@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY  creator.label               "സൃഷ്ടാവ്:">
-<!ENTITY  developers.label            "ഡവലപ്പര്‍മാര്‍:">
-<!ENTITY  translators.label           "തര്‍ജ്ജമ ചെയ്തവര്‍:">
-<!ENTITY  contributors.label          "സംഭാവന നല്‍കിയവര്‍:">
-<!ENTITY  homepage.label              "പ്രധാന താള്‍ സന്ദര്‍ശിക്കുക">

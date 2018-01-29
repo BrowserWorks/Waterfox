@@ -1,6 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY  settingsChangePreferences.label  "&brandShortName;-র পছন্দের মধ্যে বৈশিষ্ট্য পরিবর্তন করা যাবে।">
-<!ENTITY  settingsChangeOptions.label      "&brandShortName;-র বিবিধ বৈশিষ্ট্যের মধ্যে মান পরিবর্তন করা যাবে।">

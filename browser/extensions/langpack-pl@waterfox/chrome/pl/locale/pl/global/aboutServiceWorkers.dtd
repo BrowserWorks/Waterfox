@@ -1,8 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY aboutServiceWorkers.title "O wątkach usługowych">
-<!ENTITY aboutServiceWorkers.maintitle "Zarejestrowane wątki usługowe">
-<!ENTITY aboutServiceWorkers.warning_not_enabled "Obsługa wątków usługowych jest wyłączona.">
-<!ENTITY aboutServiceWorkers.warning_no_serviceworkers "Brak zarejestrowanych wątków usługowych.">

@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY dialog.title "Installazione software">
-<!ENTITY dialog.style "width: 45em">
-<!ENTITY warningPrimary.label "Installare esclusivamente componenti aggiuntivi realizzati da autori fidati.">
-<!ENTITY warningSecondary.label "Un software contenente istruzioni dannose potrebbe compromettere il computer o ottenere accesso ai dati personali.">
-<!ENTITY from.label "da:">

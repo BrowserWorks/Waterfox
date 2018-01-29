@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY removePassword.title "Eliminar contraseña maestra">
-<!ENTITY removeInfo.label "Debe introducir la contraseña actual para proceder:">
-<!ENTITY removeWarning1.label "La contraseña maestra se usa para proteger información importante, como contraseñas de sitios.">
-<!ENTITY removeWarning2.label "Si elimina la contraseña maestra, la información no estará protegida si su equipo queda comprometido.">
-<!ENTITY setPassword.oldPassword.label "Contraseña actual:">

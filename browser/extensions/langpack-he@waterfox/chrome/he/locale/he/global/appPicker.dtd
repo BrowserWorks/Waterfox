@@ -1,7 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY NoAppFound.label      "לא נמצאו יישומים לסוג קובץ זה.">
-<!ENTITY BrowseButton.label    "עיון...">
-<!ENTITY SendMsg.label         "שליחת פריט זה אל:">

@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY window.title              "फ़ोल्डर‌ चुनें">
-<!ENTITY window.style              "width: 36em; height: 18em;">
-<!ENTITY moveTo.label              " इसमें खिसकाएँ:">
-<!ENTITY newFolderButton.label     "नया फ़ोल्डर">
-<!ENTITY newFolderButton.accesskey "N">

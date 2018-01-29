@@ -1,7 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY NoAppFound.label      "Не са намерени приложения за този вид файл.">
-<!ENTITY BrowseButton.label    "Разглеждане…">
-<!ENTITY SendMsg.label         "Изпращане на този елемент към:">

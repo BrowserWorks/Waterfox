@@ -1,3 +1,0 @@
-<!-- first day of week to display in datepicker, a value from 0 to 6,
-     0 = Sunday, 1 = Monday, etc. -->
-<!ENTITY firstdayofweek.default "1">

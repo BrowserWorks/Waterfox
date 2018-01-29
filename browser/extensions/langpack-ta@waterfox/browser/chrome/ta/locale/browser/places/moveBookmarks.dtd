@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY window.title              "அடைவைத் தேர்வு செய்யவும்">
-<!ENTITY window.style              "width: 36em; height: 18em;">
-<!ENTITY moveTo.label              "இங்கு நகர்த்து:">
-<!ENTITY newFolderButton.label     "புதிய அடைவு">
-<!ENTITY newFolderButton.accesskey "N">

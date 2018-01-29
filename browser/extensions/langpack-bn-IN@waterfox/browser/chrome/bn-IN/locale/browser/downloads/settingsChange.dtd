@@ -1,7 +1,0 @@
-<!-- -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- -->
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY  settingsChangePreferences.label  "&brandShortName;-র বৈশিষ্ট্যাবলীর অধীন অ্যাপ্লিকেশন শীর্ষক ট্যাবের মধ্যে বৈশিষ্ট্য পরিবর্তন করা যাবে।">
-<!ENTITY  settingsChangeOptions.label      "&brandShortName;-র বিকল্পের অধীন অ্যাপ্লিকেশন শীর্ষক ট্যাবের মধ্যে বৈশিষ্ট্য পরিবর্তন করা যাবে।">

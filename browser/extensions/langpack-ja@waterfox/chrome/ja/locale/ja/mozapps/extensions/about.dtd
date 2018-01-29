@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY  creator.label		"作成者:">
-<!ENTITY  developers.label	"開発者:">
-<!ENTITY  translators.label	"翻訳者:">
-<!ENTITY  contributors.label	"貢献者:">
-<!ENTITY  homepage.label	"サイトを表示">

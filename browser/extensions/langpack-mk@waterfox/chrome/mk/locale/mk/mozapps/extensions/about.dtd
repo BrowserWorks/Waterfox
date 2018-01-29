@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY  creator.label               "Креирана од:">
-<!ENTITY  developers.label            "Развивачи:">
-<!ENTITY  translators.label           "Преведувачи:">
-<!ENTITY  contributors.label          "Помагачи:">
-<!ENTITY  homepage.label              "Посети ја домашната страница">

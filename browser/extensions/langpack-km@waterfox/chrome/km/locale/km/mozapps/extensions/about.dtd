@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY  creator.label               "បាន​បង្កើត​ដោយ ៖">
-<!ENTITY  developers.label            "អ្នក​អភិវឌ្ឍន៍ ៖">
-<!ENTITY  translators.label           "អ្នក​បកប្រែ ៖">
-<!ENTITY  contributors.label          "អ្នក​ចូលរួម ៖">
-<!ENTITY  homepage.label              "ទស្សនា​គេហ​ទំព័រ">

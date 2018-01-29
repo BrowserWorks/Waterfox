@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-   
-<!ENTITY removePassword.title              "ਮਾਸਟਰ ਪਾਸਵਰਡ ਹਟਾਓ">
-<!ENTITY removeInfo.label                  "ਤੁਹਾਨੂੰ ਜਾਰੀ ਰੱਖਣ ਲਈ ਆਪਣਾ ਮੌਜੂਦਾ ਪਾਸਵਰਡ ਦੇਣਾ ਪਵੇਗਾ:">
-<!ENTITY removeWarning1.label              "ਤੁਹਾਡਾ ਮਾਸਟਰ ਪਾਸਵਰਡ ਸੰਵੇਦਨਸ਼ੀਲ ਜਾਣਕਾਰੀ, ਜਿਵੇਂ ਕਿ ਸਾਇਟ ਪਾਸਵਰਡ ਆਦਿ ਨੂੰ ਸੰਭਾਲਣ ਲਈ ਵਰਤਿਆ ਜਾਦਾ ਹੈ।">
-<!ENTITY removeWarning2.label              "ਜੇਕਰ ਤੁਸੀਂ ਆਪਣਾ ਮਾਸਟਰ ਪਾਸਵਰਡ ਹਟਾਇਆ ਤਾਂ ਤੁਹਾਡੇ ਕੰਪਿਊਟਰ ਉੱਤੇ ਹਮਲਾ ਹੋਣ ਦੇ ਹਾਲਾਤ ਵਿੱਚ ਤੁਹਾਡੀ ਜਾਣਕਾਰੀ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਰਹਿ ਸਕੇਗੀ।">
-<!ENTITY setPassword.oldPassword.label     "ਮੌਜੂਦਾ ਪਾਸਵਰਡ:">

@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY removePassword.title              "Haadwachtwurd fuortsmite">
-<!ENTITY removeInfo.label                  "Jo moate jo aktuele wachtwurd ynfiere om troch te gean:">
-<!ENTITY removeWarning1.label              "Jo haadwachtwurd wurdt brûkt om gefoelige gegevens te beskermjen, lykas wachtwurden foar websites.">
-<!ENTITY removeWarning2.label              "As jo jo haadwachtwurd fourtsmite wurde jo gegevens net mear beskermd as jo kompûter oerdnommen wurdt.">
-<!ENTITY setPassword.oldPassword.label     "Aktueel wachtwurd:">

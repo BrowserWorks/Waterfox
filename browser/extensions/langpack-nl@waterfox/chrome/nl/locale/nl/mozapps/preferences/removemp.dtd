@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY removePassword.title              "Hoofdwachtwoord verwijderen">
-<!ENTITY removeInfo.label                  "U moet uw huidige wachtwoord invoeren om verder te gaan:">
-<!ENTITY removeWarning1.label              "Uw hoofdwachtwoord wordt gebruikt om gevoelige gegevens te beschermen, zoals wachtwoorden voor websites.">
-<!ENTITY removeWarning2.label              "Als u uw hoofdwachtwoord verwijdert, worden uw gegevens niet meer beschermd als de controle over uw computer wordt overgenomen.">
-<!ENTITY setPassword.oldPassword.label     "Huidige wachtwoord:">

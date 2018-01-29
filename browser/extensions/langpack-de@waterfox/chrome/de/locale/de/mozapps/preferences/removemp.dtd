@@ -1,6 +1,0 @@
-<!ENTITY removePassword.title              "Master-Passwort entfernen">
-<!ENTITY removeInfo.label                  "Aktuelles Master-Passwort eingeben, um fortzufahren:">
-<!ENTITY removeWarning1.label              "Ihr Master-Passwort schützt sensible Daten wie Passwörter und Zertifikate. ">
-<!ENTITY removeWarning2.label              "Wenn Sie Ihr Master-Passwort entfernen, werden Ihre Daten nicht mehr vor dem Zugriff Dritter geschützt.">
-<!ENTITY setPassword.oldPassword.label     "Aktuelles Passwort:">
-

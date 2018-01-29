@@ -1,7 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY NoAppFound.label      "ഈ തരത്തിലുള്ള ഫയലിനുള്ള ഒരു പ്രയോഗവും ലഭ്യമായില്ല.">
-<!ENTITY BrowseButton.label    "തെരയുക…">
-<!ENTITY SendMsg.label         "ഈ വസ്തു എങ്ങോട്ട് അയയ്ക്കണം:">

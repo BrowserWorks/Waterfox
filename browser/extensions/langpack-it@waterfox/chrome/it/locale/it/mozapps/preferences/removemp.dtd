@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY removePassword.title "Rimozione password principale">
-<!ENTITY removeInfo.label "Inserire la password principale per procedere:">
-<!ENTITY removeWarning1.label "La password principale viene utilizzata per proteggere le informazioni sensibili come le password dei siti web.">
-<!ENTITY removeWarning2.label "Rimuovendo la password principale le informazioni memorizzate non saranno protette in caso di compromissione del computer.">
-<!ENTITY setPassword.oldPassword.label "Password attuale:">
