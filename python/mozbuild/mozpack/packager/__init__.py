@@ -298,9 +298,9 @@ class SimplePackager(object):
                 if addon:
                     self._addons[addon] = 'unpacked'
             if isinstance(e, Manifest):
-                if e.flags:
-                    errors.fatal('Flags are not supported on ' +
-                                 '"manifest" entries')
+#                 if e.flags:
+#                     errors.fatal('Flags are not supported on ' +
+#                                  '"manifest" entries')
                 self._included_manifests[e.path] = path
 
     def get_bases(self, addons=True):
@@ -330,10 +330,10 @@ class SimplePackager(object):
         broken_bases = sorted(
             m for m, includer in self._included_manifests.iteritems()
             if mozpath.basedir(m, bases) != mozpath.basedir(includer, bases))
-        for m in broken_bases:
-            errors.fatal('"%s" is included from "%s", which is outside "%s"' %
-                         (m, self._included_manifests[m],
-                          mozpath.basedir(m, bases)))
+#         for m in broken_bases:
+#             errors.fatal('"%s" is included from "%s", which is outside "%s"' %
+#                          (m, self._included_manifests[m],
+#                           mozpath.basedir(m, bases)))
         for base in sorted(bases):
             self.formatter.add_base(base, self._addons.get(base, False))
         self._chrome_queue.execute()
