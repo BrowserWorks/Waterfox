@@ -672,6 +672,10 @@ public:
     uint32_t GetSrcIndex() { return mSrcIndex; }
     void GetFamilyNameAndURIForLogging(nsACString& aFamilyName,
                                        nsACString& aURI);
+                                       
+#ifdef DEBUG
+    gfxUserFontSet* GetUserFontSet() const { return mFontSet; }
+#endif
 
 protected:
     const uint8_t* SanitizeOpenTypeData(const uint8_t* aData,

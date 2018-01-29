@@ -834,14 +834,6 @@ nsGlobalWindow::ResumeIdleRequests()
 }
 
 void
-nsGlobalWindow::InsertIdleCallback(IdleRequest* aRequest)
-{
-  AssertIsOnMainThread();
-  mIdleRequestCallbacks.insertBack(aRequest);
-  aRequest->AddRef();
-}
-
-void
 nsGlobalWindow::RemoveIdleCallback(mozilla::dom::IdleRequest* aRequest)
 {
   AssertIsOnMainThread();
@@ -852,7 +844,6 @@ nsGlobalWindow::RemoveIdleCallback(mozilla::dom::IdleRequest* aRequest)
   }
 
   aRequest->removeFrom(mIdleRequestCallbacks);
-  aRequest->Release();
 }
 
 nsresult
@@ -971,8 +962,7 @@ nsGlobalWindow::RequestIdleCallback(JSContext* aCx,
     request->SetTimeoutHandle(timeoutHandle);
   }
 
-  // mIdleRequestCallbacks now owns request
-  InsertIdleCallback(request);
+  mIdleRequestCallbacks.insertBack(request);
 
   if (!IsSuspended()) {
     ScheduleIdleRequestDispatch();
@@ -2474,7 +2464,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsGlobalWindow)
   tmp->UnlinkHostObjectURIs();
 
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mIdleRequestExecutor)
-  tmp->DisableIdleCallbackRequests();
 
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END

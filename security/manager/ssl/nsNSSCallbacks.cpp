@@ -546,7 +546,9 @@ nsNSSHttpRequestSession::~nsNSSHttpRequestSession()
 }
 
 nsHTTPListener::nsHTTPListener()
-: mResultData(nullptr),
+: mHttpRequestSucceeded(false),
+  mHttpResponseCode(0),
+  mResultData(nullptr),
   mResultLen(0),
   mLock("nsHTTPListener.mLock"),
   mCondition(mLock, "nsHTTPListener.mCondition"),

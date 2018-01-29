@@ -1074,9 +1074,7 @@ public:
 
   void HandleEndOfAudio() override
   {
-    MOZ_ASSERT(!mDoneAudioSeeking);
-    AudioQueue().Finish();
-    mDoneAudioSeeking = true;
+    HandleEndOfAudioInternal();
     MaybeFinishSeek();
   }
 
@@ -1094,14 +1092,7 @@ public:
 
   void HandleEndOfVideo() override
   {
-    MOZ_ASSERT(!mDoneVideoSeeking);
-    if (mFirstVideoFrameAfterSeek) {
-      // Hit the end of stream. Move mFirstVideoFrameAfterSeek into
-      // mSeekedVideoData so we have something to display after seeking.
-      mMaster->PushVideo(mFirstVideoFrameAfterSeek);
-    }
-    VideoQueue().Finish();
-    mDoneVideoSeeking = true;
+    HandleEndOfVideoInternal();
     MaybeFinishSeek();
   }
 
@@ -1230,8 +1221,13 @@ protected:
     }
 
     if (aReject.mError == NS_ERROR_DOM_MEDIA_END_OF_STREAM) {
-      HandleEndOfAudio();
-      HandleEndOfVideo();
+      if (!mDoneAudioSeeking) {
+        HandleEndOfAudioInternal();
+      }
+      if (!mDoneVideoSeeking) {
+        HandleEndOfVideoInternal();
+      }
+      MaybeFinishSeek();
       return;
     }
 
@@ -1381,6 +1377,25 @@ protected:
     }
 
     return NS_OK;
+  }
+
+  void HandleEndOfAudioInternal()
+  {
+    MOZ_ASSERT(!mDoneAudioSeeking);
+    AudioQueue().Finish();
+    mDoneAudioSeeking = true;
+  }
+
+  void HandleEndOfVideoInternal()
+  {
+    MOZ_ASSERT(!mDoneVideoSeeking);
+    if (mFirstVideoFrameAfterSeek) {
+      // Hit the end of stream. Move mFirstVideoFrameAfterSeek into
+      // mSeekedVideoData so we have something to display after seeking.
+      mMaster->PushVideo(mFirstVideoFrameAfterSeek);
+    }
+    VideoQueue().Finish();
+    mDoneVideoSeeking = true;
   }
 
   void MaybeFinishSeek()
