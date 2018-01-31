@@ -375,7 +375,8 @@ public:
 
 protected:
   void GetMarkup(bool aIncludeSelf, nsAString& aMarkup);
-  void SetInnerHTMLInternal(const nsAString& aInnerHTML, ErrorResult& aError);
+  void SetInnerHTMLInternal(const nsAString& aInnerHTML, ErrorResult& aError,
+                            bool aNeverSanitize = false);
 
   // Override from nsINode
   virtual nsINode::nsSlots* CreateSlots() override;
