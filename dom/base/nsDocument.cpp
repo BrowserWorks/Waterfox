@@ -1354,6 +1354,7 @@ nsIDocument::nsIDocument()
     mIsContentDocument(false),
     mMightHaveStaleServoData(false),
     mBufferingCSPViolations(false),
+    mAllowUnsafeHTML(false),
     mIsScopedStyleEnabled(eScopedStyle_Unknown),
     mCompatMode(eCompatibility_FullStandards),
     mReadyState(ReadyState::READYSTATE_UNINITIALIZED),
@@ -6093,6 +6094,13 @@ nsDocument::CustomElementConstructor(JSContext* aCx, unsigned aArgc, JS::Value* 
   NS_ENSURE_SUCCESS(rv, true);
 
   return true;
+}
+
+bool
+nsIDocument::AllowUnsafeHTML() const
+{
+  return (!nsContentUtils::IsSystemPrincipal(NodePrincipal()) ||
+          mAllowUnsafeHTML);
 }
 
 bool

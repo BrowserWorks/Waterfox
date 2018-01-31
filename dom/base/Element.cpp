@@ -3723,6 +3723,12 @@ Element::SetInnerHTML(const nsAString& aInnerHTML, ErrorResult& aError)
 }
 
 void
+Element::UnsafeSetInnerHTML(const nsAString& aInnerHTML, ErrorResult& aError)
+{
+  SetInnerHTMLInternal(aInnerHTML, aError, true);
+}
+
+void
 Element::GetOuterHTML(nsAString& aOuterHTML)
 {
   GetMarkup(true, aOuterHTML);
