@@ -736,13 +736,13 @@ CustomizeMode.prototype = {
       let bundle = this.document.getElementById("bundle_browser");
       const kLabelClass = "customization-tipPanel-link";
       // eslint-disable-next-line no-unsanitized/property
-      messageNode.innerHTML = bundle.getFormattedString("customizeTips.tip0", [
+      messageNode.unsafeSetInnerHTML(bundle.getFormattedString("customizeTips.tip0", [
         "<label class=\"customization-tipPanel-em\" value=\"" +
           bundle.getString("customizeTips.tip0.hint") + "\"/>",
         this.document.getElementById("bundle_brand").getString("brandShortName"),
         "<label class=\"" + kLabelClass + " text-link\" value=\"" +
         bundle.getString("customizeTips.tip0.learnMore") + "\"/>"
-      ]);
+      ]));
 
       messageNode.querySelector("." + kLabelClass).addEventListener("click", () => {
         let url = Services.urlFormatter.formatURLPref("browser.customizemode.tip0.learnMoreUrl");
