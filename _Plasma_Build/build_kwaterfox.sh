@@ -51,12 +51,10 @@ _patchrev=7339b115a221 # Waterfox 56.0
         patch -Np1 -i $SourceDir/_Plasma_Build/fix_waterfox_browser-kde_xul.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/fix_crash_e10s_upload_cancel.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/pgo_fix_missing_kdejs.patch
-        patch -Np1 -i $SourceDir/_Plasma_Build/no-crmf.diff
         patch -Np1 -i $SourceDir/_Plasma_Build/mozilla-ucontext-$VERSION.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-disentangle.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-fix-interface.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/0001-Bug-1384062-Make-SystemResourceMonitor.stop-more-res.patch
-        patch -Np1 -i $SourceDir/_Plasma_Build/no-plt.diff
 				echo >> "$SourceDir/KDE_lock"
     else
         echo "Unable to find KDE patches or patches has already been applied!"

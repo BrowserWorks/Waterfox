@@ -32,7 +32,6 @@ function ApplyPatches(){
 	# Apply patches
     if [ ! -f "$SourceDir/wf_lock" ]; then
         cd $SourceDir
-        patch -Np1 -i $SourceDir/_Plasma_Build/no-crmf.diff
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-disentangle.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-fix-interface.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/0001-Bug-1384062-Make-SystemResourceMonitor.stop-more-res.patch
