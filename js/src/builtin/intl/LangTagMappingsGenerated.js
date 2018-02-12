@@ -58,16 +58,10 @@ var langTagMappings = {
     "zh-yue": "yue",
 };
 
-// Mappings from non-extlang subtags to preferred values.
+// Mappings from language subtags to preferred values.
 // Derived from IANA Language Subtag Registry, file date 2021-08-06.
 // https://www.iana.org/assignments/language-subtag-registry
-var langSubtagMappings = {
-    "BU": "MM",
-    "DD": "DE",
-    "FX": "FR",
-    "TP": "TL",
-    "YD": "YE",
-    "ZR": "CD",
+var languageMappings = {
     "aam": "aas",
     "adp": "dz",
     "asd": "snz",
@@ -160,6 +154,18 @@ var langSubtagMappings = {
     "yos": "zom",
     "yuu": "yug",
     "zir": "scv",
+};
+
+// Mappings from region subtags to preferred values.
+// Derived from IANA Language Subtag Registry, file date 2021-08-06.
+// https://www.iana.org/assignments/language-subtag-registry
+var regionMappings = {
+    "BU": "MM",
+    "DD": "DE",
+    "FX": "FR",
+    "TP": "TL",
+    "YD": "YE",
+    "ZR": "CD",
 };
 
 // Mappings from extlang subtags to preferred values.
