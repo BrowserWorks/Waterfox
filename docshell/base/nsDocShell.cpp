@@ -8163,6 +8163,10 @@ nsDocShell::CreateAboutBlankContentViewer(nsIPrincipal* aPrincipal,
     // wrong information :-(
     //
     (void)FirePageHideNotification(!mSavingOldViewer);
+    // pagehide notification might destroy this docshell.
+    if (mIsBeingDestroyed) {
+      return NS_ERROR_DOCSHELL_DYING;
+    }
   }
 
   // Now make sure we don't think we're in the middle of firing unload after
@@ -8694,6 +8698,10 @@ nsDocShell::RestoreFromHistory()
 
   // Notify the old content viewer that it's being hidden.
   FirePageHideNotification(!mSavingOldViewer);
+  // pagehide notification might destroy this docshell.
+  if (mIsBeingDestroyed) {
+    return NS_ERROR_DOCSHELL_DYING;
+  }
 
   // If mLSHE was changed as a result of the pagehide event, then
   // something else was loaded.  Don't finish restoring.
