@@ -1000,6 +1000,12 @@
   ; Remove protocol handler registry keys added by the MS shim
   DeleteRegKey HKLM "Software\Classes\Waterfox.URL"
   DeleteRegKey HKCU "Software\Classes\Waterfox.URL"
+
+  ; Remove old browser registration with "Firefox" prefix from registry
+  DeleteRegKey HKLM "Software\Clients\StartMenuInternet\Firefox-$AppUserModelID"
+  DeleteRegValue HKLM "Software\RegisteredApplications" "Firefox-$AppUserModelID"
+  DeleteRegKey HKCU "Software\Clients\StartMenuInternet\Firefox-$AppUserModelID"
+  DeleteRegValue HKCU "Software\RegisteredApplications" "Firefox-$AppUserModelID"
 !macroend
 !define RemoveDeprecatedKeys "!insertmacro RemoveDeprecatedKeys"
 
