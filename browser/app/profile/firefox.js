@@ -468,6 +468,7 @@ pref("browser.tabs.drawInTitlebar", false);
 #else
 pref("browser.tabs.drawInTitlebar", true);
 #endif
+pref("browser.tabs.duplicateTab", true);
 
 // 0 - Disable the tabbar session restore button.
 // 1 - Enable the tabbar session restore button.
