@@ -8,6 +8,7 @@
 
 #include "chrome/common/ipc_message_utils.h"
 
+#include "ipc/IPCMessageUtils.h"
 #include "mozilla/webrender/webrender_ffi.h"
 #include "mozilla/webrender/WebRenderTypes.h"
 
