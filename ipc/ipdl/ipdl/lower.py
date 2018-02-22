@@ -5252,7 +5252,7 @@ methodDefns."""
 
     for i, stmt in enumerate(cls.stmts):
         if isinstance(stmt, MethodDefn) and not stmt.decl.force_inline:
-            decl, defn = _splitMethodDefn(stmt, cls.name)
+            decl, defn = _splitMethodDefn(stmt, cls)
             cls.stmts[i] = StmtDecl(decl)
             if defn:
                 defns.addstmts([defn, Whitespace.NL])
