@@ -197,6 +197,9 @@ LOCAL_INCLUDES += [
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
+
+USE_LIBS += [ 'translator' ] # Grab the Angle shader translator.
+
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../workers',
@@ -205,6 +208,7 @@ LOCAL_INCLUDES += [
     '/dom/svg',
     '/dom/workers',
     '/dom/xul',
+    '/gfx/angle/checkout/include',
     '/gfx/gl',
     '/image',
     '/js/xpconnect/src',
@@ -219,10 +223,5 @@ CXXFLAGS += CONFIG['TK_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
 
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wno-error=shadow']
-
-if CONFIG['_MSC_VER']:
-    # This is intended as a temporary workaround to unblock compilation
-    # on VS2015 in warnings as errors mode.
-    CXXFLAGS += ['-wd4312']
+if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
+    CXXFLAGS += ['-Wno-error=shadow', '-Wno-missing-braces']

@@ -4,7 +4,6 @@
 
 #include "GLLibraryEGL.h"
 
-#include "angle/Platform.h"
 #include "gfxConfig.h"
 #include "gfxCrashReporterUtils.h"
 #include "gfxUtils.h"
@@ -60,7 +59,7 @@ static const char* sEGLExtensionNames[] = {
     "EGL_EXT_device_base",
     "EGL_EXT_device_query",
     "EGL_NV_stream_consumer_gltexture_yuv",
-    "EGL_ANGLE_stream_producer_d3d_texture_nv12",
+    "ANGLE_stream_producer_d3d_texture",
 };
 
 #if defined(ANDROID)
@@ -661,15 +660,15 @@ GLLibraryEGL::EnsureInitialized(bool forceAccel, nsACString* const out_failureId
         }
     }
 
-    if (IsExtensionSupported(ANGLE_stream_producer_d3d_texture_nv12)) {
+    if (IsExtensionSupported(ANGLE_stream_producer_d3d_texture)) {
         const GLLibraryLoader::SymLoadStruct nvStreamSymbols[] = {
-            SYMBOL(CreateStreamProducerD3DTextureNV12ANGLE),
-            SYMBOL(StreamPostD3DTextureNV12ANGLE),
+            SYMBOL(CreateStreamProducerD3DTextureANGLE),
+            SYMBOL(StreamPostD3DTextureANGLE),
             END_OF_SYMBOLS
         };
         if (!fnLoadSymbols(nvStreamSymbols)) {
-            NS_ERROR("EGL supports ANGLE_stream_producer_d3d_texture_nv12 without exposing its functions!");
-            MarkExtensionUnsupported(ANGLE_stream_producer_d3d_texture_nv12);
+            NS_ERROR("EGL supports ANGLE_stream_producer_d3d_texture without exposing its functions!");
+            MarkExtensionUnsupported(ANGLE_stream_producer_d3d_texture);
         }
     }
 
