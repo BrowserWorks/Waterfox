@@ -59,7 +59,6 @@ ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
 ac_add_options --enable-av1
-ac_add_options --enable-ccache
 ac_add_options --enable-eme=widevine
 ac_add_options --enable-release
 ac_add_options --enable-rust-simd # on x86 requires SSE2
