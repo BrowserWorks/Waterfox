@@ -691,7 +691,8 @@ MediaFormatReader::DecoderFactory::DoCreateDecoder(Data& aData)
   }
 
   if (NS_FAILED(result)) {
-    ownerData.mDescription = result.Description();
+    // Need to see why this is failing
+    //ownerData.mDescription = result.Description();
   }
 
   return result;
