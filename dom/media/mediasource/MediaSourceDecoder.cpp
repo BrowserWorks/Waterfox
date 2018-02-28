@@ -34,27 +34,27 @@ MediaSourceDecoder::MediaSourceDecoder(MediaDecoderInit& aInit)
   mExplicitDuration.Set(Some(UnspecifiedNaN<double>()));
 }
 
-MediaDecoder*
-MediaSourceDecoder::Clone(MediaDecoderInit& aInit)
-{
-  // TODO: Sort out cloning.
-  return nullptr;
-}
-
 MediaDecoderStateMachine*
 MediaSourceDecoder::CreateStateMachine()
 {
   MOZ_ASSERT(NS_IsMainThread());
   mDemuxer = new MediaSourceDemuxer(AbstractMainThread());
-  mReader = new MediaFormatReader(this, mDemuxer, GetVideoFrameContainer());
+  MediaFormatReaderInit init;
+  init.mVideoFrameContainer = GetVideoFrameContainer();
+  init.mKnowsCompositor = GetCompositor();
+  init.mCrashHelper = GetOwner()->CreateGMPCrashHelper();
+  init.mFrameStats = mFrameStats;
+  mReader = new MediaFormatReader(init, mDemuxer);
   return new MediaDecoderStateMachine(this, mReader);
 }
 
 nsresult
-MediaSourceDecoder::Load(nsIStreamListener**)
+MediaSourceDecoder::Load(nsIPrincipal* aPrincipal)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!GetStateMachine());
+
+  mResource = new MediaSourceResource(aPrincipal);
 
   nsresult rv = MediaShutdownManager::Instance().Register(this);
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -175,13 +175,6 @@ MediaSourceDecoder::Shutdown()
   MediaDecoder::Shutdown();
 }
 
-/*static*/
-already_AddRefed<MediaResource>
-MediaSourceDecoder::CreateResource(nsIPrincipal* aPrincipal)
-{
-  return RefPtr<MediaResource>(new MediaSourceResource(aPrincipal)).forget();
-}
-
 void
 MediaSourceDecoder::AttachMediaSource(dom::MediaSource* aMediaSource)
 {
@@ -200,7 +193,7 @@ void
 MediaSourceDecoder::Ended(bool aEnded)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  static_cast<MediaSourceResource*>(GetResource())->SetEnded(aEnded);
+  static_cast<MediaSourceResource*>(mResource.get())->SetEnded(aEnded);
   if (aEnded) {
     // We want the MediaSourceReader to refresh its buffered range as it may
     // have been modified (end lined up).
@@ -287,7 +280,7 @@ MediaSourceDecoder::NextFrameBufferedStatus()
   TimeInterval interval(
     currentPosition,
     currentPosition + DEFAULT_NEXT_FRAME_AVAILABLE_BUFFERED);
-  return buffered.ContainsStrict(ClampIntervalToEnd(interval))
+  return buffered.ContainsWithStrictEnd(ClampIntervalToEnd(interval))
          ? MediaDecoderOwner::NEXT_FRAME_AVAILABLE
          : MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE;
 }
@@ -321,19 +314,7 @@ MediaSourceDecoder::CanPlayThrough()
   TimeUnit timeAhead =
     std::min(duration, currentPosition + TimeUnit::FromSeconds(10));
   TimeInterval interval(currentPosition, timeAhead);
-  return buffered.ContainsStrict(ClampIntervalToEnd(interval));
-}
-
-void
-MediaSourceDecoder::NotifyWaitingForKey()
-{
-  mWaitingForKeyEvent.Notify();
-}
-
-MediaEventSource<void>*
-MediaSourceDecoder::WaitingForKeyEvent()
-{
-  return &mWaitingForKeyEvent;
+  return buffered.ContainsWithStrictEnd(ClampIntervalToEnd(interval));
 }
 
 TimeInterval

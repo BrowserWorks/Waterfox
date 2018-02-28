@@ -8,6 +8,8 @@ Transform the signing task into an actual task description.
 from __future__ import absolute_import, print_function, unicode_literals
 
 from taskgraph.transforms.base import TransformSequence
+from taskgraph.util.signed_artifacts import generate_specifications_of_artifacts_to_sign
+
 
 transforms = TransformSequence()
 
@@ -21,66 +23,42 @@ def add_signed_routes(config, jobs):
         dep_job = job['dependent-task']
 
         job['routes'] = []
-        for dep_route in dep_job.task.get('routes', []):
-            if not dep_route.startswith('index.gecko.v2'):
-                continue
-            branch = dep_route.split(".")[3]
-            rest = ".".join(dep_route.split(".")[4:])
-            job['routes'].append(
-                'index.gecko.v2.{}.signed-nightly.{}'.format(branch, rest))
+        if dep_job.attributes.get('nightly'):
+            for dep_route in dep_job.task.get('routes', []):
+                if not dep_route.startswith('index.gecko.v2'):
+                    continue
+                branch = dep_route.split(".")[3]
+                rest = ".".join(dep_route.split(".")[4:])
+                job['routes'].append(
+                    'index.gecko.v2.{}.signed-nightly.{}'.format(branch, rest))
+
         yield job
 
 
 @transforms.add
-def make_signing_description(config, jobs):
+def define_upstream_artifacts(config, jobs):
     for job in jobs:
         dep_job = job['dependent-task']
+        build_platform = dep_job.attributes.get('build_platform')
 
-        if 'android' in dep_job.attributes.get('build_platform'):
-            job_specs = [
-                {
-                    'artifacts': ['public/build/target.apk',
-                                  'public/build/en-US/target.apk'],
-                    'format': 'jar',
-                },
-            ]
-        elif 'macosx' in dep_job.attributes.get('build_platform'):
-            job_specs = [
-                {
-                   'artifacts': ['public/build/target.dmg'],
-                   'format': 'dmg',
-                }, {
-                   'artifacts': ['public/build/update/target.complete.mar'],
-                   'format': 'mar',
-                },
-            ]
-        else:
-            job_specs = [
-                {
-                    'artifacts': ['public/build/target.tar.bz2'],
-                    'format': 'gpg',
-                }, {
-                    'artifacts': ['public/build/update/target.complete.mar'],
-                    'format': 'mar',
-                }
-            ]
-        upstream_artifacts = []
-        for spec in job_specs:
-            fmt = spec["format"]
-            upstream_artifacts.append({
-                "taskId": {"task-reference": "<build>"},
-                "taskType": "build",
-                "paths": spec["artifacts"],
-                "formats": [fmt]
-            })
+        artifacts_specifications = generate_specifications_of_artifacts_to_sign(
+            build_platform,
+            dep_job.attributes.get('nightly'),
+            keep_locale_template=False
+        )
 
-        job['upstream-artifacts'] = upstream_artifacts
+        if 'android' in build_platform:
+            # We're in the job that creates both multilocale and en-US APKs
+            artifacts_specifications[0]['artifacts'].append('public/build/en-US/target.apk')
+
+        job['upstream-artifacts'] = [{
+            'taskId': {'task-reference': '<build>'},
+            'taskType': 'build',
+            'paths': spec['artifacts'],
+            'formats': spec['formats'],
+        } for spec in artifacts_specifications]
 
         label = dep_job.label.replace("build-", "signing-")
         job['label'] = label
-
-        # Announce job status on funsize specific routes, so that it can
-        # start the partial generation for nightlies only.
-        job['use-funsize-route'] = True
 
         yield job

@@ -4,11 +4,10 @@
 
 // Import globals from the files imported by the .xul files.
 /* import-globals-from subdialogs.js */
-/* import-globals-from advanced.js */
 /* import-globals-from main.js */
+/* import-globals-from search.js */
 /* import-globals-from containers.js */
 /* import-globals-from privacy.js */
-/* import-globals-from applications.js */
 /* import-globals-from sync.js */
 /* import-globals-from findInPage.js */
 /* import-globals-from ../../../base/content/utilityOverlay.js */
@@ -55,10 +54,9 @@ function init_all() {
 
   gSubDialog.init();
   register_module("paneGeneral", gMainPane);
+  register_module("paneSearch", gSearchPane);
   register_module("panePrivacy", gPrivacyPane);
   register_module("paneContainers", gContainersPane);
-  register_module("paneAdvanced", gAdvancedPane);
-  register_module("paneApplications", gApplicationsPane);
   register_module("paneSync", gSyncPane);
   register_module("paneSearchResults", gSearchResultsPane);
   gSearchResultsPane.init();
@@ -131,11 +129,10 @@ function init_dynamic_padding() {
 function telemetryBucketForCategory(category) {
   category = category.toLowerCase();
   switch (category) {
-    case "applications":
-    case "advanced":
     case "containers":
     case "general":
     case "privacy":
+    case "search":
     case "sync":
     case "searchresults":
       return category;
@@ -164,25 +161,31 @@ function gotoPref(aCategory) {
   }
   category = friendlyPrefCategoryNameToInternalName(category);
   if (category != "paneSearchResults") {
+    gSearchResultsPane.query = null;
     gSearchResultsPane.searchInput.value = "";
-    gSearchResultsPane.searchResultsCategory.hidden = true;
-    gSearchResultsPane.findSelection.removeAllRanges();
+    gSearchResultsPane.getFindSelection(window).removeAllRanges();
     gSearchResultsPane.removeAllSearchTooltips();
+    gSearchResultsPane.removeAllSearchMenuitemIndicators();
   } else if (!gSearchResultsPane.searchInput.value) {
     // Something tried to send us to the search results pane without
     // a query string. Default to the General pane instead.
     category = kDefaultCategoryInternalName;
     document.location.hash = kDefaultCategory;
+    gSearchResultsPane.query = null;
   }
 
   // Updating the hash (below) or changing the selected category
   // will re-enter gotoPref.
   if (gLastHash == category && !subcategory)
     return;
-  let item = categories.querySelector(".category[value=" + category + "]");
-  if (!item) {
-    category = kDefaultCategoryInternalName;
+
+  let item;
+  if (category != "paneSearchResults") {
     item = categories.querySelector(".category[value=" + category + "]");
+    if (!item) {
+      category = kDefaultCategoryInternalName;
+      item = categories.querySelector(".category[value=" + category + "]");
+    }
   }
 
   try {
@@ -199,7 +202,11 @@ function gotoPref(aCategory) {
   // Need to set the gLastHash before setting categories.selectedItem since
   // the categories 'select' event will re-enter the gotoPref codepath.
   gLastHash = category;
-  categories.selectedItem = item;
+  if (item) {
+    categories.selectedItem = item;
+  } else {
+    categories.clearSelection();
+  }
   window.history.replaceState(category, document.title);
   search(category, "data-category", subcategory, "data-subcategory");
 
@@ -219,11 +226,13 @@ function search(aQuery, aAttribute, aSubquery, aSubAttribute) {
     // element will not get considered during search. This
     // should only be used when an element is still under
     // development and should not be shown for any reason.
-    if (element.getAttribute("data-hidden-from-search") != "true") {
+    if (element.getAttribute("data-hidden-from-search") != "true" ||
+        element.getAttribute("data-subpanel") == "true") {
       let attributeValue = element.getAttribute(aAttribute);
       if (attributeValue == aQuery) {
         if (!element.classList.contains("header") &&
-             aSubquery && aSubAttribute) {
+            element.localName !== "preferences" &&
+            aSubquery && aSubAttribute) {
           let subAttributeValue = element.getAttribute(aSubAttribute);
           element.hidden = subAttributeValue != aSubquery;
         } else {
@@ -275,7 +284,7 @@ const CONFIRM_RESTART_PROMPT_CANCEL = 1;
 const CONFIRM_RESTART_PROMPT_RESTART_LATER = 2;
 function confirmRestartPrompt(aRestartToEnable, aDefaultButtonIndex,
                               aWantRevertAsCancelButton,
-			      aWantRestartLaterButton) {
+                              aWantRestartLaterButton) {
   let brandName = document.getElementById("bundleBrand").getString("brandShortName");
   let bundle = document.getElementById("bundlePreferences");
   let msg = bundle.getFormattedString(aRestartToEnable ?
@@ -340,4 +349,15 @@ function confirmRestartPrompt(aRestartToEnable, aDefaultButtonIndex,
     }
   }
   return buttonIndex;
+}
+
+// This function is used to append search keywords found
+// in the related subdialog to the button that will activate the subdialog.
+function appendSearchKeywords(aId, keywords) {
+  let element = document.getElementById(aId);
+  let searchKeywords = element.getAttribute("searchkeywords");
+  if (searchKeywords) {
+    keywords.push(searchKeywords);
+  }
+  element.setAttribute("searchkeywords", keywords.join(" "));
 }

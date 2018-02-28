@@ -333,7 +333,9 @@ operator<(const RefPtr<nsPluginElement>& lhs,
 static bool
 PluginShouldBeHidden(const nsCString& aName) {
   // This only supports one hidden plugin
-  return Preferences::GetCString("plugins.navigator.hidden_ctp_plugin").Equals(aName);
+  nsAutoCString value;
+  Preferences::GetCString("plugins.navigator.hidden_ctp_plugin", value);
+  return value.Equals(aName);
 }
 
 void
@@ -399,8 +401,8 @@ nsPluginArray::EnsurePlugins()
   }
 
   if (mPlugins.Length() == 0 && mCTPPlugins.Length() != 0) {
-    nsCOMPtr<nsPluginTag> hiddenTag = new nsPluginTag("Hidden Plugin", NULL, "dummy.plugin", NULL, NULL,
-                                                      NULL, NULL, NULL, 0, 0, false);
+    nsCOMPtr<nsPluginTag> hiddenTag = new nsPluginTag("Hidden Plugin", nullptr, "dummy.plugin", nullptr, nullptr,
+                                                      nullptr, nullptr, nullptr, 0, 0, false);
     mPlugins.AppendElement(new nsPluginElement(mWindow, hiddenTag));
   }
 
@@ -408,7 +410,6 @@ nsPluginArray::EnsurePlugins()
   // fingerprintable entropy based on plugins' installation file times.
   mPlugins.Sort();
 }
-
 // nsPluginElement implementation.
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(nsPluginElement)

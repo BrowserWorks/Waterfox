@@ -105,7 +105,6 @@ nsHtml5TreeOperation::~nsHtml5TreeOperation()
       break;
     case eTreeOpSetDocumentCharset:
     case eTreeOpNeedsCharsetSwitchTo:
-      delete[] mOne.charPtr;
       break;
     case eTreeOpProcessOfflineManifest:
       free(mOne.unicharPtr);
@@ -465,24 +464,6 @@ nsHtml5TreeOperation::SetFormElement(nsIContent* aNode, nsIContent* aParent)
 }
 
 nsresult
-nsHtml5TreeOperation::AppendIsindexPrompt(nsIContent* parent, nsHtml5DocumentBuilder* aBuilder)
-{
-  nsXPIDLString prompt;
-  nsresult rv =
-      nsContentUtils::GetLocalizedString(nsContentUtils::eFORMS_PROPERTIES,
-                                         "IsIndexPromptWithSpace", prompt);
-  uint32_t len = prompt.Length();
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  if (!len) {
-    // Don't bother appending a zero-length text node.
-    return NS_OK;
-  }
-  return AppendText(prompt.BeginReading(), len, parent, aBuilder);
-}
-
-nsresult
 nsHtml5TreeOperation::FosterParentText(nsIContent* aStackParent,
                                        char16_t* aBuffer,
                                        uint32_t aLength,
@@ -615,9 +596,8 @@ void
 nsHtml5TreeOperation::SvgLoad(nsIContent* aNode)
 {
   nsCOMPtr<nsIRunnable> event = new nsHtml5SVGLoadDispatcher(aNode);
-  if (NS_FAILED(aNode->OwnerDoc()->Dispatch("nsHtml5SVGLoadDispatcher",
-                                            TaskCategory::Other,
-                                            event.forget()))) {
+  if (NS_FAILED(aNode->OwnerDoc()->Dispatch(
+        TaskCategory::Network, event.forget()))) {
     NS_WARNING("failed to dispatch svg load dispatcher");
   }
 }
@@ -635,7 +615,8 @@ nsHtml5TreeOperation::MarkMalformedIfScript(nsIContent* aNode)
 nsresult
 nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
                               nsIContent** aScriptElement,
-                              bool* aInterrupted)
+                              bool* aInterrupted,
+                              bool* aStreamEnded)
 {
   switch(mOpCode) {
     case eTreeOpUninitialized: {
@@ -714,10 +695,6 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
       uint32_t length = mFour.integer;
       return AppendText(buffer, length, parent, aBuilder);
     }
-    case eTreeOpAppendIsindexPrompt: {
-      nsIContent* parent = *mOne.node;
-      return AppendIsindexPrompt(parent, aBuilder);
-    }
     case eTreeOpFosterParentText: {
       nsIContent* stackParent = *mOne.node;
       char16_t* buffer = mTwo.unicharPtr;
@@ -789,17 +766,16 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
       return NS_OK;
     }
     case eTreeOpSetDocumentCharset: {
-      char* str = mOne.charPtr;
+      auto encoding = WrapNotNull(mOne.encoding);
       int32_t charsetSource = mFour.integer;
-      nsDependentCString dependentString(str);
-      aBuilder->SetDocumentCharsetAndSource(dependentString, charsetSource);
+      aBuilder->SetDocumentCharsetAndSource(encoding, charsetSource);
       return NS_OK;
     }
     case eTreeOpNeedsCharsetSwitchTo: {
-      char* str = mOne.charPtr;
+      auto encoding = WrapNotNull(mOne.encoding);
       int32_t charsetSource = mFour.integer;
       int32_t lineNumber = mTwo.integer;
-      aBuilder->NeedsCharsetSwitchTo(str, charsetSource, (uint32_t)lineNumber);
+      aBuilder->NeedsCharsetSwitchTo(encoding, charsetSource, (uint32_t)lineNumber);
       return NS_OK;
     }
     case eTreeOpUpdateStyleSheet: {
@@ -823,7 +799,7 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
       return NS_OK;
     }
     case eTreeOpStreamEnded: {
-      aBuilder->DidBuildModel(false); // this causes a notifications flush anyway
+      *aStreamEnded = true;
       return NS_OK;
     }
     case eTreeOpSetStyleLineNumber: {
@@ -884,11 +860,11 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
 
       nsIDocument* doc = aBuilder->GetDocument();
 
-      const nsCString& charset = doc->GetDocumentCharacterSet();
+      auto encoding = doc->GetDocumentCharacterSet();
       nsCOMPtr<nsIURI> uri;
       nsresult rv = NS_NewURI(getter_AddRefs(uri),
                               relative,
-                              charset.get(),
+                              encoding,
                               aBuilder->GetViewSourceBaseURI());
       NS_ENSURE_SUCCESS(rv, NS_OK);
 

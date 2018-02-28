@@ -64,24 +64,44 @@ public:
   static void Shutdown();
 
   TISInputSourceWrapper()
+    : mInputSource{nullptr}
+    , mKeyboardLayout{nullptr}
+    , mUCKeyboardLayout{nullptr}
+    , mIsRTL{0}
+    , mOverrideKeyboard{false}
   {
     mInputSourceList = nullptr;
     Clear();
   }
 
   explicit TISInputSourceWrapper(const char* aID)
+    : mInputSource{nullptr}
+    , mKeyboardLayout{nullptr}
+    , mUCKeyboardLayout{nullptr}
+    , mIsRTL{0}
+    , mOverrideKeyboard{false}
   {
     mInputSourceList = nullptr;
     InitByInputSourceID(aID);
   }
 
   explicit TISInputSourceWrapper(SInt32 aLayoutID)
+    : mInputSource{nullptr}
+    , mKeyboardLayout{nullptr}
+    , mUCKeyboardLayout{nullptr}
+    , mIsRTL{0}
+    , mOverrideKeyboard{false}
   {
     mInputSourceList = nullptr;
     InitByLayoutID(aLayoutID);
   }
 
   explicit TISInputSourceWrapper(TISInputSourceRef aInputSource)
+    : mInputSource{nullptr}
+    , mKeyboardLayout{nullptr}
+    , mUCKeyboardLayout{nullptr}
+    , mIsRTL{0}
+    , mOverrideKeyboard{false}
   {
     mInputSourceList = nullptr;
     InitByTISInputSourceRef(aInputSource);
@@ -90,7 +110,7 @@ public:
   ~TISInputSourceWrapper() { Clear(); }
 
   void InitByInputSourceID(const char* aID);
-  void InitByInputSourceID(const nsAFlatString &aID);
+  void InitByInputSourceID(const nsString& aID);
   void InitByInputSourceID(const CFStringRef aID);
   /**
    * InitByLayoutID() initializes the keyboard layout by the layout ID.
@@ -813,6 +833,7 @@ public:
   virtual void OnFocusChangeInGecko(bool aFocus);
 
   void OnSelectionChange(const IMENotification& aIMENotification);
+  void OnLayoutChange();
 
   /**
    * Call [NSTextInputContext handleEvent] for mouse event support of IME
@@ -916,14 +937,6 @@ public:
   bool IsASCIICapableOnly() { return mIsASCIICapableOnly; }
   bool IgnoreIMECommit() { return mIgnoreIMECommit; }
 
-  bool IgnoreIMEComposition()
-  {
-    // Ignore the IME composition events when we're pending to discard the
-    // composition and we are not to handle the IME composition now.
-    return (mPendingMethods & kDiscardIMEComposition) &&
-           (mIsInFocusProcessing || !IsFocused());
-  }
-
   void CommitIMEComposition();
   void CancelIMEComposition();
 
@@ -950,8 +963,7 @@ protected:
   nsCOMPtr<nsITimer> mTimer;
   enum {
     kNotifyIMEOfFocusChangeInGecko = 1,
-    kDiscardIMEComposition         = 2,
-    kSyncASCIICapableOnly          = 4
+    kSyncASCIICapableOnly          = 2
   };
   uint32_t mPendingMethods;
 
@@ -989,11 +1001,6 @@ private:
   bool mIsIMEEnabled;
   bool mIsASCIICapableOnly;
   bool mIgnoreIMECommit;
-  // This flag is enabled by OnFocusChangeInGecko, and will be cleared by
-  // ExecutePendingMethods.  When this is true, IsFocus() returns TRUE.  At
-  // that time, the focus processing in Gecko might not be finished yet.  So,
-  // you cannot use WidgetQueryContentEvent or something.
-  bool mIsInFocusProcessing;
   bool mIMEHasFocus;
 
   void KillIMEComposition();
@@ -1002,7 +1009,6 @@ private:
 
   // Pending methods
   void NotifyIMEOfFocusChangeInGecko();
-  void DiscardIMEComposition();
   void SyncASCIICapableOnly();
 
   static bool sStaticMembersInitialized;

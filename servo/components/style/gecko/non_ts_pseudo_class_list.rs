@@ -26,9 +26,6 @@
  *
  * Pending pseudo-classes:
  *
- *  :-moz-lwtheme, :-moz-lwtheme-brighttext, :-moz-lwtheme-darktext,
- *  :-moz-window-inactive.
- *
  *  :scope -> <style scoped>, pending discussion.
  *
  * This follows the order defined in layout/style/nsCSSPseudoClassList.h when
@@ -67,11 +64,16 @@ macro_rules! apply_non_ts_list {
                 // TODO(emilio): Needs pref check for
                 // full-screen-api.unprefix.enabled!
                 ("fullscreen", Fullscreen, fullscreen, IN_FULLSCREEN_STATE, _),
+                ("-moz-full-screen", MozFullScreen, mozFullScreen, IN_FULLSCREEN_STATE, _),
                 // TODO(emilio): This is inconsistently named (the capital R).
                 ("-moz-focusring", MozFocusRing, mozFocusRing, IN_FOCUSRING_STATE, _),
                 ("-moz-broken", MozBroken, mozBroken, IN_BROKEN_STATE, _),
                 ("-moz-loading", MozLoading, mozLoading, IN_LOADING_STATE, _),
                 ("-moz-suppressed", MozSuppressed, mozSuppressed, IN_SUPPRESSED_STATE, PSEUDO_CLASS_INTERNAL),
+                ("-moz-has-dir-attr", MozHasDirAttr, mozHasDirAttr, IN_HAS_DIR_ATTR_STATE, PSEUDO_CLASS_INTERNAL),
+                ("-moz-dir-attr-ltr", MozDirAttrLTR, mozDirAttrLTR, IN_HAS_DIR_ATTR_LTR_STATE, PSEUDO_CLASS_INTERNAL),
+                ("-moz-dir-attr-rtl", MozDirAttrRTL, mozDirAttrRTL, IN_HAS_DIR_ATTR_RTL_STATE, PSEUDO_CLASS_INTERNAL),
+                ("-moz-dir-attr-like-auto", MozDirAttrLikeAuto, mozDirAttrLikeAuto, IN_HAS_DIR_ATTR_LIKE_AUTO_STATE, PSEUDO_CLASS_INTERNAL),
                 ("-moz-autofill", MozAutofill, mozAutofill, IN_AUTOFILL_STATE, PSEUDO_CLASS_INTERNAL),
                 ("-moz-autofill-preview", MozAutofillPreview, mozAutofillPreview, IN_AUTOFILL_PREVIEW_STATE, PSEUDO_CLASS_INTERNAL),
 
@@ -107,8 +109,13 @@ macro_rules! apply_non_ts_list {
                 ("-moz-last-node", MozLastNode, lastNode, _, _),
                 ("-moz-only-whitespace", MozOnlyWhitespace, mozOnlyWhitespace, _, _),
                 ("-moz-native-anonymous", MozNativeAnonymous, mozNativeAnonymous, _, PSEUDO_CLASS_INTERNAL),
+                ("-moz-use-shadow-tree-root", MozUseShadowTreeRoot, mozUseShadowTreeRoot, _, PSEUDO_CLASS_INTERNAL),
                 ("-moz-is-html", MozIsHTML, mozIsHTML, _, _),
                 ("-moz-placeholder", MozPlaceholder, mozPlaceholder, _, _),
+                ("-moz-lwtheme", MozLWTheme, mozLWTheme, _, _),
+                ("-moz-lwtheme-brighttext", MozLWThemeBrightText, mozLWThemeBrightText, _, _),
+                ("-moz-lwtheme-darktext", MozLWThemeDarkText, mozLWThemeDarkText, _, _),
+                ("-moz-window-inactive", MozWindowInactive, mozWindowInactive, _, _),
             ],
             string: [
                 ("-moz-system-metric", MozSystemMetric, mozSystemMetric, _, PSEUDO_CLASS_INTERNAL),

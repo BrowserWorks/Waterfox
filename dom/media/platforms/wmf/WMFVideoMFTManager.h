@@ -8,6 +8,7 @@
 #define WMFVideoMFTManager_h_
 
 #include "MFTDecoder.h"
+#include "MediaResult.h"
 #include "WMF.h"
 #include "WMFMediaDataDecoder.h"
 #include "mozilla/RefPtr.h"
@@ -27,7 +28,7 @@ public:
                      bool aDXVAEnabled);
   ~WMFVideoMFTManager();
 
-  bool Init();
+  MediaResult Init();
 
   HRESULT Input(MediaRawData* aSample) override;
 
@@ -67,11 +68,11 @@ public:
   }
 
 private:
-  bool ValidateVideoInfo();
+  MediaResult ValidateVideoInfo();
 
   bool InitializeDXVA();
 
-  bool InitInternal();
+  MediaResult InitInternal();
 
   HRESULT CreateBasicVideoFrame(IMFSample* aSample,
                                 int64_t aStreamOffset,
@@ -121,6 +122,7 @@ private:
   bool mGotValidOutputAfterNullOutput = false;
   bool mGotExcessiveNullOutput = false;
   bool mIsValid = true;
+  bool mIMFUsable = false;
 };
 
 } // namespace mozilla

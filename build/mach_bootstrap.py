@@ -38,7 +38,6 @@ MACH_MODULES = [
     'build/valgrind/mach_commands.py',
     'devtools/shared/css/generated/mach_commands.py',
     'dom/bindings/mach_commands.py',
-    'dom/media/test/external/mach_commands.py',
     'layout/tools/reftest/mach_commands.py',
     'python/mach_commands.py',
     'python/mach/mach/commands/commandinfo.py',
@@ -52,6 +51,7 @@ MACH_MODULES = [
     'taskcluster/mach_commands.py',
     'testing/awsy/mach_commands.py',
     'testing/firefox-ui/mach_commands.py',
+    'testing/geckodriver/mach_commands.py',
     'testing/mach_commands.py',
     'testing/marionette/mach_commands.py',
     'testing/mochitest/mach_commands.py',
@@ -64,6 +64,7 @@ MACH_MODULES = [
     'tools/lint/mach_commands.py',
     'tools/mach_commands.py',
     'tools/power/mach_commands.py',
+    'tools/tryselect/mach_commands.py',
     'mobile/android/mach_commands.py',
 ]
 

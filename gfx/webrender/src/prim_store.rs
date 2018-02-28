@@ -2,31 +2,53 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use api::{BuiltDisplayList, ColorF, ComplexClipRegion, DeviceIntRect, DeviceIntSize, DevicePoint};
+use api::{ExtendMode, FontKey, FontRenderMode, GlyphInstance, GlyphOptions, GradientStop};
+use api::{ImageKey, ImageRendering, ItemRange, LayerPoint, LayerRect, LayerSize, TextShadow};
+use api::{LayerToWorldTransform, TileOffset, WebGLContextId, YuvColorSpace, YuvFormat};
+use api::{device_length, FontInstanceKey, LayerVector2D, LineOrientation, LineStyle};
 use app_units::Au;
-use border::{BorderCornerClipData, BorderCornerDashClipData, BorderCornerDotClipData};
 use border::BorderCornerInstance;
 use euclid::{Size2D};
-use gpu_cache::{GpuBlockData, GpuCache, GpuCacheHandle, GpuDataRequest, ToGpuBlocks};
-use gpu_store::GpuStoreAddress;
-use internal_types::{SourceTexture, PackedTexel};
-use mask_cache::{ClipMode, ClipSource, MaskCacheInfo};
-use renderer::{VertexDataStore, GradientDataStore, SplitGeometryStore, MAX_VERTEX_TEXTURE_WIDTH};
+use gpu_cache::{GpuCacheAddress, GpuBlockData, GpuCache, GpuCacheHandle, GpuDataRequest, ToGpuBlocks};
+use mask_cache::{ClipMode, ClipRegion, ClipSource, MaskCacheInfo};
+use renderer::MAX_VERTEX_TEXTURE_WIDTH;
 use render_task::{RenderTask, RenderTaskLocation};
-use resource_cache::{CacheItem, ImageProperties, ResourceCache};
-use std::mem;
-use std::usize;
-use util::{TransformedRect, recycle_vec};
-use webrender_traits::{BuiltDisplayList, ColorF, ImageKey, ImageRendering, YuvColorSpace};
-use webrender_traits::{YuvFormat, ClipRegion, ComplexClipRegion, ItemRange, GlyphKey};
-use webrender_traits::{FontKey, FontRenderMode, WebGLContextId};
-use webrender_traits::{device_length, DeviceIntRect, DeviceIntSize};
-use webrender_traits::{DeviceRect, DevicePoint, DeviceSize};
-use webrender_traits::{LayerRect, LayerSize, LayerPoint, LayoutPoint};
-use webrender_traits::{LayerToWorldTransform, GlyphInstance, GlyphOptions};
-use webrender_traits::{ExtendMode, GradientStop, AuxIter, TileOffset};
+use resource_cache::{ImageProperties, ResourceCache};
+use std::{mem, usize};
+use util::{pack_as_float, TransformedRect, recycle_vec};
 
-pub const CLIP_DATA_GPU_SIZE: usize = 5;
-pub const MASK_DATA_GPU_SIZE: usize = 1;
+
+pub const CLIP_DATA_GPU_BLOCKS: usize = 10;
+
+#[derive(Debug, Copy, Clone)]
+pub struct PrimitiveOpacity {
+    pub is_opaque: bool,
+}
+
+impl PrimitiveOpacity {
+    pub fn opaque() -> PrimitiveOpacity {
+        PrimitiveOpacity {
+            is_opaque: true,
+        }
+    }
+
+    pub fn translucent() -> PrimitiveOpacity {
+        PrimitiveOpacity {
+            is_opaque: false,
+        }
+    }
+
+    pub fn from_alpha(alpha: f32) -> PrimitiveOpacity {
+        PrimitiveOpacity {
+            is_opaque: alpha == 1.0,
+        }
+    }
+
+    pub fn accumulate(&mut self, alpha: f32) {
+        self.is_opaque = self.is_opaque && alpha == 1.0;
+    }
+}
 
 /// Stores two coordinates in texel space. The coordinates
 /// are stored in texel coordinates because the texture atlas
@@ -39,20 +61,26 @@ pub struct TexelRect {
     pub uv1: DevicePoint,
 }
 
-impl Default for TexelRect {
-    fn default() -> TexelRect {
-        TexelRect {
-            uv0: DevicePoint::zero(),
-            uv1: DevicePoint::zero(),
-        }
-    }
-}
-
 impl TexelRect {
     pub fn new(u0: u32, v0: u32, u1: u32, v1: u32) -> TexelRect {
         TexelRect {
             uv0: DevicePoint::new(u0 as f32, v0 as f32),
             uv1: DevicePoint::new(u1 as f32, v1 as f32),
+        }
+    }
+
+    pub fn invalid() -> TexelRect {
+        TexelRect {
+            uv0: DevicePoint::new(-1.0, -1.0),
+            uv1: DevicePoint::new(-1.0, -1.0),
+        }
+    }
+}
+
+impl Into<GpuBlockData> for TexelRect {
+    fn into(self) -> GpuBlockData {
+        GpuBlockData {
+            data: [self.uv0.x, self.uv0.y, self.uv1.x, self.uv1.y],
         }
     }
 }
@@ -66,7 +94,7 @@ impl TexelRect {
 /// thread to iterate this list and update any changed
 /// texture data and update the UV rect.
 pub struct DeferredResolve {
-    pub resource_address: GpuStoreAddress,
+    pub address: GpuCacheAddress,
     pub image_properties: ImageProperties,
 }
 
@@ -87,22 +115,8 @@ pub enum PrimitiveKind {
     AngleGradient,
     RadialGradient,
     BoxShadow,
-}
-
-/// Geometry description for simple rectangular primitives, uploaded to the GPU.
-#[derive(Debug, Clone)]
-pub struct PrimitiveGeometry {
-    pub local_rect: LayerRect,
-    pub local_clip_rect: LayerRect,
-}
-
-impl Default for PrimitiveGeometry {
-    fn default() -> PrimitiveGeometry {
-        PrimitiveGeometry {
-            local_rect: unsafe { mem::uninitialized() },
-            local_clip_rect: unsafe { mem::uninitialized() },
-        }
-    }
+    TextShadow,
+    Line,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -125,7 +139,7 @@ impl GpuCacheHandle {
 // TODO(gw): Pack the fields here better!
 #[derive(Debug)]
 pub struct PrimitiveMetadata {
-    pub is_opaque: bool,
+    pub opacity: PrimitiveOpacity,
     pub clips: Vec<ClipSource>,
     pub clip_cache_info: Option<MaskCacheInfo>,
     pub prim_kind: PrimitiveKind,
@@ -141,6 +155,12 @@ pub struct PrimitiveMetadata {
     // text run.
     pub render_task: Option<RenderTask>,
     pub clip_task: Option<RenderTask>,
+
+    // TODO(gw): In the future, we should just pull these
+    //           directly from the DL item, instead of
+    //           storing them here.
+    pub local_rect: LayerRect,
+    pub local_clip_rect: LayerRect,
 }
 
 impl PrimitiveMetadata {
@@ -150,20 +170,6 @@ impl PrimitiveMetadata {
 }
 
 #[derive(Debug, Clone)]
-pub struct SplitGeometry {
-    pub data: [f32; 12],
-}
-
-impl Default for SplitGeometry {
-    fn default() -> SplitGeometry {
-        SplitGeometry {
-            data: unsafe { mem::uninitialized() },
-        }
-    }
-}
-
-
-#[derive(Debug, Clone)]
 #[repr(C)]
 pub struct RectanglePrimitive {
     pub color: ColorF,
@@ -171,7 +177,25 @@ pub struct RectanglePrimitive {
 
 impl ToGpuBlocks for RectanglePrimitive {
     fn write_gpu_blocks(&self, mut request: GpuDataRequest) {
-        request.push(self.color.into());
+        request.push(self.color);
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct LinePrimitive {
+    pub color: ColorF,
+    pub style: LineStyle,
+    pub orientation: LineOrientation,
+}
+
+impl ToGpuBlocks for LinePrimitive {
+    fn write_gpu_blocks(&self, mut request: GpuDataRequest) {
+        request.push(self.color);
+        request.push([pack_as_float(self.style as u32),
+                      pack_as_float(self.orientation as u32),
+                      0.0,
+                      0.0]);
     }
 }
 
@@ -184,30 +208,21 @@ pub enum ImagePrimitiveKind {
 #[derive(Debug)]
 pub struct ImagePrimitiveCpu {
     pub kind: ImagePrimitiveKind,
-    pub color_texture_id: SourceTexture,
-    pub resource_address: GpuStoreAddress,
-    pub sub_rect: Option<TexelRect>,
     // TODO(gw): Build on demand
-    pub gpu_block: GpuBlockData,
+    pub gpu_blocks: [GpuBlockData; 2],
 }
 
 impl ToGpuBlocks for ImagePrimitiveCpu {
     fn write_gpu_blocks(&self, mut request: GpuDataRequest) {
-        request.push(self.gpu_block);
+        request.extend_from_slice(&self.gpu_blocks);
     }
 }
 
 #[derive(Debug)]
 pub struct YuvImagePrimitiveCpu {
     pub yuv_key: [ImageKey; 3],
-    // All textures should be the same type here.
-    pub yuv_texture_id: [SourceTexture; 3],
     pub format: YuvFormat,
     pub color_space: YuvColorSpace,
-
-    // The first address of yuv resource_address. Use "yuv_resource_address + N-th" to get the N-th channel data.
-    // e.g. yuv_resource_address + 0 => y channel resource_address
-    pub yuv_resource_address: GpuStoreAddress,
 
     pub image_rendering: ImageRendering,
 
@@ -257,25 +272,17 @@ pub struct BoxShadowPrimitiveCpu {
 
 impl ToGpuBlocks for BoxShadowPrimitiveCpu {
     fn write_gpu_blocks(&self, mut request: GpuDataRequest) {
-        request.push(self.src_rect.into());
-        request.push(self.bs_rect.into());
-        request.push(self.color.into());
+        request.push(self.src_rect);
+        request.push(self.bs_rect);
+        request.push(self.color);
         request.push([self.border_radius,
                       self.edge_size,
                       self.blur_radius,
-                      self.inverted].into());
+                      self.inverted]);
         for &rect in &self.rects {
-            request.push(rect.into());
+            request.push(rect);
         }
     }
-}
-
-#[derive(Debug, Clone)]
-#[repr(C)]
-pub struct GradientStopGpu {
-    color: ColorF,
-    offset: f32,
-    padding: [f32; 3],
 }
 
 #[derive(Debug)]
@@ -284,31 +291,34 @@ pub struct GradientPrimitiveCpu {
     pub stops_count: usize,
     pub extend_mode: ExtendMode,
     pub reverse_stops: bool,
-    pub cache_dirty: bool,
-    pub gpu_data_address: GpuStoreAddress,
-    pub gpu_data_count: i32,
     pub gpu_blocks: [GpuBlockData; 3],
 }
 
-impl ToGpuBlocks for GradientPrimitiveCpu {
-    fn write_gpu_blocks(&self, mut request: GpuDataRequest) {
+impl GradientPrimitiveCpu {
+    fn build_gpu_blocks_for_aligned(&self,
+                                    display_list: &BuiltDisplayList,
+                                    mut request: GpuDataRequest) -> PrimitiveOpacity {
+        let mut opacity = PrimitiveOpacity::opaque();
         request.extend_from_slice(&self.gpu_blocks);
+        let src_stops = display_list.get(self.stops_range);
+
+        for src in src_stops {
+            request.push(src.color.premultiplied());
+            request.push([src.offset, 0.0, 0.0, 0.0]);
+            opacity.accumulate(src.color.a);
+        }
+
+        opacity
     }
-}
 
-#[derive(Debug)]
-pub struct RadialGradientPrimitiveCpu {
-    pub stops_range: ItemRange<GradientStop>,
-    pub extend_mode: ExtendMode,
-    pub cache_dirty: bool,
-    pub gpu_data_address: GpuStoreAddress,
-    pub gpu_data_count: i32,
-    pub gpu_blocks: [GpuBlockData; 3],
-}
-
-impl ToGpuBlocks for RadialGradientPrimitiveCpu {
-    fn write_gpu_blocks(&self, mut request: GpuDataRequest) {
+    fn build_gpu_blocks_for_angle_radial(&self,
+                                         display_list: &BuiltDisplayList,
+                                         mut request: GpuDataRequest) {
         request.extend_from_slice(&self.gpu_blocks);
+
+        let gradient_builder = GradientGpuBlockBuilder::new(self.stops_range,
+                                                            display_list);
+        gradient_builder.build(self.reverse_stops, &mut request);
     }
 }
 
@@ -331,47 +341,32 @@ pub const GRADIENT_DATA_SIZE: usize = GRADIENT_DATA_TABLE_SIZE + 2;
 #[repr(C)]
 // An entry in a gradient data table representing a segment of the gradient color space.
 pub struct GradientDataEntry {
-    pub start_color: PackedTexel,
-    pub end_color: PackedTexel,
+    pub start_color: ColorF,
+    pub end_color: ColorF,
 }
 
-#[repr(C)]
-// A table of gradient entries, with two colors per entry, that specify the start and end color
-// within the segment of the gradient space represented by that entry. To lookup a gradient result,
-// first the entry index is calculated to determine which two colors to interpolate between, then
-// the offset within that entry bucket is used to interpolate between the two colors in that entry.
-// This layout preserves hard stops, as the end color for a given entry can differ from the start
-// color for the following entry, despite them being adjacent. Colors are stored within in BGRA8
-// format for texture upload. This table requires the gradient color stops to be normalized to the
-// range [0, 1]. The first and last entries hold the first and last color stop colors respectively,
-// while the entries in between hold the interpolated color stop values for the range [0, 1].
-pub struct GradientData {
-    pub colors_high: [GradientDataEntry; GRADIENT_DATA_SIZE],
-    pub colors_low: [GradientDataEntry; GRADIENT_DATA_SIZE],
+struct GradientGpuBlockBuilder<'a> {
+    stops_range: ItemRange<GradientStop>,
+    display_list: &'a BuiltDisplayList,
 }
 
-impl Default for GradientData {
-    fn default() -> GradientData {
-        GradientData {
-            colors_high: unsafe { mem::uninitialized() },
-            colors_low: unsafe { mem::uninitialized() }
+impl<'a> GradientGpuBlockBuilder<'a> {
+    fn new(stops_range: ItemRange<GradientStop>,
+           display_list: &'a BuiltDisplayList) -> GradientGpuBlockBuilder<'a> {
+        GradientGpuBlockBuilder {
+            stops_range,
+            display_list,
         }
     }
-}
 
-impl Clone for GradientData {
-    fn clone(&self) -> GradientData {
-        GradientData {
-            colors_high: self.colors_high,
-            colors_low: self.colors_low,
-        }
-    }
-}
-
-impl GradientData {
     /// Generate a color ramp filling the indices in [start_idx, end_idx) and interpolating
     /// from start_color to end_color.
-    fn fill_colors(&mut self, start_idx: usize, end_idx: usize, start_color: &ColorF, end_color: &ColorF) {
+    fn fill_colors(&self,
+                   start_idx: usize,
+                   end_idx: usize,
+                   start_color: &ColorF,
+                   end_color: &ColorF,
+                   entries: &mut [GradientDataEntry; GRADIENT_DATA_SIZE]) {
         // Calculate the color difference for individual steps in the ramp.
         let inv_steps = 1.0 / (end_idx - start_idx) as f32;
         let step_r = (end_color.r - start_color.r) * inv_steps;
@@ -380,24 +375,16 @@ impl GradientData {
         let step_a = (end_color.a - start_color.a) * inv_steps;
 
         let mut cur_color = *start_color;
-        let mut cur_color_high = PackedTexel::high_bytes(&cur_color);
-        let mut cur_color_low = PackedTexel::low_bytes(&cur_color);
 
         // Walk the ramp writing start and end colors for each entry.
         for index in start_idx..end_idx {
-            let high_byte_entry = &mut self.colors_high[index];
-            let low_byte_entry = &mut self.colors_low[index];
-
-            high_byte_entry.start_color = cur_color_high;
-            low_byte_entry.start_color = cur_color_low;
+            let entry = &mut entries[index];
+            entry.start_color = cur_color;
             cur_color.r += step_r;
             cur_color.g += step_g;
             cur_color.b += step_b;
             cur_color.a += step_a;
-            cur_color_high = PackedTexel::high_bytes(&cur_color);
-            cur_color_low = PackedTexel::low_bytes(&cur_color);
-            high_byte_entry.end_color = cur_color_high;
-            low_byte_entry.end_color = cur_color_low;
+            entry.end_color = cur_color;
         }
     }
 
@@ -411,7 +398,8 @@ impl GradientData {
     }
 
     // Build the gradient data from the supplied stops, reversing them if necessary.
-    fn build(&mut self, src_stops: AuxIter<GradientStop>, reverse_stops: bool) {
+    fn build(&self, reverse_stops: bool, request: &mut GpuDataRequest) {
+        let src_stops = self.display_list.get(self.stops_range);
 
         // Preconditions (should be ensured by DisplayListBuilder):
         // * we have at least two stops
@@ -423,9 +411,20 @@ impl GradientData {
         let mut cur_color = first.color.premultiplied();
         debug_assert_eq!(first.offset, 0.0);
 
+        // A table of gradient entries, with two colors per entry, that specify the start and end color
+        // within the segment of the gradient space represented by that entry. To lookup a gradient result,
+        // first the entry index is calculated to determine which two colors to interpolate between, then
+        // the offset within that entry bucket is used to interpolate between the two colors in that entry.
+        // This layout preserves hard stops, as the end color for a given entry can differ from the start
+        // color for the following entry, despite them being adjacent. Colors are stored within in BGRA8
+        // format for texture upload. This table requires the gradient color stops to be normalized to the
+        // range [0, 1]. The first and last entries hold the first and last color stop colors respectively,
+        // while the entries in between hold the interpolated color stop values for the range [0, 1].
+        let mut entries: [GradientDataEntry; GRADIENT_DATA_SIZE] = unsafe { mem::uninitialized() };
+
         if reverse_stops {
             // Fill in the first entry (for reversed stops) with the first color stop
-            self.fill_colors(GRADIENT_DATA_LAST_STOP, GRADIENT_DATA_LAST_STOP + 1, &cur_color, &cur_color);
+            self.fill_colors(GRADIENT_DATA_LAST_STOP, GRADIENT_DATA_LAST_STOP + 1, &cur_color, &cur_color, &mut entries);
 
             // Fill in the center of the gradient table, generating a color ramp between each consecutive pair
             // of gradient stops. Each iteration of a loop will fill the indices in [next_idx, cur_idx). The
@@ -437,7 +436,7 @@ impl GradientData {
 
                 if next_idx < cur_idx {
                     self.fill_colors(next_idx, cur_idx,
-                                     &next_color, &cur_color);
+                                     &next_color, &cur_color, &mut entries);
                     cur_idx = next_idx;
                 }
 
@@ -446,10 +445,10 @@ impl GradientData {
             debug_assert_eq!(cur_idx, GRADIENT_DATA_TABLE_BEGIN);
 
             // Fill in the last entry (for reversed stops) with the last color stop
-            self.fill_colors(GRADIENT_DATA_FIRST_STOP, GRADIENT_DATA_FIRST_STOP + 1, &cur_color, &cur_color);
+            self.fill_colors(GRADIENT_DATA_FIRST_STOP, GRADIENT_DATA_FIRST_STOP + 1, &cur_color, &cur_color, &mut entries);
         } else {
             // Fill in the first entry with the first color stop
-            self.fill_colors(GRADIENT_DATA_FIRST_STOP, GRADIENT_DATA_FIRST_STOP + 1, &cur_color, &cur_color);
+            self.fill_colors(GRADIENT_DATA_FIRST_STOP, GRADIENT_DATA_FIRST_STOP + 1, &cur_color, &cur_color, &mut entries);
 
             // Fill in the center of the gradient table, generating a color ramp between each consecutive pair
             // of gradient stops. Each iteration of a loop will fill the indices in [cur_idx, next_idx). The
@@ -461,7 +460,7 @@ impl GradientData {
 
                 if next_idx > cur_idx {
                     self.fill_colors(cur_idx, next_idx,
-                                     &cur_color, &next_color);
+                                     &cur_color, &next_color, &mut entries);
                     cur_idx = next_idx;
                 }
 
@@ -470,39 +469,121 @@ impl GradientData {
             debug_assert_eq!(cur_idx, GRADIENT_DATA_TABLE_END);
 
             // Fill in the last entry with the last color stop
-            self.fill_colors(GRADIENT_DATA_LAST_STOP, GRADIENT_DATA_LAST_STOP + 1, &cur_color, &cur_color);
+            self.fill_colors(GRADIENT_DATA_LAST_STOP, GRADIENT_DATA_LAST_STOP + 1, &cur_color, &cur_color, &mut entries);
+        }
+
+        for entry in entries.iter() {
+            request.push(entry.start_color);
+            request.push(entry.end_color);
         }
     }
 }
 
+#[derive(Debug)]
+pub struct RadialGradientPrimitiveCpu {
+    pub stops_range: ItemRange<GradientStop>,
+    pub extend_mode: ExtendMode,
+    pub gpu_data_count: i32,
+    pub gpu_blocks: [GpuBlockData; 3],
+}
+
+impl RadialGradientPrimitiveCpu {
+    fn build_gpu_blocks_for_angle_radial(&self,
+                                         display_list: &BuiltDisplayList,
+                                         mut request: GpuDataRequest) {
+        request.extend_from_slice(&self.gpu_blocks);
+
+        let gradient_builder = GradientGpuBlockBuilder::new(self.stops_range,
+                                                            display_list);
+        gradient_builder.build(false, &mut request);
+    }
+}
+
 #[derive(Debug, Clone)]
-#[repr(C)]
-struct InstanceRect {
-    rect: LayerRect,
+pub struct TextDecoration {
+    pub local_rect: LayerRect,
+    pub prim: RectanglePrimitive,
+}
+
+#[derive(Debug, Clone)]
+pub struct TextShadowPrimitiveCpu {
+    pub shadow: TextShadow,
+    pub primitives: Vec<PrimitiveIndex>,
 }
 
 #[derive(Debug, Clone)]
 pub struct TextRunPrimitiveCpu {
     pub font_key: FontKey,
+    pub offset: LayerVector2D,
     pub logical_font_size: Au,
-    pub blur_radius: f32,
     pub glyph_range: ItemRange<GlyphInstance>,
     pub glyph_count: usize,
-    pub cache_dirty: bool,
     // TODO(gw): Maybe make this an Arc for sharing with resource cache
     pub glyph_instances: Vec<GlyphInstance>,
-    pub color_texture_id: SourceTexture,
-    pub color: ColorF,
-    pub render_mode: FontRenderMode,
-    pub resource_address: GpuStoreAddress,
     pub glyph_options: Option<GlyphOptions>,
-    pub gpu_data_address: GpuStoreAddress,
-    pub gpu_data_count: i32,
+    pub normal_render_mode: FontRenderMode,
+    pub shadow_render_mode: FontRenderMode,
+    pub color: ColorF,
 }
 
-impl ToGpuBlocks for TextRunPrimitiveCpu {
-    fn write_gpu_blocks(&self, mut request: GpuDataRequest) {
-        request.push(self.color.into());
+#[derive(Debug, Copy, Clone)]
+pub enum TextRunMode {
+    Normal,
+    Shadow,
+}
+
+impl TextRunPrimitiveCpu {
+    fn prepare_for_render(&mut self,
+                          resource_cache: &mut ResourceCache,
+                          device_pixel_ratio: f32,
+                          display_list: &BuiltDisplayList,
+                          run_mode: TextRunMode) {
+        // Cache the glyph positions, if not in the cache already.
+        // TODO(gw): In the future, remove `glyph_instances`
+        //           completely, and just reference the glyphs
+        //           directly from the displaty list.
+        if self.glyph_instances.is_empty() {
+            let src_glyphs = display_list.get(self.glyph_range);
+            for src in src_glyphs {
+                self.glyph_instances.push(GlyphInstance {
+                    index: src.index,
+                    point: src.point,
+                });
+            }
+        }
+
+        let font_size_dp = self.logical_font_size.scale_by(device_pixel_ratio);
+        let render_mode = match run_mode {
+            TextRunMode::Normal => self.normal_render_mode,
+            TextRunMode::Shadow => self.shadow_render_mode,
+        };
+
+        let font = FontInstanceKey::new(self.font_key,
+                                        font_size_dp,
+                                        self.color,
+                                        render_mode,
+                                        self.glyph_options);
+
+        resource_cache.request_glyphs(font, &self.glyph_instances);
+    }
+
+    fn write_gpu_blocks(&self,
+                        request: &mut GpuDataRequest) {
+        request.push(self.color);
+        request.push([self.offset.x, self.offset.y, 0.0, 0.0]);
+
+        // Two glyphs are packed per GPU block.
+        for glyph_chunk in self.glyph_instances.chunks(2) {
+            // In the case of an odd number of glyphs, the
+            // last glyph will get duplicated in the final
+            // GPU block.
+            let first_glyph = glyph_chunk.first().unwrap();
+            let second_glyph = glyph_chunk.last().unwrap();
+            request.push([first_glyph.point.x,
+                          first_glyph.point.y,
+                          second_glyph.point.x,
+                          second_glyph.point.y]);
+        }
     }
 }
 
@@ -518,7 +599,6 @@ struct GlyphPrimitive {
 struct ClipRect {
     rect: LayerRect,
     mode: f32,
-    padding: [f32; 3],
 }
 
 #[derive(Debug, Clone)]
@@ -531,10 +611,23 @@ struct ClipCorner {
     inner_radius_y: f32,
 }
 
+impl ToGpuBlocks for ClipCorner {
+    fn write_gpu_blocks(&self, mut request: GpuDataRequest) {
+        self.write(&mut request)
+    }
+}
+
 impl ClipCorner {
+    fn write(&self, request: &mut GpuDataRequest) {
+        request.push(self.rect);
+        request.push([self.outer_radius_x, self.outer_radius_y,
+                      self.inner_radius_x, self.inner_radius_y,
+                     ]);
+    }
+
     fn uniform(rect: LayerRect, outer_radius: f32, inner_radius: f32) -> ClipCorner {
         ClipCorner {
-            rect: rect,
+            rect,
             outer_radius_x: outer_radius,
             outer_radius_y: outer_radius,
             inner_radius_x: inner_radius,
@@ -546,8 +639,13 @@ impl ClipCorner {
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct ImageMaskData {
-    uv_rect: DeviceRect,
-    local_rect: LayerRect,
+    pub local_rect: LayerRect,
+}
+
+impl ToGpuBlocks for ImageMaskData {
+    fn write_gpu_blocks(&self, mut request: GpuDataRequest) {
+        request.push(self.local_rect);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -564,7 +662,6 @@ impl ClipData {
         ClipData {
             rect: ClipRect {
                 rect: clip.rect,
-                padding: [0.0; 3],
                 // TODO(gw): Support other clip modes for regions?
                 mode: ClipMode::Clip as u32 as f32,
             },
@@ -611,8 +708,7 @@ impl ClipData {
     pub fn uniform(rect: LayerRect, radius: f32, mode: ClipMode) -> ClipData {
         ClipData {
             rect: ClipRect {
-                rect: rect,
-                padding: [0.0; 3],
+                rect,
                 mode: mode as u32 as f32,
             },
             top_left: ClipCorner::uniform(
@@ -637,6 +733,14 @@ impl ClipData {
                 radius, 0.0),
         }
     }
+
+    pub fn write(&self, request: &mut GpuDataRequest) {
+        request.push(self.rect.rect);
+        request.push([self.rect.mode, 0.0, 0.0, 0.0]);
+        for corner in &[&self.top_left, &self.top_right, &self.bottom_left, &self.bottom_right] {
+            corner.write(request);
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -650,6 +754,8 @@ pub enum PrimitiveContainer {
     AngleGradient(GradientPrimitiveCpu),
     RadialGradient(RadialGradientPrimitiveCpu),
     BoxShadow(BoxShadowPrimitiveCpu),
+    TextShadow(TextShadowPrimitiveCpu),
+    Line(LinePrimitive),
 }
 
 pub struct PrimitiveStore {
@@ -657,6 +763,7 @@ pub struct PrimitiveStore {
     pub cpu_bounding_rects: Vec<Option<DeviceIntRect>>,
     pub cpu_rectangles: Vec<RectanglePrimitive>,
     pub cpu_text_runs: Vec<TextRunPrimitiveCpu>,
+    pub cpu_text_shadows: Vec<TextShadowPrimitiveCpu>,
     pub cpu_images: Vec<ImagePrimitiveCpu>,
     pub cpu_yuv_images: Vec<YuvImagePrimitiveCpu>,
     pub cpu_gradients: Vec<GradientPrimitiveCpu>,
@@ -664,21 +771,7 @@ pub struct PrimitiveStore {
     pub cpu_metadata: Vec<PrimitiveMetadata>,
     pub cpu_borders: Vec<BorderPrimitiveCpu>,
     pub cpu_box_shadows: Vec<BoxShadowPrimitiveCpu>,
-
-    /// Gets uploaded directly to GPU via vertex texture.
-    pub gpu_geometry: VertexDataStore<PrimitiveGeometry>,
-    pub gpu_data16: VertexDataStore<GpuBlock16>,
-    pub gpu_data32: VertexDataStore<GpuBlock32>,
-    pub gpu_gradient_data: GradientDataStore,
-
-    /// Geometry generated by plane splitting.
-    pub gpu_split_geometry: SplitGeometryStore,
-
-    /// Resolved resource rects.
-    pub gpu_resource_rects: VertexDataStore<TexelRect>,
-
-    /// General
-    prims_to_resolve: Vec<PrimitiveIndex>,
+    pub cpu_lines: Vec<LinePrimitive>,
 }
 
 impl PrimitiveStore {
@@ -688,19 +781,14 @@ impl PrimitiveStore {
             cpu_rectangles: Vec::new(),
             cpu_bounding_rects: Vec::new(),
             cpu_text_runs: Vec::new(),
+            cpu_text_shadows: Vec::new(),
             cpu_images: Vec::new(),
             cpu_yuv_images: Vec::new(),
             cpu_gradients: Vec::new(),
             cpu_radial_gradients: Vec::new(),
             cpu_borders: Vec::new(),
             cpu_box_shadows: Vec::new(),
-            prims_to_resolve: Vec::new(),
-            gpu_geometry: VertexDataStore::new(),
-            gpu_data16: VertexDataStore::new(),
-            gpu_data32: VertexDataStore::new(),
-            gpu_gradient_data: GradientDataStore::new(),
-            gpu_split_geometry: SplitGeometryStore::new(),
-            gpu_resource_rects: VertexDataStore::new(),
+            cpu_lines: Vec::new(),
         }
     }
 
@@ -710,107 +798,125 @@ impl PrimitiveStore {
             cpu_rectangles: recycle_vec(self.cpu_rectangles),
             cpu_bounding_rects: recycle_vec(self.cpu_bounding_rects),
             cpu_text_runs: recycle_vec(self.cpu_text_runs),
+            cpu_text_shadows: recycle_vec(self.cpu_text_shadows),
             cpu_images: recycle_vec(self.cpu_images),
             cpu_yuv_images: recycle_vec(self.cpu_yuv_images),
             cpu_gradients: recycle_vec(self.cpu_gradients),
             cpu_radial_gradients: recycle_vec(self.cpu_radial_gradients),
             cpu_borders: recycle_vec(self.cpu_borders),
             cpu_box_shadows: recycle_vec(self.cpu_box_shadows),
-            prims_to_resolve: recycle_vec(self.prims_to_resolve),
-            gpu_geometry: self.gpu_geometry.recycle(),
-            gpu_data16: self.gpu_data16.recycle(),
-            gpu_data32: self.gpu_data32.recycle(),
-            gpu_gradient_data: self.gpu_gradient_data.recycle(),
-            gpu_split_geometry: self.gpu_split_geometry.recycle(),
-            gpu_resource_rects: self.gpu_resource_rects.recycle(),
+            cpu_lines: recycle_vec(self.cpu_lines),
         }
     }
 
-    pub fn populate_clip_data(data: &mut [GpuBlock32], clip: ClipData) {
-        data[0] = GpuBlock32::from(clip.rect);
-        data[1] = GpuBlock32::from(clip.top_left);
-        data[2] = GpuBlock32::from(clip.top_right);
-        data[3] = GpuBlock32::from(clip.bottom_left);
-        data[4] = GpuBlock32::from(clip.bottom_right);
-    }
-
     pub fn add_primitive(&mut self,
-                         geometry: PrimitiveGeometry,
+                         local_rect: &LayerRect,
+                         local_clip_rect: &LayerRect,
                          clips: Vec<ClipSource>,
                          clip_info: Option<MaskCacheInfo>,
                          container: PrimitiveContainer) -> PrimitiveIndex {
         let prim_index = self.cpu_metadata.len();
         self.cpu_bounding_rects.push(None);
-        self.gpu_geometry.push(geometry);
 
         let metadata = match container {
             PrimitiveContainer::Rectangle(rect) => {
-                let is_opaque = rect.color.a == 1.0;
-
                 let metadata = PrimitiveMetadata {
-                    is_opaque: is_opaque,
-                    clips: clips,
+                    opacity: PrimitiveOpacity::from_alpha(rect.color.a),
+                    clips,
                     clip_cache_info: clip_info,
                     prim_kind: PrimitiveKind::Rectangle,
                     cpu_prim_index: SpecificPrimitiveIndex(self.cpu_rectangles.len()),
                     gpu_location: GpuCacheHandle::new(),
                     render_task: None,
                     clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
                 };
 
                 self.cpu_rectangles.push(rect);
 
                 metadata
             }
-            PrimitiveContainer::TextRun(mut text_cpu) => {
-                let gpu_glyphs_address = self.gpu_data16.alloc(text_cpu.glyph_count);
-                text_cpu.resource_address = self.gpu_resource_rects.alloc(text_cpu.glyph_count);
-                text_cpu.gpu_data_address = gpu_glyphs_address;
-                text_cpu.gpu_data_count = text_cpu.glyph_count as i32;
-
+            PrimitiveContainer::Line(line) => {
                 let metadata = PrimitiveMetadata {
-                    is_opaque: false,
-                    clips: clips,
+                    opacity: PrimitiveOpacity::translucent(),
+                    clips,
+                    clip_cache_info: clip_info,
+                    prim_kind: PrimitiveKind::Line,
+                    cpu_prim_index: SpecificPrimitiveIndex(self.cpu_lines.len()),
+                    gpu_location: GpuCacheHandle::new(),
+                    render_task: None,
+                    clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
+                };
+
+                self.cpu_lines.push(line);
+                metadata
+            }
+            PrimitiveContainer::TextRun(text_cpu) => {
+                let metadata = PrimitiveMetadata {
+                    opacity: PrimitiveOpacity::translucent(),
+                    clips,
                     clip_cache_info: clip_info,
                     prim_kind: PrimitiveKind::TextRun,
                     cpu_prim_index: SpecificPrimitiveIndex(self.cpu_text_runs.len()),
                     gpu_location: GpuCacheHandle::new(),
                     render_task: None,
                     clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
                 };
 
                 self.cpu_text_runs.push(text_cpu);
                 metadata
             }
-            PrimitiveContainer::Image(mut image_cpu) => {
-                image_cpu.resource_address = self.gpu_resource_rects.alloc(1);
-
+            PrimitiveContainer::TextShadow(text_shadow) => {
                 let metadata = PrimitiveMetadata {
-                    is_opaque: false,
-                    clips: clips,
+                    opacity: PrimitiveOpacity::translucent(),
+                    clips,
+                    clip_cache_info: clip_info,
+                    prim_kind: PrimitiveKind::TextShadow,
+                    cpu_prim_index: SpecificPrimitiveIndex(self.cpu_text_shadows.len()),
+                    gpu_location: GpuCacheHandle::new(),
+                    render_task: None,
+                    clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
+                };
+
+                self.cpu_text_shadows.push(text_shadow);
+                metadata
+            }
+            PrimitiveContainer::Image(image_cpu) => {
+                let metadata = PrimitiveMetadata {
+                    opacity: PrimitiveOpacity::translucent(),
+                    clips,
                     clip_cache_info: clip_info,
                     prim_kind: PrimitiveKind::Image,
                     cpu_prim_index: SpecificPrimitiveIndex(self.cpu_images.len()),
                     gpu_location: GpuCacheHandle::new(),
                     render_task: None,
                     clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
                 };
 
                 self.cpu_images.push(image_cpu);
                 metadata
             }
-            PrimitiveContainer::YuvImage(mut image_cpu) => {
-                image_cpu.yuv_resource_address = self.gpu_resource_rects.alloc(3);
-
+            PrimitiveContainer::YuvImage(image_cpu) => {
                 let metadata = PrimitiveMetadata {
-                    is_opaque: true,
-                    clips: clips,
+                    opacity: PrimitiveOpacity::opaque(),
+                    clips,
                     clip_cache_info: clip_info,
                     prim_kind: PrimitiveKind::YuvImage,
                     cpu_prim_index: SpecificPrimitiveIndex(self.cpu_yuv_images.len()),
                     gpu_location: GpuCacheHandle::new(),
                     render_task: None,
                     clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
                 };
 
                 self.cpu_yuv_images.push(image_cpu);
@@ -818,77 +924,69 @@ impl PrimitiveStore {
             }
             PrimitiveContainer::Border(border_cpu) => {
                 let metadata = PrimitiveMetadata {
-                    is_opaque: false,
-                    clips: clips,
+                    opacity: PrimitiveOpacity::translucent(),
+                    clips,
                     clip_cache_info: clip_info,
                     prim_kind: PrimitiveKind::Border,
                     cpu_prim_index: SpecificPrimitiveIndex(self.cpu_borders.len()),
                     gpu_location: GpuCacheHandle::new(),
                     render_task: None,
                     clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
                 };
 
                 self.cpu_borders.push(border_cpu);
                 metadata
             }
-            PrimitiveContainer::AlignedGradient(mut gradient_cpu) => {
-                let gpu_stops_address = self.gpu_data32.alloc(gradient_cpu.stops_count);
-
-                gradient_cpu.gpu_data_address = gpu_stops_address;
-                gradient_cpu.gpu_data_count = gradient_cpu.stops_count as i32;
-
+            PrimitiveContainer::AlignedGradient(gradient_cpu) => {
                 let metadata = PrimitiveMetadata {
-                    // TODO: calculate if the gradient is actually opaque
-                    is_opaque: false,
-                    clips: clips,
+                    opacity: PrimitiveOpacity::translucent(),
+                    clips,
                     clip_cache_info: clip_info,
                     prim_kind: PrimitiveKind::AlignedGradient,
                     cpu_prim_index: SpecificPrimitiveIndex(self.cpu_gradients.len()),
                     gpu_location: GpuCacheHandle::new(),
                     render_task: None,
                     clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
                 };
 
                 self.cpu_gradients.push(gradient_cpu);
                 metadata
             }
-            PrimitiveContainer::AngleGradient(mut gradient_cpu) => {
-                let gpu_gradient_address = self.gpu_gradient_data.alloc(1);
-
-                gradient_cpu.gpu_data_address = gpu_gradient_address;
-                gradient_cpu.gpu_data_count = 1;
-
+            PrimitiveContainer::AngleGradient(gradient_cpu) => {
                 let metadata = PrimitiveMetadata {
                     // TODO: calculate if the gradient is actually opaque
-                    is_opaque: false,
-                    clips: clips,
+                    opacity: PrimitiveOpacity::translucent(),
+                    clips,
                     clip_cache_info: clip_info,
                     prim_kind: PrimitiveKind::AngleGradient,
                     cpu_prim_index: SpecificPrimitiveIndex(self.cpu_gradients.len()),
                     gpu_location: GpuCacheHandle::new(),
                     render_task: None,
                     clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
                 };
 
                 self.cpu_gradients.push(gradient_cpu);
                 metadata
             }
-            PrimitiveContainer::RadialGradient(mut radial_gradient_cpu) => {
-                let gpu_gradient_address = self.gpu_gradient_data.alloc(1);
-
-                radial_gradient_cpu.gpu_data_address = gpu_gradient_address;
-                radial_gradient_cpu.gpu_data_count = 1;
-
+            PrimitiveContainer::RadialGradient(radial_gradient_cpu) => {
                 let metadata = PrimitiveMetadata {
                     // TODO: calculate if the gradient is actually opaque
-                    is_opaque: false,
-                    clips: clips,
+                    opacity: PrimitiveOpacity::translucent(),
+                    clips,
                     clip_cache_info: clip_info,
                     prim_kind: PrimitiveKind::RadialGradient,
                     cpu_prim_index: SpecificPrimitiveIndex(self.cpu_radial_gradients.len()),
                     gpu_location: GpuCacheHandle::new(),
                     render_task: None,
                     clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
                 };
 
                 self.cpu_radial_gradients.push(radial_gradient_cpu);
@@ -921,14 +1019,16 @@ impl PrimitiveStore {
                                                              PrimitiveIndex(prim_index));
 
                 let metadata = PrimitiveMetadata {
-                    is_opaque: false,
-                    clips: clips,
+                    opacity: PrimitiveOpacity::translucent(),
+                    clips,
                     clip_cache_info: clip_info,
                     prim_kind: PrimitiveKind::BoxShadow,
                     cpu_prim_index: SpecificPrimitiveIndex(self.cpu_box_shadows.len()),
                     gpu_location: GpuCacheHandle::new(),
                     render_task: Some(render_task),
                     clip_task: None,
+                    local_rect: *local_rect,
+                    local_clip_rect: *local_clip_rect,
                 };
 
                 self.cpu_box_shadows.push(box_shadow);
@@ -939,189 +1039,6 @@ impl PrimitiveStore {
         self.cpu_metadata.push(metadata);
 
         PrimitiveIndex(prim_index)
-    }
-
-    fn resolve_clip_cache_internal(gpu_data32: &mut VertexDataStore<GpuBlock32>,
-                                   clip_info: &MaskCacheInfo,
-                                   resource_cache: &ResourceCache) {
-        if let Some((ref mask, gpu_address)) = clip_info.image {
-            let cache_item = resource_cache.get_cached_image(mask.image, ImageRendering::Auto, None);
-            let mask_data = gpu_data32.get_slice_mut(gpu_address, MASK_DATA_GPU_SIZE);
-            mask_data[0] = GpuBlock32::from(ImageMaskData {
-                uv_rect: DeviceRect::new(cache_item.uv0,
-                                         DeviceSize::new(cache_item.uv1.x - cache_item.uv0.x,
-                                                         cache_item.uv1.y - cache_item.uv0.y)),
-                local_rect: mask.rect,
-            });
-        }
-    }
-
-    pub fn resolve_clip_cache(&mut self,
-                              clip_info: &MaskCacheInfo,
-                              resource_cache: &ResourceCache) {
-        Self::resolve_clip_cache_internal(&mut self.gpu_data32, clip_info, resource_cache)
-    }
-
-    fn resolve_image(resource_cache: &ResourceCache,
-                     deferred_resolves: &mut Vec<DeferredResolve>,
-                     image_key: ImageKey,
-                     image_uv_address: GpuStoreAddress,
-                     image_rendering: ImageRendering,
-                     tile_offset: Option<TileOffset>) -> (SourceTexture, Option<CacheItem>) {
-        let image_properties = resource_cache.get_image_properties(image_key);
-
-        // Check if an external image that needs to be resolved
-        // by the render thread.
-        match image_properties.external_image {
-            Some(external_image) => {
-                // This is an external texture - we will add it to
-                // the deferred resolves list to be patched by
-                // the render thread...
-                deferred_resolves.push(DeferredResolve {
-                    image_properties: image_properties,
-                    resource_address: image_uv_address,
-                });
-
-                (SourceTexture::External(external_image), None)
-            }
-            None => {
-                let cache_item = resource_cache.get_cached_image(image_key, image_rendering, tile_offset);
-                (cache_item.texture_id, Some(cache_item))
-            }
-        }
-    }
-
-    pub fn resolve_primitives(&mut self,
-                              resource_cache: &ResourceCache,
-                              device_pixel_ratio: f32) -> Vec<DeferredResolve> {
-        profile_scope!("resolve_primitives");
-        let mut deferred_resolves = Vec::new();
-
-        for prim_index in self.prims_to_resolve.drain(..) {
-            let metadata = &mut self.cpu_metadata[prim_index.0];
-            if let Some(ref clip_info) = metadata.clip_cache_info {
-                Self::resolve_clip_cache_internal(&mut self.gpu_data32, clip_info, resource_cache);
-            }
-
-            match metadata.prim_kind {
-                PrimitiveKind::Rectangle |
-                PrimitiveKind::Border |
-                PrimitiveKind::BoxShadow |
-                PrimitiveKind::AlignedGradient |
-                PrimitiveKind::AngleGradient |
-                PrimitiveKind::RadialGradient=> {}
-                PrimitiveKind::TextRun => {
-                    let text = &mut self.cpu_text_runs[metadata.cpu_prim_index.0];
-
-                    let font_size_dp = text.logical_font_size.scale_by(device_pixel_ratio);
-
-                    let dest_rects = self.gpu_resource_rects.get_slice_mut(text.resource_address,
-                                                                           text.glyph_count);
-
-                    let texture_id = resource_cache.get_glyphs(text.font_key,
-                                                               font_size_dp,
-                                                               text.color,
-                                                               &text.glyph_instances,
-                                                               text.render_mode,
-                                                               text.glyph_options, |index, uv0, uv1| {
-                        let dest_rect = &mut dest_rects[index];
-                        dest_rect.uv0 = uv0;
-                        dest_rect.uv1 = uv1;
-                    });
-
-                    text.color_texture_id = texture_id;
-                }
-                PrimitiveKind::Image => {
-                    let image_cpu = &mut self.cpu_images[metadata.cpu_prim_index.0];
-
-                    let (texture_id, cache_item) = match image_cpu.kind {
-                        ImagePrimitiveKind::Image(image_key, image_rendering, tile_offset, _) => {
-                            // Check if an external image that needs to be resolved
-                            // by the render thread.
-                            PrimitiveStore::resolve_image(resource_cache,
-                                                          &mut deferred_resolves,
-                                                          image_key,
-                                                          image_cpu.resource_address,
-                                                          image_rendering,
-                                                          tile_offset)
-                        }
-                        ImagePrimitiveKind::WebGL(context_id) => {
-                            let cache_item = resource_cache.get_webgl_texture(&context_id);
-                            (cache_item.texture_id, Some(cache_item))
-                        }
-                    };
-
-                    if let Some(cache_item) = cache_item {
-                        let resource_rect = self.gpu_resource_rects.get_mut(image_cpu.resource_address);
-                        match image_cpu.sub_rect {
-                            Some(sub_rect) => {
-                                resource_rect.uv0.x = cache_item.uv0.x + sub_rect.uv0.x;
-                                resource_rect.uv0.y = cache_item.uv0.y + sub_rect.uv0.y;
-                                resource_rect.uv1.x = cache_item.uv0.x + sub_rect.uv1.x;
-                                resource_rect.uv1.y = cache_item.uv0.y + sub_rect.uv1.y;
-                            }
-                            None => {
-                                resource_rect.uv0 = cache_item.uv0;
-                                resource_rect.uv1 = cache_item.uv1;
-                            }
-                        }
-                    }
-                    image_cpu.color_texture_id = texture_id;
-                }
-                PrimitiveKind::YuvImage => {
-                    let image_cpu = &mut self.cpu_yuv_images[metadata.cpu_prim_index.0];
-
-                    //yuv channel
-                    let channel_count = image_cpu.format.get_plane_num();
-                    debug_assert!(channel_count <= 3);
-                    for channel in 0..channel_count {
-                        // Check if an external image that needs to be resolved
-                        // by the render thread.
-                        let resource_address = image_cpu.yuv_resource_address + channel as i32;
-
-                        let (texture_id, cache_item) =
-                            PrimitiveStore::resolve_image(resource_cache,
-                                                          &mut deferred_resolves,
-                                                          image_cpu.yuv_key[channel],
-                                                          resource_address,
-                                                          image_cpu.image_rendering,
-                                                          None);
-                        // texture_id
-                        image_cpu.yuv_texture_id[channel] = texture_id;
-                        // uv coordinates
-                        if let Some(cache_item) = cache_item {
-                            let resource_rect = self.gpu_resource_rects.get_mut(image_cpu.yuv_resource_address + channel as i32);
-                            resource_rect.uv0 = cache_item.uv0;
-                            resource_rect.uv1 = cache_item.uv1;
-                        }
-                    }
-                }
-            }
-        }
-
-        deferred_resolves
-    }
-
-    pub fn set_clip_source(&mut self, index: PrimitiveIndex, source: Option<ClipSource>) {
-        let metadata = &mut self.cpu_metadata[index.0];
-        metadata.clips = match source {
-            Some(source) => {
-                let (rect, is_complex) = match source {
-                    ClipSource::Complex(rect, radius, _) => (rect, radius > 0.0),
-                    ClipSource::Region(ref region, _) => (region.main, region.is_complex()),
-                    ClipSource::BorderCorner{..} => panic!("Not supported!"),
-                };
-                self.gpu_geometry.get_mut(GpuStoreAddress(index.0 as i32))
-                    .local_clip_rect = rect;
-                if is_complex {
-                    metadata.clip_cache_info = None; //CLIP TODO: re-use the existing GPU allocation
-                }
-                vec![source]
-            }
-            None => {
-                vec![]
-            }
-        }
     }
 
     pub fn get_metadata(&self, index: PrimitiveIndex) -> &PrimitiveMetadata {
@@ -1137,90 +1054,74 @@ impl PrimitiveStore {
                                screen_rect: &DeviceIntRect,
                                layer_transform: &LayerToWorldTransform,
                                layer_combined_local_clip_rect: &LayerRect,
-                               device_pixel_ratio: f32) -> bool {
-        let geom = &self.gpu_geometry.get(GpuStoreAddress(prim_index.0 as i32));
+                               device_pixel_ratio: f32) -> Option<(LayerRect, DeviceIntRect)> {
+        let metadata = &self.cpu_metadata[prim_index.0];
+        let local_rect = metadata.local_rect
+                                 .intersection(&metadata.local_clip_rect)
+                                 .and_then(|rect| rect.intersection(layer_combined_local_clip_rect));
 
-        let bounding_rect = geom.local_rect
-                                .intersection(&geom.local_clip_rect)
-                                .and_then(|rect| rect.intersection(layer_combined_local_clip_rect))
-                                .and_then(|ref local_rect| {
-            let xf_rect = TransformedRect::new(local_rect,
+        let bounding_rect = local_rect.and_then(|local_rect| {
+            let xf_rect = TransformedRect::new(&local_rect,
                                                layer_transform,
                                                device_pixel_ratio);
             xf_rect.bounding_rect.intersection(screen_rect)
         });
 
         self.cpu_bounding_rects[prim_index.0] = bounding_rect;
-        bounding_rect.is_some()
+        bounding_rect.map(|screen_bound| (local_rect.unwrap(), screen_bound))
     }
 
     /// Returns true if the bounding box needs to be updated.
     pub fn prepare_prim_for_render(&mut self,
                                    prim_index: PrimitiveIndex,
                                    resource_cache: &mut ResourceCache,
+                                   gpu_cache: &mut GpuCache,
                                    layer_transform: &LayerToWorldTransform,
                                    device_pixel_ratio: f32,
-                                   display_list: &BuiltDisplayList) {
+                                   display_list: &BuiltDisplayList,
+                                   text_run_mode: TextRunMode)
+                                   -> &mut PrimitiveMetadata {
+        let (prim_kind, cpu_prim_index) = {
+            let metadata = &self.cpu_metadata[prim_index.0];
+            (metadata.prim_kind, metadata.cpu_prim_index)
+        };
 
-        let metadata = &mut self.cpu_metadata[prim_index.0];
-        let mut prim_needs_resolve = false;
-
-        // Mark this GPU resource as required for this frame.
-        if let Some(request) = resource_cache.gpu_cache.request(&mut metadata.gpu_location) {
-            match metadata.prim_kind {
-                PrimitiveKind::Rectangle => {
-                    let rect = &self.cpu_rectangles[metadata.cpu_prim_index.0];
-                    rect.write_gpu_blocks(request);
-                }
-                PrimitiveKind::Border => {
-                    let border = &self.cpu_borders[metadata.cpu_prim_index.0];
-                    border.write_gpu_blocks(request);
-                }
-                PrimitiveKind::BoxShadow => {
-                    let box_shadow = &self.cpu_box_shadows[metadata.cpu_prim_index.0];
-                    box_shadow.write_gpu_blocks(request);
-                }
-                PrimitiveKind::Image => {
-                    let image = &self.cpu_images[metadata.cpu_prim_index.0];
-                    image.write_gpu_blocks(request);
-                }
-                PrimitiveKind::YuvImage => {
-                    let yuv_image = &self.cpu_yuv_images[metadata.cpu_prim_index.0];
-                    yuv_image.write_gpu_blocks(request);
-                }
-                PrimitiveKind::AlignedGradient |
-                PrimitiveKind::AngleGradient => {
-                    let gradient = &self.cpu_gradients[metadata.cpu_prim_index.0];
-                    gradient.write_gpu_blocks(request);
-                }
-                PrimitiveKind::RadialGradient => {
-                    let gradient = &self.cpu_radial_gradients[metadata.cpu_prim_index.0];
-                    gradient.write_gpu_blocks(request);
-                }
-                PrimitiveKind::TextRun => {
-                    let text = &self.cpu_text_runs[metadata.cpu_prim_index.0];
-                    text.write_gpu_blocks(request);
-                }
+        // Recurse into any sub primitives and prepare them for rendering first.
+        // TODO(gw): This code is a bit hacky to work around the borrow checker.
+        //           Specifically, the clone() below on the primitive list for
+        //           text shadow primitives. Consider restructuring this code to
+        //           avoid borrow checker issues.
+        if prim_kind == PrimitiveKind::TextShadow {
+            for sub_prim_index in self.cpu_text_shadows[cpu_prim_index.0].primitives.clone() {
+                self.prepare_prim_for_render(sub_prim_index,
+                                             resource_cache,
+                                             gpu_cache,
+                                             layer_transform,
+                                             device_pixel_ratio,
+                                             display_list,
+                                             TextRunMode::Shadow);
             }
         }
 
+        let metadata = &mut self.cpu_metadata[prim_index.0];
+
         if let Some(ref mut clip_info) = metadata.clip_cache_info {
-            clip_info.update(&metadata.clips,
-                             layer_transform,
-                             &mut self.gpu_data32,
-                             device_pixel_ratio,
-                             display_list);
+            clip_info.update(&metadata.clips, layer_transform, gpu_cache, device_pixel_ratio);
+
+            //TODO-LCCR: we could tighten up the `local_clip_rect` here
+            // but that would require invalidating the whole GPU block
+
             for clip in &metadata.clips {
                 if let ClipSource::Region(ClipRegion{ image_mask: Some(ref mask), .. }, ..) = *clip {
                     resource_cache.request_image(mask.image, ImageRendering::Auto, None);
-                    prim_needs_resolve = true;
                 }
             }
         }
 
         match metadata.prim_kind {
             PrimitiveKind::Rectangle |
-            PrimitiveKind::Border  => {}
+            PrimitiveKind::Border |
+            PrimitiveKind::Line => {}
             PrimitiveKind::BoxShadow => {
                 // TODO(gw): Account for zoom factor!
                 // Here, we calculate the size of the patch required in order
@@ -1229,102 +1130,41 @@ impl PrimitiveStore {
                 // in device space. The shader adds a 1-pixel border around
                 // the patch, in order to prevent bilinear filter artifacts as
                 // the patch is clamped / mirrored across the box shadow rect.
-                let box_shadow_cpu = &self.cpu_box_shadows[metadata.cpu_prim_index.0];
+                let box_shadow_cpu = &self.cpu_box_shadows[cpu_prim_index.0];
                 let edge_size = box_shadow_cpu.edge_size.ceil() * device_pixel_ratio;
                 let edge_size = edge_size as i32 + 2;   // Account for bilinear filtering
                 let cache_size = DeviceIntSize::new(edge_size, edge_size);
                 let location = RenderTaskLocation::Dynamic(None, cache_size);
                 metadata.render_task.as_mut().unwrap().location = location;
             }
+            PrimitiveKind::TextShadow => {
+                let shadow = &mut self.cpu_text_shadows[cpu_prim_index.0];
+
+                // This is a text-shadow element. Create a render task that will
+                // render the text run to a target, and then apply a gaussian
+                // blur to that text run in order to build the actual primitive
+                // which will be blitted to the framebuffer.
+                let cache_width = (metadata.local_rect.size.width * device_pixel_ratio).ceil() as i32;
+                let cache_height = (metadata.local_rect.size.height * device_pixel_ratio).ceil() as i32;
+                let cache_size = DeviceIntSize::new(cache_width, cache_height);
+                let cache_key = PrimitiveCacheKey::TextShadow(prim_index);
+                let blur_radius = device_length(shadow.shadow.blur_radius,
+                                                device_pixel_ratio);
+                metadata.render_task = Some(RenderTask::new_blur(cache_key,
+                                                                 cache_size,
+                                                                 blur_radius,
+                                                                 prim_index));
+            }
             PrimitiveKind::TextRun => {
-                let text = &mut self.cpu_text_runs[metadata.cpu_prim_index.0];
-
-                let font_size_dp = text.logical_font_size.scale_by(device_pixel_ratio);
-                let src_glyphs = display_list.get(text.glyph_range);
-                prim_needs_resolve = true;
-
-                if text.cache_dirty {
-                    text.cache_dirty = false;
-
-                    debug_assert!(text.gpu_data_count == src_glyphs.len() as i32);
-                    debug_assert!(text.glyph_instances.is_empty());
-
-                    let dest_glyphs = self.gpu_data16.get_slice_mut(text.gpu_data_address,
-                                                                    src_glyphs.len());
-
-                    let mut glyph_key = GlyphKey::new(text.font_key,
-                                                      font_size_dp,
-                                                      text.color,
-                                                      0,
-                                                      LayoutPoint::new(0.0, 0.0),
-                                                      text.render_mode);
-                    let mut actual_glyph_count = 0;
-
-                    for src in src_glyphs {
-                        glyph_key.index = src.index;
-                        glyph_key.subpixel_point.set_offset(src.point, text.render_mode);
-
-                        let dimensions = match resource_cache.get_glyph_dimensions(&glyph_key) {
-                            None => continue,
-                            Some(dimensions) => dimensions,
-                        };
-
-                        // TODO(gw): Check for this and ensure platforms return None in this case!!!
-                        debug_assert!(dimensions.width > 0 && dimensions.height > 0);
-
-                        let x = src.point.x + dimensions.left as f32 / device_pixel_ratio;
-                        let y = src.point.y - dimensions.top as f32 / device_pixel_ratio;
-
-                        let glyph_pos = LayerPoint::new(x, y);
-
-                        dest_glyphs[actual_glyph_count] = GpuBlock16::from(GlyphPrimitive {
-                            padding: LayerPoint::zero(),
-                            offset: glyph_pos,
-                        });
-
-                        text.glyph_instances.push(GlyphInstance {
-                            index: src.index,
-                            point: glyph_pos,
-                        });
-
-                        actual_glyph_count += 1;
-                    }
-
-                    let render_task = if text.blur_radius == 0.0 {
-                        None
-                    } else {
-                        // This is a text-shadow element. Create a render task that will
-                        // render the text run to a target, and then apply a gaussian
-                        // blur to that text run in order to build the actual primitive
-                        // which will be blitted to the framebuffer.
-                        let geom = &self.gpu_geometry.get(GpuStoreAddress(prim_index.0 as i32));
-                        let cache_width = (geom.local_rect.size.width * device_pixel_ratio).ceil() as i32;
-                        let cache_height = (geom.local_rect.size.height * device_pixel_ratio).ceil() as i32;
-                        let cache_size = DeviceIntSize::new(cache_width, cache_height);
-                        let cache_key = PrimitiveCacheKey::TextShadow(prim_index);
-                        let blur_radius = device_length(text.blur_radius,
-                                                        device_pixel_ratio);
-                        Some(RenderTask::new_blur(cache_key,
-                                                  cache_size,
-                                                  blur_radius,
-                                                  prim_index))
-                    };
-
-                    text.gpu_data_count = actual_glyph_count as i32;
-                    metadata.render_task = render_task;
-                }
-
-                resource_cache.request_glyphs(text.font_key,
-                                              font_size_dp,
-                                              text.color,
-                                              &text.glyph_instances,
-                                              text.render_mode,
-                                              text.glyph_options);
+                let text = &mut self.cpu_text_runs[cpu_prim_index.0];
+                text.prepare_for_render(resource_cache,
+                                        device_pixel_ratio,
+                                        display_list,
+                                        text_run_mode);
             }
             PrimitiveKind::Image => {
-                let image_cpu = &mut self.cpu_images[metadata.cpu_prim_index.0];
+                let image_cpu = &mut self.cpu_images[cpu_prim_index.0];
 
-                prim_needs_resolve = true;
                 match image_cpu.kind {
                     ImagePrimitiveKind::Image(image_key, image_rendering, tile_offset, tile_spacing) => {
                         resource_cache.request_image(image_key, image_rendering, tile_offset);
@@ -1334,108 +1174,91 @@ impl PrimitiveStore {
                         // right now, but if we introduce a cache for images for some other
                         // reason then we might as well cache this with it.
                         let image_properties = resource_cache.get_image_properties(image_key);
-                        metadata.is_opaque = image_properties.descriptor.is_opaque &&
-                                             tile_spacing.width == 0.0 &&
-                                             tile_spacing.height == 0.0;
+                        metadata.opacity.is_opaque = image_properties.descriptor.is_opaque &&
+                                                     tile_spacing.width == 0.0 &&
+                                                     tile_spacing.height == 0.0;
                     }
                     ImagePrimitiveKind::WebGL(..) => {}
                 }
             }
             PrimitiveKind::YuvImage => {
-                let image_cpu = &mut self.cpu_yuv_images[metadata.cpu_prim_index.0];
-                prim_needs_resolve = true;
+                let image_cpu = &mut self.cpu_yuv_images[cpu_prim_index.0];
 
                 let channel_num = image_cpu.format.get_plane_num();
                 debug_assert!(channel_num <= 3);
                 for channel in 0..channel_num {
                     resource_cache.request_image(image_cpu.yuv_key[channel], image_cpu.image_rendering, None);
                 }
-
-                // TODO(nical): Currently assuming no tile_spacing for yuv images.
-                metadata.is_opaque = true;
             }
-            PrimitiveKind::AlignedGradient => {
-                let gradient = &mut self.cpu_gradients[metadata.cpu_prim_index.0];
-                if gradient.cache_dirty {
-                    let src_stops = display_list.get(gradient.stops_range);
+            PrimitiveKind::AlignedGradient |
+            PrimitiveKind::AngleGradient |
+            PrimitiveKind::RadialGradient => {}
+        }
 
-                    debug_assert!(gradient.gpu_data_count == src_stops.len() as i32);
-                    let dest_stops = self.gpu_data32.get_slice_mut(gradient.gpu_data_address,
-                                                                   src_stops.len());
+        // Mark this GPU resource as required for this frame.
+        if let Some(mut request) = gpu_cache.request(&mut metadata.gpu_location) {
+            request.push(metadata.local_rect);
+            request.push(metadata.local_clip_rect);
 
-                    for (src, dest) in src_stops.zip(dest_stops.iter_mut()) {
-                        *dest = GpuBlock32::from(GradientStopGpu {
-                            offset: src.offset,
-                            color: src.color.premultiplied(),
-                            padding: [0.0; 3],
-                        });
-                    }
-
-                    gradient.cache_dirty = false;
+            match metadata.prim_kind {
+                PrimitiveKind::Rectangle => {
+                    let rect = &self.cpu_rectangles[cpu_prim_index.0];
+                    rect.write_gpu_blocks(request);
                 }
-            }
-            PrimitiveKind::AngleGradient => {
-                let gradient = &mut self.cpu_gradients[metadata.cpu_prim_index.0];
-                if gradient.cache_dirty {
-                    let src_stops = display_list.get(gradient.stops_range);
-
-                    let dest_gradient = self.gpu_gradient_data.get_mut(gradient.gpu_data_address);
-                    dest_gradient.build(src_stops, gradient.reverse_stops);
-                    gradient.cache_dirty = false;
+                PrimitiveKind::Line => {
+                    let line = &self.cpu_lines[metadata.cpu_prim_index.0];
+                    line.write_gpu_blocks(request);
                 }
-            }
-            PrimitiveKind::RadialGradient => {
-                let gradient = &mut self.cpu_radial_gradients[metadata.cpu_prim_index.0];
-                if gradient.cache_dirty {
-                    let src_stops = display_list.get(gradient.stops_range);
-
-                    let dest_gradient = self.gpu_gradient_data.get_mut(gradient.gpu_data_address);
-                    dest_gradient.build(src_stops, false);
-                    gradient.cache_dirty = false;
+                PrimitiveKind::Border => {
+                    let border = &self.cpu_borders[cpu_prim_index.0];
+                    border.write_gpu_blocks(request);
+                }
+                PrimitiveKind::BoxShadow => {
+                    let box_shadow = &self.cpu_box_shadows[cpu_prim_index.0];
+                    box_shadow.write_gpu_blocks(request);
+                }
+                PrimitiveKind::Image => {
+                    let image = &self.cpu_images[cpu_prim_index.0];
+                    image.write_gpu_blocks(request);
+                }
+                PrimitiveKind::YuvImage => {
+                    let yuv_image = &self.cpu_yuv_images[cpu_prim_index.0];
+                    yuv_image.write_gpu_blocks(request);
+                }
+                PrimitiveKind::AlignedGradient => {
+                    let gradient = &self.cpu_gradients[cpu_prim_index.0];
+                    metadata.opacity = gradient.build_gpu_blocks_for_aligned(display_list,
+                                                                             request);
+                }
+                PrimitiveKind::AngleGradient => {
+                    let gradient = &self.cpu_gradients[cpu_prim_index.0];
+                    gradient.build_gpu_blocks_for_angle_radial(display_list,
+                                                               request);
+                }
+                PrimitiveKind::RadialGradient => {
+                    let gradient = &self.cpu_radial_gradients[cpu_prim_index.0];
+                    gradient.build_gpu_blocks_for_angle_radial(display_list,
+                                                               request);
+                }
+                PrimitiveKind::TextRun => {
+                    let text = &self.cpu_text_runs[cpu_prim_index.0];
+                    text.write_gpu_blocks(&mut request);
+                }
+                PrimitiveKind::TextShadow => {
+                    let prim = &self.cpu_text_shadows[cpu_prim_index.0];
+                    request.push(prim.shadow.color);
+                    request.push([prim.shadow.offset.x,
+                                  prim.shadow.offset.y,
+                                  prim.shadow.blur_radius,
+                                  0.0]);
                 }
             }
         }
 
-        if prim_needs_resolve {
-            self.prims_to_resolve.push(prim_index);
-        }
+        metadata
     }
 }
 
-
-macro_rules! define_gpu_block {
-    ($name:ident: $ty:ty = $($derive:ident),* ) => (
-        #[derive(Clone)]
-        #[repr(C)]
-        pub struct $name {
-            data: $ty,
-        }
-
-        impl Default for $name {
-            fn default() -> $name {
-                $name {
-                    data: unsafe { mem::uninitialized() }
-                }
-            }
-        }
-
-        $(
-            impl From<$derive> for $name {
-                fn from(data: $derive) -> $name {
-                    unsafe { mem::transmute(data) }
-                }
-            }
-        )*
-    )
-}
-
-define_gpu_block!(GpuBlock16: [f32; 4] =
-    InstanceRect, GlyphPrimitive
-);
-define_gpu_block!(GpuBlock32: [f32; 8] =
-    GradientStopGpu, ClipCorner, ClipRect, ImageMaskData,
-    BorderCornerClipData, BorderCornerDashClipData, BorderCornerDotClipData
-);
 
 //Test for one clip region contains another
 trait InsideTest<T> {

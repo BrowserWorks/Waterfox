@@ -6,11 +6,12 @@
 #ifndef __NS_ISVGCHILDFRAME_H__
 #define __NS_ISVGCHILDFRAME_H__
 
+#include "gfxMatrix.h"
 #include "gfxRect.h"
 #include "nsQueryFrame.h"
+#include "mozilla/gfx/MatrixFwd.h"
 
 class gfxContext;
-class gfxMatrix;
 class nsIFrame;
 class SVGBBox;
 
@@ -23,9 +24,6 @@ class SVGLengthList;
 class SVGNumberList;
 class SVGUserUnitList;
 
-namespace gfx {
-class Matrix;
-} // namespace gfx
 } // namespace mozilla
 
 /**
@@ -125,7 +123,7 @@ public:
    * ancestors that might affect the frame too. SVGChangedFlags are passed
    * to indicate what changed.
    *
-   * Implementations do not need to invalidate, since the caller will 
+   * Implementations do not need to invalidate, since the caller will
    * invalidate the entire area of the ancestor that changed. However, they
    * may need to update their bounds.
    */

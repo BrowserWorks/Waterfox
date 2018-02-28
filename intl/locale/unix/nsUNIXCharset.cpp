@@ -11,7 +11,6 @@
 #include "nsUConvPropertySearch.h"
 #include "nsCOMPtr.h"
 #include "nsReadableUtils.h"
-#include "nsEncoderDecoderUtils.h"
 #if HAVE_GNU_LIBC_VERSION_H
 #include <gnu/libc-version.h>
 #endif
@@ -24,9 +23,8 @@
 #include "nsPlatformCharset.h"
 #include "prinit.h"
 #include "nsUnicharUtils.h"
-#include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/Encoding.h"
 
-using mozilla::dom::EncodingUtils;
 using namespace mozilla;
 
 static constexpr nsUConvProp kUnixCharsets[] = {
@@ -58,10 +56,10 @@ nsPlatformCharset::~nsPlatformCharset()
 {
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsPlatformCharset::GetCharset(nsPlatformCharsetSel selector, nsACString& oResult)
 {
-  oResult = mCharset; 
+  oResult = mCharset;
   return NS_OK;
 }
 
@@ -100,7 +98,7 @@ nsPlatformCharset::InitGetCharset(nsACString &oString)
   return ConvertLocaleToCharsetUsingDeprecatedConfig(localeStr, oString);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsPlatformCharset::Init()
 {
   //
@@ -110,7 +108,7 @@ nsPlatformCharset::Init()
   char* locale = setlocale(LC_CTYPE, nullptr);
   NS_ASSERTION(locale, "cannot setlocale");
   if (locale) {
-    CopyASCIItoUTF16(locale, mLocale); 
+    CopyASCIItoUTF16(locale, mLocale);
   } else {
     mLocale.AssignLiteral("en_US");
   }
@@ -127,11 +125,11 @@ nsPlatformCharset::VerifyCharset(nsCString &aCharset)
     return NS_OK;
   }
 
-  nsAutoCString encoding;
-  if (!EncodingUtils::FindEncodingForLabelNoReplacement(aCharset, encoding)) {
+  const Encoding* encoding = Encoding::ForLabelNoReplacement(aCharset);
+  if (!encoding) {
     return NS_ERROR_UCONV_NOCONV;
   }
 
-  aCharset.Assign(encoding);
+  encoding->Name(aCharset);
   return NS_OK;
 }

@@ -9,14 +9,60 @@
 #include "GMPLoader.h"
 #include "prlink.h"
 #include "GMPUtils.h"
+#include "nsTArray.h"
+#include "content_decryption_module_ext.h"
+#include "nsString.h"
+#include "mozilla/Pair.h"
 
 struct GMPPlatformAPI;
 
 namespace mozilla {
 
+#if defined(XP_WIN)
+typedef nsString HostFileString;
+#else
+typedef nsCString HostFileString;
+#endif
+
+class HostFile
+{
+public:
+  explicit HostFile(const nsCString& aPath);
+  HostFile(HostFile&& aOther);
+  ~HostFile();
+
+  const HostFileString& Path() const { return mPath; }
+  cdm::PlatformFile TakePlatformFile();
+
+private:
+  const HostFileString mPath;
+  cdm::PlatformFile mFile = cdm::kInvalidPlatformFile;
+};
+
+struct HostFileData
+{
+  HostFileData(HostFile&& aBinary, HostFile&& aSig)
+    : mBinary(Move(aBinary))
+    , mSig(Move(aSig))
+  {
+  }
+
+  HostFileData(HostFileData&& aOther)
+    : mBinary(Move(aOther.mBinary))
+    , mSig(Move(aOther.mSig))
+  {
+  }
+
+  ~HostFileData() {}
+
+  HostFile mBinary;
+  HostFile mSig;
+};
+
 class ChromiumCDMAdapter : public gmp::GMPAdapter
 {
 public:
+  explicit ChromiumCDMAdapter(nsTArray<Pair<nsCString, nsCString>>&& aHostPathPairs);
 
   void SetAdaptee(PRLibrary* aLib) override;
 
@@ -33,7 +79,10 @@ public:
                        int32_t aHostVersion);
 
 private:
+  void PopulateHostFiles(nsTArray<Pair<nsCString, nsCString>>&& aHostFilePaths);
+
   PRLibrary* mLib = nullptr;
+  nsTArray<HostFileData> mHostFiles;
 };
 
 } // namespace mozilla

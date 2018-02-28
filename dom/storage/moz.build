@@ -13,6 +13,8 @@ EXPORTS.mozilla.dom += [
     'SessionStorageManager.h',
     'Storage.h',
     'StorageIPC.h',
+    'StorageNotifierService.h',
+    'StorageUtils.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -26,12 +28,13 @@ UNIFIED_SOURCES += [
     'StorageDBThread.cpp',
     'StorageDBUpdater.cpp',
     'StorageIPC.cpp',
+    'StorageNotifierService.cpp',
     'StorageObserver.cpp',
     'StorageUtils.cpp',
 ]
 
 IPDL_SOURCES += [
-    'PStorage.ipdl',
+    'PBackgroundStorage.ipdl',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')

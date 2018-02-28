@@ -58,6 +58,9 @@
           <children includes="panelview"/>
         </xul:stack>
       </xul:box>
+      <xul:box class="panel-viewcontainer offscreen">
+        <xul:box anonid="offscreenViewStack" class="panel-viewstack"/>
+      </xul:box>
     </content>
   </binding>
 
@@ -69,7 +72,7 @@
                            closemenu="none"
                            tabindex="0"
                            tooltip="&backCmd.label;"
-                           onclick="document.getBindingParent(this).panelMultiView.goBack()"/>
+                           onclick="document.getBindingParent(this).panelMultiView.goBack(); this.blur()"/>
         <xul:label xbl:inherits="value=title"/>
       </xul:box>
       <children/>

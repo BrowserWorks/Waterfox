@@ -1,6 +1,8 @@
 
 // -*- Mode: js; tab-width: 2; indent-tabs-mode: nil; js2-basic-offset: 2; js2-skip-preprocessor-directives: t; -*-
 
+/* globals APP_SHUTDOWN */
+
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
@@ -17,38 +19,37 @@ let context = {};
 let TalosParentProfiler;
 
 var windowListener = {
-  onOpenWindow: function(aWindow) {
+  onOpenWindow(aWindow) {
     // Ensure we don't get tiles which contact the network
     aboutNewTabService.newTabURL = "about:blank";
 
     // Wait for the window to finish loading
     let window = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
     let cb = function() {
-      window.removeEventListener("load", cb, false);
+      window.removeEventListener("load", cb);
       loadIntoWindow(window);
     };
-    window.addEventListener("load", cb, false);
+    window.addEventListener("load", cb);
   },
 
-  onCloseWindow: function(aWindow) {
+  onCloseWindow(aWindow) {
     aboutNewTabService.resetNewTabURL();
   },
 
-  onWindowTitleChange: function(aWindow, aTitle) {
+  onWindowTitleChange(aWindow, aTitle) {
   }
 };
 
 function promiseOneEvent(target, eventName, capture) {
   let deferred = Promise.defer();
   target.addEventListener(eventName, function handler(event) {
-    target.removeEventListener(eventName, handler, capture);
     deferred.resolve();
-  }, capture);
+  }, {capture, once: true});
   return deferred.promise;
 }
 
 function executeSoon(callback) {
-  Services.tm.mainThread.dispatch(callback, Ci.nsIThread.DISPATCH_NORMAL);
+  Services.tm.dispatchToMainThread(callback);
 }
 
 /**
@@ -67,7 +68,7 @@ function waitForDelayedStartup(win) {
         Services.obs.removeObserver(onStartup, topic);
         resolve();
       }
-    }, topic, false);
+    }, topic);
   });
 }
 
@@ -94,7 +95,7 @@ function loadTabs(gBrowser, urls) {
     let listener = {
       QueryInterface: XPCOMUtils.generateQI(["nsIWebProgressListener",
                                              "nsISupportsWeakReference"]),
-      onStateChange: function(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
+      onStateChange(aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
         let loadedState = Ci.nsIWebProgressListener.STATE_STOP |
           Ci.nsIWebProgressListener.STATE_IS_NETWORK;
         if ((aStateFlags & loadedState) == loadedState &&
@@ -205,7 +206,6 @@ function switchToTab(tab) {
       // once the content is presented to the user.
       yield loadTPSContentScript(browser);
       let start = Math.floor(window.performance.timing.navigationStart + window.performance.now());
-      TalosParentProfiler.resume("start (" + start + "): " + browser.currentURI.spec);
 
       // We need to wait for the TabSwitchDone event to make sure
       // that the async tab switcher has shut itself down.
@@ -218,7 +218,6 @@ function switchToTab(tab) {
 
       yield switchDone;
       let finish = yield finishPromise;
-      TalosParentProfiler.mark("end (" + finish + ")");
       return finish - start;
     });
   }
@@ -229,7 +228,6 @@ function switchToTab(tab) {
                       .getInterface(Ci.nsIDOMWindowUtils);
 
     let start = Math.floor(window.performance.timing.navigationStart + window.performance.now());
-    TalosParentProfiler.resume("start (" + start + "): " + browser.currentURI.spec);
 
     // There is no async tab switcher for the single-process case,
     // but tabbrowser.xml will still fire this once the updateCurrentBrowser
@@ -249,7 +247,6 @@ function switchToTab(tab) {
     // id that we got so that we don't get any intermediate MozAfterPaint's
     // that might fire before web content is shown.
     let finish = yield waitForContentPresented(browser, lastTransactionId);
-    TalosParentProfiler.mark("end (" + finish + ")");
     return finish - start;
   });
 }
@@ -269,9 +266,8 @@ function waitForTabSwitchDone(browser) {
   return new Promise((resolve) => {
     let gBrowser = browser.ownerGlobal.gBrowser;
     gBrowser.addEventListener("TabSwitchDone", function onTabSwitchDone() {
-      gBrowser.removeEventListener("TabSwitchDone", onTabSwitchDone);
       resolve();
-    });
+    }, {once: true});
   });
 }
 
@@ -420,42 +416,42 @@ function test(window) {
     for (let tab of tabs) {
       gBrowser.moveTabTo(tab, 1);
       yield forceGC(win, tab.linkedBrowser);
+      TalosParentProfiler.resume("start: " + tab.linkedBrowser.currentURI.spec);
       let time = yield switchToTab(tab);
+      TalosParentProfiler.pause("finish: " + tab.linkedBrowser.currentURI.spec);
       dump(`${tab.linkedBrowser.currentURI.spec}: ${time}ms\n`);
       times.push(time);
       yield switchToTab(initialTab);
     }
 
-    let output = '<!DOCTYPE html>'+
-                 '<html lang="en">'+
-                 '<head><title>Tab Switch Results</title></head>'+
-                 '<body><h1>Tab switch times</h1>' +
-                 '<table>';
+    let output = "<!DOCTYPE html>" +
+                 '<html lang="en">' +
+                 "<head><title>Tab Switch Results</title></head>" +
+                 "<body><h1>Tab switch times</h1>" +
+                 "<table>";
     let time = 0;
-    for(let i in times) {
+    for (let i in times) {
       time += times[i];
-      output += '<tr><td>' + testURLs[i] + '</td><td>' + times[i] + 'ms</td></tr>';
+      output += "<tr><td>" + testURLs[i] + "</td><td>" + times[i] + "ms</td></tr>";
     }
-    output += '</table></body></html>';
+    output += "</table></body></html>";
     dump("total tab switch time:" + time + "\n");
 
     let resultsTab = win.gBrowser.loadOneTab(
-      'data:text/html;charset=utf-8,' + encodeURIComponent(output), {
+      "data:text/html;charset=utf-8," + encodeURIComponent(output), {
       triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
     });
-    let pref = Services.prefs.getBoolPref("browser.tabs.warnOnCloseOtherTabs");
-    if (pref)
-      Services.prefs.setBoolPref("browser.tabs.warnOnCloseOtherTabs", false);
-    win.gBrowser.removeAllTabsBut(resultsTab);
-    if (pref)
-      Services.prefs.setBoolPref("browser.tabs.warnOnCloseOtherTabs", pref);
+
+    win.gBrowser.selectedTab = resultsTab;
 
     remotePage.sendAsyncMessage("tabswitch-test-results", {
       times,
       urls: testURLs,
     });
 
-    win.close();
+    TalosParentProfiler.afterProfileGathered().then(() => {
+      win.close();
+    });
   });
 }
 
@@ -512,7 +508,7 @@ function handleFile(win, file) {
   localFile.initWithPath(file);
   let localURI = Services.io.newFileURI(localFile);
   let req = new win.XMLHttpRequest();
-  req.open('get', localURI.spec, false);
+  req.open("get", localURI.spec, false);
   req.send(null);
 
 
@@ -535,7 +531,7 @@ function handleFile(win, file) {
 }
 
 var observer = {
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic == "tabswitch-urlfile") {
       handleFile(aSubject, aData);
     }
@@ -556,7 +552,7 @@ function startup(aData, aReason) {
   // Load into any new windows
   Services.wm.addListener(windowListener);
 
-  Services.obs.addObserver(observer, "tabswitch-urlfile", false);
+  Services.obs.addObserver(observer, "tabswitch-urlfile");
 
   Services.ppmm.loadProcessScript("chrome://tabswitch/content/tabswitch-content-process.js", true);
 

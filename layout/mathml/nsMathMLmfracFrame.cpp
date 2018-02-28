@@ -11,7 +11,6 @@
 #include "mozilla/RefPtr.h"
 #include "nsLayoutUtils.h"
 #include "nsPresContext.h"
-#include "nsRenderingContext.h"
 #include "nsDisplayList.h"
 #include "gfxContext.h"
 #include "nsMathMLElement.h"
@@ -92,7 +91,7 @@ nsMathMLmfracFrame::TransmitAutomaticData()
   return NS_OK;
 }
 
-nscoord 
+nscoord
 nsMathMLmfracFrame::CalcLineThickness(nsPresContext*  aPresContext,
                                       nsStyleContext*  aStyleContext,
                                       nsString&        aThicknessAttribute,
@@ -141,7 +140,7 @@ nsMathMLmfracFrame::CalcLineThickness(nsPresContext*  aPresContext,
   }
 
   // use minimum if the lineThickness is a non-zero value less than minimun
-  if (lineThickness && lineThickness < minimumThickness) 
+  if (lineThickness && lineThickness < minimumThickness)
     lineThickness = minimumThickness;
 
   return lineThickness;
@@ -155,7 +154,7 @@ nsMathMLmfracFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   /////////////
   // paint the numerator and denominator
   nsMathMLContainerFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
-  
+
   /////////////
   // paint the fraction line
   if (mIsBevelled) {
@@ -217,7 +216,7 @@ nsMathMLmfracFrame::PlaceInternal(DrawTarget*          aDrawTarget,
   ReflowOutput sizeDen(aDesiredSize.GetWritingMode());
   nsIFrame* frameDen = nullptr;
   nsIFrame* frameNum = mFrames.FirstChild();
-  if (frameNum) 
+  if (frameNum)
     frameDen = frameNum->GetNextSibling();
   if (!frameNum || !frameDen || frameDen->GetNextSibling()) {
     // report an error, encourage people to get their markups in order
@@ -254,7 +253,7 @@ nsMathMLmfracFrame::PlaceInternal(DrawTarget*          aDrawTarget,
     outermostEmbellished = parentData.coreFrame != mEmbellishData.coreFrame;
   }
 
-  // see if the linethickness attribute is there 
+  // see if the linethickness attribute is there
   nsAutoString value;
   mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::linethickness_, value);
   mLineThickness = CalcLineThickness(presContext, mStyleContext, value,
@@ -368,7 +367,7 @@ nsMathMLmfracFrame::PlaceInternal(DrawTarget*          aDrawTarget,
     // Try $a \above10pt b$ to see. Here is what TeX does:
     // minClearance = displayStyle ?
     //   3 * actualRuleThickness : actualRuleThickness;
- 
+
     // we slightly depart from TeX here. We use the defaultRuleThickness instead
     // of the value coming from the linethickness attribute, i.e., we recover what
     // TeX does if the user hasn't set linethickness. But when the linethickness
@@ -413,14 +412,14 @@ nsMathMLmfracFrame::PlaceInternal(DrawTarget*          aDrawTarget,
     nscoord dxDen = leftSpace + (width - sizeDen.Width())/2;
     width += leftSpace + rightSpace;
 
-    // see if the numalign attribute is there 
+    // see if the numalign attribute is there
     mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::numalign_, value);
     if (value.EqualsLiteral("left"))
       dxNum = leftSpace;
     else if (value.EqualsLiteral("right"))
       dxNum = width - rightSpace - sizeNum.Width();
 
-    // see if the denomalign attribute is there 
+    // see if the denomalign attribute is there
     mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::denomalign_, value);
     if (value.EqualsLiteral("left"))
       dxDen = leftSpace;
@@ -485,7 +484,7 @@ nsMathMLmfracFrame::PlaceInternal(DrawTarget*          aDrawTarget,
       trailingSpace += coreData.trailingSpace;
     }
     nscoord delta;
-    
+
     //           ___________
     //          |           |    /
     //         {|-NUMERATOR-|   /
@@ -496,7 +495,7 @@ nsMathMLmfracFrame::PlaceInternal(DrawTarget*          aDrawTarget,
     //                         S   _____________ } denShift
     //                         H  |             |}
     //                        /   |-DENOMINATOR-|}
-    //                       /    |_____________| 
+    //                       /    |_____________|
     //
 
     // first, ensure that the top of the numerator is at least as high as the
@@ -518,7 +517,7 @@ nsMathMLmfracFrame::PlaceInternal(DrawTarget*          aDrawTarget,
       numShift += xHeight / 2;
       denShift += xHeight / 4;
     }
-   
+
     // Set the ascent/descent of our BoundingMetrics.
     mBoundingMetrics.ascent = bmNum.ascent + numShift;
     mBoundingMetrics.descent = bmDen.descent + denShift;
@@ -564,7 +563,7 @@ nsMathMLmfracFrame::PlaceInternal(DrawTarget*          aDrawTarget,
 
     mReference.x = 0;
     mReference.y = aDesiredSize.BlockStartAscent();
-    
+
     if (aPlaceOrigin) {
       nscoord dx, dy;
 
@@ -609,7 +608,7 @@ public:
 #endif
 
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
+                     gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("MathMLSlash", TYPE_MATHML_SLASH)
 
 private:
@@ -619,7 +618,7 @@ private:
 };
 
 void nsDisplayMathMLSlash::Paint(nsDisplayListBuilder* aBuilder,
-                                 nsRenderingContext* aCtx)
+                                 gfxContext* aCtx)
 {
   DrawTarget& aDrawTarget = *aCtx->GetDrawTarget();
 

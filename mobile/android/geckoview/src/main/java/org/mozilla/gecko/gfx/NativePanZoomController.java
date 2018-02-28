@@ -131,7 +131,9 @@ class NativePanZoomController extends JNIObject implements PanZoomController {
         final MotionEvent.PointerCoords coords = new MotionEvent.PointerCoords();
         event.getPointerCoords(0, coords);
         final float x = coords.x;
-        final float y = coords.y;
+        // Mouse events are not adjusted by the AndroidDyanmicToolbarAnimator so adjust the offset
+        // here.
+        final float y = coords.y - mView.getCurrentToolbarHeight();
 
         return handleMouseEvent(event.getActionMasked(), event.getEventTime(), event.getMetaState(), x, y, event.getButtonState());
     }
@@ -139,7 +141,6 @@ class NativePanZoomController extends JNIObject implements PanZoomController {
 
     NativePanZoomController(View view) {
         mView = (LayerView) view;
-        mDestroyed = true;
 
         String[] prefs = { "ui.scrolling.negate_wheel_scroll" };
         mPrefsObserver = new PrefsHelper.PrefHandlerBase() {
@@ -204,11 +205,6 @@ class NativePanZoomController extends JNIObject implements PanZoomController {
         }
         mDestroyed = true;
         disposeNative();
-    }
-
-    @Override
-    public void attach() {
-        mDestroyed = false;
     }
 
     @WrapForJNI(calledFrom = "ui", dispatchTo = "gecko_priority") @Override // JNIObject

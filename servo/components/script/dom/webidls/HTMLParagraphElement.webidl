@@ -3,11 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmlparagraphelement
+[HTMLConstructor]
 interface HTMLParagraphElement : HTMLElement {
   // also has obsolete members
 };
 
 // https://html.spec.whatwg.org/multipage/#HTMLParagraphElement-partial
 partial interface HTMLParagraphElement {
+  // [CEReactions]
   //         attribute DOMString align;
 };

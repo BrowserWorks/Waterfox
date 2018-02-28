@@ -245,7 +245,7 @@ nsAlertsIconListener::InitAlertAsync(nsIAlertNotification* aAlert,
 
   if (!notify_is_initted()) {
     // Give the name of this application to libnotify
-    nsCOMPtr<nsIStringBundleService> bundleService = 
+    nsCOMPtr<nsIStringBundleService> bundleService =
       do_GetService(NS_STRINGBUNDLE_CONTRACTID);
 
     nsAutoCString appShortName;
@@ -256,7 +256,7 @@ nsAlertsIconListener::InitAlertAsync(nsIAlertNotification* aAlert,
       nsAutoString appName;
 
       if (bundle) {
-        bundle->GetStringFromName(u"brandShortName",
+        bundle->GetStringFromName("brandShortName",
                                   getter_Copies(appName));
         appShortName = NS_ConvertUTF16toUTF8(appName);
       } else {

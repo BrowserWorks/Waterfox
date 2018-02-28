@@ -62,6 +62,7 @@ class nsDOMStringMap;
 
 namespace mozilla {
 class DeclarationBlock;
+class TextEditor;
 namespace dom {
   struct AnimationFilter;
   struct ScrollIntoViewOptions;
@@ -148,8 +149,7 @@ enum {
                               ELEMENT_POTENTIAL_RESTYLE_ROOT_FLAGS |
                               ELEMENT_IS_CONDITIONAL_RESTYLE_ANCESTOR,
 
-  // Set if this element is marked as 'scrollgrab' (see bug 912666)
-  ELEMENT_HAS_SCROLLGRAB = ELEMENT_FLAG_BIT(5),
+  // ELEMENT_FLAG_BIT(5) is currently unused
 
   // Remaining bits are for subclasses
   ELEMENT_TYPE_SPECIFIC_BITS_OFFSET = NODE_TYPE_SPECIFIC_BITS_OFFSET + 6
@@ -204,6 +204,8 @@ public:
 #endif // MOZILLA_INTERNAL_API
 
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_ELEMENT_IID)
+
+  NS_DECL_SIZEOF_EXCLUDING_THIS
 
   NS_IMETHOD QueryInterface(REFNSIID aIID, void** aInstancePtr) override;
 
@@ -303,6 +305,23 @@ public:
    * Clear all style state locks on this element.
    */
   void ClearStyleStateLocks();
+
+  /**
+   * Accessors for the state of our dir attribute.
+   */
+  bool HasDirAuto() const
+  {
+    return State().HasState(NS_EVENT_STATE_DIR_ATTR_LIKE_AUTO);
+  }
+
+  /**
+   * Elements with dir="rtl" or dir="ltr".
+   */
+  bool HasFixedDir() const
+  {
+    return State().HasAtLeastOneOfStates(NS_EVENT_STATE_DIR_ATTR_LTR |
+                                         NS_EVENT_STATE_DIR_ATTR_RTL);
+  }
 
   /**
    * Get the inline style declaration, if any, for this element.
@@ -447,15 +466,6 @@ public:
 
   bool GetBindingURL(nsIDocument* aDocument, css::URLValue **aResult);
 
-  // The bdi element defaults to dir=auto if it has no dir attribute set.
-  // Other elements will only have dir=auto if they have an explicit dir=auto,
-  // which will mean that HasValidDir() returns true but HasFixedDir() returns
-  // false
-  inline bool HasDirAuto() const {
-    return (!HasFixedDir() &&
-            (HasValidDir() || IsHTMLElement(nsGkAtoms::bdi)));
-  }
-
   Directionality GetComputedDirectionality() const;
 
   inline Element* GetFlattenedTreeParentElement() const;
@@ -479,6 +489,16 @@ public:
 
   inline void NoteDirtyDescendantsForServo();
 
+  bool HasAnimationOnlyDirtyDescendantsForServo() const {
+    MOZ_ASSERT(IsStyledByServo());
+    return HasFlag(ELEMENT_HAS_ANIMATION_ONLY_DIRTY_DESCENDANTS_FOR_SERVO);
+  }
+
+  void UnsetHasAnimationOnlyDirtyDescendantsForServo() {
+    MOZ_ASSERT(IsStyledByServo());
+    UnsetFlags(ELEMENT_HAS_ANIMATION_ONLY_DIRTY_DESCENDANTS_FOR_SERVO);
+  }
+
 #ifdef DEBUG
   inline bool DirtyDescendantsBitIsPropagatedForServo();
 #endif
@@ -497,7 +517,7 @@ public:
    */
   inline CustomElementData* GetCustomElementData() const
   {
-    nsDOMSlots *slots = GetExistingDOMSlots();
+    nsExtendedDOMSlots* slots = GetExistingExtendedDOMSlots();
     if (slots) {
       return slots->mCustomElementData;
     }
@@ -582,6 +602,16 @@ protected:
     RemoveStatesSilently(aStates);
     NotifyStateChange(aStates);
   }
+  virtual void ToggleStates(EventStates aStates, bool aNotify)
+  {
+    NS_PRECONDITION(!aStates.HasAtLeastOneOfStates(INTRINSIC_STATES),
+                    "Should only be removing externally-managed states here");
+    mState ^= aStates;
+    if (aNotify) {
+      NotifyStateChange(aStates);
+    }
+  }
+
 public:
   // Public methods to manage state bits in MANUALLY_MANAGED_STATES.
   void AddManuallyManagedStates(EventStates aStates)
@@ -998,7 +1028,7 @@ public:
 
   ShadowRoot *FastGetShadowRoot() const
   {
-    nsDOMSlots* slots = GetExistingDOMSlots();
+    nsExtendedDOMSlots* slots = GetExistingExtendedDOMSlots();
     return slots ? slots->mShadowRoot.get() : nullptr;
   }
 
@@ -1098,6 +1128,7 @@ public:
 
   NS_IMETHOD GetInnerHTML(nsAString& aInnerHTML);
   virtual void SetInnerHTML(const nsAString& aInnerHTML, ErrorResult& aError);
+  void UnsafeSetInnerHTML(const nsAString& aInnerHTML, ErrorResult& aError);
   void GetOuterHTML(nsAString& aOuterHTML);
   void SetOuterHTML(const nsAString& aOuterHTML, ErrorResult& aError);
   void InsertAdjacentHTML(const nsAString& aPosition, const nsAString& aText,
@@ -1237,9 +1268,9 @@ public:
   nsINode* GetScopeChainParent() const override;
 
   /**
-   * Locate an nsIEditor rooted at this content node, if there is one.
+   * Locate a TextEditor rooted at this content node, if there is one.
    */
-  nsIEditor* GetEditorInternal();
+  mozilla::TextEditor* GetTextEditorInternal();
 
   /**
    * Helper method for NS_IMPL_BOOL_ATTR macro.
@@ -1337,6 +1368,7 @@ public:
   float FontSizeInflation();
 
   net::ReferrerPolicy GetReferrerPolicyAsEnum();
+  net::ReferrerPolicy ReferrerPolicyFromAttr(const nsAttrValue* aValue);
 
   /*
    * Helpers for .dataset.  This is implemented on Element, though only some
@@ -1786,15 +1818,16 @@ _elementName::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,   \
   return rv;                                                                \
 }
 
-#define NS_IMPL_ELEMENT_CLONE_WITH_INIT(_elementName)                       \
+#define EXPAND(...) __VA_ARGS__
+#define NS_IMPL_ELEMENT_CLONE_WITH_INIT_HELPER(_elementName, extra_args_)   \
 nsresult                                                                    \
 _elementName::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,   \
                     bool aPreallocateChildren) const                        \
 {                                                                           \
   *aResult = nullptr;                                                       \
   already_AddRefed<mozilla::dom::NodeInfo> ni =                             \
-    RefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();                   \
-  _elementName *it = new _elementName(ni);                                  \
+    RefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();                     \
+  _elementName *it = new _elementName(ni EXPAND extra_args_);               \
   if (!it) {                                                                \
     return NS_ERROR_OUT_OF_MEMORY;                                          \
   }                                                                         \
@@ -1811,6 +1844,11 @@ _elementName::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,   \
                                                                             \
   return rv;                                                                \
 }
+
+#define NS_IMPL_ELEMENT_CLONE_WITH_INIT(_elementName) \
+  NS_IMPL_ELEMENT_CLONE_WITH_INIT_HELPER(_elementName, ())
+#define NS_IMPL_ELEMENT_CLONE_WITH_INIT_AND_PARSER(_elementName) \
+  NS_IMPL_ELEMENT_CLONE_WITH_INIT_HELPER(_elementName, (, NOT_FROM_PARSER))
 
 /**
  * A macro to implement the getter and setter for a given string

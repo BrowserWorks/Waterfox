@@ -10,9 +10,10 @@ use dom::bindings::str::DOMString;
 use dom::window::Window;
 use dom_struct::dom_struct;
 use style::context::QuirksMode;
-use style::parser::{PARSING_MODE_DEFAULT, ParserContext};
+use style::parser::ParserContext;
 use style::stylesheets::CssRuleType;
 use style::stylesheets::supports_rule::{Declaration, parse_condition_or_declaration};
+use style_traits::PARSING_MODE_DEFAULT;
 
 #[dom_struct]
 pub struct CSS {
@@ -29,7 +30,11 @@ impl CSS {
 
     /// https://drafts.csswg.org/css-conditional/#dom-css-supports
     pub fn Supports(win: &Window, property: DOMString, value: DOMString) -> bool {
-        let decl = Declaration { prop: property.into(), val: value.into() };
+        let mut decl = String::new();
+        serialize_identifier(&property, &mut decl).unwrap();
+        decl.push_str(": ");
+        decl.push_str(&value);
+        let decl = Declaration(decl);
         let url = win.Document().url();
         let context = ParserContext::new_for_cssom(&url, win.css_error_reporter(), Some(CssRuleType::Supports),
                                                    PARSING_MODE_DEFAULT,

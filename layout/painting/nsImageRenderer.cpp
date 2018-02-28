@@ -10,6 +10,7 @@
 
 #include "mozilla/webrender/WebRenderAPI.h"
 
+#include "gfxContext.h"
 #include "gfxDrawable.h"
 #include "ImageOps.h"
 #include "mozilla/layers/StackingContextHelper.h"
@@ -17,7 +18,6 @@
 #include "nsCSSRendering.h"
 #include "nsCSSRenderingGradients.h"
 #include "nsIFrame.h"
-#include "nsRenderingContext.h"
 #include "nsStyleStructInlines.h"
 #include "nsSVGDisplayableFrame.h"
 #include "nsSVGEffects.h"
@@ -469,7 +469,7 @@ RGBALuminanceOperation(uint8_t *aData,
 
 DrawResult
 nsImageRenderer::Draw(nsPresContext*       aPresContext,
-                      nsRenderingContext&  aRenderingContext,
+                      gfxContext&          aRenderingContext,
                       const nsRect&        aDirtyRect,
                       const nsRect&        aDest,
                       const nsRect&        aFill,
@@ -489,7 +489,7 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
 
   SamplingFilter samplingFilter = nsLayoutUtils::GetSamplingFilterForFrame(mForFrame);
   DrawResult result = DrawResult::SUCCESS;
-  RefPtr<gfxContext> ctx = aRenderingContext.ThebesContext();
+  RefPtr<gfxContext> ctx = &aRenderingContext;
   IntRect tmpDTRect;
 
   if (ctx->CurrentOp() != CompositionOp::OP_OVER || mMaskOp == NS_STYLE_MASK_MODE_LUMINANCE) {
@@ -548,7 +548,7 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
 
       nsCOMPtr<imgIContainer> image(ImageOps::CreateFromDrawable(drawable));
       result =
-        nsLayoutUtils::DrawImage(*ctx,
+        nsLayoutUtils::DrawImage(*ctx, mForFrame->StyleContext(),
                                  aPresContext, image,
                                  samplingFilter, aDest, aFill, aAnchor, aDirtyRect,
                                  ConvertImageRendererToDrawFlags(mFlags),
@@ -574,11 +574,11 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
       surf = maskData;
     }
 
-    DrawTarget* dt = aRenderingContext.ThebesContext()->GetDrawTarget();
+    DrawTarget* dt = aRenderingContext.GetDrawTarget();
     dt->DrawSurface(surf, Rect(tmpDTRect.x, tmpDTRect.y, tmpDTRect.width, tmpDTRect.height),
                     Rect(0, 0, tmpDTRect.width, tmpDTRect.height),
                     DrawSurfaceOptions(SamplingFilter::POINT),
-                    DrawOptions(1.0f, aRenderingContext.ThebesContext()->CurrentOp()));
+                    DrawOptions(1.0f, aRenderingContext.CurrentOp()));
   }
 
   return result;
@@ -590,6 +590,8 @@ nsImageRenderer::BuildWebRenderDisplayItems(nsPresContext*       aPresContext,
                                             const mozilla::layers::StackingContextHelper& aSc,
                                             nsTArray<WebRenderParentCommand>&           aParentCommands,
                                             mozilla::layers::WebRenderDisplayItemLayer* aLayer,
+                                            mozilla::layers::WebRenderLayerManager* aManager,
+                                            nsDisplayItem*       aItem,
                                             const nsRect&        aDirtyRect,
                                             const nsRect&        aDest,
                                             const nsRect&        aFill,
@@ -618,13 +620,22 @@ nsImageRenderer::BuildWebRenderDisplayItems(nsPresContext*       aPresContext,
     }
     case eStyleImageType_Image:
     {
-      RefPtr<layers::ImageContainer> container = mImageContainer->GetImageContainer(aLayer->WrManager(),
-                                                                                    ConvertImageRendererToDrawFlags(mFlags));
+      // XXX(aosmond): We will support downscale-on-decode in bug 1368776. Until
+      // then, don't pass FLAG_HIGH_QUALITY_SCALING.
+      uint32_t containerFlags = imgIContainer::FLAG_NONE;
+      if (mFlags & nsImageRenderer::FLAG_SYNC_DECODE_IMAGES) {
+        containerFlags |= imgIContainer::FLAG_SYNC_DECODE;
+      }
+      RefPtr<layers::ImageContainer> container =
+        mImageContainer->GetImageContainer(aManager, containerFlags);
       if (!container) {
         NS_WARNING("Failed to get image container");
         return DrawResult::NOT_READY;
       }
-      Maybe<wr::ImageKey> key = aLayer->SendImageContainer(container, aParentCommands);
+
+      gfx::IntSize size;
+      Maybe<wr::ImageKey> key = aManager->CreateImageKey(aItem, container, aBuilder, aSc, size);
+
       if (key.isNothing()) {
         return DrawResult::BAD_IMAGE;
       }
@@ -640,14 +651,14 @@ nsImageRenderer::BuildWebRenderDisplayItems(nsPresContext*       aPresContext,
           nsRect(firstTilePos.x, firstTilePos.y,
                  aFill.XMost() - firstTilePos.x, aFill.YMost() - firstTilePos.y),
           appUnitsPerDevPixel);
-      WrRect fill = aSc.ToRelativeWrRect(fillRect);
-      WrRect clip = aSc.ToRelativeWrRect(
+      wr::LayoutRect fill = aSc.ToRelativeLayoutRect(fillRect);
+      wr::LayoutRect clip = aSc.ToRelativeLayoutRect(
           LayoutDeviceRect::FromAppUnits(aFill, appUnitsPerDevPixel));
 
       LayoutDeviceSize gapSize = LayoutDeviceSize::FromAppUnits(
           aRepeatSize - aDest.Size(), appUnitsPerDevPixel);
-      aBuilder.PushImage(fill, aBuilder.PushClipRegion(clip),
-                         wr::ToWrSize(destRect.Size()), wr::ToWrSize(gapSize),
+      aBuilder.PushImage(fill, clip,
+                         wr::ToLayoutSize(destRect.Size()), wr::ToLayoutSize(gapSize),
                          wr::ImageRendering::Auto, key.value());
       break;
     }
@@ -693,7 +704,7 @@ nsImageRenderer::DrawableForElement(const nsRect& aImageRect,
 
 DrawResult
 nsImageRenderer::DrawLayer(nsPresContext*       aPresContext,
-                           nsRenderingContext&  aRenderingContext,
+                           gfxContext&          aRenderingContext,
                            const nsRect&        aDest,
                            const nsRect&        aFill,
                            const nsPoint&       aAnchor,
@@ -724,6 +735,8 @@ nsImageRenderer::BuildWebRenderDisplayItemsForLayer(nsPresContext*       aPresCo
                                                     const mozilla::layers::StackingContextHelper& aSc,
                                                     nsTArray<WebRenderParentCommand>& aParentCommands,
                                                     WebRenderDisplayItemLayer*       aLayer,
+                                                    mozilla::layers::WebRenderLayerManager* aManager,
+                                                    nsDisplayItem*       aItem,
                                                     const nsRect&        aDest,
                                                     const nsRect&        aFill,
                                                     const nsPoint&       aAnchor,
@@ -739,8 +752,8 @@ nsImageRenderer::BuildWebRenderDisplayItemsForLayer(nsPresContext*       aPresCo
       mSize.width <= 0 || mSize.height <= 0) {
     return DrawResult::SUCCESS;
   }
-
-  return BuildWebRenderDisplayItems(aPresContext, aBuilder, aSc, aParentCommands, aLayer,
+  return BuildWebRenderDisplayItems(aPresContext, aBuilder, aSc, aParentCommands,
+                                    aLayer, aManager, aItem,
                                     aDirty, aDest, aFill, aAnchor, aRepeatSize,
                                     CSSIntRect(0, 0,
                                                nsPresContext::AppUnitsToIntCSSPixels(mSize.width),
@@ -854,7 +867,7 @@ RequiresScaling(const nsRect&        aFill,
 
 DrawResult
 nsImageRenderer::DrawBorderImageComponent(nsPresContext*       aPresContext,
-                                          nsRenderingContext&  aRenderingContext,
+                                          gfxContext&          aRenderingContext,
                                           const nsRect&        aDirtyRect,
                                           const nsRect&        aFill,
                                           const CSSIntRect&    aSrc,
@@ -908,7 +921,7 @@ nsImageRenderer::DrawBorderImageComponent(nsPresContext*       aPresContext,
 
       RefPtr<gfxDrawable> drawable =
         DrawableForElement(nsRect(nsPoint(), mSize),
-                           *aRenderingContext.ThebesContext());
+                           aRenderingContext);
       if (!drawable) {
         NS_WARNING("Could not create drawable for element");
         return DrawResult::TEMPORARY_ERROR;
@@ -924,7 +937,7 @@ nsImageRenderer::DrawBorderImageComponent(nsPresContext*       aPresContext,
     SamplingFilter samplingFilter = nsLayoutUtils::GetSamplingFilterForFrame(mForFrame);
 
     if (!RequiresScaling(aFill, aHFill, aVFill, aUnitSize)) {
-      return nsLayoutUtils::DrawSingleImage(*aRenderingContext.ThebesContext(),
+      return nsLayoutUtils::DrawSingleImage(aRenderingContext,
                                             aPresContext,
                                             subImage,
                                             samplingFilter,
@@ -937,7 +950,7 @@ nsImageRenderer::DrawBorderImageComponent(nsPresContext*       aPresContext,
     nsRect fillRect(aFill);
     nsRect tile = ComputeTile(fillRect, aHFill, aVFill, aUnitSize, repeatSize);
     CSSIntSize imageSize(srcRect.width, srcRect.height);
-    return nsLayoutUtils::DrawBackgroundImage(*aRenderingContext.ThebesContext(),
+    return nsLayoutUtils::DrawBackgroundImage(aRenderingContext,
                                               mForFrame, aPresContext,
                                               subImage, imageSize, samplingFilter,
                                               tile, fillRect, repeatSize,

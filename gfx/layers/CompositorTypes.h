@@ -174,6 +174,8 @@ struct TextureFactoryIdentifier
   bool mSupportsTextureBlitting;
   bool mSupportsPartialUploads;
   bool mSupportsComponentAlpha;
+  bool mSupportsBackdropCopyForComponentAlpha;
+  bool mUsingAdvancedLayers;
   SyncHandle mSyncHandle;
 
   explicit TextureFactoryIdentifier(LayersBackend aLayersBackend = LayersBackend::LAYERS_NONE,
@@ -191,8 +193,22 @@ struct TextureFactoryIdentifier
     , mSupportsTextureBlitting(aSupportsTextureBlitting)
     , mSupportsPartialUploads(aSupportsPartialUploads)
     , mSupportsComponentAlpha(aSupportsComponentAlpha)
+    , mSupportsBackdropCopyForComponentAlpha(true)
+    , mUsingAdvancedLayers(false)
     , mSyncHandle(aSyncHandle)
   {}
+
+  bool operator==(const TextureFactoryIdentifier& aOther) const {
+    return
+      mParentBackend == aOther.mParentBackend &&
+      mParentProcessType == aOther.mParentProcessType &&
+      mMaxTextureSize == aOther.mMaxTextureSize &&
+      mCompositorUseANGLE == aOther.mCompositorUseANGLE &&
+      mSupportsTextureBlitting == aOther.mSupportsTextureBlitting &&
+      mSupportsPartialUploads == aOther.mSupportsPartialUploads &&
+      mSupportsComponentAlpha == aOther.mSupportsComponentAlpha &&
+      mSyncHandle == aOther.mSyncHandle;
+  }
 };
 
 /**
@@ -236,7 +252,12 @@ enum class OpenMode : uint8_t {
   OPEN_WRITE       = 0x2,
   OPEN_READ_WRITE  = OPEN_READ|OPEN_WRITE,
   OPEN_READ_ONLY   = OPEN_READ,
-  OPEN_WRITE_ONLY  = OPEN_WRITE
+  OPEN_WRITE_ONLY  = OPEN_WRITE,
+
+  // This is only used in conjunction with OMTP to indicate that the DrawTarget
+  // that is being borrowed will be painted asynchronously, and so will outlive
+  // the write lock.
+  OPEN_ASYNC_WRITE = 0x04
 };
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(OpenMode)
 

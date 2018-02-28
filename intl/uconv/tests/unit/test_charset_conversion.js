@@ -34,9 +34,6 @@ function run_test()
   dataDir = do_get_file("data/");
 
   test_utf8_1();
-  test_utf16_1();
-  test_utf16_2();
-  test_utf16_3();
   test_cross_conversion();
 }
 
@@ -72,56 +69,11 @@ function test_utf8_1()
   for (var i = 0; i < UNICODE_STRINGS.length; i++)
   {
     var pipe = Pipe();
-    var conv = new COS(pipe.outputStream, "UTF-8", 1024, 0x0);
+    var conv = new COS(pipe.outputStream, "UTF-8");
     do_check_true(conv.writeString(UNICODE_STRINGS[i]));
     conv.close();
 
     if (!equalStreams(new UTF8(pipe.inputStream),
-               stringToCodePoints(UNICODE_STRINGS[i])))
-      do_throw("UNICODE_STRINGS[" + i + "] not handled correctly");
-  }
-}
-
-function test_utf16_1()
-{
-  for (var i = 0; i < UNICODE_STRINGS.length; i++)
-  {
-    var pipe = Pipe();
-    var conv = new COS(pipe.outputStream, "UTF-16", 1024, 0x0);
-    do_check_true(conv.writeString(UNICODE_STRINGS[i]));
-    conv.close();
-
-    if (!equalStreams(new UTF16(pipe.inputStream),
-               stringToCodePoints(UNICODE_STRINGS[i])))
-      do_throw("UNICODE_STRINGS[" + i + "] not handled correctly");
-  }
-}
-
-function test_utf16_2()
-{
-  for (var i = 0; i < UNICODE_STRINGS.length; i++)
-  {
-    var pipe = Pipe();
-    var conv = new COS(pipe.outputStream, "UTF-16LE", 1024, 0x0);
-    do_check_true(conv.writeString(UNICODE_STRINGS[i]));
-    conv.close();
-
-    if (!equalStreams(new UTF16(pipe.inputStream, false),
-               stringToCodePoints(UNICODE_STRINGS[i])))
-      do_throw("UNICODE_STRINGS[" + i + "] not handled correctly");
-  }
-}
-
-function test_utf16_3()
-{
-  for (var i = 0; i < UNICODE_STRINGS.length; i++)
-  {
-    var pipe = Pipe();
-    var conv = new COS(pipe.outputStream, "UTF-16BE", 1024, 0x0);
-    do_check_true(conv.writeString(UNICODE_STRINGS[i]));
-    conv.close();
-
-    if (!equalStreams(new UTF16(pipe.inputStream, true),
                stringToCodePoints(UNICODE_STRINGS[i])))
       do_throw("UNICODE_STRINGS[" + i + "] not handled correctly");
   }

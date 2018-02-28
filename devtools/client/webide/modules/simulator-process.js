@@ -7,18 +7,19 @@
 
 const { Cc, Ci, Cu } = require("chrome");
 
-const Environment = require("sdk/system/environment").env;
+const Environment = Cc["@mozilla.org/process/environment;1"]
+                      .getService(Ci.nsIEnvironment);
 const EventEmitter = require("devtools/shared/event-emitter");
-const Subprocess = require("sdk/system/child_process/subprocess");
 const Services = require("Services");
 
+const {Subprocess} = Cu.import("resource://gre/modules/Subprocess.jsm", {});
+
 loader.lazyGetter(this, "OS", () => {
-  const Runtime = require("sdk/system/runtime");
-  switch (Runtime.OS) {
+  switch (Services.appinfo.OS) {
     case "Darwin":
       return "mac64";
     case "Linux":
-      if (Runtime.XPCOMABI.indexOf("x86_64") === 0) {
+      if (Services.appinfo.XPCOMABI.indexOf("x86_64") === 0) {
         return "linux64";
       } else {
         return "linux32";
@@ -77,27 +78,38 @@ SimulatorProcess.prototype = {
     let environment;
     if (OS.indexOf("linux") > -1) {
       environment = ["TMPDIR=" + Services.dirsvc.get("TmpD", Ci.nsIFile).path];
-      ["DISPLAY", "XAUTHORITY"].forEach(key => {
-        if (key in Environment) {
-          environment.push(key + "=" + Environment[key]);
-        }
-      });
+      ["DISPLAY", "XAUTHORITY"]
+        .filter(key => Environment.exists(key))
+        .forEach(key => {
+          environment.push(key + "=" + Environment.get(key));
+        });
     }
 
     // Spawn a B2G instance.
-    this.process = Subprocess.call({
-      command: b2g,
+    Subprocess.call({
+      command: b2g.path,
       arguments: this.args,
+      environmentAppend: true,
       environment: environment,
-      stdout: data => this.emit("stdout", data),
-      stderr: data => this.emit("stderr", data),
+      stderr: "pipe",
+    }).then(process => {
+      this.process = process;
+      let dumpPipe = async (pipe, type) => {
+        let data = await pipe.readString();
+        while (data) {
+          this.emit(type, data);
+          data = await pipe.readString();
+        }
+      };
+      dumpPipe(process.stdout, "stdout");
+      dumpPipe(process.stderr, "stderr");
+
       // On B2G instance exit, reset tracked process, remote debugger port and
       // shuttingDown flag, then finally emit an exit event.
-      done: result => {
-        console.log("B2G terminated with " + result.exitCode);
+      process.wait().then(result => {
         this.process = null;
         this.emit("exit", result.exitCode);
-      }
+      });
     });
   },
 

@@ -7,6 +7,7 @@ Runs the reftest test harness.
 """
 
 import collections
+import itertools
 import json
 import multiprocessing
 import os
@@ -57,6 +58,8 @@ except ImportError:
 
 def categoriesToRegex(categoryList):
     return "\\(" + ', '.join(["(?P<%s>\\d+) %s" % c for c in categoryList]) + "\\)"
+
+
 summaryLines = [('Successful', [('pass', 'pass'), ('loadOnly', 'load only')]),
                 ('Unexpected', [('fail', 'unexpected fail'),
                                 ('pass', 'unexpected pass'),
@@ -204,13 +207,15 @@ class ReftestResolver(object):
 
 
 class RefTest(object):
+    TEST_SEEN_INITIAL = 'reftest'
+    TEST_SEEN_FINAL = 'Main app process exited normally'
     use_marionette = True
     oldcwd = os.getcwd()
     resolver_cls = ReftestResolver
 
     def __init__(self):
         self.update_mozinfo()
-        self.lastTestSeen = 'reftest'
+        self.lastTestSeen = self.TEST_SEEN_INITIAL
         self.haveDumpedScreen = False
         self.resolver = self.resolver_cls()
         self.log = None
@@ -286,7 +291,8 @@ class RefTest(object):
         prefs['reftest.logLevel'] = options.log_tbpl_level or 'info'
         prefs['reftest.manifests'] = json.dumps(manifests)
 
-        if startAfter is not None:
+        if startAfter not in (None, self.TEST_SEEN_INITIAL, self.TEST_SEEN_FINAL):
+            self.log.info("Setting reftest.startAfter to %s" % startAfter)
             prefs['reftest.startAfter'] = startAfter
 
         if options.e10s:
@@ -297,6 +303,18 @@ class RefTest(object):
         if platform.system() in ("Windows", "Microsoft") and \
            '5.1' in platform.version() and options.e10s:
             prefs['layers.acceleration.disabled'] = True
+
+        sandbox_whitelist_paths = [SCRIPT_DIRECTORY]
+        try:
+            if options.workPath:
+                sandbox_whitelist_paths.append(options.workPath)
+        except AttributeError:
+            pass
+        if platform.system() == "Linux":
+            # Trailing slashes are needed to indicate directories on Linux
+            for idx, path in enumerate(sandbox_whitelist_paths):
+                if not path.endswith("/"):
+                    sandbox_whitelist_paths[idx] = path + "/"
 
         # Bug 1300355: Disable canvas cache for win7 as it uses
         # too much memory and causes OOMs.
@@ -342,7 +360,8 @@ class RefTest(object):
 
         kwargs = {'addons': addons,
                   'preferences': prefs,
-                  'locations': locations}
+                  'locations': locations,
+                  'whitelistpaths': sandbox_whitelist_paths}
         if profile_to_clone:
             profile = mozprofile.Profile.clone(profile_to_clone, **kwargs)
         else:
@@ -364,6 +383,8 @@ class RefTest(object):
         browserEnv["XPCOM_DEBUG_BREAK"] = "stack"
         if hasattr(options, "topsrcdir"):
             browserEnv["MOZ_DEVELOPER_REPO_DIR"] = options.topsrcdir
+        if hasattr(options, "topobjdir"):
+            browserEnv["MOZ_DEVELOPER_OBJ_DIR"] = options.topobjdir
 
         if mozinfo.info["asan"]:
             # Disable leak checking for reftests for now
@@ -651,7 +672,7 @@ class RefTest(object):
             # use process_output so message is logged verbatim
             self.log.process_output(None, msg)
         else:
-            self.lastTestSeen = 'Main app process exited normally'
+            self.lastTestSeen = self.TEST_SEEN_FINAL
 
         crashed = mozcrash.log_crashes(self.log, os.path.join(profile.profile, 'minidumps'),
                                        symbolsPath, test=self.lastTestSeen)
@@ -670,8 +691,7 @@ class RefTest(object):
         profileDir = None
         startAfter = None  # When the previous run crashed, we skip the tests we ran before
         prevStartAfter = None
-        status = 1  # Just to start the loop
-        while status != 0:
+        for i in itertools.count():
             try:
                 if cmdargs is None:
                     cmdargs = []
@@ -703,10 +723,21 @@ class RefTest(object):
                                          leak_thresholds=options.leakThresholds,
                                          stack_fixer=get_stack_fixer_function(options.utilityPath,
                                                                               options.symbolsPath))
-                self.cleanup(profileDir)
+                if status == 0:
+                    break
+
+                if startAfter == self.TEST_SEEN_FINAL:
+                    self.log.info("Finished running all tests, skipping resume "
+                                  "despite non-zero status code: %s" % status)
+                    break
+
                 if startAfter is not None and options.shuffle:
                     self.log.error("Can not resume from a crash with --shuffle "
                                    "enabled. Please consider disabling --shuffle")
+                    break
+                if startAfter is not None and options.maxRetries <= i:
+                    self.log.error("Hit maximum number of allowed retries ({}) "
+                                   "in the test run".format(options.maxRetries))
                     break
                 if startAfter == prevStartAfter:
                     # If the test stuck on the same test, or there the crashed
@@ -723,8 +754,6 @@ class RefTest(object):
     def copyExtraFilesToProfile(self, options, profile):
         "Copy extra files or dirs specified on the command line to the testing profile."
         profileDir = profile.profile
-        if not os.path.exists(os.path.join(profileDir, "hyphenation")):
-            os.makedirs(os.path.join(profileDir, "hyphenation"))
         for f in options.extraProfileFiles:
             abspath = self.getFullPath(f)
             if os.path.isfile(abspath):
@@ -732,7 +761,10 @@ class RefTest(object):
                     extra_prefs = mozprofile.Preferences.read_prefs(abspath)
                     profile.set_preferences(extra_prefs)
                 elif os.path.basename(abspath).endswith('.dic'):
-                    shutil.copy2(abspath, os.path.join(profileDir, "hyphenation"))
+                    hyphDir = os.path.join(profileDir, "hyphenation")
+                    if not os.path.exists(hyphDir):
+                        os.makedirs(hyphDir)
+                    shutil.copy2(abspath, hyphDir)
                 else:
                     shutil.copy2(abspath, profileDir)
             elif os.path.isdir(abspath):

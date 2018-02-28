@@ -139,7 +139,8 @@ HTMLSharedObjectElement::BindToTree(nsIDocument *aDocument,
   if (mIsDoneAddingChildren && !pluginDoc) {
     void (HTMLSharedObjectElement::*start)() =
       &HTMLSharedObjectElement::StartObjectLoad;
-    nsContentUtils::AddScriptRunner(NewRunnableMethod(this, start));
+    nsContentUtils::AddScriptRunner(NewRunnableMethod(
+      "dom::HTMLSharedObjectElement::BindToTree", this, start));
   }
 
   return NS_OK;
@@ -223,7 +224,7 @@ HTMLSharedObjectElement::IsHTMLFocusable(bool aWithMouse,
     // Has plugin content: let the plugin decide what to do in terms of
     // internal focus from mouse clicks
     if (aTabIndex) {
-      GetTabIndex(aTabIndex);
+      *aTabIndex = TabIndex();
     }
 
     *aIsFocusable = true;
@@ -241,7 +242,7 @@ HTMLSharedObjectElement::GetDesiredIMEState()
   if (Type() == eType_Plugin) {
     return IMEState(IMEState::PLUGIN);
   }
-   
+
   return nsGenericHTMLElement::GetDesiredIMEState();
 }
 

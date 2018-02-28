@@ -3,7 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmloptgroupelement
+[HTMLConstructor]
 interface HTMLOptGroupElement : HTMLElement {
+  [CEReactions]
            attribute boolean disabled;
-  //         attribute DOMString label;
+  // [CEReactions]
+  //          attribute DOMString label;
 };

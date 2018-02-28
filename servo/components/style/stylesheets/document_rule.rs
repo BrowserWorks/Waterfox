@@ -9,10 +9,10 @@
 use cssparser::{Parser, Token, SourceLocation, BasicParseError};
 use media_queries::Device;
 use parser::{Parse, ParserContext};
-use shared_lock::{DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard, ToCssWithGuard};
+use servo_arc::Arc;
+use shared_lock::{DeepCloneParams, DeepCloneWithLock, Locked, SharedRwLock, SharedRwLockReadGuard, ToCssWithGuard};
 use std::fmt;
 use style_traits::{ToCss, ParseError, StyleParseError};
-use stylearc::Arc;
 use stylesheets::CssRules;
 use values::specified::url::SpecifiedUrl;
 
@@ -30,12 +30,12 @@ pub struct DocumentRule {
 impl ToCssWithGuard for DocumentRule {
     fn to_css<W>(&self, guard: &SharedRwLockReadGuard, dest: &mut W) -> fmt::Result
     where W: fmt::Write {
-        try!(dest.write_str("@-moz-document "));
-        try!(self.condition.to_css(dest));
-        try!(dest.write_str(" {"));
+        dest.write_str("@-moz-document ")?;
+        self.condition.to_css(dest)?;
+        dest.write_str(" {")?;
         for rule in self.rules.read_with(guard).0.iter() {
-            try!(dest.write_str(" "));
-            try!(rule.to_css(guard, dest));
+            dest.write_str(" ")?;
+            rule.to_css(guard, dest)?;
         }
         dest.write_str(" }")
     }
@@ -47,11 +47,12 @@ impl DeepCloneWithLock for DocumentRule {
         &self,
         lock: &SharedRwLock,
         guard: &SharedRwLockReadGuard,
+        params: &DeepCloneParams,
     ) -> Self {
         let rules = self.rules.read_with(guard);
         DocumentRule {
             condition: self.condition.clone(),
-            rules: Arc::new(lock.wrap(rules.deep_clone_with_lock(lock, guard))),
+            rules: Arc::new(lock.wrap(rules.deep_clone_with_lock(lock, guard, params))),
             source_location: self.source_location.clone(),
         }
     }
@@ -88,9 +89,9 @@ macro_rules! parse_quoted_or_unquoted_string {
             let start = input.position();
             input.parse_entirely(|input| {
                 match input.next() {
-                    Ok(Token::QuotedString(value)) =>
-                        Ok($url_matching_function(value.into_owned())),
-                    Ok(t) => Err(BasicParseError::UnexpectedToken(t).into()),
+                    Ok(&Token::QuotedString(ref value)) =>
+                        Ok($url_matching_function(value.as_ref().to_owned())),
+                    Ok(t) => Err(BasicParseError::UnexpectedToken(t.clone()).into()),
                     Err(e) => Err(e.into()),
                 }
             }).or_else(|_: ParseError| {
@@ -111,7 +112,7 @@ impl UrlMatchingFunction {
             parse_quoted_or_unquoted_string!(input, UrlMatchingFunction::Domain)
         } else if input.try(|input| input.expect_function_matching("regexp")).is_ok() {
             input.parse_nested_block(|input| {
-                Ok(UrlMatchingFunction::RegExp(input.expect_string()?.into_owned()))
+                Ok(UrlMatchingFunction::RegExp(input.expect_string()?.as_ref().to_owned()))
             })
         } else if let Ok(url) = input.try(|input| SpecifiedUrl::parse(context, input)) {
             Ok(UrlMatchingFunction::Url(url))
@@ -141,7 +142,7 @@ impl UrlMatchingFunction {
             UrlMatchingFunction::RegExp(ref pat) => pat,
         });
         unsafe {
-            Gecko_DocumentRule_UseForPresentation(&*device.pres_context, &*pattern, func)
+            Gecko_DocumentRule_UseForPresentation(device.pres_context(), &*pattern, func)
         }
     }
 

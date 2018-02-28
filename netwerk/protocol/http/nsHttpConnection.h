@@ -16,6 +16,7 @@
 #include "TunnelUtils.h"
 #include "mozilla/Mutex.h"
 #include "ARefBase.h"
+#include "TimingStruct.h"
 
 #include "nsIAsyncInputStream.h"
 #include "nsIAsyncOutputStream.h"
@@ -223,7 +224,8 @@ public:
     // connection since CheckForTraffic() was called.
     bool NoTraffic() {
         return mTrafficStamp &&
-            (mTrafficCount == (mTotalBytesWritten + mTotalBytesRead));
+            (mTrafficCount == (mTotalBytesWritten + mTotalBytesRead)) &&
+            !mFastOpen;
     }
     // override of nsAHttpConnection
     virtual uint32_t Version();
@@ -399,6 +401,11 @@ private:
 
     bool                           mForceSendDuringFastOpenPending;
     bool                           mReceivedSocketWouldBlockDuringFastOpen;
+
+public:
+    void BootstrapTimings(TimingStruct times);
+private:
+    TimingStruct    mBootstrappedTimings;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsHttpConnection, NS_HTTPCONNECTION_IID)

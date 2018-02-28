@@ -170,6 +170,9 @@ GetPrefNameForFeature(int32_t aFeature)
     case nsIGfxInfo::FEATURE_WEBGL2:
       name = BLACKLIST_PREF_BRANCH "webgl2";
       break;
+    case nsIGfxInfo::FEATURE_ADVANCED_LAYERS:
+      name = BLACKLIST_PREF_BRANCH "layers.advanced";
+      break;
     case nsIGfxInfo::FEATURE_D3D11_KEYED_MUTEX:
       name = BLACKLIST_PREF_BRANCH "d3d11.keyed.mutex";
       break;
@@ -203,8 +206,9 @@ GetPrefValueForFeature(int32_t aFeature, int32_t& aValue, nsACString& aFailureId
 
   nsCString failureprefname(prefname);
   failureprefname += ".failureid";
-  nsAdoptingCString failureValue = Preferences::GetCString(failureprefname.get());
-  if (failureValue) {
+  nsAutoCString failureValue;
+  nsresult rv = Preferences::GetCString(failureprefname.get(), failureValue);
+  if (NS_SUCCEEDED(rv)) {
     aFailureId = failureValue.get();
   } else {
     aFailureId = "FEATURE_FAILURE_BLACKLIST_PREF";
@@ -242,7 +246,7 @@ static bool
 GetPrefValueForDriverVersion(nsCString& aVersion)
 {
   return NS_SUCCEEDED(Preferences::GetCString(SUGGESTED_VERSION_PREF,
-                                              &aVersion));
+                                              aVersion));
 }
 
 static void
@@ -353,6 +357,8 @@ BlacklistFeatureToGfxFeature(const nsAString& aFeature)
       return nsIGfxInfo::FEATURE_CANVAS2D_ACCELERATION;
   else if (aFeature.EqualsLiteral("WEBGL2"))
     return nsIGfxInfo::FEATURE_WEBGL2;
+  else if (aFeature.EqualsLiteral("ADVANCED_LAYERS"))
+    return nsIGfxInfo::FEATURE_ADVANCED_LAYERS;
   else if (aFeature.EqualsLiteral("D3D11_KEYED_MUTEX"))
     return nsIGfxInfo::FEATURE_D3D11_KEYED_MUTEX;
 
@@ -985,6 +991,7 @@ GfxInfoBase::EvaluateDownloadedBlacklist(nsTArray<GfxDriverInfo>& aDriverInfo)
     nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION,
     nsIGfxInfo::FEATURE_CANVAS2D_ACCELERATION,
     nsIGfxInfo::FEATURE_WEBGL2,
+    nsIGfxInfo::FEATURE_ADVANCED_LAYERS,
     nsIGfxInfo::FEATURE_D3D11_KEYED_MUTEX,
     0
   };
@@ -1375,8 +1382,21 @@ void
 GfxInfoBase::DescribeFeatures(JSContext* aCx, JS::Handle<JSObject*> aObj)
 {
   JS::Rooted<JSObject*> obj(aCx);
+
   gfx::FeatureStatus gpuProcess = gfxConfig::GetValue(Feature::GPU_PROCESS);
   InitFeatureObject(aCx, aObj, "gpuProcess", FEATURE_GPU_PROCESS, Some(gpuProcess), &obj);
+
+  // Only include AL if the platform attempted to use it.
+  gfx::FeatureStatus advancedLayers = gfxConfig::GetValue(Feature::ADVANCED_LAYERS);
+  if (advancedLayers != FeatureStatus::Unused) {
+    InitFeatureObject(aCx, aObj, "advancedLayers", FEATURE_ADVANCED_LAYERS,
+                      Some(advancedLayers), &obj);
+
+    if (gfxConfig::UseFallback(Fallback::NO_CONSTANT_BUFFER_OFFSETTING)) {
+      JS::Rooted<JS::Value> trueVal(aCx, JS::BooleanValue(true));
+      JS_SetProperty(aCx, obj, "noConstantBufferOffsetting", trueVal);
+    }
+  }
 }
 
 bool
@@ -1450,6 +1470,13 @@ NS_IMETHODIMP
 GfxInfoBase::GetWebRenderEnabled(bool* aWebRenderEnabled)
 {
   *aWebRenderEnabled = gfxVars::UseWebRender();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+GfxInfoBase::GetIsHeadless(bool* aIsHeadless)
+{
+  *aIsHeadless = gfxPlatform::IsHeadless();
   return NS_OK;
 }
 

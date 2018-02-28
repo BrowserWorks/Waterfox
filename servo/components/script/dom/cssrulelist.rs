@@ -13,8 +13,8 @@ use dom::cssrule::CSSRule;
 use dom::cssstylesheet::CSSStyleSheet;
 use dom::window::Window;
 use dom_struct::dom_struct;
+use servo_arc::Arc;
 use style::shared_lock::Locked;
-use style::stylearc::Arc;
 use style::stylesheets::{CssRules, CssRulesHelpers, KeyframesRule, RulesMutateError};
 
 #[allow(unsafe_code)]
@@ -90,13 +90,15 @@ impl CSSRuleList {
         let index = idx as usize;
 
         let parent_stylesheet = self.parent_stylesheet.style_stylesheet();
-        let new_rule =
-            css_rules.insert_rule(&parent_stylesheet.shared_lock,
-                                  rule,
-                                  parent_stylesheet,
-                                  index,
-                                  nested,
-                                  None)?;
+        let new_rule = css_rules.with_raw_offset_arc(|arc| {
+            arc.insert_rule(&parent_stylesheet.shared_lock,
+                            rule,
+                            &parent_stylesheet.contents,
+                            index,
+                            nested,
+                            None)
+        })?;
+
 
         let parent_stylesheet = &*self.parent_stylesheet;
         let dom_rule = CSSRule::new_specific(&window, parent_stylesheet, new_rule);

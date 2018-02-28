@@ -374,7 +374,7 @@ var PlacesOrganizer = {
       if (aResult != Ci.nsIFilePicker.returnCancel && fp.fileURL) {
         Components.utils.import("resource://gre/modules/BookmarkHTMLUtils.jsm");
         BookmarkHTMLUtils.importFromURL(fp.fileURL.spec, false)
-                         .then(null, Components.utils.reportError);
+                         .catch(Components.utils.reportError);
       }
     };
 
@@ -393,7 +393,7 @@ var PlacesOrganizer = {
       if (aResult != Ci.nsIFilePicker.returnCancel) {
         Components.utils.import("resource://gre/modules/BookmarkHTMLUtils.jsm");
         BookmarkHTMLUtils.exportToFile(fp.file.path)
-                         .then(null, Components.utils.reportError);
+                         .catch(Components.utils.reportError);
       }
     };
 
@@ -642,16 +642,16 @@ var PlacesOrganizer = {
     if (selectedNode && !PlacesUtils.nodeIsSeparator(selectedNode)) {
       detailsDeck.selectedIndex = 1;
 
-      gEditItemOverlay.initPanel({ node: selectedNode
-                                 , hiddenRows: ["folderPicker"] });
+      gEditItemOverlay.initPanel({ node: selectedNode,
+                                   hiddenRows: ["folderPicker"] });
 
       this._detectAndSetDetailsPaneMinimalState(selectedNode);
     } else if (!selectedNode && aNodeList[0]) {
       if (aNodeList.every(PlacesUtils.nodeIsURI)) {
         let uris = aNodeList.map(node => PlacesUtils._uri(node.uri));
         detailsDeck.selectedIndex = 1;
-        gEditItemOverlay.initPanel({ uris
-                                   , hiddenRows: ["folderPicker",
+        gEditItemOverlay.initPanel({ uris,
+                                     hiddenRows: ["folderPicker",
                                                   "loadInSidebar",
                                                   "location",
                                                   "keyword",
@@ -1365,7 +1365,7 @@ var ContentTree = {
 
   openSelectedNode: function CT_openSelectedNode(aEvent) {
     let view = this.view;
-    PlacesUIUtils.openNodeWithEvent(view.selectedNode, aEvent, view);
+    PlacesUIUtils.openNodeWithEvent(view.selectedNode, aEvent);
   },
 
   onClick: function CT_onClick(aEvent) {

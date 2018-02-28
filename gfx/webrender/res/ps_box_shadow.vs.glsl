@@ -7,15 +7,15 @@
 
 void main(void) {
     Primitive prim = load_primitive();
-    BoxShadow bs = fetch_boxshadow(prim.prim_index);
-    RectWithSize segment_rect = fetch_instance_geometry(prim.prim_index + BS_HEADER_VECS + prim.user_data0);
+    BoxShadow bs = fetch_boxshadow(prim.specific_prim_address);
+    RectWithSize segment_rect = fetch_instance_geometry(prim.specific_prim_address + BS_HEADER_VECS + prim.user_data0);
 
     VertexInfo vi = write_vertex(segment_rect,
                                  prim.local_clip_rect,
                                  prim.z,
                                  prim.layer,
                                  prim.task,
-                                 prim.local_rect.p0);
+                                 prim.local_rect);
 
     RenderTaskData child_task = fetch_render_task(prim.user_data1);
     vUv.z = child_task.data1.x;

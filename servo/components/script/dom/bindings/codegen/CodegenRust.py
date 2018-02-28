@@ -17,11 +17,12 @@ import functools
 from WebIDL import (
     BuiltinTypes,
     IDLBuiltinType,
-    IDLNullValue,
-    IDLNullableType,
-    IDLObject,
-    IDLType,
     IDLInterfaceMember,
+    IDLNullableType,
+    IDLNullValue,
+    IDLObject,
+    IDLPromiseType,
+    IDLType,
     IDLUndefinedValue,
     IDLWrapperType,
 )
@@ -94,14 +95,14 @@ def stripTrailingWhitespace(text):
 
 
 def innerContainerType(type):
-    assert type.isSequence() or type.isMozMap()
+    assert type.isSequence() or type.isRecord()
     return type.inner.inner if type.nullable() else type.inner
 
 
 def wrapInNativeContainerType(type, inner):
     if type.isSequence():
         containerType = "Vec"
-    elif type.isMozMap():
+    elif type.isRecord():
         containerType = "MozMap"
     else:
         raise TypeError("Unexpected container type %s", type)
@@ -697,7 +698,7 @@ def getJSToNativeConversionInfo(type, descriptorProvider, failureCode=None,
 
     assert not (isEnforceRange and isClamp)  # These are mutually exclusive
 
-    if type.isSequence() or type.isMozMap():
+    if type.isSequence() or type.isRecord():
         innerInfo = getJSToNativeConversionInfo(innerContainerType(type),
                                                 descriptorProvider,
                                                 isMember=isMember)
@@ -754,6 +755,56 @@ def getJSToNativeConversionInfo(type, descriptorProvider, failureCode=None,
 
         return handleOptional(templateBody, declType, default)
 
+    if type.isPromise():
+        assert not type.nullable()
+        # Per spec, what we're supposed to do is take the original
+        # Promise.resolve and call it with the original Promise as this
+        # value to make a Promise out of whatever value we actually have
+        # here.  The question is which global we should use.  There are
+        # a couple cases to consider:
+        #
+        # 1) Normal call to API with a Promise argument.  This is a case the
+        #    spec covers, and we should be using the current Realm's
+        #    Promise.  That means the current compartment.
+        # 2) Promise return value from a callback or callback interface.
+        #    This is in theory a case the spec covers but in practice it
+        #    really doesn't define behavior here because it doesn't define
+        #    what Realm we're in after the callback returns, which is when
+        #    the argument conversion happens.  We will use the current
+        #    compartment, which is the compartment of the callable (which
+        #    may itself be a cross-compartment wrapper itself), which makes
+        #    as much sense as anything else. In practice, such an API would
+        #    once again be providing a Promise to signal completion of an
+        #    operation, which would then not be exposed to anyone other than
+        #    our own implementation code.
+        templateBody = fill(
+            """
+            { // Scope for our JSAutoCompartment.
+
+                rooted!(in(cx) let globalObj = CurrentGlobalOrNull(cx));
+                let promiseGlobal = GlobalScope::from_object_maybe_wrapped(globalObj.handle().get());
+
+                rooted!(in(cx) let mut valueToResolve = $${val}.get());
+                if !JS_WrapValue(cx, valueToResolve.handle_mut()) {
+                $*{exceptionCode}
+                }
+                match Promise::Resolve(&promiseGlobal, cx, valueToResolve.handle()) {
+                    Ok(value) => value,
+                    Err(error) => {
+                    throw_dom_exception(cx, &promiseGlobal, error);
+                    $*{exceptionCode}
+                    }
+                }
+            }
+            """,
+            exceptionCode=exceptionCode)
+
+        if isArgument:
+            declType = CGGeneric("&Promise")
+        else:
+            declType = CGGeneric("Rc<Promise>")
+        return handleOptional(templateBody, declType, handleDefaultNull("None"))
+
     if type.isGeckoInterface():
         assert not isEnforceRange and not isClamp
 
@@ -780,79 +831,34 @@ def getJSToNativeConversionInfo(type, descriptorProvider, failureCode=None,
         elif isArgument:
             descriptorType = descriptor.argumentType
 
-        templateBody = ""
-        isPromise = descriptor.interface.identifier.name == "Promise"
-        if isPromise:
-            # Per spec, what we're supposed to do is take the original
-            # Promise.resolve and call it with the original Promise as this
-            # value to make a Promise out of whatever value we actually have
-            # here.  The question is which global we should use.  There are
-            # a couple cases to consider:
-            #
-            # 1) Normal call to API with a Promise argument.  This is a case the
-            #    spec covers, and we should be using the current Realm's
-            #    Promise.  That means the current compartment.
-            # 2) Promise return value from a callback or callback interface.
-            #    This is in theory a case the spec covers but in practice it
-            #    really doesn't define behavior here because it doesn't define
-            #    what Realm we're in after the callback returns, which is when
-            #    the argument conversion happens.  We will use the current
-            #    compartment, which is the compartment of the callable (which
-            #    may itself be a cross-compartment wrapper itself), which makes
-            #    as much sense as anything else. In practice, such an API would
-            #    once again be providing a Promise to signal completion of an
-            #    operation, which would then not be exposed to anyone other than
-            #    our own implementation code.
-            templateBody = fill(
-                """
-                { // Scope for our JSAutoCompartment.
+        if descriptor.interface.isConsequential():
+            raise TypeError("Consequential interface %s being used as an "
+                            "argument" % descriptor.interface.identifier.name)
 
-                  rooted!(in(cx) let globalObj = CurrentGlobalOrNull(cx));
-                  let promiseGlobal = GlobalScope::from_object_maybe_wrapped(globalObj.handle().get());
-
-                  rooted!(in(cx) let mut valueToResolve = $${val}.get());
-                  if !JS_WrapValue(cx, valueToResolve.handle_mut()) {
-                    $*{exceptionCode}
-                  }
-                  match Promise::Resolve(&promiseGlobal, cx, valueToResolve.handle()) {
-                      Ok(value) => value,
-                      Err(error) => {
-                        throw_dom_exception(cx, &promiseGlobal, error);
-                        $*{exceptionCode}
-                      }
-                  }
-                }
-                """,
-                exceptionCode=exceptionCode)
+        if failureCode is None:
+            substitutions = {
+                "sourceDescription": sourceDescription,
+                "interface": descriptor.interface.identifier.name,
+                "exceptionCode": exceptionCode,
+            }
+            unwrapFailureCode = string.Template(
+                'throw_type_error(cx, "${sourceDescription} does not '
+                'implement interface ${interface}.");\n'
+                '${exceptionCode}').substitute(substitutions)
         else:
-            if descriptor.interface.isConsequential():
-                raise TypeError("Consequential interface %s being used as an "
-                                "argument" % descriptor.interface.identifier.name)
+            unwrapFailureCode = failureCode
 
-            if failureCode is None:
-                substitutions = {
-                    "sourceDescription": sourceDescription,
-                    "interface": descriptor.interface.identifier.name,
-                    "exceptionCode": exceptionCode,
+        templateBody = fill(
+            """
+            match ${function}($${val}) {
+                Ok(val) => val,
+                Err(()) => {
+                    $*{failureCode}
                 }
-                unwrapFailureCode = string.Template(
-                    'throw_type_error(cx, "${sourceDescription} does not '
-                    'implement interface ${interface}.");\n'
-                    '${exceptionCode}').substitute(substitutions)
-            else:
-                unwrapFailureCode = failureCode
-
-            templateBody = fill(
-                """
-                match ${function}($${val}) {
-                    Ok(val) => val,
-                    Err(()) => {
-                        $*{failureCode}
-                    }
-                }
-                """,
-                failureCode=unwrapFailureCode + "\n",
-                function=conversionFunction)
+            }
+            """,
+            failureCode=unwrapFailureCode + "\n",
+            function=conversionFunction)
 
         declType = CGGeneric(descriptorType)
         if type.nullable():
@@ -1323,7 +1329,7 @@ def typeNeedsCx(type, retVal=False):
 
 # Returns a conversion behavior suitable for a type
 def getConversionConfigForType(type, isEnforceRange, isClamp, treatNullAs):
-    if type.isSequence() or type.isMozMap():
+    if type.isSequence() or type.isRecord():
         return getConversionConfigForType(innerContainerType(type), isEnforceRange, isClamp, treatNullAs)
     if type.isDOMString():
         assert not isEnforceRange and not isClamp
@@ -1381,6 +1387,9 @@ def getRetvalDeclarationForType(returnType, descriptorProvider):
         if returnType.nullable():
             result = CGWrapper(result, pre="Option<", post=">")
         return result
+    if returnType.isPromise():
+        assert not returnType.nullable()
+        return CGGeneric("Rc<Promise>")
     if returnType.isGeckoInterface():
         descriptor = descriptorProvider.getDescriptor(
             returnType.unroll().inner.identifier.name)
@@ -1408,7 +1417,7 @@ def getRetvalDeclarationForType(returnType, descriptorProvider):
         if returnType.nullable():
             result = CGWrapper(result, pre="Option<", post=">")
         return result
-    if returnType.isSequence() or returnType.isMozMap():
+    if returnType.isSequence() or returnType.isRecord():
         result = getRetvalDeclarationForType(innerContainerType(returnType), descriptorProvider)
         result = wrapInNativeContainerType(returnType, result)
         if returnType.nullable():
@@ -1946,8 +1955,10 @@ class CGImports(CGWrapper):
                 if parentName:
                     descriptor = descriptorProvider.getDescriptor(parentName)
                     extras += [descriptor.path, descriptor.bindingPath]
-            elif t.isType() and t.isMozMap():
+            elif t.isType() and t.isRecord():
                 extras += ['dom::bindings::mozmap::MozMap']
+            elif isinstance(t, IDLPromiseType):
+                extras += ["dom::promise::Promise"]
             else:
                 if t.isEnum():
                     extras += [getModuleFromObject(t) + '::' + getIdentifier(t).name + 'Values']
@@ -2852,7 +2863,7 @@ create_noncallback_interface_object(cx,
                                     %(length)s,
                                     interface.handle_mut());
 assert!(!interface.is_null());""" % properties))
-            if self.descriptor.hasDescendants():
+            if self.descriptor.shouldCacheConstructor():
                 code.append(CGGeneric("""\
 assert!((*cache)[PrototypeList::Constructor::%(id)s as usize].is_null());
 (*cache)[PrototypeList::Constructor::%(id)s as usize] = interface.get();
@@ -3141,7 +3152,7 @@ class CGCallGenerator(CGThing):
     """
     def __init__(self, errorResult, arguments, argsPre, returnType,
                  extendedAttributes, descriptor, nativeMethodName,
-                 static, object="this"):
+                 static, object="this", hasCEReactions=False):
         CGThing.__init__(self)
 
         assert errorResult is None or isinstance(errorResult, str)
@@ -3174,6 +3185,9 @@ class CGCallGenerator(CGThing):
             call = CGWrapper(call, pre="%s." % object)
         call = CGList([call, CGWrapper(args, pre="(", post=")")])
 
+        if hasCEReactions:
+            self.cgRoot.append(CGGeneric("push_new_element_queue();\n"))
+
         self.cgRoot.append(CGList([
             CGGeneric("let result: "),
             result,
@@ -3181,6 +3195,9 @@ class CGCallGenerator(CGThing):
             call,
             CGGeneric(";"),
         ]))
+
+        if hasCEReactions:
+            self.cgRoot.append(CGGeneric("pop_current_element_queue();\n"))
 
         if isFallible:
             if static:
@@ -3256,11 +3273,12 @@ class CGPerSignatureCall(CGThing):
                                                           idlNode.maplikeOrSetlikeOrIterable,
                                                           idlNode.identifier.name))
         else:
+            hasCEReactions = idlNode.getExtendedAttribute("CEReactions")
             cgThings.append(CGCallGenerator(
                 errorResult,
                 self.getArguments(), self.argsPre, returnType,
                 self.extendedAttributes, descriptor, nativeMethodName,
-                static))
+                static, hasCEReactions=hasCEReactions))
 
         self.cgRoot = CGList(cgThings, "\n")
 
@@ -3819,7 +3837,9 @@ class CGMemberJITInfo(CGThing):
             return "JSVAL_TYPE_UNDEFINED"
         if t.isSequence():
             return "JSVAL_TYPE_OBJECT"
-        if t.isMozMap():
+        if t.isRecord():
+            return "JSVAL_TYPE_OBJECT"
+        if t.isPromise():
             return "JSVAL_TYPE_OBJECT"
         if t.isGeckoInterface():
             return "JSVAL_TYPE_OBJECT"
@@ -4055,7 +4075,7 @@ def getUnionTypeTemplateVars(type, descriptorProvider):
     elif type.isDictionary():
         name = type.name
         typeName = name
-    elif type.isSequence() or type.isMozMap():
+    elif type.isSequence() or type.isRecord():
         name = type.name
         inner = getUnionTypeTemplateVars(innerContainerType(type), descriptorProvider)
         typeName = wrapInNativeContainerType(type, CGGeneric(inner["typeName"])).define()
@@ -4208,7 +4228,7 @@ class CGUnionConversionStruct(CGThing):
         else:
             object = None
 
-        mozMapMemberTypes = filter(lambda t: t.isMozMap(), memberTypes)
+        mozMapMemberTypes = filter(lambda t: t.isRecord(), memberTypes)
         if len(mozMapMemberTypes) > 0:
             assert len(mozMapMemberTypes) == 1
             typeName = mozMapMemberTypes[0].name
@@ -5288,11 +5308,79 @@ class CGClassConstructHook(CGAbstractExternMethod):
             preamble += "let global = Root::downcast::<dom::types::%s>(global).unwrap();\n" % list(self.exposureSet)[0]
         preamble += """let args = CallArgs::from_vp(vp, argc);\n"""
         preamble = CGGeneric(preamble)
-        name = self.constructor.identifier.name
-        nativeName = MakeNativeName(self.descriptor.binaryNameFor(name))
-        callGenerator = CGMethodCall(["&global"], nativeName, True,
-                                     self.descriptor, self.constructor)
-        return CGList([preamble, callGenerator])
+        if self.constructor.isHTMLConstructor():
+            signatures = self.constructor.signatures()
+            assert len(signatures) == 1
+            constructorCall = CGGeneric("""\
+// Step 2 https://html.spec.whatwg.org/multipage/#htmlconstructor
+// The custom element definition cannot use an element interface as its constructor
+
+// The new_target might be a cross-compartment wrapper. Get the underlying object
+// so we can do the spec's object-identity checks.
+rooted!(in(cx) let new_target = UnwrapObject(args.new_target().to_object(), 1));
+if new_target.is_null() {
+    throw_dom_exception(cx, global.upcast::<GlobalScope>(), Error::Type("new.target is null".to_owned()));
+    return false;
+}
+
+if args.callee() == new_target.get() {
+    throw_dom_exception(cx, global.upcast::<GlobalScope>(),
+        Error::Type("new.target must not be the active function object".to_owned()));
+    return false;
+}
+
+// Step 6
+rooted!(in(cx) let mut prototype = ptr::null_mut());
+{
+    rooted!(in(cx) let mut proto_val = UndefinedValue());
+    let _ac = JSAutoCompartment::new(cx, new_target.get());
+    if !JS_GetProperty(cx, new_target.handle(), b"prototype\\0".as_ptr() as *const _, proto_val.handle_mut()) {
+        return false;
+    }
+
+    if !proto_val.is_object() {
+        // Step 7 of https://html.spec.whatwg.org/multipage/#htmlconstructor.
+        // This fallback behavior is designed to match analogous behavior for the
+        // JavaScript built-ins. So we enter the compartment of our underlying
+        // newTarget object and fall back to the prototype object from that global.
+        // XXX The spec says to use GetFunctionRealm(), which is not actually
+        // the same thing as what we have here (e.g. in the case of scripted callable proxies
+        // whose target is not same-compartment with the proxy, or bound functions, etc).
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=1317658
+
+        rooted!(in(cx) let global_object = CurrentGlobalOrNull(cx));
+        GetProtoObject(cx, global_object.handle(), prototype.handle_mut());
+    } else {
+        // Step 6
+        prototype.set(proto_val.to_object());
+    };
+}
+
+// Wrap prototype in this context since it is from the newTarget compartment
+if !JS_WrapObject(cx, prototype.handle_mut()) {
+    return false;
+}
+
+let result: Result<Root<%s>, Error> = html_constructor(&global, &args);
+let result = match result {
+    Ok(result) => result,
+    Err(e) => {
+        throw_dom_exception(cx, global.upcast::<GlobalScope>(), e);
+        return false;
+    },
+};
+
+JS_SetPrototype(cx, result.reflector().get_jsobject(), prototype.handle());
+
+(result).to_jsval(cx, args.rval());
+return true;
+""" % self.descriptor.name)
+        else:
+            name = self.constructor.identifier.name
+            nativeName = MakeNativeName(self.descriptor.binaryNameFor(name))
+            constructorCall = CGMethodCall(["&global"], nativeName, True,
+                                           self.descriptor, self.constructor)
+        return CGList([preamble, constructorCall])
 
 
 class CGClassFinalizeHook(CGAbstractClassHook):
@@ -5504,9 +5592,11 @@ def generate_imports(config, cgthings, descriptors, callbacks=None, dictionaries
         'js::jsapi::JS_ObjectIsDate',
         'js::jsapi::JS_SetImmutablePrototype',
         'js::jsapi::JS_SetProperty',
+        'js::jsapi::JS_SetPrototype',
         'js::jsapi::JS_SetReservedSlot',
         'js::jsapi::JS_SplicePrototype',
         'js::jsapi::JS_WrapValue',
+        'js::jsapi::JS_WrapObject',
         'js::jsapi::MutableHandle',
         'js::jsapi::MutableHandleObject',
         'js::jsapi::MutableHandleValue',
@@ -5534,6 +5624,7 @@ def generate_imports(config, cgthings, descriptors, callbacks=None, dictionaries
         'js::glue::RUST_JSID_IS_STRING',
         'js::glue::RUST_SYMBOL_TO_JSID',
         'js::glue::int_to_jsid',
+        'js::glue::UnwrapObject',
         'js::panic::maybe_resume_unwind',
         'js::panic::wrap_panic',
         'js::rust::GCMethods',
@@ -5548,15 +5639,18 @@ def generate_imports(config, cgthings, descriptors, callbacks=None, dictionaries
         'dom::bindings::interface::ConstructorClassHook',
         'dom::bindings::interface::InterfaceConstructorBehavior',
         'dom::bindings::interface::NonCallbackInterfaceObjectClass',
-        'dom::bindings::interface::create_callback_interface_object',
         'dom::bindings::interface::create_global_object',
+        'dom::bindings::interface::create_callback_interface_object',
         'dom::bindings::interface::create_interface_prototype_object',
         'dom::bindings::interface::create_named_constructors',
         'dom::bindings::interface::create_noncallback_interface_object',
         'dom::bindings::interface::define_guarded_constants',
         'dom::bindings::interface::define_guarded_methods',
         'dom::bindings::interface::define_guarded_properties',
+        'dom::bindings::interface::html_constructor',
         'dom::bindings::interface::is_exposed_in',
+        'dom::bindings::interface::pop_current_element_queue',
+        'dom::bindings::interface::push_new_element_queue',
         'dom::bindings::iterable::Iterable',
         'dom::bindings::iterable::IteratorType',
         'dom::bindings::js::JS',
@@ -6870,6 +6964,8 @@ def process_arg(expr, arg):
             expr += ".r()"
         else:
             expr = "&" + expr
+    elif isinstance(arg.type, IDLPromiseType):
+        expr = "&" + expr
     return expr
 
 

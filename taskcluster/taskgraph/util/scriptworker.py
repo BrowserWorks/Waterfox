@@ -40,7 +40,6 @@ This is a list of list-pairs, for ordering.
 SIGNING_SCOPE_ALIAS_TO_PROJECT = [[
     'all-nightly-branches', set([
         'mozilla-central',
-        'mozilla-aurora',
     ])
 ], [
     'all-release-branches', set([
@@ -73,7 +72,6 @@ DEVEDITION_SIGNING_CERT_SCOPES = {
 BEETMOVER_SCOPE_ALIAS_TO_PROJECT = [[
     'all-nightly-branches', set([
         'mozilla-central',
-        'mozilla-aurora',
         'mozilla-beta',
         'mozilla-release',
     ])
@@ -101,6 +99,8 @@ BEETMOVER_SCOPE_ALIAS_TO_TARGET_TASK = [[
         'nightly_fennec',
         'nightly_linux',
         'nightly_macosx',
+        'nightly_win',
+        'nightly_desktop',
         'mozilla_beta_tasks',
         'mozilla_release_tasks',
     ])
@@ -135,10 +135,6 @@ This is a list of list-pairs, for ordering.
 BALROG_SCOPE_ALIAS_TO_PROJECT = [[
     'nightly', set([
         'mozilla-central',
-    ])
-], [
-    'aurora', set([
-        'mozilla-aurora',
     ])
 ], [
     'beta', set([
@@ -422,3 +418,16 @@ def get_release_config(config):
             version = fh.readline().rstrip()
         release_config['version'] = version
     return release_config
+
+
+def get_signing_cert_scope_per_platform(build_platform, is_nightly, config):
+    if build_platform in (
+        'linux-devedition-nightly', 'linux64-devedition-nightly',
+        'macosx64-devedition-nightly',
+        'win32-devedition-nightly', 'win64-devedition-nightly',
+    ):
+        return get_devedition_signing_cert_scope(config)
+    elif is_nightly:
+        return get_signing_cert_scope(config)
+    else:
+        return 'project:releng:signing:cert:dep-signing'

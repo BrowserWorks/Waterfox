@@ -14,7 +14,6 @@
 #include "nsNameSpaceManager.h"
 #include "nsLayoutUtils.h"
 #include "nsRegion.h"
-#include "nsRenderingContext.h"
 #include "nsSVGContainerFrame.h"
 #include "nsSVGEffects.h"
 #include "mozilla/dom/SVGForeignObjectElement.h"
@@ -267,7 +266,7 @@ nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
   float cssPxPerDevPx = PresContext()->
     AppUnitsToFloatCSSPixels(PresContext()->AppUnitsPerDevPixel());
   gfxMatrix canvasTMForChildren = aTransform;
-  canvasTMForChildren.Scale(cssPxPerDevPx, cssPxPerDevPx);
+  canvasTMForChildren.PreScale(cssPxPerDevPx, cssPxPerDevPx);
 
   aContext.Multiply(canvasTMForChildren);
 
@@ -279,8 +278,7 @@ nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
   if (aImgParams.imageFlags & imgIContainer::FLAG_SYNC_DECODE) {
     flags |= PaintFrameFlags::PAINT_SYNC_DECODE_IMAGES;
   }
-  nsRenderingContext rendCtx(&aContext);
-  Unused << nsLayoutUtils::PaintFrame(&rendCtx, kid, nsRegion(kidDirtyRect),
+  Unused << nsLayoutUtils::PaintFrame(&aContext, kid, nsRegion(kidDirtyRect),
                                       NS_RGBA(0,0,0,0),
                                       nsDisplayListBuilderMode::PAINTING,
                                       flags);
@@ -522,15 +520,15 @@ nsSVGForeignObjectFrame::DoReflow()
   if (!kid)
     return;
 
-  // initiate a synchronous reflow here and now:  
-  nsRenderingContext renderingContext(
-    presContext->PresShell()->CreateReferenceRenderingContext());
+  // initiate a synchronous reflow here and now:
+  RefPtr<gfxContext> renderingContext =
+    presContext->PresShell()->CreateReferenceRenderingContext();
 
   mInReflow = true;
 
   WritingMode wm = kid->GetWritingMode();
   ReflowInput reflowInput(presContext, kid,
-                                &renderingContext,
+                                renderingContext,
                                 LogicalSize(wm, ISize(wm),
                                             NS_UNCONSTRAINEDSIZE));
   ReflowOutput desiredSize(reflowInput);
@@ -552,7 +550,7 @@ nsSVGForeignObjectFrame::DoReflow()
                mRect.height == desiredSize.Height(), "unexpected size");
   FinishReflowChild(kid, presContext, desiredSize, &reflowInput, 0, 0,
                     NS_FRAME_NO_MOVE_FRAME);
-  
+
   mInReflow = false;
 }
 
@@ -574,12 +572,8 @@ nsSVGForeignObjectFrame::GetInvalidRegion()
 }
 
 void
-nsSVGForeignObjectFrame::DoUpdateStyleOfOwnedAnonBoxes(
-  ServoStyleSet& aStyleSet,
-  nsStyleChangeList& aChangeList,
-  nsChangeHint aHintForThisFrame)
+nsSVGForeignObjectFrame::AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult)
 {
   MOZ_ASSERT(PrincipalChildList().FirstChild(), "Must have our anon box");
-  UpdateStyleOfChildAnonBox(PrincipalChildList().FirstChild(),
-                            aStyleSet, aChangeList, aHintForThisFrame);
+  aResult.AppendElement(OwnedAnonBox(PrincipalChildList().FirstChild()));
 }

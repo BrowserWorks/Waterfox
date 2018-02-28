@@ -13,11 +13,7 @@ function GetPermissionsFile(profile)
   return file;
 }
 
-function run_test() {
-  run_next_test();
-}
-
-add_task(function* test() {
+add_task(async function test() {
   /* Create and set up the permissions database */
   let profile = do_get_profile();
 
@@ -86,7 +82,11 @@ add_task(function* test() {
     stmt6Insert.bindByName("expireTime", expireTime);
     stmt6Insert.bindByName("modificationTime", modificationTime);
 
-    stmt6Insert.execute();
+    try {
+      stmt6Insert.execute();
+    } finally {
+      stmt6Insert.reset();
+    }
 
     return {
       id: thisId,
@@ -112,7 +112,11 @@ add_task(function* test() {
     stmtInsert.bindByName("appId", appId);
     stmtInsert.bindByName("isInBrowserElement", isInBrowserElement);
 
-    stmtInsert.execute();
+    try {
+      stmtInsert.execute();
+    } finally {
+      stmtInsert.reset();
+    }
 
     return {
       id: thisId,
@@ -161,6 +165,7 @@ add_task(function* test() {
   ];
 
   // CLose the db connection
+  stmt6Insert.finalize();
   stmtInsert.finalize();
   db.close();
   stmtInsert = null;
@@ -187,10 +192,10 @@ add_task(function* test() {
   let found = expected.map((it) => 0);
 
   // Add some places to the places database
-  yield PlacesTestUtils.addVisits(Services.io.newURI("https://foo.com/some/other/subdirectory"));
-  yield PlacesTestUtils.addVisits(Services.io.newURI("ftp://some.subdomain.of.foo.com:8000/some/subdirectory"));
-  yield PlacesTestUtils.addVisits(Services.io.newURI("ftp://127.0.0.1:8080"));
-  yield PlacesTestUtils.addVisits(Services.io.newURI("https://localhost:8080"));
+  await PlacesTestUtils.addVisits(Services.io.newURI("https://foo.com/some/other/subdirectory"));
+  await PlacesTestUtils.addVisits(Services.io.newURI("ftp://some.subdomain.of.foo.com:8000/some/subdirectory"));
+  await PlacesTestUtils.addVisits(Services.io.newURI("ftp://127.0.0.1:8080"));
+  await PlacesTestUtils.addVisits(Services.io.newURI("https://localhost:8080"));
 
   // Force initialization of the nsPermissionManager
   let enumerator = Services.perms.enumerator;
@@ -233,13 +238,21 @@ add_task(function* test() {
 
     // The moz_hosts table should still exist but be empty
     let mozHostsCount = db.createStatement("SELECT count(*) FROM moz_hosts");
-    mozHostsCount.executeStep();
-    do_check_eq(mozHostsCount.getInt64(0), 0);
+    try {
+      mozHostsCount.executeStep();
+      do_check_eq(mozHostsCount.getInt64(0), 0);
+    } finally {
+      mozHostsCount.finalize();
+    }
 
     // Check that there are the right number of values in the permissions database
     let mozPermsCount = db.createStatement("SELECT count(*) FROM moz_perms");
-    mozPermsCount.executeStep();
-    do_check_eq(mozPermsCount.getInt64(0), expected.length);
+    try {
+      mozPermsCount.executeStep();
+      do_check_eq(mozPermsCount.getInt64(0), expected.length);
+    } finally {
+      mozPermsCount.finalize();
+    }
 
     db.close();
   }

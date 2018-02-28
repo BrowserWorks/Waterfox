@@ -9,9 +9,6 @@
 #include "nsJSPrincipals.h"
 #include "nsScriptSecurityManager.h"
 #include "jsfriendapi.h"
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-#include "shared-libraries.h"
-#endif
 #ifdef MOZ_THREADSTACKHELPER_PSEUDO
 #include "js/ProfilingStack.h"
 #endif
@@ -24,6 +21,7 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/MemoryChecking.h"
 #include "mozilla/Sprintf.h"
+#include "nsThread.h"
 
 #ifdef __GNUC__
 # pragma GCC diagnostic push
@@ -65,91 +63,20 @@
 #endif
 #endif
 
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-#if defined(MOZ_THREADSTACKHELPER_X86) || \
-    defined(MOZ_THREADSTACKHELPER_X64)
-// On these architectures, the stack grows downwards (toward lower addresses).
-#define MOZ_THREADSTACKHELPER_STACK_GROWS_DOWN
-#else
-#error "Unsupported architecture"
-#endif
-#endif // MOZ_THREADSTACKHELPER_NATIVE
-
 namespace mozilla {
 
-void
-ThreadStackHelper::Startup()
-{
-#if defined(XP_LINUX)
-  MOZ_ASSERT(NS_IsMainThread());
-  if (!sInitialized) {
-    // TODO: centralize signal number allocation
-    sFillStackSignum = SIGRTMIN + 4;
-    if (sFillStackSignum > SIGRTMAX) {
-      // Leave uninitialized
-      MOZ_ASSERT(false);
-      return;
-    }
-    struct sigaction sigact = {};
-    sigact.sa_sigaction = FillStackHandler;
-    sigemptyset(&sigact.sa_mask);
-    sigact.sa_flags = SA_SIGINFO | SA_RESTART;
-    MOZ_ALWAYS_TRUE(!::sigaction(sFillStackSignum, &sigact, nullptr));
-  }
-  sInitialized++;
-#endif
-}
-
-void
-ThreadStackHelper::Shutdown()
-{
-#if defined(XP_LINUX)
-  MOZ_ASSERT(NS_IsMainThread());
-  if (sInitialized == 1) {
-    struct sigaction sigact = {};
-    sigact.sa_handler = SIG_DFL;
-    MOZ_ALWAYS_TRUE(!::sigaction(sFillStackSignum, &sigact, nullptr));
-  }
-  sInitialized--;
-#endif
-}
-
 ThreadStackHelper::ThreadStackHelper()
-  : mStackToFill(nullptr)
 #ifdef MOZ_THREADSTACKHELPER_PSEUDO
+  : mStackToFill(nullptr)
   , mPseudoStack(profiler_get_pseudo_stack())
   , mMaxStackSize(Stack::sMaxInlineStorage)
   , mMaxBufferSize(512)
 #endif
-{
-#if defined(XP_LINUX)
-  MOZ_ALWAYS_TRUE(!::sem_init(&mSem, 0, 0));
-  mThreadID = ::syscall(SYS_gettid);
-#elif defined(XP_WIN)
-  mInitialized = !!::DuplicateHandle(
-    ::GetCurrentProcess(), ::GetCurrentThread(),
-    ::GetCurrentProcess(), &mThreadID,
-    THREAD_SUSPEND_RESUME
 #ifdef MOZ_THREADSTACKHELPER_NATIVE
-    | THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION
+  , mNativeStackToFill(nullptr)
 #endif
-    , FALSE, 0);
-  mStackTop = profiler_get_stack_top();
-  MOZ_ASSERT(mInitialized);
-#elif defined(XP_MACOSX)
-  mThreadID = mach_thread_self();
-#endif
-}
-
-ThreadStackHelper::~ThreadStackHelper()
 {
-#if defined(XP_LINUX)
-  MOZ_ALWAYS_TRUE(!::sem_destroy(&mSem));
-#elif defined(XP_WIN)
-  if (mInitialized) {
-    MOZ_ALWAYS_TRUE(!!::CloseHandle(mThreadID));
-  }
-#endif
+  mThreadId = profiler_current_thread_id();
 }
 
 namespace {
@@ -165,167 +92,96 @@ public:
 } // namespace
 
 void
-ThreadStackHelper::GetPseudoStack(Stack& aStack)
+ThreadStackHelper::GetPseudoStack(Stack& aStack, nsACString& aRunnableName)
 {
-  GetStacksInternal(&aStack, nullptr);
+  GetStacksInternal(&aStack, nullptr, aRunnableName);
 }
 
 void
-ThreadStackHelper::GetStacksInternal(Stack* aStack, NativeStack* aNativeStack)
+ThreadStackHelper::GetNativeStack(NativeStack& aNativeStack, nsACString& aRunnableName)
 {
+  GetStacksInternal(nullptr, &aNativeStack, aRunnableName);
+}
+
+void
+ThreadStackHelper::GetPseudoAndNativeStack(Stack& aStack,
+                                           NativeStack& aNativeStack,
+                                           nsACString& aRunnableName)
+{
+  GetStacksInternal(&aStack, &aNativeStack, aRunnableName);
+}
+
+void
+ThreadStackHelper::GetStacksInternal(Stack* aStack,
+                                     NativeStack* aNativeStack,
+                                     nsACString& aRunnableName)
+{
+  aRunnableName.AssignLiteral("???");
+
+#if defined(MOZ_THREADSTACKHELPER_PSEUDO) || defined(MOZ_THREADSTACKHELPER_NATIVE)
   // Always run PrepareStackBuffer first to clear aStack
   if (aStack && !PrepareStackBuffer(*aStack)) {
     // Skip and return empty aStack
     return;
   }
 
-  ScopedSetPtr<Stack> stackPtr(mStackToFill, aStack);
-
-#if defined(XP_LINUX)
-  if (!sInitialized) {
-    MOZ_ASSERT(false);
-    return;
-  }
-  if (aStack) {
-    siginfo_t uinfo = {};
-    uinfo.si_signo = sFillStackSignum;
-    uinfo.si_code = SI_QUEUE;
-    uinfo.si_pid = getpid();
-    uinfo.si_uid = getuid();
-    uinfo.si_value.sival_ptr = this;
-    if (::syscall(SYS_rt_tgsigqueueinfo, uinfo.si_pid,
-                  mThreadID, sFillStackSignum, &uinfo)) {
-      // rt_tgsigqueueinfo was added in Linux 2.6.31.
-      // Could have failed because the syscall did not exist.
-      return;
-    }
-    MOZ_ALWAYS_TRUE(!::sem_wait(&mSem));
-  }
-
-#elif defined(XP_WIN)
-  if (!mInitialized) {
-    MOZ_ASSERT(false);
-    return;
-  }
-
-  // NOTE: We can only perform frame pointer stack walking on non win64
-  // platforms, because Win64 always omits frame pointers. We don't want to use
-  // MozStackWalk here, so we just skip collecting stacks entirely.
-#ifndef MOZ_THREADSTACKHELPER_X64
+  // Prepare the native stack
   if (aNativeStack) {
+    aNativeStack->clear();
     aNativeStack->reserve(Telemetry::HangStack::sMaxNativeFrames);
   }
+
+#ifdef MOZ_THREADSTACKHELPER_PSEUDO
+  ScopedSetPtr<Stack> stackPtr(mStackToFill, aStack);
+#endif
+#ifdef MOZ_THREADSTACKHELPER_NATIVE
+  ScopedSetPtr<NativeStack> nativeStackPtr(mNativeStackToFill, aNativeStack);
 #endif
 
-  if (::SuspendThread(mThreadID) == DWORD(-1)) {
-    MOZ_ASSERT(false);
-    return;
-  }
-
-  // SuspendThread is asynchronous, so the thread may still be running. Use
-  // GetThreadContext to ensure it's really suspended.
-  // See https://blogs.msdn.microsoft.com/oldnewthing/20150205-00/?p=44743.
-  CONTEXT context;
-  memset(&context, 0, sizeof(context));
-  context.ContextFlags = CONTEXT_CONTROL;
-  if (::GetThreadContext(mThreadID, &context)) {
-    if (aStack) {
-      FillStackBuffer();
+  Array<char, nsThread::kRunnableNameBufSize> runnableName;
+  runnableName[0] = '\0';
+  auto callback = [&, this] (void** aPCs, size_t aCount, bool aIsMainThread) {
+    // NOTE: We cannot allocate any memory in this callback, as the target
+    // thread is suspended, so we first copy it into a stack-allocated buffer,
+    // and then once the target thread is resumed, we can copy it into a real
+    // nsCString.
+    //
+    // Currently we only store the names of runnables which are running on the
+    // main thread, so we only want to read sMainThreadRunnableName and copy its
+    // value in the case that we are currently suspending the main thread.
+    if (aIsMainThread) {
+      runnableName = nsThread::sMainThreadRunnableName;
     }
 
-#ifndef MOZ_THREADSTACKHELPER_X64
-    if (aNativeStack) {
-      auto callback = [](uint32_t, void* aPC, void*, void* aClosure) {
-        NativeStack* stack = static_cast<NativeStack*>(aClosure);
-        stack->push_back(reinterpret_cast<uintptr_t>(aPC));
-      };
+#ifdef MOZ_THREADSTACKHELPER_PSEUDO
+    if (mStackToFill) {
+      FillStackBuffer();
+    }
+#endif
 
-      // Now we need to get our frame pointer, our stack pointer, and our stack
-      // top. Rather than registering and storing the stack tops ourselves, we use
-      // the gecko profiler to look it up.
-      void** framePointer = reinterpret_cast<void**>(context.Ebp);
-      void** stackPointer = reinterpret_cast<void**>(context.Esp);
-
-      MOZ_ASSERT(mStackTop, "The thread should be registered by the profiler");
-
-      // Double check that the values we pulled for the thread make sense before
-      // walking the stack.
-      if (mStackTop && framePointer >= stackPointer && framePointer < mStackTop) {
-        // NOTE: In bug 1346415 this was changed to use FramePointerStackWalk.
-        // This was done because lowering the background hang timer threshold
-        // would cause it to fire on infra early during the boot process, causing
-        // a deadlock in MozStackWalk when the target thread was holding the
-        // windows-internal lock on the function table, as it would be suspended
-        // before we tried to grab the lock to walk its stack.
-        //
-        // FramePointerStackWalk is implemented entirely in userspace and thus
-        // doesn't have the same issues with deadlocking. Unfortunately as 64-bit
-        // windows is not guaranteed to have frame pointers, the stack walking
-        // code is only enabled on 32-bit windows builds (bug 1357829).
-        FramePointerStackWalk(callback, /* skipFrames */ 0,
-                              /* maxFrames */ Telemetry::HangStack::sMaxNativeFrames,
-                              reinterpret_cast<void*>(aNativeStack), framePointer,
-                              mStackTop);
+#ifdef MOZ_THREADSTACKHELPER_NATIVE
+    if (mNativeStackToFill) {
+      while (aCount-- &&
+             mNativeStackToFill->size() < mNativeStackToFill->capacity()) {
+        mNativeStackToFill->push_back(reinterpret_cast<uintptr_t>(aPCs[aCount]));
       }
     }
 #endif
+  };
+
+  if (mStackToFill || mNativeStackToFill) {
+    profiler_suspend_and_sample_thread(mThreadId,
+                                       callback,
+                                       /* aSampleNative = */ !!aNativeStack);
   }
 
-  MOZ_ALWAYS_TRUE(::ResumeThread(mThreadID) != DWORD(-1));
-
-#elif defined(XP_MACOSX)
-# if defined(MOZ_VALGRIND) && defined(RUNNING_ON_VALGRIND)
-  if (RUNNING_ON_VALGRIND) {
-    /* thread_suspend and thread_resume sometimes hang runs on Valgrind,
-       for unknown reasons.  So, just avoid them.  See bug 1100911. */
-    return;
-  }
-# endif
-
-  if (aStack) {
-    if (::thread_suspend(mThreadID) != KERN_SUCCESS) {
-      MOZ_ASSERT(false);
-      return;
-    }
-
-    FillStackBuffer();
-
-    MOZ_ALWAYS_TRUE(::thread_resume(mThreadID) == KERN_SUCCESS);
-  }
-
+  // Copy the name buffer allocation into the output string. We explicitly set
+  // the last byte to null in case we read in some corrupted data without a null
+  // terminator.
+  runnableName[nsThread::kRunnableNameBufSize - 1] = '\0';
+  aRunnableName.AssignASCII(runnableName.cbegin());
 #endif
 }
-
-void
-ThreadStackHelper::GetNativeStack(NativeStack& aNativeStack)
-{
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-  GetStacksInternal(nullptr, &aNativeStack);
-#endif // MOZ_THREADSTACKHELPER_NATIVE
-}
-
-void
-ThreadStackHelper::GetPseudoAndNativeStack(Stack& aStack, NativeStack& aNativeStack)
-{
-  GetStacksInternal(&aStack, &aNativeStack);
-}
-
-#ifdef XP_LINUX
-
-int ThreadStackHelper::sInitialized;
-int ThreadStackHelper::sFillStackSignum;
-
-void
-ThreadStackHelper::FillStackHandler(int aSignal, siginfo_t* aInfo,
-                                    void* aContext)
-{
-  ThreadStackHelper* const helper =
-    reinterpret_cast<ThreadStackHelper*>(aInfo->si_value.sival_ptr);
-  helper->FillStackBuffer();
-  ::sem_post(&helper->mSem);
-}
-
-#endif // XP_LINUX
 
 bool
 ThreadStackHelper::PrepareStackBuffer(Stack& aStack)
@@ -333,16 +189,6 @@ ThreadStackHelper::PrepareStackBuffer(Stack& aStack)
   // Return false to skip getting the stack and return an empty stack
   aStack.clear();
 #ifdef MOZ_THREADSTACKHELPER_PSEUDO
-  /* Normally, provided the profiler is enabled, it would be an error if we
-     don't have a pseudostack here (the thread probably forgot to call
-     profiler_register_thread). However, on B2G, profiling secondary threads
-     may be disabled despite profiler being enabled. This is by-design and
-     is not an error. */
-#ifdef MOZ_WIDGET_GONK
-  if (!mPseudoStack) {
-    return false;
-  }
-#endif
   MOZ_ASSERT(mPseudoStack);
   if (!aStack.reserve(mMaxStackSize) ||
       !aStack.reserve(aStack.capacity()) || // reserve up to the capacity
@@ -484,9 +330,9 @@ ThreadStackHelper::AppendJSEntry(const js::ProfileEntry* aEntry,
 void
 ThreadStackHelper::FillStackBuffer()
 {
+#ifdef MOZ_THREADSTACKHELPER_PSEUDO
   MOZ_ASSERT(mStackToFill->empty());
 
-#ifdef MOZ_THREADSTACKHELPER_PSEUDO
   size_t reservedSize = mStackToFill->capacity();
   size_t reservedBufferSize = mStackToFill->AvailableBufferSize();
   intptr_t availableBufferSize = intptr_t(reservedBufferSize);

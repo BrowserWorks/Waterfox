@@ -51,14 +51,14 @@ NS_IMPL_ISUPPORTS(nsStreamLoader, nsIStreamLoader,
                   nsIRequestObserver, nsIStreamListener,
                   nsIThreadRetargetableStreamListener)
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsStreamLoader::GetNumBytesRead(uint32_t* aNumBytes)
 {
   *aNumBytes = mData.length();
   return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsStreamLoader::GetRequest(nsIRequest **aRequest)
 {
   NS_IF_ADDREF(*aRequest = mRequest);
@@ -94,8 +94,7 @@ NS_IMETHODIMP
 nsStreamLoader::OnStopRequest(nsIRequest* request, nsISupports *ctxt,
                               nsresult aStatus)
 {
-  PROFILER_LABEL("nsStreamLoader", "OnStopRequest",
-    js::ProfileEntry::Category::NETWORK);
+  AUTO_PROFILER_LABEL("nsStreamLoader::OnStopRequest", NETWORK);
 
   if (mObserver) {
     // provide nsIStreamLoader::request during call to OnStreamComplete
@@ -144,9 +143,9 @@ nsStreamLoader::WriteSegmentFun(nsIInputStream *inStr,
   return NS_OK;
 }
 
-NS_IMETHODIMP 
-nsStreamLoader::OnDataAvailable(nsIRequest* request, nsISupports *ctxt, 
-                                nsIInputStream *inStr, 
+NS_IMETHODIMP
+nsStreamLoader::OnDataAvailable(nsIRequest* request, nsISupports *ctxt,
+                                nsIInputStream *inStr,
                                 uint64_t sourceOffset, uint32_t count)
 {
   uint32_t countRead;

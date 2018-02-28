@@ -378,7 +378,7 @@ nsCSSValue::GetPossiblyStaticImageValue(nsIDocument* aDocument,
   if (aPresContext->IsDynamic()) {
     return do_AddRef(req);
   }
-  return nsContentUtils::GetStaticRequest(req);
+  return nsContentUtils::GetStaticRequest(aDocument, req);
 }
 
 nscoord nsCSSValue::GetFixedLength(nsPresContext* aPresContext) const
@@ -873,7 +873,7 @@ nsCSSValue::GetCalcValue() const
   nsStyleCoord::CalcValue result;
 
   if (rootValue.GetUnit() == eCSSUnit_Pixel) {
-    result.mLength = rootValue.GetFloatValue();
+    result.mLength = rootValue.GetPixelLength();
     result.mPercent = 0.0f;
     result.mHasPercent = false;
   } else {
@@ -890,7 +890,7 @@ nsCSSValue::GetCalcValue() const
                "The first value should be eCSSUnit_Pixel");
     MOZ_ASSERT(percent.GetUnit() == eCSSUnit_Percent,
                "The first value should be eCSSUnit_Percent");
-    result.mLength = length.GetFloatValue();
+    result.mLength = length.GetPixelLength();
     result.mPercent = percent.GetPercentValue();
     result.mHasPercent = true;
   }
@@ -1660,7 +1660,7 @@ nsCSSValue::AppendToString(nsCSSPropertyID aProperty, nsAString& aResult,
     }
 
     default:
-      const nsAFlatCString& name = nsCSSProps::LookupPropertyValue(aProperty, intValue);
+      const nsCString& name = nsCSSProps::LookupPropertyValue(aProperty, intValue);
       AppendASCIItoUTF16(name, aResult);
       break;
     }
@@ -2871,7 +2871,7 @@ css::URLValueData::GetURI() const
     NS_NewURI(getter_AddRefs(newURI),
               NS_ConvertUTF16toUTF8(mString),
               nullptr, mExtraData->BaseURI());
-    mURI = new PtrHolder<nsIURI>(newURI.forget());
+    mURI = new PtrHolder<nsIURI>("URLValueData::mURI", newURI.forget());
     mURIResolved = true;
   }
 
@@ -2892,31 +2892,35 @@ css::URLValueData::IsLocalRef() const
 bool
 css::URLValueData::HasRef() const
 {
+  bool result = false;
+
   if (IsLocalRef()) {
-    return true;
+    result = true;
+  } else {
+    if (nsIURI* uri = GetURI()) {
+      nsAutoCString ref;
+      nsresult rv = uri->GetRef(ref);
+      if (NS_SUCCEEDED(rv) && !ref.IsEmpty()) {
+        result = true;
+      }
+    }
   }
 
-  nsIURI* uri = GetURI();
-  if (!uri) {
-    return false;
-  }
+  mMightHaveRef = Some(result);
 
-  nsAutoCString ref;
-  nsresult rv = uri->GetRef(ref);
-  if (NS_SUCCEEDED(rv) && !ref.IsEmpty()) {
-    return true;
-  }
-
-  return false;
+  return result;
 }
 
 bool
 css::URLValueData::MightHaveRef() const
 {
   if (mMightHaveRef.isNothing()) {
-    // ::MightHaveRef is O(N), use it only use it only when MightHaveRef is
-    // called.
-    mMightHaveRef.emplace(::MightHaveRef(mString));
+    bool result = ::MightHaveRef(mString);
+    if (!ServoStyleSet::IsInServoTraversal()) {
+      // Can only cache the result if we're not on a style worker thread.
+      mMightHaveRef.emplace(result);
+    }
+    return result;
   }
 
   return mMightHaveRef.value();
@@ -3008,7 +3012,7 @@ URLValue::URLValue(const nsAString& aString, nsIURI* aBaseURI, nsIURI* aReferrer
 
 URLValue::URLValue(nsIURI* aURI, const nsAString& aString, nsIURI* aBaseURI,
                    nsIURI* aReferrer, nsIPrincipal* aOriginPrincipal)
-  : URLValueData(do_AddRef(new PtrHolder<nsIURI>(aURI)),
+  : URLValueData(do_AddRef(new PtrHolder<nsIURI>("URLValueData::mURI", aURI)),
                  aString,
                  do_AddRef(new URLExtraData(aBaseURI, aReferrer,
                                             aOriginPrincipal)))
@@ -3031,7 +3035,7 @@ css::URLValue::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 css::ImageValue::ImageValue(nsIURI* aURI, const nsAString& aString,
                             already_AddRefed<URLExtraData> aExtraData,
                             nsIDocument* aDocument)
-  : URLValueData(do_AddRef(new PtrHolder<nsIURI>(aURI)),
+  : URLValueData(do_AddRef(new PtrHolder<nsIURI>("URLValueData::mURI", aURI)),
                  aString, Move(aExtraData))
 {
   Initialize(aDocument);

@@ -38,16 +38,19 @@ JS::Zone::Zone(JSRuntime* rt, ZoneGroup* group)
     weakCaches_(group),
     gcWeakKeys_(group, SystemAllocPolicy(), rt->randomHashCodeScrambler()),
     gcSweepGroupEdges_(group),
-    typeDescrObjects_(group, this, SystemAllocPolicy()),
+    typeDescrObjects_(group, this),
+    regExps(this),
     markedAtoms_(group),
     atomCache_(group),
     externalStringCache_(group),
+    functionToStringCache_(group),
     usage(&rt->gc.usage),
     threshold(),
     gcDelayBytes(0),
     propertyTree_(group, this),
-    baseShapes_(group, this, BaseShapeSet()),
-    initialShapes_(group, this, InitialShapeSet()),
+    baseShapes_(group, this),
+    initialShapes_(group, this),
+    nurseryShapes_(group),
     data(group, nullptr),
     isSystem(group, false),
 #ifdef DEBUG
@@ -85,7 +88,8 @@ Zone::~Zone()
 #endif
 }
 
-bool Zone::init(bool isSystemArg)
+bool
+Zone::init(bool isSystemArg)
 {
     isSystem = isSystemArg;
     return uniqueIds().init() &&
@@ -93,7 +97,8 @@ bool Zone::init(bool isSystemArg)
            gcWeakKeys().init() &&
            typeDescrObjects().init() &&
            markedAtoms().init() &&
-           atomCache().init();
+           atomCache().init() &&
+           regExps.init();
 }
 
 void
@@ -160,7 +165,7 @@ Zone::sweepBreakpoints(FreeOp* fop)
                 // live.
                 MOZ_ASSERT_IF(isGCSweeping() && dbgobj->zone()->isCollecting(),
                               dbgobj->zone()->isGCSweeping() ||
-                              (!scriptGone && dbgobj->asTenured().isMarked()));
+                              (!scriptGone && dbgobj->asTenured().isMarkedAny()));
 
                 bool dying = scriptGone || IsAboutToBeFinalized(&dbgobj);
                 MOZ_ASSERT_IF(!dying, !IsAboutToBeFinalized(&bp->getHandlerRef()));
@@ -251,8 +256,8 @@ Zone::discardJitCode(FreeOp* fop, bool discardBaselineCode)
 void
 JS::Zone::checkUniqueIdTableAfterMovingGC()
 {
-    for (UniqueIdMap::Enum e(uniqueIds()); !e.empty(); e.popFront())
-        js::gc::CheckGCThingAfterMovingGC(e.front().key());
+    for (auto r = uniqueIds().all(); !r.empty(); r.popFront())
+        js::gc::CheckGCThingAfterMovingGC(r.front().key());
 }
 #endif
 
@@ -344,6 +349,8 @@ Zone::nextZone() const
 void
 Zone::clearTables()
 {
+    MOZ_ASSERT(regExps.empty());
+
     if (baseShapes().initialized())
         baseShapes().clear();
     if (initialShapes().initialized())
@@ -369,6 +376,21 @@ Zone::addTypeDescrObject(JSContext* cx, HandleObject obj)
     }
 
     return true;
+}
+
+void
+Zone::deleteEmptyCompartment(JSCompartment* comp)
+{
+    MOZ_ASSERT(comp->zone() == this);
+    MOZ_ASSERT(arenas.checkEmptyArenaLists());
+    for (auto& i : compartments()) {
+        if (i == comp) {
+            compartments().erase(&i);
+            comp->destroy(runtimeFromActiveCooperatingThread()->defaultFreeOp());
+            return;
+        }
+    }
+    MOZ_CRASH("Compartment not found");
 }
 
 ZoneList::ZoneList()
@@ -466,7 +488,7 @@ ZoneList::clear()
 }
 
 JS_PUBLIC_API(void)
-JS::shadow::RegisterWeakCache(JS::Zone* zone, WeakCache<void*>* cachep)
+JS::shadow::RegisterWeakCache(JS::Zone* zone, detail::WeakCacheBase* cachep)
 {
     zone->registerWeakCache(cachep);
 }

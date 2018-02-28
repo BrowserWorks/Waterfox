@@ -8,10 +8,10 @@
 #define mozilla_IMEContentObserver_h_
 
 #include "mozilla/Attributes.h"
+#include "mozilla/EditorBase.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIDocShell.h" // XXX Why does only this need to be included here?
-#include "nsIEditor.h"
 #include "nsIEditorObserver.h"
 #include "nsIReflowObserver.h"
 #include "nsISelectionListener.h"
@@ -86,14 +86,14 @@ public:
    *                        user may use IME in.
    *                        Or nullptr if this will observe design mode
    *                        document.
-   * @param aEditor         When aContent is an editable element or nullptr,
+   * @param aEditorBase     When aContent is an editable element or nullptr,
    *                        non-nullptr referring an editor instance which
    *                        manages aContent.
    *                        Otherwise, i.e., this will observe a plugin content,
    *                        should be nullptr.
    */
   void Init(nsIWidget* aWidget, nsPresContext* aPresContext,
-            nsIContent* aContent, nsIEditor* aEditor);
+            nsIContent* aContent, EditorBase* aEditorBase);
 
   /**
    * Destroy() finalizes the instance, i.e., stops observing contents and
@@ -129,11 +129,15 @@ public:
   bool MaybeReinitialize(nsIWidget* aWidget,
                          nsPresContext* aPresContext,
                          nsIContent* aContent,
-                         nsIEditor* aEditor);
+                         EditorBase* aEditorBase);
 
   bool IsManaging(nsPresContext* aPresContext, nsIContent* aContent) const;
   bool IsManaging(const TextComposition* aTextComposition) const;
   bool WasInitializedWithPlugin() const;
+  bool WasInitializedWith(const EditorBase& aEditorBase) const
+  {
+    return mEditorBase == &aEditorBase;
+  }
   bool IsEditorHandlingEventForComposition() const;
   bool KeepAliveDuringDeactive() const
   {
@@ -141,7 +145,6 @@ public:
            mIMENotificationRequests->WantDuringDeactive();
   }
   nsIWidget* GetWidget() const { return mWidget; }
-  nsIEditor* GetEditor() const { return mEditor; }
   void SuppressNotifyingIME();
   void UnsuppressNotifyingIME();
   nsPresContext* GetPresContext() const;
@@ -151,8 +154,10 @@ public:
   /**
    * TryToFlushPendingNotifications() should be called when pending events
    * should be flushed.  This tries to run the queued IMENotificationSender.
+   * Doesn't do anything in child processes where flushing happens
+   * asynchronously unless aAllowAsync is false.
    */
-  void TryToFlushPendingNotifications();
+  void TryToFlushPendingNotifications(bool aAllowAsync);
 
   /**
    * MaybeNotifyCompositionEventHandled() posts composition event handled
@@ -171,9 +176,9 @@ private:
   };
   State GetState() const;
   bool InitWithEditor(nsPresContext* aPresContext, nsIContent* aContent,
-                      nsIEditor* aEditor);
+                      EditorBase* aEditorBase);
   bool InitWithPlugin(nsPresContext* aPresContext, nsIContent* aContent);
-  bool IsInitializedWithPlugin() const { return !mEditor; }
+  bool IsInitializedWithPlugin() const { return !mEditorBase; }
   void OnIMEReceivedFocus();
   void Clear();
   bool IsObservingContent(nsPresContext* aPresContext,
@@ -307,7 +312,7 @@ private:
   nsCOMPtr<nsIContent> mRootContent;
   nsCOMPtr<nsINode> mEditableNode;
   nsCOMPtr<nsIDocShell> mDocShell;
-  nsCOMPtr<nsIEditor> mEditor;
+  RefPtr<EditorBase> mEditorBase;
 
   /**
    * Helper classes to notify IME.
@@ -328,12 +333,21 @@ private:
     explicit AChangeEvent(const char* aName,
                           IMEContentObserver* aIMEContentObserver)
       : Runnable(aName)
-      , mIMEContentObserver(aIMEContentObserver)
+      , mIMEContentObserver(
+          do_GetWeakReference(
+            static_cast<nsISelectionListener*>(aIMEContentObserver)))
     {
-      MOZ_ASSERT(mIMEContentObserver);
+      MOZ_ASSERT(aIMEContentObserver);
     }
 
-    RefPtr<IMEContentObserver> mIMEContentObserver;
+    already_AddRefed<IMEContentObserver> GetObserver() const
+    {
+      nsCOMPtr<nsISelectionListener> observer =
+        do_QueryReferent(mIMEContentObserver);
+      return observer.forget().downcast<IMEContentObserver>();
+    }
+
+    nsWeakPtr mIMEContentObserver;
 
     /**
      * CanNotifyIME() checks if mIMEContentObserver can and should notify IME.
@@ -356,6 +370,7 @@ private:
     }
     NS_IMETHOD Run() override;
 
+    void Dispatch(nsIDocShell* aDocShell);
   private:
     void SendFocusSet();
     void SendSelectionChange();

@@ -37,7 +37,7 @@ public:
   //    Special case: if aKeyBegin == aEquals, then there is only one string
   //    and no equal sign, so we treat the entire thing as a key with no value
 
-  QueryKeyValuePair(const nsCSubstring& aSource, int32_t aKeyBegin,
+  QueryKeyValuePair(const nsACString& aSource, int32_t aKeyBegin,
                     int32_t aEquals, int32_t aPastEnd)
   {
     if (aEquals == aKeyBegin)
@@ -208,7 +208,7 @@ namespace PlacesFolderConversion {
   {
     nsNavBookmarks *bs = nsNavBookmarks::GetBookmarksService();
     NS_ENSURE_STATE(bs);
-    int64_t folderID;
+    int64_t folderID = -1;
 
     if (NS_SUCCEEDED(bs->GetPlacesRoot(&folderID)) &&
         aFolderID == folderID) {
@@ -480,7 +480,7 @@ nsNavHistory::QueriesToQueryString(nsINavHistoryQuery **aQueries,
                              NS_LITERAL_CSTRING(QUERYKEY_NOTTAGS),
                              query,
                              &nsINavHistoryQuery::GetTagsAreNot);
- 
+
     // transitions
     const nsTArray<uint32_t>& transitions = query->Transitions();
     for (uint32_t i = 0; i < transitions.Length(); ++i) {
@@ -507,7 +507,7 @@ nsNavHistory::QueriesToQueryString(nsINavHistoryQuery **aQueries,
         queryString += NS_LITERAL_CSTRING(QUERYKEY_SORTING_ANNOTATION "=");
         queryString.Append(escaped);
       }
-    } 
+    }
   }
 
   // result type
@@ -1601,7 +1601,7 @@ void // static
 SetOptionsKeyBool(const nsCString& aValue, nsINavHistoryQueryOptions* aOptions,
                  BoolOptionsSetter setter)
 {
-  bool value;
+  bool value = false;
   nsresult rv = ParseQueryBooleanString(aValue, &value);
   if (NS_SUCCEEDED(rv)) {
     rv = (aOptions->*setter)(value);

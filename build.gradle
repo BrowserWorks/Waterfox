@@ -1,17 +1,38 @@
 import java.util.regex.Pattern
 
+def tryInt = { string ->
+    if (string == null) {
+        return string
+    }
+    if (string.isInteger()) {
+        return string as Integer
+    }
+    return string
+}
+
 allprojects {
     // Expose the per-object-directory configuration to all projects.
     ext {
         mozconfig = gradle.mozconfig
         topsrcdir = gradle.mozconfig.topsrcdir
         topobjdir = gradle.mozconfig.topobjdir
+
+        compileSdkVersion = tryInt(mozconfig.substs.ANDROID_COMPILE_SDK_VERSION)
+        buildToolsVersion = tryInt(mozconfig.substs.ANDROID_BUILD_TOOLS_VERSION)
+        targetSdkVersion = tryInt(mozconfig.substs.ANDROID_TARGET_SDK)
+        minSdkVersion = tryInt(mozconfig.substs.MOZ_ANDROID_MIN_SDK_VERSION)
+        manifestPlaceholders = [
+            ANDROID_PACKAGE_NAME: mozconfig.substs.ANDROID_PACKAGE_NAME,
+            ANDROID_TARGET_SDK: mozconfig.substs.ANDROID_TARGET_SDK,
+            MOZ_ANDROID_MIN_SDK_VERSION: mozconfig.substs.MOZ_ANDROID_MIN_SDK_VERSION,
+            MOZ_ANDROID_SHARED_ID: "${mozconfig.substs.ANDROID_PACKAGE_NAME}.sharedID",
+        ]
     }
 
     repositories {
-        if (gradle.mozconfig.substs.GRADLE_MAVEN_REPOSITORY) {
+        gradle.mozconfig.substs.GRADLE_MAVEN_REPOSITORIES.each { repository ->
             maven {
-                url gradle.mozconfig.substs.GRADLE_MAVEN_REPOSITORY
+                url repository
             }
         }
     }
@@ -21,12 +42,12 @@ buildDir "${topobjdir}/gradle/build"
 
 buildscript {
     repositories {
-        if (gradle.mozconfig.substs.GRADLE_MAVEN_REPOSITORY) {
+        gradle.mozconfig.substs.GRADLE_MAVEN_REPOSITORIES.each { repository ->
             maven {
-                url gradle.mozconfig.substs.GRADLE_MAVEN_REPOSITORY
+                url repository
             }
         }
-        // For android-sdk-manager SNAPSHOT releases.
+        // For dexcount-gradle-plugin and other in tree plugins.
         maven {
             url "file://${gradle.mozconfig.topsrcdir}/mobile/android/gradle/m2repo"
         }
@@ -39,7 +60,6 @@ buildscript {
             exclude module: 'guava'
         }
         // Provided in tree.
-        classpath 'com.jakewharton.sdkmanager:gradle-plugin:1.5.0-SNAPSHOT'
         classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.6.1'
     }
 }

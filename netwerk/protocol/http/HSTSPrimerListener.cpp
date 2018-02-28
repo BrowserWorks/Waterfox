@@ -29,10 +29,11 @@ using namespace mozilla;
 
 NS_IMPL_ISUPPORTS(HSTSPrimingListener, nsIStreamListener,
                   nsIRequestObserver, nsIInterfaceRequestor,
-                  nsITimerCallback)
+                  nsITimerCallback, nsINamed)
 
-// default to 3000ms, same as the preference
-uint32_t HSTSPrimingListener::sHSTSPrimingTimeout = 3000;
+// default to 2000ms, same as the preference
+// security.mixed_content.hsts_priming_request_timeout
+uint32_t HSTSPrimingListener::sHSTSPrimingTimeout = 2000;
 
 
 HSTSPrimingListener::HSTSPrimingListener(nsIHstsPrimingCallback* aCallback)
@@ -51,21 +52,24 @@ HSTSPrimingListener::GetInterface(const nsIID & aIID, void **aResult)
 }
 
 void
-HSTSPrimingListener::ReportTiming(nsresult aResult)
+HSTSPrimingListener::ReportTiming(nsIHstsPrimingCallback* aCallback, nsresult aResult)
 {
   nsCOMPtr<nsITimedChannel> timingChannel =
-    do_QueryInterface(mCallback);
-  if (timingChannel) {
-    TimeStamp channelCreationTime;
-    nsresult rv = timingChannel->GetChannelCreation(&channelCreationTime);
-    if (NS_SUCCEEDED(rv) && !channelCreationTime.IsNull()) {
-      PRUint32 interval =
-        (PRUint32) (TimeStamp::Now() - channelCreationTime).ToMilliseconds();
-      Telemetry::Accumulate(Telemetry::HSTS_PRIMING_REQUEST_DURATION,
-          (NS_SUCCEEDED(aResult)) ? NS_LITERAL_CSTRING("success")
-                                  : NS_LITERAL_CSTRING("failure"),
-          interval);
-    }
+    do_QueryInterface(aCallback);
+  if (!timingChannel) {
+    LOG(("HSTS priming: mCallback is not an nsITimedChannel!"));
+    return;
+  }
+
+  TimeStamp channelCreationTime;
+  nsresult rv = timingChannel->GetChannelCreation(&channelCreationTime);
+  if (NS_SUCCEEDED(rv) && !channelCreationTime.IsNull()) {
+    PRUint32 interval =
+      (PRUint32) (TimeStamp::Now() - channelCreationTime).ToMilliseconds();
+    Telemetry::Accumulate(Telemetry::HSTS_PRIMING_REQUEST_DURATION,
+        (NS_SUCCEEDED(aResult)) ? NS_LITERAL_CSTRING("success")
+                                : NS_LITERAL_CSTRING("failure"),
+        interval);
   }
 }
 
@@ -88,7 +92,7 @@ HSTSPrimingListener::OnStartRequest(nsIRequest *aRequest,
   }
 
   nsresult primingResult = CheckHSTSPrimingRequestStatus(aRequest);
-  ReportTiming(primingResult);
+  ReportTiming(callback, primingResult);
 
   if (NS_FAILED(primingResult)) {
     LOG(("HSTS Priming Failed (request was not approved)"));
@@ -155,7 +159,7 @@ HSTSPrimingListener::CheckHSTSPrimingRequestStatus(nsIRequest* aRequest)
 
   bool hsts;
   rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, uri, 0,
-                        originAttributes, nullptr, &hsts);
+                        originAttributes, nullptr, nullptr, &hsts);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (hsts) {
@@ -192,7 +196,7 @@ HSTSPrimingListener::Notify(nsITimer* timer)
     return NS_OK;
   }
 
-  ReportTiming(NS_ERROR_HSTS_PRIMING_TIMEOUT);
+  ReportTiming(callback, NS_ERROR_HSTS_PRIMING_TIMEOUT);
 
   if (mPrimingChannel) {
     rv = mPrimingChannel->Cancel(NS_ERROR_HSTS_PRIMING_TIMEOUT);
@@ -207,6 +211,14 @@ HSTSPrimingListener::Notify(nsITimer* timer)
   }
 
   return NS_OK; // unused
+}
+
+/** nsINamed **/
+NS_IMETHODIMP
+HSTSPrimingListener::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("HSTSPrimingListener");
+  return NS_OK;
 }
 
 // static
@@ -224,7 +236,7 @@ HSTSPrimingListener::StartHSTSPriming(nsIChannel* aRequestChannel,
 
   // check the HSTS cache
   bool hsts;
-  bool cached;
+  bool hstsCached;
   nsCOMPtr<nsISiteSecurityService> sss = do_GetService(NS_SSSERVICE_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -232,17 +244,21 @@ HSTSPrimingListener::StartHSTSPriming(nsIChannel* aRequestChannel,
   NS_GetOriginAttributes(aRequestChannel, originAttributes);
 
   rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, uri, 0,
-                        originAttributes, &cached, &hsts);
+                        originAttributes, &hstsCached, nullptr, &hsts);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (hsts) {
     // already saw this host and will upgrade if allowed by preferences
+    Telemetry::Accumulate(Telemetry::MIXED_CONTENT_HSTS_PRIMING_REQUESTS,
+                          HSTSPrimingRequest::eHSTS_PRIMING_REQUEST_CACHED_HSTS);
     return aCallback->OnHSTSPrimingSucceeded(true);
   }
 
-  if (cached) {
+  if (hstsCached) {
     // there is a non-expired entry in the cache that doesn't allow us to
     // upgrade, so go ahead and fail early.
+    Telemetry::Accumulate(Telemetry::MIXED_CONTENT_HSTS_PRIMING_REQUESTS,
+                          HSTSPrimingRequest::eHSTS_PRIMING_REQUEST_CACHED_NO_HSTS);
     return aCallback->OnHSTSPrimingFailed(NS_ERROR_CONTENT_BLOCKED, true);
   }
 
@@ -257,6 +273,7 @@ HSTSPrimingListener::StartHSTSPriming(nsIChannel* aRequestChannel,
 
   nsCOMPtr<nsILoadInfo> loadInfo = static_cast<mozilla::LoadInfo*>
     (originalLoadInfo.get())->CloneForNewRequest();
+  loadInfo->SetIsHSTSPriming(true);
 
   // the LoadInfo must have a security flag set in order to pass through priming
   // if none of these security flags are set, go ahead and fail now instead of
@@ -369,6 +386,9 @@ HSTSPrimingListener::StartHSTSPriming(nsIChannel* aRequestChannel,
   }
 
   listener->mHSTSPrimingTimer.swap(timer);
+
+  Telemetry::Accumulate(Telemetry::MIXED_CONTENT_HSTS_PRIMING_REQUESTS,
+                        HSTSPrimingRequest::eHSTS_PRIMING_REQUEST_SENT);
 
   return NS_OK;
 }

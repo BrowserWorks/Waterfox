@@ -77,7 +77,7 @@ struct IPCByteRange
 {
   int32_t offset;
   uint32_t length;
-};  
+};
 
 typedef nsTArray<IPCByteRange> IPCByteRanges;
 
@@ -207,9 +207,9 @@ NPPVariableToString(NPPVariable aVar)
         VARSTR(NPPVpluginScriptableNPObject);
 
         VARSTR(NPPVformValue);
-  
+
         VARSTR(NPPVpluginUrlRequestsDisplayedBool);
-  
+
         VARSTR(NPPVpluginWantsAllNetworkStreams);
 
 #ifdef XP_MACOSX
@@ -713,7 +713,7 @@ struct ParamTraits<NPNURLVariable>
   }
 };
 
-  
+
 template<>
 struct ParamTraits<NPCoordinateSpace>
 {
@@ -872,31 +872,11 @@ struct ParamTraits<mozilla::plugins::_OpenFileNameRetIPC>
 };
 
 template <>
-struct ParamTraits<mozilla::plugins::GetFileNameFunc>
-{
-  typedef mozilla::plugins::GetFileNameFunc paramType;
-
-  static void Write(Message* aMsg, const paramType& aParam)
-  {
-    WriteParam(aMsg, static_cast<uint32_t>(aParam));
-  }
-
-  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
-  {
-    uint32_t result;
-    if (ReadParam(aMsg, aIter, &result)) {
-      *aResult = static_cast<paramType>(result);
-      return true;
-    }
-    return false;
-  }
-
-  static void Log(const paramType& aParam, std::wstring* aLog)
-  {
-    aLog->append(StringPrintf(L"[%S]",
-                 aParam == mozilla::plugins::OPEN_FUNC ? "GetOpenFileName" : "GetSaveFileName"));
-  }
-};
+struct ParamTraits<mozilla::plugins::GetFileNameFunc> :
+  public ContiguousEnumSerializerInclusive<mozilla::plugins::GetFileNameFunc,
+                                           mozilla::plugins::OPEN_FUNC,
+                                           mozilla::plugins::SAVE_FUNC>
+{};
 #endif  // XP_WIN
 
 } /* namespace IPC */
@@ -905,7 +885,7 @@ struct ParamTraits<mozilla::plugins::GetFileNameFunc>
 // Serializing NPEvents is completely platform-specific and can be rather
 // intricate depending on the platform.  So for readability we split it
 // into separate files and have the only macro crud live here.
-// 
+//
 // NB: these guards are based on those where struct NPEvent is defined
 // in npapi.h.  They should be kept in sync.
 #if defined(XP_MACOSX)

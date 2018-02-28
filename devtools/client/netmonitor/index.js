@@ -15,17 +15,14 @@ const { bindActionCreators } = require("redux");
 const { bootstrap, renderRoot } = require("devtools-launchpad");
 const EventEmitter = require("devtools-modules/src/utils/event-emitter");
 const { Services: { appinfo, pref }} = require("devtools-modules");
-const { configureStore } = require("./src/utils/create-store");
 
-require("./src/assets/styles/netmonitor.css");
-
-EventEmitter.decorate(window);
-
+// Initialize preferences as early as possible
+pref("devtools.cache.disabled", false);
 pref("devtools.netmonitor.enabled", true);
 pref("devtools.netmonitor.filters", "[\"all\"]");
-pref("devtools.netmonitor.hiddenColumns",
-     "[\"cookies\",\"duration\",\"endTime\",\"latency\"," +
-     "\"protocol\",\"remoteip\",\"responseTime\",\"scheme\",\"setCookies\",\"startTime\"]"
+pref("devtools.netmonitor.visibleColumns",
+     "[\"status\",\"method\",\"file\",\"domain\",\"cause\"," +
+     "\"type\",\"transferred\",\"contentSize\",\"waterfall\"]"
 );
 pref("devtools.netmonitor.panes-network-details-width", 550);
 pref("devtools.netmonitor.panes-network-details-height", 450);
@@ -39,7 +36,13 @@ pref("devtools.netmonitor.har.forceExport", false);
 pref("devtools.netmonitor.har.pageLoadedTimeout", 1500);
 pref("devtools.netmonitor.har.enableAutoExportToFile", false);
 pref("devtools.webconsole.persistlog", false);
+pref("devtools.styleeditor.enabled", true);
 
+const { configureStore } = require("./src/utils/create-store");
+
+require("./src/assets/styles/netmonitor.css");
+
+EventEmitter.decorate(window);
 const App = require("./src/components/app");
 const store = configureStore();
 const actions = bindActionCreators(require("./src/actions"), store.dispatch);

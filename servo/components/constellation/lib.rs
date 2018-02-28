@@ -26,21 +26,20 @@ extern crate itertools;
 extern crate layout_traits;
 #[macro_use]
 extern crate log;
+extern crate metrics;
 extern crate msg;
 extern crate net;
 extern crate net_traits;
 extern crate offscreen_gl_context;
 extern crate profile_traits;
 extern crate script_traits;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
+#[macro_use] extern crate serde;
 extern crate servo_config;
 extern crate servo_rand;
 extern crate servo_remutex;
 extern crate servo_url;
 extern crate style_traits;
-extern crate webrender_traits;
+extern crate webrender_api;
 extern crate webvr_traits;
 
 mod browsingcontext;

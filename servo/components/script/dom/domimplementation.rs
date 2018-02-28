@@ -5,7 +5,7 @@
 use document_loader::DocumentLoader;
 use dom::bindings::codegen::Bindings::DOMImplementationBinding;
 use dom::bindings::codegen::Bindings::DOMImplementationBinding::DOMImplementationMethods;
-use dom::bindings::codegen::Bindings::DocumentBinding::DocumentMethods;
+use dom::bindings::codegen::Bindings::DocumentBinding::{DocumentMethods, ElementCreationOptions};
 use dom::bindings::codegen::Bindings::NodeBinding::NodeMethods;
 use dom::bindings::error::Fallible;
 use dom::bindings::inheritance::Castable;
@@ -57,7 +57,7 @@ impl DOMImplementationMethods for DOMImplementation {
                           pubid: DOMString,
                           sysid: DOMString)
                           -> Fallible<Root<DocumentType>> {
-        try!(validate_qualified_name(&qualified_name));
+        validate_qualified_name(&qualified_name)?;
         Ok(DocumentType::new(qualified_name, Some(pubid), Some(sysid), &self.document))
     }
 
@@ -92,7 +92,8 @@ impl DOMImplementationMethods for DOMImplementation {
         let maybe_elem = if qname.is_empty() {
             None
         } else {
-            match doc.upcast::<Document>().CreateElementNS(maybe_namespace, qname) {
+            let options = ElementCreationOptions { is: None };
+            match doc.upcast::<Document>().CreateElementNS(maybe_namespace, qname, &options) {
                 Err(error) => return Err(error),
                 Ok(elem) => Some(elem),
             }

@@ -60,14 +60,16 @@ configuration_tokens = ('branch',
                         'ssh_key_dir',
                         'stage_product',
                         'upload_environment',
-                       )
+                        )
 # some other values such as "%(version)s", "%(buildid)s", ...
 # are defined at run time and they cannot be enforced in the _pre_config_lock
 # phase
 runtime_config_tokens = ('buildid', 'version', 'locale', 'from_buildid',
                          'abs_objdir', 'abs_merge_dir', 'revision',
-                         'to_buildid', 'en_us_binary_url', 'mar_tools_url',
+                         'to_buildid', 'en_us_binary_url',
+                         'en_us_installer_binary_url', 'mar_tools_url',
                          'post_upload_extra', 'who')
+
 
 # DesktopSingleLocale {{{1
 class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
@@ -270,6 +272,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.read_buildbot_config()
         if not self.buildbot_config:
             self.warning("Skipping buildbot properties overrides")
+            # Set an empty dict
+            self.buildbot_config = {"properties": {}}
             return
         props = self.buildbot_config["properties"]
         for prop in ['mar_tools_url']:
@@ -368,6 +372,12 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 str(self.buildbot_config["properties"]["en_us_binary_url"])
         bootstrap_env = self.query_env(partial_env=config.get("bootstrap_env"),
                                        replace_dict=replace_dict)
+        # Override en_us_installer_binary_url if passed as a buildbot property
+        if self.buildbot_config["properties"].get("en_us_installer_binary_url"):
+            self.info("Overriding en_us_binary_url with %s" %
+                      self.buildbot_config["properties"]["en_us_installer_binary_url"])
+            bootstrap_env['EN_US_INSTALLER_BINARY_URL'] = str(
+                self.buildbot_config["properties"]["en_us_installer_binary_url"])
         if 'MOZ_SIGNING_SERVERS' in os.environ:
             sign_cmd = self.query_moz_sign_cmd(formats=None)
             sign_cmd = subprocess.list2cmdline(sign_cmd)
@@ -801,10 +811,15 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             glob_name = "*.%s.*" % locale
             matches = (glob.glob(os.path.join(upload_target, glob_name)) +
                        glob.glob(os.path.join(upload_target, 'update', glob_name)) +
-                       glob.glob(os.path.join(upload_target, '*', 'xpi', glob_name)))
+                       glob.glob(os.path.join(upload_target, '*', 'xpi', glob_name)) +
+                       glob.glob(os.path.join(upload_target, 'install', 'sea', glob_name)) +
+                       glob.glob(os.path.join(upload_target, 'setup.exe')) +
+                       glob.glob(os.path.join(upload_target, 'setup-stub.exe')))
             targets_exts = ["tar.bz2", "dmg", "langpack.xpi",
-                            "complete.mar", "checksums"]
+                            "complete.mar", "checksums", "zip",
+                            "installer.exe", "installer-stub.exe"]
             targets = ["target.%s" % ext for ext in targets_exts]
+            targets.extend(['setup.exe', 'setup-stub.exe'])
             for f in matches:
                 target_file = next(target_file for target_file in targets
                                     if f.endswith(target_file[6:]))
@@ -1044,7 +1059,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         if not manifest_src:
             manifest_src = config.get('tooltool_manifest_src')
         if not manifest_src:
-            return self.warning(ERROR_MSGS['tooltool_manifest_undetermined'])
+            return
         tooltool_manifest_path = os.path.join(dirs['abs_mozilla_dir'],
                                               manifest_src)
         python = sys.executable
@@ -1062,6 +1077,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             '--retry', '4',
             '--tooltool-manifest',
             tooltool_manifest_path,
+            '--artifact-manifest',
+            os.path.join(dirs['abs_mozilla_dir'], 'toolchains.json'),
             '--tooltool-url',
             config['tooltool_url'],
         ]
@@ -1071,6 +1088,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         cache = config['bootstrap_env'].get('TOOLTOOL_CACHE')
         if cache:
             cmd.extend(['--cache-dir', cache])
+        toolchains = os.environ.get('MOZ_TOOLCHAINS')
+        if toolchains:
+            cmd.extend(toolchains.split())
         self.info(str(cmd))
         self.run_command(cmd, cwd=dirs['abs_mozilla_dir'], halt_on_failure=True,
                          env=env)

@@ -39,7 +39,7 @@ AnimationState::UpdateState(bool aAnimationFinished,
                                           DefaultSurfaceFlags(),
                                           PlaybackType::eAnimated));
 
-  return UpdateStateInternal(result, aAnimationFinished, aSize);
+  return UpdateStateInternal(result, aAnimationFinished, aSize, aAllowInvalidation);
 }
 
 const gfx::IntRect
@@ -57,9 +57,11 @@ AnimationState::UpdateStateInternal(LookupResult& aResult,
     // no frames yet, but a decoder is or will be working on it.
     mDiscarded = false;
     mIsCurrentlyDecoded = false;
+    mHasRequestedDecode = true;
   } else {
     MOZ_ASSERT(aResult.Type() == MatchType::EXACT);
     mDiscarded = false;
+    mHasRequestedDecode = true;
 
     // If mHasBeenDecoded is true then we know the true total frame count and
     // we can use it to determine if we have all the frames now so we know if
@@ -99,7 +101,7 @@ AnimationState::UpdateStateInternal(LookupResult& aResult,
       mCompositedFrameInvalid = false;
     } else if (aResult.Type() == MatchType::NOT_FOUND ||
                aResult.Type() == MatchType::PENDING) {
-      if (mHasBeenDecoded) {
+      if (mHasRequestedDecode) {
         MOZ_ASSERT(gfxPrefs::ImageMemAnimatedDiscardable());
         mCompositedFrameInvalid = true;
       }
@@ -209,7 +211,7 @@ FrameAnimator::GetCurrentImgFrameEndTime(AnimationState& aState,
     GetTimeoutForFrame(aState, aFrames, aState.mCurrentAnimationFrameIndex);
 
   if (timeout.isNothing()) {
-    MOZ_ASSERT(aState.GetHasBeenDecoded() && !aState.GetIsCurrentlyDecoded());
+    MOZ_ASSERT(aState.GetHasRequestedDecode() && !aState.GetIsCurrentlyDecoded());
     return Nothing();
   }
 
@@ -238,7 +240,7 @@ FrameAnimator::AdvanceFrame(AnimationState& aState,
 {
   NS_ASSERTION(aTime <= TimeStamp::Now(),
                "Given time appears to be in the future");
-  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("FrameAnimator::AdvanceFrame", GRAPHICS);
 
   RefreshResult ret;
 
@@ -416,7 +418,7 @@ FrameAnimator::RequestRefresh(AnimationState& aState,
     GetCurrentImgFrameEndTime(aState, result.Surface());
   if (currentFrameEndTime.isNothing()) {
     MOZ_ASSERT(gfxPrefs::ImageMemAnimatedDiscardable());
-    MOZ_ASSERT(aState.GetHasBeenDecoded() && !aState.GetIsCurrentlyDecoded());
+    MOZ_ASSERT(aState.GetHasRequestedDecode() && !aState.GetIsCurrentlyDecoded());
     MOZ_ASSERT(aState.mCompositedFrameInvalid);
     // Nothing we can do but wait for our previous current frame to be decoded
     // again so we can determine what to do next.
@@ -465,7 +467,7 @@ FrameAnimator::GetCompositedFrame(AnimationState& aState)
 
   if (aState.mCompositedFrameInvalid) {
     MOZ_ASSERT(gfxPrefs::ImageMemAnimatedDiscardable());
-    MOZ_ASSERT(aState.GetHasBeenDecoded());
+    MOZ_ASSERT(aState.GetHasRequestedDecode());
     MOZ_ASSERT(!aState.GetIsCurrentlyDecoded());
     if (result.Type() == MatchType::NOT_FOUND) {
       return result;
@@ -512,7 +514,7 @@ FrameAnimator::GetTimeoutForFrame(AnimationState& aState,
     return Some(data.mTimeout);
   }
 
-  MOZ_ASSERT(aState.mHasBeenDecoded && !aState.mIsCurrentlyDecoded);
+  MOZ_ASSERT(aState.mHasRequestedDecode && !aState.mIsCurrentlyDecoded);
   return Nothing();
 }
 

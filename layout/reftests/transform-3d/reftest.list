@@ -23,8 +23,8 @@ fails-if(webrender) == preserve3d-3a.html preserve3d-3-ref.html
 fuzzy-if(gtkWidget,4,200) fuzzy-if(Android,4,300) fuzzy-if(winWidget&&!layersGPUAccelerated,2,100) fuzzy-if(skiaContent,16,100) fails-if(webrender) == preserve3d-5a.html preserve3d-5-ref.html
 == preserve3d-6a.html preserve3d-6-ref.html
 == scale3d-z.html scalez-1-ref.html
-fuzzy-if(winWidget,143,689) fuzzy-if(OSX,224,924) == scale3d-all.html scale3d-1-ref.html # subpixel AA
-fuzzy-if(winWidget,143,689) fuzzy-if(OSX,224,924) == scale3d-all-separate.html scale3d-1-ref.html # subpixel AA
+fuzzy-if(winWidget,143,689) fuzzy-if(OSX,224,924) fuzzy-if(winWidget&&stylo,154,644) == scale3d-all.html scale3d-1-ref.html # subpixel AA
+fuzzy-if(winWidget,143,689) fuzzy-if(OSX,224,924) fuzzy-if(winWidget&&stylo,154,644) == scale3d-all-separate.html scale3d-1-ref.html # subpixel AA
 == scale3d-xz.html scale3d-1-ref.html
 == translatez-1a.html translatez-1-ref.html
 != translatez-1b.html translatez-1-ref.html
@@ -39,6 +39,7 @@ fuzzy-if(skiaContent,1,4) == matrix3d-1a.html matrix3d-1-ref.html
 fuzzy-if(winWidget&&!layersGPUAccelerated,1,251) == backface-visibility-2.html backface-visibility-2-ref.html
 fails-if(webrender) == backface-visibility-3.html backface-visibility-3-ref.html
 == perspective-clipping-1.html perspective-clipping-1-ref.html
+== perspective-clipping-2.html perspective-clipping-2-ref.html
 != perspective-origin-1a.html rotatex-perspective-1a.html
 == perspective-origin-1b.html perspective-origin-1a.html
 fuzzy(3,99) random-if(Android&&!browserIsRemote) == perspective-origin-2a.html perspective-origin-2-ref.html # subpixel AA, bug 732568
@@ -63,17 +64,17 @@ fuzzy-if(winWidget&&!layersGPUAccelerated,1,606) == scroll-perspective-1.html sc
 fails-if(!layersGPUAccelerated&&!styloVsGecko) fails-if(webrender) == 1035611-1.html 1035611-1-ref.html # Bug 1072898 for !layersGPUAccelerated failures
 != 1157984-1.html about:blank # Bug 1157984
 fuzzy(3,99) == animate-cube-radians.html animate-cube-radians-ref.html # subpixel AA
-fuzzy(3,99) fuzzy-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)&&!layersGPUAccelerated,16,6) fails-if(styloVsGecko) == animate-cube-radians-zoom.html animate-cube-radians-zoom-ref.html
+fuzzy(3,99) fuzzy-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)&&!layersGPUAccelerated,16,6) == animate-cube-radians-zoom.html animate-cube-radians-zoom-ref.html
 != animate-cube-radians-ref.html animate-cube-radians-zoom-ref.html
 fuzzy(3,99) == animate-cube-degrees.html animate-cube-degrees-ref.html # subpixel AA
-fails-if(styloVsGecko) == animate-cube-degrees-zoom.html animate-cube-degrees-zoom-ref.html
+== animate-cube-degrees-zoom.html animate-cube-degrees-zoom-ref.html
 != animate-cube-degrees-ref.html animate-cube-degrees-zoom-ref.html
 fuzzy-if(gtkWidget,128,100) fuzzy-if(Android||OSX==1010||(gtkWidget&&layersGPUAccelerated),143,100) fuzzy-if(winWidget||OSX<1010,141,100) fails-if(webrender) == preserves3d-nested.html preserves3d-nested-ref.html
 fuzzy-if(cocoaWidget,128,9) == animate-preserve3d-parent.html animate-preserve3d-ref.html # intermittently fuzzy on Mac
 fuzzy-if(cocoaWidget,128,9) == animate-preserve3d-child.html animate-preserve3d-ref.html # intermittently fuzzy on Mac
 == animate-backface-hidden.html about:blank
 fails-if(webrender) == 1245450-1.html green-rect.html
-fuzzy(1,2000) fails-if(webrender) == opacity-preserve3d-1.html opacity-preserve3d-1-ref.html
+fuzzy(1,2000) == opacity-preserve3d-1.html opacity-preserve3d-1-ref.html
 fuzzy(1,15000) == opacity-preserve3d-2.html opacity-preserve3d-2-ref.html
 fuzzy(1,10000) == opacity-preserve3d-3.html opacity-preserve3d-3-ref.html
 fuzzy(1,10000) == opacity-preserve3d-4.html opacity-preserve3d-4-ref.html

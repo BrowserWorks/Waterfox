@@ -2,9 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use app_units::Au;
 use device::TextureFilter;
-use euclid::{TypedPoint2D, UnknownUnit};
 use fnv::FnvHasher;
 use profiler::BackendProfileCounters;
 use std::collections::{HashMap, HashSet};
@@ -15,8 +13,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tiling;
 use renderer::BlendMode;
-use webrender_traits::{ClipId, ColorF, DeviceUintRect, Epoch, ExternalImageData, ExternalImageId};
-use webrender_traits::{ImageData, ImageFormat, NativeFontHandle, PipelineId};
+use api::{ClipId, ColorU, DeviceUintRect, Epoch, ExternalImageData, ExternalImageId};
+use api::{DevicePoint, ImageData, ImageFormat, PipelineId};
 
 // An ID for a texture that is owned by the
 // texture cache module. This can include atlases
@@ -47,18 +45,8 @@ pub enum SourceTexture {
     WebGL(u32),
 }
 
-const COLOR_FLOAT_TO_FIXED: f32 = 255.0;
-const COLOR_FLOAT_TO_FIXED_WIDE: f32 = 65535.0;
-pub const ANGLE_FLOAT_TO_FIXED: f32 = 65535.0;
-
 pub const ORTHO_NEAR_PLANE: f32 = -1000000.0;
 pub const ORTHO_FAR_PLANE: f32 = 1000000.0;
-
-#[derive(Clone)]
-pub enum FontTemplate {
-    Raw(Arc<Vec<u8>>, u32),
-    Native(NativeFontHandle),
-}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TextureSampler {
@@ -67,15 +55,9 @@ pub enum TextureSampler {
     Color2,
     CacheA8,
     CacheRGBA8,
-    Data16,
-    Data32,
     ResourceCache,
     Layers,
     RenderTasks,
-    Geometry,
-    ResourceRects,
-    Gradients,
-    SplitGeometry,
     Dither,
 }
 
@@ -140,60 +122,7 @@ pub enum ClipAttribute {
     LayerIndex,
     DataIndex,
     SegmentIndex,
-}
-
-// A packed RGBA8 color ordered for vertex data or similar.
-// Use PackedTexel instead if intending to upload to a texture.
-
-#[derive(Debug, Clone, Copy)]
-#[repr(C)]
-pub struct PackedColor {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-    pub a: u8,
-}
-
-impl PackedColor {
-    pub fn from_color(color: &ColorF) -> PackedColor {
-        PackedColor {
-            r: (0.5 + color.r * COLOR_FLOAT_TO_FIXED).floor() as u8,
-            g: (0.5 + color.g * COLOR_FLOAT_TO_FIXED).floor() as u8,
-            b: (0.5 + color.b * COLOR_FLOAT_TO_FIXED).floor() as u8,
-            a: (0.5 + color.a * COLOR_FLOAT_TO_FIXED).floor() as u8,
-        }
-    }
-}
-
-// RGBA8 textures currently pack texels in BGRA format for upload.
-// PackedTexel abstracts away this difference from PackedColor.
-
-#[derive(Debug, Clone, Copy)]
-#[repr(C)]
-pub struct PackedTexel {
-    pub b: u8,
-    pub g: u8,
-    pub r: u8,
-    pub a: u8,
-}
-
-impl PackedTexel {
-    pub fn high_bytes(color: &ColorF) -> PackedTexel {
-        Self::extract_bytes(color, 8)
-    }
-
-    pub fn low_bytes(color: &ColorF) -> PackedTexel {
-        Self::extract_bytes(color, 0)
-    }
-
-    fn extract_bytes(color: &ColorF, shift_by: i32) -> PackedTexel {
-        PackedTexel {
-            b: ((0.5 + color.b * COLOR_FLOAT_TO_FIXED_WIDE).floor() as u32 >> shift_by & 0xff) as u8,
-            g: ((0.5 + color.g * COLOR_FLOAT_TO_FIXED_WIDE).floor() as u32 >> shift_by & 0xff) as u8,
-            r: ((0.5 + color.r * COLOR_FLOAT_TO_FIXED_WIDE).floor() as u32 >> shift_by & 0xff) as u8,
-            a: ((0.5 + color.a * COLOR_FLOAT_TO_FIXED_WIDE).floor() as u32 >> shift_by & 0xff) as u8,
-        }
-    }
+    ResourceAddress,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -207,19 +136,19 @@ pub struct PackedVertex {
 pub struct DebugFontVertex {
     pub x: f32,
     pub y: f32,
-    pub color: PackedColor,
+    pub color: ColorU,
     pub u: f32,
     pub v: f32,
 }
 
 impl DebugFontVertex {
-    pub fn new(x: f32, y: f32, u: f32, v: f32, color: PackedColor) -> DebugFontVertex {
+    pub fn new(x: f32, y: f32, u: f32, v: f32, color: ColorU) -> DebugFontVertex {
         DebugFontVertex {
-            x: x,
-            y: y,
-            color: color,
-            u: u,
-            v: v,
+            x,
+            y,
+            color,
+            u,
+            v,
         }
     }
 }
@@ -228,15 +157,15 @@ impl DebugFontVertex {
 pub struct DebugColorVertex {
     pub x: f32,
     pub y: f32,
-    pub color: PackedColor,
+    pub color: ColorU,
 }
 
 impl DebugColorVertex {
-    pub fn new(x: f32, y: f32, color: PackedColor) -> DebugColorVertex {
+    pub fn new(x: f32, y: f32, color: ColorU) -> DebugColorVertex {
         DebugColorVertex {
-            x: x,
-            y: y,
-            color: color,
+            x,
+            y,
+            color,
         }
     }
 }
@@ -248,6 +177,7 @@ pub enum RenderTargetMode {
     LayerRenderTarget(i32),      // Number of texture layers
 }
 
+#[derive(Debug)]
 pub enum TextureUpdateOp {
     Create {
       width: u32,
@@ -283,6 +213,7 @@ pub enum TextureUpdateOp {
     Free,
 }
 
+#[derive(Debug)]
 pub struct TextureUpdate {
     pub id: CacheTextureId,
     pub op: TextureUpdateOp,
@@ -323,9 +254,9 @@ impl RendererFrame {
                frame: Option<tiling::Frame>)
                -> RendererFrame {
         RendererFrame {
-            pipeline_epoch_map: pipeline_epoch_map,
-            layers_bouncing_back: layers_bouncing_back,
-            frame: frame,
+            pipeline_epoch_map,
+            layers_bouncing_back,
+            frame,
         }
     }
 }
@@ -335,36 +266,13 @@ pub enum ResultMsg {
     NewFrame(RendererFrame, TextureUpdateList, BackendProfileCounters),
 }
 
-#[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum AxisDirection {
-    Horizontal,
-    Vertical,
-}
-
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub struct StackingContextIndex(pub usize);
 
 #[derive(Clone, Copy, Debug)]
-pub struct RectUv<T, U = UnknownUnit> {
-    pub top_left: TypedPoint2D<T, U>,
-    pub top_right: TypedPoint2D<T, U>,
-    pub bottom_left: TypedPoint2D<T, U>,
-    pub bottom_right: TypedPoint2D<T, U>,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum LowLevelFilterOp {
-    Blur(Au, AxisDirection),
-    Brightness(Au),
-    Contrast(Au),
-    Grayscale(Au),
-    /// Fixed-point in `ANGLE_FLOAT_TO_FIXED` units.
-    HueRotate(i32),
-    Invert(Au),
-    Opacity(Au),
-    Saturate(Au),
-    Sepia(Au),
+pub struct UvRect {
+    pub uv0: DevicePoint,
+    pub uv1: DevicePoint,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

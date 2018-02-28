@@ -10,13 +10,13 @@
   System::Call "kernel32::ProcessIdToSessionId(i $0, *i ${NSIS_MAX_STRLEN} r9)"
 
   ; Determine if we're the protected UserChoice default or not. If so fix the
-  ; start menu tile.  In case there are 2 Firefox installations, we only do
+  ; start menu tile.  In case there are 2 Waterfox installations, we only do
   ; this if the application being updated is the default.
   ReadRegStr $0 HKCU "Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice" "ProgId"
   ${WordFind} "$0" "-" "+1{" $0
-  ${If} $0 == "FirefoxURL"
+  ${If} $0 == "WaterfoxURL"
   ${AndIf} $9 != 0 ; We're not running in session 0
-    ReadRegStr $0 HKCU "Software\Classes\FirefoxURL\shell\open\command" ""
+    ReadRegStr $0 HKCU "Software\Classes\WaterfoxURL\shell\open\command" ""
     ${GetPathFromString} "$0" $0
     ${GetParent} "$0" $0
     ${If} ${FileExists} "$0"
@@ -83,6 +83,7 @@
   ${UpdateShortcutBranding}
 
   ${RemoveDeprecatedKeys}
+  ${Set32to64DidMigrateReg}
 
   ${SetAppKeys}
   ${FixClassKeys}
@@ -106,11 +107,6 @@
 
   ; Register AccessibleHandler.dll with COM (this writes to HKLM)
   ${RegisterAccessibleHandler}
-
-!ifndef HAVE_64BIT_BUILD
-  ; Clean up any IAccessible registry corruption
-  ${FixCorruptOleAccRegistration}
-!endif
 
 !ifdef MOZ_MAINTENANCE_SERVICE
   Call IsUserAdmin
@@ -449,7 +445,7 @@
 !macroend
 !define AddAssociationIfNoneExist "!insertmacro AddAssociationIfNoneExist"
 
-; Adds the protocol and file handler registry entries for making Firefox the
+; Adds the protocol and file handler registry entries for making Waterfox the
 ; default handler (uses SHCTX).
 !macro SetHandlers
   ${GetLongPath} "$INSTDIR\${FileMainEXE}" $8
@@ -466,50 +462,50 @@
   StrCpy $0 "SOFTWARE\Classes"
   StrCpy $2 "$\"$8$\" -osint -url $\"%1$\""
 
-  ; Associate the file handlers with FirefoxHTML, if they aren't already.
+  ; Associate the file handlers with WaterfoxHTML, if they aren't already.
   ReadRegStr $6 SHCTX "$0\.htm" ""
   ${WordFind} "$6" "-" "+1{" $6
-  ${If} "$6" != "FirefoxHTML"
-    WriteRegStr SHCTX "$0\.htm"   "" "FirefoxHTML$5"
+  ${If} "$6" != "WaterfoxHTML"
+    WriteRegStr SHCTX "$0\.htm"   "" "WaterfoxHTML$5"
   ${EndIf}
 
   ReadRegStr $6 SHCTX "$0\.html" ""
   ${WordFind} "$6" "-" "+1{" $6
-  ${If} "$6" != "FirefoxHTML"
-    WriteRegStr SHCTX "$0\.html"  "" "FirefoxHTML$5"
+  ${If} "$6" != "WaterfoxHTML"
+    WriteRegStr SHCTX "$0\.html"  "" "WaterfoxHTML$5"
   ${EndIf}
 
   ReadRegStr $6 SHCTX "$0\.shtml" ""
   ${WordFind} "$6" "-" "+1{" $6
-  ${If} "$6" != "FirefoxHTML"
-    WriteRegStr SHCTX "$0\.shtml" "" "FirefoxHTML$5"
+  ${If} "$6" != "WaterfoxHTML"
+    WriteRegStr SHCTX "$0\.shtml" "" "WaterfoxHTML$5"
   ${EndIf}
 
   ReadRegStr $6 SHCTX "$0\.xht" ""
   ${WordFind} "$6" "-" "+1{" $6
-  ${If} "$6" != "FirefoxHTML"
-    WriteRegStr SHCTX "$0\.xht"   "" "FirefoxHTML$5"
+  ${If} "$6" != "WaterfoxHTML"
+    WriteRegStr SHCTX "$0\.xht"   "" "WaterfoxHTML$5"
   ${EndIf}
 
   ReadRegStr $6 SHCTX "$0\.xhtml" ""
   ${WordFind} "$6" "-" "+1{" $6
-  ${If} "$6" != "FirefoxHTML"
-    WriteRegStr SHCTX "$0\.xhtml" "" "FirefoxHTML$5"
+  ${If} "$6" != "WaterfoxHTML"
+    WriteRegStr SHCTX "$0\.xhtml" "" "WaterfoxHTML$5"
   ${EndIf}
 
-  ${AddAssociationIfNoneExist} ".pdf" "FirefoxHTML$5"
-  ${AddAssociationIfNoneExist} ".oga" "FirefoxHTML$5"
-  ${AddAssociationIfNoneExist} ".ogg" "FirefoxHTML$5"
-  ${AddAssociationIfNoneExist} ".ogv" "FirefoxHTML$5"
-  ${AddAssociationIfNoneExist} ".pdf" "FirefoxHTML$5"
-  ${AddAssociationIfNoneExist} ".webm" "FirefoxHTML$5"
+  ${AddAssociationIfNoneExist} ".pdf" "WaterfoxHTML$5"
+  ${AddAssociationIfNoneExist} ".oga" "WaterfoxHTML$5"
+  ${AddAssociationIfNoneExist} ".ogg" "WaterfoxHTML$5"
+  ${AddAssociationIfNoneExist} ".ogv" "WaterfoxHTML$5"
+  ${AddAssociationIfNoneExist} ".pdf" "WaterfoxHTML$5"
+  ${AddAssociationIfNoneExist} ".webm" "WaterfoxHTML$5"
 
-  ; An empty string is used for the 5th param because FirefoxHTML is not a
+  ; An empty string is used for the 5th param because WaterfoxHTML is not a
   ; protocol handler
-  ${AddDisabledDDEHandlerValues} "FirefoxHTML$5" "$2" "$8,1" \
+  ${AddDisabledDDEHandlerValues} "WaterfoxHTML$5" "$2" "$8,1" \
                                  "${AppRegName} HTML Document" ""
 
-  ${AddDisabledDDEHandlerValues} "FirefoxURL$5" "$2" "$8,1" "${AppRegName} URL" \
+  ${AddDisabledDDEHandlerValues} "WaterfoxURL$5" "$2" "$8,1" "${AppRegName} URL" \
                                  "true"
   ; An empty string is used for the 4th & 5th params because the following
   ; protocol handlers already have a display name and the additional keys
@@ -520,7 +516,7 @@
 !macroend
 !define SetHandlers "!insertmacro SetHandlers"
 
-; Adds the HKLM\Software\Clients\StartMenuInternet\Firefox-[pathhash] registry
+; Adds the HKLM\Software\Clients\StartMenuInternet\Waterfox-[pathhash] registry
 ; entries (does not use SHCTX).
 ;
 ; The values for StartMenuInternet are only valid under HKLM and there can only
@@ -581,34 +577,101 @@
   WriteRegStr ${RegKey} "$0\Capabilities" "ApplicationIcon" "$8,0"
   WriteRegStr ${RegKey} "$0\Capabilities" "ApplicationName" "${BrandShortName}"
 
-  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".htm"   "FirefoxHTML$2"
-  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".html"  "FirefoxHTML$2"
-  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".shtml" "FirefoxHTML$2"
-  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".xht"   "FirefoxHTML$2"
-  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".xhtml" "FirefoxHTML$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".htm"   "WaterfoxHTML$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".html"  "WaterfoxHTML$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".shtml" "WaterfoxHTML$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".xht"   "WaterfoxHTML$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".xhtml" "WaterfoxHTML$2"
 
   WriteRegStr ${RegKey} "$0\Capabilities\StartMenu" "StartMenuInternet" "$1"
 
-  WriteRegStr ${RegKey} "$0\Capabilities\URLAssociations" "ftp"    "FirefoxURL$2"
-  WriteRegStr ${RegKey} "$0\Capabilities\URLAssociations" "http"   "FirefoxURL$2"
-  WriteRegStr ${RegKey} "$0\Capabilities\URLAssociations" "https"  "FirefoxURL$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\URLAssociations" "ftp"    "WaterfoxURL$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\URLAssociations" "http"   "WaterfoxURL$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\URLAssociations" "https"  "WaterfoxURL$2"
 
   ; Registered Application
   WriteRegStr ${RegKey} "Software\RegisteredApplications" "$1" "$0\Capabilities"
 !macroend
 !define SetStartMenuInternet "!insertmacro SetStartMenuInternet"
 
-; The IconHandler reference for FirefoxHTML can end up in an inconsistent state
+; Add registry keys to support the Firefox 32 bit to 64 bit migration. These
+; registry entries are not removed on uninstall at this time. After the Firefox
+; 32 bit to 64 bit migration effort is completed these registry entries can be
+; removed during install, post update, and uninstall.
+!macro Set32to64DidMigrateReg
+  ${GetLongPath} "$INSTDIR" $1
+  ; These registry keys are always in the 32 bit hive since they are never
+  ; needed by a Firefox 64 bit install unless it has been updated from Firefox
+  ; 32 bit.
+  SetRegView 32
+
+!ifdef HAVE_64BIT_BUILD
+
+  ; Running Firefox 64 bit on Windows 64 bit
+  ClearErrors
+  ReadRegDWORD $2 HKLM "Software\Mozilla\${AppName}\32to64DidMigrate" "$1"
+  ; If there were no errors then the system was updated from Firefox 32 bit to
+  ; Firefox 64 bit and if the value is already 1 then the registry value has
+  ; already been updated in the HKLM registry.
+  ${IfNot} ${Errors}
+  ${AndIf} $2 != 1
+    ClearErrors
+    WriteRegDWORD HKLM "Software\Mozilla\${AppName}\32to64DidMigrate" "$1" 1
+    ${If} ${Errors}
+      ; There was an error writing to HKLM so just write it to HKCU
+      WriteRegDWORD HKCU "Software\Mozilla\${AppName}\32to64DidMigrate" "$1" 1
+    ${Else}
+      ; This will delete the value from HKCU if it exists
+      DeleteRegValue HKCU "Software\Mozilla\${AppName}\32to64DidMigrate" "$1"
+    ${EndIf}
+  ${EndIf}
+
+  ClearErrors
+  ReadRegDWORD $2 HKCU "Software\Mozilla\${AppName}\32to64DidMigrate" "$1"
+  ; If there were no errors then the system was updated from Firefox 32 bit to
+  ; Firefox 64 bit and if the value is already 1 then the registry value has
+  ; already been updated in the HKCU registry.
+  ${IfNot} ${Errors}
+  ${AndIf} $2 != 1
+    WriteRegDWORD HKCU "Software\Mozilla\${AppName}\32to64DidMigrate" "$1" 1
+  ${EndIf}
+
+!else
+
+  ; Running Firefox 32 bit
+  ${If} ${RunningX64}
+    ; Running Firefox 32 bit on a Windows 64 bit system
+    ClearErrors
+    ReadRegDWORD $2 HKLM "Software\Mozilla\${AppName}\32to64DidMigrate" "$1"
+    ; If there were errors the value doesn't exist yet.
+    ${If} ${Errors}
+      ClearErrors
+      WriteRegDWORD HKLM "Software\Mozilla\${AppName}\32to64DidMigrate" "$1" 0
+      ; If there were errors write the value in HKCU.
+      ${If} ${Errors}
+        WriteRegDWORD HKCU "Software\Mozilla\${AppName}\32to64DidMigrate" "$1" 0
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
+
+!endif
+
+  ClearErrors
+  SetRegView lastused
+!macroend
+!define Set32to64DidMigrateReg "!insertmacro Set32to64DidMigrateReg"
+
+; The IconHandler reference for WaterfoxHTML can end up in an inconsistent state
 ; due to changes not being detected by the IconHandler for side by side
 ; installs (see bug 268512). The symptoms can be either an incorrect icon or no
-; icon being displayed for files associated with Firefox (does not use SHCTX).
+; icon being displayed for files associated with Waterfox (does not use SHCTX).
 !macro FixShellIconHandler RegKey
-  ; Find the correct key to update, either FirefoxHTML or FirefoxHTML-[PathHash]
-  StrCpy $3 "FirefoxHTML-$AppUserModelID"
+  ; Find the correct key to update, either WaterfoxHTML or WaterfoxHTML-[PathHash]
+  StrCpy $3 "WaterfoxHTML-$AppUserModelID"
   ClearErrors
   ReadRegStr $0 ${RegKey} "Software\Classes\$3\DefaultIcon" ""
   ${If} ${Errors}
-    StrCpy $3 "FirefoxHTML"
+    StrCpy $3 "WaterfoxHTML"
   ${EndIf}
 
   ClearErrors
@@ -752,7 +815,7 @@
 ; HKCU Software\Classes keys when associating handlers. The fix uses the merged
 ; view in HKCR to check for existance of an existing association. This macro
 ; cleans affected installations by removing the HKLM and HKCU value if it is set
-; to FirefoxHTML when there is a value for PersistentHandler or by removing the
+; to WaterfoxHTML when there is a value for PersistentHandler or by removing the
 ; HKCU value when the HKLM value has a value other than an empty string.
 !macro FixBadFileAssociation FILE_TYPE
   ; Only delete the default value in case the key has values for OpenWithList,
@@ -763,16 +826,16 @@
   ${WordFind} "$1" "-" "+1{" $1
   ReadRegStr $2 HKCR "${FILE_TYPE}\PersistentHandler" ""
   ${If} "$2" != ""
-    ; Since there is a persistent handler remove FirefoxHTML as the default
-    ; value from both HKCU and HKLM if it set to FirefoxHTML.
-    ${If} "$0" == "FirefoxHTML"
+    ; Since there is a persistent handler remove WaterfoxHTML as the default
+    ; value from both HKCU and HKLM if it set to WaterfoxHTML.
+    ${If} "$0" == "WaterfoxHTML"
       DeleteRegValue HKCU "Software\Classes\${FILE_TYPE}" ""
     ${EndIf}
-    ${If} "$1" == "FirefoxHTML"
+    ${If} "$1" == "WaterfoxHTML"
       DeleteRegValue HKLM "Software\Classes\${FILE_TYPE}" ""
     ${EndIf}
-  ${ElseIf} "$0" == "FirefoxHTML"
-    ; Since HKCU is set to FirefoxHTML remove FirefoxHTML as the default value
+  ${ElseIf} "$0" == "WaterfoxHTML"
+    ; Since HKCU is set to WaterfoxHTML remove WaterfoxHTML as the default value
     ; from HKCU if HKLM is set to a value other than an empty string.
     ${If} "$1" != ""
       DeleteRegValue HKCU "Software\Classes\${FILE_TYPE}" ""
@@ -828,28 +891,28 @@
   ; Only set the file and protocol handlers if the existing one under HKCR is
   ; for this install location.
 
-  ${IsHandlerForInstallDir} "FirefoxHTML-$AppUserModelID" $R9
+  ${IsHandlerForInstallDir} "WaterfoxHTML-$AppUserModelID" $R9
   ${If} "$R9" == "true"
-    ; An empty string is used for the 5th param because FirefoxHTML is not a
+    ; An empty string is used for the 5th param because WaterfoxHTML is not a
     ; protocol handler.
-    ${AddDisabledDDEHandlerValues} "FirefoxHTML-$AppUserModelID" "$2" "$8,1" \
+    ${AddDisabledDDEHandlerValues} "WaterfoxHTML-$AppUserModelID" "$2" "$8,1" \
                                    "${AppRegName} HTML Document" ""
   ${Else}
-    ${IsHandlerForInstallDir} "FirefoxHTML" $R9
+    ${IsHandlerForInstallDir} "WaterfoxHTML" $R9
     ${If} "$R9" == "true"
-      ${AddDisabledDDEHandlerValues} "FirefoxHTML" "$2" "$8,1" \
+      ${AddDisabledDDEHandlerValues} "WaterfoxHTML" "$2" "$8,1" \
                                      "${AppRegName} HTML Document" ""
     ${EndIf}
   ${EndIf}
 
-  ${IsHandlerForInstallDir} "FirefoxURL-$AppUserModelID" $R9
+  ${IsHandlerForInstallDir} "WaterfoxURL-$AppUserModelID" $R9
   ${If} "$R9" == "true"
-    ${AddDisabledDDEHandlerValues} "FirefoxURL-$AppUserModelID" "$2" "$8,1" \
+    ${AddDisabledDDEHandlerValues} "WaterfoxURL-$AppUserModelID" "$2" "$8,1" \
                                    "${AppRegName} URL" "true"
   ${Else}
-    ${IsHandlerForInstallDir} "FirefoxURL" $R9
+    ${IsHandlerForInstallDir} "WaterfoxURL" $R9
     ${If} "$R9" == "true"
-      ${AddDisabledDDEHandlerValues} "FirefoxURL" "$2" "$8,1" \
+      ${AddDisabledDDEHandlerValues} "WaterfoxURL" "$2" "$8,1" \
                                      "${AppRegName} URL" "true"
     ${EndIf}
   ${EndIf}
@@ -927,49 +990,6 @@
 !macroend
 !define RegisterAccessibleHandler "!insertmacro RegisterAccessibleHandler"
 
-!ifndef HAVE_64BIT_BUILD
-!define IID_IAccessible "{618736E0-3C3D-11CF-810C-00AA00389B71}"
-!define CLSID_UniversalMarshaler "{00020404-0000-0000-C000-000000000046}"
-!define OleAccTypeLib "{1EA4DBF0-3C3B-11CF-810C-00AA00389B71}"
-!define OleAccTypeLibVersion "1.1"
-Function FixCorruptOleAccRegistration
-  Push $0
-
-  ; Read IAccessible's ProxyStubClsid32. If it is not CLSID_UniversalMarshaler
-  ; then we must be running Windows 10 Creators Update which does not use a
-  ; type library.
-  ReadRegStr $0 HKCR "Interface\${IID_IAccessible}\ProxyStubClsid32" ""
-  ${Unless} "$0" == "${CLSID_UniversalMarshaler}"
-    Pop $0
-    Return
-  ${EndIf}
-
-  Push $1
-
-  ; IAccessible is using the universal marshler, therefore we expect a valid
-  ; TypeLib key to exist
-  ClearErrors
-  ReadRegStr $0 HKCR "Interface\${IID_IAccessible}\TypeLib" ""
-  ReadRegStr $1 HKCR "Interface\${IID_IAccessible}\TypeLib" "Version"
-  ReadRegStr $0 HKCR "TypeLib\$0\$1\0\win32" ""
-  Pop $1
-  ${IfNot} ${Errors}
-  ${AndIf} ${FileExists} "$0"
-    Pop $0
-    Return
-  ${EndIf}
-
-  Pop $0
-
-  ; Some third-party code has previously overridden system typelibs
-  ; with their own but did not clean itself up during uninstall.
-  ; Revert to the system typelib.
-  WriteRegStr HKCR "Interface\${IID_IAccessible}\TypeLib" "" "${OleAccTypeLib}"
-  WriteRegStr HKCR "Interface\${IID_IAccessible}\TypeLib" "Version" "${OleAccTypeLibVersion}"
-FunctionEnd
-!define FixCorruptOleAccRegistration "Call FixCorruptOleAccRegistration"
-!endif
-
 ; Removes various registry entries for reasons noted below (does not use SHCTX).
 !macro RemoveDeprecatedKeys
   StrCpy $0 "SOFTWARE\Classes"
@@ -978,8 +998,14 @@ FunctionEnd
   ${RegCleanAppHandler} "chrome"
 
   ; Remove protocol handler registry keys added by the MS shim
-  DeleteRegKey HKLM "Software\Classes\Firefox.URL"
-  DeleteRegKey HKCU "Software\Classes\Firefox.URL"
+  DeleteRegKey HKLM "Software\Classes\Waterfox.URL"
+  DeleteRegKey HKCU "Software\Classes\Waterfox.URL"
+
+  ; Remove old browser registration with "Firefox" prefix from registry
+  DeleteRegKey HKLM "Software\Clients\StartMenuInternet\Firefox-$AppUserModelID"
+  DeleteRegValue HKLM "Software\RegisteredApplications" "Firefox-$AppUserModelID"
+  DeleteRegKey HKCU "Software\Clients\StartMenuInternet\Firefox-$AppUserModelID"
+  DeleteRegValue HKCU "Software\RegisteredApplications" "Firefox-$AppUserModelID"
 !macroend
 !define RemoveDeprecatedKeys "!insertmacro RemoveDeprecatedKeys"
 
@@ -1125,7 +1151,7 @@ FunctionEnd
         ${If} $AddTaskbarSC == ""
           ; No need to check the default on Win8 and later
           ${If} ${AtMostWin2008R2}
-            ; Check if the Firefox is the http handler for this user
+            ; Check if the Waterfox is the http handler for this user
             SetShellVarContext current ; Set SHCTX to the current user
             ${IsHandlerForInstallDir} "http" $R9
             ${If} $TmpVal == "HKLM"

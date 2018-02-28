@@ -4,15 +4,6 @@
 
 from mozboot.base import BaseBootstrapper
 
-STYLO_MOZCONFIG = '''
-To enable Stylo in your builds, paste the lines between the chevrons
-(>>> and <<<) into your mozconfig file:
-
-<<<
-ac_add_options --enable-stylo
->>>
-'''
-
 class FreeBSDBootstrapper(BaseBootstrapper):
     def __init__(self, version, flavor, **kwargs):
         BaseBootstrapper.__init__(self, **kwargs)
@@ -21,7 +12,6 @@ class FreeBSDBootstrapper(BaseBootstrapper):
 
         self.packages = [
             'autoconf213',
-            'cargo',
             'gmake',
             'gtar',
             'mercurial',
@@ -36,6 +26,7 @@ class FreeBSDBootstrapper(BaseBootstrapper):
             'gconf2',
             'gtk2',
             'gtk3',
+            'llvm40',
             'pulseaudio',
             'v4l_compat',
             'yasm',
@@ -43,10 +34,6 @@ class FreeBSDBootstrapper(BaseBootstrapper):
 
         if not self.which('unzip'):
             self.packages.append('unzip')
-
-        # GCC 4.2 or Clang 3.4 in base are too old
-        if self.flavor == 'freebsd' and self.version < 11:
-            self.browser_packages.append('gcc')
 
     def pkg_install(self, *packages):
         command = ['pkg', 'install']
@@ -70,11 +57,8 @@ class FreeBSDBootstrapper(BaseBootstrapper):
         self.pkg_install(*self.browser_packages)
 
     def ensure_stylo_packages(self, state_dir, checkout_root):
-        self.pkg_install('llvm40')
-
-    def suggest_browser_mozconfig(self):
-        if self.stylo:
-            print(STYLO_MOZCONFIG)
+        # Already installed as browser package
+        pass
 
     def upgrade_mercurial(self, current):
         self.pkg_install('mercurial')

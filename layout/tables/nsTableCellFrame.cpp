@@ -5,6 +5,7 @@
 
 #include "nsTableCellFrame.h"
 
+#include "gfxContext.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Helpers.h"
@@ -15,7 +16,6 @@
 #include "nsStyleContext.h"
 #include "nsStyleConsts.h"
 #include "nsPresContext.h"
-#include "nsRenderingContext.h"
 #include "nsCSSRendering.h"
 #include "nsIContent.h"
 #include "nsGenericHTMLElement.h"
@@ -372,7 +372,7 @@ nsTableCellFrame::DecorateForSelection(DrawTarget* aDrawTarget, nsPoint aPt)
 }
 
 DrawResult
-nsTableCellFrame::PaintBackground(nsRenderingContext& aRenderingContext,
+nsTableCellFrame::PaintBackground(gfxContext&          aRenderingContext,
                                   const nsRect&        aDirtyRect,
                                   nsPoint              aPt,
                                   uint32_t             aFlags)
@@ -422,14 +422,14 @@ public:
     aOutFrames->AppendElement(mFrame);
   }
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
+                     gfxContext* aCtx) override;
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
                            bool* aSnap) override;
   NS_DISPLAY_DECL_NAME("TableCellBackground", TYPE_TABLE_CELL_BACKGROUND)
 };
 
 void nsDisplayTableCellBackground::Paint(nsDisplayListBuilder* aBuilder,
-                                         nsRenderingContext* aCtx)
+                                         gfxContext* aCtx)
 {
   DrawResult result = static_cast<nsTableCellFrame*>(mFrame)->
     PaintBackground(*aCtx, mVisibleRect, ToReferenceFrame(),
@@ -709,16 +709,18 @@ nsTableCellFrame::GetCellBaseline() const
          borderPadding;
 }
 
-int32_t nsTableCellFrame::GetRowSpan()
+int32_t
+nsTableCellFrame::GetRowSpan()
 {
   int32_t rowSpan=1;
-  nsGenericHTMLElement *hc = nsGenericHTMLElement::FromContent(mContent);
 
   // Don't look at the content's rowspan if we're a pseudo cell
-  if (hc && !StyleContext()->GetPseudo()) {
-    const nsAttrValue* attr = hc->GetParsedAttr(nsGkAtoms::rowspan);
+  if (!StyleContext()->GetPseudo()) {
+    dom::Element* elem = mContent->AsElement();
+    const nsAttrValue* attr = elem->GetParsedAttr(nsGkAtoms::rowspan);
     // Note that we don't need to check the tag name, because only table cells
-    // and table headers parse the "rowspan" attribute into an integer.
+    // (including MathML <mtd>) and table headers parse the "rowspan" attribute
+    // into an integer.
     if (attr && attr->Type() == nsAttrValue::eInteger) {
        rowSpan = attr->GetIntegerValue();
     }
@@ -726,16 +728,20 @@ int32_t nsTableCellFrame::GetRowSpan()
   return rowSpan;
 }
 
-int32_t nsTableCellFrame::GetColSpan()
+int32_t
+nsTableCellFrame::GetColSpan()
 {
   int32_t colSpan=1;
-  nsGenericHTMLElement *hc = nsGenericHTMLElement::FromContent(mContent);
 
   // Don't look at the content's colspan if we're a pseudo cell
-  if (hc && !StyleContext()->GetPseudo()) {
-    const nsAttrValue* attr = hc->GetParsedAttr(nsGkAtoms::colspan);
+  if (!StyleContext()->GetPseudo()) {
+    dom::Element* elem = mContent->AsElement();
+    const nsAttrValue* attr = elem->GetParsedAttr(
+      MOZ_UNLIKELY(elem->IsMathMLElement()) ? nsGkAtoms::columnspan_
+                                            : nsGkAtoms::colspan);
     // Note that we don't need to check the tag name, because only table cells
-    // and table headers parse the "colspan" attribute into an integer.
+    // (including MathML <mtd>) and table headers parse the "colspan" attribute
+    // into an integer.
     if (attr && attr->Type() == nsAttrValue::eInteger) {
        colSpan = attr->GetIntegerValue();
     }
@@ -744,7 +750,7 @@ int32_t nsTableCellFrame::GetColSpan()
 }
 
 /* virtual */ nscoord
-nsTableCellFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsTableCellFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord result = 0;
   DISPLAY_MIN_WIDTH(this, result);
@@ -756,7 +762,7 @@ nsTableCellFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-nsTableCellFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsTableCellFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord result = 0;
   DISPLAY_PREF_WIDTH(this, result);
@@ -960,9 +966,10 @@ nsTableCellFrame::Reflow(nsPresContext*           aPresContext,
   FinishReflowChild(firstKid, aPresContext, kidSize, &kidReflowInput,
                     wm, kidOrigin, containerSize, 0);
 
-  nsTableFrame::InvalidateTableFrame(firstKid, origRect, origVisualOverflow,
-                                     firstReflow);
-
+  if (tableFrame->IsBorderCollapse()) {
+    nsTableFrame::InvalidateTableFrame(firstKid, origRect, origVisualOverflow,
+                                       firstReflow);
+  }
   // first, compute the bsize which can be set w/o being restricted by
   // available bsize
   LogicalSize cellSize(wm);
@@ -1064,14 +1071,12 @@ nsTableCellFrame::GetBorderWidth(WritingMode aWM) const
 }
 
 void
-nsTableCellFrame::DoUpdateStyleOfOwnedAnonBoxes(ServoStyleSet& aStyleSet,
-                                                nsStyleChangeList& aChangeList,
-                                                nsChangeHint aHintForThisFrame)
+nsTableCellFrame::AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult)
 {
   nsIFrame* kid = mFrames.FirstChild();
   MOZ_ASSERT(kid && !kid->GetNextSibling(),
              "Table cells should have just one child");
-  UpdateStyleOfChildAnonBox(kid, aStyleSet, aChangeList, aHintForThisFrame);
+  aResult.AppendElement(OwnedAnonBox(kid));
 }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -1113,12 +1118,12 @@ nsBCTableCellFrame::GetFrameName(nsAString& aResult) const
 LogicalMargin
 nsBCTableCellFrame::GetBorderWidth(WritingMode aWM) const
 {
-  int32_t pixelsToTwips = nsPresContext::AppUnitsPerCSSPixel();
+  int32_t d2a = PresContext()->AppUnitsPerDevPixel();
   return LogicalMargin(aWM,
-                       BC_BORDER_END_HALF_COORD(pixelsToTwips, mBStartBorder),
-                       BC_BORDER_START_HALF_COORD(pixelsToTwips, mIEndBorder),
-                       BC_BORDER_START_HALF_COORD(pixelsToTwips, mBEndBorder),
-                       BC_BORDER_END_HALF_COORD(pixelsToTwips, mIStartBorder));
+                       BC_BORDER_END_HALF_COORD(d2a, mBStartBorder),
+                       BC_BORDER_START_HALF_COORD(d2a, mIEndBorder),
+                       BC_BORDER_START_HALF_COORD(d2a, mBEndBorder),
+                       BC_BORDER_END_HALF_COORD(d2a, mIStartBorder));
 }
 
 BCPixelSize
@@ -1158,17 +1163,17 @@ nsBCTableCellFrame::SetBorderWidth(LogicalSide aSide, BCPixelSize aValue)
 nsBCTableCellFrame::GetBorderOverflow()
 {
   WritingMode wm = GetWritingMode();
-  int32_t p2t = nsPresContext::AppUnitsPerCSSPixel();
+  int32_t d2a = PresContext()->AppUnitsPerDevPixel();
   LogicalMargin halfBorder(wm,
-                           BC_BORDER_START_HALF_COORD(p2t, mBStartBorder),
-                           BC_BORDER_END_HALF_COORD(p2t, mIEndBorder),
-                           BC_BORDER_END_HALF_COORD(p2t, mBEndBorder),
-                           BC_BORDER_START_HALF_COORD(p2t, mIStartBorder));
+                           BC_BORDER_START_HALF_COORD(d2a, mBStartBorder),
+                           BC_BORDER_END_HALF_COORD(d2a, mIEndBorder),
+                           BC_BORDER_END_HALF_COORD(d2a, mBEndBorder),
+                           BC_BORDER_START_HALF_COORD(d2a, mIStartBorder));
   return halfBorder.GetPhysicalMargin(wm);
 }
 
 DrawResult
-nsBCTableCellFrame::PaintBackground(nsRenderingContext& aRenderingContext,
+nsBCTableCellFrame::PaintBackground(gfxContext&          aRenderingContext,
                                     const nsRect&        aDirtyRect,
                                     nsPoint              aPt,
                                     uint32_t             aFlags)

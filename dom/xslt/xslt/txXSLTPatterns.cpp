@@ -300,7 +300,7 @@ txRootPattern::toString(nsAString& aDest)
  * This looks like the id() function, but may only have LITERALs as
  * argument.
  */
-txIdPattern::txIdPattern(const nsSubstring& aString)
+txIdPattern::txIdPattern(const nsAString& aString)
 {
     nsWhitespaceTokenizer tokenizer(aString);
     while (tokenizer.hasMoreTokens()) {
@@ -366,7 +366,7 @@ txIdPattern::toString(nsAString& aDest)
 /*
  * txKeyPattern
  *
- * txKeyPattern matches if the given node is in the evalation of 
+ * txKeyPattern matches if the given node is in the evalation of
  * the key() function
  * This resembles the key() function, but may only have LITERALs as
  * argument.

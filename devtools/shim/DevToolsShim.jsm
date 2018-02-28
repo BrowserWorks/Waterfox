@@ -4,6 +4,16 @@
 
 "use strict";
 
+const {utils: Cu, classes: Cc, interfaces: Ci} = Components;
+const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+
+const { XPCOMUtils } = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
+XPCOMUtils.defineLazyGetter(this, "DevtoolsStartup", () => {
+  return Cc["@mozilla.org/devtools/startup-clh;1"]
+            .getService(Ci.nsICommandLineHandler)
+            .wrappedJSObject;
+});
+
 this.EXPORTED_SYMBOLS = [
   "DevToolsShim",
 ];
@@ -31,18 +41,47 @@ function removeItem(array, callback) {
  * installed.
  */
 this.DevToolsShim = {
-  gDevTools: null,
+  _gDevTools: null,
   listeners: [],
   tools: [],
   themes: [],
 
   /**
-   * Check if DevTools are currently installed and available.
+   * Lazy getter for the `gDevTools` instance. Should only be called when users interacts
+   * with DevTools as it will force loading them.
+   *
+   * @return {DevTools} a devtools instance (from client/framework/devtools)
+   */
+  get gDevTools() {
+    if (!this.isInstalled()) {
+      throw new Error(`Trying to interact with DevTools, but they are not installed`);
+    }
+
+    if (!this.isInitialized()) {
+      this._initDevTools();
+    }
+
+    return this._gDevTools;
+  },
+
+  /**
+   * Check if DevTools are currently installed (but not necessarily initialized).
    *
    * @return {Boolean} true if DevTools are installed.
    */
   isInstalled: function () {
-    return !!this.gDevTools;
+    return Services.io.getProtocolHandler("resource")
+             .QueryInterface(Ci.nsIResProtocolHandler)
+             .hasSubstitution("devtools");
+  },
+
+  /**
+   * Check if DevTools have already been initialized.
+   *
+   * @return {Boolean} true if DevTools are initialized.
+   */
+  isInitialized: function () {
+    return !!this._gDevTools;
   },
 
   /**
@@ -51,9 +90,9 @@ this.DevToolsShim = {
    * @param {DevTools} a devtools instance (from client/framework/devtools)
    */
   register: function (gDevTools) {
-    this.gDevTools = gDevTools;
+    this._gDevTools = gDevTools;
     this._onDevToolsRegistered();
-    this.gDevTools.emit("devtools-registered");
+    this._gDevTools.emit("devtools-registered");
   },
 
   /**
@@ -61,14 +100,14 @@ this.DevToolsShim = {
    * shutdown.
    */
   unregister: function () {
-    if (this.isInstalled()) {
-      this.gDevTools.emit("devtools-unregistered");
-      this.gDevTools = null;
+    if (this.isInitialized()) {
+      this._gDevTools.emit("devtools-unregistered");
+      this._gDevTools = null;
     }
   },
 
   /**
-   * The following methods can be called before DevTools are installed:
+   * The following methods can be called before DevTools are initialized:
    * - on
    * - off
    * - registerTool
@@ -76,7 +115,7 @@ this.DevToolsShim = {
    * - registerTheme
    * - unregisterTheme
    *
-   * If DevTools are not installed when calling the method, DevToolsShim will call the
+   * If DevTools are not initialized when calling the method, DevToolsShim will call the
    * appropriate method as soon as a gDevTools instance is registered.
    */
 
@@ -86,8 +125,8 @@ this.DevToolsShim = {
    * - toolbox-destroyed
    */
   on: function (event, listener) {
-    if (this.isInstalled()) {
-      this.gDevTools.on(event, listener);
+    if (this.isInitialized()) {
+      this._gDevTools.on(event, listener);
     } else {
       this.listeners.push([event, listener]);
     }
@@ -98,8 +137,8 @@ this.DevToolsShim = {
    * with on().
    */
   off: function (event, listener) {
-    if (this.isInstalled()) {
-      this.gDevTools.off(event, listener);
+    if (this.isInitialized()) {
+      this._gDevTools.off(event, listener);
     } else {
       removeItem(this.listeners, ([e, l]) => e === event && l === listener);
     }
@@ -110,8 +149,8 @@ this.DevToolsShim = {
    * no longer supported.
    */
   registerTool: function (tool) {
-    if (this.isInstalled()) {
-      this.gDevTools.registerTool(tool);
+    if (this.isInitialized()) {
+      this._gDevTools.registerTool(tool);
     } else {
       this.tools.push(tool);
     }
@@ -122,8 +161,8 @@ this.DevToolsShim = {
    * no longer supported.
    */
   unregisterTool: function (tool) {
-    if (this.isInstalled()) {
-      this.gDevTools.unregisterTool(tool);
+    if (this.isInitialized()) {
+      this._gDevTools.unregisterTool(tool);
     } else {
       removeItem(this.tools, t => t === tool);
     }
@@ -134,8 +173,8 @@ this.DevToolsShim = {
    * no longer supported.
    */
   registerTheme: function (theme) {
-    if (this.isInstalled()) {
-      this.gDevTools.registerTheme(theme);
+    if (this.isInitialized()) {
+      this._gDevTools.registerTheme(theme);
     } else {
       this.themes.push(theme);
     }
@@ -146,8 +185,8 @@ this.DevToolsShim = {
    * no longer supported.
    */
   unregisterTheme: function (theme) {
-    if (this.isInstalled()) {
-      this.gDevTools.unregisterTheme(theme);
+    if (this.isInitialized()) {
+      this._gDevTools.unregisterTheme(theme);
     } else {
       removeItem(this.themes, t => t === theme);
     }
@@ -160,10 +199,11 @@ this.DevToolsShim = {
    *         are not installed
    */
   getOpenedScratchpads: function () {
-    if (!this.isInstalled()) {
+    if (!this.isInitialized()) {
       return [];
     }
-    return this.gDevTools.getOpenedScratchpads();
+
+    return this._gDevTools.getOpenedScratchpads();
   },
 
   /**
@@ -174,21 +214,64 @@ this.DevToolsShim = {
     if (!this.isInstalled()) {
       return;
     }
-    this.gDevTools.restoreScratchpadSession(scratchpads);
+
+    if (!this.isInitialized()) {
+      this._initDevTools();
+    }
+
+    this._gDevTools.restoreScratchpadSession(scratchpads);
+  },
+
+  /**
+   * Called from nsContextMenu.js in mozilla-central when using the Inspect Element
+   * context menu item.
+   *
+   * @param {XULTab} tab
+   *        The browser tab on which inspect node was used.
+   * @param {Array} selectors
+   *        An array of CSS selectors to find the target node. Several selectors can be
+   *        needed if the element is nested in frames and not directly in the root
+   *        document.
+   * @return {Promise} a promise that resolves when the node is selected in the inspector
+   *         markup view or that resolves immediately if DevTools are not installed.
+   */
+  inspectNode: function (tab, selectors) {
+    if (!this.isInstalled()) {
+      return Promise.resolve();
+    }
+
+    // Initialize DevTools explicitly to pass the "ContextMenu" reason to telemetry.
+    if (!this.isInitialized()) {
+      this._initDevTools("ContextMenu");
+    }
+
+    return this.gDevTools.inspectNode(tab, selectors);
+  },
+
+  /**
+   * Initialize DevTools via the devtools-startup command line handler component.
+   * Overridden in tests.
+   *
+   * @param {String} reason
+   *        optional, if provided should be a valid entry point for DEVTOOLS_ENTRY_POINT
+   *        in toolkit/components/telemetry/Histograms.json
+   */
+  _initDevTools: function (reason) {
+    DevtoolsStartup.initDevTools(reason);
   },
 
   _onDevToolsRegistered: function () {
     // Register all pending event listeners on the real gDevTools object.
     for (let [event, listener] of this.listeners) {
-      this.gDevTools.on(event, listener);
+      this._gDevTools.on(event, listener);
     }
 
     for (let tool of this.tools) {
-      this.gDevTools.registerTool(tool);
+      this._gDevTools.registerTool(tool);
     }
 
     for (let theme of this.themes) {
-      this.gDevTools.registerTheme(theme);
+      this._gDevTools.registerTheme(theme);
     }
 
     this.listeners = [];
@@ -196,3 +279,36 @@ this.DevToolsShim = {
     this.themes = [];
   },
 };
+
+/**
+ * Compatibility layer for addon-sdk. Remove when Firefox 57 hits release.
+ *
+ * The methods below are used by classes and tests from addon-sdk/
+ * If DevTools are not installed when calling one of them, the call will throw.
+ */
+
+let addonSdkMethods = [
+  "closeToolbox",
+  "connectDebuggerServer",
+  "createDebuggerClient",
+  "getTargetForTab",
+  "getToolbox",
+  "initBrowserToolboxProcessForAddon",
+  "showToolbox",
+];
+
+/**
+ * Compatibility layer for webextensions.
+ *
+ * Those methods are called only after a DevTools webextension was loaded in DevTools,
+ * therefore DevTools should always be available when they are called.
+ */
+let webExtensionsMethods = [
+  "getTheme",
+];
+
+for (let method of [...addonSdkMethods, ...webExtensionsMethods]) {
+  this.DevToolsShim[method] = function () {
+    return this.gDevTools[method].apply(this.gDevTools, arguments);
+  };
+}

@@ -24,6 +24,7 @@ interface IID;
 interface nsIBrowserDOMWindow;
 interface nsIMessageBroadcaster;
 interface nsIDOMCrypto;
+interface XULControllers;
 
 // http://www.whatwg.org/specs/web-apps/current-work/
 [PrimaryGlobal, LegacyUnenumerableNamedProperties, NeedResolve]
@@ -263,7 +264,7 @@ partial interface Window {
   [Throws, UnsafeInPrerendering, NeedsCallerType] void sizeToContent();
 
   // XXX Shouldn't this be in nsIDOMChromeWindow?
-  [ChromeOnly, Replaceable, Throws] readonly attribute MozControllers controllers;
+  [ChromeOnly, Replaceable, Throws] readonly attribute XULControllers controllers;
 
   [ChromeOnly, Throws] readonly attribute Element? realFrameElement;
 
@@ -322,9 +323,6 @@ partial interface Window {
    * after we ditch this property and switch to static attributes. See
    */
   [ChromeOnly, Throws] readonly attribute MozSelfSupport MozSelfSupport;
-
-  [Pure]
-           attribute EventHandler onwheel;
 
            attribute EventHandler ondevicemotion;
            attribute EventHandler ondeviceorientation;
@@ -405,6 +403,9 @@ interface ChromeWindow {
 
   [Func="nsGlobalWindow::IsPrivilegedChromeWindow"]
   readonly attribute unsigned short windowState;
+
+  [Func="nsGlobalWindow::IsPrivilegedChromeWindow"]
+  readonly attribute boolean isFullyOccluded;
 
   /**
    * browserDOMWindow provides access to yet another layer of
@@ -518,7 +519,12 @@ partial interface Window {
 
 partial interface Window {
   /**
-   * Returns a list of locales that the application should be localized to.
+   * Returns a list of locales that the internationalization components
+   * should be localized to.
+   *
+   * The function name refers to Regional Preferences which can be either
+   * fetched from the internal internationalization database (CLDR), or
+   * from the host environment.
    *
    * The result is a sorted list of valid locale IDs and it should be
    * used for all APIs that accept list of locales, like ECMA402 and L10n APIs.
@@ -528,7 +534,7 @@ partial interface Window {
    * Example: ["en-US", "de", "pl", "sr-Cyrl", "zh-Hans-HK"]
    */
   [Func="IsChromeOrXBL"]
-  sequence<DOMString> getAppLocalesAsBCP47();
+  sequence<DOMString> getRegionalPrefsLocales();
 
 #ifdef ENABLE_INTL_API
   /**

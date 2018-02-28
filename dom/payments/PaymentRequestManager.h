@@ -10,6 +10,8 @@
 #include "nsISupports.h"
 #include "PaymentRequest.h"
 #include "mozilla/dom/PaymentRequestBinding.h"
+#include "mozilla/dom/PaymentRequestUpdateEventBinding.h"
+#include "mozilla/dom/PaymentResponseBinding.h"
 #include "nsCOMPtr.h"
 #include "nsTArray.h"
 
@@ -17,6 +19,7 @@ namespace mozilla {
 namespace dom {
 
 class PaymentRequestChild;
+class IPCPaymentActionRequest;
 
 /*
  *  PaymentRequestManager is a singleton used to manage the created PaymentRequests.
@@ -44,9 +47,24 @@ public:
                 const PaymentOptions& aOptions,
                 PaymentRequest** aRequest);
 
+  nsresult CanMakePayment(const nsAString& aRequestId);
+  nsresult ShowPayment(const nsAString& aRequestId);
+  nsresult AbortPayment(const nsAString& aRequestId);
+  nsresult CompletePayment(const nsAString& aRequestId,
+                           const PaymentComplete& aComplete);
+  nsresult UpdatePayment(const nsAString& aRequestId,
+                         const PaymentDetailsUpdate& aDetails);
+
+  nsresult RespondPayment(const IPCPaymentActionResponse& aResponse);
+  nsresult ChangeShippingAddress(const nsAString& aRequestId,
+                                 const IPCPaymentAddress& aAddress);
+  nsresult ChangeShippingOption(const nsAString& aRequestId,
+                                const nsAString& aOption);
+
   nsresult
   ReleasePaymentChild(PaymentRequestChild* aPaymentChild);
-protected:
+
+private:
   PaymentRequestManager() = default;
   ~PaymentRequestManager() = default;
 
@@ -54,9 +72,14 @@ protected:
                            PaymentRequestChild** aPaymentChild);
   nsresult ReleasePaymentChild(PaymentRequest* aRequest);
 
+  nsresult SendRequestPayment(PaymentRequest* aRequest,
+                              const IPCPaymentActionRequest& action,
+                              bool aReleaseAfterSend = false);
+
   // The container for the created PaymentRequests
   nsTArray<RefPtr<PaymentRequest>> mRequestQueue;
   nsRefPtrHashtable<nsRefPtrHashKey<PaymentRequest>, PaymentRequestChild> mPaymentChildHash;
+  RefPtr<PaymentRequest> mShowingRequest;
 };
 
 } // end of namespace dom

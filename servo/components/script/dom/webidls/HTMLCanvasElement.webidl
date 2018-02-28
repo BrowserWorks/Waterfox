@@ -5,10 +5,11 @@
 // https://html.spec.whatwg.org/multipage/#htmlcanvaselement
 typedef (CanvasRenderingContext2D or WebGLRenderingContext) RenderingContext;
 
+[HTMLConstructor]
 interface HTMLCanvasElement : HTMLElement {
-  [Pure]
+  [CEReactions, Pure]
            attribute unsigned long width;
-  [Pure]
+  [CEReactions, Pure]
            attribute unsigned long height;
 
   RenderingContext? getContext(DOMString contextId, any... arguments);

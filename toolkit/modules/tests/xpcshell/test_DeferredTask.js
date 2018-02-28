@@ -13,8 +13,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
                                   "resource://gre/modules/DeferredTask.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
 
 /**
  * Due to the nature of this module, most of the tests are time-dependent.  All
@@ -189,8 +187,8 @@ add_test(function test_arm_async() {
  * Checks that "arm" accepts a Task.jsm generator function.
  */
 add_test(function test_arm_async_generator() {
-  let deferredTask = new DeferredTask(function*() {
-    yield Promise.resolve();
+  let deferredTask = new DeferredTask(async function() {
+    await Promise.resolve();
     run_next_test();
   }, 50);
 

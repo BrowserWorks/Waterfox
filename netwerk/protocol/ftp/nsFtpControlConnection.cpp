@@ -64,7 +64,7 @@ nsFtpControlConnection::OnInputStreamReady(nsIAsyncInputStream *stream)
     return NS_OK;
 }
 
-nsFtpControlConnection::nsFtpControlConnection(const nsCSubstring& host,
+nsFtpControlConnection::nsFtpControlConnection(const nsACString& host,
                                                uint32_t port)
     : mServerType(0), mSessionId(gFtpHandler->GetSessionId())
     , mUseUTF8(false), mHost(host), mPort(port)
@@ -72,7 +72,7 @@ nsFtpControlConnection::nsFtpControlConnection(const nsCSubstring& host,
     LOG_INFO(("FTP:CC created @%p", this));
 }
 
-nsFtpControlConnection::~nsFtpControlConnection() 
+nsFtpControlConnection::~nsFtpControlConnection()
 {
     LOG_INFO(("FTP:CC destroyed @%p", this));
 }
@@ -80,14 +80,14 @@ nsFtpControlConnection::~nsFtpControlConnection()
 bool
 nsFtpControlConnection::IsAlive()
 {
-    if (!mSocket) 
+    if (!mSocket)
         return false;
 
     bool isAlive = false;
     mSocket->IsAlive(&isAlive);
     return isAlive;
 }
-nsresult 
+nsresult
 nsFtpControlConnection::Connect(nsIProxyInfo* proxyInfo,
                                 nsITransportEventSink* eventSink)
 {
@@ -110,7 +110,7 @@ nsFtpControlConnection::Connect(nsIProxyInfo* proxyInfo,
 
     // proxy transport events back to current thread
     if (eventSink)
-        mSocket->SetEventSink(eventSink, NS_GetCurrentThread());
+        mSocket->SetEventSink(eventSink, GetCurrentThreadEventTarget());
 
     // open buffered, blocking output stream to socket.  so long as commands
     // do not exceed 1024 bytes in length, the writing thread (the main thread)
@@ -128,7 +128,7 @@ nsFtpControlConnection::Connect(nsIProxyInfo* proxyInfo,
                                   getter_AddRefs(inStream));
     if (NS_SUCCEEDED(rv))
         mSocketInput = do_QueryInterface(inStream);
-    
+
     return rv;
 }
 
@@ -147,15 +147,15 @@ nsFtpControlConnection::WaitData(nsFtpControlConnectionListener *listener)
     NS_ENSURE_STATE(mSocketInput);
 
     mListener = listener;
-    return mSocketInput->AsyncWait(this, 0, 0, NS_GetCurrentThread());
+    return mSocketInput->AsyncWait(this, 0, 0, GetCurrentThreadEventTarget());
 }
 
-nsresult 
+nsresult
 nsFtpControlConnection::Disconnect(nsresult status)
 {
     if (!mSocket)
         return NS_OK;  // already disconnected
-    
+
     LOG_INFO(("FTP:(%p) CC disconnecting (%" PRIx32 ")", this,
               static_cast<uint32_t>(status)));
 
@@ -171,8 +171,8 @@ nsFtpControlConnection::Disconnect(nsresult status)
     return NS_OK;
 }
 
-nsresult 
-nsFtpControlConnection::Write(const nsCSubstring& command)
+nsresult
+nsFtpControlConnection::Write(const nsACString& command)
 {
     NS_ENSURE_STATE(mSocketOutput);
 
@@ -185,6 +185,6 @@ nsFtpControlConnection::Write(const nsCSubstring& command)
 
     if (len != cnt)
         return NS_ERROR_FAILURE;
-    
+
     return NS_OK;
 }

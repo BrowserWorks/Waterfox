@@ -18,21 +18,9 @@ namespace mozilla {
 namespace layers {
 
 void
-WebRenderContainerLayer::ClearAnimations()
-{
-
-  if (!GetAnimations().IsEmpty()) {
-    mManager->AsWebRenderLayerManager()->
-      AddCompositorAnimationsIdForDiscard(GetCompositorAnimationsId());
-  }
-
-  Layer::ClearAnimations();
-}
-
-void
 WebRenderContainerLayer::UpdateTransformDataForAnimation()
 {
-  for (Animation& animation : mAnimations) {
+  for (Animation& animation : mAnimationInfo.GetAnimations()) {
     if (animation.property() == eCSSProperty_transform) {
       TransformData& transformData = animation.data().get_TransformData();
       transformData.inheritedXScale() = GetInheritedXScale();
@@ -55,8 +43,7 @@ WebRenderContainerLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
   float* opacityForSC = &opacity;
   uint64_t animationsId = 0;
 
-  if (gfxPrefs::WebRenderOMTAEnabled() &&
-      !GetAnimations().IsEmpty()) {
+  if (!GetAnimations().IsEmpty()) {
     MOZ_ASSERT(GetCompositorAnimationsId());
 
     OptionalOpacity opacityForCompositor = void_t();
@@ -100,7 +87,7 @@ WebRenderContainerLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
     // going to end up clobbering it with APZ animating it too.
     MOZ_ASSERT(transformForSC);
 
-    EnsureAnimationsId();
+    mAnimationInfo.EnsureAnimationsId();
     animationsId = GetCompositorAnimationsId();
     // We need to set the transform in the stacking context to null for it to
     // pick up and install the animation id.
@@ -114,7 +101,7 @@ WebRenderContainerLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
     transformForSC = nullptr;
   }
 
-  nsTArray<WrFilterOp> filters;
+  nsTArray<wr::WrFilterOp> filters;
   for (const CSSFilter& filter : this->GetFilterChain()) {
     filters.AppendElement(wr::ToWrFilterOp(filter));
   }
@@ -125,16 +112,12 @@ WebRenderContainerLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
   LayerRect rect = Bounds();
   DumpLayerInfo("ContainerLayer", rect);
 
-  Maybe<WrImageMask> mask = BuildWrMaskLayer(&sc);
-  aBuilder.PushClip(sc.ToRelativeWrRect(rect), mask.ptrOr(nullptr));
-
   for (LayerPolygon& child : children) {
     if (child.layer->IsBackfaceHidden()) {
       continue;
     }
     ToWebRenderLayer(child.layer)->RenderLayer(aBuilder, sc);
   }
-  aBuilder.PopClip();
 }
 
 void
@@ -154,8 +137,8 @@ WebRenderRefLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
       PixelCastJustification::MovingDownToChildren);
   DumpLayerInfo("RefLayer", rect);
 
-  WrClipRegionToken clipRegion = aBuilder.PushClipRegion(aSc.ToRelativeWrRect(rect));
-  aBuilder.PushIFrame(aSc.ToRelativeWrRect(rect), clipRegion, wr::AsPipelineId(mId));
+  wr::LayoutRect r = aSc.ToRelativeLayoutRect(rect);
+  aBuilder.PushIFrame(r, wr::AsPipelineId(mId));
 }
 
 } // namespace layers

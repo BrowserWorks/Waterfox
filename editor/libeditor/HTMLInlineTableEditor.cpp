@@ -48,8 +48,13 @@ HTMLEditor::ShowInlineTableEditingUI(nsIDOMElement* aCell)
   NS_ENSURE_ARG_POINTER(aCell);
 
   // do nothing if aCell is not a table cell...
-  if (!HTMLEditUtils::IsTableCell(aCell)) {
+  nsCOMPtr<Element> cell = do_QueryInterface(aCell);
+  if (!cell || !HTMLEditUtils::IsTableCell(cell)) {
     return NS_OK;
+  }
+ 
+  if (NS_WARN_IF(!IsDescendantOfEditorRoot(cell))) {
+    return NS_ERROR_UNEXPECTED;
   }
 
   if (mInlineEditedCell) {
@@ -110,21 +115,12 @@ HTMLEditor::HideInlineTableEditingUI()
   // are no document observers to notify, but we still want to
   // UnbindFromTree.
 
-  // get the root content node.
-  nsCOMPtr<nsIContent> bodyContent = GetRoot();
-
-  DeleteRefToAnonymousNode(mAddColumnBeforeButton, bodyContent, ps);
-  mAddColumnBeforeButton = nullptr;
-  DeleteRefToAnonymousNode(mRemoveColumnButton, bodyContent, ps);
-  mRemoveColumnButton = nullptr;
-  DeleteRefToAnonymousNode(mAddColumnAfterButton, bodyContent, ps);
-  mAddColumnAfterButton = nullptr;
-  DeleteRefToAnonymousNode(mAddRowBeforeButton, bodyContent, ps);
-  mAddRowBeforeButton = nullptr;
-  DeleteRefToAnonymousNode(mRemoveRowButton, bodyContent, ps);
-  mRemoveRowButton = nullptr;
-  DeleteRefToAnonymousNode(mAddRowAfterButton, bodyContent, ps);
-  mAddRowAfterButton = nullptr;
+  DeleteRefToAnonymousNode(Move(mAddColumnBeforeButton), ps);
+  DeleteRefToAnonymousNode(Move(mRemoveColumnButton), ps);
+  DeleteRefToAnonymousNode(Move(mAddColumnAfterButton), ps);
+  DeleteRefToAnonymousNode(Move(mAddRowBeforeButton), ps);
+  DeleteRefToAnonymousNode(Move(mRemoveRowButton), ps);
+  DeleteRefToAnonymousNode(Move(mAddRowAfterButton), ps);
 
   return NS_OK;
 }

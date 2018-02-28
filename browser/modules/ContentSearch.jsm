@@ -10,7 +10,6 @@ this.EXPORTED_SYMBOLS = [
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "FormHistory",
@@ -119,7 +118,7 @@ this.ContentSearch = {
     }
     this._searchSuggestionUIStrings = {};
     let searchBundle = Services.strings.createBundle("chrome://browser/locale/search.properties");
-    let stringNames = ["searchHeader", "searchPlaceholder", "searchForSomethingWith",
+    let stringNames = ["searchHeader", "searchForSomethingWith",
                        "searchWithHeader", "searchSettings"];
 
     for (let name of stringNames) {
@@ -237,6 +236,9 @@ this.ContentSearch = {
     // where === "current"), openUILinkIn will not work because that tab is no
     // longer the current one. For this case we manually load the URI.
     if (where === "current") {
+      // Since we're going to load the search in the same browser, blur the search
+      // UI to prevent further interaction before we start loading.
+      this._reply(msg, "Blur");
       browser.loadURIWithFlags(submission.uri.spec,
                                Ci.nsIWebNavigation.LOAD_FLAGS_NONE, null, null,
                                submission.postData);
@@ -410,14 +412,8 @@ this.ContentSearch = {
     Services.search.currentEngine = Services.search.getEngineByName(data);
   },
 
-  _onMessageManageEngines(msg, data) {
-    let browserWin = msg.target.ownerGlobal;
-    let pref = Services.prefs.getBoolPref("browser.preferences.useOldOrganization");
-    if (pref) {
-      browserWin.openPreferences("paneSearch", {origin: "contentSearch"});
-    } else {
-      browserWin.openPreferences("general-search", {origin: "contentSearch"});
-    }
+  _onMessageManageEngines(msg) {
+    msg.target.ownerGlobal.openPreferences("paneSearch", { origin: "contentSearch" });
   },
 
   async _onMessageGetSuggestions(msg, data) {
@@ -551,9 +547,8 @@ this.ContentSearch = {
 
   _initService() {
     if (!this._initServicePromise) {
-      let deferred = Promise.defer();
-      this._initServicePromise = deferred.promise;
-      Services.search.init(() => deferred.resolve());
+      this._initServicePromise =
+        new Promise(resolve => Services.search.init(resolve));
     }
     return this._initServicePromise;
   },

@@ -87,6 +87,7 @@ var gPrivacyPane = {
 
     let count = ContextualIdentityService.countContainerTabs();
     if (count == 0) {
+      ContextualIdentityService.notifyAllContainersCleared();
       Services.prefs.setBoolPref("privacy.userContext.enabled", false);
       return;
     }
@@ -106,8 +107,10 @@ var gPrivacyPane = {
     let rv = Services.prompt.confirmEx(window, title, message, buttonFlags,
                                        okButton, cancelButton, null, null, {});
     if (rv == 0) {
-      ContextualIdentityService.closeContainerTabs();
       Services.prefs.setBoolPref("privacy.userContext.enabled", false);
+      ContextualIdentityService.closeContainerTabs().then(() => {
+        ContextualIdentityService.notifyAllContainersCleared();
+      });
       return;
     }
 
@@ -376,13 +379,8 @@ var gPrivacyPane = {
 
       // adjust the cookie controls status
       this.readAcceptCookies();
-      let lifetimePolicy = document.getElementById("network.cookie.lifetimePolicy").value;
-      if (lifetimePolicy != Ci.nsICookieService.ACCEPT_NORMALLY &&
-          lifetimePolicy != Ci.nsICookieService.ACCEPT_SESSION &&
-          lifetimePolicy != Ci.nsICookieService.ACCEPT_FOR_N_DAYS) {
-        lifetimePolicy = Ci.nsICookieService.ACCEPT_NORMALLY;
-      }
-      document.getElementById("keepCookiesUntil").value = disabled ? 2 : lifetimePolicy;
+      document.getElementById("keepCookiesUntil").value = disabled ? 2 :
+        document.getElementById("network.cookie.lifetimePolicy").value;
 
       // adjust the checked state of the sanitizeOnShutdown checkbox
       document.getElementById("alwaysClear").checked = disabled ? false :
@@ -466,7 +464,7 @@ var gPrivacyPane = {
       permissionType: "trackingprotection",
       hideStatusColumn: true,
       windowTitle: bundlePreferences.getString("trackingprotectionpermissionstitle"),
-      introText: bundlePreferences.getString("trackingprotectionpermissionstext"),
+      introText: bundlePreferences.getString("trackingprotectionpermissionstext2"),
     };
     gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
                     null, params);
@@ -528,6 +526,7 @@ var gPrivacyPane = {
    * network.cookie.lifetimePolicy
    * - determines how long cookies are stored:
    *     0   means keep cookies until they expire
+   *     1   means ask how long to keep each cookie
    *     2   means keep cookies until the browser is closed
    */
 

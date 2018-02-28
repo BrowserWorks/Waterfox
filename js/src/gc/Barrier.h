@@ -318,8 +318,11 @@ struct InternalBarrierMethods<jsid>
 };
 
 // Base class of all barrier types.
+//
+// This is marked non-memmovable since post barriers added by derived classes
+// can add pointers to class instances to the store buffer.
 template <typename T>
-class BarrieredBase
+class MOZ_NON_MEMMOVABLE BarrieredBase
 {
   protected:
     // BarrieredBase is not directly instantiable.
@@ -436,10 +439,16 @@ class GCPtr : public WriteBarrieredBase<T>
     }
 #ifdef DEBUG
     ~GCPtr() {
-        // No prebarrier necessary as this only happens when we are sweeping or
-        // after we have just collected the nursery.  Note that the wrapped
-        // pointer may already have been freed by this point.
-        MOZ_ASSERT(CurrentThreadIsGCSweeping());
+        // No barriers are necessary as this only happens when we are sweeping
+        // or when after GCManagedDeletePolicy has triggered the barriers for us
+        // and cleared the pointer.
+        //
+        // If you get a crash here, you may need to make the containing object
+        // use GCManagedDeletePolicy and use JS::DeletePolicy to destroy it.
+        //
+        // Note that when sweeping the wrapped pointer may already have been
+        // freed by this point.
+        MOZ_ASSERT(CurrentThreadIsGCSweeping() || this->value == JS::GCPolicy<T>::initial());
         Poison(this, JS_FREED_HEAP_PTR_PATTERN, sizeof(*this));
     }
 #endif
@@ -581,9 +590,10 @@ class ReadBarriered : public ReadBarrieredBase<T>,
         this->post(JS::GCPolicy<T>::initial(), v);
     }
 
-    // Copy is creating a new edge, so we must read barrier the source edge.
+    // The copy constructor creates a new weak edge but the wrapped pointer does
+    // not escape, so no read barrier is necessary.
     explicit ReadBarriered(const ReadBarriered& v) : ReadBarrieredBase<T>(v) {
-        this->post(JS::GCPolicy<T>::initial(), v.get());
+        this->post(JS::GCPolicy<T>::initial(), v.unbarrieredGet());
     }
 
     // Move retains the lifetime status of the source edge, so does not fire
@@ -679,7 +689,7 @@ class HeapSlot : public WriteBarrieredBase<Value>
                                                const Value& target) const;
 #endif
 
-    void set(NativeObject* owner, Kind kind, uint32_t slot, const Value& v) {
+    MOZ_ALWAYS_INLINE void set(NativeObject* owner, Kind kind, uint32_t slot, const Value& v) {
         MOZ_ASSERT(preconditionForSet(owner, kind, slot));
         pre();
         value = v;

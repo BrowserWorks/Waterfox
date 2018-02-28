@@ -1,10 +1,13 @@
-no_sccache=1
-
 ac_add_options --with-l10n-base=../../l10n
 ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
 ac_add_options --with-branding=browser/branding/aurora
 
-. $topsrcdir/build/unix/mozconfig.linux32
+. "$topsrcdir/build/mozconfig.no-compile"
+
+if test `uname -m` = "x86_64"; then
+  ac_add_options --target=i686-pc-linux
+  ac_add_options --host=i686-pc-linux
+fi
 
 export MOZILLA_OFFICIAL=1
 

@@ -43,7 +43,6 @@
 #include <sys/sysctl.h>
 #endif
 
-#include "prmem.h"
 #include "prnetdb.h"
 #include "prprf.h"
 #include "prproces.h"
@@ -121,6 +120,7 @@
 #include "nsAccessibilityService.h"
 #if defined(XP_WIN)
 #include "mozilla/a11y/Compatibility.h"
+#include "mozilla/a11y/Platform.h"
 #endif
 #endif
 
@@ -222,6 +222,10 @@
 #include "SandboxBroker.h"
 #include "SandboxPermissions.h"
 #endif
+#endif
+
+#ifdef MOZ_CODE_COVERAGE
+#include "mozilla/CodeCoverageHandler.h"
 #endif
 
 extern uint32_t gRestartMode;
@@ -963,6 +967,28 @@ nsXULAppInfo::GetAccessibilityEnabled(bool* aResult)
 }
 
 NS_IMETHODIMP
+nsXULAppInfo::GetAccessibleHandlerUsed(bool* aResult)
+{
+#if defined(ACCESSIBILITY) && defined(XP_WIN)
+  *aResult = Preferences::GetBool("accessibility.handler.enabled", false) &&
+    a11y::IsHandlerRegistered();
+#else
+  *aResult = false;
+#endif
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXULAppInfo::GetShouldBlockIncompatJaws(bool* aResult)
+{
+  *aResult = false;
+#if defined(ACCESSIBILITY) && defined(XP_WIN)
+  *aResult = mozilla::a11y::Compatibility::IsOldJAWS();
+#endif
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsXULAppInfo::GetIs64Bit(bool* aResult)
 {
 #ifdef HAVE_64BIT_BUILD
@@ -979,7 +1005,8 @@ nsXULAppInfo::EnsureContentProcess()
   if (!XRE_IsParentProcess())
     return NS_ERROR_NOT_AVAILABLE;
 
-  RefPtr<ContentParent> unused = ContentParent::GetNewOrUsedBrowserProcess();
+  RefPtr<ContentParent> unused = ContentParent::GetNewOrUsedBrowserProcess(
+    NS_LITERAL_STRING(DEFAULT_REMOTE_TYPE));
   return NS_OK;
 }
 
@@ -1441,7 +1468,7 @@ ScopedXPCOMStartup::~ScopedXPCOMStartup()
       appStartup->DestroyHiddenWindow();
 
     gDirServiceProvider->DoShutdown();
-    PROFILER_MARKER("Shutdown early");
+    profiler_add_marker("Shutdown early");
 
     WriteConsoleLog();
 
@@ -1661,7 +1688,7 @@ DumpHelp()
   printf("  --console          Start %s with a debugging console.\n", (const char*) gAppData->name);
 #endif
 
-#ifdef MOZ_WIDGET_GTK
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK) || defined(XP_MACOSX)
   printf("  --headless         Run without a GUI.\n");
 #endif
 
@@ -1943,17 +1970,17 @@ ProfileLockedDialog(nsIFile* aProfileDir, nsIFile* aProfileLocalDir,
 
     nsXPIDLString killMessage;
 #ifndef XP_MACOSX
-    sb->FormatStringFromName(aUnlocker ? u"restartMessageUnlocker"
-                                       : u"restartMessageNoUnlocker",
+    sb->FormatStringFromName(aUnlocker ? "restartMessageUnlocker"
+                                       : "restartMessageNoUnlocker",
                              params, 2, getter_Copies(killMessage));
 #else
-    sb->FormatStringFromName(aUnlocker ? u"restartMessageUnlockerMac"
-                                       : u"restartMessageNoUnlockerMac",
+    sb->FormatStringFromName(aUnlocker ? "restartMessageUnlockerMac"
+                                       : "restartMessageNoUnlockerMac",
                              params, 2, getter_Copies(killMessage));
 #endif
 
     nsXPIDLString killTitle;
-    sb->FormatStringFromName(u"restartTitle",
+    sb->FormatStringFromName("restartTitle",
                              params, 1, getter_Copies(killTitle));
 
     if (!killMessage || !killTitle)
@@ -2042,10 +2069,11 @@ ProfileMissingDialog(nsINativeAppSupport* aNative)
     nsXPIDLString missingMessage;
 
     // profileMissing
-    sb->FormatStringFromName(u"profileMissing", params, 2, getter_Copies(missingMessage));
+    sb->FormatStringFromName("profileMissing",
+                             params, 2, getter_Copies(missingMessage));
 
     nsXPIDLString missingTitle;
-    sb->FormatStringFromName(u"profileMissingTitle",
+    sb->FormatStringFromName("profileMissingTitle",
                              params, 1, getter_Copies(missingTitle));
 
     if (missingMessage && missingTitle) {
@@ -2260,6 +2288,12 @@ SelectProfile(nsIProfileLock* *aResult, nsIToolkitProfileService* aProfileSvc, n
     gDoProfileReset = true;
     gDoMigration = true;
     SaveToEnv("MOZ_RESET_PROFILE_RESTART=");
+    // We only want to restore the previous session if the profile refresh was
+    // triggered by user. And if it was a user-triggered profile refresh
+    // through, say, the safeMode dialog or the troubleshooting page, the MOZ_RESET_PROFILE_RESTART
+    // env variable would be set. Hence we set MOZ_RESET_PROFILE_MIGRATE_SESSION here so that
+    // Firefox profile migrator would migrate old session data later.
+    SaveToEnv("MOZ_RESET_PROFILE_MIGRATE_SESSION=1");
   }
 
   // reset-profile and migration args need to be checked before any profiles are chosen below.
@@ -3149,12 +3183,24 @@ XREMain::XRE_mainInit(bool* aExitFlag)
   }
 
   if (gfxPlatform::IsHeadless()) {
-#ifdef MOZ_WIDGET_GTK
-    Output(false, "*** You are running in headless mode.\n");
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK) || defined(XP_MACOSX)
+    printf_stderr("*** You are running in headless mode.\n");
 #else
     Output(true, "Error: headless mode is not currently supported on this platform.\n");
     return 1;
 #endif
+
+#ifdef XP_MACOSX
+    // To avoid taking focus when running in headless mode immediately
+    // transition Firefox to a background application.
+    ProcessSerialNumber psn = { 0, kCurrentProcess };
+    OSStatus transformStatus = TransformProcessType(&psn, kProcessTransformToBackgroundApplication);
+    if (transformStatus != noErr) {
+      NS_ERROR("Failed to make process a background application.");
+      return 1;
+    }
+#endif
+
   }
 
   nsresult rv;
@@ -3995,7 +4041,7 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
     return 0;
   }
 
-#if defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)
   // Check for and process any available updates
   nsCOMPtr<nsIFile> updRoot;
   bool persistent;
@@ -4188,7 +4234,7 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
 }
 
 #if defined(MOZ_CRASHREPORTER)
-#if defined(MOZ_CONTENT_SANDBOX) && !defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_CONTENT_SANDBOX)
 void AddSandboxAnnotations()
 {
   // Include the sandbox content level, regardless of platform
@@ -4217,7 +4263,7 @@ void AddSandboxAnnotations()
     NS_LITERAL_CSTRING("ContentSandboxCapable"),
     sandboxCapable ? NS_LITERAL_CSTRING("1") : NS_LITERAL_CSTRING("0"));
 }
-#endif /* MOZ_CONTENT_SANDBOX && !MOZ_WIDGET_GONK */
+#endif /* MOZ_CONTENT_SANDBOX */
 #endif /* MOZ_CRASHREPORTER */
 
 /*
@@ -4274,6 +4320,10 @@ XREMain::XRE_mainRun()
                                      nsPrintfCString("%.16" PRIu64, uint64_t(gMozillaPoisonBase)));
   CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("FramePoisonSize"),
                                      nsPrintfCString("%" PRIu32, uint32_t(gMozillaPoisonSize)));
+
+  bool includeContextHeap =
+    Preferences::GetBool("toolkit.crashreporter.include_context_heap", false);
+  CrashReporter::SetIncludeContextHeap(includeContextHeap);
 
 #ifdef XP_WIN
   PR_CreateThread(PR_USER_THREAD, AnnotateSystemManufacturer_ThreadStart, 0,
@@ -4379,6 +4429,7 @@ XREMain::XRE_mainRun()
       rv = GetCurrentProfile(mProfileSvc, mProfD, getter_AddRefs(newProfile));
       if (NS_SUCCEEDED(rv)) {
         newProfile->SetName(gResetOldProfileName);
+        mProfileName.Assign(gResetOldProfileName);
         // Set the new profile as the default after we're done cleaning up the old profile,
         // iff that profile was already the default
         if (profileWasSelected) {
@@ -4441,9 +4492,11 @@ XREMain::XRE_mainRun()
     PR_SetEnv(saved.release());
   }
 
+#if defined(MOZ_SANDBOX)
   // Call SandboxBroker to cache directories needed for policy rules, this must
   // be called after mDirProvider.DoStartup as it needs the profile dir.
   SandboxBroker::CacheRulesDirectories();
+#endif
 #endif
 
   SaveStateForAppInitiatedRestart();
@@ -4532,7 +4585,7 @@ XREMain::XRE_mainRun()
   }
 #endif /* MOZ_INSTRUMENT_EVENT_LOOP */
 
-#if defined(MOZ_SANDBOX) && defined(XP_LINUX) && !defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_SANDBOX) && defined(XP_LINUX)
   // If we're on Linux, we now have information about the OS capabilities
   // available to us.
   SandboxInfo sandboxInfo = SandboxInfo::Get();
@@ -4555,12 +4608,12 @@ XREMain::XRE_mainRun()
   CrashReporter::AnnotateCrashReport(
     NS_LITERAL_CSTRING("ContentSandboxCapabilities"), flagsString);
 #endif /* MOZ_CRASHREPORTER */
-#endif /* MOZ_SANDBOX && XP_LINUX && !MOZ_WIDGET_GONK */
+#endif /* MOZ_SANDBOX && XP_LINUX */
 
 #if defined(MOZ_CRASHREPORTER)
-#if defined(MOZ_CONTENT_SANDBOX) && !defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_CONTENT_SANDBOX)
   AddSandboxAnnotations();
-#endif /* MOZ_CONTENT_SANDBOX && !MOZ_WIDGET_GONK */
+#endif /* MOZ_CONTENT_SANDBOX */
 #endif /* MOZ_CRASHREPORTER */
 
   {
@@ -4593,15 +4646,6 @@ void XRE_GlibInit()
 }
 #endif
 
-// Separate stub function to let us specifically suppress it in Valgrind
-void
-XRE_CreateStatsObject()
-{
-  // Initialize global variables used by histogram collection
-  // machinery that is used by by Telemetry.  Note: is never de-initialised.
-  Telemetry::CreateStatisticsRecorder();
-}
-
 /*
  * XRE_main - A class based main entry point used by most platforms.
  *            Note that on OSX, aAppData->xreDirectory will point to
@@ -4614,25 +4658,18 @@ XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig)
 
   mozilla::LogModule::Init();
 
-  // NB: this must happen after the creation of |ScopedLogging log| since
-  // ScopedLogging::ScopedLogging calls NS_LogInit, and
-  // XRE_CreateStatsObject calls Telemetry::CreateStatisticsRecorder,
-  // and NS_LogInit must be called before Telemetry::CreateStatisticsRecorder.
-  // NS_LogInit must be called before Telemetry::CreateStatisticsRecorder
-  // so as to avoid many log messages of the form
-  //   WARNING: XPCOM objects created/destroyed from static ctor/dtor: [..]
-  // See bug 1279614.
-  XRE_CreateStatsObject();
-
 #if defined(MOZ_SANDBOX) && defined(XP_LINUX) && !defined(ANDROID)
   SandboxInfo::ThreadingCheck();
 #endif
 
-  char aLocal;
-  GeckoProfilerInitRAII profilerGuard(&aLocal);
+#ifdef MOZ_CODE_COVERAGE
+  CodeCoverageHandler::Init();
+#endif
 
-  PROFILER_LABEL("Startup", "XRE_Main",
-    js::ProfileEntry::Category::OTHER);
+  char aLocal;
+  AutoProfilerInit profilerInit(&aLocal);
+
+  AUTO_PROFILER_LABEL("XREMain::XRE_main", OTHER);
 
   nsresult rv = NS_OK;
 
@@ -5162,10 +5199,16 @@ GetMaxWebProcessCount()
     return std::max(1u, optInPrefValue);
   }
 
+#ifdef RELEASE_OR_BETA
+  // For our rollout on Release and Beta, we set this pref from the
+  // e10srollout extension. On Nightly, we don't touch the pref at all,
+  // allowing stale values to disable e10s-multi for certain users.
   if (Preferences::HasUserValue("dom.ipc.processCount.web")) {
     // The user didn't opt in or out so read the .web version of the pref.
     return std::max(1, Preferences::GetInt("dom.ipc.processCount.web", 1));
   }
+#endif
+
   return optInPrefValue;
 }
 

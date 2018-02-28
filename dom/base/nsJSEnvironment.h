@@ -86,10 +86,7 @@ public:
                                 IsShrinking aShrinking = NonShrinkingGC,
                                 int64_t aSliceMillis = 0);
 
-  // If aExtraForgetSkippableCalls is -1, forgetSkippable won't be
-  // called even if the previous collection was GC.
-  static void CycleCollectNow(nsICycleCollectorListener *aListener = nullptr,
-                              int32_t aExtraForgetSkippableCalls = 0);
+  static void CycleCollectNow(nsICycleCollectorListener *aListener = nullptr);
 
   // Run a cycle collector slice, using a heuristic to decide how long to run it.
   static void RunCycleCollectorSlice(mozilla::TimeStamp aDeadline);
@@ -179,7 +176,8 @@ class AsyncErrorReporter final : public mozilla::Runnable
 public:
   // aWindow may be null if this error report is not associated with a window
   explicit AsyncErrorReporter(xpc::ErrorReport* aReport)
-    : mReport(aReport)
+    : Runnable("dom::AsyncErrorReporter")
+    , mReport(aReport)
   {}
 
   NS_IMETHOD Run() override

@@ -77,7 +77,7 @@ CacheEntry::Callback::Callback(CacheEntry* aEntry,
                                bool aSecret)
 : mEntry(aEntry)
 , mCallback(aCallback)
-, mTargetThread(do_GetCurrentThread())
+, mTarget(GetCurrentThreadEventTarget())
 , mReadOnly(aReadOnly)
 , mRevalidating(false)
 , mCheckOnAnyThread(aCheckOnAnyThread)
@@ -114,7 +114,7 @@ CacheEntry::Callback::Callback(CacheEntry* aEntry, bool aDoomWhenFoundInPinStatu
 CacheEntry::Callback::Callback(CacheEntry::Callback const &aThat)
 : mEntry(aThat.mEntry)
 , mCallback(aThat.mCallback)
-, mTargetThread(aThat.mTargetThread)
+, mTarget(aThat.mTarget)
 , mReadOnly(aThat.mReadOnly)
 , mRevalidating(aThat.mRevalidating)
 , mCheckOnAnyThread(aThat.mCheckOnAnyThread)
@@ -134,7 +134,7 @@ CacheEntry::Callback::Callback(CacheEntry::Callback const &aThat)
 
 CacheEntry::Callback::~Callback()
 {
-  ProxyRelease(mCallback, mTargetThread);
+  ProxyRelease("CacheEntry::Callback::mCallback", mCallback, mTarget);
 
   mEntry->ReleaseHandleRef();
   MOZ_COUNT_DTOR(CacheEntry::Callback);
@@ -171,7 +171,7 @@ nsresult CacheEntry::Callback::OnCheckThread(bool *aOnCheckThread) const
 {
   if (!mCheckOnAnyThread) {
     // Check we are on the target
-    return mTargetThread->IsOnCurrentThread(aOnCheckThread);
+    return mTarget->IsOnCurrentThread(aOnCheckThread);
   }
 
   // We can invoke check anywhere
@@ -181,7 +181,7 @@ nsresult CacheEntry::Callback::OnCheckThread(bool *aOnCheckThread) const
 
 nsresult CacheEntry::Callback::OnAvailThread(bool *aOnAvailThread) const
 {
-  return mTargetThread->IsOnCurrentThread(aOnAvailThread);
+  return mTarget->IsOnCurrentThread(aOnAvailThread);
 }
 
 // CacheEntry
@@ -256,8 +256,8 @@ nsresult CacheEntry::HashingKey(nsACString &aResult) const
 }
 
 // static
-nsresult CacheEntry::HashingKey(nsCSubstring const& aStorageID,
-                                nsCSubstring const& aEnhanceID,
+nsresult CacheEntry::HashingKey(const nsACString& aStorageID,
+                                const nsACString& aEnhanceID,
                                 nsIURI* aURI,
                                 nsACString &aResult)
 {
@@ -269,9 +269,9 @@ nsresult CacheEntry::HashingKey(nsCSubstring const& aStorageID,
 }
 
 // static
-nsresult CacheEntry::HashingKey(nsCSubstring const& aStorageID,
-                                nsCSubstring const& aEnhanceID,
-                                nsCSubstring const& aURISpec,
+nsresult CacheEntry::HashingKey(const nsACString& aStorageID,
+                                const nsACString& aEnhanceID,
+                                const nsACString& aURISpec,
                                 nsACString &aResult)
 {
   /**
@@ -663,9 +663,10 @@ bool CacheEntry::InvokeCallbacks(bool aReadOnly)
 
     if (NS_SUCCEEDED(rv) && !onCheckThread) {
       // Redispatch to the target thread
-      rv = mCallbacks[i].mTargetThread->Dispatch(NewRunnableMethod(this,
-								   &CacheEntry::InvokeCallbacksLock),
-						 nsIEventTarget::DISPATCH_NORMAL);
+      rv = mCallbacks[i].mTarget->Dispatch(NewRunnableMethod("net::CacheEntry::InvokeCallbacksLock",
+                                                             this,
+                                                             &CacheEntry::InvokeCallbacksLock),
+                                           nsIEventTarget::DISPATCH_NORMAL);
       if (NS_SUCCEEDED(rv)) {
         LOG(("  re-dispatching to target thread"));
         return false;
@@ -839,7 +840,7 @@ void CacheEntry::InvokeAvailableCallback(Callback const & aCallback)
     RefPtr<AvailableCallbackRunnable> event =
       new AvailableCallbackRunnable(this, aCallback);
 
-    rv = aCallback.mTargetThread->Dispatch(event, nsIEventTarget::DISPATCH_NORMAL);
+    rv = aCallback.mTarget->Dispatch(event, nsIEventTarget::DISPATCH_NORMAL);
     LOG(("  redispatched, (rv = 0x%08" PRIx32 ")", static_cast<uint32_t>(rv)));
     return;
   }
@@ -1783,7 +1784,7 @@ void CacheEntry::DoomFile()
       LOG(("  file doomed"));
       return;
     }
-    
+
     if (NS_ERROR_FILE_NOT_FOUND == rv) {
       // File is set to be just memory-only, notify the callbacks
       // and pretend dooming has succeeded.  From point of view of
@@ -1859,7 +1860,11 @@ void CacheEntry::BackgroundOp(uint32_t aOperations, bool aForceAsync)
 
       // Because CacheFile::Set*() are not thread-safe to use (uses WeakReference that
       // is not thread-safe) we must post to the main thread...
-      NS_DispatchToMainThread(NewRunnableMethod<double>(this, &CacheEntry::StoreFrecency, mFrecency));
+      NS_DispatchToMainThread(
+        NewRunnableMethod<double>("net::CacheEntry::StoreFrecency",
+                                  this,
+                                  &CacheEntry::StoreFrecency,
+                                  mFrecency));
     }
 
     if (aOperations & Ops::REGISTER) {
@@ -1894,7 +1899,8 @@ void CacheEntry::StoreFrecency(double aFrecency)
 // CacheOutputCloseListener
 
 CacheOutputCloseListener::CacheOutputCloseListener(CacheEntry* aEntry)
-: mEntry(aEntry)
+  : Runnable("net::CacheOutputCloseListener")
+  , mEntry(aEntry)
 {
 }
 

@@ -58,6 +58,8 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   , mIsPreflight(false)
   , mForceHSTSPriming(false)
   , mMixedContentWouldBlock(false)
+  , mIsHSTSPriming(false)
+  , mIsHSTSPrimingUpgrade(false)
 {
   MOZ_ASSERT(mLoadingPrincipal);
   MOZ_ASSERT(mTriggeringPrincipal);
@@ -231,6 +233,8 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
   , mIsPreflight(false)
   , mForceHSTSPriming(false)
   , mMixedContentWouldBlock(false)
+  , mIsHSTSPriming(false)
+  , mIsHSTSPrimingUpgrade(false)
 {
   // Top-level loads are never third-party
   // Grab the information we can out of the window.
@@ -270,6 +274,7 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
   , mTriggeringPrincipal(rhs.mTriggeringPrincipal)
   , mPrincipalToInherit(rhs.mPrincipalToInherit)
   , mSandboxedLoadingPrincipal(rhs.mSandboxedLoadingPrincipal)
+  , mResultPrincipalURI(rhs.mResultPrincipalURI)
   , mLoadingContext(rhs.mLoadingContext)
   , mSecurityFlags(rhs.mSecurityFlags)
   , mInternalContentPolicyType(rhs.mInternalContentPolicyType)
@@ -294,6 +299,8 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
   , mIsPreflight(rhs.mIsPreflight)
   , mForceHSTSPriming(rhs.mForceHSTSPriming)
   , mMixedContentWouldBlock(rhs.mMixedContentWouldBlock)
+  , mIsHSTSPriming(rhs.mIsHSTSPriming)
+  , mIsHSTSPrimingUpgrade(rhs.mIsHSTSPrimingUpgrade)
 {
 }
 
@@ -301,6 +308,7 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    nsIPrincipal* aTriggeringPrincipal,
                    nsIPrincipal* aPrincipalToInherit,
                    nsIPrincipal* aSandboxedLoadingPrincipal,
+                   nsIURI* aResultPrincipalURI,
                    nsSecurityFlags aSecurityFlags,
                    nsContentPolicyType aContentPolicyType,
                    LoadTainting aTainting,
@@ -322,10 +330,13 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    bool aForcePreflight,
                    bool aIsPreflight,
                    bool aForceHSTSPriming,
-                   bool aMixedContentWouldBlock)
+                   bool aMixedContentWouldBlock,
+                   bool aIsHSTSPriming,
+                   bool aIsHSTSPrimingUpgrade)
   : mLoadingPrincipal(aLoadingPrincipal)
   , mTriggeringPrincipal(aTriggeringPrincipal)
   , mPrincipalToInherit(aPrincipalToInherit)
+  , mResultPrincipalURI(aResultPrincipalURI)
   , mSecurityFlags(aSecurityFlags)
   , mInternalContentPolicyType(aContentPolicyType)
   , mTainting(aTainting)
@@ -346,6 +357,8 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   , mIsPreflight(aIsPreflight)
   , mForceHSTSPriming (aForceHSTSPriming)
   , mMixedContentWouldBlock(aMixedContentWouldBlock)
+  , mIsHSTSPriming(aIsHSTSPriming)
+  , mIsHSTSPrimingUpgrade(aIsHSTSPrimingUpgrade)
 {
   // Only top level TYPE_DOCUMENT loads can have a null loadingPrincipal
   MOZ_ASSERT(mLoadingPrincipal || aContentPolicyType == nsIContentPolicy::TYPE_DOCUMENT);
@@ -405,6 +418,7 @@ LoadInfo::CloneForNewRequest() const
   copy->mInitialSecurityCheckDone = false;
   copy->mRedirectChainIncludingInternalRedirects.Clear();
   copy->mRedirectChain.Clear();
+  copy->mResultPrincipalURI = nullptr;
   return copy.forget();
 }
 
@@ -934,6 +948,38 @@ LoadInfo::ClearHSTSPriming()
 }
 
 NS_IMETHODIMP
+LoadInfo::SetIsHSTSPriming(bool aIsHSTSPriming)
+{
+  MOZ_ASSERT(aIsHSTSPriming);
+  mIsHSTSPriming = aIsHSTSPriming;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetIsHSTSPriming(bool* aIsHSTSPriming)
+{
+  MOZ_ASSERT(aIsHSTSPriming);
+  *aIsHSTSPriming = mIsHSTSPriming;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::SetIsHSTSPrimingUpgrade(bool aIsHSTSPrimingUpgrade)
+{
+  MOZ_ASSERT(aIsHSTSPrimingUpgrade);
+  mIsHSTSPrimingUpgrade = aIsHSTSPrimingUpgrade;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetIsHSTSPrimingUpgrade(bool* aIsHSTSPrimingUpgrade)
+{
+  MOZ_ASSERT(aIsHSTSPrimingUpgrade);
+  *aIsHSTSPrimingUpgrade = mIsHSTSPrimingUpgrade;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 LoadInfo::GetTainting(uint32_t* aTaintingOut)
 {
   MOZ_ASSERT(aTaintingOut);
@@ -964,6 +1010,20 @@ LoadInfo::GetIsTopLevelLoad(bool *aResult)
 {
   *aResult = mFrameOuterWindowID ? mFrameOuterWindowID == mOuterWindowID
                                  : mParentOuterWindowID == mOuterWindowID;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetResultPrincipalURI(nsIURI **aURI)
+{
+  NS_IF_ADDREF(*aURI = mResultPrincipalURI);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::SetResultPrincipalURI(nsIURI *aURI)
+{
+  mResultPrincipalURI = aURI;
   return NS_OK;
 }
 

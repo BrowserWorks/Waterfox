@@ -10,7 +10,7 @@ use dom::bindings::js::Root;
 use dom::bindings::reflector::{Reflector, reflect_dom_object};
 use dom::globalscope::GlobalScope;
 use dom_struct::dom_struct;
-use euclid::size::Size2D;
+use euclid::Size2D;
 use js::jsapi::{Heap, JSContext, JSObject};
 use js::rust::Runtime;
 use js::typedarray::{Uint8ClampedArray, CreateWith};
@@ -65,8 +65,8 @@ impl ImageData {
         if let Some(jsobject) = opt_jsobject {
             let cx = global.get_cx();
             typedarray!(in(cx) let array_res: Uint8ClampedArray = jsobject);
-            let mut array = try!(array_res
-                .map_err(|_| Error::Type("Argument to Image data is not an Uint8ClampedArray".to_owned())));
+            let mut array = array_res
+                .map_err(|_| Error::Type("Argument to Image data is not an Uint8ClampedArray".to_owned()))?;
 
             let byte_len = array.as_slice().len() as u32;
             if byte_len % 4 != 0 {
@@ -161,6 +161,6 @@ impl ImageDataMethods for ImageData {
     // https://html.spec.whatwg.org/multipage/#dom-imagedata-data
     unsafe fn Data(&self, _: *mut JSContext) -> NonZero<*mut JSObject> {
         assert!(!self.data.get().is_null());
-        NonZero::new(self.data.get())
+        NonZero::new_unchecked(self.data.get())
     }
 }

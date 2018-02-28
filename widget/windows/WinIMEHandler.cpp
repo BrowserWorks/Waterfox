@@ -398,8 +398,9 @@ IMEHandler::OnDestroyWindow(nsWindow* aWindow)
   // here because TabParent already lost the reference to the nsWindow when
   // it receives from the remote process.
   if (sFocusedWindow == aWindow) {
-    NS_ASSERTION(aWindow->GetInputContext().IsOriginContentProcess(),
-      "input context of focused widget should be set from a remote process");
+    MOZ_ASSERT(aWindow->GetInputContext().IsOriginContentProcess(),
+      "input context of focused widget should've been set by a remote process "
+      "if IME focus isn't cleared before destroying the widget");
     NotifyIME(aWindow, IMENotification(NOTIFY_IME_OF_BLUR));
   }
 
@@ -420,19 +421,7 @@ IMEHandler::OnDestroyWindow(nsWindow* aWindow)
 bool
 IMEHandler::NeedsToAssociateIMC()
 {
-  if (sAssociateIMCOnlyWhenIMM_IMEActive) {
-    return IsIMMActive();
-  }
-
-  // Even if IMC should be associated with focused widget with non-IMM-IME,
-  // we need to avoid crash bug of MS-IME for Japanese on Win10.  It crashes
-  // while we're associating default IME to a window when it's active.
-  static const bool sDoNotAssociateIMCWhenMSJapaneseIMEActiveOnWin10 =
-    IsWin10OrLater() &&
-    Preferences::GetBool(
-      "intl.tsf.hack.ms_japanese_ime.do_not_associate_imc_on_win10", true);
-  return !sDoNotAssociateIMCWhenMSJapaneseIMEActiveOnWin10 ||
-         !TSFTextStore::IsMSJapaneseIMEActive();
+  return !sAssociateIMCOnlyWhenIMM_IMEActive || !IsIMMActive();
 }
 #endif // #ifdef NS_ENABLE_TSF
 
@@ -562,6 +551,13 @@ IMEHandler::OnKeyboardLayoutChanged()
   // TSFStaticSink::EnsureInitActiveTIPKeyboard() forcibly.
 
   if (!sIsIMMEnabled || !IsTSFAvailable()) {
+    return;
+  }
+
+  // We don't need to do anything when sAssociateIMCOnlyWhenIMM_IMEActive is
+  // false because IMContext won't be associated/disassociated when changing
+  // active keyboard layout/IME.
+  if (!sAssociateIMCOnlyWhenIMM_IMEActive) {
     return;
   }
 
@@ -937,7 +933,7 @@ void
 IMEHandler::ShowOnScreenKeyboard()
 {
   nsAutoString cachedPath;
-  nsresult result = Preferences::GetString(kOskPathPrefName, &cachedPath);
+  nsresult result = Preferences::GetString(kOskPathPrefName, cachedPath);
   if (NS_FAILED(result) || cachedPath.IsEmpty()) {
     wchar_t path[MAX_PATH];
     // The path to TabTip.exe is defined at the following registry key.

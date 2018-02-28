@@ -393,6 +393,60 @@ public:
     SetTransition(aStartState);
   }
 
+  /**
+   * From the given SourceBufferIterator, aIterator, create a new iterator at
+   * the same position, with the given read limit, aReadLimit. The read limit
+   * applies after adjusting for the position. If the given iterator has been
+   * advanced, but required buffering inside StreamingLexer, the position
+   * of the cloned iterator will be at the beginning of buffered data; this
+   * should match the perspective of the caller.
+   */
+  Maybe<SourceBufferIterator> Clone(SourceBufferIterator& aIterator,
+                                    size_t aReadLimit) const
+  {
+    // In order to advance to the current position of the iterator from the
+    // perspective of the caller, we need to take into account if we are
+    // buffering data.
+    size_t pos = aIterator.Position();
+    if (!mBuffer.empty()) {
+      pos += aIterator.Length();
+      MOZ_ASSERT(pos > mBuffer.length());
+      pos -= mBuffer.length();
+    }
+
+    size_t readLimit = aReadLimit;
+    if (aReadLimit != SIZE_MAX) {
+      readLimit += pos;
+    }
+
+    SourceBufferIterator other = aIterator.Owner()->Iterator(readLimit);
+
+    // Since the current iterator has already advanced to this point, we
+    // know that the state can only be READY or COMPLETE. That does not mean
+    // everything is stored in a single chunk, and may require multiple Advance
+    // calls to get where we want to be.
+    SourceBufferIterator::State state;
+    do {
+      state = other.Advance(pos);
+      if (state != SourceBufferIterator::READY) {
+        MOZ_ASSERT_UNREACHABLE("Cannot advance to existing position");
+        return Nothing();
+      }
+      MOZ_ASSERT(pos >= other.Length());
+      pos -= other.Length();
+    } while (pos > 0);
+
+    // Force the data pointer to be where we expect it to be.
+    state = other.Advance(0);
+    if (state != SourceBufferIterator::READY) {
+      // The current position could be the end of the buffer, in which case
+      // there is no point cloning with no more data to read.
+      MOZ_ASSERT(state == SourceBufferIterator::COMPLETE);
+      return Nothing();
+    }
+    return Some(Move(other));
+  }
+
   template <typename Func>
   LexerResult Lex(SourceBufferIterator& aIterator,
                   IResumable* aOnResume,

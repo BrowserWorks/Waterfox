@@ -9,7 +9,6 @@
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
 
-extern crate app_units;
 extern crate bluetooth_traits;
 extern crate canvas_traits;
 extern crate cookie as cookie_rs;
@@ -28,28 +27,20 @@ extern crate net_traits;
 extern crate offscreen_gl_context;
 extern crate profile_traits;
 extern crate rustc_serialize;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
+#[macro_use] extern crate serde;
 extern crate servo_atoms;
 extern crate servo_url;
 extern crate style_traits;
 extern crate time;
-extern crate webrender_traits;
+extern crate webrender_api;
 extern crate webvr_traits;
 
 mod script_msg;
 pub mod webdriver_msg;
 
-use app_units::Au;
 use bluetooth_traits::BluetoothRequest;
 use devtools_traits::{DevtoolScriptControlMsg, ScriptToDevtoolsControlMsg, WorkerId};
-use euclid::Size2D;
-use euclid::length::Length;
-use euclid::point::Point2D;
-use euclid::rect::Rect;
-use euclid::scale_factor::ScaleFactor;
-use euclid::size::TypedSize2D;
+use euclid::{Size2D, Length, Point2D, Vector2D, Rect, ScaleFactor, TypedSize2D};
 use gfx_traits::Epoch;
 use heapsize::HeapSizeOf;
 use hyper::header::Headers;
@@ -60,6 +51,7 @@ use msg::constellation_msg::{BrowsingContextId, TopLevelBrowsingContextId, Frame
 use msg::constellation_msg::{PipelineId, PipelineNamespaceId, TraversalDirection};
 use net_traits::{FetchResponseMsg, ReferrerPolicy, ResourceThreads};
 use net_traits::image::base::Image;
+use net_traits::image::base::PixelFormat;
 use net_traits::image_cache::ImageCache;
 use net_traits::response::HttpsState;
 use net_traits::storage_thread::StorageType;
@@ -74,8 +66,9 @@ use std::fmt;
 use std::sync::Arc;
 use std::sync::mpsc::{Receiver, Sender, RecvTimeoutError};
 use style_traits::CSSPixel;
+use style_traits::SpeculativePainter;
 use webdriver_msg::{LoadStatus, WebDriverScriptCommand};
-use webrender_traits::ClipId;
+use webrender_api::{ClipId, DevicePixel, ImageKey};
 use webvr_traits::{WebVREvent, WebVRMsg};
 
 pub use script_msg::{LayoutMsg, ScriptMsg, EventResult, LogEntry};
@@ -101,9 +94,9 @@ impl Serialize for UntrustedNodeAddress {
     }
 }
 
-impl Deserialize for UntrustedNodeAddress {
-    fn deserialize<D: Deserializer>(d: D) -> Result<UntrustedNodeAddress, D::Error> {
-        let value: usize = try!(Deserialize::deserialize(d));
+impl<'de> Deserialize<'de> for UntrustedNodeAddress {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<UntrustedNodeAddress, D::Error> {
+        let value: usize = Deserialize::deserialize(d)?;
         Ok(UntrustedNodeAddress::from_id(value))
     }
 }
@@ -254,7 +247,7 @@ pub enum ConstellationControlMsg {
     /// Notifies script of the viewport.
     Viewport(PipelineId, Rect<f32>),
     /// Notifies script of a new set of scroll offsets.
-    SetScrollState(PipelineId, Vec<(UntrustedNodeAddress, Point2D<f32>)>),
+    SetScrollState(PipelineId, Vec<(UntrustedNodeAddress, Vector2D<f32>)>),
     /// Requests that the script thread immediately send the constellation the title of a pipeline.
     GetTitle(PipelineId),
     /// Notifies script thread of a change to one of its document's activity
@@ -300,7 +293,7 @@ pub enum ConstellationControlMsg {
     /// The strings are key, old value and new value.
     DispatchStorageEvent(PipelineId, StorageType, ServoUrl, Option<String>, Option<String>, Option<String>),
     /// Report an error from a CSS parser for the given pipeline
-    ReportCSSError(PipelineId, String, usize, usize, String),
+    ReportCSSError(PipelineId, String, u32, u32, String),
     /// Reload the given page.
     Reload(PipelineId),
     /// Notifies the script thread of WebVR events.
@@ -451,11 +444,11 @@ pub enum TimerSchedulerMsg {
 /// Notifies the script thread to fire due timers.
 /// `TimerSource` must be `FromWindow` when dispatched to `ScriptThread` and
 /// must be `FromWorker` when dispatched to a `DedicatedGlobalWorkerScope`
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct TimerEvent(pub TimerSource, pub TimerEventId);
 
 /// Describes the thread that requested the TimerEvent.
-#[derive(Copy, Clone, HeapSizeOf, Deserialize, Serialize)]
+#[derive(Copy, Clone, Debug, HeapSizeOf, Deserialize, Serialize)]
 pub enum TimerSource {
     /// The event was requested from a window (ScriptThread).
     FromWindow(PipelineId),
@@ -690,14 +683,8 @@ pub struct ScrollState {
     /// The ID of the scroll root.
     pub scroll_root_id: ClipId,
     /// The scrolling offset of this stacking context.
-    pub scroll_offset: Point2D<f32>,
+    pub scroll_offset: Vector2D<f32>,
 }
-
-/// One hardware pixel.
-///
-/// This unit corresponds to the smallest addressable element of the display hardware.
-#[derive(Copy, Clone, Debug)]
-pub enum DevicePixel {}
 
 /// Data about the window size.
 #[derive(Copy, Clone, Deserialize, Serialize, HeapSizeOf)]
@@ -753,9 +740,6 @@ pub enum ConstellationMsg {
     /// Request that the constellation send the current focused top-level browsing context id,
     /// over a provided channel.
     GetFocusTopLevelBrowsingContext(IpcSender<Option<TopLevelBrowsingContextId>>),
-    /// Requests that the constellation inform the compositor of the title of the pipeline
-    /// immediately.
-    GetPipelineTitle(PipelineId),
     /// Request to load the initial page.
     InitLoadUrl(ServoUrl),
     /// Query the constellation to see if the current compositor output is stable
@@ -833,12 +817,29 @@ impl From<RecvTimeoutError> for PaintWorkletError {
     }
 }
 
-/// Execute paint code in the worklet thread pool.<
-pub trait PaintWorkletExecutor: Sync + Send {
+/// Execute paint code in the worklet thread pool.
+pub trait Painter: SpeculativePainter {
     /// https://drafts.css-houdini.org/css-paint-api/#draw-a-paint-image
     fn draw_a_paint_image(&self,
-                          name: Atom,
-                          concrete_object_size: Size2D<Au>)
-                          -> Result<Image, PaintWorkletError>;
+                          size: TypedSize2D<f32, CSSPixel>,
+                          zoom: ScaleFactor<f32, CSSPixel, DevicePixel>,
+                          properties: Vec<(Atom, String)>,
+                          arguments: Vec<String>)
+                          -> DrawAPaintImageResult;
 }
 
+/// The result of executing paint code: the image together with any image URLs that need to be loaded.
+/// TODO: this should return a WR display list. https://github.com/servo/servo/issues/17497
+#[derive(Debug, Deserialize, Serialize, Clone, HeapSizeOf)]
+pub struct DrawAPaintImageResult {
+    /// The image height
+    pub width: u32,
+    /// The image width
+    pub height: u32,
+    /// The image format
+    pub format: PixelFormat,
+    /// The image drawn, or None if an invalid paint image was drawn
+    pub image_key: Option<ImageKey>,
+    /// Drawing the image might have requested loading some image URLs.
+    pub missing_image_urls: Vec<ServoUrl>,
+}

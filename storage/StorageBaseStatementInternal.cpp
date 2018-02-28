@@ -35,10 +35,11 @@ public:
    *        on.  We release the statement on that thread since releasing the
    *        statement might end up releasing the connection too.
    */
-  AsyncStatementFinalizer(StorageBaseStatementInternal *aStatement,
-                          Connection *aConnection)
-  : mStatement(aStatement)
-  , mConnection(aConnection)
+  AsyncStatementFinalizer(StorageBaseStatementInternal* aStatement,
+                          Connection* aConnection)
+    : Runnable("storage::AsyncStatementFinalizer")
+    , mStatement(aStatement)
+    , mConnection(aConnection)
   {
   }
 
@@ -50,7 +51,8 @@ public:
     }
 
     nsCOMPtr<nsIThread> targetThread(mConnection->threadOpenedOn);
-    NS_ProxyRelease(targetThread, mStatement.forget());
+    NS_ProxyRelease(
+      "AsyncStatementFinalizer::mStatement", targetThread, mStatement.forget());
     return NS_OK;
   }
 private:
@@ -80,10 +82,11 @@ public:
    *        responsibility for the instance and all other references to it
    *        should be forgotten.
    */
-  LastDitchSqliteStatementFinalizer(RefPtr<Connection> &aConnection,
-                                    sqlite3_stmt *aStatement)
-  : mConnection(aConnection)
-  , mAsyncStatement(aStatement)
+  LastDitchSqliteStatementFinalizer(RefPtr<Connection>& aConnection,
+                                    sqlite3_stmt* aStatement)
+    : Runnable("storage::LastDitchSqliteStatementFinalizer")
+    , mConnection(aConnection)
+    , mAsyncStatement(aStatement)
   {
     NS_PRECONDITION(aConnection, "You must provide a Connection");
   }
@@ -94,7 +97,9 @@ public:
     mAsyncStatement = nullptr;
 
     nsCOMPtr<nsIThread> target(mConnection->threadOpenedOn);
-    (void)::NS_ProxyRelease(target, mConnection.forget());
+    (void)::NS_ProxyRelease(
+      "LastDitchSqliteStatementFinalizer::mConnection",
+      target, mConnection.forget());
     return NS_OK;
   }
 private:
@@ -136,24 +141,26 @@ StorageBaseStatementInternal::destructorAsyncFinalize()
   if (!mAsyncStatement)
     return;
 
-  // If we reach this point, our owner has not finalized this
-  // statement, yet we are being destructed. If possible, we want to
-  // auto-finalize it early, to release the resources early.
-  nsIEventTarget *target = mDBConnection->getAsyncExecutionTarget();
-  if (target) {
-    // If we can get the async execution target, we can indeed finalize
-    // the statement, as the connection is still open.
-    bool isAsyncThread = false;
-    (void)target->IsOnCurrentThread(&isAsyncThread);
-
-    nsCOMPtr<nsIRunnable> event =
-      new LastDitchSqliteStatementFinalizer(mDBConnection, mAsyncStatement);
-    if (isAsyncThread) {
-      (void)event->Run();
-    } else {
+  bool isOwningThread = false;
+  (void)mDBConnection->threadOpenedOn->IsOnCurrentThread(&isOwningThread);
+  if (isOwningThread) {
+    // If we are the owning thread (currently that means we're also the
+    // main thread), then we can get the async target and just dispatch
+    // to it.
+    nsIEventTarget *target = mDBConnection->getAsyncExecutionTarget();
+    if (target) {
+      nsCOMPtr<nsIRunnable> event =
+        new LastDitchSqliteStatementFinalizer(mDBConnection, mAsyncStatement);
       (void)target->Dispatch(event, NS_DISPATCH_NORMAL);
     }
+  } else {
+    // If we're not the owning thread, assume we're the async thread, and
+    // just run the statement.
+    nsCOMPtr<nsIRunnable> event =
+      new LastDitchSqliteStatementFinalizer(mDBConnection, mAsyncStatement);
+    (void)event->Run();
   }
+
 
   // We might not be able to dispatch to the background thread,
   // presumably because it is being shutdown. Since said shutdown will

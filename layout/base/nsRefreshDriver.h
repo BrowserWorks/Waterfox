@@ -193,6 +193,17 @@ public:
   }
 
   /**
+   * "Early Runner" runnables will be called as the first step when refresh
+   * driver tick is triggered. Runners shouldn't keep other objects alive,
+   * since it isn't guaranteed they will ever get called.
+   */
+  void AddEarlyRunner(nsIRunnable* aRunnable)
+  {
+    mEarlyRunners.AppendElement(aRunnable);
+    EnsureTimerStarted();
+  }
+
+  /**
    * Remember whether our presshell's view manager needs a flush
    */
   void ScheduleViewManagerFlush();
@@ -306,7 +317,7 @@ public:
   static bool GetJankLevels(mozilla::Vector<uint64_t>& aJank);
 
   // mozilla::layers::TransactionIdAllocator
-  uint64_t GetTransactionId() override;
+  uint64_t GetTransactionId(bool aThrottle) override;
   uint64_t LastTransactionId() const override;
   void NotifyTransactionCompleted(uint64_t aTransactionId) override;
   void RevokeTransactionId(uint64_t aTransactionId) override;
@@ -450,6 +461,7 @@ private:
   ObserverArray mObservers[3];
   RequestTable mRequests;
   ImageStartTable mStartTable;
+  AutoTArray<nsCOMPtr<nsIRunnable>, 16> mEarlyRunners;
 
   struct PendingEvent {
     nsCOMPtr<nsINode> mTarget;

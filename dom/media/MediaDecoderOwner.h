@@ -5,7 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #ifndef MediaDecoderOwner_h_
 #define MediaDecoderOwner_h_
-#include "AbstractMediaDecoder.h"
+
+#include "MediaInfo.h"
 #include "nsAutoPtr.h"
 
 namespace mozilla {
@@ -179,6 +180,10 @@ public:
 
   // Called by the media decoder to notify the owner to reject a seek promise.
   virtual void AsyncRejectSeekDOMPromiseIfExists() = 0;
+
+  // Notified by the decoder that a decryption key is required before emitting
+  // further output.
+  virtual void NotifyWaitingForKey() {}
 };
 
 } // namespace mozilla

@@ -87,7 +87,11 @@ private:
   // This is where DECL_MEDIA_PREF for each of the preferences should go.
 
   // Cache sizes.
+  DECL_MEDIA_PREF("media.cache_size",                         MediaCacheSizeKb, uint32_t, 512000);
   DECL_MEDIA_PREF("media.memory_cache_max_size",              MediaMemoryCacheMaxSize, uint32_t, 8192);
+  DECL_MEDIA_PREF("media.memory_caches_combined_limit_kb",    MediaMemoryCachesCombinedLimitKb, uint32_t, 524288);
+  DECL_MEDIA_PREF("media.memory_caches_combined_limit_pc_sysmem",
+                                                              MediaMemoryCachesCombinedLimitPcSysmem, uint32_t, 5);
   DECL_MEDIA_PREF("media.cache.resource-index",               MediaResourceIndexCache, uint32_t, 8192);
 
   // AudioSink
@@ -120,6 +124,8 @@ private:
   DECL_MEDIA_PREF("media.android-media-codec.preferred",      PDMAndroidMediaCodecPreferred, bool, false);
   DECL_MEDIA_PREF("media.navigator.hardware.vp8_encode.acceleration_remote_enabled", RemoteMediaCodecVP8EncoderEnabled, bool, false);
 #endif
+  // WebRTC
+  DECL_MEDIA_PREF("media.navigator.mediadatadecoder_enabled", MediaDataDecoderEnabled, bool, false);
 #ifdef MOZ_FFMPEG
   DECL_MEDIA_PREF("media.ffmpeg.enabled",                     PDMFFmpegEnabled, bool, true);
   DECL_MEDIA_PREF("media.libavcodec.allow-obsolete",          LibavcodecAllowObsolete, bool, false);
@@ -136,12 +142,12 @@ private:
   DECL_MEDIA_PREF("media.decoder-doctor.wmf-disabled-is-failure", DecoderDoctorWMFDisabledIsFailure, bool, false);
   DECL_MEDIA_PREF("media.wmf.vp9.enabled",                    PDMWMFVP9DecoderEnabled, bool, true);
   DECL_MEDIA_PREF("media.wmf.decoder.thread-count",           PDMWMFThreadCount, int32_t, -1);
-  DECL_MEDIA_PREF("media.wmf.allow-unsupported-resolutions",  PDMWMFAllowUnsupportedResolutions, bool, false);
 #endif
   DECL_MEDIA_PREF("media.decoder.fuzzing.enabled",            PDMFuzzingEnabled, bool, false);
   DECL_MEDIA_PREF("media.decoder.fuzzing.video-output-minimum-interval-ms", PDMFuzzingInterval, uint32_t, 0);
   DECL_MEDIA_PREF("media.decoder.fuzzing.dont-delay-inputexhausted", PDMFuzzingDelayInputExhausted, bool, true);
   DECL_MEDIA_PREF("media.decoder.recycle.enabled",            MediaDecoderCheckRecycling, bool, false);
+  DECL_MEDIA_PREF("media.decoder.skip-to-next-key-frame.enabled", MFRSkipToNextKeyFrameEnabled, bool, true);
   DECL_MEDIA_PREF("media.gmp.decoder.enabled",                PDMGMPEnabled, bool, true);
   DECL_MEDIA_PREF("media.gmp.decoder.aac",                    GMPAACPreferred, uint32_t, 0);
   DECL_MEDIA_PREF("media.gmp.decoder.h264",                   GMPH264Preferred, uint32_t, 0);
@@ -184,15 +190,15 @@ private:
   DECL_MEDIA_PREF("media.ogg.flac.enabled",                   FlacInOgg, bool, false);
   DECL_MEDIA_PREF("media.flac.enabled",                       FlacEnabled, bool, true);
 
-#if !defined(RELEASE_OR_BETA)
-  DECL_MEDIA_PREF("media.rust.test_mode",                     RustTestMode, bool, false);
-#endif
+  // Hls
+  DECL_MEDIA_PREF("media.hls.enabled",                        HLSEnabled, bool, false);
 
-#if defined(MOZ_WIDGET_GTK)
+  // Both rust/stagefright will be enabled when this is true regardless of 'media.rust.mp4parser'.
+  DECL_MEDIA_PREF("media.rust.test_mode",                     RustTestMode, bool, false);
+
+  // True, it enables rust parser and fallback to stagefright if rust parser fails.
+  // False, it uses stagefright only.
   DECL_MEDIA_PREF("media.rust.mp4parser",                     EnableRustMP4Parser, bool, true);
-#else
-  DECL_MEDIA_PREF("media.rust.mp4parser",                     EnableRustMP4Parser, bool, false);
-#endif
 
   DECL_MEDIA_PREF("media.mp4.enabled",                        MP4Enabled, bool, false);
 
@@ -201,6 +207,8 @@ private:
   DECL_MEDIA_PREF("media.playback.warnings-as-errors.stagefright-vs-rust",
                                                               MediaWarningsAsErrorsStageFrightVsRust, bool, false);
 
+  // resume background video decoding when the cursor is hovering over the tab.
+  DECL_MEDIA_PREF("media.resume-bkgnd-video-on-tabhover",     ResumeVideoDecodingOnTabHover, bool, false);
 public:
   // Manage the singleton:
   static MediaPrefs& GetSingleton();

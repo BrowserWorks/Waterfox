@@ -27,6 +27,8 @@ class nsWindowSizes {
   macro(DOM,   mDOMCDATANodesSize) \
   macro(DOM,   mDOMCommentNodesSize) \
   macro(DOM,   mDOMEventTargetsSize) \
+  macro(DOM,   mDOMPerformanceUserEntries) \
+  macro(DOM,   mDOMPerformanceResourceEntries) \
   macro(DOM,   mDOMOtherSize) \
   macro(Style, mStyleSheetsSize) \
   macro(Other, mLayoutPresShellSize) \
@@ -37,7 +39,7 @@ class nsWindowSizes {
   macro(Other, mPropertyTablesSize) \
 
 public:
-  explicit nsWindowSizes(mozilla::MallocSizeOf aMallocSizeOf)
+  explicit nsWindowSizes(mozilla::SizeOfState& aState)
     :
       #define ZERO_SIZE(kind, mSize)  mSize(0),
       FOR_EACH_SIZE(ZERO_SIZE)
@@ -45,7 +47,7 @@ public:
       mDOMEventTargetsCount(0),
       mDOMEventListenersCount(0),
       mArenaStats(),
-      mMallocSizeOf(aMallocSizeOf)
+      mState(aState)
   {}
 
   void addToTabSizes(nsTabSizes *sizes) const {
@@ -73,7 +75,7 @@ public:
   uint32_t mDOMEventListenersCount;
 
   nsArenaMemoryStats mArenaStats;
-  mozilla::MallocSizeOf mMallocSizeOf;
+  mozilla::SizeOfState& mState;
 
 #undef FOR_EACH_SIZE
 };
@@ -162,39 +164,10 @@ public:
   static nsWindowMemoryReporter* Get();
   void ObserveDOMWindowDetached(nsGlobalWindow* aWindow);
 
+  static int64_t GhostWindowsDistinguishedAmount();
+
 private:
   ~nsWindowMemoryReporter();
-
-  /**
-   * nsGhostWindowReporter generates the "ghost-windows" report, which counts
-   * the number of ghost windows present.
-   */
-  class GhostWindowsReporter final : public nsIMemoryReporter
-  {
-    ~GhostWindowsReporter() {}
-  public:
-    NS_DECL_ISUPPORTS
-
-    static int64_t DistinguishedAmount();
-
-    NS_IMETHOD
-    CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
-                   bool aAnonymize) override
-    {
-      MOZ_COLLECT_REPORT(
-        "ghost-windows", KIND_OTHER, UNITS_COUNT, DistinguishedAmount(),
-"The number of ghost windows present (the number of nodes underneath "
-"explicit/window-objects/top(none)/ghost, modulo race conditions).  A ghost "
-"window is not shown in any tab, does not share a domain with any non-detached "
-"windows, and has met these criteria for at least "
-"memory.ghost_window_timeout_seconds, or has survived a round of "
-"about:memory's minimize memory usage button.\n\n"
-"Ghost windows can happen legitimately, but they are often indicative of "
-"leaks in the browser or add-ons.");
-
-      return NS_OK;
-    }
-  };
 
   // Protect ctor, use Init() instead.
   nsWindowMemoryReporter();
@@ -258,6 +231,8 @@ private:
   bool mCycleCollectorIsRunning;
 
   bool mCheckTimerWaitingForCCEnd;
+
+  int64_t mGhostWindowCount;
 };
 
 #endif // nsWindowMemoryReporter_h__

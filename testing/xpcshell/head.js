@@ -12,8 +12,7 @@
 
 /* defined by the harness */
 /* globals _HEAD_FILES, _HEAD_JS_PATH, _JSDEBUGGER_PORT, _JSCOV_DIR,
-    _MOZINFO_JS_PATH, _TEST_FILE, _TEST_NAME, _TESTING_MODULES_DIR,
-    _XPCSHELL_PROCESS:true */
+    _MOZINFO_JS_PATH, _TEST_FILE, _TEST_NAME, _TESTING_MODULES_DIR:true */
 
 /* defined by XPCShellImpl.cpp */
 /* globals load, sendCommand */
@@ -30,6 +29,9 @@ var _tests_pending = 0;
 var _cleanupFunctions = [];
 var _pendingTimers = [];
 var _profileInitialized = false;
+
+// Assigned in do_load_child_test_harness.
+var _XPCSHELL_PROCESS;
 
 // Register the testing-common resource protocol early, to have access to its
 // modules.
@@ -50,7 +52,6 @@ var Assert = new AssertCls(function(err, message, stack) {
     do_report_result(true, message, stack);
   }
 });
-
 
 var _add_params = function(params) {
   if (typeof _XPCSHELL_PROCESS != "undefined") {
@@ -215,14 +216,11 @@ function _do_main() {
 
   _testLogger.info("running event loop");
 
-  var thr = Components.classes["@mozilla.org/thread-manager;1"]
-                      .getService().currentThread;
+  var tm = Components.classes["@mozilla.org/thread-manager;1"].getService();
 
-  while (!_quit)
-    thr.processNextEvent(true);
+  tm.spinEventLoopUntil(() => _quit);
 
-  while (thr.hasPendingEvents())
-    thr.processNextEvent(true);
+  tm.spinEventLoopUntilEmpty();
 }
 
 function _do_quit() {
@@ -479,12 +477,14 @@ function _initDebugging(port) {
   listener.open();
 
   // spin an event loop until the debugger connects.
-  let thr = Components.classes["@mozilla.org/thread-manager;1"]
-              .getService().currentThread;
-  while (!initialized) {
+  let tm = Components.classes["@mozilla.org/thread-manager;1"].getService();
+  tm.spinEventLoopUntil(() => {
+    if (initialized) {
+      return true;
+    }
     do_print("Still waiting for debugger to connect...");
-    thr.processNextEvent(true);
-  }
+    return false;
+  });
   // NOTE: if you want to debug the harness itself, you can now add a 'debugger'
   // statement anywhere and it will stop - but we've already added a breakpoint
   // for the first line of the test scripts, so we just continue...
@@ -527,12 +527,6 @@ function _execute_test() {
   this.Assert = Assert;
   for (let func in Assert) {
     this[func] = Assert[func].bind(Assert);
-  }
-
-  if (_gTestHasOnly) {
-    _gTests = _gTests.filter(([props, ]) => {
-      return ("_only" in props) && props._only;
-    });
   }
 
   try {
@@ -614,11 +608,8 @@ function _execute_test() {
     }
     _cleanupFunctions = [];
   }).catch(reportCleanupError).then(() => complete = true);
-  let thr = Components.classes["@mozilla.org/thread-manager;1"]
-                      .getService().currentThread;
-  while (!complete) {
-    thr.processNextEvent(true);
-  }
+  let tm = Components.classes["@mozilla.org/thread-manager;1"].getService();
+  tm.spinEventLoopUntil(() => complete);
 
   // Restore idle service to avoid leaks.
   _fakeIdleService.deactivate();
@@ -1255,7 +1246,7 @@ function do_load_child_test_harness() {
       + "const _TEST_NAME=" + uneval(_TEST_NAME) + "; "
       // We'll need more magic to get the debugger working in the child
       + "const _JSDEBUGGER_PORT=0; "
-      + "const _XPCSHELL_PROCESS='child';";
+      + "_XPCSHELL_PROCESS='child';";
 
   if (typeof _JSCOV_DIR === "string") {
     command += " const _JSCOV_DIR=" + uneval(_JSCOV_DIR) + ";";
@@ -1359,52 +1350,6 @@ function do_send_remote_message(name) {
 }
 
 /**
- * Helper function to add the _only property to add_task/add_test function when
- * running it as add_task.only(...).
- *
- * @param addFunc
- *        The parent function to call, e.g. add_task or add_test.
- * @param funcOrProperties
- *        A function to be run or an object represents test properties.
- * @param func
- *        A function to be run only if the funcOrProperies is not a function.
- */
-function _add_only(addFunc, funcOrProperties, func) {
-  _gTestHasOnly = true;
-  if (typeof funcOrProperties == "function") {
-    func = funcOrProperties;
-    funcOrProperties = {};
-  }
-
-  if (typeof funcOrProperties == "object") {
-    funcOrProperties._only = true;
-  }
-  return addFunc(funcOrProperties, func);
-}
-
-/**
- * Helper function to skip the test using e.g. add_task.skip(...)
- *
- * @param addFunc
- *        The parent function to call, e.g. add_task or add_test.
- * @param funcOrProperties
- *        A function to be run or an object represents test properties.
- * @param func
- *        A function to be run only if the funcOrProperies is not a function.
- */
-function _add_skip(addFunc, funcOrProperties, func) {
-  if (typeof funcOrProperties == "function") {
-    func = funcOrProperties;
-    funcOrProperties = {};
-  }
-
-  if (typeof funcOrProperties == "object") {
-    funcOrProperties.skip_if = () => true;
-  }
-  return addFunc(funcOrProperties, func);
-}
-
-/**
  * Add a test function to the list of tests that are to be run asynchronously.
  *
  * @param funcOrProperties
@@ -1414,6 +1359,8 @@ function _add_skip(addFunc, funcOrProperties, func) {
  *                    evaluated whether the test is skipped or not.
  * @param func
  *        A function to be run only if the funcOrProperies is not a function.
+ * @param isTask
+ *        Optional flag that indicates whether `func` is a task. Defaults to `false`.
  *
  * Each test function must call run_next_test() when it's done. Test files
  * should call run_next_test() in their run_test function to execute all
@@ -1422,35 +1369,35 @@ function _add_skip(addFunc, funcOrProperties, func) {
  * @return the test function that was passed in.
  */
 var _gTests = [];
-function add_test(funcOrProperties, func) {
-  if (typeof funcOrProperties == "function") {
-    _gTests.push([{ _isTask: false }, funcOrProperties]);
-  } else if (typeof funcOrProperties == "object") {
-    funcOrProperties._isTask = false;
-    _gTests.push([funcOrProperties, func]);
+var _gRunOnlyThisTest = null;
+function add_test(properties, func = properties, isTask = false) {
+  if (typeof properties == "function") {
+    properties = { isTask };
+    _gTests.push([properties, func]);
+  } else if (typeof properties == "object") {
+    properties.isTask = isTask;
+    _gTests.push([properties, func]);
   } else {
     do_throw("add_test() should take a function or an object and a function");
   }
+  func.skip = () => properties.skip_if = () => true;
+  func.only = () => _gRunOnlyThisTest = func;
   return func;
 }
-add_test.only = _add_only.bind(undefined, add_test);
-add_test.skip = _add_skip.bind(undefined, add_test);
 
 /**
  * Add a test function which is a Task function.
  *
  * @param funcOrProperties
- *        A generator function to be run or an object represents test
- *        properties.
+ *        An async function to be run or an object represents test properties.
  *        Supported properties:
  *          skip_if : An arrow function which has an expression to be
  *                    evaluated whether the test is skipped or not.
  * @param func
- *        A generator function to be run only if the funcOrProperies is not a
- *        function.
+ *        An async function to be run only if the funcOrProperies is not a function.
  *
- * Task functions are functions fed into Task.jsm's Task.spawn(). They are
- * generators that emit promises.
+ * Task functions are functions fed into Task.jsm's Task.spawn(). They are async
+ * functions that emit promises.
  *
  * If an exception is thrown, a do_check_* comparison fails, or if a rejected
  * promise is yielded, the test function aborts immediately and the test is
@@ -1463,17 +1410,17 @@ add_test.skip = _add_skip.bind(undefined, add_test);
  *
  * Example usage:
  *
- * add_task(function* test() {
- *   let result = yield Promise.resolve(true);
+ * add_task(async function test() {
+ *   let result = await Promise.resolve(true);
  *
  *   do_check_true(result);
  *
- *   let secondary = yield someFunctionThatReturnsAPromise(result);
+ *   let secondary = await someFunctionThatReturnsAPromise(result);
  *   do_check_eq(secondary, "expected value");
  * });
  *
- * add_task(function* test_early_return() {
- *   let result = yield somethingThatReturnsAPromise();
+ * add_task(async function test_early_return() {
+ *   let result = await somethingThatReturnsAPromise();
  *
  *   if (!result) {
  *     // Test is ended immediately, with success.
@@ -1485,27 +1432,17 @@ add_test.skip = _add_skip.bind(undefined, add_test);
  *
  * add_task({
  *   skip_if: () => !("@mozilla.org/telephony/volume-service;1" in Components.classes),
- * }, function* test_volume_service() {
+ * }, async function test_volume_service() {
  *   let volumeService = Cc["@mozilla.org/telephony/volume-service;1"]
  *     .getService(Ci.nsIVolumeService);
  *   ...
  * });
  */
-function add_task(funcOrProperties, func) {
-  if (typeof funcOrProperties == "function") {
-    _gTests.push([{ _isTask: true }, funcOrProperties]);
-  } else if (typeof funcOrProperties == "object") {
-    funcOrProperties._isTask = true;
-    _gTests.push([funcOrProperties, func]);
-  } else {
-    do_throw("add_task() should take a function or an object and a function");
-  }
+function add_task(properties, func = properties) {
+  return add_test(properties, func, true);
 }
-add_task.only = _add_only.bind(undefined, add_task);
-add_task.skip = _add_skip.bind(undefined, add_task);
 
 _Task.Debugging.maintainStack = true;
-
 
 /**
  * Runs the next test function from the list of async tests.
@@ -1513,7 +1450,6 @@ _Task.Debugging.maintainStack = true;
 var _gRunningTest = null;
 var _gTestIndex = 0; // The index of the currently running test.
 var _gTaskRunning = false;
-var _gTestHasOnly = false;
 function run_next_test() {
   if (_gTaskRunning) {
     throw new Error("run_next_test() called from an add_task() test function. " +
@@ -1527,8 +1463,12 @@ function run_next_test() {
       _PromiseTestUtils.assertNoUncaughtRejections();
       let _properties;
       [_properties, _gRunningTest, ] = _gTests[_gTestIndex++];
-      if (typeof(_properties.skip_if) == "function" && _properties.skip_if()) {
-        let _condition = _properties.skip_if.toSource().replace(/\(\)\s*=>\s*/, "");
+      if ((typeof(_properties.skip_if) == "function" && _properties.skip_if()) ||
+          (_gRunOnlyThisTest && _gRunningTest != _gRunOnlyThisTest)) {
+        let _condition = _gRunOnlyThisTest ? "only one task may run." :
+          _properties.skip_if.toSource().replace(/\(\)\s*=>\s*/, "");
+        if (_condition == "true")
+          _condition = "explicitly skipped."
         let _message = _gRunningTest.name
           + " skipped because the following conditions were"
           + " met: (" + _condition + ")";
@@ -1543,7 +1483,7 @@ function run_next_test() {
       _testLogger.info(_TEST_NAME + " | Starting " + _gRunningTest.name);
       do_test_pending(_gRunningTest.name);
 
-      if (_properties._isTask) {
+      if (_properties.isTask) {
         _gTaskRunning = true;
         _Task.spawn(_gRunningTest).then(() => {
           _gTaskRunning = false;

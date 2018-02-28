@@ -62,11 +62,16 @@ Notification.prototype = {
       return;
     }
 
-    if (topic === "alertclickcallback") {
-      emitAndDelete("clicked");
-    }
-    if (topic === "alertfinished") {
-      emitAndDelete("closed");
+    switch (topic) {
+      case "alertclickcallback":
+        emitAndDelete("clicked");
+        break;
+      case "alertfinished":
+        emitAndDelete("closed");
+        break;
+      case "alertshow":
+        notifications.emit("shown", data);
+        break;
     }
   },
 };
@@ -133,7 +138,7 @@ this.notifications = class extends ExtensionAPI {
           return Promise.resolve(result);
         },
 
-        onClosed: new SingletonEventManager(context, "notifications.onClosed", fire => {
+        onClosed: new EventManager(context, "notifications.onClosed", fire => {
           let listener = (event, notificationId) => {
             // FIXME: Support the byUser argument.
             fire.async(notificationId, true);
@@ -145,7 +150,7 @@ this.notifications = class extends ExtensionAPI {
           };
         }).api(),
 
-        onClicked: new SingletonEventManager(context, "notifications.onClicked", fire => {
+        onClicked: new EventManager(context, "notifications.onClicked", fire => {
           let listener = (event, notificationId) => {
             fire.async(notificationId, true);
           };
@@ -153,6 +158,17 @@ this.notifications = class extends ExtensionAPI {
           notificationsMap.get(extension).on("clicked", listener);
           return () => {
             notificationsMap.get(extension).off("clicked", listener);
+          };
+        }).api(),
+
+        onShown: new EventManager(context, "notifications.onShown", fire => {
+          let listener = (event, notificationId) => {
+            fire.async(notificationId, true);
+          };
+
+          notificationsMap.get(extension).on("shown", listener);
+          return () => {
+            notificationsMap.get(extension).off("shown", listener);
           };
         }).api(),
 

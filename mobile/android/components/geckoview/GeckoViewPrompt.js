@@ -7,6 +7,9 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncPrefs",
+                                  "resource://gre/modules/AsyncPrefs.jsm");
+
 XPCOMUtils.defineLazyModuleGetter(this, "ContentPrefServiceParent",
                                   "resource://gre/modules/ContentPrefServiceParent.jsm");
 
@@ -39,6 +42,8 @@ PromptFactory.prototype = {
       case "profile-after-change": {
         // ContentPrefServiceParent is needed for e10s file picker.
         ContentPrefServiceParent.init();
+        // AsyncPrefs is needed for reader mode.
+        AsyncPrefs.init();
         Services.mm.addMessageListener("GeckoView:Prompt", this);
         break;
       }
@@ -460,10 +465,7 @@ PromptDelegate.prototype = {
       this.asyncShowPrompt(aMsg, res => result = res);
 
       // Spin this thread while we wait for a result
-      let thread = Services.tm.currentThread;
-      while (result === undefined) {
-        thread.processNextEvent(true);
-      }
+      Services.tm.spinEventLoopUntil(() => result !== undefined);
     } finally {
       this._changeModalState(/* aEntering */ false);
     }

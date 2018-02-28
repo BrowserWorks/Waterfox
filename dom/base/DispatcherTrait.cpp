@@ -14,18 +14,16 @@ using namespace mozilla;
 using namespace mozilla::dom;
 
 nsresult
-DispatcherTrait::Dispatch(const char* aName,
-                          TaskCategory aCategory,
+DispatcherTrait::Dispatch(TaskCategory aCategory,
                           already_AddRefed<nsIRunnable>&& aRunnable)
 {
-  return SchedulerGroup::UnlabeledDispatch(aName, aCategory, Move(aRunnable));
+  return SchedulerGroup::UnlabeledDispatch(aCategory, Move(aRunnable));
 }
 
-nsIEventTarget*
+nsISerialEventTarget*
 DispatcherTrait::EventTargetFor(TaskCategory aCategory) const
 {
-  nsCOMPtr<nsIEventTarget> main = do_GetMainThread();
-  return main;
+  return GetMainThreadSerialEventTarget();
 }
 
 AbstractThread*

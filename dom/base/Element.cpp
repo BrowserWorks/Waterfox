@@ -67,6 +67,8 @@
 #include "mozilla/EventStates.h"
 #include "mozilla/InternalMutationEvent.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/SizeOfState.h"
+#include "mozilla/TextEditor.h"
 #include "mozilla/TextEvents.h"
 #include "nsNodeUtils.h"
 #include "mozilla/dom/DirectionalityUtils.h"
@@ -103,7 +105,6 @@
 #include "nsICategoryManager.h"
 #include "nsIDOMDocumentType.h"
 #include "nsGenericHTMLElement.h"
-#include "nsIEditor.h"
 #include "nsContentCreatorFunctions.h"
 #include "nsIControllers.h"
 #include "nsView.h"
@@ -493,7 +494,7 @@ Element::GetBindingURL(nsIDocument *aDocument, css::URLValue **aResult)
                                IsHTMLElement(nsGkAtoms::object) ||
                                IsHTMLElement(nsGkAtoms::embed) ||
                                IsHTMLElement(nsGkAtoms::applet));
-  nsCOMPtr<nsIPresShell> shell = aDocument->GetShell();
+  nsIPresShell* shell = aDocument->GetShell();
   if (!shell || GetPrimaryFrame() || !isXULorPluginElement) {
     *aResult = nullptr;
     return true;
@@ -613,7 +614,9 @@ Element::WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
           binding->ExecuteAttachedHandler();
         } else {
           nsContentUtils::AddScriptRunner(
-            NewRunnableMethod(binding, &nsXBLBinding::ExecuteAttachedHandler));
+            NewRunnableMethod("nsXBLBinding::ExecuteAttachedHandler",
+                              binding,
+                              &nsXBLBinding::ExecuteAttachedHandler));
         }
       }
     }
@@ -1303,7 +1306,6 @@ Element::SetAttribute(const nsAString& aName,
 
   aError = SetAttr(name->NamespaceID(), name->LocalName(), name->GetPrefix(),
                    aValue, true);
-  return;
 }
 
 void
@@ -1547,7 +1549,7 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
 #endif
   {
     if (aBindingParent) {
-      nsDOMSlots *slots = DOMSlots();
+      nsExtendedDOMSlots* slots = ExtendedDOMSlots();
 
       slots->mBindingParent = aBindingParent; // Weak, so no addref happens.
     }
@@ -1564,13 +1566,16 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     if (aParent->HasFlag(NODE_CHROME_ONLY_ACCESS)) {
       SetFlags(NODE_CHROME_ONLY_ACCESS);
     }
+    if (HasFlag(NODE_IS_ANONYMOUS_ROOT)) {
+      aParent->SetMayHaveAnonymousChildren();
+    }
     if (aParent->IsInShadowTree()) {
       ClearSubtreeRootPointer();
       SetFlags(NODE_IS_IN_SHADOW_TREE);
     }
     ShadowRoot* parentContainingShadow = aParent->GetContainingShadow();
     if (parentContainingShadow) {
-      DOMSlots()->mContainingShadow = parentContainingShadow;
+      ExtendedDOMSlots()->mContainingShadow = parentContainingShadow;
     }
   }
 
@@ -1788,10 +1793,14 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   return NS_OK;
 }
 
-RemoveFromBindingManagerRunnable::RemoveFromBindingManagerRunnable(nsBindingManager* aManager,
-                                                                   nsIContent* aContent,
-                                                                   nsIDocument* aDoc):
-  mManager(aManager), mContent(aContent), mDoc(aDoc)
+RemoveFromBindingManagerRunnable::RemoveFromBindingManagerRunnable(
+  nsBindingManager* aManager,
+  nsIContent* aContent,
+  nsIDocument* aDoc)
+  : mozilla::Runnable("dom::RemoveFromBindingManagerRunnable")
+  , mManager(aManager)
+  , mContent(aContent)
+  , mDoc(aDoc)
 {}
 
 RemoveFromBindingManagerRunnable::~RemoveFromBindingManagerRunnable() {}
@@ -1903,8 +1912,8 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
 
   ClearInDocument();
 
-  // Computed styled data isn't useful for detached nodes, and we'll need to
-  // recomputed it anyway if we ever insert the nodes back into a document.
+  // Computed style data isn't useful for detached nodes, and we'll need to
+  // recompute it anyway if we ever insert the nodes back into a document.
   if (IsStyledByServo()) {
     ClearServoData();
   } else {
@@ -1956,7 +1965,7 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
   }
 #endif
 
-  nsDOMSlots* slots = GetExistingDOMSlots();
+  nsExtendedDOMSlots* slots = GetExistingExtendedDOMSlots();
   if (slots) {
     if (clearBindingParent) {
       slots->mBindingParent = nullptr;
@@ -2004,7 +2013,7 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
 nsICSSDeclaration*
 Element::GetSMILOverrideStyle()
 {
-  Element::nsDOMSlots *slots = DOMSlots();
+  Element::nsExtendedDOMSlots* slots = ExtendedDOMSlots();
 
   if (!slots->mSMILOverrideStyle) {
     slots->mSMILOverrideStyle = new nsDOMCSSAttributeDeclaration(this, true);
@@ -2016,7 +2025,7 @@ Element::GetSMILOverrideStyle()
 DeclarationBlock*
 Element::GetSMILOverrideStyleDeclaration()
 {
-  Element::nsDOMSlots *slots = GetExistingDOMSlots();
+  Element::nsExtendedDOMSlots* slots = GetExistingExtendedDOMSlots();
   return slots ? slots->mSMILOverrideStyleDeclaration.get() : nullptr;
 }
 
@@ -2024,7 +2033,7 @@ nsresult
 Element::SetSMILOverrideStyleDeclaration(DeclarationBlock* aDeclaration,
                                          bool aNotify)
 {
-  Element::nsDOMSlots *slots = DOMSlots();
+  Element::nsExtendedDOMSlots* slots = ExtendedDOMSlots();
 
   slots->mSMILOverrideStyleDeclaration = aDeclaration;
 
@@ -2657,6 +2666,11 @@ Element::ParseAttribute(int32_t aNamespaceID,
                         const nsAString& aValue,
                         nsAttrValue& aResult)
 {
+  if (aAttribute == nsGkAtoms::lang) {
+    aResult.ParseAtom(aValue);
+    return true;
+  }
+
   if (aNamespaceID == kNameSpaceID_None) {
     MOZ_ASSERT(aAttribute != nsGkAtoms::_class,
                "The class attribute should be preparsed and therefore should "
@@ -2712,8 +2726,6 @@ Element::PreIdMaybeChange(int32_t aNamespaceID, nsIAtom* aName,
     return;
   }
   RemoveFromIdTable();
-
-  return;
 }
 
 void
@@ -2732,8 +2744,6 @@ Element::PostIdMaybeChange(int32_t aNamespaceID, nsIAtom* aName,
   } else {
     ClearHasID();
   }
-
-  return;
 }
 
 EventListenerManager*
@@ -2981,8 +2991,8 @@ Element::List(FILE* out, int32_t aIndent,
           static_cast<unsigned long long>(State().GetInternalValue()));
   fprintf(out, " flags=[%08x]", static_cast<unsigned int>(GetFlags()));
   if (IsCommonAncestorForRangeInSelection()) {
-    nsRange::RangeHashTable* ranges =
-      static_cast<nsRange::RangeHashTable*>(GetProperty(nsGkAtoms::range));
+    const nsTHashtable<nsPtrHashKey<nsRange>>* ranges =
+      GetExistingCommonAncestorRanges();
     fprintf(out, " ranges:%d", ranges ? ranges->Count() : 0);
   }
   fprintf(out, " primaryframe=%p", static_cast<void*>(GetPrimaryFrame()));
@@ -3713,6 +3723,12 @@ Element::SetInnerHTML(const nsAString& aInnerHTML, ErrorResult& aError)
 }
 
 void
+Element::UnsafeSetInnerHTML(const nsAString& aInnerHTML, ErrorResult& aError)
+{
+  SetInnerHTMLInternal(aInnerHTML, aError, true);
+}
+
+void
 Element::GetOuterHTML(nsAString& aOuterHTML)
 {
   GetMarkup(true, aOuterHTML);
@@ -3938,8 +3954,8 @@ Element::InsertAdjacentText(
   InsertAdjacent(aWhere, textNode, aError);
 }
 
-nsIEditor*
-Element::GetEditorInternal()
+TextEditor*
+Element::GetTextEditorInternal()
 {
   nsCOMPtr<nsITextControlElement> textCtrl = do_QueryInterface(this);
   return textCtrl ? textCtrl->GetTextEditor() : nullptr;
@@ -4031,9 +4047,16 @@ Element::GetReferrerPolicyAsEnum()
 {
   if (IsHTMLElement()) {
     const nsAttrValue* referrerValue = GetParsedAttr(nsGkAtoms::referrerpolicy);
-    if (referrerValue && referrerValue->Type() == nsAttrValue::eEnum) {
-      return net::ReferrerPolicy(referrerValue->GetEnumValue());
-    }
+    return ReferrerPolicyFromAttr(referrerValue);
+  }
+  return net::RP_Unset;
+}
+
+net::ReferrerPolicy
+Element::ReferrerPolicyFromAttr(const nsAttrValue* aValue)
+{
+  if (aValue && aValue->Type() == nsAttrValue::eEnum) {
+    return net::ReferrerPolicy(aValue->GetEnumValue());
   }
   return net::RP_Unset;
 }
@@ -4066,7 +4089,7 @@ Element::ClearDataset()
 nsDataHashtable<nsRefPtrHashKey<DOMIntersectionObserver>, int32_t>*
 Element::RegisteredIntersectionObservers()
 {
-  nsDOMSlots* slots = DOMSlots();
+  nsExtendedDOMSlots* slots = ExtendedDOMSlots();
   return &slots->mRegisteredIntersectionObservers;
 }
 
@@ -4078,48 +4101,40 @@ enum nsPreviousIntersectionThreshold {
 void
 Element::RegisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 {
-  nsDataHashtable<nsRefPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
-    RegisteredIntersectionObservers();
-  if (observers->Contains(aObserver)) {
-    return;
-  }
-
-  // Value can be:
-  //   -2:   Makes sure next calculated threshold always differs, leading to a
-  //         notification task being scheduled.
-  //   -1:   Non-intersecting.
-  //   >= 0: Intersecting, valid index of aObserver->mThresholds.
-  RegisteredIntersectionObservers()->Put(aObserver, eUninitialized);
+  RegisteredIntersectionObservers()->LookupForAdd(aObserver).OrInsert([]() {
+    // Value can be:
+    //   -2:   Makes sure next calculated threshold always differs, leading to a
+    //         notification task being scheduled.
+    //   -1:   Non-intersecting.
+    //   >= 0: Intersecting, valid index of aObserver->mThresholds.
+    return eUninitialized;
+  });
 }
 
 void
 Element::UnregisterIntersectionObserver(DOMIntersectionObserver* aObserver)
 {
-  nsDataHashtable<nsRefPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
-    RegisteredIntersectionObservers();
-  observers->Remove(aObserver);
+  RegisteredIntersectionObservers()->Remove(aObserver);
 }
 
 bool
 Element::UpdateIntersectionObservation(DOMIntersectionObserver* aObserver, int32_t aThreshold)
 {
-  nsDataHashtable<nsRefPtrHashKey<DOMIntersectionObserver>, int32_t>* observers =
-    RegisteredIntersectionObservers();
-  if (!observers->Contains(aObserver)) {
-    return false;
+  bool updated = false;
+  if (auto entry = RegisteredIntersectionObservers()->Lookup(aObserver)) {
+    updated = entry.Data() != aThreshold;
+    entry.Data() = aThreshold;
   }
-  int32_t previousThreshold = observers->Get(aObserver);
-  if (previousThreshold != aThreshold) {
-    observers->Put(aObserver, aThreshold);
-    return true;
-  }
-  return false;
+  return updated;
 }
 
 void
 Element::ClearServoData() {
+  MOZ_ASSERT(IsStyledByServo());
 #ifdef MOZ_STYLO
   Servo_Element_ClearData(this);
+  UnsetFlags(ELEMENT_HAS_DIRTY_DESCENDANTS_FOR_SERVO |
+             ELEMENT_HAS_ANIMATION_ONLY_DIRTY_DESCENDANTS_FOR_SERVO);
 #else
   MOZ_CRASH("Accessing servo node data in non-stylo build");
 #endif
@@ -4128,7 +4143,18 @@ Element::ClearServoData() {
 void
 Element::SetCustomElementData(CustomElementData* aData)
 {
-  nsDOMSlots *slots = DOMSlots();
+  nsExtendedDOMSlots *slots = ExtendedDOMSlots();
   MOZ_ASSERT(!slots->mCustomElementData, "Custom element data may not be changed once set.");
   slots->mCustomElementData = aData;
 }
+
+size_t
+Element::SizeOfExcludingThis(SizeOfState& aState) const
+{
+  size_t n = FragmentOrElement::SizeOfExcludingThis(aState);
+
+  // XXX: measure mServoData.
+
+  return n;
+}
+

@@ -105,7 +105,11 @@ WMFDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
                            aParams.mImageContainer,
                            sDXVAEnabled));
 
-  if (!manager->Init()) {
+  MediaResult result = manager->Init();
+  if (NS_FAILED(result)) {
+    if (aParams.mError) {
+      *aParams.mError = result;
+    }
     return nullptr;
   }
 
@@ -158,45 +162,9 @@ CanCreateWMFDecoder()
   return result.value();
 }
 
-static bool
-IsH264DecoderBlacklisted()
-{
-#ifdef BLACKLIST_CRASHY_H264_DECODERS
-  WCHAR systemPath[MAX_PATH + 1];
-  if (!ConstructSystem32Path(L"msmpeg2vdec.dll", systemPath, MAX_PATH + 1)) {
-    // Cannot build path -> Assume it's not the blacklisted DLL.
-    return false;
-  }
-
-  DWORD zero;
-  DWORD infoSize = GetFileVersionInfoSizeW(systemPath, &zero);
-  if (infoSize == 0) {
-    // Can't get file info -> Assume we don't have the blacklisted DLL.
-    return false;
-  }
-  auto infoData = MakeUnique<unsigned char[]>(infoSize);
-  VS_FIXEDFILEINFO *vInfo;
-  UINT vInfoLen;
-  if (GetFileVersionInfoW(systemPath, 0, infoSize, infoData.get()) &&
-    VerQueryValueW(infoData.get(), L"\\", (LPVOID*)&vInfo, &vInfoLen))
-  {
-    if ((vInfo->dwFileVersionMS == ((12u << 16) | 0u))
-        && ((vInfo->dwFileVersionLS == ((9200u << 16) | 16426u))
-            || (vInfo->dwFileVersionLS == ((9200u << 16) | 17037u)))) {
-      // 12.0.9200.16426 & .17037 are blacklisted on Win64, see bug 1242343.
-      return true;
-    }
-  }
-#endif // BLACKLIST_CRASHY_H264_DECODERS
-  return false;
-}
-
 /* static */ bool
 WMFDecoderModule::HasH264()
 {
-  if (IsH264DecoderBlacklisted()) {
-    return false;
-  }
   return CanCreateWMFDecoder<CLSID_CMSH264DecoderMFT>();
 }
 
@@ -229,25 +197,6 @@ WMFDecoderModule::Supports(const TrackInfo& aTrackInfo,
   }
   if (MP4Decoder::IsH264(aTrackInfo.mMimeType)
       && WMFDecoderModule::HasH264()) {
-    if (!MediaPrefs::PDMWMFAllowUnsupportedResolutions()) {
-      const VideoInfo* videoInfo = aTrackInfo.GetAsVideoInfo();
-      MOZ_ASSERT(videoInfo);
-      // Check Windows format constraints, based on:
-      // https://msdn.microsoft.com/en-us/library/windows/desktop/dd797815(v=vs.85).aspx
-      if (IsWin8OrLater()) {
-        // Windows >7 supports at most 4096x2304.
-        if (videoInfo->mImage.width > 4096
-            || videoInfo->mImage.height > 2304) {
-          return false;
-        }
-      } else {
-        // Windows <=7 supports at most 1920x1088.
-        if (videoInfo->mImage.width > 1920
-            || videoInfo->mImage.height > 1088) {
-          return false;
-        }
-      }
-    }
     return true;
   }
   if (aTrackInfo.mMimeType.EqualsLiteral("audio/mpeg") &&
@@ -255,8 +204,7 @@ WMFDecoderModule::Supports(const TrackInfo& aTrackInfo,
     return true;
   }
   if (MediaPrefs::PDMWMFVP9DecoderEnabled()) {
-    if ((VPXDecoder::IsVP8(aTrackInfo.mMimeType)
-         || VPXDecoder::IsVP9(aTrackInfo.mMimeType))
+    if (VPXDecoder::IsVP9(aTrackInfo.mMimeType)
         && CanCreateWMFDecoder<CLSID_WebmMfVpxDec>()) {
       return true;
     }

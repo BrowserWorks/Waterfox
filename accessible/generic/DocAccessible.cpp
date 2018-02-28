@@ -92,7 +92,7 @@ DocAccessible::
   mDocumentNode(aDocument),
   mScrollPositionChangedTicks(0),
   mLoadState(eTreeConstructionPending), mDocFlags(0), mLoadEventType(0),
-  mVirtualCursor(nullptr),
+  mARIAAttrOldValue{nullptr}, mVirtualCursor(nullptr),
   mPresShell(aPresShell), mIPCDoc(nullptr)
 {
   mGenericTypes |= eDocument;
@@ -649,9 +649,12 @@ DocAccessible::ScrollPositionDidChange(nscoord aX, nscoord aY)
     mScrollWatchTimer = do_CreateInstance("@mozilla.org/timer;1");
     if (mScrollWatchTimer) {
       NS_ADDREF_THIS(); // Kung fu death grip
-      mScrollWatchTimer->InitWithFuncCallback(ScrollTimerCallback, this,
-                                              kScrollPosCheckWait,
-                                              nsITimer::TYPE_REPEATING_SLACK);
+      mScrollWatchTimer->InitWithNamedFuncCallback(
+        ScrollTimerCallback,
+        this,
+        kScrollPosCheckWait,
+        nsITimer::TYPE_REPEATING_SLACK,
+        "a11y::DocAccessible::ScrollPositionDidChange");
     }
   }
   mScrollPositionChangedTicks = 1;
@@ -664,7 +667,7 @@ NS_IMETHODIMP
 DocAccessible::Observe(nsISupports* aSubject, const char* aTopic,
                        const char16_t* aData)
 {
-  if (!nsCRT::strcmp(aTopic,"obs_documentCreated")) {    
+  if (!nsCRT::strcmp(aTopic,"obs_documentCreated")) {
     // State editable will now be set, readonly is now clear
     // Normally we only fire delayed events created from the node, not an
     // accessible object. See the AccStateChangeEvent constructor for details
@@ -817,7 +820,7 @@ DocAccessible::AttributeChangedImpl(Accessible* aAccessible,
   // For example, if an <img>'s usemap attribute is modified
   // Otherwise it may just be a state change, for example an object changing
   // its visibility
-  // 
+  //
   // XXX todo: report aria state changes for "undefined" literal value changes
   // filed as bug 472142
   //
@@ -1048,6 +1051,13 @@ DocAccessible::ARIAAttributeChanged(Accessible* aAccessible, nsIAtom* aAttribute
        elm->AttrValueIs(kNameSpaceID_None, nsGkAtoms::aria_valuetext,
                         nsGkAtoms::_empty, eCaseMatters))) {
     FireDelayedEvent(nsIAccessibleEvent::EVENT_VALUE_CHANGE, aAccessible);
+    return;
+  }
+
+  if (aAttribute == nsGkAtoms::aria_current) {
+    RefPtr<AccEvent> event =
+      new AccStateChangeEvent(aAccessible, states::CURRENT);
+    FireDelayedEvent(event);
     return;
   }
 
@@ -2098,19 +2108,39 @@ DocAccessible::DoARIAOwnsRelocation(Accessible* aOwner)
                     "candidate", child, nullptr);
 #endif
 
-    // Same child on same position, no change.
-    if (child->Parent() == aOwner &&
-        child->IndexInParent() == static_cast<int32_t>(insertIdx)) {
-      MOZ_ASSERT(owned->ElementAt(idx) == child, "Not in sync!");
-      idx++;
-      continue;
-    }
-
-    MOZ_ASSERT(owned->SafeElementAt(idx) != child, "Already in place!");
-
     if (owned->IndexOf(child) < idx) {
       continue; // ignore second entry of same ID
     }
+
+    // Same child on same position, no change.
+    if (child->Parent() == aOwner) {
+      int32_t indexInParent = child->IndexInParent();
+
+      // The child is being placed in its current index,
+      // eg. aria-owns='id1 id2 id3' is changed to aria-owns='id3 id2 id1'.
+      if (indexInParent == static_cast<int32_t>(insertIdx)) {
+        MOZ_ASSERT(child->IsRelocated(),
+                   "A child, having an index in parent from aria ownded indices range, has to be aria owned");
+        MOZ_ASSERT(owned->ElementAt(idx) == child,
+                   "Unexpected child in ARIA owned array");
+        idx++;
+        continue;
+      }
+
+      // The child is being inserted directly after its current index,
+      // resulting in a no-move case. This will happen when a parent aria-owns
+      // its last ordinal child:
+      // <ul aria-owns='id2'><li id='id1'></li><li id='id2'></li></ul>
+      if (indexInParent == static_cast<int32_t>(insertIdx) - 1) {
+        MOZ_ASSERT(!child->IsRelocated(), "Child should be in its ordinal position");
+        child->SetRelocated(true);
+        owned->InsertElementAt(idx, child);
+        idx++;
+        continue;
+      }
+    }
+
+    MOZ_ASSERT(owned->SafeElementAt(idx) != child, "Already in place!");
 
     // A new child is found, check for loops.
     if (child->Parent() != aOwner) {
@@ -2126,6 +2156,8 @@ DocAccessible::DoARIAOwnsRelocation(Accessible* aOwner)
 
     if (MoveChild(child, aOwner, insertIdx)) {
       child->SetRelocated(true);
+      MOZ_ASSERT(owned == mARIAOwnsHash.Get(aOwner));
+      owned = mARIAOwnsHash.LookupOrAdd(aOwner);
       owned->InsertElementAt(idx, child);
       idx++;
     }
@@ -2144,7 +2176,6 @@ DocAccessible::PutChildrenBack(nsTArray<RefPtr<Accessible> >* aChildren,
 {
   MOZ_ASSERT(aStartIdx <= aChildren->Length(), "Wrong removal index");
 
-  nsTArray<RefPtr<Accessible> > containers;
   for (auto idx = aStartIdx; idx < aChildren->Length(); idx++) {
     Accessible* child = aChildren->ElementAt(idx);
     if (!child->IsInDocument()) {
@@ -2166,11 +2197,12 @@ DocAccessible::PutChildrenBack(nsTArray<RefPtr<Accessible> >* aChildren,
     // Unset relocated flag to find an insertion point for the child.
     child->SetRelocated(false);
 
+    nsIContent* content = child->GetContent();
     int32_t idxInParent = -1;
-    Accessible* origContainer = GetContainerAccessible(child->GetContent());
+    Accessible* origContainer = AccessibleOrTrueContainer(content->GetParentNode());
     if (origContainer) {
       TreeWalker walker(origContainer);
-      if (walker.Seek(child->GetContent())) {
+      if (walker.Seek(content)) {
         Accessible* prevChild = walker.Prev();
         if (prevChild) {
           idxInParent = prevChild->IndexInParent() + 1;
@@ -2182,7 +2214,24 @@ DocAccessible::PutChildrenBack(nsTArray<RefPtr<Accessible> >* aChildren,
         }
       }
     }
-    MoveChild(child, origContainer, idxInParent);
+
+    // The child may have already be in its ordinal place for 2 reasons:
+    // 1. It was the last ordinal child, and the first aria-owned child.
+    //    given:      <ul id="list" aria-owns="b"><li id="a"></li><li id="b"></li></ul>
+    //    after load: $("list").setAttribute("aria-owns", "");
+    // 2. The preceding adopted children were just reclaimed, eg:
+    //    given:      <ul id="list"><li id="b"></li></ul>
+    //    after load: $("list").setAttribute("aria-owns", "a b");
+    //    later:      $("list").setAttribute("aria-owns", "");
+    if (origContainer != owner || child->IndexInParent() != idxInParent) {
+      DebugOnly<bool> moved = MoveChild(child, origContainer, idxInParent);
+      MOZ_ASSERT(moved, "Failed to put child back.");
+    } else {
+      MOZ_ASSERT(!child->PrevSibling() || !child->PrevSibling()->IsRelocated(),
+                 "No relocated child should appear before this one");
+      MOZ_ASSERT(!child->NextSibling() || child->NextSibling()->IsRelocated(),
+                 "No ordinal child should appear after this one");
+    }
   }
 
   aChildren->RemoveElementsAt(aStartIdx, aChildren->Length() - aStartIdx);
@@ -2196,6 +2245,10 @@ DocAccessible::MoveChild(Accessible* aChild, Accessible* aNewParent,
   MOZ_ASSERT(aChild->Parent(), "No parent");
   MOZ_ASSERT(aIdxInParent <= static_cast<int32_t>(aNewParent->ChildCount()),
              "Wrong insertion point for a moving child");
+
+  if (!aNewParent->IsAcceptableChild(aChild->GetContent())) {
+    return false;
+  }
 
   Accessible* curParent = aChild->Parent();
 
@@ -2228,10 +2281,6 @@ DocAccessible::MoveChild(Accessible* aChild, Accessible* aNewParent,
                       logging::eVerbose, curParent);
 #endif
     return true;
-  }
-
-  if (!aNewParent->IsAcceptableChild(aChild->GetContent())) {
-    return false;
   }
 
   MOZ_ASSERT(aIdxInParent <= static_cast<int32_t>(aNewParent->ChildCount()),

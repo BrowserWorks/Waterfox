@@ -10,7 +10,7 @@ use freetype::freetype::{FT_F26Dot6, FT_Face, FT_FaceRec};
 use freetype::freetype::{FT_Get_Char_Index, FT_Get_Postscript_Name};
 use freetype::freetype::{FT_Get_Kerning, FT_Get_Sfnt_Table, FT_Load_Sfnt_Table};
 use freetype::freetype::{FT_GlyphSlot, FT_Library, FT_Long, FT_ULong};
-use freetype::freetype::{FT_Kerning_Mode, FT_STYLE_FLAG_BOLD, FT_STYLE_FLAG_ITALIC};
+use freetype::freetype::{FT_Int32, FT_Kerning_Mode, FT_STYLE_FLAG_BOLD, FT_STYLE_FLAG_ITALIC};
 use freetype::freetype::{FT_Load_Glyph, FT_Set_Char_Size};
 use freetype::freetype::{FT_SizeRec, FT_Size_Metrics, FT_UInt, FT_Vector};
 use freetype::freetype::FT_Sfnt_Tag;
@@ -23,11 +23,18 @@ use std::sync::Arc;
 use style::computed_values::{font_stretch, font_weight};
 use super::c_str_to_string;
 use text::glyph::GlyphId;
-use text::util::{fixed_to_float, float_to_fixed};
+use text::util::fixed_to_float;
 
-fn float_to_fixed_ft(f: f64) -> i32 {
-    float_to_fixed(6, f)
-}
+// This constant is not present in the freetype
+// bindings due to bindgen not handling the way
+// the macro is defined.
+const FT_LOAD_TARGET_LIGHT: FT_Int32 = 1 << 16;
+
+// Default to slight hinting, which is what most
+// Linux distros use by default, and is a better
+// default than no hinting.
+// TODO(gw): Make this configurable.
+const GLYPH_LOAD_FLAGS: FT_Int32 = FT_LOAD_TARGET_LIGHT;
 
 fn fixed_to_float_ft(f: i32) -> f64 {
     fixed_to_float(6, f)
@@ -99,7 +106,7 @@ impl FontHandleMethods for FontHandle {
                     return Err(());
                 }
                 if let Some(s) = pt_size {
-                    try!(FontHandle::set_char_size(face, s).or(Err(())))
+                    FontHandle::set_char_size(face, s).or(Err(()))?
                 }
                 Ok(face)
             }
@@ -128,7 +135,7 @@ impl FontHandleMethods for FontHandle {
         unsafe { (*self.face).style_flags & FT_STYLE_FLAG_ITALIC as c_long != 0 }
     }
     fn boldness(&self) -> font_weight::T {
-        let default_weight = font_weight::T::Weight400;
+        let default_weight = font_weight::T::normal();
         if unsafe { (*self.face).style_flags & FT_STYLE_FLAG_BOLD as c_long == 0 } {
             default_weight
         } else {
@@ -136,18 +143,13 @@ impl FontHandleMethods for FontHandle {
                 let os2 = FT_Get_Sfnt_Table(self.face, FT_Sfnt_Tag::FT_SFNT_OS2) as *mut TT_OS2;
                 let valid = !os2.is_null() && (*os2).version != 0xffff;
                 if valid {
-                    let weight =(*os2).usWeightClass;
-                    match weight {
-                        1 | 100...199 => font_weight::T::Weight100,
-                        2 | 200...299 => font_weight::T::Weight200,
-                        3 | 300...399 => font_weight::T::Weight300,
-                        4 | 400...499 => font_weight::T::Weight400,
-                        5 | 500...599 => font_weight::T::Weight500,
-                        6 | 600...699 => font_weight::T::Weight600,
-                        7 | 700...799 => font_weight::T::Weight700,
-                        8 | 800...899 => font_weight::T::Weight800,
-                        9 | 900...999 => font_weight::T::Weight900,
-                        _ => default_weight
+                    let weight =(*os2).usWeightClass as i32;
+                    if weight < 10 {
+                        font_weight::T::from_int(weight * 100).unwrap()
+                    } else if weight >= 100 && weight < 1000 {
+                        font_weight::T::from_int(weight / 100 * 100).unwrap()
+                    } else {
+                        default_weight
                     }
                 } else {
                     default_weight
@@ -192,7 +194,9 @@ impl FontHandleMethods for FontHandle {
     fn glyph_h_advance(&self, glyph: GlyphId) -> Option<FractionalPixel> {
         assert!(!self.face.is_null());
         unsafe {
-            let res =  FT_Load_Glyph(self.face, glyph as FT_UInt, 0);
+            let res =  FT_Load_Glyph(self.face,
+                                     glyph as FT_UInt,
+                                     GLYPH_LOAD_FLAGS);
             if res.succeeded() {
                 let void_glyph = (*self.face).glyph;
                 let slot: FT_GlyphSlot = mem::transmute(void_glyph);
@@ -285,10 +289,10 @@ impl FontHandleMethods for FontHandle {
 
 impl<'a> FontHandle {
     fn set_char_size(face: FT_Face, pt_size: Au) -> Result<(), ()>{
-        let char_width = float_to_fixed_ft((0.5f64 + pt_size.to_f64_px()).floor()) as FT_F26Dot6;
+        let char_size = pt_size.to_f64_px() * 64.0 + 0.5;
 
         unsafe {
-            let result = FT_Set_Char_Size(face, char_width, 0, 0, 0);
+            let result = FT_Set_Char_Size(face, char_size as FT_F26Dot6, 0, 0, 0);
             if result.succeeded() { Ok(()) } else { Err(()) }
         }
     }

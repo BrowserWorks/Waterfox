@@ -91,7 +91,9 @@ NS_IMETHODIMP nsWifiMonitor::StartWatching(nsIWifiListener *aListener)
   }
 
 
-  mListeners.AppendElement(nsWifiListener(new nsMainThreadPtrHolder<nsIWifiListener>(aListener)));
+  mListeners.AppendElement(
+    nsWifiListener(new nsMainThreadPtrHolder<nsIWifiListener>(
+      "nsIWifiListener", aListener)));
 
   // tell ourselves that we have a new watcher.
   mon.Notify();
@@ -174,15 +176,15 @@ NS_IMETHODIMP nsWifiMonitor::Run()
   }
 
   if (doError) {
-    nsCOMPtr<nsIThread> thread = do_GetMainThread();
-    if (!thread)
+    nsCOMPtr<nsIEventTarget> target = GetMainThreadEventTarget();
+    if (!target)
       return NS_ERROR_UNEXPECTED;
 
     nsCOMPtr<nsIRunnable> runnable(new nsPassErrorToWifiListeners(currentListeners, rv));
     if (!runnable)
       return NS_ERROR_OUT_OF_MEMORY;
 
-    thread->Dispatch(runnable, NS_DISPATCH_SYNC);
+    target->Dispatch(runnable, NS_DISPATCH_SYNC);
   }
 
   LOG(("@@@@@ wifi monitor run complete\n"));

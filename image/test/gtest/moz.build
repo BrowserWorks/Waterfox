@@ -50,6 +50,8 @@ TEST_HARNESS_FILES.gtest += [
     'first-frame-green.webp',
     'first-frame-padding.gif',
     'green-1x1-truncated.gif',
+    'green-large-bmp.ico',
+    'green-large-png.ico',
     'green-multiple-sizes.ico',
     'green.bmp',
     'green.gif',

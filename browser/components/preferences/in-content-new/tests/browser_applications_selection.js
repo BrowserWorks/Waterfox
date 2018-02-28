@@ -5,8 +5,8 @@ var container;
 SimpleTest.requestCompleteLog();
 
 add_task(async function setup() {
-  await openPreferencesViaOpenPreferencesAPI("applications", {leaveOpen: true});
-  info("Preferences page opened on the applications pane.");
+  await openPreferencesViaOpenPreferencesAPI("paneGeneral", {leaveOpen: true});
+  info("Preferences page opened on the paneGeneral pane.");
 
   registerCleanupFunction(() => {
     gBrowser.removeCurrentTab();
@@ -38,7 +38,7 @@ add_task(async function selectInternalOptionForFeed() {
 
   // Select the option.
   let cmdEvent = win.document.createEvent("xulcommandevent");
-  cmdEvent.initCommandEvent("command", true, true, win, 0, false, false, false, false, null);
+  cmdEvent.initCommandEvent("command", true, true, win, 0, false, false, false, false, null, 0);
   chooseItems[0].dispatchEvent(cmdEvent);
 
   // Check that we display the correct result.

@@ -114,7 +114,7 @@ SharedSurface::ProdCopy(SharedSurface* src, SharedSurface* dest,
                                                        src->mSize,
                                                        dest->mSize,
                                                        srcTarget,
-                                                       true);
+                                                       !!gl->Screen());
         } else if (src->mAttachType == AttachmentType::GLRenderbuffer) {
             GLuint srcRB = src->ProdRenderbuffer();
             ScopedFramebufferForRenderbuffer srcWrapper(gl, srcRB);
@@ -216,9 +216,6 @@ SharedSurface::SharedSurface(SharedSurfaceType type,
     , mCanRecycle(canRecycle)
     , mIsLocked(false)
     , mIsProducerAcquired(false)
-#ifdef DEBUG
-    , mOwningThread(NS_GetCurrentThread())
-#endif
 { }
 
 layers::TextureFlags

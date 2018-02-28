@@ -5,6 +5,8 @@
 
 #include "MacIOSurfaceTextureHostOGL.h"
 #include "mozilla/gfx/MacIOSurface.h"
+#include "mozilla/webrender/RenderMacIOSurfaceTextureHostOGL.h"
+#include "mozilla/webrender/RenderThread.h"
 #include "mozilla/webrender/WebRenderAPI.h"
 #include "GLContextCGL.h"
 
@@ -115,6 +117,15 @@ MacIOSurfaceTextureHostOGL::gl() const
 }
 
 void
+MacIOSurfaceTextureHostOGL::CreateRenderTexture(const wr::ExternalImageId& aExternalImageId)
+{
+  RefPtr<wr::RenderTextureHost> texture =
+      new wr::RenderMacIOSurfaceTextureHostOGL(GetMacIOSurface());
+
+  wr::RenderThread::Get()->RegisterExternalImage(wr::AsUint64(aExternalImageId), texture.forget());
+}
+
+void
 MacIOSurfaceTextureHostOGL::GetWRImageKeys(nsTArray<wr::ImageKey>& aImageKeys,
                                            const std::function<wr::ImageKey()>& aImageKeyAllocator)
 {
@@ -167,7 +178,7 @@ MacIOSurfaceTextureHostOGL::AddWRImage(wr::WebRenderAPI* aAPI,
       aAPI->AddExternalImage(aImageKeys[0],
                              descriptor,
                              aExtID,
-                             WrExternalImageBufferType::TextureRectHandle,
+                             wr::WrExternalImageBufferType::TextureRectHandle,
                              0);
       break;
     }
@@ -182,7 +193,7 @@ MacIOSurfaceTextureHostOGL::AddWRImage(wr::WebRenderAPI* aAPI,
       aAPI->AddExternalImage(aImageKeys[0],
                              descriptor,
                              aExtID,
-                             WrExternalImageBufferType::TextureRectHandle,
+                             wr::WrExternalImageBufferType::TextureRectHandle,
                              0);
       break;
     }
@@ -196,12 +207,12 @@ MacIOSurfaceTextureHostOGL::AddWRImage(wr::WebRenderAPI* aAPI,
       aAPI->AddExternalImage(aImageKeys[0],
                              descriptor0,
                              aExtID,
-                             WrExternalImageBufferType::TextureRectHandle,
+                             wr::WrExternalImageBufferType::TextureRectHandle,
                              0);
       aAPI->AddExternalImage(aImageKeys[1],
                              descriptor1,
                              aExtID,
-                             WrExternalImageBufferType::TextureRectHandle,
+                             wr::WrExternalImageBufferType::TextureRectHandle,
                              1);
       break;
     }
@@ -213,8 +224,8 @@ MacIOSurfaceTextureHostOGL::AddWRImage(wr::WebRenderAPI* aAPI,
 
 void
 MacIOSurfaceTextureHostOGL::PushExternalImage(wr::DisplayListBuilder& aBuilder,
-                                              const WrRect& aBounds,
-                                              const WrClipRegionToken aClip,
+                                              const wr::LayoutRect& aBounds,
+                                              const wr::LayoutRect& aClip,
                                               wr::ImageRendering aFilter,
                                               Range<const wr::ImageKey>& aImageKeys)
 {
@@ -234,7 +245,7 @@ MacIOSurfaceTextureHostOGL::PushExternalImage(wr::DisplayListBuilder& aBuilder,
       aBuilder.PushYCbCrInterleavedImage(aBounds,
                                          aClip,
                                          aImageKeys[0],
-                                         WrYuvColorSpace::Rec601,
+                                         wr::WrYuvColorSpace::Rec601,
                                          aFilter);
       break;
     }
@@ -245,7 +256,7 @@ MacIOSurfaceTextureHostOGL::PushExternalImage(wr::DisplayListBuilder& aBuilder,
                              aClip,
                              aImageKeys[0],
                              aImageKeys[1],
-                             WrYuvColorSpace::Rec601,
+                             wr::WrYuvColorSpace::Rec601,
                              aFilter);
       break;
     }

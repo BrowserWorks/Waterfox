@@ -3,7 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use cssparser::{Parser, SourcePosition};
-use euclid::size::TypedSize2D;
+use euclid::ScaleFactor;
+use euclid::TypedSize2D;
+use servo_arc::Arc;
 use servo_url::ServoUrl;
 use std::borrow::ToOwned;
 use style::Atom;
@@ -12,8 +14,7 @@ use style::error_reporting::{ParseErrorReporter, ContextualParseError};
 use style::media_queries::*;
 use style::servo::media_queries::*;
 use style::shared_lock::SharedRwLock;
-use style::stylearc::Arc;
-use style::stylesheets::{AllRules, Stylesheet, Origin, CssRule};
+use style::stylesheets::{AllRules, Stylesheet, StylesheetInDocument, Origin, CssRule};
 use style::values::specified;
 use style_traits::ToCss;
 
@@ -39,7 +40,7 @@ fn test_media_rule<F>(css: &str, callback: F)
     let stylesheet = Stylesheet::from_str(
         css, url, Origin::Author, media_list, lock,
         None, &CSSErrorReporterTest, QuirksMode::NoQuirks, 0u64);
-    let dummy = Device::new(MediaType::Screen, TypedSize2D::new(200.0, 100.0));
+    let dummy = Device::new(MediaType::Screen, TypedSize2D::new(200.0, 100.0), ScaleFactor::new(1.0));
     let mut rule_count = 0;
     let guard = stylesheet.shared_lock.read();
     for rule in stylesheet.iter_rules::<AllRules>(&dummy, &guard) {
@@ -342,7 +343,7 @@ fn test_mq_malformed_expressions() {
 
 #[test]
 fn test_matching_simple() {
-    let device = Device::new(MediaType::Screen, TypedSize2D::new(200.0, 100.0));
+    let device = Device::new(MediaType::Screen, TypedSize2D::new(200.0, 100.0), ScaleFactor::new(1.0));
 
     media_query_test(&device, "@media not all { a { color: red; } }", 0);
     media_query_test(&device, "@media not screen { a { color: red; } }", 0);
@@ -358,7 +359,7 @@ fn test_matching_simple() {
 
 #[test]
 fn test_matching_width() {
-    let device = Device::new(MediaType::Screen, TypedSize2D::new(200.0, 100.0));
+    let device = Device::new(MediaType::Screen, TypedSize2D::new(200.0, 100.0), ScaleFactor::new(1.0));
 
     media_query_test(&device, "@media { a { color: red; } }", 1);
 
@@ -399,7 +400,7 @@ fn test_matching_width() {
 
 #[test]
 fn test_matching_invalid() {
-    let device = Device::new(MediaType::Screen, TypedSize2D::new(200.0, 100.0));
+    let device = Device::new(MediaType::Screen, TypedSize2D::new(200.0, 100.0), ScaleFactor::new(1.0));
 
     media_query_test(&device, "@media fridge { a { color: red; } }", 0);
     media_query_test(&device, "@media screen and (height: 100px) { a { color: red; } }", 0);

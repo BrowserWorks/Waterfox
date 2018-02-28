@@ -6,8 +6,6 @@
 package org.mozilla.gecko.customtabs;
 
 import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -30,6 +28,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.mozilla.gecko.GeckoView;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.SiteIdentity;
 import org.mozilla.gecko.Tab;
@@ -108,25 +107,24 @@ public class ActionBarPresenter {
      * @param url Url String to display
      */
     public void displayUrlOnly(@NonNull final String url) {
-        updateCustomView(null, null, url);
+        updateCustomView(null, url, /* isSecure */ false);
     }
 
     /**
-     * Update appearance of CustomView of ActionBar.
+     * Update appearance of CustomView of ActionBar
      *
-     * @param tab a Tab instance of current web page to provide information to render ActionBar.
+     * @param title          Title for current website. Could be null if don't want to show title.
+     * @param url            URL for current website. At least Custom will show this url.
+     * @param isSecure       A boolean representing whether or not the site is secure.
      */
-    public void update(@NonNull final Tab tab) {
-        final String title = tab.getTitle();
-        final String url = tab.getBaseDomain();
-
+    public void update(final String title, final String url, final boolean isSecure) {
         // Do not update CustomView immediately. If this method be invoked rapidly several times,
         // only apply last one.
         mHandler.removeCallbacks(mUpdateAction);
         mUpdateAction = new Runnable() {
             @Override
             public void run() {
-                updateCustomView(tab.getSiteIdentity(), title, url);
+                updateCustomView(title, url, isSecure);
             }
         };
         mHandler.postDelayed(mUpdateAction, CUSTOM_VIEW_UPDATE_DELAY);
@@ -215,30 +213,20 @@ public class ActionBarPresenter {
     /**
      * To update appearance of CustomView of ActionBar, includes its icon, title and url text.
      *
-     * @param identity SiteIdentity for current website. Could be null if don't want to show icon.
      * @param title    Title for current website. Could be null if don't want to show title.
      * @param url      URL for current website. At least Custom will show this url.
+     * @param isSecure A boolean representing whether or not the site is secure.
      */
     @UiThread
-    private void updateCustomView(@Nullable SiteIdentity identity,
-                                  @Nullable String title,
-                                  @NonNull String url) {
-        // update site-info icon
-        if (identity == null) {
-            mIconView.setVisibility(View.INVISIBLE);
-        } else {
-            final SecurityModeUtil.Mode mode = SecurityModeUtil.resolve(identity);
+    private void updateCustomView(final String title, final String url, final boolean isSecure) {
+        if (isSecure) {
             mIconView.setVisibility(View.VISIBLE);
-            mIconView.setImageLevel(mode.ordinal());
-            mIdentityPopup.setSiteIdentity(identity);
-
-            if (mode == SecurityModeUtil.Mode.LOCK_SECURE) {
-                // Lock-Secure is special case. Keep its original green color.
-                DrawableCompat.setTintList(mIconView.getDrawable(), null);
-            } else {
-                // Icon use same color as TextView.
-                DrawableCompat.setTint(mIconView.getDrawable(), mTextPrimaryColor);
-            }
+            mIconView.setImageLevel(SecurityModeUtil.getImageLevel(SecurityModeUtil.IconType.LOCK_SECURE));
+            // Lock-Secure is special case. Keep its original green color.
+            DrawableCompat.setTintList(mIconView.getDrawable(), null);
+        } else {
+            mIconView.setVisibility(View.INVISIBLE);
+            DrawableCompat.setTint(mIconView.getDrawable(), mTextPrimaryColor);
         }
 
         // If no title to use, use Url as title

@@ -107,15 +107,19 @@ add_task(async function test_remove_places() {
 add_task(async function test_bookmark_changes() {
   let testUri = NetUtil.newURI("http://test.mozilla.org");
 
-  let itemId = PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
-                                                     testUri,
-                                                     PlacesUtils.bookmarks.DEFAULT_INDEX,
-                                                     "bookmark title");
+  let bookmark = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+    url: testUri,
+    title: "bookmark title",
+  });
 
   do_check_true(isHostInMozPlaces(testUri));
 
   // Change the hostname
-  PlacesUtils.bookmarks.changeBookmarkURI(itemId, NetUtil.newURI(NEW_URL));
+  await PlacesUtils.bookmarks.update({
+    guid: bookmark.guid,
+    url: NEW_URL,
+  });
 
   await PlacesTestUtils.clearHistory();
 
@@ -126,23 +130,26 @@ add_task(async function test_bookmark_changes() {
 });
 
 add_task(async function test_bookmark_removal() {
-  let itemId = PlacesUtils.bookmarks.getIdForItemAt(PlacesUtils.unfiledBookmarksFolderId,
-                                                    PlacesUtils.bookmarks.DEFAULT_INDEX);
-  let newUri = NetUtil.newURI(NEW_URL);
-  PlacesUtils.bookmarks.removeItem(itemId);
+  // Get the last bookmark.
+  let unfiledBookmarksRoot =
+    await PlacesUtils.getFolderContents(PlacesUtils.unfiledBookmarksFolderId).root;
+  let itemGuid =
+    unfiledBookmarksRoot.getChild(unfiledBookmarksRoot.childCount - 1).bookmarkGuid;
+
+  await PlacesUtils.bookmarks.remove(itemGuid);
   await PlacesTestUtils.clearHistory();
 
-  checkHostNotInMozHosts(newUri, false, null);
+  checkHostNotInMozHosts(Services.io.newURI(NEW_URL), false, null);
 });
 
 add_task(async function test_moz_hosts_typed_update() {
   const TEST_URI = NetUtil.newURI("http://typed.mozilla.com");
-  let places = [{ uri: TEST_URI
-                , title: "test for " + TEST_URI.spec
+  let places = [{ uri: TEST_URI,
+                  title: "test for " + TEST_URI.spec
                 },
-                { uri: TEST_URI
-                , title: "test for " + TEST_URI.spec
-                , transition: TRANSITION_TYPED
+                { uri: TEST_URI,
+                  title: "test for " + TEST_URI.spec,
+                  transition: TRANSITION_TYPED
                 }];
 
   await PlacesTestUtils.addVisits(places);
@@ -153,13 +160,13 @@ add_task(async function test_moz_hosts_typed_update() {
 
 add_task(async function test_moz_hosts_www_remove() {
   async function test_removal(aURIToRemove, aURIToKeep, aCallback) {
-    let places = [{ uri: aURIToRemove
-                  , title: "test for " + aURIToRemove.spec
-                  , transition: TRANSITION_TYPED
+    let places = [{ uri: aURIToRemove,
+                    title: "test for " + aURIToRemove.spec,
+                    transition: TRANSITION_TYPED
                   },
-                  { uri: aURIToKeep
-                  , title: "test for " + aURIToKeep.spec
-                  , transition: TRANSITION_TYPED
+                  { uri: aURIToKeep,
+                    title: "test for " + aURIToKeep.spec,
+                    transition: TRANSITION_TYPED
                   }];
 
     await PlacesTestUtils.addVisits(places);
@@ -209,8 +216,8 @@ add_task(async function test_moz_hosts_update_2() {
   // rev_hosts.
   const TEST_URI_1 = NetUtil.newURI("https://www.google.it/");
   const TEST_URI_2 = NetUtil.newURI("https://google.it/");
-  let places = [{ uri: TEST_URI_1
-                , transition: TRANSITION_TYPED
+  let places = [{ uri: TEST_URI_1,
+                  transition: TRANSITION_TYPED
                 },
                 { uri: TEST_URI_2
                 }];

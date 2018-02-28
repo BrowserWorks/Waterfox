@@ -19,11 +19,7 @@
 
 // conflicts with #include of scoped_ptr.h
 #undef FF
-#include "webrtc/common.h"
-#include "webrtc/video_renderer.h"
 #include "webrtc/modules/video_capture/video_capture_defines.h"
-
-
 
 namespace mozilla {
 
@@ -245,6 +241,7 @@ private:
   bool mReceivedReply;
   // Async responses data contents;
   bool mReplySuccess;
+  const int mZero;
   int mReplyInteger;
   webrtc::VideoCaptureCapability mReplyCapability;
   nsCString mReplyDeviceName;

@@ -43,14 +43,15 @@ const {
   defineLazyGetter,
   getMessageManager,
   getUniqueId,
+  withHandlingUserInput,
 } = ExtensionUtils;
 
 const {
+  EventManager,
   LocalAPIImplementation,
   LocaleData,
   NoCloneSpreadArgs,
   SchemaAPIInterface,
-  SingletonEventManager,
 } = ExtensionCommon;
 
 const isContentProcess = Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT;
@@ -133,7 +134,7 @@ class Port {
         this.postMessage(json);
       },
 
-      onDisconnect: new SingletonEventManager(this.context, "Port.onDisconnect", fire => {
+      onDisconnect: new EventManager(this.context, "Port.onDisconnect", fire => {
         return this.registerOnDisconnect(holder => {
           let error = holder.deserialize(this.context.cloneScope);
           portError = error && this.context.normalizeError(error);
@@ -141,7 +142,7 @@ class Port {
         });
       }).api(),
 
-      onMessage: new SingletonEventManager(this.context, "Port.onMessage", fire => {
+      onMessage: new EventManager(this.context, "Port.onMessage", fire => {
         return this.registerOnMessage(holder => {
           let msg = holder.deserialize(this.context.cloneScope);
           fire.asyncWithoutClone(msg, portObj);
@@ -349,7 +350,7 @@ class Messenger {
   }
 
   _onMessage(name, filter) {
-    return new SingletonEventManager(this.context, name, fire => {
+    return new EventManager(this.context, name, fire => {
       let listener = {
         messageFilterPermissive: this.optionalFilter,
         messageFilterStrict: this.filter,
@@ -440,7 +441,7 @@ class Messenger {
   }
 
   _onConnect(name, filter) {
-    return new SingletonEventManager(this.context, name, fire => {
+    return new EventManager(this.context, name, fire => {
       let listener = {
         messageFilterPermissive: this.optionalFilter,
         messageFilterStrict: this.filter,
@@ -639,7 +640,15 @@ class ProxyAPIImplementation extends SchemaAPIInterface {
     this.childApiManager.callParentFunctionNoReturn(this.path, args);
   }
 
-  callAsyncFunction(args, callback) {
+  callAsyncFunction(args, callback, requireUserInput) {
+    if (requireUserInput) {
+      let context = this.childApiManager.context;
+      let winUtils = context.contentWindow.getInterface(Ci.nsIDOMWindowUtils);
+      if (!winUtils.isHandlingUserInput) {
+        let err = new context.cloneScope.Error(`${this.path} may only be called from a user input handler`);
+        return context.wrapPromise(Promise.reject(err), callback);
+      }
+    }
     return this.childApiManager.callParentAsyncFunction(this.path, args, callback);
   }
 
@@ -759,8 +768,9 @@ class ChildAPIManager {
 
         if (listener) {
           let args = data.args.deserialize(this.context.cloneScope);
-
-          return this.context.runSafeWithoutClone(listener, ...args);
+          let fire = () => this.context.runSafeWithoutClone(listener, ...args);
+          return (data.handlingUserInput) ?
+                 withHandlingUserInput(this.context.contentWindow, fire) : fire();
         }
         if (!map.removedIds.has(data.listenerId)) {
           Services.console.logStringMessage(
@@ -804,10 +814,14 @@ class ChildAPIManager {
    * @param {Array} args The parameters for the function.
    * @param {function(*)} [callback] The callback to be called when the function
    *     completes.
+   * @param {object} [options] Extra options.
+   * @param {boolean} [options.noClone = false] If true, do not clone
+   *     the arguments into an extension sandbox before calling the API
+   *     method.
    * @returns {Promise|undefined} Must be void if `callback` is set, and a
    *     promise otherwise. The promise is resolved when the function completes.
    */
-  callParentAsyncFunction(path, args, callback) {
+  callParentAsyncFunction(path, args, callback, options = {}) {
     let callId = getUniqueId();
     let deferred = PromiseUtils.defer();
     this.callPromises.set(callId, deferred);
@@ -817,6 +831,7 @@ class ChildAPIManager {
       callId,
       path,
       args,
+      noClone: options.noClone || false,
     });
 
     return this.context.wrapPromise(deferred.promise, callback);

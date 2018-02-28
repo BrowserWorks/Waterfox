@@ -36,7 +36,7 @@ Structure:
       settings: {
         addonCompatibilityCheckEnabled: <bool>, // Whether application compatibility is respected for add-ons
         blocklistEnabled: <bool>, // true on failure
-        isDefaultBrowser: <bool>, // null on failure, not available on Android
+        isDefaultBrowser: <bool>, // null on failure and until session restore completes, not available on Android
         defaultSearchEngine: <string>, // e.g. "yahoo"
         defaultSearchEngineData: {, // data about the current default engine
           name: <string>, // engine name, e.g. "Yahoo"; or "NONE" if no default
@@ -197,6 +197,9 @@ Structure:
               gpuProcess: { // Out-of-process compositing ("GPU process") feature
                 status: <string>, // "Available" means currently in use
               },
+              advancedLayers: { // Advanced Layers compositing. Only present if D3D11 enabled.
+                status: <string>,    // See the status codes above.
+              },
             },
           },
       },
@@ -212,7 +215,7 @@ Structure:
             scope: <integer>,
             type: <string>, // "extension", "service", ...
             foreignInstall: <bool>,
-            hasBinaryComponents: <bool>
+            hasBinaryComponents: <bool>,
             installDay: <number>, // days since UNIX epoch, 0 on failure
             updateDay: <number>, // days since UNIX epoch, 0 on failure
             signedState: <integer>, // whether the add-on is signed by AMO, only present for extensions
@@ -391,6 +394,8 @@ activeAddons
 ~~~~~~~~~~~~
 
 Starting from Firefox 44, the length of the following string fields: ``name``, ``description`` and ``version`` is limited to 100 characters. The same limitation applies to the same fields in ``theme`` and ``activePlugins``.
+
+Some of the fields in the record for each addon are not available during startup.  The fields that will always be present are ``id``, ``version``, ``type``, ``updateDate``, ``scope``, ``isSystem``, ``isWebExtension``, and ``multiprocessCompatible``.  All the other fields documented above become present shortly after the ``sessionstore-windows-restored`` event is dispatched.
 
 experiments
 -----------

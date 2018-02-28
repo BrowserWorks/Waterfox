@@ -7,11 +7,11 @@
 #ifndef nsBidiPresUtils_h___
 #define nsBidiPresUtils_h___
 
+#include "gfxContext.h"
 #include "nsBidi.h"
 #include "nsBidiUtils.h"
 #include "nsHashKeys.h"
 #include "nsCoord.h"
-#include "nsRenderingContext.h"
 
 #ifdef DrawText
 #undef DrawText
@@ -19,11 +19,11 @@
 
 struct BidiParagraphData;
 struct BidiLineData;
+class gfxContext;
 class nsFontMetrics;
 class nsIFrame;
 class nsBlockFrame;
 class nsPresContext;
-class nsRenderingContext;
 class nsBlockInFlowLineIterator;
 class nsStyleContext;
 struct nsSize;
@@ -100,7 +100,7 @@ public:
 
   nsBidiPresUtils();
   ~nsBidiPresUtils();
-  
+
   /**
    * Interface for the processor used by ProcessText. Used by process text to
    * collect information about the width of subruns and to notify where each
@@ -138,7 +138,7 @@ public:
      * Draws the text given in SetText to a rendering context. If SetText was
      * not called with valid parameters, the result of this call is undefined.
      * This call is guaranteed to only be called once between SetText calls.
-     * 
+     *
      * @param aXOffset The offset of the left side of the substring to be drawn
      *  from the beginning of the overall string passed to ProcessText.
      * @param aWidth The width returned by GetWidth.
@@ -164,7 +164,7 @@ public:
    * Update frame array, following the new visual sequence.
    *
    * @return total inline size
-   * 
+   *
    * @lina 05/02/2000
    */
   static nscoord ReorderFrames(nsIFrame* aFirstFrameOnLine,
@@ -178,7 +178,7 @@ public:
    * of the platform. The formatting includes: reordering, Arabic shaping,
    * symmetric and numeric swapping, removing control characters.
    *
-   * @lina 06/18/2000 
+   * @lina 06/18/2000
    */
   static nsresult FormatUnicodeText(nsPresContext*  aPresContext,
                                     char16_t*       aText,
@@ -213,7 +213,7 @@ public:
                              int32_t                aLength,
                              nsBidiLevel            aBaseLevel,
                              nsPresContext*         aPresContext,
-                             nsRenderingContext&    aRenderingContext,
+                             gfxContext&            aRenderingContext,
                              DrawTarget*            aTextRunConstructionDrawTarget,
                              nsFontMetrics&         aFontMetrics,
                              nscoord                aX,
@@ -226,12 +226,12 @@ public:
                                           aFontMetrics,
                                           MODE_DRAW, aX, aY, aPosResolve, aPosResolveCount, nullptr);
   }
-  
+
   static nscoord MeasureTextWidth(const char16_t*     aText,
                                   int32_t              aLength,
                                   nsBidiLevel          aBaseLevel,
                                   nsPresContext*       aPresContext,
-                                  nsRenderingContext&  aRenderingContext,
+                                  gfxContext&          aRenderingContext,
                                   nsFontMetrics&       aFontMetrics)
   {
     nscoord length;
@@ -266,7 +266,7 @@ public:
   static nsIFrame* GetFrameToRightOf(const nsIFrame*  aFrame,
                                      nsIFrame*        aFirstFrameOnLine,
                                      int32_t          aNumFramesOnLine);
-    
+
   /**
    * Get the frame to the left of the given frame, on the same line.
    * @param aFrame : We're looking for the frame to the left of this frame.
@@ -279,7 +279,7 @@ public:
                                     int32_t          aNumFramesOnLine);
 
   static nsIFrame* GetFirstLeaf(nsIFrame* aFrame);
-    
+
   /**
    * Get the bidi data of the given (inline) frame.
    */
@@ -379,7 +379,7 @@ private:
                                  int32_t                aLength,
                                  nsBidiLevel            aBaseLevel,
                                  nsPresContext*         aPresContext,
-                                 nsRenderingContext&    aRenderingContext,
+                                 gfxContext&            aRenderingContext,
                                  DrawTarget*            aTextRunConstructionDrawTarget,
                                  nsFontMetrics&         aFontMetrics,
                                  Mode                   aMode,
@@ -512,7 +512,7 @@ private:
                                         mozilla::WritingMode aLineWM,
                                         const nsSize& aContainerSize,
                                         nscoord aStart);
-  
+
   /**
    * Helper method for Resolve()
    * Truncate a text frame to the end of a single-directional run and possibly
@@ -520,7 +520,7 @@ private:
    *
    * @param aFrame       the original frame
    * @param aNewFrame    [OUT] the new frame that was created
-   * @param aStart       [IN] the start of the content mapped by aFrame (and 
+   * @param aStart       [IN] the start of the content mapped by aFrame (and
    *                          any fluid continuations)
    * @param aEnd         [IN] the offset of the end of the single-directional
    *                          text run.
@@ -557,7 +557,7 @@ private:
                                 int32_t&         aRunCount,
                                 uint8_t&         aCharType,
                                 uint8_t&         aPrevCharType);
-  
+
   static void StripBidiControlCharacters(char16_t* aText,
                                          int32_t&   aTextLength);
 };

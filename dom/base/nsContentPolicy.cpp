@@ -21,12 +21,14 @@
 #include "nsIDOMNode.h"
 #include "nsIDOMWindow.h"
 #include "nsIContent.h"
+#include "nsIImageLoadingContent.h"
 #include "nsILoadContext.h"
 #include "nsCOMArray.h"
 #include "nsContentUtils.h"
 #include "mozilla/dom/nsMixedContentBlocker.h"
 #include "nsIContentSecurityPolicy.h"
 #include "mozilla/dom/TabGroup.h"
+#include "mozilla/TaskCategory.h"
 
 using mozilla::LogLevel;
 
@@ -120,7 +122,7 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
     nsContentPolicyType externalType =
         nsContentUtils::InternalContentPolicyTypeToExternal(contentType);
 
-    /* 
+    /*
      * Enumerate mPolicies and ask each of them, taking the logical AND of
      * their permissions.
      */
@@ -138,7 +140,7 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
         nsCOMPtr<nsIContentSecurityPolicy> csp;
         requestPrincipal->GetCsp(getter_AddRefs(csp));
         if (csp && window) {
-            csp->EnsureEventTarget(window->EventTargetFor(TaskCategory::Other));
+            csp->EnsureEventTarget(window->EventTargetFor(mozilla::TaskCategory::Other));
         }
     }
 
@@ -156,6 +158,16 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
                                          decision);
 
         if (NS_SUCCEEDED(rv) && NS_CP_REJECTED(*decision)) {
+            // If we are blocking an image, we have to let the
+            // ImageLoadingContent know that we blocked the load.
+            if (externalType == nsIContentPolicy::TYPE_IMAGE ||
+                externalType == nsIContentPolicy::TYPE_IMAGESET) {
+              nsCOMPtr<nsIImageLoadingContent> img =
+                do_QueryInterface(requestingContext);
+              if (img) {
+                img->SetBlockedRequest(*decision);
+              }
+            }
             /* policy says no, no point continuing to check */
             return NS_OK;
         }
@@ -198,6 +210,16 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
                                                      decision);
 
         if (NS_SUCCEEDED(rv) && NS_CP_REJECTED(*decision)) {
+            // If we are blocking an image, we have to let the
+            // ImageLoadingContent know that we blocked the load.
+            if (externalType == nsIContentPolicy::TYPE_IMAGE ||
+                externalType == nsIContentPolicy::TYPE_IMAGESET) {
+              nsCOMPtr<nsIImageLoadingContent> img =
+                do_QueryInterface(requestingContext);
+              if (img) {
+                img->SetBlockedRequest(*decision);
+              }
+            }
             /* policy says no, no point continuing to check */
             return NS_OK;
         }

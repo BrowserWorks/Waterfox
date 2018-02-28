@@ -31,6 +31,19 @@ static NS_DEFINE_CID(kThisSimpleURIImplementationCID,
                      NS_THIS_SIMPLEURI_IMPLEMENTATION_CID);
 static NS_DEFINE_CID(kSimpleURICID, NS_SIMPLEURI_CID);
 
+/* static */ already_AddRefed<nsSimpleURI>
+nsSimpleURI::From(nsIURI* aURI)
+{
+    RefPtr<nsSimpleURI> uri;
+    nsresult rv = aURI->QueryInterface(kThisSimpleURIImplementationCID,
+                                       getter_AddRefs(uri));
+    if (NS_FAILED(rv)) {
+        return nullptr;
+    }
+
+    return uri.forget();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // nsSimpleURI methods:
 
@@ -240,6 +253,24 @@ nsSimpleURI::GetSpecIgnoringRef(nsACString &result)
         result += NS_LITERAL_CSTRING("?") + mQuery;
     }
     return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSimpleURI::GetDisplaySpec(nsACString &aUnicodeSpec)
+{
+    return GetSpec(aUnicodeSpec);
+}
+
+NS_IMETHODIMP
+nsSimpleURI::GetDisplayHostPort(nsACString &aUnicodeHostPort)
+{
+    return GetHostPort(aUnicodeHostPort);
+}
+
+NS_IMETHODIMP
+nsSimpleURI::GetDisplayHost(nsACString &aUnicodeHost)
+{
+    return GetHost(aUnicodeHost);
 }
 
 NS_IMETHODIMP

@@ -133,17 +133,6 @@ but you may be able to get a recent enough version from a software install
 tool or package manager on your system, or directly from https://rust-lang.org/
 '''
 
-STYLO_MOZCONFIG = '''
-To enable Stylo in your builds, paste the lines between the chevrons
-(>>> and <<<) into your mozconfig file:
-
-<<<
-ac_add_options --enable-stylo
-
-export LLVM_CONFIG=%s/clang/bin/llvm-config
->>>
-'''
-
 BROWSER_ARTIFACT_MODE_MOZCONFIG = '''
 Paste the lines between the chevrons (>>> and <<<) into your mozconfig file:
 
@@ -162,7 +151,7 @@ MODERN_MERCURIAL_VERSION = LooseVersion('3.7.3')
 MODERN_PYTHON_VERSION = LooseVersion('2.7.3')
 
 # Upgrade rust older than this.
-MODERN_RUST_VERSION = LooseVersion('1.18.0')
+MODERN_RUST_VERSION = LooseVersion('1.19.0')
 
 class BaseBootstrapper(object):
     """Base class for system bootstrappers."""
@@ -170,7 +159,6 @@ class BaseBootstrapper(object):
     def __init__(self, no_interactive=False):
         self.package_manager_updated = False
         self.no_interactive = no_interactive
-        self.stylo = False
         self.state_dir = None
 
     def install_system_packages(self):
@@ -199,8 +187,7 @@ class BaseBootstrapper(object):
         Firefox for Desktop can in simple cases determine its build environment
         entirely from configure.
         '''
-        if self.stylo:
-            print(STYLO_MOZCONFIG % self.state_dir)
+        pass
 
     def install_browser_artifact_mode_packages(self):
         '''
@@ -272,9 +259,7 @@ class BaseBootstrapper(object):
             '%s does not yet implement ensure_stylo_packages()'
             % __name__)
 
-    def install_tooltool_clang_package(self, state_dir, checkout_root, manifest_file):
-        abs_manifest_file = os.path.join(checkout_root, manifest_file)
-
+    def install_tooltool_clang_package(self, state_dir, checkout_root, toolchain_job):
         mach_binary = os.path.join(checkout_root, 'mach')
         if not os.path.exists(mach_binary):
             raise ValueError("mach not found at %s" % mach_binary)
@@ -286,8 +271,7 @@ class BaseBootstrapper(object):
             raise ValueError("cannot determine path to Python executable")
 
         cmd = [sys.executable, mach_binary, 'artifact', 'toolchain',
-               '--tooltool-manifest', abs_manifest_file,
-               'clang']
+               '--from-build', toolchain_job]
 
         subprocess.check_call(cmd, cwd=state_dir)
 

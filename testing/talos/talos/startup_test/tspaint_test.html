@@ -8,31 +8,31 @@
 <!-- In-line this to avoid compilation. -->
 <script language="Javascript" type="text/javascript" src="chrome://talos-powers-content/content/TalosPowersContent.js"></script>
 <script language="Javascript" type="text/javascript" src="../scripts/MozillaFileLogger.js"></script>
-<script language="Javascript" type="text/javascript" src="../scripts/Profiler.js"></script>
+<script language="Javascript" type="text/javascript" src="chrome://talos-powers-content/content/TalosContentProfiler.js"></script>
 <script language="JavaScript" type="text/javascript" src="../tests/quit.js"></script>
 <script language="javascript" type="text/javascript">
 
-function painted() {
-  Profiler.pause();
-  Profiler.initFromURLQueryParams(location.search);
-  Profiler.finishStartupProfiling();
-
+async function painted() {
   window.removeEventListener("MozAfterPaint", painted, true);
 
-  TalosPowersContent.getStartupInfo().then(function(startupInfo) {
-    let startupTime = startupInfo['firstPaint'] - startupInfo['process'];
+  await TalosContentProfiler.pause();
+  await TalosContentProfiler.initFromURLQueryParams(location.search);
+  await TalosContentProfiler.finishStartupProfiling();
 
-    document.body.textContent = 'Startup time = ' + startupTime + ' ms';
-    if (window.dump) {
-      dumpLog('__start_report' + startupTime + '__end_report\n\n');
-    }
-    dumpConsoleAndQuit();
-  });
+  let startupInfo = await TalosPowersContent.getStartupInfo();
+
+  let startupTime = startupInfo["firstPaint"] - startupInfo["process"];
+
+  document.body.textContent = "Startup time = " + startupTime + " ms";
+  if (window.dump) {
+    dumpLog("__start_report" + startupTime + "__end_report\n\n");
+  }
+  dumpConsoleAndQuit();
 }
 
 function failed() {
   if (window.dump) {
-    dumpLog('BROWSER FAILED TO GENERATE MOZAFTERPAINT IN 5 SECONDS');
+    dumpLog("BROWSER FAILED TO GENERATE MOZAFTERPAINT IN 5 SECONDS");
   }
   dumpConsoleAndQuit();
 }
@@ -41,20 +41,21 @@ function dumpConsoleAndQuit() {
   var messages = {}
 
   try {
-    netscape.security.PrivilegeManager.enablePrivilege('UniversalXPConnect');
-    var consoleService = Components.classes['@mozilla.org/consoleservice;1'].getService(Components.interfaces.nsIConsoleService);
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+    var consoleService = Components.classes["@mozilla.org/consoleservice;1"].getService(Components.interfaces.nsIConsoleService);
     consoleService.getMessageArray(messages, {});
-  } catch(ex) {
-    dumpLog(ex + '\n');
+  } catch (ex) {
+    dumpLog(ex + "\n");
   }
 
   for (var i = 0; i < messages.value.length; i++)
-    dumpLog(messages.value[i].message + '\n');
+    dumpLog(messages.value[i].message + "\n");
 
   // Close window asynchronously, there might still be startup operations that still need to run
   window.setTimeout(function() {
     if (window.dump) {
-      dumpLog('__startTimestamp' + Date.now() + '__endTimestamp\n');
+      // eslint-disable-next-line mozilla/avoid-Date-timing
+      dumpLog("__startTimestamp" + Date.now() + "__endTimestamp\n");
     }
     goQuitApplication();
     window.close();

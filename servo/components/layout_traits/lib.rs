@@ -6,12 +6,13 @@
 
 extern crate gfx;
 extern crate ipc_channel;
+extern crate metrics;
 extern crate msg;
 extern crate net_traits;
 extern crate profile_traits;
 extern crate script_traits;
 extern crate servo_url;
-extern crate webrender_traits;
+extern crate webrender_api;
 
 // This module contains traits in layout used generically
 //   in the rest of Servo.
@@ -20,6 +21,7 @@ extern crate webrender_traits;
 
 use gfx::font_cache_thread::FontCacheThread;
 use ipc_channel::ipc::{IpcReceiver, IpcSender};
+use metrics::PaintTimeMetrics;
 use msg::constellation_msg::PipelineId;
 use msg::constellation_msg::TopLevelBrowsingContextId;
 use net_traits::image_cache::ImageCache;
@@ -47,6 +49,8 @@ pub trait LayoutThreadFactory {
               time_profiler_chan: time::ProfilerChan,
               mem_profiler_chan: mem::ProfilerChan,
               content_process_shutdown_chan: Option<IpcSender<()>>,
-              webrender_api_sender: webrender_traits::RenderApiSender,
-              layout_threads: usize);
+              webrender_api_sender: webrender_api::RenderApiSender,
+              webrender_document: webrender_api::DocumentId,
+              layout_threads: usize,
+              paint_time_metrics: PaintTimeMetrics);
 }

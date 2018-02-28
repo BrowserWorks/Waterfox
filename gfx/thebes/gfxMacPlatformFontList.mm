@@ -65,7 +65,6 @@
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/gfx/2D.h"
@@ -217,13 +216,25 @@ MacOSFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
             }
         }
 
-        // Bug 1360309: several of Apple's Chinese fonts have spurious blank
-        // glyphs for obscure Tibetan codepoints. Blacklist these so that font
-        // fallback will not use them.
+        // Bug 1360309, 1393624: several of Apple's Chinese fonts have spurious
+        // blank glyphs for obscure Tibetan and Arabic-script codepoints.
+        // Blacklist these so that font fallback will not use them.
         if (mRequiresAAT && (FamilyName().EqualsLiteral("Songti SC") ||
                              FamilyName().EqualsLiteral("Songti TC") ||
-                             FamilyName().EqualsLiteral("STSong"))) {
+                             FamilyName().EqualsLiteral("STSong") ||
+        // Bug 1390980: on 10.11, the Kaiti fonts are also affected.
+                             FamilyName().EqualsLiteral("Kaiti SC") ||
+                             FamilyName().EqualsLiteral("Kaiti TC") ||
+                             FamilyName().EqualsLiteral("STKaiti"))) {
+            charmap->ClearRange(0x0f6b, 0x0f70);
             charmap->ClearRange(0x0f8c, 0x0f8f);
+            charmap->clear(0x0f98);
+            charmap->clear(0x0fbd);
+            charmap->ClearRange(0x0fcd, 0x0fff);
+            charmap->clear(0x0620);
+            charmap->clear(0x065f);
+            charmap->ClearRange(0x06ee, 0x06ef);
+            charmap->clear(0x06ff);
         }
     }
 
@@ -236,7 +247,7 @@ MacOSFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
         mCharacterMap = new gfxCharacterMap();
     }
 
-    LOG_FONTLIST(("(fontlist-cmap) name: %s, size: %" PRIuSIZE " hash: %8.8x%s\n",
+    LOG_FONTLIST(("(fontlist-cmap) name: %s, size: %zu hash: %8.8x%s\n",
                   NS_ConvertUTF16toUTF8(mName).get(),
                   charmap->SizeOfIncludingThis(moz_malloc_size_of),
                   charmap->mHash, mCharacterMap == charmap ? " new" : ""));

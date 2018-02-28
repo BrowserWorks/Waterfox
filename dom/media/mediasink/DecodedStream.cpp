@@ -59,8 +59,9 @@ public:
   {
     if (event == MediaStreamGraphEvent::EVENT_FINISHED) {
       aGraph->DispatchToMainThreadAfterStreamStateUpdate(
-        mAbstractMainThread,
-        NewRunnableMethod(this, &DecodedStreamGraphListener::DoNotifyFinished));
+        NewRunnableMethod("DecodedStreamGraphListener::DoNotifyFinished",
+                          this,
+                          &DecodedStreamGraphListener::DoNotifyFinished));
     }
   }
 
@@ -73,10 +74,11 @@ public:
   void Forget()
   {
     RefPtr<DecodedStreamGraphListener> self = this;
-    mAbstractMainThread->Dispatch(NS_NewRunnableFunction([self] () {
-      MOZ_ASSERT(NS_IsMainThread());
-      self->mFinishPromise.ResolveIfExists(true, __func__);
-    }));
+    mAbstractMainThread->Dispatch(
+      NS_NewRunnableFunction("DecodedStreamGraphListener::Forget", [self]() {
+        MOZ_ASSERT(NS_IsMainThread());
+        self->mFinishPromise.ResolveIfExists(true, __func__);
+      }));
     MutexAutoLock lock(mMutex);
     mStream = nullptr;
   }
@@ -110,9 +112,11 @@ UpdateStreamSuspended(AbstractThread* aMainThread, MediaStream* aStream, bool aB
   } else {
     nsCOMPtr<nsIRunnable> r;
     if (aBlocking) {
-      r = NewRunnableMethod(aStream, &MediaStream::Suspend);
+      r = NewRunnableMethod(
+        "MediaStream::Suspend", aStream, &MediaStream::Suspend);
     } else {
-      r = NewRunnableMethod(aStream, &MediaStream::Resume);
+      r =
+        NewRunnableMethod("MediaStream::Resume", aStream, &MediaStream::Resume);
     }
     aMainThread->Dispatch(r.forget());
   }
@@ -178,7 +182,7 @@ DecodedStreamData::DecodedStreamData(OutputStreamManager* aOutputStreamManager,
   , mHaveSentFinish(false)
   , mHaveSentFinishAudio(false)
   , mHaveSentFinishVideo(false)
-  , mStream(aOutputStreamManager->Graph()->CreateSourceStream(aMainThread))
+  , mStream(aOutputStreamManager->Graph()->CreateSourceStream())
   // DecodedStreamGraphListener will resolve this promise.
   , mListener(new DecodedStreamGraphListener(mStream, Move(aPromise), aMainThread))
   // mPlaying is initially true because MDSM won't start playback until playing
@@ -406,9 +410,8 @@ DecodedStream::DestroyData(UniquePtr<DecodedStreamData> aData)
 
   DecodedStreamData* data = aData.release();
   data->Forget();
-  nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([=] () {
-    delete data;
-  });
+  nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction("DecodedStream::DestroyData",
+                                                   [=]() { delete data; });
   mAbstractMainThread->Dispatch(r.forget());
 }
 

@@ -12,9 +12,10 @@ use parser::{Parse, ParserContext};
 use std::fmt;
 use style_traits::{HasViewportPercentage, ToCss, ParseError};
 use values::computed::{CalcLengthOrPercentage, LengthOrPercentage as ComputedLengthOrPercentage};
-use values::computed::{Context, ToComputedValue};
+use values::computed::{Context, Percentage, ToComputedValue};
 use values::generics::position::Position as GenericPosition;
-use values::specified::{AllowQuirks, LengthOrPercentage, Percentage};
+use values::specified::{AllowQuirks, LengthOrPercentage};
+use values::specified::transform::OriginComponent;
 
 /// The specified value of a CSS `<position>`
 pub type Position = GenericPosition<HorizontalPosition, VerticalPosition>;
@@ -27,7 +28,7 @@ pub type VerticalPosition = PositionComponent<Y>;
 
 /// The specified value of a component of a CSS `<position>`.
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, ToCss)]
 pub enum PositionComponent<S> {
     /// `center`
     Center,
@@ -63,7 +64,8 @@ impl Position {
                                 -> Result<Self, ParseError<'i>> {
         match input.try(|i| PositionComponent::parse_quirky(context, i, allow_quirks)) {
             Ok(x_pos @ PositionComponent::Center) => {
-                if let Ok(y_pos) = input.try(|i| PositionComponent::parse_quirky(context, i, allow_quirks)) {
+                if let Ok(y_pos) = input.try(|i|
+                    PositionComponent::parse_quirky(context, i, allow_quirks)) {
                     return Ok(Self::new(x_pos, y_pos));
                 }
                 let x_pos = input
@@ -110,7 +112,7 @@ impl Position {
                 let x_lop = i.try(|i| LengthOrPercentage::parse_quirky(context, i, allow_quirks)).ok();
                 let x_pos = PositionComponent::Side(x_keyword, x_lop);
                 return Ok((y_lop, x_pos));
-            }
+            };
             i.expect_ident_matching("center")?;
             let x_pos = PositionComponent::Center;
             Ok((y_lop, x_pos))
@@ -193,28 +195,7 @@ impl<S: Parse> PositionComponent<S> {
 impl<S> PositionComponent<S> {
     /// `0%`
     pub fn zero() -> Self {
-        PositionComponent::Length(LengthOrPercentage::Percentage(Percentage(0.)))
-    }
-}
-
-impl<S: ToCss> ToCss for PositionComponent<S> {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        match *self {
-            PositionComponent::Center => {
-                dest.write_str("center")
-            },
-            PositionComponent::Length(ref lop) => {
-                lop.to_css(dest)
-            },
-            PositionComponent::Side(ref keyword, ref lop) => {
-                keyword.to_css(dest)?;
-                if let Some(ref lop) = *lop {
-                    dest.write_str(" ")?;
-                    lop.to_css(dest)?;
-                }
-                Ok(())
-            },
-        }
+        PositionComponent::Length(LengthOrPercentage::Percentage(Percentage::zero()))
     }
 }
 
@@ -224,22 +205,23 @@ impl<S: Side> ToComputedValue for PositionComponent<S> {
     fn to_computed_value(&self, context: &Context) -> Self::ComputedValue {
         match *self {
             PositionComponent::Center => {
-                ComputedLengthOrPercentage::Percentage(0.5)
+                ComputedLengthOrPercentage::Percentage(Percentage(0.5))
             },
             PositionComponent::Side(ref keyword, None) => {
-                let p = if keyword.is_start() { 0. } else { 1. };
+                let p = Percentage(if keyword.is_start() { 0. } else { 1. });
                 ComputedLengthOrPercentage::Percentage(p)
             },
             PositionComponent::Side(ref keyword, Some(ref length)) if !keyword.is_start() => {
                 match length.to_computed_value(context) {
                     ComputedLengthOrPercentage::Length(length) => {
-                        ComputedLengthOrPercentage::Calc(CalcLengthOrPercentage::new(-length, Some(1.0)))
+                        ComputedLengthOrPercentage::Calc(
+                            CalcLengthOrPercentage::new(-length, Some(Percentage::hundred())))
                     },
                     ComputedLengthOrPercentage::Percentage(p) => {
-                        ComputedLengthOrPercentage::Percentage(1.0 - p)
+                        ComputedLengthOrPercentage::Percentage(Percentage(1.0 - p.0))
                     },
                     ComputedLengthOrPercentage::Calc(calc) => {
-                        let p = 1. - calc.percentage.unwrap_or(0.);
+                        let p = Percentage(1. - calc.percentage.map_or(0., |p| p.0));
                         ComputedLengthOrPercentage::Calc(CalcLengthOrPercentage::new(-calc.unclamped_length(), Some(p)))
                     },
                 }
@@ -293,5 +275,110 @@ impl Side for Y {
     #[inline]
     fn is_start(&self) -> bool {
         *self == Y::Top
+    }
+}
+
+/// The specified value of a legacy CSS `<position>`
+/// Modern position syntax supports 3 and 4-value syntax. That means:
+/// If three or four values are given, then each <percentage> or <length> represents an offset
+/// and must be preceded by a keyword, which specifies from which edge the offset is given.
+/// For example, `bottom 10px right 20px` represents a `10px` vertical
+/// offset up from the bottom edge and a `20px` horizontal offset leftward from the right edge.
+/// If three values are given, the missing offset is assumed to be zero.
+/// But for some historical reasons we need to keep CSS Level 2 syntax which only supports up to
+/// 2-value. This type represents this 2-value syntax.
+pub type LegacyPosition = GenericPosition<LegacyHPosition, LegacyVPosition>;
+
+/// The specified value of a horizontal position.
+pub type LegacyHPosition = OriginComponent<X>;
+
+/// The specified value of a vertical position.
+pub type LegacyVPosition = OriginComponent<Y>;
+
+impl Parse for LegacyPosition {
+    fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
+        Self::parse_quirky(context, input, AllowQuirks::No)
+    }
+}
+
+impl LegacyPosition {
+    /// Parses a `<position>`, with quirks.
+    pub fn parse_quirky<'i, 't>(context: &ParserContext,
+                                input: &mut Parser<'i, 't>,
+                                allow_quirks: AllowQuirks)
+                                -> Result<Self, ParseError<'i>> {
+        match input.try(|i| OriginComponent::parse(context, i)) {
+            Ok(x_pos @ OriginComponent::Center) => {
+                if let Ok(y_pos) = input.try(|i|
+                    OriginComponent::parse(context, i)) {
+                    return Ok(Self::new(x_pos, y_pos));
+                }
+                let x_pos = input
+                    .try(|i| OriginComponent::parse(context, i))
+                    .unwrap_or(x_pos);
+                let y_pos = OriginComponent::Center;
+                return Ok(Self::new(x_pos, y_pos));
+            },
+            Ok(OriginComponent::Side(x_keyword)) => {
+                if input.try(|i| i.expect_ident_matching("center")).is_ok() {
+                    let x_pos = OriginComponent::Side(x_keyword);
+                    let y_pos = OriginComponent::Center;
+                    return Ok(Self::new(x_pos, y_pos));
+                }
+                if let Ok(y_keyword) = input.try(Y::parse) {
+                    let x_pos = OriginComponent::Side(x_keyword);
+                    let y_pos = OriginComponent::Side(y_keyword);
+                    return Ok(Self::new(x_pos, y_pos));
+                }
+                let x_pos = OriginComponent::Side(x_keyword);
+                if let Ok(y_lop) = input.try(|i| LengthOrPercentage::parse_quirky(context, i, allow_quirks)) {
+                    return Ok(Self::new(x_pos, OriginComponent::Length(y_lop)))
+                }
+            },
+            Ok(x_pos @ OriginComponent::Length(_)) => {
+                if let Ok(y_keyword) = input.try(Y::parse) {
+                    let y_pos = OriginComponent::Side(y_keyword);
+                    return Ok(Self::new(x_pos, y_pos));
+                }
+                if let Ok(y_lop) = input.try(|i| LengthOrPercentage::parse_quirky(context, i, allow_quirks)) {
+                    let y_pos = OriginComponent::Length(y_lop);
+                    return Ok(Self::new(x_pos, y_pos));
+                }
+                let y_pos = OriginComponent::Center;
+                let _ = input.try(|i| i.expect_ident_matching("center"));
+                return Ok(Self::new(x_pos, y_pos));
+            },
+            Err(_) => {},
+        }
+        let y_keyword = Y::parse(input)?;
+        let x_pos: Result<_, ParseError> = input.try(|i| {
+            if let Ok(x_keyword) = i.try(X::parse) {
+                let x_pos = OriginComponent::Side(x_keyword);
+                return Ok(x_pos);
+            }
+            i.expect_ident_matching("center")?;
+            Ok(OriginComponent::Center)
+        });
+        if let Ok(x_pos) = x_pos {
+            let y_pos = OriginComponent::Side(y_keyword);
+            return Ok(Self::new(x_pos, y_pos));
+        }
+        let x_pos = OriginComponent::Center;
+        let y_pos = OriginComponent::Side(y_keyword);
+        Ok(Self::new(x_pos, y_pos))
+    }
+
+    /// `center center`
+    #[inline]
+    pub fn center() -> Self {
+        Self::new(OriginComponent::Center, OriginComponent::Center)
+    }
+}
+
+impl ToCss for LegacyPosition {
+    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
+        self.horizontal.to_css(dest)?;
+        dest.write_str(" ")?;
+        self.vertical.to_css(dest)
     }
 }

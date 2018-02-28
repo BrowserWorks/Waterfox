@@ -482,7 +482,8 @@ WebrtcGlobalInformation::GetAllStats(
   // CallbackObject does not support threadsafe refcounting, and must be
   // used and destroyed on main.
   StatsRequestCallback callbackHandle(
-    new nsMainThreadPtrHolder<WebrtcGlobalStatisticsCallback>(&aStatsCallback));
+    new nsMainThreadPtrHolder<WebrtcGlobalStatisticsCallback>(
+      "WebrtcGlobalStatisticsCallback", &aStatsCallback));
 
   nsString filter;
   if (pcIdFilter.WasPassed()) {
@@ -529,7 +530,6 @@ WebrtcGlobalInformation::GetAllStats(
   }
 
   aRv = rv;
-  return;
 }
 
 static nsresult
@@ -624,7 +624,8 @@ WebrtcGlobalInformation::GetLogging(
   // CallbackObject does not support threadsafe refcounting, and must be
   // destroyed on main.
   LogRequestCallback callbackHandle(
-    new nsMainThreadPtrHolder<WebrtcGlobalLoggingCallback>(&aLoggingCallback));
+    new nsMainThreadPtrHolder<WebrtcGlobalLoggingCallback>(
+      "WebrtcGlobalLoggingCallback", &aLoggingCallback));
 
   nsAutoCString pattern;
   CopyUTF16toUTF8(aPattern, pattern);
@@ -657,7 +658,6 @@ WebrtcGlobalInformation::GetLogging(
   }
 
   aRv = rv;
-  return;
 }
 
 static int32_t sLastSetLevel = 0;
@@ -804,7 +804,6 @@ void
 WebrtcGlobalParent::ActorDestroy(ActorDestroyReason aWhy)
 {
   mShutdown = true;
-  return;
 }
 
 mozilla::ipc::IPCResult
@@ -1018,16 +1017,15 @@ static void StoreLongTermICEStatisticsImpl_m(
     const RTCIceCandidatePairStats &pair =
       query->report->mIceCandidatePairStats.Value()[i];
 
-    if (!pair.mState.WasPassed() || !pair.mComponentId.WasPassed()) {
+    if (!pair.mState.WasPassed() || !pair.mTransportId.WasPassed()) {
       MOZ_CRASH();
       continue;
     }
 
-    // Note: this is not a "component" in the ICE definition, this is really a
-    // stream ID. This is just the way the stats API is standardized right now.
-    // Very confusing.
+    // Note: we use NrIceMediaStream's name for the
+    // RTCIceCandidatePairStats tranportId
     std::string streamId(
-      NS_ConvertUTF16toUTF8(pair.mComponentId.Value()).get());
+      NS_ConvertUTF16toUTF8(pair.mTransportId.Value()).get());
 
     streamResults[streamId].streamSucceeded |=
       pair.mState.Value() == RTCStatsIceCandidatePairState::Succeeded;

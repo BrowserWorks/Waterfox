@@ -12,6 +12,7 @@
 #include "mozilla/gfx/Blur.h"
 #include "mozilla/gfx/PathHelpers.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/SystemGroup.h"
 #include "nsExpirationTracker.h"
 #include "nsClassHashtable.h"
 #include "gfxUtils.h"
@@ -27,9 +28,6 @@ gfxAlphaBoxBlur::gfxAlphaBoxBlur()
 
 gfxAlphaBoxBlur::~gfxAlphaBoxBlur()
 {
-  if (mData) {
-    free(mData);
-  }
 }
 
 already_AddRefed<gfxContext>
@@ -38,14 +36,16 @@ gfxAlphaBoxBlur::Init(gfxContext* aDestinationCtx,
                       const IntSize& aSpreadRadius,
                       const IntSize& aBlurRadius,
                       const gfxRect* aDirtyRect,
-                      const gfxRect* aSkipRect)
+                      const gfxRect* aSkipRect,
+                      bool aUseHardwareAccel)
 {
   DrawTarget* refDT = aDestinationCtx->GetDrawTarget();
   Maybe<Rect> dirtyRect = aDirtyRect ? Some(ToRect(*aDirtyRect)) : Nothing();
   Maybe<Rect> skipRect = aSkipRect ? Some(ToRect(*aSkipRect)) : Nothing();
   RefPtr<DrawTarget> dt =
     InitDrawTarget(refDT, ToRect(aRect), aSpreadRadius, aBlurRadius,
-                   dirtyRect.ptrOr(nullptr), skipRect.ptrOr(nullptr));
+                   dirtyRect.ptrOr(nullptr), skipRect.ptrOr(nullptr),
+                   aUseHardwareAccel);
   if (!dt) {
     return nullptr;
   }
@@ -62,7 +62,8 @@ gfxAlphaBoxBlur::InitDrawTarget(const DrawTarget* aReferenceDT,
                                 const IntSize& aSpreadRadius,
                                 const IntSize& aBlurRadius,
                                 const Rect* aDirtyRect,
-                                const Rect* aSkipRect)
+                                const Rect* aSkipRect,
+                                bool aUseHardwareAccel)
 {
   mBlur.Init(aRect, aSpreadRadius, aBlurRadius, aDirtyRect, aSkipRect);
   size_t blurDataSize = mBlur.GetSurfaceAllocationSize();
@@ -77,10 +78,10 @@ gfxAlphaBoxBlur::InitDrawTarget(const DrawTarget* aReferenceDT,
   // Otherwise, DrawSurfaceWithShadow only supports square blurs without spread.
   // When blurring small draw targets such as short spans text, the cost of
   // creating and flushing an accelerated draw target may exceed the speedup
-  // gained from the faster blur, so we also make sure the blurred data exceeds
-  // a sufficient number of pixels to offset this cost.
+  // gained from the faster blur. It's up to the users of this blur
+  // to determine whether they want to use hardware acceleration.
   if (aBlurRadius.IsSquare() && aSpreadRadius.IsEmpty() &&
-      blurDataSize >= 8192 &&
+      aUseHardwareAccel &&
       backend == BackendType::DIRECT2D1_1) {
     mAccelerated = true;
     mDrawTarget =
@@ -90,6 +91,7 @@ gfxAlphaBoxBlur::InitDrawTarget(const DrawTarget* aReferenceDT,
   } else {
     // Make an alpha-only surface to draw on. We will play with the data after
     // everything is drawn to create a blur effect.
+    // This will be freed when the DrawTarget dies
     mData = static_cast<uint8_t*>(calloc(1, blurDataSize));
     if (!mData) {
       return nullptr;
@@ -108,8 +110,19 @@ gfxAlphaBoxBlur::InitDrawTarget(const DrawTarget* aReferenceDT,
   }
 
   if (!mDrawTarget || !mDrawTarget->IsValid()) {
+    if (mData) {
+      free(mData);
+    }
+
     return nullptr;
   }
+
+  if (mData) {
+    mDrawTarget->AddUserData(reinterpret_cast<UserDataKey*>(mDrawTarget.get()),
+                              mData,
+                              free);
+  }
+
   mDrawTarget->SetTransform(Matrix::Translation(-mBlur.GetRect().TopLeft()));
   return do_AddRef(mDrawTarget);
 }
@@ -351,7 +364,8 @@ class BlurCache final : public nsExpirationTracker<BlurCacheData,4>
 {
   public:
     BlurCache()
-      : nsExpirationTracker<BlurCacheData, 4>(GENERATION_MS, "BlurCache")
+      : nsExpirationTracker<BlurCacheData, 4>(GENERATION_MS, "BlurCache",
+                                              SystemGroup::EventTargetFor(TaskCategory::Other))
     {
     }
 
@@ -589,6 +603,10 @@ GetBlur(gfxContext* aDestinationCtx,
                     aShadowColor, aMirrorCorners, aOutBlurMargin);
   if (!boxShadow) {
     return nullptr;
+  }
+
+  if (RefPtr<SourceSurface> opt = destDT->OptimizeSourceSurface(boxShadow)) {
+    boxShadow = opt;
   }
 
   if (!useDestRect) {
@@ -1131,6 +1149,10 @@ gfxAlphaBoxBlur::GetInsetBlur(const Rect& aOuterRect,
   RefPtr<SourceSurface> minInsetBlur = DoBlur(&aShadowColor);
   if (!minInsetBlur) {
     return nullptr;
+  }
+
+  if (RefPtr<SourceSurface> opt = aDestDrawTarget->OptimizeSourceSurface(minInsetBlur)) {
+    minInsetBlur = opt;
   }
 
   if (!aIsDestRect) {

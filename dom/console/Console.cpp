@@ -583,7 +583,7 @@ private:
         innerID = NS_LITERAL_STRING("ServiceWorker");
         // Use scope as ID so the webconsole can decide if the message should
         // show up per tab
-        id.AssignWithConversion(mWorkerPrivate->ServiceWorkerScope());
+        CopyASCIItoUTF16(mWorkerPrivate->ServiceWorkerScope(), id);
       } else {
         innerID = NS_LITERAL_STRING("Worker");
       }
@@ -886,8 +886,8 @@ Console::Shutdown()
     }
   }
 
-  NS_ReleaseOnMainThread(mStorage.forget());
-  NS_ReleaseOnMainThread(mSandbox.forget());
+  NS_ReleaseOnMainThreadSystemGroup("Console::mStorage", mStorage.forget());
+  NS_ReleaseOnMainThreadSystemGroup("Console::mSandbox", mSandbox.forget());
 
   mTimerRegistry.Clear();
   mCounterRegistry.Clear();
@@ -2026,12 +2026,11 @@ Console::StartTimer(JSContext* aCx, const JS::Value& aName,
 
   aTimerLabel = label;
 
-  DOMHighResTimeStamp entry = 0;
-  if (mTimerRegistry.Get(label, &entry)) {
+  auto entry = mTimerRegistry.LookupForAdd(label);
+  if (entry) {
     return eTimerAlreadyExists;
   }
-
-  mTimerRegistry.Put(label, aTimestamp);
+  entry.OrInsert([&aTimestamp](){ return aTimestamp; });
 
   *aTimerValue = aTimestamp;
   return eTimerDone;
@@ -2083,14 +2082,13 @@ Console::StopTimer(JSContext* aCx, const JS::Value& aName,
 
   aTimerLabel = key;
 
-  DOMHighResTimeStamp entry = 0;
-  if (NS_WARN_IF(!mTimerRegistry.Get(key, &entry))) {
+  DOMHighResTimeStamp value = 0;
+  if (!mTimerRegistry.Remove(key, &value)) {
+    NS_WARNING("mTimerRegistry entry not found");
     return eTimerDoesntExist;
   }
 
-  mTimerRegistry.Remove(key);
-
-  *aTimerDuration = aTimestamp - entry;
+  *aTimerDuration = aTimestamp - value;
   return eTimerDone;
 }
 
@@ -2190,15 +2188,19 @@ Console::IncreaseCounter(JSContext* aCx, const Sequence<JS::Value>& aArguments,
 
   aCountLabel = string;
 
-  uint32_t count = 0;
-  if (!mCounterRegistry.Get(aCountLabel, &count) &&
-      mCounterRegistry.Count() >= MAX_PAGE_COUNTERS) {
-    return MAX_PAGE_COUNTERS;
+  const bool maxCountersReached = mCounterRegistry.Count() >= MAX_PAGE_COUNTERS;
+  auto entry = mCounterRegistry.LookupForAdd(aCountLabel);
+  if (entry) {
+    ++entry.Data();
+  } else {
+    entry.OrInsert([](){ return 1; });
+    if (maxCountersReached) {
+      // oops, we speculatively added an entry even though we shouldn't
+      mCounterRegistry.Remove(aCountLabel);
+      return MAX_PAGE_COUNTERS;
+    }
   }
-
-  ++count;
-  mCounterRegistry.Put(aCountLabel, count);
-  return count;
+  return entry.Data();
 }
 
 JS::Value

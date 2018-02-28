@@ -373,7 +373,7 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
     masm.Sub(w2, w6, w8);
 
     // Put an undefined in a register so it can be pushed.
-    masm.moveValue(UndefinedValue(), r4);
+    masm.moveValue(UndefinedValue(), ValueOperand(r4));
 
     // Push undefined N times.
     {
@@ -693,6 +693,8 @@ JitRuntime::generateVMWrapper(JSContext* cx, const VMFunction& f)
         break;
       case Type_Bool:
         masm.branchIfFalseBool(r0, masm.failureLabel());
+        break;
+      case Type_Void:
         break;
       default:
         MOZ_CRASH("unknown failure kind");

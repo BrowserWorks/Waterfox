@@ -5,10 +5,10 @@ const kTestPage = kTestRoot + "multiple_payment_request.html";
 
 registerCleanupFunction(cleanup);
 
-add_task(function*() {
+add_task(async function() {
   Services.prefs.setBoolPref("dom.payments.request.enabled", true);
-  yield BrowserTestUtils.withNewTab(kTestPage,
-    function*(browser) {
+  await BrowserTestUtils.withNewTab(kTestPage,
+    function(browser) {
 
       const paymentSrv = Cc["@mozilla.org/dom/payments/payment-request-service;1"].getService(Ci.nsIPaymentRequestService);
       ok(paymentSrv, "Fail to get PaymentRequestService.");
@@ -22,6 +22,8 @@ add_task(function*() {
           checkComplexPayment(payment);
         } else if (payment.paymentDetails.id == "simple details") {
           checkSimplePayment(payment);
+        } else if (payment.paymentDetails.id == "duplicate shipping options details") {
+          checkDupShippingOptionsPayment(payment);
         } else {
           ok(false, "Unknown payment.");
         }

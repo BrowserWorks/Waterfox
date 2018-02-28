@@ -7,6 +7,7 @@
 
 #include "MediaEngine.h"
 #include "mozilla/media/DeviceChangeCallback.h"
+#include "mozilla/dom/GetUserMediaRequest.h"
 #include "mozilla/Services.h"
 #include "mozilla/Unused.h"
 #include "nsAutoPtr.h"
@@ -167,9 +168,13 @@ class ReleaseMediaOperationResource : public Runnable
 public:
   ReleaseMediaOperationResource(
     already_AddRefed<DOMMediaStream> aStream,
-    already_AddRefed<media::Refcountable<UniquePtr<OnTracksAvailableCallback>>> aOnTracksAvailableCallback):
-    mStream(aStream),
-    mOnTracksAvailableCallback(aOnTracksAvailableCallback) {}
+    already_AddRefed<media::Refcountable<UniquePtr<OnTracksAvailableCallback>>>
+      aOnTracksAvailableCallback)
+    : Runnable("ReleaseMediaOperationResource")
+    , mStream(aStream)
+    , mOnTracksAvailableCallback(aOnTracksAvailableCallback)
+  {
+  }
   NS_IMETHOD Run() override {return NS_OK;}
 private:
   RefPtr<DOMMediaStream> mStream;
@@ -228,6 +233,7 @@ public:
   }
   void AddWindowID(uint64_t aWindowId, GetUserMediaWindowListener *aListener);
   void RemoveWindowID(uint64_t aWindowId);
+  void SendPendingGUMRequest();
   bool IsWindowStillActive(uint64_t aWindowId) {
     return !!GetWindowListener(aWindowId);
   }
@@ -314,6 +320,7 @@ private:
   WindowTable mActiveWindows;
   nsRefPtrHashtable<nsStringHashKey, GetUserMediaTask> mActiveCallbacks;
   nsClassHashtable<nsUint64HashKey, nsTArray<nsString>> mCallIds;
+  nsTArray<RefPtr<dom::GetUserMediaRequest>> mPendingGUMRequest;
 
   // Always exists
   nsAutoPtr<base::Thread> mMediaThread;
@@ -327,6 +334,7 @@ private:
   media::CoatCheck<PledgeSourceSet> mOutstandingPledges;
   media::CoatCheck<PledgeChar> mOutstandingCharPledges;
   media::CoatCheck<PledgeVoid> mOutstandingVoidPledges;
+  nsTArray<nsString> mDeviceIDs;
 public:
   media::CoatCheck<media::Pledge<nsCString>> mGetPrincipalKeyPledges;
   RefPtr<media::Parent<media::NonE10s>> mNonE10sParent;

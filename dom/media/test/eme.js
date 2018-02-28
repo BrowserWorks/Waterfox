@@ -107,41 +107,37 @@ function SourceBufferListToString(sbl)
   return "SourceBufferList[" + sbl.map(SourceBufferToString).join(", ") + "]";
 }
 
+function GenerateClearKeyLicense(licenseRequest, keyStore)
+{
+  var msgStr = ArrayBufferToString(licenseRequest);
+  var msg = JSON.parse(msgStr);
+
+  var keys = [];
+  for (var i = 0; i < msg.kids.length; i++) {
+    var id64 = msg.kids[i];
+    var idHex = Base64ToHex(msg.kids[i]).toLowerCase();
+    var key = keyStore[idHex];
+
+    if (key) {
+      keys.push({
+        "kty": "oct",
+        "kid": id64,
+        "k": HexToBase64(key)
+      });
+    }
+  }
+
+  return new TextEncoder().encode(JSON.stringify({
+    "keys" : keys,
+    "type" : msg.type || "temporary"
+  }));
+}
+
 function UpdateSessionFunc(test, token, sessionType, resolve, reject) {
   return function(ev) {
-    var msgStr = ArrayBufferToString(ev.message);
-    var msg = JSON.parse(msgStr);
-
-    Log(token, "got message from CDM: " + msgStr);
-    is(msg.type, sessionType, TimeStamp(token) + " key session type should match");
-    ok(msg.kids, TimeStamp(token) + " message event should contain key ID array");
-
-    var outKeys = [];
-
-    for (var i = 0; i < msg.kids.length; i++) {
-      var id64 = msg.kids[i];
-      var idHex = Base64ToHex(msg.kids[i]).toLowerCase();
-      var key = test.keys[idHex];
-
-      if (key) {
-        Log(token, "found key " + key + " for key id " + idHex);
-        outKeys.push({
-          "kty":"oct",
-          "kid":id64,
-          "k":HexToBase64(key)
-        });
-      } else {
-        reject(`${token} couldn't find key for key id ${idHex}`);
-      }
-    }
-
-    var update = JSON.stringify({
-      "keys" : outKeys,
-      "type" : msg.type
-    });
-    Log(token, "sending update message to CDM: " + update);
-
-    ev.target.update(StringToArrayBuffer(update)).then(function() {
+    var license = GenerateClearKeyLicense(ev.message, test.keys);
+    Log(token, "sending update message to CDM: " + (new TextDecoder().decode(license)));
+    ev.target.update(license).then(function() {
       Log(token, "MediaKeySession update ok!");
       resolve(ev.target);
     }).catch(function(reason) {
@@ -201,21 +197,6 @@ function AppendTrack(test, ms, track, token)
     Log(token, track.name + ": addSourceBuffer(" + track.type + ")");
     sb = ms.addSourceBuffer(track.type);
     sb.addEventListener("updateend", function() {
-      if (ms.readyState == "ended") {
-        /* We can get another updateevent as a result of calling ms.endOfStream() if
-           the highest end time of our source buffers is different from that of the
-           media source duration. Due to bug 1065207 this can happen because of
-           inaccuracies in the frame duration calculations. Check if we are already
-           "ended" and ignore the update event */
-        Log(token, track.name + ": updateend when readyState already 'ended'");
-        if (!resolved) {
-          // Needed if decoder knows this was the last fragment and ended by itself.
-          Log(token, track.name + ": but promise not resolved yet -> end of track");
-          resolve();
-          resolved = true;
-        }
-        return;
-      }
       Log(token, track.name + ": updateend for " + fragmentFile + ", " + SourceBufferToString(sb));
       addNextFragment();
     });
@@ -226,7 +207,7 @@ function AppendTrack(test, ms, track, token)
 
 //Returns a promise that is resolved when the media element is ready to have
 //its play() function called; when it's loaded MSE fragments.
-function LoadTest(test, elem, token)
+function LoadTest(test, elem, token, endOfStream = true)
 {
   if (!test.tracks) {
     ok(false, token + " test does not have a tracks list");
@@ -244,7 +225,9 @@ function LoadTest(test, elem, token)
         return AppendTrack(test, ms, track, token);
       })).then(function() {
         Log(token, "Tracks loaded, calling MediaSource.endOfStream()");
-        ms.endOfStream();
+        if (endOfStream) {
+          ms.endOfStream();
+        }
         resolve();
       }).catch(reject);
     }, {once: true});
@@ -384,8 +367,8 @@ function ProcessInitData(v, test, token, initData, sessionType) {
 function CleanUpMedia(v) {
   v.setMediaKeys(null);
   v.remove();
-  v.onerror = null;
-  v.src = null;
+  v.removeAttribute("src");
+  v.load();
 }
 
 /*

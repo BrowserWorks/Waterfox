@@ -10,6 +10,7 @@
 #include "nsCOMPtr.h"
 #include "nsIChannelEventSink.h"
 #include "nsIInterfaceRequestor.h"
+#include "nsINamed.h"
 #include "nsIStreamListener.h"
 #include "nsIThreadRetargetableStreamListener.h"
 #include "nsITimer.h"
@@ -25,6 +26,31 @@ namespace net {
 
 class HttpChannelParent;
 class nsHttpChannel;
+
+/*
+ * How often do we send an HSTS priming request (over all requests)
+ */
+enum HSTSPrimingRequest {
+  // No HSTS priming request. The request is not mixed-content, or we have
+  // already cached the result before nsMixedContentBlocker::ShouldLoad
+  eHSTS_PRIMING_NO_REQUEST = 0,
+  // Sent an HSTS priming request
+  eHSTS_PRIMING_REQUEST_SENT = 1,
+  // Channel marked for priming, but already had a cached result
+  eHSTS_PRIMING_REQUEST_CACHED_HSTS = 2,
+  // Channel marked for priming, but already had a cached result
+  eHSTS_PRIMING_REQUEST_CACHED_NO_HSTS = 3,
+  // An error occured setting up the the priming request channel. If the
+  // priming channel failed in OnstopRequest, there is no HSTS, or the
+  // channel is redirected, that is recorded by
+  // MIXED_CONTENT_HSTS_PRIMING_RESULT.
+  eHSTS_PRIMING_REQUEST_ERROR = 4,
+  // The channel had no load info, so is ineligible for priming
+  eHSTS_PRIMING_REQUEST_NO_LOAD_INFO = 5,
+  // The request was marked for HSTS priming, but was upgraded by
+  // NS_ShouldSecureUpgrade before HSTS priming was sent.
+  eHSTS_PRIMING_REQUEST_ALREADY_UPGRADED = 6,
+};
 
 /*
  * How often do we get back an HSTS priming result which upgrades the connection to HTTPS?
@@ -56,7 +82,7 @@ enum HSTSPrimingResult {
   eHSTS_PRIMING_TIMEOUT_BLOCK     = 9,
   // The HSTS Priming request timed out, and the load is allowed by
   // mixed-content
-  eHSTS_PRIMING_TIMEOUT_ACCEPT    = 10
+  eHSTS_PRIMING_TIMEOUT_ACCEPT    = 10,
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -65,7 +91,8 @@ enum HSTSPrimingResult {
 // nsIStreamListener in order to receive events from AsyncOpen2
 class HSTSPrimingListener final : public nsIStreamListener,
                                   public nsIInterfaceRequestor,
-                                  public nsITimerCallback
+                                  public nsITimerCallback,
+                                  public nsINamed
 {
 public:
   explicit HSTSPrimingListener(nsIHstsPrimingCallback* aCallback);
@@ -75,6 +102,7 @@ public:
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSINAMED
 
 private:
   ~HSTSPrimingListener() {}
@@ -103,7 +131,7 @@ private:
   nsresult CheckHSTSPrimingRequestStatus(nsIRequest* aRequest);
 
   // send telemetry about how long HSTS priming requests take
-  void ReportTiming(nsresult aResult);
+  void ReportTiming(nsIHstsPrimingCallback* aCallback, nsresult aResult);
 
   /**
    * the nsIHttpChannel to notify with the result of HSTS priming.

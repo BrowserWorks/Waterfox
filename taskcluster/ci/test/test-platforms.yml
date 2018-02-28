@@ -40,7 +40,6 @@ linux64/debug:
     test-sets:
         - common-tests
         - web-platform-tests
-        - headless
 linux64/opt:
     build-platform: linux64/opt
     test-sets:
@@ -50,7 +49,6 @@ linux64/opt:
         - desktop-screenshot-capture
         - talos
         - awsy
-        - headless
 linux64-nightly/opt:
     build-platform: linux64-nightly/opt
     test-sets:
@@ -58,7 +56,7 @@ linux64-nightly/opt:
         - web-platform-tests
         - opt-only-tests
         - desktop-screenshot-capture
-        - headless
+        - awsy
 linux64-devedition/opt:
     build-platform: linux64-devedition-nightly/opt
     test-sets:
@@ -66,7 +64,6 @@ linux64-devedition/opt:
         - web-platform-tests
         - opt-only-tests
         - desktop-screenshot-capture
-        - headless
 
 # TODO: use 'pgo' and 'asan' labels here, instead of -pgo/opt
 linux64-pgo/opt:
@@ -75,34 +72,66 @@ linux64-pgo/opt:
         - common-tests
         - web-platform-tests
         - talos
-        - headless
 
 linux64-asan/opt:
     build-platform: linux64-asan/opt
     test-sets:
         - common-tests
-        - headless
 
 # Stylo builds only run a subset of tests for the moment. So give them
 # their own test set.
+# Stylo doesn't work on 32-bit Linux yet (bug 1385025)
+# linux32-stylo/debug:
+#     build-platform: linux/debug
+#     test-sets:
+#         - stylo-tests
+# linux32-stylo/opt:
+#     build-platform: linux/opt
+#     test-sets:
+#         - stylo-tests
 linux64-stylo/debug:
-    build-platform: linux64-stylo/debug
+    build-platform: linux64/debug
     test-sets:
         - stylo-tests
 linux64-stylo/opt:
-    build-platform: linux64-stylo/opt
+    build-platform: linux64/opt
     test-sets:
         - stylo-tests
         - talos
 linux64-stylo-sequential/debug:
-    build-platform: linux64-stylo/debug
+    build-platform: linux64/debug
     test-sets:
         - stylo-sequential-tests
 linux64-stylo-sequential/opt:
-    build-platform: linux64-stylo/opt
+    build-platform: linux64/opt
     test-sets:
         - stylo-sequential-tests
         - talos
+macosx64-stylo/debug:
+    build-platform: macosx64/debug
+    test-sets:
+        - stylo-tests
+macosx64-stylo/opt:
+    build-platform: macosx64/opt
+    test-sets:
+        - stylo-tests
+# Windows needs more work to green up (bug 1385027)
+# windows7-32-stylo/debug:
+#     build-platform: win32/debug
+#     test-sets:
+#         - stylo-tests
+# windows7-32-stylo/opt:
+#     build-platform: win32/opt
+#     test-sets:
+#         - stylo-tests
+# windows10-64-stylo/debug:
+#     build-platform: win64/debug
+#     test-sets:
+#         - stylo-tests
+# windows10-64-stylo/opt:
+#     build-platform: win64/opt
+#     test-sets:
+#         - stylo-tests
 
 # QR builds just run a subset right now. Note that the tests in this
 # test set are further restricted in tests.yml to run on certain projects
@@ -119,7 +148,10 @@ linux64-qr/debug:
 linux64-ccov/opt:
     build-platform: linux64-ccov/opt
     test-sets:
-        - ccov-code-coverage-tests
+        - common-tests
+        - web-platform-tests
+        - awsy
+        - talos
 linux64-jsdcov/opt:
     build-platform: linux64-jsdcov/opt
     test-sets:
@@ -128,62 +160,101 @@ linux64-jsdcov/opt:
 ##
 # Windows platforms (matching /windows.*/)
 
-# win32 vm
-windows7-32-vm/debug:
-    build-platform: win32/debug
-    test-sets:
-        - windows-vm-tests
-        - external-media-tests
-windows7-32-vm/opt:
-    build-platform: win32/opt
-    test-sets:
-        - windows-vm-tests
-        - external-media-tests
-        - external-media-tests-slow
-        - awsy
-        - desktop-screenshot-capture
-
-# win32 gpu
+# win32
 windows7-32/debug:
     build-platform: win32/debug
     test-sets:
-        - windows-gpu-tests
+        - windows-tests
 windows7-32/opt:
     build-platform: win32/opt
     test-sets:
-        - windows-gpu-tests
-        - desktop-screenshot-capture
-
-# win64 vm
-windows10-64-vm/debug:
-    build-platform: win64/debug
-    test-sets:
-        - windows-vm-tests
-        - external-media-tests
-windows10-64-vm/opt:
-    build-platform: win64/opt
-    test-sets:
-        - windows-vm-tests
-        - external-media-tests
-        - external-media-tests-slow
         - awsy
         - desktop-screenshot-capture
+        - windows-talos
+        - windows-tests
 
-# win64 gpu
+windows7-32-pgo/opt:
+    build-platform: win32-pgo/opt
+    test-sets:
+        - awsy
+        - desktop-screenshot-capture
+        - windows-tests
+        - windows-talos
+
+windows7-32-nightly/opt:
+    build-platform: win32-nightly/opt
+    test-sets:
+        - awsy
+        - desktop-screenshot-capture
+        - windows-tests
+
+windows7-32-devedition/opt:
+    build-platform: win32-devedition-nightly/opt
+    test-sets:
+        - desktop-screenshot-capture
+        - windows-tests
+
+# win64
 windows10-64/debug:
     build-platform: win64/debug
     test-sets:
-        - windows-gpu-tests
+        - windows-tests
+
 windows10-64/opt:
     build-platform: win64/opt
     test-sets:
-        - windows-gpu-tests
+        - awsy
         - desktop-screenshot-capture
+        - windows-talos
+        - windows-tests
+
+windows10-64-pgo/opt:
+    build-platform: win64-pgo/opt
+    test-sets:
+        - awsy
+        - desktop-screenshot-capture
+        - windows-talos
+        - windows-tests
+
+windows10-64-nightly/opt:
+    build-platform: win64-nightly/opt
+    test-sets:
+        - awsy
+        - desktop-screenshot-capture
+        - windows-tests
+
+windows10-64-devedition/opt:
+    build-platform: win64-devedition-nightly/opt
+    test-sets:
+        - desktop-screenshot-capture
+        - windows-tests
 
 windows10-64-asan/opt:
     build-platform: win64-asan/opt
     test-sets:
         - common-tests
+
+# Windows8 tests; all via BBB
+windows8-64/debug:
+    build-platform: win64/debug
+    test-sets:
+        - windows8-tests
+windows8-64/opt:
+    build-platform: win64/opt
+    test-sets:
+        - windows8-tests
+windows8-64-pgo/opt:
+    build-platform: win64-pgo/opt
+    test-sets:
+        - windows8-tests
+windows8-64-nightly/opt:
+    build-platform: win64-nightly/opt
+    test-sets:
+        - windows8-tests
+windows8-64-devedition/opt:
+    build-platform: win64-devedition-nightly/opt
+    test-sets:
+        - windows8-tests
 
 ##
 # MacOS X platforms (matching /macosx.*/)
@@ -191,30 +262,38 @@ windows10-64-asan/opt:
 macosx64/debug:
     build-platform: macosx64/debug
     test-sets:
-        - macosx64-tests-debug
+        - macosx64-tests
 
 macosx64/opt:
     build-platform: macosx64/opt
     test-sets:
         - macosx64-tests-talos
-        - macosx64-tests-debug
+        - macosx64-tests
+        - desktop-screenshot-capture
+        - awsy
+
+macosx64-nightly/opt:
+      build-platform: macosx64-nightly/opt
+      test-sets:
+        - macosx64-tests
+        - awsy
 
 macosx64-devedition/opt:
-    build-platform: macosx64-devedition/opt
+    build-platform: macosx64-devedition-nightly/opt
     test-sets:
-        - macosx64-tests-debug
+        - macosx64-tests
 
 ##
 # Android platforms (matching /android.*/)
 
-android-4.3-arm7-api-15/debug:
-    build-platform: android-api-15/debug
+android-4.3-arm7-api-16/debug:
+    build-platform: android-api-16/debug
     test-sets:
         - android-common-tests
         - android-debug-tests
 
-android-4.3-arm7-api-15/opt:
-    build-platform: android-api-15/opt
+android-4.3-arm7-api-16/opt:
+    build-platform: android-api-16/opt
     test-sets:
         - android-common-tests
         - android-opt-tests
@@ -224,7 +303,7 @@ android-4.2-x86/opt:
     test-sets:
         - android-x86-tests
 
-android-4.3-arm7-api-15-gradle/opt:
-    build-platform: android-api-15-gradle/opt
+android-4.3-arm7-api-16-gradle/opt:
+    build-platform: android-api-16-gradle/opt
     test-sets:
         - android-gradle-tests

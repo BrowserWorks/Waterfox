@@ -26,7 +26,7 @@ use std::sync::Arc;
 use style::computed_values::{text_rendering, text_transform};
 use style::computed_values::{word_break, white_space};
 use style::logical_geometry::{LogicalSize, WritingMode};
-use style::properties::ServoComputedValues;
+use style::properties::ComputedValues;
 use style::properties::style_structs;
 use style::values::generics::text::LineHeight;
 use unicode_bidi as bidi;
@@ -436,7 +436,7 @@ fn bounding_box_for_run_metrics(metrics: &RunMetrics, writing_mode: WritingMode)
 ///
 /// `#[inline]` because often the caller only needs a few fields from the font metrics.
 #[inline]
-pub fn font_metrics_for_style(font_context: &mut FontContext, font_style: ::StyleArc<style_structs::Font>)
+pub fn font_metrics_for_style(font_context: &mut FontContext, font_style: ::ServoArc<style_structs::Font>)
                               -> FontMetrics {
     let fontgroup = font_context.layout_font_group_for_style(font_style);
     // FIXME(https://github.com/rust-lang/rust/issues/23338)
@@ -445,7 +445,7 @@ pub fn font_metrics_for_style(font_context: &mut FontContext, font_style: ::Styl
 }
 
 /// Returns the line block-size needed by the given computed style and font size.
-pub fn line_height_from_style(style: &ServoComputedValues, metrics: &FontMetrics) -> Au {
+pub fn line_height_from_style(style: &ComputedValues, metrics: &FontMetrics) -> Au {
     let font_size = style.get_font().font_size;
     match style.get_inheritedtext().line_height {
         LineHeight::Normal => metrics.line_gap,

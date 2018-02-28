@@ -176,9 +176,13 @@ class MarionetteProtocol(Protocol):
         if socket_timeout:
             self.marionette.timeout.script = socket_timeout / 2
 
+        self.marionette.switch_to_window(self.runner_handle)
         while True:
             try:
                 self.marionette.execute_async_script("")
+            except errors.NoSuchWindowException:
+                # The window closed
+                break
             except errors.ScriptTimeoutException:
                 self.logger.debug("Script timed out")
                 pass
@@ -186,7 +190,7 @@ class MarionetteProtocol(Protocol):
                 self.logger.debug("Socket closed")
                 break
             except Exception as e:
-                self.logger.error(traceback.format_exc(e))
+                self.logger.warning(traceback.format_exc(e))
                 break
 
     def on_environment_change(self, old_environment, new_environment):
@@ -467,8 +471,9 @@ class MarionetteTestharnessExecutor(TestharnessExecutor):
 class MarionetteRefTestExecutor(RefTestExecutor):
     def __init__(self, browser, server_config, timeout_multiplier=1,
                  screenshot_cache=None, close_after_done=True,
-                 debug_info=None, **kwargs):
-
+                 debug_info=None, reftest_internal=False,
+                 reftest_screenshot="unexpected",
+                 group_metadata=None, **kwargs):
         """Marionette-based executor for reftests"""
         RefTestExecutor.__init__(self,
                                  browser,
@@ -477,15 +482,35 @@ class MarionetteRefTestExecutor(RefTestExecutor):
                                  timeout_multiplier=timeout_multiplier,
                                  debug_info=debug_info)
         self.protocol = MarionetteProtocol(self, browser)
-        self.implementation = RefTestImplementation(self)
+        self.implementation = (InternalRefTestImplementation
+                               if reftest_internal
+                               else RefTestImplementation)(self)
+        self.implementation_kwargs = ({"screenshot": reftest_screenshot} if
+                                      reftest_internal else {})
+
         self.close_after_done = close_after_done
         self.has_window = False
         self.original_pref_values = {}
+        self.group_metadata = group_metadata
 
         with open(os.path.join(here, "reftest.js")) as f:
             self.script = f.read()
         with open(os.path.join(here, "reftest-wait.js")) as f:
             self.wait_script = f.read()
+
+    def setup(self, runner):
+        super(self.__class__, self).setup(runner)
+        self.implementation.setup(**self.implementation_kwargs)
+
+    def teardown(self):
+        try:
+            self.implementation.teardown()
+            handle = self.protocol.marionette.window_handles[0]
+            self.protocol.marionette.switch_to_window(handle)
+            super(self.__class__, self).teardown()
+        except Exception as e:
+            # Ignore errors during teardown
+            self.logger.warning(traceback.format_exc(e))
 
     def is_alive(self):
         return self.protocol.is_alive
@@ -494,16 +519,17 @@ class MarionetteRefTestExecutor(RefTestExecutor):
         self.protocol.on_environment_change(self.last_environment, new_environment)
 
     def do_test(self, test):
-        if self.close_after_done and self.has_window:
-            self.protocol.marionette.close()
-            self.protocol.marionette.switch_to_window(
-                self.protocol.marionette.window_handles[-1])
-            self.has_window = False
+        if not isinstance(self.implementation, InternalRefTestImplementation):
+            if self.close_after_done and self.has_window:
+                self.protocol.marionette.close()
+                self.protocol.marionette.switch_to_window(
+                    self.protocol.marionette.window_handles[-1])
+                self.has_window = False
 
-        if not self.has_window:
-            self.protocol.marionette.execute_script(self.script)
-            self.protocol.marionette.switch_to_window(self.protocol.marionette.window_handles[-1])
-            self.has_window = True
+            if not self.has_window:
+                self.protocol.marionette.execute_script(self.script)
+                self.protocol.marionette.switch_to_window(self.protocol.marionette.window_handles[-1])
+                self.has_window = True
 
         result = self.implementation.run_test(test)
         return self.convert_result(test, result)
@@ -518,10 +544,10 @@ class MarionetteRefTestExecutor(RefTestExecutor):
         test_url = self.test_url(test)
 
         return ExecuteAsyncScriptRun(self.logger,
-                             self._screenshot,
-                             self.protocol,
-                             test_url,
-                             timeout).run()
+                                     self._screenshot,
+                                     self.protocol,
+                                     test_url,
+                                     timeout).run()
 
     def _screenshot(self, marionette, url, timeout):
         marionette.navigate(url)
@@ -534,6 +560,51 @@ class MarionetteRefTestExecutor(RefTestExecutor):
             screenshot = screenshot.split(",", 1)[1]
 
         return screenshot
+
+
+class InternalRefTestImplementation(object):
+    def __init__(self, executor):
+        self.timeout_multiplier = executor.timeout_multiplier
+        self.executor = executor
+
+    @property
+    def logger(self):
+        return self.executor.logger
+
+    def setup(self, screenshot="unexpected"):
+        data = {"screenshot": screenshot}
+        if self.executor.group_metadata is not None:
+            data["urlCount"] = {urlparse.urljoin(self.executor.server_url(key[0]), key[1]):value
+                                for key, value in self.executor.group_metadata.get("url_count", {}).iteritems()
+                                if value > 1}
+        self.executor.protocol.marionette.set_context(self.executor.protocol.marionette.CONTEXT_CHROME)
+        self.executor.protocol.marionette._send_message("reftest:setup", data)
+
+    def run_test(self, test):
+        viewport_size = test.viewport_size
+        dpi = test.dpi
+
+        references = self.get_references(test)
+        rv = self.executor.protocol.marionette._send_message("reftest:run",
+                                                             {"test": self.executor.test_url(test),
+                                                              "references": references,
+                                                              "expected": test.expected(),
+                                                              "timeout": test.timeout * 1000})["value"]
+        return rv
+
+    def get_references(self, node):
+        rv = []
+        for item, relation in node.references:
+            rv.append([self.executor.test_url(item), self.get_references(item), relation])
+        return rv
+
+    def teardown(self):
+        try:
+            self.executor.protocol.marionette._send_message("reftest:teardown", {})
+            self.executor.protocol.marionette.set_context(self.executor.protocol.marionette.CONTEXT_CONTENT)
+        except Exception as e:
+            # Ignore errors during teardown
+            self.logger.warning(traceback.traceback.format_exc(e))
 
 
 class WdspecRun(object):
@@ -579,7 +650,7 @@ class WdspecRun(object):
 class MarionetteWdspecExecutor(WdspecExecutor):
     def __init__(self, browser, server_config, webdriver_binary,
                  timeout_multiplier=1, close_after_done=True, debug_info=None,
-                 capabilities=None, webdriver_args=None, binary=None):
+                 capabilities=None, webdriver_args=None, binary=None, **kwargs):
         self.do_delayed_imports()
         WdspecExecutor.__init__(self, browser, server_config,
                                 timeout_multiplier=timeout_multiplier,

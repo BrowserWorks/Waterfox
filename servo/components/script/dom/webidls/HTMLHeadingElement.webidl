@@ -3,11 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmlheadingelement
+[HTMLConstructor]
 interface HTMLHeadingElement : HTMLElement {
   // also has obsolete members
 };
 
 // https://html.spec.whatwg.org/multipage/#HTMLHeadingElement-partial
 partial interface HTMLHeadingElement {
+  // [CEReactions]
   //         attribute DOMString align;
 };

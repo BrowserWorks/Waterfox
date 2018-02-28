@@ -51,16 +51,16 @@ private:
         MarkWaitingForValidation();
         NS_IF_ADDREF(mListener);
     }
-    
+
     ~nsCacheRequest()
     {
         MOZ_COUNT_DTOR(nsCacheRequest);
         NS_ASSERTION(PR_CLIST_IS_EMPTY(this), "request still on a list");
 
         if (mListener)
-            nsCacheService::ReleaseObject_Locked(mListener, mThread);
+            nsCacheService::ReleaseObject_Locked(mListener, mEventTarget);
     }
-    
+
     /**
      * Simple Accessors
      */
@@ -92,7 +92,7 @@ private:
 
     void   MarkDoomEntriesIfExpired()   { mInfo |=  eDoomEntriesIfExpiredMask; }
     bool WillDoomEntriesIfExpired()   { return (0 != (mInfo & eDoomEntriesIfExpiredMask)); }
-    
+
     void   MarkBlockingMode()           { mInfo |= eBlockingModeMask; }
     bool IsBlocking()                 { return (0 != (mInfo & eBlockingModeMask)); }
     bool IsNonBlocking()              { return !(mInfo & eBlockingModeMask); }
@@ -133,7 +133,7 @@ private:
                 mCondVar.Wait();
             }
             MarkWaitingForValidation();  // set up for next time
-        }       
+        }
         return NS_OK;
     }
 
@@ -149,7 +149,7 @@ private:
     nsCString                  mKey;
     uint32_t                   mInfo;
     nsICacheListener *         mListener;  // strong ref
-    nsCOMPtr<nsIThread>        mThread;
+    nsCOMPtr<nsIEventTarget>   mEventTarget;
     Mutex                      mLock;
     CondVar                    mCondVar;
     nsCOMPtr<nsIFile>          mProfileDir;

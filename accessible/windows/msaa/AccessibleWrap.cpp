@@ -841,7 +841,8 @@ AccessibleWrap::accSelect(
       // is happening, so we dispatch TakeFocus from the main thread to
       // guarantee that we are outside any IPC.
       nsCOMPtr<nsIRunnable> runnable =
-        mozilla::NewRunnableMethod(this, &Accessible::TakeFocus);
+        mozilla::NewRunnableMethod("Accessible::TakeFocus",
+                                   this, &Accessible::TakeFocus);
       NS_DispatchToMainThread(runnable, NS_DISPATCH_NORMAL);
       return S_OK;
     }
@@ -1444,8 +1445,6 @@ AccessibleWrap::GetIAccessibleFor(const VARIANT& aVarChild, bool* aIsDefunct)
   if (XRE_IsParentProcess() && !IsProxy() && !sIDGen.IsChromeID(varChild.lVal)) {
     return GetRemoteIAccessibleFor(varChild);
   }
-  MOZ_ASSERT(XRE_IsParentProcess() ||
-             sIDGen.IsIDForThisContentProcess(varChild.lVal));
 
   if (varChild.lVal > 0) {
     // Gecko child indices are 0-based in contrast to indices used in MSAA.
@@ -1557,7 +1556,7 @@ AccessibleWrap::GetRemoteIAccessibleFor(const VARIANT& aVarChild)
 void
 AccessibleWrap::UpdateSystemCaretFor(Accessible* aAccessible)
 {
-  // Move the system caret so that Windows Tablet Edition and tradional ATs with 
+  // Move the system caret so that Windows Tablet Edition and tradional ATs with
   // off-screen model can follow the caret
   ::DestroyCaret();
 

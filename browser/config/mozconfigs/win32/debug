@@ -2,6 +2,8 @@
 MOZ_AUTOMATION_L10N_CHECK=0
 . "$topsrcdir/browser/config/mozconfigs/common"
 
+. "$topsrcdir/build/mozconfig.stylo"
+
 ac_add_options --enable-debug
 ac_add_options --enable-dmd
 ac_add_options --enable-profiling  # needed for --enable-dmd to work on Windows
@@ -21,4 +23,3 @@ export MOZ_PACKAGE_JSSHELL=1
 ac_add_options --with-branding=browser/branding/nightly
 
 . "$topsrcdir/build/mozconfig.common.override"
-. "$topsrcdir/build/mozconfig.cache"

@@ -1,5 +1,6 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* eslint-disable mozilla/no-arbitrary-setTimeout */
 "use strict";
 
 XPCOMUtils.defineLazyModuleGetter(this, "setTimeout",
@@ -7,6 +8,16 @@ XPCOMUtils.defineLazyModuleGetter(this, "setTimeout",
 
 const COOKIE = {
   host: "example.com",
+  name: "test_cookie",
+  path: "/",
+};
+const COOKIE_NET = {
+  host: "example.net",
+  name: "test_cookie",
+  path: "/",
+};
+const COOKIE_ORG = {
+  host: "example.org",
   name: "test_cookie",
   path: "/",
 };
@@ -18,6 +29,8 @@ function addCookie(cookie) {
 }
 
 async function setUpCookies() {
+  Services.cookies.removeAll();
+
   // Add a cookie which will end up with an older creationTime.
   oldCookie = Object.assign({}, COOKIE, {name: Date.now()});
   addCookie(oldCookie);
@@ -27,6 +40,10 @@ async function setUpCookies() {
 
   // Add a cookie which will end up with a more recent creationTime.
   addCookie(COOKIE);
+
+  // Add cookies for different domains.
+  addCookie(COOKIE_NET);
+  addCookie(COOKIE_ORG);
 }
 
 add_task(async function testCache() {
@@ -158,7 +175,41 @@ add_task(async function testCacheAndCookies() {
   ok(!Services.cookies.cookieExists(oldCookie), "Old cookie was removed.");
   ok(!Services.cookies.cookieExists(COOKIE), "Recent cookie was removed.");
 
-  // Clear cache and cookies with no since value.
+  // Clear cache and cookies with hostnames value.
+  await setUpCookies();
+  awaitNotification = TestUtils.topicObserved("cacheservice:empty-cache");
+  extension.sendMessage({hostnames: ["example.net", "example.org", "unknown.com"]});
+  await awaitNotification;
+  await extension.awaitMessage("cacheAndCookiesRemoved");
+
+  ok(Services.cookies.cookieExists(COOKIE), `Cookie ${COOKIE.name}  was not removed.`);
+  ok(!Services.cookies.cookieExists(COOKIE_NET), `Cookie ${COOKIE_NET.name}  was removed.`);
+  ok(!Services.cookies.cookieExists(COOKIE_ORG), `Cookie ${COOKIE_ORG.name}  was removed.`);
+
+  // Clear cache and cookies with (empty) hostnames value.
+  await setUpCookies();
+  awaitNotification = TestUtils.topicObserved("cacheservice:empty-cache");
+  extension.sendMessage({hostnames: []});
+  await awaitNotification;
+  await extension.awaitMessage("cacheAndCookiesRemoved");
+
+  ok(Services.cookies.cookieExists(COOKIE), `Cookie ${COOKIE.name}  was not removed.`);
+  ok(Services.cookies.cookieExists(COOKIE_NET), `Cookie ${COOKIE_NET.name}  was not removed.`);
+  ok(Services.cookies.cookieExists(COOKIE_ORG), `Cookie ${COOKIE_ORG.name}  was not removed.`);
+
+  // Clear cache and cookies with both hostnames and since values.
+  await setUpCookies();
+  awaitNotification = TestUtils.topicObserved("cacheservice:empty-cache");
+  extension.sendMessage({hostnames: ["example.com"], since});
+  await awaitNotification;
+  await extension.awaitMessage("cacheAndCookiesRemoved");
+
+  ok(Services.cookies.cookieExists(oldCookie), "Old cookie was not removed.");
+  ok(!Services.cookies.cookieExists(COOKIE), "Recent cookie was removed.");
+  ok(Services.cookies.cookieExists(COOKIE_NET), "Cookie with different hostname was not removed");
+  ok(Services.cookies.cookieExists(COOKIE_ORG), "Cookie with different hostname was not removed");
+
+  // Clear cache and cookies with no since or hostnames value.
   await setUpCookies();
   awaitNotification = TestUtils.topicObserved("cacheservice:empty-cache");
   extension.sendMessage({});
@@ -167,6 +218,8 @@ add_task(async function testCacheAndCookies() {
 
   ok(!Services.cookies.cookieExists(COOKIE), `Cookie ${COOKIE.name}  was removed.`);
   ok(!Services.cookies.cookieExists(oldCookie), `Cookie ${oldCookie.name}  was removed.`);
+  ok(!Services.cookies.cookieExists(COOKIE_NET), `Cookie ${COOKIE_NET.name}  was removed.`);
+  ok(!Services.cookies.cookieExists(COOKIE_ORG), `Cookie ${COOKIE_ORG.name}  was removed.`);
 
   await extension.unload();
 });

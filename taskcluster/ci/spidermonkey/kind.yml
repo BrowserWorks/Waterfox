@@ -4,8 +4,12 @@
 
 loader: taskgraph.loader.transform:loader
 
+kind-dependencies:
+   - toolchain
+
 transforms:
    - taskgraph.transforms.build_attrs:transforms
+   - taskgraph.transforms.toolchain:transforms
    - taskgraph.transforms.job:transforms
    - taskgraph.transforms.task:transforms
 
@@ -54,6 +58,10 @@ job-defaults:
             - test.mozbuild
             - toolkit/mozapps/installer/package-name.mk
             - toolkit/mozapps/installer/upload-files.mk
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
 
 jobs:
     sm-package/opt:
@@ -76,10 +84,7 @@ jobs:
         run:
             using: spidermonkey-mozjs-crate
             spidermonkey-variant: plain
-        run-on-projects:
-            - integration
-            - release
-            - try
+        run-on-projects: ['integration', 'release', 'try']
 
     sm-plain/debug:
         description: "Spidermonkey Plain"

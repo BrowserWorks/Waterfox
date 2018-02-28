@@ -8,6 +8,7 @@
 #define gc_Zone_h
 
 #include "mozilla/Atomics.h"
+#include "mozilla/HashFunctions.h"
 #include "mozilla/MemoryReporting.h"
 
 #include "jscntxt.h"
@@ -18,6 +19,7 @@
 #include "js/GCHashTable.h"
 #include "js/TracingAPI.h"
 #include "vm/MallocProvider.h"
+#include "vm/RegExpShared.h"
 #include "vm/TypeInference.h"
 
 namespace js {
@@ -78,7 +80,7 @@ struct UniqueIdGCPolicy {
 // Maps a Cell* to a unique, 64bit id.
 using UniqueIdMap = GCHashMap<Cell*,
                               uint64_t,
-                              PointerHasher<Cell*, 3>,
+                              PointerHasher<Cell*>,
                               SystemAllocPolicy,
                               UniqueIdGCPolicy>;
 
@@ -103,6 +105,31 @@ class MOZ_NON_TEMPORARY_CLASS ExternalStringCache
 
     MOZ_ALWAYS_INLINE JSString* lookup(const char16_t* chars, size_t len) const;
     MOZ_ALWAYS_INLINE void put(JSString* s);
+};
+
+class MOZ_NON_TEMPORARY_CLASS FunctionToStringCache
+{
+    struct Entry {
+        JSScript* script;
+        JSString* string;
+
+        void set(JSScript* scriptArg, JSString* stringArg) {
+            script = scriptArg;
+            string = stringArg;
+        }
+    };
+    static const size_t NumEntries = 2;
+    mozilla::Array<Entry, NumEntries> entries_;
+
+    FunctionToStringCache(const FunctionToStringCache&) = delete;
+    void operator=(const FunctionToStringCache&) = delete;
+
+  public:
+    FunctionToStringCache() { purge(); }
+    void purge() { mozilla::PodArrayZero(entries_); }
+
+    MOZ_ALWAYS_INLINE JSString* lookup(JSScript* script) const;
+    MOZ_ALWAYS_INLINE void put(JSScript* script, JSString* string);
 };
 
 } // namespace js
@@ -159,6 +186,7 @@ struct Zone : public JS::shadow::Zone,
     explicit Zone(JSRuntime* rt, js::ZoneGroup* group);
     ~Zone();
     MOZ_MUST_USE bool init(bool isSystem);
+    void destroy(js::FreeOp *fop);
 
   private:
     js::ZoneGroup* const group_;
@@ -178,6 +206,7 @@ struct Zone : public JS::shadow::Zone,
 
     void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                 size_t* typePool,
+                                size_t* regexpZone,
                                 size_t* jitZone,
                                 size_t* baselineStubsOptimized,
                                 size_t* cachedCFG,
@@ -215,14 +244,11 @@ struct Zone : public JS::shadow::Zone,
     // of AutoKeepAtoms for the atoms zone.
     bool canCollect();
 
-    void notifyObservingDebuggers();
-
-    void setGCState(GCState state) {
+    void changeGCState(GCState prev, GCState next) {
         MOZ_ASSERT(CurrentThreadIsHeapBusy());
-        MOZ_ASSERT_IF(state != NoGC, canCollect());
-        gcState_ = state;
-        if (state == Finished)
-            notifyObservingDebuggers();
+        MOZ_ASSERT(gcState() == prev);
+        MOZ_ASSERT_IF(next != NoGC, canCollect());
+        gcState_ = next;
     }
 
     bool isCollecting() const {
@@ -244,11 +270,8 @@ struct Zone : public JS::shadow::Zone,
         return CurrentThreadIsHeapMajorCollecting() && !rt->gc.isHeapCompacting() && gcState_ != NoGC;
     }
 
-    bool isGCMarking() {
-        if (CurrentThreadIsHeapCollecting())
-            return gcState_ == Mark || gcState_ == MarkGray;
-        else
-            return needsIncrementalBarrier();
+    bool shouldMarkInZone() const {
+        return needsIncrementalBarrier() || isGCMarking();
     }
 
     // Get a number that is incremented whenever this zone is collected, and
@@ -304,6 +327,8 @@ struct Zone : public JS::shadow::Zone,
     DebuggerVector* getDebuggers() const { return debuggers; }
     DebuggerVector* getOrCreateDebuggers(JSContext* cx);
 
+    void notifyObservingDebuggers();
+
     void clearTables();
 
     /*
@@ -352,10 +377,10 @@ struct Zone : public JS::shadow::Zone,
 
   private:
     // List of non-ephemeron weak containers to sweep during beginSweepingSweepGroup.
-    js::ZoneGroupData<mozilla::LinkedList<WeakCache<void*>>> weakCaches_;
+    js::ZoneGroupOrGCTaskData<mozilla::LinkedList<detail::WeakCacheBase>> weakCaches_;
   public:
-    mozilla::LinkedList<WeakCache<void*>>& weakCaches() { return weakCaches_.ref(); }
-    void registerWeakCache(WeakCache<void*>* cachep) {
+    mozilla::LinkedList<detail::WeakCacheBase>& weakCaches() { return weakCaches_.ref(); }
+    void registerWeakCache(detail::WeakCacheBase* cachep) {
         weakCaches().insertBack(cachep);
     }
 
@@ -401,6 +426,8 @@ struct Zone : public JS::shadow::Zone,
     js::gc::MemoryCounter<Zone> jitCodeCounter;
 
   public:
+    js::RegExpZone regExps;
+
     JS::WeakCache<TypeDescrObjectSet>& typeDescrObjects() { return typeDescrObjects_.ref(); }
 
     bool addTypeDescrObject(JSContext* cx, HandleObject obj);
@@ -408,10 +435,11 @@ struct Zone : public JS::shadow::Zone,
     bool triggerGCForTooMuchMalloc() {
         JSRuntime* rt = runtimeFromAnyThread();
 
-        if (CurrentThreadCanAccessRuntime(rt))
-            return rt->gc.triggerZoneGC(this, JS::gcreason::TOO_MUCH_MALLOC);
-        else
-            return false;
+        if (CurrentThreadCanAccessRuntime(rt)) {
+            return rt->gc.triggerZoneGC(this, JS::gcreason::TOO_MUCH_MALLOC,
+                                        gcMallocCounter.bytes(), gcMallocCounter.maxBytes());
+        }
+        return false;
     }
 
     void resetGCMallocBytes() { gcMallocCounter.reset(); }
@@ -442,12 +470,17 @@ struct Zone : public JS::shadow::Zone,
     // Cache storing allocated external strings. Purged on GC.
     js::ZoneGroupOrGCTaskData<js::ExternalStringCache> externalStringCache_;
 
+    // Cache for Function.prototype.toString. Purged on GC.
+    js::ZoneGroupOrGCTaskData<js::FunctionToStringCache> functionToStringCache_;
+
   public:
     js::SparseBitmap& markedAtoms() { return markedAtoms_.ref(); }
 
     js::AtomSet& atomCache() { return atomCache_.ref(); }
 
     js::ExternalStringCache& externalStringCache() { return externalStringCache_.ref(); };
+
+    js::FunctionToStringCache& functionToStringCache() { return functionToStringCache_.ref(); }
 
     // Track heap usage under this Zone.
     js::gc::HeapUsage usage;
@@ -467,18 +500,25 @@ struct Zone : public JS::shadow::Zone,
 
   private:
     // Set of all unowned base shapes in the Zone.
-    js::ZoneGroupData<JS::WeakCache<js::BaseShapeSet>> baseShapes_;
+    js::ZoneGroupData<js::BaseShapeSet> baseShapes_;
   public:
-    JS::WeakCache<js::BaseShapeSet>& baseShapes() { return baseShapes_.ref(); }
+    js::BaseShapeSet& baseShapes() { return baseShapes_.ref(); }
 
   private:
     // Set of initial shapes in the Zone. For certain prototypes -- namely,
     // those of various builtin classes -- there are two entries: one for a
     // lookup via TaggedProto, and one for a lookup via JSProtoKey. See
     // InitialShapeProto.
-    js::ZoneGroupData<JS::WeakCache<js::InitialShapeSet>> initialShapes_;
+    js::ZoneGroupData<js::InitialShapeSet> initialShapes_;
   public:
-    JS::WeakCache<js::InitialShapeSet>& initialShapes() { return initialShapes_.ref(); }
+    js::InitialShapeSet& initialShapes() { return initialShapes_.ref(); }
+
+  private:
+    // List of shapes that may contain nursery pointers.
+    using NurseryShapeVector = js::Vector<js::AccessorShape*, 0, js::SystemAllocPolicy>;
+    js::ZoneGroupData<NurseryShapeVector> nurseryShapes_;
+  public:
+    NurseryShapeVector& nurseryShapes() { return nurseryShapes_.ref(); }
 
 #ifdef JSGC_HASH_TABLE_CHECKS
     void checkInitialShapesTableAfterMovingGC();
@@ -501,23 +541,36 @@ struct Zone : public JS::shadow::Zone,
 #endif
 
     static js::HashNumber UniqueIdToHash(uint64_t uid) {
-        return js::HashNumber(uid >> 32) ^ js::HashNumber(uid & 0xFFFFFFFF);
+        return mozilla::HashGeneric(uid);
     }
 
     // Creates a HashNumber based on getUniqueId. Returns false on OOM.
     MOZ_MUST_USE bool getHashCode(js::gc::Cell* cell, js::HashNumber* hashp) {
         uint64_t uid;
-        if (!getUniqueId(cell, &uid))
+        if (!getOrCreateUniqueId(cell, &uid))
             return false;
         *hashp = UniqueIdToHash(uid);
         return true;
     }
 
-    // Puts an existing UID in |uidp|, or creates a new UID for this Cell and
-    // puts that into |uidp|. Returns false on OOM.
-    MOZ_MUST_USE bool getUniqueId(js::gc::Cell* cell, uint64_t* uidp) {
+    // Gets an existing UID in |uidp| if one exists.
+    MOZ_MUST_USE bool maybeGetUniqueId(js::gc::Cell* cell, uint64_t* uidp) {
         MOZ_ASSERT(uidp);
         MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
+
+        // Get an existing uid, if one has been set.
+        auto p = uniqueIds().lookup(cell);
+        if (p)
+            *uidp = p->value();
+
+        return p.found();
+    }
+
+    // Puts an existing UID in |uidp|, or creates a new UID for this Cell and
+    // puts that into |uidp|. Returns false on OOM.
+    MOZ_MUST_USE bool getOrCreateUniqueId(js::gc::Cell* cell, uint64_t* uidp) {
+        MOZ_ASSERT(uidp);
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this) || js::CurrentThreadIsPerformingGC());
 
         // Get an existing uid, if one has been set.
         auto p = uniqueIds().lookupForAdd(cell);
@@ -525,6 +578,8 @@ struct Zone : public JS::shadow::Zone,
             *uidp = p->value();
             return true;
         }
+
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
 
         // Set a new uid on the cell.
         *uidp = js::gc::NextCellUniqueId(runtimeFromAnyThread());
@@ -549,14 +604,14 @@ struct Zone : public JS::shadow::Zone,
     uint64_t getUniqueIdInfallible(js::gc::Cell* cell) {
         uint64_t uid;
         js::AutoEnterOOMUnsafeRegion oomUnsafe;
-        if (!getUniqueId(cell, &uid))
+        if (!getOrCreateUniqueId(cell, &uid))
             oomUnsafe.crash("failed to allocate uid");
         return uid;
     }
 
     // Return true if this cell has a UID associated with it.
     MOZ_MUST_USE bool hasUniqueId(js::gc::Cell* cell) {
-        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this) || js::CurrentThreadIsPerformingGC());
         return uniqueIds().has(cell);
     }
 
@@ -600,6 +655,9 @@ struct Zone : public JS::shadow::Zone,
         keepShapeTables_ = b;
     }
 
+    // Delete an empty compartment after its contents have been merged.
+    void deleteEmptyCompartment(JSCompartment* comp);
+
   private:
     js::ZoneGroupData<js::jit::JitZone*> jitZone_;
 
@@ -632,8 +690,8 @@ class ZoneGroupsIter
 
   public:
     explicit ZoneGroupsIter(JSRuntime* rt) : iterMarker(&rt->gc) {
-        it = rt->gc.groups.ref().begin();
-        end = rt->gc.groups.ref().end();
+        it = rt->gc.groups().begin();
+        end = rt->gc.groups().end();
 
         if (!done() && (*it)->usedByHelperThread)
             next();
@@ -891,38 +949,66 @@ class ZoneAllocPolicy
 
 /*
  * Provides a delete policy that can be used for objects which have their
- * lifetime managed by the GC and can only safely be destroyed while the nursery
- * is empty.
+ * lifetime managed by the GC so they can be safely destroyed outside of GC.
  *
- * This is necessary when initializing such an object may fail after the initial
- * allocation.  The partially-initialized object must be destroyed, but it may
- * not be safe to do so at the current time.  This policy puts the object on a
- * queue to be destroyed at a safe time.
+ * This is necessary for example when initializing such an object may fail after
+ * the initial allocation. The partially-initialized object must be destroyed,
+ * but it may not be safe to do so at the current time as the store buffer may
+ * contain pointers into it.
+ *
+ * This policy traces GC pointers in the object and clears them, making sure to
+ * trigger barriers while doing so. This will remove any store buffer pointers
+ * into the object and make it safe to delete.
  */
 template <typename T>
 struct GCManagedDeletePolicy
 {
-    void operator()(const T* ptr) {
-        if (ptr) {
-            Zone* zone = ptr->zone();
-            if (zone && !zone->usedByHelperThread() && zone->group()->nursery().isEnabled()) {
-                // The object may contain nursery pointers and must only be
-                // destroyed after a minor GC.
-                zone->group()->callAfterMinorGC(deletePtr, const_cast<T*>(ptr));
-            } else {
-                // The object cannot contain nursery pointers so can be
-                // destroyed immediately.
-                gc::AutoSetThreadIsSweeping threadIsSweeping;
-                js_delete(const_cast<T*>(ptr));
-            }
+    struct ClearEdgesTracer : public JS::CallbackTracer
+    {
+        explicit ClearEdgesTracer(JSContext* cx) : CallbackTracer(cx, TraceWeakMapKeysValues) {}
+#ifdef DEBUG
+        TracerKind getTracerKind() const override { return TracerKind::ClearEdges; }
+#endif
+
+        template <typename S>
+        void clearEdge(S** thingp) {
+            InternalBarrierMethods<S*>::preBarrier(*thingp);
+            InternalBarrierMethods<S*>::postBarrier(thingp, *thingp, nullptr);
+            *thingp = nullptr;
+        }
+
+        void onObjectEdge(JSObject** objp) override { clearEdge(objp); }
+        void onStringEdge(JSString** strp) override { clearEdge(strp); }
+        void onSymbolEdge(JS::Symbol** symp) override { clearEdge(symp); }
+        void onScriptEdge(JSScript** scriptp) override { clearEdge(scriptp); }
+        void onShapeEdge(js::Shape** shapep) override { clearEdge(shapep); }
+        void onObjectGroupEdge(js::ObjectGroup** groupp) override { clearEdge(groupp); }
+        void onBaseShapeEdge(js::BaseShape** basep) override { clearEdge(basep); }
+        void onJitCodeEdge(js::jit::JitCode** codep) override { clearEdge(codep); }
+        void onLazyScriptEdge(js::LazyScript** lazyp) override { clearEdge(lazyp); }
+        void onScopeEdge(js::Scope** scopep) override { clearEdge(scopep); }
+        void onRegExpSharedEdge(js::RegExpShared** sharedp) override { clearEdge(sharedp); }
+        void onChild(const JS::GCCellPtr& thing) override { MOZ_CRASH(); }
+    };
+
+    void operator()(const T* constPtr) {
+        if (constPtr) {
+            auto ptr = const_cast<T*>(constPtr);
+            ClearEdgesTracer trc(TlsContext.get());
+            ptr->trace(&trc);
+            js_delete(ptr);
         }
     }
-
-  private:
-    static void deletePtr(void* data) {
-        js_delete(reinterpret_cast<T*>(data));
-    }
 };
+
+#ifdef DEBUG
+inline bool
+IsClearEdgesTracer(JSTracer *trc)
+{
+    return trc->isCallbackTracer() &&
+           trc->asCallbackTracer()->getTracerKind() == JS::CallbackTracer::TracerKind::ClearEdges;
+}
+#endif
 
 } // namespace js
 

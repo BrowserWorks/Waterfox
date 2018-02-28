@@ -14,13 +14,13 @@
 #include "mozilla/Assertions.h"
 #include <algorithm>
 
+class gfxContext;
 class nsFloatManager;
 struct nsHypotheticalPosition;
 class nsIPercentBSizeObserver;
 class nsLineLayout;
 class nsPlaceholderFrame;
 class nsPresContext;
-class nsRenderingContext;
 
 /**
  * @return aValue clamped to [aMinValue, aMaxValue].
@@ -108,7 +108,7 @@ public:
   nsIFrame* mFrame;
 
   // Rendering context to use for measurement.
-  nsRenderingContext* mRenderingContext;
+  gfxContext* mRenderingContext;
 
   const nsMargin& ComputedPhysicalMargin() const { return mComputedMargin; }
   const nsMargin& ComputedPhysicalBorderPadding() const { return mComputedBorderPadding; }
@@ -165,14 +165,14 @@ protected:
 
 public:
   // Callers using this constructor must call InitOffsets on their own.
-  SizeComputationInput(nsIFrame *aFrame, nsRenderingContext *aRenderingContext)
+  SizeComputationInput(nsIFrame *aFrame, gfxContext *aRenderingContext)
     : mFrame(aFrame)
     , mRenderingContext(aRenderingContext)
     , mWritingMode(aFrame->GetWritingMode())
   {
   }
 
-  SizeComputationInput(nsIFrame *aFrame, nsRenderingContext *aRenderingContext,
+  SizeComputationInput(nsIFrame *aFrame, gfxContext *aRenderingContext,
                    mozilla::WritingMode aContainingBlockWritingMode,
                    nscoord aContainingBlockISize);
 
@@ -247,6 +247,7 @@ public:
                                      nsIFrame* aFrame,
                                      SizeComputationInput* aState,
                                      const mozilla::LogicalSize& aPercentBasis,
+                                     WritingMode aCBWritingMode,
                                      const nsMargin* aBorder,
                                      const nsMargin* aPadding);
   static void DisplayInitOffsetsExit(nsIFrame* aFrame,
@@ -274,7 +275,7 @@ private:
    */
   bool ComputeMargin(mozilla::WritingMode aWM,
                      const mozilla::LogicalSize& aPercentBasis);
-  
+
   /**
    * Computes padding values from the specified padding style information, and
    * fills in the mComputedPadding member.
@@ -560,7 +561,7 @@ private:
   // For block-level frames, the computed width is based on the width of the
   // containing block, the margin/border/padding areas, and the min/max width.
   MOZ_INIT_OUTSIDE_CTOR
-  nscoord          mComputedWidth; 
+  nscoord          mComputedWidth;
 
   // The computed height specifies the frame's content height, and it does
   // not apply to inline non-replaced elements
@@ -591,6 +592,10 @@ private:
   nscoord          mComputedMinHeight, mComputedMaxHeight;
 
 public:
+  // Our saved containing block dimensions.
+  MOZ_INIT_OUTSIDE_CTOR
+  LogicalSize      mContainingBlockSize;
+
   // Cached pointers to the various style structs used during intialization
   MOZ_INIT_OUTSIDE_CTOR
   const nsStyleDisplay*    mStyleDisplay;
@@ -611,7 +616,7 @@ public:
 
   mozilla::StyleDisplay GetDisplay() const;
 
-  // a frame (e.g. nsTableCellFrame) which may need to generate a special 
+  // a frame (e.g. nsTableCellFrame) which may need to generate a special
   // reflow for percent bsize calculations
   nsIPercentBSizeObserver* mPercentBSizeObserver;
 
@@ -685,7 +690,7 @@ public:
    */
   ReflowInput(nsPresContext*              aPresContext,
               nsIFrame*                   aFrame,
-              nsRenderingContext*         aRenderingContext,
+              gfxContext*                 aRenderingContext,
               const mozilla::LogicalSize& aAvailableSpace,
               uint32_t                    aFlags = 0);
 
@@ -864,7 +869,7 @@ public:
     // frames NS_FRAME_CONTAINS_RELATIVE_BSIZE is marked on.
     return (mFrame->GetStateBits() & NS_FRAME_IS_DIRTY) ||
            IsIResize() ||
-           (IsBResize() && 
+           (IsBResize() &&
             (mFrame->GetStateBits() & NS_FRAME_CONTAINS_RELATIVE_BSIZE));
   }
 

@@ -34,6 +34,7 @@
 #include "nsITextServicesDocument.h"    // for nsITextServicesDocument
 #include "nsITextServicesFilter.h"      // for nsITextServicesFilter
 #include "nsIURI.h"                     // for nsIURI
+#include "nsThreadUtils.h"              // for GetMainThreadSerialEventTarget
 #include "nsVariant.h"                  // for nsIWritableVariant, etc
 #include "nsLiteralString.h"            // for NS_LITERAL_STRING, etc
 #include "nsMemory.h"                   // for nsMemory
@@ -300,7 +301,10 @@ class CallbackCaller final : public Runnable
 {
 public:
   explicit CallbackCaller(nsIEditorSpellCheckCallback* aCallback)
-    : mCallback(aCallback) {}
+    : mozilla::Runnable("CallbackCaller")
+    , mCallback(aCallback)
+  {
+  }
 
   ~CallbackCaller()
   {
@@ -406,8 +410,7 @@ nsEditorSpellCheck::InitSpellChecker(nsIEditor* aEditor, bool aEnableSelectionCh
     // discard the failure.  Do it asynchronously so that the caller is always
     // guaranteed async behavior.
     RefPtr<CallbackCaller> caller = new CallbackCaller(aCallback);
-    rv = doc->Dispatch("nsEditorSpellCheck::CallbackCaller",
-                       TaskCategory::Other, caller.forget());
+    rv = doc->Dispatch(TaskCategory::Other, caller.forget());
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -841,7 +844,7 @@ nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
       RefPtr<nsEditorSpellCheck> self = this;
       RefPtr<DictionaryFetcher> fetcher = aFetcher;
       mSpellChecker->SetCurrentDictionaryFromList(tryDictList)->Then(
-        AbstractThread::MainThread(),
+        GetMainThreadSerialEventTarget(),
         __func__,
         [self, fetcher]() {
 #ifdef DEBUG_DICT
@@ -901,7 +904,7 @@ nsEditorSpellCheck::SetFallbackDictionary(DictionaryFetcher* aFetcher)
 
   // Get the preference value.
   nsAutoString preferredDict;
-  preferredDict = Preferences::GetLocalizedString("spellchecker.dictionary");
+  Preferences::GetLocalizedString("spellchecker.dictionary", preferredDict);
 
   if (!dictName.IsEmpty()) {
     // RFC 5646 explicitly states that matches should be case-insensitive.
@@ -1024,7 +1027,7 @@ nsEditorSpellCheck::SetFallbackDictionary(DictionaryFetcher* aFetcher)
   RefPtr<nsEditorSpellCheck> self = this;
   RefPtr<DictionaryFetcher> fetcher = aFetcher;
   mSpellChecker->SetCurrentDictionaryFromList(tryDictList)->Then(
-    AbstractThread::MainThread(),
+    GetMainThreadSerialEventTarget(),
     __func__,
     [self, fetcher]() {
       // If an error was thrown while setting the dictionary, just

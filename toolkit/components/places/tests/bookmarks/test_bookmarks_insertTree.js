@@ -129,7 +129,7 @@ add_task(async function create_separator() {
   Assert.equal(bm.index, 0);
   Assert.equal(bm.dateAdded, bm.lastModified);
   Assert.equal(bm.type, PlacesUtils.bookmarks.TYPE_SEPARATOR);
-  Assert.ok(!("title" in bm), "title should not be set");
+  Assert.strictEqual(bm.title, "");
 });
 
 add_task(async function create_plain_bm() {
@@ -326,4 +326,73 @@ add_task(async function insert_many_non_nested() {
   }
   Assert.equal(obsInvoked, bms.length);
   Assert.equal(obsInvoked, 6);
+});
+
+add_task(async function create_in_folder() {
+  let mozFolder = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    type: PlacesUtils.bookmarks.TYPE_FOLDER,
+    title: "Mozilla",
+  });
+
+  let notifications = [];
+  let obs = {
+    onItemAdded(itemId, parentId, index, type, uri, title, dateAdded, guid, parentGuid) {
+      notifications.push({ itemId, parentId, index, title, guid, parentGuid });
+    },
+  };
+  PlacesUtils.bookmarks.addObserver(obs);
+
+  let bms = await PlacesUtils.bookmarks.insertTree({children: [{
+    url: "http://getfirefox.com",
+    title: "Get Firefox!",
+  }, {
+    type: PlacesUtils.bookmarks.TYPE_FOLDER,
+    title: "Community",
+    children: [
+      {
+        url: "http://getthunderbird.com",
+        title: "Get Thunderbird!",
+      },
+      {
+        url: "https://www.seamonkey-project.org",
+        title: "SeaMonkey",
+      },
+    ],
+  }], guid: mozFolder.guid});
+  await PlacesTestUtils.promiseAsyncUpdates();
+
+  PlacesUtils.bookmarks.removeObserver(obs);
+
+  let mozFolderId = await PlacesUtils.promiseItemId(mozFolder.guid);
+  let commFolderId = await PlacesUtils.promiseItemId(bms[1].guid);
+  deepEqual(notifications, [{
+    itemId: await PlacesUtils.promiseItemId(bms[0].guid),
+    parentId: mozFolderId,
+    index: 0,
+    title: "Get Firefox!",
+    guid: bms[0].guid,
+    parentGuid: mozFolder.guid,
+  }, {
+    itemId: commFolderId,
+    parentId: mozFolderId,
+    index: 1,
+    title: "Community",
+    guid: bms[1].guid,
+    parentGuid: mozFolder.guid,
+  }, {
+    itemId: await PlacesUtils.promiseItemId(bms[2].guid),
+    parentId: commFolderId,
+    index: 0,
+    title: "Get Thunderbird!",
+    guid: bms[2].guid,
+    parentGuid: bms[1].guid,
+  }, {
+    itemId: await PlacesUtils.promiseItemId(bms[3].guid),
+    parentId: commFolderId,
+    index: 1,
+    title: "SeaMonkey",
+    guid: bms[3].guid,
+    parentGuid: bms[1].guid,
+  }]);
 });

@@ -61,14 +61,15 @@ public:
   NS_IMETHOD Run();
 
   RefPtr<nsNSSHttpRequestSession> mRequestSession;
-  
+
   RefPtr<nsHTTPListener> mListener;
   bool mResponsibleForDoneSignal;
   TimeStamp mStartTime;
 };
 
 nsHTTPDownloadEvent::nsHTTPDownloadEvent()
-:mResponsibleForDoneSignal(true)
+  : mozilla::Runnable("nsHTTPDownloadEvent")
+  , mResponsibleForDoneSignal(true)
 {
 }
 
@@ -141,7 +142,7 @@ nsHTTPDownloadEvent::Run()
     nsCOMPtr<nsIUploadChannel> uploadChannel(do_QueryInterface(chan));
     NS_ENSURE_STATE(uploadChannel);
 
-    rv = uploadChannel->SetUploadStream(uploadStream, 
+    rv = uploadChannel->SetUploadStream(uploadStream,
                                         mRequestSession->mPostContentType,
                                         -1);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -173,7 +174,7 @@ nsHTTPDownloadEvent::Run()
   NS_ADDREF(mListener->mLoadGroup);
   mListener->mLoadGroupOwnerThread = PR_GetCurrentThread();
 
-  rv = NS_NewStreamLoader(getter_AddRefs(mListener->mLoader), 
+  rv = NS_NewStreamLoader(getter_AddRefs(mListener->mLoader),
                           mListener);
 
   if (NS_SUCCEEDED(rv)) {
@@ -196,6 +197,7 @@ nsHTTPDownloadEvent::Run()
 struct nsCancelHTTPDownloadEvent : Runnable {
   RefPtr<nsHTTPListener> mListener;
 
+  nsCancelHTTPDownloadEvent() : Runnable("nsCancelHTTPDownloadEvent") {}
   NS_IMETHOD Run() override {
     mListener->FreeLoadGroup(true);
     mListener = nullptr;
@@ -428,7 +430,7 @@ nsNSSHttpRequestSession::internal_send_receive_attempt(bool &retryable_error,
       wait_interval = PR_MicrosecondsToInterval(50);
     }
     else
-    { 
+    {
       // On a secondary thread, it's fine to wait some more for
       // for the condition variable.
       wait_interval = PR_MillisecondsToInterval(250);
@@ -439,8 +441,8 @@ nsNSSHttpRequestSession::internal_send_receive_attempt(bool &retryable_error,
       if (running_on_main_thread)
       {
         // Networking runs on the main thread, which we happen to block here.
-        // Processing events will allow the OCSP networking to run while we 
-        // are waiting. Thanks a lot to Darin Fisher for rewriting the 
+        // Processing events will allow the OCSP networking to run while we
+        // are waiting. Thanks a lot to Darin Fisher for rewriting the
         // thread manager. Thanks a lot to Christian Biesinger who
         // made me aware of this possibility. (kaie)
 
@@ -544,7 +546,9 @@ nsNSSHttpRequestSession::~nsNSSHttpRequestSession()
 }
 
 nsHTTPListener::nsHTTPListener()
-: mResultData(nullptr),
+: mHttpRequestSucceeded(false),
+  mHttpResponseCode(0),
+  mResultData(nullptr),
   mResultLen(0),
   mLock("nsHTTPListener.mLock"),
   mCondition(mLock, "nsHTTPListener.mCondition"),
@@ -565,7 +569,8 @@ nsHTTPListener::~nsHTTPListener()
   }
 
   if (mLoader) {
-    NS_ReleaseOnMainThread(mLoader.forget());
+    NS_ReleaseOnMainThreadSystemGroup("nsHTTPListener::mLoader",
+                                      mLoader.forget());
   }
 }
 
@@ -612,7 +617,7 @@ nsHTTPListener::OnStreamComplete(nsIStreamLoader* aLoader,
   nsCOMPtr<nsIHttpChannel> hchan;
 
   nsresult rv = aLoader->GetRequest(getter_AddRefs(req));
-  
+
   if (NS_FAILED(aStatus))
   {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
@@ -681,16 +686,16 @@ ShowProtectedAuthPrompt(PK11SlotInfo* slot, nsIInterfaceRequestor *ir)
       NS_ADDREF(protectedAuthRunnable);
 
       protectedAuthRunnable->SetParams(slot);
-      
+
       nsCOMPtr<nsIProtectedAuthThread> runnable = do_QueryInterface(protectedAuthRunnable);
       if (runnable)
       {
         nsrv = dialogs->DisplayProtectedAuth(ir, runnable);
-              
+
         // We call join on the thread,
         // so we can be sure that no simultaneous access will happen.
         protectedAuthRunnable->Join();
-              
+
         if (NS_SUCCEEDED(nsrv))
         {
           SECStatus rv = protectedAuthRunnable->GetResult();
@@ -720,7 +725,7 @@ class PK11PasswordPromptRunnable : public SyncRunnableBase
                                  , public nsNSSShutDownObject
 {
 public:
-  PK11PasswordPromptRunnable(PK11SlotInfo* slot, 
+  PK11PasswordPromptRunnable(PK11SlotInfo* slot,
                              nsIInterfaceRequestor* ir)
     : mResult(nullptr),
       mSlot(slot),

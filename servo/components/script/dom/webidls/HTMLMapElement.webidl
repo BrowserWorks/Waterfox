@@ -3,8 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmlmapelement
+[HTMLConstructor]
 interface HTMLMapElement : HTMLElement {
-  //         attribute DOMString name;
-  //readonly attribute HTMLCollection areas;
-  //readonly attribute HTMLCollection images;
+  // [CEReactions]
+  //          attribute DOMString name;
+  // readonly attribute HTMLCollection areas;
+  // readonly attribute HTMLCollection images;
 };

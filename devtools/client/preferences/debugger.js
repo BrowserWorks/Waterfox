@@ -1,11 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-#ifdef RELEASE_OR_BETA
-pref("devtools.debugger.new-debugger-frontend", false);
-#else
 pref("devtools.debugger.new-debugger-frontend", true);
-#endif
 
 // Enable the Debugger
 pref("devtools.debugger.enabled", true);
@@ -38,8 +34,8 @@ pref("devtools.debugger.start-panel-collapsed", false);
 pref("devtools.debugger.end-panel-collapsed", false);
 pref("devtools.debugger.tabs", "[]");
 pref("devtools.debugger.pending-selected-location", "{}");
-pref("devtools.debugger.pending-breakpoints", "[]");
+pref("devtools.debugger.pending-breakpoints", "{}");
 pref("devtools.debugger.expressions", "[]");
-pref("devtools.debugger.file-search-case-sensitive", true);
-pref("devtools.debugger.file-search-whole-word", false );
+pref("devtools.debugger.file-search-case-sensitive", false);
+pref("devtools.debugger.file-search-whole-word", false);
 pref("devtools.debugger.file-search-regex-match", false);

@@ -7,13 +7,18 @@
 
 #![feature(box_syntax)]
 #![feature(mpsc_select)]
+#![feature(nonzero)]
 
 extern crate app_units;
+extern crate atomic_refcell;
+extern crate core;
 extern crate euclid;
 extern crate fnv;
 extern crate gfx;
 extern crate gfx_traits;
 extern crate heapsize;
+#[macro_use]
+extern crate html5ever;
 extern crate ipc_channel;
 #[macro_use]
 extern crate layout;
@@ -22,28 +27,34 @@ extern crate layout_traits;
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
+extern crate metrics;
 extern crate msg;
 extern crate net_traits;
 extern crate parking_lot;
 #[macro_use]
 extern crate profile_traits;
+extern crate range;
 extern crate rayon;
 extern crate script;
 extern crate script_layout_interface;
 extern crate script_traits;
 extern crate selectors;
 extern crate serde_json;
+extern crate servo_arc;
+extern crate servo_atoms;
 extern crate servo_config;
 extern crate servo_geometry;
 extern crate servo_url;
 extern crate style;
-extern crate webrender_traits;
+extern crate style_traits;
+extern crate webrender_api;
+
+mod dom_wrapper;
 
 use app_units::Au;
-use euclid::point::Point2D;
-use euclid::rect::Rect;
-use euclid::scale_factor::ScaleFactor;
-use euclid::size::Size2D;
+use dom_wrapper::{ServoLayoutElement, ServoLayoutDocument, ServoLayoutNode};
+use dom_wrapper::drop_style_and_layout_data;
+use euclid::{Point2D, Rect, Size2D, ScaleFactor, TypedSize2D};
 use fnv::FnvHashMap;
 use gfx::display_list::{OpaqueNode, WebRenderImageInfo};
 use gfx::font;
@@ -56,6 +67,8 @@ use ipc_channel::router::ROUTER;
 use layout::animation;
 use layout::construct::ConstructionResult;
 use layout::context::LayoutContext;
+use layout::context::RegisteredPainter;
+use layout::context::RegisteredPainters;
 use layout::context::heap_size_of_persistent_local_context;
 use layout::display_list_builder::ToGfxColor;
 use layout::flow::{self, Flow, ImmutableFlowUtils, MutableFlowUtils, MutableOwnedFlowUtils};
@@ -72,8 +85,8 @@ use layout::sequential;
 use layout::traversal::{ComputeAbsolutePositions, RecalcStyleAndConstructFlows};
 use layout::webrender_helpers::WebRenderDisplayListConverter;
 use layout::wrapper::LayoutNodeLayoutData;
-use layout::wrapper::drop_style_and_layout_data;
 use layout_traits::LayoutThreadFactory;
+use metrics::{PaintTimeMetrics, ProfilerMetadataFactory};
 use msg::constellation_msg::PipelineId;
 use msg::constellation_msg::TopLevelBrowsingContextId;
 use net_traits::image_cache::{ImageCache, UsePlaceholder};
@@ -81,17 +94,18 @@ use parking_lot::RwLock;
 use profile_traits::mem::{self, Report, ReportKind, ReportsChan};
 use profile_traits::time::{self, TimerMetadata, profile};
 use profile_traits::time::{TimerMetadataFrameType, TimerMetadataReflowType};
-use script::layout_wrapper::{ServoLayoutElement, ServoLayoutDocument, ServoLayoutNode};
 use script_layout_interface::message::{Msg, NewLayoutThreadInfo, Reflow, ReflowQueryType};
 use script_layout_interface::message::{ScriptReflow, ReflowComplete};
-use script_layout_interface::reporter::CSSErrorReporter;
 use script_layout_interface::rpc::{LayoutRPC, MarginStyleResponse, NodeOverflowResponse, OffsetParentResponse};
 use script_layout_interface::rpc::TextIndexResponse;
 use script_layout_interface::wrapper_traits::LayoutNode;
 use script_traits::{ConstellationControlMsg, LayoutControlMsg, LayoutMsg as ConstellationMsg};
 use script_traits::{ScrollState, UntrustedNodeAddress};
-use script_traits::PaintWorkletExecutor;
+use script_traits::DrawAPaintImageResult;
+use script_traits::Painter;
 use selectors::Element;
+use servo_arc::Arc as ServoArc;
+use servo_atoms::Atom;
 use servo_config::opts;
 use servo_config::prefs::PREFS;
 use servo_config::resource_files::read_resource_file;
@@ -104,6 +118,7 @@ use std::marker::PhantomData;
 use std::mem as std_mem;
 use std::ops::{Deref, DerefMut};
 use std::process;
+use std::slice;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
@@ -111,20 +126,26 @@ use std::thread;
 use style::animation::Animation;
 use style::context::{QuirksMode, ReflowGoal, SharedStyleContext};
 use style::context::{StyleSystemOptions, ThreadLocalStyleContextCreationInfo};
-use style::data::StoredRestyleHint;
+use style::context::RegisteredSpeculativePainter;
+use style::context::RegisteredSpeculativePainters;
 use style::dom::{ShowSubtree, ShowSubtreeDataAndPrimaryValues, TElement, TNode};
 use style::error_reporting::{NullReporter, RustLogReporter};
+use style::invalidation::element::restyle_hints::RestyleHint;
 use style::logical_geometry::LogicalPoint;
 use style::media_queries::{Device, MediaList, MediaType};
+use style::properties::PropertyId;
 use style::selector_parser::SnapshotMap;
 use style::servo::restyle_damage::{REFLOW, REFLOW_OUT_OF_FLOW, REPAINT, REPOSITION, STORE_OVERFLOW};
 use style::shared_lock::{SharedRwLock, SharedRwLockReadGuard, StylesheetGuards};
-use style::stylearc::Arc as StyleArc;
-use style::stylesheets::{Origin, Stylesheet, UserAgentStylesheets};
+use style::stylesheets::{Origin, Stylesheet, StylesheetInDocument, UserAgentStylesheets};
 use style::stylist::{ExtraStyleData, Stylist};
 use style::thread_state;
 use style::timer::Timer;
-use style::traversal::{DomTraversal, TraversalDriver, TraversalFlags};
+use style::traversal::{DomTraversal, TraversalDriver};
+use style::traversal_flags::TraversalFlags;
+use style_traits::CSSPixel;
+use style_traits::DevicePixel;
+use style_traits::SpeculativePainter;
 
 /// Information needed by the layout thread.
 pub struct LayoutThread {
@@ -203,10 +224,10 @@ pub struct LayoutThread {
     document_shared_lock: Option<SharedRwLock>,
 
     /// The list of currently-running animations.
-    running_animations: StyleArc<RwLock<FnvHashMap<OpaqueNode, Vec<Animation>>>>,
+    running_animations: ServoArc<RwLock<FnvHashMap<OpaqueNode, Vec<Animation>>>>,
 
     /// The list of animations that have expired since the last style recalculation.
-    expired_animations: StyleArc<RwLock<FnvHashMap<OpaqueNode, Vec<Animation>>>>,
+    expired_animations: ServoArc<RwLock<FnvHashMap<OpaqueNode, Vec<Animation>>>>,
 
     /// A counter for epoch messages
     epoch: Cell<Epoch>,
@@ -221,17 +242,17 @@ pub struct LayoutThread {
     /// All the other elements of this struct are read-only.
     rw_data: Arc<Mutex<LayoutThreadData>>,
 
-    /// The CSS error reporter for all CSS loaded in this layout thread
-    error_reporter: CSSErrorReporter,
-
     webrender_image_cache: Arc<RwLock<FnvHashMap<(ServoUrl, UsePlaceholder),
                                                  WebRenderImageInfo>>>,
-    /// The executor for paint worklets.
-    /// Will be None if the script thread hasn't added any paint worklet modules.
-    paint_worklet_executor: Option<Arc<PaintWorkletExecutor>>,
+
+    /// The executors for paint worklets.
+    registered_painters: RegisteredPaintersImpl,
 
     /// Webrender interface.
-    webrender_api: webrender_traits::RenderApi,
+    webrender_api: webrender_api::RenderApi,
+
+    /// Webrender document.
+    webrender_document: webrender_api::DocumentId,
 
     /// The timer object to control the timing of the animations. This should
     /// only be a test-mode timer during testing for animations.
@@ -242,7 +263,10 @@ pub struct LayoutThread {
     layout_threads: usize,
 
     /// Which quirks mode are we rendering the document in?
-    quirks_mode: Option<QuirksMode>
+    quirks_mode: Option<QuirksMode>,
+
+    /// Paint time metrics.
+    paint_time_metrics: PaintTimeMetrics,
 }
 
 impl LayoutThreadFactory for LayoutThread {
@@ -262,8 +286,10 @@ impl LayoutThreadFactory for LayoutThread {
               time_profiler_chan: time::ProfilerChan,
               mem_profiler_chan: mem::ProfilerChan,
               content_process_shutdown_chan: Option<IpcSender<()>>,
-              webrender_api_sender: webrender_traits::RenderApiSender,
-              layout_threads: usize) {
+              webrender_api_sender: webrender_api::RenderApiSender,
+              webrender_document: webrender_api::DocumentId,
+              layout_threads: usize,
+              paint_time_metrics: PaintTimeMetrics) {
         thread::Builder::new().name(format!("LayoutThread {:?}", id)).spawn(move || {
             thread_state::initialize(thread_state::LAYOUT);
 
@@ -285,7 +311,9 @@ impl LayoutThreadFactory for LayoutThread {
                                                time_profiler_chan,
                                                mem_profiler_chan.clone(),
                                                webrender_api_sender,
-                                               layout_threads);
+                                               webrender_document,
+                                               layout_threads,
+                                               paint_time_metrics);
 
                 let reporter_name = format!("layout-reporter-{}", id);
                 mem_profiler_chan.run_with_memory_reporting(|| {
@@ -420,6 +448,17 @@ fn add_font_face_rules(stylesheet: &Stylesheet,
     }
 }
 
+#[derive(Clone)]
+struct StylesheetIterator<'a>(slice::Iter<'a, ServoArc<Stylesheet>>);
+
+impl<'a> Iterator for StylesheetIterator<'a> {
+    type Item = &'a Stylesheet;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|s| &**s)
+    }
+}
+
 impl LayoutThread {
     /// Creates a new `LayoutThread` structure.
     fn new(id: PipelineId,
@@ -434,12 +473,17 @@ impl LayoutThread {
            font_cache_thread: FontCacheThread,
            time_profiler_chan: time::ProfilerChan,
            mem_profiler_chan: mem::ProfilerChan,
-           webrender_api_sender: webrender_traits::RenderApiSender,
-           layout_threads: usize)
+           webrender_api_sender: webrender_api::RenderApiSender,
+           webrender_document: webrender_api::DocumentId,
+           layout_threads: usize,
+           paint_time_metrics: PaintTimeMetrics)
            -> LayoutThread {
+        // The device pixel ratio is incorrect (it does not have the hidpi value),
+        // but it will be set correctly when the initial reflow takes place.
         let device = Device::new(
             MediaType::Screen,
-            opts::get().initial_window_size.to_f32() * ScaleFactor::new(1.0));
+            opts::get().initial_window_size.to_f32() * ScaleFactor::new(1.0),
+            ScaleFactor::new(opts::get().device_pixels_per_px.unwrap_or(1.0)));
 
         let configuration =
             rayon::Configuration::new().num_threads(layout_threads);
@@ -485,7 +529,7 @@ impl LayoutThread {
             constellation_chan: constellation_chan.clone(),
             time_profiler_chan: time_profiler_chan,
             mem_profiler_chan: mem_profiler_chan,
-            paint_worklet_executor: None,
+            registered_painters: RegisteredPaintersImpl(FnvHashMap::default()),
             image_cache: image_cache.clone(),
             font_cache_thread: font_cache_thread,
             first_reflow: Cell::new(true),
@@ -499,11 +543,12 @@ impl LayoutThread {
             outstanding_web_fonts: outstanding_web_fonts_counter,
             root_flow: RefCell::new(None),
             document_shared_lock: None,
-            running_animations: StyleArc::new(RwLock::new(FnvHashMap::default())),
-            expired_animations: StyleArc::new(RwLock::new(FnvHashMap::default())),
+            running_animations: ServoArc::new(RwLock::new(FnvHashMap::default())),
+            expired_animations: ServoArc::new(RwLock::new(FnvHashMap::default())),
             epoch: Cell::new(Epoch(0)),
             viewport_size: Size2D::new(Au(0), Au(0)),
             webrender_api: webrender_api_sender.create_api(),
+            webrender_document,
             stylist: stylist,
             rw_data: Arc::new(Mutex::new(
                 LayoutThreadData {
@@ -523,10 +568,6 @@ impl LayoutThread {
                     text_index_response: TextIndexResponse(None),
                     nodes_from_point_response: vec![],
                 })),
-            error_reporter: CSSErrorReporter {
-                pipelineid: id,
-                script_chan: Arc::new(Mutex::new(script_chan)),
-            },
             webrender_image_cache:
                 Arc::new(RwLock::new(FnvHashMap::default())),
             timer:
@@ -538,6 +579,7 @@ impl LayoutThread {
                 },
             layout_threads: layout_threads,
             quirks_mode: None,
+            paint_time_metrics: paint_time_metrics,
         }
     }
 
@@ -569,9 +611,10 @@ impl LayoutThread {
                 stylist: &self.stylist,
                 options: StyleSystemOptions::default(),
                 guards: guards,
+                visited_styles_enabled: false,
                 running_animations: self.running_animations.clone(),
                 expired_animations: self.expired_animations.clone(),
-                error_reporter: &self.error_reporter,
+                registered_speculative_painters: &self.registered_painters,
                 local_context_creation_data: Mutex::new(thread_local_style_context_creation_data),
                 timer: self.timer.clone(),
                 quirks_mode: self.quirks_mode.unwrap(),
@@ -583,7 +626,7 @@ impl LayoutThread {
             webrender_image_cache: self.webrender_image_cache.clone(),
             pending_images: if script_initiated_layout { Some(Mutex::new(vec![])) } else { None },
             newly_transitioning_nodes: if script_initiated_layout { Some(Mutex::new(vec![])) } else { None },
-            paint_worklet_executor: self.paint_worklet_executor.clone(),
+            registered_painters: &self.registered_painters,
         }
     }
 
@@ -699,10 +742,18 @@ impl LayoutThread {
             Msg::SetFinalUrl(final_url) => {
                 self.url = final_url;
             },
-            Msg::SetPaintWorkletExecutor(executor) => {
-                debug!("Setting the paint worklet executor");
-                debug_assert!(self.paint_worklet_executor.is_none());
-                self.paint_worklet_executor = Some(executor);
+            Msg::RegisterPaint(name, mut properties, painter) => {
+                debug!("Registering the painter");
+                let properties = properties.drain(..)
+                    .filter_map(|name| PropertyId::parse(&*name).ok().map(|id| (name.clone(), id)))
+                    .filter(|&(_, ref id)| id.as_shorthand().is_err())
+                    .collect();
+                let registered_painter = RegisteredPainterImpl {
+                    name: name.clone(),
+                    properties: properties,
+                    painter: painter,
+                };
+                self.registered_painters.0.insert(name, registered_painter);
             },
             Msg::PrepareToExit(response_chan) => {
                 self.prepare_to_exit(response_chan);
@@ -712,7 +763,10 @@ impl LayoutThread {
                 debug!("layout: ExitNow received");
                 self.exit_now();
                 return false
-            }
+            },
+            Msg::SetNavigationStart(time) => {
+                self.paint_time_metrics.set_navigation_start(time);
+            },
         }
 
         true
@@ -764,7 +818,9 @@ impl LayoutThread {
                              self.mem_profiler_chan.clone(),
                              info.content_process_shutdown_chan,
                              self.webrender_api.clone_sender(),
-                             info.layout_threads);
+                             self.webrender_document,
+                             info.layout_threads,
+                             info.paint_time_metrics);
     }
 
     /// Enters a quiescent state in which no new messages will be processed until an `ExitNow` is
@@ -796,12 +852,16 @@ impl LayoutThread {
     /// Shuts down the layout thread now. If there are any DOM nodes left, layout will now (safely)
     /// crash.
     fn exit_now(&mut self) {
+        // Drop the root flow explicitly to avoid holding style data, such as
+        // rule nodes.  The `Stylist` checks when it is dropped that all rule
+        // nodes have been GCed, so we want drop anyone who holds them first.
+        self.root_flow.borrow_mut().take();
         // Drop the rayon threadpool if present.
         let _ = self.parallel_traversal.take();
     }
 
     fn handle_add_stylesheet<'a, 'b>(&self,
-                                     stylesheet: StyleArc<Stylesheet>,
+                                     stylesheet: ServoArc<Stylesheet>,
                                      possibly_locked_rw_data: &mut RwData<'a, 'b>) {
         // Find all font-face rules and notify the font cache of them.
         // GWTODO: Need to handle unloading web fonts.
@@ -910,7 +970,7 @@ impl LayoutThread {
                 || {
             flow::mut_base(layout_root).stacking_relative_position =
                 LogicalPoint::zero(writing_mode).to_physical(writing_mode,
-                                                             self.viewport_size);
+                                                             self.viewport_size).to_vector();
 
             flow::mut_base(layout_root).clip = data.page_clip_rect;
 
@@ -994,14 +1054,21 @@ impl LayoutThread {
             epoch.next();
             self.epoch.set(epoch);
 
-            let viewport_size = webrender_traits::LayoutSize::from_untyped(&viewport_size);
+            let viewport_size = webrender_api::LayoutSize::from_untyped(&viewport_size);
+
+            // Set paint metrics if needed right before sending the display list to WebRender.
+            // XXX At some point, we may want to set this metric from WebRender itself.
+            self.paint_time_metrics.maybe_set_first_paint(self);
+            self.paint_time_metrics.maybe_set_first_contentful_paint(self, &display_list);
+
             self.webrender_api.set_display_list(
+                self.webrender_document,
+                webrender_api::Epoch(epoch.0),
                 Some(get_root_flow_background_color(layout_root)),
-                webrender_traits::Epoch(epoch.0),
                 viewport_size,
                 builder.finalize(),
                 true);
-            self.webrender_api.generate_frame(None);
+            self.webrender_api.generate_frame(self.webrender_document, None);
         });
     }
 
@@ -1081,6 +1148,7 @@ impl LayoutThread {
         trace!("{:?}", ShowSubtree(element.as_node()));
 
         let initial_viewport = data.window_size.initial_viewport;
+        let device_pixel_ratio = data.window_size.device_pixel_ratio;
         let old_viewport_size = self.viewport_size;
         let current_screen_size = Size2D::new(Au::from_f32_px(initial_viewport.width),
                                               Au::from_f32_px(initial_viewport.height));
@@ -1090,7 +1158,7 @@ impl LayoutThread {
         let document_shared_lock = document.style_shared_lock();
         self.document_shared_lock = Some(document_shared_lock.clone());
         let author_guard = document_shared_lock.read();
-        let device = Device::new(MediaType::Screen, initial_viewport);
+        let device = Device::new(MediaType::Screen, initial_viewport, device_pixel_ratio);
         self.stylist.set_device(device, &author_guard, &data.document_stylesheets);
 
         self.viewport_size =
@@ -1119,7 +1187,7 @@ impl LayoutThread {
                         let el = node.as_element().unwrap();
                         if let Some(mut d) = element.mutate_data() {
                             if d.has_styles() {
-                                d.ensure_restyle().hint.insert(StoredRestyleHint::subtree());
+                                d.restyle.hint.insert(RestyleHint::restyle_subtree());
                             }
                         }
                         if let Some(p) = el.parent_element() {
@@ -1145,7 +1213,7 @@ impl LayoutThread {
             marker: PhantomData,
         };
         let needs_dirtying = self.stylist.update(
-            data.document_stylesheets.iter(),
+            StylesheetIterator(data.document_stylesheets.iter()),
             &guards,
             Some(ua_stylesheets),
             data.stylesheets_changed,
@@ -1155,7 +1223,7 @@ impl LayoutThread {
         if needs_dirtying {
             if let Some(mut d) = element.mutate_data() {
                 if d.has_styles() {
-                    d.ensure_restyle().hint.insert(StoredRestyleHint::subtree());
+                    d.restyle.hint.insert(RestyleHint::restyle_subtree());
                 }
             }
         }
@@ -1200,12 +1268,11 @@ impl LayoutThread {
             }
 
             let mut style_data = style_data.borrow_mut();
-            let mut restyle_data = style_data.ensure_restyle();
 
             // Stash the data on the element for processing by the style system.
-            restyle_data.hint.insert(restyle.hint.into());
-            restyle_data.damage = restyle.damage;
-            debug!("Noting restyle for {:?}: {:?}", el, restyle_data);
+            style_data.restyle.hint.insert(restyle.hint.into());
+            style_data.restyle.damage = restyle.damage;
+            debug!("Noting restyle for {:?}: {:?}", el, style_data.restyle);
         }
 
         // Create a layout context for use throughout the following passes.
@@ -1253,7 +1320,7 @@ impl LayoutThread {
                 (self.layout_threads as u64);
             time::send_profile_data(time::ProfilerCategory::LayoutTextShaping,
                                     self.profiler_metadata(),
-                                    self.time_profiler_chan.clone(),
+                                    &self.time_profiler_chan,
                                     0,
                                     text_shaping_time,
                                     0,
@@ -1631,6 +1698,11 @@ impl LayoutThread {
     }
 }
 
+impl ProfilerMetadataFactory for LayoutThread {
+    fn new_metadata(&self) -> Option<TimerMetadata> {
+        self.profiler_metadata()
+    }
+}
 
 // The default computed value for background-color is transparent (see
 // http://dev.w3.org/csswg/css-backgrounds/#background-color). However, we
@@ -1641,8 +1713,8 @@ impl LayoutThread {
 // clearing the frame buffer to white. This ensures that setting a background
 // color on an iframe element, while the iframe content itself has a default
 // transparent background color is handled correctly.
-fn get_root_flow_background_color(flow: &mut Flow) -> webrender_traits::ColorF {
-    let transparent = webrender_traits::ColorF { r: 0.0, g: 0.0, b: 0.0, a: 0.0 };
+fn get_root_flow_background_color(flow: &mut Flow) -> webrender_api::ColorF {
+    let transparent = webrender_api::ColorF { r: 0.0, g: 0.0, b: 0.0, a: 0.0 };
     if !flow.is_block_like() {
         return transparent;
     }
@@ -1666,7 +1738,7 @@ fn get_root_flow_background_color(flow: &mut Flow) -> webrender_traits::ColorF {
 fn get_ua_stylesheets() -> Result<UserAgentStylesheets, &'static str> {
     fn parse_ua_stylesheet(shared_lock: &SharedRwLock, filename: &'static str)
                            -> Result<Stylesheet, &'static str> {
-        let res = try!(read_resource_file(filename).map_err(|_| filename));
+        let res = read_resource_file(filename).map_err(|_| filename)?;
         Ok(Stylesheet::from_bytes(
             &res,
             ServoUrl::parse(&format!("chrome://resources/{:?}", filename)).unwrap(),
@@ -1685,7 +1757,7 @@ fn get_ua_stylesheets() -> Result<UserAgentStylesheets, &'static str> {
     // FIXME: presentational-hints.css should be at author origin with zero specificity.
     //        (Does it make a difference?)
     for &filename in &["user-agent.css", "servo.css", "presentational-hints.css"] {
-        user_or_user_agent_stylesheets.push(try!(parse_ua_stylesheet(&shared_lock, filename)));
+        user_or_user_agent_stylesheets.push(parse_ua_stylesheet(&shared_lock, filename)?);
     }
     for &(ref contents, ref url) in &opts::get().user_stylesheets {
         user_or_user_agent_stylesheets.push(Stylesheet::from_bytes(
@@ -1693,7 +1765,7 @@ fn get_ua_stylesheets() -> Result<UserAgentStylesheets, &'static str> {
             shared_lock.clone(), None, &RustLogReporter, QuirksMode::NoQuirks));
     }
 
-    let quirks_mode_stylesheet = try!(parse_ua_stylesheet(&shared_lock, "quirks-mode.css"));
+    let quirks_mode_stylesheet = parse_ua_stylesheet(&shared_lock, "quirks-mode.css")?;
 
     Ok(UserAgentStylesheets {
         shared_lock: shared_lock,
@@ -1726,4 +1798,53 @@ lazy_static! {
             }
         }
     };
+}
+
+struct RegisteredPainterImpl {
+    painter: Box<Painter>,
+    name: Atom,
+    properties: FnvHashMap<Atom, PropertyId>,
+}
+
+impl SpeculativePainter for RegisteredPainterImpl {
+    fn speculatively_draw_a_paint_image(&self, properties: Vec<(Atom, String)>, arguments: Vec<String>) {
+        self.painter.speculatively_draw_a_paint_image(properties, arguments);
+    }
+}
+
+impl RegisteredSpeculativePainter for RegisteredPainterImpl {
+    fn properties(&self) -> &FnvHashMap<Atom, PropertyId> {
+        &self.properties
+    }
+    fn name(&self) -> Atom {
+        self.name.clone()
+    }
+}
+
+impl Painter for RegisteredPainterImpl {
+    fn draw_a_paint_image(&self,
+                          size: TypedSize2D<f32, CSSPixel>,
+                          device_pixel_ratio: ScaleFactor<f32, CSSPixel, DevicePixel>,
+                          properties: Vec<(Atom, String)>,
+                          arguments: Vec<String>)
+                          -> DrawAPaintImageResult
+    {
+        self.painter.draw_a_paint_image(size, device_pixel_ratio, properties, arguments)
+    }
+}
+
+impl RegisteredPainter for RegisteredPainterImpl {}
+
+struct RegisteredPaintersImpl(FnvHashMap<Atom, RegisteredPainterImpl>);
+
+impl RegisteredSpeculativePainters for RegisteredPaintersImpl  {
+    fn get(&self, name: &Atom) -> Option<&RegisteredSpeculativePainter> {
+        self.0.get(&name).map(|painter| painter as &RegisteredSpeculativePainter)
+    }
+}
+
+impl RegisteredPainters for RegisteredPaintersImpl {
+    fn get(&self, name: &Atom) -> Option<&RegisteredPainter> {
+        self.0.get(&name).map(|painter| painter as &RegisteredPainter)
+    }
 }

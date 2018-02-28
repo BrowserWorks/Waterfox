@@ -160,9 +160,6 @@ public:
   // the main thread.
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  // The following can be called on the main thread only:
-  // Get the URI
-  virtual nsIURI* URI() const { return nullptr; }
   // Close the resource, stop any listeners, channels, etc.
   // Cancels any currently blocking Read request and forces that request to
   // return an error.
@@ -186,7 +183,11 @@ public:
   // Create a new stream of the same type that refers to the same URI
   // with a new channel. Any cached data associated with the original
   // stream should be accessible in the new stream too.
-  virtual already_AddRefed<MediaResource> CloneData(MediaResourceCallback* aCallback) = 0;
+  virtual already_AddRefed<MediaResource> CloneData(
+    MediaResourceCallback* aCallback)
+  {
+    return nullptr;
+  }
 
   // These methods are called off the main thread.
   // The mode is initially MODE_PLAYBACK.
@@ -206,31 +207,6 @@ public:
   // waste, but caching lock/IO-bound resources means reducing the impact of
   // each read.
   virtual bool ShouldCacheReads() = 0;
-  // This method returns nullptr if anything fails.
-  // Otherwise, it returns an owned buffer.
-  // MediaReadAt may return fewer bytes than requested if end of stream is
-  // encountered. There is no need to call it again to get more data.
-  virtual already_AddRefed<MediaByteBuffer> MediaReadAt(int64_t aOffset, uint32_t aCount)
-  {
-    RefPtr<MediaByteBuffer> bytes = new MediaByteBuffer();
-    bool ok = bytes->SetLength(aCount, fallible);
-    NS_ENSURE_TRUE(ok, nullptr);
-    char* curr = reinterpret_cast<char*>(bytes->Elements());
-    const char* start = curr;
-    while (aCount > 0) {
-      uint32_t bytesRead;
-      nsresult rv = ReadAt(aOffset, curr, aCount, &bytesRead);
-      NS_ENSURE_SUCCESS(rv, nullptr);
-      if (!bytesRead) {
-        break;
-      }
-      aOffset += bytesRead;
-      aCount -= bytesRead;
-      curr += bytesRead;
-    }
-    bytes->SetLength(curr - start);
-    return bytes.forget();
-  }
 
   already_AddRefed<MediaByteBuffer> CachedReadAt(int64_t aOffset, uint32_t aCount)
   {
@@ -339,23 +315,6 @@ public:
    */
   virtual nsresult GetCachedRanges(MediaByteRangeSet& aRanges) = 0;
 
-  // Ensure that the media cache writes any data held in its partial block.
-  // Called on the main thread only.
-  virtual void FlushCache() { }
-
-  // Notify that the last data byte range was loaded.
-  virtual void NotifyLastByteRange() { }
-
-  // Returns the container content type of the resource. This is copied from the
-  // nsIChannel when the MediaResource is created. Safe to call from
-  // any thread.
-  virtual const MediaContainerType& GetContentType() const = 0;
-
-  // Return true if the stream is a live stream
-  virtual bool IsRealTime() {
-    return false;
-  }
-
   // Returns true if the resource is a live stream.
   virtual bool IsLiveStream()
   {
@@ -370,8 +329,6 @@ public:
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
-  const nsCString& GetContentURL() const { return EmptyCString(); }
-
 protected:
   virtual ~MediaResource() {};
 
@@ -381,7 +338,6 @@ private:
 
 class BaseMediaResource : public MediaResource {
 public:
-  nsIURI* URI() const override { return mURI; }
   void SetLoadInBackground(bool aLoadInBackground) override;
 
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
@@ -392,8 +348,6 @@ public:
     // Not owned:
     // - mCallback
     size_t size = MediaResource::SizeOfExcludingThis(aMallocSizeOf);
-    size += mContainerType.SizeOfExcludingThis(aMallocSizeOf);
-
     return size;
   }
 
@@ -402,32 +356,18 @@ public:
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
-  // Returns the url of the resource. Safe to call from any thread?
-  const nsCString& GetContentURL() const
-  {
-    return mContentURL;
-  }
-
 protected:
   BaseMediaResource(MediaResourceCallback* aCallback,
                     nsIChannel* aChannel,
-                    nsIURI* aURI,
-                    const MediaContainerType& aContainerType) :
-    mCallback(aCallback),
-    mChannel(aChannel),
-    mURI(aURI),
-    mContainerType(aContainerType),
-    mLoadInBackground(false)
+                    nsIURI* aURI)
+    : mCallback(aCallback)
+    , mChannel(aChannel)
+    , mURI(aURI)
+    , mLoadInBackground(false)
   {
-    mURI->GetSpec(mContentURL);
   }
   virtual ~BaseMediaResource()
   {
-  }
-
-  const MediaContainerType& GetContentType() const override
-  {
-    return mContainerType;
   }
 
   // Set the request's load flags to aFlags.  If the request is part of a
@@ -448,14 +388,6 @@ protected:
   // URI in case the stream needs to be re-opened. Access from
   // main thread only.
   nsCOMPtr<nsIURI> mURI;
-
-  // Content-Type of the channel. This is copied from the nsIChannel when the
-  // MediaResource is created. This is constant, so accessing from any thread
-  // is safe.
-  const MediaContainerType mContainerType;
-
-  // Copy of the url of the channel resource.
-  nsCString mContentURL;
 
   // True if SetLoadInBackground() has been called with
   // aLoadInBackground = true, i.e. when the document load event is not
@@ -519,12 +451,10 @@ public:
   ChannelMediaResource(MediaResourceCallback* aDecoder,
                        nsIChannel* aChannel,
                        nsIURI* aURI,
-                       const MediaContainerType& aContainerType,
                        bool aIsPrivateBrowsing);
   ChannelMediaResource(MediaResourceCallback* aDecoder,
                        nsIChannel* aChannel,
                        nsIURI* aURI,
-                       const MediaContainerType& aContainerType,
                        const MediaChannelStatistics& aStatistics);
   ~ChannelMediaResource();
 
@@ -558,13 +488,6 @@ public:
 
   void ThrottleReadahead(bool bThrottle) override;
 
-  // Ensure that the media cache writes any data held in its partial block.
-  // Called on the main thread.
-  void FlushCache() override;
-
-  // Notify that the last data byte range was loaded.
-  void NotifyLastByteRange() override;
-
   // Main thread
   nsresult Open(nsIStreamListener** aStreamListener) override;
   nsresult Close() override;
@@ -585,7 +508,6 @@ public:
                   uint32_t aCount, uint32_t* aBytes) override;
   // Data stored in IO&lock-encumbered MediaCacheStream, caching recommended.
   bool ShouldCacheReads() override { return true; }
-  already_AddRefed<MediaByteBuffer> MediaReadAt(int64_t aOffset, uint32_t aCount) override;
   int64_t Tell() override;
 
   // Any thread
@@ -818,18 +740,50 @@ public:
                           uint32_t aCount,
                           uint32_t* aBytes) const;
 
-  // Convenience methods, directly calling the MediaResource method of the same
-  // name.
-  // Those functions do not update the MediaResource offset as returned
-  // by Tell().
+  // Similar to ReadAt, but doesn't try to cache around the read.
+  // Useful if you know that you will not read again from the same area.
+  // Will attempt to read aRequestedCount+aExtraCount, repeatedly calling
+  // MediaResource/ ReadAt()'s until a read returns 0 bytes (so we may actually
+  // get less than aRequestedCount bytes), or until we get at least
+  // aRequestedCount bytes (so we may not get any/all of the aExtraCount bytes.)
+  nsresult UncachedRangedReadAt(int64_t aOffset,
+                                char* aBuffer,
+                                uint32_t aRequestedCount,
+                                uint32_t aExtraCount,
+                                uint32_t* aBytes) const;
 
   // This method returns nullptr if anything fails.
   // Otherwise, it returns an owned buffer.
   // MediaReadAt may return fewer bytes than requested if end of stream is
   // encountered. There is no need to call it again to get more data.
+  // Note this method will not update mOffset.
   already_AddRefed<MediaByteBuffer> MediaReadAt(int64_t aOffset, uint32_t aCount) const
   {
-    return mResource->MediaReadAt(aOffset, aCount);
+    RefPtr<MediaByteBuffer> bytes = new MediaByteBuffer();
+    if (aOffset < 0) {
+      return bytes.forget();
+    }
+    bool ok = bytes->SetLength(aCount, fallible);
+    NS_ENSURE_TRUE(ok, nullptr);
+    char* curr = reinterpret_cast<char*>(bytes->Elements());
+    const char* start = curr;
+    while (aCount > 0) {
+      uint32_t bytesRead;
+      nsresult rv = mResource->ReadAt(aOffset, curr, aCount, &bytesRead);
+      NS_ENSURE_SUCCESS(rv, nullptr);
+      if (!bytesRead) {
+        break;
+      }
+      aOffset += bytesRead;
+      if (aOffset < 0) {
+        // Very unlikely overflow.
+        break;
+      }
+      aCount -= bytesRead;
+      curr += bytesRead;
+    }
+    bytes->SetLength(curr - start);
+    return bytes.forget();
   }
   // Get the length of the stream in bytes. Returns -1 if not known.
   // This can change over time; after a seek operation, a misbehaving

@@ -279,6 +279,11 @@ nsDeviceContext::SetDPI(double* aScale)
         mAppUnitsPerDevPixelAtUnitFullZoom =
             NS_lround((AppUnitsPerCSSPixel() * 96) / dpi);
     } else {
+        nsCOMPtr<nsIScreen> primaryScreen;
+        ScreenManager& screenManager = ScreenManager::GetSingleton();
+        screenManager.GetPrimaryScreen(getter_AddRefs(primaryScreen));
+        MOZ_ASSERT(primaryScreen);
+
         // A value of -1 means use the maximum of 96 and the system DPI.
         // A value of 0 means use the system DPI. A positive value is used as the DPI.
         // This sets the physical size of a device pixel and thus controls the
@@ -288,8 +293,13 @@ nsDeviceContext::SetDPI(double* aScale)
         if (prefDPI > 0) {
             dpi = prefDPI;
         } else if (mWidget) {
+            // PuppetWidget could return -1 if the value's not available yet.
             dpi = mWidget->GetDPI();
-
+            // In case that the widget returns -1, use the primary screen's
+            // value as default.
+            if (dpi < 0) {
+                primaryScreen->GetDpi(&dpi);
+            }
             if (prefDPI < 0) {
                 dpi = std::max(96.0f, dpi);
             }
@@ -308,6 +318,11 @@ nsDeviceContext::SetDPI(double* aScale)
                 mWidget ? mWidget->GetDefaultScale()
                         : CSSToLayoutDeviceScale(1.0);
             devPixelsPerCSSPixel = scale.scale;
+            // In case that the widget returns -1, use the primary screen's
+            // value as default.
+            if (devPixelsPerCSSPixel < 0) {
+                primaryScreen->GetDefaultCSSScaleFactor(&devPixelsPerCSSPixel);
+            }
             if (aScale) {
                 *aScale = devPixelsPerCSSPixel;
             }
@@ -403,13 +418,13 @@ nsDeviceContext::CreateRenderingContextCommon(bool aWantReferenceContext)
     if (mPrintTarget->RotateNeededForLandscape()) {
       // Rotate page 90 degrees to draw landscape page on portrait paper
       IntSize size = mPrintTarget->GetSize();
-      transform.Translate(gfxPoint(0, size.width));
+      transform.PreTranslate(gfxPoint(0, size.width));
       gfxMatrix rotate(0, -1,
                        1,  0,
                        0,  0);
       transform = rotate * transform;
     }
-    transform.Scale(mPrintingScale, mPrintingScale);
+    transform.PreScale(mPrintingScale, mPrintingScale);
 
     pContext->SetMatrix(transform);
     return pContext.forget();
@@ -662,7 +677,7 @@ nsDeviceContext::FindScreen(nsIScreen** outScreen)
 bool
 nsDeviceContext::CalcPrintingSize()
 {
-    gfxSize size = mPrintTarget->GetSize();
+    gfxSize size(mPrintTarget->GetSize());
     // For printing, CSS inches and physical inches are identical
     // so it doesn't matter which we use here
     mWidth = NSToCoordRound(size.width * AppUnitsPerPhysicalInch()

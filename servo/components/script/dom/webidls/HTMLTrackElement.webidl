@@ -3,18 +3,24 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmltrackelement
+[HTMLConstructor]
 interface HTMLTrackElement : HTMLElement {
-  //         attribute DOMString kind;
-  //         attribute DOMString src;
-  //         attribute DOMString srclang;
-  //         attribute DOMString label;
-  //         attribute boolean default;
+  // [CEReactions]
+  //          attribute DOMString kind;
+  // [CEReactions]
+  //          attribute DOMString src;
+  // [CEReactions]
+  //          attribute DOMString srclang;
+  // [CEReactions]
+  //          attribute DOMString label;
+  // [CEReactions]
+  //          attribute boolean default;
 
-  //const unsigned short NONE = 0;
-  //const unsigned short LOADING = 1;
-  //const unsigned short LOADED = 2;
-  //const unsigned short ERROR = 3;
-  //readonly attribute unsigned short readyState;
+  // const unsigned short NONE = 0;
+  // const unsigned short LOADING = 1;
+  // const unsigned short LOADED = 2;
+  // const unsigned short ERROR = 3;
+  // readonly attribute unsigned short readyState;
 
-  //readonly attribute TextTrack track;
+  // readonly attribute TextTrack track;
 };

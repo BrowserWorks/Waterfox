@@ -694,6 +694,14 @@ nsMediaFeatures::features[] = {
     GetSystemMetric
   },
   {
+    &nsGkAtoms::_moz_windows_accent_color_in_titlebar,
+    nsMediaFeature::eMinMaxNotAllowed,
+    nsMediaFeature::eBoolInteger,
+    nsMediaFeature::eNoRequirements,
+    { &nsGkAtoms::windows_accent_color_in_titlebar },
+    GetSystemMetric
+  },
+  {
     &nsGkAtoms::_moz_windows_compositor,
     nsMediaFeature::eMinMaxNotAllowed,
     nsMediaFeature::eBoolInteger,

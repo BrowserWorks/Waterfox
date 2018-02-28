@@ -286,7 +286,27 @@ const testcases = [
     // Thai (also tests that node with over 63 UTF-8 octets doesn't fail)
     ["เครื่องทําน้ําทําน้ําแข็ง",
                  "xn--22cdjb2fanb9fyepcbbb9dwh4a3igze4fdcd",
-                                                     false, true, true]
+                                                     false, true, true],
+
+    // Effect of adding valid or invalid subdomains (bug 1399540)
+    ["䕮䕵䕶䕱.ascii", "xn--google.ascii",                       false, true,  true],
+    ["ascii.䕮䕵䕶䕱", "ascii.xn--google",                       false, true,  true],
+    ["中国123.䕮䕵䕶䕱", "xn--123-u68dy61b.xn--google",           false, true,  true],
+    ["䕮䕵䕶䕱.中国123", "xn--google.xn--123-u68dy61b",           false, true,  true],
+    ["xn--accountlogin.䕮䕵䕶䕱", "xn--accountlogin.xn--google", false, true,  true],
+    ["䕮䕵䕶䕱.xn--accountlogin", "xn--google.xn--accountlogin", false, true,  true],
+                                                     
+    // Arabic diacritic not allowed in Latin text (bug 1370497)
+    ["goo\u0650gle", "xn--google-yri", false, false, false],
+    // ...but Arabic diacritics are allowed on Arabic text
+    ["العَرَبِي", "xn--mgbc0a5a6cxbzabt", false, true, true],
+    
+    // Accents above dotless-i are not allowed
+    ["na\u0131\u0308ve", "xn--nave-mza04z", false, false, false],
+    ["d\u0131\u0302ner", "xn--dner-lza40z", false, false, false],
+    // but the corresponding accented-i (based on dotted i) is OK
+    ["na\u00efve.com", "xn--nave-6pa.com", false, true, true],
+    ["d\u00eener.com", "xn--dner-0pa.com", false, true, true],
 ];
 
 
@@ -311,13 +331,13 @@ function run_test() {
             var expectedUnicode = test[2 + i];
             var isASCII = {};
 
-	    var result;
-	    try {
-		result = idnService.convertToDisplayIDN(URL, isASCII);
-	    } catch(e) {
-		result = ".com";
-	    }
-            if (punycodeURL.substr(0, 4) == "xn--") {
+            var result;
+            try {
+                result = idnService.convertToDisplayIDN(URL, isASCII);
+            } catch(e) {
+                result = ".com";
+            }
+            if (punycodeURL.substr(0, 4) == "xn--" || punycodeURL.indexOf(".xn--") > 0) {
                 // test convertToDisplayIDN with a Unicode URL and with a
                 //  Punycode URL if we have one
                 do_check_eq(escape(result),

@@ -135,7 +135,7 @@ macro_rules! try_parse_one {
         % endfor
 
         if input.try(|input| input.expect_ident_matching("none")).is_err() {
-            let results = try!(input.parse_comma_separated(|i| parse_one_transition(context, i)));
+            let results = input.parse_comma_separated(|i| parse_one_transition(context, i))?;
             for result in results {
                 % for prop in "property duration timing_function delay".split():
                 ${prop}s.push(result.transition_${prop});
@@ -257,7 +257,7 @@ macro_rules! try_parse_one {
         let mut ${prop}s = vec![];
         % endfor
 
-        let results = try!(input.parse_comma_separated(|i| parse_one_animation(context, i)));
+        let results = input.parse_comma_separated(|i| parse_one_animation(context, i))?;
         for result in results.into_iter() {
             % for prop in props:
             ${prop}s.push(result.animation_${prop});
@@ -289,7 +289,7 @@ macro_rules! try_parse_one {
 
             for i in 0..len {
                 if i != 0 {
-                    try!(write!(dest, ", "));
+                    write!(dest, ", ")?;
                 }
 
                 % for name in props[1:]:
@@ -310,7 +310,7 @@ macro_rules! try_parse_one {
 
     pub fn parse_value<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                                -> Result<Longhands, ParseError<'i>> {
-        let result = try!(scroll_snap_type_x::parse(context, input));
+        let result = scroll_snap_type_x::parse(context, input)?;
         Ok(expanded! {
             scroll_snap_type_x: result,
             scroll_snap_type_y: result,
@@ -334,6 +334,7 @@ macro_rules! try_parse_one {
 <%helpers:shorthand name="-moz-transform" products="gecko"
                     sub_properties="transform"
                     flags="SHORTHAND_ALIAS_PROPERTY"
+                    derive_serialize="True"
                     spec="Non-standard: https://developer.mozilla.org/en-US/docs/Web/CSS/transform">
     use properties::longhands::transform;
 
@@ -342,11 +343,5 @@ macro_rules! try_parse_one {
         Ok(expanded! {
             transform: transform::parse_prefixed(context, input)?,
         })
-    }
-
-    impl<'a> ToCss for LonghandsToSerialize<'a>  {
-        fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-            self.transform.to_css(dest)
-        }
     }
 </%helpers:shorthand>

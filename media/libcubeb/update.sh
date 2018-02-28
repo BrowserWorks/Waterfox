@@ -30,7 +30,8 @@ cp $1/src/cubeb_resampler_internal.h src
 cp $1/src/cubeb_ring_array.h src
 cp $1/src/cubeb_ringbuffer.h src
 cp $1/src/cubeb_sndio.c src
-cp $1/src/cubeb_utils.c src
+cp $1/src/cubeb_strings.c src
+cp $1/src/cubeb_strings.h src
 cp $1/src/cubeb_utils.h src
 cp $1/src/cubeb_utils_unix.h src
 cp $1/src/cubeb_utils_win.h src
@@ -73,3 +74,6 @@ patch -p3 < disable-assert.patch
 
 echo "Applying prefer-pulse-rust.patch on top of $rev"
 patch -p3 < prefer-pulse-rust.patch
+
+echo "Applying pick-cubeb-e1e8337-to-beta.patch on top of $rev"
+patch -p3 < pick-cubeb-e1e8337-to-beta.patch

@@ -63,7 +63,8 @@ module.exports = {
 
   // When adding items to this file please check for effects on sub-directories.
   "plugins": [
-    "mozilla"
+    "mozilla",
+    "no-unsanitized"
   ],
 
   // When adding items to this file please check for effects on all of toolkit
@@ -85,7 +86,7 @@ module.exports = {
     "comma-spacing": ["error", {"after": true, "before": false}],
 
     // Commas at the end of the line not the start
-    // "comma-style": "error",
+    "comma-style": "error",
 
     // Warn about cyclomatic complexity in functions.
     // XXX Get this down to 20?
@@ -150,8 +151,14 @@ module.exports = {
     // Use [] instead of Array()
     "no-array-constructor": "error",
 
+    // Disallow modifying variables of class declarations.
+    "no-class-assign": "error",
+
     // Disallow assignment operators in conditional statements
     "no-cond-assign": "error",
+
+    // Disallow modifying variables that are declared using const.
+    "no-const-assign": "error",
 
     // Disallow control characters in regular expressions.
     "no-control-regex": "error",
@@ -164,6 +171,9 @@ module.exports = {
 
     // No duplicate arguments in function declarations
     "no-dupe-args": "error",
+
+    // Disallow duplicate class members.
+    "no-dupe-class-members": "error",
 
     // No duplicate keys in object declarations
     "no-dupe-keys": "error",
@@ -254,6 +264,9 @@ module.exports = {
     // Disallow multiple spaces in regular expressions
     "no-regex-spaces": "error",
 
+    // Disallows unnecessary `return await ...`.
+    "no-return-await": "error",
+
     // Disallow assignments where both sides are exactly the same
     "no-self-assign": "error",
 
@@ -269,6 +282,9 @@ module.exports = {
     // Disallow sparse arrays
     "no-sparse-arrays": "error",
 
+    // Disallow tabs.
+    "no-tabs": "error",
+
     // No trailing whitespace
     "no-trailing-spaces": "error",
 
@@ -278,6 +294,9 @@ module.exports = {
     // Error on newline where a semicolon is needed
     "no-unexpected-multiline": "error",
 
+    // Disallow the use of Boolean literals in conditional expressions.
+    "no-unneeded-ternary": "error",
+
     // No unreachable statements
     "no-unreachable": "error",
 
@@ -286,6 +305,11 @@ module.exports = {
 
     // No (!foo in bar) or (!object instanceof Class)
     "no-unsafe-negation": "error",
+
+    // No unsanitized use of innerHTML=, document.write() etc.
+    // cf. https://github.com/mozilla/eslint-plugin-no-unsanitized#rule-details
+    "no-unsanitized/method": "error",
+    "no-unsanitized/property": "error",
 
     // No declaring variables that are never used
     "no-unused-vars": ["error", {
@@ -306,6 +330,9 @@ module.exports = {
 
     // Disallow redundant return statements
     "no-useless-return": "error",
+
+    // Disallow whitespace before properties.
+    "no-whitespace-before-property": "error",
 
     // No using with
     "no-with": "error",

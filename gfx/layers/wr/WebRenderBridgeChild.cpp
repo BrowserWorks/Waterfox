@@ -22,7 +22,8 @@ using namespace mozilla::gfx;
 WebRenderBridgeChild::WebRenderBridgeChild(const wr::PipelineId& aPipelineId)
   : mReadLockSequenceNumber(0)
   , mIsInTransaction(false)
-  , mIdNamespace(0)
+  , mIsInClearCachedResources(false)
+  , mIdNamespace{0}
   , mResourceId(0)
   , mPipelineId(aPipelineId)
   , mIPCOpen(false)
@@ -32,7 +33,7 @@ WebRenderBridgeChild::WebRenderBridgeChild(const wr::PipelineId& aPipelineId)
 }
 
 void
-WebRenderBridgeChild::Destroy()
+WebRenderBridgeChild::Destroy(bool aIsSync)
 {
   if (!IPCOpen()) {
     return;
@@ -41,7 +42,11 @@ WebRenderBridgeChild::Destroy()
   // When this function is called from CompositorBridgeChild::Destroy().
   mDestroyed = true;
 
-  SendShutdown();
+  if (aIsSync) {
+    SendShutdownSync();
+  } else {
+    SendShutdown();
+  }
 }
 
 void
@@ -53,7 +58,7 @@ WebRenderBridgeChild::ActorDestroy(ActorDestroyReason why)
 void
 WebRenderBridgeChild::AddWebRenderParentCommand(const WebRenderParentCommand& aCmd)
 {
-  MOZ_ASSERT(mIsInTransaction);
+  MOZ_ASSERT(mIsInTransaction || mIsInClearCachedResources);
   mParentCommands.AppendElement(aCmd);
 }
 
@@ -103,21 +108,36 @@ WebRenderBridgeChild::DPEnd(wr::DisplayListBuilder &aBuilder,
   MOZ_ASSERT(mIsInTransaction);
 
   wr::BuiltDisplayList dl;
-  WrSize contentSize;
+  wr::LayoutSize contentSize;
   aBuilder.Finalize(contentSize, dl);
   ByteBuffer dlData(Move(dl.dl));
 
+  TimeStamp fwdTime;
+#if defined(ENABLE_FRAME_LATENCY_LOG)
+  fwdTime = TimeStamp::Now();
+#endif
+
   if (aIsSync) {
     this->SendDPSyncEnd(aSize, mParentCommands, mDestroyedActors, GetFwdTransactionId(), aTransactionId,
-                        contentSize, dlData, dl.dl_desc, aScrollData);
+                        contentSize, dlData, dl.dl_desc, aScrollData, mIdNamespace, fwdTime);
   } else {
     this->SendDPEnd(aSize, mParentCommands, mDestroyedActors, GetFwdTransactionId(), aTransactionId,
-                    contentSize, dlData, dl.dl_desc, aScrollData);
+                    contentSize, dlData, dl.dl_desc, aScrollData, mIdNamespace, fwdTime);
   }
 
   mParentCommands.Clear();
   mDestroyedActors.Clear();
   mIsInTransaction = false;
+}
+
+void
+WebRenderBridgeChild::ProcessWebRenderParentCommands()
+{
+  if (mParentCommands.IsEmpty()) {
+    return;
+  }
+  this->SendParentCommands(mParentCommands);
+  mParentCommands.Clear();
 }
 
 void
@@ -191,28 +211,27 @@ WebRenderBridgeChild::PushGlyphs(wr::DisplayListBuilder& aBuilder, const nsTArra
   MOZ_ASSERT(aFont);
   MOZ_ASSERT(!aGlyphs.IsEmpty());
 
-  WrFontKey key = GetFontKeyForScaledFont(aFont);
-  MOZ_ASSERT(key.mNamespace && key.mHandle);
+  wr::WrFontKey key = GetFontKeyForScaledFont(aFont);
+  MOZ_ASSERT(key.mNamespace.mHandle && key.mHandle);
 
   for (size_t i = 0; i < aGlyphs.Length(); i++) {
     GlyphArray glyph_array = aGlyphs[i];
     nsTArray<gfx::Glyph>& glyphs = glyph_array.glyphs();
 
-    nsTArray<WrGlyphInstance> wr_glyph_instances;
+    nsTArray<wr::GlyphInstance> wr_glyph_instances;
     wr_glyph_instances.SetLength(glyphs.Length());
 
     for (size_t j = 0; j < glyphs.Length(); j++) {
       wr_glyph_instances[j].index = glyphs[j].mIndex;
-      wr_glyph_instances[j].point = aSc.ToRelativeWrPoint(
+      wr_glyph_instances[j].point = aSc.ToRelativeLayoutPoint(
               LayerPoint::FromUnknownPoint(glyphs[j].mPosition));
     }
 
-    WrClipRegionToken clipRegion = aBuilder.PushClipRegion(aSc.ToRelativeWrRect(aClip));
-    aBuilder.PushText(aSc.ToRelativeWrRect(aBounds),
-                      clipRegion,
+    aBuilder.PushText(aSc.ToRelativeLayoutRect(aBounds),
+                      aSc.ToRelativeLayoutRect(aClip),
                       glyph_array.color().value(),
                       key,
-                      Range<const WrGlyphInstance>(wr_glyph_instances.Elements(), wr_glyph_instances.Length()),
+                      Range<const wr::GlyphInstance>(wr_glyph_instances.Elements(), wr_glyph_instances.Length()),
                       aFont->GetSize());
 
   }
@@ -227,10 +246,10 @@ WebRenderBridgeChild::GetFontKeyForScaledFont(gfx::ScaledFont* aScaledFont)
              (aScaledFont->GetType() == gfx::FontType::MAC) ||
              (aScaledFont->GetType() == gfx::FontType::FONTCONFIG));
 
-  RefPtr<UnscaledFont> unscaled = aScaledFont->GetUnscaledFont();
+  RefPtr<gfx::UnscaledFont> unscaled = aScaledFont->GetUnscaledFont();
   MOZ_ASSERT(unscaled);
 
-  wr::FontKey key = {0, 0};
+  wr::FontKey key = { wr::IdNamespace { 0 }, 0};
   if (mFontKeys.Get(unscaled, &key)) {
     return key;
   }
@@ -254,7 +273,7 @@ WebRenderBridgeChild::GetFontKeyForScaledFont(gfx::ScaledFont* aScaledFont)
 void
 WebRenderBridgeChild::RemoveExpiredFontKeys()
 {
-  uint32_t counter = UnscaledFont::DeletionCounter();
+  uint32_t counter = gfx::UnscaledFont::DeletionCounter();
   if (mFontKeysDeleted != counter) {
     mFontKeysDeleted = counter;
     for (auto iter = mFontKeys.Iter(); !iter.Done(); iter.Next()) {
@@ -430,6 +449,35 @@ bool
 WebRenderBridgeChild::InForwarderThread()
 {
   return NS_IsMainThread();
+}
+
+mozilla::ipc::IPCResult
+WebRenderBridgeChild::RecvWrUpdated(const wr::IdNamespace& aNewIdNamespace)
+{
+  // Update mIdNamespace to identify obsolete keys and messages by WebRenderBridgeParent.
+  // Since usage of invalid keys could cause crash in webrender.
+  mIdNamespace = aNewIdNamespace;
+  // Remove all FontKeys since they are removed by WebRenderBridgeParent
+  for (auto iter = mFontKeys.Iter(); !iter.Done(); iter.Next()) {
+    SendDeleteFont(iter.Data());
+  }
+  mFontKeys.Clear();
+  GetCompositorBridgeChild()->RecvInvalidateLayers(wr::AsUint64(mPipelineId));
+  return IPC_OK();
+}
+
+void
+WebRenderBridgeChild::BeginClearCachedResources()
+{
+  mIsInClearCachedResources = true;
+}
+
+void
+WebRenderBridgeChild::EndClearCachedResources()
+{
+  ProcessWebRenderParentCommands();
+  SendClearCachedResources();
+  mIsInClearCachedResources = false;
 }
 
 } // namespace layers

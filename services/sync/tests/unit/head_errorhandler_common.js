@@ -25,7 +25,7 @@ const EHTestsCommon = {
     response.bodyOutputStream.write(body, body.length);
   },
 
-  sync_httpd_setup() {
+  async sync_httpd_setup() {
     let global = new ServerWBO("global", {
       syncID: Service.syncID,
       storageVersion: STORAGE_VERSION,
@@ -83,7 +83,7 @@ const EHTestsCommon = {
     CatapultEngine.prototype = {
       __proto__: SyncEngine.prototype,
       exception: null, // tests fill this in
-      _sync: function _sync() {
+      async _sync() {
         if (this.exception) {
           throw this.exception;
         }
@@ -97,7 +97,8 @@ const EHTestsCommon = {
   generateCredentialsChangedFailure() {
     // Make sync fail due to changed credentials. We simply re-encrypt
     // the keys with a different Sync Key, without changing the local one.
-    let newSyncKeyBundle = new SyncKeyBundle("johndoe", "23456234562345623456234562");
+    let newSyncKeyBundle = new BulkKeyBundle("crypto");
+    newSyncKeyBundle.generateRandom();
     let keys = Service.collectionKeys.asWBO();
     keys.encrypt(newSyncKeyBundle);
     return keys.upload(Service.resource(Service.cryptoKeysURL));

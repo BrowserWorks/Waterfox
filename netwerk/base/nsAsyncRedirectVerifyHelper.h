@@ -43,10 +43,10 @@ public:
      * channels and flags. Keeps track of number of async callbacks to expect.
      */
     nsresult DelegateOnChannelRedirect(nsIChannelEventSink *sink,
-                                       nsIChannel *oldChannel, 
+                                       nsIChannel *oldChannel,
                                        nsIChannel *newChannel,
                                        uint32_t flags);
- 
+
     /**
      * Initialize and run the chain of AsyncOnChannelRedirect calls. OldChannel
      * is QI'ed for nsIAsyncVerifyRedirectCallback. The result of the redirect
@@ -59,6 +59,8 @@ public:
      *    target of the redirect channel
      * @param flags
      *    redirect flags
+     * @param mainThreadEventTarget
+     *    a labeled event target for dispatching runnables
      * @param synchronize
      *    set to TRUE if you want the Init method wait synchronously for
      *    all redirect callbacks
@@ -66,6 +68,7 @@ public:
     nsresult Init(nsIChannel* oldChan,
                   nsIChannel* newChan,
                   uint32_t flags,
+                  nsIEventTarget* mainThreadEventTarget,
                   bool synchronize = false);
 
 protected:
@@ -73,13 +76,13 @@ protected:
     nsCOMPtr<nsIChannel> mNewChan;
     uint32_t mFlags;
     bool mWaitingForRedirectCallback;
-    nsCOMPtr<nsIThread>      mCallbackThread;
+    nsCOMPtr<nsIEventTarget> mCallbackEventTarget;
     bool                     mCallbackInitiated;
     int32_t                  mExpectedCallbacks;
     nsresult                 mResult; // value passed to callback
 
     void InitCallback();
-    
+
     /**
      * Calls back to |oldChan| as described in Init()
      */
@@ -87,7 +90,7 @@ protected:
 
 private:
     ~nsAsyncRedirectVerifyHelper();
-    
+
     bool IsOldChannelCanceled();
 };
 

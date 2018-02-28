@@ -6,12 +6,12 @@
 
 #include "mozilla/dom/FallbackEncoding.h"
 
-#include "mozilla/dom/EncodingUtils.h"
-#include "nsUConvPropertySearch.h"
+#include "mozilla/Encoding.h"
+#include "mozilla/intl/LocaleService.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "nsIObserverService.h"
-#include "mozilla/intl/LocaleService.h"
+#include "nsUConvPropertySearch.h"
 
 using mozilla::intl::LocaleService;
 
@@ -36,32 +36,33 @@ FallbackEncoding* FallbackEncoding::sInstance = nullptr;
 bool FallbackEncoding::sGuessFallbackFromTopLevelDomain = true;
 
 FallbackEncoding::FallbackEncoding()
+  : mFallback(nullptr)
 {
   MOZ_ASSERT(!FallbackEncoding::sInstance,
              "Singleton already exists.");
 }
 
-void
-FallbackEncoding::Get(nsACString& aFallback)
+NotNull<const Encoding*>
+FallbackEncoding::Get()
 {
-  if (!mFallback.IsEmpty()) {
-    aFallback = mFallback;
-    return;
+  if (mFallback) {
+    return WrapNotNull(mFallback);
   }
 
-  const nsAdoptingCString& override =
-    Preferences::GetCString("intl.charset.fallback.override");
+  nsAutoCString override;
+  Preferences::GetCString("intl.charset.fallback.override", override);
   // Don't let the user break things by setting the override to unreasonable
   // values via about:config
-  if (!EncodingUtils::FindEncodingForLabel(override, mFallback) ||
-      !EncodingUtils::IsAsciiCompatible(mFallback) ||
-      mFallback.EqualsLiteral("UTF-8")) {
-    mFallback.Truncate();
+  auto encoding = Encoding::ForLabel(override);
+  if (!encoding || !encoding->IsAsciiCompatible() ||
+      encoding == UTF_8_ENCODING) {
+    mFallback = nullptr;
+  } else {
+    mFallback = encoding;
   }
 
-  if (!mFallback.IsEmpty()) {
-    aFallback = mFallback;
-    return;
+  if (mFallback) {
+    return WrapNotNull(mFallback);
   }
 
   nsAutoCString locale;
@@ -78,9 +79,8 @@ FallbackEncoding::Get(nsACString& aFallback)
       locale.EqualsLiteral("zh-hk") ||
       locale.EqualsLiteral("zh-mo") ||
       locale.EqualsLiteral("zh-hant")) {
-    mFallback.AssignLiteral("Big5");
-    aFallback = mFallback;
-    return;
+    mFallback = BIG5_ENCODING;
+    return WrapNotNull(mFallback);
   }
 
   // Throw away regions and other variants to accommodate weird stuff seen
@@ -90,20 +90,23 @@ FallbackEncoding::Get(nsACString& aFallback)
     locale.Truncate(index);
   }
 
+  nsAutoCString fallback;
   if (NS_FAILED(nsUConvPropertySearch::SearchPropertyValue(
-      localesFallbacks, ArrayLength(localesFallbacks), locale, mFallback))) {
-    mFallback.AssignLiteral("windows-1252");
+      localesFallbacks, ArrayLength(localesFallbacks), locale, fallback))) {
+    mFallback = WINDOWS_1252_ENCODING;
+  } else {
+    mFallback = Encoding::ForName(fallback);
   }
 
-  aFallback = mFallback;
+  return WrapNotNull(mFallback);
 }
 
-void
-FallbackEncoding::FromLocale(nsACString& aFallback)
+NotNull<const Encoding*>
+FallbackEncoding::FromLocale()
 {
   MOZ_ASSERT(FallbackEncoding::sInstance,
              "Using uninitialized fallback cache.");
-  FallbackEncoding::sInstance->Get(aFallback);
+  return FallbackEncoding::sInstance->Get();
 }
 
 // PrefChangedFunc
@@ -167,14 +170,15 @@ FallbackEncoding::IsParticipatingTopLevelDomain(const nsACString& aTLD)
       dummy));
 }
 
-void
-FallbackEncoding::FromTopLevelDomain(const nsACString& aTLD,
-                                     nsACString& aFallback)
+NotNull<const Encoding*>
+FallbackEncoding::FromTopLevelDomain(const nsACString& aTLD)
 {
+  nsAutoCString fallback;
   if (NS_FAILED(nsUConvPropertySearch::SearchPropertyValue(
-      domainsFallbacks, ArrayLength(domainsFallbacks), aTLD, aFallback))) {
-    aFallback.AssignLiteral("windows-1252");
+      domainsFallbacks, ArrayLength(domainsFallbacks), aTLD, fallback))) {
+    return WINDOWS_1252_ENCODING;
   }
+  return Encoding::ForName(fallback);
 }
 
 } // namespace dom

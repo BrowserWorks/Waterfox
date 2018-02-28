@@ -126,7 +126,7 @@
       <checkbox id="trackingProtectionPBM"
                 preference="privacy.trackingprotection.pbmode.enabled"
                 accesskey="&trackingProtectionPBM5.accesskey;"
-                label="&trackingProtectionPBM5.label;" />
+                label="&trackingProtectionPBM5.label;"/>
       <label id="trackingProtectionPBMLearnMore"
              class="learnMore text-link"
              value="&trackingProtectionPBMLearnMore.label;"/>
@@ -206,9 +206,9 @@
                       preference="browser.formfill.enable"/>
           </vbox>
           <hbox id="cookiesBox">
-            <checkbox id="acceptCookies" label="&acceptCookies.label;"
+            <checkbox id="acceptCookies" label="&acceptCookies2.label;"
                       preference="network.cookie.cookieBehavior"
-                      accesskey="&acceptCookies.accesskey;"
+                      accesskey="&acceptCookies2.accesskey;"
                       onsyncfrompreference="return gPrivacyPane.readAcceptCookies();"
                       onsynctopreference="return gPrivacyPane.writeAcceptCookies();"/>
             <spacer flex="1" />
@@ -237,13 +237,17 @@
             <label id="keepUntil"
                    control="keepCookiesUntil"
                    accesskey="&keepUntil.accesskey;">&keepUntil.label;</label>
-            <menulist id="keepCookiesUntil"
-                      preference="network.cookie.lifetimePolicy">
-              <menupopup>
-                <menuitem label="&expire.label;" value="0"/>
-                <menuitem label="&close.label;" value="2"/>
-              </menupopup>
-            </menulist>
+            <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
+            <hbox>
+              <menulist id="keepCookiesUntil"
+                        preference="network.cookie.lifetimePolicy">
+                <menupopup>
+                  <menuitem label="&expire.label;" value="0"/>
+                  <menuitem label="&close.label;" value="2"/>
+                  <menuitem label="ask me every time" value="1"/>
+                </menupopup>
+              </menulist>
+            </hbox>
             <spacer flex="1"/>
             <button id="showCookiesButton"
                     label="&showCookies.label;" accesskey="&showCookies.accesskey;"

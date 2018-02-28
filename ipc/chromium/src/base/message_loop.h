@@ -26,8 +26,11 @@
 #endif
 
 #include "nsAutoPtr.h"
+#include "nsCOMPtr.h"
+#include "nsIRunnable.h"
 #include "nsThreadUtils.h"
 
+class nsISerialEventTarget;
 class nsIThread;
 
 namespace mozilla {
@@ -109,15 +112,22 @@ public:
   // The MessageLoop takes ownership of the Task, and deletes it after it has
   // been Run().
   //
+  // New tasks should not be posted after the invocation of a MessageLoop's
+  // Run method. Otherwise, they may fail to actually run. Callers should check
+  // if the MessageLoop is processing tasks if necessary by calling
+  // IsAcceptingTasks().
+  //
   // NOTE: These methods may be called on any thread.  The Task will be invoked
   // on the thread that executes MessageLoop::Run().
 
-  void PostTask(already_AddRefed<mozilla::Runnable> task);
+  bool IsAcceptingTasks() const { return !shutting_down_; }
 
-  void PostDelayedTask(already_AddRefed<mozilla::Runnable> task, int delay_ms);
+  void PostTask(already_AddRefed<nsIRunnable> task);
+
+  void PostDelayedTask(already_AddRefed<nsIRunnable> task, int delay_ms);
 
   // PostIdleTask is not thread safe and should be called on this thread
-  void PostIdleTask(already_AddRefed<mozilla::Runnable> task);
+  void PostIdleTask(already_AddRefed<nsIRunnable> task);
 
   // Run the message loop.
   void Run();
@@ -137,11 +147,15 @@ public:
   // arbitrary MessageLoop to Quit.
   class QuitTask : public mozilla::Runnable {
    public:
+    QuitTask() : mozilla::Runnable("QuitTask") {}
     NS_IMETHOD Run() override {
       MessageLoop::current()->Quit();
       return NS_OK;
     }
   };
+
+  // Return an XPCOM-compatible event target for this thread.
+  nsISerialEventTarget* SerialEventTarget();
 
   // A MessageLoop has a particular type, which indicates the set of
   // asynchronous events it may process in addition to tasks and timers.
@@ -204,6 +218,8 @@ public:
 
   // Returns the MessageLoop object for the current thread, or null if none.
   static MessageLoop* current();
+
+  static void set_current(MessageLoop* loop);
 
   // Enables or disables the recursive task processing. This happens in the case
   // of recursive message loops. Some unwanted message loop may occurs when
@@ -282,12 +298,12 @@ public:
 
   // This structure is copied around by value.
   struct PendingTask {
-    RefPtr<mozilla::Runnable> task;    // The task to run.
+    nsCOMPtr<nsIRunnable> task;        // The task to run.
     base::TimeTicks delayed_run_time;  // The time when the task should be run.
     int sequence_num;                  // Secondary sort key for run time.
     bool nestable;                     // OK to dispatch from a nested loop.
 
-    PendingTask(already_AddRefed<mozilla::Runnable> aTask, bool aNestable)
+    PendingTask(already_AddRefed<nsIRunnable> aTask, bool aNestable)
         : task(aTask), sequence_num(0), nestable(aNestable) {
     }
 
@@ -355,10 +371,10 @@ public:
   // appended to the list work_queue_.  Such re-entrancy generally happens when
   // an unrequested message pump (typical of a native dialog) is executing in
   // the context of a task.
-  bool QueueOrRunTask(already_AddRefed<mozilla::Runnable> new_task);
+  bool QueueOrRunTask(already_AddRefed<nsIRunnable> new_task);
 
   // Runs the specified task and deletes it.
-  void RunTask(already_AddRefed<mozilla::Runnable> task);
+  void RunTask(already_AddRefed<nsIRunnable> task);
 
   // Calls RunTask or queues the pending_task on the deferred task list if it
   // cannot be run right now.  Returns true if the task was run.
@@ -378,7 +394,7 @@ public:
   bool DeletePendingTasks();
 
   // Post a task to our incomming queue.
-  void PostTask_Helper(already_AddRefed<mozilla::Runnable> task, int delay_ms);
+  void PostTask_Helper(already_AddRefed<nsIRunnable> task, int delay_ms);
 
   // base::MessagePump::Delegate methods:
   virtual bool DoWork() override;
@@ -422,6 +438,7 @@ public:
 
   RunState* state_;
   int run_depth_base_;
+  bool shutting_down_;
 
 #if defined(OS_WIN)
   // Should be set to true before calling Windows APIs like TrackPopupMenu, etc
@@ -435,6 +452,9 @@ public:
 
   // The next sequence number to use for delayed tasks.
   int next_sequence_num_;
+
+  class EventTarget;
+  RefPtr<EventTarget> mEventTarget;
 
   DISALLOW_COPY_AND_ASSIGN(MessageLoop);
 };

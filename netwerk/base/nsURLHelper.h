@@ -44,7 +44,7 @@ nsIURLParser * net_GetAuthURLParser();
 nsIURLParser * net_GetNoAuthURLParser();
 nsIURLParser * net_GetStdURLParser();
 
-/* convert between nsIFile and file:// URL spec 
+/* convert between nsIFile and file:// URL spec
  * net_GetURLSpecFromFile does an extra stat, so callers should
  * avoid it if possible in favor of net_GetURLSpecFromActualFile
  * and net_GetURLSpecFromDir */
@@ -64,9 +64,9 @@ void net_CoalesceDirs(netCoalesceFlags flags, char* path);
 
 /**
  * Resolves a relative path string containing "." and ".."
- * with respect to a base path (assumed to already be resolved). 
+ * with respect to a base path (assumed to already be resolved).
  * For example, resolving "../../foo/./bar/../baz.html" w.r.t.
- * "/a/b/c/d/e/" yields "/a/b/c/foo/baz.html". Attempting to 
+ * "/a/b/c/d/e/" yields "/a/b/c/foo/baz.html". Attempting to
  * ascend above the base results in the NS_ERROR_MALFORMED_URI
  * exception. If basePath is null, it treats it as "/".
  *
@@ -99,7 +99,7 @@ nsresult net_ExtractURLScheme(const nsACString &inURI,
 /* check that the given scheme conforms to RFC 2396 */
 bool net_IsValidScheme(const char *scheme, uint32_t schemeLen);
 
-inline bool net_IsValidScheme(const nsAFlatCString &scheme)
+inline bool net_IsValidScheme(const nsCString& scheme)
 {
     return net_IsValidScheme(scheme.get(), scheme.Length());
 }
@@ -123,7 +123,7 @@ void net_FilterURIString(const nsACString& input, nsACString& result);
  * @param aURL
  *        The URL string to normalize (UTF-8 encoded).  This can be a
  *        relative URL segment.
- * @param aResultBuf 
+ * @param aResultBuf
  *        The resulting string is appended to this string.  If the input URL
  *        is already normalized, then aResultBuf is unchanged.
  *
@@ -228,7 +228,7 @@ inline char *net_RFindCharNotInSet(const char *str, const char *set)
  * This function returns true if the given hostname does not include any
  * restricted characters.  Otherwise, false is returned.
  */
-bool net_IsValidHostName(const nsCSubstring &host);
+bool net_IsValidHostName(const nsACString& host);
 
 /**
  * Checks whether the IPv4 address is valid according to RFC 3986 section 3.2.2.

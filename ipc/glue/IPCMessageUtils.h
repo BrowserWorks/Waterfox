@@ -163,6 +163,24 @@ public:
 };
 
 template <typename E,
+          E MinLegal,
+          E MaxLegal>
+class ContiguousEnumValidatorInclusive
+{
+  // Silence overzealous -Wtype-limits bug in GCC fixed in GCC 4.8:
+  // "comparison of unsigned expression >= 0 is always true"
+  // http://gcc.gnu.org/bugzilla/show_bug.cgi?id=11856
+  template <typename T>
+  static bool IsLessThanOrEqual(T a, T b) { return a <= b; }
+
+public:
+  static bool IsLegalValue(E e)
+  {
+    return IsLessThanOrEqual(MinLegal, e) && e <= MaxLegal;
+  }
+};
+
+template <typename E,
           E AllBits>
 struct BitFlagsEnumValidator
 {
@@ -194,6 +212,20 @@ template <typename E,
 struct ContiguousEnumSerializer
   : EnumSerializer<E,
                    ContiguousEnumValidator<E, MinLegal, HighBound>>
+{};
+
+/**
+ * This is similar to ContiguousEnumSerializer, but the last template
+ * parameter is expected to be the highest legal value, rather than a
+ * sentinel value. This is intended to support enumerations that don't
+ * have sentinel values.
+ */
+template <typename E,
+          E MinLegal,
+          E MaxLegal>
+struct ContiguousEnumSerializerInclusive
+  : EnumSerializer<E,
+                   ContiguousEnumValidatorInclusive<E, MinLegal, MaxLegal>>
 {};
 
 /**
@@ -384,9 +416,15 @@ struct ParamTraits<nsAString>
     if (!ReadParam(aMsg, aIter, &length)) {
       return false;
     }
+
     aResult->SetLength(length);
 
-    return aMsg->ReadBytesInto(aIter, aResult->BeginWriting(), length * sizeof(char16_t));
+    mozilla::CheckedInt<uint32_t> byteLength = mozilla::CheckedInt<uint32_t>(length) * sizeof(char16_t);
+    if (!byteLength.isValid()) {
+      return false;
+    }
+
+    return aMsg->ReadBytesInto(aIter, aResult->BeginWriting(), byteLength.value());
   }
 
   static void Log(const paramType& aParam, std::wstring* aLog)
@@ -867,6 +905,118 @@ struct ParamTraits<mozilla::Maybe<T>>
     } else {
       *result = mozilla::Nothing();
     }
+    return true;
+  }
+};
+
+template<class... Ts>
+struct ParamTraits<mozilla::Variant<Ts...>>
+{
+  typedef mozilla::Variant<Ts...> paramType;
+  using Tag = typename mozilla::detail::VariantTag<Ts...>::Type;
+
+  struct VariantWriter
+  {
+    Message* msg;
+
+    template<class T>
+    void match(const T& t) {
+      WriteParam(msg, t);
+    }
+  };
+
+  static void Write(Message* msg, const paramType& param)
+  {
+    WriteParam(msg, param.tag);
+    param.match(VariantWriter(msg));
+  }
+
+  // Because VariantReader is a nested struct, we need the dummy template
+  // parameter to avoid making VariantReader<0> an explicit specialization,
+  // which is not allowed for a nested class template
+  template<size_t N, typename dummy = void>
+  struct VariantReader
+  {
+    using Next = VariantReader<N-1>;
+
+    static bool Read(const Message* msg, PickleIterator* iter,
+        Tag tag, paramType* result)
+    {
+      // Since the VariantReader specializations start at N , we need to
+      // subtract one to look at N - 1, the first valid tag.  This means our
+      // comparisons are off by 1.  If we get to N = 0 then we have failed to
+      // find a match to the tag.
+      if (tag == N - 1) {
+        // Recall, even though the template parameter is N, we are
+        // actually interested in the N - 1 tag.
+        typename mozilla::detail::Nth<N - 1, Ts...>::Type val;
+        if (ReadParam(msg, iter, &val)) {
+          *result = paramType::AsVariant(val);
+          return true;
+        }
+        return false;
+      } else {
+        return Next::Read(msg, iter, tag);
+      }
+    }
+
+  }; // VariantReader<N>
+
+  // Since we are conditioning on tag = N - 1 in the preceding specialization,
+  // if we get to `VariantReader<0, dummy>` we have failed to find
+  // a matching tag.
+  template<typename dummy>
+  struct VariantReader<0, dummy>
+  {
+    static bool Read(const Message* msg, PickleIterator* iter,
+        Tag tag, paramType* result)
+    {
+      return false;
+    }
+  };
+
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
+  {
+    Tag tag;
+    if (ReadParam(msg, iter, &tag)) {
+      return VariantReader<sizeof...(Ts)>::Read(msg, iter, tag, result);
+    }
+    return false;
+  }
+};
+
+template<typename T>
+struct ParamTraits<mozilla::dom::Optional<T>>
+{
+  typedef mozilla::dom::Optional<T> paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam)
+  {
+    if (aParam.WasPassed()) {
+      WriteParam(aMsg, true);
+      WriteParam(aMsg, aParam.Value());
+      return;
+    }
+
+    WriteParam(aMsg, false);
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
+  {
+    bool wasPassed = false;
+
+    if (!ReadParam(aMsg, aIter, &wasPassed)) {
+      return false;
+    }
+
+    aResult->Reset();
+
+    if (wasPassed) {
+      if (!ReadParam(aMsg, aIter, &aResult->Construct())) {
+        return false;
+      }
+    }
+
     return true;
   }
 };

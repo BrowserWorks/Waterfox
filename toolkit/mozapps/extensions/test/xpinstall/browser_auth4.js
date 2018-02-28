@@ -1,15 +1,10 @@
-//
-// Whitelisting this test.
-// As part of bug 1077403, the leaking uncaught rejection should be fixed.
-//
-thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: this.docShell is null");
-
-
-// ----------------------------------------------------------------------------
 // Test whether a request for auth for an XPI switches to the appropriate tab
 var gNewTab;
 
 function test() {
+  // Turn off the authentication dialog blocking for this test.
+  Services.prefs.setBoolPref("network.auth.non-web-content-triggered-resources-http-auth-allow", true);
+
   Harness.authenticationCallback = get_auth_info;
   Harness.downloadFailedCallback = download_failed;
   Harness.installEndedCallback = install_ended;
@@ -46,6 +41,8 @@ function finish_test(count) {
   authMgr.clearAll();
 
   Services.perms.remove(makeURI("http://example.com"), "install");
+
+  Services.prefs.clearUserPref("network.auth.non-web-content-triggered-resources-http-auth-allow");
 
   gBrowser.removeTab(gNewTab);
   Harness.finish();

@@ -19,12 +19,21 @@ OSPreferences::ReadSystemLocales(nsTArray<nsCString>& aLocaleList)
   //XXX: Notice, this value may be empty on an early read. In that case
   //     we won't add anything to the return list so that it doesn't get
   //     cached in mSystemLocales.
-  nsAdoptingCString locale = Preferences::GetCString("intl.locale.os");
+  nsAutoCString locale;
+  Preferences::GetCString("intl.locale.os", locale);
   if (!locale.IsEmpty()) {
     aLocaleList.AppendElement(locale);
     return true;
   }
   return false;
+}
+
+bool
+OSPreferences::ReadRegionalPrefsLocales(nsTArray<nsCString>& aLocaleList)
+{
+  // For now we're just taking System Locales since we don't know of any better
+  // API for regional prefs.
+  return ReadSystemLocales(aLocaleList);
 }
 
 bool

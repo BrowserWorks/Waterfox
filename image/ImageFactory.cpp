@@ -75,6 +75,14 @@ ComputeImageFlags(ImageURL* uri, const nsCString& aMimeType, bool isMultiPart)
     imageFlags |= Image::INIT_FLAG_TRANSIENT;
   }
 
+  // Synchronously decode metadata (including size) if we have a data URI since
+  // the data is immediately available.
+  bool isDataURI = false;
+  rv = uri->SchemeIs("data", &isDataURI);
+  if (NS_SUCCEEDED(rv) && isDataURI) {
+    imageFlags |= Image::INIT_FLAG_SYNC_LOAD;
+  }
+
   return imageFlags;
 }
 
@@ -91,6 +99,19 @@ ImageFactory::CreateImage(nsIRequest* aRequest,
 
   // Compute the image's initialization flags.
   uint32_t imageFlags = ComputeImageFlags(aURI, aMimeType, aIsMultiPart);
+
+#ifdef DEBUG
+  // Record the image load for startup performance testing.
+  if (NS_IsMainThread()) {
+    nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
+    NS_WARNING_ASSERTION(obs, "Can't get an observer service handle");
+    if (obs) {
+      nsAutoCString spec;
+      aURI->GetSpec(spec);
+      obs->NotifyObservers(nullptr, "image-loading", NS_ConvertUTF8toUTF16(spec).get());
+    }
+  }
+#endif
 
   // Select the type of image to create based on MIME type.
   if (aMimeType.EqualsLiteral(IMAGE_SVG_XML)) {
@@ -111,8 +132,32 @@ BadImage(const char* aMessage, RefPtr<T>& aImage)
   return aImage.forget();
 }
 
+static void
+SetSourceSizeHint(RasterImage* aImage, uint32_t aSize)
+{
+  // Pass anything usable on so that the RasterImage can preallocate
+  // its source buffer.
+  if (aSize == 0) {
+    return;
+  }
+
+  // Bound by something reasonable
+  uint32_t sizeHint = std::min<uint32_t>(aSize, 20000000);
+  nsresult rv = aImage->SetSourceSizeHint(sizeHint);
+  if (NS_FAILED(rv)) {
+    // Flush memory, try to get some back, and try again.
+    rv = nsMemory::HeapMinimize(true);
+    nsresult rv2 = aImage->SetSourceSizeHint(sizeHint);
+    // If we've still failed at this point, things are going downhill.
+    if (NS_FAILED(rv) || NS_FAILED(rv2)) {
+      NS_WARNING("About to hit OOM in imagelib!");
+    }
+  }
+}
+
 /* static */ already_AddRefed<Image>
-ImageFactory::CreateAnonymousImage(const nsCString& aMimeType)
+ImageFactory::CreateAnonymousImage(const nsCString& aMimeType,
+                                   uint32_t aSizeHint /* = 0 */)
 {
   nsresult rv;
 
@@ -127,6 +172,7 @@ ImageFactory::CreateAnonymousImage(const nsCString& aMimeType)
     return BadImage("RasterImage::Init failed", newImage);
   }
 
+  SetSourceSizeHint(newImage, aSizeHint);
   return newImage.forget();
 }
 
@@ -212,25 +258,7 @@ ImageFactory::CreateRasterImage(nsIRequest* aRequest,
 
   newImage->SetInnerWindowID(aInnerWindowId);
 
-  uint32_t len = GetContentSize(aRequest);
-
-  // Pass anything usable on so that the RasterImage can preallocate
-  // its source buffer.
-  if (len > 0) {
-    // Bound by something reasonable
-    uint32_t sizeHint = std::min<uint32_t>(len, 20000000);
-    rv = newImage->SetSourceSizeHint(sizeHint);
-    if (NS_FAILED(rv)) {
-      // Flush memory, try to get some back, and try again.
-      rv = nsMemory::HeapMinimize(true);
-      nsresult rv2 = newImage->SetSourceSizeHint(sizeHint);
-      // If we've still failed at this point, things are going downhill.
-      if (NS_FAILED(rv) || NS_FAILED(rv2)) {
-        NS_WARNING("About to hit OOM in imagelib!");
-      }
-    }
-  }
-
+  SetSourceSizeHint(newImage, GetContentSize(aRequest));
   return newImage.forget();
 }
 

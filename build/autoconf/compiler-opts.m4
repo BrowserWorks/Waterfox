@@ -6,16 +6,6 @@ dnl Add compiler specific options
 
 AC_DEFUN([MOZ_DEFAULT_COMPILER],
 [
-dnl set DEVELOPER_OPTIONS early; MOZ_DEFAULT_COMPILER is usually the first non-setup directive
-  if test -z "$MOZILLA_OFFICIAL"; then
-    DEVELOPER_OPTIONS=1
-  fi
-  MOZ_ARG_ENABLE_BOOL(release,
-  [  --enable-release        Build with more conservative, release engineering-oriented options.
-                          This may slow down builds.],
-      DEVELOPER_OPTIONS=,
-      DEVELOPER_OPTIONS=1)
-
 dnl Default to MSVC for win32 and gcc-4.2 for darwin
 dnl ==============================================================
 if test -z "$CROSS_COMPILE"; then
@@ -129,48 +119,6 @@ if test "$CLANG_CXX"; then
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wno-unknown-warning-option -Wno-return-type-c-linkage"
 fi
 
-if test -n "$DEVELOPER_OPTIONS"; then
-    MOZ_FORCE_GOLD=1
-fi
-
-MOZ_ARG_ENABLE_BOOL(gold,
-[  --enable-gold           Enable GNU Gold Linker when it is not already the default],
-    MOZ_FORCE_GOLD=1,
-    MOZ_FORCE_GOLD=
-    )
-
-if test "$GNU_CC" -a -n "$MOZ_FORCE_GOLD"; then
-    dnl if the default linker is BFD ld, check if gold is available and try to use it
-    dnl for local builds only.
-    if $CC -Wl,--version 2>&1 | grep -q "GNU ld"; then
-        GOLD=$($CC -print-prog-name=ld.gold)
-        case "$GOLD" in
-        /*)
-            ;;
-        *)
-            GOLD=$(which $GOLD)
-            ;;
-        esac
-        if test -n "$GOLD"; then
-            mkdir -p $_objdir/build/unix/gold
-            rm -f $_objdir/build/unix/gold/ld
-            ln -s "$GOLD" $_objdir/build/unix/gold/ld
-            if $CC -B $_objdir/build/unix/gold -Wl,--version 2>&1 | grep -q "GNU gold"; then
-                LDFLAGS="$LDFLAGS -B $_objdir/build/unix/gold"
-            else
-                rm -rf $_objdir/build/unix/gold
-            fi
-        fi
-    fi
-fi
-if test "$GNU_CC"; then
-    if $CC $LDFLAGS -Wl,--version 2>&1 | grep -q "GNU ld"; then
-        LD_IS_BFD=1
-    fi
-fi
-
-AC_SUBST([LD_IS_BFD])
-
 if test "$GNU_CC"; then
     if test -z "$DEVELOPER_OPTIONS"; then
         CFLAGS="$CFLAGS -ffunction-sections -fdata-sections"
@@ -253,11 +201,7 @@ fi
 # bionic in Android < 4.1 doesn't support PIE
 # On OSX, the linker defaults to building PIE programs when targeting OSX 10.7.
 # On other Unix systems, some file managers (Nautilus) can't start PIE programs
-if test -n "$gonkdir" && test "$ANDROID_VERSION" -ge 16; then
-    MOZ_PIE=1
-else
-    MOZ_PIE=
-fi
+MOZ_PIE=
 
 MOZ_ARG_ENABLE_BOOL(pie,
 [  --enable-pie           Enable Position Independent Executables],

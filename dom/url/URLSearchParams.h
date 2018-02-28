@@ -13,7 +13,6 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsWrapperCache.h"
 #include "nsISupports.h"
-#include "nsIUnicodeDecoder.h"
 #include "nsIXMLHttpRequest.h"
 
 namespace mozilla {
@@ -78,8 +77,7 @@ public:
 
   bool Has(const nsAString& aName);
 
-  // Returns true if aName was found and deleted, false otherwise.
-  bool Delete(const nsAString& aName);
+  void Delete(const nsAString& aName);
 
   void DeleteAll()
   {
@@ -122,7 +120,6 @@ private:
   };
 
   nsTArray<Param> mParams;
-  nsCOMPtr<nsIUnicodeDecoder> mDecoder;
 };
 
 class URLSearchParams final : public nsIXHRSendable,

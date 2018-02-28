@@ -14,13 +14,14 @@ class nsACString;
 
 namespace mozilla {
 
-class AbstractMediaDecoder;
+class ChannelMediaDecoder;
 class DecoderDoctorDiagnostics;
 class MediaContainerType;
-class MediaDecoder;
 struct MediaDecoderInit;
+struct MediaFormatReaderInit;
 class MediaDecoderOwner;
-class MediaDecoderReader;
+class MediaFormatReader;
+class MediaResource;
 
 enum CanPlayStatus {
   CANPLAY_NO,
@@ -43,14 +44,14 @@ public:
 
   // Create a decoder for the given aType. Returns null if we
   // were unable to create the decoder.
-  static already_AddRefed<MediaDecoder> CreateDecoder(const nsACString& aType,
-                                                      MediaDecoderInit& aInit,
-                                                      DecoderDoctorDiagnostics* aDiagnostics);
+  static already_AddRefed<ChannelMediaDecoder> CreateDecoder(
+    MediaDecoderInit& aInit,
+    DecoderDoctorDiagnostics* aDiagnostics);
 
   // Create a reader for thew given MIME type aType. Returns null
   // if we were unable to create the reader.
-  static MediaDecoderReader* CreateReader(const MediaContainerType& aType,
-                                          AbstractMediaDecoder* aDecoder);
+  static MediaFormatReader* CreateReader(const MediaContainerType& aType,
+                                         MediaFormatReaderInit& aInit);
 
   // Returns true if MIME type aType is supported in video documents,
   // or false otherwise. Not all platforms support all MIME types, and
@@ -61,6 +62,9 @@ public:
   // otherwise defers to MP4Decoder::IsSupportedType().
   static bool IsMP4SupportedType(const MediaContainerType& aType,
                                  DecoderDoctorDiagnostics* aDiagnostics);
+
+  // Returns true if aType is MIME type of hls.
+  static bool IsHttpLiveStreamingType(const MediaContainerType& aType);
 };
 
 } // namespace mozilla

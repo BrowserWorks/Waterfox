@@ -7,6 +7,7 @@
 #define GMPChild_h_
 
 #include "mozilla/gmp/PGMPChild.h"
+#include "mozilla/Pair.h"
 #include "GMPTimerChild.h"
 #include "GMPStorageChild.h"
 #include "GMPLoader.h"
@@ -41,6 +42,8 @@ public:
 private:
   friend class GMPContentChild;
 
+  bool ResolveLinks(nsCOMPtr<nsIFile>& aPath);
+
   bool GetUTF8LibPath(nsACString& aOutLibPath);
 
   mozilla::ipc::IPCResult AnswerStartPlugin(const nsString& aAdapter) override;
@@ -63,6 +66,8 @@ private:
   void ProcessingError(Result aCode, const char* aReason) override;
 
   GMPErr GetAPI(const char* aAPIName, void* aHostAPI, void** aPluginAPI, uint32_t aDecryptorId = 0);
+
+  nsTArray<Pair<nsCString, nsCString>> MakeCDMHostVerificationPaths();
 
   nsTArray<UniquePtr<GMPContentChild>> mGMPContentChildren;
 

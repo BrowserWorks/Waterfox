@@ -94,7 +94,7 @@ nsInputStreamTransport::OpenInputStream(uint32_t flags,
     // XXX if the caller requests an unbuffered stream, then perhaps
     //     we'd want to simply return mSource; however, then we would
     //     not be reading mSource on a background thread.  is this ok?
- 
+
     bool nonblocking = !(flags & OPEN_BLOCKING);
 
     net_ResolveSegmentParams(segsize, segcount);
@@ -260,7 +260,7 @@ private:
     }
 
     nsCOMPtr<nsIAsyncOutputStream>  mPipeOut;
- 
+
     // while the copy is active, these members may only be accessed from the
     // nsIOutputStream implementation.
     nsCOMPtr<nsITransportEventSink> mEventSink;
@@ -308,7 +308,7 @@ nsOutputStreamTransport::OpenOutputStream(uint32_t flags,
     // XXX if the caller requests an unbuffered stream, then perhaps
     //     we'd want to simply return mSink; however, then we would
     //     not be writing to mSink on a background thread.  is this ok?
- 
+
     bool nonblocking = !(flags & OPEN_BLOCKING);
 
     net_ResolveSegmentParams(segsize, segcount);
@@ -496,6 +496,20 @@ nsStreamTransportService::DelayedDispatch(already_AddRefed<nsIRunnable>, uint32_
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+NS_IMETHODIMP_(bool)
+nsStreamTransportService::IsOnCurrentThreadInfallible()
+{
+    nsCOMPtr<nsIThreadPool> pool;
+    {
+        mozilla::MutexAutoLock lock(mShutdownLock);
+        pool = mPool;
+    }
+    if (!pool) {
+      return false;
+    }
+    return pool->IsOnCurrentThread();
+}
+
 NS_IMETHODIMP
 nsStreamTransportService::IsOnCurrentThread(bool *result)
 {
@@ -561,17 +575,18 @@ nsStreamTransportService::Observe(nsISupports *subject, const char *topic,
 
 class AvailableEvent final : public Runnable
 {
-    public:
-    AvailableEvent(nsIInputStream *stream,
-                   nsIInputAvailableCallback *callback)
-        : mStream(stream)
-        , mCallback(callback)
-        , mDoingCallback(false)
-        , mSize(0)
-        , mResultForCallback(NS_OK)
-    {
-        mCallbackTarget = NS_GetCurrentThread();
-    }
+public:
+  AvailableEvent(nsIInputStream* stream,
+                 nsIInputAvailableCallback* callback)
+    : Runnable("net::AvailableEvent")
+    , mStream(stream)
+    , mCallback(callback)
+    , mDoingCallback(false)
+    , mSize(0)
+    , mResultForCallback(NS_OK)
+  {
+    mCallbackTarget = GetCurrentThreadEventTarget();
+  }
 
     NS_IMETHOD Run() override
     {

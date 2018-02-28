@@ -33,7 +33,7 @@ public:
 
     NS_DECL_ISUPPORTS
     NS_DECL_NSISCRIPTLOADEROBSERVER
-    
+
     // nsICSSLoaderObserver
     NS_IMETHOD StyleSheetLoaded(mozilla::StyleSheet* aSheet,
                                 bool aWasAlternate,
@@ -72,7 +72,7 @@ public:
 
     nsresult closePrevious(bool aFlushText);
 
-    nsresult createResultDocument(const nsSubstring& aName, int32_t aNsID,
+    nsresult createResultDocument(const nsAString& aName, int32_t aNsID,
                                   nsIDOMDocument* aSourceDocument,
                                   bool aLoadedAsData);
 

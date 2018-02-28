@@ -142,8 +142,10 @@ class AutoTimerCallbackCancel
 {
 public:
   AutoTimerCallbackCancel(nsFilePicker* aTarget,
-                          nsTimerCallbackFunc aCallbackFunc) {
-    Init(aTarget, aCallbackFunc);
+                          nsTimerCallbackFunc aCallbackFunc,
+                          const char* aName)
+  {
+    Init(aTarget, aCallbackFunc, aName);
   }
 
   ~AutoTimerCallbackCancel() {
@@ -154,19 +156,21 @@ public:
 
 private:
   void Init(nsFilePicker* aTarget,
-            nsTimerCallbackFunc aCallbackFunc) {
+            nsTimerCallbackFunc aCallbackFunc,
+            const char* aName)
+  {
     mPickerCallbackTimer = do_CreateInstance("@mozilla.org/timer;1");
     if (!mPickerCallbackTimer) {
       NS_WARNING("do_CreateInstance for timer failed??");
       return;
     }
-    mPickerCallbackTimer->InitWithFuncCallback(aCallbackFunc,
-                                               aTarget,
-                                               kDialogTimerTimeout,
-                                               nsITimer::TYPE_REPEATING_SLACK);
+    mPickerCallbackTimer->InitWithNamedFuncCallback(aCallbackFunc,
+                                                    aTarget,
+                                                    kDialogTimerTimeout,
+                                                    nsITimer::TYPE_REPEATING_SLACK,
+                                                    aName);
   }
   nsCOMPtr<nsITimer> mPickerCallbackTimer;
-    
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -424,7 +428,7 @@ nsFilePicker::ShowFolderPicker(const nsString& aInitialDir)
 bool
 nsFilePicker::ShowFilePicker(const nsString& aInitialDir)
 {
-  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("nsFilePicker::ShowFilePicker", OTHER);
 
   if (!IsWin8OrLater()) {
     // Some Windows 7 users are experiencing a race condition when some dlls
@@ -528,7 +532,8 @@ nsFilePicker::ShowFilePicker(const nsString& aInitialDir)
   {
     AutoDestroyTmpWindow adtw((HWND)(mParentWidget.get() ?
       mParentWidget->GetNativeData(NS_NATIVE_TMP_WINDOW) : nullptr));
-    AutoTimerCallbackCancel atcc(this, PickerCallbackTimerFunc);
+    AutoTimerCallbackCancel atcc(this, PickerCallbackTimerFunc,
+                                 "nsFilePicker::PickerCallbackTimerFunc");
     AutoWidgetPickerState awps(mParentWidget);
 
     if (FAILED(dialog->Show(adtw.get()))) {

@@ -1720,7 +1720,7 @@ RequestReader.prototype =
     {
       metadata._httpVersion = new nsHttpVersion(match[1]);
       if (!metadata._httpVersion.atLeast(nsHttpVersion.HTTP_1_0))
-        throw "unsupported HTTP version";
+        throw new Error("unsupported HTTP version");
     }
     catch (e)
     {
@@ -4871,7 +4871,7 @@ function nsHttpVersion(versionString)
 {
   var matches = /^(\d+)\.(\d+)$/.exec(versionString);
   if (!matches)
-    throw "Not a valid HTTP version!";
+    throw new Error("Not a valid HTTP version!");
 
   /** The major version number of this, as a number. */
   this.major = parseInt(matches[1], 10);
@@ -4881,7 +4881,7 @@ function nsHttpVersion(versionString)
 
   if (isNaN(this.major) || isNaN(this.minor) ||
       this.major < 0    || this.minor < 0)
-    throw "Not a valid HTTP version!";
+    throw new Error("Not a valid HTTP version!");
 }
 nsHttpVersion.prototype =
 {
@@ -5341,13 +5341,9 @@ function server(port, basePath)
   srv.identity.setPrimary("http", "localhost", port);
   srv.start(port);
 
-  var thread = gThreadManager.currentThread;
-  while (!srv.isStopped())
-    thread.processNextEvent(true);
+  gThreadManager.spinEventLoopUntil(() => srv.isStopped());
 
-  // get rid of any pending requests
-  while (thread.hasPendingEvents())
-    thread.processNextEvent(true);
+  gThreadManager.spinEventLoopUntilEmpty();
 
   DEBUG = false;
 }

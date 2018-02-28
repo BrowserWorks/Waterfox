@@ -29,8 +29,8 @@ What if you have to pull in an update to webrender itself?
 1) Update your graphics branch checkout to the latest code on the
    graphics branch
 2) Check out and update the webrender repo to the version you want
-3) Copy over the webrender and webrender_traits folders into gfx/. The best way
-   to do this is to simply delete the gfx/webrender and gfx/webrender_traits
+3) Copy over the webrender and webrender_api folders into gfx/. The best way
+   to do this is to simply delete the gfx/webrender and gfx/webrender_api
    folders and use |cp -R| to copy them in again from the webrender repo. Update
    the "latest commit" information at the bottom of this file with the version.
 4) If you need to modify webrender_bindings/Cargo.toml to include or remove
@@ -79,4 +79,4 @@ to make sure that mozjs_sys also has its Cargo.lock file updated if needed, henc
 the need to run the cargo update command in js/src as well. Hopefully this will
 be resolved soon.
 
-Latest Commit: b2614e4eb58f9dee08b8c38f96bc3bac834c837b
+Latest Commit: 0748e02d1be5f889fc17de2eb81c0c363ee3aa80

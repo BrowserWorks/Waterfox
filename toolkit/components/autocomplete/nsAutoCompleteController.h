@@ -12,6 +12,7 @@
 #include "nsIAutoCompletePopup.h"
 #include "nsIAutoCompleteResult.h"
 #include "nsIAutoCompleteSearch.h"
+#include "nsINamed.h"
 #include "nsString.h"
 #include "nsITreeView.h"
 #include "nsITreeSelection.h"
@@ -23,7 +24,8 @@
 class nsAutoCompleteController final : public nsIAutoCompleteController,
                                        public nsIAutoCompleteObserver,
                                        public nsITimerCallback,
-                                       public nsITreeView
+                                       public nsITreeView,
+                                       public nsINamed
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -33,9 +35,10 @@ public:
   NS_DECL_NSIAUTOCOMPLETEOBSERVER
   NS_DECL_NSITREEVIEW
   NS_DECL_NSITIMERCALLBACK
-   
+  NS_DECL_NSINAMED
+
   nsAutoCompleteController();
-  
+
 protected:
   virtual ~nsAutoCompleteController();
 
@@ -115,12 +118,12 @@ protected:
   nsresult GetFinalDefaultCompleteValue(nsAString &_retval);
 
   nsresult ClearResults();
-  
+
   nsresult RowIndexToSearch(int32_t aRowIndex,
                             int32_t *aSearchIndex, int32_t *aItemIndex);
 
   // members //////////////////////////////////////////
-  
+
   nsCOMPtr<nsIAutoCompleteInput> mInput;
 
   nsCOMArray<nsIAutoCompleteSearch> mSearches;

@@ -23,7 +23,6 @@
 #include "nsIContentViewer.h"
 #include "mozilla/dom/NodeInfo.h"
 #include "mozilla/dom/ScriptLoader.h"
-#include "nsToken.h"
 #include "nsIAppShell.h"
 #include "nsCRT.h"
 #include "prtime.h"
@@ -136,7 +135,7 @@ public:
   NS_IMETHOD WillResume(void) override;
   NS_IMETHOD SetParser(nsParserBase* aParser) override;
   virtual void FlushPendingNotifications(FlushType aType) override;
-  NS_IMETHOD SetDocumentCharset(nsACString& aCharset) override;
+  virtual void SetDocumentCharset(NotNull<const Encoding*> aEncoding) override;
   virtual nsISupports *GetTarget() override;
   virtual bool IsScriptExecuting() override;
 
@@ -1087,11 +1086,10 @@ HTMLContentSink::FlushTags()
   return mCurrentContext ? mCurrentContext->FlushTags() : NS_OK;
 }
 
-NS_IMETHODIMP
-HTMLContentSink::SetDocumentCharset(nsACString& aCharset)
+void
+HTMLContentSink::SetDocumentCharset(NotNull<const Encoding*> aEncoding)
 {
   MOZ_ASSERT_UNREACHABLE("<meta charset> case doesn't occur with about:blank");
-  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 nsISupports *

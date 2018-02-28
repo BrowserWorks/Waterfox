@@ -496,25 +496,25 @@ Number(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    /* Sample JS_CALLEE before clobbering. */
-    bool isConstructing = args.isConstructing();
-
     if (args.length() > 0) {
         if (!ToNumber(cx, args[0]))
             return false;
-        args.rval().set(args[0]);
-    } else {
-        args.rval().setInt32(0);
     }
 
-    if (!isConstructing)
+    if (!args.isConstructing()) {
+        if (args.length() > 0)
+            args.rval().set(args[0]);
+        else
+            args.rval().setInt32(0);
         return true;
+    }
 
-    RootedObject newTarget(cx, &args.newTarget().toObject());
     RootedObject proto(cx);
-    if (!GetPrototypeFromConstructor(cx, newTarget, &proto))
+    if (!GetPrototypeFromBuiltinConstructor(cx, args, &proto))
         return false;
-    JSObject* obj = NumberObject::create(cx, args.rval().toNumber(), proto);
+
+    double d = args.length() > 0 ? args[0].toNumber() : 0;
+    JSObject* obj = NumberObject::create(cx, d, proto);
     if (!obj)
         return false;
     args.rval().setObject(*obj);
@@ -959,7 +959,7 @@ num_toFixed_impl(JSContext* cx, const CallArgs& args)
         if (!ToInteger(cx, args[0], &prec))
             return false;
 
-        if (!ComputePrecisionInRange(cx, -20, MAX_PRECISION, prec, &precision))
+        if (!ComputePrecisionInRange(cx, 0, MAX_PRECISION, prec, &precision))
             return false;
     }
 
@@ -1118,26 +1118,16 @@ static const JSFunctionSpec number_methods[] = {
     JS_FS_END
 };
 
-// ES6 draft ES6 15.7.3.12
-static bool
-Number_isInteger(JSContext* cx, unsigned argc, Value* vp)
+bool
+js::IsInteger(const Value& val)
 {
-    CallArgs args = CallArgsFromVp(argc, vp);
-    if (args.length() < 1 || !args[0].isNumber()) {
-        args.rval().setBoolean(false);
-        return true;
-    }
-    Value val = args[0];
-    args.rval().setBoolean(val.isInt32() ||
-                           (mozilla::IsFinite(val.toDouble()) &&
-                            JS::ToInteger(val.toDouble()) == val.toDouble()));
-    return true;
+    return val.isInt32() ||
+           (mozilla::IsFinite(val.toDouble()) && JS::ToInteger(val.toDouble()) == val.toDouble());
 }
-
 
 static const JSFunctionSpec number_static_methods[] = {
     JS_SELF_HOSTED_FN("isFinite", "Number_isFinite", 1,0),
-    JS_FN("isInteger", Number_isInteger, 1, 0),
+    JS_SELF_HOSTED_FN("isInteger", "Number_isInteger", 1,0),
     JS_SELF_HOSTED_FN("isNaN", "Number_isNaN", 1,0),
     JS_SELF_HOSTED_FN("isSafeInteger", "Number_isSafeInteger", 1,0),
     JS_FS_END

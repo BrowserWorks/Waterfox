@@ -105,7 +105,7 @@ load 587336-1.html
 load 590291-1.svg
 load 601999-1.html
 load 605626-1.svg
-asserts(2) load 606914.xhtml # bug 606914
+asserts-if(!stylo,2) load 606914.xhtml # bug 606914, bug 718883
 load 610594-1.html
 load 610954-1.html
 load 612662-1.svg
@@ -198,6 +198,8 @@ load 1156581-1.svg
 load 1182496-1.html
 load 1209525-1.svg
 load 1223281-1.svg
+load 1322537-1.html
+load 1322537-2.html
 load 1348564.svg
 load conditional-outer-svg-nondirty-reflow-assert.xhtml
 load extref-test-1.xhtml

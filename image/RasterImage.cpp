@@ -430,7 +430,7 @@ RasterImage::WillDrawOpaqueNow()
   // If we are not locked our decoded data could get discard at any time (ie
   // between the call to this function and when we are asked to draw), so we
   // have to return false if we are unlocked.
-  if (IsUnlocked()) {
+  if (mLockCount == 0) {
     return false;
   }
 
@@ -639,7 +639,7 @@ RasterImage::GetImageContainer(LayerManager* aManager, uint32_t aFlags)
     return nullptr;
   }
 
-  if (IsUnlocked()) {
+  if (mAnimationConsumers == 0) {
     SendOnUnlockedDraw(aFlags);
   }
 
@@ -705,9 +705,10 @@ RasterImage::UpdateImageContainer()
 }
 
 size_t
-RasterImage::SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const
+RasterImage::SizeOfSourceWithComputedFallback(SizeOfState& aState) const
 {
-  return mSourceBuffer->SizeOfIncludingThisWithComputedFallback(aMallocSizeOf);
+  return mSourceBuffer->SizeOfIncludingThisWithComputedFallback(
+    aState.mMallocSizeOf);
 }
 
 void
@@ -1193,16 +1194,12 @@ LaunchDecodingTask(IDecodingTask* aTask,
 
     // If we have all the data, we can sync decode if requested.
     if (aFlags & imgIContainer::FLAG_SYNC_DECODE) {
-      PROFILER_LABEL_DYNAMIC("DecodePool", "SyncRunIfPossible",
-        js::ProfileEntry::Category::GRAPHICS, uri.get());
-      DecodePool::Singleton()->SyncRunIfPossible(aTask);
+      DecodePool::Singleton()->SyncRunIfPossible(aTask, uri);
       return true;
     }
 
     if (aFlags & imgIContainer::FLAG_SYNC_DECODE_IF_FAST) {
-      PROFILER_LABEL_DYNAMIC("DecodePool", "SyncRunIfPreferred",
-        js::ProfileEntry::Category::GRAPHICS, uri.get());
-      return DecodePool::Singleton()->SyncRunIfPreferred(aTask);
+      return DecodePool::Singleton()->SyncRunIfPreferred(aTask, uri);
     }
   }
 
@@ -1399,6 +1396,20 @@ RasterImage::DrawInternal(DrawableSurface&& aSurface,
   ImageRegion region(aRegion);
   bool frameIsFinished = aSurface->IsFinished();
 
+#ifdef DEBUG
+  // Record the image drawing for startup performance testing.
+  if (NS_IsMainThread()) {
+    nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
+    NS_WARNING_ASSERTION(obs, "Can't get an observer service handle");
+    if (obs) {
+      nsCOMPtr<nsIURI> imageURI = mURI->ToIURI();
+      nsAutoCString spec;
+      imageURI->GetSpec(spec);
+      obs->NotifyObservers(nullptr, "image-drawing", NS_ConvertUTF8toUTF16(spec).get());
+    }
+  }
+#endif
+
   // By now we may have a frame with the requested size. If not, we need to
   // adjust the drawing parameters accordingly.
   IntSize finalSize = aSurface->GetImageSize();
@@ -1455,7 +1466,7 @@ RasterImage::Draw(gfxContext* aContext,
     return DrawResult::BAD_ARGS;
   }
 
-  if (IsUnlocked()) {
+  if (mAnimationConsumers == 0) {
     SendOnUnlockedDraw(aFlags);
   }
 
@@ -1610,7 +1621,8 @@ RasterImage::HandleErrorWorker::DispatchIfNeeded(RasterImage* aImage)
 }
 
 RasterImage::HandleErrorWorker::HandleErrorWorker(RasterImage* aImage)
-  : mImage(aImage)
+  : Runnable("image::RasterImage::HandleErrorWorker")
+  , mImage(aImage)
 {
   MOZ_ASSERT(mImage, "Should have image");
 }

@@ -57,7 +57,7 @@ add_task(async function SetCurrentEngine() {
     type: "SetCurrentEngine",
     data: newCurrentEngine.name,
   });
-  let deferred = Promise.defer();
+  let deferred = PromiseUtils.defer();
   Services.obs.addObserver(function obs(subj, topic, data) {
     info("Test observed " + data);
     if (data == "engine-current") {
@@ -189,7 +189,7 @@ add_task(async function GetSuggestions_AddFormHistoryEntry_RemoveFormHistoryEntr
     type: "AddFormHistoryEntry",
     data: searchStr + "form",
   });
-  let deferred = Promise.defer();
+  let deferred = PromiseUtils.defer();
   Services.obs.addObserver(function onAdd(subj, topic, data) {
     if (data == "formhistory-add") {
       Services.obs.removeObserver(onAdd, "satchel-storage-changed");
@@ -225,7 +225,7 @@ add_task(async function GetSuggestions_AddFormHistoryEntry_RemoveFormHistoryEntr
     type: "RemoveFormHistoryEntry",
     data: searchStr + "form",
   });
-  deferred = Promise.defer();
+  deferred = PromiseUtils.defer();
   Services.obs.addObserver(function onRemove(subj, topic, data) {
     if (data == "formhistory-remove") {
       Services.obs.removeObserver(onRemove, "satchel-storage-changed");
@@ -329,7 +329,7 @@ function waitForNewEngine(basename, numImages) {
   let eventPromises = expectedSearchEvents.map(e => waitForTestMsg(e));
 
   // Wait for addEngine().
-  let addDeferred = Promise.defer();
+  let addDeferred = PromiseUtils.defer();
   let url = getRootDirectory(gTestPath) + basename;
   Services.search.addEngine(url, null, "", false, {
     onSuccess(engine) {
@@ -345,24 +345,20 @@ function waitForNewEngine(basename, numImages) {
   return Promise.all([addDeferred.promise].concat(eventPromises));
 }
 
-function addTab() {
-  return new Promise(resolve => {
-    let tab = BrowserTestUtils.addTab(gBrowser);
-    gBrowser.selectedTab = tab;
-    tab.linkedBrowser.addEventListener("load", function() {
-      let url = getRootDirectory(gTestPath) + TEST_CONTENT_SCRIPT_BASENAME;
-      gMsgMan = tab.linkedBrowser.messageManager;
-      gMsgMan.sendAsyncMessage(CONTENT_SEARCH_MSG, {
-        type: "AddToWhitelist",
-        data: ["about:blank"],
-      });
-      waitForMsg(CONTENT_SEARCH_MSG, "AddToWhitelistAck").then(() => {
-        gMsgMan.loadFrameScript(url, false);
-        resolve();
-      });
-    }, {capture: true, once: true});
-    registerCleanupFunction(() => gBrowser.removeTab(tab));
+async function addTab() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
+  registerCleanupFunction(() => gBrowser.removeTab(tab));
+
+  let url = getRootDirectory(gTestPath) + TEST_CONTENT_SCRIPT_BASENAME;
+  gMsgMan = tab.linkedBrowser.messageManager;
+  gMsgMan.sendAsyncMessage(CONTENT_SEARCH_MSG, {
+    type: "AddToWhitelist",
+    data: ["about:blank"],
   });
+
+  await waitForMsg(CONTENT_SEARCH_MSG, "AddToWhitelistAck");
+
+  gMsgMan.loadFrameScript(url, false);
 }
 
 var currentStateObj = async function() {

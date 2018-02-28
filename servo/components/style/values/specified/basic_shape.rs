@@ -12,6 +12,7 @@ use parser::{Parse, ParserContext};
 use std::borrow::Cow;
 use std::fmt;
 use style_traits::{ToCss, ParseError, StyleParseError};
+use values::computed::Percentage;
 use values::generics::basic_shape::{Circle as GenericCircle};
 use values::generics::basic_shape::{ClippingShape as GenericClippingShape, Ellipse as GenericEllipse};
 use values::generics::basic_shape::{FillRule, BasicShape as GenericBasicShape};
@@ -19,7 +20,7 @@ use values::generics::basic_shape::{FloatAreaShape as GenericFloatAreaShape, Ins
 use values::generics::basic_shape::{GeometryBox, ShapeBox, ShapeSource};
 use values::generics::basic_shape::{Polygon as GenericPolygon, ShapeRadius as GenericShapeRadius};
 use values::generics::rect::Rect;
-use values::specified::{LengthOrPercentage, Percentage};
+use values::specified::LengthOrPercentage;
 use values::specified::border::BorderRadius;
 use values::specified::position::{HorizontalPosition, Position, PositionComponent, Side, VerticalPosition};
 use values::specified::url::SpecifiedUrl;
@@ -100,7 +101,7 @@ impl Parse for GeometryBox {
 
 impl Parse for BasicShape {
     fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-        let function = input.expect_function()?;
+        let function = input.expect_function()?.clone();
         input.parse_nested_block(move |i| {
             (match_ignore_ascii_case! { &function,
                 "inset" => return InsetRect::parse_function_arguments(context, i).map(GenericBasicShape::Inset),
@@ -108,7 +109,7 @@ impl Parse for BasicShape {
                 "ellipse" => return Ellipse::parse_function_arguments(context, i).map(GenericBasicShape::Ellipse),
                 "polygon" => return Polygon::parse_function_arguments(context, i).map(GenericBasicShape::Polygon),
                 _ => Err(())
-            }).map_err(|()| StyleParseError::UnexpectedFunction(function).into())
+            }).map_err(|()| StyleParseError::UnexpectedFunction(function.clone()).into())
         })
     }
 }

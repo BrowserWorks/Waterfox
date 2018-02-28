@@ -24,7 +24,6 @@ import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.widget.themed.ThemedImageButton;
 import org.mozilla.gecko.widget.themed.ThemedLinearLayout;
 
-import static org.mozilla.gecko.Tab.TabType;
 
 public class TabStrip extends ThemedLinearLayout
                       implements TabStripInterface {
@@ -39,7 +38,6 @@ public class TabStrip extends ThemedLinearLayout
     // True when the tab strip isn't visible to the user due to something being drawn over it.
     private boolean tabStripIsCovered;
     private boolean tabsNeedUpdating;
-    private final TabType type;
 
     public TabStrip(Context context) {
         this(context, null);
@@ -48,8 +46,6 @@ public class TabStrip extends ThemedLinearLayout
     public TabStrip(Context context, AttributeSet attrs) {
         super(context, attrs);
         setOrientation(HORIZONTAL);
-
-        type = TabType.BROWSING;
 
         LayoutInflater.from(context).inflate(R.layout.tab_strip_inner, this);
         tabStripView = (TabStripView) findViewById(R.id.tab_strip);
@@ -118,10 +114,6 @@ public class TabStrip extends ThemedLinearLayout
     private class TabsListener implements Tabs.OnTabsChangedListener {
         @Override
         public void onTabChanged(Tab tab, Tabs.TabEvents msg, String data) {
-            if (msg != Tabs.TabEvents.RESTORED && tab.getType() != type) {
-                return;
-            }
-
             switch (msg) {
                 case RESTORED:
                     tabStripView.restoreTabs();

@@ -63,9 +63,8 @@
 namespace js {
 namespace coverage {
 
-LCovSource::LCovSource(LifoAlloc* alloc, JSObject* sso)
-  : source_(sso),
-    outSF_(alloc),
+LCovSource::LCovSource(LifoAlloc* alloc, const char* name)
+  : name_(name),
     outFN_(alloc),
     outFNDA_(alloc),
     numFunctionsFound_(0),
@@ -76,45 +75,55 @@ LCovSource::LCovSource(LifoAlloc* alloc, JSObject* sso)
     outDA_(alloc),
     numLinesInstrumented_(0),
     numLinesHit_(0),
-    hasFilename_(false),
     hasTopLevelScript_(false)
 {
+}
+
+LCovSource::LCovSource(LCovSource&& src)
+  : name_(src.name_),
+    outFN_(src.outFN_),
+    outFNDA_(src.outFNDA_),
+    numFunctionsFound_(src.numFunctionsFound_),
+    numFunctionsHit_(src.numFunctionsHit_),
+    outBRDA_(src.outBRDA_),
+    numBranchesFound_(src.numBranchesFound_),
+    numBranchesHit_(src.numBranchesHit_),
+    outDA_(src.outDA_),
+    numLinesInstrumented_(src.numLinesInstrumented_),
+    numLinesHit_(src.numLinesHit_),
+    hasTopLevelScript_(src.hasTopLevelScript_)
+{
+    src.name_ = nullptr;
+}
+
+LCovSource::~LCovSource()
+{
+    js_delete(name_);
 }
 
 void
 LCovSource::exportInto(GenericPrinter& out) const
 {
     // Only write if everything got recorded.
-    if (!hasFilename_ || !hasTopLevelScript_)
+    if (!hasTopLevelScript_)
         return;
 
-    outSF_.exportInto(out);
+    out.printf("SF:%s\n", name_);
 
     outFN_.exportInto(out);
     outFNDA_.exportInto(out);
-    out.printf("FNF:%" PRIuSIZE "\n", numFunctionsFound_);
-    out.printf("FNH:%" PRIuSIZE "\n", numFunctionsHit_);
+    out.printf("FNF:%zu\n", numFunctionsFound_);
+    out.printf("FNH:%zu\n", numFunctionsHit_);
 
     outBRDA_.exportInto(out);
-    out.printf("BRF:%" PRIuSIZE "\n", numBranchesFound_);
-    out.printf("BRH:%" PRIuSIZE "\n", numBranchesHit_);
+    out.printf("BRF:%zu\n", numBranchesFound_);
+    out.printf("BRH:%zu\n", numBranchesHit_);
 
     outDA_.exportInto(out);
-    out.printf("LF:%" PRIuSIZE "\n", numLinesInstrumented_);
-    out.printf("LH:%" PRIuSIZE "\n", numLinesHit_);
+    out.printf("LF:%zu\n", numLinesInstrumented_);
+    out.printf("LH:%zu\n", numLinesHit_);
 
     out.put("end_of_record\n");
-}
-
-bool
-LCovSource::writeSourceFilename(ScriptSourceObject* sso)
-{
-    outSF_.printf("SF:%s\n", sso->source()->filename());
-    if (outSF_.hadOutOfMemory())
-        return false;
-
-    hasFilename_ = true;
-    return true;
 }
 
 bool
@@ -131,7 +140,7 @@ bool
 LCovSource::writeScript(JSScript* script)
 {
     numFunctionsFound_++;
-    outFN_.printf("FN:%" PRIuSIZE ",", script->lineno());
+    outFN_.printf("FN:%zu,", script->lineno());
     if (!writeScriptName(outFN_, script))
         return false;
     outFN_.put("\n", 1);
@@ -162,6 +171,7 @@ LCovSource::writeScript(JSScript* script)
     size_t branchId = 0;
     size_t tableswitchExitOffset = 0;
     for (jsbytecode* pc = script->code(); pc != end; pc = GetNextPc(pc)) {
+        MOZ_ASSERT(script->code() <= pc && pc < end);
         JSOp op = JSOp(*pc);
         bool jump = IsJumpOpcode(op) || op == JSOP_TABLESWITCH;
         bool fallsthrough = BytecodeFallsThrough(op) && op != JSOP_GOSUB;
@@ -179,7 +189,7 @@ LCovSource::writeScript(JSScript* script)
         if (snpc <= pc) {
             size_t oldLine = lineno;
             while (!SN_IS_TERMINATOR(sn) && snpc <= pc) {
-                SrcNoteType type = (SrcNoteType) SN_TYPE(sn);
+                SrcNoteType type = SN_TYPE(sn);
                 if (type == SRC_SETLINE)
                     lineno = size_t(GetSrcNoteOffset(sn, 0));
                 else if (type == SRC_NEWLINE)
@@ -192,7 +202,7 @@ LCovSource::writeScript(JSScript* script)
             }
 
             if (oldLine != lineno && fallsthrough) {
-                outDA_.printf("DA:%" PRIuSIZE ",%" PRIu64 "\n", lineno, hits);
+                outDA_.printf("DA:%zu,%" PRIu64 "\n", lineno, hits);
 
                 // Count the number of lines instrumented & hit.
                 numLinesInstrumented_++;
@@ -221,13 +231,13 @@ LCovSource::writeScript(JSScript* script)
             }
 
             uint64_t taken = hits - fallthroughHits;
-            outBRDA_.printf("BRDA:%" PRIuSIZE ",%" PRIuSIZE ",0,", lineno, branchId);
+            outBRDA_.printf("BRDA:%zu,%zu,0,", lineno, branchId);
             if (taken)
                 outBRDA_.printf("%" PRIu64 "\n", taken);
             else
                 outBRDA_.put("-\n", 2);
 
-            outBRDA_.printf("BRDA:%" PRIuSIZE ",%" PRIuSIZE ",1,", lineno, branchId);
+            outBRDA_.printf("BRDA:%zu,%zu,1,", lineno, branchId);
             if (fallthroughHits)
                 outBRDA_.printf("%" PRIu64 "\n", fallthroughHits);
             else
@@ -248,6 +258,8 @@ LCovSource::writeScript(JSScript* script)
             // Get the default and exit pc
             jsbytecode* exitpc = pc + tableswitchExitOffset;
             jsbytecode* defaultpc = pc + GET_JUMP_OFFSET(pc);
+            MOZ_ASSERT(script->code() <= exitpc && exitpc <= end);
+            MOZ_ASSERT(script->code() <= defaultpc && defaultpc < end);
             MOZ_ASSERT(defaultpc > pc && defaultpc <= exitpc);
 
             // Get the low and high from the tableswitch
@@ -260,6 +272,7 @@ LCovSource::writeScript(JSScript* script)
             jsbytecode* firstcasepc = exitpc;
             for (size_t j = 0; j < numCases; j++) {
                 jsbytecode* testpc = pc + GET_JUMP_OFFSET(jumpTable + JUMP_OFFSET_LEN * j);
+                MOZ_ASSERT(script->code() <= testpc && testpc < end);
                 if (testpc < firstcasepc)
                     firstcasepc = testpc;
             }
@@ -275,19 +288,26 @@ LCovSource::writeScript(JSScript* script)
             size_t caseId = 0;
             for (size_t i = 0; i < numCases; i++) {
                 jsbytecode* casepc = pc + GET_JUMP_OFFSET(jumpTable + JUMP_OFFSET_LEN * i);
+                MOZ_ASSERT(script->code() <= casepc && casepc < end);
                 // The case is not present, and jumps to the default pc if used.
                 if (casepc == pc)
                     continue;
 
                 // PCs might not be in increasing order of case indexes.
                 jsbytecode* lastcasepc = firstcasepc - 1;
+                bool foundLastCase = false;
                 for (size_t j = 0; j < numCases; j++) {
                     jsbytecode* testpc = pc + GET_JUMP_OFFSET(jumpTable + JUMP_OFFSET_LEN * j);
-                    if (lastcasepc < testpc && (testpc < casepc || (j < i && testpc == casepc)))
+                    MOZ_ASSERT(script->code() <= testpc && testpc < end);
+                    if (lastcasepc < testpc && (testpc < casepc || (j < i && testpc == casepc))) {
                         lastcasepc = testpc;
+                        foundLastCase = true;
+                    }
                 }
 
-                if (casepc != lastcasepc) {
+                // If multiple case instruction have the same code block, only
+                // register the code coverage the first time we hit this case.
+                if (!foundLastCase || casepc != lastcasepc) {
                     // Case (i + low)
                     uint64_t caseHits = 0;
                     if (sc) {
@@ -297,10 +317,15 @@ LCovSource::writeScript(JSScript* script)
 
                         // Remove fallthrough.
                         fallsThroughHits = 0;
-                        if (casepc != firstcasepc) {
+                        if (foundLastCase) {
+                            // Walk from the previous case to the current one to
+                            // check if it fallthrough into the current block.
+                            MOZ_ASSERT(lastcasepc != firstcasepc - 1);
                             jsbytecode* endpc = lastcasepc;
-                            while (GetNextPc(endpc) < casepc)
+                            while (GetNextPc(endpc) < casepc) {
                                 endpc = GetNextPc(endpc);
+                                MOZ_ASSERT(script->code() <= endpc && endpc < end);
+                            }
 
                             if (BytecodeFallsThrough(JSOp(*endpc)))
                                 fallsThroughHits = script->getHitCount(endpc);
@@ -309,7 +334,7 @@ LCovSource::writeScript(JSScript* script)
                         caseHits -= fallsThroughHits;
                     }
 
-                    outBRDA_.printf("BRDA:%" PRIuSIZE ",%" PRIuSIZE ",%" PRIuSIZE ",",
+                    outBRDA_.printf("BRDA:%zu,%zu,%zu,",
                                     lineno, branchId, caseId);
                     if (caseHits)
                         outBRDA_.printf("%" PRIu64 "\n", caseHits);
@@ -331,22 +356,35 @@ LCovSource::writeScript(JSScript* script)
 
                 // Look for the last case entry before the default pc.
                 jsbytecode* lastcasepc = firstcasepc - 1;
+                bool foundLastCase = false;
                 for (size_t j = 0; j < numCases; j++) {
                     jsbytecode* testpc = pc + GET_JUMP_OFFSET(jumpTable + JUMP_OFFSET_LEN * j);
-                    if (lastcasepc < testpc && testpc <= defaultpc)
+                    MOZ_ASSERT(script->code() <= testpc && testpc < end);
+                    if (lastcasepc < testpc && testpc <= defaultpc) {
                         lastcasepc = testpc;
+                        foundLastCase = true;
+                    }
                 }
 
-                if (lastcasepc == defaultpc)
+                // Set defaultHasOwnClause to false, if one of the case
+                // statement has the same pc as the default block. Which implies
+                // that the previous loop already encoded the coverage
+                // information for the current block.
+                if (foundLastCase && lastcasepc == defaultpc)
                     defaultHasOwnClause = false;
 
                 // Look if the last case entry fallthrough to the default case,
                 // in which case we have to remove the number of fallthrough
                 // hits out of the default case hits.
-                if (sc && lastcasepc != pc) {
+                if (sc && foundLastCase) {
+                    // Walk from the previous case to the current one to check
+                    // if it fallthrough into the default block.
+                    MOZ_ASSERT(lastcasepc != firstcasepc - 1);
                     jsbytecode* endpc = lastcasepc;
-                    while (GetNextPc(endpc) < defaultpc)
+                    while (GetNextPc(endpc) < defaultpc) {
                         endpc = GetNextPc(endpc);
+                        MOZ_ASSERT(script->code() <= endpc && endpc < end);
+                    }
 
                     if (BytecodeFallsThrough(JSOp(*endpc)))
                         fallsThroughHits = script->getHitCount(endpc);
@@ -361,7 +399,7 @@ LCovSource::writeScript(JSScript* script)
             }
 
             if (defaultHasOwnClause) {
-                outBRDA_.printf("BRDA:%" PRIuSIZE ",%" PRIuSIZE ",%" PRIuSIZE ",",
+                outBRDA_.printf("BRDA:%zu,%zu,%zu,",
                                 lineno, branchId, caseId);
                 if (defaultHits)
                     outBRDA_.printf("%" PRIu64 "\n", defaultHits);
@@ -404,8 +442,7 @@ LCovCompartment::LCovCompartment()
 }
 
 void
-LCovCompartment::collectCodeCoverageInfo(JSCompartment* comp, JSObject* sso,
-                                         JSScript* script)
+LCovCompartment::collectCodeCoverageInfo(JSCompartment* comp, JSScript* script, const char* name)
 {
     // Skip any operation if we already some out-of memory issues.
     if (outTN_.hadOutOfMemory())
@@ -415,7 +452,7 @@ LCovCompartment::collectCodeCoverageInfo(JSCompartment* comp, JSObject* sso,
         return;
 
     // Get the existing source LCov summary, or create a new one.
-    LCovSource* source = lookupOrAdd(comp, sso);
+    LCovSource* source = lookupOrAdd(comp, name);
     if (!source)
         return;
 
@@ -426,31 +463,8 @@ LCovCompartment::collectCodeCoverageInfo(JSCompartment* comp, JSObject* sso,
     }
 }
 
-void
-LCovCompartment::collectSourceFile(JSCompartment* comp, ScriptSourceObject* sso)
-{
-    // Do not add sources if there is no file name associated to it.
-    if (!sso->source()->filename())
-        return;
-
-    // Skip any operation if we already some out-of memory issues.
-    if (outTN_.hadOutOfMemory())
-        return;
-
-    // Get the existing source LCov summary, or create a new one.
-    LCovSource* source = lookupOrAdd(comp, sso);
-    if (!source)
-        return;
-
-    // Write source filename into the LCovSource.
-    if (!source->writeSourceFilename(sso)) {
-        outTN_.reportOutOfMemory();
-        return;
-    }
-}
-
 LCovSource*
-LCovCompartment::lookupOrAdd(JSCompartment* comp, JSObject* sso)
+LCovCompartment::lookupOrAdd(JSCompartment* comp, const char* name)
 {
     // On the first call, write the compartment name, and allocate a LCovSource
     // vector in the LifoAlloc.
@@ -468,13 +482,19 @@ LCovCompartment::lookupOrAdd(JSCompartment* comp, JSObject* sso)
     } else {
         // Find the first matching source.
         for (LCovSource& source : *sources_) {
-            if (source.match(sso))
+            if (source.match(name))
                 return &source;
         }
     }
 
+    char* source_name = js_strdup(name);
+    if (!source_name) {
+        outTN_.reportOutOfMemory();
+        return nullptr;
+    }
+
     // Allocate a new LCovSource for the current top-level.
-    if (!sources_->append(Move(LCovSource(&alloc_, sso)))) {
+    if (!sources_->append(Move(LCovSource(&alloc_, source_name)))) {
         outTN_.reportOutOfMemory();
         return nullptr;
     }
@@ -569,7 +589,7 @@ LCovRuntime::fillWithFilename(char *name, size_t length)
     static mozilla::Atomic<size_t> globalRuntimeId(0);
     size_t rid = globalRuntimeId++;
 
-    int len = snprintf(name, length, "%s/%" PRId64 "-%" PRIu32 "-%" PRIuSIZE ".info",
+    int len = snprintf(name, length, "%s/%" PRId64 "-%" PRIu32 "-%zu.info",
                        outDir, timestamp, pid_, rid);
     if (len < 0 || size_t(len) >= length) {
         fprintf(stderr, "Warning: LCovRuntime::init: Cannot serialize file name.");

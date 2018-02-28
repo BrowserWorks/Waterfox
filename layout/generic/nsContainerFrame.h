@@ -63,8 +63,10 @@ public:
   virtual void ChildIsDirty(nsIFrame* aChild) override;
 
   virtual FrameSearchResult PeekOffsetNoAmount(bool aForward, int32_t* aOffset) override;
-  virtual FrameSearchResult PeekOffsetCharacter(bool aForward, int32_t* aOffset,
-                                     bool aRespectClusters = true) override;
+  virtual FrameSearchResult
+  PeekOffsetCharacter(bool aForward, int32_t* aOffset,
+                      PeekOffsetCharacterOptions aOptions =
+                        PeekOffsetCharacterOptions()) override;
 
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
                                     nsIAtom*        aAttribute,
@@ -72,7 +74,7 @@ public:
 
 #ifdef DEBUG_FRAME_DUMP
   void List(FILE* out = stderr, const char* aPrefix = "", uint32_t aFlags = 0) const override;
-#endif  
+#endif
 
   // nsContainerFrame methods
 
@@ -184,7 +186,7 @@ public:
   static void SyncWindowProperties(nsPresContext*       aPresContext,
                                    nsIFrame*            aFrame,
                                    nsView*              aView,
-                                   nsRenderingContext*  aRC,
+                                   gfxContext*          aRC,
                                    uint32_t             aFlags);
 
   /**
@@ -202,7 +204,7 @@ public:
                                  const nsSize& aMaxSize);
 
   // Used by both nsInlineFrame and nsFirstLetterFrame.
-  void DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
+  void DoInlineIntrinsicISize(gfxContext *aRenderingContext,
                               InlineIntrinsicISizeData *aData,
                               nsLayoutUtils::IntrinsicISizeType aType);
 
@@ -211,7 +213,7 @@ public:
    * classes derived from nsContainerFrame want.
    */
   virtual mozilla::LogicalSize
-  ComputeAutoSize(nsRenderingContext*         aRenderingContext,
+  ComputeAutoSize(gfxContext*                 aRenderingContext,
                   mozilla::WritingMode        aWM,
                   const mozilla::LogicalSize& aCBSize,
                   nscoord                     aAvailableISize,
@@ -382,7 +384,7 @@ public:
    */
   virtual bool DrainSelfOverflowList() override;
 
-  
+
   /**
    * Move all frames on our prev-in-flow's and our own ExcessOverflowContainers
    * lists to our OverflowContainers list.  If there are frames on multiple
@@ -521,6 +523,20 @@ public:
   NS_DECLARE_FRAME_PROPERTY_FRAMELIST(ExcessOverflowContainersProperty)
   NS_DECLARE_FRAME_PROPERTY_FRAMELIST(BackdropProperty)
 
+  // Only really used on nsBlockFrame instances, but the caller thinks it could
+  // have arbitrary nsContainerFrames.
+  NS_DECLARE_FRAME_PROPERTY_WITHOUT_DTOR(FirstLetterProperty, nsIFrame)
+
+  void SetHasFirstLetterChild()
+  {
+    mHasFirstLetterChild = true;
+  }
+
+  void ClearHasFirstLetterChild()
+  {
+    mHasFirstLetterChild = false;
+  }
+
 #ifdef DEBUG
   // Use this to suppress the CRAZY_SIZE assertions.
   NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(DebugReflowingWithInfiniteISize, bool)
@@ -600,7 +616,7 @@ protected:
    * into an AutoFrameListPtr.
    */
   inline nsFrameList* StealOverflowFrames();
-  
+
   /**
    * Set the overflow list.  aOverflowFrames must not be an empty list.
    */
@@ -618,25 +634,42 @@ protected:
    * Resets the overlist pointers to nullptr, and updates the receiver's child
    * count and content mapping.
    *
+   * @param aLineContainer the line container of the current frame if it
+   *          has one. nullptr if unrelated.
+   *
    * @return true if any frames were moved and false otherwise
    */
-  bool MoveOverflowToChildList();
+  bool MoveOverflowToChildList(nsIFrame* aLineContainer = nullptr);
 
   /**
-   * Push aFromChild and its next siblings to the next-in-flow. Change
-   * the geometric parent of each frame that's pushed. If there is no
-   * next-in-flow the frames are placed on the overflow list (and the
-   * geometric parent is left unchanged).
+   * Push aFromChild and its next siblings to the overflow list.
+   *
+   * @param aFromChild the first child frame to push. It is disconnected
+   *          from aPrevSibling
+   * @param aPrevSibling aFrameChild's previous sibling. Must not be null.
+   *          It's an error to push a parent's first child frame.
+   */
+  void PushChildrenToOverflow(nsIFrame* aFromChild, nsIFrame* aPrevSibling);
+
+  /**
+   * Same as above, except that this pushes frames to the next-in-flow
+   * frame and changes the geometric parent of the pushed frames when
+   * there is a next-in-flow frame.
    *
    * Updates the next-in-flow's child count. Does <b>not</b> update the
    * pusher's child count.
-   *
-   * @param   aFromChild the first child frame to push. It is disconnected from
-   *            aPrevSibling
-   * @param   aPrevSibling aFromChild's previous sibling. Must not be null.
-   *            It's an error to push a parent's first child frame
    */
   void PushChildren(nsIFrame* aFromChild, nsIFrame* aPrevSibling);
+
+  /**
+   * Reparent floats whose placeholders are inline descendants of aFrame from
+   * whatever block they're currently parented by to aOurBlock.
+   * @param aReparentSiblings if this is true, we follow aFrame's
+   * GetNextSibling chain reparenting them all
+   */
+  static void ReparentFloatsForInlineChild(nsIFrame* aOurBlock,
+                                           nsIFrame* aFrame,
+                                           bool aReparentSiblings);
 
   // ==========================================================================
   /*
@@ -807,7 +840,7 @@ public:
     {
       if (mTracker) mTracker->BeginFinish(mChild);
     }
-    ~AutoFinish() 
+    ~AutoFinish()
     {
       if (mTracker) mTracker->EndFinish(mChild);
     }

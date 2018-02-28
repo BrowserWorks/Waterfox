@@ -21,6 +21,7 @@ class NamedLambdaObject;
 class WithScope;
 class InlineTypedObject;
 class GeneratorObject;
+class RegExpObject;
 class TypedArrayObject;
 
 namespace jit {
@@ -261,8 +262,11 @@ struct VMFunction
         expectTailCall(o.expectTailCall)
     {
         // Check for valid failure/return type.
-        MOZ_ASSERT_IF(outParam != Type_Void, returnType == Type_Bool);
-        MOZ_ASSERT(returnType == Type_Bool ||
+        MOZ_ASSERT_IF(outParam != Type_Void,
+                      returnType == Type_Void ||
+                      returnType == Type_Bool);
+        MOZ_ASSERT(returnType == Type_Void ||
+                   returnType == Type_Bool ||
                    returnType == Type_Object);
         addToFunctions();
     }
@@ -273,8 +277,10 @@ struct VMFunction
 };
 
 template <class> struct TypeToDataType { /* Unexpected return type for a VMFunction. */ };
+template <> struct TypeToDataType<void> { static const DataType result = Type_Void; };
 template <> struct TypeToDataType<bool> { static const DataType result = Type_Bool; };
 template <> struct TypeToDataType<JSObject*> { static const DataType result = Type_Object; };
+template <> struct TypeToDataType<JSFunction*> { static const DataType result = Type_Object; };
 template <> struct TypeToDataType<NativeObject*> { static const DataType result = Type_Object; };
 template <> struct TypeToDataType<PlainObject*> { static const DataType result = Type_Object; };
 template <> struct TypeToDataType<InlineTypedObject*> { static const DataType result = Type_Object; };
@@ -337,6 +343,9 @@ template <> struct TypeToArgProperties<Handle<GeneratorObject*> > {
 };
 template <> struct TypeToArgProperties<Handle<PlainObject*> > {
     static const uint32_t result = TypeToArgProperties<PlainObject*>::result | VMFunction::ByRef;
+};
+template <> struct TypeToArgProperties<Handle<RegExpObject*> > {
+    static const uint32_t result = TypeToArgProperties<RegExpObject*>::result | VMFunction::ByRef;
 };
 template <> struct TypeToArgProperties<Handle<WithScope*> > {
     static const uint32_t result = TypeToArgProperties<WithScope*>::result | VMFunction::ByRef;
@@ -422,6 +431,9 @@ template <> struct TypeToRootType<Handle<GeneratorObject*> > {
     static const uint32_t result = VMFunction::RootObject;
 };
 template <> struct TypeToRootType<Handle<PlainObject*> > {
+    static const uint32_t result = VMFunction::RootObject;
+};
+template <> struct TypeToRootType<Handle<RegExpObject*> > {
     static const uint32_t result = VMFunction::RootObject;
 };
 template <> struct TypeToRootType<Handle<LexicalScope*> > {
@@ -645,6 +657,10 @@ bool GreaterThanOrEqual(JSContext* cx, MutableHandleValue lhs, MutableHandleValu
 template<bool Equal>
 bool StringsEqual(JSContext* cx, HandleString left, HandleString right, bool* res);
 
+MOZ_MUST_USE bool StringSplitHelper(JSContext* cx, HandleString str, HandleString sep,
+                                    HandleObjectGroup group, uint32_t limit,
+                                    MutableHandleValue result);
+
 MOZ_MUST_USE bool ArrayPopDense(JSContext* cx, HandleObject obj, MutableHandleValue rval);
 MOZ_MUST_USE bool ArrayPushDense(JSContext* cx, HandleObject obj, HandleValue v, uint32_t* length);
 MOZ_MUST_USE bool ArrayShiftDense(JSContext* cx, HandleObject obj, MutableHandleValue rval);
@@ -827,6 +843,9 @@ MOZ_MUST_USE bool
 BaselineThrowUninitializedThis(JSContext* cx, BaselineFrame* frame);
 
 MOZ_MUST_USE bool
+BaselineThrowInitializedThis(JSContext* cx, BaselineFrame* frame);
+
+MOZ_MUST_USE bool
 ThrowBadDerivedReturn(JSContext* cx, HandleValue v);
 
 MOZ_MUST_USE bool
@@ -869,6 +888,9 @@ ObjectHasGetterSetter(JSContext* cx, JSObject* obj, Shape* propShape);
 
 JSString*
 TypeOfObject(JSObject* obj, JSRuntime* rt);
+
+bool
+GetPrototypeOf(JSContext* cx, HandleObject target, MutableHandleValue rval);
 
 } // namespace jit
 } // namespace js

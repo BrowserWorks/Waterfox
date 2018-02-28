@@ -19,8 +19,12 @@
 #include "mozilla/layers/PLayerTransaction.h" // for PaintedLayerAttributes
 
 namespace mozilla {
-namespace layers {
+namespace gfx {
+class DrawEventRecorderMemory;
+class DrawTargetCapture;
+};
 
+namespace layers {
 class CompositableClient;
 class ShadowableLayer;
 class SpecificLayerAttributes;
@@ -61,7 +65,7 @@ public:
     NS_ASSERTION(ClientManager()->InConstruction(),
                  "Can only set properties in construction phase");
     mInvalidRegion.Add(aRegion);
-    mValidRegion.Sub(mValidRegion, mInvalidRegion.GetRegion());
+    UpdateValidRegionAfterInvalidRegionChanged();
   }
 
   virtual void RenderLayer() override { RenderLayerWithReadback(nullptr); }
@@ -73,7 +77,7 @@ public:
     if (mContentClient) {
       mContentClient->Clear();
     }
-    mValidRegion.SetEmpty();
+    ClearValidRegion();
     DestroyBackBuffer();
   }
 
@@ -109,6 +113,14 @@ public:
 
 protected:
   void PaintThebes(nsTArray<ReadbackProcessor::Update>* aReadbackUpdates);
+  void RecordThebes();
+  bool CanRecordLayer(ReadbackProcessor* aReadback);
+  bool HasMaskLayers();
+  bool EnsureContentClient();
+  uint32_t GetPaintFlags();
+  void UpdateContentClient(PaintState& aState);
+  bool UpdatePaintRegion(PaintState& aState);
+  bool PaintOffMainThread();
 
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) override;
 

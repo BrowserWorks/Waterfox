@@ -11,6 +11,8 @@
 
 #include "nsBlockFrame.h"
 
+#include "gfxContext.h"
+
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/UniquePtr.h"
@@ -47,13 +49,14 @@
 #include "nsDisplayList.h"
 #include "nsCSSAnonBoxes.h"
 #include "nsCSSFrameConstructor.h"
-#include "nsRenderingContext.h"
 #include "TextOverflow.h"
 #include "nsIFrameInlines.h"
 #include "CounterStyleManager.h"
 #include "nsISelection.h"
 #include "mozilla/dom/HTMLDetailsElement.h"
 #include "mozilla/dom/HTMLSummaryElement.h"
+#include "mozilla/ServoRestyleManager.h"
+#include "mozilla/ServoStyleSet.h"
 #include "mozilla/StyleSetHandle.h"
 #include "mozilla/StyleSetHandleInlines.h"
 #include "mozilla/Telemetry.h"
@@ -695,7 +698,7 @@ nsBlockFrame::CheckIntrinsicCacheAgainstShrinkWrapState()
 }
 
 /* virtual */ nscoord
-nsBlockFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsBlockFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nsIFrame* firstInFlow = FirstContinuation();
   if (firstInFlow != this)
@@ -783,7 +786,7 @@ nsBlockFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-nsBlockFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsBlockFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nsIFrame* firstInFlow = FirstContinuation();
   if (firstInFlow != this)
@@ -893,7 +896,7 @@ nsBlockFrame::ComputeTightBounds(DrawTarget* aDrawTarget) const
 }
 
 /* virtual */ nsresult
-nsBlockFrame::GetPrefWidthTightBounds(nsRenderingContext* aRenderingContext,
+nsBlockFrame::GetPrefWidthTightBounds(gfxContext* aRenderingContext,
                                       nscoord* aX,
                                       nscoord* aXMost)
 {
@@ -1528,13 +1531,11 @@ nsBlockFrame::Reflow(nsPresContext*           aPresContext,
     // Note: we check here for non-default "justify-items", though technically
     // that'd only affect rendering if some child has "justify-self:auto".
     // (It's safe to assume that's likely, since it's the default value that
-    // a child would have.) We also pass in nullptr for the parent style context
-    // because an accurate parameter is slower and only necessary to detect a
-    // narrow edge case with the "legacy" keyword.
+    // a child would have.)
     const nsStylePosition* stylePosition = reflowInput->mStylePosition;
     if (!IsStyleNormalOrAuto(stylePosition->mJustifyContent) ||
         !IsStyleNormalOrAuto(stylePosition->mAlignContent) ||
-        !IsStyleNormalOrAuto(stylePosition->ComputedJustifyItems(nullptr))) {
+        !IsStyleNormalOrAuto(stylePosition->mJustifyItems)) {
       Telemetry::Accumulate(Telemetry::BOX_ALIGN_PROPS_IN_BLOCKS_FLAG, true);
     } else {
       // If not already flagged by the parent, now check justify-self of the
@@ -1993,9 +1994,6 @@ nsBlockFrame::PrepareResizeReflow(BlockReflowInput& aState)
     nscoord newAvailISize =
       aState.mReflowInput.ComputedLogicalBorderPadding().IStart(wm) +
       aState.mReflowInput.ComputedISize();
-    NS_ASSERTION(NS_UNCONSTRAINEDSIZE != aState.mReflowInput.ComputedLogicalBorderPadding().IStart(wm) &&
-                 NS_UNCONSTRAINEDSIZE != aState.mReflowInput.ComputedISize(),
-                 "math on NS_UNCONSTRAINEDSIZE");
 
 #ifdef DEBUG
     if (gNoisyReflow) {
@@ -3817,6 +3815,9 @@ nsBlockFrame::ReflowBlockFrame(BlockReflowInput& aState,
           // and we have page-break-inside:avoid, then we need to be pushed to
           // our parent's next-in-flow.
           aState.mReflowStatus.SetInlineLineBreakBeforeAndReset();
+          // When we reflow in the new position, we need to reflow this
+          // line again.
+          aLine->MarkDirty();
         } else {
           // Push the line that didn't fit and any lines that follow it
           // to our next-in-flow.
@@ -4708,6 +4709,9 @@ nsBlockFrame::PlaceLine(BlockReflowInput& aState,
       ShouldAvoidBreakInside(aState.mReflowInput)) {
     aLine->AppendFloats(aState.mCurrentLineFloats);
     aState.mReflowStatus.SetInlineLineBreakBeforeAndReset();
+    // Reflow the line again when we reflow at our new position.
+    aLine->MarkDirty();
+    *aKeepReflowGoing = false;
     return true;
   }
 
@@ -4719,6 +4723,7 @@ nsBlockFrame::PlaceLine(BlockReflowInput& aState,
     if (ShouldAvoidBreakInside(aState.mReflowInput)) {
       // All our content doesn't fit, start on the next page.
       aState.mReflowStatus.SetInlineLineBreakBeforeAndReset();
+      *aKeepReflowGoing = false;
     } else {
       // Push aLine and all of its children and anything else that
       // follows to our next-in-flow.
@@ -4727,6 +4732,10 @@ nsBlockFrame::PlaceLine(BlockReflowInput& aState,
     return true;
   }
 
+  // Note that any early return before this update of aState.mBCoord
+  // must either (a) return false or (b) set aKeepReflowGoing to false.
+  // Otherwise we'll keep reflowing later lines at an incorrect
+  // position, and we might not come back and clean up the damage later.
   aState.mBCoord = newBCoord;
 
   // Add the already placed current-line floats to the line
@@ -5620,6 +5629,50 @@ nsBlockInFlowLineIterator::nsBlockInFlowLineIterator(nsBlockFrame* aFrame,
 {
   mLine = aFrame->LinesBegin();
   *aFoundValidLine = FindValidLine();
+}
+
+void
+nsBlockFrame::UpdateFirstLetterStyle(ServoRestyleState& aRestyleState)
+{
+  nsIFrame* letterFrame = GetFirstLetter();
+  if (!letterFrame) {
+    return;
+  }
+
+  // Figure out what the right style parent is.  This needs to match
+  // nsCSSFrameConstructor::CreateLetterFrame.
+  nsIFrame* inFlowFrame = letterFrame;
+  if (inFlowFrame->GetStateBits() & NS_FRAME_OUT_OF_FLOW) {
+    inFlowFrame = inFlowFrame->GetPlaceholderFrame();
+  }
+  nsIFrame* styleParent =
+    CorrectStyleParentFrame(inFlowFrame->GetParent(),
+                            nsCSSPseudoElements::firstLetter);
+  ServoStyleContext* parentStyle = styleParent->StyleContext()->AsServo();
+  RefPtr<nsStyleContext> firstLetterStyle =
+    aRestyleState.StyleSet()
+                 .ResolvePseudoElementStyle(mContent->AsElement(),
+                                            CSSPseudoElementType::firstLetter,
+                                            parentStyle,
+                                            nullptr);
+  // Note that we don't need to worry about changehints for the continuation
+  // styles: those will be handled by the styleParent already.
+  RefPtr<nsStyleContext> continuationStyle =
+    aRestyleState.StyleSet().ResolveStyleForFirstLetterContinuation(parentStyle);
+  UpdateStyleOfOwnedChildFrame(letterFrame, firstLetterStyle, aRestyleState,
+                               Some(continuationStyle.get()));
+
+  // We also want to update the style on the textframe inside the first-letter.
+  // We don't need to compute a changehint for this, though, since any changes
+  // to it are handled by the first-letter anyway.
+  nsIFrame* textFrame = letterFrame->PrincipalChildList().FirstChild();
+  RefPtr<nsStyleContext> firstTextStyle =
+    aRestyleState.StyleSet().ResolveStyleForText(textFrame->GetContent(),
+                                                 firstLetterStyle->AsServo());
+  textFrame->SetStyleContext(firstTextStyle);
+
+  // We don't need to update style for textFrame's continuations: it's already
+  // set up to inherit from parentStyle, which is what we want.
 }
 
 static nsIFrame*
@@ -6701,8 +6754,8 @@ nsBlockFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   aBuilder->MarkFramesForDisplayList(this, mFloats, aDirtyRect);
 
   // Prepare for text-overflow processing.
-  UniquePtr<TextOverflow> textOverflow(
-    TextOverflow::WillProcessLines(aBuilder, this));
+  UniquePtr<TextOverflow> textOverflow =
+    TextOverflow::WillProcessLines(aBuilder, this);
 
   // We'll collect our lines' display items here, & then append this to aLists.
   nsDisplayListCollection linesDisplayListCollection;
@@ -7078,14 +7131,8 @@ nsBlockFrame::CreateBulletFrameForListItem(bool aCreateBulletList,
     CSSPseudoElementType::mozListBullet :
     CSSPseudoElementType::mozListNumber;
 
-  nsStyleContext* parentStyle =
-    CorrectStyleParentFrame(this,
-                            nsCSSPseudoElements::GetPseudoAtom(pseudoType))->
-    StyleContext();
-
-  RefPtr<nsStyleContext> kidSC = shell->StyleSet()->
-    ResolvePseudoElementStyle(mContent->AsElement(), pseudoType,
-                              parentStyle, nullptr);
+  RefPtr<nsStyleContext> kidSC = ResolveBulletStyle(pseudoType,
+                                                    shell->StyleSet());
 
   // Create bullet frame
   nsBulletFrame* bullet = new (shell) nsBulletFrame(kidSC);
@@ -7516,6 +7563,92 @@ nsBlockFrame::ResolveBidi()
   }
 
   return nsBidiPresUtils::Resolve(this);
+}
+
+void
+nsBlockFrame::UpdatePseudoElementStyles(ServoRestyleState& aRestyleState)
+{
+  if (nsBulletFrame* bullet = GetBullet()) {
+    CSSPseudoElementType type = bullet->StyleContext()->GetPseudoType();
+    RefPtr<nsStyleContext> newBulletStyle =
+      ResolveBulletStyle(type, &aRestyleState.StyleSet());
+    UpdateStyleOfOwnedChildFrame(bullet, newBulletStyle, aRestyleState);
+  }
+
+  if (nsIFrame* firstLineFrame = GetFirstLineFrame()) {
+    nsIFrame* styleParent =
+      CorrectStyleParentFrame(firstLineFrame->GetParent(),
+                              nsCSSPseudoElements::firstLine);
+
+    ServoStyleContext* parentStyle = styleParent->StyleContext()->AsServo();
+    RefPtr<ServoStyleContext> firstLineStyle =
+      aRestyleState.StyleSet()
+                   .ResolvePseudoElementStyle(mContent->AsElement(),
+                                              CSSPseudoElementType::firstLine,
+                                              parentStyle,
+                                              nullptr);
+
+    // FIXME(bz): Can we make first-line continuations be non-inheriting anon
+    // boxes?
+    RefPtr<ServoStyleContext> continuationStyle = aRestyleState.StyleSet().
+      ResolveInheritingAnonymousBoxStyle(nsCSSAnonBoxes::mozLineFrame,
+                                         parentStyle);
+
+    UpdateStyleOfOwnedChildFrame(firstLineFrame, firstLineStyle, aRestyleState,
+                                 Some(continuationStyle.get()));
+
+    // We also want to update the styles of the first-line's descendants.  We
+    // don't need to compute a changehint for this, though, since any changes to
+    // them are handled by the first-line anyway.
+    ServoRestyleManager* manager = PresContext()->RestyleManager()->AsServo();
+    for (nsIFrame* kid : firstLineFrame->PrincipalChildList()) {
+      manager->ReparentStyleContext(kid);
+    }
+  }
+}
+
+already_AddRefed<nsStyleContext>
+nsBlockFrame::ResolveBulletStyle(CSSPseudoElementType aType,
+                                 StyleSetHandle aStyleSet)
+{
+  nsStyleContext* parentStyle =
+    CorrectStyleParentFrame(this,
+                            nsCSSPseudoElements::GetPseudoAtom(aType))->
+    StyleContext();
+
+  return aStyleSet->ResolvePseudoElementStyle(mContent->AsElement(), aType,
+                                              parentStyle, nullptr);
+}
+
+nsIFrame*
+nsBlockFrame::GetFirstLetter() const
+{
+  if (!(GetStateBits() & NS_BLOCK_HAS_FIRST_LETTER_STYLE)) {
+    // Certainly no first-letter frame.
+    return nullptr;
+  }
+
+  return GetProperty(FirstLetterProperty());
+}
+
+nsIFrame*
+nsBlockFrame::GetFirstLineFrame() const
+{
+  // Our ::first-line frame is either the first thing on our principal child
+  // list, or the second one if we have an inside bullet.
+  nsIFrame* bullet = GetInsideBullet();
+  nsIFrame* maybeFirstLine;
+  if (bullet) {
+    maybeFirstLine = bullet->GetNextSibling();
+  } else {
+    maybeFirstLine = PrincipalChildList().FirstChild();
+  }
+
+  if (maybeFirstLine && maybeFirstLine->IsLineFrame()) {
+    return maybeFirstLine;
+  }
+
+  return nullptr;
 }
 
 #ifdef DEBUG

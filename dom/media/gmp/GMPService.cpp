@@ -178,7 +178,7 @@ GeckoMediaPluginService::RunPluginCrashCallbacks(uint32_t aPluginId,
   nsAutoPtr<nsTArray<RefPtr<GMPCrashHelper>>> helpers;
   {
     MutexAutoLock lock(mMutex);
-    mPluginCrashHelpers.RemoveAndForget(aPluginId, helpers);
+    mPluginCrashHelpers.Remove(aPluginId, &helpers);
   }
   if (!helpers) {
     LOGD(("%s::%s(%i) No crash helpers, not handling crash.", __CLASS__, __FUNCTION__, aPluginId));
@@ -234,7 +234,7 @@ GeckoMediaPluginService::GetCDM(const NodeId& aNodeId,
                                 nsTArray<nsCString> aTags,
                                 GMPCrashHelper* aHelper)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
 
   if (mShuttingDownOnGMPThread || aTags.IsEmpty()) {
     return GetCDMParentPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
@@ -354,7 +354,7 @@ GeckoMediaPluginService::GetDecryptingGMPVideoDecoder(GMPCrashHelper* aHelper,
                                                       UniquePtr<GetGMPVideoDecoderCallback>&& aCallback,
                                                       uint32_t aDecryptorId)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
   NS_ENSURE_ARG(aTags && aTags->Length() > 0);
   NS_ENSURE_ARG(aCallback);
 
@@ -392,7 +392,7 @@ GeckoMediaPluginService::GetGMPVideoEncoder(GMPCrashHelper* aHelper,
                                             const nsACString& aNodeId,
                                             UniquePtr<GetGMPVideoEncoderCallback>&& aCallback)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
   NS_ENSURE_ARG(aTags && aTags->Length() > 0);
   NS_ENSURE_ARG(aCallback);
 
@@ -438,7 +438,7 @@ GeckoMediaPluginService::GetGMPDecryptor(GMPCrashHelper* aHelper,
   }
 #endif
 
-  MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
+  MOZ_ASSERT(mGMPThread->EventTarget()->IsOnCurrentThread());
   NS_ENSURE_ARG(aTags && aTags->Length() > 0);
   NS_ENSURE_ARG(aCallback);
 

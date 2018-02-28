@@ -18,7 +18,7 @@
 <hbox hidden="true"
       class="container-header-links"
       data-category="paneContainers">
-  <label class="text-link" id="backContainersLink">&backLink.label;</label>
+  <label class="text-link" id="backContainersLink">&backLink2.label;</label>
 </hbox>
 
 <hbox id="header-containers"
@@ -29,7 +29,8 @@
 </hbox>
 
 <!-- Containers -->
-<groupbox id="browserContainersGroup" data-category="paneContainers" hidden="true">
+<groupbox id="browserContainersGroupPane" data-category="paneContainers" hidden="true"
+          data-hidden-from-search="true" data-subpanel="true">
   <vbox id="browserContainersbox">
 
     <richlistbox id="containersView" orient="vertical" persist="lastSelectedType"

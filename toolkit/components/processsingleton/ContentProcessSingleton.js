@@ -16,6 +16,8 @@ XPCOMUtils.defineLazyServiceGetter(this, "cpmm",
 
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryController",
                                   "resource://gre/modules/TelemetryController.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
+                                  "resource:///modules/E10SUtils.jsm");
 
 /*
  * The message manager has an upper limit on message sizes that it can
@@ -59,9 +61,10 @@ ContentProcessSingleton.prototype = {
         level: consoleMsg.level,
         filename: consoleMsg.filename.substring(0, MSG_MGR_CONSOLE_INFO_MAX),
         lineNumber: consoleMsg.lineNumber,
-        functionName: consoleMsg.functionName.substring(0,
-          MSG_MGR_CONSOLE_INFO_MAX),
+        functionName: consoleMsg.functionName &&
+          consoleMsg.functionName.substring(0, MSG_MGR_CONSOLE_INFO_MAX),
         timeStamp: consoleMsg.timeStamp,
+        addonId: consoleMsg.addonId,
         arguments: [],
       };
 
@@ -78,7 +81,20 @@ ContentProcessSingleton.prototype = {
       for (let arg of consoleMsg.arguments) {
         if ((typeof arg == "object" || typeof arg == "function") &&
             arg !== null) {
-          arg = unavailString;
+          if (Services.appinfo.remoteType === E10SUtils.EXTENSION_REMOTE_TYPE) {
+            // For OOP extensions: we want the developer to be able to see the
+            // logs in the Browser Console. When the Addon Toolbox will be more
+            // prominent we can revisit.
+            try {
+              // If the argument is clonable, then send it as-is. If
+              // cloning fails, fall back to the unavailable string.
+              arg = Cu.cloneInto(arg, {});
+            } catch (e) {
+              arg = unavailString;
+            }
+          } else {
+            arg = unavailString;
+          }
           totalArgLength += unavailStringLength;
         } else if (typeof arg == "string") {
           totalArgLength += arg.length * 2; // 2-bytes per char

@@ -15,12 +15,14 @@ class nsFileChannel : public nsBaseChannel
                     , public nsIFileChannel
                     , public nsIUploadChannel
 {
-public: 
+public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIFILECHANNEL
   NS_DECL_NSIUPLOADCHANNEL
 
   explicit nsFileChannel(nsIURI *uri);
+
+  nsresult Init();
 
 protected:
   ~nsFileChannel();
@@ -40,6 +42,7 @@ protected:
 private:
   nsCOMPtr<nsIInputStream> mUploadStream;
   int64_t mUploadLength;
+  nsCOMPtr<nsIURI> mFileURI;
 };
 
 #endif // !nsFileChannel_h__

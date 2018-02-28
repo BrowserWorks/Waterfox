@@ -9,11 +9,12 @@ Components.utils.import("resource://gre/modules/FileUtils.jsm");
 Components.utils.import("resource:///modules/ShellService.jsm");
 Components.utils.import("resource:///modules/TransientPrefs.jsm");
 
-
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "CloudStorage",
+                                  "resource://gre/modules/CloudStorage.jsm");
 
-if (AppConstants.E10S_TESTING_ONLY) {
+if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
   XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
                                     "resource://gre/modules/UpdateUtils.jsm");
 }
@@ -89,6 +90,8 @@ var gMainPane = {
                      gMainPane.updateBrowserStartupLastSession);
     setEventListener("browser.download.dir", "change",
                      gMainPane.displayDownloadDirPref);
+    setEventListener("saveWhere", "command",
+                     gMainPane.handleSaveToCommand);
     if (AppConstants.HAVE_SHELL_SERVICE) {
       setEventListener("setDefaultButton", "command",
                        gMainPane.setDefaultBrowser);
@@ -108,8 +111,8 @@ var gMainPane = {
     setEventListener("localeSelect", "keypress", function (e) {
       gMainPane._updateLocale(e);
     });
-	
-    if (AppConstants.E10S_TESTING_ONLY) {
+
+    if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
       setEventListener("e10sAutoStart", "command",
                        gMainPane.enableE10SChange);
       let e10sCheckbox = document.getElementById("e10sAutoStart");
@@ -165,7 +168,7 @@ var gMainPane = {
 
     return e10sEnabled;
   },
-  
+
   // Sets language selector to current locale value
   getDefaultLocale: function(){
 	  let selectedLocale = document.getElementById("localeSelect");
@@ -198,7 +201,7 @@ var gMainPane = {
 },
     
   enableE10SChange() {
-    if (AppConstants.E10S_TESTING_ONLY) {
+    if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
       let e10sCheckbox = document.getElementById("e10sAutoStart");
       let e10sPref = document.getElementById("browser.tabs.remote.autostart");
       let e10sTempPref = document.getElementById("e10sTempPref");
@@ -542,6 +545,8 @@ var gMainPane = {
    *     1 - The system's downloads folder is the default download location.
    *     2 - The default download location is elsewhere as specified in
    *         browser.download.dir.
+   *     3 - The default download location is elsewhere as specified by
+   *         cloud storage API getDownloadFolder
    * browser.download.downloadDir
    *   deprecated.
    * browser.download.defaultFolder
@@ -559,8 +564,88 @@ var gMainPane = {
     downloadFolder.disabled = !preference.value || preference.locked;
     chooseFolder.disabled = !preference.value || preference.locked;
 
+    this.readCloudStorage().catch(Components.utils.reportError);
     // don't override the preference's value in UI
     return undefined;
+  },
+
+  /**
+   * Show/Hide the cloud storage radio button with provider name as label if
+   * cloud storage provider is in use.
+   * Select cloud storage radio button if browser.download.useDownloadDir is true
+   * and browser.download.folderList has value 3. Enables/disables the folder field
+   * and Browse button if cloud storage radio button is selected.
+   *
+   */
+  async readCloudStorage() {
+    // Get preferred provider in use display name
+    let providerDisplayName = await CloudStorage.getProviderIfInUse();
+    if (providerDisplayName) {
+      // Show cloud storage radio button with provider name in label
+      let saveToCloudRadio = document.getElementById("saveToCloud");
+      let cloudStrings = Services.strings.createBundle("resource://cloudstorage/preferences.properties");
+      saveToCloudRadio.label = cloudStrings.formatStringFromName("saveFilesToCloudStorage",
+                                                                 [providerDisplayName], 1);
+      saveToCloudRadio.hidden = false;
+
+      let useDownloadDirPref = document.getElementById("browser.download.useDownloadDir");
+      let folderListPref = document.getElementById("browser.download.folderList");
+
+      // Check if useDownloadDir is true and folderListPref is set to Cloud Storage value 3
+      // before selecting cloudStorageradio button. Disable folder field and Browse button if
+      // 'Save to Cloud Storage Provider' radio option is selected
+      if (useDownloadDirPref.value && folderListPref.value === 3) {
+        document.getElementById("saveWhere").selectedItem = saveToCloudRadio;
+        document.getElementById("downloadFolder").disabled = true;
+        document.getElementById("chooseFolder").disabled = true;
+      }
+    }
+  },
+
+  /**
+   * Handle clicks to 'Save To <custom path> or <system default downloads>' and
+   * 'Save to <cloud storage provider>' if cloud storage radio button is displayed in UI.
+   * Sets browser.download.folderList value and Enables/disables the folder field and Browse
+   * button based on option selected.
+   */
+  handleSaveToCommand(event) {
+    return this.handleSaveToCommandTask(event).catch(Components.utils.reportError);
+  },
+  async handleSaveToCommandTask(event) {
+    if (event.target.id !== "saveToCloud" && event.target.id !== "saveTo") {
+      return;
+    }
+    // Check if Save To Cloud Storage Provider radio option is displayed in UI
+    // before continuing.
+    let saveToCloudRadio = document.getElementById("saveToCloud");
+    if (!saveToCloudRadio.hidden) {
+      // When switching between SaveTo and SaveToCloud radio button
+      // with useDownloadDirPref value true, if selectedIndex is other than
+      // SaveTo radio button disable downloadFolder filefield and chooseFolder button
+      let saveWhere = document.getElementById("saveWhere");
+      let useDownloadDirPref = document.getElementById("browser.download.useDownloadDir");
+      if (useDownloadDirPref.value) {
+        let downloadFolder = document.getElementById("downloadFolder");
+        let chooseFolder = document.getElementById("chooseFolder");
+        downloadFolder.disabled = saveWhere.selectedIndex || useDownloadDirPref.locked;
+        chooseFolder.disabled = saveWhere.selectedIndex || useDownloadDirPref.locked;
+      }
+
+      // Set folderListPref value depending on radio option
+      // selected. folderListPref should be set to 3 if Save To Cloud Storage Provider
+      // option is selected. If user switch back to 'Save To' custom path or system
+      // default Downloads, check pref 'browser.download.dir' before setting respective
+      // folderListPref value. If currentDirPref is unspecified folderList should
+      // default to 1
+      let folderListPref = document.getElementById("browser.download.folderList");
+      let saveTo = document.getElementById("saveTo");
+      if (saveWhere.selectedItem == saveToCloudRadio) {
+        folderListPref.value = 3;
+      } else if (saveWhere.selectedItem == saveTo) {
+        let currentDirPref = document.getElementById("browser.download.dir");
+        folderListPref.value = currentDirPref.value ? await this._folderToIndex(currentDirPref.value) : 1;
+      }
+    }
   },
 
   /**
@@ -631,12 +716,21 @@ var gMainPane = {
                  .QueryInterface(Components.interfaces.nsIFileProtocolHandler);
     var iconUrlSpec;
 
+    let folderIndex = folderListPref.value;
+    if (folderIndex == 3) {
+      // When user has selected cloud storage, use value in currentDirPref to
+      // compute index to display download folder label and icon to avoid
+      // displaying blank downloadFolder label and icon on load of preferences UI
+      // Set folderIndex to 1 if currentDirPref is unspecified
+      folderIndex = currentDirPref.value ? await this._folderToIndex(currentDirPref.value) : 1;
+    }
+
     // Display a 'pretty' label or the path in the UI.
-    if (folderListPref.value == 2) {
+    if (folderIndex == 2) {
       // Custom path selected and is configured
       downloadFolder.label = this._getDisplayNameOfFile(currentDirPref.value);
       iconUrlSpec = fph.getURLSpecFromFile(currentDirPref.value);
-    } else if (folderListPref.value == 1) {
+    } else if (folderIndex == 1) {
       // 'Downloads'
       downloadFolder.label = bundlePreferences.getString("downloadsFolderName");
       iconUrlSpec = fph.getURLSpecFromFile(await this._indexToFolder(1));
@@ -706,12 +800,12 @@ var gMainPane = {
    *          the Downloads folder if aIndex == 1,
    *          the folder stored in browser.download.dir
    */
-  async _indexToFolder(aIndex) {
+  _indexToFolder(aIndex) {
     switch (aIndex) {
       case 0:
-        return await this._getDownloadsFolder("Desktop");
+        return this._getDownloadsFolder("Desktop");
       case 1:
-        return await this._getDownloadsFolder("Downloads");
+        return this._getDownloadsFolder("Downloads");
     }
     var currentDirPref = document.getElementById("browser.download.dir");
     return currentDirPref.value;

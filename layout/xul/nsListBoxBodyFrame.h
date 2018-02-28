@@ -43,10 +43,10 @@ public:
 
   friend nsIFrame* NS_NewListBoxBodyFrame(nsIPresShell* aPresShell,
                                           nsStyleContext* aContext);
-  
+
   // nsIFrame
   virtual void Init(nsIContent*       aContent,
-                    nsContainerFrame* aParent, 
+                    nsContainerFrame* aParent,
                     nsIFrame*         aPrevInFlow) override;
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
@@ -89,7 +89,7 @@ public:
   virtual nsSize GetXULMinSizeForScrollArea(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetXULPrefSize(nsBoxLayoutState& aBoxLayoutState) override;
 
-  // size calculation 
+  // size calculation
   int32_t GetRowCount();
   int32_t GetRowHeightAppUnits() { return mRowHeight; }
   int32_t GetRowHeightPixels() const;
@@ -152,11 +152,13 @@ protected:
   class nsPositionChangedEvent : public mozilla::Runnable
   {
   public:
-    nsPositionChangedEvent(nsListBoxBodyFrame* aFrame,
-                           bool aUp, int32_t aDelta) :
-      mFrame(aFrame), mUp(aUp), mDelta(aDelta)
+    nsPositionChangedEvent(nsListBoxBodyFrame* aFrame, bool aUp, int32_t aDelta)
+      : mozilla::Runnable("nsListBoxBodyFrame::nsPositionChangedEvent")
+      , mFrame(aFrame)
+      , mUp(aUp)
+      , mDelta(aDelta)
     {}
-  
+
     NS_IMETHOD Run() override
     {
       if (!mFrame) {
@@ -201,7 +203,7 @@ protected:
 
   // scrolling
   int32_t mCurrentIndex; // Row-based
-  int32_t mOldIndex; 
+  int32_t mOldIndex;
   int32_t mYPosition;
   int32_t mTimePerRow;
 

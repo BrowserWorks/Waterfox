@@ -97,10 +97,14 @@ if CONFIG['NS_PRINTING']:
         'nsDeviceContextSpecWin.cpp',
         'nsPrintOptionsWin.cpp',
         'nsPrintSettingsWin.cpp',
-        'PDFiumEngineShim.cpp',
-        'PDFViaEMFPrintHelper.cpp',
-        'WindowsEMF.cpp',
     ]
+    if CONFIG['MOZ_ENABLE_SKIA_PDF']:
+        DIRS += ['/modules/pdfium']
+        UNIFIED_SOURCES += [
+            'PDFiumEngineShim.cpp',
+            'PDFViaEMFPrintHelper.cpp',
+            'WindowsEMF.cpp',
+        ]
 
 if CONFIG['NS_ENABLE_TSF']:
     SOURCES += [
@@ -111,11 +115,19 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
+if CONFIG['MOZ_ENABLE_SKIA_PDF']:
+  LOCAL_INCLUDES += [
+    '/gfx/skia/skia/include/config',
+    '/gfx/skia/skia/include/core',
+    '/modules/pdfium/pdfium/public',
+  ]
+
 LOCAL_INCLUDES += [
     '/layout/generic',
     '/layout/xul',
     '/toolkit/xre',
     '/widget',
+    '/widget/headless',
     '/xpcom/base',
 ]
 

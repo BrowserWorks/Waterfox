@@ -45,6 +45,8 @@ const kPrefCustomizationState        = "browser.uiCustomization.state";
 const kPrefCustomizationAutoAdd      = "browser.uiCustomization.autoAdd";
 const kPrefCustomizationDebug        = "browser.uiCustomization.debug";
 const kPrefDrawInTitlebar            = "browser.tabs.drawInTitlebar";
+const kPrefUIDensity                 = "browser.uidensity";
+const kPrefAutoTouchMode             = "browser.touchmode.auto";
 
 const kExpectedWindowURL = "chrome://browser/content/browser.xul";
 
@@ -159,6 +161,8 @@ var gUIStateBeforeReset = {
   uiCustomizationState: null,
   drawInTitlebar: null,
   currentTheme: null,
+  uiDensity: null,
+  autoTouchMode: null,
 };
 
 var gDefaultPanelPlacements = null;
@@ -212,7 +216,7 @@ var CustomizableUIInternal = {
       panelPlacements.splice(-1, 0, "developer-button");
     }
 
-    if (AppConstants.E10S_TESTING_ONLY) {
+    if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
       if (gPalette.has("e10s-button")) {
         let newWindowIndex = panelPlacements.indexOf("new-window-button");
         if (newWindowIndex > -1) {
@@ -246,6 +250,9 @@ var CustomizableUIInternal = {
       "home-button",
     ];
 
+    if (AppConstants.MOZ_PHOTON_THEME) {
+      navbarPlacements.push("sidebar-button");
+    }
     if (AppConstants.MOZ_DEV_EDITION) {
       navbarPlacements.splice(2, 0, "developer-button");
     }
@@ -323,6 +330,7 @@ var CustomizableUIInternal = {
       this.registerArea(CustomizableUI.AREA_FIXED_OVERFLOW_PANEL, {
         type: CustomizableUI.TYPE_MENU_PANEL,
         defaultPlacements: [],
+        anchor: "nav-bar-overflow-button",
       }, true);
     } else {
       if (gAreas.has(CustomizableUI.AREA_FIXED_OVERFLOW_PANEL)) {
@@ -512,6 +520,8 @@ var CustomizableUIInternal = {
     }
 
     // PROVIDER_SPECIAL gets treated the same as PROVIDER_XUL.
+    // XXXgijs: this causes bugs in code that depends on widgetWrapper.provider
+    // giving an accurate answer... filed as bug 1379821
     let wrapper = new XULWidgetGroupWrapper(aWidgetId);
     gGroupWrapperCache.set(aWidgetId, wrapper);
     return wrapper;
@@ -775,7 +785,7 @@ var CustomizableUIInternal = {
 
         this.ensureButtonContextMenu(node, aAreaNode);
         if (node.localName == "toolbarbutton") {
-          if (areaIsPanel) {
+          if (areaIsPanel && !gPhotonStructure) {
             node.setAttribute("wrap", "true");
           } else {
             node.removeAttribute("wrap");
@@ -961,7 +971,9 @@ var CustomizableUIInternal = {
         continue;
       }
       this.ensureButtonContextMenu(child, aPanelContents, true);
-      child.setAttribute("wrap", "true");
+      if (!gPhotonStructure) {
+        child.setAttribute("wrap", "true");
+      }
     }
 
     this.registerBuildArea(aArea, aPanelContents);
@@ -1284,9 +1296,6 @@ var CustomizableUIInternal = {
     let nodeName = "toolbar" + aId.match(/spring|spacer|separator/)[0];
     let node = aDocument.createElementNS(kNSXUL, nodeName);
     node.id = this.ensureSpecialWidgetId(aId);
-    if (nodeName == "toolbarspring") {
-      node.flex = 1;
-    }
     return node;
   },
 
@@ -1513,6 +1522,14 @@ var CustomizableUIInternal = {
   handleWidgetCommand(aWidget, aNode, aEvent) {
     log.debug("handleWidgetCommand");
 
+    if (aWidget.onBeforeCommand) {
+      try {
+        aWidget.onBeforeCommand.call(null, aEvent);
+      } catch (e) {
+        log.error(e);
+      }
+    }
+
     if (aWidget.type == "button") {
       if (aWidget.onCommand) {
         try {
@@ -1540,7 +1557,8 @@ var CustomizableUIInternal = {
           anchor = wrapper.anchor;
         }
       }
-      ownerWindow.PanelUI.showSubView(aWidget.viewId, anchor, area);
+
+      ownerWindow.PanelUI.showSubView(aWidget.viewId, anchor, area, aEvent);
     }
   },
 
@@ -2406,6 +2424,10 @@ var CustomizableUIInternal = {
     this.wrapWidgetEventHandler("onCreated", widget);
     this.wrapWidgetEventHandler("onDestroyed", widget);
 
+    if (typeof aData.onBeforeCommand == "function") {
+      widget.onBeforeCommand = aData.onBeforeCommand;
+    }
+
     if (widget.type == "button") {
       widget.onCommand = typeof aData.onCommand == "function" ?
                            aData.onCommand :
@@ -2559,6 +2581,8 @@ var CustomizableUIInternal = {
     try {
       gUIStateBeforeReset.drawInTitlebar = Services.prefs.getBoolPref(kPrefDrawInTitlebar);
       gUIStateBeforeReset.uiCustomizationState = Services.prefs.getCharPref(kPrefCustomizationState);
+      gUIStateBeforeReset.uiDensity = Services.prefs.getIntPref(kPrefUIDensity);
+      gUIStateBeforeReset.autoTouchMode = Services.prefs.getBoolPref(kPrefAutoTouchMode);
       gUIStateBeforeReset.currentTheme = LightweightThemeManager.currentTheme;
     } catch (e) { }
 
@@ -2566,6 +2590,8 @@ var CustomizableUIInternal = {
 
     Services.prefs.clearUserPref(kPrefCustomizationState);
     Services.prefs.clearUserPref(kPrefDrawInTitlebar);
+    Services.prefs.clearUserPref(kPrefUIDensity);
+    Services.prefs.clearUserPref(kPrefAutoTouchMode);
     LightweightThemeManager.currentTheme = null;
     log.debug("State reset");
 
@@ -2636,6 +2662,8 @@ var CustomizableUIInternal = {
     let uiCustomizationState = gUIStateBeforeReset.uiCustomizationState;
     let drawInTitlebar = gUIStateBeforeReset.drawInTitlebar;
     let currentTheme = gUIStateBeforeReset.currentTheme;
+    let uiDensity = gUIStateBeforeReset.uiDensity;
+    let autoTouchMode = gUIStateBeforeReset.autoTouchMode;
 
     // Need to clear the previous state before setting the prefs
     // because pref observers may check if there is a previous UI state.
@@ -2643,6 +2671,8 @@ var CustomizableUIInternal = {
 
     Services.prefs.setCharPref(kPrefCustomizationState, uiCustomizationState);
     Services.prefs.setBoolPref(kPrefDrawInTitlebar, drawInTitlebar);
+    Services.prefs.setIntPref(kPrefUIDensity, uiDensity);
+    Services.prefs.setBoolPref(kPrefAutoTouchMode, autoTouchMode);
     LightweightThemeManager.currentTheme = currentTheme;
     this.loadSavedState();
     // If the user just customizes toolbar/titlebar visibility, gSavedState will be null
@@ -2716,18 +2746,18 @@ var CustomizableUIInternal = {
   },
 
   canWidgetMoveToArea(aWidgetId, aArea) {
-    let placement = this.getPlacementOfWidget(aWidgetId);
-    if (placement && placement.area != aArea) {
-      // Special widgets can't move to the menu panel.
-      if (this.isSpecialWidget(aWidgetId) && gAreas.has(aArea) &&
-          gAreas.get(aArea).get("type") == CustomizableUI.TYPE_MENU_PANEL) {
-        return false;
-      }
-      // For everything else, just return whether the widget is removable.
-      return this.isWidgetRemovable(aWidgetId);
+    // Special widgets can't move to the menu panel.
+    if (this.isSpecialWidget(aWidgetId) && gAreas.has(aArea) &&
+        gAreas.get(aArea).get("type") == CustomizableUI.TYPE_MENU_PANEL) {
+      return false;
     }
-
-    return true;
+    let placement = this.getPlacementOfWidget(aWidgetId);
+    // Items in the palette can move, and items can move within their area:
+    if (!placement || placement.area == aArea) {
+      return true;
+    }
+    // For everything else, just return whether the widget is removable.
+    return this.isWidgetRemovable(aWidgetId);
   },
 
   ensureWidgetPlacedInWindow(aWidgetId, aWindow) {
@@ -2815,6 +2845,16 @@ var CustomizableUIInternal = {
           return false;
         }
       }
+    }
+
+    if (Services.prefs.prefHasUserValue(kPrefUIDensity)) {
+      log.debug(kPrefUIDensity + " pref is non-default");
+      return false;
+    }
+
+    if (Services.prefs.prefHasUserValue(kPrefAutoTouchMode)) {
+      log.debug(kPrefAutoTouchMode + " pref is non-default");
+      return false;
     }
 
     if (Services.prefs.prefHasUserValue(kPrefDrawInTitlebar)) {
@@ -3265,6 +3305,12 @@ this.CustomizableUI = {
    *                  passing the document from which it was removed. This is
    *                  useful especially for 'view' type widgets that need to
    *                  cleanup after views that were constructed on the fly.
+   * - onBeforeCommand(aEvt): A function that will be invoked when the user
+   *                          activates the button but before the command
+   *                          is evaluated. Useful if code needs to run to
+   *                          change the button's icon in preparation to the
+   *                          pending command action. Called for both type=button
+   *                          and type=view.
    * - onCommand(aEvt): Only useful for button widgets; a function that will be
    *                    invoked when the user activates the button.
    * - onClick(aEvt): Attached to all widgets; a function that will be invoked
@@ -3548,7 +3594,9 @@ this.CustomizableUI = {
   get canUndoReset() {
     return gUIStateBeforeReset.uiCustomizationState != null ||
            gUIStateBeforeReset.drawInTitlebar != null ||
-           gUIStateBeforeReset.currentTheme != null;
+           gUIStateBeforeReset.currentTheme != null ||
+           gUIStateBeforeReset.autoTouchMode != null ||
+           gUIStateBeforeReset.uiDensity != null;
   },
 
   /**
@@ -3787,6 +3835,15 @@ this.CustomizableUI = {
    */
   isBuiltinToolbar(aToolbarId) {
     return CustomizableUIInternal._builtinToolbars.has(aToolbarId);
+  },
+
+  /**
+   * Create an instance of a spring, spacer or separator.
+   * @param aId       the type of special widget (spring, spacer or separator)
+   * @param aDocument the document in which to create it.
+   */
+  createSpecialWidget(aId, aDocument) {
+    return CustomizableUIInternal.createSpecialWidget(aId, aDocument);
   },
 };
 Object.freeze(this.CustomizableUI);
@@ -4152,7 +4209,9 @@ OverflowableToolbar.prototype = {
         this._disable();
         break;
       case "dragover":
-        this._showWithTimeout();
+        if (this._enabled) {
+          this._showWithTimeout();
+        }
         break;
       case "dragend":
         this._panel.hidePopup();
@@ -4172,7 +4231,7 @@ OverflowableToolbar.prototype = {
     return new Promise(resolve => {
       let doc = this._panel.ownerDocument;
       this._panel.hidden = false;
-      let photonView = this._panel.querySelector("panelmultiview");
+      let photonView = this._panel.querySelector("photonpanelmultiview");
       let contextMenu;
       if (photonView) {
         let mainViewId = photonView.getAttribute("mainViewId");
@@ -4189,10 +4248,9 @@ OverflowableToolbar.prototype = {
       this._panel.openPopup(anchor || this._chevron);
       this._chevron.open = true;
 
-      let overflowableToolbarInstance = this;
-      this._panel.addEventListener("popupshown", function(aEvent) {
-        this.addEventListener("dragover", overflowableToolbarInstance);
-        this.addEventListener("dragend", overflowableToolbarInstance);
+      this._panel.addEventListener("popupshown", aEvent => {
+        this._panel.addEventListener("dragover", this);
+        this._panel.addEventListener("dragend", this);
         resolve();
       }, {once: true});
     });

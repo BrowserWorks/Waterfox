@@ -266,7 +266,7 @@ AddNamespaceRuleToMap(css::Rule* aRule, nsXMLNameSpaceMap* aMap)
   aMap->AddPrefix(nameSpaceRule->GetPrefix(), urlSpec);
 }
 
-void 
+void
 CSSStyleSheetInner::RebuildNameSpaces()
 {
   // Just nuke our existing namespace map, if any
@@ -377,8 +377,11 @@ CSSStyleSheet::CSSStyleSheet(const CSSStyleSheet& aCopy,
 
 CSSStyleSheet::~CSSStyleSheet()
 {
-  UnparentChildren();
+}
 
+void
+CSSStyleSheet::LastRelease()
+{
   DropRuleCollection();
   // XXX The document reference is not reference counted and should
   // not be released. The document will let us know when it is going
@@ -386,6 +389,7 @@ CSSStyleSheet::~CSSStyleSheet()
   if (mRuleProcessors) {
     NS_ASSERTION(mRuleProcessors->Length() == 0, "destructing sheet with rule processor reference");
     delete mRuleProcessors; // weak refs, should be empty here anyway
+    mRuleProcessors = nullptr;
   }
   if (mInRuleProcessorCache) {
     RuleProcessorCache::RemoveSheet(this);
@@ -515,34 +519,6 @@ CSSStyleSheet::EnabledStateChangedInternal()
   ClearRuleCascades();
 }
 
-uint64_t
-CSSStyleSheet::FindOwningWindowInnerID() const
-{
-  uint64_t windowID = 0;
-  if (mDocument) {
-    windowID = mDocument->InnerWindowID();
-  }
-
-  if (windowID == 0 && mOwningNode) {
-    windowID = mOwningNode->OwnerDoc()->InnerWindowID();
-  }
-
-  if (windowID == 0 && mOwnerRule) {
-    RefPtr<StyleSheet> sheet =
-      static_cast<css::Rule*>(mOwnerRule)->GetStyleSheet();
-    if (sheet) {
-      windowID = sheet->AsGecko()->FindOwningWindowInnerID();
-    }
-  }
-
-  if (windowID == 0 && mParent) {
-    CSSStyleSheet* parentAsCSS = mParent->AsGecko();
-    windowID = parentAsCSS->FindOwningWindowInnerID();
-  }
-
-  return windowID;
-}
-
 void
 CSSStyleSheet::AppendStyleRule(css::Rule* aRule)
 {
@@ -670,7 +646,7 @@ CSSStyleSheet::SetScopeElement(dom::Element* aScopeElement)
 }
 
 CSSRuleList*
-CSSStyleSheet::GetCssRulesInternal(ErrorResult& aRv)
+CSSStyleSheet::GetCssRulesInternal()
 {
   if (!mRuleCollection) {
     mRuleCollection = new CSSRuleListImpl(this);

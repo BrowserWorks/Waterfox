@@ -77,8 +77,8 @@ public:
     // on the holder. If the result is not cached, the lookup will happen afresh
     // for each access, which is the right thing for things like dynamic NodeList
     // properties.
-    virtual bool resolveOwnProperty(JSContext* cx, const js::Wrapper& jsWrapper,
-                                    JS::HandleObject wrapper, JS::HandleObject holder,
+    virtual bool resolveOwnProperty(JSContext* cx, JS::HandleObject wrapper,
+                                    JS::HandleObject target, JS::HandleObject holder,
                                     JS::HandleId id, JS::MutableHandle<JS::PropertyDescriptor> desc);
 
     bool delete_(JSContext* cx, JS::HandleObject wrapper, JS::HandleId id,
@@ -105,10 +105,11 @@ public:
     // Slots for holder objects.
     enum {
         HOLDER_SLOT_CACHED_PROTO = 0,
+        HOLDER_SLOT_EXPANDO = 1,
         HOLDER_SHARED_SLOT_COUNT
     };
 
-    JSObject* getHolder(JSObject* wrapper);
+    static JSObject* getHolder(JSObject* wrapper);
     JSObject* ensureHolder(JSContext* cx, JS::HandleObject wrapper);
     virtual JSObject* createHolder(JSContext* cx, JSObject* wrapper) = 0;
 
@@ -125,14 +126,21 @@ protected:
 
 private:
     bool expandoObjectMatchesConsumer(JSContext* cx, JS::HandleObject expandoObject,
-                                      nsIPrincipal* consumerOrigin,
-                                      JS::HandleObject exclusiveGlobal);
+                                      nsIPrincipal* consumerOrigin);
+
+    // |expandoChain| is the expando chain in the wrapped object's compartment.
+    // |exclusiveWrapper| is any xray that has exclusive use of the expando.
+    // |cx| may be in any compartment.
     bool getExpandoObjectInternal(JSContext* cx, JSObject* expandoChain,
-                                  nsIPrincipal* origin, JSObject* exclusiveGlobal,
-                                  JS::MutableHandleObject expandoObject);
-    JSObject* attachExpandoObject(JSContext* cx, JS::HandleObject target,
+                                  JS::HandleObject exclusiveWrapper,
                                   nsIPrincipal* origin,
-                                  JS::HandleObject exclusiveGlobal);
+                                  JS::MutableHandleObject expandoObject);
+
+    // |cx| is in the target's compartment, and |exclusiveWrapper| is any xray
+    // that has exclusive use of the expando.
+    JSObject* attachExpandoObject(JSContext* cx, JS::HandleObject target,
+                                  JS::HandleObject exclusiveWrapper,
+                                  nsIPrincipal* origin);
 
     XrayTraits(XrayTraits&) = delete;
     const XrayTraits& operator=(XrayTraits&) = delete;
@@ -150,7 +158,7 @@ public:
     virtual bool resolveNativeProperty(JSContext* cx, JS::HandleObject wrapper,
                                        JS::HandleObject holder, JS::HandleId id,
                                        JS::MutableHandle<JS::PropertyDescriptor> desc) override;
-    virtual bool resolveOwnProperty(JSContext* cx, const js::Wrapper& jsWrapper, JS::HandleObject wrapper,
+    virtual bool resolveOwnProperty(JSContext* cx, JS::HandleObject wrapper, JS::HandleObject target,
                                     JS::HandleObject holder, JS::HandleId id,
                                     JS::MutableHandle<JS::PropertyDescriptor> desc) override;
     bool defineProperty(JSContext* cx, JS::HandleObject wrapper, JS::HandleId id,
@@ -204,7 +212,7 @@ public:
         //       but we can't do that yet because XrayUtils::HasNativeProperty calls this.
         return true;
     }
-    virtual bool resolveOwnProperty(JSContext* cx, const js::Wrapper& jsWrapper, JS::HandleObject wrapper,
+    virtual bool resolveOwnProperty(JSContext* cx, JS::HandleObject wrapper, JS::HandleObject target,
                                     JS::HandleObject holder, JS::HandleId id,
                                     JS::MutableHandle<JS::PropertyDescriptor> desc) override;
 
@@ -251,7 +259,7 @@ public:
         MOZ_CRASH("resolveNativeProperty hook should never be called with HasPrototype = 1");
     }
 
-    virtual bool resolveOwnProperty(JSContext* cx, const js::Wrapper& jsWrapper, JS::HandleObject wrapper,
+    virtual bool resolveOwnProperty(JSContext* cx, JS::HandleObject wrapper, JS::HandleObject target,
                                     JS::HandleObject holder, JS::HandleId id,
                                     JS::MutableHandle<JS::PropertyDescriptor> desc) override;
 
@@ -368,7 +376,7 @@ public:
         MOZ_CRASH("resolveNativeProperty hook should never be called with HasPrototype = 1");
     }
 
-    virtual bool resolveOwnProperty(JSContext* cx, const js::Wrapper& jsWrapper, JS::HandleObject wrapper,
+    virtual bool resolveOwnProperty(JSContext* cx, JS::HandleObject wrapper, JS::HandleObject target,
                                     JS::HandleObject holder, JS::HandleId id,
                                     JS::MutableHandle<JS::PropertyDescriptor> desc) override;
 
@@ -459,8 +467,7 @@ class XrayWrapper : public Base {
                                  JS::AutoIdVector& props) const override;
     virtual bool delete_(JSContext* cx, JS::Handle<JSObject*> wrapper,
                          JS::Handle<jsid> id, JS::ObjectOpResult& result) const override;
-    virtual bool enumerate(JSContext* cx, JS::Handle<JSObject*> wrapper,
-                           JS::MutableHandle<JSObject*> objp) const override;
+    virtual JSObject* enumerate(JSContext* cx, JS::Handle<JSObject*> wrapper) const override;
     virtual bool getPrototype(JSContext* cx, JS::HandleObject wrapper,
                               JS::MutableHandleObject protop) const override;
     virtual bool setPrototype(JSContext* cx, JS::HandleObject wrapper,
@@ -566,8 +573,7 @@ public:
                         bool* bp) const override;
     virtual bool getOwnEnumerablePropertyKeys(JSContext* cx, JS::Handle<JSObject*> proxy,
                                               JS::AutoIdVector& props) const override;
-    virtual bool enumerate(JSContext* cx, JS::Handle<JSObject*> proxy,
-                           JS::MutableHandle<JSObject*> objp) const override;
+    virtual JSObject* enumerate(JSContext* cx, JS::Handle<JSObject*> proxy) const override;
 };
 
 extern const SandboxProxyHandler sandboxProxyHandler;
@@ -603,7 +609,7 @@ class AutoSetWrapperNotShadowing;
 enum ExpandoSlots {
     JSSLOT_EXPANDO_NEXT = 0,
     JSSLOT_EXPANDO_ORIGIN,
-    JSSLOT_EXPANDO_EXCLUSIVE_GLOBAL,
+    JSSLOT_EXPANDO_EXCLUSIVE_WRAPPER_HOLDER,
     JSSLOT_EXPANDO_PROTOTYPE,
     JSSLOT_EXPANDO_COUNT
 };
@@ -625,6 +631,9 @@ ClearXrayExpandoSlots(JSObject* target, size_t slotIndex);
  */
 JSObject*
 EnsureXrayExpandoObject(JSContext* cx, JS::HandleObject wrapper);
+
+// Information about xrays for use by the JITs.
+extern js::XrayJitInfo gXrayJitInfo;
 
 } // namespace xpc
 

@@ -80,7 +80,6 @@
     _(InitElem)                     \
     _(InitElemGetterSetter)         \
     _(MutateProto)                  \
-    _(InitProp)                     \
     _(InitPropGetterSetter)         \
     _(CheckOverRecursed)            \
     _(DefVar)                       \
@@ -217,6 +216,7 @@
     _(IntToString)                  \
     _(DoubleToString)               \
     _(ValueToString)                \
+    _(ValueToObject)                \
     _(ValueToObjectOrNull)          \
     _(Int32x4ToFloat32x4)           \
     _(Float32x4ToInt32x4)           \
@@ -240,6 +240,7 @@
     _(BinarySharedStub)             \
     _(UnarySharedStub)              \
     _(NullarySharedStub)            \
+    _(ClassConstructor)             \
     _(Lambda)                       \
     _(LambdaArrow)                  \
     _(LambdaForSingleton)           \
@@ -283,6 +284,7 @@
     _(LoadUnboxedScalar)            \
     _(LoadUnboxedPointerV)          \
     _(LoadUnboxedPointerT)          \
+    _(LoadElementFromStateV)        \
     _(UnboxObjectOrNull)            \
     _(StoreElementV)                \
     _(StoreElementT)                \
@@ -339,9 +341,7 @@
     _(SetPropertyCache)             \
     _(SetPropertyPolymorphicV)      \
     _(SetPropertyPolymorphicT)      \
-    _(CallIteratorStartV)           \
-    _(CallIteratorStartO)           \
-    _(IteratorStartO)               \
+    _(GetIteratorCache)             \
     _(IteratorMore)                 \
     _(IsNoIterAndBranch)            \
     _(IteratorEnd)                  \
@@ -391,9 +391,13 @@
     _(CallDOMNative)                \
     _(IsCallable)                   \
     _(IsConstructor)                \
+    _(IsArrayO)                     \
+    _(IsArrayV)                     \
+    _(IsTypedArray)                 \
     _(IsObject)                     \
     _(IsObjectAndBranch)            \
     _(HasClass)                     \
+    _(ObjectClassToString)          \
     _(RecompileCheck)               \
     _(MemoryBarrier)                \
     _(AssertRangeI)                 \
@@ -413,6 +417,9 @@
     _(CheckIsCallable)              \
     _(CheckObjCoercible)            \
     _(DebugCheckSelfHosted)         \
+    _(FinishBoundFunctionInit)      \
+    _(IsPackedArray)                \
+    _(GetPrototypeOf)               \
     _(AsmJSLoadHeap)                \
     _(AsmJSStoreHeap)               \
     _(AsmJSCompareExchangeHeap)     \

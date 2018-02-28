@@ -9,6 +9,7 @@
 #include "gfx2DGlue.h"
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "mozilla/Atomics.h"
+#include "mozilla/SystemGroup.h"
 #include "mozilla/ipc/SharedMemory.h"   // for SharedMemory, etc
 #include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/layers/ISurfaceAllocator.h"
@@ -234,9 +235,11 @@ static void DestroyTextureData(TextureData* aTextureData, LayersIPCChannel* aAll
 
   if (aMainThreadOnly && !NS_IsMainThread()) {
     RefPtr<LayersIPCChannel> allocatorRef = aAllocator;
-    NS_DispatchToMainThread(NS_NewRunnableFunction([aTextureData, allocatorRef, aDeallocate]() -> void {
-      DestroyTextureData(aTextureData, allocatorRef, aDeallocate, true);
-    }));
+    SystemGroup::Dispatch(TaskCategory::Other, NS_NewRunnableFunction(
+        "layers::DestroyTextureData",
+        [aTextureData, allocatorRef, aDeallocate]() -> void {
+          DestroyTextureData(aTextureData, allocatorRef, aDeallocate, true);
+        }));
     return;
   }
 
@@ -251,7 +254,7 @@ static void DestroyTextureData(TextureData* aTextureData, LayersIPCChannel* aAll
 void
 TextureChild::ActorDestroy(ActorDestroyReason why)
 {
-  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("TextureChild::ActorDestroy", GRAPHICS);
   MOZ_ASSERT(mIPCOpen);
   mIPCOpen = false;
 
@@ -506,7 +509,7 @@ TextureClient::Lock(OpenMode aMode)
 
   auto format = GetFormat();
   if (mIsLocked && CanExposeDrawTarget() &&
-      aMode == OpenMode::OPEN_READ_WRITE &&
+      (aMode & OpenMode::OPEN_READ_WRITE) == OpenMode::OPEN_READ_WRITE &&
       NS_IsMainThread() &&
       // the formats that we apparently expect, in the cairo backend. Any other
       // format will trigger an assertion in GfxFormatToCairoFormat.
@@ -554,7 +557,8 @@ TextureClient::Unlock()
     mBorrowedDrawTarget->DetachAllSnapshots();
     // If this assertion is hit, it means something is holding a strong reference
     // to our DrawTarget externally, which is not allowed.
-    MOZ_ASSERT(mBorrowedDrawTarget->refCount() <= mExpectedDtRefs);
+    MOZ_ASSERT_IF(!(mOpenMode & OpenMode::OPEN_ASYNC_WRITE),
+                  mBorrowedDrawTarget->refCount() <= mExpectedDtRefs);
 
     mBorrowedDrawTarget = nullptr;
   }

@@ -6,7 +6,6 @@
 #include <math.h>
 
 #include "prlink.h"
-#include "prmem.h"
 #include "prenv.h"
 #include "gfxPrefs.h"
 #include "nsString.h"
@@ -116,18 +115,16 @@ LoadOSVRRuntime()
   static PRLibrary* osvrClientLib = nullptr;
   static PRLibrary* osvrClientKitLib = nullptr;
   //this looks up the path in the about:config setting, from greprefs.js or modules\libpref\init\all.js
-  nsAdoptingCString osvrUtilPath =
-    mozilla::Preferences::GetCString("gfx.vr.osvr.utilLibPath");
-  nsAdoptingCString osvrCommonPath =
-    mozilla::Preferences::GetCString("gfx.vr.osvr.commonLibPath");
-  nsAdoptingCString osvrClientPath =
-    mozilla::Preferences::GetCString("gfx.vr.osvr.clientLibPath");
-  nsAdoptingCString osvrClientKitPath =
-    mozilla::Preferences::GetCString("gfx.vr.osvr.clientKitLibPath");
-
   //we need all the libs to be valid
-  if ((!osvrUtilPath) || (!osvrCommonPath) || (!osvrClientPath) ||
-      (!osvrClientKitPath)) {
+  nsAutoCString osvrUtilPath, osvrCommonPath, osvrClientPath, osvrClientKitPath;
+  if (NS_FAILED(mozilla::Preferences::GetCString("gfx.vr.osvr.utilLibPath",
+                                                 osvrUtilPath)) ||
+      NS_FAILED(mozilla::Preferences::GetCString("gfx.vr.osvr.commonLibPath",
+                                                 osvrCommonPath)) ||
+      NS_FAILED(mozilla::Preferences::GetCString("gfx.vr.osvr.clientLibPath",
+                                                 osvrClientPath)) ||
+      NS_FAILED(mozilla::Preferences::GetCString("gfx.vr.osvr.clientKitLibPath",
+                                                 osvrClientKitPath))) {
     return false;
   }
 
@@ -328,6 +325,18 @@ VRDisplayOSVR::SubmitFrame(TextureSourceD3D11* aSource,
   const IntSize& aSize,
   const gfx::Rect& aLeftEyeRect,
   const gfx::Rect& aRightEyeRect)
+{
+  // XXX Add code to submit frame
+  return false;
+}
+
+#elif defined(XP_MACOSX)
+
+bool
+VRDisplayOSVR::SubmitFrame(MacIOSurface* aMacIOSurface,
+                           const IntSize& aSize,
+                           const gfx::Rect& aLeftEyeRect,
+                           const gfx::Rect& aRightEyeRect)
 {
   // XXX Add code to submit frame
   return false;

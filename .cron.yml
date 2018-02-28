@@ -7,18 +7,26 @@ jobs:
       job:
           type: decision-task
           treeherder-symbol: Nd
-          target-tasks-method: nightly_linux
+          target-tasks-method: nightly_desktop
       run-on-projects:
           - mozilla-central
-          - mozilla-aurora
           - date
       when:
           by-project:
             # Match buildbot starts for now
             date: [{hour: 15, minute: 0}]
             mozilla-central: [{hour: 10, minute: 0}]
-            mozilla-aurora: [] # bug 1358976
             # No default
+
+    - name: nightly-desktop-linux
+      job:
+          type: decision-task
+          treeherder-symbol: Nd-Ln
+          target-tasks-method: nightly_linux
+      run-on-projects:
+          - mozilla-central
+          - date
+      when: [] # never (hook only)
 
     - name: nightly-desktop-osx
       job:
@@ -26,15 +34,17 @@ jobs:
           treeherder-symbol: Nd-OSX
           target-tasks-method: nightly_macosx
       run-on-projects:
+          - mozilla-central
           - date
       when: [] # never (hook only)
 
-    - name: nightly-desktop-win64
+    - name: nightly-desktop-win
       job:
           type: decision-task
-          treeherder-symbol: Nd-Win64
-          target-tasks-method: nightly_win64
+          treeherder-symbol: Nd-Win
+          target-tasks-method: nightly_win
       run-on-projects:
+          - mozilla-central
           - date
       when: [] # never (hook only)
 
@@ -45,14 +55,12 @@ jobs:
           target-tasks-method: nightly_fennec
       run-on-projects:
           - mozilla-central
-          - mozilla-aurora
           - date
       when:
         by-project:
             # Match buildbot starts for now
             date: [{hour: 15, minute: 0}]
             mozilla-central: [{hour: 10, minute: 0}]
-            mozilla-aurora: [] # bug 1358976
             # No default
 
     - name: nightly-mochitest-valgrind
@@ -66,12 +74,14 @@ jobs:
           - {hour: 16, minute: 0}
           - {hour: 4, minute: 0}
 
-    - name: nightly-code-coverage
+    - name: nightly-dmd
       job:
           type: decision-task
-          treeherder-symbol: Nc
-          target-tasks-method: nightly_code_coverage
+          treeherder-symbol: Ndmd
+          target-tasks-method: nightly_dmd
       run-on-projects:
           - mozilla-central
       when:
-          - {hour: 18, minute: 0}
+          by-project:
+            mozilla-central: [{hour: 10, minute: 0}]
+            # No default

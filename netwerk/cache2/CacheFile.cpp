@@ -30,10 +30,11 @@ namespace net {
 
 class NotifyCacheFileListenerEvent : public Runnable {
 public:
-  NotifyCacheFileListenerEvent(CacheFileListener *aCallback,
+  NotifyCacheFileListenerEvent(CacheFileListener* aCallback,
                                nsresult aResult,
                                bool aIsNew)
-    : mCallback(aCallback)
+    : Runnable("net::NotifyCacheFileListenerEvent")
+    , mCallback(aCallback)
     , mRV(aResult)
     , mIsNew(aIsNew)
   {
@@ -65,11 +66,12 @@ protected:
 
 class NotifyChunkListenerEvent : public Runnable {
 public:
-  NotifyChunkListenerEvent(CacheFileChunkListener *aCallback,
+  NotifyChunkListenerEvent(CacheFileChunkListener* aCallback,
                            nsresult aResult,
                            uint32_t aChunkIdx,
-                           CacheFileChunk *aChunk)
-    : mCallback(aCallback)
+                           CacheFileChunk* aChunk)
+    : Runnable("net::NotifyChunkListenerEvent")
+    , mCallback(aCallback)
     , mRV(aResult)
     , mChunkIdx(aChunkIdx)
     , mChunk(aChunk)
@@ -330,6 +332,18 @@ CacheFile::OnChunkRead(nsresult aResult, CacheFileChunk *aChunk)
   LOG(("CacheFile::OnChunkRead() [this=%p, rv=0x%08" PRIx32 ", chunk=%p, idx=%u]",
        this, static_cast<uint32_t>(aResult), aChunk, index));
 
+  if (aChunk->mDiscardedChunk) {
+    // We discard only unused chunks, so it must be still unused when reading
+    // data finishes.
+    MOZ_ASSERT(aChunk->mRefCnt == 2);
+    aChunk->mActiveChunk = false;
+    ReleaseOutsideLock(RefPtr<CacheFileChunkListener>(aChunk->mFile.forget()).forget());
+
+    DebugOnly<bool> removed = mDiscardedChunks.RemoveElement(aChunk);
+    MOZ_ASSERT(removed);
+    return NS_OK;
+  }
+
   if (NS_FAILED(aResult)) {
     SetError(aResult);
   }
@@ -362,6 +376,18 @@ CacheFile::OnChunkWritten(nsresult aResult, CacheFileChunk *aChunk)
   MOZ_ASSERT(!mMemoryOnly);
   MOZ_ASSERT(!mOpeningFile);
   MOZ_ASSERT(mHandle);
+
+  if (aChunk->mDiscardedChunk) {
+    // We discard only unused chunks, so it must be still unused when writing
+    // data finishes.
+    MOZ_ASSERT(aChunk->mRefCnt == 2);
+    aChunk->mActiveChunk = false;
+    ReleaseOutsideLock(RefPtr<CacheFileChunkListener>(aChunk->mFile.forget()).forget());
+
+    DebugOnly<bool> removed = mDiscardedChunks.RemoveElement(aChunk);
+    MOZ_ASSERT(removed);
+    return NS_OK;
+  }
 
   if (NS_FAILED(aResult)) {
     SetError(aResult);
@@ -745,7 +771,7 @@ CacheFile::OpenInputStream(nsICacheEntry *aEntryHandle, nsIInputStream **_retval
     // a failed state.  This is the only way to protect consumers correctly
     // from reading a broken entry.  When the file is in the failed state,
     // it's also doomed, so reopening the entry won't make any difference -
-    // data will still be inaccessible anymore.  Note that for just doomed 
+    // data will still be inaccessible anymore.  Note that for just doomed
     // files, we must allow reading the data.
     return mStatus;
   }
@@ -799,7 +825,7 @@ CacheFile::OpenAlternativeInputStream(nsICacheEntry *aEntryHandle,
     // a failed state.  This is the only way to protect consumers correctly
     // from reading a broken entry.  When the file is in the failed state,
     // it's also doomed, so reopening the entry won't make any difference -
-    // data will still be inaccessible anymore.  Note that for just doomed 
+    // data will still be inaccessible anymore.  Note that for just doomed
     // files, we must allow reading the data.
     return mStatus;
   }
@@ -874,6 +900,16 @@ CacheFile::OpenOutputStream(CacheOutputCloseListener *aCloseListener, nsIOutputS
     return NS_ERROR_NOT_AVAILABLE;
   }
 
+  if (NS_FAILED(mStatus)) {
+    LOG(("CacheFile::OpenOutputStream() - CacheFile is in a failure state "
+         "[this=%p, status=0x%08" PRIx32 "]", this,
+         static_cast<uint32_t>(mStatus)));
+
+    // The CacheFile is already doomed. It make no sense to allow to write any
+    // data to such entry.
+    return mStatus;
+  }
+
   // Fail if there is any input stream opened for alternative data
   for (uint32_t i = 0; i < mInputs.Length(); ++i) {
     if (mInputs[i]->IsAlternativeData()) {
@@ -930,6 +966,16 @@ CacheFile::OpenAlternativeOutputStream(CacheOutputCloseListener *aCloseListener,
          "stream %p [this=%p]", mOutput, this));
 
     return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  if (NS_FAILED(mStatus)) {
+    LOG(("CacheFile::OpenAlternativeOutputStream() - CacheFile is in a failure "
+         "state [this=%p, status=0x%08" PRIx32 "]", this,
+         static_cast<uint32_t>(mStatus)));
+
+    // The CacheFile is already doomed. It make no sense to allow to write any
+    // data to such entry.
+    return mStatus;
   }
 
   // Fail if there is any input stream opened for alternative data
@@ -1207,8 +1253,6 @@ nsresult CacheFile::SetNetworkTimes(uint64_t aOnStartTime, uint64_t aOnStopTime)
 
   MOZ_ASSERT(mMetadata);
   NS_ENSURE_TRUE(mMetadata, NS_ERROR_UNEXPECTED);
-  MOZ_ASSERT(aOnStartTime != kIndexTimeNotAvailable);
-  MOZ_ASSERT(aOnStopTime != kIndexTimeNotAvailable);
 
   PostWriteTimer();
 
@@ -1901,8 +1945,11 @@ CacheFile::Truncate(int64_t aOffset)
 
   nsresult rv;
 
-  MOZ_ASSERT(aOffset <= mDataSize);
+  // If we ever need to truncate on non alt-data boundary, we need to handle
+  // existing input streams.
+  MOZ_ASSERT(aOffset == mAltDataOffset, "Truncating normal data not implemented");
   MOZ_ASSERT(mReady);
+  MOZ_ASSERT(!mOutput);
 
   uint32_t lastChunk = 0;
   if (mDataSize > 0) {
@@ -1916,6 +1963,9 @@ CacheFile::Truncate(int64_t aOffset)
 
   uint32_t bytesInNewLastChunk = aOffset - newLastChunk * kChunkSize;
 
+  LOG(("CacheFileTruncate() - lastChunk=%u, newLastChunk=%u, "
+       "bytesInNewLastChunk=%u", lastChunk, newLastChunk, bytesInNewLastChunk));
+
   // Remove all truncated chunks from mCachedChunks
   for (auto iter = mCachedChunks.Iter(); !iter.Done(); iter.Next()) {
     uint32_t idx = iter.Key();
@@ -1927,6 +1977,34 @@ CacheFile::Truncate(int64_t aOffset)
     }
   }
 
+  // We need to make sure no input stream holds a reference to a chunk we're
+  // going to discard. In theory, if alt-data begins at chunk boundary, input
+  // stream for normal data can get the chunk containing only alt-data via
+  // EnsureCorrectChunk() call. The input stream won't read the data from such
+  // chunk, but it will keep the reference until the stream is closed and we
+  // cannot simply discard this chunk.
+  int64_t maxInputChunk = -1;
+  for (uint32_t i = 0; i < mInputs.Length(); ++i) {
+    int64_t inputChunk = mInputs[i]->GetChunkIdx();
+
+    if (maxInputChunk < inputChunk) {
+      maxInputChunk = inputChunk;
+    }
+
+    MOZ_RELEASE_ASSERT(mInputs[i]->GetPosition() <= aOffset);
+  }
+
+  MOZ_RELEASE_ASSERT(maxInputChunk <= newLastChunk + 1);
+  if (maxInputChunk == newLastChunk + 1) {
+    // Truncating must be done at chunk boundary
+    MOZ_RELEASE_ASSERT(bytesInNewLastChunk == kChunkSize);
+    newLastChunk++;
+    bytesInNewLastChunk = 0;
+    LOG(("CacheFile::Truncate() - chunk %p is still in use, using "
+         "newLastChunk=%u and bytesInNewLastChunk=%u",
+         mChunks.GetWeak(newLastChunk), newLastChunk, bytesInNewLastChunk));
+  }
+
   // Discard all truncated chunks in mChunks
   for (auto iter = mChunks.Iter(); !iter.Done(); iter.Next()) {
     uint32_t idx = iter.Key();
@@ -1935,6 +2013,11 @@ CacheFile::Truncate(int64_t aOffset)
       RefPtr<CacheFileChunk>& chunk = iter.Data();
       LOG(("CacheFile::Truncate() - discarding chunk [idx=%u, chunk=%p]",
            idx, chunk.get()));
+
+      if (HaveChunkListeners(idx)) {
+        NotifyChunkListeners(idx, NS_ERROR_NOT_AVAILABLE, chunk);
+      }
+
       chunk->mDiscardedChunk = true;
       mDiscardedChunks.AppendElement(chunk);
       iter.Remove();
@@ -2135,7 +2218,7 @@ CacheFile::QueueChunkListener(uint32_t aIndex,
   if (!item->mTarget) {
     LOG(("CacheFile::QueueChunkListener() - Cannot get Cache I/O thread! Using "
          "main thread for callback."));
-    item->mTarget = do_GetMainThread();
+    item->mTarget = GetMainThreadEventTarget();
   }
   item->mCallback = aCallback;
 

@@ -15,7 +15,7 @@ from ipdl.type import ActorType, TypeVisitor, builtinHeaderIncludes
 ## "Public" interface to lowering
 ##
 class LowerToCxx:
-    def lower(self, tu):
+    def lower(self, tu, segmentcapacitydict):
         '''returns |[ header: File ], [ cpp : File ]| representing the
 lowered form of |tu|'''
         # annotate the AST with IPDL/C++ IR-type stuff used later
@@ -26,7 +26,7 @@ lowered form of |tu|'''
         name = tu.name
         pheader, pcpp = File(name +'.h'), File(name +'.cpp')
 
-        _GenerateProtocolCode().lower(tu, pheader, pcpp)
+        _GenerateProtocolCode().lower(tu, pheader, pcpp, segmentcapacitydict)
         headers = [ pheader ]
         cpps = [ pcpp ]
 
@@ -1417,10 +1417,11 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
         self.structUnionDefns = []
         self.funcDefns = []
 
-    def lower(self, tu, cxxHeaderFile, cxxFile):
+    def lower(self, tu, cxxHeaderFile, cxxFile, segmentcapacitydict):
         self.protocol = tu.protocol
         self.hdrfile = cxxHeaderFile
         self.cppfile = cxxFile
+        self.segmentcapacitydict = segmentcapacitydict
         tu.accept(self)
 
     def visitTranslationUnit(self, tu):
@@ -1577,8 +1578,15 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
         for md in p.messageDecls:
             decls = []
 
+            # Look up the segment capacity used for serializing this
+            # message. If the capacity is not specified, use '0' for
+            # the default capacity (defined in ipc_message.cc)
+            name = '%s::%s' % (md.namespace, md.decl.progname)
+            segmentcapacity = self.segmentcapacitydict.get(name, 0)
+
             mfDecl, mfDefn = _splitFuncDeclDefn(
                 _generateMessageConstructor(md.msgCtorFunc(), md.msgId(),
+                                            segmentcapacity,
                                             md.decl.type.nested,
                                             md.decl.type.prio,
                                             md.prettyMsgName(p.name+'::'),
@@ -1590,6 +1598,7 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
                 rfDecl, rfDefn = _splitFuncDeclDefn(
                     _generateMessageConstructor(
                         md.replyCtorFunc(), md.replyId(),
+                        0,
                         md.decl.type.nested,
                         md.decl.type.prio,
                         md.prettyReplyName(p.name+'::'),
@@ -1626,8 +1635,6 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
             ExprVar('mozilla::ipc::CreateEndpoints'),
             args=[ _backstagePass(),
                    parentpidvar, childpidvar,
-                   _protocolId(p),
-                   ExprVar(_messageStartName(p) + 'Child'),
                    parentvar, childvar
                    ])))
         return openfunc
@@ -1692,7 +1699,7 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
 
 ##--------------------------------------------------
 
-def _generateMessageConstructor(clsname, msgid, nested, prio, prettyName, compress):
+def _generateMessageConstructor(clsname, msgid, segmentSize, nested, prio, prettyName, compress):
     routingId = ExprVar('routingId')
 
     func = FunctionDefn(FunctionDecl(
@@ -1726,6 +1733,7 @@ def _generateMessageConstructor(clsname, msgid, nested, prio, prettyName, compre
         StmtReturn(ExprNew(Type('IPC::Message'),
                            args=[ routingId,
                                   ExprVar(msgid),
+                                  ExprLiteral.Int(int(segmentSize)),
                                   ExprVar(nestedEnum),
                                   ExprVar(prioEnum),
                                   compression,
@@ -4585,7 +4593,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             + [ Whitespace.NL,
                 StmtDecl(Decl(Type.BOOL, sendok.name)),
                 StmtBlock([
-                    StmtDecl(Decl(Type('GeckoProfilerTracingRAII'),
+                    StmtDecl(Decl(Type('AutoProfilerTracing'),
                                   'syncIPCTracer'),
                              initargs=[ ExprLiteral.String("IPC"),
                                         ExprLiteral.String(self.protocol.name + "::" + md.prettyMsgName()) ]),
@@ -4679,10 +4687,10 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                                              else 'mozilla::ipc::MessageDirection::eSending') ])) ])
 
     def profilerLabel(self, md):
-        return StmtExpr(ExprCall(ExprVar('PROFILER_LABEL'),
-                                 [ ExprLiteral.String(self.protocol.name),
-                                   ExprLiteral.String(md.prettyMsgName()),
-                                   ExprVar('js::ProfileEntry::Category::OTHER') ]))
+        labelStr = self.protocol.name + '::' + md.prettyMsgName()
+        return StmtExpr(ExprCall(ExprVar('AUTO_PROFILER_LABEL'),
+                                 [ ExprLiteral.String(labelStr),
+                                   ExprVar('OTHER') ]))
 
     def saveActorId(self, md):
         idvar = ExprVar('id__')

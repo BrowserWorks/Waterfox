@@ -176,6 +176,7 @@
 #include "nsIConsoleService.h"
 #include "mozilla/Attributes.h"
 #include "nsICycleCollectorListener.h"
+#include "nsISerialEventTarget.h"
 #include "nsIMemoryReporter.h"
 #include "nsIFile.h"
 #include "nsDumpUtils.h"
@@ -955,27 +956,6 @@ CanonicalizeXPCOMParticipant(nsISupports* aIn)
   return out;
 }
 
-static inline void
-ToParticipant(nsISupports* aPtr, nsXPCOMCycleCollectionParticipant** aCp);
-
-static void
-CanonicalizeParticipant(void** aParti, nsCycleCollectionParticipant** aCp)
-{
-  // If the participant is null, this is an nsISupports participant,
-  // so we must QI to get the real participant.
-
-  if (!*aCp) {
-    nsISupports* nsparti = static_cast<nsISupports*>(*aParti);
-    nsparti = CanonicalizeXPCOMParticipant(nsparti);
-    NS_ASSERTION(nsparti,
-                 "Don't add objects that don't participate in collection!");
-    nsXPCOMCycleCollectionParticipant* xcp;
-    ToParticipant(nsparti, &xcp);
-    *aParti = nsparti;
-    *aCp = xcp;
-  }
-}
-
 struct nsPurpleBufferEntry
 {
   nsPurpleBufferEntry(void* aObject, nsCycleCollectingAutoRefCnt* aRefCnt,
@@ -1073,7 +1053,9 @@ public:
     for (; !iter.Done(); iter.Next()) {
       nsPurpleBufferEntry& e = iter.Get();
       if (e.mObject) {
-        aVisitor.Visit(*this, &e);
+        if (!aVisitor.Visit(*this, &e)) {
+          return;
+        }
       }
 
       // Visit call above may have cleared the entry, or the entry was empty
@@ -1086,7 +1068,9 @@ public:
             break;
           }
           if (otherEntry.mObject) {
-            aVisitor.Visit(*this, &otherEntry);
+            if (!aVisitor.Visit(*this, &otherEntry)) {
+              return;
+            }
             // Visit may have cleared otherEntry.
             if (otherEntry.mObject) {
               e.Swap(otherEntry);
@@ -1148,6 +1132,7 @@ public:
   //     that will have no children in the cycle collector graph will also be
   //     removed. CanSkip() may be run on these children.
   void RemoveSkippable(nsCycleCollector* aCollector,
+                       js::SliceBudget& aBudget,
                        bool aRemoveChildlessNodes,
                        bool aAsyncSnowWhiteFreeing,
                        CC_ForgetSkippableCallback aCb);
@@ -1190,7 +1175,7 @@ struct SelectPointersVisitor
   {
   }
 
-  void
+  bool
   Visit(nsPurpleBuffer& aBuffer, nsPurpleBufferEntry* aEntry)
   {
     MOZ_ASSERT(aEntry->mObject, "Null object in purple buffer");
@@ -1200,6 +1185,7 @@ struct SelectPointersVisitor
         AddPurpleRoot(mBuilder, aEntry->mObject, aEntry->mParticipant)) {
       aBuffer.Remove(aEntry);
     }
+    return true;
   }
 
 private:
@@ -1263,7 +1249,7 @@ private:
   RefPtr<nsCycleCollectorLogger> mLogger;
 
 #ifdef DEBUG
-  void* mThread;
+  nsISerialEventTarget* mEventTarget;
 #endif
 
   nsCycleCollectorParams mParams;
@@ -1304,7 +1290,8 @@ public:
   void Suspect(void* aPtr, nsCycleCollectionParticipant* aCp,
                nsCycleCollectingAutoRefCnt* aRefCnt);
   uint32_t SuspectedCount();
-  void ForgetSkippable(bool aRemoveChildlessNodes, bool aAsyncSnowWhiteFreeing);
+  void ForgetSkippable(js::SliceBudget& aBudget, bool aRemoveChildlessNodes,
+                       bool aAsyncSnowWhiteFreeing);
   bool FreeSnowWhite(bool aUntilNoSWInPurpleBuffer);
 
   // This method assumes its argument is already canonicalized.
@@ -1418,6 +1405,21 @@ ToParticipant(nsISupports* aPtr, nsXPCOMCycleCollectionParticipant** aCp)
   CallQueryInterface(aPtr, aCp);
 }
 
+static void
+ToParticipant(void* aParti, nsCycleCollectionParticipant** aCp)
+{
+  // If the participant is null, this is an nsISupports participant,
+  // so we must QI to get the real participant.
+
+  if (!*aCp) {
+    nsISupports* nsparti = static_cast<nsISupports*>(aParti);
+    MOZ_ASSERT(CanonicalizeXPCOMParticipant(nsparti) == nsparti);
+    nsXPCOMCycleCollectionParticipant* xcp;
+    ToParticipant(nsparti, &xcp);
+    *aCp = xcp;
+  }
+}
+
 template<class Visitor>
 MOZ_NEVER_INLINE void
 GraphWalker<Visitor>::Walk(PtrInfo* aPi)
@@ -1487,7 +1489,9 @@ struct CCGraphDescriber : public LinkedListElement<CCGraphDescriber>
 class LogStringMessageAsync : public CancelableRunnable
 {
 public:
-  explicit LogStringMessageAsync(const nsAString& aMsg) : mMsg(aMsg)
+  explicit LogStringMessageAsync(const nsAString& aMsg)
+    : mozilla::CancelableRunnable("LogStringMessageAsync")
+    , mMsg(aMsg)
   {}
 
   NS_IMETHOD Run() override
@@ -2098,7 +2102,8 @@ private:
 
 public:
   // nsCycleCollectionNoteRootCallback methods.
-  NS_IMETHOD_(void) NoteXPCOMRoot(nsISupports* aRoot);
+  NS_IMETHOD_(void) NoteXPCOMRoot(nsISupports* aRoot,
+                                  nsCycleCollectionParticipant* aParticipant);
   NS_IMETHOD_(void) NoteJSRoot(JSObject* aRoot);
   NS_IMETHOD_(void) NoteNativeRoot(void* aRoot,
                                    nsCycleCollectionParticipant* aParticipant);
@@ -2224,7 +2229,7 @@ CCGraphBuilder::AddNode(void* aPtr, nsCycleCollectionParticipant* aParticipant)
 bool
 CCGraphBuilder::AddPurpleRoot(void* aRoot, nsCycleCollectionParticipant* aParti)
 {
-  CanonicalizeParticipant(&aRoot, &aParti);
+  ToParticipant(aRoot, &aParti);
 
   if (WantAllTraces() || !aParti->CanSkipInCC(aRoot)) {
     PtrInfo* pinfo = AddNode(aRoot, aParti);
@@ -2291,16 +2296,18 @@ CCGraphBuilder::BuildGraph(SliceBudget& aBudget)
 }
 
 NS_IMETHODIMP_(void)
-CCGraphBuilder::NoteXPCOMRoot(nsISupports* aRoot)
+CCGraphBuilder::NoteXPCOMRoot(nsISupports* aRoot,
+                              nsCycleCollectionParticipant* aParticipant)
 {
-  aRoot = CanonicalizeXPCOMParticipant(aRoot);
-  NS_ASSERTION(aRoot,
-               "Don't add objects that don't participate in collection!");
+  MOZ_ASSERT(aRoot == CanonicalizeXPCOMParticipant(aRoot));
 
+#ifdef DEBUG
   nsXPCOMCycleCollectionParticipant* cp;
   ToParticipant(aRoot, &cp);
+  MOZ_ASSERT(aParticipant == cp);
+#endif
 
-  NoteRoot(aRoot, cp);
+  NoteRoot(aRoot, aParticipant);
 }
 
 NS_IMETHODIMP_(void)
@@ -2653,18 +2660,19 @@ public:
     }
   }
 
-  void
+  bool
   Visit(nsPurpleBuffer& aBuffer, nsPurpleBufferEntry* aEntry)
   {
     MOZ_ASSERT(aEntry->mObject, "Null object in purple buffer");
     if (!aEntry->mRefCnt->get()) {
       void* o = aEntry->mObject;
       nsCycleCollectionParticipant* cp = aEntry->mParticipant;
-      CanonicalizeParticipant(&o, &cp);
+      ToParticipant(o, &cp);
       SnowWhiteObject swo = { o, cp, aEntry->mRefCnt };
       mObjects.InfallibleAppend(swo);
       aBuffer.Remove(aEntry);
     }
+    return true;
   }
 
   bool HasSnowWhiteObjects() const
@@ -2737,10 +2745,12 @@ class RemoveSkippableVisitor : public SnowWhiteKiller
 {
 public:
   RemoveSkippableVisitor(nsCycleCollector* aCollector,
+                         js::SliceBudget& aBudget,
                          bool aRemoveChildlessNodes,
                          bool aAsyncSnowWhiteFreeing,
                          CC_ForgetSkippableCallback aCb)
     : SnowWhiteKiller(aCollector)
+    , mBudget(aBudget)
     , mRemoveChildlessNodes(aRemoveChildlessNodes)
     , mAsyncSnowWhiteFreeing(aAsyncSnowWhiteFreeing)
     , mDispatchedDeferredDeletion(false)
@@ -2761,9 +2771,16 @@ public:
     }
   }
 
-  void
+  bool
   Visit(nsPurpleBuffer& aBuffer, nsPurpleBufferEntry* aEntry)
   {
+    if (mBudget.isOverBudget()) {
+      return false;
+    }
+
+    // CanSkip calls can be a bit slow, so increase the likelihood that
+    // isOverBudget actually checks whether we're over the time budget.
+    mBudget.step(5);
     MOZ_ASSERT(aEntry->mObject, "null mObject in purple buffer");
     if (!aEntry->mRefCnt->get()) {
       if (!mAsyncSnowWhiteFreeing) {
@@ -2772,19 +2789,21 @@ public:
         mDispatchedDeferredDeletion = true;
         nsCycleCollector_dispatchDeferredDeletion(false);
       }
-      return;
+      return true;
     }
     void* o = aEntry->mObject;
     nsCycleCollectionParticipant* cp = aEntry->mParticipant;
-    CanonicalizeParticipant(&o, &cp);
+    ToParticipant(o, &cp);
     if (aEntry->mRefCnt->IsPurple() && !cp->CanSkip(o, false) &&
         (!mRemoveChildlessNodes || MayHaveChild(o, cp))) {
-      return;
+      return true;
     }
     aBuffer.Remove(aEntry);
+    return true;
   }
 
 private:
+  js::SliceBudget& mBudget;
   bool mRemoveChildlessNodes;
   bool mAsyncSnowWhiteFreeing;
   bool mDispatchedDeferredDeletion;
@@ -2793,11 +2812,12 @@ private:
 
 void
 nsPurpleBuffer::RemoveSkippable(nsCycleCollector* aCollector,
+                                js::SliceBudget& aBudget,
                                 bool aRemoveChildlessNodes,
                                 bool aAsyncSnowWhiteFreeing,
                                 CC_ForgetSkippableCallback aCb)
 {
-  RemoveSkippableVisitor visitor(aCollector, aRemoveChildlessNodes,
+  RemoveSkippableVisitor visitor(aCollector, aBudget, aRemoveChildlessNodes,
                                  aAsyncSnowWhiteFreeing, aCb);
   VisitEntries(visitor);
 }
@@ -2828,7 +2848,8 @@ nsCycleCollector::FreeSnowWhite(bool aUntilNoSWInPurpleBuffer)
 }
 
 void
-nsCycleCollector::ForgetSkippable(bool aRemoveChildlessNodes,
+nsCycleCollector::ForgetSkippable(js::SliceBudget& aBudget,
+                                  bool aRemoveChildlessNodes,
                                   bool aAsyncSnowWhiteFreeing)
 {
   CheckThreadSafety();
@@ -2847,7 +2868,7 @@ nsCycleCollector::ForgetSkippable(bool aRemoveChildlessNodes,
   }
   MOZ_ASSERT(!mScanInProgress,
              "Don't forget skippable or free snow-white while scan is in progress.");
-  mPurpleBuf.RemoveSkippable(this, aRemoveChildlessNodes,
+  mPurpleBuf.RemoveSkippable(this, aBudget, aRemoveChildlessNodes,
                              aAsyncSnowWhiteFreeing, mForgetSkippableCB);
 }
 
@@ -2970,7 +2991,7 @@ public:
   {
   }
 
-  void
+  bool
   Visit(nsPurpleBuffer& aBuffer, nsPurpleBufferEntry* aEntry)
   {
     MOZ_ASSERT(aEntry->mObject,
@@ -2979,23 +3000,23 @@ public:
                "Snow-white objects shouldn't be in the purple buffer.");
 
     void* obj = aEntry->mObject;
-    if (!aEntry->mParticipant) {
-      obj = CanonicalizeXPCOMParticipant(static_cast<nsISupports*>(obj));
-      MOZ_ASSERT(obj, "Don't add objects that don't participate in collection!");
-    }
+
+    MOZ_ASSERT(aEntry->mParticipant || CanonicalizeXPCOMParticipant(static_cast<nsISupports*>(obj)) == obj,
+               "Suspect nsISupports pointer must be canonical");
 
     PtrInfo* pi = mGraph.FindNode(obj);
     if (!pi) {
-      return;
+      return true;
     }
     MOZ_ASSERT(pi->mParticipant, "No dead objects should be in the purple buffer.");
     if (MOZ_UNLIKELY(mLogger)) {
       mLogger->NoteIncrementalRoot((uint64_t)pi->mPointer);
     }
     if (pi->mColor == black) {
-      return;
+      return true;
     }
     FloodBlackNode(mCount, mFailed, pi);
+    return true;
   }
 
 private:
@@ -3394,7 +3415,7 @@ nsCycleCollector::nsCycleCollector() :
   mCCJSRuntime(nullptr),
   mIncrementalPhase(IdlePhase),
 #ifdef DEBUG
-  mThread(NS_GetCurrentThread()),
+  mEventTarget(GetCurrentThreadSerialEventTarget()),
 #endif
   mWhiteNodeCount(0),
   mBeforeUnlinkCB(nullptr),
@@ -3464,6 +3485,9 @@ nsCycleCollector::Suspect(void* aPtr, nsCycleCollectionParticipant* aParti,
   MOZ_ASSERT(HasParticipant(aPtr, aParti),
              "Suspected nsISupports pointer must QI to nsXPCOMCycleCollectionParticipant");
 
+  MOZ_ASSERT(aParti || CanonicalizeXPCOMParticipant(static_cast<nsISupports*>(aPtr)) == aPtr,
+             "Suspect nsISupports pointer must be canonical");
+
   mPurpleBuf.Put(aPtr, aParti, aRefCnt);
 }
 
@@ -3471,10 +3495,7 @@ void
 nsCycleCollector::CheckThreadSafety()
 {
 #ifdef DEBUG
-  nsIThread* currentThread = NS_GetCurrentThread();
-  // XXXkhuey we can be called so late in shutdown that NS_GetCurrentThread
-  // returns null (after the thread manager has shut down)
-  MOZ_ASSERT(mThread == currentThread || !currentThread);
+  MOZ_ASSERT(mEventTarget->IsOnCurrentThread());
 #endif
 }
 
@@ -3987,7 +4008,7 @@ SuspectAfterShutdown(void* aPtr, nsCycleCollectionParticipant* aCp,
   if (aRefCnt->get() == 0) {
     if (!aShouldDelete) {
       // The CC is shut down, so we can't be in the middle of an ICC.
-      CanonicalizeParticipant(&aPtr, &aCp);
+      ToParticipant(aPtr, &aCp);
       aRefCnt->stabilizeForDeletion();
       aCp->DeleteCycleCollectable(aPtr);
     } else {
@@ -4124,7 +4145,8 @@ nsCycleCollector_setForgetSkippableCallback(CC_ForgetSkippableCallback aCB)
 }
 
 void
-nsCycleCollector_forgetSkippable(bool aRemoveChildlessNodes,
+nsCycleCollector_forgetSkippable(js::SliceBudget& aBudget,
+                                 bool aRemoveChildlessNodes,
                                  bool aAsyncSnowWhiteFreeing)
 {
   CollectorData* data = sCollectorData.get();
@@ -4133,11 +4155,11 @@ nsCycleCollector_forgetSkippable(bool aRemoveChildlessNodes,
   MOZ_ASSERT(data);
   MOZ_ASSERT(data->mCollector);
 
-  PROFILER_LABEL("nsCycleCollector", "forgetSkippable",
-                 js::ProfileEntry::Category::CC);
+  AUTO_PROFILER_LABEL("nsCycleCollector_forgetSkippable", CC);
 
   TimeLog timeLog;
-  data->mCollector->ForgetSkippable(aRemoveChildlessNodes,
+  data->mCollector->ForgetSkippable(aBudget,
+                                    aRemoveChildlessNodes,
                                     aAsyncSnowWhiteFreeing);
   timeLog.Checkpoint("ForgetSkippable()");
 }
@@ -4180,8 +4202,7 @@ nsCycleCollector_collect(nsICycleCollectorListener* aManualListener)
   MOZ_ASSERT(data);
   MOZ_ASSERT(data->mCollector);
 
-  PROFILER_LABEL("nsCycleCollector", "collect",
-                 js::ProfileEntry::Category::CC);
+  AUTO_PROFILER_LABEL("nsCycleCollector_collect", CC);
 
   SliceBudget unlimitedBudget = SliceBudget::unlimited();
   data->mCollector->Collect(ManualCC, unlimitedBudget, aManualListener);
@@ -4197,8 +4218,7 @@ nsCycleCollector_collectSlice(SliceBudget& budget,
   MOZ_ASSERT(data);
   MOZ_ASSERT(data->mCollector);
 
-  PROFILER_LABEL("nsCycleCollector", "collectSlice",
-                 js::ProfileEntry::Category::CC);
+  AUTO_PROFILER_LABEL("nsCycleCollector_collectSlice", CC);
 
   data->mCollector->Collect(SliceCC, budget, nullptr, aPreferShorterSlices);
 }
@@ -4238,8 +4258,7 @@ nsCycleCollector_shutdown(bool aDoCollect)
 
   if (data) {
     MOZ_ASSERT(data->mCollector);
-    PROFILER_LABEL("nsCycleCollector", "shutdown",
-                   js::ProfileEntry::Category::CC);
+    AUTO_PROFILER_LABEL("nsCycleCollector_shutdown", CC);
 
     if (gMainThreadCollector == data->mCollector) {
       gMainThreadCollector = nullptr;

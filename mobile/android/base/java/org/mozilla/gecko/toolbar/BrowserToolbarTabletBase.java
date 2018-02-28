@@ -11,9 +11,12 @@ import android.support.v4.content.ContextCompat;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
+import org.mozilla.gecko.skin.SkinConfig;
 import org.mozilla.gecko.tabs.TabHistoryController;
 import org.mozilla.gecko.menu.MenuItemActionBar;
 import org.mozilla.gecko.util.HardwareUtils;
+import org.mozilla.gecko.widget.themed.ThemedFrameLayout;
+import org.mozilla.gecko.widget.themed.ThemedImageButton;
 import org.mozilla.gecko.widget.themed.ThemedTextView;
 
 import android.content.Context;
@@ -145,15 +148,26 @@ abstract class BrowserToolbarTabletBase extends BrowserToolbar {
     public void setPrivateMode(final boolean isPrivate) {
         super.setPrivateMode(isPrivate);
 
-        // If we had backgroundTintList, we could remove the colorFilter
-        // code in favor of setPrivateMode (bug 1197432).
-        final PorterDuffColorFilter colorFilter =
-                isPrivate ? privateBrowsingTabletMenuItemColorFilter : null;
-        setTabsCounterPrivateMode(isPrivate, colorFilter);
+        if (SkinConfig.isAustralis()) {
+            // If we had backgroundTintList, we could remove the colorFilter
+            // code in favor of setPrivateMode (bug 1197432).
+            final PorterDuffColorFilter colorFilter =
+                    isPrivate ? privateBrowsingTabletMenuItemColorFilter : null;
+            setTabsCounterPrivateMode(isPrivate, colorFilter);
+        }
 
         backButton.setPrivateMode(isPrivate);
         forwardButton.setPrivateMode(isPrivate);
-        menuIcon.setPrivateMode(isPrivate);
+
+        // bug 1375351: menuButton is a ThemedImageButton in Photon flavor
+        if (SkinConfig.isPhoton()) {
+            ((ThemedImageButton)menuButton).setPrivateMode(isPrivate);
+        } else {
+            ((ThemedFrameLayout)menuButton).setPrivateMode(isPrivate);
+            // menuIcon only exists in Australis flavor
+            menuIcon.setPrivateMode(isPrivate);
+        }
+
         for (int i = 0; i < actionItemBar.getChildCount(); ++i) {
             final MenuItemActionBar child = (MenuItemActionBar) actionItemBar.getChildAt(i);
             child.setPrivateMode(isPrivate);

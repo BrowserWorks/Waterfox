@@ -255,6 +255,7 @@ public:
   NS_IMETHOD GetFetchCacheMode(uint32_t* aFetchCacheMode) override;
   NS_IMETHOD SetFetchCacheMode(uint32_t aFetchCacheMode) override;
   NS_IMETHOD GetTopWindowURI(nsIURI **aTopWindowURI) override;
+  NS_IMETHOD SetTopWindowURIIfUnknown(nsIURI *aTopWindowURI) override;
   NS_IMETHOD GetProxyURI(nsIURI **proxyURI) override;
   virtual void SetCorsPreflightParameters(const nsTArray<nsCString>& unsafeHeaders) override;
   NS_IMETHOD GetConnectionInfoHashKey(nsACString& aConnectionInfoHashKey) override;
@@ -377,7 +378,7 @@ protected:
   virtual void DoNotifyListenerCleanup() = 0;
 
   // drop reference to listener, its callbacks, and the progress sink
-  void ReleaseListeners();
+  virtual void ReleaseListeners();
 
   // This is fired only when a cookie is created due to the presence of
   // Set-Cookie header in the response header of any network request.
@@ -431,6 +432,9 @@ protected:
   void AssertPrivateBrowsingId();
 #endif
 
+  // Called before we create the redirect target channel.
+  already_AddRefed<nsILoadInfo> CloneLoadInfoForRedirect(nsIURI *newURI, uint32_t redirectFlags);
+
   friend class PrivateBrowsingChannel<HttpBaseChannel>;
   friend class InterceptFailedOnStop;
 
@@ -450,6 +454,10 @@ protected:
   nsCOMPtr<nsIURI> mProxyURI;
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsCOMPtr<nsIURI> mTopWindowURI;
+  nsCOMPtr<nsIStreamListener> mListener;
+  nsCOMPtr<nsISupports> mListenerContext;
+  // An instance of nsHTTPCompressConv
+  nsCOMPtr<nsIStreamListener> mCompressListener;
 
 private:
   // Proxy release all members above on main thread.
@@ -462,12 +470,7 @@ protected:
 
   nsTArray<Pair<nsString, nsString>> mSecurityConsoleMessages;
 
-  nsCOMPtr<nsIStreamListener>       mListener;
-  nsCOMPtr<nsISupports>             mListenerContext;
   nsCOMPtr<nsISupports>             mOwner;
-
-  // An instance of nsHTTPCompressConv
-  nsCOMPtr<nsIStreamListener>       mCompressListener;
 
   nsHttpRequestHead                 mRequestHead;
   // Upload throttling.
@@ -495,7 +498,7 @@ protected:
   nsCString                         mEntityID;
   uint64_t                          mStartPos;
 
-  nsresult                          mStatus;
+  Atomic<nsresult, ReleaseAcquire>  mStatus;
   uint32_t                          mLoadFlags;
   uint32_t                          mCaps;
   uint32_t                          mClassOfService;
@@ -628,7 +631,7 @@ protected:
   int64_t   mAltDataLength;
 
   bool mForceMainDocumentChannel;
-  bool mIsTrackingResource;
+  Atomic<bool, ReleaseAcquire> mIsTrackingResource;
 
   uint64_t mChannelId;
 
@@ -720,7 +723,8 @@ nsresult HttpAsyncAborter<T>::AsyncCall(void (T::*funcPtr)(),
 {
   nsresult rv;
 
-  RefPtr<nsRunnableMethod<T>> event = NewRunnableMethod(mThis, funcPtr);
+  RefPtr<nsRunnableMethod<T>> event =
+    NewRunnableMethod("net::HttpAsyncAborter::AsyncCall", mThis, funcPtr);
   rv = NS_DispatchToCurrentThread(event);
   if (NS_SUCCEEDED(rv) && retval) {
     *retval = event;

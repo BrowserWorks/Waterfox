@@ -58,6 +58,7 @@ use mp4parse::TrackScaledTime;
 use mp4parse::serialize_opus_header;
 use mp4parse::CodecType;
 use mp4parse::Track;
+use mp4parse::vec_push;
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
@@ -69,6 +70,8 @@ pub enum mp4parse_status {
     UNSUPPORTED = 3,
     EOF = 4,
     IO = 5,
+    TABLE_TOO_LARGE = 6,
+    OOM = 7,
 }
 
 #[allow(non_camel_case_types)]
@@ -95,6 +98,9 @@ pub enum mp4parse_codec {
     VP9,
     MP3,
     MP4V,
+    JPEG,   // for QT JPEG atom in video track
+    AC3,
+    EC3,
 }
 
 impl Default for mp4parse_codec {
@@ -304,6 +310,11 @@ pub unsafe extern fn mp4parse_log(enable: bool) {
     mp4parse::set_debug_mode(enable);
 }
 
+#[no_mangle]
+pub unsafe extern fn mp4parse_fallible_allocation(enable: bool) {
+    mp4parse::set_fallible_allocation_mode(enable);
+}
+
 /// Run the `mp4parse_parser*` allocated by `mp4parse_new()` until EOF or error.
 #[no_mangle]
 pub unsafe extern fn mp4parse_read(parser: *mut mp4parse_parser) -> mp4parse_status {
@@ -312,8 +323,8 @@ pub unsafe extern fn mp4parse_read(parser: *mut mp4parse_parser) -> mp4parse_sta
         return mp4parse_status::BAD_ARG;
     }
 
-    let mut context = (*parser).context_mut();
-    let mut io = (*parser).io_mut();
+    let context = (*parser).context_mut();
+    let io = (*parser).io_mut();
 
     let r = read_mp4(io, context);
     match r {
@@ -332,7 +343,9 @@ pub unsafe extern fn mp4parse_read(parser: *mut mp4parse_parser) -> mp4parse_sta
             // those to our Error::UnexpectedEOF variant.
             (*parser).set_poisoned(true);
             mp4parse_status::IO
-        }
+        },
+        Err(Error::TableTooLarge) => mp4parse_status::TABLE_TOO_LARGE,
+        Err(Error::OutOfMemory) => mp4parse_status::OOM,
     }
 }
 
@@ -414,6 +427,7 @@ pub unsafe extern fn mp4parse_get_track_info(parser: *mut mp4parse_parser, track
         TrackType::Unknown => return mp4parse_status::UNSUPPORTED,
     };
 
+    // Return UNKNOWN for unsupported format.
     info.codec = match context.tracks[track_index].data {
         Some(SampleEntry::Audio(ref audio)) => match audio.codec_specific {
             AudioCodecSpecific::OpusSpecificBox(_) =>
@@ -434,8 +448,8 @@ pub unsafe extern fn mp4parse_get_track_info(parser: *mut mp4parse_parser, track
                 mp4parse_codec::VP9,
             VideoCodecSpecific::AVCConfig(_) =>
                 mp4parse_codec::AVC,
-            VideoCodecSpecific::ESDSConfig(_) =>
-                mp4parse_codec::MP4V,
+            VideoCodecSpecific::ESDSConfig(_) => // MP4V (14496-2) video is unsupported.
+                mp4parse_codec::UNKNOWN,
         },
         _ => mp4parse_codec::UNKNOWN,
     };
@@ -878,7 +892,10 @@ fn create_sample_table(track: &Track, track_offset_time: i64) -> Option<Vec<mp4p
     for i in stsc_iter {
         let chunk_id = i.0 as usize;
         let sample_counts = i.1;
-        let mut cur_position: u64 = stco.offsets[chunk_id];
+        let mut cur_position = match stco.offsets.get(chunk_id) {
+            Some(&i) => i,
+            _ => return None,
+        };
         for _ in 0 .. sample_counts {
             let start_offset = cur_position;
             let end_offset = match (stsz.sample_size, sample_size_iter.next()) {
@@ -891,23 +908,28 @@ fn create_sample_table(track: &Track, track_offset_time: i64) -> Option<Vec<mp4p
             }
             cur_position = end_offset;
 
-            sample_table.push(
-                mp4parse_indice {
-                    start_offset: start_offset,
-                    end_offset: end_offset,
-                    start_composition: 0,
-                    end_composition: 0,
-                    start_decode: 0,
-                    sync: !has_sync_table,
-                }
-            );
+            let res = vec_push(&mut sample_table, mp4parse_indice {
+                start_offset: start_offset,
+                end_offset: end_offset,
+                start_composition: 0,
+                end_composition: 0,
+                start_decode: 0,
+                sync: !has_sync_table,
+            });
+            if res.is_err() {
+                return None;
+            }
         }
     }
 
     // Mark the sync sample in sample_table according to 'stss'.
     if let Some(ref v) = track.stss {
         for iter in &v.samples {
-            sample_table[(iter - 1) as usize].sync = true;
+            if let Some(elem) = sample_table.get_mut((iter - 1) as usize) {
+                elem.sync = true;
+            } else {
+                return None;
+            }
         }
     }
 
@@ -944,19 +966,9 @@ fn create_sample_table(track: &Track, track_offset_time: i64) -> Option<Vec<mp4p
         // ctts_offset is the current sample offset time.
         let ctts_offset = ctts_offset_iter.next_offset_time();
 
-        // ctts_offset could be negative but (decode_time + ctts_offset) should always be positive
-        // value.
-        let start_composition = track_time_to_us(decode_time + ctts_offset, timescale).and_then(|t| {
-            if t < 0 { return None; }
-            Some(t)
-        });
+        let start_composition = track_time_to_us(decode_time + ctts_offset, timescale);
 
-        // ctts_offset could be negative but (sum_delta + ctts_offset) should always be positive
-        // value.
-        let end_composition = track_time_to_us(sum_delta + ctts_offset, timescale).and_then(|t| {
-            if t < 0 { return None; }
-            Some(t)
-        });
+        let end_composition = track_time_to_us(sum_delta + ctts_offset, timescale);
 
         let start_decode = track_time_to_us(decode_time, timescale);
 
@@ -974,12 +986,13 @@ fn create_sample_table(track: &Track, track_offset_time: i64) -> Option<Vec<mp4p
     //
     // Composition end time is not in specification. However, gecko needs it, so we need to
     // calculate to correct the composition end time.
-    if track.ctts.is_some() {
+    if sample_table.len() > 0 {
         // Create an index table refers to sample_table and sorted by start_composisiton time.
         let mut sort_table = Vec::new();
-        sort_table.reserve(sample_table.len());
         for i in 0 .. sample_table.len() {
-            sort_table.push(i);
+            if vec_push(&mut sort_table, i).is_err() {
+                return None;
+            }
         }
 
         sort_table.sort_by_key(|i| {
@@ -1113,7 +1126,7 @@ extern fn error_read(_: *mut u8, _: usize, _: *mut std::os::raw::c_void) -> isiz
 
 #[cfg(test)]
 extern fn valid_read(buf: *mut u8, size: usize, userdata: *mut std::os::raw::c_void) -> isize {
-    let mut input: &mut std::fs::File = unsafe { &mut *(userdata as *mut _) };
+    let input: &mut std::fs::File = unsafe { &mut *(userdata as *mut _) };
 
     let mut buf = unsafe { std::slice::from_raw_parts_mut(buf, size) };
     match input.read(&mut buf) {
@@ -1277,6 +1290,8 @@ fn get_track_count_poisoned_parser() {
         let mut count: u32 = 0;
         let rv = mp4parse_get_track_count(parser, &mut count);
         assert_eq!(rv, mp4parse_status::BAD_ARG);
+
+        mp4parse_free(parser);
     }
 }
 

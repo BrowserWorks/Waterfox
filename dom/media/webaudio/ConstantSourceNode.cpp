@@ -134,8 +134,9 @@ public:
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
-  AudioNodeStream* mSource;
-  AudioNodeStream* mDestination;
+  // mSource deletes the engine in its destructor.
+  AudioNodeStream* MOZ_NON_OWNING_REF mSource;
+  RefPtr<AudioNodeStream> mDestination;
   StreamTime mStart;
   StreamTime mStop;
   AudioParamTimeline mOffset;
@@ -257,7 +258,10 @@ ConstantSourceNode::NotifyMainThreadStreamFinished()
   {
   public:
     explicit EndedEventDispatcher(ConstantSourceNode* aNode)
-      : mNode(aNode) {}
+      : mozilla::Runnable("EndedEventDispatcher")
+      , mNode(aNode)
+    {
+    }
     NS_IMETHOD Run() override
     {
       // If it's not safe to run scripts right now, schedule this to run later

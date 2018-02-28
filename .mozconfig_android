@@ -1,0 +1,36 @@
+X=$(bc <<< "1.5*$(getconf _NPROCESSORS_ONLN)")
+mk_add_options AUTOCLOBBER=1
+mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
+mk_add_options MOZ_OBJDIR=objdir-android
+
+export MOZ_INSTALL_TRACKING=
+export BUILD_OFFICIAL=1
+export MOZILLA_OFFICIAL=1
+mk_add_options MOZILLA_OFFICIAL=1
+mk_add_options BUILD_OFFICIAL=1
+mk_add_options NIGHTLY_BUILD=0
+mk_add_options MOZ_DEBUG=0
+
+ac_add_options --disable-crashreporter
+ac_add_options --disable-debug
+ac_add_options --disable-js-shell
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-profiling
+ac_add_options --disable-signmar
+ac_add_options --disable-tests
+ac_add_options --disable-updater
+ac_add_options --disable-verify-mar
+
+ac_add_options --enable-application=mobile/android
+ac_add_options --enable-release
+ac_add_options --enable-optimize
+ac_add_options --target=arm-linux-androideabi
+
+ac_add_options --with-android-sdk="$HOME/Library/Android/sdk"
+ac_add_options --with-android-ndk="$HOME/Library/Android/sdk/ndk-bundle"
+ac_add_options --with-android-min-sdk=15  
+ac_add_options --with-app-name=waterfox
+ac_add_options --with-app-basename=Waterfox
+ac_add_options --with-branding=mobile/android/branding/unofficial
+ac_add_options --with-ccache=ccache
+ac_add_options --with-distribution-id=org.waterfoxproject

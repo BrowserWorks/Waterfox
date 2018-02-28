@@ -219,11 +219,11 @@ CSSAnimation::QueueEvents(StickyTimeDuration aActiveTime)
       return;
     }
     intervalStartTime =
-      std::max(std::min(StickyTimeDuration(-mEffect->SpecifiedTiming().mDelay),
+      std::max(std::min(StickyTimeDuration(-mEffect->SpecifiedTiming().Delay()),
                         computedTiming.mActiveDuration),
                zeroDuration);
     intervalEndTime =
-      std::max(std::min((EffectEnd() - mEffect->SpecifiedTiming().mDelay),
+      std::max(std::min((EffectEnd() - mEffect->SpecifiedTiming().Delay()),
                         computedTiming.mActiveDuration),
                zeroDuration);
 
@@ -361,17 +361,17 @@ PopExistingAnimation(const nsAString& aName,
 class ResolvedStyleCache {
 public:
   ResolvedStyleCache() : mCache() {}
-  nsStyleContext* Get(nsPresContext *aPresContext,
-                      nsStyleContext *aParentStyleContext,
-                      Declaration* aKeyframeDeclaration);
+  GeckoStyleContext* Get(nsPresContext* aPresContext,
+                         GeckoStyleContext* aParentStyleContext,
+                         Declaration* aKeyframeDeclaration);
 
 private:
-  nsRefPtrHashtable<nsPtrHashKey<Declaration>, nsStyleContext> mCache;
+  nsRefPtrHashtable<nsPtrHashKey<Declaration>, GeckoStyleContext> mCache;
 };
 
-nsStyleContext*
-ResolvedStyleCache::Get(nsPresContext *aPresContext,
-                        nsStyleContext *aParentStyleContext,
+GeckoStyleContext*
+ResolvedStyleCache::Get(nsPresContext* aPresContext,
+                        GeckoStyleContext* aParentStyleContext,
                         Declaration* aKeyframeDeclaration)
 {
   // FIXME (spec):  The css3-animations spec isn't very clear about how
@@ -382,7 +382,7 @@ ResolvedStyleCache::Get(nsPresContext *aPresContext,
   // that they're not, since that would prevent us from caching a lot of
   // data that we'd really like to cache (in particular, the
   // StyleAnimationValue values in AnimationPropertySegment).
-  nsStyleContext *result = mCache.GetWeak(aKeyframeDeclaration);
+  GeckoStyleContext* result = mCache.GetWeak(aKeyframeDeclaration);
   if (!result) {
     aKeyframeDeclaration->SetImmutable();
     // The spec says that !important declarations should just be ignored
@@ -394,8 +394,9 @@ ResolvedStyleCache::Get(nsPresContext *aPresContext,
     MOZ_ASSERT(aPresContext->StyleSet()->IsGecko(),
                "ServoStyleSet should not use nsAnimationManager for "
                "animations");
-    RefPtr<nsStyleContext> resultStrong = aPresContext->StyleSet()->AsGecko()->
-      ResolveStyleByAddingRules(aParentStyleContext, rules);
+    RefPtr<GeckoStyleContext> resultStrong =
+      aPresContext->StyleSet()->AsGecko()->
+        ResolveStyleByAddingRules(aParentStyleContext, rules);
     mCache.Put(aKeyframeDeclaration, resultStrong);
     result = resultStrong;
   }
@@ -404,10 +405,10 @@ ResolvedStyleCache::Get(nsPresContext *aPresContext,
 
 class MOZ_STACK_CLASS ServoCSSAnimationBuilder final {
 public:
-  explicit ServoCSSAnimationBuilder(const ServoComputedValues* aComputedValues)
-    : mComputedValues(aComputedValues)
+  explicit ServoCSSAnimationBuilder(const ServoStyleContext* aStyleContext)
+    : mStyleContext(aStyleContext)
   {
-    MOZ_ASSERT(aComputedValues);
+    MOZ_ASSERT(aStyleContext);
   }
 
   bool BuildKeyframes(nsPresContext* aPresContext,
@@ -419,22 +420,21 @@ public:
     const nsTimingFunction& timingFunction = aSrc.GetTimingFunction();
     return styleSet->GetKeyframesForName(aSrc.GetName(),
                                          timingFunction,
-                                         mComputedValues,
                                          aKeyframes);
   }
   void SetKeyframes(KeyframeEffectReadOnly& aEffect,
                     nsTArray<Keyframe>&& aKeyframes)
   {
-    aEffect.SetKeyframes(Move(aKeyframes), mComputedValues);
+    aEffect.SetKeyframes(Move(aKeyframes), mStyleContext);
   }
 
 private:
-  const ServoComputedValues* mComputedValues;
+  const ServoStyleContext* mStyleContext;
 };
 
 class MOZ_STACK_CLASS GeckoCSSAnimationBuilder final {
 public:
-  GeckoCSSAnimationBuilder(nsStyleContext* aStyleContext,
+  GeckoCSSAnimationBuilder(GeckoStyleContext* aStyleContext,
                            const NonOwningAnimationTarget& aTarget)
     : mStyleContext(aStyleContext)
     , mTarget(aTarget)
@@ -471,7 +471,7 @@ private:
     const Maybe<ComputedTimingFunction>& aInheritedTimingFunction,
     nsTArray<Keyframe>& aKeyframes);
 
-  RefPtr<nsStyleContext> mStyleContext;
+  RefPtr<GeckoStyleContext> mStyleContext;
   NonOwningAnimationTarget mTarget;
 
   ResolvedStyleCache mResolvedStyles;
@@ -844,7 +844,7 @@ GeckoCSSAnimationBuilder::GetKeyframePropertyValues(
     nsCSSPropertyIDSet& aAnimatedProperties)
 {
   nsTArray<PropertyValuePair> result;
-  RefPtr<nsStyleContext> styleContext =
+  RefPtr<GeckoStyleContext> styleContext =
     mResolvedStyles.Get(aPresContext, mStyleContext,
                         aKeyframeRule->Declaration());
 
@@ -856,23 +856,22 @@ GeckoCSSAnimationBuilder::GetKeyframePropertyValues(
       continue;
     }
 
-    PropertyValuePair pair;
-    pair.mProperty = prop;
-
     StyleAnimationValue computedValue;
     if (!StyleAnimationValue::ExtractComputedValue(prop, styleContext,
                                                    computedValue)) {
       continue;
     }
+
+    nsCSSValue propertyValue;
     DebugOnly<bool> uncomputeResult =
       StyleAnimationValue::UncomputeValue(prop, Move(computedValue),
-                                          pair.mValue);
+                                          propertyValue);
     MOZ_ASSERT(uncomputeResult,
                "Unable to get specified value from computed value");
-    MOZ_ASSERT(pair.mValue.GetUnit() != eCSSUnit_Null,
+    MOZ_ASSERT(propertyValue.GetUnit() != eCSSUnit_Null,
                "Not expecting to read invalid properties");
 
-    result.AppendElement(Move(pair));
+    result.AppendElement(Move(PropertyValuePair(prop, Move(propertyValue))));
     aAnimatedProperties.AddProperty(prop);
   }
 
@@ -941,13 +940,13 @@ GeckoCSSAnimationBuilder::FillInMissingKeyframeValues(
     }
 
     if (startKeyframe && !aPropertiesSetAtStart.HasProperty(prop)) {
-      PropertyValuePair propertyValue;
-      propertyValue.mProperty = prop;
+      // An uninitialized nsCSSValue represents the underlying value.
+      PropertyValuePair propertyValue(prop, Move(nsCSSValue()));
       startKeyframe->mPropertyValues.AppendElement(Move(propertyValue));
     }
     if (endKeyframe && !aPropertiesSetAtEnd.HasProperty(prop)) {
-      PropertyValuePair propertyValue;
-      propertyValue.mProperty = prop;
+      // An uninitialized nsCSSValue represents the underlying value.
+      PropertyValuePair propertyValue(prop, Move(nsCSSValue()));
       endKeyframe->mPropertyValues.AppendElement(Move(propertyValue));
     }
   }
@@ -992,7 +991,7 @@ BuildAnimations(nsPresContext* aPresContext,
 }
 
 void
-nsAnimationManager::UpdateAnimations(nsStyleContext* aStyleContext,
+nsAnimationManager::UpdateAnimations(GeckoStyleContext* aStyleContext,
                                      mozilla::dom::Element* aElement)
 {
   MOZ_ASSERT(mPresContext->IsDynamic(),
@@ -1017,7 +1016,7 @@ void
 nsAnimationManager::UpdateAnimations(
   dom::Element* aElement,
   CSSPseudoElementType aPseudoType,
-  const ServoComputedValues* aComputedValues)
+  const ServoStyleContext* aStyleContext)
 {
   MOZ_ASSERT(mPresContext->IsDynamic(),
              "Should not update animations for print or print preview");
@@ -1025,7 +1024,7 @@ nsAnimationManager::UpdateAnimations(
              "Should not update animations that are not attached to the "
              "document tree");
 
-  if (!aComputedValues) {
+  if (!aStyleContext) {
     // If we are in a display:none subtree we will have no computed values.
     // Since CSS animations should not run in display:none subtrees we should
     // stop (actually, destroy) any animations on this element here.
@@ -1034,10 +1033,10 @@ nsAnimationManager::UpdateAnimations(
   }
 
   NonOwningAnimationTarget target(aElement, aPseudoType);
-  ServoCSSAnimationBuilder builder(aComputedValues);
+  ServoCSSAnimationBuilder builder(aStyleContext);
 
   const nsStyleDisplay *disp =
-    Servo_GetStyleDisplay(aComputedValues);
+      aStyleContext->ComputedData()->GetStyleDisplay();
   DoUpdateAnimations(target, *disp, builder);
 }
 

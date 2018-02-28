@@ -13,6 +13,7 @@ use dom::bindings::codegen::Bindings::DocumentBinding::DocumentMethods;
 use dom::bindings::codegen::Bindings::ElementBinding;
 use dom::bindings::codegen::Bindings::ElementBinding::ElementMethods;
 use dom::bindings::codegen::Bindings::EventBinding::EventMethods;
+use dom::bindings::codegen::Bindings::FunctionBinding::Function;
 use dom::bindings::codegen::Bindings::HTMLTemplateElementBinding::HTMLTemplateElementMethods;
 use dom::bindings::codegen::Bindings::NodeBinding::NodeMethods;
 use dom::bindings::codegen::Bindings::WindowBinding::{ScrollBehavior, ScrollToOptions};
@@ -30,6 +31,7 @@ use dom::bindings::xmlname::{namespace_from_domstring, validate_and_extract, xml
 use dom::bindings::xmlname::XMLName::InvalidXMLName;
 use dom::characterdata::CharacterData;
 use dom::create::create_element;
+use dom::customelementregistry::{CallbackReaction, CustomElementDefinition, CustomElementReaction};
 use dom::document::{Document, LayoutDocumentHelpers};
 use dom::documentfragment::DocumentFragment;
 use dom::domrect::DOMRect;
@@ -80,15 +82,18 @@ use html5ever::serialize;
 use html5ever::serialize::SerializeOpts;
 use html5ever::serialize::TraversalScope;
 use html5ever::serialize::TraversalScope::{ChildrenOnly, IncludeNode};
-use js::jsapi::{HandleValue, JSAutoCompartment};
+use js::jsapi::{HandleValue, Heap, JSAutoCompartment};
+use js::jsval::JSVal;
 use net_traits::request::CorsSettings;
 use ref_filter_map::ref_filter_map;
 use script_layout_interface::message::ReflowQueryType;
-use script_thread::Runnable;
-use selectors::attr::{AttrSelectorOperation, NamespaceConstraint};
+use script_thread::{Runnable, ScriptThread};
+use selectors::attr::{AttrSelectorOperation, NamespaceConstraint, CaseSensitivity};
 use selectors::matching::{ElementSelectorFlags, LocalMatchingContext, MatchingContext, MatchingMode};
 use selectors::matching::{HAS_EDGE_CHILD_SELECTOR, HAS_SLOW_SELECTOR, HAS_SLOW_SELECTOR_LATER_SIBLINGS};
 use selectors::matching::{RelevantLinkStatus, matches_selector_list};
+use selectors::sink::Push;
+use servo_arc::Arc;
 use servo_atoms::Atom;
 use std::ascii::AsciiExt;
 use std::borrow::Cow;
@@ -97,22 +102,21 @@ use std::convert::TryFrom;
 use std::default::Default;
 use std::fmt;
 use std::rc::Rc;
+use style::CaseSensitivityExt;
+use style::applicable_declarations::ApplicableDeclarationBlock;
 use style::attr::{AttrValue, LengthOrPercentageOrAuto};
 use style::context::{QuirksMode, ReflowGoal};
 use style::element_state::*;
+use style::invalidation::element::restyle_hints::RESTYLE_SELF;
 use style::properties::{Importance, PropertyDeclaration, PropertyDeclarationBlock, parse_style_attribute};
 use style::properties::longhands::{self, background_image, border_spacing, font_family, font_size, overflow_x};
-use style::restyle_hints::RestyleHint;
 use style::rule_tree::CascadeLevel;
 use style::selector_parser::{NonTSPseudoClass, PseudoElement, RestyleDamage, SelectorImpl, SelectorParser};
 use style::selector_parser::extended_filtering;
 use style::shared_lock::{SharedRwLock, Locked};
-use style::sink::Push;
-use style::stylearc::Arc;
-use style::stylist::ApplicableDeclarationBlock;
 use style::thread_state;
 use style::values::{CSSFloat, Either};
-use style::values::specified;
+use style::values::{specified, computed};
 use stylesheet_loader::StylesheetOwner;
 
 // TODO: Update focus state when the top-level browsing context gains or loses system focus,
@@ -125,9 +129,10 @@ pub struct Element {
     local_name: LocalName,
     tag_name: TagName,
     namespace: Namespace,
-    prefix: Option<Prefix>,
+    prefix: DOMRefCell<Option<Prefix>>,
     attrs: DOMRefCell<Vec<JS<Attr>>>,
     id_attribute: DOMRefCell<Option<Atom>>,
+    is: DOMRefCell<Option<LocalName>>,
     #[ignore_heap_size_of = "Arc"]
     style_attribute: DOMRefCell<Option<Arc<Locked<PropertyDeclarationBlock>>>>,
     attr_list: MutNullableJS<NamedNodeMap>,
@@ -139,13 +144,18 @@ pub struct Element {
     /// when it has exclusive access to the element.
     #[ignore_heap_size_of = "bitflags defined in rust-selectors"]
     selector_flags: Cell<ElementSelectorFlags>,
+    /// https://html.spec.whatwg.org/multipage/#custom-element-reaction-queue
+    custom_element_reaction_queue: DOMRefCell<Vec<CustomElementReaction>>,
+    /// https://dom.spec.whatwg.org/#concept-element-custom-element-definition
+    #[ignore_heap_size_of = "Rc"]
+    custom_element_definition: DOMRefCell<Option<Rc<CustomElementDefinition>>>,
 }
 
 impl fmt::Debug for Element {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        try!(write!(f, "<{}", self.local_name));
+        write!(f, "<{}", self.local_name)?;
         if let Some(ref id) = *self.id_attribute.borrow() {
-            try!(write!(f, " id={}", id));
+            write!(f, " id={}", id)?;
         }
         write!(f, ">")
     }
@@ -161,6 +171,11 @@ impl fmt::Debug for Root<Element> {
 pub enum ElementCreator {
     ParserCreated(u64),
     ScriptCreated,
+}
+
+pub enum CustomElementCreationMode {
+    Synchronous,
+    Asynchronous,
 }
 
 impl ElementCreator {
@@ -204,9 +219,12 @@ impl<'a> TryFrom<&'a str> for AdjacentPosition {
 //
 impl Element {
     pub fn create(name: QualName,
-                  document: &Document, creator: ElementCreator)
+                  is: Option<LocalName>,
+                  document: &Document,
+                  creator: ElementCreator,
+                  mode: CustomElementCreationMode)
                   -> Root<Element> {
-        create_element(name, document, creator)
+        create_element(name, is, document, creator, mode)
     }
 
     pub fn new_inherited(local_name: LocalName,
@@ -225,14 +243,17 @@ impl Element {
             local_name: local_name,
             tag_name: TagName::new(),
             namespace: namespace,
-            prefix: prefix,
+            prefix: DOMRefCell::new(prefix),
             attrs: DOMRefCell::new(vec![]),
             id_attribute: DOMRefCell::new(None),
+            is: DOMRefCell::new(None),
             style_attribute: DOMRefCell::new(None),
             attr_list: Default::default(),
             class_list: Default::default(),
             state: Cell::new(state),
             selector_flags: Cell::new(ElementSelectorFlags::empty()),
+            custom_element_reaction_queue: Default::default(),
+            custom_element_definition: Default::default(),
         }
     }
 
@@ -252,11 +273,39 @@ impl Element {
 
         // FIXME(bholley): I think we should probably only do this for
         // NodeStyleDamaged, but I'm preserving existing behavior.
-        restyle.hint.insert(RestyleHint::for_self());
+        restyle.hint.insert(RESTYLE_SELF);
 
         if damage == NodeDamage::OtherNodeDamage {
             restyle.damage = RestyleDamage::rebuild_and_reflow();
         }
+    }
+
+    pub fn set_is(&self, is: LocalName) {
+        *self.is.borrow_mut() = Some(is);
+    }
+
+    pub fn get_is(&self) -> Option<LocalName> {
+        self.is.borrow().clone()
+    }
+
+    pub fn set_custom_element_definition(&self, definition: Rc<CustomElementDefinition>) {
+        *self.custom_element_definition.borrow_mut() = Some(definition);
+    }
+
+    pub fn get_custom_element_definition(&self) -> Option<Rc<CustomElementDefinition>> {
+        (*self.custom_element_definition.borrow()).clone()
+    }
+
+    pub fn push_callback_reaction(&self, function: Rc<Function>, args: Box<[Heap<JSVal>]>) {
+        self.custom_element_reaction_queue.borrow_mut().push(CustomElementReaction::Callback(function, args));
+    }
+
+    pub fn invoke_reactions(&self) {
+        let mut reaction_queue = self.custom_element_reaction_queue.borrow_mut();
+        for reaction in reaction_queue.iter() {
+            reaction.invoke(self);
+        }
+        reaction_queue.clear();
     }
 
     // https://drafts.csswg.org/cssom-view/#css-layout-box
@@ -345,7 +394,7 @@ impl RawLayoutElementHelpers for Element {
 
 pub trait LayoutElementHelpers {
     #[allow(unsafe_code)]
-    unsafe fn has_class_for_layout(&self, name: &Atom) -> bool;
+    unsafe fn has_class_for_layout(&self, name: &Atom, case_sensitivity: CaseSensitivity) -> bool;
     #[allow(unsafe_code)]
     unsafe fn get_classes_for_layout(&self) -> Option<&'static [Atom]>;
 
@@ -373,9 +422,9 @@ pub trait LayoutElementHelpers {
 impl LayoutElementHelpers for LayoutJS<Element> {
     #[allow(unsafe_code)]
     #[inline]
-    unsafe fn has_class_for_layout(&self, name: &Atom) -> bool {
+    unsafe fn has_class_for_layout(&self, name: &Atom, case_sensitivity: CaseSensitivity) -> bool {
         get_attr_for_layout(&*self.unsafe_get(), &ns!(), &local_name!("class")).map_or(false, |attr| {
-            attr.value_tokens_forever().unwrap().iter().any(|atom| atom == name)
+            attr.value_tokens_forever().unwrap().iter().any(|atom| case_sensitivity.eq_atom(atom, name))
         })
     }
 
@@ -557,7 +606,7 @@ impl LayoutElementHelpers for LayoutJS<Element> {
             LengthOrPercentageOrAuto::Auto => {}
             LengthOrPercentageOrAuto::Percentage(percentage) => {
                 let width_value =
-                    specified::LengthOrPercentageOrAuto::Percentage(specified::Percentage(percentage));
+                    specified::LengthOrPercentageOrAuto::Percentage(computed::Percentage(percentage));
                 hints.push(from_declaration(
                     shared_lock,
                     PropertyDeclaration::Width(width_value)));
@@ -586,7 +635,7 @@ impl LayoutElementHelpers for LayoutJS<Element> {
             LengthOrPercentageOrAuto::Auto => {}
             LengthOrPercentageOrAuto::Percentage(percentage) => {
                 let height_value =
-                    specified::LengthOrPercentageOrAuto::Percentage(specified::Percentage(percentage));
+                    specified::LengthOrPercentageOrAuto::Percentage(computed::Percentage(percentage));
                 hints.push(from_declaration(
                     shared_lock,
                     PropertyDeclaration::Height(height_value)));
@@ -819,8 +868,12 @@ impl Element {
         &self.namespace
     }
 
-    pub fn prefix(&self) -> Option<&Prefix> {
-        self.prefix.as_ref()
+    pub fn prefix(&self) -> Ref<Option<Prefix>> {
+        self.prefix.borrow()
+    }
+
+    pub fn set_prefix(&self, prefix: Option<Prefix>) {
+        *self.prefix.borrow_mut() = prefix;
     }
 
     pub fn attrs(&self) -> Ref<[JS<Attr>]> {
@@ -839,7 +892,9 @@ impl Element {
         // Steps 3-4.
         for element in inclusive_ancestor_elements {
             // Step 1.
-            if element.namespace() != &ns!() && element.prefix().map(|p| &**p) == prefix.as_ref().map(|p| &**p) {
+            if element.namespace() != &ns!() &&
+                element.prefix().as_ref().map(|p| &**p) == prefix.as_ref().map(|p| &**p)
+            {
                 return element.namespace().clone();
             }
 
@@ -1011,9 +1066,19 @@ impl Element {
     pub fn push_attribute(&self, attr: &Attr) {
         let name = attr.local_name().clone();
         let namespace = attr.namespace().clone();
-        let old_value = DOMString::from(&**attr.value());
-        let mutation = Mutation::Attribute { name, namespace, old_value };
+        let value = DOMString::from(&**attr.value());
+        let mutation = Mutation::Attribute {
+            name: name.clone(),
+            namespace: namespace.clone(),
+            old_value: value.clone(),
+        };
+
         MutationObserver::queue_a_mutation_record(&self.node, mutation);
+
+        if self.get_custom_element_definition().is_some() {
+            let reaction = CallbackReaction::AttributeChanged(name, None, Some(value), namespace);
+            ScriptThread::enqueue_callback_reaction(self, reaction);
+        }
 
         assert!(attr.GetOwnerElement().r() == Some(self));
         self.will_mutate_attr(attr);
@@ -1146,8 +1211,16 @@ impl Element {
             let name = attr.local_name().clone();
             let namespace = attr.namespace().clone();
             let old_value = DOMString::from(&**attr.value());
-            let mutation = Mutation::Attribute { name, namespace, old_value, };
+            let mutation = Mutation::Attribute {
+                name: name.clone(),
+                namespace: namespace.clone(),
+                old_value: old_value.clone(),
+            };
+
             MutationObserver::queue_a_mutation_record(&self.node, mutation);
+
+            let reaction = CallbackReaction::AttributeChanged(name, Some(old_value), None, namespace);
+            ScriptThread::enqueue_callback_reaction(self, reaction);
 
             self.attrs.borrow_mut().remove(idx);
             attr.set_owner(None);
@@ -1158,16 +1231,10 @@ impl Element {
         })
     }
 
-    pub fn has_class(&self, name: &Atom) -> bool {
-        let quirks_mode = document_from_node(self).quirks_mode();
-        let is_equal = |lhs: &Atom, rhs: &Atom| {
-            match quirks_mode {
-                QuirksMode::NoQuirks | QuirksMode::LimitedQuirks => lhs == rhs,
-                QuirksMode::Quirks => lhs.eq_ignore_ascii_case(&rhs),
-            }
-        };
-        self.get_attribute(&ns!(), &local_name!("class"))
-            .map_or(false, |attr| attr.value().as_tokens().iter().any(|atom| is_equal(name, atom)))
+    pub fn has_class(&self, name: &Atom, case_sensitivity: CaseSensitivity) -> bool {
+        self.get_attribute(&ns!(), &local_name!("class")).map_or(false, |attr| {
+            attr.value().as_tokens().iter().any(|atom| case_sensitivity.eq_atom(name, atom))
+        })
     }
 
     pub fn set_atomic_attribute(&self, local_name: &LocalName, value: DOMString) {
@@ -1361,7 +1428,7 @@ impl Element {
         // Step 10 (TODO)
 
         // Step 11
-        win.scroll_node(node.to_trusted_node_address(), x, y, behavior);
+        win.scroll_node(node, x, y, behavior);
     }
 
     // https://w3c.github.io/DOM-Parsing/#parsing
@@ -1423,13 +1490,13 @@ impl ElementMethods for Element {
 
     // https://dom.spec.whatwg.org/#dom-element-prefix
     fn GetPrefix(&self) -> Option<DOMString> {
-        self.prefix.as_ref().map(|p| DOMString::from(&**p))
+        self.prefix.borrow().as_ref().map(|p| DOMString::from(&**p))
     }
 
     // https://dom.spec.whatwg.org/#dom-element-tagname
     fn TagName(&self) -> DOMString {
         let name = self.tag_name.or_init(|| {
-            let qualified_name = match self.prefix {
+            let qualified_name = match *self.prefix.borrow() {
                 Some(ref prefix) => {
                     Cow::Owned(format!("{}:{}", &**prefix, &*self.local_name))
                 },
@@ -1537,7 +1604,7 @@ impl ElementMethods for Element {
                       qualified_name: DOMString,
                       value: DOMString) -> ErrorResult {
         let (namespace, prefix, local_name) =
-            try!(validate_and_extract(namespace, &qualified_name));
+            validate_and_extract(namespace, &qualified_name)?;
         let qualified_name = LocalName::from(qualified_name);
         let value = self.parse_attribute(&namespace, &local_name, value);
         self.set_first_matching_attribute(
@@ -1548,6 +1615,10 @@ impl ElementMethods for Element {
 
     // https://dom.spec.whatwg.org/#dom-element-setattributenode
     fn SetAttributeNode(&self, attr: &Attr) -> Fallible<Option<Root<Attr>>> {
+        // Workaround for https://github.com/servo/servo/issues/17366
+        // This ensures that if this is an "id" attr, its value is an Atom
+        attr.swap_value(&mut self.parse_plain_attribute(attr.local_name(), attr.Value()));
+
         // Step 1.
         if let Some(owner) = attr.GetOwnerElement() {
             if &*owner != self {
@@ -1799,7 +1870,7 @@ impl ElementMethods for Element {
         // Step 10 (TODO)
 
         // Step 11
-        win.scroll_node(node.to_trusted_node_address(), self.ScrollLeft(), y, behavior);
+        win.scroll_node(node, self.ScrollLeft(), y, behavior);
     }
 
     // https://drafts.csswg.org/cssom-view/#dom-element-scrolltop
@@ -1892,7 +1963,7 @@ impl ElementMethods for Element {
         // Step 10 (TODO)
 
         // Step 11
-        win.scroll_node(node.to_trusted_node_address(), x, self.ScrollTop(), behavior);
+        win.scroll_node(node, x, self.ScrollTop(), behavior);
     }
 
     // https://drafts.csswg.org/cssom-view/#dom-element-scrollwidth
@@ -1934,7 +2005,7 @@ impl ElementMethods for Element {
     /// https://w3c.github.io/DOM-Parsing/#widl-Element-innerHTML
     fn SetInnerHTML(&self, value: DOMString) -> ErrorResult {
         // Step 1.
-        let frag = try!(self.parse_fragment(value));
+        let frag = self.parse_fragment(value)?;
         // Step 2.
         // https://github.com/w3c/DOM-Parsing/issues/1
         let target = if let Some(template) = self.downcast::<HTMLTemplateElement>() {
@@ -1971,17 +2042,19 @@ impl ElementMethods for Element {
             // Step 4.
             NodeTypeId::DocumentFragment => {
                 let body_elem = Element::create(QualName::new(None, ns!(html), local_name!("body")),
+                                                None,
                                                 &context_document,
-                                                ElementCreator::ScriptCreated);
+                                                ElementCreator::ScriptCreated,
+                                                CustomElementCreationMode::Synchronous);
                 Root::upcast(body_elem)
             },
             _ => context_node.GetParentElement().unwrap()
         };
 
         // Step 5.
-        let frag = try!(parent.parse_fragment(value));
+        let frag = parent.parse_fragment(value)?;
         // Step 6.
-        try!(context_parent.ReplaceChild(frag.upcast(), context_node));
+        context_parent.ReplaceChild(frag.upcast(), context_node)?;
         Ok(())
     }
 
@@ -2100,8 +2173,8 @@ impl ElementMethods for Element {
     // https://dom.spec.whatwg.org/#dom-element-insertadjacentelement
     fn InsertAdjacentElement(&self, where_: DOMString, element: &Element)
                              -> Fallible<Option<Root<Element>>> {
-        let where_ = try!(AdjacentPosition::try_from(&*where_));
-        let inserted_node = try!(self.insert_adjacent(where_, element.upcast()));
+        let where_ = AdjacentPosition::try_from(&*where_)?;
+        let inserted_node = self.insert_adjacent(where_, element.upcast())?;
         Ok(inserted_node.map(|node| Root::downcast(node).unwrap()))
     }
 
@@ -2112,7 +2185,7 @@ impl ElementMethods for Element {
         let text = Text::new(data, &document_from_node(self));
 
         // Step 2.
-        let where_ = try!(AdjacentPosition::try_from(&*where_));
+        let where_ = AdjacentPosition::try_from(&*where_)?;
         self.insert_adjacent(where_, text.upcast()).map(|_| ())
     }
 
@@ -2120,7 +2193,7 @@ impl ElementMethods for Element {
     fn InsertAdjacentHTML(&self, position: DOMString, text: DOMString)
                           -> ErrorResult {
         // Step 1.
-        let position = try!(AdjacentPosition::try_from(&*position));
+        let position = AdjacentPosition::try_from(&*position)?;
 
         let context = match position {
             AdjacentPosition::BeforeBegin | AdjacentPosition::AfterEnd => {
@@ -2142,7 +2215,7 @@ impl ElementMethods for Element {
             &context.owner_doc(), context.downcast::<Element>());
 
         // Step 3.
-        let fragment = try!(context.parse_fragment(text));
+        let fragment = context.parse_fragment(text)?;
 
         // Step 4.
         self.insert_adjacent(position, fragment.upcast()).map(|_| ())
@@ -2503,12 +2576,12 @@ impl<'a> ::selectors::Element for Root<Element> {
         }
     }
 
-    fn get_id(&self) -> Option<Atom> {
-        self.id_attribute.borrow().clone()
+    fn has_id(&self, id: &Atom, case_sensitivity: CaseSensitivity) -> bool {
+        self.id_attribute.borrow().as_ref().map_or(false, |atom| case_sensitivity.eq_atom(id, atom))
     }
 
-    fn has_class(&self, name: &Atom) -> bool {
-        Element::has_class(&**self, name)
+    fn has_class(&self, name: &Atom, case_sensitivity: CaseSensitivity) -> bool {
+        Element::has_class(&**self, name, case_sensitivity)
     }
 
     fn is_html_element_in_html_document(&self) -> bool {

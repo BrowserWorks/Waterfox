@@ -51,6 +51,7 @@
 #include "nsWrapperCacheInlines.h"
 #include "mozilla/AppUnits.h"
 #include <algorithm>
+#include "nsStyleContextInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -352,7 +353,9 @@ nsComputedDOMStyle::GetLength(uint32_t* aLength)
   // properties.
   UpdateCurrentStyleSources(false);
   if (mStyleContext) {
-    length += StyleVariables()->mVariables.Count();
+    length += mStyleContext->IsServo()
+      ? Servo_GetCustomPropertiesCount(mStyleContext->AsServo())
+      : StyleVariables()->mVariables.Count();
   }
 
   *aLength = length;
@@ -452,18 +455,18 @@ public:
     }
   }
 
-  already_AddRefed<nsStyleContext>
-  ResolveWithAnimation(StyleSetHandle aStyleSet,
+  already_AddRefed<GeckoStyleContext>
+  ResolveWithAnimation(nsStyleSet* aStyleSet,
                        Element* aElement,
                        CSSPseudoElementType aType,
-                       nsStyleContext* aParentContext,
+                       GeckoStyleContext* aParentContext,
                        nsComputedDOMStyle::StyleType aStyleType,
                        bool aInDocWithShell)
   {
     MOZ_ASSERT(mAnimationFlag == nsComputedDOMStyle::eWithAnimation,
       "AnimationFlag should be eWithAnimation");
 
-    RefPtr<nsStyleContext> result;
+    RefPtr<GeckoStyleContext> result;
 
     if (aType != CSSPseudoElementType::NotPseudo) {
       nsIFrame* frame = nsLayoutUtils::GetStyleFrame(aElement);
@@ -497,39 +500,35 @@ public:
         rules[i].swap(rules[length - i - 1]);
       }
 
-      result = aStyleSet->AsGecko()->ResolveStyleForRules(aParentContext,
-                                                          rules);
+      result = aStyleSet->ResolveStyleForRules(aParentContext, rules);
     }
     return result.forget();
   }
 
-  already_AddRefed<nsStyleContext>
-  ResolveWithoutAnimation(StyleSetHandle aStyleSet,
+  already_AddRefed<GeckoStyleContext>
+  ResolveWithoutAnimation(nsStyleSet* aStyleSet,
                           Element* aElement,
                           CSSPseudoElementType aType,
-                          nsStyleContext* aParentContext,
+                          GeckoStyleContext* aParentContext,
                           bool aInDocWithShell)
   {
-    MOZ_ASSERT(!aStyleSet->IsServo(),
-      "Servo backend should not use this function");
     MOZ_ASSERT(mAnimationFlag == nsComputedDOMStyle::eWithoutAnimation,
       "AnimationFlag should be eWithoutAnimation");
 
-    RefPtr<nsStyleContext> result;
+    RefPtr<GeckoStyleContext> result;
 
     if (aType != CSSPseudoElementType::NotPseudo) {
       nsIFrame* frame = nsLayoutUtils::GetStyleFrame(aElement);
       Element* pseudoElement =
         frame && aInDocWithShell ? frame->GetPseudoElement(aType) : nullptr;
       result =
-        aStyleSet->AsGecko()->ResolvePseudoElementStyleWithoutAnimation(
+        aStyleSet->ResolvePseudoElementStyleWithoutAnimation(
           aElement, aType,
           aParentContext,
           pseudoElement);
     } else {
       result =
-        aStyleSet->AsGecko()->ResolveStyleWithoutAnimation(aElement,
-                                                           aParentContext);
+        aStyleSet->ResolveStyleWithoutAnimation(aElement, aParentContext);
     }
     return result.forget();
   }
@@ -563,14 +562,14 @@ MustReresolveStyle(const nsStyleContext* aContext)
 
   if (aContext->HasPseudoElementData()) {
     if (!aContext->GetPseudo() ||
-        aContext->StyleSource().IsServoComputedValues()) {
+        aContext->IsServo()) {
       // TODO(emilio): When ::first-line is supported in Servo, we may want to
       // fix this to avoid re-resolving pseudo-element styles.
       return true;
     }
 
-    return aContext->GetParent() &&
-           aContext->GetParent()->HasPseudoElementData();
+    return aContext->AsGecko()->GetParent() &&
+           aContext->AsGecko()->GetParent()->HasPseudoElementData();
   }
 
   return false;
@@ -597,6 +596,15 @@ nsComputedDOMStyle::DoGetStyleContextNoFlush(Element* aElement,
     if (!presShell)
       return nullptr;
   }
+
+  // We do this check to avoid having to add too much special casing of
+  // Servo functions we call to explicitly ignore any element data in
+  // the tree. (See comment in ServoStyleSet::ResolveStyleLazily.)
+  MOZ_RELEASE_ASSERT((aStyleType == eAll && aAnimationFlag == eWithAnimation) ||
+                     !aElement->OwnerDoc()->GetBFCacheEntry(),
+                     "nsComputedDOMStyle doesn't support getting styles without "
+                     "document rules or without animation for documents in the "
+                     "bfcache");
 
   auto pseudoType = CSSPseudoElementType::NotPseudo;
   if (aPseudo) {
@@ -635,13 +643,12 @@ nsComputedDOMStyle::DoGetStyleContextNoFlush(Element* aElement,
           if (presContext && presContext->StyleSet()->IsGecko()) {
             nsStyleSet* styleSet = presContext->StyleSet()->AsGecko();
             return styleSet->ResolveStyleByRemovingAnimation(
-                     aElement, result, eRestyle_AllHintsWithAnimations);
+                     aElement, result->AsGecko(),
+                     eRestyle_AllHintsWithAnimations);
           } else {
-            RefPtr<ServoComputedValues> baseComputedValues =
-              presContext->StyleSet()->AsServo()->
-                GetBaseComputedValuesForElement(aElement, pseudoType);
-            return NS_NewStyleContext(nullptr, presContext, aPseudo,
-                                      pseudoType, baseComputedValues.forget());
+            return presContext->StyleSet()->AsServo()->
+              GetBaseContextForElement(aElement, nullptr, presContext,
+                                       aPseudo, pseudoType, result->AsServo());
           }
         }
 
@@ -667,37 +674,38 @@ nsComputedDOMStyle::DoGetStyleContextNoFlush(Element* aElement,
     StyleRuleInclusion rules = aStyleType == eDefaultOnly
                                ? StyleRuleInclusion::DefaultOnly
                                : StyleRuleInclusion::All;
-    RefPtr<nsStyleContext> result =
-       servoSet->ResolveTransientStyle(aElement, aPseudo, pseudoType, rules);
+    RefPtr<ServoStyleContext> result =
+       servoSet->ResolveStyleLazily(aElement, pseudoType, aPseudo, rules);
     if (aAnimationFlag == eWithAnimation) {
       return result.forget();
     }
 
-    RefPtr<ServoComputedValues> baseComputedValues =
-      servoSet->GetBaseComputedValuesForElement(aElement, pseudoType);
-    return NS_NewStyleContext(nullptr, presContext, aPseudo,
-                              pseudoType, baseComputedValues.forget());
+    return servoSet->GetBaseContextForElement(aElement, nullptr, presContext,
+                                              aPseudo, pseudoType, result);
   }
 
-  RefPtr<nsStyleContext> parentContext;
+  RefPtr<GeckoStyleContext> parentContext;
   nsIContent* parent = aPseudo ? aElement : aElement->GetParent();
   // Don't resolve parent context for document fragments.
   if (parent && parent->IsElement()) {
-    parentContext = GetStyleContextNoFlush(parent->AsElement(), nullptr,
-                                           aPresShell, aStyleType);
+    RefPtr<nsStyleContext> p =
+      GetStyleContextNoFlush(parent->AsElement(), nullptr,
+                             aPresShell, aStyleType);
+    MOZ_ASSERT(p && p->IsGecko());
+    parentContext = GeckoStyleContext::TakeRef(p.forget());
   }
 
   StyleResolver styleResolver(presContext, aAnimationFlag);
 
   if (aAnimationFlag == eWithAnimation) {
-    return styleResolver.ResolveWithAnimation(styleSet,
+    return styleResolver.ResolveWithAnimation(styleSet->AsGecko(),
                                               aElement, pseudoType,
                                               parentContext,
                                               aStyleType,
                                               inDocWithShell);
   }
 
-  return styleResolver.ResolveWithoutAnimation(styleSet,
+  return styleResolver.ResolveWithoutAnimation(styleSet->AsGecko(),
                                                aElement, pseudoType,
                                                parentContext,
                                                inDocWithShell);
@@ -720,7 +728,7 @@ nsComputedDOMStyle::GetAdjustedValuesForBoxSizing()
 
 /* static */
 nsIPresShell*
-nsComputedDOMStyle::GetPresShellForContent(nsIContent* aContent)
+nsComputedDOMStyle::GetPresShellForContent(const nsIContent* aContent)
 {
   nsIDocument* composedDoc = aContent->GetComposedDoc();
   if (!composedDoc)
@@ -778,20 +786,24 @@ nsComputedDOMStyle::ClearStyleContext()
 }
 
 void
-nsComputedDOMStyle::SetResolvedStyleContext(RefPtr<nsStyleContext>&& aContext)
+nsComputedDOMStyle::SetResolvedStyleContext(RefPtr<nsStyleContext>&& aContext,
+                                            uint64_t aGeneration)
 {
   if (!mResolvedStyleContext) {
     mResolvedStyleContext = true;
     mContent->AddMutationObserver(this);
   }
   mStyleContext = aContext;
+  mStyleContextGeneration = aGeneration;
 }
 
 void
-nsComputedDOMStyle::SetFrameStyleContext(nsStyleContext* aContext)
+nsComputedDOMStyle::SetFrameStyleContext(nsStyleContext* aContext,
+                                         uint64_t aGeneration)
 {
   ClearStyleContext();
   mStyleContext = aContext;
+  mStyleContextGeneration = aGeneration;
 }
 
 void
@@ -813,17 +825,37 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
   mFlushedPendingReflows = aNeedsLayoutFlush;
 #endif
 
+  nsCOMPtr<nsIPresShell> presShellForContent = GetPresShellForContent(mContent);
+  if (presShellForContent && presShellForContent != document->GetShell()) {
+    presShellForContent->FlushPendingNotifications(FlushType::Style);
+  }
+
   mPresShell = document->GetShell();
   if (!mPresShell || !mPresShell->GetPresContext()) {
     ClearStyleContext();
     return;
   }
 
+  // We need to use GetUndisplayedRestyleGeneration instead of
+  // GetRestyleGeneration, because the caching of mStyleContext is an
+  // optimization that is useful only for displayed elements.
+  // For undisplayed elements we need to take into account any DOM changes that
+  // might cause a restyle, because Servo will not increase the generation for
+  // undisplayed elements.
+  // As for Gecko, GetUndisplayedRestyleGeneration is effectively equal to
+  // GetRestyleGeneration, since the generation is incremented whenever we
+  // process restyles.
   uint64_t currentGeneration =
-    mPresShell->GetPresContext()->GetRestyleGeneration();
+    mPresShell->GetPresContext()->GetUndisplayedRestyleGeneration();
 
   if (mStyleContext) {
-    if (mStyleContextGeneration == currentGeneration) {
+    // We can't rely on the undisplayed restyle generation if
+    // mContent is out-of-document, since that generation is not
+    // incremented for DOM changes on out-of-document elements.
+    // So we always need to update the style context to ensure it
+    // it up-to-date.
+    if (mStyleContextGeneration == currentGeneration
+        && mContent->IsInComposedDoc()) {
       // Our cached style context is still valid.
       return;
     }
@@ -863,21 +895,21 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
                      "the inner table");
       }
 
-      SetFrameStyleContext(mInnerFrame->StyleContext());
+      SetFrameStyleContext(mInnerFrame->StyleContext(), currentGeneration);
       NS_ASSERTION(mStyleContext, "Frame without style context?");
     }
   }
 
   if (!mStyleContext || MustReresolveStyle(mStyleContext)) {
 #ifdef DEBUG
-    if (mStyleContext && mStyleContext->StyleSource().IsGeckoRuleNodeOrNull()) {
+    if (mStyleContext && mStyleContext->IsGecko()) {
       // We want to check that going through this path because of
       // HasPseudoElementData is rare, because it slows us down a good
       // bit.  So check that we're really inside something associated
       // with a pseudo-element that contains elements.  (We also allow
       // the element to be NAC, just in case some chrome JS calls
       // getComputedStyle on a NAC-implemented pseudo.)
-      nsStyleContext* topWithPseudoElementData = mStyleContext;
+      GeckoStyleContext* topWithPseudoElementData = mStyleContext->AsGecko();
       while (topWithPseudoElementData->GetParent()->HasPseudoElementData()) {
         topWithPseudoElementData = topWithPseudoElementData->GetParent();
       }
@@ -894,10 +926,11 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
 #endif
     // Need to resolve a style context
     RefPtr<nsStyleContext> resolvedStyleContext =
-      nsComputedDOMStyle::GetStyleContext(mContent->AsElement(),
-                                          mPseudo,
-                                          mPresShell,
-                                          mStyleType);
+      nsComputedDOMStyle::GetStyleContextNoFlush(
+          mContent->AsElement(),
+          mPseudo,
+          presShellForContent ? presShellForContent.get() : mPresShell,
+          mStyleType);
     if (!resolvedStyleContext) {
       ClearStyleContext();
       return;
@@ -907,10 +940,10 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
     // will flush, since we flushed style at the top of this function.
     NS_ASSERTION(mPresShell &&
                  currentGeneration ==
-                   mPresShell->GetPresContext()->GetRestyleGeneration(),
+                   mPresShell->GetPresContext()->GetUndisplayedRestyleGeneration(),
                  "why should we have flushed style again?");
 
-    SetResolvedStyleContext(Move(resolvedStyleContext));
+    SetResolvedStyleContext(Move(resolvedStyleContext), currentGeneration);
     NS_ASSERTION(mPseudo || !mStyleContext->HasPseudoElementData(),
                  "should not have pseudo-element data");
   }
@@ -922,8 +955,9 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
     nsStyleSet* styleSet = mPresShell->StyleSet()->AsGecko();
     RefPtr<nsStyleContext> unanimatedStyleContext =
       styleSet->ResolveStyleByRemovingAnimation(
-        mContent->AsElement(), mStyleContext, eRestyle_AllHintsWithAnimations);
-    SetResolvedStyleContext(Move(unanimatedStyleContext));
+        mContent->AsElement(), mStyleContext->AsGecko(),
+        eRestyle_AllHintsWithAnimations);
+    SetResolvedStyleContext(Move(unanimatedStyleContext), currentGeneration);
   }
 
   // mExposeVisitedStyle is set to true only by testing APIs that
@@ -941,16 +975,17 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
 void
 nsComputedDOMStyle::ClearCurrentStyleSources()
 {
+  // Release the current style context if we got it off the frame.
+  // For a style context we resolved, keep it around so that we
+  // can re-use it next time this object is queried, but not if it-s a
+  // re-resolved style context because we were inside a pseudo-element.
+  if (!mResolvedStyleContext || mOuterFrame) {
+    ClearStyleContext();
+  }
+
   mOuterFrame = nullptr;
   mInnerFrame = nullptr;
   mPresShell = nullptr;
-
-  // Release the current style context if we got it off the frame.
-  // For a style context we resolved, keep it around so that we
-  // can re-use it next time this object is queried.
-  if (!mResolvedStyleContext) {
-    mStyleContext = nullptr;
-  }
 }
 
 already_AddRefed<CSSValue>
@@ -1069,11 +1104,25 @@ nsComputedDOMStyle::IndexedGetter(uint32_t   aIndex,
     return;
   }
 
-  const nsStyleVariables* variables = StyleVariables();
-  if (aIndex - length < variables->mVariables.Count()) {
+  bool isServo = mStyleContext->IsServo();
+
+  const nsStyleVariables* variables = isServo
+    ? nullptr
+    : StyleVariables();
+
+  const uint32_t count = isServo
+    ? Servo_GetCustomPropertiesCount(mStyleContext->AsServo())
+    : variables->mVariables.Count();
+
+  const uint32_t index = aIndex - length;
+  if (index < count) {
     aFound = true;
     nsString varName;
-    variables->mVariables.GetVariableAt(aIndex - length, varName);
+    if (isServo) {
+      Servo_GetCustomPropertyNameAt(mStyleContext->AsServo(), index, &varName);
+    } else {
+      variables->mVariables.GetVariableAt(index, varName);
+    }
     aPropName.AssignLiteral("--");
     aPropName.Append(varName);
   } else {
@@ -1535,57 +1584,11 @@ nsComputedDOMStyle::DoGetTransformStyle()
   return val.forget();
 }
 
-/* If the property is "none", hand back "none" wrapped in a value.
- * Otherwise, compute the aggregate transform matrix and hands it back in a
- * "matrix" wrapper.
- */
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetTransform()
 {
-  /* First, get the display data.  We'll need it. */
   const nsStyleDisplay* display = StyleDisplay();
-
-  /* If there are no transforms, then we should construct a single-element
-   * entry and hand it back.
-   */
-  if (!display->mSpecifiedTransform) {
-    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-
-    /* Set it to "none." */
-    val->SetIdent(eCSSKeyword_none);
-    return val.forget();
-  }
-
-  /* Otherwise, we need to compute the current value of the transform matrix,
-   * store it in a string, and hand it back to the caller.
-   */
-
-  /* Use the inner frame for the reference box.  If we don't have an inner
-   * frame we use empty dimensions to allow us to continue (and percentage
-   * values in the transform will simply give broken results).
-   * TODO: There is no good way for us to represent the case where there's no
-   * frame, which is problematic.  The reason is that when we have percentage
-   * transforms, there are a total of four stored matrix entries that influence
-   * the transform based on the size of the element.  However, this poses a
-   * problem, because only two of these values can be explicitly referenced
-   * using the named transforms.  Until a real solution is found, we'll just
-   * use this approach.
-   */
-  nsStyleTransformMatrix::TransformReferenceBox refBox(mInnerFrame,
-                                                       nsSize(0, 0));
-
-   RuleNodeCacheConditions dummy;
-   bool dummyBool;
-   gfx::Matrix4x4 matrix =
-     nsStyleTransformMatrix::ReadTransforms(display->mSpecifiedTransform->mHead,
-                                            mStyleContext,
-                                            mStyleContext->PresContext(),
-                                            dummy,
-                                            refBox,
-                                            float(mozilla::AppUnitsPerCSSPixel()),
-                                            &dummyBool);
-
-  return MatrixToCSSValue(matrix);
+  return GetTransformValue(display->mSpecifiedTransform);
 }
 
 already_AddRefed<CSSValue>
@@ -4226,6 +4229,41 @@ nsComputedDOMStyle::DoGetWindowShadow()
 }
 
 already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetWindowOpacity()
+{
+  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+  val->SetNumber(StyleUIReset()->mWindowOpacity);
+  return val.forget();
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetWindowTransform()
+{
+  const nsStyleUIReset* uiReset = StyleUIReset();
+  return GetTransformValue(uiReset->mSpecifiedWindowTransform);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetWindowTransformOrigin()
+{
+  RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
+
+  const nsStyleUIReset* uiReset = StyleUIReset();
+
+  RefPtr<nsROCSSPrimitiveValue> originX = new nsROCSSPrimitiveValue;
+  SetValueToCoord(originX, uiReset->mWindowTransformOrigin[0], false,
+                  &nsComputedDOMStyle::GetFrameBoundsWidthForTransform);
+  valueList->AppendCSSValue(originX.forget());
+
+  RefPtr<nsROCSSPrimitiveValue> originY = new nsROCSSPrimitiveValue;
+  SetValueToCoord(originY, uiReset->mWindowTransformOrigin[1], false,
+                  &nsComputedDOMStyle::GetFrameBoundsHeightForTransform);
+  valueList->AppendCSSValue(originY.forget());
+
+  return valueList.forget();
+}
+
+already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetWordBreak()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
@@ -4672,8 +4710,7 @@ nsComputedDOMStyle::DoGetJustifyItems()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   nsAutoString str;
-  auto justify =
-    StylePosition()->ComputedJustifyItems(mStyleContext->GetParentAllowServo());
+  auto justify = StylePosition()->mJustifyItems;
   nsCSSValue::AppendAlignJustifyValueToString(justify, str);
   val->SetString(str);
   return val.forget();
@@ -5381,7 +5418,6 @@ nsComputedDOMStyle::GetStickyOffset(mozilla::Side aSide)
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::GetStaticOffset(mozilla::Side aSide)
-
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   SetValueToCoord(val, StylePosition()->mOffset.Get(aSide), false);
@@ -5424,7 +5460,7 @@ nsComputedDOMStyle::GetLineHeightCoord(nscoord& aCoord)
   // lie about font size inflation since we lie about font size (since
   // the inflation only applies to text)
   aCoord = ReflowInput::CalcLineHeight(mContent, mStyleContext,
-                                             blockHeight, 1.0f);
+                                       blockHeight, 1.0f);
 
   // CalcLineHeight uses font->mFont.size, but we want to use
   // font->mSize as the font size.  Adjust for that.  Also adjust for
@@ -5860,6 +5896,56 @@ nsComputedDOMStyle::GetSVGPaintFor(bool aFill)
   }
 
   return val.forget();
+}
+
+/* If the property is "none", hand back "none" wrapped in a value.
+ * Otherwise, compute the aggregate transform matrix and hands it back in a
+ * "matrix" wrapper.
+ */
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::GetTransformValue(nsCSSValueSharedList* aSpecifiedTransform)
+{
+  /* If there are no transforms, then we should construct a single-element
+   * entry and hand it back.
+   */
+  if (!aSpecifiedTransform) {
+    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+
+    /* Set it to "none." */
+    val->SetIdent(eCSSKeyword_none);
+    return val.forget();
+  }
+
+  /* Otherwise, we need to compute the current value of the transform matrix,
+   * store it in a string, and hand it back to the caller.
+   */
+
+  /* Use the inner frame for the reference box.  If we don't have an inner
+   * frame we use empty dimensions to allow us to continue (and percentage
+   * values in the transform will simply give broken results).
+   * TODO: There is no good way for us to represent the case where there's no
+   * frame, which is problematic.  The reason is that when we have percentage
+   * transforms, there are a total of four stored matrix entries that influence
+   * the transform based on the size of the element.  However, this poses a
+   * problem, because only two of these values can be explicitly referenced
+   * using the named transforms.  Until a real solution is found, we'll just
+   * use this approach.
+   */
+  nsStyleTransformMatrix::TransformReferenceBox refBox(mInnerFrame,
+                                                       nsSize(0, 0));
+
+   RuleNodeCacheConditions dummy;
+   bool dummyBool;
+   gfx::Matrix4x4 matrix =
+     nsStyleTransformMatrix::ReadTransforms(aSpecifiedTransform->mHead,
+                                            mStyleContext,
+                                            mStyleContext->PresContext(),
+                                            dummy,
+                                            refBox,
+                                            float(mozilla::AppUnitsPerCSSPixel()),
+                                            &dummyBool);
+
+  return MatrixToCSSValue(matrix);
 }
 
 already_AddRefed<CSSValue>
@@ -6873,12 +6959,13 @@ nsComputedDOMStyle::DoGetCustomProperty(const nsAString& aPropertyName)
 {
   MOZ_ASSERT(nsCSSProps::IsCustomPropertyName(aPropertyName));
 
-  const nsStyleVariables* variables = StyleVariables();
-
   nsString variableValue;
   const nsAString& name = Substring(aPropertyName,
                                     CSS_CUSTOM_NAME_PREFIX_LENGTH);
-  if (!variables->mVariables.Get(name, variableValue)) {
+  bool present = mStyleContext->IsServo()
+    ? Servo_GetCustomPropertyValue(mStyleContext->AsServo(), &name, &variableValue)
+    : StyleVariables()->mVariables.Get(name, variableValue);
+  if (!present) {
     return nullptr;
   }
 

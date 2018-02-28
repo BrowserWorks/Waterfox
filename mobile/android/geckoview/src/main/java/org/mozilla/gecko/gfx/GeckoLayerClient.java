@@ -9,7 +9,6 @@ import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.util.FloatUtils;
 import org.mozilla.gecko.util.GeckoBundle;
 
 import android.content.Context;
@@ -51,9 +50,9 @@ class GeckoLayerClient implements LayerView.Listener
 
     private volatile boolean mGeckoIsReady;
 
-    /* package */ final PanZoomController mPanZoomController;
+    private final PanZoomController mPanZoomController;
     private final DynamicToolbarAnimator mToolbarAnimator;
-    /* package */ final LayerView mView;
+    private final LayerView mView;
 
     /* This flag is true from the time that browser.js detects a first-paint is about to start,
      * to the time that we receive the first-paint composite notification from the compositor.
@@ -112,8 +111,7 @@ class GeckoLayerClient implements LayerView.Listener
         mView.post(new Runnable() {
             @Override
             public void run() {
-                mPanZoomController.attach();
-                mView.updateCompositor();
+                getView().updateCompositor();
             }
         });
     }
@@ -216,12 +214,9 @@ class GeckoLayerClient implements LayerView.Listener
       * viewport information provided.
       */
     @WrapForJNI(calledFrom = "ui")
-    public void updateRootFrameMetrics(float scrollX, float scrollY, float zoom,
-            float cssPageLeft, float cssPageTop, float cssPageRight, float cssPageBottom) {
-        RectF cssPageRect = new RectF(cssPageLeft, cssPageTop, cssPageRight, cssPageBottom);
+    public void updateRootFrameMetrics(float scrollX, float scrollY, float zoom) {
         mViewportMetrics = mViewportMetrics.setViewportOrigin(scrollX, scrollY)
-            .setZoomFactor(zoom)
-            .setPageRect(RectUtils.scale(cssPageRect, zoom), cssPageRect);
+            .setZoomFactor(zoom);
 
         mToolbarAnimator.onMetricsChanged(mViewportMetrics);
         mContentDocumentIsDisplayed = true;
@@ -412,7 +407,7 @@ class GeckoLayerClient implements LayerView.Listener
         mView.post(new Runnable() {
             @Override
             public void run() {
-                mView.dispatchTouchEvent(event);
+                getView().dispatchTouchEvent(event);
             }
         });
 

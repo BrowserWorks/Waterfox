@@ -13,7 +13,7 @@
 
 namespace mozilla {
 
-MediaDecoder*
+ChannelMediaDecoder*
 ADTSDecoder::Clone(MediaDecoderInit& aInit)
 {
   if (!IsEnabled())
@@ -25,9 +25,11 @@ ADTSDecoder::Clone(MediaDecoderInit& aInit)
 MediaDecoderStateMachine*
 ADTSDecoder::CreateStateMachine()
 {
-  RefPtr<MediaDecoderReader> reader =
-      new MediaFormatReader(this, new ADTSDemuxer(GetResource()));
-  return new MediaDecoderStateMachine(this, reader);
+  MediaFormatReaderInit init;
+  init.mCrashHelper = GetOwner()->CreateGMPCrashHelper();
+  init.mFrameStats = mFrameStats;
+  mReader = new MediaFormatReader(init, new ADTSDemuxer(mResource));
+  return new MediaDecoderStateMachine(this, mReader);
 }
 
 /* static */ bool

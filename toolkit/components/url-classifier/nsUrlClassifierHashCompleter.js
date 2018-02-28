@@ -15,6 +15,7 @@ const PARTIAL_LENGTH = 4;
 
 // Upper limit on the server response minimumWaitDuration
 const MIN_WAIT_DURATION_MAX_VALUE = 24 * 60 * 60 * 1000;
+const PREF_DEBUG_ENABLED = "browser.safebrowsing.debug";
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -28,10 +29,11 @@ XPCOMUtils.defineLazyServiceGetter(this, 'gUrlUtil',
                                    '@mozilla.org/url-classifier/utils;1',
                                    'nsIUrlClassifierUtils');
 
+let loggingEnabled = false;
+
 // Log only if browser.safebrowsing.debug is true
 function log(...stuff) {
-  let logging = Services.prefs.getBoolPref("browser.safebrowsing.debug", false);
-  if (!logging) {
+  if (!loggingEnabled) {
     return;
   }
 
@@ -181,7 +183,7 @@ function HashCompleter() {
   this._nextGethashTimeMs = {};
 
   Services.obs.addObserver(this, "quit-application");
-
+  Services.prefs.addObserver(PREF_DEBUG_ENABLED, this);
 }
 
 HashCompleter.prototype = {
@@ -290,9 +292,16 @@ HashCompleter.prototype = {
   },
 
   observe: function HC_observe(aSubject, aTopic, aData) {
-    if (aTopic == "quit-application") {
+    switch (aTopic) {
+    case "quit-application":
       this._shuttingDown = true;
       Services.obs.removeObserver(this, "quit-application");
+      break;
+    case "nsPref:changed":
+      if (aData == PREF_DEBUG_ENABLED) {
+        loggingEnabled = Services.prefs.getBoolPref(PREF_DEBUG_ENABLED);
+      }
+      break;
     }
   },
 };
@@ -407,7 +416,7 @@ HashCompleterRequest.prototype = {
     // with onStopRequest since we implement nsIStreamListener on the
     // channel.
     if (this._channel && this._channel.isPending()) {
-      log("cancelling request to " + this.gethashUrl + "\n");
+      log("cancelling request to " + this.gethashUrl + " (timeout)\n");
       Services.telemetry.getKeyedHistogramById("URLCLASSIFIER_COMPLETE_TIMEOUT2").
         add(this.telemetryProvider, 1);
       this._channel.cancel(Cr.NS_BINDING_ABORTED);
@@ -419,19 +428,24 @@ HashCompleterRequest.prototype = {
     let loadFlags = Ci.nsIChannel.INHIBIT_CACHING |
                     Ci.nsIChannel.LOAD_BYPASS_CACHE;
 
-    let actualGethashUrl = this.gethashUrl;
+    this.actualGethashUrl = this.gethashUrl;
     if (this.isV4) {
       // As per spec, we add the request payload to the gethash url.
-      actualGethashUrl += "&$req=" + this.buildRequestV4();
+      this.actualGethashUrl += "&$req=" + this.buildRequestV4();
     }
 
-    log("actualGethashUrl: " + actualGethashUrl);
+    log("actualGethashUrl: " + this.actualGethashUrl);
 
     let channel = NetUtil.newChannel({
-      uri: actualGethashUrl,
+      uri: this.actualGethashUrl,
       loadUsingSystemPrincipal: true
     });
     channel.loadFlags = loadFlags;
+    channel.loadInfo.originAttributes = {
+      // The firstPartyDomain value should sync with NECKO_SAFEBROWSING_FIRST_PARTY_DOMAIN
+      // defined in nsNetUtil.h.
+      firstPartyDomain: "safebrowsing.86868755-6b82-4842-b301-72671a0db32e.mozilla"
+    };
 
     // Disable keepalive.
     let httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
@@ -751,6 +765,11 @@ HashCompleterRequest.prototype = {
 
     Services.telemetry.getKeyedHistogramById("URLCLASSIFIER_COMPLETE_REMOTE_STATUS2").
       add(this.telemetryProvider, httpStatusToBucket(httpStatus));
+    if (httpStatus == 400) {
+      dump("Safe Browsing server returned a 400 during completion: request= " +
+           this.actualGethashUrl + "\n");
+    }
+
     Services.telemetry.getKeyedHistogramById("URLCLASSIFIER_COMPLETE_TIMEOUT2").
       add(this.telemetryProvider, 0);
 

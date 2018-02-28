@@ -28,12 +28,7 @@ void AssertIsMainThreadOrServoFontMetricsLocked();
   bool IsServo() const { return false; }
 #endif
 
-/**
- * Macro used in a base class of |geckotype_| and |servotype_|.
- * The class should define |StyleBackendType mType;| itself.
- */
-#define MOZ_DECL_STYLO_METHODS(geckotype_, servotype_)  \
-  MOZ_DECL_STYLO_CHECK_METHODS                          \
+#define MOZ_DECL_STYLO_CONVERT_METHODS(geckotype_, servotype_)  \
   inline geckotype_* AsGecko();                         \
   inline servotype_* AsServo();                         \
   inline const geckotype_* AsGecko() const;             \
@@ -44,25 +39,33 @@ void AssertIsMainThreadOrServoFontMetricsLocked();
   inline const servotype_* GetAsServo() const;
 
 /**
+ * Macro used in a base class of |geckotype_| and |servotype_|.
+ * The class should define |StyleBackendType mType;| itself.
+ */
+#define MOZ_DECL_STYLO_METHODS(geckotype_, servotype_)  \
+  MOZ_DECL_STYLO_CHECK_METHODS                          \
+  MOZ_DECL_STYLO_CONVERT_METHODS(geckotype_, servotype_)
+
+/**
  * Macro used in inline header of class |type_| with its Gecko and Servo
  * subclasses named |geckotype_| and |servotype_| correspondingly for
  * implementing the inline methods defined by MOZ_DECL_STYLO_METHODS.
  */
 #define MOZ_DEFINE_STYLO_METHODS(type_, geckotype_, servotype_) \
   geckotype_* type_::AsGecko() {                                \
-    MOZ_ASSERT(IsGecko());                                      \
+    MOZ_DIAGNOSTIC_ASSERT(IsGecko());                           \
     return static_cast<geckotype_*>(this);                      \
   }                                                             \
   servotype_* type_::AsServo() {                                \
-    MOZ_ASSERT(IsServo());                                      \
+    MOZ_DIAGNOSTIC_ASSERT(IsServo());                           \
     return static_cast<servotype_*>(this);                      \
   }                                                             \
   const geckotype_* type_::AsGecko() const {                    \
-    MOZ_ASSERT(IsGecko());                                      \
+    MOZ_DIAGNOSTIC_ASSERT(IsGecko());                           \
     return static_cast<const geckotype_*>(this);                \
   }                                                             \
   const servotype_* type_::AsServo() const {                    \
-    MOZ_ASSERT(IsServo());                                      \
+    MOZ_DIAGNOSTIC_ASSERT(IsServo());                           \
     return static_cast<const servotype_*>(this);                \
   }                                                             \
   geckotype_* type_::GetAsGecko() {                             \

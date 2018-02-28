@@ -167,16 +167,20 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace, nsIAtom* aName,
               aAttributes->getValue(nsHtml5AttributeName::ATTR_CROSSORIGIN);
             nsHtml5String integrity =
               aAttributes->getValue(nsHtml5AttributeName::ATTR_INTEGRITY);
+            bool async =
+              aAttributes->contains(nsHtml5AttributeName::ATTR_ASYNC);
+            bool defer =
+              aAttributes->contains(nsHtml5AttributeName::ATTR_DEFER);
             mSpeculativeLoadQueue.AppendElement()->InitScript(
               url,
               charset,
               type,
               crossOrigin,
               integrity,
-              mode == nsHtml5TreeBuilder::IN_HEAD);
-            mCurrentHtmlScriptIsAsyncOrDefer =
-              aAttributes->contains(nsHtml5AttributeName::ATTR_ASYNC) ||
-              aAttributes->contains(nsHtml5AttributeName::ATTR_DEFER);
+              mode == nsHtml5TreeBuilder::IN_HEAD,
+              async,
+              defer);
+            mCurrentHtmlScriptIsAsyncOrDefer = async || defer;
           }
         } else if (nsGkAtoms::link == aName) {
           nsHtml5String rel =
@@ -279,7 +283,9 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace, nsIAtom* aName,
               type,
               crossOrigin,
               integrity,
-              mode == nsHtml5TreeBuilder::IN_HEAD);
+              mode == nsHtml5TreeBuilder::IN_HEAD,
+              false,
+              false);
           }
         } else if (nsGkAtoms::style == aName) {
           nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
@@ -585,26 +591,6 @@ nsHtml5TreeBuilder::appendCharacters(nsIContentHandle* aParent, char16_t* aBuffe
   NS_ASSERTION(treeOp, "Tree op allocation failed.");
   treeOp->Init(eTreeOpAppendText, bufferCopy, aLength,
       deepTreeSurrogateParent ? deepTreeSurrogateParent : aParent);
-}
-
-void
-nsHtml5TreeBuilder::appendIsindexPrompt(nsIContentHandle* aParent)
-{
-  NS_PRECONDITION(aParent, "Null parent");
-
-  if (mBuilder) {
-    nsresult rv = nsHtml5TreeOperation::AppendIsindexPrompt(
-      static_cast<nsIContent*>(aParent),
-      mBuilder);
-    if (NS_FAILED(rv)) {
-      MarkAsBrokenAndRequestSuspension(rv);
-    }
-    return;
-  }
-
-  nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
-  NS_ASSERTION(treeOp, "Tree op allocation failed.");
-  treeOp->Init(eTreeOpAppendIsindexPrompt, aParent);
 }
 
 void
@@ -944,7 +930,6 @@ nsHtml5TreeBuilder::elementPopped(int32_t aNamespace, nsIAtom* aName, nsIContent
     // See comments in nsHtml5SpeculativeLoad.h about <picture> preloading
     mSpeculativeLoadQueue.AppendElement()->InitEndPicture();
   }
-  return;
 }
 
 void
@@ -1078,17 +1063,19 @@ nsHtml5TreeBuilder::FlushLoads()
 }
 
 void
-nsHtml5TreeBuilder::SetDocumentCharset(nsACString& aCharset, 
+nsHtml5TreeBuilder::SetDocumentCharset(NotNull<const Encoding*> aEncoding, 
                                        int32_t aCharsetSource)
 {
   if (mBuilder) {
-    mBuilder->SetDocumentCharsetAndSource(aCharset, aCharsetSource);
+    mBuilder->SetDocumentCharsetAndSource(aEncoding, aCharsetSource);
   } else if (mSpeculativeLoadStage) {
+    nsAutoCString charset;
+    aEncoding->Name(charset);
     mSpeculativeLoadQueue.AppendElement()->InitSetDocumentCharset(
-      aCharset, aCharsetSource);
+      charset, aCharsetSource);
   } else {
     mOpQueue.AppendElement()->Init(
-      eTreeOpSetDocumentCharset, aCharset, aCharsetSource);
+      eTreeOpSetDocumentCharset, aEncoding, aCharsetSource);
   }
 }
 
@@ -1103,7 +1090,7 @@ nsHtml5TreeBuilder::StreamEnded()
 }
 
 void
-nsHtml5TreeBuilder::NeedsCharsetSwitchTo(const nsACString& aCharset,
+nsHtml5TreeBuilder::NeedsCharsetSwitchTo(NotNull<const Encoding*> aEncoding,
                                          int32_t aCharsetSource,
                                          int32_t aLineNumber)
 {
@@ -1114,7 +1101,7 @@ nsHtml5TreeBuilder::NeedsCharsetSwitchTo(const nsACString& aCharset,
   nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
   NS_ASSERTION(treeOp, "Tree op allocation failed.");
   treeOp->Init(eTreeOpNeedsCharsetSwitchTo,
-               aCharset,
+               aEncoding,
                aCharsetSource,
                aLineNumber);
 }

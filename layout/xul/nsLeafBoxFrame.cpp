@@ -74,7 +74,7 @@ nsLeafBoxFrame::AttributeChanged(int32_t aNameSpaceID,
   nsresult rv = nsLeafFrame::AttributeChanged(aNameSpaceID, aAttribute,
                                               aModType);
 
-  if (aAttribute == nsGkAtoms::mousethrough) 
+  if (aAttribute == nsGkAtoms::mousethrough)
     UpdateMouseThrough();
 
   return rv;
@@ -119,7 +119,7 @@ nsLeafBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 }
 
 /* virtual */ nscoord
-nsLeafBoxFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsLeafBoxFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -141,7 +141,7 @@ nsLeafBoxFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-nsLeafBoxFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsLeafBoxFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -170,7 +170,7 @@ nsLeafBoxFrame::GetIntrinsicISize()
 }
 
 LogicalSize
-nsLeafBoxFrame::ComputeAutoSize(nsRenderingContext* aRenderingContext,
+nsLeafBoxFrame::ComputeAutoSize(gfxContext*         aRenderingContext,
                                 WritingMode         aWM,
                                 const LogicalSize&  aCBSize,
                                 nscoord             aAvailableISize,
@@ -220,7 +220,7 @@ nsLeafBoxFrame::Reflow(nsPresContext*   aPresContext,
       break;
     default:printf("<unknown>%d", aReflowInput.reason);break;
   }
-  
+
   printSize("AW", aReflowInput.AvailableWidth());
   printSize("AH", aReflowInput.AvailableHeight());
   printSize("CW", aReflowInput.ComputedWidth());
@@ -294,10 +294,10 @@ nsLeafBoxFrame::Reflow(nsPresContext*   aPresContext,
   nsRect r(mRect.x, mRect.y, computedSize.width, computedSize.height);
 
   SetXULBounds(state, r);
- 
+
   // layout our children
   XULLayout(state);
-  
+
   // ok our child could have gotten bigger. So lets get its bounds
   aDesiredSize.Width() = mRect.width;
   aDesiredSize.Height() = mRect.height;
@@ -311,9 +311,9 @@ nsLeafBoxFrame::Reflow(nsPresContext*   aPresContext,
     printf("%p ** nsLBF(done) W:%d H:%d  ", this, aDesiredSize.Width(), aDesiredSize.Height());
 
     if (maxElementWidth) {
-      printf("MW:%d\n", *maxElementWidth); 
+      printf("MW:%d\n", *maxElementWidth);
     } else {
-      printf("MW:?\n"); 
+      printf("MW:?\n");
     }
 
   }

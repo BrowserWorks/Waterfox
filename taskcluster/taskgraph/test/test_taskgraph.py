@@ -6,9 +6,9 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import unittest
 
-from ..graph import Graph
-from ..task import Task
-from ..taskgraph import TaskGraph
+from taskgraph.graph import Graph
+from taskgraph.task import Task
+from taskgraph.taskgraph import TaskGraph
 from mozunit import main
 
 
@@ -73,6 +73,7 @@ class TestTaskGraph(unittest.TestCase):
 
         tasks, new_graph = TaskGraph.from_json(graph.to_json())
         self.assertEqual(graph, new_graph)
+
 
 if __name__ == '__main__':
     main()

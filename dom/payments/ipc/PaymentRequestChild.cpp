@@ -21,8 +21,58 @@ PaymentRequestChild::RequestPayment(const IPCPaymentActionRequest& aAction)
   if (!mActorAlive) {
     return NS_ERROR_FAILURE;
   }
-  SendRequestPayment(aAction);
+  if (!SendRequestPayment(aAction)) {
+    return NS_ERROR_FAILURE;
+  }
   return NS_OK;
+}
+
+mozilla::ipc::IPCResult
+PaymentRequestChild::RecvRespondPayment(const IPCPaymentActionResponse& aResponse)
+{
+  if (!mActorAlive) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  const IPCPaymentActionResponse& response = aResponse;
+  RefPtr<PaymentRequestManager> manager = PaymentRequestManager::GetSingleton();
+  MOZ_ASSERT(manager);
+  nsresult rv = manager->RespondPayment(response);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
+PaymentRequestChild::RecvChangeShippingAddress(const nsString& aRequestId,
+                                               const IPCPaymentAddress& aAddress)
+{
+  if (!mActorAlive) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  RefPtr<PaymentRequestManager> manager = PaymentRequestManager::GetSingleton();
+  MOZ_ASSERT(manager);
+  nsresult rv = manager->ChangeShippingAddress(aRequestId, aAddress);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
+PaymentRequestChild::RecvChangeShippingOption(const nsString& aRequestId,
+                                              const nsString& aOption)
+{
+  if (!mActorAlive) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  RefPtr<PaymentRequestManager> manager = PaymentRequestManager::GetSingleton();
+  MOZ_ASSERT(manager);
+  nsresult rv = manager->ChangeShippingOption(aRequestId, aOption);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  return IPC_OK();
 }
 
 void
@@ -31,7 +81,10 @@ PaymentRequestChild::ActorDestroy(ActorDestroyReason aWhy)
   mActorAlive = false;
   RefPtr<PaymentRequestManager> manager = PaymentRequestManager::GetSingleton();
   MOZ_ASSERT(manager);
-  manager->ReleasePaymentChild(this);
+  nsresult rv = manager->ReleasePaymentChild(this);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    MOZ_ASSERT(false);
+  }
 }
 
 void

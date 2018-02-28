@@ -104,14 +104,14 @@ public:
   nsresult HashingKeyWithStorage(nsACString &aResult) const;
   nsresult HashingKey(nsACString &aResult) const;
 
-  static nsresult HashingKey(nsCSubstring const& aStorageID,
-                             nsCSubstring const& aEnhanceID,
+  static nsresult HashingKey(const nsACString& aStorageID,
+                             const nsACString& aEnhanceID,
                              nsIURI* aURI,
                              nsACString &aResult);
 
-  static nsresult HashingKey(nsCSubstring const& aStorageID,
-                             nsCSubstring const& aEnhanceID,
-                             nsCSubstring const& aURISpec,
+  static nsresult HashingKey(const nsACString& aStorageID,
+                             const nsACString& aEnhanceID,
+                             const nsACString& aURISpec,
                              nsACString &aResult);
 
   // Accessed only on the service management thread
@@ -160,7 +160,7 @@ private:
     // it's pointer).
     RefPtr<CacheEntry> mEntry;
     nsCOMPtr<nsICacheEntryOpenCallback> mCallback;
-    nsCOMPtr<nsIThread> mTargetThread;
+    nsCOMPtr<nsIEventTarget> mTarget;
     bool mReadOnly : 1;
     bool mRevalidating : 1;
     bool mCheckOnAnyThread : 1;
@@ -208,7 +208,11 @@ private:
   {
   public:
     DoomCallbackRunnable(CacheEntry* aEntry, nsresult aRv)
-      : mEntry(aEntry), mRv(aRv) {}
+      : Runnable("net::CacheEntry::DoomCallbackRunnable")
+      , mEntry(aEntry)
+      , mRv(aRv)
+    {
+    }
 
   private:
     NS_IMETHOD Run() override

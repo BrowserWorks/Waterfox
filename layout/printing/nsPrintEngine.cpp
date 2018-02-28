@@ -73,6 +73,7 @@ static const char kPrintingPromptService[] = "@mozilla.org/embedcomp/printingpro
 #include "nsISelectionController.h"
 
 // Misc
+#include "gfxContext.h"
 #include "mozilla/gfx/DrawEventRecorder.h"
 #include "mozilla/layout/RemotePrintJobChild.h"
 #include "nsISupportsUtils.h"
@@ -93,7 +94,6 @@ static const char kPrintingPromptService[] = "@mozilla.org/embedcomp/printingpro
 #include "nsDeviceContextSpecProxy.h"
 #include "nsViewManager.h"
 #include "nsView.h"
-#include "nsRenderingContext.h"
 
 #include "nsIPageSequenceFrame.h"
 #include "nsIURL.h"
@@ -392,8 +392,13 @@ nsresult
 nsPrintEngine::CommonPrint(bool                    aIsPrintPreview,
                            nsIPrintSettings*       aPrintSettings,
                            nsIWebProgressListener* aWebProgressListener,
-                           nsIDOMDocument* aDoc) {
-  RefPtr<nsPrintEngine> kungfuDeathGrip = this;
+                           nsIDOMDocument* aDoc)
+{
+  // Callers must hold a strong reference to |this| to ensure that we stay
+  // alive for the duration of this method, because our main owning reference
+  // (on nsDocumentViewer) might be cleared during this function (if we cause
+  // script to run and it cancels the print operation).
+
   nsresult rv = DoCommonPrint(aIsPrintPreview, aPrintSettings,
                               aWebProgressListener, aDoc);
   if (NS_FAILED(rv)) {
@@ -534,6 +539,14 @@ nsPrintEngine::DoCommonPrint(bool                    aIsPrintPreview,
     // Build the "tree" of PrintObjects
     BuildDocTree(printData->mPrintObject->mDocShell, &printData->mPrintDocList,
                  printData->mPrintObject);
+  }
+
+  // The nsAutoScriptBlocker above will now have been destroyed, which may
+  // cause our print/print-preview operation to finish. In this case, we
+  // should immediately return an error code so that the root caller knows
+  // it shouldn't continue to do anything with this instance.
+  if (mIsDestroying || (aIsPrintPreview && !GetIsCreatingPrintPreview())) {
+    return NS_ERROR_FAILURE;
   }
 
   if (!aIsPrintPreview) {
@@ -1633,6 +1646,14 @@ nsPrintEngine::ReconstructAndReflow(bool doSetPixelScale)
       continue;
     }
 
+    // When the print object has been marked as "print the document" (i.e,
+    // po->mDontPrint is false), mPresContext and mPresShell should be
+    // non-nullptr (i.e., should've been created for the print) since they
+    // are necessary to print the document.
+    MOZ_ASSERT(po->mPresContext && po->mPresShell,
+      "mPresContext and mPresShell shouldn't be nullptr when the print object "
+      "has been marked as \"print the document\"");
+
     UpdateZoomRatio(po, doSetPixelScale);
 
     po->mPresContext->SetPageScale(po->mZoomRatio);
@@ -1683,9 +1704,38 @@ nsPrintEngine::ReconstructAndReflow(bool doSetPixelScale)
 nsresult
 nsPrintEngine::SetupToPrintContent()
 {
-  if (NS_WARN_IF(!mPrt)) {
+  // This method may be called while DoCommonPrint() initializes the instance
+  // when its script blocker goes out of scope.  In such case, this cannot do
+  // its job as expected because some objects in mPrt have not been initialized
+  // yet but they are necessary.
+  // Note: it shouldn't be possible for mPrt->mPrintObject to be null; we check
+  // it for good measure (after we check its owner) before we start
+  // dereferencing it below.
+  if (NS_WARN_IF(!mPrt) ||
+      NS_WARN_IF(!mPrt->mPrintObject)) {
     return NS_ERROR_FAILURE;
   }
+
+  // If this is creating print preview, mPrt->mPrintObject->mPresContext and
+  // mPrt->mPrintObject->mPresShell need to be non-nullptr because this cannot
+  // initialize page sequence frame without them at end of this method since
+  // page sequence frame has already been destroyed or not been created yet.
+  if (mIsCreatingPrintPreview &&
+      (NS_WARN_IF(!mPrt->mPrintObject->mPresContext) ||
+       NS_WARN_IF(!mPrt->mPrintObject->mPresShell))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // If this is printing some documents (not print-previewing the documents),
+  // mPrt->mPrintObject->mPresContext and mPrt->mPrintObject->mPresShell can be
+  // nullptr only when mPrt->mPrintObject->mDontPrint is set to true.  E.g., if
+  // the document has a <frameset> element and it's printing only content in a
+  // <frame> element or all <frame> elements separately.
+  MOZ_ASSERT(
+    (!mIsCreatingPrintPreview && !mPrt->mPrintObject->IsPrintable()) ||
+    (mPrt->mPrintObject->mPresContext && mPrt->mPrintObject->mPresShell),
+    "mPresContext and mPresShell shouldn't be nullptr when printing the "
+    "document or creating print-preview");
 
   bool didReconstruction = false;
 
@@ -1926,6 +1976,18 @@ nsPrintEngine::InitPrintDocConstruction(bool aHandleError)
 nsresult
 nsPrintEngine::AfterNetworkPrint(bool aHandleError)
 {
+  // If Destroy() has already been called, mPtr is nullptr.  Then, the instance
+  // needs to do nothing anymore in this method.
+  // Note: it shouldn't be possible for mPrt->mPrintObject to be null; we
+  // just check it for good measure, as we check its owner.
+  // Note: it shouldn't be possible for mPrt->mPrintObject->mDocShell to be
+  // null; we just check it for good measure, as we check its owner.
+  if (!mPrt ||
+      NS_WARN_IF(!mPrt->mPrintObject) ||
+      NS_WARN_IF(!mPrt->mPrintObject->mDocShell)) {
+    return NS_ERROR_FAILURE;
+  }
+
   nsCOMPtr<nsIWebProgress> webProgress = do_QueryInterface(mPrt->mPrintObject->mDocShell);
 
   webProgress->RemoveProgressListener(
@@ -2350,6 +2412,10 @@ nsPrintEngine::CalcNumPrintablePages(int32_t& aNumPages)
   for (uint32_t i=0; i<mPrt->mPrintDocList.Length(); i++) {
     nsPrintObject* po = mPrt->mPrintDocList.ElementAt(i);
     NS_ASSERTION(po, "nsPrintObject can't be null!");
+    // Note: The po->mPresContext null-check below is necessary, because it's
+    // possible po->mPresContext might never have been set.  (e.g., if
+    // IsPrintable() returns false, ReflowPrintObject bails before setting
+    // mPresContext)
     if (po->mPresContext && po->mPresContext->IsRootPaginatedDocument()) {
       nsIPageSequenceFrame* pageSequence = po->mPresShell->GetPageSequenceFrame();
       nsIFrame * seqFrame = do_QueryFrame(pageSequence);
@@ -3593,6 +3659,13 @@ nsPrintEngine::FinishPrintPreview()
 
   rv = DocumentReadyForPrinting();
 
+  // Note that this method may be called while the instance is being
+  // initialized.  Some methods which initialize the instance (e.g.,
+  // DoCommonPrint) may need to stop initializing and return error if
+  // this is called.  Therefore it's important to set IsCreatingPrintPreview
+  // state to false here.  If you need to remove this call of
+  // SetIsCreatingPrintPreview here, you need to keep them being able to
+  // check whether the owner stopped using this instance.
   SetIsCreatingPrintPreview(false);
 
   // mPrt may be cleared during a call of nsPrintData::OnEndPrinting()
@@ -3690,8 +3763,10 @@ nsPrintEngine::Observe(nsISupports *aSubject, const char *aTopic, const char16_t
 //---------------------------------------------------------------
 class nsPrintCompletionEvent : public Runnable {
 public:
-  explicit nsPrintCompletionEvent(nsIDocumentViewerPrint *docViewerPrint)
-    : mDocViewerPrint(docViewerPrint) {
+  explicit nsPrintCompletionEvent(nsIDocumentViewerPrint* docViewerPrint)
+    : mozilla::Runnable("nsPrintCompletionEvent")
+    , mDocViewerPrint(docViewerPrint)
+  {
     NS_ASSERTION(mDocViewerPrint, "mDocViewerPrint is null.");
   }
 
@@ -3716,8 +3791,7 @@ nsPrintEngine::FirePrintCompletionEvent()
   nsCOMPtr<nsIDocument> doc = cv->GetDocument();
   NS_ENSURE_TRUE_VOID(doc);
 
-  NS_ENSURE_SUCCESS_VOID(doc->Dispatch("nsPrintCompletionEvent",
-                                       TaskCategory::Other, event.forget()));
+  NS_ENSURE_SUCCESS_VOID(doc->Dispatch(TaskCategory::Other, event.forget()));
 }
 
 void
@@ -3813,7 +3887,7 @@ static void RootFrameList(nsPresContext* aPresContext, FILE* out, int32_t aInden
  */
 static void DumpFrames(FILE*                 out,
                        nsPresContext*       aPresContext,
-                       nsRenderingContext * aRendContext,
+                       gfxContext * aRendContext,
                        nsIFrame *            aFrame,
                        int32_t               aLevel)
 {

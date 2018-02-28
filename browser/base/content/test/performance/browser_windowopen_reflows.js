@@ -13,34 +13,92 @@
  * for tips on how to do that.
  */
 const EXPECTED_REFLOWS = [
-  [
-    "select@chrome://global/content/bindings/textbox.xml",
-    "focusAndSelectUrlBar@chrome://browser/content/browser.js",
-    "_delayedStartup@chrome://browser/content/browser.js",
-  ],
+  {
+    stack: [
+      "select@chrome://global/content/bindings/textbox.xml",
+      "focusAndSelectUrlBar@chrome://browser/content/browser.js",
+      "_delayedStartup@chrome://browser/content/browser.js",
+    ],
+  },
 ];
 
+if (Services.appinfo.OS == "Linux") {
+  if (gMultiProcessBrowser) {
+    EXPECTED_REFLOWS.push({
+      stack: [
+        "handleEvent@chrome://browser/content/tabbrowser.xml",
+      ],
+    });
+  } else {
+    EXPECTED_REFLOWS.push({
+      stack: [
+        "handleEvent@chrome://browser/content/tabbrowser.xml",
+        "inferFromText@chrome://browser/content/browser.js",
+        "handleEvent@chrome://browser/content/browser.js",
+      ],
+    });
+  }
+}
+
 if (Services.appinfo.OS == "Darwin") {
-  // TabsInTitlebar._update causes a reflow on OS X trying to do calculations
-  // since layout info is already dirty. This doesn't seem to happen before
-  // MozAfterPaint on Linux.
-  EXPECTED_REFLOWS.push(
-    [
-      "rect@chrome://browser/content/browser-tabsintitlebar.js",
-      "_update@chrome://browser/content/browser-tabsintitlebar.js",
-      "updateAppearance@chrome://browser/content/browser-tabsintitlebar.js",
+  EXPECTED_REFLOWS.push({
+    stack: [
       "handleEvent@chrome://browser/content/tabbrowser.xml",
+      "inferFromText@chrome://browser/content/browser.js",
+      "handleEvent@chrome://browser/content/browser.js",
     ],
+  });
+}
+
+if (Services.appinfo.OS == "WINNT") {
+  EXPECTED_REFLOWS.push(
+    {
+      stack: [
+        "verticalMargins@chrome://browser/content/browser-tabsintitlebar.js",
+        "_update@chrome://browser/content/browser-tabsintitlebar.js",
+        "updateAppearance@chrome://browser/content/browser-tabsintitlebar.js",
+        "handleEvent@chrome://browser/content/tabbrowser.xml",
+      ],
+      times: 2, // This number should only ever go down - never up.
+    },
+
+    {
+      stack: [
+        "handleEvent@chrome://browser/content/tabbrowser.xml",
+        "inferFromText@chrome://browser/content/browser.js",
+        "handleEvent@chrome://browser/content/browser.js",
+      ],
+    },
+
+    {
+      stack: [
+        "handleEvent@chrome://browser/content/tabbrowser.xml",
+      ],
+    }
   );
 }
 
 if (Services.appinfo.OS == "WINNT" || Services.appinfo.OS == "Darwin") {
   EXPECTED_REFLOWS.push(
-    [
-      "handleEvent@chrome://browser/content/tabbrowser.xml",
-      "inferFromText@chrome://browser/content/browser.js",
-      "handleEvent@chrome://browser/content/browser.js",
-    ],
+    {
+      stack: [
+        "rect@chrome://browser/content/browser-tabsintitlebar.js",
+        "_update@chrome://browser/content/browser-tabsintitlebar.js",
+        "updateAppearance@chrome://browser/content/browser-tabsintitlebar.js",
+        "handleEvent@chrome://browser/content/tabbrowser.xml",
+      ],
+      times: 4, // This number should only ever go down - never up.
+    },
+
+    {
+      stack: [
+        "verticalMargins@chrome://browser/content/browser-tabsintitlebar.js",
+        "_update@chrome://browser/content/browser-tabsintitlebar.js",
+        "updateAppearance@chrome://browser/content/browser-tabsintitlebar.js",
+        "handleEvent@chrome://browser/content/tabbrowser.xml",
+      ],
+      times: 2, // This number should only ever go down - never up.
+    }
   );
 }
 
@@ -49,6 +107,19 @@ if (Services.appinfo.OS == "WINNT" || Services.appinfo.OS == "Darwin") {
  * uninterruptible reflows when opening new windows.
  */
 add_task(async function() {
+  const IS_WIN8 = (navigator.userAgent.indexOf("Windows NT 6.2") != -1);
+  if (IS_WIN8) {
+    ok(true, "Skipping this test because of perma-failures on Windows 8 x64 (bug 1381521)");
+    return;
+  }
+
+  // Flushing all caches helps to ensure that we get consistent
+  // behaviour when opening a new window, even if windows have been
+  // opened in previous tests.
+  Services.obs.notifyObservers(null, "startupcache-invalidate");
+  Services.obs.notifyObservers(null, "chrome-flush-skin-caches");
+  Services.obs.notifyObservers(null, "chrome-flush-caches");
+
   let win = OpenBrowserWindow();
 
   await withReflowObserver(async function() {

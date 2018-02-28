@@ -59,7 +59,6 @@
   locale/@AB_CD@/global/finddialog.properties           (%chrome/global/finddialog.properties)
 #endif
   locale/@AB_CD@/global/globalKeys.dtd                  (%chrome/global/globalKeys.dtd)
-  locale/@AB_CD@/global/headsUpDisplay.properties       (%chrome/global/headsUpDisplay.properties)
   locale/@AB_CD@/global/intl.css                        (%chrome/global/intl.css)
   locale/@AB_CD@/global/intl.properties                 (%chrome/global/intl.properties)
   locale/@AB_CD@/global/keys.properties                 (%chrome/global/keys.properties)
@@ -136,6 +135,11 @@
 % locale alerts @AB_CD@ %locale/@AB_CD@/alerts/
   locale/@AB_CD@/alerts/alert.dtd                                (%chrome/alerts/alert.dtd)
   locale/@AB_CD@/alerts/alert.properties                         (%chrome/alerts/alert.properties)
+#ifndef MOZ_FENNEC
+% locale cookie @AB_CD@ %locale/@AB_CD@/cookie/
+  locale/@AB_CD@/cookie/cookieAcceptDialog.dtd           (%chrome/cookie/cookieAcceptDialog.dtd)
+  locale/@AB_CD@/cookie/cookieAcceptDialog.properties    (%chrome/cookie/cookieAcceptDialog.properties)
+#endif
 % locale passwordmgr @AB_CD@ %locale/@AB_CD@/passwordmgr/
   locale/@AB_CD@/passwordmgr/passwordmgr.properties (%chrome/passwordmgr/passwordmgr.properties)
   locale/@AB_CD@/passwordmgr/passwordManager.dtd    (%chrome/passwordmgr/passwordManager.dtd)

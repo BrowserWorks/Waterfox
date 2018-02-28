@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsLatin1Prober.h"
-#include "prmem.h"
 #include <stdio.h>
 
 #define UDF    0        // undefined
@@ -17,7 +16,7 @@
 #define ASO    7        // accent small other
 #define CLASS_NUM   8    // total classes
 
-static const unsigned char Latin1_CharToClass[] = 
+static const unsigned char Latin1_CharToClass[] =
 {
   OTH, OTH, OTH, OTH, OTH, OTH, OTH, OTH,   // 00 - 07
   OTH, OTH, OTH, OTH, OTH, OTH, OTH, OTH,   // 08 - 0F
@@ -54,21 +53,21 @@ static const unsigned char Latin1_CharToClass[] =
 };
 
 
-/* 0 : illegal 
-   1 : very unlikely 
-   2 : normal 
+/* 0 : illegal
+   1 : very unlikely
+   2 : normal
    3 : very likely
 */
-static const unsigned char Latin1ClassModel[] = 
+static const unsigned char Latin1ClassModel[] =
 {
 /*      UDF OTH ASC ASS ACV ACO ASV ASO  */
 /*UDF*/  0,  0,  0,  0,  0,  0,  0,  0,
 /*OTH*/  0,  3,  3,  3,  3,  3,  3,  3,
-/*ASC*/  0,  3,  3,  3,  3,  3,  3,  3, 
+/*ASC*/  0,  3,  3,  3,  3,  3,  3,  3,
 /*ASS*/  0,  3,  3,  3,  1,  1,  3,  3,
 /*ACV*/  0,  3,  3,  3,  1,  2,  1,  2,
-/*ACO*/  0,  3,  3,  3,  3,  3,  3,  3, 
-/*ASV*/  0,  3,  1,  3,  1,  1,  1,  3, 
+/*ACO*/  0,  3,  3,  3,  3,  3,  3,  3,
+/*ASV*/  0,  3,  1,  3,  1,  1,  1,  3,
 /*ASO*/  0,  3,  1,  3,  1,  1,  3,  3,
 };
 
@@ -90,7 +89,7 @@ nsProbingState nsLatin1Prober::HandleData(const char* aBuf, uint32_t aLen)
     newBuf1 = (char*)aBuf;
     newLen1 = aLen;
   }
-  
+
   unsigned char charClass;
   unsigned char freq;
   for (uint32_t i = 0; i < newLen1; i++)
@@ -106,7 +105,7 @@ nsProbingState nsLatin1Prober::HandleData(const char* aBuf, uint32_t aLen)
   }
 
   if (newBuf1 != aBuf)
-    PR_FREEIF(newBuf1);
+    free(newBuf1);
 
   return mState;
 }
@@ -115,7 +114,7 @@ float nsLatin1Prober::GetConfidence(void)
 {
   if (mState == eNotMe)
     return 0.01f;
-  
+
   float confidence;
   uint32_t total = 0;
   for (int32_t i = 0; i < FREQ_CAT_NUM; i++)
@@ -131,8 +130,8 @@ float nsLatin1Prober::GetConfidence(void)
 
   if (confidence < 0.0f)
     confidence = 0.0f;
-  
-  // lower the confidence of latin1 so that other more accurate detector 
+
+  // lower the confidence of latin1 so that other more accurate detector
   // can take priority.
   confidence *= 0.50f;
 

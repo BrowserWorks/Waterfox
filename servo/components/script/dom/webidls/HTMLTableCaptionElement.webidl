@@ -3,11 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmltablecaptionelement
+[HTMLConstructor]
 interface HTMLTableCaptionElement : HTMLElement {
   // also has obsolete members
 };
 
 // https://html.spec.whatwg.org/multipage/#HTMLTableCaptionElement-partial
 partial interface HTMLTableCaptionElement {
-  //         attribute DOMString align;
+  // [CEReactions]
+  //          attribute DOMString align;
 };

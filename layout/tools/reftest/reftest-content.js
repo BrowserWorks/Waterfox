@@ -177,10 +177,15 @@ function resetZoom() {
 
 function doPrintMode(contentRootElement) {
     // use getAttribute because className works differently in HTML and SVG
-    return contentRootElement &&
-           contentRootElement.hasAttribute('class') &&
-           contentRootElement.getAttribute('class').split(/\s+/)
-                             .indexOf("reftest-print") != -1;
+    if (contentRootElement &&
+        contentRootElement.hasAttribute('class')) {
+        var classList = contentRootElement.getAttribute('class').split(/\s+/);
+        if (classList.indexOf("reftest-print") != -1) {
+            SendException("reftest-print is obsolete, use reftest-paged instead");
+            return;
+        }
+        return classList.indexOf("reftest-paged") != -1;
+    }
 }
 
 function setupPrintMode() {
@@ -675,9 +680,17 @@ function OnDocumentLoad(event)
         // Ignore load events for subframes.
         return;
 
-    if (gClearingForAssertionCheck &&
-        currentDoc.location.href == BLANK_URL_FOR_CLEARING) {
-        DoAssertionCheck();
+    if (gClearingForAssertionCheck) {
+        if (currentDoc.location.href == BLANK_URL_FOR_CLEARING) {
+            DoAssertionCheck();
+            return;
+        }
+
+        // It's likely the previous test document reloads itself and causes the
+        // attempt of loading blank page fails. In this case we should retry
+        // loading the blank page.
+        LogInfo("Retry loading a blank page");
+        LoadURI(BLANK_URL_FOR_CLEARING);
         return;
     }
 
@@ -833,6 +846,7 @@ function RecordResult()
     clearTimeout(gFailureTimeout);
     gFailureReason = null;
     gFailureTimeout = null;
+    gCurrentURL = null;
 
     if (gCurrentTestType == TYPE_SCRIPT) {
         var error = '';

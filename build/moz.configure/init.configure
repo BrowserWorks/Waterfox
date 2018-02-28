@@ -279,9 +279,7 @@ def mozconfig_options(mozconfig, automation, help):
             add(key, value)
             os.environ[key] = value
         for key, value in mozconfig['vars']['added'].iteritems():
-            # mozconfig_loader adds _IS_SET variables that are irrelevant
-            if not key.endswith('_IS_SET'):
-                add(key, value)
+            add(key, value)
         for key, (_, value) in mozconfig['vars']['modified'].iteritems():
             add(key, value)
 
@@ -308,6 +306,121 @@ def shell(value, mozillabuild):
         shell = shell + '.exe'
     return find_program(shell)
 
+
+# Source checkout and version control integration.
+# ================================================
+
+@depends(check_build_environment, 'MOZ_AUTOMATION', '--help')
+@checking('for vcs source checkout')
+@imports('os')
+def vcs_checkout_type(build_env, automation, _):
+    if os.path.exists(os.path.join(build_env.topsrcdir, '.hg')):
+        return 'hg'
+    elif os.path.exists(os.path.join(build_env.topsrcdir, '.git')):
+        return 'git'
+    elif automation:
+        raise FatalCheckError('unable to resolve VCS type; must run '
+                              'from a source checkout when MOZ_AUTOMATION '
+                              'is set')
+
+# Resolve VCS binary for detected repository type.
+
+# TODO remove hg.exe once bug 1382940 addresses ambiguous executables case.
+hg = check_prog('HG', ('hg.exe', 'hg',), allow_missing=True,
+                when=depends(vcs_checkout_type)(lambda x: x == 'hg'))
+git = check_prog('GIT', ('git',), allow_missing=True,
+                 when=depends(vcs_checkout_type)(lambda x: x == 'git'))
+
+@depends_if(hg)
+@checking('for Mercurial version')
+@imports('os')
+@imports('re')
+def hg_version(hg):
+    # HGPLAIN in Mercurial 1.5+ forces stable output, regardless of set
+    # locale or encoding.
+    env = dict(os.environ)
+    env['HGPLAIN'] = '1'
+
+    out = check_cmd_output(hg, '--version', env=env)
+
+    match = re.search(r'Mercurial Distributed SCM \(version ([^\)]+)', out)
+
+    if not match:
+        raise FatalCheckError('unable to determine Mercurial version: %s' % out)
+
+    # The version string may be "unknown" for Mercurial run out of its own
+    # source checkout or for bad builds. But LooseVersion handles it.
+
+    return Version(match.group(1))
+
+# Resolve Mercurial config items so other checks have easy access.
+# Do NOT set this in the config because it may contain sensitive data
+# like API keys.
+@depends_all(check_build_environment, hg, hg_version)
+@imports('os')
+def hg_config(build_env, hg, version):
+    env = dict(os.environ)
+    env['HGPLAIN'] = '1'
+
+    # Warnings may get sent to stderr. But check_cmd_output() ignores
+    # stderr if exit code is 0. And the command should always succeed if
+    # `hg version` worked.
+    out = check_cmd_output(hg, 'config', env=env, cwd=build_env.topsrcdir)
+
+    # out is bytes. However, unicode literals are in effect, so implicit
+    # type coercion can occur. The underlying Mercurial config file may be
+    # in a user-defined encoding. However, HGPLAIN both overrides the decoding
+    # inside Mercurial *and* ensures output is utf-8. Because moz.configure
+    # is using unicode literals, our returned config object uses unicode
+    # keys and values to limit potential for coercion.
+
+    # Mercurial should emit utf-8. But be paranoid and ignore invalid utf-8
+    # byte sequences.
+    out = out.decode('utf-8', 'replace')
+
+    config = {}
+
+    for line in out.strip().splitlines():
+        key, value = [s.strip() for s in line.split('=', 1)]
+        config[key] = value
+
+    return config
+
+@depends_if(git)
+@checking('for Git version')
+@imports('re')
+def git_version(git):
+    out = check_cmd_output(git, '--version').rstrip()
+
+    match = re.search('git version (.*)$', out)
+
+    if not match:
+        raise FatalCheckError('unable to determine Git version: %s' % out)
+
+    return Version(match.group(1))
+
+# Only set VCS_CHECKOUT_TYPE if we resolved the VCS binary.
+# Require resolved VCS info when running in automation so automation's
+# environment is more well-defined.
+@depends(vcs_checkout_type, hg_version, git_version, 'MOZ_AUTOMATION')
+def exposed_vcs_checkout_type(vcs_checkout_type, hg, git, automation):
+    if vcs_checkout_type == 'hg':
+        if hg:
+            return 'hg'
+
+        if automation:
+            raise FatalCheckError('could not resolve Mercurial binary info')
+
+    elif vcs_checkout_type == 'git':
+        if git:
+            return 'git'
+
+        if automation:
+            raise FatalCheckError('could not resolve Git binary info')
+    elif vcs_checkout_type:
+        raise FatalCheckError('unhandled VCS type: %s' % vcs_checkout_type)
+
+set_config('VCS_CHECKOUT_TYPE', exposed_vcs_checkout_type)
 
 # Host and target systems
 # ==============================================================
@@ -821,19 +934,9 @@ set_config('MOZ_CONFIGURE_OPTIONS', all_configure_options)
 def js_option(*args, **kwargs):
     opt = option(*args, **kwargs)
 
-    @depends(opt.option, build_project)
+    @depends(opt.option, build_project, when=kwargs.get('when'))
     def js_option(value, build_project):
         if build_project != 'js':
             return value.format(opt.option)
 
     add_old_configure_arg(js_option)
-
-
-# Bug 1278542: This function is a workaround to resolve
-# |android_ndk_include|'s dependency on 'gonkdir.' The
-# actual implementation is located in b2g/moz.configure.
-# Remove this function as soon as 'android_ndk_include'
-# depends on 'target.'
-@depends('--help')
-def gonkdir(_):
-    return None

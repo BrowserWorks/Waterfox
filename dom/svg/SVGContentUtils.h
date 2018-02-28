@@ -34,9 +34,6 @@ class Element;
 class SVGSVGElement;
 } // namespace dom
 
-namespace gfx {
-class Matrix;
-} // namespace gfx
 } // namespace mozilla
 
 #define SVG_ZERO_LENGTH_PATH_FIX_FACTOR 512
@@ -177,7 +174,7 @@ public:
 
   /**
    * Returns the current computed value of the CSS property 'stroke-width' for
-   * the given element. aStyleContext may be provided as an optimization. 
+   * the given element. aStyleContext may be provided as an optimization.
    * aContextPaint is also optional.
    *
    * Note that this function does NOT take account of the value of the 'stroke'

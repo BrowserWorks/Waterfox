@@ -18,6 +18,7 @@
 #include "nsPrintfCString.h"
 #include "nsXULAppAPI.h"
 #include "nsIFrameLoader.h"
+#include "nsINamed.h"
 #include "nsIObserverService.h"
 #include "StaticPtr.h"
 #include "nsIMozBrowserFrame.h"
@@ -226,6 +227,7 @@ class ParticularProcessPriorityManager final
   : public WakeLockObserver
   , public nsIObserver
   , public nsITimerCallback
+  , public nsINamed
   , public nsSupportsWeakReference
 {
   ~ParticularProcessPriorityManager();
@@ -273,6 +275,12 @@ public:
   void TabActivityChanged(TabParent* aTabParent, bool aIsActive);
 
   void ShutDown();
+
+  NS_IMETHOD GetName(nsACString& aName) override
+  {
+    aName.AssignLiteral("ParticularProcessPriorityManager");
+    return NS_OK;
+  }
 
 private:
   static uint32_t sBackgroundPerceivableGracePeriodMS;
@@ -453,14 +461,16 @@ already_AddRefed<ParticularProcessPriorityManager>
 ProcessPriorityManagerImpl::GetParticularProcessPriorityManager(
   ContentParent* aContentParent)
 {
-  RefPtr<ParticularProcessPriorityManager> pppm;
   uint64_t cpId = aContentParent->ChildID();
-  mParticularManagers.Get(cpId, &pppm);
-  if (!pppm) {
-    pppm = new ParticularProcessPriorityManager(aContentParent);
-    pppm->Init();
-    mParticularManagers.Put(cpId, pppm);
+  auto entry = mParticularManagers.LookupForAdd(cpId);
+  RefPtr<ParticularProcessPriorityManager> pppm = entry.OrInsert(
+    [aContentParent]() {
+      return new ParticularProcessPriorityManager(aContentParent);
+    });
 
+  if (!entry) {
+    // We created a new entry.
+    pppm->Init();
     FireTestOnlyObserverNotification("process-created",
       nsPrintfCString("%" PRIu64, cpId));
   }
@@ -501,14 +511,10 @@ ProcessPriorityManagerImpl::ObserveContentParentDestroyed(nsISupports* aSubject)
   props->GetPropertyAsUint64(NS_LITERAL_STRING("childID"), &childID);
   NS_ENSURE_TRUE_VOID(childID != CONTENT_PROCESS_ID_UNKNOWN);
 
-  RefPtr<ParticularProcessPriorityManager> pppm;
-  mParticularManagers.Get(childID, &pppm);
-  if (pppm) {
-    pppm->ShutDown();
-
-    mParticularManagers.Remove(childID);
-
+  if (auto entry = mParticularManagers.Lookup(childID)) {
+    entry.Data()->ShutDown();
     mHighPriorityChildIDs.RemoveEntry(childID);
+    entry.Remove();
   }
 }
 
@@ -563,7 +569,8 @@ ProcessPriorityManagerImpl::TabActivityChanged(TabParent* aTabParent,
 NS_IMPL_ISUPPORTS(ParticularProcessPriorityManager,
                   nsIObserver,
                   nsITimerCallback,
-                  nsISupportsWeakReference);
+                  nsISupportsWeakReference,
+                  nsINamed);
 
 ParticularProcessPriorityManager::ParticularProcessPriorityManager(
   ContentParent* aContentParent)

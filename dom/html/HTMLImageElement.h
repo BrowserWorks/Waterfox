@@ -134,14 +134,25 @@ public:
     SetUnsignedIntAttr(nsGkAtoms::vspace, aVspace, 0, aError);
   }
 
-  // The XPCOM versions of the following getters work for Web IDL bindings as well
+  void GetAlt(nsAString& aAlt)
+  {
+    GetHTMLAttr(nsGkAtoms::alt, aAlt);
+  }
   void SetAlt(const nsAString& aAlt, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::alt, aAlt, aError);
   }
+  void GetSrc(nsAString& aSrc)
+  {
+    GetURIAttr(nsGkAtoms::src, nullptr, aSrc);
+  }
   void SetSrc(const nsAString& aSrc, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::src, aSrc, aError);
+  }
+  void GetSrcset(nsAString& aSrcset)
+  {
+    GetHTMLAttr(nsGkAtoms::srcset, aSrcset);
   }
   void SetSrcset(const nsAString& aSrcset, ErrorResult& aError)
   {
@@ -158,25 +169,50 @@ public:
   {
     SetOrRemoveNullableStringAttr(nsGkAtoms::crossorigin, aCrossOrigin, aError);
   }
+  void GetUseMap(nsAString& aUseMap)
+  {
+    GetHTMLAttr(nsGkAtoms::usemap, aUseMap);
+  }
   void SetUseMap(const nsAString& aUseMap, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::usemap, aUseMap, aError);
+  }
+  void GetName(nsAString& aName)
+  {
+    GetHTMLAttr(nsGkAtoms::name, aName);
   }
   void SetName(const nsAString& aName, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::name, aName, aError);
   }
+  void GetAlign(nsAString& aAlign)
+  {
+    GetHTMLAttr(nsGkAtoms::align, aAlign);
+  }
   void SetAlign(const nsAString& aAlign, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::align, aAlign, aError);
+  }
+  void GetLongDesc(nsAString& aLongDesc)
+  {
+    GetURIAttr(nsGkAtoms::longdesc, nullptr, aLongDesc);
   }
   void SetLongDesc(const nsAString& aLongDesc, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::longdesc, aLongDesc, aError);
   }
+  void GetSizes(nsAString& aSizes)
+  {
+    GetHTMLAttr(nsGkAtoms::sizes, aSizes);
+  }
   void SetSizes(const nsAString& aSizes, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::sizes, aSizes, aError);
+  }
+  void GetCurrentSrc(nsAString& aValue);
+  void GetBorder(nsAString& aBorder)
+  {
+    GetHTMLAttr(nsGkAtoms::border, aBorder);
   }
   void SetBorder(const nsAString& aBorder, ErrorResult& aError)
   {
@@ -199,7 +235,10 @@ public:
 
   int32_t X();
   int32_t Y();
-  // Uses XPCOM GetLowsrc.
+  void GetLowsrc(nsAString& aLowsrc)
+  {
+    GetURIAttr(nsGkAtoms::lowsrc, nullptr, aLowsrc);
+  }
   void SetLowsrc(const nsAString& aLowsrc, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::lowsrc, aLowsrc, aError);
@@ -347,6 +386,8 @@ protected:
 
   // Override for nsImageLoadingContent.
   nsIContent* AsContent() override { return this; }
+  NS_IMETHOD GetNaturalWidth(uint32_t* aNaturalWidth) override;
+  NS_IMETHOD GetNaturalHeight(uint32_t* aNaturalHeight) override;
 
   // This is a weak reference that this element and the HTMLFormElement
   // cooperate in maintaining.
@@ -361,34 +402,25 @@ private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
                                     GenericSpecifiedValues* aGenericData);
   /**
-   * This function is called by BeforeSetAttr and OnAttrSetButNotChanged.
+   * This function is called by AfterSetAttr and OnAttrSetButNotChanged.
    * It will not be called if the value is being unset.
    *
    * @param aNamespaceID the namespace of the attr being set
    * @param aName the localname of the attribute being set
    * @param aValue the value it's being set to represented as either a string or
    *        a parsed nsAttrValue.
-   * @param aNotify Whether we plan to notify document observers.
-   */
-  void BeforeMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
-                             const nsAttrValueOrString& aValue,
-                             bool aNotify);
-  /**
-   * This function is called by AfterSetAttr and OnAttrSetButNotChanged.
-   * It will not be called if the value is being unset.
-   *
-   * @param aNamespaceID the namespace of the attr being set
-   * @param aName the localname of the attribute being set
+   * @param aOldValue the value previously set. Will be null if no value was
+   *        previously set. This value should only be used when
+   *        aValueMaybeChanged is true; when aValueMaybeChanged is false,
+   *        aOldValue should be considered unreliable.
+   * @param aValueMaybeChanged will be false when this function is called from
+   *        OnAttrSetButNotChanged to indicate that the value was not changed.
    * @param aNotify Whether we plan to notify document observers.
    */
   void AfterMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
-                            bool aNotify);
-  /**
-   * Used by BeforeMaybeChangeAttr and AfterMaybeChangeAttr to keep track of
-   * whether a reload needs to be forced after an attribute change that is
-   * currently in progress.
-   */
-  bool mForceReload;
+                            const nsAttrValueOrString& aValue,
+                            const nsAttrValue* aOldValue,
+                            bool aValueMaybeChanged, bool aNotify);
 
   bool mInDocResponsiveContent;
   RefPtr<ImageLoadTask> mPendingImageLoadTask;

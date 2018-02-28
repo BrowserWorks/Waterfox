@@ -509,25 +509,13 @@ public:
     delete[] tmp;
   }
 
-  NS_IMETHODIMP GetLocalDescription(char** aSDP);
+  NS_IMETHODIMP GetLocalDescription(nsAString& aSDP);
+  NS_IMETHODIMP GetCurrentLocalDescription(nsAString& aSDP);
+  NS_IMETHODIMP GetPendingLocalDescription(nsAString& aSDP);
 
-  void GetLocalDescription(nsAString& aSDP)
-  {
-    char *tmp;
-    GetLocalDescription(&tmp);
-    aSDP.AssignASCII(tmp);
-    delete[] tmp;
-  }
-
-  NS_IMETHODIMP GetRemoteDescription(char** aSDP);
-
-  void GetRemoteDescription(nsAString& aSDP)
-  {
-    char *tmp;
-    GetRemoteDescription(&tmp);
-    aSDP.AssignASCII(tmp);
-    delete[] tmp;
-  }
+  NS_IMETHODIMP GetRemoteDescription(nsAString& aSDP);
+  NS_IMETHODIMP GetCurrentRemoteDescription(nsAString& aSDP);
+  NS_IMETHODIMP GetPendingRemoteDescription(nsAString& aSDP);
 
   NS_IMETHODIMP SignalingState(mozilla::dom::PCImplSignalingState* aState);
 
@@ -647,7 +635,7 @@ private:
   nsresult ConfigureJsepSessionCodecs();
 
   NS_IMETHODIMP EnsureDataConnection(uint16_t aLocalPort, uint16_t aNumstreams,
-                                     uint32_t aMaxMessageSize);
+                                     uint32_t aMaxMessageSize, bool aMMSSet);
 
   nsresult CloseInt();
   nsresult CheckApiState(bool assert_ice_ready) const;
@@ -681,6 +669,7 @@ private:
       uint16_t* localport,
       uint16_t* remoteport,
       uint32_t* maxmessagesize,
+      bool*     mmsset,
       uint16_t* level) const;
 
   static void DeferredAddTrackToJsepSession(const std::string& pcHandle,
@@ -738,7 +727,7 @@ private:
 
   nsCOMPtr<nsPIDOMWindowInner> mWindow;
 
-  // The SDP sent in from JS - here for debugging.
+  // The SDP sent in from JS
   std::string mLocalRequestedSDP;
   std::string mRemoteRequestedSDP;
 
@@ -805,20 +794,24 @@ private:
   uint16_t mMaxSending[SdpMediaSection::kMediaTypes];
 
   // DTMF
-  struct DTMFState {
-    PeerConnectionImpl* mPeerConnectionImpl;
-    nsCOMPtr<nsITimer> mSendTimer;
-    nsString mTrackId;
-    nsString mTones;
-    size_t mLevel;
-    uint32_t mDuration;
-    uint32_t mInterToneGap;
+   class DTMFState : public nsITimerCallback {
+       virtual ~DTMFState();
+     public:
+       DTMFState();
+ 
+       NS_DECL_NSITIMERCALLBACK
+       NS_DECL_THREADSAFE_ISUPPORTS
+ 
+       PeerConnectionImpl* mPeerConnectionImpl;
+       nsCOMPtr<nsITimer> mSendTimer;
+       nsString mTrackId;
+       nsString mTones;
+       size_t mLevel;
+       uint32_t mDuration;
+       uint32_t mInterToneGap;
   };
 
-  static void
-  DTMFSendTimerCallback_m(nsITimer* timer, void*);
-
-  nsTArray<DTMFState> mDTMFStates;
+   nsTArray<RefPtr<DTMFState>> mDTMFStates;
 
 public:
   //these are temporary until the DataChannel Listen/Connect API is removed

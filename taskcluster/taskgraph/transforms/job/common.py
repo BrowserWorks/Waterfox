@@ -12,9 +12,12 @@ from __future__ import absolute_import, print_function, unicode_literals
 SECRET_SCOPE = 'secrets:get:project/releng/gecko/{}/level-{}/{}'
 
 
-def docker_worker_add_workspace_cache(config, job, taskdesc):
+def docker_worker_add_workspace_cache(config, job, taskdesc, extra=None):
     """Add the workspace cache based on the build platform/type and level,
-    except on try where workspace caches are not used."""
+    except on try where workspace caches are not used.
+
+    extra, is an optional kwarg passed in that supports extending the cache
+    key name to avoid undesired conflicts with other caches."""
     if config.params['project'] == 'try':
         return
 
@@ -27,6 +30,10 @@ def docker_worker_add_workspace_cache(config, job, taskdesc):
         ),
         'mount-point': "/home/worker/workspace",
     })
+    if extra:
+        taskdesc['worker']['caches'][-1]['name'] += '-{}'.format(
+            extra
+        )
 
 
 def docker_worker_add_tc_vcs_cache(config, job, taskdesc):
@@ -38,12 +45,22 @@ def docker_worker_add_tc_vcs_cache(config, job, taskdesc):
     })
 
 
-def docker_worker_add_public_artifacts(config, job, taskdesc):
+def add_public_artifacts(config, job, taskdesc, path):
     taskdesc['worker'].setdefault('artifacts', []).append({
         'name': 'public/build',
-        'path': '/home/worker/artifacts/',
+        'path': path,
         'type': 'directory',
     })
+
+
+def docker_worker_add_public_artifacts(config, job, taskdesc):
+    """ Adds a public artifact directory to the task """
+    add_public_artifacts(config, job, taskdesc, path='/home/worker/artifacts/')
+
+
+def generic_worker_add_public_artifacts(config, job, taskdesc):
+    """ Adds a public artifact directory to the task """
+    add_public_artifacts(config, job, taskdesc, path=r'public/build')
 
 
 def docker_worker_add_gecko_vcs_env_vars(config, job, taskdesc):

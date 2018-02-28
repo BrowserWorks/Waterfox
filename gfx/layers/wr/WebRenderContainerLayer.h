@@ -27,9 +27,7 @@ public:
 protected:
   virtual ~WebRenderContainerLayer()
   {
-
-    if (gfxPrefs::WebRenderOMTAEnabled() &&
-        !GetAnimations().IsEmpty()) {
+    if (!GetAnimations().IsEmpty()) {
       mManager->AsWebRenderLayerManager()->
         AddCompositorAnimationsIdForDiscard(GetCompositorAnimationsId());
     }
@@ -45,7 +43,6 @@ public:
   void RenderLayer(wr::DisplayListBuilder& aBuilder,
                    const StackingContextHelper& aSc) override;
 
-  void ClearAnimations() override;
   virtual void ComputeEffectiveTransforms(const gfx::Matrix4x4& aTransformToSurface) override
   {
     DefaultComputeEffectiveTransforms(aTransformToSurface);

@@ -7,6 +7,8 @@
 #ifndef mozilla_plugins_PluginBridge_h
 #define mozilla_plugins_PluginBridge_h
 
+#include <functional>
+
 #include "base/process.h"
 
 namespace mozilla {
@@ -26,7 +28,7 @@ class PPluginModuleParent;
 
 bool
 SetupBridge(uint32_t aPluginId, dom::ContentParent* aContentParent,
-            bool aForceBridgeNow, nsresult* aResult, uint32_t* aRunID,
+            nsresult* aResult, uint32_t* aRunID,
             ipc::Endpoint<PPluginModuleParent>* aEndpoint);
 
 nsresult
@@ -39,14 +41,15 @@ void
 TakeFullMinidump(uint32_t aPluginId,
                  base::ProcessId aContentProcessId,
                  const nsAString& aBrowserDumpId,
-                 nsString& aDumpId);
+                 std::function<void(nsString)>&& aCallback,
+                 bool aAsync);
 
 void
 TerminatePlugin(uint32_t aPluginId,
                 base::ProcessId aContentProcessId,
                 const nsCString& aMonitorDescription,
-                const nsAString& aDumpId);
-
+                const nsAString& aDumpId,
+                std::function<void(bool)>&& aCallback);
 } // namespace plugins
 } // namespace mozilla
 

@@ -138,8 +138,13 @@ nsXULPopupListener::HandleEvent(nsIDOMEvent* aEvent)
   if (!targetContent) {
     return NS_OK;
   }
-  if (EventStateManager::IsRemoteTarget(targetContent)) {
-    return NS_OK;
+
+  {
+    EventTarget* originalTarget = mouseEvent->AsEvent()->InternalDOMEvent()->GetOriginalTarget();
+    nsCOMPtr<nsIContent> content = do_QueryInterface(originalTarget);
+    if (content && EventStateManager::IsRemoteTarget(content)) {
+      return NS_OK;
+    }
   }
 
   bool preventDefault;
@@ -235,7 +240,7 @@ nsXULPopupListener::FireFocusOnTargetContent(nsIDOMNode* aTargetNode, bool aIsTo
     // strong reference to keep this from going away between events
     // XXXbz between what events?  We don't use this local at all!
     RefPtr<nsPresContext> context = shell->GetPresContext();
- 
+
     nsCOMPtr<nsIContent> content = do_QueryInterface(aTargetNode);
     nsIFrame* targetFrame = content->GetPrimaryFrame();
     if (!targetFrame) return NS_ERROR_FAILURE;
@@ -259,7 +264,7 @@ nsXULPopupListener::FireFocusOnTargetContent(nsIDOMNode* aTargetNode, bool aIsTo
           }
         }
         currFrame = currFrame->GetParent();
-    } 
+    }
 
     nsIFocusManager* fm = nsFocusManager::GetFocusManager();
     if (fm) {
@@ -296,7 +301,7 @@ nsXULPopupListener::ClosePopup()
   if (mPopupContent) {
     // this is called when the listener is going away, so make sure that the
     // popup is hidden. Use asynchronous hiding just to be safe so we don't
-    // fire events during destruction.  
+    // fire events during destruction.
     nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
     if (pm)
       pm->HidePopup(mPopupContent, false, true, true, false);
@@ -305,7 +310,7 @@ nsXULPopupListener::ClosePopup()
 } // ClosePopup
 
 static already_AddRefed<nsIContent>
-GetImmediateChild(nsIContent* aContent, nsIAtom *aTag) 
+GetImmediateChild(nsIContent* aContent, nsIAtom *aTag)
 {
   for (nsIContent* child = aContent->GetFirstChild();
        child;
@@ -323,14 +328,14 @@ GetImmediateChild(nsIContent* aContent, nsIAtom *aTag)
 // LaunchPopup
 //
 // Given the element on which the event was triggered and the mouse locations in
-// Client and widget coordinates, popup a new window showing the appropriate 
+// Client and widget coordinates, popup a new window showing the appropriate
 // content.
 //
 // aTargetContent is the target of the mouse event aEvent that triggered the
 // popup. mElement is the element that the popup menu is attached to.
 // aTargetContent may be equal to mElement or it may be a descendant.
 //
-// This looks for an attribute on |mElement| of the appropriate popup type 
+// This looks for an attribute on |mElement| of the appropriate popup type
 // (popup, context) and uses that attribute's value as an ID for
 // the popup content in the document.
 //
@@ -394,8 +399,8 @@ nsXULPopupListener::LaunchPopup(nsIDOMEvent* aEvent, nsIContent* aTargetContent)
     // XXXsmaug Should we try to use ShadowRoot::GetElementById in case
     //          mElement is in shadow DOM?
     //
-    // Use getElementById to obtain the popup content and gracefully fail if 
-    // we didn't find any popup content in the document. 
+    // Use getElementById to obtain the popup content and gracefully fail if
+    // we didn't find any popup content in the document.
     NS_WARNING("GetElementById had some kind of spasm.");
     return rv;
   }

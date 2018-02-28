@@ -85,9 +85,9 @@ GetExtraJSContextHeapSize()
 class ExecuteCallback final : public Runnable
 {
 public:
-  ExecuteCallback(nsPACManCallback *aCallback,
-                  nsresult status)
-    : mCallback(aCallback)
+  ExecuteCallback(nsPACManCallback* aCallback, nsresult status)
+    : Runnable("net::ExecuteCallback")
+    , mCallback(aCallback)
     , mStatus(status)
   {
   }
@@ -125,8 +125,9 @@ private:
 class ShutdownThread final : public Runnable
 {
 public:
-  explicit ShutdownThread(nsIThread *thread)
-    : mThread(thread)
+  explicit ShutdownThread(nsIThread* thread)
+    : Runnable("net::ShutdownThread")
+    , mThread(thread)
   {
   }
 
@@ -146,8 +147,9 @@ private:
 class WaitForThreadShutdown final : public Runnable
 {
 public:
-  explicit WaitForThreadShutdown(nsPACMan *aPACMan)
-    : mPACMan(aPACMan)
+  explicit WaitForThreadShutdown(nsPACMan* aPACMan)
+    : Runnable("net::WaitForThreadShutdown")
+    , mPACMan(aPACMan)
   {
   }
 
@@ -174,8 +176,9 @@ private:
 class PACLoadComplete final : public Runnable
 {
 public:
-  explicit PACLoadComplete(nsPACMan *aPACMan)
-    : mPACMan(aPACMan)
+  explicit PACLoadComplete(nsPACMan* aPACMan)
+    : Runnable("net::PACLoadComplete")
+    , mPACMan(aPACMan)
   {
   }
 
@@ -201,8 +204,9 @@ class ExecutePACThreadAction final : public Runnable
 {
 public:
   // by default we just process the queue
-  explicit ExecutePACThreadAction(nsPACMan *aPACMan)
-    : mPACMan(aPACMan)
+  explicit ExecutePACThreadAction(nsPACMan* aPACMan)
+    : Runnable("net::ExecutePACThreadAction")
+    , mPACMan(aPACMan)
     , mCancel(false)
     , mCancelStatus(NS_OK)
     , mSetupPAC(false)
@@ -238,13 +242,15 @@ public:
     if (mSetupPAC) {
       mSetupPAC = false;
 
+      nsCOMPtr<nsIEventTarget> target = mPACMan->GetNeckoTarget();
       mPACMan->mPAC.Init(mSetupPACURI,
                          mSetupPACData,
                          mPACMan->mIncludePath,
-                         mExtraHeapSize);
+                         mExtraHeapSize,
+                         target);
 
       RefPtr<PACLoadComplete> runnable = new PACLoadComplete(mPACMan);
-      NS_DispatchToMainThread(runnable);
+      mPACMan->Dispatch(runnable.forget());
       return NS_OK;
     }
 
@@ -266,10 +272,12 @@ private:
 
 //-----------------------------------------------------------------------------
 
-PendingPACQuery::PendingPACQuery(nsPACMan *pacMan, nsIURI *uri,
-                                 nsPACManCallback *callback,
+PendingPACQuery::PendingPACQuery(nsPACMan* pacMan,
+                                 nsIURI* uri,
+                                 nsPACManCallback* callback,
                                  bool mainThreadResponse)
-  : mPACMan(pacMan)
+  : Runnable("net::PendingPACQuery")
+  , mPACMan(pacMan)
   , mCallback(callback)
   , mOnMainThreadOnly(mainThreadResponse)
 {
@@ -287,7 +295,7 @@ PendingPACQuery::Complete(nsresult status, const nsCString &pacString)
   RefPtr<ExecuteCallback> runnable = new ExecuteCallback(mCallback, status);
   runnable->SetPACString(pacString);
   if (mOnMainThreadOnly)
-    NS_DispatchToMainThread(runnable);
+    mPACMan->Dispatch(runnable.forget());
   else
     runnable->Run();
 }
@@ -301,7 +309,7 @@ PendingPACQuery::UseAlternatePACFile(const nsCString &pacURL)
   RefPtr<ExecuteCallback> runnable = new ExecuteCallback(mCallback, NS_OK);
   runnable->SetPACURL(pacURL);
   if (mOnMainThreadOnly)
-    NS_DispatchToMainThread(runnable);
+    mPACMan->Dispatch(runnable.forget());
   else
     runnable->Run();
 }
@@ -322,8 +330,9 @@ static uint32_t sThreadLocalIndex = 0xdeadbeef; // out of range
 static const char *kPACIncludePath =
   "network.proxy.autoconfig_url.include_path";
 
-nsPACMan::nsPACMan()
-  : mLoadPending(false)
+nsPACMan::nsPACMan(nsIEventTarget *mainThreadEventTarget)
+  : NeckoTargetHolder(mainThreadEventTarget)
+  , mLoadPending(false)
   , mShutdown(false)
   , mLoadFailureCount(0)
   , mInProgress(false)
@@ -345,7 +354,7 @@ nsPACMan::~nsPACMan()
     }
     else {
       RefPtr<ShutdownThread> runnable = new ShutdownThread(mPACThread);
-      NS_DispatchToMainThread(runnable);
+      Dispatch(runnable.forget());
     }
   }
 
@@ -365,7 +374,7 @@ nsPACMan::Shutdown()
   PostCancelPendingQ(NS_ERROR_ABORT);
 
   RefPtr<WaitForThreadShutdown> runnable = new WaitForThreadShutdown(this);
-  NS_DispatchToMainThread(runnable);
+  Dispatch(runnable.forget());
 }
 
 nsresult
@@ -432,8 +441,12 @@ nsPACMan::LoadPACFromURI(const nsCString &spec)
   // queries the enter between now and when we actually load the PAC file.
 
   if (!mLoadPending) {
-    nsresult rv;
-    if (NS_FAILED(rv = NS_DispatchToCurrentThread(NewRunnableMethod(this, &nsPACMan::StartLoading))))
+    nsCOMPtr<nsIRunnable> runnable =
+      NewRunnableMethod("nsPACMan::StartLoading", this, &nsPACMan::StartLoading);
+    nsresult rv = NS_IsMainThread()
+      ? Dispatch(runnable.forget())
+      : GetCurrentThreadEventTarget()->Dispatch(runnable.forget());
+    if (NS_FAILED(rv))
       return rv;
     mLoadPending = true;
   }

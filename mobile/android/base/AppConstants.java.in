@@ -61,6 +61,7 @@ public class AppConstants {
          * Otherwise, we need a range check.
          */
         public static final boolean preMarshmallow = MAX_SDK_VERSION < 23 || (MIN_SDK_VERSION < 23 && Build.VERSION.SDK_INT < 23);
+        public static final boolean preLollipopMR1 = MAX_SDK_VERSION < 22 || (MIN_SDK_VERSION < 22 && Build.VERSION.SDK_INT < 22);
         public static final boolean preLollipop = MAX_SDK_VERSION < 21 || (MIN_SDK_VERSION < 21 && Build.VERSION.SDK_INT < 21);
         public static final boolean preJBMR2 = MAX_SDK_VERSION < 18 || (MIN_SDK_VERSION < 18 && Build.VERSION.SDK_INT < 18);
         public static final boolean preJBMR1 = MAX_SDK_VERSION < 17 || (MIN_SDK_VERSION < 17 && Build.VERSION.SDK_INT < 17);
@@ -205,13 +206,6 @@ public class AppConstants {
     false;
 //#endif
 
-    public static final boolean MOZ_LOCALE_SWITCHER =
-//#ifdef MOZ_LOCALE_SWITCHER
-    true;
-//#else
-    false;
-//#endif
-
     public static final boolean MOZ_UPDATER =
 //#ifdef MOZ_UPDATER
     true;
@@ -312,6 +306,13 @@ public class AppConstants {
 
     public static final boolean MOZ_ANDROID_CUSTOM_TABS =
 //#ifdef MOZ_ANDROID_CUSTOM_TABS
+    true;
+//#else
+    false;
+//#endif
+
+    public static final boolean MOZ_ANDROID_PWA =
+//#ifdef MOZ_ANDROID_PWA
     true;
 //#else
     false;

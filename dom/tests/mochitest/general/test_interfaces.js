@@ -27,8 +27,10 @@ var ecmaGlobals =
   [
     "Array",
     "ArrayBuffer",
-    "Atomics",
+    {name: "Atomics", disabled: true},
     "Boolean",
+    {name: "ByteLengthQueuingStrategy", disabled: !SpecialPowers.Cu.getJSTestingFunctions().streamsAreEnabled()},
+    {name: "CountQueuingStrategy", disabled: !SpecialPowers.Cu.getJSTestingFunctions().streamsAreEnabled()},
     "DataView",
     "Date",
     "Error",
@@ -44,7 +46,7 @@ var ecmaGlobals =
     "Int32Array",
     "Int8Array",
     "InternalError",
-    {name: "Intl", nonReleaseAndroid: true, android: false},
+    "Intl",
     "Iterator",
     "JSON",
     "Map",
@@ -55,11 +57,12 @@ var ecmaGlobals =
     "Promise",
     "Proxy",
     "RangeError",
+    {name: "ReadableStream", disabled: !SpecialPowers.Cu.getJSTestingFunctions().streamsAreEnabled()},
     "ReferenceError",
     "Reflect",
     "RegExp",
     "Set",
-    "SharedArrayBuffer",
+    {name: "SharedArrayBuffer", disabled: true},
     {name: "SIMD", nightly: true},
     "StopIteration",
     "String",
@@ -195,8 +198,6 @@ var interfaceNamesInGlobalScope =
     "CompositionEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ConstantSourceNode",
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    "Controllers",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ConvolverNode",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -414,7 +415,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLCollection",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "HTMLContentElement",
+    {name: "HTMLContentElement", stylo: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLDataElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -512,7 +513,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLSelectElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "HTMLShadowElement",
+    {name: "HTMLShadowElement", stylo: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLSourceElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -750,16 +751,13 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PluginArray",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PointerEvent", nightly: true, desktop: true, windows: true},
+    {name: "PointerEvent", nightly: true, desktop: true, android: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PopStateEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PopupBlockedEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "PopupBoxObject", xbl: true},
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PresentationDeviceInfoManager",
-     disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "Presentation", desktop: false, release: false },
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -845,7 +843,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "ScopedCredentialInfo", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "ShadowRoot", // Bogus, but the test harness forces it on.  See bug 1159768.
+    {name: "ShadowRoot", stylo: false}, // Bogus, but the test harness forces it on.  See bug 1159768.
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "SharedWorker",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1157,8 +1155,6 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "TreeContentView", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "TreeSelection", xbl: true},
-// IMPORTANT: Do not change this list without review from a DOM peer!
     "TreeWalker",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "U2F", disabled: true},
@@ -1273,13 +1269,9 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "XULCheckboxElement", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "XULCommandDispatcher", xbl: true},
-// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "XULCommandEvent", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "XULControlElement", xbl: true},
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "XULControllers", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "XULDocument", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1293,6 +1285,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "XULTreeBuilder", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "XULTreeBuilderObserver", xbl: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
   ];
 // IMPORTANT: Do not change the list above without review from a DOM peer!
 
@@ -1305,6 +1299,7 @@ function createInterfaceMap(isXBLScope) {
   var isWindows = /Windows/.test(navigator.oscpu);
   var isAndroid = navigator.userAgent.includes("Android");
   var isLinux = /Linux/.test(navigator.oscpu) && !isAndroid;
+  var isStylo = SpecialPowers.DOMWindowUtils.isStyledByServo;
   var isSecureContext = window.isSecureContext;
 
   var interfaceMap = {};
@@ -1318,14 +1313,14 @@ function createInterfaceMap(isXBLScope) {
         ok(!("pref" in entry), "Bogus pref annotation for " + entry.name);
         if ((entry.nightly === !isNightly) ||
             (entry.nightlyAndroid === !(isAndroid && isNightly) && isAndroid) ||
-            (entry.nonReleaseAndroid === !(isAndroid && !isRelease) && isAndroid) ||
             (entry.xbl === !isXBLScope) ||
             (entry.desktop === !isDesktop) ||
             (entry.windows === !isWindows) ||
             (entry.releaseNonWindows === !isRelease && !isWindows) ||
             (entry.mac === !isMac) ||
             (entry.linux === !isLinux) ||
-            (entry.android === !isAndroid && !entry.nonReleaseAndroid && !entry.nightlyAndroid) ||
+            (entry.android === !isAndroid && !entry.nightlyAndroid) ||
+            (entry.stylo === !isStylo) ||
             (entry.release === !isRelease) ||
             (entry.isSecureContext === !isSecureContext) ||
             entry.disabled) {

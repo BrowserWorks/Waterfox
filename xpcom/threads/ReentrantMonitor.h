@@ -86,7 +86,7 @@ public:
   nsresult Wait(PRIntervalTime aInterval = PR_INTERVAL_NO_TIMEOUT)
   {
 #ifdef MOZILLA_INTERNAL_API
-    GeckoProfilerThreadSleepRAII sleep;
+    AutoProfilerThreadSleep sleep;
 #endif //MOZILLA_INTERNAL_API
     return PR_Wait(mReentrantMonitor, aInterval) == PR_SUCCESS ?
       NS_OK : NS_ERROR_FAILURE;
@@ -199,6 +199,8 @@ private:
   ReentrantMonitorAutoEnter& operator=(const ReentrantMonitorAutoEnter&);
   static void* operator new(size_t) CPP_THROW_NEW;
 
+  friend class ReentrantMonitorAutoExit;
+
   mozilla::ReentrantMonitor* mReentrantMonitor;
 };
 
@@ -229,6 +231,15 @@ public:
     mReentrantMonitor->Exit();
   }
 
+  explicit ReentrantMonitorAutoExit(
+    ReentrantMonitorAutoEnter& aReentrantMonitorAutoEnter)
+    : mReentrantMonitor(aReentrantMonitorAutoEnter.mReentrantMonitor)
+  {
+    NS_ASSERTION(mReentrantMonitor, "null monitor");
+    mReentrantMonitor->AssertCurrentThreadIn();
+    mReentrantMonitor->Exit();
+  }
+
   ~ReentrantMonitorAutoExit(void)
   {
     mReentrantMonitor->Enter();
@@ -244,6 +255,5 @@ private:
 };
 
 } // namespace mozilla
-
 
 #endif // ifndef mozilla_ReentrantMonitor_h

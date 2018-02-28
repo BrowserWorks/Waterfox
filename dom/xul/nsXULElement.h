@@ -434,7 +434,7 @@ public:
 
     virtual nsIDOMNode* AsDOMNode() override { return this; }
 
-    virtual bool IsEventAttributeName(nsIAtom* aName) override;
+    virtual bool IsEventAttributeNameInternal(nsIAtom* aName) override;
 
     typedef mozilla::dom::DOMString DOMString;
     void GetXULAttr(nsIAtom* aName, DOMString& aResult) const
@@ -725,19 +725,6 @@ protected:
 
     nsresult AddPopupListener(nsIAtom* aName);
 
-    class nsXULSlots : public mozilla::dom::Element::nsDOMSlots
-    {
-    public:
-        nsXULSlots();
-        virtual ~nsXULSlots();
-
-        void Traverse(nsCycleCollectionTraversalCallback &cb);
-
-        nsCOMPtr<nsISupports> mFrameLoaderOrOpener;
-    };
-
-    virtual nsINode::nsSlots* CreateSlots() override;
-
     nsresult LoadSrc();
 
     /**
@@ -795,8 +782,8 @@ protected:
     // Internal accessor. This shadows the 'Slots', and returns
     // appropriate value.
     nsIControllers *Controllers() {
-      nsDOMSlots* slots = GetExistingDOMSlots();
-      return slots ? slots->mControllers : nullptr;
+      nsExtendedDOMSlots* slots = GetExistingExtendedDOMSlots();
+      return slots ? slots->mControllers.get() : nullptr;
     }
 
     void UnregisterAccessKey(const nsAString& aOldValue);

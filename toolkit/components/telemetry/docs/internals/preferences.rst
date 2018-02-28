@@ -54,6 +54,10 @@ Preferences
 
   Allow the ``shutdown`` ping to be sent when the browser shuts down, from the second browsing session on, instead of the next restart, using the :doc:`ping sender <pingsender>`.
 
+``toolkit.telemetry.shutdownPingSender.enabledFirstSession``
+
+  Allow the ``shutdown`` ping to be sent using the :doc:`ping sender <pingsender>` from the first browsing session.
+
 ``toolkit.telemetry.newProfilePing.enabled``
 
   Enable the :doc:`../data/new-profile` ping on new profiles.
@@ -61,6 +65,10 @@ Preferences
 ``toolkit.telemetry.newProfilePing.delay``
 
   Controls the delay after which the :doc:`../data/new-profile` is sent on new profiles.
+
+``toolkit.telemetry.updatePing.enabled``
+
+  Enable the :doc:`../data/update-ping` on browser updates.
 
 Data-choices notification
 -------------------------
@@ -137,3 +145,7 @@ The following prefs are for testing purpose only.
 ``toolkit.telemetry.send.overrideOfficialCheck``
 
   If true, allows sending pings on unofficial builds. Requires a restart.
+
+``toolkit.telemetry.healthping.enabled``
+
+  If false, sending health pings is disabled. Defaults to true.

@@ -8,7 +8,6 @@
 #include "nsIMemory.h"
 #include "nsPluginsDir.h"
 #include "nsPluginsDirUtils.h"
-#include "prmem.h"
 #include "prenv.h"
 #include "prerror.h"
 #include "prio.h"
@@ -60,7 +59,7 @@ static void SearchForSoname(const char* name, char** soname)
         return;
     PRDir *fdDir = PR_OpenDir(DEFAULT_X11_PATH);
     if (!fdDir)
-        return;       
+        return;
 
     int n = strlen(name);
     PRDirEntry *dirEntry;
@@ -190,7 +189,7 @@ static void LoadExtraSharedLibs()
             }
 
             // Check whether sonameListToSave is a empty String, Bug: 329205
-            if (sonameListToSave[0]) 
+            if (sonameListToSave[0])
                 for (p = &sonameListToSave[strlen(sonameListToSave) - 1]; *p == ':'; p--)
                     *p = 0; //delete tail ":" delimiters
 
@@ -214,21 +213,11 @@ bool nsPluginsDir::IsPluginFile(nsIFile* file)
     if (NS_FAILED(file->GetNativeLeafName(filename)))
         return false;
 
-#ifdef ANDROID
-    // It appears that if you load
-    // 'libstagefright_honeycomb.so' on froyo, or
-    // 'libstagefright_froyo.so' on honeycomb, we will abort.
-    // Since these are just helper libs, we can ignore.
-    const char *cFile = filename.get();
-    if (strstr(cFile, "libstagefright") != nullptr)
-        return false;
-#endif
-
     NS_NAMED_LITERAL_CSTRING(dllSuffix, LOCAL_PLUGIN_DLL_SUFFIX);
     if (filename.Length() > dllSuffix.Length() &&
         StringEndsWith(filename, dllSuffix))
         return true;
-    
+
 #ifdef LOCAL_PLUGIN_DLL_ALT_SUFFIX
     NS_NAMED_LITERAL_CSTRING(dllAltSuffix, LOCAL_PLUGIN_DLL_ALT_SUFFIX);
     if (filename.Length() > dllAltSuffix.Length() &&
@@ -305,14 +294,14 @@ nsresult nsPluginFile::LoadPlugin(PRLibrary **outLibrary)
 #endif  // MOZ_WIDGET_GTK == 2
 
 #ifdef DEBUG
-    printf("LoadPlugin() %s returned %lx\n", 
+    printf("LoadPlugin() %s returned %lx\n",
            libSpec.value.pathname, (unsigned long)pLibrary);
 #endif
 
     if (!pLibrary) {
         return NS_ERROR_FAILURE;
     }
-    
+
     return NS_OK;
 }
 
@@ -326,7 +315,7 @@ nsresult nsPluginFile::GetPluginInfo(nsPluginInfo& info, PRLibrary **outLibrary)
     nsresult rv = LoadPlugin(outLibrary);
     if (NS_FAILED(rv))
         return rv;
-  
+
     const char* (*npGetPluginVersion)() =
         (const char* (*)()) PR_FindFunctionSymbol(pLibrary, "NP_GetPluginVersion");
     if (npGetPluginVersion) {
@@ -404,9 +393,12 @@ nsresult nsPluginFile::FreePluginInfo(nsPluginInfo& info)
             PL_strfree(info.fExtensionArray[i]);
     }
 
-    PR_FREEIF(info.fMimeTypeArray);
-    PR_FREEIF(info.fMimeDescriptionArray);
-    PR_FREEIF(info.fExtensionArray);
+    free(info.fMimeTypeArray);
+    info.fMimeTypeArray = nullptr;
+    free(info.fMimeDescriptionArray);
+    info.fMimeDescriptionArray = nullptr;
+    free(info.fExtensionArray);
+    info.fExtensionArray = nullptr;
 
     if (info.fFullPath != nullptr)
         PL_strfree(info.fFullPath);

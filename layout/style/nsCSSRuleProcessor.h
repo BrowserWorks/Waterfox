@@ -81,6 +81,7 @@ public:
 public:
   nsresult ClearRuleCascades();
 
+  static bool VisitedLinksEnabled();
   static void Startup();
   static void InitSystemMetrics();
   static void Shutdown();
@@ -103,19 +104,19 @@ public:
    * slightly adjusted from IntrinsicState().
    */
   static mozilla::EventStates GetContentState(
-                                mozilla::dom::Element* aElement,
+                                const mozilla::dom::Element* aElement,
                                 bool aUsingPrivateBrowsing);
   static mozilla::EventStates GetContentState(
-                                mozilla::dom::Element* aElement,
+                                const mozilla::dom::Element* aElement,
                                 const TreeMatchContext& aTreeMatchContext);
   static mozilla::EventStates GetContentState(
-                                mozilla::dom::Element* aElement);
+                                const mozilla::dom::Element* aElement);
 
   /*
    * Helper to get the content state for :visited handling for an element
    */
   static mozilla::EventStates GetContentStateForVisitedHandling(
-             mozilla::dom::Element* aElement,
+             const mozilla::dom::Element* aElement,
              nsRuleWalker::VisitedHandlingType aVisitedHandling,
              bool aIsRelevantLink);
 
@@ -172,7 +173,7 @@ public:
                                   bool* const aDependence = nullptr);
 
   static bool LangPseudoMatches(const mozilla::dom::Element* aElement,
-                                const nsAString* aOverrideLang,
+                                const nsIAtom* aOverrideLang,
                                 bool aHasOverrideLang,
                                 const char16_t* aString,
                                 const nsIDocument* aDocument);
@@ -255,7 +256,7 @@ public:
 #ifdef XP_WIN
   // Cached theme identifier for the moz-windows-theme media query.
   static uint8_t GetWindowsThemeIdentifier();
-  static void SetWindowsThemeIdentifier(uint8_t aId) { 
+  static void SetWindowsThemeIdentifier(uint8_t aId) {
     sWinThemeId = aId;
   }
 #endif

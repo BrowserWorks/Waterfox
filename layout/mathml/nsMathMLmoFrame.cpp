@@ -3,9 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "gfxContext.h"
 #include "nsMathMLmoFrame.h"
 #include "nsPresContext.h"
-#include "nsRenderingContext.h"
 #include "nsContentUtils.h"
 #include "nsFrameSelection.h"
 #include "nsMathMLElement.h"
@@ -80,7 +80,7 @@ nsMathMLmoFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     nsMathMLTokenFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
   } else {
     DisplayBorderBackgroundOutline(aBuilder, aLists);
-    
+
     // make our char selected if our inner child text frame is selected
     bool isSelected = false;
     nsRect selectedRect;
@@ -92,7 +92,7 @@ nsMathMLmoFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       isSelected = true;
     }
     mMathMLChar.Display(aBuilder, this, aLists, 0, isSelected ? &selectedRect : nullptr);
-  
+
 #if defined(DEBUG) && defined(SHOW_BOUNDING_BOX)
     // for visual debug
     DisplayBoundingMetrics(aBuilder, this, mReference, mBoundingMetrics, aLists);
@@ -113,7 +113,7 @@ nsMathMLmoFrame::ProcessTextData()
   int32_t length = data.Length();
   char16_t ch = (length == 0) ? char16_t('\0') : data[0];
 
-  if ((length == 1) && 
+  if ((length == 1) &&
       (ch == kApplyFunction  ||
        ch == kInvisibleSeparator ||
        ch == kInvisiblePlus ||
@@ -156,7 +156,7 @@ nsMathMLmoFrame::ProcessTextData()
   mFlags |= allFlags & NS_MATHML_OPERATOR_ACCENT;
   mFlags |= allFlags & NS_MATHML_OPERATOR_MOVABLELIMITS;
 
-  // see if this is an operator that should be centered to cater for 
+  // see if this is an operator that should be centered to cater for
   // fonts that are not math-aware
   if (1 == length) {
     if ((ch == '+') || (ch == '=') || (ch == '*') ||
@@ -185,7 +185,7 @@ nsMathMLmoFrame::ProcessTextData()
   ResolveMathMLCharStyle(presContext, mContent, mStyleContext, &mMathMLChar);
 }
 
-// get our 'form' and lookup in the Operator Dictionary to fetch 
+// get our 'form' and lookup in the Operator Dictionary to fetch
 // our default data that may come from there. Then complete our setup
 // using attributes that we may have. To stay in sync, this function is
 // called very often. We depend on many things that may change around us.
@@ -206,7 +206,7 @@ nsMathMLmoFrame::ProcessOperatorData()
   // it mutable irrespective of the form of the embellished container.
   // Also remember the other special bits that we want to carry forward.
   mFlags &= NS_MATHML_OPERATOR_MUTABLE |
-            NS_MATHML_OPERATOR_ACCENT | 
+            NS_MATHML_OPERATOR_ACCENT |
             NS_MATHML_OPERATOR_MOVABLELIMITS |
             NS_MATHML_OPERATOR_CENTERED |
             NS_MATHML_OPERATOR_INVISIBLE;
@@ -222,7 +222,7 @@ nsMathMLmoFrame::ProcessOperatorData()
     mEmbellishData.leadingSpace = 0;
     mEmbellishData.trailingSpace = 0;
     if (mMathMLChar.Length() != 1)
-      mEmbellishData.direction = NS_STRETCH_DIRECTION_UNSUPPORTED;  
+      mEmbellishData.direction = NS_STRETCH_DIRECTION_UNSUPPORTED;
     // else... retain the native direction obtained in ProcessTextData()
 
     if (!mFrames.FirstChild()) {
@@ -278,7 +278,7 @@ nsMathMLmoFrame::ProcessOperatorData()
   // container. A null form here means that an earlier attempt to stretch
   // our mMathMLChar failed, in which case we don't bother re-stretching again
   if (form) {
-    // get our outermost embellished container and its parent. 
+    // get our outermost embellished container and its parent.
     // (we ensure that we are the core, not just a sibling of the core)
     nsIFrame* embellishAncestor = this;
     nsEmbellishData embellishData;
@@ -380,7 +380,7 @@ nsMathMLmoFrame::ProcessOperatorData()
   // "Specifies the leading space appearing before the operator"
   //
   // values: length
-  // default: set by dictionary (thickmathspace) 
+  // default: set by dictionary (thickmathspace)
   //
   // XXXfredw Support for negative and relative values is not implemented
   // (bug 805926).
@@ -407,7 +407,7 @@ nsMathMLmoFrame::ProcessOperatorData()
   // "Specifies the trailing space appearing after the operator"
   //
   // values: length
-  // default: set by dictionary (thickmathspace) 
+  // default: set by dictionary (thickmathspace)
   //
   // XXXfredw Support for negative and relative values is not implemented
   // (bug 805926).
@@ -700,7 +700,7 @@ nsMathMLmoFrame::Stretch(DrawTarget*          aDrawTarget,
       if (mMinSize > 0.0f) {
         // if we are here, there is a user defined minsize ...
         // always allow the char to stretch in its natural direction,
-        // even if it is different from the caller's direction 
+        // even if it is different from the caller's direction
         if (aStretchDirection != NS_STRETCH_DIRECTION_DEFAULT &&
             aStretchDirection != mEmbellishData.direction) {
           aStretchDirection = NS_STRETCH_DIRECTION_DEFAULT;
@@ -738,7 +738,8 @@ nsMathMLmoFrame::Stretch(DrawTarget*          aDrawTarget,
     }
 
     // let the MathMLChar stretch itself...
-    nsresult res = mMathMLChar.Stretch(PresContext(), aDrawTarget,
+    nsresult res = mMathMLChar.Stretch(this,
+                                       aDrawTarget,
                                        fontSizeInflation,
                                        aStretchDirection, container, charSize,
                                        stretchHint,
@@ -763,7 +764,7 @@ nsMathMLmoFrame::Stretch(DrawTarget*          aDrawTarget,
     // update our bounding metrics... it becomes that of our MathML char
     mBoundingMetrics = charSize;
 
-    // if the returned direction is 'unsupported', the char didn't actually change. 
+    // if the returned direction is 'unsupported', the char didn't actually change.
     // So we do the centering only if necessary
     if (mMathMLChar.GetStretchDirection() != NS_STRETCH_DIRECTION_UNSUPPORTED ||
         NS_MATHML_OPERATOR_IS_CENTERED(mFlags)) {
@@ -974,7 +975,7 @@ nsMathMLmoFrame::Place(DrawTarget*          aDrawTarget,
       StyleFont()->mMathDisplay == NS_MATHML_DISPLAYSTYLE_BLOCK &&
       NS_MATHML_OPERATOR_IS_LARGEOP(mFlags) && UseMathMLChar()) {
     nsBoundingMetrics newMetrics;
-    rv = mMathMLChar.Stretch(PresContext(), aDrawTarget,
+    rv = mMathMLChar.Stretch(this, aDrawTarget,
                              nsLayoutUtils::FontSizeInflationFor(this),
                              NS_STRETCH_DIRECTION_VERTICAL,
                              aDesiredSize.mBoundingMetrics, newMetrics,
@@ -1027,7 +1028,7 @@ nsMathMLmoFrame::MarkIntrinsicISizesDirty()
 }
 
 /* virtual */ void
-nsMathMLmoFrame::GetIntrinsicISizeMetrics(nsRenderingContext* aRenderingContext,
+nsMathMLmoFrame::GetIntrinsicISizeMetrics(gfxContext* aRenderingContext,
                                           ReflowOutput& aDesiredSize)
 {
   ProcessOperatorData();
@@ -1035,7 +1036,7 @@ nsMathMLmoFrame::GetIntrinsicISizeMetrics(nsRenderingContext* aRenderingContext,
     uint32_t stretchHint = GetStretchHint(mFlags, mPresentationData, true,
                                           StyleFont());
     aDesiredSize.Width() = mMathMLChar.
-      GetMaxWidth(PresContext(), aRenderingContext->GetDrawTarget(),
+      GetMaxWidth(this, aRenderingContext->GetDrawTarget(),
                   nsLayoutUtils::FontSizeInflationFor(this),
                   stretchHint);
   }
@@ -1088,7 +1089,7 @@ nsMathMLmoFrame::AttributeChanged(int32_t         aNameSpaceID,
 }
 
 // ----------------------
-// No need to track the style context given to our MathML char. 
+// No need to track the style context given to our MathML char.
 // the Style System will use these to pass the proper style context to our MathMLChar
 nsStyleContext*
 nsMathMLmoFrame::GetAdditionalStyleContext(int32_t aIndex) const

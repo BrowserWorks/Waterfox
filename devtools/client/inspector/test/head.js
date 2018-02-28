@@ -439,6 +439,14 @@ const getHighlighterHelperFor = (type) => Task.async(
         };
       },
 
+      get actorID() {
+        if (!highlighter) {
+          return null;
+        }
+
+        return highlighter.actorID;
+      },
+
       show: function* (selector = ":root", options) {
         highlightedNode = yield getNodeFront(selector, inspector);
         return yield highlighter.show(highlightedNode, options);
@@ -495,11 +503,11 @@ const getHighlighterHelperFor = (type) => Task.async(
       //   mouse.up();         // synthesize "mouseup" at 20,30
       mouse: new Proxy({}, {
         get: (target, name) =>
-          function* (x = prevX, y = prevY) {
+          function* (x = prevX, y = prevY, selector = ":root") {
             prevX = x;
             prevY = y;
             yield testActor.synthesizeMouse({
-              selector: ":root", x, y, options: {type: "mouse" + name}});
+              selector, x, y, options: {type: "mouse" + name}});
           }
       }),
 
@@ -702,7 +710,7 @@ function* assertShowPreviewTooltip(view, target) {
 
   let name = "previewTooltip";
   ok(view.tooltips._instances.has(name),
-    `Tooltip '${name}' has been instanciated`);
+    `Tooltip '${name}' has been instantiated`);
   let tooltip = view.tooltips.getTooltip(name);
 
   if (!tooltip.isVisible()) {
@@ -794,4 +802,34 @@ function* getDisplayedNodeTextContent(selector, inspector) {
     return textContainer.textContent;
   }
   return null;
+}
+
+/**
+ * Toggle the shapes highlighter by simulating a click on the toggle
+ * in the rules view with the given selector and property
+ *
+ * @param {CssRuleView} view
+ *        The instance of the rule-view panel
+ * @param {Object} highlighters
+ *        The highlighters instance of the rule-view panel
+ * @param {String} selector
+ *        The selector in the rule-view to look for the property in
+ * @param {String} property
+ *        The name of the property
+ * @param {Boolean} show
+ *        If true, the shapes highlighter is being shown. If false, it is being hidden
+ */
+function* toggleShapesHighlighter(view, highlighters, selector, property, show) {
+  info("Toggle shapes highlighter");
+  let container = getRuleViewProperty(view, selector, property).valueSpan;
+  let shapesToggle = container.querySelector(".ruleview-shape");
+  if (show) {
+    let onHighlighterShown = highlighters.once("shapes-highlighter-shown");
+    shapesToggle.click();
+    yield onHighlighterShown;
+  } else {
+    let onHighlighterHidden = highlighters.once("shapes-highlighter-hidden");
+    shapesToggle.click();
+    yield onHighlighterHidden;
+  }
 }

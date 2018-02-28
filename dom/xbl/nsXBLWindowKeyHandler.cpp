@@ -25,17 +25,21 @@
 #include "nsIPresShell.h"
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStateManager.h"
+#include "mozilla/Move.h"
 #include "nsISelectionController.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/StaticPtr.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
+#include "mozilla/layers/KeyboardMap.h"
 #include "nsIEditor.h"
 #include "nsIHTMLEditor.h"
 #include "nsIDOMDocument.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
+using namespace mozilla::layers;
 
 class nsXBLSpecialDocInfo : public nsIObserver
 {
@@ -146,8 +150,17 @@ nsXBLSpecialDocInfo::GetAllHandlers(const char* aType,
 }
 
 // Init statics
-nsXBLSpecialDocInfo* nsXBLWindowKeyHandler::sXBLSpecialDocInfo = nullptr;
+static StaticRefPtr<nsXBLSpecialDocInfo> sXBLSpecialDocInfo;
 uint32_t nsXBLWindowKeyHandler::sRefCnt = 0;
+
+/* static */ void
+nsXBLWindowKeyHandler::EnsureSpecialDocInfo()
+{
+  if (!sXBLSpecialDocInfo) {
+    sXBLSpecialDocInfo = new nsXBLSpecialDocInfo();
+  }
+  sXBLSpecialDocInfo->LoadDocInfo();
+}
 
 nsXBLWindowKeyHandler::nsXBLWindowKeyHandler(nsIDOMElement* aElement,
                                              EventTarget* aTarget)
@@ -167,7 +180,7 @@ nsXBLWindowKeyHandler::~nsXBLWindowKeyHandler()
 
   --sRefCnt;
   if (!sRefCnt) {
-    NS_IF_RELEASE(sXBLSpecialDocInfo);
+    sXBLSpecialDocInfo = nullptr;
   }
 }
 
@@ -228,11 +241,7 @@ nsXBLWindowKeyHandler::EnsureHandlers()
     nsCOMPtr<nsIContent> content(do_QueryInterface(el));
     BuildHandlerChain(content, &mHandler);
   } else { // We are an XBL file of handlers.
-    if (!sXBLSpecialDocInfo) {
-      sXBLSpecialDocInfo = new nsXBLSpecialDocInfo();
-      NS_ADDREF(sXBLSpecialDocInfo);
-    }
-    sXBLSpecialDocInfo->LoadDocInfo();
+    EnsureSpecialDocInfo();
 
     // Now determine which handlers we should be using.
     if (IsHTMLEditableFieldFocused()) {
@@ -397,6 +406,44 @@ nsXBLWindowKeyHandler::RemoveKeyboardEventListenersFrom(
                            TrustedEventsAtSystemGroupBubble());
 }
 
+/* static */ KeyboardMap
+nsXBLWindowKeyHandler::CollectKeyboardShortcuts()
+{
+  // Load the XBL handlers
+  EnsureSpecialDocInfo();
+
+  nsXBLPrototypeHandler* handlers = nullptr;
+  nsXBLPrototypeHandler* userHandlers = nullptr;
+  sXBLSpecialDocInfo->GetAllHandlers("browser", &handlers, &userHandlers);
+
+  // Convert the handlers into keyboard shortcuts, using an AutoTArray with
+  // the maximum amount of shortcuts used on any platform to minimize allocations
+  AutoTArray<KeyboardShortcut, 48> shortcuts;
+
+  // Append keyboard shortcuts for hardcoded actions like tab
+  KeyboardShortcut::AppendHardcodedShortcuts(shortcuts);
+
+  for (nsXBLPrototypeHandler* handler = handlers;
+       handler;
+       handler = handler->GetNextHandler()) {
+    KeyboardShortcut shortcut;
+    if (handler->TryConvertToKeyboardShortcut(&shortcut)) {
+      shortcuts.AppendElement(shortcut);
+    }
+  }
+
+  for (nsXBLPrototypeHandler* handler = userHandlers;
+       handler;
+       handler = handler->GetNextHandler()) {
+    KeyboardShortcut shortcut;
+    if (handler->TryConvertToKeyboardShortcut(&shortcut)) {
+      shortcuts.AppendElement(shortcut);
+    }
+  }
+
+  return KeyboardMap(mozilla::Move(shortcuts));
+}
+
 nsIAtom*
 nsXBLWindowKeyHandler::ConvertEventToDOMEventType(
                          const WidgetKeyboardEvent& aWidgetKeyboardEvent) const
@@ -437,7 +484,7 @@ nsXBLWindowKeyHandler::HandleEvent(nsIDOMEvent* aEvent)
   if (widgetKeyboardEvent->IsKeyEventOnPlugin()) {
     // key events on plugin shouldn't execute shortcut key handlers which are
     // not reserved.
-    if (!widgetKeyboardEvent->mIsReserved) {
+    if (!widgetKeyboardEvent->IsReservedByChrome()) {
       return NS_OK;
     }
 
@@ -469,26 +516,13 @@ nsXBLWindowKeyHandler::HandleEventOnCaptureInDefaultEventGroup(
   WidgetKeyboardEvent* widgetKeyboardEvent =
     aEvent->AsEvent()->WidgetEventPtr()->AsKeyboardEvent();
 
-  if (widgetKeyboardEvent->mIsReserved) {
-    MOZ_RELEASE_ASSERT(
-      widgetKeyboardEvent->mFlags.mOnlySystemGroupDispatchInContent);
-    MOZ_RELEASE_ASSERT(
-      widgetKeyboardEvent->mFlags.mNoCrossProcessBoundaryForwarding);
+  if (widgetKeyboardEvent->IsReservedByChrome()) {
     return;
   }
 
   bool isReserved = false;
   if (HasHandlerForEvent(aEvent, &isReserved) && isReserved) {
-    widgetKeyboardEvent->mIsReserved = true;
-    // For reserved commands (such as Open New Tab), we don't to wait for
-    // the content to answer (so mWantReplyFromContentProcess remains false),
-    // neither to give a chance for content to override its behavior.
-    widgetKeyboardEvent->StopCrossProcessForwarding();
-    // If the key combination is reserved by chrome, we shouldn't expose the
-    // keyboard event to web contents because such keyboard events shouldn't be
-    // cancelable.  So, it's not good behavior to fire keyboard events but
-    // to ignore the defaultPrevented attribute value in chrome.
-    widgetKeyboardEvent->mFlags.mOnlySystemGroupDispatchInContent = true;
+    widgetKeyboardEvent->MarkAsReservedByChrome();
   }
 }
 
@@ -499,14 +533,10 @@ nsXBLWindowKeyHandler::HandleEventOnCaptureInSystemEventGroup(
   WidgetKeyboardEvent* widgetEvent =
     aEvent->AsEvent()->WidgetEventPtr()->AsKeyboardEvent();
 
-  if (widgetEvent->mFlags.mNoCrossProcessBoundaryForwarding ||
-      widgetEvent->mFlags.mOnlySystemGroupDispatchInContent) {
-    return;
-  }
-
-  nsCOMPtr<mozilla::dom::Element> originalTarget =
-    do_QueryInterface(aEvent->AsEvent()->WidgetEventPtr()->mOriginalTarget);
-  if (!EventStateManager::IsRemoteTarget(originalTarget)) {
+  // If the event won't be sent to remote process, this listener needs to do
+  // nothing.
+  if (widgetEvent->mFlags.mOnlySystemGroupDispatchInContent ||
+      !widgetEvent->WillBeSentToRemoteProcess()) {
     return;
   }
 
@@ -514,15 +544,15 @@ nsXBLWindowKeyHandler::HandleEventOnCaptureInSystemEventGroup(
     return;
   }
 
-  // Inform the child process that this is a event that we want a reply
-  // from.
-  widgetEvent->mFlags.mWantReplyFromContentProcess = true;
-  // If this event hadn't been marked as mNoCrossProcessBoundaryForwarding
+  // If this event wasn't marked as IsCrossProcessForwardingStopped,
   // yet, it means it wasn't processed by content. We'll not call any
-  // of the handlers at this moment, and will wait for the event to be
-  // redispatched with mNoCrossProcessBoundaryForwarding = 1 to process it.
-  // XXX Why not StopImmediatePropagation()?
-  aEvent->AsEvent()->StopPropagation();
+  // of the handlers at this moment, and will wait the reply event.
+  // So, stop immediate propagation in this event first, then, mark it as
+  // waiting reply from remote process.  Finally, when this process receives
+  // a reply from the remote process, it should be dispatched into this
+  // DOM tree again.
+  widgetEvent->StopImmediatePropagation();
+  widgetEvent->MarkAsWaitingReplyFromRemoteProcess();
 }
 
 bool

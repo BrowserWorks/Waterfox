@@ -185,6 +185,9 @@
 @RESPATH@/browser/components/browser-feeds.xpt
 @RESPATH@/components/caps.xpt
 @RESPATH@/components/chrome.xpt
+#ifdef MOZ_CODE_COVERAGE
+@RESPATH@/components/code-coverage.xpt
+#endif
 @RESPATH@/components/commandhandler.xpt
 @RESPATH@/components/commandlines.xpt
 @RESPATH@/components/composer.xpt
@@ -383,8 +386,6 @@
 @RESPATH@/browser/components/devtools-startup.js
 @RESPATH@/browser/components/aboutdebugging-registration.js
 @RESPATH@/browser/components/aboutdebugging.manifest
-@RESPATH@/browser/components/webideCli.js
-@RESPATH@/browser/components/webideComponents.manifest
 @RESPATH@/browser/components/Experiments.manifest
 @RESPATH@/browser/components/ExperimentsService.js
 @RESPATH@/browser/components/browser-newtab.xpt
@@ -399,6 +400,9 @@
 @RESPATH@/components/nsSearchService.js
 @RESPATH@/components/nsSearchSuggestions.js
 @RESPATH@/components/nsSidebar.js
+#if defined(NIGHTLY_BUILD) && defined(MOZ_BUILD_APP_IS_BROWSER)
+@RESPATH@/components/payments.manifest
+#endif
 @RESPATH@/components/passwordmgr.manifest
 @RESPATH@/components/nsLoginInfo.js
 @RESPATH@/components/nsLoginManager.js
@@ -545,8 +549,6 @@
 @RESPATH@/components/nsAsyncShutdown.manifest
 @RESPATH@/components/nsAsyncShutdown.js
 
-@RESPATH@/components/PresentationDeviceInfoManager.manifest
-@RESPATH@/components/PresentationDeviceInfoManager.js
 @RESPATH@/components/BuiltinProviders.manifest
 @RESPATH@/components/PresentationControlService.js
 @RESPATH@/components/PresentationDataChannelSessionTransport.js
@@ -825,6 +827,14 @@ bin/libfreebl_32int64_3.so
 @RESPATH@/components/SanityTest.js
 #endif
 
-#ifdef MOZ_MULET
-#include ../../b2g/installer/package-manifest.in
+#ifdef MOZ_DMD
+; DMD
+@RESPATH@/dmd.py
+@RESPATH@/fix_stack_using_bpsyms.py
+#ifdef XP_MACOSX
+@RESPATH@/fix_macosx_stack.py
+#endif
+#ifdef XP_LINUX
+@RESPATH@/fix_linux_stack.py
+#endif
 #endif

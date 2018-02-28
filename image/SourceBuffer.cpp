@@ -42,6 +42,7 @@ SourceBufferIterator::operator=(SourceBufferIterator&& aOther)
   mData = aOther.mData;
   mChunkCount = aOther.mChunkCount;
   mByteCount = aOther.mByteCount;
+  mRemainderToRead = aOther.mRemainderToRead;
 
   return *this;
 }
@@ -63,6 +64,25 @@ SourceBufferIterator::AdvanceOrScheduleResume(size_t aRequestedBytes,
   MOZ_ASSERT(mData.mIterating.mNextReadLength <= mData.mIterating.mAvailableLength);
   mData.mIterating.mOffset += mData.mIterating.mNextReadLength;
   mData.mIterating.mAvailableLength -= mData.mIterating.mNextReadLength;
+
+  // An iterator can have a limit imposed on it to read only a subset of a
+  // source buffer. If it is present, we need to mimic the same behaviour as
+  // the owning SourceBuffer.
+  if (MOZ_UNLIKELY(mRemainderToRead != SIZE_MAX)) {
+    MOZ_ASSERT(mData.mIterating.mNextReadLength <= mRemainderToRead);
+    mRemainderToRead -= mData.mIterating.mNextReadLength;
+
+    if (MOZ_UNLIKELY(mRemainderToRead == 0)) {
+      mData.mIterating.mNextReadLength = 0;
+      SetComplete(NS_OK);
+      return COMPLETE;
+    }
+
+    if (MOZ_UNLIKELY(aRequestedBytes > mRemainderToRead)) {
+      aRequestedBytes = mRemainderToRead;
+    }
+  }
+
   mData.mIterating.mNextReadLength = 0;
 
   if (MOZ_LIKELY(mState == READY)) {
@@ -204,30 +224,27 @@ SourceBuffer::Compact()
     return NS_OK;
   }
 
-  Maybe<Chunk> newChunk = CreateChunk(length, /* aRoundUp = */ false);
-  if (MOZ_UNLIKELY(!newChunk || newChunk->AllocationFailed())) {
-    NS_WARNING("Failed to allocate chunk for SourceBuffer compacting - OOM?");
+  Chunk& mergeChunk = mChunks[0];
+  if (MOZ_UNLIKELY(!mergeChunk.SetCapacity(length))) {
+    NS_WARNING("Failed to reallocate chunk for SourceBuffer compacting - OOM?");
     return NS_OK;
   }
 
-  // Copy our old chunks into the new chunk.
-  for (uint32_t i = 0 ; i < mChunks.Length() ; ++i) {
-    size_t offset = newChunk->Length();
-    MOZ_ASSERT(offset < newChunk->Capacity());
-    MOZ_ASSERT(offset + mChunks[i].Length() <= newChunk->Capacity());
+  // Copy our old chunks into the newly reallocated first chunk.
+  for (uint32_t i = 1 ; i < mChunks.Length() ; ++i) {
+    size_t offset = mergeChunk.Length();
+    MOZ_ASSERT(offset < mergeChunk.Capacity());
+    MOZ_ASSERT(offset + mChunks[i].Length() <= mergeChunk.Capacity());
 
-    memcpy(newChunk->Data() + offset, mChunks[i].Data(), mChunks[i].Length());
-    newChunk->AddLength(mChunks[i].Length());
+    memcpy(mergeChunk.Data() + offset, mChunks[i].Data(), mChunks[i].Length());
+    mergeChunk.AddLength(mChunks[i].Length());
   }
 
-  MOZ_ASSERT(newChunk->Length() == newChunk->Capacity(),
+  MOZ_ASSERT(mergeChunk.Length() == mergeChunk.Capacity(),
              "Compacted chunk has slack space");
 
-  // Replace the old chunks with the new, compact chunk.
-  mChunks.Clear();
-  if (MOZ_UNLIKELY(NS_FAILED(AppendChunk(Move(newChunk))))) {
-    return HandleError(NS_ERROR_OUT_OF_MEMORY);
-  }
+  // Remove the redundant chunks.
+  mChunks.RemoveElementsAt(1, mChunks.Length() - 1);
   mChunks.Compact();
 
   return NS_OK;
@@ -317,7 +334,7 @@ SourceBuffer::ExpectLength(size_t aExpectedLength)
     return NS_OK;
   }
 
-  if (MOZ_UNLIKELY(NS_FAILED(AppendChunk(CreateChunk(aExpectedLength))))) {
+  if (MOZ_UNLIKELY(NS_FAILED(AppendChunk(CreateChunk(aExpectedLength, /* aRoundUp */ false))))) {
     return HandleError(NS_ERROR_OUT_OF_MEMORY);
   }
 
@@ -518,14 +535,14 @@ SourceBuffer::SizeOfIncludingThisWithComputedFallback(MallocSizeOf
 }
 
 SourceBufferIterator
-SourceBuffer::Iterator()
+SourceBuffer::Iterator(size_t aReadLength)
 {
   {
     MutexAutoLock lock(mMutex);
     mConsumerCount++;
   }
 
-  return SourceBufferIterator(this);
+  return SourceBufferIterator(this, aReadLength);
 }
 
 void
@@ -601,7 +618,7 @@ SourceBuffer::AdvanceIteratorOrScheduleResume(SourceBufferIterator& aIterator,
   if (MOZ_UNLIKELY(mChunks.Length() == 0)) {
     // We haven't gotten an initial chunk yet.
     AddWaitingConsumer(aConsumer);
-    return aIterator.SetWaiting();
+    return aIterator.SetWaiting(!!aConsumer);
   }
 
   uint32_t iteratorChunkIdx = aIterator.mData.mIterating.mChunk;
@@ -639,7 +656,7 @@ SourceBuffer::AdvanceIteratorOrScheduleResume(SourceBufferIterator& aIterator,
   // We're not complete, but there's no more data right now. Arrange to wake up
   // the consumer when we get more data.
   AddWaitingConsumer(aConsumer);
-  return aIterator.SetWaiting();
+  return aIterator.SetWaiting(!!aConsumer);
 }
 
 nsresult

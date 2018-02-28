@@ -7,6 +7,8 @@
 #include "IPCBlobInputStreamThread.h"
 
 #include "mozilla/StaticMutex.h"
+#include "mozilla/SystemGroup.h"
+#include "mozilla/TaskCategory.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/PBackgroundChild.h"
 #include "nsIIPCBackgroundChildCreateCallback.h"
@@ -27,6 +29,8 @@ bool gShutdownHasStarted = false;
 class ThreadInitializeRunnable final : public Runnable
 {
 public:
+  ThreadInitializeRunnable() : Runnable("dom::ThreadInitializeRunnable") {}
+
   NS_IMETHOD
   Run() override
   {
@@ -44,7 +48,8 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   explicit MigrateActorRunnable(IPCBlobInputStreamChild* aActor)
-    : mActor(aActor)
+    : Runnable("dom::MigrateActorRunnable")
+    , mActor(aActor)
   {
     MOZ_ASSERT(mActor);
   }
@@ -91,12 +96,12 @@ NS_IMPL_ISUPPORTS_INHERITED(MigrateActorRunnable, Runnable,
 NS_IMPL_ISUPPORTS(IPCBlobInputStreamThread, nsIObserver)
 
 /* static */ bool
-IPCBlobInputStreamThread::IsOnFileThread(nsIThread* aThread)
+IPCBlobInputStreamThread::IsOnFileEventTarget(nsIEventTarget* aEventTarget)
 {
-  MOZ_ASSERT(aThread);
+  MOZ_ASSERT(aEventTarget);
 
   mozilla::StaticMutexAutoLock lock(gIPCBlobThreadMutex);
-  return gIPCBlobThread && aThread == gIPCBlobThread->mThread;
+  return gIPCBlobThread && aEventTarget == gIPCBlobThread->mThread;
 }
 
 /* static */ IPCBlobInputStreamThread*
@@ -120,7 +125,8 @@ void
 IPCBlobInputStreamThread::Initialize()
 {
   if (!NS_IsMainThread()) {
-    NS_DispatchToMainThread(new ThreadInitializeRunnable());
+    RefPtr<Runnable> runnable = new ThreadInitializeRunnable();
+    SystemGroup::Dispatch(TaskCategory::Other, runnable.forget());
     return;
   }
 

@@ -30,8 +30,6 @@ user_pref("extensions.systemAddon.update.url", "http://localhost/dummy-system-ad
 user_pref("extensions.getAddons.cache.enabled", false);
 // Disable blocklist updates so we don't have them reported as leaks
 user_pref("extensions.blocklist.enabled", false);
-// Make url-classifier updates so rare that they won't affect tests
-user_pref("urlclassifier.updateinterval", 172800);
 // Disable downscale-during-decode, since it makes reftests more difficult.
 user_pref("image.downscale-during-decode.enabled", false);
 // Checking whether two files are the same is slow on Windows.
@@ -145,3 +143,7 @@ user_pref("media.openUnsupportedTypeWithExternalApp", false);
 // The prefs recommended by Marionette are typically geared towards
 // consumer automation; not vendor testing.
 user_pref("marionette.prefs.recommended", false);
+
+// Make sure we don't reach out to the network with pocket or snippets
+user_pref("browser.newtabpage.activity-stream.feeds.section.topstories", false);
+user_pref("browser.newtabpage.activity-stream.feeds.snippets", false);

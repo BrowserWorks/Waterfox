@@ -96,6 +96,7 @@ const char* const XPCJSRuntime::mStrings[] = {
     "__exposedProps__",     // IDX_EXPOSEDPROPS
     "eval",                 // IDX_EVAL
     "controllers",          // IDX_CONTROLLERS
+    "Controllers",          // IDX_CONTROLLERS_CLASS
     "realFrameElement",     // IDX_REALFRAMEELEMENT
     "length",               // IDX_LENGTH
     "name",                 // IDX_NAME
@@ -110,23 +111,6 @@ const char* const XPCJSRuntime::mStrings[] = {
 };
 
 /***************************************************************************/
-
-static mozilla::Atomic<bool> sDiscardSystemSource(false);
-
-bool
-xpc::ShouldDiscardSystemSource() { return sDiscardSystemSource; }
-
-#ifdef DEBUG
-static mozilla::Atomic<bool> sExtraWarningsForSystemJS(false);
-bool xpc::ExtraWarningsForSystemJS() { return sExtraWarningsForSystemJS; }
-#else
-bool xpc::ExtraWarningsForSystemJS() { return false; }
-#endif
-
-static mozilla::Atomic<bool> sSharedMemoryEnabled(false);
-
-bool
-xpc::SharedMemoryEnabled() { return sSharedMemoryEnabled; }
 
 // *Some* NativeSets are referenced from mClassInfo2NativeSetMap.
 // *All* NativeSets are referenced from mNativeSetMap.
@@ -156,7 +140,7 @@ public:
   nsresult Dispatch()
   {
       nsCOMPtr<nsIRunnable> self(this);
-      return NS_IdleDispatchToCurrentThread(self.forget(), 1000);
+      return NS_IdleDispatchToCurrentThread(self.forget(), 2500);
   }
 
   void Start(bool aContinuation = false, bool aPurge = false)
@@ -645,12 +629,6 @@ void XPCJSRuntime::TraceNativeBlackRoots(JSTracer* trc)
             roots->TraceJSAll(trc);
     }
 
-    // XPCJSObjectHolders don't participate in cycle collection, so always
-    // trace them here.
-    XPCRootSetElem* e;
-    for (e = mObjectHolderRoots; e; e = e->GetNextRoot())
-        static_cast<XPCJSObjectHolder*>(e)->TraceJS(trc);
-
     JSContext* cx = XPCJSContext::Get()->Context();
     dom::TraceBlackJS(trc, JS_GetGCParameter(cx, JSGC_NUMBER),
                       nsXPConnect::XPConnect()->IsShuttingDown());
@@ -680,11 +658,13 @@ XPCJSRuntime::TraverseAdditionalNativeRoots(nsCycleCollectionNoteRootCallback& c
            if (val.isObject() && !JS::ObjectIsMarkedGray(&val.toObject()))
                continue;
         }
-        cb.NoteXPCOMRoot(v);
+        cb.NoteXPCOMRoot(v,
+                         XPCTraceableVariant::NS_CYCLE_COLLECTION_INNERCLASS::GetParticipant());
     }
 
     for (XPCRootSetElem* e = mWrappedJSRoots; e ; e = e->GetNextRoot()) {
-        cb.NoteXPCOMRoot(ToSupports(static_cast<nsXPCWrappedJS*>(e)));
+        cb.NoteXPCOMRoot(ToSupports(static_cast<nsXPCWrappedJS*>(e)),
+                         nsXPCWrappedJS::NS_CYCLE_COLLECTION_INNERCLASS::GetParticipant());
     }
 }
 
@@ -762,7 +742,8 @@ XPCJSRuntime::DoCycleCollectionCallback(JSContext* cx)
     // The GC has detected that a CC at this point would collect a tremendous
     // amount of garbage that is being revivified unnecessarily.
     NS_DispatchToCurrentThread(
-            NS_NewRunnableFunction([](){nsJSContext::CycleCollectNow(nullptr);}));
+      NS_NewRunnableFunction("XPCJSRuntime::DoCycleCollectionCallback",
+                             []() { nsJSContext::CycleCollectNow(nullptr); }));
 
     XPCJSRuntime* self = nsXPConnect::GetRuntimeInstance();
     if (!self)
@@ -978,9 +959,10 @@ class LargeAllocationFailureRunnable final : public Runnable
 
   public:
     LargeAllocationFailureRunnable()
-      : mMutex("LargeAllocationFailureRunnable::mMutex"),
-        mCondVar(mMutex, "LargeAllocationFailureRunnable::mCondVar"),
-        mWaiting(true)
+      : mozilla::Runnable("LargeAllocationFailureRunnable")
+      , mMutex("LargeAllocationFailureRunnable::mMutex")
+      , mCondVar(mMutex, "LargeAllocationFailureRunnable::mCondVar")
+      , mWaiting(true)
     {
         MOZ_ASSERT(!NS_IsMainThread());
     }
@@ -1049,102 +1031,6 @@ CompartmentPrivate::SizeOfIncludingThis(MallocSizeOf mallocSizeOf)
 
 /***************************************************************************/
 
-#define JS_OPTIONS_DOT_STR "javascript.options."
-
-static void
-ReloadPrefsCallback(const char* pref, void* data)
-{
-    JSContext* cx = XPCJSContext::Get()->Context();
-
-    bool safeMode = false;
-    nsCOMPtr<nsIXULRuntime> xr = do_GetService("@mozilla.org/xre/runtime;1");
-    if (xr) {
-        xr->GetInSafeMode(&safeMode);
-    }
-
-    bool useBaseline = Preferences::GetBool(JS_OPTIONS_DOT_STR "baselinejit") && !safeMode;
-    bool useIon = Preferences::GetBool(JS_OPTIONS_DOT_STR "ion") && !safeMode;
-    bool useAsmJS = Preferences::GetBool(JS_OPTIONS_DOT_STR "asmjs") && !safeMode;
-    bool useWasm = Preferences::GetBool(JS_OPTIONS_DOT_STR "wasm") && !safeMode;
-    bool useWasmBaseline = Preferences::GetBool(JS_OPTIONS_DOT_STR "wasm_baselinejit") && !safeMode;
-    bool throwOnAsmJSValidationFailure = Preferences::GetBool(JS_OPTIONS_DOT_STR
-                                                              "throw_on_asmjs_validation_failure");
-    bool useNativeRegExp = Preferences::GetBool(JS_OPTIONS_DOT_STR "native_regexp") && !safeMode;
-
-    bool parallelParsing = Preferences::GetBool(JS_OPTIONS_DOT_STR "parallel_parsing");
-    bool offthreadIonCompilation = Preferences::GetBool(JS_OPTIONS_DOT_STR
-                                                       "ion.offthread_compilation");
-    bool useBaselineEager = Preferences::GetBool(JS_OPTIONS_DOT_STR
-                                                 "baselinejit.unsafe_eager_compilation");
-    bool useIonEager = Preferences::GetBool(JS_OPTIONS_DOT_STR "ion.unsafe_eager_compilation");
-#ifdef DEBUG
-    bool fullJitDebugChecks = Preferences::GetBool(JS_OPTIONS_DOT_STR "jit.full_debug_checks");
-#endif
-
-    int32_t baselineThreshold = Preferences::GetInt(JS_OPTIONS_DOT_STR "baselinejit.threshold", -1);
-    int32_t ionThreshold = Preferences::GetInt(JS_OPTIONS_DOT_STR "ion.threshold", -1);
-
-    sDiscardSystemSource = Preferences::GetBool(JS_OPTIONS_DOT_STR "discardSystemSource");
-
-    bool useAsyncStack = Preferences::GetBool(JS_OPTIONS_DOT_STR "asyncstack");
-
-    bool throwOnDebuggeeWouldRun = Preferences::GetBool(JS_OPTIONS_DOT_STR
-                                                        "throw_on_debuggee_would_run");
-
-    bool dumpStackOnDebuggeeWouldRun = Preferences::GetBool(JS_OPTIONS_DOT_STR
-                                                            "dump_stack_on_debuggee_would_run");
-
-    bool werror = Preferences::GetBool(JS_OPTIONS_DOT_STR "werror");
-
-    bool extraWarnings = Preferences::GetBool(JS_OPTIONS_DOT_STR "strict");
-
-    sSharedMemoryEnabled = Preferences::GetBool(JS_OPTIONS_DOT_STR "shared_memory");
-
-#ifdef DEBUG
-    sExtraWarningsForSystemJS = Preferences::GetBool(JS_OPTIONS_DOT_STR "strict.debug");
-#endif
-
-#ifdef JS_GC_ZEAL
-    int32_t zeal = Preferences::GetInt(JS_OPTIONS_DOT_STR "gczeal", -1);
-    int32_t zeal_frequency =
-        Preferences::GetInt(JS_OPTIONS_DOT_STR "gczeal.frequency",
-                            JS_DEFAULT_ZEAL_FREQ);
-    if (zeal >= 0) {
-        JS_SetGCZeal(cx, (uint8_t)zeal, zeal_frequency);
-    }
-#endif // JS_GC_ZEAL
-
-#ifdef FUZZING
-    bool fuzzingEnabled = Preferences::GetBool("fuzzing.enabled");
-#endif
-
-    JS::ContextOptionsRef(cx).setBaseline(useBaseline)
-                             .setIon(useIon)
-                             .setAsmJS(useAsmJS)
-                             .setWasm(useWasm)
-                             .setWasmAlwaysBaseline(useWasmBaseline)
-                             .setThrowOnAsmJSValidationFailure(throwOnAsmJSValidationFailure)
-                             .setNativeRegExp(useNativeRegExp)
-                             .setAsyncStack(useAsyncStack)
-                             .setThrowOnDebuggeeWouldRun(throwOnDebuggeeWouldRun)
-                             .setDumpStackOnDebuggeeWouldRun(dumpStackOnDebuggeeWouldRun)
-                             .setWerror(werror)
-#ifdef FUZZING
-                             .setFuzzing(fuzzingEnabled)
-#endif
-                             .setExtraWarnings(extraWarnings);
-
-    JS_SetParallelParsingEnabled(cx, parallelParsing);
-    JS_SetOffthreadIonCompilationEnabled(cx, offthreadIonCompilation);
-    JS_SetGlobalJitCompilerOption(cx, JSJITCOMPILER_BASELINE_WARMUP_TRIGGER,
-                                  useBaselineEager ? 0 : baselineThreshold);
-    JS_SetGlobalJitCompilerOption(cx, JSJITCOMPILER_ION_WARMUP_TRIGGER,
-                                  useIonEager ? 0 : ionThreshold);
-#ifdef DEBUG
-    JS_SetGlobalJitCompilerOption(cx, JSJITCOMPILER_FULL_DEBUG_CHECKS, fullJitDebugChecks);
-#endif
-}
-
 void
 XPCJSRuntime::Shutdown(JSContext* cx)
 {
@@ -1184,13 +1070,6 @@ XPCJSRuntime::Shutdown(JSContext* cx)
 
     delete mDyingWrappedNativeProtoMap;
     mDyingWrappedNativeProtoMap = nullptr;
-
-    Preferences::UnregisterPrefixCallback(ReloadPrefsCallback,
-                                          JS_OPTIONS_DOT_STR);
-
-#ifdef FUZZING
-    Preferences::UnregisterCallback(ReloadPrefsCallback, "fuzzing.enabled");
-#endif
 
     CycleCollectedJSRuntime::Shutdown(cx);
 }
@@ -1517,6 +1396,10 @@ ReportZoneStats(const JS::ZoneStats& zStats,
         zStats.typePool,
         "Type sets and related data.");
 
+    ZCREPORT_BYTES(pathPrefix + NS_LITERAL_CSTRING("regexp-zone"),
+        zStats.regexpZone,
+        "The regexp zone and regexp data.");
+
     ZCREPORT_BYTES(pathPrefix + NS_LITERAL_CSTRING("jit-zone"),
         zStats.jitZone,
         "The JIT zone.");
@@ -1574,7 +1457,7 @@ ReportZoneStats(const JS::ZoneStats& zStats,
         bool truncated = notableString.Length() < info.length;
 
         nsCString path = pathPrefix +
-            nsPrintfCString("strings/" STRING_LENGTH "%" PRIuSIZE ", copies=%d, \"%s\"%s)/",
+            nsPrintfCString("strings/" STRING_LENGTH "%zu, copies=%d, \"%s\"%s)/",
                             info.length, info.numCopies, escapedString.get(),
                             truncated ? " (truncated)" : "");
 
@@ -1915,10 +1798,6 @@ ReportCompartmentStats(const JS::CompartmentStats& cStats,
         cStats.crossCompartmentWrappersTable,
         "The cross-compartment wrapper table.");
 
-    ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("regexp-compartment"),
-        cStats.regexpCompartment,
-        "The regexp compartment and regexp data.");
-
     ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("saved-stacks-set"),
         cStats.savedStacksSet,
         "The saved stacks set.");
@@ -2242,11 +2121,11 @@ MOZ_DEFINE_MALLOC_SIZE_OF(OrphanMallocSizeOf)
 namespace xpc {
 
 static size_t
-SizeOfTreeIncludingThis(nsINode* tree)
+SizeOfTreeIncludingThis(nsINode* tree, SizeOfState& aState)
 {
-    size_t n = tree->SizeOfIncludingThis(OrphanMallocSizeOf);
+    size_t n = tree->SizeOfIncludingThis(aState);
     for (nsIContent* child = tree->GetFirstChild(); child; child = child->GetNextNode(tree))
-        n += child->SizeOfIncludingThis(OrphanMallocSizeOf);
+        n += child->SizeOfIncludingThis(aState);
 
     return n;
 }
@@ -2256,10 +2135,11 @@ class OrphanReporter : public JS::ObjectPrivateVisitor
   public:
     explicit OrphanReporter(GetISupportsFun aGetISupports)
       : JS::ObjectPrivateVisitor(aGetISupports)
-    {
-    }
+      , mState(OrphanMallocSizeOf)
+    {}
 
-    virtual size_t sizeOfIncludingThis(nsISupports* aSupports) override {
+    virtual size_t sizeOfIncludingThis(nsISupports* aSupports) override
+    {
         size_t n = 0;
         nsCOMPtr<nsINode> node = do_QueryInterface(aSupports);
         // https://bugzilla.mozilla.org/show_bug.cgi?id=773533#c11 explains
@@ -2272,21 +2152,15 @@ class OrphanReporter : public JS::ObjectPrivateVisitor
             // sub-tree that this node belongs to, measure the sub-tree's size
             // and then record its root so we don't measure it again.
             nsCOMPtr<nsINode> orphanTree = node->SubtreeRoot();
-            if (orphanTree &&
-                !mAlreadyMeasuredOrphanTrees.Contains(orphanTree)) {
-                // If PutEntry() fails we don't measure this tree, which could
-                // lead to under-measurement. But that's better than the
-                // alternatives, which are over-measurement or an OOM abort.
-                if (mAlreadyMeasuredOrphanTrees.PutEntry(orphanTree, fallible)) {
-                    n += SizeOfTreeIncludingThis(orphanTree);
-                }
+            if (orphanTree && !mState.HaveSeenPtr(orphanTree.get())) {
+                n += SizeOfTreeIncludingThis(orphanTree, mState);
             }
         }
         return n;
     }
 
   private:
-    nsTHashtable <nsISupportsHashKey> mAlreadyMeasuredOrphanTrees;
+    SizeOfState mState;
 };
 
 #ifdef DEBUG
@@ -2677,6 +2551,9 @@ AccumulateTelemetryCallback(int id, uint32_t sample, const char* key)
       case JS_TELEMETRY_GC_BUDGET_MS:
         Telemetry::Accumulate(Telemetry::GC_BUDGET_MS, sample);
         break;
+      case JS_TELEMETRY_GC_BUDGET_OVERRUN:
+        Telemetry::Accumulate(Telemetry::GC_BUDGET_OVERRUN, sample);
+        break;
       case JS_TELEMETRY_GC_ANIMATION_MS:
         Telemetry::Accumulate(Telemetry::GC_ANIMATION_MS, sample);
         break;
@@ -2924,7 +2801,6 @@ XPCJSRuntime::XPCJSRuntime(JSContext* aCx)
    mDoingFinalization(false),
    mVariantRoots(nullptr),
    mWrappedJSRoots(nullptr),
-   mObjectHolderRoots(nullptr),
    mAsyncSnowWhiteFreer(new AsyncFreeSnowWhite())
 {
     MOZ_COUNT_CTOR_INHERITED(XPCJSRuntime, CycleCollectedJSRuntime);
@@ -2968,6 +2844,7 @@ XPCJSRuntime::Initialize(JSContext* cx)
     js::SetPreserveWrapperCallback(cx, PreserveWrapper);
     JS_SetAccumulateTelemetryCallback(cx, AccumulateTelemetryCallback);
     js::SetWindowProxyClass(cx, &OuterWindowProxyClass);
+    js::SetXrayJitInfo(&gXrayJitInfo);
     JS::SetProcessLargeAllocationFailureCallback(OnLargeAllocationFailureCallback);
 
     // The JS engine needs to keep the source code around in order to implement
@@ -2997,15 +2874,6 @@ XPCJSRuntime::Initialize(JSContext* cx)
     RegisterJSMainRuntimeCompartmentsSystemDistinguishedAmount(JSMainRuntimeCompartmentsSystemDistinguishedAmount);
     RegisterJSMainRuntimeCompartmentsUserDistinguishedAmount(JSMainRuntimeCompartmentsUserDistinguishedAmount);
     mozilla::RegisterJSSizeOfTab(JSSizeOfTab);
-
-    // Watch for the JS boolean options.
-    ReloadPrefsCallback(nullptr, nullptr);
-    Preferences::RegisterPrefixCallback(ReloadPrefsCallback,
-                                        JS_OPTIONS_DOT_STR);
-
-#ifdef FUZZING
-    Preferences::RegisterCallback(ReloadPrefsCallback, "fuzzing.enabled");
-#endif
 }
 
 bool
@@ -3151,7 +3019,7 @@ XPCRootSetElem::AddToRootSet(XPCRootSetElem** listHead)
 void
 XPCRootSetElem::RemoveFromRootSet()
 {
-    JS::PokeGC(XPCJSContext::Get()->Context());
+    JS::NotifyGCRootsRemoved(XPCJSContext::Get()->Context());
 
     MOZ_ASSERT(mSelfp, "Must be linked");
 

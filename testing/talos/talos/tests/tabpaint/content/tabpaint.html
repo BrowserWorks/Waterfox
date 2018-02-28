@@ -15,12 +15,12 @@
 
             let { fromParent, fromContent } = msg.data;
 
-            tpRecordTime([fromParent, fromContent].join(','), 0, "tabpaint-from-parent, tabpaint-from-content");
+            tpRecordTime([fromParent, fromContent].join(","), 0, "tabpaint-from-parent, tabpaint-from-content");
           });
 
           mm.addMessageListener("TabPaint:OpenFromContent", function openFromContent() {
             let target = document.getElementById("target");
-            let now = Date.now();
+            let now = Date.now();  // eslint-disable-line mozilla/avoid-Date-timing
             let href = "target.html?" + now;
             target.href = href;
             target.click();

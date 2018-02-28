@@ -193,7 +193,7 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
    * Window of target
    */
   get window() {
-    return this._window || this.parentActor.window;
+    return this.parentActor.window;
   },
 
   /**
@@ -201,6 +201,14 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
    */
   get document() {
     return this.window.document;
+  },
+
+  /**
+   * StyleSheet's window.
+   */
+  get ownerWindow() {
+    // eslint-disable-next-line mozilla/use-ownerGlobal
+    return this.ownerDocument.defaultView;
   },
 
   get ownerNode() {
@@ -255,18 +263,31 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
     }
   },
 
-  initialize: function (styleSheet, parentActor, window) {
+  initialize: function (styleSheet, parentActor) {
     protocol.Actor.prototype.initialize.call(this, null);
 
     this.rawSheet = styleSheet;
     this.parentActor = parentActor;
     this.conn = this.parentActor.conn;
 
-    this._window = window;
-
     // text and index are unknown until source load
     this.text = null;
     this._styleSheetIndex = -1;
+
+    // When the style is imported, `styleSheet.ownerNode` is null,
+    // so retrieve the topmost parent style sheet which has an ownerNode
+    let parentStyleSheet = styleSheet;
+    while (parentStyleSheet.parentStyleSheet) {
+      parentStyleSheet = parentStyleSheet.parentStyleSheet;
+    }
+    // When the style is injected via nsIDOMWindowUtils.loadSheet, even
+    // the parent style sheet has no owner, so default back to tab actor
+    // document
+    if (parentStyleSheet.ownerNode) {
+      this.ownerDocument = parentStyleSheet.ownerNode.ownerDocument;
+    } else {
+      this.ownerDocument = parentActor.window;
+    }
   },
 
   /**
@@ -469,8 +490,8 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
     let excludedProtocolsRe = /^(chrome|file|resource|moz-extension):\/\//;
     if (!excludedProtocolsRe.test(this.href)) {
       // Stylesheets using other protocols should use the content principal.
-      options.window = this.window;
-      options.principal = this.document.nodePrincipal;
+      options.window = this.ownerWindow;
+      options.principal = this.ownerDocument.nodePrincipal;
     }
 
     let result;
@@ -622,6 +643,10 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
    *         Url of source map.
    */
   _extractSourceMapUrl: function (content) {
+    // If a SourceMap response header was saved on the style sheet, use it.
+    if (this.rawSheet.sourceMapURL) {
+      return this.rawSheet.sourceMapURL;
+    }
     let matches = /sourceMappingURL\=([^\s\*]*)/.exec(content);
     if (matches) {
       return matches[1];
@@ -927,9 +952,14 @@ var StyleSheetsActor = protocol.ActorClassWithSpec(styleSheetsSpec, {
       for (let i = 0; i < rules.length; i++) {
         let rule = rules[i];
         if (rule.type == Ci.nsIDOMCSSRule.IMPORT_RULE) {
-          // Associated styleSheet may be null if it has already been seen due
-          // to duplicate @imports for the same URL.
-          if (!rule.styleSheet || !this._shouldListSheet(doc, rule.styleSheet)) {
+          // With the Gecko style system, the associated styleSheet may be null
+          // if it has already been seen because an import cycle for the same
+          // URL.  With Stylo, the styleSheet will exist (which is correct per
+          // the latest CSSOM spec), so we also need to check ancestors for the
+          // same URL to avoid cycles.
+          let sheet = rule.styleSheet;
+          if (!sheet || this._haveAncestorWithSameURL(sheet) ||
+              !this._shouldListSheet(doc, sheet)) {
             continue;
           }
           let actor = this.parentActor.createStyleSheetActor(rule.styleSheet);
@@ -946,6 +976,23 @@ var StyleSheetsActor = protocol.ActorClassWithSpec(styleSheetsSpec, {
 
       return imported;
     }.bind(this));
+  },
+
+  /**
+   * Check all ancestors to see if this sheet's URL matches theirs as a way to
+   * detect an import cycle.
+   *
+   * @param {DOMStyleSheet} sheet
+   */
+  _haveAncestorWithSameURL(sheet) {
+    let sheetHref = sheet.href;
+    while (sheet.parentStyleSheet) {
+      if (sheet.parentStyleSheet.href == sheetHref) {
+        return true;
+      }
+      sheet = sheet.parentStyleSheet;
+    }
+    return false;
   },
 
   /**

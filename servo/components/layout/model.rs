@@ -7,13 +7,13 @@
 #![deny(unsafe_code)]
 
 use app_units::Au;
-use euclid::{Matrix4D, SideOffsets2D, Size2D};
+use euclid::{Transform3D, SideOffsets2D, Size2D};
 use fragment::Fragment;
 use std::cmp::{max, min};
 use std::fmt;
 use style::computed_values::transform::ComputedMatrix;
 use style::logical_geometry::{LogicalMargin, WritingMode};
-use style::properties::ServoComputedValues;
+use style::properties::ComputedValues;
 use style::values::computed::{BorderCornerRadius, LengthOrPercentageOrAuto};
 use style::values::computed::{LengthOrPercentage, LengthOrPercentageOrNone};
 
@@ -144,7 +144,7 @@ impl MarginCollapseInfo {
                         LengthOrPercentageOrAuto::Auto => true,
                         LengthOrPercentageOrAuto::Length(Au(v)) => v == 0,
                         LengthOrPercentageOrAuto::Percentage(v) => {
-                            v == 0. || containing_block_size.is_none()
+                            v.0 == 0. || containing_block_size.is_none()
                         }
                         LengthOrPercentageOrAuto::Calc(_) => false,
                     };
@@ -154,7 +154,7 @@ impl MarginCollapseInfo {
                         LengthOrPercentage::Length(Au(0)) => {
                             FinalMarginState::MarginsCollapseThrough
                         },
-                        LengthOrPercentage::Percentage(v) if v == 0. => {
+                        LengthOrPercentage::Percentage(v) if v.0 == 0. => {
                             FinalMarginState::MarginsCollapseThrough
                         },
                         _ => {
@@ -408,7 +408,7 @@ impl MaybeAuto {
         match length {
             LengthOrPercentageOrAuto::Auto => MaybeAuto::Auto,
             LengthOrPercentageOrAuto::Percentage(percent) => {
-                MaybeAuto::Specified(containing_length.scale_by(percent))
+                MaybeAuto::Specified(containing_length.scale_by(percent.0))
             }
             LengthOrPercentageOrAuto::Calc(calc) => {
                 MaybeAuto::from_option(calc.to_used_value(Some(containing_length)))
@@ -481,7 +481,7 @@ pub fn specified_border_radius(
 }
 
 #[inline]
-pub fn padding_from_style(style: &ServoComputedValues,
+pub fn padding_from_style(style: &ComputedValues,
                           containing_block_inline_size: Au,
                           writing_mode: WritingMode)
                           -> LogicalMargin<Au> {
@@ -498,7 +498,7 @@ pub fn padding_from_style(style: &ServoComputedValues,
 ///
 /// This is used when calculating intrinsic inline sizes.
 #[inline]
-pub fn specified_margin_from_style(style: &ServoComputedValues,
+pub fn specified_margin_from_style(style: &ComputedValues,
                                    writing_mode: WritingMode) -> LogicalMargin<Au> {
     let margin_style = style.get_margin();
     LogicalMargin::from_physical(writing_mode, SideOffsets2D::new(
@@ -509,12 +509,12 @@ pub fn specified_margin_from_style(style: &ServoComputedValues,
 }
 
 pub trait ToGfxMatrix {
-    fn to_gfx_matrix(&self) -> Matrix4D<f32>;
+    fn to_gfx_matrix(&self) -> Transform3D<f32>;
 }
 
 impl ToGfxMatrix for ComputedMatrix {
-    fn to_gfx_matrix(&self) -> Matrix4D<f32> {
-        Matrix4D::row_major(
+    fn to_gfx_matrix(&self) -> Transform3D<f32> {
+        Transform3D::row_major(
             self.m11 as f32, self.m12 as f32, self.m13 as f32, self.m14 as f32,
             self.m21 as f32, self.m22 as f32, self.m23 as f32, self.m24 as f32,
             self.m31 as f32, self.m32 as f32, self.m33 as f32, self.m34 as f32,

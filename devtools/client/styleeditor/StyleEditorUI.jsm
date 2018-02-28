@@ -234,7 +234,7 @@ StyleEditorUI.prototype = {
   _onNewDocument: function () {
     this._debuggee.getStyleSheets().then((styleSheets) => {
       return this._resetStyleSheetList(styleSheets);
-    }).then(null, e => console.error(e));
+    }).catch(e => console.error(e));
   },
 
   /**
@@ -634,7 +634,7 @@ StyleEditorUI.prototype = {
               this.emit("error", { key: "error-compressed", level: "info" });
             }
           }
-        }.bind(this)).then(null, e => console.error(e));
+        }.bind(this)).catch(e => console.error(e));
       }
     });
   },
@@ -899,7 +899,7 @@ StyleEditorUI.prototype = {
         if (!rule.matches) {
           cond.classList.add("media-condition-unmatched");
         }
-        if (this._target.tab.tagName == "tab") {
+        if (this._target.isLocalTab) {
           this._setConditionContents(cond, rule.conditionText);
         } else {
           cond.textContent = rule.conditionText;
@@ -919,7 +919,7 @@ StyleEditorUI.prototype = {
       sidebar.hidden = !showSidebar || !inSource;
 
       this.emit("media-list-changed", editor);
-    }.bind(this)).then(null, e => console.error(e));
+    }.bind(this)).catch(e => console.error(e));
   },
 
   /**

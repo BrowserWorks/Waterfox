@@ -210,8 +210,11 @@ public:
                          nsIAtom* aWhich,
                          int32_t aValue,
                          bool aUserChanged)
-  : mListener(aListener), mWhich(aWhich),
-    mValue(aValue), mUserChanged(aUserChanged)
+    : mozilla::Runnable("nsValueChangedRunnable")
+    , mListener(aListener)
+    , mWhich(aWhich)
+    , mValue(aValue)
+    , mUserChanged(aUserChanged)
   {}
 
   NS_IMETHOD Run() override
@@ -229,10 +232,10 @@ public:
 class nsDragStateChangedRunnable : public Runnable
 {
 public:
-  nsDragStateChangedRunnable(nsISliderListener* aListener,
-                             bool aDragBeginning)
-  : mListener(aListener),
-    mDragBeginning(aDragBeginning)
+  nsDragStateChangedRunnable(nsISliderListener* aListener, bool aDragBeginning)
+    : mozilla::Runnable("nsDragStateChangedRunnable")
+    , mListener(aListener)
+    , mDragBeginning(aDragBeginning)
   {}
 
   NS_IMETHOD Run() override
@@ -328,7 +331,7 @@ nsSliderFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       nsDisplayEventReceiver(aBuilder, this));
     return;
   }
-  
+
   nsBoxFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
 }
 
@@ -454,6 +457,9 @@ nsSliderFrame::BuildDisplayListForChildren(nsDisplayListBuilder*   aBuilder,
       // Restore the saved clip so it applies to the thumb container layer.
       thumbContentsClipState.Restore();
 
+      nsDisplayListBuilder::AutoBuildingDisplayList
+        buildingDisplayList(aBuilder, this, dirty, false);
+
       // Wrap the list to make it its own layer.
       const ActiveScrolledRoot* ownLayerASR = contASRTracker.GetContainerASR();
       aLists.Content()->AppendNewToTop(new (aBuilder)
@@ -470,7 +476,7 @@ nsSliderFrame::BuildDisplayListForChildren(nsDisplayListBuilder*   aBuilder,
       return;
     }
   }
-  
+
   nsBoxFrame::BuildDisplayListForChildren(aBuilder, aDirtyRect, aLists);
 }
 
@@ -890,7 +896,7 @@ nsSliderFrame::CurrentPositionChanged()
 static void UpdateAttribute(nsIContent* aScrollbar, nscoord aNewPos, bool aNotify, bool aIsSmooth) {
   nsAutoString str;
   str.AppendInt(aNewPos);
-  
+
   if (aIsSmooth) {
     aScrollbar->SetAttr(kNameSpaceID_None, nsGkAtoms::smooth, NS_LITERAL_STRING("true"), false);
   }
@@ -911,7 +917,7 @@ nsSliderFrame::SetCurrentThumbPosition(nsIContent* aScrollbar, nscoord aNewThumb
   GetXULClientRect(crect);
   nscoord offset = IsXULHorizontal() ? crect.x : crect.y;
   int32_t newPos = NSToIntRound((aNewThumbPos - offset) / mRatio);
-  
+
   if (aMaySnap && mContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::snap,
                                         nsGkAtoms::_true, eCaseMatters)) {
     // If snap="true", then the slider may only be set to min + (increment * x).
@@ -919,7 +925,7 @@ nsSliderFrame::SetCurrentThumbPosition(nsIContent* aScrollbar, nscoord aNewThumb
     int32_t increment = GetIncrement(aScrollbar);
     newPos = NSToIntRound(newPos / float(increment)) * increment;
   }
-  
+
   SetCurrentPosition(aScrollbar, newPos, aIsSmooth);
 }
 
@@ -1424,9 +1430,9 @@ nsSliderFrame::HandlePress(nsPresContext* aPresContext,
   if (mContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::disabled,
                             nsGkAtoms::_true, eCaseMatters))
     return NS_OK;
-  
+
   nsRect thumbRect = thumbFrame->GetRect();
-  
+
   nscoord change = 1;
   nsPoint eventPoint;
   if (!GetEventPoint(aEvent, eventPoint)) {
@@ -1436,7 +1442,7 @@ nsSliderFrame::HandlePress(nsPresContext* aPresContext,
   mozilla::Telemetry::Accumulate(mozilla::Telemetry::SCROLL_INPUT_METHODS,
       (uint32_t) ScrollInputMethod::MainThreadScrollbarTrackClick);
 
-  if (IsXULHorizontal() ? eventPoint.x < thumbRect.x 
+  if (IsXULHorizontal() ? eventPoint.x < thumbRect.x
                         : eventPoint.y < thumbRect.y)
     change = -1;
 

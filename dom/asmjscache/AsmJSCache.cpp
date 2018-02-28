@@ -68,12 +68,18 @@ namespace asmjscache {
 
 namespace {
 
+class ParentRunnable;
+
 // Anything smaller should compile fast enough that caching will just add
 // overhead.
 static const size_t sMinCachedModuleLength = 10000;
 
 // The number of characters to hash into the Metadata::Entry::mFastHash.
 static const unsigned sNumFastHashChars = 4096;
+
+// Track all live parent actors.
+typedef nsTArray<const ParentRunnable*> ParentActorArray;
+StaticAutoPtr<ParentActorArray> sLiveParentActors;
 
 nsresult
 WriteMetadataFile(nsIFile* aMetadataFile, const Metadata& aMetadata)
@@ -235,6 +241,94 @@ EvictEntries(nsIFile* aDirectory, const nsACString& aGroup,
   }
 }
 
+/*******************************************************************************
+ * Client
+ ******************************************************************************/
+
+class Client
+  : public quota::Client
+{
+  static Client* sInstance;
+
+  bool mShutdownRequested;
+
+public:
+  Client();
+
+  static bool
+  IsShuttingDownOnBackgroundThread()
+  {
+    AssertIsOnBackgroundThread();
+
+    if (sInstance) {
+      return sInstance->IsShuttingDown();
+    }
+
+    return QuotaManager::IsShuttingDown();
+  }
+
+  static bool
+  IsShuttingDownOnNonBackgroundThread()
+  {
+    MOZ_ASSERT(!IsOnBackgroundThread());
+
+    return QuotaManager::IsShuttingDown();
+  }
+
+  bool
+  IsShuttingDown() const
+  {
+    AssertIsOnBackgroundThread();
+
+    return mShutdownRequested;
+  }
+
+  NS_INLINE_DECL_REFCOUNTING(Client, override)
+
+  Type
+  GetType() override;
+
+  nsresult
+  InitOrigin(PersistenceType aPersistenceType,
+             const nsACString& aGroup,
+             const nsACString& aOrigin,
+             const AtomicBool& aCanceled,
+             UsageInfo* aUsageInfo) override;
+
+  nsresult
+  GetUsageForOrigin(PersistenceType aPersistenceType,
+                    const nsACString& aGroup,
+                    const nsACString& aOrigin,
+                    const AtomicBool& aCanceled,
+                    UsageInfo* aUsageInfo) override;
+
+  void
+  OnOriginClearCompleted(PersistenceType aPersistenceType,
+                         const nsACString& aOrigin)
+                         override;
+
+  void
+  ReleaseIOThreadObjects() override;
+
+  void
+  AbortOperations(const nsACString& aOrigin) override;
+
+  void
+  AbortOperationsForProcess(ContentParentId aContentParentId) override;
+
+  void
+  StartIdleMaintenance() override;
+
+  void
+  StopIdleMaintenance() override;
+
+  void
+  ShutdownWorkThreads() override;
+
+private:
+  ~Client() override;
+};
+
 // FileDescriptorHolder owns a file descriptor and its memory mapping.
 // FileDescriptorHolder is derived by two runnable classes (that is,
 // (Parent|Child)Runnable.
@@ -242,11 +336,12 @@ class FileDescriptorHolder : public Runnable
 {
 public:
   FileDescriptorHolder()
-  : mQuotaObject(nullptr),
-    mFileSize(INT64_MIN),
-    mFileDesc(nullptr),
-    mFileMap(nullptr),
-    mMappedMemory(nullptr)
+    : Runnable("dom::asmjscache::FileDescriptorHolder")
+    , mQuotaObject(nullptr)
+    , mFileSize(INT64_MIN)
+    , mFileDesc(nullptr)
+    , mFileMap(nullptr)
+    , mMappedMemory(nullptr)
   { }
 
   ~FileDescriptorHolder() override
@@ -345,7 +440,7 @@ public:
   ParentRunnable(const PrincipalInfo& aPrincipalInfo,
                  OpenMode aOpenMode,
                  WriteParams aWriteParams)
-  : mOwningThread(NS_GetCurrentThread()),
+  : mOwningEventTarget(GetCurrentThreadEventTarget()),
     mPrincipalInfo(aPrincipalInfo),
     mOpenMode(aOpenMode),
     mWriteParams(aWriteParams),
@@ -367,14 +462,16 @@ private:
     MOZ_ASSERT(mActorDestroyed);
   }
 
+#ifdef DEBUG
   bool
   IsOnOwningThread() const
   {
-    MOZ_ASSERT(mOwningThread);
+    MOZ_ASSERT(mOwningEventTarget);
 
     bool current;
-    return NS_SUCCEEDED(mOwningThread->IsOnCurrentThread(&current)) && current;
+    return NS_SUCCEEDED(mOwningEventTarget->IsOnCurrentThread(&current)) && current;
   }
+#endif
 
   void
   AssertIsOnOwningThread() const
@@ -435,7 +532,7 @@ private:
                mState != eFinished);
 
     mState = eFailing;
-    MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+    MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->Dispatch(this, NS_DISPATCH_NORMAL));
   }
 
   nsresult
@@ -543,7 +640,7 @@ private:
     return IPC_OK();
   }
 
-  nsCOMPtr<nsIEventTarget> mOwningThread;
+  nsCOMPtr<nsIEventTarget> mOwningEventTarget;
   const PrincipalInfo mPrincipalInfo;
   const OpenMode mOpenMode;
   const WriteParams mWriteParams;
@@ -800,6 +897,13 @@ ParentRunnable::FinishOnOwningThread()
   FileDescriptorHolder::Finish();
 
   mDirectoryLock = nullptr;
+
+  MOZ_ASSERT(sLiveParentActors);
+  sLiveParentActors->RemoveElement(this);
+
+  if (sLiveParentActors->IsEmpty()) {
+    sLiveParentActors = nullptr;
+  }
 }
 
 NS_IMETHODIMP
@@ -820,7 +924,7 @@ ParentRunnable::Run()
       }
 
       mState = eWaitingToFinishInit;
-      MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+      MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->Dispatch(this, NS_DISPATCH_NORMAL));
 
       return NS_OK;
     }
@@ -867,7 +971,7 @@ ParentRunnable::Run()
 
       if (mOpenMode == eOpenForRead) {
         mState = eSendingMetadataForRead;
-        MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+        MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->Dispatch(this, NS_DISPATCH_NORMAL));
 
         return NS_OK;
       }
@@ -879,7 +983,7 @@ ParentRunnable::Run()
       }
 
       mState = eSendingCacheFile;
-      MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+      MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->Dispatch(this, NS_DISPATCH_NORMAL));
       return NS_OK;
     }
 
@@ -909,7 +1013,7 @@ ParentRunnable::Run()
       }
 
       mState = eSendingCacheFile;
-      MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+      MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->Dispatch(this, NS_DISPATCH_NORMAL));
       return NS_OK;
     }
 
@@ -1029,6 +1133,10 @@ AllocEntryParent(OpenMode aOpenMode,
 {
   AssertIsOnBackgroundThread();
 
+  if (NS_WARN_IF(Client::IsShuttingDownOnBackgroundThread())) {
+    return nullptr;
+  }
+
   if (NS_WARN_IF(aPrincipalInfo.type() == PrincipalInfo::TNullPrincipalInfo)) {
     MOZ_ASSERT(false);
     return nullptr;
@@ -1036,6 +1144,12 @@ AllocEntryParent(OpenMode aOpenMode,
 
   RefPtr<ParentRunnable> runnable =
     new ParentRunnable(aPrincipalInfo, aOpenMode, aWriteParams);
+
+  if (!sLiveParentActors) {
+    sLiveParentActors = new ParentActorArray();
+  }
+
+  sLiveParentActors->AppendElement(runnable);
 
   nsresult rv = NS_DispatchToMainThread(runnable);
   NS_ENSURE_SUCCESS(rv, nullptr);
@@ -1602,128 +1716,160 @@ CloseEntryForWrite(size_t aSize,
   }
 }
 
-class Client : public quota::Client
+/*******************************************************************************
+ * Client
+ ******************************************************************************/
+
+Client* Client::sInstance = nullptr;
+
+Client::Client()
+  : mShutdownRequested(false)
 {
-  ~Client() override = default;
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(!sInstance, "We expect this to be a singleton!");
 
-public:
-  NS_IMETHOD_(MozExternalRefCountType)
-  AddRef() override;
+  sInstance = this;
+}
 
-  NS_IMETHOD_(MozExternalRefCountType)
-  Release() override;
+Client::~Client()
+{
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(sInstance == this, "We expect this to be a singleton!");
 
-  Type
-  GetType() override
-  {
-    return ASMJS;
-  }
+  sInstance = nullptr;
+}
 
-  nsresult
-  InitOrigin(PersistenceType aPersistenceType,
-             const nsACString& aGroup,
-             const nsACString& aOrigin,
-             const AtomicBool& aCanceled,
-             UsageInfo* aUsageInfo) override
-  {
-    if (!aUsageInfo) {
-      return NS_OK;
-    }
-    return GetUsageForOrigin(aPersistenceType,
-                             aGroup,
-                             aOrigin,
-                             aCanceled,
-                             aUsageInfo);
-  }
+Client::Type
+Client::GetType()
+{
+  return ASMJS;
+}
 
-  nsresult
-  GetUsageForOrigin(PersistenceType aPersistenceType,
-                    const nsACString& aGroup,
-                    const nsACString& aOrigin,
-                    const AtomicBool& aCanceled,
-                    UsageInfo* aUsageInfo) override
-  {
-    QuotaManager* qm = QuotaManager::Get();
-    MOZ_ASSERT(qm, "We were being called by the QuotaManager");
-
-    nsCOMPtr<nsIFile> directory;
-    nsresult rv = qm->GetDirectoryForOrigin(aPersistenceType, aOrigin,
-                                            getter_AddRefs(directory));
-    NS_ENSURE_SUCCESS(rv, rv);
-    MOZ_ASSERT(directory, "We're here because the origin directory exists");
-
-    rv = directory->Append(NS_LITERAL_STRING(ASMJSCACHE_DIRECTORY_NAME));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    DebugOnly<bool> exists;
-    MOZ_ASSERT(NS_SUCCEEDED(directory->Exists(&exists)) && exists);
-
-    nsCOMPtr<nsISimpleEnumerator> entries;
-    rv = directory->GetDirectoryEntries(getter_AddRefs(entries));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    bool hasMore;
-    while (NS_SUCCEEDED((rv = entries->HasMoreElements(&hasMore))) &&
-           hasMore && !aCanceled) {
-      nsCOMPtr<nsISupports> entry;
-      rv = entries->GetNext(getter_AddRefs(entry));
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      nsCOMPtr<nsIFile> file = do_QueryInterface(entry);
-      NS_ENSURE_TRUE(file, NS_NOINTERFACE);
-
-      int64_t fileSize;
-      rv = file->GetFileSize(&fileSize);
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      MOZ_ASSERT(fileSize >= 0, "Negative size?!");
-
-      // Since the client is not explicitly storing files, append to database
-      // usage which represents implicit storage allocation.
-      aUsageInfo->AppendToDatabaseUsage(uint64_t(fileSize));
-    }
-    NS_ENSURE_SUCCESS(rv, rv);
-
+nsresult
+Client::InitOrigin(PersistenceType aPersistenceType,
+                   const nsACString& aGroup,
+                   const nsACString& aOrigin,
+                   const AtomicBool& aCanceled,
+                   UsageInfo* aUsageInfo)
+{
+  if (!aUsageInfo) {
     return NS_OK;
   }
+  return GetUsageForOrigin(aPersistenceType,
+                           aGroup,
+                           aOrigin,
+                           aCanceled,
+                           aUsageInfo);
+}
 
-  void
-  OnOriginClearCompleted(PersistenceType aPersistenceType,
-                         const nsACString& aOrigin)
-                         override
-  { }
+nsresult
+Client::GetUsageForOrigin(PersistenceType aPersistenceType,
+                          const nsACString& aGroup,
+                          const nsACString& aOrigin,
+                          const AtomicBool& aCanceled,
+                          UsageInfo* aUsageInfo)
+{
+  QuotaManager* qm = QuotaManager::Get();
+  MOZ_ASSERT(qm, "We were being called by the QuotaManager");
 
-  void
-  ReleaseIOThreadObjects() override
-  { }
+  nsCOMPtr<nsIFile> directory;
+  nsresult rv = qm->GetDirectoryForOrigin(aPersistenceType, aOrigin,
+                                          getter_AddRefs(directory));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
-  void
-  AbortOperations(const nsACString& aOrigin) override
-  { }
+  MOZ_ASSERT(directory, "We're here because the origin directory exists");
 
-  void
-  AbortOperationsForProcess(ContentParentId aContentParentId) override
-  { }
+  rv = directory->Append(NS_LITERAL_STRING(ASMJSCACHE_DIRECTORY_NAME));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
-  void
-  StartIdleMaintenance() override
-  { }
+  DebugOnly<bool> exists;
+  MOZ_ASSERT(NS_SUCCEEDED(directory->Exists(&exists)) && exists);
 
-  void
-  StopIdleMaintenance() override
-  { }
+  nsCOMPtr<nsISimpleEnumerator> entries;
+  rv = directory->GetDirectoryEntries(getter_AddRefs(entries));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
-  void
-  ShutdownWorkThreads() override
-  { }
+  bool hasMore;
+  while (NS_SUCCEEDED((rv = entries->HasMoreElements(&hasMore))) &&
+         hasMore && !aCanceled) {
+    nsCOMPtr<nsISupports> entry;
+    rv = entries->GetNext(getter_AddRefs(entry));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
 
-private:
-  nsAutoRefCnt mRefCnt;
-  NS_DECL_OWNINGTHREAD
-};
+    nsCOMPtr<nsIFile> file = do_QueryInterface(entry);
+    if (NS_WARN_IF(!file)) {
+      return NS_NOINTERFACE;
+    }
 
-NS_IMPL_ADDREF(asmjscache::Client)
-NS_IMPL_RELEASE(asmjscache::Client)
+    int64_t fileSize;
+    rv = file->GetFileSize(&fileSize);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    MOZ_ASSERT(fileSize >= 0, "Negative size?!");
+
+    // Since the client is not explicitly storing files, append to database
+    // usage which represents implicit storage allocation.
+    aUsageInfo->AppendToDatabaseUsage(uint64_t(fileSize));
+  }
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  return NS_OK;
+}
+
+void
+Client::OnOriginClearCompleted(PersistenceType aPersistenceType,
+                               const nsACString& aOrigin)
+{
+}
+
+void
+Client::ReleaseIOThreadObjects()
+{
+}
+
+void
+Client::AbortOperations(const nsACString& aOrigin)
+{
+}
+
+void
+Client::AbortOperationsForProcess(ContentParentId aContentParentId)
+{
+}
+
+void
+Client::StartIdleMaintenance()
+{
+}
+
+void
+Client::StopIdleMaintenance()
+{
+}
+
+void
+Client::ShutdownWorkThreads()
+{
+  AssertIsOnBackgroundThread();
+
+  if (sLiveParentActors) {
+    MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() {
+      return !sLiveParentActors;
+    }));
+  }
+}
 
 quota::Client*
 CreateClient()

@@ -65,8 +65,8 @@ public:
   virtual void SetInitialChildList(ChildListID     aListID,
                                    nsFrameList&    aChildList) override;
 
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
 
   virtual void Reflow(nsPresContext*           aCX,
                       ReflowOutput&     aDesiredSize,
@@ -249,7 +249,7 @@ public:
 protected:
   /**
    * Return the first non-disabled option starting at aFromIndex (inclusive).
-   * @param aFoundIndex if non-null, set to the index of the returned option 
+   * @param aFoundIndex if non-null, set to the index of the returned option
    */
   HTMLOptionElement* GetNonDisabledOptionFrom(int32_t aFromIndex,
                                               int32_t* aFoundIndex = nullptr);

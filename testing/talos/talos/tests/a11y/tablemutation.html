@@ -2,6 +2,7 @@
 <meta charset="utf-8">
 <title>Accessibility Table Mutation</title>
 <script src="a11y.js"></script>
+<script src="chrome://talos-powers-content/content/TalosContentProfiler.js"></script>
 </head>
 
 <body>
@@ -76,21 +77,23 @@
 
 </body>
 <script>
-window.onload = function ()  {
-  setTimeout("mutateTable()",100);
+/* import-globals-from a11y.js */
+window.onload = function() {
+  setTimeout(function() {
+    mutateTable();
+  }, 100);
 };
 function mutateTable() {
-  var htmTable = document.getElementById('datatable');
+  var htmTable = document.getElementById("datatable");
   var TableRows = [ ];
 
   // Locate all TR elements of the table
   var htmRow = htmTable.childNodes[0];
-  while(htmRow) {
-    if(htmRow.nodeType == 1) {
-      if(htmRow.tagName == 'TR') {
+  while (htmRow) {
+    if (htmRow.nodeType == 1) {
+      if (htmRow.tagName == "TR") {
         TableRows.push(htmRow);
-      }
-      else {
+      } else {
         htmRow = htmRow.childNodes[0];
       }
     }
@@ -99,11 +102,11 @@ function mutateTable() {
 
   var Range = document.createRange();
   Range.setStartBefore(TableRows[0]);
-  Range.setEndAfter(TableRows[TableRows.length-1]);
+  Range.setEndAfter(TableRows[TableRows.length - 1]);
 
   // Put all rows into a Fragment
   var Fragment = document.createDocumentFragment();
-  for(var Index in TableRows) {
+  for (var Index in TableRows) {
     Fragment.appendChild(TableRows[Index]);
   }
 
@@ -115,20 +118,24 @@ function mutateTable() {
 
   ensureAccessibleTree("start");
 
-  var start = new Date();
+  TalosContentProfiler.resume("tablemutation start", true).then(() => {
+    var start = new Date(); // eslint-disable-line mozilla/avoid-Date-timing
 
-  // Cause all kinds of crazy events
-  Range.deleteContents();
-  Range.insertNode(Fragment);
+    // Cause all kinds of crazy events
+    Range.deleteContents();
+    Range.insertNode(Fragment);
 
-  document.documentElement.offsetLeft; // flush layout
+    document.documentElement.offsetLeft; // flush layout
 
-  setTimeout (postProcessingRecord, 0, start);
+    setTimeout(postProcessingRecord, 0, start);
+  });
 }
 
-function postProcessingRecord(s)
-{
-  //alert(new Date() - s);
-  tpRecordTime(new Date() - s, s);
+function postProcessingRecord(s) {
+  // alert(new Date() - s);
+  let delta = new Date() - s; // eslint-disable-line mozilla/avoid-Date-timing
+  TalosContentProfiler.pause("tablemutation finish", true).then(() => {
+    tpRecordTime(delta, s);
+  });
 }
 </script>

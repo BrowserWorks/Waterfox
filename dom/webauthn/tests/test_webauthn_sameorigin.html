@@ -29,24 +29,24 @@
     }
 
     function arrivingHereIsBad(aResult) {
-      // TODO: Change to `ok` when Bug 1329764 lands
-      todo(false, "Bad result! Received a: " + aResult);
+      ok(false, "Bad result! Received a: " + aResult);
       return Promise.resolve();
     }
 
     function expectSecurityError(aResult) {
-      // TODO: Change to `ok` when Bug 1329764 lands
-      todo(aResult.toString().startsWith("SecurityError"), "Expecting a SecurityError");
+      ok(aResult.toString().startsWith("SecurityError"), "Expecting a SecurityError");
       return Promise.resolve();
     }
 
-    function keepThisPublicKeyCredential(aPublicKeyCredential) {
-      gTrackedCredential = {
-        type: "public-key",
-        id: Uint8Array.from(aPublicKeyCredential.rawId),
-        transports: [ "usb" ],
+    function keepThisPublicKeyCredential(aIdentifier) {
+      return function(aPublicKeyCredential) {
+        gTrackedCredential[aIdentifier] = {
+          type: "public-key",
+          id: Uint8Array.from(aPublicKeyCredential.rawId),
+          transports: [ "usb" ],
+        }
+        return Promise.resolve(aPublicKeyCredential);
       }
-      return Promise.resolve(aPublicKeyCredential);
     }
 
     function runTests() {
@@ -61,21 +61,20 @@
       window.crypto.getRandomValues(chall);
 
       let user = {id: "none", name: "none", icon: "none", displayName: "none"};
-      let param = {type: "public-key", algorithm: "p-256"};
+      let param = {type: "public-key", algorithm: "Es256"};
 
       var testFuncs = [
         function() {
           // Test basic good call
-          let rp = {id: document.origin};
+          let rp = {id: document.domain};
           let makeCredentialOptions = {
             rp: rp, user: user, challenge: chall, parameters: [param]
           };
           return credm.create({publicKey: makeCredentialOptions})
-                      .then(keepThisPublicKeyCredential)
+                      .then(keepThisPublicKeyCredential("basic"))
                       .then(arrivingHereIsGood)
                       .catch(arrivingHereIsBad);
         },
-
         function() {
           // Test rp.id being unset
           let makeCredentialOptions = {
@@ -87,7 +86,7 @@
         },
         function() {
           // Test this origin with optional fields
-          let rp = {id: "user:pass@" + document.origin + ":8888"};
+          let rp = {id: "user:pass@" + document.domain + ":8888"};
           let makeCredentialOptions = {
             rp: rp, user: user, challenge: chall, parameters: [param]
           };
@@ -107,7 +106,7 @@
         },
         function() {
           // Test subdomain of this origin
-          let rp = {id: "subdomain." + document.origin};
+          let rp = {id: "subdomain." + document.domain};
           let makeCredentialOptions = {
             rp: rp, user: user, challenge: chall, parameters: [param]
           };
@@ -116,8 +115,18 @@
                       .catch(expectSecurityError);
         },
         function() {
-          // Test another origin
+          // Test the same origin
           let rp = {id: "example.com"};
+          let makeCredentialOptions = {
+            rp: rp, user: user, challenge: chall, parameters: [param]
+          };
+          return credm.create({publicKey: makeCredentialOptions})
+                      .then(arrivingHereIsGood)
+                      .catch(arrivingHereIsBad);
+        },
+        function() {
+          // Test the eTLD
+          let rp = {id: "com"};
           let makeCredentialOptions = {
             rp: rp, user: user, challenge: chall, parameters: [param]
           };
@@ -139,8 +148,8 @@
           // Test basic good call
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
-            rpId: document.origin,
-            allowList: [gTrackedCredential]
+            rpId: document.domain,
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsGood)
@@ -150,7 +159,7 @@
           // Test rpId being unset
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
-            allowList: [gTrackedCredential]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsGood)
@@ -161,7 +170,7 @@
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: "user:pass@" + document.origin + ":8888",
-            allowList: [gTrackedCredential]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsBad)
@@ -172,7 +181,7 @@
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: "",
-            allowList: [gTrackedCredential]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsBad)
@@ -182,19 +191,30 @@
           // Test subdomain of this origin
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
-            rpId: "subdomain." + document.origin,
-            allowList: [gTrackedCredential]
+            rpId: "subdomain." + document.domain,
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsBad)
                       .catch(expectSecurityError);
         },
         function () {
-          // Test another origin
+          // Test the same origin
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: "example.com",
-            allowList: [gTrackedCredential]
+            allowList: [gTrackedCredential["basic"]]
+          };
+          return credm.get({publicKey: publicKeyCredentialRequestOptions})
+                      .then(arrivingHereIsGood)
+                      .catch(arrivingHereIsBad);
+        },
+        function() {
+          // Test the eTLD
+          let publicKeyCredentialRequestOptions = {
+            challenge: chall,
+            rpId: "com",
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsBad)
@@ -205,15 +225,36 @@
           let publicKeyCredentialRequestOptions = {
             challenge: chall,
             rpId: "alt.test",
-            allowList: [gTrackedCredential]
+            allowList: [gTrackedCredential["basic"]]
           };
           return credm.get({publicKey: publicKeyCredentialRequestOptions})
                       .then(arrivingHereIsBad)
-                      .catch(expectSecurityError)
+                      .catch(expectSecurityError);
+        },
+        // These next two tests should be removed in Bug 1381126.
+        function () {
+          // Test basic good Create call but using an origin (Bug 1380421)
+          let rp = {id: window.origin};
+          let makeCredentialOptions = {
+            rp: rp, user: user, challenge: chall, parameters: [param]
+          };
+          return credm.create({publicKey: makeCredentialOptions})
+                      .then(keepThisPublicKeyCredential("origin"))
+                      .then(arrivingHereIsGood)
+                      .catch(arrivingHereIsBad);
         },
         function () {
-          SimpleTest.finish();
+          // Test basic good Get call but using an origin (Bug 1380421)
+          let publicKeyCredentialRequestOptions = {
+            challenge: chall,
+            rpId: window.origin,
+            allowList: [gTrackedCredential["origin"]]
+          };
+          return credm.get({publicKey: publicKeyCredentialRequestOptions})
+                      .then(arrivingHereIsGood)
+                      .catch(arrivingHereIsBad);
         }
+        // End remove in Bug 1381126.
       ];
       var i = 0;
       var runNextTest = () => {
@@ -221,7 +262,7 @@
           SimpleTest.finish();
           return;
         }
-        console.log(i);
+        console.log(i, testFuncs[i], testFuncs.length);
         testFuncs[i]().then(() => { runNextTest(); });
         i = i + 1;
       };

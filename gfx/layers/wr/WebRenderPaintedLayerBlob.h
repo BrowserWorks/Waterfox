@@ -32,11 +32,17 @@ protected:
   virtual ~WebRenderPaintedLayerBlob()
   {
     MOZ_COUNT_DTOR(WebRenderPaintedLayerBlob);
+    ClearWrResources();
+  }
+  void ClearWrResources()
+  {
     if (mExternalImageId.isSome()) {
       WrBridge()->DeallocExternalImageId(mExternalImageId.ref());
+      mExternalImageId = Nothing();
     }
     if (mImageKey.isSome()) {
       WrManager()->AddImageKeyForDiscard(mImageKey.value());
+      mImageKey = Nothing();
     }
   }
 
@@ -46,16 +52,18 @@ public:
   virtual void InvalidateRegion(const nsIntRegion& aRegion) override
   {
     mInvalidRegion.Add(aRegion);
-    mValidRegion.Sub(mValidRegion, mInvalidRegion.GetRegion());
+    UpdateValidRegionAfterInvalidRegionChanged();
   }
-
+  virtual void ClearCachedResources() override
+  {
+    ClearWrResources();
+  }
   Layer* GetLayer() override { return this; }
   void RenderLayer(wr::DisplayListBuilder& aBuilder,
                    const StackingContextHelper& aSc) override;
 private:
-  RefPtr<ImageContainer> mImageContainer;
-  RefPtr<ImageClient> mImageClient;
-  Maybe<WrImageKey> mImageKey;
+  Maybe<wr::WrImageKey> mImageKey;
+  LayerIntRect mImageBounds;
 };
 
 } // namespace layers

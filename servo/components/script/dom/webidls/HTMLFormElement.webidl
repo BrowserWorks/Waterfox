@@ -3,16 +3,25 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmlformelement
-//[OverrideBuiltins]
+[/*OverrideBuiltins, */HTMLConstructor]
 interface HTMLFormElement : HTMLElement {
+  [CEReactions]
            attribute DOMString acceptCharset;
+  [CEReactions]
            attribute DOMString action;
+  [CEReactions]
            attribute DOMString autocomplete;
+  [CEReactions]
            attribute DOMString enctype;
+  [CEReactions]
            attribute DOMString encoding;
+  [CEReactions]
            attribute DOMString method;
+  [CEReactions]
            attribute DOMString name;
+  [CEReactions]
            attribute boolean noValidate;
+  [CEReactions]
            attribute DOMString target;
 
   [SameObject] readonly attribute HTMLFormControlsCollection elements;
@@ -21,6 +30,7 @@ interface HTMLFormElement : HTMLElement {
   //getter (RadioNodeList or Element) (DOMString name);
 
   void submit();
+  [CEReactions]
   void reset();
   //boolean checkValidity();
   //boolean reportValidity();

@@ -67,7 +67,7 @@ nsNumberControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
 }
 
 nscoord
-nsNumberControlFrame::GetMinISize(nsRenderingContext* aRenderingContext)
+nsNumberControlFrame::GetMinISize(gfxContext* aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -85,7 +85,7 @@ nsNumberControlFrame::GetMinISize(nsRenderingContext* aRenderingContext)
 }
 
 nscoord
-nsNumberControlFrame::GetPrefISize(nsRenderingContext* aRenderingContext)
+nsNumberControlFrame::GetPrefISize(gfxContext* aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -303,14 +303,16 @@ class FocusTextField : public Runnable
 {
 public:
   FocusTextField(nsIContent* aNumber, nsIContent* aTextField)
-    : mNumber(aNumber),
-      mTextField(aTextField)
+    : mozilla::Runnable("FocusTextField")
+    , mNumber(aNumber)
+    , mTextField(aTextField)
   {}
 
   NS_IMETHOD Run() override
   {
     if (mNumber->AsElement()->State().HasState(NS_EVENT_STATE_FOCUS)) {
-      HTMLInputElement::FromContent(mTextField)->Focus();
+      IgnoredErrorResult ignored;
+      HTMLInputElement::FromContent(mTextField)->Focus(ignored);
     }
 
     return NS_OK;
@@ -400,9 +402,8 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   }
 
   // Propogate our tabindex:
-  int32_t tabIndex;
-  content->GetTabIndex(&tabIndex);
-  textField->SetTabIndex(tabIndex);
+  IgnoredErrorResult ignored;
+  textField->SetTabIndex(content->TabIndex(), ignored);
 
   // Initialize the text field's placeholder, if ours is set:
   nsAutoString placeholder;
@@ -590,14 +591,17 @@ nsNumberControlFrame::HandleFocusEvent(WidgetEvent* aEvent)
 {
   if (aEvent->mOriginalTarget != mTextField) {
     // Move focus to our text field
-    HTMLInputElement::FromContent(mTextField)->Focus();
+    RefPtr<HTMLInputElement> textField = HTMLInputElement::FromContent(mTextField);
+    IgnoredErrorResult ignored;
+    textField->Focus(ignored);
   }
 }
 
-nsresult
+void
 nsNumberControlFrame::HandleSelectCall()
 {
-  return HTMLInputElement::FromContent(mTextField)->Select();
+  RefPtr<HTMLInputElement> textField = HTMLInputElement::FromContent(mTextField);
+  textField->Select();
 }
 
 #define STYLES_DISABLING_NATIVE_THEMING \

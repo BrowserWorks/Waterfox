@@ -124,23 +124,24 @@ VideoDecoderChild::ActorDestroy(ActorDestroyReason aWhy)
     // Defer reporting an error until we've recreated the manager so that
     // it'll be safe for MediaFormatReader to recreate decoders
     RefPtr<VideoDecoderChild> ref = this;
-    GetManager()->RunWhenRecreated(NS_NewRunnableFunction([=]() {
-      if (ref->mInitialized) {
-        mDecodedData.Clear();
-        mDecodePromise.RejectIfExists(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER,
-                                      __func__);
-        mDrainPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER,
-                                     __func__);
-        mFlushPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER,
-                                     __func__);
-        // Make sure the next request will be rejected accordingly if ever
-        // called.
-        mNeedNewDecoder = true;
-      } else {
-        ref->mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER,
-                                         __func__);
-      }
-    }));
+    GetManager()->RunWhenRecreated(
+      NS_NewRunnableFunction("dom::VideoDecoderChild::ActorDestroy", [=]() {
+        if (ref->mInitialized) {
+          mDecodedData.Clear();
+          mDecodePromise.RejectIfExists(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER,
+                                        __func__);
+          mDrainPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER,
+                                       __func__);
+          mFlushPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER,
+                                       __func__);
+          // Make sure the next request will be rejected accordingly if ever
+          // called.
+          mNeedNewDecoder = true;
+        } else {
+          ref->mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER,
+                                           __func__);
+        }
+      }));
   }
   mCanSend = false;
 }
@@ -151,12 +152,21 @@ VideoDecoderChild::InitIPDL(const VideoInfo& aVideoInfo,
 {
   RefPtr<VideoDecoderManagerChild> manager =
     VideoDecoderManagerChild::GetSingleton();
-  // If the manager isn't available, then don't initialize mIPDLSelfRef and
+
+  // The manager isn't available because VideoDecoderManagerChild has been
+  // initialized with null end points and we don't want to decode video on GPU
+  // process anymore. Return false here so that we can fallback to other PDMs.
+  if (!manager) {
+    return false;
+  }
+
+  // The manager doesn't support sending messages because we've just crashed
+  // and are working on reinitialization. Don't initialize mIPDLSelfRef and
   // leave us in an error state. We'll then immediately reject the promise when
   // Init() is called and the caller can try again. Hopefully by then the new
   // manager is ready, or we've notified the caller of it being no longer
   // available. If not, then the cycle repeats until we're ready.
-  if (!manager || !manager->CanSend()) {
+  if (!manager->CanSend()) {
     return true;
   }
 

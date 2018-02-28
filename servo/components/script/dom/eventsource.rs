@@ -16,7 +16,7 @@ use dom::eventtarget::EventTarget;
 use dom::globalscope::GlobalScope;
 use dom::messageevent::MessageEvent;
 use dom_struct::dom_struct;
-use euclid::length::Length;
+use euclid::Length;
 use hyper::header::{Accept, qitem};
 use ipc_channel::ipc;
 use ipc_channel::router::ROUTER;
@@ -387,7 +387,7 @@ impl EventSource {
         // TODO: Step 9 set request's client settings
         let mut request = RequestInit {
             url: url_record,
-            origin: global.get_url(),
+            origin: global.origin().immutable().clone(),
             pipeline_id: Some(global.pipeline_id()),
             // https://html.spec.whatwg.org/multipage/#create-a-potential-cors-request
             use_url_credentials: true,

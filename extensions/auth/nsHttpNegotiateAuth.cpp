@@ -117,17 +117,17 @@ nsHttpNegotiateAuth::GetAuthFlags(uint32_t *flags)
     // to complete a sequence of transactions with the server over the same
     // connection.
     //
-    *flags = CONNECTION_BASED | IDENTITY_IGNORED; 
+    *flags = CONNECTION_BASED | IDENTITY_IGNORED;
     return NS_OK;
 }
 
 //
-// Always set *identityInvalid == FALSE here.  This 
+// Always set *identityInvalid == FALSE here.  This
 // will prevent the browser from popping up the authentication
 // prompt window.  Because GSSAPI does not have an API
 // for fetching initial credentials (ex: A Kerberos TGT),
 // there is no correct way to get the users credentials.
-// 
+//
 NS_IMETHODIMP
 nsHttpNegotiateAuth::ChallengeReceived(nsIHttpAuthenticableChannel *authChannel,
                                        const char *challenge,
@@ -192,7 +192,7 @@ nsHttpNegotiateAuth::ChallengeReceived(nsIHttpAuthenticableChannel *authChannel,
     // construct the proper service name for passing to "gss_import_name".
     //
     // TODO: Possibly make this a configurable service name for use
-    // with non-standard servers that use stuff like "khttp/f.q.d.n" 
+    // with non-standard servers that use stuff like "khttp/f.q.d.n"
     // instead.
     //
     service.Insert("HTTP@", 0);
@@ -235,7 +235,7 @@ namespace {
 // This event is fired on main thread when async call of
 // nsHttpNegotiateAuth::GenerateCredentials is finished. During the Run()
 // method the nsIHttpAuthenticatorCallback::OnCredsAvailable is called with
-// obtained credentials, flags and NS_OK when successful, otherwise 
+// obtained credentials, flags and NS_OK when successful, otherwise
 // NS_ERROR_FAILURE is returned as a result of failed operation.
 //
 class GetNextTokenCompleteEvent final : public nsIRunnable,
@@ -330,26 +330,26 @@ class GetNextTokenRunnable final : public mozilla::Runnable
 {
     ~GetNextTokenRunnable() override = default;
     public:
-        GetNextTokenRunnable(nsIHttpAuthenticableChannel *authChannel,
-                             const char *challenge,
-                             bool isProxyAuth,
-                             const char16_t *domain,
-                             const char16_t *username,
-                             const char16_t *password,
-                             nsISupports *sessionState,
-                             nsISupports *continuationState,
-                             GetNextTokenCompleteEvent *aCompleteEvent
-                             )
-            : mAuthChannel(authChannel)
-            , mChallenge(challenge)
-            , mIsProxyAuth(isProxyAuth)
-            , mDomain(domain)
-            , mUsername(username)
-            , mPassword(password)
-            , mSessionState(sessionState)
-            , mContinuationState(continuationState)
-            , mCompleteEvent(aCompleteEvent)
-        {
+      GetNextTokenRunnable(nsIHttpAuthenticableChannel* authChannel,
+                           const char* challenge,
+                           bool isProxyAuth,
+                           const char16_t* domain,
+                           const char16_t* username,
+                           const char16_t* password,
+                           nsISupports* sessionState,
+                           nsISupports* continuationState,
+                           GetNextTokenCompleteEvent* aCompleteEvent)
+        : mozilla::Runnable("GetNextTokenRunnable")
+        , mAuthChannel(authChannel)
+        , mChallenge(challenge)
+        , mIsProxyAuth(isProxyAuth)
+        , mDomain(domain)
+        , mUsername(username)
+        , mPassword(password)
+        , mSessionState(sessionState)
+        , mContinuationState(continuationState)
+        , mCompleteEvent(aCompleteEvent)
+      {
         }
 
         NS_IMETHODIMP Run() override
@@ -588,7 +588,7 @@ nsHttpNegotiateAuth::GenerateCredentials(nsIHttpAuthenticableChannel *authChanne
     else
         snprintf(*creds, bufsize, "%s %s", kNegotiate, encoded_token);
 
-    PR_Free(encoded_token);
+    PR_Free(encoded_token); // PL_Base64Encode() uses PR_Malloc().
     return rv;
 }
 

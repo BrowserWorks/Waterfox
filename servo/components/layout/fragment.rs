@@ -6,11 +6,11 @@
 
 #![deny(unsafe_code)]
 
-use StyleArc;
+use ServoArc;
 use app_units::Au;
 use canvas_traits::CanvasMsg;
 use context::{LayoutContext, with_thread_local_font_context};
-use euclid::{Matrix4D, Point2D, Radians, Rect, Size2D};
+use euclid::{Transform3D, Point2D, Vector2D, Radians, Rect, Size2D};
 use floats::ClearType;
 use flow::{self, ImmutableFlowUtils};
 use flow_ref::FlowRef;
@@ -45,7 +45,7 @@ use style::computed_values::{overflow_wrap, overflow_x, position, text_decoratio
 use style::computed_values::{transform_style, vertical_align, white_space, word_break};
 use style::computed_values::content::ContentItem;
 use style::logical_geometry::{Direction, LogicalMargin, LogicalRect, LogicalSize, WritingMode};
-use style::properties::ServoComputedValues;
+use style::properties::ComputedValues;
 use style::selector_parser::RestyleDamage;
 use style::servo::restyle_damage::RECONSTRUCT_FLOW;
 use style::str::char_is_whitespace;
@@ -95,10 +95,10 @@ pub struct Fragment {
     pub node: OpaqueNode,
 
     /// The CSS style of this fragment.
-    pub style: StyleArc<ServoComputedValues>,
+    pub style: ServoArc<ComputedValues>,
 
     /// The CSS style of this fragment when it's selected
-    pub selected_style: StyleArc<ServoComputedValues>,
+    pub selected_style: ServoArc<ComputedValues>,
 
     /// The position of this fragment relative to its owning flow. The size includes padding and
     /// border, but not margin.
@@ -143,10 +143,10 @@ pub struct Fragment {
 
 impl Serialize for Fragment {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut serializer = try!(serializer.serialize_struct("fragment", 3));
-        try!(serializer.serialize_field("id", &self.debug_id));
-        try!(serializer.serialize_field("border_box", &self.border_box));
-        try!(serializer.serialize_field("margin", &self.margin));
+        let mut serializer = serializer.serialize_struct("fragment", 3)?;
+        serializer.serialize_field("id", &self.debug_id)?;
+        serializer.serialize_field("border_box", &self.border_box)?;
+        serializer.serialize_field("margin", &self.margin)?;
         serializer.end()
     }
 }
@@ -676,8 +676,8 @@ impl Fragment {
     /// Constructs a new `Fragment` instance from an opaque node.
     pub fn from_opaque_node_and_style(node: OpaqueNode,
                                       pseudo: PseudoElementType<()>,
-                                      style: StyleArc<ServoComputedValues>,
-                                      selected_style: StyleArc<ServoComputedValues>,
+                                      style: ServoArc<ComputedValues>,
+                                      selected_style: ServoArc<ComputedValues>,
                                       mut restyle_damage: RestyleDamage,
                                       specific: SpecificFragmentInfo)
                                       -> Fragment {
@@ -706,7 +706,7 @@ impl Fragment {
     /// type. For the new anonymous fragment, layout-related values (border box, etc.) are reset to
     /// initial values.
     pub fn create_similar_anonymous_fragment(&self,
-                                             style: StyleArc<ServoComputedValues>,
+                                             style: ServoArc<ComputedValues>,
                                              specific: SpecificFragmentInfo)
                                              -> Fragment {
         let writing_mode = style.writing_mode;
@@ -1339,7 +1339,7 @@ impl Fragment {
 
     // Return offset from original position because of `position: relative`.
     pub fn relative_position(&self, containing_block_size: &LogicalSize<Au>) -> LogicalSize<Au> {
-        fn from_style(style: &ServoComputedValues, container_size: &LogicalSize<Au>)
+        fn from_style(style: &ComputedValues, container_size: &LogicalSize<Au>)
                       -> LogicalSize<Au> {
             let offsets = style.logical_position();
             let offset_i = if offsets.inline_start != LengthOrPercentageOrAuto::Auto {
@@ -1392,12 +1392,12 @@ impl Fragment {
     }
 
     #[inline(always)]
-    pub fn style(&self) -> &ServoComputedValues {
+    pub fn style(&self) -> &ComputedValues {
         &*self.style
     }
 
     #[inline(always)]
-    pub fn selected_style(&self) -> &ServoComputedValues {
+    pub fn selected_style(&self) -> &ComputedValues {
         &*self.selected_style
     }
 
@@ -1854,7 +1854,7 @@ impl Fragment {
         match (&mut self.specific, &next_fragment.specific) {
             (&mut SpecificFragmentInfo::ScannedText(ref mut this_info),
              &SpecificFragmentInfo::ScannedText(ref other_info)) => {
-                debug_assert!(::arc_ptr_eq(&this_info.run, &other_info.run));
+                debug_assert!(Arc::ptr_eq(&this_info.run, &other_info.run));
                 this_info.range_end_including_stripped_whitespace =
                     other_info.range_end_including_stripped_whitespace;
                 if other_info.requires_line_break_afterward_if_wrapping_on_newlines() {
@@ -2142,7 +2142,7 @@ impl Fragment {
         };
         return inline_metrics;
 
-        fn inline_metrics_of_block(flow: &FlowRef, style: &ServoComputedValues) -> InlineMetrics {
+        fn inline_metrics_of_block(flow: &FlowRef, style: &ComputedValues) -> InlineMetrics {
             // CSS 2.1 § 10.8: "The height of each inline-level box in the line box is calculated.
             // For replaced elements, inline-block elements, and inline-table elements, this is the
             // height of their margin box."
@@ -2158,17 +2158,35 @@ impl Fragment {
             let block_flow = flow.as_block();
             let start_margin = block_flow.fragment.margin.block_start;
             let end_margin = block_flow.fragment.margin.block_end;
-            if style.get_box().overflow_y == overflow_x::T::visible {
-                if let Some(baseline_offset) = flow.baseline_offset_of_last_line_box_in_flow() {
-                    let ascent = baseline_offset + start_margin;
-                    let space_below_baseline = block_flow.fragment.border_box.size.block -
-                        baseline_offset + end_margin;
-                    return InlineMetrics::new(ascent, space_below_baseline, baseline_offset)
-                }
-            }
-            let ascent = block_flow.fragment.border_box.size.block + end_margin;
-            let space_above_baseline = start_margin + ascent;
-            InlineMetrics::new(space_above_baseline, Au(0), ascent)
+            let border_box_block_size = block_flow.fragment.border_box.size.block;
+
+            //     --------
+            //      margin
+            // top -------- + +
+            //              | |
+            //              | |
+            //  A  ..pogo.. | + baseline_offset_of_last_line_box_in_flow()
+            //              |
+            //     -------- + border_box_block_size
+            //      margin
+            //  B  --------
+            //
+            // § 10.8.1 says that the baseline (and thus ascent, which is the
+            // distance from the baseline to the top) should be A if it has an
+            // in-flow line box and if overflow: visible, and B otherwise.
+            let ascent =
+                match (flow.baseline_offset_of_last_line_box_in_flow(),
+                       style.get_box().overflow_y) {
+                // Case A
+                (Some(baseline_offset), overflow_x::T::visible) => baseline_offset,
+                // Case B
+                _ => border_box_block_size + end_margin,
+            };
+
+            let space_below_baseline = border_box_block_size + end_margin - ascent;
+            let space_above_baseline = ascent + start_margin;
+
+            InlineMetrics::new(space_above_baseline, space_below_baseline, ascent)
         }
     }
 
@@ -2234,7 +2252,7 @@ impl Fragment {
                 }
                 vertical_align::T::LengthOrPercentage(LengthOrPercentage::Percentage(
                         percentage)) => {
-                    offset -= minimum_line_metrics.space_needed().scale_by(percentage)
+                    offset -= minimum_line_metrics.space_needed().scale_by(percentage.0)
                 }
                 vertical_align::T::LengthOrPercentage(LengthOrPercentage::Calc(formula)) => {
                     offset -= formula.to_used_value(Some(minimum_line_metrics.space_needed())).unwrap()
@@ -2405,7 +2423,7 @@ impl Fragment {
         }
     }
 
-    pub fn repair_style(&mut self, new_style: &StyleArc<ServoComputedValues>) {
+    pub fn repair_style(&mut self, new_style: &ServoArc<ComputedValues>) {
         self.style = (*new_style).clone()
     }
 
@@ -2422,7 +2440,7 @@ impl Fragment {
     /// This is the method you should use for display list construction as well as
     /// `getBoundingClientRect()` and so forth.
     pub fn stacking_relative_border_box(&self,
-                                        stacking_relative_flow_origin: &Point2D<Au>,
+                                        stacking_relative_flow_origin: &Vector2D<Au>,
                                         relative_containing_block_size: &LogicalSize<Au>,
                                         relative_containing_block_mode: WritingMode,
                                         coordinate_system: CoordinateSystem)
@@ -2440,7 +2458,7 @@ impl Fragment {
         // this.
         let relative_position = self.relative_position(relative_containing_block_size);
         border_box.translate_by_size(&relative_position.to_physical(self.style.writing_mode))
-                  .translate(stacking_relative_flow_origin)
+                  .translate(&stacking_relative_flow_origin)
     }
 
     /// Given the stacking-context-relative border box, returns the stacking-context-relative
@@ -2467,7 +2485,7 @@ impl Fragment {
         if self.style().get_effects().opacity != 1.0 {
             return true
         }
-        if !self.style().get_effects().filter.is_empty() {
+        if !self.style().get_effects().filter.0.is_empty() {
             return true
         }
         if self.style().get_effects().mix_blend_mode != mix_blend_mode::T::normal {
@@ -2551,9 +2569,8 @@ impl Fragment {
 
         // Box shadows cause us to draw outside our border box.
         for box_shadow in &self.style().get_effects().box_shadow.0 {
-            let offset = Point2D::new(box_shadow.offset_x, box_shadow.offset_y);
-            let inflation = box_shadow.spread_radius + box_shadow.blur_radius *
-                BLUR_INFLATION_FACTOR;
+            let offset = Vector2D::new(box_shadow.base.horizontal, box_shadow.base.vertical);
+            let inflation = box_shadow.spread + box_shadow.base.blur * BLUR_INFLATION_FACTOR;
             overflow.paint = overflow.paint.union(&border_box.translate(&offset)
                                                              .inflate(inflation, inflation))
         }
@@ -2842,13 +2859,13 @@ impl Fragment {
     }
 
     /// Returns the 4D matrix representing this fragment's transform.
-    pub fn transform_matrix(&self, stacking_relative_border_box: &Rect<Au>) -> Option<Matrix4D<f32>> {
+    pub fn transform_matrix(&self, stacking_relative_border_box: &Rect<Au>) -> Option<Transform3D<f32>> {
         let operations = match self.style.get_box().transform.0 {
             None => return None,
             Some(ref operations) => operations,
         };
 
-        let mut transform = Matrix4D::identity();
+        let mut transform = Transform3D::identity();
         let transform_origin = &self.style.get_box().transform_origin;
         let transform_origin_x =
             transform_origin.horizontal
@@ -2860,30 +2877,30 @@ impl Fragment {
                 .to_f32_px();
         let transform_origin_z = transform_origin.depth.to_f32_px();
 
-        let pre_transform = Matrix4D::create_translation(transform_origin_x,
-                                                         transform_origin_y,
-                                                         transform_origin_z);
-        let post_transform = Matrix4D::create_translation(-transform_origin_x,
-                                                          -transform_origin_y,
-                                                          -transform_origin_z);
+        let pre_transform = Transform3D::create_translation(transform_origin_x,
+                                                            transform_origin_y,
+                                                            transform_origin_z);
+        let post_transform = Transform3D::create_translation(-transform_origin_x,
+                                                             -transform_origin_y,
+                                                             -transform_origin_z);
 
         for operation in operations {
             let matrix = match *operation {
                 transform::ComputedOperation::Rotate(ax, ay, az, theta) => {
                     let theta = 2.0f32 * f32::consts::PI - theta.radians();
-                    Matrix4D::create_rotation(ax, ay, az, Radians::new(theta))
+                    Transform3D::create_rotation(ax, ay, az, Radians::new(theta))
                 }
                 transform::ComputedOperation::Perspective(d) => {
                     create_perspective_matrix(d)
                 }
                 transform::ComputedOperation::Scale(sx, sy, sz) => {
-                    Matrix4D::create_scale(sx, sy, sz)
+                    Transform3D::create_scale(sx, sy, sz)
                 }
                 transform::ComputedOperation::Translate(tx, ty, tz) => {
                     let tx = tx.to_used_value(stacking_relative_border_box.size.width).to_f32_px();
                     let ty = ty.to_used_value(stacking_relative_border_box.size.height).to_f32_px();
                     let tz = tz.to_f32_px();
-                    Matrix4D::create_translation(tx, ty, tz)
+                    Transform3D::create_translation(tx, ty, tz)
                 }
                 transform::ComputedOperation::Matrix(m) => {
                     m.to_gfx_matrix()
@@ -2893,14 +2910,14 @@ impl Fragment {
                     unreachable!()
                 }
                 transform::ComputedOperation::Skew(theta_x, theta_y) => {
-                    Matrix4D::create_skew(Radians::new(theta_x.radians()),
+                    Transform3D::create_skew(Radians::new(theta_x.radians()),
                                           Radians::new(theta_y.radians()))
                 }
                 transform::ComputedOperation::InterpolateMatrix { .. } |
                 transform::ComputedOperation::AccumulateMatrix { .. } => {
-                    // TODO: Convert InterpolateMatrix/AccmulateMatrix into a valid Matrix4D by
+                    // TODO: Convert InterpolateMatrix/AccmulateMatrix into a valid Transform3D by
                     // the reference box.
-                    Matrix4D::identity()
+                    Transform3D::identity()
                 }
             };
 
@@ -2911,7 +2928,7 @@ impl Fragment {
     }
 
     /// Returns the 4D matrix representing this fragment's perspective.
-    pub fn perspective_matrix(&self, stacking_relative_border_box: &Rect<Au>) -> Option<Matrix4D<f32>> {
+    pub fn perspective_matrix(&self, stacking_relative_border_box: &Rect<Au>) -> Option<Transform3D<f32>> {
         match self.style().get_box().perspective {
             Either::First(length) => {
                 let perspective_origin = self.style().get_box().perspective_origin;
@@ -2924,12 +2941,12 @@ impl Fragment {
                             .to_used_value(stacking_relative_border_box.size.height)
                             .to_f32_px());
 
-                let pre_transform = Matrix4D::create_translation(perspective_origin.x,
-                                                                 perspective_origin.y,
-                                                                 0.0);
-                let post_transform = Matrix4D::create_translation(-perspective_origin.x,
-                                                                  -perspective_origin.y,
-                                                                  0.0);
+                let pre_transform = Transform3D::create_translation(perspective_origin.x,
+                                                                    perspective_origin.y,
+                                                                    0.0);
+                let post_transform = Transform3D::create_translation(-perspective_origin.x,
+                                                                     -perspective_origin.y,
+                                                                     0.0);
 
                 let perspective_matrix = create_perspective_matrix(length);
 
@@ -3021,9 +3038,9 @@ pub struct InlineStyleIterator<'a> {
 }
 
 impl<'a> Iterator for InlineStyleIterator<'a> {
-    type Item = &'a ServoComputedValues;
+    type Item = &'a ComputedValues;
 
-    fn next(&mut self) -> Option<&'a ServoComputedValues> {
+    fn next(&mut self) -> Option<&'a ComputedValues> {
         if !self.primary_style_yielded {
             self.primary_style_yielded = true;
             return Some(&*self.fragment.style)
@@ -3099,9 +3116,9 @@ impl Overflow {
         self.paint = self.paint.union(&other.paint);
     }
 
-    pub fn translate(&mut self, point: &Point2D<Au>) {
-        self.scroll = self.scroll.translate(point);
-        self.paint = self.paint.translate(point);
+    pub fn translate(&mut self, by: &Vector2D<Au>) {
+        self.scroll = self.scroll.translate(by);
+        self.paint = self.paint.translate(by);
     }
 }
 
@@ -3184,11 +3201,11 @@ impl Serialize for DebugId {
 // and behaves as it does in other browsers.
 // See https://lists.w3.org/Archives/Public/www-style/2016Jan/0020.html for more details.
 #[inline]
-fn create_perspective_matrix(d: Au) -> Matrix4D<f32> {
+fn create_perspective_matrix(d: Au) -> Transform3D<f32> {
     let d = d.to_f32_px();
     if d <= 0.0 {
-        Matrix4D::identity()
+        Transform3D::identity()
     } else {
-        Matrix4D::create_perspective(d)
+        Transform3D::create_perspective(d)
     }
 }

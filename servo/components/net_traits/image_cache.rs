@@ -7,7 +7,7 @@ use image::base::{Image, ImageMetadata};
 use ipc_channel::ipc::IpcSender;
 use servo_url::ServoUrl;
 use std::sync::Arc;
-use webrender_traits;
+use webrender_api;
 
 // ======================================================================
 // Aux structs and enums.
@@ -60,7 +60,7 @@ impl ImageResponder {
 }
 
 /// The returned image.
-#[derive(Clone, Deserialize, Serialize, HeapSizeOf)]
+#[derive(Clone, Debug, Deserialize, Serialize, HeapSizeOf)]
 pub enum ImageResponse {
     /// The requested image was loaded.
     Loaded(Arc<Image>, ServoUrl),
@@ -84,7 +84,7 @@ pub enum ImageState {
 #[derive(Copy, Clone, PartialEq, Eq, Deserialize, Serialize, HeapSizeOf, Hash, Debug)]
 pub struct PendingImageId(pub u64);
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PendingImageResponse {
     pub response: ImageResponse,
     pub id: PendingImageId,
@@ -101,7 +101,7 @@ pub enum UsePlaceholder {
 // ======================================================================
 
 pub trait ImageCache: Sync + Send {
-    fn new(webrender_api: webrender_traits::RenderApi) -> Self where Self: Sized;
+    fn new(webrender_api: webrender_api::RenderApi) -> Self where Self: Sized;
 
     /// Return any available metadata or image for the given URL,
     /// or an indication that the image is not yet available if it is in progress,

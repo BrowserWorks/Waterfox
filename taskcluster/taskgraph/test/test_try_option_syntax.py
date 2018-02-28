@@ -6,11 +6,11 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import unittest
 
-from ..try_option_syntax import TryOptionSyntax
-from ..try_option_syntax import RIDEALONG_BUILDS
-from ..graph import Graph
-from ..taskgraph import TaskGraph
-from ..task import Task
+from taskgraph.try_option_syntax import TryOptionSyntax
+from taskgraph.try_option_syntax import RIDEALONG_BUILDS
+from taskgraph.graph import Graph
+from taskgraph.taskgraph import TaskGraph
+from taskgraph.task import Task
 from mozunit import main
 
 
@@ -323,6 +323,7 @@ class TestTryOptionSyntax(unittest.TestCase):
         "--no-retry sets no_retry to true"
         tos = TryOptionSyntax('try: --no-retry', graph_with_jobs)
         self.assertTrue(tos.no_retry)
+
 
 if __name__ == '__main__':
     main()

@@ -19,9 +19,9 @@ const { preferences } = metadata;
 const Startup = Cu.import("resource://gre/modules/sdk/system/Startup.js", {}).exports;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyGetter(this, "BrowserToolboxProcess", function () {
-  return Cu.import("resource://devtools/client/framework/ToolboxProcess.jsm", {}).
-         BrowserToolboxProcess;
+XPCOMUtils.defineLazyGetter(this, "DevToolsShim", function () {
+  return Cu.import("chrome://devtools-shim/content/DevToolsShim.jsm", {}).
+         DevToolsShim;
 });
 
 // Initializes default preferences
@@ -70,7 +70,7 @@ function startup(reason, options) {
     // Run the addon even in case of error (best effort approach)
     require('../l10n/loader').
       load(rootURI).
-      then(null, function failure(error) {
+      catch(function failure(error) {
         if (!isNative)
           console.info("Error while loading localization: " + error.message);
       }).
@@ -81,7 +81,7 @@ function startup(reason, options) {
         return ready;
       }).then(function() {
         run(options);
-      }).then(null, console.exception);
+      }).catch(console.exception);
     return void 0; // otherwise we raise a warning, see bug 910304
   });
 }
@@ -156,7 +156,7 @@ function run(options) {
     }
 
     if (get("extensions." + id + ".sdk.debug.show", false)) {
-      BrowserToolboxProcess.init({ addonID: id });
+      DevToolsShim.initBrowserToolboxProcessForAddon(id);
     }
   } catch (error) {
     console.exception(error);

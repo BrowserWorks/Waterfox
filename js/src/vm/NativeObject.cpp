@@ -286,24 +286,6 @@ js::NativeObject::numFixedSlotsForCompilation() const
     return gc::GetGCKindSlots(kind, getClass());
 }
 
-uint32_t
-js::NativeObject::dynamicSlotsCount(uint32_t nfixed, uint32_t span, const Class* clasp)
-{
-    if (span <= nfixed)
-        return 0;
-    span -= nfixed;
-
-    // Increase the slots to SLOT_CAPACITY_MIN to decrease the likelihood
-    // the dynamic slots need to get increased again. ArrayObjects ignore
-    // this because slots are uncommon in that case.
-    if (clasp != &ArrayObject::class_ && span <= SLOT_CAPACITY_MIN)
-        return SLOT_CAPACITY_MIN;
-
-    uint32_t slots = mozilla::RoundUpPow2(span);
-    MOZ_ASSERT(slots >= span);
-    return slots;
-}
-
 void
 NativeObject::setLastPropertyShrinkFixedSlots(Shape* shape)
 {
@@ -1097,16 +1079,17 @@ NativeObject::CopyElementsForWrite(JSContext* cx, NativeObject* obj)
 }
 
 /* static */ bool
-NativeObject::allocSlot(JSContext* cx, HandleNativeObject obj, uint32_t* slotp)
+NativeObject::allocDictionarySlot(JSContext* cx, HandleNativeObject obj, uint32_t* slotp)
 {
+    MOZ_ASSERT(obj->inDictionaryMode());
+
     uint32_t slot = obj->slotSpan();
     MOZ_ASSERT(slot >= JSSLOT_FREE(obj->getClass()));
 
-    // If this object is in dictionary mode, try to pull a free slot from the
-    // shape table's slot-number free list. Shapes without a ShapeTable have an
-    // empty free list, because we only purge ShapeTables with an empty free
-    // list.
-    if (obj->inDictionaryMode()) {
+    // Try to pull a free slot from the shape table's slot-number free list.
+    // Shapes without a ShapeTable have an empty free list, because we only
+    // purge ShapeTables with an empty free list.
+    {
         AutoCheckCannotGC nogc;
         if (ShapeTable* table = obj->lastProperty()->maybeTable(nogc)) {
             uint32_t last = table->freeList();
@@ -1134,10 +1117,7 @@ NativeObject::allocSlot(JSContext* cx, HandleNativeObject obj, uint32_t* slotp)
 
     *slotp = slot;
 
-    if (obj->inDictionaryMode() && !obj->setSlotSpan(cx, slot + 1))
-        return false;
-
-    return true;
+    return obj->setSlotSpan(cx, slot + 1);
 }
 
 void
@@ -1286,7 +1266,8 @@ js::AddPropertyTypesAfterProtoChange(JSContext* cx, NativeObject* obj, ObjectGro
     MOZ_ASSERT(!obj->group()->unknownProperties());
 
     // First copy the dynamic flags.
-    MarkObjectGroupFlags(cx, obj, oldGroup->flags() & OBJECT_FLAG_DYNAMIC_MASK);
+    MarkObjectGroupFlags(cx, obj, oldGroup->flags() &
+                         (OBJECT_FLAG_DYNAMIC_MASK & ~OBJECT_FLAG_UNKNOWN_PROPERTIES));
 
     // Now update all property types. If the object has many properties, this
     // function may be slow so we mark all properties as unknown.
@@ -1384,7 +1365,7 @@ PurgeEnvironmentChainHelper(JSContext* cx, HandleObject objArg, HandleId id)
  * flagged as a delegate (i.e., obj has ever been on a prototype or parent
  * chain).
  */
-static inline bool
+static MOZ_ALWAYS_INLINE bool
 PurgeEnvironmentChain(JSContext* cx, HandleObject obj, HandleId id)
 {
     if (obj->isDelegate() && obj->isNative())
@@ -2884,8 +2865,6 @@ js::NativeDeleteProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
         // as the result parameter. This always succeeds when there is no hook.
         return CallJSDeletePropertyOp(cx, obj->getClass()->getDelProperty(), obj, id, result);
     }
-
-    cx->runtime()->gc.poke();
 
     // Step 6. Non-configurable property.
     if (GetPropertyAttributes(obj, prop) & JSPROP_PERMANENT)

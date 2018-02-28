@@ -9,12 +9,13 @@ use computed_values::{font_feature_settings, font_stretch, font_style, font_weig
 use computed_values::font_family::FamilyName;
 use counter_style;
 use cssparser::UnicodeRange;
-use font_face::{FontFaceRuleData, Source, FontDisplay};
+use font_face::{FontFaceRuleData, Source, FontDisplay, FontWeight};
 use gecko_bindings::bindings;
 use gecko_bindings::structs::{self, nsCSSFontFaceRule, nsCSSValue};
 use gecko_bindings::structs::{nsCSSCounterDesc, nsCSSCounterStyleRule};
 use gecko_bindings::sugar::ns_css_value::ToNsCssValue;
 use gecko_bindings::sugar::refptr::{RefPtr, UniqueRefPtr};
+use properties::longhands::font_language_override;
 use shared_lock::{ToCssWithGuard, SharedRwLockReadGuard};
 use std::{fmt, str};
 use values::generics::FontSettings;
@@ -30,7 +31,19 @@ impl ToNsCssValue for FamilyName {
 
 impl ToNsCssValue for font_weight::T {
     fn convert(self, nscssvalue: &mut nsCSSValue) {
-        nscssvalue.set_integer(self as i32)
+        nscssvalue.set_integer(self.0 as i32)
+    }
+}
+
+impl ToNsCssValue for FontWeight {
+    fn convert(self, nscssvalue: &mut nsCSSValue) {
+        match self {
+            FontWeight::Normal =>
+                nscssvalue.set_enum(structs::NS_STYLE_FONT_WEIGHT_NORMAL as i32),
+            FontWeight::Bold =>
+                nscssvalue.set_enum(structs::NS_STYLE_FONT_WEIGHT_BOLD as i32),
+            FontWeight::Weight(weight) => nscssvalue.set_integer(weight.0 as i32),
+        }
     }
 }
 
@@ -51,6 +64,17 @@ impl ToNsCssValue for font_feature_settings::T {
                     (feature, index)
                 }))
             }
+        }
+    }
+}
+
+impl ToNsCssValue for font_language_override::SpecifiedValue {
+    fn convert(self, nscssvalue: &mut nsCSSValue) {
+        match self {
+            font_language_override::SpecifiedValue::Normal => nscssvalue.set_normal(),
+            font_language_override::SpecifiedValue::Override(ref lang) => nscssvalue.set_string(&*lang),
+            // This path is unreachable because the descriptor is only specified by the user.
+            font_language_override::SpecifiedValue::System(_) => unreachable!(),
         }
     }
 }

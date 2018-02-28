@@ -38,9 +38,6 @@ this.AUSTLMY = {
   CHK_NO_UPDATE_FOUND: 0,
   // Update will be downloaded in the background (background download)
   CHK_DOWNLOAD_UPDATE: 1,
-  // Showing prompt due to the update.xml specifying showPrompt
-  // (update notification)
-  CHK_SHOWPROMPT_SNIPPET: 2,
   // Showing prompt due to preference (update notification)
   CHK_SHOWPROMPT_PREF: 3,
   // Already has an active update in progress (no notification)
@@ -74,8 +71,6 @@ this.AUSTLMY = {
   CHK_NO_COMPAT_UPDATE_FOUND: 24,
   // Update found for a previous version (no notification)
   CHK_UPDATE_PREVIOUS_VERSION: 25,
-  // Update found for a version with the never preference set (no notification)
-  CHK_UPDATE_NEVER_PREF: 26,
   // Update found without a type attribute (no notification)
   CHK_UPDATE_INVALID_TYPE: 27,
   // The system is no longer supported (system unsupported notification)
@@ -181,7 +176,6 @@ this.AUSTLMY = {
   DWNLD_ERR_DOCUMENT_NOT_CACHED: 12,
   DWNLD_ERR_VERIFY_NO_REQUEST: 13,
   DWNLD_ERR_VERIFY_PATCH_SIZE_NOT_EQUAL: 14,
-  DWNLD_ERR_VERIFY_NO_HASH_MATCH: 15,
 
   /**
    * Submit a telemetry ping for the update download result code.

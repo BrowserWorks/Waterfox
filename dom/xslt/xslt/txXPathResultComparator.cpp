@@ -10,14 +10,13 @@
 #include "txCore.h"
 #include "nsCollationCID.h"
 #include "nsIServiceManager.h"
-#include "prmem.h"
 
 #define kAscending (1<<0)
 #define kUpperFirst (1<<1)
 
 txResultStringComparator::txResultStringComparator(bool aAscending,
                                                    bool aUpperFirst,
-                                                   const nsAFlatString& aLanguage)
+                                                   const nsString& aLanguage)
 {
     mSorting = 0;
     if (aAscending)
@@ -29,7 +28,7 @@ txResultStringComparator::txResultStringComparator(bool aAscending,
         NS_ERROR("Failed to initialize txResultStringComparator");
 }
 
-nsresult txResultStringComparator::init(const nsAFlatString& aLanguage)
+nsresult txResultStringComparator::init(const nsString& aLanguage)
 {
     nsresult rv;
 
@@ -115,7 +114,7 @@ int txResultStringComparator::compareValues(txObject* aVal1, txObject* aVal2)
         nsString* caseString = (nsString *)strval1->mCaseKey;
         rv = mCollation->AllocateRawSortKey(nsICollation::kCollationCaseSensitive,
                                             *caseString,
-                                            (uint8_t**)&strval1->mCaseKey, 
+                                            (uint8_t**)&strval1->mCaseKey,
                                             &strval1->mCaseLength);
         if (NS_FAILED(rv)) {
             // XXX ErrorReport
@@ -129,7 +128,7 @@ int txResultStringComparator::compareValues(txObject* aVal1, txObject* aVal2)
         nsString* caseString = (nsString *)strval2->mCaseKey;
         rv = mCollation->AllocateRawSortKey(nsICollation::kCollationCaseSensitive,
                                             *caseString,
-                                            (uint8_t**)&strval2->mCaseKey, 
+                                            (uint8_t**)&strval2->mCaseKey,
                                             &strval2->mCaseLength);
         if (NS_FAILED(rv)) {
             // XXX ErrorReport
@@ -160,9 +159,9 @@ txResultStringComparator::StringValue::StringValue() : mKey(0),
 
 txResultStringComparator::StringValue::~StringValue()
 {
-    PR_Free(mKey);
+    free(mKey);
     if (mCaseLength > 0)
-        PR_Free((uint8_t*)mCaseKey);
+        free(mCaseKey);
     else
         delete (nsString*)mCaseKey;
 }
@@ -206,6 +205,6 @@ int txResultNumberComparator::compareValues(txObject* aVal1, txObject* aVal2)
 
     if (dval1 == dval2)
         return 0;
-    
+
     return (dval1 < dval2) ? -mAscending : mAscending;
 }

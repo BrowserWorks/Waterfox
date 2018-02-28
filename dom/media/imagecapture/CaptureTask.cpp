@@ -176,7 +176,10 @@ CaptureTask::PostTrackEndEvent()
   {
   public:
     explicit TrackEndRunnable(CaptureTask* aTask)
-      : mTask(aTask) {}
+      : mozilla::Runnable("TrackEndRunnable")
+      , mTask(aTask)
+    {
+    }
 
     NS_IMETHOD Run() override
     {
@@ -191,9 +194,7 @@ CaptureTask::PostTrackEndEvent()
 
   IC_LOG("Got MediaStream track removed or finished event.");
   nsCOMPtr<nsIRunnable> event = new TrackEndRunnable(this);
-  SystemGroup::Dispatch("CaptureTask::TaskComplete",
-                        TaskCategory::Other,
-                        event.forget());
+  SystemGroup::Dispatch(TaskCategory::Other, event.forget());
 }
 
 } // namespace mozilla

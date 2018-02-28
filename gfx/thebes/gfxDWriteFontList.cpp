@@ -511,7 +511,7 @@ gfxDWriteFontEntry::GetFontTable(uint32_t aTag)
 nsresult
 gfxDWriteFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
 {
-    PROFILER_LABEL_FUNC(js::ProfileEntry::Category::GRAPHICS);
+    AUTO_PROFILER_LABEL("gfxDWriteFontEntry::ReadCMAP", GRAPHICS);
 
     // attempt this once, if errors occur leave a blank cmap
     if (mCharacterMap) {
@@ -613,7 +613,7 @@ gfxDWriteFontEntry::CreateFontFace(IDWriteFontFace **aFontFace,
             hr = mFont->CreateFontFace(getter_AddRefs(mFontFace));
         } else if (mFontFile) {
             IDWriteFontFile *fontFile = mFontFile.get();
-            hr = gfxWindowsPlatform::GetPlatform()->GetDWriteFactory()->
+            hr = Factory::GetDWriteFactory()->
                 CreateFontFace(mFaceType,
                                1,
                                &fontFile,
@@ -644,7 +644,7 @@ gfxDWriteFontEntry::CreateFontFace(IDWriteFontFace **aFontFace,
         if (FAILED(mFontFace->GetFiles(&numberOfFiles, files.Elements()))) {
             return NS_ERROR_FAILURE;
         }
-        HRESULT hr = gfxWindowsPlatform::GetPlatform()->GetDWriteFactory()->
+        HRESULT hr = Factory::GetDWriteFactory()->
             CreateFontFace(mFontFace->GetType(),
                            numberOfFiles,
                            files.Elements(),
@@ -883,7 +883,7 @@ gfxDWriteFontList::InitFontListForPlatform()
     mFontSubstitutes.Clear();
     mNonExistingFonts.Clear();
 
-    hr = gfxWindowsPlatform::GetPlatform()->GetDWriteFactory()->
+    hr = Factory::GetDWriteFactory()->
         GetGdiInterop(getter_AddRefs(mGDIInterop));
     if (FAILED(hr)) {
         Telemetry::Accumulate(Telemetry::DWRITEFONT_INIT_PROBLEM,
@@ -894,7 +894,7 @@ gfxDWriteFontList::InitFontListForPlatform()
     QueryPerformanceCounter(&t2); // base-class/interop initialization
 
     RefPtr<IDWriteFactory> factory =
-        gfxWindowsPlatform::GetPlatform()->GetDWriteFactory();
+        Factory::GetDWriteFactory();
 
     hr = factory->GetSystemFontCollection(getter_AddRefs(mSystemFonts));
     NS_ASSERTION(SUCCEEDED(hr), "GetSystemFontCollection failed!");
@@ -991,9 +991,11 @@ gfxDWriteFontList::InitFontListForPlatform()
         }
     }
 
-    nsAdoptingCString classicFamilies =
-        Preferences::GetCString("gfx.font_rendering.cleartype_params.force_gdi_classic_for_families");
-    if (classicFamilies) {
+    nsAutoCString classicFamilies;
+    nsresult rv = Preferences::GetCString(
+      "gfx.font_rendering.cleartype_params.force_gdi_classic_for_families",
+      classicFamilies);
+    if (NS_SUCCEEDED(rv)) {
         nsCCharSeparatedTokenizer tokenizer(classicFamilies, ',');
         while (tokenizer.hasMoreTokens()) {
             NS_ConvertUTF8toUTF16 name(tokenizer.nextToken());
@@ -1413,7 +1415,7 @@ gfxDWriteFontList::PlatformGlobalFontFallback(const uint32_t aCh,
     HRESULT hr;
 
     RefPtr<IDWriteFactory> dwFactory =
-        gfxWindowsPlatform::GetPlatform()->GetDWriteFactory();
+        Factory::GetDWriteFactory();
     if (!dwFactory) {
         return nullptr;
     }

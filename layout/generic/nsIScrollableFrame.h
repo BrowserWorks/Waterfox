@@ -22,12 +22,12 @@
 #define NS_DEFAULT_VERTICAL_SCROLL_DISTANCE   3
 #define NS_DEFAULT_HORIZONTAL_SCROLL_DISTANCE 5
 
+class gfxContext;
 class nsBoxLayoutState;
 class nsIScrollPositionListener;
 class nsIFrame;
 class nsPresContext;
 class nsIContent;
-class nsRenderingContext;
 class nsIAtom;
 class nsDisplayListBuilder;
 
@@ -97,13 +97,13 @@ public:
    * of the scrolled contents.
    */
   virtual nsMargin GetDesiredScrollbarSizes(nsPresContext* aPresContext,
-                                            nsRenderingContext* aRC) = 0;
+                                            gfxContext* aRC) = 0;
   /**
    * Return the width for non-disappearing scrollbars.
    */
   virtual nscoord
   GetNondisappearingScrollbarWidth(nsPresContext* aPresContext,
-                                   nsRenderingContext* aRC,
+                                   gfxContext* aRC,
                                    mozilla::WritingMode aWM) = 0;
   /**
    * GetScrolledRect is designed to encapsulate deciding which
@@ -133,7 +133,7 @@ public:
    */
   virtual nsPoint GetScrollPosition() const = 0;
   /**
-   * As GetScrollPosition(), but uses the top-right as origin for RTL frames. 
+   * As GetScrollPosition(), but uses the top-right as origin for RTL frames.
    */
   virtual nsPoint GetLogicalScrollPosition() const = 0;
   /**
@@ -166,7 +166,7 @@ public:
    * smooth msd, or normal scrolling.
    *
    * SMOOTH scrolls have a symmetrical acceleration and deceleration curve
-   * modeled with a set of splines that guarantee that the destination will be 
+   * modeled with a set of splines that guarantee that the destination will be
    * reached over a fixed time interval.  SMOOTH will only be smooth if smooth
    * scrolling is actually enabled.  This behavior is utilized by keyboard and
    * mouse wheel scrolling events.
@@ -402,7 +402,7 @@ public:
    */
   virtual mozilla::Maybe<mozilla::layers::ScrollMetadata> ComputeScrollMetadata(
     mozilla::layers::Layer* aLayer,
-    nsIFrame* aContainerReferenceFrame,
+    const nsIFrame* aContainerReferenceFrame,
     const ContainerLayerParameters& aParameters,
     const mozilla::DisplayItemClip* aClip) const = 0;
 

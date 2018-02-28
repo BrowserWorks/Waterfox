@@ -37,6 +37,7 @@ namespace mozilla {
 class ScopedGfxFeatureReporter;
 namespace layers {
 class DeviceAttachmentsD3D11;
+class MLGDevice;
 } // namespace layers
 
 namespace gfx {
@@ -57,6 +58,7 @@ public:
   RefPtr<ID3D11Device> GetCompositorDevice();
   RefPtr<ID3D11Device> GetContentDevice();
   RefPtr<ID3D11Device> CreateDecoderDevice();
+  RefPtr<layers::MLGDevice> GetMLGDevice();
   IDirectDraw7* GetDirectDraw();
 
   unsigned GetCompositorFeatureLevel() const;
@@ -101,7 +103,6 @@ public:
   // Note: these set the cached device reset reason, which will be picked up
   // on the next frame.
   void ForceDeviceReset(ForcedDeviceResetReason aReason);
-  void NotifyD3D9DeviceReset();
 
 private:
   // Pre-load any compositor resources that are expensive, and are needed when we
@@ -120,6 +121,7 @@ private:
       RefPtr<ID3D11Device>& aOutDevice);
 
   void CreateWARPCompositorDevice();
+  void CreateMLGDevice();
 
   mozilla::gfx::FeatureStatus CreateContentDevice();
 
@@ -153,6 +155,7 @@ private:
   RefPtr<ID3D11Device> mContentDevice;
   RefPtr<ID3D11Device> mDecoderDevice;
   RefPtr<layers::DeviceAttachmentsD3D11> mCompositorAttachments;
+  RefPtr<layers::MLGDevice> mMLGDevice;
   bool mCompositorDeviceSupportsVideo;
 
   Maybe<D3D11DeviceStatus> mDeviceStatus;

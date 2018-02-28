@@ -63,6 +63,8 @@ class TextRenderer;
 class CompositingRenderTarget;
 struct FPSState;
 class PaintCounter;
+class LayerMLGPU;
+class LayerManagerMLGPU;
 class UiCompositorControllerParent;
 
 static const int kVisualWarningDuration = 150; // ms
@@ -98,10 +100,6 @@ public:
     MOZ_CRASH("GFX: Call on compositor, not LayerManagerComposite");
   }
 
-  virtual LayersBackend GetBackendType() override
-  {
-    MOZ_CRASH("GFX: Shouldn't be called for composited layer manager");
-  }
   virtual void GetBackendName(nsAString& name) override
   {
     MOZ_CRASH("GFX: Shouldn't be called for composited layer manager");
@@ -122,14 +120,30 @@ public:
   virtual void EndTransaction(const TimeStamp& aTimeStamp,
                               EndTransactionFlags aFlags = END_DEFAULT) = 0;
   virtual void UpdateRenderBounds(const gfx::IntRect& aRect) {}
+  virtual void SetDiagnosticTypes(DiagnosticTypes aDiagnostics) {}
 
   virtual HostLayerManager* AsHostLayerManager() override {
     return this;
+  }
+  virtual LayerManagerMLGPU* AsLayerManagerMLGPU() {
+    return nullptr;
   }
 
   void ExtractImageCompositeNotifications(nsTArray<ImageCompositeNotificationInfo>* aNotifications)
   {
     aNotifications->AppendElements(Move(mImageCompositeNotifications));
+  }
+
+  void AppendImageCompositeNotification(const ImageCompositeNotificationInfo& aNotification)
+  {
+    // Only send composite notifications when we're drawing to the screen,
+    // because that's what they mean.
+    // Also when we're not drawing to the screen, DidComposite will not be
+    // called to extract and send these notifications, so they might linger
+    // and contain stale ImageContainerParent pointers.
+    if (IsCompositingToScreen()) {
+      mImageCompositeNotifications.AppendElement(aNotification);
+    }
   }
 
   /**
@@ -164,6 +178,9 @@ public:
   virtual bool AlwaysScheduleComposite() const {
     return false;
   }
+  virtual bool IsCompositingToScreen() const {
+    return false;
+  }
 
   void RecordPaintTimes(const PaintTiming& aTiming);
   void RecordUpdateTime(float aValue);
@@ -188,6 +205,16 @@ public:
     return mCompositeUntilTime;
   }
 
+  // We maintaining a global mapping from ID to CompositorBridgeParent for
+  // async compositables.
+  uint32_t GetCompositorBridgeID() const {
+    return mCompositorBridgeID;
+  }
+  void SetCompositorBridgeID(uint32_t aID) {
+    MOZ_ASSERT(mCompositorBridgeID == 0, "The compositor ID must be set only once.");
+    mCompositorBridgeID = aID;
+  }
+
 protected:
   bool mDebugOverlayWantsNextFrame;
   nsTArray<ImageCompositeNotificationInfo> mImageCompositeNotifications;
@@ -196,6 +223,7 @@ protected:
   float mWarningLevel;
   mozilla::TimeStamp mWarnTime;
   UniquePtr<Diagnostics> mDiagnostics;
+  uint32_t mCompositorBridgeID;
 
   bool mWindowOverlayChanged;
   TimeDuration mLastPaintTime;
@@ -290,6 +318,7 @@ public:
     CreateOptimalMaskDrawTarget(const IntSize &aSize) override;
 
   virtual const char* Name() const override { return ""; }
+  virtual bool IsCompositingToScreen() const override;
 
   bool AlwaysScheduleComposite() const override;
 
@@ -304,10 +333,19 @@ public:
    *   - Recomputes visible regions to account for async transforms.
    *     Each layer accumulates into |aVisibleRegion| its post-transform
    *     (including async transforms) visible region.
+   *
+   *   - aRenderTargetClip is the exact clip required for aLayer, in the coordinates
+   *     of the nearest render target (the same as GetEffectiveTransform).
+   *
+   *   - aClipFromAncestors is the approximate combined clip from all ancestors, in
+   *     the coordinate space of our parent, but maybe be an overestimate in the
+   *     presence of complex transforms.
    */
+  void PostProcessLayers(nsIntRegion& aOpaqueRegion);
   void PostProcessLayers(Layer* aLayer,
                          nsIntRegion& aOpaqueRegion,
                          LayerIntRegion& aVisibleRegion,
+                         const Maybe<RenderTargetIntRect>& aRenderTargetClip,
                          const Maybe<ParentLayerIntRect>& aClipFromAncestors);
 
   /**
@@ -386,22 +424,14 @@ public:
   bool AsyncPanZoomEnabled() const override;
 
 public:
-  void AppendImageCompositeNotification(const ImageCompositeNotificationInfo& aNotification)
-  {
-    // Only send composite notifications when we're drawing to the screen,
-    // because that's what they mean.
-    // Also when we're not drawing to the screen, DidComposite will not be
-    // called to extract and send these notifications, so they might linger
-    // and contain stale ImageContainerParent pointers.
-    if (!mCompositor->GetTargetContext()) {
-      mImageCompositeNotifications.AppendElement(aNotification);
-    }
-  }
-
-public:
-  virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override
-  {
+  virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override {
     return mCompositor->GetTextureFactoryIdentifier();
+  }
+  virtual LayersBackend GetBackendType() override {
+    return mCompositor ? mCompositor->GetBackendType() : LayersBackend::LAYERS_NONE;
+  }
+  virtual void SetDiagnosticTypes(DiagnosticTypes aDiagnostics) override {
+    mCompositor->SetDiagnosticTypes(aDiagnostics);
   }
 
   void ForcePresent() override { mCompositor->ForcePresent(); }
@@ -484,7 +514,7 @@ private:
 #endif
 #if defined(MOZ_WIDGET_ANDROID)
 public:
-  virtual void RequestScreenPixels(UiCompositorControllerParent* aController)
+  virtual void RequestScreenPixels(UiCompositorControllerParent* aController) override
   {
     mScreenPixelsTarget = aController;
   }
@@ -525,6 +555,8 @@ public:
 
   virtual Layer* GetLayer() = 0;
 
+  virtual LayerMLGPU* AsLayerMLGPU() { return nullptr; }
+
   virtual bool SetCompositableHost(CompositableHost*)
   {
     // We must handle this gracefully, see bug 967824
@@ -543,6 +575,10 @@ public:
   void SetShadowVisibleRegion(const LayerIntRegion& aRegion)
   {
     mShadowVisibleRegion = aRegion;
+  }
+  void SetShadowVisibleRegion(LayerIntRegion&& aRegion)
+  {
+    mShadowVisibleRegion = Move(aRegion);
   }
 
   void SetShadowOpacity(float aOpacity)
@@ -571,11 +607,12 @@ public:
   // These getters can be used anytime.
   float GetShadowOpacity() { return mShadowOpacity; }
   const Maybe<ParentLayerIntRect>& GetShadowClipRect() { return mShadowClipRect; }
-  const LayerIntRegion& GetShadowVisibleRegion() { return mShadowVisibleRegion; }
+  const LayerIntRegion& GetShadowVisibleRegion() const { return mShadowVisibleRegion; }
   const gfx::Matrix4x4& GetShadowBaseTransform() { return mShadowTransform; }
   gfx::Matrix4x4 GetShadowTransform();
   bool GetShadowTransformSetByAnimation() { return mShadowTransformSetByAnimation; }
   bool GetShadowOpacitySetByAnimation() { return mShadowOpacitySetByAnimation; }
+  LayerIntRegion&& GetShadowVisibleRegion() { return Move(mShadowVisibleRegion); }
 
 protected:
   HostLayerManager* mCompositorManager;

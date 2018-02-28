@@ -9,6 +9,7 @@ with Files('**'):
 
 SOURCES += [
     'alpha_processing.c',
+    'alpha_processing_neon.c',
     'alpha_processing_sse2.c',
     'alpha_processing_sse41.c',
     'dec.c',
@@ -17,6 +18,7 @@ SOURCES += [
     'dec_sse2.c',
     'dec_sse41.c',
     'filters.c',
+    'filters_neon.c',
     'filters_sse2.c',
     'lossless.c',
     'lossless_neon.c',
@@ -32,7 +34,9 @@ SOURCES += [
 ]
 
 if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
+    SOURCES['alpha_processing_neon.c'].flags += CONFIG['NEON_FLAGS']
     SOURCES['dec_neon.c'].flags += CONFIG['NEON_FLAGS']
+    SOURCES['filters_neon.c'].flags += CONFIG['NEON_FLAGS']
     SOURCES['lossless_neon.c'].flags += CONFIG['NEON_FLAGS']
     SOURCES['rescaler_neon.c'].flags += CONFIG['NEON_FLAGS']
     SOURCES['upsampling_neon.c'].flags += CONFIG['NEON_FLAGS']

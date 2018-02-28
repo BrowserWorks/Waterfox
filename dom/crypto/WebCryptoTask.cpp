@@ -384,7 +384,7 @@ WebCryptoTask::DispatchWithPromise(Promise* aResultPromise)
   }
 
   // Store calling thread
-  mOriginalThread = NS_GetCurrentThread();
+  mOriginalEventTarget = GetCurrentThreadSerialEventTarget();
 
   // If we are running on a worker thread we must hold the worker
   // alive while we work on the thread pool.  Otherwise the worker
@@ -419,7 +419,7 @@ WebCryptoTask::Run()
     }
 
     // Back to the original thread, i.e. continue below.
-    mOriginalThread->Dispatch(this, NS_DISPATCH_NORMAL);
+    mOriginalEventTarget->Dispatch(this, NS_DISPATCH_NORMAL);
     return NS_OK;
   }
 
@@ -716,12 +716,16 @@ private:
       return NS_ERROR_DOM_INVALID_ACCESS_ERR;
     }
 
+    // Check whether the integer addition would overflow.
+    if (std::numeric_limits<CryptoBuffer::size_type>::max() - 16 < mData.Length()) {
+      return NS_ERROR_DOM_DATA_ERR;
+    }
+
     // Initialize the output buffer (enough space for padding / a full tag)
-    uint32_t dataLen = mData.Length();
-    uint32_t maxLen = dataLen + 16;
-    if (!mResult.SetLength(maxLen, fallible)) {
+    if (!mResult.SetLength(mData.Length() + 16, fallible)) {
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
+
     uint32_t outLen = 0;
 
     // Perform the encryption/decryption
@@ -3729,7 +3733,7 @@ WebCryptoTask::WebCryptoTask()
   : CancelableRunnable("WebCryptoTask")
   , mEarlyRv(NS_OK)
   , mEarlyComplete(false)
-  , mOriginalThread(nullptr)
+  , mOriginalEventTarget(nullptr)
   , mReleasedNSSResources(false)
   , mRv(NS_ERROR_NOT_INITIALIZED)
 {
@@ -3745,7 +3749,9 @@ WebCryptoTask::~WebCryptoTask()
   }
 
   if (mWorkerHolder) {
-    NS_ProxyRelease(mOriginalThread, mWorkerHolder.forget());
+    NS_ProxyRelease(
+      "WebCryptoTask::mWorkerHolder",
+      mOriginalEventTarget, mWorkerHolder.forget());
   }
 }
 

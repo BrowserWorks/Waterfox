@@ -42,7 +42,6 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/FileUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/NetUtil.jsm");
-Components.utils.import("resource://gre/modules/Promise.jsm");
 const { OS } = Components.utils.import("resource://gre/modules/osfile.jsm", {});
 Components.utils.import("resource://gre/modules/AsyncShutdown.jsm");
 
@@ -86,6 +85,7 @@ const {
   promiseSetExtensionModifiedTime,
   promiseShutdownManager,
   promiseStartupManager,
+  promiseWebExtensionStartup,
   promiseWriteProxyFileToDir,
   registerDirectory,
   setExtensionModifiedTime,
@@ -1066,19 +1066,6 @@ const EXTENSIONS_DB = "extensions.json";
 var gExtensionsJSON = gProfD.clone();
 gExtensionsJSON.append(EXTENSIONS_DB);
 
-function promiseWebExtensionStartup() {
-  const {Management} = Components.utils.import("resource://gre/modules/Extension.jsm", {});
-
-  return new Promise(resolve => {
-    let listener = (evt, extension) => {
-      Management.off("ready", listener);
-      resolve(extension);
-    };
-
-    Management.on("ready", listener);
-  });
-}
-
 function promiseInstallWebExtension(aData) {
   let addonFile = createTempWebExtensionFile(aData);
 
@@ -1289,7 +1276,7 @@ function saveJSON(aData, aFile) {
   let stream = FileUtils.openSafeFileOutputStream(aFile);
   let converter = AM_Cc["@mozilla.org/intl/converter-output-stream;1"].
     createInstance(AM_Ci.nsIConverterOutputStream);
-  converter.init(stream, "UTF-8", 0, 0x0000);
+  converter.init(stream, "UTF-8");
   // XXX pretty print the JSON while debugging
   converter.writeString(JSON.stringify(aData, null, 2));
   converter.flush();

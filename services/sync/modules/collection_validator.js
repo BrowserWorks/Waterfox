@@ -5,6 +5,10 @@
 "use strict";
 
 const Cu = Components.utils;
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "Async",
+                                  "resource://services-common/async.js");
 
 
 this.EXPORTED_SYMBOLS = ["CollectionValidator", "CollectionProblemData"];
@@ -69,16 +73,14 @@ class CollectionValidator {
     let collection = engine.itemSource();
     let collectionKey = engine.service.collectionKeys.keyForCollection(engine.name);
     collection.full = true;
-    let items = [];
-    collection.recordHandler = function(item) {
-      item.decrypt(collectionKey);
-      items.push(item.cleartext);
-    };
-    let resp = await collection.getBatched();
-    if (!resp.success) {
-      throw resp;
+    let result = await collection.getBatched();
+    if (!result.response.success) {
+      throw result.response;
     }
-    return items;
+    return result.records.map(record => {
+      record.decrypt(collectionKey);
+      return record.cleartext;
+    });
   }
 
   // Should return a promise that resolves to an array of client items.
@@ -103,7 +105,7 @@ class CollectionValidator {
 
   // Turn the server item into something that can be easily compared with the client
   // items.
-  normalizeServerItem(item) {
+  async normalizeServerItem(item) {
     return item;
   }
 
@@ -138,15 +140,24 @@ class CollectionValidator {
   //   clientRecords: Normalized client records
   //   records: Normalized server records,
   //   deletedRecords: Array of ids that were marked as deleted by the server.
-  compareClientWithServer(clientItems, serverItems) {
-    clientItems = clientItems.map(item => this.normalizeClientItem(item));
-    serverItems = serverItems.map(item => this.normalizeServerItem(item));
+  async compareClientWithServer(clientItems, serverItems) {
+    let maybeYield = Async.jankYielder();
+    const clientRecords = [];
+    for (let item of clientItems) {
+      await maybeYield();
+      clientRecords.push(this.normalizeClientItem(item));
+    }
+    const serverRecords = [];
+    for (let item of serverItems) {
+      await maybeYield();
+      serverRecords.push((await this.normalizeServerItem(item)));
+    }
     let problems = this.emptyProblemData();
     let seenServer = new Map();
     let serverDeleted = new Set();
     let allRecords = new Map();
 
-    for (let record of serverItems) {
+    for (let record of serverRecords) {
       let id = record[this.idProp];
       if (!id) {
         ++problems.missingIDs;
@@ -167,7 +178,7 @@ class CollectionValidator {
     }
 
     let seenClient = new Map();
-    for (let record of clientItems) {
+    for (let record of clientRecords) {
       let id = record[this.idProp];
       record.shouldSync = this.syncedByClient(record);
       seenClient.set(id, record);
@@ -205,8 +216,8 @@ class CollectionValidator {
     }
     return {
       problemData: problems,
-      clientRecords: clientItems,
-      records: serverItems,
+      clientRecords,
+      records: serverRecords,
       deletedRecords: [...serverDeleted]
     };
   }

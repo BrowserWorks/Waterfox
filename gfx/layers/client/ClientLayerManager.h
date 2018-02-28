@@ -9,11 +9,13 @@
 #include <stdint.h>                     // for int32_t
 #include "Layers.h"
 #include "gfxContext.h"                 // for gfxContext
+#include "gfxPrefs.h"
 #include "mozilla/Attributes.h"         // for override
 #include "mozilla/LinkedList.h"         // For LinkedList
 #include "mozilla/WidgetUtils.h"        // for ScreenRotation
 #include "mozilla/gfx/Rect.h"           // for Rect
 #include "mozilla/layers/CompositorTypes.h"
+#include "mozilla/layers/FocusTarget.h"  // for FocusTarget
 #include "mozilla/layers/LayersTypes.h"  // for BufferMode, LayersBackend, etc
 #include "mozilla/layers/ShadowLayers.h"  // for ShadowLayerForwarder, etc
 #include "mozilla/layers/APZTestData.h" // for APZTestData
@@ -133,6 +135,8 @@ public:
 
   virtual void SetIsFirstPaint() override;
 
+  virtual void SetFocusTarget(const FocusTarget& aFocusTarget) override;
+
   /**
    * Pass through call to the forwarder for nsPresContext's
    * CollectPluginGeometryUpdates. Passes widget configuration information
@@ -187,7 +191,7 @@ public:
   }
   virtual bool NeedsComposite() const override { return mNeedsComposite; }
 
-  virtual void Composite() override;
+  virtual void ScheduleComposite() override;
   virtual void GetFrameUniformity(FrameUniformityData* aFrameUniformityData) override;
 
   virtual void DidComposite(uint64_t aTransactionId,
@@ -195,6 +199,7 @@ public:
                             const mozilla::TimeStamp& aCompositeEnd) override;
 
   virtual bool AreComponentAlphaLayersEnabled() override;
+  virtual bool SupportsBackdropCopyForComponentAlpha() override;
 
   // Log APZ test data for the current paint. We supply the paint sequence
   // number ourselves, and take care of calling APZTestData::StartNewPaint()
@@ -203,6 +208,7 @@ public:
                                   const std::string& aKey,
                                   const std::string& aValue)
   {
+    MOZ_ASSERT(gfxPrefs::APZTestLoggingEnabled(), "don't call me");
     mApzTestData.LogTestDataForPaint(mPaintSequenceNumber, aScrollId, aKey, aValue);
   }
 
@@ -219,6 +225,7 @@ public:
                                     const std::string& aKey,
                                     const std::string& aValue)
   {
+    MOZ_ASSERT(gfxPrefs::APZTestLoggingEnabled(), "don't call me");
     mApzTestData.LogTestDataForRepaintRequest(aSequenceNumber, aScrollId, aKey, aValue);
   }
 

@@ -8,7 +8,6 @@
 #define MOZ_UNITS_H_
 
 #include "mozilla/gfx/Coord.h"
-#include "mozilla/gfx/Matrix.h"
 #include "mozilla/gfx/Point.h"
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/gfx/ScaleFactor.h"
@@ -186,6 +185,7 @@ typedef gfx::Matrix4x4Typed<ScreenPixel, ParentLayerPixel> ScreenToParentLayerMa
 typedef gfx::Matrix4x4Typed<ParentLayerPixel, LayerPixel> ParentLayerToLayerMatrix4x4;
 typedef gfx::Matrix4x4Typed<ParentLayerPixel, ScreenPixel> ParentLayerToScreenMatrix4x4;
 typedef gfx::Matrix4x4Typed<ParentLayerPixel, ParentLayerPixel> ParentLayerToParentLayerMatrix4x4;
+typedef gfx::Matrix4x4Typed<ParentLayerPixel, RenderTargetPixel> ParentLayerToRenderTargetMatrix4x4;
 
 /*
  * The pixels that content authors use to specify sizes in.

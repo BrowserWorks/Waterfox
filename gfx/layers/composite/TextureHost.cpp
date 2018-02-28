@@ -22,6 +22,8 @@
 #include "mozilla/layers/TextureClient.h"
 #include "mozilla/layers/GPUVideoTextureHost.h"
 #include "mozilla/layers/WebRenderTextureHost.h"
+#include "mozilla/webrender/RenderBufferTextureHost.h"
+#include "mozilla/webrender/RenderThread.h"
 #include "mozilla/webrender/WebRenderAPI.h"
 #include "nsAString.h"
 #include "mozilla/RefPtr.h"                   // for nsRefPtr
@@ -96,7 +98,7 @@ WrapWithWebRenderTextureHost(ISurfaceAllocator* aDeallocator,
                              LayersBackend aBackend,
                              TextureFlags aFlags)
 {
-  if (!gfxVars::UseWebRender() ||
+  if (!gfx::gfxVars::UseWebRender() ||
       (aFlags & TextureFlags::SNAPSHOT) ||
       (aBackend != LayersBackend::LAYERS_WR) ||
       (!aDeallocator->UsesImageBridge() && !aDeallocator->AsCompositorBridgeParentBase())) {
@@ -542,7 +544,7 @@ bool
 BufferTextureHost::Lock()
 {
   MOZ_ASSERT(!mLocked);
-  if (!MaybeUpload(!mNeedsFullUpdate ? &mMaybeUpdatedRegion : nullptr)) {
+  if (!UploadIfNeeded()) {
       return false;
   }
   mLocked = !!mFirstSource;
@@ -554,6 +556,15 @@ BufferTextureHost::Unlock()
 {
   MOZ_ASSERT(mLocked);
   mLocked = false;
+}
+
+void
+BufferTextureHost::CreateRenderTexture(const wr::ExternalImageId& aExternalImageId)
+{
+  RefPtr<wr::RenderTextureHost> texture =
+      new wr::RenderBufferTextureHost(GetBuffer(), GetBufferDescriptor());
+
+  wr::RenderThread::Get()->RegisterExternalImage(wr::AsUint64(aExternalImageId), texture.forget());
 }
 
 void
@@ -596,25 +607,25 @@ BufferTextureHost::AddWRImage(wr::WebRenderAPI* aAPI,
     aAPI->AddExternalImage(aImageKeys[0],
                            yDescriptor,
                            aExtID,
-                           WrExternalImageBufferType::ExternalBuffer,
+                           wr::WrExternalImageBufferType::ExternalBuffer,
                            0);
     aAPI->AddExternalImage(aImageKeys[1],
                            cbcrDescriptor,
                            aExtID,
-                           WrExternalImageBufferType::ExternalBuffer,
+                           wr::WrExternalImageBufferType::ExternalBuffer,
                            1);
     aAPI->AddExternalImage(aImageKeys[2],
                            cbcrDescriptor,
                            aExtID,
-                           WrExternalImageBufferType::ExternalBuffer,
+                           wr::WrExternalImageBufferType::ExternalBuffer,
                            2);
   }
 }
 
 void
 BufferTextureHost::PushExternalImage(wr::DisplayListBuilder& aBuilder,
-                                     const WrRect& aBounds,
-                                     const WrClipRegionToken aClip,
+                                     const wr::LayoutRect& aBounds,
+                                     const wr::LayoutRect& aClip,
                                      wr::ImageRendering aFilter,
                                      Range<const wr::ImageKey>& aImageKeys)
 {
@@ -628,7 +639,7 @@ BufferTextureHost::PushExternalImage(wr::DisplayListBuilder& aBuilder,
                                   aImageKeys[0],
                                   aImageKeys[1],
                                   aImageKeys[2],
-                                  WrYuvColorSpace::Rec601,
+                                  wr::WrYuvColorSpace::Rec601,
                                   aFilter);
   }
 }
@@ -833,6 +844,16 @@ BufferTextureHost::BindTextureSource(CompositableTextureSourceRef& aTexture)
   return !!aTexture;
 }
 
+bool
+BufferTextureHost::AcquireTextureSource(CompositableTextureSourceRef& aTexture)
+{
+  if (!UploadIfNeeded()) {
+    return false;
+  }
+  aTexture = mFirstSource;
+  return !!mFirstSource;
+}
+
 void
 BufferTextureHost::UnbindTextureSource()
 {
@@ -873,6 +894,12 @@ BufferTextureHost::GetYUVColorSpace() const
     return desc.yUVColorSpace();
   }
   return YUVColorSpace::UNKNOWN;
+}
+
+bool
+BufferTextureHost::UploadIfNeeded()
+{
+  return MaybeUpload(!mNeedsFullUpdate ? &mMaybeUpdatedRegion : nullptr);
 }
 
 bool

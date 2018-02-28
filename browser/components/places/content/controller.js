@@ -217,14 +217,14 @@ PlacesController.prototype = {
         PlacesUtils.transactionManager.undoTransaction();
         return;
       }
-      PlacesTransactions.undo().then(null, Components.utils.reportError);
+      PlacesTransactions.undo().catch(Components.utils.reportError);
       break;
     case "cmd_redo":
       if (!PlacesUIUtils.useAsyncTransactions) {
         PlacesUtils.transactionManager.redoTransaction();
         return;
       }
-      PlacesTransactions.redo().then(null, Components.utils.reportError);
+      PlacesTransactions.redo().catch(Components.utils.reportError);
       break;
     case "cmd_cut":
     case "placesCmd_cut":
@@ -236,11 +236,11 @@ PlacesController.prototype = {
       break;
     case "cmd_paste":
     case "placesCmd_paste":
-      this.paste().then(null, Components.utils.reportError);
+      this.paste().catch(Components.utils.reportError);
       break;
     case "cmd_delete":
     case "placesCmd_delete":
-      this.remove("Remove Selection").then(null, Components.utils.reportError);
+      this.remove("Remove Selection").catch(Components.utils.reportError);
       break;
     case "placesCmd_deleteDataHost":
       var host;
@@ -286,18 +286,18 @@ PlacesController.prototype = {
       this.reloadSelectedLivemark();
       break;
     case "placesCmd_sortBy:name":
-      this.sortFolderByName().then(null, Components.utils.reportError);
+      this.sortFolderByName().catch(Components.utils.reportError);
       break;
     case "placesCmd_createBookmark":
       let node = this._view.selectedNode;
-      PlacesUIUtils.showBookmarkDialog({ action: "add"
-                                       , type: "bookmark"
-                                       , hiddenRows: [ "description"
-                                                     , "keyword"
-                                                     , "location"
-                                                     , "loadInSidebar" ]
-                                       , uri: NetUtil.newURI(node.uri)
-                                       , title: node.title
+      PlacesUIUtils.showBookmarkDialog({ action: "add",
+                                         type: "bookmark",
+                                         hiddenRows: [ "description",
+                                                        "keyword",
+                                                        "location",
+                                                        "loadInSidebar" ],
+                                         uri: NetUtil.newURI(node.uri),
+                                         title: node.title
                                        }, window.top);
       break;
     }
@@ -677,9 +677,9 @@ PlacesController.prototype = {
     if (!node)
       return;
 
-    PlacesUIUtils.showBookmarkDialog({ action: "edit"
-                                     , node
-                                     , hiddenRows: [ "folderPicker" ]
+    PlacesUIUtils.showBookmarkDialog({ action: "edit",
+                                       node,
+                                       hiddenRows: [ "folderPicker" ]
                                      }, window.top);
   },
 
@@ -734,10 +734,10 @@ PlacesController.prototype = {
       throw Cr.NS_ERROR_NOT_AVAILABLE;
 
     let performed =
-      PlacesUIUtils.showBookmarkDialog({ action: "add"
-                                       , type: aType
-                                       , defaultInsertionPoint: ip
-                                       , hiddenRows: [ "folderPicker" ]
+      PlacesUIUtils.showBookmarkDialog({ action: "add",
+                                         type: aType,
+                                         defaultInsertionPoint: ip,
+                                         hiddenRows: [ "folderPicker" ]
                                        }, window.top);
     if (performed) {
       // Select the new item.
@@ -765,8 +765,8 @@ PlacesController.prototype = {
       return;
     }
 
-    let txn = PlacesTransactions.NewSeparator({ parentGuid: await ip.promiseGuid()
-                                              , index: ip.index });
+    let txn = PlacesTransactions.NewSeparator({ parentGuid: await ip.promiseGuid(),
+                                                index: ip.index });
     let guid = await txn.transact();
     let itemId = await PlacesUtils.promiseItemId(guid);
     // Select the new item.
@@ -1268,8 +1268,8 @@ PlacesController.prototype = {
     let itemsToSelect = [];
     if (PlacesUIUtils.useAsyncTransactions) {
       if (ip.isTag) {
-        let uris = items.filter(item => "uri" in item).map(item => NetUtil.newURI(item.uri));
-        await PlacesTransactions.Tag({ uris, tag: ip.tagName }).transact();
+        let urls = items.filter(item => "uri" in item).map(item => Services.io.newURI(item.uri));
+        await PlacesTransactions.Tag({ urls, tag: ip.tagName }).transact();
       } else {
         await PlacesTransactions.batch(async function() {
           let insertionIndex = ip.index;

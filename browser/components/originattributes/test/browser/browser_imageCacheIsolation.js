@@ -17,7 +17,13 @@ server.registerPathHandler("/image.png", imageHandler);
 server.registerPathHandler("/file.html", fileHandler);
 server.start(-1);
 
+// Disable rcwn to make cache behavior deterministic.
+let rcwnEnabled = Services.prefs.getBoolPref("network.http.rcwn.enabled");
+Services.prefs.setBoolPref("network.http.rcwn.enabled", false);
+
 registerCleanupFunction(() => {
+  Services.prefs.setBoolPref("network.http.rcwn.enabled", rcwnEnabled);
+
   server.stop(() => {
     server = null;
   });

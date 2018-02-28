@@ -21,6 +21,7 @@
 #include "nsDocShell.h"
 #include "nsIDOMMouseEvent.h"
 #include "nsIDOMWindowUtils.h"
+#include "nsINamed.h"
 #include "nsIScrollableFrame.h"
 #include "nsIScrollbarMediator.h"
 #include "nsITimer.h"
@@ -124,6 +125,7 @@ APZEventState::~APZEventState()
 {}
 
 class DelayedFireSingleTapEvent final : public nsITimerCallback
+                                      , public nsINamed
 {
 public:
   NS_DECL_ISUPPORTS
@@ -154,6 +156,13 @@ public:
     return NS_OK;
   }
 
+  NS_IMETHOD
+  GetName(nsACString& aName) override
+  {
+    aName.AssignLiteral("DelayedFireSingleTapEvent");
+    return NS_OK;
+  }
+
   void ClearTimer() {
     mTimer = nullptr;
   }
@@ -171,7 +180,7 @@ private:
   RefPtr<nsIContent> mTouchRollup;
 };
 
-NS_IMPL_ISUPPORTS(DelayedFireSingleTapEvent, nsITimerCallback)
+NS_IMPL_ISUPPORTS(DelayedFireSingleTapEvent, nsITimerCallback, nsINamed)
 
 void
 APZEventState::ProcessSingleTap(const CSSPoint& aPoint,
@@ -207,7 +216,7 @@ APZEventState::ProcessSingleTap(const CSSPoint& aPoint,
 
   APZES_LOG("Active element uses style, scheduling timer for click event\n");
   nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID);
-  TabChild* tabChild = widget->GetOwningTabChild();
+  dom::TabChild* tabChild = widget->GetOwningTabChild();
 
   if (tabChild && XRE_IsContentProcess()) {
     timer->SetTarget(
@@ -381,7 +390,8 @@ APZEventState::ProcessTouchEvent(const WidgetTouchEvent& aEvent,
   }
 
   default:
-    NS_WARNING("Unknown touch event type");
+    MOZ_ASSERT_UNREACHABLE("Unknown touch event type");
+    break;
   }
 
   if (sentContentResponse &&
@@ -489,11 +499,6 @@ APZEventState::ProcessAPZStateChange(ViewID aViewId,
     mActiveElementManager->HandleTouchEnd();
     break;
   }
-  case APZStateChange::eSentinel:
-    // Should never happen, but we want this case branch to stop the compiler
-    // whining about unhandled values.
-    MOZ_ASSERT(false);
-    break;
   }
 }
 

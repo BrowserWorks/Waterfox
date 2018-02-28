@@ -144,7 +144,7 @@ XULTreeAccessible::Value(nsString& aValue)
 void
 XULTreeAccessible::Shutdown()
 {
-  if (!mDoc->IsDefunct()) {
+  if (mDoc && !mDoc->IsDefunct()) {
     UnbindCacheEntriesFromDocument(mAccessibleCache);
   }
 
@@ -504,7 +504,7 @@ XULTreeAccessible::ContainerWidget() const
       if (inputElm) {
         nsCOMPtr<nsINode> inputNode = do_QueryInterface(inputElm);
         if (inputNode) {
-          Accessible* input = 
+          Accessible* input =
             mDoc->GetAccessible(inputNode);
           return input ? input->ContainerWidget() : nullptr;
         }

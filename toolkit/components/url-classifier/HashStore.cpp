@@ -38,7 +38,6 @@
 #include "prio.h"
 #include "mozilla/Logging.h"
 #include "mozilla/IntegerPrintfMacros.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "zlib.h"
 #include "Classifier.h"
 #include "nsUrlClassifierDBService.h"
@@ -191,19 +190,26 @@ TableUpdateV4::NewPrefixes(int32_t aSize, std::string& aPrefixes)
       LOG(("%.2X%.2X%.2X%.2X", c[0], c[1], c[2], c[3]));
     }
 
-    LOG(("---- %" PRIuSIZE " fixed-length prefixes in total.", aPrefixes.size() / aSize));
+    LOG(("---- %zu fixed-length prefixes in total.", aPrefixes.size() / aSize));
   }
 
   PrefixStdString* prefix = new PrefixStdString(aPrefixes);
   mPrefixesMap.Put(aSize, prefix);
 }
 
-void
+nsresult
 TableUpdateV4::NewRemovalIndices(const uint32_t* aIndices, size_t aNumOfIndices)
 {
+  MOZ_ASSERT(mRemovalIndiceArray.IsEmpty(), "mRemovalIndiceArray must be empty");
+
+  if (!mRemovalIndiceArray.SetCapacity(aNumOfIndices, fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
   for (size_t i = 0; i < aNumOfIndices; i++) {
     mRemovalIndiceArray.AppendElement(aIndices[i]);
   }
+  return NS_OK;
 }
 
 void
@@ -592,8 +598,9 @@ Merge(ChunkSet* aStoreChunks,
     // no match, add
     if (storeIter == storeEnd
         || storeIter->Compare(updatePrefix) != 0) {
-      if (!adds.AppendElement(updatePrefix))
+      if (!adds.AppendElement(updatePrefix, fallible)) {
         return NS_ERROR_OUT_OF_MEMORY;
+      }
     }
   }
 
@@ -939,9 +946,11 @@ HashStore::WriteSubPrefixes(nsIOutputStream* aOut)
   nsTArray<uint32_t> subchunks;
   nsTArray<uint32_t> prefixes;
   uint32_t count = mSubPrefixes.Length();
-  addchunks.SetCapacity(count);
-  subchunks.SetCapacity(count);
-  prefixes.SetCapacity(count);
+  if (!addchunks.SetCapacity(count, fallible) ||
+      !subchunks.SetCapacity(count, fallible) ||
+      !prefixes.SetCapacity(count, fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   for (uint32_t i = 0; i < count; i++) {
     addchunks.AppendElement(mSubPrefixes[i].AddChunk());
@@ -1191,7 +1200,7 @@ HashStore::AugmentAdds(const nsTArray<uint32_t>& aPrefixes)
 {
   uint32_t cnt = aPrefixes.Length();
   if (cnt != mAddPrefixes.Length()) {
-    LOG(("Amount of prefixes in cache not consistent with store (%" PRIuSIZE " vs %" PRIuSIZE ")",
+    LOG(("Amount of prefixes in cache not consistent with store (%zu vs %zu)",
          aPrefixes.Length(), mAddPrefixes.Length()));
     return NS_ERROR_FAILURE;
   }

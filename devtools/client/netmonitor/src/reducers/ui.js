@@ -5,12 +5,15 @@
 "use strict";
 
 const I = require("devtools/client/shared/vendor/immutable");
+const Services = require("Services");
 const {
   CLEAR_REQUESTS,
   OPEN_NETWORK_DETAILS,
+  DISABLE_BROWSER_CACHE,
   OPEN_STATISTICS,
   REMOVE_SELECTED_CUSTOM_REQUEST,
   RESET_COLUMNS,
+  RESPONSE_HEADERS,
   SELECT_DETAILS_PANEL_TAB,
   SEND_CUSTOM_REQUEST,
   SELECT_REQUEST,
@@ -18,7 +21,7 @@ const {
   WATERFALL_RESIZE,
 } = require("../constants");
 
-const Columns = I.Record({
+const cols = {
   status: true,
   method: true,
   file: true,
@@ -38,12 +41,19 @@ const Columns = I.Record({
   duration: false,
   latency: false,
   waterfall: true,
-});
+};
+const Columns = I.Record(
+  Object.assign(
+    cols,
+    RESPONSE_HEADERS.reduce((acc, header) => Object.assign(acc, { [header]: false }), {})
+  )
+);
 
 const UI = I.Record({
   columns: new Columns(),
   detailsPanelSelectedTab: "headers",
   networkDetailsOpen: false,
+  browserCacheDisabled: Services.prefs.getBoolPref("devtools.cache.disabled"),
   statisticsOpen: false,
   waterfallWidth: null,
 });
@@ -58,6 +68,10 @@ function resizeWaterfall(state, action) {
 
 function openNetworkDetails(state, action) {
   return state.set("networkDetailsOpen", action.open);
+}
+
+function disableBrowserCache(state, action) {
+  return state.set("browserCacheDisabled", action.disabled);
 }
 
 function openStatistics(state, action) {
@@ -87,6 +101,8 @@ function ui(state = new UI(), action) {
       return openNetworkDetails(state, { open: false });
     case OPEN_NETWORK_DETAILS:
       return openNetworkDetails(state, action);
+    case DISABLE_BROWSER_CACHE:
+      return disableBrowserCache(state, action);
     case OPEN_STATISTICS:
       return openStatistics(state, action);
     case RESET_COLUMNS:

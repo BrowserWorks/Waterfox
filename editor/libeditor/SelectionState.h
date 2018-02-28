@@ -40,10 +40,10 @@ public:
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(RangeItem)
   NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(RangeItem)
 
-  nsCOMPtr<nsINode> startNode;
-  int32_t startOffset;
-  nsCOMPtr<nsINode> endNode;
-  int32_t endOffset;
+  nsCOMPtr<nsINode> mStartContainer;
+  int32_t mStartOffset;
+  nsCOMPtr<nsINode> mEndContainer;
+  int32_t mEndOffset;
 };
 
 /**
@@ -109,11 +109,8 @@ public:
   // DOM Range gravity will promote the selection out of the node on deletion,
   // which is not what you want if you know you are reinserting it.
   nsresult SelAdjCreateNode(nsINode* aParent, int32_t aPosition);
-  nsresult SelAdjCreateNode(nsIDOMNode* aParent, int32_t aPosition);
   nsresult SelAdjInsertNode(nsINode* aParent, int32_t aPosition);
-  nsresult SelAdjInsertNode(nsIDOMNode* aParent, int32_t aPosition);
   void SelAdjDeleteNode(nsINode* aNode);
-  void SelAdjDeleteNode(nsIDOMNode* aNode);
   nsresult SelAdjSplitNode(nsIContent& aOldRightNode, int32_t aOffset,
                            nsIContent* aNewLeftNode);
   nsresult SelAdjJoinNodes(nsINode& aLeftNode,
@@ -194,10 +191,10 @@ public:
     , mOffset(aOffset)
   {
     mRangeItem = new RangeItem();
-    mRangeItem->startNode = *mNode;
-    mRangeItem->endNode = *mNode;
-    mRangeItem->startOffset = *mOffset;
-    mRangeItem->endOffset = *mOffset;
+    mRangeItem->mStartContainer = *mNode;
+    mRangeItem->mEndContainer = *mNode;
+    mRangeItem->mStartOffset = *mOffset;
+    mRangeItem->mEndOffset = *mOffset;
     mRangeUpdater.RegisterRangeItem(mRangeItem);
   }
 
@@ -209,10 +206,10 @@ public:
     , mOffset(aOffset)
   {
     mRangeItem = new RangeItem();
-    mRangeItem->startNode = do_QueryInterface(*mDOMNode);
-    mRangeItem->endNode = do_QueryInterface(*mDOMNode);
-    mRangeItem->startOffset = *mOffset;
-    mRangeItem->endOffset = *mOffset;
+    mRangeItem->mStartContainer = do_QueryInterface(*mDOMNode);
+    mRangeItem->mEndContainer = do_QueryInterface(*mDOMNode);
+    mRangeItem->mStartOffset = *mOffset;
+    mRangeItem->mEndOffset = *mOffset;
     mRangeUpdater.RegisterRangeItem(mRangeItem);
   }
 
@@ -220,11 +217,11 @@ public:
   {
     mRangeUpdater.DropRangeItem(mRangeItem);
     if (mNode) {
-      *mNode = mRangeItem->startNode;
+      *mNode = mRangeItem->mStartContainer;
     } else {
-      *mDOMNode = GetAsDOMNode(mRangeItem->startNode);
+      *mDOMNode = GetAsDOMNode(mRangeItem->mStartContainer);
     }
-    *mOffset = mRangeItem->startOffset;
+    *mOffset = mRangeItem->mStartOffset;
   }
 };
 

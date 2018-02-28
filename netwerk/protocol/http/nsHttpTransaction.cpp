@@ -173,19 +173,26 @@ void nsHttpTransaction::ResumeReading()
     }
 }
 
+bool nsHttpTransaction::EligibleForThrottling() const
+{
+    return (mClassOfService & (nsIClassOfService::Throttleable |
+                               nsIClassOfService::DontThrottle |
+                               nsIClassOfService::Leader |
+                               nsIClassOfService::Unblocked)) ==
+        nsIClassOfService::Throttleable;
+}
+
 void nsHttpTransaction::SetClassOfService(uint32_t cos)
 {
-    bool wasThrottling = mClassOfService & nsIClassOfService::Throttleable;
-
+    bool wasThrottling = EligibleForThrottling();
     mClassOfService = cos;
-
-    bool isThrottling = mClassOfService & nsIClassOfService::Throttleable;
+    bool isThrottling = EligibleForThrottling();
 
     if (mConnection && wasThrottling != isThrottling) {
         // Do nothing until we are actually activated.  For now
-        // only remember the throttle flag.  Call to MoveActiveTransaction
+        // only remember the throttle flag.  Call to UpdateActiveTransaction
         // would add this transaction to the list too early.
-        gHttpHandler->ConnMgr()->MoveActiveTransaction(this, isThrottling);
+        gHttpHandler->ConnMgr()->UpdateActiveTransaction(this);
 
         if (mReadingStopped && !isThrottling) {
             ResumeReading();
@@ -242,6 +249,7 @@ nsHttpTransaction::Init(uint32_t caps,
     MOZ_ASSERT(NS_IsMainThread());
 
     mTopLevelOuterContentWindowId = topLevelOuterContentWindowId;
+    LOG(("  window-id = %" PRIx64, mTopLevelOuterContentWindowId));
 
     mActivityDistributor = services::GetActivityDistributor();
     if (!mActivityDistributor) {
@@ -518,8 +526,7 @@ nsHttpTransaction::OnActivated(bool h2)
     }
 
     mActivated = true;
-    gHttpHandler->ConnMgr()->AddActiveTransaction(
-        this, mClassOfService & nsIClassOfService::Throttleable);
+    gHttpHandler->ConnMgr()->AddActiveTransaction(this);
 }
 
 void
@@ -577,6 +584,14 @@ nsHttpTransaction::OnTransportStatus(nsITransport* transport,
         } else if (status == NS_NET_STATUS_CONNECTED_TO) {
             SetConnectEnd(TimeStamp::Now(), true);
         } else if (status == NS_NET_STATUS_TLS_HANDSHAKE_ENDED) {
+            {
+                // before overwriting connectEnd, copy it to secureConnectionStart
+                MutexAutoLock lock(mLock);
+                if (mTimings.secureConnectionStart.IsNull() &&
+                    !mTimings.connectEnd.IsNull()) {
+                    mTimings.secureConnectionStart = mTimings.connectEnd;
+                }
+            }
             SetConnectEnd(TimeStamp::Now(), false);
         } else if (status == NS_NET_STATUS_SENDING_TO) {
             // Set the timestamp to Now(), only if it null
@@ -617,7 +632,7 @@ nsHttpTransaction::OnTransportStatus(nsITransport* transport,
             LOG3(("ObserveActivity failed (%08x)", static_cast<uint32_t>(rv)));
         }
     }
-    
+
     // nsHttpChannel synthesizes progress events in OnDataAvailable
     if (status == NS_NET_STATUS_RECEIVING_FROM)
         return;
@@ -825,12 +840,25 @@ bool nsHttpTransaction::ShouldStopReading()
     if (mActivatedAsH2) {
         // Throttling feature is now disabled for http/2 transactions
         // because of bug 1367861.  The logic around mActivatedAsH2
-        // will be removed when that is fixed
+        // will be removed when that is fixed.
+        // 
+        // Calling ShouldStopReading on the manager just to make sure 
+        // the throttling time window is correctly updated by this transaction.
+        Unused << gHttpHandler->ConnMgr()->ShouldStopReading(this);
         return false;
     }
 
-    if (!gHttpHandler->ConnMgr()->ShouldStopReading(
-            this, mClassOfService & nsIClassOfService::Throttleable)) {
+    if (mClassOfService & nsIClassOfService::DontThrottle) {
+        // We deliberately don't touch the throttling window here since
+        // DontThrottle requests are expected to be long-standing media
+        // streams and would just unnecessarily block running downloads.
+        // If we want to ballance bandwidth for media responses against
+        // running downloads, we need to find something smarter like 
+        // changing the suspend/resume throttling intervals at-runtime.
+        return false;
+    }
+
+    if (!gHttpHandler->ConnMgr()->ShouldStopReading(this)) {
         // We are not obligated to throttle
         return false;
     }
@@ -924,8 +952,7 @@ nsHttpTransaction::Close(nsresult reason)
          this, static_cast<uint32_t>(reason)));
 
     if (!mClosed) {
-        gHttpHandler->ConnMgr()->RemoveActiveTransaction(
-            this, mClassOfService & nsIClassOfService::Throttleable);
+        gHttpHandler->ConnMgr()->RemoveActiveTransaction(this);
         mActivated = false;
     }
 
@@ -1837,8 +1864,11 @@ nsHttpTransaction::DispatchedAsBlocking()
 void
 nsHttpTransaction::RemoveDispatchedAsBlocking()
 {
-    if (!mRequestContext || !mDispatchedAsBlocking)
+    if (!mRequestContext || !mDispatchedAsBlocking) {
+        LOG(("nsHttpTransaction::RemoveDispatchedAsBlocking this=%p not blocking",
+             this));
         return;
+    }
 
     uint32_t blockers = 0;
     nsresult rv = mRequestContext->RemoveBlockingTransaction(&blockers);
@@ -1944,6 +1974,13 @@ nsHttpTransaction::Timings()
 }
 
 void
+nsHttpTransaction::BootstrapTimings(TimingStruct times)
+{
+    mozilla::MutexAutoLock lock(mLock);
+    mTimings = times;
+}
+
+void
 nsHttpTransaction::SetDomainLookupStart(mozilla::TimeStamp timeStamp, bool onlyIfNull)
 {
     mozilla::MutexAutoLock lock(mLock);
@@ -2035,6 +2072,13 @@ nsHttpTransaction::GetConnectStart()
 }
 
 mozilla::TimeStamp
+nsHttpTransaction::GetSecureConnectionStart()
+{
+    mozilla::MutexAutoLock lock(mLock);
+    return mTimings.secureConnectionStart;
+}
+
+mozilla::TimeStamp
 nsHttpTransaction::GetConnectEnd()
 {
     mozilla::MutexAutoLock lock(mLock);
@@ -2068,14 +2112,16 @@ nsHttpTransaction::GetResponseEnd()
 
 class DeleteHttpTransaction : public Runnable {
 public:
-    explicit DeleteHttpTransaction(nsHttpTransaction *trans)
-        : mTrans(trans)
-    {}
+  explicit DeleteHttpTransaction(nsHttpTransaction* trans)
+    : Runnable("net::DeleteHttpTransaction")
+    , mTrans(trans)
+  {
+  }
 
-    NS_IMETHOD Run() override
-    {
-        delete mTrans;
-        return NS_OK;
+  NS_IMETHOD Run() override
+  {
+    delete mTrans;
+    return NS_OK;
     }
 private:
     nsHttpTransaction *mTrans;

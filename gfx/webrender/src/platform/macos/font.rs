@@ -15,10 +15,11 @@ use core_text::font_descriptor::kCTFontDefaultOrientation;
 use core_text;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-use webrender_traits::{ColorU, FontKey, FontRenderMode, GlyphDimensions};
-use webrender_traits::{GlyphKey, GlyphOptions, SubpixelPoint};
-use webrender_traits::NativeFontHandle;
+use api::{ColorU, FontKey, FontRenderMode, GlyphDimensions};
+use api::{GlyphKey, SubpixelPoint};
+use api::{FontInstanceKey, NativeFontHandle};
 use gamma_lut::{GammaLut, Color as ColorLut};
+use std::ptr;
 
 pub struct FontContext {
     cg_fonts: HashMap<FontKey, CGFont>,
@@ -31,6 +32,8 @@ pub struct FontContext {
 unsafe impl Send for FontContext {}
 
 pub struct RasterizedGlyph {
+    pub top: f32,
+    pub left: f32,
     pub width: u32,
     pub height: u32,
     pub bytes: Vec<u8>,
@@ -39,6 +42,8 @@ pub struct RasterizedGlyph {
 impl RasterizedGlyph {
     pub fn blank() -> RasterizedGlyph {
         RasterizedGlyph {
+            top: 0.0,
+            left: 0.0,
             width: 0,
             height: 0,
             bytes: vec![],
@@ -52,6 +57,7 @@ struct GlyphMetrics {
     rasterized_ascent: i32,
     rasterized_width: u32,
     rasterized_height: u32,
+    advance: f32,
 }
 
 // According to the Skia source code, there's no public API to
@@ -59,7 +65,7 @@ struct GlyphMetrics {
 // this function from Skia which is used to check if a glyph
 // can be rendered with subpixel AA.
 fn supports_subpixel_aa() -> bool {
-    let mut cg_context = CGContext::create_bitmap_context(1, 1, 8, 4,
+    let mut cg_context = CGContext::create_bitmap_context(None, 1, 1, 8, 4,
                                                           &CGColorSpace::create_device_rgb(),
                                                           kCGImageAlphaNoneSkipFirst |
                                                           kCGBitmapByteOrder32Little);
@@ -93,6 +99,7 @@ fn get_glyph_metrics(ct_font: &CTFont,
             rasterized_height: 0,
             rasterized_ascent: 0,
             rasterized_descent: 0,
+            advance: 0.0,
         };
     }
 
@@ -121,12 +128,18 @@ fn get_glyph_metrics(ct_font: &CTFont,
     let width = right - left;
     let height = top - bottom;
 
+    let advance = ct_font.get_advances_for_glyphs(kCTFontDefaultOrientation,
+                                                  &glyph,
+                                                  ptr::null_mut(),
+                                                  1);
+
     let metrics = GlyphMetrics {
         rasterized_left: left,
         rasterized_width: width as u32,
         rasterized_height: height as u32,
         rasterized_ascent: top,
         rasterized_descent: -bottom,
+        advance: advance as f32,
     };
 
     metrics
@@ -206,9 +219,28 @@ impl FontContext {
         }
     }
 
+    pub fn get_glyph_index(&mut self, font_key: FontKey, ch: char) -> Option<u32> {
+        let character = ch as u16;
+        let mut glyph = 0;
+
+        self.get_ct_font(font_key, Au(16 * 60))
+            .and_then(|ref ct_font| {
+                let result = ct_font.get_glyphs_for_characters(&character,
+                                                               &mut glyph,
+                                                               1);
+
+                if result {
+                    Some(glyph as u32)
+                } else {
+                    None
+                }
+            })
+    }
+
     pub fn get_glyph_dimensions(&mut self,
+                                font: &FontInstanceKey,
                                 key: &GlyphKey) -> Option<GlyphDimensions> {
-        self.get_ct_font(key.font_key, key.size).and_then(|ref ct_font| {
+        self.get_ct_font(font.font_key, font.size).and_then(|ref ct_font| {
             let glyph = key.index as CGGlyph;
             let metrics = get_glyph_metrics(ct_font, glyph, &key.subpixel_point);
             if metrics.rasterized_width == 0 || metrics.rasterized_height == 0 {
@@ -219,6 +251,7 @@ impl FontContext {
                     top: metrics.rasterized_ascent,
                     width: metrics.rasterized_width as u32,
                     height: metrics.rasterized_height as u32,
+                    advance: metrics.advance,
                 })
             }
         })
@@ -264,12 +297,11 @@ impl FontContext {
     }
 
     pub fn rasterize_glyph(&mut self,
-                           key: &GlyphKey,
-                           render_mode: FontRenderMode,
-                           _glyph_options: Option<GlyphOptions>)
+                           font: &FontInstanceKey,
+                           key: &GlyphKey)
                            -> Option<RasterizedGlyph> {
 
-        let ct_font = match self.get_ct_font(key.font_key, key.size) {
+        let ct_font = match self.get_ct_font(font.font_key, font.size) {
             Some(font) => font,
             None => return Some(RasterizedGlyph::blank())
         };
@@ -280,12 +312,12 @@ impl FontContext {
             return Some(RasterizedGlyph::blank())
         }
 
-        let context_flags = match render_mode {
+        let context_flags = match font.render_mode {
             FontRenderMode::Subpixel => kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst,
             FontRenderMode::Alpha | FontRenderMode::Mono => kCGImageAlphaPremultipliedLast,
         };
 
-        let mut cg_context = CGContext::create_bitmap_context(metrics.rasterized_width as usize,
+        let mut cg_context = CGContext::create_bitmap_context(None, metrics.rasterized_width as usize,
                                                               metrics.rasterized_height as usize,
                                                               8,
                                                               metrics.rasterized_width as usize * 4,
@@ -314,7 +346,7 @@ impl FontContext {
         // For alpha/mono, WR ignores all channels other than alpha.
         // Also note that WR expects text to be black bg with white text, so invert
         // when we draw the glyphs.
-        let (antialias, smooth) = match render_mode {
+        let (antialias, smooth) = match font.render_mode {
             FontRenderMode::Subpixel => (true, true),
             FontRenderMode::Alpha => (true, false),
             FontRenderMode::Mono => (false, false),
@@ -365,7 +397,7 @@ impl FontContext {
 
         // Convert to linear space for subpixel AA.
         // We explicitly do not do this for grayscale AA
-        if render_mode == FontRenderMode::Subpixel {
+        if font.render_mode == FontRenderMode::Subpixel {
             self.gamma_lut.coregraphics_convert_to_linear_bgra(&mut rasterized_pixels,
                                                                metrics.rasterized_width as usize,
                                                                metrics.rasterized_height as usize);
@@ -382,7 +414,7 @@ impl FontContext {
                 pixel[1] = 255 - pixel[1];
                 pixel[2] = 255 - pixel[2];
 
-                pixel[3] = match render_mode {
+                pixel[3] = match font.render_mode {
                     FontRenderMode::Subpixel => 255,
                     _ => {
                         assert_eq!(pixel[0], pixel[1]);
@@ -396,10 +428,12 @@ impl FontContext {
         self.gamma_correct_pixels(&mut rasterized_pixels,
                                   metrics.rasterized_width as usize,
                                   metrics.rasterized_height as usize,
-                                  render_mode,
-                                  key.color);
+                                  font.render_mode,
+                                  font.color);
 
         Some(RasterizedGlyph {
+            left: metrics.rasterized_left as f32,
+            top: metrics.rasterized_ascent as f32,
             width: metrics.rasterized_width,
             height: metrics.rasterized_height,
             bytes: rasterized_pixels,

@@ -18,6 +18,7 @@ use core_foundation::string::{CFString, CFStringRef};
 use core_foundation::url::{CFURL, CFURLRef};
 use core_graphics::base::CGFloat;
 
+use libc::c_void;
 use std::mem;
 
 /*
@@ -182,7 +183,7 @@ pub const kCTFontPriorityDynamic: CTFontPriority = 50000;
 pub const kCTFontPriorityProcess: CTFontPriority = 60000;
 
 #[repr(C)]
-struct __CTFontDescriptor;
+pub struct __CTFontDescriptor(c_void);
 
 pub type CTFontDescriptorRef = *const __CTFontDescriptor;
 
@@ -252,34 +253,44 @@ impl CTFontDescriptor {
 
 impl CTFontDescriptor {
     pub fn family_name(&self) -> String {
-        let value = self.get_string_attribute(kCTFontDisplayNameAttribute);
-        value.expect("A font2 must have a non-null font family name.")
+        unsafe {
+            let value = self.get_string_attribute(kCTFontDisplayNameAttribute);
+            value.expect("A font2 must have a non-null font family name.")
+        }
     }
 
     pub fn font_name(&self) -> String {
-        let value = self.get_string_attribute(kCTFontNameAttribute);
-        value.expect("A font must have a non-null name.")
+        unsafe {
+            let value = self.get_string_attribute(kCTFontNameAttribute);
+            value.expect("A font must have a non-null name.")
+        }
     }
 
     pub fn style_name(&self) -> String {
-        let value = self.get_string_attribute(kCTFontStyleNameAttribute);
-        value.expect("A font must have a non-null style name.")
+        unsafe {
+            let value = self.get_string_attribute(kCTFontStyleNameAttribute);
+            value.expect("A font must have a non-null style name.")
+        }
     }
 
     pub fn display_name(&self) -> String {
-        let value = self.get_string_attribute(kCTFontDisplayNameAttribute);
-        value.expect("A font must have a non-null display name.")
+        unsafe {
+            let value = self.get_string_attribute(kCTFontDisplayNameAttribute);
+            value.expect("A font must have a non-null display name.")
+        }
     }
 
-    pub fn font_path(&self) -> String {
+    pub fn font_path(&self) -> Option<String> {
         unsafe {
             let value = CTFontDescriptorCopyAttribute(self.obj, kCTFontURLAttribute);
-            assert!(!value.is_null());
+            if value.is_null() {
+                return None;
+            }
 
             let value: CFType = TCFType::wrap_under_get_rule(value);
             assert!(value.instance_of::<CFURLRef,CFURL>());
             let url: CFURL = TCFType::wrap_under_get_rule(mem::transmute(value.as_CFTypeRef()));
-            format!("{:?}", url)
+            Some(format!("{:?}", url))
         }
     }
 }
@@ -297,7 +308,7 @@ pub fn debug_descriptor(desc: &CTFontDescriptor) {
     println!("name: {}", desc.font_name());
     println!("style: {}", desc.style_name());
     println!("display: {}", desc.display_name());
-    println!("path: {}", desc.font_path());
+    println!("path: {:?}", desc.font_path());
     desc.show();
 }
 

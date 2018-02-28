@@ -16,6 +16,9 @@
 #include "ExtendInputEffectD2D1.h"
 #include "Tools.h"
 #include "nsAppRunner.h"
+#include "MainThreadUtils.h"
+
+#include "mozilla/Mutex.h"
 
 using namespace std;
 
@@ -32,10 +35,9 @@ namespace gfx {
 
 uint64_t DrawTargetD2D1::mVRAMUsageDT;
 uint64_t DrawTargetD2D1::mVRAMUsageSS;
-IDWriteFactory *DrawTargetD2D1::mDWriteFactory;
-ID2D1Factory1* DrawTargetD2D1::mFactory = nullptr;
+StaticRefPtr<ID2D1Factory1> DrawTargetD2D1::mFactory;
 
-ID2D1Factory1 *D2DFactory1()
+RefPtr<ID2D1Factory1> D2DFactory()
 {
   return DrawTargetD2D1::factory();
 }
@@ -608,7 +610,7 @@ DrawTargetD2D1::FillGlyphs(ScaledFont *aFont,
                            const GlyphBuffer &aBuffer,
                            const Pattern &aPattern,
                            const DrawOptions &aOptions,
-                           const GlyphRenderingOptions *aRenderingOptions)
+                           const GlyphRenderingOptions*)
 {
   if (aFont->GetType() != FontType::DWRITE) {
     gfxDebug() << *this << ": Ignoring drawing call for incompatible font.";
@@ -617,16 +619,7 @@ DrawTargetD2D1::FillGlyphs(ScaledFont *aFont,
 
   ScaledFontDWrite *font = static_cast<ScaledFontDWrite*>(aFont);
 
-  IDWriteRenderingParams *params = nullptr;
-  if (aRenderingOptions) {
-    if (aRenderingOptions->GetType() != FontType::DWRITE) {
-      gfxDebug() << *this << ": Ignoring incompatible GlyphRenderingOptions.";
-      // This should never happen.
-      MOZ_ASSERT(false);
-    } else {
-      params = static_cast<const GlyphRenderingOptionsDWrite*>(aRenderingOptions)->mParams;
-    }
-  }
+  IDWriteRenderingParams *params = font->mParams;
 
   AntialiasMode aaMode = font->GetDefaultAAMode();
 
@@ -1045,7 +1038,8 @@ DrawTargetD2D1::CreateGradientStops(GradientStop *rawStops, uint32_t aNumStops, 
     return nullptr;
   }
 
-  return MakeAndAddRef<GradientStopsD2D>(stopCollection, Factory::GetDirect3D11Device());
+  RefPtr<ID3D11Device> device = Factory::GetDirect3D11Device();
+  return MakeAndAddRef<GradientStopsD2D>(stopCollection, device);
 }
 
 already_AddRefed<FilterNode>
@@ -1077,12 +1071,10 @@ DrawTargetD2D1::Init(ID3D11Texture2D* aTexture, SurfaceFormat aFormat)
 {
   HRESULT hr;
 
-  ID2D1Device* device = Factory::GetD2D1Device();
+  RefPtr<ID2D1Device> device = Factory::GetD2D1Device(&mDeviceSeq);
   if (!device) {
     gfxCriticalNote << "[D2D1.1] Failed to obtain a device for DrawTargetD2D1::Init(ID3D11Texture2D*, SurfaceFormat).";
     return false;
-  } else {
-    mDeviceSeq = Factory::GetD2D1DeviceSeq();
   }
 
   hr = device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, getter_AddRefs(mDC));
@@ -1144,12 +1136,10 @@ DrawTargetD2D1::Init(const IntSize &aSize, SurfaceFormat aFormat)
 {
   HRESULT hr;
 
-  ID2D1Device* device = Factory::GetD2D1Device();
+  RefPtr<ID2D1Device> device = Factory::GetD2D1Device(&mDeviceSeq);
   if (!device) {
     gfxCriticalNote << "[D2D1.1] Failed to obtain a device for DrawTargetD2D1::Init(IntSize, SurfaceFormat).";
     return false;
-  } else {
-    mDeviceSeq = Factory::GetD2D1DeviceSeq();
   }
 
   hr = device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, getter_AddRefs(mDC));
@@ -1209,12 +1199,17 @@ DrawTargetD2D1::GetByteSize() const
   return mSize.width * mSize.height * BytesPerPixel(mFormat);
 }
 
-ID2D1Factory1*
+RefPtr<ID2D1Factory1>
 DrawTargetD2D1::factory()
 {
-  if (mFactory) {
+  StaticMutexAutoLock lock(Factory::mDeviceLock);
+
+  if (mFactory || !NS_IsMainThread()) {
     return mFactory;
   }
+
+  // We don't allow initializing the factory off the main thread.
+  MOZ_RELEASE_ASSERT(NS_IsMainThread());
 
   RefPtr<ID2D1Factory> factory;
   D2D1CreateFactoryFunc createD2DFactory;
@@ -1245,10 +1240,13 @@ DrawTargetD2D1::factory()
     return nullptr;
   }
 
-  hr = factory->QueryInterface((ID2D1Factory1**)&mFactory);
-  if (FAILED(hr) || !mFactory) {
+  RefPtr<ID2D1Factory1> factory1;
+  hr = factory->QueryInterface(__uuidof(ID2D1Factory1), getter_AddRefs(factory1));
+  if (FAILED(hr) || !factory1) {
     return nullptr;
   }
+
+  mFactory = factory1;
 
   ExtendInputEffectD2D1::Register(mFactory);
   RadialGradientEffectD2D1::Register(mFactory);
@@ -1256,40 +1254,15 @@ DrawTargetD2D1::factory()
   return mFactory;
 }
 
-IDWriteFactory*
-DrawTargetD2D1::GetDWriteFactory()
-{
-  if (mDWriteFactory) {
-    return mDWriteFactory;
-  }
-
-  decltype(DWriteCreateFactory)* createDWriteFactory;
-  HMODULE dwriteModule = LoadLibraryW(L"dwrite.dll");
-  createDWriteFactory = (decltype(DWriteCreateFactory)*)
-    GetProcAddress(dwriteModule, "DWriteCreateFactory");
-
-  if (!createDWriteFactory) {
-    gfxWarning() << "Failed to locate DWriteCreateFactory function.";
-    return nullptr;
-  }
-
-  HRESULT hr = createDWriteFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
-                                   reinterpret_cast<IUnknown**>(&mDWriteFactory));
-
-  if (FAILED(hr)) {
-    gfxWarning() << "Failed to create DWrite Factory.";
-  }
-
-  return mDWriteFactory;
-}
-
 void
 DrawTargetD2D1::CleanupD2D()
 {
+  MOZ_RELEASE_ASSERT(NS_IsMainThread());
+  Factory::mDeviceLock.AssertCurrentThreadOwns();
+
   if (mFactory) {
     RadialGradientEffectD2D1::Unregister(mFactory);
     ExtendInputEffectD2D1::Unregister(mFactory);
-    mFactory->Release();
     mFactory = nullptr;
   }
 }
@@ -2032,7 +2005,8 @@ DrawTargetD2D1::PushD2DLayer(ID2D1DeviceContext *aDC, ID2D1Geometry *aGeometry, 
 
 bool
 DrawTargetD2D1::IsDeviceContextValid() {
-  return (mDeviceSeq == Factory::GetD2D1DeviceSeq()) && Factory::GetD2D1Device();
+  uint32_t seqNo;
+  return Factory::GetD2D1Device(&seqNo) && seqNo == mDeviceSeq;
 }
 
 }

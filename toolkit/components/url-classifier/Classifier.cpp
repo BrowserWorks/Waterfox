@@ -21,7 +21,6 @@
 #include "mozilla/SyncRunnable.h"
 #include "mozilla/Base64.h"
 #include "mozilla/Unused.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/UniquePtr.h"
 #include "nsIUrlClassifierUtils.h"
 #include "nsUrlClassifierDBService.h"
@@ -258,9 +257,6 @@ Classifier::Open(nsIFile& aCacheDirectory)
   rv = CreateStoreDirectory();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mCryptoHash = do_CreateInstance(NS_CRYPTO_HASH_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
   // Build the list of know urlclassifier lists
   // XXX: Disk IO potentially on the main thread during startup
   RegenActiveTables();
@@ -302,7 +298,8 @@ Classifier::Reset()
     return;
   }
 
-  nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction(resetFunc);
+  nsCOMPtr<nsIRunnable> r =
+    NS_NewRunnableFunction("safebrowsing::Classifier::Reset", resetFunc);
   SyncRunnable::DispatchToThread(mUpdateThread, r);
 }
 
@@ -467,22 +464,10 @@ Classifier::Check(const nsACString& aSpec,
     }
   }
 
-  // Only record telemetry when both v2 and v4 have data.
-  bool isV2Empty = true, isV4Empty = true;
-  bool shouldDoTelemetry = false;
-  for (auto&& cache : cacheArray) {
-    bool& ref = LookupCache::Cast<LookupCacheV2>(cache) ? isV2Empty : isV4Empty;
-    ref = ref ? cache->IsEmpty() : false;
-    if (!isV2Empty && !isV4Empty) {
-      shouldDoTelemetry = true;
-      break;
-    }
-  }
-
   // Now check each lookup fragment against the entries in the DB.
   for (uint32_t i = 0; i < fragments.Length(); i++) {
     Completion lookupHash;
-    lookupHash.FromPlaintext(fragments[i], mCryptoHash);
+    lookupHash.FromPlaintext(fragments[i]);
 
     if (LOG_ENABLED()) {
       nsAutoCString checking;
@@ -500,10 +485,10 @@ Classifier::Check(const nsACString& aSpec,
       NS_ENSURE_SUCCESS(rv, rv);
 
       if (has) {
-        LookupResult *result = aResults.AppendElement();
-        if (!result)
+        LookupResult *result = aResults.AppendElement(fallible);
+        if (!result) {
           return NS_ERROR_OUT_OF_MEMORY;
-
+        }
         LOG(("Found a result in %s: %s",
              cache->TableName().get(),
              confirmed ? "confirmed." : "Not confirmed."));
@@ -513,26 +498,8 @@ Classifier::Check(const nsACString& aSpec,
         result->mTableName.Assign(cache->TableName());
         result->mPartialHashLength = confirmed ? COMPLETE_SIZE : matchLength;
         result->mProtocolV2 = LookupCache::Cast<LookupCacheV2>(cache);
-
-        // There are two cases we are going to ignore the result for telemetry:
-        // 1. shouldDoTelemetry == false(when either v2 or v4 table is empty)
-        // 2. When match was found in the table which is not provided by google.
-        if (!shouldDoTelemetry ||
-            !StringBeginsWith(result->mTableName, NS_LITERAL_CSTRING("goog"))) {
-          continue;
-        }
-
-        result->mMatchResult = result->mProtocolV2 ?
-                               MatchResult::eV2Prefix : MatchResult::eV4Prefix;
       }
     }
-  }
-
-  // If we cannot find the prefix in neither the v2 nor the v4 database, record the
-  // telemetry here because we won't reach nsUrlClassifierLookupCallback:::HandleResult.
-  if (shouldDoTelemetry && aResults.Length() == 0) {
-    Telemetry::Accumulate(Telemetry::URLCLASSIFIER_MATCH_RESULT,
-                          static_cast<uint8_t>(MatchResult::eNoMatch));
   }
 
   return NS_OK;
@@ -768,25 +735,30 @@ Classifier::AsyncApplyUpdates(nsTArray<TableUpdate*>* aUpdates,
   nsCOMPtr<nsIThread> callerThread = NS_GetCurrentThread();
   MOZ_ASSERT(callerThread != mUpdateThread);
 
-  nsCOMPtr<nsIRunnable> bgRunnable = NS_NewRunnableFunction([=] {
-    MOZ_ASSERT(NS_GetCurrentThread() == mUpdateThread, "MUST be on update thread");
+  nsCOMPtr<nsIRunnable> bgRunnable =
+    NS_NewRunnableFunction("safebrowsing::Classifier::AsyncApplyUpdates", [=] {
+      MOZ_ASSERT(NS_GetCurrentThread() == mUpdateThread,
+                 "MUST be on update thread");
 
-    LOG(("Step 1. ApplyUpdatesBackground on update thread."));
-    nsCString failedTableName;
-    nsresult bgRv = ApplyUpdatesBackground(aUpdates, failedTableName);
+      LOG(("Step 1. ApplyUpdatesBackground on update thread."));
+      nsCString failedTableName;
+      nsresult bgRv = ApplyUpdatesBackground(aUpdates, failedTableName);
 
-    nsCOMPtr<nsIRunnable> fgRunnable = NS_NewRunnableFunction([=] {
-      MOZ_ASSERT(NS_GetCurrentThread() == callerThread, "MUST be on caller thread");
+      nsCOMPtr<nsIRunnable> fgRunnable = NS_NewRunnableFunction(
+        "safebrowsing::Classifier::AsyncApplyUpdates", [=] {
+          MOZ_ASSERT(NS_GetCurrentThread() == callerThread,
+                     "MUST be on caller thread");
 
-      LOG(("Step 2. ApplyUpdatesForeground on caller thread"));
-      nsresult rv = ApplyUpdatesForeground(bgRv, failedTableName);;
+          LOG(("Step 2. ApplyUpdatesForeground on caller thread"));
+          nsresult rv = ApplyUpdatesForeground(bgRv, failedTableName);
+          ;
 
-      LOG(("Step 3. Updates applied! Fire callback."));
+          LOG(("Step 3. Updates applied! Fire callback."));
 
-      aCallback(rv);
+          aCallback(rv);
+        });
+      callerThread->Dispatch(fgRunnable, NS_DISPATCH_NORMAL);
     });
-    callerThread->Dispatch(fgRunnable, NS_DISPATCH_NORMAL);
-  });
 
   return mUpdateThread->Dispatch(bgRunnable, NS_DISPATCH_NORMAL);
 }
@@ -838,7 +810,7 @@ Classifier::ApplyUpdatesBackground(nsTArray<TableUpdate*>* aUpdates,
       }
     }
 
-    LOG(("Applying %" PRIuSIZE " table updates.", aUpdates->Length()));
+    LOG(("Applying %zu table updates.", aUpdates->Length()));
 
     for (uint32_t i = 0; i < aUpdates->Length(); i++) {
       // Previous UpdateHashStore() may have consumed this update..
@@ -903,7 +875,7 @@ Classifier::ApplyUpdatesForeground(nsresult aBackgroundRv,
 nsresult
 Classifier::ApplyFullHashes(nsTArray<TableUpdate*>* aUpdates)
 {
-  LOG(("Applying %" PRIuSIZE " table gethashes.", aUpdates->Length()));
+  LOG(("Applying %zu table gethashes.", aUpdates->Length()));
 
   ScopedUpdatesClearer scopedUpdatesClearer(aUpdates);
   for (uint32_t i = 0; i < aUpdates->Length(); i++) {
@@ -1278,11 +1250,11 @@ Classifier::UpdateHashStore(nsTArray<TableUpdate*>* aUpdates,
     if (updateV2) {
       LOG(("Applied update to table %s:", store.TableName().get()));
       LOG(("  %d add chunks", updateV2->AddChunks().Length()));
-      LOG(("  %" PRIuSIZE " add prefixes", updateV2->AddPrefixes().Length()));
-      LOG(("  %" PRIuSIZE " add completions", updateV2->AddCompletes().Length()));
+      LOG(("  %zu add prefixes", updateV2->AddPrefixes().Length()));
+      LOG(("  %zu add completions", updateV2->AddCompletes().Length()));
       LOG(("  %d sub chunks", updateV2->SubChunks().Length()));
-      LOG(("  %" PRIuSIZE " sub prefixes", updateV2->SubPrefixes().Length()));
-      LOG(("  %" PRIuSIZE " sub completions", updateV2->SubCompletes().Length()));
+      LOG(("  %zu sub prefixes", updateV2->SubPrefixes().Length()));
+      LOG(("  %zu sub completions", updateV2->SubCompletes().Length()));
       LOG(("  %d add expirations", updateV2->AddExpirations().Length()));
       LOG(("  %d sub expirations", updateV2->SubExpirations().Length()));
     }
@@ -1297,11 +1269,11 @@ Classifier::UpdateHashStore(nsTArray<TableUpdate*>* aUpdates,
 
   LOG(("Table %s now has:", store.TableName().get()));
   LOG(("  %d add chunks", store.AddChunks().Length()));
-  LOG(("  %" PRIuSIZE " add prefixes", store.AddPrefixes().Length()));
-  LOG(("  %" PRIuSIZE " add completions", store.AddCompletes().Length()));
+  LOG(("  %zu add prefixes", store.AddPrefixes().Length()));
+  LOG(("  %zu add completions", store.AddCompletes().Length()));
   LOG(("  %d sub chunks", store.SubChunks().Length()));
-  LOG(("  %" PRIuSIZE " sub prefixes", store.SubPrefixes().Length()));
-  LOG(("  %" PRIuSIZE " sub completions", store.SubCompletes().Length()));
+  LOG(("  %zu sub prefixes", store.SubPrefixes().Length()));
+  LOG(("  %zu sub completions", store.SubCompletes().Length()));
 
   rv = store.WriteFile();
   NS_ENSURE_SUCCESS(rv, rv);

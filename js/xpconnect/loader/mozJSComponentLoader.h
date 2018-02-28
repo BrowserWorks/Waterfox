@@ -52,6 +52,11 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
 
     static mozJSComponentLoader* Get() { return sSelf; }
 
+    nsresult Import(const nsACString& aResourceURI, JS::HandleValue aTargetObj,
+                    JSContext* aCx, uint8_t aArgc, JS::MutableHandleValue aRetval);
+    nsresult Unload(const nsACString& aResourceURI);
+    nsresult IsModuleLoaded(const nsACString& aResourceURI, bool* aRetval);
+
     size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf);
 
  protected:
@@ -63,6 +68,7 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
     void UnloadModules();
 
     void CreateLoaderGlobal(JSContext* aCx,
+                            nsACString& aLocation,
                             JSAddonId* aAddonID,
                             JS::MutableHandleObject aGlobal);
 
@@ -85,7 +91,6 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
                         JS::MutableHandleObject vp);
 
     nsCOMPtr<nsIComponentManager> mCompMgr;
-    nsCOMPtr<nsIPrincipal> mSystemPrincipal;
 
     class ModuleEntry : public mozilla::Module
     {
@@ -139,7 +144,8 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
         nsCOMPtr<xpcIJSGetFactory> getfactoryobj;
         JS::PersistentRootedObject obj;
         JS::PersistentRootedScript thisObjectKey;
-        char*               location;
+        char* location;
+        nsCString resolvedURL;
     };
 
     friend class ModuleEntry;
@@ -155,6 +161,11 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
 
     nsClassHashtable<nsCStringHashKey, ModuleEntry> mImports;
     nsDataHashtable<nsCStringHashKey, ModuleEntry*> mInProgressImports;
+
+    // A map of on-disk file locations which are loaded as modules to the
+    // pre-resolved URIs they were loaded from. Used to prevent the same file
+    // from being loaded separately, from multiple URLs.
+    nsClassHashtable<nsCStringHashKey, nsCString> mLocations;
 
     bool mInitialized;
 };

@@ -15,6 +15,7 @@
 #include "mozilla/gfx/2D.h"
 
 // Interfaces Needed
+#include "gfxContext.h"
 #include "nsReadableUtils.h"
 #include "nsIComponentManager.h"
 #include "nsIDOMDocument.h"
@@ -37,7 +38,6 @@
 #include "nsIServiceManager.h"
 #include "nsFocusManager.h"
 #include "Layers.h"
-#include "gfxContext.h"
 #include "nsILoadContext.h"
 #include "nsDocShell.h"
 
@@ -68,6 +68,7 @@ nsWebBrowser::nsWebBrowser()
   , mIsActive(true)
   , mParentNativeWindow(nullptr)
   , mProgressListener(nullptr)
+  , mWidgetListenerDelegate(this)
   , mBackgroundColor(0)
   , mPersistCurrentState(nsIWebBrowserPersist::PERSIST_STATE_READY)
   , mPersistResult(NS_OK)
@@ -1193,7 +1194,7 @@ nsWebBrowser::Create()
     LayoutDeviceIntRect bounds(mInitInfo->x, mInitInfo->y,
                                mInitInfo->cx, mInitInfo->cy);
 
-    mInternalWidget->SetWidgetListener(this);
+    mInternalWidget->SetWidgetListener(&mWidgetListenerDelegate);
     rv = mInternalWidget->Create(nullptr, mParentNativeWindow, bounds,
                                  &widgetInit);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -1896,6 +1897,14 @@ nsWebBrowser::SetFocusedElement(nsIDOMElement* aFocusedElement)
 {
   nsCOMPtr<nsIFocusManager> fm = do_GetService(FOCUSMANAGER_CONTRACTID);
   return fm ? fm->SetFocus(aFocusedElement, 0) : NS_OK;
+}
+
+bool
+nsWebBrowser::WidgetListenerDelegate::PaintWindow(
+  nsIWidget* aWidget, mozilla::LayoutDeviceIntRegion aRegion)
+{
+  RefPtr<nsWebBrowser> holder = mWebBrowser;
+  return holder->PaintWindow(aWidget, aRegion);
 }
 
 //*****************************************************************************

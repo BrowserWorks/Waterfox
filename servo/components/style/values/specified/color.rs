@@ -13,7 +13,7 @@ use parser::{ParserContext, Parse};
 use properties::longhands::color::SystemColor;
 use std::fmt;
 use std::io::Write;
-use style_traits::{ToCss, ParseError, StyleParseError};
+use style_traits::{ToCss, ParseError, StyleParseError, ValueParseError};
 use super::AllowQuirks;
 use values::computed::{Color as ComputedColor, Context, ToComputedValue};
 
@@ -72,28 +72,32 @@ impl Parse for Color {
         // specified value.
         let start_position = input.position();
         let authored = match input.next() {
-            Ok(Token::Ident(s)) => Some(s.to_lowercase().into_boxed_str()),
+            Ok(&Token::Ident(ref s)) => Some(s.to_lowercase().into_boxed_str()),
             _ => None,
         };
         input.reset(start_position);
-        if let Ok(value) = input.try(CSSParserColor::parse) {
-            Ok(match value {
-                CSSParserColor::CurrentColor => Color::CurrentColor,
-                CSSParserColor::RGBA(rgba) => Color::Numeric {
-                    parsed: rgba,
-                    authored: authored,
-                },
-            })
-        } else {
-            #[cfg(feature = "gecko")] {
-                if let Ok(system) = input.try(SystemColor::parse) {
-                    Ok(Color::System(system))
-                } else {
-                    gecko::SpecialColorKeyword::parse(input).map(Color::Special)
+        match input.try(CSSParserColor::parse) {
+            Ok(value) =>
+                Ok(match value {
+                    CSSParserColor::CurrentColor => Color::CurrentColor,
+                    CSSParserColor::RGBA(rgba) => Color::Numeric {
+                        parsed: rgba,
+                        authored: authored,
+                    },
+                }),
+            Err(e) => {
+                #[cfg(feature = "gecko")] {
+                    if let Ok(system) = input.try(SystemColor::parse) {
+                        return Ok(Color::System(system));
+                    } else if let Ok(c) = gecko::SpecialColorKeyword::parse(input) {
+                        return Ok(Color::Special(c));
+                    }
                 }
-            }
-            #[cfg(not(feature = "gecko"))] {
-                Err(StyleParseError::UnspecifiedError.into())
+                match e {
+                    BasicParseError::UnexpectedToken(t) =>
+                        Err(StyleParseError::ValueError(ValueParseError::InvalidColor(t)).into()),
+                    e => Err(e.into())
+                }
             }
         }
     }
@@ -161,11 +165,13 @@ impl Color {
                                 input: &mut Parser<'i, 't>,
                                 allow_quirks: AllowQuirks)
                                 -> Result<Self, ParseError<'i>> {
-        input.try(|i| Self::parse(context, i)).or_else(|_| {
+        input.try(|i| Self::parse(context, i)).or_else(|e| {
             if !allow_quirks.allowed(context.quirks_mode) {
-                return Err(StyleParseError::UnspecifiedError.into());
+                return Err(e);
             }
-            Color::parse_quirky_color(input).map(|rgba| Color::rgba(rgba))
+            Color::parse_quirky_color(input)
+                .map(|rgba| Color::rgba(rgba))
+                .map_err(|_| e)
         })
     }
 
@@ -173,25 +179,24 @@ impl Color {
     ///
     /// https://quirks.spec.whatwg.org/#the-hashless-hex-color-quirk
     fn parse_quirky_color<'i, 't>(input: &mut Parser<'i, 't>) -> Result<RGBA, ParseError<'i>> {
-        let (number, dimension) = match input.next()? {
-            Token::Number(number) => {
-                (number, None)
+        let (value, unit) = match *input.next()? {
+            Token::Number { int_value: Some(integer), .. } => {
+                (integer, None)
             },
-            Token::Dimension(number, dimension) => {
-                (number, Some(dimension))
+            Token::Dimension { int_value: Some(integer), ref unit, .. } => {
+                (integer, Some(unit))
             },
-            Token::Ident(ident) => {
+            Token::Ident(ref ident) => {
                 if ident.len() != 3 && ident.len() != 6 {
                     return Err(StyleParseError::UnspecifiedError.into());
                 }
                 return parse_hash_color(ident.as_bytes())
                     .map_err(|()| StyleParseError::UnspecifiedError.into());
             }
-            t => {
-                return Err(BasicParseError::UnexpectedToken(t).into());
+            ref t => {
+                return Err(BasicParseError::UnexpectedToken(t.clone()).into());
             },
         };
-        let value = number.int_value.ok_or(StyleParseError::UnspecifiedError)?;
         if value < 0 {
             return Err(StyleParseError::UnspecifiedError.into());
         }
@@ -210,7 +215,7 @@ impl Color {
         } else {
             return Err(StyleParseError::UnspecifiedError.into())
         };
-        let total = length + dimension.as_ref().map_or(0, |d| d.len());
+        let total = length + unit.as_ref().map_or(0, |d| d.len());
         if total > 6 {
             return Err(StyleParseError::UnspecifiedError.into());
         }
@@ -218,8 +223,8 @@ impl Color {
         let space_padding = 6 - total;
         let mut written = space_padding;
         written += itoa::write(&mut serialization[written..], value).unwrap();
-        if let Some(dimension) = dimension {
-            written += (&mut serialization[written..]).write(dimension.as_bytes()).unwrap();
+        if let Some(unit) = unit {
+            written += (&mut serialization[written..]).write(unit.as_bytes()).unwrap();
         }
         debug_assert!(written == 6);
         parse_hash_color(&serialization).map_err(|()| StyleParseError::UnspecifiedError.into())
@@ -255,7 +260,7 @@ impl ToComputedValue for Color {
             #[cfg(feature = "gecko")]
             Color::Special(special) => {
                 use self::gecko::SpecialColorKeyword as Keyword;
-                let pres_context = unsafe { &*_context.device.pres_context };
+                let pres_context = _context.device().pres_context();
                 convert_nscolor_to_computedcolor(match special {
                     Keyword::MozDefaultColor => pres_context.mDefaultColor,
                     Keyword::MozDefaultBackgroundColor => pres_context.mBackgroundColor,
@@ -269,17 +274,13 @@ impl ToComputedValue for Color {
                 use dom::TElement;
                 use gecko::wrapper::GeckoElement;
                 use gecko_bindings::bindings::Gecko_GetBody;
-                let pres_context = unsafe { &*_context.device.pres_context };
-                let body = unsafe {
-                    Gecko_GetBody(pres_context)
-                };
-                if let Some(body) = body {
-                    let wrap = GeckoElement(body);
-                    let borrow = wrap.borrow_data();
-                    ComputedColor::rgba(borrow.as_ref().unwrap()
-                                              .styles().primary.values()
-                                              .get_color()
-                                              .clone_color())
+                let pres_context = _context.device().pres_context();
+                let body = unsafe { Gecko_GetBody(pres_context) }.map(GeckoElement);
+                let data = body.as_ref().and_then(|wrap| wrap.borrow_data());
+                if let Some(data) = data {
+                    ComputedColor::rgba(data.styles.primary()
+                                            .get_color()
+                                            .clone_color())
                 } else {
                     convert_nscolor_to_computedcolor(pres_context.mDefaultColor)
                 }
@@ -300,7 +301,7 @@ impl ToComputedValue for Color {
 
 /// Specified color value, but resolved to just RGBA for computed value
 /// with value from color property at the same context.
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Debug, PartialEq, ToCss)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub struct RGBAColor(pub Color);
 
@@ -312,18 +313,12 @@ impl Parse for RGBAColor {
     }
 }
 
-impl ToCss for RGBAColor {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        self.0.to_css(dest)
-    }
-}
-
 impl ToComputedValue for RGBAColor {
     type ComputedValue = RGBA;
 
     fn to_computed_value(&self, context: &Context) -> RGBA {
         self.0.to_computed_value(context)
-            .to_rgba(context.style.get_color().clone_color())
+            .to_rgba(context.style().get_color().clone_color())
     }
 
     fn from_computed_value(computed: &RGBA) -> Self {

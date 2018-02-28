@@ -63,6 +63,8 @@
 #include "nsContentUtils.h"
 #include "nsJSUtils.h"
 #include "nsILoadInfo.h"
+#include "nsIDOMXULCommandDispatcher.h"
+#include "nsITreeSelection.h"
 
 // This should be probably defined on some other place... but I couldn't find it
 #define WEBAPPS_PERM_NAME "webapps-manage"
@@ -509,8 +511,8 @@ nsScriptSecurityManager::CheckSameOriginURI(nsIURI* aSourceURI,
     if (!SecurityCompareURIs(aSourceURI, aTargetURI))
     {
          if (reportError) {
-            ReportError(nullptr, NS_LITERAL_STRING("CheckSameOriginError"),
-                     aSourceURI, aTargetURI);
+            ReportError(nullptr, "CheckSameOriginError",
+                        aSourceURI, aTargetURI);
          }
          return NS_ERROR_DOM_BAD_URI;
     }
@@ -847,7 +849,7 @@ nsScriptSecurityManager::CheckLoadURIFlags(nsIURI *aSourceURI,
     // Note that the order of policy checks here is very important!
     // We start from most restrictive and work our way down.
     bool reportErrors = !(aFlags & nsIScriptSecurityManager::DONT_REPORT_ERRORS);
-    NS_NAMED_LITERAL_STRING(errorTag, "CheckLoadURIError");
+    const char* errorTag = "CheckLoadURIError";
 
     nsAutoCString targetScheme;
     nsresult rv = aTargetBaseURI->GetScheme(targetScheme);
@@ -939,10 +941,10 @@ nsScriptSecurityManager::CheckLoadURIFlags(nsIURI *aSourceURI,
     if (hasFlags) {
         // Allow domains that were whitelisted in the prefs. In 99.9% of cases,
         // this array is empty.
-        for (nsIURI* uri : EnsureFileURIWhitelist()) {
-            if (EqualOrSubdomain(aSourceURI, uri)) {
-                return NS_OK;
-            }
+        bool isWhitelisted;
+        MOZ_ALWAYS_SUCCEEDS(InFileURIWhitelist(aSourceURI, &isWhitelisted));
+        if (isWhitelisted) {
+            return NS_OK;
         }
 
         // Allow chrome://
@@ -979,7 +981,7 @@ nsScriptSecurityManager::CheckLoadURIFlags(nsIURI *aSourceURI,
         NS_ConvertASCIItoUTF16 ucsTargetScheme(targetScheme);
         const char16_t* formatStrings[] = { ucsTargetScheme.get() };
         rv = sStrBundle->
-            FormatStringFromName(u"ProtocolFlagError",
+            FormatStringFromName("ProtocolFlagError",
                                  formatStrings,
                                  ArrayLength(formatStrings),
                                  getter_Copies(message));
@@ -996,7 +998,7 @@ nsScriptSecurityManager::CheckLoadURIFlags(nsIURI *aSourceURI,
 }
 
 nsresult
-nsScriptSecurityManager::ReportError(JSContext* cx, const nsAString& messageTag,
+nsScriptSecurityManager::ReportError(JSContext* cx, const char* aMessageTag,
                                      nsIURI* aSource, nsIURI* aTarget)
 {
     nsresult rv;
@@ -1017,7 +1019,7 @@ nsScriptSecurityManager::ReportError(JSContext* cx, const nsAString& messageTag,
     NS_ConvertASCIItoUTF16 ucsSourceSpec(sourceSpec);
     NS_ConvertASCIItoUTF16 ucsTargetSpec(targetSpec);
     const char16_t *formatStrings[] = { ucsSourceSpec.get(), ucsTargetSpec.get() };
-    rv = sStrBundle->FormatStringFromName(PromiseFlatString(messageTag).get(),
+    rv = sStrBundle->FormatStringFromName(aMessageTag,
                                           formatStrings,
                                           ArrayLength(formatStrings),
                                           getter_Copies(message));
@@ -1092,6 +1094,23 @@ nsScriptSecurityManager::CheckLoadURIStrWithPrincipal(nsIPrincipal* aPrincipal,
     }
 
     return rv;
+}
+
+NS_IMETHODIMP
+nsScriptSecurityManager::InFileURIWhitelist(nsIURI* aUri, bool* aResult)
+{
+    MOZ_ASSERT(aUri);
+    MOZ_ASSERT(aResult);
+
+    *aResult = false;
+    for (nsIURI* uri : EnsureFileURIWhitelist()) {
+        if (EqualOrSubdomain(aUri, uri)) {
+            *aResult = true;
+            return NS_OK;
+        }
+    }
+
+    return NS_OK;
 }
 
 ///////////////// Principals ///////////////////////
@@ -1208,7 +1227,8 @@ nsScriptSecurityManager::CanCreateWrapper(JSContext *cx,
     }
 
     // We give remote-XUL whitelisted domains a free pass here. See bug 932906.
-    if (!xpc::AllowContentXBLScope(js::GetContextCompartment(cx)))
+    JSCompartment* contextCompartment = js::GetContextCompartment(cx);
+    if (!xpc::AllowContentXBLScope(contextCompartment))
     {
         return NS_OK;
     }
@@ -1218,28 +1238,42 @@ nsScriptSecurityManager::CanCreateWrapper(JSContext *cx,
         return NS_OK;
     }
 
+    // We want to expose nsIDOMXULCommandDispatcher and nsITreeSelection implementations
+    // in XBL scopes.
+    if (xpc::IsContentXBLScope(contextCompartment)) {
+      nsCOMPtr<nsIDOMXULCommandDispatcher> dispatcher = do_QueryInterface(aObj);
+      if (dispatcher) {
+        return NS_OK;
+      }
+
+      nsCOMPtr<nsITreeSelection> treeSelection = do_QueryInterface(aObj);
+      if (treeSelection) {
+        return NS_OK;
+      }
+    }
+
     //-- Access denied, report an error
-    NS_ConvertUTF8toUTF16 strName("CreateWrapperDenied");
     nsAutoCString origin;
     nsIPrincipal* subjectPrincipal = nsContentUtils::SubjectPrincipal();
     GetPrincipalDomainOrigin(subjectPrincipal, origin);
     NS_ConvertUTF8toUTF16 originUnicode(origin);
     NS_ConvertUTF8toUTF16 classInfoName(objClassInfo.GetName());
-    const char16_t* formatStrings[] = {
-        classInfoName.get(),
-        originUnicode.get()
-    };
-    uint32_t length = ArrayLength(formatStrings);
-    if (originUnicode.IsEmpty()) {
-        --length;
-    } else {
-        strName.AppendLiteral("ForOrigin");
-    }
+    nsresult rv;
     nsXPIDLString errorMsg;
-    nsresult rv = sStrBundle->FormatStringFromName(strName.get(),
-                                                   formatStrings,
-                                                   length,
-                                                   getter_Copies(errorMsg));
+    if (originUnicode.IsEmpty()) {
+        const char16_t* formatStrings[] = { classInfoName.get() };
+        rv = sStrBundle->FormatStringFromName("CreateWrapperDenied",
+                                              formatStrings,
+                                              1,
+                                              getter_Copies(errorMsg));
+    } else {
+        const char16_t* formatStrings[] = { classInfoName.get(),
+                                            originUnicode.get() };
+        rv = sStrBundle->FormatStringFromName("CreateWrapperDeniedForOrigin",
+                                              formatStrings,
+                                              2,
+                                              getter_Copies(errorMsg));
+    }
     NS_ENSURE_SUCCESS(rv, rv);
 
     SetPendingException(cx, errorMsg.get());
@@ -1608,7 +1642,8 @@ nsScriptSecurityManager::EnsureFileURIWhitelist()
     //
 
     mFileURIWhitelist.emplace();
-    auto policies = mozilla::Preferences::GetCString("capability.policy.policynames");
+    nsAutoCString policies;
+    mozilla::Preferences::GetCString("capability.policy.policynames", policies);
     for (uint32_t base = SkipPast<IsWhitespaceOrComma>(policies, 0), bound = 0;
          base < policies.Length();
          base = SkipPast<IsWhitespaceOrComma>(policies, bound))
@@ -1621,7 +1656,9 @@ nsScriptSecurityManager::EnsureFileURIWhitelist()
         nsCString checkLoadURIPrefName = NS_LITERAL_CSTRING("capability.policy.") +
                                          policyName +
                                          NS_LITERAL_CSTRING(".checkloaduri.enabled");
-        if (!Preferences::GetString(checkLoadURIPrefName.get()).LowerCaseEqualsLiteral("allaccess")) {
+        nsAutoString value;
+        nsresult rv = Preferences::GetString(checkLoadURIPrefName.get(), value);
+        if (NS_FAILED(rv) || !value.LowerCaseEqualsLiteral("allaccess")) {
             continue;
         }
 
@@ -1629,7 +1666,8 @@ nsScriptSecurityManager::EnsureFileURIWhitelist()
         nsCString domainPrefName = NS_LITERAL_CSTRING("capability.policy.") +
                                    policyName +
                                    NS_LITERAL_CSTRING(".sites");
-        auto siteList = Preferences::GetCString(domainPrefName.get());
+        nsAutoCString siteList;
+        Preferences::GetCString(domainPrefName.get(), siteList);
         AddSitesToFileURIWhitelist(siteList);
     }
 

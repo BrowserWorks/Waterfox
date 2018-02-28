@@ -3,11 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmltablesectionelement
+[HTMLConstructor]
 interface HTMLTableSectionElement : HTMLElement {
   readonly attribute HTMLCollection rows;
   [Throws]
   HTMLElement insertRow(optional long index = -1);
-  [Throws]
+  [CEReactions, Throws]
   void deleteRow(long index);
 
   // also has obsolete members
@@ -15,8 +16,12 @@ interface HTMLTableSectionElement : HTMLElement {
 
 // https://html.spec.whatwg.org/multipage/#HTMLTableSectionElement-partial
 partial interface HTMLTableSectionElement {
-  //         attribute DOMString align;
-  //         attribute DOMString ch;
-  //         attribute DOMString chOff;
-  //         attribute DOMString vAlign;
+  // [CEReactions]
+  //          attribute DOMString align;
+  // [CEReactions]
+  //          attribute DOMString ch;
+  // [CEReactions]
+  //          attribute DOMString chOff;
+  // [CEReactions]
+  //          attribute DOMString vAlign;
 };

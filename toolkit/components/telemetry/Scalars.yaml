@@ -1,6 +1,24 @@
 # This file contains a definition of the scalar probes that are recorded in Telemetry.
 # They are submitted with the "main" pings and can be inspected in about:telemetry.
 
+# The following section contains the accessibility scalars.
+a11y:
+  instantiators:
+    bug_numbers:
+      - 1323069
+    description: >
+      The leaf name and version number of the binary for the process responsible
+      for remotely instantiating a11y.
+    expires: "61"
+    kind: string
+    notification_emails:
+      - dbolter@mozilla.com
+    record_in_processes:
+      - 'main'
+    release_channel_collection: opt-out
+    keyed: false
+    cpp_guard: 'ACCESSIBILITY'
+
 # The following section contains the aushelper system add-on scalars.
 aushelper:
   websense_reg_version:
@@ -124,6 +142,35 @@ browser.engagement:
     record_in_processes:
       - 'main'
 
+  restored_pinned_tabs_count:
+    bug_numbers:
+      - 1373728
+    description: >
+      The count of the number of pinned tabs that were restored.
+    expires: '62'
+    kind: uint
+    notification_emails:
+      - chutten@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  active_ticks:
+    bug_numbers:
+      - 1376942
+    description: >
+      The count of the number of five-second intervals ('ticks') the user
+      was considered 'active' in a subsession. Session activity involves keyboard or mouse
+      interaction with the application. It does not take into account whether or not the window
+      has focus or is in the foreground, only if it is receiving these interaction events.
+    expires: never
+    kind: uint
+    notification_emails:
+      - bcolloran@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
 # The following section contains the browser engagement scalars.
 browser.engagement.navigation:
   urlbar:
@@ -230,6 +277,90 @@ browser.usage:
       - 'main'
       - 'content'
 
+# The following section contains the session restore scalars.
+browser.session.restore:
+  number_of_win:
+    bug_numbers:
+      - 1379226
+    description: The count of windows open after a session has been restored.
+    expires: never
+    kind: uint
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  number_of_tabs:
+    bug_numbers:
+      - 1379226
+    description: The count of tabs open after a session has been restored.
+    expires: never
+    kind: uint
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  tabbar_restore_available:
+    bug_numbers:
+      - 1379226
+    description: >
+      Recorded on startup. Boolean stating whether the tabbar session
+      restore button was ever available.
+    expires: never
+    kind: boolean
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  tabbar_restore_clicked:
+    bug_numbers:
+      - 1379226
+    description: >
+      Recorded on click event. Boolean stating if the session restore button
+      was clicked.
+    expires: never
+    kind: boolean
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  browser_startup_page:
+    bug_numbers:
+      - 1379226
+    description: >
+      The value of the browser.startup.page pref.
+      This pref restores the tabs and windows automatically when set to 3.
+    expires: never
+    kind: uint
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  browser_tabs_restorebutton:
+    bug_numbers:
+      - 1379226
+    description: >
+      The value of the browser.tabs.restorebutton pref.
+      0 - the user is not a part of the experiment
+      1 - the user is a part of the experiment
+      2 - the user is part of the control group
+    expires: never
+    kind: uint
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
 # This section is for probes used to measure use of the Webextensions storage.sync API.
 storage.sync.api.usage:
   extensions_using:
@@ -310,6 +441,77 @@ security:
     notification_emails:
       - seceng-telemetry@mozilla.com
     release_channel_collection: opt-out
+    record_in_processes:
+      - main
+
+sandbox:
+  no_job:
+    bug_numbers:
+      - 1392570
+    description: >
+      Indicates that we can't use a job object for sandboxed child processes.
+      Keyed by whether we are in a remote session or not from ::GetSystemMetrics(SM_REMOTESESSION).
+    expires: "62"
+    kind: boolean
+    keyed: true
+    notification_emails:
+      - bowen@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+    cpp_guard: 'XP_WIN'
+
+preferences:
+  created_new_user_prefs_file:
+    bug_numbers:
+      - 1367813
+    description: >-
+      A boolean indicating that profile/prefs.js was not found and it is being
+      created for the first time in this session.
+    expires: "62"
+    kind: boolean
+    notification_emails:
+      - bsmedberg@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+  prefs_file_was_invalid:
+    bug_numbers:
+      - 1367813
+    description: >-
+      Set to true if a failure occurred reading profile/prefs.js.
+    expires: "62"
+    kind: boolean
+    notification_emails:
+      - bsmedberg@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+  read_user_js:
+    bug_numbers:
+      - 1367813
+    description: >-
+      Set to true if user.js exists and was read.
+    expires: "62"
+    kind: boolean
+    notification_emails:
+      - bsmedberg@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+  search_query:
+    bug_numbers:
+      - 1359306
+    description: >-
+      Each key is a search query string when user performs a search action within
+      about:preferences, and each value is the number of times that key is recorded.
+      The telemetry data will be recorded if there is a successful search result highlighted.
+    expires: "62"
+    kind: uint
+    keyed: true
+    notification_emails:
+      - chsiang@mozilla.com
+    release_channel_collection: opt-in
     record_in_processes:
       - main
 
@@ -459,6 +661,104 @@ devtools.copy.full.css.selector:
     record_in_processes:
       - 'main'
 
+devtools.copy.xpath:
+  opened:
+    bug_numbers:
+      - 987877
+    description: Number of times the DevTools copy XPath has been used.
+    expires: "58"
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.rules.gridinspector:
+  opened:
+    bug_numbers:
+      - 1373483
+    description: >
+      Number of times the DevTools grid inspector was opened from the rules view.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.grid.gridinspector:
+  opened:
+    bug_numbers:
+      - 1373483
+    description: >
+      Number of times the DevTools grid inspector was opened from the grid view.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.grid.showGridAreasOverlay:
+  checked:
+    bug_numbers:
+      - 1373483
+    description: >
+      Number of times the DevTools grid inspector's "Display grid areas" was checked.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.grid.showGridLineNumbers:
+  checked:
+    bug_numbers:
+      - 1373483
+    description: >
+      Number of times the DevTools grid inspector's "Display grid numbers" was checked.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.grid.showInfiniteLines:
+  checked:
+    bug_numbers:
+      - 1373483
+    description: >
+      Number of times the DevTools grid inspector's "Extend grid lines infinitely" was checked.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools:
+  current_theme:
+    bug_numbers:
+      - 1396811
+    description: >
+      Number of times DevTools was opened, keyed by theme.
+    expires: never
+    kind: uint
+    keyed: true
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
 navigator.storage:
   estimate_count:
     bug_numbers:
@@ -501,6 +801,145 @@ telemetry:
     kind: boolean
     notification_emails:
       - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+telemetry.discarded:
+  accumulations:
+    bug_numbers:
+      - 1369041
+    description: >
+      Number of discarded accumulations to histograms in child processes
+    expires: "never"
+    kind: uint
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all_childs'
+  keyed_accumulations:
+    bug_numbers:
+      - 1369041
+    description: >
+      Number of discarded accumulations to keyed histograms in child processes
+    expires: "never"
+    kind: uint
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all_childs'
+  scalar_actions:
+    bug_numbers:
+      - 1369041
+    description: >
+      Number of discarded actions on scalars in child processes
+    expires: "never"
+    kind: uint
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all_childs'
+  keyed_scalar_actions:
+    bug_numbers:
+      - 1369041
+    description: >
+      Number of discarded actions on keyed scalars in child processes
+    expires: "never"
+    kind: uint
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all_childs'
+  child_events:
+    bug_numbers:
+      - 1369041
+    description: >
+      Number of discarded events in child processes
+    expires: "never"
+    kind: uint
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all_childs'
+
+# The following section contains graphics-related scalars.
+gfx.advanced.layers:
+  failure_id:
+    bug_numbers:
+      - 1365879
+    description: >
+      Each key is a failure for initializing Advanced Layers, and each value
+      is the number of times that failure was recorded. The failure codes
+      are unique strings present in MLGDeviceD3D11::Initialize, such that
+      a failure can be traced back to a specific Direct3D API call.
+    keyed: true
+    kind: uint
+    expires: "61"
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+    record_in_processes:
+      - 'main'
+
+# The following section contains the form autofill related scalars.
+formautofill:
+  availability:
+    bug_numbers:
+      - 1386959
+    description: A boolean sent once per session to represent whether the formautofill is available in the build
+    expires: never
+    kind: boolean
+    notification_emails:
+      - autofill@lists.mozilla.org
+      - jcheng@mozilla.com
+      - chsiang@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+formautofill.addresses:
+  fill_type_manual:
+    bug_numbers:
+      - 990200
+    description: Count at submission time whether the submitted form was filled manually.
+    expires: never
+    kind: uint
+    notification_emails:
+      - autofill@lists.mozilla.org
+      - jcheng@mozilla.com
+      - chsiang@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+  fill_type_autofill:
+    bug_numbers:
+      - 990200
+    description: Count at submission time whether the submitted form was autofilled.
+    expires: never
+    kind: uint
+    notification_emails:
+      - autofill@lists.mozilla.org
+      - jcheng@mozilla.com
+      - chsiang@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+  fill_type_autofill_update:
+    bug_numbers:
+      - 990200
+    description: >
+      Count at submission time whether the submitted form was autofilled, but
+      the data in form is changed and can not be merged to orginal address profile.
+    expires: never
+    kind: uint
+    notification_emails:
+      - autofill@lists.mozilla.org
+      - jcheng@mozilla.com
+      - chsiang@mozilla.com
     release_channel_collection: opt-out
     record_in_processes:
       - 'main'

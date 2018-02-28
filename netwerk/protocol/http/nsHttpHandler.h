@@ -74,7 +74,7 @@ public:
                                               uint32_t capabilities);
     bool     IsAcceptableEncoding(const char *encoding, bool isSecure);
 
-    const nsAFlatCString &UserAgent();
+    const nsCString& UserAgent();
 
     nsHttpVersion  HttpVersion()             { return mHttpVersion; }
     nsHttpVersion  ProxyHttpVersion()        { return mProxyHttpVersion; }
@@ -135,6 +135,7 @@ public:
     uint32_t       RequestTokenBucketBurst() {return mRequestTokenBucketBurst; }
 
     bool           PromptTempRedirect()      { return mPromptTempRedirect; }
+    bool           IsUrgentStartEnabled() { return mUrgentStartEnabled; }
 
     // TCP Keepalive configuration values.
 
@@ -331,9 +332,11 @@ public:
 
     // Called by channels before a redirect happens. This notifies both the
     // channel's and the global redirect observers.
-    MOZ_MUST_USE nsresult AsyncOnChannelRedirect(nsIChannel* oldChan,
-                                                 nsIChannel* newChan,
-                                                 uint32_t flags);
+    MOZ_MUST_USE nsresult AsyncOnChannelRedirect(
+                              nsIChannel* oldChan,
+                              nsIChannel* newChan,
+                              uint32_t flags,
+                              nsIEventTarget* mainThreadEventTarget = nullptr);
 
     // Called by the channel when the response is read from the cache without
     // communicating with the server.
@@ -380,6 +383,11 @@ public:
     float FocusedWindowTransactionRatio() const
     {
         return mFocusedWindowTransactionRatio;
+    }
+
+    bool ActiveTabPriority() const
+    {
+        return mActiveTabPriority;
     }
 
 private:
@@ -452,6 +460,9 @@ private:
     uint32_t mThrottleSuspendFor;
     uint32_t mThrottleResumeFor;
     uint32_t mThrottleResumeIn;
+    uint32_t mThrottleTimeWindow;
+
+    bool mUrgentStartEnabled;
 
     uint8_t  mRedirectionLimit;
 
@@ -492,6 +503,7 @@ private:
     nsCString      mDeviceModelId;
 
     nsCString      mUserAgent;
+    nsCString      mSpoofedUserAgent;
     nsXPIDLCString mUserAgentOverride;
     bool           mUserAgentIsDirty; // true if mUserAgent should be rebuilt
     bool           mAcceptLanguagesIsDirty;
@@ -602,6 +614,9 @@ private:
     Atomic<bool, Relaxed> mFastOpenSupported;
     uint32_t mFastOpenConsecutiveFailureLimit;
     uint32_t mFastOpenConsecutiveFailureCounter;
+
+    // If true, the transactions from active tab will be dispatched first.
+    bool mActiveTabPriority;
 
 private:
     // For Rate Pacing Certain Network Events. Only assign this pointer on

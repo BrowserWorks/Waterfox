@@ -76,7 +76,7 @@ let json = [
            name: "sub_foo",
            type: "function",
            parameters: [],
-           returns: "integer",
+           returns: {type: "integer"},
          },
        ],
      },
@@ -213,6 +213,7 @@ let json = [
            name: "arg",
            type: "object",
            properties: {
+             hostname: {type: "string", "format": "hostname", "optional": true},
              url: {type: "string", "format": "url", "optional": true},
              relativeUrl: {type: "string", "format": "relativeUrl", "optional": true},
              strictRelativeUrl: {type: "string", "format": "strictRelativeUrl", "optional": true},
@@ -403,6 +404,9 @@ class TallyingAPIImplementation extends SchemaAPIInterface {
 
   callFunction(args) {
     tally("call", this.namespace, this.name, args);
+    if (this.name === "sub_foo") {
+      return 13;
+    }
   }
 
   callFunctionNoReturn(args) {
@@ -622,17 +626,32 @@ add_task(async function() {
                 /String "DEADcow" must match \/\^\[0-9a-f\]\+\$\/i/,
                 "should throw for non-match");
 
+  root.testing.format({hostname: "foo"});
+  verify("call", "testing", "format", [{hostname: "foo",
+                                        relativeUrl: null,
+                                        strictRelativeUrl: null,
+                                        url: null}]);
+  tallied = null;
+
+  for (let invalid of ["", " ", "http://foo", "foo/bar", "foo.com/", "foo?"]) {
+    Assert.throws(() => root.testing.format({hostname: invalid}),
+                  /Invalid hostname/,
+                  "should throw for invalid hostname");
+  }
+
   root.testing.format({url: "http://foo/bar",
                        relativeUrl: "http://foo/bar"});
-  verify("call", "testing", "format", [{url: "http://foo/bar",
+  verify("call", "testing", "format", [{hostname: null,
                                         relativeUrl: "http://foo/bar",
-                                        strictRelativeUrl: null}]);
+                                        strictRelativeUrl: null,
+                                        url: "http://foo/bar"}]);
   tallied = null;
 
   root.testing.format({relativeUrl: "foo.html", strictRelativeUrl: "foo.html"});
-  verify("call", "testing", "format", [{url: null,
+  verify("call", "testing", "format", [{hostname: null,
                                         relativeUrl: `${wrapper.url}foo.html`,
-                                        strictRelativeUrl: `${wrapper.url}foo.html`}]);
+                                        strictRelativeUrl: `${wrapper.url}foo.html`,
+                                        url: null}]);
   tallied = null;
 
   for (let format of ["url", "relativeUrl"]) {
@@ -685,30 +704,30 @@ add_task(async function() {
   });
 
   root.testing.deep({foo: {bar: [{baz: {required: 12, optional: "42"}}]}});
-  verify("call", "testing", "deep", [{foo: {bar: [{baz: {required: 12, optional: "42"}}]}}]);
+  verify("call", "testing", "deep", [{foo: {bar: [{baz: {optional: "42", required: 12}}]}}]);
   tallied = null;
 
   Assert.throws(() => root.testing.deep({foo: {bar: [{baz: {optional: "42"}}]}}),
                 /Type error for parameter arg \(Error processing foo\.bar\.0\.baz: Property "required" is required\) for testing\.deep/,
                 "should throw with the correct object path");
 
-  Assert.throws(() => root.testing.deep({foo: {bar: [{baz: {required: 12, optional: 42}}]}}),
+  Assert.throws(() => root.testing.deep({foo: {bar: [{baz: {optional: 42, required: 12}}]}}),
                 /Type error for parameter arg \(Error processing foo\.bar\.0\.baz\.optional: Expected string instead of 42\) for testing\.deep/,
                 "should throw with the correct object path");
 
 
   talliedErrors.length = 0;
 
-  root.testing.errors({warn: "0123", ignore: "0123", default: "0123"});
-  verify("call", "testing", "errors", [{warn: "0123", ignore: "0123", default: "0123"}]);
+  root.testing.errors({default: "0123", ignore: "0123", warn: "0123"});
+  verify("call", "testing", "errors", [{default: "0123", ignore: "0123", warn: "0123"}]);
   checkErrors([]);
 
-  root.testing.errors({warn: "0123", ignore: "x123", default: "0123"});
-  verify("call", "testing", "errors", [{warn: "0123", ignore: null, default: "0123"}]);
+  root.testing.errors({default: "0123", ignore: "x123", warn: "0123"});
+  verify("call", "testing", "errors", [{default: "0123", ignore: null,  warn: "0123"}]);
   checkErrors([]);
 
-  root.testing.errors({warn: "x123", ignore: "0123", default: "0123"});
-  verify("call", "testing", "errors", [{warn: null, ignore: "0123", default: "0123"}]);
+  root.testing.errors({default: "0123", ignore: "0123", warn: "x123"});
+  verify("call", "testing", "errors", [{default: "0123", ignore: "0123", warn: null}]);
   checkErrors([
     'String "x123" must match /^\\d+$/',
   ]);
@@ -767,7 +786,7 @@ add_task(async function() {
 
 
   root.testing.localize({foo: "__MSG_foo__", bar: "__MSG_foo__", url: "__MSG_http://example.com/__"});
-  verify("call", "testing", "localize", [{foo: "FOO", bar: "__MSG_foo__", url: "http://example.com/"}]);
+  verify("call", "testing", "localize", [{bar: "__MSG_foo__", foo: "FOO", url: "http://example.com/"}]);
   tallied = null;
 
 
@@ -1222,6 +1241,7 @@ let nestedNamespaceJson = [
         "events": [
           {
             "name": "onEvent",
+            "type": "function",
           },
         ],
         "properties": {
@@ -1286,17 +1306,27 @@ add_task(async function testNestedNamespace() {
      "Got the expected instance of the CustomType defined in the schema");
   ok(instanceOfCustomType.functionOnCustomType,
      "Got the expected method in the CustomType instance");
+  ok(instanceOfCustomType.onEvent &&
+     instanceOfCustomType.onEvent.addListener &&
+     typeof instanceOfCustomType.onEvent.addListener == "function",
+     "Got the expected event defined in the CustomType instance");
 
-  // TODO: test support events and properties in a SubModuleType defined in the schema,
+  instanceOfCustomType.functionOnCustomType("param_value");
+  verify("call", "nested.namespace.instanceOfCustomType",
+         "functionOnCustomType", ["param_value"]);
+
+  let fakeListener = () => {};
+  instanceOfCustomType.onEvent.addListener(fakeListener);
+  verify("addListener", "nested.namespace.instanceOfCustomType",
+         "onEvent", [fakeListener, []]);
+  instanceOfCustomType.onEvent.removeListener(fakeListener);
+  verify("removeListener", "nested.namespace.instanceOfCustomType",
+         "onEvent", [fakeListener]);
+
+  // TODO: test support properties in a SubModuleType defined in the schema,
   // once implemented, e.g.:
-  //
-  // ok(instanceOfCustomType.url,
-  //    "Got the expected property defined in the CustomType instance)
-  //
-  // ok(instanceOfCustomType.onEvent &&
-  //    instanceOfCustomType.onEvent.addListener &&
-  //    typeof instanceOfCustomType.onEvent.addListener == "function",
-  //    "Got the expected event defined in the CustomType instance");
+  // ok("url" in instanceOfCustomType,
+  //   "Got the expected property defined in the CustomType instance");
 });
 
 let $importJson = [
@@ -1473,6 +1503,7 @@ let defaultsJson = [
        ],
        returns: {
          type: "object",
+         additionalProperties: true,
        },
      },
    ]},
@@ -1508,4 +1539,81 @@ add_task(async function testDefaults() {
   deepEqual(root.defaultsJson.defaultFoo(), {prop1: 1, newProp: 1});
   deepEqual(root.defaultsJson.defaultFoo({prop1: 2}), {prop1: 2, newProp: 1});
   deepEqual(root.defaultsJson.defaultFoo(), {prop1: 1, newProp: 1});
+});
+
+let returnsJson = [{
+  namespace: "returns",
+  types: [
+    {
+      id: "Widget",
+      type: "object",
+      properties: {
+        size: {type: "integer"},
+        colour: {type: "string", optional: true},
+      },
+    },
+  ],
+  functions: [
+    {
+      name: "complete",
+      type: "function",
+      returns: {$ref: "Widget"},
+      parameters: [],
+    },
+    {
+      name: "optional",
+      type: "function",
+      returns: {$ref: "Widget"},
+      parameters: [],
+    },
+    {
+      name: "invalid",
+      type: "function",
+      returns: {$ref: "Widget"},
+      parameters: [],
+    },
+  ],
+}];
+
+add_task(async function testReturns() {
+  const url = "data:," + JSON.stringify(returnsJson);
+  await Schemas.load(url);
+
+  const apiObject = {
+    complete() {
+      return {size: 3, colour: "orange"};
+    },
+    optional() {
+      return {size: 4};
+    },
+    invalid() {
+      return {};
+    },
+  };
+
+  const localWrapper = {
+    cloneScope: global,
+    shouldInject(ns) {
+      return true;
+    },
+    getImplementation(ns, name) {
+      return new LocalAPIImplementation(apiObject, name, null);
+    },
+  };
+
+  const root = {};
+  Schemas.inject(root, localWrapper);
+
+  deepEqual(root.returns.complete(), {size: 3, colour: "orange"});
+  deepEqual(root.returns.optional(), {size: 4},
+            "Missing optional properties is allowed");
+
+  if (AppConstants.DEBUG) {
+    Assert.throws(() => root.returns.invalid(),
+                  `Type error for result value (Property "size" is required)`,
+                  "Should throw for invalid result in DEBUG builds");
+  } else {
+    deepEqual(root.returns.invalid(), {},
+              "Doesn't throw for invalid result value in release builds");
+  }
 });

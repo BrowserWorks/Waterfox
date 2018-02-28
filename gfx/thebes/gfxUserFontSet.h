@@ -8,6 +8,8 @@
 
 #include "gfxFont.h"
 #include "gfxFontFamilyList.h"
+#include "gfxFontSrcPrincipal.h"
+#include "gfxFontSrcURI.h"
 #include "nsRefPtrHashtable.h"
 #include "nsCOMPtr.h"
 #include "nsIURI.h"
@@ -55,10 +57,10 @@ struct gfxFontFaceSrc {
     uint32_t               mFormatFlags;
 
     nsString               mLocalName;     // full font name if local
-    nsCOMPtr<nsIURI>       mURI;           // uri if url
+    RefPtr<gfxFontSrcURI>  mURI;           // uri if url
     nsCOMPtr<nsIURI>       mReferrer;      // referrer url if url
     mozilla::net::ReferrerPolicy mReferrerPolicy;
-    nsCOMPtr<nsIPrincipal> mOriginPrincipal; // principal if url
+    RefPtr<gfxFontSrcPrincipal> mOriginPrincipal; // principal if url
 
     RefPtr<gfxFontFaceBufferSource> mBuffer;
 };
@@ -66,6 +68,9 @@ struct gfxFontFaceSrc {
 inline bool
 operator==(const gfxFontFaceSrc& a, const gfxFontFaceSrc& b)
 {
+    // The mReferrer and mOriginPrincipal comparisons aren't safe OMT.
+    MOZ_ASSERT(NS_IsMainThread());
+
     if (a.mSourceType != b.mSourceType) {
         return false;
     }
@@ -76,7 +81,7 @@ operator==(const gfxFontFaceSrc& a, const gfxFontFaceSrc& b)
             bool equals;
             return a.mUseOriginPrincipal == b.mUseOriginPrincipal &&
                    a.mFormatFlags == b.mFormatFlags &&
-                   NS_SUCCEEDED(a.mURI->Equals(b.mURI, &equals)) && equals &&
+                   (a.mURI == b.mURI || a.mURI->Equals(b.mURI)) &&
                    NS_SUCCEEDED(a.mReferrer->Equals(b.mReferrer, &equals)) &&
                      equals &&
                    a.mReferrerPolicy == b.mReferrerPolicy &&
@@ -99,7 +104,7 @@ class gfxUserFontData {
 public:
     gfxUserFontData()
         : mSrcIndex(0), mFormat(0), mMetaOrigLen(0),
-          mCRC32(0), mLength(0), mCompression(kUnknownCompression),
+          mCompression(kUnknownCompression),
           mPrivate(false), mIsBuffer(false)
     { }
     virtual ~gfxUserFontData() { }
@@ -107,15 +112,13 @@ public:
     size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
     nsTArray<uint8_t> mMetadata;  // woff metadata block (compressed), if any
-    nsCOMPtr<nsIURI>  mURI;       // URI of the source, if it was url()
-    nsCOMPtr<nsIPrincipal> mPrincipal; // principal for the download, if url()
+    RefPtr<gfxFontSrcURI>  mURI;       // URI of the source, if it was url()
+    RefPtr<gfxFontSrcPrincipal> mPrincipal; // principal for the download, if url()
     nsString          mLocalName; // font name used for the source, if local()
     nsString          mRealName;  // original fullname from the font resource
     uint32_t          mSrcIndex;  // index in the rule's source list
     uint32_t          mFormat;    // format hint for the source used, if any
     uint32_t          mMetaOrigLen; // length needed to decompress metadata
-    uint32_t          mCRC32;     // Checksum
-    uint32_t          mLength;    // Font length
     uint8_t           mCompression; // compression type
     bool              mPrivate;   // whether font belongs to a private window
     bool              mIsBuffer;  // whether the font source was a buffer
@@ -255,12 +258,20 @@ public:
     // returns the Principal (for use in the key when caching the loaded font),
     // and whether the load should bypass the cache (force-reload).
     virtual nsresult CheckFontLoad(const gfxFontFaceSrc* aFontFaceSrc,
-                                   nsIPrincipal** aPrincipal,
+                                   gfxFontSrcPrincipal** aPrincipal,
                                    bool* aBypassCache) = 0;
+
+    virtual gfxFontSrcPrincipal* GetStandardFontLoadPrincipal() = 0;
 
     // check whether content policies allow the given URI to load.
     virtual bool IsFontLoadAllowed(nsIURI* aFontLocation,
-                                   nsIPrincipal* aPrincipal) = 0;
+                                   nsIPrincipal* aPrincipal,
+                                   nsTArray<nsCOMPtr<nsIRunnable>>* aViolations) = 0;
+
+    // Dispatches all of the specified runnables to the font face set's
+    // document's event queue.
+    virtual void DispatchFontLoadViolations(
+        nsTArray<nsCOMPtr<nsIRunnable>>& aViolations) = 0;
 
     // initialize the process that loads external font data, which upon
     // completion will call FontDataDownloadComplete method
@@ -284,21 +295,10 @@ public:
 
     class UserFontCache {
     public:
-        // Flag passed when caching a font entry, to specify whether the entry
-        // should persist in the cache or be discardable.
-        typedef enum {
-            kDiscardable,
-            kPersistent
-        } EntryPersistence;
-
         // Record a loaded user-font in the cache. This requires that the
         // font-entry's userFontData has been set up already, as it relies
         // on the URI and Principal recorded there.
-        // If aPersistence is Persistent, the entry will remain in the cache
-        // across cacheservice:empty-cache notifications. This is used for
-        // "preloaded hidden fonts" on FxOS.
-        static void CacheFont(gfxFontEntry* aFontEntry,
-                              EntryPersistence aPersistence = kDiscardable);
+        static void CacheFont(gfxFontEntry* aFontEntry);
 
         // The given gfxFontEntry is being destroyed, so remove any record that
         // refers to it.
@@ -309,10 +309,33 @@ public:
         // The aPrivate flag is set for requests coming from private windows,
         // so we can avoid leaking fonts cached in private windows mode out to
         // normal windows.
-        static gfxFontEntry* GetFont(nsIURI* aSrcURI,
-                                     nsIPrincipal* aPrincipal,
+        static gfxFontEntry* GetFont(gfxFontSrcURI* aSrcURI,
+                                     gfxFontSrcPrincipal* aPrincipal,
                                      gfxUserFontEntry* aUserFontEntry,
                                      bool              aPrivate);
+
+        // Generation number that is incremented whenever an entry is added to
+        // the cache.  (Removals don't increment it.)
+        static uint32_t Generation() { return sGeneration; }
+
+        // For each entry in the user font cache where we haven't recorded
+        // whether the given user font set is allowed to use the entry,
+        // call IsFontLoadAllowed and record it.
+        //
+        // This function should be called just before a Servo restyle, so
+        // that we can determine whether a given font load (using a cached
+        // font) would be allowed without having to call the non-OMT-safe
+        // IsFontLoadAllowed from the style worker threads.
+        static void UpdateAllowedFontSets(gfxUserFontSet* aUserFontSet);
+
+        // Clears all recorded IsFontLoadAllowed results for the given
+        // user font set.
+        //
+        // This function should be called just before the user font set is
+        // going away, or when we detect that a document's node principal
+        // has changed (and thus the already recorded IsFontLoadAllowed
+        // results are no longer valid).
+        static void ClearAllowedFontSets(gfxUserFontSet* aUserFontSet);
 
         // Clear everything so that we don't leak URIs and Principals.
         static void Shutdown();
@@ -352,38 +375,19 @@ public:
         // or rendering, and that must match between a font-set's userfont
         // entry and the corresponding "real" font entry.
         struct Key {
-            nsCOMPtr<nsIURI>        mURI;
-            nsCOMPtr<nsIPrincipal>  mPrincipal; // use nullptr with data: URLs
+            RefPtr<gfxFontSrcURI>   mURI;
+            RefPtr<gfxFontSrcPrincipal> mPrincipal; // use nullptr with data: URLs
             // The font entry MUST notify the cache when it is destroyed
             // (by calling ForgetFont()).
             gfxFontEntry* MOZ_NON_OWNING_REF mFontEntry;
-            uint32_t                mCRC32;
-            uint32_t                mLength;
             bool                    mPrivate;
-            EntryPersistence        mPersistence;
 
-            Key(nsIURI* aURI, nsIPrincipal* aPrincipal,
-                gfxFontEntry* aFontEntry, bool aPrivate,
-                EntryPersistence aPersistence = kDiscardable)
+            Key(gfxFontSrcURI* aURI, gfxFontSrcPrincipal* aPrincipal,
+                gfxFontEntry* aFontEntry, bool aPrivate)
                 : mURI(aURI),
                   mPrincipal(aPrincipal),
                   mFontEntry(aFontEntry),
-                  mCRC32(0),
-                  mLength(0),
-                  mPrivate(aPrivate),
-                  mPersistence(aPersistence)
-            { }
-
-            Key(uint32_t aCRC32, uint32_t aLength,
-                gfxFontEntry* aFontEntry, bool aPrivate,
-                EntryPersistence aPersistence = kDiscardable)
-                : mURI(nullptr),
-                  mPrincipal(nullptr),
-                  mFontEntry(aFontEntry),
-                  mCRC32(aCRC32),
-                  mLength(aLength),
-                  mPrivate(aPrivate),
-                  mPersistence(aPersistence)
+                  mPrivate(aPrivate)
             { }
         };
 
@@ -395,21 +399,15 @@ public:
             explicit Entry(KeyTypePointer aKey)
                 : mURI(aKey->mURI),
                   mPrincipal(aKey->mPrincipal),
-                  mCRC32(aKey->mCRC32),
-                  mLength(aKey->mLength),
                   mFontEntry(aKey->mFontEntry),
-                  mPrivate(aKey->mPrivate),
-                  mPersistence(aKey->mPersistence)
+                  mPrivate(aKey->mPrivate)
             { }
 
             Entry(const Entry& aOther)
                 : mURI(aOther.mURI),
                   mPrincipal(aOther.mPrincipal),
-                  mCRC32(aOther.mCRC32),
-                  mLength(aOther.mLength),
                   mFontEntry(aOther.mFontEntry),
-                  mPrivate(aOther.mPrivate),
-                  mPersistence(aOther.mPersistence)
+                  mPrivate(aOther.mPrivate)
             { }
 
             ~Entry() { }
@@ -419,15 +417,10 @@ public:
             static KeyTypePointer KeyToPointer(KeyType aKey) { return &aKey; }
 
             static PLDHashNumber HashKey(const KeyTypePointer aKey) {
-                if (aKey->mLength) {
-                    return aKey->mCRC32;
-                }
-                uint32_t principalHash = 0;
-                if (aKey->mPrincipal) {
-                    aKey->mPrincipal->GetHashValue(&principalHash);
-                }
+                PLDHashNumber principalHash =
+                    aKey->mPrincipal ? aKey->mPrincipal->Hash() : 0;
                 return mozilla::HashGeneric(principalHash + int(aKey->mPrivate),
-                                            nsURIHashKey::HashKey(aKey->mURI),
+                                            aKey->mURI->Hash(),
                                             HashFeatures(aKey->mFontEntry->mFeatureSettings),
                                             mozilla::HashString(aKey->mFontEntry->mFamilyName),
                                             (aKey->mFontEntry->mStyle |
@@ -438,10 +431,18 @@ public:
 
             enum { ALLOW_MEMMOVE = false };
 
+            gfxFontSrcURI* GetURI() const { return mURI; }
+            gfxFontSrcPrincipal* GetPrincipal() const { return mPrincipal; }
             gfxFontEntry* GetFontEntry() const { return mFontEntry; }
-
-            bool IsPersistent() const { return mPersistence == kPersistent; }
             bool IsPrivate() const { return mPrivate; }
+
+            bool CheckIsFontSetAllowed(gfxUserFontSet* aUserFontSet) const;
+            bool CheckIsFontSetAllowedAndDispatchViolations(gfxUserFontSet* aUserFontSet) const;
+            bool IsFontSetAllowedKnown(gfxUserFontSet* aUserFontSet) const;
+            void SetIsFontSetAllowed(gfxUserFontSet* aUserFontSet,
+                                     bool aAllowed,
+                                     nsTArray<nsCOMPtr<nsIRunnable>>&& aViolations);
+            void ClearIsFontSetAllowed(gfxUserFontSet* aUserFontSet);
 
             void ReportMemory(nsIHandleReportCallback* aHandleReport,
                               nsISupports* aData, bool aAnonymize);
@@ -457,11 +458,53 @@ public:
                                           aFeatures.Length() * sizeof(gfxFontFeature));
             }
 
-            nsCOMPtr<nsIURI>       mURI;
-            nsCOMPtr<nsIPrincipal> mPrincipal; // or nullptr for data: URLs
+            // An entry in mAllowedFontSets.
+            class LoadResultEntry : public nsPtrHashKey<gfxUserFontSet>
+            {
+            public:
+                explicit LoadResultEntry(KeyTypePointer aKey)
+                  : nsPtrHashKey(aKey)
+                  , mAllowed(false)
+                {
+                }
 
-            uint32_t               mCRC32;
-            uint32_t               mLength;
+                LoadResultEntry(LoadResultEntry&& aOther)
+                  : nsPtrHashKey(aOther.mKey)
+                  , mAllowed(aOther.mAllowed)
+                  , mViolations(mozilla::Move(aOther.mViolations))
+                {
+                }
+
+                ~LoadResultEntry() {}
+
+                // Whether the user font set (the key) is allowed to load this
+                // entry's font.
+                bool mAllowed;
+
+                // If the load is not allowed, the CSP violation reports that
+                // must be dispatched when we attempt to use the entry's font.
+                // (Should be empty if mAllowed is true.)
+                nsTArray<nsCOMPtr<nsIRunnable>> mViolations;
+
+                enum { ALLOW_MEMMOVE = false };
+            };
+
+            // Set of gfxUserFontSets that are allowed to use this cached font
+            // entry.
+            //
+            // This is basically a cache of results of calls to
+            // gfxUserFontSet::IsFontLoadAllowed for each font set to be used
+            // when using the cache from style worker threads (where calling
+            // IsFontLoadAllowed is not possible).  Whenever a new entry is
+            // added to the cache, sGeneration is bumped, and a FontFaceSet
+            // for a document about to be styled can call UpdateAllowedFontSets
+            // to record IsFontLoadAllowed results for the new entries.  When
+            // a FontFaceSet is going away, it calls ClearAllowedFontSets
+            // to remove entries from the mAllowedFontSets tables.
+            nsTHashtable<LoadResultEntry> mAllowedFontSets;
+
+            RefPtr<gfxFontSrcURI>  mURI;
+            RefPtr<gfxFontSrcPrincipal> mPrincipal; // or nullptr for data: URLs
 
             // The "real" font entry corresponding to this downloaded font.
             // The font entry MUST notify the cache when it is destroyed
@@ -470,12 +513,11 @@ public:
 
             // Whether this font was loaded from a private window.
             bool                   mPrivate;
-
-            // Whether this entry should survive cache-flushing.
-            EntryPersistence       mPersistence;
         };
 
         static nsTHashtable<Entry>* sUserFonts;
+
+        static uint32_t sGeneration;
     };
 
     void SetLocalRulesUsed() {
@@ -626,10 +668,14 @@ public:
     // since we can't make that class a friend
     void SetLoader(nsFontFaceLoader* aLoader) { mLoader = aLoader; }
     nsFontFaceLoader* GetLoader() { return mLoader; }
-    nsIPrincipal* GetPrincipal() { return mPrincipal; }
+    gfxFontSrcPrincipal* GetPrincipal() { return mPrincipal; }
     uint32_t GetSrcIndex() { return mSrcIndex; }
     void GetFamilyNameAndURIForLogging(nsACString& aFamilyName,
                                        nsACString& aURI);
+                                       
+#ifdef DEBUG
+    gfxUserFontSet* GetUserFontSet() const { return mFontSet; }
+#endif
 
 protected:
     const uint8_t* SanitizeOpenTypeData(const uint8_t* aData,
@@ -705,7 +751,7 @@ protected:
     // methods of nsFontFaceLoader this reference is nulled out.
     nsFontFaceLoader* MOZ_NON_OWNING_REF mLoader; // current loader for this entry, if any
     gfxUserFontSet*          mFontSet; // font-set which owns this userfont entry
-    nsCOMPtr<nsIPrincipal>   mPrincipal;
+    RefPtr<gfxFontSrcPrincipal> mPrincipal;
 };
 
 

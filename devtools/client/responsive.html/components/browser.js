@@ -12,9 +12,14 @@ const { getToplevelWindow } = require("../utils/window");
 const { DOM: dom, createClass, addons, PropTypes } =
   require("devtools/client/shared/vendor/react");
 
-const Types = require("../types");
 const e10s = require("../utils/e10s");
 const message = require("../utils/message");
+
+// Allow creation of HTML fragments without automatic sanitization, even
+// though we're in a chrome-privileged document.
+// This is, unfortunately, necessary in order to React to function
+// correctly.
+document.allowUnsafeHTML = true;
 
 module.exports = createClass({
 
@@ -27,7 +32,6 @@ module.exports = createClass({
   displayName: "Browser",
 
   propTypes: {
-    location: Types.location.isRequired,
     swapAfterMount: PropTypes.bool.isRequired,
     onBrowserMounted: PropTypes.func.isRequired,
     onContentResize: PropTypes.func.isRequired,
@@ -111,13 +115,6 @@ module.exports = createClass({
   }),
 
   render() {
-    let {
-      location,
-    } = this.props;
-
-    // innerHTML expects & to be an HTML entity
-    location = location.replace(/&/g, "&amp;");
-
     return dom.div(
       {
         ref: "browserContainer",
@@ -140,7 +137,7 @@ module.exports = createClass({
           __html: `<iframe class="browser" mozbrowser="true"
                            remote="true" remoteType="web"
                            noisolation="true" allowfullscreen="true"
-                           src="${location}" width="100%" height="100%">
+                           src="about:blank" width="100%" height="100%">
                    </iframe>`
         }
       }

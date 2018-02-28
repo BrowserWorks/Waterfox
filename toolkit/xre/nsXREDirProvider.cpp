@@ -68,6 +68,9 @@
 #if (defined(XP_WIN) || defined(XP_MACOSX))
 #include "nsIUUIDGenerator.h"
 #include "mozilla/Unused.h"
+#if defined(XP_WIN)
+#include "WinUtils.h"
+#endif
 #endif
 #endif
 
@@ -119,6 +122,20 @@ nsXREDirProvider::Initialize(nsIFile *aXULAppDir,
   mAppProvider = aAppProvider;
   mXULAppDir = aXULAppDir;
   mGREDir = aGREDir;
+#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+  // The GRE directory can be used in sandbox rules, so we need to make sure
+  // it doesn't contain any junction points or symlinks or the sandbox will
+  // reject those rules.
+  if (!mozilla::widget::WinUtils::ResolveJunctionPointsAndSymLinks(mGREDir)) {
+    NS_WARNING("Failed to resolve GRE Dir.");
+  }
+  // If the mXULAppDir is different it lives below the mGREDir. To avoid
+  // confusion resolve that as well even though we don't need it for sandbox
+  // rules. Some tests rely on this for example.
+  if (!mozilla::widget::WinUtils::ResolveJunctionPointsAndSymLinks(mXULAppDir)) {
+    NS_WARNING("Failed to resolve XUL App Dir.");
+  }
+#endif
   mGREDir->Clone(getter_AddRefs(mGREBinDir));
 #ifdef XP_MACOSX
   mGREBinDir->SetNativeLeafName(NS_LITERAL_CSTRING("MacOS"));
@@ -182,6 +199,14 @@ nsXREDirProvider::SetProfile(nsIFile* aDir, nsIFile* aLocalDir)
 
   mProfileDir = aDir;
   mProfileLocalDir = aLocalDir;
+#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+  // The profile directory can be used in sandbox rules, so we need to make sure
+  // it doesn't contain any junction points or symlinks or the sandbox will
+  // reject those rules.
+  if (!mozilla::widget::WinUtils::ResolveJunctionPointsAndSymLinks(mProfileDir)) {
+    NS_WARNING("Failed to resolve Profile Dir.");
+  }
+#endif
   return NS_OK;
 }
 
@@ -395,7 +420,7 @@ nsXREDirProvider::GetFile(const char* aProperty, bool* aPersistent,
         rv = localDir->AppendNative(NS_LITERAL_CSTRING("NativeMessagingHosts"));
       }
 #else
-      rv = localDir->AppendNative(NS_LITERAL_CSTRING(".mozilla"));
+      rv = localDir->AppendNative(NS_LITERAL_CSTRING(".waterfox"));
       if (NS_SUCCEEDED(rv)) {
         rv = localDir->AppendNative(NS_LITERAL_CSTRING("native-messaging-hosts"));
       }
@@ -678,12 +703,24 @@ nsXREDirProvider::LoadContentProcessTempDir()
     mContentTempDir = GetContentProcessSandboxTempDir();
   }
 
-  if (mContentTempDir) {
-    return NS_OK;
-  } else {
-    return NS_GetSpecialDirectory(NS_OS_TEMP_DIR,
-                                  getter_AddRefs(mContentTempDir));
+  if (!mContentTempDir) {
+    nsresult rv = NS_GetSpecialDirectory(NS_OS_TEMP_DIR,
+                                         getter_AddRefs(mContentTempDir));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
   }
+
+#if defined(XP_WIN)
+  // The content temp dir can be used in sandbox rules, so we need to make sure
+  // it doesn't contain any junction points or symlinks or the sandbox will
+  // reject those rules.
+  if (!mozilla::widget::WinUtils::ResolveJunctionPointsAndSymLinks(mContentTempDir)) {
+    NS_WARNING("Failed to resolve Content Temp Dir.");
+  }
+#endif
+
+  return NS_OK;
 }
 
 static bool
@@ -714,7 +751,7 @@ GetContentProcessSandboxTempDir()
 
   nsAutoString tempDirSuffix;
   rv = Preferences::GetString("security.sandbox.content.tempDirSuffix",
-                              &tempDirSuffix);
+                              tempDirSuffix);
   if (NS_WARN_IF(NS_FAILED(rv)) || tempDirSuffix.IsEmpty()) {
     return nullptr;
   }
@@ -742,8 +779,9 @@ CreateContentProcessSandboxTempDir()
 
   // Get (and create if blank) temp directory suffix pref.
   nsresult rv;
-  nsAdoptingString tempDirSuffix =
-    Preferences::GetString("security.sandbox.content.tempDirSuffix");
+  nsAutoString tempDirSuffix;
+  Preferences::GetString("security.sandbox.content.tempDirSuffix",
+                         tempDirSuffix);
   if (tempDirSuffix.IsEmpty()) {
     nsCOMPtr<nsIUUIDGenerator> uuidgen =
       do_GetService("@mozilla.org/uuid-generator;1", &rv);
@@ -773,7 +811,10 @@ CreateContentProcessSandboxTempDir()
     nsCOMPtr<nsIPrefService> prefsvc = Preferences::GetService();
     if (!prefsvc || NS_FAILED((rv = prefsvc->SavePrefFile(nullptr)))) {
       // Again, if we fail to save the pref file we might not be able to clean
-      // up the temp directory, so don't create one.
+      // up the temp directory, so don't create one.  Note that in the case
+      // the preference values allows an off main thread save, the successful
+      // return from the call doesn't mean we actually saved the file.  See
+      // bug 1364496 for details.
       NS_WARNING("Failed to save pref file, cannot create temp dir.");
       return nullptr;
     }
@@ -986,6 +1027,8 @@ nsXREDirProvider::GetDirectory(nsIFile* *aResult)
 NS_IMETHODIMP
 nsXREDirProvider::DoStartup()
 {
+  nsresult rv;
+
   if (!mProfileNotified) {
     nsCOMPtr<nsIObserverService> obsSvc =
       mozilla::services::GetObserverService();
@@ -998,8 +1041,7 @@ nsXREDirProvider::DoStartup()
        crashes and because we want to begin crash tracking before other code run
        from this notification since they may cause crashes.
     */
-    nsresult rv = mozilla::Preferences::ResetAndReadUserPrefs();
-    if (NS_FAILED(rv)) NS_WARNING("Failed to setup pref service.");
+    mozilla::Preferences::InitializeUserPrefs();
 
     bool safeModeNecessary = false;
     nsCOMPtr<nsIAppStartup> appStartup (do_GetService(NS_APPSTARTUP_CONTRACTID));
@@ -1085,7 +1127,7 @@ nsXREDirProvider::DoStartup()
 void
 nsXREDirProvider::DoShutdown()
 {
-  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("nsXREDirProvider::DoShutdown", OTHER);
 
   if (mProfileNotified) {
     nsCOMPtr<nsIObserverService> obsSvc =
@@ -1096,14 +1138,13 @@ nsXREDirProvider::DoShutdown()
       obsSvc->NotifyObservers(nullptr, "profile-change-net-teardown", kShutdownPersist);
       obsSvc->NotifyObservers(nullptr, "profile-change-teardown", kShutdownPersist);
 
-      // Phase 2c: Now that things are torn down, force JS GC so that things which depend on
-      // resources which are about to go away in "profile-before-change" are destroyed first.
-
+#ifdef DEBUG
+      // Not having this causes large intermittent leaks. See bug 1340425.
       if (JSContext* cx = dom::danger::GetJSContext()) {
         JS_GC(cx);
       }
+#endif
 
-      // Phase 3: Notify observers of a profile change
       obsSvc->NotifyObservers(nullptr, "profile-before-change", kShutdownPersist);
       obsSvc->NotifyObservers(nullptr, "profile-before-change-qm", kShutdownPersist);
       obsSvc->NotifyObservers(nullptr, "profile-before-change-telemetry", kShutdownPersist);
@@ -1122,29 +1163,16 @@ nsXREDirProvider::DoShutdown()
 static nsresult
 GetShellFolderPath(KNOWNFOLDERID folder, nsAString& _retval)
 {
-  wchar_t* buf;
-  uint32_t bufLength = _retval.GetMutableData(&buf, MAXPATHLEN + 3);
-  NS_ENSURE_TRUE(bufLength >= (MAXPATHLEN + 3), NS_ERROR_OUT_OF_MEMORY);
-
-  nsresult rv = NS_OK;
-
-  LPITEMIDLIST pItemIDList = nullptr;
-
   DWORD flags = KF_FLAG_SIMPLE_IDLIST | KF_FLAG_DONT_VERIFY | KF_FLAG_NO_ALIAS;
-  if (SUCCEEDED(SHGetKnownFolderIDList(folder, flags, NULL, &pItemIDList)) &&
-      SHGetPathFromIDListW(pItemIDList, buf)) {
-    // We're going to use wcslen (wcsnlen not available in msvc7.1) so make
-    // sure to null terminate.
-    buf[bufLength - 1] = L'\0';
-    _retval.SetLength(wcslen(buf));
-  } else {
-    _retval.SetLength(0);
-    rv = NS_ERROR_NOT_AVAILABLE;
+  PWSTR path = nullptr;
+
+  if (!SUCCEEDED(SHGetKnownFolderPath(folder, flags, NULL, &path))) {
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
-  CoTaskMemFree(pItemIDList);
-
-  return rv;
+  _retval = nsDependentString(path);
+  CoTaskMemFree(path);
+  return NS_OK;
 }
 
 /**
@@ -1231,14 +1259,6 @@ nsresult
 nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
 {
   nsCOMPtr<nsIFile> updRoot;
-#if defined(MOZ_WIDGET_GONK)
-
-  nsresult rv = NS_NewNativeLocalFile(nsDependentCString("/data/local"),
-                                      true,
-                                      getter_AddRefs(updRoot));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-#else
   nsCOMPtr<nsIFile> appFile;
   bool per = false;
   nsresult rv = GetFile(XRE_EXECUTABLE_FILE, &per, getter_AddRefs(appFile));
@@ -1384,7 +1404,6 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
   NS_ENSURE_SUCCESS(rv, rv);
 
 #endif // XP_WIN
-#endif
   updRoot.forget(aResult);
   return NS_OK;
 }
@@ -1488,9 +1507,6 @@ nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile, bool aLocal)
   NS_ENSURE_SUCCESS(rv, rv);
 
   rv = NS_NewLocalFile(path, true, getter_AddRefs(localDir));
-#elif defined(MOZ_WIDGET_GONK)
-  rv = NS_NewNativeLocalFile(NS_LITERAL_CSTRING("/data/b2g"), true,
-                             getter_AddRefs(localDir));
 #elif defined(XP_UNIX)
   const char* homeDir = getenv("HOME");
   if (!homeDir || !*homeDir)
@@ -1634,7 +1650,7 @@ nsXREDirProvider::AppendSysUserExtensionPath(nsIFile* aFile)
 
 #elif defined(XP_UNIX)
 
-  static const char* const sXR = ".mozilla";
+  static const char* const sXR = ".waterfox";
   rv = aFile->AppendNative(nsDependentCString(sXR));
   NS_ENSURE_SUCCESS(rv, rv);
 

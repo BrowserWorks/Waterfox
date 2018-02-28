@@ -18,6 +18,8 @@
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "nsIThreadRetargetableStreamListener.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/Atomics.h"
+#include "mozilla/Mutex.h"
 
 class nsIURI;
 class nsIPrincipal;
@@ -53,7 +55,7 @@ public:
                       nsIPrincipal* aRequestingPrincipal,
                       bool aWithCredentials);
 
-  NS_DECL_ISUPPORTS
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSIINTERFACEREQUESTOR
@@ -70,6 +72,10 @@ public:
 
   void SetInterceptController(nsINetworkInterceptController* aInterceptController);
 
+  // When CORS blocks a request, log the message to the web console, or the
+  // browser console if no valid inner window ID is found.
+  static void LogBlockedCORSRequest(uint64_t aInnerWindowID,
+                                    const nsAString& aMessage);
 private:
   // Only HttpChannelParent can call RemoveFromCorsPreflightCache
   friend class mozilla::net::HttpChannelParent;
@@ -102,15 +108,24 @@ private:
   nsCOMPtr<nsIInterfaceRequestor> mOuterNotificationCallbacks;
   nsCOMPtr<nsINetworkInterceptController> mInterceptController;
   bool mWithCredentials;
-  bool mRequestApproved;
+  mozilla::Atomic<bool, mozilla::Relaxed> mRequestApproved;
   // Please note that the member variable mHasBeenCrossSite may rely on the
   // promise that the CSP directive 'upgrade-insecure-requests' upgrades
   // an http: request to https: in nsHttpChannel::Connect() and hence
   // a request might not be marked as cross site request based on that promise.
   bool mHasBeenCrossSite;
+  // Under e10s, logging happens in the child process. Keep a reference to the
+  // creator nsIHttpChannel in order to find the way back to the child. Released
+  // in OnStopRequest().
+  nsCOMPtr<nsIHttpChannel> mHttpChannel;
 #ifdef DEBUG
   bool mInited;
 #endif
+
+  // only locking mOuterListener, because it can be used on different threads.
+  // We guarantee that OnStartRequest, OnDataAvailable and OnStopReques will be
+  // called in order, but to make tsan happy we will lock mOuterListener.
+  mutable mozilla::Mutex mMutex;
 };
 
 #endif

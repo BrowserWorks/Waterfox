@@ -46,13 +46,16 @@ DevToolsModules(
     'async-utils.js',
     'builtin-modules.js',
     'content-observer.js',
+    'debounce.js',
     'defer.js',
     'deprecated-sync-thenables.js',
     'DevToolsUtils.js',
     'dom-node-constants.js',
     'dom-node-filter-constants.js',
     'event-emitter.js',
+    'extend.js',
     'flags.js',
+    'generate-uuid.js',
     'indentation.js',
     'l10n.js',
     'loader-plugin-raw.jsm',
@@ -64,6 +67,7 @@ DevToolsModules(
     'system.js',
     'task.js',
     'ThreadSafeDevToolsUtils.js',
+    'wasm-source-map.js',
 )
 
 with Files('**'):
