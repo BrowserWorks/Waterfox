@@ -124,11 +124,14 @@ OSXVersion::GetVersionNumber()
 
 namespace mozilla {
 
-bool StartMacSandbox(MacSandboxInfo aInfo, std::string &aErrorMessage)
+bool StartMacSandbox(MacSandboxInfo const &aInfo, std::string &aErrorMessage)
 {
   std::vector<const char *> params;
   char *profile = NULL;
   bool profile_needs_free = false;
+
+  std::string macOSMinor = std::to_string(OSXVersion::OSXVersionMinor());
+
   if (aInfo.type == MacSandboxType_Plugin) {
     profile = const_cast<char *>(pluginSandboxRules);
     params.push_back("SHOULD_LOG");
@@ -160,10 +163,8 @@ bool StartMacSandbox(MacSandboxInfo aInfo, std::string &aErrorMessage)
       params.push_back(aInfo.level == 2 ? "TRUE" : "FALSE");
       params.push_back("SANDBOX_LEVEL_3");
       params.push_back(aInfo.level == 3 ? "TRUE" : "FALSE");
-      params.push_back("MAC_OS_MINOR_9");
-      params.push_back(OSXVersion::OSXVersionMinor() == 9 ? "TRUE" : "FALSE");
-      params.push_back("MAC_OS_MINOR_MIN_13");
-      params.push_back(OSXVersion::OSXVersionMinor() >= 13 ? "TRUE" : "FALSE");
+      params.push_back("MAC_OS_MINOR");
+      params.push_back(macOSMinor.c_str());
       params.push_back("APP_PATH");
       params.push_back(aInfo.appPath.c_str());
       params.push_back("APP_BINARY_PATH");
@@ -180,6 +181,22 @@ bool StartMacSandbox(MacSandboxInfo aInfo, std::string &aErrorMessage)
       params.push_back(aInfo.hasSandboxedProfile ? "TRUE" : "FALSE");
       params.push_back("HAS_FILE_PRIVILEGES");
       params.push_back(aInfo.hasFilePrivileges ? "TRUE" : "FALSE");
+      if (!aInfo.testingReadPath1.empty()) {
+        params.push_back("TESTING_READ_PATH1");
+        params.push_back(aInfo.testingReadPath1.c_str());
+      }
+      if (!aInfo.testingReadPath2.empty()) {
+        params.push_back("TESTING_READ_PATH2");
+        params.push_back(aInfo.testingReadPath2.c_str());
+      }
+      if (!aInfo.testingReadPath3.empty()) {
+        params.push_back("TESTING_READ_PATH3");
+        params.push_back(aInfo.testingReadPath3.c_str());
+      }
+      if (!aInfo.testingReadPath4.empty()) {
+        params.push_back("TESTING_READ_PATH4");
+        params.push_back(aInfo.testingReadPath4.c_str());
+      }
 #ifdef DEBUG
       if (!aInfo.debugWriteDir.empty()) {
         params.push_back("DEBUG_WRITE_DIR");

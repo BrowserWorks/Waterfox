@@ -6,12 +6,15 @@
 
 #include "mozilla/mscom/MainThreadRuntime.h"
 
+#if defined(ACCESSIBILITY)
+#include "mozilla/a11y/Compatibility.h"
+#endif
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
-#include "nsDebug.h"
 #include "nsWindowsHelpers.h"
+#include "nsXULAppAPI.h"
 
 #include <accctrl.h>
 #include <aclapi.h>
@@ -36,8 +39,13 @@ extern "C" void __cdecl SetOaNoCache(void);
 namespace mozilla {
 namespace mscom {
 
+MainThreadRuntime* MainThreadRuntime::sInstance = nullptr;
+
 MainThreadRuntime::MainThreadRuntime()
   : mInitResult(E_UNEXPECTED)
+#if defined(ACCESSIBILITY)
+  , mActCtxRgn(a11y::Compatibility::GetActCtxResourceId())
+#endif // defined(ACCESSIBILITY)
 {
   // We must be the outermost COM initialization on this thread. The COM runtime
   // cannot be configured once we start manipulating objects
@@ -69,6 +77,61 @@ MainThreadRuntime::MainThreadRuntime()
 
   // Disable the BSTR cache (as it never invalidates, thus leaking memory)
   ::SetOaNoCache();
+
+  if (FAILED(mInitResult)) {
+    return;
+  }
+
+  if (XRE_IsParentProcess()) {
+    MainThreadClientInfo::Create(getter_AddRefs(mClientInfo));
+  }
+
+  MOZ_ASSERT(!sInstance);
+  sInstance = this;
+}
+
+MainThreadRuntime::~MainThreadRuntime()
+{
+  if (mClientInfo) {
+    mClientInfo->Detach();
+  }
+
+  MOZ_ASSERT(sInstance == this);
+  if (sInstance == this) {
+    sInstance = nullptr;
+  }
+}
+
+/* static */
+DWORD
+MainThreadRuntime::GetClientThreadId()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(XRE_IsParentProcess(), "Unsupported outside of parent process");
+  if (!XRE_IsParentProcess()) {
+    return 0;
+  }
+
+  // Don't check for a calling executable if the caller is in-process.
+  // We verify this by asking COM for a call context. If none exists, then
+  // we must be a local call.
+  RefPtr<IServerSecurity> serverSecurity;
+  if (FAILED(::CoGetCallContext(IID_IServerSecurity,
+                                getter_AddRefs(serverSecurity)))) {
+    return 0;
+  }
+
+  MOZ_ASSERT(sInstance);
+  if (!sInstance) {
+    return 0;
+  }
+
+  MOZ_ASSERT(sInstance->mClientInfo);
+  if (!sInstance->mClientInfo) {
+    return 0;
+  }
+
+  return sInstance->mClientInfo->GetLastRemoteCallThreadId();
 }
 
 HRESULT

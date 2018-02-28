@@ -426,7 +426,7 @@ NS_IMETHODIMP nsWebBrowserPersist::SaveURI(
 NS_IMETHODIMP nsWebBrowserPersist::SavePrivacyAwareURI(
     nsIURI *aURI, nsISupports *aCacheKey,
     nsIURI *aReferrer, uint32_t aReferrerPolicy,
-    nsIInputStream *aPostData, const char *aExtraHeaders, 
+    nsIInputStream *aPostData, const char *aExtraHeaders,
     nsISupports *aFile, bool aIsPrivate)
 {
     NS_ENSURE_TRUE(mFirstAndOnlyUse, NS_ERROR_FAILURE);
@@ -675,8 +675,10 @@ nsWebBrowserPersist::SerializeNextFile()
         // Finish and clean things up.  Defer this because the caller
         // may have been expecting to use the listeners that that
         // method will clear.
-        NS_DispatchToCurrentThread(NewRunnableMethod(this,
-            &nsWebBrowserPersist::FinishDownload));
+        NS_DispatchToCurrentThread(
+          NewRunnableMethod("nsWebBrowserPersist::FinishDownload",
+                            this,
+                            &nsWebBrowserPersist::FinishDownload));
         return;
     }
 
@@ -787,8 +789,10 @@ nsWebBrowserPersist::OnWrite::OnFinish(nsIWebBrowserPersistDocument* aDoc,
             return NS_OK;
         }
     }
-    NS_DispatchToCurrentThread(NewRunnableMethod(mParent,
-        &nsWebBrowserPersist::SerializeNextFile));
+    NS_DispatchToCurrentThread(
+      NewRunnableMethod("nsWebBrowserPersist::SerializeNextFile",
+                        mParent,
+                        &nsWebBrowserPersist::SerializeNextFile));
     return NS_OK;
 }
 
@@ -1182,39 +1186,39 @@ nsresult nsWebBrowserPersist::SendErrorStatusChange(
         AppendUTF8toUTF16(fileurl, path);
     }
 
-    nsAutoString msgId;
+    const char* msgId;
     switch(aResult)
     {
     case NS_ERROR_FILE_NAME_TOO_LONG:
         // File name too long.
-        msgId.AssignLiteral("fileNameTooLongError");
+        msgId = "fileNameTooLongError";
         break;
     case NS_ERROR_FILE_ALREADY_EXISTS:
         // File exists with same name as directory.
-        msgId.AssignLiteral("fileAlreadyExistsError");
+        msgId = "fileAlreadyExistsError";
         break;
     case NS_ERROR_FILE_DISK_FULL:
     case NS_ERROR_FILE_NO_DEVICE_SPACE:
         // Out of space on target volume.
-        msgId.AssignLiteral("diskFull");
+        msgId = "diskFull";
         break;
 
     case NS_ERROR_FILE_READ_ONLY:
         // Attempt to write to read/only file.
-        msgId.AssignLiteral("readOnly");
+        msgId = "readOnly";
         break;
 
     case NS_ERROR_FILE_ACCESS_DENIED:
         // Attempt to write without sufficient permissions.
-        msgId.AssignLiteral("accessError");
+        msgId = "accessError";
         break;
 
     default:
         // Generic read/write error message.
         if (aIsReadError)
-            msgId.AssignLiteral("readError");
+            msgId = "readError";
         else
-            msgId.AssignLiteral("writeError");
+            msgId = "writeError";
         break;
     }
     // Get properties file bundle and extract status string.
@@ -1228,7 +1232,7 @@ nsresult nsWebBrowserPersist::SendErrorStatusChange(
     nsXPIDLString msgText;
     const char16_t *strings[1];
     strings[0] = path.get();
-    rv = bundle->FormatStringFromName(msgId.get(), strings, 1, getter_Copies(msgText));
+    rv = bundle->FormatStringFromName(msgId, strings, 1, getter_Copies(msgText));
     NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
 
     mProgressListener->OnStatusChange(nullptr, aRequest, aResult, msgText);
@@ -1537,7 +1541,7 @@ nsWebBrowserPersist::GetExtensionForContentType(const char16_t *aContentType, ch
     }
 
     nsAutoCString contentType;
-    contentType.AssignWithConversion(aContentType);
+    LossyCopyUTF16toASCII(aContentType, contentType);
     nsAutoCString ext;
     rv = mMIMEService->GetPrimaryExtension(contentType, EmptyCString(), ext);
     if (NS_SUCCEEDED(rv))
@@ -1790,9 +1794,11 @@ nsWebBrowserPersist::FinishSaveDocumentInternal(nsIURI* aFile,
         // Bounce this off the event loop to avoid stack overflow.
         typedef StoreCopyPassByRRef<decltype(toWalk)> WalkStorage;
         auto saveMethod = &nsWebBrowserPersist::SaveDocumentDeferred;
-        nsCOMPtr<nsIRunnable> saveLater =
-            NewRunnableMethod<WalkStorage>(this, saveMethod,
-                                           mozilla::Move(toWalk));
+        nsCOMPtr<nsIRunnable> saveLater = NewRunnableMethod<WalkStorage>(
+          "nsWebBrowserPersist::FinishSaveDocumentInternal",
+          this,
+          saveMethod,
+          mozilla::Move(toWalk));
         NS_DispatchToCurrentThread(saveLater);
     } else {
         // Done walking DOMs; on to the serialization phase.
@@ -2085,7 +2091,7 @@ nsWebBrowserPersist::CalculateUniqueFilename(nsIURI *aURI)
         if (localFile)
         {
             nsAutoString filenameAsUnichar;
-            filenameAsUnichar.AssignWithConversion(filename.get());
+            CopyASCIItoUTF16(filename, filenameAsUnichar);
             localFile->SetLeafName(filenameAsUnichar);
 
             // Resync the URI with the file after the extension has been appended
@@ -2120,7 +2126,7 @@ nsWebBrowserPersist::MakeFilenameFromURI(nsIURI *aURI, nsString &aFilename)
         url->GetFileName(nameFromURL);
         if (mPersistFlags & PERSIST_FLAGS_DONT_CHANGE_FILENAMES)
         {
-            fileName.AssignWithConversion(NS_UnescapeURL(nameFromURL).BeginReading());
+            CopyASCIItoUTF16(NS_UnescapeURL(nameFromURL), fileName);
             aFilename = fileName;
             return NS_OK;
         }
@@ -2410,7 +2416,7 @@ nsWebBrowserPersist::FixRedirectedChannelEntry(nsIChannel *aNewChannel)
         // If a match was found, remove the data entry with the old channel
         // key and re-add it with the new channel key.
         nsAutoPtr<OutputData> outputData;
-        mOutputMap.RemoveAndForget(matchingKey, outputData);
+        mOutputMap.Remove(matchingKey, &outputData);
         NS_ENSURE_TRUE(outputData, NS_ERROR_FAILURE);
 
         // Store data again with new channel unless told to ignore redirects.
@@ -2545,33 +2551,33 @@ nsWebBrowserPersist::URIData::GetLocalURI(nsIURI *targetBaseURI, nsCString& aSpe
             if (!url) {
                 return NS_ERROR_FAILURE;
             }
-            
+
             nsAutoCString filename;
             url->GetFileName(filename);
-            
+
             nsAutoCString rawPathURL(mRelativePathToData);
             rawPathURL.Append(filename);
-            
+
             rv = NS_EscapeURL(rawPathURL, esc_FilePath, aSpecOut, fallible);
             NS_ENSURE_SUCCESS(rv, rv);
         } else {
             nsAutoCString rawPathURL;
-            
+
             nsCOMPtr<nsIFile> dataFile;
             rv = GetLocalFileFromURI(mFile, getter_AddRefs(dataFile));
             NS_ENSURE_SUCCESS(rv, rv);
-            
+
             nsCOMPtr<nsIFile> docFile;
             rv = GetLocalFileFromURI(targetBaseURI, getter_AddRefs(docFile));
             NS_ENSURE_SUCCESS(rv, rv);
-            
+
             nsCOMPtr<nsIFile> parentDir;
             rv = docFile->GetParent(getter_AddRefs(parentDir));
             NS_ENSURE_SUCCESS(rv, rv);
-            
+
             rv = dataFile->GetRelativePath(parentDir, rawPathURL);
             NS_ENSURE_SUCCESS(rv, rv);
-            
+
             rv = NS_EscapeURL(rawPathURL, esc_FilePath, aSpecOut, fallible);
             NS_ENSURE_SUCCESS(rv, rv);
         }
@@ -2727,9 +2733,8 @@ nsWebBrowserPersist::MakeAndStoreLocalFilenameInURIMap(
 
     // Create a sensibly named filename for the URI and store in the URI map
     URIData *data;
-    if (mURIMap.Contains(spec))
+    if (mURIMap.Get(spec, &data))
     {
-        data = mURIMap.Get(spec);
         if (aNeedsPersisting)
         {
           data->mNeedsPersisting = true;

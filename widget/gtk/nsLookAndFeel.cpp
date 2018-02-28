@@ -54,6 +54,12 @@ nsLookAndFeel::nsLookAndFeel()
 {
 }
 
+void
+nsLookAndFeel::NativeInit()
+{
+    EnsureInit();
+}
+
 nsLookAndFeel::~nsLookAndFeel()
 {
 #if (MOZ_WIDGET_GTK == 2)
@@ -928,7 +934,7 @@ GetSystemFontInfo(GtkWidget *aWidget,
 
     if (!pango_font_description_get_size_is_absolute(desc)) {
         // |size| is in pango-points, so convert to pixels.
-        size *= float(gfxPlatformGtk::GetDPI()) / POINTS_PER_INCH_FLOAT;
+        size *= float(gfxPlatformGtk::GetFontScaleDPI()) / POINTS_PER_INCH_FLOAT;
     }
 
     // Scale fonts up on HiDPI displays.
@@ -1074,6 +1080,9 @@ nsLookAndFeel::EnsureInit()
         return;
     mInitialized = true;
 
+    // gtk does non threadsafe refcounting
+    MOZ_ASSERT(NS_IsMainThread());
+
 #if (MOZ_WIDGET_GTK == 2)
     NS_ASSERTION(!mStyle, "already initialized");
     // GtkInvisibles come with a refcount that is not floating
@@ -1174,8 +1183,9 @@ nsLookAndFeel::EnsureInit()
     // Allow content Gtk theme override by pref, it's useful when styled Gtk+
     // widgets break web content.
     if (XRE_IsContentProcess()) {
-        auto contentThemeName =
-            mozilla::Preferences::GetCString("widget.content.gtk-theme-override");
+        nsAutoCString contentThemeName;
+        mozilla::Preferences::GetCString("widget.content.gtk-theme-override",
+                                         contentThemeName);
         if (!contentThemeName.IsEmpty()) {
             g_object_set(settings, "gtk-theme-name", contentThemeName.get(), nullptr);
         }

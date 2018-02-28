@@ -4,13 +4,12 @@
 
 //! Gecko-specific bits for selector-parsing.
 
-use cssparser::{Parser, ToCss};
+use cssparser::{BasicParseError, Parser, ToCss, Token, CowRcStr};
 use element_state::ElementState;
 use gecko_bindings::structs::CSSPseudoClassType;
 use selector_parser::{SelectorParser, PseudoElementCascadeType};
 use selectors::parser::{Selector, SelectorMethods, SelectorParseError};
 use selectors::visitor::SelectorVisitor;
-use std::borrow::Cow;
 use std::fmt;
 use string_cache::{Atom, Namespace, WeakAtom, WeakNamespace};
 use style_traits::{ParseError, StyleParseError};
@@ -175,18 +174,37 @@ impl NonTSPseudoClass {
         apply_non_ts_list!(pseudo_class_state)
     }
 
-    /// Returns true if the given pseudoclass should trigger style sharing cache revalidation.
+    /// Returns true if the given pseudoclass should trigger style sharing cache
+    /// revalidation.
     pub fn needs_cache_revalidation(&self) -> bool {
-        // :dir() depends on state only, but doesn't use state_flag because its
-        // semantics don't quite match.  Nevertheless, it doesn't need cache
-        // revalidation, because we already compare states for elements and
-        // candidates.
         self.state_flag().is_empty() &&
         !matches!(*self,
+                  // :-moz-any is handled by the revalidation visitor walking
+                  // the things inside it; it does not need to cause
+                  // revalidation on its own.
                   NonTSPseudoClass::MozAny(_) |
+                  // :dir() depends on state only, but doesn't use state_flag
+                  // because its semantics don't quite match.  Nevertheless, it
+                  // doesn't need cache revalidation, because we already compare
+                  // states for elements and candidates.
                   NonTSPseudoClass::Dir(_) |
+                  // :-moz-is-html only depends on the state of the document and
+                  // the namespace of the element; the former is invariant
+                  // across all the elements involved and the latter is already
+                  // checked for by our caching precondtions.
                   NonTSPseudoClass::MozIsHTML |
-                  NonTSPseudoClass::MozPlaceholder)
+                  // :-moz-placeholder is parsed but never matches.
+                  NonTSPseudoClass::MozPlaceholder |
+                  // :-moz-locale-dir and :-moz-window-inactive depend only on
+                  // the state of the document, which is invariant across all
+                  // the elements involved in a given style cache.
+                  NonTSPseudoClass::MozLocaleDir(_) |
+                  NonTSPseudoClass::MozWindowInactive |
+                  // Similar for the document themes.
+                  NonTSPseudoClass::MozLWTheme |
+                  NonTSPseudoClass::MozLWThemeBrightText |
+                  NonTSPseudoClass::MozLWThemeDarkText
+        )
     }
 
     /// Convert NonTSPseudoClass to Gecko's CSSPseudoClassType.
@@ -249,7 +267,12 @@ impl<'a, 'i> ::selectors::Parser<'i> for SelectorParser<'a> {
     type Impl = SelectorImpl;
     type Error = StyleParseError<'i>;
 
-    fn parse_non_ts_pseudo_class(&self, name: Cow<'i, str>)
+    fn is_pseudo_element_allows_single_colon(name: &CowRcStr<'i>) -> bool {
+        ::selectors::parser::is_css2_pseudo_element(name) ||
+            name.starts_with("-moz-tree-") // tree pseudo-elements
+    }
+
+    fn parse_non_ts_pseudo_class(&self, name: CowRcStr<'i>)
                                  -> Result<NonTSPseudoClass, ParseError<'i>> {
         macro_rules! pseudo_class_parse {
             (bare: [$(($css:expr, $name:ident, $gecko_type:tt, $state:tt, $flags:tt),)*],
@@ -271,7 +294,7 @@ impl<'a, 'i> ::selectors::Parser<'i> for SelectorParser<'a> {
     }
 
     fn parse_non_ts_functional_pseudo_class<'t>(&self,
-                                                name: Cow<'i, str>,
+                                                name: CowRcStr<'i>,
                                                 parser: &mut Parser<'i, 't>)
                                                 -> Result<NonTSPseudoClass, ParseError<'i>> {
         macro_rules! pseudo_class_string_parse {
@@ -298,7 +321,7 @@ impl<'a, 'i> ::selectors::Parser<'i> for SelectorParser<'a> {
                             Selector::parse(self, input)
                         })?;
                         // Selectors inside `:-moz-any` may not include combinators.
-                        if selectors.iter().flat_map(|x| x.iter_raw()).any(|s| s.is_combinator()) {
+                        if selectors.iter().flat_map(|x| x.iter_raw_match_order()).any(|s| s.is_combinator()) {
                             return Err(SelectorParseError::UnexpectedIdent("-moz-any".into()).into())
                         }
                         NonTSPseudoClass::MozAny(selectors.into_boxed_slice())
@@ -315,9 +338,33 @@ impl<'a, 'i> ::selectors::Parser<'i> for SelectorParser<'a> {
         }
     }
 
-    fn parse_pseudo_element(&self, name: Cow<'i, str>) -> Result<PseudoElement, ParseError<'i>> {
+    fn parse_pseudo_element(&self, name: CowRcStr<'i>) -> Result<PseudoElement, ParseError<'i>> {
         PseudoElement::from_slice(&name, self.in_user_agent_stylesheet())
             .ok_or(SelectorParseError::UnexpectedIdent(name.clone()).into())
+    }
+
+    fn parse_functional_pseudo_element<'t>(&self, name: CowRcStr<'i>,
+                                           parser: &mut Parser<'i, 't>)
+                                           -> Result<PseudoElement, ParseError<'i>> {
+        if name.starts_with("-moz-tree-") {
+            // Tree pseudo-elements can have zero or more arguments,
+            // separated by either comma or space.
+            let mut args = Vec::new();
+            loop {
+                match parser.next() {
+                    Ok(&Token::Ident(ref ident)) => args.push(ident.as_ref().to_owned()),
+                    Ok(&Token::Comma) => {},
+                    Ok(t) => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
+                    Err(BasicParseError::EndOfInput) => break,
+                    _ => unreachable!("Parser::next() shouldn't return any other error"),
+                }
+            }
+            let args = args.into_boxed_slice();
+            if let Some(pseudo) = PseudoElement::tree_pseudo_element(&name, args) {
+                return Ok(pseudo);
+            }
+        }
+        Err(SelectorParseError::UnexpectedIdent(name.clone()).into())
     }
 
     fn default_namespace(&self) -> Option<Namespace> {
@@ -349,11 +396,11 @@ impl SelectorImpl {
 
 
     #[inline]
-    /// Executes a function for each pseudo-element.
-    pub fn each_pseudo_element<F>(fun: F)
+    /// Executes a function for each simple (not functional) pseudo-element.
+    pub fn each_simple_pseudo_element<F>(fun: F)
         where F: FnMut(PseudoElement),
     {
-        PseudoElement::each(fun)
+        PseudoElement::each_simple(fun)
     }
 
     #[inline]

@@ -12,18 +12,21 @@ const XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
-Cu.import("resource://gre/modules/AsyncPrefs.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "WindowsUIUtils", "@mozilla.org/windows-ui-utils;1", "nsIWindowsUIUtils");
-XPCOMUtils.defineLazyServiceGetter(this, "AlertsService", "@mozilla.org/alerts-service;1", "nsIAlertsService");
 XPCOMUtils.defineLazyGetter(this, "WeaveService", () =>
   Cc["@mozilla.org/weave/service;1"].getService().wrappedJSObject
 );
+XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
+                                  "resource://gre/modules/ContextualIdentityService.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "SafeBrowsing",
+                                  "resource://gre/modules/SafeBrowsing.jsm");
 
 // lazy module getters
 
 /* global AboutHome:false, AboutNewTab:false, AddonManager:false, AppMenuNotifications:false,
-          AsyncShutdown:false, AutoCompletePopup:false, BookmarkHTMLUtils:false,
+          AsyncPrefs: false, AsyncShutdown:false, AutoCompletePopup:false, BookmarkHTMLUtils:false,
           BookmarkJSONUtils:false, BrowserUITelemetry:false, BrowserUsageTelemetry:false,
           ContentClick:false, ContentPrefServiceParent:false, ContentSearch:false,
           DateTimePickerHelper:false, DirectoryLinksProvider:false,
@@ -31,12 +34,13 @@ XPCOMUtils.defineLazyGetter(this, "WeaveService", () =>
           FileUtils:false, FormValidationHandler:false, Integration:false,
           LightweightThemeManager:false, LoginHelper:false, LoginManagerParent:false,
           NetUtil:false, NewTabUtils:false, OS:false,
+          PageActions:false,
           PageThumbs:false, PdfJs:false, PermissionUI:false, PlacesBackups:false,
           PlacesUtils:false, PluralForm:false, PrivateBrowsingUtils:false,
           ProcessHangMonitor:false, ReaderParent:false, RecentWindow:false,
           RemotePrompt:false, SessionStore:false,
           ShellService:false, SimpleServiceDiscovery:false, TabCrashHandler:false,
-          Task:false, UITour:false, UIState:false, UpdateListener:false, WebChannel:false,
+          UITour:false, UIState:false, UpdateListener:false, WebChannel:false,
           WindowsRegistry:false, webrtcUI:false */
 
 
@@ -53,9 +57,9 @@ let initializedModules = {};
   ["AboutNewTab", "resource:///modules/AboutNewTab.jsm"],
   ["AddonManager", "resource://gre/modules/AddonManager.jsm"],
   ["AppMenuNotifications", "resource://gre/modules/AppMenuNotifications.jsm"],
+  ["AsyncPrefs", "resource://gre/modules/AsyncPrefs.jsm"],
   ["AsyncShutdown", "resource://gre/modules/AsyncShutdown.jsm"],
   ["AutoCompletePopup", "resource://gre/modules/AutoCompletePopup.jsm"],
-  ["BrowserUtils", "resource://gre/modules/BrowserUtils.jsm"],
   ["BookmarkHTMLUtils", "resource://gre/modules/BookmarkHTMLUtils.jsm"],
   ["BookmarkJSONUtils", "resource://gre/modules/BookmarkJSONUtils.jsm"],
   ["ContentClick", "resource:///modules/ContentClick.jsm"],
@@ -74,6 +78,7 @@ let initializedModules = {};
   ["NetUtil", "resource://gre/modules/NetUtil.jsm"],
   ["NewTabUtils", "resource://gre/modules/NewTabUtils.jsm"],
   ["OS", "resource://gre/modules/osfile.jsm"],
+  ["PageActions", "resource:///modules/PageActions.jsm"],
   ["PageThumbs", "resource://gre/modules/PageThumbs.jsm"],
   ["PdfJs", "resource://pdf.js/PdfJs.jsm"],
   ["PermissionUI", "resource:///modules/PermissionUI.jsm"],
@@ -89,7 +94,6 @@ let initializedModules = {};
   ["ShellService", "resource:///modules/ShellService.jsm"],
   ["SimpleServiceDiscovery", "resource://gre/modules/SimpleServiceDiscovery.jsm"],
   ["TabCrashHandler", "resource:///modules/ContentCrashHandlers.jsm"],
-  ["Task", "resource://gre/modules/Task.jsm"],
   ["UIState", "resource://services-sync/UIState.jsm"],
   ["UserAgentOverrides", "resource://gre/modules/UserAgentOverrides.jsm"],
   ["UpdateListener", "resource://gre/modules/UpdateListener.jsm", "init"],
@@ -141,6 +145,12 @@ const listeners = {
     "ContentPrefs:AddObserverForName": ["ContentPrefServiceParent"],
     "ContentPrefs:RemoveObserverForName": ["ContentPrefServiceParent"],
     // PLEASE KEEP THIS LIST IN SYNC WITH THE LISTENERS ADDED IN ContentPrefServiceParent.init
+
+    // PLEASE KEEP THIS LIST IN SYNC WITH THE LISTENERS ADDED IN AsyncPrefs.init
+    "AsyncPrefs:SetPref": ["AsyncPrefs"],
+    "AsyncPrefs:ResetPref": ["AsyncPrefs"],
+    // PLEASE KEEP THIS LIST IN SYNC WITH THE LISTENERS ADDED IN AsyncPrefs.init
+
     "FeedConverter:addLiveBookmark": ["Feeds"],
     "WCCR:setAutoHandler": ["Feeds"],
     "webrtc:UpdateGlobalIndicators": ["webrtcUI"],
@@ -255,6 +265,7 @@ function BrowserGlue() {
     });
 
   XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts", "resource://gre/modules/FxAccounts.jsm");
+  XPCOMUtils.defineLazyServiceGetter(this, "AlertsService", "@mozilla.org/alerts-service;1", "nsIAlertsService");
 
   this._init();
 }
@@ -267,10 +278,6 @@ const OBSERVE_LASTWINDOW_CLOSE_TOPICS = AppConstants.platform != "macosx";
 
 BrowserGlue.prototype = {
   _saveSession: false,
-  _isPlacesInitObserver: false,
-  _isPlacesLockedObserver: false,
-  _isPlacesShutdownObserver: false,
-  _isPlacesDatabaseLocked: false,
   _migrationImportsDefaultBookmarks: false,
 
   _setPrefToSaveSession: function BG__setPrefToSaveSession(aForce) {
@@ -321,7 +328,7 @@ BrowserGlue.prototype = {
         this._onAppDefaults();
         break;
       case "final-ui-startup":
-        this._finalUIStartup();
+        this._beforeUIStartup();
         break;
       case "browser-delayed-startup-finished":
         this._onFirstWindowLoaded(subject);
@@ -365,8 +372,14 @@ BrowserGlue.prototype = {
       case "fxaccounts:device_connected":
         this._onDeviceConnected(data);
         break;
+      case "fxaccounts:verify_login":
+        this._onVerifyLoginNotification(JSON.parse(data));
+        break;
       case "fxaccounts:device_disconnected":
-        this._onDeviceDisconnected();
+        data = JSON.parse(data);
+        if (data.isLocalDevice) {
+          this._onDeviceDisconnected();
+        }
         break;
       case "weave:engine:clients:display-uris":
         this._onDisplaySyncURIs(subject);
@@ -377,21 +390,9 @@ BrowserGlue.prototype = {
         subject.data = true;
         break;
       case "places-init-complete":
+        Services.obs.removeObserver(this, "places-init-complete");
         if (!this._migrationImportsDefaultBookmarks)
           this._initPlaces(false);
-
-        Services.obs.removeObserver(this, "places-init-complete");
-        this._isPlacesInitObserver = false;
-        // no longer needed, since history was initialized completely.
-        Services.obs.removeObserver(this, "places-database-locked");
-        this._isPlacesLockedObserver = false;
-        break;
-      case "places-database-locked":
-        this._isPlacesDatabaseLocked = true;
-        // Stop observing, so further attempts to load history service
-        // will not show the prompt.
-        Services.obs.removeObserver(this, "places-database-locked");
-        this._isPlacesLockedObserver = false;
         break;
       case "idle":
         this._backupBookmarks();
@@ -419,6 +420,10 @@ BrowserGlue.prototype = {
           });
         } else if (data == "mock-fxaccounts") {
           Object.defineProperty(this, "fxAccounts", {
+            value: subject.wrappedJSObject
+          });
+        } else if (data == "mock-alerts-service") {
+          Object.defineProperty(this, "AlertsService", {
             value: subject.wrappedJSObject
           });
         }
@@ -468,13 +473,10 @@ BrowserGlue.prototype = {
         // an engine, and that newly added engines are visible.
         if (data == "engine-added" || data == "engine-removed") {
           let engineName = subject.QueryInterface(Ci.nsISearchEngine).name;
-          let Preferences =
-            Cu.import("resource://gre/modules/Preferences.jsm", {}).Preferences;
-          let pref = Preferences.get("browser.search.hiddenOneOffs");
+          let pref = Services.prefs.getStringPref("browser.search.hiddenOneOffs");
           let hiddenList = pref ? pref.split(",") : [];
           hiddenList = hiddenList.filter(x => x !== engineName);
-          Preferences.set("browser.search.hiddenOneOffs",
-                          hiddenList.join(","));
+          Services.prefs.setStringPref("browser.search.hiddenOneOffs", hiddenList.join(","));
         }
         break;
       case "flash-plugin-hang":
@@ -499,7 +501,7 @@ BrowserGlue.prototype = {
         break;
       case "browser.application.restart":
         this._initPlaces(true);
-        BrowserUtils.restartApplication();       
+        BrowserUtils.restartApplication();
         break;
     }
   },
@@ -522,19 +524,15 @@ BrowserGlue.prototype = {
     os.addObserver(this, "weave:service:ready");
     os.addObserver(this, "fxaccounts:onverified");
     os.addObserver(this, "fxaccounts:device_connected");
+    os.addObserver(this, "fxaccounts:verify_login");
     os.addObserver(this, "fxaccounts:device_disconnected");
     os.addObserver(this, "weave:engine:clients:display-uris");
     os.addObserver(this, "session-save");
     os.addObserver(this, "places-init-complete");
-    this._isPlacesInitObserver = true;
-    os.addObserver(this, "places-database-locked");
-    this._isPlacesLockedObserver = true;
     os.addObserver(this, "distribution-customization-complete");
     os.addObserver(this, "handle-xul-text-link");
     os.addObserver(this, "profile-before-change");
-    if (AppConstants.MOZ_TELEMETRY_REPORTING) {
-      os.addObserver(this, "keyword-search");
-    }
+    os.addObserver(this, "keyword-search");
     os.addObserver(this, "browser-search-engine-modified");
     os.addObserver(this, "restart-in-safe-mode");
     os.addObserver(this, "flash-plugin-hang");
@@ -543,6 +541,15 @@ BrowserGlue.prototype = {
 
     this._flashHangCount = 0;
     this._firstWindowReady = new Promise(resolve => this._firstWindowLoaded = resolve);
+    
+    // There may be a better way to do this, but for now on older OS X versions
+    // we need to disable e10s otherwise tabs will keep crashing.
+    if (AppConstants.isPlatformAndVersionAtMost("macosx", 13)) {
+        Services.prefs.setBoolPref("browser.tabs.remote.autostart", false);
+        Services.prefs.setBoolPref("browser.tabs.remote.autostart.2", false);
+        Services.prefs.setBoolPref("extensions.e10sBlockedByAddons", true);
+        Services.prefs.setBoolPref("extensions.e10sMultiBlockedByAddons", true);
+    }
 
     if (AppConstants.platform == "macosx" ||
         (AppConstants.platform == "win" && AppConstants.RELEASE_OR_BETA)) {
@@ -570,6 +577,7 @@ BrowserGlue.prototype = {
     os.removeObserver(this, "weave:service:ready");
     os.removeObserver(this, "fxaccounts:onverified");
     os.removeObserver(this, "fxaccounts:device_connected");
+    os.removeObserver(this, "fxaccounts:verify_login");
     os.removeObserver(this, "fxaccounts:device_disconnected");
     os.removeObserver(this, "weave:engine:clients:display-uris");
     os.removeObserver(this, "session-save");
@@ -577,15 +585,16 @@ BrowserGlue.prototype = {
       this._idleService.removeIdleObserver(this, this._bookmarksBackupIdleTime);
       delete this._bookmarksBackupIdleTime;
     }
-    if (this._isPlacesInitObserver)
+    if (this._mediaTelemetryIdleObserver) {
+      this._idleService.removeIdleObserver(this._mediaTelemetryIdleObserver, MEDIA_TELEMETRY_IDLE_TIME_SEC);
+      delete this._mediaTelemetryIdleObserver;
+    }
+    try {
       os.removeObserver(this, "places-init-complete");
-    if (this._isPlacesLockedObserver)
-      os.removeObserver(this, "places-database-locked");
+    } catch (ex) { /* Could have been removed already */ }
     os.removeObserver(this, "handle-xul-text-link");
     os.removeObserver(this, "profile-before-change");
-    if (AppConstants.MOZ_TELEMETRY_REPORTING) {
-      os.removeObserver(this, "keyword-search");
-    }
+    os.removeObserver(this, "keyword-search");
     os.removeObserver(this, "browser-search-engine-modified");
     os.removeObserver(this, "flash-plugin-hang");
     os.removeObserver(this, "xpi-signature-changed");
@@ -594,14 +603,13 @@ BrowserGlue.prototype = {
 
   _onAppDefaults: function BG__onAppDefaults() {
     // apply distribution customizations (prefs)
-    // other customizations are applied in _finalUIStartup()
+    // other customizations are applied in _beforeUIStartup()
     this._distributionCustomizer.applyPrefDefaults();
   },
 
   // runs on startup, before the first command line handler is invoked
   // (i.e. before the first window is opened)
-  _finalUIStartup: function BG__finalUIStartup() {
-    this._sanitizer.onStartup();
+  _beforeUIStartup: function BG__beforeUIStartup() {
     // check if we're in safe mode
     if (Services.appinfo.inSafeMode) {
       Services.ww.openWindow(null, "chrome://browser/content/safeMode.xul",
@@ -617,15 +625,7 @@ BrowserGlue.prototype = {
 
     listeners.init();
 
-    PageThumbs.init();
-
-    DirectoryLinksProvider.init();
-    NewTabUtils.init();
-    NewTabUtils.links.addProvider(DirectoryLinksProvider);
-    AboutNewTab.init();
-
     SessionStore.init();
-    UserAgentOverrides.init();
 
     if (AppConstants.INSTALL_COMPACT_THEMES) {
       let vendorShortName = gBrandBundle.GetStringFromName("vendorShortName");
@@ -650,12 +650,6 @@ BrowserGlue.prototype = {
         accentcolor: "black",
         author: vendorShortName,
       });
-    }
-
-    TabCrashHandler.init();
-    if (AppConstants.MOZ_CRASHREPORTER) {
-      PluginCrashReporter.init();
-      UnsubmittedCrashHandler.init();
     }
 
     Services.obs.notifyObservers(null, "browser-ui-startup-complete");
@@ -854,6 +848,11 @@ BrowserGlue.prototype = {
       }
     }
 
+    TabCrashHandler.init();
+    if (AppConstants.MOZ_CRASHREPORTER) {
+      PluginCrashReporter.init();
+    }
+
     ProcessHangMonitor.init();
 
     // A channel for "remote troubleshooting" code...
@@ -888,11 +887,11 @@ BrowserGlue.prototype = {
       if (updateChannel) {
         let uninstalledValue =
           WindowsRegistry.readRegKey(Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-                                     "Software\\Mozilla\\Firefox",
+                                     "Software\\Mozilla\\Waterfox",
                                      `Uninstalled-${updateChannel}`);
         let removalSuccessful =
           WindowsRegistry.removeRegKey(Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-                                       "Software\\Mozilla\\Firefox",
+                                       "Software\\Mozilla\\Waterfox",
                                        `Uninstalled-${updateChannel}`);
         if (removalSuccessful && uninstalledValue == "True") {
           this._resetProfileNotification("uninstall");
@@ -908,6 +907,15 @@ BrowserGlue.prototype = {
     if (Services.prefs.prefHasUserValue("services.sync.username")) {
       WeaveService.init();
     }
+
+    PageThumbs.init();
+
+    DirectoryLinksProvider.init();
+    NewTabUtils.init();
+    NewTabUtils.links.addProvider(DirectoryLinksProvider);
+    AboutNewTab.init();
+
+    PageActions.init();
 
     this._firstWindowTelemetry(aWindow);
     this._firstWindowLoaded();
@@ -941,8 +949,6 @@ BrowserGlue.prototype = {
         mod.uninit();
       }
     }
-
-    BrowserUsageTelemetry.uninit();
 
     PageThumbs.uninit();
     AboutNewTab.uninit();
@@ -985,12 +991,6 @@ BrowserGlue.prototype = {
     // Show update notification, if needed.
     if (Services.prefs.prefHasUserValue("app.update.postupdate"))
       this._showUpdateNotification();
-
-    // Load the "more info" page for a locked places.sqlite
-    // This property is set earlier by places-database-locked topic.
-    if (this._isPlacesDatabaseLocked) {
-      this._showPlacesLockedNotificationBox();
-    }
 
     ExtensionsUI.init();
 
@@ -1095,6 +1095,23 @@ BrowserGlue.prototype = {
       }
     }
 
+    if (AppConstants.MOZ_CRASHREPORTER) {
+      UnsubmittedCrashHandler.init();
+      Services.tm.idleDispatchToMainThread(function() {
+        UnsubmittedCrashHandler.checkForUnsubmittedCrashReports();
+      });
+    }
+
+    // Let's load the contextual identities.
+    Services.tm.idleDispatchToMainThread(() => {
+      ContextualIdentityService.load();
+    });
+
+    Services.tm.idleDispatchToMainThread(() => {
+      SafeBrowsing.init();
+    }, 5000);
+
+    this._sanitizer.onStartup();
     E10SAccessibilityCheck.onWindowsRestored();
   },
 
@@ -1125,7 +1142,7 @@ BrowserGlue.prototype = {
         let newProfilePath = newProfile.rootDir.path;
         OS.File.removeDir(newProfilePath).then(() => {
           return OS.File.makeDir(newProfilePath);
-        }).then(null, e => {
+        }).catch(e => {
           Cu.reportError("Could not empty profile 'default': " + e);
         });
       }
@@ -1354,7 +1371,7 @@ BrowserGlue.prototype = {
     try {
       // This will throw NS_ERROR_NOT_AVAILABLE if the notification cannot
       // be displayed per the idl.
-      AlertsService.showAlertNotification(null, title, text,
+      this.AlertsService.showAlertNotification(null, title, text,
                                           true, url, clickCallback);
     } catch (e) {
       Cu.reportError(e);
@@ -1388,6 +1405,18 @@ BrowserGlue.prototype = {
     // If the database is corrupt or has been newly created we should
     // import bookmarks.
     let dbStatus = PlacesUtils.history.databaseStatus;
+
+    // Show a notification with a "more info" link for a locked places.sqlite.
+    if (dbStatus == PlacesUtils.history.DATABASE_STATUS_LOCKED) {
+      // Note: initPlaces should always happen when the first window is ready,
+      // in any case, better safe than sorry.
+      this._firstWindowReady.then(() => {
+        this._showPlacesLockedNotificationBox();
+        Services.obs.notifyObservers(null, "places-browser-init-complete");
+      });
+      return;
+    }
+
     let importBookmarks = !aInitialMigrationPerformed &&
                           (dbStatus == PlacesUtils.history.DATABASE_STATUS_CREATE ||
                            dbStatus == PlacesUtils.history.DATABASE_STATUS_CORRUPT);
@@ -1620,12 +1649,12 @@ BrowserGlue.prototype = {
         return;
       this._openPreferences("sync", { origin: "doorhanger" });
     }
-    AlertsService.showAlertNotification(null, title, body, true, null, clickCallback);
+    this.AlertsService.showAlertNotification(null, title, body, true, null, clickCallback);
   },
 
   // eslint-disable-next-line complexity
   _migrateUI: function BG__migrateUI() {
-    const UI_VERSION = 55;
+    const UI_VERSION = 56;
     const BROWSER_DOCURL = "chrome://browser/content/browser.xul";
 
     let currentUIVersion;
@@ -1955,21 +1984,65 @@ BrowserGlue.prototype = {
       }
     }
 
+    if (currentUIVersion < 48) {
+      // Bug 1372954 - the checked value was persisted but the attribute removal wouldn't
+      // be persisted (Bug 15232). Turns out we can just not persist the value in this case.
+      // The situation was only happening for a few nightlies in 56, so this migration can
+      // be removed in version 58.
+      xulStore.removeValue(BROWSER_DOCURL, "sidebar-box", "checked");
+    }
+
+    if (currentUIVersion < 49) {
+      // Annotate that a user haven't seen any onboarding tour
+      Services.prefs.setIntPref("browser.onboarding.seen-tourset-version", 0);
+    }
+
+    if (currentUIVersion < 50) {
+      try {
+        // Transform prefs related to old DevTools Console.
+        // The following prefs might be missing when the old DevTools Console
+        // front-end is removed.
+        // See also: https://bugzilla.mozilla.org/show_bug.cgi?id=1381834
+        if (Services.prefs.getBoolPref("devtools.webconsole.filter.networkinfo")) {
+          Services.prefs.setBoolPref("devtools.webconsole.filter.net", true);
+        }
+        if (Services.prefs.getBoolPref("devtools.webconsole.filter.cssparser")) {
+          Services.prefs.setBoolPref("devtools.webconsole.filter.css", true);
+        }
+      } catch (ex) {
+        // It's ok if a pref is missing.
+      }
+    }
+
     if (currentUIVersion < 55) {
-      // Set any disabled Waterfox features to false if upgrading from lower version
-      // where these may have been enabled.
-      Services.prefs.setBoolPref("browser.send_pings", false);
-      Services.prefs.setBoolPref("experiments.enabled", false);
-      Services.prefs.setBoolPref("experiments.supported", false);
-      Services.prefs.setBoolPref("extensions.legacy.enabled", true);
-      Services.prefs.setBoolPref("toolkit.telemetry.archive.enabled", false);
-      Services.prefs.setBoolPref("toolkit.telemetry.newProfilePing.enabled", false);
-      Services.prefs.setBoolPref("toolkit.telemetry.shutdownPingSender.enabled", false);
-      Services.prefs.setBoolPref("xpinstall.signatures.required", false);
-      Services.prefs.setStringPref("browser.aboutHomeSnippets.updateUrl", "");
-      Services.prefs.setStringPref("browser.newtabpage.directory.source", "");
-      Services.prefs.setStringPref("experiments.manifest.uri", "");      
-      Services.prefs.setStringPref("extensions.hotfix.id", "");
+        // Set any disabled Waterfox features to false if upgrading from lower version
+        // where these may have been enabled.
+        Services.prefs.setBoolPref("browser.send_pings", false);
+        Services.prefs.setBoolPref("experiments.enabled", false);
+        Services.prefs.setBoolPref("experiments.supported", false);
+        Services.prefs.setBoolPref("extensions.legacy.enabled", true);
+        Services.prefs.setBoolPref("toolkit.telemetry.archive.enabled", false);
+        Services.prefs.setBoolPref("toolkit.telemetry.newProfilePing.enabled", false);
+        Services.prefs.setBoolPref("toolkit.telemetry.shutdownPingSender.enabled", false);
+        Services.prefs.setBoolPref("xpinstall.signatures.required", false);
+        Services.prefs.setStringPref("browser.aboutHomeSnippets.updateUrl", "");
+        Services.prefs.setStringPref("browser.newtabpage.directory.source", "");
+        Services.prefs.setStringPref("experiments.manifest.uri", "");
+        Services.prefs.setStringPref("extensions.hotfix.id", "");
+
+        // Delete left over profile
+        //let path = OS.Path.join(OS.Constants.Path.profileDir, Services.prefs.getCharPref("general.oldDefaultProfile"));
+        //OS.File.removeDir(path);
+        //Services.prefs.setCharPref("general.oldDefaultProfile", "");
+    }
+    
+    if (currentUIVersion < 56) {
+    	if (AppConstants.isPlatformAndVersionAtMost("macosx", 13)) {
+    		Services.prefs.setBoolPref("browser.tabs.remote.autostart", false);
+    		Services.prefs.setBoolPref("browser.tabs.remote.autostart.2", false);
+    		Services.prefs.setBoolPref("extensions.e10sBlockedByAddons", true);
+    		Services.prefs.setBoolPref("extensions.e10sMultiBlockedByAddons", true);
+    	}
     }
 
     // Update the migration version.
@@ -2182,7 +2255,7 @@ BrowserGlue.prototype = {
           body = win.gURLBar.trimValue(body);
         }
       } else {
-        title = bundle.GetStringFromName("tabsArrivingNotification.title");
+        title = bundle.GetStringFromName("multipleTabsArrivingNotification.title");
         const allSameDevice = URIs.every(URI => URI.clientId == URIs[0].clientId);
         const unknownDevice = allSameDevice && !deviceName;
         let tabArrivingBody;
@@ -2211,9 +2284,37 @@ BrowserGlue.prototype = {
       if (AppConstants.platform == "win") {
         imageURL = "chrome://branding/content/icon64.png";
       }
-      AlertsService.showAlertNotification(imageURL, title, body, true, null, clickCallback);
+      this.AlertsService.showAlertNotification(imageURL, title, body, true, null, clickCallback);
     } catch (ex) {
       Cu.reportError("Error displaying tab(s) received by Sync: " + ex);
+    }
+  },
+
+  async _onVerifyLoginNotification({body, title, url}) {
+    let tab;
+    let imageURL;
+    if (AppConstants.platform == "win") {
+      imageURL = "chrome://branding/content/icon64.png";
+    }
+    let win = RecentWindow.getMostRecentBrowserWindow({private: false});
+    if (!win) {
+      win = await this._openURLInNewWindow(url);
+      let tabs = win.gBrowser.tabs;
+      tab = tabs[tabs.length - 1];
+    } else {
+      tab = win.gBrowser.addTab(url);
+    }
+    tab.setAttribute("attention", true);
+    let clickCallback = (subject, topic, data) => {
+      if (topic != "alertclickcallback")
+        return;
+      win.gBrowser.selectedTab = tab;
+    };
+
+    try {
+      this.AlertsService.showAlertNotification(imageURL, title, body, true, null, clickCallback);
+    } catch (ex) {
+      Cu.reportError("Error notifying of a verify login event: " + ex);
     }
   },
 
@@ -2239,7 +2340,7 @@ BrowserGlue.prototype = {
     };
 
     try {
-      AlertsService.showAlertNotification(null, title, body, true, null, clickCallback);
+      this.AlertsService.showAlertNotification(null, title, body, true, null, clickCallback);
     } catch (ex) {
       Cu.reportError("Error notifying of a new Sync device: " + ex);
     }
@@ -2255,7 +2356,7 @@ BrowserGlue.prototype = {
         return;
       this._openPreferences("sync", { origin: "devDisconnectedAlert"});
     }
-    AlertsService.showAlertNotification(null, title, body, true, null, clickCallback);
+    this.AlertsService.showAlertNotification(null, title, body, true, null, clickCallback);
   },
 
   _handleFlashHang() {

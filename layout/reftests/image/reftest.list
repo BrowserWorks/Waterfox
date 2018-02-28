@@ -2,7 +2,7 @@ fuzzy-if(Android,8,30) == background-image-zoom-1.html background-image-zoom-1-r
 fails-if(usesRepeatResampling) == background-image-zoom-2.html about:blank
 == image-seam-1a.html image-seam-1-ref.html
 == image-seam-1b.html image-seam-1-ref.html
-fuzzy-if(Android,255,154) == image-seam-2.html  image-seam-2-ref.html  # Bug 1128229
+fuzzy-if(Android,255,154) fuzzy-if(webrender,0-1,0-400) == image-seam-2.html  image-seam-2-ref.html  # Bug 1128229
 == image-zoom-1.html image-zoom-1-ref.html
 == image-zoom-2.html image-zoom-1-ref.html
 == invalid-url-image-1.html invalid-url-image-1-ref.html
@@ -33,6 +33,7 @@ fuzzy(1,1) == image-orientation-from-image.html?180&flip image-orientation-ref.h
 fuzzy(1,1) == image-orientation-from-image.html?270&flip image-orientation-ref.html?270&flip
 
 # Tests for image-orientation used with an explicit orientation:
+fuzzy(1,1) == image-orientation-explicit.html?-900     image-orientation-ref.html?180
 fuzzy(1,1) == image-orientation-explicit.html?0        image-orientation-ref.html?0
 fuzzy(1,1) == image-orientation-explicit.html?90       image-orientation-ref.html?90
 fuzzy(1,1) == image-orientation-explicit.html?180      image-orientation-ref.html?180
@@ -43,7 +44,8 @@ fuzzy(1,1) == image-orientation-explicit.html?180&flip image-orientation-ref.htm
 fuzzy(1,1) == image-orientation-explicit.html?270&flip image-orientation-ref.html?270&flip
 
 # Tests for image-orientation used with non-axis-aligned angles:
-fuzzy(1,1) fails-if(styloVsGecko||stylo) == image-orientation-explicit.html?-45      image-orientation-ref.html?0
+fuzzy(1,1) == image-orientation-explicit.html?-46      image-orientation-ref.html?270
+fuzzy(1,1) == image-orientation-explicit.html?-45      image-orientation-ref.html?0
 fuzzy(1,1) == image-orientation-explicit.html?-15      image-orientation-ref.html?0
 fuzzy(1,1) == image-orientation-explicit.html?15       image-orientation-ref.html?0
 fuzzy(1,1) == image-orientation-explicit.html?45       image-orientation-ref.html?90
@@ -55,7 +57,7 @@ fuzzy(1,1) == image-orientation-explicit.html?195      image-orientation-ref.htm
 fuzzy(1,1) == image-orientation-explicit.html?225      image-orientation-ref.html?270
 fuzzy(1,1) == image-orientation-explicit.html?255      image-orientation-ref.html?270
 fuzzy(1,1) == image-orientation-explicit.html?285      image-orientation-ref.html?270
-fuzzy(1,1) fails-if(styloVsGecko||stylo) == image-orientation-explicit.html?315      image-orientation-ref.html?0
+fuzzy(1,1) == image-orientation-explicit.html?315      image-orientation-ref.html?0
 fuzzy(1,1) == image-orientation-explicit.html?345      image-orientation-ref.html?0
 
 # Tests for image-orientation used on generated content:
@@ -109,7 +111,7 @@ fuzzy(1,1) == image-orientation-background.html?90&flip      image-orientation-r
 == image-srcset-basic-selection-1.5x.html image-srcset-basic-selection-1.5x-ref.html
 == image-srcset-basic-selection-1x.html image-srcset-basic-selection-1x-ref.html
 == image-srcset-basic-selection-width-0.5x.html image-srcset-basic-selection-width-0.5x-ref.html
-fails-if(styloVsGecko) == image-srcset-basic-selection-width-10x.html image-srcset-basic-selection-width-10x-ref.html
+== image-srcset-basic-selection-width-10x.html image-srcset-basic-selection-width-10x-ref.html
 == image-srcset-basic-selection-width-2x.html image-srcset-basic-selection-width-2x-ref.html
 == image-srcset-basic-selection-width-1x.html image-srcset-basic-selection-width-1x-ref.html
 == image-srcset-default-2x.html image-srcset-default-2x-ref.html
@@ -118,7 +120,7 @@ fails-if(styloVsGecko) == image-srcset-basic-selection-width-10x.html image-srcs
 == image-srcset-default-src-1x.html image-srcset-default-src-1x-ref.html
 == image-srcset-orientation-2x.html image-srcset-orientation-2x-ref.html
 == image-srcset-orientation-1x.html image-srcset-orientation-1x-ref.html
-fails-if(styloVsGecko) == image-srcset-svg-3x.html image-srcset-svg-3x-ref.html
+== image-srcset-svg-3x.html image-srcset-svg-3x-ref.html
 == image-srcset-svg-2x.html image-srcset-svg-2x-ref.html
 == image-srcset-svg-1x.html image-srcset-svg-1x-ref.html
 == image-srcset-svg-default-2x.html image-srcset-svg-default-2x-ref.html

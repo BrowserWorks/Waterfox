@@ -10,7 +10,6 @@
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/MathAlgorithms.h"
-#include "mozilla/SizePrintfMacros.h"
 
 #include <ctype.h>
 
@@ -1073,7 +1072,7 @@ MConstant::printOpcode(GenericPrinter& out) const
             }
             if (fun->hasScript()) {
                 JSScript* script = fun->nonLazyScript();
-                out.printf(" (%s:%" PRIuSIZE ")",
+                out.printf(" (%s:%zu)",
                         script->filename() ? script->filename() : "", script->lineno());
             }
             out.printf(" at %p", (void*) fun);
@@ -5098,6 +5097,28 @@ MArrayState::Copy(TempAllocator& alloc, MArrayState* state)
     return res;
 }
 
+MArgumentState*
+MArgumentState::New(TempAllocator::Fallible view, const MDefinitionVector& args)
+{
+    MArgumentState* res = new(view.alloc) MArgumentState();
+    if (!res || !res->init(view.alloc, args.length()))
+        return nullptr;
+    for (size_t i = 0, e = args.length(); i < e; i++)
+        res->initOperand(i, args[i]);
+    return res;
+}
+
+MArgumentState*
+MArgumentState::Copy(TempAllocator& alloc, MArgumentState* state)
+{
+    MArgumentState* res = new(alloc) MArgumentState();
+    if (!res || !res->init(alloc, state->numElements()))
+        return nullptr;
+    for (size_t i = 0, e = res->numOperands(); i < e; i++)
+        res->initOperand(i, state->getOperand(i));
+    return res;
+}
+
 MNewArray::MNewArray(CompilerConstraintList* constraints, uint32_t length, MConstant* templateConst,
                      gc::InitialHeap initialHeap, jsbytecode* pc, bool vmCall)
   : MUnaryInstruction(templateConst),
@@ -6116,6 +6137,14 @@ PropertyReadNeedsTypeBarrier(CompilerConstraintList* constraints,
         return BarrierKind::TypeSet;
     }
 
+    if (!name && IsTypedArrayClass(key->clasp())) {
+        Scalar::Type arrayType = Scalar::Type(key->clasp() - &TypedArrayObject::classes[0]);
+        MIRType type = MIRTypeForTypedArrayRead(arrayType, true);
+        if (observed->mightBeMIRType(type))
+            return BarrierKind::NoBarrier;
+        return BarrierKind::TypeSet;
+    }
+
     jsid id = name ? NameToId(name) : JSID_VOID;
     HeapTypeSetKey property = key->property(id);
     if (property.maybeTypes()) {
@@ -6147,34 +6176,6 @@ PropertyReadNeedsTypeBarrier(CompilerConstraintList* constraints,
     return BarrierKind::NoBarrier;
 }
 
-static bool
-ObjectSubsumes(TypeSet::ObjectKey* first, TypeSet::ObjectKey* second)
-{
-    if (first->isSingleton() ||
-        second->isSingleton() ||
-        first->clasp() != second->clasp() ||
-        first->unknownProperties() ||
-        second->unknownProperties())
-    {
-        return false;
-    }
-
-    if (first->clasp() == &ArrayObject::class_) {
-        HeapTypeSetKey firstElements = first->property(JSID_VOID);
-        HeapTypeSetKey secondElements = second->property(JSID_VOID);
-
-        return firstElements.maybeTypes() && secondElements.maybeTypes() &&
-               firstElements.maybeTypes()->equals(secondElements.maybeTypes());
-    }
-
-    if (first->clasp() == &UnboxedArrayObject::class_) {
-        return first->group()->unboxedLayout().elementType() ==
-               second->group()->unboxedLayout().elementType();
-    }
-
-    return false;
-}
-
 BarrierKind
 jit::PropertyReadNeedsTypeBarrier(JSContext* propertycx,
                                   CompilerConstraintList* constraints,
@@ -6187,60 +6188,33 @@ jit::PropertyReadNeedsTypeBarrier(JSContext* propertycx,
     // If this access has never executed, try to add types to the observed set
     // according to any property which exists on the object or its prototype.
     if (observed->empty() && name) {
-        JSObject* obj;
-        if (key->isSingleton())
-            obj = key->singleton();
-        else
-            obj = key->proto().isDynamic() ? nullptr : key->proto().toObjectOrNull();
-
-        while (obj) {
-            if (!obj->getClass()->isNative())
+        TypeSet::ObjectKey* obj = key;
+        do {
+            if (!obj->clasp()->isNative())
                 break;
 
-            TypeSet::ObjectKey* key = TypeSet::ObjectKey::get(obj);
             if (propertycx)
-                key->ensureTrackedProperty(propertycx, NameToId(name));
+                obj->ensureTrackedProperty(propertycx, NameToId(name));
 
-            if (!key->unknownProperties()) {
-                HeapTypeSetKey property = key->property(NameToId(name));
-                if (property.maybeTypes()) {
-                    TypeSet::TypeList types;
-                    if (!property.maybeTypes()->enumerateTypes(&types))
-                        break;
-                    if (types.length() == 1) {
-                        // Note: the return value here is ignored.
-                        observed->addType(types[0], GetJitContext()->temp->lifoAlloc());
-                        break;
-                    }
+            if (obj->unknownProperties())
+                break;
+
+            HeapTypeSetKey property = obj->property(NameToId(name));
+            if (property.maybeTypes()) {
+                TypeSet::TypeList types;
+                if (!property.maybeTypes()->enumerateTypes(&types))
+                    break;
+                if (types.length() == 1) {
+                    // Note: the return value here is ignored.
+                    observed->addType(types[0], GetJitContext()->temp->lifoAlloc());
                 }
+                break;
             }
 
-            obj = obj->staticPrototype();
-        }
-    }
-
-    // If any objects which could be observed are similar to ones that have
-    // already been observed, add them to the observed type set.
-    if (!key->unknownProperties()) {
-        HeapTypeSetKey property = key->property(name ? NameToId(name) : JSID_VOID);
-
-        if (property.maybeTypes() && !property.maybeTypes()->unknownObject()) {
-            for (size_t i = 0; i < property.maybeTypes()->getObjectCount(); i++) {
-                TypeSet::ObjectKey* key = property.maybeTypes()->getObject(i);
-                if (!key || observed->unknownObject())
-                    continue;
-
-                for (size_t j = 0; j < observed->getObjectCount(); j++) {
-                    TypeSet::ObjectKey* observedKey = observed->getObject(j);
-                    if (observedKey && ObjectSubsumes(observedKey, key)) {
-                        // Note: the return value here is ignored.
-                        observed->addType(TypeSet::ObjectType(key),
-                                          GetJitContext()->temp->lifoAlloc());
-                        break;
-                    }
-                }
-            }
-        }
+            if (!obj->proto().isObject())
+                break;
+            obj = TypeSet::ObjectKey::get(obj->proto().toObject());
+        } while (obj);
     }
 
     return PropertyReadNeedsTypeBarrier(constraints, key, name, observed);

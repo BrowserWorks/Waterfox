@@ -101,6 +101,12 @@ public:
 
 class IncrementalFinalizeRunnable;
 
+struct JSHolderInfo
+{
+  void* mHolder;
+  nsScriptObjectTracer* mTracer;
+};
+
 class CycleCollectedJSRuntime
 {
   friend class JSGCThingParticipant;
@@ -260,6 +266,10 @@ public:
   bool AreGCGrayBitsValid() const;
   void GarbageCollect(uint32_t aReason) const;
 
+  // This needs to be an nsWrapperCache, not a JSObject, because we need to know
+  // when our object gets moved.  But we can't trace it (and hence update our
+  // storage), because we do not want to keep it alive.  nsWrapperCache handles
+  // this for us via its "object moved" handling.
   void NurseryWrapperAdded(nsWrapperCache* aCache);
   void NurseryWrapperPreserved(JSObject* aWrapper);
   void JSObjectsTenured();
@@ -302,11 +312,10 @@ private:
   JS::GCSliceCallback mPrevGCSliceCallback;
   JS::GCNurseryCollectionCallback mPrevGCNurseryCollectionCallback;
 
-#ifdef MOZ_GECKO_PROFILER
   mozilla::TimeStamp mLatestNurseryCollectionStart;
-#endif
 
-  nsDataHashtable<nsPtrHashKey<void>, nsScriptObjectTracer*> mJSHolders;
+  SegmentedVector<JSHolderInfo, 1024, InfallibleAllocPolicy> mJSHolders;
+  nsDataHashtable<nsPtrHashKey<void>, JSHolderInfo*> mJSHolderMap;
 
   typedef nsDataHashtable<nsFuncPtrHashKey<DeferredFinalizeFunction>, void*>
     DeferredFinalizerTable;

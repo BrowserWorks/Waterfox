@@ -13,7 +13,6 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/TemplateLib.h"
 
 #include <string.h>
@@ -1000,17 +999,6 @@ js::GetPrototypeFromConstructor(JSContext* cx, HandleObject newTarget, MutableHa
         return false;
     proto.set(protov.isObject() ? &protov.toObject() : nullptr);
     return true;
-}
-
-bool
-js::GetPrototypeFromCallableConstructor(JSContext* cx, const CallArgs& args, MutableHandleObject proto)
-{
-    RootedObject newTarget(cx);
-    if (args.isConstructing())
-        newTarget = &args.newTarget().toObject();
-    else
-        newTarget = &args.callee();
-    return GetPrototypeFromConstructor(cx, newTarget, proto);
 }
 
 JSObject*
@@ -2202,56 +2190,6 @@ JS::IdentifyStandardConstructor(JSObject* obj)
 }
 
 bool
-JSObject::isCallable() const
-{
-    if (is<JSFunction>())
-        return true;
-    return callHook() != nullptr;
-}
-
-bool
-JSObject::isConstructor() const
-{
-    if (is<JSFunction>()) {
-        const JSFunction& fun = as<JSFunction>();
-        return fun.isConstructor();
-    }
-    return constructHook() != nullptr;
-}
-
-JSNative
-JSObject::callHook() const
-{
-    const js::Class* clasp = getClass();
-
-    if (JSNative call = clasp->getCall())
-        return call;
-
-    if (is<js::ProxyObject>()) {
-        const js::ProxyObject& p = as<js::ProxyObject>();
-        if (p.handler()->isCallable(const_cast<JSObject*>(this)))
-            return js::proxy_Call;
-    }
-    return nullptr;
-}
-
-JSNative
-JSObject::constructHook() const
-{
-    const js::Class* clasp = getClass();
-
-    if (JSNative construct = clasp->getConstruct())
-        return construct;
-
-    if (is<js::ProxyObject>()) {
-        const js::ProxyObject& p = as<js::ProxyObject>();
-        if (p.handler()->isConstructor(const_cast<JSObject*>(this)))
-            return js::proxy_Construct;
-    }
-    return nullptr;
-}
-
-bool
 js::LookupProperty(JSContext* cx, HandleObject obj, js::HandleId id,
                    MutableHandleObject objp, MutableHandle<PropertyResult> propp)
 {
@@ -2769,9 +2707,23 @@ js::PreventExtensions(JSContext* cx, HandleObject obj, ObjectOpResult& result, I
 
     // Force lazy properties to be resolved.
     if (obj->isNative()) {
-        if (JSEnumerateOp enumerate = obj->getClass()->getEnumerate()) {
+        const Class* clasp = obj->getClass();
+        if (JSEnumerateOp enumerate = clasp->getEnumerate()) {
             if (!enumerate(cx, obj.as<NativeObject>()))
                 return false;
+        }
+        if (clasp->getNewEnumerate() && clasp->getResolve()) {
+            AutoIdVector properties(cx);
+            if (!clasp->getNewEnumerate()(cx, obj, properties, /* enumerableOnly = */ false))
+                return false;
+
+            RootedId id(cx);
+            for (size_t i = 0; i < properties.length(); i++) {
+                id = properties[i];
+                bool found;
+                if (!HasOwnProperty(cx, obj, id, &found))
+                    return false;
+            }
         }
     }
 
@@ -3010,18 +2962,6 @@ js::UnwatchProperty(JSContext* cx, HandleObject obj, HandleId id)
 
     return UnwatchGuts(cx, obj, id);
 }
-
-const char*
-js::GetObjectClassName(JSContext* cx, HandleObject obj)
-{
-    assertSameCompartment(cx, obj);
-
-    if (obj->is<ProxyObject>())
-        return Proxy::className(cx, obj);
-
-    return obj->getClass()->name;
-}
-
 
 /* * */
 
@@ -3448,7 +3388,7 @@ dumpValue(const Value& v, FILE* fp)
         }
         if (fun->hasScript()) {
             JSScript* script = fun->nonLazyScript();
-            fprintf(fp, " (%s:%" PRIuSIZE ")",
+            fprintf(fp, " (%s:%zu)",
                     script->filename() ? script->filename() : "", script->lineno());
         }
         fprintf(fp, " at %p>", (void*) fun);
@@ -3538,6 +3478,12 @@ bool
 JSObject::uninlinedIsProxy() const
 {
     return is<ProxyObject>();
+}
+
+bool
+JSObject::uninlinedNonProxyIsExtensible() const
+{
+    return nonProxyIsExtensible();
 }
 
 void
@@ -3708,7 +3654,7 @@ js::DumpInterpreterFrame(JSContext* cx, FILE* fp, InterpreterFrame* start)
         }
         fputc('\n', fp);
 
-        fprintf(fp, "file %s line %" PRIuSIZE "\n",
+        fprintf(fp, "file %s line %zu\n",
                 i.script()->filename(), i.script()->lineno());
 
         if (jsbytecode* pc = i.pc()) {
@@ -3767,11 +3713,11 @@ js::DumpBacktrace(JSContext* cx, FILE* fp)
             i.isWasm() ? 'W' :
             '?';
 
-        sprinter.printf("#%" PRIuSIZE " %14p %c   %s:%d",
+        sprinter.printf("#%zu %14p %c   %s:%d",
                         depth, i.rawFramePtr(), frameType, filename, line);
 
         if (i.hasScript()) {
-            sprinter.printf(" (%p @ %" PRIuSIZE ")\n",
+            sprinter.printf(" (%p @ %zu)\n",
                             i.script(), i.script()->pcToOffset(i.pc()));
         } else {
             sprinter.printf(" (%p)\n", i.pc());

@@ -8,7 +8,7 @@ skip-if(Android) load 336744-1.html # bug 1268050
 load 336960-1.html
 load 342954-1.xhtml
 load 342954-2.xhtml
-asserts-if(stylo,4) load 368276-1.xhtml # bug 1370830
+load 368276-1.xhtml
 load 368641-1.xhtml
 load 378521-1.xhtml
 load 382376-1.xhtml
@@ -28,7 +28,7 @@ load 454820-1.html
 load 460665-1.xhtml
 load 463511-1.xhtml
 load 464863-1.xhtml
-skip-if(stylo) load 472260-1.xhtml # bug 1323657
+load 472260-1.xhtml
 load 477878-1.html
 load 492978-1.xul
 load 493123-1.xhtml
@@ -38,3 +38,4 @@ load 507991-1.xhtml
 load 830614-1.xul
 load 895805-1.xhtml
 load set-field-bad-this.xhtml
+load 1382357.xhtml

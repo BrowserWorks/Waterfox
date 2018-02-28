@@ -44,7 +44,7 @@ function copyToTempUTF8File(file, charset) {
     try {
       let converterOut = Cc["@mozilla.org/intl/converter-output-stream;1"]
                            .createInstance(Ci.nsIConverterOutputStream);
-      converterOut.init(bufferedOut, "utf-8", 0, 0x0000);
+      converterOut.init(bufferedOut, "utf-8");
       try {
         converterOut.writeString(inputStr || "");
         bufferedOut.QueryInterface(Ci.nsISafeOutputStream).finish();
@@ -234,7 +234,7 @@ Object.defineProperty(Qihoo360seProfileMigrator.prototype, "sourceProfiles", {
         throw new Error("360 Secure Browser's 'login.ini' file could not be read.");
       }
 
-      let loginIniInUtf8 = copyToTempUTF8File(loginIni, "gbk");
+      let loginIniInUtf8 = copyToTempUTF8File(loginIni, "GBK");
       let loginIniObj = parseINIStrings(loginIniInUtf8);
       try {
         loginIniInUtf8.remove(false);

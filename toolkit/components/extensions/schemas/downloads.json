@@ -96,7 +96,8 @@
             "type": "string"
           },
           "referrer": {
-            "type": "string"
+            "type": "string",
+            "optional": true
           },
           "filename": {
             "description": "Absolute local path.",
@@ -556,6 +557,7 @@
         "name": "open",
         "type": "function",
         "async": "callback",
+        "requireUserInput": true,
         "description": "Open the downloaded file.",
         "permissions": ["downloads.open"],
         "parameters": [

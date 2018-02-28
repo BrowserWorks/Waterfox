@@ -8,6 +8,7 @@
 
 #ifdef XP_WIN
 #include "WMFDecoderModule.h"
+#include "mozilla/WindowsVersion.h"
 #endif
 #ifdef MOZ_FFVPX
 #include "FFVPXRuntimeLinker.h"
@@ -189,16 +190,16 @@ PDMFactory::EnsureInit() const
   }
 
   // Not on the main thread -> Sync-dispatch creation to main thread.
-  nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+  nsCOMPtr<nsIEventTarget> mainTarget = GetMainThreadEventTarget();
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableFunction([]() {
+    NS_NewRunnableFunction("PDMFactory::EnsureInit", []() {
       StaticMutexAutoLock mon(sMonitor);
       if (!sInstance) {
         sInstance = new PDMFactoryImpl();
         ClearOnShutdown(&sInstance);
       }
     });
-  SyncRunnable::DispatchToThread(mainThread, runnable);
+  SyncRunnable::DispatchToThread(mainTarget, runnable);
 }
 
 already_AddRefed<MediaDataDecoder>
@@ -232,7 +233,7 @@ PDMFactory::CreateDecoder(const CreateDecoderParams& aParams)
   }
 
   for (auto& current : mCurrentPDMs) {
-    if (!current->SupportsMimeType(config.mMimeType, diagnostics)) {
+    if (!current->Supports(config, diagnostics)) {
       continue;
     }
     RefPtr<MediaDataDecoder> m = CreateDecoderWithPDM(current, aParams);
@@ -293,12 +294,15 @@ PDMFactory::CreateDecoderWithPDM(PlatformDecoderModule* aPDM,
 
   if (MP4Decoder::IsH264(config.mMimeType) && !aParams.mUseNullDecoder) {
     RefPtr<H264Converter> h = new H264Converter(aPDM, aParams);
-    const nsresult rv = h->GetLastError();
-    if (NS_SUCCEEDED(rv) || rv == NS_ERROR_NOT_INITIALIZED) {
+    const MediaResult result = h->GetLastError();
+    if (NS_SUCCEEDED(result) || result == NS_ERROR_NOT_INITIALIZED) {
       // The H264Converter either successfully created the wrapped decoder,
       // or there wasn't enough AVCC data to do so. Otherwise, there was some
       // problem, for example WMF DLLs were missing.
       m = h.forget();
+    }
+    if (NS_FAILED(result) && aParams.mError) {
+      *aParams.mError = result;
     }
   } else {
     m = aPDM->CreateVideoDecoder(aParams);
@@ -344,7 +348,7 @@ PDMFactory::CreatePDMs()
   }
 
 #ifdef XP_WIN
-  if (MediaPrefs::PDMWMFEnabled()) {
+  if (MediaPrefs::PDMWMFEnabled() && !IsWin7AndPre2000Compatible()) {
     m = new WMFDecoderModule();
     RefPtr<PlatformDecoderModule> remote = new dom::RemoteDecoderModule(m);
     StartupPDM(remote);

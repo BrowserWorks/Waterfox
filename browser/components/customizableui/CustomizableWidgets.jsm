@@ -131,7 +131,7 @@ function fillSubviewFromMenuItems(aMenuItems, aSubview) {
           newEvent.initCommandEvent(
             event.type, event.bubbles, event.cancelable, event.view,
             event.detail, event.ctrlKey, event.altKey, event.shiftKey,
-            event.metaKey, event.sourceEvent);
+            event.metaKey, event.sourceEvent, 0);
           item.dispatchEvent(newEvent);
         });
       }
@@ -173,11 +173,31 @@ const CustomizableWidgets = [
     shortcutId: "key_gotoHistory",
     tooltiptext: "history-panelmenu.tooltiptext2",
     defaultArea: CustomizableUI.AREA_PANEL,
+    recentlyClosedTabsPanel: "appMenu-library-recentlyClosedTabs",
+    recentlyClosedWindowsPanel: "appMenu-library-recentlyClosedWindows",
+    handleEvent(event) {
+      switch (event.type) {
+        case "PanelMultiViewHidden":
+          this.onPanelMultiViewHidden(event);
+          break;
+        case "ViewShowing":
+          this.onSubViewShowing(event);
+          break;
+        default:
+          throw new Error(`Unsupported event for '${this.id}'`);
+      }
+    },
     onViewShowing(aEvent) {
       // Populate our list of history
       const kMaxResults = 15;
       let doc = aEvent.target.ownerDocument;
       let win = doc.defaultView;
+
+      if (AppConstants.MOZ_PHOTON_THEME && win.gPhotonStructure) {
+        // For the Photon panelview we're going to do something different!
+        this.onPhotonViewShowing(aEvent);
+        return;
+      }
 
       let options = PlacesUtils.history.getNewQueryOptions();
       options.excludeQueries = true;
@@ -275,14 +295,40 @@ const CustomizableWidgets = [
       }
       recentlyClosedWindows.appendChild(windowsFragment);
     },
+    onPhotonViewShowing(event) {
+      if (this._panelMenuView)
+        return;
+
+      let panelview = event.target;
+      let document = panelview.ownerDocument;
+      let window = document.defaultView;
+
+      // We restrict the amount of results to 42. Not 50, but 42. Why? Because 42.
+      let query = "place:queryType=" + Ci.nsINavHistoryQueryOptions.QUERY_TYPE_HISTORY +
+        "&sort=" + Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_DESCENDING +
+        "&maxResults=42&excludeQueries=1";
+      this._panelMenuView = new window.PlacesPanelview(document.getElementById("appMenu_historyMenu"),
+        panelview, query);
+      // When either of these sub-subviews show, populate them with recently closed
+      // objects data.
+      document.getElementById(this.recentlyClosedTabsPanel).addEventListener("ViewShowing", this);
+      document.getElementById(this.recentlyClosedWindowsPanel).addEventListener("ViewShowing", this);
+      // When the popup is hidden (thus the panelmultiview node as well), make
+      // sure to stop listening to PlacesDatabase updates.
+      panelview.panelMultiView.addEventListener("PanelMultiViewHidden", this);
+    },
     onCreated(aNode) {
+      // Skip this for the Photon panelview.
+      let doc = aNode.ownerDocument;
+      if (AppConstants.MOZ_PHOTON_THEME && doc.defaultView.gPhotonStructure)
+        return;
+
       // Middle clicking recently closed items won't close the panel - cope:
       let onRecentlyClosedClick = function(aEvent) {
         if (aEvent.button == 1) {
           CustomizableUI.hidePanelForNode(this);
         }
       };
-      let doc = aNode.ownerDocument;
       let recentlyClosedTabs = doc.getElementById("PanelUI-recentlyClosedTabs");
       let recentlyClosedWindows = doc.getElementById("PanelUI-recentlyClosedWindows");
       recentlyClosedTabs.addEventListener("click", onRecentlyClosedClick);
@@ -290,6 +336,51 @@ const CustomizableWidgets = [
     },
     onViewHiding(aEvent) {
       log.debug("History view is being hidden!");
+    },
+    onPanelMultiViewHidden(event) {
+      let panelMultiView = event.target;
+      let document = panelMultiView.ownerDocument;
+      if (this._panelMenuView) {
+        this._panelMenuView.uninit();
+        delete this._panelMenuView;
+        document.getElementById(this.recentlyClosedTabsPanel).removeEventListener("ViewShowing", this);
+        document.getElementById(this.recentlyClosedWindowsPanel).removeEventListener("ViewShowing", this);
+      }
+      panelMultiView.removeEventListener("PanelMultiViewHidden", this);
+    },
+    onSubViewShowing(event) {
+      let panelview = event.target;
+      let document = event.target.ownerDocument;
+      let window = document.defaultView;
+      let viewType = panelview.id == this.recentlyClosedTabsPanel ? "Tabs" : "Windows";
+
+      this._panelMenuView.clearAllContents(panelview);
+
+      let utils = RecentlyClosedTabsAndWindowsMenuUtils;
+      let method = `get${viewType}Fragment`;
+      let fragment = utils[method](window, "toolbarbutton");
+      let elementCount = fragment.childElementCount;
+      this._panelMenuView._setEmptyPopupStatus(panelview, !elementCount);
+      if (!elementCount)
+        return;
+
+      let body = document.createElement("vbox");
+      body.className = "panel-subview-body";
+      body.appendChild(fragment);
+      let footer;
+      while (--elementCount >= 0) {
+        let element = body.childNodes[elementCount];
+        CustomizableUI.addShortcut(element);
+        element.classList.add("subviewbutton");
+        if (element.classList.contains("restoreallitem")) {
+          footer = element;
+          element.classList.add("panel-subview-footer");
+        } else {
+          element.classList.add("subviewbutton-iconic", "bookmark-item");
+        }
+      }
+      panelview.appendChild(body);
+      panelview.appendChild(footer);
     }
   }, {
     id: "sync-button",
@@ -329,7 +420,8 @@ const CustomizableWidgets = [
       let promoParentElt = doc.getElementById("PanelUI-remotetabs-mobile-promo");
       // Put it all together...
       let contents = bundle.getFormattedString("appMenuRemoteTabs.mobilePromo.text2", formatArgs);
-      promoParentElt.innerHTML = contents;
+      // eslint-disable-next-line no-unsanitized/property
+      promoParentElt.unsafeSetInnerHTML(contents);
       // We manually manage the "click" event to open the promo links because
       // allowing the "text-link" widget handle it has 2 problems: (1) it only
       // supports button 0 and (2) it's tricky to intercept when it does the
@@ -595,21 +687,23 @@ const CustomizableWidgets = [
     }
   }, {
     id: "sidebar-button",
-    type: "view",
-    viewId: "PanelUI-sidebar",
     tooltiptext: "sidebar-button.tooltiptext2",
-    onViewShowing(aEvent) {
-      // Populate the subview with whatever menuitems are in the
-      // sidebar menu. We skip menu elements, because the menu panel has no way
-      // of dealing with those right now.
-      let doc = aEvent.target.ownerDocument;
-      let menu = doc.getElementById("viewSidebarMenu");
+    onCommand(aEvent) {
+      let win = aEvent.target.ownerGlobal;
+      win.SidebarUI.toggle();
+    },
+    onCreated(aNode) {
+      // Add an observer so the button is checked while the sidebar is open
+      let doc = aNode.ownerDocument;
+      let obChecked = doc.createElementNS(kNSXUL, "observes");
+      obChecked.setAttribute("element", "sidebar-box");
+      obChecked.setAttribute("attribute", "checked");
+      let obPosition = doc.createElementNS(kNSXUL, "observes");
+      obPosition.setAttribute("element", "sidebar-box");
+      obPosition.setAttribute("attribute", "positionend");
 
-      // First clear any existing menuitems then populate. Add it to the
-      // standard menu first, then copy all sidebar options to the panel.
-      let sidebarItems = doc.getElementById("PanelUI-sidebarItems");
-      clearSubview(sidebarItems);
-      fillSubviewFromMenuItems([...menu.children], sidebarItems);
+      aNode.appendChild(obChecked);
+      aNode.appendChild(obPosition);
     }
   }, {
     id: "social-share-button",
@@ -1177,9 +1271,9 @@ const CustomizableWidgets = [
     observe(aSubject, aTopic, aData) {
       let {instances} = CustomizableUI.getWidget("containers-panelmenu");
       for (let {node} of instances) {
-	if (node) {
-	  this.updateVisibility(node);
-	}
+        if (node) {
+          this.updateVisibility(node);
+        }
       }
     },
 
@@ -1271,7 +1365,7 @@ if (Services.prefs.getBoolPref("privacy.panicButton.enabled")) {
   });
 }
 
-if (AppConstants.E10S_TESTING_ONLY) {
+if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
   if (Services.appinfo.browserTabsRemoteAutostart) {
     CustomizableWidgets.push({
       id: "e10s-button",

@@ -9,33 +9,35 @@ Cu.import("resource://services-sync/engines/history.js");
 Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 
-Service.engineManager.clear();
-Service.engineManager.register(HistoryEngine);
-var engine = Service.engineManager.get("history");
-var tracker = engine._tracker;
+let engine;
+let tracker;
 
-// Don't write out by default.
-tracker.persistChangedIDs = false;
-
-function run_test() {
+add_task(async function setup() {
   initTestLogging("Trace");
   Log.repository.getLogger("Sync.Tracker.History").level = Log.Level.Trace;
-  run_next_test();
-}
+
+  Service.engineManager.clear();
+  await Service.engineManager.register(HistoryEngine);
+  engine = Service.engineManager.get("history");
+  tracker = engine._tracker;
+
+  // Don't write out by default.
+  tracker.persistChangedIDs = false;
+});
 
 async function verifyTrackerEmpty() {
-  let changes = engine.pullNewChanges();
+  let changes = await engine.pullNewChanges();
   do_check_empty(changes);
   equal(tracker.score, 0);
 }
 
 async function verifyTrackedCount(expected) {
-  let changes = engine.pullNewChanges();
+  let changes = await engine.pullNewChanges();
   do_check_attribute_count(changes, expected);
 }
 
 async function verifyTrackedItems(tracked) {
-  let changes = engine.pullNewChanges();
+  let changes = await engine.pullNewChanges();
   let trackedIDs = new Set(Object.keys(changes));
   for (let guid of tracked) {
     ok(guid in changes, `${guid} should be tracked`);
@@ -142,7 +144,7 @@ add_task(async function test_track_delete() {
   // This isn't present because we weren't tracking when it was visited.
   await addVisit("track_delete");
   let uri = Utils.makeURI("http://getfirefox.com/track_delete");
-  let guid = engine._store.GUIDForUri(uri);
+  let guid = await engine._store.GUIDForUri(uri.spec);
   await verifyTrackerEmpty();
 
   await startTracking();
@@ -160,7 +162,7 @@ add_task(async function test_track_delete() {
 add_task(async function test_dont_track_expiration() {
   _("Expirations are not tracked.");
   let uriToRemove = await addVisit("to_remove");
-  let guidToRemove = engine._store.GUIDForUri(uriToRemove);
+  let guidToRemove = await engine._store.GUIDForUri(uriToRemove.spec);
 
   await resetTracker();
   await verifyTrackerEmpty();
@@ -214,19 +216,19 @@ add_task(async function test_filter_hidden() {
 
   _("Add visit; should be hidden by the redirect");
   let hiddenURI = await addVisit("hidden");
-  let hiddenGUID = engine._store.GUIDForUri(hiddenURI);
+  let hiddenGUID = await engine._store.GUIDForUri(hiddenURI.spec);
   _(`Hidden visit GUID: ${hiddenGUID}`);
 
   _("Add redirect visit; should be tracked");
-  let trackedURI = await addVisit("redirect", hiddenURI,
+  let trackedURI = await addVisit("redirect", hiddenURI.spec,
     PlacesUtils.history.TRANSITION_REDIRECT_PERMANENT);
-  let trackedGUID = engine._store.GUIDForUri(trackedURI);
+  let trackedGUID = await engine._store.GUIDForUri(trackedURI.spec);
   _(`Tracked visit GUID: ${trackedGUID}`);
 
   _("Add visit for framed link; should be ignored");
   let embedURI = await addVisit("framed_link", null,
     PlacesUtils.history.TRANSITION_FRAMED_LINK);
-  let embedGUID = engine._store.GUIDForUri(embedURI);
+  let embedGUID = await engine._store.GUIDForUri(embedURI.spec);
   _(`Framed link visit GUID: ${embedGUID}`);
 
   _("Run Places maintenance to mark redirect visit as hidden");

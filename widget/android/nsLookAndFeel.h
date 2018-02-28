@@ -8,13 +8,14 @@
 #include "nsXPLookAndFeel.h"
 #include "AndroidBridge.h"
 
-class nsLookAndFeel: public nsXPLookAndFeel
+class nsLookAndFeel final : public nsXPLookAndFeel
 {
 public:
     nsLookAndFeel();
     virtual ~nsLookAndFeel();
 
     virtual nsresult NativeGetColor(ColorID aID, nscolor &aResult);
+    virtual void NativeInit() final {};
     virtual nsresult GetIntImpl(IntID aID, int32_t &aResult);
     virtual nsresult GetFloatImpl(FloatID aID, float &aResult);
     virtual bool GetFontImpl(FontID aID, nsString& aName, gfxFontStyle& aStyle,

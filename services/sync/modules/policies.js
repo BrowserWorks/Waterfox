@@ -599,6 +599,7 @@ ErrorHandler.prototype = {
     Svc.Obs.add("weave:service:login:error", this);
     Svc.Obs.add("weave:service:sync:error", this);
     Svc.Obs.add("weave:service:sync:finish", this);
+    Svc.Obs.add("weave:service:start-over:finish", this);
 
     this.initLogs();
   },
@@ -716,6 +717,10 @@ ErrorHandler.prototype = {
         this.dontIgnoreErrors = false;
         this.notifyOnNextTick("weave:ui:sync:finish");
         break;
+      case "weave:service:start-over:finish":
+        // ensure we capture any logs between the last sync and the reset completing.
+        this.resetFileLog();
+        break;
     }
   },
 
@@ -738,23 +743,21 @@ ErrorHandler.prototype = {
     Utils.nextTick(this.service.sync, this.service);
   },
 
-  _dumpAddons: function _dumpAddons() {
+  async _dumpAddons() {
     // Just dump the items that sync may be concerned with. Specifically,
     // active extensions that are not hidden.
-    let addonPromise = Promise.resolve([]);
+    let addons = [];
     try {
-      addonPromise = AddonManager.getAddonsByTypes(["extension"]);
+      addons = await AddonManager.getAddonsByTypes(["extension"]);
     } catch (e) {
       this._log.warn("Failed to dump addons", e)
     }
 
-    return addonPromise.then(addons => {
-      let relevantAddons = addons.filter(x => x.isActive && !x.hidden);
-      this._log.debug("Addons installed", relevantAddons.length);
-      for (let addon of relevantAddons) {
-        this._log.debug(" - ${name}, version ${version}, id ${id}", addon);
-      }
-    });
+    let relevantAddons = addons.filter(x => x.isActive && !x.hidden);
+    this._log.debug("Addons installed", relevantAddons.length);
+    for (let addon of relevantAddons) {
+      this._log.debug(" - ${name}, version ${version}, id ${id}", addon);
+    }
   },
 
   /**

@@ -975,6 +975,23 @@ fn read_esds_one_byte_extension_descriptor() {
 }
 
 #[test]
+fn read_esds_byte_extension_descriptor() {
+    let mut stream = make_box(BoxSize::Auto, b"esds", |s| {
+        s.B32(0) // reserved
+         .B16(0x0003)
+         .B16(0x8181)   // extension byte length 0x81
+         .append_repeated(0, 0x81)
+    });
+    let mut iter = super::BoxIter::new(&mut stream);
+    let mut stream = iter.next_box().unwrap().unwrap();
+
+    match super::read_esds(&mut stream) {
+        Ok(_) => (),
+        _ => panic!("fail to parse descriptor extension byte length"),
+    }
+}
+
+#[test]
 fn read_f4v_stsd() {
     let mut stream = make_box(BoxSize::Auto, b".mp3", |s| {
         s.append_repeated(0, 6)
@@ -1006,8 +1023,57 @@ fn max_table_limit() {
     let mut stream = iter.next_box().unwrap().unwrap();
     let mut track = super::Track::new(0);
     match super::read_edts(&mut stream, &mut track) {
-        Err(Error::Unsupported(s)) => assert_eq!(s, "Over limited value"),
+        Err(Error::TableTooLarge) => (),
         Ok(_) => panic!("expected an error result"),
+        _ => panic!("expected a different error result"),
+    }
+}
+
+#[test]
+fn unknown_video_sample_entry() {
+    let unknown_codec = make_box(BoxSize::Auto, b"yyyy", |s| {
+        s.append_repeated(0, 16)
+    }).into_inner();
+    let mut stream = make_box(BoxSize::Auto, b"xxxx", |s| {
+        s.append_repeated(0, 6)
+         .B16(1)
+         .append_repeated(0, 16)
+         .B16(0)
+         .B16(0)
+         .append_repeated(0, 14)
+         .append_repeated(0, 32)
+         .append_repeated(0, 4)
+         .append_bytes(unknown_codec.as_slice())
+    });
+    let mut iter = super::BoxIter::new(&mut stream);
+    let mut stream = iter.next_box().unwrap().unwrap();
+    match super::read_video_sample_entry(&mut stream) {
+        Ok((super::CodecType::Unknown, super::SampleEntry::Unknown)) => (),
+        _ => panic!("expected a different error result"),
+    }
+}
+
+#[test]
+fn unknown_audio_sample_entry() {
+    let unknown_codec = make_box(BoxSize::Auto, b"yyyy", |s| {
+        s.append_repeated(0, 16)
+    }).into_inner();
+    let mut stream = make_box(BoxSize::Auto, b"xxxx", |s| {
+        s.append_repeated(0, 6)
+         .B16(1)
+         .B32(0)
+         .B32(0)
+         .B16(2)
+         .B16(16)
+         .B16(0)
+         .B16(0)
+         .B32(48000 << 16)
+         .append_bytes(unknown_codec.as_slice())
+    });
+    let mut iter = super::BoxIter::new(&mut stream);
+    let mut stream = iter.next_box().unwrap().unwrap();
+    match super::read_audio_sample_entry(&mut stream) {
+        Ok((super::CodecType::Unknown, super::SampleEntry::Unknown)) => (),
         _ => panic!("expected a different error result"),
     }
 }

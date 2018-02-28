@@ -853,9 +853,19 @@ nsSVGUtils::PaintFrameWithEffects(nsIFrame *aFrame,
       dirtyRegion = &tmpDirtyRegion;
     }
 
+    gfxContextMatrixAutoSaveRestore autoSR(target);
+
+    // 'target' is currently scaled such that its user space units are CSS
+    // pixels (SVG user space units). But PaintFilteredFrame expects it to be
+    // scaled in such a way that its user space units are device pixels. So we
+    // have to adjust the scale.
+    gfxMatrix reverseScaleMatrix = nsSVGUtils::GetCSSPxToDevPxMatrix(aFrame);
+    DebugOnly<bool> invertible = reverseScaleMatrix.Invert();
+    target->SetMatrix(reverseScaleMatrix * aTransform *
+                      target->CurrentMatrix());
+
     SVGPaintCallback paintCallback;
-    nsFilterInstance::PaintFilteredFrame(aFrame, target->GetDrawTarget(),
-                                         aTransform, &paintCallback,
+    nsFilterInstance::PaintFilteredFrame(aFrame, target, &paintCallback,
                                          dirtyRegion, aImgParams);
   } else {
      svgFrame->PaintSVG(*target, aTransform, aImgParams, aDirtyRect);
@@ -918,7 +928,7 @@ nsSVGUtils::HitTestChildren(nsSVGDisplayContainerFrame* aFrame,
       if (!m.Invert()) {
         return nullptr;
       }
-      point = m.Transform(point);
+      point = m.TransformPoint(point);
     }
   }
 
@@ -946,7 +956,7 @@ nsSVGUtils::HitTestChildren(nsSVGDisplayContainerFrame* aFrame,
           if (!m.Invert()) {
             continue;
           }
-          p = m.Transform(p);
+          p = m.TransformPoint(p);
         }
       }
       result = SVGFrame->GetFrameForPoint(p);
@@ -1044,7 +1054,7 @@ nsSVGUtils::GetClipRectForFrame(nsIFrame *aFrame,
       clipRect.y = aY;
       clipRect.height = aHeight;
     }
-     
+
     return clipRect;
   }
   return gfxRect(aX, aY, aWidth, aHeight);
@@ -1099,7 +1109,10 @@ nsSVGUtils::GetBBox(nsIFrame* aFrame, uint32_t aFlags,
       (isOuterSVG && (aFlags & eUseFrameBoundsForOuterSVG))) {
     // An HTML element or an SVG outer frame.
     MOZ_ASSERT(!hasSVGLayout);
-    return nsSVGIntegrationUtils::GetSVGBBoxForNonSVGFrame(aFrame);
+    bool onlyCurrentFrame = aFlags & eIncludeOnlyCurrentFrameForNonSVGElement;
+    return nsSVGIntegrationUtils::GetSVGBBoxForNonSVGFrame(
+      aFrame,
+      /* aUnionContinuations = */ !onlyCurrentFrame);
   }
 
   MOZ_ASSERT(svg);
@@ -1168,10 +1181,10 @@ nsSVGUtils::GetBBox(nsIFrame* aFrame, uint32_t aFlags,
           static_cast<SVGClipPathElement*>(clipPathFrame->GetContent());
         RefPtr<SVGAnimatedEnumeration> units = clipContent->ClipPathUnits();
         if (units->AnimVal() == SVG_UNIT_TYPE_OBJECTBOUNDINGBOX) {
-          matrix.Translate(gfxPoint(x, y));
-          matrix.Scale(width, height);
+          matrix.PreTranslate(gfxPoint(x, y));
+          matrix.PreScale(width, height);
         } else if (aFrame->IsSVGForeignObjectFrame()) {
-          matrix.Reset();
+          matrix = gfxMatrix();
         }
         bbox =
           clipPathFrame->GetBBoxForClipPathFrame(bbox, matrix).ToThebesRect();
@@ -1296,14 +1309,15 @@ nsSVGUtils::CanOptimizeOpacity(nsIFrame *aFrame)
 gfxMatrix
 nsSVGUtils::AdjustMatrixForUnits(const gfxMatrix &aMatrix,
                                  nsSVGEnum *aUnits,
-                                 nsIFrame *aFrame)
+                                 nsIFrame *aFrame,
+                                 uint32_t aFlags)
 {
   if (aFrame &&
       aUnits->GetAnimValue() == SVG_UNIT_TYPE_OBJECTBOUNDINGBOX) {
-    gfxRect bbox = GetBBox(aFrame);
+    gfxRect bbox = GetBBox(aFrame, aFlags);
     gfxMatrix tm = aMatrix;
-    tm.Translate(gfxPoint(bbox.X(), bbox.Y()));
-    tm.Scale(bbox.Width(), bbox.Height());
+    tm.PreTranslate(gfxPoint(bbox.X(), bbox.Y()));
+    tm.PreScale(bbox.Width(), bbox.Height());
     return tm;
   }
   return aMatrix;
@@ -1742,7 +1756,7 @@ nsSVGUtils::SetupCairoStrokeGeometry(nsIFrame* aFrame,
   }
 
   const nsStyleSVG* style = aFrame->StyleSVG();
-  
+
   switch (style->mStrokeLinecap) {
   case NS_STYLE_STROKE_LINECAP_BUTT:
     aContext->SetLineCap(CapStyle::BUTT);

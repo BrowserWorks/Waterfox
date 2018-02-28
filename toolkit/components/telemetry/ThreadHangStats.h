@@ -13,9 +13,11 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/Vector.h"
+#include "mozilla/CombinedStacks.h"
 
 #include "nsString.h"
 #include "prinrval.h"
+#include "jsapi.h"
 
 namespace mozilla {
 namespace Telemetry {
@@ -162,38 +164,43 @@ public:
    hang, along with a time histogram of the hang times. */
 class HangHistogram : public TimeHistogram
 {
+public:
+  // Value used for mNativeStackIndex to represent the absence of a cached
+  // native stack.
+  static const uint32_t NO_NATIVE_STACK_INDEX = UINT32_MAX;
+
 private:
   static uint32_t GetHash(const HangStack& aStack);
 
   HangStack mStack;
-  // Native stack that corresponds to the pseudostack in mStack
-  NativeHangStack mNativeStack;
+  // Cached index of the native stack in the mCombinedStacks list in the owning
+  // ThreadHangStats object. A default value of NO_NATIVE_STACK_INDEX means that
+  // the ThreadHangStats object which owns this HangHistogram doesn't have a
+  // cached CombinedStacks with this HangHistogram in it.
+  uint32_t mNativeStackIndex;
   // Use a hash to speed comparisons
   const uint32_t mHash;
   // Annotations attributed to this stack
   HangMonitor::HangAnnotationsVector mAnnotations;
+  // The name of the runnable on the current thread.
+  nsCString mRunnableName;
 
 public:
-  explicit HangHistogram(HangStack&& aStack)
+  explicit HangHistogram(HangStack&& aStack, const nsACString& aRunnableName)
     : mStack(mozilla::Move(aStack))
+    , mNativeStackIndex(NO_NATIVE_STACK_INDEX)
     , mHash(GetHash(mStack))
-  {
-  }
-
-  explicit HangHistogram(HangStack&& aStack,
-                         NativeHangStack&& aNativeStack)
-    : mStack(mozilla::Move(aStack))
-    , mNativeStack(mozilla::Move(aNativeStack))
-    , mHash(GetHash(mStack))
+    , mRunnableName(aRunnableName)
   {
   }
 
   HangHistogram(HangHistogram&& aOther)
     : TimeHistogram(mozilla::Move(aOther))
     , mStack(mozilla::Move(aOther.mStack))
-    , mNativeStack(mozilla::Move(aOther.mNativeStack))
+    , mNativeStackIndex(mozilla::Move(aOther.mNativeStackIndex))
     , mHash(mozilla::Move(aOther.mHash))
     , mAnnotations(mozilla::Move(aOther.mAnnotations))
+    , mRunnableName(aOther.mRunnableName)
   {
   }
   bool operator==(const HangHistogram& aOther) const;
@@ -204,11 +211,15 @@ public:
   const HangStack& GetStack() const {
     return mStack;
   }
-  NativeHangStack& GetNativeStack() {
-    return mNativeStack;
+  uint32_t GetNativeStackIndex() const {
+    return mNativeStackIndex;
   }
-  const NativeHangStack& GetNativeStack() const {
-    return mNativeStack;
+  void SetNativeStackIndex(uint32_t aIndex) {
+    MOZ_ASSERT(aIndex != NO_NATIVE_STACK_INDEX);
+    mNativeStackIndex = aIndex;
+  }
+  const char* GetRunnableName() const {
+    return mRunnableName.get();
   }
   const HangMonitor::HangAnnotationsVector& GetAnnotations() const {
     return mAnnotations;
@@ -228,6 +239,7 @@ public:
  - time histogram of all task run times
  - hang histograms of individual hangs
  - annotations for each hang
+ - combined native stacks for all hangs
 */
 class ThreadHangStats
 {
@@ -238,10 +250,12 @@ public:
   TimeHistogram mActivity;
   mozilla::Vector<HangHistogram, 4> mHangs;
   uint32_t mNativeStackCnt;
+  CombinedStacks mCombinedStacks;
 
   explicit ThreadHangStats(const char* aName)
     : mName(aName)
     , mNativeStackCnt(0)
+    , mCombinedStacks(Telemetry::kMaximumNativeHangStacks)
   {
   }
   ThreadHangStats(ThreadHangStats&& aOther)
@@ -249,6 +263,7 @@ public:
     , mActivity(mozilla::Move(aOther.mActivity))
     , mHangs(mozilla::Move(aOther.mHangs))
     , mNativeStackCnt(aOther.mNativeStackCnt)
+    , mCombinedStacks(mozilla::Move(aOther.mCombinedStacks))
   {
     aOther.mNativeStackCnt = 0;
   }
@@ -256,6 +271,17 @@ public:
     return mName.get();
   }
 };
+
+/**
+ * Reflects thread hang stats object as a JS object.
+ *
+ * @param JSContext* cx javascript context.
+ * @param JSContext* cx thread hang statistics.
+ *
+ * @return JSObject* Javascript reflection of the statistics.
+ */
+JSObject*
+CreateJSThreadHangStats(JSContext* cx, const Telemetry::ThreadHangStats& thread);
 
 } // namespace Telemetry
 } // namespace mozilla

@@ -421,30 +421,31 @@ Proxy::getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy, AutoIdVec
     return handler->getOwnEnumerablePropertyKeys(cx, proxy, props);
 }
 
-bool
-Proxy::enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp)
+JSObject*
+Proxy::enumerate(JSContext* cx, HandleObject proxy)
 {
     if (!CheckRecursionLimit(cx))
-        return false;
-    const BaseProxyHandler* handler = proxy->as<ProxyObject>().handler();
-    objp.set(nullptr); // default result if we refuse to perform this action
+        return nullptr;
 
+    const BaseProxyHandler* handler = proxy->as<ProxyObject>().handler();
     if (handler->hasPrototype()) {
         AutoIdVector props(cx);
         if (!Proxy::getOwnEnumerablePropertyKeys(cx, proxy, props))
-            return false;
+            return nullptr;
 
         RootedObject proto(cx);
         if (!GetPrototype(cx, proxy, &proto))
-            return false;
+            return nullptr;
         if (!proto)
-            return EnumeratedIdVectorToIterator(cx, proxy, 0, props, objp);
+            return EnumeratedIdVectorToIterator(cx, proxy, 0, props);
         assertSameCompartment(cx, proxy, proto);
 
         AutoIdVector protoProps(cx);
-        return GetPropertyKeys(cx, proto, 0, &protoProps) &&
-               AppendUnique(cx, props, protoProps) &&
-               EnumeratedIdVectorToIterator(cx, proxy, 0, props, objp);
+        if (!GetPropertyKeys(cx, proto, 0, &protoProps))
+            return nullptr;
+        if (!AppendUnique(cx, props, protoProps))
+            return nullptr;
+        return EnumeratedIdVectorToIterator(cx, proxy, 0, props);
     }
 
     AutoEnterPolicy policy(cx, handler, proxy, JSID_VOIDHANDLE,
@@ -453,10 +454,11 @@ Proxy::enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp)
     // If the policy denies access but wants us to return true, we need
     // to hand a valid (empty) iterator object to the caller.
     if (!policy.allowed()) {
-        return policy.returnValue() &&
-            NewEmptyPropertyIterator(cx, 0, objp);
+        if (!policy.returnValue())
+            return nullptr;
+        return NewEmptyPropertyIterator(cx, 0);
     }
-    return handler->enumerate(cx, proxy, objp);
+    return handler->enumerate(cx, proxy);
 }
 
 bool
@@ -560,7 +562,7 @@ Proxy::className(JSContext* cx, HandleObject proxy)
 }
 
 JSString*
-Proxy::fun_toString(JSContext* cx, HandleObject proxy, unsigned indent)
+Proxy::fun_toString(JSContext* cx, HandleObject proxy, bool isToSource)
 {
     if (!CheckRecursionLimit(cx))
         return nullptr;
@@ -569,16 +571,16 @@ Proxy::fun_toString(JSContext* cx, HandleObject proxy, unsigned indent)
                            BaseProxyHandler::GET, /* mayThrow = */ false);
     // Do the safe thing if the policy rejects.
     if (!policy.allowed())
-        return handler->BaseProxyHandler::fun_toString(cx, proxy, indent);
-    return handler->fun_toString(cx, proxy, indent);
+        return handler->BaseProxyHandler::fun_toString(cx, proxy, isToSource);
+    return handler->fun_toString(cx, proxy, isToSource);
 }
 
-bool
-Proxy::regexp_toShared(JSContext* cx, HandleObject proxy, MutableHandleRegExpShared shared)
+RegExpShared*
+Proxy::regexp_toShared(JSContext* cx, HandleObject proxy)
 {
     if (!CheckRecursionLimit(cx))
-        return false;
-    return proxy->as<ProxyObject>().handler()->regexp_toShared(cx, proxy, shared);
+        return nullptr;
+    return proxy->as<ProxyObject>().handler()->regexp_toShared(cx, proxy);
 }
 
 bool
@@ -754,6 +756,7 @@ const ClassOps js::ProxyClassOps = {
     nullptr,                 /* getProperty */
     nullptr,                 /* setProperty */
     nullptr,                 /* enumerate   */
+    nullptr,                 /* newEnumerate */
     nullptr,                 /* resolve     */
     nullptr,                 /* mayResolve  */
     proxy_Finalize,          /* finalize    */
@@ -777,7 +780,6 @@ const ObjectOps js::ProxyObjectOps = {
     proxy_DeleteProperty,
     Proxy::watch, Proxy::unwatch,
     Proxy::getElements,
-    nullptr,  /* enumerate */
     Proxy::fun_toString
 };
 

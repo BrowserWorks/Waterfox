@@ -7,9 +7,6 @@
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
-                                  "resource://gre/modules/NetUtil.jsm");
-
 var {
   ExtensionError,
 } = ExtensionUtils;
@@ -61,23 +58,7 @@ var gMenuBuilder = {
 
       // Display the extension icon on the root element.
       if (root.extension.manifest.icons) {
-        let parentWindow = contextData.menu.ownerGlobal;
-        let extension = root.extension;
-
-        let {icon} = IconDetails.getPreferredIcon(extension.manifest.icons, extension,
-                                                  16 * parentWindow.devicePixelRatio);
-
-        // The extension icons in the manifest are not pre-resolved, since
-        // they're sometimes used by the add-on manager when the extension is
-        // not enabled, and its URLs are not resolvable.
-        let resolvedURL = root.extension.baseURI.resolve(icon);
-
-        if (rootElement.localName == "menu") {
-          rootElement.setAttribute("class", "menu-iconic");
-        } else if (rootElement.localName == "menuitem") {
-          rootElement.setAttribute("class", "menuitem-iconic");
-        }
-        rootElement.setAttribute("image", resolvedURL);
+        this.setMenuItemIcon(rootElement, root.extension, contextData, root.extension.manifest.icons);
       }
 
       if (firstItem) {
@@ -193,7 +174,7 @@ var gMenuBuilder = {
     let label = item.title;
     if (label) {
       if (contextData.isTextSelected && label.indexOf("%s") > -1) {
-        let selection = contextData.selectionText;
+        let selection = contextData.selectionText.trim();
         // The rendering engine will truncate the title if it's longer than 64 characters.
         // But if it makes sense let's try truncate selection text only, to handle cases like
         // 'look up "%s" in MyDictionary' more elegantly.
@@ -210,6 +191,10 @@ var gMenuBuilder = {
     if (item.id && item.extension && item.extension.id) {
       element.setAttribute("id",
         `${makeWidgetId(item.extension.id)}_${item.id}`);
+    }
+
+    if (item.icons) {
+      this.setMenuItemIcon(element, item.extension, contextData, item.icons);
     }
 
     if (item.type == "checkbox") {
@@ -276,6 +261,26 @@ var gMenuBuilder = {
     return element;
   },
 
+  setMenuItemIcon(element, extension, contextData, icons) {
+    let parentWindow = contextData.menu.ownerGlobal;
+
+    let {icon} = IconDetails.getPreferredIcon(icons, extension,
+                                              16 * parentWindow.devicePixelRatio);
+
+    // The extension icons in the manifest are not pre-resolved, since
+    // they're sometimes used by the add-on manager when the extension is
+    // not enabled, and its URLs are not resolvable.
+    let resolvedURL = extension.baseURI.resolve(icon);
+
+    if (element.localName == "menu") {
+      element.setAttribute("class", "menu-iconic");
+    } else if (element.localName == "menuitem") {
+      element.setAttribute("class", "menuitem-iconic");
+    }
+
+    element.setAttribute("image", resolvedURL);
+  },
+
   handleEvent(event) {
     if (this.xulMenu != event.target || event.type != "popuphidden") {
       return;
@@ -298,51 +303,29 @@ global.actionContextMenu = function(contextData) {
   gMenuBuilder.buildActionContextMenu(contextData);
 };
 
+const contextsMap = {
+  onAudio: "audio",
+  onEditableArea: "editable",
+  inFrame: "frame",
+  onImage: "image",
+  onLink: "link",
+  onPassword: "password",
+  isTextSelected: "selection",
+  onVideo: "video",
+
+  onBrowserAction: "browser_action",
+  onPageAction: "page_action",
+  onTab: "tab",
+  inToolsMenu: "tools_menu",
+};
+
 const getMenuContexts = contextData => {
   let contexts = new Set();
 
-  if (contextData.inFrame) {
-    contexts.add("frame");
-  }
-
-  if (contextData.isTextSelected) {
-    contexts.add("selection");
-  }
-
-  if (contextData.onLink) {
-    contexts.add("link");
-  }
-
-  if (contextData.onEditableArea) {
-    contexts.add("editable");
-  }
-
-  if (contextData.onPassword) {
-    contexts.add("password");
-  }
-
-  if (contextData.onImage) {
-    contexts.add("image");
-  }
-
-  if (contextData.onVideo) {
-    contexts.add("video");
-  }
-
-  if (contextData.onAudio) {
-    contexts.add("audio");
-  }
-
-  if (contextData.onPageAction) {
-    contexts.add("page_action");
-  }
-
-  if (contextData.onBrowserAction) {
-    contexts.add("browser_action");
-  }
-
-  if (contextData.onTab) {
-    contexts.add("tab");
+  for (const [key, value] of Object.entries(contextsMap)) {
+    if (contextData[key]) {
+      contexts.add(value);
+    }
   }
 
   if (contexts.size === 0) {
@@ -350,7 +333,7 @@ const getMenuContexts = contextData => {
   }
 
   // New non-content contexts supported in Firefox are not part of "all".
-  if (!contextData.onTab) {
+  if (!contextData.onTab && !contextData.inToolsMenu) {
     contexts.add("all");
   }
 
@@ -529,6 +512,7 @@ MenuItem.prototype = {
 
     setIfDefined("parentMenuItemId", this.parentId);
     setIfDefined("mediaType", mediaType);
+    setIfDefined("linkText", contextData.linkText);
     setIfDefined("linkUrl", contextData.linkUrl);
     setIfDefined("srcUrl", contextData.srcUrl);
     setIfDefined("pageUrl", contextData.pageUrl);
@@ -566,7 +550,7 @@ MenuItem.prototype = {
       if (contextData.onLink) {
         targetUrls.push(contextData.linkUrl);
       }
-      if (!targetUrls.some(targetUrl => targetPattern.matches(NetUtil.newURI(targetUrl)))) {
+      if (!targetUrls.some(targetUrl => targetPattern.matches(Services.io.newURI(targetUrl)))) {
         return false;
       }
     }
@@ -576,8 +560,10 @@ MenuItem.prototype = {
 };
 
 // While any extensions are active, this Tracker registers to observe/listen
-// for contex-menu events from both content and chrome.
+// for menu events from both Tools and context menus, both content and chrome.
 const menuTracker = {
+  menuIds: ["menu_ToolsPopup", "tabContextMenu"],
+
   register() {
     Services.obs.addObserver(this, "on-build-contextmenu");
     for (const window of windowTracker.browserWindows()) {
@@ -589,8 +575,10 @@ const menuTracker = {
   unregister() {
     Services.obs.removeObserver(this, "on-build-contextmenu");
     for (const window of windowTracker.browserWindows()) {
-      const menu = window.document.getElementById("tabContextMenu");
-      menu.removeEventListener("popupshowing", this);
+      for (const id of this.menuIds) {
+        const menu = window.document.getElementById(id);
+        menu.removeEventListener("popupshowing", this);
+      }
     }
     windowTracker.removeOpenListener(this.onWindowOpen);
   },
@@ -601,12 +589,19 @@ const menuTracker = {
   },
 
   onWindowOpen(window) {
-    const menu = window.document.getElementById("tabContextMenu");
-    menu.addEventListener("popupshowing", menuTracker);
+    for (const id of menuTracker.menuIds) {
+      const menu = window.document.getElementById(id);
+      menu.addEventListener("popupshowing", menuTracker);
+    }
   },
 
   handleEvent(event) {
     const menu = event.target;
+    if (menu.id === "menu_ToolsPopup") {
+      const tab = tabTracker.activeTab;
+      const pageUrl = tab.linkedBrowser.currentURI.spec;
+      gMenuBuilder.build({menu, tab, pageUrl, inToolsMenu: true});
+    }
     if (menu.id === "tabContextMenu") {
       const trigger = menu.triggerNode;
       const tab = trigger.localName === "tab" ? trigger : tabTracker.activeTab;
@@ -672,9 +667,10 @@ this.menusInternal = class extends ExtensionAPI {
           }
         },
 
-        onClicked: new SingletonEventManager(context, "menusInternal.onClicked", fire => {
+        onClicked: new EventManager(context, "menusInternal.onClicked", fire => {
           let listener = (event, info, tab) => {
-            fire.async(info, tab);
+            context.withPendingBrowser(tab.linkedBrowser,
+                                       () => fire.sync(info, tab));
           };
 
           extension.on("webext-menu-menuitem-click", listener);

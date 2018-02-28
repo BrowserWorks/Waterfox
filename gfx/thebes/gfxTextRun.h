@@ -7,20 +7,25 @@
 #ifndef GFX_TEXTRUN_H
 #define GFX_TEXTRUN_H
 
+#include <stdint.h>
+
 #include "gfxTypes.h"
-#include "nsString.h"
 #include "gfxPoint.h"
 #include "gfxFont.h"
 #include "gfxFontConstants.h"
-#include "nsTArray.h"
 #include "gfxSkipChars.h"
 #include "gfxPlatform.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/RefPtr.h"
+#include "nsPoint.h"
+#include "nsString.h"
+#include "nsTArray.h"
+#include "nsTextFrameUtils.h"
 #include "DrawMode.h"
 #include "harfbuzz/hb.h"
 #include "nsUnicodeScriptCodes.h"
 #include "nsColor.h"
-#include "nsTextFrameUtils.h"
+#include "X11UndefineNone.h"
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -933,10 +938,9 @@ public:
     enum { UNDERLINE_OFFSET_NOT_SET = INT16_MAX };
     gfxFloat GetUnderlineOffset();
 
-    already_AddRefed<gfxFont>
-        FindFontForChar(uint32_t ch, uint32_t prevCh, uint32_t aNextCh,
-                        Script aRunScript, gfxFont *aPrevMatchedFont,
-                        uint8_t *aMatchType);
+    gfxFont* FindFontForChar(uint32_t ch, uint32_t prevCh, uint32_t aNextCh,
+                             Script aRunScript, gfxFont *aPrevMatchedFont,
+                             uint8_t *aMatchType);
 
     gfxUserFontSet* GetUserFontSet();
 
@@ -989,11 +993,10 @@ public:
 
 protected:
     // search through pref fonts for a character, return nullptr if no matching pref font
-    already_AddRefed<gfxFont> WhichPrefFontSupportsChar(uint32_t aCh);
+    gfxFont* WhichPrefFontSupportsChar(uint32_t aCh);
 
-    already_AddRefed<gfxFont>
-        WhichSystemFontSupportsChar(uint32_t aCh, uint32_t aNextCh,
-                                    Script aRunScript);
+    gfxFont* WhichSystemFontSupportsChar(uint32_t aCh, uint32_t aNextCh,
+                                         Script aRunScript);
 
     template<typename T>
     void ComputeRanges(nsTArray<gfxTextRange>& mRanges,
@@ -1234,7 +1237,7 @@ protected:
     // Helper for font-matching:
     // search all faces in a family for a fallback in cases where it's unclear
     // whether the family might have a font for a given character
-    already_AddRefed<gfxFont>
+    gfxFont*
     FindFallbackFaceForChar(gfxFontFamily* aFamily, uint32_t aCh,
                             Script aRunScript);
 

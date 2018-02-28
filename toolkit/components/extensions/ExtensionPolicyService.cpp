@@ -20,6 +20,7 @@
 #include "nsIDOMDocument.h"
 #include "nsIDocument.h"
 #include "nsILoadInfo.h"
+#include "nsIXULRuntime.h"
 #include "nsNetUtil.h"
 #include "nsPIDOMWindow.h"
 #include "nsXULAppAPI.h"
@@ -81,15 +82,22 @@ ExtensionPolicyService::ExtensionPolicyService()
   RegisterObservers();
 }
 
+bool
+ExtensionPolicyService::UseRemoteExtensions() const
+{
+  return sRemoteExtensions && BrowserTabsRemoteAutostart();
+}
 
 bool
 ExtensionPolicyService::IsExtensionProcess() const
 {
-  if (sRemoteExtensions && XRE_IsContentProcess()) {
+  bool isRemote = UseRemoteExtensions();
+
+  if (isRemote && XRE_IsContentProcess()) {
     auto& remoteType = dom::ContentChild::GetSingleton()->GetRemoteType();
     return remoteType.EqualsLiteral(EXTENSION_REMOTE_TYPE);
   }
-  return XRE_IsParentProcess();
+  return !isRemote && XRE_IsParentProcess();
 }
 
 
@@ -148,7 +156,7 @@ ExtensionPolicyService::BaseCSP(nsAString& aBaseCSP) const
 {
   nsresult rv;
 
-  rv = Preferences::GetString("extensions.webextensions.base-content-security-policy", &aBaseCSP);
+  rv = Preferences::GetString("extensions.webextensions.base-content-security-policy", aBaseCSP);
   if (NS_FAILED(rv)) {
     aBaseCSP.AssignLiteral(DEFAULT_BASE_CSP);
   }
@@ -159,7 +167,7 @@ ExtensionPolicyService::DefaultCSP(nsAString& aDefaultCSP) const
 {
   nsresult rv;
 
-  rv = Preferences::GetString("extensions.webextensions.default-content-security-policy", &aDefaultCSP);
+  rv = Preferences::GetString("extensions.webextensions.default-content-security-policy", aDefaultCSP);
   if (NS_FAILED(rv)) {
     aDefaultCSP.AssignLiteral(DEFAULT_DEFAULT_CSP);
   }
@@ -271,17 +279,15 @@ ExtensionPolicyService::CheckWindow(nsPIDOMWindowOuter* aWindow)
   // We only care about non-initial document loads here. The initial
   // about:blank document will usually be re-used to load another document.
   nsCOMPtr<nsIDocument> doc = aWindow->GetExtantDoc();
-  if (!doc || doc->IsInitialDocument()) {
+  if (!doc || doc->IsInitialDocument() ||
+      doc->GetReadyStateEnum() == nsIDocument::READYSTATE_UNINITIALIZED) {
     return;
   }
 
-  nsCOMPtr<nsIURI> aboutBlank;
-  NS_ENSURE_SUCCESS_VOID(NS_NewURI(getter_AddRefs(aboutBlank),
-                                   "about:blank"));
-
-  nsCOMPtr<nsIURI> uri = doc->GetDocumentURI();
-  bool equal;
-  if (!uri || NS_FAILED(uri->EqualsExceptRef(aboutBlank, &equal)) || !equal) {
+  nsCOMPtr<nsIURI> docUri = doc->GetDocumentURI();
+  nsCOMPtr<nsIURI> uri;
+  if (!docUri || NS_FAILED(docUri->CloneIgnoringRef(getter_AddRefs(uri))) ||
+      !NS_IsAboutBlank(uri)) {
     return;
   }
 

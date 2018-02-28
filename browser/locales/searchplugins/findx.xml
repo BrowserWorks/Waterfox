@@ -1,9 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
-  <ShortName>findx</ShortName>
-  <Description>findx - your new search engine. No logging. No tracking. Transparent algorithms. Hosted in Europe. Users like you help shape the results.</Description>
-  <InputEncoding>UTF-8</InputEncoding>
-  <Image width="16" height="16" type="image/x-icon">data:image/x-icon;base64,AAABAAEAEBAAAAEACABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAAAEAABILAAASCwAAAAEAAAABAADRkx0A0ZMdANGSHADQkRoA0ZIbANGTHQDRkx0A0ZMcANGTHADRkx0A0ZMdANGTHQDRkhwA16A5AObFhgDbqk0A0ZIcANGSGwDQkRoA0ZQfANOZKQDUmSoA0ZMeANGTHQDRkx0A0ZMdAOrPmwD///8A4712ANCQGADWnjQA4710AO/asgD26tMA9urTAN+zYQDQkhoA0ZMdANKWIwDz4sMA+vPnANmlRADivHQA9+3ZAP79+gD58eMA8uC+AO3VpwDbrFEA0ZIbANGTHQDSlSIA8uC/APrz5wDw3bgA/fv2APPkxgDhuW0A1p82ANKVIgDRkxwA0ZIcANGTHQDRkx0A0ZIcAOzSoQD///8A+/XrAOXCgADUmSoA0JEZANGSGwDRkx0A0ZMdANGTHQDRkhsA1ZwwAPPiwwDkwX4A0JEaANGSHADRkx0A0ZMdANKVIQDr0J4A+/btAPz48ADs0qEA0ZMeANGTHQDRkx0A0JIaAN+0YwD79+0A5L96AOjJjwD79eoA26pOANCRGgDRkx0A0ZMcANOYKADz48QA8d66ANKWJADVnTMA9efOAPLhwADUmy4A0ZIbANGTHQDQkhoA3K5WAPr06QDdsFsA0JEaANGSGwDbqk4A9+zYAO7WqgDUmy8A0ZIbANGTHQDQkRkA5cJ/APTlygDTmCgA0ZMcANGTHQDRkhsA2aVEAO3VqADr0aAA2aVCANGTHQDRkx0A0JEaAOK7cQDqzZgA0ZIcANGTHQDRkx0A0ZIbANKVIADXoToA1Z0zANGTHQDRkxwA1JosANijPwDRkxwA0ZMdANGTHQDRkhsA0ZIcANGTHQDRkx0A0ZMcANGSGwDRkx0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJydnp8AAAAAAAAAAAAAAACTlJWWAAAAl5iZmpsAAAAAiImKi4wLjY6PkJGSegAAAHt8fX5/gIGCg4SFhocAAABvcHFyc3R1dnd4eXoAAAAAZGVmZ2hpamtsbW4AAAAAAFpbXF1eX2BhYmMAAAAAAAAAUlNUVVZXWFkAAAAAAAAAAD5LTE1CTk9QUQAAAAAAAAAAP0BBQkNERUZHSElKAAAAADIzNDU2Nzg5Ojs8PT4AAAAlJicoKSorLC0uLzAxAAAAGBkaGxwdHh8gISIjJAAAAAsMDQ4PEBESExQVFhcAAAAAAQIDBAUAAAYHCAkKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</Image>
-  <moz:SearchForm>https://www.findx.com/</moz:SearchForm>
-  <Url type="text/html" method="GET" template="https://www.findx.com/search?type=web&amp;q={searchTerms}&amp;client=opensearch"/>
-  <Url type="application/x-suggestions+json" template="https://www.findx.com/api/web-search/suggestions/?q={searchTerms}&amp;type=opensearch"/>
+	<ShortName>findx</ShortName>
+	<Description>findx - your new search engine. No logging. No tracking. Transparent algorithms. Hosted in Europe. Users like you help shape the results.</Description>
+	<InputEncoding>UTF-8</InputEncoding>
+	<Image height="16" width="16">resource://search-plugins/images/findx.ico</Image>
+	<Url type="text/html" method="GET" template="https://www.findx.com/search?type=web&amp;q={searchTerms}&amp;client=opensearch"/>
+	<Url type="application/x-suggestions+json" template="https://www.findx.com/api/web-search/suggestions/?q={searchTerms}&amp;type=opensearch"/>
 </OpenSearchDescription>

@@ -33,6 +33,30 @@ XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
 
+function _TabRemovalObserver(resolver, tabParentIds) {
+  this._resolver = resolver;
+  this._tabParentIds = tabParentIds;
+  Services.obs.addObserver(this, "ipc:browser-destroyed");
+}
+
+_TabRemovalObserver.prototype = {
+  _resolver: null,
+  _tabParentIds: null,
+
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
+
+  observe(subject, topic, data) {
+    let tabParent = subject.QueryInterface(Ci.nsITabParent);
+    if (this._tabParentIds.has(tabParent.tabId)) {
+      this._tabParentIds.delete(tabParent.tabId);
+      if (this._tabParentIds.size == 0) {
+        Services.obs.removeObserver(this, "ipc:browser-destroyed");
+        this._resolver();
+      }
+    }
+  }
+};
+
 function _ContextualIdentityService(path) {
   this.init(path);
 }
@@ -90,11 +114,6 @@ _ContextualIdentityService.prototype = {
 
   init(path) {
     this._path = path;
-    this._saver = new DeferredTask(() => this.save(), SAVE_DELAY_MS);
-    AsyncShutdown.profileBeforeChange.addBlocker("ContextualIdentityService: writing data",
-                                                 () => this._saver.finalize());
-
-    this.load();
   },
 
   load() {
@@ -154,22 +173,39 @@ _ContextualIdentityService.prototype = {
   },
 
   saveSoon() {
+    if (!this._saver) {
+      this._saverCallback = () => this._saver.finalize();
+
+      this._saver = new DeferredTask(() => this.save(), SAVE_DELAY_MS);
+      AsyncShutdown.profileBeforeChange.addBlocker(
+        "ContextualIdentityService: writing data", this._saverCallback);
+    } else {
+      this._saver.disarm();
+    }
+
     this._saver.arm();
   },
 
   save() {
-   let object = {
-     version: 2,
-     lastUserContextId: this._lastUserContextId,
-     identities: this._identities
-   };
+    AsyncShutdown.profileBeforeChange.removeBlocker(this._saverCallback);
 
-   let bytes = gTextEncoder.encode(JSON.stringify(object));
-   return OS.File.writeAtomic(this._path, bytes,
-                              { tmpPath: this._path + ".tmp" });
+    this._saver = null;
+    this._saverCallback = null;
+
+    let object = {
+      version: 2,
+      lastUserContextId: this._lastUserContextId,
+      identities: this._identities
+    };
+
+    let bytes = gTextEncoder.encode(JSON.stringify(object));
+    return OS.File.writeAtomic(this._path, bytes,
+                               { tmpPath: this._path + ".tmp" });
   },
 
   create(name, icon, color) {
+    this.ensureDataReady();
+
     let identity = {
       userContextId: ++this._lastUserContextId,
       public: true,
@@ -185,6 +221,8 @@ _ContextualIdentityService.prototype = {
   },
 
   update(userContextId, name, icon, color) {
+    this.ensureDataReady();
+
     let identity = this._identities.find(identity => identity.userContextId == userContextId &&
                                          identity.public);
     if (identity && name) {
@@ -202,6 +240,8 @@ _ContextualIdentityService.prototype = {
   },
 
   remove(userContextId) {
+    this.ensureDataReady();
+
     let index = this._identities.findIndex(i => i.userContextId == userContextId && i.public);
     if (index == -1) {
       return false;
@@ -293,9 +333,33 @@ _ContextualIdentityService.prototype = {
   },
 
   closeContainerTabs(userContextId = 0) {
-    this._forEachContainerTab(function(tab, tabbrowser) {
-      tabbrowser.removeTab(tab);
-    }, userContextId);
+    return new Promise(resolve => {
+      let tabParentIds = new Set();
+      this._forEachContainerTab((tab, tabbrowser) => {
+        let frameLoader = tab.linkedBrowser.QueryInterface(Ci.nsIFrameLoaderOwner).frameLoader;
+
+        // We don't have tabParent in non-e10s mode.
+        if (frameLoader.tabParent) {
+          tabParentIds.add(frameLoader.tabParent.tabId);
+        }
+
+        tabbrowser.removeTab(tab);
+      }, userContextId);
+
+      if (tabParentIds.size == 0) {
+        resolve();
+        return;
+      }
+
+      new _TabRemovalObserver(resolve, tabParentIds);
+    });
+  },
+
+  notifyAllContainersCleared() {
+    for (let identity of this._identities) {
+      Services.obs.notifyObservers(null, "clear-origin-attributes-data",
+                                   JSON.stringify({ userContextId: identity.userContextId }));
+    }
   },
 
   _forEachContainerTab(callback, userContextId = 0) {
@@ -304,17 +368,17 @@ _ContextualIdentityService.prototype = {
       let win = windowList.getNext();
 
       if (win.closed || !win.gBrowser) {
-	continue;
+        continue;
       }
 
       let tabbrowser = win.gBrowser;
       for (let i = tabbrowser.tabContainer.childNodes.length - 1; i >= 0; --i) {
         let tab = tabbrowser.tabContainer.childNodes[i];
-	if (tab.hasAttribute("usercontextid") &&
-            (!userContextId ||
-             parseInt(tab.getAttribute("usercontextid"), 10) == userContextId)) {
-	  callback(tab, tabbrowser);
-	}
+        if (tab.hasAttribute("usercontextid") &&
+                  (!userContextId ||
+                   parseInt(tab.getAttribute("usercontextid"), 10) == userContextId)) {
+          callback(tab, tabbrowser);
+        }
       }
     }
   },

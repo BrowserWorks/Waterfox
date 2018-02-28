@@ -8,8 +8,9 @@
 #include "nsIAsyncInputStream.h"
 #include "nsICancelableRunnable.h"
 #include "nsIRunnable.h"
-#include "nsIThread.h"
+#include "nsISerialEventTarget.h"
 #include "nsStreamUtils.h"
+#include "nsThreadUtils.h"
 
 using mozilla::dom::workers::Canceling;
 using mozilla::dom::workers::GetCurrentThreadWorkerPrivate;
@@ -26,7 +27,7 @@ class IPCStreamSource::Callback final : public nsIInputStreamCallback
 public:
   explicit Callback(IPCStreamSource* aSource)
     : mSource(aSource)
-    , mOwningThread(NS_GetCurrentThread())
+    , mOwningEventTarget(GetCurrentThreadSerialEventTarget())
   {
     MOZ_ASSERT(mSource);
   }
@@ -35,14 +36,14 @@ public:
   OnInputStreamReady(nsIAsyncInputStream* aStream) override
   {
     // any thread
-    if (mOwningThread == NS_GetCurrentThread()) {
+    if (mOwningEventTarget->IsOnCurrentThread()) {
       return Run();
     }
 
     // If this fails, then it means the owning thread is a Worker that has
     // been shutdown.  Its ok to lose the event in this case because the
     // IPCStreamChild listens for this event through the WorkerHolder.
-    nsresult rv = mOwningThread->Dispatch(this, nsIThread::DISPATCH_NORMAL);
+    nsresult rv = mOwningEventTarget->Dispatch(this, nsIThread::DISPATCH_NORMAL);
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to dispatch stream readable event to owning thread");
     }
@@ -53,7 +54,7 @@ public:
   NS_IMETHOD
   Run() override
   {
-    MOZ_ASSERT(mOwningThread == NS_GetCurrentThread());
+    MOZ_ASSERT(mOwningEventTarget->IsOnCurrentThread());
     if (mSource) {
       mSource->OnStreamReady(this);
     }
@@ -72,7 +73,7 @@ public:
   void
   ClearSource()
   {
-    MOZ_ASSERT(mOwningThread == NS_GetCurrentThread());
+    MOZ_ASSERT(mOwningEventTarget->IsOnCurrentThread());
     MOZ_ASSERT(mSource);
     mSource = nullptr;
   }
@@ -91,7 +92,7 @@ private:
   // ActorDestroyed() is called).
   IPCStreamSource* mSource;
 
-  nsCOMPtr<nsIThread> mOwningThread;
+  nsCOMPtr<nsISerialEventTarget> mOwningEventTarget;
 
   NS_DECL_THREADSAFE_ISUPPORTS
 };
@@ -189,7 +190,7 @@ void
 IPCStreamSource::Start()
 {
   NS_ASSERT_OWNINGTHREAD(IPCStreamSource);
-  DoRead();
+  DoRead(ReadReason::Starting);
 }
 
 void
@@ -200,7 +201,7 @@ IPCStreamSource::StartDestroy()
 }
 
 void
-IPCStreamSource::DoRead()
+IPCStreamSource::DoRead(ReadReason aReadReason)
 {
   NS_ASSERT_OWNINGTHREAD(IPCStreamSource);
   MOZ_ASSERT(mState == eActorConstructed);
@@ -214,6 +215,15 @@ IPCStreamSource::DoRead()
   static_assert(kMaxBytesPerMessage <= static_cast<uint64_t>(UINT32_MAX),
                 "kMaxBytesPerMessage must cleanly cast to uint32_t");
 
+  // Per the nsIInputStream API, having 0 bytes available in a stream is
+  // ambiguous.  It could mean "no data yet, but some coming later" or it could
+  // mean "EOF" (end of stream).
+  //
+  // If we're just starting up, we can't distinguish between those two options.
+  // But if we're being notified that an async stream is ready, then the
+  // first Available() call returning 0 should really mean end of stream.
+  // Subsequent Available() calls, after we read some data, could mean anything.
+  bool noDataMeansEOF = (aReadReason == ReadReason::Notified);
   while (true) {
     // It should not be possible to transition to closed state without
     // this loop terminating via a return.
@@ -233,7 +243,11 @@ IPCStreamSource::DoRead()
     }
 
     if (available == 0) {
-      Wait();
+      if (noDataMeansEOF) {
+        OnEnd(rv);
+      } else {
+        Wait();
+      }
       return;
     }
 
@@ -246,6 +260,9 @@ IPCStreamSource::DoRead()
     rv = mStream->Read(buffer.BeginWriting(), buffer.Length(), &bytesRead);
     MOZ_ASSERT_IF(NS_FAILED(rv), bytesRead == 0);
     buffer.SetLength(bytesRead);
+
+    // After this point, having no data tells us nothing about EOF.
+    noDataMeansEOF = false;
 
     // If we read any data from the stream, send it across.
     if (!buffer.IsEmpty()) {
@@ -290,7 +307,7 @@ IPCStreamSource::OnStreamReady(Callback* aCallback)
   MOZ_ASSERT(aCallback == mCallback);
   mCallback->ClearSource();
   mCallback = nullptr;
-  DoRead();
+  DoRead(ReadReason::Notified);
 }
 
 void

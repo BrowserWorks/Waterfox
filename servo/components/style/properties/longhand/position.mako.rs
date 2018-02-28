@@ -108,7 +108,7 @@ ${helpers.single_keyword("flex-wrap", "nowrap wrap wrap-reverse",
 
     ${helpers.predefined_type(name="justify-items",
                               type="JustifyItems",
-                              initial_value="specified::JustifyItems::auto()",
+                              initial_value="computed::JustifyItems::auto()",
                               spec="https://drafts.csswg.org/css-align/#propdef-justify-items",
                               animation_value_type="discrete")}
 
@@ -170,9 +170,8 @@ ${helpers.predefined_type("order", "Integer", "0",
 % else:
     // FIXME: This property should be animatable.
     ${helpers.predefined_type("flex-basis",
-                              "LengthOrPercentageOrAutoOrContent",
-                              "computed::LengthOrPercentageOrAutoOrContent::Auto",
-                              "parse_non_negative",
+                              "FlexBasis",
+                              "computed::FlexBasis::auto()",
                               spec="https://drafts.csswg.org/css-flexbox/#flex-basis-property",
                               extra_prefixes="webkit",
                               animation_value_type="none")}
@@ -261,7 +260,7 @@ ${helpers.predefined_type("object-position",
         ${helpers.predefined_type("grid-%s-%s" % (kind, range),
                                   "GridLine",
                                   "Default::default()",
-                                  animation_value_type="none",
+                                  animation_value_type="discrete",
                                   spec="https://drafts.csswg.org/css-grid/#propdef-grid-%s-%s" % (kind, range),
                                   products="gecko",
                                   boxed=True)}
@@ -272,16 +271,14 @@ ${helpers.predefined_type("object-position",
     ${helpers.predefined_type("grid-auto-%ss" % kind,
                               "TrackSize",
                               "Default::default()",
-                              animation_value_type="none",
+                              animation_value_type="discrete",
                               spec="https://drafts.csswg.org/css-grid/#propdef-grid-auto-%ss" % kind,
                               products="gecko",
                               boxed=True)}
 
-    // NOTE: The spec lists only `none | <track-list> | <auto-track-list>`, but gecko seems to support
-    // `subgrid <line-name-list>?` in addition to this (probably old spec). We should support it soon.
     ${helpers.predefined_type("grid-template-%ss" % kind,
-                              "TrackListOrNone",
-                              "Either::Second(None_)",
+                              "GridTemplateComponent",
+                              "specified::GenericGridTemplateComponent::None",
                               products="gecko",
                               spec="https://drafts.csswg.org/css-grid/#propdef-grid-template-%ss" % kind,
                               boxed=True,
@@ -334,7 +331,7 @@ ${helpers.predefined_type("object-position",
     pub fn get_initial_value() -> computed_value::T {
         computed_value::T {
             autoflow: computed_value::AutoFlow::Row,
-            dense: false
+            dense: false,
         }
     }
 
@@ -364,7 +361,7 @@ ${helpers.predefined_type("object-position",
                 _ => false
             };
             if !success {
-                return Err(SelectorParseError::UnexpectedIdent(ident).into());
+                return Err(SelectorParseError::UnexpectedIdent(ident.clone()).into());
             }
         }
 
@@ -466,8 +463,8 @@ ${helpers.predefined_type("object-position",
         fn parse<'i, 't>(_context: &ParserContext, input: &mut Parser<'i, 't>)
                          -> Result<Self, ParseError<'i>> {
             let mut strings = vec![];
-            while let Ok(string) = input.try(Parser::expect_string) {
-                strings.push(string.into_owned().into_boxed_str());
+            while let Ok(string) = input.try(|i| i.expect_string().map(|s| s.as_ref().into())) {
+                strings.push(string);
             }
 
             TemplateAreas::from_vec(strings)

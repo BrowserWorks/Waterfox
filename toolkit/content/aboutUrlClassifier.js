@@ -133,7 +133,7 @@ var Provider = {
           let str = bundle.GetStringFromName("TriggerUpdate")
           btn.appendChild(document.createTextNode(str));
           td.appendChild(btn);
-	      } else {
+        } else {
           let str = column.id === "col-lastupdateresult" ? STR_NA : "";
           td.appendChild(document.createTextNode(str));
         }
@@ -156,6 +156,11 @@ var Provider = {
       let nut = Services.prefs.getCharPref(pref, "");
       values["col-nextupdatetime"] = nut ? new Date(nut * 1) : STR_NA;
 
+      let listmanager = Cc["@mozilla.org/url-classifier/listmanager;1"]
+                        .getService(Ci.nsIUrlListManager);
+      let bot = listmanager.getBackOffTime(provider);
+      values["col-backofftime"] = bot ? new Date(bot * 1) : STR_NA;
+
       for (let key of Object.keys(values)) {
         let elem = document.getElementById(provider + "-" + key);
         elem.childNodes[0].nodeValue = values[key];
@@ -169,7 +174,8 @@ var Provider = {
                       .getService(Ci.nsIUrlListManager);
 
     let pref = "browser.safebrowsing.provider." + provider + ".lists";
-    let table = Services.prefs.getCharPref(pref, "").split(",")[0];
+    let tables = Services.prefs.getCharPref(pref, "").split(",");
+    let table = tables.find(t => listmanager.getUpdateUrl(t) != "");
 
     let updateUrl = listmanager.getUpdateUrl(table);
     if (!listmanager.checkForUpdates(updateUrl)) {

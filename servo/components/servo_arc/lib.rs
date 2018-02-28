@@ -22,14 +22,16 @@
 // duplicate those here.
 #![allow(missing_docs)]
 
-#[cfg(feature = "servo")] extern crate serde;
 extern crate nodrop;
+#[cfg(feature = "servo")] extern crate serde;
+extern crate stable_deref_trait;
 
 #[cfg(feature = "servo")]
 use heapsize::HeapSizeOf;
 use nodrop::NoDrop;
 #[cfg(feature = "servo")]
 use serde::{Deserialize, Serialize};
+use stable_deref_trait::{CloneStableDeref, StableDeref};
 use std::{isize, usize};
 use std::borrow;
 use std::cmp::Ordering;
@@ -39,6 +41,7 @@ use std::hash::{Hash, Hasher};
 use std::iter::{ExactSizeIterator, Iterator};
 use std::mem;
 use std::ops::{Deref, DerefMut};
+use std::process;
 use std::ptr;
 use std::slice;
 use std::sync::atomic;
@@ -191,6 +194,30 @@ impl<T> Arc<T> {
             p: NonZeroPtrMut::new(ptr as *mut ArcInner<T>),
         }
     }
+
+    /// Produce a pointer to the data that can be converted back
+    /// to an arc
+    pub fn borrow_arc<'a>(&'a self) -> ArcBorrow<'a, T> {
+        ArcBorrow(&**self)
+    }
+    /// Temporarily converts |self| into a bonafide RawOffsetArc and exposes it to the
+    /// provided callback. The refcount is not modified.
+    #[inline(always)]
+    pub fn with_raw_offset_arc<F, U>(&self, f: F) -> U
+        where F: FnOnce(&RawOffsetArc<T>) -> U
+    {
+        // Synthesize transient Arc, which never touches the refcount of the ArcInner.
+        let transient = unsafe { NoDrop::new(Arc::into_raw_offset(ptr::read(self))) };
+
+        // Expose the transient Arc to the callback, which may clone it if it wants.
+        let result = f(&transient);
+
+        // Forget the transient Arc to leave the refcount untouched.
+        mem::forget(transient);
+
+        // Forward the result.
+        result
+    }
 }
 
 impl<T: ?Sized> Arc<T> {
@@ -247,13 +274,7 @@ impl<T: ?Sized> Clone for Arc<T> {
         // We abort because such a program is incredibly degenerate, and we
         // don't care to support it.
         if old_size > MAX_REFCOUNT {
-            // Note: std::process::abort is stable in 1.17, which we don't yet
-            // require for Gecko. Panic is good enough in practice here (it will
-            // trigger an abort at least in Gecko, and this case is degenerate
-            // enough that Servo shouldn't have code that triggers it).
-            //
-            // We should fix this when we require 1.17.
-            panic!();
+            process::abort();
         }
 
         Arc { p: NonZeroPtrMut::new(self.ptr()) }
@@ -437,6 +458,9 @@ impl<T: ?Sized> AsRef<T> for Arc<T> {
     }
 }
 
+unsafe impl<T: ?Sized> StableDeref for Arc<T> {}
+unsafe impl<T: ?Sized> CloneStableDeref for Arc<T> {}
+
 // This is what the HeapSize crate does for regular arc, but is questionably
 // sound. See https://github.com/servo/heapsize/issues/37
 #[cfg(feature = "servo")]
@@ -447,11 +471,11 @@ impl<T: HeapSizeOf> HeapSizeOf for Arc<T> {
 }
 
 #[cfg(feature = "servo")]
-impl<T: Deserialize> Deserialize for Arc<T>
+impl<'de, T: Deserialize<'de>> Deserialize<'de> for Arc<T>
 {
     fn deserialize<D>(deserializer: D) -> Result<Arc<T>, D::Error>
     where
-        D: ::serde::de::Deserializer,
+        D: ::serde::de::Deserializer<'de>,
     {
         T::deserialize(deserializer).map(Arc::new)
     }
@@ -527,12 +551,16 @@ impl<H, T> Arc<HeaderSlice<H, [T]>> {
             //
             // To avoid alignment issues, we allocate words rather than bytes,
             // rounding up to the nearest word size.
-            assert!(mem::align_of::<T>() <= mem::align_of::<usize>(),
-                    "We don't handle over-aligned types");
-            let words_to_allocate = divide_rounding_up(size, size_of::<usize>());
-            let mut vec = Vec::<usize>::with_capacity(words_to_allocate);
-            vec.set_len(words_to_allocate);
-            let buffer = Box::into_raw(vec.into_boxed_slice()) as *mut usize as *mut u8;
+            let buffer = if mem::align_of::<T>() <= mem::align_of::<usize>() {
+                Self::allocate_buffer::<usize>(size)
+            } else if mem::align_of::<T>() <= mem::align_of::<u64>() {
+                // On 32-bit platforms <T> may have 8 byte alignment while usize has 4 byte aligment.
+                // Use u64 to avoid over-alignment.
+                // This branch will compile away in optimized builds.
+                Self::allocate_buffer::<u64>(size)
+            } else {
+                panic!("Over-aligned type not handled");
+            };
 
             // Synthesize the fat pointer. We do this by claiming we have a direct
             // pointer to a [T], and then changing the type of the borrow. The key
@@ -563,6 +591,14 @@ impl<H, T> Arc<HeaderSlice<H, [T]>> {
         // Return the fat Arc.
         assert_eq!(size_of::<Self>(), size_of::<usize>() * 2, "The Arc will be fat");
         Arc { p: NonZeroPtrMut::new(ptr) }
+    }
+
+    #[inline]
+    unsafe fn allocate_buffer<W>(size: usize) -> *mut u8 {
+        let words_to_allocate = divide_rounding_up(size, mem::size_of::<W>());
+        let mut vec = Vec::<W>::with_capacity(words_to_allocate);
+        vec.set_len(words_to_allocate);
+        Box::into_raw(vec.into_boxed_slice()) as *mut W as *mut u8
     }
 }
 
@@ -625,6 +661,8 @@ impl<H: 'static, T: 'static> ThinArc<H, T> {
         let result = f(&transient);
 
         // Forget the transient Arc to leave the refcount untouched.
+        // XXXManishearth this can be removed when unions stabilize,
+        // since then NoDrop becomes zero overhead
         mem::forget(transient);
 
         // Forward the result.
@@ -687,6 +725,199 @@ impl<H: PartialEq + 'static, T: PartialEq + 'static> PartialEq for ThinArc<H, T>
 }
 
 impl<H: Eq + 'static, T: Eq + 'static> Eq for ThinArc<H, T> {}
+
+/// An Arc, except it holds a pointer to the T instead of to the
+/// entire ArcInner.
+///
+/// ```text
+///  Arc<T>    RawOffsetArc<T>
+///   |          |
+///   v          v
+///  ---------------------
+/// | RefCount | T (data) | [ArcInner<T>]
+///  ---------------------
+/// ```
+///
+/// This means that this is a direct pointer to
+/// its contained data (and can be read from by both C++ and Rust),
+/// but we can also convert it to a "regular" Arc<T> by removing the offset
+#[derive(Eq)]
+pub struct RawOffsetArc<T: 'static> {
+    ptr: NonZeroPtrMut<T>,
+}
+
+unsafe impl<T: 'static + Sync + Send> Send for RawOffsetArc<T> {}
+unsafe impl<T: 'static + Sync + Send> Sync for RawOffsetArc<T> {}
+
+impl<T: 'static> Deref for RawOffsetArc<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.ptr.ptr() }
+    }
+}
+
+impl<T: 'static> Clone for RawOffsetArc<T> {
+    fn clone(&self) -> Self {
+        Arc::into_raw_offset(self.clone_arc())
+    }
+}
+
+impl<T: 'static> Drop for RawOffsetArc<T> {
+    fn drop(&mut self) {
+        let _ = Arc::from_raw_offset(RawOffsetArc { ptr: self.ptr.clone() });
+    }
+}
+
+
+impl<T: fmt::Debug + 'static> fmt::Debug for RawOffsetArc<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&**self, f)
+    }
+}
+
+impl<T: PartialEq> PartialEq for RawOffsetArc<T> {
+    fn eq(&self, other: &RawOffsetArc<T>) -> bool {
+        *(*self) == *(*other)
+    }
+
+    fn ne(&self, other: &RawOffsetArc<T>) -> bool {
+        *(*self) != *(*other)
+    }
+}
+
+impl<T: 'static> RawOffsetArc<T> {
+    /// Temporarily converts |self| into a bonafide Arc and exposes it to the
+    /// provided callback. The refcount is not modified.
+    #[inline(always)]
+    pub fn with_arc<F, U>(&self, f: F) -> U
+        where F: FnOnce(&Arc<T>) -> U
+    {
+        // Synthesize transient Arc, which never touches the refcount of the ArcInner.
+        let transient = unsafe { NoDrop::new(Arc::from_raw(self.ptr.ptr())) };
+
+        // Expose the transient Arc to the callback, which may clone it if it wants.
+        let result = f(&transient);
+
+        // Forget the transient Arc to leave the refcount untouched.
+        // XXXManishearth this can be removed when unions stabilize,
+        // since then NoDrop becomes zero overhead
+        mem::forget(transient);
+
+        // Forward the result.
+        result
+    }
+
+    /// If uniquely owned, provide a mutable reference
+    /// Else create a copy, and mutate that
+    pub fn make_mut(&mut self) -> &mut T where T: Clone {
+        unsafe {
+            // extract the RawOffsetArc as an owned variable
+            let this = ptr::read(self);
+            // treat it as a real Arc
+            let mut arc = Arc::from_raw_offset(this);
+            // obtain the mutable reference. Cast away the lifetime
+            // This may mutate `arc`
+            let ret = Arc::make_mut(&mut arc) as *mut _;
+            // Store the possibly-mutated arc back inside, after converting
+            // it to a RawOffsetArc again
+            ptr::write(self, Arc::into_raw_offset(arc));
+            &mut *ret
+        }
+    }
+
+    /// Clone it as an Arc
+    pub fn clone_arc(&self) -> Arc<T> {
+        RawOffsetArc::with_arc(self, |a| a.clone())
+    }
+
+    /// Produce a pointer to the data that can be converted back
+    /// to an arc
+    pub fn borrow_arc<'a>(&'a self) -> ArcBorrow<'a, T> {
+        ArcBorrow(&**self)
+    }
+}
+
+impl<T: 'static> Arc<T> {
+    /// Converts an Arc into a RawOffsetArc. This consumes the Arc, so the refcount
+    /// is not modified.
+    #[inline]
+    pub fn into_raw_offset(a: Self) -> RawOffsetArc<T> {
+        RawOffsetArc {
+            ptr: NonZeroPtrMut::new(Arc::into_raw(a) as *mut T),
+        }
+    }
+
+    /// Converts a RawOffsetArc into an Arc. This consumes the RawOffsetArc, so the refcount
+    /// is not modified.
+    #[inline]
+    pub fn from_raw_offset(a: RawOffsetArc<T>) -> Self {
+        let ptr = a.ptr.ptr();
+        mem::forget(a);
+        unsafe { Arc::from_raw(ptr) }
+    }
+}
+
+/// A "borrowed Arc". This is a pointer to
+/// a T that is known to have been allocated within an
+/// Arc.
+///
+/// This is equivalent in guarantees to `&Arc<T>`, however it is
+/// a bit more flexible. To obtain an `&Arc<T>` you must have
+/// an Arc<T> instance somewhere pinned down until we're done with it.
+///
+/// However, Gecko hands us refcounted things as pointers to T directly,
+/// so we have to conjure up a temporary Arc on the stack each time. The
+/// same happens for when the object is managed by a RawOffsetArc.
+///
+/// ArcBorrow lets us deal with borrows of known-refcounted objects
+/// without needing to worry about how they're actually stored.
+#[derive(PartialEq, Eq)]
+pub struct ArcBorrow<'a, T: 'a>(&'a T);
+
+impl<'a, T> Copy for ArcBorrow<'a, T> {}
+impl<'a, T> Clone for ArcBorrow<'a, T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<'a, T> ArcBorrow<'a, T> {
+    pub fn clone_arc(&self) -> Arc<T> {
+        let arc = unsafe { Arc::from_raw(self.0) };
+        // addref it!
+        mem::forget(arc.clone());
+        arc
+    }
+
+    /// For constructing from a reference known to be Arc-backed,
+    /// e.g. if we obtain such a reference over FFI
+    pub unsafe fn from_ref(r: &'a T) -> Self {
+        ArcBorrow(r)
+    }
+
+    pub fn with_arc<F, U>(&self, f: F) -> U where F: FnOnce(&Arc<T>) -> U, T: 'static {
+        // Synthesize transient Arc, which never touches the refcount.
+        let transient = unsafe { NoDrop::new(Arc::from_raw(self.0)) };
+
+        // Expose the transient Arc to the callback, which may clone it if it wants.
+        let result = f(&transient);
+
+        // Forget the transient Arc to leave the refcount untouched.
+        // XXXManishearth this can be removed when unions stabilize,
+        // since then NoDrop becomes zero overhead
+        mem::forget(transient);
+
+        // Forward the result.
+        result
+    }
+}
+
+impl<'a, T> Deref for ArcBorrow<'a, T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &*self.0
+    }
+}
 
 #[cfg(test)]
 mod tests {

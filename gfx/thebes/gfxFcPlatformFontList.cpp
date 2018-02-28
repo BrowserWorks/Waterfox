@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Logging.h"
-#include "mozilla/SizePrintfMacros.h"
 
 #include "gfxFcPlatformFontList.h"
 #include "gfxFont.h"
@@ -382,7 +381,7 @@ gfxFontconfigFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
         mCharacterMap = new gfxCharacterMap();
     }
 
-    LOG_FONTLIST(("(fontlist-cmap) name: %s, size: %" PRIuSIZE " hash: %8.8x%s\n",
+    LOG_FONTLIST(("(fontlist-cmap) name: %s, size: %zu hash: %8.8x%s\n",
                   NS_ConvertUTF16toUTF8(mName).get(),
                   charmap->SizeOfIncludingThis(moz_malloc_size_of),
                   charmap->mHash, mCharacterMap == charmap ? " new" : ""));
@@ -471,26 +470,47 @@ gfxFontconfigFontEntry::ReleaseGrFace(gr_face* aFace)
 double
 gfxFontconfigFontEntry::GetAspect()
 {
-    if (mAspect == 0.0) {
-        // default to aspect = 0.5
-        mAspect = 0.5;
+    if (mAspect != 0.0) {
+        return mAspect;
+    }
 
-        // create a font to calculate x-height / em-height
-        gfxFontStyle s;
-        s.size = 100.0; // pick large size to avoid possible hinting artifacts
-        RefPtr<gfxFont> font = FindOrMakeFont(&s, false);
-        if (font) {
-            const gfxFont::Metrics& metrics =
-                font->GetMetrics(gfxFont::eHorizontal);
-
-            // The factor of 0.1 ensures that xHeight is sane so fonts don't
-            // become huge.  Strictly ">" ensures that xHeight and emHeight are
-            // not both zero.
-            if (metrics.xHeight > 0.1 * metrics.emHeight) {
-                mAspect = metrics.xHeight / metrics.emHeight;
+    // try to compute aspect from OS/2 metrics if available
+    AutoTable os2Table(this, TRUETYPE_TAG('O','S','/','2'));
+    if (os2Table) {
+        uint16_t upem = UnitsPerEm();
+        if (upem != kInvalidUPEM) {
+            uint32_t len;
+            auto os2 = reinterpret_cast<const OS2Table*>
+                (hb_blob_get_data(os2Table, &len));
+            if (uint16_t(os2->version) >= 2) {
+                if (len >= offsetof(OS2Table, sxHeight) + sizeof(int16_t) &&
+                    int16_t(os2->sxHeight) > 0.1 * upem) {
+                    mAspect = double(int16_t(os2->sxHeight)) / upem;
+                    return mAspect;
+                }
             }
         }
     }
+
+    // default to aspect = 0.5 if the code below fails
+    mAspect = 0.5;
+
+    // create a font to calculate x-height / em-height
+    gfxFontStyle s;
+    s.size = 100.0; // pick large size to avoid possible hinting artifacts
+    RefPtr<gfxFont> font = FindOrMakeFont(&s, false);
+    if (font) {
+        const gfxFont::Metrics& metrics =
+            font->GetMetrics(gfxFont::eHorizontal);
+
+        // The factor of 0.1 ensures that xHeight is sane so fonts don't
+        // become huge.  Strictly ">" ensures that xHeight and emHeight are
+        // not both zero.
+        if (metrics.xHeight > 0.1 * metrics.emHeight) {
+            mAspect = metrics.xHeight / metrics.emHeight;
+        }
+    }
+
     return mAspect;
 }
 
@@ -1181,10 +1201,12 @@ gfxFcPlatformFontList::gfxFcPlatformFontList()
         mLastConfig = FcConfigGetCurrent();
         mCheckFontUpdatesTimer = do_CreateInstance("@mozilla.org/timer;1");
         if (mCheckFontUpdatesTimer) {
-            mCheckFontUpdatesTimer->
-                InitWithFuncCallback(CheckFontUpdates, this,
-                                     (rescanInterval + 1) * 1000,
-                                     nsITimer::TYPE_REPEATING_SLACK);
+          mCheckFontUpdatesTimer->InitWithNamedFuncCallback(
+            CheckFontUpdates,
+            this,
+            (rescanInterval + 1) * 1000,
+            nsITimer::TYPE_REPEATING_SLACK,
+            "gfxFcPlatformFontList::gfxFcPlatformFontList");
         } else {
             NS_WARNING("Failure to create font updates timer");
         }
@@ -1676,17 +1698,21 @@ gfxFcPlatformFontList::AddGenericFonts(mozilla::FontFamilyType aGenericType,
     if ((!mAlwaysUseFontconfigGenerics && aLanguage) ||
         aLanguage == nsGkAtoms::x_math) {
         nsIAtom* langGroup = GetLangGroup(aLanguage);
-        nsAdoptingString fontlistValue =
-            Preferences::GetString(NamePref(generic, langGroup).get());
+        nsAutoString fontlistValue;
+        Preferences::GetString(NamePref(generic, langGroup).get(),
+                               fontlistValue);
+        nsresult rv;
         if (fontlistValue.IsEmpty()) {
             // The font name list may have two or more family names as comma
             // separated list.  In such case, not matching with generic font
             // name is fine because if the list prefers specific font, we
             // should try to use the pref with complicated path.
-            fontlistValue =
-                 Preferences::GetString(NameListPref(generic, langGroup).get());
+            rv = Preferences::GetString(NameListPref(generic, langGroup).get(),
+                                        fontlistValue);
+        } else {
+            rv = NS_OK;
         }
-        if (fontlistValue) {
+        if (NS_SUCCEEDED(rv)) {
             if (!fontlistValue.EqualsLiteral("serif") &&
                 !fontlistValue.EqualsLiteral("sans-serif") &&
                 !fontlistValue.EqualsLiteral("monospace")) {
@@ -1876,15 +1902,15 @@ gfxFcPlatformFontList::PrefFontListsUseOnlyGenerics()
             nsCCharSeparatedTokenizer tokenizer(prefName, '.');
             const nsDependentCSubstring& generic = tokenizer.nextToken();
             const nsDependentCSubstring& langGroup = tokenizer.nextToken();
-            nsAdoptingCString fontPrefValue = Preferences::GetCString(names[i]);
+            nsAutoCString fontPrefValue;
+            Preferences::GetCString(names[i], fontPrefValue);
             if (fontPrefValue.IsEmpty()) {
                 // The font name list may have two or more family names as comma
                 // separated list.  In such case, not matching with generic font
                 // name is fine because if the list prefers specific font, this
                 // should return false.
-                fontPrefValue =
-                    Preferences::GetCString(NameListPref(generic,
-                                                         langGroup).get());
+                Preferences::GetCString(NameListPref(generic, langGroup).get(),
+                                        fontPrefValue);
             }
 
             if (!langGroup.EqualsLiteral("x-math") &&

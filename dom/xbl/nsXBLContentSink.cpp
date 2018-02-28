@@ -82,14 +82,13 @@ nsXBLContentSink::Init(nsIDocument* aDoc,
 void
 nsXBLContentSink::MaybeStartLayout(bool aIgnorePendingSheets)
 {
-  return;
 }
 
 nsresult
 nsXBLContentSink::FlushText(bool aReleaseTextNode)
 {
   if (mTextLength != 0) {
-    const nsASingleFragmentString& text = Substring(mText, mText+mTextLength);
+    const nsAString& text = Substring(mText, mText+mTextLength);
     if (mState == eXBL_InHandlers) {
       NS_ASSERTION(mBinding, "Must have binding here");
       // Get the text and add it to the event handler.

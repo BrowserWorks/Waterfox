@@ -317,7 +317,7 @@ class JS_FRIEND_API(BaseProxyHandler)
     virtual bool construct(JSContext* cx, HandleObject proxy, const CallArgs& args) const;
 
     /* SpiderMonkey extensions. */
-    virtual bool enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp) const;
+    virtual JSObject* enumerate(JSContext* cx, HandleObject proxy) const;
     virtual bool getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
                                        MutableHandle<PropertyDescriptor> desc) const;
     virtual bool hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const;
@@ -330,9 +330,8 @@ class JS_FRIEND_API(BaseProxyHandler)
                                  ESClass* cls) const;
     virtual bool isArray(JSContext* cx, HandleObject proxy, JS::IsArrayAnswer* answer) const;
     virtual const char* className(JSContext* cx, HandleObject proxy) const;
-    virtual JSString* fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const;
-    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy,
-                                 MutableHandle<js::RegExpShared*> shared) const;
+    virtual JSString* fun_toString(JSContext* cx, HandleObject proxy, bool isToSource) const;
+    virtual RegExpShared* regexp_toShared(JSContext* cx, HandleObject proxy) const;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp) const;
     virtual void trace(JSTracer* trc, JSObject* proxy) const;
     virtual void finalize(JSFreeOp* fop, JSObject* proxy) const;
@@ -713,6 +712,13 @@ CheckProxyFlags()
                   ((Flags >> JSCLASS_RESERVED_SLOTS_SHIFT) & JSCLASS_RESERVED_SLOTS_MASK)
                   <= shadow::Object::MAX_FIXED_SLOTS,
                   "ProxyValueArray size must not exceed max JSObject size");
+
+    // Proxies must not have the JSCLASS_SKIP_NURSERY_FINALIZE flag set: they
+    // always have finalizers, and whether they can be nursery allocated is
+    // controlled by the canNurseryAllocate() method on the proxy handler.
+    static_assert(!(Flags & JSCLASS_SKIP_NURSERY_FINALIZE),
+                  "Proxies must not use JSCLASS_SKIP_NURSERY_FINALIZE; use "
+                  "the canNurseryAllocate() proxy handler method instead.");
     return Flags;
 }
 

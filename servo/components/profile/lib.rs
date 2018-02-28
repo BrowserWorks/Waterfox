@@ -11,6 +11,7 @@
 #[cfg(not(target_os = "windows"))]
 extern crate alloc_jemalloc;
 extern crate heartbeats_simple;
+extern crate influent;
 extern crate ipc_channel;
 #[cfg(not(target_os = "windows"))]
 extern crate libc;
@@ -21,7 +22,7 @@ extern crate profile_traits;
 #[cfg(target_os = "linux")]
 extern crate regex;
 #[macro_use]
-extern crate serde_derive;
+extern crate serde;
 extern crate serde_json;
 extern crate servo_config;
 #[cfg(target_os = "macos")]

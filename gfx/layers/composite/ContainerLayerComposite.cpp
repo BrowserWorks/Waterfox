@@ -35,9 +35,7 @@
 #include "TextRenderer.h"               // for TextRenderer
 #include <vector>
 #include "GeckoProfiler.h"              // for GeckoProfiler
-#ifdef MOZ_GECKO_PROFILER
-#include "ProfilerMarkerPayload.h"      // for LayerTranslationPayload
-#endif
+#include "ProfilerMarkerPayload.h"      // for LayerTranslationMarkerPayload
 
 #define CULLING_LOG(...)
 // #define CULLING_LOG(...) printf_stderr("CULLING: " __VA_ARGS__)
@@ -83,7 +81,6 @@ DrawLayerInfo(const RenderTargetIntRect& aClipRect,
 static void
 PrintUniformityInfo(Layer* aLayer)
 {
-#ifdef MOZ_GECKO_PROFILER
   if (!profiler_is_active()) {
     return;
   }
@@ -100,9 +97,10 @@ PrintUniformityInfo(Layer* aLayer)
   }
 
   Point translation = transform.As2D().GetTranslation();
-  LayerTranslationPayload* payload = new LayerTranslationPayload(aLayer, translation);
-  PROFILER_MARKER_PAYLOAD("LayerTranslation", payload);
-#endif
+  profiler_add_marker(
+    "LayerTranslation",
+    MakeUnique<LayerTranslationMarkerPayload>(aLayer, translation,
+                                              TimeStamp::Now()));
 }
 
 static Maybe<gfx::Polygon>
@@ -128,7 +126,7 @@ SelectLayerGeometry(const Maybe<gfx::Polygon>& aParentGeometry,
   return Nothing();
 }
 
-static void
+void
 TransformLayerGeometry(Layer* aLayer, Maybe<gfx::Polygon>& aGeometry)
 {
   Layer* parent = aLayer;
@@ -163,12 +161,12 @@ static gfx::IntRect ContainerVisibleRect(ContainerT* aContainer)
 /* all of the per-layer prepared data we need to maintain */
 struct PreparedLayer
 {
-  PreparedLayer(LayerComposite *aLayer,
+  PreparedLayer(Layer *aLayer,
                 RenderTargetIntRect aClipRect,
                 Maybe<gfx::Polygon>&& aGeometry)
   : mLayer(aLayer), mClipRect(aClipRect), mGeometry(Move(aGeometry)) {}
 
-  LayerComposite* mLayer;
+  RefPtr<Layer> mLayer;
   RenderTargetIntRect mClipRect;
   Maybe<Polygon> mGeometry;
 };
@@ -187,6 +185,12 @@ ContainerPrepare(ContainerT* aContainer,
                  LayerManagerComposite* aManager,
                  const RenderTargetIntRect& aClipRect)
 {
+  // We can end up calling prepare multiple times if we duplicated
+  // layers due to preserve-3d plane splitting. The results
+  // should be identical, so we only need to do it once.
+  if (aContainer->mPrepared) {
+    return;
+  }
   aContainer->mPrepared = MakeUnique<PreparedData>();
   aContainer->mPrepared->mNeedsSurfaceCopy = false;
 
@@ -226,7 +230,8 @@ ContainerPrepare(ContainerT* aContainer,
     CULLING_LOG("Preparing sublayer %p\n", layerToRender->GetLayer());
 
     layerToRender->Prepare(clipRect);
-    aContainer->mPrepared->mLayers.AppendElement(PreparedLayer(layerToRender, clipRect,
+    aContainer->mPrepared->mLayers.AppendElement(PreparedLayer(layerToRender->GetLayer(),
+                                                               clipRect,
                                                                Move(layer.geometry)));
   }
 
@@ -289,7 +294,7 @@ RenderMinimap(ContainerT* aContainer, LayerManagerComposite* aManager,
     return;
   }
 
-  ParentLayerPoint scrollOffset = controller->GetCurrentAsyncScrollOffset(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
+  ParentLayerPoint scrollOffset = controller->GetCurrentAsyncScrollOffset(AsyncPanZoomController::eForCompositing);
 
   // Options
   const int verticalPadding = 10;
@@ -404,7 +409,7 @@ RenderLayers(ContainerT* aContainer, LayerManagerComposite* aManager,
     PreparedLayer& preparedData = aContainer->mPrepared->mLayers[i];
 
     const gfx::IntRect clipRect = preparedData.mClipRect.ToUnknownRect();
-    LayerComposite* layerToRender = preparedData.mLayer;
+    LayerComposite* layerToRender = static_cast<LayerComposite*>(preparedData.mLayer->ImplData());
     const Maybe<gfx::Polygon>& childGeometry = preparedData.mGeometry;
 
     Layer* layer = layerToRender->GetLayer();
@@ -479,7 +484,7 @@ RenderLayers(ContainerT* aContainer, LayerManagerComposite* aManager,
                                                    asyncTransform * aContainer->GetEffectiveTransform());
         if (AsyncPanZoomController* apzc = layer->GetAsyncPanZoomController(i - 1)) {
           asyncTransform =
-              apzc->GetCurrentAsyncTransformWithOverscroll(AsyncPanZoomController::RESPECT_FORCE_DISABLE).ToUnknownMatrix()
+              apzc->GetCurrentAsyncTransformWithOverscroll(AsyncPanZoomController::eForCompositing).ToUnknownMatrix()
             * asyncTransform;
         }
       }
@@ -587,7 +592,6 @@ ContainerRender(ContainerT* aContainer,
     }
 
     if (!surface) {
-      aContainer->mPrepared = nullptr;
       return;
     }
 
@@ -623,14 +627,14 @@ ContainerRender(ContainerT* aContainer,
   // attached to it has a nonempty async transform, then that transform is not applied
   // to any visible content. Display a warning box (conditioned on the FPS display being
   // enabled).
-  if (gfxPrefs::LayersDrawFPS() && aContainer->IsScrollInfoLayer()) {
+  if (gfxPrefs::LayersDrawFPS() && aContainer->IsScrollableWithoutContent()) {
     // Since aContainer doesn't have any children we can just iterate from the top metrics
     // on it down to the bottom using GetFirstChild and not worry about walking onto another
     // underlying layer.
     for (LayerMetricsWrapper i(aContainer); i; i = i.GetFirstChild()) {
       if (AsyncPanZoomController* apzc = i.GetApzc()) {
         if (!apzc->GetAsyncTransformAppliedToContent()
-            && !AsyncTransformComponentMatrix(apzc->GetCurrentAsyncTransform(AsyncPanZoomController::NORMAL)).IsIdentity()) {
+            && !AsyncTransformComponentMatrix(apzc->GetCurrentAsyncTransform(AsyncPanZoomController::eForHitTesting)).IsIdentity()) {
           aManager->UnusedApzTransformWarning();
           break;
         }
@@ -690,6 +694,10 @@ void
 ContainerLayerComposite::Cleanup()
 {
   mPrepared = nullptr;
+
+  for (Layer* l = GetFirstChild(); l; l = l->GetNextSibling()) {
+    static_cast<LayerComposite*>(l->AsHostLayer())->Cleanup();
+  }
 }
 
 void
@@ -755,6 +763,16 @@ void
 RefLayerComposite::Prepare(const RenderTargetIntRect& aClipRect)
 {
   ContainerPrepare(this, mCompositeManager, aClipRect);
+}
+
+void
+RefLayerComposite::Cleanup()
+{
+  mPrepared = nullptr;
+
+  for (Layer* l = GetFirstChild(); l; l = l->GetNextSibling()) {
+    static_cast<LayerComposite*>(l->AsHostLayer())->Cleanup();
+  }
 }
 
 void

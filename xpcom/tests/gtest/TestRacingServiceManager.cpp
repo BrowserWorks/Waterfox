@@ -23,7 +23,7 @@
 
 using namespace mozilla;
 
-/* f93f6bdc-88af-42d7-9d64-1b43c649a3e5 */ 
+/* f93f6bdc-88af-42d7-9d64-1b43c649a3e5 */
 #define FACTORY_CID1                                 \
 {                                                    \
   0xf93f6bdc,                                        \
@@ -183,7 +183,11 @@ class TestRunnable : public Runnable
 public:
   NS_DECL_NSIRUNNABLE
 
-  TestRunnable() : mFirstRunnableDone(false) { }
+  TestRunnable()
+    : mozilla::Runnable("TestRacingServiceManager::TestRunnable")
+    , mFirstRunnableDone(false)
+  {
+  }
 
   bool mFirstRunnableDone;
 };

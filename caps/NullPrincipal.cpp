@@ -110,7 +110,7 @@ NullPrincipal::Init(const OriginAttributes& aOriginAttributes, bool aIsFirstPart
   if (aIsFirstParty) {
     // remove the '{}' characters from both ends.
     path.Mid(path, 1, path.Length() - 2);
-    path.AppendLiteral(".mozilla");
+    path.AppendLiteral(".waterfox");
     attrs.SetFirstPartyDomain(true, path);
   }
 

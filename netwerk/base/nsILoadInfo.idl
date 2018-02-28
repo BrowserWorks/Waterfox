@@ -11,6 +11,7 @@ interface nsIDOMDocument;
 interface nsINode;
 interface nsIPrincipal;
 interface nsIRedirectHistoryEntry;
+interface nsIURI;
 %{C++
 #include "nsTArray.h"
 #include "mozilla/BasePrincipal.h"
@@ -676,6 +677,16 @@ interface nsILoadInfo : nsISupports
   [noscript, infallible] readonly attribute boolean mixedContentWouldBlock;
 
   /**
+   * True if this load is an HSTS priming request.
+   */
+  [noscript, infallible] attribute boolean isHSTSPriming;
+
+  /**
+   * True if this load was upgraded from HSTS priming
+   */
+  [noscript, infallible] attribute boolean isHSTSPrimingUpgrade;
+
+  /**
    * Mark this LoadInfo as needing HSTS Priming
    *
    * @param wouldBlock Carry the decision of Mixed Content Blocking to be
@@ -741,6 +752,14 @@ interface nsILoadInfo : nsISupports
    * Note that the load for a sub-frame's document will return false here.
    */
   [infallible] readonly attribute boolean isTopLevelLoad;
+
+  /**
+   * If this is non-null, this property represents two things: (1) the
+   * URI to be used for the principal if the channel with this loadinfo
+   * gets a principal based on URI and (2) the URI to use for a document
+   * created from the channel with this loadinfo.
+   */
+  attribute nsIURI resultPrincipalURI;
 
   /**
    * Returns the null principal of the resulting resource if the SEC_SANDBOXED

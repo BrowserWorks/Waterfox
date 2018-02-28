@@ -17,12 +17,15 @@ ${helpers.single_keyword("ime-mode", "auto normal active disabled inactive",
                          spec="https://drafts.csswg.org/css-ui/#input-method-editor")}
 
 ${helpers.single_keyword("-moz-user-select", "auto text none all element elements" +
-                            " toggle tri-state -moz-all -moz-none -moz-text",
+                            " toggle tri-state -moz-all -moz-text",
                          products="gecko",
                          alias="-webkit-user-select",
                          gecko_ffi_name="mUserSelect",
                          gecko_enum_prefix="StyleUserSelect",
-                         animation_value_type="none",
+                         gecko_inexhaustive=True,
+                         gecko_strip_moz_prefix=False,
+                         aliases="-moz-none=none",
+                         animation_value_type="discrete",
                          spec="https://drafts.csswg.org/css-ui-4/#propdef-user-select")}
 
 ${helpers.single_keyword("-moz-window-dragging", "default drag no-drag", products="gecko",
@@ -78,7 +81,7 @@ ${helpers.single_keyword("-moz-window-shadow", "none default menu tooltip sheet"
 
     pub fn parse<'i, 't>(_context: &ParserContext, input: &mut Parser<'i, 't>)
                          -> Result<SpecifiedValue, ParseError<'i>> {
-        match try!(input.expect_integer()) {
+        match input.expect_integer()? {
             0 => Ok(computed_value::T(false)),
             1 => Ok(computed_value::T(true)),
             _ => Err(StyleParseError::UnspecifiedError.into()),

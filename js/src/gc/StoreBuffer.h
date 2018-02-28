@@ -8,6 +8,7 @@
 #define gc_StoreBuffer_h
 
 #include "mozilla/Attributes.h"
+#include "mozilla/HashFunctions.h"
 #include "mozilla/ReentrancyGuard.h"
 
 #include <algorithm>
@@ -40,7 +41,7 @@ class BufferableRef
     bool maybeInRememberedSet(const Nursery&) const { return true; }
 };
 
-typedef HashSet<void*, PointerHasher<void*, 3>, SystemAllocPolicy> EdgeSet;
+typedef HashSet<void*, PointerHasher<void*>, SystemAllocPolicy> EdgeSet;
 
 /* The size of a single block of store buffer storage space. */
 static const size_t LifoAllocBlockSize = 1 << 13; /* 8KiB */
@@ -121,7 +122,7 @@ class StoreBuffer
             last_ = T();
 
             if (MOZ_UNLIKELY(stores_.count() > MaxEntries))
-                owner->setAboutToOverflow();
+                owner->setAboutToOverflow(T::FullBufferReason);
         }
 
         bool has(StoreBuffer* owner, const T& v) {
@@ -188,7 +189,7 @@ class StoreBuffer
                 oomUnsafe.crash("Failed to allocate for GenericBuffer::put.");
 
             if (isAboutToOverflow())
-                owner->setAboutToOverflow();
+                owner->setAboutToOverflow(JS::gcreason::FULL_GENERIC_BUFFER);
         }
 
         size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) {
@@ -207,7 +208,7 @@ class StoreBuffer
     struct PointerEdgeHasher
     {
         typedef Edge Lookup;
-        static HashNumber hash(const Lookup& l) { return uintptr_t(l.edge) >> 3; }
+        static HashNumber hash(const Lookup& l) { return mozilla::HashGeneric(l.edge); }
         static bool match(const Edge& k, const Lookup& l) { return k == l; }
     };
 
@@ -234,6 +235,8 @@ class StoreBuffer
         explicit operator bool() const { return edge != nullptr; }
 
         typedef PointerEdgeHasher<CellPtrEdge> Hasher;
+
+        static const auto FullBufferReason = JS::gcreason::FULL_CELL_PTR_BUFFER;
     };
 
     struct ValueEdge
@@ -261,6 +264,8 @@ class StoreBuffer
         explicit operator bool() const { return edge != nullptr; }
 
         typedef PointerEdgeHasher<ValueEdge> Hasher;
+
+        static const auto FullBufferReason = JS::gcreason::FULL_VALUE_BUFFER;
     };
 
     struct SlotsEdge
@@ -335,9 +340,13 @@ class StoreBuffer
 
         typedef struct {
             typedef SlotsEdge Lookup;
-            static HashNumber hash(const Lookup& l) { return l.objectAndKind_ ^ l.start_ ^ l.count_; }
+            static HashNumber hash(const Lookup& l) {
+                return mozilla::HashGeneric(l.objectAndKind_, l.start_, l.count_);
+            }
             static bool match(const SlotsEdge& k, const Lookup& l) { return k == l; }
         } Hasher;
+
+        static const auto FullBufferReason = JS::gcreason::FULL_SLOT_BUFFER;
     };
 
     template <typename Buffer, typename Edge>
@@ -431,7 +440,7 @@ class StoreBuffer
     void traceWholeCell(TenuringTracer& mover, JS::TraceKind kind, Cell* cell);
 
     /* For use by our owned buffers and for testing. */
-    void setAboutToOverflow();
+    void setAboutToOverflow(JS::gcreason::Reason);
 
     void addToWholeCellBuffer(ArenaCellSet* set);
 

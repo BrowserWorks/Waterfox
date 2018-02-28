@@ -23,9 +23,7 @@ const {
 const promise = require("promise");
 const defer = require("devtools/shared/defer");
 const { Task } = require("devtools/shared/task");
-const { Class } = require("sdk/core/heritage");
 const events = require("sdk/event/core");
-const object = require("sdk/util/object");
 const nodeConstants = require("devtools/shared/dom-node-constants.js");
 loader.lazyRequireGetter(this, "CommandUtils",
   "devtools/client/shared/developer-toolbar", true);
@@ -36,42 +34,42 @@ const HIDDEN_CLASS = "__fx-devtools-hide-shortcut__";
  * Convenience API for building a list of attribute modifications
  * for the `modifyAttributes` request.
  */
-const AttributeModificationList = Class({
-  initialize: function (node) {
+class AttributeModificationList {
+  constructor(node) {
     this.node = node;
     this.modifications = [];
-  },
+  }
 
-  apply: function () {
+  apply() {
     let ret = this.node.modifyAttributes(this.modifications);
     return ret;
-  },
+  }
 
-  destroy: function () {
+  destroy() {
     this.node = null;
     this.modification = null;
-  },
+  }
 
-  setAttributeNS: function (ns, name, value) {
+  setAttributeNS(ns, name, value) {
     this.modifications.push({
       attributeNamespace: ns,
       attributeName: name,
       newValue: value
     });
-  },
+  }
 
-  setAttribute: function (name, value) {
+  setAttribute(name, value) {
     this.setAttributeNS(undefined, name, value);
-  },
+  }
 
-  removeAttributeNS: function (ns, name) {
+  removeAttributeNS(ns, name) {
     this.setAttributeNS(ns, name, undefined);
-  },
+  }
 
-  removeAttribute: function (name) {
+  removeAttribute(name) {
     this.setAttributeNS(undefined, name, undefined);
   }
-});
+}
 
 /**
  * Client side of the node actor.
@@ -125,7 +123,7 @@ const NodeFront = FrontClassWithSpec(nodeSpec, {
 
     // Shallow copy of the form.  We could just store a reference, but
     // eventually we'll want to update some of the data.
-    this._form = object.merge(form);
+    this._form = Object.assign({}, form);
     this._form.attrs = this._form.attrs ? this._form.attrs.slice() : [];
 
     if (form.parent) {
@@ -348,7 +346,7 @@ const NodeFront = FrontClassWithSpec(nodeSpec, {
    * Return a new AttributeModificationList for this node.
    */
   startModifyingAttributes: function () {
-    return AttributeModificationList(this);
+    return new AttributeModificationList(this);
   },
 
   _cacheAttributes: function () {
@@ -773,7 +771,7 @@ const WalkerFront = FrontClassWithSpec(walkerSpec, {
           continue;
         }
 
-        let emittedMutation = object.merge(change, { target: targetFront });
+        let emittedMutation = Object.assign(change, { target: targetFront });
 
         if (change.type === "childList" ||
             change.type === "nativeAnonymousChildList") {

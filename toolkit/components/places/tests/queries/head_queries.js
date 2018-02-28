@@ -136,11 +136,11 @@ async function task_populateDB(aArray) {
       }
 
       if (qdata.isLivemark) {
-        await PlacesUtils.livemarks.addLivemark({ title: qdata.title
-                                                , parentId: (await PlacesUtils.promiseItemId(qdata.parentGuid))
-                                                , index: qdata.index
-                                                , feedURI: uri(qdata.feedURI)
-                                                , siteURI: uri(qdata.uri)
+        await PlacesUtils.livemarks.addLivemark({ title: qdata.title,
+                                                  parentId: (await PlacesUtils.promiseItemId(qdata.parentGuid)),
+                                                  index: qdata.index,
+                                                  feedURI: uri(qdata.feedURI),
+                                                  siteURI: uri(qdata.uri)
                                                 });
       }
 
@@ -211,7 +211,7 @@ function queryData(obj) {
   this.title = obj.title ? obj.title : "";
   this.markPageAsTyped = obj.markPageAsTyped ? obj.markPageAsTyped : false;
   this.isPageAnnotation = obj.isPageAnnotation ? obj.isPageAnnotation : false;
-  this.removeAnnotation = obj.removeAnnotation ? true : false;
+  this.removeAnnotation = !!obj.removeAnnotation;
   this.annoName = obj.annoName ? obj.annoName : "";
   this.annoVal = obj.annoVal ? obj.annoVal : "";
   this.annoFlags = obj.annoFlags ? obj.annoFlags : 0;

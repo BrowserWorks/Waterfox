@@ -20,9 +20,9 @@
 #include "nsImageRenderer.h"
 #include "nsCSSRenderingBorders.h"
 
+class gfxContext;
 class nsStyleContext;
 class nsPresContext;
-class nsRenderingContext;
 
 namespace mozilla {
 
@@ -114,12 +114,12 @@ struct nsCSSRendering {
    * Initialize any static variables used by nsCSSRendering.
    */
   static void Init();
-  
+
   /**
    * Clean up any static variables used by nsCSSRendering.
    */
   static void Shutdown();
-  
+
   static bool GetShadowInnerRadii(nsIFrame* aFrame,
                                   const nsRect& aFrameArea,
                                   RectCornerRadii& aOutInnerRadii);
@@ -127,7 +127,7 @@ struct nsCSSRendering {
                                              const nsRect& aFrameArea);
   static bool ShouldPaintBoxShadowInner(nsIFrame* aFrame);
   static void PaintBoxShadowInner(nsPresContext* aPresContext,
-                                  nsRenderingContext& aRenderingContext,
+                                  gfxContext& aRenderingContext,
                                   nsIFrame* aForFrame,
                                   const nsRect& aFrameArea);
 
@@ -147,7 +147,7 @@ struct nsCSSRendering {
   static bool HasBoxShadowNativeTheme(nsIFrame* aFrame,
                                       bool& aMaybeHasBorderRadius);
   static void PaintBoxShadowOuter(nsPresContext* aPresContext,
-                                  nsRenderingContext& aRenderingContext,
+                                  gfxContext& aRenderingContext,
                                   nsIFrame* aForFrame,
                                   const nsRect& aFrameArea,
                                   const nsRect& aDirtyRect,
@@ -163,7 +163,7 @@ struct nsCSSRendering {
    * when rendering, the default is to skip none.
    */
   static DrawResult PaintBorder(nsPresContext* aPresContext,
-                                nsRenderingContext& aRenderingContext,
+                                gfxContext& aRenderingContext,
                                 nsIFrame* aForFrame,
                                 const nsRect& aDirtyRect,
                                 const nsRect& aBorderArea,
@@ -177,7 +177,7 @@ struct nsCSSRendering {
    * when rendering, the default is to skip none.
    */
   static DrawResult PaintBorderWithStyleBorder(nsPresContext* aPresContext,
-                                               nsRenderingContext& aRenderingContext,
+                                               gfxContext& aRenderingContext,
                                                nsIFrame* aForFrame,
                                                const nsRect& aDirtyRect,
                                                const nsRect& aBorderArea,
@@ -207,7 +207,7 @@ struct nsCSSRendering {
 
   static mozilla::Maybe<nsCSSBorderRenderer>
   CreateBorderRendererForOutline(nsPresContext* aPresContext,
-                                 nsRenderingContext* aRenderingContext,
+                                 gfxContext* aRenderingContext,
                                  nsIFrame* aForFrame,
                                  const nsRect& aDirtyRect,
                                  const nsRect& aBorderArea,
@@ -218,7 +218,7 @@ struct nsCSSRendering {
    * for borders.
    */
   static void PaintOutline(nsPresContext* aPresContext,
-                          nsRenderingContext& aRenderingContext,
+                          gfxContext& aRenderingContext,
                           nsIFrame* aForFrame,
                           const nsRect& aDirtyRect,
                           const nsRect& aBorderArea,
@@ -474,7 +474,7 @@ struct nsCSSRendering {
   };
 
   static DrawResult PaintStyleImageLayer(const PaintBGParams& aParams,
-                                         nsRenderingContext& aRenderingCtx);
+                                         gfxContext& aRenderingCtx);
 
   /**
    * Same as |PaintStyleImageLayer|, except using the provided style structs.
@@ -490,7 +490,7 @@ struct nsCSSRendering {
    * layer's composition mode) will be used.
    */
   static DrawResult PaintStyleImageLayerWithSC(const PaintBGParams& aParams,
-                                               nsRenderingContext& aRenderingCtx,
+                                               gfxContext& aRenderingCtx,
                                                nsStyleContext *mBackgroundSC,
                                                const nsStyleBorder& aBorder);
 
@@ -503,13 +503,17 @@ struct nsCSSRendering {
                                                                  mozilla::wr::DisplayListBuilder& aBuilder,
                                                                  const mozilla::layers::StackingContextHelper& aSc,
                                                                  nsTArray<mozilla::layers::WebRenderParentCommand>& aParentCommands,
-                                                                 mozilla::layers::WebRenderDisplayItemLayer* aLayer);
+                                                                 mozilla::layers::WebRenderDisplayItemLayer* aLayer,
+                                                                 mozilla::layers::WebRenderLayerManager* aManager,
+                                                                 nsDisplayItem* aItem);
 
   static DrawResult BuildWebRenderDisplayItemsForStyleImageLayerWithSC(const PaintBGParams& aParams,
                                                                        mozilla::wr::DisplayListBuilder& aBuilder,
                                                                        const mozilla::layers::StackingContextHelper& aSc,
                                                                        nsTArray<mozilla::layers::WebRenderParentCommand>& aParentCommands,
                                                                        mozilla::layers::WebRenderDisplayItemLayer* aLayer,
+                                                                       mozilla::layers::WebRenderLayerManager* aManager,
+                                                                       nsDisplayItem* aItem,
                                                                        nsStyleContext *mBackgroundSC,
                                                                        const nsStyleBorder& aBorder);
 
@@ -545,7 +549,6 @@ struct nsCSSRendering {
                                      nscolor       aBGColor,
                                      const nsRect& aBorderRect,
                                      int32_t       aAppUnitsPerDevPixel,
-                                     int32_t       aAppUnitsPerCSSPixel,
                                      uint8_t       aStartBevelSide = 0,
                                      nscoord       aStartBevelOffset = 0,
                                      uint8_t       aEndBevelSide = 0,
@@ -711,7 +714,8 @@ class nsContextBoxBlur {
 
 public:
   enum {
-    FORCE_MASK = 0x01
+    FORCE_MASK = 0x01,
+    DISABLE_HARDWARE_ACCELERATION_BLUR = 0x02
   };
   /**
    * Prepares a gfxContext to draw on. Do not call this twice; if you want
@@ -743,7 +747,7 @@ public:
    *
    * @param aSkipRect            An area in device pixels (NOT app units!) to avoid
    *                             blurring over, to prevent unnecessary work.
-   *                             
+   *
    * @param aFlags               FORCE_MASK to ensure that the content drawn to the
    *                             returned gfxContext is used as a mask, and not
    *                             drawn directly to aDestinationCtx.

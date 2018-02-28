@@ -19,14 +19,17 @@ using namespace dom;
 PlaceholderTransaction::PlaceholderTransaction(
                           EditorBase& aEditorBase,
                           nsIAtom* aName,
-                          UniquePtr<SelectionState> aSelState)
+                          Maybe<SelectionState>&& aSelState)
   : mAbsorb(true)
   , mForwarding(nullptr)
   , mCompositionTransaction(nullptr)
   , mCommitted(false)
-  , mStartSel(Move(aSelState))
   , mEditorBase(&aEditorBase)
 {
+  // Make sure to move aSelState into a local variable to null out the original
+  // Maybe<SelectionState> variable.
+  Maybe<SelectionState> selState(Move(aSelState));
+  mStartSel = *selState;
   mName = aName;
 }
 
@@ -38,25 +41,20 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(PlaceholderTransaction)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(PlaceholderTransaction,
                                                 EditAggregateTransaction)
-  if (tmp->mStartSel) {
-    ImplCycleCollectionUnlink(*tmp->mStartSel);
-  }
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mEditorBase);
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mStartSel);
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mEndSel);
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(PlaceholderTransaction,
                                                   EditAggregateTransaction)
-  if (tmp->mStartSel) {
-    ImplCycleCollectionTraverse(cb, *tmp->mStartSel, "mStartSel", 0);
-  }
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mEditorBase);
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mStartSel);
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mEndSel);
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(PlaceholderTransaction)
   NS_INTERFACE_MAP_ENTRY(nsIAbsorbingTransaction)
-  NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
 NS_INTERFACE_MAP_END_INHERITING(EditAggregateTransaction)
 
 NS_IMPL_ADDREF_INHERITED(PlaceholderTransaction, EditAggregateTransaction)
@@ -79,12 +77,10 @@ PlaceholderTransaction::UndoTransaction()
   nsresult rv = EditAggregateTransaction::UndoTransaction();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  NS_ENSURE_TRUE(mStartSel, NS_ERROR_NULL_POINTER);
-
   // now restore selection
   RefPtr<Selection> selection = mEditorBase->GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_NULL_POINTER);
-  return mStartSel->RestoreSelection(selection);
+  return mStartSel.RestoreSelection(selection);
 }
 
 NS_IMETHODIMP
@@ -223,11 +219,11 @@ PlaceholderTransaction::StartSelectionEquals(SelectionState* aSelState,
   // determine if starting selection matches the given selection state.
   // note that we only care about collapsed selections.
   NS_ENSURE_TRUE(aResult && aSelState, NS_ERROR_NULL_POINTER);
-  if (!mStartSel->IsCollapsed() || !aSelState->IsCollapsed()) {
+  if (!mStartSel.IsCollapsed() || !aSelState->IsCollapsed()) {
     *aResult = false;
     return NS_OK;
   }
-  *aResult = mStartSel->IsEqual(aSelState);
+  *aResult = mStartSel.IsEqual(aSelState);
   return NS_OK;
 }
 

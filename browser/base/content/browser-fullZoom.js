@@ -2,6 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// This file is loaded into the browser window scope.
+/* eslint-env mozilla/browser-window */
+
 /**
  * Controls the "full zoom" setting and its site-specific preferences.
  */
@@ -10,6 +13,7 @@ var FullZoom = {
   name: "browser.content.full-zoom",
 
   // browser.zoom.siteSpecific preference cache
+  // Enabling privacy.resistFingerprinting implies disabling browser.zoom.siteSpecific.
   _siteSpecificPref: undefined,
 
   // browser.zoom.updateBackgroundTabs preference cache
@@ -25,6 +29,11 @@ var FullZoom = {
   _initialLocations: new WeakMap(),
 
   get siteSpecific() {
+    if (this._siteSpecificPref === undefined) {
+      this._siteSpecificPref =
+        !gPrefService.getBoolPref("privacy.resistFingerprinting") &&
+        gPrefService.getBoolPref("browser.zoom.siteSpecific");
+    }
     return this._siteSpecificPref;
   },
 
@@ -46,13 +55,16 @@ var FullZoom = {
                  getService(Ci.nsIContentPrefService2);
     this._cps2.addObserverForName(this.name, this);
 
-    this._siteSpecificPref =
-      gPrefService.getBoolPref("browser.zoom.siteSpecific");
     this.updateBackgroundTabs =
       gPrefService.getBoolPref("browser.zoom.updateBackgroundTabs");
+
     // Listen for changes to the browser.zoom branch so we can enable/disable
     // updating background tabs and per-site saving and restoring of zoom levels.
     gPrefService.addObserver("browser.zoom.", this, true);
+
+    // Also need to listen to privacy.resistFingerprinting in order to update
+    // this._siteSpecificPref.
+    gPrefService.addObserver("privacy.resistFingerprinting", this, true);
 
     // If we received onLocationChange events for any of the current browsers
     // before we were initialized we want to replay those upon initialization.
@@ -93,9 +105,11 @@ var FullZoom = {
     switch (aTopic) {
       case "nsPref:changed":
         switch (aData) {
+          case "privacy.resistFingerprinting":
+            // fall through
           case "browser.zoom.siteSpecific":
-            this._siteSpecificPref =
-              gPrefService.getBoolPref("browser.zoom.siteSpecific");
+            // Invalidate pref cache.
+            this._siteSpecificPref = undefined;
             break;
           case "browser.zoom.updateBackgroundTabs":
             this.updateBackgroundTabs =

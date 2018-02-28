@@ -82,7 +82,7 @@ menu.subviewbutton > .menu-right:-moz-locale-dir(rtl) {
 }
 
 .subviewbutton > .toolbarbutton-icon {
-  margin-inline-end: 5px !important;
+  margin-inline-end: 5px;
 }
 
 .subviewbutton > .menu-right,
@@ -102,8 +102,21 @@ menu.subviewbutton > .menu-right:-moz-locale-dir(rtl) {
 photonpanelmultiview .subviewbutton > .toolbarbutton-text,
 photonpanelmultiview .subviewbutton > .toolbarbutton-icon,
 photonpanelmultiview .panel-banner-item > .toolbarbutton-multiline-text {
-  padding: 0;
   margin: 0;
+}
+
+photonpanelmultiview .subviewbutton > .toolbarbutton-icon {
+  padding: 0;
+}
+
+photonpanelmultiview .subviewbutton:-moz-any([image],[targetURI],.cui-withicon,
+  .restoreallitem, .bookmark-item) > .toolbarbutton-text {
+  padding-inline-start: 8px;
+}
+
+photonpanelmultiview .subviewbutton:-moz-any([image],[targetURI],.cui-withicon,
+  .restoreallitem, .bookmark-item)[checked="true"] > .toolbarbutton-icon {
+  visibility: visible;
 }
 
 /* END photon adjustments */

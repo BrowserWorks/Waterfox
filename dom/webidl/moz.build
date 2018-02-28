@@ -411,6 +411,7 @@ WEBIDL_FILES = [
     'BarProp.webidl',
     'BaseAudioContext.webidl',
     'BaseKeyframeTypes.webidl',
+    'BasicCardPayment.webidl',
     'BatteryManager.webidl',
     'BeforeUnloadEvent.webidl',
     'BiquadFilterNode.webidl',
@@ -724,7 +725,10 @@ WEBIDL_FILES = [
     'PaintWorkletGlobalScope.webidl',
     'PannerNode.webidl',
     'ParentNode.webidl',
+    'PaymentAddress.webidl',
     'PaymentRequest.webidl',
+    'PaymentRequestUpdateEvent.webidl',
+    'PaymentResponse.webidl',
     'Performance.webidl',
     'PerformanceEntry.webidl',
     'PerformanceMark.webidl',
@@ -748,7 +752,6 @@ WEBIDL_FILES = [
     'PresentationAvailability.webidl',
     'PresentationConnection.webidl',
     'PresentationConnectionList.webidl',
-    'PresentationDeviceInfoManager.webidl',
     'PresentationReceiver.webidl',
     'PresentationRequest.webidl',
     'ProcessingInstruction.webidl',
@@ -926,6 +929,8 @@ WEBIDL_FILES = [
     'TreeBoxObject.webidl',
     'TreeColumn.webidl',
     'TreeColumns.webidl',
+    'TreeContentView.webidl',
+    'TreeView.webidl',
     'TreeWalker.webidl',
     'U2F.webidl',
     'UDPMessageEvent.webidl',
@@ -977,6 +982,7 @@ WEBIDL_FILES = [
     'XULCommandEvent.webidl',
     'XULDocument.webidl',
     'XULElement.webidl',
+    'XULTemplateBuilder.webidl',
 ]
 
 if CONFIG['MOZ_WEBRTC']:

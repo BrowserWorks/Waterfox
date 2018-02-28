@@ -122,7 +122,8 @@ class HandoffRunnable : public mozilla::Runnable
 {
 public:
   explicit HandoffRunnable(ICallFrame* aCallFrame, IUnknown* aTargetInterface)
-    : mCallFrame(aCallFrame)
+    : Runnable("HandoffRunnable")
+    , mCallFrame(aCallFrame)
     , mTargetInterface(aTargetInterface)
     , mResult(E_UNEXPECTED)
   {
@@ -221,7 +222,8 @@ MainThreadHandoff::Release()
       // main thread right now, so we send a reference to ourselves to the main
       // thread to be re-released there.
       RefPtr<MainThreadHandoff> self = this;
-      NS_ReleaseOnMainThread(self.forget());
+      NS_ReleaseOnMainThreadSystemGroup(
+        "MainThreadHandoff", self.forget());
     }
   }
   return newRefCnt;
@@ -547,7 +549,7 @@ MainThreadHandoff::OnWalkInterface(REFIID aIid, PVOID* aInterface,
       };
 
       MainThreadInvoker invoker;
-      invoker.Invoke(NS_NewRunnableFunction(checkFn));
+      invoker.Invoke(NS_NewRunnableFunction("MainThreadHandoff::OnWalkInterface", checkFn));
     }
 
     if (areTargetsEqual) {

@@ -107,6 +107,7 @@
 #include "mozilla/dom/CanvasPath.h"
 #include "mozilla/dom/HTMLImageElement.h"
 #include "mozilla/dom/HTMLVideoElement.h"
+#include "mozilla/dom/SVGImageElement.h"
 #include "mozilla/dom/SVGMatrix.h"
 #include "mozilla/dom/TextMetrics.h"
 #include "mozilla/dom/SVGMatrix.h"
@@ -142,10 +143,6 @@ using mozilla::gl::GLContextProvider;
 
 #ifdef XP_WIN
 #include "gfxWindowsPlatform.h"
-#endif
-
-#ifdef MOZ_WIDGET_GONK
-#include "mozilla/layers/ShadowLayers.h"
 #endif
 
 // windows.h (included by chromium code) defines this, in its infinite wisdom
@@ -1576,8 +1573,9 @@ CanvasRenderingContext2D::ScheduleStableStateCallback()
   mHasPendingStableStateCallback = true;
 
   nsContentUtils::RunInStableState(
-    NewRunnableMethod(this, &CanvasRenderingContext2D::OnStableState)
-  );
+    NewRunnableMethod("dom::CanvasRenderingContext2D::OnStableState",
+                      this,
+                      &CanvasRenderingContext2D::OnStableState));
 }
 
 void
@@ -2528,10 +2526,10 @@ CanvasRenderingContext2D::CreatePattern(const CanvasImageSource& aSource,
     return nullptr;
   }
 
-  Element* htmlElement;
+  Element* element;
   if (aSource.IsHTMLCanvasElement()) {
     HTMLCanvasElement* canvas = &aSource.GetAsHTMLCanvasElement();
-    htmlElement = canvas;
+    element = canvas;
 
     nsIntSize size = canvas->GetSize();
     if (size.width == 0 || size.height == 0) {
@@ -2556,7 +2554,7 @@ CanvasRenderingContext2D::CreatePattern(const CanvasImageSource& aSource,
       }
 
       RefPtr<CanvasPattern> pat =
-        new CanvasPattern(this, srcSurf, repeatMode, htmlElement->NodePrincipal(), canvas->IsWriteOnly(), false);
+        new CanvasPattern(this, srcSurf, repeatMode, element->NodePrincipal(), canvas->IsWriteOnly(), false);
 
       return pat.forget();
     }
@@ -2567,11 +2565,19 @@ CanvasRenderingContext2D::CreatePattern(const CanvasImageSource& aSource,
       return nullptr;
     }
 
-    htmlElement = img;
+    element = img;
+  } else if (aSource.IsSVGImageElement()) {
+    SVGImageElement* img = &aSource.GetAsSVGImageElement();
+    if (img->IntrinsicState().HasState(NS_EVENT_STATE_BROKEN)) {
+      aError.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+      return nullptr;
+    }
+
+    element = img;
   } else if (aSource.IsHTMLVideoElement()) {
     auto& video = aSource.GetAsHTMLVideoElement();
     video.MarkAsContentSource(mozilla::dom::HTMLVideoElement::CallerAPI::CREATE_PATTERN);
-    htmlElement = &video;
+    element = &video;
   } else {
     // Special case for ImageBitmap
     ImageBitmap& imgBitmap = aSource.GetAsImageBitmap();
@@ -2610,7 +2616,7 @@ CanvasRenderingContext2D::CreatePattern(const CanvasImageSource& aSource,
   // The canvas spec says that createPattern should use the first frame
   // of animated images
   nsLayoutUtils::SurfaceFromElementResult res =
-    nsLayoutUtils::SurfaceFromElement(htmlElement,
+    nsLayoutUtils::SurfaceFromElement(element,
       nsLayoutUtils::SFE_WANT_FIRST_FRAME_IF_IMAGE, mTarget);
 
   if (!res.GetSourceSurface()) {
@@ -2684,7 +2690,7 @@ CreateFontDeclaration(const nsAString& aFont,
     eCSSProperty_line_height, NS_LITERAL_STRING("normal"), &lineHeightChanged);
 }
 
-static already_AddRefed<nsStyleContext>
+static already_AddRefed<GeckoStyleContext>
 GetFontParentStyleContext(Element* aElement, nsIPresShell* aPresShell,
                           ErrorResult& aError)
 {
@@ -2696,7 +2702,7 @@ GetFontParentStyleContext(Element* aElement, nsIPresShell* aPresShell,
       aError.Throw(NS_ERROR_FAILURE);
       return nullptr;
     }
-    return result.forget();
+    return already_AddRefed<GeckoStyleContext>(result.forget().take()->AsGecko());
   }
 
   // otherwise inherit from default (10px sans-serif)
@@ -2712,7 +2718,7 @@ GetFontParentStyleContext(Element* aElement, nsIPresShell* aPresShell,
   nsStyleSet* styleSet = aPresShell->StyleSet()->GetAsGecko();
   MOZ_RELEASE_ASSERT(styleSet);
 
-  RefPtr<nsStyleContext> result =
+  RefPtr<GeckoStyleContext> result =
     styleSet->ResolveStyleForRules(nullptr, parentRules);
 
   if (!result) {
@@ -2734,7 +2740,7 @@ PropertyIsInheritOrInitial(Declaration* aDeclaration, const nsCSSPropertyID aPro
                          filterVal->GetUnit() == eCSSUnit_Initial));
 }
 
-static already_AddRefed<nsStyleContext>
+static already_AddRefed<GeckoStyleContext>
 GetFontStyleContext(Element* aElement, const nsAString& aFont,
                     nsIPresShell* aPresShell,
                     nsAString& aOutUsedFont,
@@ -2760,7 +2766,7 @@ GetFontStyleContext(Element* aElement, const nsAString& aFont,
 
   // have to get a parent style context for inherit-like relative
   // values (2em, bolder, etc.)
-  RefPtr<nsStyleContext> parentContext =
+  RefPtr<GeckoStyleContext> parentContext =
     GetFontParentStyleContext(aElement, aPresShell, aError);
 
   if (aError.Failed()) {
@@ -2782,7 +2788,7 @@ GetFontStyleContext(Element* aElement, const nsAString& aFont,
   nsStyleSet* styleSet = aPresShell->StyleSet()->GetAsGecko();
   MOZ_RELEASE_ASSERT(styleSet);
 
-  RefPtr<nsStyleContext> sc =
+  RefPtr<GeckoStyleContext> sc =
     styleSet->ResolveStyleForRules(parentContext, rules);
 
   // The font getter is required to be reserialized based on what we
@@ -2811,7 +2817,8 @@ CreateDeclarationForServo(nsCSSPropertyID aProperty,
                         &value,
                         data,
                         ParsingMode::Default,
-                        aDocument->GetCompatibilityMode()).Consume();
+                        aDocument->GetCompatibilityMode(),
+                        aDocument->CSSLoader()).Consume();
 
   if (!servoDeclarations) {
     // We got a syntax error.  The spec says this value must be ignored.
@@ -2828,7 +2835,8 @@ CreateDeclarationForServo(nsCSSPropertyID aProperty,
                                            false,
                                            data,
                                            ParsingMode::Default,
-                                           aDocument->GetCompatibilityMode());
+                                           aDocument->GetCompatibilityMode(),
+                                           aDocument->CSSLoader());
   }
 
   return servoDeclarations.forget();
@@ -2841,7 +2849,7 @@ CreateFontDeclarationForServo(const nsAString& aFont,
   return CreateDeclarationForServo(eCSSProperty_font, aFont, aDocument);
 }
 
-static already_AddRefed<ServoComputedValues>
+static already_AddRefed<ServoStyleContext>
 GetFontStyleForServo(Element* aElement, const nsAString& aFont,
                      nsIPresShell* aPresShell,
                      nsAString& aOutUsedFont,
@@ -2866,18 +2874,19 @@ GetFontStyleForServo(Element* aElement, const nsAString& aFont,
 
   ServoStyleSet* styleSet = aPresShell->StyleSet()->AsServo();
 
-  RefPtr<ServoComputedValues> parentStyle;
+  RefPtr<ServoStyleContext> parentStyle;
   // have to get a parent style context for inherit-like relative
   // values (2em, bolder, etc.)
   if (aElement && aElement->IsInUncomposedDoc()) {
     // Inherit from the canvas element.
     aPresShell->FlushPendingNotifications(FlushType::Style);
-    // We need to use ResolveTransientServoStyle, which involves traversal,
-    // instead of ResolveServoStyle() because we need up-to-date style even if
+    // We need to use ResolveStyleLazily, which involves traversal,
+    // instead of ResolvestyleFor() because we need up-to-date style even if
     // the canvas element is display:none.
     parentStyle =
-      styleSet->ResolveTransientServoStyle(aElement,
-                                           CSSPseudoElementType::NotPseudo);
+      styleSet->ResolveStyleLazily(aElement,
+                                   CSSPseudoElementType::NotPseudo,
+                                   nullptr);
   } else {
     RefPtr<RawServoDeclarationBlock> declarations =
       CreateFontDeclarationForServo(NS_LITERAL_STRING("10px sans-serif"),
@@ -2893,7 +2902,7 @@ GetFontStyleForServo(Element* aElement, const nsAString& aFont,
   MOZ_ASSERT(!aPresShell->IsDestroying(),
              "GetFontParentStyleContext should have returned an error if the presshell is being destroyed.");
 
-  RefPtr<ServoComputedValues> sc =
+  RefPtr<ServoStyleContext> sc =
     styleSet->ResolveForDeclarations(parentStyle, declarations);
 
   // The font getter is required to be reserialized based on what we
@@ -2916,10 +2925,10 @@ CreateFilterDeclaration(const nsAString& aFilter,
     eCSSProperty_UNKNOWN, EmptyString(), &dummy);
 }
 
-static already_AddRefed<nsStyleContext>
+static already_AddRefed<GeckoStyleContext>
 ResolveFilterStyle(const nsAString& aFilterString,
                    nsIPresShell* aPresShell,
-                   nsStyleContext* aParentContext,
+                   GeckoStyleContext* aParentContext,
                    ErrorResult& aError)
 {
   nsIDocument* document = aPresShell->GetDocument();
@@ -2944,7 +2953,7 @@ ResolveFilterStyle(const nsAString& aFilterString,
   nsStyleSet* styleSet = aPresShell->StyleSet()->GetAsGecko();
   MOZ_RELEASE_ASSERT(styleSet);
 
-  RefPtr<nsStyleContext> sc =
+  RefPtr<GeckoStyleContext> sc =
     styleSet->ResolveStyleForRules(aParentContext, rules);
 
   return sc.forget();
@@ -2957,9 +2966,9 @@ CreateFilterDeclarationForServo(const nsAString& aFilter,
   return CreateDeclarationForServo(eCSSProperty_filter, aFilter, aDocument);
 }
 
-static already_AddRefed<ServoComputedValues>
+static already_AddRefed<ServoStyleContext>
 ResolveFilterStyleForServo(const nsAString& aFilterString,
-                           const ServoComputedValues* aParentStyle,
+                           const ServoStyleContext* aParentStyle,
                            nsIPresShell* aPresShell,
                            ErrorResult& aError)
 {
@@ -2980,7 +2989,7 @@ ResolveFilterStyleForServo(const nsAString& aFilterString,
   }
 
   ServoStyleSet* styleSet = aPresShell->StyleSet()->AsServo();
-  RefPtr<ServoComputedValues> computedValues =
+  RefPtr<ServoStyleContext> computedValues =
     styleSet->ResolveForDeclarations(aParentStyle, declarations);
 
   return computedValues.forget();
@@ -3005,14 +3014,14 @@ CanvasRenderingContext2D::ParseFilter(const nsAString& aString,
 
   nsString usedFont;
   if (presShell->StyleSet()->IsGecko()) {
-    RefPtr<nsStyleContext> parentContext =
+    RefPtr<GeckoStyleContext> parentContext =
       GetFontStyleContext(mCanvasElement, GetFont(),
                           presShell, usedFont, aError);
     if (!parentContext) {
       aError.Throw(NS_ERROR_FAILURE);
       return false;
     }
-    RefPtr<nsStyleContext> sc =
+    RefPtr<GeckoStyleContext> sc =
       ResolveFilterStyle(aString, presShell, parentContext, aError);
 
     if (!sc) {
@@ -3025,7 +3034,7 @@ CanvasRenderingContext2D::ParseFilter(const nsAString& aString,
   // For stylo
   MOZ_ASSERT(presShell->StyleSet()->IsServo());
 
-  RefPtr<ServoComputedValues> parentStyle =
+  RefPtr<ServoStyleContext> parentStyle =
     GetFontStyleForServo(mCanvasElement,
                          GetFont(),
                          presShell,
@@ -3035,7 +3044,7 @@ CanvasRenderingContext2D::ParseFilter(const nsAString& aString,
     return false;
   }
 
-  RefPtr<ServoComputedValues> computedValues =
+  RefPtr<ServoStyleContext> computedValues =
     ResolveFilterStyleForServo(aString,
                                parentStyle,
                                presShell,
@@ -3044,7 +3053,7 @@ CanvasRenderingContext2D::ParseFilter(const nsAString& aString,
      return false;
   }
 
-  const nsStyleEffects* effects = Servo_GetStyleEffects(computedValues);
+  const nsStyleEffects* effects = computedValues->ComputedData()->GetStyleEffects();
   // XXX: This mFilters is a one shot object, we probably could avoid copying.
   aFilterChain = effects->mFilters;
   return true;
@@ -3952,31 +3961,19 @@ CanvasRenderingContext2D::SetFontInternal(const nsAString& aFont,
   }
 
   RefPtr<nsStyleContext> sc;
-  RefPtr<ServoComputedValues> computedValues;
   nsString usedFont;
-  const nsStyleFont* fontStyle;
   if (presShell->StyleSet()->IsServo()) {
-    computedValues = GetFontStyleForServo(mCanvasElement,
-                                          aFont,
-                                          presShell,
-                                          usedFont,
-                                          aError);
-    if (!computedValues) {
-      return false;
-    }
-    fontStyle = Servo_GetStyleFont(computedValues);
+    sc =
+      GetFontStyleForServo(mCanvasElement, aFont, presShell, usedFont, aError);
   } else {
-    sc = GetFontStyleContext(mCanvasElement,
-                             aFont,
-                             presShell,
-                             usedFont,
-                             aError);
-    if (!sc) {
-      return false;
-    }
-    fontStyle = sc->StyleFont();
+    sc =
+      GetFontStyleContext(mCanvasElement, aFont, presShell, usedFont, aError);
+  }
+  if (!sc) {
+    return false;
   }
 
+  const nsStyleFont* fontStyle = sc->StyleFont();
   nsPresContext* c = presShell->GetPresContext();
 
   // Purposely ignore the font size that respects the user's minimum
@@ -5173,6 +5170,9 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
     if (aImage.IsHTMLImageElement()) {
       HTMLImageElement* img = &aImage.GetAsHTMLImageElement();
       element = img;
+    } else if (aImage.IsSVGImageElement()) {
+      SVGImageElement* img = &aImage.GetAsSVGImageElement();
+      element = img;
     } else {
       HTMLVideoElement* video = &aImage.GetAsHTMLVideoElement();
       video->MarkAsContentSource(mozilla::dom::HTMLVideoElement::CallerAPI::DRAW_IMAGE);
@@ -5232,7 +5232,10 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
     }
 
     {
-      gl->MakeCurrent();
+      if (!gl->MakeCurrent()) {
+        aError.Throw(NS_ERROR_NOT_AVAILABLE);
+        return;
+      }
       GLuint videoTexture = 0;
       gl->fGenTextures(1, &videoTexture);
       // skiaGL expect upload on drawing, and uses texture 0 for texturing,
@@ -5358,10 +5361,18 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
     return;
   }
 
+  // Per spec, the smoothing setting applies only to scaling up a bitmap image.
+  // When down-scaling the user agent is free to choose whether or not to smooth
+  // the image. Nearest sampling when down-scaling is rarely desirable and
+  // smoothing when down-scaling matches chromium's behavior.
+  // If any dimension is up-scaled, we consider the image as being up-scaled.
+  auto scale = mTarget->GetTransform().ScaleFactors(true);
+  bool isDownScale = aDw * Abs(scale.width) < aSw && aDh * Abs(scale.height) < aSh;
+
   SamplingFilter samplingFilter;
   AntialiasMode antialiasMode;
 
-  if (CurrentState().imageSmoothingEnabled) {
+  if (CurrentState().imageSmoothingEnabled || isDownScale) {
     samplingFilter = gfx::SamplingFilter::LINEAR;
     antialiasMode = AntialiasMode::DEFAULT;
   } else {
@@ -5463,9 +5474,9 @@ CanvasRenderingContext2D::DrawDirectlyToCanvas(
     return;
   }
   context->SetMatrix(contextMatrix.
-                       Scale(1.0 / contextScale.width,
-                             1.0 / contextScale.height).
-                       Translate(aDest.x - aSrc.x, aDest.y - aSrc.y));
+                       PreScale(1.0 / contextScale.width,
+                                1.0 / contextScale.height).
+                       PreTranslate(aDest.x - aSrc.x, aDest.y - aSrc.y));
 
   // FLAG_CLAMP is added for increased performance, since we never tile here.
   uint32_t modifiedFlags = aImage.mDrawingFlags | imgIContainer::FLAG_CLAMP;
@@ -6364,8 +6375,9 @@ CanvasPath::Constructor(const GlobalObject& aGlobal, ErrorResult& aRv)
 already_AddRefed<CanvasPath>
 CanvasPath::Constructor(const GlobalObject& aGlobal, CanvasPath& aCanvasPath, ErrorResult& aRv)
 {
-  RefPtr<gfx::Path> tempPath = aCanvasPath.GetPath(CanvasWindingRule::Nonzero,
-                                                   gfxPlatform::GetPlatform()->ScreenReferenceDrawTarget());
+  RefPtr<gfx::Path> tempPath = aCanvasPath.GetPath(
+    CanvasWindingRule::Nonzero,
+    gfxPlatform::GetPlatform()->ScreenReferenceDrawTarget().get());
 
   RefPtr<CanvasPath> path = new CanvasPath(aGlobal.GetAsSupports(), tempPath->CopyToBuilder());
   return path.forget();
@@ -6554,8 +6566,9 @@ CanvasPath::BezierTo(const gfx::Point& aCP1,
 void
 CanvasPath::AddPath(CanvasPath& aCanvasPath, const Optional<NonNull<SVGMatrix>>& aMatrix)
 {
-  RefPtr<gfx::Path> tempPath = aCanvasPath.GetPath(CanvasWindingRule::Nonzero,
-                                                   gfxPlatform::GetPlatform()->ScreenReferenceDrawTarget());
+  RefPtr<gfx::Path> tempPath = aCanvasPath.GetPath(
+    CanvasWindingRule::Nonzero,
+    gfxPlatform::GetPlatform()->ScreenReferenceDrawTarget().get());
 
   if (aMatrix.WasPassed()) {
     const SVGMatrix& m = aMatrix.Value();

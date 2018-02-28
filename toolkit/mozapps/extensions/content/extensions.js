@@ -112,90 +112,18 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "legacyExtensionsEnabled",
 document.addEventListener("load", initialize, true);
 window.addEventListener("unload", shutdown);
 
-function cancel(requestDetails) {
-  console.log("Canceling: " + requestDetails.url);
-  return {cancel: true};
-}
-
-class MessageDispatcher {
-  constructor(target) {
-    this.listeners = new Map();
-    this.target = target;
-  }
-
-  addMessageListener(name, handler) {
-    if (!this.listeners.has(name)) {
-      this.listeners.set(name, new Set());
-    }
-
-    this.listeners.get(name).add(handler);
-  }
-
-  removeMessageListener(name, handler) {
-    if (this.listeners.has(name)) {
-      this.listeners.get(name).delete(handler);
-    }
-  }
-
-  sendAsyncMessage(name, data) {
-    for (let handler of this.listeners.get(name) || new Set()) {
-      Promise.resolve().then(() => {
-        handler.receiveMessage({
-          name,
-          data,
-          target: this.target,
-        });
-      });
-    }
-  }
-}
-
-/**
- * A mock FrameMessageManager global to allow frame scripts to run in
- * non-top-level, non-remote <browser>s as if they were top-level or
- * remote.
- *
- * @param {Element} browser
- *        A XUL <browser> element.
- */
-class FakeFrameMessageManager {
-  constructor(browser) {
-    let dispatcher = new MessageDispatcher(browser);
-    let frameDispatcher = new MessageDispatcher(null);
-
-    let bind = (object, method) => object[method].bind(object);
-
-    this.sendAsyncMessage = bind(frameDispatcher, "sendAsyncMessage");
-    this.addMessageListener = bind(dispatcher, "addMessageListener");
-    this.removeMessageListener = bind(dispatcher, "removeMessageListener");
-
-    this.frame = {
-      get content() {
-        return browser.contentWindow;
-      },
-
-      get docShell() {
-        return browser.docShell;
-      },
-
-      addEventListener: bind(browser, "addEventListener"),
-      removeEventListener: bind(browser, "removeEventListener"),
-
-      sendAsyncMessage: bind(dispatcher, "sendAsyncMessage"),
-      addMessageListener: bind(frameDispatcher, "addMessageListener"),
-      removeMessageListener: bind(frameDispatcher, "removeMessageListener"),
-    }
-  }
-
-  loadFrameScript(url) {
-    Services.scriptloader.loadSubScript(url, Object.create(this.frame));
-  }
-}
-
 function promiseEvent(event, target, capture = false) {
   return new Promise(resolve => {
     target.addEventListener(event, resolve, {capture, once: true});
   });
+}
+
+function removeGoogleAnalytics(aSubject, aTopic, aData) {
+  let httpChannel = aSubject.QueryInterface(Ci.nsIHttpChannel);
+  let requestUrl = httpChannel.URI.spec
+  if (requestUrl.indexOf('google-analytics.com') > -1) {
+     httpChannel.cancel(Cr.NS_BINDING_ABORTED);
+  }
 }
 
 var gPendingInitializations = 1;
@@ -203,30 +131,7 @@ Object.defineProperty(this, "gIsInitializing", {
   get: () => gPendingInitializations > 0
 });
 
-// Block URLs as seen in https://github.com/Noitidart/PortableTester/blob/block-urls/bootstrap.js#L14
-var obsGA = {
-    'http-on-modify-request': {
-        observe: function (aSubject, aTopic, aData) {
-            //console.info('http-on-modify-request: aSubject = ' + aSubject + ' | aTopic = ' + aTopic + ' | aData = ' + aData);
-            var httpChannel = aSubject.QueryInterface(Ci.nsIHttpChannel);
-            var requestUrl = httpChannel.URI.spec
-            if (requestUrl.indexOf('google-analytics.com') > -1) {
-               httpChannel.cancel(Cr.NS_BINDING_ABORTED); //this aborts the load
-            }
-        },
-        reg: function () {
-            Services.obs.addObserver(obsGA['http-on-modify-request'], 'http-on-modify-request', false);
-        },
-        unreg: function () {
-            Services.obs.removeObserver(obsGA['http-on-modify-request'], 'http-on-modify-request');
-        }
-    }
-};
-
 function initialize(event) {
-  for (var o in obsGA) {
-    obsGA[o].reg();
-  }
   // XXXbz this listener gets _all_ load events for all nodes in the
   // document... but relies on not being called "too early".
   if (event.target instanceof XMLStylesheetProcessingInstruction) {
@@ -266,6 +171,13 @@ function initialize(event) {
     gDragDrop.onDrop(event);
   });
   addonPage.addEventListener("keypress", function(event) {
+    // If there is an embedded preferences <browser> running in a remote
+    // process, we will see the event here first before it gets a chance
+    // to bubble up through the embedded page.  To avoid stealing focus,
+    // we just ignore events when focus is in an options browser.
+    if (event.target.classList.contains("inline-options-browser")) {
+      return;
+    }
     gHeader.onKeyPress(event);
   });
 
@@ -279,6 +191,7 @@ function initialize(event) {
   gEventManager.initialize();
   Services.obs.addObserver(sendEMPong, "EM-ping");
   Services.obs.notifyObservers(window, "EM-loaded");
+  Services.obs.addObserver(removeGoogleAnalytics, "http-on-modify-request");
 
   // If the initial view has already been selected (by a call to loadView from
   // the above notifications) then bail out now
@@ -321,9 +234,7 @@ function shutdown() {
   gEventManager.shutdown();
   gViewController.shutdown();
   Services.obs.removeObserver(sendEMPong, "EM-ping");
-  for (var o in obsGA) {
-    obsGA[o].unreg();
-  }
+  Services.obs.removeObserver(removeGoogleAnalytics, "http-on-modify-request");
 }
 
 function sendEMPong(aSubject, aTopic, aData) {
@@ -346,6 +257,10 @@ function isCorrectlySigned(aAddon) {
   // Add-ons without an "isCorrectlySigned" property are correctly signed as
   // they aren't the correct type for signing.
   return aAddon.isCorrectlySigned !== false;
+}
+
+function isDisabledUnsigned(addon) {
+  return AddonSettings.REQUIRE_SIGNING && !isCorrectlySigned(addon);
 }
 
 function isLegacyExtension(addon) {
@@ -371,6 +286,10 @@ function isLegacyExtension(addon) {
     legacy = false;
   }
   return legacy;
+}
+
+function isDisabledLegacy(addon) {
+  return !legacyExtensionsEnabled && isLegacyExtension(addon);
 }
 
 function isDiscoverEnabled() {
@@ -1520,7 +1439,9 @@ var gViewController = {
       doCommand() {
         let mainWindow = getMainWindow();
         if ("switchToTabHavingURI" in mainWindow) {
-          mainWindow.switchToTabHavingURI("about:debugging#addons", true);
+          mainWindow.switchToTabHavingURI("about:debugging#addons", true, {
+            triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+          });
         }
       },
     },
@@ -1618,7 +1539,7 @@ var gViewController = {
         if (Preferences.get("browser.preferences.useOldOrganization")) {
           mainWindow.openAdvancedPreferences("dataChoicesTab", {origin: "experimentsOpenPref"});
         } else {
-          mainWindow.openPreferences("paneAdvanced", {origin: "experimentsOpenPref"});
+          mainWindow.openPreferences("privacy-reports", {origin: "experimentsOpenPref"});
         }
       },
     },
@@ -1700,7 +1621,9 @@ function hasInlineOptions(aAddon) {
 function openOptionsInTab(optionsURL) {
   let mainWindow = getMainWindow();
   if ("switchToTabHavingURI" in mainWindow) {
-    mainWindow.switchToTabHavingURI(optionsURL, true);
+    mainWindow.switchToTabHavingURI(optionsURL, true, {
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
     return true;
   }
   return false;
@@ -2890,12 +2813,17 @@ var gLegacyView = {
   async show(type, request) {
     let addons = await AddonManager.getAddonsByTypes(["extension"]);
     addons = addons.filter(a => !a.hidden &&
-                              (isLegacyExtension(a) || !isCorrectlySigned(a)));
+                              (isDisabledLegacy(a) || isDisabledUnsigned(a)));
 
     while (this._listBox.itemCount > 0)
       this._listBox.removeItemAt(0);
 
     let elements = addons.map(a => createItem(a));
+    if (elements.length == 0) {
+      gViewController.loadView("addons://list/extension");
+      return;
+    }
+
     sortElements(elements, ["uiState", "name"], true);
     for (let element of elements) {
       this._listBox.appendChild(element);
@@ -2904,7 +2832,9 @@ var gLegacyView = {
     gViewController.notifyViewChanged();
   },
 
-  hide() {},
+  hide() {
+    doPendingUninstalls(this._listBox);
+  },
 
   getSelectedAddon() {
     var item = this._listBox.selectedItem;
@@ -2924,7 +2854,7 @@ var gLegacyView = {
     let haveUnsigned = false;
     let haveLegacy = false;
     for (let extension of extensions) {
-      if (AddonSettings.REQUIRE_SIGNING && !isCorrectlySigned(extension)) {
+      if (isDisabledUnsigned(extension)) {
         haveUnsigned = true;
       }
       if (isLegacyExtension(extension)) {
@@ -3026,8 +2956,7 @@ var gListView = {
       if (!legacyExtensionsEnabled) {
         let preLen = aAddonsList.length;
         aAddonsList = aAddonsList.filter(addon => !isLegacyExtension(addon) &&
-                                                  (isCorrectlySigned(addon) ||
-                                                   !AddonSettings.REQUIRE_SIGNING));
+                                                  !isDisabledUnsigned(addon));
         if (aAddonsList.length != preLen) {
           showLegacyInfo = true;
         }
@@ -3228,7 +3157,7 @@ var gDetailView = {
         legacy = !(aAddon.isWebExtension || aAddon.id.endsWith("@personas.mozilla.org"));
       }
 
-      if (legacy && aAddon.signedStatus == AddonManager.SIGNEDSTATE_PRIVILEGED) {
+      if (legacy && aAddon.signedState == AddonManager.SIGNEDSTATE_PRIVILEGED) {
         legacy = false;
       }
 
@@ -3243,8 +3172,11 @@ var gDetailView = {
 
     // If the search category isn't selected then make sure to select the
     // correct category
-    if (gCategories.selected != "addons://search/")
-      gCategories.select("addons://list/" + aAddon.type);
+    if (gCategories.selected != "addons://search/") {
+      let category = (isDisabledLegacy(aAddon) || isDisabledUnsigned(aAddon)) ?
+                     "addons://legacy" : `addons://list/${aAddon.type}`;
+      gCategories.select(category);
+    }
 
     document.getElementById("detail-name").textContent = aAddon.name;
     var icon = AddonManager.getPreferredIconURL(aAddon, 64, window);
@@ -3286,7 +3218,8 @@ var gDetailView = {
       // plugins without having bug 624602 fixed yet, and intentionally ignores
       // localisation.
       if (aAddon.isGMPlugin) {
-        fullDesc.innerHTML = aAddon.fullDescription;
+        // eslint-disable-next-line no-unsanitized/property
+        fullDesc.unsafeSetInnerHTML(aAddon.fullDescription);
       } else {
         fullDesc.textContent = aAddon.fullDescription;
       }
@@ -3545,7 +3478,7 @@ var gDetailView = {
         errorLink.value = gStrings.ext.GetStringFromName("details.notification.blocked.link");
         errorLink.href = this._addon.blocklistURL;
         errorLink.hidden = false;
-      } else if (!isCorrectlySigned(this._addon) && AddonSettings.REQUIRE_SIGNING) {
+      } else if (isDisabledUnsigned(this._addon)) {
         this.node.setAttribute("notification", "error");
         document.getElementById("detail-error").textContent = gStrings.ext.formatStringFromName(
           "details.notification.unsignedAndDisabled", [this._addon.name, gStrings.brandShortName], 2
@@ -3816,7 +3749,10 @@ var gDetailView = {
     let browser = document.createElement("browser");
     browser.setAttribute("type", "content");
     browser.setAttribute("disableglobalhistory", "true");
+    browser.setAttribute("id", "addon-options");
     browser.setAttribute("class", "inline-options-browser");
+    browser.setAttribute("forcemessagemanager", "true");
+    browser.setAttribute("selectmenulist", "ContentSelectDropdown");
 
     let {optionsURL} = this._addon;
     let remote = !E10SUtils.canLoadURIInProcess(optionsURL, Services.appinfo.PROCESS_TYPE_DEFAULT);
@@ -3836,9 +3772,7 @@ var gDetailView = {
     browser.clientTop;
 
     await readyPromise;
-    if (remote) {
-      ExtensionParent.apiManager.emit("extension-browser-inserted", browser);
-    }
+    ExtensionParent.apiManager.emit("extension-browser-inserted", browser);
 
     return new Promise(resolve => {
       let messageListener = {
@@ -3850,7 +3784,7 @@ var gDetailView = {
         },
       };
 
-      let mm = browser.messageManager || new FakeFrameMessageManager(browser);
+      let mm = browser.messageManager;
       mm.loadFrameScript("chrome://extensions/content/ext-browser-content.js",
                          false);
       mm.addMessageListener("Extension:BrowserContentLoaded", messageListener);

@@ -118,7 +118,7 @@ AsyncStatement::initialize(Connection *aDBConnection,
                            const nsACString &aSQLStatement)
 {
   MOZ_ASSERT(aDBConnection, "No database connection given!");
-  MOZ_ASSERT(!aDBConnection->isClosed(), "Database connection should be valid");
+  MOZ_ASSERT(aDBConnection->isConnectionReadyOnThisThread(), "Database connection should be valid");
   MOZ_ASSERT(aNativeConnection, "No native connection given!");
 
   mDBConnection = aDBConnection;
@@ -221,7 +221,9 @@ AsyncStatement::~AsyncStatement()
     // NS_ProxyRelase only magic forgets for us if mDBConnection is an
     // nsCOMPtr.  Which it is not; it's an nsRefPtr.
     nsCOMPtr<nsIThread> targetThread(mDBConnection->threadOpenedOn);
-    NS_ProxyRelease(targetThread, mDBConnection.forget());
+    NS_ProxyRelease(
+      "AsyncStatement::mDBConnection",
+      targetThread, mDBConnection.forget());
   }
 }
 
@@ -375,7 +377,7 @@ AsyncStatement::GetState(int32_t *_state)
 //// mozIStorageBindingParams
 
 BOILERPLATE_BIND_PROXIES(
-  AsyncStatement, 
+  AsyncStatement,
   if (mFinalized) return NS_ERROR_UNEXPECTED;
 )
 

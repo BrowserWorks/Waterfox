@@ -4,9 +4,8 @@
 
 //! Geometry in flow-relative space.
 
-use euclid::{Point2D, Rect, Size2D};
+use euclid::{Point2D, Rect, Size2D, SideOffsets2D};
 use euclid::num::Zero;
-use euclid::side_offsets::SideOffsets2D;
 use std::cmp::{max, min};
 use std::fmt::{self, Debug, Error, Formatter};
 use std::ops::{Add, Sub};
@@ -145,20 +144,20 @@ impl WritingMode {
 impl fmt::Display for WritingMode {
     fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
         if self.is_vertical() {
-            try!(write!(formatter, "V"));
+            write!(formatter, "V")?;
             if self.is_vertical_lr() {
-                try!(write!(formatter, " LR"));
+                write!(formatter, " LR")?;
             } else {
-                try!(write!(formatter, " RL"));
+                write!(formatter, " RL")?;
             }
             if self.intersects(FLAG_SIDEWAYS) {
-                try!(write!(formatter, " Sideways"));
+                write!(formatter, " Sideways")?;
             }
             if self.intersects(FLAG_LINE_INVERTED) {
-                try!(write!(formatter, " Inverted"));
+                write!(formatter, " Inverted")?;
             }
         } else {
-            try!(write!(formatter, "H"));
+            write!(formatter, "H")?;
         }
         if self.is_bidi_ltr() {
             write!(formatter, " LTR")

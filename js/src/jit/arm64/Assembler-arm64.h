@@ -221,12 +221,6 @@ class Assembler : public vixl::Assembler
             dataRelocations_.oom();
     }
 
-    void disableProtection() {}
-    void enableProtection() {}
-    void setLowerBoundForProtection(size_t) {}
-    void unprotectRegion(unsigned char*, size_t) {}
-    void reprotectRegion(unsigned char*, size_t) {}
-
     void copyJumpRelocationTable(uint8_t* dest) const {
         if (jumpRelocations_.length())
             memcpy(dest, jumpRelocations_.buffer(), jumpRelocations_.length());
@@ -387,6 +381,12 @@ class Assembler : public vixl::Assembler
         LabelBase* label = absoluteLabel;
         label->bind(off.getOffset());
     }
+    void writeCodePointer(CodeOffset* label) {
+        uintptr_t x = LabelBase::INVALID_OFFSET;
+        BufferOffset off = EmitData(&x, sizeof(uintptr_t));
+        label->bind(off.getOffset());
+    }
+
 
     void verifyHeapAccessDisassembly(uint32_t begin, uint32_t end,
                                      const Disassembler::HeapAccess& heapAccess)

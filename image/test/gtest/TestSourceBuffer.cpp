@@ -373,22 +373,25 @@ TEST_F(ImageSourceBuffer, MinChunkCapacity)
   CheckIteratorIsComplete(iterator, 2, SourceBuffer::MIN_CHUNK_CAPACITY + 1);
 }
 
-TEST_F(ImageSourceBuffer, ExpectLengthDoesNotShrinkBelowMinCapacity)
+TEST_F(ImageSourceBuffer, ExpectLengthAllocatesRequestedCapacity)
 {
   SourceBufferIterator iterator = mSourceBuffer->Iterator();
 
   // Write SourceBuffer::MIN_CHUNK_CAPACITY bytes of test data to the buffer,
   // but call ExpectLength() first to make SourceBuffer expect only a single
-  // byte. We expect this to still result in only one chunk, because
-  // regardless of ExpectLength() we won't allocate a chunk smaller than
-  // MIN_CHUNK_CAPACITY bytes.
+  // byte. We expect this to still result in two chunks, because we trust the
+  // initial guess of ExpectLength() but after that it will only allocate chunks
+  // of at least MIN_CHUNK_CAPACITY bytes.
   EXPECT_TRUE(NS_SUCCEEDED(mSourceBuffer->ExpectLength(1)));
   CheckedAppendToBufferInChunks(10, SourceBuffer::MIN_CHUNK_CAPACITY);
   CheckedCompleteBuffer(iterator, SourceBuffer::MIN_CHUNK_CAPACITY);
 
-  // Verify that the iterator sees a single chunk.
-  CheckedAdvanceIterator(iterator, SourceBuffer::MIN_CHUNK_CAPACITY);
-  CheckIteratorIsComplete(iterator, 1, SourceBuffer::MIN_CHUNK_CAPACITY);
+  // Verify that the iterator sees a first chunk with 1 byte, and a second chunk
+  // with the remaining data.
+  CheckedAdvanceIterator(iterator, 1, 1, 1);
+  CheckedAdvanceIterator(iterator, SourceBuffer::MIN_CHUNK_CAPACITY - 1, 2,
+		                   SourceBuffer::MIN_CHUNK_CAPACITY);
+  CheckIteratorIsComplete(iterator, 2, SourceBuffer::MIN_CHUNK_CAPACITY);
 }
 
 TEST_F(ImageSourceBuffer, ExpectLengthGrowsAboveMinCapacity)
@@ -807,4 +810,56 @@ TEST_F(ImageSourceBuffer, ExpectLengthDoesNotTriggerResume)
   // Call ExpectLength(). If this triggers a resume, |mExpectNoResume| will
   // ensure that the test fails.
   mSourceBuffer->ExpectLength(1000);
+}
+
+TEST_F(ImageSourceBuffer, CompleteSuccessWithSameReadLength)
+{
+  SourceBufferIterator iterator = mSourceBuffer->Iterator(1);
+
+  // Write a single byte to the buffer and complete the buffer. (We have to
+  // write at least one byte because completing a zero length buffer always
+  // fails; see the ZeroLengthBufferAlwaysFails test.)
+  CheckedAppendToBuffer(mData, 1);
+  CheckedCompleteBuffer(iterator, 1);
+
+  // We should be able to advance once (to read the single byte) and then should
+  // reach the COMPLETE state with a successful status.
+  CheckedAdvanceIterator(iterator, 1);
+  CheckIteratorIsComplete(iterator, 1);
+}
+
+TEST_F(ImageSourceBuffer, CompleteSuccessWithSmallerReadLength)
+{
+  // Create an iterator limited to one byte.
+  SourceBufferIterator iterator = mSourceBuffer->Iterator(1);
+
+  // Write two bytes to the buffer and complete the buffer. (We have to
+  // write at least one byte because completing a zero length buffer always
+  // fails; see the ZeroLengthBufferAlwaysFails test.)
+  CheckedAppendToBuffer(mData, 2);
+  CheckedCompleteBuffer(iterator, 2);
+
+  // We should be able to advance once (to read the single byte) and then should
+  // reach the COMPLETE state with a successful status, because our iterator is
+  // limited to a single byte, rather than the full length.
+  CheckedAdvanceIterator(iterator, 1);
+  CheckIteratorIsComplete(iterator, 1);
+}
+
+TEST_F(ImageSourceBuffer, CompleteSuccessWithGreaterReadLength)
+{
+  // Create an iterator limited to one byte.
+  SourceBufferIterator iterator = mSourceBuffer->Iterator(2);
+
+  // Write a single byte to the buffer and complete the buffer. (We have to
+  // write at least one byte because completing a zero length buffer always
+  // fails; see the ZeroLengthBufferAlwaysFails test.)
+  CheckedAppendToBuffer(mData, 1);
+  CheckedCompleteBuffer(iterator, 1);
+
+  // We should be able to advance once (to read the single byte) and then should
+  // reach the COMPLETE state with a successful status. Our iterator lets us
+  // read more but the underlying buffer has been completed.
+  CheckedAdvanceIterator(iterator, 1);
+  CheckIteratorIsComplete(iterator, 1);
 }

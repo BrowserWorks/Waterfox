@@ -23,6 +23,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "Schemas",
                                   "resource://gre/modules/Schemas.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TestUtils",
+                                  "resource://testing-common/TestUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "Management", () => {
   const {Management} = Cu.import("resource://gre/modules/Extension.jsm", {});
@@ -61,21 +63,16 @@ function frameScript() {
 
 const FRAME_SCRIPT = `data:text/javascript,(${encodeURI(frameScript)}).call(this)`;
 
-
-const XUL_URL = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(
-  `<?xml version="1.0"?>
-  <window id="documentElement"/>`);
-
 let kungFuDeathGrip = new Set();
-function promiseBrowserLoaded(browser, url) {
+function promiseBrowserLoaded(browser, url, redirectUrl) {
   return new Promise(resolve => {
     const listener = {
       QueryInterface: XPCOMUtils.generateQI([Ci.nsISupportsWeakReference, Ci.nsIWebProgressListener]),
 
       onStateChange(webProgress, request, stateFlags, statusCode) {
         let requestUrl = request.URI ? request.URI.spec : webProgress.DOMWindow.location.href;
-
-        if (webProgress.isTopLevel && requestUrl === url &&
+        if (webProgress.isTopLevel &&
+            (requestUrl === url || requestUrl === redirectUrl) &&
             (stateFlags & Ci.nsIWebProgressListener.STATE_STOP)) {
           resolve();
           kungFuDeathGrip.delete(listener);
@@ -110,7 +107,7 @@ class ContentPage {
 
     chromeShell.createAboutBlankContentViewer(system);
     chromeShell.useGlobalHistory = false;
-    chromeShell.loadURI(XUL_URL, 0, null, null, null);
+    chromeShell.loadURI("chrome://extensions/content/dummy.xul", 0, null, null, null);
 
     await promiseObserved("chrome-document-global-created",
                           win => win.document == chromeShell.document);
@@ -136,20 +133,25 @@ class ContentPage {
     return browser;
   }
 
-  async loadURL(url) {
+  async loadURL(url, redirectUrl = undefined) {
     await this.browserReady;
 
     this.browser.loadURI(url);
-    return promiseBrowserLoaded(this.browser, url);
+    return promiseBrowserLoaded(this.browser, url, redirectUrl);
   }
 
   async close() {
     await this.browserReady;
 
+    let {messageManager} = this.browser;
+
     this.browser = null;
 
     this.windowlessBrowser.close();
     this.windowlessBrowser = null;
+
+    await TestUtils.topicObserved("message-manager-disconnect",
+                                  subject => subject === messageManager);
   }
 }
 
@@ -523,6 +525,13 @@ class AOMExtensionWrapper extends ExtensionWrapper {
     }
   }
 
+  async _flushCache() {
+    if (this.extension && this.extension.rootURI instanceof Ci.nsIJARURI) {
+      let file = this.extension.rootURI.JARFile.QueryInterface(Ci.nsIFileURL).file;
+      await Services.ppmm.broadcastAsyncMessage("Extension:FlushJarCache", {path: file.path});
+    }
+  }
+
   get version() {
     return this.addon && this.addon.version;
   }
@@ -540,11 +549,18 @@ class AOMExtensionWrapper extends ExtensionWrapper {
     return this._install(this.file);
   }
 
-  upgrade(data) {
+  async unload() {
+    await this._flushCache();
+    return super.unload();
+  }
+
+  async upgrade(data) {
     this.startupPromise = new Promise(resolve => {
       this.resolveStartup = resolve;
     });
     this.state = "restarting";
+
+    await this._flushCache();
 
     let xpiFile = Extension.generateXPI(data);
 
@@ -667,10 +683,10 @@ var ExtensionTestUtils = {
     REMOTE_CONTENT_SCRIPTS = !!val;
   },
 
-  loadContentPage(url, remote = undefined) {
+  loadContentPage(url, remote = undefined, redirectUrl = undefined) {
     let contentPage = new ContentPage(remote);
 
-    return contentPage.loadURL(url).then(() => {
+    return contentPage.loadURL(url, redirectUrl).then(() => {
       return contentPage;
     });
   },

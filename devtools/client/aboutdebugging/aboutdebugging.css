@@ -159,7 +159,10 @@ button {
 }
 
 .addons-install-error {
+  align-items: center;
   background-color: #f3b0b0;
+  display: flex;
+  justify-content: space-between;
 }
 
 .service-worker-multi-process {
@@ -232,10 +235,16 @@ button {
   color: gray;
 }
 
+#addons-panel h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
 .addon-target-container {
   background: #fff;
   box-shadow: 0 0 1px rgba(0, 0, 0, 0.12);
   list-style-type: none;
+  font-size: 13px;
   margin: 0 0 8px;
   padding: 4px 16px;
   transition: box-shadow 150ms;
@@ -250,7 +259,11 @@ button {
   display: flex;
   margin: 0;
   padding: 16px 0;
-  font-size: 14px;
+}
+
+.addon-target-name {
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .addon-target-actions {
@@ -293,7 +306,7 @@ button {
   background: none;
   border: none;
   color: #0087ff;
-  font-size: 14px;
+  font-size: 13px;
   margin: 12px;
   min-width: auto;
   padding: 4px;
@@ -328,6 +341,25 @@ button {
   /* Subtract the start padding so the button is still a bigger click target but
    * lines up with the icon. */
   margin-inline-start: -4px;
+}
+
+.addon-target-messages {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  margin-bottom: 16px;
+  padding: 0 0 12px 0;
+}
+
+.addon-target-message {
+  list-style-type: none;
+  padding: 4px 0;
+}
+
+.addon-target-message:first-of-type {
+  padding-top: 0;
+}
+
+.addon-target-warning-message {
+  color: #a47f00;
 }
 
 /* We want the ellipsis on the left-hand-side, so make the parent RTL

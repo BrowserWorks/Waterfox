@@ -79,9 +79,11 @@ namespace dom {
 class ImageLoadTask : public Runnable
 {
 public:
-  ImageLoadTask(HTMLImageElement *aElement, bool aAlwaysLoad,
+  ImageLoadTask(HTMLImageElement* aElement,
+                bool aAlwaysLoad,
                 bool aUseUrgentStartForChannel)
-    : mElement(aElement)
+    : Runnable("dom::ImageLoadTask")
+    , mElement(aElement)
     , mAlwaysLoad(aAlwaysLoad)
     , mUseUrgentStartForChannel(aUseUrgentStartForChannel)
   {
@@ -118,7 +120,6 @@ private:
 HTMLImageElement::HTMLImageElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsGenericHTMLElement(aNodeInfo)
   , mForm(nullptr)
-  , mForceReload(false)
   , mInDocResponsiveContent(false)
   , mCurrentDensity(1.0)
 {
@@ -152,20 +153,6 @@ NS_INTERFACE_TABLE_TAIL_INHERITING(nsGenericHTMLElement)
 NS_IMPL_ELEMENT_CLONE(HTMLImageElement)
 
 
-NS_IMPL_STRING_ATTR(HTMLImageElement, Name, name)
-NS_IMPL_STRING_ATTR(HTMLImageElement, Align, align)
-NS_IMPL_STRING_ATTR(HTMLImageElement, Alt, alt)
-NS_IMPL_STRING_ATTR(HTMLImageElement, Border, border)
-NS_IMPL_INT_ATTR(HTMLImageElement, Hspace, hspace)
-NS_IMPL_BOOL_ATTR(HTMLImageElement, IsMap, ismap)
-NS_IMPL_URI_ATTR(HTMLImageElement, LongDesc, longdesc)
-NS_IMPL_STRING_ATTR(HTMLImageElement, Sizes, sizes)
-NS_IMPL_URI_ATTR(HTMLImageElement, Lowsrc, lowsrc)
-NS_IMPL_URI_ATTR(HTMLImageElement, Src, src)
-NS_IMPL_STRING_ATTR(HTMLImageElement, Srcset, srcset)
-NS_IMPL_STRING_ATTR(HTMLImageElement, UseMap, usemap)
-NS_IMPL_INT_ATTR(HTMLImageElement, Vspace, vspace)
-
 bool
 HTMLImageElement::IsInteractiveHTMLContent(bool aIgnoreTabindex) const
 {
@@ -179,7 +166,7 @@ HTMLImageElement::AsyncEventRunning(AsyncEventDispatcher* aEvent)
   nsImageLoadingContent::AsyncEventRunning(aEvent);
 }
 
-nsresult
+void
 HTMLImageElement::GetCurrentSrc(nsAString& aValue)
 {
   nsCOMPtr<nsIURI> currentURI;
@@ -191,8 +178,6 @@ HTMLImageElement::GetCurrentSrc(nsAString& aValue)
   } else {
     SetDOMStringToNull(aValue);
   }
-
-  return NS_OK;
 }
 
 bool
@@ -221,16 +206,6 @@ HTMLImageElement::Complete()
      (imgIRequest::STATUS_LOAD_COMPLETE | imgIRequest::STATUS_ERROR)) != 0;
 }
 
-NS_IMETHODIMP
-HTMLImageElement::GetComplete(bool* aComplete)
-{
-  NS_PRECONDITION(aComplete, "Null out param!");
-
-  *aComplete = Complete();
-
-  return NS_OK;
-}
-
 CSSIntPoint
 HTMLImageElement::GetXY()
 {
@@ -253,52 +228,6 @@ int32_t
 HTMLImageElement::Y()
 {
   return GetXY().y;
-}
-
-NS_IMETHODIMP
-HTMLImageElement::GetX(int32_t* aX)
-{
-  *aX = X();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-HTMLImageElement::GetY(int32_t* aY)
-{
-  *aY = Y();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-HTMLImageElement::GetHeight(uint32_t* aHeight)
-{
-  *aHeight = Height();
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-HTMLImageElement::SetHeight(uint32_t aHeight)
-{
-  ErrorResult rv;
-  SetHeight(aHeight, rv);
-  return rv.StealNSResult();
-}
-
-NS_IMETHODIMP
-HTMLImageElement::GetWidth(uint32_t* aWidth)
-{
-  *aWidth = Width();
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-HTMLImageElement::SetWidth(uint32_t aWidth)
-{
-  ErrorResult rv;
-  SetWidth(aWidth, rv);
-  return rv.StealNSResult();
 }
 
 bool
@@ -378,10 +307,6 @@ HTMLImageElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValueOrString* aValue,
                                 bool aNotify)
 {
-  if (aValue) {
-    BeforeMaybeChangeAttr(aNameSpaceID, aName, *aValue, aNotify);
-  }
-
   if (aNameSpaceID == kNameSpaceID_None && mForm &&
       (aName == nsGkAtoms::name || aName == nsGkAtoms::id)) {
     // remove the image from the hashtable as needed
@@ -402,8 +327,11 @@ HTMLImageElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                const nsAttrValue* aValue,
                                const nsAttrValue* aOldValue, bool aNotify)
 {
+  nsAttrValueOrString attrVal(aValue);
+
   if (aValue) {
-    AfterMaybeChangeAttr(aNameSpaceID, aName, aNotify);
+    AfterMaybeChangeAttr(aNameSpaceID, aName, attrVal, aOldValue, true,
+                         aNotify);
   }
 
   if (aNameSpaceID == kNameSpaceID_None && mForm &&
@@ -419,8 +347,6 @@ HTMLImageElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
   // Handle src/srcset updates. If aNotify is false, we are coming from the
   // parser or some such place; we'll get bound after all the attributes have
   // been set, so we'll do the image load from BindToTree.
-
-  nsAttrValueOrString attrVal(aValue);
 
   if (aName == nsGkAtoms::src &&
       aNameSpaceID == kNameSpaceID_None &&
@@ -466,18 +392,19 @@ HTMLImageElement::OnAttrSetButNotChanged(int32_t aNamespaceID, nsIAtom* aName,
                                          const nsAttrValueOrString& aValue,
                                          bool aNotify)
 {
-  BeforeMaybeChangeAttr(aNamespaceID, aName, aValue, aNotify);
-  AfterMaybeChangeAttr(aNamespaceID, aName, aNotify);
+  AfterMaybeChangeAttr(aNamespaceID, aName, aValue, nullptr, false, aNotify);
 
   return nsGenericHTMLElement::OnAttrSetButNotChanged(aNamespaceID, aName,
                                                       aValue, aNotify);
 }
 
 void
-HTMLImageElement::BeforeMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                        const nsAttrValueOrString& aValue,
-                                        bool aNotify)
+HTMLImageElement::AfterMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                       const nsAttrValueOrString& aValue,
+                                       const nsAttrValue* aOldValue,
+                                       bool aValueMaybeChanged, bool aNotify)
 {
+  bool forceReload = false;
   // We need to force our image to reload.  This must be done here, not in
   // AfterSetAttr or BeforeSetAttr, because we want to do it even if the attr is
   // being set to its existing value, which is normally optimized away as a
@@ -488,9 +415,6 @@ HTMLImageElement::BeforeMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
   // spec.
   //
   // Both cases handle unsetting src in AfterSetAttr
-  //
-  // Much of this should probably happen in AfterMaybeChangeAttr.
-  // See Bug 1370705
   if (aNamespaceID == kNameSpaceID_None &&
       aName == nsGkAtoms::src) {
 
@@ -515,10 +439,14 @@ HTMLImageElement::BeforeMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
       mNewRequestsWillNeedAnimationReset = true;
 
       // Force image loading here, so that we'll try to load the image from
-      // network if it's set to be not cacheable...  If we change things so that
-      // the state gets in Element's attr-setting happen around this
-      // LoadImage call, we could start passing false instead of aNotify
-      // here.
+      // network if it's set to be not cacheable.
+      // Potentially, false could be passed here rather than aNotify since
+      // UpdateState will be called by SetAttrAndNotify, but there are two
+      // obstacles to this: 1) LoadImage will end up calling
+      // UpdateState(aNotify), and we do not want it to call UpdateState(false)
+      // when aNotify is true, and 2) When this function is called by
+      // OnAttrSetButNotChanged, SetAttrAndNotify will not subsequently call
+      // UpdateState.
       LoadImage(aValue.String(), true, aNotify, eImageLoadType_Normal);
 
       mNewRequestsWillNeedAnimationReset = false;
@@ -526,40 +454,31 @@ HTMLImageElement::BeforeMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
   } else if (aNamespaceID == kNameSpaceID_None &&
              aName == nsGkAtoms::crossorigin &&
              aNotify) {
-    nsAttrValue attrValue;
-    ParseCORSValue(aValue.String(), attrValue);
-    if (GetCORSMode() != AttrValueToCORSMode(&attrValue)) {
+    if (aValueMaybeChanged && GetCORSMode() != AttrValueToCORSMode(aOldValue)) {
       // Force a new load of the image with the new cross origin policy.
-      mForceReload = true;
+      forceReload = true;
     }
   } else if (aName == nsGkAtoms::referrerpolicy &&
       aNamespaceID == kNameSpaceID_None &&
       aNotify) {
-    ReferrerPolicy referrerPolicy = AttributeReferrerPolicyFromString(aValue.String());
+    ReferrerPolicy referrerPolicy = GetImageReferrerPolicy();
     if (!InResponsiveMode() &&
         referrerPolicy != RP_Unset &&
-        referrerPolicy != GetImageReferrerPolicy()) {
+        aValueMaybeChanged &&
+        referrerPolicy != ReferrerPolicyFromAttr(aOldValue)) {
       // XXX: Bug 1076583 - We still use the older synchronous algorithm
       // Because referrerPolicy is not treated as relevant mutations, setting
       // the attribute will neither trigger a reload nor update the referrer
       // policy of the loading channel (whether it has previously completed or
       // not). Force a new load of the image with the new referrerpolicy.
-      mForceReload = true;
+      forceReload = true;
     }
   }
 
-  return;
-}
-
-void
-HTMLImageElement::AfterMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                       bool aNotify)
-{
   // Because we load image synchronously in non-responsive-mode, we need to do
   // reload after the attribute has been set if the reload is triggerred by
   // cross origin changing.
-  if (mForceReload) {
-    mForceReload = false;
+  if (forceReload) {
     // Mark channel as urgent-start before load image if the image load is
     // initaiated by a user interaction.
     mUseUrgentStartForChannel = EventStateManager::IsHandlingUserInput();
@@ -575,8 +494,6 @@ HTMLImageElement::AfterMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
       ForceReload(aNotify);
     }
   }
-
-  return;
 }
 
 nsresult
@@ -689,7 +606,10 @@ HTMLImageElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     if (LoadingEnabled() &&
         OwnerDoc()->IsCurrentActiveDocument()) {
       nsContentUtils::AddScriptRunner(
-        NewRunnableMethod<bool>(this, &HTMLImageElement::MaybeLoadImage, false));
+        NewRunnableMethod<bool>("dom::HTMLImageElement::MaybeLoadImage",
+                                this,
+                                &HTMLImageElement::MaybeLoadImage,
+                                false));
     }
   }
 
@@ -782,9 +702,14 @@ HTMLImageElement::NodeInfoChanged(nsIDocument* aOldDoc)
     // Bug 1076583 - We still behave synchronously in the non-responsive case
     nsContentUtils::AddScriptRunner(
       (InResponsiveMode())
-        ? NewRunnableMethod<bool>(this, &HTMLImageElement::QueueImageLoadTask, true)
-        : NewRunnableMethod<bool>(this, &HTMLImageElement::MaybeLoadImage, true)
-    );
+        ? NewRunnableMethod<bool>("dom::HTMLImageElement::QueueImageLoadTask",
+                                  this,
+                                  &HTMLImageElement::QueueImageLoadTask,
+                                  true)
+        : NewRunnableMethod<bool>("dom::HTMLImageElement::MaybeLoadImage",
+                                  this,
+                                  &HTMLImageElement::MaybeLoadImage,
+                                  true));
   }
 }
 
@@ -907,7 +832,10 @@ HTMLImageElement::CopyInnerTo(Element* aDest, bool aPreallocateChildren)
       mUseUrgentStartForChannel = EventStateManager::IsHandlingUserInput();
 
       nsContentUtils::AddScriptRunner(
-        NewRunnableMethod<bool>(dest, &HTMLImageElement::MaybeLoadImage, false));
+        NewRunnableMethod<bool>("dom::HTMLImageElement::MaybeLoadImage",
+                                dest,
+                                &HTMLImageElement::MaybeLoadImage,
+                                false));
     }
   }
 

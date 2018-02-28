@@ -279,7 +279,8 @@ public:
   }
 
   nsSimplePluginEvent(nsIDocument* aTarget, const nsAString& aEvent)
-    : mTarget(aTarget)
+    : mozilla::Runnable("nsSimplePluginEvent")
+    , mTarget(aTarget)
     , mDocument(aTarget)
     , mEvent(aEvent)
   {
@@ -289,7 +290,8 @@ public:
   nsSimplePluginEvent(nsIContent* aTarget,
                       nsIDocument* aDocument,
                       const nsAString& aEvent)
-    : mTarget(aTarget)
+    : mozilla::Runnable("nsSimplePluginEvent")
+    , mTarget(aTarget)
     , mDocument(aDocument)
     , mEvent(aEvent)
   {
@@ -952,13 +954,15 @@ nsObjectLoadingContent::BuildParametersArray()
 
   bool isJava = IsJavaMIME(mContentType);
 
-  nsCString codebase;
+  nsAutoCString codebase;
   if (isJava) {
       nsresult rv = mBaseURI->GetSpec(codebase);
       NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  nsAdoptingCString wmodeOverride = Preferences::GetCString("plugins.force.wmode");
+    nsAutoCString wmodeOverride;
+    Preferences::GetCString("plugins.force.wmode", wmodeOverride);
+
   for (uint32_t i = 0; i < mCachedAttributes.Length(); i++) {
     if (!wmodeOverride.IsEmpty() && mCachedAttributes[i].mName.EqualsIgnoreCase("wmode")) {
       CopyASCIItoUTF16(wmodeOverride, mCachedAttributes[i].mValue);
@@ -1021,8 +1025,7 @@ NS_IMETHODIMP
 nsObjectLoadingContent::OnStartRequest(nsIRequest *aRequest,
                                        nsISupports *aContext)
 {
-  PROFILER_LABEL("nsObjectLoadingContent", "OnStartRequest",
-    js::ProfileEntry::Category::NETWORK);
+  AUTO_PROFILER_LABEL("nsObjectLoadingContent::OnStartRequest", NETWORK);
 
   LOG(("OBJLC [%p]: Channel OnStartRequest", this));
 
@@ -1100,8 +1103,7 @@ nsObjectLoadingContent::OnStopRequest(nsIRequest *aRequest,
                                       nsISupports *aContext,
                                       nsresult aStatusCode)
 {
-  PROFILER_LABEL("nsObjectLoadingContent", "OnStopRequest",
-    js::ProfileEntry::Category::NETWORK);
+  AUTO_PROFILER_LABEL("nsObjectLoadingContent::OnStopRequest", NETWORK);
 
   // Handle object not loading error because source was a tracking URL.
   // We make a note of this object node by including it in a dedicated
@@ -1562,8 +1564,7 @@ nsObjectLoadingContent::CheckLoadPolicy(int16_t *aContentPolicy)
                                           mContentType,
                                           nullptr, //extra
                                           aContentPolicy,
-                                          nsContentUtils::GetContentPolicy(),
-                                          nsContentUtils::GetSecurityManager());
+                                          nsContentUtils::GetContentPolicy());
   NS_ENSURE_SUCCESS(rv, false);
   if (NS_CP_REJECTED(*aContentPolicy)) {
     LOG(("OBJLC [%p]: Content policy denied load of %s",
@@ -1616,8 +1617,7 @@ nsObjectLoadingContent::CheckProcessPolicy(int16_t *aContentPolicy)
                                  mContentType,
                                  nullptr, //extra
                                  aContentPolicy,
-                                 nsContentUtils::GetContentPolicy(),
-                                 nsContentUtils::GetSecurityManager());
+                                 nsContentUtils::GetContentPolicy());
   NS_ENSURE_SUCCESS(rv, false);
 
   if (NS_CP_REJECTED(*aContentPolicy)) {
@@ -1665,19 +1665,18 @@ nsObjectLoadingContent::UpdateObjectParameters(bool aJavaURI)
   ///
 
   if (aJavaURI || thisContent->NodeInfo()->Equals(nsGkAtoms::applet)) {
-    nsAdoptingCString javaMIME = Preferences::GetCString(kPrefJavaMIME);
-    newMime = javaMIME;
-    NS_ASSERTION(IsJavaMIME(newMime),
-                 "plugin.mime.java should be recognized as java");
-    isJava = true;
+      Preferences::GetCString(kPrefJavaMIME, newMime);
+      NS_ASSERTION(IsJavaMIME(newMime),
+                   "plugin.mime.java should be recognized as java");
+      isJava = true;
   } else {
-    nsAutoString rawTypeAttr;
-    thisContent->GetAttr(kNameSpaceID_None, nsGkAtoms::type, rawTypeAttr);
-    if (!rawTypeAttr.IsEmpty()) {
-      typeAttr = rawTypeAttr;
-      CopyUTF16toUTF8(rawTypeAttr, newMime);
-      isJava = IsJavaMIME(newMime);
-    }
+      nsAutoString rawTypeAttr;
+      thisContent->GetAttr(kNameSpaceID_None, nsGkAtoms::type, rawTypeAttr);
+      if (!rawTypeAttr.IsEmpty()) {
+          typeAttr = rawTypeAttr;
+          CopyUTF16toUTF8(rawTypeAttr, newMime);
+          isJava = IsJavaMIME(newMime);
+      }
   }
 
   ///
@@ -1685,27 +1684,28 @@ nsObjectLoadingContent::UpdateObjectParameters(bool aJavaURI)
   ///
 
   if (caps & eSupportClassID) {
-    nsAutoString classIDAttr;
-    thisContent->GetAttr(kNameSpaceID_None, nsGkAtoms::classid, classIDAttr);
-    if (!classIDAttr.IsEmpty()) {
-      // Our classid support is limited to 'java:' ids
-      nsAdoptingCString javaMIME = Preferences::GetCString(kPrefJavaMIME);
-      NS_ASSERTION(IsJavaMIME(javaMIME),
-                   "plugin.mime.java should be recognized as java");
-      RefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
-      if (StringBeginsWith(classIDAttr, NS_LITERAL_STRING("java:")) &&
-          pluginHost &&
-          pluginHost->HavePluginForType(javaMIME)) {
-        newMime = javaMIME;
-        isJava = true;
-      } else {
-        // XXX(johns): Our de-facto behavior since forever was to refuse to load
-        // Objects who don't have a classid we support, regardless of other type
-        // or uri info leads to a valid plugin.
-        newMime.Truncate();
-        stateInvalid = true;
+      nsAutoString classIDAttr;
+      thisContent->GetAttr(kNameSpaceID_None, nsGkAtoms::classid, classIDAttr);
+      if (!classIDAttr.IsEmpty()) {
+          // Our classid support is limited to 'java:' ids
+          nsAutoCString javaMIME;
+          Preferences::GetCString(kPrefJavaMIME, javaMIME);
+          NS_ASSERTION(IsJavaMIME(javaMIME),
+                       "plugin.mime.java should be recognized as java");
+          RefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
+          if (StringBeginsWith(classIDAttr, NS_LITERAL_STRING("java:")) &&
+              pluginHost &&
+              pluginHost->HavePluginForType(javaMIME)) {
+              newMime = javaMIME;
+              isJava = true;
+          } else {
+              // XXX(johns): Our de-facto behavior since forever was to refuse to load
+              // Objects who don't have a classid we support, regardless of other type
+              // or uri info leads to a valid plugin.
+              newMime.Truncate();
+              stateInvalid = true;
+          }
       }
-    }
   }
 
   ///
@@ -3206,7 +3206,7 @@ nsObjectLoadingContent::DoStopPlugin(nsPluginInstanceOwner* aInstanceOwner)
 NS_IMETHODIMP
 nsObjectLoadingContent::StopPluginInstance()
 {
-  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("nsObjectLoadingContent::StopPluginInstance", OTHER);
   // Clear any pending events
   mPendingInstantiateEvent = nullptr;
   mPendingCheckPluginStopEvent = nullptr;
@@ -3356,7 +3356,7 @@ static void initializeObjectLoadingContentPrefs()
 bool
 nsObjectLoadingContent::ShouldBlockContent()
 {
- 
+
   if (!sPrefsInitialized) {
     initializeObjectLoadingContentPrefs();
   }
@@ -3542,8 +3542,8 @@ nsObjectLoadingContent::FavorFallbackMode(bool aIsPluginClickToPlay) {
     return false;
   }
 
-  nsCString prefString;
-  if (NS_SUCCEEDED(Preferences::GetCString(kPrefFavorFallbackMode, &prefString))) {
+  nsAutoCString prefString;
+  if (NS_SUCCEEDED(Preferences::GetCString(kPrefFavorFallbackMode, prefString))) {
     if (aIsPluginClickToPlay &&
         prefString.EqualsLiteral("follow-ctp")) {
       return true;
@@ -3569,8 +3569,8 @@ nsObjectLoadingContent::HasGoodFallback() {
   }
 
   nsTArray<nsCString> rulesList;
-  nsCString prefString;
-  if (NS_SUCCEEDED(Preferences::GetCString(kPrefFavorFallbackRules, &prefString))) {
+  nsAutoCString prefString;
+  if (NS_SUCCEEDED(Preferences::GetCString(kPrefFavorFallbackRules, prefString))) {
       ParseString(prefString, ',', rulesList);
   }
 
@@ -3913,6 +3913,7 @@ nsObjectLoadingContent::MayResolve(jsid aId)
 void
 nsObjectLoadingContent::GetOwnPropertyNames(JSContext* aCx,
                                             JS::AutoIdVector& /* unused */,
+                                            bool /* unused */,
                                             ErrorResult& aRv)
 {
   // Just like DoResolve, just make sure we're instantiated.  That will do

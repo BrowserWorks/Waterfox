@@ -69,7 +69,9 @@ imgRequest::imgRequest(imgLoader* aLoader, const ImageCacheKey& aCacheKey)
  , mDecodeRequested(false)
  , mNewPartPending(false)
  , mHadInsecureRedirect(false)
-{ }
+{
+  LOG_FUNC(gImgLog, "imgRequest::imgRequest()");
+}
 
 imgRequest::~imgRequest()
 {
@@ -558,6 +560,10 @@ imgRequest::AdjustPriorityInternal(int32_t aDelta)
 void
 imgRequest::BoostPriority(uint32_t aCategory)
 {
+  if (!gfxPrefs::ImageLayoutNetworkPriority()) {
+    return;
+  }
+
   uint32_t newRequestedCategory =
     (mBoostCategoriesRequested & aCategory) ^ aCategory;
   if (!newRequestedCategory) {
@@ -611,7 +617,8 @@ imgRequest::UpdateCacheEntrySize()
   }
 
   RefPtr<Image> image = GetImage();
-  size_t size = image->SizeOfSourceWithComputedFallback(moz_malloc_size_of);
+  SizeOfState state(moz_malloc_size_of);
+  size_t size = image->SizeOfSourceWithComputedFallback(state);
   mCacheEntry->SetDataSize(size);
 }
 

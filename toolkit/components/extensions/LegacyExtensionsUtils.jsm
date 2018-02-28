@@ -126,10 +126,13 @@ class EmbeddedExtension {
   /**
    * Start the embedded webextension.
    *
+   * @param {number} reason
+   *   The add-on startup bootstrap reason received from the XPIProvider.
+   *
    * @returns {Promise<LegacyContextAPI>} A promise which resolve to the API exposed to the
    *   legacy context.
    */
-  startup() {
+  startup(reason) {
     if (this.started) {
       return Promise.reject(new Error("This embedded extension has already been started"));
     }
@@ -144,6 +147,8 @@ class EmbeddedExtension {
         resourceURI: embeddedExtensionURI,
         version: this.version,
       });
+
+      this.extension.isEmbedded = true;
 
       // This callback is register to the "startup" event, emitted by the Extension instance
       // after the extension manifest.json has been loaded without any errors, but before
@@ -181,7 +186,7 @@ class EmbeddedExtension {
 
       // Run ambedded extension startup and catch any error during embedded extension
       // startup.
-      this.extension.startup().catch((err) => {
+      this.extension.startup(reason).catch((err) => {
         this.started = false;
         this.startupPromise = null;
         this.extension.off("startup", onBeforeStarted);
@@ -196,24 +201,21 @@ class EmbeddedExtension {
   /**
    * Shuts down the embedded webextension.
    *
+   * @param {number} reason
+   *   The add-on shutdown bootstrap reason received from the XPIProvider.
+   *
    * @returns {Promise<void>} a promise that is resolved when the shutdown has been done
    */
-  shutdown() {
+  async shutdown(reason) {
     EmbeddedExtensionManager.untrackEmbeddedExtension(this);
 
-    // If there is a pending startup,  wait to be completed and then shutdown.
-    if (this.startupPromise) {
-      return this.startupPromise.then(() => {
-        this.extension.shutdown();
-      });
-    }
+    if (this.extension && !this.extension.hasShutdown) {
+      let {extension} = this;
+      this.extension = null;
 
-    // Run shutdown now if the embedded webextension has been correctly started
-    if (this.extension && this.started && !this.extension.hasShutdown) {
-      this.extension.shutdown();
+      await extension.shutdown(reason);
     }
-
-    return Promise.resolve();
+    return undefined;
   }
 }
 

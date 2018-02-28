@@ -37,7 +37,6 @@ public:
     : mSpeechTask(aSpeechTask)
     , mStream(aStream)
     , mStarted(false)
-    , mAbstractMainThread(aMainThread)
   {
   }
 
@@ -65,13 +64,15 @@ public:
           if (!mStarted) {
             mStarted = true;
             aGraph->DispatchToMainThreadAfterStreamStateUpdate(
-              mAbstractMainThread,
-              NewRunnableMethod(this, &SynthStreamListener::DoNotifyStarted));
+              NewRunnableMethod("dom::SynthStreamListener::DoNotifyStarted",
+                                this,
+                                &SynthStreamListener::DoNotifyStarted));
           }
 
           aGraph->DispatchToMainThreadAfterStreamStateUpdate(
-            mAbstractMainThread,
-            NewRunnableMethod(this, &SynthStreamListener::DoNotifyFinished));
+            NewRunnableMethod("dom::SynthStreamListener::DoNotifyFinished",
+                              this,
+                              &SynthStreamListener::DoNotifyFinished));
         }
         break;
       case MediaStreamGraphEvent::EVENT_REMOVED:
@@ -89,8 +90,9 @@ public:
     if (aBlocked == MediaStreamListener::UNBLOCKED && !mStarted) {
       mStarted = true;
       aGraph->DispatchToMainThreadAfterStreamStateUpdate(
-        mAbstractMainThread,
-        NewRunnableMethod(this, &SynthStreamListener::DoNotifyStarted));
+        NewRunnableMethod("dom::SynthStreamListener::DoNotifyStarted",
+                          this,
+                          &SynthStreamListener::DoNotifyStarted));
     }
   }
 
@@ -102,8 +104,6 @@ private:
   RefPtr<MediaStream> mStream;
 
   bool mStarted;
-
-  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 // nsSpeechTask
@@ -120,19 +120,20 @@ NS_INTERFACE_MAP_END
 NS_IMPL_CYCLE_COLLECTING_ADDREF(nsSpeechTask)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(nsSpeechTask)
 
-nsSpeechTask::nsSpeechTask(SpeechSynthesisUtterance* aUtterance)
+nsSpeechTask::nsSpeechTask(SpeechSynthesisUtterance* aUtterance, bool aIsChrome)
   : mUtterance(aUtterance)
   , mInited(false)
   , mPrePaused(false)
   , mPreCanceled(false)
   , mCallback(nullptr)
   , mIndirectAudio(false)
+  , mIsChrome(aIsChrome)
 {
   mText = aUtterance->mText;
   mVolume = aUtterance->Volume();
 }
 
-nsSpeechTask::nsSpeechTask(float aVolume, const nsAString& aText)
+nsSpeechTask::nsSpeechTask(float aVolume, const nsAString& aText, bool aIsChrome)
   : mUtterance(nullptr)
   , mVolume(aVolume)
   , mText(aText)
@@ -141,6 +142,7 @@ nsSpeechTask::nsSpeechTask(float aVolume, const nsAString& aText)
   , mPreCanceled(false)
   , mCallback(nullptr)
   , mIndirectAudio(false)
+  , mIsChrome(aIsChrome)
 {
 }
 
@@ -166,9 +168,11 @@ nsSpeechTask::~nsSpeechTask()
 void
 nsSpeechTask::InitDirectAudio()
 {
+  // nullptr as final argument here means that this is not tied to a window.
+  // This is a global MSG.
   mStream = MediaStreamGraph::GetInstance(MediaStreamGraph::AUDIO_THREAD_DRIVER,
-                                          AudioChannel::Normal)->
-    CreateSourceStream(AbstractThread::MainThread() /* Non DocGroup-version for the task in parent. */);
+                                          AudioChannel::Normal, nullptr)->
+    CreateSourceStream();
   mIndirectAudio = false;
   mInited = true;
 }
@@ -511,6 +515,12 @@ nsSpeechTask::DispatchResumeImpl(float aElapsedTime, uint32_t aCharIndex)
   return NS_OK;
 }
 
+void
+nsSpeechTask::ForceError(float aElapsedTime, uint32_t aCharIndex)
+{
+  DispatchErrorInner(aElapsedTime, aCharIndex);
+}
+
 NS_IMETHODIMP
 nsSpeechTask::DispatchError(float aElapsedTime, uint32_t aCharIndex)
 {
@@ -521,6 +531,12 @@ nsSpeechTask::DispatchError(float aElapsedTime, uint32_t aCharIndex)
     return NS_ERROR_FAILURE;
   }
 
+  return DispatchErrorInner(aElapsedTime, aCharIndex);
+}
+
+nsresult
+nsSpeechTask::DispatchErrorInner(float aElapsedTime, uint32_t aCharIndex)
+{
   if (!mPreCanceled) {
     nsSynthVoiceRegistry::GetInstance()->SpeakNext();
   }

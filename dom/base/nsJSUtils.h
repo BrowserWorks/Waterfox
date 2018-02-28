@@ -8,7 +8,7 @@
 #define nsJSUtils_h__
 
 /**
- * This is not a generated file. It contains common utility functions 
+ * This is not a generated file. It contains common utility functions
  * invoked from the JavaScript code generated from IDL interfaces.
  * The goal of the utility functions is to cut down on the size of
  * the generated code itself.
@@ -68,10 +68,8 @@ public:
 
   // ExecutionContext is used to switch compartment.
   class MOZ_STACK_CLASS ExecutionContext {
-#ifdef MOZ_GECKO_PROFILER
     // Register stack annotations for the Gecko profiler.
-    mozilla::ProfilerStackFrameRAII mProfilerRAII;
-#endif
+    mozilla::AutoProfilerLabel mAutoProfilerLabel;
 
     JSContext* mCx;
 

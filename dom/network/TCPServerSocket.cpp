@@ -64,7 +64,12 @@ TCPServerSocket::Init()
   }
 
   if (XRE_GetProcessType() == GeckoProcessType_Content) {
-    mServerBridgeChild = new TCPServerSocketChild(this, mPort, mBacklog, mUseArrayBuffers);
+    nsCOMPtr<nsIEventTarget> target;
+    if (nsCOMPtr<nsIGlobalObject> global = GetOwnerGlobal()) {
+      target = global->EventTargetFor(TaskCategory::Other);
+    }
+    mServerBridgeChild =
+      new TCPServerSocketChild(this, mPort, mBacklog, mUseArrayBuffers, target);
     return NS_OK;
   }
 
@@ -143,10 +148,6 @@ TCPServerSocket::OnSocketAccepted(nsIServerSocket* aServer, nsISocketTransport* 
 {
   nsCOMPtr<nsIGlobalObject> global = GetOwnerGlobal();
   RefPtr<TCPSocket> socket = TCPSocket::CreateAcceptedSocket(global, aTransport, mUseArrayBuffers);
-  if (mServerBridgeParent) {
-    socket->SetAppIdAndBrowser(mServerBridgeParent->GetAppId(),
-                               mServerBridgeParent->GetInIsolatedMozBrowser());
-  }
   FireEvent(NS_LITERAL_STRING("connect"), socket);
   return NS_OK;
 }

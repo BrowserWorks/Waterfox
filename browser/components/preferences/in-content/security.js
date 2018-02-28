@@ -70,7 +70,7 @@ var gSecurityPane = {
 
     var params = this._addonParams;
     if (!params.windowTitle || !params.introText) {
-      params.windowTitle = bundlePrefs.getString("addons_permissions_title");
+      params.windowTitle = bundlePrefs.getString("addons_permissions_title2");
       params.introText = bundlePrefs.getString("addonspermissionstext");
     }
 
@@ -132,7 +132,7 @@ var gSecurityPane = {
       prefilledHost: "",
       permissionType: "login-saving",
       windowTitle: bundlePrefs.getString("savedLoginsExceptions_title"),
-      introText: bundlePrefs.getString("savedLoginsExceptions_desc")
+      introText: bundlePrefs.getString("savedLoginsExceptions_desc2")
     };
 
     gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
@@ -174,24 +174,32 @@ var gSecurityPane = {
       safeBrowsingMalwarePref.value = enableSafeBrowsing.checked;
 
       if (enableSafeBrowsing.checked) {
-        blockDownloads.removeAttribute("disabled");
-        if (blockDownloads.checked) {
+        if (blockDownloads) {
+          blockDownloads.removeAttribute("disabled");
+          if (blockDownloads.checked) {
+            blockUncommonUnwanted.removeAttribute("disabled");
+          }
+        } else {
           blockUncommonUnwanted.removeAttribute("disabled");
         }
       } else {
-        blockDownloads.setAttribute("disabled", "true");
+        if (blockDownloads) {
+          blockDownloads.setAttribute("disabled", "true");
+        }
         blockUncommonUnwanted.setAttribute("disabled", "true");
       }
     });
 
-    blockDownloads.addEventListener("command", function() {
-      blockDownloadsPref.value = blockDownloads.checked;
-      if (blockDownloads.checked) {
-        blockUncommonUnwanted.removeAttribute("disabled");
-      } else {
-        blockUncommonUnwanted.setAttribute("disabled", "true");
-      }
-    });
+    if (blockDownloads) {
+      blockDownloads.addEventListener("command", function() {
+        blockDownloadsPref.value = blockDownloads.checked;
+        if (blockDownloads.checked) {
+          blockUncommonUnwanted.removeAttribute("disabled");
+        } else {
+          blockUncommonUnwanted.setAttribute("disabled", "true");
+        }
+      });
+    }
 
     blockUncommonUnwanted.addEventListener("command", function() {
       blockUnwantedPref.value = blockUncommonUnwanted.checked;
@@ -199,10 +207,17 @@ var gSecurityPane = {
 
       let malware = malwareTable.value
         .split(",")
-        .filter(x => x !== "goog-unwanted-shavar" && x !== "test-unwanted-simple");
+        .filter(x => x !== "goog-unwanted-proto" &&
+                     x !== "goog-unwanted-shavar" &&
+                     x !== "test-unwanted-simple");
 
       if (blockUncommonUnwanted.checked) {
-        malware.push("goog-unwanted-shavar");
+        if (malware.indexOf("goog-malware-shavar") != -1) {
+          malware.push("goog-unwanted-shavar");
+        } else {
+          malware.push("goog-unwanted-proto");
+        }
+
         malware.push("test-unwanted-simple");
       }
 
@@ -216,13 +231,18 @@ var gSecurityPane = {
 
     enableSafeBrowsing.checked = safeBrowsingPhishingPref.value && safeBrowsingMalwarePref.value;
     if (!enableSafeBrowsing.checked) {
-      blockDownloads.setAttribute("disabled", "true");
+      if (blockDownloads) {
+        blockDownloads.setAttribute("disabled", "true");
+      }
+
       blockUncommonUnwanted.setAttribute("disabled", "true");
     }
 
-    blockDownloads.checked = blockDownloadsPref.value;
-    if (!blockDownloadsPref.value) {
-      blockUncommonUnwanted.setAttribute("disabled", "true");
+    if (blockDownloads) {
+      blockDownloads.checked = blockDownloadsPref.value;
+      if (!blockDownloadsPref.value) {
+        blockUncommonUnwanted.setAttribute("disabled", "true");
+      }
     }
 
     blockUncommonUnwanted.checked = blockUnwantedPref.value && blockUncommonPref.value;

@@ -29,15 +29,16 @@
     <dd>@bookmarks_toolbarfolder_description@
 #ifndef NIGHTLY_BUILD
         <dl>
-            <p><dt><a href="https://www.mozilla.org/@AB_CD@/firefox/central/" icon="@firefox_icon@">@getting_started@</a></dt>
+            <!-- <p><dt><a href="https://www.mozilla.org/@AB_CD@/firefox/central/" icon="@firefox_icon@">@getting_started@</a></dt> -->
+            <p><dt><A FEEDURL="https://blog.waterfoxproject.org/rss" HREF="https://blog.waterfoxproject.org/">The Waterfox Blog</A></dt>
         </dl>
-    <p><dt><h3>@firefox_heading@</h3></dt>
+    <!-- <p><dt><h3>@firefox_heading@</h3></dt>
         <dl><p>
             <dt><a href="https://support.mozilla.org/@AB_CD@/products/firefox" icon="@mozilla_icon@">@firefox_help@</a>
             <dt><a href="https://www.mozilla.org/@AB_CD@/firefox/customize/" icon="@mozilla_icon@">@firefox_customize@</a>
             <dt><a href="https://www.mozilla.org/@AB_CD@/contribute/" icon="@mozilla_icon@">@firefox_community@</a>
             <dt><a href="https://www.mozilla.org/@AB_CD@/about/" icon="@mozilla_icon@">@firefox_about@</a>
-        </dl>
+        </dl> -->
 #else
         <dl>
             <p><dt><a href="https://www.mozilla.org/@AB_CD@/contribute/" icon="@mozilla_icon@">@firefox_community@</a>

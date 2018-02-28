@@ -14,9 +14,9 @@ use dom::element::Element;
 use dom::stylesheet::StyleSheet;
 use dom::window::Window;
 use dom_struct::dom_struct;
+use servo_arc::Arc;
 use std::cell::Cell;
 use style::shared_lock::SharedRwLock;
-use style::stylearc::Arc;
 use style::stylesheets::Stylesheet as StyleStyleSheet;
 
 #[dom_struct]
@@ -57,10 +57,14 @@ impl CSSStyleSheet {
     }
 
     fn rulelist(&self) -> Root<CSSRuleList> {
-        self.rulelist.or_init(|| CSSRuleList::new(self.global().as_window(),
-                                                  self,
-                                                  RulesSource::Rules(self.style_stylesheet
-                                                                         .rules.clone())))
+        self.rulelist.or_init(|| {
+            let rules = self.style_stylesheet.contents.rules.clone();
+            CSSRuleList::new(
+                self.global().as_window(),
+                self,
+                RulesSource::Rules(rules)
+            )
+        })
     }
 
     pub fn disabled(&self) -> bool {

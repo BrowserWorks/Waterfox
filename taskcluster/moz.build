@@ -7,9 +7,6 @@
 with Files('**'):
     BUG_COMPONENT = ('Taskcluster', 'General')
 
-with Files('actions/**'):
-    BUG_COMPONENT = ('Taskcluster', 'Task Configuration')
-
 with Files('ci/**'):
     BUG_COMPONENT = ('Taskcluster', 'Task Configuration')
 
@@ -26,4 +23,7 @@ with Files('scripts/**'):
 with Files('taskgraph/**'):
     BUG_COMPONENT = ('Taskcluster', 'Task Configuration')
 
+PYTHON_UNITTEST_MANIFESTS += [
+    'taskgraph/test/python.ini',
+]
 SPHINX_TREES['taskcluster'] = 'docs'

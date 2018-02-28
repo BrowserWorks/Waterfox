@@ -13,9 +13,11 @@
 #include "nsDebug.h"
 #include "nsArenaMemoryStats.h"
 #include "nsPrintfCString.h"
-#include "nsStyleContext.h"
+#include "GeckoStyleContext.h"
 #include "FrameLayerBuilder.h"
 #include "mozilla/ArrayUtils.h"
+#include "nsStyleContext.h"
+#include "nsStyleContextInlines.h"
 
 #include <inttypes.h>
 
@@ -46,23 +48,12 @@ nsPresArena::ClearArenaRefPtrWithoutDeregistering(void* aPtr,
                                                   ArenaObjectID aObjectID)
 {
   switch (aObjectID) {
-#define PRES_ARENA_OBJECT_WITH_ARENAREFPTR_SUPPORT(name_)                     \
-    case eArenaObjectID_##name_:                                              \
-      static_cast<ArenaRefPtr<name_>*>(aPtr)->ClearWithoutDeregistering();    \
+    // We use ArenaRefPtr<nsStyleContext>, which can be ServoStyleContext
+    // or GeckoStyleContext. GeckoStyleContext is actually arena managed,
+    // but ServoStyleContext isn't.
+    case eArenaObjectID_GeckoStyleContext:
+      static_cast<ArenaRefPtr<nsStyleContext>*>(aPtr)->ClearWithoutDeregistering();
       return;
-#include "nsPresArenaObjectList.h"
-#undef PRES_ARENA_OBJECT_WITH_ARENAREFPTR_SUPPORT
-    default:
-      break;
-  }
-  switch (aObjectID) {
-#define PRES_ARENA_OBJECT_WITHOUT_ARENAREFPTR_SUPPORT(name_)                  \
-    case eArenaObjectID_##name_:                                              \
-      MOZ_ASSERT(false, #name_ " must be declared in nsPresArenaObjectList.h "\
-                        "with PRES_ARENA_OBJECT_SUPPORTS_ARENAREFPTR");       \
-      break;
-#include "nsPresArenaObjectList.h"
-#undef PRES_ARENA_OBJECT_WITHOUT_ARENAREFPTR_SUPPORT
     default:
       MOZ_ASSERT(false, "unexpected ArenaObjectID value");
       break;
@@ -115,9 +106,17 @@ nsPresArena::Allocate(uint32_t aCode, size_t aSize)
 
   void* result;
   if (len > 0) {
-    // LIFO behavior for best cache utilization
+    // Remove from the end of the mEntries array to avoid memmoving entries,
+    // and use SetLengthAndRetainStorage to avoid a lot of malloc/free
+    // from ShrinkCapacity on smaller sizes.  500 pointers means the malloc size
+    // for the array is 4096 bytes or more on a 64-bit system.  The next smaller
+    // size is 2048 (with jemalloc), which we consider not worth compacting.
     result = list->mEntries.ElementAt(len - 1);
-    list->mEntries.RemoveElementAt(len - 1);
+    if (list->mEntries.Capacity() > 500) {
+      list->mEntries.RemoveElementAt(len - 1);
+    } else {
+      list->mEntries.SetLengthAndRetainStorage(len - 1);
+    }
 #if defined(DEBUG)
     {
       MOZ_MAKE_MEM_DEFINED(result, list->mEntrySize);
@@ -208,7 +207,7 @@ nsPresArena::AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
       case eArenaObjectID_nsRuleNode:
         p = &aArenaStats->mRuleNodes;
         break;
-      case eArenaObjectID_nsStyleContext:
+      case eArenaObjectID_GeckoStyleContext:
         p = &aArenaStats->mStyleContexts;
         break;
 #define STYLE_STRUCT(name_, checkdata_cb_)      \

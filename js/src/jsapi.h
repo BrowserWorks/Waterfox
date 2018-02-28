@@ -36,6 +36,7 @@
 #include "js/Realm.h"
 #include "js/RefCounted.h"
 #include "js/RootingAPI.h"
+#include "js/Stream.h"
 #include "js/TracingAPI.h"
 #include "js/UniquePtr.h"
 #include "js/Utility.h"
@@ -999,7 +1000,7 @@ JS_IsBuiltinFunctionConstructor(JSFunction* fun);
  * It is important that SpiderMonkey be initialized, and the first context
  * be created, in a single-threaded fashion.  Otherwise the behavior of the
  * library is undefined.
- * See: http://developer.mozilla.org/en/docs/Category:JSAPI_Reference
+ * See: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference
  */
 
 // Create a new runtime, with a single cooperative context for this thread.
@@ -1029,6 +1030,23 @@ JS_ResumeCooperativeContext(JSContext* cx);
 // become the runtime's active context.
 extern JS_PUBLIC_API(JSContext*)
 JS_NewCooperativeContext(JSContext* siblingContext);
+
+namespace JS {
+
+// Class to relinquish exclusive access to all zone groups in use by this
+// thread. This allows other cooperative threads to enter the zone groups
+// and modify their contents.
+struct AutoRelinquishZoneGroups
+{
+    explicit AutoRelinquishZoneGroups(JSContext* cx);
+    ~AutoRelinquishZoneGroups();
+
+  private:
+    JSContext* cx;
+    mozilla::Vector<void*> enterList;
+};
+
+} // namespace JS
 
 // Destroy a context allocated with JS_NewContext or JS_NewCooperativeContext.
 // The context must be the current active context in the runtime, and after
@@ -1201,6 +1219,16 @@ class JS_PUBLIC_API(ContextOptions) {
         return *this;
     }
 
+    bool streams() const { return streams_; }
+    ContextOptions& setStreams(bool flag) {
+        streams_ = flag;
+        return *this;
+    }
+    ContextOptions& toggleStreams() {
+        streams_ = !streams_;
+        return *this;
+    }
+
     bool wasmAlwaysBaseline() const { return wasmAlwaysBaseline_; }
     ContextOptions& setWasmAlwaysBaseline(bool flag) {
         wasmAlwaysBaseline_ = flag;
@@ -1311,6 +1339,7 @@ class JS_PUBLIC_API(ContextOptions) {
     bool strictMode_ : 1;
     bool extraWarnings_ : 1;
     bool forEachStatement_: 1;
+    bool streams_: 1;
 #ifdef FUZZING
     bool fuzzing_ : 1;
 #endif
@@ -1494,9 +1523,10 @@ JS_InitStandardClasses(JSContext* cx, JS::Handle<JSObject*> obj);
  * as usual for bool result-typed API entry points.
  *
  * This API can be called directly from a global object class's resolve op,
- * to define standard classes lazily.  The class's enumerate op should call
- * JS_EnumerateStandardClasses(cx, obj), to define eagerly during for..in
- * loops any classes not yet resolved lazily.
+ * to define standard classes lazily. The class should either have an enumerate
+ * hook that calls JS_EnumerateStandardClasses, or a newEnumerate hook that
+ * calls JS_NewEnumerateStandardClasses. newEnumerate is preferred because it's
+ * faster (does not define all standard classes).
  */
 extern JS_PUBLIC_API(bool)
 JS_ResolveStandardClass(JSContext* cx, JS::HandleObject obj, JS::HandleId id, bool* resolved);
@@ -1506,6 +1536,10 @@ JS_MayResolveStandardClass(const JSAtomState& names, jsid id, JSObject* maybeObj
 
 extern JS_PUBLIC_API(bool)
 JS_EnumerateStandardClasses(JSContext* cx, JS::HandleObject obj);
+
+extern JS_PUBLIC_API(bool)
+JS_NewEnumerateStandardClasses(JSContext* cx, JS::HandleObject obj, JS::AutoIdVector& properties,
+                               bool enumerableOnly);
 
 extern JS_PUBLIC_API(bool)
 JS_GetClassObject(JSContext* cx, JSProtoKey key, JS::MutableHandle<JSObject*> objp);
@@ -3973,7 +4007,7 @@ class JS_FRIEND_API(ReadOnlyCompileOptions) : public TransitiveCompileOptions
       : TransitiveCompileOptions(),
         lineno(1),
         column(0),
-        sourceStartColumn(0),
+        scriptSourceOffset(0),
         isRunOnce(false),
         noScriptRval(false)
     { }
@@ -3996,7 +4030,18 @@ class JS_FRIEND_API(ReadOnlyCompileOptions) : public TransitiveCompileOptions
     // POD options.
     unsigned lineno;
     unsigned column;
-    unsigned sourceStartColumn;
+    // The offset within the ScriptSource's full uncompressed text of the first
+    // character we're presenting for compilation with this CompileOptions.
+    //
+    // When we compile a LazyScript, we pass the compiler only the substring of
+    // the source the lazy function occupies. With chunked decompression, we
+    // may not even have the complete uncompressed source present in memory. But
+    // parse node positions are offsets within the ScriptSource's full text,
+    // and LazyScripts indicate their substring of the full source by its
+    // starting and ending offsets within the full text. This
+    // scriptSourceOffset field lets the frontend convert between these
+    // offsets and offsets within the substring presented for compilation.
+    unsigned scriptSourceOffset;
     // isRunOnce only applies to non-function scripts.
     bool isRunOnce;
     bool noScriptRval;
@@ -4069,12 +4114,8 @@ class JS_FRIEND_API(OwningCompileOptions) : public ReadOnlyCompileOptions
         return *this;
     }
     OwningCompileOptions& setUTF8(bool u) { utf8 = u; return *this; }
-    OwningCompileOptions& setColumn(unsigned c, unsigned ssc) {
-        MOZ_ASSERT(ssc <= c);
-        column = c;
-        sourceStartColumn = ssc;
-        return *this;
-    }
+    OwningCompileOptions& setColumn(unsigned c) { column = c; return *this; }
+    OwningCompileOptions& setScriptSourceOffset(unsigned o) { scriptSourceOffset = o; return *this; }
     OwningCompileOptions& setIsRunOnce(bool once) { isRunOnce = once; return *this; }
     OwningCompileOptions& setNoScriptRval(bool nsr) { noScriptRval = nsr; return *this; }
     OwningCompileOptions& setSelfHostingMode(bool shm) { selfHostingMode = shm; return *this; }
@@ -4170,12 +4211,8 @@ class MOZ_STACK_CLASS JS_FRIEND_API(CompileOptions) final : public ReadOnlyCompi
         return *this;
     }
     CompileOptions& setUTF8(bool u) { utf8 = u; return *this; }
-    CompileOptions& setColumn(unsigned c, unsigned ssc) {
-        MOZ_ASSERT(ssc <= c);
-        column = c;
-        sourceStartColumn = ssc;
-        return *this;
-    }
+    CompileOptions& setColumn(unsigned c) { column = c; return *this; }
+    CompileOptions& setScriptSourceOffset(unsigned o) { scriptSourceOffset = o; return *this; }
     CompileOptions& setIsRunOnce(bool once) { isRunOnce = once; return *this; }
     CompileOptions& setNoScriptRval(bool nsr) { noScriptRval = nsr; return *this; }
     CompileOptions& setSelfHostingMode(bool shm) { selfHostingMode = shm; return *this; }
@@ -4247,6 +4284,9 @@ CompileForNonSyntacticScope(JSContext* cx, const ReadOnlyCompileOptions& options
 
 extern JS_PUBLIC_API(bool)
 CanCompileOffThread(JSContext* cx, const ReadOnlyCompileOptions& options, size_t length);
+
+extern JS_PUBLIC_API(bool)
+CanDecodeOffThread(JSContext* cx, const ReadOnlyCompileOptions& options, size_t length);
 
 /*
  * Off thread compilation control flow.
@@ -4348,16 +4388,10 @@ CompileFunction(JSContext* cx, AutoObjectVector& envChain,
 } /* namespace JS */
 
 extern JS_PUBLIC_API(JSString*)
-JS_DecompileScript(JSContext* cx, JS::Handle<JSScript*> script, const char* name, unsigned indent);
-
-/*
- * API extension: OR this into indent to avoid pretty-printing the decompiled
- * source resulting from JS_DecompileFunction.
- */
-#define JS_DONT_PRETTY_PRINT    ((unsigned)0x8000)
+JS_DecompileScript(JSContext* cx, JS::Handle<JSScript*> script);
 
 extern JS_PUBLIC_API(JSString*)
-JS_DecompileFunction(JSContext* cx, JS::Handle<JSFunction*> fun, unsigned indent);
+JS_DecompileFunction(JSContext* cx, JS::Handle<JSFunction*> fun);
 
 
 /*
@@ -4570,6 +4604,9 @@ JS_ResetInterruptCallback(JSContext* cx, bool enable);
 
 extern JS_PUBLIC_API(void)
 JS_RequestInterruptCallback(JSContext* cx);
+
+extern JS_PUBLIC_API(void)
+JS_RequestInterruptCallbackCanWait(JSContext* cx);
 
 namespace JS {
 
@@ -6048,20 +6085,21 @@ JS_SetParallelParsingEnabled(JSContext* cx, bool enabled);
 extern JS_PUBLIC_API(void)
 JS_SetOffthreadIonCompilationEnabled(JSContext* cx, bool enabled);
 
-#define JIT_COMPILER_OPTIONS(Register)                                     \
-    Register(BASELINE_WARMUP_TRIGGER, "baseline.warmup.trigger")           \
-    Register(ION_WARMUP_TRIGGER, "ion.warmup.trigger")                     \
-    Register(ION_GVN_ENABLE, "ion.gvn.enable")                             \
-    Register(ION_FORCE_IC, "ion.forceinlineCaches")                        \
-    Register(ION_ENABLE, "ion.enable")                                     \
+#define JIT_COMPILER_OPTIONS(Register)                                      \
+    Register(BASELINE_WARMUP_TRIGGER, "baseline.warmup.trigger")            \
+    Register(ION_WARMUP_TRIGGER, "ion.warmup.trigger")                      \
+    Register(ION_GVN_ENABLE, "ion.gvn.enable")                              \
+    Register(ION_FORCE_IC, "ion.forceinlineCaches")                         \
+    Register(ION_ENABLE, "ion.enable")                                      \
     Register(ION_INTERRUPT_WITHOUT_SIGNAL, "ion.interrupt-without-signals") \
-    Register(ION_CHECK_RANGE_ANALYSIS, "ion.check-range-analysis")         \
-    Register(BASELINE_ENABLE, "baseline.enable")                           \
-    Register(OFFTHREAD_COMPILATION_ENABLE, "offthread-compilation.enable") \
-    Register(FULL_DEBUG_CHECKS, "jit.full-debug-checks")                   \
-    Register(JUMP_THRESHOLD, "jump-threshold")                             \
-    Register(ASMJS_ATOMICS_ENABLE, "asmjs.atomics.enable")                 \
-    Register(WASM_TEST_MODE, "wasm.test-mode")                             \
+    Register(ION_CHECK_RANGE_ANALYSIS, "ion.check-range-analysis")          \
+    Register(BASELINE_ENABLE, "baseline.enable")                            \
+    Register(OFFTHREAD_COMPILATION_ENABLE, "offthread-compilation.enable")  \
+    Register(FULL_DEBUG_CHECKS, "jit.full-debug-checks")                    \
+    Register(JUMP_THRESHOLD, "jump-threshold")                              \
+    Register(SIMULATOR_ALWAYS_INTERRUPT, "simulator.always-interrupt")      \
+    Register(ASMJS_ATOMICS_ENABLE, "asmjs.atomics.enable")                  \
+    Register(WASM_TEST_MODE, "wasm.test-mode")                              \
     Register(WASM_FOLD_OFFSETS, "wasm.fold-offsets")
 
 typedef enum JSJitCompilerOption {
@@ -6366,17 +6404,30 @@ SetBuildIdOp(JSContext* cx, BuildIdOp buildIdOp);
 /**
  * The WasmModule interface allows the embedding to hold a reference to the
  * underying C++ implementation of a JS WebAssembly.Module object for purposes
- * of (de)serialization off the object's JSRuntime's thread.
+ * of efficient postMessage() of WebAssembly.Module and (de)serialization off
+ * the object's JSRuntime's thread for IndexedDB.
+ *
+ * For postMessage() sharing:
+ *
+ * - GetWasmModule() is called when making a structured clone of payload
+ * containing a WebAssembly.Module object. The structured clone buffer holds a
+ * refcount of the JS::WasmModule until createObject() is called in the target
+ * agent's JSContext. The new WebAssembly.Module object continues to hold the
+ * JS::WasmModule and thus the final reference of a JS::WasmModule may be
+ * dropped from any thread and so the virtual destructor (and all internal
+ * methods of the C++ module) must be thread-safe.
+ *
+ * For (de)serialization:
  *
  * - Serialization starts when WebAssembly.Module is passed to the
  * structured-clone algorithm. JS::GetWasmModule is called on the JSRuntime
  * thread that initiated the structured clone to get the JS::WasmModule.
- * This interface is then taken to a background thread where serializedSize()
- * and serialize() are called to write the object to two files: a bytecode file
- * that always allows successful deserialization and a compiled-code file keyed
- * on cpu- and build-id that may become invalid if either of these change between
- * serialization and deserialization. After serialization, the reference is
- * dropped from the background thread.
+ * This interface is then taken to a background thread where the bytecode and
+ * compiled code are written into separate files: a bytecode file that always
+ * allows successful deserialization and a compiled-code file keyed on cpu- and
+ * build-id that may become invalid if either of these change between
+ * serialization and deserialization. After serialization, a reference is
+ * dropped from a separate thread so the virtual destructor must be thread-safe.
  *
  * - Deserialization starts when the structured clone algorithm encounters a
  * serialized WebAssembly.Module. On a background thread, the compiled-code file
@@ -6393,9 +6444,11 @@ struct WasmModule : js::AtomicRefCounted<WasmModule>
 {
     virtual ~WasmModule() {}
 
-    virtual void serializedSize(size_t* maybeBytecodeSize, size_t* maybeCompiledSize) const = 0;
-    virtual void serialize(uint8_t* maybeBytecodeBegin, size_t maybeBytecodeSize,
-                           uint8_t* maybeCompiledBegin, size_t maybeCompiledSize) const = 0;
+    virtual size_t bytecodeSerializedSize() const = 0;
+    virtual void bytecodeSerialize(uint8_t* bytecodeBegin, size_t bytecodeSize) const = 0;
+
+    virtual size_t compiledSerializedSize() const = 0;
+    virtual void compiledSerialize(uint8_t* compiledBegin, size_t compiledSize) const = 0;
 
     virtual JSObject* createObject(JSContext* cx) = 0;
 };

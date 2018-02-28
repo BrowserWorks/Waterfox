@@ -182,6 +182,13 @@ protected:
   virtual mozilla::ipc::IPCResult RecvPDataChannelConstructor(PDataChannelParent* aActor,
                                                               const uint32_t& channelId) override;
 
+  virtual PSimpleChannelParent*
+    AllocPSimpleChannelParent(const uint32_t& channelId) override;
+  virtual bool DeallocPSimpleChannelParent(PSimpleChannelParent* parent) override;
+
+  virtual mozilla::ipc::IPCResult RecvPSimpleChannelConstructor(PSimpleChannelParent* aActor,
+                                                              const uint32_t& channelId) override;
+
   virtual PFileChannelParent*
     AllocPFileChannelParent(const uint32_t& channelId) override;
   virtual bool DeallocPFileChannelParent(PFileChannelParent* parent) override;
@@ -235,7 +242,14 @@ protected:
 
   virtual mozilla::ipc::IPCResult RecvRemoveRequestContext(const uint64_t& rcid) override;
 
-  virtual mozilla::ipc::IPCResult RecvNotifyCurrentTopLevelOuterContentWindowId(const uint64_t& aWindowId) override;
+  /* WebExtensions */
+  virtual mozilla::ipc::IPCResult
+    RecvGetExtensionStream(const URIParams& aURI,
+                           GetExtensionStreamResolver&& aResolve) override;
+
+  virtual mozilla::ipc::IPCResult
+    RecvGetExtensionFD(const URIParams& aURI,
+                       GetExtensionFDResolver&& aResolve) override;
 };
 
 } // namespace net

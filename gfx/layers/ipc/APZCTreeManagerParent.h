@@ -79,6 +79,17 @@ public:
           uint64_t* aOutInputBlockId) override;
 
   mozilla::ipc::IPCResult
+  RecvReceiveKeyboardInputEvent(
+          const KeyboardInput& aEvent,
+          nsEventStatus* aOutStatus,
+          KeyboardInput* aOutEvent,
+          ScrollableLayerGuid* aOutTargetGuid,
+          uint64_t* aOutInputBlockId) override;
+
+  mozilla::ipc::IPCResult
+  RecvSetKeyboardMap(const KeyboardMap& aKeyboardMap) override;
+
+  mozilla::ipc::IPCResult
   RecvZoomToRect(
           const ScrollableLayerGuid& aGuid,
           const CSSRect& aRect,
@@ -116,6 +127,14 @@ public:
           const AsyncDragMetrics& aDragMetrics) override;
 
   mozilla::ipc::IPCResult
+  RecvStartAutoscroll(
+          const ScrollableLayerGuid& aGuid,
+          const ScreenPoint& aAnchorLocation) override;
+
+  mozilla::ipc::IPCResult
+  RecvStopAutoscroll(const ScrollableLayerGuid& aGuid) override;
+
+  mozilla::ipc::IPCResult
   RecvSetLongTapEnabled(const bool& aTapGestureEnabled) override;
 
   mozilla::ipc::IPCResult
@@ -129,10 +148,11 @@ public:
           const EventMessage& aEventMessage) override;
 
   mozilla::ipc::IPCResult
-  RecvTransformEventRefPoint(
+  RecvProcessUnhandledEvent(
           const LayoutDeviceIntPoint& aRefPoint,
           LayoutDeviceIntPoint* aOutRefPoint,
-          ScrollableLayerGuid* aOutTargetGuid) override;
+          ScrollableLayerGuid*  aOutTargetGuid,
+          uint64_t*             aOutFocusSequenceNumber) override;
 
   void
   ActorDestroy(ActorDestroyReason aWhy) override { }

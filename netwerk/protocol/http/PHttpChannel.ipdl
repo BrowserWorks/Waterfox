@@ -99,7 +99,6 @@ child:
                        bool                isFromCache,
                        bool                cacheEntryAvailable,
                        int32_t             cacheFetchCount,
-                       uint32_t            cacheLastFetched,
                        uint32_t            cacheExpirationTime,
                        nsCString           cachedCharset,
                        nsCString           securityInfoSerialization,
@@ -117,7 +116,7 @@ child:
   // Called to initiate content channel redirect, starts talking to sinks
   // on the content process and reports result via Redirect2Verify above
   async Redirect1Begin(uint32_t           registrarId,
-                       URIParams          newUri,
+                       URIParams          newOriginalUri,
                        uint32_t           redirectFlags,
                        nsHttpResponseHead responseHead,
                        nsCString          securityInfoSerialization,
@@ -141,6 +140,11 @@ child:
 
   // Tell the child to issue a deprecation warning.
   async IssueDeprecationWarning(uint32_t warning, bool asError);
+
+  // When CORS blocks the request in the parent process, it doesn't have the
+  // correct window ID, so send the message to the child for logging to the web
+  // console.
+  async LogBlockedCORSRequest(nsString message);
 
 both:
   // After receiving this message, the parent also calls

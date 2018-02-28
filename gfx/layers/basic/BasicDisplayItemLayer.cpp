@@ -17,6 +17,7 @@
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsRegion.h"                   // for nsIntRegion
 #include "mozilla/gfx/PathHelpers.h"
+#include "mozilla/gfx/Helpers.h"
 #include "nsDisplayList.h"              // for nsDisplayItem
 #include "nsCaret.h"
 
@@ -60,8 +61,7 @@ public:
     RefPtr<gfxContext> context = gfxContext::CreateOrNull(aDT, aDeviceOffset);
     context->SetMatrix(ThebesMatrix(transform));
 
-    nsRenderingContext ctx(context);
-    mItem->Paint(mBuilder, &ctx);
+    mItem->Paint(mBuilder, context);
   }
 
 protected:

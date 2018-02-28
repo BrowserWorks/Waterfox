@@ -346,41 +346,36 @@ MacroAssemblerARM::ma_movPatchable(ImmPtr imm, Register dest, Assembler::Conditi
     ma_movPatchable(Imm32(int32_t(imm.value)), dest, c);
 }
 
-/* static */ void
-MacroAssemblerARM::ma_mov_patch(Imm32 imm_, Register dest, Assembler::Condition c,
-                                RelocStyle rs, Instruction* i)
+/* static */
+template<class Iter>
+void
+MacroAssemblerARM::ma_mov_patch(Imm32 imm32, Register dest, Assembler::Condition c,
+                                RelocStyle rs, Iter iter)
 {
-    MOZ_ASSERT(i);
-    int32_t imm = imm_.value;
+    MOZ_ASSERT(iter.cur());
 
     // Make sure the current instruction is not an artificial guard inserted
     // by the assembler buffer.
-    i = i->skipPool();
+    iter.skipPool();
 
+    int32_t imm = imm32.value;
     switch(rs) {
       case L_MOVWT:
-        Assembler::as_movw_patch(dest, Imm16(imm & 0xffff), c, i);
-        i = i->next();
-        Assembler::as_movt_patch(dest, Imm16(imm >> 16 & 0xffff), c, i);
+        Assembler::as_movw_patch(dest, Imm16(imm & 0xffff), c, iter.cur());
+        Assembler::as_movt_patch(dest, Imm16(imm >> 16 & 0xffff), c, iter.next());
         break;
       case L_LDR:
-        Assembler::WritePoolEntry(i, c, imm);
+        Assembler::WritePoolEntry(iter.cur(), c, imm);
         break;
     }
 }
 
-/* static */ void
-MacroAssemblerARM::ma_mov_patch(ImmPtr imm, Register dest, Assembler::Condition c,
-                                RelocStyle rs, Instruction* i)
-{
-    ma_mov_patch(Imm32(int32_t(imm.value)), dest, c, rs, i);
-}
-
-Instruction*
-MacroAssemblerARM::offsetToInstruction(CodeOffset offs)
-{
-    return editSrc(BufferOffset(offs.offset()));
-}
+template void
+MacroAssemblerARM::ma_mov_patch(Imm32 imm32, Register dest, Assembler::Condition c,
+                                RelocStyle rs, InstructionIterator iter);
+template void
+MacroAssemblerARM::ma_mov_patch(Imm32 imm32, Register dest, Assembler::Condition c,
+                                RelocStyle rs, BufferInstructionIterator iter);
 
 void
 MacroAssemblerARM::ma_mov(Register src, Register dest, SBit s, Assembler::Condition c)
@@ -3277,22 +3272,6 @@ MacroAssemblerARMCompat::extractTag(const BaseIndex& address, Register scratch)
     return extractTag(Address(scratch, address.offset), scratch);
 }
 
-void
-MacroAssemblerARMCompat::moveValue(const Value& val, Register type, Register data)
-{
-    ma_mov(Imm32(val.toNunboxTag()), type);
-    if (val.isGCThing())
-        ma_mov(ImmGCPtr(val.toGCThing()), data);
-    else
-        ma_mov(Imm32(val.toNunboxPayload()), data);
-}
-
-void
-MacroAssemblerARMCompat::moveValue(const Value& val, const ValueOperand& dest)
-{
-    moveValue(val, dest.typeReg(), dest.payloadReg());
-}
-
 /////////////////////////////////////////////////////////////////
 // X86/X64-common (ARM too now) interface.
 /////////////////////////////////////////////////////////////////
@@ -3645,7 +3624,7 @@ MacroAssemblerARMCompat::handleFailureWithHandlerTail(void* handler)
     // No exception handler. Load the error value, load the new stack pointer
     // and return from the entry frame.
     bind(&entryFrame);
-    moveValue(MagicValue(JS_ION_ERROR), JSReturnOperand);
+    asMasm().moveValue(MagicValue(JS_ION_ERROR), JSReturnOperand);
     {
         ScratchRegisterScope scratch(asMasm());
         ma_ldr(Address(sp, offsetof(ResumeFromException, stackPointer)), sp, scratch);
@@ -5322,6 +5301,78 @@ MacroAssembler::pushFakeReturnAddress(Register scratch)
 
     MOZ_ASSERT_IF(!oom(), pseudoReturnOffset - offsetBeforePush == 8);
     return pseudoReturnOffset;
+}
+
+// ===============================================================
+// Move instructions
+
+void
+MacroAssembler::moveValue(const TypedOrValueRegister& src, const ValueOperand& dest)
+{
+    if (src.hasValue()) {
+        moveValue(src.valueReg(), dest);
+        return;
+    }
+
+    MIRType type = src.type();
+    AnyRegister reg = src.typedReg();
+
+    if (!IsFloatingPointType(type)) {
+        mov(ImmWord(MIRTypeToTag(type)), dest.typeReg());
+        if (reg.gpr() != dest.payloadReg())
+            mov(reg.gpr(), dest.payloadReg());
+        return;
+    }
+
+    ScratchDoubleScope scratch(*this);
+    FloatRegister freg = reg.fpu();
+    if (type == MIRType::Float32) {
+        convertFloat32ToDouble(freg, ScratchFloat32Reg);
+        freg = ScratchFloat32Reg;
+    }
+    ma_vxfer(freg, dest.payloadReg(), dest.typeReg());
+}
+
+void
+MacroAssembler::moveValue(const ValueOperand& src, const ValueOperand& dest)
+{
+    Register s0 = src.typeReg();
+    Register s1 = src.payloadReg();
+    Register d0 = dest.typeReg();
+    Register d1 = dest.payloadReg();
+
+    // Either one or both of the source registers could be the same as a
+    // destination register.
+    if (s1 == d0) {
+        if (s0 == d1) {
+            // If both are, this is just a swap of two registers.
+            ScratchRegisterScope scratch(*this);
+            MOZ_ASSERT(d1 != scratch);
+            MOZ_ASSERT(d0 != scratch);
+            ma_mov(d1, scratch);
+            ma_mov(d0, d1);
+            ma_mov(scratch, d0);
+            return;
+        }
+        // If only one is, copy that source first.
+        mozilla::Swap(s0, s1);
+        mozilla::Swap(d0, d1);
+    }
+
+    if (s0 != d0)
+        ma_mov(s0, d0);
+    if (s1 != d1)
+        ma_mov(s1, d1);
+}
+
+void
+MacroAssembler::moveValue(const Value& src, const ValueOperand& dest)
+{
+    ma_mov(Imm32(src.toNunboxTag()), dest.typeReg());
+    if (src.isGCThing())
+        ma_mov(ImmGCPtr(src.toGCThing()), dest.payloadReg());
+    else
+        ma_mov(Imm32(src.toNunboxPayload()), dest.payloadReg());
 }
 
 // ===============================================================

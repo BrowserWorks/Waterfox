@@ -1,43 +1,10 @@
 [
   {
-    "version": "clang 3.9.0",
-    "size": 166261192,
-    "digest": "52f3fc23f0f5c98050f8b0ac7c92a6752d067582a16f712a5a58074be98975d594f9e36249fc2be7f1cc2ca6d509c663faaf2bea66f949243cc1f41651638ba6",
-    "algorithm": "sha512",
-    "filename": "clang.tar.xz",
-    "unpack": true
-  },
-  {
-    "version": "gcc 4.9.4 + PR64905",
-    "size": 101297752,
-    "digest": "42aa2e3fdd232b5e390472a788e7f7db71a1fee4221e260b6cb58c9a1d73e6cdd10afcbac137f7844290169cd6b561b424ecc92b159e9726b0ad5de3f478a8be",
-    "algorithm": "sha512",
-    "filename": "gcc.tar.xz",
-    "unpack": true
-  },
-  {
-    "size": 6075028,
-    "visibility": "public",
-    "digest": "0b962ba55a5a2fbae44218683bdf6ea0dfe8165aba436173a065f7190976184586b9acf4c23478bc5b6d81a3e00f681bf16df0536c9c9718ad0570d064f69027",
-    "algorithm": "sha512",
-    "unpack": true,
-    "filename": "cctools.tar.xz"
-  },
-  {
     "size": 30823112,
     "visibility": "internal",
     "digest": "0c58e06a3ea8f4641c991a7406fc8733c574f0b4aa773bce0feaa5468d2b8440fa33cea056e16fad2b8a7ef4409ca7228113eb12adc87c3e115129d8a3b3b565",
     "algorithm": "sha512",
     "unpack": true,
     "filename": "MacOSX10.10.sdk.tar.xz"
-  },
-  {
-    "version": "sccache rev b21198a7183a2fe226ff49348b1c0b51bae9f4f8",
-    "algorithm": "sha512",
-    "visibility": "public",
-    "filename": "sccache2.tar.xz",
-    "unpack": true,
-    "digest": "b89c40dbf28c2bd54fadf017c15a8789f6e7611252a623cc3a1507e3dd6fc9e5a50d746e81776ba856e33fdc99b4a6413ba7c3ac0aed5f4835705da2b758ef22",
-    "size": 1020700
   }
 ]

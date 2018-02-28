@@ -10,7 +10,7 @@ load 493915-1.html
 load 495794-1.html
 load 576612-1.html
 load 752784-1.html
-skip-if(webrender) load 789075-1.html # bug 1366502 comment 42
+skip-if(Android) skip-if(webrender) load 789075-1.html # bug 1366502 comment 42, bug 1374405
 skip-if(Android&&AndroidVersion=='22') HTTP load 795892-1.html # bug 1358718
 load 844563.html
 load 846612.html
@@ -84,6 +84,7 @@ load 1185192.html
 load 1304948.html
 load 1319486.html
 load 1291702.html
+load 1384248.html
 load disconnect-wrong-destination.html
 load analyser-channels-1.html
 load audiocontext-double-suspend.html
@@ -100,3 +101,4 @@ skip-if(Android&&AndroidVersion=='22') load video-replay-after-audio-end.html # 
 # This needs to run at the end to avoid leaking busted state into other tests.
 load 691096-1.html
 load 1236639.html
+test-pref(media.navigator.permission.disabled,true) load 1388372.html

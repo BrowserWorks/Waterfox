@@ -8,12 +8,11 @@ use interfaces::{CefBrowser, CefBrowserHost, CefClient, cef_browser_t, cef_brows
 use types::cef_event_flags_t::{EVENTFLAG_ALT_DOWN, EVENTFLAG_CONTROL_DOWN, EVENTFLAG_SHIFT_DOWN};
 use types::cef_key_event_type_t::{KEYEVENT_CHAR, KEYEVENT_KEYDOWN, KEYEVENT_KEYUP, KEYEVENT_RAWKEYDOWN};
 use types::{cef_mouse_button_type_t, cef_mouse_event, cef_rect_t, cef_key_event, cef_window_handle_t};
-use webrender_traits::ScrollLocation;
+use webrender_api::ScrollLocation;
 use wrappers::CefWrap;
 
 use compositing::windowing::{WindowEvent, MouseWindowEvent};
-use euclid::point::TypedPoint2D;
-use euclid::size::TypedSize2D;
+use euclid::{TypedPoint2D, TypedVector2D, TypedSize2D};
 use libc::{c_double, c_int};
 use msg::constellation_msg::{self, KeyModifiers, KeyState};
 use script_traits::{MouseButton, TouchEventType};
@@ -470,7 +469,7 @@ full_cef_class_impl! {
             let event: &cef_mouse_event = event;
             let delta_x: c_int = delta_x;
             let delta_y: c_int = delta_y;
-            let delta = TypedPoint2D::new(delta_x as f32, delta_y as f32);
+            let delta = TypedVector2D::new(delta_x as f32, delta_y as f32);
             let origin = TypedPoint2D::new((*event).x as i32, (*event).y as i32);
             this.downcast().send_window_event(WindowEvent::Scroll(ScrollLocation::Delta(delta),
                                                                   origin,
@@ -487,8 +486,7 @@ full_cef_class_impl! {
             this.downcast().send_window_event(WindowEvent::PinchZoom((new_zoom_level / old_zoom_level) as f32))
         }}
 
-        fn initialize_compositing(&this,) -> () {{
-            this.downcast().send_window_event(WindowEvent::InitializeCompositing);
+        fn initialize_compositing(&_this,) -> () {{
         }}
 
         fn composite(&this,) -> () {{

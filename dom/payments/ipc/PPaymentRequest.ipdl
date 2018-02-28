@@ -11,7 +11,7 @@ namespace dom {
 
 struct IPCPaymentMethodData
 {
-  nsString[] supportedMethods;
+  nsString supportedMethods;
   nsString data;
 };
 
@@ -30,7 +30,7 @@ struct IPCPaymentItem
 
 struct IPCPaymentDetailsModifier
 {
-  nsString[] supportedMethods;
+  nsString supportedMethods;
   IPCPaymentItem total;
   IPCPaymentItem[] additionalDisplayItems;
   nsString data;
@@ -75,9 +75,93 @@ struct IPCPaymentCreateActionRequest
   IPCPaymentOptions options;
 };
 
+struct IPCPaymentCanMakeActionRequest
+{
+  nsString requestId;
+};
+
+struct IPCPaymentShowActionRequest
+{
+  nsString requestId;
+};
+
+struct IPCPaymentAbortActionRequest
+{
+  nsString requestId;
+};
+
+struct IPCPaymentCompleteActionRequest
+{
+  nsString requestId;
+  nsString completeStatus;
+};
+
+struct IPCPaymentUpdateActionRequest
+{
+  nsString requestId;
+  IPCPaymentDetails details;
+};
+
 union IPCPaymentActionRequest
 {
   IPCPaymentCreateActionRequest;
+  IPCPaymentCanMakeActionRequest;
+  IPCPaymentShowActionRequest;
+  IPCPaymentAbortActionRequest;
+  IPCPaymentCompleteActionRequest;
+  IPCPaymentUpdateActionRequest;
+};
+
+struct IPCPaymentCanMakeActionResponse
+{
+  nsString requestId;
+  bool result;
+};
+
+struct IPCPaymentShowActionResponse
+{
+  nsString requestId;
+  bool isAccepted;
+  nsString methodName;
+  nsString data;
+  nsString payerName;
+  nsString payerEmail;
+  nsString payerPhone;
+};
+
+struct IPCPaymentAbortActionResponse
+{
+  nsString requestId;
+  bool isSucceeded;
+};
+
+struct IPCPaymentCompleteActionResponse
+{
+  nsString requestId;
+  bool isCompleted;
+};
+
+union IPCPaymentActionResponse
+{
+  IPCPaymentCanMakeActionResponse;
+  IPCPaymentShowActionResponse;
+  IPCPaymentAbortActionResponse;
+  IPCPaymentCompleteActionResponse;
+};
+
+struct IPCPaymentAddress
+{
+  nsString country;
+  nsString[] addressLine;
+  nsString region;
+  nsString city;
+  nsString dependentLocality;
+  nsString postalCode;
+  nsString sortingCode;
+  nsString languageCode;
+  nsString organization;
+  nsString recipient;
+  nsString phone;
 };
 
 sync protocol PPaymentRequest
@@ -88,6 +172,13 @@ parent:
   async __delete__();
 
   async RequestPayment(IPCPaymentActionRequest aAction);
+
+child:
+  async RespondPayment(IPCPaymentActionResponse aResponse);
+  async ChangeShippingAddress(nsString aRequestId,
+                              IPCPaymentAddress aAddress);
+  async ChangeShippingOption(nsString aRequestId,
+                             nsString aOption);
 };
 
 } // end of namespace dom

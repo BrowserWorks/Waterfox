@@ -4,29 +4,33 @@
 
 //! Gecko's media-query device and expression representation.
 
+use app_units::AU_PER_PX;
 use app_units::Au;
 use context::QuirksMode;
 use cssparser::{CssStringWriter, Parser, RGBA, Token, BasicParseError};
+use euclid::ScaleFactor;
 use euclid::Size2D;
 use font_metrics::get_metrics_provider_for_product;
 use gecko::values::convert_nscolor_to_rgba;
 use gecko_bindings::bindings;
+use gecko_bindings::structs;
 use gecko_bindings::structs::{nsCSSKeyword, nsCSSProps_KTableEntry, nsCSSValue, nsCSSUnit, nsStringBuffer};
 use gecko_bindings::structs::{nsMediaExpression_Range, nsMediaFeature};
 use gecko_bindings::structs::{nsMediaFeature_ValueType, nsMediaFeature_RangeType, nsMediaFeature_RequirementFlags};
-use gecko_bindings::structs::RawGeckoPresContextOwned;
+use gecko_bindings::structs::{nsPresContext, RawGeckoPresContextOwned};
 use media_queries::MediaType;
 use parser::ParserContext;
 use properties::{ComputedValues, StyleBuilder};
 use properties::longhands::font_size;
 use selectors::parser::SelectorParseError;
+use servo_arc::Arc;
 use std::fmt::{self, Write};
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use str::starts_with_ignore_ascii_case;
 use string_cache::Atom;
+use style_traits::{CSSPixel, DevicePixel};
 use style_traits::{ToCss, ParseError, StyleParseError};
 use style_traits::viewport::ViewportConstraints;
-use stylearc::Arc;
 use values::{CSSFloat, specified};
 use values::computed::{self, ToComputedValue};
 
@@ -36,7 +40,7 @@ pub struct Device {
     /// NB: The pres context lifetime is tied to the styleset, who owns the
     /// stylist, and thus the `Device`, so having a raw pres context pointer
     /// here is fine.
-    pub pres_context: RawGeckoPresContextOwned,
+    pres_context: RawGeckoPresContextOwned,
     default_values: Arc<ComputedValues>,
     viewport_override: Option<ViewportConstraints>,
     /// The font size of the root element
@@ -51,6 +55,9 @@ pub struct Device {
     /// Whether any styles computed in the document relied on the root font-size
     /// by using rem units.
     used_root_font_size: AtomicBool,
+    /// Whether any styles computed in the document relied on the viewport size
+    /// by using vw/vh/vmin/vmax units.
+    used_viewport_size: AtomicBool,
 }
 
 unsafe impl Sync for Device {}
@@ -66,6 +73,7 @@ impl Device {
             viewport_override: None,
             root_font_size: AtomicIsize::new(font_size::get_initial_value().0 as isize), // FIXME(bz): Seems dubious?
             used_root_font_size: AtomicBool::new(false),
+            used_viewport_size: AtomicBool::new(false),
         }
     }
 
@@ -79,18 +87,11 @@ impl Device {
     /// Returns the default computed values as a reference, in order to match
     /// Servo.
     pub fn default_computed_values(&self) -> &ComputedValues {
-        &*self.default_values
-    }
-
-    /// Returns the default computed values, but wrapped in an arc for cheap
-    /// cloning.
-    pub fn default_computed_values_arc(&self) -> &Arc<ComputedValues> {
         &self.default_values
     }
 
-    /// Returns the default computed values as an `Arc`, in order to avoid
-    /// clones.
-    pub fn default_values_arc(&self) -> &Arc<ComputedValues> {
+    /// Returns the default computed values as an `Arc`.
+    pub fn default_computed_values_arc(&self) -> &Arc<ComputedValues> {
         &self.default_values
     }
 
@@ -105,12 +106,18 @@ impl Device {
         self.root_font_size.store(size.0 as isize, Ordering::Relaxed)
     }
 
+    /// Gets the pres context associated with this document.
+    pub fn pres_context(&self) -> &nsPresContext {
+        unsafe { &*self.pres_context }
+    }
+
     /// Recreates the default computed values.
     pub fn reset_computed_values(&mut self) {
         // NB: A following stylesheet flush will populate this if appropriate.
         self.viewport_override = None;
-        self.default_values = ComputedValues::default_values(unsafe { &*self.pres_context });
+        self.default_values = ComputedValues::default_values(self.pres_context());
         self.used_root_font_size.store(false, Ordering::Relaxed);
+        self.used_viewport_size.store(false, Ordering::Relaxed);
     }
 
     /// Returns whether we ever looked up the root font size of the Device.
@@ -134,10 +141,10 @@ impl Device {
             // FIXME(emilio): Gecko allows emulating random media with
             // mIsEmulatingMedia / mMediaEmulated . Refactor both sides so that
             // is supported (probably just making MediaType an Atom).
-            if (*self.pres_context).mMedium == atom!("screen").as_ptr() {
+            if self.pres_context().mMedium == atom!("screen").as_ptr() {
                 MediaType::Screen
             } else {
-                debug_assert!((*self.pres_context).mMedium == atom!("print").as_ptr());
+                debug_assert!(self.pres_context().mMedium == atom!("print").as_ptr());
                 MediaType::Print
             }
         }
@@ -145,24 +152,39 @@ impl Device {
 
     /// Returns the current viewport size in app units.
     pub fn au_viewport_size(&self) -> Size2D<Au> {
+        self.used_viewport_size.store(true, Ordering::Relaxed);
         self.viewport_override.as_ref().map(|v| {
             Size2D::new(Au::from_f32_px(v.size.width),
                         Au::from_f32_px(v.size.height))
         }).unwrap_or_else(|| unsafe {
             // TODO(emilio): Need to take into account scrollbars.
-            Size2D::new(Au((*self.pres_context).mVisibleArea.width),
-                        Au((*self.pres_context).mVisibleArea.height))
+            let area = &self.pres_context().mVisibleArea;
+            Size2D::new(Au(area.width), Au(area.height))
         })
+    }
+
+    /// Returns whether we ever looked up the viewport size of the Device.
+    pub fn used_viewport_size(&self) -> bool {
+        self.used_viewport_size.load(Ordering::Relaxed)
+    }
+
+    /// Returns the device pixel ratio.
+    pub fn device_pixel_ratio(&self) -> ScaleFactor<f32, CSSPixel, DevicePixel> {
+        let override_dppx = self.pres_context().mOverrideDPPX;
+        if override_dppx > 0.0 { return ScaleFactor::new(override_dppx); }
+        let au_per_dpx = self.pres_context().mCurAppUnitsPerDevPixel as f32;
+        let au_per_px = AU_PER_PX as f32;
+        ScaleFactor::new(au_per_px / au_per_dpx)
     }
 
     /// Returns whether document colors are enabled.
     pub fn use_document_colors(&self) -> bool {
-        unsafe { (*self.pres_context).mUseDocumentColors() != 0 }
+        self.pres_context().mUseDocumentColors() != 0
     }
 
     /// Returns the default background color.
     pub fn default_background_color(&self) -> RGBA {
-        convert_nscolor_to_rgba(unsafe { (*self.pres_context).mBackgroundColor })
+        convert_nscolor_to_rgba(self.pres_context().mBackgroundColor)
     }
 }
 
@@ -230,24 +252,23 @@ impl Resolution {
     }
 
     fn parse<'i, 't>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i>> {
-        let (value, unit) = match try!(input.next()) {
-            Token::Dimension(value, unit) => {
+        let (value, unit) = match *input.next()? {
+            Token::Dimension { value, ref unit, .. } => {
                 (value, unit)
             },
-            t => return Err(BasicParseError::UnexpectedToken(t).into()),
+            ref t => return Err(BasicParseError::UnexpectedToken(t.clone()).into()),
         };
 
-        let inner_value = value.value;
-        if inner_value <= 0. {
+        if value <= 0. {
             return Err(StyleParseError::UnspecifiedError.into())
         }
 
         (match_ignore_ascii_case! { &unit,
-            "dpi" => Ok(Resolution::Dpi(inner_value)),
-            "dppx" => Ok(Resolution::Dppx(inner_value)),
-            "dpcm" => Ok(Resolution::Dpcm(inner_value)),
+            "dpi" => Ok(Resolution::Dpi(value)),
+            "dppx" => Ok(Resolution::Dppx(value)),
+            "dpcm" => Ok(Resolution::Dpcm(value)),
             _ => Err(())
-        }).map_err(|()| StyleParseError::UnexpectedDimension(unit).into())
+        }).map_err(|()| StyleParseError::UnexpectedDimension(unit.clone()).into())
     }
 }
 
@@ -405,13 +426,8 @@ impl MediaExpressionValue {
 fn find_feature<F>(mut f: F) -> Option<&'static nsMediaFeature>
     where F: FnMut(&'static nsMediaFeature) -> bool,
 {
-    // FIXME(emilio): With build-time bindgen, we would be able to use
-    // structs::nsMediaFeatures_features. That would unfortunately break MSVC
-    // builds, or require one bindings file per platform.
-    //
-    // I'm not into any of those, so meanwhile let's use a FFI function.
     unsafe {
-        let mut features = bindings::Gecko_GetMediaFeatures();
+        let mut features = structs::nsMediaFeatures_features.as_ptr();
         while !(*features).mName.is_null() {
             if f(&*features) {
                 return Some(&*features);
@@ -419,7 +435,6 @@ fn find_feature<F>(mut f: F) -> Option<&'static nsMediaFeature>
             features = features.offset(1);
         }
     }
-
     None
 }
 
@@ -463,49 +478,60 @@ impl Expression {
     /// ```
     pub fn parse<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
                          -> Result<Self, ParseError<'i>> {
-        try!(input.expect_parenthesis_block());
+        input.expect_parenthesis_block()?;
         input.parse_nested_block(|input| {
-            let ident = try!(input.expect_ident());
+            // FIXME: remove extra indented block when lifetimes are non-lexical
+            let feature;
+            let range;
+            {
+                let ident = input.expect_ident()?;
 
-            let mut flags = 0;
-            let result = {
-                let mut feature_name = &*ident;
+                let mut flags = 0;
+                let result = {
+                    let mut feature_name = &**ident;
 
-                // TODO(emilio): this is under a pref in Gecko.
-                if starts_with_ignore_ascii_case(feature_name, "-webkit-") {
-                    feature_name = &feature_name[8..];
-                    flags |= nsMediaFeature_RequirementFlags::eHasWebkitPrefix as u8;
-                }
+                    if unsafe { structs::StylePrefs_sWebkitPrefixedAliasesEnabled } &&
+                       starts_with_ignore_ascii_case(feature_name, "-webkit-") {
+                        feature_name = &feature_name[8..];
+                        flags |= nsMediaFeature_RequirementFlags::eHasWebkitPrefix as u8;
+                        if unsafe { structs::StylePrefs_sWebkitDevicePixelRatioEnabled } {
+                            flags |= nsMediaFeature_RequirementFlags::eWebkitDevicePixelRatioPrefEnabled as u8;
+                        }
+                    }
 
-                let range = if starts_with_ignore_ascii_case(feature_name, "min-") {
-                    feature_name = &feature_name[4..];
-                    nsMediaExpression_Range::eMin
-                } else if starts_with_ignore_ascii_case(feature_name, "max-") {
-                    feature_name = &feature_name[4..];
-                    nsMediaExpression_Range::eMax
-                } else {
-                    nsMediaExpression_Range::eEqual
+                    let range = if starts_with_ignore_ascii_case(feature_name, "min-") {
+                        feature_name = &feature_name[4..];
+                        nsMediaExpression_Range::eMin
+                    } else if starts_with_ignore_ascii_case(feature_name, "max-") {
+                        feature_name = &feature_name[4..];
+                        nsMediaExpression_Range::eMax
+                    } else {
+                        nsMediaExpression_Range::eEqual
+                    };
+
+                    let atom = Atom::from(feature_name);
+                    match find_feature(|f| atom.as_ptr() == unsafe { *f.mName }) {
+                        Some(f) => Ok((f, range)),
+                        None => Err(()),
+                    }
                 };
 
-                let atom = Atom::from(feature_name);
-                match find_feature(|f| atom.as_ptr() == unsafe { *f.mName }) {
-                    Some(f) => Ok((f, range)),
-                    None => Err(()),
+                match result {
+                    Ok((f, r)) => {
+                        feature = f;
+                        range = r;
+                    }
+                    Err(()) => return Err(SelectorParseError::UnexpectedIdent(ident.clone()).into()),
                 }
-            };
 
-            let (feature, range) = match result {
-                Ok((feature, range)) => (feature, range),
-                Err(()) => return Err(SelectorParseError::UnexpectedIdent(ident).into()),
-            };
+                if (feature.mReqFlags & !flags) != 0 {
+                    return Err(SelectorParseError::UnexpectedIdent(ident.clone()).into());
+                }
 
-            if (feature.mReqFlags & !flags) != 0 {
-                return Err(SelectorParseError::UnexpectedIdent(ident).into());
-            }
-
-            if range != nsMediaExpression_Range::eEqual &&
-                feature.mRangeType != nsMediaFeature_RangeType::eMinMaxAllowed {
-                return Err(SelectorParseError::UnexpectedIdent(ident).into());
+                if range != nsMediaExpression_Range::eEqual &&
+                    feature.mRangeType != nsMediaFeature_RangeType::eMinMaxAllowed {
+                    return Err(SelectorParseError::UnexpectedIdent(ident.clone()).into());
+                }
             }
 
             // If there's no colon, this is a media query of the form
@@ -581,7 +607,7 @@ impl Expression {
                     MediaExpressionValue::Enumerated(value)
                 }
                 nsMediaFeature_ValueType::eIdent => {
-                    MediaExpressionValue::Ident(input.expect_ident()?.into_owned())
+                    MediaExpressionValue::Ident(input.expect_ident()?.as_ref().to_owned())
                 }
             };
 
@@ -627,15 +653,13 @@ impl Expression {
         // em units are relative to the initial font-size.
         let context = computed::Context {
             is_root_element: false,
-            device: device,
-            inherited_style: default_values,
-            layout_parent_style: default_values,
-            style: StyleBuilder::for_derived_style(default_values),
+            builder: StyleBuilder::for_derived_style(device, default_values, None, None),
             font_metrics_provider: &provider,
             cached_system_font: None,
             in_media_query: true,
             // TODO: pass the correct value here.
             quirks_mode: quirks_mode,
+            for_smil_animation: false,
         };
 
         let required_value = match self.value {

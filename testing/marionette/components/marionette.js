@@ -7,12 +7,14 @@
 const {Constructor: CC, interfaces: Ci, utils: Cu, classes: Cc} = Components;
 
 Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(
     this, "env", "@mozilla.org/process/environment;1", "nsIEnvironment");
+
+XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
+    "resource://gre/modules/Preferences.jsm");
 
 const MARIONETTE_CONTRACT_ID = "@mozilla.org/remote/marionette;1";
 const MARIONETTE_CID = Components.ID("{786a1369-dca5-4adc-8486-33d23c88010a}");
@@ -24,7 +26,7 @@ const PREF_LOG_LEVEL_FALLBACK = "marionette.logging";
 
 const DEFAULT_LOG_LEVEL = "info";
 const LOG_LEVELS = new class extends Map {
-  constructor () {
+  constructor() {
     super([
       ["fatal", Log.Level.Fatal],
       ["error", Log.Level.Error],
@@ -36,7 +38,7 @@ const LOG_LEVELS = new class extends Map {
     ]);
   }
 
-  get (level) {
+  get(level) {
     let s = new String(level).toLowerCase();
     if (!this.has(s)) {
       return DEFAULT_LOG_LEVEL;
@@ -67,13 +69,44 @@ const ServerSocket = CC("@mozilla.org/network/server-socket;1",
     "nsIServerSocket",
     "initSpecialConnection");
 
+const {PREF_STRING, PREF_BOOL, PREF_INT, PREF_INVALID} = Ci.nsIPrefBranch;
+
+function getPrefVal(pref) {
+  let prefType = Services.prefs.getPrefType(pref);
+  let prefValue;
+  switch (prefType) {
+    case PREF_STRING:
+      prefValue = Services.prefs.getStringPref(pref);
+      break;
+
+    case PREF_BOOL:
+      prefValue = Services.prefs.getBoolPref(pref);
+      break;
+
+    case PREF_INT:
+      prefValue = Services.prefs.getIntPref(pref);
+      break;
+
+    case PREF_INVALID:
+      prefValue = undefined;
+      break;
+
+    default:
+      throw new TypeError(`Unexpected preference type (${prefType}) for ` +
+                          `${pref}`);
+  }
+
+  return prefValue;
+}
+
 // Get preference value of |preferred|, falling back to |fallback|
 // if |preferred| is not user-modified and |fallback| exists.
-function getPref (preferred, fallback) {
-  if (!Preferences.isSet(preferred) && Preferences.has(fallback)) {
-    return Preferences.get(fallback, Preferences.get(preferred));
+function getPref(preferred, fallback) {
+  if (!Services.prefs.prefHasUserValue(preferred) &&
+      Services.prefs.getPrefType(fallback) != Ci.nsIPrefBranch.PREF_INVALID) {
+    return getPrefVal(fallback, getPrefVal(preferred));
   }
-  return Preferences.get(preferred);
+  return getPrefVal(preferred);
 }
 
 // Marionette preferences recently changed names.  This is an abstraction
@@ -82,16 +115,16 @@ function getPref (preferred, fallback) {
 //
 // This shim can be removed when Firefox 55 ships.
 const prefs = {
-  get port () {
+  get port() {
     return getPref(PREF_PORT, PREF_PORT_FALLBACK);
   },
 
-  get logLevel () {
+  get logLevel() {
     let s = getPref(PREF_LOG_LEVEL, PREF_LOG_LEVEL_FALLBACK);
     return LOG_LEVELS.get(s);
   },
 
-  readFromEnvironment (key) {
+  readFromEnvironment(key) {
     const env = Cc["@mozilla.org/process/environment;1"]
         .getService(Ci.nsIEnvironment);
 
@@ -150,51 +183,39 @@ MarionetteComponent.prototype = {
   helpInfo: "  --marionette       Enable remote control server.\n",
 };
 
-MarionetteComponent.prototype.onSocketAccepted = function (socket, transport) {
-  this.logger.info("onSocketAccepted for Marionette dummy socket");
-};
-
-MarionetteComponent.prototype.onStopListening = function (socket, status) {
-  this.logger.info(`onStopListening for Marionette dummy socket, code ${status}`);
-  socket.close();
-};
-
 // Handle -marionette flag
-MarionetteComponent.prototype.handle = function (cmdLine) {
+MarionetteComponent.prototype.handle = function(cmdLine) {
   if (!this.enabled && cmdLine.handleFlag("marionette", false)) {
     this.enabled = true;
     this.logger.info("Enabled via --marionette");
   }
 };
 
-MarionetteComponent.prototype.observe = function (subject, topic, data) {
+MarionetteComponent.prototype.observe = function(subject, topic, data) {
   this.logger.debug(`Received observer notification "${topic}"`);
 
   switch (topic) {
+    case "profile-after-change":
+      Services.obs.addObserver(this, "command-line-startup");
+      Services.obs.addObserver(this, "sessionstore-windows-restored");
+
+      prefs.readFromEnvironment(ENV_PRESERVE_PREFS);
+      break;
+
+    // In safe mode the command line handlers are getting parsed after the
+    // safe mode dialog has been closed. To allow Marionette to start
+    // earlier, use the CLI startup observer notification for
+    // special-cased handlers, which gets fired before the dialog appears.
     case "command-line-startup":
       Services.obs.removeObserver(this, topic);
       this.handle(subject);
 
-    case "profile-after-change":
-      // Using sessionstore-windows-restored as the xpcom category doesn't
-      // seem to work, so we wait for that by adding an observer here.
-      Services.obs.addObserver(this, "sessionstore-windows-restored");
-
-      // In safe mode the command line handlers are getting parsed after the
-      // safe mode dialog has been closed. To allow Marionette to start
-      // earlier, register the CLI startup observer notification for
-      // special-cased handlers, which gets fired before the dialog appears.
-      Services.obs.addObserver(this, "command-line-startup");
-
-      prefs.readFromEnvironment(ENV_PRESERVE_PREFS);
-
-      if (this.enabled) {
-        // We want to suppress the modal dialog that's shown
-        // when starting up in safe-mode to enable testing.
-        if (Services.appinfo.inSafeMode) {
-          Services.obs.addObserver(this, "domwindowopened");
-        }
+      // We want to suppress the modal dialog that's shown
+      // when starting up in safe-mode to enable testing.
+      if (this.enabled && Services.appinfo.inSafeMode) {
+        Services.obs.addObserver(this, "domwindowopened");
       }
+
       break;
 
     case "domwindowclosed":
@@ -244,14 +265,14 @@ MarionetteComponent.prototype.observe = function (subject, topic, data) {
   }
 };
 
-MarionetteComponent.prototype.setupLogger = function (level) {
+MarionetteComponent.prototype.setupLogger = function(level) {
   let logger = Log.repository.getLogger("Marionette");
   logger.level = level;
   logger.addAppender(new Log.DumpAppender());
   return logger;
 };
 
-MarionetteComponent.prototype.suppressSafeModeDialog = function (win) {
+MarionetteComponent.prototype.suppressSafeModeDialog = function(win) {
   win.addEventListener("load", () => {
     if (win.document.getElementById("safeModeDialog")) {
       // accept the dialog to start in safe-mode
@@ -263,15 +284,18 @@ MarionetteComponent.prototype.suppressSafeModeDialog = function (win) {
   }, {once: true});
 };
 
-MarionetteComponent.prototype.init = function () {
+MarionetteComponent.prototype.init = function() {
   if (this.running || !this.enabled || !this.finalUIStartup) {
     return;
   }
 
   // Delay initialization until we are done with delayed startup...
-  Services.tm.mainThread.idleDispatch(() => {
+  Services.tm.idleDispatchToMainThread(() => {
     // ... and with startup tests.
-    Services.tm.mainThread.idleDispatch(() => {
+    let promise = Promise.resolve();
+    if ("@mozilla.org/test/startuprecorder;1" in Cc)
+      promise = Cc["@mozilla.org/test/startuprecorder;1"].getService().wrappedJSObject.done;
+    promise.then(() => {
       let s;
       try {
         Cu.import("chrome://marionette/content/server.js");
@@ -288,7 +312,7 @@ MarionetteComponent.prototype.init = function () {
   });
 };
 
-MarionetteComponent.prototype.uninit = function () {
+MarionetteComponent.prototype.uninit = function() {
   if (!this.running) {
     return;
   }

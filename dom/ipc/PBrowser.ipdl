@@ -29,12 +29,11 @@ include URIParams;
 include PPrintingTypes;
 include PTabContext;
 
+include "mozilla/GfxMessageUtils.h";
+include "mozilla/layers/LayersMessageUtils.h";
 
 using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
-using class mozilla::gfx::Matrix from "mozilla/gfx/Matrix.h";
-using struct gfxSize from "gfxPoint.h";
-using CSSRect from "Units.h";
-using CSSSize from "Units.h";
+using mozilla::gfx::Matrix from "mozilla/gfx/Matrix.h";
 using mozilla::LayoutDeviceIntPoint from "Units.h";
 using mozilla::LayoutDevicePoint from "Units.h";
 using mozilla::ScreenIntPoint from "Units.h";
@@ -64,7 +63,6 @@ using class mozilla::WidgetSelectionEvent from "ipc/nsGUIEventIPC.h";
 using class mozilla::WidgetTouchEvent from "ipc/nsGUIEventIPC.h";
 using class mozilla::WidgetPluginEvent from "ipc/nsGUIEventIPC.h";
 using struct mozilla::dom::RemoteDOMEvent from "mozilla/dom/TabMessageUtils.h";
-using mozilla::dom::ScreenOrientationInternal from "mozilla/dom/ScreenOrientation.h";
 using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
 using mozilla::layers::CompositorOptions from "mozilla/layers/CompositorOptions.h";
 using mozilla::CSSToScreenScale from "Units.h";
@@ -149,11 +147,6 @@ parent:
     sync PPluginWidget();
 
     async PPaymentRequest();
-
-    /**
-     * Return native data of root widget
-     */
-    nested(inside_cpow) sync GetWidgetNativeData() returns (WindowsHandle value);
 
     /**
      * Sends an NS_NATIVE_CHILD_OF_SHAREABLE_WINDOW to be adopted by the
@@ -367,21 +360,6 @@ parent:
     sync IsParentWindowMainWidgetVisible() returns (bool visible);
 
     /**
-     * Gets the DPI of the screen corresponding to this browser.
-     */
-    sync GetDPI() returns (float value);
-
-    /**
-     * Gets the default scaling factor of the screen corresponding to this browser.
-     */
-    sync GetDefaultScale() returns (double value);
-
-    /**
-     * Gets the rounding of coordinates in the widget.
-     */
-    sync GetWidgetRounding() returns (int32_t value);
-
-    /**
      * Set the native cursor.
      * @param value
      *   The widget cursor to set.
@@ -460,13 +438,9 @@ parent:
      *
      * @param opener the PBrowser whose content called window.open.
      */
-    sync BrowserFrameOpenWindow(PBrowser opener, PRenderFrame renderFrame,
-                                nsString aURL, nsString aName, nsString aFeatures)
-      returns (bool windowOpened,
-               TextureFactoryIdentifier textureFactoryIdentifier,
-               uint64_t layersId,
-               CompositorOptions compositorOptions,
-               uint32_t maxTouchPoints);
+    async BrowserFrameOpenWindow(PBrowser opener, PRenderFrame renderFrame,
+                                 nsString aURL, nsString aName, nsString aFeatures)
+        returns (CreatedWindowInfo window);
 
     /**
      * Tells the containing widget whether the given input block results in a
@@ -637,10 +611,7 @@ child:
 
     async LoadURL(nsCString uri, ShowInfo info);
 
-    async UpdateDimensions(CSSRect rect, CSSSize size,
-                           ScreenOrientationInternal orientation,
-                           LayoutDeviceIntPoint clientOffset,
-                           LayoutDeviceIntPoint chromeDisp) compressall;
+    async UpdateDimensions(DimensionInfo dimensions) compressall;
 
     async SizeModeChanged(nsSizeMode sizeMode);
 
@@ -819,10 +790,9 @@ child:
      *
      * @param event keyboard event
      * @param isTrusted true if triggered by a trusted key event
-     * @param modifierMask indicates which accesskey modifiers are pressed
      */
     async HandleAccessKey(WidgetKeyboardEvent event,
-                          uint32_t[] charCodes, int32_t modifierMask);
+                          uint32_t[] charCodes);
 
     /**
      * Tells the root child docShell whether or not to use
@@ -901,6 +871,12 @@ child:
      * be called before the first non-blank document is loaded in the TabChild.
      */
     async SetOriginAttributes(OriginAttributes aOriginAttributes);
+
+    /**
+     * Pass the current handle for the current native widget to the content
+     * process, so it can be used by PuppetWidget.
+     */
+    async SetWidgetNativeData(WindowsHandle aHandle);
 
 /*
  * FIXME: write protocol!

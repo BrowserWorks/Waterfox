@@ -308,18 +308,17 @@ public:
   void CreateWebRenderCommandsForBCBorders(mozilla::wr::DisplayListBuilder& aBuilder,
                                            const mozilla::layers::StackingContextHelper& aSc,
                                            nsTArray<mozilla::layers::WebRenderParentCommand>& aParentCommands,
-                                           mozilla::layers::WebRenderDisplayItemLayer* aLayer,
                                            const nsPoint& aPt);
 
   virtual void MarkIntrinsicISizesDirty() override;
   // For border-collapse tables, the caller must not add padding and
   // border to the results of these functions.
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
   virtual IntrinsicISizeOffsetData IntrinsicISizeOffsets() override;
 
   virtual mozilla::LogicalSize
-  ComputeSize(nsRenderingContext*         aRenderingContext,
+  ComputeSize(gfxContext*                 aRenderingContext,
               mozilla::WritingMode        aWM,
               const mozilla::LogicalSize& aCBSize,
               nscoord                     aAvailableISize,
@@ -329,7 +328,7 @@ public:
               ComputeSizeFlags            aFlags) override;
 
   virtual mozilla::LogicalSize
-  ComputeAutoSize(nsRenderingContext*         aRenderingContext,
+  ComputeAutoSize(gfxContext*                 aRenderingContext,
                   mozilla::WritingMode        aWM,
                   const mozilla::LogicalSize& aCBSize,
                   nscoord                     aAvailableISize,
@@ -342,7 +341,7 @@ public:
    * A copy of nsFrame::ShrinkWidthToFit that calls a different
    * GetPrefISize, since tables have two different ones.
    */
-  nscoord TableShrinkISizeToFit(nsRenderingContext *aRenderingContext,
+  nscoord TableShrinkISizeToFit(gfxContext *aRenderingContext,
                                 nscoord aWidthInCB);
 
   // XXXldb REWRITE THIS COMMENT!
@@ -593,12 +592,14 @@ public:
 
   virtual bool ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas) override;
 
-  // Update the style of our table wrapper frame.
-  virtual void DoUpdateStyleOfOwnedAnonBoxes(
-    mozilla::ServoStyleSet& aStyleSet,
-    nsStyleChangeList& aChangeList,
-    nsChangeHint aHintForThisFrame) override;
+  // Return our wrapper frame.
+  void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
+
 protected:
+  static void UpdateStyleOfOwnedAnonBoxesForTableWrapper(
+    nsIFrame* aOwningFrame,
+    nsIFrame* aWrapperFrame,
+    mozilla::ServoRestyleState& aRestyleState);
 
   /** protected constructor.
     * @see NewFrame
@@ -635,7 +636,7 @@ protected:
   // This calls the col group and column reflow methods, which do two things:
   //  (1) set all the dimensions to 0
   //  (2) notify the table about colgroups or columns with hidden visibility
-  void ReflowColGroups(nsRenderingContext* aRenderingContext);
+  void ReflowColGroups(gfxContext* aRenderingContext);
 
   /** return the isize of the table taking into account visibility collapse
     * on columns and colgroups
@@ -1036,8 +1037,8 @@ inline void nsTableFrame::SetHasBCBorders(bool aValue)
 inline nscoord
 nsTableFrame::GetContinuousIStartBCBorderWidth() const
 {
-  int32_t aPixelsToTwips = nsPresContext::AppUnitsPerCSSPixel();
-  return BC_BORDER_END_HALF_COORD(aPixelsToTwips, mBits.mIStartContBCBorder);
+  int32_t d2a = PresContext()->AppUnitsPerDevPixel();
+  return BC_BORDER_END_HALF_COORD(d2a, mBits.mIStartContBCBorder);
 }
 
 inline void nsTableFrame::SetContinuousIStartBCBorderWidth(nscoord aValue)

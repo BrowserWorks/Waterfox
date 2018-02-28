@@ -70,7 +70,10 @@ ExternalHelperAppChild::OnStartRequest(nsIRequest *request, nsISupports *ctx)
   // DivertToParent or SendOnStartRequest just in case.
   nsCOMPtr<nsPIDOMWindowOuter> window =
     do_GetInterface(mHandler->GetDialogParent());
-  TabChild *tabChild = window ? mozilla::dom::TabChild::GetFrom(window) : nullptr;
+  NS_ENSURE_TRUE(window, NS_ERROR_NOT_AVAILABLE);
+
+  TabChild *tabChild = mozilla::dom::TabChild::GetFrom(window);
+  NS_ENSURE_TRUE(tabChild, NS_ERROR_NOT_AVAILABLE);
 
   nsCOMPtr<nsIDivertableChannel> divertable = do_QueryInterface(request);
   if (divertable) {

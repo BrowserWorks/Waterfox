@@ -8,6 +8,7 @@
 
 #include "nscore.h"
 #include "nsIHTTPHeaderListener.h"
+#include "nsINamed.h"
 #include "nsIRequest.h"
 #include "nsITimer.h"
 #include "nsCOMArray.h"
@@ -40,27 +41,9 @@ protected:
   nsNPAPIPluginStreamListener*          mStreamListener; // only valid if browser initiated
 };
 
-// Used to handle NPN_NewStream() - writes the stream as received by the plugin
-// to a file and at completion (NPN_DestroyStream), tells the browser to load it into
-// a plugin-specified target
-class nsPluginStreamToFile : public nsIOutputStream
-{
-public:
-  nsPluginStreamToFile(const char* target, nsIPluginInstanceOwner* owner);
-
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSIOUTPUTSTREAM
-protected:
-  virtual ~nsPluginStreamToFile();
-  char* mTarget;
-  nsCString mFileURL;
-  nsCOMPtr<nsIFile> mTempFile;
-  nsCOMPtr<nsIOutputStream> mOutputStream;
-  nsIPluginInstanceOwner* mOwner;
-};
-
 class nsNPAPIPluginStreamListener : public nsITimerCallback,
-                                    public nsIHTTPHeaderListener
+                                    public nsIHTTPHeaderListener,
+                                    public nsINamed
 {
 private:
   typedef mozilla::PluginLibrary PluginLibrary;
@@ -69,6 +52,7 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
   NS_DECL_NSIHTTPHEADERLISTENER
+  NS_DECL_NSINAMED
 
   nsNPAPIPluginStreamListener(nsNPAPIPluginInstance* inst, void* notifyData,
                               const char* aURL);
@@ -77,9 +61,9 @@ public:
   nsresult OnDataAvailable(nsPluginStreamListenerPeer* streamPeer,
                            nsIInputStream* input,
                            uint32_t length);
-  nsresult OnFileAvailable(nsPluginStreamListenerPeer* streamPeer, 
+  nsresult OnFileAvailable(nsPluginStreamListenerPeer* streamPeer,
                            const char* fileName);
-  nsresult OnStopBinding(nsPluginStreamListenerPeer* streamPeer, 
+  nsresult OnStopBinding(nsPluginStreamListenerPeer* streamPeer,
                          nsresult status);
   nsresult GetStreamType(int32_t *result);
   bool SetStreamType(uint16_t aType, bool aNeedsResume = true);

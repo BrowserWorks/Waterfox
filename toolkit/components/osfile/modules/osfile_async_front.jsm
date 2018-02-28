@@ -50,8 +50,10 @@ var Path = {};
 Cu.import("resource://gre/modules/osfile/ospath.jsm", Path);
 
 // The library of promises.
-Cu.import("resource://gre/modules/Promise.jsm", this);
-Cu.import("resource://gre/modules/Task.jsm", this);
+XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
+                                  "resource://gre/modules/PromiseUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Task",
+                                  "resource://gre/modules/Task.jsm");
 
 // The implementation of communications
 Cu.import("resource://gre/modules/PromiseWorker.jsm", this);
@@ -216,6 +218,12 @@ var Scheduler = this.Scheduler = {
   resetTimer: null,
 
   /**
+   * A flag indicating whether we had some activities when waiting the
+   * timer and if it's not we can shut down the worker.
+   */
+  hasRecentActivity: false,
+
+  /**
    * The worker to which to send requests.
    *
    * If the worker has never been created or has been reset, this is a
@@ -230,6 +238,20 @@ var Scheduler = this.Scheduler = {
       this._worker = new BasePromiseWorker("resource://gre/modules/osfile/osfile_async_worker.js");
       this._worker.log = LOG;
       this._worker.ExceptionHandlers["OS.File.Error"] = OSError.fromMsg;
+
+      let delay = Services.prefs.getIntPref("osfile.reset_worker_delay", 0);
+      if (delay) {
+        this.resetTimer = setInterval(
+          () => {
+            if (this.hasRecentActivity) {
+              this.hasRecentActivity = false;
+              return;
+            }
+            clearInterval(this.resetTimer);
+            Scheduler.kill({reset: true, shutdown: false});
+          },
+          delay);
+      }
     }
     return this._worker;
   },
@@ -237,23 +259,10 @@ var Scheduler = this.Scheduler = {
   _worker: null,
 
   /**
-   * Prepare to kill the OS.File worker after a few seconds.
+   * Restart the OS.File worker killer timer.
    */
   restartTimer: function(arg) {
-    let delay = Services.prefs.getIntPref("osfile.reset_worker_delay", 0);
-
-    if (!delay) {
-      // Don't auto-shutdown if we don't have a delay preference set.
-      return;
-    }
-
-    if (this.resetTimer) {
-      clearTimeout(this.resetTimer);
-    }
-    this.resetTimer = setTimeout(
-      () => Scheduler.kill({reset: true, shutdown: false}),
-      delay
-    );
+    this.hasRecentActivity = true;
   },
 
   /**
@@ -275,7 +284,7 @@ var Scheduler = this.Scheduler = {
     // to an obsolete worker (we reactivate it in the `finally`).
     // This needs to be done right now so that we maintain relative
     // ordering with calls to post(), etc.
-    let deferred = Promise.defer();
+    let deferred = PromiseUtils.defer();
     let savedQueue = this.queue;
     this.queue = deferred.promise;
 
@@ -304,9 +313,11 @@ var Scheduler = this.Scheduler = {
         let message = ["Meta_shutdown", [reset]];
 
         Scheduler.latestReceived = [];
-        Scheduler.latestSent = [Date.now(),
-          Task.Debugging.generateReadableStack(new Error().stack),
-          ...message];
+        let stack = new Error().stack;
+        // Avoid loading Task.jsm if there's no task on the stack.
+        if (stack.includes("/Task.jsm:"))
+          stack = Task.Debugging.generateReadableStack(stack);
+        Scheduler.latestSent = [Date.now(), stack, ...message];
 
         // Wait for result
         let resources;
@@ -374,9 +385,9 @@ var Scheduler = this.Scheduler = {
   push: function(code) {
     let promise = this.queue.then(code);
     // By definition, |this.queue| can never reject.
-    this.queue = promise.then(null, () => undefined);
+    this.queue = promise.catch(() => undefined);
     // Fork |promise| to ensure that uncaught errors are reported
-    return promise.then(null, null);
+    return promise.then();
   },
 
   /**
@@ -385,6 +396,10 @@ var Scheduler = this.Scheduler = {
    * @param {string} method The name of the method to call.
    * @param {...} args The arguments to pass to the method. These arguments
    * must be clonable.
+   * The last argument by convention may be an object `options`, with some of
+   * the following fields:
+   *   - {number|null} outSerializationDuration A parameter to be filled with
+   *     duration of the `this.worker.post` method.
    * @return {Promise} A promise conveying the result/error caused by
    * calling |method| with arguments |args|.
    */
@@ -419,14 +434,33 @@ var Scheduler = this.Scheduler = {
       // Don't kill the worker just yet
       Scheduler.restartTimer();
 
+      // The last object inside the args may be an options object.
+      let options = null;
+      if (args && args.length >= 1 && typeof args[args.length-1] === "object") {
+        options = args[args.length - 1];
+      }
 
       let reply;
       try {
         try {
           Scheduler.Debugging.messagesSent++;
           Scheduler.Debugging.latestSent = Scheduler.Debugging.latestSent.slice(0, 2);
+          let serializationStartTimeMs = Date.now();
           reply = await this.worker.post(method, args, closure);
+          let serializationEndTimeMs = Date.now();
           Scheduler.Debugging.latestReceived = [Date.now(), summarizeObject(reply)];
+
+          // There were no options for recording the serialization duration.
+          if (options && "outSerializationDuration" in options) {
+            // The difference might be negative for very fast operations, since Date.now() may not be monotonic.
+            let serializationDurationMs = Math.max(0, serializationEndTimeMs - serializationStartTimeMs);
+
+            if (typeof options.outSerializationDuration === "number") {
+              options.outSerializationDuration += serializationDurationMs;
+            } else {
+              options.outSerializationDuration = serializationDurationMs;
+            }
+          }
           return reply;
         } finally {
           Scheduler.Debugging.messagesReceived++;
@@ -640,8 +674,8 @@ File.prototype = {
     // Options might be a nullish value, so better check for that before using
     // the |in| operator.
     if (isTypedArray(buffer) && !(options && "bytes" in options)) {
-      // Preserve reference to option |outExecutionDuration|, if it is passed.
-      options = clone(options, ["outExecutionDuration"]);
+      // Preserve reference to option |outExecutionDuration|, |outSerializationDuration|, if it is passed.
+      options = clone(options, ["outExecutionDuration", "outSerializationDuration"]);
       options.bytes = buffer.byteLength;
     }
     return Scheduler.post("File_prototype_write",
@@ -1070,7 +1104,7 @@ File.read = function read(path, bytes, options = {}) {
     // We should now be passing it as a field of |options|.
     options = bytes || {};
   } else {
-    options = clone(options, ["outExecutionDuration"]);
+    options = clone(options, ["outExecutionDuration", "outSerializationDuration"]);
     if (typeof bytes != "undefined") {
       options.bytes = bytes;
     }
@@ -1151,8 +1185,8 @@ File.exists = function exists(path) {
  */
 File.writeAtomic = function writeAtomic(path, buffer, options = {}) {
   // Copy |options| to avoid modifying the original object but preserve the
-  // reference to |outExecutionDuration| option if it is passed.
-  options = clone(options, ["outExecutionDuration"]);
+  // reference to |outExecutionDuration|, |outSerializationDuration| option if it is passed.
+  options = clone(options, ["outExecutionDuration", "outSerializationDuration"]);
   // As options.tmpPath is a path, we need to encode it as |Type.path| message
   if ("tmpPath" in options) {
     options.tmpPath = Type.path.toMsg(options.tmpPath);

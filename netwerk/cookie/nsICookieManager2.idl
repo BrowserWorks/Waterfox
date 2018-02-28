@@ -94,6 +94,8 @@ interface nsICookieManager2 : nsICookieManager
                               in OriginAttributesPtr aOriginAttributes,
                               out boolean aExists);
 
+  boolean cookieExists2(in nsICookie2 aCookie);
+
   /**
    * Count how many cookies exist within the base domain of 'aHost'.
    * Thus, for a host "weather.yahoo.com", the base domain would be "yahoo.com",

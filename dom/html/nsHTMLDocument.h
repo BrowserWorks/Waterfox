@@ -74,6 +74,8 @@ public:
     return mWriteLevel != uint32_t(0);
   }
 
+  virtual nsIContent* GetUnfocusedKeyEventTarget() override;
+
   virtual nsContentList* GetForms() override;
 
   virtual nsContentList* GetFormControls() override;
@@ -191,8 +193,11 @@ public:
   nsIHTMLCollection* Scripts();
   already_AddRefed<nsContentList> GetElementsByName(const nsAString & aName)
   {
-    return NS_GetFuncStringNodeList(this, MatchNameAttribute, nullptr,
-                                    UseExistingNameString, aName);
+    return GetFuncStringContentList<nsCachableElementsByNameNodeList>(this,
+                                                                      MatchNameAttribute,
+                                                                      nullptr,
+                                                                      UseExistingNameString,
+                                                                      aName);
   }
   already_AddRefed<nsIDocument> Open(JSContext* cx,
                                      const nsAString& aType,
@@ -321,21 +326,24 @@ protected:
 
   static void TryHintCharset(nsIContentViewer* aContentViewer,
                              int32_t& aCharsetSource,
-                             nsACString& aCharset);
+                             NotNull<const Encoding*>& aEncoding);
   void TryUserForcedCharset(nsIContentViewer* aCv,
                             nsIDocShell*  aDocShell,
                             int32_t& aCharsetSource,
-                            nsACString& aCharset);
+                            NotNull<const Encoding*>& aEncoding);
   static void TryCacheCharset(nsICachingChannel* aCachingChannel,
-                                int32_t& aCharsetSource,
-                                nsACString& aCharset);
+                              int32_t& aCharsetSource,
+                              NotNull<const Encoding*>& aEncoding);
   void TryParentCharset(nsIDocShell*  aDocShell,
-                        int32_t& charsetSource, nsACString& aCharset);
-  void TryTLD(int32_t& aCharsetSource, nsACString& aCharset);
-  static void TryFallback(int32_t& aCharsetSource, nsACString& aCharset);
+                        int32_t& charsetSource,
+                        NotNull<const Encoding*>& aEncoding);
+  void TryTLD(int32_t& aCharsetSource, NotNull<const Encoding*>& aCharset);
+  static void TryFallback(int32_t& aCharsetSource,
+                          NotNull<const Encoding*>& aEncoding);
 
   // Override so we can munge the charset on our wyciwyg channel as needed.
-  virtual void SetDocumentCharacterSet(const nsACString& aCharSetID) override;
+  virtual void
+    SetDocumentCharacterSet(NotNull<const Encoding*> aEncoding) override;
 
   // Tracks if we are currently processing any document.write calls (either
   // implicit or explicit). Note that if a write call writes out something which

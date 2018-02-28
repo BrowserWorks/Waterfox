@@ -439,13 +439,6 @@ class MochitestArguments(ArgumentContainer):
           "default": None,
           "suppress": True,
           }],
-        [["--strict-content-sandbox"],
-         {"action": "store_true",
-          "default": False,
-          "dest": "strictContentSandbox",
-          "help": "Run tests with a more strict content sandbox (Windows only).",
-          "suppress": not mozinfo.isWin,
-          }],
         [["--nested_oop"],
          {"action": "store_true",
           "default": False,
@@ -607,6 +600,12 @@ class MochitestArguments(ArgumentContainer):
           "help": "File describes all failure patterns of the tests.",
           "suppress": True,
           }],
+        [["--work-path"],
+         {"default": None,
+          "dest": "workPath",
+          "help": "Path to the base dir of all test files.",
+          "suppress": True,
+          }],
     ]
 
     defaults = {
@@ -628,8 +627,6 @@ class MochitestArguments(ArgumentContainer):
     def validate(self, parser, options, context):
         """Validate generic options."""
 
-        # for test manifest parsing.
-        mozinfo.update({"strictContentSandbox": options.strictContentSandbox})
         # for test manifest parsing.
         mozinfo.update({"nested_oop": options.nested_oop})
 

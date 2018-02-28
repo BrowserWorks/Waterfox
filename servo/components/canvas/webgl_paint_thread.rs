@@ -4,17 +4,18 @@
 
 use canvas_traits::{CanvasCommonMsg, CanvasData, CanvasMsg, CanvasImageData};
 use canvas_traits::{FromLayoutMsg, FromScriptMsg, byte_swap};
-use euclid::size::Size2D;
+use euclid::Size2D;
 use gleam::gl;
 use ipc_channel::ipc::{self, IpcSender};
 use offscreen_gl_context::{ColorAttachmentType, GLContext, GLLimits};
 use offscreen_gl_context::{GLContextAttributes, NativeGLContext, OSMesaContext};
 use servo_config::opts;
 use std::borrow::ToOwned;
+use std::mem;
 use std::sync::Arc;
 use std::sync::mpsc::channel;
 use std::thread;
-use webrender_traits;
+use webrender_api;
 
 enum GLContextWrapper {
     Native(GLContext<NativeGLContext>),
@@ -56,11 +57,11 @@ impl GLContextWrapper {
     fn resize(&mut self, size: Size2D<i32>) -> Result<Size2D<i32>, &'static str> {
         match *self {
             GLContextWrapper::Native(ref mut ctx) => {
-                try!(ctx.resize(size));
+                ctx.resize(size)?;
                 Ok(ctx.borrow_draw_buffer().unwrap().size())
             }
             GLContextWrapper::OSMesa(ref mut ctx) => {
-                try!(ctx.resize(size));
+                ctx.resize(size)?;
                 Ok(ctx.borrow_draw_buffer().unwrap().size())
             }
         }
@@ -88,7 +89,7 @@ impl GLContextWrapper {
         }
     }
 
-    pub fn apply_command(&self, cmd: webrender_traits::WebGLCommand) {
+    pub fn apply_command(&self, cmd: webrender_api::WebGLCommand) {
         match *self {
             GLContextWrapper::Native(ref ctx) => {
                 cmd.apply(ctx);
@@ -101,8 +102,16 @@ impl GLContextWrapper {
 }
 
 enum WebGLPaintTaskData {
-    WebRender(webrender_traits::RenderApi, webrender_traits::WebGLContextId),
-    Readback(GLContextWrapper, webrender_traits::RenderApi, Option<webrender_traits::ImageKey>),
+    WebRender(webrender_api::RenderApi, webrender_api::WebGLContextId),
+    Readback {
+        context: GLContextWrapper,
+        webrender_api: webrender_api::RenderApi,
+        image_key: Option<webrender_api::ImageKey>,
+        /// An old webrender image key that can be deleted when the next epoch ends.
+        old_image_key: Option<webrender_api::ImageKey>,
+        /// An old webrender image key that can be deleted when the current epoch ends.
+        very_old_image_key: Option<webrender_api::ImageKey>,
+    },
 }
 
 pub struct WebGLPaintThread {
@@ -112,14 +121,20 @@ pub struct WebGLPaintThread {
 
 fn create_readback_painter(size: Size2D<i32>,
                            attrs: GLContextAttributes,
-                           webrender_api: webrender_traits::RenderApi,
+                           webrender_api: webrender_api::RenderApi,
                            gl_type: gl::GlType)
     -> Result<(WebGLPaintThread, GLLimits), String> {
-    let context = try!(GLContextWrapper::new(size, attrs, gl_type));
+    let context = GLContextWrapper::new(size, attrs, gl_type)?;
     let limits = context.get_limits();
     let painter = WebGLPaintThread {
         size: size,
-        data: WebGLPaintTaskData::Readback(context, webrender_api, None)
+        data: WebGLPaintTaskData::Readback {
+            context: context,
+            webrender_api: webrender_api,
+            image_key: None,
+            old_image_key: None,
+            very_old_image_key: None,
+        },
     };
 
     Ok((painter, limits))
@@ -128,11 +143,11 @@ fn create_readback_painter(size: Size2D<i32>,
 impl WebGLPaintThread {
     fn new(size: Size2D<i32>,
            attrs: GLContextAttributes,
-           webrender_api_sender: webrender_traits::RenderApiSender,
+           webrender_api_sender: webrender_api::RenderApiSender,
            gl_type: gl::GlType)
         -> Result<(WebGLPaintThread, GLLimits), String> {
         let wr_api = webrender_api_sender.create_api();
-        let device_size = webrender_traits::DeviceIntSize::from_untyped(&size);
+        let device_size = webrender_api::DeviceIntSize::from_untyped(&size);
         match wr_api.request_webgl_context(&device_size, attrs) {
             Ok((id, limits)) => {
                 let painter = WebGLPaintThread {
@@ -148,24 +163,24 @@ impl WebGLPaintThread {
         }
     }
 
-    fn handle_webgl_message(&self, message: webrender_traits::WebGLCommand) {
+    fn handle_webgl_message(&self, message: webrender_api::WebGLCommand) {
         debug!("WebGL message: {:?}", message);
         match self.data {
             WebGLPaintTaskData::WebRender(ref api, id) => {
                 api.send_webgl_command(id, message);
             }
-            WebGLPaintTaskData::Readback(ref ctx, _, _) => {
-                ctx.apply_command(message);
+            WebGLPaintTaskData::Readback { ref context, .. } => {
+                context.apply_command(message);
             }
         }
     }
 
-    fn handle_webvr_message(&self, message: webrender_traits::VRCompositorCommand) {
+    fn handle_webvr_message(&self, message: webrender_api::VRCompositorCommand) {
         match self.data {
             WebGLPaintTaskData::WebRender(ref api, id) => {
                 api.send_vr_compositor_command(id, message);
             }
-            WebGLPaintTaskData::Readback(..) => {
+            WebGLPaintTaskData::Readback { .. } => {
                 error!("Webrender is required for WebVR implementation");
             }
         }
@@ -176,7 +191,7 @@ impl WebGLPaintThread {
     /// communicate with it.
     pub fn start(size: Size2D<i32>,
                  attrs: GLContextAttributes,
-                 webrender_api_sender: webrender_traits::RenderApiSender)
+                 webrender_api_sender: webrender_api::RenderApiSender)
                  -> Result<(IpcSender<CanvasMsg>, GLLimits), String> {
         let (sender, receiver) = ipc::channel::<CanvasMsg>().unwrap();
         let (result_chan, result_port) = channel();
@@ -229,14 +244,20 @@ impl WebGLPaintThread {
 
     fn send_data(&mut self, chan: IpcSender<CanvasData>) {
         match self.data {
-            WebGLPaintTaskData::Readback(ref ctx, ref webrender_api, ref mut image_key) => {
+            WebGLPaintTaskData::Readback {
+                ref context,
+                ref webrender_api,
+                ref mut image_key,
+                ref mut old_image_key,
+                ref mut very_old_image_key,
+            } => {
                 let width = self.size.width as usize;
                 let height = self.size.height as usize;
 
-                let mut pixels = ctx.gl().read_pixels(0, 0,
-                                                      self.size.width as gl::GLsizei,
-                                                      self.size.height as gl::GLsizei,
-                                                      gl::RGBA, gl::UNSIGNED_BYTE);
+                let mut pixels = context.gl().read_pixels(0, 0,
+                                                          self.size.width as gl::GLsizei,
+                                                          self.size.height as gl::GLsizei,
+                                                          gl::RGBA, gl::UNSIGNED_BYTE);
                 // flip image vertically (texture is upside down)
                 let orig_pixels = pixels.clone();
                 let stride = width * 4;
@@ -250,15 +271,15 @@ impl WebGLPaintThread {
                 // rgba -> bgra
                 byte_swap(&mut pixels);
 
-                let descriptor = webrender_traits::ImageDescriptor {
+                let descriptor = webrender_api::ImageDescriptor {
                     width: width as u32,
                     height: height as u32,
                     stride: None,
-                    format: webrender_traits::ImageFormat::RGBA8,
+                    format: webrender_api::ImageFormat::BGRA8,
                     offset: 0,
                     is_opaque: false,
                 };
-                let data = webrender_traits::ImageData::Raw(Arc::new(pixels));
+                let data = webrender_api::ImageData::Raw(Arc::new(pixels));
 
                 match *image_key {
                     Some(image_key) => {
@@ -276,6 +297,10 @@ impl WebGLPaintThread {
                     }
                 }
 
+                if let Some(image_key) = mem::replace(very_old_image_key, old_image_key.take()) {
+                    webrender_api.delete_image(image_key);
+                }
+
                 let image_data = CanvasImageData {
                     image_key: image_key.unwrap(),
                 };
@@ -291,17 +316,24 @@ impl WebGLPaintThread {
     #[allow(unsafe_code)]
     fn recreate(&mut self, size: Size2D<i32>) -> Result<(), &'static str> {
         match self.data {
-            WebGLPaintTaskData::Readback(ref mut context, _, _) => {
+            WebGLPaintTaskData::Readback { ref mut context, ref mut image_key, ref mut old_image_key, .. }  => {
                 if size.width > self.size.width ||
                    size.height > self.size.height {
-                    self.size = try!(context.resize(size));
+                    self.size = context.resize(size)?;
                 } else {
                     self.size = size;
                     context.gl().scissor(0, 0, size.width, size.height);
                 }
+                // Webrender doesn't let images change size, so we clear the webrender image key.
+                if let Some(image_key) = image_key.take() {
+                    // If this executes, then we are in a new epoch since we last recreated the canvas,
+                    // so `old_image_key` must be `None`.
+                    debug_assert!(old_image_key.is_none());
+                    *old_image_key = Some(image_key);
+                }
             }
             WebGLPaintTaskData::WebRender(ref api, id) => {
-                let device_size = webrender_traits::DeviceIntSize::from_untyped(&size);
+                let device_size = webrender_api::DeviceIntSize::from_untyped(&size);
                 api.resize_webgl_context(id, &device_size);
             }
         }
@@ -310,7 +342,7 @@ impl WebGLPaintThread {
     }
 
     fn init(&mut self) {
-        if let WebGLPaintTaskData::Readback(ref context, _, _) = self.data {
+        if let WebGLPaintTaskData::Readback { ref context, .. } = self.data {
             context.make_current();
         }
     }
@@ -318,9 +350,21 @@ impl WebGLPaintThread {
 
 impl Drop for WebGLPaintThread {
     fn drop(&mut self) {
-        if let WebGLPaintTaskData::Readback(_, ref mut wr, image_key) = self.data {
+        if let WebGLPaintTaskData::Readback {
+            ref mut webrender_api,
+            image_key,
+            old_image_key,
+            very_old_image_key,
+            ..
+        } = self.data {
             if let Some(image_key) = image_key {
-                wr.delete_image(image_key);
+                webrender_api.delete_image(image_key);
+            }
+            if let Some(image_key) = old_image_key {
+                webrender_api.delete_image(image_key);
+            }
+            if let Some(image_key) = very_old_image_key {
+                webrender_api.delete_image(image_key);
             }
         }
     }

@@ -6,23 +6,15 @@
 <ShortName>Yahoo</ShortName>
 <Description>Yahoo Search</Description>
 <InputEncoding>UTF-8</InputEncoding>
-<Image width="16" height="16">resource://search-plugins/images/yahoo.ico</Image>
+<Image height="16" width="16">data:image/x-icon;base64,AAABAAIAEBAAAAEAIABoBAAAJgAAAAgIAAABACAASAEAAI4EAAAoAAAAEAAAACAAAAABACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAewE4824BNLJvADJ1cAQ3UW8IOCgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwCDknbQQ1UW8AM3VuATSyegE383sAN/91ADT/dQA1/3QANf90ATX/dAI2/3QDNv90Azb/dAM2/3QDNv9zAjb/cwI1/3MBNP93ADb/dAA0/3oAN/99ADj/ewA3/3sBN/99Ajn/gAM7/4IEPf+BBT3/egAy/3kAMv9/BTz/gAU8/30EO/+AAjv/fQE5/3gANv98ADj/fgA4/4IAO/+EAjz/hgM9/4kEQP+LBkH/hwA6//Tl7P/05u3/hgA6/4oGQf+JBUD/iQQ//4cCPf+BATr/fgA4/4EAOf+LAT//jANA/44EQv+SBkT/kgdF/5IAQf/s0t7/7dTf/5IAQf+VCEf/kwdG/5IFRP+PBEH/iQI+/34BOf+AADr/lAFC/5YDRf+ZBUb/mwdJ/50IS/+bA0b/6srZ/+vM2v+bA0b/mwpK/5sISf+bBkj/mQVG/4wDQP+AADr/hgA8/5oCRf+gBEj/owZL/6UITf+nCk//pgVM/+nB0//pwtT/pgVN/6kKUf+lCU7/owdM/54FSP+WA0X/gQE6/4YAPP+fAkj/qgRO/6wHT/+uCFH/rgtS/60BTv/z2eT/8tnl/60CTv+wC1X/rQlS/6wIUP+pBk7/lgRF/4YBPP+HAD3/pwNL/7MFUf+0BlP/tAhU/7cLVv/HQ33////////////KRYD/tgtW/7cJVv+0CFP/rAVP/5sER/+GAT3/iAE9/60CTv++BFb/vwZY/8AIWf+9AFH/9tzn//TX5P/01uT/993p/7wAUv/ACFr/vwdY/7QEUv+hA0n/gwE7/4oAPf+0AlD/xQNZ/8QFWf/EB1v/2ViR///////RQID/0T+A///////ZW5L/xwhd/8YGW/+9BFb/pQJK/4EAOv+NAD//twFS/8gCWv/JBFv/xgBT//34+v/wvdP/xABX/8UBV//wu9P//vn7/8cAVP/KBF3/wANX/6kCTP+BADr/iwA+/7cAUv/HAVr/xQFY/+OIsP//////xBxn/74GWP+/B1n/xBpm///////jirH/xgFZ/8ICV/+vAE//igA9/4gAPP+qAEz/tABR/68AS//SfqT/xlmK/6oBTP+qBU7/qQRN/6gCTP/GV4j/0nui/7EATP+vAU7/mgBF/4MAO/+CADr/jAA+/5wARf+IAD3/jgFA/4ABO/99Ajr/gwI9/4cCPv9/Ajv/jAFA/4oBPv+UAEL/mQBE/4cAPf9/ADn/fAE483oBOLR1ADZ2cwQ3UnAHOCgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABqCDUndQQ4UoAAOnZ7ATi0fAE48z/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/8AAAoAAAACAAAABAAAAABACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbwAz/3IANMpzAjWIagApiGoAKYhzAjWIcgA0ym8AM/93ADX/ggI6/4IDPP/Tkq3/05Gs/4IDPP+DAjr/dwA1/38BOPyVBET/lwZH/8uDo//Lg6P/mAZH/5UERP9/ATj8iAE976YFS/+nBU7/4KC4/96ctf+oBU7/pQVM/4gBPe+MAT/vtgVT/7sWW//8+fj/+evw/7sWXP+1BVL/jAE/75UBQ/zFAFX/68LV/9ZYj//WV43/5a3F/8YAVv+UAUL8kwBA/8tUhP/12OX/tQBN/7YATf/22+j/ylGB/5IAQP93ADb/hAA4yoIAMomCAjuHggI6iIIAMoiDADfKdgA2/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</Image>
 <Url type="application/x-suggestions+json" method="GET"
      template="https://search.yahoo.com/sugg/ff">
   <Param name="output"  value="fxjson" />
-  <Param name="appid"   value="ffd" />
   <Param name="command" value="{searchTerms}" />
 </Url>
 <Url type="text/html" method="GET" template="https://search.yahoo.com/yhs/search"
      resultdomain="yahoo.com" rel="searchform">
   <Param name="p" value="{searchTerms}"/>
   <Param name="ei" value="UTF-8"/>
-  <Param name="hspart" value="mozilla"/>
-  <MozParam name="hsimp" condition="purpose" purpose="searchbar"   value="yhs-001"/>
-  <MozParam name="hsimp" condition="purpose" purpose="keyword"     value="yhs-002"/>
-  <MozParam name="hsimp" condition="purpose" purpose="homepage"    value="yhs-003"/>
-  <MozParam name="hsimp" condition="purpose" purpose="newtab"      value="yhs-004"/>
-  <MozParam name="hsimp" condition="purpose" purpose="contextmenu" value="yhs-005"/>
-  <MozParam name="hsimp" condition="purpose" purpose="system"      value="yhs-007"/>
 </Url>
 </SearchPlugin>

@@ -6,7 +6,7 @@
 
 #![deny(missing_docs)]
 
-use cssparser::{Parser, SourcePosition, BasicParseError, Token, NumericValue, PercentageValue};
+use cssparser::{Parser, SourcePosition, BasicParseError, Token};
 use cssparser::ParseError as CssParseError;
 use log;
 use style_traits::ParseError;
@@ -18,8 +18,12 @@ pub enum ContextualParseError<'a> {
     UnsupportedPropertyDeclaration(&'a str, ParseError<'a>),
     /// A font face descriptor was not recognized.
     UnsupportedFontFaceDescriptor(&'a str, ParseError<'a>),
+    /// A font feature values descroptor was not recognized.
+    UnsupportedFontFeatureValuesDescriptor(&'a str, ParseError<'a>),
     /// A keyframe rule was not valid.
     InvalidKeyframeRule(&'a str, ParseError<'a>),
+    /// A font feature values rule was not valid.
+    InvalidFontFeatureValuesRule(&'a str, ParseError<'a>),
     /// A keyframe property declaration was not recognized.
     UnsupportedKeyframePropertyDeclaration(&'a str, ParseError<'a>),
     /// A rule was invalid for some reason.
@@ -54,11 +58,11 @@ impl<'a> ContextualParseError<'a> {
                 Token::QuotedString(ref s) => format!("quoted string \"{}\"", s),
                 Token::UnquotedUrl(ref u) => format!("url {}", u),
                 Token::Delim(ref d) => format!("delimiter {}", d),
-                Token::Number(NumericValue { int_value: Some(i), .. }) => format!("number {}", i),
-                Token::Number(ref n) => format!("number {}", n.value),
-                Token::Percentage(PercentageValue { int_value: Some(i), .. }) => format!("percentage {}", i),
-                Token::Percentage(ref p) => format!("percentage {}", p.unit_value),
-                Token::Dimension(_, ref d) => format!("dimension {}", d),
+                Token::Number { int_value: Some(i), .. } => format!("number {}", i),
+                Token::Number { value, .. } => format!("number {}", value),
+                Token::Percentage { int_value: Some(i), .. } => format!("percentage {}", i),
+                Token::Percentage { unit_value, .. } => format!("percentage {}", unit_value * 100.),
+                Token::Dimension { value, ref unit, .. } => format!("dimension {}{}", value, unit),
                 Token::WhiteSpace(_) => format!("whitespace"),
                 Token::Comment(_) => format!("comment"),
                 Token::Colon => format!("colon (:)"),
@@ -76,8 +80,8 @@ impl<'a> ContextualParseError<'a> {
                 Token::ParenthesisBlock => format!("parenthesis ("),
                 Token::SquareBracketBlock => format!("square bracket ["),
                 Token::CurlyBracketBlock => format!("curly bracket {{"),
-                Token::BadUrl => format!("bad url parse error"),
-                Token::BadString => format!("bad string parse error"),
+                Token::BadUrl(ref _u) => format!("bad url parse error"),
+                Token::BadString(ref _s) => format!("bad string parse error"),
                 Token::CloseParenthesis => format!("unmatched close parenthesis"),
                 Token::CloseSquareBracket => format!("unmatched close square bracket"),
                 Token::CloseCurlyBracket => format!("unmatched close curly bracket"),
@@ -88,11 +92,11 @@ impl<'a> ContextualParseError<'a> {
             match *err {
                 CssParseError::Basic(BasicParseError::UnexpectedToken(ref t)) =>
                     format!("found unexpected {}", token_to_str(t)),
-                CssParseError::Basic(BasicParseError::ExpectedToken(ref t)) =>
-                    format!("expected {}", token_to_str(t)),
                 CssParseError::Basic(BasicParseError::EndOfInput) =>
                     format!("unexpected end of input"),
-                CssParseError::Basic(BasicParseError::AtRuleInvalid) =>
+                CssParseError::Basic(BasicParseError::AtRuleInvalid(ref i)) =>
+                    format!("@ rule invalid: {}", i),
+                CssParseError::Basic(BasicParseError::AtRuleBodyInvalid) =>
                     format!("@ rule invalid"),
                 CssParseError::Basic(BasicParseError::QualifiedRuleInvalid) =>
                     format!("qualified rule invalid"),
@@ -108,9 +112,15 @@ impl<'a> ContextualParseError<'a> {
             ContextualParseError::UnsupportedFontFaceDescriptor(decl, ref err) =>
                 format!("Unsupported @font-face descriptor declaration: '{}', {}", decl,
                         parse_error_to_str(err)),
+            ContextualParseError::UnsupportedFontFeatureValuesDescriptor(decl, ref err) =>
+            format!("Unsupported @font-feature-values descriptor declaration: '{}', {}", decl,
+                    parse_error_to_str(err)),
             ContextualParseError::InvalidKeyframeRule(rule, ref err) =>
                 format!("Invalid keyframe rule: '{}', {}", rule,
                         parse_error_to_str(err)),
+            ContextualParseError::InvalidFontFeatureValuesRule(rule, ref err) =>
+            format!("Invalid font feature value rule: '{}', {}", rule,
+                    parse_error_to_str(err)),
             ContextualParseError::UnsupportedKeyframePropertyDeclaration(decl, ref err) =>
                 format!("Unsupported keyframe property declaration: '{}', {}", decl,
                         parse_error_to_str(err)),
@@ -139,7 +149,7 @@ impl<'a> ContextualParseError<'a> {
 }
 
 /// A generic trait for an error reporter.
-pub trait ParseErrorReporter : Sync {
+pub trait ParseErrorReporter {
     /// Called when the style engine detects an error.
     ///
     /// Returns the current input being parsed, the source position it was
@@ -169,7 +179,7 @@ impl ParseErrorReporter for RustLogReporter {
                         line_number_offset: u64) {
         if log_enabled!(log::LogLevel::Info) {
             let location = input.source_location(position);
-            let line_offset = location.line + line_number_offset as usize;
+            let line_offset = location.line + line_number_offset as u32;
             info!("Url:\t{}\n{}:{} {}", url.as_str(), line_offset, location.column, error.to_string())
         }
     }
@@ -187,9 +197,4 @@ impl ParseErrorReporter for NullReporter {
             _: u64) {
         // do nothing
     }
-}
-
-/// Create an instance of the default error reporter.
-pub fn create_error_reporter() -> RustLogReporter {
-    RustLogReporter
 }

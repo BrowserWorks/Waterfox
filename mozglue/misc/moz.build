@@ -7,6 +7,7 @@
 FINAL_LIBRARY = 'mozglue'
 
 EXPORTS.mozilla += [
+    'AutoProfilerLabel.h',
     'PlatformConditionVariable.h',
     'PlatformMutex.h',
     'Printf.h',
@@ -21,6 +22,7 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     ]
 
 SOURCES += [
+    'AutoProfilerLabel.cpp',
     'Printf.cpp',
     'StackWalk.cpp',
     'TimeStamp.cpp',

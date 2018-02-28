@@ -28,6 +28,11 @@ var SidebarUI = {
     return this._browser = document.getElementById("sidebar");
   },
   POSITION_START_PREF: "sidebar.position_start",
+  DEFAULT_SIDEBAR_ID: "viewBookmarksSidebar",
+
+  // lastOpenedId is set in show() but unlike currentID it's not cleared out on hide
+  // and isn't persisted across windows
+  lastOpenedId: null,
 
   _box: null,
   // The constructor of this label accesses the browser element due to the
@@ -64,7 +69,6 @@ var SidebarUI = {
     if (!enumerator.hasMoreElements()) {
       document.persist("sidebar-box", "sidebarcommand");
       document.persist("sidebar-box", "width");
-      document.persist("sidebar-box", "src");
       document.persist("sidebar-title", "value");
     }
   },
@@ -143,10 +147,10 @@ var SidebarUI = {
       let boxOrdinal = this._box.ordinal;
       this._box.ordinal = appcontent.ordinal;
       appcontent.ordinal = boxOrdinal;
-      // Indicate we've switched ordering to the splitter
-      this._splitter.setAttribute("overlapend", true);
+      // Indicate we've switched ordering to the box
+      this._box.setAttribute("positionend", true);
     } else {
-      this._splitter.removeAttribute("overlapend");
+      this._box.removeAttribute("positionend");
     }
 
     this.hideSwitcherPanel();
@@ -173,27 +177,16 @@ var SidebarUI = {
     }
 
     let commandID = sourceUI._box.getAttribute("sidebarcommand");
-    let commandElem = document.getElementById(commandID);
 
     // dynamically generated sidebars will fail this check, but we still
     // consider it adopted.
-    if (!commandElem) {
+    if (!document.getElementById(commandID)) {
       return true;
     }
 
-    this._title.setAttribute("value",
-                             sourceUI._title.getAttribute("value"));
     this._box.setAttribute("width", sourceUI._box.boxObject.width);
+    this._show(commandID);
 
-    this._box.setAttribute("sidebarcommand", commandID);
-    // Note: we're setting 'src' on this._box, which is a <vbox>, not on
-    // the <browser id="sidebar">. This lets us delay the actual load until
-    // delayedStartup().
-    this._box.setAttribute("src", sourceUI.browser.getAttribute("src"));
-
-    this._setVisibility(true);
-    commandElem.setAttribute("checked", "true");
-    this.browser.setAttribute("src", this._box.getAttribute("src"));
     return true;
   },
 
@@ -226,16 +219,20 @@ var SidebarUI = {
       return;
     }
 
-    let command = document.getElementById(commandID);
-    if (command) {
-      this._setVisibility(true);
-      command.setAttribute("checked", "true");
-      this.browser.setAttribute("src", this._box.getAttribute("src"));
+    if (document.getElementById(commandID)) {
+      this._show(commandID);
     } else {
       // Remove the |sidebarcommand| attribute, because the element it
       // refers to no longer exists, so we should assume this sidebar
       // panel has been uninstalled. (249883)
       this._box.removeAttribute("sidebarcommand");
+      // On a startup in which the startup cache was invalidated (e.g. app update)
+      // extensions will not be started prior to delayedLoad, thus the
+      // sidebarcommand element will not exist yet.  Store the commandID so
+      // extensions may reopen if necessary.  A startup cache invalidation
+      // can be forced (for testing) by deleting compatibility.ini from the
+      // profile.
+      this.lastOpenedId = commandID;
     }
   },
 
@@ -276,17 +273,12 @@ var SidebarUI = {
     this._title.value = value;
   },
 
-  /**
-   * Internal helper to show/hide the box and splitter elements.
-   *
-   * @param {bool} visible
-   */
-  _setVisibility(visible) {
-    this._box.hidden = !visible;
-    this._splitter.hidden = !visible;
-    if (visible) {
-      this.setPosition();
+  getBroadcasterById(id) {
+    let sidebarBroadcaster = document.getElementById(id);
+    if (sidebarBroadcaster && sidebarBroadcaster.localName == "broadcaster") {
+      return sidebarBroadcaster;
     }
+    return null;
   },
 
   /**
@@ -297,7 +289,14 @@ var SidebarUI = {
    * @param {string} commandID ID of the xul:broadcaster element to use.
    * @return {Promise}
    */
-  toggle(commandID = this.currentID) {
+  toggle(commandID = this.lastOpenedId) {
+    // First priority for a default value is this.lastOpenedId which is set during show()
+    // and not reset in hide(), unlike currentID. If show() hasn't been called or the command
+    // doesn't exist anymore, then fallback to a default sidebar.
+    if (!commandID || !this.getBroadcasterById(commandID)) {
+      commandID = this.DEFAULT_SIDEBAR_ID;
+    }
+
     if (this.isOpen && commandID == this.currentID) {
       this.hide();
       return Promise.resolve();
@@ -309,24 +308,34 @@ var SidebarUI = {
    * Show the sidebar, using the parameters from the specified broadcaster.
    * @see SidebarUI note.
    *
+   * This wraps the internal method, including a ping to telemetry.
+   *
    * @param {string} commandID ID of the xul:broadcaster element to use.
    */
   show(commandID) {
+    return this._show(commandID).then(() => {
+    });
+  },
+
+  /**
+   * Implementation for show. Also used internally for sidebars that are shown
+   * when a window is opened and we don't want to ping telemetry.
+   *
+   * @param {string} commandID ID of the xul:broadcaster element to use.
+   */
+  _show(commandID) {
     return new Promise((resolve, reject) => {
-      let sidebarBroadcaster = document.getElementById(commandID);
-      if (!sidebarBroadcaster || sidebarBroadcaster.localName != "broadcaster") {
+      let sidebarBroadcaster = this.getBroadcasterById(commandID);
+      if (!sidebarBroadcaster) {
         reject(new Error("Invalid sidebar broadcaster specified: " + commandID));
         return;
       }
 
-      let broadcasters = document.getElementsByAttribute("group", "sidebar");
-      for (let broadcaster of broadcasters) {
-        // skip elements that observe sidebar broadcasters and random
-        // other elements
-        if (broadcaster.localName != "broadcaster") {
-          continue;
-        }
+      if (this.isOpen && commandID != this.currentID) {
+      }
 
+      let broadcasters = document.querySelectorAll("broadcaster[group=sidebar]");
+      for (let broadcaster of broadcasters) {
         if (broadcaster != sidebarBroadcaster) {
           broadcaster.removeAttribute("checked");
         } else {
@@ -334,28 +343,27 @@ var SidebarUI = {
         }
       }
 
-      this._setVisibility(true);
+      this._box.hidden = this._splitter.hidden = false;
+      this.setPosition();
 
       this.hideSwitcherPanel();
 
+      this._box.setAttribute("checked", "true");
       this._box.setAttribute("sidebarcommand", sidebarBroadcaster.id);
       this.lastOpenedId = sidebarBroadcaster.id;
 
-      let title = sidebarBroadcaster.getAttribute("sidebartitle");
-      if (!title) {
-        title = sidebarBroadcaster.getAttribute("label");
+      let title = sidebarBroadcaster.getAttribute("sidebartitle") ||
+                  sidebarBroadcaster.getAttribute("label");
+
+      // When loading a web page in the sidebar there is no title set on the
+      // broadcaster, as it is instead set by openWebPanel. Don't clear out
+      // the title in this case.
+      if (title) {
+        this.title = title;
       }
-      this._title.value = title;
 
       let url = sidebarBroadcaster.getAttribute("sidebarurl");
       this.browser.setAttribute("src", url); // kick off async load
-
-      // We set this attribute here in addition to setting it on the <browser>
-      // element itself, because the code in SidebarUI.uninit() persists this
-      // attribute, not the "src" of the <browser id="sidebar">. The reason it
-      // does that is that we want to delay sidebar load a bit when a browser
-      // window opens. See delayedStartup() and SidebarUI.startDelayedLoad().
-      this._box.setAttribute("src", url);
 
       if (this.browser.contentDocument.location.href != url) {
         this.browser.addEventListener("load", event => {
@@ -410,8 +418,9 @@ var SidebarUI = {
 
     sidebarBroadcaster.removeAttribute("checked");
     this._box.setAttribute("sidebarcommand", "");
-    this._title.value = "";
-    this._setVisibility(false);
+    this._box.removeAttribute("checked");
+    this.title = "";
+    this._box.hidden = this._splitter.hidden = true;
 
     let selBrowser = gBrowser.selectedBrowser;
     selBrowser.focus();

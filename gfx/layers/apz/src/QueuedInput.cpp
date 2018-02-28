@@ -38,13 +38,19 @@ QueuedInput::QueuedInput(const PanGestureInput& aInput, PanGestureBlockState& aB
 {
 }
 
+QueuedInput::QueuedInput(const KeyboardInput& aInput, KeyboardBlockState& aBlock)
+  : mInput(MakeUnique<KeyboardInput>(aInput))
+  , mBlock(&aBlock)
+{
+}
+
 InputData*
 QueuedInput::Input()
 {
   return mInput.get();
 }
 
-CancelableBlockState*
+InputBlockState*
 QueuedInput::Block()
 {
   return mBlock.get();

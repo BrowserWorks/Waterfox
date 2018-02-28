@@ -78,13 +78,15 @@ pub enum AttrSelectorOperator {
 
 impl ToCss for AttrSelectorOperator {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
+        // https://drafts.csswg.org/cssom/#serializing-selectors
+        // See "attribute selector".
         dest.write_str(match *self {
-            AttrSelectorOperator::Equal => " = ",
-            AttrSelectorOperator::Includes => " ~= ",
-            AttrSelectorOperator::DashMatch => " |= ",
-            AttrSelectorOperator::Prefix => " ^= ",
-            AttrSelectorOperator::Substring => " *= ",
-            AttrSelectorOperator::Suffix => " $= ",
+            AttrSelectorOperator::Equal => "=",
+            AttrSelectorOperator::Includes => "~=",
+            AttrSelectorOperator::DashMatch => "|=",
+            AttrSelectorOperator::Prefix => "^=",
+            AttrSelectorOperator::Substring => "*=",
+            AttrSelectorOperator::Suffix => "$=",
         })
     }
 }
@@ -127,7 +129,7 @@ pub static SELECTOR_WHITESPACE: &'static [char] = &[' ', '\t', '\n', '\r', '\x0C
 
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum ParsedCaseSensitivity {
-    CaseSensitive,  // Selectors spec says language-defined, but HTML says sensitive.
+    CaseSensitive,
     AsciiCaseInsensitive,
     AsciiCaseInsensitiveIfInHtmlElementInHtmlDocument,
 }
@@ -150,7 +152,7 @@ impl ParsedCaseSensitivity {
 
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum CaseSensitivity {
-    CaseSensitive,  // Selectors spec says language-defined, but HTML says sensitive.
+    CaseSensitive,
     AsciiCaseInsensitive,
 }
 

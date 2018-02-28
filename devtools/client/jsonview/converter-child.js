@@ -12,8 +12,10 @@ const Services = require("Services");
 
 loader.lazyRequireGetter(this, "NetworkHelper",
                                "devtools/shared/webconsole/network-helper");
-loader.lazyRequireGetter(this, "JsonViewUtils",
-                               "devtools/client/jsonview/utils");
+loader.lazyGetter(this, "debug", function () {
+  let {AppConstants} = require("resource://gre/modules/AppConstants.jsm");
+  return !!(AppConstants.DEBUG || AppConstants.DEBUG_JS_MODULES);
+});
 
 const childProcessMessageManager =
   Cc["@mozilla.org/childprocessmessagemanager;1"]
@@ -138,6 +140,12 @@ function fixSave(request) {
 
 // Exports variables that will be accessed by the non-privileged scripts.
 function exportData(win, request) {
+  let data = Cu.createObjectIn(win, {
+    defineAs: "JSONView"
+  });
+
+  data.debug = debug;
+
   let Locale = {
     $STR: key => {
       try {
@@ -148,7 +156,7 @@ function exportData(win, request) {
       }
     }
   };
-  JsonViewUtils.exportIntoContentScope(win, Locale, "Locale");
+  data.Locale = Cu.cloneInto(Locale, win, {cloneFunctions: true});
 
   let headers = {
     response: [],
@@ -168,7 +176,7 @@ function exportData(win, request) {
       }
     });
   }
-  JsonViewUtils.exportIntoContentScope(win, headers, "headers");
+  data.headers = Cu.cloneInto(headers, win);
 }
 
 // Serializes a qualifiedName and an optional set of attributes into an HTML
@@ -198,26 +206,27 @@ function initialHTML(doc) {
     os = "linux";
   }
 
-  let base = doc.createElement("base");
-  base.href = "resource://devtools/client/jsonview/";
+  // The base URI is prepended to all URIs instead of using a <base> element
+  // because the latter can be blocked by a CSP base-uri directive (bug 1316393)
+  let baseURI = "resource://devtools/client/jsonview/";
 
   let style = doc.createElement("link");
   style.rel = "stylesheet";
   style.type = "text/css";
-  style.href = "css/main.css";
+  style.href = baseURI + "css/main.css";
 
   let script = doc.createElement("script");
-  script.src = "lib/require.js";
-  script.dataset.main = "viewer-config";
+  script.src = baseURI + "lib/require.js";
+  script.dataset.main = baseURI + "viewer-config.js";
   script.defer = true;
 
   let head = doc.createElement("head");
-  head.append(base, style, script);
+  head.append(style, script);
 
   return "<!DOCTYPE html>\n" +
     startTag("html", {
       "platform": os,
-      "class": "theme-" + JsonViewUtils.getCurrentTheme(),
+      "class": "theme-" + Services.prefs.getCharPref("devtools.theme"),
       "dir": Services.locale.isAppLocaleRTL ? "rtl" : "ltr"
     }) +
     head.outerHTML +

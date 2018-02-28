@@ -22,6 +22,14 @@ function manifestVideo() {
   return gManifestNavigatorSource.contentDocument.createElement('video');
 }
 
+// Need to get the server url composed with ip:port instead of mochi.test.
+// Since we will provide the url to Exoplayer which cannot recognize the domain
+// name "mochi.test".
+let serverUrl = SpecialPowers.Services.prefs.getCharPref("media.hls.server.url");
+var gHLSTests = [
+  { name: serverUrl + "/bipbop_4x3_variant.m3u8", type:"audio/x-mpegurl", duration:19.95334 }
+];
+
 // These are small test files, good for just seeing if something loads. We
 // really only need one test file per backend here.
 var gSmallTests = [
@@ -38,6 +46,14 @@ var gSmallTests = [
   { name:"gizmo-short.mp4", type:"video/mp4", width:560, height:320, duration:0.27 },
   { name:"flac-s24.flac", type:"audio/flac", duration:4.04 },
   { name:"bogus.duh", type:"bogus/duh" }
+];
+
+var gFrameCountTests = [
+  { name:"bipbop.mp4", type:"video/mp4", totalFrameCount:297},
+  { name:"gizmo.mp4", type:"video/mp4", totalFrameCount:166},
+  { name:"seek-short.webm", type:"video/webm", totalFrameCount:8},
+  { name:"seek.webm", type:"video/webm", totalFrameCount:120},
+  { name:"320x240.ogv", type:"video/ogg", totalFrameCount:8},
 ];
 
 if (SpecialPowers.Services.appinfo.name != "B2G") {
@@ -90,6 +106,12 @@ var gPlayedTests = [
   //{ name:"vbr.mp3", type:"audio/mpeg", duration:10.0 },
   { name:"bug495794.ogg", type:"audio/ogg", duration:0.3 },
 ];
+
+if (manifestNavigator().userAgent.includes("Windows") &&
+    manifestVideo().canPlayType('video/mp4; codecs="avc1.42E01E"')) {
+  gPlayedTests = gPlayedTests.concat({name: "red-46x48.mp4", type:"video/mp4", duration:1.00},
+                                     {name: "red-48x46.mp4", type:"video/mp4", duration:1.00});
+}
 
 // Used by test_mozLoadFrom.  Need one test file per decoder backend, plus
 // anything for testing clone-specific bugs.
@@ -537,14 +559,6 @@ var gErrorTests = [
   { name:"bug604067.webm", type:"video/webm" },
   { name:"bogus.duh", type:"bogus/duh" }
 ];
-
-// Windows' H.264 decoder cannot handle H.264 streams with resolution
-// less than 48x48 pixels. We refuse to play and error on such streams.
-if (manifestNavigator().userAgent.includes("Windows") &&
-    manifestVideo().canPlayType('video/mp4; codecs="avc1.42E01E"')) {
-  gErrorTests = gErrorTests.concat({name: "red-46x48.mp4", type:"video/mp4"},
-                                   {name: "red-48x46.mp4", type:"video/mp4"});
-}
 
 // These files would get error after receiving "loadedmetadata", we would like
 // to check duration in "onerror" and make sure the duration is still available.
@@ -1542,13 +1556,10 @@ function getMajorMimeType(mimetype) {
 // Force releasing decoder to avoid timeout in waiting for decoding resource.
 function removeNodeAndSource(n) {
   n.remove();
-  // Clearing srcObject and/or src will actually set them to some default
-  // URI that will fail to load, so make sure we don't produce a spurious
-  // bailing error.
-  n.onerror = null;
   // reset |srcObject| first since it takes precedence over |src|.
   n.srcObject = null;
-  n.src = "";
+  n.removeAttribute("src");
+  n.load();
   while (n.firstChild) {
     n.firstChild.remove();
   }
@@ -1681,7 +1692,8 @@ function MediaTestManager() {
       this.finished(token);
     };
     // Default timeout to 180s for each test.
-    this.timers[token] = setTimeout(onTimeout, 180000);
+    // Call SimpleTest._originalSetTimeout() to bypass the flaky timeout checker.
+    this.timers[token] = SimpleTest._originalSetTimeout.call(window, onTimeout, 180000);
 
     is(this.numTestsRunning, this.tokens.length,
        "[started " + token + " t=" + elapsedTime(this.startTime) + "] Length of array should match number of running tests");

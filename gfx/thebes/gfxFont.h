@@ -33,6 +33,7 @@
 #include "harfbuzz/hb.h"
 #include "mozilla/gfx/2D.h"
 #include "nsColor.h"
+#include "mozilla/ServoUtils.h"
 
 typedef struct _cairo cairo_t;
 typedef struct _cairo_scaled_font cairo_scaled_font_t;
@@ -255,12 +256,41 @@ struct FontCacheSizes {
     size_t mShapedWords; // memory used by the per-font shapedWord caches
 };
 
-class gfxFontCache final : public nsExpirationTracker<gfxFont,3> {
+class gfxFontCacheExpirationTracker
+    : public ExpirationTrackerImpl<gfxFont, 3,
+                                   ::detail::PlaceholderLock,
+                                   ::detail::PlaceholderAutoLock>
+{
+protected:
+    typedef ::detail::PlaceholderLock Lock;
+    typedef ::detail::PlaceholderAutoLock AutoLock;
+
+    Lock mLock;
+
+    AutoLock FakeLock()
+    {
+        return AutoLock(mLock);
+    }
+
+    Lock& GetMutex() override
+    {
+        mozilla::AssertIsMainThreadOrServoFontMetricsLocked();
+        return mLock;
+    }
+
 public:
-    enum {
-        FONT_TIMEOUT_SECONDS = 10,
-        SHAPED_WORD_TIMEOUT_SECONDS = 60
-    };
+    enum { FONT_TIMEOUT_SECONDS = 10 };
+
+    gfxFontCacheExpirationTracker(nsIEventTarget* aEventTarget)
+        : ExpirationTrackerImpl<gfxFont, 3, Lock, AutoLock>(
+            FONT_TIMEOUT_SECONDS * 1000, "gfxFontCache", aEventTarget)
+    {
+    }
+};
+
+class gfxFontCache final : private gfxFontCacheExpirationTracker {
+public:
+    enum { SHAPED_WORD_TIMEOUT_SECONDS = 60 };
 
     explicit gfxFontCache(nsIEventTarget* aEventTarget);
     ~gfxFontCache();
@@ -277,12 +307,11 @@ public:
     // It's OK to call this even if Init() has not been called.
     static void Shutdown();
 
-    // Look up a font in the cache. Returns an addrefed pointer, or null
-    // if there's nothing matching in the cache
-    already_AddRefed<gfxFont>
-    Lookup(const gfxFontEntry* aFontEntry,
-           const gfxFontStyle* aStyle,
-           const gfxCharacterMap* aUnicodeRangeMap);
+    // Look up a font in the cache. Returns null if there's nothing matching
+    // in the cache
+    gfxFont* Lookup(const gfxFontEntry* aFontEntry,
+                    const gfxFontStyle* aStyle,
+                    const gfxCharacterMap* aUnicodeRangeMap);
 
     // We created a new font (presumably because Lookup returned null);
     // put it in the cache. The font's refcount should be nonzero. It is
@@ -294,10 +323,6 @@ public:
     // the cache. We delete it if it's not acquired again after a certain
     // amount of time.
     void NotifyReleased(gfxFont *aFont);
-
-    // This gets called when the timeout has expired on a zero-refcount
-    // font; we just delete it.
-    virtual void NotifyExpired(gfxFont *aFont) override;
 
     // Cleans out the hashtable and removes expired fonts waiting for cleanup.
     // Other gfxFont objects may be still in use but they will be pushed
@@ -314,6 +339,16 @@ public:
                                 FontCacheSizes* aSizes) const;
     void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                 FontCacheSizes* aSizes) const;
+
+    void AgeAllGenerations()
+    {
+        AgeAllGenerationsLocked(FakeLock());
+    }
+
+    void RemoveObject(gfxFont* aFont)
+    {
+        RemoveObjectLocked(aFont, FakeLock());
+    }
 
 protected:
     class MemoryReporter final : public nsIMemoryReporter
@@ -333,6 +368,20 @@ protected:
         NS_DECL_ISUPPORTS
         NS_DECL_NSIOBSERVER
     };
+
+    nsresult AddObject(gfxFont* aFont)
+    {
+        return AddObjectLocked(aFont, FakeLock());
+    }
+
+    // This gets called when the timeout has expired on a zero-refcount
+    // font; we just delete it.
+    virtual void NotifyExpiredLocked(gfxFont* aFont, const AutoLock&) override
+    {
+        NotifyExpired(aFont);
+    }
+
+    void NotifyExpired(gfxFont* aFont);
 
     void DestroyFont(gfxFont *aFont);
 
@@ -439,29 +488,24 @@ namespace gfx {
 // by textrun clients like nsTextFrame.)
 enum class ShapedTextFlags : uint16_t {
     /**
-     * When set, the text string pointer used to create the text run
-     * is guaranteed to be available during the lifetime of the text run.
-     */
-    TEXT_IS_PERSISTENT           = 0x0001,
-    /**
      * When set, the text is RTL.
      */
-    TEXT_IS_RTL                  = 0x0002,
+    TEXT_IS_RTL                  = 0x0001,
     /**
      * When set, spacing is enabled and the textrun needs to call GetSpacing
      * on the spacing provider.
      */
-    TEXT_ENABLE_SPACING          = 0x0004,
+    TEXT_ENABLE_SPACING          = 0x0002,
     /**
      * When set, the text has no characters above 255 and it is stored
      * in the textrun in 8-bit format.
      */
-    TEXT_IS_8BIT                 = 0x0008,
+    TEXT_IS_8BIT                 = 0x0004,
     /**
      * When set, GetHyphenationBreaks may return true for some character
      * positions, otherwise it will always return false for all characters.
      */
-    TEXT_ENABLE_HYPHEN_BREAKS    = 0x0010,
+    TEXT_ENABLE_HYPHEN_BREAKS    = 0x0008,
     /**
      * When set, the RunMetrics::mBoundingBox field will be initialized
      * properly based on glyph extents, in particular, glyph extents that
@@ -469,41 +513,45 @@ enum class ShapedTextFlags : uint16_t {
      * and advance width of the glyph). When not set, it may just be the
      * standard font-box even if glyphs overflow.
      */
-    TEXT_NEED_BOUNDING_BOX       = 0x0020,
+    TEXT_NEED_BOUNDING_BOX       = 0x0010,
     /**
      * When set, optional ligatures are disabled. Ligatures that are
      * required for legible text should still be enabled.
      */
-    TEXT_DISABLE_OPTIONAL_LIGATURES = 0x0040,
+    TEXT_DISABLE_OPTIONAL_LIGATURES = 0x0020,
     /**
      * When set, the textrun should favour speed of construction over
      * quality. This may involve disabling ligatures and/or kerning or
      * other effects.
      */
-    TEXT_OPTIMIZE_SPEED          = 0x0080,
+    TEXT_OPTIMIZE_SPEED          = 0x0040,
     /**
      * When set, the textrun should discard control characters instead of
      * turning them into hexboxes.
      */
-    TEXT_HIDE_CONTROL_CHARACTERS = 0x0100,
+    TEXT_HIDE_CONTROL_CHARACTERS = 0x0080,
 
     /**
      * nsTextFrameThebes sets these, but they're defined here rather than
      * in nsTextFrameUtils.h because ShapedWord creation/caching also needs
      * to check the _INCOMING flag
      */
-    TEXT_TRAILING_ARABICCHAR     = 0x0200,
+    TEXT_TRAILING_ARABICCHAR     = 0x0100,
     /**
      * When set, the previous character for this textrun was an Arabic
      * character.  This is used for the context detection necessary for
      * bidi.numeral implementation.
      */
-    TEXT_INCOMING_ARABICCHAR     = 0x0400,
+    TEXT_INCOMING_ARABICCHAR     = 0x0200,
 
     /**
      * Set if the textrun should use the OpenType 'math' script.
      */
-    TEXT_USE_MATH_SCRIPT         = 0x0800,
+    TEXT_USE_MATH_SCRIPT         = 0x0400,
+
+    /*
+     * Bit 0x0800 is currently unused.
+     */
 
     /**
      * Field for orientation of the textrun and glyphs within it.
@@ -1888,9 +1936,9 @@ public:
         return mMathTable.get();
     }
 
-    // return a cloned font resized and offset to simulate sub/superscript glyphs
-    already_AddRefed<gfxFont>
-    GetSubSuperscriptFont(int32_t aAppUnitsPerDevPixel);
+    // Return a cloned font resized and offset to simulate sub/superscript
+    // glyphs. This does not add a reference to the returned font.
+    gfxFont* GetSubSuperscriptFont(int32_t aAppUnitsPerDevPixel);
 
     /**
      * Return the reference cairo_t object from aDT.
@@ -1929,8 +1977,9 @@ protected:
                                         float& aBaselineOffset);
 
     // Return a font that is a "clone" of this one, but reduced to 80% size
-    // (and with variantCaps set to normal).
-    already_AddRefed<gfxFont> GetSmallCapsFont();
+    // (and with variantCaps set to normal). This does not add a reference to
+    // the returned font.
+    gfxFont* GetSmallCapsFont();
 
     // subclasses may provide (possibly hinted) glyph widths (in font units);
     // if they do not override this, harfbuzz will use unhinted widths

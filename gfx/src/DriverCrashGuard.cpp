@@ -351,7 +351,8 @@ DriverCrashGuard::CheckAndUpdatePref(const char* aPrefName, const nsAString& aCu
 {
   std::string pref = GetFullPrefName(aPrefName);
 
-  nsAdoptingString oldValue = Preferences::GetString(pref.c_str());
+  nsAutoString oldValue;
+  Preferences::GetString(pref.c_str(), oldValue);
   if (oldValue == aCurrentValue) {
     return false;
   }
@@ -388,7 +389,7 @@ DriverCrashGuard::FlushPreferences()
   MOZ_ASSERT(XRE_IsParentProcess());
 
   if (nsIPrefService* prefService = Preferences::GetService()) {
-    prefService->SavePrefFile(nullptr);
+    static_cast<Preferences *>(prefService)->SavePrefFileBlocking();
   }
 }
 

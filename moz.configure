@@ -18,8 +18,7 @@ include('build/moz.configure/init.configure')
 # To be removed in Bug 1003313
 @depends(milestone)
 def e10s_testing_only(milestone):
-    if not milestone.is_release_or_beta:
-        return True
+    return True
 
 set_config('E10S_TESTING_ONLY', e10s_testing_only)
 set_define('E10S_TESTING_ONLY', e10s_testing_only)
@@ -74,6 +73,18 @@ def enable_tests(value):
 set_config('ENABLE_TESTS', enable_tests)
 set_define('ENABLE_TESTS', enable_tests)
 
+js_option(env='MOZILLA_OFFICIAL',
+          help='Build an official release')
+
+@depends('MOZILLA_OFFICIAL')
+def mozilla_official(official):
+    if official:
+        return True
+
+set_config('MOZILLA_OFFICIAL', mozilla_official)
+set_define('MOZILLA_OFFICIAL', mozilla_official)
+add_old_configure_assignment('MOZILLA_OFFICIAL', mozilla_official)
+
 @depends(enable_tests)
 def gtest_has_rtti(value):
     if value:
@@ -103,15 +114,14 @@ js_option('--enable-debug',
 add_old_configure_assignment('MOZ_DEBUG',
                              depends('--enable-debug')(lambda v: bool(v)))
 
-imply_option('--enable-rust-debug',
-             depends('--enable-debug')(lambda v: bool(v) or None))
-
 js_option('--enable-rust-debug',
           help='Build Rust code with debug assertions turned on.')
 
-@depends('--enable-rust-debug')
-def debug_rust(debug):
-    if debug:
+@depends('--enable-rust-debug', '--enable-debug')
+def debug_rust(value, debug):
+    if value.origin == 'default':
+        return bool(debug) or None
+    elif bool(value):
         return True
 
 set_config('MOZ_DEBUG_RUST', debug_rust)
@@ -130,6 +140,86 @@ include('build/moz.configure/headers.configure',
         when='--enable-compile-environment')
 include('build/moz.configure/warnings.configure',
         when='--enable-compile-environment')
+
+
+@depends(target, host)
+def is_openbsd(target, host):
+    return target.kernel == 'OpenBSD' or host.kernel == 'OpenBSD'
+
+option(env='SO_VERSION', nargs=1, default='1.0', when=is_openbsd,
+       help='Shared library version for OpenBSD systems')
+
+@depends('SO_VERSION', when=is_openbsd)
+def so_version(value):
+    return value
+
+@template
+def library_name_info_template(host_or_target):
+    assert host_or_target in (host, target)
+    compiler = {
+        host: host_c_compiler,
+        target: c_compiler,
+    }[host_or_target]
+
+    @depends(host_or_target, compiler, so_version)
+    def library_name_info_impl(host_or_target, compiler, so_version):
+        if host_or_target.kernel == 'WINNT':
+            # There aren't artifacts for mingw builds, so it's OK that the
+            # results are inaccurate in that case.
+            if compiler and compiler.type not in ('msvc', 'clang-cl'):
+                return namespace(
+                    dll=namespace(prefix='', suffix='.dll'),
+                    lib=namespace(prefix='lib', suffix='a'),
+                    import_lib=namespace(prefix='lib', suffix='a'),
+                    rust_lib=namespace(prefix='', suffix='lib'),
+                    obj=namespace(prefix='', suffix='o'),
+                )
+
+            return namespace(
+                dll=namespace(prefix='', suffix='.dll'),
+                lib=namespace(prefix='', suffix='lib'),
+                import_lib=namespace(prefix='', suffix='lib'),
+                rust_lib=namespace(prefix='', suffix='lib'),
+                obj=namespace(prefix='', suffix='obj'),
+            )
+
+        elif host_or_target.kernel == 'Darwin':
+            return namespace(
+                dll=namespace(prefix='lib', suffix='.dylib'),
+                lib=namespace(prefix='lib', suffix='a'),
+                import_lib=namespace(prefix=None, suffix=''),
+                rust_lib=namespace(prefix='lib', suffix='a'),
+                obj=namespace(prefix='', suffix='o'),
+            )
+        elif so_version:
+            so = '.so.%s' % so_version
+        else:
+            so = '.so'
+
+        return namespace(
+            dll=namespace(prefix='lib', suffix=so),
+            lib=namespace(prefix='lib', suffix='a'),
+            import_lib=namespace(prefix=None, suffix=''),
+            rust_lib=namespace(prefix='lib', suffix='a'),
+            obj=namespace(prefix='', suffix='o'),
+        )
+
+    return library_name_info_impl
+
+host_library_name_info = library_name_info_template(host)
+library_name_info = library_name_info_template(target)
+
+set_config('DLL_PREFIX', library_name_info.dll.prefix)
+set_config('DLL_SUFFIX', library_name_info.dll.suffix)
+set_config('LIB_PREFIX', library_name_info.lib.prefix)
+set_config('LIB_SUFFIX', library_name_info.lib.suffix)
+set_config('RUST_LIB_PREFIX', library_name_info.rust_lib.prefix)
+set_config('RUST_LIB_SUFFIX', library_name_info.rust_lib.suffix)
+set_config('OBJ_SUFFIX', library_name_info.obj.suffix)
+# Lots of compilation tests depend on this variable being present.
+add_old_configure_assignment('OBJ_SUFFIX', library_name_info.obj.suffix)
+set_config('IMPORT_LIB_SUFFIX', library_name_info.import_lib.suffix)
+set_define('MOZ_DLL_SUFFIX', depends(library_name_info.dll.suffix)(lambda s: '"%s"' % s))
 
 include(include_project_configure)
 
@@ -273,6 +363,42 @@ def tup_progs(build_backends):
     return None
 
 tup = check_prog('TUP', tup_progs)
+
+# watchman detection
+# ==============================================================
+
+watchman = check_prog('WATCHMAN', ('watchman',), allow_missing=True)
+
+@depends_if(watchman)
+@checking('for watchman version')
+@imports('json')
+def watchman_version(watchman):
+    out = check_cmd_output(watchman, 'version')
+    res = json.loads(out)
+    return Version(res['version'])
+
+@depends_all(hg_version, hg_config, watchman)
+@checking('for watchman Mercurial integration')
+@imports('os')
+def watchman_hg(hg_version, hg_config, watchman):
+    if hg_version < Version('3.8'):
+        return 'no (Mercurial 3.8+ required)'
+
+    ext_enabled = False
+    mode_disabled = False
+
+    for k in ('extensions.fsmonitor', 'extensions.hgext.fsmonitor'):
+        if k in hg_config and hg_config[k] != '!':
+            ext_enabled = True
+
+    mode_disabled = hg_config.get('fsmonitor.mode') == 'off'
+
+    if not ext_enabled:
+        return 'no (fsmonitor extension not enabled)'
+    if mode_disabled:
+        return 'no (fsmonitor.mode=off disables fsmonitor)'
+
+    return True
 
 # Miscellaneous programs
 # ==============================================================

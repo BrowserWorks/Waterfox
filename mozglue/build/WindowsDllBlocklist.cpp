@@ -32,6 +32,7 @@
 #include "mozilla/WindowsVersion.h"
 #include "nsWindowsHelpers.h"
 #include "WindowsDllBlocklist.h"
+#include "mozilla/AutoProfilerLabel.h"
 
 using namespace mozilla;
 
@@ -72,6 +73,7 @@ struct DllBlockInfo {
   enum {
     FLAGS_DEFAULT = 0,
     BLOCK_WIN8PLUS_ONLY = 1,
+    BLOCK_WIN8_ONLY = 2,
     USE_TIMESTAMP = 4,
     CHILD_PROCESSES_ONLY = 8
   } flags;
@@ -244,6 +246,9 @@ static const DllBlockInfo sWindowsDllBlocklist[] = {
   { "nahimic2devprops.dll", ALL_VERSIONS },
   // Nahimic is causing crashes, bug 1233556
   { "nahimicmsiosd.dll", ALL_VERSIONS },
+
+  // Bug 1268470 - crashes with Kaspersky Lab on Windows 8
+  { "klsihk64.dll", MAKE_VERSION(14, 0, 456, 0xffff), DllBlockInfo::BLOCK_WIN8_ONLY },
 
   { nullptr, 0 }
 };
@@ -699,6 +704,11 @@ patched_LdrLoadDll (PWCHAR filePath, PULONG flags, PUNICODE_STRING moduleFileNam
       goto continue_loading;
     }
 
+    if ((info->flags & DllBlockInfo::BLOCK_WIN8_ONLY) &&
+        (!IsWin8OrLater() || IsWin8Point1OrLater())) {
+      goto continue_loading;
+    }
+
     if ((info->flags & DllBlockInfo::CHILD_PROCESSES_ONLY) &&
         !(sInitFlags & eDllBlocklistInitFlagIsChildProcess)) {
       goto continue_loading;
@@ -763,6 +773,12 @@ continue_loading:
   printf_stderr("LdrLoadDll: continuing load... ('%S')\n", moduleFileName->Buffer);
 #endif
 
+  // A few DLLs such as xul.dll and nss3.dll get loaded before mozglue's
+  // AutoProfilerLabel is initialized, and this is a no-op in those cases. But
+  // the vast majority of DLLs do get labelled here.
+  AutoProfilerLabel label("WindowsDllBlocklist::patched_LdrLoadDll", dllName,
+                          __LINE__);
+
 #ifdef _M_AMD64
   // Prevent the stack walker from suspending this thread when LdrLoadDll
   // holds the RtlLookupFunctionEntry lock.
@@ -771,7 +787,6 @@ continue_loading:
 
   return stub_LdrLoadDll(filePath, flags, moduleFileName, handle);
 }
-
 
 #ifdef _M_IX86
 static bool
@@ -803,7 +818,7 @@ patched_BaseThreadInitThunk(BOOL aIsInitialThread, void* aStartAddress,
                             void* aThreadParam)
 {
   if (ShouldBlockThread(aStartAddress)) {
-    aStartAddress = NopThreadProc;
+    aStartAddress = (void*)NopThreadProc;
   }
 
   stub_BaseThreadInitThunk(aIsInitialThread, aStartAddress, aThreadParam);
@@ -860,17 +875,20 @@ DllBlocklist_Initialize(uint32_t aInitFlags)
   }
 #endif
 
-#ifdef _M_IX86 // Minimize impact; crashes in BaseThreadInitThunk are vastly more frequent on x86
-  if(!Kernel32Intercept.AddDetour("BaseThreadInitThunk",
+#ifdef _M_IX86 // Minimize impact. Crashes in BaseThreadInitThunk are more frequent on x86
+
+  // Bug 1361410: WRusr.dll will overwrite our hook and cause a crash.
+  // Workaround: If we detect WRusr.dll, don't hook.
+  if (!GetModuleHandleW(L"WRusr.dll")) {
+    if(!Kernel32Intercept.AddDetour("BaseThreadInitThunk",
                                     reinterpret_cast<intptr_t>(patched_BaseThreadInitThunk),
                                     (void**) &stub_BaseThreadInitThunk)) {
 #ifdef DEBUG
-    printf_stderr("BaseThreadInitThunk hook failed\n");
+      printf_stderr("BaseThreadInitThunk hook failed\n");
 #endif
+    }
   }
 #endif // _M_IX86
-
-
 }
 
 MFBT_API void

@@ -5,17 +5,17 @@
 
 /* This parsing code originally lived in xpfe/components/directory/ - bbaetz */
 
-#include "mozilla/ArrayUtils.h"
-
-#include "prprf.h"
-
 #include "nsDirIndexParser.h"
-#include "nsEscape.h"
-#include "nsIInputStream.h"
-#include "nsCRT.h"
+
+#include "mozilla/ArrayUtils.h"
 #include "mozilla/dom/FallbackEncoding.h"
-#include "nsITextToSubURI.h"
+#include "mozilla/Encoding.h"
+#include "prprf.h"
+#include "nsCRT.h"
+#include "nsEscape.h"
 #include "nsIDirIndex.h"
+#include "nsIInputStream.h"
+#include "nsITextToSubURI.h"
 #include "nsServiceManagerUtils.h"
 
 using namespace mozilla;
@@ -33,8 +33,9 @@ nsDirIndexParser::Init() {
   mLineStart = 0;
   mHasDescription = false;
   mFormat[0] = -1;
-  mozilla::dom::FallbackEncoding::FromLocale(mEncoding);
- 
+  auto encoding = mozilla::dom::FallbackEncoding::FromLocale();
+  encoding->Name(mEncoding);
+
   nsresult rv;
   // XXX not threadsafe
   if (gRefCntParser++ == 0)
@@ -70,7 +71,7 @@ nsDirIndexParser::GetComment(char** aComment) {
 
   if (!*aComment)
     return NS_ERROR_OUT_OF_MEMORY;
-  
+
   return NS_OK;
 }
 
@@ -131,7 +132,7 @@ nsDirIndexParser::ParseFormat(const char* aFormatStr)
   do {
     while (*aFormatStr && nsCRT::IsAsciiSpace(char16_t(*aFormatStr)))
       ++aFormatStr;
-    
+
     if (! *aFormatStr)
       break;
 
@@ -142,14 +143,14 @@ nsDirIndexParser::ParseFormat(const char* aFormatStr)
     name.SetCapacity(len + 1);
     name.Append(aFormatStr, len);
     aFormatStr += len;
-    
+
     // Okay, we're gonna monkey with the nsStr. Bold!
     name.SetLength(nsUnescapeCount(name.BeginWriting()));
 
     // All tokens are case-insensitive - http://www.mozilla.org/projects/netlib/dirindexformat.html
     if (name.LowerCaseEqualsLiteral("description"))
       mHasDescription = true;
-    
+
     for (Field* i = gFieldTable; i->mName; ++i) {
       if (name.EqualsIgnoreCase(i->mName)) {
         mFormat[formatNum] = i->mType;
@@ -159,7 +160,7 @@ nsDirIndexParser::ParseFormat(const char* aFormatStr)
     }
 
   } while (*aFormatStr && (formatNum < (ArrayLength(mFormat)-1)));
-  
+
   return NS_OK;
 }
 
@@ -233,27 +234,26 @@ nsDirIndexParser::ParseData(nsIDirIndex *aIdx, char* aDataStr, int32_t aLineLen)
     case FIELD_FILENAME: {
       // don't unescape at this point, so that UnEscapeAndConvert() can
       filename = value;
-      
+
       bool    success = false;
-      
+
       nsAutoString entryuri;
-      
+
       if (gTextToSubURI) {
-        char16_t   *result = nullptr;
-        if (NS_SUCCEEDED(rv = gTextToSubURI->UnEscapeAndConvert(mEncoding.get(), filename.get(),
-                                                                &result)) && (result)) {
-          if (*result) {
+        nsAutoString result;
+        if (NS_SUCCEEDED(rv = gTextToSubURI->UnEscapeAndConvert(
+                           mEncoding, filename, result))) {
+          if (!result.IsEmpty()) {
             aIdx->SetLocation(filename.get());
             if (!mHasDescription)
-              aIdx->SetDescription(result);
+              aIdx->SetDescription(result.get());
             success = true;
           }
-          free(result);
         } else {
           NS_WARNING("UnEscapeAndConvert error");
         }
       }
-      
+
       if (!success) {
         // if unsuccessfully at charset conversion, then
         // just fallback to unescape'ing in-place
@@ -321,9 +321,9 @@ nsDirIndexParser::OnDataAvailable(nsIRequest *aRequest, nsISupports *aCtxt,
                                   uint32_t aCount) {
   if (aCount < 1)
     return NS_OK;
-  
+
   int32_t len = mBuf.Length();
-  
+
   // Ensure that our mBuf has capacity to hold the data we're about to
   // read.
   if (!mBuf.SetLength(len + aCount, fallible))
@@ -347,25 +347,25 @@ nsresult
 nsDirIndexParser::ProcessData(nsIRequest *aRequest, nsISupports *aCtxt) {
   if (!mListener)
     return NS_ERROR_FAILURE;
-  
+
   int32_t     numItems = 0;
-  
+
   while(true) {
     ++numItems;
-    
+
     int32_t             eol = mBuf.FindCharInSet("\n\r", mLineStart);
     if (eol < 0)        break;
     mBuf.SetCharAt(char16_t('\0'), eol);
-    
+
     const char  *line = mBuf.get() + mLineStart;
-    
+
     int32_t lineLen = eol - mLineStart;
     mLineStart = eol + 1;
-    
+
     if (lineLen >= 4) {
       nsresult  rv;
       const char        *buf = line;
-      
+
       if (buf[0] == '1') {
         if (buf[1] == '0') {
           if (buf[2] == '0' && buf[3] == ':') {
@@ -396,7 +396,7 @@ nsDirIndexParser::ProcessData(nsIRequest *aRequest, nsISupports *aCtxt) {
             nsCOMPtr<nsIDirIndex> idx = do_CreateInstance("@mozilla.org/dirIndex;1",&rv);
             if (NS_FAILED(rv))
               return rv;
-            
+
             rv = ParseData(idx, ((char *)buf) + 4, lineLen - 4);
             if (NS_FAILED(rv)) {
               return rv;
@@ -414,7 +414,7 @@ nsDirIndexParser::ProcessData(nsIRequest *aRequest, nsISupports *aCtxt) {
             int i = 4;
             while (buf[i] && nsCRT::IsAsciiSpace(buf[i]))
               ++i;
-            
+
             if (buf[i])
               SetEncoding(buf+i);
           }
@@ -422,6 +422,6 @@ nsDirIndexParser::ProcessData(nsIRequest *aRequest, nsISupports *aCtxt) {
       }
     }
   }
-  
+
   return NS_OK;
 }

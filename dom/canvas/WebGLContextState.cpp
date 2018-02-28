@@ -307,7 +307,7 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
 
                 nsAutoString ret;
                 if (overridePref) {
-                    nsresult res = Preferences::GetString(overridePref, &ret);
+                    nsresult res = Preferences::GetString(overridePref, ret);
                     if (NS_SUCCEEDED(res) && ret.Length() > 0)
                         hasRetVal = true;
                 }
@@ -508,6 +508,8 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
         case LOCAL_GL_POLYGON_OFFSET_FILL:
         case LOCAL_GL_SCISSOR_TEST:
         case LOCAL_GL_SAMPLE_COVERAGE_INVERT:
+        case LOCAL_GL_SAMPLE_ALPHA_TO_COVERAGE:
+        case LOCAL_GL_SAMPLE_COVERAGE:
         case LOCAL_GL_DEPTH_WRITEMASK: {
             realGLboolean b = 0;
             gl->fGetBooleanv(pname, &b);

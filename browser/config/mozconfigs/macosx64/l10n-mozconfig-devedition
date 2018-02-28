@@ -1,5 +1,13 @@
 . "$topsrcdir/browser/config/mozconfigs/common"
-. "$topsrcdir/build/macosx/mozconfig.common"
+. "$topsrcdir/build/mozconfig.no-compile"
+
+if test `uname -s` = "Linux"; then
+  # We need to indicate the target for cross builds
+  ac_add_options --target=x86_64-apple-darwin
+  export MKFSHFS=$topsrcdir/hfsplus-tools/newfs_hfs
+  export DMG_TOOL=$topsrcdir/dmg/dmg
+  export HFS_TOOL=$topsrcdir/dmg/hfsplus
+fi
 
 ac_add_options --with-l10n-base=../../l10n
 ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
@@ -19,4 +27,3 @@ export MOZ_TELEMETRY_REPORTING=1
 mk_add_options AUTOCLOBBER=
 
 . "$topsrcdir/build/mozconfig.common.override"
-. "$topsrcdir/build/mozconfig.cache"

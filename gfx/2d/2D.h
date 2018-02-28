@@ -27,6 +27,8 @@
 // solution.
 #include "mozilla/RefPtr.h"
 #include "mozilla/ServoUtils.h"
+#include "mozilla/StaticMutex.h"
+#include "mozilla/StaticPtr.h"
 #include "mozilla/WeakPtr.h"
 
 #include "mozilla/DebugOnly.h"
@@ -1230,14 +1232,6 @@ public:
     CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const = 0;
 
   /**
-   * Create a DrawTarget that captures the drawing commands and can be replayed
-   * onto a compatible DrawTarget afterwards.
-   *
-   * @param aSize Size of the area this DT will capture.
-   */
-  virtual already_AddRefed<DrawTargetCapture> CreateCaptureDT(const IntSize& aSize);
-
-  /**
    * Create a draw target optimized for drawing a shadow.
    *
    * Note that aSigma is the blur radius that must be used when we draw the
@@ -1495,8 +1489,21 @@ public:
   static already_AddRefed<DrawTarget>
     CreateDrawTarget(BackendType aBackend, const IntSize &aSize, SurfaceFormat aFormat);
 
+  /**
+   * Create a DrawTarget that captures the drawing commands and can be replayed
+   * onto a compatible DrawTarget afterwards.
+   *
+   * @param aSize Size of the area this DT will capture.
+   */
+  static already_AddRefed<DrawTargetCapture>
+    CreateCaptureDrawTarget(BackendType aBackend, const IntSize &aSize, SurfaceFormat aFormat);
+
+
   static already_AddRefed<DrawTarget>
-    CreateRecordingDrawTarget(DrawEventRecorder *aRecorder, DrawTarget *aDT);
+    CreateWrapAndRecordDrawTarget(DrawEventRecorder *aRecorder, DrawTarget *aDT);
+
+  static already_AddRefed<DrawTarget>
+    CreateRecordingDrawTarget(DrawEventRecorder *aRecorder, DrawTarget *aDT, IntSize aSize);
 
   static already_AddRefed<DrawTarget>
     CreateDrawTargetForData(BackendType aBackend, unsigned char* aData, const IntSize &aSize, int32_t aStride, SurfaceFormat aFormat, bool aUninitialized = false);
@@ -1517,12 +1524,13 @@ public:
    *
    * @param aData Pointer to the data
    * @param aSize Size of the TrueType data
-   * @param aType Type of NativeFontResource that should be created.
+   * @param aBackendType Type of the reference DrawTarget the font should be created for.
+   * @param aFontType Type of NativeFontResource that should be created.
    * @param aFontContext Optional native font context to be used to create the NativeFontResource.
    * @return a NativeFontResource of nullptr if failed.
    */
   static already_AddRefed<NativeFontResource>
-    CreateNativeFontResource(uint8_t *aData, uint32_t aSize, FontType aType, void* aFontContext = nullptr);
+    CreateNativeFontResource(uint8_t *aData, uint32_t aSize, BackendType aBackendType, FontType aFontType, void* aFontContext = nullptr);
 
   /**
    * This creates an unscaled font of the given type based on font descriptor
@@ -1639,6 +1647,8 @@ public:
 
   static FT_Library NewFTLibrary();
   static void ReleaseFTLibrary(FT_Library aFTLibrary);
+  static void LockFTLibrary(FT_Library aFTLibrary);
+  static void UnlockFTLibrary(FT_Library aFTLibrary);
 
   static FT_Face NewFTFace(FT_Library aFTLibrary, const char* aFileName, int aFaceIndex);
   static FT_Face NewFTFaceFromData(FT_Library aFTLibrary, const uint8_t* aData, size_t aDataSize, int aFaceIndex);
@@ -1658,15 +1668,13 @@ public:
    * Returns true on success, or false on failure and leaves the D2D1/Direct3D11 devices unset.
    */
   static bool SetDirect3D11Device(ID3D11Device *aDevice);
+  static RefPtr<ID3D11Device> GetDirect3D11Device();
+  static RefPtr<ID2D1Device> GetD2D1Device(uint32_t* aOutSeqNo = nullptr);
+  static bool HasD2D1Device();
+  static RefPtr<IDWriteFactory> GetDWriteFactory();
   static bool SetDWriteFactory(IDWriteFactory *aFactory);
-  static ID3D11Device *GetDirect3D11Device();
-  static ID2D1Device *GetD2D1Device();
-  static uint32_t GetD2D1DeviceSeq();
-  static IDWriteFactory *GetDWriteFactory();
+  static RefPtr<IDWriteFactory> EnsureDWriteFactory();
   static bool SupportsD2D1();
-
-  static already_AddRefed<GlyphRenderingOptions>
-    CreateDWriteGlyphRenderingOptions(IDWriteRenderingParams *aParams);
 
   static uint64_t GetD2DVRAMUsageDrawTarget();
   static uint64_t GetD2DVRAMUsageSourceSurface();
@@ -1678,16 +1686,28 @@ public:
                                   const RefPtr<UnscaledFont>& aUnscaledFont,
                                   Float aSize,
                                   bool aUseEmbeddedBitmap,
-                                  bool aForceGDIMode);
+                                  bool aForceGDIMode,
+                                  IDWriteRenderingParams *aParams,
+                                  Float aGamma,
+                                  Float aContrast);
 
   static void UpdateSystemTextQuality();
 
 private:
-  static ID2D1Device *mD2D1Device;
-  static ID3D11Device *mD3D11Device;
-  static IDWriteFactory *mDWriteFactory;
+  static StaticRefPtr<ID2D1Device> mD2D1Device;
+  static StaticRefPtr<ID3D11Device> mD3D11Device;
+  static StaticRefPtr<IDWriteFactory> mDWriteFactory;
+  static bool mDWriteFactoryInitialized;
+
+protected:
+  // This guards access to the singleton devices above, as well as the
+  // singleton devices in DrawTargetD2D1.
+  static StaticMutex mDeviceLock;
+
+  friend class DrawTargetD2D1;
 #endif
 
+private:
   static DrawEventRecorder *mRecorder;
 };
 

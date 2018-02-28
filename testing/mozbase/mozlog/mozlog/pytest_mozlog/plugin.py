@@ -5,6 +5,8 @@
 import mozlog
 import time
 
+import pytest
+
 
 def pytest_addoption(parser):
     # We can't simply use mozlog.commandline.add_logging_group(parser) here because
@@ -61,6 +63,7 @@ class MozLog(object):
         '''Called after test collection is completed, just before tests are run (suite start)'''
         self._log_suite_start([item.nodeid for item in session.items])
 
+    @pytest.mark.optionalhook
     def pytest_xdist_node_collection_finished(self, node, ids):
         '''Called after each pytest-xdist node collection is completed'''
         self._log_suite_start(ids)
@@ -78,7 +81,7 @@ class MozLog(object):
         message = stack = None
         if hasattr(report, 'wasxfail'):
             expected = 'FAIL'
-        if report.failed:
+        if report.failed or report.outcome == 'rerun':
             status = 'FAIL' if report.when == 'call' else 'ERROR'
         if report.skipped:
             status = 'SKIP' if not hasattr(report, 'wasxfail') else 'FAIL'
@@ -107,7 +110,7 @@ class MozLog(object):
                                  (longrepr.__class__, dir(longrepr)))
         if status != expected or expected != 'PASS':
             self.results[test] = (status, expected, message, stack)
-        if report.when == 'teardown':
+        if report.outcome == 'rerun' or report.when == 'teardown':
             defaults = ('PASS', 'PASS', None, None)
             status, expected, message, stack = self.results.get(test, defaults)
             self.logger.test_end(test=test, status=status, expected=expected,

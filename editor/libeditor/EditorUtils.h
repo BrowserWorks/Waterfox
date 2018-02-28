@@ -7,6 +7,7 @@
 #ifndef mozilla_EditorUtils_h
 #define mozilla_EditorUtils_h
 
+#include "mozilla/dom/Selection.h"
 #include "mozilla/EditorBase.h"
 #include "mozilla/GuardObjects.h"
 #include "nsCOMPtr.h"
@@ -25,10 +26,6 @@ class nsRange;
 
 namespace mozilla {
 template <class T> class OwningNonNull;
-
-namespace dom {
-class Selection;
-} // namespace dom
 
 /***************************************************************************
  * EditActionResult is useful to return multiple results of an editor
@@ -144,8 +141,10 @@ EditActionCanceled(nsresult aRv = NS_OK)
 }
 
 /***************************************************************************
- * stack based helper class for batching a collection of txns inside a
- * placeholder txn.
+ * stack based helper class for batching a collection of transactions inside a
+ * placeholder transaction.
+ * XXX This is used by mozInlineSpellChecker.  Therefore, cannot use concrete
+ *     editor class.
  */
 class MOZ_RAII AutoPlaceHolderBatch
 {
@@ -318,6 +317,23 @@ public:
 protected:
   EditorBase* mEditorBase;
   MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
+
+class MOZ_STACK_CLASS AutoRangeArray final
+{
+public:
+  explicit AutoRangeArray(dom::Selection* aSelection)
+  {
+    if (!aSelection) {
+      return;
+    }
+    uint32_t rangeCount = aSelection->RangeCount();
+    for (uint32_t i = 0; i < rangeCount; i++) {
+      mRanges.AppendElement(*aSelection->GetRangeAt(i));
+    }
+  }
+
+  AutoTArray<mozilla::OwningNonNull<nsRange>, 8> mRanges;
 };
 
 /******************************************************************************

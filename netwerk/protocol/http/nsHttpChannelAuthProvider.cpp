@@ -42,6 +42,7 @@ namespace net {
 #define HTTP_AUTH_DIALOG_TOP_LEVEL_DOC 29
 #define HTTP_AUTH_DIALOG_SAME_ORIGIN_SUBRESOURCE 30
 #define HTTP_AUTH_DIALOG_SAME_ORIGIN_XHR 31
+#define HTTP_AUTH_DIALOG_NON_WEB_CONTENT 32
 
 #define HTTP_AUTH_BASIC_INSECURE 0
 #define HTTP_AUTH_BASIC_SECURE 1
@@ -95,6 +96,7 @@ uint32_t nsHttpChannelAuthProvider::sAuthAllowPref =
     SUBRESOURCE_AUTH_DIALOG_ALLOW_ALL;
 
 bool nsHttpChannelAuthProvider::sImgCrossOriginAuthAllowPref = true;
+bool nsHttpChannelAuthProvider::sNonWebContentTriggeredAuthAllow = false;
 
 void
 nsHttpChannelAuthProvider::InitializePrefs()
@@ -106,6 +108,9 @@ nsHttpChannelAuthProvider::InitializePrefs()
   mozilla::Preferences::AddBoolVarCache(&sImgCrossOriginAuthAllowPref,
                                         "network.auth.subresource-img-cross-origin-http-auth-allow",
                                         true);
+  mozilla::Preferences::AddBoolVarCache(&sNonWebContentTriggeredAuthAllow,
+                                        "network.auth.non-web-content-triggered-resources-http-auth-allow",
+                                        false);
 }
 
 NS_IMETHODIMP
@@ -288,7 +293,7 @@ nsHttpChannelAuthProvider::CheckForSuperfluousAuth()
     // contained a userpass, then (provided some other conditions are true),
     // we'll give the user an opportunity to abort the channel as this might be
     // an attempt to spoof a different site (see bug 232567).
-    if (!ConfirmAuth(NS_LITERAL_STRING("SuperfluousAuth"), true)) {
+    if (!ConfirmAuth("SuperfluousAuth", true)) {
         // calling cancel here sets our mStatus and aborts the HTTP
         // transaction, which prevents OnDataAvailable events.
         Unused << mAuthChannel->Cancel(NS_ERROR_ABORT);
@@ -563,7 +568,7 @@ nsHttpChannelAuthProvider::PrepareForAuthentication(bool proxyAuth)
 nsresult
 nsHttpChannelAuthProvider::GetCredentials(const char     *challenges,
                                           bool            proxyAuth,
-                                          nsAFlatCString &creds)
+                                          nsCString& creds)
 {
     nsCOMPtr<nsIHttpAuthenticator> auth;
     nsAutoCString challenge;
@@ -660,10 +665,10 @@ nsHttpChannelAuthProvider::GetCredentials(const char     *challenges,
 
 nsresult
 nsHttpChannelAuthProvider::GetAuthorizationMembers(bool                 proxyAuth,
-                                                   nsCSubstring&        scheme,
+                                                   nsACString&        scheme,
                                                    const char*&         host,
                                                    int32_t&             port,
-                                                   nsCSubstring&        path,
+                                                   nsACString&        path,
                                                    nsHttpAuthIdentity*& ident,
                                                    nsISupports**&       continuationState)
 {
@@ -701,7 +706,7 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
                                                       const char *authType,
                                                       bool        proxyAuth,
                                                       nsIHttpAuthenticator *auth,
-                                                      nsAFlatCString     &creds)
+                                                      nsCString& creds)
 {
     LOG(("nsHttpChannelAuthProvider::GetCredentialsForChallenge "
          "[this=%p channel=%p proxyAuth=%d challenges=%s]\n",
@@ -912,8 +917,10 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
             // BlockPrompt will set mCrossOrigin parameter as well.
             if (BlockPrompt()) {
                 LOG(("nsHttpChannelAuthProvider::GetCredentialsForChallenge: "
-                     "Prompt is blocked [this=%p pref=%d img-pref=%d]\n",
-                      this, sAuthAllowPref, sImgCrossOriginAuthAllowPref));
+                     "Prompt is blocked [this=%p pref=%d img-pref=%d "
+                     "non-web-content-triggered-pref=%d]\n",
+                      this, sAuthAllowPref, sImgCrossOriginAuthAllowPref,
+                      sNonWebContentTriggeredAuthAllow));
                 return NS_ERROR_ABORT;
             }
 
@@ -929,7 +936,7 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
     if (identFromURI) {
         // Warn the user before automatically using the identity from the URL
         // to automatically log them into a site (see bug 232567).
-        if (!ConfirmAuth(NS_LITERAL_STRING("AutomaticAuth"), false)) {
+        if (!ConfirmAuth("AutomaticAuth", false)) {
             // calling cancel here sets our mStatus and aborts the HTTP
             // transaction, which prevents OnDataAvailable events.
             rv = mAuthChannel->Cancel(NS_ERROR_ABORT);
@@ -983,12 +990,22 @@ nsHttpChannelAuthProvider::BlockPrompt()
     // We will treat loads w/o loadInfo as a top level document.
     bool topDoc = true;
     bool xhr = false;
+    bool nonWebContent = false;
 
     if (loadInfo) {
         if (loadInfo->GetExternalContentPolicyType() !=
             nsIContentPolicy::TYPE_DOCUMENT) {
             topDoc = false;
         }
+
+        if (!topDoc) {
+            nsCOMPtr<nsIPrincipal> triggeringPrinc =
+                loadInfo->TriggeringPrincipal();
+            if (nsContentUtils::IsSystemPrincipal(triggeringPrinc)) {
+                nonWebContent = true;
+            }
+        }
+
         if (loadInfo->GetExternalContentPolicyType() ==
             nsIContentPolicy::TYPE_XMLHTTPREQUEST) {
             xhr = true;
@@ -1014,20 +1031,27 @@ nsHttpChannelAuthProvider::BlockPrompt()
 
     if (gHttpHandler->IsTelemetryEnabled()) {
         if (topDoc) {
-            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_2,
+            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_3,
                                   HTTP_AUTH_DIALOG_TOP_LEVEL_DOC);
+        } else if (nonWebContent) {
+            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_3,
+                                   HTTP_AUTH_DIALOG_NON_WEB_CONTENT);
         } else if (!mCrossOrigin) {
             if (xhr) {
-                Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_2,
+                Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_3,
                                       HTTP_AUTH_DIALOG_SAME_ORIGIN_XHR);
             } else {
-                Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_2,
+                Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_3,
                                       HTTP_AUTH_DIALOG_SAME_ORIGIN_SUBRESOURCE);
             }
         } else {
-            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_2,
+            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS_3,
                                   loadInfo->GetExternalContentPolicyType());
         }
+    }
+
+    if (!topDoc && !sNonWebContentTriggeredAuthAllow && nonWebContent) {
+        return true;
     }
 
     switch (sAuthAllowPref) {
@@ -1044,7 +1068,8 @@ nsHttpChannelAuthProvider::BlockPrompt()
         // If pref network.auth.subresource-img-cross-origin-http-auth-allow
         // is set, http-authentication dialog for image subresources is
         // blocked.
-        if (!sImgCrossOriginAuthAllowPref &&
+        if (mCrossOrigin &&
+            !sImgCrossOriginAuthAllowPref &&
             loadInfo &&
             ((loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_IMAGE) ||
              (loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_IMAGESET))) {
@@ -1488,7 +1513,7 @@ NS_IMETHODIMP nsHttpChannelAuthProvider::OnCredsGenerated(const char *aGenerated
 }
 
 nsresult
-nsHttpChannelAuthProvider::ContinueOnAuthAvailable(const nsCSubstring& creds)
+nsHttpChannelAuthProvider::ContinueOnAuthAvailable(const nsACString& creds)
 {
     nsresult rv;
     if (mProxyAuth)
@@ -1509,8 +1534,8 @@ nsHttpChannelAuthProvider::ContinueOnAuthAvailable(const nsCSubstring& creds)
 }
 
 bool
-nsHttpChannelAuthProvider::ConfirmAuth(const nsString &bundleKey,
-                                       bool            doYesNoPrompt)
+nsHttpChannelAuthProvider::ConfirmAuth(const char* bundleKey,
+                                       bool        doYesNoPrompt)
 {
     // skip prompting the user if
     //   1) we've already prompted the user
@@ -1587,7 +1612,7 @@ nsHttpChannelAuthProvider::ConfirmAuth(const nsString &bundleKey,
     const char16_t *strs[2] = { ucsHost.get(), ucsUser.get() };
 
     nsXPIDLString msg;
-    bundle->FormatStringFromName(bundleKey.get(), strs, 2, getter_Copies(msg));
+    bundle->FormatStringFromName(bundleKey, strs, 2, getter_Copies(msg));
     if (!msg)
         return true;
 

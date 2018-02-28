@@ -152,6 +152,7 @@ nsIAtom** const kAttributesHTML[] = {
   &nsGkAtoms::accesskey,
   &nsGkAtoms::action,
   &nsGkAtoms::alt,
+  &nsGkAtoms::as,
   &nsGkAtoms::autocomplete,
   &nsGkAtoms::autofocus,
   &nsGkAtoms::autoplay,
@@ -169,6 +170,7 @@ nsIAtom** const kAttributesHTML[] = {
   &nsGkAtoms::contextmenu,
   &nsGkAtoms::controls,
   &nsGkAtoms::coords,
+  &nsGkAtoms::crossorigin,
   &nsGkAtoms::datetime,
   &nsGkAtoms::dir,
   &nsGkAtoms::disabled,
@@ -185,6 +187,7 @@ nsIAtom** const kAttributesHTML[] = {
   &nsGkAtoms::hreflang,
   &nsGkAtoms::icon,
   &nsGkAtoms::id,
+  &nsGkAtoms::integrity,
   &nsGkAtoms::ismap,
   &nsGkAtoms::itemid,
   &nsGkAtoms::itemprop,
@@ -1292,7 +1295,7 @@ nsTreeSanitizer::SanitizeURL(mozilla::dom::Element* aElement,
   nsCOMPtr<nsIURI> baseURI = aElement->GetBaseURI();
   nsCOMPtr<nsIURI> attrURI;
   nsresult rv = NS_NewURI(getter_AddRefs(attrURI), v, nullptr, baseURI);
-  if (NS_SUCCEEDED(rv)) { 
+  if (NS_SUCCEEDED(rv)) {
     if (mCidEmbedsOnly &&
         kNameSpaceID_None == aNamespace) {
       if (nsGkAtoms::src == aLocalName || nsGkAtoms::background == aLocalName) {

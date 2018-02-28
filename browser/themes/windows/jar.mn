@@ -53,10 +53,12 @@ browser.jar:
   skin/classic/browser/urlbar-history-dropmarker-win7@2x.png
   skin/classic/browser/webRTC-indicator.css  (../shared/webRTC-indicator.css)
 * skin/classic/browser/controlcenter/panel.css                 (controlcenter/panel.css)
-  skin/classic/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
+#ifndef MOZ_PHOTON_THEME
   skin/classic/browser/customizableui/customizeMode-gridTexture.png  (customizableui/customizeMode-gridTexture.png)
+  skin/classic/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
   skin/classic/browser/customizableui/customizeMode-separatorHorizontal.png  (customizableui/customizeMode-separatorHorizontal.png)
   skin/classic/browser/customizableui/customizeMode-separatorVertical.png  (customizableui/customizeMode-separatorVertical.png)
+#endif
   skin/classic/browser/customizableui/menu-arrow.svg           (customizableui/menu-arrow.svg)
 * skin/classic/browser/customizableui/panelUI.css       (customizableui/panelUI.css)
 * skin/classic/browser/downloads/allDownloadsViewOverlay.css   (downloads/allDownloadsViewOverlay.css)
@@ -69,7 +71,7 @@ browser.jar:
   skin/classic/browser/feeds/feedIcon16.png                    (feeds/feedIcon16.png)
   skin/classic/browser/feeds/subscribe.css                     (feeds/subscribe.css)
 * skin/classic/browser/newtab/newTab.css                       (newtab/newTab.css)
-  skin/classic/browser/places/places.css                       (places/places.css)
+* skin/classic/browser/places/places.css                       (places/places.css)
 * skin/classic/browser/places/organizer.css                    (places/organizer.css)
   skin/classic/browser/places/query.png                        (places/query.png)
   skin/classic/browser/places/bookmarksMenu.png                (places/bookmarksMenu.png)
@@ -82,7 +84,6 @@ browser.jar:
   skin/classic/browser/places/starred48.png                    (places/starred48.png)
   skin/classic/browser/places/unstarred48.png                  (places/unstarred48.png)
   skin/classic/browser/places/tag.png                          (places/tag.png)
-  skin/classic/browser/places/history.png                      (places/history.png)
   skin/classic/browser/places/allBookmarks.png                 (places/allBookmarks.png)
   skin/classic/browser/places/unsortedBookmarks.png            (places/unsortedBookmarks.png)
   skin/classic/browser/places/downloads.png                    (places/downloads.png)
@@ -98,15 +99,8 @@ browser.jar:
   skin/classic/browser/preferences/applications.css            (preferences/applications.css)
   skin/classic/browser/social/services-16.png                  (social/services-16.png)
   skin/classic/browser/social/services-64.png                  (social/services-64.png)
-  skin/classic/browser/tabbrowser/newtab.svg                   (tabbrowser/newtab.svg)
-  skin/classic/browser/tabbrowser/newtab-win7.svg          (tabbrowser/newtab-win7.svg)
-  skin/classic/browser/tabbrowser/newtab-inverted.svg          (tabbrowser/newtab-inverted.svg)
-  skin/classic/browser/tabbrowser/newtab-inverted-win7.svg (tabbrowser/newtab-inverted-win7.svg)
   skin/classic/browser/tabbrowser/tab-active-middle.png        (tabbrowser/tab-active-middle.png)
   skin/classic/browser/tabbrowser/tab-active-middle@2x.png     (tabbrowser/tab-active-middle@2x.png)
-  skin/classic/browser/tabbrowser/tab-arrow-left.svg           (tabbrowser/tab-arrow-left.svg)
-  skin/classic/browser/tabbrowser/tab-arrow-left-win7.svg  (tabbrowser/tab-arrow-left-win7.svg)
-  skin/classic/browser/tabbrowser/tab-arrow-left-inverted.svg  (tabbrowser/tab-arrow-left-inverted.svg)
   skin/classic/browser/tabbrowser/tab-background-start.png     (tabbrowser/tab-background-start.png)
   skin/classic/browser/tabbrowser/tab-background-start@2x.png  (tabbrowser/tab-background-start@2x.png)
   skin/classic/browser/tabbrowser/tab-background-middle.png    (tabbrowser/tab-background-middle.png)
@@ -166,9 +160,6 @@ browser.jar:
 % override chrome://browser/skin/urlbar-history-dropmarker.png        chrome://browser/skin/urlbar-history-dropmarker-win7.png      os=WINNT osversion<=6.1
 % override chrome://browser/skin/urlbar-history-dropmarker@2x.png     chrome://browser/skin/urlbar-history-dropmarker-win7@2x.png   os=WINNT osversion<=6.1
 % override chrome://browser/skin/downloads/download-glow-menuPanel.png  chrome://browser/skin/downloads/download-glow-menuPanel-win7.png os=WINNT osversion<=6.1
-% override chrome://browser/skin/tabbrowser/newtab.svg                chrome://browser/skin/tabbrowser/newtab-win7.svg              os=WINNT osversion<=6.1
-% override chrome://browser/skin/tabbrowser/newtab-inverted.svg       chrome://browser/skin/tabbrowser/newtab-inverted-win7.svg     os=WINNT osversion<=6.1
-% override chrome://browser/skin/tabbrowser/tab-arrow-left.svg        chrome://browser/skin/tabbrowser/tab-arrow-left-win7.svg      os=WINNT osversion<=6.1
 
 % override chrome://browser/skin/tabbrowser/tab-background-start.png     chrome://browser/skin/tabbrowser/tab-background-start-preWin10.png     os=WINNT osversion<=6.3
 % override chrome://browser/skin/tabbrowser/tab-background-start@2x.png  chrome://browser/skin/tabbrowser/tab-background-start-preWin10@2x.png  os=WINNT osversion<=6.3

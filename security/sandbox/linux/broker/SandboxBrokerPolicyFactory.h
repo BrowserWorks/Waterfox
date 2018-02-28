@@ -16,15 +16,14 @@ public:
   SandboxBrokerPolicyFactory();
 
 #ifdef MOZ_CONTENT_SANDBOX
-  UniquePtr<SandboxBroker::Policy> GetContentPolicy(int aPid);
+  UniquePtr<SandboxBroker::Policy> GetContentPolicy(int aPid, bool aFileProcess);
 #endif
 
 private:
   UniquePtr<const SandboxBroker::Policy> mCommonContentPolicy;
-  // B2G devices tend to have hardware-specific paths used by device
-  // drivers, so rollout of filesystem isolation will need per-device
-  // testing.  This predicate allows that to happen gradually.
-  static bool IsSystemSupported();
+  static void AddDynamicPathList(SandboxBroker::Policy *policy,
+                                 const char* aPathListPref,
+                                 int perms);
 };
 
 } // namespace mozilla

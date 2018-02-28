@@ -24,10 +24,12 @@
 #include "mozilla/layers/APZThreadUtils.h"
 #include "mozilla/layers/APZCTreeManager.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
+#include "mozilla/layers/CompositorManagerParent.h"
 #include "mozilla/layers/CompositorThread.h"
 #include "mozilla/layers/ImageBridgeParent.h"
 #include "mozilla/layers/LayerTreeOwnerTracker.h"
 #include "mozilla/layers/UiCompositorControllerParent.h"
+#include "mozilla/layers/MemoryReportingMLGPU.h"
 #include "mozilla/webrender/RenderThread.h"
 #include "nsDebugImpl.h"
 #include "nsExceptionHandler.h"
@@ -103,6 +105,7 @@ GPUParent::Init(base::ProcessId aParentPid,
   gfxPlatform::InitNullMetadata();
   // Ensure our Factory is initialised, mainly for gfx logging to work.
   gfxPlatform::InitMoz2DLogging();
+  mlg::InitializeMemoryReporters();
 #if defined(XP_WIN)
   DeviceManagerDx::Init();
 #endif
@@ -126,9 +129,10 @@ void
 GPUParent::NotifyDeviceReset()
 {
   if (!NS_IsMainThread()) {
-    NS_DispatchToMainThread(NS_NewRunnableFunction([] () -> void {
-      GPUParent::GetSingleton()->NotifyDeviceReset();
-    }));
+    NS_DispatchToMainThread(
+      NS_NewRunnableFunction("gfx::GPUParent::NotifyDeviceReset", []() -> void {
+        GPUParent::GetSingleton()->NotifyDeviceReset();
+      }));
     return;
   }
 
@@ -167,6 +171,7 @@ GPUParent::RecvInit(nsTArray<GfxPrefSetting>&& prefs,
   gfxConfig::Inherit(Feature::HW_COMPOSITING, devicePrefs.hwCompositing());
   gfxConfig::Inherit(Feature::D3D11_COMPOSITING, devicePrefs.d3d11Compositing());
   gfxConfig::Inherit(Feature::OPENGL_COMPOSITING, devicePrefs.oglCompositing());
+  gfxConfig::Inherit(Feature::ADVANCED_LAYERS, devicePrefs.advancedLayers());
   gfxConfig::Inherit(Feature::DIRECT2D, devicePrefs.useD2D1());
 
   for (const LayerTreeIdMapping& map : aMappings) {
@@ -211,6 +216,13 @@ GPUParent::RecvInit(nsTArray<GfxPrefSetting>&& prefs,
   Unused << SendInitComplete(data);
 
   Telemetry::AccumulateTimeDelta(Telemetry::GPU_PROCESS_INITIALIZATION_TIME_MS, mLaunchTime);
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
+GPUParent::RecvInitCompositorManager(Endpoint<PCompositorManagerParent>&& aEndpoint)
+{
+  CompositorManagerParent::Create(Move(aEndpoint));
   return IPC_OK();
 }
 
@@ -292,6 +304,7 @@ GPUParent::RecvGetDeviceStatus(GPUDeviceData* aOut)
 {
   CopyFeatureChange(Feature::D3D11_COMPOSITING, &aOut->d3d11Compositing());
   CopyFeatureChange(Feature::OPENGL_COMPOSITING, &aOut->oglCompositing());
+  CopyFeatureChange(Feature::ADVANCED_LAYERS, &aOut->advancedLayers());
 
 #if defined(XP_WIN)
   if (DeviceManagerDx* dm = DeviceManagerDx::Get()) {
@@ -306,37 +319,10 @@ GPUParent::RecvGetDeviceStatus(GPUDeviceData* aOut)
   return IPC_OK();
 }
 
-static void
-OpenParent(RefPtr<CompositorBridgeParent> aParent,
-           Endpoint<PCompositorBridgeParent>&& aEndpoint)
-{
-  if (!aParent->Bind(Move(aEndpoint))) {
-    MOZ_CRASH("Failed to bind compositor");
-  }
-}
-
 mozilla::ipc::IPCResult
-GPUParent::RecvNewWidgetCompositor(Endpoint<layers::PCompositorBridgeParent>&& aEndpoint,
-                                   const CSSToLayoutDeviceScale& aScale,
-                                   const TimeDuration& aVsyncRate,
-                                   const CompositorOptions& aOptions,
-                                   const bool& aUseExternalSurfaceSize,
-                                   const IntSize& aSurfaceSize)
+GPUParent::RecvNewContentCompositorManager(Endpoint<PCompositorManagerParent>&& aEndpoint)
 {
-  RefPtr<CompositorBridgeParent> cbp =
-    new CompositorBridgeParent(aScale, aVsyncRate, aOptions, aUseExternalSurfaceSize, aSurfaceSize);
-
-  MessageLoop* loop = CompositorThreadHolder::Loop();
-  loop->PostTask(NewRunnableFunction(OpenParent, cbp, Move(aEndpoint)));
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-GPUParent::RecvNewContentCompositorBridge(Endpoint<PCompositorBridgeParent>&& aEndpoint)
-{
-  if (!CompositorBridgeParent::CreateForContent(Move(aEndpoint))) {
-    return IPC_FAIL_NO_REASON(this);
-  }
+  CompositorManagerParent::Create(Move(aEndpoint));
   return IPC_OK();
 }
 

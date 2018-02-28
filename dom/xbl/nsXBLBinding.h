@@ -7,7 +7,6 @@
 #ifndef nsXBLBinding_h_
 #define nsXBLBinding_h_
 
-#include "mozilla/ServoBindings.h"
 #include "nsXBLService.h"
 #include "nsCOMPtr.h"
 #include "nsINodeList.h"
@@ -24,6 +23,7 @@ class nsIAtom;
 class nsIDocument;
 
 namespace mozilla {
+class ServoStyleSet;
 namespace dom {
 
 class ShadowRoot;
@@ -133,7 +133,7 @@ public:
   const mozilla::ServoStyleSet* GetServoStyleSet() const;
 
   static nsresult DoInitJSClass(JSContext *cx, JS::Handle<JSObject*> obj,
-                                const nsAFlatString& aClassName,
+                                const nsString& aClassName,
                                 nsXBLPrototypeBinding* aProtoBinding,
                                 JS::MutableHandle<JSObject*> aClassObject,
                                 bool* aNew);

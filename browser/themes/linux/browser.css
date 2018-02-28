@@ -17,7 +17,7 @@
 
 :root {
 %ifdef MOZ_PHOTON_THEME
-  --toolbarbutton-border-radius: 2px;
+  --toolbarbutton-border-radius: 4px;
 %else
   --toolbarbutton-border-radius: 1px;
 
@@ -327,24 +327,13 @@ menuitem.bookmark-item {
   -moz-appearance: none;
   -moz-box-align: stretch;
 }
-
 .urlbar-input-box {
   margin: 0;
 }
-
-.urlbar-input-box,
-#urlbar-display-box {
-  padding-inline-start: 4px;
-  border-inline-start: 1px solid var(--urlbar-separator-color);
-  border-image: linear-gradient(transparent 15%, var(--urlbar-separator-color) 15%, var(--urlbar-separator-color) 85%, transparent 85%);
-  border-image-slice: 1;
-}
-
 .urlbar-history-dropmarker {
   -moz-appearance: toolbarbutton-dropdown;
   transition: opacity 0.15s ease;
 }
-
 #urlbar-wrapper[switchingtabs] > #urlbar > .urlbar-textbox-container > .urlbar-history-dropmarker {
   transition: none;
 }
@@ -467,7 +456,7 @@ menuitem.bookmark-item {
   border-bottom-right-radius: 1.5px;
 }
 
-#identity-box:-moz-focusring {
+#identity-box:not(:active):-moz-focusring {
   outline: 1px dotted;
   outline-offset: -3px;
 }
@@ -528,17 +517,16 @@ html|*.addon-webext-perm-list {
   height: 14px;
   vertical-align: bottom;
   margin-bottom: 1px;
+  -moz-context-properties: fill;
+  fill: currentColor;
 }
 
 .addon-addon-icon {
-  list-style-image: url("chrome://browser/skin/menuPanel.svg");
-  -moz-image-region: rect(0px, 288px, 32px, 256px);
+  list-style-image: url("chrome://browser/skin/addons.svg");
 }
 
 .addon-toolbar-icon {
   list-style-image: url("chrome://browser/skin/menu.svg");
-  -moz-context-properties: fill;
-  fill: var(--toolbarbutton-icon-fill);
 }
 
 /* Notification icon box */
@@ -693,11 +681,13 @@ html|span.ac-emphasize-text-url {
 }
 
 .ac-type-icon[type=bookmark] {
-  list-style-image: url("chrome://browser/skin/urlbar-star.svg#star");
+  list-style-image: url("chrome://browser/skin/bookmark.svg");
+  -moz-context-properties: fill;
+  fill: #b2b2b2;
 }
 
 .ac-type-icon[type=bookmark][selected][current] {
-  list-style-image: url("chrome://browser/skin/urlbar-star.svg#star-inverted");
+  fill: white;
 }
 
 .ac-type-icon[type=keyword],
@@ -714,12 +704,14 @@ html|span.ac-emphasize-text-url {
 
 .ac-type-icon[type=switchtab],
 .ac-type-icon[type=remotetab] {
-  list-style-image: url("chrome://browser/skin/urlbar-tab.svg#tab");
+  list-style-image: url("chrome://browser/skin/urlbar-tab.svg");
+  -moz-context-properties: fill;
+  fill: #b2b2b2;
 }
 
 .ac-type-icon[type=switchtab][selected],
 .ac-type-icon[type=remotetab][selected] {
-  list-style-image: url("chrome://browser/skin/urlbar-tab.svg#tab-inverted");
+  fill: white;
 }
 
 .autocomplete-treebody::-moz-tree-cell-text(treecolAutoCompleteComment) {
@@ -954,6 +946,18 @@ html|span.ac-emphasize-text-url {
   background-color: Window;
 }
 
+#sidebar-header {
+  border-bottom: 1px solid ThreeDShadow;
+}
+
+.sidebar-splitter {
+  -moz-appearance: none;
+  width: 6px;
+  background-color: -moz-dialog;
+  border: 1px ThreeDShadow;
+  border-style: none solid;
+}
+
 .browserContainer > findbar {
   background-color: -moz-dialog;
   color: -moz-DialogText;
@@ -1031,62 +1035,19 @@ html|span.ac-emphasize-text-url {
   background-image: -moz-image-rect(url("chrome://global/skin/icons/close.svg"), 0, 96, 16, 80);
 }
 
-/* Tabstrip new tab button */
-.tabs-newtab-button,
-#TabsToolbar > #new-tab-button ,
-#TabsToolbar > toolbarpaletteitem > #new-tab-button {
-  list-style-image: url(chrome://browser/skin/tabbrowser/newtab.svg);
-  -moz-image-region: auto;
-}
+/* Tab bar scroll arrows */
 
-#TabsToolbar[brighttext] .tabs-newtab-button,
-#TabsToolbar[brighttext] > #new-tab-button,
-#TabsToolbar[brighttext] > toolbarpaletteitem > #new-tab-button {
-  list-style-image: url(chrome://browser/skin/tabbrowser/newtab-inverted.svg);
-}
-
-/* Tabbrowser arrowscrollbox arrows */
 .tabbrowser-arrowscrollbox > .scrollbutton-up > .toolbarbutton-icon,
 .tabbrowser-arrowscrollbox > .scrollbutton-down > .toolbarbutton-icon {
   -moz-appearance: none;
 }
 
-.tabbrowser-arrowscrollbox > .scrollbutton-up,
-.tabbrowser-arrowscrollbox > .scrollbutton-down {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-arrow-left.png");
-}
-
-#TabsToolbar[brighttext] > #tabbrowser-tabs > .tabbrowser-arrowscrollbox > .scrollbutton-up,
-#TabsToolbar[brighttext] > #tabbrowser-tabs > .tabbrowser-arrowscrollbox > .scrollbutton-down {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-arrow-left-inverted.png);
-}
-
-.tabbrowser-arrowscrollbox > .scrollbutton-up:-moz-locale-dir(rtl),
-.tabbrowser-arrowscrollbox > .scrollbutton-down:-moz-locale-dir(ltr) {
-  transform: scaleX(-1);
-}
-
-#alltabs-button {
-  list-style-image: url("chrome://browser/skin/tabbrowser/alltabs.png");
-}
-
-#TabsToolbar[brighttext] > #alltabs-button,
-#TabsToolbar[brighttext] > toolbarpaletteitem > #alltabs-button {
-  list-style-image: url("chrome://browser/skin/tabbrowser/alltabs-inverted.png");
-}
-
 /* All tabs menupopup */
-.alltabs-item > .menu-iconic-left > .menu-iconic-icon {
-  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.svg");
-}
 
 .alltabs-item[selected="true"] {
   font-weight: bold;
 }
 
-.alltabs-item[busy] > .menu-iconic-left > .menu-iconic-icon {
-  list-style-image: url("chrome://global/skin/icons/loading.png");
-}
 
 toolbarbutton.chevron {
   list-style-image: url("chrome://global/skin/toolbar/chevron.gif") !important;
@@ -1114,7 +1075,7 @@ toolbarbutton.chevron > .toolbarbutton-icon {
 .statuspanel-label {
   margin: 0;
   padding: 2px 4px;
-  background: -moz-dialog;
+  background-color: -moz-dialog;
   border: 1px none ThreeDShadow;
   border-top-style: solid;
   color: -moz-dialogText;
@@ -1169,6 +1130,7 @@ notification.pluginVulnerable > .notification-inner > .messageCloseButton:not(:h
 
 %include ../shared/customizableui/customizeMode.inc.css
 
+%ifndef MOZ_PHOTON_THEME
 #main-window[customize-entered] > #tab-view-deck {
   background-image: url("chrome://browser/skin/customizableui/customizeMode-gridTexture.png"),
                     linear-gradient(to bottom, #bcbcbc, #b5b5b5);
@@ -1208,6 +1170,7 @@ notification.pluginVulnerable > .notification-inner > .messageCloseButton:not(:h
   border-right: 3px solid transparent;
   border-left: 3px solid transparent;
 }
+%endif
 
 /* The :hover:active style from toolkit doesn't seem to work in this panel so just use :active. */
 .customization-tipPanel-closeBox > .close-icon:active {
@@ -1235,6 +1198,12 @@ notification.pluginVulnerable > .notification-inner > .messageCloseButton:not(:h
   overflow: hidden;
 }
 
-.webextension-popup-browser {
+.webextension-popup-browser,
+.webextension-popup-stack {
   border-radius: inherit;
+}
+
+/* Prevent movement in the restore-tabs-button when it's clicked. */
+.restore-tabs-button:hover:active:not([disabled="true"]) {
+  padding: 3px;
 }

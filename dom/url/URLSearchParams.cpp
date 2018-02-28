@@ -6,7 +6,7 @@
 
 #include "URLSearchParams.h"
 #include "mozilla/dom/URLSearchParamsBinding.h"
-#include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/Encoding.h"
 #include "nsDOMString.h"
 #include "nsIInputStream.h"
 #include "nsStringStream.h"
@@ -86,57 +86,23 @@ URLParams::Set(const nsAString& aName, const nsAString& aValue)
   param->mValue = aValue;
 }
 
-bool
+void
 URLParams::Delete(const nsAString& aName)
 {
-  bool found = false;
   for (uint32_t i = 0; i < mParams.Length();) {
     if (mParams[i].mKey.Equals(aName)) {
       mParams.RemoveElementAt(i);
-      found = true;
     } else {
       ++i;
     }
   }
-
-  return found;
 }
 
 void
 URLParams::ConvertString(const nsACString& aInput, nsAString& aOutput)
 {
-  aOutput.Truncate();
-
-  if (!mDecoder) {
-    mDecoder = EncodingUtils::DecoderForEncoding("UTF-8");
-    if (!mDecoder) {
-      MOZ_ASSERT(mDecoder, "Failed to create a decoder.");
-      return;
-    }
-  }
-
-  int32_t inputLength = aInput.Length();
-  int32_t outputLength = 0;
-
-  nsresult rv = mDecoder->GetMaxLength(aInput.BeginReading(), inputLength,
-                                       &outputLength);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return;
-  }
-
-  if (!aOutput.SetLength(outputLength, fallible)) {
-    return;
-  }
-
-  int32_t newOutputLength = outputLength;
-  rv = mDecoder->Convert(aInput.BeginReading(), &inputLength,
-                         aOutput.BeginWriting(), &newOutputLength);
-  if (NS_FAILED(rv)) {
-    aOutput.Truncate();
-    return;
-  }
-  if (newOutputLength < outputLength) {
-    aOutput.Truncate(newOutputLength);
+  if (NS_FAILED(UTF_8_ENCODING->DecodeWithoutBOMHandling(aInput, aOutput))) {
+    MOZ_CRASH("Out of memory when converting URL params.");
   }
 }
 
@@ -405,9 +371,8 @@ URLSearchParams::Has(const nsAString& aName)
 void
 URLSearchParams::Delete(const nsAString& aName)
 {
-  if (mParams->Delete(aName)) {
-    NotifyObserver();
-  }
+  mParams->Delete(aName);
+  NotifyObserver();
 }
 
 void

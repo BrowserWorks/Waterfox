@@ -154,7 +154,7 @@ IsBackgroundFinalized(AllocKind kind)
         true,      /* AllocKind::OBJECT_GROUP */
         true,      /* AllocKind::FAT_INLINE_STRING */
         true,      /* AllocKind::STRING */
-        false,     /* AllocKind::EXTERNAL_STRING */
+        true,      /* AllocKind::EXTERNAL_STRING */
         true,      /* AllocKind::FAT_INLINE_ATOM */
         true,      /* AllocKind::ATOM */
         true,      /* AllocKind::SYMBOL */
@@ -1166,7 +1166,7 @@ inline void CheckValueAfterMovingGC(const JS::Value& value);
 #endif // JSGC_HASH_TABLE_CHECKS
 
 #define JS_FOR_EACH_ZEAL_MODE(D)               \
-            D(Poke, 1)                         \
+            D(RootsChange, 1)                  \
             D(Alloc, 2)                        \
             D(FrameGC, 3)                      \
             D(VerifierPre, 4)                  \

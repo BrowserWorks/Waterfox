@@ -99,6 +99,8 @@ static LazyLogModule sThreadLog("nsThread");
 
 NS_DECL_CI_INTERFACE_GETTER(nsThread)
 
+Array<char, nsThread::kRunnableNameBufSize> nsThread::sMainThreadRunnableName;
+
 //-----------------------------------------------------------------------------
 // Because we do not have our own nsIFactory, we have to implement nsIClassInfo
 // somewhat manually.
@@ -181,6 +183,7 @@ NS_INTERFACE_MAP_BEGIN(nsThread)
   NS_INTERFACE_MAP_ENTRY(nsIThread)
   NS_INTERFACE_MAP_ENTRY(nsIThreadInternal)
   NS_INTERFACE_MAP_ENTRY(nsIEventTarget)
+  NS_INTERFACE_MAP_ENTRY(nsISerialEventTarget)
   NS_INTERFACE_MAP_ENTRY(nsISupportsPriority)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIThread)
   if (aIID.Equals(NS_GET_IID(nsIClassInfo))) {
@@ -239,10 +242,11 @@ public:
   DelayedRunnable(already_AddRefed<nsIThread> aTargetThread,
                   already_AddRefed<nsIRunnable> aRunnable,
                   uint32_t aDelay)
-    : mTargetThread(aTargetThread),
-      mWrappedRunnable(aRunnable),
-      mDelayedFrom(TimeStamp::NowLoRes()),
-      mDelay(aDelay)
+    : mozilla::Runnable("DelayedRunnable")
+    , mTargetThread(aTargetThread)
+    , mWrappedRunnable(aRunnable)
+    , mDelayedFrom(TimeStamp::NowLoRes())
+    , mDelay(aDelay)
   { }
 
   NS_DECL_ISUPPORTS_INHERITED
@@ -459,6 +463,7 @@ nsThread::ThreadFunc(void* aArg)
   nsThread* self = initData->thread;  // strong reference
 
   self->mThread = PR_GetCurrentThread();
+  self->mVirtualThread = GetCurrentVirtualThread();
   SetupCurrentThreadForChaosMode();
 
   if (!initData->name.IsEmpty()) {
@@ -705,6 +710,7 @@ nsresult
 nsThread::InitCurrentThread()
 {
   mThread = PR_GetCurrentThread();
+  mVirtualThread = GetCurrentVirtualThread();
   SetupCurrentThreadForChaosMode();
 
   mIdlePeriod = new IdlePeriod();
@@ -745,7 +751,7 @@ nsThread::PutEvent(already_AddRefed<nsIRunnable> aEvent, nsNestedEventTarget* aT
   }
 
   if (obs) {
-    obs->OnDispatchedEvent(this);
+    obs->OnDispatchedEvent();
   }
 
   return NS_OK;
@@ -887,6 +893,13 @@ nsThread::IsOnCurrentThread(bool* aResult)
 {
   *aResult = (PR_GetCurrentThread() == mThread);
   return NS_OK;
+}
+
+NS_IMETHODIMP_(bool)
+nsThread::IsOnCurrentThreadInfallible()
+{
+  // Rely on mVirtualThread being correct.
+  MOZ_CRASH("IsOnCurrentThreadInfallible should never be called on nsIThread");
 }
 
 //-----------------------------------------------------------------------------
@@ -1152,13 +1165,6 @@ nsThread::IdleDispatch(already_AddRefed<nsIRunnable> aEvent)
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsThread::IdleDispatchFromScript(nsIRunnable* aEvent)
-{
-  nsCOMPtr<nsIRunnable> event(aEvent);
-  return IdleDispatch(event.forget());
-}
-
 #ifdef MOZ_CANARY
 void canary_alarm_handler(int signum);
 
@@ -1387,8 +1393,8 @@ nsThread::ProcessNextEvent(bool aMayWait, bool* aResult)
       Maybe<Telemetry::AutoTimer<Telemetry::MAIN_THREAD_RUNNABLE_MS>> timer;
       Maybe<Telemetry::AutoTimer<Telemetry::IDLE_RUNNABLE_BUDGET_OVERUSE_MS>> idleTimer;
 
+      nsAutoCString name;
       if ((MAIN_THREAD == mIsMainThread) || mNextIdleDeadline) {
-        nsCString name;
         bool labeled = GetLabeledRunnableName(event, name);
 
         if (MAIN_THREAD == mIsMainThread) {
@@ -1412,6 +1418,28 @@ nsThread::ProcessNextEvent(bool aMayWait, bool* aResult)
           // the 0 bucket of the histogram.
           idleTimer.emplace(name, mNextIdleDeadline);
         }
+      }
+
+      // If we're on the main thread, we want to record our current runnable's
+      // name in a static so that BHR can record it.
+      Array<char, kRunnableNameBufSize> restoreRunnableName;
+      restoreRunnableName[0] = '\0';
+      auto clear = MakeScopeExit([&] {
+        if (MAIN_THREAD == mIsMainThread) {
+          MOZ_ASSERT(NS_IsMainThread());
+          sMainThreadRunnableName = restoreRunnableName;
+        }
+      });
+      if (MAIN_THREAD == mIsMainThread) {
+        MOZ_ASSERT(NS_IsMainThread());
+        restoreRunnableName = sMainThreadRunnableName;
+
+        // Copy the name into sMainThreadRunnableName's buffer, and append a
+        // terminating null.
+        uint32_t length = std::min((uint32_t) kRunnableNameBufSize - 1,
+                                   (uint32_t) name.Length());
+        memcpy(sMainThreadRunnableName.begin(), name.BeginReading(), length);
+        sMainThreadRunnableName[length] = '\0';
       }
 #endif
 
@@ -1666,6 +1694,26 @@ nsThread::DoMainThreadSpecificProcessing(bool aReallyWait)
 #endif
 }
 
+NS_IMETHODIMP
+nsThread::GetEventTarget(nsIEventTarget** aEventTarget)
+{
+  nsCOMPtr<nsIEventTarget> target = this;
+  target.forget(aEventTarget);
+  return NS_OK;
+}
+
+nsIEventTarget*
+nsThread::EventTarget()
+{
+  return this;
+}
+
+nsISerialEventTarget*
+nsThread::SerialEventTarget()
+{
+  return this;
+}
+
 //-----------------------------------------------------------------------------
 
 NS_IMPL_ISUPPORTS(nsThread::nsNestedEventTarget, nsIEventTarget)
@@ -1696,4 +1744,10 @@ NS_IMETHODIMP
 nsThread::nsNestedEventTarget::IsOnCurrentThread(bool* aResult)
 {
   return mThread->IsOnCurrentThread(aResult);
+}
+
+NS_IMETHODIMP_(bool)
+nsThread::nsNestedEventTarget::IsOnCurrentThreadInfallible()
+{
+  return mThread->IsOnCurrentThread();
 }

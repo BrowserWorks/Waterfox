@@ -177,7 +177,7 @@ var Reader = {
 
     let browser = tab.browser;
     if (browser.currentURI.spec.startsWith("about:reader")) {
-      showPageAction("drawable://reader_active", Strings.reader.GetStringFromName("readerView.close"));
+      showPageAction("drawable://ic_readermode_on", Strings.reader.GetStringFromName("readerView.close"));
       // Only start a reader session if the viewer is in the foreground. We do
       // not track background reader viewers.
       return;
@@ -187,7 +187,7 @@ var Reader = {
     this._showSystemUI(true);
 
     if (browser.isArticle) {
-      showPageAction("drawable://reader", Strings.reader.GetStringFromName("readerView.enter"));
+      showPageAction("drawable://ic_readermode", Strings.reader.GetStringFromName("readerView.enter"));
       this._sendMmaEvent("reader_available");
     } else {
     }

@@ -196,6 +196,7 @@ EXTRA_JS_MODULES += [
     'FinderIterator.jsm',
     'FormLikeFactory.jsm',
     'Geometry.jsm',
+    'GMPExtractorWorker.js',
     'GMPInstallManager.jsm',
     'GMPUtils.jsm',
     'HiddenFrame.jsm',
@@ -238,7 +239,6 @@ EXTRA_JS_MODULES += [
     'Services.jsm',
     'sessionstore/FormData.jsm',
     'sessionstore/ScrollPosition.jsm',
-    'sessionstore/XPathGenerator.jsm',
     'ShortcutUtils.jsm',
     'Sqlite.jsm',
     'Task.jsm',
@@ -297,7 +297,11 @@ for var in ('ANDROID_PACKAGE_NAME',
             'MOZ_APP_NAME',
             'MOZ_APP_VERSION',
             'MOZ_APP_VERSION_DISPLAY',
+            'MOZ_BING_API_CLIENTID',
+            'MOZ_BING_API_KEY',
+            'MOZ_GOOGLE_API_KEY',
             'MOZ_MACBUNDLE_NAME',
+            'MOZ_MOZILLA_API_KEY',
             'MOZ_WIDGET_TOOLKIT',
             'DLL_PREFIX',
             'DLL_SUFFIX',
@@ -307,8 +311,11 @@ for var in ('ANDROID_PACKAGE_NAME',
 for var in ('MOZ_TOOLKIT_SEARCH',
             'MOZ_SYSTEM_NSS',
             'MOZ_UPDATER',
+            'MOZ_ANDROID_MOZILLA_ONLINE',
             'MOZ_SWITCHBOARD'):
     if CONFIG[var]:
         DEFINES[var] = True
+
+JAR_MANIFESTS += ['jar.mn']
 
 DEFINES['TOPOBJDIR'] = TOPOBJDIR

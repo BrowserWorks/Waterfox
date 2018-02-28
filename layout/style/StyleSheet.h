@@ -84,7 +84,7 @@ public:
     mOwningNode = aOwningNode;
   }
 
-  css::SheetParsingMode ParsingMode() { return mParsingMode; }
+  css::SheetParsingMode ParsingMode() const { return mParsingMode; }
   mozilla::dom::CSSStyleSheetParsingMode ParsingModeDOM();
 
   /**
@@ -144,7 +144,7 @@ public:
   void AppendAllChildSheets(nsTArray<StyleSheet*>& aArray);
 
   // style sheet owner info
-  enum DocumentAssociationMode {
+  enum DocumentAssociationMode : uint8_t {
     // OwnedByDocument means mDocument owns us (possibly via a chain of other
     // stylesheets).
     OwnedByDocument,
@@ -169,6 +169,9 @@ public:
   dom::CSSImportRule* GetOwnerRule() const { return mOwnerRule; }
 
   void PrependStyleSheet(StyleSheet* aSheet);
+
+  // Prepend a stylesheet to the child list without calling Will/DidDirty.
+  void PrependStyleSheetSilently(StyleSheet* aSheet);
 
   StyleSheet* GetFirstChild() const;
   StyleSheet* GetMostRecentlyAddedChildSheet() const {
@@ -210,6 +213,8 @@ public:
   dom::MediaList* Media();
   bool Disabled() const { return mDisabled; }
   // The XPCOM SetDisabled is fine for WebIDL.
+  void GetSourceMapURL(nsAString& aTitle);
+  void SetSourceMapURL(const nsAString& aSourceMapURL);
 
   // WebIDL CSSStyleSheet API
   // Can't be inline because we can't include ImportRule here.  And can't be
@@ -259,6 +264,9 @@ public:
   nsresult InsertRuleIntoGroup(const nsAString& aRule,
                                css::GroupRule* aGroup, uint32_t aIndex);
 
+  // Find the ID of the owner inner window.
+  uint64_t FindOwningWindowInnerID() const;
+
   template<typename Func>
   void EnumerateChildSheets(Func aCallback) {
     for (StyleSheet* child = GetFirstChild(); child; child = child->mNext) {
@@ -291,6 +299,8 @@ protected:
   };
 
   void UnparentChildren();
+
+  void LastRelease();
 
   // Return success if the subject principal subsumes the principal of our
   // inner, error otherwise.  This will also succeed if the subject has
@@ -332,6 +342,8 @@ protected:
   const StyleBackendType mType;
   bool                  mDisabled;
 
+  bool mDirty; // has been modified
+
   // mDocumentAssociationMode determines whether mDocument directly owns us (in
   // the sense that if it's known-live then we're known-live).  Always
   // NotOwnedByDocument when mDocument is null.
@@ -340,8 +352,6 @@ protected:
   // Core information we get from parsed sheets, which are shared amongst
   // StyleSheet clones.
   StyleSheetInfo* mInner;
-
-  bool mDirty; // has been modified
 
   nsTArray<StyleSetHandle> mStyleSets;
 

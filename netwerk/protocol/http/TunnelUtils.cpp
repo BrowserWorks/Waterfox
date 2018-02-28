@@ -126,6 +126,10 @@ TLSFilterTransaction::Close(nsresult aReason)
     return;
   }
 
+  if (mTimer) {
+    mTimer->Cancel();
+    mTimer = nullptr;
+  }
   mTransaction->Close(aReason);
   mTransaction = nullptr;
 }
@@ -444,6 +448,13 @@ TLSFilterTransaction::Notify(nsITimer *timer)
   }
   DebugOnly<nsresult> rv = StartTimerCallback();
   MOZ_ASSERT(NS_SUCCEEDED(rv));
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+TLSFilterTransaction::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("TLSFilterTransaction");
   return NS_OK;
 }
 
@@ -982,7 +993,6 @@ SpdyConnectTransaction::ForcePlainText()
   MOZ_ASSERT(!mTunnelTransport, "call before mapstreamtohttpconnection");
 
   mForcePlainText = true;
-  return;
 }
 
 void
@@ -1624,7 +1634,7 @@ SocketTransportShim::SetFastOpenCallback(TCPFastOpen *aFastOpen)
   return mWrapped->SetFastOpenCallback(aFastOpen);
 }
 
-NS_IMPL_ISUPPORTS(TLSFilterTransaction, nsITimerCallback)
+NS_IMPL_ISUPPORTS(TLSFilterTransaction, nsITimerCallback, nsINamed)
 NS_IMPL_ISUPPORTS(SocketTransportShim, nsISocketTransport, nsITransport)
 NS_IMPL_ISUPPORTS(InputStreamShim, nsIInputStream, nsIAsyncInputStream)
 NS_IMPL_ISUPPORTS(OutputStreamShim, nsIOutputStream, nsIAsyncOutputStream)

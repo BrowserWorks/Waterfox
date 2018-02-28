@@ -59,8 +59,8 @@ using mozilla::AutoJSContext;
     if (slots && !slots->mMutationObservers.IsEmpty()) {          \
       /* No need to explicitly notify the first observer first    \
          since that'll happen anyway. */                          \
-      NS_OBSERVER_ARRAY_NOTIFY_OBSERVERS(                         \
-        slots->mMutationObservers, nsIMutationObserver,           \
+      NS_OBSERVER_AUTO_ARRAY_NOTIFY_OBSERVERS(                    \
+        slots->mMutationObservers, nsIMutationObserver, 1,        \
         func_, params_);                                          \
     }                                                             \
     ShadowRoot* shadow = ShadowRoot::FromNode(node);              \
@@ -87,8 +87,8 @@ using mozilla::AutoJSContext;
     if (slots && !slots->mMutationObservers.IsEmpty()) {          \
       /* No need to explicitly notify the first observer first    \
          since that'll happen anyway. */                          \
-      NS_OBSERVER_ARRAY_NOTIFY_OBSERVERS_WITH_QI(                 \
-        slots->mMutationObservers, nsIMutationObserver,           \
+      NS_OBSERVER_AUTO_ARRAY_NOTIFY_OBSERVERS_WITH_QI(            \
+        slots->mMutationObservers, nsIMutationObserver, 1,        \
         nsIAnimationObserver, func_, params_);                    \
     }                                                             \
     ShadowRoot* shadow = ShadowRoot::FromNode(node);              \
@@ -292,18 +292,21 @@ nsNodeUtils::LastRelease(nsINode* aNode)
   nsINode::nsSlots* slots = aNode->GetExistingSlots();
   if (slots) {
     if (!slots->mMutationObservers.IsEmpty()) {
-      NS_OBSERVER_ARRAY_NOTIFY_OBSERVERS(slots->mMutationObservers,
-                                         nsIMutationObserver,
-                                         NodeWillBeDestroyed, (aNode));
+      NS_OBSERVER_AUTO_ARRAY_NOTIFY_OBSERVERS(slots->mMutationObservers,
+                                              nsIMutationObserver, 1,
+                                              NodeWillBeDestroyed, (aNode));
     }
 
     if (aNode->IsElement()) {
       Element* elem = aNode->AsElement();
       FragmentOrElement::nsDOMSlots* domSlots =
         static_cast<FragmentOrElement::nsDOMSlots*>(slots);
-      for (auto iter = domSlots->mRegisteredIntersectionObservers.Iter(); !iter.Done(); iter.Next()) {
-        DOMIntersectionObserver* observer = iter.Key();
-        observer->UnlinkTarget(*elem);
+      if (domSlots->mExtendedSlots) {
+        for (auto iter = domSlots->mExtendedSlots->mRegisteredIntersectionObservers.Iter();
+             !iter.Done(); iter.Next()) {
+          DOMIntersectionObserver* observer = iter.Key();
+          observer->UnlinkTarget(*elem);
+        }
       }
     }
 
@@ -408,9 +411,7 @@ nsNodeUtils::CloneNodeImpl(nsINode *aNode, bool aDeep, nsINode **aResult)
   *aResult = nullptr;
 
   nsCOMPtr<nsINode> newNode;
-  nsCOMArray<nsINode> nodesWithProperties;
-  nsresult rv = Clone(aNode, aDeep, nullptr, nodesWithProperties,
-                      getter_AddRefs(newNode));
+  nsresult rv = Clone(aNode, aDeep, nullptr, nullptr, getter_AddRefs(newNode));
   NS_ENSURE_SUCCESS(rv, rv);
 
   newNode.forget(aResult);
@@ -422,7 +423,7 @@ nsresult
 nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
                            nsNodeInfoManager *aNewNodeInfoManager,
                            JS::Handle<JSObject*> aReparentScope,
-                           nsCOMArray<nsINode> &aNodesWithProperties,
+                           nsCOMArray<nsINode> *aNodesWithProperties,
                            nsINode *aParent, nsINode **aResult)
 {
   NS_PRECONDITION((!aClone && aNewNodeInfoManager) || !aReparentScope,
@@ -545,6 +546,9 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
           if (elm->MayHavePointerEnterLeaveEventListener()) {
             window->SetHasPointerEnterLeaveEventListeners();
           }
+          if (elm->MayHaveSelectionChangeEventListener()) {
+            window->SetHasSelectionChangeEventListeners();
+          }
         }
       }
     }
@@ -585,13 +589,24 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
           if (wasRegistered) {
             aNode->OwnerDoc()->UnregisterActivityObserver(aNode->AsElement());
           }
-          aNode->mNodeInfo.swap(newNodeInfo);
+          if (elem) {
+            elem->NodeInfoChanged(newDoc);
+          }
           if (wasRegistered) {
             aNode->OwnerDoc()->RegisterActivityObserver(aNode->AsElement());
           }
           return rv;
         }
       }
+    }
+  }
+
+  if (aNodesWithProperties && aNode->HasProperties()) {
+    bool ok = aNodesWithProperties->AppendObject(aNode);
+    MOZ_RELEASE_ASSERT(ok, "Out of memory");
+    if (aClone) {
+      ok = aNodesWithProperties->AppendObject(clone);
+      MOZ_RELEASE_ASSERT(ok, "Out of memory");
     }
   }
 
@@ -649,15 +664,6 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
     }
   }
 #endif
-
-  if (aNode->HasProperties()) {
-    bool ok = aNodesWithProperties.AppendObject(aNode);
-    if (aClone) {
-      ok = ok && aNodesWithProperties.AppendObject(clone);
-    }
-
-    NS_ENSURE_TRUE(ok, NS_ERROR_OUT_OF_MEMORY);
-  }
 
   clone.forget(aResult);
 

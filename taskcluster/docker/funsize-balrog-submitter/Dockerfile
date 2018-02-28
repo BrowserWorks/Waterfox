@@ -7,7 +7,8 @@ ENV DEBIAN_FRONTEND noninteractive
 # to make sure that files are removed within a single docker layer
 RUN apt-get update -q && \
     apt-get install -yyq --no-install-recommends \
-    python mercurial curl python-boto python-setuptools python-cryptography && \
+    python mercurial curl python-boto python-setuptools python-cryptography \
+    python-dev gcc liblzma-dev && \
     apt-get clean
 
 COPY requirements.txt /tmp/
@@ -25,7 +26,8 @@ COPY scripts/* /home/worker/bin/
 RUN mkdir /home/worker/keys
 COPY *.pubkey /home/worker/keys/
 COPY runme.sh /runme.sh
-RUN chmod 755 /home/worker/bin/* /runme.sh
+COPY submit_complete.sh /submit_complete.sh
+RUN chmod 755 /home/worker/bin/* /runme.sh /submit_complete.sh
 
 ENV           HOME          /home/worker
 ENV           SHELL         /bin/bash

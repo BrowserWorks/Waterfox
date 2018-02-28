@@ -53,8 +53,6 @@ var suppressed_toggles = [
 
 // Possible values for '-moz-os-version'
 var windows_versions = [
-  "windows-xp",
-  "windows-vista",
   "windows-win7",
   "windows-win8",
   "windows-win10",
@@ -222,13 +220,23 @@ var green = (function () {
   return getComputedStyle(temp).backgroundColor;
 })();
 
+// Injected HTML will automatically be sanitized when we're in a chrome
+// document unless we use `unsafeSetInnerHTML`. That function doesn't
+// exist in non-chrome documents, so add a stub to allow the same code
+// to run in both.
+if (!Element.prototype.unsafeSetInnerHTML) {
+  Element.prototype.unsafeSetInnerHTML = html => {
+    this.innerHTML = html;
+  };
+}
+
 // __testCSS(resisting)__.
 // Creates a series of divs and CSS using media queries to set their
 // background color. If all media queries match as expected, then
 // all divs should have a green background color.
 var testCSS = function (resisting) {
-  document.getElementById("display").innerHTML = generateHtmlLines(resisting);
-  document.getElementById("test-css").innerHTML = generateCSSLines(resisting);
+  document.getElementById("display").unsafeSetInnerHTML(generateHtmlLines(resisting));
+  document.getElementById("test-css").unsafeSetInnerHTML(generateCSSLines(resisting));
   let cssTestDivs = document.querySelectorAll(".spoof,.suppress");
   for (let div of cssTestDivs) {
     let color = window.getComputedStyle(div).backgroundColor;
@@ -260,7 +268,7 @@ var sleep = function (timeoutMs) {
 // Test to see if media queries are properly spoofed in picture elements
 // when we are resisting fingerprinting. A generator function
 // to be used with SpawnTask.js.
-var testMediaQueriesInPictureElements = function* (resisting) {
+var testMediaQueriesInPictureElements = async function(resisting) {
   let lines = "";
   for (let [key, offVal, onVal] of expected_values) {
     let expected = resisting ? onVal : offVal;
@@ -272,9 +280,9 @@ var testMediaQueriesInPictureElements = function* (resisting) {
       lines += "</picture><br/>\n";
     }
   }
-  document.getElementById("pictures").innerHTML = lines;
+  document.getElementById("pictures").unsafeSetInnerHTML(lines);
   var testImages = document.getElementsByClassName("testImage");
-  yield sleep(0);
+  await sleep(0);
   for (let testImage of testImages) {
     ok(testImage.currentSrc.endsWith("/match.png"), "Media query '" + testImage.title + "' in picture should match.");
   }
@@ -292,9 +300,9 @@ var pushPref = function (key, value) {
 // __test(isContent)__.
 // Run all tests. A generator function to be used
 // with SpawnTask.js.
-var test = function* (isContent) {
+var test = async function(isContent) {
   for (prefValue of [false, true]) {
-    yield pushPref("privacy.resistFingerprinting", prefValue);
+    await pushPref("privacy.resistFingerprinting", prefValue);
     let resisting = prefValue && isContent;
     expected_values.forEach(
       function ([key, offVal, onVal]) {
@@ -309,6 +317,6 @@ var test = function* (isContent) {
     if (OS === "Darwin") {
       testOSXFontSmoothing(resisting);
     }
-    yield testMediaQueriesInPictureElements(resisting);
+    await testMediaQueriesInPictureElements(resisting);
   }
 };

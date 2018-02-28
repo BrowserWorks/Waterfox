@@ -3,9 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmlmetaelement
+[HTMLConstructor]
 interface HTMLMetaElement : HTMLElement {
+  [CEReactions]
              attribute DOMString name;
+  // [CEReactions]
   //         attribute DOMString httpEquiv;
+  [CEReactions]
              attribute DOMString content;
 
   // also has obsolete members
@@ -13,5 +17,6 @@ interface HTMLMetaElement : HTMLElement {
 
 // https://html.spec.whatwg.org/multipage/#HTMLMetaElement-partial
 partial interface HTMLMetaElement {
+  // [CEReactions]
   //         attribute DOMString scheme;
 };

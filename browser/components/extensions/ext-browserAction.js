@@ -14,6 +14,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "clearTimeout",
                                   "resource://gre/modules/Timer.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "setTimeout",
                                   "resource://gre/modules/Timer.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch",
+                                  "resource://gre/modules/TelemetryStopwatch.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ViewPopup",
                                   "resource:///modules/ExtensionPopups.jsm");
 
@@ -22,6 +24,8 @@ XPCOMUtils.defineLazyServiceGetter(this, "DOMUtils",
                                    "inIDOMUtils");
 
 Cu.import("resource://gre/modules/EventEmitter.jsm");
+
+XPCOMUtils.defineLazyPreferenceGetter(this, "gPhotonStructure", "browser.photon.structure.enabled");
 
 var {
   DefaultWeakMap,
@@ -34,6 +38,8 @@ var {
 } = ExtensionParent;
 
 const POPUP_PRELOAD_TIMEOUT_MS = 200;
+const POPUP_OPEN_MS_HISTOGRAM = "WEBEXT_BROWSERACTION_POPUP_OPEN_MS";
+const POPUP_RESULT_HISTOGRAM = "WEBEXT_BROWSERACTION_POPUP_PRELOAD_RESULT_COUNT";
 
 var XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
@@ -52,7 +58,7 @@ const browserActionMap = new WeakMap();
 XPCOMUtils.defineLazyGetter(this, "browserAreas", () => {
   return {
     "navbar": CustomizableUI.AREA_NAVBAR,
-    "menupanel": CustomizableUI.AREA_PANEL,
+    "menupanel": gPhotonStructure ? CustomizableUI.AREA_FIXED_OVERFLOW_PANEL : CustomizableUI.AREA_PANEL,
     "tabstrip": CustomizableUI.AREA_TABSTRIP,
     "personaltoolbar": CustomizableUI.AREA_BOOKMARKS,
   };
@@ -77,6 +83,7 @@ this.browserAction = class extends ExtensionAPI {
 
     this.pendingPopup = null;
     this.pendingPopupTimeout = null;
+    this.eventQueue = [];
 
     this.tabManager = extension.tabManager;
 
@@ -85,7 +92,10 @@ this.browserAction = class extends ExtensionAPI {
       title: options.default_title || extension.name,
       badgeText: "",
       badgeBackgroundColor: null,
-      icon: IconDetails.normalize({path: options.default_icon}, extension),
+      icon: IconDetails.normalize({
+        path: options.default_icon,
+        themeIcons: options.theme_icons,
+      }, extension),
       popup: options.default_popup || "",
       area: browserAreas[options.default_area || "navbar"],
     };
@@ -128,6 +138,7 @@ this.browserAction = class extends ExtensionAPI {
         let view = document.createElementNS(XUL_NS, "panelview");
         view.id = this.viewId;
         view.setAttribute("flex", "1");
+        view.setAttribute("extension", true);
 
         document.getElementById("PanelUI-multiView").appendChild(view);
         document.addEventListener("popupshowing", this);
@@ -156,7 +167,8 @@ this.browserAction = class extends ExtensionAPI {
         this.updateButton(node, this.defaults);
       },
 
-      onViewShowing: event => {
+      onViewShowing: async event => {
+        TelemetryStopwatch.start(POPUP_OPEN_MS_HISTOGRAM, this);
         let document = event.target.ownerDocument;
         let tabbrowser = document.defaultView.gBrowser;
 
@@ -169,17 +181,35 @@ this.browserAction = class extends ExtensionAPI {
         // Google Chrome onClicked extension API.
         if (popupURL) {
           try {
+            if (event.target.closest("panelmultiview")) {
+              // FIXME: The line below needs to change eventually, but for now:
+              // ensure the view is _always_ visible _before_ `popup.attach()` is
+              // called. PanelMultiView.jsm dictates different behavior.
+              event.target.setAttribute("current", true);
+            }
             let popup = this.getPopup(document.defaultView, popupURL);
-            event.detail.addBlocker(popup.attach(event.target));
+            let attachPromise = popup.attach(event.target);
+            event.detail.addBlocker(attachPromise);
+            await attachPromise;
+            TelemetryStopwatch.finish(POPUP_OPEN_MS_HISTOGRAM, this);
+            if (this.eventQueue.length) {
+              let histogram = Services.telemetry.getHistogramById(POPUP_RESULT_HISTOGRAM);
+              histogram.add("popupShown");
+              this.eventQueue = [];
+            }
           } catch (e) {
+            TelemetryStopwatch.cancel(POPUP_OPEN_MS_HISTOGRAM, this);
             Cu.reportError(e);
             event.preventDefault();
           }
         } else {
+          TelemetryStopwatch.cancel(POPUP_OPEN_MS_HISTOGRAM, this);
           // This isn't not a hack, but it seems to provide the correct behavior
           // with the fewest complications.
           event.preventDefault();
-          this.emit("click");
+          this.emit("click", tabbrowser.selectedBrowser);
+          // Ensure we close any popups this node was in:
+          CustomizableUI.hidePanelForNode(event.target);
         }
       },
     });
@@ -218,7 +248,11 @@ this.browserAction = class extends ExtensionAPI {
     // Google Chrome onClicked extension API.
     if (this.getProperty(tab, "popup")) {
       if (this.widget.areaType == CustomizableUI.TYPE_MENU_PANEL) {
-        await window.PanelUI.show();
+        if (gPhotonStructure) {
+          await window.document.getElementById("nav-bar").overflowable.show();
+        } else {
+          await window.PanelUI.show();
+        }
       }
 
       let event = new window.CustomEvent("command", {bubbles: true, cancelable: true});
@@ -242,6 +276,7 @@ this.browserAction = class extends ExtensionAPI {
           let enabled = this.getProperty(tab, "enabled");
 
           if (popupURL && enabled && (this.pendingPopup || !ViewPopup.for(this.extension, window))) {
+            this.eventQueue.push("Mousedown");
             // Add permission for the active tab so it will exist for the popup.
             // Store the tab to revoke the permission during clearPopup.
             if (!this.tabManager.hasActiveTabPermission(tab)) {
@@ -282,6 +317,7 @@ this.browserAction = class extends ExtensionAPI {
         let enabled = this.getProperty(tab, "enabled");
 
         if (popupURL && enabled && (this.pendingPopup || !ViewPopup.for(this.extension, window))) {
+          this.eventQueue.push("Hover");
           this.pendingPopup = this.getPopup(window, popupURL, true);
         }
         break;
@@ -289,6 +325,11 @@ this.browserAction = class extends ExtensionAPI {
 
       case "mouseout":
         if (this.pendingPopup) {
+          if (this.eventQueue.length) {
+            let histogram = Services.telemetry.getHistogramById(POPUP_RESULT_HISTOGRAM);
+            histogram.add(`clearAfter${this.eventQueue.pop()}`);
+            this.eventQueue = [];
+          }
           this.clearPopup();
         }
         break;
@@ -431,7 +472,7 @@ this.browserAction = class extends ExtensionAPI {
 
     // If the best available icon size is not divisible by 16, check if we have
     // an 18px icon to fall back to, and trim off the padding instead.
-    if (size % 16 && !icon.endsWith(".svg")) {
+    if (size % 16 && typeof icon === "string" && !icon.endsWith(".svg")) {
       let result = IconDetails.getPreferredIcon(icons, this.extension, 18);
 
       if (result.size % 18 == 0) {
@@ -441,14 +482,27 @@ this.browserAction = class extends ExtensionAPI {
       }
     }
 
-    let getIcon = size => IconDetails.escapeUrl(
-      IconDetails.getPreferredIcon(icons, this.extension, size).icon);
+    let getIcon = (size, theme) => {
+      let {icon} = IconDetails.getPreferredIcon(icons, this.extension, size);
+      if (typeof icon === "object") {
+        return IconDetails.escapeUrl(icon[theme]);
+      }
+      return IconDetails.escapeUrl(icon);
+    };
+
+    let getStyle = (name, size) => {
+      return `
+        --webextension-${name}: url("${getIcon(size, "default")}");
+        --webextension-${name}-light: url("${getIcon(size, "light")}");
+        --webextension-${name}-dark: url("${getIcon(size, "dark")}");
+      `;
+    };
 
     let style = `
-      --webextension-menupanel-image: url("${getIcon(32)}");
-      --webextension-menupanel-image-2x: url("${getIcon(64)}");
-      --webextension-toolbar-image: url("${IconDetails.escapeUrl(icon)}");
-      --webextension-toolbar-image-2x: url("${getIcon(baseSize * 2)}");
+      ${getStyle("menupanel-image", 32)}
+      ${getStyle("menupanel-image-2x", 64)}
+      ${getStyle("toolbar-image", baseSize)}
+      ${getStyle("toolbar-image-2x", baseSize * 2)}
     `;
 
     return {style, legacy};
@@ -516,9 +570,10 @@ this.browserAction = class extends ExtensionAPI {
 
     return {
       browserAction: {
-        onClicked: new SingletonEventManager(context, "browserAction.onClicked", fire => {
-          let listener = () => {
-            fire.async(tabManager.convert(tabTracker.activeTab));
+        onClicked: new InputEventManager(context, "browserAction.onClicked", fire => {
+          let listener = (event, browser) => {
+            context.withPendingBrowser(browser, () =>
+              fire.sync(tabManager.convert(tabTracker.activeTab)));
           };
           browserAction.on("click", listener);
           return () => {
@@ -583,6 +638,9 @@ this.browserAction = class extends ExtensionAPI {
           // For internal consistency, we currently resolve both relative to the
           // calling context.
           let url = details.popup && context.uri.resolve(details.popup);
+          if (url && !context.checkLoadURL(url)) {
+            return Promise.reject({message: `Access denied for URL ${url}`});
+          }
           browserAction.setProperty(tab, "popup", url);
         },
 

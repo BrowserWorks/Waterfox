@@ -16,7 +16,6 @@
 #include "webrtc/modules/video_capture/device_info_impl.h"
 #include "webrtc/modules/video_capture/video_capture_config.h"
 #include "webrtc/modules/video_capture/video_capture_impl.h"
-#include "webrtc/system_wrappers/include/ref_count.h"
 #include "webrtc/system_wrappers/include/trace.h"
 
 #include "webrtc/modules/video_capture/mac/avfoundation/video_capture_avfoundation.h"
@@ -72,42 +71,41 @@ bool CheckOSVersion()
  *                             version buffer
  */
 
-VideoCaptureModule* VideoCaptureImpl::Create(
-    const int32_t id, const char* deviceUniqueIdUTF8)
+rtc::scoped_refptr<VideoCaptureModule> VideoCaptureImpl::Create(
+    const char* deviceUniqueIdUTF8)
 {
 
     if (webrtc::videocapturemodule::CheckOSVersion() == false)
     {
-        WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, id,
+        WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, 0,
                      "OS version is too old. Could not create video capture "
                      "module. Returning NULL");
         return NULL;
     }
 
-    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, id,
-                 "Using AVFoundation framework to capture video", id);
+    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, 0,
+                 "Using AVFoundation framework to capture video", 0);
 
-    RefCountImpl<videocapturemodule::VideoCaptureMacAVFoundation>* newCaptureModule =
-        new RefCountImpl<videocapturemodule::VideoCaptureMacAVFoundation>(id);
+    rtc::scoped_refptr<videocapturemodule::VideoCaptureMacAVFoundation> newCaptureModule(
+        new rtc::RefCountedObject<videocapturemodule::VideoCaptureMacAVFoundation>(0));
 
     if(!newCaptureModule)
     {
-        WEBRTC_TRACE(webrtc::kTraceDebug, webrtc::kTraceVideoCapture, id,
+        WEBRTC_TRACE(webrtc::kTraceDebug, webrtc::kTraceVideoCapture, 0,
                      "could not Create for unique device %s, !newCaptureModule",
                      deviceUniqueIdUTF8);
         return NULL;
     }
-    if(newCaptureModule->Init(id, deviceUniqueIdUTF8) != 0)
+    if(newCaptureModule->Init(0, deviceUniqueIdUTF8) != 0)
     {
-        WEBRTC_TRACE(webrtc::kTraceDebug, webrtc::kTraceVideoCapture, id,
+        WEBRTC_TRACE(webrtc::kTraceDebug, webrtc::kTraceVideoCapture, 0,
                      "could not Create for unique device %s, "
                      "newCaptureModule->Init()!=0", deviceUniqueIdUTF8);
-        delete newCaptureModule;
         return NULL;
     }
 
     // Successfully created VideoCaptureMacQuicktime. Return it
-    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, id,
+    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, 0,
                  "Module created for unique device %s, will use AVFoundation "
                  "framework",deviceUniqueIdUTF8);
     return newCaptureModule;
@@ -120,33 +118,33 @@ VideoCaptureModule* VideoCaptureImpl::Create(
  ***************************************************************************/
 
 VideoCaptureModule::DeviceInfo*
-VideoCaptureImpl::CreateDeviceInfo(const int32_t id)
+VideoCaptureImpl::CreateDeviceInfo()
 {
 
 
     if (webrtc::videocapturemodule::CheckOSVersion() == false)
     {
-        WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, id,
+        WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, 0,
                      "OS version is too old. Could not create video capture "
                      "module. Returning NULL");
         return NULL;
     }
 
     webrtc::videocapturemodule::VideoCaptureMacAVFoundationInfo* newCaptureInfoModule =
-        new webrtc::videocapturemodule::VideoCaptureMacAVFoundationInfo(id);
+        new webrtc::videocapturemodule::VideoCaptureMacAVFoundationInfo(0);
 
     if(!newCaptureInfoModule || newCaptureInfoModule->Init() != 0)
     {
         //Destroy(newCaptureInfoModule);
         delete newCaptureInfoModule;
         newCaptureInfoModule = NULL;
-        WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, id,
+        WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, 0,
                      "Failed to Init newCaptureInfoModule created with id %d "
-                     "and device \"\" ", id);
+                     "and device \"\" ", 0);
         return NULL;
     }
-    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, id,
-                 "VideoCaptureModule created for id", id);
+    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, 0,
+                 "VideoCaptureModule created for id", 0);
     return newCaptureInfoModule;
 
 }

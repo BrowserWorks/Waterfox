@@ -8,10 +8,14 @@ void
 nsTPromiseFlatString_CharT::Init(const substring_type& str)
 {
   if (str.IsTerminated()) {
-    mData = const_cast<char_type*>(static_cast<const char_type*>(str.Data()));
-    mLength = str.Length();
-    mFlags = str.Flags() & (F_TERMINATED | F_LITERAL);
-    // does not promote F_VOIDED
+    char_type* newData =
+      const_cast<char_type*>(static_cast<const char_type*>(str.Data()));
+    size_type newLength = str.Length();
+    DataFlags newDataFlags =
+      str.GetDataFlags() & (DataFlags::TERMINATED | DataFlags::LITERAL);
+    // does not promote DataFlags::VOIDED
+
+    SetData(newData, newLength, newDataFlags);
   } else {
     Assign(str);
   }

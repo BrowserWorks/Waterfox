@@ -10,6 +10,7 @@
 #include "mozilla/dom/CSSRuleList.h"
 #include "mozilla/dom/MediaList.h"
 #include "mozilla/dom/ShadowRoot.h"
+#include "mozilla/ServoCSSRuleList.h"
 #include "mozilla/ServoStyleSheet.h"
 #include "mozilla/StyleSheetInlines.h"
 #include "mozilla/CSSStyleSheet.h"
@@ -27,9 +28,9 @@ StyleSheet::StyleSheet(StyleBackendType aType, css::SheetParsingMode aParsingMod
   , mParsingMode(aParsingMode)
   , mType(aType)
   , mDisabled(false)
+  , mDirty(false)
   , mDocumentAssociationMode(NotOwnedByDocument)
   , mInner(nullptr)
-  , mDirty(false)
 {
 }
 
@@ -46,11 +47,11 @@ StyleSheet::StyleSheet(const StyleSheet& aCopy,
   , mParsingMode(aCopy.mParsingMode)
   , mType(aCopy.mType)
   , mDisabled(aCopy.mDisabled)
+  , mDirty(aCopy.mDirty)
   // We only use this constructor during cloning.  It's the cloner's
   // responsibility to notify us if we end up being owned by a document.
   , mDocumentAssociationMode(NotOwnedByDocument)
   , mInner(aCopy.mInner) // Shallow copy, but concrete subclasses will fix up.
-  , mDirty(aCopy.mDirty)
 {
   MOZ_ASSERT(mInner, "Should only copy StyleSheets with an mInner.");
   mInner->AddSheet(this);
@@ -64,8 +65,22 @@ StyleSheet::StyleSheet(const StyleSheet& aCopy,
 
 StyleSheet::~StyleSheet()
 {
+  MOZ_ASSERT(!mInner, "Inner should have been dropped in LastRelease");
+}
+
+void
+StyleSheet::LastRelease()
+{
   MOZ_ASSERT(mInner, "Should have an mInner at time of destruction.");
   MOZ_ASSERT(mInner->mSheets.Contains(this), "Our mInner should include us.");
+
+  UnparentChildren();
+  if (IsGecko()) {
+    AsGecko()->LastRelease();
+  } else {
+    AsServo()->LastRelease();
+  }
+
   mInner->RemoveSheet(this);
   mInner = nullptr;
 
@@ -135,7 +150,12 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(StyleSheet)
 NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(StyleSheet)
-NS_IMPL_CYCLE_COLLECTING_RELEASE(StyleSheet)
+// We want to disconnect from our inner as soon as our refcount drops to zero,
+// without waiting for async deletion by the cycle collector.  Otherwise we
+// might end up cloning the inner if someone mutates another sheet that shares
+// it with us, even though there is only one such sheet and we're about to go
+// away.  This situation arises easily with sheet preloading.
+NS_IMPL_CYCLE_COLLECTING_RELEASE_WITH_LAST_RELEASE(StyleSheet, LastRelease())
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(StyleSheet)
 
@@ -239,6 +259,7 @@ StyleSheetInfo::StyleSheetInfo(StyleSheetInfo& aCopy,
   , mComplete(aCopy.mComplete)
   , mFirstChild()  // We don't rebuild the child because we're making a copy
                    // without children.
+  , mSourceMapURL(aCopy.mSourceMapURL)
 #ifdef DEBUG
   , mPrincipalSet(aCopy.mPrincipalSet)
 #endif
@@ -437,14 +458,19 @@ StyleSheet::EnsureUniqueInner()
   mInner->RemoveSheet(this);
   mInner = clone;
 
-  // Ensure we're using the new rules.
-  //
-  // NOTE: In Servo, all kind of changes that change the set of selectors or
-  // rules we match are covered by the PresShell notifications. In Gecko that's
-  // true too, but this is probably needed because selectors are not refcounted
-  // and can become stale.
   if (CSSStyleSheet* geckoSheet = GetAsGecko()) {
+    // Ensure we're using the new rules.
+    //
+    // NOTE: In Servo, all kind of changes that change the set of selectors or
+    // rules we match are covered by the PresShell notifications. In Gecko
+    // that's true too, but this is probably needed because selectors are not
+    // refcounted and can become stale.
     geckoSheet->ClearRuleCascades();
+  } else {
+    // Fixup the child lists and parent links in the Servo sheet. This is done
+    // here instead of in StyleSheetInner::CloneFor, because it's just more
+    // convenient to do so instead.
+    AsServo()->BuildChildListAfterInnerClone();
   }
 
   // let our containing style sets know that if we call
@@ -478,7 +504,19 @@ StyleSheet::GetCssRules(nsIPrincipal& aSubjectPrincipal,
   if (!AreRulesAvailable(aSubjectPrincipal, aRv)) {
     return nullptr;
   }
-  FORWARD_INTERNAL(GetCssRulesInternal, (aRv))
+  FORWARD_INTERNAL(GetCssRulesInternal, ())
+}
+
+void
+StyleSheet::GetSourceMapURL(nsAString& aSourceMapURL)
+{
+  aSourceMapURL = mInner->mSourceMapURL;
+}
+
+void
+StyleSheet::SetSourceMapURL(const nsAString& aSourceMapURL)
+{
+  mInner->mSourceMapURL = aSourceMapURL;
 }
 
 css::Rule*
@@ -571,6 +609,33 @@ StyleSheet::InsertRuleIntoGroup(const nsAString& aRule,
   }
 
   return NS_OK;
+}
+
+uint64_t
+StyleSheet::FindOwningWindowInnerID() const
+{
+  uint64_t windowID = 0;
+  if (mDocument) {
+    windowID = mDocument->InnerWindowID();
+  }
+
+  if (windowID == 0 && mOwningNode) {
+    windowID = mOwningNode->OwnerDoc()->InnerWindowID();
+  }
+
+  RefPtr<css::Rule> ownerRule;
+  if (windowID == 0 && (ownerRule = GetDOMOwnerRule())) {
+    RefPtr<StyleSheet> sheet = ownerRule->GetStyleSheet();
+    if (sheet) {
+      windowID = sheet->FindOwningWindowInnerID();
+    }
+  }
+
+  if (windowID == 0 && mParent) {
+    windowID = mParent->FindOwningWindowInnerID();
+  }
+
+  return windowID;
 }
 
 void
@@ -694,9 +759,16 @@ StyleSheet::ClearAssociatedDocument()
 void
 StyleSheet::PrependStyleSheet(StyleSheet* aSheet)
 {
-  NS_PRECONDITION(nullptr != aSheet, "null arg");
-
   WillDirty();
+  PrependStyleSheetSilently(aSheet);
+  DidDirty();
+}
+
+void
+StyleSheet::PrependStyleSheetSilently(StyleSheet* aSheet)
+{
+  MOZ_ASSERT(aSheet);
+
   aSheet->mNext = SheetInfo().mFirstChild;
   SheetInfo().mFirstChild = aSheet;
 
@@ -704,7 +776,6 @@ StyleSheet::PrependStyleSheet(StyleSheet* aSheet)
   // it's going away.
   aSheet->mParent = this;
   aSheet->SetAssociatedDocument(mDocument, mDocumentAssociationMode);
-  DidDirty();
 }
 
 size_t

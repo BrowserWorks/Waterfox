@@ -31,6 +31,7 @@ struct nsGenConInitializer;
 
 class nsContainerFrame;
 class nsFirstLineFrame;
+class nsFirstLetterFrame;
 class nsICSSAnonBoxPseudo;
 class nsIDocument;
 class nsPageContentFrame;
@@ -59,7 +60,7 @@ public:
   friend class mozilla::ServoRestyleManager;
 
   nsCSSFrameConstructor(nsIDocument* aDocument, nsIPresShell* aPresShell);
-  ~nsCSSFrameConstructor(void) {
+  ~nsCSSFrameConstructor() {
     MOZ_ASSERT(mUpdateCount == 0, "Dying in the middle of our own update?");
   }
 
@@ -583,7 +584,7 @@ private:
                                nsFrameItems&            aFrameItems);
 
 private:
-  /* An enum of possible parent types for anonymous table or ruby object 
+  /* An enum of possible parent types for anonymous table or ruby object
      construction */
   enum ParentType {
     eTypeBlock = 0, /* This includes all non-table-related frames */
@@ -1943,12 +1944,14 @@ private:
 
   // Methods support :first-letter style
 
-  void CreateFloatingLetterFrame(nsFrameConstructorState& aState,
-                                 nsIContent*              aTextContent,
-                                 nsIFrame*                aTextFrame,
-                                 nsContainerFrame*        aParentFrame,
-                                 nsStyleContext*          aStyleContext,
-                                 nsFrameItems&            aResult);
+  nsFirstLetterFrame*
+  CreateFloatingLetterFrame(nsFrameConstructorState& aState,
+                            nsIContent*              aTextContent,
+                            nsIFrame*                aTextFrame,
+                            nsContainerFrame*        aParentFrame,
+                            nsStyleContext*          aParentStyleContext,
+                            nsStyleContext*          aStyleContext,
+                            nsFrameItems&            aResult);
 
   void CreateLetterFrame(nsContainerFrame*        aBlockFrame,
                          nsContainerFrame*        aBlockContinuation,

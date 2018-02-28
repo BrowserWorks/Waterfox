@@ -48,7 +48,7 @@ static constexpr Register WasmIonExitRegE1 { Registers::invalid_reg };
 
 static constexpr Register WasmIonExitRegReturnData { Registers::invalid_reg };
 static constexpr Register WasmIonExitRegReturnType { Registers::invalid_reg };
-static constexpr Register WasmIonExitTlsReg = { Registers::invalid_reg };
+static constexpr Register WasmIonExitTlsReg { Registers::invalid_reg };
 static constexpr Register WasmIonExitRegD0 { Registers::invalid_reg };
 static constexpr Register WasmIonExitRegD1 { Registers::invalid_reg };
 static constexpr Register WasmIonExitRegD2 { Registers::invalid_reg };
@@ -153,6 +153,8 @@ class Assembler : public AssemblerShared
 
     static uintptr_t GetPointer(uint8_t*) { MOZ_CRASH(); }
 
+    static bool HasRoundInstruction(RoundingMode) { return false; }
+
     void verifyHeapAccessDisassembly(uint32_t begin, uint32_t end,
                                      const Disassembler::HeapAccess& heapAccess)
     {
@@ -196,9 +198,7 @@ class MacroAssemblerNone : public Assembler
     static bool SupportsSimd() { return false; }
     static bool SupportsUnalignedAccesses() { return false; }
 
-    static bool HasRoundInstruction(RoundingMode) { return false; }
-
-    void executableCopy(void*, bool) { MOZ_CRASH(); }
+    void executableCopy(void*, bool = true) { MOZ_CRASH(); }
     void copyJumpRelocationTable(uint8_t*) { MOZ_CRASH(); }
     void copyDataRelocationTable(uint8_t*) { MOZ_CRASH(); }
     void copyPreBarrierTable(uint8_t*) { MOZ_CRASH(); }
@@ -210,6 +210,7 @@ class MacroAssemblerNone : public Assembler
     void bindLater(Label*, wasm::TrapDesc) { MOZ_CRASH(); }
     template <typename T> void j(Condition, T) { MOZ_CRASH(); }
     template <typename T> void jump(T) { MOZ_CRASH(); }
+    void writeCodePointer(CodeOffset* label) { MOZ_CRASH(); }
     void haltingAlign(size_t) { MOZ_CRASH(); }
     void nopAlign(size_t) { MOZ_CRASH(); }
     void checkStackAlignment() { MOZ_CRASH(); }
@@ -423,12 +424,6 @@ class MacroAssemblerNone : public Assembler
     // Instrumentation for entering and leaving the profiler.
     void profilerEnterFrame(Register , Register ) { MOZ_CRASH(); }
     void profilerExitFrame() { MOZ_CRASH(); }
-
-    void disableProtection() { MOZ_CRASH(); }
-    void enableProtection() { MOZ_CRASH(); }
-    void setLowerBoundForProtection(size_t) { MOZ_CRASH(); }
-    void unprotectRegion(unsigned char*, size_t) { MOZ_CRASH(); }
-    void reprotectRegion(unsigned char*, size_t) { MOZ_CRASH(); }
 
 #ifdef JS_NUNBOX32
     Address ToPayload(Address) { MOZ_CRASH(); }

@@ -11,7 +11,6 @@ import sys
 import tempfile
 import subprocess
 import shutil
-from collections import defaultdict
 
 from mach.decorators import (
     CommandArgument,
@@ -19,9 +18,7 @@ from mach.decorators import (
     Command,
 )
 
-from mozbuild.base import BuildEnvironmentNotFoundException, MachCommandBase
-from mozbuild.base import MachCommandConditions as conditions
-import mozpack.path as mozpath
+from mozbuild.base import MachCommandBase, MachCommandConditions as conditions
 from argparse import ArgumentParser
 
 UNKNOWN_TEST = '''
@@ -42,15 +39,6 @@ UNKNOWN_FLAVOR = '''
 I know you are trying to run a %s test. Unfortunately, I can't run those
 tests yet. Sorry!
 '''.strip()
-
-CONFIG_ENVIRONMENT_NOT_FOUND = '''
-No config environment detected. This means we are unable to properly
-detect test files in the specified paths or tags. Please run:
-
-    $ mach configure
-
-and try again.
-'''.lstrip()
 
 MOCHITEST_CHUNK_BY_DIR = 4
 MOCHITEST_TOTAL_CHUNKS = 5
@@ -441,21 +429,32 @@ class CheckSpiderMonkeyCommand(MachCommandBase):
 
     def run_checkspidermonkey(self, **params):
         import subprocess
-        import sys
+
+        self.virtualenv_manager.ensure()
+        python = self.virtualenv_manager.python_path
 
         js = os.path.join(self.bindir, executable_name('js'))
 
         print('Running jit-tests')
-        jittest_cmd = [os.path.join(self.topsrcdir, 'js', 'src', 'jit-test', 'jit_test.py'),
-              js, '--no-slow', '--jitflags=all']
+        jittest_cmd = [
+            python,
+            os.path.join(self.topsrcdir, 'js', 'src', 'jit-test', 'jit_test.py'),
+            js,
+            '--no-slow',
+            '--jitflags=all',
+        ]
         if params['valgrind']:
             jittest_cmd.append('--valgrind')
 
         jittest_result = subprocess.call(jittest_cmd)
 
         print('running jstests')
-        jstest_cmd = [os.path.join(self.topsrcdir, 'js', 'src', 'tests', 'jstests.py'),
-              js, '--jitflags=all']
+        jstest_cmd = [
+            python,
+            os.path.join(self.topsrcdir, 'js', 'src', 'tests', 'jstests.py'),
+            js,
+            '--jitflags=all',
+        ]
         jstest_result = subprocess.call(jstest_cmd)
 
         print('running jsapi-tests')
@@ -463,15 +462,15 @@ class CheckSpiderMonkeyCommand(MachCommandBase):
         jsapi_tests_result = subprocess.call(jsapi_tests_cmd)
 
         print('running check-style')
-        check_style_cmd = [sys.executable, os.path.join(self.topsrcdir, 'config', 'check_spidermonkey_style.py')]
+        check_style_cmd = [python, os.path.join(self.topsrcdir, 'config', 'check_spidermonkey_style.py')]
         check_style_result = subprocess.call(check_style_cmd, cwd=os.path.join(self.topsrcdir, 'js', 'src'))
 
         print('running check-masm')
-        check_masm_cmd = [sys.executable, os.path.join(self.topsrcdir, 'config', 'check_macroassembler_style.py')]
+        check_masm_cmd = [python, os.path.join(self.topsrcdir, 'config', 'check_macroassembler_style.py')]
         check_masm_result = subprocess.call(check_masm_cmd, cwd=os.path.join(self.topsrcdir, 'js', 'src'))
 
         print('running check-js-msg-encoding')
-        check_js_msg_cmd = [sys.executable, os.path.join(self.topsrcdir, 'config', 'check_js_msg_encoding.py')]
+        check_js_msg_cmd = [python, os.path.join(self.topsrcdir, 'config', 'check_js_msg_encoding.py')]
         check_js_msg_result = subprocess.call(check_js_msg_cmd, cwd=self.topsrcdir)
 
         all_passed = jittest_result and jstest_result and jsapi_tests_result and check_style_result and check_masm_result and check_js_msg_result
@@ -501,243 +500,6 @@ class JsapiTestsCommand(MachCommandBase):
 
         return jsapi_tests_result
 
-def autotry_parser():
-    from autotry import arg_parser
-    parser = arg_parser()
-    # The --no-artifact flag is only interpreted locally by |mach try|; it's not
-    # like the --artifact flag, which is interpreted remotely by the try server.
-    #
-    # We need a tri-state where set is different than the default value, so we
-    # use a different variable than --artifact.
-    parser.add_argument('--no-artifact',
-                        dest='no_artifact',
-                        action='store_true',
-                        help='Force compiled (non-artifact) builds even when '
-                             '--enable-artifact-builds is set.')
-    return parser
-
-@CommandProvider
-class PushToTry(MachCommandBase):
-    def normalise_list(self, items, allow_subitems=False):
-        from autotry import parse_arg
-
-        rv = defaultdict(list)
-        for item in items:
-            parsed = parse_arg(item)
-            for key, values in parsed.iteritems():
-                rv[key].extend(values)
-
-        if not allow_subitems:
-            if not all(item == [] for item in rv.itervalues()):
-                raise ValueError("Unexpected subitems in argument")
-            return rv.keys()
-        else:
-            return rv
-
-    def validate_args(self, **kwargs):
-        from autotry import AutoTry
-        if not kwargs["paths"] and not kwargs["tests"] and not kwargs["tags"]:
-            print("Paths, tags, or tests must be specified as an argument to autotry.")
-            sys.exit(1)
-
-        if kwargs["platforms"] is None:
-            if 'AUTOTRY_PLATFORM_HINT' in os.environ:
-                kwargs["platforms"] = [os.environ['AUTOTRY_PLATFORM_HINT']]
-            else:
-                print("Platforms must be specified as an argument to autotry.")
-                sys.exit(1)
-
-        try:
-            platforms = self.normalise_list(kwargs["platforms"])
-        except ValueError as e:
-            print("Error parsing -p argument:\n%s" % e.message)
-            sys.exit(1)
-
-        try:
-            tests = (self.normalise_list(kwargs["tests"], allow_subitems=True)
-                     if kwargs["tests"] else {})
-        except ValueError as e:
-            print("Error parsing -u argument (%s):\n%s" % (kwargs["tests"], e.message))
-            sys.exit(1)
-
-        try:
-            talos = (self.normalise_list(kwargs["talos"], allow_subitems=True)
-                     if kwargs["talos"] else [])
-        except ValueError as e:
-            print("Error parsing -t argument:\n%s" % e.message)
-            sys.exit(1)
-
-        paths = []
-        for p in kwargs["paths"]:
-            p = mozpath.normpath(os.path.abspath(p))
-            if not (os.path.isdir(p) and p.startswith(self.topsrcdir)):
-                print('Specified path "%s" is not a directory under the srcdir,'
-                      ' unable to specify tests outside of the srcdir' % p)
-                sys.exit(1)
-            if len(p) <= len(self.topsrcdir):
-                print('Specified path "%s" is at the top of the srcdir and would'
-                      ' select all tests.' % p)
-                sys.exit(1)
-            paths.append(os.path.relpath(p, self.topsrcdir))
-
-        try:
-            tags = self.normalise_list(kwargs["tags"]) if kwargs["tags"] else []
-        except ValueError as e:
-            print("Error parsing --tags argument:\n%s" % e.message)
-            sys.exit(1)
-
-        extra_values = {k['dest'] for k in AutoTry.pass_through_arguments.values()}
-        extra_args = {k: v for k, v in kwargs.items()
-                      if k in extra_values and v}
-
-        return kwargs["builds"], platforms, tests, talos, paths, tags, extra_args
-
-
-    @Command('try',
-             category='testing',
-             description='Push selected tests to the try server',
-             parser=autotry_parser)
-
-    def autotry(self, **kwargs):
-        """Autotry is in beta, please file bugs blocking 1149670.
-
-        Push the current tree to try, with the specified syntax.
-
-        Build options, platforms and regression tests may be selected
-        using the usual try options (-b, -p and -u respectively). In
-        addition, tests in a given directory may be automatically
-        selected by passing that directory as a positional argument to the
-        command. For example:
-
-        mach try -b d -p linux64 dom testing/web-platform/tests/dom
-
-        would schedule a try run for linux64 debug consisting of all
-        tests under dom/ and testing/web-platform/tests/dom.
-
-        Test selection using positional arguments is available for
-        mochitests, reftests, xpcshell tests and web-platform-tests.
-
-        Tests may be also filtered by passing --tag to the command,
-        which will run only tests marked as having the specified
-        tags e.g.
-
-        mach try -b d -p win64 --tag media
-
-        would run all tests tagged 'media' on Windows 64.
-
-        If both positional arguments or tags and -u are supplied, the
-        suites in -u will be run in full. Where tests are selected by
-        positional argument they will be run in a single chunk.
-
-        If no build option is selected, both debug and opt will be
-        scheduled. If no platform is selected a default is taken from
-        the AUTOTRY_PLATFORM_HINT environment variable, if set.
-
-        The command requires either its own mercurial extension ("push-to-try",
-        installable from mach mercurial-setup) or a git repo using git-cinnabar
-        (available at https://github.com/glandium/git-cinnabar).
-
-        """
-
-        from mozbuild.testing import TestResolver
-        from autotry import AutoTry
-
-        print("mach try is under development, please file bugs blocking 1149670.")
-
-        resolver_func = lambda: self._spawn(TestResolver)
-        at = AutoTry(self.topsrcdir, resolver_func, self._mach_context)
-
-        if kwargs["list"]:
-            at.list_presets()
-            sys.exit()
-
-        if kwargs["load"] is not None:
-            defaults = at.load_config(kwargs["load"])
-
-            if defaults is None:
-                print("No saved configuration called %s found in autotry.ini" % kwargs["load"],
-                      file=sys.stderr)
-
-            for key, value in kwargs.iteritems():
-                if value in (None, []) and key in defaults:
-                    kwargs[key] = defaults[key]
-
-        if kwargs["push"] and at.find_uncommited_changes():
-            print('ERROR please commit changes before continuing')
-            sys.exit(1)
-
-        if not any(kwargs[item] for item in ("paths", "tests", "tags")):
-            kwargs["paths"], kwargs["tags"] = at.find_paths_and_tags(kwargs["verbose"])
-
-        builds, platforms, tests, talos, paths, tags, extra = self.validate_args(**kwargs)
-
-        if paths or tags:
-            if not os.path.exists(os.path.join(self.topobjdir, 'config.status')):
-                print(CONFIG_ENVIRONMENT_NOT_FOUND)
-                sys.exit(1)
-
-            paths = [os.path.relpath(os.path.normpath(os.path.abspath(item)), self.topsrcdir)
-                     for item in paths]
-            paths_by_flavor = at.paths_by_flavor(paths=paths, tags=tags)
-
-            if not paths_by_flavor and not tests:
-                print("No tests were found when attempting to resolve paths:\n\n\t%s" %
-                      paths)
-                sys.exit(1)
-
-            if not kwargs["intersection"]:
-                paths_by_flavor = at.remove_duplicates(paths_by_flavor, tests)
-        else:
-            paths_by_flavor = {}
-
-        local_artifact_build = False
-        try:
-            if self.substs.get("MOZ_ARTIFACT_BUILDS"):
-                local_artifact_build = True
-        except BuildEnvironmentNotFoundException:
-            # If we don't have a build locally, we can't tell whether
-            # an artifact build is desired, but we still want the
-            # command to succeed, if possible.
-            pass
-
-        # Add --artifact if --enable-artifact-builds is set ...
-        if local_artifact_build:
-            extra["artifact"] = True
-        # ... unless --no-artifact is explicitly given.
-        if kwargs["no_artifact"]:
-            if "artifact" in extra:
-                del extra["artifact"]
-
-        try:
-            msg = at.calc_try_syntax(platforms, tests, talos, builds, paths_by_flavor, tags,
-                                     extra, kwargs["intersection"])
-        except ValueError as e:
-            print(e.message)
-            sys.exit(1)
-
-        if local_artifact_build:
-            if kwargs["no_artifact"]:
-                print('mozconfig has --enable-artifact-builds but '
-                      '--no-artifact specified, not including --artifact '
-                      'flag in try syntax')
-            else:
-                print('mozconfig has --enable-artifact-builds; including '
-                      '--artifact flag in try syntax (use --no-artifact '
-                      'to override)')
-
-        if kwargs["verbose"] and paths_by_flavor:
-            print('The following tests will be selected: ')
-            for flavor, paths in paths_by_flavor.iteritems():
-                print("%s: %s" % (flavor, ",".join(paths)))
-
-        if kwargs["verbose"] or not kwargs["push"]:
-            print('The following try syntax was calculated:\n%s' % msg)
-
-        if kwargs["push"]:
-            at.push_to_try(msg, kwargs["verbose"])
-
-        if kwargs["save"] is not None:
-            at.save_config(kwargs["save"], msg)
 
 
 def get_parser(argv=None):
@@ -993,6 +755,7 @@ class TestInfoCommand(MachCommandBase):
         # This function attempts to find appropriate names for different
         # queries based on the specified test name.
 
+        import posixpath
         import re
 
         # full_test_name is full path to file in hg (or git)
@@ -1013,6 +776,7 @@ class TestInfoCommand(MachCommandBase):
                 for line in out:
                     print(line)
         if self.full_test_name:
+            self.full_test_name.replace(os.sep, posixpath.sep)
             print("Found %s in source control." % self.full_test_name)
         else:
             print("Unable to validate test name '%s'!" % self.test_name)

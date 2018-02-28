@@ -1,10 +1,7 @@
 browser/components/translation/cld2/
-build/stlport/
 db/sqlite3/src/
 dom/media/platforms/ffmpeg/libav
 extensions/spellcheck/hunspell/src/
-gfx/2d/convolver
-gfx/2d/image_operations
 gfx/angle/
 gfx/cairo/
 gfx/graphite2/
@@ -14,7 +11,7 @@ gfx/qcms/
 gfx/skia/
 gfx/vr/openvr/
 gfx/webrender
-gfx/webrender_traits
+gfx/webrender_api
 gfx/ycbcr/
 intl/hyphenation/hyphen/
 intl/icu/
@@ -57,6 +54,8 @@ modules/fdlibm/
 modules/freetype2/
 modules/libbz2/
 modules/libmar/
+modules/pdfium/
+modules/woff2/
 modules/zlib/
 netwerk/sctp/src/
 netwerk/srtp/src/
@@ -67,7 +66,11 @@ security/nss/
 security/sandbox/chromium/
 testing/gtest/gmock/
 testing/gtest/gtest/
+testing/talos/talos/tests/canvasmark/
 testing/talos/talos/tests/dromaeo/
+testing/talos/talos/tests/kraken/
+testing/talos/talos/tests/v8_7/
+third_party/aom/
 third_party/python/blessings/
 third_party/python/configobj/
 third_party/python/futures/
@@ -79,12 +82,14 @@ third_party/python/pyasn1/
 third_party/python/pyasn1-modules/
 third_party/python/PyECC/
 third_party/python/pytest/
-third_party/python/pyyaml/
 third_party/python/pytoml/
+third_party/python/pyyaml/
 third_party/python/redo/
 third_party/python/requests/
 third_party/python/rsa/
 third_party/python/which/
+third_party/rust/
 toolkit/components/jsoncpp/
 toolkit/components/protobuf/
 toolkit/crashreporter/google-breakpad/
+tools/fuzzing/libfuzzer

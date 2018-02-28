@@ -7,14 +7,16 @@
 #define mozilla_EditorBase_h
 
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc.
+#include "mozilla/Maybe.h"              // for Maybe
 #include "mozilla/OwningNonNull.h"      // for OwningNonNull
 #include "mozilla/SelectionState.h"     // for RangeUpdater, etc.
-#include "mozilla/StyleSheet.h"   // for StyleSheet
-#include "mozilla/UniquePtr.h"
+#include "mozilla/StyleSheet.h"         // for StyleSheet
+#include "mozilla/WeakPtr.h"            // for WeakPtr
 #include "mozilla/dom/Text.h"
 #include "nsCOMPtr.h"                   // for already_AddRefed, nsCOMPtr
 #include "nsCycleCollectionParticipant.h"
 #include "nsGkAtoms.h"
+#include "nsIDocument.h"                // for nsIDocument
 #include "nsIEditor.h"                  // for nsIEditor, etc.
 #include "nsIObserver.h"                // for NS_DECL_NSIOBSERVER, etc.
 #include "nsIPlaintextEditor.h"         // for nsIPlaintextEditor, etc.
@@ -34,7 +36,6 @@ class nsIDOMEvent;
 class nsIDOMEventListener;
 class nsIDOMEventTarget;
 class nsIDOMNode;
-class nsIDocument;
 class nsIDocumentStateListener;
 class nsIEditActionListener;
 class nsIEditorObserver;
@@ -116,6 +117,7 @@ class HTMLEditor;
 class InsertNodeTransaction;
 class InsertTextTransaction;
 class JoinNodeTransaction;
+class PlaceholderTransaction;
 class RemoveStyleSheetTransaction;
 class SetTextTransaction;
 class SplitNodeTransaction;
@@ -134,6 +136,75 @@ class Text;
 namespace widget {
 struct IMEState;
 } // namespace widget
+
+/**
+ * CachedWeakPtr stores a pointer to a class which inherits nsIWeakReference.
+ * If the instance of the class has already been destroyed, this returns
+ * nullptr.  Otherwise, returns cached pointer.
+ * If class T inherits nsISupports a lot, specify Base explicitly for avoiding
+ * ambiguous conversion to nsISupports.
+ */
+template<class T, class Base = nsISupports>
+class CachedWeakPtr final
+{
+public:
+  CachedWeakPtr<T, Base>()
+    : mCache(nullptr)
+  {
+  }
+  explicit CachedWeakPtr<T, Base>(T* aObject)
+  {
+    mWeakPtr = do_GetWeakReference(static_cast<Base*>(aObject));
+    mCache = aObject;
+  }
+  explicit CachedWeakPtr<T, Base>(const nsCOMPtr<T>& aOther)
+  {
+    mWeakPtr = do_GetWeakReference(static_cast<Base*>(aOther.get()));
+    mCache = aOther;
+  }
+  explicit CachedWeakPtr<T, Base>(already_AddRefed<T>& aOther)
+  {
+    RefPtr<T> other = aOther;
+    mWeakPtr = do_GetWeakReference(static_cast<Base*>(other.get()));
+    mCache = other;
+  }
+
+  CachedWeakPtr<T, Base>& operator=(T* aObject)
+  {
+    mWeakPtr = do_GetWeakReference(static_cast<Base*>(aObject));
+    mCache = aObject;
+    return *this;
+  }
+  CachedWeakPtr<T, Base>& operator=(const nsCOMPtr<T>& aOther)
+  {
+    mWeakPtr = do_GetWeakReference(static_cast<Base*>(aOther.get()));
+    mCache = aOther;
+    return *this;
+  }
+  CachedWeakPtr<T, Base>& operator=(already_AddRefed<T>& aOther)
+  {
+    RefPtr<T> other = aOther;
+    mWeakPtr = do_GetWeakReference(static_cast<Base*>(other.get()));
+    mCache = other;
+    return *this;
+  }
+
+  bool IsAlive() const { return mWeakPtr && mWeakPtr->IsAlive(); }
+
+  explicit operator bool() const { return mWeakPtr; }
+  operator T*() const { return get(); }
+  T* get() const
+  {
+    if (mCache && !mWeakPtr->IsAlive()) {
+      const_cast<CachedWeakPtr<T, Base>*>(this)->mCache = nullptr;
+    }
+    return mCache;
+  }
+
+private:
+  nsWeakPtr mWeakPtr;
+  T* MOZ_NON_OWNING_REF mCache;
+};
 
 #define kMOZEditorBogusNodeAttrAtom nsGkAtoms::mozeditorbogusnode
 #define kMOZEditorBogusNodeValue NS_LITERAL_STRING("TRUE")
@@ -181,6 +252,7 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(EditorBase, nsIEditor)
 
+  bool IsInitialized() const { return !!mDocumentWeak; }
   already_AddRefed<nsIDOMDocument> GetDOMDocument();
   already_AddRefed<nsIDocument> GetDocument();
   already_AddRefed<nsIPresShell> GetPresShell();
@@ -207,7 +279,8 @@ public:
                                       Text& aTextNode, int32_t aOffset,
                                       bool aSuppressIME = false);
 
-  nsresult SetTextImpl(const nsAString& aString,
+  nsresult SetTextImpl(Selection& aSelection,
+                       const nsAString& aString,
                        Text& aTextNode);
 
   NS_IMETHOD DeleteSelectionImpl(EDirection aAction,
@@ -360,9 +433,6 @@ protected:
     CreateTxnForInsertText(const nsAString& aStringToInsert, Text& aTextNode,
                            int32_t aOffset);
 
-  already_AddRefed<SetTextTransaction>
-    CreateTxnForSetText(const nsAString& aString, Text& aTextNode);
-
   /**
    * Never returns null.
    */
@@ -422,6 +492,10 @@ protected:
    * Called after a transaction is redone successfully.
    */
   void DoAfterRedoTransaction();
+
+  // Note that aSelection is optional and can be nullptr.
+  nsresult DoTransaction(Selection* aSelection,
+                         nsITransaction* aTxn);
 
   enum TDocumentListenerNotification
   {
@@ -708,6 +782,13 @@ public:
   bool ShouldHandleIMEComposition() const;
 
   /**
+   * Returns number of undo or redo items.  If TransactionManager returns
+   * unexpected error, returns -1.
+   */
+  int32_t NumberOfUndoItems() const;
+  int32_t NumberOfRedoItems() const;
+
+  /**
    * From html rules code - migration in progress.
    */
   static nsresult GetTagString(nsIDOMNode* aNode, nsAString& outString);
@@ -720,20 +801,20 @@ public:
   static bool IsTextNode(nsINode* aNode);
 
   static nsCOMPtr<nsIDOMNode> GetChildAt(nsIDOMNode* aParent, int32_t aOffset);
-  static nsIContent* GetNodeAtRangeOffsetPoint(nsIDOMNode* aParentOrNode,
+  static nsIContent* GetNodeAtRangeOffsetPoint(nsINode* aParentOrNode,
                                                int32_t aOffset);
 
   static nsresult GetStartNodeAndOffset(Selection* aSelection,
                                         nsIDOMNode** outStartNode,
                                         int32_t* outStartOffset);
   static nsresult GetStartNodeAndOffset(Selection* aSelection,
-                                        nsINode** aStartNode,
+                                        nsINode** aStartContainer,
                                         int32_t* aStartOffset);
   static nsresult GetEndNodeAndOffset(Selection* aSelection,
                                       nsIDOMNode** outEndNode,
                                       int32_t* outEndOffset);
   static nsresult GetEndNodeAndOffset(Selection* aSelection,
-                                      nsINode** aEndNode,
+                                      nsINode** aEndContainer,
                                       int32_t* aEndOffset);
 #if DEBUG_JOE
   static void DumpNode(nsIDOMNode* aNode, int32_t indent = 0);
@@ -745,8 +826,8 @@ public:
    * Helpers to add a node to the selection.
    * Used by table cell selection methods.
    */
-  nsresult CreateRange(nsIDOMNode* aStartParent, int32_t aStartOffset,
-                       nsIDOMNode* aEndParent, int32_t aEndOffset,
+  nsresult CreateRange(nsIDOMNode* aStartContainer, int32_t aStartOffset,
+                       nsIDOMNode* aEndContainer, int32_t aEndOffset,
                        nsRange** aRange);
 
   /**
@@ -786,9 +867,9 @@ public:
                                   Selection* aSelection,
                                   nsIDOMNode* previousSelectedNode,
                                   int32_t previousSelectedOffset,
-                                  nsIDOMNode* aStartNode,
+                                  nsIDOMNode* aStartContainer,
                                   int32_t aStartOffset,
-                                  nsIDOMNode* aEndNode,
+                                  nsIDOMNode* aEndContainer,
                                   int32_t aEndOffset);
 
   virtual already_AddRefed<dom::EventTarget> GetDOMEventTarget() = 0;
@@ -813,6 +894,8 @@ public:
   /**
    * Accessor methods to flags.
    */
+  uint32_t Flags() const { return mFlags; }
+
   bool IsPlaintextEditor() const
   {
     return (mFlags & nsIPlaintextEditor::eEditorPlaintextMask) != 0;
@@ -826,6 +909,17 @@ public:
   bool IsPasswordEditor() const
   {
     return (mFlags & nsIPlaintextEditor::eEditorPasswordMask) != 0;
+  }
+
+  // FYI: Both IsRightToLeft() and IsLeftToRight() may return false if
+  //      the editor inherits the content node's direction.
+  bool IsRightToLeft() const
+  {
+    return (mFlags & nsIPlaintextEditor::eEditorRightToLeft) != 0;
+  }
+  bool IsLeftToRight() const
+  {
+    return (mFlags & nsIPlaintextEditor::eEditorLeftToRight) != 0;
   }
 
   bool IsReadonly() const
@@ -886,13 +980,34 @@ public:
 
   bool HasIndependentSelection() const
   {
-    return !!mSelConWeak;
+    return !!mSelectionControllerWeak;
   }
 
   bool IsModifiable() const
   {
     return !IsReadonly();
   }
+
+  /**
+   * IsInEditAction() return true while the instance is handling an edit action.
+   * Otherwise, false.
+   */
+  bool IsInEditAction() const { return mIsInEditAction; }
+
+  /**
+   * IsSuppressingDispatchingInputEvent() returns true if the editor stops
+   * dispatching input event.  Otherwise, false.
+   */
+  bool IsSuppressingDispatchingInputEvent() const
+  {
+    return !mDispatchInputEvent;
+  }
+
+  /**
+   * GetTransactionManager() returns transaction manager associated with the
+   * editor.  This may return nullptr if undo/redo hasn't been enabled.
+   */
+  already_AddRefed<nsITransactionManager> GetTransactionManager() const;
 
   /**
    * Get the input event target. This might return null.
@@ -984,6 +1099,14 @@ public:
    */
   void HideCaret(bool aHide);
 
+private:
+  // Weak reference to the nsISelectionController.
+  // Use GetSelectionController() to retrieve actual pointer.
+  CachedWeakPtr<nsISelectionController> mSelectionControllerWeak;
+  // Weak reference to the nsIDocument.
+  // Use GetDocument() to retrieve actual pointer.
+  CachedWeakPtr<nsIDocument> mDocumentWeak;
+
 protected:
   enum Tristate
   {
@@ -1005,16 +1128,12 @@ protected:
   // The form field as an event receiver.
   nsCOMPtr<dom::EventTarget> mEventTarget;
   nsCOMPtr<nsIDOMEventListener> mEventListener;
-  // Weak reference to the nsISelectionController.
-  nsWeakPtr mSelConWeak;
-  // Weak reference to placeholder for begin/end batch purposes.
-  nsWeakPtr mPlaceHolderTxn;
-  // Weak reference to the nsIDOMDocument.
-  nsWeakPtr mDocWeak;
+  // Strong reference to placeholder for begin/end batch purposes.
+  RefPtr<PlaceholderTransaction> mPlaceholderTransaction;
   // Name of placeholder transaction.
-  nsIAtom* mPlaceHolderName;
+  nsIAtom* mPlaceholderName;
   // Saved selection state for placeholder transaction batching.
-  mozilla::UniquePtr<SelectionState> mSelState;
+  mozilla::Maybe<SelectionState> mSelState;
   // IME composition this is not null between compositionstart and
   // compositionend.
   RefPtr<TextComposition> mComposition;
@@ -1045,7 +1164,7 @@ protected:
   int32_t mUpdateCount;
 
   // Nesting count for batching.
-  int32_t mPlaceHolderBatch;
+  int32_t mPlaceholderBatch;
   // The current editor action.
   EditAction mAction;
 

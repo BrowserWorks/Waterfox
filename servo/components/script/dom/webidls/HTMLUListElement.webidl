@@ -3,12 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmlulistelement
+[HTMLConstructor]
 interface HTMLUListElement : HTMLElement {
   // also has obsolete members
 };
 
 // https://html.spec.whatwg.org/multipage/#HTMLUListElement-partial
 partial interface HTMLUListElement {
-  //         attribute boolean compact;
-  //         attribute DOMString type;
+  // [CEReactions]
+  //          attribute boolean compact;
+  // [CEReactions]
+  //          attribute DOMString type;
 };

@@ -72,10 +72,6 @@ AC_SUBST(autoconfmk)
 
 MOZ_ANDROID_NDK
 
-if test -n "$gonkdir" ; then
-    LDFLAGS="-L$gonkdir/out/target/product/$GONK_PRODUCT/obj/lib -Wl,-rpath-link=$gonkdir/out/target/product/$GONK_PRODUCT/obj/lib --sysroot=$gonkdir/out/target/product/$GONK_PRODUCT/obj/ -llog $LDFLAGS"
-fi
-
 case "$target" in
 *-apple-darwin*)
     MOZ_IOS_SDK
@@ -181,7 +177,6 @@ case "$target" in
         case "$CC_VERSION" in
         19*)
             _CC_SUITE=14
-            MSVS_VERSION=2015
             MSVC_C_RUNTIME_DLL=vcruntime140.dll
             MSVC_CXX_RUNTIME_DLL=msvcp140.dll
 
@@ -195,7 +190,6 @@ case "$target" in
             CXXFLAGS="$CXXFLAGS -Zc:sizedDealloc-"
             ;;
         esac
-        AC_SUBST(MSVS_VERSION)
         AC_SUBST(MSVC_C_RUNTIME_DLL)
         AC_SUBST(MSVC_CXX_RUNTIME_DLL)
 
@@ -405,16 +399,8 @@ AS_BIN=$AS
 AR_EXTRACT='$(AR) x'
 AS='$(CC)'
 AS_DASH_C_FLAG='-c'
-DLL_PREFIX=lib
-LIB_PREFIX=lib
-RUST_LIB_PREFIX=lib
-DLL_SUFFIX=.so
-OBJ_SUFFIX=o
-LIB_SUFFIX=a
-RUST_LIB_SUFFIX=a
-IMPORT_LIB_SUFFIX=
 DIRENT_INO=d_ino
-MOZ_USER_DIR=".mozilla"
+MOZ_USER_DIR=".waterfox"
 
 MOZ_FIX_LINK_PATHS="-Wl,-rpath-link,${DIST}/bin -Wl,-rpath-link,${prefix}/lib"
 
@@ -480,16 +466,21 @@ if test "$GNU_CC"; then
     AC_MSG_CHECKING([for -z text option to ld])
     _SAVE_LDFLAGS=$LDFLAGS
     LDFLAGS="$LDFLAGS -Wl,-z,text"
-    AC_TRY_LINK(,,AC_MSG_RESULT([yes])
-                  [NSPR_LDFLAGS="$NSPR_LDFLAGS -Wl,-z,text"],
+    AC_TRY_LINK(,,AC_MSG_RESULT([yes]),
+                  AC_MSG_RESULT([no])
+                  LDFLAGS=$_SAVE_LDFLAGS)
+
+    AC_MSG_CHECKING([for -z relro option to ld])
+    _SAVE_LDFLAGS=$LDFLAGS
+    LDFLAGS="$LDFLAGS -Wl,-z,relro"
+    AC_TRY_LINK(,,AC_MSG_RESULT([yes]),
                   AC_MSG_RESULT([no])
                   LDFLAGS=$_SAVE_LDFLAGS)
 
     AC_MSG_CHECKING([for --build-id option to ld])
     _SAVE_LDFLAGS=$LDFLAGS
     LDFLAGS="$LDFLAGS -Wl,--build-id"
-    AC_TRY_LINK(,,AC_MSG_RESULT([yes])
-                  [NSPR_LDFLAGS="$NSPR_LDFLAGS -Wl,--build-id"],
+    AC_TRY_LINK(,,AC_MSG_RESULT([yes]),
                   AC_MSG_RESULT([no])
                   LDFLAGS=$_SAVE_LDFLAGS)
 
@@ -563,7 +554,6 @@ case "$target" in
     MOZ_OPTIMIZE_FLAGS="-O3 -fno-stack-protector"
     CFLAGS="$CFLAGS -fno-common"
     CXXFLAGS="$CXXFLAGS -fno-common -stdlib=libc++"
-    DLL_SUFFIX=".dylib"
     DSO_LDOPTS=''
     STRIP="$STRIP -x -S"
     LDFLAGS="$LDFLAGS -lobjc"
@@ -622,6 +612,11 @@ case "$target" in
         if test -z "$CLANG_CC"; then
            MOZ_OPTIMIZE_FLAGS="-freorder-blocks $MOZ_OPTIMIZE_FLAGS"
         fi
+        if test "$CLANG_CC"; then
+           MOZ_OPTIMIZE_FLAGS="-O3"
+           CXXFLAGS="$CXXFLAGS -static-libstdc++"
+           CFLAGS="$CFLAGS"
+        fi
     fi
 
     case "${target_cpu}" in
@@ -635,7 +630,6 @@ case "$target" in
 *-mingw*)
     DSO_CFLAGS=
     DSO_PIC_CFLAGS=
-    DLL_SUFFIX=.dll
     RC=rc.exe
     if test -n "$GNU_CC" -o -n "$CLANG_CC"; then
         CC="$CC -mwindows"
@@ -654,8 +648,6 @@ case "$target" in
         # mingw doesn't require kernel32, user32, and advapi32 explicitly
         LIBS="$LIBS -lgdi32 -lwinmm -lwsock32"
         MOZ_FIX_LINK_PATHS=
-        DLL_PREFIX=
-        IMPORT_LIB_SUFFIX=a
 
         WIN32_CONSOLE_EXE_LDFLAGS=-mconsole
         WIN32_GUI_EXE_LDFLAGS=-mwindows
@@ -672,13 +664,6 @@ case "$target" in
         RANLIB='echo not_ranlib'
         STRIP='echo not_strip'
         PKG_SKIP_STRIP=1
-        OBJ_SUFFIX=obj
-        LIB_SUFFIX=lib
-        RUST_LIB_SUFFIX=lib
-        DLL_PREFIX=
-        LIB_PREFIX=
-        RUST_LIB_PREFIX=
-        IMPORT_LIB_SUFFIX=lib
         MKSHLIB='$(LINK) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
         MKCSHLIB='$(LINK) -NOLOGO -DLL -OUT:$@ -PDB:$(LINK_PDBFILE) $(DSO_LDOPTS)'
         WIN32_SUBSYSTEM_VERSION=5.02
@@ -851,13 +836,11 @@ case "$target" in
     CFLAGS="$CFLAGS -Dunix"
     CXXFLAGS="$CXXFLAGS -Dunix"
     if $CC -E - -dM </dev/null | grep __ELF__ >/dev/null; then
-        DLL_SUFFIX=".so"
         DSO_PIC_CFLAGS='-fPIC -DPIC'
         DSO_LDOPTS='-shared'
 	BIN_FLAGS='-Wl,--export-dynamic'
     else
     	DSO_PIC_CFLAGS='-fPIC -DPIC'
-    	DLL_SUFFIX=".so.1.0"
     	DSO_LDOPTS='-shared'
     fi
     # This will fail on a.out systems prior to 1.5.1_ALPHA.
@@ -869,7 +852,6 @@ case "$target" in
     ;;
 
 *-openbsd*)
-    DLL_SUFFIX=".so.1.0"
     DSO_CFLAGS=''
     DSO_PIC_CFLAGS='-fPIC'
     DSO_LDOPTS='-shared -fPIC'
@@ -1504,12 +1486,16 @@ AC_SUBST(MOZ_OPTIMIZE_LDFLAGS)
 AC_SUBST(MOZ_PGO_OPTIMIZE_FLAGS)
 
 dnl ========================================================
-dnl = Disable trace logging
+dnl = Trace logging. Enabled by default in DEBUG builds.
 dnl ========================================================
-ENABLE_TRACE_LOGGING=1
-MOZ_ARG_DISABLE_BOOL(trace-logging,
-[  --disable-trace-logging   Disable trace logging],
+MOZ_ARG_ENABLE_BOOL(trace-logging,
+[  --enable-trace-logging   Enable trace logging],
+    ENABLE_TRACE_LOGGING=1,
     ENABLE_TRACE_LOGGING= )
+
+if test -n "$MOZ_DEBUG"; then
+    ENABLE_TRACE_LOGGING=1
+fi
 
 AC_SUBST(ENABLE_TRACE_LOGGING)
 
@@ -2028,8 +2014,6 @@ AC_SUBST(MOZ_APP_VERSION)
 
 AC_SUBST(MOZ_PKG_SPECIAL)
 
-AC_SUBST(MOZILLA_OFFICIAL)
-
 dnl ========================================================
 dnl ECMAScript Internationalization API Support (uses ICU)
 dnl ========================================================
@@ -2100,16 +2084,7 @@ AC_SUBST(MKCSHLIB)
 AC_SUBST(DSO_CFLAGS)
 AC_SUBST(DSO_PIC_CFLAGS)
 AC_SUBST(DSO_LDOPTS)
-AC_SUBST(LIB_PREFIX)
-AC_SUBST(RUST_LIB_PREFIX)
-AC_SUBST(DLL_PREFIX)
-AC_SUBST(DLL_SUFFIX)
-AC_DEFINE_UNQUOTED(MOZ_DLL_SUFFIX, "$DLL_SUFFIX")
-AC_SUBST(LIB_SUFFIX)
-AC_SUBST(RUST_LIB_SUFFIX)
-AC_SUBST(OBJ_SUFFIX)
 AC_SUBST(BIN_SUFFIX)
-AC_SUBST(IMPORT_LIB_SUFFIX)
 AC_SUBST(USE_N32)
 AC_SUBST(CC_VERSION)
 AC_SUBST(MOZ_LINKER)

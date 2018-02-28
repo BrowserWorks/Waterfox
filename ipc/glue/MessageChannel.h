@@ -26,12 +26,16 @@
 #include "nsExceptionHandler.h"
 #endif
 #include "MessageLink.h"
+#include "nsThreadUtils.h"
 
 #include <deque>
 #include <functional>
 #include <map>
 #include <math.h>
 #include <stack>
+#include <vector>
+
+class nsIEventTarget;
 
 namespace mozilla {
 namespace ipc {
@@ -144,7 +148,7 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver
     // For more details on the process of opening a channel between
     // threads, see the extended comment on this function
     // in MessageChannel.cpp.
-    bool Open(MessageChannel *aTargetChan, MessageLoop *aTargetLoop, Side aSide);
+    bool Open(MessageChannel *aTargetChan, nsIEventTarget *aEventTarget, Side aSide);
 
     // Close the underlying transport channel.
     void Close();
@@ -252,6 +256,22 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver
 
     bool IsInTransaction() const;
     void CancelCurrentTransaction();
+
+    // Force all calls to Send to defer actually sending messages. This will
+    // cause sync messages to block until another thread calls
+    // StopPostponingSends.
+    //
+    // This must be called from the worker thread.
+    void BeginPostponingSends();
+
+    // Stop postponing sent messages, and immediately flush all postponed
+    // messages to the link. This may be called from any thread.
+    //
+    // Note that there are no ordering guarantees between two different
+    // MessageChannels. If channel B sends a message, then stops postponing
+    // channel A, messages from A may arrive before B. The easiest way to order
+    // this, if needed, is to make B send a sync message.
+    void StopPostponingSends();
 
     /**
      * This function is used by hang annotation code to determine which IPDL
@@ -490,6 +510,10 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver
     // depending on context.
     static bool IsAlwaysDeferred(const Message& aMsg);
 
+    // Helper for sending a message via the link. This should only be used for
+    // non-special messages that might have to be postponed.
+    void SendMessageToLink(Message* aMsg);
+
     bool WasTransactionCanceled(int transaction);
     bool ShouldDeferMessage(const Message& aMsg);
     bool ShouldDeferInterruptMessage(const Message& aMsg, size_t aStackDepth);
@@ -505,8 +529,8 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver
     // Can be run on either thread
     void AssertWorkerThread() const
     {
-        MOZ_ASSERT(mWorkerLoopID != -1, "Channel hasn't been opened yet");
-        MOZ_RELEASE_ASSERT(mWorkerLoopID == MessageLoop::current()->id(),
+        MOZ_ASSERT(mWorkerThread, "Channel hasn't been opened yet");
+        MOZ_RELEASE_ASSERT(mWorkerThread == GetCurrentVirtualThread(),
                            "not on worker thread!");
     }
 
@@ -515,8 +539,8 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver
     // NOT our worker thread.
     void AssertLinkThread() const
     {
-        MOZ_ASSERT(mWorkerLoopID != -1, "Channel hasn't been opened yet");
-        MOZ_RELEASE_ASSERT(mWorkerLoopID != MessageLoop::current()->id(),
+        MOZ_ASSERT(mWorkerThread, "Channel hasn't been opened yet");
+        MOZ_RELEASE_ASSERT(mWorkerThread != GetCurrentVirtualThread(),
                            "on worker thread but should not be!");
     }
 
@@ -576,9 +600,9 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver
     MessageLoop* mWorkerLoop;           // thread where work is done
     RefPtr<CancelableRunnable> mChannelErrorTask;  // NotifyMaybeChannelError runnable
 
-    // id() of mWorkerLoop.  This persists even after mWorkerLoop is cleared
-    // during channel shutdown.
-    int mWorkerLoopID;
+    // Thread we are allowed to send and receive on. This persists even after
+    // mWorkerLoop is cleared during channel shutdown.
+    PRThread* mWorkerThread;
 
     // Timeout periods are broken up in two to prevent system suspension from
     // triggering an abort. This method (called by WaitForEvent with a 'did
@@ -796,6 +820,11 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver
     RefPtr<CancelableRunnable> mOnChannelConnectedTask;
     bool mPeerPidSet;
     int32_t mPeerPid;
+
+    // Channels can enter messages are not sent immediately; instead, they are
+    // held in a queue until another thread deems it is safe to send them.
+    bool mIsPostponingSends;
+    std::vector<UniquePtr<Message>> mPostponedSends;
 };
 
 void

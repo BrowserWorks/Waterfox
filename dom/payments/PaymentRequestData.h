@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_PaymentRequestData_h
 #define mozilla_dom_PaymentRequestData_h
 
+#include "nsIPaymentAddress.h"
 #include "nsIPaymentRequest.h"
 #include "nsCOMPtr.h"
 #include "mozilla/dom/PPaymentRequest.h"
@@ -25,12 +26,12 @@ public:
                          nsIPaymentMethodData** aMethodData);
 
 private:
-  PaymentMethodData(nsIArray* aSupportedMethods,
+  PaymentMethodData(const nsAString& aSupportedMethods,
                     const nsAString& aData);
 
   ~PaymentMethodData() = default;
 
-  nsCOMPtr<nsIArray> mSupportedMethods;
+  nsString mSupportedMethods;
   nsString mData;
 };
 
@@ -83,14 +84,14 @@ public:
                          nsIPaymentDetailsModifier** aModifier);
 
 private:
-  PaymentDetailsModifier(nsIArray* aSupportedMethods,
+  PaymentDetailsModifier(const nsAString& aSupportedMethods,
                          nsIPaymentItem* aTotal,
                          nsIArray* aAdditionalDisplayItems,
                          const nsAString& aData);
 
   ~PaymentDetailsModifier() = default;
 
-  nsCOMPtr<nsIArray> mSupportedMethods;
+  nsString mSupportedMethods;
   nsCOMPtr<nsIPaymentItem> mTotal;
   nsCOMPtr<nsIArray> mAdditionalDisplayItems;
   nsString mData;
@@ -190,6 +191,30 @@ private:
   nsCOMPtr<nsIArray> mPaymentMethods;
   nsCOMPtr<nsIPaymentDetails> mPaymentDetails;
   nsCOMPtr<nsIPaymentOptions> mPaymentOptions;
+};
+
+class PaymentAddress final : public nsIPaymentAddress
+{
+public:
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIPAYMENTADDRESS
+
+  PaymentAddress() = default;
+
+private:
+  ~PaymentAddress() = default;
+
+  nsString mCountry;
+  nsCOMPtr<nsIArray> mAddressLine;
+  nsString mRegion;
+  nsString mCity;
+  nsString mDependentLocality;
+  nsString mPostalCode;
+  nsString mSortingCode;
+  nsString mLanguageCode;
+  nsString mOrganization;
+  nsString mRecipient;
+  nsString mPhone;
 };
 
 } // end of namespace payment

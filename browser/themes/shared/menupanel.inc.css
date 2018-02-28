@@ -1,5 +1,6 @@
 /* Menu panel and palette styles */
 
+%ifndef MOZ_PHOTON_THEME
 toolbaritem[sdkstylewidget="true"] > toolbarbutton,
 :-moz-any(@primaryToolbarButtons@)[cui-areatype="menu-panel"],
 toolbarpaletteitem[place="palette"] > :-moz-any(@primaryToolbarButtons@) {
@@ -175,13 +176,14 @@ toolbarpaletteitem[place="palette"] > #zoom-controls > #zoom-out-button {
 toolbarpaletteitem[place="palette"] > #zoom-controls > #zoom-in-button {
   -moz-image-region: rect(0px, 96px, 16px, 80px);
 }
+%endif
 
 #add-share-provider {
   list-style-image: url(chrome://browser/skin/menuPanel-small.svg);
   -moz-image-region: rect(0px, 96px, 16px, 80px);
 }
 
-
+#appMenuRecentlyClosedWindows,
 #appMenu-new-window-button {
   list-style-image: url(chrome://browser/skin/new-window.svg);
 }
@@ -210,7 +212,8 @@ toolbarpaletteitem[place="palette"] > #zoom-controls > #zoom-in-button {
   list-style-image: url(chrome://browser/skin/customize.svg);
 }
 
-#appMenu-find-button {
+#appMenu-find-button,
+#panelMenu_searchBookmarks {
   list-style-image: url(chrome://browser/skin/find.svg);
 }
 
@@ -249,3 +252,50 @@ toolbarpaletteitem[place="palette"] > #zoom-controls > #zoom-in-button {
 #appMenu-fullscreen-button[checked] {
   list-style-image: url(chrome://browser/skin/fullscreen-exit.svg);
 }
+
+#appMenu-library-history-button {
+  list-style-image: url(chrome://browser/skin/history.svg);
+}
+
+#appMenuRecentlyClosedTabs,
+#appMenu-library-remotetabs-button {
+  list-style-image: url("chrome://browser/skin/synced-tabs.svg");
+}
+
+#PanelUI-remotetabs-syncnow {
+  list-style-image: url("chrome://browser/skin/sync.svg");
+}
+
+#PanelUI-remotetabs-view-managedevices {
+  list-style-image: url("chrome://browser/skin/device-mobile.svg");
+}
+
+#appMenuViewHistorySidebar,
+#PanelUI-remotetabs-view-sidebar,
+#panelMenu_viewBookmarksSidebar {
+  list-style-image: url("chrome://browser/skin/sidebars.svg");
+}
+
+#appMenu-library-bookmarks-button,
+#panelMenuBookmarkThisPage {
+  list-style-image: url("chrome://browser/skin/bookmark-hollow.svg");
+}
+
+#panelMenuBookmarkThisPage[starred] {
+  list-style-image: url("chrome://browser/skin/bookmark.svg");
+}
+
+%ifdef MOZ_PHOTON_THEME
+#bookmarks-menu-button[cui-areatype="menu-panel"],
+toolbarpaletteitem[place="palette"] > #bookmarks-menu-button {
+  list-style-image: url("chrome://browser/skin/bookmark-star-on-tray.svg");
+}
+
+#appMenuClearRecentHistory {
+  list-style-image: url("chrome://browser/skin/forget.svg");
+}
+
+#appMenuRestoreLastSession {
+  list-style-image: url("chrome://browser/skin/reload.svg");
+}
+%endif

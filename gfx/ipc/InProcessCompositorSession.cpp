@@ -9,21 +9,25 @@
 // so we can cast an APZCTreeManager to an IAPZCTreeManager
 #include "mozilla/layers/APZCTreeManager.h"
 #include "mozilla/layers/IAPZCTreeManager.h"
+#include "nsBaseWidget.h"
 
 namespace mozilla {
 namespace layers {
 
 InProcessCompositorSession::InProcessCompositorSession(widget::CompositorWidget* aWidget,
+                                                       nsBaseWidget* baseWidget,
                                                        CompositorBridgeChild* aChild,
                                                        CompositorBridgeParent* aParent)
  : CompositorSession(aWidget->AsDelegate(), aChild, aParent->RootLayerTreeId()),
+   mWidget(baseWidget),
    mCompositorBridgeParent(aParent),
    mCompositorWidget(aWidget)
 {
+  GPUProcessManager::Get()->RegisterInProcessSession(this);
 }
 
 /* static */ RefPtr<InProcessCompositorSession>
-InProcessCompositorSession::Create(nsIWidget* aWidget,
+InProcessCompositorSession::Create(nsBaseWidget* aWidget,
                                    LayerManager* aLayerManager,
                                    const uint64_t& aRootLayerTreeId,
                                    CSSToLayoutDeviceScale aScale,
@@ -36,11 +40,25 @@ InProcessCompositorSession::Create(nsIWidget* aWidget,
   aWidget->GetCompositorWidgetInitData(&initData);
 
   RefPtr<CompositorWidget> widget = CompositorWidget::CreateLocal(initData, aOptions, aWidget);
-  RefPtr<CompositorBridgeChild> child = new CompositorBridgeChild(aLayerManager, aNamespace);
   RefPtr<CompositorBridgeParent> parent =
-    child->InitSameProcess(widget, aRootLayerTreeId, aScale, aOptions, aUseExternalSurfaceSize, aSurfaceSize);
+    CompositorManagerParent::CreateSameProcessWidgetCompositorBridge(aScale, aOptions,
+                                                                     aUseExternalSurfaceSize,
+                                                                     aSurfaceSize);
+  MOZ_ASSERT(parent);
+  parent->InitSameProcess(widget, aRootLayerTreeId);
 
-  return new InProcessCompositorSession(widget, child, parent);
+  RefPtr<CompositorBridgeChild> child =
+    CompositorManagerChild::CreateSameProcessWidgetCompositorBridge(aLayerManager,
+                                                                    aNamespace);
+  MOZ_ASSERT(child);
+
+  return new InProcessCompositorSession(widget, aWidget, child, parent);
+}
+
+void
+InProcessCompositorSession::NotifySessionLost()
+{
+  mWidget->NotifyCompositorSessionLost(this);
 }
 
 CompositorBridgeParent*
@@ -61,6 +79,12 @@ InProcessCompositorSession::GetAPZCTreeManager() const
   return mCompositorBridgeParent->GetAPZCTreeManager(mRootLayerTreeId);
 }
 
+nsIWidget*
+InProcessCompositorSession::GetWidget() const
+{
+  return mWidget;
+}
+
 void
 InProcessCompositorSession::Shutdown()
 {
@@ -68,16 +92,17 @@ InProcessCompositorSession::Shutdown()
   // at which point CBP will defer a Release on the compositor thread. We
   // can safely release our reference now, and let the destructor run on either
   // thread.
-  mCompositorBridgeChild->Destroy();
-  mCompositorBridgeChild = nullptr;
-  mCompositorBridgeParent = nullptr;
-  mCompositorWidget = nullptr;
 #if defined(MOZ_WIDGET_ANDROID)
   if (mUiCompositorControllerChild) {
     mUiCompositorControllerChild->Destroy();
     mUiCompositorControllerChild = nullptr;
   }
 #endif //defined(MOZ_WIDGET_ANDROID)
+  mCompositorBridgeChild->Destroy();
+  mCompositorBridgeChild = nullptr;
+  mCompositorBridgeParent = nullptr;
+  mCompositorWidget = nullptr;
+  GPUProcessManager::Get()->UnregisterInProcessSession(this);
 }
 
 } // namespace layers

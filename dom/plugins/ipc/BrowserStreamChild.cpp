@@ -178,16 +178,6 @@ BrowserStreamChild::NPN_RequestRead(NPByteRange* aRangeList)
 }
 
 void
-BrowserStreamChild::NPN_DestroyStream(NPReason reason)
-{
-  mStreamStatus = reason;
-  if (ALIVE == mState)
-    SendNPN_DestroyStream(reason);
-
-  EnsureDeliveryPending();
-}
-
-void
 BrowserStreamChild::EnsureDeliveryPending()
 {
   MessageLoop::current()->PostTask(
@@ -237,7 +227,7 @@ BrowserStreamChild::Deliver()
   }
   if (DESTROYED == mDestroyPending && mNotifyPending) {
     NS_ASSERTION(mStreamNotify, "mDestroyPending but no mStreamNotify?");
-      
+
     mNotifyPending = false;
     mStreamNotify->NPP_URLNotify(mStreamStatus);
     delete mStreamNotify;
@@ -275,7 +265,10 @@ BrowserStreamChild::DeliverPendingData()
     if (0 == r)
       return true;
     if (r < 0) { // error condition
-      NPN_DestroyStream(NPRES_NETWORK_ERR);
+      mStreamStatus = NPRES_NETWORK_ERR;
+
+      // Set up stream destruction
+      EnsureDeliveryPending();
       return false;
     }
     mPendingData[0].curpos += r;

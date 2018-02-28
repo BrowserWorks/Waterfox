@@ -4,16 +4,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/TaskQueue.h"
+#include "H264Converter.h"
 
 #include "DecoderDoctorDiagnostics.h"
-#include "H264Converter.h"
 #include "ImageContainer.h"
 #include "MediaInfo.h"
 #include "MediaPrefs.h"
+#include "PDMFactory.h"
+#include "mozilla/TaskQueue.h"
 #include "mp4_demuxer/AnnexB.h"
 #include "mp4_demuxer/H264.h"
-#include "PDMFactory.h"
 
 namespace mozilla
 {
@@ -33,7 +33,7 @@ H264Converter::H264Converter(PlatformDecoderModule* aPDM,
   , mOnWaitingForKeyEvent(aParams.mOnWaitingForKeyEvent)
   , mDecoderOptions(aParams.mOptions)
 {
-  CreateDecoder(mOriginalConfig, aParams.mDiagnostics);
+  mLastError = CreateDecoder(mOriginalConfig, aParams.mDiagnostics);
   if (mDecoder) {
     MOZ_ASSERT(mp4_demuxer::H264::HasSPS(mOriginalConfig.mExtraData));
     // The video metadata contains out of band SPS/PPS (AVC1) store it.
@@ -74,7 +74,7 @@ H264Converter::Decode(MediaRawData* aSample)
       __func__);
   }
 
-  nsresult rv;
+  MediaResult rv(NS_OK);
   if (!mDecoder) {
     // It is not possible to create an AVCC H264 decoder without SPS.
     // As such, creation will fail if the extra_data just extracted doesn't
@@ -105,10 +105,7 @@ H264Converter::Decode(MediaRawData* aSample)
   }
 
   if (NS_FAILED(rv)) {
-    return DecodePromise::CreateAndReject(
-      MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                  RESULT_DETAIL("Unable to create H264 decoder")),
-      __func__);
+    return DecodePromise::CreateAndReject(rv, __func__);
   }
 
   if (mNeedKeyframe && !aSample->mKeyframe) {
@@ -236,7 +233,7 @@ H264Converter::SetSeekThreshold(const media::TimeUnit& aTime)
   }
 }
 
-nsresult
+MediaResult
 H264Converter::CreateDecoder(const VideoInfo& aConfig,
                              DecoderDoctorDiagnostics* aDiagnostics)
 {
@@ -252,16 +249,15 @@ H264Converter::CreateDecoder(const VideoInfo& aConfig,
     // WMF H.264 Video Decoder and Apple ATDecoder do not support YUV444 format.
     if (spsdata.profile_idc == 244 /* Hi444PP */
         || spsdata.chroma_format_idc == PDMFactory::kYUV444) {
-      mLastError = NS_ERROR_FAILURE;
       if (aDiagnostics) {
         aDiagnostics->SetVideoNotSupported();
       }
-      return NS_ERROR_FAILURE;
+      return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                         RESULT_DETAIL("No support for YUV444 format."));
     }
   } else {
-    // SPS was invalid.
-    mLastError = NS_ERROR_FAILURE;
-    return NS_ERROR_FAILURE;
+    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                       RESULT_DETAIL("Invalid SPS NAL."));
   }
 
   mDecoder = mPDM->CreateVideoDecoder({
@@ -273,12 +269,15 @@ H264Converter::CreateDecoder(const VideoInfo& aConfig,
     mGMPCrashHelper,
     mType,
     mOnWaitingForKeyEvent,
-    mDecoderOptions
+    mDecoderOptions,
+    &mLastError
   });
 
   if (!mDecoder) {
-    mLastError = NS_ERROR_FAILURE;
-    return NS_ERROR_FAILURE;
+    MOZ_ASSERT(NS_FAILED(mLastError));
+    return MediaResult(mLastError.Code(),
+                       RESULT_DETAIL("Unable to create H264 decoder, reason = %s.",
+                                     mLastError.Description().get()));
   }
 
   mNeedKeyframe = true;
@@ -286,7 +285,7 @@ H264Converter::CreateDecoder(const VideoInfo& aConfig,
   return NS_OK;
 }
 
-nsresult
+MediaResult
 H264Converter::CreateDecoderAndInit(MediaRawData* aSample)
 {
   RefPtr<MediaByteBuffer> extra_data =
@@ -301,7 +300,7 @@ H264Converter::CreateDecoderAndInit(MediaRawData* aSample)
     UpdateConfigFromExtraData(extra_data);
   }
 
-  nsresult rv =
+  MediaResult rv =
     CreateDecoder(mCurrentConfig, /* DecoderDoctorDiagnostics* */ nullptr);
 
   if (NS_SUCCEEDED(rv)) {
@@ -389,7 +388,7 @@ H264Converter::DecodeFirstSample(MediaRawData* aSample)
     ->Track(mDecodePromiseRequest);
 }
 
-nsresult
+MediaResult
 H264Converter::CheckForSPSChange(MediaRawData* aSample)
 {
   RefPtr<MediaByteBuffer> extra_data =
@@ -501,7 +500,7 @@ void H264Converter::FlushThenShutdownDecoder(MediaRawData* aPendingSample)
                           return;
                         }
 
-                        nsresult rv = CreateDecoderAndInit(sample);
+                        MediaResult rv = CreateDecoderAndInit(sample);
                         if (rv == NS_ERROR_DOM_MEDIA_INITIALIZING_DECODER) {
                           // All good so far, will continue later.
                           return;

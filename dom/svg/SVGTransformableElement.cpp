@@ -92,7 +92,7 @@ SVGTransformableElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
 }
 
 bool
-SVGTransformableElement::IsEventAttributeName(nsIAtom* aName)
+SVGTransformableElement::IsEventAttributeNameInternal(nsIAtom* aName)
 {
   return nsContentUtils::IsEventAttributeName(aName, EventNameType_SVGGraphic);
 }
@@ -172,7 +172,7 @@ SVGTransformableElement::GetFarthestViewportElement()
 }
 
 already_AddRefed<SVGIRect>
-SVGTransformableElement::GetBBox(const SVGBoundingBoxOptions& aOptions, 
+SVGTransformableElement::GetBBox(const SVGBoundingBoxOptions& aOptions,
                                  ErrorResult& rv)
 {
   nsIFrame* frame = GetPrimaryFrame(FlushType::Layout);

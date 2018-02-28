@@ -22,25 +22,20 @@
 #include <mach/mach.h>
 #endif
 
-// Support pseudostack on these platforms.
+// Support pseudostack and native stack on these platforms.
 #if defined(XP_LINUX) || defined(XP_WIN) || defined(XP_MACOSX)
 #  ifdef MOZ_GECKO_PROFILER
 #    define MOZ_THREADSTACKHELPER_PSEUDO
+#    define MOZ_THREADSTACKHELPER_NATIVE
 #  endif
 #endif
 
-#if defined(MOZ_THREADSTACKHELPER_PSEUDO) && defined(XP_WIN)
-#  define MOZ_THREADSTACKHELPER_NATIVE
-#  if defined(__i386__) || defined(_M_IX86)
-#    define MOZ_THREADSTACKHELPER_X86
-#  elif defined(__x86_64__) || defined(_M_X64)
-#    define MOZ_THREADSTACKHELPER_X64
-#  elif defined(__arm__) || defined(_M_ARM)
-#    define MOZ_THREADSTACKHELPER_ARM
-#  else
-     // Unsupported architecture
-#    undef MOZ_THREADSTACKHELPER_NATIVE
-#  endif
+// NOTE: Currently, due to a problem with LUL stackwalking initialization taking
+// a long time (bug 1365309), we don't perform pseudostack or native stack
+// walking on Linux.
+#if defined(XP_LINUX)
+#  undef MOZ_THREADSTACKHELPER_NATIVE
+#  undef MOZ_THREADSTACKHELPER_PSEUDO
 #endif
 
 namespace mozilla {
@@ -67,11 +62,14 @@ public:
   typedef Telemetry::NativeHangStack NativeStack;
 
 private:
-  Stack* mStackToFill;
 #ifdef MOZ_THREADSTACKHELPER_PSEUDO
+  Stack* mStackToFill;
   const PseudoStack* const mPseudoStack;
   size_t mMaxStackSize;
   size_t mMaxBufferSize;
+#endif
+#ifdef MOZ_THREADSTACKHELPER_NATIVE
+  NativeStack* mNativeStackToFill;
 #endif
 
   bool PrepareStackBuffer(Stack& aStack);
@@ -84,73 +82,51 @@ private:
 
 public:
   /**
-   * Initialize ThreadStackHelper. Must be called from main thread.
-   */
-  static void Startup();
-  /**
-   * Uninitialize ThreadStackHelper. Must be called from main thread.
-   */
-  static void Shutdown();
-
-  /**
    * Create a ThreadStackHelper instance targeting the current thread.
    */
   ThreadStackHelper();
-
-  ~ThreadStackHelper();
 
   /**
    * Retrieve the current pseudostack of the thread associated
    * with this ThreadStackHelper.
    *
-   * @param aStack Stack instance to be filled.
+   * @param aStack         Stack instance to be filled.
+   * @param aRunnableName  The name of the current runnable on the target thread.
    */
-  void GetPseudoStack(Stack& aStack);
+  void GetPseudoStack(Stack& aStack, nsACString& aRunnableName);
 
   /**
    * Retrieve the current native stack of the thread associated
    * with this ThreadStackHelper.
    *
-   * @param aNativeStack NativeStack instance to be filled.
+   * @param aNativeStack   NativeStack instance to be filled.
+   * @param aRunnableName  The name of the current runnable on the target thread.
    */
-  void GetNativeStack(NativeStack& aNativeStack);
+  void GetNativeStack(NativeStack& aNativeStack, nsACString& aRunnableName);
 
   /**
    * Retrieve the current pseudostack and native stack of the thread associated
    * with this ThreadStackHelper. This method only pauses the target thread once
    * to get both stacks.
    *
-   * @param aStack        Stack instance to be filled with the pseudostack.
-   * @param aNativeStack  NativeStack instance to be filled with the native stack.
+   * @param aStack         Stack instance to be filled with the pseudostack.
+   * @param aNativeStack   NativeStack instance to be filled with the native stack.
+   * @param aRunnableName  The name of the current runnable on the target thread.
    */
-  void GetPseudoAndNativeStack(Stack& aStack, NativeStack& aNativeStack);
+  void GetPseudoAndNativeStack(Stack& aStack,
+                               NativeStack& aNativeStack,
+                               nsACString& aRunnableName);
 
 private:
   // Fill in the passed aStack and aNativeStack datastructures with backtraces.
   // If only aStack needs to be collected, nullptr may be passed for
   // aNativeStack, and vice versa.
-  void GetStacksInternal(Stack* aStack, NativeStack* aNativeStack);
-#if defined(XP_LINUX)
-private:
-  static int sInitialized;
-  static int sFillStackSignum;
+  void GetStacksInternal(Stack* aStack,
+                         NativeStack* aNativeStack,
+                         nsACString& aRunnableName);
 
-  static void FillStackHandler(int aSignal, siginfo_t* aInfo, void* aContext);
-
-  sem_t mSem;
-  pid_t mThreadID;
-
-#elif defined(XP_WIN)
-private:
-  bool mInitialized;
-  HANDLE mThreadID;
-  void* mStackTop;
-
-#elif defined(XP_MACOSX)
-private:
-  thread_act_t mThreadID;
-
-#endif
+  // The profiler's unique thread identifier for the target thread.
+  int mThreadId;
 };
 
 } // namespace mozilla

@@ -8,12 +8,28 @@
 
 #include "js/Date.h"
 #include "mozilla/dom/HTMLInputElement.h"
+#include "nsDateTimeControlFrame.h"
 
 const double DateTimeInputTypeBase::kMinimumYear = 1;
 const double DateTimeInputTypeBase::kMaximumYear = 275760;
 const double DateTimeInputTypeBase::kMaximumMonthInMaximumYear = 9;
 const double DateTimeInputTypeBase::kMaximumWeekInMaximumYear = 37;
 const double DateTimeInputTypeBase::kMsPerDay = 24 * 60 * 60 * 1000;
+
+/* static */ bool
+DateTimeInputTypeBase::IsInputDateTimeEnabled()
+{
+  static bool sDateTimeEnabled = false;
+  static bool sDateTimePrefCached = false;
+  if (!sDateTimePrefCached) {
+    sDateTimePrefCached = true;
+    mozilla::Preferences::AddBoolVarCache(&sDateTimeEnabled,
+                                          "dom.forms.datetime",
+                                          false);
+  }
+
+  return sDateTimeEnabled;
+}
 
 bool
 DateTimeInputTypeBase::IsMutable() const
@@ -91,6 +107,50 @@ DateTimeInputTypeBase::HasStepMismatch(bool aUseZeroIfValueNaN) const
 }
 
 bool
+DateTimeInputTypeBase::HasBadInput() const
+{
+  nsDateTimeControlFrame* frame = do_QueryFrame(GetPrimaryFrame());
+  if (!frame) {
+    return false;
+  }
+
+  return frame->HasBadInput();;
+}
+
+nsresult
+DateTimeInputTypeBase::GetRangeOverflowMessage(nsXPIDLString& aMessage)
+{
+  nsAutoString maxStr;
+  mInputElement->GetAttr(kNameSpaceID_None, nsGkAtoms::max, maxStr);
+
+  const char16_t* params[] = { maxStr.get() };
+  return nsContentUtils::FormatLocalizedString(nsContentUtils::eDOM_PROPERTIES,
+    "FormValidationDateTimeRangeOverflow", params, aMessage);
+}
+
+nsresult
+DateTimeInputTypeBase::GetRangeUnderflowMessage(nsXPIDLString& aMessage)
+{
+  nsAutoString minStr;
+  mInputElement->GetAttr(kNameSpaceID_None, nsGkAtoms::min, minStr);
+
+  const char16_t* params[] = { minStr.get() };
+  return nsContentUtils::FormatLocalizedString(nsContentUtils::eDOM_PROPERTIES,
+    "FormValidationDateTimeRangeUnderflow", params, aMessage);
+}
+
+nsresult
+DateTimeInputTypeBase::MinMaxStepAttrChanged()
+{
+  nsDateTimeControlFrame* frame = do_QueryFrame(GetPrimaryFrame());
+  if (frame) {
+    frame->OnMinMaxStepAttrChanged();
+  }
+
+  return NS_OK;
+}
+
+bool
 DateTimeInputTypeBase::GetTimeFromMs(double aValue, uint16_t* aHours,
                                      uint16_t* aMinutes, uint16_t* aSeconds,
                                      uint16_t* aMilliseconds) const {
@@ -114,6 +174,17 @@ DateTimeInputTypeBase::GetTimeFromMs(double aValue, uint16_t* aHours,
 }
 
 // input type=date
+
+nsresult
+DateInputType::GetBadInputMessage(nsXPIDLString& aMessage)
+{
+  if (!IsInputDateTimeEnabled()) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  return nsContentUtils::GetLocalizedString(nsContentUtils::eDOM_PROPERTIES,
+    "FormValidationInvalidDate", aMessage);
+}
 
 bool
 DateInputType::ConvertStringToNumber(nsAString& aValue,

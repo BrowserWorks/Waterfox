@@ -22,6 +22,7 @@ namespace base {
 // This task is used to trigger the message loop to exit.
 class ThreadQuitTask : public mozilla::Runnable {
  public:
+  ThreadQuitTask() : mozilla::Runnable("ThreadQuitTask") {}
   NS_IMETHOD Run() override {
     MessageLoop::current()->Quit();
     Thread::SetThreadWasQuitProperly(true);
@@ -153,7 +154,7 @@ void Thread::StopSoon() {
 }
 
 void Thread::ThreadMain() {
-  mozilla::AutoProfilerRegister registerThread(name_.c_str());
+  mozilla::AutoProfilerRegisterThread registerThread(name_.c_str());
   mozilla::IOInterposer::RegisterCurrentThread();
 
   // The message loop for this thread.

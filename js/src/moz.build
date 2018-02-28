@@ -125,6 +125,7 @@ EXPORTS.js += [
     '../public/Result.h',
     '../public/RootingAPI.h',
     '../public/SliceBudget.h',
+    '../public/Stream.h',
     '../public/StructuredClone.h',
     '../public/SweepingAPI.h',
     '../public/TraceKind.h',
@@ -157,6 +158,7 @@ UNIFIED_SOURCES += [
     'builtin/Reflect.cpp',
     'builtin/ReflectParse.cpp',
     'builtin/SIMD.cpp',
+    'builtin/Stream.cpp',
     'builtin/SymbolObject.cpp',
     'builtin/TestingFunctions.cpp',
     'builtin/TypedObject.cpp',
@@ -234,6 +236,7 @@ UNIFIED_SOURCES += [
     'jit/IonIC.cpp',
     'jit/IonOptimizationLevels.cpp',
     'jit/JitcodeMap.cpp',
+    'jit/JitFrameIterator.cpp',
     'jit/JitFrames.cpp',
     'jit/JitOptions.cpp',
     'jit/JitSpewer.cpp',
@@ -286,7 +289,6 @@ UNIFIED_SOURCES += [
     'json.cpp',
     'jsopcode.cpp',
     'jsprf.cpp',
-    'jspropertytree.cpp',
     'jsscript.cpp',
     'jsstr.cpp',
     'jswatchpoint.cpp',
@@ -610,7 +612,7 @@ if CONFIG['MOZ_VTUNE']:
         'vtune/VTuneWrapper.cpp',
     ]
     if CONFIG['CC_TYPE'] != 'msvc':
-        SOURCES['vtune/ittnotify_static.c'].flags += ['-Wno-varargs']
+        SOURCES['vtune/ittnotify_static.c'].flags += ['-Wno-varargs', '-Wno-unknown-pragmas']
 
 if CONFIG['HAVE_LINUX_PERF_EVENT_H']:
     SOURCES += [

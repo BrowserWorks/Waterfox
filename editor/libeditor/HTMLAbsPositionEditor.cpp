@@ -31,9 +31,7 @@
 #include "nsIDOMNode.h"
 #include "nsDOMCSSRGBColor.h"
 #include "nsIDOMWindow.h"
-#include "nsIEditor.h"
 #include "nsIEditRules.h"
-#include "nsIHTMLEditor.h"
 #include "nsIHTMLObjectResizer.h"
 #include "nsINode.h"
 #include "nsIPresShell.h"
@@ -231,11 +229,11 @@ HTMLEditor::GetElementZIndex(nsIDOMElement* aElement,
   return NS_OK;
 }
 
-already_AddRefed<Element>
+ManualNACPtr
 HTMLEditor::CreateGrabber(nsINode* aParentNode)
 {
   // let's create a grabber through the element factory
-  RefPtr<Element> ret =
+  ManualNACPtr ret =
     CreateAnonymousElement(nsGkAtoms::span, GetAsDOMNode(aParentNode),
                            NS_LITERAL_STRING("mozGrabber"), false);
   if (NS_WARN_IF(!ret)) {
@@ -247,7 +245,7 @@ HTMLEditor::CreateGrabber(nsINode* aParentNode)
   evtTarget->AddEventListener(NS_LITERAL_STRING("mousedown"),
                               mEventListener, false);
 
-  return ret.forget();
+  return ret;
 }
 
 NS_IMETHODIMP
@@ -291,13 +289,8 @@ HTMLEditor::HideGrabber()
   // are no document observers to notify, but we still want to
   // UnbindFromTree.
 
-  nsCOMPtr<nsIContent> parentContent = mGrabber->GetParent();
-  NS_ENSURE_TRUE(parentContent, NS_ERROR_NULL_POINTER);
-
-  DeleteRefToAnonymousNode(mGrabber, parentContent, ps);
-  mGrabber = nullptr;
-  DeleteRefToAnonymousNode(mPositioningShadow, parentContent, ps);
-  mPositioningShadow = nullptr;
+  DeleteRefToAnonymousNode(Move(mGrabber), ps);
+  DeleteRefToAnonymousNode(Move(mPositioningShadow), ps);
 
   return NS_OK;
 }
@@ -307,6 +300,10 @@ HTMLEditor::ShowGrabberOnElement(nsIDOMElement* aElement)
 {
   nsCOMPtr<Element> element = do_QueryInterface(aElement);
   NS_ENSURE_ARG_POINTER(element);
+
+  if (NS_WARN_IF(!IsDescendantOfEditorRoot(element))) {
+    return NS_ERROR_UNEXPECTED;
+  }
 
   if (mGrabber) {
     NS_ERROR("call HideGrabber first");
@@ -373,7 +370,7 @@ HTMLEditor::GrabberClicked()
   // add a mouse move listener to the editor
   nsresult rv = NS_OK;
   if (!mMouseMotionListenerP) {
-    mMouseMotionListenerP = new ResizerMouseMotionListener(this);
+    mMouseMotionListenerP = new ResizerMouseMotionListener(*this);
     if (!mMouseMotionListenerP) {return NS_ERROR_NULL_POINTER;}
 
     nsCOMPtr<nsIDOMEventTarget> piTarget = GetDOMEventTarget();
@@ -396,10 +393,7 @@ HTMLEditor::EndMoving()
     nsCOMPtr<nsIPresShell> ps = GetPresShell();
     NS_ENSURE_TRUE(ps, NS_ERROR_NOT_INITIALIZED);
 
-    nsCOMPtr<nsIContent> parentContent = mGrabber->GetParent();
-    NS_ENSURE_TRUE(parentContent, NS_ERROR_FAILURE);
-
-    DeleteRefToAnonymousNode(mPositioningShadow, parentContent, ps);
+    DeleteRefToAnonymousNode(Move(mPositioningShadow), ps);
 
     mPositioningShadow = nullptr;
   }

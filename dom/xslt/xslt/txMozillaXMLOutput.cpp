@@ -29,8 +29,8 @@
 #include "mozilla/StyleSheetInlines.h"
 #include "mozilla/css/Loader.h"
 #include "mozilla/dom/Element.h"
-#include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/dom/ScriptLoader.h"
+#include "mozilla/Encoding.h"
 #include "nsContentUtils.h"
 #include "txXMLUtils.h"
 #include "nsContentSink.h"
@@ -123,7 +123,7 @@ txMozillaXMLOutput::attribute(nsIAtom* aPrefix,
 
 nsresult
 txMozillaXMLOutput::attribute(nsIAtom* aPrefix,
-                              const nsSubstring& aLocalName,
+                              const nsAString& aLocalName,
                               const int32_t aNsID,
                               const nsString& aValue)
 {
@@ -171,7 +171,7 @@ txMozillaXMLOutput::attributeInternal(nsIAtom* aPrefix,
 }
 
 nsresult
-txMozillaXMLOutput::characters(const nsSubstring& aData, bool aDOE)
+txMozillaXMLOutput::characters(const nsAString& aData, bool aDOE)
 {
     nsresult rv = closePrevious(false);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -212,7 +212,7 @@ txMozillaXMLOutput::endDocument(nsresult aResult)
         if (mNotifier) {
             mNotifier->OnTransformEnd(aResult);
         }
-        
+
         return NS_OK;
     }
 
@@ -221,7 +221,7 @@ txMozillaXMLOutput::endDocument(nsresult aResult)
         if (mNotifier) {
             mNotifier->OnTransformEnd(rv);
         }
-        
+
         return rv;
     }
 
@@ -267,7 +267,7 @@ txMozillaXMLOutput::endElement()
                ("endElement, mBadChildLevel = %d\n", mBadChildLevel));
         return NS_OK;
     }
-    
+
     --mTreeDepth;
 
     nsresult rv = closePrevious(true);
@@ -313,7 +313,7 @@ txMozillaXMLOutput::endElement()
                                                 nsGkAtoms::audio,
                                                 nsGkAtoms::video)) {
           element->DoneCreatingElement();
-        }   
+        }
     }
 
     if (mCreatingNewDocument) {
@@ -444,8 +444,8 @@ txMozillaXMLOutput::startElement(nsIAtom* aPrefix, nsIAtom* aLocalName,
 
             aLowercaseLocalName = owner;
         }
-        return startElementInternal(nullptr, 
-                                    aLowercaseLocalName, 
+        return startElementInternal(nullptr,
+                                    aLowercaseLocalName,
                                     kNameSpaceID_XHTML);
     }
 
@@ -454,7 +454,7 @@ txMozillaXMLOutput::startElement(nsIAtom* aPrefix, nsIAtom* aLocalName,
 
 nsresult
 txMozillaXMLOutput::startElement(nsIAtom* aPrefix,
-                                 const nsSubstring& aLocalName,
+                                 const nsAString& aLocalName,
                                  const int32_t aNsID)
 {
     int32_t nsId = aNsID;
@@ -569,7 +569,7 @@ txMozillaXMLOutput::closePrevious(bool aFlushText)
             // We already have a document element, but the XSLT spec allows this.
             // As a workaround, create a wrapper object and use that as the
             // document element.
-            
+
             rv = createTxWrapper();
             NS_ENSURE_SUCCESS(rv, rv);
         }
@@ -590,7 +590,7 @@ txMozillaXMLOutput::closePrevious(bool aFlushText)
         if (mDocument == mCurrentNode) {
             if (XMLUtils::isWhitespace(mText)) {
                 mText.Truncate();
-                
+
                 return NS_OK;
             }
 
@@ -764,7 +764,7 @@ txMozillaXMLOutput::endHTMLElement(nsIContent* aElement)
             }
         }
     }
-    
+
     return NS_OK;
 }
 
@@ -777,7 +777,7 @@ void txMozillaXMLOutput::processHTTPEquiv(nsIAtom* aHeader, const nsString& aVal
 }
 
 nsresult
-txMozillaXMLOutput::createResultDocument(const nsSubstring& aName, int32_t aNsID,
+txMozillaXMLOutput::createResultDocument(const nsAString& aName, int32_t aNsID,
                                          nsIDOMDocument* aSourceDocument,
                                          bool aLoadedAsData)
 {
@@ -812,7 +812,7 @@ txMozillaXMLOutput::createResultDocument(const nsSubstring& aName, int32_t aNsID
     mNodeInfoManager = mDocument->NodeInfoManager();
 
     // Reset and set up the document
-    URIUtils::ResetWithSource(mDocument, aSourceDocument);
+    URIUtils::ResetWithSource(mDocument, source);
 
     // Make sure we set the script handling object after resetting with the
     // source, so that we have the right principal.
@@ -820,11 +820,10 @@ txMozillaXMLOutput::createResultDocument(const nsSubstring& aName, int32_t aNsID
 
     // Set the charset
     if (!mOutputFormat.mEncoding.IsEmpty()) {
-        nsAutoCString canonicalCharset;
-        if (EncodingUtils::FindEncodingForLabel(mOutputFormat.mEncoding,
-                                                canonicalCharset)) {
+        const Encoding* encoding = Encoding::ForLabel(mOutputFormat.mEncoding);
+        if (encoding) {
             mDocument->SetDocumentCharacterSetSource(kCharsetFromOtherComponent);
-            mDocument->SetDocumentCharacterSet(canonicalCharset);
+            mDocument->SetDocumentCharacterSet(WrapNotNull(encoding));
         }
     }
 
@@ -943,7 +942,7 @@ txMozillaXMLOutput::createHTMLElement(nsIAtom* aName,
 
 txTransformNotifier::txTransformNotifier()
     : mPendingStylesheetCount(0),
-      mInTransform(false)      
+      mInTransform(false)
 {
 }
 
@@ -956,10 +955,10 @@ NS_IMPL_ISUPPORTS(txTransformNotifier,
                   nsICSSLoaderObserver)
 
 NS_IMETHODIMP
-txTransformNotifier::ScriptAvailable(nsresult aResult, 
-                                     nsIScriptElement *aElement, 
+txTransformNotifier::ScriptAvailable(nsresult aResult,
+                                     nsIScriptElement *aElement,
                                      bool aIsInline,
-                                     nsIURI *aURI, 
+                                     nsIURI *aURI,
                                      int32_t aLineNo)
 {
     if (NS_FAILED(aResult) &&
@@ -970,8 +969,8 @@ txTransformNotifier::ScriptAvailable(nsresult aResult,
     return NS_OK;
 }
 
-NS_IMETHODIMP 
-txTransformNotifier::ScriptEvaluated(nsresult aResult, 
+NS_IMETHODIMP
+txTransformNotifier::ScriptEvaluated(nsresult aResult,
                                      nsIScriptElement *aElement,
                                      bool aIsInline)
 {
@@ -982,7 +981,7 @@ txTransformNotifier::ScriptEvaluated(nsresult aResult,
     return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 txTransformNotifier::StyleSheetLoaded(StyleSheet* aSheet,
                                       bool aWasAlternate,
                                       nsresult aStatus)
@@ -999,7 +998,7 @@ txTransformNotifier::StyleSheetLoaded(StyleSheet* aSheet,
         --mPendingStylesheetCount;
         SignalTransformEnd();
     }
-    
+
     return NS_OK;
 }
 

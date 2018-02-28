@@ -604,7 +604,14 @@ CacheFileInputStream::CanRead(CacheFileChunkReadHandle *aHandle)
   MOZ_ASSERT(mChunk);
   MOZ_ASSERT(mPos / kChunkSize == mChunk->Index());
 
-  int64_t retval = aHandle->Offset() + aHandle->DataSize() - mPos;
+  int64_t retval = aHandle->Offset() + aHandle->DataSize();
+
+  if (!mAlternativeData && mFile->mAltDataOffset != -1 &&
+      mFile->mAltDataOffset < retval) {
+    retval = mFile->mAltDataOffset;
+  }
+
+  retval -= mPos;
   if (retval <= 0 && NS_FAILED(mChunk->GetStatus())) {
     CloseWithStatusLocked(mChunk->GetStatus());
   }
@@ -630,12 +637,13 @@ CacheFileInputStream::NotifyListener()
     if (!mCallbackTarget) {
       LOG(("CacheFileInputStream::NotifyListener() - Cannot get Cache I/O "
            "thread! Using main thread for callback."));
-      mCallbackTarget = do_GetMainThread();
+      mCallbackTarget = GetMainThreadEventTarget();
     }
   }
 
   nsCOMPtr<nsIInputStreamCallback> asyncCallback =
-    NS_NewInputStreamReadyEvent(mCallback, mCallbackTarget);
+    NS_NewInputStreamReadyEvent("CacheFileInputStream::NotifyListener",
+                                mCallback, mCallbackTarget);
 
   mCallback = nullptr;
   mCallbackTarget = nullptr;

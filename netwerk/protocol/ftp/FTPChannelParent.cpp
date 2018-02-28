@@ -460,10 +460,13 @@ FTPChannelParent::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext)
 
   // Send down any permissions which are relevant to this URL if we are
   // performing a document load.
-  PContentParent* pcp = Manager()->Manager();
-  DebugOnly<nsresult> rv =
-    static_cast<ContentParent*>(pcp)->AboutToLoadHttpFtpWyciwygDocumentForChild(chan);
-  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  if (!mIPCClosed) {
+    PContentParent* pcp = Manager()->Manager();
+    MOZ_ASSERT(pcp, "We should have a manager if our IPC isn't closed");
+    DebugOnly<nsresult> rv =
+      static_cast<ContentParent*>(pcp)->AboutToLoadHttpFtpWyciwygDocumentForChild(chan);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
+  }
 
   int64_t contentLength;
   chan->GetContentLength(&contentLength);
@@ -714,7 +717,7 @@ FTPChannelParent::ResumeForDiversion()
   // keep us alive if there's more data to be delivered to listener.
   if (NS_WARN_IF(NS_FAILED(Delete()))) {
     FailDiversion(NS_ERROR_UNEXPECTED);
-    return NS_ERROR_UNEXPECTED;   
+    return NS_ERROR_UNEXPECTED;
   }
   return NS_OK;
 }
@@ -755,8 +758,9 @@ FTPChannelParent::DivertTo(nsIStreamListener *aListener)
   // Call OnStartRequest and SendDivertMessages asynchronously to avoid
   // reentering client context.
   NS_DispatchToCurrentThread(
-    NewRunnableMethod(this, &FTPChannelParent::StartDiversion));
-  return;
+    NewRunnableMethod("net::FTPChannelParent::StartDiversion",
+                      this,
+                      &FTPChannelParent::StartDiversion));
 }
 
 void
@@ -800,10 +804,11 @@ FTPChannelParent::StartDiversion()
 class FTPFailDiversionEvent : public Runnable
 {
 public:
-  FTPFailDiversionEvent(FTPChannelParent *aChannelParent,
+  FTPFailDiversionEvent(FTPChannelParent* aChannelParent,
                         nsresult aErrorCode,
                         bool aSkipResume)
-    : mChannelParent(aChannelParent)
+    : Runnable("net::FTPFailDiversionEvent")
+    , mChannelParent(aChannelParent)
     , mErrorCode(aErrorCode)
     , mSkipResume(aSkipResume)
   {
@@ -899,11 +904,11 @@ FTPChannelParent::AsyncOnChannelRedirect(
     // when FTP is set to use HTTP proxying, we wind up getting redirected to an HTTP channel.
     nsCOMPtr<nsIHttpChannel> httpChan = do_QueryInterface(newChannel);
     if (!httpChan)
-      return NS_ERROR_UNEXPECTED; 
+      return NS_ERROR_UNEXPECTED;
   }
   mChannel = newChannel;
   callback->OnRedirectVerifyCallback(NS_OK);
-  return NS_OK; 
+  return NS_OK;
 }
 
 NS_IMETHODIMP

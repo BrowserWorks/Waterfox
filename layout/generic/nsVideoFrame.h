@@ -55,10 +55,10 @@ public:
                           const Maybe<OnNonvisible>& aNonvisibleAction = Nothing()) override;
 
   /* get the size of the video's display */
-  nsSize GetVideoIntrinsicSize(nsRenderingContext *aRenderingContext);
+  nsSize GetVideoIntrinsicSize(gfxContext *aRenderingContext);
   nsSize GetIntrinsicRatio() override;
   mozilla::LogicalSize
-  ComputeSize(nsRenderingContext *aRenderingContext,
+  ComputeSize(gfxContext *aRenderingContext,
               mozilla::WritingMode aWritingMode,
               const mozilla::LogicalSize& aCBSize,
               nscoord aAvailableISize,
@@ -66,8 +66,8 @@ public:
               const mozilla::LogicalSize& aBorder,
               const mozilla::LogicalSize& aPadding,
               ComputeSizeFlags aFlags) override;
-  nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  nscoord GetPrefISize(gfxContext *aRenderingContext) override;
   void DestroyFrom(nsIFrame* aDestructRoot) override;
 
   void Reflow(nsPresContext*     aPresContext,
@@ -84,7 +84,7 @@ public:
     return nsSplittableFrame::IsFrameOfType(aFlags &
       ~(nsIFrame::eReplaced | nsIFrame::eReplacedSizing));
   }
-  
+
   nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) override;
   void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                 uint32_t aFilters) override;

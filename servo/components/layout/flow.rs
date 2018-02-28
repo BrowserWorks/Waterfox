@@ -29,7 +29,7 @@ use app_units::Au;
 use block::{BlockFlow, FormattingContextType};
 use context::LayoutContext;
 use display_list_builder::DisplayListBuildState;
-use euclid::{Matrix4D, Point2D, Rect, Size2D};
+use euclid::{Transform3D, Point2D, Vector2D, Rect, Size2D};
 use flex::FlexFlow;
 use floats::{Floats, SpeculatedFloatPlacement};
 use flow_list::{FlowList, MutFlowListIterator};
@@ -52,7 +52,7 @@ use std::sync::atomic::Ordering;
 use style::computed_values::{clear, float, overflow_x, position, text_align};
 use style::context::SharedStyleContext;
 use style::logical_geometry::{LogicalRect, LogicalSize, WritingMode};
-use style::properties::ServoComputedValues;
+use style::properties::ComputedValues;
 use style::selector_parser::RestyleDamage;
 use style::servo::restyle_damage::{RECONSTRUCT_FLOW, REFLOW, REFLOW_OUT_OF_FLOW, REPAINT, REPOSITION};
 use style::values::computed::LengthOrPercentageOrAuto;
@@ -63,7 +63,7 @@ use table_colgroup::TableColGroupFlow;
 use table_row::TableRowFlow;
 use table_rowgroup::TableRowGroupFlow;
 use table_wrapper::TableWrapperFlow;
-use webrender_traits::ClipId;
+use webrender_api::ClipId;
 
 /// Virtual methods that make up a float context.
 ///
@@ -260,7 +260,7 @@ pub trait Flow: fmt::Debug + Sync + Send + 'static {
         match self.class() {
             FlowClass::Block | FlowClass::TableCaption | FlowClass::TableCell => {}
             _ => {
-                overflow.translate(&position.origin);
+                overflow.translate(&position.origin.to_vector());
                 return overflow;
             }
         }
@@ -285,7 +285,7 @@ pub trait Flow: fmt::Debug + Sync + Send + 'static {
 
         if !self.as_block().fragment.establishes_stacking_context() ||
            self.as_block().fragment.style.get_box().transform.0.is_none() {
-            overflow.translate(&position.origin);
+            overflow.translate(&position.origin.to_vector());
             return overflow;
         }
 
@@ -294,7 +294,7 @@ pub trait Flow: fmt::Debug + Sync + Send + 'static {
         let transform_2d = self.as_block()
                                .fragment
                                .transform_matrix(&position)
-                               .unwrap_or(Matrix4D::identity())
+                               .unwrap_or(Transform3D::identity())
                                .to_2d();
         let transformed_overflow = Overflow {
             paint: f32_rect_to_au_rect(transform_2d.transform_rect(
@@ -308,7 +308,7 @@ pub trait Flow: fmt::Debug + Sync + Send + 'static {
         // unnecessary once we are taking into account 3D transformations above.
         overflow.union(&transformed_overflow);
 
-        overflow.translate(&position.origin);
+        overflow.translate(&position.origin.to_vector());
         overflow
     }
 
@@ -424,7 +424,7 @@ pub trait Flow: fmt::Debug + Sync + Send + 'static {
 
     /// Attempts to perform incremental fixup of this flow by replacing its fragment's style with
     /// the new style. This can only succeed if the flow has exactly one fragment.
-    fn repair_style(&mut self, new_style: &::StyleArc<ServoComputedValues>);
+    fn repair_style(&mut self, new_style: &::ServoArc<ComputedValues>);
 
     /// Print any extra children (such as fragments) contained in this Flow
     /// for debugging purposes. Any items inserted into the tree will become
@@ -561,7 +561,7 @@ pub trait MutableFlowUtils {
 
     /// Calls `repair_style` and `bubble_inline_sizes`. You should use this method instead of
     /// calling them individually, since there is no reason not to perform both operations.
-    fn repair_style_and_bubble_inline_sizes(self, style: &::StyleArc<ServoComputedValues>);
+    fn repair_style_and_bubble_inline_sizes(self, style: &::ServoArc<ComputedValues>);
 }
 
 pub trait MutableOwnedFlowUtils {
@@ -917,7 +917,7 @@ pub struct BaseFlow {
 
     /// The position of this flow relative to the start of the nearest ancestor stacking context.
     /// This is computed during the top-down pass of display list construction.
-    pub stacking_relative_position: Point2D<Au>,
+    pub stacking_relative_position: Vector2D<Au>,
 
     /// Details about descendants with position 'absolute' or 'fixed' for which we are the
     /// containing block. This is in tree order. This includes any direct children.
@@ -1011,14 +1011,12 @@ impl fmt::Debug for BaseFlow {
 
 impl Serialize for BaseFlow {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut serializer = try!(serializer.serialize_struct("base", 5));
-        try!(serializer.serialize_field("id", &self.debug_id()));
-        try!(serializer.serialize_field("stacking_relative_position",
-                                        &self.stacking_relative_position));
-        try!(serializer.serialize_field("intrinsic_inline_sizes",
-                                        &self.intrinsic_inline_sizes));
-        try!(serializer.serialize_field("position", &self.position));
-        try!(serializer.serialize_field("children", &self.children));
+        let mut serializer = serializer.serialize_struct("base", 5)?;
+        serializer.serialize_field("id", &self.debug_id())?;
+        serializer.serialize_field("stacking_relative_position", &self.stacking_relative_position)?;
+        serializer.serialize_field("intrinsic_inline_sizes", &self.intrinsic_inline_sizes)?;
+        serializer.serialize_field("position", &self.position)?;
+        serializer.serialize_field("children", &self.children)?;
         serializer.end()
     }
 }
@@ -1035,7 +1033,7 @@ pub enum ForceNonfloatedFlag {
 
 impl BaseFlow {
     #[inline]
-    pub fn new(style: Option<&ServoComputedValues>,
+    pub fn new(style: Option<&ComputedValues>,
                writing_mode: WritingMode,
                force_nonfloated: ForceNonfloatedFlag)
                -> BaseFlow {
@@ -1098,7 +1096,7 @@ impl BaseFlow {
             parallel: FlowParallelInfo::new(),
             floats: Floats::new(writing_mode),
             collapsible_margins: CollapsibleMargins::new(),
-            stacking_relative_position: Point2D::zero(),
+            stacking_relative_position: Vector2D::zero(),
             abs_descendants: AbsoluteDescendants::new(),
             speculated_float_placement_in: SpeculatedFloatPlacement::zero(),
             speculated_float_placement_out: SpeculatedFloatPlacement::zero(),
@@ -1114,6 +1112,28 @@ impl BaseFlow {
             thread_id: 0,
             stacking_context_id: StackingContextId::root(),
             scroll_root_id: None,
+        }
+    }
+
+    /// Update the 'flags' field when computed styles have changed.
+    ///
+    /// These flags are initially set during flow construction.  They only need to be updated here
+    /// if they are based on properties that can change without triggering `RECONSTRUCT_FLOW`.
+    pub fn update_flags_if_needed(&mut self, style: &ComputedValues) {
+        // For absolutely-positioned flows, changes to top/bottom/left/right can cause these flags
+        // to get out of date:
+        if self.restyle_damage.contains(REFLOW_OUT_OF_FLOW) {
+            // Note: We don't need to check whether IS_ABSOLUTELY_POSITIONED has changed, because
+            // changes to the 'position' property trigger flow reconstruction.
+            if self.flags.contains(IS_ABSOLUTELY_POSITIONED) {
+                let logical_position = style.logical_position();
+                self.flags.set(INLINE_POSITION_IS_STATIC,
+                    logical_position.inline_start == LengthOrPercentageOrAuto::Auto &&
+                    logical_position.inline_end == LengthOrPercentageOrAuto::Auto);
+                self.flags.set(BLOCK_POSITION_IS_STATIC,
+                    logical_position.block_start == LengthOrPercentageOrAuto::Auto &&
+                    logical_position.block_end == LengthOrPercentageOrAuto::Auto);
+            }
         }
     }
 
@@ -1361,8 +1381,9 @@ impl<'a> MutableFlowUtils for &'a mut Flow {
 
     /// Calls `repair_style` and `bubble_inline_sizes`. You should use this method instead of
     /// calling them individually, since there is no reason not to perform both operations.
-    fn repair_style_and_bubble_inline_sizes(self, style: &::StyleArc<ServoComputedValues>) {
+    fn repair_style_and_bubble_inline_sizes(self, style: &::ServoArc<ComputedValues>) {
         self.repair_style(style);
+        mut_base(self).update_flags_if_needed(style);
         self.bubble_inline_sizes();
     }
 

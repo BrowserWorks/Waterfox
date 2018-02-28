@@ -17,42 +17,6 @@ typedef mozilla::dom::Sequence<nsString> WebrtcGlobalLog;
 namespace IPC {
 
 template<typename T>
-struct ParamTraits<mozilla::dom::Optional<T>>
-{
-  typedef mozilla::dom::Optional<T> paramType;
-
-  static void Write(Message* aMsg, const paramType& aParam)
-  {
-    if (aParam.WasPassed()) {
-      WriteParam(aMsg, true);
-      WriteParam(aMsg, aParam.Value());
-      return;
-    }
-
-    WriteParam(aMsg, false);
-  }
-
-  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
-  {
-    bool was_passed = false;
-
-    if (!ReadParam(aMsg, aIter, &was_passed)) {
-      return false;
-    }
-
-    aResult->Reset(); //XXX Optional_base seems to reach this point with isSome true.
-
-    if (was_passed) {
-      if (!ReadParam(aMsg, aIter, &(aResult->Construct()))) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-};
-
-template<typename T>
 struct ParamTraits<mozilla::dom::Sequence<T>>
 {
   typedef mozilla::dom::Sequence<T> paramType;
@@ -203,27 +167,37 @@ struct ParamTraits<mozilla::dom::RTCIceCandidatePairStats>
 
   static void Write(Message* aMsg, const paramType& aParam)
   {
-    WriteParam(aMsg, aParam.mComponentId);
+    WriteParam(aMsg, aParam.mTransportId);
     WriteParam(aMsg, aParam.mLocalCandidateId);
     WriteParam(aMsg, aParam.mPriority);
     WriteParam(aMsg, aParam.mNominated);
+    WriteParam(aMsg, aParam.mWritable);
     WriteParam(aMsg, aParam.mReadable);
     WriteParam(aMsg, aParam.mRemoteCandidateId);
     WriteParam(aMsg, aParam.mSelected);
     WriteParam(aMsg, aParam.mState);
+    WriteParam(aMsg, aParam.mBytesSent);
+    WriteParam(aMsg, aParam.mBytesReceived);
+    WriteParam(aMsg, aParam.mLastPacketSentTimestamp);
+    WriteParam(aMsg, aParam.mLastPacketReceivedTimestamp);
     WriteRTCStats(aMsg, aParam);
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
-    if (!ReadParam(aMsg, aIter, &(aResult->mComponentId)) ||
+    if (!ReadParam(aMsg, aIter, &(aResult->mTransportId)) ||
         !ReadParam(aMsg, aIter, &(aResult->mLocalCandidateId)) ||
         !ReadParam(aMsg, aIter, &(aResult->mPriority)) ||
         !ReadParam(aMsg, aIter, &(aResult->mNominated)) ||
+        !ReadParam(aMsg, aIter, &(aResult->mWritable)) ||
         !ReadParam(aMsg, aIter, &(aResult->mReadable)) ||
         !ReadParam(aMsg, aIter, &(aResult->mRemoteCandidateId)) ||
         !ReadParam(aMsg, aIter, &(aResult->mSelected)) ||
         !ReadParam(aMsg, aIter, &(aResult->mState)) ||
+        !ReadParam(aMsg, aIter, &(aResult->mBytesSent)) ||
+        !ReadParam(aMsg, aIter, &(aResult->mBytesReceived)) ||
+        !ReadParam(aMsg, aIter, &(aResult->mLastPacketSentTimestamp)) ||
+        !ReadParam(aMsg, aIter, &(aResult->mLastPacketReceivedTimestamp)) ||
         !ReadRTCStats(aMsg, aIter, aResult)) {
       return false;
     }
@@ -343,6 +317,7 @@ struct ParamTraits<mozilla::dom::RTCInboundRTPStreamStats>
   {
     WriteParam(aMsg, aParam.mBytesReceived);
     WriteParam(aMsg, aParam.mDiscardedPackets);
+    WriteParam(aMsg, aParam.mFramesDecoded);
     WriteParam(aMsg, aParam.mJitter);
     WriteParam(aMsg, aParam.mMozAvSyncDelay);
     WriteParam(aMsg, aParam.mMozJitterBufferDelay);
@@ -357,6 +332,7 @@ struct ParamTraits<mozilla::dom::RTCInboundRTPStreamStats>
   {
     if (!ReadParam(aMsg, aIter, &(aResult->mBytesReceived)) ||
         !ReadParam(aMsg, aIter, &(aResult->mDiscardedPackets)) ||
+        !ReadParam(aMsg, aIter, &(aResult->mFramesDecoded)) ||
         !ReadParam(aMsg, aIter, &(aResult->mJitter)) ||
         !ReadParam(aMsg, aIter, &(aResult->mMozAvSyncDelay)) ||
         !ReadParam(aMsg, aIter, &(aResult->mMozJitterBufferDelay)) ||

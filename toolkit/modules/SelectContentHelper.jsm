@@ -20,6 +20,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
 const kStateActive = 0x00000001; // NS_EVENT_STATE_ACTIVE
 const kStateHover = 0x00000004; // NS_EVENT_STATE_HOVER
 
+const SUPPORTED_PROPERTIES = [
+  "color",
+  "background-color",
+  "text-shadow",
+];
+
 // A process global state for whether or not content thinks
 // that a <select> dropdown is open or not. This is managed
 // entirely within this module, and is read-only accessible
@@ -199,13 +205,13 @@ this.SelectContentHelper.prototype = {
   // This is used to skip applying the custom color if it matches
   // the user agent values.
   _calculateUAColors() {
-    let dummyOption = this.element.ownerDocument.createElement("option");
+    let dummyOption = this.element.ownerDocument.createElementNS("http://www.w3.org/1999/xhtml", "option");
     dummyOption.style.setProperty("color", "-moz-comboboxtext", "important");
     dummyOption.style.setProperty("background-color", "-moz-combobox", "important");
     let optionCS = this.element.ownerGlobal.getComputedStyle(dummyOption);
     this._uaBackgroundColor = optionCS.backgroundColor;
     this._uaColor = optionCS.color;
-    let dummySelect = this.element.ownerDocument.createElement("select");
+    let dummySelect = this.element.ownerDocument.createElementNS("http://www.w3.org/1999/xhtml", "select");
     dummySelect.style.setProperty("color", "-moz-fieldtext", "important");
     dummySelect.style.setProperty("background-color", "-moz-field", "important");
     let selectCS = this.element.ownerGlobal.getComputedStyle(dummySelect);
@@ -359,7 +365,9 @@ this.SelectContentHelper.prototype = {
         }
         break;
       case "transitionend":
-        this._update();
+        if (SUPPORTED_PROPERTIES.indexOf(event.propertyName) != -1) {
+          this._updateTimer.arm();
+        }
         break;
     }
   }
@@ -390,6 +398,10 @@ function buildOptionListForChildren(node) {
 
       let cs = getComputedStyles(child);
 
+      // Note: If you add any more CSS properties support here,
+      // please add the property name to the SUPPORTED_PROPERTIES
+      // list so that the menu can be correctly updated when CSS
+      // transitions are used.
       let info = {
         index: child.index,
         tagName,

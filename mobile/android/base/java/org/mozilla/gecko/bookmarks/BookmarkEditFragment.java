@@ -169,6 +169,10 @@ public class BookmarkEditFragment extends DialogFragment implements SelectFolder
                     return;
                 }
 
+                // When coming back from SelectFolderFragment, we update view with data stored in `bookmark`,
+                // so before navigating, we have to save current title from nameText into `bookmark`.
+                bookmark.title = nameText.getText().toString();
+
                 final SelectFolderFragment dialog = SelectFolderFragment.newInstance(bookmark.parentId, bookmark.id);
                 dialog.setTargetFragment(BookmarkEditFragment.this, 0);
                 dialog.show(getActivity().getSupportFragmentManager(), "select-bookmark-folder");
@@ -228,8 +232,10 @@ public class BookmarkEditFragment extends DialogFragment implements SelectFolder
         nameText.setText(bookmark.title);
 
         if (bookmark.type == Bookmarks.TYPE_FOLDER) {
+            toolbar.setTitle(R.string.bookmark_edit_folder_title);
             locationLayout.setVisibility(View.GONE);
         } else {
+            toolbar.setTitle(R.string.bookmark_edit_title);
             locationLayout.setVisibility(View.VISIBLE);
         }
         locationText.setText(bookmark.url);

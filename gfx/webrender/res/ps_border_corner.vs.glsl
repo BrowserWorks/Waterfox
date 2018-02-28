@@ -117,7 +117,7 @@ int select_style(int color_select, vec2 fstyle) {
 
 void main(void) {
     Primitive prim = load_primitive();
-    Border border = fetch_border(prim.prim_index);
+    Border border = fetch_border(prim.specific_prim_address);
     int sub_part = prim.user_data0;
     BorderCorners corners = get_border_corners(border, prim.local_rect);
 
@@ -271,14 +271,14 @@ void main(void) {
                                                     prim.z,
                                                     prim.layer,
                                                     prim.task,
-                                                    prim.local_rect.p0);
+                                                    prim.local_rect);
 #else
     VertexInfo vi = write_vertex(segment_rect,
                                  prim.local_clip_rect,
                                  prim.z,
                                  prim.layer,
                                  prim.task,
-                                 prim.local_rect.p0);
+                                 prim.local_rect);
 #endif
 
     vLocalPos = vi.local_pos;

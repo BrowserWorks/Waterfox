@@ -10,11 +10,13 @@
 #include "base/basictypes.h"            // for DISALLOW_EVIL_CONSTRUCTORS
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
 #include "mozilla/Attributes.h"         // for override
+#include "mozilla/Monitor.h"
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/layers/PCompositorBridgeChild.h"
 #include "mozilla/layers/TextureForwarder.h" // for TextureForwarder
 #include "mozilla/webrender/WebRenderTypes.h"
 #include "nsClassHashtable.h"           // for nsClassHashtable
+#include "nsRefPtrHashtable.h"
 #include "nsCOMPtr.h"                   // for nsCOMPtr
 #include "nsHashKeys.h"                 // for nsUint64HashKey
 #include "nsISupportsImpl.h"            // for NS_INLINE_DECL_REFCOUNTING
@@ -39,6 +41,7 @@ class IAPZCTreeManager;
 class APZCTreeManagerChild;
 class ClientLayerManager;
 class CompositorBridgeParent;
+class CompositorManagerChild;
 class CompositorOptions;
 class TextureClient;
 class TextureClientPool;
@@ -52,7 +55,16 @@ class CompositorBridgeChild final : public PCompositorBridgeChild,
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CompositorBridgeChild, override);
 
-  explicit CompositorBridgeChild(LayerManager *aLayerManager, uint32_t aNamespace);
+  explicit CompositorBridgeChild(CompositorManagerChild* aManager);
+
+  /**
+   * Initialize the singleton compositor bridge for a content process.
+   */
+  void InitForContent(uint32_t aNamespace);
+
+  void InitForWidget(uint64_t aProcessToken,
+                     LayerManager* aLayerManager,
+                     uint32_t aNamespace);
 
   void Destroy();
 
@@ -62,30 +74,6 @@ public:
    * in progressive paint calculations.
    */
   bool LookupCompositorFrameMetrics(const FrameMetrics::ViewID aId, FrameMetrics&);
-
-  /**
-   * Initialize the singleton compositor bridge for a content process.
-   */
-  static bool InitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoint, uint32_t aNamespace);
-  static bool ReinitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoint, uint32_t aNamespace);
-
-  static RefPtr<CompositorBridgeChild> CreateRemote(
-    const uint64_t& aProcessToken,
-    LayerManager* aLayerManager,
-    Endpoint<PCompositorBridgeChild>&& aEndpoint,
-    uint32_t aNamespace);
-
-  /**
-   * Initialize the CompositorBridgeChild, create CompositorBridgeParent, and
-   * open a same-process connection.
-   */
-  CompositorBridgeParent* InitSameProcess(
-    widget::CompositorWidget* aWidget,
-    const uint64_t& aLayerTreeId,
-    CSSToLayoutDeviceScale aScale,
-    const CompositorOptions& aOptions,
-    bool aUseExternalSurface,
-    const gfx::IntSize& aSurfaceSize);
 
   static CompositorBridgeChild* Get();
 
@@ -131,8 +119,6 @@ public:
                                        uint64_t aSerial,
                                        wr::MaybeExternalImageId& aExternalImageId,
                                        nsIEventTarget* aTarget) override;
-
-  virtual void HandleFatalError(const char* aName, const char* aMsg) const override;
 
   /**
    * Request that the parent tell us when graphics are ready on GPU.
@@ -219,14 +205,12 @@ public:
   PAPZChild* AllocPAPZChild(const uint64_t& aLayersId) override;
   bool DeallocPAPZChild(PAPZChild* aActor) override;
 
-  void ProcessingError(Result aCode, const char* aReason) override;
-
   void WillEndTransaction();
 
   PWebRenderBridgeChild* AllocPWebRenderBridgeChild(const wr::PipelineId& aPipelineId,
                                                     const LayoutDeviceIntSize&,
                                                     TextureFactoryIdentifier*,
-                                                    uint32_t*) override;
+                                                    wr::IdNamespace*) override;
   bool DeallocPWebRenderBridgeChild(PWebRenderBridgeChild* aActor) override;
 
   uint64_t DeviceResetSequenceNumber() const {
@@ -237,12 +221,34 @@ public:
 
   wr::PipelineId GetNextPipelineId();
 
+  // Must only be called from the main thread. Notifies the CompositorBridge
+  // that the paint thread is going to begin painting asynchronously.
+  void NotifyBeginAsyncPaint();
+
+  // Must only be called from the paint thread. Notifies the CompositorBridge
+  // that the paint thread has finished an asynchronous paint request.
+  void NotifyFinishedAsyncPaint();
+
+  // Must only be called from the main thread. Notifies the CompoistorBridge
+  // that a transaction is about to be sent, and if the paint thread is
+  // currently painting, to begin delaying IPC messages.
+  void PostponeMessagesIfAsyncPainting();
+
+  // Must only be called from the main thread. Ensures that any paints from
+  // previous frames have been flushed. The main thread blocks until the
+  // operation completes.
+  void FlushAsyncPaints();
+
 private:
   // Private destructor, to discourage deletion outside of Release():
   virtual ~CompositorBridgeChild();
 
-  void InitIPDL();
-  void DeallocPCompositorBridgeChild() override;
+  // Must only be called from the paint thread. If the main thread is delaying
+  // IPC messages, this forwards all such delayed IPC messages to the I/O thread
+  // and resumes IPC.
+  void ResumeIPCAfterAsyncPaint();
+
+  void AfterDestroy();
 
   virtual PLayerTransactionChild*
     AllocPLayerTransactionChild(const nsTArray<LayersBackend>& aBackendHints,
@@ -266,9 +272,6 @@ private:
   mozilla::ipc::IPCResult RecvObserveLayerUpdate(const uint64_t& aLayersId,
                                                  const uint64_t& aEpoch,
                                                  const bool& aActive) override;
-
-  already_AddRefed<nsIEventTarget>
-  GetSpecificMessageEventTarget(const Message& aMsg) override;
 
   uint64_t GetNextResourceId();
 
@@ -298,6 +301,8 @@ private:
     uint32_t mAPZCId;
   };
 
+  RefPtr<CompositorManagerChild> mCompositorManager;
+
   RefPtr<LayerManager> mLayerManager;
 
   uint32_t mIdNamespace;
@@ -320,6 +325,9 @@ private:
   // True until the beginning of the two-step shutdown sequence of this actor.
   bool mCanSend;
 
+  // False until the actor is destroyed.
+  bool mActorDestroyed;
+
   /**
    * Transaction id of ShadowLayerForwarder.
    * It is incrementaed by UpdateFwdTransactionId() in each BeginTransaction() call.
@@ -335,7 +343,7 @@ private:
    * Hold TextureClients refs until end of their usages on host side.
    * It defer calling of TextureClient recycle callback.
    */
-  nsDataHashtable<nsUint64HashKey, RefPtr<TextureClient> > mTexturesWaitingRecycled;
+  nsRefPtrHashtable<nsUint64HashKey, TextureClient> mTexturesWaitingRecycled;
 
   MessageLoop* mMessageLoop;
 
@@ -344,6 +352,20 @@ private:
   uint64_t mProcessToken;
 
   FixedSizeSmallShmemSectionAllocator* mSectionAllocator;
+
+  // Off-Main-Thread Painting state. This covers access to the OMTP-related
+  // state below.
+  Monitor mPaintLock;
+
+  // Contains the number of outstanding asynchronous paints tied to a
+  // PLayerTransaction on this bridge. This is R/W on both the main and paint
+  // threads, and must be accessed within the paint lock.
+  size_t mOutstandingAsyncPaints;
+
+  // True if this CompositorBridge is currently delaying its messages until the
+  // paint thread completes. This is R/W on both the main and paint threads, and
+  // must be accessed within the paint lock.
+  bool mIsWaitingForPaint;
 };
 
 } // namespace layers

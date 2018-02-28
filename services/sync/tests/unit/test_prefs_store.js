@@ -22,39 +22,32 @@ function makePersona(id) {
   };
 }
 
-function run_test() {
+add_task(async function run_test() {
   _("Test fixtures.");
   // read our custom prefs file before doing anything.
-  Services.prefs.readUserPrefs(do_get_file("prefs_test_prefs_store.js"));
-  // Now we've read from this file, any writes the pref service makes will be
-  // back to this prefs_test_prefs_store.js directly in the obj dir. This
-  // upsets things in confusing ways :) We avoid this by explicitly telling the
-  // pref service to use a file in our profile dir.
-  let prefFile = do_get_profile();
-  prefFile.append("prefs.js");
-  Services.prefs.savePrefFile(prefFile);
-  Services.prefs.readUserPrefs(prefFile);
+  Services.prefs.readUserPrefsFromFile(do_get_file("prefs_test_prefs_store.js"));
 
-  let store = Service.engineManager.get("prefs")._store;
+  let engine = Service.engineManager.get("prefs");
+  let store = engine._store;
   let prefs = new Preferences();
   try {
 
     _("The GUID corresponds to XUL App ID.");
-    let allIDs = store.getAllIDs();
+    let allIDs = await store.getAllIDs();
     let ids = Object.keys(allIDs);
     do_check_eq(ids.length, 1);
     do_check_eq(ids[0], PREFS_GUID);
     do_check_true(allIDs[PREFS_GUID], true);
 
-    do_check_true(store.itemExists(PREFS_GUID));
-    do_check_false(store.itemExists("random-gibberish"));
+    do_check_true((await store.itemExists(PREFS_GUID)));
+    do_check_false((await store.itemExists("random-gibberish")));
 
     _("Unknown prefs record is created as deleted.");
-    let record = store.createRecord("random-gibberish", "prefs");
+    let record = await store.createRecord("random-gibberish", "prefs");
     do_check_true(record.deleted);
 
     _("Prefs record contains only prefs that should be synced.");
-    record = store.createRecord(PREFS_GUID, "prefs");
+    record = await store.createRecord(PREFS_GUID, "prefs");
     do_check_eq(record.value["testing.int"], 123);
     do_check_eq(record.value["testing.string"], "ohai");
     do_check_eq(record.value["testing.bool"], true);
@@ -86,7 +79,7 @@ function run_test() {
       "testing.somepref": "im a new pref from other device",
       "services.sync.prefs.sync.testing.somepref": true
     };
-    store.update(record);
+    await store.update(record);
     do_check_eq(prefs.get("testing.int"), 42);
     do_check_eq(prefs.get("testing.string"), "im in ur prefs");
     do_check_eq(prefs.get("testing.bool"), false);
@@ -109,7 +102,7 @@ function run_test() {
       "lightweightThemes.selectedThemeID": persona1.id,
       "lightweightThemes.usedThemes": usedThemes
     };
-    store.update(record);
+    await store.update(record);
     do_check_eq(prefs.get("lightweightThemes.selectedThemeID"), persona1.id);
     do_check_true(Utils.deepEquals(LightweightThemeManager.currentTheme,
                   persona1));
@@ -119,7 +112,7 @@ function run_test() {
       "lightweightThemes.selectedThemeID": null,
       "lightweightThemes.usedThemes": usedThemes
     };
-    store.update(record);
+    await store.update(record);
     do_check_false(!!prefs.get("lightweightThemes.selectedThemeID"));
     do_check_eq(LightweightThemeManager.currentTheme, null);
 
@@ -128,7 +121,7 @@ function run_test() {
     record.value = {
       "testing.int": 98
     };
-    store.update(record);
+    await store.update(record);
     do_check_eq(prefs.get("testing.int"), 42);
 
     _("The light-weight theme preference is handled correctly.");
@@ -142,21 +135,21 @@ function run_test() {
       record.value = {
         "testing.int": 42,
       };
-      store.update(record);
+      await store.update(record);
       do_check_true(lastThemeID === undefined,
                     "should not have tried to change the theme with an unrelated pref.");
       Services.prefs.setCharPref("lightweightThemes.selectedThemeID", "foo");
       record.value = {
         "lightweightThemes.selectedThemeID": "foo",
       };
-      store.update(record);
+      await store.update(record);
       do_check_true(lastThemeID === undefined,
                     "should not have tried to change the theme when the incoming pref matches current value.");
 
       record.value = {
         "lightweightThemes.selectedThemeID": "bar",
       };
-      store.update(record);
+      await store.update(record);
       do_check_eq(lastThemeID, "bar",
                   "should have tried to change the theme when the incoming pref was different.");
     } finally {
@@ -165,4 +158,4 @@ function run_test() {
   } finally {
     prefs.resetBranch("");
   }
-}
+});

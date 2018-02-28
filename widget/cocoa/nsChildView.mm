@@ -36,6 +36,7 @@
 #include "nsThemeConstants.h"
 #include "nsIWidgetListener.h"
 #include "nsIPresShell.h"
+#include "nsIScreen.h"
 
 #include "nsDragService.h"
 #include "nsClipboard.h"
@@ -68,6 +69,8 @@
 #include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/BasicCompositor.h"
 #include "mozilla/layers/InputAPZContext.h"
+#include "mozilla/layers/WebRenderBridgeChild.h"
+#include "mozilla/webrender/WebRenderAPI.h"
 #include "mozilla/widget/CompositorWidget.h"
 #include "gfxUtils.h"
 #include "gfxPrefs.h"
@@ -357,6 +360,7 @@ nsChildView::nsChildView() : nsBaseWidget()
 , mEffectsLock("WidgetEffects")
 , mShowsResizeIndicator(false)
 , mHasRoundedBottomCorners(false)
+, mDevPixelCornerRadius{0}
 , mIsCoveringTitlebar(false)
 , mIsFullscreen(false)
 , mIsOpaque(false)
@@ -365,6 +369,8 @@ nsChildView::nsChildView() : nsBaseWidget()
 , mVisible(false)
 , mDrawing(false)
 , mIsDispatchPaint(false)
+, mPluginFocused{false}
+, mCurrentPanGestureBelongsToSwipe{false}
 {
   EnsureLogInitialized();
 }
@@ -821,12 +827,12 @@ nsChildView::GetParent()
 float
 nsChildView::GetDPI()
 {
-  NSWindow* window = [mView window];
-  if (window && [window isKindOfClass:[BaseWindow class]]) {
-    return [(BaseWindow*)window getDPI];
+  float dpi = 96.0;
+  nsCOMPtr<nsIScreen> screen = GetWidgetScreen();
+  if (screen) {
+    screen->GetDpi(&dpi);
   }
-
-  return 96.0;
+  return dpi;
 }
 
 void
@@ -2043,7 +2049,9 @@ nsChildView::PrepareWindowEffects()
     mIsCoveringTitlebar = [(ChildView*)mView isCoveringTitlebar];
     NSInteger styleMask = [[mView window] styleMask];
     bool wasFullscreen = mIsFullscreen;
-    mIsFullscreen = (styleMask & NSFullScreenWindowMask) || !(styleMask & NSTitledWindowMask);
+    nsCocoaWindow* windowWidget = GetXULWindowWidget();
+    mIsFullscreen = (styleMask & NSFullScreenWindowMask) ||
+                    (windowWidget && windowWidget->InFullScreenMode());
 
     canBeOpaque = mIsFullscreen && wasFullscreen;
     if (canBeOpaque && VibrancyManager::SystemSupportsVibrancy()) {
@@ -2070,6 +2078,59 @@ nsChildView::CleanupWindowEffects()
   mResizerImage = nullptr;
   mCornerMaskImage = nullptr;
   mTitlebarImage = nullptr;
+}
+
+void
+nsChildView::AddWindowOverlayWebRenderCommands(layers::WebRenderBridgeChild* aWrBridge,
+                                               wr::DisplayListBuilder& aBuilder)
+{
+  PrepareWindowEffects();
+
+  LayoutDeviceIntRegion updatedTitlebarRegion;
+  updatedTitlebarRegion.And(mUpdatedTitlebarRegion, mTitlebarRect);
+  mUpdatedTitlebarRegion.SetEmpty();
+
+  if (mTitlebarCGContext) {
+    gfx::IntSize size(CGBitmapContextGetWidth(mTitlebarCGContext),
+                      CGBitmapContextGetHeight(mTitlebarCGContext));
+    size_t stride = CGBitmapContextGetBytesPerRow(mTitlebarCGContext);
+    size_t titlebarCGContextDataLength = stride * size.height;
+    gfx::SurfaceFormat format = gfx::SurfaceFormat::B8G8R8A8;
+    wr::ByteBuffer buffer(
+      titlebarCGContextDataLength,
+      static_cast<uint8_t *>(CGBitmapContextGetData(mTitlebarCGContext)));
+
+    if (mTitlebarImageKey &&
+        mTitlebarImageSize != size) {
+      // Delete wr::ImageKey. wr::ImageKey does not support size change.
+      CleanupWebRenderWindowOverlay(aWrBridge);
+      MOZ_ASSERT(mTitlebarImageKey.isNothing());
+    }
+
+    if (!mTitlebarImageKey) {
+      mTitlebarImageKey = Some(aWrBridge->GetNextImageKey());
+      aWrBridge->SendAddImage(*mTitlebarImageKey, size, stride, format, buffer);
+      mTitlebarImageSize = size;
+      updatedTitlebarRegion.SetEmpty();
+    }
+
+    if (!updatedTitlebarRegion.IsEmpty()) {
+      aWrBridge->SendUpdateImage(*mTitlebarImageKey, size, format, buffer);
+    }
+
+    wr::LayoutRect rect = wr::ToLayoutRect(mTitlebarRect);
+    aBuilder.PushImage(wr::LayoutRect{ { 0, 0 }, { float(size.width), float(size.height) } },
+                       rect, wr::ImageRendering::Auto, *mTitlebarImageKey);
+  }
+}
+
+void
+nsChildView::CleanupWebRenderWindowOverlay(layers::WebRenderBridgeChild* aWrBridge)
+{
+  if (mTitlebarImageKey) {
+    aWrBridge->SendDeleteImage(*mTitlebarImageKey);
+    mTitlebarImageKey = Nothing();
+  }
 }
 
 bool
@@ -3116,6 +3177,7 @@ nsChildView::GetDocumentAccessible()
 
 GLPresenter::GLPresenter(GLContext* aContext)
  : mGLContext(aContext)
+ , mQuadVBO{0}
 {
   mGLContext->MakeCurrent();
   ShaderConfigOGL config;
@@ -3222,7 +3284,7 @@ class WidgetsReleaserRunnable final : public mozilla::Runnable
 {
 public:
   explicit WidgetsReleaserRunnable(nsTArray<nsCOMPtr<nsIWidget>>&& aWidgetArray)
-    : mWidgetArray(aWidgetArray)
+    : mozilla::Runnable("WidgetsReleaserRunnable"), mWidgetArray(aWidgetArray)
   {
   }
 
@@ -3765,12 +3827,6 @@ NSEvent* gLastDragMouseDownEvent = nil;
 {
   CGContextRef cgContext = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
   [self drawRect:aRect inContext:cgContext];
-
-  // If we're a transparent window and our contents have changed, we need
-  // to make sure the shadow is updated to the new contents.
-  if ([[self window] isKindOfClass:[BaseWindow class]]) {
-    [(BaseWindow*)[self window] deferredInvalidateShadow];
-  }
 }
 
 - (void)drawRect:(NSRect)aRect inContext:(CGContextRef)aContext
@@ -3811,8 +3867,7 @@ NSEvent* gLastDragMouseDownEvent = nil;
     return;
   }
 
-  PROFILER_LABEL("ChildView", "drawRect",
-    js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("ChildView::drawRect", GRAPHICS);
 
   // The CGContext that drawRect supplies us with comes with a transform that
   // scales one user space unit to one Cocoa point, which can consist of
@@ -3879,8 +3934,7 @@ NSEvent* gLastDragMouseDownEvent = nil;
 
 - (void)drawUsingOpenGL
 {
-  PROFILER_LABEL("ChildView", "drawUsingOpenGL",
-    js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("ChildView::drawUsingOpenGL", GRAPHICS);
 
   if (![self isUsingOpenGL] || !mGeckoChild->IsVisible())
     return;
@@ -5341,7 +5395,10 @@ GetIntegerDeltaForEvent(NSEvent* aEvent)
   aOutGeckoEvent->inputSource = nsIDOMMouseEvent::MOZ_SOURCE_PEN;
   aOutGeckoEvent->tiltX = lround([aPointerEvent tilt].x * 90);
   aOutGeckoEvent->tiltY = lround([aPointerEvent tilt].y * 90);
-
+  aOutGeckoEvent->tangentialPressure = [aPointerEvent tangentialPressure];
+  // Make sure the twist value is in the range of 0-359.
+  int32_t twist = fmod([aPointerEvent rotation], 360);
+  aOutGeckoEvent->twist = twist >= 0 ? twist : twist + 360;
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 

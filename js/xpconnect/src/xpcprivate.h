@@ -151,7 +151,6 @@
 
 #include "SandboxPrivate.h"
 #include "BackstagePass.h"
-#include "nsAXPCNativeCallContext.h"
 
 #ifdef XP_WIN
 // Nasty MS defines
@@ -442,8 +441,8 @@ public:
 
     // Mapping of often used strings to jsid atoms that live 'forever'.
     //
-    // To add a new string: add to this list and to XPCJSContext::mStrings
-    // at the top of XPCJSContext.cpp
+    // To add a new string: add to this list and to XPCJSRuntime::mStrings
+    // at the top of XPCJSRuntime.cpp
     enum {
         IDX_CONSTRUCTOR             = 0 ,
         IDX_TO_STRING               ,
@@ -464,6 +463,7 @@ public:
         IDX_EXPOSEDPROPS            ,
         IDX_EVAL                    ,
         IDX_CONTROLLERS             ,
+        IDX_CONTROLLERS_CLASS       ,
         IDX_REALFRAMEELEMENT        ,
         IDX_LENGTH                  ,
         IDX_NAME                    ,
@@ -618,7 +618,6 @@ public:
 
     inline void AddVariantRoot(XPCTraceableVariant* variant);
     inline void AddWrappedJSRoot(nsXPCWrappedJS* wrappedJS);
-    inline void AddObjectHolderRoot(XPCJSObjectHolder* holder);
 
     void DebugDump(int16_t depth);
 
@@ -663,7 +662,6 @@ private:
     bool mDoingFinalization;
     XPCRootSetElem* mVariantRoots;
     XPCRootSetElem* mWrappedJSRoots;
-    XPCRootSetElem* mObjectHolderRoots;
     nsTArray<xpcGCCallback> extraGCCallbacks;
     JS::GCSliceCallback mPrevGCSliceCallback;
     JS::DoCycleCollectionCallback mPrevDoCycleCollectionCallback;
@@ -705,18 +703,9 @@ XPCJSContext::GetStringName(unsigned index) const
 //
 // Note that most accessors are inlined.
 
-class MOZ_STACK_CLASS XPCCallContext final : public nsAXPCNativeCallContext
+class MOZ_STACK_CLASS XPCCallContext final
 {
 public:
-    NS_IMETHOD GetCallee(nsISupports** aResult);
-    NS_IMETHOD GetCalleeMethodIndex(uint16_t* aResult);
-    NS_IMETHOD GetJSContext(JSContext** aResult);
-    NS_IMETHOD GetArgc(uint32_t* aResult);
-    NS_IMETHOD GetArgvPtr(JS::Value** aResult);
-    NS_IMETHOD GetCalleeInterface(nsIInterfaceInfo** aResult);
-    NS_IMETHOD GetCalleeClassInfo(nsIClassInfo** aResult);
-    NS_IMETHOD GetPreviousCallContext(nsAXPCNativeCallContext** aResult);
-
     enum {NO_ARGS = (unsigned) -1};
 
     explicit XPCCallContext(JSContext* cx,
@@ -997,11 +986,11 @@ public:
 
     typedef js::HashMap<JSAddonId*,
                         nsCOMPtr<nsIAddonInterposition>,
-                        js::PointerHasher<JSAddonId*, 3>,
+                        js::PointerHasher<JSAddonId*>,
                         js::SystemAllocPolicy> InterpositionMap;
 
     typedef js::HashSet<JSAddonId*,
-                        js::PointerHasher<JSAddonId*, 3>,
+                        js::PointerHasher<JSAddonId*>,
                         js::SystemAllocPolicy> AddonSet;
 
     // Gets the appropriate scope object for XBL in this scope. The context
@@ -1741,7 +1730,8 @@ public:
 
     inline void SweepTearOffs();
 
-    // Returns a string that shuld be free'd using JS_smprintf_free (or null).
+    // Returns a string that should be freed with js_free, or nullptr on
+    // failure.
     char* ToString(XPCWrappedNativeTearOff* to = nullptr) const;
 
     static nsIXPCScriptable* GatherProtoScriptable(nsIClassInfo* classInfo);
@@ -2048,8 +2038,7 @@ private:
 
 /***************************************************************************/
 
-class XPCJSObjectHolder final : public nsIXPConnectJSObjectHolder,
-                                public XPCRootSetElem
+class XPCJSObjectHolder final : public nsIXPConnectJSObjectHolder
 {
 public:
     // all the interface method declarations...
@@ -2059,16 +2048,13 @@ public:
     // non-interface implementation
 
 public:
-    void TraceJS(JSTracer* trc);
-
-    explicit XPCJSObjectHolder(JSObject* obj);
+    XPCJSObjectHolder(JSContext* cx, JSObject* obj);
 
 private:
-    virtual ~XPCJSObjectHolder();
-
+    virtual ~XPCJSObjectHolder() {}
     XPCJSObjectHolder() = delete;
 
-    JS::Heap<JSObject*> mJSObj;
+    JS::PersistentRooted<JSObject*> mJSObj;
 };
 
 /***************************************************************************

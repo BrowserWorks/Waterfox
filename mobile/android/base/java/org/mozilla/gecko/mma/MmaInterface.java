@@ -7,18 +7,19 @@
 package org.mozilla.gecko.mma;
 
 import android.app.Activity;
-import android.app.Application;
 import android.content.Context;
+
+import java.util.Map;
 
 
 public interface MmaInterface {
-    void init(Activity Activity);
+    void init(Activity Activity, Map<String, ?> attributes);
 
     void start(Context context);
 
-    void track(String mmaEvent);
+    void event(String mmaEvent);
 
-    void track(String mmaEvent, double value);
+    void event(String mmaEvent, double value);
 
     void stop();
 }

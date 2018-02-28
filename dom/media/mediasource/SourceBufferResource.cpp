@@ -11,7 +11,6 @@
 #include "nsISeekableStream.h"
 #include "nsISupports.h"
 #include "mozilla/Logging.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/TaskQueue.h"
 #include "MediaData.h"
 
@@ -21,8 +20,16 @@ mozilla::LogModule* GetSourceBufferResourceLog()
   return sLogModule;
 }
 
-#define SBR_DEBUG(arg, ...) MOZ_LOG(GetSourceBufferResourceLog(), mozilla::LogLevel::Debug, ("SourceBufferResource(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
-#define SBR_DEBUGV(arg, ...) MOZ_LOG(GetSourceBufferResourceLog(), mozilla::LogLevel::Verbose, ("SourceBufferResource(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
+#define SBR_DEBUG(arg, ...)                                                    \
+  MOZ_LOG(                                                                     \
+    GetSourceBufferResourceLog(),                                              \
+    mozilla::LogLevel::Debug,                                                  \
+    ("SourceBufferResource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
+#define SBR_DEBUGV(arg, ...)                                                   \
+  MOZ_LOG(                                                                     \
+    GetSourceBufferResourceLog(),                                              \
+    mozilla::LogLevel::Verbose,                                                \
+    ("SourceBufferResource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 
 namespace mozilla {
 
@@ -135,7 +142,7 @@ void
 SourceBufferResource::AppendData(MediaByteBuffer* aData)
 {
   MOZ_ASSERT(OnTaskQueue());
-  SBR_DEBUG("AppendData(aData=%p, aLength=%" PRIuSIZE ")",
+  SBR_DEBUG("AppendData(aData=%p, aLength=%zu)",
             aData->Elements(), aData->Length());
   mInputBuffer.AppendItem(aData);
   mEnded = false;
@@ -154,12 +161,13 @@ SourceBufferResource::~SourceBufferResource()
   SBR_DEBUG("");
 }
 
-SourceBufferResource::SourceBufferResource(const MediaContainerType& aType)
-  : mType(aType)
+SourceBufferResource::SourceBufferResource()
 #if defined(DEBUG)
-  , mTaskQueue(AbstractThread::GetCurrent()->AsTaskQueue())
-#endif
+  : mTaskQueue(AbstractThread::GetCurrent()->AsTaskQueue())
   , mOffset(0)
+#else
+  : mOffset(0)
+#endif
   , mClosed(false)
   , mEnded(false)
 {

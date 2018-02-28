@@ -64,13 +64,8 @@
 # wishes to include *must* go into the global-scripts.inc file
 # so that they can be shared by macBrowserOverlay.xul.
 #include global-scripts.inc
-<script type="application/javascript" src="chrome://browser/content/nsContextMenu.js"/>
 
 <script type="application/javascript" src="chrome://global/content/contentAreaUtils.js"/>
-
-<script type="application/javascript" src="chrome://browser/content/downloads/downloads.js"/>
-<script type="application/javascript" src="chrome://browser/content/downloads/indicator.js"/>
-<script type="application/javascript" src="chrome://browser/content/places/editBookmarkOverlay.js"/>
 
 # All sets except for popupsets (commands, keys, stringbundles and broadcasters) *must* go into the
 # browser-sets.inc file for sharing with hiddenWindow.xul.
@@ -104,9 +99,9 @@
                 hidden="true"
                 oncommand="gBrowser.openNonRemoteWindow(TabContextMenu.contextTab);"/>
 #endif
-      <menuseparator id="context_sendTabToDevice_separator" hidden="true"/>
+      <menuseparator id="context_sendTabToDevice_separator"/>
       <menu id="context_sendTabToDevice" label="&sendTabToDevice.label;"
-            accesskey="&sendTabToDevice.accesskey;" hidden="true">
+            accesskey="&sendTabToDevice.accesskey;">
         <menupopup id="context_sendTabToDevicePopupMenu"
                    onpopupshowing="gSync.populateSendTabToDevicesMenu(event.target, TabContextMenu.contextTab.linkedBrowser.currentURI.spec, TabContextMenu.contextTab.linkedBrowser.contentTitle);"/>
       </menu>
@@ -413,57 +408,41 @@
       </hbox>
     </panel>
 
-    <panel id="page-action-panel"
+#ifdef MOZ_PHOTON_THEME
+    <panel id="pageActionPanel"
            class="cui-widget-panel"
            role="group"
            type="arrow"
            hidden="true"
            flip="slide"
            position="bottomcenter topright"
-           noautofocus="true">
-      <photonpanelmultiview id="page-action-multiView"
-                            mainViewId="page-action-mainView">
-        <panelview id="page-action-mainView"
+           tabspecific="true"
+           noautofocus="true"
+           context="pageActionPanelContextMenu"
+           oncontextmenu="BrowserPageActions.onContextMenu(event);"
+           copyURL-title="&copyURLCmd.label;"
+           emailLink-title="&emailPageCmd.label;"
+           sendToDevice-title="&sendToDevice.label2;"
+           sendToDevice-notReadyTitle="&sendToDevice.syncNotReady.label;">
+      <photonpanelmultiview id="pageActionPanelMultiView"
+                            mainViewId="pageActionPanelMainView"
+                            viewCacheId="appMenu-viewCache">
+        <panelview id="pageActionPanelMainView"
                    class="PanelUI-subView">
-          <vbox class="panel-subview-body">
-            <toolbarbutton id="page-action-bookmark-button"
-                           class="subviewbutton subviewbutton-iconic"
-                           observes="bookmarkThisPageBroadcaster"
-                           command="Browser:AddBookmarkAs"
-                           onclick="gPageActionButton.panel.hidePopup();"/>
-            <toolbarseparator/>
-            <toolbarbutton id="page-action-copy-url-button"
-                           class="subviewbutton subviewbutton-iconic"
-                           label="&copyURLCmd.label;"
-                           command="PageAction:copyURL"/>
-            <toolbarbutton id="page-action-email-link-button"
-                           class="subviewbutton subviewbutton-iconic"
-                           label="&emailPageCmd.label;"
-                           command="PageAction:emailLink"/>
-            <toolbarbutton id="page-action-send-to-device-button"
-                           class="subviewbutton subviewbutton-iconic subviewbutton-nav"
-                           label="&sendToDevice.label;"
-                           closemenu="none"
-                           oncommand="gPageActionButton.showSendToDeviceView(this);"/>
-          </vbox>
-        </panelview>
-        <panelview id="page-action-sendToDeviceView"
-                   class="PanelUI-subView"
-                   title="&sendToDevice.viewTitle;">
-          <vbox id="page-action-sendToDeviceView-body" class="panel-subview-body">
-            <toolbarbutton id="page-action-sendToDevice-fxa-button"
-                           class="subviewbutton subviewbutton-iconic"
-                           label="&syncBrand.fxAccount.label;"
-                           shortcut="&sendToDevice.fxaRequired.label;"
-                           oncommand="gPageActionButton.fxaButtonClicked();"/>
-            <toolbarbutton id="page-action-no-devices-button"
-                           class="subviewbutton"
-                           label="&sendToDevice.noDevices.label;"
-                           disabled="true"/>
-          </vbox>
+          <vbox class="panel-subview-body"/>
         </panelview>
       </photonpanelmultiview>
     </panel>
+
+    <menupopup id="pageActionPanelContextMenu"
+               onpopupshowing="BrowserPageActions.onContextMenuShowing(event, this);">
+      <menuitem id="pageActionPanelContextMenu-toggleUrlbar"
+                add-label="&pageAction.addToUrlbar.label;"
+                remove-label="&pageAction.removeFromUrlbar.label;"
+                label="&pageAction.addToUrlbar.label;"
+                oncommand="BrowserPageActions.toggleShownInUrlbarForContextAction();"/>
+    </menupopup>
+#endif
 
     <!-- Bookmarks and history tooltip -->
     <tooltip id="bhTooltip"/>
@@ -748,11 +727,19 @@
                            class="toolbarbutton-1"
                            command="Browser:ReloadOrDuplicate"
                            onclick="checkForMiddleClick(this, event);"
-                           tooltip="dynamic-shortcut-tooltip"/>
+                           tooltip="dynamic-shortcut-tooltip">
+              <box class="toolbarbutton-animatable-box">
+                <image class="toolbarbutton-animatable-image"/>
+              </box>
+            </toolbarbutton>
             <toolbarbutton id="stop-button"
                            class="toolbarbutton-1"
                            command="Browser:Stop"
-                           tooltip="dynamic-shortcut-tooltip"/>
+                           tooltip="dynamic-shortcut-tooltip">
+              <box class="toolbarbutton-animatable-box">
+                <image class="toolbarbutton-animatable-image"/>
+              </box>
+            </toolbarbutton>
           </toolbaritem>
 #endif
           <hbox id="urlbar-wrapper" flex="1">
@@ -776,7 +763,6 @@
                      showcommentcolumn="true"
                      showimagecolumn="true"
                      enablehistory="true"
-                     maxrows="10"
                      newlines="stripsurroundingwhitespace"
                      ontextentered="this.handleCommand(param);"
                      ontextreverted="return this.handleRevert();"
@@ -812,8 +798,8 @@
                 </box>
                 <box id="notification-popup-box"
                      hidden="true"
-                     onmouseover="document.getElementById('identity-icon').classList.add('no-hover');"
-                     onmouseout="document.getElementById('identity-icon').classList.remove('no-hover');"
+                     onmouseover="document.getElementById('identity-box').classList.add('no-hover');"
+                     onmouseout="document.getElementById('identity-box').classList.remove('no-hover');"
                      align="center">
                   <image id="default-notification-icon" class="notification-anchor-icon" role="button"
                          tooltiptext="&urlbar.defaultNotificationAnchor.tooltip;"/>
@@ -876,6 +862,24 @@
                        onclick="FullZoom.reset();"
                        tooltip="dynamic-shortcut-tooltip"
                        hidden="true"/>
+#ifdef MOZ_PHOTON_THEME
+                <image id="pageActionButton"
+                       class="urlbar-icon"
+                       tooltiptext="&pageActionButton.tooltip;"
+                       onclick="BrowserPageActions.mainButtonClicked(event);"/>
+                <hbox id="star-button-box" hidden="true">
+                  <image id="star-button"
+                         class="urlbar-icon"
+                         onclick="BookmarkingUI.onStarCommand(event);">
+                    <observes element="bookmarkThisPageBroadcaster" attribute="starred"/>
+                    <observes element="bookmarkThisPageBroadcaster" attribute="tooltiptext"/>
+                  </image>
+                  <hbox id="star-button-animatable-box">
+                    <image id="star-button-animatable-image"
+                           onclick="BookmarkingUI.onStarCommand(event);"/>
+                  </hbox>
+                </hbox>
+#endif
               </hbox>
               <hbox id="userContext-icons" hidden="true">
                 <label id="userContext-label"/>
@@ -895,11 +899,6 @@
                              class="chromeclass-toolbar-additional"
                              command="Browser:Stop"
                              tooltip="dynamic-shortcut-tooltip"/>
-#else
-              <toolbarbutton id="urlbar-page-action-button"
-                             class="chromeclass-toolbar-additional"
-                             tooltiptext="&pageActionButton.tooltip;"
-                             onclick="gPageActionButton.onEvent(event);"/>
 #endif
             </textbox>
           </hbox>
@@ -915,7 +914,11 @@
         <toolbarbutton id="bookmarks-menu-button"
                        class="toolbarbutton-1 chromeclass-toolbar-additional"
                        removable="true"
+#ifdef MOZ_PHOTON_THEME
+                       type="menu"
+#else
                        type="menu-button"
+#endif
                        label="&bookmarksMenuButton.label;"
                        tooltip="dynamic-shortcut-tooltip"
                        anchor="dropmarker"
@@ -932,7 +935,7 @@
                      placespopup="true"
                      context="placesContext"
                      openInTabs="children"
-                     oncommand="BookmarksEventHandler.onCommand(event, this.parentNode._placesView);"
+                     oncommand="BookmarksEventHandler.onCommand(event);"
                      onclick="BookmarksEventHandler.onClick(event, this.parentNode._placesView);"
                      onpopupshowing="BookmarkingUI.onPopupShowing(event);
                                      BookmarkingUI.attachPlacesView(event, this);"
@@ -1041,7 +1044,13 @@
       <toolbarbutton id="nav-bar-overflow-button"
                      class="toolbarbutton-1 chromeclass-toolbar-additional overflow-button"
                      skipintoolbarset="true"
-                     tooltiptext="&navbarOverflow.label;"/>
+                     tooltiptext="&navbarOverflow.label;">
+#ifdef MOZ_PHOTON_ANIMATIONS
+        <box class="toolbarbutton-animatable-box">
+          <image class="toolbarbutton-animatable-image"/>
+        </box>
+#endif
+      </toolbarbutton>
 
       <toolbaritem id="PanelUI-button"
                    class="chromeclass-toolbar-additional"
@@ -1096,7 +1105,7 @@
               id="PlacesToolbar"
               context="placesContext"
               onclick="BookmarksEventHandler.onClick(event, this._placesView);"
-              oncommand="BookmarksEventHandler.onCommand(event, this._placesView);"
+              oncommand="BookmarksEventHandler.onCommand(event);"
               tooltip="bhTooltip"
               popupsinherittooltip="true">
           <hbox flex="1">
@@ -1165,8 +1174,13 @@
                      tooltip="dynamic-shortcut-tooltip"/>
 #ifdef MOZ_PHOTON_THEME
       <toolbarbutton id="library-button" class="toolbarbutton-1 chromeclass-toolbar-additional"
-                     oncommand="PanelUI.showSubView('appMenu-libraryView', this, null, true);"
-                     label="&places.library.title;"/>
+                     oncommand="PanelUI.showSubView('appMenu-libraryView', this, null, event);"
+                     closemenu="none"
+                     label="&places.library.title;">
+        <box class="toolbarbutton-animatable-box">
+          <image class="toolbarbutton-animatable-image"/>
+        </box>
+      </toolbarbutton>
 #endif
     </toolbarpalette>
   </toolbox>

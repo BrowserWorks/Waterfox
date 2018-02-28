@@ -86,7 +86,7 @@ class GlobalHelperThreadState
     // The lists below are all protected by |lock|.
 
     // Ion compilation worklist and finished jobs.
-    IonBuilderVector ionWorklist_, ionFinishedList_;
+    IonBuilderVector ionWorklist_, ionFinishedList_, ionFreeList_;
 
     // wasm worklist and finished jobs.
     wasm::CompileTaskPtrVector wasmWorklist_, wasmFinishedList_;
@@ -179,6 +179,9 @@ class GlobalHelperThreadState
     IonBuilderVector& ionFinishedList(const AutoLockHelperThreadState&) {
         return ionFinishedList_;
     }
+    IonBuilderVector& ionFreeList(const AutoLockHelperThreadState&) {
+        return ionFreeList_;
+    }
 
     wasm::CompileTaskPtrVector& wasmWorklist(const AutoLockHelperThreadState&) {
         return wasmWorklist_;
@@ -224,6 +227,7 @@ class GlobalHelperThreadState
     bool canStartWasmCompile(const AutoLockHelperThreadState& lock);
     bool canStartPromiseTask(const AutoLockHelperThreadState& lock);
     bool canStartIonCompile(const AutoLockHelperThreadState& lock);
+    bool canStartIonFreeTask(const AutoLockHelperThreadState& lock);
     bool canStartParseTask(const AutoLockHelperThreadState& lock);
     bool canStartCompressionTask(const AutoLockHelperThreadState& lock);
     bool canStartGCHelperTask(const AutoLockHelperThreadState& lock);
@@ -340,6 +344,14 @@ HelperThreadState()
     return *gHelperThreadState;
 }
 
+typedef mozilla::Variant<jit::IonBuilder*,
+                         wasm::CompileTask*,
+                         PromiseTask*,
+                         ParseTask*,
+                         SourceCompressionTask*,
+                         GCHelperState*,
+                         GCParallelTask*> HelperTaskUnion;
+
 /* Individual helper thread, one allocated per core. */
 struct HelperThread
 {
@@ -359,13 +371,7 @@ struct HelperThread
     mozilla::Atomic<bool, mozilla::Relaxed> pause;
 
     /* The current task being executed by this thread, if any. */
-    mozilla::Maybe<mozilla::Variant<jit::IonBuilder*,
-                                    wasm::CompileTask*,
-                                    PromiseTask*,
-                                    ParseTask*,
-                                    SourceCompressionTask*,
-                                    GCHelperState*,
-                                    GCParallelTask*>> currentTask;
+    mozilla::Maybe<HelperTaskUnion> currentTask;
 
     bool idle() const {
         return currentTask.isNothing();
@@ -418,6 +424,7 @@ struct HelperThread
     void handleWasmWorkload(AutoLockHelperThreadState& locked);
     void handlePromiseTaskWorkload(AutoLockHelperThreadState& locked);
     void handleIonWorkload(AutoLockHelperThreadState& locked);
+    void handleIonFreeWorkload(AutoLockHelperThreadState& locked);
     void handleParseWorkload(AutoLockHelperThreadState& locked);
     void handleCompressionWorkload(AutoLockHelperThreadState& locked);
     void handleGCHelperWorkload(AutoLockHelperThreadState& locked);
@@ -479,13 +486,21 @@ StartPromiseTask(JSContext* cx, UniquePtr<PromiseTask> task);
 bool
 StartOffThreadIonCompile(JSContext* cx, jit::IonBuilder* builder);
 
+/*
+ * Schedule deletion of Ion compilation data.
+ */
+bool
+StartOffThreadIonFree(jit::IonBuilder* builder, const AutoLockHelperThreadState& lock);
+
 struct AllCompilations {};
 struct ZonesInState { JSRuntime* runtime; JS::Zone::GCState state; };
+struct CompilationsUsingNursery { JSRuntime* runtime; };
 
 using CompilationSelector = mozilla::Variant<JSScript*,
                                              JSCompartment*,
                                              ZonesInState,
                                              JSRuntime*,
+                                             CompilationsUsingNursery,
                                              AllCompilations>;
 
 /*
@@ -516,6 +531,12 @@ inline void
 CancelOffThreadIonCompile(JSRuntime* runtime)
 {
     CancelOffThreadIonCompile(CompilationSelector(runtime), true);
+}
+
+inline void
+CancelOffThreadIonCompilesUsingNurseryPointers(JSRuntime* runtime)
+{
+    CancelOffThreadIonCompile(CompilationSelector(CompilationsUsingNursery{runtime}), true);
 }
 
 inline void

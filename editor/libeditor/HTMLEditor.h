@@ -8,6 +8,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/CSSEditUtils.h"
+#include "mozilla/ManualNAC.h"
 #include "mozilla/StyleSheet.h"
 #include "mozilla/TextEditor.h"
 #include "mozilla/UniquePtr.h"
@@ -21,7 +22,6 @@
 #include "nsIDocumentObserver.h"
 #include "nsIDOMElement.h"
 #include "nsIDOMEventListener.h"
-#include "nsIEditor.h"
 #include "nsIEditorMailSupport.h"
 #include "nsIEditorStyleSheets.h"
 #include "nsIEditorUtils.h"
@@ -39,6 +39,7 @@
 class nsDocumentFragment;
 class nsITransferable;
 class nsIClipboard;
+class nsIDOMMouseEvent;
 class nsILinkHandler;
 class nsTableWrapperFrame;
 class nsIDOMRange;
@@ -134,6 +135,8 @@ public:
                                             bool aSuppressTransaction) override;
   using EditorBase::RemoveAttributeOrEquivalent;
   using EditorBase::SetAttributeOrEquivalent;
+
+  nsresult MouseMove(nsIDOMMouseEvent* aMouseEvent);
 
   // nsStubMutationObserver overrides
   NS_DECL_NSIMUTATIONOBSERVER_CONTENTAPPENDED
@@ -293,8 +296,6 @@ public:
 
   NS_IMETHOD SelectAll() override;
 
-  NS_IMETHOD GetRootElement(nsIDOMElement** aRootElement) override;
-
   // nsICSSLoaderObserver
   NS_IMETHOD StyleSheetLoaded(StyleSheet* aSheet,
                               bool aWasAlternate, nsresult aStatus) override;
@@ -416,7 +417,7 @@ protected:
   virtual void RemoveEventListeners() override;
 
   bool ShouldReplaceRootElement();
-  void ResetRootElementAndEventTarget();
+  void NotifyRootChanged();
   nsresult GetBodyElement(nsIDOMHTMLElement** aBody);
 
   /**
@@ -646,9 +647,9 @@ protected:
                          dom::DocumentFragment** aFragment, bool aTrustedInput);
   void CreateListOfNodesToPaste(dom::DocumentFragment& aFragment,
                                 nsTArray<OwningNonNull<nsINode>>& outNodeList,
-                                nsINode* aStartNode,
+                                nsINode* aStartContainer,
                                 int32_t aStartOffset,
-                                nsINode* aEndNode,
+                                nsINode* aEndContainer,
                                 int32_t aEndOffset);
   nsresult CreateTagStack(nsTArray<nsString>& aTagStack,
                           nsIDOMNode* aNode);
@@ -672,7 +673,7 @@ protected:
   /**
    * Small utility routine to test if a break node is visible to user.
    */
-  bool IsVisBreak(nsINode* aNode);
+  bool IsVisibleBRElement(nsINode* aNode);
 
   /**
    * Utility routine to possibly adjust the insertion position when
@@ -855,11 +856,9 @@ protected:
   void RemoveListenerAndDeleteRef(const nsAString& aEvent,
                                   nsIDOMEventListener* aListener,
                                   bool aUseCapture,
-                                  Element* aElement,
-                                  nsIContent* aParentContent,
+                                  ManualNACPtr aElement,
                                   nsIPresShell* aShell);
-  void DeleteRefToAnonymousNode(nsIContent* aContent,
-                                nsIContent* aParentContent,
+  void DeleteRefToAnonymousNode(ManualNACPtr aContent,
                                 nsIPresShell* aShell);
 
   nsresult ShowResizersInner(nsIDOMElement *aResizedElement);
@@ -881,6 +880,8 @@ protected:
                            nsIContent* aContainer,
                            nsIContent* aChild);
 
+  void UpdateRootElement();
+
   // resizing
   bool mIsObjectResizingEnabled;
   bool mIsResizing;
@@ -900,19 +901,19 @@ protected:
   bool mIsInlineTableEditingEnabled;
 
   // resizing
-  nsCOMPtr<Element> mTopLeftHandle;
-  nsCOMPtr<Element> mTopHandle;
-  nsCOMPtr<Element> mTopRightHandle;
-  nsCOMPtr<Element> mLeftHandle;
-  nsCOMPtr<Element> mRightHandle;
-  nsCOMPtr<Element> mBottomLeftHandle;
-  nsCOMPtr<Element> mBottomHandle;
-  nsCOMPtr<Element> mBottomRightHandle;
+  ManualNACPtr mTopLeftHandle;
+  ManualNACPtr mTopHandle;
+  ManualNACPtr mTopRightHandle;
+  ManualNACPtr mLeftHandle;
+  ManualNACPtr mRightHandle;
+  ManualNACPtr mBottomLeftHandle;
+  ManualNACPtr mBottomHandle;
+  ManualNACPtr mBottomRightHandle;
 
   nsCOMPtr<Element> mActivatedHandle;
 
-  nsCOMPtr<Element> mResizingShadow;
-  nsCOMPtr<Element> mResizingInfo;
+  ManualNACPtr mResizingShadow;
+  ManualNACPtr mResizingInfo;
 
   nsCOMPtr<Element> mResizedObject;
 
@@ -943,18 +944,17 @@ protected:
 
   nsresult SetAllResizersPosition();
 
-  already_AddRefed<Element> CreateResizer(int16_t aLocation,
-                                          nsIDOMNode* aParentNode);
+  ManualNACPtr CreateResizer(int16_t aLocation, nsIDOMNode* aParentNode);
   void SetAnonymousElementPosition(int32_t aX, int32_t aY,
                                    Element* aResizer);
 
-  already_AddRefed<Element> CreateShadow(nsIDOMNode* aParentNode,
-                                         nsIDOMElement* aOriginalObject);
+  ManualNACPtr CreateShadow(nsIDOMNode* aParentNode,
+                            nsIDOMElement* aOriginalObject);
   nsresult SetShadowPosition(Element* aShadow, Element* aOriginalObject,
                              int32_t aOriginalObjectX,
                              int32_t aOriginalObjectY);
 
-  already_AddRefed<Element> CreateResizingInfo(nsIDOMNode* aParentNode);
+  ManualNACPtr CreateResizingInfo(nsIDOMNode* aParentNode);
   nsresult SetResizingInfoPosition(int32_t aX, int32_t aY,
                                    int32_t aW, int32_t aH);
 
@@ -983,12 +983,12 @@ protected:
   int32_t mPositionedObjectBorderTop;
 
   nsCOMPtr<Element> mAbsolutelyPositionedObject;
-  nsCOMPtr<Element> mGrabber;
-  nsCOMPtr<Element> mPositioningShadow;
+  ManualNACPtr mGrabber;
+  ManualNACPtr mPositioningShadow;
 
   int32_t mGridSize;
 
-  already_AddRefed<Element> CreateGrabber(nsINode* aParentNode);
+  ManualNACPtr CreateGrabber(nsINode* aParentNode);
   nsresult StartMoving(nsIDOMElement* aHandle);
   nsresult SetFinalPosition(int32_t aX, int32_t aY);
   void AddPositioningOffset(int32_t& aX, int32_t& aY);
@@ -1001,13 +1001,13 @@ protected:
   // inline table editing
   nsCOMPtr<nsIDOMElement> mInlineEditedCell;
 
-  RefPtr<Element> mAddColumnBeforeButton;
-  RefPtr<Element> mRemoveColumnButton;
-  RefPtr<Element> mAddColumnAfterButton;
+  ManualNACPtr mAddColumnBeforeButton;
+  ManualNACPtr mRemoveColumnButton;
+  ManualNACPtr mAddColumnAfterButton;
 
-  RefPtr<Element> mAddRowBeforeButton;
-  RefPtr<Element> mRemoveRowButton;
-  RefPtr<Element> mAddRowAfterButton;
+  ManualNACPtr mAddRowBeforeButton;
+  ManualNACPtr mRemoveRowButton;
+  ManualNACPtr mAddRowAfterButton;
 
   void AddMouseClickListener(Element* aElement);
   void RemoveMouseClickListener(Element* aElement);
@@ -1053,11 +1053,10 @@ private:
    *                              is to be added to the created anonymous
    *                              element
    */
-  already_AddRefed<Element> CreateAnonymousElement(
-                              nsIAtom* aTag,
-                              nsIDOMNode* aParentNode,
-                              const nsAString& aAnonClass,
-                              bool aIsCreatedHidden);
+  ManualNACPtr CreateAnonymousElement(nsIAtom* aTag,
+                                      nsIDOMNode* aParentNode,
+                                      const nsAString& aAnonClass,
+                                      bool aIsCreatedHidden);
 };
 
 } // namespace mozilla

@@ -115,9 +115,6 @@ NS_INTERFACE_TABLE_TAIL_INHERITING(nsGenericHTMLFormElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLObjectElement)
 
-// nsIConstraintValidation
-NS_IMPL_NSICONSTRAINTVALIDATION(HTMLObjectElement)
-
 #ifdef XP_MACOSX
 
 static nsIWidget* GetWidget(Element* aElement)
@@ -131,7 +128,9 @@ class PluginFocusSetter : public Runnable
 {
 public:
   PluginFocusSetter(nsIWidget* aWidget, Element* aElement)
-  : mWidget(aWidget), mElement(aElement)
+    : Runnable("PluginFocusSetter")
+    , mWidget(aWidget)
+    , mElement(aElement)
   {
   }
 
@@ -269,7 +268,8 @@ HTMLObjectElement::BindToTree(nsIDocument *aDocument,
   // If we already have all the children, start the load.
   if (mIsDoneAddingChildren && !pluginDoc) {
     void (HTMLObjectElement::*start)() = &HTMLObjectElement::StartObjectLoad;
-    nsContentUtils::AddScriptRunner(NewRunnableMethod(this, start));
+    nsContentUtils::AddScriptRunner(
+      NewRunnableMethod("dom::HTMLObjectElement::BindToTree", this, start));
   }
 
   return NS_OK;
@@ -358,7 +358,7 @@ HTMLObjectElement::IsHTMLFocusable(bool aWithMouse,
   nsIDocument *doc = GetComposedDoc();
   if (!doc || doc->HasFlag(NODE_IS_EDITABLE)) {
     if (aTabIndex) {
-      GetTabIndex(aTabIndex);
+      *aTabIndex = TabIndex();
     }
 
     *aIsFocusable = false;
@@ -374,7 +374,7 @@ HTMLObjectElement::IsHTMLFocusable(bool aWithMouse,
     // Has plugin content: let the plugin decide what to do in terms of
     // internal focus from mouse clicks
     if (aTabIndex) {
-      GetTabIndex(aTabIndex);
+      *aTabIndex = TabIndex();
     }
 
     *aIsFocusable = true;

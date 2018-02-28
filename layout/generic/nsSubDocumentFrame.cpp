@@ -84,10 +84,14 @@ NS_QUERYFRAME_TAIL_INHERITING(nsAtomicContainerFrame)
 class AsyncFrameInit : public Runnable
 {
 public:
-  explicit AsyncFrameInit(nsIFrame* aFrame) : mFrame(aFrame) {}
+  explicit AsyncFrameInit(nsIFrame* aFrame)
+    : mozilla::Runnable("AsyncFrameInit")
+    , mFrame(aFrame)
+  {
+  }
   NS_IMETHOD Run() override
   {
-    PROFILER_LABEL("mozilla", "AsyncFrameInit::Run", js::ProfileEntry::Category::OTHER);
+    AUTO_PROFILER_LABEL("AsyncFrameInit::Run", OTHER);
     if (mFrame.IsAlive()) {
       static_cast<nsSubDocumentFrame*>(mFrame.GetFrame())->ShowViewer();
     }
@@ -644,7 +648,7 @@ nsresult nsSubDocumentFrame::GetFrameName(nsAString& aResult) const
 #endif
 
 /* virtual */ nscoord
-nsSubDocumentFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsSubDocumentFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -660,7 +664,7 @@ nsSubDocumentFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-nsSubDocumentFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsSubDocumentFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -697,7 +701,7 @@ nsSubDocumentFrame::GetIntrinsicRatio()
 
 /* virtual */
 LogicalSize
-nsSubDocumentFrame::ComputeAutoSize(nsRenderingContext* aRenderingContext,
+nsSubDocumentFrame::ComputeAutoSize(gfxContext*         aRenderingContext,
                                     WritingMode         aWM,
                                     const LogicalSize&  aCBSize,
                                     nscoord             aAvailableISize,
@@ -720,7 +724,7 @@ nsSubDocumentFrame::ComputeAutoSize(nsRenderingContext* aRenderingContext,
 
 /* virtual */
 LogicalSize
-nsSubDocumentFrame::ComputeSize(nsRenderingContext* aRenderingContext,
+nsSubDocumentFrame::ComputeSize(gfxContext*         aRenderingContext,
                                 WritingMode         aWM,
                                 const LogicalSize&  aCBSize,
                                 nscoord             aAvailableISize,
@@ -854,7 +858,7 @@ nsSubDocumentFrame::AttributeChanged(int32_t aNameSpaceID,
   if (aNameSpaceID != kNameSpaceID_None) {
     return NS_OK;
   }
-  
+
   // If the noResize attribute changes, dis/allow frame to be resized
   if (aAttribute == nsGkAtoms::noresize) {
     // Note that we're not doing content type checks, but that's ok -- if
@@ -908,10 +912,11 @@ public:
                nsFrameLoader* aFrameLoader,
                nsIPresShell* aPresShell,
                bool aHideViewerIfFrameless)
-    : mFrameElement(aFrameElement),
-      mFrameLoader(aFrameLoader),
-      mPresShell(aPresShell),
-      mHideViewerIfFrameless(aHideViewerIfFrameless)
+    : mozilla::Runnable("nsHideViewer")
+    , mFrameElement(aFrameElement)
+    , mFrameLoader(aFrameLoader)
+    , mPresShell(aPresShell)
+    , mHideViewerIfFrameless(aHideViewerIfFrameless)
   {
     NS_ASSERTION(mFrameElement, "Must have a frame element");
     NS_ASSERTION(mFrameLoader, "Must have a frame loader");

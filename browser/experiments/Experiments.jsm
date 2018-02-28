@@ -12,10 +12,8 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/AsyncShutdown.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
@@ -39,6 +37,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gCrashReporter",
 
 const FILE_CACHE                = "experiments.json";
 const EXPERIMENTS_CHANGED_TOPIC = "experiments-changed";
+const PREF_CHANGED_TOPIC        = "nsPref:changed";
 const MANIFEST_VERSION          = 1;
 const CACHE_VERSION             = 1;
 
@@ -53,8 +52,7 @@ const PREF_LOGGING_DUMP         = PREF_LOGGING + ".dump"; // experiments.logging
 const PREF_MANIFEST_URI         = "manifest.uri"; // experiments.logging.manifest.uri
 const PREF_FORCE_SAMPLE         = "force-sample-value"; // experiments.force-sample-value
 
-const PREF_BRANCH_TELEMETRY     = "toolkit.telemetry.";
-const PREF_TELEMETRY_ENABLED    = "enabled";
+const PREF_TELEMETRY_ENABLED      = "toolkit.telemetry.enabled";
 
 const URI_EXTENSION_STRINGS     = "chrome://mozapps/locale/extensions/extensions.properties";
 const STRING_TYPE_NAME          = "type.%ID%.name";
@@ -93,8 +91,7 @@ const TELEMETRY_LOG = {
 };
 XPCOMUtils.defineConstant(this, "TELEMETRY_LOG", TELEMETRY_LOG);
 
-const gPrefs = new Preferences(PREF_BRANCH);
-const gPrefsTelemetry = new Preferences(PREF_BRANCH_TELEMETRY);
+const gPrefs = Services.prefs.getBranch(PREF_BRANCH);
 var gExperimentsEnabled = false;
 var gAddonProvider = null;
 var gExperiments = null;
@@ -120,9 +117,9 @@ function configureLogging() {
     gLogger = Log.repository.getLogger("Browser.Experiments");
     gLogger.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
   }
-  gLogger.level = gPrefs.get(PREF_LOGGING_LEVEL, Log.Level.Warn);
+  gLogger.level = gPrefs.getIntPref(PREF_LOGGING_LEVEL, Log.Level.Warn);
 
-  let logDumping = gPrefs.get(PREF_LOGGING_DUMP, false);
+  let logDumping = gPrefs.getBoolPref(PREF_LOGGING_DUMP, false);
   if (logDumping != gLogDumping) {
     if (logDumping) {
       gLogAppenderDump = new Log.DumpAppender(new Log.BasicFormatter());
@@ -165,14 +162,30 @@ function addonInstallForURL(url, hash) {
 // Returns a promise that is resolved with an Array<Addon> of the installed
 // experiment addons.
 function installedExperimentAddons() {
-  return AddonManager.getAddonsByTypes(["experiment"]).then(addons => {
+  return AddonManager.getActiveAddons(["experiment"]).then(addons => {
     return addons.filter(a => !a.appDisabled);
   });
 }
 
 // Takes an Array<Addon> and returns a promise that is resolved when the
 // addons are uninstalled.
-function uninstallAddons(addons) {
+async function uninstallAddons(addons) {
+  if (!AddonManagerPrivate.isDBLoaded()) {
+    await new Promise(resolve => {
+      Services.obs.addObserver({
+        observe(subject, topic, data) {
+          Services.obs.removeObserver(this, "xpi-database-loaded");
+          resolve();
+        },
+      }, "xpi-database-loaded");
+    });
+
+    // This function was called during startup so the addons that were
+    // passed in were partial addon objects.  Now that the full addons
+    // database is loaded, get proper Addon objects.
+    addons = await AddonManager.getAddonsByIDs(addons.map(a => a.id));
+  }
+
   let ids = new Set(addons.map(addon => addon.id));
   return new Promise(resolve => {
 
@@ -192,10 +205,6 @@ function uninstallAddons(addons) {
     AddonManager.addAddonListener(listener);
 
     for (let addon of addons) {
-      // Disabling the add-on before uninstalling is necessary to cause tests to
-      // pass. This might be indicative of a bug in XPIProvider.
-      // TODO follow up in bug 992396.
-      addon.userDisabled = true;
       addon.uninstall();
     }
 
@@ -240,7 +249,7 @@ Experiments.Policy.prototype = {
   },
 
   random() {
-    let pref = gPrefs.get(PREF_FORCE_SAMPLE);
+    let pref = gPrefs.getStringPref(PREF_FORCE_SAMPLE, undefined);
     if (pref !== undefined) {
       let val = Number.parseFloat(pref);
       this._log.debug("random sample forced: " + val);
@@ -361,7 +370,7 @@ Experiments.Experiments = function(policy = new Experiments.Policy()) {
 };
 
 Experiments.Experiments.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsITimerCallback, Ci.nsIObserver]),
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsITimerCallback, Ci.nsIObserver, Ci.nsISupportsWeakReference]),
 
   /**
    * `true` if the experiments manager is currently setup (has been fully initialized
@@ -371,18 +380,32 @@ Experiments.Experiments.prototype = {
     return !this._shutdown;
   },
 
+  observe(subject, topic, data) {
+    switch (topic) {
+      case PREF_CHANGED_TOPIC:
+        if (data == PREF_BRANCH + PREF_MANIFEST_URI) {
+          this.updateManifest();
+        } else if (data == PREF_BRANCH + PREF_ENABLED) {
+          this._toggleExperimentsEnabled(gPrefs.getBoolPref(PREF_ENABLED, false));
+        } else if (data == PREF_TELEMETRY_ENABLED) {
+          this._telemetryStatusChanged();
+        }
+        break;
+    }
+  },
+
   init() {
     this._shutdown = false;
     configureLogging();
 
-    gExperimentsEnabled = gPrefs.get(PREF_ENABLED, false) && TelemetryUtils.isTelemetryEnabled;
+    gExperimentsEnabled = gPrefs.getBoolPref(PREF_ENABLED, false) && TelemetryUtils.isTelemetryEnabled;
     this._log.trace("enabled=" + gExperimentsEnabled + ", " + this.enabled);
 
-    gPrefs.observe(PREF_LOGGING, configureLogging);
-    gPrefs.observe(PREF_MANIFEST_URI, this.updateManifest, this);
-    gPrefs.observe(PREF_ENABLED, this._toggleExperimentsEnabled, this);
+    Services.prefs.addObserver(PREF_BRANCH + PREF_LOGGING, configureLogging);
+    Services.prefs.addObserver(PREF_BRANCH + PREF_MANIFEST_URI, this, true);
+    Services.prefs.addObserver(PREF_BRANCH + PREF_ENABLED, this, true);
 
-    gPrefsTelemetry.observe(PREF_TELEMETRY_ENABLED, this._telemetryStatusChanged, this);
+    Services.prefs.addObserver(PREF_TELEMETRY_ENABLED, this, true);
 
     AddonManager.shutdown.addBlocker("Experiments.jsm shutdown",
       this.uninit.bind(this),
@@ -427,11 +450,11 @@ Experiments.Experiments.prototype = {
       this._log.trace("uninit: no previous shutdown");
       this._unregisterWithAddonManager();
 
-      gPrefs.ignore(PREF_LOGGING, configureLogging);
-      gPrefs.ignore(PREF_MANIFEST_URI, this.updateManifest, this);
-      gPrefs.ignore(PREF_ENABLED, this._toggleExperimentsEnabled, this);
+      Services.prefs.removeObserver(PREF_BRANCH + PREF_LOGGING, configureLogging);
+      Services.prefs.removeObserver(PREF_BRANCH + PREF_MANIFEST_URI, this);
+      Services.prefs.removeObserver(PREF_BRANCH + PREF_ENABLED, this);
 
-      gPrefsTelemetry.ignore(PREF_TELEMETRY_ENABLED, this._telemetryStatusChanged, this);
+      Services.prefs.removeObserver(PREF_TELEMETRY_ENABLED, this);
 
       if (this._timer) {
         this._timer.clear();
@@ -570,7 +593,7 @@ Experiments.Experiments.prototype = {
    */
   set enabled(enabled) {
     this._log.trace("set enabled(" + enabled + ")");
-    gPrefs.set(PREF_ENABLED, enabled);
+    gPrefs.setBoolPref(PREF_ENABLED, enabled);
   },
 
   async _toggleExperimentsEnabled(enabled) {
@@ -593,7 +616,7 @@ Experiments.Experiments.prototype = {
   },
 
   _telemetryStatusChanged() {
-    this._toggleExperimentsEnabled(gPrefs.get(PREF_ENABLED, false));
+    this._toggleExperimentsEnabled(gPrefs.getBoolPref(PREF_ENABLED, false));
   },
 
   /**
@@ -1212,7 +1235,7 @@ Experiments.Experiments.prototype = {
 
     if (!activeExperiment) {
       // Avoid this pref staying out of sync if there were e.g. crashes.
-      gPrefs.set(PREF_ACTIVE_EXPERIMENT, false);
+      gPrefs.setBoolPref(PREF_ACTIVE_EXPERIMENT, false);
     }
 
     // Ensure the active experiment is in the proper state. This may install,
@@ -1292,7 +1315,7 @@ Experiments.Experiments.prototype = {
       }
     }
 
-    gPrefs.set(PREF_ACTIVE_EXPERIMENT, activeExperiment != null);
+    gPrefs.setBoolPref(PREF_ACTIVE_EXPERIMENT, activeExperiment != null);
 
     if (activeChanged || this._firstEvaluate) {
       Services.obs.notifyObservers(null, EXPERIMENTS_CHANGED_TOPIC);
@@ -1750,115 +1773,113 @@ Experiments.ExperimentEntry.prototype = {
    *
    * @return Promise<> Resolved when the operation is complete.
    */
-  async start() {
+  start() {
     this._log.trace("start() for " + this.id);
 
     this._enabled = true;
-    return await this.reconcileAddonState();
+    return this.reconcileAddonState();
   },
 
   // Async install of the addon for this experiment, part of the start task above.
   async _installAddon() {
-    let deferred = Promise.defer();
-
     let hash = this._policy.ignoreHashes ? null : this._manifestData.xpiHash;
 
     let install = await addonInstallForURL(this._manifestData.xpiURL, hash);
     gActiveInstallURLs.add(install.sourceURI.spec);
 
-    let failureHandler = (failureInstall, handler) => {
-      let message = "AddonInstall " + handler + " for " + this.id + ", state=" +
-                   (failureInstall.state || "?") + ", error=" + failureInstall.error;
-      this._log.error("_installAddon() - " + message);
-      this._failedStart = true;
-      gActiveInstallURLs.delete(failureInstall.sourceURI.spec);
-
-      TelemetryLog.log(TELEMETRY_LOG.ACTIVATION_KEY,
-                      [TELEMETRY_LOG.ACTIVATION.INSTALL_FAILURE, this.id]);
-
-      deferred.reject(new Error(message));
-    };
-
-    let listener = {
-      _expectedID: null,
-
-      onDownloadEnded: downloadEndedInstall => {
-        this._log.trace("_installAddon() - onDownloadEnded for " + this.id);
-
-        if (downloadEndedInstall.existingAddon) {
-          this._log.warn("_installAddon() - onDownloadEnded, addon already installed");
-        }
-
-        if (downloadEndedInstall.addon.type !== "experiment") {
-          this._log.error("_installAddon() - onDownloadEnded, wrong addon type");
-          downloadEndedInstall.cancel();
-        }
-      },
-
-      onInstallStarted: installStartedInstall => {
-        this._log.trace("_installAddon() - onInstallStarted for " + this.id);
-
-        if (installStartedInstall.existingAddon) {
-          this._log.warn("_installAddon() - onInstallStarted, addon already installed");
-        }
-
-        if (installStartedInstall.addon.type !== "experiment") {
-          this._log.error("_installAddon() - onInstallStarted, wrong addon type");
-          return false;
-        }
-        return undefined;
-      },
-
-      onInstallEnded: installEndedInstall => {
-        this._log.trace("_installAddon() - install ended for " + this.id);
-        gActiveInstallURLs.delete(installEndedInstall.sourceURI.spec);
-
-        this._lastChangedDate = this._policy.now();
-        this._startDate = this._policy.now();
-        this._enabled = true;
+    return new Promise((resolve, reject) => {
+      let failureHandler = (failureInstall, handler) => {
+        let message = "AddonInstall " + handler + " for " + this.id + ", state=" +
+                     (failureInstall.state || "?") + ", error=" + failureInstall.error;
+        this._log.error("_installAddon() - " + message);
+        this._failedStart = true;
+        gActiveInstallURLs.delete(failureInstall.sourceURI.spec);
 
         TelemetryLog.log(TELEMETRY_LOG.ACTIVATION_KEY,
-                       [TELEMETRY_LOG.ACTIVATION.ACTIVATED, this.id]);
+                        [TELEMETRY_LOG.ACTIVATION.INSTALL_FAILURE, this.id]);
 
-        let addon = installEndedInstall.addon;
-        this._name = addon.name;
-        this._addonId = addon.id;
-        this._description = addon.description || "";
-        this._homepageURL = addon.homepageURL || "";
+        reject(new Error(message));
+      };
 
-        // Experiment add-ons default to userDisabled=true. Enable if needed.
-        if (addon.userDisabled) {
-          this._log.trace("Add-on is disabled. Enabling.");
-          listener._expectedID = addon.id;
-          AddonManager.addAddonListener(listener);
-          addon.userDisabled = false;
-        } else {
-          this._log.trace("Add-on is enabled. start() completed.");
-          deferred.resolve();
-        }
-      },
+      let listener = {
+        _expectedID: null,
 
-      onEnabled: addon => {
-        this._log.info("onEnabled() for " + addon.id);
+        onDownloadEnded: downloadEndedInstall => {
+          this._log.trace("_installAddon() - onDownloadEnded for " + this.id);
 
-        if (addon.id != listener._expectedID) {
-          return;
-        }
+          if (downloadEndedInstall.existingAddon) {
+            this._log.warn("_installAddon() - onDownloadEnded, addon already installed");
+          }
 
-        AddonManager.removeAddonListener(listener);
-        deferred.resolve();
-      },
-    };
+          if (downloadEndedInstall.addon.type !== "experiment") {
+            this._log.error("_installAddon() - onDownloadEnded, wrong addon type");
+            downloadEndedInstall.cancel();
+          }
+        },
 
-    ["onDownloadCancelled", "onDownloadFailed", "onInstallCancelled", "onInstallFailed"]
-      .forEach(what => {
-        listener[what] = eventInstall => failureHandler(eventInstall, what)
-      });
+        onInstallStarted: installStartedInstall => {
+          this._log.trace("_installAddon() - onInstallStarted for " + this.id);
 
-    install.addListener(listener);
-    install.install();
+          if (installStartedInstall.existingAddon) {
+            this._log.warn("_installAddon() - onInstallStarted, addon already installed");
+          }
 
-    return await deferred.promise;
+          if (installStartedInstall.addon.type !== "experiment") {
+            this._log.error("_installAddon() - onInstallStarted, wrong addon type");
+            return false;
+          }
+          return undefined;
+        },
+
+        onInstallEnded: installEndedInstall => {
+          this._log.trace("_installAddon() - install ended for " + this.id);
+          gActiveInstallURLs.delete(installEndedInstall.sourceURI.spec);
+
+          this._lastChangedDate = this._policy.now();
+          this._startDate = this._policy.now();
+          this._enabled = true;
+
+          TelemetryLog.log(TELEMETRY_LOG.ACTIVATION_KEY,
+                         [TELEMETRY_LOG.ACTIVATION.ACTIVATED, this.id]);
+
+          let addon = installEndedInstall.addon;
+          this._name = addon.name;
+          this._addonId = addon.id;
+          this._description = addon.description || "";
+          this._homepageURL = addon.homepageURL || "";
+
+          // Experiment add-ons default to userDisabled=true. Enable if needed.
+          if (addon.userDisabled) {
+            this._log.trace("Add-on is disabled. Enabling.");
+            listener._expectedID = addon.id;
+            AddonManager.addAddonListener(listener);
+            addon.userDisabled = false;
+          } else {
+            this._log.trace("Add-on is enabled. start() completed.");
+            resolve();
+          }
+        },
+
+        onEnabled: addon => {
+          this._log.info("onEnabled() for " + addon.id);
+
+          if (addon.id != listener._expectedID) {
+            return;
+          }
+
+          AddonManager.removeAddonListener(listener);
+          resolve();
+        },
+      };
+
+      ["onDownloadCancelled", "onDownloadFailed", "onInstallCancelled", "onInstallFailed"]
+        .forEach(what => {
+          listener[what] = eventInstall => failureHandler(eventInstall, what)
+        });
+
+      install.addListener(listener);
+      install.install();
+    });
   },
 
   /**

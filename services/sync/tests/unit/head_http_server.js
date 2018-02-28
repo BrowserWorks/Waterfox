@@ -65,7 +65,7 @@ function httpd_basic_auth_handler(body, metadata, response) {
  */
 function ServerWBO(id, initialPayload, modified) {
   if (!id) {
-    throw "No ID for ServerWBO!";
+    throw new Error("No ID for ServerWBO!");
   }
   this.id = id;
   if (!initialPayload) {
@@ -296,7 +296,7 @@ ServerCollection.prototype = {
     return c;
   },
 
-  get(options) {
+  get(options, request) {
     let result;
     if (options.full) {
       let data = [];
@@ -317,8 +317,13 @@ ServerCollection.prototype = {
       } else if (start) {
         data = data.slice(start);
       }
-      // Our implementation of application/newlines.
-      result = data.join("\n") + "\n";
+
+      if (request && request.getHeader("accept") == "application/newlines") {
+        this._log.error("Error: client requesting application/newlines content");
+        throw new Error("This server should not serve application/newlines content");
+      } else {
+        result = JSON.stringify(data);
+      }
 
       // Use options as a backchannel to report count.
       options.recordCount = data.length;
@@ -530,7 +535,7 @@ function track_collections_helper() {
         body = JSON.stringify(collections);
         break;
       default:
-        throw "Non-GET on info_collections.";
+        throw new Error("Non-GET on info_collections.");
     }
 
     response.setHeader("Content-Type", "application/json");
@@ -1025,7 +1030,7 @@ SyncServer.prototype = {
           }
           return coll.collectionHandler(req, resp);
         default:
-          throw "Request method " + req.method + " not implemented.";
+          throw new Error("Request method " + req.method + " not implemented.");
       }
     },
 

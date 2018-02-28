@@ -21,6 +21,7 @@ struct D3D11DeviceStatus
   bool textureSharingWorks;
   uint32_t featureLevel;
   DxgiAdapterDesc adapter;
+  int32_t sequenceNumber;
 };
 
 struct DevicePrefs
@@ -28,6 +29,7 @@ struct DevicePrefs
   FeatureStatus hwCompositing;
   FeatureStatus d3d11Compositing;
   FeatureStatus oglCompositing;
+  FeatureStatus advancedLayers;
   FeatureStatus useD2D1;
 };
 
@@ -63,6 +65,7 @@ struct GPUDeviceData
 {
   FeatureChange d3d11Compositing;
   FeatureChange oglCompositing;
+  FeatureChange advancedLayers;
   GPUDeviceStatus gpuDevice;
 };
 

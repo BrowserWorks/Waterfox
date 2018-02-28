@@ -16,8 +16,8 @@ var statsExpectedByType = {
       "packetsReceived", "packetsLost", "bytesReceived", "jitter",],
     optional: ["roundTripTime", "remoteId", "nackCount",],
     localVideoOnly: ["discardedPackets", "framerateStdDev", "framerateMean",
-      "bitrateMean", "bitrateStdDev", "firCount", "pliCount",],
-    unimplemented: ["mediaTrackId", "transportId", "codecId", "framesDecoded",
+      "bitrateMean", "bitrateStdDev", "firCount", "pliCount", "framesDecoded",],
+    unimplemented: ["mediaTrackId", "transportId", "codecId",
       "packetsDiscarded", "associateStatsId",
       "sliCount", "qpSum", "packetsRepaired", "fractionLost",
       "burstPacketsLost", "burstLossCount", "burstDiscardCount",
@@ -41,7 +41,20 @@ var statsExpectedByType = {
   "data-channel": { skip: true },
   "track": { skip: true },
   "transport": { skip: true },
-  "candidate-pair": { skip : true },
+  "candidate-pair": {
+    expected: ["id", "timestamp", "type",
+      "transportId", "localCandidateId", "remoteCandidateId", "state",
+      "priority", "nominated", "writable", "readable",
+      "bytesSent", "bytesReceived",
+      "lastPacketSentTimestamp", "lastPacketReceivedTimestamp",],
+    optional: ["selected",],
+    unimplemented: ["totalRoundTripTime", "currentRoundTripTime",
+      "availableOutgoingBitrate", "availableIncomingBitrate",
+      "requestsReceived", "requestsSent", "responsesReceived",
+      "responsesSent", "retransmissionsReceived", "retransmissionsSent",
+      "consentRequestsSent",],
+    deprecated: [],
+  },
   "local-candidate": { skip: true },
   "remote-candidate": { skip: true },
   "certificate": { skip: true },
@@ -190,8 +203,10 @@ var pedanticChecks = report => {
         stat.type + ".packetsLost is a sane number for a short test. value="
         + stat.packetsLost);
 
+      // This should be much lower for audio, TODO: Bug 1330575
+      let expectedJitter = stat.mediaType == "video" ? 0.5 : 1;
       // jitter
-      ok(stat.jitter < 10, // This should be much lower, TODO: Bug 1330575
+      ok(stat.jitter < expectedJitter,
         stat.type + ".jitter is sane number for a local only test. value="
         + stat.jitter);
 
@@ -243,7 +258,10 @@ var pedanticChecks = report => {
         ok(stat.discardedPackets < 100, stat.type
           + ".discardedPackets is a sane number for a short test. value="
           + stat.discardedPackets);
-
+        // framesDecoded
+        ok(stat.framesDecoded > 0 && stat.framesDecoded < 1000000, stat.type
+          + ".framesDecoded is a sane number for a short test. value="
+          + stat.framesDecoded);
         // bitrateMean
         // special exception, TODO: Bug 1341533
         if (stat.bitrateMean !== undefined) {
@@ -360,6 +378,104 @@ var pedanticChecks = report => {
           + ".framesEncoded is a sane number for a short test. value="
           + stat.framesEncoded);
       }
+    } else if (stat.type == "candidate-pair") {
+      info("candidate-pair is: " + JSON.stringify(stat));
+      //
+      // Required fields
+      //
+
+      // transportId
+      ok(stat.transportId,
+        stat.type + ".transportId has a value. value="
+        + stat.transportId);
+
+      // localCandidateId
+      ok(stat.localCandidateId,
+        stat.type + ".localCandidateId has a value. value="
+        + stat.localCandidateId);
+
+      // remoteCandidateId
+      ok(stat.remoteCandidateId,
+        stat.type + ".remoteCandidateId has a value. value="
+        + stat.remoteCandidateId);
+
+      // priority
+      ok(stat.priority,
+        stat.type + ".priority has a value. value="
+        + stat.priority);
+
+      // readable
+      ok(stat.readable,
+        stat.type + ".readable is true. value="
+        + stat.readable);
+
+      // writable
+      ok(stat.writable,
+        stat.type + ".writable is true. value="
+        + stat.writable);
+
+      // state
+      if (stat.state == "succeeded" &&
+          stat.selected !== undefined &&
+          stat.selected) {
+        info("candidate-pair state is succeeded and selected is true");
+        // nominated
+        ok(stat.nominated,
+          stat.type + ".nominated is true. value="
+          + stat.nominated);
+
+        // bytesSent
+        ok(stat.bytesSent > 5000,
+          stat.type + ".bytesSent is a sane number (>5,000) for a short test. value="
+          + stat.bytesSent);
+
+        // bytesReceived
+        ok(stat.bytesReceived > 5000,
+          stat.type + ".bytesReceived is a sane number (>5,000) for a short test. value="
+          + stat.bytesReceived);
+
+        // lastPacketSentTimestamp
+        ok(stat.lastPacketSentTimestamp,
+          stat.type + ".lastPacketSentTimestamp has a value. value="
+          + stat.lastPacketSentTimestamp);
+
+        // lastPacketReceivedTimestamp
+        ok(stat.lastPacketReceivedTimestamp,
+          stat.type + ".lastPacketReceivedTimestamp has a value. value="
+          + stat.lastPacketReceivedTimestamp);
+
+      } else {
+        info("candidate-pair is _not_ both state == succeeded and selected");
+        // nominated
+        ok(stat.nominated !== undefined,
+          stat.type + ".nominated exists. value="
+          + stat.nominated);
+        ok(stat.bytesSent !== undefined,
+          stat.type + ".bytesSent exists. value="
+          + stat.bytesSent);
+        ok(stat.bytesReceived !== undefined,
+          stat.type + ".bytesReceived exists. value="
+          + stat.bytesReceived);
+        ok(stat.lastPacketSentTimestamp !== undefined,
+          stat.type + ".lastPacketSentTimestamp exists. value="
+          + stat.lastPacketSentTimestamp);
+        ok(stat.lastPacketReceivedTimestamp !== undefined,
+          stat.type + ".lastPacketReceivedTimestamp exists. value="
+          + stat.lastPacketReceivedTimestamp);
+      }
+
+
+      //
+      // Optional fields
+      //
+      // selected
+      ok(stat.selected === undefined ||
+         ((stat.state == "succeeded" && stat.selected) ||
+          !stat.selected),
+        stat.type + ".selected is undefined, true when state is succeeded, "
+        + "or false. value="
+        + stat.selected);
+
     }
 
     //

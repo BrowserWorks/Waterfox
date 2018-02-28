@@ -10,14 +10,12 @@ from taskgraph.transforms.job import run_job_using
 from taskgraph.util.schema import Schema
 from taskgraph.transforms.tests import (
     test_description_schema,
-    get_firefox_version,
     normpath
 )
 from taskgraph.transforms.job.common import (
     support_vcs_checkout,
 )
 import os
-import re
 
 BUILDER_NAME_PREFIX = {
     'linux64-pgo': 'Ubuntu VM 12.04 x64',
@@ -27,13 +25,50 @@ BUILDER_NAME_PREFIX = {
     'linux64-ccov': 'Ubuntu Code Coverage VM 12.04 x64',
     'linux64-jsdcov': 'Ubuntu Code Coverage VM 12.04 x64',
     'linux64-stylo': 'Ubuntu VM 12.04 x64',
+    'linux64-stylo-sequential': 'Ubuntu VM 12.04 x64',
+    'linux64-devedition': 'Ubuntu VM 12.04 x64',
     'linux64-devedition-nightly': 'Ubuntu VM 12.04 x64',
     'macosx64': 'Rev7 MacOSX Yosemite 10.10.5',
     'macosx64-devedition': 'Rev7 MacOSX Yosemite 10.10.5 DevEdition',
-    'android-4.3-arm7-api-15': 'Android 4.3 armv7 API 15+',
+    'android-4.3-arm7-api-16': 'Android 4.3 armv7 api-16+',
     'android-4.2-x86': 'Android 4.2 x86 Emulator',
-    'android-4.3-arm7-api-15-gradle': 'Android 4.3 armv7 API 15+',
+    'android-4.3-arm7-api-16-gradle': 'Android 4.3 armv7 api-16+',
+    'windows10-64': 'Windows 10 64-bit',
+    'windows10-64-nightly': 'Windows 10 64-bit',
+    'windows10-64-pgo': 'Windows 10 64-bit',
+    'windows10-64-asan': 'Windows 10 64-bit',
+    'windows10-64-stylo': 'Windows 10 64-bit',
+    'windows7-32': 'Windows 7 32-bit',
+    ('windows7-32', 'virtual-with-gpu'): 'Windows 7 VM-GFX 32-bit',
+    'windows7-32-nightly': 'Windows 7 32-bit',
+    'windows7-32-devedition': 'Windows 7 32-bit DevEdition',
+    'windows7-32-pgo': 'Windows 7 32-bit',
+    'windows7-32-stylo': 'Windows 7 32-bit',
+    'windows8-64': 'Windows 8 64-bit',
+    'windows8-64-nightly': 'Windows 8 64-bit',
+    'windows8-64-devedition': 'Windows 8 64-bit DevEdition',
+    'windows8-64-pgo': 'Windows 8 64-bit',
 }
+
+VARIANTS = [
+    'nightly',
+    'devedition',
+    'pgo',
+    'asan',
+    'stylo',
+    'stylo-sequential',
+    'qr',
+    'ccov',
+    'jsdcov',
+]
+
+
+def get_variant(test_platform):
+    for v in VARIANTS:
+        if '-{}/'.format(v) in test_platform:
+            return v
+    return ''
+
 
 test_description_schema = {str(k): v for k, v in test_description_schema.schema.iteritems()}
 
@@ -45,16 +80,7 @@ mozharness_test_run_schema = Schema({
 
 def test_packages_url(taskdesc):
     """Account for different platforms that name their test packages differently"""
-    build_platform = taskdesc['attributes']['build_platform']
-    build_type = taskdesc['attributes']['build_type']
-
-    if build_platform.startswith('macosx64') and build_type == 'opt':
-        target = 'firefox-{}.en-US.{}'.format(get_firefox_version(), 'mac')
-    else:
-        target = 'target'
-
-    return get_artifact_url(
-        '<build>', 'public/build/{}.test_packages.json'.format(target))
+    return get_artifact_url('<build>', 'public/build/target.test_packages.json')
 
 
 @run_job_using('docker-engine', 'mozharness-test', schema=mozharness_test_run_schema)
@@ -213,7 +239,8 @@ def mozharness_test_on_generic_worker(config, job, taskdesc):
             'type': 'directory'
         })
 
-    installer_url = get_artifact_url('<build>', mozharness['build-artifact-name'])
+    upstream_task = '<build-signing>' if mozharness['requires-signed-builds'] else '<build>'
+    installer_url = get_artifact_url(upstream_task, mozharness['build-artifact-name'])
 
     taskdesc['scopes'].extend(
         ['generic-worker:os-group:{}'.format(group) for group in test['os-groups']])
@@ -290,6 +317,9 @@ def mozharness_test_on_generic_worker(config, job, taskdesc):
             for i, c in enumerate(mh_command):
                 if isinstance(c, basestring) and c.startswith('--test-suite'):
                     mh_command[i] += suffix
+
+    if config.params['project'] == 'try':
+        env['TRY_COMMIT_MSG'] = config.params['message']
 
     worker['mounts'] = [{
         'directory': '.',
@@ -401,7 +431,8 @@ def mozharness_test_buildbot_bridge(config, job, taskdesc):
     worker = taskdesc['worker']
 
     branch = config.params['project']
-    platform, build_type = test['build-platform'].split('/')
+    build_platform, build_type = test['build-platform'].split('/')
+    test_platform = test['test-platform'].split('/')[0]
     test_name = test.get('try-name', test['test-name'])
     mozharness = test['mozharness']
 
@@ -437,11 +468,12 @@ def mozharness_test_buildbot_bridge(config, job, taskdesc):
     if mozharness.get('chunked', False):
         this_chunk = test.get('this-chunk')
         test_name = '{}-{}'.format(test_name, this_chunk)
+    elif test.get('this-chunk', 1) != 1:
+        raise Exception("Unexpected chunking when 'chunked' attribute is 'false'"
+                        " for {}".format(test_name))
 
     if test.get('suite', '') == 'talos':
-        # on linux64-<variant>/<build>, we add the variant to the buildername
-        m = re.match(r'\w+-([^/]+)/.*', test['test-platform'])
-        variant = m.group(1) if m and m.group(1) else ''
+        variant = get_variant(test['test-platform'])
 
         # On beta and release, we run nightly builds on-push; the talos
         # builders need to run against non-nightly buildernames
@@ -457,7 +489,7 @@ def mozharness_test_buildbot_bridge(config, job, taskdesc):
             name = '{prefix} {branch} talos {test_name}'
 
         buildername = name.format(
-            prefix=BUILDER_NAME_PREFIX[platform],
+            prefix=BUILDER_NAME_PREFIX[test_platform],
             variant=variant,
             branch=branch,
             test_name=test_name
@@ -466,11 +498,19 @@ def mozharness_test_buildbot_bridge(config, job, taskdesc):
         if buildername.startswith('Ubuntu'):
             buildername = buildername.replace('VM', 'HW')
     else:
-        buildername = '{} {} {} test {}'.format(
-            BUILDER_NAME_PREFIX[platform],
-            branch,
-            build_type,
-            test_name
+        variant = get_variant(test['test-platform'])
+        # If we are a pgo type, munge the build_type for the
+        # Unittest builder name generation
+        if 'pgo' in variant:
+            build_type = variant
+        prefix = BUILDER_NAME_PREFIX.get(
+            (test_platform, test.get('virtualization')),
+            BUILDER_NAME_PREFIX[test_platform])
+        buildername = '{prefix} {branch} {build_type} test {test_name}'.format(
+            prefix=prefix,
+            branch=branch,
+            build_type=build_type,
+            test_name=test_name
         )
 
     worker.update({
@@ -486,3 +526,8 @@ def mozharness_test_buildbot_bridge(config, job, taskdesc):
             'installer_path': mozharness['build-artifact-name'],
         }
     })
+
+    if mozharness['requires-signed-builds']:
+        upstream_task = '<build-signing>'
+        installer_url = get_artifact_url(upstream_task, mozharness['build-artifact-name'])
+        worker['properties']['signed_installer_url'] = {'task-reference': installer_url}

@@ -205,6 +205,12 @@ interface nsIFinishReportingCallback : nsISupports
   void callback(in nsISupports data);
 };
 
+[scriptable, function, uuid(1a80cd0f-0d9e-4397-be69-68ad28fe5175)]
+interface nsIHeapAllocatedCallback : nsISupports
+{
+  void callback(in int64_t bytesAllocated);
+};
+
 [scriptable, builtinclass, uuid(2998574d-8993-407a-b1a5-8ad7417653e1)]
 interface nsIMemoryReporterManager : nsISupports
 {
@@ -368,7 +374,8 @@ interface nsIMemoryReporterManager : nsISupports
    * of low-{virtual,physical}-memory events that have occurred since the
    * process started.
    *
-   * |ghostWindows| (UNITS_COUNT)  The number of ghost windows.
+   * |ghostWindows| (UNITS_COUNT)  A cached value of the number of ghost
+   * windows. This should have been updated within the past 60s.
    *
    * |pageFaultsHard| (UNITS_COUNT_CUMULATIVE)  The number of hard (a.k.a.
    * major) page faults that have occurred since the process started.
@@ -410,6 +417,12 @@ interface nsIMemoryReporterManager : nsISupports
    */
   [infallible] readonly attribute boolean isDMDEnabled;
   [infallible] readonly attribute boolean isDMDRunning;
+
+  /*
+   * Asynchronously gets attribute 'heapAllocated'. The value is returned in
+   * the callback argument.
+   */
+  [must_use] void getHeapAllocatedAsync(in nsIHeapAllocatedCallback callback);
 
   /*
    * Run a series of GC/CC's in an attempt to minimize the application's memory

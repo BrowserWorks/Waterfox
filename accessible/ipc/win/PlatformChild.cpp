@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/a11y/Compatibility.h"
 #include "mozilla/a11y/PlatformChild.h"
 #include "mozilla/mscom/EnsureMTA.h"
 #include "mozilla/mscom/InterceptorLog.h"
@@ -48,6 +49,14 @@ PlatformChild::PlatformChild()
   , mMiscTypelib(mozilla::mscom::RegisterTypelib(L"Accessible.tlb"))
   , mSdnTypelib(mozilla::mscom::RegisterTypelib(L"AccessibleMarshal.dll"))
 {
+  WORD actCtxResourceId = Compatibility::GetActCtxResourceId();
+
+  mozilla::mscom::MTADeletePtr<mozilla::mscom::ActivationContextRegion> tmpActCtxMTA;
+  mozilla::mscom::EnsureMTA([actCtxResourceId, &tmpActCtxMTA]() -> void {
+    tmpActCtxMTA.reset(new mozilla::mscom::ActivationContextRegion(actCtxResourceId));
+  });
+  mActCtxMTA = Move(tmpActCtxMTA);
+
   mozilla::mscom::InterceptorLog::Init();
   mozilla::mscom::RegisterArrayData(sPlatformChildArrayData);
 

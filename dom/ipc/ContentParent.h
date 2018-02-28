@@ -11,6 +11,7 @@
 #include "mozilla/dom/nsIContentParent.h"
 #include "mozilla/gfx/gfxVarReceiver.h"
 #include "mozilla/gfx/GPUProcessListener.h"
+#include "mozilla/ipc/CrashReporterHost.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/FileUtils.h"
@@ -34,8 +35,6 @@
 #include "DriverCrashGuard.h"
 
 #define CHILD_PROCESS_SHUTDOWN_MESSAGE NS_LITERAL_STRING("child-process-shutdown")
-
-#define NO_REMOTE_TYPE ""
 
 // These must match the similar ones in E10SUtils.jsm.
 #define DEFAULT_REMOTE_TYPE "web"
@@ -75,7 +74,6 @@ class OptionalURIParams;
 class PFileDescriptorSetParent;
 class URIParams;
 class TestShellParent;
-class CrashReporterHost;
 } // namespace ipc
 
 namespace jsipc {
@@ -94,7 +92,6 @@ namespace dom {
 
 class Element;
 class TabParent;
-class PStorageParent;
 class ClonedMessageData;
 class MemoryReport;
 class TabContext;
@@ -173,7 +170,7 @@ public:
    * 3. normal iframe
    */
   static already_AddRefed<ContentParent>
-  GetNewOrUsedBrowserProcess(const nsAString& aRemoteType = NS_LITERAL_STRING(NO_REMOTE_TYPE),
+  GetNewOrUsedBrowserProcess(const nsAString& aRemoteType,
                              hal::ProcessPriority aPriority =
                              hal::ProcessPriority::PROCESS_PRIORITY_FOREGROUND,
                              ContentParent* aOpener = nullptr);
@@ -303,9 +300,6 @@ public:
   virtual mozilla::ipc::IPCResult RecvConnectPluginBridge(const uint32_t& aPluginId,
                                                           nsresult* aRv,
                                                           Endpoint<PPluginModuleParent>* aEndpoint) override;
-
-  virtual mozilla::ipc::IPCResult RecvGetBlocklistState(const uint32_t& aPluginId,
-                                                        uint32_t* aIsBlocklisted) override;
 
   virtual mozilla::ipc::IPCResult RecvUngrabPointer(const uint32_t& aTime) override;
 
@@ -455,13 +449,6 @@ public:
   virtual PHeapSnapshotTempFileHelperParent*
   AllocPHeapSnapshotTempFileHelperParent() override;
 
-  virtual PStorageParent* AllocPStorageParent() override;
-
-  virtual mozilla::ipc::IPCResult RecvPStorageConstructor(PStorageParent* aActor) override
-  {
-    return PContentParent::RecvPStorageConstructor(aActor);
-  }
-
   virtual PJavaScriptParent*
   AllocPJavaScriptParent() override;
 
@@ -536,14 +523,8 @@ public:
                    const nsCString& aFeatures,
                    const nsCString& aBaseURI,
                    const float& aFullZoom,
-                   nsresult* aResult,
-                   bool* aWindowIsNew,
-                   InfallibleTArray<FrameScriptInfo>* aFrameScripts,
-                   nsCString* aURLToLoad,
-                   layers::TextureFactoryIdentifier* aTextureFactoryIdentifier,
-                   uint64_t* aLayersId,
-                   mozilla::layers::CompositorOptions* aCompositorOptions,
-                   uint32_t* aMaxTouchPoints) override;
+                   const IPC::Principal& aTriggeringPrincipal,
+                   CreateWindowResolver&& aResolve) override;
 
   virtual mozilla::ipc::IPCResult RecvCreateWindowInDifferentProcess(
     PBrowserParent* aThisTab,
@@ -555,7 +536,8 @@ public:
     const nsCString& aFeatures,
     const nsCString& aBaseURI,
     const float& aFullZoom,
-    const nsString& aName) override;
+    const nsString& aName,
+    const IPC::Principal& aTriggeringPrincipal) override;
 
   static bool AllocateLayerTreeId(TabParent* aTabParent, uint64_t* aId);
 
@@ -576,14 +558,6 @@ public:
 
   virtual mozilla::ipc::IPCResult
   RecvUnstoreAndBroadcastBlobURLUnregistration(const nsCString& aURI) override;
-
-  virtual mozilla::ipc::IPCResult
-  RecvBroadcastLocalStorageChange(const nsString& aDocumentURI,
-                                  const nsString& aKey,
-                                  const nsString& aOldValue,
-                                  const nsString& aNewValue,
-                                  const IPC::Principal& aPrincipal,
-                                  const bool& aIsPrivate) override;
 
   virtual mozilla::ipc::IPCResult
   RecvGetA11yContentId(uint32_t* aContentId) override;
@@ -716,7 +690,8 @@ private:
                      const nsString& aName,
                      nsresult& aResult,
                      nsCOMPtr<nsITabParent>& aNewTabParent,
-                     bool* aWindowIsNew);
+                     bool* aWindowIsNew,
+                     nsIPrincipal* aTriggeringPrincipal);
 
   FORWARD_SHMEM_ALLOCATOR_TO(PContentParent)
 
@@ -749,6 +724,17 @@ private:
   // should be send from this function. This function should only be
   // called after the process has been transformed to browser.
   void ForwardKnownInfo();
+
+  /**
+   * We might want to reuse barely used content processes if certain criteria are met.
+   */
+  bool TryToRecycle();
+
+  /**
+   * Removing it from the static array so it won't be returned for new tabs in
+   * GetNewOrUsedBrowserProcess.
+   */
+  void RemoveFromList();
 
   /**
    * Decide whether the process should be kept alive even when it would normally
@@ -800,6 +786,8 @@ private:
 
   // Start the force-kill timer on shutdown.
   void StartForceKillTimer();
+
+  void OnGenerateMinidumpComplete(bool aDumpResult);
 
   // Ensure that the permissions for the giben Permission key are set in the
   // content process.
@@ -931,8 +919,6 @@ private:
 
   virtual bool DeallocPMediaParent(PMediaParent* aActor) override;
 
-  virtual bool DeallocPStorageParent(PStorageParent* aActor) override;
-
   virtual PPresentationParent* AllocPPresentationParent() override;
 
   virtual bool DeallocPPresentationParent(PPresentationParent* aActor) override;
@@ -1049,6 +1035,8 @@ private:
 
   virtual mozilla::ipc::IPCResult RecvFirstIdle() override;
 
+  virtual mozilla::ipc::IPCResult RecvDeviceReset() override;
+
   virtual mozilla::ipc::IPCResult RecvKeywordToURI(const nsCString& aKeyword,
                                                    nsString* aProviderName,
                                                    OptionalIPCStream* aPostData,
@@ -1163,6 +1151,8 @@ private:
     InfallibleTArray<KeyedScalarAction>&& aScalarActions) override;
   virtual mozilla::ipc::IPCResult RecvRecordChildEvents(
     nsTArray<ChildEventData>&& events) override;
+  virtual mozilla::ipc::IPCResult RecvRecordDiscardedData(
+    const DiscardedData& aDiscardedData) override;
 public:
   void SendGetFilesResponseAndForget(const nsID& aID,
                                      const GetFilesResponseResult& aResult);
@@ -1182,6 +1172,7 @@ private:
 
   GeckoChildProcessHost* mSubprocess;
   const TimeStamp mLaunchTS; // used to calculate time to start content process
+  TimeStamp mActivateTS;
   ContentParent* mOpener;
 
   nsString mRemoteType;

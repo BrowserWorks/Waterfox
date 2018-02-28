@@ -70,6 +70,8 @@
     _(MathTrunc)                    \
     _(MathCbrt)                     \
                                     \
+    _(ReflectGetPrototypeOf)        \
+                                    \
     _(RegExpMatcher)                \
     _(RegExpSearcher)               \
     _(RegExpTester)                 \
@@ -88,6 +90,7 @@
     _(IntrinsicStringSplitString)   \
                                     \
     _(ObjectCreate)                 \
+    _(ObjectToString)               \
                                     \
     _(SimdInt32x4)                  \
     _(SimdUint32x4)                 \
@@ -121,14 +124,18 @@
     _(IntrinsicIsConstructing)      \
     _(IntrinsicSubstringKernel)     \
     _(IntrinsicObjectHasPrototype)  \
+    _(IntrinsicFinishBoundFunctionInit) \
+    _(IntrinsicIsPackedArray)       \
                                     \
     _(IntrinsicIsArrayIterator)     \
     _(IntrinsicIsMapIterator)       \
     _(IntrinsicIsSetIterator)       \
     _(IntrinsicIsStringIterator)    \
                                     \
+    _(IntrinsicIsMapObject)         \
     _(IntrinsicGetNextMapEntryForIterator) \
                                     \
+    _(IntrinsicIsSetObject)         \
     _(IntrinsicGetNextSetEntryForIterator) \
                                     \
     _(IntrinsicNewArrayIterator)    \

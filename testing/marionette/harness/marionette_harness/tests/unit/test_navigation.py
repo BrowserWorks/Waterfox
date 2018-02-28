@@ -3,6 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import contextlib
+import os
 import urllib
 
 from marionette_driver import By, errors, expected, Wait
@@ -16,6 +17,8 @@ from marionette_harness import (
     WindowManagerMixin,
 )
 
+here = os.path.abspath(os.path.dirname(__file__))
+
 
 def inline(doc):
     return "data:text/html;charset=utf-8,%s" % urllib.quote(doc)
@@ -26,9 +29,13 @@ class BaseNavigationTestCase(WindowManagerMixin, MarionetteTestCase):
     def setUp(self):
         super(BaseNavigationTestCase, self).setUp()
 
+        file_path = os.path.join(here, 'data', 'test.html').replace("\\", "/")
+
+        self.test_page_file_url = "file:///{}".format(file_path)
         self.test_page_frameset = self.marionette.absolute_url("frameset.html")
         self.test_page_insecure = self.fixtures.where_is("test.html", on="https")
         self.test_page_not_remote = "about:robots"
+        self.test_page_push_state = self.marionette.absolute_url("navigation_pushstate.html")
         self.test_page_remote = self.marionette.absolute_url("test.html")
         self.test_page_slow_resource = self.marionette.absolute_url("slow_resource.html")
 
@@ -191,6 +198,74 @@ class TestNavigate(BaseNavigationTestCase):
         self.assertTrue(self.marionette.execute_script(
             "return window.visited", sandbox=None))
 
+    def test_navigate_hash_argument_identical(self):
+        test_page = "{}#foo".format(inline("<p id=foo>"))
+
+        self.marionette.navigate(test_page)
+        self.marionette.find_element(By.ID, "foo")
+        self.marionette.navigate(test_page)
+        self.marionette.find_element(By.ID, "foo")
+
+    def test_navigate_hash_argument_differnt(self):
+        test_page = "{}#Foo".format(inline("<p id=foo>"))
+
+        self.marionette.navigate(test_page)
+        self.marionette.find_element(By.ID, "foo")
+        self.marionette.navigate(test_page.lower())
+        self.marionette.find_element(By.ID, "foo")
+
+    def test_navigate_history_pushstate(self):
+        target_page = self.marionette.absolute_url("navigation_pushstate_target.html")
+
+        self.marionette.navigate(self.test_page_push_state)
+        self.marionette.find_element(By.ID, "forward").click()
+
+        # By using pushState() the URL is updated but the target page is not loaded
+        # and as such the element is not displayed
+        self.assertEqual(self.marionette.get_url(), target_page)
+        with self.assertRaises(errors.NoSuchElementException):
+            self.marionette.find_element(By.ID, "target")
+
+        self.marionette.go_back()
+        self.assertEqual(self.marionette.get_url(), self.test_page_push_state)
+
+        # The target page still gets not loaded
+        self.marionette.go_forward()
+        self.assertEqual(self.marionette.get_url(), target_page)
+        with self.assertRaises(errors.NoSuchElementException):
+            self.marionette.find_element(By.ID, "target")
+
+        # Navigating to a different page, and returning to the injected
+        # page, it will be loaded.
+        self.marionette.navigate(self.test_page_remote)
+        self.assertEqual(self.marionette.get_url(), self.test_page_remote)
+
+        self.marionette.go_back()
+        self.assertEqual(self.marionette.get_url(), target_page)
+        self.marionette.find_element(By.ID, "target")
+
+        self.marionette.go_back()
+        self.assertEqual(self.marionette.get_url(), self.test_page_push_state)
+
+    @skip_if_mobile("Test file is only located on host machine")
+    def test_navigate_file_url(self):
+        self.marionette.navigate(self.test_page_file_url)
+        self.marionette.find_element(By.ID, "file-url")
+        self.marionette.navigate(self.test_page_remote)
+
+    @run_if_e10s("Requires e10s mode enabled")
+    @skip_if_mobile("Test file is only located on host machine")
+    def test_navigate_file_url_remoteness_change(self):
+        self.marionette.navigate("about:robots")
+        self.assertFalse(self.is_remote_tab)
+
+        self.marionette.navigate(self.test_page_file_url)
+        self.assertTrue(self.is_remote_tab)
+        self.marionette.find_element(By.ID, "file-url")
+
+        self.marionette.navigate("about:robots")
+        self.assertFalse(self.is_remote_tab)
+
     @skip_if_mobile("Bug 1334095 - Timeout: No new tab has been opened")
     def test_about_blank_for_new_docshell(self):
         self.assertEqual(self.marionette.get_url(), "about:blank")
@@ -217,6 +292,7 @@ class TestNavigate(BaseNavigationTestCase):
         self.marionette.switch_to_window(self.new_tab)
         self.marionette.navigate(self.test_page_remote)
 
+    @skip("Bug 1369923 - Disabling as keystrokes don't trigger page loads")
     @skip_if_mobile("Interacting with chrome elements not available for Fennec")
     def test_type_to_non_remote_tab(self):
         self.marionette.navigate(self.test_page_not_remote)
@@ -334,7 +410,15 @@ class TestBackForwardNavigation(BaseNavigationTestCase):
         ]
         self.run_bfcache_test(test_pages)
 
-    @skip("Causes crashes for JS GC (bug 1344863) and a11y (bug 1344868)")
+    @skip_if_mobile("Test file is only located on host machine")
+    def test_file_url(self):
+        test_pages = [
+            {"url": self.test_page_remote},
+            {"url": self.test_page_file_url},
+            {"url": self.test_page_remote},
+        ]
+        self.run_bfcache_test(test_pages)
+
     def test_frameset(self):
         test_pages = [
             {"url": self.marionette.absolute_url("frameset.html")},
@@ -512,6 +596,14 @@ class TestRefresh(BaseNavigationTestCase):
         self.marionette.refresh()
         self.marionette.find_element(By.NAME, "third")
 
+    @skip_if_mobile("Test file is only located on host machine")
+    def test_file_url(self):
+        self.marionette.navigate(self.test_page_file_url)
+        self.assertEqual(self.test_page_file_url, self.marionette.get_url())
+
+        self.marionette.refresh()
+        self.assertEqual(self.test_page_file_url, self.marionette.get_url())
+
     def test_image(self):
         image = self.marionette.absolute_url('black.png')
 
@@ -520,6 +612,26 @@ class TestRefresh(BaseNavigationTestCase):
 
         self.marionette.refresh()
         self.assertEqual(image, self.marionette.get_url())
+
+    def test_history_pushstate(self):
+        target_page = self.marionette.absolute_url("navigation_pushstate_target.html")
+
+        self.marionette.navigate(self.test_page_push_state)
+        self.marionette.find_element(By.ID, "forward").click()
+
+        # By using pushState() the URL is updated but the target page is not loaded
+        # and as such the element is not displayed
+        self.assertEqual(self.marionette.get_url(), target_page)
+        with self.assertRaises(errors.NoSuchElementException):
+            self.marionette.find_element(By.ID, "target")
+
+        # Refreshing the target page will trigger a full page load.
+        self.marionette.refresh()
+        self.assertEqual(self.marionette.get_url(), target_page)
+        self.marionette.find_element(By.ID, "target")
+
+        self.marionette.go_back()
+        self.assertEqual(self.marionette.get_url(), self.test_page_push_state)
 
     def test_timeout_error(self):
         slow_page = self.marionette.absolute_url("slow?delay=3")
@@ -627,6 +739,7 @@ class TestPageLoadStrategy(BaseNavigationTestCase):
         # current load state is unknown. So only test that the command executes successfully.
         self.marionette.navigate(self.test_page_slow_resource)
 
+    @skip_if_mobile("Disabling due to message passing slowness on Android.")
     def test_eager(self):
         self.marionette.delete_session()
         self.marionette.start_session({"desiredCapabilities": {"pageLoadStrategy": "eager"}})

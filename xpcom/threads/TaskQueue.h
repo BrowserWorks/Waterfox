@@ -82,6 +82,9 @@ public:
     // in deadlocks.
   }
 
+  // Prevent a GCC warning about the other overload of Dispatch being hidden.
+  using AbstractThread::Dispatch;
+
   // Puts the queue in a shutdown state and returns immediately. The queue will
   // remain alive at least until all the events are drained, because the Runners
   // hold a strong reference to the task queue, and one of them is always held
@@ -106,7 +109,7 @@ public:
 
   // Create a new nsIEventTarget wrapper object that dispatches to this
   // TaskQueue.
-  already_AddRefed<nsIEventTarget> WrapAsEventTarget();
+  already_AddRefed<nsISerialEventTarget> WrapAsEventTarget();
 
 protected:
   virtual ~TaskQueue();
@@ -146,7 +149,7 @@ protected:
   // The thread can't die while we're running in it, and we only use it for
   // pointer-comparison with the current thread anyway - so we make it atomic
   // and don't refcount it.
-  Atomic<nsIThread*> mRunningThread;
+  Atomic<PRThread*> mRunningThread;
 
   // RAII class that gets instantiated for each dispatched task.
   class AutoTaskGuard : public AutoTaskDispatcher
@@ -165,14 +168,14 @@ protected:
       sCurrentThreadTLS.set(aQueue);
 
       MOZ_ASSERT(mQueue->mRunningThread == nullptr);
-      mQueue->mRunningThread = NS_GetCurrentThread();
+      mQueue->mRunningThread = GetCurrentPhysicalThread();
     }
 
     ~AutoTaskGuard()
     {
       DrainDirectTasks();
 
-      MOZ_ASSERT(mQueue->mRunningThread == NS_GetCurrentThread());
+      MOZ_ASSERT(mQueue->mRunningThread == GetCurrentPhysicalThread());
       mQueue->mRunningThread = nullptr;
 
       sCurrentThreadTLS.set(mLastCurrentThread);
@@ -200,7 +203,8 @@ protected:
   class Runner : public Runnable {
   public:
     explicit Runner(TaskQueue* aQueue)
-      : mQueue(aQueue)
+      : Runnable("TaskQueue::Runner")
+      , mQueue(aQueue)
     {
     }
     NS_IMETHOD Run() override;

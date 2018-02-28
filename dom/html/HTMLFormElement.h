@@ -314,7 +314,8 @@ public:
     SetHTMLAttr(nsGkAtoms::acceptcharset, aValue, aRv);
   }
 
-  // XPCOM GetAction() is OK
+  void GetAction(nsString& aValue);
+
   void SetAction(const nsAString& aValue, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::action, aValue, aRv);
@@ -409,6 +410,9 @@ public:
   static void
   AssertDocumentOrder(const nsTArray<nsGenericHTMLFormElement*>& aControls,
                       nsIContent* aForm);
+  static void
+  AssertDocumentOrder(const nsTArray<RefPtr<nsGenericHTMLFormElement>>& aControls,
+                      nsIContent* aForm);
 #endif
 
   js::ExpandoAndGeneration mExpandoAndGeneration;
@@ -426,7 +430,8 @@ protected:
   class RemoveElementRunnable : public Runnable {
   public:
     explicit RemoveElementRunnable(HTMLFormElement* aForm)
-      : mForm(aForm)
+      : Runnable("dom::HTMLFormElement::RemoveElementRunnable")
+      , mForm(aForm)
     {}
 
     NS_IMETHOD Run() override {
@@ -559,22 +564,6 @@ protected:
   nsDataHashtable<nsStringCaseInsensitiveHashKey,uint32_t> mRequiredRadioButtonCounts;
   /** The value missing state of each group */
   nsDataHashtable<nsStringCaseInsensitiveHashKey,bool> mValueMissingRadioGroups;
-  /** Whether we are currently processing a submit event or not */
-  bool mGeneratingSubmit;
-  /** Whether we are currently processing a reset event or not */
-  bool mGeneratingReset;
-  /** Whether we are submitting currently */
-  bool mIsSubmitting;
-  /** Whether the submission is to be deferred in case a script triggers it */
-  bool mDeferSubmission;
-  /** Whether we notified NS_FORMSUBMIT_SUBJECT listeners already */
-  bool mNotifiedObservers;
-  /** If we notified the listeners early, what was the result? */
-  bool mNotifiedObserversResult;
-  /** Keep track of what the popup state was when the submit was initiated */
-  PopupControlState mSubmitPopupState;
-  /** Keep track of whether a submission was user-initiated or not */
-  bool mSubmitInitiatedFromUserInput;
 
   /** The pending submission object */
   nsAutoPtr<HTMLFormSubmission> mPendingSubmission;
@@ -611,6 +600,9 @@ protected:
 
   nsInterfaceHashtable<nsStringHashKey,nsISupports> mPastNameLookupTable;
 
+  /** Keep track of what the popup state was when the submit was initiated */
+  PopupControlState mSubmitPopupState;
+
   /**
    * Number of invalid and candidate for constraint validation elements in the
    * form the last time UpdateValidity has been called.
@@ -618,6 +610,20 @@ protected:
    */
   int32_t mInvalidElementsCount;
 
+  /** Whether we are currently processing a submit event or not */
+  bool mGeneratingSubmit;
+  /** Whether we are currently processing a reset event or not */
+  bool mGeneratingReset;
+  /** Whether we are submitting currently */
+  bool mIsSubmitting;
+  /** Whether the submission is to be deferred in case a script triggers it */
+  bool mDeferSubmission;
+  /** Whether we notified NS_FORMSUBMIT_SUBJECT listeners already */
+  bool mNotifiedObservers;
+  /** If we notified the listeners early, what was the result? */
+  bool mNotifiedObserversResult;
+  /** Keep track of whether a submission was user-initiated or not */
+  bool mSubmitInitiatedFromUserInput;
   /**
    * Whether the submission of this form has been ever prevented because of
    * being invalid.

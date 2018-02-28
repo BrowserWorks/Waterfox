@@ -7,7 +7,6 @@
 const { utils: Cu, interfaces: Ci, classes: Cc, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
@@ -18,9 +17,13 @@ const PAGE_HEIGHT = 166;
 const DRIVER_PREF = "sanity-test.driver-version";
 const DEVICE_PREF = "sanity-test.device-id";
 const VERSION_PREF = "sanity-test.version";
+const ADVANCED_LAYERS_PREF = "sanity-test.advanced-layers";
 const DISABLE_VIDEO_PREF = "media.hardware-video-decoding.failed";
 const RUNNING_PREF = "sanity-test.running";
 const TIMEOUT_SEC = 20;
+
+const AL_ENABLED_PREF = "layers.mlgpu.dev-enabled";
+const AL_TEST_FAILED_PREF = "layers.mlgpu.sanity-test-failed";
 
 // GRAPHICS_SANITY_TEST histogram enumeration values
 const TEST_PASSED = 0;
@@ -34,6 +37,7 @@ const REASON_FIRST_RUN = 0;
 const REASON_FIREFOX_CHANGED = 1;
 const REASON_DEVICE_CHANGED = 2;
 const REASON_DRIVER_CHANGED = 3;
+const REASON_AL_CONFIG_CHANGED = 4;
 
 // GRAPHICS_SANITY_TEST_OS_SNAPSHOT histogram enumeration values
 const SNAPSHOT_VIDEO_OK = 0;
@@ -61,7 +65,7 @@ function reportResult(val) {
     histogram.add(val);
   } catch (e) {}
 
-  Preferences.set(RUNNING_PREF, false);
+  Services.prefs.setBoolPref(RUNNING_PREF, false);
   Services.prefs.savePrefFile(null);
 }
 
@@ -120,19 +124,27 @@ function verifyLayersRendering(ctx) {
   return testPixel(ctx, 18, 18, 255, 0, 0, 255, 64);
 }
 
-function testCompositor(win, ctx) {
+function testCompositor(test, win, ctx) {
   takeWindowSnapshot(win, ctx);
   var testPassed = true;
 
   if (!verifyVideoRendering(ctx)) {
     reportResult(TEST_FAILED_VIDEO);
-    Preferences.set(DISABLE_VIDEO_PREF, true);
+    Services.prefs.setBoolPref(DISABLE_VIDEO_PREF, true);
     testPassed = false;
   }
 
   if (!verifyLayersRendering(ctx)) {
+    // Try disabling advanced layers if it was enabled. Also trgiger
+    // a device reset so the screen redraws.
+    if (Services.prefs.getBoolPref(AL_ENABLED_PREF, false)) {
+      Services.prefs.setBoolPref(AL_TEST_FAILED_PREF, true);
+      test.utils.triggerDeviceReset();
+    }
     reportResult(TEST_FAILED_RENDER);
     testPassed = false;
+  } else {
+    Services.prefs.setBoolPref(AL_TEST_FAILED_PREF, false);
   }
 
   if (testPassed) {
@@ -174,7 +186,7 @@ var listener = {
 
     // Perform the compositor backbuffer test, which currently we use for
     // actually deciding whether to enable hardware media decoding.
-    testCompositor(this.win, this.ctx);
+    testCompositor(this, this.win, this.ctx);
 
     this.endTest();
   },
@@ -190,6 +202,7 @@ var listener = {
   onWindowLoaded() {
     let browser = this.win.document.createElementNS(XUL_NS, "browser");
     browser.setAttribute("type", "content");
+    browser.setAttribute("disableglobalhistory", "true");
 
     let remoteBrowser = Services.appinfo.browserTabsRemoteAutostart;
     browser.setAttribute("remote", remoteBrowser);
@@ -245,42 +258,65 @@ SanityTest.prototype = {
     // gpu or drivers.
     var buildId = Services.appinfo.platformBuildID;
     var gfxinfo = Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo);
+    var hasAL = Services.prefs.getBoolPref(AL_ENABLED_PREF, false);
 
-    if (Preferences.get(RUNNING_PREF, false)) {
-      Preferences.set(DISABLE_VIDEO_PREF, true);
+    if (Services.prefs.getBoolPref(RUNNING_PREF, false)) {
+      Services.prefs.setBoolPref(DISABLE_VIDEO_PREF, true);
       reportResult(TEST_CRASHED);
       return false;
     }
 
     function checkPref(pref, value, reason) {
-      var prefValue = Preferences.get(pref, undefined);
-      if (prefValue == value) {
-        return true;
+      let prefValue;
+      let prefType = Services.prefs.getPrefType(pref);
+
+      switch (prefType) {
+          case Ci.nsIPrefBranch.PREF_INVALID:
+              reportTestReason(REASON_FIRST_RUN);
+              return false;
+
+          case Ci.nsIPrefBranch.PREF_STRING:
+              prefValue = Services.prefs.getStringPref(pref);
+              break;
+
+          case Ci.nsIPrefBranch.PREF_BOOL:
+              prefValue = Services.prefs.getBoolPref(pref);
+              break;
+
+          case Ci.nsIPrefBranch.PREF_INT:
+              prefValue = Services.prefs.getIntPref(pref);
+              break;
+
+          default:
+              throw new Error("Unexpected preference type.");
       }
-      if (prefValue === undefined) {
-        reportTestReason(REASON_FIRST_RUN);
-      } else {
+
+      if (prefValue != value) {
         reportTestReason(reason);
+        return false;
       }
-      return false;
+
+      return true;
     }
 
     // TODO: Handle dual GPU setups
     if (checkPref(DRIVER_PREF, gfxinfo.adapterDriverVersion, REASON_DRIVER_CHANGED) &&
         checkPref(DEVICE_PREF, gfxinfo.adapterDeviceID, REASON_DEVICE_CHANGED) &&
-        checkPref(VERSION_PREF, buildId, REASON_FIREFOX_CHANGED)) {
+        checkPref(VERSION_PREF, buildId, REASON_FIREFOX_CHANGED) &&
+        checkPref(ADVANCED_LAYERS_PREF, hasAL, REASON_AL_CONFIG_CHANGED)) {
       return false;
     }
 
     // Enable hardware decoding so we can test again
     // and record the driver version to detect if the driver changes.
-    Preferences.set(DISABLE_VIDEO_PREF, false);
-    Preferences.set(DRIVER_PREF, gfxinfo.adapterDriverVersion);
-    Preferences.set(DEVICE_PREF, gfxinfo.adapterDeviceID);
-    Preferences.set(VERSION_PREF, buildId);
+    Services.prefs.setBoolPref(DISABLE_VIDEO_PREF, false);
+    Services.prefs.setStringPref(DRIVER_PREF, gfxinfo.adapterDriverVersion);
+    Services.prefs.setStringPref(DEVICE_PREF, gfxinfo.adapterDeviceID);
+    Services.prefs.setStringPref(VERSION_PREF, buildId);
+    Services.prefs.setBoolPref(ADVANCED_LAYERS_PREF, hasAL);
 
     // Update the prefs so that this test doesn't run again until the next update.
-    Preferences.set(RUNNING_PREF, true);
+    Services.prefs.setBoolPref(RUNNING_PREF, true);
     Services.prefs.savePrefFile(null);
     return true;
   },

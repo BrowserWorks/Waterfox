@@ -47,7 +47,7 @@ this.ExtensionsUI = {
     Services.obs.addObserver(this, "webextension-install-notify");
     Services.obs.addObserver(this, "webextension-optional-permission-prompt");
 
-    await RecentWindow.getMostRecentBrowserWindow().delayedStartupPromise;
+    await Services.wm.getMostRecentWindow("navigator:browser").delayedStartupPromise;
 
     this._checkForSideloaded();
   },
@@ -234,7 +234,7 @@ this.ExtensionsUI = {
 
       // If we don't have any promptable permissions, just proceed
       if (strings.msgs.length == 0) {
-        resolve();
+        resolve(true);
         return;
       }
 
@@ -320,6 +320,11 @@ this.ExtensionsUI = {
       result.msgs.push(bundle.formatStringFromName(permissionKey(NATIVE_MSG_PERM), [appName], 1));
     }
 
+    // Hardcoded "proxy" permission string for beta uplift.
+    if (perms.permissions.includes("proxy")) {
+      result.msgs.push("Control browser proxy settings");
+    }
+
     // Finally, show remaining permissions, in any order.
     for (let permission of perms.permissions) {
       // Handled above
@@ -369,6 +374,7 @@ this.ExtensionsUI = {
       result.acceptText = bundle.GetStringFromName("webextPerms.optionalPermsAllow.label");
       result.acceptKey = bundle.GetStringFromName("webextPerms.optionalPermsAllow.accessKey");
       result.cancelText = bundle.GetStringFromName("webextPerms.optionalPermsDeny.label");
+      result.cancelKey = bundle.GetStringFromName("webextPerms.optionalPermsDeny.accessKey");
     }
 
     return result;
@@ -378,8 +384,10 @@ this.ExtensionsUI = {
     function eventCallback(topic) {
       let doc = this.browser.ownerDocument;
       if (topic == "showing") {
+        // eslint-disable-next-line no-unsanitized/property
         doc.getElementById("addon-webext-perm-header").innerHTML = strings.header;
         let textEl = doc.getElementById("addon-webext-perm-text");
+        // eslint-disable-next-line no-unsanitized/property
         textEl.innerHTML = strings.text;
         textEl.hidden = !strings.text;
 
@@ -436,6 +444,7 @@ this.ExtensionsUI = {
       ];
 
       win.PopupNotifications.show(browser, "addon-webext-permissions", "",
+      // eslint-disable-next-line no-unsanitized/property
                                   "addons-notification-icon",
                                   action, secondaryActions, popupOptions);
     });
@@ -476,10 +485,12 @@ this.ExtensionsUI = {
         eventCallback(topic) {
           if (topic == "showing") {
             let doc = this.browser.ownerDocument;
+        // eslint-disable-next-line no-unsanitized/property
             doc.getElementById("addon-installed-notification-header")
-               .innerHTML = msg1;
+               .unsafeSetInnerHTML(msg1);
+            // eslint-disable-next-line no-unsanitized/property
             doc.getElementById("addon-installed-notification-message")
-               .innerHTML = msg2;
+               .unsafeSetInnerHTML(msg2);
           } else if (topic == "dismissed") {
             resolve();
           }

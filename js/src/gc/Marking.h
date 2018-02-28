@@ -265,15 +265,15 @@ class GCMarker : public JSTracer
      */
     void setMarkColorGray() {
         MOZ_ASSERT(isDrained());
-        MOZ_ASSERT(color == gc::BLACK);
-        color = gc::GRAY;
+        MOZ_ASSERT(color == gc::MarkColor::Black);
+        color = gc::MarkColor::Gray;
     }
     void setMarkColorBlack() {
         MOZ_ASSERT(isDrained());
-        MOZ_ASSERT(color == gc::GRAY);
-        color = gc::BLACK;
+        MOZ_ASSERT(color == gc::MarkColor::Gray);
+        color = gc::MarkColor::Black;
     }
-    uint32_t markColor() const { return color; }
+    gc::MarkColor markColor() const { return color; }
 
     void enterWeakMarkingMode();
     void leaveWeakMarkingMode();
@@ -366,7 +366,7 @@ class GCMarker : public JSTracer
     gc::MarkStack stack;
 
     /* The color is only applied to objects and functions. */
-    ActiveThreadData<uint32_t> color;
+    ActiveThreadData<gc::MarkColor> color;
 
     /* Pointer to the top of the stack of arenas we are delaying marking on. */
     ActiveThreadData<js::gc::Arena*> unmarkedArenaStackTop;
@@ -397,6 +397,9 @@ class GCMarker : public JSTracer
 // the marking phase of incremental GC.
 bool
 IsBufferGrayRootsTracer(JSTracer* trc);
+
+bool
+IsUnmarkGrayTracer(JSTracer* trc);
 #endif
 
 namespace gc {

@@ -48,7 +48,7 @@
 #include "nsPIDOMWindow.h"              // for nsPIDOMWindow
 #include "nsPresContext.h"              // for nsPresContext
 #include "nsReadableUtils.h"            // for AppendUTF16toUTF8
-#include "nsStringFwd.h"                // for nsAFlatString
+#include "nsStringFwd.h"                // for nsString
 #include "mozilla/dom/Selection.h"      // for AutoHideSelectionChanges
 #include "nsFrameSelection.h"           // for nsFrameSelection
 
@@ -974,10 +974,12 @@ nsEditingSession::EndDocumentLoad(nsIWebProgress *aWebProgress,
           NS_ENSURE_SUCCESS(rv, rv);
 
           mEditorStatus = eEditorCreationInProgress;
-          mLoadBlankDocTimer->InitWithFuncCallback(
-                                          nsEditingSession::TimerCallback,
-                                          static_cast<void*> (mDocShell.get()),
-                                          10, nsITimer::TYPE_ONE_SHOT);
+          mLoadBlankDocTimer->InitWithNamedFuncCallback(
+            nsEditingSession::TimerCallback,
+            static_cast<void*>(mDocShell.get()),
+            10,
+            nsITimer::TYPE_ONE_SHOT,
+            "nsEditingSession::EndDocumentLoad");
         }
       }
     }

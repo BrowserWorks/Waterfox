@@ -215,9 +215,9 @@ void nsNotifyAddrListener::checkLink(void)
     // Walk through the linked list, maintaining head pointer so we can free
     // list later
 
-    for (ifa = list; ifa != NULL; ifa = ifa->ifa_next) {
+    for (ifa = list; ifa != nullptr; ifa = ifa->ifa_next) {
         int family;
-        if (ifa->ifa_addr == NULL)
+        if (ifa->ifa_addr == nullptr)
             continue;
 
         family = ifa->ifa_addr->sa_family;
@@ -317,7 +317,8 @@ void nsNotifyAddrListener::OnNetlinkMessage(int aNetlinkSocket)
             struct ifaddrmsg* ifam;
             nsCString addrStr;
             addrStr.Assign(addr);
-            if (mAddressInfo.Get(addrStr, &ifam)) {
+            if (auto entry = mAddressInfo.LookupForAdd(addrStr)) {
+                ifam = entry.Data();
                 LOG(("nsNotifyAddrListener::OnNetlinkMessage: the address "
                      "already known."));
                 if (memcmp(ifam, newifam, sizeof(struct ifaddrmsg))) {
@@ -330,7 +331,7 @@ void nsNotifyAddrListener::OnNetlinkMessage(int aNetlinkSocket)
                 networkChange = true;
                 ifam = (struct ifaddrmsg*)malloc(sizeof(struct ifaddrmsg));
                 memcpy(ifam, newifam, sizeof(struct ifaddrmsg));
-                mAddressInfo.Put(addrStr,ifam);
+                entry.OrInsert([ifam] () { return ifam; });
             }
         } else {
             LOG(("nsNotifyAddrListener::OnNetlinkMessage: an address "

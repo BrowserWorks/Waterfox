@@ -729,13 +729,13 @@ XPCConvert::JSData2Native(void* d, HandleValue s,
 }
 
 static inline bool
-CreateHolderIfNeeded(HandleObject obj, MutableHandleValue d,
+CreateHolderIfNeeded(JSContext* cx, HandleObject obj, MutableHandleValue d,
                      nsIXPConnectJSObjectHolder** dest)
 {
     if (dest) {
         if (!obj)
             return false;
-        RefPtr<XPCJSObjectHolder> objHolder = new XPCJSObjectHolder(obj);
+        RefPtr<XPCJSObjectHolder> objHolder = new XPCJSObjectHolder(cx, obj);
         objHolder.forget(dest);
     }
 
@@ -796,7 +796,7 @@ XPCConvert::NativeInterface2JSObject(MutableHandleValue d,
     if (flat) {
         if (allowNativeWrapper && !JS_WrapObject(cx, &flat))
             return false;
-        return CreateHolderIfNeeded(flat, d, dest);
+        return CreateHolderIfNeeded(cx, flat, d, dest);
     }
 
     if (iid->Equals(NS_GET_IID(nsISupports))) {
@@ -808,7 +808,7 @@ XPCConvert::NativeInterface2JSObject(MutableHandleValue d,
             flat = promise->PromiseObj();
             if (!JS_WrapObject(cx, &flat))
                 return false;
-            return CreateHolderIfNeeded(flat, d, dest);
+            return CreateHolderIfNeeded(cx, flat, d, dest);
         }
     }
 
@@ -867,7 +867,7 @@ XPCConvert::NativeInterface2JSObject(MutableHandleValue d,
         } else {
             if (!flat)
                 return false;
-            RefPtr<XPCJSObjectHolder> objHolder = new XPCJSObjectHolder(flat);
+            RefPtr<XPCJSObjectHolder> objHolder = new XPCJSObjectHolder(cx, flat);
             objHolder.forget(dest);
         }
     }
@@ -1708,14 +1708,6 @@ XPCConvert::JSStringWithSize2Native(void* d, HandleValue s,
                         *pErr = NS_ERROR_XPC_NOT_ENOUGH_CHARS_IN_STRING;
                     return false;
                 }
-                if (0 != count) {
-                    len = (count + 1) * sizeof(char);
-                    if (!(*((void**)d) = moz_xmalloc(len)))
-                        return false;
-                    return true;
-                }
-                // else ...
-
                 *((char**)d) = nullptr;
                 return true;
             }
@@ -1762,14 +1754,6 @@ XPCConvert::JSStringWithSize2Native(void* d, HandleValue s,
                     return false;
                 }
 
-                if (0 != count) {
-                    len = (count + 1) * sizeof(char16_t);
-                    if (!(*((void**)d) = moz_xmalloc(len)))
-                        return false;
-                    return true;
-                }
-
-                // else ...
                 *((const char16_t**)d) = nullptr;
                 return true;
             }

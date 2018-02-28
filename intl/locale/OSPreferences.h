@@ -78,7 +78,8 @@ public:
 
 
   /**
-   * Returns a list of locales used by the host environment.
+   * Returns a list of locales used by the host environment for UI
+   * localization.
    *
    * The result is a sorted list and we expect that the OS attempts to
    * use the top locale from the list for which it has data.
@@ -101,11 +102,48 @@ public:
    */
   bool GetSystemLocales(nsTArray<nsCString>& aRetVal);
 
+  /**
+   * Returns a list of locales used by host environment for regional
+   * preferences internationalization.
+   *
+   * The result is a sorted list and we expect that the OS attempts to
+   * use the top locale from the list for which it has data.
+   *
+   * Each element of the list is a valid locale ID that can be passed to ICU
+   * and ECMA402 Intl APIs,
+   *
+   * Example: ["en-US", "de", "pl", "sr-Cyrl", "zh-Hans-HK"]
+   *
+   * The return bool value indicates whether the function successfully
+   * resolved at least one locale.
+   *
+   * Usage:
+   *   nsTArray<nsCString> systemLocales;
+   *   OSPreferences::GetInstance()->GetRegionalPrefsLocales(regionalPrefsLocales);
+   *
+   * (See mozIOSPreferences.idl for a JS-callable version of this.)
+   */
+  bool GetRegionalPrefsLocales(nsTArray<nsCString>& aRetVal);
+
   static bool GetDateTimeConnectorPattern(const nsACString& aLocale,
                                           nsAString& aRetVal);
 
+  /**
+   * Triggers a refresh of retrieving data from host environment.
+   *
+   * If the result differs from the previous list, it will additionally
+   * trigger global events for changed values:
+   *
+   *  * SystemLocales: "intl:system-locales-changed"
+   *
+   * This method should not be called from anywhere except of per-platform
+   * hooks into OS events.
+   */
+  void Refresh();
+
 protected:
   nsTArray<nsCString> mSystemLocales;
+  nsTArray<nsCString> mRegionalPrefsLocales;
 
 private:
   virtual ~OSPreferences() {};
@@ -143,6 +181,8 @@ private:
    */
   bool ReadSystemLocales(nsTArray<nsCString>& aRetVal);
 
+  bool ReadRegionalPrefsLocales(nsTArray<nsCString>& aRetVal);
+
   /**
    * This is a host environment specific method that will be implemented
    * separately for each platform.
@@ -160,19 +200,6 @@ private:
                            DateTimeFormatStyle aTimeFormatStyle,
                            const nsACString& aLocale,
                            nsAString& aRetVal);
-
-  /**
-   * Triggers a refresh of retrieving data from host environment.
-   *
-   * If the result differs from the previous list, it will additionally
-   * trigger global events for changed values:
-   *
-   *  * SystemLocales: "intl:system-locales-changed"
-   *
-   * This method should not be called from anywhere except of per-platform
-   * hooks into OS events.
-   */
-  void Refresh();
 };
 
 } // intl

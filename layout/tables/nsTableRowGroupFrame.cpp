@@ -293,8 +293,11 @@ nsTableRowGroupFrame::PlaceChild(nsPresContext*         aPresContext,
   FinishReflowChild(aKidFrame, aPresContext, aDesiredSize, nullptr,
                     aWM, aKidPosition, aContainerSize, 0);
 
-  nsTableFrame::InvalidateTableFrame(aKidFrame, aOriginalKidRect,
-                                     aOriginalKidVisualOverflow, isFirstReflow);
+  nsTableFrame* tableFrame = GetTableFrame();
+  if (tableFrame->IsBorderCollapse()) {
+    nsTableFrame::InvalidateTableFrame(aKidFrame, aOriginalKidRect,
+                                       aOriginalKidVisualOverflow, isFirstReflow);
+  }
 
   // Adjust the running block-offset
   aReflowInput.bCoord += aDesiredSize.BSize(aWM);
@@ -1683,10 +1686,10 @@ nsTableRowGroupFrame::GetBCBorderWidth(WritingMode aWM)
     lastRowFrame = rowFrame;
   }
   if (firstRowFrame) {
-    border.BStart(aWM) = nsPresContext::
-      CSSPixelsToAppUnits(firstRowFrame->GetBStartBCBorderWidth());
-    border.BEnd(aWM) = nsPresContext::
-      CSSPixelsToAppUnits(lastRowFrame->GetBEndBCBorderWidth());
+    border.BStart(aWM) = PresContext()->DevPixelsToAppUnits(
+      firstRowFrame->GetBStartBCBorderWidth());
+    border.BEnd(aWM) = PresContext()->DevPixelsToAppUnits(
+      lastRowFrame->GetBEndBCBorderWidth());
   }
   return border;
 }

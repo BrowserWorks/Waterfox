@@ -90,9 +90,9 @@ public:
   // nsIFrame overrides
   // We need to override GetXULMinSize and GetXULPrefSize because XUL uses
   // placeholders not within lines.
-  virtual void AddInlineMinISize(nsRenderingContext* aRenderingContext,
+  virtual void AddInlineMinISize(gfxContext* aRenderingContext,
                                  InlineMinISizeData* aData) override;
-  virtual void AddInlinePrefISize(nsRenderingContext* aRenderingContext,
+  virtual void AddInlinePrefISize(gfxContext* aRenderingContext,
                                   InlinePrefISizeData* aData) override;
   virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetXULPrefSize(nsBoxLayoutState& aBoxLayoutState) override;
@@ -110,7 +110,7 @@ public:
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 #endif // DEBUG || (MOZ_REFLOW_PERF_DSP && MOZ_REFLOW_PERF)
-  
+
 #ifdef DEBUG_FRAME_DUMP
   void List(FILE* out = stderr, const char* aPrefix = "", uint32_t aFlags = 0) const override;
   virtual nsresult GetFrameName(nsAString& aResult) const override;

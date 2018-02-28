@@ -88,28 +88,28 @@ with Files('java/org/mozilla/gecko/*GuestSession*'):
 with Files('locales/**'):
     BUG_COMPONENT = ('Firefox for Android', 'General')
 
-with Files('resources/**'):
+with Files('../app/src/*/res/**'):
     BUG_COMPONENT = ('Firefox for Android', 'General')
 
-with Files('resources/anim/**'):
+with Files('../app/src/*/res/anim/**'):
     BUG_COMPONENT = ('Firefox for Android', 'Overlays')
 
-with Files('resources/raw/*favicon*'):
+with Files('../app/src/*/res/raw/*favicon*'):
     BUG_COMPONENT = ('Firefox for Android', 'Favicon Handling')
 
-with Files('resources/xml*/*preference*'):
+with Files('../app/src/*/res/xml*/*preference*'):
     BUG_COMPONENT = ('Firefox for Android', 'Settings and Preferences')
 
-with Files('resources/menu/**'):
+with Files('../app/src/*/res/menu/**'):
     BUG_COMPONENT = ('Firefox for Android', 'General')
 
-with Files('resources/menu/*home*'):
+with Files('../app/src/*/res/menu/*home*'):
     BUG_COMPONENT = ('Firefox for Android', 'Awesomescreen')
 
-with Files('resources/menu/*activitystream*'):
+with Files('../app/src/*/res/menu/*activitystream*'):
     BUG_COMPONENT = ('Firefox for Android', 'Awesomescreen')
 
-with Files('resources/menu/browsersearch_contextmenu.xml'):
+with Files('../app/src/*/res/menu/browsersearch_contextmenu.xml'):
     BUG_COMPONENT = ('Firefox for Android', 'Awesomescreen')
 
 DIRS += ['locales']
@@ -329,20 +329,17 @@ services_jar.javac_flags += ['-Xlint:all,-deprecation']
 
 if CONFIG['MOZ_WEBRTC']:
     base_root = TOPSRCDIR + '/media/webrtc/trunk/webrtc/base/java/src/org/webrtc/'
-    video_render_root = TOPSRCDIR + '/media/webrtc/trunk/webrtc/modules/video_render/android/java/src/org/webrtc/videoengine/'
     video_capture_root = TOPSRCDIR + '/media/webrtc/trunk/webrtc/modules/video_capture/android/java/src/org/webrtc/videoengine/'
     audio_root = TOPSRCDIR + '/media/webrtc/trunk/webrtc/modules/audio_device/android/java/src/org/webrtc/voiceengine/'
     wrjar = add_java_jar('webrtc')
     wrjar.sources += [
         base_root + 'Logging.java',
+        base_root + 'ThreadUtils.java',
     ]
     wrjar.sources += [
         video_capture_root + 'CaptureCapabilityAndroid.java',
         video_capture_root + 'VideoCaptureAndroid.java',
         video_capture_root + 'VideoCaptureDeviceInfoAndroid.java',
-        video_render_root + 'ViEAndroidGLES20.java',
-        video_render_root + 'ViERenderer.java',
-        video_render_root + 'ViESurfaceRenderer.java',
     ]
     wrjar.sources += [
         audio_root + 'BuildInfo.java',
@@ -386,7 +383,7 @@ gvjar.sources += [geckoview_source_dir + 'java/org/mozilla/gecko/' + x
     'GeckoSharedPrefs.java',
     'GeckoThread.java',
     'GeckoView.java',
-    'GeckoViewFragment.java',
+    'GeckoViewHandler.java',
     'GeckoViewSettings.java',
     'gfx/BitmapUtils.java',
     'gfx/BufferedImage.java',
@@ -406,7 +403,6 @@ gvjar.sources += [geckoview_source_dir + 'java/org/mozilla/gecko/' + x
     'gfx/PanningPerfAPI.java',
     'gfx/PanZoomController.java',
     'gfx/PointUtils.java',
-    'gfx/RectUtils.java',
     'gfx/RenderTask.java',
     'gfx/StackScroller.java',
     'gfx/SurfaceAllocator.java',
@@ -418,12 +414,19 @@ gvjar.sources += [geckoview_source_dir + 'java/org/mozilla/gecko/' + x
     'InputMethods.java',
     'media/AsyncCodec.java',
     'media/AsyncCodecFactory.java',
+    'media/BaseHlsPlayer.java',
     'media/Codec.java',
     'media/CodecProxy.java',
     'media/FormatParam.java',
+    'media/GeckoAudioInfo.java',
+    'media/GeckoHLSDemuxerWrapper.java',
+    'media/GeckoHLSResourceWrapper.java',
+    'media/GeckoHLSSample.java',
     'media/GeckoMediaDrm.java',
     'media/GeckoMediaDrmBridgeV21.java',
     'media/GeckoMediaDrmBridgeV23.java',
+    'media/GeckoPlayerFactory.java',
+    'media/GeckoVideoInfo.java',
     'media/JellyBeanAsyncCodec.java',
     'media/LollipopAsyncCodec.java',
     'media/MediaDrmProxy.java',
@@ -460,6 +463,16 @@ gvjar.sources += [geckoview_thirdparty_source_dir + f for f in [
     'java/com/googlecode/eyesfree/braille/selfbraille/WriteData.java',
 ]]
 
+if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
+    gvjar.sources += [geckoview_source_dir + 'java/org/mozilla/gecko/' + x for x in [
+        'media/GeckoHlsAudioRenderer.java',
+        'media/GeckoHlsPlayer.java',
+        'media/GeckoHlsRendererBase.java',
+        'media/GeckoHlsVideoRenderer.java',
+        'media/Utils.java',
+    ]]
+
+
 gvjar.extra_jars += [
     CONFIG['ANDROID_SUPPORT_ANNOTATIONS_JAR_LIB'],
     CONFIG['ANDROID_SUPPORT_V4_AAR_LIB'],
@@ -491,6 +504,7 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'activitystream/homepanel/ActivityStreamHomeFragment.java',
     'activitystream/homepanel/ActivityStreamHomeScreen.java',
     'activitystream/homepanel/ActivityStreamPanel.java',
+    'activitystream/homepanel/HighlightsDividerItemDecoration.java',
     'activitystream/homepanel/HighlightsLoader.java',
     'activitystream/homepanel/menu/ActivityStreamContextMenu.java',
     'activitystream/homepanel/menu/BottomSheetContextMenu.java',
@@ -506,12 +520,12 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'activitystream/homepanel/stream/WelcomePanel.java',
     'activitystream/homepanel/StreamItemAnimator.java',
     'activitystream/homepanel/StreamRecyclerAdapter.java',
-    'activitystream/homepanel/topsites/CirclePageIndicator.java',
     'activitystream/homepanel/topsites/TopSitesCard.java',
     'activitystream/homepanel/topsites/TopSitesPage.java',
     'activitystream/homepanel/topsites/TopSitesPageAdapter.java',
     'activitystream/homepanel/topsites/TopSitesPagerAdapter.java',
     'activitystream/ranking/HighlightCandidate.java',
+    'activitystream/ranking/HighlightCandidateCursorIndices.java',
     'activitystream/ranking/HighlightsRanking.java',
     'activitystream/ranking/RankingUtils.java',
     'activitystream/Utils.java',
@@ -588,7 +602,6 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'distribution/ReferrerReceiver.java',
     'dlc/BaseAction.java',
     'dlc/catalog/DownloadContent.java',
-    'dlc/catalog/DownloadContentBootstrap.java',
     'dlc/catalog/DownloadContentBuilder.java',
     'dlc/catalog/DownloadContentCatalog.java',
     'dlc/DownloadAction.java',
@@ -696,7 +709,6 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'home/SearchEngine.java',
     'home/SearchEngineAdapter.java',
     'home/SearchEngineBar.java',
-    'home/SearchEngineRow.java',
     'home/SearchLoader.java',
     'home/SimpleCursorLoader.java',
     'home/SpacingDecoration.java',
@@ -844,7 +856,6 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'search/SearchEngineManager.java',
     'SessionParser.java',
     'SharedPreferencesHelper.java',
-    'SingleTabActivity.java',
     'SiteIdentity.java',
     'SnackbarBuilder.java',
     'SuggestClient.java',
@@ -923,7 +934,6 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'toolbar/ShapedButton.java',
     'toolbar/ShapedButtonFrameLayout.java',
     'toolbar/SiteIdentityPopup.java',
-    'toolbar/TabCounter.java',
     'toolbar/ToolbarDisplayLayout.java',
     'toolbar/ToolbarEditLayout.java',
     'toolbar/ToolbarEditText.java',
@@ -938,6 +948,7 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'util/JavaUtil.java',
     'util/ResourceDrawableUtils.java',
     'util/TouchTargetUtil.java',
+    'util/URIUtils.java',
     'util/ViewUtil.java',
     'webapps/WebAppActivity.java',
     'webapps/WebAppIndexer.java',
@@ -975,6 +986,7 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'widget/ResizablePathDrawable.java',
     'widget/RoundedCornerLayout.java',
     'widget/SiteLogins.java',
+    'widget/SplashScreen.java',
     'widget/SquaredImageView.java',
     'widget/SquaredRelativeLayout.java',
     'widget/SwipeDismissListViewTouchListener.java',
@@ -991,11 +1003,26 @@ gbjar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'widget/themed/ThemedImageButton.java',
     'widget/themed/ThemedImageView.java',
     'widget/themed/ThemedLinearLayout.java',
+    'widget/themed/ThemedListView.java',
     'widget/themed/ThemedRelativeLayout.java',
     'widget/themed/ThemedTextSwitcher.java',
     'widget/themed/ThemedTextView.java',
     'widget/themed/ThemedView.java',
 ]]
+if CONFIG['MOZ_ANDROID_PHOTON']:
+    gbjar.sources += ['../app/src/photon/java/org/mozilla/gecko/' + x for x in [
+        'home/SearchEngineRow.java',
+        'home/SuggestionItem.java',
+        'skin/SkinConfig.java',
+        'toolbar/TabCounter.java',
+    ]]
+else:
+    gbjar.sources += ['../app/src/australis/java/org/mozilla/gecko/' + x for x in [
+        'home/SearchEngineRow.java',
+        'skin/SkinConfig.java',
+        'toolbar/TabCounter.java',
+    ]]
+
 android_package_dir = CONFIG['ANDROID_PACKAGE_NAME'].replace('.', '/')
 gbjar.generated_sources = [] # Keep it this way.
 gbjar.extra_jars += [
@@ -1356,7 +1383,19 @@ if CONFIG['MOZ_ANDROID_MMA']:
 # Putting branding earlier allows branders to override default resources.
 ANDROID_RES_DIRS += [
     '/' + CONFIG['MOZ_BRANDING_DIRECTORY'] + '/res',
-    'resources',
+]
+
+if CONFIG['MOZ_ANDROID_PHOTON']:
+    ANDROID_RES_DIRS += [
+        '/mobile/android/app/src/photon/res',
+    ]
+else:
+    ANDROID_RES_DIRS += [
+        '/mobile/android/app/src/australis/res',
+    ]
+
+ANDROID_RES_DIRS += [
+    '/mobile/android/app/src/main/res',
     '/mobile/android/services/src/main/res',
     '!res',
 ]

@@ -165,7 +165,8 @@ class CancelDNSRequestEvent : public Runnable
 {
 public:
   CancelDNSRequestEvent(DNSRequestChild* aDnsReq, nsresult aReason)
-    : mDnsRequest(aDnsReq)
+    : Runnable("net::CancelDNSRequestEvent")
+    , mDnsRequest(aDnsReq)
     , mReasonForCancel(aReason)
   {}
 
@@ -213,9 +214,10 @@ DNSRequestChild::StartRequest()
   // we can only do IPDL on the main thread
   if (!NS_IsMainThread()) {
     SystemGroup::Dispatch(
-      "StartDNSRequestChild",
       TaskCategory::Other,
-      NewRunnableMethod(this, &DNSRequestChild::StartRequest));
+      NewRunnableMethod("net::DNSRequestChild::StartRequest",
+                        this,
+                        &DNSRequestChild::StartRequest));
     return;
   }
 
@@ -279,7 +281,9 @@ DNSRequestChild::RecvLookupCompleted(const DNSRequestResponse& reply)
     CallOnLookupComplete();
   } else {
     nsCOMPtr<nsIRunnable> event =
-      NewRunnableMethod(this, &DNSRequestChild::CallOnLookupComplete);
+      NewRunnableMethod("net::DNSRequestChild::CallOnLookupComplete",
+                        this,
+                        &DNSRequestChild::CallOnLookupComplete);
     mTarget->Dispatch(event, NS_DISPATCH_NORMAL);
   }
 
@@ -322,9 +326,7 @@ DNSRequestChild::Cancel(nsresult reason)
   if(mIPCOpen) {
     // We can only do IPDL on the main thread
     nsCOMPtr<nsIRunnable> runnable = new CancelDNSRequestEvent(this, reason);
-    SystemGroup::Dispatch("CancelDNSRequest",
-                          TaskCategory::Other,
-                          runnable.forget());
+    SystemGroup::Dispatch(TaskCategory::Other, runnable.forget());
   }
   return NS_OK;
 }

@@ -12,27 +12,35 @@ ${helpers.predefined_type("background-color", "Color",
     spec="https://drafts.csswg.org/css-backgrounds/#background-color",
     animation_value_type="IntermediateColor",
     ignored_when_colors_disabled=True,
-    allow_quirks=True)}
+    allow_quirks=True,
+    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER")}
 
 ${helpers.predefined_type("background-image", "ImageLayer",
     initial_value="Either::First(None_)",
     initial_specified_value="Either::First(None_)",
     spec="https://drafts.csswg.org/css-backgrounds/#the-background-image",
     vector="True",
-    animation_value_type="none",
+    animation_value_type="discrete",
     has_uncacheable_values="True" if product == "gecko" else "False",
-    ignored_when_colors_disabled="True")}
+    ignored_when_colors_disabled="True",
+    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER")}
 
 % for (axis, direction, initial) in [("x", "Horizontal", "left"), ("y", "Vertical", "top")]:
-    ${helpers.predefined_type("background-position-" + axis, "position::" + direction + "Position",
-                              initial_value="computed::LengthOrPercentage::zero()",
-                              initial_specified_value="SpecifiedValue::initial_specified_value()",
-                              spec="https://drafts.csswg.org/css-backgrounds-4/#propdef-background-position-" + axis,
-                              animation_value_type="ComputedValue", vector=True, delegate_animate=True)}
+    ${helpers.predefined_type(
+        "background-position-" + axis,
+        "position::" + direction + "Position",
+        initial_value="computed::LengthOrPercentage::zero()",
+        initial_specified_value="SpecifiedValue::initial_specified_value()",
+        spec="https://drafts.csswg.org/css-backgrounds-4/#propdef-background-position-" + axis,
+        animation_value_type="ComputedValue",
+        vector=True,
+        flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
+    )}
 % endfor
 
-<%helpers:vector_longhand name="background-repeat" animation_value_type="none"
-                          spec="https://drafts.csswg.org/css-backgrounds/#the-background-repeat">
+<%helpers:vector_longhand name="background-repeat" animation_value_type="discrete"
+                          spec="https://drafts.csswg.org/css-backgrounds/#the-background-repeat"
+                          flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER">
     use std::fmt;
     use style_traits::ToCss;
 
@@ -42,8 +50,8 @@ ${helpers.predefined_type("background-image", "ImageLayer",
                              "round" => Round,
                              "no-repeat" => NoRepeat);
 
-    #[derive(Debug, Clone, PartialEq)]
     #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+    #[derive(Clone, Debug, PartialEq, ToCss)]
     pub enum SpecifiedValue {
         RepeatX,
         RepeatY,
@@ -66,29 +74,13 @@ ${helpers.predefined_type("background-image", "ImageLayer",
                 (RepeatKeyword::Repeat, RepeatKeyword::NoRepeat) => dest.write_str("repeat-x"),
                 (RepeatKeyword::NoRepeat, RepeatKeyword::Repeat) => dest.write_str("repeat-y"),
                 (horizontal, vertical) => {
-                    try!(horizontal.to_css(dest));
+                    horizontal.to_css(dest)?;
                     if horizontal != vertical {
-                        try!(dest.write_str(" "));
-                        try!(vertical.to_css(dest));
+                        dest.write_str(" ")?;
+                        vertical.to_css(dest)?;
                     }
                     Ok(())
                 },
-            }
-        }
-    }
-    impl ToCss for SpecifiedValue {
-        fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-            match *self {
-                SpecifiedValue::RepeatX => dest.write_str("repeat-x"),
-                SpecifiedValue::RepeatY => dest.write_str("repeat-y"),
-                SpecifiedValue::Other(horizontal, vertical) => {
-                    try!(horizontal.to_css(dest));
-                    if let Some(vertical) = vertical {
-                        try!(dest.write_str(" "));
-                        try!(vertical.to_css(dest));
-                    }
-                    Ok(())
-                }
             }
         }
     }
@@ -130,15 +122,15 @@ ${helpers.predefined_type("background-image", "ImageLayer",
 
     pub fn parse<'i, 't>(_context: &ParserContext, input: &mut Parser<'i, 't>)
                          -> Result<SpecifiedValue, ParseError<'i>> {
-        let ident = input.expect_ident()?;
+        let ident = input.expect_ident_cloned()?;
         (match_ignore_ascii_case! { &ident,
             "repeat-x" => Ok(SpecifiedValue::RepeatX),
             "repeat-y" => Ok(SpecifiedValue::RepeatY),
             _ => Err(()),
         }).or_else(|()| {
             let horizontal: Result<_, ParseError> = RepeatKeyword::from_ident(&ident)
-                .map_err(|()| SelectorParseError::UnexpectedIdent(ident).into());
-            let horizontal = try!(horizontal);
+                .map_err(|()| SelectorParseError::UnexpectedIdent(ident.clone()).into());
+            let horizontal = horizontal?;
             let vertical = input.try(RepeatKeyword::parse).ok();
             Ok(SpecifiedValue::Other(horizontal, vertical))
         })
@@ -150,7 +142,8 @@ ${helpers.single_keyword("background-attachment",
                          vector=True,
                          gecko_constant_prefix="NS_STYLE_IMAGELAYER_ATTACHMENT",
                          spec="https://drafts.csswg.org/css-backgrounds/#the-background-attachment",
-                         animation_value_type="discrete")}
+                         animation_value_type="discrete",
+                         flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER")}
 
 ${helpers.single_keyword("background-clip",
                          "border-box padding-box content-box",
@@ -158,14 +151,16 @@ ${helpers.single_keyword("background-clip",
                          vector=True, extra_prefixes="webkit",
                          gecko_enum_prefix="StyleGeometryBox",
                          spec="https://drafts.csswg.org/css-backgrounds/#the-background-clip",
-                         animation_value_type="discrete")}
+                         animation_value_type="discrete",
+                         flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER")}
 
 ${helpers.single_keyword("background-origin",
                          "padding-box border-box content-box",
                          vector=True, extra_prefixes="webkit",
                          gecko_enum_prefix="StyleGeometryBox",
                          spec="https://drafts.csswg.org/css-backgrounds/#the-background-origin",
-                         animation_value_type="discrete")}
+                         animation_value_type="discrete",
+                         flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER")}
 
 ${helpers.predefined_type("background-size", "BackgroundSize",
     initial_value="computed::LengthOrPercentageOrAuto::Auto.into()",
@@ -173,6 +168,7 @@ ${helpers.predefined_type("background-size", "BackgroundSize",
     spec="https://drafts.csswg.org/css-backgrounds/#the-background-size",
     vector=True,
     animation_value_type="ComputedValue",
+    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
     extra_prefixes="webkit")}
 
 // https://drafts.fxtf.org/compositing/#background-blend-mode
@@ -182,4 +178,5 @@ ${helpers.single_keyword("background-blend-mode",
                             saturation color luminosity""",
                          gecko_constant_prefix="NS_STYLE_BLEND",
                          vector=True, products="gecko", animation_value_type="discrete",
-                         spec="https://drafts.fxtf.org/compositing/#background-blend-mode")}
+                         spec="https://drafts.fxtf.org/compositing/#background-blend-mode",
+                         flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER")}

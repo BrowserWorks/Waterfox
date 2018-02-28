@@ -17,7 +17,6 @@
 #include "RiceDeltaDecoder.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/IntegerPrintfMacros.h"
-#include "mozilla/SizePrintfMacros.h"
 
 // MOZ_LOG=UrlClassifierProtocolParser:5
 mozilla::LazyLogModule gUrlClassifierProtocolParserLog("UrlClassifierProtocolParser");
@@ -79,13 +78,6 @@ ProtocolParser::ProtocolParser()
 ProtocolParser::~ProtocolParser()
 {
   CleanupUpdates();
-}
-
-nsresult
-ProtocolParser::Init(nsICryptoHash* aHasher)
-{
-  mCryptoHash = aHasher;
-  return NS_OK;
 }
 
 void
@@ -223,7 +215,7 @@ ProtocolParserV2::ProcessExpirations(const nsCString& aLine)
     NS_WARNING("Got an expiration without a table.");
     return NS_ERROR_FAILURE;
   }
-  const nsCSubstring &list = Substring(aLine, 3);
+  const nsACString& list = Substring(aLine, 3);
   nsACString::const_iterator begin, end;
   list.BeginReading(begin);
   list.EndReading(end);
@@ -329,7 +321,7 @@ ProtocolParserV2::ProcessChunkControl(const nsCString& aLine)
 nsresult
 ProtocolParserV2::ProcessForward(const nsCString& aLine)
 {
-  const nsCSubstring &forward = Substring(aLine, 2);
+  const nsACString& forward = Substring(aLine, 2);
   return AddForward(forward);
 }
 
@@ -405,7 +397,7 @@ ProtocolParserV2::ProcessPlaintextChunk(const nsACString& aChunk)
     if (mChunkState.type == CHUNK_ADD) {
       if (mChunkState.hashSize == COMPLETE_SIZE) {
         Completion hash;
-        hash.FromPlaintext(line, mCryptoHash);
+        hash.FromPlaintext(line);
         nsresult rv = mTableUpdate->NewAddComplete(mChunkState.num, hash);
         if (NS_FAILED(rv)) {
           return rv;
@@ -413,7 +405,7 @@ ProtocolParserV2::ProcessPlaintextChunk(const nsACString& aChunk)
       } else {
         NS_ASSERTION(mChunkState.hashSize == 4, "Only 32- or 4-byte hashes can be used for add chunks.");
         Prefix hash;
-        hash.FromPlaintext(line, mCryptoHash);
+        hash.FromPlaintext(line);
         nsresult rv = mTableUpdate->NewAddPrefix(mChunkState.num, hash);
         if (NS_FAILED(rv)) {
           return rv;
@@ -434,7 +426,7 @@ ProtocolParserV2::ProcessPlaintextChunk(const nsACString& aChunk)
 
       if (mChunkState.hashSize == COMPLETE_SIZE) {
         Completion hash;
-        hash.FromPlaintext(Substring(iter, end), mCryptoHash);
+        hash.FromPlaintext(Substring(iter, end));
         nsresult rv = mTableUpdate->NewSubComplete(addChunk, hash, mChunkState.num);
         if (NS_FAILED(rv)) {
           return rv;
@@ -442,7 +434,7 @@ ProtocolParserV2::ProcessPlaintextChunk(const nsACString& aChunk)
       } else {
         NS_ASSERTION(mChunkState.hashSize == 4, "Only 32- or 4-byte hashes can be used for add chunks.");
         Prefix hash;
-        hash.FromPlaintext(Substring(iter, end), mCryptoHash);
+        hash.FromPlaintext(Substring(iter, end));
         nsresult rv = mTableUpdate->NewSubPrefix(addChunk, hash, mChunkState.num);
         if (NS_FAILED(rv)) {
           return rv;
@@ -537,7 +529,7 @@ ProtocolParserV2::ProcessDigestSub(const nsACString& aChunk)
   uint32_t start = 0;
   while (start < aChunk.Length()) {
     // Read ADDCHUNKNUM
-    const nsCSubstring& addChunkStr = Substring(aChunk, start, 4);
+    const nsACString& addChunkStr = Substring(aChunk, start, 4);
     start += 4;
 
     uint32_t addChunk;
@@ -604,7 +596,7 @@ ProtocolParserV2::ProcessHostSub(const Prefix& aDomain, uint8_t aNumEntries,
       return NS_ERROR_FAILURE;
     }
 
-    const nsCSubstring& addChunkStr = Substring(aChunk, *aStart, 4);
+    const nsACString& addChunkStr = Substring(aChunk, *aStart, 4);
     *aStart += 4;
 
     uint32_t addChunk;
@@ -625,7 +617,7 @@ ProtocolParserV2::ProcessHostSub(const Prefix& aDomain, uint8_t aNumEntries,
   }
 
   for (uint8_t i = 0; i < aNumEntries; i++) {
-    const nsCSubstring& addChunkStr = Substring(aChunk, *aStart, 4);
+    const nsACString& addChunkStr = Substring(aChunk, *aStart, 4);
     *aStart += 4;
 
     uint32_t addChunk;
@@ -701,7 +693,7 @@ ProtocolParserV2::ProcessHostSubComplete(uint8_t aNumEntries,
     hash.Assign(Substring(aChunk, *aStart, COMPLETE_SIZE));
     *aStart += COMPLETE_SIZE;
 
-    const nsCSubstring& addChunkStr = Substring(aChunk, *aStart, 4);
+    const nsACString& addChunkStr = Substring(aChunk, *aStart, 4);
     *aStart += 4;
 
     uint32_t addChunk;
@@ -937,7 +929,7 @@ ProtocolParserProtobuf::ProcessRawAddition(TableUpdateV4& aTableUpdate,
     uint32_t* fixedLengthPrefixes = (uint32_t*)prefixes.c_str();
     size_t numOfFixedLengthPrefixes = prefixes.size() / 4;
     PARSER_LOG(("* Raw addition (4 bytes)"));
-    PARSER_LOG(("  - # of prefixes: %" PRIuSIZE, numOfFixedLengthPrefixes));
+    PARSER_LOG(("  - # of prefixes: %zu", numOfFixedLengthPrefixes));
     PARSER_LOG(("  - Memory address: 0x%p", fixedLengthPrefixes));
   } else {
     // TODO: Process variable length prefixes including full hashes.
@@ -970,8 +962,12 @@ ProtocolParserProtobuf::ProcessRawRemoval(TableUpdateV4& aTableUpdate,
   PARSER_LOG(("* Raw removal"));
   PARSER_LOG(("  - # of removal: %d", indices.size()));
 
-  aTableUpdate.NewRemovalIndices((const uint32_t*)indices.data(),
-                                 indices.size());
+  nsresult rv = aTableUpdate.NewRemovalIndices((const uint32_t*)indices.data(),
+                                               indices.size());
+  if (NS_FAILED(rv)) {
+    PARSER_LOG(("Failed to create new removal indices."));
+    return rv;
+  }
 
   return NS_OK;
 }
@@ -1104,7 +1100,11 @@ ProtocolParserProtobuf::ProcessEncodedRemoval(TableUpdateV4& aTableUpdate,
   }
 
   // The encoded prefixes are always 4 bytes.
-  aTableUpdate.NewRemovalIndices(&decoded[0], decoded.Length());
+  rv = aTableUpdate.NewRemovalIndices(&decoded[0], decoded.Length());
+  if (NS_FAILED(rv)) {
+    PARSER_LOG(("Failed to create new removal indices."));
+    return rv;
+  }
 
   return NS_OK;
 }

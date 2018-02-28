@@ -12,7 +12,6 @@
 #include "nsIDOMHTMLSelectElement.h"
 #include "nsIDOMHTMLOptionElement.h"
 #include "nsComboboxControlFrame.h"
-#include "nsIDOMHTMLOptGroupElement.h"
 #include "nsIPresShell.h"
 #include "nsIDOMMouseEvent.h"
 #include "nsIXULRuntime.h"
@@ -24,6 +23,7 @@
 #include "nsDisplayList.h"
 #include "nsContentUtils.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/HTMLOptGroupElement.h"
 #include "mozilla/dom/HTMLOptionsCollection.h"
 #include "mozilla/dom/HTMLSelectElement.h"
 #include "mozilla/EventStateManager.h"
@@ -281,8 +281,7 @@ GetMaxOptionBSize(nsIFrame* aContainer, WritingMode aWM)
   nscoord result = 0;
   for (nsIFrame* option : aContainer->PrincipalChildList()) {
     nscoord optionBSize;
-    if (nsCOMPtr<nsIDOMHTMLOptGroupElement>
-        (do_QueryInterface(option->GetContent()))) {
+    if (HTMLOptGroupElement::FromContent(option->GetContent())) {
       // An optgroup; drill through any scroll frame and recurse.  |frame| might
       // be null here though if |option| is an anonymous leaf frame of some sort.
       auto frame = option->GetContentInsertionFrame();
@@ -323,7 +322,7 @@ nsListControlFrame::CalcBSizeOfARow()
 }
 
 nscoord
-nsListControlFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsListControlFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -341,7 +340,7 @@ nsListControlFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
 }
 
 nscoord
-nsListControlFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsListControlFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -469,9 +468,6 @@ nsListControlFrame::Reflow(nsPresContext*           aPresContext,
   // nsSelectsAreaFrame will have suppressed the scrollbar update.
   if (!IsScrollbarUpdateSuppressed()) {
     // All done.  No need to do more reflow.
-    NS_ASSERTION(!IsScrollbarUpdateSuppressed(),
-                 "Shouldn't be suppressing if the block size of a row has not "
-                 "changed!");
     return;
   }
 
@@ -753,7 +749,8 @@ CountOptionsAndOptgroups(nsIFrame* aFrame)
       if (content->IsHTMLElement(nsGkAtoms::option)) {
         ++count;
       } else {
-        nsCOMPtr<nsIDOMHTMLOptGroupElement> optgroup = do_QueryInterface(content);
+        RefPtr<HTMLOptGroupElement> optgroup =
+          HTMLOptGroupElement::FromContent(content);
         if (optgroup) {
           nsAutoString label;
           optgroup->GetLabel(label);
@@ -1465,13 +1462,14 @@ nsListControlFrame::AboutToDropDown()
   // which is always opaque, in case we don't end up with an opaque color.
   // This gives us a very poor approximation of translucency.
   nsIFrame* comboboxFrame = do_QueryFrame(mComboboxFrame);
-  nsStyleContext* context = comboboxFrame->StyleContext()->GetParent();
+  nsIFrame* ancestor = comboboxFrame->GetParent();
   mLastDropdownBackstopColor = NS_RGBA(0,0,0,0);
-  while (NS_GET_A(mLastDropdownBackstopColor) < 255 && context) {
+  while (NS_GET_A(mLastDropdownBackstopColor) < 255 && ancestor) {
+    nsStyleContext* context = ancestor->StyleContext();
     mLastDropdownBackstopColor =
       NS_ComposeColors(context->StyleBackground()->BackgroundColor(context),
                        mLastDropdownBackstopColor);
-    context = context->GetParent();
+    ancestor = ancestor->GetParent();
   }
   mLastDropdownBackstopColor =
     NS_ComposeColors(PresContext()->DefaultBackgroundColor(),

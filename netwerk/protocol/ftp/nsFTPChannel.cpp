@@ -14,7 +14,7 @@ using namespace mozilla;
 using namespace mozilla::net;
 extern LazyLogModule gFTPLog;
 
-// There are two transport connections established for an 
+// There are two transport connections established for an
 // ftp connection. One is used for the command channel , and
 // the other for the data channel. The command channel is the first
 // connection made and is used to negotiate the second, data, channel.
@@ -45,7 +45,7 @@ nsFtpChannel::SetUploadStream(nsIInputStream *stream,
     mUploadStream = stream;
 
     // NOTE: contentLength is intentionally ignored here.
- 
+
     return NS_OK;
 }
 
@@ -139,24 +139,26 @@ class FTPEventSinkProxy final : public nsIFTPEventSink
 public:
     explicit FTPEventSinkProxy(nsIFTPEventSink* aTarget)
         : mTarget(aTarget)
-        , mTargetThread(do_GetCurrentThread())
+        , mEventTarget(GetCurrentThreadEventTarget())
     { }
-        
+
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSIFTPEVENTSINK
 
     class OnFTPControlLogRunnable : public Runnable
     {
     public:
-        OnFTPControlLogRunnable(nsIFTPEventSink* aTarget,
-                                bool aServer,
-                                const char* aMessage)
-            : mTarget(aTarget)
-            , mServer(aServer)
-            , mMessage(aMessage)
-        { }
+      OnFTPControlLogRunnable(nsIFTPEventSink* aTarget,
+                              bool aServer,
+                              const char* aMessage)
+        : mozilla::Runnable("FTPEventSinkProxy::OnFTPControlLogRunnable")
+        , mTarget(aTarget)
+        , mServer(aServer)
+        , mMessage(aMessage)
+      {
+      }
 
-        NS_DECL_NSIRUNNABLE
+      NS_DECL_NSIRUNNABLE
 
     private:
         nsCOMPtr<nsIFTPEventSink> mTarget;
@@ -166,7 +168,7 @@ public:
 
 private:
     nsCOMPtr<nsIFTPEventSink> mTarget;
-    nsCOMPtr<nsIThread> mTargetThread;
+    nsCOMPtr<nsIEventTarget> mEventTarget;
 };
 
 NS_IMPL_ISUPPORTS(FTPEventSinkProxy, nsIFTPEventSink)
@@ -176,7 +178,7 @@ FTPEventSinkProxy::OnFTPControlLog(bool aServer, const char* aMsg)
 {
     RefPtr<OnFTPControlLogRunnable> r =
         new OnFTPControlLogRunnable(mTarget, aServer, aMsg);
-    return mTargetThread->Dispatch(r, NS_DISPATCH_NORMAL);
+    return mEventTarget->Dispatch(r, NS_DISPATCH_NORMAL);
 }
 
 NS_IMETHODIMP

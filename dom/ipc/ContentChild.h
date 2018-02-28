@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_ContentChild_h
 #define mozilla_dom_ContentChild_h
 
+#include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/ContentBridgeParent.h"
 #include "mozilla/dom/nsIContentChild.h"
@@ -48,7 +49,6 @@ namespace dom {
 
 class AlertObserver;
 class ConsoleListener;
-class PStorageChild;
 class ClonedMessageData;
 class TabChild;
 class GetFilesHelperChild;
@@ -107,7 +107,7 @@ public:
   void InitXPCOM(const XPCOMInitData& aXPCOMInit,
                  const mozilla::dom::ipc::StructuredCloneData& aInitialData);
 
-  void InitGraphicsDeviceData();
+  void InitGraphicsDeviceData(const ContentDeviceData& aData);
 
   static ContentChild* GetSingleton()
   {
@@ -161,7 +161,7 @@ public:
 
   mozilla::ipc::IPCResult
   RecvInitRendering(
-    Endpoint<PCompositorBridgeChild>&& aCompositor,
+    Endpoint<PCompositorManagerChild>&& aCompositor,
     Endpoint<PImageBridgeChild>&& aImageBridge,
     Endpoint<PVRManagerChild>&& aVRBridge,
     Endpoint<PVideoDecoderManagerChild>&& aVideoManager,
@@ -169,11 +169,13 @@ public:
 
   mozilla::ipc::IPCResult
   RecvReinitRendering(
-    Endpoint<PCompositorBridgeChild>&& aCompositor,
+    Endpoint<PCompositorManagerChild>&& aCompositor,
     Endpoint<PImageBridgeChild>&& aImageBridge,
     Endpoint<PVRManagerChild>&& aVRBridge,
     Endpoint<PVideoDecoderManagerChild>&& aVideoManager,
     nsTArray<uint32_t>&& namespaces) override;
+
+  virtual mozilla::ipc::IPCResult RecvAudioDefaultDeviceChange() override;
 
   mozilla::ipc::IPCResult RecvReinitRenderingForDeviceReset() override;
 
@@ -295,10 +297,6 @@ public:
 
   virtual bool DeallocPMediaChild(PMediaChild* aActor) override;
 
-  virtual PStorageChild* AllocPStorageChild() override;
-
-  virtual bool DeallocPStorageChild(PStorageChild* aActor) override;
-
   virtual PPresentationChild* AllocPPresentationChild() override;
 
   virtual bool DeallocPPresentationChild(PPresentationChild* aActor) override;
@@ -409,14 +407,6 @@ public:
   virtual mozilla::ipc::IPCResult
   RecvInitBlobURLs(nsTArray<BlobURLRegistrationData>&& aRegistations) override;
 
-  virtual mozilla::ipc::IPCResult
-  RecvDispatchLocalStorageChange(const nsString& aDocumentURI,
-                                 const nsString& aKey,
-                                 const nsString& aOldValue,
-                                 const nsString& aNewValue,
-                                 const IPC::Principal& aPrincipal,
-                                 const bool& aIsPrivate) override;
-
   virtual mozilla::ipc::IPCResult RecvLastPrivateDocShellDestroyed() override;
 
   virtual mozilla::ipc::IPCResult
@@ -437,12 +427,6 @@ public:
   virtual mozilla::ipc::IPCResult RecvNotifyIdleObserver(const uint64_t& aObserver,
                                                          const nsCString& aTopic,
                                                          const nsString& aData) override;
-
-  virtual mozilla::ipc::IPCResult RecvAssociatePluginId(const uint32_t& aPluginId,
-                                                        const base::ProcessId& aProcessId) override;
-
-  virtual mozilla::ipc::IPCResult RecvLoadPluginResult(const uint32_t& aPluginId,
-                                                       const bool& aResult) override;
 
   virtual mozilla::ipc::IPCResult RecvUpdateWindow(const uintptr_t& aChildId) override;
 
@@ -609,6 +593,15 @@ public:
   RecvSetPermissionsWithKey(const nsCString& aPermissionKey,
                             nsTArray<IPC::Permission>&& aPerms) override;
 
+  virtual mozilla::ipc::IPCResult
+  RecvShareCodeCoverageMutex(const CrossProcessMutexHandle& aHandle) override;
+
+  virtual mozilla::ipc::IPCResult
+  RecvDumpCodeCoverageCounters() override;
+
+  virtual mozilla::ipc::IPCResult
+  RecvResetCodeCoverageCounters() override;
+
 #if defined(XP_WIN) && defined(ACCESSIBILITY)
   bool
   SendGetA11yContentId();
@@ -665,7 +658,9 @@ public:
   virtual already_AddRefed<nsIEventTarget> GetEventTargetFor(TabChild* aTabChild) override;
 
   mozilla::ipc::IPCResult
-  RecvSetPluginList(const uint32_t& aPluginEpoch, nsTArray<PluginTag>&& aPluginTags, nsTArray<FakePluginTag>&& aFakePluginTags) override;
+  RecvSetPluginList(const uint32_t& aPluginEpoch,
+                    nsTArray<PluginTag>&& aPluginTags,
+                    nsTArray<FakePluginTag>&& aFakePluginTags) override;
 
 private:
   static void ForceKillTimerCallback(nsITimer* aTimer, void* aClosure);
@@ -677,6 +672,9 @@ private:
 
   virtual already_AddRefed<nsIEventTarget>
   GetConstructedEventTarget(const Message& aMsg) override;
+
+  virtual already_AddRefed<nsIEventTarget>
+  GetSpecificMessageEventTarget(const Message& aMsg) override;
 
   InfallibleTArray<nsAutoPtr<AlertObserver> > mAlertObservers;
   RefPtr<ConsoleListener> mConsoleListener;
@@ -747,7 +745,7 @@ private:
 
   nsClassHashtable<nsUint64HashKey, AnonymousTemporaryFileCallback> mPendingAnonymousTemporaryFiles;
 
-  bool mShuttingDown;
+  mozilla::Atomic<bool> mShuttingDown;
 
   DISALLOW_EVIL_CONSTRUCTORS(ContentChild);
 };

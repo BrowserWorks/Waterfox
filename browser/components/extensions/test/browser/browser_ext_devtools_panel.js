@@ -2,12 +2,11 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-XPCOMUtils.defineLazyModuleGetter(this, "devtools",
-                                  "resource://devtools/shared/Loader.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "gDevTools",
-                                  "resource://devtools/client/framework/gDevTools.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
                                   "resource://gre/modules/Preferences.jsm");
+
+const {DevToolsShim} = Cu.import("chrome://devtools-shim/content/DevToolsShim.jsm", {});
+const {gDevTools} = DevToolsShim;
 
 const DEVTOOLS_THEME_PREF = "devtools.theme";
 
@@ -76,7 +75,7 @@ add_task(async function test_theme_name_no_panel() {
 
   await extension.startup();
 
-  let target = devtools.TargetFactory.forTab(tab);
+  let target = gDevTools.getTargetForTab(tab);
   await gDevTools.showToolbox(target, "webconsole");
   info("developer toolbox opened");
 
@@ -195,7 +194,7 @@ add_task(async function test_devtools_page_panels_create() {
 
   await extension.startup();
 
-  let target = devtools.TargetFactory.forTab(tab);
+  let target = gDevTools.getTargetForTab(tab);
 
   const toolbox = await gDevTools.showToolbox(target, "webconsole");
   info("developer toolbox opened");
@@ -302,6 +301,138 @@ add_task(async function test_devtools_page_panels_create() {
   is(toolToggledResults.panelCreated, 1, "devtools.panel.create callback has been called once");
   is(toolToggledResults.panelShown, 3, "panel.onShown listener has been called three times");
   is(toolToggledResults.panelHidden, 3, "panel.onHidden listener has been called three times");
+
+  await gDevTools.closeToolbox(target);
+  await target.destroy();
+
+  await extension.unload();
+
+  await BrowserTestUtils.removeTab(tab);
+});
+
+add_task(async function test_devtools_page_invalid_panel_urls() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "http://mochi.test:8888/");
+
+  async function devtools_page() {
+    const matchInvalidPanelURL = /must be a relative URL/;
+    const matchInvalidIconURL = /be one of \[""\], or match the format "strictRelativeUrl"/;
+
+    const test_cases = [
+      // Invalid panel urls (validated by the schema wrappers, throws on invalid urls).
+      {panel: "about:about", icon: "icon.png", expectError: matchInvalidPanelURL},
+      {panel: "about:addons", icon: "icon.png", expectError: matchInvalidPanelURL},
+      {panel: "http://mochi.test:8888", icon: "icon.png", expectError: matchInvalidPanelURL},
+      // Invalid icon urls (validated inside the API method because of the empty icon string
+      // which have to be resolved to the default icon, reject the returned promise).
+      {panel: "panel.html", icon: "about:about", expectError: matchInvalidIconURL},
+      {panel: "panel.html", icon: "http://mochi.test:8888", expectError: matchInvalidIconURL},
+      // Valid panel urls
+      {panel: "panel.html", icon: "icon.png"},
+      {panel: "./panel.html", icon: "icon.png"},
+      {panel: "/panel.html", icon: "icon.png"},
+      {panel: "/panel.html", icon: ""},
+    ];
+
+    browser.test.onMessage.addListener(async msg => {
+      if (msg !== "start_test_panel_create") {
+        return;
+      }
+
+      for (let {panel, icon, expectError} of test_cases) {
+        browser.test.log(`Testing devtools.panels.create for ${JSON.stringify({panel, icon})}`);
+
+        if (expectError) {
+          // Verify that invalid panel urls throw.
+          browser.test.assertThrows(
+            () => browser.devtools.panels.create("Test Panel", icon, panel),
+            expectError,
+            "Got the expected rejection on creating a devtools panel with " +
+            `panel url ${panel} and icon ${icon}`
+          );
+        } else {
+          // Verify that with valid panel and icon urls the panel is created and loaded
+          // as expected.
+          try {
+            const pane = await browser.devtools.panels.create("Test Panel", icon, panel);
+
+            // Wait the panel to be loaded.
+            const oncePanelLoaded = new Promise(resolve => {
+              pane.onShown.addListener(paneWin => {
+                browser.test.assertTrue(
+                  paneWin.location.href.endsWith("/panel.html"),
+                  `The panel has loaded the expected extension URL with ${panel}`);
+                resolve();
+              });
+            });
+
+            // Ask the privileged code to select the last created panel.
+            browser.test.sendMessage("select-devtools-panel");
+            await oncePanelLoaded;
+          } catch (err) {
+            browser.test.fail("Unexpected failure on creating a devtools panel with " +
+                              `panel url ${panel} and icon ${icon}`);
+          }
+        }
+      }
+
+      browser.test.sendMessage("test_invalid_devtools_panel_urls_done");
+    });
+
+    browser.test.sendMessage("devtools_page_ready");
+  }
+
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      devtools_page: "devtools_page.html",
+      icons: {
+        "32": "icon.png",
+      },
+    },
+    files: {
+      "devtools_page.html": `<!DOCTYPE html>
+        <html>
+         <head>
+           <meta charset="utf-8">
+         </head>
+         <body>
+           <script src="devtools_page.js"></script>
+         </body>
+        </html>`,
+      "devtools_page.js": devtools_page,
+      "panel.html":  `<!DOCTYPE html>
+        <html>
+         <head>
+           <meta charset="utf-8">
+         </head>
+         <body>
+           DEVTOOLS PANEL
+         </body>
+        </html>`,
+      "icon.png": imageBuffer,
+      "default-icon.png": imageBuffer,
+    },
+  });
+
+  await extension.startup();
+
+  let target = gDevTools.getTargetForTab(tab);
+
+  let toolbox = await gDevTools.showToolbox(target, "webconsole");
+
+  extension.onMessage("select-devtools-panel", () => {
+    const toolboxAdditionalTools = toolbox.getAdditionalTools();
+    const lastTool = toolboxAdditionalTools[toolboxAdditionalTools.length - 1];
+
+    gDevTools.showToolbox(target, lastTool.id);
+  });
+
+  info("developer toolbox opened");
+
+  await extension.awaitMessage("devtools_page_ready");
+
+  extension.sendMessage("start_test_panel_create");
+
+  await extension.awaitMessage("test_invalid_devtools_panel_urls_done");
 
   await gDevTools.closeToolbox(target);
   await target.destroy();

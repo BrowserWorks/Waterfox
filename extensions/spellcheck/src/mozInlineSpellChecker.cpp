@@ -78,20 +78,13 @@ using namespace mozilla::dom;
 //#define DEBUG_INLINESPELL
 
 // the number of milliseconds that we will take at once to do spellchecking
-#define INLINESPELL_CHECK_TIMEOUT 50
+#define INLINESPELL_CHECK_TIMEOUT 1
 
 // The number of words to check before we look at the time to see if
-// INLINESPELL_CHECK_TIMEOUT ms have elapsed. This prevents us from spending
-// too much time checking the clock. Note that misspelled words count for
-// more than one word in this calculation.
-#define INLINESPELL_TIMEOUT_CHECK_FREQUENCY 50
-
-// This number is the number of checked words a misspelled word counts for
-// when we're checking the time to see if the alloted time is up for
-// spellchecking. Misspelled words take longer to process since we have to
-// create a range, so they count more. The exact number isn't very important
-// since this just controls how often we check the current time.
-#define MISSPELLED_WORD_COUNT_PENALTY 4
+// INLINESPELL_CHECK_TIMEOUT ms have elapsed. This prevents us from getting
+// stuck and not moving forward because the INLINESPELL_CHECK_TIMEOUT might
+// be too short to a low-end machine.
+#define INLINESPELL_MINIMUM_WORDS_BEFORE_TIMEOUT 5
 
 // These notifications are broadcast when spell check starts and ends.  STARTED
 // must always be followed by ENDED.
@@ -101,7 +94,10 @@ using namespace mozilla::dom;
 static bool ContentIsDescendantOf(nsINode* aPossibleDescendant,
                                     nsINode* aPossibleAncestor);
 
-static const char kMaxSpellCheckSelectionSize[] = "extensions.spellcheck.inline.max-misspellings";
+static const char kMaxSpellCheckSelectionSize[] =
+  "extensions.spellcheck.inline.max-misspellings";
+static const PRTime kMaxSpellCheckTimeInUsec =
+  INLINESPELL_CHECK_TIMEOUT * PR_USEC_PER_MSEC;
 
 mozInlineSpellStatus::mozInlineSpellStatus(mozInlineSpellChecker* aSpellChecker)
     : mSpellChecker(aSpellChecker), mWordCount(0)
@@ -356,19 +352,18 @@ mozInlineSpellStatus::FinishNavigationEvent(mozInlineSpellWordUtil& aWordUtil)
 
   NS_ASSERTION(mAnchorRange, "No anchor for navigation!");
   nsCOMPtr<nsIDOMNode> newAnchorNode, oldAnchorNode;
-  int32_t newAnchorOffset, oldAnchorOffset;
 
   // get the DOM position of the old caret, the range should be collapsed
   nsresult rv = mOldNavigationAnchorRange->GetStartContainer(
       getter_AddRefs(oldAnchorNode));
   NS_ENSURE_SUCCESS(rv, rv);
-  rv = mOldNavigationAnchorRange->GetStartOffset(&oldAnchorOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
+  uint32_t oldAnchorOffset = mOldNavigationAnchorRange->StartOffset();
 
   // find the word on the old caret position, this is the one that we MAY need
   // to check
   RefPtr<nsRange> oldWord;
-  rv = aWordUtil.GetRangeForWord(oldAnchorNode, oldAnchorOffset,
+  rv = aWordUtil.GetRangeForWord(oldAnchorNode,
+                                 static_cast<int32_t>(oldAnchorOffset),
                                  getter_AddRefs(oldWord));
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -380,15 +375,16 @@ mozInlineSpellStatus::FinishNavigationEvent(mozInlineSpellWordUtil& aWordUtil)
   // get the DOM position of the new caret, the range should be collapsed
   rv = mAnchorRange->GetStartContainer(getter_AddRefs(newAnchorNode));
   NS_ENSURE_SUCCESS(rv, rv);
-  rv = mAnchorRange->GetStartOffset(&newAnchorOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
+  uint32_t newAnchorOffset = mAnchorRange->StartOffset();
 
   // see if the new cursor position is in the word of the old cursor position
   bool isInRange = false;
   if (! mForceNavigationWordCheck) {
-    rv = oldWord->IsPointInRange(newAnchorNode,
-                                 newAnchorOffset + mNewNavigationPositionOffset,
-                                 &isInRange);
+    rv = oldWord->IsPointInRange(
+                    newAnchorNode,
+                    static_cast<int32_t>(
+                      newAnchorOffset + mNewNavigationPositionOffset),
+                    &isInRange);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -421,11 +417,9 @@ mozInlineSpellStatus::FillNoCheckRangeFromAnchor(
   nsresult rv = mAnchorRange->GetStartContainer(getter_AddRefs(anchorNode));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  int32_t anchorOffset;
-  rv = mAnchorRange->GetStartOffset(&anchorOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return aWordUtil.GetRangeForWord(anchorNode, anchorOffset,
+  uint32_t anchorOffset = mAnchorRange->StartOffset();
+  return aWordUtil.GetRangeForWord(anchorNode,
+                                   static_cast<int32_t>(anchorOffset),
                                    getter_AddRefs(mNoCheckRange));
 }
 
@@ -484,32 +478,33 @@ mozInlineSpellStatus::PositionToCollapsedRange(nsIDOMDocument* aDocument,
 class mozInlineSpellResume : public Runnable
 {
 public:
-  mozInlineSpellResume(const mozInlineSpellStatus& aStatus,
+  mozInlineSpellResume(UniquePtr<mozInlineSpellStatus>&& aStatus,
                        uint32_t aDisabledAsyncToken)
     : Runnable("mozInlineSpellResume")
     , mDisabledAsyncToken(aDisabledAsyncToken)
-    , mStatus(aStatus)
+    , mStatus(Move(aStatus))
   {
   }
 
   nsresult Post()
   {
-    return NS_DispatchToMainThread(this);
+    nsCOMPtr<nsIRunnable> runnable(this);
+    return NS_IdleDispatchToCurrentThread(runnable.forget(), 1000);
   }
 
   NS_IMETHOD Run() override
   {
     // Discard the resumption if the spell checker was disabled after the
     // resumption was scheduled.
-    if (mDisabledAsyncToken == mStatus.mSpellChecker->mDisabledAsyncToken) {
-      mStatus.mSpellChecker->ResumeCheck(&mStatus);
+    if (mDisabledAsyncToken == mStatus->mSpellChecker->mDisabledAsyncToken) {
+      mStatus->mSpellChecker->ResumeCheck(Move(mStatus));
     }
     return NS_OK;
   }
 
 private:
   uint32_t mDisabledAsyncToken;
-  mozInlineSpellStatus mStatus;
+  UniquePtr<mozInlineSpellStatus> mStatus;
 };
 
 // Used as the nsIEditorSpellCheck::InitSpellChecker callback.
@@ -570,7 +565,7 @@ mozInlineSpellChecker::mozInlineSpellChecker() :
 {
   nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
   if (prefs)
-    prefs->GetIntPref(kMaxSpellCheckSelectionSize, &mMaxNumWordsInSpellSelection); 
+    prefs->GetIntPref(kMaxSpellCheckSelectionSize, &mMaxNumWordsInSpellSelection);
   mMaxMisspellingsPerCheck = mMaxNumWordsInSpellSelection * 3 / 4;
 }
 
@@ -700,7 +695,8 @@ mozInlineSpellChecker::UpdateCanEnableInlineSpellChecking()
 
 // mozInlineSpellChecker::RegisterEventListeners
 //
-//    The inline spell checker listens to mouse events and keyboard navigation+ //    events.
+//    The inline spell checker listens to mouse events and keyboard navigation
+//    events.
 
 nsresult
 mozInlineSpellChecker::RegisterEventListeners()
@@ -901,14 +897,15 @@ mozInlineSpellChecker::SpellCheckAfterEditorChange(
   rv = aSelection->GetAnchorOffset(&anchorOffset);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mozInlineSpellStatus status(this);
-  rv = status.InitForEditorChange((EditAction)aAction,
-                                  anchorNode, anchorOffset,
-                                  aPreviousSelectedNode, aPreviousSelectedOffset,
-                                  aStartNode, aStartOffset,
-                                  aEndNode, aEndOffset);
+  auto status = MakeUnique<mozInlineSpellStatus>(this);
+  rv = status->InitForEditorChange((EditAction)aAction,
+                                   anchorNode, anchorOffset,
+                                   aPreviousSelectedNode,
+                                   aPreviousSelectedOffset,
+                                   aStartNode, aStartOffset,
+                                   aEndNode, aEndOffset);
   NS_ENSURE_SUCCESS(rv, rv);
-  rv = ScheduleSpellCheck(status);
+  rv = ScheduleSpellCheck(Move(status));
   NS_ENSURE_SUCCESS(rv, rv);
 
   // remember the current caret position after every change
@@ -931,11 +928,11 @@ mozInlineSpellChecker::SpellCheckRange(nsIDOMRange* aRange)
     return NS_ERROR_NOT_INITIALIZED;
   }
 
-  mozInlineSpellStatus status(this);
+  auto status = MakeUnique<mozInlineSpellStatus>(this);
   nsRange* range = static_cast<nsRange*>(aRange);
-  nsresult rv = status.InitForRange(range);
+  nsresult rv = status->InitForRange(range);
   NS_ENSURE_SUCCESS(rv, rv);
-  return ScheduleSpellCheck(status);
+  return ScheduleSpellCheck(Move(status));
 }
 
 // mozInlineSpellChecker::GetMisspelledWord
@@ -947,7 +944,7 @@ mozInlineSpellChecker::GetMisspelledWord(nsIDOMNode *aNode, int32_t aOffset,
   NS_ENSURE_ARG_POINTER(aNode);
   nsCOMPtr<nsISelection> spellCheckSelection;
   nsresult res = GetSpellCheckSelection(getter_AddRefs(spellCheckSelection));
-  NS_ENSURE_SUCCESS(res, res); 
+  NS_ENSURE_SUCCESS(res, res);
 
   return IsPointInSelection(spellCheckSelection, aNode, aOffset, newword);
 }
@@ -964,7 +961,7 @@ mozInlineSpellChecker::ReplaceWord(nsIDOMNode *aNode, int32_t aOffset,
 
   nsCOMPtr<nsIDOMRange> range;
   nsresult res = GetMisspelledWord(aNode, aOffset, getter_AddRefs(range));
-  NS_ENSURE_SUCCESS(res, res); 
+  NS_ENSURE_SUCCESS(res, res);
 
   if (range)
   {
@@ -976,7 +973,7 @@ mozInlineSpellChecker::ReplaceWord(nsIDOMNode *aNode, int32_t aOffset,
     NS_ENSURE_SUCCESS(res, res);
 
     AutoPlaceHolderBatch phb(editor, nullptr);
-  
+
     nsCOMPtr<nsISelection> selection;
     res = editor->GetSelection(getter_AddRefs(selection));
     NS_ENSURE_SUCCESS(res, res);
@@ -1000,12 +997,12 @@ mozInlineSpellChecker::AddWordToDictionary(const nsAString &word)
 
   nsAutoString wordstr(word);
   nsresult rv = mSpellCheck->AddWordToDictionary(wordstr.get());
-  NS_ENSURE_SUCCESS(rv, rv); 
-
-  mozInlineSpellStatus status(this);
-  rv = status.InitForSelection();
   NS_ENSURE_SUCCESS(rv, rv);
-  return ScheduleSpellCheck(status);
+
+  auto status = MakeUnique<mozInlineSpellStatus>(this);
+  rv = status->InitForSelection();
+  NS_ENSURE_SUCCESS(rv, rv);
+  return ScheduleSpellCheck(Move(status));
 }
 
 //  mozInlineSpellChecker::RemoveWordFromDictionary
@@ -1017,12 +1014,12 @@ mozInlineSpellChecker::RemoveWordFromDictionary(const nsAString &word)
 
   nsAutoString wordstr(word);
   nsresult rv = mSpellCheck->RemoveWordFromDictionary(wordstr.get());
-  NS_ENSURE_SUCCESS(rv, rv); 
-  
-  mozInlineSpellStatus status(this);
-  rv = status.InitForRange(nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
-  return ScheduleSpellCheck(status);
+
+  auto status = MakeUnique<mozInlineSpellStatus>(this);
+  rv = status->InitForRange(nullptr);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return ScheduleSpellCheck(Move(status));
 }
 
 // mozInlineSpellChecker::IgnoreWord
@@ -1034,12 +1031,12 @@ mozInlineSpellChecker::IgnoreWord(const nsAString &word)
 
   nsAutoString wordstr(word);
   nsresult rv = mSpellCheck->IgnoreWordAllOccurrences(wordstr.get());
-  NS_ENSURE_SUCCESS(rv, rv); 
-
-  mozInlineSpellStatus status(this);
-  rv = status.InitForSelection();
   NS_ENSURE_SUCCESS(rv, rv);
-  return ScheduleSpellCheck(status);
+
+  auto status = MakeUnique<mozInlineSpellStatus>(this);
+  rv = status->InitForSelection();
+  NS_ENSURE_SUCCESS(rv, rv);
+  return ScheduleSpellCheck(Move(status));
 }
 
 // mozInlineSpellChecker::IgnoreWords
@@ -1054,10 +1051,10 @@ mozInlineSpellChecker::IgnoreWords(const char16_t **aWordsToIgnore,
   for (uint32_t index = 0; index < aCount; index++)
     mSpellCheck->IgnoreWordAllOccurrences(aWordsToIgnore[index]);
 
-  mozInlineSpellStatus status(this);
-  nsresult rv = status.InitForSelection();
+  auto status = MakeUnique<mozInlineSpellStatus>(this);
+  nsresult rv = status->InitForSelection();
   NS_ENSURE_SUCCESS(rv, rv);
-  return ScheduleSpellCheck(status);
+  return ScheduleSpellCheck(Move(status));
 }
 
 NS_IMETHODIMP mozInlineSpellChecker::WillCreateNode(const nsAString & aTag, nsIDOMNode *aParent, int32_t aPosition)
@@ -1112,7 +1109,7 @@ NS_IMETHODIMP mozInlineSpellChecker::WillJoinNodes(nsIDOMNode *aLeftNode, nsIDOM
   return NS_OK;
 }
 
-NS_IMETHODIMP mozInlineSpellChecker::DidJoinNodes(nsIDOMNode *aLeftNode, nsIDOMNode *aRightNode, 
+NS_IMETHODIMP mozInlineSpellChecker::DidJoinNodes(nsIDOMNode *aLeftNode, nsIDOMNode *aRightNode,
                                                   nsIDOMNode *aParent, nsresult aResult)
 {
   return SpellCheckBetweenNodes(aRightNode, 0, aRightNode, 0);
@@ -1217,8 +1214,8 @@ mozInlineSpellChecker::MakeSpellCheckRange(
       return rv;
     }
   } else {
-    int32_t endOffset = -1;
-    endNode = nsRange::GetParentAndOffsetAfter(endNode, &endOffset);
+    uint32_t endOffset;
+    endNode = nsRange::GetContainerAndOffsetAfter(endNode, &endOffset);
     rv = range->SetStartAndEnd(startNode, aStartOffset, endNode, endOffset);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
@@ -1244,10 +1241,10 @@ mozInlineSpellChecker::SpellCheckBetweenNodes(nsIDOMNode *aStartNode,
   if (! range)
     return NS_OK; // range is empty: nothing to do
 
-  mozInlineSpellStatus status(this);
-  rv = status.InitForRange(range);
+  auto status = MakeUnique<mozInlineSpellStatus>(this);
+  rv = status->InitForRange(range);
   NS_ENSURE_SUCCESS(rv, rv);
-  return ScheduleSpellCheck(status);
+  return ScheduleSpellCheck(Move(status));
 }
 
 // mozInlineSpellChecker::ShouldSpellCheckNode
@@ -1262,7 +1259,7 @@ mozInlineSpellChecker::ShouldSpellCheckNode(nsIEditor* aEditor,
 {
   MOZ_ASSERT(aNode);
   if (!aNode->IsContent())
-    return true;
+    return false;
 
   nsIContent *content = aNode->AsContent();
 
@@ -1332,20 +1329,23 @@ mozInlineSpellChecker::ShouldSpellCheckNode(nsIEditor* aEditor,
 //    the proper structures for calls to DoSpellCheck.
 
 nsresult
-mozInlineSpellChecker::ScheduleSpellCheck(const mozInlineSpellStatus& aStatus)
+mozInlineSpellChecker::ScheduleSpellCheck(UniquePtr<mozInlineSpellStatus>&& aStatus)
 {
   if (mFullSpellCheckScheduled) {
     // Just ignore this; we're going to spell-check everything anyway
     return NS_OK;
   }
+  // Cache the value because we are going to move aStatus's ownership to
+  // the new created mozInlineSpellResume instance.
+  bool isFullSpellCheck = aStatus->IsFullSpellCheck();
 
   RefPtr<mozInlineSpellResume> resume =
-    new mozInlineSpellResume(aStatus, mDisabledAsyncToken);
+    new mozInlineSpellResume(Move(aStatus), mDisabledAsyncToken);
   NS_ENSURE_TRUE(resume, NS_ERROR_OUT_OF_MEMORY);
 
   nsresult rv = resume->Post();
   if (NS_SUCCEEDED(rv)) {
-    if (aStatus.IsFullSpellCheck()) {
+    if (isFullSpellCheck) {
       // We're going to check everything.  Suppress further spell-check attempts
       // until that happens.
       mFullSpellCheckScheduled = true;
@@ -1368,8 +1368,7 @@ mozInlineSpellChecker::ScheduleSpellCheck(const mozInlineSpellStatus& aStatus)
 
 nsresult
 mozInlineSpellChecker::DoSpellCheckSelection(mozInlineSpellWordUtil& aWordUtil,
-                                             Selection* aSpellCheckSelection,
-                                             mozInlineSpellStatus* aStatus)
+                                             Selection* aSpellCheckSelection)
 {
   nsresult rv;
 
@@ -1400,8 +1399,8 @@ mozInlineSpellChecker::DoSpellCheckSelection(mozInlineSpellWordUtil& aWordUtil,
   // We use this state object for all calls, and just update its range. Note
   // that we don't need to call FinishInit since we will be filling in the
   // necessary information.
-  mozInlineSpellStatus status(this);
-  rv = status.InitForRange(nullptr);
+  auto status = MakeUnique<mozInlineSpellStatus>(this);
+  rv = status->InitForRange(nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
   bool doneChecking;
@@ -1410,14 +1409,14 @@ mozInlineSpellChecker::DoSpellCheckSelection(mozInlineSpellWordUtil& aWordUtil,
     // check range over it that needs to be deleted. All the old ranges
     // were cleared above. We also need to clear the word count so that we
     // check all words instead of stopping early.
-    status.mRange = ranges[idx];
-    rv = DoSpellCheck(aWordUtil, aSpellCheckSelection, &status,
+    status->mRange = ranges[idx];
+    rv = DoSpellCheck(aWordUtil, aSpellCheckSelection, status,
                       &doneChecking);
     NS_ENSURE_SUCCESS(rv, rv);
     MOZ_ASSERT(doneChecking,
                "We gave the spellchecker one word, but it didn't finish checking?!?!");
 
-    status.mWordCount = 0;
+    status->mWordCount = 0;
   }
 
   return NS_OK;
@@ -1456,7 +1455,7 @@ mozInlineSpellChecker::DoSpellCheckSelection(mozInlineSpellWordUtil& aWordUtil,
 
 nsresult mozInlineSpellChecker::DoSpellCheck(mozInlineSpellWordUtil& aWordUtil,
                                              Selection *aSpellCheckSelection,
-                                             mozInlineSpellStatus* aStatus,
+                                             const UniquePtr<mozInlineSpellStatus>& aStatus,
                                              bool* aDoneChecking)
 {
   *aDoneChecking = true;
@@ -1481,9 +1480,9 @@ nsresult mozInlineSpellChecker::DoSpellCheck(mozInlineSpellWordUtil& aWordUtil,
   {
     // Scope for the node/offset pairs here so they don't get
     // accidentally used later
-    nsINode* beginNode = aStatus->mRange->GetStartParent();
+    nsINode* beginNode = aStatus->mRange->GetStartContainer();
     int32_t beginOffset = aStatus->mRange->StartOffset();
-    nsINode* endNode = aStatus->mRange->GetEndParent();
+    nsINode* endNode = aStatus->mRange->GetEndContainer();
     int32_t endOffset = aStatus->mRange->EndOffset();
 
     // Now check that we're still looking at a range that's under
@@ -1505,7 +1504,7 @@ nsresult mozInlineSpellChecker::DoSpellCheck(mozInlineSpellWordUtil& aWordUtil,
   if (! editor)
     return NS_ERROR_FAILURE;
 
-  int32_t wordsSinceTimeCheck = 0;
+  int32_t wordsChecked = 0;
   PRTime beginTime = PR_Now();
 
   nsAutoString wordText;
@@ -1515,7 +1514,6 @@ nsresult mozInlineSpellChecker::DoSpellCheck(mozInlineSpellWordUtil& aWordUtil,
                                             getter_AddRefs(wordRange),
                                             &dontCheckWord)) &&
          wordRange) {
-    wordsSinceTimeCheck++;
 
     // get the range for the current word.
     nsINode *beginNode;
@@ -1527,6 +1525,25 @@ nsresult mozInlineSpellChecker::DoSpellCheck(mozInlineSpellWordUtil& aWordUtil,
     endNode = wordRange->GetEndContainer(erv);
     beginOffset = wordRange->GetStartOffset(erv);
     endOffset = wordRange->GetEndOffset(erv);
+
+    // see if we've done enough words in this round and run out of time.
+    if (wordsChecked >= INLINESPELL_MINIMUM_WORDS_BEFORE_TIMEOUT &&
+        PR_Now() > PRTime(beginTime + kMaxSpellCheckTimeInUsec)) {
+      // stop checking, our time limit has been exceeded.
+      #ifdef DEBUG_INLINESPELL
+        printf("We have run out of the time, schedule next round.");
+      #endif
+      // move the range to encompass the stuff that needs checking.
+      nsresult rv = aStatus->mRange->SetStart(beginNode, beginOffset);
+      if (NS_FAILED(rv)) {
+        // The range might be unhappy because the beginning is after the
+        // end. This is possible when the requested end was in the middle
+        // of a word, just ignore this situation and assume we're done.
+        return NS_OK;
+      }
+      *aDoneChecking = false;
+      return NS_OK;
+    }
 
 #ifdef DEBUG_INLINESPELL
     printf("->Got word \"%s\"", NS_ConvertUTF16toUTF8(wordText).get());
@@ -1579,33 +1596,16 @@ nsresult mozInlineSpellChecker::DoSpellCheck(mozInlineSpellWordUtil& aWordUtil,
     if (NS_FAILED(rv))
       continue;
 
+    wordsChecked++;
+
     if (isMisspelled) {
       // misspelled words count extra toward the max
-      wordsSinceTimeCheck += MISSPELLED_WORD_COUNT_PENALTY;
       AddRange(aSpellCheckSelection, wordRange);
 
       aStatus->mWordCount ++;
       if (aStatus->mWordCount >= mMaxMisspellingsPerCheck ||
-          SpellCheckSelectionIsFull())
+          SpellCheckSelectionIsFull()) {
         break;
-    }
-
-    // see if we've run out of time, only check every N words for perf
-    if (wordsSinceTimeCheck >= INLINESPELL_TIMEOUT_CHECK_FREQUENCY) {
-      wordsSinceTimeCheck = 0;
-      if (PR_Now() > PRTime(beginTime + INLINESPELL_CHECK_TIMEOUT * PR_USEC_PER_MSEC)) {
-        // stop checking, our time limit has been exceeded
-
-        // move the range to encompass the stuff that needs checking
-        rv = aStatus->mRange->SetStart(endNode, endOffset);
-        if (NS_FAILED(rv)) {
-          // The range might be unhappy because the beginning is after the
-          // end. This is possible when the requested end was in the middle
-          // of a word, just ignore this situation and assume we're done.
-          return NS_OK;
-        }
-        *aDoneChecking = false;
-        return NS_OK;
       }
     }
   }
@@ -1637,7 +1637,7 @@ private:
 //    the last resume left off.
 
 nsresult
-mozInlineSpellChecker::ResumeCheck(mozInlineSpellStatus* aStatus)
+mozInlineSpellChecker::ResumeCheck(UniquePtr<mozInlineSpellStatus>&& aStatus)
 {
   // Observers should be notified that spell check has ended only after spell
   // check is done below, but since there are many early returns in this method
@@ -1696,13 +1696,13 @@ mozInlineSpellChecker::ResumeCheck(mozInlineSpellStatus* aStatus)
 
   bool doneChecking = true;
   if (aStatus->mOp == mozInlineSpellStatus::eOpSelection)
-    rv = DoSpellCheckSelection(wordUtil, spellCheckSelection, aStatus);
+    rv = DoSpellCheckSelection(wordUtil, spellCheckSelection);
   else
     rv = DoSpellCheck(wordUtil, spellCheckSelection, aStatus, &doneChecking);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (! doneChecking)
-    rv = ScheduleSpellCheck(*aStatus);
+    rv = ScheduleSpellCheck(Move(aStatus));
   return rv;
 }
 
@@ -1816,13 +1816,13 @@ mozInlineSpellChecker::AddRange(nsISelection* aSpellCheckSelection,
 }
 
 nsresult mozInlineSpellChecker::GetSpellCheckSelection(nsISelection ** aSpellCheckSelection)
-{ 
+{
   nsCOMPtr<nsIEditor> editor (do_QueryReferent(mEditor));
   NS_ENSURE_TRUE(editor, NS_ERROR_NULL_POINTER);
 
   nsCOMPtr<nsISelectionController> selcon;
   nsresult rv = editor->GetSelectionController(getter_AddRefs(selcon));
-  NS_ENSURE_SUCCESS(rv, rv); 
+  NS_ENSURE_SUCCESS(rv, rv);
 
   return selcon->GetSelection(nsISelectionController::SELECTION_SPELLCHECK, aSpellCheckSelection);
 }
@@ -1839,7 +1839,7 @@ nsresult mozInlineSpellChecker::SaveCurrentSelectionPosition()
 
   rv = selection->GetFocusNode(getter_AddRefs(mCurrentSelectionAnchorNode));
   NS_ENSURE_SUCCESS(rv, rv);
-  
+
   selection->GetFocusOffset(&mCurrentSelectionOffset);
 
   return NS_OK;
@@ -1897,14 +1897,15 @@ mozInlineSpellChecker::HandleNavigationEvent(bool aForceWordSpellCheck,
   NS_ENSURE_SUCCESS(rv, rv);
 
   bool shouldPost;
-  mozInlineSpellStatus status(this);
-  rv = status.InitForNavigation(aForceWordSpellCheck, aNewPositionOffset,
-                                currentAnchorNode, currentAnchorOffset,
-                                mCurrentSelectionAnchorNode, mCurrentSelectionOffset,
-                                &shouldPost);
+  auto status = MakeUnique<mozInlineSpellStatus>(this);
+  rv = status->InitForNavigation(aForceWordSpellCheck, aNewPositionOffset,
+                                 currentAnchorNode, currentAnchorOffset,
+                                 mCurrentSelectionAnchorNode,
+                                 mCurrentSelectionOffset,
+                                 &shouldPost);
   NS_ENSURE_SUCCESS(rv, rv);
   if (shouldPost) {
-    rv = ScheduleSpellCheck(status);
+    rv = ScheduleSpellCheck(Move(status));
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -1941,7 +1942,7 @@ nsresult mozInlineSpellChecker::MouseClick(nsIDOMEvent *aMouseEvent)
   nsCOMPtr<nsIDOMMouseEvent>mouseEvent = do_QueryInterface(aMouseEvent);
   NS_ENSURE_TRUE(mouseEvent, NS_OK);
 
-  // ignore any errors from HandleNavigationEvent as we don't want to prevent 
+  // ignore any errors from HandleNavigationEvent as we don't want to prevent
   // anyone else from seeing this event.
   int16_t button;
   mouseEvent->GetButton(&button);
@@ -1957,7 +1958,7 @@ nsresult mozInlineSpellChecker::KeyPress(nsIDOMEvent* aKeyEvent)
   uint32_t keyCode;
   keyEvent->GetKeyCode(&keyCode);
 
-  // we only care about navigation keys that moved selection 
+  // we only care about navigation keys that moved selection
   switch (keyCode)
   {
     case nsIDOMKeyEvent::DOM_VK_RIGHT:

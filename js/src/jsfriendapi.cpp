@@ -622,7 +622,7 @@ struct VisitGrayCallbackFunctor {
 
     template <class T>
     void operator()(T tp) const {
-        if ((*tp)->isTenured() && (*tp)->asTenured().isMarked(gc::GRAY))
+        if ((*tp)->isMarkedGray())
             callback_(closure_, JS::GCCellPtr(*tp));
     }
 };
@@ -1104,10 +1104,13 @@ static char
 MarkDescriptor(void* thing)
 {
     gc::TenuredCell* cell = gc::TenuredCell::fromPointer(thing);
-    if (cell->isMarked(gc::BLACK))
-        return cell->isMarked(gc::GRAY) ? 'G' : 'B';
-    else
-        return cell->isMarked(gc::GRAY) ? 'X' : 'W';
+    if (cell->isMarkedBlack())
+        return 'B';
+    if (cell->isMarkedGray())
+        return 'G';
+    if (cell->isMarkedAny())
+        return 'X';
+    return 'W';
 }
 
 static void
@@ -1206,9 +1209,9 @@ JS::NotifyDidPaint(JSContext* cx)
 }
 
 JS_FRIEND_API(void)
-JS::PokeGC(JSContext* cx)
+JS::NotifyGCRootsRemoved(JSContext* cx)
 {
-    cx->runtime()->gc.poke();
+    cx->runtime()->gc.notifyRootsRemoved();
 }
 
 JS_FRIEND_API(JSCompartment*)
@@ -1300,6 +1303,20 @@ DOMProxyShadowsCheck
 js::GetDOMProxyShadowsCheck()
 {
     return gDOMProxyShadowsCheck;
+}
+
+static XrayJitInfo* gXrayJitInfo = nullptr;
+
+JS_FRIEND_API(void)
+js::SetXrayJitInfo(XrayJitInfo* info)
+{
+    gXrayJitInfo = info;
+}
+
+XrayJitInfo*
+js::GetXrayJitInfo()
+{
+    return gXrayJitInfo;
 }
 
 bool
@@ -1483,5 +1500,5 @@ JS_FRIEND_API(bool)
 js::SystemZoneAvailable(JSContext* cx)
 {
     CooperatingContext& owner = cx->runtime()->gc.systemZoneGroup->ownerContext();
-    return owner.context() == cx || owner.context() == nullptr;
+    return owner.context() == nullptr;
 }

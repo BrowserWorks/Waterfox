@@ -49,7 +49,7 @@ already_AddRefed<HRTFDatabaseLoader> HRTFDatabaseLoader::createAndLoadAsynchrono
     MOZ_ASSERT(NS_IsMainThread());
 
     RefPtr<HRTFDatabaseLoader> loader;
-    
+
     if (!s_loaderMap) {
         s_loaderMap = new nsTHashtable<LoaderByRateEntry>();
     }
@@ -111,23 +111,28 @@ size_t HRTFDatabaseLoader::sizeOfIncludingThis(mozilla::MallocSizeOf aMallocSize
 
 class HRTFDatabaseLoader::ProxyReleaseEvent final : public Runnable {
 public:
-    explicit ProxyReleaseEvent(HRTFDatabaseLoader* loader) : mLoader(loader) {}
-    NS_IMETHOD Run() override
-    {
-        mLoader->MainThreadRelease();
-        return NS_OK;
+  explicit ProxyReleaseEvent(HRTFDatabaseLoader* loader)
+    : mozilla::Runnable("WebCore::HRTFDatabaseLoader::ProxyReleaseEvent")
+    , mLoader(loader)
+  {
+  }
+  NS_IMETHOD Run() override
+  {
+    mLoader->MainThreadRelease();
+    return NS_OK;
     }
 private:
-    HRTFDatabaseLoader* mLoader;
+    // Ownership transferred by ProxyRelease
+    HRTFDatabaseLoader* MOZ_OWNING_REF mLoader;
 };
 
 void HRTFDatabaseLoader::ProxyRelease()
 {
-    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-    if (MOZ_LIKELY(mainThread)) {
+    nsCOMPtr<nsIEventTarget> mainTarget = GetMainThreadEventTarget();
+    if (MOZ_LIKELY(mainTarget)) {
         RefPtr<ProxyReleaseEvent> event = new ProxyReleaseEvent(this);
         DebugOnly<nsresult> rv =
-            mainThread->Dispatch(event, NS_DISPATCH_NORMAL);
+            mainTarget->Dispatch(event, NS_DISPATCH_NORMAL);
         MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed to dispatch release event");
     } else {
         // Should be in XPCOM shutdown.
@@ -153,7 +158,7 @@ void HRTFDatabaseLoader::MainThreadRelease()
 // Asynchronously load the database in this thread.
 static void databaseLoaderEntry(void* threadData)
 {
-    AutoProfilerRegister registerThread("HRTFDatabaseLdr");
+    AutoProfilerRegisterThread registerThread("HRTFDatabaseLdr");
     NS_SetCurrentThreadName("HRTFDatabaseLdr");
 
     HRTFDatabaseLoader* loader = reinterpret_cast<HRTFDatabaseLoader*>(threadData);
@@ -181,7 +186,7 @@ void HRTFDatabaseLoader::loadAsynchronously()
     AddRef();
 
     MutexAutoLock locker(m_threadLock);
-    
+
     MOZ_ASSERT(!m_hrtfDatabase.get() && !m_databaseLoaderThread,
                "Called twice");
     // Start the asynchronous database loading process.
@@ -199,7 +204,7 @@ bool HRTFDatabaseLoader::isLoaded() const
 void HRTFDatabaseLoader::waitForLoaderThreadCompletion()
 {
     MutexAutoLock locker(m_threadLock);
-    
+
     // waitForThreadCompletion() should not be called twice for the same thread.
     if (m_databaseLoaderThread) {
         DebugOnly<PRStatus> status = PR_JoinThread(m_databaseLoaderThread);

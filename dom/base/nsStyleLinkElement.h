@@ -20,6 +20,7 @@
 #include "nsCOMPtr.h"
 #include "nsIStyleSheetLinkingElement.h"
 #include "nsTArray.h"
+#include "nsAttrValue.h"
 
 class nsIDocument;
 class nsIURI;
@@ -41,7 +42,7 @@ public:
 
   mozilla::StyleSheet* GetSheet() const { return mStyleSheet; }
 
-  // nsIStyleSheetLinkingElement  
+  // nsIStyleSheetLinkingElement
   NS_IMETHOD SetStyleSheet(mozilla::StyleSheet* aStyleSheet) override;
   NS_IMETHOD_(mozilla::StyleSheet*) GetStyleSheet() override;
   NS_IMETHOD InitStyleLinkElement(bool aDontLoadStyle) override;
@@ -62,19 +63,17 @@ public:
     eSTYLESHEET =   0x00000004,
     eNEXT =         0x00000008,
     eALTERNATE =    0x00000010,
-    eHTMLIMPORT =   0x00000020,
-    ePRECONNECT =   0x00000040,
-    ePRERENDER =    0x00000080
+    ePRECONNECT =   0x00000020,
+    ePRERENDER =    0x00000040,
+    ePRELOAD =      0x00000080
   };
 
   // The return value is a bitwise or of 0 or more RelValues.
-  // aPrincipal is used to check if HTML imports is enabled for the
-  // provided principal.
-  static uint32_t ParseLinkTypes(const nsAString& aTypes,
-                                 nsIPrincipal* aPrincipal);
+  static uint32_t ParseLinkTypes(const nsAString& aTypes);
 
-  static bool IsImportEnabled();
-  
+  static bool CheckPreloadAttrs(const nsAttrValue& aAs, const nsAString& aType,
+                                const nsAString& aMedia, nsIDocument* aDocument);
+
   void UpdateStyleSheetInternal()
   {
     UpdateStyleSheetInternal(nullptr, nullptr);

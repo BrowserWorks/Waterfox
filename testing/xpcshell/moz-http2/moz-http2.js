@@ -807,6 +807,46 @@ function handleRequest(req, res) {
     return;
   }
 
+  else if (u.pathname === "/doublepush") {
+    push1 = res.push('/doublypushed');
+    push1.writeHead(200, {
+      'content-type': 'text/plain',
+      'pushed' : 'yes',
+      'content-length' : 6,
+      'X-Connection-Http2': 'yes'
+    });
+    push1.end('pushed');
+
+    push2 = res.push('/doublypushed');
+    push2.writeHead(200, {
+      'content-type': 'text/plain',
+      'pushed' : 'yes',
+      'content-length' : 6,
+      'X-Connection-Http2': 'yes'
+    });
+    push2.end('pushed');
+  }
+
+  else if (u.pathname === "/doublypushed") {
+    content = 'not pushed';
+  }
+
+  else if (u.pathname === "/diskcache") {
+    content = "this was pulled via h2";
+  }
+
+  else if (u.pathname === "/pushindisk") {
+    var pushedContent = "this was pushed via h2";
+    push = res.push('/diskcache');
+    push.writeHead(200, {
+      'content-type': 'text/html',
+      'pushed' : 'yes',
+      'content-length' : pushedContent.length,
+      'X-Connection-Http2': 'yes'
+    });
+    push.end(pushedContent);
+  }
+
   res.setHeader('Content-Type', 'text/html');
   if (req.httpVersionMajor != 2) {
     res.setHeader('Connection', 'close');

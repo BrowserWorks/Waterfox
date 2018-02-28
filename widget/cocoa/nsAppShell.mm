@@ -34,6 +34,7 @@
 #include "GeckoProfiler.h"
 #include "ScreenHelperCocoa.h"
 #include "mozilla/widget/ScreenManager.h"
+#include "HeadlessScreenHelper.h"
 #include "pratom.h"
 #if !defined(RELEASE_OR_BETA) || defined(DEBUG)
 #include "nsSandboxViolationSink.h"
@@ -310,7 +311,12 @@ nsAppShell::Init()
 
   if (XRE_IsParentProcess()) {
     ScreenManager& screenManager = ScreenManager::GetSingleton();
-    screenManager.SetHelper(mozilla::MakeUnique<ScreenHelperCocoa>());
+
+    if (gfxPlatform::IsHeadless()) {
+      screenManager.SetHelper(mozilla::MakeUnique<HeadlessScreenHelper>());
+    } else {
+      screenManager.SetHelper(mozilla::MakeUnique<ScreenHelperCocoa>());
+    }
   }
 
   rv = nsBaseAppShell::Init();
@@ -325,7 +331,12 @@ nsAppShell::Init()
     gAppShellMethodsSwizzled = true;
   }
 
-  if (nsCocoaFeatures::OnYosemiteOrLater()) {
+  // The bug that this works around was introduced in OS X 10.10.0
+  // and fixed in OS X 10.10.2. Order these version checks so as
+  // few as possible will actually end up running.
+  if (nsCocoaFeatures::OSXVersionMinor() == 10 &&
+      nsCocoaFeatures::OSXVersionBugFix() < 2 &&
+      nsCocoaFeatures::OSXVersionMajor() == 10) {
     // Explicitly turn off CGEvent logging.  This works around bug 1092855.
     // If there are already CGEvents in the log, turning off logging also
     // causes those events to be written to disk.  But at this point no
@@ -362,8 +373,7 @@ void
 nsAppShell::ProcessGeckoEvents(void* aInfo)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
-  PROFILER_LABEL("Events", "ProcessGeckoEvents",
-    js::ProfileEntry::Category::EVENTS);
+  AUTO_PROFILER_LABEL("nsAppShell::ProcessGeckoEvents", EVENTS);
 
   nsAppShell* self = static_cast<nsAppShell*> (aInfo);
 

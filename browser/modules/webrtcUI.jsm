@@ -626,20 +626,26 @@ function prompt(aBrowser, aRequest) {
               bundle.getString("getUserMedia.shareScreen.learnMoreLabel");
             let baseURL =
               Services.urlFormatter.formatURLPref("app.support.baseURL");
-            let learnMore =
-              "<label class='text-link' href='" + baseURL + "screenshare-safety'>" +
-              learnMoreText + "</label>";
+
+            let learnMore = chromeWin.document.createElement("label");
+            learnMore.className = "text-link";
+            learnMore.setAttribute("href", baseURL + "screenshare-safety");
+            learnMore.textContent = learnMoreText;
 
             if (type == "screen") {
               string = bundle.getFormattedString("getUserMedia.shareScreenWarning.message",
-                                                 [learnMore]);
+                                                 ["<>"]);
             } else {
               let brand =
                 doc.getElementById("bundle_brand").getString("brandShortName");
               string = bundle.getFormattedString("getUserMedia.shareFirefoxWarning.message",
-                                                 [brand, learnMore]);
+                                                 [brand, "<>"]);
             }
-            warning.innerHTML = string;
+
+            let [pre, post] = string.split("<>");
+            warning.textContent = pre;
+            warning.appendChild(learnMore);
+            warning.appendChild(chromeWin.document.createTextNode(post));
           }
 
           let perms = Services.perms;
@@ -1066,10 +1072,15 @@ function updateIndicators(data, target) {
   }
 
   if (webrtcUI.showGlobalIndicator) {
-    if (!gIndicatorWindow)
+    if (!gIndicatorWindow) {
       gIndicatorWindow = getGlobalIndicator();
-    else
-      gIndicatorWindow.updateIndicatorState();
+    } else {
+      try {
+        gIndicatorWindow.updateIndicatorState();
+      } catch (err) {
+        Cu.reportError(`error in gIndicatorWindow.updateIndicatorState(): ${err.message}`);
+      }
+    }
   } else if (gIndicatorWindow) {
     gIndicatorWindow.close();
     gIndicatorWindow = null;

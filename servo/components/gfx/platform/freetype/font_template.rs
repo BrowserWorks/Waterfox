@@ -5,7 +5,7 @@
 use servo_atoms::Atom;
 use std::fs::File;
 use std::io::{Read, Error};
-use webrender_traits::NativeFontHandle;
+use webrender_api::NativeFontHandle;
 
 /// Platform specific font representation for Linux.
 /// The identifier is an absolute path, and the bytes
@@ -25,7 +25,7 @@ impl FontTemplateData {
             },
             None => {
                 // TODO: Handle file load failure!
-                let mut file = try!(File::open(&*identifier));
+                let mut file = File::open(&*identifier)?;
                 let mut buffer = vec![];
                 file.read_to_end(&mut buffer).unwrap();
                 buffer

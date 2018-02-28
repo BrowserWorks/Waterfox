@@ -89,7 +89,7 @@ Connection::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 }
 
 void
-Connection::Update(ConnectionType aType, bool aIsWifi, bool aDHCPGateway,
+Connection::Update(ConnectionType aType, bool aIsWifi, uint32_t aDHCPGateway,
                    bool aNotify)
 {
   NS_ASSERT_OWNINGTHREAD(Connection);
@@ -100,7 +100,8 @@ Connection::Update(ConnectionType aType, bool aIsWifi, bool aDHCPGateway,
   mIsWifi = aIsWifi;
   mDHCPGateway = aDHCPGateway;
 
-  if (aNotify && previousType != aType) {
+  if (aNotify && previousType != aType &&
+      !nsContentUtils::ShouldResistFingerprinting()) {
     DispatchTrustedEvent(CHANGE_EVENT_NAME);
   }
 }

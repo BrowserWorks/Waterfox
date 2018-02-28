@@ -18,7 +18,11 @@
   color: var(--lwt-text-color) !important;
 }
 
+%ifndef MOZ_PHOTON_THEME
 :root:-moz-lwtheme:not([customization-lwtheme]) {
+%else
+:root:-moz-lwtheme {
+%endif
   background-color: var(--lwt-accent-color) !important;
   background-image: var(--lwt-header-image), var(--lwt-additional-images) !important;
   background-position: var(--lwt-background-alignment) !important;
@@ -102,6 +106,12 @@ photonpanelmultiview {
 panelview {
   -moz-binding: url("chrome://browser/content/customizableui/panelUI.xml#panelview");
   -moz-box-orient: vertical;
+}
+
+panel[hidden] panelmultiview,
+panel[hidden] photonpanelmultiview,
+panel[hidden] panelview {
+  -moz-binding: none;
 }
 
 .panel-mainview {
@@ -258,6 +268,10 @@ window:not([chromehidden~="toolbar"]) #nav-bar[nonemptyoverflow] > .overflow-but
   -moz-window-dragging: inherit;
 }
 
+toolbarpaletteitem {
+  -moz-window-dragging: no-drag;
+}
+
 %ifdef XP_MACOSX
 #titlebar-fullscreen-button {
   -moz-appearance: -moz-mac-fullscreen-button;
@@ -344,9 +358,27 @@ toolbarpaletteitem > toolbaritem[sdkstylewidget="true"][cui-areatype="toolbar"] 
     list-style-image: var(--webextension-toolbar-image, inherit);
   }
 
+  .webextension-browser-action:-moz-lwtheme-brighttext {
+    list-style-image: var(--webextension-toolbar-image-light, inherit);
+  }
+
+  .webextension-browser-action:-moz-lwtheme-darktext {
+    list-style-image: var(--webextension-toolbar-image-dark, inherit);
+  }
+
   .webextension-browser-action[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > .webextension-browser-action {
     list-style-image: var(--webextension-menupanel-image, inherit);
+  }
+
+  .webextension-browser-action[cui-areatype="menu-panel"],
+  toolbarpaletteitem[place="palette"] > .webextension-browser-action:-moz-lwtheme-brighttext {
+    list-style-image: var(--webextension-menupanel-image-light, inherit);
+  }
+
+  .webextension-browser-action[cui-areatype="menu-panel"],
+  toolbarpaletteitem[place="palette"] > .webextension-browser-action:-moz-lwtheme-darktext {
+    list-style-image: var(--webextension-menupanel-image-dark, inherit);
   }
 
   .webextension-page-action {
@@ -363,9 +395,27 @@ toolbarpaletteitem > toolbaritem[sdkstylewidget="true"][cui-areatype="toolbar"] 
     list-style-image: var(--webextension-toolbar-image-2x, inherit);
   }
 
+  .webextension-browser-action:-moz-lwtheme-brighttext {
+    list-style-image: var(--webextension-toolbar-image-2x-light, inherit);
+  }
+
+  .webextension-browser-action:-moz-lwtheme-darktext {
+    list-style-image: var(--webextension-toolbar-image-2x-dark, inherit);
+  }
+
   .webextension-browser-action[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > .webextension-browser-action {
     list-style-image: var(--webextension-menupanel-image-2x, inherit);
+  }
+
+  .webextension-browser-action[cui-areatype="menu-panel"],
+  toolbarpaletteitem[place="palette"] > .webextension-browser-action:-moz-lwtheme-brighttext {
+    list-style-image: var(--webextension-menupanel-image-2x-light, inherit);
+  }
+
+  .webextension-browser-action[cui-areatype="menu-panel"],
+  toolbarpaletteitem[place="palette"] > .webextension-browser-action:-moz-lwtheme-darktext {
+    list-style-image: var(--webextension-menupanel-image-2x-dark, inherit);
   }
 
   .webextension-page-action {
@@ -428,10 +478,21 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   visibility: collapse;
 }
 
+/* The reload-button is only disabled temporarily when it becomes visible
+   to prevent users from accidentally clicking it. We don't however need
+   to show this disabled state, as the flicker that it generates is short
+   enough to be visible but not long enough to explain anything to users. */
+#reload-button[disabled]:not(:-moz-window-inactive) > .toolbarbutton-icon {
+  opacity: 1 !important;
+}
+
 #PanelUI-feeds > .feed-toolbarbutton:-moz-locale-dir(rtl) {
   direction: rtl;
 }
 
+#appMenu_historyMenu > .bookmark-item,
+#appMenu-library-recentlyClosedTabs > .panel-subview-body > .bookmark-item,
+#appMenu-library-recentlyClosedWindows > .panel-subview-body > .bookmark-item,
 #panelMenu_bookmarksMenu > .bookmark-item {
   max-width: none;
 }
@@ -533,6 +594,12 @@ html|input.urlbar-input[textoverflow]:not([focused]) {
   display: none;
 }
 
+/* Never show a scrollbar for the Location Bar popup.  This overrides the
+   richlistbox inline overflow: auto style.*/
+#PopupAutoCompleteRichResult > richlistbox > scrollbox {
+  overflow: hidden !important;
+}
+
 /* For action items in a noactions popup, show the URL text and hide the action
    text and type icon. */
 #PopupAutoCompleteRichResult[noactions] > richlistbox > richlistitem.overridable-action > .ac-url {
@@ -624,6 +691,7 @@ html|input.urlbar-input[textoverflow]:not([focused]) {
 
 #urlbar[pageproxystate="invalid"] > #urlbar-icons > .urlbar-icon,
 %ifdef MOZ_PHOTON_THEME
+#urlbar[pageproxystate="invalid"] > #urlbar-icons > #star-button-box > .urlbar-icon,
 .urlbar-go-button[pageproxystate="valid"],
 .urlbar-go-button:not([parentfocused="true"]),
 %else
@@ -692,6 +760,18 @@ html|input.urlbar-input[textoverflow]:not([focused]) {
 
 #main-window[customizing] :-moz-any(#urlbar, .searchbar-textbox) > .autocomplete-textbox-container > .textbox-input-box {
   visibility: hidden;
+}
+
+/* Flexible spacer sizing (matching url bar) */
+toolbarpaletteitem[place=toolbar][id^=wrapper-customizableui-special-spring],
+toolbarspring {
+  -moz-box-flex: 1;
+  min-width: 40px;
+}
+
+#nav-bar toolbarpaletteitem[id^=wrapper-customizableui-special-spring],
+#nav-bar toolbarspring {
+  -moz-box-flex: 80;
 }
 
 /* ::::: Unified Back-/Forward Button ::::: */
@@ -1065,7 +1145,54 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-
   -moz-image-region: auto;
 }
 
-%ifndef MOZ_WIDGET_GTK
+%ifdef MOZ_WIDGET_COCOA
+
+/* On Mac, use the properties "-moz-window-transform" and "-moz-window-opacity"
+   instead of "transform" and "opacity" for these animations.
+   The -moz-window* properties apply to the whole window including the window's
+   shadow, and they don't affect the window's "shape", so the system doesn't
+   have to recompute the shadow shape during the animation. This makes them a
+   lot faster. In fact, Gecko no longer triggers shadow shape recomputations
+   for repaints.
+   These properties are not implemented on other platforms. */
+#BMB_bookmarksPopup {
+  -moz-window-transform: scale(.4);
+  -moz-window-opacity: 0;
+  transition-property: -moz-window-transform, -moz-window-opacity;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-out;
+}
+
+#BMB_bookmarksPopup[animate="open"] {
+  -moz-window-transform: none;
+  -moz-window-opacity: 1.0;
+}
+
+#BMB_bookmarksPopup[animate="cancel"] {
+  -moz-window-transform: none;
+}
+
+#BMB_bookmarksPopup[arrowposition="after_start"]:-moz-locale-dir(ltr),
+#BMB_bookmarksPopup[arrowposition="after_end"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: 20px top;
+}
+
+#BMB_bookmarksPopup[arrowposition="after_end"]:-moz-locale-dir(ltr),
+#BMB_bookmarksPopup[arrowposition="after_start"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: calc(100% - 20px) top;
+}
+
+#BMB_bookmarksPopup[arrowposition="before_start"]:-moz-locale-dir(ltr),
+#BMB_bookmarksPopup[arrowposition="before_end"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: 20px bottom;
+}
+
+#BMB_bookmarksPopup[arrowposition="before_end"]:-moz-locale-dir(ltr),
+#BMB_bookmarksPopup[arrowposition="before_start"]:-moz-locale-dir(rtl) {
+  -moz-window-transform-origin: calc(100% - 20px) bottom;
+}
+
+%elifndef MOZ_WIDGET_GTK
 
 #BMB_bookmarksPopup {
   transform: scale(.4);
@@ -1103,10 +1230,10 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-
 #BMB_bookmarksPopup[arrowposition="before_start"]:-moz-locale-dir(rtl) {
   transform-origin: calc(100% - 20px) bottom;
 }
-
 %endif
 
 /* Customize mode */
+%ifndef MOZ_PHOTON_THEME
 #navigator-toolbox,
 #browser-bottombox,
 #content-deck {
@@ -1120,6 +1247,7 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-
   transition-duration: 1ms;
   transition-timing-function: linear;
 }
+%endif
 
 #PanelUI-contents > .panel-customization-placeholder > .panel-customization-placeholder-child {
   list-style-image: none;
@@ -1154,12 +1282,41 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-
   flex-grow: 1;
 }
 
-#customization-panelHolder > #widget-overflow-fixed-list {
-  padding-bottom: 50px; /* Make sure there's always space to drop stuff. */
+#customization-container[photon] #customization-panelHolder {
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
-#customization-panelHolder {
+#customization-panelHolder > #widget-overflow-fixed-list {
+  flex: 0 1 auto; /* Size to content, but allow ourselves to shrink */
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#customization-container:not([photon]) #customization-panelHolder {
   overflow-y: hidden;
+}
+
+#customization-container[photon] #customization-panel-container {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+}
+
+#customization-container[photon] #customization-panelWrapper,
+#customization-container[photon] #customization-panelWrapper > .panel-arrowcontent,
+#customization-container[photon] #customization-panelHolder {
+  flex-direction: column;
+  display: flex;
+  min-height: 0;
+}
+
+#customization-container[photon] #customization-panelWrapper {
+  flex: 1 1 auto;
+  height: 0; /* Don't let my contents affect ancestors' content-based sizing */
+  align-items: end; /* align to the end on the cross-axis (affects arrow) */
 }
 
 #customization-panelWrapper,
@@ -1167,8 +1324,7 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-
   -moz-box-flex: 1;
 }
 
-#customization-panelWrapper > .panel-arrowcontent {
-  padding: 0 !important;
+#customization-container:not([photon]) #customization-panelWrapper > .panel-arrowcontent {
   overflow: hidden;
 }
 
@@ -1234,12 +1390,27 @@ toolbarpaletteitem[place="palette"] {
   display: inline-block;
 }
 
+#main-window[photon-structure] toolbarpaletteitem[place="palette"] {
+  -moz-binding: url("chrome://global/content/bindings/toolbar.xml#toolbarpaletteitem-palette-wrapping-label");
+  width: 7em;
+  /* icon (16) + margin (9 + 12) + 3 lines of text: */
+  height: calc(39px + 3em);
+  margin-inline-end: 24px;
+  overflow: visible;
+  vertical-align: top;
+}
+
 toolbarpaletteitem[place="palette"][hidden] {
   display: none;
 }
 
 #customization-palette .toolbarpaletteitem-box {
   -moz-box-pack: center;
+  width: 7em;
+  max-width: 7em;
+}
+
+#main-window:not([photon-structure]) #customization-palette .toolbarpaletteitem-box {
   -moz-box-flex: 1;
   width: 10em;
   max-width: 10em;
@@ -1270,11 +1441,12 @@ toolbarpaletteitem[place="palette"][hidden] {
   -moz-window-shadow: none;
 }
 
-/* Page action menu */
-#page-action-sendToDeviceView-body[signedin] > #page-action-sendToDevice-fxa-button,
-#page-action-sendToDeviceView-body:not([signedin]) > #page-action-no-devices-button,
-#page-action-sendToDeviceView-body[hasdevices] > #page-action-no-devices-button {
+%ifdef MOZ_PHOTON_THEME
+/* Page action panel */
+#pageAction-panel-sendToDevice-subview-body:not([state="notready"]) > #pageAction-panel-sendToDevice-notReady,
+#pageAction-urlbar-sendToDevice-subview-body:not([state="notready"]) > #pageAction-urlbar-sendToDevice-notReady {
   display: none;
 }
+%endif
 
 %include theme-vars.inc.css

@@ -6,7 +6,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import unittest
 
-from ..parameters import Parameters, load_parameters_file, PARAMETER_NAMES
+from taskgraph.parameters import Parameters, load_parameters_file, PARAMETER_NAMES
 from mozunit import main, MockedOpen
 
 
@@ -49,14 +49,15 @@ class TestParameters(unittest.TestCase):
     def test_load_parameters_file_yaml(self):
         with MockedOpen({"params.yml": "some: data\n"}):
             self.assertEqual(
-                    load_parameters_file({'parameters': 'params.yml'}),
+                    load_parameters_file('params.yml'),
                     {'some': 'data'})
 
     def test_load_parameters_file_json(self):
         with MockedOpen({"params.json": '{"some": "data"}'}):
             self.assertEqual(
-                    load_parameters_file({'parameters': 'params.json'}),
+                    load_parameters_file('params.json'),
                     {'some': 'data'})
+
 
 if __name__ == '__main__':
     main()

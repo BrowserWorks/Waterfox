@@ -97,6 +97,14 @@ pub enum CacheMode {
     OnlyIfCached,
 }
 
+/// [Service-workers mode](https://fetch.spec.whatwg.org/#request-service-workers-mode)
+#[derive(Copy, Clone, PartialEq, Serialize, Deserialize, HeapSizeOf)]
+pub enum ServiceWorkersMode {
+    All,
+    Foreign,
+    None,
+}
+
 /// [Redirect mode](https://fetch.spec.whatwg.org/#concept-request-redirect-mode)
 #[derive(Copy, Clone, PartialEq, Serialize, Deserialize, HeapSizeOf)]
 pub enum RedirectMode {
@@ -140,6 +148,7 @@ pub struct RequestInit {
     pub headers: Headers,
     pub unsafe_request: bool,
     pub body: Option<Vec<u8>>,
+    pub service_workers_mode: ServiceWorkersMode,
     // TODO: client object
     pub type_: Type,
     pub destination: Destination,
@@ -149,9 +158,7 @@ pub struct RequestInit {
     pub use_cors_preflight: bool,
     pub credentials_mode: CredentialsMode,
     pub use_url_credentials: bool,
-    // this should actually be set by fetch, but fetch
-    // doesn't have info about the client right now
-    pub origin: ServoUrl,
+    pub origin: ImmutableOrigin,
     // XXXManishearth these should be part of the client object
     pub referrer_url: Option<ServoUrl>,
     pub referrer_policy: Option<ReferrerPolicy>,
@@ -170,6 +177,7 @@ impl Default for RequestInit {
             headers: Headers::new(),
             unsafe_request: false,
             body: None,
+            service_workers_mode: ServiceWorkersMode::All,
             type_: Type::None,
             destination: Destination::None,
             synchronous: false,
@@ -178,7 +186,7 @@ impl Default for RequestInit {
             use_cors_preflight: false,
             credentials_mode: CredentialsMode::Omit,
             use_url_credentials: false,
-            origin: ServoUrl::parse("about:blank").unwrap(),
+            origin: ImmutableOrigin::new_opaque(),
             referrer_url: None,
             referrer_policy: None,
             pipeline_id: None,
@@ -208,12 +216,12 @@ pub struct Request {
     /// https://fetch.spec.whatwg.org/#concept-request-body
     pub body: Option<Vec<u8>>,
     // TODO: client object
-    pub is_service_worker_global_scope: bool,
     pub window: Window,
     // TODO: target browsing context
     /// https://fetch.spec.whatwg.org/#request-keepalive-flag
     pub keep_alive: bool,
-    pub skip_service_worker: bool,
+    // https://fetch.spec.whatwg.org/#request-service-workers-mode
+    pub service_workers_mode: ServiceWorkersMode,
     /// https://fetch.spec.whatwg.org/#concept-request-initiator
     pub initiator: Initiator,
     /// https://fetch.spec.whatwg.org/#concept-request-type
@@ -257,7 +265,6 @@ pub struct Request {
 impl Request {
     pub fn new(url: ServoUrl,
                origin: Option<Origin>,
-               is_service_worker_global_scope: bool,
                pipeline_id: Option<PipelineId>)
                -> Request {
         Request {
@@ -267,10 +274,9 @@ impl Request {
             headers: Headers::new(),
             unsafe_request: false,
             body: None,
-            is_service_worker_global_scope: is_service_worker_global_scope,
             window: Window::Client,
             keep_alive: false,
-            skip_service_worker: false,
+            service_workers_mode: ServiceWorkersMode::All,
             initiator: Initiator::None,
             type_: Type::None,
             destination: Destination::None,
@@ -294,13 +300,13 @@ impl Request {
 
     pub fn from_init(init: RequestInit) -> Request {
         let mut req = Request::new(init.url.clone(),
-                                   Some(Origin::Origin(init.origin.origin())),
-                                   false,
+                                   Some(Origin::Origin(init.origin)),
                                    init.pipeline_id);
         req.method = init.method;
         req.headers = init.headers;
         req.unsafe_request = init.unsafe_request;
         req.body = init.body;
+        req.service_workers_mode = init.service_workers_mode;
         req.type_ = init.type_;
         req.destination = init.destination;
         req.synchronous = init.synchronous;

@@ -4,11 +4,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include "mozilla/GfxMessageUtils.h";
+include "mozilla/layers/LayersMessageUtils.h";
 include "ipc/nsGUIEventIPC.h";
 include "mozilla/dom/TabMessageUtils.h"; // Needed for IPC::ParamTraits<nsEventStatus>.
 
 include protocol PCompositorBridge;
 
+using CSSPoint from "Units.h";
 using CSSRect from "Units.h";
 using LayoutDeviceCoord from "Units.h";
 using LayoutDeviceIntPoint from "Units.h";
@@ -19,6 +21,7 @@ using mozilla::layers::MaybeZoomConstraints from "FrameMetrics.h";
 using mozilla::layers::TouchBehaviorFlags from "mozilla/layers/APZUtils.h";
 using mozilla::layers::AsyncDragMetrics from "mozilla/layers/AsyncDragMetrics.h";
 using mozilla::layers::GeckoContentController::TapType from "mozilla/layers/GeckoContentController.h";
+using class mozilla::layers::KeyboardMap from "mozilla/layers/KeyboardMap.h";
 
 using nsEventStatus from "mozilla/EventForwards.h";
 using EventMessage from "mozilla/EventForwards.h";
@@ -36,6 +39,7 @@ using class mozilla::PinchGestureInput from "InputData.h";
 using mozilla::PinchGestureInput::PinchGestureType from "InputData.h";
 using class mozilla::TapGestureInput from "InputData.h";
 using class mozilla::ScrollWheelInput from "InputData.h";
+using class mozilla::KeyboardInput from "InputData.h";
 
 namespace mozilla {
 namespace layers {
@@ -68,11 +72,17 @@ parent:
 
   async CancelAnimation(ScrollableLayerGuid aGuid);
 
+  async SetKeyboardMap(KeyboardMap aKeyboardMap);
+
   async SetDPI(float aDpiValue);
 
   async SetAllowedTouchBehavior(uint64_t aInputBlockId, TouchBehaviorFlags[] aValues);
 
   async StartScrollbarDrag(ScrollableLayerGuid aGuid, AsyncDragMetrics aDragMetrics);
+
+  async StartAutoscroll(ScrollableLayerGuid aGuid, ScreenPoint aAnchorLocation);
+
+  async StopAutoscroll(ScrollableLayerGuid aGuid);
 
   async SetLongTapEnabled(bool aTapGestureEnabled);
 
@@ -117,11 +127,18 @@ parent:
              ScrollableLayerGuid aOutTargetGuid,
              uint64_t            aOutInputBlockId);
 
+  sync ReceiveKeyboardInputEvent(KeyboardInput aEvent)
+    returns (nsEventStatus       aOutStatus,
+             KeyboardInput       aOutEvent,
+             ScrollableLayerGuid aOutTargetGuid,
+             uint64_t            aOutInputBlockId);
+
   async UpdateWheelTransaction(LayoutDeviceIntPoint aRefPoint, EventMessage aEventMessage);
 
-  sync TransformEventRefPoint(LayoutDeviceIntPoint aRefPoint)
+  sync ProcessUnhandledEvent(LayoutDeviceIntPoint aRefPoint)
     returns (LayoutDeviceIntPoint   aOutRefPoint,
-             ScrollableLayerGuid    aOutTargetGuid);
+             ScrollableLayerGuid    aOutTargetGuid,
+             uint64_t               aOutFocusSequenceNumber);
 
   async __delete__();
 

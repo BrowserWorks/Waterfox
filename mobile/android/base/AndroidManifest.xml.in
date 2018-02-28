@@ -13,7 +13,7 @@
 #ifdef MOZ_ANDROID_MAX_SDK_VERSION
               android:maxSdkVersion="@MOZ_ANDROID_MAX_SDK_VERSION@"
 #endif
-              android:targetSdkVersion="23"/>
+              android:targetSdkVersion="@ANDROID_TARGET_SDK@"/>
 
 <!-- The bouncer APK and the main APK should define the same set of
      <permission>, <uses-permission>, and <uses-feature> elements.  This reduces
@@ -32,7 +32,7 @@
 # The preprocessor does not yet support arbitrary parentheses, so this cannot
 # be parenthesized thus to clarify that the logical AND operator has precedence:
 #   !defined(MOZILLA_OFFICIAL) || (defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG))
-#if !defined(MOZILLA_OFFICIAL) || defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG)
+#if defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG)
                  android:debuggable="true">
 #else
                  android:debuggable="false">

@@ -127,7 +127,9 @@ nsConsoleService::~nsConsoleService()
 class AddConsolePrefWatchers : public Runnable
 {
 public:
-  explicit AddConsolePrefWatchers(nsConsoleService* aConsole) : mConsole(aConsole)
+  explicit AddConsolePrefWatchers(nsConsoleService* aConsole)
+    : mozilla::Runnable("AddConsolePrefWatchers")
+    , mConsole(aConsole)
   {
   }
 
@@ -168,7 +170,8 @@ class LogMessageRunnable : public Runnable
 {
 public:
   LogMessageRunnable(nsIConsoleMessage* aMessage, nsConsoleService* aService)
-    : mMessage(aMessage)
+    : mozilla::Runnable("LogMessageRunnable")
+    , mMessage(aMessage)
     , mService(aService)
   { }
 
@@ -320,14 +323,15 @@ nsConsoleService::LogMessageWithMode(nsIConsoleMessage* aMessage,
     // Release |retiredMessage| on the main thread in case it is an instance of
     // a mainthread-only class like nsScriptErrorWithStack and we're off the
     // main thread.
-    NS_ReleaseOnMainThread(retiredMessage.forget());
+    NS_ReleaseOnMainThreadSystemGroup(
+      "nsConsoleService::retiredMessage", retiredMessage.forget());
   }
 
   if (r) {
     // avoid failing in XPCShell tests
     nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
     if (mainThread) {
-      SystemGroup::Dispatch("LogMessageRunnable", TaskCategory::Other, r.forget());
+      SystemGroup::Dispatch(TaskCategory::Other, r.forget());
     }
   }
 

@@ -13,6 +13,7 @@ use euclid::num::Zero;
 use num_traits::ToPrimitive;
 use properties::PropertyDeclarationBlock;
 use selectors::attr::AttrSelectorOperation;
+use servo_arc::Arc;
 use servo_url::ServoUrl;
 use shared_lock::Locked;
 use std::ascii::AsciiExt;
@@ -20,7 +21,6 @@ use std::str::FromStr;
 use str::{HTML_SPACE_CHARACTERS, read_exponent, read_fraction};
 use str::{read_numbers, split_commas, split_html_space_chars};
 use str::str_join;
-use stylearc::Arc;
 use values::specified::Length;
 
 // Duplicated from script::dom::values.
@@ -512,8 +512,8 @@ pub fn parse_legacy_color(mut input: &str) -> Result<RGBA, ()> {
             0 => Err(()),
             1 => hex(string[0] as char),
             _ => {
-                let upper = try!(hex(string[0] as char));
-                let lower = try!(hex(string[1] as char));
+                let upper = hex(string[0] as char)?;
+                let lower = hex(string[1] as char)?;
                 Ok((upper << 4) | lower)
             }
         }

@@ -19,9 +19,10 @@ GMPCrashHelper::Destroy()
     delete this;
   } else {
     // Don't addref, as then we'd end up releasing after the detele runs!
-    SystemGroup::Dispatch(
-      "GMPCrashHelper::Destroy", TaskCategory::Other,
-      NewNonOwningRunnableMethod(this, &GMPCrashHelper::Destroy));
+    SystemGroup::Dispatch(TaskCategory::Other,
+                          NewNonOwningRunnableMethod("GMPCrashHelper::Destroy",
+                                                     this,
+                                                     &GMPCrashHelper::Destroy));
   }
 }
 

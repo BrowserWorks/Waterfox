@@ -57,6 +57,22 @@ The recommended process for changing task graphs is this:
 5. When you are satisfied with the changes, push them to try to ensure that the
    modified tasks work as expected.
 
+Hacking Actions
+...............
+
+If you are working on an action task and wish to test it out locally, use the
+``./mach taskgraph test-action-callback`` command:
+
+   .. code-block:: none
+
+        ./mach taskgraph test-action-task \
+            --task-id I4gu9KDmSZWu3KHx6ba6tw --task-group-id sMO4ybV9Qb2tmcI1sDHClQ \
+            -p parameters.yml --input input.yml \
+            hello_world_action
+
+This invocation will run the hello world callback with the given inputs and
+print any created tasks to stdout, rather than actually creating them.
+
 Common Changes
 --------------
 
@@ -155,6 +171,9 @@ the ``build`` kind.  If you need some additional functionality in the kind,
 it's OK to modify the implementation as necessary, as long as the modification
 is complete and useful to the next developer to come along.
 
+Tasks in the ``build`` kind generate Firefox installers, and the ``test`` kind
+will add a full set of Firefox tests for each ``build`` task.
+
 New Kind
 ````````
 
@@ -162,9 +181,9 @@ The next option to consider is adding a new kind.  A distinct kind gives you
 some isolation from other task types, which can be nice if you are adding an
 experimental kind of task.
 
-Kinds can range in complexity.  The simplest sort of kind uses the
-``TransformTask`` implementation to read a list of jobs from the ``jobs`` key,
-and applies the standard ``job`` and ``task`` transforms:
+Kinds can range in complexity.  The simplest sort of kind uses the transform
+loader to read a list of jobs from the ``jobs`` key, and applies the standard
+``job`` and ``task`` transforms:
 
 .. code-block:: yaml
 
@@ -175,24 +194,38 @@ and applies the standard ``job`` and ``task`` transforms:
     jobs:
        - ..your job description here..
 
-Custom Kind Implementation
-``````````````````````````
+Job descriptions are defined and documented in
+``taskcluster/taskgraph/transforms/job/__init__.py``.
+
+Custom Kind Loader
+``````````````````
 
 If your task depends on other tasks, then the decision of which tasks to create
-may require some code.  For example, the ``upload-symbols`` kind iterates over
-the builds in the graph, generating a task for each one.  This specific
-post-build behavior is implemented in the general
-``taskgraph.task.post_build:PostBuildTask`` kind implementation.  If your task
-needs something more purpose-specific, then it may be time to write a new kind
-implementation.
+may require some code.  For example, the ``test`` kind iterates over
+the builds in the graph, generating a full set of test tasks for each one.  This specific
+post-build behavior is implemented as a loader defined in ``taskcluster/taskgraph/loader/test.py``.
+
+A custom loader is useful when the set of tasks you want to create is not
+static but based on something else (such as the available builds) or when the
+dependency relationships for your tasks are complex.
 
 Custom Transforms
 `````````````````
 
-If your task needs to create many tasks from a single description, for example
-to implement chunking, it is time to implement some custom transforms.  Ideally
-those transforms will produce job descriptions, so you can use the existing ``job``
-and ``task`` transforms:
+Most loaders apply a series of ":doc:`transforms <transforms>`" that start with
+an initial human-friendly description of a task and end with a task definition
+suitable for insertion into a Taskcluster queue.
+
+Custom transforms can be useful to apply defaults, simplifying the YAML files
+in your kind. They can also apply business logic that is more easily expressed
+in code than in YAML.
+
+Transforms need not be one-to-one: a transform can produce zero or more outputs
+for each input. For example, the test transforms perform chunking by producing
+an output for each chunk of a given input.
+
+Ideally those transforms will produce job descriptions, so you can use the
+existing ``job`` and ``task`` transforms:
 
 .. code-block:: yaml
 
@@ -201,10 +234,7 @@ and ``task`` transforms:
        - taskgraph.transforms.job:transforms
        - taskgraph.transforms.task:transforms
 
-Similarly, if you need to include dynamic task defaults -- perhaps some feature
-is only available in level-3 repositories, or on specific projects -- then
-custom transforms are the appropriate tool.  Try to keep transforms simple,
-single-purpose and well-documented!
+Try to keep transforms simple, single-purpose and well-documented!
 
 Custom Run-Using
 ````````````````
@@ -222,3 +252,54 @@ Something Else?
 
 If you make another change not described here that turns out to be simple or
 common, please include an update to this file in your patch.
+
+
+Schedule a Task on Try
+----------------------
+
+There are two methods for scheduling a task on try.
+
+The first method is a command line string called ``try syntax`` which is passed
+into the decision task via the commit message. An example try syntax might look
+like:
+
+.. parsed-literal::
+
+    try: -b o -p linux64 -u mochitest-1 -t none
+
+This gets parsed by ``taskgraph.try_option_syntax:TryOptionSyntax`` and returns
+a list of matching task labels. For more information see the
+`TryServer wiki page <https://wiki.mozilla.org/Try>`_.
+
+The second method uses a checked-in file called ``try_task_config.json`` which
+lives at the root of the source dir. The format of this file is either a list
+of task labels, or a JSON object where task labels make up the keys. For
+example, the ``try_task_config.json`` file might look like:
+
+.. parsed-literal::
+
+    [
+      "test-windows10-64/opt-web-platform-tests-12",
+      "test-windows7-32/opt-reftest-1",
+      "test-windows7-32/opt-reftest-2",
+      "test-windows7-32/opt-reftest-3",
+      "build-linux64/debug",
+      "source-test-mozlint-eslint"
+    ]
+
+Very simply, this will run any task label that gets passed in as well as their
+dependencies. While it is possible to manually commit this file and push to
+try, it is mainly meant to be a generation target for various trychooser tools.
+
+A list of all possible task labels can be obtained by running:
+
+.. parsed-literal::
+
+    $ ./mach taskgraph tasks
+
+A list of task labels relevant to a tree (defaults to mozilla-central) can be
+obtained with:
+
+.. parsed-literal::
+
+    $ ./mach taskgraph target

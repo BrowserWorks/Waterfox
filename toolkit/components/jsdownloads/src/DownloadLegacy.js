@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,21 +14,14 @@
 
 "use strict";
 
-// Globals
-
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
-
-// DownloadLegacyTransfer
+XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
+                                  "resource://gre/modules/PromiseUtils.jsm");
 
 /**
  * nsITransfer implementation that provides a bridge to a Download object.
@@ -61,20 +52,18 @@ XPCOMUtils.defineLazyModuleGetter(this, "Promise",
  * download is successful, even if the source has a size of zero bytes.
  */
 function DownloadLegacyTransfer() {
-  this._deferDownload = Promise.defer();
+  this._deferDownload = PromiseUtils.defer();
 }
 
 DownloadLegacyTransfer.prototype = {
   classID: Components.ID("{1b4c85df-cbdd-4bb6-b04e-613caece083c}"),
 
-  // nsISupports
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
                                          Ci.nsIWebProgressListener2,
                                          Ci.nsITransfer]),
 
   // nsIWebProgressListener
-
   onStateChange: function DLT_onStateChange(aWebProgress, aRequest, aStateFlags,
                                             aStatus) {
     if (!Components.isSuccessCode(aStatus)) {
@@ -132,7 +121,7 @@ DownloadLegacyTransfer.prototype = {
             }
           }
         });
-      }).then(null, Cu.reportError);
+      }).catch(Cu.reportError);
     } else if ((aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) &&
         (aStateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK)) {
       // The last file has been received, or the download failed.  Wait for the
@@ -146,13 +135,14 @@ DownloadLegacyTransfer.prototype = {
           download.saver.setRedirects(this._redirects);
         }
         download.saver.onTransferFinished(aStatus);
-      }).then(null, Cu.reportError);
+      }).catch(Cu.reportError);
 
       // Release the reference to the component executing the download.
       this._cancelable = null;
     }
   },
 
+  // nsIWebProgressListener
   onProgressChange: function DLT_onProgressChange(aWebProgress, aRequest,
                                                   aCurSelfProgress,
                                                   aMaxSelfProgress,
@@ -165,6 +155,7 @@ DownloadLegacyTransfer.prototype = {
 
   onLocationChange() { },
 
+  // nsIWebProgressListener
   onStatusChange: function DLT_onStatusChange(aWebProgress, aRequest, aStatus,
                                               aMessage) {
     // The status change may optionally be received in addition to the state
@@ -176,14 +167,13 @@ DownloadLegacyTransfer.prototype = {
       // Wait for the associated Download object to be available.
       this._deferDownload.promise.then(function DLT_OSC_onDownload(aDownload) {
         aDownload.saver.onTransferFinished(aStatus);
-      }).then(null, Cu.reportError);
+      }).catch(Cu.reportError);
     }
   },
 
   onSecurityChange() { },
 
   // nsIWebProgressListener2
-
   onProgressChange64: function DLT_onProgressChange64(aWebProgress, aRequest,
                                                       aCurSelfProgress,
                                                       aMaxSelfProgress,
@@ -192,9 +182,10 @@ DownloadLegacyTransfer.prototype = {
     // Wait for the associated Download object to be available.
     this._deferDownload.promise.then(function DLT_OPC64_onDownload(aDownload) {
       aDownload.saver.onProgressBytes(aCurTotalProgress, aMaxTotalProgress);
-    }).then(null, Cu.reportError);
+    }).catch(Cu.reportError);
   },
 
+  // nsIWebProgressListener2
   onRefreshAttempted: function DLT_onRefreshAttempted(aWebProgress, aRefreshURI,
                                                       aMillis, aSameURI) {
     // Indicate that refreshes and redirects are allowed by default.  However,
@@ -203,7 +194,6 @@ DownloadLegacyTransfer.prototype = {
   },
 
   // nsITransfer
-
   init: function DLT_init(aSource, aTarget, aDisplayName, aMIMEInfo, aStartTime,
                           aTempFile, aCancelable, aIsPrivate) {
     this._cancelable = aCancelable;
@@ -247,7 +237,7 @@ DownloadLegacyTransfer.prototype = {
 
       // Add the download to the list, allowing it to be seen and canceled.
       return Downloads.getList(Downloads.ALL).then(list => list.add(aDownload));
-    }).then(null, Cu.reportError);
+    }).catch(Cu.reportError);
   },
 
   setSha256Hash(hash) {
@@ -261,8 +251,6 @@ DownloadLegacyTransfer.prototype = {
   setRedirects(redirects) {
     this._redirects = redirects;
   },
-
-  // Private methods and properties
 
   /**
    * This deferred object contains a promise that is resolved with the Download
@@ -293,7 +281,5 @@ DownloadLegacyTransfer.prototype = {
    */
   _signatureInfo: null,
 };
-
-// Module
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([DownloadLegacyTransfer]);

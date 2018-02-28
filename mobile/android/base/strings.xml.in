@@ -247,6 +247,9 @@
   <string name="custom_tabs_menu_footer">&custom_tabs_menu_footer;</string>
   <string name="custom_tabs_hint_url_copy">&custom_tabs_hint_url_copy;</string>
 
+  <string name="pref_pwa">&pref_pwa;</string>
+  <string name="pref_pwa_summary">&pref_pwa_summary;</string>
+
   <string name="pref_activity_stream">&pref_activity_stream;</string>
   <string name="pref_activity_stream_summary">&pref_activity_stream_summary;</string>
 
@@ -258,10 +261,6 @@
   <string name="pref_clear_on_exit_title">&pref_clear_on_exit_title3;</string>
   <string name="pref_clear_on_exit_summary2">&pref_clear_on_exit_summary2;</string>
   <string name="pref_clear_on_exit_dialog_title">&pref_clear_on_exit_dialog_title;</string>
-  <string name="pref_plugins">&pref_plugins;</string>
-  <string name="pref_plugins_enabled">&pref_plugins_enabled;</string>
-  <string name="pref_plugins_tap_to_play">&pref_plugins_tap_to_play2;</string>
-  <string name="pref_plugins_disabled">&pref_plugins_disabled;</string>
   <string name="pref_use_system_font_size">&pref_use_system_font_size;</string>
   <string name="pref_use_system_font_size_summary">&pref_use_system_font_size_summary;</string>
   <string name="pref_media_autoplay_enabled">&pref_media_autoplay_enabled;</string>
@@ -433,6 +432,7 @@
   <string name="page_removed">&page_removed;</string>
 
   <string name="bookmark_edit_title">&bookmark_edit_title;</string>
+  <string name="bookmark_edit_folder_title">&bookmark_edit_folder_title;</string>
   <string name="bookmark_edit_name">&bookmark_edit_name;</string>
   <string name="bookmark_edit_location">&bookmark_edit_location;</string>
   <string name="bookmark_edit_keyword">&bookmark_edit_keyword;</string>
@@ -478,6 +478,9 @@
   <string name="home_remote_tabs_unhide_selected_devices">&home_remote_tabs_unhide_selected_devices;</string>
   <string name="pin_site_dialog_hint">&pin_site_dialog_hint;</string>
 
+  <string name="home_pinned_site">&home_pinned_site;</string>
+  <string name="home_unpinned_site">&home_unpinned_site;</string>
+
   <string name="remote_tabs_never_synced">&remote_tabs_never_synced;</string>
 
   <string name="filepicker_title">&filepicker_title;</string>
@@ -487,22 +490,22 @@
 
   <!-- Default bookmarks. We used to use bookmark titles shared with XUL from mobile's
        profile/bookmarks.inc (see bug 964946). Don't expose the URLs to L10N. -->
-  <string name="bookmarkdefaults_title_aboutfirefox">&bookmarks_about_browser;</string>
-  <string name="bookmarkdefaults_url_aboutfirefox">about:firefox</string>
+  <string name="bookmarkdefaults_title_aboutfirefox">Waterfox: Website</string>
+  <string name="bookmarkdefaults_url_aboutfirefox">https://www.waterfoxproject.org</string>
 
   <!-- Icon is automatically generated from R.drawable.bookmarkdefaults_favicon_addons -->
-  <string name="bookmarkdefaults_title_addons">&bookmarks_addons;</string>
+  <string name="bookmarkdefaults_title_addons">Add-on Store</string>
   <string name="bookmarkdefaults_url_addons">https://addons.mozilla.org/android?utm_source=inproduct&amp;utm_medium=default-bookmarks&amp;utm_campaign=mobileandroid</string>
 
   <!-- Icon is automatically generated from R.drawable.bookmarkdefaults_favicon_support -->
-  <string name="bookmarkdefaults_title_support">&bookmarks_support;</string>
+  <string name="bookmarkdefaults_title_support">Firefox Help Pages</string>
   <string name="bookmarkdefaults_url_support">https://support.mozilla.org/products/mobile?utm_source=inproduct&amp;utm_medium=default-bookmarks&amp;utm_campaign=mobileandroid</string>
 
-  <string name="bookmarkdefaults_title_restricted_webmaker">&bookmarks_restricted_webmaker;</string>
+  <!-- <string name="bookmarkdefaults_title_restricted_webmaker">&bookmarks_restricted_webmaker;</string>
   <string name="bookmarkdefaults_url_restricted_webmaker">https://webmaker.org/</string>
 
   <string name="bookmarkdefaults_title_restricted_support">&bookmarks_restricted_support2;</string>
-  <string name="bookmarkdefaults_url_restricted_support">https://support.mozilla.org/kb/controlledaccess?utm_source=inproduct&amp;utm_medium=default-bookmarks&amp;utm_campaign=mobileandroid</string>
+  <string name="bookmarkdefaults_url_restricted_support">https://support.mozilla.org/kb/controlledaccess?utm_source=inproduct&amp;utm_medium=default-bookmarks&amp;utm_campaign=mobileandroid</string> -->
 
   <!-- Site identity popup -->
   <string name="identity_connection_secure">&identity_connection_secure;</string>
@@ -640,4 +643,5 @@
 
   <string name="activity_stream_welcome_title">&activity_stream_welcome_title;</string>
   <string name="activity_stream_welcome_content">&activity_stream_welcome_content1;</string>
+  <string name="fullscreen_warning">&fullscreen_warning;</string>
 </resources>

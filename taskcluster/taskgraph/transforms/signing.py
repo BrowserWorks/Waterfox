@@ -8,8 +8,9 @@ Transform the signing task into an actual task description.
 from __future__ import absolute_import, print_function, unicode_literals
 
 from taskgraph.transforms.base import TransformSequence
+from taskgraph.util.attributes import copy_attributes_from_dependent_job
 from taskgraph.util.schema import validate_schema, Schema
-from taskgraph.util.scriptworker import get_signing_cert_scope, get_devedition_signing_cert_scope
+from taskgraph.util.scriptworker import get_signing_cert_scope_per_platform
 from taskgraph.transforms.task import task_description_schema
 from voluptuous import Any, Required, Optional
 
@@ -58,10 +59,6 @@ signing_description_schema = Schema({
 
     # Routes specific to this task, if defined
     Optional('routes'): [basestring],
-
-    # If True, adds a route which funsize uses to schedule generation of partial mar
-    # files for updates. Expected to be added on nightly builds only.
-    Optional('use-funsize-route'): bool,
 })
 
 
@@ -88,39 +85,38 @@ def make_task_description(config, jobs):
             signing_format_scopes.append("project:releng:signing:format:{}".format(format))
 
         treeherder = job.get('treeherder', {})
-        treeherder.setdefault('symbol', 'tc(Ns)')
+        is_nightly = dep_job.attributes.get('nightly', False)
+        treeherder.setdefault('symbol', _generate_treeherder_symbol(is_nightly))
+
         dep_th_platform = dep_job.task.get('extra', {}).get(
             'treeherder', {}).get('machine', {}).get('platform', '')
-        treeherder.setdefault('platform', "{}/opt".format(dep_th_platform))
+        build_type = dep_job.attributes.get('build_type')
+        build_platform = dep_job.attributes.get('build_platform')
+        treeherder.setdefault('platform', _generate_treeherder_platform(
+            dep_th_platform, build_platform, build_type
+        ))
+
         treeherder.setdefault('tier', 1)
         treeherder.setdefault('kind', 'build')
 
         label = job.get('label', "{}-signing".format(dep_job.label))
 
-        attributes = {
-            'nightly': dep_job.attributes.get('nightly', False),
-            'build_platform': dep_job.attributes.get('build_platform'),
-            'build_type': dep_job.attributes.get('build_type'),
-            'signed': True,
-        }
+        attributes = copy_attributes_from_dependent_job(dep_job)
+        attributes['signed'] = True
+
         if dep_job.attributes.get('chunk_locales'):
             # Used for l10n attribute passthrough
             attributes['chunk_locales'] = dep_job.attributes.get('chunk_locales')
 
-        # This code wasn't originally written with the possibility of using different
-        # signing cert scopes for different platforms on the same branch. This isn't
-        # ideal, but it's what we currently have to make this possible.
-        if dep_job.attributes.get('build_platform') in set(
-          ['linux64-devedition-nightly', 'linux-devedition-nightly']):
-            signing_cert_scope = get_devedition_signing_cert_scope(config)
-        else:
-            signing_cert_scope = get_signing_cert_scope(config)
+        signing_cert_scope = get_signing_cert_scope_per_platform(
+            dep_job.attributes.get('build_platform'), is_nightly, config
+        )
 
         task = {
             'label': label,
             'description': "{} Signing".format(
                 dep_job.task["metadata"]["description"]),
-            'worker-type': "scriptworker-prov-v1/signing-linux-v1",
+            'worker-type': _generate_worker_type(signing_cert_scope),
             'worker': {'implementation': 'scriptworker-signing',
                        'upstream-artifacts': job['upstream-artifacts'],
                        'max-run-time': 3600},
@@ -132,8 +128,18 @@ def make_task_description(config, jobs):
             'routes': job.get('routes', []),
         }
 
-        if job.get('use-funsize-route', False):
-            task['routes'].append("project.releng.funsize.level-{level}.{project}".format(
-                project=config.params['project'], level=config.params['level']))
-
         yield task
+
+
+def _generate_treeherder_platform(dep_th_platform, build_platform, build_type):
+    actual_build_type = 'pgo' if '-pgo' in build_platform else build_type
+    return '{}/{}'.format(dep_th_platform, actual_build_type)
+
+
+def _generate_treeherder_symbol(is_nightly):
+    return 'tc(Ns)' if is_nightly else 'tc(Bs)'
+
+
+def _generate_worker_type(signing_cert_scope):
+    worker_type = 'depsigning' if 'dep-signing' in signing_cert_scope else 'signing-linux-v1'
+    return 'scriptworker-prov-v1/{}'.format(worker_type)

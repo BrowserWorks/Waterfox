@@ -5,6 +5,7 @@
 
 /* rendering object for HTML <br> elements */
 
+#include "gfxContext.h"
 #include "nsCOMPtr.h"
 #include "nsContainerFrame.h"
 #include "nsFontMetrics.h"
@@ -13,7 +14,6 @@
 #include "nsLineLayout.h"
 #include "nsStyleConsts.h"
 #include "nsGkAtoms.h"
-#include "nsRenderingContext.h"
 #include "nsLayoutUtils.h"
 
 //FOR SELECTION
@@ -34,8 +34,10 @@ public:
   virtual ContentOffsets CalcContentOffsetsFromFramePoint(nsPoint aPoint) override;
 
   virtual FrameSearchResult PeekOffsetNoAmount(bool aForward, int32_t* aOffset) override;
-  virtual FrameSearchResult PeekOffsetCharacter(bool aForward, int32_t* aOffset,
-                                     bool aRespectClusters = true) override;
+  virtual FrameSearchResult
+  PeekOffsetCharacter(bool aForward, int32_t* aOffset,
+                      PeekOffsetCharacterOptions aOptions =
+                        PeekOffsetCharacterOptions()) override;
   virtual FrameSearchResult PeekOffsetWord(bool aForward, bool aWordSelectEatSpace,
                               bool aIsKeyboardSelect, int32_t* aOffset,
                               PeekWordState* aState) override;
@@ -44,12 +46,12 @@ public:
                           ReflowOutput& aDesiredSize,
                           const ReflowInput& aReflowInput,
                           nsReflowStatus& aStatus) override;
-  virtual void AddInlineMinISize(nsRenderingContext *aRenderingContext,
+  virtual void AddInlineMinISize(gfxContext *aRenderingContext,
                                  InlineMinISizeData *aData) override;
-  virtual void AddInlinePrefISize(nsRenderingContext *aRenderingContext,
+  virtual void AddInlinePrefISize(gfxContext *aRenderingContext,
                                   InlinePrefISizeData *aData) override;
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
   virtual nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode) const override;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
@@ -175,7 +177,7 @@ BRFrame::Reflow(nsPresContext* aPresContext,
 }
 
 /* virtual */ void
-BRFrame::AddInlineMinISize(nsRenderingContext *aRenderingContext,
+BRFrame::AddInlineMinISize(gfxContext *aRenderingContext,
                            nsIFrame::InlineMinISizeData *aData)
 {
   if (!GetParent()->StyleContext()->ShouldSuppressLineBreak()) {
@@ -184,7 +186,7 @@ BRFrame::AddInlineMinISize(nsRenderingContext *aRenderingContext,
 }
 
 /* virtual */ void
-BRFrame::AddInlinePrefISize(nsRenderingContext *aRenderingContext,
+BRFrame::AddInlinePrefISize(gfxContext *aRenderingContext,
                             nsIFrame::InlinePrefISizeData *aData)
 {
   if (!GetParent()->StyleContext()->ShouldSuppressLineBreak()) {
@@ -195,7 +197,7 @@ BRFrame::AddInlinePrefISize(nsRenderingContext *aRenderingContext,
 }
 
 /* virtual */ nscoord
-BRFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+BRFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord result = 0;
   DISPLAY_MIN_WIDTH(this, result);
@@ -203,7 +205,7 @@ BRFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-BRFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+BRFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord result = 0;
   DISPLAY_PREF_WIDTH(this, result);
@@ -244,7 +246,7 @@ BRFrame::PeekOffsetNoAmount(bool aForward, int32_t* aOffset)
 
 nsIFrame::FrameSearchResult
 BRFrame::PeekOffsetCharacter(bool aForward, int32_t* aOffset,
-                             bool aRespectClusters)
+                             PeekOffsetCharacterOptions aOptions)
 {
   NS_ASSERTION (aOffset && *aOffset <= 1, "aOffset out of range");
   // Keep going. The actual line jumping will stop us.

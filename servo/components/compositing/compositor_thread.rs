@@ -6,8 +6,7 @@
 
 use SendableFrameTree;
 use compositor::CompositingReason;
-use euclid::point::Point2D;
-use euclid::size::Size2D;
+use euclid::{Point2D, Size2D};
 use ipc_channel::ipc::IpcSender;
 use msg::constellation_msg::{Key, KeyModifiers, KeyState, PipelineId};
 use net_traits::image::base::Image;
@@ -20,7 +19,7 @@ use std::sync::mpsc::{Receiver, Sender};
 use style_traits::cursor::Cursor;
 use style_traits::viewport::ViewportConstraints;
 use webrender;
-use webrender_traits;
+use webrender_api;
 
 
 /// Used to wake up the event loop, provided by the servo port/embedder.
@@ -86,13 +85,13 @@ pub enum Msg {
     ShutdownComplete,
 
     /// Scroll a page in a window
-    ScrollFragmentPoint(webrender_traits::ClipId, Point2D<f32>, bool),
+    ScrollFragmentPoint(webrender_api::ClipId, Point2D<f32>, bool),
     /// Alerts the compositor that the current page has changed its title.
     ChangePageTitle(PipelineId, Option<String>),
     /// Alerts the compositor that the given pipeline has changed whether it is running animations.
     ChangeRunningAnimationsState(PipelineId, AnimationState),
     /// Replaces the current frame tree, typically called during main frame navigation.
-    SetFrameTree(SendableFrameTree, IpcSender<()>),
+    SetFrameTree(SendableFrameTree),
     /// The load of a page has begun
     LoadStart,
     /// The load of a page has completed
@@ -101,8 +100,6 @@ pub enum Msg {
     HistoryChanged(Vec<LoadData>, usize),
     /// Wether or not to follow a link
     AllowNavigation(ServoUrl, IpcSender<bool>),
-    /// We hit the delayed composition timeout. (See `delayed_composition.rs`.)
-    DelayedCompositionTimeout(u64),
     /// Composite.
     Recomposite(CompositingReason),
     /// Sends an unconsumed key event back to the compositor.
@@ -161,7 +158,6 @@ impl Debug for Msg {
             Msg::AllowNavigation(..) => write!(f, "AllowNavigation"),
             Msg::LoadStart => write!(f, "LoadStart"),
             Msg::HistoryChanged(..) => write!(f, "HistoryChanged"),
-            Msg::DelayedCompositionTimeout(..) => write!(f, "DelayedCompositionTimeout"),
             Msg::Recomposite(..) => write!(f, "Recomposite"),
             Msg::KeyEvent(..) => write!(f, "KeyEvent"),
             Msg::TouchEventProcessed(..) => write!(f, "TouchEventProcessed"),
@@ -198,5 +194,6 @@ pub struct InitialCompositorState {
     pub mem_profiler_chan: mem::ProfilerChan,
     /// Instance of webrender API
     pub webrender: webrender::Renderer,
-    pub webrender_api_sender: webrender_traits::RenderApiSender,
+    pub webrender_document: webrender_api::DocumentId,
+    pub webrender_api: webrender_api::RenderApi,
 }

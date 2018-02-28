@@ -23,6 +23,10 @@ namespace mozilla {
 
 class ContentCacheInParent;
 
+namespace dom {
+class TabParent;
+} // namespace dom
+
 /**
  * ContentCache stores various information of the child content.
  * This class has members which are necessary both in parent process and
@@ -318,7 +322,7 @@ private:
 class ContentCacheInParent final : public ContentCache
 {
 public:
-  ContentCacheInParent();
+  explicit ContentCacheInParent(dom::TabParent& aTabParent);
 
   /**
    * AssignContent() is called when TabParent receives ContentCache from
@@ -406,6 +410,11 @@ private:
   IMENotification mPendingLayoutChange;
   IMENotification mPendingCompositionUpdate;
 
+  // mTabParent is owner of the instance.
+  dom::TabParent& MOZ_NON_OWNING_REF mTabParent;
+  // mCompositionString is composition string which were sent to the remote
+  // process but not yet committed in the remote process.
+  nsString mCompositionString;
   // This is not nullptr only while the instance is requesting IME to
   // composition.  Then, data value of dispatched composition events should
   // be stored into the instance.
@@ -417,6 +426,13 @@ private:
   // mCompositionStartInChild stores current composition start offset in the
   // remote process.
   uint32_t mCompositionStartInChild;
+  // mPendingCommitLength is commit string length of the first pending
+  // composition.  This is used by relative offset query events when querying
+  // new composition start offset.
+  // Note that when mPendingCompositionCount is not 0, i.e., there are 2 or
+  // more pending compositions, this cache won't be used because in such case,
+  // anyway ContentCacheInParent cannot return proper character rect.
+  uint32_t mPendingCommitLength;
   // mPendingCompositionCount is number of compositions which started in widget
   // but not yet handled in the child process.
   uint8_t mPendingCompositionCount;
@@ -424,6 +440,12 @@ private:
   // IME has composition.  So, this is set to true when eCompositionStart is
   // dispatched and set to false when eCompositionCommit(AsIs) is dispatched.
   bool mWidgetHasComposition;
+  // mIsPendingLastCommitEvent is true only when this sends
+  // eCompositionCommit(AsIs) event to the remote process but it's not handled
+  // in the remote process yet.
+  bool mIsPendingLastCommitEvent;
+
+  ContentCacheInParent() = delete;
 
   /**
    * When following methods' aRoundToExistingOffset is true, even if specified

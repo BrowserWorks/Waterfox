@@ -62,7 +62,7 @@ ProxyStream::ProxyStream(REFIID aIID, const BYTE* aInitBuf,
     // OK to forget mStream when calling into this function because the stream
     // gets released even if the unmarshaling part fails.
     unmarshalResult =
-      ::CoGetInterfaceAndReleaseStream(mStream.forget().take(), IID_IUnknown,
+      ::CoGetInterfaceAndReleaseStream(mStream.forget().take(), aIID,
                                        getter_AddRefs(mUnmarshaledProxy));
     MOZ_ASSERT(SUCCEEDED(unmarshalResult));
   };
@@ -189,8 +189,28 @@ ProxyStream::GetBuffer(int& aReturnedBufSize) const
   return mGlobalLockedBuf;
 }
 
+RefPtr<IStream>
+ProxyStream::GetStream() const
+{
+  MOZ_ASSERT(mStream);
+  MOZ_ASSERT(mHGlobal);
+
+  if (!mStream) {
+    return nullptr;
+  }
+
+  // Ensure the stream is rewound. We do this because CoReleaseMarshalData needs
+  // the stream to be pointing to the beginning of the marshal data.
+  LARGE_INTEGER pos;
+  pos.QuadPart = 0LL;
+  DebugOnly<HRESULT> hr = mStream->Seek(pos, STREAM_SEEK_SET, nullptr);
+  MOZ_ASSERT(SUCCEEDED(hr));
+
+  return mStream;
+}
+
 bool
-ProxyStream::GetInterface(REFIID aIID, void** aOutInterface) const
+ProxyStream::GetInterface(void** aOutInterface)
 {
   // We should not have a locked buffer on this side
   MOZ_ASSERT(!mGlobalLockedBuf);
@@ -200,26 +220,8 @@ ProxyStream::GetInterface(REFIID aIID, void** aOutInterface) const
     return false;
   }
 
-  if (!mUnmarshaledProxy) {
-    *aOutInterface = nullptr;
-    return true;
-  }
-
-  HRESULT hr = E_UNEXPECTED;
-
-  auto qiFn = [&]() -> void
-  {
-    hr = mUnmarshaledProxy->QueryInterface(aIID, aOutInterface);
-  };
-
-  if (XRE_IsParentProcess()) {
-    qiFn();
-  } else {
-    // mUnmarshaledProxy requires that we execute this in the MTA
-    EnsureMTA mta(qiFn);
-  }
-
-  return SUCCEEDED(hr);
+  *aOutInterface = mUnmarshaledProxy.release();
+  return true;
 }
 
 ProxyStream::ProxyStream(REFIID aIID, IUnknown* aObject)

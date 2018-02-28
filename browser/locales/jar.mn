@@ -25,6 +25,9 @@
     locale/browser/browser.properties              (%chrome/browser/browser.properties)
     locale/browser/customizableui/customizableWidgets.properties (%chrome/browser/customizableui/customizableWidgets.properties)
     locale/browser/lightweightThemes.properties    (%chrome/browser/lightweightThemes.properties)
+#ifdef XP_WIN
+    locale/browser/uiDensity.properties            (%chrome/browser/uiDensity.properties)
+#endif
     locale/browser/newTab.dtd                      (%chrome/browser/newTab.dtd)
     locale/browser/newTab.properties               (%chrome/browser/newTab.properties)
     locale/browser/pageInfo.dtd                    (%chrome/browser/pageInfo.dtd)
@@ -33,7 +36,6 @@
     locale/browser/safeMode.dtd                    (%chrome/browser/safeMode.dtd)
     locale/browser/sanitize.dtd                    (%chrome/browser/sanitize.dtd)
     locale/browser/search.properties               (%chrome/browser/search.properties)
-    locale/browser/searchbar.dtd                   (%chrome/browser/searchbar.dtd)
     locale/browser/sitePermissions.properties      (%chrome/browser/sitePermissions.properties)
     locale/browser/engineManager.properties        (%chrome/browser/engineManager.properties)
     locale/browser/setDesktopBackground.dtd        (%chrome/browser/setDesktopBackground.dtd)
@@ -107,6 +109,9 @@
     locale/browser/searchplugins/list.json      (.deps/generated_@AB_CD@/list.json)
 #endif
     locale/browser/searchplugins/images/amazon.ico     (searchplugins/images/amazon.ico)
+    locale/browser/searchplugins/images/ecosia.ico     (searchplugins/images/ecosia.ico)
+    locale/browser/searchplugins/images/findx.ico      (searchplugins/images/findx.ico)
+    locale/browser/searchplugins/images/startpage.png  (searchplugins/images/startpage.png)
     locale/browser/searchplugins/images/wikipedia.ico  (searchplugins/images/wikipedia.ico)
     locale/browser/searchplugins/images/yahoo.ico      (searchplugins/images/yahoo.ico)
     locale/browser/searchplugins/images/yandex-en.ico  (searchplugins/images/yandex-en.ico)

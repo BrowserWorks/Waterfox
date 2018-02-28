@@ -11,8 +11,6 @@
 Cu.import("resource://testing-common/httpd.js");
 
 Cu.import("resource://gre/modules/NetUtil.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 // We need the profile directory so the test harness will clean up our test
@@ -159,7 +157,7 @@ function test_async_copy()
     bstream.init(ostream, 256);
     return {file: file, sink: bstream};
   }
-  Task.spawn(function*() {
+  (async function() {
     do_test_pending();
     for (let bufferedInput of [true, false]) {
       for (let bufferedOutput of [true, false]) {
@@ -171,9 +169,9 @@ function test_async_copy()
         let TEST_DATA = "[" + make_sample(text) + "]";
         let source = make_input(bufferedInput, TEST_DATA);
         let {file, sink} = make_output(bufferedOutput);
-        let deferred = Promise.defer();
-        NetUtil.asyncCopy(source, sink, deferred.resolve);
-        let result = yield deferred.promise;
+        let result = await new Promise(resolve => {
+          NetUtil.asyncCopy(source, sink, resolve);
+        });
 
         // Make sure the copy was successful!
         if (!Components.isSuccessCode(result)) {
@@ -187,7 +185,7 @@ function test_async_copy()
 
     do_test_finished();
     run_next_test();
-  });
+  })();
 }
 
 function test_async_write_file() {

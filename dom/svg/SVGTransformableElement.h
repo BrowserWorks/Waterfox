@@ -37,7 +37,7 @@ public:
   already_AddRefed<SVGAnimatedTransformList> Transform();
   nsSVGElement* GetNearestViewportElement();
   nsSVGElement* GetFarthestViewportElement();
-  already_AddRefed<SVGIRect> GetBBox(const SVGBoundingBoxOptions& aOptions, 
+  already_AddRefed<SVGIRect> GetBBox(const SVGBoundingBoxOptions& aOptions,
                                      ErrorResult& rv);
   already_AddRefed<SVGMatrix> GetCTM();
   already_AddRefed<SVGMatrix> GetScreenCTM();
@@ -52,7 +52,7 @@ public:
 
 
   // nsSVGElement overrides
-  virtual bool IsEventAttributeName(nsIAtom* aName) override;
+  virtual bool IsEventAttributeNameInternal(nsIAtom* aName) override;
 
 
   virtual gfxMatrix PrependLocalTransformsTo(

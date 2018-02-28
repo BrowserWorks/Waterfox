@@ -22,11 +22,11 @@ extern crate servo_url;
 extern crate style_traits;
 extern crate time;
 extern crate webrender;
-extern crate webrender_traits;
+extern crate webrender_api;
 
 pub use compositor_thread::CompositorProxy;
 pub use compositor::IOCompositor;
-use euclid::size::TypedSize2D;
+use euclid::TypedSize2D;
 use ipc_channel::ipc::IpcSender;
 use msg::constellation_msg::PipelineId;
 use msg::constellation_msg::TopLevelBrowsingContextId;
@@ -35,7 +35,6 @@ use style_traits::CSSPixel;
 
 mod compositor;
 pub mod compositor_thread;
-mod delayed_composition;
 mod touch;
 pub mod windowing;
 

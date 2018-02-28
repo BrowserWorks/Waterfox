@@ -11,9 +11,9 @@ use cssparser::{stylesheet_encoding, EncodingSupport};
 use error_reporting::ParseErrorReporter;
 use media_queries::MediaList;
 use self::encoding::{EncodingRef, DecoderTrap};
+use servo_arc::Arc;
 use shared_lock::SharedRwLock;
 use std::str;
-use stylearc::Arc;
 use stylesheets::{Stylesheet, StylesheetLoader, Origin, UrlExtraData};
 
 struct RustEncoding;
@@ -79,7 +79,7 @@ impl Stylesheet {
                              bytes: &[u8],
                              protocol_encoding_label: Option<&str>,
                              environment_encoding: Option<EncodingRef>,
-                             url_data: &UrlExtraData,
+                             url_data: UrlExtraData,
                              stylesheet_loader: Option<&StylesheetLoader>,
                              error_reporter: &ParseErrorReporter) {
         let (string, _) = decode_stylesheet_bytes(

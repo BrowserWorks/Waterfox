@@ -156,8 +156,6 @@ this.AppConstants = Object.freeze({
   "macosx",
 #elif MOZ_WIDGET_ANDROID
   "android",
-#elif MOZ_WIDGET_GONK
-  "gonk",
 #elif XP_LINUX
   "linux",
 #else
@@ -178,13 +176,6 @@ this.AppConstants = Object.freeze({
 
   MOZ_CRASHREPORTER:
 #ifdef MOZ_CRASHREPORTER
-  true,
-#else
-  false,
-#endif
-
-  MOZ_VERIFY_MAR_SIGNATURE:
-#ifdef MOZ_VERIFY_MAR_SIGNATURE
   true,
 #else
   false,
@@ -316,6 +307,13 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  MOZ_ANDROID_MOZILLA_ONLINE:
+#ifdef MOZ_ANDROID_MOZILLA_ONLINE
+  true,
+#else
+  false,
+#endif
+
   DLL_PREFIX: "@DLL_PREFIX@",
   DLL_SUFFIX: "@DLL_SUFFIX@",
 
@@ -332,6 +330,11 @@ this.AppConstants = Object.freeze({
   MOZ_B2G_OS_NAME: @MOZ_B2G_OS_NAME@,
 
   DEBUG_JS_MODULES: "@DEBUG_JS_MODULES@",
+
+  MOZ_BING_API_CLIENTID: "@MOZ_BING_API_CLIENTID@",
+  MOZ_BING_API_KEY: "@MOZ_BING_API_KEY@",
+  MOZ_GOOGLE_API_KEY: "@MOZ_GOOGLE_API_KEY@",
+  MOZ_MOZILLA_API_KEY: "@MOZ_MOZILLA_API_KEY@",
 
   // URL to the hg revision this was built from (e.g.
   // "https://hg.mozilla.org/mozilla-central/rev/6256ec9113c1")
@@ -362,8 +365,22 @@ this.AppConstants = Object.freeze({
     false,
 #endif
 
+  MOZ_PHOTON_PREFERENCES:
+#ifdef MOZ_PHOTON_PREFERENCES
+    true,
+#else
+    false,
+#endif
+
   MOZ_PHOTON_THEME:
 #ifdef MOZ_PHOTON_THEME
+    true,
+#else
+    false,
+#endif
+
+  MOZ_STYLO:
+#ifdef MOZ_STYLO
     true,
 #else
     false,

@@ -24,6 +24,7 @@ var { helpers, assert } = (function () {
 
   var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
   var { TargetFactory } = require("devtools/client/framework/target");
+  var { gDevToolsBrowser } = require("devtools/client/framework/devtools-browser");
   var Services = require("Services");
 
   var assert = { ok: ok, is: is, log: info };
@@ -134,7 +135,7 @@ var { helpers, assert } = (function () {
     var loaded = helpers.listenOnce(options.browser, "load", true).then(function (ev) {
       var reply = callback.call(null, options);
 
-      return Promise.resolve(reply).then(null, function (error) {
+      return Promise.resolve(reply).catch(function (error) {
         ok(false, error);
       }).then(function () {
         tabbrowser.removeTab(options.tab);
@@ -211,8 +212,8 @@ var { helpers, assert } = (function () {
     options = options || {};
     options.chromeWindow = options.chromeWindow || window;
 
-    return options.chromeWindow.DeveloperToolbar.show(true).then(function () {
-      var toolbar = options.chromeWindow.DeveloperToolbar;
+    var toolbar = gDevToolsBrowser.getDeveloperToolbar(options.chromeWindow);
+    return toolbar.show(true).then(function () {
       options.automator = createDeveloperToolbarAutomator(toolbar);
       options.requisition = toolbar.requisition;
       return options;
@@ -243,7 +244,8 @@ var { helpers, assert } = (function () {
  * @return A promise resolved (with undefined) when the toolbar is closed
  */
   helpers.closeToolbar = function (options) {
-    return options.chromeWindow.DeveloperToolbar.hide().then(function () {
+    var toolbar = gDevToolsBrowser.getDeveloperToolbar(options.chromeWindow).hide();
+    return toolbar.then(function () {
       delete options.automator;
       delete options.requisition;
     });
@@ -323,18 +325,18 @@ var { helpers, assert } = (function () {
     return helpers.addTab(url, function (innerOptions) {
       var win = innerOptions.chromeWindow;
 
-      return win.DeveloperToolbar.show(true).then(function () {
-        var toolbar = win.DeveloperToolbar;
+      var toolbar = gDevToolsBrowser.getDeveloperToolbar(win);
+      return toolbar.show(true).then(function () {
         innerOptions.automator = createDeveloperToolbarAutomator(toolbar);
         innerOptions.requisition = toolbar.requisition;
 
         var reply = callback.call(null, innerOptions);
 
-        return Promise.resolve(reply).then(null, function (error) {
+        return Promise.resolve(reply).catch(function (error) {
           ok(false, error);
           console.error(error);
         }).then(function () {
-          win.DeveloperToolbar.hide().then(function () {
+          toolbar.hide().then(function () {
             delete innerOptions.automator;
           });
         });

@@ -17,7 +17,7 @@ add_task(async function() {
   let exceptions = Services.prefs.getCharPref("extensions.legacy.exceptions");
   exceptions = [ exceptions, ...IGNORE ].join(",");
 
-  SpecialPowers.pushPrefEnv({
+  await SpecialPowers.pushPrefEnv({
     set: [
       ["extensions.legacy.enabled", false],
       ["extensions.legacy.exceptions", exceptions],
@@ -178,5 +178,48 @@ add_task(async function() {
     "unsigned_legacy@tests.mozilla.org",
   ]);
 
+  // Disable unsigned extensions
+  SpecialPowers.pushPrefEnv({
+    set: [
+      ["xpinstall.signatures.required", false],
+    ],
+  });
+
+  // The name of the pane should go back to "Legacy Extensions"
+  await mgrWin.gLegacyView.refresh();
+  is(catItem.disabled, false, "Legacy category is visible");
+  is(catItem.getAttribute("name"), get_string("type.legacy.name"),
+     "Category label with no unsigned extensions is correct");
+
+  // The unsigned extension should be present in the main extensions pane
+  await catUtils.openType("extension");
+  checkList("addon-list", [
+    "webextension@tests.mozilla.org",
+    "mozilla@tests.mozilla.org",
+    "unsigned_webext@tests.mozilla.org",
+  ]);
+
+  // And it should not be present in the legacy pane
+  await catUtils.openType("legacy");
+  checkList("legacy-list", [
+    "legacy@tests.mozilla.org",
+    "unsigned_legacy@tests.mozilla.org",
+  ]);
+
+  await close_manager(mgrWin);
+
+  // Now enable legacy extensions and open a new addons manager tab.
+  // The remembered last view will be the list of legacy extensions but
+  // now that legacy extensions are enabled, we should jump to the
+  // regular Extensions list.
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["extensions.legacy.enabled", true],
+    ],
+  });
+
+  mgrWin = await open_manager(null);
+  is(mgrWin.gViewController.currentViewId, "addons://list/extension",
+     "addons manager switched to extensions list");
   await close_manager(mgrWin);
 });

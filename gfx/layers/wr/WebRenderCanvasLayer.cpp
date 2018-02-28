@@ -27,9 +27,15 @@ namespace layers {
 WebRenderCanvasLayer::~WebRenderCanvasLayer()
 {
   MOZ_COUNT_DTOR(WebRenderCanvasLayer);
+  ClearWrResources();
+}
 
+void
+WebRenderCanvasLayer::ClearWrResources()
+{
   if (mExternalImageId.isSome()) {
     WrBridge()->DeallocExternalImageId(mExternalImageId.ref());
+    mExternalImageId = Nothing();
   }
 }
 
@@ -69,12 +75,6 @@ WebRenderCanvasLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
   LayerRect rect(0, 0, mBounds.width, mBounds.height);
   DumpLayerInfo("CanvasLayer", rect);
 
-  LayerRect clipRect = ClipRect().valueOr(rect);
-  Maybe<WrImageMask> mask = BuildWrMaskLayer(&sc);
-  WrClipRegionToken clip = aBuilder.PushClipRegion(
-      sc.ToRelativeWrRect(clipRect),
-      mask.ptrOr(nullptr));
-
   wr::ImageRendering filter = wr::ToImageRendering(mSamplingFilter);
 
   if (gfxPrefs::LayersDump()) {
@@ -83,11 +83,12 @@ WebRenderCanvasLayer::RenderLayer(wr::DisplayListBuilder& aBuilder,
                   Stringify(filter).c_str());
   }
 
-  WrImageKey key = GetImageKey();
+  wr::WrImageKey key = GenerateImageKey();
   WrBridge()->AddWebRenderParentCommand(OpAddExternalImage(mExternalImageId.value(), key));
   WrManager()->AddImageKeyForDiscard(key);
 
-  aBuilder.PushImage(sc.ToRelativeWrRect(rect), clip, filter, key);
+  wr::LayoutRect r = sc.ToRelativeLayoutRect(rect);
+  aBuilder.PushImage(r, r, filter, key);
 }
 
 void
@@ -100,6 +101,18 @@ CompositableForwarder*
 WebRenderCanvasLayer::GetForwarder()
 {
   return WrManager()->WrBridge();
+}
+
+void
+WebRenderCanvasLayer::ClearCachedResources()
+{
+  ClearWrResources();
+  if (mBufferProvider) {
+    mBufferProvider->ClearCachedResources();
+  }
+  if (mCanvasClient) {
+    mCanvasClient->Clear();
+  }
 }
 
 } // namespace layers

@@ -8,7 +8,6 @@
 
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/Vector.h"
 
@@ -552,7 +551,7 @@ static const JSClass sCABIClass = {
 static const JSClassOps sCTypeProtoClassOps = {
   nullptr, nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, nullptr,
-  ConstructAbstract, nullptr, ConstructAbstract
+  nullptr, ConstructAbstract, nullptr, ConstructAbstract
 };
 static const JSClass sCTypeProtoClass = {
   "CType",
@@ -569,8 +568,8 @@ static const JSClass sCDataProtoClass = {
 
 static const JSClassOps sCTypeClassOps = {
   nullptr, nullptr, nullptr, nullptr,
-  nullptr, nullptr, nullptr, CType::Finalize,
-  CType::ConstructData, CType::HasInstance, CType::ConstructData,
+  nullptr, nullptr, nullptr, nullptr,
+  CType::Finalize, CType::ConstructData, CType::HasInstance, CType::ConstructData,
   CType::Trace
 };
 static const JSClass sCTypeClass = {
@@ -582,8 +581,8 @@ static const JSClass sCTypeClass = {
 
 static const JSClassOps sCDataClassOps = {
   nullptr, nullptr, ArrayType::Getter, ArrayType::Setter,
-  nullptr, nullptr, nullptr, CData::Finalize,
-  FunctionType::Call, nullptr, FunctionType::Call
+  nullptr, nullptr, nullptr, nullptr,
+  CData::Finalize, FunctionType::Call, nullptr, FunctionType::Call
 };
 static const JSClass sCDataClass = {
   "CData",
@@ -594,8 +593,9 @@ static const JSClass sCDataClass = {
 
 static const JSClassOps sCClosureClassOps = {
   nullptr, nullptr, nullptr, nullptr,
-  nullptr, nullptr, nullptr, CClosure::Finalize,
-  nullptr, nullptr, nullptr, CClosure::Trace
+  nullptr, nullptr, nullptr, nullptr,
+  CClosure::Finalize, nullptr, nullptr, nullptr,
+  CClosure::Trace
 };
 static const JSClass sCClosureClass = {
   "CClosure",
@@ -620,7 +620,8 @@ static const JSClass sCDataFinalizerProtoClass = {
  */
 static const JSClassOps sCDataFinalizerClassOps = {
   nullptr, nullptr, nullptr, nullptr,
-  nullptr, nullptr, nullptr, CDataFinalizer::Finalize
+  nullptr, nullptr, nullptr, nullptr,
+  CDataFinalizer::Finalize
 };
 static const JSClass sCDataFinalizerClass = {
   "CDataFinalizer",
@@ -811,7 +812,8 @@ static const JSClass sUInt64ProtoClass = {
 
 static const JSClassOps sInt64ClassOps = {
   nullptr, nullptr, nullptr, nullptr,
-  nullptr, nullptr, nullptr, Int64Base::Finalize
+  nullptr, nullptr, nullptr, nullptr,
+  Int64Base::Finalize
 };
 
 static const JSClass sInt64Class = {
@@ -1468,7 +1470,7 @@ FieldDescriptorCountError(JSContext* cx, HandleValue typeVal, size_t length)
     return false;
 
   char lengthStr[16];
-  SprintfLiteral(lengthStr, "%" PRIuSIZE, length);
+  SprintfLiteral(lengthStr, "%zu", length);
 
   JS_ReportErrorNumberLatin1(cx, GetErrorMessage, nullptr,
                              CTYPESMSG_FIELD_DESC_COUNT, valStr, lengthStr);
@@ -1732,10 +1734,10 @@ static bool
 InvalidIndexRangeError(JSContext* cx, size_t index, size_t length)
 {
   char indexStr[16];
-  SprintfLiteral(indexStr, "%" PRIuSIZE, index);
+  SprintfLiteral(indexStr, "%zu", index);
 
   char lengthStr[16];
-  SprintfLiteral(lengthStr,"%" PRIuSIZE, length);
+  SprintfLiteral(lengthStr,"%zu", length);
 
   JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                             CTYPESMSG_INVALID_RANGE, indexStr, lengthStr);
@@ -1892,8 +1894,8 @@ SizeMismatchCastError(JSContext* cx,
 
   char sourceSizeStr[16];
   char targetSizeStr[16];
-  SprintfLiteral(sourceSizeStr, "%" PRIuSIZE, sourceSize);
-  SprintfLiteral(targetSizeStr, "%" PRIuSIZE, targetSize);
+  SprintfLiteral(sourceSizeStr, "%zu", sourceSize);
+  SprintfLiteral(targetSizeStr, "%zu", targetSize);
 
   JS_ReportErrorNumberLatin1(cx, GetErrorMessage, nullptr,
                              CTYPESMSG_SIZE_MISMATCH_CAST,
@@ -6316,7 +6318,7 @@ StructType::ConstructData(JSContext* cx,
   size_t count = fields->count();
   if (count >= 2) {
     char fieldLengthStr[32];
-    SprintfLiteral(fieldLengthStr, "0, 1, or %" PRIuSIZE, count);
+    SprintfLiteral(fieldLengthStr, "0, 1, or %zu", count);
     return ArgumentLengthError(cx, "StructType constructor", fieldLengthStr,
                                "s");
   }

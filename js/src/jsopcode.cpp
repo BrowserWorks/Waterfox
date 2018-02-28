@@ -13,7 +13,6 @@
 #define __STDC_FORMAT_MACROS
 
 #include "mozilla/Attributes.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/Vector.h"
 
@@ -154,7 +153,7 @@ const char * PCCounts::numExecName = "interp";
 static MOZ_MUST_USE bool
 DumpIonScriptCounts(Sprinter* sp, HandleScript script, jit::IonScriptCounts* ionCounts)
 {
-    if (!sp->jsprintf("IonScript [%" PRIuSIZE " blocks]:\n", ionCounts->numBlocks()))
+    if (!sp->jsprintf("IonScript [%zu blocks]:\n", ionCounts->numBlocks()))
         return false;
 
     for (size_t i = 0; i < ionCounts->numBlocks(); i++) {
@@ -242,11 +241,11 @@ js::DumpCompartmentPCCounts(JSContext* cx)
         if (!sprinter.init())
             return false;
 
-        fprintf(stdout, "--- SCRIPT %s:%" PRIuSIZE " ---\n", script->filename(), script->lineno());
+        fprintf(stdout, "--- SCRIPT %s:%zu ---\n", script->filename(), script->lineno());
         if (!DumpPCCounts(cx, script, &sprinter))
             return false;
         fputs(sprinter.string(), stdout);
-        fprintf(stdout, "--- END SCRIPT %s:%" PRIuSIZE " ---\n", script->filename(), script->lineno());
+        fprintf(stdout, "--- END SCRIPT %s:%zu ---\n", script->filename(), script->lineno());
     }
 
     return true;
@@ -1209,7 +1208,7 @@ ToDisassemblySource(JSContext* cx, HandleValue v, JSAutoByteString* bytes)
 
         if (obj.is<JSFunction>()) {
             RootedFunction fun(cx, &obj.as<JSFunction>());
-            JSString* str = JS_DecompileFunction(cx, fun, JS_DONT_PRETTY_PRINT);
+            JSString* str = JS_DecompileFunction(cx, fun);
             if (!str)
                 return false;
             return bytes->encodeLatin1(cx, str);
@@ -1615,7 +1614,8 @@ Disassemble1(JSContext* cx, HandleScript script, jsbytecode* pc,
     if (!dumpStack())
         return 0;
 
-    sp->put("\n");
+    if (!sp->put("\n"))
+        return 0;
     return len;
 }
 
@@ -2728,7 +2728,7 @@ GetPCCountJSON(JSContext* cx, const ScriptAndCounts& sac, StringBuffer& buf)
     if (!AppendJSONProperty(buf, "text", NO_COMMA))
         return false;
 
-    JSString* str = JS_DecompileScript(cx, script, nullptr, 0);
+    JSString* str = JS_DecompileScript(cx, script);
     if (!str || !(str = StringToSource(cx, str)))
         return false;
 
@@ -2965,7 +2965,6 @@ GenerateLcovInfo(JSContext* cx, JSCompartment* comp, GenericPrinter& out)
     coverage::LCovCompartment compCover;
     for (JSScript* topLevel: topScripts) {
         RootedScript topScript(cx, topLevel);
-        compCover.collectSourceFile(comp, &topScript->scriptSourceUnwrap());
 
         // We found the top-level script, visit all the functions reachable
         // from the top-level function, and delazify them.
@@ -2977,7 +2976,8 @@ GenerateLcovInfo(JSContext* cx, JSCompartment* comp, GenericPrinter& out)
         RootedFunction fun(cx);
         do {
             script = queue.popCopy();
-            compCover.collectCodeCoverageInfo(comp, script->sourceObject(), script);
+            if (script->filename())
+                compCover.collectCodeCoverageInfo(comp, script, script->filename());
 
             // Iterate from the last to the first object in order to have
             // the functions them visited in the opposite order when popping

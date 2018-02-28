@@ -3957,6 +3957,41 @@ class MArrayState
     }
 };
 
+// Hold the arguments of an inlined frame. At the moment this class is not
+// recovered on bailout as it does not have an implementation and it should
+// be inlined at all its uses.
+class MArgumentState
+  : public MVariadicInstruction,
+    public NoFloatPolicyAfter<0>::Data
+{
+  private:
+    explicit MArgumentState() {
+        setResultType(MIRType::Object);
+        setMovable();
+    }
+
+  public:
+    INSTRUCTION_HEADER(ArgumentState)
+
+    static MArgumentState* New(TempAllocator::Fallible view, const MDefinitionVector& args);
+    static MArgumentState* Copy(TempAllocator& alloc, MArgumentState* state);
+
+    size_t numElements() const {
+        return numOperands();
+    }
+
+    MDefinition* getElement(uint32_t index) const {
+        return getOperand(index);
+    }
+
+    bool congruentTo(const MDefinition* ins) const override {
+        return congruentIfOperandsEqual(ins);
+    }
+    AliasSet getAliasSet() const override {
+        return AliasSet::None();
+    }
+};
+
 // Setting __proto__ in an object literal.
 class MMutateProto
   : public MAryInstruction<2>,
@@ -3977,40 +4012,6 @@ class MMutateProto
 
     bool possiblyCalls() const override {
         return true;
-    }
-};
-
-// Slow path for adding a property to an object without a known base.
-class MInitProp
-  : public MAryInstruction<2>,
-    public MixPolicy<ObjectPolicy<0>, BoxPolicy<1> >::Data
-{
-    CompilerPropertyName name_;
-
-  protected:
-    MInitProp(MDefinition* obj, PropertyName* name, MDefinition* value)
-      : name_(name)
-    {
-        initOperand(0, obj);
-        initOperand(1, value);
-        setResultType(MIRType::None);
-    }
-
-  public:
-    INSTRUCTION_HEADER(InitProp)
-    TRIVIAL_NEW_WRAPPERS
-    NAMED_OPERANDS((0, getObject), (1, getValue))
-
-    PropertyName* propertyName() const {
-        return name_;
-    }
-
-    bool possiblyCalls() const override {
-        return true;
-    }
-
-    bool appendRoots(MRootList& roots) const override {
-        return roots.append(name_);
     }
 };
 
@@ -5743,6 +5744,29 @@ class MToString :
     ALLOW_CLONE(MToString)
 };
 
+// Converts any type to an object, throwing on null or undefined.
+class MToObject :
+  public MUnaryInstruction,
+  public BoxInputsPolicy::Data
+{
+    explicit MToObject(MDefinition* def)
+      : MUnaryInstruction(def)
+    {
+        setResultType(MIRType::Object);
+        setGuard(); // Throws on null or undefined.
+    }
+
+  public:
+    INSTRUCTION_HEADER(ToObject)
+    TRIVIAL_NEW_WRAPPERS
+
+    AliasSet getAliasSet() const override {
+        return AliasSet::None();
+    }
+
+    ALLOW_CLONE(MToObject)
+};
+
 // Converts any type to an object or null value, throwing on undefined.
 class MToObjectOrNull :
   public MUnaryInstruction,
@@ -7451,9 +7475,8 @@ class MFromCodePoint
     bool congruentTo(const MDefinition* ins) const override {
         return congruentIfOperandsEqual(ins);
     }
-    bool possiblyCalls() const override {
-        return true;
-    }
+
+    ALLOW_CLONE(MFromCodePoint)
 };
 
 class MSinCos
@@ -7491,15 +7514,19 @@ class MSinCos
 };
 
 class MStringSplit
-  : public MTernaryInstruction,
+  : public MBinaryInstruction,
     public MixPolicy<StringPolicy<0>, StringPolicy<1> >::Data
 {
+    CompilerObjectGroup group_;
+
     MStringSplit(CompilerConstraintList* constraints, MDefinition* string, MDefinition* sep,
-                 MConstant* templateObject)
-      : MTernaryInstruction(string, sep, templateObject)
+                 ObjectGroup* group)
+      : MBinaryInstruction(string, sep),
+        group_(group)
     {
         setResultType(MIRType::Object);
-        setResultTypeSet(templateObject->resultTypeSet());
+        TemporaryTypeSet* types = MakeSingletonTypeSet(constraints, group);
+        setResultTypeSet(types);
     }
 
   public:
@@ -7507,11 +7534,8 @@ class MStringSplit
     TRIVIAL_NEW_WRAPPERS
     NAMED_OPERANDS((0, string), (1, separator))
 
-    JSObject* templateObject() const {
-        return &getOperand(2)->toConstant()->toObject();
-    }
     ObjectGroup* group() const {
-        return templateObject()->group();
+        return group_;
     }
     bool possiblyCalls() const override {
         return true;
@@ -7524,6 +7548,9 @@ class MStringSplit
     MOZ_MUST_USE bool writeRecoverData(CompactBufferWriter& writer) const override;
     bool canRecoverOnBailout() const override {
         return true;
+    }
+    bool appendRoots(MRootList& roots) const override {
+        return roots.append(group_);
     }
 };
 
@@ -8195,10 +8222,12 @@ class MRegExp : public MNullaryInstruction
 {
     CompilerGCPointer<RegExpObject*> source_;
     bool mustClone_;
+    bool hasShared_;
 
-    MRegExp(CompilerConstraintList* constraints, RegExpObject* source)
+    MRegExp(CompilerConstraintList* constraints, RegExpObject* source, bool hasShared)
       : source_(source),
-        mustClone_(true)
+        mustClone_(true),
+        hasShared_(hasShared)
     {
         setResultType(MIRType::Object);
         setResultTypeSet(MakeSingletonTypeSet(constraints, source));
@@ -8213,6 +8242,9 @@ class MRegExp : public MNullaryInstruction
     }
     bool mustClone() const {
         return mustClone_;
+    }
+    bool hasShared() const {
+        return hasShared_;
     }
     RegExpObject* source() const {
         return source_;
@@ -8471,6 +8503,29 @@ class MSubstr
     bool congruentTo(const MDefinition* ins) const override {
         return congruentIfOperandsEqual(ins);
     }
+    AliasSet getAliasSet() const override {
+        return AliasSet::None();
+    }
+};
+
+class MClassConstructor : public MNullaryInstruction
+{
+    jsbytecode* pc_;
+
+    explicit MClassConstructor(jsbytecode* pc)
+      : pc_(pc)
+    {
+        setResultType(MIRType::Object);
+    }
+
+  public:
+    INSTRUCTION_HEADER(ClassConstructor)
+    TRIVIAL_NEW_WRAPPERS
+
+    jsbytecode* pc() const {
+      return pc_;
+    }
+
     AliasSet getAliasSet() const override {
         return AliasSet::None();
     }
@@ -9644,6 +9699,30 @@ class MStoreElementCommon
     }
     void setNeedsBarrier() {
         needsBarrier_ = true;
+    }
+};
+
+// This instruction is used to load an element of a non-escaped inlined array.
+class MLoadElementFromState
+  : public MBinaryInstruction,
+    public SingleObjectPolicy::Data
+{
+    MLoadElementFromState(MDefinition* array, MDefinition* index)
+      : MBinaryInstruction(array, index)
+    {
+        MOZ_ASSERT(array->isArgumentState());
+        MOZ_ASSERT(index->type() == MIRType::Int32);
+        setResultType(MIRType::Value);
+        setMovable();
+    }
+
+  public:
+    INSTRUCTION_HEADER(LoadElementFromState)
+    TRIVIAL_NEW_WRAPPERS
+    NAMED_OPERANDS((0, array), (1, index));
+
+    AliasSet getAliasSet() const override {
+        return AliasSet::None();
     }
 };
 
@@ -12463,26 +12542,20 @@ class MNearbyInt
     ALLOW_CLONE(MNearbyInt)
 };
 
-class MIteratorStart
+class MGetIteratorCache
   : public MUnaryInstruction,
     public BoxExceptPolicy<0, MIRType::Object>::Data
 {
-    uint8_t flags_;
-
-    MIteratorStart(MDefinition* obj, uint8_t flags)
-      : MUnaryInstruction(obj), flags_(flags)
+    explicit MGetIteratorCache(MDefinition* val)
+      : MUnaryInstruction(val)
     {
         setResultType(MIRType::Object);
     }
 
   public:
-    INSTRUCTION_HEADER(IteratorStart)
+    INSTRUCTION_HEADER(GetIteratorCache)
     TRIVIAL_NEW_WRAPPERS
-    NAMED_OPERANDS((0, object))
-
-    uint8_t flags() const {
-        return flags_;
-    }
+    NAMED_OPERANDS((0, value))
 };
 
 class MIteratorMore
@@ -12688,7 +12761,7 @@ class MArgumentsLength : public MNullaryInstruction
     AliasSet getAliasSet() const override {
         // Arguments |length| cannot be mutated by Ion Code.
         return AliasSet::None();
-   }
+    }
 
     void computeRange(TempAllocator& alloc) override;
 
@@ -13416,6 +13489,68 @@ class MHasClass
     }
 };
 
+// Note: we might call a proxy trap, so this instruction is effectful.
+class MIsArray
+  : public MUnaryInstruction,
+    public BoxExceptPolicy<0, MIRType::Object>::Data
+{
+    explicit MIsArray(MDefinition* value)
+      : MUnaryInstruction(value)
+    {
+        setResultType(MIRType::Boolean);
+    }
+
+  public:
+    INSTRUCTION_HEADER(IsArray)
+    TRIVIAL_NEW_WRAPPERS
+    NAMED_OPERANDS((0, value))
+};
+
+class MIsTypedArray
+  : public MUnaryInstruction,
+    public SingleObjectPolicy::Data
+{
+    explicit MIsTypedArray(MDefinition* value)
+      : MUnaryInstruction(value)
+    {
+        setResultType(MIRType::Boolean);
+        setMovable();
+    }
+
+  public:
+    INSTRUCTION_HEADER(IsTypedArray)
+    TRIVIAL_NEW_WRAPPERS
+    NAMED_OPERANDS((0, value))
+
+    AliasSet getAliasSet() const override {
+        return AliasSet::None();
+    }
+};
+
+class MObjectClassToString
+  : public MUnaryInstruction,
+    public SingleObjectPolicy::Data
+{
+    explicit MObjectClassToString(MDefinition* obj)
+      : MUnaryInstruction(obj)
+    {
+        setMovable();
+        setResultType(MIRType::String);
+    }
+
+  public:
+    INSTRUCTION_HEADER(ObjectClassToString)
+    TRIVIAL_NEW_WRAPPERS
+    NAMED_OPERANDS((0, object))
+
+    AliasSet getAliasSet() const override {
+        return AliasSet::None();
+    }
+    bool congruentTo(const MDefinition* ins) const override {
+        return congruentIfOperandsEqual(ins);
+    }
+};
+
 class MCheckReturn
   : public MBinaryInstruction,
     public BoxInputsPolicy::Data
@@ -13764,11 +13899,66 @@ class MDebugCheckSelfHosted
 
 };
 
-class MAsmJSNeg
+class MFinishBoundFunctionInit
+  : public MTernaryInstruction,
+    public Mix3Policy<ObjectPolicy<0>, ObjectPolicy<1>, IntPolicy<2>>::Data
+{
+    MFinishBoundFunctionInit(MDefinition* bound, MDefinition* target, MDefinition* argCount)
+      : MTernaryInstruction(bound, target, argCount)
+    { }
+
+  public:
+    INSTRUCTION_HEADER(FinishBoundFunctionInit)
+    TRIVIAL_NEW_WRAPPERS
+    NAMED_OPERANDS((0, bound), (1, target), (2, argCount))
+};
+
+class MIsPackedArray
+  : public MUnaryInstruction,
+    public SingleObjectPolicy::Data
+{
+    explicit MIsPackedArray(MDefinition* array)
+      : MUnaryInstruction(array)
+    {
+        setResultType(MIRType::Boolean);
+        setMovable();
+    }
+
+  public:
+    INSTRUCTION_HEADER(IsPackedArray)
+    TRIVIAL_NEW_WRAPPERS
+    NAMED_OPERANDS((0, array))
+
+    AliasSet getAliasSet() const override {
+        return AliasSet::Load(AliasSet::ObjectFields);
+    }
+};
+
+class MGetPrototypeOf
+  : public MUnaryInstruction,
+    public SingleObjectPolicy::Data
+{
+    explicit MGetPrototypeOf(MDefinition* target)
+      : MUnaryInstruction(target)
+    {
+        setResultType(MIRType::Value);
+        setGuard(); // May throw if target is a proxy.
+    }
+
+  public:
+    INSTRUCTION_HEADER(GetPrototypeOf)
+    TRIVIAL_NEW_WRAPPERS
+    NAMED_OPERANDS((0, target))
+};
+
+// Flips the input's sign bit, independently of the rest of the number's
+// payload. Note this is different from multiplying by minus-one, which has
+// side-effects for e.g. NaNs.
+class MWasmNeg
   : public MUnaryInstruction,
     public NoTypePolicy::Data
 {
-    MAsmJSNeg(MDefinition* op, MIRType type)
+    MWasmNeg(MDefinition* op, MIRType type)
       : MUnaryInstruction(op)
     {
         setResultType(type);
@@ -13776,7 +13966,7 @@ class MAsmJSNeg
     }
 
   public:
-    INSTRUCTION_HEADER(AsmJSNeg)
+    INSTRUCTION_HEADER(WasmNeg)
     TRIVIAL_NEW_WRAPPERS
 };
 
@@ -14720,6 +14910,29 @@ AbortReasonOr<bool>
 ArrayPrototypeHasIndexedProperty(IonBuilder* builder, JSScript* script);
 AbortReasonOr<bool>
 TypeCanHaveExtraIndexedProperties(IonBuilder* builder, TemporaryTypeSet* types);
+
+inline MIRType
+MIRTypeForTypedArrayRead(Scalar::Type arrayType, bool observedDouble)
+{
+    switch (arrayType) {
+      case Scalar::Int8:
+      case Scalar::Uint8:
+      case Scalar::Uint8Clamped:
+      case Scalar::Int16:
+      case Scalar::Uint16:
+      case Scalar::Int32:
+        return MIRType::Int32;
+      case Scalar::Uint32:
+        return observedDouble ? MIRType::Double : MIRType::Int32;
+      case Scalar::Float32:
+        return MIRType::Float32;
+      case Scalar::Float64:
+        return MIRType::Double;
+      default:
+        break;
+    }
+    MOZ_CRASH("Unknown typed array type");
+}
 
 } // namespace jit
 } // namespace js

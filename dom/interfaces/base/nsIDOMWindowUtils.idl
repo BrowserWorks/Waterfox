@@ -29,6 +29,7 @@ native nscolor(nscolor);
 [ptr] native gfxContext(gfxContext);
 typedef unsigned long long nsViewID;
 
+interface nsIArray;
 interface nsICycleCollectorListener;
 interface nsIDOMNode;
 interface nsIDOMNodeList;
@@ -258,7 +259,7 @@ interface nsIDOMWindowUtils : nsISupports {
    */
   attribute boolean isFirstPaint;
 
-  void getPresShellId(out uint32_t aPresShellId);
+  uint32_t getPresShellId();
 
   /**
    * Following modifiers are for sent*Event() except sendNative*Event().
@@ -638,6 +639,12 @@ interface nsIDOMWindowUtils : nsISupports {
                            [optional] in nsIObserver aObserver);
 
   /**
+   * Suppress animations that are applied to a window by OS when
+   * resizing, moving, changing size mode, ...
+   */
+  void suppressAnimation(in boolean aSuppress);
+
+  /**
    * The values for sendNativeMouseScrollEvent's aAdditionalFlags.
    */
 
@@ -829,15 +836,8 @@ interface nsIDOMWindowUtils : nsISupports {
    * @param aListener listener that receives information about the CC graph
    *                  (see @mozilla.org/cycle-collector-logger;1 for a logger
    *                   component)
-   * @param aExtraForgetSkippableCalls indicates how many times
-   *                                   nsCycleCollector_forgetSkippable will
-   *                                   be called before running cycle collection.
-   *                                   -1 prevents the default
-   *                                   nsCycleCollector_forgetSkippable call
-   *                                   which happens after garbage collection.
    */
-  void garbageCollect([optional] in nsICycleCollectorListener aListener,
-                      [optional] in long aExtraForgetSkippableCalls);
+  void garbageCollect([optional] in nsICycleCollectorListener aListener);
 
   /**
    * Force a cycle collection without garbage collection.
@@ -848,15 +848,8 @@ interface nsIDOMWindowUtils : nsISupports {
    * @param aListener listener that receives information about the CC graph
    *                  (see @mozilla.org/cycle-collector-logger;1 for a logger
    *                   component)
-   * @param aExtraForgetSkippableCalls indicates how many times
-   *                                   nsCycleCollector_forgetSkippable will
-   *                                   be called before running cycle collection.
-   *                                   -1 prevents the default
-   *                                   nsCycleCollector_forgetSkippable call
-   *                                   which happens after garbage collection.
    */
-  void cycleCollect([optional] in nsICycleCollectorListener aListener,
-                    [optional] in long aExtraForgetSkippableCalls);
+  void cycleCollect([optional] in nsICycleCollectorListener aListener);
 
   /**
    * Trigger whichever GC or CC timer is currently active and waiting to fire.
@@ -920,7 +913,7 @@ interface nsIDOMWindowUtils : nsISupports {
    */
   nsIDOMNodeList nodesFromRect(in float aX,
                                in float aY,
-                               in float aTopSize, 
+                               in float aTopSize,
                                in float aRightSize,
                                in float aBottomSize,
                                in float aLeftSize,
@@ -1001,6 +994,15 @@ interface nsIDOMWindowUtils : nsISupports {
    * Returns the given element's bounds without flushing pending layout changes.
    */
   nsIDOMClientRect getBoundsWithoutFlushing(in nsIDOMElement aElement);
+
+  const long FLUSH_STYLE = 0;
+  const long FLUSH_LAYOUT = 1;
+  const long FLUSH_DISPLAY = 2;
+
+  /**
+   * Returns true if a flush of the given type is needed.
+   */
+  bool needsFlush(in long aFlushtype);
 
   /**
    * Returns the bounds of the window's currently loaded document. This will
@@ -1408,13 +1410,18 @@ interface nsIDOMWindowUtils : nsISupports {
    * error if there is no widget associated with this window.
    */
   readonly attribute AString layerManagerType;
-  
+
   /**
    * True if the layer manager for the widget associated with this window is
    * forwarding layers to a remote compositor, false otherwise. Throws an
    * error if there is no widget associated with this window.
    */
   readonly attribute boolean layerManagerRemote;
+
+  /**
+   * True if advanced layers is enabled on this window, false otherwise.
+   */
+  readonly attribute boolean usingAdvancedLayers;
 
   /**
    * Returns a Promise that will be resolved with a string once the capabilities
@@ -1428,6 +1435,28 @@ interface nsIDOMWindowUtils : nsISupports {
    * Returns the current audio backend as a free-form string.
    */
   readonly attribute AString currentAudioBackend;
+
+  /**
+   * Returns the max channel counts of the current audio device.
+   */
+  readonly attribute unsigned long currentMaxAudioChannels;
+
+  /**
+   * Returns the preferred channel layout of the current audio device.
+   */
+  readonly attribute AString currentPreferredChannelLayout;
+
+  /**
+   * Returns the preferred sample rate of the current audio device.
+   */
+  readonly attribute unsigned long currentPreferredSampleRate;
+
+  /**
+   * Returns all the audio input/output devices.
+   */
+  const unsigned short AUDIO_INPUT   = 0;
+  const unsigned short AUDIO_OUTPUT  = 1;
+  nsIArray audioDevices(in unsigned short aSide);
 
   /**
    * Record (and return) frame-intervals for frames which were presented
@@ -1594,7 +1623,7 @@ interface nsIDOMWindowUtils : nsISupports {
    * the bounds of the window. Always returns true in non-DEBUG builds.
    */
   boolean leafLayersPartitionWindow();
- 
+
   /**
    * Check if any PaintedLayer painting has been done for this element,
    * clears the painted flags if they have.
@@ -1729,7 +1758,7 @@ interface nsIDOMWindowUtils : nsISupports {
    * Synchronously loads a style sheet from |sheetURI| and adds it to the list
    * of additional style sheets of the document.
    *
-   * These additional style sheets are very much like user/agent sheets loaded 
+   * These additional style sheets are very much like user/agent sheets loaded
    * with loadAndRegisterSheet. The only difference is that they are applied only
    * on the document owned by this window.
    *
@@ -1752,7 +1781,7 @@ interface nsIDOMWindowUtils : nsISupports {
   void addSheet(in nsIPreloadedStyleSheet sheet, in unsigned long type);
 
   /**
-   * Remove the document style sheet at |sheetURI| from the list of additional 
+   * Remove the document style sheet at |sheetURI| from the list of additional
    * style sheets of the document.  The removal takes effect immediately.
    */
   void removeSheet(in nsIURI sheetURI, in unsigned long type);
@@ -1934,6 +1963,11 @@ interface nsIDOMWindowUtils : nsISupports {
   void leaveChaosMode();
 
   /**
+   * Alerts Gecko of a device reset
+   */
+  void triggerDeviceReset();
+
+  /**
    * Returns whether the document's style set's rule processor for the
    * specified level of the cascade is shared by multiple style sets.
    * (Used by tests to ensure that certain optimizations do not regress.)
@@ -2020,6 +2054,21 @@ interface nsIDOMWindowUtils : nsISupports {
    *         on the first-strong character found in the string.
    */
   long getDirectionFromText(in AString aString);
+
+  /**
+   * Calls FrameNeedsReflow on that root frame so that a layout flush
+   * will be necessary.
+   *
+   * This should only be used for testing.
+   */
+  void ensureDirtyRootFrame();
+
+  /**
+   * Whether the current document is styled by Servo's style engine.
+   *
+   * This calls nsIDocument::IsStyledByServo().
+   */
+  readonly attribute boolean isStyledByServo;
 
   // These consts are only for testing purposes.
   const long DEFAULT_MOUSE_POINTER_ID = 0;

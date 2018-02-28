@@ -117,6 +117,7 @@ config = {
                 "--screenshot-on-fail",
                 "--cleanup-crashes",
                 "--marionette-startup-timeout=180",
+                "--work-path=%(abs_work_dir)s",
             ],
             "run_filename": "runtests.py",
             "testsdir": "mochitest"
@@ -148,6 +149,7 @@ config = {
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
                 "--cleanup-crashes",
+                "--work-path=%(abs_work_dir)s",
             ],
             "run_filename": "runreftest.py",
             "testsdir": "reftest"
@@ -205,8 +207,8 @@ config = {
         "jetpack-package-clipboard": ["--flavor=jetpack-package", "--subsuite=clipboard"],
         "jetpack-addon": ["--flavor=jetpack-addon"],
         "a11y": ["--flavor=a11y"],
-        "plain-style": ["--failure-pattern-file=stylo-failures.md", "layout/style/test"],
-        "chrome-style": ["--flavor=chrome", "--failure-pattern-file=../stylo-failures.md", "layout/style/test/chrome"],
+        "plain-style": ["--failure-pattern-file=stylo-failures.md", "layout/style/test", "dom/smil/test", "dom/animation/test"],
+        "chrome-style": ["--flavor=chrome", "--failure-pattern-file=../stylo-failures.md", "layout/style/test/chrome", "dom/animation/test"],
     },
     # local reftest suites
     "all_reftest_suites": {
@@ -226,7 +228,8 @@ config = {
         "reftest-no-accel": {
             "options": ["--suite=reftest",
                         "--setpref=layers.acceleration.force-enabled=disabled"],
-            "tests": ["tests/reftest/tests/layout/reftests/reftest.list"]},
+            "tests": ["tests/reftest/tests/layout/reftests/reftest.list"]
+        },
         "reftest-stylo": {
             "options": ["--suite=reftest",
                         "--setpref=reftest.compareStyloToGecko=true"],

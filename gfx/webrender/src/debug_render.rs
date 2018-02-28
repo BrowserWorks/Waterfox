@@ -5,11 +5,11 @@
 use debug_font_data;
 use device::{Device, GpuMarker, ProgramId, VAOId, TextureId, VertexFormat};
 use device::{TextureFilter, VertexUsageHint, TextureTarget};
-use euclid::{Matrix4D, Point2D, Size2D, Rect};
+use euclid::{Transform3D, Point2D, Size2D, Rect};
 use internal_types::{ORTHO_NEAR_PLANE, ORTHO_FAR_PLANE, TextureSampler};
-use internal_types::{DebugFontVertex, DebugColorVertex, RenderTargetMode, PackedColor};
+use internal_types::{DebugFontVertex, DebugColorVertex, RenderTargetMode};
 use std::f32;
-use webrender_traits::{ColorF, ImageFormat, DeviceUintSize};
+use api::{ColorU, ImageFormat, DeviceUintSize};
 
 pub struct DebugRenderer {
     font_vertices: Vec<DebugFontVertex>,
@@ -48,14 +48,14 @@ impl DebugRenderer {
             font_vertices: Vec::new(),
             font_indices: Vec::new(),
             line_vertices: Vec::new(),
-            tri_vao: tri_vao,
+            tri_vao,
             tri_vertices: Vec::new(),
             tri_indices: Vec::new(),
-            font_program_id: font_program_id,
-            color_program_id: color_program_id,
-            font_vao: font_vao,
-            line_vao: line_vao,
-            font_texture_id: font_texture_id,
+            font_program_id,
+            color_program_id,
+            font_vao,
+            line_vao,
+            font_texture_id,
         }
     }
 
@@ -67,11 +67,10 @@ impl DebugRenderer {
                     x: f32,
                     y: f32,
                     text: &str,
-                    color: &ColorF) -> Rect<f32> {
+                    color: ColorU) -> Rect<f32> {
         let mut x_start = x;
         let ipw = 1.0 / debug_font_data::BMP_WIDTH as f32;
         let iph = 1.0 / debug_font_data::BMP_HEIGHT as f32;
-        let color = PackedColor::from_color(color);
 
         let mut min_x = f32::MAX;
         let mut max_x = -f32::MAX;
@@ -125,10 +124,8 @@ impl DebugRenderer {
                     y0: f32,
                     x1: f32,
                     y1: f32,
-                    color_top: &ColorF,
-                    color_bottom: &ColorF) {
-        let color_top = PackedColor::from_color(color_top);
-        let color_bottom = PackedColor::from_color(color_bottom);
+                    color_top: ColorU,
+                    color_bottom: ColorU) {
         let vertex_count = self.tri_vertices.len() as u32;
 
         self.tri_vertices.push(DebugColorVertex::new(x0, y0, color_top));
@@ -148,12 +145,10 @@ impl DebugRenderer {
     pub fn add_line(&mut self,
                     x0: i32,
                     y0: i32,
-                    color0: &ColorF,
+                    color0: ColorU,
                     x1: i32,
                     y1: i32,
-                    color1: &ColorF) {
-        let color0 = PackedColor::from_color(color0);
-        let color1 = PackedColor::from_color(color1);
+                    color1: ColorU) {
         self.line_vertices.push(DebugColorVertex::new(x0 as f32, y0 as f32, color0));
         self.line_vertices.push(DebugColorVertex::new(x1 as f32, y1 as f32, color1));
     }
@@ -166,12 +161,12 @@ impl DebugRenderer {
         device.set_blend(true);
         device.set_blend_mode_alpha();
 
-        let projection = Matrix4D::ortho(0.0,
-                                         viewport_size.width as f32,
-                                         viewport_size.height as f32,
-                                         0.0,
-                                         ORTHO_NEAR_PLANE,
-                                         ORTHO_FAR_PLANE);
+        let projection = Transform3D::ortho(0.0,
+                                            viewport_size.width as f32,
+                                            viewport_size.height as f32,
+                                            0.0,
+                                            ORTHO_NEAR_PLANE,
+                                            ORTHO_FAR_PLANE);
 
         // Triangles
         if !self.tri_vertices.is_empty() {

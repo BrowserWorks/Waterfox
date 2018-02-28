@@ -1,40 +1,10 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80 filetype=javascript: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
- * This file includes the following constructors and global objects:
- *
- * Download
- * Represents a single download, with associated state and actions.  This object
- * is transient, though it can be included in a DownloadList so that it can be
- * managed by the user interface and persisted across sessions.
- *
- * DownloadSource
- * Represents the source of a download, for example a document or an URI.
- *
- * DownloadTarget
- * Represents the target of a download, for example a file in the global
- * downloads directory, or a file in the system temporary directory.
- *
- * DownloadError
- * Provides detailed information about a download failure.
- *
- * DownloadSaver
- * Template for an object that actually transfers the data for the download.
- *
- * DownloadCopySaver
- * Saver object that simply copies the entire source file to the target.
- *
- * DownloadLegacySaver
- * Saver object that integrates with the legacy nsITransfer interface.
- *
- * DownloadPDFSaver
- * This DownloadSaver type creates a PDF file from the current document in a
- * given window, specified using the windowRef property of the DownloadSource
- * object associated with the download.
+ * Main implementation of the Downloads API objects. Consumers should get
+ * references to these objects through the "Downloads.jsm" module.
  */
 
 "use strict";
@@ -50,12 +20,7 @@ this.EXPORTED_SYMBOLS = [
   "DownloadPDFSaver",
 ];
 
-// Globals
-
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/Integration.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -66,8 +31,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm")
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
+                                  "resource://gre/modules/PromiseUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
@@ -138,15 +103,13 @@ function deserializeUnknownProperties(aObject, aSerializable, aFilterFn) {
  */
 const kProgressUpdateIntervalMs = 400;
 
-// Download
-
 /**
  * Represents a single download, with associated state and actions.  This object
  * is transient, though it can be included in a DownloadList so that it can be
  * managed by the user interface and persisted across sessions.
  */
 this.Download = function() {
-  this._deferSucceeded = Promise.defer();
+  this._deferSucceeded = PromiseUtils.defer();
 }
 
 this.Download.prototype = {
@@ -385,7 +348,7 @@ this.Download.prototype = {
 
     // Create a new deferred object and an associated promise before starting
     // the actual download.  We store it on the download as the current attempt.
-    let deferAttempt = Promise.defer();
+    let deferAttempt = PromiseUtils.defer();
     let currentAttempt = deferAttempt.promise;
     this._currentAttempt = currentAttempt;
 
@@ -574,7 +537,7 @@ this.Download.prototype = {
     this._deferSucceeded.resolve();
 
     if (this.launchWhenSucceeded) {
-      this.launch().then(null, Cu.reportError);
+      this.launch().catch(Cu.reportError);
 
       // Always schedule files to be deleted at the end of the private browsing
       // mode, regardless of the value of the pref.
@@ -773,10 +736,9 @@ this.Download.prototype = {
 
     if (!this._promiseCanceled) {
       // Start a new cancellation request.
-      let deferCanceled = Promise.defer();
-      this._currentAttempt.then(() => deferCanceled.resolve(),
-                                () => deferCanceled.resolve());
-      this._promiseCanceled = deferCanceled.promise;
+      this._promiseCanceled = new Promise(resolve => {
+        this._currentAttempt.then(resolve, resolve);
+      });
 
       // The download can already be restarted.
       this._currentAttempt = null;
@@ -841,35 +803,28 @@ this.Download.prototype = {
       return Promise.resolve();
     }
 
-    let promiseRemovePartialData = this._promiseRemovePartialData;
-
-    if (!promiseRemovePartialData) {
-      let deferRemovePartialData = Promise.defer();
-      promiseRemovePartialData = deferRemovePartialData.promise;
-      this._promiseRemovePartialData = promiseRemovePartialData;
-
-      deferRemovePartialData.resolve(
-        (async () => {
-          try {
-            // Wait upon any pending cancellation request.
-            if (this._promiseCanceled) {
-              await this._promiseCanceled;
-            }
-            // Ask the saver object to remove any partial data.
-            await this.saver.removePartialData();
-            // For completeness, clear the number of bytes transferred.
-            if (this.currentBytes != 0 || this.hasPartialData) {
-              this.currentBytes = 0;
-              this.hasPartialData = false;
-              this._notifyChange();
-            }
-          } finally {
-            this._promiseRemovePartialData = null;
+    if (!this._promiseRemovePartialData) {
+      this._promiseRemovePartialData = (async () => {
+        try {
+          // Wait upon any pending cancellation request.
+          if (this._promiseCanceled) {
+            await this._promiseCanceled;
           }
-        })());
+          // Ask the saver object to remove any partial data.
+          await this.saver.removePartialData();
+          // For completeness, clear the number of bytes transferred.
+          if (this.currentBytes != 0 || this.hasPartialData) {
+            this.currentBytes = 0;
+            this.hasPartialData = false;
+            this._notifyChange();
+          }
+        } finally {
+          this._promiseRemovePartialData = null;
+        }
+      })();
     }
 
-    return promiseRemovePartialData;
+    return this._promiseRemovePartialData;
   },
 
   /**
@@ -959,7 +914,7 @@ this.Download.prototype = {
 
         this._notifyChange();
       }
-    })().then(null, Cu.reportError);
+    })().catch(Cu.reportError);
   },
 
   /**
@@ -1233,8 +1188,6 @@ Download.fromSerializable = function(aSerializable) {
   return download;
 };
 
-// DownloadSource
-
 /**
  * Represents the source of a download, for example a document or an URI.
  */
@@ -1357,8 +1310,6 @@ this.DownloadSource.fromSerializable = function(aSerializable) {
 
   return source;
 };
-
-// DownloadTarget
 
 /**
  * Represents the target of a download, for example a file in the global
@@ -1484,8 +1435,6 @@ this.DownloadTarget.fromSerializable = function(aSerializable) {
   }
   return target;
 };
-
-// DownloadError
 
 /**
  * Provides detailed information about a download failure.
@@ -1677,8 +1626,6 @@ this.DownloadError.fromSerializable = function(aSerializable) {
   return e;
 };
 
-// DownloadSaver
-
 /**
  * Template for an object that actually transfers the data for the download.
  */
@@ -1827,8 +1774,6 @@ this.DownloadSaver.fromSerializable = function(aSerializable) {
   return saver;
 };
 
-// DownloadCopySaver
-
 /**
  * Saver object that simply copies the entire source file to the target.
  */
@@ -1925,7 +1870,7 @@ this.DownloadCopySaver.prototype = {
       }
 
       try {
-        let deferSaveComplete = Promise.defer();
+        let deferSaveComplete = PromiseUtils.defer();
 
         if (this._canceled) {
           // Don't create the BackgroundFileSaver object if we have been
@@ -2304,16 +2249,14 @@ this.DownloadCopySaver.fromSerializable = function(aSerializable) {
   return saver;
 };
 
-// DownloadLegacySaver
-
 /**
  * Saver object that integrates with the legacy nsITransfer interface.
  *
  * For more background on the process, see the DownloadLegacyTransfer object.
  */
 this.DownloadLegacySaver = function() {
-  this.deferExecuted = Promise.defer();
-  this.deferCanceled = Promise.defer();
+  this.deferExecuted = PromiseUtils.defer();
+  this.deferCanceled = PromiseUtils.defer();
 }
 
 this.DownloadLegacySaver.prototype = {
@@ -2671,8 +2614,6 @@ this.DownloadLegacySaver.prototype = {
 this.DownloadLegacySaver.fromSerializable = function() {
   return new DownloadLegacySaver();
 };
-
-// DownloadPDFSaver
 
 /**
  * This DownloadSaver type creates a PDF file from the current document in a

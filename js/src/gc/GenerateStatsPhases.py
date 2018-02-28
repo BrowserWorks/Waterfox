@@ -71,9 +71,14 @@ MarkRootsPhaseKind = PhaseKind("MARK_ROOTS", "Mark Roots", 48, [
 
 JoinParallelTasksPhaseKind = PhaseKind("JOIN_PARALLEL_TASKS", "Join Parallel Tasks", 67)
 
+UnmarkGrayPhaseKind = PhaseKind("UNMARK_GRAY", "Unmark gray", 56)
+
 PhaseKindGraphRoots = [
     PhaseKind("MUTATOR", "Mutator Running", 0),
     PhaseKind("GC_BEGIN", "Begin Callback", 1),
+    PhaseKind("EVICT_NURSERY_FOR_MAJOR_GC", "Evict Nursery For Major GC", 70, [
+        MarkRootsPhaseKind,
+    ]),
     PhaseKind("WAIT_BACKGROUND_THREAD", "Wait Background Thread", 2),
     PhaseKind("PREPARE", "Prepare For Collection", 69, [
         PhaseKind("UNMARK", "Unmark", 7),
@@ -86,13 +91,18 @@ PhaseKindGraphRoots = [
         ]),
     PhaseKind("MARK", "Mark", 6, [
         MarkRootsPhaseKind,
+        UnmarkGrayPhaseKind,
         PhaseKind("MARK_DELAYED", "Mark Delayed", 8)
         ]),
     PhaseKind("SWEEP", "Sweep", 9, [
         PhaseKind("SWEEP_MARK", "Mark During Sweeping", 10, [
-            PhaseKind("SWEEP_MARK_TYPES", "Mark Types During Sweeping", 11),
-            PhaseKind("SWEEP_MARK_INCOMING_BLACK", "Mark Incoming Black Pointers", 12),
-            PhaseKind("SWEEP_MARK_WEAK", "Mark Weak", 13),
+            UnmarkGrayPhaseKind,
+            PhaseKind("SWEEP_MARK_INCOMING_BLACK", "Mark Incoming Black Pointers", 12, [
+                UnmarkGrayPhaseKind,
+            ]),
+            PhaseKind("SWEEP_MARK_WEAK", "Mark Weak", 13, [
+                UnmarkGrayPhaseKind,
+            ]),
             PhaseKind("SWEEP_MARK_INCOMING_GRAY", "Mark Incoming Gray Pointers", 14),
             PhaseKind("SWEEP_MARK_GRAY", "Mark Gray", 15),
             PhaseKind("SWEEP_MARK_GRAY_WEAK", "Mark Gray and Weak", 16)
@@ -130,7 +140,6 @@ PhaseKindGraphRoots = [
         PhaseKind("SWEEP_SCOPE", "Sweep Scope", 59),
         PhaseKind("SWEEP_REGEXP_SHARED", "Sweep RegExpShared", 61),
         PhaseKind("SWEEP_SHAPE", "Sweep Shape", 36),
-        PhaseKind("SWEEP_JITCODE", "Sweep JIT code", 37),
         PhaseKind("FINALIZE_END", "Finalize End Callback", 38),
         PhaseKind("DESTROY", "Deallocate", 39),
         JoinParallelTasksPhaseKind
@@ -154,7 +163,7 @@ PhaseKindGraphRoots = [
         MarkRootsPhaseKind,
     ]),
     PhaseKind("BARRIER", "Barriers", 55, [
-        PhaseKind("UNMARK_GRAY", "Unmark gray", 56),
+        UnmarkGrayPhaseKind
     ])
 ]
 

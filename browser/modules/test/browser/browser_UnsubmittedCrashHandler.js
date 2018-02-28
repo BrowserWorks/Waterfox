@@ -206,6 +206,25 @@ add_task(async function setup() {
   // disabled is an intentional choice, as this allows for easier
   // simulation of startup and shutdown.
   UnsubmittedCrashHandler.uninit();
+
+  // While we're here, let's test that we don't show the notification
+  // if we're disabled and something happens to check for unsubmitted
+  // crash reports.
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.crashReports.unsubmittedCheck.enabled", false],
+    ],
+  });
+
+  await createPendingCrashReports(1);
+
+  notification =
+    await UnsubmittedCrashHandler.checkForUnsubmittedCrashReports();
+  Assert.ok(!notification, "There should not be a notification");
+
+  clearPendingCrashReports();
+  await SpecialPowers.popPrefEnv();
+
   await SpecialPowers.pushPrefEnv({
     set: [
       ["browser.crashReports.unsubmittedCheck.enabled", true],
@@ -241,6 +260,36 @@ add_task(async function test_no_pending_no_notification() {
 add_task(async function test_one_pending() {
   await createPendingCrashReports(1);
   let notification =
+    await UnsubmittedCrashHandler.checkForUnsubmittedCrashReports();
+  Assert.ok(notification, "There should be a notification");
+
+  gNotificationBox.removeNotification(notification, true);
+  clearPendingCrashReports();
+});
+
+/**
+ * Tests that an ignored crash report does not suppress a notification that
+ * would be trigged by another, unignored crash report.
+ */
+add_task(async function test_other_ignored() {
+  let toIgnore = await createPendingCrashReports(1);
+  let notification =
+    await UnsubmittedCrashHandler.checkForUnsubmittedCrashReports();
+  Assert.ok(notification, "There should be a notification");
+
+  // Dismiss notification, creating the .dmp.ignore file
+  let anonyNodes = document.getAnonymousNodes(notification)[0];
+  let closeButton = anonyNodes.querySelector(".close-icon");
+  closeButton.click();
+  gNotificationBox.removeNotification(notification, true);
+  await waitForIgnoredReports(toIgnore);
+
+  notification =
+    await UnsubmittedCrashHandler.checkForUnsubmittedCrashReports();
+  Assert.ok(!notification, "There should not be a notification");
+
+  await createPendingCrashReports(1);
+  notification =
     await UnsubmittedCrashHandler.checkForUnsubmittedCrashReports();
   Assert.ok(notification, "There should be a notification");
 

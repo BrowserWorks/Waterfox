@@ -117,10 +117,14 @@ class BasePopup {
         this.destroyBrowser(this.browser, true);
         this.browser.remove();
       }
+      if (this.stack) {
+        this.stack.remove();
+      }
 
       if (this.viewNode) {
         this.viewNode.removeEventListener(this.DESTROY_EVENT, this);
         this.viewNode.style.maxHeight = "";
+        delete this.viewNode.customRectGetter;
       }
 
       let {panel} = this;
@@ -131,6 +135,7 @@ class BasePopup {
       }
 
       this.browser = null;
+      this.stack = null;
       this.viewNode = null;
     });
   }
@@ -219,6 +224,10 @@ class BasePopup {
 
   createBrowser(viewNode, popupURL = null) {
     let document = viewNode.ownerDocument;
+
+    let stack = document.createElementNS(XUL_NS, "stack");
+    stack.setAttribute("class", "webextension-popup-stack");
+
     let browser = document.createElementNS(XUL_NS, "browser");
     browser.setAttribute("type", "content");
     browser.setAttribute("disableglobalhistory", "true");
@@ -228,6 +237,9 @@ class BasePopup {
     browser.setAttribute("tooltip", "aHTMLTooltip");
     browser.setAttribute("contextmenu", "contentAreaContextMenu");
     browser.setAttribute("autocompletepopup", "PopupAutoComplete");
+    browser.setAttribute("selectmenulist", "ContentSelectDropdown");
+    browser.setAttribute("selectmenuconstrained", "false");
+    browser.sameProcessAsFrameLoader = this.extension.groupFrameLoader;
 
     if (this.extension.remote) {
       browser.setAttribute("remote", "true");
@@ -238,6 +250,7 @@ class BasePopup {
     // main menu panel, so that the browser occupies the full width of the view,
     // and also takes up any extra height that's available to it.
     browser.setAttribute("flex", "1");
+    stack.setAttribute("flex", "1");
 
     // Note: When using noautohide panels, the popup manager will add width and
     // height attributes to the panel, breaking our resize code, if the browser
@@ -245,6 +258,7 @@ class BasePopup {
     // will be if and when we popup debugging.
 
     this.browser = browser;
+    this.stack = stack;
 
     let readyPromise;
     if (this.extension.remote) {
@@ -253,7 +267,8 @@ class BasePopup {
       readyPromise = promiseEvent(browser, "load");
     }
 
-    viewNode.appendChild(browser);
+    stack.appendChild(browser);
+    viewNode.appendChild(stack);
 
     ExtensionParent.apiManager.emit("extension-browser-inserted", browser);
 
@@ -323,6 +338,9 @@ class BasePopup {
       // available to us in the panel.
       height = Math.max(height, this.viewHeight);
       this.viewNode.style.maxHeight = `${height}px`;
+      // Used by the panelmultiview code to figure out sizing without reparenting
+      // (which would destroy the browser and break us).
+      this.lastCalculatedInViewHeight = height;
     } else {
       this.browser.style.width = `${width}px`;
       this.browser.style.minWidth = `${width}px`;
@@ -421,6 +439,9 @@ class ViewPopup extends BasePopup {
     // be swapped with the browser in the real panel when it's ready.
     let panel = document.createElement("panel");
     panel.setAttribute("type", "arrow");
+    if (extension.remote) {
+      panel.setAttribute("remote", "true");
+    }
     document.getElementById("mainPopupSet").appendChild(panel);
 
     super(extension, panel, popupURL, browserStyle, fixedWidth, blockParser);
@@ -448,6 +469,7 @@ class ViewPopup extends BasePopup {
   async attach(viewNode) {
     this.viewNode = viewNode;
     this.viewNode.addEventListener(this.DESTROY_EVENT, this);
+    this.viewNode.setAttribute("closemenu", "none");
 
     if (this.extension.remote) {
       this.panel.setAttribute("remote", "true");
@@ -512,6 +534,10 @@ class ViewPopup extends BasePopup {
     if (this.dimensions && !this.fixedWidth) {
       this.resizeBrowser(this.dimensions);
     }
+
+    this.viewNode.customRectGetter = () => {
+      return {height: this.lastCalculatedInViewHeight || this.viewHeight};
+    };
 
     this.tempPanel.remove();
     this.tempPanel = null;

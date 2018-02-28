@@ -36,7 +36,8 @@ public:
                       uint32_t aSeverityFlag,
                       bool aIsChrome,
                       uint64_t aInnerWindowID)
-    : mMessage(aMessage)
+    : mozilla::Runnable("ScriptErrorRunnable")
+    , mMessage(aMessage)
     , mFilename(aFilename)
     , mLineNumber(aLineNumber)
     , mColumnNumber(aColumnNumber)
@@ -55,7 +56,8 @@ public:
                       uint32_t aSeverityFlag,
                       bool aIsChrome,
                       uint64_t aInnerWindowID)
-    : mMessageName(aMessageName)
+    : mozilla::Runnable("ScriptErrorRunnable")
+    , mMessageName(aMessageName)
     , mFilename(aFilename)
     , mLineNumber(aLineNumber)
     , mColumnNumber(aColumnNumber)
@@ -212,9 +214,7 @@ ScriptErrorHelper::Dump(const nsAString& aMessage,
                               aIsChrome,
                               aInnerWindowID);
     MOZ_ALWAYS_SUCCEEDS(
-      SystemGroup::Dispatch("indexedDB::ScriptErrorHelper::Dump",
-                            TaskCategory::Other,
-                            runnable.forget()));
+      SystemGroup::Dispatch(TaskCategory::Other, runnable.forget()));
   }
 }
 
@@ -245,9 +245,7 @@ ScriptErrorHelper::DumpLocalizedMessage(const nsACString& aMessageName,
                               aIsChrome,
                               aInnerWindowID);
     MOZ_ALWAYS_SUCCEEDS(
-      SystemGroup::Dispatch("indexedDB::ScriptErrorHelper::DumpLocalizedMessage",
-                            TaskCategory::Other,
-                            runnable.forget()));
+      SystemGroup::Dispatch(TaskCategory::Other, runnable.forget()));
   }
 }
 

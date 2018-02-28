@@ -73,9 +73,6 @@ with Files("E10SUtils.jsm"):
 with Files("ExtensionsUI.jsm"):
     BUG_COMPONENT = ("Toolkit", "WebExtensions: General")
 
-with Files("FullZoomUI.jsm"):
-    BUG_COMPONENT = ("Firefox", "Toolbars and Customization")
-
 with Files("LaterRun.jsm"):
     BUG_COMPONENT = ("Firefox", "Tours")
 
@@ -115,8 +112,14 @@ with Files("WindowsPreviewPerTab.jsm"):
 with Files("offlineAppCache.jsm"):
     BUG_COMPONENT = ("Firefox", "Preferences")
 
+with Files("UpdateTopLevelContentWindowIDHelper.jsm"):
+    BUG_COMPONENT = ("Core", "Networking")
+
 with Files("webrtcUI.jsm"):
     BUG_COMPONENT = ("Firefox", "Device Permissions")
+
+with Files("ZoomUI.jsm"):
+    BUG_COMPONENT = ("Firefox", "Toolbars and Customization")
 
 
 BROWSER_CHROME_MANIFESTS += ['test/browser/browser.ini']
@@ -142,9 +145,9 @@ EXTRA_JS_MODULES += [
     'Feeds.jsm',
     'FormSubmitObserver.jsm',
     'FormValidationHandler.jsm',
-    'FullZoomUI.jsm',
     'LaterRun.jsm',
     'offlineAppCache.jsm',
+    'PageActions.jsm',
     'PermissionUI.jsm',
     'PluginContent.jsm',
     'ProcessHangMonitor.jsm',
@@ -156,7 +159,9 @@ EXTRA_JS_MODULES += [
     'Social.jsm',
     'SocialService.jsm',
     'TransientPrefs.jsm',
+    'UpdateTopLevelContentWindowIDHelper.jsm',
     'webrtcUI.jsm',
+    'ZoomUI.jsm',
 ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':

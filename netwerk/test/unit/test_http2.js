@@ -958,6 +958,102 @@ function test_http2_status_phrase() {
   chan.asyncOpen2(listener);
 }
 
+var PulledDiskCacheListener = function() {};
+PulledDiskCacheListener.prototype = new Http2CheckListener();
+PulledDiskCacheListener.prototype.EXPECTED_DATA = "this was pulled via h2";
+PulledDiskCacheListener.prototype.readData = "";
+PulledDiskCacheListener.prototype.onDataAvailable = function testOnDataAvailable(request, ctx, stream, off, cnt) {
+  this.onDataAvailableFired = true;
+  this.isHttp2Connection = checkIsHttp2(request);
+  this.accum += cnt;
+  this.readData += read_stream(stream, cnt);
+};
+PulledDiskCacheListener.prototype.onStopRequest = function testOnStopRequest(request, ctx, status) {
+  do_check_eq(this.EXPECTED_DATA, this.readData);
+  Http2CheckListener.prorotype.onStopRequest.call(this, request, ctx, status);
+};
+
+const DISK_CACHE_DATA = "this is from disk cache";
+
+var FromDiskCacheListener = function() {};
+FromDiskCacheListener.prototype = {
+  onStartRequestFired: false,
+  onDataAvailableFired: false,
+  readData: "",
+
+  onStartRequest: function testOnStartRequest(request, ctx) {
+    this.onStartRequestFired = true;
+    if (!Components.isSuccessCode(request.status)) {
+      do_throw("Channel should have a success code! (" + request.status + ")");
+    }
+
+    do_check_true(request instanceof Components.interfaces.nsIHttpChannel);
+    do_check_true(request.requestSucceeded);
+    do_check_eq(request.responseStatus, 200);
+  },
+
+  onDataAvailable: function testOnDataAvailable(request, ctx, stream, off, cnt) {
+    this.onDataAvailableFired = true;
+    this.readData += read_stream(stream, cnt);
+  },
+
+  onStopRequest: function testOnStopRequest(request, ctx, status) {
+    do_check_true(this.onStartRequestFired);
+    do_check_true(Components.isSuccessCode(status));
+    do_check_true(this.onDataAvailableFired);
+    do_check_eq(this.readData, DISK_CACHE_DATA);
+
+    evict_cache_entries("disk");
+    syncWithCacheIOThread(() => {
+      // Now that we know the entry is out of the disk cache, check to make sure
+      // we don't have this hiding in the push cache somewhere - if we do, it
+      // didn't get cancelled, and we have a bug.
+      var chan = makeChan("https://localhost:" + serverPort + "/diskcache");
+      chan.listener = new PulledDiskCacheListener();
+      chan.loadGroup = loadGroup;
+      chan.asyncOpen2(listener);
+    });
+  }
+};
+
+var Http2DiskCachePushListener = function() {};
+
+Http2DiskCachePushListener.prototype = new Http2CheckListener();
+
+Http2DiskCachePushListener.onStopRequest = function(request, ctx, status) {
+    do_check_true(this.onStartRequestFired);
+    do_check_true(Components.isSuccessCode(status));
+    do_check_true(this.onDataAvailableFired);
+    do_check_true(this.isHttp2Connection == this.shouldBeHttp2);
+
+    // Now we need to open a channel to ensure we get data from the disk cache
+    // for the pushed item, instead of from the push cache.
+    var chan = makeChan("https://localhost:" + serverPort + "/diskcache");
+    chan.listener = new FromDiskCacheListener();
+    chan.loadGroup = loadGroup;
+    chan.asyncOpen2(listener);
+};
+
+function continue_test_http2_disk_cache_push(status, entry, appCache) {
+  // TODO - store stuff in cache entry, then open an h2 channel that will push
+  // this, once that completes, open a channel for the cache entry we made and
+  // ensure it came from disk cache, not the push cache.
+  var outputStream = entry.openOutputStream(0);
+  outputStream.write(DISK_CACHE_DATA, DISK_CACHE_DATA.length);
+
+  // Now we open our URL that will push data for the URL above
+  var chan = makeChan("https://localhost:" + serverPort + "/pushindisk");
+  var listener = new Http2DiskCachePushListener();
+  chan.loadGroup = loadGroup;
+  chan.asyncOpen2(listener);
+}
+
+function test_http2_disk_cache_push() {
+  asyncOpenCacheEntry("https://localhost:" + serverPort + "/diskcache",
+                      "disk", Ci.nsICacheStorage.OPEN_NORMALLY, null,
+                      continue_test_http2_disk_cache_push, false);
+}
+
 function test_complete() {
   resetPrefs();
   do_test_pending();
@@ -967,6 +1063,45 @@ function test_complete() {
 
   do_test_finished();
   do_timeout(0,run_next_test);
+}
+
+var Http2DoublepushListener = function () {};
+Http2DoublepushListener.prototype = new Http2CheckListener();
+Http2DoublepushListener.prototype.onStopRequest = function (request, ctx, status) {
+  do_check_true(this.onStartRequestFired);
+  do_check_true(Components.isSuccessCode(status));
+  do_check_true(this.onDataAvailableFired);
+  do_check_true(this.isHttp2Connection == this.shouldBeHttp2);
+
+  var chan = makeChan("https://localhost:" + serverPort + "/doublypushed");
+  var listener = new Http2DoublypushedListener();
+  chan.loadGroup = loadGroup;
+  chan.asyncOpen2(listener);
+};
+
+var Http2DoublypushedListener = function () {};
+Http2DoublypushedListener.prototype = new Http2CheckListener();
+Http2DoublypushedListener.prototype.readData = "";
+Http2DoublypushedListener.prototype.onDataAvailable = function (request, ctx, stream, off, cnt) {
+  this.onDataAvailableFired = true;
+  this.accum += cnt;
+  this.readData += read_stream(stream, cnt);
+};
+Http2DoublypushedListener.prototype.onStopRequest = function (request, ctx, status) {
+  do_check_true(this.onStartRequestFired);
+  do_check_true(Components.isSuccessCode(status));
+  do_check_true(this.onDataAvailableFired);
+  do_check_eq(this.readData, "pushed");
+
+  run_next_test();
+  do_test_finished();
+};
+
+function test_http2_doublepush() {
+  var chan = makeChan("https://localhost:" + serverPort + "/doublepush");
+  var listener = new Http2DoublepushListener();
+  chan.loadGroup = loadGroup;
+  chan.asyncOpen2(listener);
 }
 
 // hack - the header test resets the multiplex object on the server,
@@ -1004,6 +1139,8 @@ var tests = [ test_http2_post_big
             , test_http2_folded_header
             , test_http2_empty_data
             , test_http2_status_phrase
+            , test_http2_doublepush
+            , test_http2_disk_cache_push
             // Add new tests above here - best to add new tests before h1
             // streams get too involved
             // These next two must always come in this order

@@ -5,16 +5,17 @@
 //! Tests for parsing and serialization of values/properties
 
 use cssparser::{Parser, ParserInput};
-use euclid::size::TypedSize2D;
+use euclid::ScaleFactor;
+use euclid::TypedSize2D;
 use media_queries::CSSErrorReporterTest;
 use style::context::QuirksMode;
 use style::font_metrics::ServoMetricsProvider;
 use style::media_queries::{Device, MediaType};
-use style::parser::{PARSING_MODE_DEFAULT, ParserContext};
+use style::parser::ParserContext;
 use style::properties::{ComputedValues, StyleBuilder};
 use style::stylesheets::{CssRuleType, Origin};
 use style::values::computed::{Context, ToComputedValue};
-use style_traits::{ToCss, ParseError};
+use style_traits::{PARSING_MODE_DEFAULT, ToCss, ParseError};
 
 fn parse<T, F>(f: F, s: &'static str) -> Result<T, ParseError<'static>>
 where F: for<'t> Fn(&ParserContext, &mut Parser<'static, 't>) -> Result<T, ParseError<'static>> {
@@ -50,18 +51,16 @@ fn assert_computed_serialization<C, F, T>(f: F, input: &'static str, output: &st
 {
     let viewport_size = TypedSize2D::new(0., 0.);
     let initial_style = ComputedValues::initial_values();
-    let device = Device::new(MediaType::Screen, viewport_size);
+    let device = Device::new(MediaType::Screen, viewport_size, ScaleFactor::new(1.0));
 
     let context = Context {
         is_root_element: true,
-        device: &device,
-        inherited_style: initial_style,
-        layout_parent_style: initial_style,
-        style: StyleBuilder::for_derived_style(&initial_style),
+        builder: StyleBuilder::for_derived_style(&device, initial_style, None, None),
         cached_system_font: None,
         font_metrics_provider: &ServoMetricsProvider,
         in_media_query: false,
         quirks_mode: QuirksMode::NoQuirks,
+        for_smil_animation: false,
     };
 
     let parsed = parse(f, input).unwrap();
@@ -87,13 +86,14 @@ macro_rules! assert_roundtrip_with_context {
         }, &mut input).unwrap();
 
         let mut input = ::cssparser::ParserInput::new(&serialized);
-        super::parse_input(|context, i| {
+        let unwrapped = super::parse_input(|context, i| {
             let re_parsed = $fun(context, i)
                             .expect(&format!("Failed to parse serialization {}", $input));
             let re_serialized = ToCss::to_css_string(&re_parsed);
             assert_eq!(serialized, re_serialized);
             Ok(())
-        }, &mut input).unwrap()
+        }, &mut input).unwrap();
+        unwrapped
     }}
 }
 

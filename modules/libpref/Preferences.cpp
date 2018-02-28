@@ -11,6 +11,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/HashFunctions.h"
 #include "mozilla/ServoStyleSet.h"
+#include "mozilla/Telemetry.h"
 #include "mozilla/UniquePtrExtensions.h"
 
 #include "nsXULAppAPI.h"
@@ -54,9 +55,11 @@
 #include "nsThreadUtils.h"
 #include "GeckoProfiler.h"
 
+using namespace mozilla;
+
 #ifdef DEBUG
 #define ENSURE_MAIN_PROCESS(message, pref) do {                                \
-  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {        \
+  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {                                  \
     nsPrintfCString msg("ENSURE_MAIN_PROCESS failed. %s %s", message, pref);   \
     NS_WARNING(msg.get());                                                     \
     return NS_ERROR_NOT_AVAILABLE;                                             \
@@ -74,7 +77,7 @@ public:
 #define WATCHING_PREF_RAII() WatchinPrefRAII watchingPrefRAII
 #else
 #define ENSURE_MAIN_PROCESS(message, pref)                                     \
-  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {        \
+  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {                                  \
     return NS_ERROR_NOT_AVAILABLE;                                             \
   }
 #define WATCHING_PREF_RAII()
@@ -91,14 +94,39 @@ static NS_DEFINE_CID(kZipReaderCID, NS_ZIPREADER_CID);
 void
 Preferences::DirtyCallback()
 {
-  if (gHashTable && sPreferences && !sPreferences->mDirty) {
+  if (!XRE_IsParentProcess()) {
+    // TODO: this should really assert because you can't set prefs in a
+    // content process. But so much code currently does this that we just
+    // ignore it for now.
+    return;
+  }
+  if (!gHashTable || !sPreferences) {
+    return;
+  }
+  if (sPreferences->mProfileShutdown) {
+    NS_WARNING("Setting user pref after profile shutdown.");
+    return;
+  }
+  if (!sPreferences->mDirty) {
     sPreferences->mDirty = true;
+
+    if (sPreferences->mCurrentFile &&
+        sPreferences->AllowOffMainThreadSave()
+        && !sPreferences->mSavePending) {
+      sPreferences->mSavePending = true;
+      static const int PREF_DELAY_MS = 500;
+      NS_DelayedDispatchToCurrentThread(
+        mozilla::NewRunnableMethod("Preferences::SavePrefFileAsynchronous",
+                                   sPreferences,
+                                   &Preferences::SavePrefFileAsynchronous),
+        PREF_DELAY_MS);
+    }
   }
 }
 
 // Prototypes
 static nsresult openPrefFile(nsIFile* aFile);
-static nsresult pref_InitInitialObjects(void);
+static Result<Ok, const char*> pref_InitInitialObjects();
 static nsresult pref_LoadPrefsInDirList(const char *listId);
 static nsresult ReadExtensionPrefs(nsIFile *aFile);
 
@@ -130,6 +158,10 @@ Preferences* Preferences::sPreferences = nullptr;
 nsIPrefBranch* Preferences::sRootBranch = nullptr;
 nsIPrefBranch* Preferences::sDefaultRootBranch = nullptr;
 bool Preferences::sShutdown = false;
+
+// This globally enables or disables OMT pref writing, both sync and async
+static int32_t sAllowOMTPrefWrite = -1;
+
 
 class ValueObserverHashKey : public PLDHashEntryHdr {
 public:
@@ -225,6 +257,142 @@ ValueObserver::Observe(nsISupports     *aSubject,
   return NS_OK;
 }
 
+// Write the preference data to a file.
+//
+class PreferencesWriter final
+{
+public:
+  PreferencesWriter()
+  {
+  }
+
+  static
+  nsresult Write(nsIFile* aFile, PrefSaveData& aPrefs)
+  {
+    nsCOMPtr<nsIOutputStream> outStreamSink;
+    nsCOMPtr<nsIOutputStream> outStream;
+    uint32_t                  writeAmount;
+    nsresult                  rv;
+
+    // execute a "safe" save by saving through a tempfile
+    rv = NS_NewSafeLocalFileOutputStream(getter_AddRefs(outStreamSink),
+                                         aFile,
+                                         -1,
+                                         0600);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+
+    rv = NS_NewBufferedOutputStream(getter_AddRefs(outStream), outStreamSink, 4096);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+
+    struct CharComparator
+    {
+      bool LessThan(const mozilla::UniqueFreePtr<char>& a,
+                    const mozilla::UniqueFreePtr<char>& b) const
+      {
+        return strcmp(a.get(), b.get()) < 0;
+      }
+      bool Equals(const mozilla::UniqueFreePtr<char>& a,
+                  const mozilla::UniqueFreePtr<char>& b) const
+      {
+        return strcmp(a.get(), b.get()) == 0;
+      }
+    };
+
+    /* Sort the preferences to make a readable file on disk */
+    aPrefs.Sort(CharComparator());
+
+    // write out the file header
+    outStream->Write(kPrefFileHeader, sizeof(kPrefFileHeader) - 1, &writeAmount);
+
+    for (auto& prefptr : aPrefs) {
+      char* pref = prefptr.get();
+      MOZ_ASSERT(pref);
+      outStream->Write(pref, strlen(pref), &writeAmount);
+      outStream->Write(NS_LINEBREAK, NS_LINEBREAK_LEN, &writeAmount);
+    }
+
+    // tell the safe output stream to overwrite the real prefs file
+    // (it'll abort if there were any errors during writing)
+    nsCOMPtr<nsISafeOutputStream> safeStream = do_QueryInterface(outStream);
+    NS_ASSERTION(safeStream, "expected a safe output stream!");
+    if (safeStream) {
+      rv = safeStream->Finish();
+    }
+
+#ifdef DEBUG
+    if (NS_FAILED(rv)) {
+      NS_WARNING("failed to save prefs file! possible data loss");
+    }
+#endif
+    return rv;
+  }
+
+  static
+  void Flush()
+  {
+    // This can be further optimized; instead of waiting for
+    // all of the writer thread to be available, we just have
+    // to wait for all the pending writes to be done.
+    if (!sPendingWriteData.compareExchange(nullptr, nullptr)) {
+      nsresult rv = NS_OK;
+      nsCOMPtr<nsIEventTarget> target =
+        do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID, &rv);
+      if (NS_SUCCEEDED(rv)) {
+        target->Dispatch(NS_NewRunnableFunction("Preferences_dummy", [] {}),
+                         nsIEventTarget::DISPATCH_SYNC);
+      }
+    }
+  }
+
+  // This is the data that all of the runnables (see below) will attempt
+  // to write.  It will always have the most up to date version, or be
+  // null, if the up to date information has already been written out.
+  static Atomic<PrefSaveData*> sPendingWriteData;
+};
+Atomic<PrefSaveData*> PreferencesWriter::sPendingWriteData(nullptr);
+
+class PWRunnable : public Runnable
+{
+public:
+  explicit PWRunnable(nsIFile* aFile)
+    : Runnable("PWRunnable")
+    , mFile(aFile)
+  {}
+
+  NS_IMETHOD Run() override
+  {
+    mozilla::UniquePtr<PrefSaveData> prefs(PreferencesWriter::sPendingWriteData.exchange(nullptr));
+    // If we get a nullptr on the exchange, it means that somebody
+    // else has already processed the request, and we can just return.
+
+    nsresult rv = NS_OK;
+    if (prefs) {
+      rv = PreferencesWriter::Write(mFile, *prefs);
+
+      // Make a copy of these so we can have them in runnable lambda.
+      // nsIFile is only there so that we would never release the
+      // ref counted pointer off main thread.
+      nsresult rvCopy = rv;
+      nsCOMPtr<nsIFile> fileCopy(mFile);
+      SystemGroup::Dispatch(TaskCategory::Other,
+                            NS_NewRunnableFunction("Preferences::WriterRunnable", [fileCopy, rvCopy] {
+        MOZ_RELEASE_ASSERT(NS_IsMainThread());
+        if (NS_FAILED(rvCopy)) {
+          Preferences::DirtyCallback();
+        }
+      }));
+    }
+    return rv;
+  }
+
+protected:
+  nsCOMPtr<nsIFile> mFile;
+};
+
 struct CacheData {
   void* cacheLocation;
   union {
@@ -235,6 +403,9 @@ struct CacheData {
   };
 };
 
+// gCacheDataDesc holds information about prefs startup. It's being used for
+// diagnosing prefs startup problems in bug 1276488.
+static const char* gCacheDataDesc = "untouched";
 static nsTArray<nsAutoPtr<CacheData> >* gCacheData = nullptr;
 static nsRefPtrHashtable<ValueObserverHashKey,
                          ValueObserver>* gObserverTable = nullptr;
@@ -420,6 +591,8 @@ PreferenceServiceReporter::CollectReports(
 namespace {
 class AddPreferencesMemoryReporterRunnable : public Runnable
 {
+public:
+  AddPreferencesMemoryReporterRunnable() : Runnable("AddPreferencesMemoryReporterRunnable") {}
   NS_IMETHOD Run() override
   {
     return RegisterStrongMemoryReporter(new PreferenceServiceReporter());
@@ -436,7 +609,10 @@ Preferences::GetInstanceForService()
     return sPreferences;
   }
 
-  NS_ENSURE_TRUE(!sShutdown, nullptr);
+  if (sShutdown) {
+    gCacheDataDesc = "shutting down in GetInstanceForService()";
+    return nullptr;
+  }
 
   sRootBranch = new nsPrefBranch("", false);
   NS_ADDREF(sRootBranch);
@@ -446,13 +622,16 @@ Preferences::GetInstanceForService()
   sPreferences = new Preferences();
   NS_ADDREF(sPreferences);
 
-  if (NS_FAILED(sPreferences->Init())) {
+  Result<Ok, const char*> res = sPreferences->Init();
+  if (res.isErr()) {
     // The singleton instance will delete sRootBranch and sDefaultRootBranch.
+    gCacheDataDesc = res.unwrapErr();
     NS_RELEASE(sPreferences);
     return nullptr;
   }
 
   gCacheData = new nsTArray<nsAutoPtr<CacheData> >();
+  gCacheDataDesc = "set by GetInstanceForService()";
 
   gObserverTable = new nsRefPtrHashtable<ValueObserverHashKey, ValueObserver>();
 
@@ -515,7 +694,6 @@ Preferences::Shutdown()
  */
 
 Preferences::Preferences()
-  : mDirty(false)
 {
 }
 
@@ -555,7 +733,6 @@ NS_INTERFACE_MAP_BEGIN(Preferences)
     NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
 NS_INTERFACE_MAP_END
 
-
 /*
  * nsIPrefService Implementation
  */
@@ -568,16 +745,13 @@ Preferences::SetInitPreferences(nsTArray<PrefSetting>* aPrefs) {
   gInitPrefs = new InfallibleTArray<PrefSetting>(mozilla::Move(*aPrefs));
 }
 
-nsresult
+Result<Ok, const char*>
 Preferences::Init()
 {
-  nsresult rv;
-
   PREF_SetDirtyCallback(&DirtyCallback);
   PREF_Init();
 
-  rv = pref_InitInitialObjects();
-  NS_ENSURE_SUCCESS(rv, rv);
+  MOZ_TRY(pref_InitInitialObjects());
 
   if (XRE_IsContentProcess()) {
     MOZ_ASSERT(gInitPrefs);
@@ -586,7 +760,7 @@ Preferences::Init()
     }
     delete gInitPrefs;
     gInitPrefs = nullptr;
-    return NS_OK;
+    return Ok();
   }
 
   nsXPIDLCString lockFileName;
@@ -598,94 +772,119 @@ Preferences::Init()
    * category which will do the rest.
    */
 
-  rv = PREF_CopyCharPref("general.config.filename", getter_Copies(lockFileName), false);
+  nsresult rv = PREF_CopyCharPref("general.config.filename",
+                                  getter_Copies(lockFileName), false);
   if (NS_SUCCEEDED(rv))
     NS_CreateServicesFromCategory("pref-config-startup",
                                   static_cast<nsISupports *>(static_cast<void *>(this)),
-                                  "pref-config-startup");    
+                                  "pref-config-startup");
 
   nsCOMPtr<nsIObserverService> observerService =
     mozilla::services::GetObserverService();
-  if (!observerService)
-    return NS_ERROR_FAILURE;
+  if (!observerService) {
+    return Err("GetObserverService() failed (1)");
+  }
 
+  observerService->AddObserver(this, "profile-before-change-telemetry", true);
   rv = observerService->AddObserver(this, "profile-before-change", true);
 
   observerService->AddObserver(this, "load-extension-defaults", true);
   observerService->AddObserver(this, "suspend_process_notification", true);
 
-  return(rv);
+  if (NS_FAILED(rv)) {
+    return Err("AddObserver(\"profile-before-change\") failed");
+  }
+
+  return Ok();
 }
 
 // static
-nsresult
-Preferences::ResetAndReadUserPrefs()
+void
+Preferences::InitializeUserPrefs()
 {
+  MOZ_ASSERT(!sPreferences->mCurrentFile, "Should only initialize prefs once");
+
+  // prefs which are set before we initialize the profile are silently discarded.
+  // This is stupid, but there are various tests which depend on this behavior.
   sPreferences->ResetUserPrefs();
-  return sPreferences->ReadUserPrefs(nullptr);
+
+  nsCOMPtr<nsIFile> prefsFile = sPreferences->ReadSavedPrefs();
+  sPreferences->ReadUserOverridePrefs();
+
+  sPreferences->mDirty = false;
+
+  // Don't set mCurrentFile until we're done so that dirty flags work properly
+  sPreferences->mCurrentFile = prefsFile.forget();
+
+  // Migrate the old prerelease telemetry pref
+  if (!Preferences::GetBool(kOldTelemetryPref, true)) {
+    Preferences::SetBool(kTelemetryPref, false);
+    Preferences::ClearUser(kOldTelemetryPref);
+  }
+
+  sPreferences->NotifyServiceObservers(NS_PREFSERVICE_READ_TOPIC_ID);
 }
 
 NS_IMETHODIMP
 Preferences::Observe(nsISupports *aSubject, const char *aTopic,
                      const char16_t *someData)
 {
-  if (XRE_IsContentProcess())
+  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {
     return NS_ERROR_NOT_AVAILABLE;
+  }
 
   nsresult rv = NS_OK;
 
   if (!nsCRT::strcmp(aTopic, "profile-before-change")) {
-    rv = SavePrefFile(nullptr);
+    // Normally prefs aren't written after this point, and so we kick off
+    // an asynchronous pref save so that I/O can be done in parallel with
+    // other shutdown.
+    if (AllowOffMainThreadSave()) {
+      SavePrefFile(nullptr);
+    }
+  } else if (!nsCRT::strcmp(aTopic, "profile-before-change-telemetry")) {
+    // It's possible that a profile-before-change observer after ours
+    // set a pref. A blocking save here re-saves if necessary and also waits
+    // for any pending saves to complete.
+    SavePrefFileBlocking();
+    MOZ_ASSERT(!mDirty, "Preferences should not be dirty");
+    mProfileShutdown = true;
   } else if (!strcmp(aTopic, "load-extension-defaults")) {
     pref_LoadPrefsInDirList(NS_EXT_PREFS_DEFAULTS_DIR_LIST);
   } else if (!nsCRT::strcmp(aTopic, "reload-default-prefs")) {
     // Reload the default prefs from file.
-    pref_InitInitialObjects();
+    Unused << pref_InitInitialObjects();
   } else if (!nsCRT::strcmp(aTopic, "suspend_process_notification")) {
     // Our process is being suspended. The OS may wake our process later,
     // or it may kill the process. In case our process is going to be killed
     // from the suspended state, we save preferences before suspending.
-    rv = SavePrefFile(nullptr);
+    rv = SavePrefFileBlocking();
   }
   return rv;
 }
 
 
 NS_IMETHODIMP
-Preferences::ReadUserPrefs(nsIFile *aFile)
+Preferences::ReadUserPrefsFromFile(nsIFile *aFile)
 {
-  if (XRE_IsContentProcess()) {
-    NS_ERROR("cannot load prefs from content process");
+  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {
+    NS_ERROR("must load prefs from parent process");
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  nsresult rv;
-
-  if (nullptr == aFile) {
-    rv = UseDefaultPrefFile();
-    // A user pref file is optional.
-    // Ignore all errors related to it, so we retain 'rv' value :-|
-    (void) UseUserPrefFile();
-
-    // Migrate the old prerelease telemetry pref
-    if (!Preferences::GetBool(kOldTelemetryPref, true)) {
-      Preferences::SetBool(kTelemetryPref, false);
-      Preferences::ClearUser(kOldTelemetryPref);
-    }
-
-    NotifyServiceObservers(NS_PREFSERVICE_READ_TOPIC_ID);
-  } else {
-    rv = ReadAndOwnUserPrefFile(aFile);
+  if (!aFile) {
+    NS_ERROR("ReadUserPrefsFromFile requires a parameter");
+    return NS_ERROR_INVALID_ARG;
   }
 
-  return rv;
+  return openPrefFile(aFile);
 }
 
 NS_IMETHODIMP
 Preferences::ResetPrefs()
 {
-  if (XRE_IsContentProcess()) {
-    NS_ERROR("cannot reset prefs from content process");
+  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {
+    NS_ERROR("must reset prefs from parent process");
     return NS_ERROR_NOT_AVAILABLE;
   }
 
@@ -694,30 +893,65 @@ Preferences::ResetPrefs()
 
   PREF_Init();
 
-  return pref_InitInitialObjects();
+  return pref_InitInitialObjects().isOk() ? NS_OK : NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP
 Preferences::ResetUserPrefs()
 {
-  if (XRE_IsContentProcess()) {
-    NS_ERROR("cannot reset user prefs from content process");
+  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {
+    NS_ERROR("must reset user prefs from parent process");
     return NS_ERROR_NOT_AVAILABLE;
   }
 
   PREF_ClearAllUserPrefs();
-  return NS_OK;    
+  return NS_OK;
+}
+
+bool
+Preferences::AllowOffMainThreadSave()
+{
+  // Put in a preference that allows us to disable
+  // off main thread preference file save.
+  if (sAllowOMTPrefWrite < 0) {
+    bool value = false;
+    Preferences::GetBool("preferences.allow.omt-write", &value);
+    sAllowOMTPrefWrite = value ? 1 : 0;
+  }
+  return !!sAllowOMTPrefWrite;
+}
+
+nsresult
+Preferences::SavePrefFileBlocking()
+{
+  if (mDirty) {
+    return SavePrefFileInternal(nullptr, SaveMethod::Blocking);
+  }
+
+  // If we weren't dirty to start, SavePrefFileInternal will early exit
+  // so there is no guarantee that we don't have oustanding async
+  // saves in the pipe.  Since the contract of SavePrefFileOnMainThread
+  // is that the file on disk matches the preferences, we have to make
+  // sure those requests are completed.
+
+  if (AllowOffMainThreadSave()) {
+    PreferencesWriter::Flush();
+  }
+  return NS_OK;
+}
+
+nsresult
+Preferences::SavePrefFileAsynchronous()
+{
+  return SavePrefFileInternal(nullptr, SaveMethod::Asynchronous);
 }
 
 NS_IMETHODIMP
 Preferences::SavePrefFile(nsIFile *aFile)
 {
-  if (XRE_IsContentProcess()) {
-    NS_ERROR("cannot save pref file from content process");
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-
-  return SavePrefFileInternal(aFile);
+  // This is the method accessible from service API.  Make it off
+  // main thread.
+  return SavePrefFileInternal(aFile, SaveMethod::Asynchronous);
 }
 
 static nsresult
@@ -860,60 +1094,60 @@ Preferences::GetDirty(bool *_retval) {
 nsresult
 Preferences::NotifyServiceObservers(const char *aTopic)
 {
-  nsCOMPtr<nsIObserverService> observerService = 
-    mozilla::services::GetObserverService();  
+  nsCOMPtr<nsIObserverService> observerService =
+    mozilla::services::GetObserverService();
   if (!observerService)
     return NS_ERROR_FAILURE;
 
   nsISupports *subject = (nsISupports *)((nsIPrefService *)this);
   observerService->NotifyObservers(subject, aTopic, nullptr);
-  
+
   return NS_OK;
 }
 
-nsresult
-Preferences::UseDefaultPrefFile()
+already_AddRefed<nsIFile>
+Preferences::ReadSavedPrefs()
 {
-  nsCOMPtr<nsIFile> aFile;
-  nsresult rv = NS_GetSpecialDirectory(NS_APP_PREFS_50_FILE, getter_AddRefs(aFile));
-
-  if (NS_SUCCEEDED(rv)) {
-    rv = ReadAndOwnUserPrefFile(aFile);
-    // Most likely cause of failure here is that the file didn't
-    // exist, so save a new one. mUserPrefReadFailed will be
-    // used to catch an error in actually reading the file.
-    if (NS_FAILED(rv)) {
-      if (NS_FAILED(SavePrefFileInternal(aFile)))
-        NS_ERROR("Failed to save new shared pref file");
-      else
-        rv = NS_OK;
-    }
+  nsCOMPtr<nsIFile> file;
+  nsresult rv = NS_GetSpecialDirectory(NS_APP_PREFS_50_FILE,
+                                       getter_AddRefs(file));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return nullptr;
   }
-  
-  return rv;
+
+  rv = openPrefFile(file);
+  if (rv == NS_ERROR_FILE_NOT_FOUND) {
+    // this is a normal case for new users
+    Telemetry::ScalarSet(Telemetry::ScalarID::PREFERENCES_CREATED_NEW_USER_PREFS_FILE, true);
+    rv = NS_OK;
+  } else if (NS_FAILED(rv)) {
+    // Save a backup copy of the current (invalid) prefs file, since all prefs
+    // from the error line to the end of the file will be lost (bug 361102).
+    // TODO we should notify the user about it (bug 523725).
+    Telemetry::ScalarSet(Telemetry::ScalarID::PREFERENCES_PREFS_FILE_WAS_INVALID, true);
+    MakeBackupPrefFile(file);
+  }
+
+  return file.forget();
 }
 
-nsresult
-Preferences::UseUserPrefFile()
+void
+Preferences::ReadUserOverridePrefs()
 {
-  nsresult rv = NS_OK;
   nsCOMPtr<nsIFile> aFile;
-  nsDependentCString prefsDirProp(NS_APP_PREFS_50_DIR);
-
-  rv = NS_GetSpecialDirectory(prefsDirProp.get(), getter_AddRefs(aFile));
-  if (NS_SUCCEEDED(rv) && aFile) {
-    rv = aFile->AppendNative(NS_LITERAL_CSTRING("user.js"));
-    if (NS_SUCCEEDED(rv)) {
-      bool exists = false;
-      aFile->Exists(&exists);
-      if (exists) {
-        rv = openPrefFile(aFile);
-      } else {
-        rv = NS_ERROR_FILE_NOT_FOUND;
-      }
-    }
+  nsresult rv = NS_GetSpecialDirectory(NS_APP_PREFS_50_DIR,
+                                       getter_AddRefs(aFile));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
   }
-  return rv;
+
+  aFile->AppendNative(NS_LITERAL_CSTRING("user.js"));
+  rv = openPrefFile(aFile);
+  if (rv != NS_ERROR_FILE_NOT_FOUND) {
+    // If the file exists and was at least partially read, record that
+    // in telemetry as it may be a sign of pref injection.
+    Telemetry::ScalarSet(Telemetry::ScalarID::PREFERENCES_READ_USER_JS, true);
+  }
 }
 
 nsresult
@@ -942,51 +1176,43 @@ Preferences::MakeBackupPrefFile(nsIFile *aFile)
 }
 
 nsresult
-Preferences::ReadAndOwnUserPrefFile(nsIFile *aFile)
+Preferences::SavePrefFileInternal(nsIFile *aFile, SaveMethod aSaveMethod)
 {
-  NS_ENSURE_ARG(aFile);
-  
-  if (mCurrentFile == aFile)
-    return NS_OK;
-  mCurrentFile = aFile;
-
-  nsresult rv = NS_OK;
-  bool exists = false;
-  mCurrentFile->Exists(&exists);
-  if (exists) {
-    rv = openPrefFile(mCurrentFile);
-    if (NS_FAILED(rv)) {
-      // Save a backup copy of the current (invalid) prefs file, since all prefs
-      // from the error line to the end of the file will be lost (bug 361102).
-      // TODO we should notify the user about it (bug 523725).
-      MakeBackupPrefFile(mCurrentFile);
-    }
-  } else {
-    rv = NS_ERROR_FILE_NOT_FOUND;
+  if (MOZ_UNLIKELY(!XRE_IsParentProcess())) {
+    NS_ERROR("must save pref file from parent process");
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
-  return rv;
-}
-
-nsresult
-Preferences::SavePrefFileInternal(nsIFile *aFile)
-{
   // We allow different behavior here when aFile argument is not null,
   // but it happens to be the same as the current file.  It is not
   // clear that we should, but it does give us a "force" save on the
   // unmodified pref file (see the original bug 160377 when we added this.)
 
   if (nullptr == aFile) {
+    mSavePending = false;
+
+    // Off main thread writing only if allowed
+    if (!AllowOffMainThreadSave()) {
+      aSaveMethod = SaveMethod::Blocking;
+    }
+
     // the mDirty flag tells us if we should write to mCurrentFile
     // we only check this flag when the caller wants to write to the default
     if (!mDirty) {
       return NS_OK;
     }
 
+    // check for profile shutdown after mDirty because the runnables from
+    // DirtyCallback can still be pending
+    if (mProfileShutdown) {
+      NS_WARNING("Cannot save pref file after profile shutdown.");
+      return NS_ERROR_ILLEGAL_DURING_SHUTDOWN;
+    }
+
     // It's possible that we never got a prefs file.
     nsresult rv = NS_OK;
     if (mCurrentFile) {
-      rv = WritePrefFile(mCurrentFile);
+      rv = WritePrefFile(mCurrentFile, aSaveMethod);
     }
 
     // If we succeeded writing to mCurrentFile, reset the dirty flag
@@ -995,67 +1221,57 @@ Preferences::SavePrefFileInternal(nsIFile *aFile)
     }
     return rv;
   } else {
-    return WritePrefFile(aFile);
+    // We only allow off main thread writes on mCurrentFile
+    return WritePrefFile(aFile, SaveMethod::Blocking);
   }
 }
 
 nsresult
-Preferences::WritePrefFile(nsIFile* aFile)
+Preferences::WritePrefFile(nsIFile* aFile, SaveMethod aSaveMethod)
 {
-  nsCOMPtr<nsIOutputStream> outStreamSink;
-  nsCOMPtr<nsIOutputStream> outStream;
-  uint32_t                  writeAmount;
-  nsresult                  rv;
-
-  if (!gHashTable)
+  if (!gHashTable) {
     return NS_ERROR_NOT_INITIALIZED;
-
-  PROFILER_LABEL("Preferences", "WritePrefFile",
-                 js::ProfileEntry::Category::OTHER);
-
-  // execute a "safe" save by saving through a tempfile
-  rv = NS_NewSafeLocalFileOutputStream(getter_AddRefs(outStreamSink),
-                                       aFile,
-                                       -1,
-                                       0600);
-  if (NS_FAILED(rv)) 
-      return rv;
-  rv = NS_NewBufferedOutputStream(getter_AddRefs(outStream), outStreamSink, 4096);
-  if (NS_FAILED(rv)) 
-      return rv;  
-
-  // get the lines that we're supposed to be writing to the file
-  uint32_t prefCount;
-  UniquePtr<char*[]> valueArray = pref_savePrefs(gHashTable, &prefCount);
-
-  /* Sort the preferences to make a readable file on disk */
-  NS_QuickSort(valueArray.get(), prefCount, sizeof(char *),
-               pref_CompareStrings, nullptr);
-
-  // write out the file header
-  outStream->Write(kPrefFileHeader, sizeof(kPrefFileHeader) - 1, &writeAmount);
-
-  for (uint32_t valueIdx = 0; valueIdx < prefCount; valueIdx++) {
-    char*& pref = valueArray[valueIdx];
-    MOZ_ASSERT(pref);
-    outStream->Write(pref, strlen(pref), &writeAmount);
-    outStream->Write(NS_LINEBREAK, NS_LINEBREAK_LEN, &writeAmount);
-    free(pref);
-    pref = nullptr;
   }
 
-  // tell the safe output stream to overwrite the real prefs file
-  // (it'll abort if there were any errors during writing)
-  nsCOMPtr<nsISafeOutputStream> safeStream = do_QueryInterface(outStream);
-  NS_ASSERTION(safeStream, "expected a safe output stream!");
-  if (safeStream) {
-    rv = safeStream->Finish();
-    if (NS_FAILED(rv)) {
-      NS_WARNING("failed to save prefs file! possible data loss");
+  AUTO_PROFILER_LABEL("Preferences::WritePrefFile", OTHER);
+
+  if (AllowOffMainThreadSave()) {
+
+    nsresult rv = NS_OK;
+    mozilla::UniquePtr<PrefSaveData> prefs =
+      MakeUnique<PrefSaveData>(pref_savePrefs(gHashTable));
+
+    // Put the newly constructed preference data into sPendingWriteData
+    // for the next request to pick up
+    prefs.reset(PreferencesWriter::sPendingWriteData.exchange(prefs.release()));
+    if (prefs) {
+      // There was a previous request that hasn't been processed,
+      // and this is the data it had.
       return rv;
+    } else {
+      // There were no previous requests, dispatch one since
+      // sPendingWriteData has the up to date information.
+      nsCOMPtr<nsIEventTarget> target =
+        do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID, &rv);
+      if (NS_SUCCEEDED(rv)) {
+        bool async = aSaveMethod == SaveMethod::Asynchronous;
+        rv = target->Dispatch(new PWRunnable(aFile),
+                              async ? nsIEventTarget::DISPATCH_NORMAL :
+                                      nsIEventTarget::DISPATCH_SYNC);
+        return rv;
+      }
     }
+
+    // If we can't get the thread for writing, for whatever reason, do the
+    // main thread write after making some noise:
+    MOZ_ASSERT(false,"failed to get the target thread for OMT pref write");
   }
-  return NS_OK;
+
+  // This will do a main thread write.  It is safe to do it this way
+  // as AllowOffMainThreadSave() returns a consistent value for the
+  // lifetime of the parent process.
+  PrefSaveData prefsData = pref_savePrefs(gHashTable);
+  return PreferencesWriter::Write(aFile, prefsData);
 }
 
 static nsresult openPrefFile(nsIFile* aFile)
@@ -1063,8 +1279,8 @@ static nsresult openPrefFile(nsIFile* aFile)
   nsCOMPtr<nsIInputStream> inStr;
 
   nsresult rv = NS_NewLocalFileInputStream(getter_AddRefs(inStr), aFile);
-  if (NS_FAILED(rv)) 
-    return rv;        
+  if (NS_FAILED(rv))
+    return rv;
 
   int64_t fileSize64;
   rv = aFile->GetFileSize(&fileSize64);
@@ -1190,7 +1406,7 @@ pref_LoadPrefsInDir(nsIFile* aDir, char const *const *aSpecialFiles, uint32_t aS
   }
 
   prefFiles.Sort(pref_CompareFileNames, nullptr);
-  
+
   uint32_t arrayCount = prefFiles.Count();
   uint32_t i;
   for (i = 0; i < arrayCount; ++i) {
@@ -1271,7 +1487,8 @@ static nsresult pref_ReadPrefFromJar(nsZipArchive* jarReader, const char *name)
 // Initialize default preference JavaScript buffers from
 // appropriate TEXT resources
 //----------------------------------------------------------------------------------------
-static nsresult pref_InitInitialObjects()
+static Result<Ok, const char*>
+pref_InitInitialObjects()
 {
   nsresult rv;
 
@@ -1308,11 +1525,11 @@ static nsresult pref_InitInitialObjects()
   if (jarReader) {
     // Load jar:$gre/omni.jar!/greprefs.js
     rv = pref_ReadPrefFromJar(jarReader, "greprefs.js");
-    NS_ENSURE_SUCCESS(rv, rv);
+    NS_ENSURE_SUCCESS(rv, Err("pref_ReadPrefFromJar() failed"));
 
     // Load jar:$gre/omni.jar!/defaults/pref/*.js
     rv = jarReader->FindInit("defaults/pref/*.js$", &findPtr);
-    NS_ENSURE_SUCCESS(rv, rv);
+    NS_ENSURE_SUCCESS(rv, Err("jarReader->FindInit() failed"));
 
     find = findPtr;
     while (NS_SUCCEEDED(find->FindNext(&entryName, &entryNameLen))) {
@@ -1329,10 +1546,10 @@ static nsresult pref_InitInitialObjects()
     // Load $gre/greprefs.js
     nsCOMPtr<nsIFile> greprefsFile;
     rv = NS_GetSpecialDirectory(NS_GRE_DIR, getter_AddRefs(greprefsFile));
-    NS_ENSURE_SUCCESS(rv, rv);
+    NS_ENSURE_SUCCESS(rv, Err("NS_GetSpecialDirectory(NS_GRE_DIR) failed"));
 
     rv = greprefsFile->AppendNative(NS_LITERAL_CSTRING("greprefs.js"));
-    NS_ENSURE_SUCCESS(rv, rv);
+    NS_ENSURE_SUCCESS(rv, Err("greprefsFile->AppendNative() failed"));
 
     rv = openPrefFile(greprefsFile);
     if (NS_FAILED(rv))
@@ -1343,7 +1560,8 @@ static nsresult pref_InitInitialObjects()
   nsCOMPtr<nsIFile> defaultPrefDir;
 
   rv = NS_GetSpecialDirectory(NS_APP_PREF_DEFAULTS_50_DIR, getter_AddRefs(defaultPrefDir));
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS(
+    rv, Err("NS_GetSpecialDirectory(NS_APP_PREF_DEFAULTS_50_DIR) failed"));
 
   /* these pref file names should not be used: we process them after all other application pref files for backwards compatibility */
   static const char* specialFiles[] = {
@@ -1374,7 +1592,7 @@ static nsresult pref_InitInitialObjects()
     appJarReader = mozilla::Omnijar::GetReader(mozilla::Omnijar::GRE);
   if (appJarReader) {
     rv = appJarReader->FindInit("defaults/preferences/*.js$", &findPtr);
-    NS_ENSURE_SUCCESS(rv, rv);
+    NS_ENSURE_SUCCESS(rv, Err("appJarReader->FindInit() failed"));
     find = findPtr;
     prefEntries.Clear();
     while (NS_SUCCEEDED(find->FindNext(&entryName, &entryNameLen))) {
@@ -1389,7 +1607,8 @@ static nsresult pref_InitInitialObjects()
   }
 
   rv = pref_LoadPrefsInDirList(NS_APP_PREFS_DEFAULTS_DIR_LIST);
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS(
+    rv, Err("pref_LoadPrefsInDirList(NS_APP_PREFS_DEFAULTS_DIR_LIST) failed"));
 
   // Set up the correct default for toolkit.telemetry.enabled.
   // If this build has MOZ_TELEMETRY_ON_BY_DEFAULT *or* we're on the beta
@@ -1401,7 +1620,9 @@ static nsresult pref_InitInitialObjects()
 #ifdef MOZ_TELEMETRY_ON_BY_DEFAULT
     prerelease = true;
 #else
-    if (Preferences::GetDefaultCString(kChannelPref).EqualsLiteral("beta")) {
+    nsAutoCString prefValue;
+    Preferences::GetDefaultCString(kChannelPref, prefValue);
+    if (prefValue.EqualsLiteral("beta")) {
       prerelease = true;
     }
 #endif
@@ -1413,12 +1634,15 @@ static nsresult pref_InitInitialObjects()
 
   nsCOMPtr<nsIObserverService> observerService =
     mozilla::services::GetObserverService();
-  if (!observerService)
-    return NS_ERROR_FAILURE;
+  NS_ENSURE_SUCCESS(rv, Err("GetObserverService() failed (2)"));
 
   observerService->NotifyObservers(nullptr, NS_PREFSERVICE_APPDEFAULTS_TOPIC_ID, nullptr);
 
-  return pref_LoadPrefsInDirList(NS_EXT_PREFS_DEFAULTS_DIR_LIST);
+  rv = pref_LoadPrefsInDirList(NS_EXT_PREFS_DEFAULTS_DIR_LIST);
+  NS_ENSURE_SUCCESS(
+    rv, Err("pref_LoadPrefsInDirList(NS_EXT_PREFS_DEFAULTS_DIR_LIST) failed"));
+
+  return Ok();
 }
 
 
@@ -1462,87 +1686,47 @@ Preferences::GetFloat(const char* aPref, float* aResult)
 }
 
 // static
-nsAdoptingCString
-Preferences::GetCString(const char* aPref)
-{
-  nsAdoptingCString result;
-  PREF_CopyCharPref(aPref, getter_Copies(result), false);
-  return result;
-}
-
-// static
-nsAdoptingString
-Preferences::GetString(const char* aPref)
-{
-  nsAdoptingString result;
-  GetString(aPref, &result);
-  return result;
-}
-
-// static
 nsresult
-Preferences::GetCString(const char* aPref, nsACString* aResult)
+Preferences::GetCString(const char* aPref, nsACString& aResult)
 {
-  NS_PRECONDITION(aResult, "aResult must not be NULL");
   NS_ENSURE_TRUE(InitStaticMembers(), NS_ERROR_NOT_AVAILABLE);
-  nsAutoCString result;
-  nsresult rv = PREF_CopyCharPref(aPref, getter_Copies(result), false);
+  char* result;
+  nsresult rv = PREF_CopyCharPref(aPref, &result, false);
   if (NS_SUCCEEDED(rv)) {
-    *aResult = result;
+    aResult.Adopt(result);
   }
   return rv;
 }
 
 // static
 nsresult
-Preferences::GetString(const char* aPref, nsAString* aResult)
+Preferences::GetString(const char* aPref, nsAString& aResult)
 {
-  NS_PRECONDITION(aResult, "aResult must not be NULL");
   NS_ENSURE_TRUE(InitStaticMembers(), NS_ERROR_NOT_AVAILABLE);
   nsAutoCString result;
   nsresult rv = PREF_CopyCharPref(aPref, getter_Copies(result), false);
   if (NS_SUCCEEDED(rv)) {
-    CopyUTF8toUTF16(result, *aResult);
+    CopyUTF8toUTF16(result, aResult);
   }
   return rv;
 }
 
 // static
-nsAdoptingCString
-Preferences::GetLocalizedCString(const char* aPref)
-{
-  nsAdoptingCString result;
-  GetLocalizedCString(aPref, &result);
-  return result;
-}
-
-// static
-nsAdoptingString
-Preferences::GetLocalizedString(const char* aPref)
-{
-  nsAdoptingString result;
-  GetLocalizedString(aPref, &result);
-  return result;
-}
-
-// static
 nsresult
-Preferences::GetLocalizedCString(const char* aPref, nsACString* aResult)
+Preferences::GetLocalizedCString(const char* aPref, nsACString& aResult)
 {
-  NS_PRECONDITION(aResult, "aResult must not be NULL");
   nsAutoString result;
-  nsresult rv = GetLocalizedString(aPref, &result);
+  nsresult rv = GetLocalizedString(aPref, result);
   if (NS_SUCCEEDED(rv)) {
-    CopyUTF16toUTF8(result, *aResult);
+    CopyUTF16toUTF8(result, aResult);
   }
   return rv;
 }
 
 // static
 nsresult
-Preferences::GetLocalizedString(const char* aPref, nsAString* aResult)
+Preferences::GetLocalizedString(const char* aPref, nsAString& aResult)
 {
-  NS_PRECONDITION(aResult, "aResult must not be NULL");
   NS_ENSURE_TRUE(InitStaticMembers(), NS_ERROR_NOT_AVAILABLE);
   nsCOMPtr<nsIPrefLocalizedString> prefLocalString;
   nsresult rv = sRootBranch->GetComplexValue(aPref,
@@ -1550,7 +1734,7 @@ Preferences::GetLocalizedString(const char* aPref, nsAString* aResult)
                                              getter_AddRefs(prefLocalString));
   if (NS_SUCCEEDED(rv)) {
     NS_ASSERTION(prefLocalString, "Succeeded but the result is NULL");
-    prefLocalString->GetData(getter_Copies(*aResult));
+    prefLocalString->GetData(getter_Copies(aResult));
   }
   return rv;
 }
@@ -1837,6 +2021,15 @@ static void BoolVarChanged(const char* aPref, void* aClosure)
     Preferences::GetBool(aPref, cache->defaultValueBool);
 }
 
+static void
+CacheDataAppendElement(CacheData* aData)
+{
+  if (!gCacheData) {
+    MOZ_CRASH_UNSAFE_PRINTF("!gCacheData: %s", gCacheDataDesc);
+  }
+  gCacheData->AppendElement(aData);
+}
+
 // static
 nsresult
 Preferences::AddBoolVarCache(bool* aCache,
@@ -1852,7 +2045,7 @@ Preferences::AddBoolVarCache(bool* aCache,
   CacheData* data = new CacheData();
   data->cacheLocation = aCache;
   data->defaultValueBool = aDefault;
-  gCacheData->AppendElement(data);
+  CacheDataAppendElement(data);
   RegisterPriorityCallback(BoolVarChanged, aPref, data);
   return NS_OK;
 }
@@ -1879,7 +2072,7 @@ Preferences::AddIntVarCache(int32_t* aCache,
   CacheData* data = new CacheData();
   data->cacheLocation = aCache;
   data->defaultValueInt = aDefault;
-  gCacheData->AppendElement(data);
+  CacheDataAppendElement(data);
   RegisterPriorityCallback(IntVarChanged, aPref, data);
   return NS_OK;
 }
@@ -1906,7 +2099,7 @@ Preferences::AddUintVarCache(uint32_t* aCache,
   CacheData* data = new CacheData();
   data->cacheLocation = aCache;
   data->defaultValueUint = aDefault;
-  gCacheData->AppendElement(data);
+  CacheDataAppendElement(data);
   RegisterPriorityCallback(UintVarChanged, aPref, data);
   return NS_OK;
 }
@@ -1935,7 +2128,7 @@ Preferences::AddAtomicUintVarCache(Atomic<uint32_t, Order>* aCache,
   CacheData* data = new CacheData();
   data->cacheLocation = aCache;
   data->defaultValueUint = aDefault;
-  gCacheData->AppendElement(data);
+  CacheDataAppendElement(data);
   RegisterPriorityCallback(AtomicUintVarChanged<Order>, aPref, data);
   return NS_OK;
 }
@@ -1969,7 +2162,7 @@ Preferences::AddFloatVarCache(float* aCache,
   CacheData* data = new CacheData();
   data->cacheLocation = aCache;
   data->defaultValueFloat = aDefault;
-  gCacheData->AppendElement(data);
+  CacheDataAppendElement(data);
   RegisterPriorityCallback(FloatVarChanged, aPref, data);
   return NS_OK;
 }
@@ -1994,28 +2187,26 @@ Preferences::GetDefaultInt(const char* aPref, int32_t* aResult)
 
 // static
 nsresult
-Preferences::GetDefaultCString(const char* aPref, nsACString* aResult)
+Preferences::GetDefaultCString(const char* aPref, nsACString& aResult)
 {
-  NS_PRECONDITION(aResult, "aResult must not be NULL");
   NS_ENSURE_TRUE(InitStaticMembers(), NS_ERROR_NOT_AVAILABLE);
-  nsAutoCString result;
-  nsresult rv = PREF_CopyCharPref(aPref, getter_Copies(result), true);
+  char* result;
+  nsresult rv = PREF_CopyCharPref(aPref, &result, true);
   if (NS_SUCCEEDED(rv)) {
-    *aResult = result;
+    aResult.Adopt(result);
   }
   return rv;
 }
 
 // static
 nsresult
-Preferences::GetDefaultString(const char* aPref, nsAString* aResult)
+Preferences::GetDefaultString(const char* aPref, nsAString& aResult)
 {
-  NS_PRECONDITION(aResult, "aResult must not be NULL");
   NS_ENSURE_TRUE(InitStaticMembers(), NS_ERROR_NOT_AVAILABLE);
   nsAutoCString result;
   nsresult rv = PREF_CopyCharPref(aPref, getter_Copies(result), true);
   if (NS_SUCCEEDED(rv)) {
-    CopyUTF8toUTF16(result, *aResult);
+    CopyUTF8toUTF16(result, aResult);
   }
   return rv;
 }
@@ -2023,12 +2214,12 @@ Preferences::GetDefaultString(const char* aPref, nsAString* aResult)
 // static
 nsresult
 Preferences::GetDefaultLocalizedCString(const char* aPref,
-                                        nsACString* aResult)
+                                        nsACString& aResult)
 {
   nsAutoString result;
-  nsresult rv = GetDefaultLocalizedString(aPref, &result);
+  nsresult rv = GetDefaultLocalizedString(aPref, result);
   if (NS_SUCCEEDED(rv)) {
-    CopyUTF16toUTF8(result, *aResult);
+    CopyUTF16toUTF8(result, aResult);
   }
   return rv;
 }
@@ -2036,7 +2227,7 @@ Preferences::GetDefaultLocalizedCString(const char* aPref,
 // static
 nsresult
 Preferences::GetDefaultLocalizedString(const char* aPref,
-                                       nsAString* aResult)
+                                       nsAString& aResult)
 {
   NS_ENSURE_TRUE(InitStaticMembers(), NS_ERROR_NOT_AVAILABLE);
   nsCOMPtr<nsIPrefLocalizedString> prefLocalString;
@@ -2046,45 +2237,9 @@ Preferences::GetDefaultLocalizedString(const char* aPref,
                                         getter_AddRefs(prefLocalString));
   if (NS_SUCCEEDED(rv)) {
     NS_ASSERTION(prefLocalString, "Succeeded but the result is NULL");
-    prefLocalString->GetData(getter_Copies(*aResult));
+    prefLocalString->GetData(getter_Copies(aResult));
   }
   return rv;
-}
-
-// static
-nsAdoptingString
-Preferences::GetDefaultString(const char* aPref)
-{
-  nsAdoptingString result;
-  GetDefaultString(aPref, &result);
-  return result;
-}
-
-// static
-nsAdoptingCString
-Preferences::GetDefaultCString(const char* aPref)
-{
-  nsAdoptingCString result;
-  PREF_CopyCharPref(aPref, getter_Copies(result), true);
-  return result;
-}
-
-// static
-nsAdoptingString
-Preferences::GetDefaultLocalizedString(const char* aPref)
-{
-  nsAdoptingString result;
-  GetDefaultLocalizedString(aPref, &result);
-  return result;
-}
-
-// static
-nsAdoptingCString
-Preferences::GetDefaultLocalizedCString(const char* aPref)
-{
-  nsAdoptingCString result;
-  GetDefaultLocalizedCString(aPref, &result);
-  return result;
 }
 
 // static

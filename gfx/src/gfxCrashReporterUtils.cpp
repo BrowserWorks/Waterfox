@@ -68,6 +68,7 @@ ObserverToDestroyFeaturesAlreadyReported::Observe(nsISupports* aSubject,
 
 class RegisterObserverRunnable : public Runnable {
 public:
+  RegisterObserverRunnable() : Runnable("RegisterObserverRunnable") {}
   NS_IMETHOD Run() override {
     // LeakLog made me do this. Basically, I just wanted gFeaturesAlreadyReported to be a static nsTArray<nsCString>,
     // and LeakLog was complaining about leaks like this:
@@ -87,7 +88,8 @@ public:
 class AppendAppNotesRunnable : public CancelableRunnable {
 public:
   explicit AppendAppNotesRunnable(const nsACString& aFeatureStr)
-    : mFeatureString(aFeatureStr)
+    : CancelableRunnable("AppendAppNotesRunnable")
+    , mFeatureString(aFeatureStr)
   {
   }
 
@@ -108,8 +110,7 @@ ScopedGfxFeatureReporter::WriteAppNote(char statusChar)
   if (!gFeaturesAlreadyReported) {
     gFeaturesAlreadyReported = new nsTArray<nsCString>;
     nsCOMPtr<nsIRunnable> r = new RegisterObserverRunnable();
-    SystemGroup::Dispatch("ScopedGfxFeatureReporter::RegisterObserverRunnable",
-                          TaskCategory::Other, r.forget());
+    SystemGroup::Dispatch(TaskCategory::Other, r.forget());
   }
 
   nsAutoCString featureString;
@@ -130,8 +131,7 @@ ScopedGfxFeatureReporter::AppNote(const nsACString& aMessage)
     CrashReporter::AppendAppNotesToCrashReport(aMessage);
   } else {
     nsCOMPtr<nsIRunnable> r = new AppendAppNotesRunnable(aMessage);
-    SystemGroup::Dispatch("ScopedGfxFeatureReporter::AppendAppNotesRunnable",
-                          TaskCategory::Other, r.forget());
+    SystemGroup::Dispatch(TaskCategory::Other, r.forget());
   }
 }
   

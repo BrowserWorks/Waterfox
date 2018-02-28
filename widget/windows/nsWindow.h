@@ -67,7 +67,7 @@ struct MSGResult;
  * Native WIN32 window wrapper.
  */
 
-class nsWindow : public nsWindowBase
+class nsWindow final : public nsWindowBase
 {
   typedef mozilla::TimeStamp TimeStamp;
   typedef mozilla::TimeDuration TimeDuration;
@@ -78,7 +78,7 @@ class nsWindow : public nsWindowBase
   typedef mozilla::widget::IMEContext IMEContext;
 
 public:
-  nsWindow();
+  explicit nsWindow(bool aIsChildWindow = false);
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -133,6 +133,7 @@ public:
                                           int32_t aVertical) override;
   virtual void            PlaceBehind(nsTopLevelWidgetZPlacement aPlacement, nsIWidget *aWidget, bool aActivate) override;
   virtual void            SetSizeMode(nsSizeMode aMode) override;
+  virtual void            SuppressAnimation(bool aSuppress) override;
   virtual void            Enable(bool aState) override;
   virtual bool            IsEnabled() const override;
   virtual nsresult        SetFocus(bool aRaise) override;
@@ -636,6 +637,9 @@ protected:
   // Whether we're in the process of sending a WM_SETTEXT ourselves
   bool                  mSendingSetText;
 
+  // Whether we we're created as a NS_CHILD_CID window (aka ChildWindow) or not.
+  bool                  mIsChildWindow : 1;
+
   // The point in time at which the last paint completed. We use this to avoid
   //  painting too rapidly in response to frequent input events.
   TimeStamp mLastPaintEndTime;
@@ -661,18 +665,6 @@ protected:
 
   // Pointer events processing and management
   WinPointerEvents mPointerEvents;
-};
-
-/**
- * A child window is a window with different style.
- */
-class ChildWindow : public nsWindow {
-
-public:
-  ChildWindow() {}
-
-protected:
-  virtual DWORD WindowStyle();
 };
 
 #endif // Window_h__

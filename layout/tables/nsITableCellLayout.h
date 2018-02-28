@@ -7,6 +7,10 @@
 
 #include "nsQueryFrame.h"
 
+#define MAX_ROWSPAN 65534 // the cellmap can not handle more.
+#define MAX_COLSPAN 1000 // limit as IE and opera do.  If this ever changes,
+                         // change COL_SPAN_OFFSET/COL_SPAN_SHIFT accordingly.
+
 /**
  * nsITableCellLayout
  * interface for layout objects that act like table cells.
@@ -24,7 +28,7 @@ public:
 
   /** return the mapped cell's row index (starting at 0 for the first row) */
   virtual nsresult GetRowIndex(int32_t &aRowIndex) const = 0;
-  
+
   /** return the mapped cell's column index (starting at 0 for the first column) */
   virtual nsresult GetColIndex(int32_t &aColIndex) const = 0;
 };

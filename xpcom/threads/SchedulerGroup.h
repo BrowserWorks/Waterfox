@@ -16,6 +16,7 @@
 
 class nsIEventTarget;
 class nsIRunnable;
+class nsISerialEventTarget;
 
 namespace mozilla {
 class AbstractThread;
@@ -66,6 +67,14 @@ public:
     return !sRunningDispatcher || mAccessValid;
   }
 
+  // This function returns true if it's currently safe to run unlabeled code
+  // with no known SchedulerGroup. It will only return true if we're inside an
+  // unlabeled runnable.
+  static bool IsSafeToRunUnlabeled()
+  {
+    return !sRunningDispatcher;
+  }
+
   // Ensure that it's valid to access the TabGroup at this time.
   void ValidateAccess() const
   {
@@ -90,6 +99,8 @@ public:
     NS_DECLARE_STATIC_IID_ACCESSOR(NS_SCHEDULERGROUPRUNNABLE_IID);
 
  private:
+    friend class SchedulerGroup;
+
     ~Runnable() = default;
 
     nsCOMPtr<nsIRunnable> mRunnable;
@@ -99,11 +110,10 @@ public:
 
   bool* GetValidAccessPtr() { return &mAccessValid; }
 
-  virtual nsresult Dispatch(const char* aName,
-                            TaskCategory aCategory,
+  virtual nsresult Dispatch(TaskCategory aCategory,
                             already_AddRefed<nsIRunnable>&& aRunnable);
 
-  virtual nsIEventTarget* EventTargetFor(TaskCategory aCategory) const;
+  virtual nsISerialEventTarget* EventTargetFor(TaskCategory aCategory) const;
 
   // Must always be called on the main thread. The returned AbstractThread can
   // always be used off the main thread.
@@ -113,8 +123,7 @@ public:
   // requested type.
   virtual dom::TabGroup* AsTabGroup() { return nullptr; }
 
-  static nsresult UnlabeledDispatch(const char* aName,
-                                    TaskCategory aCategory,
+  static nsresult UnlabeledDispatch(TaskCategory aCategory,
                                     already_AddRefed<nsIRunnable>&& aRunnable);
 
   static void MarkVsyncReceived();
@@ -122,20 +131,22 @@ public:
   static void MarkVsyncRan();
 
 protected:
+  static nsresult InternalUnlabeledDispatch(TaskCategory aCategory,
+                                            already_AddRefed<Runnable>&& aRunnable);
+
   // Implementations are guaranteed that this method is called on the main
   // thread.
   virtual AbstractThread* AbstractMainThreadForImpl(TaskCategory aCategory);
 
   // Helper method to create an event target specific to a particular TaskCategory.
-  virtual already_AddRefed<nsIEventTarget>
+  virtual already_AddRefed<nsISerialEventTarget>
   CreateEventTargetFor(TaskCategory aCategory);
 
   // Given an event target returned by |dispatcher->CreateEventTargetFor|, this
   // function returns |dispatcher|.
   static SchedulerGroup* FromEventTarget(nsIEventTarget* aEventTarget);
 
-  nsresult LabeledDispatch(const char* aName,
-                           TaskCategory aCategory,
+  nsresult LabeledDispatch(TaskCategory aCategory,
                            already_AddRefed<nsIRunnable>&& aRunnable);
 
   void CreateEventTargets(bool aNeedValidation);
@@ -153,7 +164,7 @@ protected:
   static SchedulerGroup* sRunningDispatcher;
   bool mAccessValid;
 
-  nsCOMPtr<nsIEventTarget> mEventTargets[size_t(TaskCategory::Count)];
+  nsCOMPtr<nsISerialEventTarget> mEventTargets[size_t(TaskCategory::Count)];
   RefPtr<AbstractThread> mAbstractThreads[size_t(TaskCategory::Count)];
 };
 

@@ -160,7 +160,8 @@ class DecodePoolWorker : public Runnable
 {
 public:
   explicit DecodePoolWorker(DecodePoolImpl* aImpl)
-    : mImpl(aImpl)
+    : Runnable("image::DecodePoolWorker")
+    , mImpl(aImpl)
   { }
 
   NS_IMETHOD Run() override
@@ -180,9 +181,7 @@ public:
         case Work::Type::SHUTDOWN:
           DecodePoolImpl::ShutdownThread(thisThread);
 
-#ifdef MOZ_GECKO_PROFILER
           profiler_unregister_thread();
-#endif // MOZ_GECKO_PROFILER
 
           return NS_OK;
 
@@ -317,10 +316,13 @@ DecodePool::AsyncRun(IDecodingTask* aTask)
 }
 
 bool
-DecodePool::SyncRunIfPreferred(IDecodingTask* aTask)
+DecodePool::SyncRunIfPreferred(IDecodingTask* aTask, const nsCString& aURI)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aTask);
+
+  AUTO_PROFILER_LABEL_DYNAMIC("DecodePool::SyncRunIfPreferred", GRAPHICS,
+                              aURI.get());
 
   if (aTask->ShouldPreferSyncRun()) {
     aTask->Run();
@@ -332,10 +334,14 @@ DecodePool::SyncRunIfPreferred(IDecodingTask* aTask)
 }
 
 void
-DecodePool::SyncRunIfPossible(IDecodingTask* aTask)
+DecodePool::SyncRunIfPossible(IDecodingTask* aTask, const nsCString& aURI)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aTask);
+
+  AUTO_PROFILER_LABEL_DYNAMIC("DecodePool::SyncRunIfPossible", GRAPHICS,
+                              aURI.get());
+
   aTask->Run();
 }
 

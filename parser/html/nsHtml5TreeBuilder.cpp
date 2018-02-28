@@ -204,7 +204,6 @@ nsHtml5TreeBuilder::doctype(nsIAtom* name,
     return;
   }
   errStrayDoctype();
-  return;
 }
 
 void 
@@ -232,7 +231,6 @@ nsHtml5TreeBuilder::comment(char16_t* buf, int32_t start, int32_t length)
   }
   flushCharacters();
   appendComment(stack[currentPtr]->node, buf, start, length);
-  return;
 }
 
 void 
@@ -1297,54 +1295,6 @@ nsHtml5TreeBuilder::startTag(nsHtml5ElementName* elementName, nsHtml5HtmlAttribu
               appendVoidElementToCurrentMayFoster(name, attributes, formPointer);
               selfClosing = false;
               attributes = nullptr;
-              NS_HTML5_BREAK(starttagloop);
-            }
-            case ISINDEX: {
-              errIsindex();
-              if (!!formPointer && !isTemplateContents()) {
-                NS_HTML5_BREAK(starttagloop);
-              }
-              implicitlyCloseP();
-              nsHtml5HtmlAttributes* formAttrs = new nsHtml5HtmlAttributes(0);
-              int32_t actionIndex = attributes->getIndex(nsHtml5AttributeName::ATTR_ACTION);
-              if (actionIndex > -1) {
-                formAttrs->addAttribute(nsHtml5AttributeName::ATTR_ACTION, attributes->getValueNoBoundsCheck(actionIndex), attributes->getLineNoBoundsCheck(actionIndex));
-              }
-              appendToCurrentNodeAndPushFormElementMayFoster(formAttrs);
-              appendVoidElementToCurrentMayFoster(nsHtml5ElementName::ELT_HR, nsHtml5HtmlAttributes::EMPTY_ATTRIBUTES);
-              appendToCurrentNodeAndPushElementMayFoster(nsHtml5ElementName::ELT_LABEL, nsHtml5HtmlAttributes::EMPTY_ATTRIBUTES);
-              int32_t promptIndex = attributes->getIndex(nsHtml5AttributeName::ATTR_PROMPT);
-              if (promptIndex > -1) {
-                autoJArray<char16_t,int32_t> prompt = nsHtml5Portability::newCharArrayFromString(attributes->getValueNoBoundsCheck(promptIndex));
-                appendCharacters(stack[currentPtr]->node, prompt, 0, prompt.length);
-              } else {
-                appendIsindexPrompt(stack[currentPtr]->node);
-              }
-              nsHtml5HtmlAttributes* inputAttributes = new nsHtml5HtmlAttributes(0);
-              inputAttributes->addAttribute(nsHtml5AttributeName::ATTR_NAME, nsHtml5Portability::newStringFromLiteral("isindex"), tokenizer->getLineNumber());
-              for (int32_t i = 0; i < attributes->getLength(); i++) {
-                nsIAtom* attributeQName =
-                  attributes->getLocalNameNoBoundsCheck(i);
-                if (nsGkAtoms::name == attributeQName ||
-                    nsGkAtoms::prompt == attributeQName) {
-                  attributes->releaseValue(i);
-                } else if (nsGkAtoms::action != attributeQName) {
-                  inputAttributes->AddAttributeWithLocal(
-                    attributeQName,
-                    attributes->getValueNoBoundsCheck(i),
-                    attributes->getLineNoBoundsCheck(i));
-                }
-              }
-              attributes->clearWithoutReleasingContents();
-              appendVoidElementToCurrentMayFoster(
-                nsGkAtoms::input, inputAttributes, formPointer);
-              pop();
-              appendVoidElementToCurrentMayFoster(nsHtml5ElementName::ELT_HR, nsHtml5HtmlAttributes::EMPTY_ATTRIBUTES);
-              pop();
-              if (!isTemplateContents()) {
-                formPointer = nullptr;
-              }
-              selfClosing = false;
               NS_HTML5_BREAK(starttagloop);
             }
             case TEXTAREA: {
@@ -2801,7 +2751,6 @@ nsHtml5TreeBuilder::endTag(nsHtml5ElementName* elementName)
           case INPUT:
           case KEYGEN:
           case HR:
-          case ISINDEX:
           case IFRAME:
           case NOEMBED:
           case NOFRAMES:
@@ -3392,7 +3341,6 @@ nsHtml5TreeBuilder::closeTheCell(int32_t eltPos)
   }
   clearTheListOfActiveFormattingElementsUpToTheLastMarker();
   mode = IN_ROW;
-  return;
 }
 
 int32_t 

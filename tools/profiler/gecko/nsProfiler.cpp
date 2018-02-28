@@ -24,6 +24,7 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/TypedArray.h"
 #include "nsLocalFile.h"
+#include "nsThreadUtils.h"
 #include "ProfilerParent.h"
 #include "platform.h"
 
@@ -90,17 +91,6 @@ nsProfiler::CanProfile(bool *aCanProfile)
   return NS_OK;
 }
 
-static bool
-HasFeature(const char** aFeatures, uint32_t aFeatureCount, const char* aFeature)
-{
-  for (size_t i = 0; i < aFeatureCount; i++) {
-    if (strcmp(aFeatures[i], aFeature) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
 NS_IMETHODIMP
 nsProfiler::StartProfiler(uint32_t aEntries, double aInterval,
                           const char** aFeatures, uint32_t aFeatureCount,
@@ -110,19 +100,9 @@ nsProfiler::StartProfiler(uint32_t aEntries, double aInterval,
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  #define ADD_FEATURE_BIT(n_, str_, Name_) \
-    if (HasFeature(aFeatures, aFeatureCount, str_)) { \
-      features |= ProfilerFeature::Name_; \
-    }
-
-  // Convert the array of strings to a bitfield.
-  uint32_t features = 0;
-  PROFILER_FOR_EACH_FEATURE(ADD_FEATURE_BIT)
-
-  #undef ADD_FEATURE_BIT
-
   ResetGathering();
 
+  uint32_t features = ParseFeaturesFromStringArray(aFeatures, aFeatureCount);
   profiler_start(aEntries, aInterval, features, aFilters, aFilterCount);
 
   return NS_OK;
@@ -167,7 +147,7 @@ nsProfiler::ResumeSampling()
 NS_IMETHODIMP
 nsProfiler::AddMarker(const char *aMarker)
 {
-  PROFILER_MARKER(aMarker);
+  profiler_add_marker(aMarker);
   return NS_OK;
 }
 
@@ -274,7 +254,7 @@ nsProfiler::GetProfileDataAsync(double aSinceTime, JSContext* aCx,
   }
 
   StartGathering(aSinceTime)->Then(
-    AbstractThread::MainThread(), __func__,
+    GetMainThreadSerialEventTarget(), __func__,
     [promise](nsCString aResult) {
       AutoJSAPI jsapi;
       if (NS_WARN_IF(!jsapi.Init(promise->GlobalJSObject()))) {
@@ -342,7 +322,7 @@ nsProfiler::GetProfileDataAsArrayBuffer(double aSinceTime, JSContext* aCx,
   }
 
   StartGathering(aSinceTime)->Then(
-    AbstractThread::MainThread(), __func__,
+    GetMainThreadSerialEventTarget(), __func__,
     [promise](nsCString aResult) {
       AutoJSAPI jsapi;
       if (NS_WARN_IF(!jsapi.Init(promise->GlobalJSObject()))) {
@@ -383,7 +363,7 @@ nsProfiler::DumpProfileToFileAsync(const nsACString& aFilename,
   nsCString filename(aFilename);
 
   StartGathering(aSinceTime)->Then(
-    AbstractThread::MainThread(), __func__,
+    GetMainThreadSerialEventTarget(), __func__,
     [filename](const nsCString& aResult) {
       nsCOMPtr<nsIFile> file = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID);
       nsresult rv = file->InitWithNativePath(filename);
@@ -417,13 +397,12 @@ nsProfiler::IsActive(bool *aIsActive)
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsProfiler::GetFeatures(uint32_t* aCount, char*** aFeatureList)
+static void
+GetArrayOfStringsForFeatures(uint32_t aFeatures,
+                             uint32_t* aCount, char*** aFeatureList)
 {
-  uint32_t features = profiler_get_available_features();
-
   #define COUNT_IF_SET(n_, str_, Name_) \
-    if (ProfilerFeature::Has##Name_(features)) { \
+    if (ProfilerFeature::Has##Name_(aFeatures)) { \
       len++; \
     }
 
@@ -436,7 +415,7 @@ nsProfiler::GetFeatures(uint32_t* aCount, char*** aFeatureList)
   auto featureList = static_cast<char**>(moz_xmalloc(len * sizeof(char*)));
 
   #define DUP_IF_SET(n_, str_, Name_) \
-    if (ProfilerFeature::Has##Name_(features)) { \
+    if (ProfilerFeature::Has##Name_(aFeatures)) { \
       size_t strLen = strlen(str_); \
       featureList[i] = static_cast<char*>( \
         nsMemory::Clone(str_, (strLen + 1) * sizeof(char))); \
@@ -447,10 +426,24 @@ nsProfiler::GetFeatures(uint32_t* aCount, char*** aFeatureList)
   size_t i = 0;
   PROFILER_FOR_EACH_FEATURE(DUP_IF_SET)
 
-  #undef STRDUP_IF_SET
+  #undef DUP_IF_SET
 
   *aFeatureList = featureList;
   *aCount = len;
+}
+
+NS_IMETHODIMP
+nsProfiler::GetFeatures(uint32_t* aCount, char*** aFeatureList)
+{
+  uint32_t features = profiler_get_available_features();
+  GetArrayOfStringsForFeatures(features, aCount, aFeatureList);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsProfiler::GetAllFeatures(uint32_t* aCount, char*** aFeatureList)
+{
+  GetArrayOfStringsForFeatures((uint32_t)-1, aCount, aFeatureList);
   return NS_OK;
 }
 
@@ -545,7 +538,7 @@ nsProfiler::ReceiveShutdownProfile(const nsCString& aProfile)
   if (mExitProfiles.Length() >= MAX_SUBPROCESS_EXIT_PROFILES) {
     mExitProfiles.RemoveElementAt(0);
   }
-  mExitProfiles.AppendElement(aProfile);
+  mExitProfiles.AppendElement(ExitProfile{ aProfile, TimeStamp::Now() });
 }
 
 RefPtr<nsProfiler::GatheringPromise>
@@ -572,9 +565,13 @@ nsProfiler::StartGathering(double aSinceTime)
 
   mWriter.emplace();
 
+  TimeStamp thisProcessFirstSampleTime;
+
   // Start building up the JSON result and grab the profile from this process.
   mWriter->Start(SpliceableJSONWriter::SingleLineStyle);
-  if (!profiler_stream_json_for_this_process(*mWriter, aSinceTime)) {
+  if (!profiler_stream_json_for_this_process(*mWriter, aSinceTime,
+                                             /* aIsShuttingDown */ true,
+                                             &thisProcessFirstSampleTime)) {
     // The profiler is inactive. This either means that it was inactive even
     // at the time that ProfileGatherer::Start() was called, or that it was
     // stopped on a different thread since that call. Either way, we need to
@@ -586,9 +583,15 @@ nsProfiler::StartGathering(double aSinceTime)
 
   // If we have any process exit profiles, add them immediately, and clear
   // mExitProfiles.
-  for (size_t i = 0; i < mExitProfiles.Length(); ++i) {
-    if (!mExitProfiles[i].IsEmpty()) {
-      mWriter->Splice(mExitProfiles[i].get());
+  for (auto& exitProfile : mExitProfiles) {
+    if (thisProcessFirstSampleTime &&
+        exitProfile.mGatherTime < thisProcessFirstSampleTime) {
+      // Don't include exit profiles that have no overlap with the profile
+      // from our own process.
+      continue;
+    }
+    if (!exitProfile.mJSON.IsEmpty()) {
+      mWriter->Splice(exitProfile.mJSON.get());
     }
   }
   mExitProfiles.Clear();
@@ -604,7 +607,7 @@ nsProfiler::StartGathering(double aSinceTime)
   mPendingProfiles = profiles.Length();
   RefPtr<nsProfiler> self = this;
   for (auto profile : profiles) {
-    profile->Then(AbstractThread::MainThread(), __func__,
+    profile->Then(GetMainThreadSerialEventTarget(), __func__,
       [self](const nsCString& aResult) {
         self->GatheredOOPProfile(aResult);
       },

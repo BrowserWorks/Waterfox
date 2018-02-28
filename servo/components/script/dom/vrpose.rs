@@ -32,7 +32,9 @@ unsafe fn update_or_create_typed_array(cx: *mut JSContext,
     match src {
         Some(data) => {
             if dst.get().is_null() {
-                let _ = Float32Array::create(cx, CreateWith::Slice(data), dst.handle_mut());
+                rooted!(in (cx) let mut array = ptr::null_mut());
+                let _ = Float32Array::create(cx, CreateWith::Slice(data), array.handle_mut());
+                (*dst).set(array.get());
             } else {
                 typedarray!(in(cx) let array: Float32Array = dst.get());
                 if let Ok(mut array) = array {
@@ -56,7 +58,7 @@ fn heap_to_option(heap: &Heap<*mut JSObject>) -> Option<NonZero<*mut JSObject>> 
         None
     } else {
         unsafe {
-            Some(NonZero::new(js_object))
+            Some(NonZero::new_unchecked(js_object))
         }
     }
 }

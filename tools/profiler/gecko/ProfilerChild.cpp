@@ -39,6 +39,21 @@ ProfilerChild::RecvStart(const ProfilerInitParams& params)
 }
 
 mozilla::ipc::IPCResult
+ProfilerChild::RecvEnsureStarted(const ProfilerInitParams& params)
+{
+  nsTArray<const char*> filterArray;
+  for (size_t i = 0; i < params.filters().Length(); ++i) {
+    filterArray.AppendElement(params.filters()[i].get());
+  }
+
+  profiler_ensure_started(params.entries(), params.interval(),
+                          params.features(),
+                          filterArray.Elements(), filterArray.Length());
+
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
 ProfilerChild::RecvStop()
 {
   profiler_stop();
@@ -60,10 +75,11 @@ ProfilerChild::RecvResume()
 }
 
 static nsCString
-CollectProfileOrEmptyString()
+CollectProfileOrEmptyString(bool aIsShuttingDown)
 {
   nsCString profileCString;
-  UniquePtr<char[]> profile = profiler_get_profile();
+  UniquePtr<char[]> profile =
+    profiler_get_profile(/* aSinceTime */ 0, aIsShuttingDown);
   if (profile) {
     profileCString = nsCString(profile.get(), strlen(profile.get()));
   } else {
@@ -75,7 +91,7 @@ CollectProfileOrEmptyString()
 mozilla::ipc::IPCResult
 ProfilerChild::RecvGatherProfile(GatherProfileResolver&& aResolve)
 {
-  aResolve(CollectProfileOrEmptyString());
+  aResolve(CollectProfileOrEmptyString(/* aIsShuttingDown */ false));
   return IPC_OK();
 }
 
@@ -96,7 +112,7 @@ ProfilerChild::Destroy()
 nsCString
 ProfilerChild::GrabShutdownProfile()
 {
-  return CollectProfileOrEmptyString();
+  return CollectProfileOrEmptyString(/* aIsShuttingDown */ true);
 }
 
 } // namespace mozilla

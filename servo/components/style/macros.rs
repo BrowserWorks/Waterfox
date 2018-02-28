@@ -17,7 +17,7 @@ macro_rules! try_match_ident_ignore_ascii_case {
             _ => Err(()),
         })
         .map_err(|()| {
-            ::selectors::parser::SelectorParseError::UnexpectedIdent(__ident).into()
+            ::selectors::parser::SelectorParseError::UnexpectedIdent(__ident.clone()).into()
         })
     }
 }
@@ -82,16 +82,10 @@ macro_rules! add_impls_for_keyword_enum {
 
 macro_rules! define_keyword_type {
     ($name: ident, $css: expr) => {
-        #[derive(Clone, PartialEq, Copy)]
-        #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
         #[allow(missing_docs)]
+        #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+        #[derive(Clone, Copy, PartialEq, ToCss)]
         pub struct $name;
-
-        impl ::style_traits::ToCss for $name {
-            fn to_css<W>(&self, dest: &mut W) -> ::std::fmt::Result where W: ::std::fmt::Write {
-                write!(dest, $css)
-            }
-        }
 
         impl $crate::properties::animated_properties::Animatable for $name {
             #[inline]
@@ -116,6 +110,12 @@ macro_rules! define_keyword_type {
         }
 
         impl $crate::values::computed::ComputedValueAsSpecified for $name {}
+        impl $crate::values::animated::AnimatedValueAsComputed for $name {}
         no_viewport_percentage!($name);
+
+        impl $crate::values::animated::ToAnimatedZero for $name {
+            #[inline]
+            fn to_animated_zero(&self) -> Result<Self, ()> { Ok($name) }
+        }
     };
 }

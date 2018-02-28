@@ -292,6 +292,9 @@ IsValidGUID(const nsACString& aGUID)
 void
 TruncateTitle(const nsACString& aTitle, nsACString& aTrimmed)
 {
+  if (aTitle.IsVoid()) {
+    return;
+  }
   aTrimmed = aTitle;
   if (aTitle.Length() > TITLE_LENGTH_MAX) {
     aTrimmed = StringHead(aTitle, TITLE_LENGTH_MAX);
@@ -316,36 +319,6 @@ GetHiddenState(bool aIsRedirect,
          aTransitionType == nsINavHistoryService::TRANSITION_EMBED ||
          aIsRedirect;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-//// PlacesEvent
-
-PlacesEvent::PlacesEvent(const char* aTopic)
-: mTopic(aTopic)
-{
-}
-
-NS_IMETHODIMP
-PlacesEvent::Run()
-{
-  Notify();
-  return NS_OK;
-}
-
-void
-PlacesEvent::Notify()
-{
-  NS_ASSERTION(NS_IsMainThread(), "Must only be used on the main thread!");
-  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-  if (obs) {
-    (void)obs->NotifyObservers(nullptr, mTopic, nullptr);
-  }
-}
-
-NS_IMPL_ISUPPORTS_INHERITED0(
-  PlacesEvent
-, Runnable
-)
 
 ////////////////////////////////////////////////////////////////////////////////
 //// AsyncStatementCallbackNotifier

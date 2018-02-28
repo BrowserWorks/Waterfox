@@ -62,6 +62,12 @@ GPUProcessHost::WaitForLaunch()
 
   int32_t timeoutMs = gfxPrefs::GPUProcessTimeoutMs();
 
+  // If one of the following environment variables are set we can effectively
+  // ignore the timeout - as we can guarantee the compositor process will be terminated
+  if (PR_GetEnv("MOZ_DEBUG_CHILD_PROCESS") || PR_GetEnv("MOZ_DEBUG_CHILD_PAUSE")) {
+    timeoutMs = 0;
+  }
+
   // Our caller expects the connection to be finished after we return, so we
   // immediately set up the IPDL actor and fire callbacks. The IO thread will
   // still dispatch a notification to the main thread - we'll just ignore it.
@@ -183,25 +189,18 @@ GPUProcessHost::Shutdown()
 void
 GPUProcessHost::OnChannelClosed()
 {
-  if (!mShutdownRequested) {
+  mChannelClosed = true;
+
+  if (!mShutdownRequested && mListener) {
     // This is an unclean shutdown. Notify our listener that we're going away.
-    mChannelClosed = true;
-    if (mListener) {
-      mListener->OnProcessUnexpectedShutdown(this);
-    }
+    mListener->OnProcessUnexpectedShutdown(this);
+  } else {
+    DestroyProcess();
   }
 
   // Release the actor.
   GPUChild::Destroy(Move(mGPUChild));
   MOZ_ASSERT(!mGPUChild);
-
-  // If the owner of GPUProcessHost already requested shutdown, we can now
-  // schedule destruction. Otherwise we must wait for someone to call
-  // Shutdown. Note that GPUProcessManager calls Shutdown within
-  // OnProcessUnexpectedShutdown.
-  if (mShutdownRequested) {
-    DestroyProcess();
-  }
 }
 
 void

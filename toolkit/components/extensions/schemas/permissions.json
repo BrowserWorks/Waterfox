@@ -33,7 +33,7 @@
           },
           "origins": {
             "type": "array",
-            "items": { "$ref": "manifest.MatchPattern" },
+            "items": { "$ref": "manifest.MatchPatternInternal" },
             "optional": true,
             "default": []
           }
@@ -86,6 +86,7 @@
         "type": "function",
         "allowedContexts": ["content"],
         "async": "callback",
+        "requireUserInput": true,
         "description": "Request the given permissions.",
         "parameters": [
           {

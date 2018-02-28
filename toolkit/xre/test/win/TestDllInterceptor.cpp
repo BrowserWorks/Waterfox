@@ -316,6 +316,13 @@ bool TestCreateFileA(void* aFunc)
   return true;
 }
 
+bool TestQueryDosDeviceW(void* aFunc)
+{
+  auto patchedQueryDosDeviceW =
+    reinterpret_cast<decltype(&QueryDosDeviceW)>(aFunc);
+  return patchedQueryDosDeviceW(nullptr, nullptr, 0) == 0;
+}
+
 bool TestInSendMessageEx(void* aFunc)
 {
   auto patchedInSendMessageEx =
@@ -425,6 +432,14 @@ bool TestTlsFree(void* aFunc)
   return sTlsIndex != 0 && patchedTlsFree(sTlsIndex);
 }
 
+bool TestPrintDlgW(void* aFunc)
+{
+  auto patchedPrintDlgW =
+    reinterpret_cast<decltype(&PrintDlgW)>(aFunc);
+  patchedPrintDlgW(0);
+  return true;
+}
+
 int main()
 {
   payload initial = { 0x12345678, 0xfc4e9d31, 0x87654321 };
@@ -509,6 +524,7 @@ int main()
       TestHook(TestCreateFileW, "kernel32.dll", "CreateFileW") &&    // see Bug 1316415
 #endif
       TestHook(TestCreateFileA, "kernel32.dll", "CreateFileA") &&
+      TestHook(TestQueryDosDeviceW, "kernelbase.dll", "QueryDosDeviceW") &&
       TestDetour("user32.dll", "CreateWindowExW") &&
       TestHook(TestInSendMessageEx, "user32.dll", "InSendMessageEx") &&
       TestHook(TestImmGetContext, "imm32.dll", "ImmGetContext") &&
@@ -523,6 +539,7 @@ int main()
       TestHook(TestLdrUnloadDll, "ntdll.dll", "LdrUnloadDll") &&
       MaybeTestHook(IsWin8OrLater(), TestLdrResolveDelayLoadedAPI, "ntdll.dll", "LdrResolveDelayLoadedAPI") &&
       MaybeTestHook(!IsWin8OrLater(), TestRtlInstallFunctionTableCallback, "kernel32.dll", "RtlInstallFunctionTableCallback") &&
+      TestHook(TestPrintDlgW, "comdlg32.dll", "PrintDlgW") &&
 #endif
       MaybeTestHook(ShouldTestTipTsf(), TestProcessCaretEvents, "tiptsf.dll", "ProcessCaretEvents") &&
 #ifdef _M_IX86

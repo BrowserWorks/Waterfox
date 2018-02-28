@@ -23,10 +23,6 @@ namespace {
 class ReleaseRunnable final : public Runnable
 {
 public:
-  ReleaseRunnable()
-    : Runnable("ReleaseRunnable")
-  {}
-
   static void
   MaybeReleaseOnMainThread(nsTArray<RefPtr<Promise>>& aPromises,
                            nsTArray<RefPtr<GetFilesCallback>>& aCallbacks,
@@ -61,6 +57,7 @@ private:
                   nsTArray<RefPtr<GetFilesCallback>>& aCallbacks,
                   Sequence<RefPtr<File>>& aFiles,
                   already_AddRefed<nsIGlobalObject> aGlobal)
+    : Runnable("dom::ReleaseRunnable")
   {
     mPromises.SwapElements(aPromises);
     mCallbacks.SwapElements(aCallbacks);
@@ -621,7 +618,8 @@ GetFilesHelperParent::GetFilesHelperParent(const nsID& aUUID,
 
 GetFilesHelperParent::~GetFilesHelperParent()
 {
-  NS_ReleaseOnMainThread(mContentParent.forget());
+  NS_ReleaseOnMainThreadSystemGroup(
+    "GetFilesHelperParent::mContentParent", mContentParent.forget());
 }
 
 /* static */ already_AddRefed<GetFilesHelperParent>

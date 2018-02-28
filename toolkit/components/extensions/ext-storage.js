@@ -63,9 +63,9 @@ this.storage = class extends ExtensionAPI {
           },
         },
 
-        onChanged: new SingletonEventManager(context, "storage.onChanged", fire => {
+        onChanged: new EventManager(context, "storage.onChanged", fire => {
           let listenerLocal = changes => {
-            fire.async(changes, "local");
+            fire.raw(changes, "local");
           };
           let listenerSync = changes => {
             fire.async(changes, "sync");

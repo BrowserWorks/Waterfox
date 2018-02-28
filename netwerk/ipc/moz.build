@@ -10,6 +10,7 @@ EXPORTS.mozilla.net += [
     'NeckoCommon.h',
     'NeckoMessageUtils.h',
     'NeckoParent.h',
+    'NeckoTargetHolder.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -17,6 +18,7 @@ UNIFIED_SOURCES += [
     'NeckoChild.cpp',
     'NeckoCommon.cpp',
     'NeckoParent.cpp',
+    'NeckoTargetHolder.cpp',
 ]
 
 IPDL_SOURCES = [
@@ -27,6 +29,7 @@ IPDL_SOURCES = [
     'PNecko.ipdl',
     'PRtspChannel.ipdl',
     'PRtspController.ipdl',
+    'PSimpleChannel.ipdl',
 ]
 
 # needed so --disable-webrtc builds work (yes, a bit messy)
@@ -45,6 +48,7 @@ FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '/caps',
+    '/dom/base',
     '/modules/libjar',
     '/netwerk/base',
     '/netwerk/protocol/http',

@@ -12,7 +12,6 @@ import java.util.regex.Pattern;
 
 import org.json.JSONObject;
 import org.mozilla.gecko.annotation.RobocopTarget;
-import org.mozilla.gecko.customtabs.CustomTabsActivity;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.URLMetadata;
 import org.mozilla.gecko.gfx.BitmapUtils;
@@ -21,21 +20,17 @@ import org.mozilla.gecko.icons.IconDescriptor;
 import org.mozilla.gecko.icons.IconRequestBuilder;
 import org.mozilla.gecko.icons.IconResponse;
 import org.mozilla.gecko.icons.Icons;
-import org.mozilla.gecko.mozglue.SafeIntent;
 import org.mozilla.gecko.reader.ReaderModeUtils;
 import org.mozilla.gecko.reader.ReadingListHelper;
 import org.mozilla.gecko.toolbar.BrowserToolbar.TabEditingState;
 import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.ThreadUtils;
-import org.mozilla.gecko.webapps.WebAppIndexer;
 import org.mozilla.gecko.widget.SiteLogins;
 
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
@@ -47,7 +42,6 @@ public class Tab {
 
     private static Pattern sColorPattern;
     private final int mId;
-    private TabType mType;
     private final BrowserDB mDB;
     private long mLastUsed;
     private String mUrl;
@@ -62,9 +56,7 @@ public class Tab {
     private Future<IconResponse> mRunningIconRequest;
 
     private boolean mHasFeeds;
-    private SafeIntent mCustomTabIntent;
     private String mManifestUrl;
-    private String mManifestPath;
     private boolean mHasOpenSearch;
     private final SiteIdentity mSiteIdentity;
     private SiteLogins mSiteLogins;
@@ -77,7 +69,6 @@ public class Tab {
     private int mFaviconLoadId;
     private String mContentType;
     private boolean mHasTouchListeners;
-    private final ArrayList<View> mPluginViews;
     private int mState;
     private Bitmap mThumbnailBitmap;
     private boolean mDesktopMode;
@@ -90,7 +81,6 @@ public class Tab {
     private volatile boolean mIsMediaPlaying;
     private String mMostRecentHomePanel;
     private boolean mShouldShowToolbarWithoutAnimationOnFirstSelection;
-    private boolean mWasSelectedInForeground;
 
     /*
      * Bundle containing restore data for the panel referenced in mMostRecentHomePanel. This can be
@@ -126,11 +116,10 @@ public class Tab {
         NONE         // Non error pages
     }
 
-    public Tab(Context context, int id, String url, boolean external, int parentId, String title, TabType type) {
+    public Tab(Context context, int id, String url, boolean external, int parentId, String title) {
         mAppContext = context.getApplicationContext();
         mDB = BrowserDB.from(context);
         mId = id;
-        mType = type;
         mUrl = url;
         mBaseDomain = "";
         mUserRequested = "";
@@ -139,7 +128,6 @@ public class Tab {
         mTitle = title == null ? "" : title;
         mSiteIdentity = new SiteIdentity();
         mContentType = "";
-        mPluginViews = new ArrayList<View>();
         mState = shouldShowProgress(url) ? STATE_LOADING : STATE_SUCCESS;
         mLoadProgress = LOAD_PROGRESS_INIT;
         mIconRequestBuilder = Icons.with(mAppContext).pageUrl(mUrl);
@@ -249,13 +237,9 @@ public class Tab {
 
     public Bitmap getThumbnailBitmap(int width, int height) {
         if (mThumbnailBitmap != null) {
-            // Bug 787318 - Honeycomb has a bug with bitmap caching, we can't
-            // reuse the bitmap there.
-            boolean honeycomb = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB
-                              && Build.VERSION.SDK_INT <= Build.VERSION_CODES.HONEYCOMB_MR2);
             boolean sizeChange = mThumbnailBitmap.getWidth() != width
                               || mThumbnailBitmap.getHeight() != height;
-            if (honeycomb || sizeChange) {
+            if (sizeChange) {
                 mThumbnailBitmap = null;
             }
         }
@@ -304,20 +288,8 @@ public class Tab {
         return mHasFeeds;
     }
 
-    public SafeIntent getCustomTabIntent() {
-        return mCustomTabIntent;
-    }
-
     public String getManifestUrl() {
         return mManifestUrl;
-    }
-
-    /**
-     * @return If not empty, the path to a locally installed copy of the Progressive Web App
-     *         manifest file for this tab.
-     */
-    public String getManifestPath() {
-        return mManifestPath;
     }
 
     public boolean hasOpenSearch() {
@@ -489,16 +461,8 @@ public class Tab {
         mHasFeeds = hasFeeds;
     }
 
-    public void setCustomTabIntent(SafeIntent intent) {
-        mCustomTabIntent = intent;
-    }
-
     public void setManifestUrl(String manifestUrl) {
         mManifestUrl = manifestUrl;
-    }
-
-    public void setManifestPath(String manifestPath) {
-        mManifestPath = manifestPath;
     }
 
     public void setHasOpenSearch(boolean hasOpenSearch) {
@@ -770,18 +734,6 @@ public class Tab {
         }
     }
 
-    public void addPluginView(View view) {
-        mPluginViews.add(view);
-    }
-
-    public void removePluginView(View view) {
-        mPluginViews.remove(view);
-    }
-
-    public View[] getPluginViews() {
-        return mPluginViews.toArray(new View[mPluginViews.size()]);
-    }
-
     public void setDesktopMode(boolean enabled) {
         mDesktopMode = enabled;
     }
@@ -792,50 +744,6 @@ public class Tab {
 
     public boolean isPrivate() {
         return false;
-    }
-
-    public void setWasSelectedInForeground(boolean state) {
-        mWasSelectedInForeground = state;
-    }
-
-    public boolean getWasSelectedInForeground() {
-        return mWasSelectedInForeground;
-    }
-
-    public TabType getType() {
-        return mType;
-    }
-
-    public enum TabType {
-        BROWSING,
-        CUSTOMTAB,
-        WEBAPP
-    }
-
-    /**
-     * @return False if the tab is not matching the activity passed as argument.
-     */
-    public boolean matchesActivity(final Activity activity) {
-        final String activityName = activity.getClass().getName();
-        return activityName.equals(getTargetClassNameForTab());
-    }
-
-    /**
-     * @return The class name of the activity that should preferably be displaying this tab.
-     */
-    public String getTargetClassNameForTab() {
-        final TabType type = getType();
-
-        switch (type) {
-            case CUSTOMTAB:
-                return CustomTabsActivity.class.getName();
-            case WEBAPP:
-                final int index =  WebAppIndexer.getInstance().getIndexForManifest(
-                        getManifestPath(), mAppContext);
-                return WebAppIndexer.WEBAPP_CLASS + index;
-            default:
-                return AppConstants.MOZ_ANDROID_BROWSER_INTENT_CLASS;
-        }
     }
 
     /**

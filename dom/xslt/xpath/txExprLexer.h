@@ -13,7 +13,7 @@
 /**
  * A Token class for the ExprLexer.
  *
- * This class was ported from XSL:P, an open source Java based 
+ * This class was ported from XSL:P, an open source Java based
  * XSLT processor, written by yours truly.
  */
 class Token
@@ -88,7 +88,7 @@ public:
     /**
      * Constructors
      */
-    typedef nsASingleFragmentString::const_char_iterator iterator;
+    typedef nsAString::const_char_iterator iterator;
 
     Token(iterator aStart, iterator aEnd, Type aType)
         : mStart(aStart),
@@ -136,9 +136,9 @@ public:
      * generated Tokens point to Substrings of it.
      * mPosition points to the offending location in case of an error.
      */
-    nsresult parse(const nsASingleFragmentString& aPattern);
+    nsresult parse(const nsAString& aPattern);
 
-    typedef nsASingleFragmentString::const_char_iterator iterator;
+    typedef nsAString::const_char_iterator iterator;
     iterator mPosition;
 
     /**

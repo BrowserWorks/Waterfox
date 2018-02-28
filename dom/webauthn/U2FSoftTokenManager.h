@@ -24,17 +24,20 @@ class U2FSoftTokenManager final : public U2FTokenTransport,
 {
 public:
   explicit U2FSoftTokenManager(uint32_t aCounter);
-  virtual nsresult Register(const nsTArray<uint8_t>& aApplication,
-                            const nsTArray<uint8_t>& aChallenge,
-                            /* out */ nsTArray<uint8_t>& aRegistration,
-                            /* out */ nsTArray<uint8_t>& aSignature) override;
-  virtual nsresult Sign(const nsTArray<uint8_t>& aApplication,
-                        const nsTArray<uint8_t>& aChallenge,
-                        const nsTArray<uint8_t>& aKeyHandle,
-                        /* out */ nsTArray<uint8_t>& aSignature) override;
-  nsresult IsRegistered(const nsTArray<uint8_t>& aKeyHandle,
-                        const nsTArray<uint8_t>& aAppParam,
-                        bool& aResult);
+
+  virtual RefPtr<U2FRegisterPromise>
+  Register(const nsTArray<WebAuthnScopedCredentialDescriptor>& aDescriptors,
+           const nsTArray<uint8_t>& aApplication,
+           const nsTArray<uint8_t>& aChallenge,
+           uint32_t aTimeoutMS) override;
+
+  virtual RefPtr<U2FSignPromise>
+  Sign(const nsTArray<WebAuthnScopedCredentialDescriptor>& aDescriptors,
+       const nsTArray<uint8_t>& aApplication,
+       const nsTArray<uint8_t>& aChallenge,
+       uint32_t aTimeoutMS) override;
+
+  virtual void Cancel() override;
 
   // For nsNSSShutDownObject
   virtual void virtualDestroyNSSReference() override;
@@ -44,6 +47,10 @@ private:
   ~U2FSoftTokenManager();
   nsresult Init();
   bool IsCompatibleVersion(const nsAString& aVersion);
+
+  nsresult IsRegistered(const nsTArray<uint8_t>& aKeyHandle,
+                        const nsTArray<uint8_t>& aAppParam,
+                        bool& aResult);
 
   bool mInitialized;
   mozilla::UniquePK11SymKey mWrappingKey;

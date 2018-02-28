@@ -64,18 +64,26 @@ pref("devtools.inspector.showAllAnonymousContent", false);
 pref("devtools.inspector.mdnDocsTooltip.enabled", false);
 // Enable the new color widget
 pref("devtools.inspector.colorWidget.enabled", false);
+// Enable the CSS shapes highlighter
+pref("devtools.inspector.shapesHighlighter.enabled", false);
 
 // Enable the Font Inspector
 pref("devtools.fontinspector.enabled", true);
 
-// Enable the Layout View
-pref("devtools.layoutview.enabled", false);
+// Counter to promote the inspector layout view.
+// @remove after release 56 (See Bug 1355747)
+pref("devtools.promote.layoutview", 1);
+// Whether or not to show the promote bar in the layout view
+// @remove after release 56 (See Bug 1355747)
+pref("devtools.promote.layoutview.showPromoteBar", true);
 
 // Grid highlighter preferences
+pref("devtools.gridinspector.gridOutlineMaxColumns", 50);
+pref("devtools.gridinspector.gridOutlineMaxRows", 50);
 pref("devtools.gridinspector.showGridAreas", false);
 pref("devtools.gridinspector.showGridLineNumbers", false);
-pref("devtools.gridinspector.showGridOutline", false);
 pref("devtools.gridinspector.showInfiniteLines", false);
+pref("devtools.gridinspector.showNegativeLineNumbers", false);
 
 // Whether or not the box model panel is opened in the computed view
 pref("devtools.computed.boxmodel.opened", true);
@@ -157,8 +165,8 @@ pref("devtools.netmonitor.enabled", true);
 pref("devtools.netmonitor.panes-network-details-width", 550);
 pref("devtools.netmonitor.panes-network-details-height", 450);
 pref("devtools.netmonitor.filters", "[\"all\"]");
-pref("devtools.netmonitor.hiddenColumns",
-  "[\"cookies\",\"duration\",\"endTime\",\"latency\",\"protocol\",\"remoteip\",\"responseTime\",\"scheme\",\"setCookies\",\"startTime\"]"
+pref("devtools.netmonitor.visibleColumns",
+  "[\"status\",\"method\",\"file\",\"domain\",\"cause\",\"type\",\"transferred\",\"contentSize\",\"waterfall\"]"
 );
 
 // The default Network monitor HAR export setting
@@ -304,8 +312,8 @@ pref("devtools.webconsole.timestampMessages", false);
 // to automatically trigger multiline editing (equivalent to shift + enter).
 pref("devtools.webconsole.autoMultiline", true);
 
-// Enable the experimental webconsole frontend
-#if defined(NIGHTLY_BUILD)
+// Enable the new webconsole frontend
+#if defined(NIGHTLY_BUILD) || defined(MOZ_DEV_EDITION)
 pref("devtools.webconsole.new-frontend-enabled", true);
 #else
 pref("devtools.webconsole.new-frontend-enabled", false);

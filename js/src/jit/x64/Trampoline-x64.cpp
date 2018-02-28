@@ -462,7 +462,7 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
     // Copy the number of actual arguments
     masm.loadPtr(Address(rsp, RectifierFrameLayout::offsetOfNumActualArgs()), rdx);
 
-    masm.moveValue(UndefinedValue(), r10);
+    masm.moveValue(UndefinedValue(), ValueOperand(r10));
 
     masm.movq(rsp, r9); // Save %rsp.
 
@@ -778,6 +778,8 @@ JitRuntime::generateVMWrapper(JSContext* cx, const VMFunction& f)
       case Type_Bool:
         masm.testb(rax, rax);
         masm.j(Assembler::Zero, masm.failureLabel());
+        break;
+      case Type_Void:
         break;
       default:
         MOZ_CRASH("unknown failure kind");

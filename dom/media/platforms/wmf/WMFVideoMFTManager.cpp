@@ -4,18 +4,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <algorithm>
-#include <psapi.h>
-#include <winsdkver.h>
-
 #include "WMFVideoMFTManager.h"
+
 #include "DXVA2Manager.h"
 #include "GMPUtils.h" // For SplitAt. TODO: Move SplitAt to a central place.
 #include "IMFYCbCrImage.h"
 #include "ImageContainer.h"
 #include "Layers.h"
 #include "MP4Decoder.h"
-#include "MediaDecoderReader.h"
 #include "MediaInfo.h"
 #include "MediaTelemetryConstants.h"
 #include "VPXDecoder.h"
@@ -24,16 +20,21 @@
 #include "gfx2DGlue.h"
 #include "gfxPrefs.h"
 #include "gfxWindowsPlatform.h"
+#include "mozilla/gfx/DeviceManagerDx.h"
 #include "mozilla/AbstractThread.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Logging.h"
 #include "mozilla/SyncRunnable.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/WindowsVersion.h"
+#include "mozilla/gfx/DeviceManagerDx.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "nsPrintfCString.h"
 #include "nsThreadUtils.h"
 #include "nsWindowsHelpers.h"
+#include <algorithm>
+#include <psapi.h>
+#include <winsdkver.h>
 
 #define LOG(...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
 
@@ -72,6 +73,38 @@ const CLSID CLSID_WebmMfVpxDec =
 
 namespace mozilla {
 
+static bool
+IsWin7H264Decoder4KCapable()
+{
+  WCHAR systemPath[MAX_PATH + 1];
+  if (!ConstructSystem32Path(L"msmpeg2vdec.dll", systemPath, MAX_PATH + 1)) {
+    // Cannot build path -> Assume it's the old DLL or it's missing.
+    return false;
+  }
+
+  DWORD zero;
+  DWORD infoSize = GetFileVersionInfoSizeW(systemPath, &zero);
+  if (infoSize == 0) {
+    // Can't get file info -> Assume it's the old DLL or it's missing.
+    return false;
+  }
+  auto infoData = MakeUnique<unsigned char[]>(infoSize);
+  VS_FIXEDFILEINFO *vInfo;
+  UINT vInfoLen;
+  if (GetFileVersionInfoW(systemPath, 0, infoSize, infoData.get()) &&
+    VerQueryValueW(infoData.get(), L"\\", (LPVOID*)&vInfo, &vInfoLen))
+  {
+    uint64_t version =
+      uint64_t(vInfo->dwFileVersionMS) << 32 | uint64_t(vInfo->dwFileVersionLS);
+    // 12.0.9200.16426 & later allow for >1920x1088 resolutions.
+    const uint64_t minimum =
+      (uint64_t(12) << 48) | (uint64_t(9200) << 16) | uint64_t(16426);
+    return version >= minimum;
+  }
+  // Can't get file version -> Assume it's the old DLL.
+  return false;
+}
+
 template<class T>
 class DeleteObjectTask: public Runnable {
 public:
@@ -92,7 +125,7 @@ private:
 template<class T>
 void DeleteOnMainThread(nsAutoPtr<T>& aObject) {
   nsCOMPtr<nsIRunnable> r = new DeleteObjectTask<T>(aObject);
-  SystemGroup::Dispatch("VideoUtils::DeleteObjectTask", TaskCategory::Other, r.forget());
+  SystemGroup::Dispatch(TaskCategory::Other, r.forget());
 }
 
 LayersBackend
@@ -151,16 +184,15 @@ WMFVideoMFTManager::~WMFVideoMFTManager()
         ? 2
         : mGotValidOutputAfterNullOutput ? 3 : 4;
 
-  nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction([=]() -> void {
+  nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction("WMFVideoMFTManager::~WMFVideoMFTManager",
+                                                      [=]() -> void {
     LOG(nsPrintfCString("Reporting telemetry VIDEO_MFT_OUTPUT_NULL_SAMPLES=%d",
                         telemetry)
         .get());
     Telemetry::Accumulate(Telemetry::HistogramID::VIDEO_MFT_OUTPUT_NULL_SAMPLES,
                           telemetry);
   });
-  SystemGroup::Dispatch("~WMFVideoMFTManager::report_telemetry",
-                        TaskCategory::Other,
-                        task.forget());
+  SystemGroup::Dispatch(TaskCategory::Other, task.forget());
 }
 
 const GUID&
@@ -388,7 +420,8 @@ class CreateDXVAManagerEvent : public Runnable
 public:
   CreateDXVAManagerEvent(layers::KnowsCompositor* aKnowsCompositor,
                          nsCString& aFailureReason)
-    : mBackend(LayersBackend::LAYERS_D3D11)
+    : Runnable("CreateDXVAManagerEvent")
+    , mBackend(LayersBackend::LAYERS_D3D11)
     , mKnowsCompositor(aKnowsCompositor)
     , mFailureReason(aFailureReason)
   {
@@ -470,36 +503,45 @@ WMFVideoMFTManager::InitializeDXVA()
   return mDXVA2Manager != nullptr;
 }
 
-bool
+MediaResult
 WMFVideoMFTManager::ValidateVideoInfo()
 {
-  // The WMF H.264 decoder is documented to have a minimum resolution
-  // 48x48 pixels. We've observed the decoder working for output smaller than
-  // that, but on some output it hangs in IMFTransform::ProcessOutput(), so
-  // we just reject streams which are less than the documented minimum.
+  if (mStreamType != H264 ||
+    gfxPrefs::PDMWMFAllowUnsupportedResolutions()) {
+    return NS_OK;
+  }
+  // The WMF H.264 decoder is documented to have a minimum resolution 48x48 pixels
+  // for resolution, but we won't enable hw decoding for the resolution < 132 pixels.
+  // It's assumed the software decoder doesn't have this limitation, but it still
+  // might have maximum resolution limitation.
   // https://msdn.microsoft.com/en-us/library/windows/desktop/dd797815(v=vs.85).aspx
-  static const int32_t MIN_H264_FRAME_DIMENSION = 48;
-  if (mStreamType == H264
-      && (mVideoInfo.mImage.width < MIN_H264_FRAME_DIMENSION
-          || mVideoInfo.mImage.height < MIN_H264_FRAME_DIMENSION)) {
-    LogToBrowserConsole(NS_LITERAL_STRING(
-      "Can't decode H.264 stream with width or height less than 48 pixels."));
+  const bool Is4KCapable = IsWin8OrLater() || IsWin7H264Decoder4KCapable();
+  static const int32_t MAX_H264_PIXEL_COUNT =
+    Is4KCapable ? 4096 * 2304 : 1920 * 1088;
+  const CheckedInt32 pixelCount =
+    CheckedInt32(mVideoInfo.mImage.width) * mVideoInfo.mImage.height;
+
+  if (!pixelCount.isValid() || pixelCount.value() > MAX_H264_PIXEL_COUNT) {
     mIsValid = false;
+    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                       RESULT_DETAIL("Can't decode H.264 stream because its "
+                                     "resolution is out of the maximum limitation"));
   }
 
-  return mIsValid;
+  return NS_OK;
 }
 
-bool
+MediaResult
 WMFVideoMFTManager::Init()
 {
-  if (!ValidateVideoInfo()) {
-    return false;
+
+  MediaResult result = ValidateVideoInfo();
+  if (NS_FAILED(result)) {
+    return result;
   }
 
-  bool success = InitInternal();
-
-  if (success && mDXVA2Manager) {
+    result = InitInternal();
+    if (NS_SUCCEEDED(result) && mDXVA2Manager) {
     // If we had some failures but eventually made it work,
     // make sure we preserve the messages.
     if (mDXVA2Manager->IsD3D11()) {
@@ -509,10 +551,10 @@ WMFVideoMFTManager::Init()
     }
   }
 
-  return success;
+  return result;
 }
 
-bool
+MediaResult
 WMFVideoMFTManager::InitInternal()
 {
   mUseHwAccel = false; // default value; changed if D3D setup succeeds.
@@ -521,7 +563,9 @@ WMFVideoMFTManager::InitInternal()
   RefPtr<MFTDecoder> decoder(new MFTDecoder());
 
   HRESULT hr = decoder->Create(GetMFTGUID());
-  NS_ENSURE_TRUE(SUCCEEDED(hr), false);
+  NS_ENSURE_TRUE(SUCCEEDED(hr),
+                   MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                               RESULT_DETAIL("Can't create the MFT decoder.")));
 
   RefPtr<IMFAttributes> attr(decoder->GetAttributes());
   UINT32 aware = 0;
@@ -562,9 +606,10 @@ WMFVideoMFTManager::InitInternal()
   }
 
   if (!mUseHwAccel) {
-    // Use VP8/9 MFT only if HW acceleration is available
     if (mStreamType == VP9 || mStreamType == VP8) {
-      return false;
+      return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                         RESULT_DETAIL("Use VP8/9 MFT only if HW acceleration "
+                                       "is available."));
     }
     Telemetry::Accumulate(Telemetry::MEDIA_DECODER_BACKEND_USED,
                           uint32_t(media::MediaDecoderBackend::WMFSoftware));
@@ -572,11 +617,15 @@ WMFVideoMFTManager::InitInternal()
 
   mDecoder = decoder;
   hr = SetDecoderMediaTypes();
-  NS_ENSURE_TRUE(SUCCEEDED(hr), false);
+  NS_ENSURE_TRUE(SUCCEEDED(hr),
+                 MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                             RESULT_DETAIL("Fail to set the decoder media types.")));
 
   RefPtr<IMFMediaType> outputType;
   hr = mDecoder->GetOutputMediaType(outputType);
-  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+  NS_ENSURE_TRUE(SUCCEEDED(hr),
+                 MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                            RESULT_DETAIL("Fail to get the output media type.")));
 
   if (mUseHwAccel && !CanUseDXVA(outputType)) {
     mDXVAEnabled = false;
@@ -590,7 +639,10 @@ WMFVideoMFTManager::InitInternal()
   if (mDXVA2Manager) {
     hr = mDXVA2Manager->ConfigureForSize(mVideoInfo.ImageRect().width,
                                          mVideoInfo.ImageRect().height);
-    NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+    NS_ENSURE_TRUE(SUCCEEDED(hr),
+                   MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                               RESULT_DETAIL("Fail to configure image size for "
+                                             "DXVA2Manager.")));
   } else {
     GetDefaultStride(outputType, mVideoInfo.ImageRect().width, &mVideoStride);
   }
@@ -604,7 +656,23 @@ WMFVideoMFTManager::InitInternal()
       mVideoInfo.mDisplay.width,
       mVideoInfo.mDisplay.height);
 
-  return true;
+  if (!mUseHwAccel) {
+    RefPtr<ID3D11Device> device =
+      gfx::DeviceManagerDx::Get()->GetCompositorDevice();
+    if (!device) {
+      device = gfx::DeviceManagerDx::Get()->GetContentDevice();
+    }
+    if (device) {
+      RefPtr<ID3D10Multithread> multi;
+      HRESULT hr =
+        device->QueryInterface((ID3D10Multithread**)getter_AddRefs(multi));
+      if (SUCCEEDED(hr) && multi) {
+        multi->SetMultithreadProtected(TRUE);
+        mIMFUsable = true;
+      }
+    }
+  }
+  return MediaResult(NS_OK);
 }
 
 HRESULT
@@ -686,7 +754,8 @@ public:
   SupportsConfigEvent(DXVA2Manager* aDXVA2Manager,
                       IMFMediaType* aMediaType,
                       float aFramerate)
-    : mDXVA2Manager(aDXVA2Manager)
+    : Runnable("SupportsConfigEvent")
+    , mDXVA2Manager(aDXVA2Manager)
     , mMediaType(aMediaType)
     , mFramerate(aFramerate)
     , mSupportsConfig(false)
@@ -834,7 +903,7 @@ WMFVideoMFTManager::CreateBasicVideoFrame(IMFSample* aSample,
   nsIntRect pictureRegion = mVideoInfo.ScaledImageRect(videoWidth, videoHeight);
 
   LayersBackend backend = GetCompositorBackendType(mKnowsCompositor);
-  if (backend != LayersBackend::LAYERS_D3D11) {
+  if (backend != LayersBackend::LAYERS_D3D11 || !mIMFUsable) {
     RefPtr<VideoData> v =
       VideoData::CreateAndCopyData(mVideoInfo,
                                    mImageContainer,

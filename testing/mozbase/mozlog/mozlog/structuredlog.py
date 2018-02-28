@@ -97,6 +97,7 @@ def set_default_logger(default_logger):
 
     _default_logger_name = default_logger.name
 
+
 log_levels = dict((k.upper(), v) for v, k in
                   enumerate(["critical", "error", "warning", "info", "debug"]))
 
@@ -254,8 +255,9 @@ class StructuredLogger(object):
     def _ensure_suite_state(self, action, data):
         if action == 'suite_start':
             if self._state.suite_started:
+                # limit data to reduce unnecessary log bloat
                 self.error("Got second suite_start message before suite_end. " +
-                           "Logged with data: {}".format(json.dumps(data)))
+                           "Logged with data: {}".format(json.dumps(data)[:100]))
                 return False
             self._state.suite_started = True
         elif action == 'suite_end':

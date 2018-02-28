@@ -50,9 +50,9 @@ nsCacheEntry::nsCacheEntry(const nsACString &   key,
 nsCacheEntry::~nsCacheEntry()
 {
     MOZ_COUNT_DTOR(nsCacheEntry);
-    
+
     if (mData)
-        nsCacheService::ReleaseObject_Locked(mData, mThread);
+        nsCacheService::ReleaseObject_Locked(mData, mEventTarget);
 }
 
 
@@ -101,13 +101,13 @@ void
 nsCacheEntry::SetData(nsISupports * data)
 {
     if (mData) {
-        nsCacheService::ReleaseObject_Locked(mData, mThread);
+        nsCacheService::ReleaseObject_Locked(mData, mEventTarget);
         mData = nullptr;
     }
 
     if (data) {
         NS_ADDREF(mData = data);
-        mThread = do_GetCurrentThread();
+        mEventTarget = GetCurrentThreadEventTarget();
     }
 }
 
@@ -361,7 +361,7 @@ nsCacheEntryInfo::IsStreamBased(bool * result)
 {
     NS_ENSURE_ARG_POINTER(result);
     if (!mCacheEntry)  return NS_ERROR_NOT_AVAILABLE;
-    
+
     *result = mCacheEntry->IsStreamData();
     return NS_OK;
 }

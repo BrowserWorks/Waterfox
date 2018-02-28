@@ -6,12 +6,9 @@
 
 use NestedEventLoopListener;
 use compositing::compositor_thread::EventLoopWaker;
-use compositing::windowing::{MouseWindowEvent, WindowNavigateMsg};
+use compositing::windowing::{AnimationState, MouseWindowEvent};
 use compositing::windowing::{WindowEvent, WindowMethods};
-use euclid::{Point2D, Size2D, TypedPoint2D};
-use euclid::rect::TypedRect;
-use euclid::scale_factor::ScaleFactor;
-use euclid::size::TypedSize2D;
+use euclid::{Point2D, Size2D, TypedPoint2D, TypedVector2D, ScaleFactor, TypedSize2D};
 #[cfg(target_os = "windows")]
 use gdi32;
 use gleam::gl;
@@ -23,11 +20,12 @@ use glutin::TouchPhase;
 #[cfg(target_os = "macos")]
 use glutin::os::macos::{ActivationPolicy, WindowBuilderExt};
 use msg::constellation_msg::{self, Key};
-use msg::constellation_msg::{ALT, CONTROL, KeyState, NONE, SHIFT, SUPER};
+use msg::constellation_msg::{ALT, CONTROL, KeyState, NONE, SHIFT, SUPER, TraversalDirection};
 use net_traits::net_error_list::NetError;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use osmesa_sys;
-use script_traits::{DevicePixel, LoadData, TouchEventType, TouchpadPressurePhase};
+use script_traits::{LoadData, TouchEventType, TouchpadPressurePhase};
+use servo::ipc_channel::ipc::IpcSender;
 use servo_config::opts;
 use servo_config::prefs::PREFS;
 use servo_config::resource_files;
@@ -41,10 +39,11 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 use std::rc::Rc;
+use style_traits::DevicePixel;
 use style_traits::cursor::Cursor;
 #[cfg(target_os = "windows")]
 use user32;
-use webrender_traits::ScrollLocation;
+use webrender_api::{DeviceUintRect, DeviceUintSize, ScrollLocation};
 #[cfg(target_os = "windows")]
 use winapi;
 
@@ -199,6 +198,8 @@ pub struct Window {
     #[cfg(not(target_os = "windows"))]
     pressed_key_map: RefCell<Vec<(ScanCode, char)>>,
 
+    animation_state: Cell<AnimationState>,
+
     gl: Rc<gl::Gl>,
 }
 
@@ -319,6 +320,7 @@ impl Window {
             #[cfg(target_os = "windows")]
             last_pressed_key: Cell::new(None),
             gl: gl.clone(),
+            animation_state: Cell::new(AnimationState::Idle),
         };
 
         window.present();
@@ -501,7 +503,7 @@ impl Window {
                     MouseScrollDelta::LineDelta(dx, dy) => (dx, dy * LINE_HEIGHT),
                     MouseScrollDelta::PixelDelta(dx, dy) => (dx, dy),
                 };
-                let scroll_location = ScrollLocation::Delta(TypedPoint2D::new(dx, dy));
+                let scroll_location = ScrollLocation::Delta(TypedVector2D::new(dx, dy));
                 if let Some((x, y)) = pos {
                     self.mouse_pos.set(Point2D::new(x, y));
                     self.event_queue.borrow_mut().push(
@@ -658,10 +660,14 @@ impl Window {
         let mut events = mem::replace(&mut *self.event_queue.borrow_mut(), Vec::new());
         let mut close_event = false;
 
+        let poll = self.animation_state.get() == AnimationState::Animating ||
+                   opts::get().output_file.is_some() ||
+                   opts::get().exit_after_load ||
+                   opts::get().headless;
         // When writing to a file then exiting, use event
         // polling so that we don't block on a GUI event
         // such as mouse click.
-        if opts::get().output_file.is_some() || opts::get().exit_after_load || opts::get().headless {
+        if poll {
             match self.kind {
                 WindowKind::Window(ref window) => {
                     while let Some(event) = window.poll_events().next() {
@@ -926,10 +932,10 @@ impl Window {
     fn platform_handle_key(&self, key: Key, mods: constellation_msg::KeyModifiers) {
         match (mods, key) {
             (CMD_OR_CONTROL, Key::LeftBracket) => {
-                self.event_queue.borrow_mut().push(WindowEvent::Navigation(WindowNavigateMsg::Back));
+                self.event_queue.borrow_mut().push(WindowEvent::Navigation(TraversalDirection::Back(1)));
             }
             (CMD_OR_CONTROL, Key::RightBracket) => {
-                self.event_queue.borrow_mut().push(WindowEvent::Navigation(WindowNavigateMsg::Forward));
+                self.event_queue.borrow_mut().push(WindowEvent::Navigation(TraversalDirection::Forward(1)));
             }
             _ => {}
         }
@@ -956,24 +962,24 @@ impl WindowMethods for Window {
         self.gl.clone()
     }
 
-    fn framebuffer_size(&self) -> TypedSize2D<u32, DevicePixel> {
+    fn framebuffer_size(&self) -> DeviceUintSize {
         match self.kind {
             WindowKind::Window(ref window) => {
                 let scale_factor = window.hidpi_factor() as u32;
                 // TODO(ajeffrey): can this fail?
                 let (width, height) = window.get_inner_size().expect("Failed to get window inner size.");
-                TypedSize2D::new(width * scale_factor, height * scale_factor)
+                DeviceUintSize::new(width, height) * scale_factor
             }
             WindowKind::Headless(ref context) => {
-                TypedSize2D::new(context.width, context.height)
+                DeviceUintSize::new(context.width, context.height)
             }
         }
     }
 
-    fn window_rect(&self) -> TypedRect<u32, DevicePixel> {
+    fn window_rect(&self) -> DeviceUintRect {
         let size = self.framebuffer_size();
         let origin = TypedPoint2D::zero();
-        TypedRect::new(origin, size)
+        DeviceUintRect::new(origin, size)
     }
 
     fn size(&self) -> TypedSize2D<f32, DeviceIndependentPixel> {
@@ -1006,6 +1012,10 @@ impl WindowMethods for Window {
             }
         }
 
+    }
+
+    fn set_animation_state(&self, state: AnimationState) {
+        self.animation_state.set(state);
     }
 
     fn set_inner_size(&self, size: Size2D<u32>) {
@@ -1212,10 +1222,10 @@ impl WindowMethods for Window {
             }
 
             (NONE, None, Key::NavigateForward) => {
-                self.event_queue.borrow_mut().push(WindowEvent::Navigation(WindowNavigateMsg::Forward));
+                self.event_queue.borrow_mut().push(WindowEvent::Navigation(TraversalDirection::Forward(1)));
             }
             (NONE, None, Key::NavigateBackward) => {
-                self.event_queue.borrow_mut().push(WindowEvent::Navigation(WindowNavigateMsg::Back));
+                self.event_queue.borrow_mut().push(WindowEvent::Navigation(TraversalDirection::Back(1)));
             }
 
             (NONE, None, Key::Escape) => {
@@ -1225,14 +1235,14 @@ impl WindowMethods for Window {
             }
 
             (CMD_OR_ALT, None, Key::Right) => {
-                self.event_queue.borrow_mut().push(WindowEvent::Navigation(WindowNavigateMsg::Forward));
+                self.event_queue.borrow_mut().push(WindowEvent::Navigation(TraversalDirection::Forward(1)));
             }
             (CMD_OR_ALT, None, Key::Left) => {
-                self.event_queue.borrow_mut().push(WindowEvent::Navigation(WindowNavigateMsg::Back));
+                self.event_queue.borrow_mut().push(WindowEvent::Navigation(TraversalDirection::Back(1)));
             }
 
             (NONE, None, Key::PageDown) => {
-               let scroll_location = ScrollLocation::Delta(TypedPoint2D::new(0.0,
+               let scroll_location = ScrollLocation::Delta(TypedVector2D::new(0.0,
                                    -self.framebuffer_size()
                                         .to_f32()
                                         .to_untyped()
@@ -1241,7 +1251,7 @@ impl WindowMethods for Window {
                                    TouchEventType::Move);
             }
             (NONE, None, Key::PageUp) => {
-                let scroll_location = ScrollLocation::Delta(TypedPoint2D::new(0.0,
+                let scroll_location = ScrollLocation::Delta(TypedVector2D::new(0.0,
                                    self.framebuffer_size()
                                        .to_f32()
                                        .to_untyped()
@@ -1259,18 +1269,18 @@ impl WindowMethods for Window {
             }
 
             (NONE, None, Key::Up) => {
-                self.scroll_window(ScrollLocation::Delta(TypedPoint2D::new(0.0, 3.0 * LINE_HEIGHT)),
+                self.scroll_window(ScrollLocation::Delta(TypedVector2D::new(0.0, 3.0 * LINE_HEIGHT)),
                                    TouchEventType::Move);
             }
             (NONE, None, Key::Down) => {
-                self.scroll_window(ScrollLocation::Delta(TypedPoint2D::new(0.0, -3.0 * LINE_HEIGHT)),
+                self.scroll_window(ScrollLocation::Delta(TypedVector2D::new(0.0, -3.0 * LINE_HEIGHT)),
                                    TouchEventType::Move);
             }
             (NONE, None, Key::Left) => {
-                self.scroll_window(ScrollLocation::Delta(TypedPoint2D::new(LINE_HEIGHT, 0.0)), TouchEventType::Move);
+                self.scroll_window(ScrollLocation::Delta(TypedVector2D::new(LINE_HEIGHT, 0.0)), TouchEventType::Move);
             }
             (NONE, None, Key::Right) => {
-                self.scroll_window(ScrollLocation::Delta(TypedPoint2D::new(-LINE_HEIGHT, 0.0)), TouchEventType::Move);
+                self.scroll_window(ScrollLocation::Delta(TypedVector2D::new(-LINE_HEIGHT, 0.0)), TouchEventType::Move);
             }
             (CMD_OR_CONTROL, Some('r'), _) => {
                 if let Some(true) = PREFS.get("shell.builtin-key-shortcuts.enabled").as_boolean() {
@@ -1282,6 +1292,9 @@ impl WindowMethods for Window {
                     self.event_queue.borrow_mut().push(WindowEvent::Quit);
                 }
             }
+            (CONTROL, None, Key::F12) => {
+                self.event_queue.borrow_mut().push(WindowEvent::ToggleWebRenderProfiler);
+            }
 
             _ => {
                 self.platform_handle_key(key, mods);
@@ -1289,8 +1302,10 @@ impl WindowMethods for Window {
         }
     }
 
-    fn allow_navigation(&self, _: ServoUrl) -> bool {
-        true
+    fn allow_navigation(&self, _: ServoUrl, response_chan: IpcSender<bool>) {
+        if let Err(e) = response_chan.send(true) {
+            warn!("Failed to send allow_navigation() response: {}", e);
+        };
     }
 
     fn supports_clipboard(&self) -> bool {

@@ -47,7 +47,7 @@ fn make_tag(tag_bytes: &[u8]) -> FontTableTag {
     unsafe { *(tag_bytes.as_ptr() as *const FontTableTag) }
 }
 
-macro_rules! try_lossy(($result:expr) => (try!($result.map_err(|_| (())))));
+macro_rules! try_lossy(($result:expr) => ($result.map_err(|_| (()))?));
 
 // Given a set of records, figure out the string indices for the family and face
 // names.  We want name_id 1 and 2, and we need to use platform_id == 1 and
@@ -155,18 +155,8 @@ impl FontInfo {
             },
         };
 
-        let weight = match min(9, max(1, weight_val / 100)) {
-            1 => font_weight::T::Weight100,
-            2 => font_weight::T::Weight200,
-            3 => font_weight::T::Weight300,
-            4 => font_weight::T::Weight400,
-            5 => font_weight::T::Weight500,
-            6 => font_weight::T::Weight600,
-            7 => font_weight::T::Weight700,
-            8 => font_weight::T::Weight800,
-            9 => font_weight::T::Weight900,
-            _ => return Err(()),
-        };
+        let weight = font_weight::T::
+            from_int(min(9, max(1, weight_val as i32 / 100)) * 100).unwrap();
 
         let stretch = match min(9, max(1, width_val)) {
             1 => font_stretch::T::ultra_condensed,
@@ -198,21 +188,21 @@ impl FontInfo {
 
     fn new_from_font(font: &Font) -> Result<FontInfo, ()> {
         let style = font.style();
-        let weight = match font.weight() {
-            FontWeight::Thin => font_weight::T::Weight100,
-            FontWeight::ExtraLight => font_weight::T::Weight200,
-            FontWeight::Light => font_weight::T::Weight300,
+        let weight = font_weight::T(match font.weight() {
+            FontWeight::Thin => 100,
+            FontWeight::ExtraLight => 200,
+            FontWeight::Light => 300,
             // slightly grayer gray
-            FontWeight::SemiLight => font_weight::T::Weight300,
-            FontWeight::Regular => font_weight::T::Weight400,
-            FontWeight::Medium => font_weight::T::Weight500,
-            FontWeight::SemiBold => font_weight::T::Weight600,
-            FontWeight::Bold => font_weight::T::Weight700,
-            FontWeight::ExtraBold => font_weight::T::Weight800,
-            FontWeight::Black => font_weight::T::Weight900,
+            FontWeight::SemiLight => 300,
+            FontWeight::Regular => 400,
+            FontWeight::Medium => 500,
+            FontWeight::SemiBold => 600,
+            FontWeight::Bold => 700,
+            FontWeight::ExtraBold => 800,
+            FontWeight::Black => 900,
             // slightly blacker black
-            FontWeight::ExtraBlack => font_weight::T::Weight900,
-        };
+            FontWeight::ExtraBlack => 900,
+        });
         let stretch = match font.stretch() {
             FontStretch::Undefined => font_stretch::T::normal,
             FontStretch::UltraCondensed => font_stretch::T::ultra_condensed,
@@ -262,12 +252,12 @@ impl FontHandleMethods for FontHandle {
             }
 
             let face = font_file.unwrap().create_face(0, dwrote::DWRITE_FONT_SIMULATIONS_NONE);
-            let info = try!(FontInfo::new_from_face(&face));
+            let info = FontInfo::new_from_face(&face)?;
             (info, face)
         } else {
             let font = font_from_atom(&template.identifier);
             let face = font.create_font_face();
-            let info = try!(FontInfo::new_from_font(&font));
+            let info = FontInfo::new_from_font(&font)?;
             (info, face)
         };
 
@@ -372,7 +362,7 @@ impl FontHandleMethods for FontHandle {
             descent:          au_from_du_s(dm.descent as i32),
             max_advance:      au_from_pt(0.0), // FIXME
             average_advance:  au_from_pt(0.0), // FIXME
-            line_gap:         au_from_du((dm.ascent + dm.descent + dm.lineGap as u16) as i32),
+            line_gap:         au_from_du_s((dm.ascent + dm.descent + dm.lineGap as u16) as i32),
         };
         debug!("Font metrics (@{} pt): {:?}", self.em_size * 12., metrics);
         metrics

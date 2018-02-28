@@ -22,7 +22,6 @@
 #include "nsIContent.h"
 #include "nsIDOMElement.h"
 #include "nsIDOMNode.h"
-#include "nsIEditor.h"
 #include "nsIFrame.h"
 #include "nsINode.h"
 #include "nsIPresShell.h"
@@ -2590,7 +2589,6 @@ HTMLEditor::GetCellIndexes(nsIDOMElement* aCell,
     aCell = cell;
   }
 
-  NS_ENSURE_TRUE(mDocWeak, NS_ERROR_NOT_INITIALIZED);
   nsCOMPtr<nsIPresShell> ps = GetPresShell();
   NS_ENSURE_TRUE(ps, NS_ERROR_NOT_INITIALIZED);
 
@@ -2924,35 +2922,30 @@ HTMLEditor::GetCellFromRange(nsRange* aRange,
 
   *aCell = nullptr;
 
-  nsCOMPtr<nsIDOMNode> startParent;
-  nsresult rv = aRange->GetStartContainer(getter_AddRefs(startParent));
+  nsCOMPtr<nsIDOMNode> startContainer;
+  nsresult rv = aRange->GetStartContainer(getter_AddRefs(startContainer));
   NS_ENSURE_SUCCESS(rv, rv);
-  NS_ENSURE_TRUE(startParent, NS_ERROR_FAILURE);
+  NS_ENSURE_TRUE(startContainer, NS_ERROR_FAILURE);
 
-  int32_t startOffset;
-  rv = aRange->GetStartOffset(&startOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
+  uint32_t startOffset = aRange->StartOffset();
 
-  nsCOMPtr<nsIDOMNode> childNode = GetChildAt(startParent, startOffset);
+  nsCOMPtr<nsIDOMNode> childNode =
+    GetChildAt(startContainer, static_cast<int32_t>(startOffset));
   // This means selection is probably at a text node (or end of doc?)
   if (!childNode) {
     return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsIDOMNode> endParent;
-  rv = aRange->GetEndContainer(getter_AddRefs(endParent));
+  nsCOMPtr<nsIDOMNode> endContainer;
+  rv = aRange->GetEndContainer(getter_AddRefs(endContainer));
   NS_ENSURE_SUCCESS(rv, rv);
-  NS_ENSURE_TRUE(startParent, NS_ERROR_FAILURE);
-
-  int32_t endOffset;
-  rv = aRange->GetEndOffset(&endOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_TRUE(startContainer, NS_ERROR_FAILURE);
 
   // If a cell is deleted, the range is collapse
-  //   (startOffset == endOffset)
+  //   (startOffset == aRange->EndOffset())
   //   so tell caller the cell wasn't found
-  if (startParent == endParent &&
-      endOffset == startOffset+1 &&
+  if (startContainer == endContainer &&
+      aRange->EndOffset() == startOffset+1 &&
       HTMLEditUtils::IsTableCell(childNode)) {
     // Should we also test if frame is selected? (Use GetCellDataAt())
     // (Let's not for now -- more efficient)

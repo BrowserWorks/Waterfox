@@ -12,7 +12,10 @@ from types import StringTypes, ModuleType
 
 import mozpack.path as mozpath
 
-from mozbuild.util import ReadOnlyDict
+from mozbuild.util import (
+    memoized_property,
+    ReadOnlyDict,
+)
 from mozbuild.shellutil import quote as shell_quote
 
 
@@ -144,14 +147,14 @@ class ConfigEnvironment(object):
         self.substs['ACDEFINES'] = ' '.join(['-D%s=%s' % (name,
             shell_quote(self.defines[name]).replace('$', '$$'))
             for name in sorted(global_defines)])
-        def serialize(obj):
+        def serialize(name, obj):
             if isinstance(obj, StringTypes):
                 return obj
             if isinstance(obj, Iterable):
                 return ' '.join(obj)
-            raise Exception('Unhandled type %s', type(obj))
+            raise Exception('Unhandled type %s for %s', type(obj), str(name))
         self.substs['ALLSUBSTS'] = '\n'.join(sorted(['%s = %s' % (name,
-            serialize(self.substs[name])) for name in self.substs if self.substs[name]]))
+            serialize(name, self.substs[name])) for name in self.substs if self.substs[name]]))
         self.substs['ALLEMPTYSUBSTS'] = '\n'.join(sorted(['%s =' % name
             for name in self.substs if not self.substs[name]]))
 
@@ -193,6 +196,13 @@ class ConfigEnvironment(object):
     @property
     def is_artifact_build(self):
         return self.substs.get('MOZ_ARTIFACT_BUILDS', False)
+
+    @memoized_property
+    def acdefines(self):
+        acdefines = dict((name, self.defines[name])
+                         for name in self.defines
+                         if name not in self.non_global_defines)
+        return ReadOnlyDict(acdefines)
 
     @staticmethod
     def from_config_status(path):

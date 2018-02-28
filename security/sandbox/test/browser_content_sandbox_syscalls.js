@@ -40,6 +40,20 @@ function callFork(args) {
   return (rv);
 }
 
+// Calls the native sysctl syscall.
+function callSysctl(args) {
+  Components.utils.import("resource://gre/modules/ctypes.jsm");
+  let {lib, name} = args;
+  let libc = ctypes.open(lib);
+  let sysctlbyname = libc.declare("sysctlbyname", ctypes.default_abi,
+                                  ctypes.int, ctypes.char.ptr,
+                                  ctypes.voidptr_t, ctypes.size_t.ptr,
+                                  ctypes.voidptr_t, ctypes.size_t.ptr);
+  let rv = sysctlbyname(name, null, null, null, null);
+  libc.close();
+  return rv;
+}
+
 // Calls the native open/close syscalls.
 function callOpen(args) {
   Components.utils.import("resource://gre/modules/ctypes.jsm");
@@ -121,7 +135,7 @@ function areContentSyscallsSandboxed(level) {
 // Tests executing OS API calls in the content process. Limited to Mac
 // and Linux calls for now.
 //
-add_task(function* () {
+add_task(async function() {
   // This test is only relevant in e10s
   if (!gMultiProcessBrowser) {
     ok(false, "e10s is enabled");
@@ -168,7 +182,7 @@ add_task(function* () {
   if (isMac()) {
     // exec something harmless, this should fail
     let cmd = getOSExecCmd();
-    let rv = yield ContentTask.spawn(browser, {lib, cmd}, callExec);
+    let rv = await ContentTask.spawn(browser, {lib, cmd}, callExec);
     ok(rv == -1, `exec(${cmd}) is not permitted`);
   }
 
@@ -177,7 +191,7 @@ add_task(function* () {
     // open a file for writing in $HOME, this should fail
     let path = fileInHomeDir().path;
     let flags = openWriteCreateFlags();
-    let fd = yield ContentTask.spawn(browser, {lib, path, flags}, callOpen);
+    let fd = await ContentTask.spawn(browser, {lib, path, flags}, callOpen);
     ok(fd < 0, "opening a file for writing in home is not permitted");
   }
 
@@ -187,13 +201,30 @@ add_task(function* () {
     // and the open handler in the content process closes the file for us
     let path = fileInTempDir().path;
     let flags = openWriteCreateFlags();
-    let fd = yield ContentTask.spawn(browser, {lib, path, flags}, callOpen);
+    let fd = await ContentTask.spawn(browser, {lib, path, flags}, callOpen);
     ok(fd >= 0, "opening a file for writing in content temp is permitted");
   }
 
   // use fork syscall
   if (isLinux() || isMac()) {
-    let rv = yield ContentTask.spawn(browser, {lib}, callFork);
+    let rv = await ContentTask.spawn(browser, {lib}, callFork);
     ok(rv == -1, "calling fork is not permitted");
+  }
+
+  // On macOS before 10.10 the |sysctl-name| predicate didn't exist for
+  // filtering |sysctl| access. Check the Darwin version before running the
+  // tests (Darwin 14.0.0 is macOS 10.10). This branch can be removed when we
+  // remove support for macOS 10.9.
+  if (isMac() && Services.sysinfo.getProperty("version") >= "14.0.0") {
+    let rv = await ContentTask.spawn(browser, {lib, name: "kern.boottime"},
+                                     callSysctl);
+    ok(rv == -1, "calling sysctl('kern.boottime') is not permitted");
+
+    rv = await ContentTask.spawn(browser, {lib, name: "net.inet.ip.ttl"},
+                                 callSysctl);
+    ok(rv == -1, "calling sysctl('net.inet.ip.ttl') is not permitted");
+
+    rv = await ContentTask.spawn(browser, {lib, name: "hw.ncpu"}, callSysctl);
+    ok(rv == 0, "calling sysctl('hw.ncpu') is permitted");
   }
 });

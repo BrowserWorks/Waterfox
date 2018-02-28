@@ -6,6 +6,7 @@
 
 #include "mozilla/dom/U2FTokenManager.h"
 #include "mozilla/dom/U2FTokenTransport.h"
+#include "mozilla/dom/U2FHIDTokenManager.h"
 #include "mozilla/dom/U2FSoftTokenManager.h"
 #include "mozilla/dom/WebAuthnTransactionParent.h"
 #include "mozilla/MozPromise.h"
@@ -19,9 +20,10 @@
 
 // Not named "security.webauth.u2f_softtoken_counter" because setting that
 // name causes the window.u2f object to disappear until preferences get
-// reloaded, as its' pref is a substring!
+// reloaded, as its pref is a substring!
 #define PREF_U2F_NSSTOKEN_COUNTER "security.webauth.softtoken_counter"
 #define PREF_WEBAUTHN_SOFTTOKEN_ENABLED "security.webauth.webauthn_enable_softtoken"
+#define PREF_WEBAUTHN_USBTOKEN_ENABLED "security.webauth.webauthn_enable_usbtoken"
 
 namespace mozilla {
 namespace dom {
@@ -44,10 +46,7 @@ private:
   U2FPrefManager() :
     mPrefMutex("U2FPrefManager Mutex")
   {
-    MOZ_ASSERT(NS_IsMainThread());
-    MutexAutoLock lock(mPrefMutex);
-    mSoftTokenEnabled = Preferences::GetBool(PREF_WEBAUTHN_SOFTTOKEN_ENABLED);
-    mSoftTokenCounter = Preferences::GetUint(PREF_U2F_NSSTOKEN_COUNTER);
+    UpdateValues();
   }
   ~U2FPrefManager() = default;
 
@@ -61,6 +60,7 @@ public:
       gPrefManager = new U2FPrefManager();
       Preferences::AddStrongObserver(gPrefManager, PREF_WEBAUTHN_SOFTTOKEN_ENABLED);
       Preferences::AddStrongObserver(gPrefManager, PREF_U2F_NSSTOKEN_COUNTER);
+      Preferences::AddStrongObserver(gPrefManager, PREF_WEBAUTHN_USBTOKEN_ENABLED);
       ClearOnShutdown(&gPrefManager, ShutdownPhase::ShutdownThreads);
     }
     return gPrefManager;
@@ -83,21 +83,33 @@ public:
     return mSoftTokenCounter;
   }
 
+  bool GetUsbTokenEnabled()
+  {
+    MutexAutoLock lock(mPrefMutex);
+    return mUsbTokenEnabled;
+  }
+
   NS_IMETHODIMP
   Observe(nsISupports* aSubject,
           const char* aTopic,
           const char16_t* aData) override
   {
+    UpdateValues();
+    return NS_OK;
+  }
+private:
+  void UpdateValues() {
     MOZ_ASSERT(NS_IsMainThread());
     MutexAutoLock lock(mPrefMutex);
     mSoftTokenEnabled = Preferences::GetBool(PREF_WEBAUTHN_SOFTTOKEN_ENABLED);
     mSoftTokenCounter = Preferences::GetUint(PREF_U2F_NSSTOKEN_COUNTER);
-    return NS_OK;
+    mUsbTokenEnabled = Preferences::GetBool(PREF_WEBAUTHN_USBTOKEN_ENABLED);
   }
-private:
+
   Mutex mPrefMutex;
   bool mSoftTokenEnabled;
   int mSoftTokenCounter;
+  bool mUsbTokenEnabled;
 };
 
 NS_IMPL_ISUPPORTS(U2FPrefManager, nsIObserver);
@@ -106,8 +118,9 @@ NS_IMPL_ISUPPORTS(U2FPrefManager, nsIObserver);
  * U2FManager Implementation
  **********************************************************************/
 
-U2FTokenManager::U2FTokenManager() :
-  mTransactionParent(nullptr)
+U2FTokenManager::U2FTokenManager()
+  : mTransactionParent(nullptr)
+  , mTransactionId(0)
 {
   MOZ_ASSERT(XRE_IsParentProcess());
   // Create on the main thread to make sure ClearOnShutdown() works.
@@ -145,25 +158,63 @@ U2FTokenManager::Get()
 }
 
 void
+U2FTokenManager::AbortTransaction(const nsresult& aError)
+{
+  Unused << mTransactionParent->SendCancel(aError);
+  ClearTransaction();
+}
+
+void
 U2FTokenManager::MaybeClearTransaction(WebAuthnTransactionParent* aParent)
 {
   // Only clear if we've been requested to do so by our current transaction
   // parent.
-  if (mTransactionParent != aParent) {
-    return;
+  if (mTransactionParent == aParent) {
+    ClearTransaction();
   }
-  mTransactionParent = nullptr;
-  // Drop managers at the end of all transactions
-  mSoftTokenManager = nullptr;
 }
 
 void
-U2FTokenManager::Cancel(const nsresult& aError)
+U2FTokenManager::ClearTransaction()
 {
-  if (mTransactionParent) {
-    Unused << mTransactionParent->SendCancel(aError);
+  mTransactionParent = nullptr;
+  // Drop managers at the end of all transactions
+  mTokenManagerImpl = nullptr;
+  // Forget promises, if necessary.
+  mRegisterPromise.DisconnectIfExists();
+  mSignPromise.DisconnectIfExists();
+  // Bump transaction id.
+  mTransactionId++;
+}
+
+RefPtr<U2FTokenTransport>
+U2FTokenManager::GetTokenManagerImpl()
+{
+  MOZ_ASSERT(U2FPrefManager::Get());
+
+  if (mTokenManagerImpl) {
+    return mTokenManagerImpl;
   }
-  MaybeClearTransaction(mTransactionParent);
+
+  auto pm = U2FPrefManager::Get();
+  bool useSoftToken = pm->GetSoftTokenEnabled();
+  bool useUsbToken = pm->GetUsbTokenEnabled();
+
+  // At least one token type must be enabled.
+  // We currently don't support soft and USB tokens enabled at
+  // the same time as the softtoken would always win the race to register.
+  // We could support it for signing though...
+  if (!(useSoftToken ^ useUsbToken)) {
+    return nullptr;
+  }
+
+  if (useSoftToken) {
+    return new U2FSoftTokenManager(pm->GetSoftTokenCounter());
+  }
+
+  // TODO Use WebAuthnRequest to aggregate results from all transports,
+  //      once we have multiple HW transport types.
+  return new U2FHIDTokenManager();
 }
 
 void
@@ -171,60 +222,71 @@ U2FTokenManager::Register(WebAuthnTransactionParent* aTransactionParent,
                           const WebAuthnTransactionInfo& aTransactionInfo)
 {
   MOZ_LOG(gU2FTokenManagerLog, LogLevel::Debug, ("U2FAuthRegister"));
-  MOZ_ASSERT(U2FPrefManager::Get());
+
+  ClearTransaction();
   mTransactionParent = aTransactionParent;
+  mTokenManagerImpl = GetTokenManagerImpl();
 
-  // Since we only have soft token available at the moment, use that if the pref
-  // is on.
-  //
-  // TODO Check all transports and use WebAuthnRequest to aggregate
-  // replies
-  if (U2FPrefManager::Get()->GetSoftTokenEnabled()) {
-    if (!mSoftTokenManager) {
-      mSoftTokenManager = new U2FSoftTokenManager(U2FPrefManager::Get()->GetSoftTokenCounter());
-    }
-
-    // Check if all the supplied parameters are syntactically well-formed and
-    // of the correct length. If not, return an error code equivalent to
-    // UnknownError and terminate the operation.
-
-    if ((aTransactionInfo.RpIdHash().Length() != SHA256_LENGTH) ||
-        (aTransactionInfo.ClientDataHash().Length() != SHA256_LENGTH)) {
-      Cancel(NS_ERROR_DOM_UNKNOWN_ERR);
-      return;
-    }
-
-    nsresult rv;
-
-    for (auto desc: aTransactionInfo.Descriptors()) {
-      bool isRegistered = false;
-      rv = mSoftTokenManager->IsRegistered(desc.id(), aTransactionInfo.RpIdHash(), isRegistered);
-      if (NS_FAILED(rv)) {
-        Cancel(rv);
-        return;
-      }
-      if (isRegistered) {
-        Cancel(NS_ERROR_DOM_NOT_ALLOWED_ERR);
-        return;
-      }
-    }
-
-    nsTArray<uint8_t> reg;
-    nsTArray<uint8_t> sig;
-    rv = mSoftTokenManager->Register(aTransactionInfo.RpIdHash(),
-                                     aTransactionInfo.ClientDataHash(),
-                                     reg,
-                                     sig);
-    if (NS_FAILED(rv)) {
-      Cancel(rv);
-      return;
-    }
-    Unused << mTransactionParent->SendConfirmRegister(reg,
-                                                      sig);
-    MaybeClearTransaction(mTransactionParent);
+  if (!mTokenManagerImpl) {
+    AbortTransaction(NS_ERROR_DOM_NOT_ALLOWED_ERR);
     return;
   }
-  Cancel(NS_ERROR_DOM_NOT_ALLOWED_ERR);
+
+  // Check if all the supplied parameters are syntactically well-formed and
+  // of the correct length. If not, return an error code equivalent to
+  // UnknownError and terminate the operation.
+
+  if ((aTransactionInfo.RpIdHash().Length() != SHA256_LENGTH) ||
+      (aTransactionInfo.ClientDataHash().Length() != SHA256_LENGTH)) {
+    AbortTransaction(NS_ERROR_DOM_UNKNOWN_ERR);
+    return;
+  }
+
+  uint64_t tid = mTransactionId;
+  mTokenManagerImpl->Register(aTransactionInfo.Descriptors(),
+                              aTransactionInfo.RpIdHash(),
+                              aTransactionInfo.ClientDataHash(),
+                              aTransactionInfo.TimeoutMS())
+                   ->Then(GetCurrentThreadSerialEventTarget(), __func__,
+                         [tid](U2FRegisterResult&& aResult) {
+                           U2FTokenManager* mgr = U2FTokenManager::Get();
+                           mgr->MaybeConfirmRegister(tid, aResult);
+                         },
+                         [tid](nsresult rv) {
+                           MOZ_ASSERT(NS_FAILED(rv));
+                           U2FTokenManager* mgr = U2FTokenManager::Get();
+                           mgr->MaybeAbortRegister(tid, rv);
+                         })
+                   ->Track(mRegisterPromise);
+}
+
+void
+U2FTokenManager::MaybeConfirmRegister(uint64_t aTransactionId,
+                                      U2FRegisterResult& aResult)
+{
+  if (mTransactionId != aTransactionId) {
+    return;
+  }
+
+  mRegisterPromise.Complete();
+
+  nsTArray<uint8_t> registration;
+  aResult.ConsumeRegistration(registration);
+
+  Unused << mTransactionParent->SendConfirmRegister(registration);
+  ClearTransaction();
+}
+
+void
+U2FTokenManager::MaybeAbortRegister(uint64_t aTransactionId,
+                                    const nsresult& aError)
+{
+  if (mTransactionId != aTransactionId) {
+    return;
+  }
+
+  mRegisterPromise.Complete();
+  AbortTransaction(aError);
 }
 
 void
@@ -232,47 +294,79 @@ U2FTokenManager::Sign(WebAuthnTransactionParent* aTransactionParent,
                       const WebAuthnTransactionInfo& aTransactionInfo)
 {
   MOZ_LOG(gU2FTokenManagerLog, LogLevel::Debug, ("U2FAuthSign"));
-  MOZ_ASSERT(U2FPrefManager::Get());
+
+  ClearTransaction();
   mTransactionParent = aTransactionParent;
+  mTokenManagerImpl = GetTokenManagerImpl();
 
-  // Since we only have soft token available at the moment, use that if the pref
-  // is on.
-  //
-  // TODO Check all transports and use WebAuthnRequest to aggregate
-  // replies
-  if (U2FPrefManager::Get()->GetSoftTokenEnabled()) {
-    if (!mSoftTokenManager) {
-      mSoftTokenManager = new U2FSoftTokenManager(U2FPrefManager::Get()->GetSoftTokenCounter());
-    }
-
-    if ((aTransactionInfo.RpIdHash().Length() != SHA256_LENGTH) ||
-        (aTransactionInfo.ClientDataHash().Length() != SHA256_LENGTH)) {
-      Cancel(NS_ERROR_DOM_UNKNOWN_ERR);
-      return;
-    }
-
-    for (auto desc: aTransactionInfo.Descriptors()) {
-      bool reg;
-      nsresult rv = mSoftTokenManager->IsRegistered(desc.id(), aTransactionInfo.RpIdHash(), reg);
-      if (!reg) {
-        continue;
-      }
-      nsTArray<uint8_t> sig;
-      rv = mSoftTokenManager->Sign(aTransactionInfo.RpIdHash(),
-                                   aTransactionInfo.ClientDataHash(),
-                                   desc.id(),
-                                   sig);
-      if (NS_FAILED(rv)) {
-        Cancel(rv);
-        return;
-      }
-      Unused << mTransactionParent->SendConfirmSign(desc.id(), sig);
-      MaybeClearTransaction(mTransactionParent);
-      return;
-    }
+  if (!mTokenManagerImpl) {
+    AbortTransaction(NS_ERROR_DOM_NOT_ALLOWED_ERR);
+    return;
   }
-  // If we come out of the loop, we aren't registered
-  Cancel(NS_ERROR_DOM_NOT_ALLOWED_ERR);
+
+  if ((aTransactionInfo.RpIdHash().Length() != SHA256_LENGTH) ||
+      (aTransactionInfo.ClientDataHash().Length() != SHA256_LENGTH)) {
+    AbortTransaction(NS_ERROR_DOM_UNKNOWN_ERR);
+    return;
+  }
+
+  uint64_t tid = mTransactionId;
+  mTokenManagerImpl->Sign(aTransactionInfo.Descriptors(),
+                          aTransactionInfo.RpIdHash(),
+                          aTransactionInfo.ClientDataHash(),
+                          aTransactionInfo.TimeoutMS())
+                   ->Then(GetCurrentThreadSerialEventTarget(), __func__,
+                     [tid](U2FSignResult&& aResult) {
+                       U2FTokenManager* mgr = U2FTokenManager::Get();
+                       mgr->MaybeConfirmSign(tid, aResult);
+                     },
+                     [tid](nsresult rv) {
+                       MOZ_ASSERT(NS_FAILED(rv));
+                       U2FTokenManager* mgr = U2FTokenManager::Get();
+                       mgr->MaybeAbortSign(tid, rv);
+                     })
+                   ->Track(mSignPromise);
+}
+
+void
+U2FTokenManager::MaybeConfirmSign(uint64_t aTransactionId,
+                                  U2FSignResult& aResult)
+{
+  if (mTransactionId != aTransactionId) {
+    return;
+  }
+
+  mSignPromise.Complete();
+
+  nsTArray<uint8_t> keyHandle;
+  aResult.ConsumeKeyHandle(keyHandle);
+  nsTArray<uint8_t> signature;
+  aResult.ConsumeSignature(signature);
+
+  Unused << mTransactionParent->SendConfirmSign(keyHandle, signature);
+  ClearTransaction();
+}
+
+void
+U2FTokenManager::MaybeAbortSign(uint64_t aTransactionId, const nsresult& aError)
+{
+  if (mTransactionId != aTransactionId) {
+    return;
+  }
+
+  mSignPromise.Complete();
+  AbortTransaction(aError);
+}
+
+void
+U2FTokenManager::Cancel(WebAuthnTransactionParent* aParent)
+{
+  if (mTransactionParent != aParent) {
+    return;
+  }
+
+  mTokenManagerImpl->Cancel();
+  ClearTransaction();
 }
 
 }

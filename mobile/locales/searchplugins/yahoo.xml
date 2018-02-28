@@ -16,30 +16,34 @@
 <!-- phone search -->
 <Url type="text/html" method="GET" template="https://search.yahoo.com/yhs/search" rel="searchform">
   <Param name="ei"     value="UTF-8" />
-  <Param name="hspart" value="mozilla" />
-  <Param name="hsimp"  value="yhsm-002" />
+  <Param name="hspart" value="domaindev" />
+  <Param name="hsimp"  value="yhs-vivaldi" />
   <Param name="p"  value="{searchTerms}" />
+  <Param name="type" value="31__alt__ddc_mwp_vivaldi_com" />
 </Url>
 <!-- tablet search -->
 <Url type="application/x-moz-tabletsearch" method="GET" template="https://search.yahoo.com/yhs/search">
   <Param name="ei"     value="UTF-8" />
-  <Param name="hspart" value="mozilla" />
-  <Param name="hsimp"  value="yhst-002" />
+  <Param name="hspart" value="domaindev" />
+  <Param name="hsimp"  value="yhs-vivaldi" />
   <Param name="p"  value="{searchTerms}" />
+  <Param name="type" value="31__alt__ddc_mwp_vivaldi_com" />
 </Url>
 <!-- phone Search activity -->
 <Url type="text/html" method="GET" rel="mobile" template="https://search.yahoo.com/yhs/search">
   <Param name="ei"     value="UTF-8" />
-  <Param name="hspart" value="mozilla" />
-  <Param name="hsimp"  value="yhsm-001" />
+  <Param name="hspart" value="domaindev" />
+  <Param name="hsimp"  value="yhs-vivaldi" />
   <Param name="p"  value="{searchTerms}" />
+  <Param name="type" value="31__alt__ddc_mwp_vivaldi_com" />
 </Url>
 <!-- Tablet Search activity -->
 <Url type="application/x-moz-tabletsearch" method="GET" 
      rel="mobile" template="https://search.yahoo.com/yhs/search">
   <Param name="ei"     value="UTF-8" />
-  <Param name="hspart" value="mozilla" />
-  <Param name="hsimp"  value="yhst-002" />
+  <Param name="hspart" value="domaindev" />
+  <Param name="hsimp"  value="yhs-vivaldi" />
   <Param name="p"  value="{searchTerms}" />
+  <Param name="type" value="31__alt__ddc_mwp_vivaldi_com" />
 </Url>
 </SearchPlugin>

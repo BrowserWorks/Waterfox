@@ -152,6 +152,7 @@ class BeetMover(BaseScript, VirtualenvMixin, object):
                     "PyYAML",
                     "Jinja2",
                     "redo",
+                    "cryptography==2.0.3",
                     "mar",
                 ],
                 "virtualenv_path": "venv",

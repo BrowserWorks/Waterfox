@@ -205,7 +205,7 @@ class WindowTracker extends WindowTrackerBase {
  *        The listener function to call when an EventDispatcher event is
  *        recieved.
  */
-global.GlobalEventManager = class extends SingletonEventManager {
+global.GlobalEventManager = class extends EventManager {
   constructor(context, name, event, listener) {
     super(context, name, fire => {
       let listener2 = {
@@ -237,7 +237,7 @@ global.GlobalEventManager = class extends SingletonEventManager {
  * @param {function} listener
  *        The listener function to call when a DOM event is received.
  */
-global.WindowEventManager = class extends SingletonEventManager {
+global.WindowEventManager = class extends EventManager {
   constructor(context, name, event, listener) {
     super(context, name, fire => {
       let listener2 = listener.bind(null, fire);
@@ -398,6 +398,10 @@ class Tab extends TabBase {
     return {muted: false};
   }
 
+  get lastAccessed() {
+    return this.nativeTab.lastTouchedAt;
+  }
+
   get pinned() {
     return false;
   }
@@ -427,6 +431,58 @@ class Tab extends TabBase {
 
   get windowId() {
     return windowTracker.getId(this.window);
+  }
+}
+
+// Manages tab-specific context data and dispatches tab select and close events.
+class TabContext {
+  constructor(getDefaults, extension) {
+    this.extension = extension;
+    this.getDefaults = getDefaults;
+    this.tabData = new Map();
+
+    EventEmitter.decorate(this);
+
+    GlobalEventDispatcher.registerListener(this, [
+      "Tab:Selected",
+      "Tab:Closed",
+    ]);
+  }
+
+  get(tabId) {
+    if (!this.tabData.has(tabId)) {
+      this.tabData.set(tabId, this.getDefaults());
+    }
+
+    return this.tabData.get(tabId);
+  }
+
+  clear(tabId) {
+    this.tabData.delete(tabId);
+  }
+
+  /**
+   * Required by the GlobalEventDispatcher module. This event will get
+   * called whenever one of the registered listeners fires.
+   * @param {string} event The event which fired.
+   * @param {object} data Information about the event which fired.
+   */
+  onEvent(event, data) {
+    switch (event) {
+      case "Tab:Selected":
+        this.emit("tab-selected", data.id);
+        break;
+      case "Tab:Closed":
+        this.emit("tab-closed", data.tabId);
+        break;
+    }
+  }
+
+  shutdown() {
+    GlobalEventDispatcher.unregisterListener(this, [
+      "Tab:Selected",
+      "Tab:Closed",
+    ]);
   }
 }
 
@@ -476,7 +532,7 @@ class Window extends WindowBase {
   }
 }
 
-Object.assign(global, {Tab, Window});
+Object.assign(global, {Tab, TabContext, Window});
 
 class TabManager extends TabManagerBase {
   get(tabId, default_ = undefined) {

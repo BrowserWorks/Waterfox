@@ -144,7 +144,6 @@ class JSObject : public js::gc::Cell
     js::WatchOp          getOpsWatch()          const { return getClass()->getOpsWatch(); }
     js::UnwatchOp        getOpsUnwatch()        const { return getClass()->getOpsUnwatch(); }
     js::GetElementsOp    getOpsGetElements()    const { return getClass()->getOpsGetElements(); }
-    JSNewEnumerateOp     getOpsEnumerate()      const { return getClass()->getOpsEnumerate(); }
     JSFunToStringOp      getOpsFunToString()    const { return getClass()->getOpsFunToString(); }
 
     js::ObjectGroup* group() const {
@@ -505,6 +504,7 @@ class JSObject : public js::gc::Cell
     // places that want it (JITs and the like), and it'd be a pain to mark them
     // all as friends.
     inline bool nonProxyIsExtensible() const;
+    bool uninlinedNonProxyIsExtensible() const;
 
   public:
     /*
@@ -516,10 +516,10 @@ class JSObject : public js::gc::Cell
     /*
      * Back to generic stuff.
      */
-    bool isCallable() const;
-    bool isConstructor() const;
-    JSNative callHook() const;
-    JSNative constructHook() const;
+    MOZ_ALWAYS_INLINE bool isCallable() const;
+    MOZ_ALWAYS_INLINE bool isConstructor() const;
+    MOZ_ALWAYS_INLINE JSNative callHook() const;
+    MOZ_ALWAYS_INLINE JSNative constructHook() const;
 
     MOZ_ALWAYS_INLINE void finalize(js::FreeOp* fop);
 
@@ -682,23 +682,6 @@ JSObject::writeBarrierPost(void* cellp, JSObject* prev, JSObject* next)
     if (prev && (buffer = prev->storeBuffer()))
         buffer->unputCell(static_cast<js::gc::Cell**>(cellp));
 }
-
-namespace js {
-
-inline bool
-IsCallable(const Value& v)
-{
-    return v.isObject() && v.toObject().isCallable();
-}
-
-// ES6 rev 24 (2014 April 27) 7.2.5 IsConstructor
-inline bool
-IsConstructor(const Value& v)
-{
-    return v.isObject() && v.toObject().isConstructor();
-}
-
-} /* namespace js */
 
 class JSValueArray {
   public:
@@ -1087,7 +1070,7 @@ ToPrimitive(JSContext* cx, JSType preferredType, MutableHandleValue vp)
  * toString support. (This isn't called GetClassName because there's a macro in
  * <windows.h> with that name.)
  */
-extern const char*
+MOZ_ALWAYS_INLINE const char*
 GetObjectClassName(JSContext* cx, HandleObject obj);
 
 /*
@@ -1169,8 +1152,21 @@ NewObjectWithTaggedProtoIsCachable(JSContext* cx, Handle<TaggedProto> proto,
 extern bool
 GetPrototypeFromConstructor(JSContext* cx, js::HandleObject newTarget, js::MutableHandleObject proto);
 
-extern bool
-GetPrototypeFromCallableConstructor(JSContext* cx, const CallArgs& args, js::MutableHandleObject proto);
+MOZ_ALWAYS_INLINE bool
+GetPrototypeFromBuiltinConstructor(JSContext* cx, const CallArgs& args, js::MutableHandleObject proto)
+{
+    // When proto is set to nullptr, the caller is expected to select the
+    // correct default built-in prototype for this constructor.
+    if (!args.isConstructing() || &args.newTarget().toObject() == &args.callee()) {
+        proto.set(nullptr);
+        return true;
+    }
+
+    // We're calling this constructor from a derived class, retrieve the
+    // actual prototype from newTarget.
+    RootedObject newTarget(cx, &args.newTarget().toObject());
+    return GetPrototypeFromConstructor(cx, newTarget, proto);
+}
 
 // Specialized call for constructing |this| with a known function callee,
 // and a known prototype.

@@ -86,19 +86,24 @@ function getCleanedPacket(key, packet) {
       }
 
       if (Array.isArray(res.message.arguments)) {
-        res.message.arguments.forEach((argument, i) => {
-          let existingArgument = existingPacket.message.arguments[i];
+        res.message.arguments = res.message.arguments.map((argument, i) => {
+          if (!argument || typeof argument !== "object") {
+            return argument;
+          }
 
+          let newArgument = Object.assign({}, argument);
+          let existingArgument = existingPacket.message.arguments[i];
           // Clean actor ids on each message.arguments item.
-          if (argument && argument.actor) {
-            argument.actor = existingArgument.actor;
+          if (newArgument.actor) {
+            newArgument.actor = existingArgument.actor;
           }
 
           // `window`'s properties count can vary from OS to OS, so we
           // clean the `ownPropertyLength` property from the grip.
-          if (argument && argument.class === "Window") {
-            argument.ownPropertyLength = existingArgument.ownPropertyLength;
+          if (newArgument.class === "Window") {
+            newArgument.ownPropertyLength = existingArgument.ownPropertyLength;
           }
+          return newArgument;
         });
       }
     }
@@ -212,6 +217,12 @@ function getCleanedPacket(key, packet) {
           existingPacket.networkInfo.response.transferredSize;
       }
     }
+
+    if (res.helperResult) {
+      if (res.helperResult.object) {
+        res.helperResult.object.actor = existingPacket.helperResult.object.actor;
+      }
+    }
   } else {
     res = packet;
   }
@@ -283,16 +294,18 @@ function* generateConsoleApiStubs() {
   };
 
   let toolbox = yield openNewTabAndToolbox(TEST_URI, "webconsole");
-  let {ui} = toolbox.getCurrentPanel().hud;
+  const hud = toolbox.getCurrentPanel().hud;
+  let {ui} = hud;
   ok(ui.jsterm, "jsterm exists");
   ok(ui.newConsoleOutput, "newConsoleOutput exists");
 
   for (let [key, {keys, code}] of consoleApi) {
     let received = new Promise(resolve => {
       let i = 0;
-      let listener = (type, res) => {
-        stubs.packets.push(formatPacket(keys[i], res));
-        stubs.preparedMessages.push(formatStub(keys[i], res));
+      let listener = async (type, res) => {
+        const callKey = keys[i];
+        stubs.packets.push(formatPacket(callKey, res));
+        stubs.preparedMessages.push(formatStub(callKey, res));
         if (++i === keys.length) {
           toolbox.target.client.removeListener("consoleAPICall", listener);
           resolve();
@@ -306,6 +319,7 @@ function* generateConsoleApiStubs() {
       [key, code],
       function ([subKey, subCode]) {
         let script = content.document.createElement("script");
+        // eslint-disable-next-line no-unsanitized/property
         script.innerHTML = `function triggerPacket() {${subCode}}`;
         content.document.body.appendChild(script);
         content.wrappedJSObject.triggerPacket();
@@ -349,6 +363,7 @@ function* generateCssMessageStubs() {
       [key, code],
       function ([subKey, subCode]) {
         let style = content.document.createElement("style");
+        // eslint-disable-next-line no-unsanitized/property
         style.innerHTML = subCode;
         content.document.body.appendChild(style);
       }
@@ -438,6 +453,7 @@ function* generateNetworkEventStubs() {
       [key, code],
       function ([subKey, subCode]) {
         let script = content.document.createElement("script");
+        // eslint-disable-next-line no-unsanitized/property
         script.innerHTML = `function triggerPacket() {${subCode}}`;
         content.document.body.appendChild(script);
         content.wrappedJSObject.triggerPacket();
@@ -484,6 +500,7 @@ function* generatePageErrorStubs() {
       [key, code],
       function ([subKey, subCode]) {
         let script = content.document.createElement("script");
+        // eslint-disable-next-line no-unsanitized/property
         script.innerHTML = subCode;
         content.document.body.appendChild(script);
         script.remove();

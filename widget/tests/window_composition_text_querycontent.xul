@@ -4508,6 +4508,89 @@ function runQueryContentEventRelativeToInsertionPoint()
   synthesizeComposition({ type: "compositioncommitasis" });
 }
 
+function runBug1375825Test()
+{
+  contenteditable.focus();
+
+  // #1
+  contenteditable.innerHTML = "abc<span contenteditable=\"false\">defgh</span>";
+
+  var ret = synthesizeQueryTextRect(2, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (2, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "c", "runBug1375825Test #1 (2, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'c'");
+
+  ret = synthesizeQueryTextRect(3, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (3, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "d", "runBug1375825Test #1 (3, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'd'");
+
+  ret = synthesizeQueryTextRect(4, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (4, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "e", "runBug1375825Test #1 (4, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'e'");
+
+  ret = synthesizeQueryTextRect(5, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (5, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "f", "runBug1375825Test #1 (5, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'f'");
+
+  ret = synthesizeQueryTextRect(6, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (6, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "g", "runBug1375825Test #1 (6, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'g'");
+
+  ret = synthesizeQueryTextRect(7, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (7, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "h", "runBug1375825Test #1 (7, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'h'");
+
+  // #2
+  contenteditable.innerHTML = "abc<span style=\"-moz-user-select: all;\">defgh</span>";
+
+  ret = synthesizeQueryTextRect(2, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (2, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "c", "runBug1375825Test #2 (2, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'c'");
+
+  ret = synthesizeQueryTextRect(3, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (3, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "d", "runBug1375825Test #2 (3, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'd'");
+
+  ret = synthesizeQueryTextRect(4, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (4, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "e", "runBug1375825Test #2 (4, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'e'");
+
+  ret = synthesizeQueryTextRect(5, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (5, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "f", "runBug1375825Test #2 (5, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'f'");
+
+  ret = synthesizeQueryTextRect(6, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (6, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "g", "runBug1375825Test #2 (6, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'g'");
+
+  ret = synthesizeQueryTextRect(7, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (7, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "h", "runBug1375825Test #2 (7, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'h'");
+}
+
 function runCSSTransformTest()
 {
   textarea.focus();
@@ -7156,6 +7239,23 @@ function* runIMEContentObserverTest()
     notifications.shift();
   }
 
+  // Bug 1374057 - On ubuntu 16.04 there are notify-position-change events that are
+  // recorded after all the other events so we remove them through this function.
+  function ensureToRemovePostPositionChangeNotification(aDescription, expectedCount)
+  {
+    if (!notifications.length) {
+      return;
+    }
+    if (notifications.length <= expectedCount) {
+      return;
+    }
+    if (notifications[notifications.length-1].type != "notify-position-change") {
+      return;
+    }
+    ok(true, "notify-position-change", aDescription + "Unnecessary notify-position-change occurred, ignoring it");
+    notifications.pop();
+  }
+
   function getNativeText(aXPText)
   {
     if (kLF == "\n") {
@@ -7228,9 +7328,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("a", { code: "KeyA" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: 0, addedLength: 1 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 1, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // "ab[]"
@@ -7238,9 +7340,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("b", { code: "KeyB" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 1, removedLength: 0, addedLength: 1 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 2, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // "abc[]"
@@ -7248,9 +7352,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("c", { code: "KeyC" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 2, removedLength: 0, addedLength: 1 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 3, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // "ab[c]"
@@ -7258,7 +7364,9 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkSelectionChangeNotification(notifications[0], description, { offset: 2, text: "c", reversed: true });
+    ensureToRemovePostPositionChangeNotification(description, 1);
     dumpUnexpectedNotifications(description, 1);
 
     // "a[bc]"
@@ -7266,7 +7374,9 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkSelectionChangeNotification(notifications[0], description, { offset: 1, text: "bc", reversed: true });
+    ensureToRemovePostPositionChangeNotification(description, 1);
     dumpUnexpectedNotifications(description, 1);
 
     // "[abc]"
@@ -7274,7 +7384,9 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkSelectionChangeNotification(notifications[0], description, { offset: 0, text: "abc", reversed: true });
+    ensureToRemovePostPositionChangeNotification(description, 1);
     dumpUnexpectedNotifications(description, 1);
 
     // "[]abc"
@@ -7282,7 +7394,9 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkSelectionChangeNotification(notifications[0], description, { offset: 0, text: "" });
+    ensureToRemovePostPositionChangeNotification(description, 1);
     dumpUnexpectedNotifications(description, 1);
 
     // "[a]bc"
@@ -7290,7 +7404,9 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_ArrowRight", { code: "ArrowRight", shiftKey: true }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkSelectionChangeNotification(notifications[0], description, { offset: 0, text: "a" });
+    ensureToRemovePostPositionChangeNotification(description, 1);
     dumpUnexpectedNotifications(description, 1);
 
     // "[ab]c"
@@ -7298,7 +7414,9 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_ArrowRight", { code: "ArrowRight", shiftKey: true }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkSelectionChangeNotification(notifications[0], description, { offset: 0, text: "ab" });
+    ensureToRemovePostPositionChangeNotification(description, 1);
     dumpUnexpectedNotifications(description, 1);
 
     // "[]c"
@@ -7306,9 +7424,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: 2, addedLength: 0 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 0, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // "[]"
@@ -7316,8 +7436,10 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: 1, addedLength: 0 });
     checkPositionChangeNotification(notifications[1], description);
+    ensureToRemovePostPositionChangeNotification(description, 2);
     dumpUnexpectedNotifications(description, 2);
 
     // "abc[]"
@@ -7331,9 +7453,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 2, removedLength: 1, addedLength: 0 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 2, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // "[ab]"
@@ -7346,9 +7470,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: 2, addedLength: 0 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 0, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // "abcd[]"
@@ -7369,9 +7495,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 1, removedLength: 2, addedLength: 0 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 1, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // "a[bc]d"
@@ -7386,9 +7514,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("B", { code: "KeyB", shiftKey: true }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 1, removedLength: 2, addedLength: 1 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 2, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     if (!aTestLineBreaker) {
@@ -7400,9 +7530,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_Enter", { code: "Enter" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 2, removedLength: 0, addedLength: kLFLen });
     checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("aB\n").length, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // "aB[]d"
@@ -7410,9 +7542,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 2, removedLength: kLFLen, addedLength: 0 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 2, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // "a[B]d"
@@ -7424,9 +7558,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_Enter", { code: "Enter" }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 1, removedLength: 1, addedLength: kLFLen });
     checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("a\n").length, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // "a[\n]d"
@@ -7434,7 +7570,9 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkSelectionChangeNotification(notifications[0], description, { offset: 1, text: kLF, reversed: true });
+    ensureToRemovePostPositionChangeNotification(description, 1);
     dumpUnexpectedNotifications(description, 1);
 
     // "a[]d"
@@ -7442,9 +7580,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     synthesizeKey("KEY_Delete", { code: "Delete", shiftKey: true }, win, callback);
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 1, removedLength: kLFLen, addedLength: 0 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 1, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // ab\ncd\nef\ngh\n[]
@@ -7452,9 +7592,11 @@ function* runIMEContentObserverTest()
     notifications = [];
     aElement.value = "ab\ncd\nef\ngh\n";
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: 2, addedLength: getNativeText("ab\ncd\nef\ngh\n").length });
     checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("ab\ncd\nef\ngh\n").length, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
 
     // []
@@ -7462,10 +7604,12 @@ function* runIMEContentObserverTest()
     notifications = [];
     aElement.value = "";
     yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
     // XXX Removing invisible <br> or something? The removed length is a line breaker length longer.
     checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: getNativeText("ab\ncd\nef\ngh\n").length + kLFLen, addedLength: 0 });
     checkSelectionChangeNotification(notifications[1], description, { offset: 0, text: "" });
     checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
     dumpUnexpectedNotifications(description, 3);
   }
 
@@ -7718,9 +7862,9 @@ function* runIMEContentObserverTest()
       dumpUnexpectedNotifications(description, 3);
     } else {
       checkTextChangeNotification(notifications[0], description, { offset: 2 + offsetAtContainer, removedLength: kLFLen, addedLength: 0 });
-      todo_is(notifications.length, 3, description + " should cause 3 notifications");
-      todo_is(notifications[1] && notifications[1].type, "notify-selection-change", description + " should cause selection change notification");
-      todo_is(notifications[2] && notifications[2].type, "notify-position-change", description + " should cause position change notification");
+      is(notifications.length, 3, description + " should cause 3 notifications");
+      is(notifications[1] && notifications[1].type, "notify-selection-change", description + " should cause selection change notification");
+      is(notifications[2] && notifications[2].type, "notify-position-change", description + " should cause position change notification");
     }
 
     // "a[B]d"
@@ -7981,6 +8125,7 @@ function* testBody()
   yield* runIMEContentObserverTest();
   runCSSTransformTest();
   runBug722639Test();
+  runBug1375825Test();
   runForceCommitTest();
   runNestedSettingValue();
   runBug811755Test();

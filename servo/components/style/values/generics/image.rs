@@ -8,6 +8,7 @@
 
 use Atom;
 use cssparser::serialize_identifier;
+use custom_properties::SpecifiedValue;
 use std::fmt;
 use style_traits::{HasViewportPercentage, ToCss};
 use values::computed::ComputedValueAsSpecified;
@@ -18,13 +19,13 @@ use values::specified::url::SpecifiedUrl;
 /// [image]: https://drafts.csswg.org/css-images/#image-values
 #[derive(Clone, PartialEq, ToComputedValue)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-pub enum Image<Gradient, ImageRect> {
+pub enum Image<Gradient, MozImageRect> {
     /// A `<url()>` image.
     Url(SpecifiedUrl),
     /// A `<gradient>` image.
     Gradient(Gradient),
     /// A `-moz-image-rect` image
-    Rect(ImageRect),
+    Rect(MozImageRect),
     /// A `-moz-element(# <element-id>)`
     Element(Atom),
     /// A paint worklet image.
@@ -35,11 +36,11 @@ pub enum Image<Gradient, ImageRect> {
 
 /// A CSS gradient.
 /// https://drafts.csswg.org/css-images/#gradients
-#[derive(Clone, Debug, HasViewportPercentage, PartialEq, ToComputedValue)]
+#[derive(Clone, Debug, HasViewportPercentage, PartialEq)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-pub struct Gradient<LineDirection, Length, LengthOrPercentage, Position, Color> {
+pub struct Gradient<LineDirection, Length, LengthOrPercentage, Position, Color, Angle> {
     /// Gradients can be linear or radial.
-    pub kind: GradientKind<LineDirection, Length, LengthOrPercentage, Position>,
+    pub kind: GradientKind<LineDirection, Length, LengthOrPercentage, Position, Angle>,
     /// The color stops and interpolation hints.
     pub items: Vec<GradientItem<Color, LengthOrPercentage>>,
     /// True if this is a repeating gradient.
@@ -50,26 +51,28 @@ pub struct Gradient<LineDirection, Length, LengthOrPercentage, Position, Color> 
 
 #[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToComputedValue)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-/// Whether we used the modern notation or the compatibility `-webkit` prefix.
+/// Whether we used the modern notation or the compatibility `-webkit`, `-moz` prefixes.
 pub enum CompatMode {
     /// Modern syntax.
     Modern,
     /// `-webkit` prefix.
     WebKit,
+    /// `-moz` prefix
+    Moz,
 }
 
 /// A gradient kind.
-#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToComputedValue)]
+#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
-pub enum GradientKind<LineDirection, Length, LengthOrPercentage, Position> {
+pub enum GradientKind<LineDirection, Length, LengthOrPercentage, Position, Angle> {
     /// A linear gradient.
     Linear(LineDirection),
     /// A radial gradient.
-    Radial(EndingShape<Length, LengthOrPercentage>, Position),
+    Radial(EndingShape<Length, LengthOrPercentage>, Position, Option<Angle>),
 }
 
 /// A radial gradient's ending shape.
-#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToComputedValue)]
+#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToComputedValue, ToCss)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub enum EndingShape<Length, LengthOrPercentage> {
     /// A circular gradient.
@@ -89,7 +92,7 @@ pub enum Circle<Length> {
 }
 
 /// An ellipse shape.
-#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToComputedValue)]
+#[derive(Clone, Copy, Debug, HasViewportPercentage, PartialEq, ToComputedValue, ToCss)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub enum Ellipse<LengthOrPercentage> {
     /// An ellipse pair of radii.
@@ -123,7 +126,7 @@ pub enum GradientItem<Color, LengthOrPercentage> {
 
 /// A color stop.
 /// https://drafts.csswg.org/css-images/#typedef-color-stop-list
-#[derive(Clone, Copy, HasViewportPercentage, PartialEq, ToComputedValue)]
+#[derive(Clone, Copy, HasViewportPercentage, PartialEq, ToComputedValue, ToCss)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub struct ColorStop<Color, LengthOrPercentage> {
     /// The color of this stop.
@@ -134,17 +137,26 @@ pub struct ColorStop<Color, LengthOrPercentage> {
 
 /// Specified values for a paint worklet.
 /// https://drafts.css-houdini.org/css-paint-api/
-#[derive(Clone, Debug, PartialEq, ToComputedValue)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 pub struct PaintWorklet {
     /// The name the worklet was registered with.
     pub name: Atom,
+    /// The arguments for the worklet.
+    /// TODO: store a parsed representation of the arguments.
+    pub arguments: Vec<SpecifiedValue>,
 }
+
+impl ComputedValueAsSpecified for PaintWorklet {}
 
 impl ToCss for PaintWorklet {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
         dest.write_str("paint(")?;
         serialize_identifier(&*self.name.to_string(), dest)?;
+        for argument in &self.arguments {
+            dest.write_str(", ")?;
+            argument.to_css(dest)?;
+        }
         dest.write_str(")")
     }
 }
@@ -152,14 +164,15 @@ impl ToCss for PaintWorklet {
 /// Values for `moz-image-rect`.
 ///
 /// `-moz-image-rect(<uri>, top, right, bottom, left);`
-#[derive(Clone, Debug, PartialEq, ToComputedValue)]
-#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
 #[allow(missing_docs)]
-pub struct ImageRect<NumberOrPercentage> {
+#[cfg_attr(feature = "servo", derive(HeapSizeOf))]
+#[css(comma, function)]
+#[derive(Clone, Debug, PartialEq, ToComputedValue, ToCss)]
+pub struct MozImageRect<NumberOrPercentage> {
     pub url: SpecifiedUrl,
     pub top: NumberOrPercentage,
-    pub bottom: NumberOrPercentage,
     pub right: NumberOrPercentage,
+    pub bottom: NumberOrPercentage,
     pub left: NumberOrPercentage,
 }
 
@@ -212,13 +225,16 @@ impl<G, R> HasViewportPercentage for Image<G, R>
     }
 }
 
-impl<D, L, LoP, P, C> ToCss for Gradient<D, L, LoP, P, C>
-    where D: LineDirection, L: ToCss, LoP: ToCss, P: ToCss, C: ToCss,
+impl<D, L, LoP, P, C, A> ToCss for Gradient<D, L, LoP, P, C, A>
+    where D: LineDirection, L: ToCss, LoP: ToCss, P: ToCss, C: ToCss, A: ToCss
 {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        if self.compat_mode == CompatMode::WebKit {
-            dest.write_str("-webkit-")?;
+        match self.compat_mode {
+            CompatMode::WebKit => dest.write_str("-webkit-")?,
+            CompatMode::Moz => dest.write_str("-moz-")?,
+            _ => {},
         }
+
         if self.repeating {
             dest.write_str("repeating-")?;
         }
@@ -230,7 +246,7 @@ impl<D, L, LoP, P, C> ToCss for Gradient<D, L, LoP, P, C>
                 direction.to_css(dest, self.compat_mode)?;
                 false
             },
-            GradientKind::Radial(ref shape, ref position) => {
+            GradientKind::Radial(ref shape, ref position, ref angle) => {
                 let omit_shape = match *shape {
                     EndingShape::Ellipse(Ellipse::Extent(ShapeExtent::Cover)) |
                     EndingShape::Ellipse(Ellipse::Extent(ShapeExtent::FarthestCorner)) => {
@@ -247,6 +263,10 @@ impl<D, L, LoP, P, C> ToCss for Gradient<D, L, LoP, P, C>
                     position.to_css(dest)?;
                 } else {
                     position.to_css(dest)?;
+                    if let Some(ref a) = *angle {
+                        dest.write_str(" ")?;
+                        a.to_css(dest)?;
+                    }
                     if !omit_shape {
                         dest.write_str(", ")?;
                         shape.to_css(dest)?;
@@ -266,7 +286,7 @@ impl<D, L, LoP, P, C> ToCss for Gradient<D, L, LoP, P, C>
     }
 }
 
-impl<D, L, LoP, P> GradientKind<D, L, LoP, P> {
+impl<D, L, LoP, P, A> GradientKind<D, L, LoP, P, A> {
     fn label(&self) -> &str {
         match *self {
             GradientKind::Linear(..) => "linear",
@@ -285,29 +305,25 @@ pub trait LineDirection {
         where W: fmt::Write;
 }
 
-impl<L, LoP> ToCss for EndingShape<L, LoP>
-    where L: ToCss, LoP: ToCss,
+impl<L> ToCss for Circle<L>
+where
+    L: ToCss,
 {
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
+    fn to_css<W>(&self, dest: &mut W) -> fmt::Result
+    where
+        W: fmt::Write,
+    {
         match *self {
-            EndingShape::Circle(Circle::Extent(ShapeExtent::FarthestCorner)) |
-            EndingShape::Circle(Circle::Extent(ShapeExtent::Cover)) => {
+            Circle::Extent(ShapeExtent::FarthestCorner) |
+            Circle::Extent(ShapeExtent::Cover) => {
                 dest.write_str("circle")
             },
-            EndingShape::Circle(Circle::Extent(keyword)) => {
+            Circle::Extent(keyword) => {
                 dest.write_str("circle ")?;
                 keyword.to_css(dest)
             },
-            EndingShape::Circle(Circle::Radius(ref length)) => {
+            Circle::Radius(ref length) => {
                 length.to_css(dest)
-            },
-            EndingShape::Ellipse(Ellipse::Extent(keyword)) => {
-                keyword.to_css(dest)
-            },
-            EndingShape::Ellipse(Ellipse::Radii(ref x, ref y)) => {
-                x.to_css(dest)?;
-                dest.write_str(" ")?;
-                y.to_css(dest)
             },
         }
     }
@@ -322,36 +338,5 @@ impl<C, L> fmt::Debug for ColorStop<C, L>
             write!(f, " {:?}", pos)?;
         }
         Ok(())
-    }
-}
-
-impl<C, L> ToCss for ColorStop<C, L>
-    where C: ToCss, L: ToCss,
-{
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        self.color.to_css(dest)?;
-        if let Some(ref position) = self.position {
-            dest.write_str(" ")?;
-            position.to_css(dest)?;
-        }
-        Ok(())
-    }
-}
-
-impl<C> ToCss for ImageRect<C>
-    where C: ToCss,
-{
-    fn to_css<W>(&self, dest: &mut W) -> fmt::Result where W: fmt::Write {
-        dest.write_str("-moz-image-rect(")?;
-        self.url.to_css(dest)?;
-        dest.write_str(", ")?;
-        self.top.to_css(dest)?;
-        dest.write_str(", ")?;
-        self.right.to_css(dest)?;
-        dest.write_str(", ")?;
-        self.bottom.to_css(dest)?;
-        dest.write_str(", ")?;
-        self.left.to_css(dest)?;
-        dest.write_str(")")
     }
 }

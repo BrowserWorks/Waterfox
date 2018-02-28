@@ -25,9 +25,9 @@ interface Element : Node {
   [Pure]
   readonly attribute DOMString tagName;
 
-  [Pure]
+  [CEReactions, Pure]
            attribute DOMString id;
-  [Pure]
+  [CEReactions, Pure]
            attribute DOMString className;
   [Constant, PutForwards=value]
   readonly attribute DOMTokenList classList;
@@ -40,13 +40,13 @@ interface Element : Node {
   DOMString? getAttribute(DOMString name);
   [Pure]
   DOMString? getAttributeNS(DOMString? namespace, DOMString localName);
-  [Throws]
+  [CEReactions, Throws]
   void setAttribute(DOMString name, DOMString value);
-  [Throws]
+  [CEReactions, Throws]
   void setAttributeNS(DOMString? namespace, DOMString name, DOMString value);
-  [Throws]
+  [CEReactions, Throws]
   void removeAttribute(DOMString name);
-  [Throws]
+  [CEReactions, Throws]
   void removeAttributeNS(DOMString? namespace, DOMString localName);
   [Pure]
   boolean hasAttribute(DOMString name);
@@ -70,7 +70,7 @@ interface Element : Node {
   [Pure]
   HTMLCollection getElementsByClassName(DOMString classNames);
 
-  [Throws, Pure]
+  [CEReactions, Throws, Pure]
   Element? insertAdjacentElement(DOMString where, Element element); // historical
 
   [Throws]
@@ -89,10 +89,6 @@ interface Element : Node {
    */
   [ChromeOnly]
   readonly attribute float fontSizeInflation;
-
-  // Mozilla specific stuff
-  [Pure]
-           attribute EventHandler onwheel;
 
   // Selectors API
   /**
@@ -141,12 +137,12 @@ interface Element : Node {
 
   // Obsolete methods.
   Attr? getAttributeNode(DOMString name);
-  [Throws]
+  [CEReactions, Throws]
   Attr? setAttributeNode(Attr newAttr);
-  [Throws]
+  [CEReactions, Throws]
   Attr? removeAttributeNode(Attr oldAttr);
   Attr? getAttributeNodeNS(DOMString? namespaceURI, DOMString localName);
-  [Throws]
+  [CEReactions, Throws]
   Attr? setAttributeNodeNS(Attr newAttr);
 
   [ChromeOnly]
@@ -223,12 +219,22 @@ partial interface Element {
 
 // http://domparsing.spec.whatwg.org/#extensions-to-the-element-interface
 partial interface Element {
-  [Pure,SetterThrows,TreatNullAs=EmptyString]
+  [CEReactions, Pure,SetterThrows,TreatNullAs=EmptyString]
   attribute DOMString innerHTML;
-  [Pure,SetterThrows,TreatNullAs=EmptyString]
+  [CEReactions, Pure,SetterThrows,TreatNullAs=EmptyString]
   attribute DOMString outerHTML;
-  [Throws]
+  [CEReactions, Throws]
   void insertAdjacentHTML(DOMString position, DOMString text);
+
+  /**
+   * Like the innerHTML setter, but does not sanitize its values, even in
+   * chrome-privileged documents.
+   *
+   * If you're thinking about using this, don't. You have many, much better
+   * options.
+   */
+  [ChromeOnly, Throws]
+  void unsafeSetInnerHTML(DOMString html);
 };
 
 // http://www.w3.org/TR/selectors-api/#interface-definitions

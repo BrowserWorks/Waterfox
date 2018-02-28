@@ -3,8 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // https://html.spec.whatwg.org/multipage/#htmllabelelement
+[HTMLConstructor]
 interface HTMLLabelElement : HTMLElement {
   readonly attribute HTMLFormElement? form;
+  [CEReactions]
   attribute DOMString htmlFor;
   readonly attribute HTMLElement? control;
 };

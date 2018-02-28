@@ -24,6 +24,7 @@
 #include "mozilla/Mutex.h"
 #include "DataChannelProtocol.h"
 #include "DataChannelListener.h"
+#include "mozilla/net/NeckoTargetHolder.h"
 #ifdef SCTP_DTLS_SUPPORTED
 #include "mtransport/sigslot.h"
 #include "mtransport/transportflow.h"
@@ -91,9 +92,10 @@ public:
 };
 
 // One per PeerConnection
-class DataChannelConnection
+class DataChannelConnection final
+  : public net::NeckoTargetHolder
 #ifdef SCTP_DTLS_SUPPORTED
-  : public sigslot::has_slots<>
+  , public sigslot::has_slots<>
 #endif
 {
   virtual ~DataChannelConnection();
@@ -111,7 +113,8 @@ public:
     virtual void NotifyDataChannel(already_AddRefed<DataChannel> channel) = 0;
   };
 
-  explicit DataChannelConnection(DataConnectionListener *listener);
+  explicit DataChannelConnection(DataConnectionListener *listener,
+                                 nsIEventTarget *aTarget);
 
   bool Init(unsigned short aPort, uint16_t aNumStreams, bool aUsingDtls);
   void Destroy(); // So we can spawn refs tied to runnables in shutdown
@@ -323,6 +326,7 @@ public:
     , mFlags(flags)
     , mIsRecvBinary(false)
     , mBufferedThreshold(0) // default from spec
+    , mMainThreadEventTarget(connection->GetNeckoTarget())
     {
       NS_ASSERTION(mConnection,"NULL connection");
     }
@@ -448,6 +452,7 @@ private:
   nsCString mRecvBuffer;
   nsTArray<nsAutoPtr<BufferedMsg>> mBufferedData; // GUARDED_BY(mConnection->mLock)
   nsTArray<nsCOMPtr<nsIRunnable>> mQueuedMessages;
+  nsCOMPtr<nsIEventTarget> mMainThreadEventTarget;
 };
 
 // used to dispatch notifications of incoming data to the main thread
@@ -467,37 +472,49 @@ public:
     NO_LONGER_BUFFERED,
   };  /* types */
 
-  DataChannelOnMessageAvailable(int32_t     aType,
-                                DataChannelConnection *aConnection,
-                                DataChannel *aChannel,
-                                nsCString   &aData,  // XXX this causes inefficiency
-                                int32_t     aLen)
-    : mType(aType),
-      mChannel(aChannel),
-      mConnection(aConnection),
-      mData(aData),
-      mLen(aLen) {}
+  DataChannelOnMessageAvailable(
+    int32_t aType,
+    DataChannelConnection* aConnection,
+    DataChannel* aChannel,
+    nsCString& aData, // XXX this causes inefficiency
+    int32_t aLen)
+    : Runnable("DataChannelOnMessageAvailable")
+    , mType(aType)
+    , mChannel(aChannel)
+    , mConnection(aConnection)
+    , mData(aData)
+    , mLen(aLen)
+  {
+  }
 
-  DataChannelOnMessageAvailable(int32_t     aType,
-                                DataChannel *aChannel)
-    : mType(aType),
-      mChannel(aChannel) {}
+  DataChannelOnMessageAvailable(int32_t aType, DataChannel* aChannel)
+    : Runnable("DataChannelOnMessageAvailable")
+    , mType(aType)
+    , mChannel(aChannel)
+  {
+  }
   // XXX is it safe to leave mData/mLen uninitialized?  This should only be
   // used for notifications that don't use them, but I'd like more
   // bulletproof compile-time checking.
 
-  DataChannelOnMessageAvailable(int32_t     aType,
-                                DataChannelConnection *aConnection,
-                                DataChannel *aChannel)
-    : mType(aType),
-      mChannel(aChannel),
-      mConnection(aConnection) {}
+  DataChannelOnMessageAvailable(int32_t aType,
+                                DataChannelConnection* aConnection,
+                                DataChannel* aChannel)
+    : Runnable("DataChannelOnMessageAvailable")
+    , mType(aType)
+    , mChannel(aChannel)
+    , mConnection(aConnection)
+  {
+  }
 
   // for ON_CONNECTION/ON_DISCONNECTED
-  DataChannelOnMessageAvailable(int32_t     aType,
-                                DataChannelConnection *aConnection)
-    : mType(aType),
-      mConnection(aConnection) {}
+  DataChannelOnMessageAvailable(int32_t aType,
+                                DataChannelConnection* aConnection)
+    : Runnable("DataChannelOnMessageAvailable")
+    , mType(aType)
+    , mConnection(aConnection)
+  {
+  }
 
   NS_IMETHOD Run() override
   {

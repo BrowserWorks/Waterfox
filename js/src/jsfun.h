@@ -60,6 +60,9 @@ class JSFunction : public js::NativeObject
         BOUND_FUN        = 0x0008,  /* function was created with Function.prototype.bind. */
         HAS_GUESSED_ATOM = 0x0020,  /* function had no explicit name, but a
                                        name was guessed for it anyway */
+        HAS_BOUND_FUNCTION_NAME_PREFIX = 0x0020, /* bound functions reuse the HAS_GUESSED_ATOM
+                                                    flag to track if atom_ already contains the
+                                                    "bound " function name prefix */
         LAMBDA           = 0x0040,  /* function comes from a FunctionExpression, ArrowFunction, or
                                        Function() call (not a FunctionDeclaration or nonstandard
                                        function-statement) */
@@ -100,8 +103,8 @@ class JSFunction : public js::NativeObject
         INTERPRETED_GENERATOR_OR_ASYNC = INTERPRETED,
         NO_XDR_FLAGS = RESOLVED_LENGTH | RESOLVED_NAME,
 
-        STABLE_ACROSS_CLONES = CONSTRUCTOR | HAS_GUESSED_ATOM | LAMBDA |
-                               SELF_HOSTED | HAS_COMPILE_TIME_NAME | FUNCTION_KIND_MASK
+        STABLE_ACROSS_CLONES = CONSTRUCTOR | LAMBDA | SELF_HOSTED | HAS_COMPILE_TIME_NAME |
+                               FUNCTION_KIND_MASK
     };
 
     static_assert((INTERPRETED | INTERPRETED_LAZY) == js::JS_FUNCTION_INTERPRETED_BITS,
@@ -187,10 +190,20 @@ class JSFunction : public js::NativeObject
     bool isAsmJSNative()            const { return kind() == AsmJS; }
 
     /* Possible attributes of an interpreted function: */
-    bool hasCompileTimeName()       const { return flags() & HAS_COMPILE_TIME_NAME; }
-    bool hasGuessedAtom()           const { return flags() & HAS_GUESSED_ATOM; }
-    bool isLambda()                 const { return flags() & LAMBDA; }
     bool isBoundFunction()          const { return flags() & BOUND_FUN; }
+    bool hasCompileTimeName()       const { return flags() & HAS_COMPILE_TIME_NAME; }
+    bool hasGuessedAtom()           const {
+        static_assert(HAS_GUESSED_ATOM == HAS_BOUND_FUNCTION_NAME_PREFIX,
+                      "HAS_GUESSED_ATOM is unused for bound functions");
+        return (flags() & (HAS_GUESSED_ATOM | BOUND_FUN)) == HAS_GUESSED_ATOM;
+    }
+    bool hasBoundFunctionNamePrefix() const {
+        static_assert(HAS_BOUND_FUNCTION_NAME_PREFIX == HAS_GUESSED_ATOM,
+                      "HAS_BOUND_FUNCTION_NAME_PREFIX is only used for bound functions");
+        MOZ_ASSERT(isBoundFunction());
+        return flags() & HAS_BOUND_FUNCTION_NAME_PREFIX;
+    }
+    bool isLambda()                 const { return flags() & LAMBDA; }
     bool isInterpretedLazy()        const { return flags() & INTERPRETED_LAZY; }
     bool hasScript()                const { return flags() & INTERPRETED; }
 
@@ -341,8 +354,7 @@ class JSFunction : public js::NativeObject
         MOZ_ASSERT(atom);
         MOZ_ASSERT(!hasGuessedAtom());
         MOZ_ASSERT(!isClassConstructor());
-        MOZ_ASSERT(js::AtomIsMarked(zone(), atom));
-        atom_ = atom;
+        setAtom(atom);
         flags_ |= HAS_COMPILE_TIME_NAME;
     }
     JSAtom* compileTimeName() const {
@@ -356,15 +368,23 @@ class JSFunction : public js::NativeObject
         MOZ_ASSERT(atom);
         MOZ_ASSERT(!hasCompileTimeName());
         MOZ_ASSERT(!hasGuessedAtom());
-        MOZ_ASSERT(js::AtomIsMarked(zone(), atom));
-        atom_ = atom;
+        MOZ_ASSERT(!isBoundFunction());
+        setAtom(atom);
         flags_ |= HAS_GUESSED_ATOM;
     }
     void clearGuessedAtom() {
         MOZ_ASSERT(hasGuessedAtom());
+        MOZ_ASSERT(!isBoundFunction());
         MOZ_ASSERT(atom_);
-        atom_ = nullptr;
+        setAtom(nullptr);
         flags_ &= ~HAS_GUESSED_ATOM;
+    }
+
+    void setPrefixedBoundFunctionName(JSAtom* atom) {
+        MOZ_ASSERT(!hasBoundFunctionNamePrefix());
+        MOZ_ASSERT(atom);
+        flags_ |= HAS_BOUND_FUNCTION_NAME_PREFIX;
+        setAtom(atom);
     }
 
     /* uint16_t representation bounds number of call object dynamic slots. */
@@ -595,6 +615,13 @@ class JSFunction : public js::NativeObject
     const js::Value& getBoundFunctionArgument(unsigned which) const;
     size_t getBoundFunctionArgumentCount() const;
 
+    /*
+     * Used to mark bound functions as such and make them constructible if the
+     * target is. Also assigns the prototype and sets the name and correct length.
+     */
+    static bool finishBoundFunctionInit(JSContext* cx, js::HandleFunction bound,
+                                        js::HandleObject targetObj, int32_t argCount);
+
   private:
     js::GCPtrScript& mutableScript() {
         MOZ_ASSERT(hasScript());
@@ -644,7 +671,7 @@ static_assert(sizeof(JSFunction) == sizeof(js::shadow::Function),
               "shadow interface must match actual interface");
 
 extern JSString*
-fun_toStringHelper(JSContext* cx, js::HandleObject obj, unsigned indent);
+fun_toStringHelper(JSContext* cx, js::HandleObject obj, bool isToSource);
 
 namespace js {
 
@@ -774,6 +801,9 @@ class FunctionExtended : public JSFunction
     static inline size_t offsetOfArrowNewTargetSlot() {
         return offsetOfExtendedSlot(ARROW_NEWTARGET_SLOT);
     }
+    static inline size_t offsetOfMethodHomeObjectSlot() {
+        return offsetOfExtendedSlot(METHOD_HOMEOBJECT_SLOT);
+    }
 
   private:
     friend class JSFunction;
@@ -851,7 +881,7 @@ JSFunction::getExtendedSlot(size_t which) const
 
 namespace js {
 
-JSString* FunctionToString(JSContext* cx, HandleFunction fun, bool prettyPring);
+JSString* FunctionToString(JSContext* cx, HandleFunction fun, bool isToSource);
 
 template<XDRMode mode>
 bool

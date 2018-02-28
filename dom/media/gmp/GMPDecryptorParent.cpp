@@ -6,7 +6,6 @@
 #include "GMPDecryptorParent.h"
 #include "GMPContentParent.h"
 #include "MediaData.h"
-#include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Unused.h"
 
 namespace mozilla {
@@ -31,10 +30,10 @@ GMPDecryptorParent::GMPDecryptorParent(GMPContentParent* aPlugin)
   , mPluginId(aPlugin->GetPluginId())
   , mCallback(nullptr)
 #ifdef DEBUG
-  , mGMPThread(aPlugin->GMPThread())
+  , mGMPEventTarget(aPlugin->GMPEventTarget())
 #endif
 {
-  MOZ_ASSERT(mPlugin && mGMPThread);
+  MOZ_ASSERT(mPlugin && mGMPEventTarget);
 }
 
 GMPDecryptorParent::~GMPDecryptorParent()
@@ -374,7 +373,7 @@ mozilla::ipc::IPCResult
 GMPDecryptorParent::RecvBatchedKeyStatusChanged(const nsCString& aSessionId,
                                                 InfallibleTArray<GMPKeyInformation>&& aKeyInfos)
 {
-  LOGD(("GMPDecryptorParent[%p]::RecvBatchedKeyStatusChanged(sessionId='%s', KeyInfos len='%" PRIuSIZE "')",
+  LOGD(("GMPDecryptorParent[%p]::RecvBatchedKeyStatusChanged(sessionId='%s', KeyInfos len='%zu')",
         this, aSessionId.get(), aKeyInfos.Length()));
 
   if (mIsOpen) {
@@ -437,7 +436,7 @@ void
 GMPDecryptorParent::Close()
 {
   LOGD(("GMPDecryptorParent[%p]::Close()", this));
-  MOZ_ASSERT(mGMPThread == NS_GetCurrentThread());
+  MOZ_ASSERT(mGMPEventTarget->IsOnCurrentThread());
 
   // Consumer is done with us; we can shut down.  No more callbacks should
   // be made to mCallback. Note: do this before Shutdown()!
@@ -454,7 +453,7 @@ void
 GMPDecryptorParent::Shutdown()
 {
   LOGD(("GMPDecryptorParent[%p]::Shutdown()", this));
-  MOZ_ASSERT(mGMPThread == NS_GetCurrentThread());
+  MOZ_ASSERT(mGMPEventTarget->IsOnCurrentThread());
 
   if (mShuttingDown) {
     return;

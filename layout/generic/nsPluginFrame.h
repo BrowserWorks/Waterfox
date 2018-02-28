@@ -70,8 +70,8 @@ public:
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
                     nsIFrame*         aPrevInFlow) override;
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
   virtual void Reflow(nsPresContext* aPresContext,
                       ReflowOutput& aDesiredSize,
                       const ReflowInput& aReflowInput,
@@ -105,7 +105,7 @@ public:
 
   virtual void SetIsDocumentActive(bool aIsActive) override;
 
-  virtual nsresult GetCursor(const nsPoint& aPoint, 
+  virtual nsresult GetCursor(const nsPoint& aPoint,
                              nsIFrame::Cursor& aCursor) override;
 
   // APIs used by nsRootPresContext to set up the widget position/size/clip
@@ -232,7 +232,7 @@ protected:
                       const ReflowInput& aReflowInput,
                       ReflowOutput& aDesiredSize);
 
-  bool IsFocusable(int32_t *aTabIndex = nullptr, 
+  bool IsFocusable(int32_t *aTabIndex = nullptr,
                    bool aWithMouse = false) override;
 
   // check attributes and optionally CSS to see if we should display anything
@@ -243,7 +243,7 @@ protected:
   bool IsPaintedByGecko() const;
 
   nsIntPoint GetWindowOriginInPixels(bool aWindowless);
-  
+
   /*
    * If this frame is in a remote tab, return the tab offset to
    * the origin of the chrome window. In non-e10s, this return 0,0.
@@ -252,12 +252,12 @@ protected:
   LayoutDeviceIntPoint GetRemoteTabChromeOffset();
 
   static void PaintPrintPlugin(nsIFrame* aFrame,
-                               nsRenderingContext* aRenderingContext,
+                               gfxContext* aRenderingContext,
                                const nsRect& aDirtyRect, nsPoint aPt);
-  void PrintPlugin(nsRenderingContext& aRenderingContext,
+  void PrintPlugin(gfxContext& aRenderingContext,
                    const nsRect& aDirtyRect);
   void PaintPlugin(nsDisplayListBuilder* aBuilder,
-                   nsRenderingContext& aRenderingContext,
+                   gfxContext& aRenderingContext,
                    const nsRect& aDirtyRect, const nsRect& aPluginRect);
 
   void NotifyPluginReflowObservers();
@@ -292,9 +292,12 @@ private:
 
   class PluginEventNotifier : public mozilla::Runnable {
   public:
-    explicit PluginEventNotifier(const nsString &aEventType) : 
-      mEventType(aEventType) {}
-    
+    explicit PluginEventNotifier(const nsString& aEventType)
+      : mozilla::Runnable("nsPluginFrame::PluginEventNotifier")
+      , mEventType(aEventType)
+    {
+    }
+
     NS_IMETHOD Run() override;
   private:
     nsString mEventType;
@@ -352,7 +355,7 @@ public:
   virtual nsRegion GetOpaqueRegion(nsDisplayListBuilder* aBuilder,
                                    bool* aSnap) override;
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
+                     gfxContext* aCtx) override;
   virtual bool ComputeVisibility(nsDisplayListBuilder* aBuilder,
                                  nsRegion* aVisibleRegion) override;
 
@@ -363,7 +366,7 @@ public:
                                              const ContainerLayerParameters& aContainerParameters) override
   {
     return static_cast<nsPluginFrame*>(mFrame)->BuildLayer(aBuilder,
-                                                           aManager, 
+                                                           aManager,
                                                            this,
                                                            aContainerParameters);
   }

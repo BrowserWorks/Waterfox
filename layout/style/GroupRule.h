@@ -99,8 +99,10 @@ struct ServoGroupRuleRules
   }
 
   void Clear() {
-    mRuleList->DropReference();
-    mRuleList = nullptr;
+    if (mRuleList) {
+      mRuleList->DropReference();
+      mRuleList = nullptr;
+    }
   }
   void Traverse(nsCycleCollectionTraversalCallback& cb) {
     ImplCycleCollectionTraverse(cb, mRuleList, "mRuleList");
@@ -141,7 +143,8 @@ class GroupRule : public Rule
 {
 protected:
   GroupRule(uint32_t aLineNumber, uint32_t aColumnNumber);
-  explicit GroupRule(already_AddRefed<ServoCssRules> aRules);
+  GroupRule(already_AddRefed<ServoCssRules> aRules,
+            uint32_t aLineNumber, uint32_t aColumnNumber);
   GroupRule(const GroupRule& aCopy);
   virtual ~GroupRule();
 public:

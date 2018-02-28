@@ -16,6 +16,7 @@ using namespace mozilla::css;
 using namespace mozilla::net;
 
 #define PARSING_REPETITIONS 20
+#define SETPROPERTY_REPETITIONS (1000 * 1000)
 
 #ifdef MOZ_STYLO
 
@@ -27,10 +28,11 @@ static void ServoParsingBench() {
   RefPtr<URLExtraData> data = new URLExtraData(
     NullPrincipalURI::Create(), nullptr, NullPrincipal::Create());
   for (int i = 0; i < PARSING_REPETITIONS; i++) {
-    RefPtr<RawServoStyleSheet> stylesheet = Servo_StyleSheet_FromUTF8Bytes(
-      nullptr, nullptr, &css, eAuthorSheetFeatures, nullptr,
-      data, 0, eCompatibility_FullStandards
-    ).Consume();
+    RefPtr<RawServoStyleSheetContents> stylesheet =
+      Servo_StyleSheet_FromUTF8Bytes(
+        nullptr, nullptr, &css, eAuthorSheetFeatures,
+        data, 0, eCompatibility_FullStandards
+      ).Consume();
   }
 }
 
@@ -56,3 +58,37 @@ static void GeckoParsingBench() {
 }
 
 MOZ_GTEST_BENCH(Stylo, Gecko_nsCSSParser_ParseSheet_Bench, GeckoParsingBench);
+
+
+#ifdef MOZ_STYLO
+
+static void ServoSetPropertyByIdBench(const nsACString& css) {
+  RefPtr<RawServoDeclarationBlock> block = Servo_DeclarationBlock_CreateEmpty().Consume();
+  RefPtr<URLExtraData> data = new URLExtraData(
+    NullPrincipalURI::Create(), nullptr, NullPrincipal::Create());
+
+  ASSERT_TRUE(IsUTF8(css));
+
+  for (int i = 0; i < SETPROPERTY_REPETITIONS; i++) {
+    Servo_DeclarationBlock_SetPropertyById(
+      block,
+      eCSSProperty_width,
+      &css,
+      /* is_important = */ false,
+      data,
+      ParsingMode::Default,
+      eCompatibility_FullStandards,
+      nullptr
+    );
+  }
+}
+
+MOZ_GTEST_BENCH(Stylo, Servo_DeclarationBlock_SetPropertyById_Bench, [] {
+  ServoSetPropertyByIdBench(NS_LITERAL_CSTRING("10px"));
+});
+
+MOZ_GTEST_BENCH(Stylo, Servo_DeclarationBlock_SetPropertyById_WithInitialSpace_Bench, [] {
+  ServoSetPropertyByIdBench(NS_LITERAL_CSTRING(" 10px"));
+});
+
+#endif

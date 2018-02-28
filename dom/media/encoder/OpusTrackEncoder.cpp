@@ -10,12 +10,7 @@
 #include <opus/opus.h>
 
 #undef LOG
-#ifdef MOZ_WIDGET_GONK
-#include <android/log.h>
-#define LOG(args...) __android_log_print(ANDROID_LOG_INFO, "MediaEncoder", ## args);
-#else
 #define LOG(args, ...)
-#endif
 
 namespace mozilla {
 
@@ -216,8 +211,7 @@ OpusTrackEncoder::GetPacketDuration()
 already_AddRefed<TrackMetadataBase>
 OpusTrackEncoder::GetMetadata()
 {
-  PROFILER_LABEL("OpusTrackEncoder", "GetMetadata",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("OpusTrackEncoder::GetMetadata", OTHER);
   {
     // Wait if mEncoder is not initialized.
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
@@ -260,8 +254,7 @@ OpusTrackEncoder::GetMetadata()
 nsresult
 OpusTrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
 {
-  PROFILER_LABEL("OpusTrackEncoder", "GetEncodedTrack",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("OpusTrackEncoder::GetEncodedTrack", OTHER);
   {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
     // Wait until initialized or cancelled.

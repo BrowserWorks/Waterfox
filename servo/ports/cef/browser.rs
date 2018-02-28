@@ -8,14 +8,14 @@ use frame::{ServoCefFrame, ServoCefFrameExtensions};
 use interfaces::{CefBrowser, CefBrowserHost, CefClient, CefFrame, CefRequestContext};
 use interfaces::{cef_browser_t, cef_browser_host_t, cef_client_t, cef_frame_t};
 use interfaces::{cef_request_context_t};
+use msg::constellation_msg::TraversalDirection;
 use servo::Browser;
-use servo::servo_config::prefs::PREFS;
 use servo::servo_url::ServoUrl;
 use types::{cef_browser_settings_t, cef_string_t, cef_window_info_t, cef_window_handle_t};
 use window;
 use wrappers::CefWrap;
 
-use compositing::windowing::{WindowNavigateMsg, WindowEvent};
+use compositing::windowing::WindowEvent;
 use glutin_app;
 use libc::c_int;
 use std::cell::{Cell, RefCell};
@@ -38,14 +38,6 @@ impl ServoBrowser {
         match *self {
             ServoBrowser::OnScreen(ref mut browser) => { browser.handle_events(vec![event]); }
             ServoBrowser::OffScreen(ref mut browser) => { browser.handle_events(vec![event]); }
-            ServoBrowser::Invalid => {}
-        }
-    }
-
-    pub fn request_title_for_main_frame(&self) {
-        match *self {
-            ServoBrowser::OnScreen(ref browser) => browser.request_title_for_main_frame(),
-            ServoBrowser::OffScreen(ref browser) => browser.request_title_for_main_frame(),
             ServoBrowser::Invalid => {}
         }
     }
@@ -78,11 +70,11 @@ cef_class_impl! {
         }}
 
         fn go_back(&this,) -> () {{
-            this.send_window_event(WindowEvent::Navigation(WindowNavigateMsg::Back));
+            this.send_window_event(WindowEvent::Navigation(TraversalDirection::Back(1)));
         }}
 
         fn go_forward(&this,) -> () {{
-            this.send_window_event(WindowEvent::Navigation(WindowNavigateMsg::Forward));
+            this.send_window_event(WindowEvent::Navigation(TraversalDirection::Forward(1)));
         }}
 
         // Returns the main (top-level) frame for the browser window.
@@ -124,7 +116,7 @@ pub struct ServoCefBrowser {
 }
 
 impl ServoCefBrowser {
-    pub fn new(window_info: &cef_window_info_t, client: CefClient) -> ServoCefBrowser {
+    pub fn new(window_info: &cef_window_info_t, client: CefClient, target_url: ServoUrl) -> ServoCefBrowser {
         let frame = ServoCefFrame::new().as_cef_interface();
         let host = ServoCefBrowserHost::new(client.clone()).as_cef_interface();
         let mut window_handle: cef_window_handle_t = get_null_window_handle();
@@ -132,9 +124,7 @@ impl ServoCefBrowser {
         let (glutin_window, servo_browser) = if window_info.windowless_rendering_enabled == 0 {
             let parent_window = glutin_app::WindowID::new(window_info.parent_window as *mut _);
             let glutin_window = glutin_app::create_window(Some(parent_window));
-            let home_url = ServoUrl::parse(PREFS.get("shell.homepage").as_string()
-                    .unwrap_or("about:blank")).unwrap();
-            let servo_browser = Browser::new(glutin_window.clone(), home_url);
+            let servo_browser = Browser::new(glutin_window.clone(), target_url);
             window_handle = glutin_window.platform_window().window as cef_window_handle_t;
             (Some(glutin_window), ServoBrowser::OnScreen(servo_browser))
         } else {
@@ -166,7 +156,6 @@ impl ServoCefBrowser {
 pub trait ServoCefBrowserExtensions {
     fn init(&self, window_info: &cef_window_info_t);
     fn send_window_event(&self, event: WindowEvent);
-    fn request_title_for_main_frame(&self);
     fn pinch_zoom_level(&self) -> f32;
 }
 
@@ -175,8 +164,7 @@ impl ServoCefBrowserExtensions for CefBrowser {
         if window_info.windowless_rendering_enabled != 0 {
             let window = window::Window::new(window_info.width, window_info.height);
             window.set_browser(self.clone());
-            let home_url = ServoUrl::parse(PREFS.get("shell.homepage").as_string()
-                    .unwrap_or("about:blank")).unwrap();
+            let home_url = ServoUrl::parse("about:blank").unwrap();
             let servo_browser = Browser::new(window.clone(), home_url);
             *self.downcast().servo_browser.borrow_mut() = ServoBrowser::OffScreen(servo_browser);
         }
@@ -202,10 +190,6 @@ impl ServoCefBrowserExtensions for CefBrowser {
             // we just queue up that event instead of immediately processing it.
             browser.message_queue.borrow_mut().push(event);
         }
-    }
-
-    fn request_title_for_main_frame(&self) {
-        self.downcast().servo_browser.borrow().request_title_for_main_frame()
     }
 
     fn pinch_zoom_level(&self) -> f32 {
@@ -274,11 +258,17 @@ fn browser_host_create(window_info: &cef_window_info_t,
                        url: *const cef_string_t,
                        callback_executed: bool)
                        -> CefBrowser {
-    let browser = ServoCefBrowser::new(window_info, client).as_cef_interface();
+    let url_string = if url != ptr::null() {
+        unsafe { String::from_utf16(CefWrap::to_rust(url)).ok() }
+    } else {
+        None
+    };
+    let target_url = url_string
+        .and_then(|val| ServoUrl::parse(&val).ok())
+        .or(ServoUrl::parse("about:blank").ok())
+        .unwrap();
+    let browser = ServoCefBrowser::new(window_info, client, target_url).as_cef_interface();
     browser.init(window_info);
-    if url != ptr::null() {
-       unsafe { browser.downcast().frame.set_url(CefWrap::to_rust(url)); }
-    }
     if callback_executed {
         browser_callback_after_created(browser.clone());
     }

@@ -38,12 +38,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PermissionsUtils",
                                   "resource://gre/modules/PermissionsUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "BrowserToolboxProcess",
-                                  "resource://devtools/client/framework/ToolboxProcess.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ConsoleAPI",
                                   "resource://gre/modules/Console.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ProductAddonChecker",
@@ -102,6 +98,7 @@ const nsIFile = Components.Constructor("@mozilla.org/file/local;1", "nsIFile",
 
 const PREF_DB_SCHEMA                  = "extensions.databaseSchema";
 const PREF_XPI_STATE                  = "extensions.xpiState";
+const PREF_BLOCKLIST_ITEM_URL         = "extensions.blocklist.itemURL";
 const PREF_BOOTSTRAP_ADDONS           = "extensions.bootstrappedAddons";
 const PREF_PENDING_OPERATIONS         = "extensions.pendingOperations";
 const PREF_SKIN_SWITCHPENDING         = "extensions.dss.switchPending";
@@ -138,6 +135,7 @@ const PREF_EM_MIN_COMPAT_PLATFORM_VERSION = "extensions.minCompatiblePlatformVer
 const PREF_CHECKCOMAT_THEMEOVERRIDE   = "extensions.checkCompatibility.temporaryThemeOverride_minAppVersion";
 
 const PREF_EM_HOTFIX_ID               = "extensions.hotfix.id";
+const PREF_EM_LAST_APP_BUILD_ID       = "extensions.lastAppBuildId";
 
 const OBSOLETE_PREFERENCES = [
   "extensions.bootstrappedAddons",
@@ -193,11 +191,11 @@ const TOOLKIT_ID                      = "toolkit@mozilla.org";
 
 const XPI_SIGNATURE_CHECK_PERIOD      = 24 * 60 * 60;
 
-XPCOMUtils.defineConstant(this, "DB_SCHEMA", 21);
+XPCOMUtils.defineConstant(this, "DB_SCHEMA", 22);
 
 XPCOMUtils.defineLazyPreferenceGetter(this, "ALLOW_NON_MPC", PREF_ALLOW_NON_MPC);
 
-const NOTIFICATION_TOOLBOXPROCESS_LOADED      = "ToolboxProcessLoaded";
+const NOTIFICATION_TOOLBOX_CONNECTION_CHANGE      = "toolbox-connection-change";
 
 // Properties that exist in the install manifest
 const PROP_LOCALE_SINGLE = ["name", "description", "creator", "homepageURL"];
@@ -265,7 +263,13 @@ const SIGNED_TYPES = new Set([
   "webextension-theme",
 ]);
 
-const ALL_TYPES = new Set([
+const LEGACY_TYPES = new Set([
+  "apiextension",
+  "extension",
+  "theme",
+]);
+
+const ALL_EXTERNAL_TYPES = new Set([
   "dictionary",
   "extension",
   "experiment",
@@ -316,8 +320,17 @@ const LAZY_OBJECTS = ["XPIDatabase", "XPIDatabaseReconcile"];
 
 var gLazyObjectsLoaded = false;
 
-XPCOMUtils.defineLazyPreferenceGetter(this, "gStartupScanScopes",
-                                      PREF_EM_STARTUP_SCAN_SCOPES, 0);
+XPCOMUtils.defineLazyGetter(this, "gStartupScanScopes", () => {
+  let appBuildID = Services.appinfo.appBuildID;
+  let oldAppBuildID = Services.prefs.getCharPref(PREF_EM_LAST_APP_BUILD_ID, "");
+  Services.prefs.setCharPref(PREF_EM_LAST_APP_BUILD_ID, appBuildID);
+  if (appBuildID !== oldAppBuildID) {
+    // If the build id changed, scan all scopes
+    return AddonManager.SCOPE_ALL;
+  }
+
+  return Services.prefs.getIntPref(PREF_EM_STARTUP_SCAN_SCOPES, 0);
+});
 
 function loadLazyObjects() {
   let uri = "resource://gre/modules/addons/XPIProviderUtils.js";
@@ -337,7 +350,6 @@ function loadLazyObjects() {
     syncLoadManifestFromFile,
     isUsableAddon,
     recordAddonTelemetry,
-    applyBlocklistChanges,
     flushChromeCaches,
     descriptorToPath,
   });
@@ -551,7 +563,7 @@ function writeStringToFile(file, string) {
     stream.init(file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE |
                             FileUtils.MODE_TRUNCATE, FileUtils.PERMS_FILE,
                            0);
-    converter.init(stream, "UTF-8", 0, 0x0000);
+    converter.init(stream, "UTF-8");
     converter.writeString(string);
   } finally {
     converter.close();
@@ -764,57 +776,6 @@ SafeInstallOperation.prototype = {
 };
 
 /**
- * Sets the userDisabled and softDisabled properties of an add-on based on what
- * values those properties had for a previous instance of the add-on. The
- * previous instance may be a previous install or in the case of an application
- * version change the same add-on.
- *
- * NOTE: this may modify aNewAddon in place; callers should save the database if
- * necessary
- *
- * @param  aOldAddon
- *         The previous instance of the add-on
- * @param  aNewAddon
- *         The new instance of the add-on
- * @param  aAppVersion
- *         The optional application version to use when checking the blocklist
- *         or undefined to use the current application
- * @param  aPlatformVersion
- *         The optional platform version to use when checking the blocklist or
- *         undefined to use the current platform
- */
-function applyBlocklistChanges(aOldAddon, aNewAddon, aOldAppVersion,
-                               aOldPlatformVersion) {
-  // Copy the properties by default
-  aNewAddon.userDisabled = aOldAddon.userDisabled;
-  aNewAddon.softDisabled = aOldAddon.softDisabled;
-
-  let oldBlocklistState = Blocklist.getAddonBlocklistState(aOldAddon.wrapper,
-                                                           aOldAppVersion,
-                                                           aOldPlatformVersion);
-  let newBlocklistState = Blocklist.getAddonBlocklistState(aNewAddon.wrapper);
-
-  // If the blocklist state hasn't changed then the properties don't need to
-  // change
-  if (newBlocklistState == oldBlocklistState)
-    return;
-
-  if (newBlocklistState == Blocklist.STATE_SOFTBLOCKED) {
-    if (aNewAddon.type != "theme") {
-      // The add-on has become softblocked, set softDisabled if it isn't already
-      // userDisabled
-      aNewAddon.softDisabled = !aNewAddon.userDisabled;
-    } else {
-      // Themes just get userDisabled to switch back to the default theme
-      aNewAddon.userDisabled = true;
-    }
-  } else {
-    // If the new add-on is not softblocked then it cannot be softDisabled
-    aNewAddon.softDisabled = false;
-  }
-}
-
-/**
  * Evaluates whether an add-on is allowed to run in safe mode.
  *
  * @param  aAddon
@@ -890,8 +851,8 @@ function isUsableAddon(aAddon) {
       return false;
   }
 
-  if (!AddonSettings.ALLOW_LEGACY_EXTENSIONS &&
-      aAddon.type == "extension" && !aAddon._installLocation.isSystem &&
+  if (!AddonSettings.ALLOW_LEGACY_EXTENSIONS && LEGACY_TYPES.has(aAddon.type) &&
+      !aAddon._installLocation.isSystem &&
       aAddon.signedState !== AddonManager.SIGNEDSTATE_PRIVILEGED) {
     logger.warn(`disabling legacy extension ${aAddon.id}`);
     return false;
@@ -1012,10 +973,7 @@ function syncLoadManifestFromFile(aFile, aInstallLocation) {
     result = val
   });
 
-  let thread = Services.tm.currentThread;
-
-  while (success === undefined)
-    thread.processNextEvent(true);
+  Services.tm.spinEventLoopUntil(() => success !== undefined);
 
   if (!success)
     throw result;
@@ -1883,8 +1841,6 @@ this.XPIProvider = {
   _telemetryDetails: {},
   // A Map from an add-on install to its ID
   _addonFileMap: new Map(),
-  // Flag to know if ToolboxProcess.jsm has already been loaded by someone or not
-  _toolboxProcessLoaded: false,
   // Have we started shutting down bootstrap add-ons?
   _closing: false,
 
@@ -2226,21 +2182,7 @@ this.XPIProvider = {
       Services.prefs.addObserver(PREF_ALLOW_LEGACY, this);
       Services.prefs.addObserver(PREF_ALLOW_NON_MPC, this);
       Services.obs.addObserver(this, NOTIFICATION_FLUSH_PERMISSIONS);
-
-      // Cu.isModuleLoaded can fail here for external XUL apps where there is
-      // no chrome.manifest that defines resource://devtools.
-      if (ResProtocolHandler.hasSubstitution("devtools")) {
-        if (Cu.isModuleLoaded("resource://devtools/client/framework/ToolboxProcess.jsm")) {
-          // If BrowserToolboxProcess is already loaded, set the boolean to true
-          // and do whatever is needed
-          this._toolboxProcessLoaded = true;
-          BrowserToolboxProcess.on("connectionchange",
-                                   this.onDebugConnectionChange.bind(this));
-        } else {
-          // Else, wait for it to load
-          Services.obs.addObserver(this, NOTIFICATION_TOOLBOXPROCESS_LOADED);
-        }
-      }
+      Services.obs.addObserver(this, NOTIFICATION_TOOLBOX_CONNECTION_CHANGE);
 
 
       let flushCaches = this.checkForChanges(aAppChanged, aOldAppVersion,
@@ -2344,20 +2286,41 @@ this.XPIProvider = {
         }
       }, "final-ui-startup");
 
-      // Once other important startup work is finished, try to load the
-      // XPI database so that the telemetry environment can be populated
-      // with detailed addon information.
+      // If we haven't yet loaded the XPI database, schedule loading it
+      // to occur once other important startup work is finished.  We want
+      // this to happen relatively quickly after startup so the telemetry
+      // environment has complete addon information.
+      //
+      // Unfortunately we have to use a variety of ways do detect when it
+      // is time to load.  In a regular browser process we just wait for
+      // sessionstore-windows-restored.  In a browser toolbox process
+      // we wait for the toolbox to show up, based on xul-window-visible
+      // and a visible toolbox window.
+      // Finally, we have a test-only event called test-load-xpi-database
+      // as a temporary workaround for bug 1372845.  The latter can be
+      // cleaned up when that bug is resolved.
       if (!this.isDBLoaded) {
-        Services.obs.addObserver({
+        const EVENTS = [ "sessionstore-windows-restored", "xul-window-visible", "test-load-xpi-database" ];
+        let observer = {
           observe(subject, topic, data) {
-            Services.obs.removeObserver(this, "sessionstore-windows-restored");
+            if (topic == "xul-window-visible" &&
+                !Services.wm.getMostRecentWindow("devtools:toolbox")) {
+              return;
+            }
+
+            for (let event of EVENTS) {
+              Services.obs.removeObserver(observer, event);
+            }
 
             // It would be nice to defer some of the work here until we
             // have idle time but we can't yet use requestIdleCallback()
             // from chrome.  See bug 1358476.
             XPIDatabase.asyncLoadDB();
           },
-        }, "sessionstore-windows-restored");
+        };
+        for (let event of EVENTS) {
+          Services.obs.addObserver(observer, event);
+        }
       }
 
       AddonManagerPrivate.recordTimestamp("XPI_startup_end");
@@ -2382,7 +2345,7 @@ this.XPIProvider = {
    *                          flushing the XPI Database if it was loaded,
    *                          0 otherwise.
    */
-  shutdown() {
+  async shutdown() {
     logger.debug("shutdown");
 
     // Stop anything we were doing asynchronously
@@ -2424,6 +2387,13 @@ this.XPIProvider = {
       Services.prefs.setBoolPref(PREF_PENDING_OPERATIONS, false);
     }
 
+    // Ugh, if we reach this point without loading the xpi database,
+    // we need to load it know, otherwise the telemetry shutdown blocker
+    // will never resolve.
+    if (!XPIDatabase.initialized) {
+      await XPIDatabase.asyncLoadDB();
+    }
+
     this.installs = null;
     this.installLocations = null;
     this.installLocationsByName = null;
@@ -2432,24 +2402,11 @@ this.XPIProvider = {
     this.extensionsActive = false;
     this._addonFileMap.clear();
 
-    if (gLazyObjectsLoaded) {
-      let done = XPIDatabase.shutdown();
-      done.then(
-        ret => {
-          logger.debug("Notifying XPI shutdown observers");
-          Services.obs.notifyObservers(null, "xpi-provider-shutdown");
-        },
-        err => {
-          logger.debug("Notifying XPI shutdown observers");
-          this._shutdownError = err;
-          Services.obs.notifyObservers(null, "xpi-provider-shutdown", err);
-        }
-      );
-      return done;
+    try {
+      await XPIDatabase.shutdown();
+    } catch (err) {
+      this._shutdownError = err;
     }
-    logger.debug("Notifying XPI shutdown observers");
-    Services.obs.notifyObservers(null, "xpi-provider-shutdown");
-    return undefined;
   },
 
   /**
@@ -2556,7 +2513,7 @@ this.XPIProvider = {
       return;
     }
 
-    url = UpdateUtils.formatUpdateURL(url);
+    url = await UpdateUtils.formatUpdateURL(url);
 
     logger.info(`Starting system add-on update check from ${url}.`);
     let res = await ProductAddonChecker.getProductAddonList(url);
@@ -3647,7 +3604,7 @@ this.XPIProvider = {
    */
   getAddonsByTypes(aTypes, aCallback) {
     let typesToGet = getAllAliasesForTypes(aTypes);
-    if (typesToGet && !typesToGet.some(type => ALL_TYPES.has(type))) {
+    if (typesToGet && !typesToGet.some(type => ALL_EXTERNAL_TYPES.has(type))) {
       aCallback([]);
       return;
     }
@@ -3686,6 +3643,9 @@ this.XPIProvider = {
 
     let result = [];
     for (let addon of XPIStates.enabledAddons()) {
+      if (aTypes && !aTypes.includes(addon.type)) {
+        continue;
+      }
       let location = this.installLocationsByName[addon.location.name];
       let scope, isSystem;
       if (location) {
@@ -3921,12 +3881,12 @@ this.XPIProvider = {
     }
   },
 
-  onDebugConnectionChange(aEvent, aWhat, aConnection) {
-    if (aWhat != "opened")
+  onDebugConnectionChange({what, connection}) {
+    if (what != "opened")
       return;
 
     for (let [id, val] of this.activeAddons) {
-      aConnection.setAddonOptions(
+      connection.setAddonOptions(
         id, { global: val.bootstrapScope });
     }
   },
@@ -3942,11 +3902,9 @@ this.XPIProvider = {
         this.importPermissions();
       }
       return;
-    } else if (aTopic == NOTIFICATION_TOOLBOXPROCESS_LOADED) {
-      Services.obs.removeObserver(this, NOTIFICATION_TOOLBOXPROCESS_LOADED);
-      this._toolboxProcessLoaded = true;
-      BrowserToolboxProcess.on("connectionchange",
-                               this.onDebugConnectionChange.bind(this));
+    } else if (aTopic == NOTIFICATION_TOOLBOX_CONNECTION_CHANGE) {
+      this.onDebugConnectionChange(aSubject.wrappedJSObject);
+      return;
     }
 
     if (aTopic == "nsPref:changed") {
@@ -4313,13 +4271,9 @@ this.XPIProvider = {
       logger.warn("Error loading bootstrap.js for " + aId, e);
     }
 
-    // Only access BrowserToolboxProcess if ToolboxProcess.jsm has been
-    // initialized as otherwise, when it will be initialized, all addons'
-    // globals will be added anyways
-    if (this._toolboxProcessLoaded) {
-      BrowserToolboxProcess.setAddonOptions(aId,
-        { global: activeAddon.bootstrapScope });
-    }
+    // Notify the BrowserToolboxProcess that a new addon has been loaded.
+    let wrappedJSObject = { id: aId, options: { global: activeAddon.bootstrapScope }};
+    Services.obs.notifyObservers({ wrappedJSObject }, "toolbox-update-addon-options");
   },
 
   /**
@@ -4338,11 +4292,9 @@ this.XPIProvider = {
     this.activeAddons.delete(aId);
     this.addAddonsToCrashReporter();
 
-    // Only access BrowserToolboxProcess if ToolboxProcess.jsm has been
-    // initialized as otherwise, there won't be any addon globals added to it
-    if (this._toolboxProcessLoaded) {
-      BrowserToolboxProcess.setAddonOptions(aId, { global: null });
-    }
+    // Notify the BrowserToolboxProcess that an addon has been unloaded.
+    let wrappedJSObject = { id: aId, options: { global: null }};
+    Services.obs.notifyObservers({ wrappedJSObject }, "toolbox-update-addon-options");
   },
 
   /**
@@ -4430,13 +4382,17 @@ this.XPIProvider = {
       }
 
       if (aAddon.hasEmbeddedWebExtension) {
+        let reason = Object.keys(BOOTSTRAP_REASONS).find(
+          key => BOOTSTRAP_REASONS[key] == aReason
+        );
+
         if (aMethod == "startup") {
           const webExtension = LegacyExtensionsUtils.getEmbeddedExtensionFor(params);
           params.webExtension = {
-            startup: () => webExtension.startup(),
+            startup: () => webExtension.startup(reason),
           };
         } else if (aMethod == "shutdown") {
-          LegacyExtensionsUtils.getEmbeddedExtensionFor(params).shutdown();
+          LegacyExtensionsUtils.getEmbeddedExtensionFor(params).shutdown(reason);
         }
       }
 
@@ -4580,7 +4536,7 @@ this.XPIProvider = {
         XPIDatabase.updateAddonActive(aAddon, !isDisabled);
 
         if (isDisabled) {
-          if (aAddon.bootstrap) {
+          if (aAddon.bootstrap && this.activeAddons.has(aAddon.id)) {
             this.callBootstrapMethod(aAddon, aAddon._sourceBundle, "shutdown",
                                      BOOTSTRAP_REASONS.ADDON_DISABLE);
             this.unloadBootstrapScope(aAddon.id);
@@ -4850,6 +4806,8 @@ AddonInternal.prototype = {
   userDisabled: false,
   appDisabled: false,
   softDisabled: false,
+  blocklistState: Ci.nsIBlocklistService.STATE_NOT_BLOCKED,
+  blocklistURL: null,
   sourceURI: null,
   releaseNotesURI: null,
   foreignInstall: false,
@@ -5019,22 +4977,63 @@ AddonInternal.prototype = {
     return app;
   },
 
-  get blocklistState() {
-    let staticItem = findMatchingStaticBlocklistItem(this);
-    if (staticItem)
-      return staticItem.level;
-
-    return Blocklist.getAddonBlocklistState(this.wrapper);
-  },
-
-  get blocklistURL() {
+  findBlocklistEntry() {
     let staticItem = findMatchingStaticBlocklistItem(this);
     if (staticItem) {
-      let url = Services.urlFormatter.formatURLPref("extensions.blocklist.itemURL");
-      return url.replace(/%blockID%/g, staticItem.blockID);
+      let url = Services.urlFormatter.formatURLPref(PREF_BLOCKLIST_ITEM_URL);
+      return {
+        state: staticItem.level,
+        url: url.replace(/%blockID%/g, staticItem.blockID)
+      };
     }
 
-    return Blocklist.getAddonBlocklistURL(this.wrapper);
+    return Blocklist.getAddonBlocklistEntry(this.wrapper);
+  },
+
+  updateBlocklistState(options = {}) {
+    let {applySoftBlock = true, oldAddon = null, updateDatabase = true} = options;
+
+    if (oldAddon) {
+      this.userDisabled = oldAddon.userDisabled;
+      this.softDisabled = oldAddon.softDisabled;
+      this.blocklistState = oldAddon.blocklistState;
+    }
+    let oldState = this.blocklistState;
+
+    let entry = this.findBlocklistEntry();
+    let newState = entry ? entry.state : Blocklist.STATE_NOT_BLOCKED;
+
+    this.blocklistState = newState;
+    this.blocklistURL = entry && entry.url;
+
+    let userDisabled, softDisabled;
+    // After a blocklist update, the blocklist service manually applies
+    // new soft blocks after displaying a UI, in which cases we need to
+    // skip updating it here.
+    if (applySoftBlock && oldState != newState) {
+      if (newState == Blocklist.STATE_SOFTBLOCKED) {
+        if (this.type == "theme") {
+          userDisabled = true;
+        } else {
+          softDisabled = !this.userDisabled;
+        }
+      } else {
+        softDisabled = false;
+      }
+    }
+
+    if (this.inDatabase && updateDatabase) {
+      XPIProvider.updateAddonDisabledState(this, userDisabled, softDisabled);
+      XPIDatabase.saveChanges();
+    } else {
+      this.appDisabled = !isUsableAddon(this);
+      if (userDisabled !== undefined) {
+        this.userDisabled = userDisabled;
+      }
+      if (softDisabled !== undefined) {
+        this.softDisabled = softDisabled;
+      }
+    }
   },
 
   applyCompatibilityUpdate(aUpdate, aSyncCompatibility) {
@@ -5452,6 +5451,10 @@ AddonWrapper.prototype = {
     if (!Services.appinfo.inSafeMode)
       return true;
     return addon.bootstrap && canRunInSafeMode(addon);
+  },
+
+  updateBlocklistState(applySoftBlock = true) {
+    addonFor(this).updateBlocklistState({applySoftBlock});
   },
 
   get userDisabled() {
@@ -6050,7 +6053,7 @@ class MutableDirectoryInstallLocation extends DirectoryInstallLocation {
 
     OS.File.makeDir(this._directory.path);
     let stagepath = OS.Path.join(this._directory.path, DIR_STAGE);
-    return this._stagingDirPromise = OS.File.makeDir(stagepath).then(null, (e) => {
+    return this._stagingDirPromise = OS.File.makeDir(stagepath).catch((e) => {
       if (e instanceof OS.File.Error && e.becauseExists)
         return;
       logger.error("Failed to create staging directory", e);
@@ -6876,7 +6879,6 @@ this.XPIInternal = {
   TEMPORARY_ADDON_SUFFIX,
   TOOLKIT_ID,
   XPIStates,
-  applyBlocklistChanges,
   getExternalType,
   isTheme,
   isUsableAddon,
