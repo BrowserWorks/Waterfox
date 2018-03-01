@@ -87,7 +87,7 @@ function checkButtons(icons, iconInfo, area) {
 
 async function runTestWithIcons(icons) {
   const FRAME_COLOR = [71, 105, 91];
-  const TAB_TEXT_COLOR = [207, 221, 192, .9];
+  const TAB_BACKGROUND_TEXT_COLOR = [207, 221, 192, .9];
   let manifest = {
     "theme": {
       "images": {
@@ -95,7 +95,7 @@ async function runTestWithIcons(icons) {
       },
       "colors": {
         "frame": FRAME_COLOR,
-        "tab_text": TAB_TEXT_COLOR,
+        "tab_background_text": TAB_BACKGROUND_TEXT_COLOR,
       },
       "icons": {},
     },

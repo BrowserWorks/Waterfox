@@ -91,6 +91,16 @@ class Theme {
           this.lwtStyles.accentcolor = cssColor;
           break;
         case "textcolor":
+        case "tab_background_text":
+          this.lwtStyles.textcolor = cssColor;
+          break;
+        case "toolbar":
+          this.lwtStyles.toolbarColor = cssColor;
+          break;
+        case "toolbar_text":
+        case "bookmark_text":
+          this.lwtStyles.toolbar_text = cssColor;
+          break;
         case "tab_text":
           this.lwtStyles.textcolor = cssColor;
           break;
