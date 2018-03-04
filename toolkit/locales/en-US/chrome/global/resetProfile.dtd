@@ -10,7 +10,7 @@
 <!ENTITY refreshProfile.dialog.items.label2  "preserve dictionaries, extensions, language packs and plug-ins">
 <!ENTITY refreshProfile.dialog.items.label3  "reset preferences for extensions">
 <!ENTITY refreshProfile.dialog.items.label4  "remove themes that are not integral to &brandShortName;">
-<!ENTITY refreshProfile.dialog.items.label5  "remove descriptions, ratings and other types of complementary information that may been gained from Mozilla's add-ons service.">
+<!ENTITY refreshProfile.dialog.items.label5  "remove descriptions, ratings and other types of complementary information that may have been gained from Mozilla's add-ons service.">
 
 <!ENTITY refreshProfile.dialog.button.label  "Refresh &brandShortName;">
 
