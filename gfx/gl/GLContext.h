@@ -1366,9 +1366,9 @@ public:
         AFTER_GL_CALL;
     }
 
-    GLint fGetUniformLocation (GLint programObj, const GLchar* name) {
+    GLint fGetUniformLocation (GLuint programObj, const GLchar* name) {
         BEFORE_GL_CALL;
-        GLint retval = mSymbols.fGetUniformLocation(programObj, name);
+        GLuint retval = mSymbols.fGetUniformLocation(programObj, name);
         OnSyncCall();
         AFTER_GL_CALL;
         return retval;
