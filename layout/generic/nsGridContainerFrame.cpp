@@ -1120,6 +1120,9 @@ struct nsGridContainerFrame::Tracks
     }
   };
 
+  using FitContentClamper =
+    std::function<bool(uint32_t aTrack, nscoord aMinSize, nscoord* aSize)>;
+
   // Helper methods for ResolveIntrinsicSize.
   template<TrackSizingPhase phase>
   bool GrowBaseForSpanningItems(const nsTArray<Step2ItemData>& aItemData,
@@ -1128,17 +1131,17 @@ struct nsGridContainerFrame::Tracks
                                 nsTArray<TrackSize>& aItemPlan,
                                 TrackSize::StateBits aSelector,
                                 uint32_t aStartIndex,
-                                uint32_t aEndIndex);
+                                uint32_t aEndIndex,
+                                const FitContentClamper& aClamper = nullptr);
   template<TrackSizingPhase phase>
   bool GrowLimitForSpanningItems(const nsTArray<Step2ItemData>& aItemData,
                                  nsTArray<uint32_t>& aTracks,
                                  nsTArray<TrackSize>& aPlan,
                                  nsTArray<TrackSize>& aItemPlan,
                                  TrackSize::StateBits aSelector,
-                                 const TrackSizingFunctions& aFunctions,
-                                 nscoord aPercentageBasis,
                                  uint32_t aStartIndex,
-                                 uint32_t aEndIndex);
+                                 uint32_t aEndIndex,
+                                 const FitContentClamper& aClamper = nullptr);
   /**
    * Resolve Intrinsic Track Sizes.
    * http://dev.w3.org/csswg/css-grid/#algo-content
@@ -1254,8 +1257,6 @@ struct nsGridContainerFrame::Tracks
     }
   }
 
-  using FitContentClamper =
-    std::function<bool(uint32_t aTrack, nscoord aMinSize, nscoord* aSize)>;
   /**
    * Grow the planned size for tracks in aGrowableTracks up to their limit
    * and then freeze them (all aGrowableTracks must be unfrozen on entry).
@@ -1424,12 +1425,15 @@ struct nsGridContainerFrame::Tracks
                               nsTArray<TrackSize>& aPlan,
                               nsTArray<TrackSize>& aItemPlan,
                               nsTArray<uint32_t>&  aGrowableTracks,
-                              TrackSize::StateBits aSelector)
+                              TrackSize::StateBits aSelector,
+                              const FitContentClamper& aFitContentClamper)
   {
     InitializeItemPlan<phase>(aItemPlan, aGrowableTracks);
-    nscoord space = GrowTracksToLimit(aAvailableSpace, aItemPlan, aGrowableTracks, nullptr);
+    nscoord space = GrowTracksToLimit(aAvailableSpace, aItemPlan, aGrowableTracks,
+                                      aFitContentClamper);
     if (space > 0) {
-      GrowSelectedTracksUnlimited(space, aItemPlan, aGrowableTracks, aSelector, nullptr);
+      GrowSelectedTracksUnlimited(space, aItemPlan, aGrowableTracks, aSelector,
+                                  aFitContentClamper);
     }
     for (uint32_t track : aGrowableTracks) {
       nscoord& plannedSize = aPlan[track].mBase;
@@ -1448,26 +1452,14 @@ struct nsGridContainerFrame::Tracks
                                nsTArray<TrackSize>& aPlan,
                                nsTArray<TrackSize>& aItemPlan,
                                nsTArray<uint32_t>&  aGrowableTracks,
-                               const TrackSizingFunctions& aFunctions,
-                               nscoord                     aPercentageBasis)
+                               const FitContentClamper& aFitContentClamper)
   {
-    auto fitContentClamper = [&aFunctions, aPercentageBasis] (uint32_t aTrack,
-                                                              nscoord aMinSize,
-                                                              nscoord* aSize) {
-      nscoord fitContentLimit =
-        ::ResolveToDefiniteSize(aFunctions.MaxSizingFor(aTrack), aPercentageBasis);
-      if (*aSize > fitContentLimit) {
-        *aSize = std::max(aMinSize, fitContentLimit);
-        return true;
-      }
-      return false;
-    };
     InitializeItemPlan<phase>(aItemPlan, aGrowableTracks);
     nscoord space = GrowTracksToLimit(aAvailableSpace, aItemPlan, aGrowableTracks,
-                                      fitContentClamper);
+                                      aFitContentClamper);
     if (space > 0) {
       GrowSelectedTracksUnlimited(space, aItemPlan, aGrowableTracks,
-                                  TrackSize::StateBits(0), fitContentClamper);
+                                  TrackSize::StateBits(0), aFitContentClamper);
     }
     for (uint32_t track : aGrowableTracks) {
       nscoord& plannedSize = aPlan[track].mBase;
@@ -4177,7 +4169,8 @@ nsGridContainerFrame::Tracks::GrowBaseForSpanningItems(
   nsTArray<TrackSize>& aItemPlan,
   TrackSize::StateBits aSelector,
   uint32_t aStartIndex,
-  uint32_t aEndIndex)
+  uint32_t aEndIndex,
+  const FitContentClamper& aFitContentClamper)
 {
   bool updatedBase = false;
   InitializePlan<phase>(aPlan);
@@ -4194,7 +4187,8 @@ nsGridContainerFrame::Tracks::GrowBaseForSpanningItems(
     space = CollectGrowable<phase>(space, item.mLineRange, aSelector,
                                    aTracks);
     if (space > 0) {
-      DistributeToTrackBases<phase>(space, aPlan, aItemPlan, aTracks, aSelector);
+      DistributeToTrackBases<phase>(space, aPlan, aItemPlan, aTracks, aSelector,
+                                    aFitContentClamper);
       updatedBase = true;
     }
   }
@@ -4212,10 +4206,9 @@ nsGridContainerFrame::Tracks::GrowLimitForSpanningItems(
   nsTArray<TrackSize>& aPlan,
   nsTArray<TrackSize>& aItemPlan,
   TrackSize::StateBits aSelector,
-  const TrackSizingFunctions& aFunctions,
-  nscoord aPercentageBasis,
   uint32_t aStartIndex,
-  uint32_t aEndIndex)
+  uint32_t aEndIndex,
+  const FitContentClamper& aFitContentClamper)
 {
   InitializePlan<phase>(aPlan);
   for (uint32_t i = aStartIndex; i < aEndIndex; ++i) {
@@ -4233,7 +4226,7 @@ nsGridContainerFrame::Tracks::GrowLimitForSpanningItems(
                                      aTracks);
       if (space > 0) {
         DistributeToTrackLimits<phase>(space, aPlan, aItemPlan, aTracks,
-                                       aFunctions, aPercentageBasis);
+                                       aFitContentClamper);
       }
     }
   }
@@ -4359,6 +4352,19 @@ nsGridContainerFrame::Tracks::ResolveIntrinsicSize(
 
   // Step 2.
   if (maxSpan) {
+    auto fitContentClamper = [&aFunctions, aPercentageBasis] (uint32_t aTrack,
+                                                              nscoord aMinSize,
+                                                              nscoord* aSize)
+    {
+      nscoord fitContentLimit =
+        ::ResolveToDefiniteSize(aFunctions.MaxSizingFor(aTrack), aPercentageBasis);
+      if (*aSize > fitContentLimit) {
+        *aSize = std::max(aMinSize, fitContentLimit);
+        return true;
+      }
+      return false;
+    };
+
     // Sort the collected items on span length, shortest first.
     std::stable_sort(step2Items.begin(), step2Items.end(),
                      Step2ItemData::IsSpanLessThan);
@@ -4423,7 +4429,7 @@ nsGridContainerFrame::Tracks::ResolveIntrinsicSize(
         // Step 2.5 MinSize to intrinsic max-sizing.
         GrowLimitForSpanningItems<TrackSizingPhase::eIntrinsicMaximums>(
           step2Items, tracks, plan, itemPlan, TrackSize::eIntrinsicMaxSizing,
-          aFunctions, aPercentageBasis, spanGroupStartIndex, spanGroupEndIndex);
+          spanGroupStartIndex, spanGroupEndIndex, fitContentClamper);
 
         for (size_t j = 0, len = mSizes.Length(); j < len; ++j) {
           TrackSize& sz = itemPlan[j];
@@ -4441,7 +4447,7 @@ nsGridContainerFrame::Tracks::ResolveIntrinsicSize(
           // Step 2.6 MaxContentContribution to max-content max-sizing.
           GrowLimitForSpanningItems<TrackSizingPhase::eMaxContentMaximums>(
             step2Items, tracks, plan, itemPlan, TrackSize::eAutoOrMaxContentMaxSizing,
-            aFunctions, aPercentageBasis, spanGroupStartIndex, spanGroupEndIndex);
+            spanGroupStartIndex, spanGroupEndIndex, fitContentClamper);
 
         }
         CopyPlanToLimit(plan);
