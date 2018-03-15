@@ -1421,7 +1421,7 @@ struct nsGridContainerFrame::Tracks
    * up to their limits, then distribute the remaining space beyond the limits.
    */
   template<TrackSizingPhase phase>
-  void DistributeToTrackBases(nscoord              aAvailableSpace,
+  void DistributeToTrackSizes(nscoord              aAvailableSpace,
                               nsTArray<TrackSize>& aPlan,
                               nsTArray<TrackSize>& aItemPlan,
                               nsTArray<uint32_t>&  aGrowableTracks,
@@ -1434,32 +1434,6 @@ struct nsGridContainerFrame::Tracks
     if (space > 0) {
       GrowSelectedTracksUnlimited(space, aItemPlan, aGrowableTracks, aSelector,
                                   aFitContentClamper);
-    }
-    for (uint32_t track : aGrowableTracks) {
-      nscoord& plannedSize = aPlan[track].mBase;
-      nscoord itemIncurredSize = aItemPlan[track].mBase;
-      if (plannedSize < itemIncurredSize) {
-        plannedSize = itemIncurredSize;
-      }
-    }
-  }
-
-  /**
-   * Distribute aAvailableSpace to the planned limits for aGrowableTracks.
-   */
-  template<TrackSizingPhase phase>
-  void DistributeToTrackLimits(nscoord              aAvailableSpace,
-                               nsTArray<TrackSize>& aPlan,
-                               nsTArray<TrackSize>& aItemPlan,
-                               nsTArray<uint32_t>&  aGrowableTracks,
-                               const FitContentClamper& aFitContentClamper)
-  {
-    InitializeItemPlan<phase>(aItemPlan, aGrowableTracks);
-    nscoord space = GrowTracksToLimit(aAvailableSpace, aItemPlan, aGrowableTracks,
-                                      aFitContentClamper);
-    if (space > 0) {
-      GrowSelectedTracksUnlimited(space, aItemPlan, aGrowableTracks,
-                                  TrackSize::StateBits(0), aFitContentClamper);
     }
     for (uint32_t track : aGrowableTracks) {
       nscoord& plannedSize = aPlan[track].mBase;
@@ -4187,7 +4161,7 @@ nsGridContainerFrame::Tracks::GrowBaseForSpanningItems(
     space = CollectGrowable<phase>(space, item.mLineRange, aSelector,
                                    aTracks);
     if (space > 0) {
-      DistributeToTrackBases<phase>(space, aPlan, aItemPlan, aTracks, aSelector,
+      DistributeToTrackSizes<phase>(space, aPlan, aItemPlan, aTracks, aSelector,
                                     aFitContentClamper);
       updatedBase = true;
     }
@@ -4225,8 +4199,9 @@ nsGridContainerFrame::Tracks::GrowLimitForSpanningItems(
       space = CollectGrowable<phase>(space, item.mLineRange, aSelector,
                                      aTracks);
       if (space > 0) {
-        DistributeToTrackLimits<phase>(space, aPlan, aItemPlan, aTracks,
-                                       aFitContentClamper);
+        DistributeToTrackSizes<phase>(space, aPlan, aItemPlan, aTracks,
+                                      TrackSize::StateBits(0),
+                                      aFitContentClamper);
       }
     }
   }
