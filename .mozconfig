@@ -38,11 +38,11 @@ ac_add_options --disable-js-shell
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-profiling
 ac_add_options --disable-signmar
-ac_add_options --disable-stylo
 ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
+ac_add_options --enable-stylo
 ac_add_options --enable-update-channel=release
 ac_add_options --enable-updater
 
