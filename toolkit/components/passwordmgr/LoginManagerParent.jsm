@@ -99,8 +99,7 @@ var LoginManagerParent = {
 
       case "RemoteLogins:findRecipes": {
         let formHost = (new URL(data.formOrigin)).host;
-        let recipeManager = yield this.recipeParentPromise;
-        return recipeManager.getRecipesForHost(formHost);
+        return this._recipeManager.getRecipesForHost(formHost);
       }
 
       case "RemoteLogins:onFormSubmit": {
