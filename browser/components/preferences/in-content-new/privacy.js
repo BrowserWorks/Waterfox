@@ -237,14 +237,6 @@ var gPrivacyPane = {
       document.getElementById("drmGroup").setAttribute("style", "display: none !important");
     }
 
-    this.initDataCollection();
-    if (AppConstants.MOZ_CRASHREPORTER) {
-      this.initSubmitCrashes();
-    }
-    this.initSubmitHealthReport();
-    setEventListener("submitHealthReportBox", "command",
-                     gPrivacyPane.updateSubmitHealthReport);
-
     let bundlePrefs = document.getElementById("bundlePreferences");
     let signonBundle = document.getElementById("signonBundle");
     let pkiBundle = document.getElementById("pkiBundle");
@@ -1332,16 +1324,6 @@ var gPrivacyPane = {
     }
   },
 
-  initDataCollection() {
-    this._setupLearnMoreLink("toolkit.datacollection.infoURL",
-                             "dataCollectionPrivacyNotice");
-  },
-
-  initSubmitCrashes() {
-    this._setupLearnMoreLink("toolkit.crashreporter.infoURL",
-                             "crashReporterLearnMore");
-  },
-
   /**
    * Set up or hide the Learn More links for various data collection options
    */
@@ -1355,35 +1337,6 @@ var gPrivacyPane = {
     } else {
       el.setAttribute("hidden", "true");
     }
-  },
-
-  /**
-   * Initialize the health report service reference and checkbox.
-   */
-  initSubmitHealthReport() {
-    this._setupLearnMoreLink("datareporting.healthreport.infoURL", "FHRLearnMore");
-
-    let checkbox = document.getElementById("submitHealthReportBox");
-
-    // Telemetry is only sending data if MOZ_TELEMETRY_REPORTING is defined.
-    // We still want to display the preferences panel if that's not the case, but
-    // we want it to be disabled and unchecked.
-    if (Services.prefs.prefIsLocked(PREF_UPLOAD_ENABLED) ||
-        !AppConstants.MOZ_TELEMETRY_REPORTING) {
-      checkbox.setAttribute("disabled", "true");
-      return;
-    }
-
-    checkbox.checked = Services.prefs.getBoolPref(PREF_UPLOAD_ENABLED) &&
-                       AppConstants.MOZ_TELEMETRY_REPORTING;
-  },
-
-  /**
-   * Update the health report preference with state from checkbox.
-   */
-  updateSubmitHealthReport() {
-    let checkbox = document.getElementById("submitHealthReportBox");
-    Services.prefs.setBoolPref(PREF_UPLOAD_ENABLED, checkbox.checked);
   },
 
   // Methods for Offline Apps (AppCache)
