@@ -41,16 +41,16 @@ this.TelemetryModules = Object.freeze({
   start() {
     // The list of loaded modules is obtainable only when the profiler is enabled.
     // If it isn't, we don't want to send the ping at all.
-    if (!AppConstants.MOZ_GECKO_PROFILER) {
+    // if (!AppConstants.MOZ_GECKO_PROFILER) {
       return;
-    }
+    // }
 
-    // Use nsIUpdateTimerManager for a long-duration timer that survives across sessions.
-    gUpdateTimerManager.registerTimer(
-      "telemetry_modules_ping",
-      this,
-      Preferences.get(MODULES_PING_INTERVAL_PREFERENCE, MODULES_PING_INTERVAL_SECONDS)
-    );
+    // // Use nsIUpdateTimerManager for a long-duration timer that survives across sessions.
+    // gUpdateTimerManager.registerTimer(
+    //   "telemetry_modules_ping",
+    //   this,
+    //   Preferences.get(MODULES_PING_INTERVAL_PREFERENCE, MODULES_PING_INTERVAL_SECONDS)
+    // );
   },
 
   /**
