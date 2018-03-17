@@ -246,8 +246,6 @@ LocalStorage::ApplyEvent(StorageEvent* aStorageEvent)
 
 static const char kPermissionType[] = "cookie";
 static const char kStorageEnabled[] = "dom.storage.enabled";
-static const char kCookiesBehavior[] = "network.cookie.cookieBehavior";
-static const char kCookiesLifetimePolicy[] = "network.cookie.lifetimePolicy";
 
 bool
 LocalStorage::PrincipalEquals(nsIPrincipal* aPrincipal)

@@ -244,7 +244,6 @@
                 <menupopup>
                   <menuitem label="&expire.label;" value="0"/>
                   <menuitem label="&close.label;" value="2"/>
-                  <menuitem label="ask me every time" value="1"/>
                 </menupopup>
               </menulist>
             </hbox>

@@ -31,7 +31,6 @@ static const char kCookiesPermissions[] = "network.cookie.cookieBehavior";
 static const char kCookiesLifetimeEnabled[] = "network.cookie.lifetime.enabled";
 static const char kCookiesLifetimeDays[] = "network.cookie.lifetime.days";
 static const char kCookiesLifetimeCurrentSession[] = "network.cookie.lifetime.behavior";
-static const char kCookiesAskPermission[] = "network.cookie.warnAboutCookies";
 static const char kCookiesMaxPerHost[] = "network.cookie.maxPerHost";
 static const char kCookieLeaveSecurityAlone[] = "network.cookie.leave-secure-alone";
 
@@ -157,7 +156,6 @@ InitPrefs(nsIPrefBranch *aPrefBranch)
     aPrefBranch->SetBoolPref(kCookiesLifetimeEnabled, true);
     aPrefBranch->SetIntPref(kCookiesLifetimeCurrentSession, 0);
     aPrefBranch->SetIntPref(kCookiesLifetimeDays, 1);
-    aPrefBranch->SetBoolPref(kCookiesAskPermission, false);
     aPrefBranch->SetBoolPref(kCookieLeaveSecurityAlone, true);
     // Set the base domain limit to 50 so we have a known value.
     aPrefBranch->SetIntPref(kCookiesMaxPerHost, 50);
