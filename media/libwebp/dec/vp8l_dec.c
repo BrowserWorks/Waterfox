@@ -28,8 +28,8 @@
 
 static const int kCodeLengthLiterals = 16;
 static const int kCodeLengthRepeatCode = 16;
-static const int kCodeLengthExtraBits[3] = { 2, 3, 7 };
-static const int kCodeLengthRepeatOffsets[3] = { 3, 3, 11 };
+static const uint8_t kCodeLengthExtraBits[3] = { 2, 3, 7 };
+static const uint8_t kCodeLengthRepeatOffsets[3] = { 3, 3, 11 };
 
 // -----------------------------------------------------------------------------
 //  Five Huffman codes are used at each meta code:
@@ -86,7 +86,7 @@ static const uint8_t kCodeToPlane[CODE_TO_PLANE_CODES] = {
 // All values computed for 8-bit first level lookup with Mark Adler's tool:
 // http://www.hdfgroup.org/ftp/lib-external/zlib/zlib-1.2.5/examples/enough.c
 #define FIXED_TABLE_SIZE (630 * 3 + 410)
-static const int kTableSize[12] = {
+static const uint16_t kTableSize[12] = {
   FIXED_TABLE_SIZE + 654,
   FIXED_TABLE_SIZE + 656,
   FIXED_TABLE_SIZE + 658,
@@ -485,6 +485,7 @@ static int ReadHuffmanCodes(VP8LDecoder* const dec, int xsize, int ysize,
 //------------------------------------------------------------------------------
 // Scaling.
 
+#if !defined(WEBP_REDUCE_SIZE)
 static int AllocateAndInitRescaler(VP8LDecoder* const dec, VP8Io* const io) {
   const int num_channels = 4;
   const int in_width = io->mb_w;
@@ -516,9 +517,12 @@ static int AllocateAndInitRescaler(VP8LDecoder* const dec, VP8Io* const io) {
                    out_width, out_height, 0, num_channels, work);
   return 1;
 }
+#endif   // WEBP_REDUCE_SIZE
 
 //------------------------------------------------------------------------------
 // Export to ARGB
+
+#if !defined(WEBP_REDUCE_SIZE)
 
 // We have special "export" function since we need to convert from BGRA
 static int Export(WebPRescaler* const rescaler, WEBP_CSP_MODE colorspace,
@@ -560,6 +564,8 @@ static int EmitRescaledRowsRGBA(const VP8LDecoder* const dec,
   }
   return num_lines_out;
 }
+
+#endif   // WEBP_REDUCE_SIZE
 
 // Emit rows without any scaling.
 static int EmitRows(WEBP_CSP_MODE colorspace,
@@ -746,9 +752,12 @@ static void ProcessRows(VP8LDecoder* const dec, int row) {
       if (WebPIsRGBMode(output->colorspace)) {  // convert to RGBA
         const WebPRGBABuffer* const buf = &output->u.RGBA;
         uint8_t* const rgba = buf->rgba + dec->last_out_row_ * buf->stride;
-        const int num_rows_out = io->use_scaling ?
+        const int num_rows_out =
+#if !defined(WEBP_REDUCE_SIZE)
+         io->use_scaling ?
             EmitRescaledRowsRGBA(dec, rows_data, in_stride, io->mb_h,
                                  rgba, buf->stride) :
+#endif  // WEBP_REDUCE_SIZE
             EmitRows(output->colorspace, rows_data, in_stride,
                      io->mb_w, io->mb_h, rgba, buf->stride);
         // Update 'last_out_row_'.
@@ -1012,12 +1021,13 @@ static int DecodeAlphaData(VP8LDecoder* const dec, uint8_t* const data,
       ok = 0;
       goto End;
     }
-    assert(br->eos_ == VP8LIsEndOfStream(br));
+    br->eos_ = VP8LIsEndOfStream(br);
   }
   // Process the remaining rows corresponding to last row-block.
   ExtractPalettedAlphaRows(dec, row > last_row ? last_row : row);
 
  End:
+  br->eos_ = VP8LIsEndOfStream(br);
   if (!ok || (br->eos_ && pos < end)) {
     ok = 0;
     dec->status_ = br->eos_ ? VP8_STATUS_SUSPENDED
@@ -1090,11 +1100,12 @@ static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
     VP8LFillBitWindow(br);
     if (htree_group->use_packed_table) {
       code = ReadPackedSymbols(htree_group, br, src);
+      if (VP8LIsEndOfStream(br)) break;
       if (code == PACKED_NON_LITERAL_CODE) goto AdvanceByOne;
     } else {
       code = ReadSymbol(htree_group->htrees[GREEN], br);
     }
-    if (br->eos_) break;  // early out
+    if (VP8LIsEndOfStream(br)) break;
     if (code < NUM_LITERAL_CODES) {  // Literal
       if (htree_group->is_trivial_literal) {
         *src = htree_group->literal_arb | (code << 8);
@@ -1104,7 +1115,7 @@ static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
         VP8LFillBitWindow(br);
         blue = ReadSymbol(htree_group->htrees[BLUE], br);
         alpha = ReadSymbol(htree_group->htrees[ALPHA], br);
-        if (br->eos_) break;
+        if (VP8LIsEndOfStream(br)) break;
         *src = ((uint32_t)alpha << 24) | (red << 16) | (code << 8) | blue;
       }
     AdvanceByOne:
@@ -1132,7 +1143,7 @@ static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
       VP8LFillBitWindow(br);
       dist_code = GetCopyDistance(dist_symbol, br);
       dist = PlaneCodeToDistance(width, dist_code);
-      if (br->eos_) break;
+      if (VP8LIsEndOfStream(br)) break;
       if (src - data < (ptrdiff_t)dist || src_end - src < (ptrdiff_t)length) {
         goto Error;
       } else {
@@ -1169,9 +1180,9 @@ static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
     } else {  // Not reached
       goto Error;
     }
-    assert(br->eos_ == VP8LIsEndOfStream(br));
   }
 
+  br->eos_ = VP8LIsEndOfStream(br);
   if (dec->incremental_ && br->eos_ && src < src_end) {
     RestoreState(dec);
   } else if (!br->eos_) {
@@ -1630,12 +1641,19 @@ int VP8LDecodeImage(VP8LDecoder* const dec) {
 
     if (!AllocateInternalBuffers32b(dec, io->width)) goto Err;
 
+#if !defined(WEBP_REDUCE_SIZE)
     if (io->use_scaling && !AllocateAndInitRescaler(dec, io)) goto Err;
 
     if (io->use_scaling || WebPIsPremultipliedMode(dec->output_->colorspace)) {
       // need the alpha-multiply functions for premultiplied output or rescaling
       WebPInitAlphaProcessing();
     }
+#else
+    if (io->use_scaling) {
+      dec->status_ = VP8_STATUS_INVALID_PARAM;
+      goto Err;
+    }
+#endif
     if (!WebPIsRGBMode(dec->output_->colorspace)) {
       WebPInitConvertARGBToYUV();
       if (dec->output_->u.YUVA.a != NULL) WebPInitAlphaProcessing();

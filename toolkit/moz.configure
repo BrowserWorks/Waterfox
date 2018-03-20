@@ -1177,7 +1177,7 @@ add_old_configure_assignment('FT2_CFLAGS',
 option('--with-system-webp',
        help='Use system libwebp (located with pkgconfig)')
 
-system_webp = pkg_check_modules('MOZ_WEBP', 'libwebp >= 0.6.0 libwebpdemux >= 0.6.0',
+system_webp = pkg_check_modules('MOZ_WEBP', 'libwebp >= 0.6.1 libwebpdemux >= 0.6.1',
                                 when='--with-system-webp')
 
 set_config('MOZ_SYSTEM_WEBP', depends_if(system_webp)(lambda _: True))

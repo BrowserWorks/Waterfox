@@ -212,7 +212,7 @@ static int EmitAlphaRGBA4444(const VP8Io* const io, WebPDecParams* const p,
     int num_rows;
     const int start_y = GetAlphaSourceRow(io, &alpha, &num_rows);
     uint8_t* const base_rgba = buf->rgba + start_y * buf->stride;
-#ifdef WEBP_SWAP_16BIT_CSP
+#if (WEBP_SWAP_16BIT_CSP == 1)
     uint8_t* alpha_dst = base_rgba;
 #else
     uint8_t* alpha_dst = base_rgba + 1;
@@ -241,6 +241,7 @@ static int EmitAlphaRGBA4444(const VP8Io* const io, WebPDecParams* const p,
 //------------------------------------------------------------------------------
 // YUV rescaling (no final RGB conversion needed)
 
+#if !defined(WEBP_REDUCE_SIZE)
 static int Rescale(const uint8_t* src, int src_stride,
                    int new_lines, WebPRescaler* const wrk) {
   int num_lines_out = 0;
@@ -431,7 +432,7 @@ static int ExportAlphaRGBA4444(WebPDecParams* const p, int y_pos,
                                int max_lines_out) {
   const WebPRGBABuffer* const buf = &p->output->u.RGBA;
   uint8_t* const base_rgba = buf->rgba + y_pos * buf->stride;
-#ifdef WEBP_SWAP_16BIT_CSP
+#if (WEBP_SWAP_16BIT_CSP == 1)
   uint8_t* alpha_dst = base_rgba;
 #else
   uint8_t* alpha_dst = base_rgba + 1;
@@ -541,6 +542,8 @@ static int InitRGBRescaler(const VP8Io* const io, WebPDecParams* const p) {
   return 1;
 }
 
+#endif  // WEBP_REDUCE_SIZE
+
 //------------------------------------------------------------------------------
 // Default custom functions
 
@@ -561,10 +564,14 @@ static int CustomSetup(VP8Io* io) {
     WebPInitUpsamplers();
   }
   if (io->use_scaling) {
+#if !defined(WEBP_REDUCE_SIZE)
     const int ok = is_rgb ? InitRGBRescaler(io, p) : InitYUVRescaler(io, p);
     if (!ok) {
       return 0;    // memory error
     }
+#else
+    return 0;   // rescaling support not compiled
+#endif
   } else {
     if (is_rgb) {
       WebPInitSamplers();
@@ -598,9 +605,6 @@ static int CustomSetup(VP8Io* io) {
     }
   }
 
-  if (is_rgb) {
-    VP8YUVInit();
-  }
   return 1;
 }
 

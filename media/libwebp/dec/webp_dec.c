@@ -421,7 +421,9 @@ VP8StatusCode WebPParseHeaders(WebPHeaderStructure* const headers) {
                                 NULL, NULL, NULL, &has_animation,
                                 NULL, headers);
   if (status == VP8_STATUS_OK || status == VP8_STATUS_NOT_ENOUGH_DATA) {
-    // TODO(jzern): full support of animation frames will require API additions.
+    // The WebPDemux API + libwebp can be used to decode individual
+    // uncomposited frames or the WebPAnimDecoder can be used to fully
+    // reconstruct them (see webp/demux.h).
     if (has_animation) {
       status = VP8_STATUS_UNSUPPORTED_FEATURE;
     }

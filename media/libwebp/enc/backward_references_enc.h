@@ -10,8 +10,8 @@
 // Author: Jyrki Alakuijala (jyrki@google.com)
 //
 
-#ifndef WEBP_ENC_BACKWARD_REFERENCES_H_
-#define WEBP_ENC_BACKWARD_REFERENCES_H_
+#ifndef WEBP_ENC_BACKWARD_REFERENCES_ENC_H_
+#define WEBP_ENC_BACKWARD_REFERENCES_ENC_H_
 
 #include <assert.h>
 #include <stdlib.h>
@@ -91,11 +91,6 @@ static WEBP_INLINE uint32_t PixOrCopyLength(const PixOrCopy* const p) {
   return p->len;
 }
 
-static WEBP_INLINE uint32_t PixOrCopyArgb(const PixOrCopy* const p) {
-  assert(p->mode == kLiteral);
-  return p->argb_or_distance;
-}
-
 static WEBP_INLINE uint32_t PixOrCopyCacheIdx(const PixOrCopy* const p) {
   assert(p->mode == kCacheIdx);
   assert(p->argb_or_distance < (1U << MAX_COLOR_CACHE_BITS));
@@ -112,6 +107,16 @@ static WEBP_INLINE uint32_t PixOrCopyDistance(const PixOrCopy* const p) {
 
 #define HASH_BITS 18
 #define HASH_SIZE (1 << HASH_BITS)
+
+// If you change this, you need MAX_LENGTH_BITS + WINDOW_SIZE_BITS <= 32 as it
+// is used in VP8LHashChain.
+#define MAX_LENGTH_BITS 12
+#define WINDOW_SIZE_BITS 20
+// We want the max value to be attainable and stored in MAX_LENGTH_BITS bits.
+#define MAX_LENGTH ((1 << MAX_LENGTH_BITS) - 1)
+#if MAX_LENGTH_BITS + WINDOW_SIZE_BITS > 32
+#error "MAX_LENGTH_BITS + WINDOW_SIZE_BITS > 32"
+#endif
 
 typedef struct VP8LHashChain VP8LHashChain;
 struct VP8LHashChain {
@@ -133,6 +138,24 @@ int VP8LHashChainFill(VP8LHashChain* const p, int quality,
                       const uint32_t* const argb, int xsize, int ysize,
                       int low_effort);
 void VP8LHashChainClear(VP8LHashChain* const p);  // release memory
+
+static WEBP_INLINE int VP8LHashChainFindOffset(const VP8LHashChain* const p,
+                                               const int base_position) {
+  return p->offset_length_[base_position] >> MAX_LENGTH_BITS;
+}
+
+static WEBP_INLINE int VP8LHashChainFindLength(const VP8LHashChain* const p,
+                                               const int base_position) {
+  return p->offset_length_[base_position] & ((1U << MAX_LENGTH_BITS) - 1);
+}
+
+static WEBP_INLINE void VP8LHashChainFindCopy(const VP8LHashChain* const p,
+                                              int base_position,
+                                              int* const offset_ptr,
+                                              int* const length_ptr) {
+  *offset_ptr = VP8LHashChainFindOffset(p, base_position);
+  *length_ptr = VP8LHashChainFindLength(p, base_position);
+}
 
 // -----------------------------------------------------------------------------
 // VP8LBackwardRefs (block-based backward-references storage)
@@ -158,9 +181,6 @@ struct VP8LBackwardRefs {
 void VP8LBackwardRefsInit(VP8LBackwardRefs* const refs, int block_size);
 // Release memory for backward references.
 void VP8LBackwardRefsClear(VP8LBackwardRefs* const refs);
-// Copies the 'src' backward refs to the 'dst'. Returns 0 in case of error.
-int VP8LBackwardRefsCopy(const VP8LBackwardRefs* const src,
-                         VP8LBackwardRefs* const dst);
 
 // Cursor for iterating on references content
 typedef struct {
@@ -189,6 +209,12 @@ static WEBP_INLINE void VP8LRefsCursorNext(VP8LRefsCursor* const c) {
 // -----------------------------------------------------------------------------
 // Main entry points
 
+enum VP8LLZ77Type {
+  kLZ77Standard = 1,
+  kLZ77RLE = 2,
+  kLZ77Box = 4
+};
+
 // Evaluates best possible backward references for specified quality.
 // The input cache_bits to 'VP8LGetBackwardReferences' sets the maximum cache
 // bits to use (passing 0 implies disabling the local color cache).
@@ -197,11 +223,12 @@ static WEBP_INLINE void VP8LRefsCursorNext(VP8LRefsCursor* const c) {
 // refs[0] or refs[1].
 VP8LBackwardRefs* VP8LGetBackwardReferences(
     int width, int height, const uint32_t* const argb, int quality,
-    int low_effort, int* const cache_bits,
-    const VP8LHashChain* const hash_chain, VP8LBackwardRefs refs[2]);
+    int low_effort, int lz77_types_to_try, int* const cache_bits,
+    const VP8LHashChain* const hash_chain, VP8LBackwardRefs* const refs_tmp1,
+    VP8LBackwardRefs* const refs_tmp2);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // WEBP_ENC_BACKWARD_REFERENCES_H_
+#endif  // WEBP_ENC_BACKWARD_REFERENCES_ENC_H_

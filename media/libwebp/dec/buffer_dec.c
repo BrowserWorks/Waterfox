@@ -21,7 +21,7 @@
 // WebPDecBuffer
 
 // Number of bytes per pixel for the different color-spaces.
-static const int kModeBpp[MODE_LAST] = {
+static const uint8_t kModeBpp[MODE_LAST] = {
   3, 4, 3, 4, 4, 2, 2,
   4, 4, 4, 2,    // pre-multiplied modes
   1, 1 };
@@ -36,7 +36,7 @@ static int IsValidColorspace(int webp_csp_mode) {
 // strictly speaking, the very last (or first, if flipped) row
 // doesn't require padding.
 #define MIN_BUFFER_SIZE(WIDTH, HEIGHT, STRIDE)       \
-    (uint64_t)(STRIDE) * ((HEIGHT) - 1) + (WIDTH)
+    ((uint64_t)(STRIDE) * ((HEIGHT) - 1) + (WIDTH))
 
 static VP8StatusCode CheckDecBuffer(const WebPDecBuffer* const buffer) {
   int ok = 1;
@@ -98,9 +98,14 @@ static VP8StatusCode AllocateBuffer(WebPDecBuffer* const buffer) {
     uint64_t uv_size = 0, a_size = 0, total_size;
     // We need memory and it hasn't been allocated yet.
     // => initialize output buffer, now that dimensions are known.
-    const int stride = w * kModeBpp[mode];
-    const uint64_t size = (uint64_t)stride * h;
+    int stride;
+    uint64_t size;
 
+    if ((uint64_t)w * kModeBpp[mode] >= (1ull << 32)) {
+      return VP8_STATUS_INVALID_PARAM;
+    }
+    stride = w * kModeBpp[mode];
+    size = (uint64_t)stride * h;
     if (!WebPIsRGBMode(mode)) {
       uv_stride = (w + 1) / 2;
       uv_size = (uint64_t)uv_stride * ((h + 1) / 2);
@@ -169,11 +174,11 @@ VP8StatusCode WebPFlipBuffer(WebPDecBuffer* const buffer) {
   return VP8_STATUS_OK;
 }
 
-VP8StatusCode WebPAllocateDecBuffer(int w, int h,
+VP8StatusCode WebPAllocateDecBuffer(int width, int height,
                                     const WebPDecoderOptions* const options,
-                                    WebPDecBuffer* const out) {
+                                    WebPDecBuffer* const buffer) {
   VP8StatusCode status;
-  if (out == NULL || w <= 0 || h <= 0) {
+  if (buffer == NULL || width <= 0 || height <= 0) {
     return VP8_STATUS_INVALID_PARAM;
   }
   if (options != NULL) {    // First, apply options if there is any.
@@ -182,33 +187,39 @@ VP8StatusCode WebPAllocateDecBuffer(int w, int h,
       const int ch = options->crop_height;
       const int x = options->crop_left & ~1;
       const int y = options->crop_top & ~1;
-      if (x < 0 || y < 0 || cw <= 0 || ch <= 0 || x + cw > w || y + ch > h) {
+      if (x < 0 || y < 0 || cw <= 0 || ch <= 0 ||
+          x + cw > width || y + ch > height) {
         return VP8_STATUS_INVALID_PARAM;   // out of frame boundary.
       }
-      w = cw;
-      h = ch;
+      width = cw;
+      height = ch;
     }
+
     if (options->use_scaling) {
+#if !defined(WEBP_REDUCE_SIZE)
       int scaled_width = options->scaled_width;
       int scaled_height = options->scaled_height;
       if (!WebPRescalerGetScaledDimensions(
-              w, h, &scaled_width, &scaled_height)) {
+              width, height, &scaled_width, &scaled_height)) {
         return VP8_STATUS_INVALID_PARAM;
       }
-      w = scaled_width;
-      h = scaled_height;
+      width = scaled_width;
+      height = scaled_height;
+#else
+      return VP8_STATUS_INVALID_PARAM;   // rescaling not supported
+#endif
     }
   }
-  out->width = w;
-  out->height = h;
+  buffer->width = width;
+  buffer->height = height;
 
   // Then, allocate buffer for real.
-  status = AllocateBuffer(out);
+  status = AllocateBuffer(buffer);
   if (status != VP8_STATUS_OK) return status;
 
   // Use the stride trick if vertical flip is needed.
   if (options != NULL && options->flip) {
-    status = WebPFlipBuffer(out);
+    status = WebPFlipBuffer(buffer);
   }
   return status;
 }

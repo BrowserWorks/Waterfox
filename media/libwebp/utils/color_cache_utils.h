@@ -12,8 +12,10 @@
 // Authors: Jyrki Alakuijala (jyrki@google.com)
 //          Urvang Joshi (urvang@google.com)
 
-#ifndef WEBP_UTILS_COLOR_CACHE_H_
-#define WEBP_UTILS_COLOR_CACHE_H_
+#ifndef WEBP_UTILS_COLOR_CACHE_UTILS_H_
+#define WEBP_UTILS_COLOR_CACHE_UTILS_H_
+
+#include <assert.h>
 
 #include "../webp/types.h"
 
@@ -30,7 +32,7 @@ typedef struct {
 
 static const uint64_t kHashMul = 0x1e35a7bdull;
 
-static WEBP_INLINE int HashPix(uint32_t argb, int shift) {
+static WEBP_INLINE int VP8LHashPix(uint32_t argb, int shift) {
   return (int)(((argb * kHashMul) & 0xffffffffu) >> shift);
 }
 
@@ -48,19 +50,19 @@ static WEBP_INLINE void VP8LColorCacheSet(const VP8LColorCache* const cc,
 
 static WEBP_INLINE void VP8LColorCacheInsert(const VP8LColorCache* const cc,
                                              uint32_t argb) {
-  const int key = HashPix(argb, cc->hash_shift_);
+  const int key = VP8LHashPix(argb, cc->hash_shift_);
   cc->colors_[key] = argb;
 }
 
 static WEBP_INLINE int VP8LColorCacheGetIndex(const VP8LColorCache* const cc,
                                               uint32_t argb) {
-  return HashPix(argb, cc->hash_shift_);
+  return VP8LHashPix(argb, cc->hash_shift_);
 }
 
 // Return the key if cc contains argb, and -1 otherwise.
 static WEBP_INLINE int VP8LColorCacheContains(const VP8LColorCache* const cc,
                                               uint32_t argb) {
-  const int key = HashPix(argb, cc->hash_shift_);
+  const int key = VP8LHashPix(argb, cc->hash_shift_);
   return (cc->colors_[key] == argb) ? key : -1;
 }
 
@@ -82,4 +84,4 @@ void VP8LColorCacheClear(VP8LColorCache* const color_cache);
 }
 #endif
 
-#endif  // WEBP_UTILS_COLOR_CACHE_H_
+#endif  // WEBP_UTILS_COLOR_CACHE_UTILS_H_

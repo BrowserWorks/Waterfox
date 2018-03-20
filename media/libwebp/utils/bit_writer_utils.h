@@ -11,8 +11,8 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#ifndef WEBP_UTILS_BIT_WRITER_H_
-#define WEBP_UTILS_BIT_WRITER_H_
+#ifndef WEBP_UTILS_BIT_WRITER_UTILS_H_
+#define WEBP_UTILS_BIT_WRITER_UTILS_H_
 
 #include "../webp/types.h"
 
@@ -100,16 +100,24 @@ typedef struct {
   int error_;
 } VP8LBitWriter;
 
-static WEBP_INLINE size_t VP8LBitWriterNumBytes(VP8LBitWriter* const bw) {
+static WEBP_INLINE size_t VP8LBitWriterNumBytes(const VP8LBitWriter* const bw) {
   return (bw->cur_ - bw->buf_) + ((bw->used_ + 7) >> 3);
 }
 
 // Returns false in case of memory allocation error.
 int VP8LBitWriterInit(VP8LBitWriter* const bw, size_t expected_size);
+// Returns false in case of memory allocation error.
+int VP8LBitWriterClone(const VP8LBitWriter* const src,
+                       VP8LBitWriter* const dst);
 // Finalize the bitstream coding. Returns a pointer to the internal buffer.
 uint8_t* VP8LBitWriterFinish(VP8LBitWriter* const bw);
 // Release any pending memory and zeroes the object.
 void VP8LBitWriterWipeOut(VP8LBitWriter* const bw);
+// Resets the cursor of the BitWriter bw to when it was like in bw_init.
+void VP8LBitWriterReset(const VP8LBitWriter* const bw_init,
+                        VP8LBitWriter* const bw);
+// Swaps the memory held by two BitWriters.
+void VP8LBitWriterSwap(VP8LBitWriter* const src, VP8LBitWriter* const dst);
 
 // Internal function for VP8LPutBits flushing 32 bits from the written state.
 void VP8LPutBitsFlushBits(VP8LBitWriter* const bw);
@@ -143,4 +151,4 @@ static WEBP_INLINE void VP8LPutBits(VP8LBitWriter* const bw,
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_UTILS_BIT_WRITER_H_ */
+#endif  /* WEBP_UTILS_BIT_WRITER_UTILS_H_ */
