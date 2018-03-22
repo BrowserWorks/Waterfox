@@ -5572,6 +5572,9 @@ pref("browser.search.official", true);
 
 // GMPInstallManager prefs
 
+// Whether updates are enabled
+pref("media.gmp-manager.updateEnabled", true);
+
 // User-settable override to media.gmp-manager.url for testing purposes.
 //pref("media.gmp-manager.url.override", "");
 
