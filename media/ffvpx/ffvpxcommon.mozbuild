@@ -10,6 +10,7 @@ ASFLAGS += ['-I%s/media/ffvpx' % TOPSRCDIR]
 
 if CONFIG['FFVPX_ASFLAGS']:
     USE_YASM = True
+
     if CONFIG['OS_ARCH'] == 'WINNT':
        # Fix inline symbols and math defines for windows.
         DEFINES['_USE_MATH_DEFINES'] = True
@@ -29,6 +30,17 @@ if CONFIG['FFVPX_ASFLAGS']:
     else:
         # Default to unix, similar to how ASFLAGS setup works in configure.in
         ASFLAGS += ['-Pconfig_unix64.asm']
+    # default disabled components
+    ASFLAGS += ['-Pdefaults_disabled.asm']
+
+    if int(CONFIG['YASM_MAJOR_VERSION']) == 1 and int(CONFIG['YASM_MINOR_VERSION']) < 2:
+        DEFINES['YASM_MISSING_AVX2'] = True
+        ASFLAGS += [
+            '-DHAVE_AVX2=0',
+            '-DHAVE_AVX2_INTERNAL=0',
+            '-DHAVE_AVX2_EXTERNAL=0',
+        ]
+
 
 LOCAL_INCLUDES += ['/media/ffvpx']
 
@@ -52,6 +64,8 @@ if CONFIG['GNU_CC']:
         CFLAGS += [
             '-Wno-incompatible-pointer-types-discards-qualifiers',
             '-Wno-logical-op-parentheses',
+            # Workaround for https://bugs.llvm.org/show_bug.cgi?id=26828#c4 :
+            '-ffreestanding',
         ]
     # Force visibility of cpu and av_log symbols.
     CFLAGS += ['-include', 'libavutil_visibility.h']
@@ -83,7 +97,7 @@ elif CONFIG['_MSC_VER']:
         '-wd4057', '-wd4204', '-wd4706', '-wd4305', '-wd4152', '-wd4324',
         '-we4013', '-wd4100', '-wd4214', '-wd4307', '-wd4273', '-wd4554',
     ]
-
+    LOCAL_INCLUDES += ['/media/ffvpx/compat/atomics/win32']
 DEFINES['HAVE_AV_CONFIG_H'] = True
 
 if CONFIG['MOZ_DEBUG']:

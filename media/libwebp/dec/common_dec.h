@@ -11,8 +11,8 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#ifndef WEBP_DEC_COMMON_H_
-#define WEBP_DEC_COMMON_H_
+#ifndef WEBP_DEC_COMMON_DEC_H_
+#define WEBP_DEC_COMMON_DEC_H_
 
 // intra prediction modes
 enum { B_DC_PRED = 0,   // 4x4 modes
@@ -51,4 +51,4 @@ enum { MB_FEATURE_TREE_PROBS = 3,
        NUM_PROBAS = 11
      };
 
-#endif    // WEBP_DEC_COMMON_H_
+#endif    // WEBP_DEC_COMMON_DEC_H_

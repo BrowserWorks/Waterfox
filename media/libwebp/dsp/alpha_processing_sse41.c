@@ -19,9 +19,9 @@
 
 //------------------------------------------------------------------------------
 
-static int ExtractAlpha(const uint8_t* argb, int argb_stride,
-                        int width, int height,
-                        uint8_t* alpha, int alpha_stride) {
+static int ExtractAlpha_SSE41(const uint8_t* argb, int argb_stride,
+                              int width, int height,
+                              uint8_t* alpha, int alpha_stride) {
   // alpha_and stores an 'and' operation of all the alpha[] values. The final
   // value is not 0xff if any of the alpha[] is not equal to 0xff.
   uint32_t alpha_and = 0xff;
@@ -82,7 +82,7 @@ static int ExtractAlpha(const uint8_t* argb, int argb_stride,
 extern void WebPInitAlphaProcessingSSE41(void);
 
 WEBP_TSAN_IGNORE_FUNCTION void WebPInitAlphaProcessingSSE41(void) {
-  WebPExtractAlpha = ExtractAlpha;
+  WebPExtractAlpha = ExtractAlpha_SSE41;
 }
 
 #else  // !WEBP_USE_SSE41

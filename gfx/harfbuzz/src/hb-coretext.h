@@ -42,10 +42,14 @@ HB_BEGIN_DECLS
 
 #define HB_CORETEXT_TAG_MORT HB_TAG('m','o','r','t')
 #define HB_CORETEXT_TAG_MORX HB_TAG('m','o','r','x')
+#define HB_CORETEXT_TAG_KERX HB_TAG('k','e','r','x')
 
 
 HB_EXTERN hb_face_t *
 hb_coretext_face_create (CGFontRef cg_font);
+
+HB_EXTERN hb_font_t *
+hb_coretext_font_create (CTFontRef ct_font);
 
 
 HB_EXTERN CGFontRef

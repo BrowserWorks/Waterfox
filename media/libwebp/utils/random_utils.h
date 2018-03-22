@@ -11,8 +11,8 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#ifndef WEBP_UTILS_RANDOM_H_
-#define WEBP_UTILS_RANDOM_H_
+#ifndef WEBP_UTILS_RANDOM_UTILS_H_
+#define WEBP_UTILS_RANDOM_UTILS_H_
 
 #include <assert.h>
 #include "../webp/types.h"
@@ -60,4 +60,4 @@ static WEBP_INLINE int VP8RandomBits(VP8Random* const rg, int num_bits) {
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_UTILS_RANDOM_H_ */
+#endif  /* WEBP_UTILS_RANDOM_UTILS_H_ */

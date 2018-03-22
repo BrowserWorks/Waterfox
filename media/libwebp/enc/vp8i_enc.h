@@ -11,8 +11,8 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#ifndef WEBP_ENC_VP8ENCI_H_
-#define WEBP_ENC_VP8ENCI_H_
+#ifndef WEBP_ENC_VP8I_ENC_H_
+#define WEBP_ENC_VP8I_ENC_H_
 
 #include <string.h>     // for memcpy()
 #include "../dec/common_dec.h"
@@ -32,7 +32,7 @@ extern "C" {
 // version numbers
 #define ENC_MAJ_VERSION 0
 #define ENC_MIN_VERSION 6
-#define ENC_REV_VERSION 0
+#define ENC_REV_VERSION 1
 
 enum { MAX_LF_LEVELS = 64,       // Maximum loop filter level
        MAX_VARIABLE_LEVEL = 67,  // last (inclusive) level with variable cost
@@ -75,10 +75,10 @@ typedef enum {   // Rate-distortion optimization levels
 #define U_OFF_ENC    (16)
 #define V_OFF_ENC    (16 + 8)
 
-extern const int VP8Scan[16];           // in quant.c
-extern const int VP8UVModeOffsets[4];   // in analyze.c
-extern const int VP8I16ModeOffsets[4];
-extern const int VP8I4ModeOffsets[NUM_BMODES];
+extern const uint16_t VP8Scan[16];
+extern const uint16_t VP8UVModeOffsets[4];
+extern const uint16_t VP8I16ModeOffsets[4];
+extern const uint16_t VP8I4ModeOffsets[NUM_BMODES];
 
 // Layout of prediction blocks
 // intra 16x16
@@ -330,9 +330,6 @@ int VP8RecordCoeffTokens(int ctx, const struct VP8Residual* const res,
 // Estimate the final coded size given a set of 'probas'.
 size_t VP8EstimateTokenSize(VP8TBuffer* const b, const uint8_t* const probas);
 
-// unused for now
-void VP8TokenToStats(const VP8TBuffer* const b, proba_t* const stats);
-
 #endif  // !DISABLE_TOKEN_BUFFER
 
 //------------------------------------------------------------------------------
@@ -502,19 +499,10 @@ int WebPPictureAllocYUVA(WebPPicture* const picture, int width, int height);
 // compressibility (no guarantee, though). Assumes that pic->use_argb is true.
 void WebPCleanupTransparentAreaLossless(WebPPicture* const pic);
 
-  // in near_lossless.c
-// Near lossless preprocessing in RGB color-space.
-int VP8ApplyNearLossless(int xsize, int ysize, uint32_t* argb, int quality);
-// Near lossless adjustment for predictors.
-void VP8ApplyNearLosslessPredict(int xsize, int ysize, int pred_bits,
-                                 const uint32_t* argb_orig,
-                                 uint32_t* argb, uint32_t* argb_scratch,
-                                 const uint32_t* const transform_data,
-                                 int quality, int subtract_green);
 //------------------------------------------------------------------------------
 
 #ifdef __cplusplus
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_ENC_VP8ENCI_H_ */
+#endif  /* WEBP_ENC_VP8I_ENC_H_ */

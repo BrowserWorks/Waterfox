@@ -87,10 +87,11 @@ enum use_category_t {
   USE_VMPst	= 39,	/* VOWEL_MOD_POST */
   USE_VMPre	= 23,	/* VOWEL_MOD_PRE */
   USE_SMAbv	= 41,	/* SYM_MOD_ABOVE */
-  USE_SMBlw	= 42	/* SYM_MOD_BELOW */
+  USE_SMBlw	= 42,	/* SYM_MOD_BELOW */
+  USE_CS	= 43	/* CONS_WITH_STACKER */
 };
 
 HB_INTERNAL USE_TABLE_ELEMENT_TYPE
-hb_use_get_categories (hb_codepoint_t u);
+hb_use_get_category (hb_codepoint_t u);
 
 #endif /* HB_OT_SHAPE_COMPLEX_USE_PRIVATE_HH */

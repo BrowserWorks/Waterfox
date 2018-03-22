@@ -12,8 +12,8 @@
 // Author: Skal (pascal.massimino@gmail.com)
 //         Vikas Arora (vikaas.arora@gmail.com)
 
-#ifndef WEBP_UTILS_BIT_READER_H_
-#define WEBP_UTILS_BIT_READER_H_
+#ifndef WEBP_UTILS_BIT_READER_UTILS_H_
+#define WEBP_UTILS_BIT_READER_UTILS_H_
 
 #include <assert.h>
 #ifdef _MSC_VER
@@ -155,9 +155,10 @@ static WEBP_INLINE int VP8LIsEndOfStream(const VP8LBitReader* const br) {
 
 // For jumping over a number of bits in the bit stream when accessed with
 // VP8LPrefetchBits and VP8LFillBitWindow.
+// This function does *not* set br->eos_, since it's speed-critical.
+// Use with extreme care!
 static WEBP_INLINE void VP8LSetBitPos(VP8LBitReader* const br, int val) {
   br->bit_pos_ = val;
-  br->eos_ = VP8LIsEndOfStream(br);
 }
 
 // Advances the read buffer by 4 bytes to make room for reading next 32 bits.
@@ -171,4 +172,4 @@ static WEBP_INLINE void VP8LFillBitWindow(VP8LBitReader* const br) {
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_UTILS_BIT_READER_H_ */
+#endif  /* WEBP_UTILS_BIT_READER_UTILS_H_ */

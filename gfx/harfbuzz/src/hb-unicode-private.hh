@@ -108,7 +108,7 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
     /* XXX This hack belongs to the Myanmar shaper. */
     if (unlikely (unicode == 0x1037u)) unicode = 0x103Au;
 
-    /* XXX This hack belongs to the SEA shaper (for Tai Tham):
+    /* XXX This hack belongs to the USE shaper (for Tai Tham):
      * Reorder SAKOT to ensure it comes after any tone marks. */
     if (unlikely (unicode == 0x1A60u)) return 254;
 
@@ -137,6 +137,7 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
    * we do NOT want to hide them, as the way Uniscribe has implemented them
    * is with regular spacing glyphs, and that's the way fonts are made to work.
    * As such, we make exceptions for those four.
+   * Also ignoring U+1BCA0..1BCA3. https://github.com/harfbuzz/harfbuzz/issues/503
    *
    * Unicode 7.0:
    * $ grep '; Default_Ignorable_Code_Point ' DerivedCoreProperties.txt | sed 's/;.*#/#/'
@@ -193,8 +194,7 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
     {
       /* Other planes */
       switch (plane) {
-	case 0x01: return hb_in_ranges<hb_codepoint_t> (ch, 0x1BCA0u, 0x1BCA3u,
-					    0x1D173u, 0x1D17Au);
+	case 0x01: return hb_in_range<hb_codepoint_t> (ch, 0x1D173u, 0x1D17Au);
 	case 0x0E: return hb_in_range<hb_codepoint_t> (ch, 0xE0000u, 0xE0FFFu);
 	default: return false;
       }
@@ -357,13 +357,13 @@ extern HB_INTERNAL const hb_unicode_funcs_t _hb_unicode_funcs_nil;
 /* Misc */
 
 #define HB_UNICODE_GENERAL_CATEGORY_IS_MARK(gen_cat) \
-	(FLAG_SAFE (gen_cat) & \
+	(FLAG_UNSAFE (gen_cat) & \
 	 (FLAG (HB_UNICODE_GENERAL_CATEGORY_SPACING_MARK) | \
 	  FLAG (HB_UNICODE_GENERAL_CATEGORY_ENCLOSING_MARK) | \
 	  FLAG (HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK)))
 
 #define HB_UNICODE_GENERAL_CATEGORY_IS_NON_ENCLOSING_MARK_OR_MODIFIER_SYMBOL(gen_cat) \
-	(FLAG_SAFE (gen_cat) & \
+	(FLAG_UNSAFE (gen_cat) & \
 	 (FLAG (HB_UNICODE_GENERAL_CATEGORY_SPACING_MARK) | \
 	  FLAG (HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK) | \
 	  FLAG (HB_UNICODE_GENERAL_CATEGORY_MODIFIER_SYMBOL)))

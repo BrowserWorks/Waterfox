@@ -14,12 +14,16 @@
 #include "./vp8i_dec.h"
 #include "../utils/bit_reader_inl_utils.h"
 
+#if !defined(USE_GENERIC_TREE)
 #if !defined(__arm__) && !defined(_M_ARM) && !defined(__aarch64__)
 // using a table is ~1-2% slower on ARM. Prefer the coded-tree approach then.
-#define USE_GENERIC_TREE
+#define USE_GENERIC_TREE 1   // ALTERNATE_CODE
+#else
+#define USE_GENERIC_TREE 0
 #endif
+#endif  // USE_GENERIC_TREE
 
-#ifdef USE_GENERIC_TREE
+#if (USE_GENERIC_TREE == 1)
 static const int8_t kYModesIntra4[18] = {
   -B_DC_PRED, 1,
     -B_TM_PRED, 2,
@@ -317,7 +321,7 @@ static void ParseIntraMode(VP8BitReader* const br,
       int x;
       for (x = 0; x < 4; ++x) {
         const uint8_t* const prob = kBModesProba[top[x]][ymode];
-#ifdef USE_GENERIC_TREE
+#if (USE_GENERIC_TREE == 1)
         // Generic tree-parsing
         int i = kYModesIntra4[VP8GetBit(br, prob[0])];
         while (i > 0) {
@@ -335,7 +339,7 @@ static void ParseIntraMode(VP8BitReader* const br,
                         (!VP8GetBit(br, prob[6]) ? B_LD_PRED :
                           (!VP8GetBit(br, prob[7]) ? B_VL_PRED :
                             (!VP8GetBit(br, prob[8]) ? B_HD_PRED : B_HU_PRED)));
-#endif    // USE_GENERIC_TREE
+#endif  // USE_GENERIC_TREE
         top[x] = ymode;
       }
       memcpy(modes, top, 4 * sizeof(*top));
@@ -498,7 +502,7 @@ static const uint8_t
 
 // Paragraph 9.9
 
-static const int kBands[16 + 1] = {
+static const uint8_t kBands[16 + 1] = {
   0, 1, 2, 3, 6, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 7,
   0  // extra entry as sentinel
 };

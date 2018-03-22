@@ -97,7 +97,7 @@ thai_pua_shape (hb_codepoint_t u, thai_action_t action, hb_font_t *font)
     hb_codepoint_t u;
     hb_codepoint_t win_pua;
     hb_codepoint_t mac_pua;
-  } const *pua_mappings = NULL;
+  } const *pua_mappings = nullptr;
   static const thai_pua_mapping_t SD_mappings[] = {
     {0x0E48u, 0xF70Au, 0xF88Bu}, /* MAI EK */
     {0x0E49u, 0xF70Bu, 0xF88Eu}, /* MAI THO */
@@ -244,6 +244,7 @@ do_thai_pua_shaping (const hb_ot_shape_plan_t *plan HB_UNUSED,
     /* At least one of the above/below actions is NOP. */
     thai_action_t action = above_edge.action != NOP ? above_edge.action : below_edge.action;
 
+    buffer->unsafe_to_break (base, i);
     if (action == RD)
       info[base].codepoint = thai_pua_shape (info[base].codepoint, action, font);
     else
@@ -365,18 +366,18 @@ preprocess_text_thai (const hb_ot_shape_plan_t *plan,
 
 const hb_ot_complex_shaper_t _hb_ot_complex_shaper_thai =
 {
-  "thai",
-  NULL, /* collect_features */
-  NULL, /* override_features */
-  NULL, /* data_create */
-  NULL, /* data_destroy */
+  nullptr, /* collect_features */
+  nullptr, /* override_features */
+  nullptr, /* data_create */
+  nullptr, /* data_destroy */
   preprocess_text_thai,
-  NULL, /* postprocess_glyphs */
+  nullptr, /* postprocess_glyphs */
   HB_OT_SHAPE_NORMALIZATION_MODE_DEFAULT,
-  NULL, /* decompose */
-  NULL, /* compose */
-  NULL, /* setup_masks */
-  NULL, /* disable_otl */
+  nullptr, /* decompose */
+  nullptr, /* compose */
+  nullptr, /* setup_masks */
+  nullptr, /* disable_otl */
+  nullptr, /* reorder_marks */
   HB_OT_SHAPE_ZERO_WIDTH_MARKS_BY_GDEF_LATE,
   false,/* fallback_position */
 };

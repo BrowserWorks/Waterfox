@@ -456,7 +456,7 @@ hb_font_get_glyph_from_name (hb_font_t *font,
 /* high-level funcs, with fallback */
 
 /* Calls either hb_font_get_nominal_glyph() if variation_selector is 0,
- * otherwise callse hb_font_get_variation_glyph(). */
+ * otherwise calls hb_font_get_variation_glyph(). */
 HB_EXTERN hb_bool_t
 hb_font_get_glyph (hb_font_t *font,
 		   hb_codepoint_t unicode, hb_codepoint_t variation_selector,
@@ -606,6 +606,16 @@ HB_EXTERN void
 hb_font_get_ppem (hb_font_t *font,
 		  unsigned int *x_ppem,
 		  unsigned int *y_ppem);
+
+/*
+ * Point size per EM.  Used for optical-sizing in CoreText.
+ * A value of zero means "not set".
+ */
+HB_EXTERN void
+hb_font_set_ptem (hb_font_t *font, float ptem);
+
+HB_EXTERN float
+hb_font_get_ptem (hb_font_t *font);
 
 HB_EXTERN void
 hb_font_set_variations (hb_font_t *font,

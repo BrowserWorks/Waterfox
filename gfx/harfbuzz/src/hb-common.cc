@@ -32,6 +32,9 @@
 #include "hb-object-private.hh"
 
 #include <locale.h>
+#ifdef HAVE_XLOCALE_H
+#include <xlocale.h>
+#endif
 
 
 /* hb_options_t */
@@ -82,7 +85,7 @@ hb_tag_from_string (const char *str, int len)
   for (; i < 4; i++)
     tag[i] = ' ';
 
-  return HB_TAG_CHAR4 (tag);
+  return HB_TAG (tag[0], tag[1], tag[2], tag[3]);
 }
 
 /**
@@ -246,8 +249,8 @@ struct hb_language_item_t {
 static hb_language_item_t *langs;
 
 #ifdef HB_USE_ATEXIT
-static
-void free_langs (void)
+static void
+free_langs (void)
 {
   while (langs) {
     hb_language_item_t *next = langs->next;
@@ -271,13 +274,13 @@ retry:
   /* Not found; allocate one. */
   hb_language_item_t *lang = (hb_language_item_t *) calloc (1, sizeof (hb_language_item_t));
   if (unlikely (!lang))
-    return NULL;
+    return nullptr;
   lang->next = first_lang;
   *lang = key;
   if (unlikely (!lang->lang))
   {
     free (lang);
-    return NULL;
+    return nullptr;
   }
 
   if (!hb_atomic_ptr_cmpexch (&langs, first_lang, lang)) {
@@ -315,7 +318,7 @@ hb_language_from_string (const char *str, int len)
   if (!str || !len || !*str)
     return HB_LANGUAGE_INVALID;
 
-  hb_language_item_t *item = NULL;
+  hb_language_item_t *item = nullptr;
   if (len >= 0)
   {
     /* NUL-terminate it. */
@@ -346,7 +349,7 @@ hb_language_from_string (const char *str, int len)
 const char *
 hb_language_to_string (hb_language_t language)
 {
-  /* This is actually NULL-safe! */
+  /* This is actually nullptr-safe! */
   return language->s;
 }
 
@@ -366,7 +369,7 @@ hb_language_get_default (void)
 
   hb_language_t language = (hb_language_t) hb_atomic_ptr_get (&default_language);
   if (unlikely (language == HB_LANGUAGE_INVALID)) {
-    language = hb_language_from_string (setlocale (LC_CTYPE, NULL), -1);
+    language = hb_language_from_string (setlocale (LC_CTYPE, nullptr), -1);
     (void) hb_atomic_ptr_cmpexch (&default_language, HB_LANGUAGE_INVALID, language);
   }
 
@@ -521,6 +524,7 @@ hb_script_get_horizontal_direction (hb_script_t script)
     case HB_SCRIPT_PSALTER_PAHLAVI:
 
     /* Unicode-8.0 additions */
+    case HB_SCRIPT_HATRAN:
     case HB_SCRIPT_OLD_HUNGARIAN:
 
     /* Unicode-9.0 additions */
@@ -559,9 +563,9 @@ hb_user_data_array_t::set (hb_user_data_key_t *key,
 void *
 hb_user_data_array_t::get (hb_user_data_key_t *key)
 {
-  hb_user_data_item_t item = {NULL, NULL, NULL};
+  hb_user_data_item_t item = {nullptr, nullptr, nullptr};
 
-  return items.find (key, &item, lock) ? item.data : NULL;
+  return items.find (key, &item, lock) ? item.data : nullptr;
 }
 
 
@@ -694,6 +698,57 @@ parse_uint32 (const char **pp, const char *end, uint32_t *pv)
   return true;
 }
 
+#if defined (HAVE_NEWLOCALE) && defined (HAVE_STRTOD_L)
+#define USE_XLOCALE 1
+#define HB_LOCALE_T locale_t
+#define HB_CREATE_LOCALE(locName) newlocale (LC_ALL_MASK, locName, nullptr)
+#define HB_FREE_LOCALE(loc) freelocale (loc)
+#elif defined(_MSC_VER)
+#define USE_XLOCALE 1
+#define HB_LOCALE_T _locale_t
+#define HB_CREATE_LOCALE(locName) _create_locale (LC_ALL, locName)
+#define HB_FREE_LOCALE(loc) _free_locale (loc)
+#define strtod_l(a, b, c) _strtod_l ((a), (b), (c))
+#endif
+
+#ifdef USE_XLOCALE
+
+static HB_LOCALE_T C_locale;
+
+#ifdef HB_USE_ATEXIT
+static void
+free_C_locale (void)
+{
+  if (C_locale)
+    HB_FREE_LOCALE (C_locale);
+}
+#endif
+
+static HB_LOCALE_T
+get_C_locale (void)
+{
+retry:
+  HB_LOCALE_T C = (HB_LOCALE_T) hb_atomic_ptr_get (&C_locale);
+
+  if (unlikely (!C))
+  {
+    C = HB_CREATE_LOCALE ("C");
+
+    if (!hb_atomic_ptr_cmpexch (&C_locale, nullptr, C))
+    {
+      HB_FREE_LOCALE (C_locale);
+      goto retry;
+    }
+
+#ifdef HB_USE_ATEXIT
+    atexit (free_C_locale); /* First person registers atexit() callback. */
+#endif
+  }
+
+  return C;
+}
+#endif
+
 static bool
 parse_float (const char **pp, const char *end, float *pv)
 {
@@ -707,7 +762,11 @@ parse_float (const char **pp, const char *end, float *pv)
   float v;
 
   errno = 0;
+#ifdef USE_XLOCALE
+  v = strtod_l (p, &pend, get_C_locale ());
+#else
   v = strtod (p, &pend);
+#endif
   if (errno || p == pend)
     return false;
 
@@ -726,9 +785,9 @@ parse_bool (const char **pp, const char *end, uint32_t *pv)
     (*pp)++;
 
   /* CSS allows on/off as aliases 1/0. */
-  if (*pp - p == 2 || 0 == strncmp (p, "on", 2))
+  if (*pp - p == 2 && 0 == strncmp (p, "on", 2))
     *pv = 1;
-  else if (*pp - p == 3 || 0 == strncmp (p, "off", 2))
+  else if (*pp - p == 3 && 0 == strncmp (p, "off", 3))
     *pv = 0;
   else
     return false;
@@ -820,7 +879,7 @@ parse_feature_value_postfix (const char **pp, const char *end, hb_feature_t *fea
                    parse_bool (pp, end, &feature->value);
   /* CSS doesn't use equal-sign between tag and value.
    * If there was an equal-sign, then there *must* be a value.
-   * A value without an eqaul-sign is ok, but not required. */
+   * A value without an equal-sign is ok, but not required. */
   return !had_equal || had_value;
 }
 

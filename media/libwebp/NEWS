@@ -1,3 +1,16 @@
+- 11/24/2017: version 0.6.1
+  This is a binary compatible release.
+  * lossless performance and compression improvements + a new 'cruncher' mode
+    (-m 6 -q 100)
+  * ARM performance improvements with clang (15-20% w/ndk r15c, issue #339)
+  * webp-js: emscripten/webassembly based javascript decoder
+  * miscellaneous bug & build fixes (issue #329, #332, #343, #353, #360, #361,
+    #363)
+  Tool updates / additions:
+    added webpinfo - prints file format information (issue #330)
+    gif2webp - loop behavior modified to match Chrome M63+ (crbug.com/649264);
+               '-loop_compatibility' can be used for the old behavior
+
 - 1/26/2017: version 0.6.0
   * lossless performance and compression improvements
   * miscellaneous performance improvements (SSE2, NEON, MSA)

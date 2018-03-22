@@ -11,8 +11,8 @@
 //
 // Models the histograms of literal and distance codes.
 
-#ifndef WEBP_ENC_HISTOGRAM_H_
-#define WEBP_ENC_HISTOGRAM_H_
+#ifndef WEBP_ENC_HISTOGRAM_ENC_H_
+#define WEBP_ENC_HISTOGRAM_ENC_H_
 
 #include <string.h>
 
@@ -90,7 +90,9 @@ VP8LHistogram* VP8LAllocateHistogram(int cache_bits);
 
 // Accumulate a token 'v' into a histogram.
 void VP8LHistogramAddSinglePixOrCopy(VP8LHistogram* const histo,
-                                     const PixOrCopy* const v);
+                                     const PixOrCopy* const v,
+                                     int (*const distance_modifier)(int, int),
+                                     int distance_modifier_arg0);
 
 static WEBP_INLINE int VP8LHistogramNumCodes(int palette_code_bits) {
   return NUM_LITERAL_CODES + NUM_LENGTH_CODES +
@@ -103,7 +105,7 @@ int VP8LGetHistoImageSymbols(int xsize, int ysize,
                              int quality, int low_effort,
                              int histogram_bits, int cache_bits,
                              VP8LHistogramSet* const image_in,
-                             VP8LHistogramSet* const tmp_histos,
+                             VP8LHistogram* const tmp_histo,
                              uint16_t* const histogram_symbols);
 
 // Returns the entropy for the symbols in the input array.
@@ -120,4 +122,4 @@ double VP8LHistogramEstimateBits(const VP8LHistogram* const p);
 }
 #endif
 
-#endif  // WEBP_ENC_HISTOGRAM_H_
+#endif  // WEBP_ENC_HISTOGRAM_ENC_H_
