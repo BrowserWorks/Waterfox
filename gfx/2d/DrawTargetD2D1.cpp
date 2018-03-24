@@ -72,21 +72,16 @@ DrawTargetD2D1::~DrawTargetD2D1()
     mDC->EndDraw();
   }
 
-  {
-    // Until this point in the destructor it -must- still be valid for FlushInternal
-    // to be called on this.
-    StaticMutexAutoLock lock(Factory::mDTDependencyLock);
-    // Targets depending on us can break that dependency, since we're obviously not going to
-    // be modified in the future.
-    for (auto iter = mDependentTargets.begin();
-      iter != mDependentTargets.end(); iter++) {
-      (*iter)->mDependingOnTargets.erase(this);
-    }
-    // Our dependencies on other targets no longer matter.
-    for (TargetSet::iterator iter = mDependingOnTargets.begin();
-      iter != mDependingOnTargets.end(); iter++) {
-      (*iter)->mDependentTargets.erase(this);
-    }
+  // Targets depending on us can break that dependency, since we're obviously not going to
+  // be modified in the future.
+  for (auto iter = mDependentTargets.begin();
+       iter != mDependentTargets.end(); iter++) {
+    (*iter)->mDependingOnTargets.erase(this);
+  }
+  // Our dependencies on other targets no longer matter.
+  for (TargetSet::iterator iter = mDependingOnTargets.begin();
+       iter != mDependingOnTargets.end(); iter++) {
+    (*iter)->mDependentTargets.erase(this);
   }
 }
 
@@ -156,7 +151,28 @@ static const uint32_t kPushedLayersBeforePurge = 25;
 void
 DrawTargetD2D1::Flush()
 {
-  FlushInternal();
+  if (IsDeviceContextValid()) {
+    if ((mUsedCommandListsSincePurge >= kPushedLayersBeforePurge) &&
+        mPushedLayers.size() == 1) {
+      // It's important to pop all clips as otherwise layers can forget about
+      // their clip when doing an EndDraw. When we have layers pushed we cannot
+      // easily pop all underlying clips to delay the purge until we have no
+      // layers pushed.
+      PopAllClips();
+      mUsedCommandListsSincePurge = 0;
+      mDC->EndDraw();
+      mDC->BeginDraw();
+    } else {
+      mDC->Flush();
+    }
+  }
+
+  // We no longer depend on any target.
+  for (TargetSet::iterator iter = mDependingOnTargets.begin();
+       iter != mDependingOnTargets.end(); iter++) {
+    (*iter)->mDependentTargets.erase(this);
+  }
+  mDependingOnTargets.clear();
 }
 
 void
@@ -1251,40 +1267,6 @@ DrawTargetD2D1::CleanupD2D()
   }
 }
 
-DrawTargetD2D1::FlushInternal(bool aHasDependencyMutex /* = false */)
-{
-  if (IsDeviceContextValid()) {
-    if ((mUsedCommandListsSincePurge >= kPushedLayersBeforePurge) &&
-      mPushedLayers.size() == 1) {
-      // It's important to pop all clips as otherwise layers can forget about
-      // their clip when doing an EndDraw. When we have layers pushed we cannot
-      // easily pop all underlying clips to delay the purge until we have no
-      // layers pushed.
-      PopAllClips();
-      mUsedCommandListsSincePurge = 0;
-      mDC->EndDraw();
-      mDC->BeginDraw();
-    }
-    else {
-      mDC->Flush();
-    }
-  }
-
-  Maybe<StaticMutexAutoLock> lock;
-
-  if (!aHasDependencyMutex) {
-    lock.emplace(Factory::mDTDependencyLock);
-  }
-
-  Factory::mDTDependencyLock.AssertCurrentThreadOwns();
-  // We no longer depend on any target.
-  for (TargetSet::iterator iter = mDependingOnTargets.begin();
-    iter != mDependingOnTargets.end(); iter++) {
-    (*iter)->mDependentTargets.erase(this);
-  }
-  mDependingOnTargets.clear();
-}
-
 void
 DrawTargetD2D1::MarkChanged()
 {
@@ -1298,18 +1280,15 @@ DrawTargetD2D1::MarkChanged()
       MOZ_ASSERT(!mSnapshot);
     }
   }
-  {
-    StaticMutexAutoLock lock(Factory::mDTDependencyLock);
-    if (mDependentTargets.size()) {
-      // Copy mDependentTargets since the Flush()es below will modify it.
-      TargetSet tmpTargets = mDependentTargets;
-      for (TargetSet::iterator iter = tmpTargets.begin();
-        iter != tmpTargets.end(); iter++) {
-        (*iter)->FlushInternal(true);
-      }
-      // The Flush() should have broken all dependencies on this target.
-      MOZ_ASSERT(!mDependentTargets.size());
+  if (mDependentTargets.size()) {
+    // Copy mDependentTargets since the Flush()es below will modify it.
+    TargetSet tmpTargets = mDependentTargets;
+    for (TargetSet::iterator iter = tmpTargets.begin();
+         iter != tmpTargets.end(); iter++) {
+      (*iter)->Flush();
     }
+    // The Flush() should have broken all dependencies on this target.
+    MOZ_ASSERT(!mDependentTargets.size());
   }
 }
 
@@ -1485,18 +1464,9 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
 void
 DrawTargetD2D1::AddDependencyOnSource(SourceSurfaceD2D1* aSource)
 {
-  Maybe<MutexAutoLock> snapshotLock;
-  // We grab the SnapshotLock as well, this guaranteeds aSource->mDrawTarget
-  // cannot be cleared in between the if statement and the dereference.
-  if (aSource->mSnapshotLock) {
-    snapshotLock.emplace(*aSource->mSnapshotLock);
-  }
-  {
-    StaticMutexAutoLock lock(Factory::mDTDependencyLock);
-    if (aSource->mDrawTarget && !mDependingOnTargets.count(aSource->mDrawTarget)) {
-      aSource->mDrawTarget->mDependentTargets.insert(this);
-      mDependingOnTargets.insert(aSource->mDrawTarget);
-    }
+  if (aSource->mDrawTarget && !mDependingOnTargets.count(aSource->mDrawTarget)) {
+    aSource->mDrawTarget->mDependentTargets.insert(this);
+    mDependingOnTargets.insert(aSource->mDrawTarget);
   }
 }
 
