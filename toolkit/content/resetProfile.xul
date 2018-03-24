@@ -35,5 +35,6 @@
     <label class="migratedLabel" value="&refreshProfile.dialog.items.label3;"/>
     <label class="migratedLabel" value="&refreshProfile.dialog.items.label4;"/>
     <label class="migratedLabel" value="&refreshProfile.dialog.items.label5;"/>
+    <label class="migratedLabel" value="&refreshProfile.dialog.items.label6;"/>
   </vbox>
 </dialog>
