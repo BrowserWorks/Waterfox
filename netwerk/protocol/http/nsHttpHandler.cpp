@@ -436,11 +436,11 @@ nsHttpHandler::Init()
 
     nsHttpChannelAuthProvider::InitializePrefs();
 
-    // mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION);
-    mMisc.AssignLiteral("rv: 57.0");
+    mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION);
+    // mMisc.AssignLiteral("rv: 57.0");
 
-    // mCompatFirefox.AssignLiteral("Firefox/" MOZILLA_UAVERSION);
-    mCompatFirefox.AssignLiteral("Firefox/57.0");
+    mCompatFirefox.AssignLiteral("Firefox/" MOZILLA_UAVERSION);
+    // mCompatFirefox.AssignLiteral("Firefox/57.0");
 
     nsCOMPtr<nsIXULAppInfo> appInfo =
         do_GetService("@mozilla.org/xre/app-info;1");

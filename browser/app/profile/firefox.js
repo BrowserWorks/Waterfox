@@ -30,6 +30,9 @@ pref("extensions.logging.enabled", false);
 // Disables strict compatibility, making addons compatible-by-default.
 pref("extensions.strictCompatibility", false);
 
+// Disable compatibility checking due to mish-mash of versions.
+pref("extensions.checkCompatibility.56.1", false);
+
 // Specifies a minimum maxVersion an addon needs to say it's compatible with
 // for it to be compatible by default.
 pref("extensions.minCompatibleAppVersion", "4.0");
