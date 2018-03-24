@@ -30,10 +30,10 @@
   <label value="&refreshProfile.dialog.description3;"/>
 
   <vbox id="migratedItems">
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label1;"/>
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label2;"/>
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label3;"/>
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label4;"/>
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label5;"/>
+    <label class="migratedLabel" value="Reset preferences for Waterfox"/>
+    <label class="migratedLabel" value="Preserve dictionaries, extensions, language packs and plug-ins"/>
+    <label class="migratedLabel" value="Reset preferences for extensions"/>
+    <label class="migratedLabel" value="Remove themes"/>
+    <label class="migratedLabel" value="Remove descriptions, ratings and other types of complementary information that may have been gained from Mozilla's add-ons service."/>
   </vbox>
 </dialog>
