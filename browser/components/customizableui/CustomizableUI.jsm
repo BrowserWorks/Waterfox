@@ -257,13 +257,6 @@ var CustomizableUIInternal = {
       navbarPlacements.splice(2, 0, "developer-button");
     }
 
-    // Place this last, when createWidget is called for pocket, it will
-    // append to the toolbar.
-    if (Services.prefs.getPrefType("extensions.pocket.enabled") != Services.prefs.PREF_INVALID &&
-        Services.prefs.getBoolPref("extensions.pocket.enabled")) {
-        navbarPlacements.push("pocket-button");
-    }
-
     this.registerArea(CustomizableUI.AREA_NAVBAR, {
       legacy: true,
       type: CustomizableUI.TYPE_TOOLBAR,
