@@ -27,14 +27,12 @@
 
   <description value="&refreshProfile.dialog.description1;"></description>
   <label value="&refreshProfile.dialog.description2;"/>
-  <label value="&refreshProfile.dialog.description3;"/>
 
   <vbox id="migratedItems">
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label1;"/>
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label2;"/>
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label3;"/>
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label4;"/>
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label5;"/>
-    <label class="migratedLabel" value="&refreshProfile.dialog.items.label6;"/>
+    <label class="migratedLabel" value="Reset configuration preferences"/>
+    <label class="migratedLabel" value="Preserve dictionaries, add-ons, and plug-ins"/>
+    <label class="migratedLabel" value="Reset preferences for add-ons and remove any related metadata"/>
+    <label class="migratedLabel" value="Remove themes"/>
+    <label class="migratedLabel" value="Enable multi-process (but not check for compatibility with extensions)."/>
   </vbox>
 </dialog>
