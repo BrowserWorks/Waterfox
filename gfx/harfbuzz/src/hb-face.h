@@ -71,7 +71,6 @@ hb_face_set_user_data (hb_face_t          *face,
 		       hb_destroy_func_t   destroy,
 		       hb_bool_t           replace);
 
-
 HB_EXTERN void *
 hb_face_get_user_data (hb_face_t          *face,
 		       hb_user_data_key_t *key);
@@ -111,6 +110,11 @@ hb_face_set_glyph_count (hb_face_t    *face,
 HB_EXTERN unsigned int
 hb_face_get_glyph_count (hb_face_t *face);
 
+HB_EXTERN unsigned int
+hb_face_get_table_tags (hb_face_t    *face,
+			unsigned int  start_offset,
+			unsigned int *table_count, /* IN/OUT */
+			hb_tag_t     *table_tags /* OUT */);
 
 HB_END_DECLS
 

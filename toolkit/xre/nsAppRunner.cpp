@@ -34,6 +34,7 @@
 #endif
 
 #ifdef XP_MACOSX
+#include "nsCocoaFeatures.h"
 #include "nsVersionComparator.h"
 #include "MacLaunchHelper.h"
 #include "MacApplicationDelegate.h"
@@ -5087,6 +5088,11 @@ MultiprocessBlockPolicy()
   }
 #endif
 
+#if defined(XP_MACOSX)
+  if (!nsCocoaFeatures::OnYosemiteOrLater()) {
+    return kE10sForceDisabled;
+  }
+#endif
   /*
    * None of the blocking policies matched, so e10s is allowed to run. Return
    * 0, indicating success.

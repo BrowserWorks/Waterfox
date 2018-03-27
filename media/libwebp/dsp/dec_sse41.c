@@ -19,7 +19,7 @@
 #include "../dec/vp8i_dec.h"
 #include "../utils/utils.h"
 
-static void HE16(uint8_t* dst) {     // horizontal
+static void HE16_SSE41(uint8_t* dst) {     // horizontal
   int j;
   const __m128i kShuffle3 = _mm_set1_epi8(3);
   for (j = 16; j > 0; --j) {
@@ -36,7 +36,7 @@ static void HE16(uint8_t* dst) {     // horizontal
 extern void VP8DspInitSSE41(void);
 
 WEBP_TSAN_IGNORE_FUNCTION void VP8DspInitSSE41(void) {
-  VP8PredLuma16[3] = HE16;
+  VP8PredLuma16[3] = HE16_SSE41;
 }
 
 #else  // !WEBP_USE_SSE41

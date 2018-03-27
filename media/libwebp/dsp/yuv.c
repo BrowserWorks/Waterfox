@@ -13,60 +13,8 @@
 
 #include "./yuv.h"
 
+#include <assert.h>
 #include <stdlib.h>
-
-#if defined(WEBP_YUV_USE_TABLE)
-
-static int done = 0;
-
-static WEBP_INLINE uint8_t clip(int v, int max_value) {
-  return v < 0 ? 0 : v > max_value ? max_value : v;
-}
-
-int16_t VP8kVToR[256], VP8kUToB[256];
-int32_t VP8kVToG[256], VP8kUToG[256];
-uint8_t VP8kClip[YUV_RANGE_MAX - YUV_RANGE_MIN];
-uint8_t VP8kClip4Bits[YUV_RANGE_MAX - YUV_RANGE_MIN];
-
-WEBP_TSAN_IGNORE_FUNCTION void VP8YUVInit(void) {
-  int i;
-  if (done) {
-    return;
-  }
-#ifndef USE_YUVj
-  for (i = 0; i < 256; ++i) {
-    VP8kVToR[i] = (89858 * (i - 128) + YUV_HALF) >> YUV_FIX;
-    VP8kUToG[i] = -22014 * (i - 128) + YUV_HALF;
-    VP8kVToG[i] = -45773 * (i - 128);
-    VP8kUToB[i] = (113618 * (i - 128) + YUV_HALF) >> YUV_FIX;
-  }
-  for (i = YUV_RANGE_MIN; i < YUV_RANGE_MAX; ++i) {
-    const int k = ((i - 16) * 76283 + YUV_HALF) >> YUV_FIX;
-    VP8kClip[i - YUV_RANGE_MIN] = clip(k, 255);
-    VP8kClip4Bits[i - YUV_RANGE_MIN] = clip((k + 8) >> 4, 15);
-  }
-#else
-  for (i = 0; i < 256; ++i) {
-    VP8kVToR[i] = (91881 * (i - 128) + YUV_HALF) >> YUV_FIX;
-    VP8kUToG[i] = -22554 * (i - 128) + YUV_HALF;
-    VP8kVToG[i] = -46802 * (i - 128);
-    VP8kUToB[i] = (116130 * (i - 128) + YUV_HALF) >> YUV_FIX;
-  }
-  for (i = YUV_RANGE_MIN; i < YUV_RANGE_MAX; ++i) {
-    const int k = i;
-    VP8kClip[i - YUV_RANGE_MIN] = clip(k, 255);
-    VP8kClip4Bits[i - YUV_RANGE_MIN] = clip((k + 8) >> 4, 15);
-  }
-#endif
-
-  done = 1;
-}
-
-#else
-
-WEBP_TSAN_IGNORE_FUNCTION void VP8YUVInit(void) {}
-
-#endif  // WEBP_YUV_USE_TABLE
 
 //-----------------------------------------------------------------------------
 // Plain-C version
@@ -75,14 +23,14 @@ WEBP_TSAN_IGNORE_FUNCTION void VP8YUVInit(void) {}
 static void FUNC_NAME(const uint8_t* y,                                        \
                       const uint8_t* u, const uint8_t* v,                      \
                       uint8_t* dst, int len) {                                 \
-  const uint8_t* const end = dst + (len & ~1) * XSTEP;                         \
+  const uint8_t* const end = dst + (len & ~1) * (XSTEP);                       \
   while (dst != end) {                                                         \
     FUNC(y[0], u[0], v[0], dst);                                               \
-    FUNC(y[1], u[0], v[0], dst + XSTEP);                                       \
+    FUNC(y[1], u[0], v[0], dst + (XSTEP));                                     \
     y += 2;                                                                    \
     ++u;                                                                       \
     ++v;                                                                       \
-    dst += 2 * XSTEP;                                                          \
+    dst += 2 * (XSTEP);                                                        \
   }                                                                            \
   if (len & 1) {                                                               \
     FUNC(y[0], u[0], v[0], dst);                                               \
@@ -168,7 +116,7 @@ WEBP_TSAN_IGNORE_FUNCTION void WebPInitSamplers(void) {
 //-----------------------------------------------------------------------------
 // ARGB -> YUV converters
 
-static void ConvertARGBToY(const uint32_t* argb, uint8_t* y, int width) {
+static void ConvertARGBToY_C(const uint32_t* argb, uint8_t* y, int width) {
   int i;
   for (i = 0; i < width; ++i) {
     const uint32_t p = argb[i];
@@ -220,14 +168,14 @@ void WebPConvertARGBToUV_C(const uint32_t* argb, uint8_t* u, uint8_t* v,
 
 //-----------------------------------------------------------------------------
 
-static void ConvertRGB24ToY(const uint8_t* rgb, uint8_t* y, int width) {
+static void ConvertRGB24ToY_C(const uint8_t* rgb, uint8_t* y, int width) {
   int i;
   for (i = 0; i < width; ++i, rgb += 3) {
     y[i] = VP8RGBToY(rgb[0], rgb[1], rgb[2], YUV_HALF);
   }
 }
 
-static void ConvertBGR24ToY(const uint8_t* bgr, uint8_t* y, int width) {
+static void ConvertBGR24ToY_C(const uint8_t* bgr, uint8_t* y, int width) {
   int i;
   for (i = 0; i < width; ++i, bgr += 3) {
     y[i] = VP8RGBToY(bgr[2], bgr[1], bgr[0], YUV_HALF);
@@ -246,6 +194,7 @@ void WebPConvertRGBA32ToUV_C(const uint16_t* rgb,
 
 //-----------------------------------------------------------------------------
 
+#if !WEBP_NEON_OMIT_C_CODE
 #define MAX_Y ((1 << 10) - 1)    // 10b precision over 16b-arithmetic
 static uint16_t clip_y(int v) {
   return (v < 0) ? 0 : (v > MAX_Y) ? MAX_Y : (uint16_t)v;
@@ -283,6 +232,7 @@ static void SharpYUVFilterRow_C(const int16_t* A, const int16_t* B, int len,
     out[2 * i + 1] = clip_y(best_y[2 * i + 1] + v1);
   }
 }
+#endif  // !WEBP_NEON_OMIT_C_CODE
 
 #undef MAX_Y
 
@@ -308,22 +258,26 @@ static volatile VP8CPUInfo rgba_to_yuv_last_cpuinfo_used =
     (VP8CPUInfo)&rgba_to_yuv_last_cpuinfo_used;
 
 extern void WebPInitConvertARGBToYUVSSE2(void);
+extern void WebPInitConvertARGBToYUVNEON(void);
 extern void WebPInitSharpYUVSSE2(void);
+extern void WebPInitSharpYUVNEON(void);
 
 WEBP_TSAN_IGNORE_FUNCTION void WebPInitConvertARGBToYUV(void) {
   if (rgba_to_yuv_last_cpuinfo_used == VP8GetCPUInfo) return;
 
-  WebPConvertARGBToY = ConvertARGBToY;
+  WebPConvertARGBToY = ConvertARGBToY_C;
   WebPConvertARGBToUV = WebPConvertARGBToUV_C;
 
-  WebPConvertRGB24ToY = ConvertRGB24ToY;
-  WebPConvertBGR24ToY = ConvertBGR24ToY;
+  WebPConvertRGB24ToY = ConvertRGB24ToY_C;
+  WebPConvertBGR24ToY = ConvertBGR24ToY_C;
 
   WebPConvertRGBA32ToUV = WebPConvertRGBA32ToUV_C;
 
+#if !WEBP_NEON_OMIT_C_CODE
   WebPSharpYUVUpdateY = SharpYUVUpdateY_C;
   WebPSharpYUVUpdateRGB = SharpYUVUpdateRGB_C;
   WebPSharpYUVFilterRow = SharpYUVFilterRow_C;
+#endif
 
   if (VP8GetCPUInfo != NULL) {
 #if defined(WEBP_USE_SSE2)
@@ -333,5 +287,23 @@ WEBP_TSAN_IGNORE_FUNCTION void WebPInitConvertARGBToYUV(void) {
     }
 #endif  // WEBP_USE_SSE2
   }
+
+#if defined(WEBP_USE_NEON)
+  if (WEBP_NEON_OMIT_C_CODE ||
+      (VP8GetCPUInfo != NULL && VP8GetCPUInfo(kNEON))) {
+    WebPInitConvertARGBToYUVNEON();
+    WebPInitSharpYUVNEON();
+  }
+#endif  // WEBP_USE_NEON
+
+  assert(WebPConvertARGBToY != NULL);
+  assert(WebPConvertARGBToUV != NULL);
+  assert(WebPConvertRGB24ToY != NULL);
+  assert(WebPConvertBGR24ToY != NULL);
+  assert(WebPConvertRGBA32ToUV != NULL);
+  assert(WebPSharpYUVUpdateY != NULL);
+  assert(WebPSharpYUVUpdateRGB != NULL);
+  assert(WebPSharpYUVFilterRow != NULL);
+
   rgba_to_yuv_last_cpuinfo_used = VP8GetCPUInfo;
 }

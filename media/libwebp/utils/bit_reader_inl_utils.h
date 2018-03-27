@@ -13,8 +13,8 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#ifndef WEBP_UTILS_BIT_READER_INL_H_
-#define WEBP_UTILS_BIT_READER_INL_H_
+#ifndef WEBP_UTILS_BIT_READER_INL_UTILS_H_
+#define WEBP_UTILS_BIT_READER_INL_UTILS_H_
 
 #ifdef HAVE_CONFIG_H
 #include "../webp/config.h"
@@ -187,4 +187,4 @@ static WEBP_INLINE int VP8GetBitAlt(VP8BitReader* const br, int prob) {
 }    // extern "C"
 #endif
 
-#endif   // WEBP_UTILS_BIT_READER_INL_H_
+#endif   // WEBP_UTILS_BIT_READER_INL_UTILS_H_

@@ -13,9 +13,12 @@
 
 #include "./dsp.h"
 
-#define USE_STATIC_TABLES     // undefine to have run-time table initialization
+// define to 0 to have run-time table initialization
+#if !defined(USE_STATIC_TABLES)
+#define USE_STATIC_TABLES 1   // ALTERNATE_CODE
+#endif
 
-#ifdef USE_STATIC_TABLES
+#if (USE_STATIC_TABLES == 1)
 
 static const uint8_t abs0[255 + 255 + 1] = {
   0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8, 0xf7, 0xf6, 0xf5, 0xf4,
@@ -337,7 +340,7 @@ static uint8_t clip1[255 + 511 + 1];
 // and make sure it's set to true _last_ (so as to be thread-safe)
 static volatile int tables_ok = 0;
 
-#endif
+#endif    // USE_STATIC_TABLES
 
 const int8_t* const VP8ksclip1 = (const int8_t*)&sclip1[1020];
 const int8_t* const VP8ksclip2 = (const int8_t*)&sclip2[112];
@@ -345,7 +348,7 @@ const uint8_t* const VP8kclip1 = &clip1[255];
 const uint8_t* const VP8kabs0 = &abs0[255];
 
 WEBP_TSAN_IGNORE_FUNCTION void VP8InitClipTables(void) {
-#if !defined(USE_STATIC_TABLES)
+#if (USE_STATIC_TABLES == 0)
   int i;
   if (!tables_ok) {
     for (i = -255; i <= 255; ++i) {

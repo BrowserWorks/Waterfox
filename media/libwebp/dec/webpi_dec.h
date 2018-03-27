@@ -11,8 +11,8 @@
 //
 // Author: somnath@google.com (Somnath Banerjee)
 
-#ifndef WEBP_DEC_WEBPI_H_
-#define WEBP_DEC_WEBPI_H_
+#ifndef WEBP_DEC_WEBPI_DEC_H_
+#define WEBP_DEC_WEBPI_DEC_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -130,4 +130,4 @@ int WebPAvoidSlowMemory(const WebPDecBuffer* const output,
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_DEC_WEBPI_H_ */
+#endif  /* WEBP_DEC_WEBPI_DEC_H_ */

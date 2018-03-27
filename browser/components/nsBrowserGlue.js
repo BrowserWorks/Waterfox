@@ -541,15 +541,6 @@ BrowserGlue.prototype = {
 
     this._flashHangCount = 0;
     this._firstWindowReady = new Promise(resolve => this._firstWindowLoaded = resolve);
-    
-    // There may be a better way to do this, but for now on older OS X versions
-    // we need to disable e10s otherwise tabs will keep crashing.
-    if (AppConstants.isPlatformAndVersionAtMost("macosx", 13)) {
-        Services.prefs.setBoolPref("browser.tabs.remote.autostart", false);
-        Services.prefs.setBoolPref("browser.tabs.remote.autostart.2", false);
-        Services.prefs.setBoolPref("extensions.e10sBlockedByAddons", true);
-        Services.prefs.setBoolPref("extensions.e10sMultiBlockedByAddons", true);
-    }
 
     if (AppConstants.platform == "macosx" ||
         (AppConstants.platform == "win" && AppConstants.RELEASE_OR_BETA)) {
@@ -2034,15 +2025,6 @@ BrowserGlue.prototype = {
         //let path = OS.Path.join(OS.Constants.Path.profileDir, Services.prefs.getCharPref("general.oldDefaultProfile"));
         //OS.File.removeDir(path);
         //Services.prefs.setCharPref("general.oldDefaultProfile", "");
-    }
-    
-    if (currentUIVersion < 56) {
-    	if (AppConstants.isPlatformAndVersionAtMost("macosx", 13)) {
-    		Services.prefs.setBoolPref("browser.tabs.remote.autostart", false);
-    		Services.prefs.setBoolPref("browser.tabs.remote.autostart.2", false);
-    		Services.prefs.setBoolPref("extensions.e10sBlockedByAddons", true);
-    		Services.prefs.setBoolPref("extensions.e10sMultiBlockedByAddons", true);
-    	}
     }
 
     // Update the migration version.

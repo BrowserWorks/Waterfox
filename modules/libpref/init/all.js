@@ -23,23 +23,23 @@ pref("preferences.allow.omt-write", false);
 
 pref("keyword.enabled", false);
 pref("general.useragent.locale", "chrome://global/locale/intl.properties");
-pref("general.useragent.compatMode.firefox", true);
+pref("general.useragent.compatMode.firefox", false);
 
 // This pref exists only for testing purposes. In order to disable all
 // overrides by default, don't initialize UserAgentOverrides.jsm.
 pref("general.useragent.site_specific_overrides", true);
-#ifdef XP_WIN
-pref("general.useragent.override.americanexpress.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0");
-pref("general.useragent.override.chase.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0");
-pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0");
-pref("general.useragent.override.slack.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0");
-#endif
-#ifdef XP_MACOSX
-pref("general.useragent.override.americanexpress.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:56.0) Gecko/20100101 Firefox/56.0");
-pref("general.useragent.override.chase.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:56.0) Gecko/20100101 Firefox/56.0");
-pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:56.0) Gecko/20100101 Firefox/56.0");
-pref("general.useragent.override.slack.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:56.0) Gecko/20100101 Firefox/56.0");
-#endif
+// #ifdef XP_WIN
+// pref("general.useragent.override.americanexpress.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0");
+// pref("general.useragent.override.chase.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0");
+// pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0");
+// pref("general.useragent.override.slack.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0");
+// #endif
+// #ifdef XP_MACOSX
+// pref("general.useragent.override.americanexpress.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:56.0) Gecko/20100101 Firefox/56.0");
+// pref("general.useragent.override.chase.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:56.0) Gecko/20100101 Firefox/56.0");
+// pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:56.0) Gecko/20100101 Firefox/56.0");
+// pref("general.useragent.override.slack.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:56.0) Gecko/20100101 Firefox/56.0");
+// #endif
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
 
@@ -1331,11 +1331,7 @@ pref("dom.forms.number", true);
 pref("dom.forms.color", true);
 
 // Support for input type=date and type=time. Enabled by default on Nightly.
-#ifdef NIGHTLY_BUILD
 pref("dom.forms.datetime", true);
-#else
-pref("dom.forms.datetime", false);
-#endif
 
 // Support for input type=month, type=week and type=datetime-local. By default,
 // disabled.
@@ -1868,7 +1864,7 @@ pref("network.jar.block-remote-files", true);
 // This preference, if true, causes all UTF-8 domain names to be normalized to
 // punycode.  The intention is to allow UTF-8 domain names as input, but never
 // generate them from punycode.
-pref("network.IDN_show_punycode", false);
+pref("network.IDN_show_punycode", true);
 
 // If "network.IDN.use_whitelist" is set to true, TLDs with
 // "network.IDN.whitelist.tld" explicitly set to true are treated as
@@ -5575,6 +5571,9 @@ pref("browser.search.official", true);
 #endif
 
 // GMPInstallManager prefs
+
+// Whether updates are enabled
+pref("media.gmp-manager.updateEnabled", true);
 
 // User-settable override to media.gmp-manager.url for testing purposes.
 //pref("media.gmp-manager.url.override", "");

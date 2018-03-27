@@ -11,8 +11,17 @@
 //
 // Author: Vikas Arora (vikaas.arora@gmail.com)
 
-#ifndef WEBP_ENC_VP8LI_H_
-#define WEBP_ENC_VP8LI_H_
+#ifndef WEBP_ENC_VP8LI_ENC_H_
+#define WEBP_ENC_VP8LI_ENC_H_
+
+#ifdef HAVE_CONFIG_H
+#include "../webp/config.h"
+#endif
+// Either WEBP_NEAR_LOSSLESS is defined as 0 in config.h when compiling to
+// disable near-lossless, or it is enabled by default.
+#ifndef WEBP_NEAR_LOSSLESS
+#define WEBP_NEAR_LOSSLESS 1
+#endif
 
 #include "./backward_references_enc.h"
 #include "./histogram_enc.h"
@@ -27,16 +36,24 @@ extern "C" {
 // maximum value of transform_bits_ in VP8LEncoder.
 #define MAX_TRANSFORM_BITS 6
 
+typedef enum {
+  kEncoderNone = 0,
+  kEncoderARGB,
+  kEncoderNearLossless,
+  kEncoderPalette
+} VP8LEncoderARGBContent;
+
 typedef struct {
   const WebPConfig* config_;      // user configuration and parameters
   const WebPPicture* pic_;        // input picture.
 
-  uint32_t* argb_;                // Transformed argb image data.
-  uint32_t* argb_scratch_;        // Scratch memory for argb rows
-                                  // (used for prediction).
-  uint32_t* transform_data_;      // Scratch memory for transform data.
-  uint32_t* transform_mem_;       // Currently allocated memory.
-  size_t    transform_mem_size_;  // Currently allocated memory size.
+  uint32_t* argb_;                       // Transformed argb image data.
+  VP8LEncoderARGBContent argb_content_;  // Content type of the argb buffer.
+  uint32_t* argb_scratch_;               // Scratch memory for argb rows
+                                         // (used for prediction).
+  uint32_t* transform_data_;             // Scratch memory for transform data.
+  uint32_t* transform_mem_;              // Currently allocated memory.
+  size_t    transform_mem_size_;         // Currently allocated memory size.
 
   int       current_width_;       // Corresponds to packed image width.
 
@@ -54,8 +71,7 @@ typedef struct {
   uint32_t palette_[MAX_PALETTE_SIZE];
 
   // Some 'scratch' (potentially large) objects.
-  struct VP8LBackwardRefs refs_[2];  // Backward Refs array corresponding to
-                                     // LZ77 & RLE coding.
+  struct VP8LBackwardRefs refs_[3];  // Backward Refs array for temporaries.
   VP8LHashChain hash_chain_;         // HashChain data for constructing
                                      // backward references.
 } VP8LEncoder;
@@ -75,6 +91,13 @@ WebPEncodingError VP8LEncodeStream(const WebPConfig* const config,
                                    const WebPPicture* const picture,
                                    VP8LBitWriter* const bw, int use_cache);
 
+#if (WEBP_NEAR_LOSSLESS == 1)
+// in near_lossless.c
+// Near lossless preprocessing in RGB color-space.
+int VP8ApplyNearLossless(const WebPPicture* const picture, int quality,
+                         uint32_t* const argb_dst);
+#endif
+
 //------------------------------------------------------------------------------
 // Image transforms in predictor.c.
 
@@ -92,4 +115,4 @@ void VP8LColorSpaceTransform(int width, int height, int bits, int quality,
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_ENC_VP8LI_H_ */
+#endif  /* WEBP_ENC_VP8LI_ENC_H_ */

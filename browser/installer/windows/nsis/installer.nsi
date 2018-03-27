@@ -251,6 +251,10 @@ Section "-InstallStartCleanup"
 
   ; setup the application model id registration value
   ${InitHashAppModelId} "$INSTDIR" "Software\Mozilla\${AppName}\TaskBarIDs"
+  
+  ; Remove old application model id stored under the Firefox key
+  DeleteRegValue HKCU "Software\Mozilla\Firefox\TaskBarIDs" "$INSTDIR"
+  DeleteRegValue HKLM "Software\Mozilla\Firefox\TaskBarIDs" "$INSTDIR"
 
   ; Remove the updates directory
   ${CleanUpdateDirectories} "Mozilla\Firefox" "Mozilla\updates"

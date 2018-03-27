@@ -85,11 +85,13 @@ int WebPRescalerGetScaledDimensions(int src_width, int src_height,
 
     // if width is unspecified, scale original proportionally to height ratio.
     if (width == 0) {
-      width = (src_width * height + src_height / 2) / src_height;
+      width =
+          (int)(((uint64_t)src_width * height + src_height / 2) / src_height);
     }
     // if height is unspecified, scale original proportionally to width ratio.
     if (height == 0) {
-      height = (src_height * width + src_width / 2) / src_width;
+      height =
+          (int)(((uint64_t)src_height * width + src_width / 2) / src_width);
     }
     // Check if the overall dimensions still make sense.
     if (width <= 0 || height <= 0) {

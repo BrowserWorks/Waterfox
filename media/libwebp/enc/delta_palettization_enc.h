@@ -10,8 +10,8 @@
 // Author: Mislav Bradac (mislavm@google.com)
 //
 
-#ifndef WEBP_ENC_DELTA_PALETTIZATION_H_
-#define WEBP_ENC_DELTA_PALETTIZATION_H_
+#ifndef WEBP_ENC_DELTA_PALETTIZATION_ENC_H_
+#define WEBP_ENC_DELTA_PALETTIZATION_ENC_H_
 
 #include "../webp/encode.h"
 #include "../enc/vp8li_enc.h"
@@ -22,4 +22,4 @@
 // if delta-palettization is not producing expected saving.
 WebPEncodingError WebPSearchOptimalDeltaPalette(VP8LEncoder* const enc);
 
-#endif  // WEBP_ENC_DELTA_PALETTIZATION_H_
+#endif  // WEBP_ENC_DELTA_PALETTIZATION_ENC_H_

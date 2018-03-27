@@ -25,7 +25,6 @@ DIRS += [
     'commandlines',
     'contentprefs',
     'contextualidentity',
-    'cookie',
     'crashmonitor',
     'diskspacewatcher',
     'downloads',

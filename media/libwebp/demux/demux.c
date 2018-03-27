@@ -25,7 +25,7 @@
 
 #define DMUX_MAJ_VERSION 0
 #define DMUX_MIN_VERSION 3
-#define DMUX_REV_VERSION 2
+#define DMUX_REV_VERSION 3
 
 typedef struct {
   size_t start_;        // start location of the data
@@ -205,12 +205,14 @@ static void SetFrameInfo(size_t start_offset, size_t size,
   frame->complete_ = complete;
 }
 
-// Store image bearing chunks to 'frame'.
+// Store image bearing chunks to 'frame'. 'min_size' is an optional size
+// requirement, it may be zero.
 static ParseStatus StoreFrame(int frame_num, uint32_t min_size,
                               MemBuffer* const mem, Frame* const frame) {
   int alpha_chunks = 0;
   int image_chunks = 0;
-  int done = (MemDataSize(mem) < min_size);
+  int done = (MemDataSize(mem) < CHUNK_HEADER_SIZE ||
+              MemDataSize(mem) < min_size);
   ParseStatus status = PARSE_OK;
 
   if (done) return PARSE_NEED_MORE_DATA;
@@ -401,9 +403,9 @@ static ParseStatus ParseSingleImage(WebPDemuxer* const dmux) {
   frame = (Frame*)WebPSafeCalloc(1ULL, sizeof(*frame));
   if (frame == NULL) return PARSE_ERROR;
 
-  // For the single image case we allow parsing of a partial frame, but we need
-  // at least CHUNK_HEADER_SIZE for parsing.
-  status = StoreFrame(1, CHUNK_HEADER_SIZE, &dmux->mem_, frame);
+  // For the single image case we allow parsing of a partial frame, so no
+  // minimum size is imposed here.
+  status = StoreFrame(1, 0, &dmux->mem_, frame);
   if (status != PARSE_ERROR) {
     const int has_alpha = !!(dmux->feature_flags_ & ALPHA_FLAG);
     // Clear any alpha when the alpha flag is missing.

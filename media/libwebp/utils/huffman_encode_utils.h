@@ -11,8 +11,8 @@
 //
 // Entropy encoding (Huffman) for webp lossless
 
-#ifndef WEBP_UTILS_HUFFMAN_ENCODE_H_
-#define WEBP_UTILS_HUFFMAN_ENCODE_H_
+#ifndef WEBP_UTILS_HUFFMAN_ENCODE_UTILS_H_
+#define WEBP_UTILS_HUFFMAN_ENCODE_UTILS_H_
 
 #include "../webp/types.h"
 
@@ -57,4 +57,4 @@ void VP8LCreateHuffmanTree(uint32_t* const histogram, int tree_depth_limit,
 }
 #endif
 
-#endif  // WEBP_UTILS_HUFFMAN_ENCODE_H_
+#endif  // WEBP_UTILS_HUFFMAN_ENCODE_UTILS_H_

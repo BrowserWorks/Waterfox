@@ -93,14 +93,6 @@ static WEBP_INLINE float VP8LFastSLog2(uint32_t v) {
 // -----------------------------------------------------------------------------
 // PrefixEncode()
 
-static WEBP_INLINE int VP8LBitsLog2Ceiling(uint32_t n) {
-  const int log_floor = BitsLog2Floor(n);
-  if (n == (n & ~(n - 1))) {  // zero or a power of two.
-    return log_floor;
-  }
-  return log_floor + 1;
-}
-
 // Splitting of distance and length codes into prefixes and
 // extra bits. The prefixes are encoded with an entropy code
 // while the extra bits are stored just as normal bits.

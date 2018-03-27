@@ -11,8 +11,8 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#ifndef WEBP_WEBP_DECODE_VP8_H_
-#define WEBP_WEBP_DECODE_VP8_H_
+#ifndef WEBP_DEC_VP8_DEC_H_
+#define WEBP_DEC_VP8_DEC_H_
 
 #include "../webp/decode.h"
 
@@ -33,7 +33,7 @@ extern "C" {
 //   /* customize io's functions (setup()/put()/teardown()) if needed. */
 //
 //   VP8Decoder* dec = VP8New();
-//   bool ok = VP8Decode(dec);
+//   int ok = VP8Decode(dec, &io);
 //   if (!ok) printf("Error: %s\n", VP8StatusMessage(dec));
 //   VP8Delete(dec);
 //   return ok;
@@ -157,24 +157,24 @@ void VP8Delete(VP8Decoder* const dec);
 // Miscellaneous VP8/VP8L bitstream probing functions.
 
 // Returns true if the next 3 bytes in data contain the VP8 signature.
-WEBP_EXTERN(int) VP8CheckSignature(const uint8_t* const data, size_t data_size);
+WEBP_EXTERN int VP8CheckSignature(const uint8_t* const data, size_t data_size);
 
 // Validates the VP8 data-header and retrieves basic header information viz
 // width and height. Returns 0 in case of formatting error. *width/*height
 // can be passed NULL.
-WEBP_EXTERN(int) VP8GetInfo(
+WEBP_EXTERN int VP8GetInfo(
     const uint8_t* data,
     size_t data_size,    // data available so far
     size_t chunk_size,   // total data size expected in the chunk
     int* const width, int* const height);
 
 // Returns true if the next byte(s) in data is a VP8L signature.
-WEBP_EXTERN(int) VP8LCheckSignature(const uint8_t* const data, size_t size);
+WEBP_EXTERN int VP8LCheckSignature(const uint8_t* const data, size_t size);
 
 // Validates the VP8L data-header and retrieves basic header information viz
 // width, height and alpha. Returns 0 in case of formatting error.
 // width/height/has_alpha can be passed NULL.
-WEBP_EXTERN(int) VP8LGetInfo(
+WEBP_EXTERN int VP8LGetInfo(
     const uint8_t* data, size_t data_size,  // data available so far
     int* const width, int* const height, int* const has_alpha);
 
@@ -182,4 +182,4 @@ WEBP_EXTERN(int) VP8LGetInfo(
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_WEBP_DECODE_VP8_H_ */
+#endif  /* WEBP_DEC_VP8_DEC_H_ */

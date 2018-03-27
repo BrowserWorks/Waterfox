@@ -16,6 +16,7 @@
 #include "../webp/decode.h"
 #include "../webp/encode.h"
 #include "../webp/format_constants.h"  // for MAX_PALETTE_SIZE
+#include "./color_cache_utils.h"
 #include "./utils.h"
 
 // If PRINT_MEM_INFO is defined, extra info (like total memory used, number of
@@ -252,7 +253,6 @@ int WebPGetColorPalette(const WebPPicture* const pic, uint32_t* const palette) {
   int num_colors = 0;
   uint8_t in_use[COLOR_HASH_SIZE] = { 0 };
   uint32_t colors[COLOR_HASH_SIZE];
-  static const uint64_t kHashMul = 0x1e35a7bdull;
   const uint32_t* argb = pic->argb;
   const int width = pic->width;
   const int height = pic->height;
@@ -267,7 +267,7 @@ int WebPGetColorPalette(const WebPPicture* const pic, uint32_t* const palette) {
         continue;
       }
       last_pix = argb[x];
-      key = ((last_pix * kHashMul) & 0xffffffffu) >> COLOR_HASH_RIGHT_SHIFT;
+      key = VP8LHashPix(last_pix, COLOR_HASH_RIGHT_SHIFT);
       while (1) {
         if (!in_use[key]) {
           colors[key] = last_pix;
