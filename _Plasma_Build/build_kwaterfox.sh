@@ -36,6 +36,7 @@ _patchrev=7339b115a221 # Waterfox 56.0
 			wget -O $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch "http://www.rosenauer.org/hg/mozilla/raw-file/$_patchrev/mozilla-kde.patch"
 			wget -O $SourceDir/_Plasma_Build/firefox-kde-$VERSION.patch "http://www.rosenauer.org/hg/mozilla/raw-file/$_patchrev/firefox-kde.patch"
 			wget -O $SourceDir/_Plasma_Build/mozilla-ucontext-$VERSION.patch "http://www.rosenauer.org/hg/mozilla/raw-file/$_patchrev/mozilla-ucontext.patch"
+			wget -O $SourceDir/_Plasma_Build/unity-menubar-$VERSION.patch "https://bazaar.launchpad.net/~mozillateam/firefox/firefox.xenial/download/1222/unitymenubar.patch-20130215095938-1n6mqqau8tdfqwhg-1/unity-menubar.patch"
 			sed -i 's/Firefox/Waterfox/g' $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch
 			sed -i 's/KMOZILLAHELPER/KWATERFOXHELPER/g' $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch
 			sed -i 's|/usr/lib/mozilla/kmozillahelper|/opt/waterfox/kwaterfoxhelper|g' $SourceDir/_Plasma_Build/mozilla-kde-$VERSION.patch
@@ -55,6 +56,7 @@ _patchrev=7339b115a221 # Waterfox 56.0
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-disentangle.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/wifi-fix-interface.patch
         patch -Np1 -i $SourceDir/_Plasma_Build/0001-Bug-1384062-Make-SystemResourceMonitor.stop-more-res.patch
+        patch -Np1 -i $SourceDir/_Plasma_Build/unity-menubar-$VERSION.patch
 				echo >> "$SourceDir/KDE_lock"
     else
         echo "Unable to find KDE patches or patches has already been applied!"
