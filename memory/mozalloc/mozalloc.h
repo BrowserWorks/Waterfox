@@ -249,6 +249,21 @@ void operator delete[](void* ptr, const std::nothrow_t&) MOZALLOC_THROW_IF_HAS_E
     return free_impl(ptr);
 }
 
+#if defined(XP_WIN)
+// We provide the global sized delete overloads unconditionally because the
+// MSVC runtime headers do, despite compiling with /Zc:sizedDealloc-
+MOZALLOC_EXPORT_NEW MOZ_ALWAYS_INLINE_EVEN_DEBUG
+void operator delete(void* ptr, size_t /*size*/) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
+{
+    return free_impl(ptr);
+}
+
+MOZALLOC_EXPORT_NEW MOZ_ALWAYS_INLINE_EVEN_DEBUG
+void operator delete[](void* ptr, size_t /*size*/) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
+{
+    return free_impl(ptr);
+}
+#endif
 
 /*
  * We also add a new allocator variant: "fallible operator new."
