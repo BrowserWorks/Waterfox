@@ -3,7 +3,6 @@
 var { SocialService } = Cu.import("resource:///modules/SocialService.jsm", {});
 
 let contextMenu;
-let hasPocket = Services.prefs.getBoolPref("extensions.pocket.enabled");
 let hasContainers = Services.prefs.getBoolPref("privacy.userContext.enabled");
 
 // A social share provider
