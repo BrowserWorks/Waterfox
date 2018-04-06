@@ -131,6 +131,7 @@
     _(IntrinsicIsMapIterator)       \
     _(IntrinsicIsSetIterator)       \
     _(IntrinsicIsStringIterator)    \
+    _(IntrinsicGuardToStringIterator) \
                                     \
     _(IntrinsicIsMapObject)         \
     _(IntrinsicGetNextMapEntryForIterator) \
