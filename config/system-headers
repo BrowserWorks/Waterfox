@@ -1260,6 +1260,7 @@ png.h
 #if MOZ_SYSTEM_WEBP==1
 webp/decode.h
 webp/demux.h
+webp/encode.h
 webp/mux_types.h
 webp/types.h
 #endif

@@ -7,21 +7,28 @@
 with Files('**'):
     BUG_COMPONENT = ('Core', 'ImageLib')
 
-EXPORTS.webp += [
-    'webp/decode.h',
-    'webp/demux.h',
-    'webp/encode.h',
-    'webp/mux_types.h',
-    'webp/types.h',
-]
-
-DIRS += [
-    'dec',
-    'demux',
-    'dsp',
-    'enc',
-    'moz',
-    'utils',
+SOURCES += [
+    'alpha_enc.c',
+    'analysis_enc.c',
+    'backward_references_cost_enc.c',
+    'backward_references_enc.c',
+    'config_enc.c',
+    'cost_enc.c',
+    'filter_enc.c',
+    'frame_enc.c',
+    'histogram_enc.c',
+    'iterator_enc.c',
+    'near_lossless_enc.c',
+    'picture_csp_enc.c',
+    'picture_enc.c',
+    'picture_tools_enc.c',
+    'predictor_enc.c',
+    'quant_enc.c',
+    'syntax_enc.c',
+    'token_enc.c',
+    'tree_enc.c',
+    'vp8l_enc.c',
+    'webp_enc.c',
 ]
 
 FINAL_LIBRARY = 'gkmedias'
