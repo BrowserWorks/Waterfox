@@ -34,6 +34,16 @@ struct ParamTraits<LookAndFeelInt>
   }
 };
 
+template<>
+struct ParamTraits<nsTransparencyMode> : public ContiguousEnumSerializerInclusive<nsTransparencyMode, eTransparencyOpaque, eTransparencyBorderlessGlass>
+{ };
+
+template<>
+struct ParamTraits<nsCursor>
+  : public ContiguousEnumSerializer<nsCursor, eCursor_standard, eCursorCount>
+{
+};
+
 } // namespace IPC
 
 #endif // WidgetMessageUtils_h
