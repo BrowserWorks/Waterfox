@@ -2324,11 +2324,9 @@ public:
    */
   struct IntrinsicISizeOffsetData {
     nscoord hPadding, hBorder, hMargin;
-    float hPctPadding, hPctMargin;
 
     IntrinsicISizeOffsetData()
       : hPadding(0), hBorder(0), hMargin(0)
-      , hPctPadding(0.0f), hPctMargin(0.0f)
     {}
   };
   virtual IntrinsicISizeOffsetData IntrinsicISizeOffsets() = 0;
