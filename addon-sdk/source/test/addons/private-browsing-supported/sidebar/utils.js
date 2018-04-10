@@ -8,7 +8,6 @@ const { getMostRecentBrowserWindow } = require('sdk/window/utils');
 const { fromIterator } = require('sdk/util/array');
 
 const BUILTIN_SIDEBAR_MENUITEMS = exports.BUILTIN_SIDEBAR_MENUITEMS = [
-  'menu_socialSidebar',
   'menu_historySidebar',
   'menu_bookmarksSidebar',
 ];

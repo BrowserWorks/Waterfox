@@ -10,9 +10,7 @@
   skin/classic/browser/aboutNetError.css                       (../shared/aboutNetError.css)
   skin/classic/browser/blockedSite.css                         (../shared/blockedSite.css)
   skin/classic/browser/error-pages.css                         (../shared/error-pages.css)
-* skin/classic/browser/aboutProviderDirectory.css              (../shared/aboutProviderDirectory.css)
 * skin/classic/browser/aboutSessionRestore.css                 (../shared/aboutSessionRestore.css)
-  skin/classic/browser/aboutSocialError.css                    (../shared/aboutSocialError.css)
   skin/classic/browser/aboutTabCrashed.css                     (../shared/aboutTabCrashed.css)
   skin/classic/browser/aboutWelcomeBack.css                    (../shared/aboutWelcomeBack.css)
   skin/classic/browser/addons/addon-install-blocked.svg        (../shared/addons/addon-install-blocked.svg)
@@ -187,7 +185,6 @@
 #endif
   skin/classic/browser/save.svg                       (../shared/icons/save.svg)
   skin/classic/browser/settings.svg                   (../shared/icons/settings.svg)
-  skin/classic/browser/share.svg                      (../shared/icons/share.svg)
   skin/classic/browser/sidebars.svg                   (../shared/icons/sidebars.svg)
   skin/classic/browser/sidebars-right.svg             (../shared/icons/sidebars-right.svg)
   skin/classic/browser/stop.svg                       (../shared/icons/stop.svg)
