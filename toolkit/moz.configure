@@ -484,7 +484,7 @@ project_flag('MOZ_PLACES',
 
 project_flag('MOZ_SOCIAL',
              help='Build SocialAPI if required',
-             default=True)
+             default=False)
 
 project_flag('MOZ_SERVICES_HEALTHREPORT',
              help='Build Firefox Health Reporter Service',

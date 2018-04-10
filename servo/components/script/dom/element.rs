@@ -95,7 +95,6 @@ use selectors::matching::{RelevantLinkStatus, matches_selector_list};
 use selectors::sink::Push;
 use servo_arc::Arc;
 use servo_atoms::Atom;
-use std::ascii::AsciiExt;
 use std::borrow::Cow;
 use std::cell::{Cell, Ref};
 use std::convert::TryFrom;

@@ -862,6 +862,16 @@ cargo_build_flags += --color=always
 endif
 endif
 
+# These flags are passed via `cargo rustc` and only apply to the final rustc
+# invocation (i.e., only the top-level crate, not its dependencies).
+cargo_rustc_flags = $(CARGO_RUSTCFLAGS)
+ifndef DEVELOPER_OPTIONS
+ifndef MOZ_DEBUG_RUST
+# Enable link-time optimization for release builds.
+cargo_rustc_flags += -C lto
+endif
+endif
+
 # Cargo currently supports only two interesting profiles for building:
 # development and release.  Those map (roughly) to --enable-debug and
 # --disable-debug in Gecko, respectively, but there's another axis that we'd
@@ -906,11 +916,13 @@ ifdef MOZ_USING_SCCACHE
 sccache_wrap := RUSTC_WRAPPER='$(CCACHE)'
 endif
 
+ifdef MOZ_DEBUG_SYMBOLS
 # XXX hack to work around dsymutil failing on cross-OSX builds (bug 1380381)
 ifeq ($(HOST_OS_ARCH)-$(OS_ARCH),Linux-Darwin)
 default_rustflags += -C debuginfo=1
 else
 default_rustflags += -C debuginfo=2
+endif
 endif
 
 # We use the + prefix to pass down the jobserver fds to cargo, but we
@@ -939,7 +951,7 @@ endef
 #
 #   $(call CARGO_BUILD)
 define CARGO_BUILD
-$(call RUN_CARGO,build,$(1))
+$(call RUN_CARGO,rustc,$(1))
 endef
 
 define CARGO_CHECK
@@ -984,7 +996,7 @@ endif
 # build.
 force-cargo-library-build:
 	$(REPORT_BUILD)
-	$(call CARGO_BUILD,$(target_cargo_env_vars)) --lib $(cargo_target_flag) $(rust_features_flag)
+	$(call CARGO_BUILD,$(target_cargo_env_vars)) --lib $(cargo_target_flag) $(rust_features_flag) -- $(cargo_rustc_flags)
 
 $(RUST_LIBRARY_FILE): force-cargo-library-build
 

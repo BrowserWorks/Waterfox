@@ -30,6 +30,7 @@ SOURCES += [
     'upsampling_neon.c',
     'upsampling_sse2.c',
     'yuv.c',
+    'yuv_neon.c',
     'yuv_sse2.c',
 ]
 
@@ -40,6 +41,7 @@ if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     SOURCES['lossless_neon.c'].flags += CONFIG['NEON_FLAGS']
     SOURCES['rescaler_neon.c'].flags += CONFIG['NEON_FLAGS']
     SOURCES['upsampling_neon.c'].flags += CONFIG['NEON_FLAGS']
+    SOURCES['yuv_neon.c'].flags += CONFIG['NEON_FLAGS']
 elif CONFIG['INTEL_ARCHITECTURE']:
     SOURCES['alpha_processing_sse2.c'].flags += CONFIG['SSE2_FLAGS']
     SOURCES['alpha_processing_sse41.c'].flags += CONFIG['SSE2_FLAGS']

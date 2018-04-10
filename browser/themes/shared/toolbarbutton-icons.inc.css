@@ -237,10 +237,6 @@ toolbar:not([brighttext]) #bookmarks-menu-button@attributeSelectorForToolbar@[st
   list-style-image: url("chrome://browser/skin/feed.svg");
 }
 
-#social-share-button@attributeSelectorForToolbar@ {
-  list-style-image: url("chrome://browser/skin/share.svg");
-}
-
 #characterencoding-button@attributeSelectorForToolbar@{
   list-style-image: url("chrome://browser/skin/characterEncoding.svg");
 }
