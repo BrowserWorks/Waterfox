@@ -5188,18 +5188,6 @@ pref("memory.dump_reports_on_oom", false);
 // Number of stack frames to capture in createObjectURL for about:memory.
 pref("memory.blob_report.stack_frames", 0);
 
-// comma separated list of domain origins (e.g. https://domain.com) that still
-// need localStorage in the frameworker
-sticky_pref("social.whitelist", "");
-// comma separated list of domain origins (e.g. https://domain.com) for
-// directory websites (e.g. AMO) that can install providers for other sites
-sticky_pref("social.directories", "");
-// remote-install allows any website to activate a provider, with extended UI
-// notifying user of installation. we can later pref off remote install if
-// necessary. This does not affect whitelisted and directory installs.
-sticky_pref("social.remote-install.enabled", false);
-sticky_pref("social.toast-notifications.enabled", false);
-
 // Disable idle observer fuzz, because only privileged content can access idle
 // observers (bug 780507).
 pref("dom.idle-observers-api.fuzz_time.disabled", true);

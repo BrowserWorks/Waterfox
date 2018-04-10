@@ -117,7 +117,6 @@
 //! which invoke their member's destructors through C++ code.
 
 #![allow(non_camel_case_types)]
-#![deny(warnings)]
 
 use std::ops::{Deref, DerefMut};
 use std::marker::PhantomData;

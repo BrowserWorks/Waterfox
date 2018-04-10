@@ -12,7 +12,7 @@ use parser::ParserContext;
 use properties::{CSSWideKeyword, DeclaredValue};
 use selectors::parser::SelectorParseError;
 use servo_arc::Arc;
-use std::ascii::AsciiExt;
+#[allow(unused_imports)] use std::ascii::AsciiExt;
 use std::borrow::Cow;
 use std::collections::{HashMap, hash_map, HashSet};
 use std::fmt;

@@ -33,5 +33,6 @@
     <label class="migratedLabel" value="Preserve dictionaries, add-ons, and plug-ins"/>
     <label class="migratedLabel" value="Reset preferences for add-ons and remove any related metadata"/>
     <label class="migratedLabel" value="Remove themes"/>
+    <label class="migratedLabel" value="Enable multi-process (but not check compatibility with extensions)."/>
   </vbox>
 </dialog>

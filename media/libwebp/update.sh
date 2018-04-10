@@ -57,6 +57,7 @@ cp $1/src/dsp/upsampling.c dsp
 cp $1/src/dsp/upsampling_neon.c dsp
 cp $1/src/dsp/upsampling_sse2.c dsp
 cp $1/src/dsp/yuv.c dsp
+cp $1/src/dsp/yuv_neon.c dsp
 cp $1/src/dsp/yuv_sse2.c dsp
 
 mkdir -p enc

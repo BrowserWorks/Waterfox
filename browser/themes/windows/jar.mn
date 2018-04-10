@@ -97,8 +97,6 @@ browser.jar:
 * skin/classic/browser/preferences/in-content/dialog.css       (preferences/in-content/dialog.css)
 * skin/classic/browser/preferences/in-content-new/dialog.css           (preferences/in-content-new/dialog.css)
   skin/classic/browser/preferences/applications.css            (preferences/applications.css)
-  skin/classic/browser/social/services-16.png                  (social/services-16.png)
-  skin/classic/browser/social/services-64.png                  (social/services-64.png)
   skin/classic/browser/tabbrowser/tab-active-middle.png        (tabbrowser/tab-active-middle.png)
   skin/classic/browser/tabbrowser/tab-active-middle@2x.png     (tabbrowser/tab-active-middle@2x.png)
   skin/classic/browser/tabbrowser/tab-background-start.png     (tabbrowser/tab-background-start.png)

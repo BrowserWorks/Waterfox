@@ -16,7 +16,6 @@ use dom::window::Window;
 use dom_struct::dom_struct;
 use servo_arc::Arc;
 use servo_url::ServoUrl;
-use std::ascii::AsciiExt;
 use style::attr::AttrValue;
 use style::properties::{Importance, PropertyDeclarationBlock, PropertyId, LonghandId, ShorthandId};
 use style::properties::{parse_one_declaration_into, parse_style_attribute, SourcePropertyDeclaration};
@@ -238,7 +237,7 @@ impl CSSStyleDeclaration {
             return Err(Error::NoModificationAllowed);
         }
 
-        self.owner.mutate_associated_block(|ref mut pdb, mut changed| {
+        self.owner.mutate_associated_block(|pdb, changed| {
             if value.is_empty() {
                 // Step 3
                 *changed = pdb.remove_property(&id);
@@ -360,7 +359,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
             _ => return Ok(()),
         };
 
-        self.owner.mutate_associated_block(|ref mut pdb, mut changed| {
+        self.owner.mutate_associated_block(|pdb, changed| {
             // Step 5 & 6
             *changed = pdb.set_importance(&id, importance);
         });
@@ -388,7 +387,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
         };
 
         let mut string = String::new();
-        self.owner.mutate_associated_block(|mut pdb, mut changed| {
+        self.owner.mutate_associated_block(|pdb, changed| {
             pdb.property_value_to_css(&id, &mut string).unwrap();
             *changed = pdb.remove_property(&id);
         });
@@ -438,7 +437,7 @@ impl CSSStyleDeclarationMethods for CSSStyleDeclaration {
         }
 
         let quirks_mode = window.Document().quirks_mode();
-        self.owner.mutate_associated_block(|mut pdb, mut _changed| {
+        self.owner.mutate_associated_block(|pdb, _changed| {
             // Step 3
             *pdb = parse_style_attribute(&value,
                                          &self.owner.base_url(),
