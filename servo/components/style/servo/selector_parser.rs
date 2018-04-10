@@ -21,7 +21,6 @@ use selectors::Element;
 use selectors::attr::{AttrSelectorOperation, NamespaceConstraint, CaseSensitivity};
 use selectors::parser::{SelectorMethods, SelectorParseError};
 use selectors::visitor::SelectorVisitor;
-use std::ascii::AsciiExt;
 use std::fmt;
 use std::fmt::Debug;
 use std::mem;

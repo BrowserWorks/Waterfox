@@ -353,6 +353,7 @@ raw-lines = [
     "pub type ServoStyleContextBorrowed<'a> = &'a ::properties::ComputedValues;",
     "pub type ServoStyleContextBorrowedOrNull<'a> = Option<&'a ::properties::ComputedValues>;",
     "pub type ServoComputedDataBorrowed<'a> = &'a ServoComputedData;",
+    "pub type RawServoAnimationValueTableBorrowed<'a> = &'a ();"
 ]
 whitelist-functions = ["Servo_.*", "Gecko_.*"]
 structs-types = [
@@ -385,7 +386,7 @@ structs-types = [
     "RawGeckoPresContext",
     "RawGeckoPresContextOwned",
     "RawGeckoStyleAnimationList",
-    "RawGeckoStyleChildrenIteratorBorrowedMut",
+    "RawGeckoStyleChildrenIterator",
     "RawGeckoServoStyleRuleList",
     "RawGeckoURLExtraData",
     "RawGeckoXBLBinding",
@@ -520,6 +521,7 @@ servo-borrow-types = [
     "RawGeckoFontFaceRuleList",
     "RawGeckoServoStyleRuleList",
     "RawGeckoServoAnimationValueList",
+    "RawGeckoStyleChildrenIterator",
 ]
 fixups = [
     # hack for gecko-owned string

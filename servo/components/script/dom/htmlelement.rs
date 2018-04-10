@@ -31,7 +31,6 @@ use dom::nodelist::NodeList;
 use dom::virtualmethods::VirtualMethods;
 use dom_struct::dom_struct;
 use html5ever::{LocalName, Prefix};
-use std::ascii::AsciiExt;
 use std::borrow::ToOwned;
 use std::default::Default;
 use std::rc::Rc;
