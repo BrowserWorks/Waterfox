@@ -8,6 +8,7 @@
 
 #include "jsgc.h"
 
+#include "gc/FreeOp.h"
 #include "gc/Policy.h"
 #include "jit/BaselineJIT.h"
 #include "jit/Ion.h"
@@ -130,7 +131,7 @@ Zone::getOrCreateDebuggers(JSContext* cx)
 void
 Zone::sweepBreakpoints(FreeOp* fop)
 {
-    if (!group() || group()->debuggerList().isEmpty())
+    if (!group() || fop->runtime()->debuggerList().isEmpty())
         return;
 
     /*
