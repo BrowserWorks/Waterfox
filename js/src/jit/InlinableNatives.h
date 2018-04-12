@@ -127,8 +127,8 @@
     _(IntrinsicFinishBoundFunctionInit) \
     _(IntrinsicIsPackedArray)       \
                                     \
-    _(IntrinsicIsArrayIterator)     \
-    _(IntrinsicIsMapIterator)       \
+    _(IntrinsicGuardToArrayIterator) \
+    _(IntrinsicGuardToMapIterator)  \
     _(IntrinsicIsSetIterator)       \
     _(IntrinsicGuardToStringIterator) \
                                     \
