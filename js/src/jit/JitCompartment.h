@@ -358,8 +358,8 @@ class JitRuntime
         return rt->geckoProfiler().enabled();
     }
 
-    bool isOptimizationTrackingEnabled(ZoneGroup* group) {
-        return isProfilerInstrumentationEnabled(group->runtime);
+    bool isOptimizationTrackingEnabled(JSRuntime* rt) {
+        return isProfilerInstrumentationEnabled(rt);
     }
 
 #ifdef DEBUG
