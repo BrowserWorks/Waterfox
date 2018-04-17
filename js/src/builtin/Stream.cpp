@@ -3635,7 +3635,7 @@ ReadableStreamBYOBRequest::constructor(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    RootedArrayBufferObject view(cx, &viewVal.toObject().as<ArrayBufferObject>());
+    Rooted<ArrayBufferViewObject*> view(cx, &viewVal.toObject().as<ArrayBufferViewObject>());
 
     RootedObject request(cx, CreateReadableStreamBYOBRequest(cx, controller, view));
     if (!request)
