@@ -1687,7 +1687,7 @@ pref("browser.sessionstore.restore_tabs_lazily", true);
 pref("browser.suppress_first_window_animation", true);
 
 // Preferences for Photon onboarding system extension
-pref("browser.onboarding.enabled", true);
+sticky_pref("browser.onboarding.enabled", false);
 // Mark this as an upgraded profile so we don't offer the initial new user onboarding tour.
 pref("browser.onboarding.tourset-version", 1);
 pref("browser.onboarding.hidden", false);
