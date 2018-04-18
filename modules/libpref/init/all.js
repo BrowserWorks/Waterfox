@@ -1035,7 +1035,7 @@ sticky_pref("toolkit.telemetry.infoURL", "");
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
 pref("toolkit.telemetry.debugSlowSql", false);
 // Whether to use the unified telemetry behavior, requires a restart.
-pref("toolkit.telemetry.unified", true);
+sticky_pref("toolkit.telemetry.unified", false);
 // AsyncShutdown delay before crashing in case of shutdown freeze
 pref("toolkit.asyncshutdown.crash_timeout", 60000);
 // Extra logging for AsyncShutdown barriers and phases
@@ -1516,7 +1516,7 @@ pref("logging.config.clear_on_startup", true);
 // Allow necko to do A/B testing. Will generally only happen if
 // telemetry is also enabled as otherwise there is no way to report
 // the results
-pref("network.allow-experiments", true);
+sticky_pref("network.allow-experiments", false);
 
 // Allow the network changed event to get sent when a network topology or
 // setup change is noticed while running.
