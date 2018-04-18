@@ -1281,7 +1281,7 @@ pref("browser.newtabpage.rows", 3);
 pref("browser.newtabpage.columns", 5);
 
 // directory tiles download URL
-sticky_pref("browser.newtabpage.directory.source", "");
+sticky_pref("browser.newtabpage.directory.source", "data:application/json,{}");
 
 // activates Activity Stream
 #ifdef NIGHTLY_BUILD
