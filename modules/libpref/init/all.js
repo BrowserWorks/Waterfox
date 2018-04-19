@@ -1035,7 +1035,7 @@ sticky_pref("toolkit.telemetry.infoURL", "");
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
 pref("toolkit.telemetry.debugSlowSql", false);
 // Whether to use the unified telemetry behavior, requires a restart.
-pref("toolkit.telemetry.unified", true);
+sticky_pref("toolkit.telemetry.unified", false);
 // AsyncShutdown delay before crashing in case of shutdown freeze
 pref("toolkit.asyncshutdown.crash_timeout", 60000);
 // Extra logging for AsyncShutdown barriers and phases
@@ -3238,8 +3238,8 @@ pref("dom.ipc.tabs.shutdownTimeoutSecs", 0);
 
 pref("dom.ipc.plugins.flash.disable-protected-mode", false);
 
-pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", true);
-pref("dom.ipc.plugins.reportCrashURL", true);
+pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", false);
+pref("dom.ipc.plugins.reportCrashURL", false);
 
 // How long we wait before unloading an idle plugin process.
 // Defaults to 30 seconds.
