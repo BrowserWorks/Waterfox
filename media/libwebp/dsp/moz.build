@@ -29,9 +29,11 @@ SOURCES += [
     'upsampling.c',
     'upsampling_neon.c',
     'upsampling_sse2.c',
+    'upsampling_sse41.c',
     'yuv.c',
     'yuv_neon.c',
     'yuv_sse2.c',
+    'yuv_sse41.c',
 ]
 
 if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
@@ -51,7 +53,9 @@ elif CONFIG['INTEL_ARCHITECTURE']:
     SOURCES['lossless_sse2.c'].flags += CONFIG['SSE2_FLAGS']
     SOURCES['rescaler_sse2.c'].flags += CONFIG['SSE2_FLAGS']
     SOURCES['upsampling_sse2.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['upsampling_sse41.c'].flags += CONFIG['SSE2_FLAGS']
     SOURCES['yuv_sse2.c'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['yuv_sse41.c'].flags += CONFIG['SSE2_FLAGS']
 
 FINAL_LIBRARY = 'gkmedias'
 
