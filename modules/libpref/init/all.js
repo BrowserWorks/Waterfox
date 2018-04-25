@@ -3309,7 +3309,7 @@ pref("svg.transform-box.enabled", true);
 # always enabled in the chrome process, regardless of this pref.)
 # Also, these keywords are currently not part of any spec, which is partly why
 # we disable them for web content.
-pref("svg.context-properties.content.enabled", false);
+pref("svg.context-properties.content.enabled", true);
 
 // Default font types and sizes by locale
 pref("font.default.ar", "sans-serif");
