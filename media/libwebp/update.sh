@@ -56,9 +56,11 @@ cp $1/src/dsp/rescaler_sse2.c dsp
 cp $1/src/dsp/upsampling.c dsp
 cp $1/src/dsp/upsampling_neon.c dsp
 cp $1/src/dsp/upsampling_sse2.c dsp
+cp $1/src/dsp/upsampling_sse41.c dsp
 cp $1/src/dsp/yuv.c dsp
 cp $1/src/dsp/yuv_neon.c dsp
 cp $1/src/dsp/yuv_sse2.c dsp
+cp $1/src/dsp/yuv_sse41.c dsp
 
 mkdir -p enc
 cp $1/src/enc/*.h enc
