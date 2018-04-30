@@ -1381,15 +1381,6 @@ nsPluginStreamListenerPeer::AsyncOnChannelRedirect(nsIChannel *oldChannel, nsICh
     return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsIAsyncVerifyRedirectCallback> proxyCallback =
-    new ChannelRedirectProxyCallback(this, callback, oldChannel, newChannel);
-
-  // Give NPAPI a chance to control redirects.
-  bool notificationHandled = mPStreamListener->HandleRedirectNotification(oldChannel, newChannel, proxyCallback);
-  if (notificationHandled) {
-    return NS_OK;
-  }
-
   // Don't allow cross-origin 307 POST redirects.
   nsCOMPtr<nsIHttpChannel> oldHttpChannel(do_QueryInterface(oldChannel));
   if (oldHttpChannel) {
@@ -1411,6 +1402,15 @@ nsPluginStreamListenerPeer::AsyncOnChannelRedirect(nsIChannel *oldChannel, nsICh
         }
       }
     }
+  }
+
+  nsCOMPtr<nsIAsyncVerifyRedirectCallback> proxyCallback =
+    new ChannelRedirectProxyCallback(this, callback, oldChannel, newChannel);
+
+  // Give NPAPI a chance to control redirects.
+  bool notificationHandled = mPStreamListener->HandleRedirectNotification(oldChannel, newChannel, proxyCallback);
+  if (notificationHandled) {
+    return NS_OK;
   }
 
   // Fall back to channel event sink for window.
