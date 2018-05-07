@@ -75,18 +75,6 @@ KeyframeEffect::KeyframeEffect(
   const Maybe<OwningAnimationTarget>& aTarget,
   const TimingParams& aTiming,
   const KeyframeEffectParams& aOptions)
-  : KeyframeEffect(aDocument, aTarget,
-                           new AnimationEffectTimingReadOnly(aDocument,
-                                                             aTiming),
-                           aOptions)
-{
-}
-
-KeyframeEffect::KeyframeEffect(
-  nsIDocument* aDocument,
-  const Maybe<OwningAnimationTarget>& aTarget,
-  AnimationEffectTimingReadOnly* aTiming,
-  const KeyframeEffectParams& aOptions)
   : AnimationEffect(aDocument, aTiming)
   , mTarget(aTarget)
   , mEffectOptions(aOptions)
@@ -970,7 +958,7 @@ KeyframeEffect::ConstructKeyframeEffect(const GlobalObject& aGlobal,
 
   // Create a new KeyframeEffect object with aSource's target,
   // iteration composite operation, composite operation, and spacing mode.
-  // The constructor creates a new AnimationEffect(ReadOnly) object by
+  // The constructor creates a new AnimationEffect object by
   // aSource's TimingParams.
   // Note: we don't need to re-throw exceptions since the value specified on
   //       aSource's timing object can be assumed valid.
