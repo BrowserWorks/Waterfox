@@ -176,6 +176,7 @@ public:
   CompositeOperation Composite() const;
   void SetComposite(const CompositeOperation& aComposite);
 
+  void NotifySpecifiedTimingUpdated();
   void NotifyAnimationTimingUpdated();
   void RequestRestyle(EffectCompositor::RestyleType aRestyleType);
   void SetAnimation(Animation* aAnimation) override;
