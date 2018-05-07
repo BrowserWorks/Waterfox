@@ -85,7 +85,7 @@ AnimationEffectReadOnly::SetSpecifiedTiming(const TimingParams& aTiming)
     mAnimation->NotifyEffectTimingUpdated();
   }
   // For keyframe effects, NotifyEffectTimingUpdated above will eventually cause
-  // KeyframeEffectReadOnly::NotifyAnimationTimingUpdated to be called so it can
+  // KeyframeEffect::NotifyAnimationTimingUpdated to be called so it can
   // update its registration with the target element as necessary.
 }
 

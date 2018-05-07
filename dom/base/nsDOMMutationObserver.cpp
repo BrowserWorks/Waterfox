@@ -396,8 +396,7 @@ nsAnimationReceiver::RecordAnimationMutation(Animation* aAnimation,
     return;
   }
 
-  mozilla::dom::KeyframeEffectReadOnly* keyframeEffect =
-    effect->AsKeyframeEffect();
+  mozilla::dom::KeyframeEffect* keyframeEffect = effect->AsKeyframeEffect();
   if (!keyframeEffect) {
     return;
   }

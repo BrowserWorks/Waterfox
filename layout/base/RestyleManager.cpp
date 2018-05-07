@@ -1895,7 +1895,7 @@ RestyleManager::AnimationsWithDestroyedFrame
     // *compositor* at this point.
     EffectSet* effectSet = EffectSet::GetEffectSet(element, aPseudoType);
     if (effectSet) {
-      for (KeyframeEffectReadOnly* effect : *effectSet) {
+      for (KeyframeEffect* effect : *effectSet) {
         effect->ResetIsRunningOnCompositor();
       }
     }

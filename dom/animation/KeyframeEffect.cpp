@@ -56,33 +56,33 @@ PropertyValuePair::operator==(const PropertyValuePair& aOther) const
 
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTION_INHERITED(KeyframeEffectReadOnly,
+NS_IMPL_CYCLE_COLLECTION_INHERITED(KeyframeEffect,
                                    AnimationEffectReadOnly,
                                    mTarget)
 
-NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(KeyframeEffectReadOnly,
+NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(KeyframeEffect,
                                                AnimationEffectReadOnly)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(KeyframeEffectReadOnly)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(KeyframeEffect)
 NS_INTERFACE_MAP_END_INHERITING(AnimationEffectReadOnly)
 
-NS_IMPL_ADDREF_INHERITED(KeyframeEffectReadOnly, AnimationEffectReadOnly)
-NS_IMPL_RELEASE_INHERITED(KeyframeEffectReadOnly, AnimationEffectReadOnly)
+NS_IMPL_ADDREF_INHERITED(KeyframeEffect, AnimationEffectReadOnly)
+NS_IMPL_RELEASE_INHERITED(KeyframeEffect, AnimationEffectReadOnly)
 
-KeyframeEffectReadOnly::KeyframeEffectReadOnly(
+KeyframeEffect::KeyframeEffect(
   nsIDocument* aDocument,
   const Maybe<OwningAnimationTarget>& aTarget,
   const TimingParams& aTiming,
   const KeyframeEffectParams& aOptions)
-  : KeyframeEffectReadOnly(aDocument, aTarget,
+  : KeyframeEffect(aDocument, aTarget,
                            new AnimationEffectTimingReadOnly(aDocument,
                                                              aTiming),
                            aOptions)
 {
 }
 
-KeyframeEffectReadOnly::KeyframeEffectReadOnly(
+KeyframeEffect::KeyframeEffect(
   nsIDocument* aDocument,
   const Maybe<OwningAnimationTarget>& aTarget,
   AnimationEffectTimingReadOnly* aTiming,
@@ -96,20 +96,20 @@ KeyframeEffectReadOnly::KeyframeEffectReadOnly(
 }
 
 JSObject*
-KeyframeEffectReadOnly::WrapObject(JSContext* aCx,
+KeyframeEffect::WrapObject(JSContext* aCx,
                                    JS::Handle<JSObject*> aGivenProto)
 {
-  return KeyframeEffectReadOnlyBinding::Wrap(aCx, this, aGivenProto);
+  return KeyframeEffectBinding::Wrap(aCx, this, aGivenProto);
 }
 
-IterationCompositeOperation KeyframeEffectReadOnly::IterationComposite(
+IterationCompositeOperation KeyframeEffect::IterationComposite(
   CallerType /*aCallerType*/) const
 {
   return mEffectOptions.mIterationComposite;
 }
 
 void
-KeyframeEffectReadOnly::SetIterationComposite(
+KeyframeEffect::SetIterationComposite(
   const IterationCompositeOperation& aIterationComposite,
   CallerType aCallerType)
 {
@@ -132,13 +132,13 @@ KeyframeEffectReadOnly::SetIterationComposite(
 }
 
 CompositeOperation
-KeyframeEffectReadOnly::Composite() const
+KeyframeEffect::Composite() const
 {
   return mEffectOptions.mComposite;
 }
 
 void
-KeyframeEffectReadOnly::SetComposite(const CompositeOperation& aComposite)
+KeyframeEffect::SetComposite(const CompositeOperation& aComposite)
 {
   if (mEffectOptions.mComposite == aComposite) {
     return;
@@ -159,7 +159,7 @@ KeyframeEffectReadOnly::SetComposite(const CompositeOperation& aComposite)
 }
 
 void
-KeyframeEffectReadOnly::NotifySpecifiedTimingUpdated()
+KeyframeEffect::NotifySpecifiedTimingUpdated()
 {
   // Use the same document for a pseudo element and its parent element.
   // Use nullptr if we don't have mTarget, so disable the mutation batch.
@@ -178,7 +178,7 @@ KeyframeEffectReadOnly::NotifySpecifiedTimingUpdated()
 }
 
 void
-KeyframeEffectReadOnly::NotifyAnimationTimingUpdated()
+KeyframeEffect::NotifyAnimationTimingUpdated()
 {
   UpdateTargetRegistration();
 
@@ -245,7 +245,7 @@ KeyframesEqualIgnoringComputedOffsets(const nsTArray<Keyframe>& aLhs,
 
 // https://drafts.csswg.org/web-animations/#dom-keyframeeffect-setkeyframes
 void
-KeyframeEffectReadOnly::SetKeyframes(JSContext* aContext,
+KeyframeEffect::SetKeyframes(JSContext* aContext,
                                      JS::Handle<JSObject*> aKeyframes,
                                      ErrorResult& aRv)
 {
@@ -270,14 +270,14 @@ KeyframeEffectReadOnly::SetKeyframes(JSContext* aContext,
 }
 
 void
-KeyframeEffectReadOnly::SetKeyframes(nsTArray<Keyframe>&& aKeyframes,
+KeyframeEffect::SetKeyframes(nsTArray<Keyframe>&& aKeyframes,
                                      GeckoStyleContext* aStyleContext)
 {
   DoSetKeyframes(Move(aKeyframes), Move(aStyleContext));
 }
 
 void
-KeyframeEffectReadOnly::SetKeyframes(
+KeyframeEffect::SetKeyframes(
   nsTArray<Keyframe>&& aKeyframes,
   const ServoStyleContext* aComputedValues)
 {
@@ -286,7 +286,7 @@ KeyframeEffectReadOnly::SetKeyframes(
 
 template<typename StyleType>
 void
-KeyframeEffectReadOnly::DoSetKeyframes(nsTArray<Keyframe>&& aKeyframes,
+KeyframeEffect::DoSetKeyframes(nsTArray<Keyframe>&& aKeyframes,
                                        StyleType* aStyle)
 {
   static_assert(IsSame<StyleType, GeckoStyleContext>::value ||
@@ -313,7 +313,7 @@ KeyframeEffectReadOnly::DoSetKeyframes(nsTArray<Keyframe>&& aKeyframes,
 }
 
 const AnimationProperty*
-KeyframeEffectReadOnly::GetEffectiveAnimationOfProperty(
+KeyframeEffect::GetEffectiveAnimationOfProperty(
   nsCSSPropertyID aProperty) const
 {
   EffectSet* effectSet =
@@ -338,7 +338,7 @@ KeyframeEffectReadOnly::GetEffectiveAnimationOfProperty(
 }
 
 bool
-KeyframeEffectReadOnly::HasAnimationOfProperty(nsCSSPropertyID aProperty) const
+KeyframeEffect::HasAnimationOfProperty(nsCSSPropertyID aProperty) const
 {
   for (const AnimationProperty& property : mProperties) {
     if (property.mProperty == aProperty) {
@@ -372,7 +372,7 @@ SpecifiedKeyframeArraysAreEqual(const nsTArray<Keyframe>& aA,
 #endif
 
 void
-KeyframeEffectReadOnly::UpdateProperties(nsStyleContext* aStyleContext)
+KeyframeEffect::UpdateProperties(nsStyleContext* aStyleContext)
 {
   MOZ_ASSERT(aStyleContext);
 
@@ -385,7 +385,7 @@ KeyframeEffectReadOnly::UpdateProperties(nsStyleContext* aStyleContext)
 }
 
 void
-KeyframeEffectReadOnly::UpdateProperties(
+KeyframeEffect::UpdateProperties(
   const ServoStyleContext* aStyleContext)
 {
   DoUpdateProperties(aStyleContext);
@@ -393,7 +393,7 @@ KeyframeEffectReadOnly::UpdateProperties(
 
 template<typename StyleType>
 void
-KeyframeEffectReadOnly::DoUpdateProperties(StyleType* aStyle)
+KeyframeEffect::DoUpdateProperties(StyleType* aStyle)
 {
   MOZ_ASSERT(aStyle);
 
@@ -441,7 +441,7 @@ KeyframeEffectReadOnly::DoUpdateProperties(StyleType* aStyle)
 }
 
 /* static */ StyleAnimationValue
-KeyframeEffectReadOnly::CompositeValue(
+KeyframeEffect::CompositeValue(
   nsCSSPropertyID aProperty,
   const StyleAnimationValue& aValueToComposite,
   const StyleAnimationValue& aUnderlyingValue,
@@ -476,7 +476,7 @@ KeyframeEffectReadOnly::CompositeValue(
 }
 
 StyleAnimationValue
-KeyframeEffectReadOnly::GetUnderlyingStyle(
+KeyframeEffect::GetUnderlyingStyle(
   nsCSSPropertyID aProperty,
   const RefPtr<AnimValuesStyleRule>& aAnimationRule)
 {
@@ -498,7 +498,7 @@ KeyframeEffectReadOnly::GetUnderlyingStyle(
 }
 
 StyleAnimationValue
-KeyframeEffectReadOnly::CompositeValue(
+KeyframeEffect::CompositeValue(
   nsCSSPropertyID aProperty,
   const RefPtr<AnimValuesStyleRule>& aAnimationRule,
   const StyleAnimationValue& aValueToComposite,
@@ -517,7 +517,7 @@ KeyframeEffectReadOnly::CompositeValue(
 }
 
 void
-KeyframeEffectReadOnly::EnsureBaseStyles(
+KeyframeEffect::EnsureBaseStyles(
   GeckoStyleContext* aStyleContext,
   const nsTArray<AnimationProperty>& aProperties)
 {
@@ -544,7 +544,7 @@ KeyframeEffectReadOnly::EnsureBaseStyles(
 }
 
 void
-KeyframeEffectReadOnly::EnsureBaseStyle(
+KeyframeEffect::EnsureBaseStyle(
   nsCSSPropertyID aProperty,
   GeckoStyleContext* aStyleContext,
   RefPtr<GeckoStyleContext>& aCachedBaseStyleContext)
@@ -574,7 +574,7 @@ KeyframeEffectReadOnly::EnsureBaseStyle(
 }
 
 void
-KeyframeEffectReadOnly::EnsureBaseStyles(
+KeyframeEffect::EnsureBaseStyles(
   const ServoStyleContext* aComputedValues,
   const nsTArray<AnimationProperty>& aProperties)
 {
@@ -602,7 +602,7 @@ KeyframeEffectReadOnly::EnsureBaseStyles(
 }
 
 void
-KeyframeEffectReadOnly::EnsureBaseStyle(
+KeyframeEffect::EnsureBaseStyle(
   const AnimationProperty& aProperty,
   CSSPseudoElementType aPseudoType,
   nsPresContext* aPresContext,
@@ -639,7 +639,7 @@ KeyframeEffectReadOnly::EnsureBaseStyle(
 }
 
 void
-KeyframeEffectReadOnly::WillComposeStyle()
+KeyframeEffect::WillComposeStyle()
 {
   ComputedTiming computedTiming = GetComputedTiming();
   mProgressOnLastCompose = computedTiming.mProgress;
@@ -647,7 +647,7 @@ KeyframeEffectReadOnly::WillComposeStyle()
 }
 
 void
-KeyframeEffectReadOnly::ComposeStyleRule(
+KeyframeEffect::ComposeStyleRule(
   RefPtr<AnimValuesStyleRule>& aStyleRule,
   const AnimationProperty& aProperty,
   const AnimationPropertySegment& aSegment,
@@ -727,7 +727,7 @@ KeyframeEffectReadOnly::ComposeStyleRule(
 }
 
 void
-KeyframeEffectReadOnly::ComposeStyleRule(
+KeyframeEffect::ComposeStyleRule(
   RawServoAnimationValueMap& aAnimationValues,
   const AnimationProperty& aProperty,
   const AnimationPropertySegment& aSegment,
@@ -744,7 +744,7 @@ KeyframeEffectReadOnly::ComposeStyleRule(
 
 template<typename ComposeAnimationResult>
 void
-KeyframeEffectReadOnly::ComposeStyle(
+KeyframeEffect::ComposeStyle(
   ComposeAnimationResult&& aComposeResult,
   const nsCSSPropertyIDSet& aPropertiesToSkip)
 {
@@ -806,7 +806,7 @@ KeyframeEffectReadOnly::ComposeStyle(
 }
 
 bool
-KeyframeEffectReadOnly::IsRunningOnCompositor() const
+KeyframeEffect::IsRunningOnCompositor() const
 {
   // We consider animation is running on compositor if there is at least
   // one property running on compositor.
@@ -821,7 +821,7 @@ KeyframeEffectReadOnly::IsRunningOnCompositor() const
 }
 
 void
-KeyframeEffectReadOnly::SetIsRunningOnCompositor(nsCSSPropertyID aProperty,
+KeyframeEffect::SetIsRunningOnCompositor(nsCSSPropertyID aProperty,
                                                  bool aIsRunning)
 {
   MOZ_ASSERT(nsCSSProps::PropHasFlags(aProperty,
@@ -843,7 +843,7 @@ KeyframeEffectReadOnly::SetIsRunningOnCompositor(nsCSSPropertyID aProperty,
 }
 
 void
-KeyframeEffectReadOnly::ResetIsRunningOnCompositor()
+KeyframeEffect::ResetIsRunningOnCompositor()
 {
   for (AnimationProperty& property : mProperties) {
     property.mIsRunningOnCompositor = false;
@@ -887,7 +887,7 @@ KeyframeEffectParamsFromUnion(const OptionsType& aOptions,
 }
 
 /* static */ Maybe<OwningAnimationTarget>
-KeyframeEffectReadOnly::ConvertTarget(
+KeyframeEffect::ConvertTarget(
   const Nullable<ElementOrCSSPseudoElement>& aTarget)
 {
   // Return value optimization.
@@ -912,7 +912,7 @@ KeyframeEffectReadOnly::ConvertTarget(
 
 template <class KeyframeEffectType, class OptionsType>
 /* static */ already_AddRefed<KeyframeEffectType>
-KeyframeEffectReadOnly::ConstructKeyframeEffect(
+KeyframeEffect::ConstructKeyframeEffect(
     const GlobalObject& aGlobal,
     const Nullable<ElementOrCSSPseudoElement>& aTarget,
     JS::Handle<JSObject*> aKeyframes,
@@ -926,7 +926,7 @@ KeyframeEffectReadOnly::ConstructKeyframeEffect(
   // matches the spec behavior.
   //
   // In Xray case, the new objects should be created using the document of
-  // the target global, but KeyframeEffect and KeyframeEffectReadOnly
+  // the target global, but KeyframeEffect
   // constructors are called in the caller's compartment to access
   // `aKeyframes` object.
   nsIDocument* doc = AnimationUtils::GetDocumentFromGlobal(aGlobal.Get());
@@ -958,8 +958,8 @@ KeyframeEffectReadOnly::ConstructKeyframeEffect(
 
 template<class KeyframeEffectType>
 /* static */ already_AddRefed<KeyframeEffectType>
-KeyframeEffectReadOnly::ConstructKeyframeEffect(const GlobalObject& aGlobal,
-                                                KeyframeEffectReadOnly& aSource,
+KeyframeEffect::ConstructKeyframeEffect(const GlobalObject& aGlobal,
+                                                KeyframeEffect& aSource,
                                                 ErrorResult& aRv)
 {
   nsIDocument* doc = AnimationUtils::GetCurrentRealmDocument(aGlobal.Context());
@@ -968,7 +968,7 @@ KeyframeEffectReadOnly::ConstructKeyframeEffect(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  // Create a new KeyframeEffectReadOnly object with aSource's target,
+  // Create a new KeyframeEffect object with aSource's target,
   // iteration composite operation, composite operation, and spacing mode.
   // The constructor creates a new AnimationEffect(ReadOnly) object by
   // aSource's TimingParams.
@@ -995,7 +995,7 @@ KeyframeEffectReadOnly::ConstructKeyframeEffect(const GlobalObject& aGlobal,
 
 template<typename StyleType>
 nsTArray<AnimationProperty>
-KeyframeEffectReadOnly::BuildProperties(StyleType* aStyle)
+KeyframeEffect::BuildProperties(StyleType* aStyle)
 {
   static_assert(IsSame<StyleType, GeckoStyleContext>::value ||
                 IsSame<StyleType, const ServoStyleContext>::value,
@@ -1036,7 +1036,7 @@ KeyframeEffectReadOnly::BuildProperties(StyleType* aStyle)
 }
 
 void
-KeyframeEffectReadOnly::UpdateTargetRegistration()
+KeyframeEffect::UpdateTargetRegistration()
 {
   if (!mTarget) {
     return;
@@ -1063,7 +1063,7 @@ KeyframeEffectReadOnly::UpdateTargetRegistration()
 }
 
 void
-KeyframeEffectReadOnly::UnregisterTarget()
+KeyframeEffect::UnregisterTarget()
 {
   if (!mInEffectSet) {
     return;
@@ -1084,7 +1084,7 @@ KeyframeEffectReadOnly::UnregisterTarget()
 }
 
 void
-KeyframeEffectReadOnly::RequestRestyle(
+KeyframeEffect::RequestRestyle(
   EffectCompositor::RestyleType aRestyleType)
 {
    if (!mTarget) {
@@ -1099,7 +1099,7 @@ KeyframeEffectReadOnly::RequestRestyle(
 }
 
 already_AddRefed<nsStyleContext>
-KeyframeEffectReadOnly::GetTargetStyleContext()
+KeyframeEffect::GetTargetStyleContext()
 {
   nsIPresShell* shell = GetPresShell();
   if (!shell) {
@@ -1134,29 +1134,41 @@ DumpAnimationProperties(nsTArray<AnimationProperty>& aAnimationProperties)
 }
 #endif
 
-/* static */ already_AddRefed<KeyframeEffectReadOnly>
-KeyframeEffectReadOnly::Constructor(
+/* static */ already_AddRefed<KeyframeEffect>
+KeyframeEffect::Constructor(
     const GlobalObject& aGlobal,
     const Nullable<ElementOrCSSPseudoElement>& aTarget,
     JS::Handle<JSObject*> aKeyframes,
     const UnrestrictedDoubleOrKeyframeEffectOptions& aOptions,
     ErrorResult& aRv)
 {
-  return ConstructKeyframeEffect<KeyframeEffectReadOnly>(aGlobal, aTarget,
+  return ConstructKeyframeEffect<KeyframeEffect>(aGlobal, aTarget,
                                                          aKeyframes, aOptions,
                                                          aRv);
 }
 
-/* static */ already_AddRefed<KeyframeEffectReadOnly>
-KeyframeEffectReadOnly::Constructor(const GlobalObject& aGlobal,
-                                    KeyframeEffectReadOnly& aSource,
+/* static */ already_AddRefed<KeyframeEffect>
+KeyframeEffect::Constructor(const GlobalObject& aGlobal,
+                                    KeyframeEffect& aSource,
                                     ErrorResult& aRv)
 {
-  return ConstructKeyframeEffect<KeyframeEffectReadOnly>(aGlobal, aSource, aRv);
+  return ConstructKeyframeEffect<KeyframeEffect>(aGlobal, aSource, aRv);
+}
+
+/* static */ already_AddRefed<KeyframeEffect>
+KeyframeEffect::Constructor(
+    const GlobalObject& aGlobal,
+    const Nullable<ElementOrCSSPseudoElement>& aTarget,
+    JS::Handle<JSObject*> aKeyframes,
+    const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
+    ErrorResult& aRv)
+{
+  return ConstructKeyframeEffect<KeyframeEffect>(aGlobal, aTarget, aKeyframes,
+                                                 aOptions, aRv);
 }
 
 void
-KeyframeEffectReadOnly::GetTarget(
+KeyframeEffect::GetTarget(
     Nullable<OwningElementOrCSSPseudoElement>& aRv) const
 {
   if (!mTarget) {
@@ -1183,7 +1195,7 @@ KeyframeEffectReadOnly::GetTarget(
 }
 
 void
-KeyframeEffectReadOnly::SetTarget(
+KeyframeEffect::SetTarget(
   const Nullable<ElementOrCSSPseudoElement>& aTarget)
 {
   Maybe<OwningAnimationTarget> newTarget = ConvertTarget(aTarget);
@@ -1251,7 +1263,7 @@ CreatePropertyValue(nsCSSPropertyID aProperty,
 }
 
 void
-KeyframeEffectReadOnly::GetProperties(
+KeyframeEffect::GetProperties(
     nsTArray<AnimationPropertyDetails>& aProperties,
     ErrorResult& aRv) const
 {
@@ -1316,7 +1328,7 @@ KeyframeEffectReadOnly::GetProperties(
 }
 
 void
-KeyframeEffectReadOnly::GetKeyframes(JSContext*& aCx,
+KeyframeEffect::GetKeyframes(JSContext*& aCx,
                                      nsTArray<JSObject*>& aResult,
                                      ErrorResult& aRv)
 {
@@ -1417,7 +1429,7 @@ KeyframeEffectReadOnly::GetKeyframes(JSContext*& aCx,
 }
 
 /* static */ const TimeDuration
-KeyframeEffectReadOnly::OverflowRegionRefreshInterval()
+KeyframeEffect::OverflowRegionRefreshInterval()
 {
   // The amount of time we can wait between updating throttled animations
   // on the main thread that influence the overflow region.
@@ -1428,7 +1440,7 @@ KeyframeEffectReadOnly::OverflowRegionRefreshInterval()
 }
 
 bool
-KeyframeEffectReadOnly::CanThrottle() const
+KeyframeEffect::CanThrottle() const
 {
   // Unthrottle if we are not in effect or current. This will be the case when
   // our owning animation has finished, is idle, or when we are in the delay
@@ -1509,7 +1521,7 @@ KeyframeEffectReadOnly::CanThrottle() const
 }
 
 bool
-KeyframeEffectReadOnly::CanThrottleTransformChanges(nsIFrame& aFrame) const
+KeyframeEffect::CanThrottleTransformChanges(nsIFrame& aFrame) const
 {
   // If we know that the animation cannot cause overflow,
   // we can just disable flushes for this animation.
@@ -1553,7 +1565,7 @@ KeyframeEffectReadOnly::CanThrottleTransformChanges(nsIFrame& aFrame) const
 }
 
 nsIFrame*
-KeyframeEffectReadOnly::GetAnimationFrame() const
+KeyframeEffect::GetAnimationFrame() const
 {
   if (!mTarget) {
     return nullptr;
@@ -1578,7 +1590,7 @@ KeyframeEffectReadOnly::GetAnimationFrame() const
 }
 
 nsIDocument*
-KeyframeEffectReadOnly::GetRenderedDocument() const
+KeyframeEffect::GetRenderedDocument() const
 {
   if (!mTarget) {
     return nullptr;
@@ -1587,7 +1599,7 @@ KeyframeEffectReadOnly::GetRenderedDocument() const
 }
 
 nsIPresShell*
-KeyframeEffectReadOnly::GetPresShell() const
+KeyframeEffect::GetPresShell() const
 {
   nsIDocument* doc = GetRenderedDocument();
   if (!doc) {
@@ -1597,7 +1609,7 @@ KeyframeEffectReadOnly::GetPresShell() const
 }
 
 /* static */ bool
-KeyframeEffectReadOnly::IsGeometricProperty(
+KeyframeEffect::IsGeometricProperty(
   const nsCSSPropertyID aProperty)
 {
   MOZ_ASSERT(!nsCSSProps::IsShorthand(aProperty),
@@ -1625,7 +1637,7 @@ KeyframeEffectReadOnly::IsGeometricProperty(
 }
 
 /* static */ bool
-KeyframeEffectReadOnly::CanAnimateTransformOnCompositor(
+KeyframeEffect::CanAnimateTransformOnCompositor(
   const nsIFrame* aFrame,
   AnimationPerformanceWarning::Type& aPerformanceWarning)
 {
@@ -1657,7 +1669,7 @@ KeyframeEffectReadOnly::CanAnimateTransformOnCompositor(
 }
 
 bool
-KeyframeEffectReadOnly::ShouldBlockAsyncTransformAnimations(
+KeyframeEffect::ShouldBlockAsyncTransformAnimations(
   const nsIFrame* aFrame,
   AnimationPerformanceWarning::Type& aPerformanceWarning) const
 {
@@ -1698,7 +1710,7 @@ KeyframeEffectReadOnly::ShouldBlockAsyncTransformAnimations(
 }
 
 bool
-KeyframeEffectReadOnly::HasGeometricProperties() const
+KeyframeEffect::HasGeometricProperties() const
 {
   for (const AnimationProperty& property : mProperties) {
     if (IsGeometricProperty(property.mProperty)) {
@@ -1710,7 +1722,7 @@ KeyframeEffectReadOnly::HasGeometricProperties() const
 }
 
 void
-KeyframeEffectReadOnly::SetPerformanceWarning(
+KeyframeEffect::SetPerformanceWarning(
   nsCSSPropertyID aProperty,
   const AnimationPerformanceWarning& aWarning)
 {
@@ -1762,7 +1774,7 @@ CreateStyleContextForAnimationValue(nsCSSPropertyID aProperty,
 }
 
 void
-KeyframeEffectReadOnly::CalculateCumulativeChangeHint(
+KeyframeEffect::CalculateCumulativeChangeHint(
   nsStyleContext* aStyleContext)
 {
   if (mDocument->IsStyledByServo()) {
@@ -1814,7 +1826,7 @@ KeyframeEffectReadOnly::CalculateCumulativeChangeHint(
 }
 
 void
-KeyframeEffectReadOnly::SetAnimation(Animation* aAnimation)
+KeyframeEffect::SetAnimation(Animation* aAnimation)
 {
   if (mAnimation == aAnimation) {
     return;
@@ -1839,7 +1851,7 @@ KeyframeEffectReadOnly::SetAnimation(Animation* aAnimation)
 }
 
 bool
-KeyframeEffectReadOnly::CanIgnoreIfNotVisible() const
+KeyframeEffect::CanIgnoreIfNotVisible() const
 {
   if (!AnimationUtils::IsOffscreenThrottlingEnabled()) {
     return false;
@@ -1858,7 +1870,7 @@ KeyframeEffectReadOnly::CanIgnoreIfNotVisible() const
 }
 
 void
-KeyframeEffectReadOnly::MaybeUpdateFrameForCompositor()
+KeyframeEffect::MaybeUpdateFrameForCompositor()
 {
   nsIFrame* frame = GetAnimationFrame();
   if (!frame) {
@@ -1878,7 +1890,7 @@ KeyframeEffectReadOnly::MaybeUpdateFrameForCompositor()
 }
 
 void
-KeyframeEffectReadOnly::MarkCascadeNeedsUpdate()
+KeyframeEffect::MarkCascadeNeedsUpdate()
 {
   if (!mTarget) {
     return;
@@ -1893,7 +1905,7 @@ KeyframeEffectReadOnly::MarkCascadeNeedsUpdate()
 }
 
 bool
-KeyframeEffectReadOnly::HasComputedTimingChanged() const
+KeyframeEffect::HasComputedTimingChanged() const
 {
   // Typically we don't need to request a restyle if the progress hasn't
   // changed since the last call to ComposeStyle. The one exception is if the
@@ -1908,7 +1920,7 @@ KeyframeEffectReadOnly::HasComputedTimingChanged() const
 }
 
 bool
-KeyframeEffectReadOnly::ContainsAnimatedScale(const nsIFrame* aFrame) const
+KeyframeEffect::ContainsAnimatedScale(const nsIFrame* aFrame) const
 {
   if (!IsCurrent()) {
     return false;
@@ -1953,7 +1965,7 @@ KeyframeEffectReadOnly::ContainsAnimatedScale(const nsIFrame* aFrame) const
 }
 
 void
-KeyframeEffectReadOnly::UpdateEffectSet(EffectSet* aEffectSet) const
+KeyframeEffect::UpdateEffectSet(EffectSet* aEffectSet) const
 {
   if (!mInEffectSet) {
     return;
@@ -1977,64 +1989,15 @@ KeyframeEffectReadOnly::UpdateEffectSet(EffectSet* aEffectSet) const
 
 template
 void
-KeyframeEffectReadOnly::ComposeStyle<RefPtr<AnimValuesStyleRule>&>(
+KeyframeEffect::ComposeStyle<RefPtr<AnimValuesStyleRule>&>(
   RefPtr<AnimValuesStyleRule>& aAnimationRule,
   const nsCSSPropertyIDSet& aPropertiesToSkip);
 
 template
 void
-KeyframeEffectReadOnly::ComposeStyle<RawServoAnimationValueMap&>(
+KeyframeEffect::ComposeStyle<RawServoAnimationValueMap&>(
   RawServoAnimationValueMap& aAnimationValues,
   const nsCSSPropertyIDSet& aPropertiesToSkip);
-
-KeyframeEffect::KeyframeEffect(nsIDocument* aDocument,
-                               const Maybe<OwningAnimationTarget>& aTarget,
-                               const TimingParams& aTiming,
-                               const KeyframeEffectParams& aOptions)
-  : KeyframeEffectReadOnly(aDocument, aTarget,
-                           new AnimationEffectTiming(aDocument, aTiming, this),
-                           aOptions)
-{
-}
-
-JSObject*
-KeyframeEffect::WrapObject(JSContext* aCx,
-                           JS::Handle<JSObject*> aGivenProto)
-{
-  return KeyframeEffectBinding::Wrap(aCx, this, aGivenProto);
-}
-
-/* static */ already_AddRefed<KeyframeEffect>
-KeyframeEffect::Constructor(
-    const GlobalObject& aGlobal,
-    const Nullable<ElementOrCSSPseudoElement>& aTarget,
-    JS::Handle<JSObject*> aKeyframes,
-    const UnrestrictedDoubleOrKeyframeEffectOptions& aOptions,
-    ErrorResult& aRv)
-{
-  return ConstructKeyframeEffect<KeyframeEffect>(aGlobal, aTarget, aKeyframes,
-                                                 aOptions, aRv);
-}
-
-/* static */ already_AddRefed<KeyframeEffect>
-KeyframeEffect::Constructor(const GlobalObject& aGlobal,
-                            KeyframeEffectReadOnly& aSource,
-                            ErrorResult& aRv)
-{
-  return ConstructKeyframeEffect<KeyframeEffect>(aGlobal, aSource, aRv);
-}
-
-/* static */ already_AddRefed<KeyframeEffect>
-KeyframeEffect::Constructor(
-    const GlobalObject& aGlobal,
-    const Nullable<ElementOrCSSPseudoElement>& aTarget,
-    JS::Handle<JSObject*> aKeyframes,
-    const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
-    ErrorResult& aRv)
-{
-  return ConstructKeyframeEffect<KeyframeEffect>(aGlobal, aTarget, aKeyframes,
-                                                 aOptions, aRv);
-}
 
 } // namespace dom
 } // namespace mozilla

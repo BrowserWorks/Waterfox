@@ -150,12 +150,12 @@ SampleValue(double aPortion, const layers::Animation& aAnimation,
                "Must have same unit");
 
   StyleAnimationValue startValue =
-    dom::KeyframeEffectReadOnly::CompositeValue(aAnimation.property(),
+    dom::KeyframeEffect::CompositeValue(aAnimation.property(),
                                                 aStart.mValue,
                                                 aUnderlyingValue,
                                                 aStart.mComposite);
   StyleAnimationValue endValue =
-    dom::KeyframeEffectReadOnly::CompositeValue(aAnimation.property(),
+    dom::KeyframeEffect::CompositeValue(aAnimation.property(),
                                                 aEnd.mValue,
                                                 aUnderlyingValue,
                                                 aEnd.mComposite);

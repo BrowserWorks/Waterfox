@@ -35,7 +35,7 @@ using namespace mozilla;
 using namespace mozilla::css;
 using mozilla::dom::Animation;
 using mozilla::dom::AnimationPlayState;
-using mozilla::dom::KeyframeEffectReadOnly;
+using mozilla::dom::KeyframeEffect;
 using mozilla::dom::CSSAnimation;
 
 typedef mozilla::ComputedTiming::AnimationPhase AnimationPhase;
@@ -431,7 +431,7 @@ public:
                                          timingFunction,
                                          aKeyframes);
   }
-  void SetKeyframes(KeyframeEffectReadOnly& aEffect,
+  void SetKeyframes(KeyframeEffect& aEffect,
                     nsTArray<Keyframe>&& aKeyframes)
   {
     aEffect.SetKeyframes(Move(aKeyframes), mStyleContext);
@@ -455,7 +455,7 @@ public:
   bool BuildKeyframes(nsPresContext* aPresContext,
                       const StyleAnimation& aSrc,
                       nsTArray<Keyframe>& aKeyframs);
-  void SetKeyframes(KeyframeEffectReadOnly& aEffect,
+  void SetKeyframes(KeyframeEffect& aEffect,
                     nsTArray<Keyframe>&& aKeyframes)
   {
     aEffect.SetKeyframes(Move(aKeyframes), mStyleContext);
@@ -507,7 +507,7 @@ UpdateOldAnimationPropertiesWithNew(
     animationChanged = oldEffect->SpecifiedTiming() != aNewTiming;
     oldEffect->SetSpecifiedTiming(aNewTiming);
 
-    KeyframeEffectReadOnly* oldKeyframeEffect = oldEffect->AsKeyframeEffect();
+    KeyframeEffect* oldKeyframeEffect = oldEffect->AsKeyframeEffect();
     if (oldKeyframeEffect) {
       aBuilder.SetKeyframes(*oldKeyframeEffect, Move(aNewKeyframes));
     }
@@ -593,8 +593,8 @@ BuildAnimation(nsPresContext* aPresContext,
   Maybe<OwningAnimationTarget> target;
   target.emplace(aTarget.mElement, aTarget.mPseudoType);
   KeyframeEffectParams effectOptions;
-  RefPtr<KeyframeEffectReadOnly> effect =
-    new KeyframeEffectReadOnly(aPresContext->Document(), target, timing,
+  RefPtr<KeyframeEffect> effect =
+    new KeyframeEffect(aPresContext->Document(), target, timing,
                                effectOptions);
 
   aBuilder.SetKeyframes(*effect, Move(keyframes));
