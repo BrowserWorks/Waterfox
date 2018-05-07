@@ -26,9 +26,10 @@ dictionary KeyframeEffectOptions : AnimationEffectTimingProperties {
               optional (unrestricted double or KeyframeEffectOptions) options),
  Constructor (KeyframeEffectReadOnly source)]
 interface KeyframeEffectReadOnly : AnimationEffectReadOnly {
-  readonly attribute (Element or CSSPseudoElement)?  target;
-  readonly attribute IterationCompositeOperation iterationComposite;
-  readonly attribute CompositeOperation          composite;
+  attribute (Element or CSSPseudoElement)?  target;
+  [NeedsCallerType]
+  attribute IterationCompositeOperation iterationComposite;
+  attribute CompositeOperation          composite;
 
   // We use object instead of ComputedKeyframe so that we can put the
   // property-value pairs on the object.
@@ -60,10 +61,6 @@ partial interface KeyframeEffectReadOnly {
               optional (unrestricted double or KeyframeEffectOptions) options),
  Constructor (KeyframeEffectReadOnly source)]
 interface KeyframeEffect : KeyframeEffectReadOnly {
-  inherit attribute (Element or CSSPseudoElement)? target;
-  [NeedsCallerType]
-  inherit attribute IterationCompositeOperation    iterationComposite;
-  inherit attribute CompositeOperation          composite;
   [Throws]
   void setKeyframes (object? keyframes);
 };
