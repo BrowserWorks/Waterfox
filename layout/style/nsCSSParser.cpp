@@ -62,7 +62,7 @@
 #include "mozilla/StylePrefs.h"
 #include "nsRuleData.h"
 #include "mozilla/CSSVariableValues.h"
-#include "mozilla/dom/AnimationEffectReadOnlyBinding.h"
+#include "mozilla/dom/AnimationEffectBinding.h"
 #include "mozilla/dom/URL.h"
 #include "gfxFontFamilyList.h"
 

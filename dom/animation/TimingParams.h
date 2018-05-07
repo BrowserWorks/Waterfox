@@ -19,7 +19,7 @@
 #ifdef None
 #undef None
 #endif
-#include "mozilla/dom/AnimationEffectReadOnlyBinding.h" // for FillMode
+#include "mozilla/dom/AnimationEffectBinding.h" // for FillMode
                                                         // and PlaybackDirection
 
 class nsIDocument;

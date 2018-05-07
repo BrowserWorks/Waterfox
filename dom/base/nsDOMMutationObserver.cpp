@@ -391,7 +391,7 @@ void
 nsAnimationReceiver::RecordAnimationMutation(Animation* aAnimation,
                                              AnimationMutation aMutationType)
 {
-  mozilla::dom::AnimationEffectReadOnly* effect = aAnimation->GetEffect();
+  mozilla::dom::AnimationEffect* effect = aAnimation->GetEffect();
   if (!effect) {
     return;
   }

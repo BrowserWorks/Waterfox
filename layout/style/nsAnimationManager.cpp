@@ -503,7 +503,7 @@ UpdateOldAnimationPropertiesWithNew(
   // Update the old from the new so we can keep the original object
   // identity (and any expando properties attached to it).
   if (aOld.GetEffect()) {
-    dom::AnimationEffectReadOnly* oldEffect = aOld.GetEffect();
+    dom::AnimationEffect* oldEffect = aOld.GetEffect();
     animationChanged = oldEffect->SpecifiedTiming() != aNewTiming;
     oldEffect->SetSpecifiedTiming(aNewTiming);
 

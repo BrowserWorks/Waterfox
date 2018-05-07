@@ -6,7 +6,7 @@
 
 #include "AnimationHelper.h"
 #include "mozilla/ComputedTimingFunction.h" // for ComputedTimingFunction
-#include "mozilla/dom/AnimationEffectReadOnlyBinding.h" // for dom::FillMode
+#include "mozilla/dom/AnimationEffectBinding.h" // for dom::FillMode
 #include "mozilla/dom/KeyframeEffectBinding.h" // for dom::IterationComposite
 #include "mozilla/dom/KeyframeEffect.h" // for dom::KeyFrameEffectReadOnly
 #include "mozilla/layers/CompositorThread.h" // for CompositorThreadHolder
@@ -242,7 +242,7 @@ AnimationHelper::SampleAnimationForEachNode(TimeStamp aTime,
     };
 
     ComputedTiming computedTiming =
-      dom::AnimationEffectReadOnly::GetComputedTimingAt(
+      dom::AnimationEffect::GetComputedTimingAt(
         Nullable<TimeDuration>(elapsedDuration), timing,
         animation.playbackRate());
 

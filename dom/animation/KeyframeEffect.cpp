@@ -57,18 +57,18 @@ PropertyValuePair::operator==(const PropertyValuePair& aOther) const
 namespace dom {
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(KeyframeEffect,
-                                   AnimationEffectReadOnly,
+                                   AnimationEffect,
                                    mTarget)
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(KeyframeEffect,
-                                               AnimationEffectReadOnly)
+                                               AnimationEffect)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(KeyframeEffect)
-NS_INTERFACE_MAP_END_INHERITING(AnimationEffectReadOnly)
+NS_INTERFACE_MAP_END_INHERITING(AnimationEffect)
 
-NS_IMPL_ADDREF_INHERITED(KeyframeEffect, AnimationEffectReadOnly)
-NS_IMPL_RELEASE_INHERITED(KeyframeEffect, AnimationEffectReadOnly)
+NS_IMPL_ADDREF_INHERITED(KeyframeEffect, AnimationEffect)
+NS_IMPL_RELEASE_INHERITED(KeyframeEffect, AnimationEffect)
 
 KeyframeEffect::KeyframeEffect(
   nsIDocument* aDocument,
@@ -87,7 +87,7 @@ KeyframeEffect::KeyframeEffect(
   const Maybe<OwningAnimationTarget>& aTarget,
   AnimationEffectTimingReadOnly* aTiming,
   const KeyframeEffectParams& aOptions)
-  : AnimationEffectReadOnly(aDocument, aTiming)
+  : AnimationEffect(aDocument, aTiming)
   , mTarget(aTarget)
   , mEffectOptions(aOptions)
   , mInEffectOnLastAnimationTimingUpdate(false)

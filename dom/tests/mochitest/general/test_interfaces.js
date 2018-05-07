@@ -111,7 +111,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "Animation"},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "AnimationEffectReadOnly", release: false},
+    {name: "AnimationEffect", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "AnimationEffectTiming", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
