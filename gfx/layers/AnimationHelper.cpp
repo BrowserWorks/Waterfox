@@ -8,7 +8,7 @@
 #include "mozilla/ComputedTimingFunction.h" // for ComputedTimingFunction
 #include "mozilla/dom/AnimationEffectReadOnlyBinding.h" // for dom::FillMode
 #include "mozilla/dom/KeyframeEffectBinding.h" // for dom::IterationComposite
-#include "mozilla/dom/KeyframeEffectReadOnly.h" // for dom::KeyFrameEffectReadOnly
+#include "mozilla/dom/KeyframeEffect.h" // for dom::KeyFrameEffectReadOnly
 #include "mozilla/layers/CompositorThread.h" // for CompositorThreadHolder
 #include "mozilla/layers/LayerAnimationUtils.h" // for TimingFunctionToComputedTimingFunction
 #include "mozilla/StyleAnimationValue.h" // for StyleAnimationValue, etc

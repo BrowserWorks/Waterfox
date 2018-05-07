@@ -14,7 +14,7 @@
 #include "mozilla/ServoStyleSet.h"
 #include "mozilla/StyleAnimationValue.h"
 #include "mozilla/dom/DocumentTimeline.h"
-#include "mozilla/dom/KeyframeEffectReadOnly.h"
+#include "mozilla/dom/KeyframeEffect.h"
 
 #include "nsPresContext.h"
 #include "nsStyleSet.h"
