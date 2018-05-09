@@ -922,7 +922,7 @@ gfxPlatformFontList::ResolveEmojiFontNames(
 void
 gfxPlatformFontList::GetFontFamiliesFromGenericFamilies(
     nsTArray<nsString>& aGenericNameFamilies,
-    nsAtom* aLangGroup,
+    nsIAtom* aLangGroup,
     nsTArray<RefPtr<gfxFontFamily>>* aGenericFamilies)
 {
     // lookup and add platform fonts uniquely
@@ -931,8 +931,7 @@ gfxPlatformFontList::GetFontFamiliesFromGenericFamilies(
         style.language = aLangGroup;
         style.systemFont = false;
         AutoTArray<gfxFontFamily*,10> families;
-        FindAndAddFamilies(genericFamily, &families, FindFamiliesFlags(0),
-                           &style);
+        FindAndAddFamilies(genericFamily, &families, &style, 1.0);
         for (gfxFontFamily* f : families) {
             if (!aGenericFamilies->Contains(f)) {
                 aGenericFamilies->AppendElement(f);
