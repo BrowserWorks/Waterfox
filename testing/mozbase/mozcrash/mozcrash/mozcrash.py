@@ -521,18 +521,18 @@ def cleanup_pending_crash_reports():
     affecting test results; it is best to ensure that these are removed
     before starting any browser tests.
 
-    Firefox stores pending crash reports in "<UAppData>/Crash Reports".
+    Waterfox stores pending crash reports in "<UAppData>/Crash Reports".
     If the browser is not running, it cannot provide <UAppData>, so this
     code tries to anticipate its value.
 
     See dom/system/OSFileConstants.cpp for platform variations of <UAppData>.
     """
     if mozinfo.isWin:
-        location = os.path.expanduser("~\\AppData\\Roaming\\Mozilla\\Firefox\\Crash Reports")
+        location = os.path.expanduser("~\\AppData\\Roaming\\Waterfox\\Crash Reports")
     elif mozinfo.isMac:
-        location = os.path.expanduser("~/Library/Application Support/firefox/Crash Reports")
+        location = os.path.expanduser("~/Library/Application Support/waterfox/Crash Reports")
     else:
-        location = os.path.expanduser("~/.mozilla/firefox/Crash Reports")
+        location = os.path.expanduser("~/.waterfox/Crash Reports")
     logger = get_logger()
     if os.path.exists(location):
         try:
