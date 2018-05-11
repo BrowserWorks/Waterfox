@@ -53,7 +53,7 @@ public class GeckoProfileDirectories {
         public boolean matches(INISection section);
     }
 
-    private static final String MOZILLA_DIR_NAME = "mozilla";
+    private static final String WATERFOX_DIR_NAME = "waterfox";
 
     /**
      * Returns true if the supplied profile entry represents the default profile.
@@ -116,14 +116,14 @@ public class GeckoProfileDirectories {
      */
     @RobocopTarget
     public static File getMozillaDirectory(Context context) throws NoMozillaDirectoryException {
-        final File mozillaDir = new File(context.getFilesDir(), MOZILLA_DIR_NAME);
+        final File mozillaDir = new File(context.getFilesDir(), WATERFOX_DIR_NAME);
         if (mozillaDir.mkdirs() || mozillaDir.isDirectory()) {
             return mozillaDir;
         }
 
         // Although this leaks a path to the system log, the path is
         // predictable (unlike a profile directory), so this is fine.
-        throw new NoMozillaDirectoryException("Unable to create mozilla directory at " + mozillaDir.getAbsolutePath());
+        throw new NoMozillaDirectoryException("Unable to create waterfox directory at " + mozillaDir.getAbsolutePath());
     }
 
     /**
