@@ -294,16 +294,16 @@ GetSystemParentDirectory(nsIFile** aFile)
 #if defined(XP_MACOSX)
   rv = GetOSXFolderType(kOnSystemDisk, kApplicationSupportFolderType, getter_AddRefs(localDir));
   if (NS_SUCCEEDED(rv)) {
-    rv = localDir->AppendNative(NS_LITERAL_CSTRING("Mozilla"));
+    rv = localDir->AppendNative(NS_LITERAL_CSTRING("Waterfox"));
   }
 #else
   NS_NAMED_LITERAL_CSTRING(dirname,
 #ifdef HAVE_USR_LIB64_DIR
-                           "/usr/lib64/mozilla"
+                           "/usr/lib64/waterfox"
 #elif defined(__OpenBSD__) || defined(__FreeBSD__)
-                           "/usr/local/lib/mozilla"
+                           "/usr/local/lib/waterfox"
 #else
-                           "/usr/lib/mozilla"
+                           "/usr/lib/waterfox"
 #endif
                            );
   rv = NS_NewNativeLocalFile(dirname, false, getter_AddRefs(localDir));
@@ -415,7 +415,7 @@ nsXREDirProvider::GetFile(const char* aProperty, bool* aPersistent,
     rv = GetUserDataDirectoryHome(getter_AddRefs(localDir), false);
     if (NS_SUCCEEDED(rv)) {
 #if defined(XP_MACOSX)
-      rv = localDir->AppendNative(NS_LITERAL_CSTRING("Mozilla"));
+      rv = localDir->AppendNative(NS_LITERAL_CSTRING("Waterfox"));
       if (NS_SUCCEEDED(rv)) {
         rv = localDir->AppendNative(NS_LITERAL_CSTRING("NativeMessagingHosts"));
       }
@@ -479,9 +479,9 @@ nsXREDirProvider::GetFile(const char* aProperty, bool* aPersistent,
   else if (!strcmp(aProperty, XRE_SYS_SHARE_EXTENSION_PARENT_DIR)) {
 #ifdef ENABLE_SYSTEM_EXTENSION_DIRS
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
-    static const char *const sysLExtDir = "/usr/local/share/mozilla/extensions";
+    static const char *const sysLExtDir = "/usr/local/share/waterfox/extensions";
 #else
-    static const char *const sysLExtDir = "/usr/share/mozilla/extensions";
+    static const char *const sysLExtDir = "/usr/share/waterfox/extensions";
 #endif
     return NS_NewNativeLocalFile(nsDependentCString(sysLExtDir),
                                  false, aFile);
@@ -1289,7 +1289,7 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
                                            gAppData->name)))) {
       return NS_ERROR_FAILURE;
     }
-  } else if (NS_FAILED(localDir->AppendNative(NS_LITERAL_CSTRING("Mozilla")))) {
+  } else if (NS_FAILED(localDir->AppendNative(NS_LITERAL_CSTRING("Waterfox")))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -1314,7 +1314,7 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
     // under SOFTWARE\Mozilla.
     wchar_t regPath[1024] = { L'\0' };
     swprintf_s(regPath, mozilla::ArrayLength(regPath), L"SOFTWARE\\%S\\%S\\TaskBarIDs",
-               (hasVendor ? gAppData->vendor : "Mozilla"), MOZ_APP_BASENAME);
+               (hasVendor ? gAppData->vendor : "Waterfox"), MOZ_APP_BASENAME);
 
     // If we pre-computed the hash, grab it from the registry.
     pathHashResult = GetCachedHash(HKEY_LOCAL_MACHINE,
@@ -1640,7 +1640,7 @@ nsXREDirProvider::AppendSysUserExtensionPath(nsIFile* aFile)
 
 #if defined (XP_MACOSX) || defined(XP_WIN)
 
-  static const char* const sXR = "Mozilla";
+  static const char* const sXR = "Waterfox";
   rv = aFile->AppendNative(nsDependentCString(sXR));
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1729,7 +1729,7 @@ nsXREDirProvider::AppendProfilePath(nsIFile* aFile,
   // XXXsmaug ...and the rest of the profile creation!
   MOZ_ASSERT(!aAppName,
              "Profile creation for external applications is not implemented!");
-  rv = aFile->AppendNative(nsDependentCString("mozilla"));
+  rv = aFile->AppendNative(nsDependentCString("waterfox"));
   NS_ENSURE_SUCCESS(rv, rv);
 #elif defined(XP_UNIX)
   nsAutoCString folder;
