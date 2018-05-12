@@ -34,7 +34,7 @@ if CONFIG['MOZ_OPTIMIZE']:
 footer = """
 
 # We allow warnings for third-party code that can be updated from upstream.
-AllowCompilerWarnings()
+ALLOW_COMPILER_WARNINGS = True
 
 FINAL_LIBRARY = 'gkmedias'
 LOCAL_INCLUDES += [
