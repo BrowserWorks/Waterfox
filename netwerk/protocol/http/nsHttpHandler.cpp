@@ -465,7 +465,7 @@ nsHttpHandler::Init()
     // version.
     uint32_t spoofedVersion = mAppVersion.ToInteger(&rv);
     if (NS_SUCCEEDED(rv)) {
-        spoofedVersion = spoofedVersion - (spoofedVersion % 10);
+        spoofedVersion = (10 - spoofedVersion % 10) + spoofedVersion;
         mSpoofedUserAgent.Assign(nsPrintfCString(
             "Mozilla/5.0 (%s; rv:%d.0) Gecko/%s Firefox/%d.0",
             SPOOFED_OSCPU, spoofedVersion, LEGACY_BUILD_ID, spoofedVersion));

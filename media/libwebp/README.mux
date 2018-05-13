@@ -1,7 +1,7 @@
 ﻿          __   __  ____  ____  ____  __ __  _     __ __
          /  \\/  \/  _ \/  _ \/  _ \/  \  \/ \___/_ / _\
          \       /   __/  _  \   __/      /  /  (_/  /__
-          \__\__/\_____/_____/__/  \__//_/\_____/__/___/v0.4.1
+          \__\__/\_____/_____/__/  \__//_/\_____/__/___/v1.0.0
 
 
 Description:
@@ -33,6 +33,7 @@ Usage: webpmux -get GET_OPTIONS INPUT -o OUTPUT
        webpmux -info INPUT
        webpmux [-h|-help]
        webpmux -version
+       webpmux argument_file_name
 
 GET_OPTIONS:
  Extract relevant data:
@@ -91,6 +92,9 @@ INPUT & OUTPUT are in WebP format.
 
 Note: The nature of EXIF, XMP and ICC data is not checked and is assumed to be
 valid.
+
+Note: if a single file name is passed as the argument, the arguments will be
+tokenized from this file. The file name must not start with the character '-'.
 
 Visualization tool:
 ===================

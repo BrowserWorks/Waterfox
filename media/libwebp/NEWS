@@ -1,3 +1,13 @@
+- 4/2/2018: version 1.0.0
+  This is a binary compatible release.
+  * lossy encoder improvements to avoid chroma shifts in various circumstances
+    (issues #308, #340)
+  * big-endian fixes for decode, RGBA import and WebPPictureDistortion
+  Tool updates:
+    gifwebp, anim_diff - default duration behavior (<= 10ms) changed to match
+                         web browsers, transcoding tools (issue #379)
+    img2webp, webpmux - allow options to be passed in via a file (issue #355)
+
 - 11/24/2017: version 0.6.1
   This is a binary compatible release.
   * lossless performance and compression improvements + a new 'cruncher' mode

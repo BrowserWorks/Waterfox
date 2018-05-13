@@ -932,14 +932,28 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         <parameter name="aEvent"/>
         <body><![CDATA[
           let droppedItem = this._getDroppableItem(aEvent);
-          if (droppedItem) {
-            this.value = droppedItem instanceof URL ? droppedItem.href : droppedItem;
-            SetPageProxyState("invalid");
-            this.focus();
-            this.handleCommand();
-            // Force not showing the dropped URI immediately.
-            gBrowser.userTypedValue = null;
-            URLBarSetURI();
+          if (Services.prefs.getBoolPref("browser.urlbar.dragDropLoad", false)) {
+            if (droppedItem) {
+              this.value = droppedItem instanceof URL ? droppedItem.href : droppedItem;
+              SetPageProxyState("invalid");
+              this.focus();
+              this.handleCommand();
+              // Force not showing the dropped URI immediately.
+              gBrowser.userTypedValue = null;
+              URLBarSetURI();
+            }
+          } else {
+            if (droppedItem) {
+              this.value = droppedItem instanceof URL ? droppedItem.href : droppedItem;
+              SetPageProxyState("invalid");
+              this.focus();
+              if (droppedItem instanceof URL) {
+                this.handleCommand();
+                // Force not showing the dropped URI immediately.
+                gBrowser.userTypedValue = null;
+                URLBarSetURI();
+              }
+            }
           }
         ]]></body>
       </method>

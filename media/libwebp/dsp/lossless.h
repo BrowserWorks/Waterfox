@@ -25,10 +25,6 @@
 extern "C" {
 #endif
 
-#ifdef WEBP_EXPERIMENTAL_FEATURES
-#include "../enc/delta_palettization_enc.h"
-#endif  // WEBP_EXPERIMENTAL_FEATURES
-
 //------------------------------------------------------------------------------
 // Decoding
 

@@ -4,7 +4,7 @@
           \__\__/\____/\_____/__/ ____  ___
                 / _/ /    \    \ /  _ \/ _/
                /  \_/   / /   \ \   __/  \__
-               \____/____/\_____/_____/____/v0.6.1
+               \____/____/\_____/_____/____/v1.0.0
 
 Description:
 ============
@@ -458,6 +458,7 @@ File-level options (only used at the start of compression):
  -mixed ............... use mixed lossy/lossless automatic mode
  -v ................... verbose mode
  -h ................... this help
+ -version ............. print version number and exit
 
 Per-frame options (only used for subsequent images input):
  -d <int> ............. frame duration in ms (default: 100)
@@ -524,6 +525,11 @@ Options:
   -min_psnr <float> ... minimum per-frame PSNR
   -raw_comparison ..... if this flag is not used, RGB is
                         premultiplied before comparison
+  -max_diff <int> ..... maximum allowed difference per channel
+                        between corresponding pixels in subsequent
+                        frames
+  -h .................. this help
+  -version ............ print version number and exit
 
 Building:
 ---------

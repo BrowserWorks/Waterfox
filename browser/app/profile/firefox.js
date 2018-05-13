@@ -301,6 +301,9 @@ pref("browser.urlbar.doubleClickSelectsAll", true);
 pref("browser.urlbar.doubleClickSelectsAll", false);
 #endif
 
+// Allow dropping text directly in urlbar and loading
+pref("browser.urlbar.dragDropLoad", false);
+
 // Control autoFill behavior
 pref("browser.urlbar.autoFill", true);
 pref("browser.urlbar.autoFill.typed", true);
@@ -1266,7 +1269,7 @@ pref("browser.newtabpage.introShown", false);
 pref("browser.newtabpage.enabled", true);
 
 // Toggles the directory tiles content of 'about:newtab'.
-pref("browser.newtabpage.enhanced", true);
+pref("browser.newtabpage.enhanced", false);
 
 // enables Activity Stream inspired layout
 pref("browser.newtabpage.compact", false);
@@ -1281,7 +1284,7 @@ pref("browser.newtabpage.rows", 3);
 pref("browser.newtabpage.columns", 5);
 
 // directory tiles download URL
-sticky_pref("browser.newtabpage.directory.source", "");
+sticky_pref("browser.newtabpage.directory.source", "data:application/json,{}");
 
 // activates Activity Stream
 #ifdef NIGHTLY_BUILD
@@ -1537,7 +1540,7 @@ pref("browser.tabs.remote.autostart.2", true);
 #endif
 
 // For the about:tabcrashed page
-pref("browser.tabs.crashReporting.sendReport", true);
+pref("browser.tabs.crashReporting.sendReport", false);
 pref("browser.tabs.crashReporting.includeURL", false);
 pref("browser.tabs.crashReporting.requestEmail", false);
 pref("browser.tabs.crashReporting.emailMe", false);
@@ -1687,7 +1690,7 @@ pref("browser.sessionstore.restore_tabs_lazily", true);
 pref("browser.suppress_first_window_animation", true);
 
 // Preferences for Photon onboarding system extension
-pref("browser.onboarding.enabled", true);
+sticky_pref("browser.onboarding.enabled", false);
 // Mark this as an upgraded profile so we don't offer the initial new user onboarding tour.
 pref("browser.onboarding.tourset-version", 1);
 pref("browser.onboarding.hidden", false);
