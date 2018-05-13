@@ -46,6 +46,7 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   , mUpgradeInsecureRequests(false)
   , mVerifySignedContent(false)
   , mEnforceSRI(false)
+  , mAllowDocumentToBeAgnosticToCSP(false)
   , mForceInheritPrincipalDropped(false)
   , mInnerWindowID(0)
   , mOuterWindowID(0)
@@ -221,6 +222,7 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
   , mUpgradeInsecureRequests(false)
   , mVerifySignedContent(false)
   , mEnforceSRI(false)
+  , mAllowDocumentToBeAgnosticToCSP(false)
   , mForceInheritPrincipalDropped(false)
   , mInnerWindowID(0)
   , mOuterWindowID(0)
@@ -282,6 +284,7 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
   , mUpgradeInsecureRequests(rhs.mUpgradeInsecureRequests)
   , mVerifySignedContent(rhs.mVerifySignedContent)
   , mEnforceSRI(rhs.mEnforceSRI)
+  , mAllowDocumentToBeAgnosticToCSP(rhs.mAllowDocumentToBeAgnosticToCSP)
   , mForceInheritPrincipalDropped(rhs.mForceInheritPrincipalDropped)
   , mInnerWindowID(rhs.mInnerWindowID)
   , mOuterWindowID(rhs.mOuterWindowID)
@@ -315,6 +318,7 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    bool aUpgradeInsecureRequests,
                    bool aVerifySignedContent,
                    bool aEnforceSRI,
+                   bool aAllowDocumentToBeAgnosticToCSP,
                    bool aForceInheritPrincipalDropped,
                    uint64_t aInnerWindowID,
                    uint64_t aOuterWindowID,
@@ -343,6 +347,7 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   , mUpgradeInsecureRequests(aUpgradeInsecureRequests)
   , mVerifySignedContent(aVerifySignedContent)
   , mEnforceSRI(aEnforceSRI)
+  , mAllowDocumentToBeAgnosticToCSP(aAllowDocumentToBeAgnosticToCSP)
   , mForceInheritPrincipalDropped(aForceInheritPrincipalDropped)
   , mInnerWindowID(aInnerWindowID)
   , mOuterWindowID(aOuterWindowID)
@@ -743,6 +748,25 @@ LoadInfo::ResetPrincipalToInheritToNullPrincipal()
 
   return NS_OK;
 }
+
+NS_IMETHODIMP
+LoadInfo::SetAllowDocumentToBeAgnosticToCSP(bool aAllowDocumentToBeAgnosticToCSP)
+{
+  if (mInternalContentPolicyType != nsIContentPolicy::TYPE_DOCUMENT) {
+    MOZ_ASSERT(false, "not available for loads other than TYPE_DOCUMENT");
+    return NS_ERROR_UNEXPECTED;
+  }
+  mAllowDocumentToBeAgnosticToCSP = aAllowDocumentToBeAgnosticToCSP;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetAllowDocumentToBeAgnosticToCSP(bool* aAllowDocumentToBeAgnosticToCSP)
+{
+  *aAllowDocumentToBeAgnosticToCSP = mAllowDocumentToBeAgnosticToCSP;
+  return NS_OK;
+}
+
 
 NS_IMETHODIMP
 LoadInfo::SetScriptableOriginAttributes(JSContext* aCx,

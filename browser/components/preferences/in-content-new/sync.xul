@@ -73,10 +73,6 @@
         --><image class="androidLink"></image><label id="fxaMobilePromo-android"
                   class="text-link"><!--
         -->&mobilePromo3.androidLink;</label><!--
-        -->&mobilePromo3.iOSBefore;<!--
-        --><image class="iOSLink"></image><label id="fxaMobilePromo-ios"
-                  class="text-link"><!--
-        -->&mobilePromo3.iOSLink;</label><!--
         -->&mobilePromo3.end;
     </label>
   </vbox>

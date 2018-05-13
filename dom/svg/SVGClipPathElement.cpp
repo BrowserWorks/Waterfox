@@ -50,6 +50,13 @@ SVGClipPathElement::GetEnumInfo()
                             ArrayLength(sEnumInfo));
 }
 
+bool
+SVGClipPathElement::IsUnitsObjectBoundingBox() const
+{
+  return mEnumAttributes[CLIPPATHUNITS].GetAnimValue() == SVG_UNIT_TYPE_OBJECTBOUNDINGBOX;
+}
+
+
 //----------------------------------------------------------------------
 // nsIDOMNode methods
 

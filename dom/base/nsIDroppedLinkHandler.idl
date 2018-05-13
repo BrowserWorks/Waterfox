@@ -80,6 +80,16 @@ interface nsIDroppedLinkHandler : nsISupports
                  [retval, array, size_is(aCount)] out nsIDroppedLinkItem aLinks);
 
   /**
+   * Given a drop event aEvent, validate the extra URIs for the event,
+   * this is used when the caller extracts yet another URIs from the dropped
+   * text, like home button that splits the text with "|".
+   */
+  void validateURIsForDrop(in nsIDOMDragEvent aEvent,
+                           in unsigned long aURIsCount,
+                           [array, size_is(aURIsCount)] in wstring aURIs,
+                           [optional] in boolean aDisallowInherit);
+
+  /**
    * Given a drop event aEvent, determines the triggering principal for the
    * event and returns it.
    */

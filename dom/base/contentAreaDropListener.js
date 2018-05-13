@@ -238,6 +238,15 @@ ContentAreaDropListener.prototype =
     return links;
   },
 
+  validateURIsForDrop: function(aEvent, aURIsCount, aURIs, aDisallowInherit)
+  {
+    let dataTransfer = aEvent.dataTransfer;
+
+    for (let uri of aURIs) {
+      this._validateURI(dataTransfer, uri, aDisallowInherit);
+    }
+  },
+
   _eventTargetIsDisabled: function(aEvent)
   {
     let ownerDoc = aEvent.originalTarget.ownerDocument;

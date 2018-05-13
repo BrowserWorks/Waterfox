@@ -48,6 +48,7 @@ struct LoadInfoArgs
   bool                        upgradeInsecureRequests;
   bool                        verifySignedContent;
   bool                        enforceSRI;
+  bool                        allowDocumentToBeAgnosticToCSP;
   bool                        forceInheritPrincipalDropped;
   uint64_t                    innerWindowID;
   uint64_t                    outerWindowID;

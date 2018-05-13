@@ -5121,8 +5121,8 @@ SVGTextFrame::DoGlyphPositioning()
     float actualTextLength =
       static_cast<float>(presContext->AppUnitsToGfxUnits(frameLength) * factor);
 
-    RefPtr<SVGAnimatedEnumeration> lengthAdjustEnum = element->LengthAdjust();
-    uint16_t lengthAdjust = lengthAdjustEnum->AnimVal();
+    uint16_t lengthAdjust =
+      element->EnumAttributes()[SVGTextContentElement::LENGTHADJUST].GetAnimValue();
     switch (lengthAdjust) {
       case SVG_LENGTHADJUST_SPACINGANDGLYPHS:
         // Scale the glyphs and their positions.
