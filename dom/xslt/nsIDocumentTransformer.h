@@ -7,6 +7,7 @@
 
 #include "nsISupports.h"
 
+class nsIContent;
 class nsIDocument;
 class nsIDOMNode;
 class nsIURI;
