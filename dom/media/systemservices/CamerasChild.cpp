@@ -291,7 +291,7 @@ CamerasChild::NumberOfCapabilities(CaptureEngine aCapEngine,
   LOG(("NumberOfCapabilities for %s", deviceUniqueIdUTF8));
   nsCString unique_id(deviceUniqueIdUTF8);
   nsCOMPtr<nsIRunnable> runnable =
-    mozilla::NewRunnableMethod<CaptureEngine, nsCString>(
+    mozilla::NewNonOwningRunnableMethod<CaptureEngine, nsCString>(
       "camera::PCamerasChild::SendNumberOfCapabilities",
       this,
       &CamerasChild::SendNumberOfCapabilities,
@@ -307,7 +307,7 @@ CamerasChild::NumberOfCaptureDevices(CaptureEngine aCapEngine)
 {
   LOG((__PRETTY_FUNCTION__));
   nsCOMPtr<nsIRunnable> runnable =
-    mozilla::NewRunnableMethod<CaptureEngine>(
+    mozilla::NewNonOwningRunnableMethod<CaptureEngine>(
       "camera::PCamerasChild::SendNumberOfCaptureDevices",
       this,
       &CamerasChild::SendNumberOfCaptureDevices,
@@ -334,7 +334,7 @@ CamerasChild::EnsureInitialized(CaptureEngine aCapEngine)
 {
   LOG((__PRETTY_FUNCTION__));
   nsCOMPtr<nsIRunnable> runnable =
-    mozilla::NewRunnableMethod<CaptureEngine>(
+    mozilla::NewNonOwningRunnableMethod<CaptureEngine>(
       "camera::PCamerasChild::SendEnsureInitialized",
       this,
       &CamerasChild::SendEnsureInitialized,
@@ -353,7 +353,7 @@ CamerasChild::GetCaptureCapability(CaptureEngine aCapEngine,
   LOG(("GetCaptureCapability: %s %d", unique_idUTF8, capability_number));
   nsCString unique_id(unique_idUTF8);
   nsCOMPtr<nsIRunnable> runnable =
-    mozilla::NewRunnableMethod<CaptureEngine, nsCString, unsigned int>(
+    mozilla::NewNonOwningRunnableMethod<CaptureEngine, nsCString, unsigned int>(
       "camera::PCamerasChild::SendGetCaptureCapability",
       this,
       &CamerasChild::SendGetCaptureCapability,
@@ -395,7 +395,7 @@ CamerasChild::GetCaptureDevice(CaptureEngine aCapEngine,
 {
   LOG((__PRETTY_FUNCTION__));
   nsCOMPtr<nsIRunnable> runnable =
-    mozilla::NewRunnableMethod<CaptureEngine, unsigned int>(
+    mozilla::NewNonOwningRunnableMethod<CaptureEngine, unsigned int>(
       "camera::PCamerasChild::SendGetCaptureDevice",
       this,
       &CamerasChild::SendGetCaptureDevice,
@@ -439,9 +439,9 @@ CamerasChild::AllocateCaptureDevice(CaptureEngine aCapEngine,
   LOG((__PRETTY_FUNCTION__));
   nsCString unique_id(unique_idUTF8);
   nsCOMPtr<nsIRunnable> runnable =
-    mozilla::NewRunnableMethod<CaptureEngine,
-                               nsCString,
-                               const mozilla::ipc::PrincipalInfo&>(
+    mozilla::NewNonOwningRunnableMethod<CaptureEngine,
+                                        nsCString,
+                                        const mozilla::ipc::PrincipalInfo&>(
       "camera::PCamerasChild::SendAllocateCaptureDevice",
       this,
       &CamerasChild::SendAllocateCaptureDevice,
@@ -475,7 +475,7 @@ CamerasChild::ReleaseCaptureDevice(CaptureEngine aCapEngine,
 {
   LOG((__PRETTY_FUNCTION__));
   nsCOMPtr<nsIRunnable> runnable =
-    mozilla::NewRunnableMethod<CaptureEngine, int>(
+    mozilla::NewNonOwningRunnableMethod<CaptureEngine, int>(
       "camera::PCamerasChild::SendReleaseCaptureDevice",
       this,
       &CamerasChild::SendReleaseCaptureDevice,
@@ -526,7 +526,7 @@ CamerasChild::StartCapture(CaptureEngine aCapEngine,
                            webrtcCaps.codecType,
                            webrtcCaps.interlaced);
   nsCOMPtr<nsIRunnable> runnable = mozilla::
-    NewRunnableMethod<CaptureEngine, int, VideoCaptureCapability>(
+    NewNonOwningRunnableMethod<CaptureEngine, int, VideoCaptureCapability>(
       "camera::PCamerasChild::SendStartCapture",
       this,
       &CamerasChild::SendStartCapture,
@@ -542,7 +542,7 @@ CamerasChild::StopCapture(CaptureEngine aCapEngine, const int capture_id)
 {
   LOG((__PRETTY_FUNCTION__));
   nsCOMPtr<nsIRunnable> runnable =
-    mozilla::NewRunnableMethod<CaptureEngine, int>(
+    mozilla::NewNonOwningRunnableMethod<CaptureEngine, int>(
       "camera::PCamerasChild::SendStopCapture",
       this,
       &CamerasChild::SendStopCapture,
@@ -610,7 +610,7 @@ CamerasChild::ShutdownParent()
     // Delete the parent actor.
     // CamerasChild (this) will remain alive and is only deleted by the
     // IPC layer when SendAllDone returns.
-    nsCOMPtr<nsIRunnable> deleteRunnable = mozilla::NewRunnableMethod(
+    nsCOMPtr<nsIRunnable> deleteRunnable = mozilla::NewNonOwningRunnableMethod(
       "camera::PCamerasChild::SendAllDone", this, &CamerasChild::SendAllDone);
     CamerasSingleton::Thread()->Dispatch(deleteRunnable, NS_DISPATCH_NORMAL);
   } else {
