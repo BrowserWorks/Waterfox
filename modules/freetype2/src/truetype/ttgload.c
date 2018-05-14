@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueType Glyph Loader (body).                                        */
 /*                                                                         */
-/*  Copyright 1996-2016 by                                                 */
+/*  Copyright 1996-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -18,12 +18,13 @@
 
 #include <ft2build.h>
 #include FT_INTERNAL_DEBUG_H
+#include FT_CONFIG_CONFIG_H
 #include FT_INTERNAL_CALC_H
 #include FT_INTERNAL_STREAM_H
 #include FT_INTERNAL_SFNT_H
 #include FT_TRUETYPE_TAGS_H
 #include FT_OUTLINE_H
-#include FT_TRUETYPE_DRIVER_H
+#include FT_DRIVER_H
 #include FT_LIST_H
 
 #include "ttgload.h"
@@ -86,7 +87,7 @@
   /*************************************************************************/
   /*                                                                       */
   /* Return the vertical metrics in font units for a given glyph.          */
-  /* See macro `TT_LOADER_SET_PP' below for explanations.                  */
+  /* See function `tt_loader_set_pp' below for explanations.               */
   /*                                                                       */
   FT_LOCAL_DEF( void )
   TT_Get_VMetrics( TT_Face     face,
@@ -162,7 +163,7 @@
       /* This may not be the right place for this, but it works...  */
       /* Note that we have to unconditionally load the tweaks since */
       /* it is possible that glyphs individually switch ClearType's */
-      /* backwards compatibility mode on and off.                   */
+      /* backward compatibility mode on and off.                    */
       sph_set_tweaks( loader, glyph_index );
     }
 #endif /* TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY */
@@ -194,39 +195,39 @@
     if ( face->root.internal->incremental_interface                           &&
          face->root.internal->incremental_interface->funcs->get_glyph_metrics )
     {
-      FT_Incremental_MetricsRec  metrics;
+      FT_Incremental_MetricsRec  incr_metrics;
       FT_Error                   error;
 
 
-      metrics.bearing_x = loader->left_bearing;
-      metrics.bearing_y = 0;
-      metrics.advance   = loader->advance;
-      metrics.advance_v = 0;
+      incr_metrics.bearing_x = loader->left_bearing;
+      incr_metrics.bearing_y = 0;
+      incr_metrics.advance   = loader->advance;
+      incr_metrics.advance_v = 0;
 
       error = face->root.internal->incremental_interface->funcs->get_glyph_metrics(
                 face->root.internal->incremental_interface->object,
-                glyph_index, FALSE, &metrics );
+                glyph_index, FALSE, &incr_metrics );
       if ( error )
         goto Exit;
 
-      left_bearing  = (FT_Short)metrics.bearing_x;
-      advance_width = (FT_UShort)metrics.advance;
+      left_bearing  = (FT_Short)incr_metrics.bearing_x;
+      advance_width = (FT_UShort)incr_metrics.advance;
 
 #if 0
 
       /* GWW: Do I do the same for vertical metrics? */
-      metrics.bearing_x = 0;
-      metrics.bearing_y = loader->top_bearing;
-      metrics.advance   = loader->vadvance;
+      incr_metrics.bearing_x = 0;
+      incr_metrics.bearing_y = loader->top_bearing;
+      incr_metrics.advance   = loader->vadvance;
 
       error = face->root.internal->incremental_interface->funcs->get_glyph_metrics(
                 face->root.internal->incremental_interface->object,
-                glyph_index, TRUE, &metrics );
+                glyph_index, TRUE, &incr_metrics );
       if ( error )
         goto Exit;
 
-      top_bearing    = (FT_Short)metrics.bearing_y;
-      advance_height = (FT_UShort)metrics.advance;
+      top_bearing    = (FT_Short)incr_metrics.bearing_y;
+      advance_height = (FT_UShort)incr_metrics.advance;
 
 #endif /* 0 */
 
@@ -332,7 +333,6 @@
     FT_Outline*     outline;
     FT_UShort       n_ins;
     FT_Int          n_points;
-    FT_ULong        tmp;
 
     FT_Byte         *flag, *flag_limit;
     FT_Byte         c, count;
@@ -398,18 +398,21 @@
 
     FT_TRACE5(( "  Instructions size: %u\n", n_ins ));
 
-    /* check it */
-    if ( ( limit - p ) < n_ins )
-    {
-      FT_TRACE0(( "TT_Load_Simple_Glyph: instruction count mismatch\n" ));
-      error = FT_THROW( Too_Many_Hints );
-      goto Fail;
-    }
-
 #ifdef TT_USE_BYTECODE_INTERPRETER
 
     if ( IS_HINTED( load->load_flags ) )
     {
+      FT_ULong  tmp;
+
+
+      /* check instructions size */
+      if ( ( limit - p ) < n_ins )
+      {
+        FT_TRACE1(( "TT_Load_Simple_Glyph: instruction count mismatch\n" ));
+        error = FT_THROW( Too_Many_Hints );
+        goto Fail;
+      }
+
       /* we don't trust `maxSizeOfInstructions' in the `maxp' table */
       /* and thus update the bytecode array size by ourselves       */
 
@@ -661,7 +664,52 @@
     } while ( subglyph->flags & MORE_COMPONENTS );
 
     gloader->current.num_subglyphs = num_subglyphs;
-    FT_TRACE5(( "  %d components\n", num_subglyphs ));
+    FT_TRACE5(( "  %d component%s\n",
+                num_subglyphs,
+                num_subglyphs > 1 ? "s" : "" ));
+
+#ifdef FT_DEBUG_LEVEL_TRACE
+    {
+      FT_UInt  i;
+
+
+      subglyph = gloader->current.subglyphs;
+
+      for ( i = 0; i < num_subglyphs; i++ )
+      {
+        if ( num_subglyphs > 1 )
+          FT_TRACE7(( "    subglyph %d:\n", i ));
+
+        FT_TRACE7(( "      glyph index: %d\n", subglyph->index ));
+
+        if ( subglyph->flags & ARGS_ARE_XY_VALUES )
+          FT_TRACE7(( "      offset: x=%d, y=%d\n",
+                      subglyph->arg1,
+                      subglyph->arg2 ));
+        else
+          FT_TRACE7(( "      matching points: base=%d, component=%d\n",
+                      subglyph->arg1,
+                      subglyph->arg2 ));
+
+        if ( subglyph->flags & WE_HAVE_A_SCALE )
+          FT_TRACE7(( "      scaling: %f\n",
+                      subglyph->transform.xx / 65536.0 ));
+        else if ( subglyph->flags & WE_HAVE_AN_XY_SCALE )
+          FT_TRACE7(( "      scaling: x=%f, y=%f\n",
+                      subglyph->transform.xx / 65536.0,
+                      subglyph->transform.yy / 65536.0 ));
+        else if ( subglyph->flags & WE_HAVE_A_2X2 )
+          FT_TRACE7(( "      scaling: xx=%f, yx=%f\n"
+                      "               xy=%f, yy=%f\n",
+                      subglyph->transform.xx / 65536.0,
+                      subglyph->transform.yx / 65536.0,
+                      subglyph->transform.xy / 65536.0,
+                      subglyph->transform.yy / 65536.0 ));
+
+        subglyph++;
+      }
+    }
+#endif /* FT_DEBUG_LEVEL_TRACE */
 
 #ifdef TT_USE_BYTECODE_INTERPRETER
 
@@ -753,7 +801,7 @@
     {
       FT_TRACE1(( "TT_Hint_Glyph: too long instructions" ));
       FT_TRACE1(( " (0x%lx byte) is truncated\n",
-                 loader->glyph->control_len ));
+                  loader->glyph->control_len ));
     }
     n_ins = loader->glyph->control_len;
 
@@ -775,8 +823,8 @@
     }
     else
     {
-      loader->exec->metrics.x_scale = loader->size->metrics.x_scale;
-      loader->exec->metrics.y_scale = loader->size->metrics.y_scale;
+      loader->exec->metrics.x_scale = loader->size->metrics->x_scale;
+      loader->exec->metrics.y_scale = loader->size->metrics->y_scale;
     }
 #endif
 
@@ -818,11 +866,11 @@
 #endif
 
 #ifdef TT_SUPPORT_SUBPIXEL_HINTING_MINIMAL
-    /* Save possibly modified glyph phantom points unless in v40 backwards */
+    /* Save possibly modified glyph phantom points unless in v40 backward  */
     /* compatibility mode, where no movement on the x axis means no reason */
     /* to change bearings or advance widths.                               */
     if ( !( driver->interpreter_version == TT_INTERPRETER_VERSION_40 &&
-            !loader->exec->backwards_compatibility ) )
+            loader->exec->backward_compatibility ) )
     {
 #endif
       loader->pp1 = zone->cur[zone->n_points - 4];
@@ -886,7 +934,8 @@
 
 #ifdef TT_CONFIG_OPTION_GX_VAR_SUPPORT
 
-    if ( loader->face->doblend && !loader->face->is_default_instance )
+    if ( FT_IS_NAMED_INSTANCE( FT_FACE( loader->face ) ) ||
+         FT_IS_VARIATION( FT_FACE( loader->face ) )      )
     {
       /* Deltas apply to the unscaled data. */
       error = TT_Vary_Apply_Glyph_Deltas( loader->face,
@@ -923,7 +972,7 @@
       TT_Driver  driver = (TT_Driver)FT_FACE_DRIVER( face );
 
       FT_String*  family         = face->root.family_name;
-      FT_UInt     ppem           = loader->size->metrics.x_ppem;
+      FT_UInt     ppem           = loader->size->metrics->x_ppem;
       FT_String*  style          = face->root.style_name;
       FT_UInt     x_scale_factor = 1000;
 #endif
@@ -952,9 +1001,9 @@
         if ( ( loader->load_flags & FT_LOAD_NO_SCALE ) == 0 ||
              x_scale_factor != 1000                         )
         {
-          x_scale = FT_MulDiv( loader->size->metrics.x_scale,
+          x_scale = FT_MulDiv( loader->size->metrics->x_scale,
                                (FT_Long)x_scale_factor, 1000 );
-          y_scale = loader->size->metrics.y_scale;
+          y_scale = loader->size->metrics->y_scale;
 
           /* compensate for any scaling by de/emboldening; */
           /* the amount was determined via experimentation */
@@ -974,8 +1023,8 @@
         /* scale the glyph */
         if ( ( loader->load_flags & FT_LOAD_NO_SCALE ) == 0 )
         {
-          x_scale = loader->size->metrics.x_scale;
-          y_scale = loader->size->metrics.y_scale;
+          x_scale = loader->size->metrics->x_scale;
+          y_scale = loader->size->metrics->y_scale;
 
           do_scale = TRUE;
         }
@@ -988,9 +1037,24 @@
           vec->x = FT_MulFix( vec->x, x_scale );
           vec->y = FT_MulFix( vec->y, y_scale );
         }
+      }
 
+#ifdef TT_CONFIG_OPTION_GX_VAR_SUPPORT
+      /* if we have a HVAR table, `pp1' and/or `pp2' are already adjusted */
+      if ( !( loader->face->variation_support & TT_FACE_FLAG_VAR_HADVANCE ) ||
+           !IS_HINTED( loader->load_flags )                                 )
+#endif
+      {
         loader->pp1 = outline->points[n_points - 4];
         loader->pp2 = outline->points[n_points - 3];
+      }
+
+#ifdef TT_CONFIG_OPTION_GX_VAR_SUPPORT
+      /* if we have a VVAR table, `pp3' and/or `pp4' are already adjusted */
+      if ( !( loader->face->variation_support & TT_FACE_FLAG_VAR_VADVANCE ) ||
+           !IS_HINTED( loader->load_flags )                                 )
+#endif
+      {
         loader->pp3 = outline->points[n_points - 2];
         loader->pp4 = outline->points[n_points - 1];
       }
@@ -1133,8 +1197,8 @@
 
       if ( !( loader->load_flags & FT_LOAD_NO_SCALE ) )
       {
-        FT_Fixed  x_scale = loader->size->metrics.x_scale;
-        FT_Fixed  y_scale = loader->size->metrics.y_scale;
+        FT_Fixed  x_scale = loader->size->metrics->x_scale;
+        FT_Fixed  y_scale = loader->size->metrics->y_scale;
 
 
         x = FT_MulFix( x, x_scale );
@@ -1142,8 +1206,28 @@
 
         if ( subglyph->flags & ROUND_XY_TO_GRID )
         {
-          x = FT_PIX_ROUND( x );
-          y = FT_PIX_ROUND( y );
+          TT_Face    face   = loader->face;
+          TT_Driver  driver = (TT_Driver)FT_FACE_DRIVER( face );
+
+
+          if ( IS_HINTED( loader->load_flags ) )
+          {
+            /*
+             * We round the horizontal offset only if there is hinting along
+             * the x axis; this corresponds to integer advance width values.
+             *
+             * Theoretically, a glyph's bytecode can toggle ClearType's
+             * `backward compatibility' mode, which would allow modification
+             * of the advance width.  In reality, however, applications
+             * neither allow nor expect modified advance widths if subpixel
+             * rendering is active.
+             *
+             */
+            if ( driver->interpreter_version == TT_INTERPRETER_VERSION_35 )
+              x = FT_PIX_ROUND( x );
+
+            y = FT_PIX_ROUND( y );
+          }
         }
       }
     }
@@ -1356,6 +1440,7 @@
     TT_Driver driver = (TT_Driver)FT_FACE_DRIVER( loader->face );
 #endif
 
+
 #ifdef TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY
     if ( driver->interpreter_version == TT_INTERPRETER_VERSION_38 )
     {
@@ -1392,7 +1477,7 @@
   /* a utility function to retrieve i-th node from given FT_List */
   static FT_ListNode
   ft_list_get_node_at( FT_List  list,
-                       FT_UInt  index )
+                       FT_UInt  idx )
   {
     FT_ListNode  cur;
 
@@ -1402,10 +1487,10 @@
 
     for ( cur = list->head; cur; cur = cur->next )
     {
-      if ( !index )
+      if ( !idx )
         return cur;
 
-      index--;
+      idx--;
     }
 
     return NULL;
@@ -1467,8 +1552,8 @@
 
     if ( ( loader->load_flags & FT_LOAD_NO_SCALE ) == 0 )
     {
-      x_scale = loader->size->metrics.x_scale;
-      y_scale = loader->size->metrics.y_scale;
+      x_scale = loader->size->metrics->x_scale;
+      y_scale = loader->size->metrics->y_scale;
     }
     else
     {
@@ -1574,7 +1659,8 @@
 
 #ifdef TT_CONFIG_OPTION_GX_VAR_SUPPORT
 
-      if ( loader->face->doblend && !loader->face->is_default_instance )
+      if ( FT_IS_NAMED_INSTANCE( FT_FACE( face ) ) ||
+           FT_IS_VARIATION( FT_FACE( face ) )      )
       {
         /* a small outline structure with four elements for */
         /* communication with `TT_Vary_Apply_Glyph_Deltas'  */
@@ -1683,7 +1769,7 @@
     /***********************************************************************/
 
     /* otherwise, load a composite! */
-    else if ( loader->n_contours == -1 )
+    else if ( loader->n_contours < 0 )
     {
       FT_Memory  memory = face->root.memory;
 
@@ -1693,6 +1779,9 @@
 
       FT_ListNode  node, node2;
 
+
+      /* normalize the `n_contours' value */
+      loader->n_contours = -1;
 
       /*
        * We store the glyph index directly in the `node->data' pointer,
@@ -1705,11 +1794,11 @@
       /* clear the nodes filled by sibling chains */
       node = ft_list_get_node_at( &loader->composites, recurse_count );
       for ( node2 = node; node2; node2 = node2->next )
-        node2->data = (void*)ULONG_MAX;
+        node2->data = (void*)FT_ULONG_MAX;
 
       /* check whether we already have a composite glyph with this index */
       if ( FT_List_Find( &loader->composites,
-                         (void*)(unsigned long)glyph_index ) )
+                         FT_UINT_TO_POINTER( glyph_index ) ) )
       {
         FT_TRACE1(( "TT_Load_Composite_Glyph:"
                     " infinite recursion detected\n" ));
@@ -1718,13 +1807,13 @@
       }
 
       else if ( node )
-        node->data = (void*)(unsigned long)glyph_index;
+        node->data = FT_UINT_TO_POINTER( glyph_index );
 
       else
       {
         if ( FT_NEW( node ) )
           goto Exit;
-        node->data = (void*)(unsigned long)glyph_index;
+        node->data = FT_UINT_TO_POINTER( glyph_index );
         FT_List_Add( &loader->composites, node );
       }
 
@@ -1745,7 +1834,8 @@
 
 #ifdef TT_CONFIG_OPTION_GX_VAR_SUPPORT
 
-      if ( face->doblend && !face->is_default_instance )
+      if ( FT_IS_NAMED_INSTANCE( FT_FACE( face ) ) ||
+           FT_IS_VARIATION( FT_FACE( face ) )      )
       {
         short        i, limit;
         FT_SubGlyph  subglyph;
@@ -1988,12 +2078,6 @@
         }
       }
     }
-    else
-    {
-      /* invalid composite count (negative but not -1) */
-      error = FT_THROW( Invalid_Outline );
-      goto Exit;
-    }
 
     /***********************************************************************/
     /***********************************************************************/
@@ -2035,7 +2119,7 @@
 
     y_scale = 0x10000L;
     if ( ( loader->load_flags & FT_LOAD_NO_SCALE ) == 0 )
-      y_scale = size->root.metrics.y_scale;
+      y_scale = size->metrics->y_scale;
 
     if ( glyph->format != FT_GLYPH_FORMAT_COMPOSITE )
       FT_Outline_Get_CBox( &glyph->outline, &bbox );
@@ -2050,24 +2134,24 @@
     glyph->metrics.horiBearingY = bbox.yMax;
     glyph->metrics.horiAdvance  = loader->pp2.x - loader->pp1.x;
 
-    /* Adjust advance width to the value contained in the hdmx table    */
-    /* unless FT_LOAD_COMPUTE_METRICS is set or backwards compatibility */
-    /* mode of the v40 interpreter is active.  See `ttinterp.h' for     */
-    /* details on backwards compatibility mode.                         */
+    /* Adjust advance width to the value contained in the hdmx table   */
+    /* unless FT_LOAD_COMPUTE_METRICS is set or backward compatibility */
+    /* mode of the v40 interpreter is active.  See `ttinterp.h' for    */
+    /* details on backward compatibility mode.                         */
     if (
 #ifdef TT_SUPPORT_SUBPIXEL_HINTING_MINIMAL
-         !( driver->interpreter_version == TT_INTERPRETER_VERSION_40 &&
-            ( loader->exec && loader->exec->backwards_compatibility  ) ) &&
+         !( driver->interpreter_version == TT_INTERPRETER_VERSION_40  &&
+            ( loader->exec && loader->exec->backward_compatibility  ) ) &&
 #endif
-         !face->postscript.isFixedPitch                                  &&
-         IS_HINTED( loader->load_flags )                                 &&
-         !( loader->load_flags & FT_LOAD_COMPUTE_METRICS )               )
+         !face->postscript.isFixedPitch                                 &&
+         IS_HINTED( loader->load_flags )                                &&
+         !( loader->load_flags & FT_LOAD_COMPUTE_METRICS )              )
     {
       FT_Byte*  widthp;
 
 
       widthp = tt_face_get_device_metrics( face,
-                                           size->root.metrics.x_ppem,
+                                           size->metrics->x_ppem,
                                            glyph_index );
 
 #ifdef TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY
@@ -2097,8 +2181,8 @@
     }
 
     /* set glyph dimensions */
-    glyph->metrics.width  = bbox.xMax - bbox.xMin;
-    glyph->metrics.height = bbox.yMax - bbox.yMin;
+    glyph->metrics.width  = SUB_LONG( bbox.xMax, bbox.xMin );
+    glyph->metrics.height = SUB_LONG( bbox.yMax, bbox.yMin );
 
     /* Now take care of vertical metrics.  In the case where there is */
     /* no vertical information within the font (relatively common),   */
@@ -2134,7 +2218,8 @@
         /*       table in the font.  Otherwise, we use the     */
         /*       values defined in the horizontal header.      */
 
-        height = (FT_Short)FT_DivFix( bbox.yMax - bbox.yMin,
+        height = (FT_Short)FT_DivFix( SUB_LONG( bbox.yMax,
+                                                bbox.yMin ),
                                       y_scale );
         if ( face->os2.version != 0xFFFFU )
           advance = (FT_Pos)( face->os2.sTypoAscender -
@@ -2149,7 +2234,7 @@
 #ifdef FT_CONFIG_OPTION_INCREMENTAL
       {
         FT_Incremental_InterfaceRec*  incr;
-        FT_Incremental_MetricsRec     metrics;
+        FT_Incremental_MetricsRec     incr_metrics;
         FT_Error                      error;
 
 
@@ -2159,19 +2244,19 @@
         /* overriding metrics for this glyph.                       */
         if ( incr && incr->funcs->get_glyph_metrics )
         {
-          metrics.bearing_x = 0;
-          metrics.bearing_y = top;
-          metrics.advance   = advance;
+          incr_metrics.bearing_x = 0;
+          incr_metrics.bearing_y = top;
+          incr_metrics.advance   = advance;
 
           error = incr->funcs->get_glyph_metrics( incr->object,
                                                   glyph_index,
                                                   TRUE,
-                                                  &metrics );
+                                                  &incr_metrics );
           if ( error )
             return error;
 
-          top     = metrics.bearing_y;
-          advance = metrics.advance;
+          top     = incr_metrics.bearing_y;
+          advance = incr_metrics.advance;
         }
       }
 
@@ -2213,7 +2298,7 @@
     SFNT_Service        sfnt;
     FT_Stream           stream;
     FT_Error            error;
-    TT_SBit_MetricsRec  metrics;
+    TT_SBit_MetricsRec  sbit_metrics;
 
 
     face   = (TT_Face)glyph->face;
@@ -2226,34 +2311,34 @@
                                    (FT_UInt)load_flags,
                                    stream,
                                    &glyph->bitmap,
-                                   &metrics );
+                                   &sbit_metrics );
     if ( !error )
     {
       glyph->outline.n_points   = 0;
       glyph->outline.n_contours = 0;
 
-      glyph->metrics.width  = (FT_Pos)metrics.width  * 64;
-      glyph->metrics.height = (FT_Pos)metrics.height * 64;
+      glyph->metrics.width  = (FT_Pos)sbit_metrics.width  * 64;
+      glyph->metrics.height = (FT_Pos)sbit_metrics.height * 64;
 
-      glyph->metrics.horiBearingX = (FT_Pos)metrics.horiBearingX * 64;
-      glyph->metrics.horiBearingY = (FT_Pos)metrics.horiBearingY * 64;
-      glyph->metrics.horiAdvance  = (FT_Pos)metrics.horiAdvance  * 64;
+      glyph->metrics.horiBearingX = (FT_Pos)sbit_metrics.horiBearingX * 64;
+      glyph->metrics.horiBearingY = (FT_Pos)sbit_metrics.horiBearingY * 64;
+      glyph->metrics.horiAdvance  = (FT_Pos)sbit_metrics.horiAdvance  * 64;
 
-      glyph->metrics.vertBearingX = (FT_Pos)metrics.vertBearingX * 64;
-      glyph->metrics.vertBearingY = (FT_Pos)metrics.vertBearingY * 64;
-      glyph->metrics.vertAdvance  = (FT_Pos)metrics.vertAdvance  * 64;
+      glyph->metrics.vertBearingX = (FT_Pos)sbit_metrics.vertBearingX * 64;
+      glyph->metrics.vertBearingY = (FT_Pos)sbit_metrics.vertBearingY * 64;
+      glyph->metrics.vertAdvance  = (FT_Pos)sbit_metrics.vertAdvance  * 64;
 
       glyph->format = FT_GLYPH_FORMAT_BITMAP;
 
       if ( load_flags & FT_LOAD_VERTICAL_LAYOUT )
       {
-        glyph->bitmap_left = metrics.vertBearingX;
-        glyph->bitmap_top  = metrics.vertBearingY;
+        glyph->bitmap_left = sbit_metrics.vertBearingX;
+        glyph->bitmap_top  = sbit_metrics.vertBearingY;
       }
       else
       {
-        glyph->bitmap_left = metrics.horiBearingX;
-        glyph->bitmap_top  = metrics.horiBearingY;
+        glyph->bitmap_left = sbit_metrics.horiBearingX;
+        glyph->bitmap_top  = sbit_metrics.horiBearingY;
       }
     }
 
@@ -2270,16 +2355,16 @@
                   FT_Int32      load_flags,
                   FT_Bool       glyf_table_only )
   {
-    FT_Error  error;
-
     TT_Face    face;
     FT_Stream  stream;
+
 #ifdef TT_USE_BYTECODE_INTERPRETER
+    FT_Error   error;
     FT_Bool    pedantic = FT_BOOL( load_flags & FT_LOAD_PEDANTIC );
-#endif
 #if defined TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY || \
     defined TT_SUPPORT_SUBPIXEL_HINTING_MINIMAL
     TT_Driver  driver = (TT_Driver)FT_FACE_DRIVER( (TT_Face)glyph->face );
+#endif
 #endif
 
 
@@ -2336,13 +2421,19 @@
 #ifdef TT_SUPPORT_SUBPIXEL_HINTING_MINIMAL
       if ( driver->interpreter_version == TT_INTERPRETER_VERSION_40 )
       {
-        subpixel_hinting_lean   = TRUE;
-        grayscale_cleartype     = !FT_BOOL( load_flags         &
-                                            FT_LOAD_TARGET_LCD     ||
-                                            load_flags           &
-                                            FT_LOAD_TARGET_LCD_V   );
-        exec->vertical_lcd_lean = FT_BOOL( load_flags           &
-                                           FT_LOAD_TARGET_LCD_V );
+        subpixel_hinting_lean =
+          FT_BOOL( FT_LOAD_TARGET_MODE( load_flags ) !=
+                   FT_RENDER_MODE_MONO               );
+        grayscale_cleartype =
+          FT_BOOL( subpixel_hinting_lean         &&
+                   !( ( load_flags         &
+                        FT_LOAD_TARGET_LCD )   ||
+                      ( load_flags           &
+                        FT_LOAD_TARGET_LCD_V ) ) );
+        exec->vertical_lcd_lean =
+          FT_BOOL( subpixel_hinting_lean    &&
+                   ( load_flags           &
+                     FT_LOAD_TARGET_LCD_V ) );
       }
       else
       {
@@ -2602,7 +2693,8 @@
     TT_LoaderRec  loader;
 
 #ifdef TT_CONFIG_OPTION_GX_VAR_SUPPORT
-#define IS_DEFAULT_INSTANCE  ( ( (TT_Face)glyph->face )->is_default_instance )
+#define IS_DEFAULT_INSTANCE  ( !( FT_IS_NAMED_INSTANCE( glyph->face ) ||  \
+                                  FT_IS_VARIATION( glyph->face )      ) )
 #else
 #define IS_DEFAULT_INSTANCE  1
 #endif
@@ -2617,8 +2709,73 @@
          ( load_flags & FT_LOAD_NO_BITMAP ) == 0 &&
          IS_DEFAULT_INSTANCE                     )
     {
+      FT_Fixed  x_scale = size->root.metrics.x_scale;
+      FT_Fixed  y_scale = size->root.metrics.y_scale;
+
+
       error = load_sbit_image( size, glyph, glyph_index, load_flags );
-      if ( !error )
+      if ( FT_ERR_EQ( error, Missing_Bitmap ) )
+      {
+        /* the bitmap strike is incomplete and misses the requested glyph; */
+        /* if we have a bitmap-only font, return an empty glyph            */
+        if ( !FT_IS_SCALABLE( glyph->face ) )
+        {
+          TT_Face  face = (TT_Face)glyph->face;
+
+          FT_Short  left_bearing = 0;
+          FT_Short  top_bearing  = 0;
+
+          FT_UShort  advance_width  = 0;
+          FT_UShort  advance_height = 0;
+
+
+          /* to return an empty glyph, however, we need metrics data   */
+          /* from the `hmtx' (or `vmtx') table; the assumption is that */
+          /* empty glyphs are missing intentionally, representing      */
+          /* whitespace - not having at least horizontal metrics is    */
+          /* thus considered an error                                  */
+          if ( !face->horz_metrics_size )
+            return error;
+
+          /* we now construct an empty bitmap glyph */
+          TT_Get_HMetrics( face, glyph_index,
+                           &left_bearing,
+                           &advance_width );
+          TT_Get_VMetrics( face, glyph_index,
+                           0,
+                           &top_bearing,
+                           &advance_height );
+
+          glyph->outline.n_points   = 0;
+          glyph->outline.n_contours = 0;
+
+          glyph->metrics.width  = 0;
+          glyph->metrics.height = 0;
+
+          glyph->metrics.horiBearingX = FT_MulFix( left_bearing, x_scale );
+          glyph->metrics.horiBearingY = 0;
+          glyph->metrics.horiAdvance  = FT_MulFix( advance_width, x_scale );
+
+          glyph->metrics.vertBearingX = 0;
+          glyph->metrics.vertBearingY = FT_MulFix( top_bearing, y_scale );
+          glyph->metrics.vertAdvance  = FT_MulFix( advance_height, y_scale );
+
+          glyph->format            = FT_GLYPH_FORMAT_BITMAP;
+          glyph->bitmap.pixel_mode = FT_PIXEL_MODE_MONO;
+
+          glyph->bitmap_left = 0;
+          glyph->bitmap_top  = 0;
+
+          return FT_Err_Ok;
+        }
+      }
+      else if ( error )
+      {
+        /* return error if font is not scalable */
+        if ( !FT_IS_SCALABLE( glyph->face ) )
+          return error;
+      }
+      else
       {
         if ( FT_IS_SCALABLE( glyph->face ) )
         {
@@ -2632,13 +2789,11 @@
           /* sanity checks: if `xxxAdvance' in the sbit metric */
           /* structure isn't set, use `linearXXXAdvance'      */
           if ( !glyph->metrics.horiAdvance && glyph->linearHoriAdvance )
-            glyph->metrics.horiAdvance =
-              FT_MulFix( glyph->linearHoriAdvance,
-                         size->root.metrics.x_scale );
+            glyph->metrics.horiAdvance = FT_MulFix( glyph->linearHoriAdvance,
+                                                    x_scale );
           if ( !glyph->metrics.vertAdvance && glyph->linearVertAdvance )
-            glyph->metrics.vertAdvance =
-              FT_MulFix( glyph->linearVertAdvance,
-                         size->root.metrics.y_scale );
+            glyph->metrics.vertAdvance = FT_MulFix( glyph->linearVertAdvance,
+                                                    y_scale );
         }
 
         return FT_Err_Ok;
@@ -2649,14 +2804,20 @@
 
     /* if FT_LOAD_NO_SCALE is not set, `ttmetrics' must be valid */
     if ( !( load_flags & FT_LOAD_NO_SCALE ) && !size->ttmetrics.valid )
-      return FT_THROW( Invalid_Size_Handle );
+    {
+      error = FT_THROW( Invalid_Size_Handle );
+      goto Exit;
+    }
 
     if ( load_flags & FT_LOAD_SBITS_ONLY )
-      return FT_THROW( Invalid_Argument );
+    {
+      error = FT_THROW( Invalid_Argument );
+      goto Exit;
+    }
 
     error = tt_loader_init( &loader, size, glyph, load_flags, FALSE );
     if ( error )
-      return error;
+      goto Exit;
 
     glyph->format        = FT_GLYPH_FORMAT_OUTLINE;
     glyph->num_subglyphs = 0;
@@ -2728,8 +2889,15 @@
     /* TrueType glyphs at all sizes using the bytecode interpreter. */
     /*                                                              */
     if ( !( load_flags & FT_LOAD_NO_SCALE ) &&
-         size->root.metrics.y_ppem < 24     )
+         size->metrics->y_ppem < 24         )
       glyph->outline.flags |= FT_OUTLINE_HIGH_PRECISION;
+
+  Exit:
+#ifdef FT_DEBUG_LEVEL_TRACE
+    if ( error )
+      FT_TRACE1(( "  failed (error code 0x%x)\n",
+                  error ));
+#endif
 
     return error;
   }

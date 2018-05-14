@@ -1,3 +1,344 @@
+CHANGES BETWEEN 2.9 and 2.9.1
+
+  I. IMPORTANT BUG FIXES
+
+    - Type  1  fonts  containing   flex  features  were  not  rendered
+      correctly (bug introduced in version 2.9).
+
+    - CVE-2018-6942: Older  FreeType versions  can crash  with certain
+      malformed variation fonts.
+
+        http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-6942
+
+
+  II. MISCELLANEOUS
+
+    - Bug fix: Multiple calls to `FT_Get_MM_Var' returned garbage.
+
+    - The base  extensions `ftlcdfil' and  `ftfntfmt' are now  part of
+      the  base  module  (and  thus no  longer  configurable  in  file
+      `modules.cfg').
+
+    - Emboldening of bitmaps didn't work correctly sometimes,  showing
+      various artifacts (bug introduced in version 2.8.1).
+
+    - Use  of  the `freetype-config'  script  to  get compilation  and
+      linking  options   is  deprecated   since  it   doesn't  support
+      cross-compiling, among other  deficiencies.  Instead, you should
+      use the `pkg-config' interface.
+
+      The `configure'  script no longer installs  `freetype-config' by
+      default.  For  backwards compatibility,  a new  configure option
+      `--enable-freetype-config'   is  provided   that  reverts   this
+      decision.
+
+    - The auto-hinter script ranges have  been updated for Unicode 11.
+      No support  for new scripts  have been added, however,  with the
+      exception of Georgian Mtavruli.
+
+    - Support for cmake has been improved.
+
+    - The next  release will  remove support for  Position Independent
+      Code  as  needed  by  systems that  prohibit  automatic  address
+      fixups, such  as BREW.  [Compilation with  modern compilers that
+      use flags like `-fPIC' or `-fPIE' is not affected.]
+
+
+======================================================================
+
+CHANGES BETWEEN 2.8.1 and 2.9
+
+  I. IMPORTANT BUG FIXES
+
+    - Advance width values of variation fonts were often wrong.
+
+    - More fixes for variation font support; you should update to this
+      version if you want to support them.
+
+
+  II. IMPORTANT CHANGES
+
+    - As a GSoC project, Ewald Hew extended the new (Adobe) CFF engine
+      to  handle  Type  1  fonts  also,  thus  greatly  improving  the
+      rendering of  this format.   This is the  new default.   The old
+      engine   is  still   available   if   the  configuration   macro
+      `T1_CONFIG_OPTION_OLD_ENGINE'    gets    defined;   using    the
+      `hinting-engine' property  of the `type1' driver  module you can
+      then switch between the two engines.
+
+    - A new function,  `FT_Set_Named_Instance', can be used  to set or
+      change the current named instance.
+
+    - Starting  with   this  FreeType  version,   resetting  variation
+      coordinates  will   return  to  the  currently   selected  named
+      instance.  Previously, FreeType returned to the base font (i.e.,
+      no instance set).
+
+
+  III. MISCELLANEOUS
+
+    - The `face_flags' field of the `FT_Face' structure has a new bit,
+      `FT_FACE_FLAG_VARIATION', which  is set if a  variation font has
+      been      altered      with      `FT_Set_MM_Design_Coordinates',
+      `FT_Set_Var_Design_Coordinates',                              or
+      `FT_Set_Var_Blend_Coordinates'.
+
+    - If  the  current  face  is  a  named  instance,  the  new  macro
+      `FT_IS_NAMED_INSTANCE' returns true.
+
+    - `FT_IS_VARIATION' is  a new macro  that returns true  whenever a
+      face object has  been altered by `FT_Set_MM_Design_Coordinates',
+      `FT_Set_Var_Design_Coordinates',                              or
+      `FT_Set_Var_Blend_Coordinates'.
+
+    - Changing  the  design  coordinates  of  a  variation  font  with
+      `FT_Set_Var_Design_Coordinates'                               or
+      `FT_Set_Var_Blend_Coordinates'  does  not  influence  the  named
+      instance index value (only `FT_Set_Named_Instance' does that).
+
+    - Special PostScript  names for named instances  are only returned
+      if the  named instance is set  with `FT_Set_Named_Instance' (and
+      the font  has corresponding  entries in  its `fvar'  table).  If
+      `FT_IS_VARIATION'  returns  true,  the  algorithmically  derived
+      PostScript name is provided, not  looking up special entries for
+      named instances.
+
+    - A new function  `FT_Done_MM_Var' is provided to  free the memory
+      returned in a call to `FT_Get_MM_Var'.
+
+    - On  platforms  using  the   `configure'  script,  the  installed
+      `ftoption.h' file  now correctly reflects  configuration options
+      like `--with-harfbuzz'.
+
+    - Better  support to  build FreeType  as  a DLL  on Windows  using
+      Visual C.
+
+    - All data specific to driver modules is now collected in a single
+      file,      `FT_DRIVER_H'.      Consequently,      the     macros
+      `FT_AUTOHINTER_H',   `FT_CFF_DRIVER_H',  `FT_TRUETYPE_DRIVER_H',
+      and `FT_PCF_DRIVER_H' still work but are deprecated.
+
+    - Some fuzzer fixes to better reject malformed fonts.
+
+    - The `ftbench' demo program has a new test for opening a new face
+      and loading some glyphs.
+
+    - The `ftbench' demo program has a  new option `-j' to specify the
+      last glyph index to be used in the tests.
+
+    - The  `ftgrid' demo  program has  a new  option `-n'  to suppress
+      display of named instances of variation fonts.
+
+    - The `ttdebug' demo program can now  show a stack trace (key `K')
+      and switch  between hexadecimal and decimal  display of integers
+      (key `I').
+
+
+======================================================================
+
+CHANGES BETWEEN 2.8 and 2.8.1
+
+  I. IMPORTANT BUG FIXES
+
+    - B/W  hinting   of  TrueType   fonts  didn't  work   properly  if
+      interpreter version 38 or 40 was selected.
+
+    - Some severe  problems within the handling  of TrueType Variation
+      Fonts were found and fixed.
+
+    - Function `FT_Set_Var_Design_Coordinates' didn't correctly handle
+      the case with less input coordinates than axes.
+
+
+  II. IMPORTANT CHANGES
+
+    - By  default,  FreeType  now offers  high  quality  LCD-optimized
+      output without  resorting to ClearType techniques  of resolution
+      tripling and  filtering.  In  this method, called  Harmony, each
+      color channel  is generated separately after  shifting the glyph
+      outline, capitalizing  on the fact  that the color grids  on LCD
+      panels  are shifted  by  a third  of a  pixel.   This output  is
+      indistinguishable from ClearType with a light 3-tap filter.
+
+
+  III. MISCELLANEOUS
+
+    - Using the  new function `FT_Get_Var_Axis_Flags',  an application
+      can access the `flags' field  of a variation axis (introduced in
+      OpenType version 1.8.2)
+
+    - More sanity checks.
+
+    - The  internal representation  of buffers  for LCD  rendering has
+      changed (to be more precise, the amount of padding gets computed
+      differently).  Applications  that use  the FreeType API  are not
+      affected.
+
+    - To  reset all  design axis  values of  a variation  font to  its
+      default values you can now say
+
+        error = FT_Set_Var_Design_Coordinates( face, 0, NULL );
+
+      This  also works  with functions  `FT_Set_MM_Design_Coordinates'
+      and `FT_Set_MM_Blend_Coordinates'.
+
+    - FreeType  now synthesizes  a  missing Unicode  cmap for  (older)
+      TrueType fonts also if glyph names are available.
+
+    - FreeType  has  improved  handling   of  BDF  fonts  without  the
+      `POINT_SIZE', `RESOLUTION_X', or  `RESOLUTION_Y' properties; the
+      library now  uses the values of  the `SIZE' keyword if  they are
+      missing.   Previously,   `SIZE'  was  completely   ignored,  and
+      FreeType used heuristic values instead.
+
+    - Multiple calls to `FT_Bitmap_Convert' do work now as advertised.
+      Previously,  they failed with an assertion error if there was an
+      empty bitmap between non-empty ones.
+
+    - The warping option  has moved  from `light'  to `normal' hinting
+      where  it replaces  the original hinting algorithm.  The `light'
+      mode is now always void of any hinting in x-direction.
+
+    - 16bit  compiler  support is  now  officially  ended.  We  didn't
+      provide any maintenance  since many years,  and given that there
+      were no error  or problem reports either it seems  that it is no
+      longer needed.
+
+    - The `ftgrid'  demo program  can now toggle  the display  of grid
+      lines with the `G' key.
+
+    - The `ftgrid' demo  program can toggle a different  set of colors
+      (suitable to color-blind people) with the `C' key.
+
+    - The `ftgrid'  demo program  now supports  the `-e'  command line
+      option to select a cmap.
+
+    - The `ftdump' demo program has a  new command line option `-t' to
+      output the SFNT table list.
+
+
+======================================================================
+
+CHANGES BETWEEN 2.7.1 and 2.8
+
+  I. IMPORTANT CHANGES
+
+    - Support for OpenType Variation Fonts is now complete.   The last
+      missing part was handling the `VVAR' and `MVAR' tables, which is
+      available with this release.
+
+    - A new  function `FT_Face_Properties' allows the  control of some
+      module  and   library  properties  per  font.    Currently,  the
+      following properties can be  handled: stem darkening, LCD filter
+      weights, and the random seed for the `random' CFF operator.
+
+    - The PCF change to show more `colourful' family names (introduced
+      in version 2.7.1) was too radical; it can now be configured with
+      PCF_CONFIG_OPTION_LONG_FAMILY_NAMES   at   compile   time.    If
+      activated, it can  be switched off at run time  with the new pcf
+      property  `no-long-family-names'.  If  the `FREETYPE_PROPERTIES'
+      environment variable is available, you can say
+
+        FREETYPE_PROPERTIES=pcf:no-long-family-names=1
+
+    - Support  for  the  following  scripts  has  been  added  to  the
+      auto-hinter.
+
+        Adlam, Avestan, Bamum, Buhid, Carian, Chakma, Coptic, Cypriot,
+        Deseret, Glagolitic, Gothic, Kayah, Lisu, N'Ko, Ol Chiki, Old
+        Turkic, Osage, Osmanya, Saurashtra, Shavian, Sundanese, Tai
+        Viet, Tifinagh, Unified Canadian Syllabics, Vai
+
+
+  II. IMPORTANT BUG FIXES
+
+    - `Light' auto-hinting  mode no  longer uses TrueType  metrics for
+      TrueType  fonts.   This bug  was  introduced  in version  2.4.6,
+      causing   horizontal  scaling   also.    Almost  all   GNU/Linux
+      distributions (with Fedora as  a notable exception) disabled the
+      corresponding patch for good reasons; chances are thus high that
+      you won't notice a difference.
+
+      If  optical backward  compatibility for  legacy applications  is
+      necessary, you might enable the AF_CONFIG_OPTION_TT_SIZE_METRICS
+      configuration option.   However, it  is strongly  recommended to
+      avoid that, adjusting font sizes instead.
+
+    - Global size  metrics values  in the  `FT_Size_Metrics' structure
+      can be  different for TrueType  fonts.  Reason is that  in older
+      FreeType  versions  the  metrics  were  rounded  differently  to
+      integer pixels compared  to all other font  formats, yielding an
+      inconsistent behaviour if you used non-native hinting.  Starting
+      with this  version, global size  metrics for TrueType  fonts are
+      handled the same as other  font formats: `ascender' gets rounded
+      up,  `descender'  gets  rounded  down,  `height'  gets  normally
+      rounded, and `max_advance' gets normally rounded, too.
+
+      If you need more precise values of (global) ascender, descender,
+      height, or  `max_advance', please take the  corresponding values
+      from the `FT_Face' structure and scale them manually.
+
+    - If a TrueType font gets loaded with FT_LOAD_NO_HINTING, FreeType
+      now scales  the font linearly  again (bug introduced  in version
+      2.4.6).
+
+    - CVE-2017-8105,  CVE-2017-8287:  Older   FreeType  versions  have
+      out-of-bounds  writes  caused  by  heap-based  buffer  overflows
+      related to Type 1 fonts.
+
+        https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-8105
+        https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-8287
+
+
+  III. MISCELLANEOUS
+
+    - A  new function  `FT_Set_Default_Properties' has  been added  to
+      parse    the    `FREETYPE_PROPERTIES'    environment    variable
+      (previously, it  was internal only).   `FT_Init_FreeType' always
+      call this  function, but  `FT_New_Library' does not  (similar to
+      `FT_Add_Default_Modules').
+
+    - To be in sync with OpenType version 1.7 and newer, macros
+
+        FT_PARAM_TAG_IGNORE_PREFERRED_FAMILY,
+        FT_PARAM_TAG_IGNORE_PREFERRED_SUBFAMILY,
+        TT_NAME_ID_PREFERRED_FAMILY
+        TT_NAME_ID_PREFERRED_SUBFAMILY
+
+      are renamed to
+
+        FT_PARAM_TAG_IGNORE_TYPOGRAPHIC_FAMILY,
+        FT_PARAM_TAG_IGNORE_TYPOGRAPHIC_SUBFAMILY,
+        TT_NAME_ID_TYPOGRAPHIC_FAMILY
+        TT_NAME_ID_TYPOGRAPHIC_SUBFAMILY
+
+      The old macro names are deprecated (but still available).
+
+    - Support for SFNT `name' tables has been improved.
+
+      . Format  1 `name' tables  are now supported.  Use  new function
+        `FT_Get_Sfnt_LangTag' to access associated language tags.
+
+      . Language, encoding, and name IDs have been updated to OpenType
+        version 1.8.1.
+
+    - The new CFF  engine now handles the `random'  operator.  All CFF
+      opcodes are now supported.
+
+    - The CFF module  has a new property `random-seed'  to control the
+      pseudo-random number generation for the `random' operator.
+
+    - The `freetype-config' script is now a wrapper of `pkg-config' if
+      this program is available in the path.
+
+    - FT_LOAD_TARGET_LCD  is now  a  variant of  FT_LOAD_TARGET_LIGHT;
+      this should provide better rendering results.
+
+    - A mode to display  light auto-hinting with  subpixel positioning
+      has been added to `ftdiff'.
+
+
+======================================================================
 
 CHANGES BETWEEN 2.7 and 2.7.1
 
@@ -17,6 +358,12 @@ CHANGES BETWEEN 2.7 and 2.7.1
 
     - Handling of  raw CID fonts was partially  broken (bug introduced
       in 2.6.4).
+
+    - CVE-2016-10328:  Older  FreeType versions had  an  out-of-bounds
+      write caused by a heap-based  buffer overflow related to the CFF
+      fonts.
+
+        https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2016-10328
 
 
   III. MISCELLANEOUS
@@ -195,7 +542,7 @@ CHANGES BETWEEN 2.6.3 and 2.6.4
 
     - Type 42 fonts as created by LilyPond are now supported.
 
-    - Minor rendering improvments in the auto-hinter.
+    - Minor rendering improvements in the auto-hinter.
 
     - For experimental  reasons, the old  CFF engine now  supports all
       CFF operators except `random', including the deprecated Multiple
@@ -240,7 +587,7 @@ CHANGES BETWEEN 2.6.2 and 2.6.3
       to the user.   The exception to this  is `__FTERRORS_H__', which
       must be  sometimes undefined by  the user to get  FreeType error
       strings:  Both this  form and  the new  `FTERRORS_H_' macro  are
-      accepted for backwards compatibility.
+      accepted for backward compatibility.
 
     - Minor improvements mainly to the Type 1 driver.
 
@@ -317,8 +664,8 @@ CHANGES BETWEEN 2.6.1 and 2.6.2
 
     - The smooth renderer has been made faster.
 
-    - The `ftstring'  demo program  now supports  sub-pixel rendering;
-      use key `l' to cycle through the LCD modes.
+    - The `ftstring' demo program now supports subpixel rendering; use
+      key `l' to cycle through the LCD modes.
 
     - The `ftstring'  demo program now supports  colour rendering; use
       the `space' key to cycle through various colour combinations.
@@ -481,17 +828,17 @@ CHANGES BETWEEN 2.5.5 and 2.6
       compiler warnings.
 
     - Function `FT_Bitmap_New'  has been renamed  to `FT_Bitmap_Init',
-      since  this name  better reflects  its function.   For backwards
+      since  this name  better reflects  its  function.   For backward
       compatibility, the old function name is still available.
 
     - Function   `FT_Get_X11_Font_Format'   has    been   renamed   to
       `FT_Get_Font_Format',  since  this   name  better  reflects  its
-      function.  For backwards compatibility, the old function name is
+      function.  For backward compatibility,  the old function name is
       still available.
 
       Additionally, the header  file macro for this  function has been
       renamed to  `FT_FONT_FORMATS_H' (the old name  `FT_XFREE86_H' is
-      retained for backwards compatibility).
+      retained for backward compatibility).
 
     - Various improvements to the `ftgrid' demo program.
 
@@ -531,7 +878,7 @@ CHANGES BETWEEN 2.5.3 and 2.5.4
   I. IMPORTANT BUG FIXES
 
     - A   variant  of   vulnerability  CVE-2014-2240   was  identified
-      (cf.  http://savannah.nongnu.org/bugs/?43661) and  fixed in  the
+      (cf.  https://savannah.nongnu.org/bugs/?43661) and  fixed in the
       new CFF driver.  All users should upgrade.
 
     - The new auto-hinter code using HarfBuzz crashed for some invalid
@@ -602,7 +949,7 @@ CHANGES BETWEEN 2.5.2 and 2.5.3
   I. IMPORTANT BUG FIXES
 
     - A vulnerability (CVE-2014-2240) was  identified and fixed in the
-      new  CFF  driver  (cf.  http://savannah.nongnu.org/bugs/?41697).
+      new  CFF driver  (cf.  https://savannah.nongnu.org/bugs/?41697).
       All users should upgrade.
 
     - More  bug  fixes related  to  correct  positioning of  composite
@@ -635,7 +982,7 @@ CHANGES BETWEEN 2.5.2 and 2.5.3
            and install FreeType again.
 
       With FreeType's  `configure' script the procedure  boils down to
-      configure, build, and install Freetype, then configure, compile,
+      configure, build, and install FreeType, then configure, compile,
       and  install  HarfBuzz,  then configure,  compile,  and  install
       FreeType again (after executing `make distclean').
 
@@ -925,7 +1272,7 @@ index ebcf189..3f2ce6b 100644
   II. MISCELLANEOUS
 
     - The  (top-level)  `configure'  script   now  respects  the  MAKE
-      environment variable to specify a `make' binary.   For backwards
+      environment variable  to specify a `make' binary.   For backward
       compatibility, GNUMAKE still overrides MAKE, though.
 
     - The `ftview'  and `ftdiff'  demo programs have  been redesigned,
@@ -974,7 +1321,7 @@ CHANGES BETWEEN 2.4.10 and 2.4.11
     - Subpixel  hinting support  has been  contributed by  Infinality,
       based on Greg Hitchcock's whitepaper at
 
-        http://www.microsoft.com/typography/cleartype/truetypecleartype.aspx
+        https://www.microsoft.com/typography/cleartype/truetypecleartype.aspx
 
       Originally, it was a separate patch available from
 
@@ -1844,7 +2191,7 @@ CHANGES BETWEEN 2.3.0 and 2.2.1
       of  the  library,  mainly   due  to  patent  issues.   For  more
       information see:
 
-      http://lists.gnu.org/archive/html/freetype/2006-09/msg00064.html
+      https://lists.gnu.org/archive/html/freetype/2006-09/msg00064.html
 
       A  new  configuration macro  FT_CONFIG_OPTION_SUBPIXEL_RENDERING
       has been introduced in  `ftoption.h'; manually define it in this
@@ -1947,7 +2294,7 @@ CHANGES BETWEEN 2.2 and 2.1.10
       We provide  patches for  most of those  rogue clients.   See the
       following page for more information:
 
-        http://www.freetype.org/freetype2/patches/rogue-patches.html
+        https://www.freetype.org/freetype2/patches/rogue-patches.html
 
       Note that, as  a convenience to our Unix  desktop users, version
       2.2 is *binary* compatible with FreeType 2.1.7, which means that
@@ -2059,7 +2406,7 @@ CHANGES BETWEEN 2.2 and 2.1.10
 
     - Rudimentary support for Adobe's new `SING Glyphlet' format.  See
 
-        http://www.adobe.com/products/indesign/sing_gaiji.html
+        https://www.adobe.com/content/dam/acom/en/devnet/font/pdfs/5148.SING_Tutorial.pdf
 
       for more information.
 
@@ -2144,7 +2491,7 @@ CHANGES BETWEEN 2.1.10 and 2.1.9
       probably using a different pitch, and to further manipulate it.
 
     - A new  API `FT_Outline_Embolden'  (in FT_OUTLINE_H) gives  finer
-      control how  outlines are embolded.
+      control how outlines are emboldened.
 
     - `FT_GlyphSlot_Embolden' (in FT_SYNTHESIS_H)  now handles bitmaps
       also (code contributed  by Chia I Wu).  Note that this  function
@@ -2263,7 +2610,7 @@ CHANGES BETWEEN 2.1.8 and 2.1.7
       correctly  treated as a  CID, similar  to FreeType's  CID driver
       module.  Note that CID CMap support is still missing.
 
-    - The FT_FACE_FLAGS_GLYPH_NAMES flag is now  set correctly for all
+    - The FT_FACE_FLAG_GLYPH_NAMES flag  is now  set correctly for all
       font formats.
 
     - Some subsetted Type 1  fonts weren't parsed correctly.  This bug
@@ -2554,7 +2901,7 @@ CHANGES BETWEEN 2.1.5 and 2.1.4
 
     - FT_ENCODING_MS_{SJIS,GB2312,BIG5,WANSUNG,JOHAB}      are     now
       deprecated               in               favour              of
-      FT_ENCODING_{SJIS,GB2312,GIB5,WANSONG,JOHAB}  -- those encodings
+      FT_ENCODING_{SJIS,GB2312,BIG5,WANSUNG,JOHAB}  -- those encodings
       are not specific to Microsoft.
 
 
@@ -2736,7 +3083,7 @@ CHANGES BETWEEN 2.1.3 and 2.1.2
       quality since  many nasty defaults have been suppressed.  Please
       visit the web page:
 
-        http://www.freetype.org/hinting/smooth-hinting.html
+        https://www.freetype.org/hinting/smooth-hinting.html
 
       for additional details on this topic.
 
@@ -2756,12 +3103,12 @@ CHANGES BETWEEN 2.1.3 and 2.1.2
         FT_LOAD_TARGET_MONO   :: Hint and render for 1-bit displays.
 
         FT_LOAD_TARGET_LCD    :: Hint and render for horizontal RGB or
-                                 BGR sub-pixel displays (like LCD
+                                 BGR subpixel displays (like LCD
                                  screens).  THIS IS STILL
                                  EXPERIMENTAL!
 
         FT_LOAD_TARGET_LCD_V  :: Same as FT_LOAD_TARGET_LCD, for
-                                 vertical sub-pixel displays (like
+                                 vertical subpixel displays (like
                                  rotated LCD screens).  THIS IS STILL
                                  EXPERIMENTAL!
 
@@ -2995,7 +3342,7 @@ CHANGES BETWEEN 2.1.0 and 2.0.9
     - The  FreeType 2  redesign has  begun.  More  information  can be
       found at this URL:
 
-        http://www.freetype.org/freetype2/redesign.html
+        https://www.freetype.org/freetype2/redesign.html
 
       The following  internal changes  have been performed  within the
       sources of this release:
@@ -3586,13 +3933,7 @@ CHANGES BETWEEN 2.0.2 and 2.0.1
 
       For more information, see section I of the following document:
 
-        http://www.freetype.org/
-          freetype2/docs/tutorial/step1.html
-
-      or
-
-        http://freetype.sourceforge.net/
-          freetype2/docs/tutorial/step1.html
+        https://www.freetype.org/freetype2/docs/tutorial/step1.html
 
     - Many, many comments have been added to the public source file in
       order to  automatically generate  the API Reference  through the
@@ -3601,7 +3942,7 @@ CHANGES BETWEEN 2.0.2 and 2.0.1
       The latter has been updated  to support the grouping of sections
       in chapters and better index sort.  See:
 
-        http://www.freetype.org/freetype2/docs/reference/ft2-toc.html
+        https://www.freetype.org/freetype2/docs/reference/ft2-toc.html
 
 
   III. CHANGES TO THE BUILD PROCESS
@@ -4676,7 +5017,7 @@ Extensions support:
 
 ------------------------------------------------------------------------
 
-Copyright 2000-2016 by
+Copyright 2000-2018 by
 David Turner, Robert Wilhelm, and Werner Lemberg.
 
 This  file  is  part  of the  FreeType  project, and may  only be  used,

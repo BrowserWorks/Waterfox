@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueType-specific tables loader (body).                              */
 /*                                                                         */
-/*  Copyright 1996-2016 by                                                 */
+/*  Copyright 1996-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -247,13 +247,13 @@
     if ( pos2 > face->glyf_len )
     {
       /* We try to sanitize the last `loca' entry. */
-      if ( gindex == face->num_locations - 1 )
+      if ( gindex == face->num_locations - 2 )
       {
         FT_TRACE1(( "tt_face_get_location:"
-                    " too large offset (0x%08lx) found for glyph index %ld,\n"
+                    " too large size (%ld bytes) found for glyph index %ld,\n"
                     "                     "
-                    " truncating at the end of `glyf' table (0x%08lx)\n",
-                    pos2, gindex + 1, face->glyf_len ));
+                    " truncating at the end of `glyf' table to %ld bytes\n",
+                    pos2 - pos1, gindex, face->glyf_len - pos1 ));
         pos2 = face->glyf_len;
       }
       else

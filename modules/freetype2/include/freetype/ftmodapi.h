@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType modules public interface (specification).                   */
 /*                                                                         */
-/*  Copyright 1996-2016 by                                                 */
+/*  Copyright 1996-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -89,6 +89,7 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*    FT_Property_Set                                                    */
   /*    FT_Property_Get                                                    */
+  /*    FT_Set_Default_Properties                                          */
   /*                                                                       */
   /*    FT_New_Library                                                     */
   /*    FT_Done_Library                                                    */
@@ -322,16 +323,15 @@ FT_BEGIN_HEADER
    *       The module name.
    *
    *    property_name ::
-   *       The property name.  Properties are described in the `Synopsis'
-   *       subsection of the module's documentation.
+   *       The property name.  Properties are described in section
+   *       @properties.
    *
    *       Note that only a few modules have properties.
    *
    *    value ::
    *       A generic pointer to a variable or structure that gives the new
    *       value of the property.  The exact definition of `value' is
-   *       dependent on the property; see the `Synopsis' subsection of the
-   *       module's documentation.
+   *       dependent on the property; see section @properties.
    *
    * @return:
    *   FreeType error code.  0~means success.
@@ -389,15 +389,14 @@ FT_BEGIN_HEADER
    *       The module name.
    *
    *    property_name ::
-   *       The property name.  Properties are described in the `Synopsis'
-   *       subsection of the module's documentation.
+   *       The property name.  Properties are described in section
+   *       @properties.
    *
    * @inout:
    *    value ::
    *       A generic pointer to a variable or structure that gives the
    *       value of the property.  The exact definition of `value' is
-   *       dependent on the property; see the `Synopsis' subsection of the
-   *       module's documentation.
+   *       dependent on the property; see section @properties.
    *
    * @return:
    *   FreeType error code.  0~means success.
@@ -440,6 +439,50 @@ FT_BEGIN_HEADER
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
+  /*    FT_Set_Default_Properties                                          */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    If compilation option FT_CONFIG_OPTION_ENVIRONMENT_PROPERTIES is   */
+  /*    set, this function reads the `FREETYPE_PROPERTIES' environment     */
+  /*    variable to control driver properties.  See section @properties    */
+  /*    for more.                                                          */
+  /*                                                                       */
+  /*    If the compilation option is not set, this function does nothing.  */
+  /*                                                                       */
+  /*    `FREETYPE_PROPERTIES' has the following syntax form (broken here   */
+  /*    into multiple lines for better readability).                       */
+  /*                                                                       */
+  /*    {                                                                  */
+  /*      <optional whitespace>                                            */
+  /*      <module-name1> ':'                                               */
+  /*      <property-name1> '=' <property-value1>                           */
+  /*      <whitespace>                                                     */
+  /*      <module-name2> ':'                                               */
+  /*      <property-name2> '=' <property-value2>                           */
+  /*      ...                                                              */
+  /*    }                                                                  */
+  /*                                                                       */
+  /*    Example:                                                           */
+  /*                                                                       */
+  /*    {                                                                  */
+  /*      FREETYPE_PROPERTIES=truetype:interpreter-version=35 \            */
+  /*                          cff:no-stem-darkening=1 \                    */
+  /*                          autofitter:warping=1                         */
+  /*    }                                                                  */
+  /*                                                                       */
+  /* <InOut>                                                               */
+  /*    library :: A handle to a new library object.                       */
+  /*                                                                       */
+  /* <Since>                                                               */
+  /*    2.8                                                                */
+  /*                                                                       */
+  FT_EXPORT( void )
+  FT_Set_Default_Properties( FT_Library  library );
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Function>                                                            */
   /*    FT_Reference_Library                                               */
   /*                                                                       */
   /* <Description>                                                         */
@@ -477,8 +520,9 @@ FT_BEGIN_HEADER
   /*    valid for the life of the @FT_Library object.                      */
   /*                                                                       */
   /*    Normally, you would call this function (followed by a call to      */
-  /*    @FT_Add_Default_Modules or a series of calls to @FT_Add_Module)    */
-  /*    instead of @FT_Init_FreeType to initialize the FreeType library.   */
+  /*    @FT_Add_Default_Modules or a series of calls to @FT_Add_Module,    */
+  /*    and a call to @FT_Set_Default_Properties) instead of               */
+  /*    @FT_Init_FreeType to initialize the FreeType library.              */
   /*                                                                       */
   /*    Don't use @FT_Done_FreeType but @FT_Done_Library to destroy a      */
   /*    library instance.                                                  */

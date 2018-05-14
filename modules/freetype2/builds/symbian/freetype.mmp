@@ -2,7 +2,7 @@
 // FreeType 2 makefile for the symbian platform
 //
 
-// Copyright 2008-2016 by
+// Copyright 2008-2018 by
 // David Turner, Robert Wilhelm, and Werner Lemberg.
 //
 // This file is part of the FreeType project, and may only be used, modified,
@@ -28,13 +28,11 @@ source ftbbox.c
 source ftbdf.c
 source ftbitmap.c
 source ftcid.c
-source ftfntfmt.c
 source ftfstype.c
 source ftgasp.c
 source ftglyph.c
 source ftgxval.c
 source ftinit.c
-source ftlcdfil.c
 source ftmm.c
 source ftotval.c
 source ftpatent.c
@@ -48,6 +46,10 @@ source ftwinfnt.c
 sourcepath ..\..\src\bdf
 
 source bdf.c
+
+sourcepath ..\..\src\bzip2
+
+source ftbzip2.c
 
 sourcepath ..\..\src\cache
 
@@ -64,10 +66,6 @@ source type1cid.c
 sourcepath ..\..\src\gzip
 
 source ftgzip.c
-
-sourcepath ..\..\src\bzip2
-
-source ftbzip2.c
 
 sourcepath ..\..\src\lzw
 
@@ -126,12 +124,12 @@ systeminclude		..\..\include
 systeminclude		\epoc32\include\stdapis
 userinclude		..\..\src\autofit
 userinclude		..\..\src\bdf
+userinclude		..\..\src\bzip2
 userinclude		..\..\src\cache
 userinclude		..\..\src\cff
 userinclude		..\..\src\cid
 userinclude		..\..\src\gxvalid
 userinclude		..\..\src\gzip
-userinclude		..\..\src\bzip2
 userinclude		..\..\src\lzw
 userinclude		..\..\src\otvalid
 userinclude		..\..\src\pcf
