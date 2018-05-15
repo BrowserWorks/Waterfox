@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Tags for TrueType and OpenType tables (specification only).          */
 /*                                                                         */
-/*  Copyright 1996-2016 by                                                 */
+/*  Copyright 1996-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -105,6 +105,12 @@ FT_BEGIN_HEADER
 #define TTAG_vmtx  FT_MAKE_TAG( 'v', 'm', 't', 'x' )
 #define TTAG_VVAR  FT_MAKE_TAG( 'V', 'V', 'A', 'R' )
 #define TTAG_wOFF  FT_MAKE_TAG( 'w', 'O', 'F', 'F' )
+
+/* used by "Keyboard.dfont" on legacy Mac OS X */
+#define TTAG_0xA5kbd  FT_MAKE_TAG( 0xA5, 'k', 'b', 'd' )
+
+/* used by "LastResort.dfont" on legacy Mac OS X */
+#define TTAG_0xA5lst  FT_MAKE_TAG( 0xA5, 'l', 's', 't' )
 
 
 FT_END_HEADER

@@ -2,7 +2,7 @@
 # FreeType 2 template for Unix-specific compiler definitions
 #
 
-# Copyright 1996-2016 by
+# Copyright 1996-2018 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -87,19 +87,26 @@ ANSIFLAGS := @XX_ANSIFLAGS@
 
 # C compiler to use -- we use libtool!
 #
-#
 CCraw := $(CC)
 CC    := $(LIBTOOL) --mode=compile $(CCraw)
 
+# Resource compiler to use on Cygwin/MinGW, usually windres.
+#
+RCraw := @RC@
+ifneq ($(RCraw),)
+  RC := $(LIBTOOL) --tag=RC --mode=compile $(RCraw)
+endif
+
 # Linker flags.
 #
-LDFLAGS := @LDFLAGS@
+LDFLAGS           := @LDFLAGS@
+LIB_CLOCK_GETTIME := @LIB_CLOCK_GETTIME@  # for ftbench
 
 
 # export symbols
 #
 CCraw_build  := @CC_BUILD@	# native CC of building system
-E_BUILD      := @EXEEXT_BUILD@	# extension for exexutable on building system
+E_BUILD      := @EXEEXT_BUILD@	# extension for executable on building system
 EXPORTS_LIST := $(OBJ_DIR)/ftexport.sym
 CCexe        := $(CCraw_build)	# used to compile `apinames' only
 

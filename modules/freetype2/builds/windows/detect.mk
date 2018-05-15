@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 1996-2016 by
+# Copyright 1996-2018 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -77,7 +77,7 @@ ifeq ($(PLATFORM),windows)
   # So we need to hack.
   #
   # Kudos to Eli Zaretskii (DJGPP guru) that helped debug it.
-  # Details are available in threads of the freetype mailing list
+  # Details are available in threads of the FreeType mailing list
   # (2004-11-11), and then in the devel mailing list (2004-11-20 to -23).
   #
   ifeq ($(OS),Windows_NT)
@@ -95,22 +95,22 @@ ifeq ($(PLATFORM),windows)
 
   ifneq ($(findstring list,$(MAKECMDGOALS)),)  # test for the "list" target
     dump_target_list:
-	    @echo ÿ
-	    @echo $(PROJECT_TITLE) build system -- supported compilers
-	    @echo ÿ
-	    @echo Several command-line compilers are supported on Win32:
-	    @echo ÿ
-	    @echo ÿÿmake setupÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿgcc (with Mingw)
-	    @echo ÿÿmake setup visualcÿÿÿÿÿÿÿÿÿÿÿÿÿMicrosoft Visual C++
-	    @echo ÿÿmake setup bcc32ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿBorland C/C++
-	    @echo ÿÿmake setup lccÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿWin32-LCC
-	    @echo ÿÿmake setup intelcÿÿÿÿÿÿÿÿÿÿÿÿÿÿIntel C/C++
-	    @echo ÿ
+	    $(info )
+	    $(info $(PROJECT_TITLE) build system -- supported compilers)
+	    $(info )
+	    $(info Several command-line compilers are supported on Win32:)
+	    $(info )
+	    $(info $(empty)  make setup                     gcc (with Mingw))
+	    $(info $(empty)  make setup visualc             Microsoft Visual C++)
+	    $(info $(empty)  make setup bcc32               Borland C/C++)
+	    $(info $(empty)  make setup lcc                 Win32-LCC)
+	    $(info $(empty)  make setup intelc              Intel C/C++)
+	    $(info )
 
     setup: dump_target_list
     .PHONY: dump_target_list list
   else
-    setup: dos_setup
+    setup: std_setup
   endif
 
   # additionally, we provide hooks for various other compilers

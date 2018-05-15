@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    User-selectable configuration macros (specification only).           */
 /*                                                                         */
-/*  Copyright 1996-2016 by                                                 */
+/*  Copyright 1996-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -82,8 +82,8 @@ FT_BEGIN_HEADER
   /* to control the various font drivers and modules.  The controllable    */
   /* properties are listed in the section `Controlling FreeType Modules'   */
   /* in the reference's table of contents; currently there are properties  */
-  /* for the auto-hinter (file `ftautoh.h'), CFF (file `ftcffdrv.h'), and  */
-  /* TrueType (file `ftttdrv.h').                                          */
+  /* for the auto-hinter (file `ftautoh.h'), CFF (file `ftcffdrv.h'),      */
+  /* TrueType (file `ftttdrv.h'), and PCF (file `ftpcfdrv.h').             */
   /*                                                                       */
   /* `FREETYPE_PROPERTIES' has the following syntax form (broken here into */
   /* multiple lines for better readability).                               */
@@ -107,22 +107,19 @@ FT_BEGIN_HEADER
 
   /*************************************************************************/
   /*                                                                       */
-  /* Uncomment the line below if you want to activate sub-pixel rendering  */
-  /* (a.k.a. LCD rendering, or ClearType) in this build of the library.    */
+  /* Uncomment the line below if you want to activate LCD rendering        */
+  /* technology similar to ClearType in this build of the library.  This   */
+  /* technology triples the resolution in the direction color subpixels.   */
+  /* To mitigate color fringes inherent to this technology, you also need  */
+  /* to explicitly set up LCD filtering.                                   */
   /*                                                                       */
   /* Note that this feature is covered by several Microsoft patents        */
   /* and should not be activated in any default build of the library.      */
+  /* When this macro is not defined, FreeType offers alternative LCD       */
+  /* rendering technology that produces excellent output without LCD       */
+  /* filtering.                                                            */
   /*                                                                       */
-  /* This macro has no impact on the FreeType API, only on its             */
-  /* _implementation_.  For example, using FT_RENDER_MODE_LCD when calling */
-  /* FT_Render_Glyph still generates a bitmap that is 3 times wider than   */
-  /* the original size in case this macro isn't defined; however, each     */
-  /* triplet of subpixels has R=G=B.                                       */
-  /*                                                                       */
-  /* This is done to allow FreeType clients to run unmodified, forcing     */
-  /* them to display normal gray-level anti-aliased glyphs.                */
-  /*                                                                       */
-#define FT_CONFIG_OPTION_SUBPIXEL_RENDERING
+/* #define FT_CONFIG_OPTION_SUBPIXEL_RENDERING */
 
 
   /*************************************************************************/
@@ -273,48 +270,6 @@ FT_BEGIN_HEADER
 
   /*************************************************************************/
   /*                                                                       */
-  /* DLL export compilation                                                */
-  /*                                                                       */
-  /*   When compiling FreeType as a DLL, some systems/compilers need a     */
-  /*   special keyword in front OR after the return type of function       */
-  /*   declarations.                                                       */
-  /*                                                                       */
-  /*   Two macros are used within the FreeType source code to define       */
-  /*   exported library functions: FT_EXPORT and FT_EXPORT_DEF.            */
-  /*                                                                       */
-  /*     FT_EXPORT( return_type )                                          */
-  /*                                                                       */
-  /*       is used in a function declaration, as in                        */
-  /*                                                                       */
-  /*         FT_EXPORT( FT_Error )                                         */
-  /*         FT_Init_FreeType( FT_Library*  alibrary );                    */
-  /*                                                                       */
-  /*                                                                       */
-  /*     FT_EXPORT_DEF( return_type )                                      */
-  /*                                                                       */
-  /*       is used in a function definition, as in                         */
-  /*                                                                       */
-  /*         FT_EXPORT_DEF( FT_Error )                                     */
-  /*         FT_Init_FreeType( FT_Library*  alibrary )                     */
-  /*         {                                                             */
-  /*           ... some code ...                                           */
-  /*           return FT_Err_Ok;                                           */
-  /*         }                                                             */
-  /*                                                                       */
-  /*   You can provide your own implementation of FT_EXPORT and            */
-  /*   FT_EXPORT_DEF here if you want.  If you leave them undefined, they  */
-  /*   will be later automatically defined as `extern return_type' to      */
-  /*   allow normal compilation.                                           */
-  /*                                                                       */
-  /*   Do not #undef these macros here since the build system might define */
-  /*   them for certain configurations only.                               */
-  /*                                                                       */
-/* #define FT_EXPORT(x)      extern x */
-/* #define FT_EXPORT_DEF(x)  x */
-
-
-  /*************************************************************************/
-  /*                                                                       */
   /* Glyph Postscript Names handling                                       */
   /*                                                                       */
   /*   By default, FreeType 2 is compiled with the `psnames' module.  This */
@@ -327,7 +282,7 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*   - The TrueType driver will provide its own set of glyph names,      */
   /*     if you build it to support postscript names in the TrueType       */
-  /*     `post' table.                                                     */
+  /*     `post' table, but will not synthesize a missing Unicode charmap.  */
   /*                                                                       */
   /*   - The Type 1 driver will not be able to synthesize a Unicode        */
   /*     charmap out of the glyphs found in the fonts.                     */
@@ -672,7 +627,7 @@ FT_BEGIN_HEADER
   /* This option requires TT_CONFIG_OPTION_BYTECODE_INTERPRETER to be      */
   /* defined.                                                              */
   /*                                                                       */
-  /* [1] http://www.microsoft.com/typography/cleartype/truetypecleartype.aspx */
+  /* [1] https://www.microsoft.com/typography/cleartype/truetypecleartype.aspx */
   /*                                                                       */
 /* #define TT_CONFIG_OPTION_SUBPIXEL_HINTING  1     */
 /* #define TT_CONFIG_OPTION_SUBPIXEL_HINTING  2     */
@@ -692,7 +647,7 @@ FT_BEGIN_HEADER
   /* composite flags array which can be used to disambiguate, but old      */
   /* fonts will not have them.                                             */
   /*                                                                       */
-  /*   http://www.microsoft.com/typography/otspec/glyf.htm                 */
+  /*   https://www.microsoft.com/typography/otspec/glyf.htm                */
   /*   https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6glyf.html */
   /*                                                                       */
 #undef TT_CONFIG_OPTION_COMPONENT_OFFSET_SCALED
@@ -790,6 +745,16 @@ FT_BEGIN_HEADER
 
 
   /*************************************************************************/
+  /*                                                                       */
+  /* T1_CONFIG_OPTION_OLD_ENGINE controls whether the pre-Adobe Type 1     */
+  /* engine gets compiled into FreeType.  If defined, it is possible to    */
+  /* switch between the two engines using the `hinting-engine' property of */
+  /* the type1 driver module.                                              */
+  /*                                                                       */
+#define T1_CONFIG_OPTION_OLD_ENGINE
+
+
+  /*************************************************************************/
   /*************************************************************************/
   /****                                                                 ****/
   /****         C F F   D R I V E R    C O N F I G U R A T I O N        ****/
@@ -830,6 +795,33 @@ FT_BEGIN_HEADER
   /* the cff driver module.                                                */
   /*                                                                       */
 #define CFF_CONFIG_OPTION_OLD_ENGINE
+
+
+  /*************************************************************************/
+  /*************************************************************************/
+  /****                                                                 ****/
+  /****         P C F   D R I V E R    C O N F I G U R A T I O N        ****/
+  /****                                                                 ****/
+  /*************************************************************************/
+  /*************************************************************************/
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* There are many PCF fonts just called `Fixed' which look completely    */
+  /* different, and which have nothing to do with each other.  When        */
+  /* selecting `Fixed' in KDE or Gnome one gets results that appear rather */
+  /* random, the style changes often if one changes the size and one       */
+  /* cannot select some fonts at all.  This option makes the PCF module    */
+  /* prepend the foundry name (plus a space) to the family name.           */
+  /*                                                                       */
+  /* We also check whether we have `wide' characters; all put together, we */
+  /* get family names like `Sony Fixed' or `Misc Fixed Wide'.              */
+  /*                                                                       */
+  /* If this option is activated, it can be controlled with the            */
+  /* `no-long-family-names' property of the pcf driver module.             */
+  /*                                                                       */
+#define PCF_CONFIG_OPTION_LONG_FAMILY_NAMES
 
 
   /*************************************************************************/
@@ -886,12 +878,14 @@ FT_BEGIN_HEADER
 #ifdef TT_CONFIG_OPTION_BYTECODE_INTERPRETER
 #define  TT_USE_BYTECODE_INTERPRETER
 
+#ifdef TT_CONFIG_OPTION_SUBPIXEL_HINTING
 #if TT_CONFIG_OPTION_SUBPIXEL_HINTING & 1
 #define  TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY
 #endif
 
 #if TT_CONFIG_OPTION_SUBPIXEL_HINTING & 2
 #define  TT_SUPPORT_SUBPIXEL_HINTING_MINIMAL
+#endif
 #endif
 #endif
 

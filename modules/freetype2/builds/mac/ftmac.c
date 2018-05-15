@@ -5,7 +5,7 @@
 /*    Mac FOND support.  Written by just@letterror.com.                    */
 /*  Heavily Fixed by mpsuzuki, George Williams and Sean McBride            */
 /*                                                                         */
-/*  Copyright 1996-2016 by                                                 */
+/*  Copyright 1996-2018 by                                                 */
 /*  Just van Rossum, David Turner, Robert Wilhelm, and Werner Lemberg.     */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -1423,7 +1423,7 @@ typedef short ResourceIndex;
   /*    accepts an FSRef instead of a path.                                */
   /*                                                                       */
   /* This function is deprecated because Carbon data types (FSRef)         */
-  /* are not cross-platform, and thus not suitable for the freetype API.   */
+  /* are not cross-platform, and thus not suitable for the FreeType API.   */
   FT_EXPORT_DEF( FT_Error )
   FT_New_Face_From_FSRef( FT_Library    library,
                           const FSRef*  ref,
@@ -1481,7 +1481,7 @@ typedef short ResourceIndex;
   /*    accepts an FSSpec instead of a path.                               */
   /*                                                                       */
   /* This function is deprecated because Carbon data types (FSSpec)        */
-  /* are not cross-platform, and thus not suitable for the freetype API.   */
+  /* are not cross-platform, and thus not suitable for the FreeType API.   */
   FT_EXPORT_DEF( FT_Error )
   FT_New_Face_From_FSSpec( FT_Library     library,
                            const FSSpec*  spec,

@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 1996-2016 by
+# Copyright 1996-2018 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -43,6 +43,7 @@ DISTCLEAN += $(OBJ_BUILD)/config.cache  \
              $(OBJ_BUILD)/unix-def.mk   \
              $(OBJ_BUILD)/unix-cc.mk    \
              $(OBJ_BUILD)/ftconfig.h    \
+             $(OBJ_BUILD)/ftoption.h    \
              $(LIBTOOL)                 \
              $(OBJ_BUILD)/Makefile
 
@@ -62,6 +63,7 @@ version_info := @version_info@
 
 # Variables needed for `freetype-config' and `freetype.pc'.
 #
+PKG_CONFIG         := @PKG_CONFIG@
 REQUIRES_PRIVATE   := @REQUIRES_PRIVATE@
 LIBS_PRIVATE       := @LIBS_PRIVATE@
 LIBSSTATIC_CONFIG  := @LIBSSTATIC_CONFIG@
@@ -102,6 +104,7 @@ NO_OUTPUT := 2> /dev/null
 $(OBJ_BUILD)/freetype-config: $(TOP_DIR)/builds/unix/freetype-config.in
 	rm -f $@ $@.tmp
 	sed -e 's|%LIBSSTATIC_CONFIG%|$(LIBSSTATIC_CONFIG)|'   \
+	    -e 's|%PKG_CONFIG%|$(PKG_CONFIG)|'                 \
 	    -e 's|%build_libtool_libs%|$(build_libtool_libs)|' \
 	    -e 's|%exec_prefix%|$(exec_prefix)|'               \
 	    -e 's|%ft_version%|$(ft_version)|'                 \
@@ -111,7 +114,7 @@ $(OBJ_BUILD)/freetype-config: $(TOP_DIR)/builds/unix/freetype-config.in
 	    $<                                                 \
 	    > $@.tmp
 	chmod +x $@.tmp
-	chmod a-w $@.tmp
+	chmod go-w $@.tmp
 	mv $@.tmp $@
 
 # To support directory names with spaces (as might easily happen on Windows
@@ -141,6 +144,9 @@ $(OBJ_BUILD)/freetype2.pc: $(TOP_DIR)/builds/unix/freetype2.in
 	    > $@.tmp
 	chmod a-w $@.tmp
 	mv $@.tmp $@
+
+# defines whether we should install `freetype-config' or not
+INSTALL_FT2_CONFIG = @INSTALL_FT2_CONFIG@
 
 all install: $(OBJ_BUILD)/freetype-config \
      $(OBJ_BUILD)/freetype2.pc

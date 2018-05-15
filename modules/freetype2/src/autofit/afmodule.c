@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Auto-fitter module implementation (body).                            */
 /*                                                                         */
-/*  Copyright 2003-2016 by                                                 */
+/*  Copyright 2003-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -56,7 +56,7 @@
 
 #include FT_INTERNAL_OBJECTS_H
 #include FT_INTERNAL_DEBUG_H
-#include FT_AUTOHINTER_H
+#include FT_DRIVER_H
 #include FT_SERVICE_PROPERTIES_H
 
 
@@ -102,6 +102,19 @@
 
     return error;
   }
+
+
+#ifdef FT_CONFIG_OPTION_PIC
+
+#undef  AF_SCRIPT_CLASSES_GET
+#define AF_SCRIPT_CLASSES_GET  \
+          ( GET_PIC( ft_module->library )->af_script_classes )
+
+#undef  AF_STYLE_CLASSES_GET
+#define AF_STYLE_CLASSES_GET  \
+          ( GET_PIC( ft_module->library )->af_style_classes )
+
+#endif
 
 
   static FT_Error
@@ -291,12 +304,10 @@
         long         nsd = ft_strtol( s, NULL, 10 );
 
 
-        if ( nsd == 0 )
-          module->no_stem_darkening = 0;
-        else if ( nsd == 1 )
-          module->no_stem_darkening = 1;
+        if ( !nsd )
+          module->no_stem_darkening = FALSE;
         else
-          return FT_THROW( Invalid_Argument );
+          module->no_stem_darkening = TRUE;
       }
       else
 #endif

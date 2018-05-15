@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    CFF token stream parser (body)                                       */
 /*                                                                         */
-/*  Copyright 1996-2016 by                                                 */
+/*  Copyright 1996-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -20,10 +20,11 @@
 #include "cffparse.h"
 #include FT_INTERNAL_STREAM_H
 #include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_CALC_H
+#include FT_INTERNAL_POSTSCRIPT_AUX_H
 
 #include "cfferrs.h"
 #include "cffpic.h"
-#include "cffgload.h"
 #include "cffload.h"
 
 
@@ -154,6 +155,22 @@
     10000000L,
     100000000L,
     1000000000L
+  };
+
+  /* maximum values allowed for multiplying      */
+  /* with the corresponding `power_tens' element */
+  static const FT_Long power_ten_limits[] =
+  {
+    FT_LONG_MAX / 1L,
+    FT_LONG_MAX / 10L,
+    FT_LONG_MAX / 100L,
+    FT_LONG_MAX / 1000L,
+    FT_LONG_MAX / 10000L,
+    FT_LONG_MAX / 100000L,
+    FT_LONG_MAX / 1000000L,
+    FT_LONG_MAX / 10000000L,
+    FT_LONG_MAX / 100000000L,
+    FT_LONG_MAX / 1000000000L,
   };
 
 
@@ -448,9 +465,21 @@
       /* 16.16 fixed point is used internally for CFF2 blend results. */
       /* Since these are trusted values, a limit check is not needed. */
 
-      /* After the 255, 4 bytes are in host order. */
-      /* Blend result is rounded to integer.       */
-      return (FT_Long)( *( (FT_UInt32 *) ( d[0] + 1 ) ) + 0x8000U ) >> 16;
+      /* After the 255, 4 bytes give the number.                 */
+      /* The blend value is converted to integer, with rounding; */
+      /* due to the right-shift we don't need the lowest byte.   */
+#if 0
+      return (FT_Short)(
+               ( ( ( (FT_UInt32)*( d[0] + 1 ) << 24 ) |
+                   ( (FT_UInt32)*( d[0] + 2 ) << 16 ) |
+                   ( (FT_UInt32)*( d[0] + 3 ) <<  8 ) |
+                     (FT_UInt32)*( d[0] + 4 )         ) + 0x8000U ) >> 16 );
+#else
+      return (FT_Short)(
+               ( ( ( (FT_UInt32)*( d[0] + 1 ) << 16 ) |
+                   ( (FT_UInt32)*( d[0] + 2 ) <<  8 ) |
+                     (FT_UInt32)*( d[0] + 3 )         ) + 0x80U ) >> 8 );
+#endif
     }
 
     else
@@ -472,7 +501,15 @@
 
 
       if ( scaling )
+      {
+        if ( FT_ABS( val ) > power_ten_limits[scaling] )
+        {
+          val = val > 0 ? 0x7FFFFFFFL : -0x7FFFFFFFL;
+          goto Overflow;
+        }
+
         val *= power_tens[scaling];
+      }
 
       if ( val > 0x7FFF )
       {
@@ -882,8 +919,6 @@
     FT_Error     error;
 
 
-    error = FT_ERR( Stack_Underflow );
-
     if ( !priv || !priv->subfont )
     {
       error = FT_THROW( Invalid_File_Format );
@@ -914,7 +949,9 @@
       goto Exit;
     }
 
-    FT_TRACE4(( "   %d values blended\n", numBlends ));
+    FT_TRACE4(( "   %d value%s blended\n",
+                numBlends,
+                numBlends == 1 ? "" : "s" ));
 
     error = cff_blend_doBlend( subFont, parser, numBlends );
 
@@ -1113,6 +1150,8 @@
 #define CFF_FIELD_DELTA( code, name, max, id ) i++;
 #undef CFF_FIELD_CALLBACK
 #define CFF_FIELD_CALLBACK( code, name, id ) i++;
+#undef CFF_FIELD_BLEND
+#define CFF_FIELD_BLEND( code, id ) i++;
 
 #include "cfftoken.h"
 
@@ -1158,6 +1197,17 @@
           clazz[i].reader       = 0;                                \
           clazz[i].array_max    = max_;                             \
           clazz[i].count_offset = FT_FIELD_OFFSET( num_ ## name_ ); \
+          i++;
+
+#undef  CFF_FIELD_BLEND
+#define CFF_FIELD_BLEND( code_, id_ )              \
+          clazz[i].kind         = cff_kind_blend;  \
+          clazz[i].code         = code_ | CFFCODE; \
+          clazz[i].offset       = 0;               \
+          clazz[i].size         = 0;               \
+          clazz[i].reader       = cff_parse_blend; \
+          clazz[i].array_max    = 0;               \
+          clazz[i].count_offset = 0;               \
           i++;
 
 #include "cfftoken.h"
@@ -1210,6 +1260,18 @@
           clazz[i].id           = id_;                              \
           i++;
 
+#undef  CFF_FIELD_BLEND
+#define CFF_FIELD_BLEND( code_, id_ )              \
+          clazz[i].kind         = cff_kind_blend;  \
+          clazz[i].code         = code_ | CFFCODE; \
+          clazz[i].offset       = 0;               \
+          clazz[i].size         = 0;               \
+          clazz[i].reader       = cff_parse_blend; \
+          clazz[i].array_max    = 0;               \
+          clazz[i].count_offset = 0;               \
+          clazz[i].id           = id_;             \
+          i++;
+
 #include "cfftoken.h"
 
     clazz[i].kind         = 0;
@@ -1239,9 +1301,14 @@
                   FT_Byte*    start,
                   FT_Byte*    limit )
   {
+#ifdef CFF_CONFIG_OPTION_OLD_ENGINE
+    PSAux_Service  psaux;
+#endif
+
     FT_Byte*    p       = start;
     FT_Error    error   = FT_Err_Ok;
     FT_Library  library = parser->library;
+
     FT_UNUSED( library );
 
 
@@ -1328,10 +1395,16 @@
         cff_rec.top_font.font_dict.num_axes    = parser->num_axes;
         decoder.cff                            = &cff_rec;
 
-        error = cff_decoder_parse_charstrings( &decoder,
-                                               charstring_base,
-                                               charstring_len,
-                                               1 );
+        psaux = (PSAux_Service)FT_Get_Module_Interface( library, "psaux" );
+        if ( !psaux )
+        {
+          FT_ERROR(( "cff_parser_run: cannot access `psaux' module\n" ));
+          error = FT_THROW( Missing_Module );
+          goto Exit;
+        }
+
+        error = psaux->cff_decoder_funcs->parse_charstrings_old(
+                  &decoder, charstring_base, charstring_len, 1 );
 
         /* Now copy the stack data in the temporary decoder object,    */
         /* converting it back to charstring number representations     */
@@ -1550,7 +1623,7 @@
                 val = 0;
                 while ( num_args > 0 )
                 {
-                  val += cff_parse_num( parser, data++ );
+                  val = ADD_LONG( val, cff_parse_num( parser, data++ ) );
                   switch ( field->size )
                   {
                   case (8 / FT_CHAR_BIT):

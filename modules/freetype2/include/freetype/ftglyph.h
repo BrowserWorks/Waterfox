@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType convenience functions to handle glyphs (specification).     */
 /*                                                                         */
-/*  Copyright 1996-2016 by                                                 */
+/*  Copyright 1996-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -231,6 +231,12 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    FreeType error code.  0~means success.                             */
   /*                                                                       */
+  /* <Note>                                                                */
+  /*    Because `*aglyph->advance.x' and '*aglyph->advance.y' are 16.16    */
+  /*    fixed-point numbers, `slot->advance.x' and `slot->advance.y'       */
+  /*    (which are in 26.6 fixed-point format) must be in the range        */
+  /*    ]-32768;32768[.                                                    */
+  /*                                                                       */
   FT_EXPORT( FT_Error )
   FT_Get_Glyph( FT_GlyphSlot  slot,
                 FT_Glyph     *aglyph );
@@ -341,10 +347,10 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /* <Description>                                                         */
   /*    Return a glyph's `control box'.  The control box encloses all the  */
-  /*    outline's points, including Bézier control points.  Though it      */
+  /*    outline's points, including Bezier control points.  Though it      */
   /*    coincides with the exact bounding box for most glyphs, it can be   */
   /*    slightly larger in some situations (like when rotating an outline  */
-  /*    that contains Bézier outside arcs).                                */
+  /*    that contains Bezier outside arcs).                                */
   /*                                                                       */
   /*    Computing the control box is very fast, while getting the bounding */
   /*    box can take much more time as it needs to walk over all segments  */
@@ -453,7 +459,7 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*                                                                       */
   /*        // load glyph                                                  */
-  /*        error = FT_Load_Char( face, glyph_index, FT_LOAD_DEFAUT );     */
+  /*        error = FT_Load_Char( face, glyph_index, FT_LOAD_DEFAULT );    */
   /*                                                                       */
   /*        // extract glyph image                                         */
   /*        error = FT_Get_Glyph( face->glyph, &glyph );                   */
@@ -565,6 +571,9 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /* <Note>                                                                */
   /*    The result is undefined if either `a' or `b' is zero.              */
+  /*                                                                       */
+  /*    Since the function uses wrap-around arithmetic, results become     */
+  /*    meaningless if the arguments are very large.                       */
   /*                                                                       */
   FT_EXPORT( void )
   FT_Matrix_Multiply( const FT_Matrix*  a,

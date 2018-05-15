@@ -7,9 +7,12 @@ Table fields
   wrapper format
     The format used to represent the font data.  In the table below it
     is  used only  if the  font format  differs.  Possible  values are
-    `SFNT' (binary), `PS'  (a text header, followed by  binary or text
-    data), `LZW'  (compressed with  either `gzip' or  `compress'), and
-    `BZ2' (compressed with `bzip2`).
+
+      SFNT  binary
+      PFB   binary
+      PS    a text header, followed by  binary or text data
+      LZW   compressed with  either `gzip' or `compress'
+      BZ2   compressed with `bzip2'.
 
   font format
     How the font is to be accessed, possibly after converting the file
@@ -95,6 +98,9 @@ which isn't supported yet please send a mail too.
 
 
   ---     PS      TYPE_1  ---        type1    T1_SPEC.pdf
+                                              (PFA, Type 1 font resource)
+  PFB     PS      TYPE_1  ---        type1    T1_SPEC.pdf,
+                                              5040.Download_Fonts.pdf
                                               (`normal' Type 1 font)
   ---     PS      TYPE_1  CID        cid      PLRM.pdf (CID Font Type 0;
                                               Type 9 font)
@@ -149,10 +155,11 @@ which isn't supported yet please send a mail too.
 [1] Support should  be rather simple since this is  identical to `CFF'
     but in a PS wrapper.
 
-[2] Official PFR specification:
+[2] The  official  PFR  specification  is  no  longer  available,  but
+    archive.org has archived it:
 
-      http://www.bitstream.com/categories/developer/truedoc/pfrspec.html
-      http://www.bitstream.com/categories/developer/truedoc/pfrspec1.2.pdf
+      https://web.archive.org/web/20091014062300/http://www.bitstream.com/font_rendering/products/truedoc/pfrspec.html
+      https://web.archive.org/web/20081115152605/http://www.bitstream.com/font_rendering/pdfs/pfrspec1.3.pdf
 
     The syntax  of the  auxiliary data  is not  defined there,  but is
     partially defined in MHP 1.0.3 (also called ETSI TS 101812 V1.3.1)
@@ -160,8 +167,6 @@ which isn't supported yet please send a mail too.
 
       http://www.etsi.org/
       http://webapp.etsi.org/workprogram/Report_WorkItem.asp?WKI_ID=18799
-
-    (free registration required).
 
 [3] Support  is rudimentary  currently; some  tables or  data are  not
     loaded yet.
@@ -178,15 +183,15 @@ which isn't supported yet please send a mail too.
     George Williams deduced  the font format from the  X11 sources and
     documented it for his FontForge font editor:
 
-      http://fontforge.github.io/pcf-format.html
+      https://fontforge.github.io/pcf-format.html
 
 [5] This is from MS Windows 3; see Microsoft's Knowledge Base article at
 
-      http://support.microsoft.com/kb/65123
+      https://support.microsoft.com/kb/65123
 
 ------------------------------------------------------------------------
 
-Copyright 2004-2016 by
+Copyright 2004-2018 by
 David Turner, Robert Wilhelm, and Werner Lemberg.
 
 This  file is  part  of the  FreeType  project, and  may  only be  used,
@@ -197,3 +202,7 @@ accept it fully.
 
 
 --- end of formats.txt ---
+
+Local Variables:
+coding: utf-8
+End:

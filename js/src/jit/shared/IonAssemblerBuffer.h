@@ -29,15 +29,21 @@ class BufferOffset
 
     explicit BufferOffset(int offset_)
       : offset(offset_)
-    { }
+    {
+        MOZ_ASSERT(offset >= 0);
+    }
 
     explicit BufferOffset(Label* l)
       : offset(l->offset())
-    { }
+    {
+        MOZ_ASSERT(offset >= 0);
+    }
 
     explicit BufferOffset(RepatchLabel* l)
       : offset(l->offset())
-    { }
+    {
+        MOZ_ASSERT(offset >= 0);
+    }
 
     int getOffset() const { return offset; }
     bool assigned() const { return offset != INT_MIN; }
@@ -187,8 +193,12 @@ class AssemblerBuffer
         return !(size() & (alignment - 1));
     }
 
-  protected:
-    virtual Slice* newSlice(LifoAlloc& a) {
+  private:
+    Slice* newSlice(LifoAlloc& a) {
+        if (size() > MaxCodeBytesPerProcess - sizeof(Slice)) {
+            fail_oom();
+            return nullptr;
+        }
         Slice* tmp = static_cast<Slice*>(a.alloc(sizeof(Slice)));
         if (!tmp) {
             fail_oom();
@@ -286,6 +296,9 @@ class AssemblerBuffer
         if (tail)
             return bufferSize + tail->length();
         return bufferSize;
+    }
+    BufferOffset nextOffset() const {
+        return BufferOffset(size());
     }
 
     bool oom() const { return m_oom || m_bail; }
@@ -400,12 +413,6 @@ class AssemblerBuffer
         // second-to-last.
         Slice* prev = tail->getPrev();
         return getInstBackwards(off, prev, bufferSize - prev->length());
-    }
-
-    BufferOffset nextOffset() const {
-        if (tail)
-            return BufferOffset(bufferSize + tail->length());
-        return BufferOffset(bufferSize);
     }
 
     typedef AssemblerBuffer<SliceSize, Inst> ThisClass;

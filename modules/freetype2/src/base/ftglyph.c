@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType convenience functions to handle glyphs (body).              */
 /*                                                                         */
-/*  Copyright 1996-2016 by                                                 */
+/*  Copyright 1996-2018 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -408,12 +408,28 @@
       goto Exit;
 
     /* copy advance while converting 26.6 to 16.16 format */
+    if ( slot->advance.x >=  0x8000L * 64 ||
+         slot->advance.x <= -0x8000L * 64 )
+    {
+      FT_ERROR(( "FT_Get_Glyph: advance width too large\n" ));
+      error = FT_THROW( Invalid_Argument );
+      goto Exit2;
+    }
+    if ( slot->advance.y >=  0x8000L * 64 ||
+         slot->advance.y <= -0x8000L * 64 )
+    {
+      FT_ERROR(( "FT_Get_Glyph: advance height too large\n" ));
+      error = FT_THROW( Invalid_Argument );
+      goto Exit2;
+    }
+
     glyph->advance.x = slot->advance.x * 1024;
     glyph->advance.y = slot->advance.y * 1024;
 
     /* now import the image from the glyph slot */
     error = clazz->glyph_init( glyph, slot );
 
+  Exit2:
     /* if an error occurred, destroy the glyph */
     if ( error )
       FT_Done_Glyph( glyph );

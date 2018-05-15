@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 1996-2016 by
+# Copyright 1996-2018 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -172,7 +172,8 @@ include $(TOP_DIR)/builds/modules.mk
 # get FreeType version string, using a
 # poor man's `sed' emulation with make's built-in string functions
 #
-work := $(strip $(shell $(CAT) $(TOP_DIR)/include/freetype/freetype.h))
+work := $(strip $(shell $(CAT) \
+                  $(subst /,$(SEP),$(TOP_DIR)/include/freetype/freetype.h)))
 work := $(subst |,x,$(work))
 work := $(subst $(space),|,$(work))
 work := $(subst \#define|FREETYPE_MAJOR|,$(space),$(work))

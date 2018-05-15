@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Embedded resource forks accessor (body).                             */
 /*                                                                         */
-/*  Copyright 2004-2016 by                                                 */
+/*  Copyright 2004-2018 by                                                 */
 /*  Masatake YAMATO and Redhat K.K.                                        */
 /*                                                                         */
 /*  FT_Raccess_Get_HeaderInfo() and raccess_guess_darwin_hfsplus() are     */
@@ -271,7 +271,13 @@
           if ( FT_STREAM_SKIP( 4 ) )  /* mbz */
             goto Exit;
 
-          if ( ref[j].res_id < 0 || temp < 0 )
+          /*
+           * According to Inside Macintosh: More Macintosh Toolbox,
+           * "Resource IDs" (1-46), there are some reserved IDs.
+           * However, FreeType2 is not a font synthesizer, no need
+           * to check the acceptable resource ID.
+           */
+          if ( temp < 0 )
           {
             error = FT_THROW( Invalid_Table );
             goto Exit;
@@ -281,7 +287,7 @@
 
           FT_TRACE3(( "             [%d]:"
                       " resource_id=0x%04x, offset=0x%08x\n",
-                      j, ref[j].res_id, ref[j].offset ));
+                      j, (FT_UShort)ref[j].res_id, ref[j].offset ));
         }
 
         if ( sort_by_res_id )
@@ -472,7 +478,7 @@
   }
 
 
-#ifndef FT_MACINTOSH
+#if defined( FT_CONFIG_OPTION_MAC_FONTS ) && !defined( FT_MACINTOSH )
   static FT_RFork_Rule
   raccess_get_rule_type_from_rule_index( FT_Library  library,
                                          FT_UInt     rule_index )

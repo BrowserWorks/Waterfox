@@ -1,9 +1,9 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
+"https://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>FreeType-2.7.1 API Reference</title>
+<title>FreeType-2.9.1 API Reference</title>
 <style type="text/css">
   a:link { color: #0000EF; }
   a:visited { color: #51188E; }
@@ -100,23 +100,25 @@
 <body>
 
 <table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table>
-<h1>FreeType-2.7.1 API Reference</h1>
+<h1>FreeType-2.9.1 API Reference</h1>
 
 <h1 id="multiple_masters">Multiple Masters</h1>
 <h2>Synopsis</h2>
 <table class="synopsis">
-<tr><td><a href="#FT_MM_Axis">FT_MM_Axis</a></td><td><a href="#FT_Set_MM_Design_Coordinates">FT_Set_MM_Design_Coordinates</a></td></tr>
-<tr><td><a href="#FT_Multi_Master">FT_Multi_Master</a></td><td><a href="#FT_Set_Var_Design_Coordinates">FT_Set_Var_Design_Coordinates</a></td></tr>
-<tr><td><a href="#FT_Var_Axis">FT_Var_Axis</a></td><td><a href="#FT_Get_Var_Design_Coordinates">FT_Get_Var_Design_Coordinates</a></td></tr>
-<tr><td><a href="#FT_Var_Named_Style">FT_Var_Named_Style</a></td><td><a href="#FT_Set_MM_Blend_Coordinates">FT_Set_MM_Blend_Coordinates</a></td></tr>
-<tr><td><a href="#FT_MM_Var">FT_MM_Var</a></td><td><a href="#FT_Get_MM_Blend_Coordinates">FT_Get_MM_Blend_Coordinates</a></td></tr>
-<tr><td><a href="#FT_Get_Multi_Master">FT_Get_Multi_Master</a></td><td><a href="#FT_Set_Var_Blend_Coordinates">FT_Set_Var_Blend_Coordinates</a></td></tr>
-<tr><td><a href="#FT_Get_MM_Var">FT_Get_MM_Var</a></td><td><a href="#FT_Get_Var_Blend_Coordinates">FT_Get_Var_Blend_Coordinates</a></td></tr>
+<tr><td><a href="#FT_MM_Axis">FT_MM_Axis</a></td><td><a href="#FT_Set_Var_Design_Coordinates">FT_Set_Var_Design_Coordinates</a></td></tr>
+<tr><td><a href="#FT_Multi_Master">FT_Multi_Master</a></td><td><a href="#FT_Get_Var_Design_Coordinates">FT_Get_Var_Design_Coordinates</a></td></tr>
+<tr><td><a href="#FT_Var_Axis">FT_Var_Axis</a></td><td><a href="#FT_Set_MM_Blend_Coordinates">FT_Set_MM_Blend_Coordinates</a></td></tr>
+<tr><td><a href="#FT_Var_Named_Style">FT_Var_Named_Style</a></td><td><a href="#FT_Get_MM_Blend_Coordinates">FT_Get_MM_Blend_Coordinates</a></td></tr>
+<tr><td><a href="#FT_MM_Var">FT_MM_Var</a></td><td><a href="#FT_Set_Var_Blend_Coordinates">FT_Set_Var_Blend_Coordinates</a></td></tr>
+<tr><td><a href="#FT_Get_Multi_Master">FT_Get_Multi_Master</a></td><td><a href="#FT_Get_Var_Blend_Coordinates">FT_Get_Var_Blend_Coordinates</a></td></tr>
+<tr><td><a href="#FT_Get_MM_Var">FT_Get_MM_Var</a></td><td><a href="#FT_VAR_AXIS_FLAG_XXX">FT_VAR_AXIS_FLAG_XXX</a></td></tr>
+<tr><td><a href="#FT_Done_MM_Var">FT_Done_MM_Var</a></td><td><a href="#FT_Get_Var_Axis_Flags">FT_Get_Var_Axis_Flags</a></td></tr>
+<tr><td><a href="#FT_Set_MM_Design_Coordinates">FT_Set_MM_Design_Coordinates</a></td><td><a href="#FT_Set_Named_Instance">FT_Set_Named_Instance</a></td></tr>
 </table>
 
 
 <p>The following types and functions are used to manage Multiple Master fonts, i.e., the selection of specific design instances by setting design axis coordinates.</p>
-<p>George Williams has extended this interface to make it work with both Type&nbsp;1 Multiple Masters fonts and GX distortable (var) fonts. Some of these routines only work with MM fonts, others will work with both types. They are similar enough that a consistent interface makes sense.</p>
+<p>Besides Adobe MM fonts, the interface supports Apple's TrueType GX and OpenType variation fonts. Some of the routines only work with Adobe MM fonts, others will work with all three types. They are similar enough that a consistent interface makes sense.</p>
 
 <div class="section">
 <h3 id="FT_MM_Axis">FT_MM_Axis</h3>
@@ -131,8 +133,8 @@
   } <b>FT_MM_Axis</b>;
 </pre>
 
-<p>A simple structure used to model a given axis in design space for Multiple Masters fonts.</p>
-<p>This structure can't be used for GX var fonts.</p>
+<p>A structure to model a given axis in design space for Multiple Masters fonts.</p>
+<p>This structure can't be used for TrueType GX or OpenType variation fonts.</p>
 
 <h4>fields</h4>
 <table class="fields">
@@ -163,8 +165,8 @@
   } <b>FT_Multi_Master</b>;
 </pre>
 
-<p>A structure used to model the axes and space of a Multiple Masters font.</p>
-<p>This structure can't be used for GX var fonts.</p>
+<p>A structure to model the axes and space of a Multiple Masters font.</p>
+<p>This structure can't be used for TrueType GX or OpenType variation fonts.</p>
 
 <h4>fields</h4>
 <table class="fields">
@@ -200,29 +202,32 @@
   } <b>FT_Var_Axis</b>;
 </pre>
 
-<p>A simple structure used to model a given axis in design space for Multiple Masters and GX var fonts.</p>
+<p>A structure to model a given axis in design space for Multiple Masters, TrueType GX, and OpenType variation fonts.</p>
 
 <h4>fields</h4>
 <table class="fields">
 <tr><td class="val" id="name">name</td><td class="desc">
-<p>The axis's name. Not always meaningful for GX.</p>
+<p>The axis's name. Not always meaningful for TrueType GX or OpenType variation fonts.</p>
 </td></tr>
 <tr><td class="val" id="minimum">minimum</td><td class="desc">
 <p>The axis's minimum design coordinate.</p>
 </td></tr>
 <tr><td class="val" id="def">def</td><td class="desc">
-<p>The axis's default design coordinate. FreeType computes meaningful default values for MM; it is then an integer value, not in 16.16 format.</p>
+<p>The axis's default design coordinate. FreeType computes meaningful default values for Adobe MM fonts.</p>
 </td></tr>
 <tr><td class="val" id="maximum">maximum</td><td class="desc">
 <p>The axis's maximum design coordinate.</p>
 </td></tr>
 <tr><td class="val" id="tag">tag</td><td class="desc">
-<p>The axis's tag (the GX equivalent to &lsquo;name&rsquo;). FreeType provides default values for MM if possible.</p>
+<p>The axis's tag (the equivalent to &lsquo;name&rsquo; for TrueType GX and OpenType variation fonts). FreeType provides default values for Adobe MM fonts if possible.</p>
 </td></tr>
 <tr><td class="val" id="strid">strid</td><td class="desc">
-<p>The entry in &lsquo;name&rsquo; table (another GX version of &lsquo;name&rsquo;). Not meaningful for MM.</p>
+<p>The axis name entry in the font's &lsquo;name&rsquo; table. This is another (and often better) version of the &lsquo;name&rsquo; field for TrueType GX or OpenType variation fonts. Not meaningful for Adobe MM fonts.</p>
 </td></tr>
 </table>
+
+<h4>note</h4>
+<p>The fields &lsquo;minimum&rsquo;, &lsquo;def&rsquo;, and &lsquo;maximum&rsquo; are 16.16 fractional values for TrueType GX and OpenType variation fonts. For Adobe MM fonts, the values are integers.</p>
 
 <hr>
 <table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
@@ -240,16 +245,19 @@
   } <b>FT_Var_Named_Style</b>;
 </pre>
 
-<p>A simple structure used to model a named style in a GX var font.</p>
-<p>This structure can't be used for MM fonts.</p>
+<p>A structure to model a named instance in a TrueType GX or OpenType variation font.</p>
+<p>This structure can't be used for Adobe MM fonts.</p>
 
 <h4>fields</h4>
 <table class="fields">
 <tr><td class="val" id="coords">coords</td><td class="desc">
-<p>The design coordinates for this style. This is an array with one entry for each axis.</p>
+<p>The design coordinates for this instance. This is an array with one entry for each axis.</p>
 </td></tr>
 <tr><td class="val" id="strid">strid</td><td class="desc">
-<p>The entry in &lsquo;name&rsquo; table identifying this style.</p>
+<p>The entry in &lsquo;name&rsquo; table identifying this instance.</p>
+</td></tr>
+<tr><td class="val" id="psid">psid</td><td class="desc">
+<p>The entry in &lsquo;name&rsquo; table identifying a PostScript name for this instance. Value 0xFFFF indicates a missing entry.</p>
 </td></tr>
 </table>
 
@@ -271,26 +279,26 @@
   } <b>FT_MM_Var</b>;
 </pre>
 
-<p>A structure used to model the axes and space of a Multiple Masters or GX var distortable font.</p>
-<p>Some fields are specific to one format and not to the other.</p>
+<p>A structure to model the axes and space of an Adobe MM, TrueType GX, or OpenType variation font.</p>
+<p>Some fields are specific to one format and not to the others.</p>
 
 <h4>fields</h4>
 <table class="fields">
 <tr><td class="val" id="num_axis">num_axis</td><td class="desc">
-<p>The number of axes. The maximum value is&nbsp;4 for MM; no limit in GX.</p>
+<p>The number of axes. The maximum value is&nbsp;4 for Adobe MM fonts; no limit in TrueType GX or OpenType variation fonts.</p>
 </td></tr>
 <tr><td class="val" id="num_designs">num_designs</td><td class="desc">
-<p>The number of designs; should be normally 2^num_axis for MM fonts. Not meaningful for GX (where every glyph could have a different number of designs).</p>
+<p>The number of designs; should be normally 2^num_axis for Adobe MM fonts. Not meaningful for TrueType GX or OpenType variation fonts (where every glyph could have a different number of designs).</p>
 </td></tr>
 <tr><td class="val" id="num_namedstyles">num_namedstyles</td><td class="desc">
-<p>The number of named styles; a &lsquo;named style&rsquo; is a tuple of design coordinates that has a string ID (in the &lsquo;name&rsquo; table) associated with it. The font can tell the user that, for example, [Weight=1.5,Width=1.1] is &lsquo;Bold&rsquo;.</p>
-<p>For Type 1 Multiple Masters fonts, this value is always zero because the format does not support named styles.</p>
+<p>The number of named styles; a &lsquo;named style&rsquo; is a tuple of design coordinates that has a string ID (in the &lsquo;name&rsquo; table) associated with it. The font can tell the user that, for example, [Weight=1.5,Width=1.1] is &lsquo;Bold&rsquo;. Another name for &lsquo;named style&rsquo; is &lsquo;named instance&rsquo;.</p>
+<p>For Adobe Multiple Masters fonts, this value is always zero because the format does not support named styles.</p>
 </td></tr>
 <tr><td class="val" id="axis">axis</td><td class="desc">
-<p>An axis descriptor table. GX fonts contain slightly more data than MM. Memory management of this pointer is done internally by FreeType.</p>
+<p>An axis descriptor table. TrueType GX and OpenType variation fonts contain slightly more data than Adobe MM fonts. Memory management of this pointer is done internally by FreeType.</p>
 </td></tr>
 <tr><td class="val" id="namedstyle">namedstyle</td><td class="desc">
-<p>A named style table. Only meaningful with GX. Memory management of this pointer is done internally by FreeType.</p>
+<p>A named style (instance) table. Only meaningful for TrueType GX and OpenType variation fonts. Memory management of this pointer is done internally by FreeType.</p>
 </td></tr>
 </table>
 
@@ -306,8 +314,8 @@
                        <a href="ft2-multiple_masters.html#FT_Multi_Master">FT_Multi_Master</a>  *amaster );
 </pre>
 
-<p>Retrieve the Multiple Master descriptor of a given font.</p>
-<p>This function can't be used with GX fonts.</p>
+<p>Retrieve a variation descriptor of a given Adobe MM font.</p>
+<p>This function can't be used with TrueType GX or OpenType variation fonts.</p>
 
 <h4>input</h4>
 <table class="fields">
@@ -338,7 +346,8 @@
                  <a href="ft2-multiple_masters.html#FT_MM_Var">FT_MM_Var</a>*  *amaster );
 </pre>
 
-<p>Retrieve the Multiple Master/GX var descriptor of a given font.</p>
+<p>Retrieve a variation descriptor for a given font.</p>
+<p>This function works with all supported variation formats.</p>
 
 <h4>input</h4>
 <table class="fields">
@@ -350,7 +359,31 @@
 <h4>output</h4>
 <table class="fields">
 <tr><td class="val" id="amaster">amaster</td><td class="desc">
-<p>The Multiple Masters/GX var descriptor. Allocates a data structure, which the user must deallocate with &lsquo;free&rsquo; after use.</p>
+<p>The variation descriptor. Allocates a data structure, which the user must deallocate with a call to <a href="ft2-multiple_masters.html#FT_Done_MM_Var">FT_Done_MM_Var</a> after use.</p>
+</td></tr>
+</table>
+
+<h4>return</h4>
+<p>FreeType error code. 0&nbsp;means success.</p>
+
+<hr>
+<table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
+
+<div class="section">
+<h3 id="FT_Done_MM_Var">FT_Done_MM_Var</h3>
+<p>Defined in FT_MULTIPLE_MASTERS_H (freetype/ftmm.h).</p>
+<pre>
+  FT_EXPORT( <a href="ft2-basic_types.html#FT_Error">FT_Error</a> )
+  <b>FT_Done_MM_Var</b>( <a href="ft2-base_interface.html#FT_Library">FT_Library</a>   library,
+                  <a href="ft2-multiple_masters.html#FT_MM_Var">FT_MM_Var</a>   *amaster );
+</pre>
+
+<p>Free the memory allocated by <a href="ft2-multiple_masters.html#FT_Get_MM_Var">FT_Get_MM_Var</a>.</p>
+
+<h4>input</h4>
+<table class="fields">
+<tr><td class="val" id="library">library</td><td class="desc">
+<p>A handle of the face's parent library object that was used in the call to <a href="ft2-multiple_masters.html#FT_Get_MM_Var">FT_Get_MM_Var</a> to create &lsquo;amaster&rsquo;.</p>
 </td></tr>
 </table>
 
@@ -370,8 +403,8 @@
                                 <a href="ft2-basic_types.html#FT_Long">FT_Long</a>*  coords );
 </pre>
 
-<p>For Multiple Masters fonts, choose an interpolated font design through design coordinates.</p>
-<p>This function can't be used with GX fonts.</p>
+<p>For Adobe MM fonts, choose an interpolated font design through design coordinates.</p>
+<p>This function can't be used with TrueType GX or OpenType variation fonts.</p>
 
 <h4>inout</h4>
 <table class="fields">
@@ -392,6 +425,10 @@
 
 <h4>return</h4>
 <p>FreeType error code. 0&nbsp;means success.</p>
+
+<h4>note</h4>
+<p>[Since 2.8.1] To reset all axes to the default values, call the function with &lsquo;num_coords&rsquo; set to zero and &lsquo;coords&rsquo; set to NULL.</p>
+<p>[Since 2.9] If &lsquo;num_coords&rsquo; is larger than zero, this function sets the <a href="ft2-base_interface.html#FT_FACE_FLAG_XXX">FT_FACE_FLAG_VARIATION</a> bit in <a href="ft2-base_interface.html#FT_Face">FT_Face</a>'s &lsquo;face_flags&rsquo; field (i.e., <a href="ft2-base_interface.html#FT_IS_VARIATION">FT_IS_VARIATION</a> will return true). If &lsquo;num_coords&rsquo; is zero, this bit flag gets unset.</p>
 
 <hr>
 <table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
@@ -406,7 +443,8 @@
                                  <a href="ft2-basic_types.html#FT_Fixed">FT_Fixed</a>*  coords );
 </pre>
 
-<p>For Multiple Master or GX Var fonts, choose an interpolated font design through design coordinates.</p>
+<p>Choose an interpolated font design through design coordinates.</p>
+<p>This function works with all supported variation formats.</p>
 
 <h4>inout</h4>
 <table class="fields">
@@ -428,6 +466,10 @@
 <h4>return</h4>
 <p>FreeType error code. 0&nbsp;means success.</p>
 
+<h4>note</h4>
+<p>[Since 2.8.1] To reset all axes to the default values, call the function with &lsquo;num_coords&rsquo; set to zero and &lsquo;coords&rsquo; set to NULL. [Since 2.9] &lsquo;Default values&rsquo; means the currently selected named instance (or the base font if no named instance is selected).</p>
+<p>[Since 2.9] If &lsquo;num_coords&rsquo; is larger than zero, this function sets the <a href="ft2-base_interface.html#FT_FACE_FLAG_XXX">FT_FACE_FLAG_VARIATION</a> bit in <a href="ft2-base_interface.html#FT_Face">FT_Face</a>'s &lsquo;face_flags&rsquo; field (i.e., <a href="ft2-base_interface.html#FT_IS_VARIATION">FT_IS_VARIATION</a> will return true). If &lsquo;num_coords&rsquo; is zero, this bit flag gets unset.</p>
+
 <hr>
 <table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
 
@@ -441,7 +483,8 @@
                                  <a href="ft2-basic_types.html#FT_Fixed">FT_Fixed</a>*  coords );
 </pre>
 
-<p>For Multiple Master and GX Var fonts, get the design coordinates of the currently selected interpolated font.</p>
+<p>Get the design coordinates of the currently selected interpolated font.</p>
+<p>This function works with all supported variation formats.</p>
 
 <h4>input</h4>
 <table class="fields">
@@ -463,6 +506,9 @@
 <h4>return</h4>
 <p>FreeType error code. 0&nbsp;means success.</p>
 
+<h4>since</h4>
+<p>2.7.1</p>
+
 <hr>
 <table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
 
@@ -476,7 +522,8 @@
                                <a href="ft2-basic_types.html#FT_Fixed">FT_Fixed</a>*  coords );
 </pre>
 
-<p>For Multiple Masters and GX var fonts, choose an interpolated font design through normalized blend coordinates.</p>
+<p>Choose an interpolated font design through normalized blend coordinates.</p>
+<p>This function works with all supported variation formats.</p>
 
 <h4>inout</h4>
 <table class="fields">
@@ -491,12 +538,16 @@
 <p>The number of available design coordinates. If it is larger than the number of axes, ignore the excess values. If it is smaller than the number of axes, use default values for the remaining axes.</p>
 </td></tr>
 <tr><td class="val" id="coords">coords</td><td class="desc">
-<p>The design coordinates array (each element must be between 0 and 1.0 for MM fonts, and between -1.0 and 1.0 for GX var fonts).</p>
+<p>The design coordinates array (each element must be between 0 and 1.0 for Adobe MM fonts, and between -1.0 and 1.0 for TrueType GX and OpenType variation fonts).</p>
 </td></tr>
 </table>
 
 <h4>return</h4>
 <p>FreeType error code. 0&nbsp;means success.</p>
+
+<h4>note</h4>
+<p>[Since 2.8.1] To reset all axes to the default values, call the function with &lsquo;num_coords&rsquo; set to zero and &lsquo;coords&rsquo; set to NULL. [Since 2.9] &lsquo;Default values&rsquo; means the currently selected named instance (or the base font if no named instance is selected).</p>
+<p>[Since 2.9] If &lsquo;num_coords&rsquo; is larger than zero, this function sets the <a href="ft2-base_interface.html#FT_FACE_FLAG_XXX">FT_FACE_FLAG_VARIATION</a> bit in <a href="ft2-base_interface.html#FT_Face">FT_Face</a>'s &lsquo;face_flags&rsquo; field (i.e., <a href="ft2-base_interface.html#FT_IS_VARIATION">FT_IS_VARIATION</a> will return true). If &lsquo;num_coords&rsquo; is zero, this bit flag gets unset.</p>
 
 <hr>
 <table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
@@ -511,7 +562,8 @@
                                <a href="ft2-basic_types.html#FT_Fixed">FT_Fixed</a>*  coords );
 </pre>
 
-<p>For Multiple Masters and GX var fonts, get the normalized blend coordinates of the currently selected interpolated font.</p>
+<p>Get the normalized blend coordinates of the currently selected interpolated font.</p>
+<p>This function works with all supported variation formats.</p>
 
 <h4>input</h4>
 <table class="fields">
@@ -519,7 +571,7 @@
 <p>A handle to the source face.</p>
 </td></tr>
 <tr><td class="val" id="num_coords">num_coords</td><td class="desc">
-<p>The number of normalized blend coordinates to retrieve. If it is larger than the number of axes, set the excess values to&nbsp;0.5 for MM fonts, and to&nbsp;0 for GX var fonts.</p>
+<p>The number of normalized blend coordinates to retrieve. If it is larger than the number of axes, set the excess values to&nbsp;0.5 for Adobe MM fonts, and to&nbsp;0 for TrueType GX and OpenType variation fonts.</p>
 </td></tr>
 </table>
 
@@ -532,6 +584,9 @@
 
 <h4>return</h4>
 <p>FreeType error code. 0&nbsp;means success.</p>
+
+<h4>since</h4>
+<p>2.7.1</p>
 
 <hr>
 <table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
@@ -562,6 +617,104 @@
 </pre>
 
 <p>This is another name of <a href="ft2-multiple_masters.html#FT_Get_MM_Blend_Coordinates">FT_Get_MM_Blend_Coordinates</a>.</p>
+
+<h4>since</h4>
+<p>2.7.1</p>
+
+<hr>
+<table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
+
+<div class="section">
+<h3 id="FT_VAR_AXIS_FLAG_XXX">FT_VAR_AXIS_FLAG_XXX</h3>
+<p>Defined in FT_MULTIPLE_MASTERS_H (freetype/ftmm.h).</p>
+<pre>
+#define <a href="ft2-multiple_masters.html#FT_VAR_AXIS_FLAG_HIDDEN">FT_VAR_AXIS_FLAG_HIDDEN</a>  1
+</pre>
+
+<p>A list of bit flags used in the return value of <a href="ft2-multiple_masters.html#FT_Get_Var_Axis_Flags">FT_Get_Var_Axis_Flags</a>.</p>
+
+<h4>values</h4>
+<table class="fields">
+<tr><td class="val" id="FT_VAR_AXIS_FLAG_HIDDEN">FT_VAR_AXIS_FLAG_HIDDEN</td><td class="desc">
+<p>The variation axis should not be exposed to user interfaces.</p>
+</td></tr>
+</table>
+
+<h4>since</h4>
+<p>2.8.1</p>
+
+<hr>
+<table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
+
+<div class="section">
+<h3 id="FT_Get_Var_Axis_Flags">FT_Get_Var_Axis_Flags</h3>
+<p>Defined in FT_MULTIPLE_MASTERS_H (freetype/ftmm.h).</p>
+<pre>
+  FT_EXPORT( <a href="ft2-basic_types.html#FT_Error">FT_Error</a> )
+  <b>FT_Get_Var_Axis_Flags</b>( <a href="ft2-multiple_masters.html#FT_MM_Var">FT_MM_Var</a>*  master,
+                         <a href="ft2-basic_types.html#FT_UInt">FT_UInt</a>     axis_index,
+                         <a href="ft2-basic_types.html#FT_UInt">FT_UInt</a>*    flags );
+</pre>
+
+<p>Get the &lsquo;flags&rsquo; field of an OpenType Variation Axis Record.</p>
+<p>Not meaningful for Adobe MM fonts (&lsquo;*flags&rsquo; is always zero).</p>
+
+<h4>input</h4>
+<table class="fields">
+<tr><td class="val" id="master">master</td><td class="desc">
+<p>The variation descriptor.</p>
+</td></tr>
+<tr><td class="val" id="axis_index">axis_index</td><td class="desc">
+<p>The index of the requested variation axis.</p>
+</td></tr>
+</table>
+
+<h4>output</h4>
+<table class="fields">
+<tr><td class="val" id="flags">flags</td><td class="desc">
+<p>The &lsquo;flags&rsquo; field. See <a href="ft2-multiple_masters.html#FT_VAR_AXIS_FLAG_XXX">FT_VAR_AXIS_FLAG_XXX</a> for possible values.</p>
+</td></tr>
+</table>
+
+<h4>return</h4>
+<p>FreeType error code. 0&nbsp;means success.</p>
+
+<h4>since</h4>
+<p>2.8.1</p>
+
+<hr>
+<table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
+
+<div class="section">
+<h3 id="FT_Set_Named_Instance">FT_Set_Named_Instance</h3>
+<p>Defined in FT_MULTIPLE_MASTERS_H (freetype/ftmm.h).</p>
+<pre>
+  FT_EXPORT( <a href="ft2-basic_types.html#FT_Error">FT_Error</a> )
+  <b>FT_Set_Named_Instance</b>( <a href="ft2-base_interface.html#FT_Face">FT_Face</a>  face,
+                         <a href="ft2-basic_types.html#FT_UInt">FT_UInt</a>  instance_index );
+</pre>
+
+<p>Set or change the current named instance.</p>
+
+<h4>input</h4>
+<table class="fields">
+<tr><td class="val" id="face">face</td><td class="desc">
+<p>A handle to the source face.</p>
+</td></tr>
+<tr><td class="val" id="instance_index">instance_index</td><td class="desc">
+<p>The index of the requested instance, starting with value 1. If set to value 0, FreeType switches to font access without a named instance.</p>
+</td></tr>
+</table>
+
+<h4>return</h4>
+<p>FreeType error code. 0&nbsp;means success.</p>
+
+<h4>note</h4>
+<p>The function uses the value of &lsquo;instance_index&rsquo; to set bits 16-30 of the face's &lsquo;face_index&rsquo; field. It also resets any variation applied to the font, and the <a href="ft2-base_interface.html#FT_FACE_FLAG_XXX">FT_FACE_FLAG_VARIATION</a> bit of the face's &lsquo;face_flags&rsquo; field gets reset to zero (i.e., <a href="ft2-base_interface.html#FT_IS_VARIATION">FT_IS_VARIATION</a> will return false).</p>
+<p>For Adobe MM fonts (which don't have named instances) this function simply resets the current face to the default instance.</p>
+
+<h4>since</h4>
+<p>2.9</p>
 
 <hr>
 <table class="index-toc-link"><tr><td class="left">[<a href="ft2-index.html">Index</a>]</td><td class="middle">[<a href="#">Top</a>]</td><td class="right">[<a href="ft2-toc.html">TOC</a>]</td></tr></table></div>
