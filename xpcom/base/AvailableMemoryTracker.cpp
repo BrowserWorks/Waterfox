@@ -327,13 +327,9 @@ public:
 
   void Init();
 
-private:
-  static bool sFreeDirtyPages;
 };
 
 NS_IMPL_ISUPPORTS(nsMemoryPressureWatcher, nsIObserver)
-
-bool nsMemoryPressureWatcher::sFreeDirtyPages = false;
 
 /**
  * Initialize and subscribe to the memory-pressure events. We subscribe to the
@@ -349,8 +345,6 @@ nsMemoryPressureWatcher::Init()
     os->AddObserver(this, "memory-pressure", /* ownsWeak */ false);
   }
 
-  Preferences::AddBoolVarCache(&sFreeDirtyPages, "memory.free_dirty_pages",
-                               false);
 }
 
 /**
@@ -363,11 +357,9 @@ nsMemoryPressureWatcher::Observe(nsISupports* aSubject, const char* aTopic,
 {
   MOZ_ASSERT(!strcmp(aTopic, "memory-pressure"), "Unknown topic");
 
-  if (sFreeDirtyPages) {
-    nsCOMPtr<nsIRunnable> runnable = new nsJemallocFreeDirtyPagesRunnable();
+  nsCOMPtr<nsIRunnable> runnable = new nsJemallocFreeDirtyPagesRunnable();
 
-    NS_DispatchToMainThread(runnable);
-  }
+  NS_DispatchToMainThread(runnable);
 
   return NS_OK;
 }
