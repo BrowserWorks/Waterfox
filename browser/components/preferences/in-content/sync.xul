@@ -220,9 +220,6 @@
         &mobilePromo3.start;<!-- We put these comments to avoid inserting white spaces
         --><label class="androidLink text-link" id="fxaMobilePromo-android-hasFxaAccount"><!--
         -->&mobilePromo3.androidLink;</label><!--
-        -->&mobilePromo3.iOSBefore;<!--
-        --><label class="iOSLink text-link" id="fxaMobilePromo-ios-hasFxaAccount"><!--
-        -->&mobilePromo3.iOSLink;</label><!--
         -->&mobilePromo3.end;
     </label>
     <vbox id="tosPP-small" align="start">
