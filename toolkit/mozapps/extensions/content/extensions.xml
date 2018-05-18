@@ -843,6 +843,7 @@
                 <xul:label anonid="name" class="name" crop="end" flex="1"
                            tooltip="addonitem-tooltip" xbl:inherits="value=name"/>
                 <xul:label anonid="legacy"/>
+                <xul:label anonid="version" class="version"/>
                 <xul:label class="disabled-postfix" value="&addon.disabled.postfix;"/>
                 <xul:label class="update-postfix" value="&addon.update.postfix;"/>
                 <xul:spacer flex="5000"/> <!-- Necessary to make the name crop -->
@@ -1024,6 +1025,9 @@
         document.getAnonymousElementByAttribute(this, "anonid",
                                                 "info");
       </field>
+      <field name="_version">
+        document.getAnonymousElementByAttribute(this, "anonid", "version");
+      </field>
       <field name="_experimentState">
         document.getAnonymousElementByAttribute(this, "anonid", "experiment-state");
       </field>
@@ -1161,6 +1165,11 @@
             this._icon.src = iconURL;
           else
             this._icon.src = "";
+
+          if (shouldShowVersionNumber(this.mAddon))
+            this._version.value = this.mAddon.version;
+          else
+            this._version.hidden = true;
 
           if (this.mAddon.description)
             this._description.value = this.mAddon.description;
@@ -1460,6 +1469,14 @@
         ]]></body>
       </method>
 
+      <method name="_updateUpgradeInfo">
+        <body><![CDATA[
+          // Only update the version string if we're displaying the upgrade info
+          if (this.hasAttribute("upgrade") && shouldShowVersionNumber(this.mAddon))
+            this._version.value = this.mManualUpdate.version;
+        ]]></body>
+      </method>
+
       <method name="_fetchReleaseNotes">
         <parameter name="aURI"/>
         <body><![CDATA[
@@ -1752,6 +1769,7 @@
 
           this.mManualUpdate = aInstall;
           this._showStatus("update-available");
+          this._updateUpgradeInfo();
         ]]></body>
       </method>
 
@@ -1954,6 +1972,7 @@
         <xul:vbox class="fade name-outer-container" flex="1">
           <xul:hbox class="name-container">
             <xul:label anonid="name" class="name" crop="end" tooltip="addonitem-tooltip"/>
+            <xul:label anonid="version" class="version" hidden="true"/>
           </xul:hbox>
         </xul:vbox>
         <xul:vbox class="install-status-container">
@@ -1974,6 +1993,9 @@
       </field>
       <field name="_name">
         document.getAnonymousElementByAttribute(this, "anonid", "name");
+      </field>
+      <field name="_version">
+        document.getAnonymousElementByAttribute(this, "anonid", "version");
       </field>
       <field name="_warning">
         document.getAnonymousElementByAttribute(this, "anonid", "warning");
@@ -2002,6 +2024,14 @@
             this._icon.src = this.mAddon.iconURL ||
                              (this.mInstall ? this.mInstall.iconURL : "");
             this._name.value = this.mAddon.name;
+
+            if (this.mAddon.version) {
+              this._version.value = this.mAddon.version;
+              this._version.hidden = false;
+            } else {
+              this._version.hidden = true;
+            }
+
           } else {
             this._icon.src = this.mInstall.iconURL;
             // AddonInstall.name isn't always available - fallback to filename
@@ -2014,6 +2044,13 @@
                        null, null);
               url.QueryInterface(Components.interfaces.nsIURL);
               this._name.value = url.fileName;
+            }
+
+            if (this.mInstall.version) {
+              this._version.value = this.mInstall.version;
+              this._version.hidden = false;
+            } else {
+              this._version.hidden = true;
             }
           }
 

@@ -257,6 +257,7 @@ richlistitem:not([selected]) * {
 .view-pane[type="experiment"] .update-postfix,
 .view-pane[type="experiment"] .addon-control.enable,
 .view-pane[type="experiment"] .addon-control.disable,
+.view-pane[type="experiment"] .version,
 #detail-view[type="experiment"] .alert-container,
 #detail-view[type="experiment"] #detail-version,
 #detail-view[type="experiment"] #detail-creator,
@@ -273,4 +274,11 @@ richlistitem:not([selected]) * {
 .addon[type="experiment"][status="installing"] .experiment-time,
 .addon[type="experiment"][status="installing"] .experiment-state {
   display: none;
+}
+
+/* Hacky method for smaller window size with addon version */
+@media screen and (max-width: 850px) {
+	.version{
+		display: none;
+	}
 }
