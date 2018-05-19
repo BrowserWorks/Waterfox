@@ -85,7 +85,7 @@ function init_all() {
   document.dispatchEvent(initFinished);
 
   let helpButton = document.querySelector(".help-button");
-  let helpUrl = Services.urlFormatter.formatURLPref("app.support.baseURL") + "preferences";
+  let helpUrl = "https://www.reddit.com/r/waterfox/";
   helpButton.setAttribute("href", helpUrl);
 
   // Wait until initialization of all preferences are complete before
