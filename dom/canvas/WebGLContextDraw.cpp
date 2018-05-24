@@ -222,9 +222,9 @@ WebGLContext::BindFakeBlack(uint32_t texUnit, TexTarget target, FakeBlackType fa
             gl->fPixelStorei(LOCAL_GL_UNPACK_SKIP_ROWS, 0);
             gl->fPixelStorei(LOCAL_GL_UNPACK_SKIP_IMAGES, 0);
         }
-        
+
         fakeBlackTex = FakeBlackTexture::Create(gl, target, fakeBlack);
-        
+
         gl->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT, mPixelStore_UnpackAlignment);
         if (IsWebGL2()) {
             gl->fPixelStorei(LOCAL_GL_UNPACK_SKIP_PIXELS, mPixelStore_UnpackSkipPixels);
