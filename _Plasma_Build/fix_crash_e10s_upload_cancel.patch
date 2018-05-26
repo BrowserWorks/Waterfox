@@ -1,0 +1,20 @@
+diff --git a/widget/gtk/nsFilePicker.cpp b/widget/gtk/nsFilePicker.cpp
+index 483cf37c1562..586fb9111aee 100644
+--- a/widget/gtk/nsFilePicker.cpp
++++ b/widget/gtk/nsFilePicker.cpp
+@@ -384,6 +384,7 @@ nsFilePicker::Open(nsIFilePickerShownCallback *aCallback)
+   if( nsKDEUtils::kdeSupport()) {
+     mCallback = aCallback;
+     mRunning = true;
++    NS_ADDREF_THIS();
+     g_idle_add([](gpointer data) -> gboolean {
+       nsFilePicker* queuedPicker = (nsFilePicker*) data;
+       int16_t result;
+@@ -395,6 +396,7 @@ nsFilePicker::Open(nsIFilePickerShownCallback *aCallback)
+         queuedPicker->mResult = result;
+       }
+       queuedPicker->mRunning = false;
++      NS_RELEASE(queuedPicker);
+       return G_SOURCE_REMOVE;
+     }, this);
+ 

@@ -1,0 +1,10 @@
+--- b/browser/app/Makefile.in	2016-02-14 15:57:50.000000000 +0100
++++ a/browser/app/Makefile.in	2016-02-14 16:08:29.823744590 +0100
+@@ -71,6 +71,7 @@
+ libs:: $(srcdir)/profile/channel-prefs.js
+ 	$(NSINSTALL) -D $(DIST)/bin/defaults/pref
+ 	$(call py_action,preprocessor,-Fsubstitution $(PREF_PPFLAGS) $(ACDEFINES) $^ -o $(DIST)/bin/defaults/pref/channel-prefs.js)
++	cp $(topsrcdir)/_Plasma_Build/kde.js $(DIST)/bin/defaults/pref/kde.js	
+ 
+ ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+ 
