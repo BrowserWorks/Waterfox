@@ -745,6 +745,7 @@ BookmarkImporter.prototype = {
         this._curFrame.inDescription = true;
         break;
       case "hr":
+        this._closeContainer(aElt);
         this._handleSeparator(aElt);
         break;
     }
