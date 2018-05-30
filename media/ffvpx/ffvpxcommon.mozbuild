@@ -57,15 +57,19 @@ if CONFIG['GNU_CC']:
         '-Wno-unused-function',
         # XXX This does not seem to have any effect on some versions of GCC.
         '-Wno-deprecated-declarations',
-        '-Wno-discarded-qualifiers',
-        '-Wno-maybe-uninitialized',
     ]
     if CONFIG['CLANG_CXX']:
         CFLAGS += [
             '-Wno-incompatible-pointer-types-discards-qualifiers',
-            '-Wno-logical-op-parentheses',
+            '-Wno-string-conversion',
+            '-Wno-visibility',
             # Workaround for https://bugs.llvm.org/show_bug.cgi?id=26828#c4 :
             '-ffreestanding',
+        ]
+    else:
+        CFLAGS += [
+            '-Wno-discarded-qualifiers',
+            '-Wno-maybe-uninitialized',
         ]
     # Force visibility of cpu and av_log symbols.
     CFLAGS += ['-include', 'libavutil_visibility.h']
