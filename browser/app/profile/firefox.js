@@ -345,7 +345,7 @@ pref("browser.urlbar.maxCharsForSearchSuggestions", 20);
 pref("browser.urlbar.suggest.history.onlyTyped",    false);
 
 pref("browser.urlbar.formatting.enabled", true);
-pref("browser.urlbar.trimURLs", true);
+sticky_pref("browser.urlbar.trimURLs", false);
 
 pref("browser.urlbar.oneOffSearches", true);
 
