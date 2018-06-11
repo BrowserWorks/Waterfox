@@ -647,7 +647,7 @@ pref("media.video-queue.default-size", 10);
 pref("media.video-queue.send-to-compositor-size", 9999);
 
 // Whether to disable the video stats to prevent fingerprinting
-sticky_pref("media.video_stats.enabled", false);
+pref("media.video_stats.enabled", false);
 
 // Whether to check the decoder supports recycling.
 pref("media.decoder.recycle.enabled", false);
