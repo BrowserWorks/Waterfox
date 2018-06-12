@@ -3,7 +3,7 @@
 	<ShortName>Ecosia</ShortName>
 	<Description>Search Ecosia</Description>
 	<InputEncoding>UTF-8</InputEncoding>
-	<Image height="16" width="16">resource://search-plugins/images/ecosia.ico</Image>
+	<Image height="16" width="16">resource://search-plugins/images/ecosia.svg</Image>
 	<Url type="text/html" method="get" template="https://www.ecosia.org/search?tt=waterfox&amp;q={searchTerms}"/>
 	<Url type="application/x-suggestions+json" template="https://ac.ecosia.org/autocomplete?q={searchTerms}&amp;type=list&amp;tt=waterfox"/>
 </OpenSearchDescription>

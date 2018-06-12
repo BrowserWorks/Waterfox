@@ -108,14 +108,15 @@
     locale/browser/searchplugins/               (.deps/generated_@AB_CD@/*.xml)
     locale/browser/searchplugins/list.json      (.deps/generated_@AB_CD@/list.json)
 #endif
-    locale/browser/searchplugins/images/amazon.ico     (searchplugins/images/amazon.ico)
-    locale/browser/searchplugins/images/ecosia.ico     (searchplugins/images/ecosia.ico)
+    locale/browser/searchplugins/images/bing.svg       (searchplugins/images/bing.svg)
+    locale/browser/searchplugins/images/ddg.svg        (searchplugins/images/ddg.svg)
+    locale/browser/searchplugins/images/google.svg     (searchplugins/images/google.svg)
+    locale/browser/searchplugins/images/ecosia.svg     (searchplugins/images/ecosia.svg)
     locale/browser/searchplugins/images/findx.ico      (searchplugins/images/findx.ico)
+    locale/browser/searchplugins/images/qwant.svg      (searchplugins/images/qwant.svg)
     locale/browser/searchplugins/images/startpage.png  (searchplugins/images/startpage.png)
     locale/browser/searchplugins/images/wikipedia.ico  (searchplugins/images/wikipedia.ico)
-    locale/browser/searchplugins/images/yahoo.ico      (searchplugins/images/yahoo.ico)
-    locale/browser/searchplugins/images/yandex-en.ico  (searchplugins/images/yandex-en.ico)
-    locale/browser/searchplugins/images/yandex-ru.ico  (searchplugins/images/yandex-ru.ico)
+    locale/browser/searchplugins/images/yahoo.svg      (searchplugins/images/yahoo.svg)
 % locale browser-region @AB_CD@ %locale/browser-region/
     locale/browser-region/region.properties        (%chrome/browser-region/region.properties)
 # the following files are browser-specific overrides
