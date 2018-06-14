@@ -1784,8 +1784,8 @@ nsINode::Before(const Sequence<OwningNodeOrString>& aNodes,
   nsCOMPtr<nsINode> viablePreviousSibling =
     FindViablePreviousSibling(*this, aNodes);
 
-  nsCOMPtr<nsINode> node =
-    ConvertNodesOrStringsIntoNode(aNodes, OwnerDoc(), aRv);
+  nsCOMPtr<nsIDocument> doc = OwnerDoc();
+  nsCOMPtr<nsINode> node = ConvertNodesOrStringsIntoNode(aNodes, doc, aRv);
   if (aRv.Failed()) {
     return;
   }
@@ -1807,8 +1807,8 @@ nsINode::After(const Sequence<OwningNodeOrString>& aNodes,
 
   nsCOMPtr<nsINode> viableNextSibling = FindViableNextSibling(*this, aNodes);
 
-  nsCOMPtr<nsINode> node =
-    ConvertNodesOrStringsIntoNode(aNodes, OwnerDoc(), aRv);
+  nsCOMPtr<nsIDocument> doc = OwnerDoc();
+  nsCOMPtr<nsINode> node = ConvertNodesOrStringsIntoNode(aNodes, doc, aRv);
   if (aRv.Failed()) {
     return;
   }
@@ -1827,8 +1827,8 @@ nsINode::ReplaceWith(const Sequence<OwningNodeOrString>& aNodes,
 
   nsCOMPtr<nsINode> viableNextSibling = FindViableNextSibling(*this, aNodes);
 
-  nsCOMPtr<nsINode> node =
-    ConvertNodesOrStringsIntoNode(aNodes, OwnerDoc(), aRv);
+  nsCOMPtr<nsIDocument> doc = OwnerDoc();
+  nsCOMPtr<nsINode> node = ConvertNodesOrStringsIntoNode(aNodes, doc, aRv);
   if (aRv.Failed()) {
     return;
   }
@@ -1884,8 +1884,8 @@ void
 nsINode::Prepend(const Sequence<OwningNodeOrString>& aNodes,
                  ErrorResult& aRv)
 {
-  nsCOMPtr<nsINode> node =
-    ConvertNodesOrStringsIntoNode(aNodes, OwnerDoc(), aRv);
+  nsCOMPtr<nsIDocument> doc = OwnerDoc();
+  nsCOMPtr<nsINode> node = ConvertNodesOrStringsIntoNode(aNodes, doc, aRv);
   if (aRv.Failed()) {
     return;
   }
@@ -1898,8 +1898,8 @@ void
 nsINode::Append(const Sequence<OwningNodeOrString>& aNodes,
                  ErrorResult& aRv)
 {
-  nsCOMPtr<nsINode> node =
-    ConvertNodesOrStringsIntoNode(aNodes, OwnerDoc(), aRv);
+  nsCOMPtr<nsIDocument> doc = OwnerDoc();
+  nsCOMPtr<nsINode> node = ConvertNodesOrStringsIntoNode(aNodes, doc, aRv);
   if (aRv.Failed()) {
     return;
   }
