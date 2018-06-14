@@ -28,6 +28,7 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/ShadowRoot.h"
+#include "mozilla/dom/ScriptSettings.h"
 #include "nsAttrValueOrString.h"
 #include "nsBindingManager.h"
 #include "nsCCUncollectableMarker.h"
@@ -1576,6 +1577,49 @@ CheckForOutdatedParent(nsINode* aParent, nsINode* aNode)
   return NS_OK;
 }
 
+static nsresult
+ReparentWrappersInSubtree(nsIContent* aRoot)
+{
+  MOZ_ASSERT(ShouldUseXBLScope(aRoot));
+  // Start off with no global so we don't fire any error events on failure.
+  AutoJSAPI jsapi;
+  jsapi.Init();
+
+  JSContext* cx = jsapi.cx();
+
+  nsIGlobalObject* docGlobal = aRoot->OwnerDoc()->GetScopeObject();
+  if (NS_WARN_IF(!docGlobal)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  JS::Rooted<JSObject*> rootedGlobal(cx, docGlobal->GetGlobalJSObject());
+  if (NS_WARN_IF(!rootedGlobal)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  rootedGlobal = xpc::GetXBLScope(cx, rootedGlobal);
+
+  ErrorResult rv;
+  JS::Rooted<JSObject*> reflector(cx);
+  for (nsIContent* cur = aRoot; cur; cur = cur->GetNextNode(aRoot)) {
+    if ((reflector = cur->GetWrapper())) {
+      JSAutoRealm ar(cx, reflector);
+      ReparentWrapper(cx, reflector, rv);
+      rv.WouldReportJSException();
+      if (rv.Failed()) {
+        // We _could_ consider BlastSubtreeToPieces here, but it's not really
+        // needed.  Having some nodes in here accessible to content while others
+        // are not is probably OK.  We just need to fail out of the actual
+        // insertion, so they're not in the DOM.  Returning a failure here will
+        // do that.
+        return rv.StealNSResult();
+      }
+    }
+  }
+
+  return NS_OK;
+}
+
 nsresult
 nsINode::doInsertChildAt(nsIContent* aKid, uint32_t aIndex,
                          bool aNotify, nsAttrAndChildArray& aChildArray)
@@ -1613,9 +1657,15 @@ nsINode::doInsertChildAt(nsIContent* aKid, uint32_t aIndex,
   nsIContent* parent =
     IsNodeOfType(eDOCUMENT) ? nullptr : static_cast<nsIContent*>(this);
 
+  bool wasInXBLScope = ShouldUseXBLScope(aKid);
   rv = aKid->BindToTree(doc, parent,
                         parent ? parent->GetBindingParent() : nullptr,
                         true);
+  if (NS_SUCCEEDED(rv) && !wasInXBLScope && ShouldUseXBLScope(aKid)) {
+    MOZ_ASSERT(ShouldUseXBLScope(this),
+               "Why does the kid need to use an XBL scope?");
+    rv = ReparentWrappersInSubtree(aKid);
+  }
   if (NS_FAILED(rv)) {
     if (GetFirstChild() == aKid) {
       mFirstChild = aKid->GetNextSibling();
