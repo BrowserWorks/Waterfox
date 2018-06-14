@@ -119,6 +119,7 @@ nsWebPDecoder::EndFrame()
        mTimeout.AsEncodedValueDeprecated(), (int)mBlend));
 
   PostFrameStop(opacity, mDisposal, mTimeout, mBlend);
+  WebPFreeDecBuffer(&mBuffer);
   WebPIDelete(mDecoder);
   mDecoder = nullptr;
   mLastRow = 0;
