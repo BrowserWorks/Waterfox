@@ -3356,7 +3356,8 @@ HTMLInputElement::Blur(ErrorResult& aError)
     nsNumberControlFrame* numberControlFrame =
       do_QueryFrame(GetPrimaryFrame());
     if (numberControlFrame) {
-      HTMLInputElement* textControl = numberControlFrame->GetAnonTextControl();
+      RefPtr<HTMLInputElement> textControl =
+        numberControlFrame->GetAnonTextControl();
       if (textControl) {
         textControl->Blur(aError);
         return;
