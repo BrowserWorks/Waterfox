@@ -1079,12 +1079,17 @@ nsHtml5TreeOpExecutor::AddSpeculationCSP(const nsAString& aCSP)
 
   NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
 
-  nsIPrincipal* principal = mDocument->NodePrincipal();
+  nsCOMPtr<nsIPrincipal> principal = mDocument->NodePrincipal();
   nsCOMPtr<nsIContentSecurityPolicy> preloadCsp;
   nsCOMPtr<nsIDOMDocument> domDoc = do_QueryInterface(mDocument);
   nsresult rv = principal->EnsurePreloadCSP(domDoc, getter_AddRefs(preloadCsp));
   NS_ENSURE_SUCCESS_VOID(rv);
-
+  
+  if (!preloadCsp) {
+    // XXX: System principals can't preload CSP. We're done here.
+    return;
+  }
+  
   // please note that meta CSPs and CSPs delivered through a header need
   // to be joined together.
   rv = preloadCsp->AppendPolicy(aCSP,
