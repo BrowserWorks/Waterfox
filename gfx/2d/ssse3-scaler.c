@@ -514,7 +514,6 @@ fail:
 /* scale the src from src_width/height to dest_width/height drawn
  * into the rectangle x,y width,height
  * src_stride and dst_stride are 4 byte units */
-void ssse3_scale_data(uint32_t *src, int src_width, int src_height, int src_stride,
 bool ssse3_scale_data(uint32_t *src, int src_width, int src_height, int src_stride,
                       uint32_t *dest, int dest_width, int dest_height,
                       int dest_stride,
