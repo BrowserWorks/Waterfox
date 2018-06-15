@@ -1930,7 +1930,6 @@ CanvasRenderingContext2D::GetHeight() const
 NS_IMETHODIMP
 CanvasRenderingContext2D::SetDimensions(int32_t aWidth, int32_t aHeight)
 {
-  ClearTarget();
 
   // Zero sized surfaces can cause problems.
   mZero = false;
@@ -1942,20 +1941,26 @@ CanvasRenderingContext2D::SetDimensions(int32_t aWidth, int32_t aHeight)
     aWidth = 1;
     mZero = true;
   }
-  mWidth = aWidth;
-  mHeight = aHeight;
+            
+  ClearTarget(aWidth, aHeight);
 
   return NS_OK;
 }
 
 void
-CanvasRenderingContext2D::ClearTarget()
+CanvasRenderingContext2D::ClearTarget(int32_t aWidth, int32_t aHeight)
 {
   Reset();
 
   mResetLayer = true;
 
   SetInitialState();
+            
+  // Update dimensions only if new (strictly positive) values were passed.
+  if (aWidth > 0 && aHeight > 0) {
+    mWidth = aWidth;
+    mHeight = aHeight;
+  }        
 
   // For vertical writing-mode, unless text-orientation is sideways,
   // we'll modify the initial value of textBaseline to 'middle'.
