@@ -2553,7 +2553,7 @@ pref("security.insecure_field_warning.contextual.enabled", false);
 pref("security.insecure_field_warning.ignore_local_ip_address", true);
 
 // Disable pinning checks by default.
-pref("security.cert_pinning.enforcement_level", 0);
+pref("security.cert_pinning.enforcement_level", 2);
 // Do not process hpkp headers rooted by not built in roots by default.
 // This is to prevent accidental pinning from MITM devices and is used
 // for tests.
