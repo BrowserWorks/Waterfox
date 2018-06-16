@@ -2429,7 +2429,7 @@ GCRuntime::updateCellPointers(MovingTracer* trc, Zone* zone, AllocKinds kinds, s
         for (size_t i = 0; i < bgTaskCount && !bgArenas.done(); i++) {
             bgTasks[i].emplace(rt, &bgArenas, lock);
             startTask(*bgTasks[i], gcstats::PhaseKind::COMPACT_UPDATE_CELLS, lock);
-            tasksStarted = i;
+            tasksStarted++;
         }
     }
 
