@@ -2071,7 +2071,7 @@ RopeMatch(JSContext* cx, JSRope* text, JSLinearString* pat, int* match)
     return true;
 }
 
-/* ES6 draft rc4 21.1.3.7. */
+/* ES6 2015 ST 21.1.3.7 String.prototype.includes */
 bool
 js::str_includes(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -2126,6 +2126,13 @@ js::str_includes(JSContext* cx, unsigned argc, Value* vp)
 
     args.rval().setBoolean(StringMatch(text, searchStr, start) != -1);
     return true;
+}
+
+/* ES6 draft <RC4 String.prototype.contains for compatibility */
+bool
+js::str_contains(JSContext* cx, unsigned argc, Value* vp)
+{
+    return js::str_includes(cx, argc, vp);
 }
 
 /* ES6 20120927 draft 15.5.4.7. */
@@ -3170,6 +3177,7 @@ static const JSFunctionSpec string_methods[] = {
     JS_SELF_HOSTED_FN("padEnd", "String_pad_end", 2,0),
     JS_SELF_HOSTED_FN("codePointAt", "String_codePointAt", 1,0),
     JS_FN("includes",          str_includes,          1,0),
+    JS_FN("contains",          str_contains,          1,0),
     JS_FN("indexOf",           str_indexOf,           1,0),
     JS_FN("lastIndexOf",       str_lastIndexOf,       1,0),
     JS_FN("startsWith",        str_startsWith,        1,0),
