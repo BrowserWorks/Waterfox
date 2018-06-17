@@ -760,6 +760,9 @@ pref("browser.backspace_action", 2);
 pref("browser.backspace_action", 0);
 #endif
 
+// Waterfox never eats the space with word selection, regardless of O.S.
+pref("layout.word_select.eat_space_to_next_word", false);
+
 // this will automatically enable inline spellchecking (if it is available) for
 // editable elements in HTML
 // 0 = spellcheck nothing
