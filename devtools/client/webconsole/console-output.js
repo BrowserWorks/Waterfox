@@ -29,7 +29,7 @@ const {extend} = require("devtools/shared/extend");
 const MAX_STRING_GRIP_LENGTH = 36;
 const {ELLIPSIS} = require("devtools/shared/l10n");
 
-const validProtocols = /^(http|https|ftp|data|javascript|resource|chrome):/i;
+const validProtocols = /^(http|https|ftp|resource|chrome):/i;
 
 // Constants for compatibility with the Web Console output implementation before
 // bug 778766.
