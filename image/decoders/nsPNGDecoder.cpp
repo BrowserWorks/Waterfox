@@ -36,12 +36,16 @@ namespace image {
 static LazyLogModule sPNGLog("PNGDecoder");
 static LazyLogModule sPNGDecoderAccountingLog("PNGDecoderAccounting");
 
-// limit image dimensions (bug #251381, #591822, #967656, and #1283961)
+// Limit image dimensions.
 #ifndef MOZ_PNG_MAX_WIDTH
-#  define MOZ_PNG_MAX_WIDTH 0x7fffffff // Unlimited
+#  define MOZ_PNG_MAX_WIDTH 65535 
 #endif
 #ifndef MOZ_PNG_MAX_HEIGHT
-#  define MOZ_PNG_MAX_HEIGHT 0x7fffffff // Unlimited
+#  define MOZ_PNG_MAX_HEIGHT 65535
+#endif
+// Maximum area supported in pixels (W*H)
+#ifndef MOZ_PNG_MAX_PIX
+#  define MOZ_PNG_MAX_PIX 268435456 // 256 Mpix = 16Ki x 16Ki
 #endif
 
 nsPNGDecoder::AnimFrameInfo::AnimFrameInfo()
@@ -566,7 +570,14 @@ nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr)
   // Always decode to 24-bit RGB or 32-bit RGBA
   png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
                &interlace_type, &compression_type, &filter_type);
-
+ 
+  // Check sizes against cap limits and W*H
+  if ((width > MOZ_PNG_MAX_WIDTH) ||
+      (height > MOZ_PNG_MAX_HEIGHT) ||
+      (width * height > MOZ_PNG_MAX_PIX)) {
+    png_error(decoder->mPNG, "Image too large");
+  }
+ 
   const IntRect frameRect(0, 0, width, height);
 
   // Post our size to the superclass
