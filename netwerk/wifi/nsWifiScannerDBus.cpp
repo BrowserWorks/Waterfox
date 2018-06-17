@@ -67,7 +67,7 @@ nsWifiScannerDBus::SendMessage(const char* aInterface,
       return NS_ERROR_FAILURE;
     }
   } else if (!strcmp(aFuncCall, "GetAll")) {
-    const char* param = "";
+    const char* param = "org.freedesktop.NetworkManager.AccessPoint";
     if (!dbus_message_iter_append_basic(&argsIter, DBUS_TYPE_STRING, &param)) {
       return NS_ERROR_FAILURE;
     }
