@@ -309,6 +309,11 @@ nsContentSink::ProcessHeaderData(nsIAtom* aHeader, const nsAString& aValue,
   mDocument->SetHeaderData(aHeader, aValue);
 
   if (aHeader == nsGkAtoms::setcookie) {
+    // Don't allow setting cookies in cookie-averse documents.
+    if (mDocument->IsCookieAverse()) {
+      return NS_OK;
+    }
+    
     // Note: Necko already handles cookies set via the channel.  We can't just
     // call SetCookie on the channel because we want to do some security checks
     // here.
