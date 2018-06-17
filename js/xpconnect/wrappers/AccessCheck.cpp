@@ -354,6 +354,20 @@ ExposedPropertiesOnly::check(JSContext* cx, HandleObject wrapper, HandleId id, W
     //
     // Unfortunately, |cx| can be in either compartment when we call ::check. :-(
     JSAutoCompartment ac(cx, wrappedObject);
+    
+    // Proxies are not allowed in the proto chain.
+    RootedObject o(cx, wrappedObject);
+    while (o) {
+        JSObject* unwrapped = js::IsWrapper(o) ? js::CheckedUnwrap(o, false) : o;
+        if (!unwrapped || js::IsProxy(unwrapped))
+            return false;
+
+        RootedObject p(cx);
+        if (!js::GetObjectProto(cx, o, &p))
+            return false;
+
+        o = p;
+    }
 
     bool found = false;
     if (!JS_HasPropertyById(cx, wrappedObject, exposedPropsId, &found))
