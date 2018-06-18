@@ -4826,7 +4826,8 @@ nsRuleNode::ComputeTextData(void* aStartStruct,
         if (font->mSize != 0) {
           lh = nscoord(float(lh) * float(font->mFont.size) / float(font->mSize));
         } else {
-          lh = minimumFontSize;
+          // Never shrink line heights as a result of minFontSize
+          lh = std::max(lh, minimumFontSize);
         }
       }
       text->mLineHeight.SetCoordValue(lh);
