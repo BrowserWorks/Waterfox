@@ -1459,6 +1459,7 @@ pref("javascript.options.mem.nursery.max_kb", -1);
 pref("javascript.options.mem.gc_per_zone", true);
 pref("javascript.options.mem.gc_incremental", true);
 pref("javascript.options.mem.gc_incremental_slice_ms", 5);
+pref("javascript.options.mem.gc_generational", true);
 pref("javascript.options.mem.gc_compacting", true);
 pref("javascript.options.mem.log", false);
 pref("javascript.options.mem.notify", false);
