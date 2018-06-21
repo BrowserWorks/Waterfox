@@ -21,10 +21,7 @@
 #include "nsJSUtils.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Observer.h"
-#include "mozilla/Services.h"
-#include "mozilla/StaticPtr.h"
 #include "mozilla/dom/ContentChild.h"
-#include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/ScreenOrientation.h"
 #include "WindowIdentifier.h"
 
