@@ -941,13 +941,22 @@ VectorImage::CreateSurfaceAndShow(const SVGDrawingParameters& aParams, BackendTy
 
   RefPtr<gfxDrawable> svgDrawable =
     new gfxCallbackDrawable(cb, aParams.size);
+  
+  // We take an early exit without using the surface cache if
+  // x or y > maxDimension, because for vector images this can cause bad perf
+  // issues if large sizes are scaled repeatedly (a rather common scenario)
+  // that can quickly exhaust the cache.
+  uint32_t maxDimension = 3000;
 
   bool bypassCache = bool(aParams.flags & FLAG_BYPASS_SURFACE_CACHE) ||
                      // Refuse to cache animated images:
                      // XXX(seth): We may remove this restriction in bug 922893.
                      mHaveAnimations ||
                      // The image is too big to fit in the cache:
-                     !SurfaceCache::CanHold(aParams.size);
+                     !SurfaceCache::CanHold(aParams.size) ||
+                     // Image x or y is larger than our cache cap:
+                     aParams.size.width > maxDimension ||
+                     aParams.size.height > maxDimension;
   if (bypassCache) {
     return Show(svgDrawable, aParams);
   }
