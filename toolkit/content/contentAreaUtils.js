@@ -1071,6 +1071,7 @@ function getDefaultFileName(aDefaultFileName, aURI, aDocument,
 }
 
 function validateFileName(aFileName) {
+  aFileName = aFileName.replace(/[\u200e\u200f\u202a-\u202e]/g, "");
   var re = /[\/]+/g;
   if (navigator.appVersion.indexOf("Windows") != -1) {
     re = /[\\\/\|]+/g;
