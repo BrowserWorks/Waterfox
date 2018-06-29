@@ -130,21 +130,22 @@ SharedArrayRawBuffer::New(JSContext* cx, uint32_t length)
     if (allocSize <= length)
         return nullptr;
 
+    // Test >= to guard against the case where multiple extant runtimes
+    // race to allocate.
+    if (++numLive >= maxLive) {
+        JSRuntime* rt = cx->runtime();
+        if (rt->largeAllocationFailureCallback)
+            rt->largeAllocationFailureCallback(rt->largeAllocationFailureCallbackData);
+        if (numLive >= maxLive) {
+            numLive--;
+            return nullptr;
+        }
+    }
+    
     bool preparedForAsmJS = jit::JitOptions.asmJSAtomicsEnable && IsValidAsmJSHeapLength(length);
 
     void* p = nullptr;
     if (preparedForAsmJS) {
-        // Test >= to guard against the case where multiple extant runtimes
-        // race to allocate.
-        if (++numLive >= maxLive) {
-            if (OnLargeAllocationFailure)
-                OnLargeAllocationFailure();
-            if (numLive >= maxLive) {
-                numLive--;
-                return nullptr;
-            }
-        }
-
         uint32_t mappedSize = SharedArrayMappedSize(allocSize);
 
         // Get the entire reserved region (with all pages inaccessible)
@@ -167,7 +168,8 @@ SharedArrayRawBuffer::New(JSContext* cx, uint32_t length)
 # endif
     } else {
         p = MapMemory(allocSize, true);
-        if (!p)
+        if (!p) {
+            numLive--;
             return nullptr;
     }
 
@@ -223,8 +225,6 @@ SharedArrayRawBuffer::dropReference()
     uint32_t allocSize = SharedArrayAllocSize(this->length);
 
     if (this->preparedForAsmJS) {
-        numLive--;
-
         uint32_t mappedSize = SharedArrayMappedSize(allocSize);
         UnmapMemory(address, mappedSize);
 
@@ -236,6 +236,10 @@ SharedArrayRawBuffer::dropReference()
     } else {
         UnmapMemory(address, allocSize);
     }
+    
+    // Decrement the buffer counter at the end -- otherwise, a race condition
+    // could enable the creation of unlimited buffers.
+    numLive--;
 }
 
 
