@@ -972,6 +972,12 @@ static float* qcms_modular_transform_data(struct qcms_modular_transform *transfo
 			assert(0 && "Unsupported transform module");
 			return NULL;
 		}
+		if (transform->grid_size <= 0 &&
+			(transform_fn == qcms_transform_module_clut ||
+			 transform_fn == qcms_transform_module_clut_only)) {
+			assert(0 && "Invalid transform");
+			return NULL;
+		}
                 transform->transform_module_fn(transform,src,dest,len);
                 dest = src;
                 src = new_src;
