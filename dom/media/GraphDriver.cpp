@@ -186,7 +186,8 @@ public:
   NS_IMETHOD Run() override
   {
     LOG(LogLevel::Debug,
-        ("Starting a new system driver for graph %p", mDriver->mGraphImpl));
+        ("Starting a new system driver for graph %p",
+         mDriver->mGraphImpl.get()));
 
     RefPtr<GraphDriver> previousDriver;
     {
@@ -223,8 +224,9 @@ private:
 void
 ThreadedDriver::Start()
 {
+  MOZ_ASSERT(!ThreadRunning());
   LOG(LogLevel::Debug,
-      ("Starting thread for a SystemClockDriver  %p", mGraphImpl));
+      ("Starting thread for a SystemClockDriver  %p", mGraphImpl.get()));
   Unused << NS_WARN_IF(mThread);
   if (!mThread) { // Ensure we haven't already started it
     nsCOMPtr<nsIRunnable> event = new MediaStreamGraphInitThreadRunnable(this);
@@ -847,7 +849,7 @@ AudioCallbackDriver::Revive()
   } else {
     LOG(LogLevel::Debug,
         ("Starting audio threads for MediaStreamGraph %p from a new thread.",
-         mGraphImpl));
+         mGraphImpl.get()));
     RefPtr<AsyncCubebTask> initEvent =
       new AsyncCubebTask(this, AsyncCubebOperation::INIT);
     initEvent->Dispatch();
