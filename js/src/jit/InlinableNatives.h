@@ -130,6 +130,7 @@
     _(IntrinsicIsArrayIterator)     \
     _(IntrinsicIsMapIterator)       \
     _(IntrinsicIsSetIterator)       \
+    _(IntrinsicIsStringIterator)    \
     _(IntrinsicGuardToStringIterator) \
                                     \
     _(IntrinsicIsMapObject)         \
