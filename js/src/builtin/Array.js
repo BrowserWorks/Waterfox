@@ -704,14 +704,13 @@ function CreateArrayIterator(obj, kind) {
 // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-%arrayiteratorprototype%.next
 function ArrayIteratorNext() {
     // Step 1-3.
-    var obj;
-    if (!IsObject(this) || (obj = GuardToArrayIterator(this)) === null) {
+    if (!IsObject(this) || !IsArrayIterator(this)) {
         return callFunction(CallArrayIteratorMethodIfWrapped, this,
                             "ArrayIteratorNext");
     }
 
     // Step 4.
-    var a = UnsafeGetReservedSlot(obj, ITERATOR_SLOT_TARGET);
+    var a = UnsafeGetReservedSlot(this, ITERATOR_SLOT_TARGET);
     var result = { value: undefined, done: false };
 
     // Step 5.
@@ -722,10 +721,10 @@ function ArrayIteratorNext() {
 
     // Step 6.
     // The index might not be an integer, so we have to do a generic get here.
-    var index = UnsafeGetReservedSlot(obj, ITERATOR_SLOT_NEXT_INDEX);
+    var index = UnsafeGetReservedSlot(this, ITERATOR_SLOT_NEXT_INDEX);
 
     // Step 7.
-    var itemKind = UnsafeGetInt32FromReservedSlot(obj, ITERATOR_SLOT_ITEM_KIND);
+    var itemKind = UnsafeGetInt32FromReservedSlot(this, ITERATOR_SLOT_ITEM_KIND);
 
     // Step 8-9.
     var len;
@@ -743,13 +742,13 @@ function ArrayIteratorNext() {
 
     // Step 10.
     if (index >= len) {
-        UnsafeSetReservedSlot(obj, ITERATOR_SLOT_TARGET, null);
+        UnsafeSetReservedSlot(this, ITERATOR_SLOT_TARGET, null);
         result.done = true;
         return result;
     }
 
     // Step 11.
-    UnsafeSetReservedSlot(obj, ITERATOR_SLOT_NEXT_INDEX, index + 1);
+    UnsafeSetReservedSlot(this, ITERATOR_SLOT_NEXT_INDEX, index + 1);
 
     // Step 16.
     if (itemKind === ITEM_KIND_VALUE) {
