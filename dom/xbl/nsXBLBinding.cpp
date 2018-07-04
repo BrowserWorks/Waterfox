@@ -1009,7 +1009,7 @@ nsXBLBinding::DoInitJSClass(JSContext *cx,
   JS::Rooted<JSObject*> parent_proto(cx);
   {
     JS::RootedObject wrapped(cx, obj);
-    JSAutoRealm ar(cx, xblScope);
+    JSAutoCompartment ac(cx, xblScope);
     if (!JS_WrapObject(cx, &wrapped)) {
       return NS_ERROR_FAILURE;
     }
