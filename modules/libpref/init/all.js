@@ -3786,7 +3786,7 @@ pref("gfx.font_rendering.cleartype_params.force_gdi_classic_for_families",
      "Arial,Consolas,Courier New,Microsoft Sans Serif,Segoe UI,Tahoma,Trebuchet MS,Verdana");
 // The maximum size at which we will force GDI classic mode using
 // force_gdi_classic_for_families.
-pref("gfx.font_rendering.cleartype_params.force_gdi_classic_max_size", 15);
+pref("gfx.font_rendering.cleartype_params.force_gdi_classic_max_size", 17);
 
 pref("ui.key.menuAccessKeyFocuses", true);
 
