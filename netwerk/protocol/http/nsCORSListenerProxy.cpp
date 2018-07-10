@@ -1055,13 +1055,6 @@ nsCORSListenerProxy::CheckPreflightNeeded(nsIChannel* aChannel, UpdateType aUpda
     return NS_OK;
   }
 
-  // A preflight is needed. But if we've already been cross-site, then
-  // we already did a preflight when that happened, and so we're not allowed
-  // to do another preflight again.
-  if (aUpdateType != UpdateType::InternalOrHSTSRedirect) {
-    NS_ENSURE_FALSE(mHasBeenCrossSite, NS_ERROR_DOM_BAD_URI);
-  }
-
   nsCOMPtr<nsIHttpChannelInternal> internal = do_QueryInterface(http);
   NS_ENSURE_TRUE(internal, NS_ERROR_DOM_BAD_URI);
 
