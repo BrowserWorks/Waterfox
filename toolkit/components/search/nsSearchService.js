@@ -109,7 +109,7 @@ const NEW_LINES = /(\r\n|\r|\n)/;
 
 // Set an arbitrary cap on the maximum icon size. Without this, large icons can
 // cause big delays when loading them at startup.
-const MAX_ICON_SIZE   = 10000;
+const MAX_ICON_SIZE   = 32768;
 
 // Default charset to use for sending search parameters. ISO-8859-1 is used to
 // match previous nsInternetSearchService behavior as a URL parameter. Label
