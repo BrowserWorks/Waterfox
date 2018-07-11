@@ -17,6 +17,8 @@ interface Event {
   readonly attribute DOMString type;
   [Pure]
   readonly attribute EventTarget? target;
+  [Pure, BinaryName="target"]
+  readonly attribute EventTarget? srcElement;
   [Pure]
   readonly attribute EventTarget? currentTarget;
 
