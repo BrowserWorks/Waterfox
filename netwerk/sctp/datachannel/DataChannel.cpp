@@ -649,6 +649,7 @@ DataChannelConnection::SctpDtlsInput(TransportFlow *flow,
     }
   }
   // Pass the data to SCTP
+  MutexAutoLock lock(mLock);
   usrsctp_conninput(static_cast<void *>(this), data, len, 0);
 }
 
@@ -1019,7 +1020,7 @@ DataChannelConnection::SendDeferredMessages()
   bool still_blocked = false;
 
   // This may block while something is modifying channels, but should not block for IO
-  MutexAutoLock lock(mLock);
+  mLock.AssertCurrentThreadOwns();
 
   // XXX For total fairness, on a still_blocked we'd start next time at the
   // same index.  Sorry, not going to bother for now.
@@ -1925,7 +1926,7 @@ DataChannelConnection::ReceiveCallback(struct socket* sock, void *data, size_t d
   if (!data) {
     usrsctp_close(sock); // SCTP has finished shutting down
   } else {
-    MutexAutoLock lock(mLock);
+    mLock.AssertCurrentThreadOwns();
     if (flags & MSG_NOTIFICATION) {
       HandleNotification(static_cast<union sctp_notification *>(data), datalen);
     } else {
