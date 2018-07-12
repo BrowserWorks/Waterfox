@@ -33,9 +33,9 @@ if test `uname -s` = MINGW32_NT-6.2; then
 mk_add_options MOZ_MAKE_FLAGS=-j4
 else
 X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)*3/2))
+mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 fi
 mk_add_options AUTOCLOBBER=1
-mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 mk_add_options MOZ_OBJDIR=objdir
 
 ac_add_options --disable-crashreporter
