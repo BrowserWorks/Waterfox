@@ -233,15 +233,18 @@ nsChromeRegistry::Canonify(nsIURL* aChromeURL)
     aChromeURL->SetPath(path);
   }
   else {
-    // prevent directory traversals ("..")
     // path is already unescaped once, but uris can get unescaped twice
     const char* pos = path.BeginReading();
     const char* end = path.EndReading();
+    if (*pos == '/' || *pos == ' ') {
+      return NS_ERROR_DOM_BAD_URI;
+    }
     while (pos < end) {
       switch (*pos) {
         case ':':
           return NS_ERROR_DOM_BAD_URI;
         case '.':
+          // prevent directory traversals ("..")
           if (pos[1] == '.')
             return NS_ERROR_DOM_BAD_URI;
           break;
