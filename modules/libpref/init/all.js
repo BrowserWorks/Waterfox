@@ -2536,6 +2536,9 @@ pref("security.signed_content.CSP.default", "script-src 'self'; style-src 'self'
 pref("security.mixed_content.block_active_content", false);
 pref("security.mixed_content.block_display_content", false);
 
+// Disable HPKP telemetry
+pref("security.ssl.errorReporting.enabled", false);
+
 // Sub-resource integrity
 pref("security.sri.enable", true);
 
