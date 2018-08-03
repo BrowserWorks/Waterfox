@@ -8562,6 +8562,7 @@ nsTextFrame::AddInlineMinISizeForFlow(gfxContext *aRenderingContext,
     aData->mCurrentLine +=
       textRun->GetMinAdvanceWidth(Range(start, flowEndInTextRun));
     aData->mTrailingWhitespace = 0;
+    aData->mAtStartOfLine = false;
     aData->OptionallyBreak();
     return;
   }
