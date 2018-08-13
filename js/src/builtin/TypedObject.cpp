@@ -997,9 +997,7 @@ StructMetaTypeDescr::create(JSContext* cx,
     if (!CreateTraceList(cx, descr))
         return nullptr;
 
-    if (!cx->zone()->addTypeDescrObject(cx, descr) ||
-        !cx->zone()->addTypeDescrObject(cx, fieldTypeVec))
-    {
+    if (!cx->zone()->addTypeDescrObject(cx, descr)) {
         ReportOutOfMemory(cx);
         return nullptr;
     }
