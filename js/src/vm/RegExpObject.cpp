@@ -1725,7 +1725,7 @@ js::ParseRegExpFlags(JSContext* cx, JSString* flagStr, RegExpFlags* flagsOut)
 
     if (!ok) {
         TwoByteChars range(&invalidFlag, 1);
-        UniqueChars utf8(JS::CharsToNewUTF8CharsZ(nullptr, range).c_str());
+        UniqueChars utf8(JS::CharsToNewUTF8CharsZ(cx, range).c_str());
         if (!utf8)
             return false;
         JS_ReportErrorFlagsAndNumberUTF8(cx, JSREPORT_ERROR, GetErrorMessage, nullptr,
