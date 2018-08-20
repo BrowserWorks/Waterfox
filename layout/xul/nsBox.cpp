@@ -11,6 +11,7 @@
 #include "nsIContent.h"
 #include "nsContainerFrame.h"
 #include "nsNameSpaceManager.h"
+#include "nsThemeConstants.h"
 #include "nsGkAtoms.h"
 #include "nsIDOMNode.h"
 #include "nsIDOMMozNamedAttrMap.h"
@@ -657,6 +658,23 @@ nsIFrame::AddXULPrefSize(nsIFrame* aBox, nsSize& aSize, bool &aWidthSet, bool &a
     return (aWidthSet && aHeightSet);
 }
 
+// This returns the scrollbar width we want to use when either native
+// theme is disabled, or the native theme claims that it doesn't support
+// scrollbar.
+static nscoord
+GetScrollbarWidthNoTheme(nsIFrame* aBox)
+{
+    nsStyleContext* scrollbarStyle = nsLayoutUtils::StyleForScrollbar(aBox);
+    switch (scrollbarStyle->StyleUserInterface()->mScrollbarWidth) {
+      default:
+      case StyleScrollbarWidth::Auto:
+        return 16 * AppUnitsPerCSSPixel();
+      case StyleScrollbarWidth::Thin:
+        return 8 * AppUnitsPerCSSPixel();
+      case StyleScrollbarWidth::None:
+        return 0;
+    }
+}
 
 bool
 nsIFrame::AddXULMinSize(nsBoxLayoutState& aState, nsIFrame* aBox, nsSize& aSize,
@@ -682,6 +700,19 @@ nsIFrame::AddXULMinSize(nsBoxLayoutState& aState, nsIFrame* aBox, nsSize& aSize,
         if (size.height) {
           aSize.height = aState.PresContext()->DevPixelsToAppUnits(size.height);
           aHeightSet = true;
+        }
+      } else {
+        switch (display->mAppearance) {
+          case NS_THEME_SCROLLBAR_VERTICAL:
+            aSize.width = GetScrollbarWidthNoTheme(aBox);
+            aWidthSet = true;
+            break;
+          case NS_THEME_SCROLLBAR_HORIZONTAL:
+            aSize.height = GetScrollbarWidthNoTheme(aBox);
+            aHeightSet = true;
+            break;
+          default:
+            break;
         }
       }
     }
