@@ -57,3 +57,9 @@ testing, may be buggy. Firefox nightlies, for example, can be found at:
     ftp://ftp.mozilla.org/pub/firefox/nightly/latest-trunk/
             - or -
     http://nightly.mozilla.org/
+    
+If you have any issues in Waterfox (website render issues in javascript code, distrorted images on varius websites) that related to Firefox unsupported machines e.g MacBook a1181 (macbook 4.1) with MLPostFactor / macpostfactor , do the following:
+1) Disable hardware acceleration: https://support.mozilla.org/en-US/kb/troubleshoot-extensions-themes-to-fix-problems#w_turn-off-hardware-acceleration (Thanks to @laniakea64)
+2) If you have pdf support issues on those systems, install alternative google pdf viewer extension from the market.
+
+Enjoy Waterfox that brought to you with love!
