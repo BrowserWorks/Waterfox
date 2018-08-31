@@ -1591,8 +1591,8 @@ ReparentWrappersInSubtree(nsIContent* aRoot)
   JS::Rooted<JSObject*> reflector(cx);
   for (nsIContent* cur = aRoot; cur; cur = cur->GetNextNode(aRoot)) {
     if ((reflector = cur->GetWrapper())) {
-      JSAutoRealm ar(cx, reflector);
-      ReparentWrapper(cx, reflector, rv);
+      JSAutoCompartment ac(cx, reflector);
+      ReparentWrapper(cx, reflector);
       rv.WouldReportJSException();
       if (rv.Failed()) {
         // We _could_ consider BlastSubtreeToPieces here, but it's not really
