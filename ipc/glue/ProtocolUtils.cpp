@@ -599,7 +599,6 @@ IToplevelProtocol::IToplevelProtocol(ProtocolId aProtoId, Side aSide)
 
 IToplevelProtocol::~IToplevelProtocol()
 {
-  mState = nullptr;
   if (mTrans) {
     RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(mTrans.release());
     XRE_GetIOMessageLoop()->PostTask(task.forget());
