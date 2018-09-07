@@ -26,13 +26,12 @@ ac_add_options --enable-release
 ac_add_options --enable-optimize
 ac_add_options --target=arm-linux-androideabi
 
-ac_add_options --with-android-sdk="$HOME/Library/Android/sdk"
-ac_add_options --with-android-ndk="$HOME/Library/Android/sdk/ndk-bundle"
-ac_add_options --with-android-min-sdk=21
-ac_add_options --with-android-version=21  
+ac_add_options --with-android-sdk="/Users/akontos/.mozbuild/android-sdk-macosx"
+ac_add_options --with-android-ndk="/Users/akontos/.mozbuild/android-ndk-r11c"
+ac_add_options --with-android-min-sdk=23
+ac_add_options --with-android-version=23  
 ac_add_options --with-app-name=waterfox
 ac_add_options --with-app-basename=Waterfox
 ac_add_options --with-branding=mobile/android/branding/unofficial
-ac_add_options --with-ccache=ccache
 ac_add_options --with-distribution-id=org.waterfoxproject
 ac_add_options --without-google-play-services

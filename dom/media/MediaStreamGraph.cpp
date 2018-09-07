@@ -3504,7 +3504,8 @@ MediaStreamGraphImpl::Destroy()
   // First unregister from memory reporting.
   UnregisterWeakMemoryReporter(this);
 
-  // Clear the self reference which will destroy this instance.
+  // Clear the self reference which will destroy this instance if all
+  // associated GraphDrivers are destroyed.
   mSelfRef = nullptr;
 }
 

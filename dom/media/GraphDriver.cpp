@@ -186,7 +186,8 @@ public:
   NS_IMETHOD Run() override
   {
     LOG(LogLevel::Debug,
-        ("Starting a new system driver for graph %p", mDriver->mGraphImpl));
+        ("Starting a new system driver for graph %p",
+         mDriver->mGraphImpl.get()));
 
     RefPtr<GraphDriver> previousDriver;
     {
@@ -223,8 +224,9 @@ private:
 void
 ThreadedDriver::Start()
 {
+  MOZ_ASSERT(!ThreadRunning());
   LOG(LogLevel::Debug,
-      ("Starting thread for a SystemClockDriver  %p", mGraphImpl));
+      ("Starting thread for a SystemClockDriver  %p", mGraphImpl.get()));
   Unused << NS_WARN_IF(mThread);
   if (!mThread) { // Ensure we haven't already started it
     nsCOMPtr<nsIRunnable> event = new MediaStreamGraphInitThreadRunnable(this);
@@ -645,20 +647,6 @@ AudioCallbackDriver::Init()
 
   mSampleRate = output.rate = CubebUtils::PreferredSampleRate();
 
-#if defined(__ANDROID__)
-#if defined(MOZ_B2G)
-  output.stream_type = CubebUtils::ConvertChannelToCubebType(mAudioChannel);
-#else
-  output.stream_type = CUBEB_STREAM_TYPE_MUSIC;
-#endif
-  if (output.stream_type == CUBEB_STREAM_TYPE_MAX) {
-    NS_WARNING("Bad stream type");
-    return false;
-  }
-#else
-  (void)mAudioChannel;
-#endif
-
   output.channels = mGraphImpl->AudioChannelCount();
   if (AUDIO_OUTPUT_FORMAT == AUDIO_FORMAT_S16) {
     output.format = CUBEB_SAMPLE_S16NE;
@@ -786,7 +774,7 @@ void
 AudioCallbackDriver::Resume()
 {
   LOG(LogLevel::Debug,
-      ("Resuming audio threads for MediaStreamGraph %p", mGraphImpl));
+      ("Resuming audio threads for MediaStreamGraph %p", mGraphImpl.get()));
   if (cubeb_stream_start(mAudioStream) != CUBEB_OK) {
     NS_WARNING("Could not start cubeb stream for MSG.");
   }
@@ -861,7 +849,7 @@ AudioCallbackDriver::Revive()
   } else {
     LOG(LogLevel::Debug,
         ("Starting audio threads for MediaStreamGraph %p from a new thread.",
-         mGraphImpl));
+         mGraphImpl.get()));
     RefPtr<AsyncCubebTask> initEvent =
       new AsyncCubebTask(this, AsyncCubebOperation::INIT);
     initEvent->Dispatch();

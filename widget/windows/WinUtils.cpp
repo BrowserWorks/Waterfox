@@ -1782,7 +1782,14 @@ WinUtils::ToIntRect(const RECT& aRect)
 bool
 WinUtils::IsIMEEnabled(const InputContext& aInputContext)
 {
-  return IsIMEEnabled(aInputContext.mIMEState.mEnabled);
+  if (!IsIMEEnabled(aInputContext.mIMEState.mEnabled)) {
+    return false;
+  }
+  if (aInputContext.mIMEState.mEnabled == IMEState::PLUGIN &&
+      aInputContext.mHTMLInputType.EqualsLiteral("password")) {
+    return false;
+  }
+  return true;
 }
 
 /* static */

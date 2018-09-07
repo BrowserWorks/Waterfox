@@ -7,7 +7,7 @@
 #ifndef mozilla_Observer_h
 #define mozilla_Observer_h
 
-#include "nsTArray.h"
+#include "nsTObserverArray.h"
 
 namespace mozilla {
 
@@ -48,7 +48,7 @@ public:
    */
   void AddObserver(Observer<T>* aObserver)
   {
-    mObservers.AppendElement(aObserver);
+    mObservers.AppendElementUnlessExists(aObserver);
   }
 
   /**
@@ -65,17 +65,20 @@ public:
     return mObservers.Length();
   }
 
+  /**
+   * Call Notify() on each item in the list.
+   */
   void Broadcast(const T& aParam)
   {
-    nsTArray<Observer<T>*> observersCopy(mObservers);
-    uint32_t size = observersCopy.Length();
-    for (uint32_t i = 0; i < size; ++i) {
-      observersCopy[i]->Notify(aParam);
+    typename nsTObserverArray<Observer<T>*>::ForwardIterator iter(mObservers);
+    while (iter.HasMore()) {
+      Observer<T>* obs = iter.GetNext();
+      obs->Notify(aParam);
     }
   }
 
 protected:
-  nsTArray<Observer<T>*> mObservers;
+  nsTObserverArray<Observer<T>*> mObservers;
 };
 
 } // namespace mozilla

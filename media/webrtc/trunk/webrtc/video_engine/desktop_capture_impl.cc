@@ -449,7 +449,11 @@ DesktopCaptureImpl::DesktopCaptureImpl(const int32_t id)
 #if defined(_WIN32)
     capturer_thread_(new rtc::PlatformUIThread(Run, this, "ScreenCaptureThread")),
 #else
+#if defined(WEBRTC_LINUX)
+    capturer_thread_(nullptr),
+#else
     capturer_thread_(new rtc::PlatformThread(Run, this, "ScreenCaptureThread")),
+#endif
 #endif
     started_(false) {
   //-> TODO @@NG why is this crashing (seen on Linux)
@@ -464,8 +468,9 @@ DesktopCaptureImpl::DesktopCaptureImpl(const int32_t id)
 
 DesktopCaptureImpl::~DesktopCaptureImpl() {
   time_event_->Set();
-  capturer_thread_->Stop();
-
+  if (capturer_thread_) {
+    capturer_thread_->Stop();
+  }
   DeRegisterCaptureDataCallback();
   delete &_callBackCs;
   delete &_apiCs;
@@ -689,6 +694,16 @@ int32_t DesktopCaptureImpl::StartCapture(const VideoCaptureCapability& capabilit
   capturer_thread_->RequestCallbackTimer(maxFPSNeeded);
 #endif
 
+  if (started_) {
+    return 0;
+  }
+#if defined(WEBRTC_LINUX)
+  // Lazily init capturer_thread_
+  if (!capturer_thread_) {
+      capturer_thread_ = std::unique_ptr<rtc::PlatformThread>(
+          new rtc::PlatformThread(Run, this, "ScreenCaptureThread"));
+  }
+#endif
   desktop_capturer_cursor_composer_->Start(this);
   capturer_thread_->Start();
   started_ = true;

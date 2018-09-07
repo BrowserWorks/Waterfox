@@ -31,7 +31,13 @@
 #define fopen(path,mode)      hnjFopen(path,mode)
 #define fclose(file)          hnjFclose(file)
 #define fgets(buf,count,file) hnjFgets(buf,count,file)
+#ifdef __ANDROID__
+#ifdef feof
+#define __libcpp_feof(file)            hnjFeof(file)
+#endif // feof
+#else
 #define feof(file)            hnjFeof(file)
+#endif // __ANDROID__
 #define fgetc(file)           hnjFgetc(file)
 
 typedef struct hnjFile_ hnjFile;
