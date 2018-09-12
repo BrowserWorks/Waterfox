@@ -405,20 +405,26 @@ NS_IMETHODIMP nsPrinterEnumeratorGTK::InitPrintSettingsFromPrinter(const char16_
 
   NS_ENSURE_ARG_POINTER(aPrintSettings);
 
-  /* Set filename */
-  nsAutoCString filename;
-  const char *path;
-  
-  if (!(path = PR_GetEnv("PWD")))
-    path = PR_GetEnv("HOME");
-  
-  if (path)
-    filename = nsPrintfCString("%s/mozilla.pdf", path);
-  else
-    filename.AssignLiteral("mozilla.pdf");
+  // Set a default file name.
+  nsAutoString filename;
+  nsresult rv = aPrintSettings->GetToFileName(filename);
+  if (NS_FAILED(rv) || filename.IsEmpty()) {
+    const char* path = PR_GetEnv("PWD");
+    if (!path) {
+      path = PR_GetEnv("HOME");
+    }
 
-  DO_PR_DEBUG_LOG(("Setting default filename to '%s'\n", filename.get()));
-  aPrintSettings->SetToFileName(NS_ConvertUTF8toUTF16(filename).get());
+    if (path) {
+      CopyUTF8toUTF16(path, filename);
+      filename.AppendLiteral("/mozilla.pdf");
+    } else {
+      filename.AssignLiteral("mozilla.pdf");
+    }
+
+    DO_PR_DEBUG_LOG(("Setting default filename to '%s'\n",
+                     NS_ConvertUTF16toUTF8(filename).get()));
+    aPrintSettings->SetToFileName(filename);
+  }
 
   aPrintSettings->SetIsInitializedFromPrinter(true);
 
