@@ -219,6 +219,7 @@ public:
   {
     MOZ_ASSERT(NS_IsMainThread());
     mResolve(mFD);
+    mResolve = nullptr;
     return NS_OK;
   }
 
