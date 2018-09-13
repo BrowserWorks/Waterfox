@@ -227,7 +227,7 @@ ClearCDMStorage(already_AddRefed<nsIRunnable> aContinuation,
                 nsIThread* aTarget, PRTime aSince = -1)
 {
   RefPtr<ClearCDMStorageTask> task(
-    new ClearCDMStorageTask(Move(aContinuation), aTarget, aSince));
+      new ClearCDMStorageTask(std::move(aContinuation), aTarget, aSince));
   SystemGroup::Dispatch(TaskCategory::Other, task.forget());
 }
 
@@ -309,10 +309,9 @@ GetNodeId(const nsAString& aOrigin,
 
   // We rely on the fact that the GetNodeId implementation for
   // GeckoMediaPluginServiceParent is synchronous.
-  nsresult rv = service->GetNodeId(origin,
-                                   topLevelOrigin,
-                                   NS_LITERAL_STRING("gmp-fake"),
-                                   Move(callback));
+  nsresult rv =
+      service->GetNodeId(origin, topLevelOrigin, NS_LITERAL_STRING("gmp-fake"),
+                         std::move(callback));
   EXPECT_TRUE(NS_SUCCEEDED(rv) && NS_SUCCEEDED(result));
   return nodeId;
 }
@@ -436,14 +435,16 @@ class CDMStorageTest
   {
     nsTArray<nsCString> updates;
     updates.AppendElement(aUpdate);
-    CreateDecryptor(aOrigin, aTopLevelOrigin, aInPBMode, Move(updates));
+    CreateDecryptor(aOrigin, aTopLevelOrigin, aInPBMode, std::move(updates));
   }
 
   void CreateDecryptor(const nsAString& aOrigin,
                        const nsAString& aTopLevelOrigin,
                        bool aInPBMode,
                        nsTArray<nsCString>&& aUpdates) {
-    CreateDecryptor(GetNodeId(aOrigin, aTopLevelOrigin, NS_LITERAL_STRING("gmp-fake"), aInPBMode), Move(aUpdates));
+    CreateDecryptor(GetNodeId(aOrigin, aTopLevelOrigin,
+                              NS_LITERAL_STRING("gmp-fake"), aInPBMode),
+                    std::move(aUpdates));
   }
 
   void CreateDecryptor(const NodeId& aNodeId,
@@ -457,7 +458,7 @@ class CDMStorageTest
 
     RefPtr<CDMStorageTest> self = this;
     RefPtr<gmp::GetCDMParentPromise> promise =
-          service->GetCDM(aNodeId, Move(tags), nullptr);
+        service->GetCDM(aNodeId, std::move(tags), nullptr);
     auto thread = GetAbstractGMPThread();
     promise->Then(thread,
                   __func__,
@@ -575,12 +576,11 @@ class CDMStorageTest
     EnumerateCDMStorageDir(NS_LITERAL_CSTRING("id"),
                            NodeIdCollector(siteInfo.get()));
     // Invoke "Forget this site" on the main thread.
-    SystemGroup::Dispatch(TaskCategory::Other,
-                          NewRunnableMethod<UniquePtr<NodeInfo>&&>(
-                            "CDMStorageTest::TestForgetThisSite_Forget",
-                            this,
-                            &CDMStorageTest::TestForgetThisSite_Forget,
-                            Move(siteInfo)));
+    SystemGroup::Dispatch(
+        TaskCategory::Other,
+        NewRunnableMethod<UniquePtr<NodeInfo>&&>(
+            "CDMStorageTest::TestForgetThisSite_Forget", this,
+            &CDMStorageTest::TestForgetThisSite_Forget, std::move(siteInfo)));
   }
 
   void TestForgetThisSite_Forget(UniquePtr<NodeInfo>&& aSiteInfo) {
@@ -593,10 +593,8 @@ class CDMStorageTest
     service->GetThread(getter_AddRefs(thread));
 
     nsCOMPtr<nsIRunnable> r = NewRunnableMethod<UniquePtr<NodeInfo>&&>(
-      "CDMStorageTest::TestForgetThisSite_Verify",
-      this,
-      &CDMStorageTest::TestForgetThisSite_Verify,
-      Move(aSiteInfo));
+        "CDMStorageTest::TestForgetThisSite_Verify", this,
+        &CDMStorageTest::TestForgetThisSite_Verify, std::move(aSiteInfo));
     thread->Dispatch(r, NS_DISPATCH_NORMAL);
 
     nsCOMPtr<nsIRunnable> f = NewRunnableMethod(
@@ -975,7 +973,8 @@ class CDMStorageTest
   }
 
   void Expect(const nsCString& aMessage, already_AddRefed<nsIRunnable> aContinuation) {
-    mExpected.AppendElement(ExpectedMessage(aMessage, Move(aContinuation)));
+    mExpected.AppendElement(
+        ExpectedMessage(aMessage, std::move(aContinuation)));
   }
 
   void AwaitFinished() {
@@ -990,10 +989,9 @@ class CDMStorageTest
     }
     EXPECT_FALSE(mNodeId.IsEmpty());
     RefPtr<GMPShutdownObserver> task(new GMPShutdownObserver(
-      NewRunnableMethod(
-        "CDMStorageTest::Shutdown", this, &CDMStorageTest::Shutdown),
-      Move(aContinuation),
-      mNodeId));
+        NewRunnableMethod("CDMStorageTest::Shutdown", this,
+                          &CDMStorageTest::Shutdown),
+        std::move(aContinuation), mNodeId));
     SystemGroup::Dispatch(TaskCategory::Other, task.forget());
   }
 
@@ -1090,7 +1088,7 @@ private:
                         uint32_t aMessageType,
                         nsTArray<uint8_t>&& aMessage) override
     {
-      mRunner->SessionMessage(aSessionId, aMessageType, Move(aMessage));
+      mRunner->SessionMessage(aSessionId, aMessageType, std::move(aMessage));
     }
 
     void SessionKeysChange(const nsCString& aSessionId,
@@ -1100,11 +1098,6 @@ private:
                           double aSecondsSinceEpoch) override { }
 
     void SessionClosed(const nsCString& aSessionId) override { }
-
-    void LegacySessionError(const nsCString& aSessionId,
-                            nsresult aError,
-                            uint32_t aSystemCode,
-                            const nsCString& aMessage) override { }
 
     void Terminated() override { mRunner->Terminated(); }
 
