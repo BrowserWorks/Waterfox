@@ -62,8 +62,13 @@ struct ParamTraits<GMPBufferType>
 {};
 
 template <>
-struct ParamTraits<GMPSimulcastStream>
-{
+struct ParamTraits<GMPEncryptionScheme>
+    : public ContiguousEnumSerializer<
+          GMPEncryptionScheme, GMPEncryptionScheme::kGMPEncryptionNone,
+          GMPEncryptionScheme::kGMPEncryptionInvalid> {};
+
+template <>
+struct ParamTraits<GMPSimulcastStream> {
   typedef GMPSimulcastStream paramType;
 
   static void Write(Message* aMsg, const paramType& aParam)
