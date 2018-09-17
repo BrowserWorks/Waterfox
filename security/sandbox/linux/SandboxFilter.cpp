@@ -765,6 +765,11 @@ public:
       return Allow();
 
 #ifdef DESKTOP
+    case __NR_sched_setaffinity:
+      return Error(EPERM);
+#endif
+
+#ifdef DESKTOP
     case __NR_pipe2:
       return Allow();
 
