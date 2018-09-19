@@ -774,7 +774,7 @@ WebMDemuxer::GetNextPacket(TrackInfo::TrackType aType,
         // encryption bit is set on a frame with no IV, but we gracefully
         // handle incase.
         MOZ_ASSERT_UNREACHABLE(
-            "Unencrypted packets should not have the encryption bit set!");
+          "Unencrypted packets should not have the encryption bit set!");
         WEBM_DEBUG("Unencrypted packet with encryption bit set");
         writer->mCrypto.mPlainSizes.AppendElement(length);
         writer->mCrypto.mEncryptedSizes.AppendElement(0);
