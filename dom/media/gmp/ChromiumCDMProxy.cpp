@@ -116,9 +116,42 @@ ChromiumCDMProxy::Init(PromiseId aPromiseId,
         },
         [self, aPromiseId](MediaResult rv) {
           self->RejectPromise(
-            aPromiseId, rv.Code(), rv.Description());
-        });
-    }));
+              aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+              NS_LITERAL_CSTRING("Couldn't get GeckoMediaPluginService in "
+                                 "ChromiumCDMProxy::Init"));
+          return;
+        }
+        RefPtr<gmp::GetCDMParentPromise> promise =
+            service->GetCDM(nodeId, {keySystem}, helper);
+        promise->Then(
+            thread, __func__,
+            [self, aPromiseId, thread](RefPtr<gmp::ChromiumCDMParent> cdm) {
+              // service->GetCDM succeeded
+              self->mCallback =
+                  MakeUnique<ChromiumCDMCallbackProxy>(self, self->mMainThread);
+              cdm->Init(self->mCallback.get(),
+                        self->mDistinctiveIdentifierRequired,
+                        self->mPersistentStateRequired, self->mMainThread)
+                  ->Then(thread, __func__,
+                         [self, aPromiseId, cdm](bool /* unused */) {
+                           // CDM init succeeded
+                           {
+                             MutexAutoLock lock(self->mCDMMutex);
+                             self->mCDM = cdm;
+                           }
+                           self->OnCDMCreated(aPromiseId);
+                         },
+                         [self, aPromiseId](MediaResult aResult) {
+                           // CDM init failed
+                           self->RejectPromise(aPromiseId, aResult.Code(),
+                                               aResult.Message());
+                         });
+            },
+            [self, aPromiseId](MediaResult rv) {
+              // service->GetCDM failed
+              self->RejectPromise(aPromiseId, rv.Code(), rv.Description());
+            });
+      }));
 
   mGMPThread->Dispatch(task.forget());
 }
