@@ -26,6 +26,31 @@ InProcessWinCompositorWidget::InProcessWinCompositorWidget(const CompositorWidge
   MOZ_ASSERT(mWindow);
 }
 
+void
+InProcessWinCompositorWidget::OnDestroyWindow()
+{
+  EnterPresentLock();
+  WinCompositorWidget::OnDestroyWindow();
+  LeavePresentLock();
+}
+
+void
+InProcessWinCompositorWidget::UpdateTransparency(nsTransparencyMode aMode)
+{
+  EnterPresentLock();
+  WinCompositorWidget::UpdateTransparency(aMode);
+  LeavePresentLock();
+}
+
+void
+InProcessWinCompositorWidget::ClearTransparentWindow()
+{
+  EnterPresentLock();
+  WinCompositorWidget::ClearTransparentWindow();
+  LeavePresentLock();
+}
+
+
 nsIWidget*
 InProcessWinCompositorWidget::RealWidget()
 {
