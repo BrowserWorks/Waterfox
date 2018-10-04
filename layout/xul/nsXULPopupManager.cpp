@@ -968,6 +968,7 @@ nsXULPopupManager::ShowPopupCallback(nsIContent* aPopup,
   item->SetParent(mPopups);
   mPopups = item;
   SetCaptureState(oldmenu);
+  NS_ENSURE_TRUE_VOID(weakFrame.IsAlive());
 
   item->UpdateFollowAnchor();
 
