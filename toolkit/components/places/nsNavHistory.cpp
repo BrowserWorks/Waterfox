@@ -261,12 +261,14 @@ const int32_t nsNavHistory::kGetInfoIndex_Guid = 14;
 const int32_t nsNavHistory::kGetInfoIndex_VisitId = 15;
 const int32_t nsNavHistory::kGetInfoIndex_FromVisitId = 16;
 const int32_t nsNavHistory::kGetInfoIndex_VisitType = 17;
+const int32_t nsNavHistory::kGetInfoIndex_ParentFolder = 18;
+const int32_t nsNavHistory::kGetInfoIndex_ParentPath = 19;
 // These columns are followed by corresponding constants in nsNavBookmarks.cpp,
 // which must be kept in sync:
-// nsNavBookmarks::kGetChildrenIndex_Guid = 18;
-// nsNavBookmarks::kGetChildrenIndex_Position = 19;
-// nsNavBookmarks::kGetChildrenIndex_Type = 20;
-// nsNavBookmarks::kGetChildrenIndex_PlaceID = 21;
+// nsNavBookmarks::kGetChildrenIndex_Guid = 20;
+// nsNavBookmarks::kGetChildrenIndex_Position = 21;
+// nsNavBookmarks::kGetChildrenIndex_Type = 22;
+// nsNavBookmarks::kGetChildrenIndex_PlaceID = 23;
 
 PLACES_FACTORY_SINGLETON_IMPLEMENTATION(nsNavHistory, gHistoryService)
 
@@ -1517,7 +1519,8 @@ PlacesSQLQueryBuilder::SelectAsURI()
         "SELECT h.id, h.url, h.title AS page_title, h.rev_host, h.visit_count, "
         "h.last_visit_date, null, null, null, null, null, ") +
         tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-        "null, null, null "
+        "null, null, null, "
+        "null,null " 
         "FROM moz_places h "
         // WHERE 1 is a no-op since additonal conditions will start with AND.
         "WHERE 1 "
@@ -1543,15 +1546,17 @@ PlacesSQLQueryBuilder::SelectAsURI()
             "h.rev_host, h.visit_count, h.last_visit_date, null, b2.id, "
             "b2.dateAdded, b2.lastModified, b2.parent, ") +
             tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-            "null, null, null, b2.guid, b2.position, b2.type, b2.fk "
-          "FROM moz_bookmarks b2 "
+                "null, null, null, "
+                "f.title, null " //TODO Parent Path Query
+                ",b2.guid, b2.position, b2.type, b2.fk "
+          "FROM moz_bookmarks f, moz_bookmarks b2 "
           "JOIN (SELECT b.fk "
                 "FROM moz_bookmarks b "
                 // ADDITIONAL_CONDITIONS will filter on parent.
                 "WHERE b.type = 1 {ADDITIONAL_CONDITIONS} "
                 ") AS seed ON b2.fk = seed.fk "
           "JOIN moz_places h ON h.id = b2.fk "
-          "WHERE NOT EXISTS ( "
+          "WHERE f.id = b.parent AND NOT EXISTS ( "
             "SELECT id FROM moz_bookmarks WHERE id = b2.parent AND parent = ") +
                 nsPrintfCString("%" PRId64, history->GetTagsFolder()) +
           NS_LITERAL_CSTRING(") "
@@ -1567,10 +1572,12 @@ PlacesSQLQueryBuilder::SelectAsURI()
             "h.rev_host, h.visit_count, h.last_visit_date, null, b.id, "
             "b.dateAdded, b.lastModified, b.parent, ") +
             tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid,"
-            "null, null, null, b.guid, b.position, b.type, b.fk "
-          "FROM moz_bookmarks b "
+                "null, null, null, "
+                "f.title, null " //TODO Parent Path Query
+                ",b.guid, b.position, b.type, b.fk "
+          "FROM moz_bookmarks f, moz_bookmarks b "
           "JOIN moz_places h ON b.fk = h.id "
-          "WHERE NOT EXISTS "
+          "WHERE f.id = b.parent AND NOT EXISTS "
               "(SELECT id FROM moz_bookmarks "
                 "WHERE id = b.parent AND parent = ") +
                   nsPrintfCString("%" PRId64, history->GetTagsFolder()) +
@@ -1599,7 +1606,8 @@ PlacesSQLQueryBuilder::SelectAsVisit()
     "SELECT h.id, h.url, h.title AS page_title, h.rev_host, h.visit_count, "
       "v.visit_date, null, null, null, null, null, ") +
       tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-      "v.id, v.from_visit, v.visit_type "
+      "v.id, v.from_visit, v.visit_type, "
+      "null, null "
     "FROM moz_places h "
     "JOIN moz_historyvisits v ON h.id = v.place_id "
     // WHERE 1 is a no-op since additonal conditions will start with AND.
@@ -1634,7 +1642,8 @@ PlacesSQLQueryBuilder::SelectAsDay()
      "SELECT null, "
        "'place:type=%d&sort=%d&beginTime='||beginTime||'&endTime='||endTime, "
       "dayTitle, null, null, beginTime, null, null, null, null, null, null, "
-      "null, null, null "
+      "null, null, null, "
+      "null, null "
      "FROM (", // TOUTER BEGIN
      resultType,
      sortingMode);
@@ -1837,7 +1846,8 @@ PlacesSQLQueryBuilder::SelectAsSite()
   mQueryString = nsPrintfCString(
     "SELECT null, 'place:type=%d&sort=%d&domain=&domainIsHost=true'%s, "
            ":localhost, :localhost, null, null, null, null, null, null, null, "
-           "null, null, null "
+           "null, null, null, "
+           "null, null "
     "WHERE EXISTS ( "
       "SELECT h.id FROM moz_places h "
       "%s "
@@ -1852,7 +1862,8 @@ PlacesSQLQueryBuilder::SelectAsSite()
     "SELECT null, "
            "'place:type=%d&sort=%d&domain='||host||'&domainIsHost=true'%s, "
            "host, host, null, null, null, null, null, null, null, "
-           "null, null, null "
+           "null, null, null, "
+           "null, null "
     "FROM ( "
       "SELECT get_unreversed_host(h.rev_host) AS host "
       "FROM moz_places h "
@@ -1892,7 +1903,8 @@ PlacesSQLQueryBuilder::SelectAsTag()
   mQueryString = nsPrintfCString(
     "SELECT null, 'place:folder=' || id || '&queryType=%d&type=%d', "
            "title, null, null, null, null, null, dateAdded, "
-           "lastModified, null, null, null, null, null, null "
+           "lastModified, null, null, null, null, null, null, "
+           "null, null "
     "FROM moz_bookmarks "
     "WHERE parent = %" PRId64,
     nsINavHistoryQueryOptions::QUERY_TYPE_BOOKMARKS,
@@ -2040,6 +2052,18 @@ PlacesSQLQueryBuilder::OrderBy()
     case nsINavHistoryQueryOptions::SORT_BY_ANNOTATION_ASCENDING:
     case nsINavHistoryQueryOptions::SORT_BY_ANNOTATION_DESCENDING:
       break; // Sort later in nsNavHistoryQueryResultNode::FillChildren()
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTFOLDER_ASCENDING:
+        OrderByColumnIndexAsc(nsNavHistory::kGetInfoIndex_ParentFolder);
+      break;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTFOLDER_DESCENDING:
+        OrderByColumnIndexDesc(nsNavHistory::kGetInfoIndex_ParentFolder);
+      break;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTPATH_ASCENDING:
+        OrderByColumnIndexAsc(nsNavHistory::kGetInfoIndex_ParentPath);
+      break;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTPATH_DESCENDING:
+        OrderByColumnIndexDesc(nsNavHistory::kGetInfoIndex_ParentPath);
+      break;
     case nsINavHistoryQueryOptions::SORT_BY_FRECENCY_ASCENDING:
         OrderByColumnIndexAsc(nsNavHistory::kGetInfoIndex_Frecency);
       break;
@@ -2127,7 +2151,8 @@ nsNavHistory::ConstructQueryString(
       "SELECT h.id, h.url, h.title AS page_title, h.rev_host, h.visit_count, h.last_visit_date, "
           "null, null, null, null, null, ") +
           tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-          "null, null, null "
+          "null, null, null, "
+           "null, null "
         "FROM moz_places h "
         "WHERE h.hidden = 0 "
           "AND EXISTS (SELECT id FROM moz_historyvisits WHERE place_id = h.id "
@@ -3833,6 +3858,9 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
   // itemId
   int64_t itemId = aRow->AsInt64(kGetInfoIndex_ItemId);
   int64_t parentId = -1;
+  nsAutoCString parentFolder,parentPath;
+  parentFolder = "";
+  parentPath = "";
   if (itemId == 0) {
     // This is not a bookmark.  For non-bookmarks we use a -1 itemId value.
     // Notice ids in sqlite tables start from 1, so itemId cannot ever be 0.
@@ -3845,6 +3873,10 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
       // The Places root has parent == 0, but that item id does not really
       // exist. We want to set the parent only if it's a real one.
       parentId = itemParentId;
+      rv = aRow->GetUTF8String(kGetInfoIndex_ParentFolder, parentFolder);
+      NS_ENSURE_SUCCESS(rv, rv);
+      rv = aRow->GetUTF8String(kGetInfoIndex_ParentPath, parentPath);
+      NS_ENSURE_SUCCESS(rv, rv);
     }
   }
 
@@ -3897,6 +3929,8 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
     if (itemId != -1) {
       resultNode->mItemId = itemId;
       resultNode->mFolderId = parentId;
+      resultNode->mParentFolder = parentFolder;
+      resultNode->mParentPath = parentPath;
       resultNode->mDateAdded = aRow->AsInt64(kGetInfoIndex_ItemDateAdded);
       resultNode->mLastModified = aRow->AsInt64(kGetInfoIndex_ItemLastModified);
 
@@ -4057,7 +4091,8 @@ nsNavHistory::VisitIdToResultNode(int64_t visitId,
         "SELECT h.id, h.url, h.title, h.rev_host, h.visit_count, "
                "v.visit_date, null, null, null, null, null, "
                ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-              "v.id, v.from_visit, v.visit_type "
+              "v.id, v.from_visit, v.visit_type, "
+              "null, null "
         "FROM moz_places h "
         "JOIN moz_historyvisits v ON h.id = v.place_id "
         "WHERE v.id = :visit_id ")
@@ -4071,7 +4106,8 @@ nsNavHistory::VisitIdToResultNode(int64_t visitId,
         "SELECT h.id, h.url, h.title, h.rev_host, h.visit_count, "
                "h.last_visit_date, null, null, null, null, null, "
                ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-              "null, null, null "
+              "null, null, null, "
+              "null, null "
         "FROM moz_places h "
         "JOIN moz_historyvisits v ON h.id = v.place_id "
         "WHERE v.id = :visit_id ")
@@ -4117,10 +4153,12 @@ nsNavHistory::BookmarkIdToResultNode(int64_t aBookmarkId, nsNavHistoryQueryOptio
              "h.rev_host, h.visit_count, h.last_visit_date, null, b.id, "
              "b.dateAdded, b.lastModified, b.parent, "
              ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-             "null, null, null, b.guid, b.position, b.type, b.fk "
-      "FROM moz_bookmarks b "
+               "null, null, null, "
+               "f.title, null " //TODO Parent Path Query
+               ",b.guid, b.position, b.type, b.fk "
+      "FROM moz_bookmarks f, moz_bookmarks b "
       "JOIN moz_places h ON b.fk = h.id "
-      "WHERE b.id = :item_id ")
+      "WHERE b.id = :item_id AND f.id = b.parent")
   );
   NS_ENSURE_STATE(stmt);
   mozStorageStatementScoper scoper(stmt);
