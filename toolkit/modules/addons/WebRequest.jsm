@@ -201,7 +201,7 @@ class HeaderChanger {
 
       if (!original || value !== original.value) {
         let shouldMerge = headersAlreadySet.has(lowerCaseName);
-        this.setHeader(name, value, shouldMerge, opts);
+        this.setHeader(name, value, shouldMerge, opts, lowerCaseName);
       }
 
       headersAlreadySet.add(lowerCaseName);
@@ -223,9 +223,9 @@ const checkRestrictedHeaderValue = (value, opts = {}) => {
 };
 
 class RequestHeaderChanger extends HeaderChanger {
-  setHeader(name, value, merge, opts = {}) {
+  setHeader(name, value, merge, opts, lowerCaseName) {
     try {
-      if (name === "host") {
+      if (value && lowerCaseName === "host") {
         checkRestrictedHeaderValue(value, opts);
       }
       this.channel.setRequestHeader(name, value, merge);
@@ -242,7 +242,7 @@ class RequestHeaderChanger extends HeaderChanger {
 }
 
 class ResponseHeaderChanger extends HeaderChanger {
-  setHeader(name, value, merge, opts = {}) {
+  setHeader(name, value, merge, opts, lowerCaseName) {
     try {
       if (name.toLowerCase() === "content-type" && value) {
         // The Content-Type header value can't be modified, so we
