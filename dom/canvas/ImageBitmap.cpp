@@ -1553,17 +1553,5 @@ ImageBitmap::FindOptimalFormat(const Optional<Sequence<ImageBitmapFormat>>& aPos
   }
 }
 
-int32_t
-ImageBitmap::MappedDataLength(ImageBitmapFormat aFormat, ErrorResult& aRv)
-{
-  MOZ_ASSERT(mDataWrapper, "No ImageBitmapFormatUtils functionalities.");
-
-  if (aFormat == mDataWrapper->GetFormat()) {
-    return mDataWrapper->GetBufferLength();
-  } else {
-    return CalculateImageBufferSize(aFormat, Width(), Height());
-  }
-}
-
 } // namespace dom
 } // namespace mozilla
