@@ -1547,16 +1547,16 @@ PlacesSQLQueryBuilder::SelectAsURI()
             "b2.dateAdded, b2.lastModified, b2.parent, ") +
             tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
                 "null, null, null, "
-                "f.title, null " //TODO Parent Path Query
+                "null, null " //TODO Show Parent Queries in Tag Search
                 ",b2.guid, b2.position, b2.type, b2.fk "
-          "FROM moz_bookmarks f, moz_bookmarks b2 "
+          "FROM moz_bookmarks b2 "
           "JOIN (SELECT b.fk "
                 "FROM moz_bookmarks b "
                 // ADDITIONAL_CONDITIONS will filter on parent.
                 "WHERE b.type = 1 {ADDITIONAL_CONDITIONS} "
                 ") AS seed ON b2.fk = seed.fk "
           "JOIN moz_places h ON h.id = b2.fk "
-          "WHERE f.id = b.parent AND NOT EXISTS ( "
+          "WHERE NOT EXISTS ( "
             "SELECT id FROM moz_bookmarks WHERE id = b2.parent AND parent = ") +
                 nsPrintfCString("%" PRId64, history->GetTagsFolder()) +
           NS_LITERAL_CSTRING(") "
