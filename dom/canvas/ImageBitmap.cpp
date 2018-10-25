@@ -379,11 +379,12 @@ static already_AddRefed<SourceSurface> GetSurfaceFromElement(
 
 /*
  * The specification doesn't allow to create an ImageBitmap from a vector image.
- * This function is used to check if the given HTMLImageElement contains a
+ * This function is used to check if the given Image Element contains a
  * raster image.
  */
+template<class ElementType>
 static bool
-HasRasterImage(HTMLImageElement& aImageEl)
+HasRasterImage(ElementType& aImageEl)
 {
   nsresult rv;
 
@@ -716,6 +717,39 @@ ImageBitmap::CreateInternal(nsIGlobalObject* aGlobal, HTMLImageElement& aImageEl
     return nullptr;
   }
 
+  bool writeOnly = true;
+
+  // Get the SourceSurface out from the image element and then do security
+  // checking.
+  RefPtr<SourceSurface> surface = GetSurfaceFromElement(aGlobal, aImageEl,
+                                                        &writeOnly, aRv);
+
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+
+  // Create ImageBitmap.
+  RefPtr<layers::Image> data = CreateImageFromSurface(surface);
+
+  if (NS_WARN_IF(!data)) {
+    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
+    return nullptr;
+  }
+
+  RefPtr<ImageBitmap> ret = new ImageBitmap(aGlobal, data, writeOnly);
+
+  // Set the picture rectangle.
+  if (ret && aCropRect.isSome()) {
+    ret->SetPictureRect(aCropRect.ref(), aRv);
+  }
+
+  return ret.forget();
+}
+
+/* static */ already_AddRefed<ImageBitmap>
+ImageBitmap::CreateInternal(nsIGlobalObject* aGlobal, SVGImageElement& aImageEl,
+                            const Maybe<IntRect>& aCropRect, ErrorResult& aRv)
+{
   bool writeOnly = true;
 
   // Get the SourceSurface out from the image element and then do security
@@ -1371,6 +1405,10 @@ ImageBitmap::Create(nsIGlobalObject* aGlobal, const ImageBitmapSource& aSrc,
     MOZ_ASSERT(NS_IsMainThread(),
                "Creating ImageBitmap from HTMLImageElement off the main thread.");
     imageBitmap = CreateInternal(aGlobal, aSrc.GetAsHTMLImageElement(), aCropRect, aRv);
+  } else if (aSrc.IsSVGImageElement()) {
+    MOZ_ASSERT(NS_IsMainThread(),
+               "Creating ImageBitmap from SVGImageElement off the main thread.");
+    imageBitmap = CreateInternal(aGlobal, aSrc.GetAsSVGImageElement(), aCropRect, aRv);
   } else if (aSrc.IsHTMLVideoElement()) {
     MOZ_ASSERT(NS_IsMainThread(),
                "Creating ImageBitmap from HTMLVideoElement off the main thread.");

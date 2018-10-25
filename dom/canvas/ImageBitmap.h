@@ -52,11 +52,11 @@ class File;
 class HTMLCanvasElement;
 class HTMLImageElement;
 class HTMLVideoElement;
-enum class ImageBitmapFormat : uint8_t;
 class ImageData;
 class ImageUtils;
 class Promise;
 class PostMessageEvent; // For StructuredClone between windows.
+class SVGImageElement;
 
 struct ImageBitmapCloneData final
 {
@@ -181,6 +181,10 @@ protected:
 
   static already_AddRefed<ImageBitmap>
   CreateInternal(nsIGlobalObject* aGlobal, HTMLImageElement& aImageEl,
+                 const Maybe<gfx::IntRect>& aCropRect, ErrorResult& aRv);
+
+  static already_AddRefed<ImageBitmap>
+  CreateInternal(nsIGlobalObject* aGlobal, SVGImageElement& aImageEl,
                  const Maybe<gfx::IntRect>& aCropRect, ErrorResult& aRv);
 
   static already_AddRefed<ImageBitmap>
