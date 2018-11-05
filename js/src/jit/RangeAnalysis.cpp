@@ -2167,7 +2167,7 @@ RangeAnalysis::analyzeLoopPhi(MBasicBlock* header, LoopIterationBound* loopBound
     if (initial->block()->isMarked())
         return;
 
-    SimpleLinearSum modified = ExtractLinearSum(phi->getLoopBackedgeOperand());
+    SimpleLinearSum modified = ExtractLinearSum(phi->getLoopBackedgeOperand(), MathSpace::Infinite);
 
     if (modified.term != phi || modified.constant == 0)
         return;
