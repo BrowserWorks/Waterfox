@@ -28,6 +28,7 @@ pref("general.useragent.compatMode.firefox", false);
 // This pref exists only for testing purposes. In order to disable all
 // overrides by default, don't initialize UserAgentOverrides.jsm.
 pref("general.useragent.site_specific_overrides", true);
+pref("general.useragent.override.github.com", "Mozilla/5.0 (rv:60.0) Gecko/20100101 Firefox/60.0");
 #ifdef XP_WIN
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:57.0) Gecko/20100101 Firefox/57.0");
 #endif
