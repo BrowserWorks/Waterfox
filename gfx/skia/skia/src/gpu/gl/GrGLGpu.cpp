@@ -1883,13 +1883,13 @@ void GrGLGpu::setupGeometry(const GrPrimitiveProcessor& primProc,
         SkASSERT(vertexBuffer && !vertexBuffer->isMapped());
         bindings[0].fBuffer = vertexBuffer;
         bindings[0].fStride = vertexStride;
-        bindings[0].fBufferOffset = vertexBuffer->baseOffset() + baseVertex * vertexStride;
+        bindings[0].fBufferOffset = vertexBuffer->baseOffset() + baseVertex * size_t(vertexStride);
     }
     if (int instanceStride = primProc.getInstanceStride()) {
         SkASSERT(instanceBuffer && !instanceBuffer->isMapped());
         bindings[1].fBuffer = instanceBuffer;
         bindings[1].fStride = instanceStride;
-        bindings[1].fBufferOffset = instanceBuffer->baseOffset() + baseInstance * instanceStride;
+        bindings[1].fBufferOffset = instanceBuffer->baseOffset() + baseInstance * size_t(instanceStride);
     }
 
     int numAttribs = primProc.numAttribs();
