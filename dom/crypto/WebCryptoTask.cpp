@@ -585,7 +585,7 @@ public:
 
       mMechanism = CKM_AES_CBC_PAD;
       telemetryAlg = TA_AES_CBC;
-      AesCbcParams params;
+      RootedDictionary<AesCbcParams> params(aCx);
       nsresult rv = Coerce(aCx, params, aAlgorithm);
       if (NS_FAILED(rv)) {
         mEarlyRv = NS_ERROR_DOM_INVALID_ACCESS_ERR;
@@ -602,7 +602,7 @@ public:
 
       mMechanism = CKM_AES_CTR;
       telemetryAlg = TA_AES_CTR;
-      AesCtrParams params;
+      RootedDictionary<AesCtrParams> params(aCx);
       nsresult rv = Coerce(aCx, params, aAlgorithm);
       if (NS_FAILED(rv)) {
         mEarlyRv = NS_ERROR_DOM_SYNTAX_ERR;
@@ -621,7 +621,7 @@ public:
 
       mMechanism = CKM_AES_GCM;
       telemetryAlg = TA_AES_GCM;
-      AesGcmParams params;
+      RootedDictionary<AesGcmParams> params(aCx);
       nsresult rv = Coerce(aCx, params, aAlgorithm);
       if (NS_FAILED(rv)) {
         mEarlyRv = NS_ERROR_DOM_SYNTAX_ERR;
