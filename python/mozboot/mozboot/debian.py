@@ -60,6 +60,7 @@ class DebianBootstrapper(StyloInstall, BaseBootstrapper):
         'libx11-xcb-dev',
         'libxt-dev',
         'mesa-common-dev',
+        'nasm',
         'python-dbus',
         'xvfb',
         'yasm',
