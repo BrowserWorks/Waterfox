@@ -1165,6 +1165,8 @@ public:
   bool CanCommunicateWith(ContentParentId aOtherProcess);
 
 private:
+  // Released in ActorDestroy; deliberately not exposed to the CC.
+  RefPtr<ContentParent> mSelfRef;
 
   // If you add strong pointers to cycle collected objects here, be sure to
   // release these objects in ShutDownProcess.  See the comment there for more
