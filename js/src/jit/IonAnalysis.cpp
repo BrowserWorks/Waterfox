@@ -2340,7 +2340,7 @@ jit::RemoveUnmarkedBlocks(MIRGenerator* mir, MIRGraph& graph, uint32_t numMarked
         // bailout.
         for (PostorderIterator it(graph.poBegin()); it != graph.poEnd();) {
             MBasicBlock* block = *it++;
-            if (!block->isMarked())
+            if (block->isMarked())
                 continue;
 
             FlagAllOperandsAsHavingRemovedUses(mir, block);
