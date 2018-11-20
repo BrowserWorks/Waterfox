@@ -16,7 +16,7 @@ namespace mozilla {
 namespace image {
 class RasterImage;
 
-class nsWebPDecoder : public Decoder
+class nsWebPDecoder final : public Decoder
 {
 public:
   virtual ~nsWebPDecoder();
@@ -31,34 +31,28 @@ private:
   // Decoders should only be instantiated via DecoderFactory.
   explicit nsWebPDecoder(RasterImage* aImage);
 
-  enum class State
-  {
-    WEBP_DATA,
-    FINISHED_WEBP_DATA
-  };
+  void ApplyColorProfile(const char* aProfile, size_t aLength);
 
-  LexerTransition<State> ReadHeader(const char* aData, size_t aLength);
-  LexerTransition<State> ReadPayload(const char* aData, size_t aLength);
-  LexerTransition<State> FinishedData();
+  LexerResult UpdateBuffer(SourceBufferIterator& aIterator,
+                           SourceBufferIterator::State aState);
+  LexerResult ReadData();
+  LexerResult ReadHeader(WebPDemuxer* aDemuxer, bool aIsComplete);
+  LexerResult ReadPayload(WebPDemuxer* aDemuxer, bool aIsComplete);
 
   nsresult CreateFrame(const nsIntRect& aFrameRect);
   void EndFrame();
 
-  nsresult GetDataBuffer(const uint8_t*& aData, size_t& aLength);
-  nsresult SaveDataBuffer(const uint8_t* aData, size_t aLength);
+  LexerResult ReadSingle(const uint8_t* aData, size_t aLength,
+                         const IntRect& aFrameRect);
 
-  LexerTransition<State> ReadSingle(const uint8_t* aData, size_t aLength,
-                                    bool aAppend, const IntRect& aFrameRect);
-
-  LexerTransition<State> ReadMultiple(const uint8_t* aData, size_t aLength);
-
-  StreamingLexer<State> mLexer;
+  LexerResult ReadMultiple(WebPDemuxer* aDemuxer, bool aIsComplete);
 
   /// The SurfacePipe used to write to the output surface.
   SurfacePipe mPipe;
 
-  /// The buffer used to accumulate data until the complete WebP header is received.
-  Vector<uint8_t> mData;
+  /// The buffer used to accumulate data until the complete WebP header is
+  /// received, if and only if the iterator is discontiguous.
+  Vector<uint8_t> mBufferedData;
 
   /// The libwebp output buffer descriptor pointing to the decoded data.
   WebPDecBuffer mBuffer;
@@ -78,11 +72,35 @@ private:
   /// Surface format for the current frame.
   gfx::SurfaceFormat mFormat;
 
+  /// Frame rect for the current frame.
+  IntRect mFrameRect;
+
   /// The last row of decoded pixels written to mPipe.
   int mLastRow;
 
   /// Number of decoded frames.
   uint32_t mCurrentFrame;
+
+  /// Pointer to the start of the contiguous encoded image data.
+  const uint8_t* mData;
+
+  /// Length of data pointed to by mData.
+  size_t mLength;
+
+  /// True if the iterator has reached its end.
+  bool mIteratorComplete;
+
+  /// True if this decoding pass requires a WebPDemuxer.
+  bool mNeedDemuxer;
+
+  /// True if we have setup the color profile for the image.
+  bool mGotColorProfile;
+
+  /// Color management profile from the ICCP chunk in the image.
+  qcms_profile* mInProfile;
+
+  /// Color management transform to apply to image data.
+  qcms_transform* mTransform;
 };
 
 } // namespace image
