@@ -15,6 +15,7 @@
 
 #ifdef MOZ_AV1
 #include "AOMDecoder.h"
+#include "DAV1DDecoder.h"
 #endif
 
 namespace mozilla {
@@ -51,7 +52,11 @@ AgnosticDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
 #ifdef MOZ_AV1
   else if (AOMDecoder::IsAV1(aParams.mConfig.mMimeType) &&
            MediaPrefs::AV1Enabled()) {
-    m = new AOMDecoder(aParams);
+    if (Preferences::GetBool("media.av1.use-dav1d" ,true)) {
+      m = new DAV1DDecoder(aParams);
+    } else {
+      m = new AOMDecoder(aParams);
+    }
   }
 #endif
   else if (TheoraDecoder::IsTheora(aParams.mConfig.mMimeType)) {

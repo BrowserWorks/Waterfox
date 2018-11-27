@@ -407,6 +407,8 @@ pref("media.ffvpx.enabled", true);
 #endif
 #ifdef MOZ_AV1
 pref("media.av1.enabled", true);
+// Use libdav1d instead of libaom
+pref("media.av1.use-dav1d", false);
 #endif
 #if defined(MOZ_FFMPEG) || defined(MOZ_FFVPX)
 pref("media.ffmpeg.low-latency.enabled", false);
