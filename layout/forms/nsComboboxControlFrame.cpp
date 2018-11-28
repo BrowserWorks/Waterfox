@@ -1048,6 +1048,10 @@ nsComboboxControlFrame::HandleRedisplayTextEvent()
   mRedisplayTextEvent.Forget();
 
   ActuallyDisplayText(true);
+  if (!weakThis.IsAlive()) {
+    return;
+  }
+
   // XXXbz This should perhaps be eResize.  Check.
   PresContext()->PresShell()->FrameNeedsReflow(mDisplayFrame,
                                                nsIPresShell::eStyleChange,
@@ -1059,13 +1063,14 @@ nsComboboxControlFrame::HandleRedisplayTextEvent()
 void
 nsComboboxControlFrame::ActuallyDisplayText(bool aNotify)
 {
+  RefPtr<nsTextNode> displayContent = mDisplayContent;
   if (mDisplayedOptionTextOrPreview.IsEmpty()) {
     // Have to use a non-breaking space for line-block-size calculations
     // to be right
     static const char16_t space = 0xA0;
-    mDisplayContent->SetText(&space, 1, aNotify);
+    displayContent->SetText(&space, 1, aNotify);
   } else {
-    mDisplayContent->SetText(mDisplayedOptionTextOrPreview, aNotify);
+    displayContent->SetText(mDisplayedOptionTextOrPreview, aNotify);
   }
 }
 
