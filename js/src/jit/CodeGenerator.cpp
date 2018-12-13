@@ -5900,6 +5900,12 @@ typedef StringIteratorObject* (*NewStringIteratorObjectFn)(JSContext*, NewObject
 static const VMFunction NewStringIteratorObjectInfo =
     FunctionInfo<NewStringIteratorObjectFn>(NewStringIteratorObject, "NewStringIteratorObject");
 
+typedef RegExpStringIteratorObject* (*NewRegExpStringIteratorObjectFn)(JSContext*, NewObjectKind);
+
+static const VMFunction NewRegExpStringIteratorObjectInfo =
+  FunctionInfo<NewRegExpStringIteratorObjectFn>(NewRegExpStringIteratorObject,
+                                                "NewRegExpStringIteratorObject");
+
 void
 CodeGenerator::visitNewIterator(LNewIterator* lir)
 {
@@ -5919,6 +5925,12 @@ CodeGenerator::visitNewIterator(LNewIterator* lir)
                         ArgList(Imm32(GenericObject)),
                         StoreRegisterTo(objReg));
         break;
+      case MNewIterator::RegExpStringIterator:
+          ool = oolCallVM(NewRegExpStringIteratorObjectInfo,
+                          lir,
+                          ArgList(Imm32(GenericObject)),
+                          StoreRegisterTo(objReg));
+          break;
       default:
           MOZ_CRASH("unexpected iterator type");
     }

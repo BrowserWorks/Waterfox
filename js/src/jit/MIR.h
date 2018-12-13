@@ -3539,6 +3539,7 @@ class MNewIterator
     enum Type {
         ArrayIterator,
         StringIterator,
+        RegExpStringIterator,
     };
 
 private:

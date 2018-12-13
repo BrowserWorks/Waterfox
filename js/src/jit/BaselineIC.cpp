@@ -2079,6 +2079,11 @@ GetTemplateObjectForNative(JSContext* cx, HandleFunction target, const CallArgs&
         return !!res;
     }
 
+    if (native == js::intrinsic_NewRegExpStringIterator) {
+        res.set(NewRegExpStringIteratorObject(cx, TenuredObject));
+        return !!res;
+    }
+
     if (JitSupportsSimd() && GetTemplateObjectForSimd(cx, target, res))
        return !!res;
 
