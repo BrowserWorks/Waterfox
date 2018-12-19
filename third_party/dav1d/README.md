@@ -8,28 +8,36 @@ This project is partially funded by the *Alliance for Open Media*/**AOM**.
 
 ## Goal and Features
 
-The goal of this project is to provide a decoder for **most platforms**, and achieve the **highest speed** possible to overcome the lack of AV1 hardware decoder.
+The goal of this project is to provide a decoder for **most platforms**, and achieve the **highest speed** possible to overcome the temporary lack of AV1 hardware decoder.
 
-It aims to support all features from AV1, including all subsampling and bit-depth parameters.
+It supports all features from AV1, including all subsampling and bit-depth parameters.
 
 In the future, this project will host simple tools or simple wrappings *(like, for example, an MFT transform)*.
 
 ## License
 
-**dav1d** is released under a very liberal license, a contrario from the other VideoLAN projects, so that it can be embedded anywhere, including non-open-source software; or even drivers, for hybrid decoders.
+**dav1d** is released under a very liberal license, a contrario from the other VideoLAN projects, so that it can be embedded anywhere, including non-open-source software; or even drivers, to allow the creation of hybrid decoders.
 
-The reasoning behind this decision is the same as for libvorbis, [RMS on vorbis](https://lwn.net/2001/0301/a/rms-ov-license.php3).
+The reasoning behind this decision is the same as for libvorbis, see [RMS on vorbis](https://lwn.net/2001/0301/a/rms-ov-license.php3).
 
 # Roadmap
 
 The plan is the folllowing:
 
+### Reached
 1. Complete C implementation of the decoder,
 2. Provide a usable API,
 3. Port to most platforms,
-4. Make it fast, by writing asm.
+4. Make it fast on desktop, by writing asm for AVX-2 chips.
 
-By the end of 2018, we hope to have a completely usable version that will be faster than any other software open source implementation.
+### On-going
+5. Make it fast on mobile, by writing asm for ARMv8 chips,
+6. Make it fast on older desktop, by writing asm for SSE chips.
+
+### After
+7. Improve C code base with [various tweaks](wiki/task-list),
+8. Accelerate for less common architectures,
+9. Use more GPU, when possible.
 
 # Contribute
 
@@ -37,9 +45,10 @@ Currently, we are looking for help from:
 - C developers,
 - asm developers,
 - platform-specific developers,
+- GPGPU developers,
 - testers.
 
-Our contributions guidelines are strict. We want to build a coherent codebase to simplify maintenance and achieve the highest possible speed.
+Our contributions guidelines are quite strict. We want to build a coherent codebase to simplify maintenance and achieve the highest possible speed.
 
 Notably, the codebase is in pure C and asm.
 
@@ -51,7 +60,7 @@ See the [contributions document](CONTRIBUTING.md).
 
 There is no CLA.
 
-People will keep their copyright and their authorship rights.
+People will keep their copyright and their authorship rights, while adhering to the BSD 2-clause license.
 
 VideoLAN will only have the collective work rights.
 
@@ -109,6 +118,10 @@ We think that an implementation written from scratch can achieve faster decoding
 
 ## What about the AV1 patent license?
 
-This project is an implementation of a decoder. It gives you no special rights on the AV1 patents.
+- This project is an implementation of a decoder. It gives you no special rights on the AV1 patents.
 
 Please read the [AV1 patent license](doc/PATENTS) that applies to the AV1 specification and codec.
+
+## Will you care about <my_arch>? <my_os>?
+
+- We do, but we don't have either the time or the knowledge. Therefore, patches and contributions welcome.
