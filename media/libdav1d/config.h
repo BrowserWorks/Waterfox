@@ -13,7 +13,6 @@
 #define ARCH_ARM 0
 #endif
 
-
 #if defined(__i386__) || defined(_M_IX86)
 #define ARCH_X86_32 1
 #else
@@ -46,7 +45,8 @@
 // Set memory aligment
 #if defined(__ANDROID__) && (ARCH_ARM == 1 || ARCH_X86_32 == 1)
 #define HAVE_MEMALIGN 1
-#elif ARCH_X86_64 == 1 && (defined(_WIN32) || defined(__CYGWIN__)) && defined(MOZ_ASAN)
+#elif ARCH_X86_64 == 1 && (defined(_WIN32) || defined(__CYGWIN__)) && \
+    defined(MOZ_ASAN)
 #define HAVE_ALIGNED_MALLOC 1
 #else
 #define HAVE_POSIX_MEMALIGN 1
