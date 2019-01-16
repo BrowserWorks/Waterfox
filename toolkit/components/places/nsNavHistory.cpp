@@ -218,6 +218,17 @@ void GetTagsSqlFragment(int64_t aTagsFolder,
 
   _sqlFragment.AppendLiteral(" AS tags ");
 }
+#define PathQuerySql(tagsFolder)  ( NS_LITERAL_CSTRING(" \
+     with recursive folder_path(id,title) as \
+	(select m.id, m.title from moz_bookmarks m \
+	where m.parent is 0 \
+	union \
+	select m.id, p.title || '/' || m.title \
+		from moz_bookmarks as m,folder_path as p \
+		where m.parent = p.id and m.type is 2 and m.id <> ") \
+                + nsPrintfCString("%" PRId64, tagsFolder) + NS_LITERAL_CSTRING(" \
+	) \
+        ") )
 
 /**
  * This class sets begin/end of batch updates to correspond to C++ scopes so
@@ -1541,13 +1552,14 @@ PlacesSQLQueryBuilder::SelectAsURI()
                            mHasSearchTerms,
                            tagsSqlFragment);
 
-        mQueryString = NS_LITERAL_CSTRING(
+        mQueryString = PathQuerySql(history->GetTagsFolder()) +
+          NS_LITERAL_CSTRING(
           "SELECT b2.fk, h.url, b2.title AS page_title, "
             "h.rev_host, h.visit_count, h.last_visit_date, null, b2.id, "
             "b2.dateAdded, b2.lastModified, b2.parent, ") +
             tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
                 "null, null, null, "
-                "null, null " //TODO Show Parent Queries in Tag Search
+                "null, null "
                 ",b2.guid, b2.position, b2.type, b2.fk "
           "FROM moz_bookmarks b2 "
           "JOIN (SELECT b.fk "
@@ -1567,17 +1579,17 @@ PlacesSQLQueryBuilder::SelectAsURI()
                            NS_LITERAL_CSTRING("b.fk"),
                            mHasSearchTerms,
                            tagsSqlFragment);
-        mQueryString = NS_LITERAL_CSTRING(
+        mQueryString = PathQuerySql(history->GetTagsFolder()) + NS_LITERAL_CSTRING(
           "SELECT b.fk, h.url, b.title AS page_title, "
             "h.rev_host, h.visit_count, h.last_visit_date, null, b.id, "
             "b.dateAdded, b.lastModified, b.parent, ") +
             tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid,"
                 "null, null, null, "
-                "f.title, null " //TODO Parent Path Query
+                "f.title, p.title "
                 ",b.guid, b.position, b.type, b.fk "
-          "FROM moz_bookmarks f, moz_bookmarks b "
+          "FROM moz_bookmarks f, moz_bookmarks b, folder_path p "
           "JOIN moz_places h ON b.fk = h.id "
-          "WHERE f.id = b.parent AND NOT EXISTS "
+          "WHERE f.id = b.parent AND f.id = p.id AND NOT EXISTS "
               "(SELECT id FROM moz_bookmarks "
                 "WHERE id = b.parent AND parent = ") +
                   nsPrintfCString("%" PRId64, history->GetTagsFolder()) +
@@ -4148,17 +4160,17 @@ nsNavHistory::BookmarkIdToResultNode(int64_t aBookmarkId, nsNavHistoryQueryOptio
   GetTagsSqlFragment(GetTagsFolder(), NS_LITERAL_CSTRING("h.id"),
                      true, tagsFragment);
   // Should match kGetInfoIndex_*
-  nsCOMPtr<mozIStorageStatement> stmt = mDB->GetStatement(NS_LITERAL_CSTRING(
+  nsCOMPtr<mozIStorageStatement> stmt = mDB->GetStatement( PathQuerySql(GetTagsFolder()) + NS_LITERAL_CSTRING(
       "SELECT b.fk, h.url, b.title, "
              "h.rev_host, h.visit_count, h.last_visit_date, null, b.id, "
              "b.dateAdded, b.lastModified, b.parent, "
              ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
                "null, null, null, "
-               "f.title, null " //TODO Parent Path Query
+               "f.title, p.title "
                ",b.guid, b.position, b.type, b.fk "
-      "FROM moz_bookmarks f, moz_bookmarks b "
+      "FROM moz_bookmarks f, moz_bookmarks b, folder_path p "
       "JOIN moz_places h ON b.fk = h.id "
-      "WHERE b.id = :item_id AND f.id = b.parent")
+      "WHERE b.id = :item_id AND f.id = b.parent AND f.id = p.id")
   );
   NS_ENSURE_STATE(stmt);
   mozStorageStatementScoper scoper(stmt);
