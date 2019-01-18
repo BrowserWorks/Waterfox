@@ -1327,15 +1327,19 @@ int32_t nsNavHistoryContainerResultNode::SortComparison_ParentFolderLess(
   int32_t value = SortComparison_StringLess(NS_ConvertUTF8toUTF16(a->mParentFolder),
                                             NS_ConvertUTF8toUTF16(b->mParentFolder));
   if (value == 0) {
-    // resolve by URI
-    if (a->IsURI()) {
-      value = a->mURI.Compare(b->mURI.get());
-    }
-    if (value == 0) {
-      // resolve by date
-      value = ComparePRTime(a->mTime, b->mTime);
-      if (value == 0)
-        value = nsNavHistoryContainerResultNode::SortComparison_Bookmark(a, b, closure);
+    //Compare Folder IDs
+    value = CompareIntegers(a->mFolderId,b->mFolderId);
+    if (value == 0){
+      // resolve by URI
+      if (a->IsURI()) {
+        value = a->mURI.Compare(b->mURI.get());
+      }
+      if (value == 0) {
+        // resolve by date
+        value = ComparePRTime(a->mTime, b->mTime);
+        if (value == 0)
+          value = nsNavHistoryContainerResultNode::SortComparison_Bookmark(a, b, closure);
+      }
     }
   }
   return value;
@@ -1355,19 +1359,24 @@ int32_t nsNavHistoryContainerResultNode::SortComparison_ParentPathLess(
   int32_t value = SortComparison_StringLess(NS_ConvertUTF8toUTF16(a->mParentPath),
                                             NS_ConvertUTF8toUTF16(b->mParentPath));
   if (value == 0) {
-    // resolve by URI
-    if (a->IsURI()) {
-      value = a->mURI.Compare(b->mURI.get());
-    }
-    if (value == 0) {
-      // resolve by date
-      value = ComparePRTime(a->mTime, b->mTime);
-      if (value == 0)
-        value = nsNavHistoryContainerResultNode::SortComparison_Bookmark(a, b, closure);
+    //Compare Folder IDs
+    value = CompareIntegers(a->mFolderId,b->mFolderId);
+    if (value == 0){
+      // resolve by URI
+      if (a->IsURI()) {
+        value = a->mURI.Compare(b->mURI.get());
+      }
+      if (value == 0) {
+        // resolve by date
+        value = ComparePRTime(a->mTime, b->mTime);
+        if (value == 0)
+          value = nsNavHistoryContainerResultNode::SortComparison_Bookmark(a, b, closure);
+      }
     }
   }
   return value;
 }
+
 int32_t nsNavHistoryContainerResultNode::SortComparison_ParentPathGreater(
     nsNavHistoryResultNode* a, nsNavHistoryResultNode* b, void* closure)
 {
