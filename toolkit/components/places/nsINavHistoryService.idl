@@ -186,6 +186,11 @@ interface nsINavHistoryResultNode : nsISupports
    * history visit nodes, this value is 0.
    */
   readonly attribute unsigned long visitType;
+
+  readonly attribute AUTF8String parentFolder;
+
+  readonly attribute AUTF8String parentPath;
+
 };
 
 
@@ -1018,8 +1023,12 @@ interface nsINavHistoryQueryOptions : nsISupports
   const unsigned short SORT_BY_TAGS_DESCENDING = 18;
   const unsigned short SORT_BY_ANNOTATION_ASCENDING = 19;
   const unsigned short SORT_BY_ANNOTATION_DESCENDING = 20;
-  const unsigned short SORT_BY_FRECENCY_ASCENDING = 21;
-  const unsigned short SORT_BY_FRECENCY_DESCENDING = 22;
+  const unsigned short SORT_BY_PARENTFOLDER_ASCENDING = 21;
+  const unsigned short SORT_BY_PARENTFOLDER_DESCENDING = 22;
+  const unsigned short SORT_BY_PARENTPATH_ASCENDING = 23;
+  const unsigned short SORT_BY_PARENTPATH_DESCENDING = 24;
+  const unsigned short SORT_BY_FRECENCY_ASCENDING = 25;
+  const unsigned short SORT_BY_FRECENCY_DESCENDING = 26;
 
   /**
    * "URI" results, one for each URI visited in the range. Individual result

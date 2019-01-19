@@ -108,6 +108,8 @@ nsNavHistoryResultNode::nsNavHistoryResultNode(
   mTransitionType(0)
 {
   mTags.SetIsVoid(true);
+  mParentFolder.SetIsVoid(true);
+  mParentPath.SetIsVoid(true);
 }
 
 
@@ -258,6 +260,16 @@ nsNavHistoryResultNode::GetVisitType(uint32_t* aVisitType) {
   *aVisitType = mTransitionType;
   return NS_OK;
 }
+
+NS_IMETHODIMP
+nsNavHistoryResultNode::GetParentFolder(nsACString& aParentFolder){
+  aParentFolder = mParentFolder;
+  return NS_OK; }
+
+NS_IMETHODIMP
+nsNavHistoryResultNode::GetParentPath(nsACString& aParentPath){
+  aParentPath = mParentPath;
+  return NS_OK; }
 
 
 void
@@ -779,6 +791,14 @@ nsNavHistoryContainerResultNode::GetSortingComparator(uint16_t aSortType)
       return &SortComparison_TagsLess;
     case nsINavHistoryQueryOptions::SORT_BY_TAGS_DESCENDING:
       return &SortComparison_TagsGreater;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTFOLDER_ASCENDING:
+      return &SortComparison_ParentFolderLess;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTFOLDER_DESCENDING:
+      return &SortComparison_ParentFolderGreater;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTPATH_ASCENDING:
+      return &SortComparison_ParentPathLess;
+    case nsINavHistoryQueryOptions::SORT_BY_PARENTPATH_DESCENDING:
+      return &SortComparison_ParentPathGreater;
     case nsINavHistoryQueryOptions::SORT_BY_FRECENCY_ASCENDING:
       return &SortComparison_FrecencyLess;
     case nsINavHistoryQueryOptions::SORT_BY_FRECENCY_DESCENDING:
@@ -1296,6 +1316,71 @@ nsNavHistoryContainerResultNode::SortComparison_FrecencyGreater(
 )
 {
   return -nsNavHistoryContainerResultNode::SortComparison_FrecencyLess(a, b, closure);
+}
+
+int32_t nsNavHistoryContainerResultNode::SortComparison_ParentFolderLess(
+    nsNavHistoryResultNode* a, nsNavHistoryResultNode* b, void* closure)
+{
+  uint32_t aType;
+  a->GetType(&aType);
+
+  int32_t value = SortComparison_StringLess(NS_ConvertUTF8toUTF16(a->mParentFolder),
+                                            NS_ConvertUTF8toUTF16(b->mParentFolder));
+  if (value == 0) {
+    //Compare Folder IDs
+    value = CompareIntegers(a->mFolderId,b->mFolderId);
+    if (value == 0){
+      // resolve by URI
+      if (a->IsURI()) {
+        value = a->mURI.Compare(b->mURI.get());
+      }
+      if (value == 0) {
+        // resolve by date
+        value = ComparePRTime(a->mTime, b->mTime);
+        if (value == 0)
+          value = nsNavHistoryContainerResultNode::SortComparison_Bookmark(a, b, closure);
+      }
+    }
+  }
+  return value;
+}
+int32_t nsNavHistoryContainerResultNode::SortComparison_ParentFolderGreater(
+    nsNavHistoryResultNode* a, nsNavHistoryResultNode* b, void* closure)
+{
+  return -SortComparison_ParentFolderLess(a, b, closure);
+}
+
+int32_t nsNavHistoryContainerResultNode::SortComparison_ParentPathLess(
+    nsNavHistoryResultNode* a, nsNavHistoryResultNode* b, void* closure)
+{
+  uint32_t aType;
+  a->GetType(&aType);
+
+  int32_t value = SortComparison_StringLess(NS_ConvertUTF8toUTF16(a->mParentPath),
+                                            NS_ConvertUTF8toUTF16(b->mParentPath));
+  if (value == 0) {
+    //Compare Folder IDs
+    value = CompareIntegers(a->mFolderId,b->mFolderId);
+    if (value == 0){
+      // resolve by URI
+      if (a->IsURI()) {
+        value = a->mURI.Compare(b->mURI.get());
+      }
+      if (value == 0) {
+        // resolve by date
+        value = ComparePRTime(a->mTime, b->mTime);
+        if (value == 0)
+          value = nsNavHistoryContainerResultNode::SortComparison_Bookmark(a, b, closure);
+      }
+    }
+  }
+  return value;
+}
+
+int32_t nsNavHistoryContainerResultNode::SortComparison_ParentPathGreater(
+    nsNavHistoryResultNode* a, nsNavHistoryResultNode* b, void* closure)
+{
+  return -SortComparison_ParentPathLess(a, b, closure);
 }
 
 /**

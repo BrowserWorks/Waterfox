@@ -22,11 +22,11 @@
 using namespace mozilla;
 
 // These columns sit to the right of the kGetInfoIndex_* columns.
-const int32_t nsNavBookmarks::kGetChildrenIndex_Guid = 18;
-const int32_t nsNavBookmarks::kGetChildrenIndex_Position = 19;
-const int32_t nsNavBookmarks::kGetChildrenIndex_Type = 20;
-const int32_t nsNavBookmarks::kGetChildrenIndex_PlaceID = 21;
-const int32_t nsNavBookmarks::kGetChildrenIndex_SyncStatus = 22;
+const int32_t nsNavBookmarks::kGetChildrenIndex_Guid = 20;
+const int32_t nsNavBookmarks::kGetChildrenIndex_Position = 21;
+const int32_t nsNavBookmarks::kGetChildrenIndex_Type = 22;
+const int32_t nsNavBookmarks::kGetChildrenIndex_PlaceID = 23;
+const int32_t nsNavBookmarks::kGetChildrenIndex_SyncStatus = 24;
 
 using namespace mozilla::places;
 
@@ -1126,6 +1126,7 @@ nsNavBookmarks::GetDescendantChildren(int64_t aFolderId,
       "SELECT h.id, h.url, b.title, h.rev_host, h.visit_count, "
              "h.last_visit_date, null, b.id, b.dateAdded, b.lastModified, "
              "b.parent, null, h.frecency, h.hidden, h.guid, null, null, null, "
+             "null, null, "
              "b.guid, b.position, b.type, b.fk, b.syncStatus "
       "FROM moz_bookmarks b "
       "LEFT JOIN moz_places h ON b.fk = h.id "
@@ -2172,6 +2173,7 @@ nsNavBookmarks::QueryFolderChildren(
     "SELECT h.id, h.url, b.title, h.rev_host, h.visit_count, "
            "h.last_visit_date, null, b.id, b.dateAdded, b.lastModified, "
            "b.parent, null, h.frecency, h.hidden, h.guid, null, null, null, "
+           "null, null, "
            "b.guid, b.position, b.type, b.fk "
     "FROM moz_bookmarks b "
     "LEFT JOIN moz_places h ON b.fk = h.id "

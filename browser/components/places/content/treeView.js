@@ -582,6 +582,8 @@ PlacesTreeView.prototype = {
   COLUMN_TYPE_DATEADDED: 6,
   COLUMN_TYPE_LASTMODIFIED: 7,
   COLUMN_TYPE_TAGS: 8,
+  COLUMN_TYPE_PARENTFOLDER: 9,
+  COLUMN_TYPE_PARENTPATH: 10,
 
   _getColumnType: function PTV__getColumnType(aColumn) {
     let columnType = aColumn.element.getAttribute("anonid") || aColumn.id;
@@ -603,6 +605,10 @@ PlacesTreeView.prototype = {
         return this.COLUMN_TYPE_LASTMODIFIED;
       case "tags":
         return this.COLUMN_TYPE_TAGS;
+      case "parentFolder":
+        return this.COLUMN_TYPE_PARENTFOLDER;
+      case "parentPath":
+        return this.COLUMN_TYPE_PARENTPATH;
     }
     return this.COLUMN_TYPE_UNKNOWN;
   },
@@ -1555,6 +1561,10 @@ PlacesTreeView.prototype = {
         if (node.lastModified)
           return this._convertPRTimeToString(node.lastModified);
         return "";
+      case this.COLUMN_TYPE_PARENTFOLDER:
+        return node.parentFolder
+      case this.COLUMN_TYPE_PARENTPATH:
+        return node.parentPath
     }
     return "";
   },
@@ -1717,6 +1727,26 @@ PlacesTreeView.prototype = {
           newSort = NHQO.SORT_BY_TAGS_ASCENDING;
 
         break;
+      case this.COLUMN_TYPE_PARENTFOLDER:
+        if (oldSort == NHQO.SORT_BY_PARENTFOLDER_ASCENDING)
+          newSort = NHQO.SORT_BY_PARENTFOLDER_DESCENDING;
+        else if (allowTriState && oldSort == NHQO.SORT_BY_PARENTFOLDER_DESCENDING)
+          newSort = NHQO.SORT_BY_NONE;
+        else
+          newSort = NHQO.SORT_BY_PARENTFOLDER_ASCENDING;
+
+        break;
+      case this.COLUMN_TYPE_PARENTPATH:
+        if (oldSort == NHQO.SORT_BY_PARENTPATH_ASCENDING)
+          newSort = NHQO.SORT_BY_PARENTPATH_DESCENDING;
+        else if (allowTriState && oldSort == NHQO.SORT_BY_PARENTPATH_DESCENDING)
+          newSort = NHQO.SORT_BY_NONE;
+        else
+          newSort = NHQO.SORT_BY_PARENTPATH_ASCENDING;
+
+        break;
+
+
       default:
         throw Cr.NS_ERROR_INVALID_ARG;
     }
