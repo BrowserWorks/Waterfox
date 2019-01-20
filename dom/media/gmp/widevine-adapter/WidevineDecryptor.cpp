@@ -10,6 +10,7 @@
 #include "WidevineFileIO.h"
 #include <stdarg.h>
 #include "base/time.h"
+#include "GMPLog.h"
 
 using namespace cdm;
 using namespace std;
@@ -33,13 +34,13 @@ WidevineDecryptor::GetInstance(uint32_t aInstanceId)
 WidevineDecryptor::WidevineDecryptor()
   : mCallback(nullptr)
 {
-  CDM_LOG("WidevineDecryptor created this=%p, instanceId=%u", this, mInstanceId);
+  GMP_LOG("WidevineDecryptor created this=%p, instanceId=%u", this, mInstanceId);
   AddRef(); // Released in DecryptingComplete().
 }
 
 WidevineDecryptor::~WidevineDecryptor()
 {
-  CDM_LOG("WidevineDecryptor destroyed this=%p, instanceId=%u", this, mInstanceId);
+  GMP_LOG("WidevineDecryptor destroyed this=%p, instanceId=%u", this, mInstanceId);
 }
 
 void
@@ -55,7 +56,7 @@ WidevineDecryptor::Init(GMPDecryptorCallback* aCallback,
                         bool aDistinctiveIdentifierRequired,
                         bool aPersistentStateRequired)
 {
-  CDM_LOG("WidevineDecryptor::Init() this=%p distinctiveId=%d persistentState=%d",
+  GMP_LOG("WidevineDecryptor::Init() this=%p distinctiveId=%d persistentState=%d",
           this, aDistinctiveIdentifierRequired, aPersistentStateRequired);
   MOZ_ASSERT(aCallback);
   mCallback = aCallback;
@@ -90,7 +91,7 @@ WidevineDecryptor::CreateSession(uint32_t aCreateSessionToken,
                                  uint32_t aInitDataSize,
                                  GMPSessionType aSessionType)
 {
-  CDM_LOG("Decryptor::CreateSession(token=%d, pid=%d)", aCreateSessionToken, aPromiseId);
+  GMP_LOG("Decryptor::CreateSession(token=%d, pid=%d)", aCreateSessionToken, aPromiseId);
   InitDataType initDataType;
   if (!strcmp(aInitDataType, "cenc")) {
     initDataType = kCenc;
@@ -116,7 +117,7 @@ WidevineDecryptor::LoadSession(uint32_t aPromiseId,
                                const char* aSessionId,
                                uint32_t aSessionIdLength)
 {
-  CDM_LOG("Decryptor::LoadSession(pid=%d, %s)", aPromiseId, aSessionId);
+  GMP_LOG("Decryptor::LoadSession(pid=%d, %s)", aPromiseId, aSessionId);
   // TODO: session type??
   CDM()->LoadSession(aPromiseId, kPersistentLicense, aSessionId, aSessionIdLength);
 }
@@ -128,7 +129,7 @@ WidevineDecryptor::UpdateSession(uint32_t aPromiseId,
                                  const uint8_t* aResponse,
                                  uint32_t aResponseSize)
 {
-  CDM_LOG("Decryptor::UpdateSession(pid=%d, session=%s)", aPromiseId, aSessionId);
+  GMP_LOG("Decryptor::UpdateSession(pid=%d, session=%s)", aPromiseId, aSessionId);
   CDM()->UpdateSession(aPromiseId, aSessionId, aSessionIdLength, aResponse, aResponseSize);
 }
 
@@ -137,7 +138,7 @@ WidevineDecryptor::CloseSession(uint32_t aPromiseId,
                                 const char* aSessionId,
                                 uint32_t aSessionIdLength)
 {
-  CDM_LOG("Decryptor::CloseSession(pid=%d, session=%s)", aPromiseId, aSessionId);
+  GMP_LOG("Decryptor::CloseSession(pid=%d, session=%s)", aPromiseId, aSessionId);
   CDM()->CloseSession(aPromiseId, aSessionId, aSessionIdLength);
 }
 
@@ -146,7 +147,7 @@ WidevineDecryptor::RemoveSession(uint32_t aPromiseId,
                                  const char* aSessionId,
                                  uint32_t aSessionIdLength)
 {
-  CDM_LOG("Decryptor::RemoveSession(%s)", aSessionId);
+  GMP_LOG("Decryptor::RemoveSession(%s)", aSessionId);
   CDM()->RemoveSession(aPromiseId, aSessionId, aSessionIdLength);
 }
 
@@ -155,7 +156,7 @@ WidevineDecryptor::SetServerCertificate(uint32_t aPromiseId,
                                         const uint8_t* aServerCert,
                                         uint32_t aServerCertSize)
 {
-  CDM_LOG("Decryptor::SetServerCertificate()");
+  GMP_LOG("Decryptor::SetServerCertificate()");
   CDM()->SetServerCertificate(aPromiseId, aServerCert, aServerCertSize);
 }
 
@@ -164,7 +165,7 @@ WidevineDecryptor::Decrypt(GMPBuffer* aBuffer,
                            GMPEncryptedBufferMetadata* aMetadata)
 {
   if (!mCallback) {
-    CDM_LOG("WidevineDecryptor::Decrypt() this=%p FAIL; !mCallback", this);
+    GMP_LOG("WidevineDecryptor::Decrypt() this=%p FAIL; !mCallback", this);
     return;
   }
   const GMPEncryptedBufferMetadata* crypto = aMetadata;
@@ -173,7 +174,7 @@ WidevineDecryptor::Decrypt(GMPBuffer* aBuffer,
   InitInputBuffer(crypto, aBuffer->Id(), aBuffer->Data(), aBuffer->Size(), sample, subsamples);
   WidevineDecryptedBlock decrypted;
   Status rv = CDM()->Decrypt(sample, &decrypted);
-  CDM_LOG("Decryptor::Decrypt(timestamp=%" PRId64 ") rv=%d sz=%d",
+  GMP_LOG("Decryptor::Decrypt(timestamp=%" PRId64 ") rv=%d sz=%d",
           sample.timestamp, rv, decrypted.DecryptedBuffer()->Size());
   if (rv == kSuccess) {
     aBuffer->Resize(decrypted.DecryptedBuffer()->Size());
@@ -187,7 +188,7 @@ WidevineDecryptor::Decrypt(GMPBuffer* aBuffer,
 void
 WidevineDecryptor::DecryptingComplete()
 {
-  CDM_LOG("WidevineDecryptor::DecryptingComplete() this=%p, instanceId=%u",
+  GMP_LOG("WidevineDecryptor::DecryptingComplete() this=%p, instanceId=%u",
           this, mInstanceId);
   // Drop our references to the CDMWrapper. When any other references
   // held elsewhere are dropped (for example references held by a
@@ -202,7 +203,7 @@ WidevineDecryptor::DecryptingComplete()
 Buffer*
 WidevineDecryptor::Allocate(uint32_t aCapacity)
 {
-  CDM_LOG("Decryptor::Allocate(capacity=%u)", aCapacity);
+  GMP_LOG("Decryptor::Allocate(capacity=%u)", aCapacity);
   return new WidevineBuffer(aCapacity);
 }
 
@@ -230,7 +231,7 @@ private:
 void
 WidevineDecryptor::SetTimer(int64_t aDelayMs, void* aContext)
 {
-  CDM_LOG("Decryptor::SetTimer(delay_ms=%" PRId64 ", context=0x%p)", aDelayMs, aContext);
+  GMP_LOG("Decryptor::SetTimer(delay_ms=%" PRId64 ", context=0x%p)", aDelayMs, aContext);
   if (mCDM) {
     GMPSetTimerOnMainThread(new TimerTask(this, mCDM, aContext), aDelayMs);
   }
@@ -248,7 +249,7 @@ WidevineDecryptor::OnResolveNewSessionPromise(uint32_t aPromiseId,
                                               uint32_t aSessionIdSize)
 {
   if (!mCallback) {
-    CDM_LOG("Decryptor::OnResolveNewSessionPromise(aPromiseId=0x%d) FAIL; !mCallback", aPromiseId);
+    GMP_LOG("Decryptor::OnResolveNewSessionPromise(aPromiseId=0x%d) FAIL; !mCallback", aPromiseId);
     return;
   }
 
@@ -257,15 +258,15 @@ WidevineDecryptor::OnResolveNewSessionPromise(uint32_t aPromiseId,
   // We can safely assume this means that we have failed to load a session
   // as the other methods specify calling 'OnRejectPromise' when they fail.
   if (!aSessionId) {
-    CDM_LOG("Decryptor::OnResolveNewSessionPromise(aPromiseId=0x%d) Failed to load session", aPromiseId);
+    GMP_LOG("Decryptor::OnResolveNewSessionPromise(aPromiseId=0x%d) Failed to load session", aPromiseId);
     mCallback->ResolveLoadSessionPromise(aPromiseId, false);
     return;
   }
 
-  CDM_LOG("Decryptor::OnResolveNewSessionPromise(aPromiseId=0x%d)", aPromiseId);
+  GMP_LOG("Decryptor::OnResolveNewSessionPromise(aPromiseId=0x%d)", aPromiseId);
   auto iter = mPromiseIdToNewSessionTokens.find(aPromiseId);
   if (iter == mPromiseIdToNewSessionTokens.end()) {
-    CDM_LOG("FAIL: Decryptor::OnResolveNewSessionPromise(aPromiseId=%d) unknown aPromiseId", aPromiseId);
+    GMP_LOG("FAIL: Decryptor::OnResolveNewSessionPromise(aPromiseId=%d) unknown aPromiseId", aPromiseId);
     return;
   }
   mCallback->SetSessionId(iter->second, aSessionId, aSessionIdSize);
@@ -277,10 +278,10 @@ void
 WidevineDecryptor::OnResolvePromise(uint32_t aPromiseId)
 {
   if (!mCallback) {
-    CDM_LOG("Decryptor::OnResolvePromise(aPromiseId=0x%d) FAIL; !mCallback", aPromiseId);
+    GMP_LOG("Decryptor::OnResolvePromise(aPromiseId=0x%d) FAIL; !mCallback", aPromiseId);
     return;
   }
-  CDM_LOG("Decryptor::OnResolvePromise(aPromiseId=%d)", aPromiseId);
+  GMP_LOG("Decryptor::OnResolvePromise(aPromiseId=%d)", aPromiseId);
   mCallback->ResolvePromise(aPromiseId);
 }
 
@@ -312,11 +313,11 @@ WidevineDecryptor::OnRejectPromise(uint32_t aPromiseId,
                                    uint32_t aErrorMessageSize)
 {
   if (!mCallback) {
-    CDM_LOG("Decryptor::OnRejectPromise(aPromiseId=%d, err=%d, sysCode=%u, msg=%s) FAIL; !mCallback",
+    GMP_LOG("Decryptor::OnRejectPromise(aPromiseId=%d, err=%d, sysCode=%u, msg=%s) FAIL; !mCallback",
             aPromiseId, (int)aError, aSystemCode, aErrorMessage);
     return;
   }
-  CDM_LOG("Decryptor::OnRejectPromise(aPromiseId=%d, err=%d, sysCode=%u, msg=%s)",
+  GMP_LOG("Decryptor::OnRejectPromise(aPromiseId=%d, err=%d, sysCode=%u, msg=%s)",
           aPromiseId, (int)aError, aSystemCode, aErrorMessage);
   mCallback->RejectPromise(aPromiseId,
                            ToGMPDOMException(aError),
@@ -345,10 +346,10 @@ WidevineDecryptor::OnSessionMessage(const char* aSessionId,
                                     uint32_t aLegacyDestinationUrlLength)
 {
   if (!mCallback) {
-    CDM_LOG("Decryptor::OnSessionMessage() FAIL; !mCallback");
+    GMP_LOG("Decryptor::OnSessionMessage() FAIL; !mCallback");
     return;
   }
-  CDM_LOG("Decryptor::OnSessionMessage()");
+  GMP_LOG("Decryptor::OnSessionMessage()");
   mCallback->SessionMessage(aSessionId,
                             aSessionIdSize,
                             ToGMPMessageType(aMessageType),
@@ -379,10 +380,10 @@ WidevineDecryptor::OnSessionKeysChange(const char* aSessionId,
                                        uint32_t aKeysInfoCount)
 {
   if (!mCallback) {
-    CDM_LOG("Decryptor::OnSessionKeysChange() FAIL; !mCallback");
+    GMP_LOG("Decryptor::OnSessionKeysChange() FAIL; !mCallback");
     return;
   }
-  CDM_LOG("Decryptor::OnSessionKeysChange()");
+  GMP_LOG("Decryptor::OnSessionKeysChange()");
 
   nsTArray<GMPMediaKeyInfo> key_infos;
   for (uint32_t i = 0; i < aKeysInfoCount; i++) {
@@ -406,11 +407,11 @@ WidevineDecryptor::OnExpirationChange(const char* aSessionId,
                                       Time aNewExpiryTime)
 {
   if (!mCallback) {
-    CDM_LOG("Decryptor::OnExpirationChange(sid=%s) t=%lf FAIL; !mCallback",
+    GMP_LOG("Decryptor::OnExpirationChange(sid=%s) t=%lf FAIL; !mCallback",
             aSessionId, aNewExpiryTime);
     return;
   }
-  CDM_LOG("Decryptor::OnExpirationChange(sid=%s) t=%lf", aSessionId, aNewExpiryTime);
+  GMP_LOG("Decryptor::OnExpirationChange(sid=%s) t=%lf", aSessionId, aNewExpiryTime);
   mCallback->ExpirationChange(aSessionId, aSessionIdSize, ToGMPTime(aNewExpiryTime));
 }
 
@@ -419,10 +420,10 @@ WidevineDecryptor::OnSessionClosed(const char* aSessionId,
                                    uint32_t aSessionIdSize)
 {
   if (!mCallback) {
-    CDM_LOG("Decryptor::OnSessionClosed(sid=%s) FAIL; !mCallback", aSessionId);
+    GMP_LOG("Decryptor::OnSessionClosed(sid=%s) FAIL; !mCallback", aSessionId);
     return;
   }
-  CDM_LOG("Decryptor::OnSessionClosed(sid=%s)", aSessionId);
+  GMP_LOG("Decryptor::OnSessionClosed(sid=%s)", aSessionId);
   mCallback->SessionClosed(aSessionId, aSessionIdSize);
 }
 
@@ -435,11 +436,11 @@ WidevineDecryptor::OnLegacySessionError(const char* aSessionId,
                                         uint32_t aErrorMessageLength)
 {
   if (!mCallback) {
-    CDM_LOG("Decryptor::OnLegacySessionError(sid=%s, error=%d) FAIL; !mCallback",
+    GMP_LOG("Decryptor::OnLegacySessionError(sid=%s, error=%d) FAIL; !mCallback",
             aSessionId, (int)aError);
     return;
   }
-  CDM_LOG("Decryptor::OnLegacySessionError(sid=%s, error=%d)", aSessionId, (int)aError);
+  GMP_LOG("Decryptor::OnLegacySessionError(sid=%s, error=%d)", aSessionId, (int)aError);
   mCallback->SessionError(aSessionId,
                           aSessionIdLength,
                           ToGMPDOMException(aError),
@@ -454,32 +455,32 @@ WidevineDecryptor::SendPlatformChallenge(const char* aServiceId,
                                          const char* aChallenge,
                                          uint32_t aChallengeSize)
 {
-  CDM_LOG("Decryptor::SendPlatformChallenge(service_id=%s)", aServiceId);
+  GMP_LOG("Decryptor::SendPlatformChallenge(service_id=%s)", aServiceId);
 }
 
 void
 WidevineDecryptor::EnableOutputProtection(uint32_t aDesiredProtectionMask)
 {
-  CDM_LOG("Decryptor::EnableOutputProtection(mask=0x%x)", aDesiredProtectionMask);
+  GMP_LOG("Decryptor::EnableOutputProtection(mask=0x%x)", aDesiredProtectionMask);
 }
 
 void
 WidevineDecryptor::QueryOutputProtectionStatus()
 {
-  CDM_LOG("Decryptor::QueryOutputProtectionStatus()");
+  GMP_LOG("Decryptor::QueryOutputProtectionStatus()");
 }
 
 void
 WidevineDecryptor::OnDeferredInitializationDone(StreamType aStreamType,
                                                 Status aDecoderStatus)
 {
-  CDM_LOG("Decryptor::OnDeferredInitializationDone()");
+  GMP_LOG("Decryptor::OnDeferredInitializationDone()");
 }
 
 FileIO*
 WidevineDecryptor::CreateFileIO(FileIOClient* aClient)
 {
-  CDM_LOG("Decryptor::CreateFileIO()");
+  GMP_LOG("Decryptor::CreateFileIO()");
   if (!mPersistentStateRequired) {
     return nullptr;
   }

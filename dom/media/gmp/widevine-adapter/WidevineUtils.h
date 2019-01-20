@@ -13,6 +13,7 @@
 #include "nsISupportsImpl.h"
 #include "nsTArray.h"
 #include "mozilla/Logging.h"
+#include "GMPLog.h"
 
 namespace mozilla {
 

@@ -9,6 +9,7 @@
 #include "WidevineVideoFrame.h"
 #include "mozilla/Move.h"
 #include <inttypes.h>
+#include "GMPLog.h"
 
 using namespace cdm;
 
@@ -26,7 +27,7 @@ WidevineVideoDecoder::WidevineVideoDecoder(GMPVideoHost* aVideoHost,
 {
   // Expect to start with a CDM wrapper, will release it in DecodingComplete().
   MOZ_ASSERT(mCDMWrapper);
-  CDM_LOG("WidevineVideoDecoder created this=%p", this);
+  GMP_LOG("WidevineVideoDecoder created this=%p", this);
 
   // Corresponding Release is in DecodingComplete().
   AddRef();
@@ -34,7 +35,7 @@ WidevineVideoDecoder::WidevineVideoDecoder(GMPVideoHost* aVideoHost,
 
 WidevineVideoDecoder::~WidevineVideoDecoder()
 {
-  CDM_LOG("WidevineVideoDecoder destroyed this=%p", this);
+  GMP_LOG("WidevineVideoDecoder destroyed this=%p", this);
 }
 
 static
@@ -91,7 +92,7 @@ WidevineVideoDecoder::InitDecode(const GMPVideoCodec& aCodecSettings,
     mCallback->Error(ToGMPErr(rv));
     return;
   }
-  CDM_LOG("WidevineVideoDecoder::InitDecode() rv=%d", rv);
+  GMP_LOG("WidevineVideoDecoder::InitDecode() rv=%d", rv);
 }
 
 void
@@ -120,7 +121,7 @@ WidevineVideoDecoder::Decode(GMPVideoEncodedFrame* aInputFrame,
 
   WidevineVideoFrame frame;
   Status rv = CDM()->DecryptAndDecodeFrame(sample, &frame);
-  CDM_LOG("WidevineVideoDecoder::Decode(timestamp=%" PRId64 ") rv=%d",
+  GMP_LOG("WidevineVideoDecoder::Decode(timestamp=%" PRId64 ") rv=%d",
           sample.timestamp, rv);
 
   // Destroy frame, so that the shmem is now free to be used to return
@@ -130,7 +131,7 @@ WidevineVideoDecoder::Decode(GMPVideoEncodedFrame* aInputFrame,
 
   if (rv == kSuccess || rv == kNoKey) {
     if (rv == kNoKey) {
-      CDM_LOG("NoKey for sample at time=%" PRId64 "!", sample.timestamp);
+      GMP_LOG("NoKey for sample at time=%" PRId64 "!", sample.timestamp);
       // Somehow our key became unusable. Typically this would happen when
       // a stream requires output protection, and the configuration changed
       // such that output protection is no longer available. For example, a
@@ -145,7 +146,7 @@ WidevineVideoDecoder::Decode(GMPVideoEncodedFrame* aInputFrame,
       }
     }
     if (!ReturnOutput(frame)) {
-      CDM_LOG("WidevineVideoDecoder::Decode() Failed in ReturnOutput()");
+      GMP_LOG("WidevineVideoDecoder::Decode() Failed in ReturnOutput()");
       mCallback->Error(GMPDecodeErr);
       return;
     }
@@ -244,7 +245,7 @@ WidevineVideoDecoder::ReturnOutput(WidevineVideoFrame& aCDMFrame)
     GMPVideoFrame* f = nullptr;
     auto err = mVideoHost->CreateFrame(kGMPI420VideoFrame, &f);
     if (GMP_FAILED(err) || !f) {
-      CDM_LOG("Failed to create i420 frame!\n");
+      GMP_LOG("Failed to create i420 frame!\n");
       return false;
     }
     auto gmpFrame = static_cast<GMPVideoi420Frame*>(f);
@@ -325,7 +326,7 @@ WidevineVideoDecoder::ReturnOutput(WidevineVideoFrame& aCDMFrame)
 void
 WidevineVideoDecoder::Reset()
 {
-  CDM_LOG("WidevineVideoDecoder::Reset() mSentInput=%d", mSentInput);
+  GMP_LOG("WidevineVideoDecoder::Reset() mSentInput=%d", mSentInput);
   // We shouldn't reset if a drain is pending.
   MOZ_ASSERT(!mDrainPending);
   mResetInProgress = true;
@@ -354,9 +355,9 @@ WidevineVideoDecoder::CompleteReset()
 void
 WidevineVideoDecoder::Drain()
 {
-  CDM_LOG("WidevineVideoDecoder::Drain()");
+  GMP_LOG("WidevineVideoDecoder::Drain()");
   if (mReturnOutputCallDepth > 0) {
-    CDM_LOG("Drain call is reentrant, postponing drain");
+    GMP_LOG("Drain call is reentrant, postponing drain");
     mDrainPending = true;
     return;
   }
@@ -366,13 +367,13 @@ WidevineVideoDecoder::Drain()
     WidevineVideoFrame frame;
     InputBuffer sample;
     Status rv = CDM()->DecryptAndDecodeFrame(sample, &frame);
-    CDM_LOG("WidevineVideoDecoder::Drain();  DecryptAndDecodeFrame() rv=%d", rv);
+    GMP_LOG("WidevineVideoDecoder::Drain();  DecryptAndDecodeFrame() rv=%d", rv);
     if (frame.Format() == kUnknownVideoFormat) {
       break;
     }
     if (rv == kSuccess) {
       if (!ReturnOutput(frame)) {
-        CDM_LOG("WidevineVideoDecoder::Decode() Failed in ReturnOutput()");
+        GMP_LOG("WidevineVideoDecoder::Decode() Failed in ReturnOutput()");
       }
     }
   }
@@ -387,14 +388,14 @@ WidevineVideoDecoder::Drain()
 void
 WidevineVideoDecoder::DecodingComplete()
 {
-  CDM_LOG("WidevineVideoDecoder::DecodingComplete()");
+  GMP_LOG("WidevineVideoDecoder::DecodingComplete()");
 
   if (mCDMWrapper) {
     // mCallback will be null if the decoder has not been fully initialized.
     if (mCallback) {
       CDM()->DeinitializeDecoder(kStreamTypeVideo);
     } else {
-      CDM_LOG("WideVineDecoder::DecodingComplete() Decoder was not fully initialized!");
+      GMP_LOG("WideVineDecoder::DecodingComplete() Decoder was not fully initialized!");
     }
 
     mCDMWrapper = nullptr;
