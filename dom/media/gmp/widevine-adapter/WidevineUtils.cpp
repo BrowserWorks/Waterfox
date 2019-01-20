@@ -65,7 +65,7 @@ CDMWrapper::CDMWrapper(cdm::ContentDecryptionModule_8* aCDM,
 
 CDMWrapper::~CDMWrapper()
 {
-  CDM_LOG("CDMWrapper destroying CDM=%p", mCDM);
+  GMP_LOG("CDMWrapper destroying CDM=%p", mCDM);
   mCDM->Destroy();
   mCDM = nullptr;
 }
