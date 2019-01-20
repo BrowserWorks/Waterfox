@@ -5561,13 +5561,13 @@ pref("media.gmp-manager.updateEnabled", true);
 //pref("media.gmp-manager.url.override", "");
 
 // Update service URL for GMP install/updates:
-pref("media.gmp-manager.url", "https://aus5.mozilla.org/update/3/GMP/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
+pref("media.gmp-manager.url", "https://www.waterfoxproject.org/update/GMP/%VERSION%/%CHANNEL%/%OS_VERSION%/update.xml");
 
 // When |media.gmp-manager.cert.requireBuiltIn| is true or not specified the
 // final certificate and all certificates the connection is redirected to before
 // the final certificate for the url specified in the |media.gmp-manager.url|
 // preference must be built-in.
-pref("media.gmp-manager.cert.requireBuiltIn", true);
+pref("media.gmp-manager.cert.requireBuiltIn", false);
 
 // The |media.gmp-manager.certs.| preference branch contains branches that are
 // sequentially numbered starting at 1 that contain attribute name / value
@@ -5585,7 +5585,7 @@ pref("media.gmp-manager.cert.requireBuiltIn", true);
 // the |media.gmp-manager.url.override| preference should ONLY be used for testing.
 // IMPORTANT! app.update.certs.* prefs should also be updated if these
 // are updated.
-pref("media.gmp-manager.cert.checkAttributes", true);
+pref("media.gmp-manager.cert.checkAttributes", false);
 pref("media.gmp-manager.certs.1.issuerName", "CN=DigiCert SHA2 Secure Server CA,O=DigiCert Inc,C=US");
 pref("media.gmp-manager.certs.1.commonName", "aus5.mozilla.org");
 pref("media.gmp-manager.certs.2.issuerName", "CN=thawte SSL CA - G2,O=\"thawte, Inc.\",C=US");
