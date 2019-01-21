@@ -144,6 +144,10 @@ nsWebPDecoder::UpdateBuffer(SourceBufferIterator& aIterator,
 
   switch (aState) {
     case SourceBufferIterator::READY:
+      if(!aIterator.IsContiguous()) {
+        //We need to buffer. This should be rare, but expensive.
+        break;
+      }
       if (!mData) {
         // For as long as we hold onto an iterator, we know the data pointers
         // to the chunks cannot change underneath us, so save the pointer to
