@@ -436,17 +436,14 @@ nsHttpHandler::Init()
 
     nsHttpChannelAuthProvider::InitializePrefs();
 
-    mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION "; Waterfox");
-    // mMisc.AssignLiteral("rv: 57.0");
+    mMisc.AssignLiteral("rv:65.0");
 
-    mCompatFirefox.AssignLiteral("Firefox/" MOZ_APP_UA_VERSION);
-    // mCompatFirefox.AssignLiteral("Firefox/57.0");
+    mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
 
     nsCOMPtr<nsIXULAppInfo> appInfo =
         do_GetService("@mozilla.org/xre/app-info;1");
 
-    // mAppName.AssignLiteral(MOZ_APP_UA_NAME);
-    mAppName.AssignLiteral("Firefox");
+    mAppName.AssignLiteral(MOZ_APP_UA_NAME);
     if (mAppName.Length() == 0 && appInfo) {
         // Try to get the UA name from appInfo, falling back to the name
         appInfo->GetUAName(mAppName);
@@ -906,18 +903,14 @@ nsHttpHandler::BuildUserAgent()
     mUserAgent += '/';
     mUserAgent += mProductSub;
 
-    bool isFirefox = mAppName.EqualsLiteral("Firefox");
-    if (isFirefox || mCompatFirefoxEnabled) {
-        // "Firefox/x.y" (compatibility) app token
-        mUserAgent += ' ';
+    // App portion
+    mUserAgent += ' ';
+    mUserAgent += "Firefox";
+    mUserAgent += '/';
+    mUserAgent += "65.0";
+    mUserAgent += ' ';
+    if (mCompatFirefoxEnabled) {
         mUserAgent += mCompatFirefox;
-    }
-    if (!isFirefox) {
-        // App portion
-        mUserAgent += ' ';
-        mUserAgent += mAppName;
-        mUserAgent += '/';
-        mUserAgent += mAppVersion;
     }
 }
 
