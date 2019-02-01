@@ -6,7 +6,7 @@
 	<ShortName>Bing</ShortName>
 	<Description>Bing. Search by Microsoft.</Description>
 	<InputEncoding>UTF-8</InputEncoding>
-	<Image height="16" width="16">resource://search-plugins/images/bing.svg</Image>
+	<Image height="16" width="16"> data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADkAAAA5BAMAAAB+Np62AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAeUExURQyEhP///3m8vGu1tZrMzC2Vlb/f393u7kmjo/P5+V6tUwoAAADHSURBVDjL7dKtC8JAGAbwF9nBLT4qG2saFtY0rbogLF6Q9VOE1aHBuGZW/IMNbgvu7kkGBZ/647j3S+SLY6hmJdMlzoYp4pQpZn/9mBqqeco0xN74NQCilVc1gOTgrbkBgEfr0TUAICndGuKVtyPrNOgUG5dqqmKpastUlGUqqmF6ZW8r9u+O1Ty5EdVNh3E7VtXPIlmMtzAt+jluHTsachSiFyF6F6JzQzRynWzVN+o6WJHc2eiQzNXoEFUAtXij7ElItPxInvPdLeEZ4vELAAAAAElFTkSuQmCC</Image>
 	<Url type="application/x-suggestions+json" template="https://www.bing.com/osjson.aspx">
 		<Param name="query" value="{searchTerms}"/>
 		<Param name="language" value="{moz:locale}"/>

@@ -6,7 +6,7 @@
 <ShortName>Yahoo</ShortName>
 <Description>Yahoo Search</Description>
 <InputEncoding>UTF-8</InputEncoding>
-<Image height="16" width="16">resource://search-plugins/images/yahoo.svg</Image>
+<Image height="16" width="16">resource://search-plugins/images/yahoo.ico</Image>
 <Url type="application/x-suggestions+json" method="GET"
      template="https://search.yahoo.com/sugg/ff">
   <Param name="output"  value="fxjson" />
