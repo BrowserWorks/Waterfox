@@ -108,6 +108,7 @@
     locale/browser/searchplugins/               (.deps/generated_@AB_CD@/*.xml)
     locale/browser/searchplugins/list.json      (.deps/generated_@AB_CD@/list.json)
 #endif
+    locale/browser/searchplugins/images/google.ico     (searchplugins/images/google.ico)
     locale/browser/searchplugins/images/wikipedia.ico  (searchplugins/images/wikipedia.ico)
     locale/browser/searchplugins/images/yahoo.ico      (searchplugins/images/yahoo.ico)
 % locale browser-region @AB_CD@ %locale/browser-region/
