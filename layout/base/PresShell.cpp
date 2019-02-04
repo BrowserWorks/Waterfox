@@ -7260,11 +7260,11 @@ PresShell::HandleEvent(nsIFrame* aFrame,
     return NS_OK;
   }
 
-  nsIContent* capturingContent = ((aEvent->mClass == ePointerEventClass ||
-                                   aEvent->mClass == eWheelEventClass ||
-                                   aEvent->HasMouseEventMessage())
-                                 ? GetCapturingContent()
-                                 : nullptr);
+  nsCOMPtr<nsIContent> capturingContent =
+      ((aEvent->mClass == ePointerEventClass ||
+        aEvent->mClass == eWheelEventClass || aEvent->HasMouseEventMessage())
+           ? GetCapturingContent()
+           : nullptr);
 
   nsCOMPtr<nsIDocument> retargetEventDoc;
   if (!aDontRetargetEvents) {
