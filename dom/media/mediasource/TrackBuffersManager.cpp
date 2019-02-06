@@ -396,6 +396,7 @@ TrackBuffersManager::CompleteResetParserState()
   }
 
   // 7. Remove all bytes from the input buffer.
+  mPendingInputBuffer = nullptr;
   mInputBuffer = nullptr;
   if (mCurrentInputBuffer) {
     mCurrentInputBuffer->EvictAll();
