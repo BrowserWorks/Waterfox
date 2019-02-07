@@ -536,7 +536,7 @@ public:
 
         @param extraPtCount  number of additional SkPoint to allocate
     */
-    void incReserve(unsigned extraPtCount);
+    void incReserve(int extraPtCount);
 
     /** Adds beginning of contour at SkPoint (x, y).
 
