@@ -5,7 +5,7 @@
 
 const ID = "bug397778@tests.mozilla.org";
 
-const ADDON = {
+const ADDON = createInstallRDF({
   id: "bug397778@tests.mozilla.org",
   version: "1.0",
   name: "Fallback Name",
@@ -58,7 +58,7 @@ const ADDON = {
       description: "en-CA Description",
     },
   ],
-};
+});
 
 add_task(async function setup() {
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1");

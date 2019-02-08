@@ -6,8 +6,8 @@
 
 var EXPORTED_SYMBOLS = ["BootstrapLoader"];
 
-ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {AddonManager} = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   AddonInternal: "resource://gre/modules/addons/XPIDatabase.jsm",
@@ -18,11 +18,11 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 });
 
 XPCOMUtils.defineLazyGetter(this, "BOOTSTRAP_REASONS", () => {
-  const {XPIProvider} = ChromeUtils.import("resource://gre/modules/addons/XPIProvider.jsm", {});
+  const {XPIProvider} = ChromeUtils.import("resource://gre/modules/addons/XPIProvider.jsm");
   return XPIProvider.BOOTSTRAP_REASONS;
 });
 
-ChromeUtils.import("resource://gre/modules/Log.jsm");
+const {Log} = ChromeUtils.import("resource://gre/modules/Log.jsm");
 var logger = Log.repository.getLogger("addons.bootstrap");
 
 /**
@@ -294,7 +294,8 @@ var BootstrapLoader = {
     return addon;
   },
 
-  loadScope(addon, file) {
+  loadScope(addon) {
+    let file = addon.file || addon._sourceBundle;
     let uri = getURIForResourceInFile(file, "bootstrap.js").spec;
     let principal = Services.scriptSecurityManager.getSystemPrincipal();
 

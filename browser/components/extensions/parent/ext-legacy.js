@@ -1,14 +1,10 @@
-/* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set sts=2 sw=2 et tw=80: */
-/* global tabTracker */
-"use strict";
-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+"use strict";
 
 ChromeUtils.defineModuleGetter(this, "ChromeManifest", "resource:///modules/ChromeManifest.jsm");
-ChromeUtils.defineModuleGetter(this, "ExtensionSupport", "resource:///modules/extensionSupport.jsm");
+ChromeUtils.defineModuleGetter(this, "ExtensionSupport", "resource:///modules/ExtensionSupport.jsm");
 ChromeUtils.defineModuleGetter(this, "Overlays", "resource:///modules/Overlays.jsm");
 ChromeUtils.defineModuleGetter(this, "XPIInternal", "resource://gre/modules/addons/XPIProvider.jsm");
 
@@ -119,9 +115,9 @@ this.legacy = class extends ExtensionAPI {
       let instance;
       try {
         if (service) {
-          instance = Components.classes[contractid.substr(8)].getService(Ci.nsIObserver);
+          instance = Cc[contractid.substr(8)].getService(Ci.nsIObserver);
         } else {
-          instance = Components.classes[contractid].createInstance(Ci.nsIObserver);
+          instance = Cc[contractid].createInstance(Ci.nsIObserver);
         }
 
         instance.observe(null, "profile-after-change", null);

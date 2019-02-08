@@ -9,8 +9,8 @@ var gToolboxChanged = false;
 var gToolboxSheet = false;
 var gPaletteBox = null;
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 function onLoad() {
   if ("arguments" in window && window.arguments[0]) {
@@ -460,7 +460,6 @@ function addNewToolbar() {
   doneButton.disabled = true;
 
   while (true) {
-
     if (!promptService.prompt(window, title, message, name, null, {})) {
       doneButton.disabled = false;
       return;

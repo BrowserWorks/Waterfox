@@ -15,7 +15,7 @@ const ID1 = "bootstrap1@tests.mozilla.org";
 const ID2 = "bootstrap2@tests.mozilla.org";
 
 // This verifies that bootstrappable add-ons can be used without restarts.
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 // Enable loading extensions from the user scopes
 Services.prefs.setIntPref("extensions.enabledScopes",
@@ -34,7 +34,7 @@ registerDirectory("XREUSysExt", userExtDir.parent);
 
 const ADDONS = {
   test_bootstrap1_1: {
-    "install.rdf": {
+    "install.rdf": createInstallRDF({
       id: "bootstrap1@tests.mozilla.org",
 
       name: "Test Bootstrap 1",
@@ -42,20 +42,20 @@ const ADDONS = {
       iconURL: "chrome://foo/skin/icon.png",
       aboutURL: "chrome://foo/content/about.xul",
       optionsURL: "chrome://foo/content/options.xul",
-    },
+    }),
     "bootstrap.js": BOOTSTRAP_MONITOR_BOOTSTRAP_JS,
   },
   test_bootstrap1_2: {
-    "install.rdf": {
+    "install.rdf": createInstallRDF({
       id: "bootstrap1@tests.mozilla.org",
       version: "2.0",
 
       name: "Test Bootstrap 1",
-    },
+    }),
     "bootstrap.js": BOOTSTRAP_MONITOR_BOOTSTRAP_JS,
   },
   test_bootstrap1_3: {
-    "install.rdf": {
+    "install.rdf": createInstallRDF({
       id: "bootstrap1@tests.mozilla.org",
       version: "3.0",
 
@@ -65,13 +65,13 @@ const ADDONS = {
         id: "undefined",
         minVersion: "1",
         maxVersion: "1"}],
-    },
+    }),
     "bootstrap.js": BOOTSTRAP_MONITOR_BOOTSTRAP_JS,
   },
   test_bootstrap2_1: {
-    "install.rdf": {
+    "install.rdf": createInstallRDF({
       id: "bootstrap2@tests.mozilla.org",
-    },
+    }),
     "bootstrap.js": BOOTSTRAP_MONITOR_BOOTSTRAP_JS,
   },
 };
@@ -126,7 +126,7 @@ function getUninstallNewVersion() {
 }
 
 async function checkBootstrappedPref() {
-  let XPIScope = ChromeUtils.import("resource://gre/modules/addons/XPIProvider.jsm", {});
+  let XPIScope = ChromeUtils.import("resource://gre/modules/addons/XPIProvider.jsm", null);
 
   let data = new Map();
   for (let entry of XPIScope.XPIStates.enabledAddons()) {
@@ -1072,7 +1072,7 @@ add_task(async function test_23() {
   ]);
 
   let url = "http://example.com/addons/test_bootstrap1_1.xpi";
-  let install = await AddonManager.getInstallForURL(url, "application/x-xpinstall");
+  let install = await AddonManager.getInstallForURL(url, {});
 
   ensure_test_completed();
 

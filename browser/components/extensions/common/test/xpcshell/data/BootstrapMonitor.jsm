@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var EXPORTED_SYMBOLS = [ "monitor" ];
 
@@ -10,7 +10,6 @@ function notify(event, originalMethod, data, reason) {
   let info = {
     event,
     data: Object.assign({}, data, {
-      installPath: data.installPath.path,
       resourceURI: data.resourceURI.spec,
     }),
     reason,

@@ -6,15 +6,12 @@
 
 /* globals internalSave, goDoCommand */
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/ViewSourceBrowser.jsm");
+var {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var {ViewSourceBrowser} = ChromeUtils.import("resource://gre/modules/ViewSourceBrowser.jsm");
 
-ChromeUtils.defineModuleGetter(this, "Services",
-  "resource://gre/modules/Services.jsm");
-ChromeUtils.defineModuleGetter(this, "CharsetMenu",
-  "resource://gre/modules/CharsetMenu.jsm");
-ChromeUtils.defineModuleGetter(this, "Deprecated",
-  "resource://gre/modules/Deprecated.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {CharsetMenu} = ChromeUtils.import("resource://gre/modules/CharsetMenu.jsm");
+var {Deprecated} = ChromeUtils.import("resource://gre/modules/Deprecated.jsm");
 
 /* global gBrowser, gViewSourceBundle, gContextMenu */
 [

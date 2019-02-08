@@ -3,9 +3,9 @@
  */
 
 const ADDON = {
-  "install.rdf": {
+  "install.rdf": createInstallRDF({
     "id": "bug675371@tests.mozilla.org",
-  },
+  }),
   "chrome.manifest": `content bug675371 .`,
   "test.js": `var active = true;`,
 };

@@ -1,4 +1,4 @@
-ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
+var {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
 function updateDocumentSourceMaps(src) {
   const nsISAXXMLReader = Ci.nsISAXXMLReader;

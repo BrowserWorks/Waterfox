@@ -4,14 +4,13 @@
 
 this.EXPORTED_SYMBOLS = ["ChromeManifest"];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 /**
  * A parser for chrome.manifest files. Implements a subset of
  * https://developer.mozilla.org/en-US/docs/Mozilla/Chrome_Registration
  */
 class ChromeManifest {
-
   /**
    * Constucts the chrome.manifest parser
    *
@@ -38,7 +37,6 @@ class ChromeManifest {
     this.skin = new Map();
     this.resource = new Map();
     this.override = new Map();
-
   }
 
 
@@ -310,7 +308,6 @@ class DefaultMap extends Map {
   constructor(_default, iterable) {
     super(iterable);
     this._default = _default;
-
   }
 
   /**

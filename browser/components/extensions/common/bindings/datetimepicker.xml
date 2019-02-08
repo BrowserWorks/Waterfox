@@ -149,7 +149,6 @@
       </method>
 
       <constructor>
-        ChromeUtils.import("resource://gre/modules/Services.jsm");
         this._init();
 
         var cval = this.getAttribute("value");
@@ -484,13 +483,20 @@
       <method name="_init">
         <body>
           <![CDATA[
+            const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
             this.hourField = this._fieldOne;
             this.minuteField = this._fieldTwo;
             this.secondField = this._fieldThree;
 
             var numberOrder = /^(\D*)\s*(\d+)(\D*)(\d+)(\D*)(\d+)\s*(\D*)$/;
 
-            var locale = Services.locale.regionalPrefsLocales[0] + "-u-ca-gregory-nu-latn";
+            // XXX TODO: The following hack should be fixed once Intl.Locale arrives in bug 1433303.
+            var locale = Services.locale.regionalPrefsLocales[0];
+            if (locale.includes("-u-"))
+              locale += "-ca-gregory-nu-latn";
+            else
+              locale += "-u-ca-gregory-nu-latn";
             var dtf = new Services.intl.DateTimeFormat(locale, { timeStyle: "long" });
 
             var pmTime = dtf.format(new Date(2000, 0, 1, 16, 7, 9));
@@ -768,6 +774,8 @@
       <method name="_init">
         <body>
           <![CDATA[
+            const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
             // We'll default to YYYY/MM/DD to start.
             var yfield = "input-one";
             var mfield = "input-two";
@@ -779,7 +787,12 @@
 
             var numberOrder = /^(\D*)\s*(\d+)(\D*)(\d+)(\D*)(\d+)\s*(\D*)$/;
 
-            var locale = Services.locale.regionalPrefsLocales[0] + "-u-ca-gregory-nu-latn";
+            // XXX TODO: The following hack should be fixed once Intl.Locale arrives in bug 1433303.
+            var locale = Services.locale.regionalPrefsLocales[0];
+            if (locale.includes("-u-"))
+              locale += "-ca-gregory-nu-latn";
+            else
+              locale += "-u-ca-gregory-nu-latn";
             var dtf = new Services.intl.DateTimeFormat(locale, { dateStyle: "short" });
 
             var dt = dtf.format(new Date(2002, 9, 4));
@@ -1010,7 +1023,14 @@
       <method name="_init">
         <body>
           <![CDATA[
-            var locale = Services.locale.regionalPrefsLocales[0] + "-u-ca-gregory";
+            const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
+            // XXX TODO: The following hack should be fixed once Intl.Locale arrives in bug 1433303.
+            var locale = Services.locale.regionalPrefsLocales[0];
+            if (locale.includes("-u-"))
+              locale += "-ca-gregory";
+            else
+              locale += "-u-ca-gregory";
             var dtfMonth = new Services.intl.DateTimeFormat(locale, {month: "long", timeZone: "UTC"});
             var dtfWeekday = new Services.intl.DateTimeFormat(locale, {weekday: "narrow"});
 

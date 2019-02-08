@@ -8,8 +8,9 @@ EXTRA_JS_MODULES += [
     'ChromeManifest.jsm',
     'ExtensionSupport.jsm',
     'IOUtils.js',
-    'iteratorUtils.jsm',
+    'iteratorUtils.jsm'
     'Overlays.jsm',
+    'RDFDataSource.jsm',
     'RDFManifestConverter.jsm',
 ]
 
@@ -19,7 +20,7 @@ SOURCES += [
 ]
 
 LOCAL_INCLUDES += [
-    '/netwerk/base'
+    '/%s/netwerk/base' % CONFIG['mozreltopsrcdir']
 ]
 
 FINAL_LIBRARY = 'xul'

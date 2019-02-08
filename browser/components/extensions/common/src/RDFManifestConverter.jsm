@@ -6,7 +6,7 @@
 var EXPORTED_SYMBOLS = ["InstallRDF"];
 
 ChromeUtils.defineModuleGetter(this, "RDFDataSource",
-                               "resource://gre/modules/addons/RDFDataSource.jsm");
+                               "resource:///modules/RDFDataSource.jsm");
 
 const RDFURI_INSTALL_MANIFEST_ROOT = "urn:mozilla:install-manifest";
 

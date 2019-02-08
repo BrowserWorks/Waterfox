@@ -7,6 +7,7 @@ const XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {ExtensionSupport} = ChromeUtils.import("resource:///modules/ExtensionSupport.jsm");
 
 ChromeUtils.defineModuleGetter(this, "ActorManagerParent",
                                "resource://gre/modules/ActorManagerParent.jsm");

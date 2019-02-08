@@ -10,7 +10,7 @@
 
 this.EXPORTED_SYMBOLS = ["Overlays"];
 
-const { ConsoleAPI } = ChromeUtils.import("resource://gre/modules/Console.jsm", null);
+const { ConsoleAPI } = ChromeUtils.import("resource://gre/modules/Console.jsm");
 ChromeUtils.defineModuleGetter(this, "Services", "resource://gre/modules/Services.jsm");
 ChromeUtils.defineModuleGetter(this, "setTimeout", "resource://gre/modules/Timer.jsm");
 
@@ -481,9 +481,10 @@ class Overlays {
     } else if (node.textContent) {
       oconsole.debug(`Loading eval'd script into ${this.window.location}`);
       try {
+        let dataURL = "data:application/javascript," + encodeURIComponent(node.textContent);
         // It would be great if we could have script errors show the right url, but for now
-        // window.eval will have to do.
-        this.window.eval(node.textContent);
+        // loadSubScript will have to do.
+        Services.scriptloader.loadSubScript(dataURL, this.window);
       } catch (ex) {
         Cu.reportError(ex);
       }

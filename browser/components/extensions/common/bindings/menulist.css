@@ -6,9 +6,18 @@
 
 @namespace html url("http://www.w3.org/1999/xhtml"); /* namespace for HTML elements */
 
-menulist[editable="true"] {
+xbl-menulist {
+  -moz-binding: url("chrome://browser/content/menulist.xml#xbl-menulist");
+}
+
+menulist[editable="true"],
+xbl-menulist[editable="true"] {
   -moz-binding: url("chrome://browser/content/menulist.xml#menulist-editable");
   -moz-user-focus: ignore;
+}
+
+xbl-menulist .menulist-dropmarker {
+  display: -moz-box;
 }
 
 html|*.menulist-editable-input {
