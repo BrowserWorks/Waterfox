@@ -1,7 +1,7 @@
 const {ASRouterTargeting, QueryCache} =
-  ChromeUtils.import("resource://activity-stream/lib/ASRouterTargeting.jsm", {});
+  ChromeUtils.import("resource://activity-stream/lib/ASRouterTargeting.jsm");
 const {AddonTestUtils} =
-  ChromeUtils.import("resource://testing-common/AddonTestUtils.jsm", {});
+  ChromeUtils.import("resource://testing-common/AddonTestUtils.jsm");
 ChromeUtils.defineModuleGetter(this, "ProfileAge",
   "resource://gre/modules/ProfileAge.jsm");
 ChromeUtils.defineModuleGetter(this, "AddonManager",
@@ -188,7 +188,7 @@ add_task(async function check_needsUpdate() {
 
 add_task(async function checksearchEngines() {
   const result = await ASRouterTargeting.Environment.searchEngines;
-  const expectedInstalled = Services.search.getVisibleEngines()
+  const expectedInstalled = (await Services.search.getVisibleEngines())
     .map(engine => engine.identifier)
     .sort()
     .join(",");
@@ -198,14 +198,14 @@ add_task(async function checksearchEngines() {
     "searchEngines.installed should be an array of visible search engines");
   ok(result.current && typeof result.current === "string",
     "searchEngines.current should be a truthy string");
-  is(result.current, Services.search.defaultEngine.identifier,
+  is(result.current, (await Services.search.getDefault()).identifier,
     "searchEngines.current should be the current engine name");
 
-  const message = {id: "foo", targeting: `searchEngines[.current == ${Services.search.defaultEngine.identifier}]`};
+  const message = {id: "foo", targeting: `searchEngines[.current == ${(await Services.search.getDefault()).identifier}]`};
   is(await ASRouterTargeting.findMatchingMessage({messages: [message]}), message,
     "should select correct item by searchEngines.current");
 
-  const message2 = {id: "foo", targeting: `searchEngines[${Services.search.getVisibleEngines()[0].identifier} in .installed]`};
+  const message2 = {id: "foo", targeting: `searchEngines[${(await Services.search.getVisibleEngines())[0].identifier} in .installed]`};
   is(await ASRouterTargeting.findMatchingMessage({messages: [message2]}), message2,
     "should select correct item by searchEngines.installed");
 });

@@ -4,13 +4,13 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const {
   EnvironmentPrefs,
   MarionettePrefs,
-} = ChromeUtils.import("chrome://marionette/content/prefs.js", {});
+} = ChromeUtils.import("chrome://marionette/content/prefs.js", null);
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   Log: "chrome://marionette/content/log.js",
@@ -333,6 +333,7 @@ class MarionetteParentProcess {
         Services.obs.addObserver(this, "sessionstore-windows-restored");
         Services.obs.addObserver(this, "mail-startup-done");
         Services.obs.addObserver(this, "toplevel-window-ready");
+        Services.obs.addObserver(this, "marionette-startup-requested");
 
         for (let [pref, value] of EnvironmentPrefs.from(ENV_PRESERVE_PREFS)) {
           Preferences.set(pref, value);
@@ -363,8 +364,7 @@ class MarionetteParentProcess {
           Services.obs.removeObserver(this, topic);
 
           Services.obs.addObserver(this, "xpcom-will-shutdown");
-          this.finalUIStartup = true;
-          this.init();
+          Services.obs.notifyObservers(this, "marionette-startup-requested");
         }
         break;
 
@@ -388,8 +388,7 @@ class MarionetteParentProcess {
 
       // Thunderbird only, instead of sessionstore-windows-restored.
       case "mail-startup-done":
-        this.finalUIStartup = true;
-        this.init();
+        Services.obs.notifyObservers(this, "marionette-startup-requested");
         break;
 
       case "sessionstore-windows-restored":
@@ -411,10 +410,14 @@ class MarionetteParentProcess {
           Services.obs.addObserver(this, "domwindowclosed");
         } else {
           Services.obs.addObserver(this, "xpcom-will-shutdown");
-          this.finalUIStartup = true;
-          this.init();
+          Services.obs.notifyObservers(this, "marionette-startup-requested");
         }
 
+        break;
+
+      case "marionette-startup-requested":
+        this.finalUIStartup = true;
+        this.init();
         break;
 
       case "xpcom-will-shutdown":

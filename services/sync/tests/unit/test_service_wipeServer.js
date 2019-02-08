@@ -1,10 +1,6 @@
-ChromeUtils.import("resource://services-sync/util.js");
-ChromeUtils.import("resource://services-sync/record.js");
-ChromeUtils.import("resource://services-sync/resource.js");
-ChromeUtils.import("resource://testing-common/services/sync/fakeservices.js");
 
 Svc.Prefs.set("registerEngines", "");
-ChromeUtils.import("resource://services-sync/service.js");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
 
 // configure the identity we use for this test.
 const identityConfig = makeIdentityConfig({username: "johndoe"});
@@ -63,7 +59,6 @@ add_task(async function test_wipeServer_list_success() {
     _("wipeServer stopped deleting after encountering an error with the 'petrol' collection, thus only 'steam' has been deleted.");
     Assert.ok(steam_coll.deleted);
     Assert.ok(diesel_coll.deleted);
-
   } finally {
     await promiseStopServer(server);
     Svc.Prefs.resetBranch("");
@@ -104,7 +99,6 @@ add_task(async function test_wipeServer_list_503() {
     _("wipeServer stopped deleting after encountering an error with the 'petrol' collection, thus only 'steam' has been deleted.");
     Assert.ok(steam_coll.deleted);
     Assert.ok(!diesel_coll.deleted);
-
   } finally {
     await promiseStopServer(server);
     Svc.Prefs.resetBranch("");

@@ -391,6 +391,10 @@ bool TypeSet::mightBeMIRType(jit::MIRType type) const {
       return baseFlags() & TYPE_FLAG_STRING;
     case jit::MIRType::Symbol:
       return baseFlags() & TYPE_FLAG_SYMBOL;
+#ifdef ENABLE_BIGINT
+    case jit::MIRType::BigInt:
+      return baseFlags() & TYPE_FLAG_BIGINT;
+#endif
     case jit::MIRType::MagicOptimizedArguments:
       return baseFlags() & TYPE_FLAG_LAZYARGS;
     case jit::MIRType::MagicHole:
@@ -1191,9 +1195,10 @@ CompilerConstraintList* js::NewCompilerConstraintList(
     TemporaryTypeSet** pBytecodeTypes) {
   LifoAlloc* alloc = constraints->alloc();
   AutoSweepTypeScript sweep(script);
-  StackTypeSet* existing = script->types(sweep)->typeArray();
+  TypeScript* typeScript = script->types();
+  StackTypeSet* existing = typeScript->typeArray(sweep);
 
-  size_t count = NumTypeSets(script);
+  size_t count = typeScript->numTypeSets();
   TemporaryTypeSet* types =
       alloc->newArrayUninitialized<TemporaryTypeSet>(count);
   if (!types) {
@@ -1501,8 +1506,7 @@ bool js::FinishCompilation(JSContext* cx, HandleScript script,
   for (size_t i = 0; i < constraints->numFrozenScripts(); i++) {
     const CompilerConstraintList::FrozenScript& entry =
         constraints->frozenScript(i);
-    AutoSweepTypeScript sweep(entry.script);
-    TypeScript* types = entry.script->types(sweep);
+    TypeScript* types = entry.script->types();
     if (!types) {
       succeeded = false;
       break;
@@ -1516,6 +1520,7 @@ bool js::FinishCompilation(JSContext* cx, HandleScript script,
       break;
     }
 
+    AutoSweepTypeScript sweep(entry.script);
     if (!CheckFrozenTypeSet(sweep, cx, entry.thisTypes,
                             TypeScript::ThisTypes(entry.script))) {
       succeeded = false;
@@ -1529,9 +1534,9 @@ bool js::FinishCompilation(JSContext* cx, HandleScript script,
         succeeded = false;
       }
     }
-    for (size_t i = 0; i < entry.script->nTypeSets(); i++) {
+    for (size_t i = 0; i < entry.script->numBytecodeTypeSets(); i++) {
       if (!CheckFrozenTypeSet(sweep, cx, &entry.bytecodeTypes[i],
-                              &types->typeArray()[i])) {
+                              &types->typeArray(sweep)[i])) {
         succeeded = false;
       }
     }
@@ -1539,20 +1544,19 @@ bool js::FinishCompilation(JSContext* cx, HandleScript script,
     // Add this compilation to the inlinedCompilations list of each inlined
     // script, so we can invalidate it on changes to stack type sets.
     if (entry.script != script) {
-      if (!types->addInlinedCompilation(recompileInfo)) {
+      if (!types->addInlinedCompilation(sweep, recompileInfo)) {
         succeeded = false;
       }
     }
 
     // If necessary, add constraints to trigger invalidation on the script
     // after any future changes to the stack type sets.
-    if (entry.script->hasFreezeConstraints()) {
+    if (types->hasFreezeConstraints(sweep)) {
       continue;
     }
 
-    size_t count = TypeScript::NumTypeSets(entry.script);
-
-    StackTypeSet* array = types->typeArray();
+    size_t count = types->numTypeSets();
+    StackTypeSet* array = types->typeArray(sweep);
     for (size_t i = 0; i < count; i++) {
       if (!array[i].addConstraint(
               cx,
@@ -1563,7 +1567,7 @@ bool js::FinishCompilation(JSContext* cx, HandleScript script,
     }
 
     if (succeeded) {
-      entry.script->setHasFreezeConstraints();
+      types->setHasFreezeConstraints(sweep);
     }
   }
 
@@ -1607,8 +1611,7 @@ void js::FinishDefinitePropertiesAnalysis(JSContext* cx,
     const CompilerConstraintList::FrozenScript& entry =
         constraints->frozenScript(i);
     JSScript* script = entry.script;
-    AutoSweepTypeScript sweep(script);
-    MOZ_ASSERT(script->types(sweep));
+    MOZ_ASSERT(script->types());
 
     MOZ_ASSERT(TypeScript::ThisTypes(script)->isSubset(entry.thisTypes));
 
@@ -1619,8 +1622,9 @@ void js::FinishDefinitePropertiesAnalysis(JSContext* cx,
       MOZ_ASSERT(TypeScript::ArgTypes(script, j)->isSubset(&entry.argTypes[j]));
     }
 
-    for (size_t j = 0; j < script->nTypeSets(); j++) {
-      MOZ_ASSERT(script->types(sweep)->typeArray()[j].isSubset(
+    AutoSweepTypeScript sweep(script);
+    for (size_t j = 0; j < script->numBytecodeTypeSets(); j++) {
+      MOZ_ASSERT(script->types()->typeArray(sweep)[j].isSubset(
           &entry.bytecodeTypes[j]));
     }
   }
@@ -1630,12 +1634,12 @@ void js::FinishDefinitePropertiesAnalysis(JSContext* cx,
     const CompilerConstraintList::FrozenScript& entry =
         constraints->frozenScript(i);
     JSScript* script = entry.script;
-    AutoSweepTypeScript sweep(script);
-    TypeScript* types = script->types(sweep);
+    TypeScript* types = script->types();
     if (!types) {
       MOZ_CRASH();
     }
 
+    AutoSweepTypeScript sweep(script);
     CheckDefinitePropertiesTypeSet(sweep, cx, entry.thisTypes,
                                    TypeScript::ThisTypes(script));
 
@@ -1647,9 +1651,9 @@ void js::FinishDefinitePropertiesAnalysis(JSContext* cx,
                                      TypeScript::ArgTypes(script, j));
     }
 
-    for (size_t j = 0; j < script->nTypeSets(); j++) {
+    for (size_t j = 0; j < script->numBytecodeTypeSets(); j++) {
       CheckDefinitePropertiesTypeSet(sweep, cx, &entry.bytecodeTypes[j],
-                                     &types->typeArray()[j]);
+                                     &types->typeArray(sweep)[j]);
     }
   }
 }
@@ -1709,6 +1713,10 @@ static inline jit::MIRType GetMIRTypeFromTypeFlags(TypeFlags flags) {
       return jit::MIRType::String;
     case TYPE_FLAG_SYMBOL:
       return jit::MIRType::Symbol;
+#ifdef ENABLE_BIGINT
+    case TYPE_FLAG_BIGINT:
+      return jit::MIRType::BigInt;
+#endif
     case TYPE_FLAG_LAZYARGS:
       return jit::MIRType::MagicOptimizedArguments;
     case TYPE_FLAG_ANYOBJECT:
@@ -2722,12 +2730,12 @@ void TypeZone::addPendingRecompile(JSContext* cx, JSScript* script) {
   }
 
   // Trigger recompilation of any callers inlining this script.
-  AutoSweepTypeScript sweep(script);
-  if (TypeScript* types = script->types(sweep)) {
-    for (const RecompileInfo& info : types->inlinedCompilations()) {
+  if (TypeScript* types = script->types()) {
+    AutoSweepTypeScript sweep(script);
+    for (const RecompileInfo& info : types->inlinedCompilations(sweep)) {
       addPendingRecompile(cx, info);
     }
-    types->inlinedCompilations().clearAndFree();
+    types->inlinedCompilations(sweep).clearAndFree();
   }
 }
 
@@ -2759,9 +2767,8 @@ void js::PrintTypes(JSContext* cx, Compartment* comp, bool force) {
   RootedScript script(cx);
   for (auto iter = zone->cellIter<JSScript>(); !iter.done(); iter.next()) {
     script = iter;
-    AutoSweepTypeScript sweep(script);
-    if (script->types(sweep)) {
-      script->types(sweep)->printTypes(cx, script);
+    if (TypeScript* types = script->types()) {
+      types->printTypes(cx, script);
     }
   }
 
@@ -3436,8 +3443,9 @@ bool js::AddClearDefiniteFunctionUsesInScript(JSContext* cx, ObjectGroup* group,
       TypeSet::ObjectType(calleeScript->functionNonDelazifying()).objectKey();
 
   AutoSweepTypeScript sweep(script);
-  unsigned count = TypeScript::NumTypeSets(script);
-  StackTypeSet* typeArray = script->types(sweep)->typeArray();
+  TypeScript* typeScript = script->types();
+  unsigned count = typeScript->numTypeSets();
+  StackTypeSet* typeArray = typeScript->typeArray(sweep);
 
   for (unsigned i = 0; i < count; i++) {
     StackTypeSet* types = &typeArray[i];
@@ -3500,19 +3508,19 @@ void js::TypeMonitorCallSlow(JSContext* cx, JSObject* callee,
   }
 }
 
-void js::FillBytecodeTypeMap(JSScript* script, uint32_t* bytecodeMap) {
+static void FillBytecodeTypeMap(JSScript* script, uint32_t* bytecodeMap) {
   uint32_t added = 0;
   for (jsbytecode* pc = script->code(); pc < script->codeEnd();
        pc += GetBytecodeLength(pc)) {
     JSOp op = JSOp(*pc);
     if (CodeSpec[op].format & JOF_TYPESET) {
       bytecodeMap[added++] = script->pcToOffset(pc);
-      if (added == script->nTypeSets()) {
+      if (added == script->numBytecodeTypeSets()) {
         break;
       }
     }
   }
-  MOZ_ASSERT(added == script->nTypeSets());
+  MOZ_ASSERT(added == script->numBytecodeTypeSets());
 }
 
 void js::TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc,
@@ -3567,6 +3575,35 @@ void js::TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc,
 // TypeScript
 /////////////////////////////////////////////////////////////////////
 
+static size_t NumTypeSets(JSScript* script) {
+  size_t num = script->numBytecodeTypeSets() + 1 /* this */;
+  if (JSFunction* fun = script->functionNonDelazifying()) {
+    num += fun->nargs();
+  }
+
+  // We rely on |num| being in a safe range to prevent overflow when allocating
+  // TypeScript.
+  static_assert(JSScript::MaxBytecodeTypeSets == UINT16_MAX,
+                "JSScript typesets should have safe range to avoid overflow");
+  static_assert(JSFunction::NArgsBits == 16,
+                "JSFunction nargs should have safe range to avoid overflow");
+
+  return num;
+}
+
+TypeScript::TypeScript(JSScript* script, ICScriptPtr&& icScript,
+                       uint32_t numTypeSets)
+    : icScript_(std::move(icScript)), numTypeSets_(numTypeSets) {
+  setTypesGeneration(script->zone()->types.generation);
+
+  StackTypeSet* array = typeArrayDontCheckGeneration();
+  for (unsigned i = 0; i < numTypeSets; i++) {
+    new (&array[i]) StackTypeSet();
+  }
+
+  FillBytecodeTypeMap(script, bytecodeTypeMap());
+}
+
 bool JSScript::makeTypes(JSContext* cx) {
   MOZ_ASSERT(!types_);
   cx->check(this);
@@ -3582,33 +3619,31 @@ bool JSScript::makeTypes(JSContext* cx) {
   auto prepareForDestruction = mozilla::MakeScopeExit(
       [&] { icScript->prepareForDestruction(cx->zone()); });
 
-  unsigned count = TypeScript::NumTypeSets(this);
+  size_t numTypeSets = NumTypeSets(this);
+  size_t bytecodeTypeMapEntries = numBytecodeTypeSets();
 
-  size_t size = TypeScript::SizeIncludingTypeArray(count);
+  // Calculate allocation size. This cannot overflow, see comment in
+  // NumTypeSets.
+  static_assert(sizeof(TypeScript) ==
+                    sizeof(StackTypeSet) + offsetof(TypeScript, typeArray_),
+                "typeArray_ must be last member of TypeScript");
+  size_t allocSize =
+      (offsetof(TypeScript, typeArray_) + numTypeSets * sizeof(StackTypeSet) +
+       bytecodeTypeMapEntries * sizeof(uint32_t));
+
   auto typeScript =
-      reinterpret_cast<TypeScript*>(cx->pod_calloc<uint8_t>(size));
+      reinterpret_cast<TypeScript*>(cx->pod_malloc<uint8_t>(allocSize));
   if (!typeScript) {
     return false;
   }
 
   prepareForDestruction.release();
-  typeScript->icScript_ = std::move(icScript);
 
-#ifdef JS_CRASH_DIAGNOSTICS
-  {
-    StackTypeSet* typeArray = typeScript->typeArray();
-    for (unsigned i = 0; i < count; i++) {
-      typeArray[i].initMagic();
-    }
-  }
-#endif
-
-  types_ = typeScript;
-  setTypesGeneration(cx->zone()->types.generation);
+  types_ = new (typeScript) TypeScript(this, std::move(icScript), numTypeSets);
 
 #ifdef DEBUG
-  StackTypeSet* typeArray = typeScript->typeArray();
-  for (unsigned i = 0; i < nTypeSets(); i++) {
+  StackTypeSet* typeArray = typeScript->typeArrayDontCheckGeneration();
+  for (unsigned i = 0; i < numBytecodeTypeSets(); i++) {
     InferSpew(ISpewOps, "typeSet: %sT%p%s bytecode%u %p",
               InferSpewColor(&typeArray[i]), &typeArray[i],
               InferSpewColorReset(), i, this);
@@ -4663,22 +4698,23 @@ void ObjectGroup::sweep(const AutoSweepObjectGroup& sweep) {
   }
 }
 
-/* static */ void JSScript::sweepTypes(const js::AutoSweepTypeScript& sweep) {
-  MOZ_ASSERT(typesGeneration() != zone()->types.generation);
-  setTypesGeneration(zone()->types.generation);
+/* static */ void TypeScript::sweepTypes(const js::AutoSweepTypeScript& sweep,
+                                         Zone* zone) {
+  MOZ_ASSERT(typesGeneration() != zone->types.generation);
+  setTypesGeneration(zone->types.generation);
 
-  AssertGCStateForSweep(zone());
+  AssertGCStateForSweep(zone);
 
   Maybe<AutoClearTypeInferenceStateOnOOM> clearStateOnOOM;
-  if (!zone()->types.isSweepingTypes()) {
-    clearStateOnOOM.emplace(zone());
+  if (!zone->types.isSweepingTypes()) {
+    clearStateOnOOM.emplace(zone);
   }
 
-  TypeZone& types = zone()->types;
+  TypeZone& types = zone->types;
 
   // Sweep the inlinedCompilations Vector.
   {
-    RecompileInfoVector& inlinedCompilations = types_->inlinedCompilations();
+    RecompileInfoVector& inlinedCompilations = this->inlinedCompilations(sweep);
     size_t dest = 0;
     for (size_t i = 0; i < inlinedCompilations.length(); i++) {
       if (inlinedCompilations[i].shouldSweep(types)) {
@@ -4690,23 +4726,23 @@ void ObjectGroup::sweep(const AutoSweepObjectGroup& sweep) {
     inlinedCompilations.shrinkTo(dest);
   }
 
-  unsigned num = TypeScript::NumTypeSets(this);
-  StackTypeSet* typeArray = types_->typeArray();
-
   // Remove constraints and references to dead objects from stack type sets.
+  unsigned num = numTypeSets();
+  StackTypeSet* arr = typeArray(sweep);
   for (unsigned i = 0; i < num; i++) {
-    typeArray[i].sweep(sweep, zone());
+    arr[i].sweep(sweep, zone);
   }
 
-  if (zone()->types.hadOOMSweepingTypes()) {
+  if (types.hadOOMSweepingTypes()) {
     // It's possible we OOM'd while copying freeze constraints, so they
     // need to be regenerated.
-    clearFlag(MutableFlags::HasFreezeConstraints);
+    flags_.hasFreezeConstraints = false;
   }
 }
 
 void JSScript::maybeReleaseTypes() {
-  if (!types_ || zone()->types.keepTypeScripts || hasBaselineScript()) {
+  if (!types_ || zone()->types.keepTypeScripts || hasBaselineScript() ||
+      types_->active()) {
     return;
   }
 
@@ -4714,10 +4750,6 @@ void JSScript::maybeReleaseTypes() {
 
   types_->destroy(zone());
   types_ = nullptr;
-
-  // Freeze constraints on stack type sets need to be regenerated the
-  // next time the script is analyzed.
-  clearFlag(MutableFlags::HasFreezeConstraints);
 }
 
 void TypeScript::destroy(Zone* zone) {
@@ -4729,7 +4761,7 @@ void TypeScript::destroy(Zone* zone) {
 void Zone::addSizeOfIncludingThis(
     mozilla::MallocSizeOf mallocSizeOf, size_t* typePool, size_t* regexpZone,
     size_t* jitZone, size_t* baselineStubsOptimized, size_t* cachedCFG,
-    size_t* uniqueIdMap, size_t* shapeTables, size_t* atomsMarkBitmaps,
+    size_t* uniqueIdMap, size_t* shapeCaches, size_t* atomsMarkBitmaps,
     size_t* compartmentObjects, size_t* crossCompartmentWrappersTables,
     size_t* compartmentsPrivateData) {
   *typePool += types.typeLifoAlloc().sizeOfExcludingThis(mallocSizeOf);
@@ -4739,7 +4771,7 @@ void Zone::addSizeOfIncludingThis(
                                      baselineStubsOptimized, cachedCFG);
   }
   *uniqueIdMap += uniqueIds().shallowSizeOfExcludingThis(mallocSizeOf);
-  *shapeTables += baseShapes().sizeOfExcludingThis(mallocSizeOf) +
+  *shapeCaches += baseShapes().sizeOfExcludingThis(mallocSizeOf) +
                   initialShapes().sizeOfExcludingThis(mallocSizeOf);
   *atomsMarkBitmaps += markedAtoms().sizeOfExcludingThis(mallocSizeOf);
 
@@ -4809,13 +4841,9 @@ AutoClearTypeInferenceStateOnOOM::~AutoClearTypeInferenceStateOnOOM() {
 }
 
 #ifdef DEBUG
-void TypeScript::printTypes(JSContext* cx, HandleScript script) const {
+void TypeScript::printTypes(JSContext* cx, HandleScript script) {
   AutoSweepTypeScript sweep(script);
-  MOZ_ASSERT(script->types(sweep) == this);
-
-  if (!script->hasBaselineScript()) {
-    return;
-  }
+  MOZ_ASSERT(script->types() == this);
 
   AutoEnterAnalysis enter(nullptr, script->zone());
   Fprinter out(stderr);
@@ -4861,7 +4889,7 @@ void TypeScript::printTypes(JSContext* cx, HandleScript script) const {
 
     if (CodeSpec[*pc].format & JOF_TYPESET) {
       StackTypeSet* types = TypeScript::BytecodeTypes(script, pc);
-      fprintf(stderr, "  typeset %u:", unsigned(types - typeArray()));
+      fprintf(stderr, "  typeset %u:", unsigned(types - typeArray(sweep)));
       types->print();
       fprintf(stderr, "\n");
     }

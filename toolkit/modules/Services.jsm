@@ -6,8 +6,8 @@
 
 var EXPORTED_SYMBOLS = ["Services"];
 
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 var Services = {};
 
@@ -105,11 +105,11 @@ var initTable = {
 if (AppConstants.platform == "android") {
   initTable.androidBridge = ["@mozilla.org/android/bridge;1", "nsIAndroidBridge"];
 }
+if (AppConstants.MOZ_TOOLKIT_SEARCH) {
+  initTable.search = ["@mozilla.org/browser/search-service;1", "nsISearchService"];
+}
 if (AppConstants.MOZ_GECKO_PROFILER) {
   initTable.profiler = ["@mozilla.org/tools/profiler;1", "nsIProfiler"];
-}
-if (AppConstants.MOZ_TOOLKIT_SEARCH) {
-  initTable.search = ["@mozilla.org/browser/search-service;1", "nsIBrowserSearchService"];
 }
 if ("@mozilla.org/browser/enterprisepolicies;1" in Cc) {
   initTable.policies = ["@mozilla.org/browser/enterprisepolicies;1", "nsIEnterprisePolicies"];

@@ -1234,11 +1234,19 @@
       ]]></handler>
 
       <handler event="transitionend"><![CDATA[
-        if (event.propertyName != "max-width") {
+        if (event.propertyName != "max-width" &&
+            event.propertyName != "transform") {
           return;
         }
 
-        var tab = event.target;
+        if (gBrowser.tabAnimationsInProgress == 0) {
+          return;
+        }
+
+        let tab = event.originalTarget;
+        if (tab.nodeName != "tab") {
+          return;
+        }
 
         if (tab.getAttribute("fadein") == "true") {
           if (tab._fullyOpen) {
@@ -1249,6 +1257,9 @@
         } else if (tab.closing) {
           gBrowser._endRemoveTab(tab);
         }
+
+        let evt = new CustomEvent("TabAnimationEnd", { bubbles: true });
+        tab.dispatchEvent(evt);
       ]]></handler>
 
       <handler event="dblclick"><![CDATA[
@@ -1333,22 +1344,14 @@
             byMouse: event.mozInputSource == MouseEvent.MOZ_SOURCE_MOUSE,
           });
         } else if (event.originalTarget.localName == "scrollbox") {
-          // The user middleclicked an open space on the tabstrip. This could
-          // be because they intend to open a new tab, but it could also be
-          // because they just removed a tab and they now middleclicked on the
-          // resulting space while that tab is closing. In that case, we don't
-          // want to open a tab. So if we're removing one or more tabs, and
-          // the tab click is before the end of the last visible tab, we do
-          // nothing.
-          if (gBrowser._removingTabs.length) {
-            let visibleTabs = this._getVisibleTabs();
-            let lastTab = visibleTabs[visibleTabs.length - 1];
-            let endOfTab = lastTab.getBoundingClientRect()[RTL_UI ? "left" : "right"];
-            if ((!RTL_UI && event.clientX > endOfTab) ||
-                (RTL_UI && event.clientX < endOfTab)) {
-              BrowserOpenTab();
-            }
-          } else {
+          // The user middleclicked on the tabstrip. Check whether the click
+          // was dispatched on the open space of it.
+          let visibleTabs = this._getVisibleTabs();
+          let lastTab = visibleTabs[visibleTabs.length - 1];
+          let winUtils = window.windowUtils;
+          let endOfTab = winUtils.getBoundsWithoutFlushing(lastTab)[RTL_UI ? "left" : "right"];
+          if ((!RTL_UI && event.clientX > endOfTab) ||
+              (RTL_UI && event.clientX < endOfTab)) {
             BrowserOpenTab();
           }
         } else {
@@ -1915,11 +1918,11 @@
            extends="chrome://global/content/bindings/tabbox.xml#tab">
     <content context="tabContextMenu">
       <xul:stack class="tab-stack" flex="1">
-        <xul:vbox xbl:inherits="selected=visuallyselected,fadein"
+        <xul:vbox xbl:inherits="selected=visuallyselected,fadein,multiselected"
                   class="tab-background">
           <xul:hbox xbl:inherits="selected=visuallyselected,multiselected,before-multiselected"
                     class="tab-line"/>
-          <xul:spacer flex="1"/>
+          <xul:spacer flex="1" class="tab-background-inner"/>
           <xul:hbox class="tab-bottom-line"/>
         </xul:vbox>
         <xul:hbox xbl:inherits="pinned,bursting,notselectedsinceload"
@@ -2252,18 +2255,6 @@
         ]]></body>
       </method>
 
-      <method name="startMediaBlockTimer">
-        <body><![CDATA[
-          TelemetryStopwatch.start("TAB_MEDIA_BLOCKING_TIME_MS", this);
-        ]]></body>
-      </method>
-
-       <method name="finishMediaBlockTimer">
-        <body><![CDATA[
-          TelemetryStopwatch.finish("TAB_MEDIA_BLOCKING_TIME_MS", this);
-        ]]></body>
-      </method>
-
       <method name="toggleMuteAudio">
         <parameter name="aMuteReason"/>
         <body>
@@ -2278,7 +2269,6 @@
 
             browser.resumeMedia();
             hist.add(3 /* unblockByClickingIcon */);
-            this.finishMediaBlockTimer();
           } else {
             if (browser.audioMuted) {
               if (this.linkedPanel) {

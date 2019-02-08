@@ -10,9 +10,9 @@ const TOPIC_PRESENTATION_RECEIVER_LAUNCH = "presentation-receiver:launch";
 const TOPIC_PRESENTATION_RECEIVER_LAUNCH_RESPONSE = "presentation-receiver:launch:response";
 
 // globals XPCOMUtils
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 // globals Services
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 function log(str) {
   // dump("-*- PresentationRequestUIGlue.js -*-: " + str + "\n");
@@ -37,7 +37,6 @@ PresentationRequestUIGlue.prototype = {
     }
 
     return new Promise((aResolve, aReject) => {
-
       let uuidGenerator = Cc["@mozilla.org/uuid-generator;1"]
                             .getService(Ci.nsIUUIDGenerator);
       let requestId = uuidGenerator.generateUUID().toString();

@@ -9,7 +9,17 @@
 const { createFactory, createElement } = require("devtools/client/shared/vendor/react");
 const { Provider } = require("devtools/client/shared/vendor/react-redux");
 
+loader.lazyRequireGetter(this, "ChangesContextMenu", "devtools/client/inspector/changes/ChangesContextMenu");
+loader.lazyRequireGetter(this, "clipboardHelper", "devtools/shared/platform/clipboard");
+
 const ChangesApp = createFactory(require("./components/ChangesApp"));
+const { getChangesStylesheet } = require("./selectors/changes");
+
+const {
+  TELEMETRY_SCALAR_CONTEXTMENU,
+  TELEMETRY_SCALAR_CONTEXTMENU_COPY,
+  TELEMETRY_SCALAR_COPY,
+} = require("./constants");
 
 const {
   resetChanges,
@@ -21,18 +31,32 @@ class ChangesView {
     this.document = window.document;
     this.inspector = inspector;
     this.store = this.inspector.store;
-    this.toolbox = this.inspector.toolbox;
+    this.telemetry = this.inspector.telemetry;
+    this.window = window;
 
     this.onAddChange = this.onAddChange.bind(this);
     this.onClearChanges = this.onClearChanges.bind(this);
     this.onChangesFront = this.onChangesFront.bind(this);
+    this.onContextMenu = this.onContextMenu.bind(this);
+    this.onCopy = this.onCopy.bind(this);
     this.destroy = this.destroy.bind(this);
 
     this.init();
   }
 
+  get contextMenu() {
+    if (!this._contextMenu) {
+      this._contextMenu = new ChangesContextMenu(this);
+    }
+
+    return this._contextMenu;
+  }
+
   init() {
-    const changesApp = ChangesApp({});
+    const changesApp = ChangesApp({
+      onContextMenu: this.onContextMenu,
+      onCopy: this.onCopy,
+    });
 
     // listen to the front for initialization, add listeners
     // when it is ready
@@ -79,6 +103,32 @@ class ChangesView {
     }
   }
 
+  /**
+   * Handler for the "Copy Changes" option from the context menu.
+   * Builds a CSS text with the changes aggregated for the target rule and copies it to
+   * the clipboard.
+   *
+   * @param {String} ruleId
+   *        Rule id of the target rule.
+   * @param {String} sourceId
+   *        Source id of the target rule.
+   */
+  copyChanges(ruleId, sourceId) {
+    const state = this.store.getState().changes || {};
+    const filter = { ruleIds: [ruleId], sourceIds: [sourceId] };
+    const text = getChangesStylesheet(state, filter);
+    clipboardHelper.copyString(text);
+  }
+
+  /**
+   * Handler for the "Copy" option from the context menu.
+   * Copies the current text selection to the clipboard.
+   */
+  copySelection() {
+    clipboardHelper.copyString(this.window.getSelection().toString());
+    this.telemetry.scalarAdd(TELEMETRY_SCALAR_CONTEXTMENU_COPY, 1);
+  }
+
   onAddChange(change) {
     // Turn data into a suitable change to send to the store.
     this.store.dispatch(trackChange(change));
@@ -86,6 +136,23 @@ class ChangesView {
 
   onClearChanges() {
     this.store.dispatch(resetChanges());
+  }
+
+  /**
+   * Event handler for the "contextmenu" event fired when the context menu is requested.
+   * @param {Event} e
+   */
+  onContextMenu(e) {
+    this.contextMenu.show(e);
+    this.telemetry.scalarAdd(TELEMETRY_SCALAR_CONTEXTMENU, 1);
+  }
+
+  /**
+   * Event handler for the "copy" event fired when content is copied to the clipboard.
+   * We don't change the default behavior. We only log the increment count of this action.
+   */
+  onCopy() {
+    this.telemetry.scalarAdd(TELEMETRY_SCALAR_COPY, 1);
   }
 
   /**
@@ -102,7 +169,11 @@ class ChangesView {
     this.document = null;
     this.inspector = null;
     this.store = null;
-    this.toolbox = null;
+
+    if (this._contextMenu) {
+      this._contextMenu.destroy();
+      this._contextMenu = null;
+    }
   }
 }
 

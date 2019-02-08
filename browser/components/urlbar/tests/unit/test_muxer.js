@@ -23,14 +23,14 @@ add_task(async function test_muxer() {
                 "Should throw with invalid sort");
 
   let matches = [
-    new UrlbarResult(UrlbarUtils.MATCH_TYPE.TAB_SWITCH,
-                     UrlbarUtils.MATCH_SOURCE.TABS,
+    new UrlbarResult(UrlbarUtils.RESULT_TYPE.TAB_SWITCH,
+                     UrlbarUtils.RESULT_SOURCE.TABS,
                      { url: "http://mozilla.org/tab/" }),
-    new UrlbarResult(UrlbarUtils.MATCH_TYPE.URL,
-                     UrlbarUtils.MATCH_SOURCE.BOOKMARKS,
+    new UrlbarResult(UrlbarUtils.RESULT_TYPE.URL,
+                     UrlbarUtils.RESULT_SOURCE.BOOKMARKS,
                      { url: "http://mozilla.org/bookmark/" }),
-    new UrlbarResult(UrlbarUtils.MATCH_TYPE.URL,
-                     UrlbarUtils.MATCH_SOURCE.HISTORY,
+    new UrlbarResult(UrlbarUtils.RESULT_TYPE.URL,
+                     UrlbarUtils.RESULT_SOURCE.HISTORY,
                      { url: "http://mozilla.org/history/" }),
   ];
 
@@ -52,13 +52,13 @@ add_task(async function test_muxer() {
     }
     sort(queryContext) {
       queryContext.results.sort((a, b) => {
-        if (b.source == UrlbarUtils.MATCH_SOURCE.TABS) {
+        if (b.source == UrlbarUtils.RESULT_SOURCE.TABS) {
           return -1;
         }
-        if (b.source == UrlbarUtils.MATCH_SOURCE.BOOKMARKS) {
+        if (b.source == UrlbarUtils.RESULT_SOURCE.BOOKMARKS) {
           return 1;
         }
-        return a.source == UrlbarUtils.MATCH_SOURCE.BOOKMARKS ? -1 : 1;
+        return a.source == UrlbarUtils.RESULT_SOURCE.BOOKMARKS ? -1 : 1;
       });
     }
   }

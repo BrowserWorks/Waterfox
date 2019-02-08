@@ -16,8 +16,7 @@ var EXPORTED_SYMBOLS = [
   "UrlbarUtils",
 ];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetters(this, {
   BinarySearch: "resource://gre/modules/BinarySearch.jsm",
   BrowserUtils: "resource://gre/modules/BrowserUtils.jsm",
@@ -25,6 +24,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   PlacesUIUtils: "resource:///modules/PlacesUIUtils.jsm",
   PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
   Services: "resource://gre/modules/Services.jsm",
+  UrlbarPrefs: "resource:///modules/UrlbarPrefs.jsm",
 });
 
 var UrlbarUtils = {
@@ -45,8 +45,8 @@ var UrlbarUtils = {
   MAXIMUM_ALLOWED_EXTENSION_MATCHES: 6,
 
   // This is used by UnifiedComplete, the new implementation will use
-  // PROVIDER_TYPE and MATCH_TYPE
-  MATCH_GROUP: {
+  // PROVIDER_TYPE and RESULT_TYPE
+  RESULT_GROUP: {
     HEURISTIC: "heuristic",
     GENERAL: "general",
     SUGGESTION: "suggestion",
@@ -67,7 +67,7 @@ var UrlbarUtils = {
   },
 
   // Defines UrlbarResult types.
-  MATCH_TYPE: {
+  RESULT_TYPE: {
     // An open tab.
     // Payload: { icon, url, userContextId }
     TAB_SWITCH: 1,
@@ -80,7 +80,7 @@ var UrlbarUtils = {
     // A bookmark keyword.
     // Payload: { icon, url, keyword, postData }
     KEYWORD: 4,
-    // A WebExtension Omnibox match.
+    // A WebExtension Omnibox result.
     // Payload: { icon, keyword, title, content }
     OMNIBOX: 5,
     // A tab from another synced device.
@@ -88,17 +88,23 @@ var UrlbarUtils = {
     REMOTE_TAB: 6,
   },
 
-  // This defines the source of matches returned by a provider. Each provider
-  // can return matches from more than one source. This is used by the
+  // This defines the source of results returned by a provider. Each provider
+  // can return results from more than one source. This is used by the
   // ProvidersManager to decide which providers must be queried and which
-  // matches can be returned.
-  MATCH_SOURCE: {
+  // results can be returned.
+  RESULT_SOURCE: {
     BOOKMARKS: 1,
     HISTORY: 2,
     SEARCH: 3,
     TABS: 4,
     OTHER_LOCAL: 5,
     OTHER_NETWORK: 6,
+  },
+
+  // This defines icon locations that are common used in the UI.
+  ICON: {
+    DEFAULT: Ci.nsIFaviconService.FAVICON_DEFAULT_URL,
+    SEARCH_GLASS: "chrome://browser/skin/search-glass.svg",
   },
 
   /**
@@ -229,7 +235,107 @@ var UrlbarUtils = {
       return matches;
     }, []);
   },
+
+  /**
+   * Extracts an url from a result, if possible.
+   * @param {UrlbarResult} result The result to extract from.
+   * @returns {object} a {url, postData} object, or null if a url can't be built
+   *          from this result.
+   */
+  getUrlFromResult(result) {
+    switch (result.type) {
+      case UrlbarUtils.RESULT_TYPE.URL:
+      case UrlbarUtils.RESULT_TYPE.KEYWORD:
+      case UrlbarUtils.RESULT_TYPE.REMOTE_TAB:
+      case UrlbarUtils.RESULT_TYPE.TAB_SWITCH:
+        return {url: result.payload.url, postData: null};
+      case UrlbarUtils.RESULT_TYPE.SEARCH: {
+        const engine = Services.search.getEngineByName(result.payload.engine);
+        let [url, postData] = getSearchQueryUrl(
+          engine, result.payload.suggestion || result.payload.query);
+        return {url, postData};
+      }
+    }
+    return {url: null, postData: null};
+  },
+
+  /**
+   * Tries to initiate a speculative connection to a given url.
+   * @param {nsISearchEngine|nsIURI|URL|string} urlOrEngine entity to initiate
+   *        a speculative connection for.
+   * @param {window} window the window from where the connection is initialized.
+   * @note This is not infallible, if a speculative connection cannot be
+   *       initialized, it will be a no-op.
+   */
+  setupSpeculativeConnection(urlOrEngine, window) {
+    if (!UrlbarPrefs.get("speculativeConnect.enabled")) {
+      return;
+    }
+    if (urlOrEngine instanceof Ci.nsISearchEngine) {
+      try {
+        urlOrEngine.speculativeConnect({
+          window,
+          originAttributes: window.gBrowser.contentPrincipal.originAttributes,
+        });
+      } catch (ex) {
+        // Can't setup speculative connection for this url, just ignore it.
+      }
+      return;
+    }
+
+    if (urlOrEngine instanceof URL) {
+      urlOrEngine = urlOrEngine.href;
+    }
+
+    try {
+      let uri = urlOrEngine instanceof Ci.nsIURI ? urlOrEngine
+                                                  : Services.io.newURI(urlOrEngine);
+      Services.io.speculativeConnect2(uri, window.gBrowser.contentPrincipal, null);
+    } catch (ex) {
+      // Can't setup speculative connection for this url, just ignore it.
+    }
+  },
+
+  /**
+   * Used to filter out the javascript protocol from URIs, since we don't
+   * support LOAD_FLAGS_DISALLOW_INHERIT_PRINCIPAL for those.
+   * @param {string} pasteData The data to check for javacript protocol.
+   * @returns {string} The modified paste data.
+   */
+  stripUnsafeProtocolOnPaste(pasteData) {
+    while (true) {
+      let scheme = "";
+      try {
+        scheme = Services.io.extractScheme(pasteData);
+      } catch (ex) {
+        // If it throws, this is not a javascript scheme.
+      }
+      if (scheme != "javascript") {
+        break;
+      }
+
+      pasteData = pasteData.substring(pasteData.indexOf(":") + 1);
+    }
+    return pasteData;
+  },
 };
+
+/**
+ * Get the url to load for the search query and records in telemetry that it
+ * is being loaded.
+ *
+ * @param {nsISearchEngine} engine
+ *   The engine to generate the query for.
+ * @param {string} query
+ *   The query string to search for.
+ * @returns {array}
+ *   Returns an array containing the query url (string) and the
+ *    post data (object).
+ */
+function getSearchQueryUrl(engine, query) {
+  let submission = engine.getSubmission(query, null, "keyword");
+  return [submission.uri.spec, submission.postData];
+}
 
 /**
  * UrlbarQueryContext defines a user's autocomplete input from within the urlbar.
@@ -298,11 +404,11 @@ class UrlbarQueryContext {
 
 /**
  * Base class for a muxer.
- * The muxer scope is to sort a given list of matches.
+ * The muxer scope is to sort a given list of results.
  */
 class UrlbarMuxer {
   /**
-   * Unique name for the muxer, used by the context to sort matches.
+   * Unique name for the muxer, used by the context to sort results.
    * Not using a unique name will cause the newest registration to win.
    * @abstract
    */
@@ -310,8 +416,8 @@ class UrlbarMuxer {
     return "UrlbarMuxerBase";
   }
   /**
-   * Sorts queryContext matches in-place.
-   * @param {UrlbarQueryContext} queryContext the context to sort matches for.
+   * Sorts queryContext results in-place.
+   * @param {UrlbarQueryContext} queryContext the context to sort results for.
    * @abstract
    */
   sort(queryContext) {
@@ -321,7 +427,7 @@ class UrlbarMuxer {
 
 /**
  * Base class for a provider.
- * The provider scope is to query a datasource and return matches from it.
+ * The provider scope is to query a datasource and return results from it.
  */
 class UrlbarProvider {
   /**
@@ -340,7 +446,7 @@ class UrlbarProvider {
     throw new Error("Trying to access the base class, must be overridden");
   }
   /**
-   * List of UrlbarUtils.MATCH_SOURCE, representing the data sources used by
+   * List of UrlbarUtils.RESULT_SOURCE, representing the data sources used by
    * the provider.
    * @abstract
    */

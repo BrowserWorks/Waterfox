@@ -15,8 +15,8 @@ deps = [
     'mozdevice>=1.1.6',
     'mozfile>=1.2',
     'mozinfo>=0.7,<2',
-    'mozlog==3.*',
-    'mozprocess>=0.23,<1',
+    'mozlog~=4.0',
+    'mozprocess>=0.23,<2',
     'mozprofile~=2.1',
     'six>=1.10.0,<2',
 ]

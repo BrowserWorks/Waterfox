@@ -6,7 +6,7 @@
 
 var EXPORTED_SYMBOLS = ["AboutReaderChild"];
 
-ChromeUtils.import("resource://gre/modules/ActorChild.jsm");
+const {ActorChild} = ChromeUtils.import("resource://gre/modules/ActorChild.jsm");
 
 ChromeUtils.defineModuleGetter(this, "AboutReader",
                                "resource://gre/modules/AboutReader.jsm");
@@ -93,7 +93,6 @@ class AboutReaderChild extends ActorChild {
       case "DOMContentLoaded":
         this.updateReaderButton();
         break;
-
     }
   }
 

@@ -59,6 +59,16 @@ class XHRBreakpoints extends Component<Props, State> {
     };
   }
 
+  componentDidMount() {
+    const { showInput } = this.props;
+
+    // Ensures that the input is focused when the "+"
+    // is clicked while the panel is collapsed
+    if (this._input && showInput) {
+      this._input.focus();
+    }
+  }
+
   componentDidUpdate(prevProps, prevState) {
     const input = this._input;
 
@@ -194,14 +204,16 @@ class XHRBreakpoints extends Component<Props, State> {
         title={path}
         onDoubleClick={(items, options) => this.editExpression(index)}
       >
-        <input
-          type="checkbox"
-          className="xhr-checkbox"
-          checked={!disabled}
-          onChange={() => this.handleCheckbox(index)}
-          onClick={ev => ev.stopPropagation()}
-        />
-        <div className="xhr-label">{text}</div>
+        <label>
+          <input
+            type="checkbox"
+            className="xhr-checkbox"
+            checked={!disabled}
+            onChange={() => this.handleCheckbox(index)}
+            onClick={ev => ev.stopPropagation()}
+          />
+          <div className="xhr-label">{text}</div>
+        </label>
         <div className="xhr-container__close-btn">
           <CloseButton handleClick={e => removeXHRBreakpoint(index)} />
         </div>

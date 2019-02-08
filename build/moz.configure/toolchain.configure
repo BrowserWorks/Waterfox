@@ -467,7 +467,7 @@ def get_compiler_info(compiler, language):
         #if defined(_MSC_VER)
         #if defined(__clang__)
         %COMPILER "clang-cl"
-        %VERSION _MSC_FULL_VER
+        %VERSION __clang_major__.__clang_minor__.__clang_patchlevel__
         #else
         %COMPILER "msvc"
         %VERSION _MSC_FULL_VER
@@ -548,7 +548,7 @@ def get_compiler_info(compiler, language):
     stdc_version = int(data.get('STDC_VERSION', '0L').rstrip('L'))
 
     version = data.get('VERSION')
-    if version and type in ('msvc', 'clang-cl'):
+    if version and type == 'msvc':
         msc_ver = version
         version = msc_ver[0:2]
         if len(msc_ver) > 2:
@@ -587,12 +587,6 @@ def check_compiler(compiler, language, target):
 
     flags = []
 
-    def append_flag(flag):
-        if flag not in flags:
-            if info.type == 'clang-cl':
-                flags.append('-Xclang')
-            flags.append(flag)
-
     # Check language standards
     # --------------------------------------------------------------------
     if language != info.language:
@@ -605,7 +599,9 @@ def check_compiler(compiler, language, target):
     # example)
     if info.language == 'C' and info.language_version != 199901:
         if info.type in ('clang-cl', 'clang', 'gcc'):
-            append_flag('-std=gnu99')
+            if info.type == 'clang-cl':
+                flags.append('-Xclang')
+            flags.append('-std=gnu99')
 
     # Note: MSVC, while supporting C++14, still reports 199711L for __cplusplus.
     # Note: this is a strict version check because we used to always add
@@ -613,55 +609,41 @@ def check_compiler(compiler, language, target):
     cxx14_version = 201402
     if info.language == 'C++':
         if info.type == 'clang' and info.language_version != cxx14_version:
-            append_flag('-std=gnu++14')
+            flags.append('-std=gnu++14')
         # MSVC headers include C++14 features, but don't guard them
         # with appropriate checks.
         elif info.type == 'clang-cl' and info.language_version != cxx14_version:
-            append_flag('-std=c++14')
-
-    # We force clang-cl to emulate Visual C++ 2017 version 15.8.4
-    msvc_version = '19.15.26726'
-    if info.type == 'clang-cl' and info.version != msvc_version:
-        # This flag is a direct clang-cl flag that doesn't need -Xclang,
-        # add it directly.
-        flags.append('-fms-compatibility-version=%s' % msvc_version)
+            flags.append('-Xclang')
+            flags.append('-std=c++14')
 
     # Check compiler target
     # --------------------------------------------------------------------
-    if not info.cpu or info.cpu != target.cpu:
-        if info.type == 'clang':
-            append_flag('--target=%s' % target.toolchain)
-        elif info.type == 'clang-cl':
-            # Ideally this would share the 'clang' branch above, but on Windows
-            # the --target needs additional data like ms-compatibility-version.
-            if (info.cpu, target.cpu) == ('x86_64', 'x86'):
-                # -m32 does not use -Xclang, so add it directly.
-                flags.append('-m32')
-            elif target.toolchain == 'aarch64-mingw32':
-                # clang-cl uses a different name for this target
-                flags.append('--target=aarch64-windows-msvc')
-        elif info.type == 'gcc':
-            same_arch = same_arch_different_bits()
-            if (target.cpu, info.cpu) in same_arch:
-                append_flag('-m32')
-            elif (info.cpu, target.cpu) in same_arch:
-                append_flag('-m64')
+    has_target = False
+    if info.type == 'clang':
+        if not info.kernel or info.kernel != target.kernel or \
+                not info.endianness or info.endianness != target.endianness:
+            flags.append('--target=%s' % target.toolchain)
+            has_target = True
 
-    if not info.kernel or info.kernel != target.kernel:
-        if info.type == 'clang':
-            append_flag('--target=%s' % target.toolchain)
+        # Add target flag when there is an OS mismatch (e.g. building for Android on
+        # Linux). However, only do this if the target OS is in our whitelist, to
+        # keep things the same on other platforms.
+        elif target.os in OS_preprocessor_checks and (
+                not info.os or info.os != target.os):
+            flags.append('--target=%s' % target.toolchain)
+            has_target = True
 
-    if not info.endianness or info.endianness != target.endianness:
-        if info.type == 'clang':
-            append_flag('--target=%s' % target.toolchain)
-
-    # Add target flag when there is an OS mismatch (e.g. building for Android on
-    # Linux). However, only do this if the target OS is in our whitelist, to
-    # keep things the same on other platforms.
-    if target.os in OS_preprocessor_checks and (
-            not info.os or info.os != target.os):
-        if info.type == 'clang':
-            append_flag('--target=%s' % target.toolchain)
+    if not has_target and (not info.cpu or info.cpu != target.cpu and info.type != 'msvc'):
+        same_arch = same_arch_different_bits()
+        if (target.cpu, info.cpu) in same_arch:
+            flags.append('-m32')
+        elif (info.cpu, target.cpu) in same_arch:
+            flags.append('-m64')
+        elif info.type == 'clang-cl' and target.cpu == 'aarch64':
+            # clang-cl uses a different name for this target
+            flags.append('--target=aarch64-windows-msvc')
+        elif info.type == 'clang':
+            flags.append('--target=%s' % target.toolchain)
 
     return namespace(
         type=info.type,
@@ -676,78 +658,105 @@ def check_compiler(compiler, language, target):
 
 @imports(_from='__builtin__', _import='open')
 @imports('json')
+@imports('os')
 @imports('subprocess')
 @imports('sys')
 def get_vc_paths(topsrcdir):
     def vswhere(args):
         encoding = 'mbcs' if sys.platform == 'win32' else 'utf-8'
+        program_files = (os.environ.get('PROGRAMFILES(X86)') or
+                         os.environ.get('PROGRAMFILES'))
+        if not program_files:
+            return []
+        vswhere = os.path.join(program_files, 'Microsoft Visual Studio',
+                               'Installer', 'vswhere.exe')
+        if not os.path.exists(vswhere):
+            return []
         return json.loads(
-            subprocess.check_output([
-                os.path.join(topsrcdir, 'build/win32/vswhere.exe'),
-                '-format',
-                'json'
-            ] + args).decode(encoding, 'replace'))
+            subprocess.check_output([vswhere, '-format', 'json'] + args)
+            .decode(encoding, 'replace'))
 
     for install in vswhere(['-products', '*', '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64']):
         path = install['installationPath']
         tools_version = open(os.path.join(
             path, r'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt'), 'rb').read().strip()
         tools_path = os.path.join(
-            path, r'VC\Tools\MSVC', tools_version, r'bin\HostX64')
-        yield (Version(install['installationVersion']), {
-            'x64': [os.path.join(tools_path, 'x64')],
-            # The cross toolchains require DLLs from the native x64 toolchain.
-            'x86': [os.path.join(tools_path, 'x86'), os.path.join(tools_path, 'x64')],
-            'arm64': [os.path.join(tools_path, 'arm64'), os.path.join(tools_path, 'x64')],
-        })
+            path, r'VC\Tools\MSVC', tools_version)
+        yield (Version(install['installationVersion']), tools_path)
+
+
+@depends(host)
+def host_is_windows(host):
+    if host.kernel == 'WINNT':
+        return True
 
 
 js_option('--with-visual-studio-version', nargs=1,
-          choices=('2017',),
+          choices=('2017',), when=host_is_windows,
           help='Select a specific Visual Studio version to use')
 
 
-@depends('--with-visual-studio-version')
+@depends('--with-visual-studio-version', when=host_is_windows)
 def vs_major_version(value):
     if value:
         return {'2017': 15}[value[0]]
 
 
+js_option(env='VC_PATH', nargs=1, when=host_is_windows,
+          help='Path to the Microsoft Visual C/C++ compiler')
+
+
+@depends(host, vs_major_version, check_build_environment, 'VC_PATH',
+         '--with-visual-studio-version', when=host_is_windows)
+@imports(_from='__builtin__', _import='sorted')
+@imports(_from='operator', _import='itemgetter')
+def vc_compiler_paths_for_version(host, vs_major_version, env, vc_path, vs_release_name):
+    if vc_path and vs_release_name:
+        die('VC_PATH and --with-visual-studio-version cannot be used together.')
+    if vc_path:
+        # Use an arbitrary version, it doesn't matter.
+        all_versions = [(Version('15'), vc_path[0])]
+    else:
+        all_versions = sorted(get_vc_paths(env.topsrcdir), key=itemgetter(0))
+    if not all_versions:
+        return
+    if vs_major_version:
+        versions = [d for (v, d) in all_versions if v.major ==
+                    vs_major_version]
+        if not versions:
+            die('Visual Studio %s could not be found!' % vs_release_name)
+        path = versions[0]
+    else:
+        # Choose the newest version.
+        path = all_versions[-1][1]
+    host_dir = {
+        'x86_64': 'HostX64',
+        'x86': 'HostX86',
+    }.get(host.cpu)
+    if host_dir:
+        path = os.path.join(path, 'bin', host_dir)
+        return {
+            'x64': [os.path.join(path, 'x64')],
+            # The cross toolchains require DLLs from the native x64 toolchain.
+            'x86': [os.path.join(path, 'x86'), os.path.join(path, 'x64')],
+            'arm64': [os.path.join(path, 'arm64'), os.path.join(path, 'x64')],
+        }
+
+
 @template
 def vc_compiler_path_for(host_or_target):
-    @depends(host, host_or_target, vs_major_version, check_build_environment,
-             '--with-visual-studio-version')
-    @imports(_from='__builtin__', _import='sorted')
-    @imports(_from='operator', _import='itemgetter')
-    @imports('platform')
-    def vc_compiler_path(host, target, vs_major_version, env, vs_release_name):
-        if host.kernel != 'WINNT':
-            return
+    @depends(host_or_target, vc_compiler_paths_for_version,
+             when=host_is_windows)
+    def vc_compiler_path(target, paths):
         vc_target = {
             'x86': 'x86',
             'x86_64': 'x64',
             'arm': 'arm',
             'aarch64': 'arm64'
         }.get(target.cpu)
-        if vc_target is None:
-            return
-
-        all_versions = sorted(get_vc_paths(env.topsrcdir), key=itemgetter(0))
-        if not all_versions:
-            return
-        if vs_major_version:
-            versions = [d for (v, d) in all_versions if v.major ==
-                        vs_major_version]
-            if not versions:
-                die('Visual Studio %s could not be found!' % vs_release_name)
-            data = versions[0]
-        else:
-            # Choose the newest version.
-            data = all_versions[-1][1]
-        paths = data.get(vc_target)
         if not paths:
             return
-        return paths
+        return paths.get(vc_target)
     return vc_compiler_path
 
 
@@ -1160,6 +1169,22 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
     add_old_configure_assignment(var, depends_if(valid_compiler)(
         lambda x: list(x.wrapper) + [x.compiler] + list(x.flags)))
 
+    if host_or_target is target:
+        add_old_configure_assignment('ac_cv_prog_%s' % var, depends_if(valid_compiler)(
+            lambda x: list(x.wrapper) + [x.compiler] + list(x.flags)))
+        # We check that it works in python configure already.
+        add_old_configure_assignment('ac_cv_prog_%s_works' % var.lower(), 'yes')
+        add_old_configure_assignment(
+            'ac_cv_prog_%s_cross' % var.lower(),
+            depends(cross_compiling)(lambda x: 'yes' if x else 'no'))
+        gcc_like = depends(valid_compiler.type)(lambda x: 'yes' if x in ('gcc', 'clang') else 'no')
+        add_old_configure_assignment('ac_cv_prog_%s_g' % var.lower(), gcc_like)
+        if language == 'C':
+            add_old_configure_assignment('ac_cv_prog_gcc', gcc_like)
+        if language == 'C++':
+            add_old_configure_assignment('ac_cv_prog_gxx', gcc_like)
+
+
     # Set CC_TYPE/CC_VERSION/HOST_CC_TYPE/HOST_CC_VERSION to allow
     # old-configure to do some of its still existing checks.
     if language == 'C':
@@ -1178,6 +1203,8 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
 
     valid_compiler.try_compile(check_msg='%s works' % what,
                                onerror=compiler_error)
+
+    set_config('%s_BASE_FLAGS' % var, valid_compiler.flags)
 
     # Set CPP/CXXCPP for both the build system and old-configure. We don't
     # need to check this works for preprocessing, because we already relied
@@ -1239,8 +1266,7 @@ def msvs_version(info):
     # clang-cl emulates the same version scheme as cl. And MSVS_VERSION needs to
     # be set for GYP on Windows.
     if info.type in ('clang-cl', 'msvc'):
-        if info.version >= '19.10':
-            return '2017'
+        return '2017'
 
     return ''
 
@@ -1263,7 +1289,7 @@ def check_have_64_bit(have_64_bit, compiler_have_64_bit):
 def default_debug_flags(compiler_info, target):
     # Debug info is ON by default.
     if compiler_info.type in ('msvc', 'clang-cl'):
-        return '-Zi'
+        return '-Z7'
     elif target.kernel == 'WINNT' and compiler_info.type == 'clang':
         return '-g -gcodeview'
     return '-g'
@@ -1670,6 +1696,15 @@ option('--enable-hardening', env='MOZ_SECURITY_HARDENING',
        help='Enables security hardening compiler options')
 
 
+# This function is a bit confusing. It adds or removes hardening flags in
+# three stuations: if --enable-hardening is passed; if --disable-hardening
+# is passed, and if no flag is passed.
+#
+# At time of this comment writing, all flags are actually added in the
+# default no-flag case; making --enable-hardening the same as omitting the
+# flag. --disable-hardening will omit the security flags. (However, not all
+# possible security flags will be omitted by --disable-hardening, as many are
+# compiler-default options we do not explicitly enable.)
 @depends('--enable-hardening', '--enable-address-sanitizer',
          '--enable-optimize', c_compiler, target)
 def security_hardening_cflags(hardening_flag, asan, optimize, c_compiler, target):
@@ -1680,6 +1715,7 @@ def security_hardening_cflags(hardening_flag, asan, optimize, c_compiler, target
     js_flags = []
     js_ldflags = []
 
+    # ----------------------------------------------------------
     # If hardening is explicitly enabled, or not explicitly disabled
     if hardening_flag.origin == "default" or hardening_flag:
         # FORTIFY_SOURCE ------------------------------------
@@ -1708,7 +1744,19 @@ def security_hardening_cflags(hardening_flag, asan, optimize, c_compiler, target
             ldflags.append("-Wl,--dynamicbase")
             js_ldflags.append("-Wl,--dynamicbase")
 
-    # If ASAN _is_ on, undefine FOTIFY_SOURCE just to be safe
+        # Control Flow Guard (CFG) ----------------------------
+        # See Bug 1525588 for why this doesn't work on Windows ARM
+        if c_compiler.type == 'clang-cl' and c_compiler.version >= '8' and \
+           target.cpu != 'aarch64':
+            flags.append("-guard:cf")
+            js_flags.append("-guard:cf")
+            # nolongjmp is needed because clang doesn't emit the CFG tables of
+            # setjmp return addresses https://bugs.llvm.org/show_bug.cgi?id=40057
+            ldflags.append("-guard:cf,nolongjmp")
+            js_ldflags.append("-guard:cf,nolongjmp")
+
+    # ----------------------------------------------------------
+    # If ASAN _is_ on, undefine FORTIFY_SOURCE just to be safe
     if asan:
         flags.append("-U_FORTIFY_SOURCE")
         js_flags.append("-U_FORTIFY_SOURCE")
@@ -2066,6 +2114,7 @@ def as_with_flags(as_info, assembler, provided_assembler, c_compiler):
 
 
 add_old_configure_assignment('AS', as_with_flags)
+add_old_configure_assignment('ac_cv_prog_AS', as_with_flags)
 
 
 @depends(assembler, c_compiler, extra_toolchain_flags)

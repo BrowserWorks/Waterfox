@@ -73,11 +73,11 @@ function checkOnlyLoginWasUsedTwice({ justChanged }) {
 
 // Begin popup notification (doorhanger) functions //
 
-const REMEMBER_BUTTON = 0;
-const NEVER_BUTTON = 2;
+const REMEMBER_BUTTON = "button";
+const NEVER_MENUITEM = 0;
 
-const CHANGE_BUTTON = 0;
-const DONT_CHANGE_BUTTON = 1;
+const CHANGE_BUTTON = "button";
+const DONT_CHANGE_BUTTON = "secondaryButton";
 
 /**
  * Checks if we have a password capture popup notification
@@ -85,11 +85,12 @@ const DONT_CHANGE_BUTTON = 1;
  *
  * @param {String} aKind The desired `passwordNotificationType`
  * @param {Object} [popupNotifications = PopupNotifications]
+ * @param {Object} [browser = null] Optional browser whose notifications should be searched.
  * @return the found password popup notification.
  */
-function getCaptureDoorhanger(aKind, popupNotifications = PopupNotifications) {
+function getCaptureDoorhanger(aKind, popupNotifications = PopupNotifications, browser = null) {
   ok(true, "Looking for " + aKind + " popup notification");
-  let notification = popupNotifications.getNotification("password");
+  let notification = popupNotifications.getNotification("password", browser);
   if (notification) {
     is(notification.options.passwordNotificationType, aKind, "Notification type matches.");
     if (aKind == "password-change") {
@@ -116,15 +117,15 @@ function clickDoorhangerButton(aPopup, aButtonIndex) {
   ok(true, notifications.length + " notification(s)");
   let notification = notifications[0];
 
-  if (aButtonIndex == 0) {
+  if (aButtonIndex == "button") {
     ok(true, "Triggering main action");
     notification.button.doCommand();
-  } else if (aButtonIndex == 1) {
+  } else if (aButtonIndex == "secondaryButton") {
     ok(true, "Triggering secondary action");
     notification.secondaryButton.doCommand();
-  } else if (aButtonIndex <= aPopup.secondaryActions.length) {
-    ok(true, "Triggering secondary action " + aButtonIndex);
-    notification.children[aButtonIndex - 1].doCommand();
+  } else {
+    ok(true, "Triggering menuitem # " + aButtonIndex);
+    notification.menupopup.querySelectorAll("menuitem")[aButtonIndex].doCommand();
   }
 }
 

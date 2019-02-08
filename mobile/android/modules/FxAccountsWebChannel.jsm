@@ -12,10 +12,10 @@
  */
 var EXPORTED_SYMBOLS = ["EnsureFxAccountsWebChannel"];
 
-ChromeUtils.import("resource://gre/modules/Accounts.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/WebChannel.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Accounts} = ChromeUtils.import("resource://gre/modules/Accounts.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {WebChannel} = ChromeUtils.import("resource://gre/modules/WebChannel.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const log = ChromeUtils.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.bind("FxAccounts");
 
@@ -279,7 +279,6 @@ this.FxAccountsWebChannel.prototype = {
                   UITelemetry.addEvent("action.1", "content", null, "fxaccount-login");
                   return success;
                 });
-
             })
             .then(success => {
               if (!success) {

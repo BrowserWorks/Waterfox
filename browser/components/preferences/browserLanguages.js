@@ -4,7 +4,7 @@
 
 /* import-globals-from ../../../toolkit/content/preferencesBindings.js */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(this, "AddonManager",
                                "resource://gre/modules/AddonManager.jsm");
@@ -31,8 +31,7 @@ async function installFromUrl(url, hash, callback) {
   let telemetryInfo = {
     source: "about:preferences",
   };
-  let install = await AddonManager.getInstallForURL(
-    url, "application/x-xpinstall", hash, null, null, null, null, telemetryInfo);
+  let install = await AddonManager.getInstallForURL(url, {hash, telemetryInfo});
   if (callback) {
     callback(install.installId.toString());
   }
@@ -181,7 +180,7 @@ class OrderedListBox {
 class SortedItemSelectList {
   constructor({menulist, button, onSelect, onChange, compareFn}) {
     this.menulist = menulist;
-    this.popup = menulist.firstElementChild;
+    this.popup = menulist.menupopup;
     this.button = button;
     this.compareFn = compareFn;
     this.items = [];

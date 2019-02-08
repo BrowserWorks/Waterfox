@@ -27,20 +27,17 @@ struct DateTimeValue;
 }  // namespace dom
 }  // namespace mozilla
 
-class nsDateTimeControlFrame final : public nsContainerFrame,
-                                     public nsIAnonymousContentCreator {
+class nsDateTimeControlFrame final : public nsContainerFrame {
   typedef mozilla::dom::DateTimeValue DateTimeValue;
 
-  explicit nsDateTimeControlFrame(ComputedStyle* aStyle);
+  explicit nsDateTimeControlFrame(ComputedStyle* aStyle,
+                                  nsPresContext* aPresContext);
 
  public:
   friend nsIFrame* NS_NewDateTimeControlFrame(nsIPresShell* aPresShell,
                                               ComputedStyle* aStyle);
 
   void ContentStatesChanged(mozilla::EventStates aStates) override;
-  void DestroyFrom(nsIFrame* aDestructRoot,
-                   PostDestroyData& aPostDestroyData) override;
-
   NS_DECL_QUERYFRAME
   NS_DECL_FRAMEARENA_HELPERS(nsDateTimeControlFrame)
 
@@ -64,22 +61,8 @@ class nsDateTimeControlFrame final : public nsContainerFrame,
               const ReflowInput& aReflowInput,
               nsReflowStatus& aStatus) override;
 
-  bool IsLeafDynamic() const override;
-
-  // nsIAnonymousContentCreator
-  nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) override;
-  void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
-                                uint32_t aFilter) override;
-
   nsresult AttributeChanged(int32_t aNameSpaceID, nsAtom* aAttribute,
                             int32_t aModType) override;
-
-  nsIContent* GetInputAreaContent();
-
-  void OnValueChanged();
-  void OnMinMaxStepAttrChanged();
-  void HandleFocusEvent();
-  void HandleBlurEvent();
 
  private:
   class SyncDisabledStateEvent;
@@ -104,13 +87,9 @@ class nsDateTimeControlFrame final : public nsContainerFrame,
   };
 
   /**
-   * Sync the disabled state of the anonymous children up with our content's.
+   * Sync the disabled state of the datetimebox children up with our content's.
    */
   void SyncDisabledState();
-
-  // Anonymous child which is bound via XBL to an element that wraps the input
-  // area and reset button.
-  RefPtr<mozilla::dom::Element> mInputAreaContent;
 };
 
 #endif  // nsDateTimeControlFrame_h__

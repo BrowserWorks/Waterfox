@@ -88,8 +88,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleFont {
   nsStyleFont(const nsStyleFont& aStyleFont);
   explicit nsStyleFont(const mozilla::dom::Document&);
   ~nsStyleFont() { MOZ_COUNT_DTOR(nsStyleFont); }
-  void FinishStyle(nsPresContext*, const nsStyleFont*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleFont*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleFont& aNewData) const;
 
@@ -242,7 +242,8 @@ class nsStyleImageRequest {
   // on the main thread before get() can be used.
   nsStyleImageRequest(Mode aModeFlags, mozilla::css::URLValue* aImageValue);
 
-  bool Resolve(nsPresContext*, const nsStyleImageRequest* aOldImageRequest);
+  bool Resolve(mozilla::dom::Document&,
+               const nsStyleImageRequest* aOldImageRequest);
   bool IsResolved() const { return mResolved; }
 
   imgRequestProxy* get() {
@@ -334,14 +335,15 @@ struct nsStyleImage {
   void SetCropRect(mozilla::UniquePtr<nsStyleSides> aCropRect);
   void SetURLValue(already_AddRefed<const URLValue> aURLValue);
 
-  void ResolveImage(nsPresContext* aContext, const nsStyleImage* aOldImage) {
+  void ResolveImage(mozilla::dom::Document& aDocument,
+                    const nsStyleImage* aOldImage) {
     MOZ_ASSERT(mType != eStyleImageType_Image || mImage);
     if (mType == eStyleImageType_Image && !mImage->IsResolved()) {
       const nsStyleImageRequest* oldRequest =
           (aOldImage && aOldImage->GetType() == eStyleImageType_Image)
               ? aOldImage->ImageRequest()
               : nullptr;
-      mImage->Resolve(aContext, oldRequest);
+      mImage->Resolve(aDocument, oldRequest);
     }
   }
 
@@ -469,8 +471,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleColor {
   explicit nsStyleColor(const mozilla::dom::Document&);
   nsStyleColor(const nsStyleColor& aOther);
   ~nsStyleColor() { MOZ_COUNT_DTOR(nsStyleColor); }
-  void FinishStyle(nsPresContext*, const nsStyleColor*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleColor*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleColor& aNewData) const;
 
@@ -635,8 +637,9 @@ struct nsStyleImageLayers {
     // Initialize mRepeat and mOrigin by specified layer type
     void Initialize(LayerType aType);
 
-    void ResolveImage(nsPresContext* aContext, const Layer* aOldLayer) {
-      mImage.ResolveImage(aContext, aOldLayer ? &aOldLayer->mImage : nullptr);
+    void ResolveImage(mozilla::dom::Document& aDocument,
+                      const Layer* aOldLayer) {
+      mImage.ResolveImage(aDocument, aOldLayer ? &aOldLayer->mImage : nullptr);
     }
 
     // True if the rendering of this layer might change when the size
@@ -683,13 +686,13 @@ struct nsStyleImageLayers {
 
   const Layer& BottomLayer() const { return mLayers[mImageCount - 1]; }
 
-  void ResolveImages(nsPresContext* aContext,
+  void ResolveImages(mozilla::dom::Document& aDocument,
                      const nsStyleImageLayers* aOldLayers) {
     for (uint32_t i = 0; i < mImageCount; ++i) {
       const Layer* oldLayer = (aOldLayers && aOldLayers->mLayers.Length() > i)
                                   ? &aOldLayers->mLayers[i]
                                   : nullptr;
-      mLayers[i].ResolveImage(aContext, oldLayer);
+      mLayers[i].ResolveImage(aDocument, oldLayer);
     }
   }
 
@@ -728,8 +731,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleBackground {
   // Resolves and tracks the images in mImage.  Only called with a Servo-backed
   // style system, where those images must be resolved later than the OMT
   // nsStyleBackground constructor call.
-  void FinishStyle(nsPresContext*, const nsStyleBackground*);
-  const static bool kHasFinishStyle = true;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleBackground*);
+  const static bool kHasTriggerImageLoads = true;
 
   nsChangeHint CalcDifference(const nsStyleBackground& aNewData) const;
 
@@ -763,8 +766,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleMargin {
   explicit nsStyleMargin(const mozilla::dom::Document&);
   nsStyleMargin(const nsStyleMargin& aMargin);
   ~nsStyleMargin() { MOZ_COUNT_DTOR(nsStyleMargin); }
-  void FinishStyle(nsPresContext*, const nsStyleMargin*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleMargin*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleMargin& aNewData) const;
 
@@ -789,8 +792,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStylePadding {
   explicit nsStylePadding(const mozilla::dom::Document&);
   nsStylePadding(const nsStylePadding& aPadding);
   ~nsStylePadding() { MOZ_COUNT_DTOR(nsStylePadding); }
-  void FinishStyle(nsPresContext*, const nsStylePadding*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStylePadding*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStylePadding& aNewData) const;
 
@@ -934,8 +937,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleBorder {
   // Resolves and tracks mBorderImageSource.  Only called with a Servo-backed
   // style system, where those images must be resolved later than the OMT
   // nsStyleBorder constructor call.
-  void FinishStyle(nsPresContext*, const nsStyleBorder*);
-  const static bool kHasFinishStyle = true;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleBorder*);
+  const static bool kHasTriggerImageLoads = true;
 
   nsChangeHint CalcDifference(const nsStyleBorder& aNewData) const;
 
@@ -1103,8 +1106,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleOutline {
   explicit nsStyleOutline(const mozilla::dom::Document&);
   nsStyleOutline(const nsStyleOutline& aOutline);
   ~nsStyleOutline() { MOZ_COUNT_DTOR(nsStyleOutline); }
-  void FinishStyle(nsPresContext*, const nsStyleOutline*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleOutline*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleOutline& aNewData) const;
 
@@ -1148,8 +1151,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleList {
   nsStyleList(const nsStyleList& aStyleList);
   ~nsStyleList();
 
-  void FinishStyle(nsPresContext*, const nsStyleList*);
-  const static bool kHasFinishStyle = true;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleList*);
+  const static bool kHasTriggerImageLoads = true;
 
   nsChangeHint CalcDifference(const nsStyleList& aNewData,
                               const nsStyleDisplay* aOldDisplay) const;
@@ -1291,8 +1294,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStylePosition {
   explicit nsStylePosition(const mozilla::dom::Document&);
   nsStylePosition(const nsStylePosition& aOther);
   ~nsStylePosition();
-  void FinishStyle(nsPresContext*, const nsStylePosition*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStylePosition*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(
       const nsStylePosition& aNewData,
@@ -1466,8 +1469,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleTextReset {
   explicit nsStyleTextReset(const mozilla::dom::Document&);
   nsStyleTextReset(const nsStyleTextReset& aOther);
   ~nsStyleTextReset();
-  void FinishStyle(nsPresContext*, const nsStyleTextReset*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleTextReset*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   // Note the difference between this and
   // ComputedStyle::HasTextDecorationLines.
@@ -1492,8 +1495,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleText {
   explicit nsStyleText(const mozilla::dom::Document&);
   nsStyleText(const nsStyleText& aOther);
   ~nsStyleText();
-  void FinishStyle(nsPresContext*, const nsStyleText*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleText*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleText& aNewData) const;
 
@@ -1590,8 +1593,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleVisibility {
   explicit nsStyleVisibility(const mozilla::dom::Document&);
   nsStyleVisibility(const nsStyleVisibility& aVisibility);
   ~nsStyleVisibility() { MOZ_COUNT_DTOR(nsStyleVisibility); }
-  void FinishStyle(nsPresContext*, const nsStyleVisibility*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleVisibility*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleVisibility& aNewData) const;
 
@@ -1826,7 +1829,8 @@ struct StyleShapeSource final {
   }
   void SetPath(UniquePtr<StyleSVGPath> aPath);
 
-  void FinishStyle(nsPresContext*, const StyleShapeSource* aOldShapeSource);
+  void TriggerImageLoads(mozilla::dom::Document&,
+                         const StyleShapeSource* aOldShapeSource);
 
  private:
   void* operator new(size_t) = delete;
@@ -1874,8 +1878,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleDisplay {
   nsStyleDisplay(const nsStyleDisplay& aOther);
   ~nsStyleDisplay();
 
-  void FinishStyle(nsPresContext*, const nsStyleDisplay*);
-  const static bool kHasFinishStyle = true;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleDisplay*);
+  const static bool kHasTriggerImageLoads = true;
 
   nsChangeHint CalcDifference(const nsStyleDisplay& aNewData) const;
 
@@ -2290,7 +2294,7 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleDisplay {
    * frame (i.e., when calculating style changes).
    */
   inline bool IsFixedPosContainingBlockForNonSVGTextFrames(
-      mozilla::ComputedStyle&) const;
+      const mozilla::ComputedStyle&) const;
   inline bool
   IsFixedPosContainingBlockForContainLayoutAndPaintSupportingFrames() const;
   inline bool IsFixedPosContainingBlockForTransformSupportingFrames() const;
@@ -2302,9 +2306,6 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleDisplay {
     return mIndividualTransform ? do_AddRef(mIndividualTransform) : nullptr;
   }
 
- private:
-  // Helpers for above functions, which do some but not all of the tests
-  // for them (since transform must be tested separately for each).
   void GenerateCombinedIndividualTransform();
 };
 
@@ -2312,8 +2313,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleTable {
   explicit nsStyleTable(const mozilla::dom::Document&);
   nsStyleTable(const nsStyleTable& aOther);
   ~nsStyleTable();
-  void FinishStyle(nsPresContext*, const nsStyleTable*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleTable*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleTable& aNewData) const;
 
@@ -2325,8 +2326,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleTableBorder {
   explicit nsStyleTableBorder(const mozilla::dom::Document&);
   nsStyleTableBorder(const nsStyleTableBorder& aOther);
   ~nsStyleTableBorder();
-  void FinishStyle(nsPresContext*, const nsStyleTableBorder*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleTableBorder*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleTableBorder& aNewData) const;
 
@@ -2397,8 +2398,6 @@ class nsStyleContentData {
   CounterFunction* GetCounters() const {
     MOZ_ASSERT(mType == StyleContentType::Counter ||
                mType == StyleContentType::Counters);
-    MOZ_ASSERT(mContent.mCounters->mCounterStyle.IsResolved(),
-               "Counter style should have been resolved");
     return mContent.mCounters;
   }
 
@@ -2429,7 +2428,7 @@ class nsStyleContentData {
     MOZ_ASSERT(mContent.mImage);
   }
 
-  void Resolve(nsPresContext*, const nsStyleContentData*);
+  void Resolve(mozilla::dom::Document&, const nsStyleContentData*);
 
  private:
   StyleContentType mType;
@@ -2458,8 +2457,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleContent {
   explicit nsStyleContent(const mozilla::dom::Document&);
   nsStyleContent(const nsStyleContent& aContent);
   ~nsStyleContent();
-  void FinishStyle(nsPresContext*, const nsStyleContent*);
-  const static bool kHasFinishStyle = true;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleContent*);
+  const static bool kHasTriggerImageLoads = true;
 
   nsChangeHint CalcDifference(const nsStyleContent& aNewData) const;
 
@@ -2523,8 +2522,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleUIReset {
   explicit nsStyleUIReset(const mozilla::dom::Document&);
   nsStyleUIReset(const nsStyleUIReset& aOther);
   ~nsStyleUIReset();
-  void FinishStyle(nsPresContext*, const nsStyleUIReset*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleUIReset*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleUIReset& aNewData) const;
 
@@ -2562,8 +2561,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleUI {
   nsStyleUI(const nsStyleUI& aOther);
   ~nsStyleUI();
 
-  void FinishStyle(nsPresContext*, const nsStyleUI*);
-  const static bool kHasFinishStyle = true;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleUI*);
+  const static bool kHasTriggerImageLoads = true;
 
   nsChangeHint CalcDifference(const nsStyleUI& aNewData) const;
 
@@ -2590,8 +2589,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleXUL {
   explicit nsStyleXUL(const mozilla::dom::Document&);
   nsStyleXUL(const nsStyleXUL& aSource);
   ~nsStyleXUL();
-  void FinishStyle(nsPresContext*, const nsStyleXUL*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleXUL*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleXUL& aNewData) const;
 
@@ -2608,8 +2607,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleColumn {
   explicit nsStyleColumn(const mozilla::dom::Document&);
   nsStyleColumn(const nsStyleColumn& aSource);
   ~nsStyleColumn();
-  void FinishStyle(nsPresContext*, const nsStyleColumn*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleColumn*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleColumn& aNewData) const;
 
@@ -2736,8 +2735,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleSVG {
   explicit nsStyleSVG(const mozilla::dom::Document&);
   nsStyleSVG(const nsStyleSVG& aSource);
   ~nsStyleSVG();
-  void FinishStyle(nsPresContext*, const nsStyleSVG*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleSVG*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleSVG& aNewData) const;
 
@@ -2835,8 +2834,8 @@ struct nsStyleFilter {
   nsStyleFilter();
   nsStyleFilter(const nsStyleFilter& aSource);
   ~nsStyleFilter();
-  void FinishStyle(nsPresContext*, const nsStyleFilter*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleFilter*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsStyleFilter& operator=(const nsStyleFilter& aOther);
 
@@ -2893,8 +2892,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleSVGReset {
   // Resolves and tracks the images in mMask.  Only called with a Servo-backed
   // style system, where those images must be resolved later than the OMT
   // nsStyleSVGReset constructor call.
-  void FinishStyle(nsPresContext*, const nsStyleSVGReset*);
-  const static bool kHasFinishStyle = true;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleSVGReset*);
+  const static bool kHasTriggerImageLoads = true;
 
   nsChangeHint CalcDifference(const nsStyleSVGReset& aNewData) const;
 
@@ -2926,8 +2925,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleEffects {
   explicit nsStyleEffects(const mozilla::dom::Document&);
   nsStyleEffects(const nsStyleEffects& aSource);
   ~nsStyleEffects();
-  void FinishStyle(nsPresContext*, const nsStyleEffects*) {}
-  const static bool kHasFinishStyle = false;
+  void TriggerImageLoads(mozilla::dom::Document&, const nsStyleEffects*) {}
+  const static bool kHasTriggerImageLoads = false;
 
   nsChangeHint CalcDifference(const nsStyleEffects& aNewData) const;
 

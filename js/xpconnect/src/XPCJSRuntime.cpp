@@ -156,7 +156,8 @@ class AsyncFreeSnowWhite : public Runnable {
 
   nsresult Dispatch() {
     nsCOMPtr<nsIRunnable> self(this);
-    return NS_IdleDispatchToCurrentThread(self.forget(), 500);
+    return NS_DispatchToCurrentThreadQueue(self.forget(), 500,
+                                           EventQueuePriority::Idle);
   }
 
   void Start(bool aContinuation = false, bool aPurge = false) {
@@ -200,7 +201,6 @@ CompartmentPrivate::CompartmentPrivate(JS::Compartment* c,
       wasShutdown(false),
       mWrappedJSMap(JSObject2WrappedJSMap::newMap(XPC_JS_MAP_LENGTH)) {
   MOZ_COUNT_CTOR(xpc::CompartmentPrivate);
-  mozilla::PodArrayZero(wrapperDenialWarnings);
 }
 
 CompartmentPrivate::~CompartmentPrivate() {
@@ -217,7 +217,9 @@ void CompartmentPrivate::SystemIsBeingShutDown() {
   }
 }
 
-RealmPrivate::RealmPrivate(JS::Realm* realm) : scriptability(realm) {}
+RealmPrivate::RealmPrivate(JS::Realm* realm) : scriptability(realm) {
+  mozilla::PodArrayZero(wrapperDenialWarnings);
+}
 
 /* static */ void RealmPrivate::Init(HandleObject aGlobal,
                                      const SiteIdentifier& aSite) {
@@ -2249,7 +2251,7 @@ class XPCJSRuntimeStats : public JS::RuntimeStats {
       RootedObject global(cx, JS::GetRealmGlobalOrNull(realm));
       if (global) {
         RefPtr<nsGlobalWindowInner> window;
-        if (NS_SUCCEEDED(UNWRAP_OBJECT(Window, global, window))) {
+        if (NS_SUCCEEDED(UNWRAP_NON_WRAPPER_OBJECT(Window, global, window))) {
           // The global is a |window| object.  Use the path prefix that
           // we should have already created for it.
           if (mTopWindowPaths->Get(window->WindowID(), &extras->pathPrefix))
@@ -2277,7 +2279,7 @@ class XPCJSRuntimeStats : public JS::RuntimeStats {
     RootedObject global(cx, JS::GetRealmGlobalOrNull(realm));
     if (global) {
       RefPtr<nsGlobalWindowInner> window;
-      if (NS_SUCCEEDED(UNWRAP_OBJECT(Window, global, window))) {
+      if (NS_SUCCEEDED(UNWRAP_NON_WRAPPER_OBJECT(Window, global, window))) {
         // The global is a |window| object.  Use the path prefix that
         // we should have already created for it.
         if (mWindowPaths->Get(window->WindowID(), &extras->jsPathPrefix)) {

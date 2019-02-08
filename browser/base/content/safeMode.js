@@ -3,11 +3,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const appStartup = Services.startup;
 
-ChromeUtils.import("resource://gre/modules/ResetProfile.jsm");
+const {ResetProfile} = ChromeUtils.import("resource://gre/modules/ResetProfile.jsm");
 
 var defaultToReset = false;
 
@@ -77,6 +77,4 @@ function onLoad() {
     document.documentElement.getButton("extra1").hidden = true;
     document.getElementById("resetProfileInstead").hidden = true;
   }
-  document.l10n.translateElements(document.querySelectorAll("label, description")).then(
-    () => window.sizeToContent());
 }

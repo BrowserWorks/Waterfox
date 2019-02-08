@@ -25,11 +25,11 @@ const { updateFonts } = require("./actions/fonts");
 const {
   applyInstance,
   resetFontEditor,
+  setEditorDisabled,
   updateAxis,
   updateCustomInstance,
   updateFontEditor,
   updateFontProperty,
-  updateWarningMessage,
 } = require("./actions/font-editor");
 const { updatePreviewText } = require("./actions/font-options");
 
@@ -53,8 +53,6 @@ const REGISTERED_AXES_TO_FONT_PROPERTIES = {
 };
 const REGISTERED_AXES = Object.keys(REGISTERED_AXES_TO_FONT_PROPERTIES);
 
-const HISTOGRAM_N_FONT_AXES = "DEVTOOLS_FONTEDITOR_N_FONT_AXES";
-const HISTOGRAM_N_FONTS_RENDERED = "DEVTOOLS_FONTEDITOR_N_FONTS_RENDERED";
 const HISTOGRAM_FONT_TYPE_DISPLAYED = "DEVTOOLS_FONTEDITOR_FONT_TYPE_DISPLAYED";
 
 class FontInspector {
@@ -551,8 +549,7 @@ class FontInspector {
     return this.inspector &&
            this.inspector.selection.nodeFront &&
            this.inspector.selection.isConnected() &&
-           this.inspector.selection.isElementNode() &&
-           !this.inspector.selection.isPseudoElementNode();
+           this.inspector.selection.isElementNode();
   }
 
   /**
@@ -561,12 +558,6 @@ class FontInspector {
   logTelemetryProbesOnNewNode() {
     const { fontEditor } = this.store.getState();
     const { telemetry } = this.inspector;
-
-    // Log the number of font faces used to render content of the element.
-    const nbOfFontsRendered = fontEditor.fonts.length;
-    if (nbOfFontsRendered) {
-      telemetry.getHistogramById(HISTOGRAM_N_FONTS_RENDERED).add(nbOfFontsRendered);
-    }
 
     // Log data about the currently edited font (if any).
     // Note that the edited font is always the first one from the fontEditor.fonts array.
@@ -578,9 +569,6 @@ class FontInspector {
     const nbOfAxes = editedFont.variationAxes ? editedFont.variationAxes.length : 0;
     telemetry.getHistogramById(HISTOGRAM_FONT_TYPE_DISPLAYED).add(
       !nbOfAxes ? "nonvariable" : "variable");
-    if (nbOfAxes) {
-      telemetry.getHistogramById(HISTOGRAM_N_FONT_AXES).add(nbOfAxes);
-    }
   }
 
   /**
@@ -805,13 +793,6 @@ class FontInspector {
    */
   async refreshFontEditor() {
     if (!this.store || !this.isSelectedNodeValid()) {
-      if (this.inspector.selection.isPseudoElementNode()) {
-        const noPseudoWarning = getStr("fontinspector.noPseduoWarning");
-        this.store.dispatch(resetFontEditor());
-        this.store.dispatch(updateWarningMessage(noPseudoWarning));
-        return;
-      }
-
       // If the selection is a TextNode, switch selection to be its parent node.
       if (this.inspector.selection.isTextNode()) {
         const selection = this.inspector.selection;
@@ -876,6 +857,9 @@ class FontInspector {
     });
 
     this.store.dispatch(updateFontEditor(fonts, properties, node.actorID));
+    const isPseudo = this.inspector.selection.isPseudoElementNode();
+    this.store.dispatch(setEditorDisabled(isPseudo));
+
     this.inspector.emit("fonteditor-updated");
     // Listen to manual changes in the Rule view that could update the Font Editor state
     this.ruleView.on("property-value-updated", this.onRulePropertyUpdated);

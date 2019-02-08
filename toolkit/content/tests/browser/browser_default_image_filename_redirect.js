@@ -6,7 +6,7 @@
  * doggy.png in file picker dialog.
  */
 
-let {WebRequest} = ChromeUtils.import("resource://gre/modules/WebRequest.jsm", {});
+let {WebRequest} = ChromeUtils.import("resource://gre/modules/WebRequest.jsm");
 let MockFilePicker = SpecialPowers.MockFilePicker;
 MockFilePicker.init(window);
 add_task(async function() {
@@ -25,7 +25,6 @@ add_task(async function() {
 
   await BrowserTestUtils.withNewTab(URL_FIREBIRD,
   async function(browser) {
-
     // Click image to show context menu.
     let popupShownPromise = BrowserTestUtils.waitForEvent(document, "popupshown");
     await BrowserTestUtils.synthesizeMouseAtCenter("img",

@@ -26,54 +26,60 @@
 //   ProfileBuffer. The sampling is done from off-thread, and so uses
 //   SuspendAndSampleAndResumeThread() to get the register values.
 
-#include <algorithm>
-#include <ostream>
-#include <fstream>
-#include <sstream>
-#include <errno.h>
-
 #include "platform.h"
-#include "PlatformMacros.h"
+
+#include "GeckoProfiler.h"
+#include "GeckoProfilerReporter.h"
+#include "PageInformation.h"
+#include "ProfiledThreadData.h"
+#include "ProfilerBacktrace.h"
+#include "ProfileBuffer.h"
+#include "ProfilerIOInterposeObserver.h"
+#include "ProfilerMarkerPayload.h"
+#include "ProfilerParent.h"
+#include "RegisteredThread.h"
+#include "shared-libraries.h"
+#include "ThreadInfo.h"
+#include "VTuneProfiler.h"
+
+#include "js/TraceLoggerAPI.h"
+#include "memory_hooks.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Atomics.h"
-#include "mozilla/Printf.h"
-#include "mozilla/UniquePtr.h"
-#include "mozilla/Vector.h"
-#include "GeckoProfiler.h"
-#include "VTuneProfiler.h"
-#include "GeckoProfilerReporter.h"
-#include "ProfilerIOInterposeObserver.h"
 #include "mozilla/AutoProfilerLabel.h"
 #include "mozilla/ExtensionPolicyService.h"
+#include "mozilla/extensions/WebExtensionPolicy.h"
+#include "mozilla/Printf.h"
+#include "mozilla/Services.h"
 #include "mozilla/StackWalk.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/SystemGroup.h"
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Tuple.h"
-#include "mozilla/extensions/WebExtensionPolicy.h"
-#include "ThreadInfo.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/Vector.h"
+#include "nsDirectoryServiceDefs.h"
+#include "nsDirectoryServiceUtils.h"
 #include "nsIHttpProtocolHandler.h"
 #include "nsIObserverService.h"
 #include "nsIPropertyBag2.h"
 #include "nsIXULAppInfo.h"
 #include "nsIXULRuntime.h"
-#include "nsDirectoryServiceUtils.h"
-#include "nsDirectoryServiceDefs.h"
 #include "nsJSPrincipals.h"
 #include "nsMemoryReporterManager.h"
-#include "nsScriptSecurityManager.h"
-#include "nsXULAppAPI.h"
 #include "nsProfilerStartParams.h"
-#include "ProfilerParent.h"
-#include "mozilla/Services.h"
+#include "nsScriptSecurityManager.h"
 #include "nsThreadUtils.h"
-#include "ProfilerMarkerPayload.h"
-#include "memory_hooks.h"
-#include "shared-libraries.h"
+#include "nsXULAppAPI.h"
 #include "prdtoa.h"
 #include "prtime.h"
-#include "js/TraceLoggerAPI.h"
+
+#include <algorithm>
+#include <errno.h>
+#include <fstream>
+#include <ostream>
+#include <sstream>
 
 #if defined(XP_WIN)
 #  include <processthreadsapi.h>  // for GetCurrentProcessId()
@@ -445,6 +451,7 @@ class ActivePS {
       mFilters[i] = aFilters[i];
     }
 
+#if !defined(RELEASE_OR_BETA)
     if (mInterposeObserver) {
       // We need to register the observer on the main thread, because we want
       // to observe IO that happens on the main thread.
@@ -462,9 +469,11 @@ class ActivePS {
             }));
       }
     }
+#endif
   }
 
   ~ActivePS() {
+#if !defined(RELEASE_OR_BETA)
     if (mInterposeObserver) {
       // We need to unregister the observer on the main thread, because that's
       // where we've registered it.
@@ -479,6 +488,7 @@ class ActivePS {
             }));
       }
     }
+#endif
   }
 
   bool ThreadSelected(const char* aThreadName) {
@@ -1959,6 +1969,8 @@ static void locked_profiler_stream_json_for_this_process(
   { StreamPages(aLock, aWriter); }
   aWriter.EndArray();
 
+  buffer.StreamProfilerOverheadToJSON(aWriter, CorePS::ProcessStartTime(),
+                                      aSinceTime);
   buffer.StreamCountersToJSON(aWriter, CorePS::ProcessStartTime(), aSinceTime);
   buffer.StreamMemoryToJSON(aWriter, CorePS::ProcessStartTime(), aSinceTime);
 
@@ -2255,6 +2267,7 @@ void SamplerThread::Run() {
     // This scope is for |lock|. It ends before we sleep below.
     {
       PSAutoLock lock(gPSMutex);
+      TimeStamp lockAcquired = TimeStamp::Now();
 
       if (!ActivePS::Exists(lock)) {
         return;
@@ -2268,6 +2281,7 @@ void SamplerThread::Run() {
       }
 
       ActivePS::Buffer(lock).DeleteExpiredStoredMarkers();
+      TimeStamp expiredMarkersCleaned = TimeStamp::Now();
 
       if (!ActivePS::IsPaused(lock)) {
         const nsTArray<LiveProfiledThreadData>& liveThreads =
@@ -2313,6 +2327,7 @@ void SamplerThread::Run() {
             buffer.AddEntry(ProfileBufferEntry::Number(number));
           }
         }
+        TimeStamp countersSampled = TimeStamp::Now();
 
         for (auto& thread : liveThreads) {
           RegisteredThread* registeredThread = thread.mRegisteredThread;
@@ -2360,6 +2375,18 @@ void SamplerThread::Run() {
         // SuspendAndSampleAndResumeThread, which is why it is done here.
         CorePS::Lul(lock)->MaybeShowStats();
 #endif
+        TimeStamp threadsSampled = TimeStamp::Now();
+
+        buffer.AddEntry(
+            ProfileBufferEntry::ProfilerOverheadTime(delta.ToMilliseconds()));
+        buffer.AddEntry(ProfileBufferEntry::ProfilerOverheadDuration(
+            (lockAcquired - sampleStart).ToMilliseconds()));
+        buffer.AddEntry(ProfileBufferEntry::ProfilerOverheadDuration(
+            (expiredMarkersCleaned - lockAcquired).ToMilliseconds()));
+        buffer.AddEntry(ProfileBufferEntry::ProfilerOverheadDuration(
+            (countersSampled - expiredMarkersCleaned).ToMilliseconds()));
+        buffer.AddEntry(ProfileBufferEntry::ProfilerOverheadDuration(
+            (threadsSampled - countersSampled).ToMilliseconds()));
       }
 
       Maybe<double> duration = ActivePS::Duration(lock);

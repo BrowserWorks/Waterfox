@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/nsFormAutoCompleteResult.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {FormAutoCompleteResult} = ChromeUtils.import("resource://gre/modules/nsFormAutoCompleteResult.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.defineModuleGetter(this, "SearchSuggestionController",
                                "resource://gre/modules/SearchSuggestionController.jsm");
 
@@ -135,13 +135,9 @@ SuggestAutoComplete.prototype = {
       return;
     }
 
-    Services.search.init(aResult => {
-      if (!Components.isSuccessCode(aResult)) {
-        Cu.reportError("Could not initialize search service, bailing out: " + aResult);
-        return;
-      }
+    Services.search.init().then(() => {
       this._triggerSearch(searchString, formHistorySearchParam, listener, privacyMode);
-    });
+    }).catch(result => Cu.reportError("Could not initialize search service, bailing out: " + result));
   },
 
   /**

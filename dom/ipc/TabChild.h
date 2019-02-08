@@ -26,6 +26,7 @@
 #include "nsWeakReference.h"
 #include "nsITabChild.h"
 #include "nsITooltipListener.h"
+#include "nsIWebProgressListener.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/TabContext.h"
 #include "mozilla/dom/CoalescedMouseData.h"
@@ -46,7 +47,9 @@
 
 class nsIDOMWindowUtils;
 class nsIHttpChannel;
+class nsIRequest;
 class nsISerialEventTarget;
+class nsIWebProgress;
 class nsWebBrowser;
 
 template <typename T>
@@ -77,6 +80,8 @@ class TabGroup;
 class ClonedMessageData;
 class CoalescedMouseData;
 class CoalescedWheelData;
+class RequestData;
+class WebProgressData;
 
 class TabChildMessageManager : public ContentFrameMessageManager,
                                public nsIMessageSender,
@@ -198,6 +203,7 @@ class TabChild final : public TabChildBase,
                        public nsSupportsWeakReference,
                        public nsITabChild,
                        public nsIObserver,
+                       public nsIWebProgressListener,
                        public TabContext,
                        public nsITooltipListener,
                        public mozilla::ipc::IShmemAllocator {
@@ -208,6 +214,8 @@ class TabChild final : public TabChildBase,
   typedef mozilla::layers::SetAllowedTouchBehaviorCallback
       SetAllowedTouchBehaviorCallback;
   typedef mozilla::layers::TouchBehaviorFlags TouchBehaviorFlags;
+
+  friend class PBrowserChild;
 
  public:
   /**
@@ -252,6 +260,7 @@ class TabChild final : public TabChildBase,
   NS_DECL_NSIWINDOWPROVIDER
   NS_DECL_NSITABCHILD
   NS_DECL_NSIOBSERVER
+  NS_DECL_NSIWEBPROGRESSLISTENER
   NS_DECL_NSITOOLTIPLISTENER
 
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(TabChild, TabChildBase)
@@ -776,6 +785,11 @@ class TabChild final : public TabChildBase,
   bool CreateRemoteLayerManager(
       mozilla::layers::PCompositorBridgeChild* aCompositorChild);
 
+  nsresult PrepareProgressListenerData(nsIWebProgress* aWebProgress,
+                                       nsIRequest* aRequest,
+                                       WebProgressData& aWebProgressData,
+                                       RequestData& aRequestData);
+
   class DelayedDeleteRunnable;
 
   TextureFactoryIdentifier mTextureFactoryIdentifier;
@@ -801,6 +815,7 @@ class TabChild final : public TabChildBase,
   SetAllowedTouchBehaviorCallback mSetAllowedTouchBehaviorCallback;
   bool mHasValidInnerSize;
   bool mDestroyed;
+  bool mProgressListenerRegistered;
   // Position of client area relative to the outer window
   LayoutDeviceIntPoint mClientOffset;
   // Position of tab, relative to parent widget (typically the window)

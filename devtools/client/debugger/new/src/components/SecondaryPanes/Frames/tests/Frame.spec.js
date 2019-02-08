@@ -2,42 +2,40 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
+// @flow
+
 import React from "react";
 import { shallow, mount } from "enzyme";
 import Frame from "../Frame.js";
+import { makeMockFrame, makeMockSource } from "../../../../utils/test-mockup";
 
 import FrameMenu from "../FrameMenu";
 jest.mock("../FrameMenu", () => jest.fn());
 
-function render(frameToSelect = {}, overrides = {}, propsOverrides = {}) {
-  const defaultFrame = {
-    id: 1,
-    source: {
-      url: "foo-view.js",
-      isBlackBoxed: false
-    },
-    displayName: "renderFoo",
-    frameworkGroupingOn: false,
-    toggleFrameworkGrouping: jest.fn(),
-    library: false,
-    location: {
-      line: 10
-    }
-  };
-  const frame = { ...defaultFrame, ...overrides };
-  const selectedFrame = { ...frame, ...frameToSelect };
-  const selectFrame = jest.fn();
-  const toggleBlackBox = jest.fn();
-
-  const props = {
+function frameProperties(frame, selectedFrame: any, overrides = {}) {
+  return {
     frame,
     selectedFrame,
     copyStackTrace: jest.fn(),
     contextTypes: {},
-    selectFrame,
-    toggleBlackBox,
-    ...propsOverrides
+    selectFrame: jest.fn(),
+    toggleBlackBox: jest.fn(),
+    displayFullUrl: false,
+    frameworkGroupingOn: false,
+    selectable: true,
+    toggleFrameworkGrouping: null,
+    ...overrides
   };
+}
+
+function render(frameToSelect = {}, overrides = {}, propsOverrides = {}) {
+  const source = makeMockSource("foo-view.js");
+  const defaultFrame = makeMockFrame("1", source, undefined, 10, "renderFoo");
+
+  const frame = { ...defaultFrame, ...overrides };
+  const selectedFrame = { ...frame, ...frameToSelect };
+
+  const props = frameProperties(frame, selectedFrame, propsOverrides);
   const component = shallow(<Frame {...props} />);
   return { component, props };
 }
@@ -49,74 +47,51 @@ describe("Frame", () => {
   });
 
   it("user frame (not selected)", () => {
-    const { component } = render({ id: 2 });
+    const { component } = render({ id: "2" });
     expect(component).toMatchSnapshot();
   });
 
   it("library frame", () => {
+    const source = makeMockSource("backbone.js");
     const backboneFrame = {
-      id: 3,
-      source: { url: "backbone.js" },
-      displayName: "updateEvents",
-      library: "backbone",
-      location: {
-        line: 12
-      }
+      ...makeMockFrame("3", source, undefined, 12, "updateEvents"),
+      library: "backbone"
     };
 
-    const { component } = render({ id: 3 }, backboneFrame);
+    const { component } = render({ id: "3" }, backboneFrame);
     expect(component).toMatchSnapshot();
   });
 
   it("filename only", () => {
-    const frame = {
-      id: 1,
-      source: {
-        url: "https://firefox.com/assets/src/js/foo-view.js"
-      },
-      displayName: "renderFoo",
-      location: {
-        line: 10
-      }
-    };
+    const source = makeMockSource(
+      "https://firefox.com/assets/src/js/foo-view.js"
+    );
+    const frame = makeMockFrame("1", source, undefined, 10, "renderFoo");
 
-    const component = mount(<Frame frame={frame} />);
-    expect(component.text()).toBe("\trenderFoo foo-view.js:10\n");
+    const props = frameProperties(frame, null);
+    const component = mount(<Frame {...props} />);
+    expect(component.text()).toBe("    renderFoo foo-view.js:10");
   });
 
   it("full URL", () => {
     const url = `https://${"a".repeat(100)}.com/assets/src/js/foo-view.js`;
-    const frame = {
-      id: 1,
-      source: {
-        url
-      },
-      displayName: "renderFoo",
-      location: {
-        line: 10
-      }
-    };
+    const source = makeMockSource(url);
+    const frame = makeMockFrame("1", source, undefined, 10, "renderFoo");
 
-    const component = mount(<Frame frame={frame} displayFullUrl={true} />);
-    expect(component.text()).toBe(`\trenderFoo ${url}:10\n`);
+    const props = frameProperties(frame, null, { displayFullUrl: true });
+    const component = mount(<Frame {...props} />);
+    expect(component.text()).toBe(`    renderFoo ${url}:10`);
   });
 
   it("getFrameTitle", () => {
     const url = `https://${"a".repeat(100)}.com/assets/src/js/foo-view.js`;
-    const frame = {
-      id: 1,
-      source: {
-        url
-      },
-      displayName: "renderFoo",
-      location: {
-        line: 10
-      }
-    };
+    const source = makeMockSource(url);
+    const frame = makeMockFrame("1", source, undefined, 10, "renderFoo");
 
-    const component = shallow(
-      <Frame frame={frame} getFrameTitle={x => `Jump to ${x}`} />
-    );
+    const props = frameProperties(frame, null, {
+      getFrameTitle: x => `Jump to ${x}`
+    });
+    const component = shallow(<Frame {...props} />);
     expect(component.prop("title")).toBe(`Jump to ${url}:10`);
     expect(component).toMatchSnapshot();
   });

@@ -381,6 +381,32 @@ static bool AsyncTransformShouldBeUnapplied(
   return false;
 }
 
+/**
+ * Given a fixed-position layer, check if it's fixed with respect to the
+ * zoomed APZC.
+ */
+static bool IsFixedToZoomContainer(Layer* aFixedLayer) {
+  ScrollableLayerGuid::ViewID targetId =
+      aFixedLayer->GetFixedPositionScrollContainerId();
+  MOZ_ASSERT(targetId != ScrollableLayerGuid::NULL_SCROLL_ID);
+  LayerMetricsWrapper result(aFixedLayer, LayerMetricsWrapper::StartAt::BOTTOM);
+  while (result) {
+    if (Maybe<ScrollableLayerGuid::ViewID> zoomedScrollId =
+            result.IsAsyncZoomContainer()) {
+      return *zoomedScrollId == targetId;
+    }
+    // Don't ascend into another layer tree. Scroll IDs are not unique
+    // across layer trees, and in any case position:fixed doesn't reach
+    // across documents.
+    if (result.AsRefLayer() != nullptr) {
+      break;
+    }
+
+    result = result.GetParent();
+  }
+  return false;
+}
+
 // If |aLayer| is fixed or sticky, returns the scroll id of the scroll frame
 // that it's fixed or sticky to. Otherwise, returns Nothing().
 static Maybe<ScrollableLayerGuid::ViewID> IsFixedOrSticky(Layer* aLayer) {
@@ -400,7 +426,7 @@ void AsyncCompositionManager::AlignFixedAndStickyLayers(
     ScrollableLayerGuid::ViewID aTransformScrollId,
     const LayerToParentLayerMatrix4x4& aPreviousTransformForRoot,
     const LayerToParentLayerMatrix4x4& aCurrentTransformForRoot,
-    const ScreenMargin& aFixedLayerMargins, ClipPartsCache* aClipPartsCache) {
+    const ScreenMargin& aFixedLayerMargins, ClipPartsCache& aClipPartsCache) {
   Layer* layer = aStartTraversalAt;
   bool needsAsyncTransformUnapplied = false;
   if (Maybe<ScrollableLayerGuid::ViewID> fixedTo = IsFixedOrSticky(layer)) {
@@ -422,6 +448,19 @@ void AsyncCompositionManager::AlignFixedAndStickyLayers(
     }
     return;
   }
+
+  AdjustFixedOrStickyLayer(aTransformedSubtreeRoot, layer, aTransformScrollId,
+                           aPreviousTransformForRoot, aCurrentTransformForRoot,
+                           aFixedLayerMargins, aClipPartsCache);
+}
+
+void AsyncCompositionManager::AdjustFixedOrStickyLayer(
+    Layer* aTransformedSubtreeRoot, Layer* aFixedOrSticky,
+    ScrollableLayerGuid::ViewID aTransformScrollId,
+    const LayerToParentLayerMatrix4x4& aPreviousTransformForRoot,
+    const LayerToParentLayerMatrix4x4& aCurrentTransformForRoot,
+    const ScreenMargin& aFixedLayerMargins, ClipPartsCache& aClipPartsCache) {
+  Layer* layer = aFixedOrSticky;
 
   // Insert a translation so that the position of the anchor point is the same
   // before and after the change to the transform of aTransformedSubtreeRoot.
@@ -529,7 +568,7 @@ void AsyncCompositionManager::AlignFixedAndStickyLayers(
       layer,
       ViewAs<ParentLayerPixel>(translation,
                                PixelCastJustification::NoTransformOnLayer),
-      true, aClipPartsCache);
+      true, &aClipPartsCache);
 
   // Propragate the unconsumed portion of the translation to descendant
   // fixed/sticky layers.
@@ -873,13 +912,48 @@ bool AsyncCompositionManager::ApplyAsyncContentTransformToTree(
   // the individual parts for descendant layers.
   ClipPartsCache clipPartsCache;
 
+  Layer* zoomContainer = nullptr;
+  Maybe<LayerMetricsWrapper> zoomedMetrics;
+
   ForEachNode<ForwardIterator>(
       aLayer,
-      [&stackDeferredClips](Layer* layer) {
+      [&](Layer* layer) {
         stackDeferredClips.push(Maybe<ParentLayerIntRect>());
+
+        // If we encounter the async zoom container, find the corresponding
+        // APZC and stash it into |zoomedMetrics|.
+        // (We stash it in the form of a LayerMetricsWrapper because
+        // APZSampler requires going through that rather than using the APZC
+        // directly.)
+        // We do this on the way down the tree (i.e. here in the pre-action)
+        // so that by the time we encounter the layers with the RCD-RSF's
+        // scroll metadata (which will be descendants of the async zoom
+        // container), we can check for it and know we should only apply the
+        // scroll portion of the async transform to those layers (as the zoom
+        // portion will go on the async zoom container).
+        if (Maybe<ScrollableLayerGuid::ViewID> zoomedScrollId =
+                layer->IsAsyncZoomContainer()) {
+          zoomContainer = layer;
+          ForEachNode<ForwardIterator>(
+              LayerMetricsWrapper(layer),
+              [zoomedScrollId, &zoomedMetrics](LayerMetricsWrapper aWrapper) {
+                // Do not descend into layer subtrees with a different layers
+                // id.
+                if (aWrapper.AsRefLayer()) {
+                  return TraversalFlag::Skip;
+                }
+
+                if (aWrapper.Metrics().GetScrollId() == *zoomedScrollId) {
+                  zoomedMetrics = Some(aWrapper);
+                  MOZ_ASSERT(zoomedMetrics->GetApzc());
+                  return TraversalFlag::Abort;
+                }
+
+                return TraversalFlag::Continue;
+              });
+        }
       },
-      [this, &aOutFoundRoot, &stackDeferredClips, &appliedTransform,
-       &clipPartsCache](Layer* layer) {
+      [&](Layer* layer) {
         Maybe<ParentLayerIntRect> clipDeferredFromChildren =
             stackDeferredClips.top();
         stackDeferredClips.pop();
@@ -962,8 +1036,15 @@ bool AsyncCompositionManager::ApplyAsyncContentTransformToTree(
 
             hasAsyncTransform = true;
 
+            AsyncTransformComponents asyncTransformComponents =
+                (zoomedMetrics &&
+                 sampler->GetGuid(*zoomedMetrics) == sampler->GetGuid(wrapper))
+                    ? AsyncTransformComponents{AsyncTransformComponent::eScroll}
+                    : ScrollAndZoom;
+
             AsyncTransform asyncTransformWithoutOverscroll =
-                sampler->GetCurrentAsyncTransform(wrapper);
+                sampler->GetCurrentAsyncTransform(wrapper,
+                                                  asyncTransformComponents);
             AsyncTransformComponentMatrix overscrollTransform =
                 sampler->GetOverscrollTransform(wrapper);
             AsyncTransformComponentMatrix asyncTransform =
@@ -1077,7 +1158,7 @@ bool AsyncCompositionManager::ApplyAsyncContentTransformToTree(
             AlignFixedAndStickyLayers(layer, layer, metrics.GetScrollId(),
                                       oldTransform,
                                       transformWithoutOverscrollOrOmta,
-                                      fixedLayerMargins, &clipPartsCache);
+                                      fixedLayerMargins, clipPartsCache);
 
             // Combine the local clip with the ancestor scrollframe clip. This
             // is not included in the async transform above, since the ancestor
@@ -1127,6 +1208,36 @@ bool AsyncCompositionManager::ApplyAsyncContentTransformToTree(
                 ancestorMaskLayers.AppendElement(ancestorMaskLayer);
               }
             }
+          }
+
+          if (Maybe<ScrollableLayerGuid::ViewID> zoomedScrollId =
+                  layer->IsAsyncZoomContainer()) {
+            if (zoomedMetrics) {
+              AsyncTransform zoomTransform = sampler->GetCurrentAsyncTransform(
+                  *zoomedMetrics, {AsyncTransformComponent::eZoom});
+              hasAsyncTransform = true;
+              combinedAsyncTransform *=
+                  AsyncTransformComponentMatrix(zoomTransform);
+            } else {
+              // TODO: Is this normal? It happens on some pages, such as
+              // about:config on mobile, for just one frame or so, before the
+              // scroll metadata for zoomedScrollId appears in the layer tree.
+            }
+          }
+
+          if (zoomedMetrics && layer->GetIsFixedPosition() &&
+              !layer->GetParent()->GetIsFixedPosition() &&
+              IsFixedToZoomContainer(layer)) {
+            LayerToParentLayerMatrix4x4 currentTransform;
+            LayerToParentLayerMatrix4x4 previousTransform =
+                CSSTransformMatrix() *
+                CompleteAsyncTransform(
+                    sampler->GetCurrentAsyncViewportRelativeTransform(
+                        *zoomedMetrics));
+            AdjustFixedOrStickyLayer(zoomContainer, layer,
+                                     sampler->GetGuid(*zoomedMetrics).mScrollId,
+                                     previousTransform, currentTransform,
+                                     fixedLayerMargins, clipPartsCache);
           }
         }
 
@@ -1322,17 +1433,8 @@ bool AsyncCompositionManager::TransformShadowTree(
   mPreviousFrameTimeStamp = wantNextFrame ? aCurrentFrame : TimeStamp();
 
   if (!(aSkip & CompositorBridgeParentBase::TransformsToSkip::APZ)) {
-    // FIXME/bug 775437: unify this interface with the ~native-fennec
-    // derived code
-    //
-    // Attempt to apply an async content transform to any layer that has
-    // an async pan zoom controller (which means that it is rendered
-    // async using Gecko). If this fails, fall back to transforming the
-    // primary scrollable layer.  "Failing" here means that we don't
-    // find a frame that is async scrollable.  Note that the fallback
-    // code also includes Fennec which is rendered async.  Fennec uses
-    // its own platform-specific async rendering that is done partially
-    // in Gecko and partially in Java.
+    // Apply an async content transform to any layer that has
+    // an async pan zoom controller.
     bool foundRoot = false;
     if (ApplyAsyncContentTransformToTree(root, &foundRoot)) {
 #if defined(MOZ_WIDGET_ANDROID)

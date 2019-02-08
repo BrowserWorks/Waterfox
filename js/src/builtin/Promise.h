@@ -10,6 +10,7 @@
 #include "js/Promise.h"
 
 #include "builtin/SelfHostingDefines.h"
+#include "ds/Fifo.h"
 #include "threading/ConditionVariable.h"
 #include "threading/Mutex.h"
 #include "vm/NativeObject.h"
@@ -422,6 +423,8 @@ class MOZ_NON_TEMPORARY_CLASS PromiseLookup final {
   }
 };
 
+class OffThreadPromiseRuntimeState;
+
 // [SMDOC] OffThreadPromiseTask: an off-main-thread task that resolves a promise
 //
 // An OffThreadPromiseTask is an abstract base class holding a JavaScript
@@ -497,6 +500,8 @@ class OffThreadPromiseTask : public JS::Dispatchable {
   void operator=(const OffThreadPromiseTask&) = delete;
   OffThreadPromiseTask(const OffThreadPromiseTask&) = delete;
 
+  void unregister(OffThreadPromiseRuntimeState& state);
+
  protected:
   OffThreadPromiseTask(JSContext* cx, Handle<PromiseObject*> promise);
 
@@ -526,7 +531,7 @@ using OffThreadPromiseTaskSet =
     HashSet<OffThreadPromiseTask*, DefaultHasher<OffThreadPromiseTask*>,
             SystemAllocPolicy>;
 
-using DispatchableVector = Vector<JS::Dispatchable*, 0, SystemAllocPolicy>;
+using DispatchableFifo = Fifo<JS::Dispatchable*, 0, SystemAllocPolicy>;
 
 class OffThreadPromiseRuntimeState {
   friend class OffThreadPromiseTask;
@@ -536,12 +541,24 @@ class OffThreadPromiseRuntimeState {
   JS::DispatchToEventLoopCallback dispatchToEventLoopCallback_;
   void* dispatchToEventLoopClosure_;
 
-  // These fields are mutated by any thread and are guarded by mutex_.
+  // All following fields are mutated by any thread and are guarded by mutex_.
   Mutex mutex_;
-  ConditionVariable allCanceled_;
+
+  // A set of all OffThreadPromiseTasks that have successfully called 'init'.
+  // OffThreadPromiseTask's destructor removes them from the set.
   OffThreadPromiseTaskSet live_;
+
+  // The allCancelled_ condition is waited on and notified during engine
+  // shutdown, communicating when all off-thread tasks in live_ are safe to be
+  // destroyed from the (shutting down) main thread. This condition is met when
+  // live_.count() == numCanceled_ where "canceled" means "the
+  // DispatchToEventLoopCallback failed after this task finished execution".
+  ConditionVariable allCanceled_;
   size_t numCanceled_;
-  DispatchableVector internalDispatchQueue_;
+
+  // The queue of JS::Dispatchables used by the DispatchToEventLoopCallback that
+  // calling js::UseInternalJobQueues installs.
+  DispatchableFifo internalDispatchQueue_;
   ConditionVariable internalDispatchQueueAppended_;
   bool internalDispatchQueueClosed_;
 

@@ -8,6 +8,7 @@
 
 #include "mozilla/Atomics.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/Move.h"
 #include "mozilla/TimeStamp.h"
 
 #include "jsexn.h"
@@ -1236,7 +1237,8 @@ static MOZ_MUST_USE bool NewPromiseCapability(
   // For Promise.all and Promise.race we can only optimize away the creation
   // of the GetCapabilitiesExecutor function, and directly allocate the
   // result promise instead of invoking the Promise constructor.
-  if (IsNativeFunction(cVal, PromiseConstructor)) {
+  if (IsNativeFunction(cVal, PromiseConstructor) &&
+      cVal.toObject().nonCCWRealm() == cx->realm()) {
     PromiseObject* promise;
     if (canOmitResolutionFunctions) {
       promise = CreatePromiseObjectWithoutResolutionFunctions(cx);
@@ -4065,7 +4067,8 @@ static bool Promise_catch_impl(JSContext* cx, unsigned argc, Value* vp,
     return false;
   }
 
-  if (IsNativeFunction(thenVal, &Promise_then)) {
+  if (IsNativeFunction(thenVal, &Promise_then) &&
+      thenVal.toObject().nonCCWRealm() == cx->realm()) {
     return Promise_then_impl(cx, thisVal, onFulfilled, onRejected, args.rval(),
                              rvalUsed);
   }
@@ -4921,8 +4924,7 @@ OffThreadPromiseTask::~OffThreadPromiseTask() {
   MOZ_ASSERT(state.initialized());
 
   if (registered_) {
-    LockGuard<Mutex> lock(state.mutex_);
-    state.live_.remove(this);
+    unregister(state);
   }
 }
 
@@ -4944,12 +4946,25 @@ bool OffThreadPromiseTask::init(JSContext* cx) {
   return true;
 }
 
+void OffThreadPromiseTask::unregister(OffThreadPromiseRuntimeState& state) {
+  MOZ_ASSERT(registered_);
+  LockGuard<Mutex> lock(state.mutex_);
+  state.live_.remove(this);
+  registered_ = false;
+}
+
 void OffThreadPromiseTask::run(JSContext* cx,
                                MaybeShuttingDown maybeShuttingDown) {
   MOZ_ASSERT(cx->runtime() == runtime_);
   MOZ_ASSERT(CurrentThreadCanAccessRuntime(runtime_));
   MOZ_ASSERT(registered_);
-  MOZ_ASSERT(runtime_->offThreadPromiseState.ref().initialized());
+
+  // Remove this task from live_ before calling `resolve`, so that if `resolve`
+  // itself drains the queue reentrantly, the queue will not think this task is
+  // yet to be queued and block waiting for it.
+  OffThreadPromiseRuntimeState& state = runtime_->offThreadPromiseState.ref();
+  MOZ_ASSERT(state.initialized());
+  unregister(state);
 
   if (maybeShuttingDown == JS::Dispatchable::NotShuttingDown) {
     // We can't leave a pending exception when returning to the caller so do
@@ -5029,7 +5044,7 @@ void OffThreadPromiseRuntimeState::init(
   // The JS API contract is that 'false' means shutdown, so be infallible
   // here (like Gecko).
   AutoEnterOOMUnsafeRegion noOOM;
-  if (!state.internalDispatchQueue_.append(d)) {
+  if (!state.internalDispatchQueue_.pushBack(d)) {
     noOOM.crash("internalDispatchToEventLoop");
   }
 
@@ -5055,8 +5070,8 @@ void OffThreadPromiseRuntimeState::internalDrain(JSContext* cx) {
   MOZ_ASSERT(usingInternalDispatchQueue());
   MOZ_ASSERT(!internalDispatchQueueClosed_);
 
-  while (true) {
-    DispatchableVector dispatchQueue;
+  for (;;) {
+    JS::Dispatchable* d;
     {
       LockGuard<Mutex> lock(mutex_);
 
@@ -5065,18 +5080,17 @@ void OffThreadPromiseRuntimeState::internalDrain(JSContext* cx) {
         return;
       }
 
+      // There are extant live OffThreadPromiseTasks. If none are in the queue,
+      // block until one of them finishes and enqueues a dispatchable.
       while (internalDispatchQueue_.empty()) {
         internalDispatchQueueAppended_.wait(lock);
       }
 
-      Swap(dispatchQueue, internalDispatchQueue_);
-      MOZ_ASSERT(internalDispatchQueue_.empty());
+      d = internalDispatchQueue_.popCopyFront();
     }
 
     // Don't call run() with mutex_ held to avoid deadlock.
-    for (JS::Dispatchable* d : dispatchQueue) {
-      d->run(cx, JS::Dispatchable::NotShuttingDown);
-    }
+    d->run(cx, JS::Dispatchable::NotShuttingDown);
   }
 }
 
@@ -5098,10 +5112,10 @@ void OffThreadPromiseRuntimeState::shutdown(JSContext* cx) {
   // requirement of the embedding that, before shutdown, all successfully-
   // dispatched-to-event-loop tasks have been run.
   if (usingInternalDispatchQueue()) {
-    DispatchableVector dispatchQueue;
+    DispatchableFifo dispatchQueue;
     {
       LockGuard<Mutex> lock(mutex_);
-      Swap(dispatchQueue, internalDispatchQueue_);
+      mozilla::Swap(dispatchQueue, internalDispatchQueue_);
       MOZ_ASSERT(internalDispatchQueue_.empty());
       internalDispatchQueueClosed_ = true;
     }

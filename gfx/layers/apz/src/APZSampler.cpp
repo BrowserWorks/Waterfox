@@ -149,13 +149,13 @@ ParentLayerPoint APZSampler::GetCurrentAsyncScrollOffset(
 }
 
 AsyncTransform APZSampler::GetCurrentAsyncTransform(
-    const LayerMetricsWrapper& aLayer) {
+    const LayerMetricsWrapper& aLayer, AsyncTransformComponents aComponents) {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
   AssertOnSamplerThread();
 
   MOZ_ASSERT(aLayer.GetApzc());
   return aLayer.GetApzc()->GetCurrentAsyncTransform(
-      AsyncPanZoomController::eForCompositing);
+      AsyncPanZoomController::eForCompositing, aComponents);
 }
 
 AsyncTransform APZSampler::GetCurrentAsyncTransformForFixedAdjustment(
@@ -165,6 +165,16 @@ AsyncTransform APZSampler::GetCurrentAsyncTransformForFixedAdjustment(
 
   MOZ_ASSERT(aLayer.GetApzc());
   return aLayer.GetApzc()->GetCurrentAsyncTransformForFixedAdjustment(
+      AsyncPanZoomController::eForCompositing);
+}
+
+AsyncTransform APZSampler::GetCurrentAsyncViewportRelativeTransform(
+    const LayerMetricsWrapper& aLayer) {
+  MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
+  AssertOnSamplerThread();
+
+  MOZ_ASSERT(aLayer.GetApzc());
+  return aLayer.GetApzc()->GetCurrentAsyncViewportRelativeTransform(
       AsyncPanZoomController::eForCompositing);
 }
 
@@ -208,6 +218,14 @@ bool APZSampler::HasUnusedAsyncTransform(const LayerMetricsWrapper& aLayer) {
               apzc->GetCurrentAsyncTransform(
                   AsyncPanZoomController::eForCompositing))
               .IsIdentity();
+}
+
+ScrollableLayerGuid APZSampler::GetGuid(const LayerMetricsWrapper& aLayer) {
+  MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
+  AssertOnSamplerThread();
+
+  MOZ_ASSERT(aLayer.GetApzc());
+  return aLayer.GetApzc()->GetGuid();
 }
 
 void APZSampler::AssertOnSamplerThread() const {

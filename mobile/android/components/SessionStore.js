@@ -3,13 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   EventDispatcher: "resource://gre/modules/Messaging.jsm",
-  FormData: "resource://gre/modules/FormData.jsm",
   OS: "resource://gre/modules/osfile.jsm",
   PrivacyFilter: "resource://gre/modules/sessionstore/PrivacyFilter.jsm",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
@@ -1395,7 +1394,7 @@ SessionStore.prototype = {
         // restore() will return false, and thus abort restoration for the
         // current |frame| and its descendants, if |data.url| is given but
         // doesn't match the loaded document's URL.
-        return FormData.restore(frame, data);
+        return SessionStoreUtils.restoreFormData(frame.document, data);
       });
     }
   },
@@ -1574,7 +1573,6 @@ SessionStore.prototype = {
   },
 
   _sendClosedTabsToJava(aWindow) {
-
     // If the app is shutting down, we don't need to do anything.
     if (this._loadState <= STATE_QUITTING) {
       return;

@@ -5,10 +5,10 @@
 var Cm = Components.manager;
 
 // Shared logging for all HTTP server functions.
-ChromeUtils.import("resource://gre/modules/Log.jsm");
-ChromeUtils.import("resource://services-common/utils.js");
-ChromeUtils.import("resource://testing-common/TestUtils.jsm");
-ChromeUtils.import("resource://testing-common/services/sync/utils.js");
+var {Log} = ChromeUtils.import("resource://gre/modules/Log.jsm");
+var {CommonUtils} = ChromeUtils.import("resource://services-common/utils.js");
+var {TestUtils} = ChromeUtils.import("resource://testing-common/TestUtils.jsm");
+var {AccountState, MockFxaStorageManager, SyncTestingInfrastructure, configureFxAccountIdentity, configureIdentity, encryptPayload, getLoginTelemetryScalar, makeFxAccountsInternalMock, makeIdentityConfig, promiseNamedTimer, promiseZeroTimer, sumHistogram, syncTestLogging, waitForZeroTimer} = ChromeUtils.import("resource://testing-common/services/sync/utils.js");
 
 const SYNC_HTTP_LOGGER = "Sync.Test.Server";
 
@@ -585,7 +585,6 @@ function sync_httpd_setup(handlers) {
  * may cause strangeness wrt timestamp headers and 412 responses.
  */
 function track_collections_helper() {
-
   /*
    * Our tracking object.
    */
@@ -725,7 +724,6 @@ SyncServer.prototype = {
       _("==========================================");
       do_throw(ex);
     }
-
   },
 
   /**

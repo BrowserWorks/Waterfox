@@ -3,8 +3,8 @@
 
 "use strict";
 
-const {require} = ChromeUtils.import("resource://devtools/shared/Loader.jsm", {});
-const {escapeCSSComment, _unescapeCSSComment} = require("devtools/shared/css/parsing-utils");
+const {require} = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
+const {escapeCSSComment, unescapeCSSComment} = require("devtools/shared/css/parsing-utils");
 
 const TEST_DATA = [
   {
@@ -33,7 +33,7 @@ function run_test() {
 
     const escaped = escapeCSSComment(test.input);
     equal(escaped, test.expected);
-    const unescaped = _unescapeCSSComment(escaped);
+    const unescaped = unescapeCSSComment(escaped);
     equal(unescaped, test.input);
   }
 }

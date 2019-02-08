@@ -1,5 +1,3 @@
-ChromeUtils.import("resource://gre/modules/addons/AddonRepository.jsm");
-
 const PREF_GET_LANGPACKS = "extensions.getAddons.langpacks.url";
 
 let server = AddonTestUtils.createHttpServer({hosts: ["example.com"]});
@@ -91,5 +89,4 @@ add_task(async function setup() {
   setData("not valid json");
   await Assert.rejects(AddonRepository.getAvailableLangpacks(),
                        /SyntaxError/, "Got parse error on invalid JSON");
-
 });

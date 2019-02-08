@@ -4,8 +4,8 @@
 "use strict";
 
 add_task(async function test_filtering() {
-  let match = new UrlbarResult(UrlbarUtils.MATCH_TYPE.TAB_SWITCH,
-                               UrlbarUtils.MATCH_SOURCE.TABS,
+  let match = new UrlbarResult(UrlbarUtils.RESULT_TYPE.TAB_SWITCH,
+                               UrlbarUtils.RESULT_SOURCE.TABS,
                                { url: "http://mozilla.org/foo/" });
   let providerName = registerBasicTestProvider([match]);
   let context = createContext(undefined, {providers: [providerName]});
@@ -29,8 +29,8 @@ add_task(async function test_filtering() {
 
   let matches = [
     match,
-    new UrlbarResult(UrlbarUtils.MATCH_TYPE.TAB_SWITCH,
-                     UrlbarUtils.MATCH_SOURCE.HISTORY,
+    new UrlbarResult(UrlbarUtils.RESULT_TYPE.TAB_SWITCH,
+                     UrlbarUtils.RESULT_SOURCE.HISTORY,
                      { url: "http://mozilla.org/foo/" }),
   ];
   providerName = registerBasicTestProvider(matches);
@@ -67,11 +67,11 @@ add_task(async function test_filter_javascript() {
       },
     },
   });
-  let match = new UrlbarResult(UrlbarUtils.MATCH_TYPE.TAB_SWITCH,
-                               UrlbarUtils.MATCH_SOURCE.TABS,
+  let match = new UrlbarResult(UrlbarUtils.RESULT_TYPE.TAB_SWITCH,
+                               UrlbarUtils.RESULT_SOURCE.TABS,
                                { url: "http://mozilla.org/foo/" });
-  let jsMatch = new UrlbarResult(UrlbarUtils.MATCH_TYPE.TAB_SWITCH,
-                                 UrlbarUtils.MATCH_SOURCE.HISTORY,
+  let jsMatch = new UrlbarResult(UrlbarUtils.RESULT_TYPE.TAB_SWITCH,
+                                 UrlbarUtils.RESULT_SOURCE.HISTORY,
                                  { url: "javascript:foo" });
   let providerName = registerBasicTestProvider([match, jsMatch]);
   let context = createContext(undefined, {providers: [providerName]});
@@ -110,11 +110,11 @@ add_task(async function test_filter_sources() {
   });
 
   let goodMatches = [
-    new UrlbarResult(UrlbarUtils.MATCH_TYPE.TAB_SWITCH,
-                     UrlbarUtils.MATCH_SOURCE.TABS,
+    new UrlbarResult(UrlbarUtils.RESULT_TYPE.TAB_SWITCH,
+                     UrlbarUtils.RESULT_SOURCE.TABS,
                      { url: "http://mozilla.org/foo/" }),
-    new UrlbarResult(UrlbarUtils.MATCH_TYPE.URL,
-                     UrlbarUtils.MATCH_SOURCE.HISTORY,
+    new UrlbarResult(UrlbarUtils.RESULT_TYPE.URL,
+                     UrlbarUtils.RESULT_SOURCE.HISTORY,
                      { url: "http://mozilla.org/foo/" }),
   ];
   /**
@@ -129,8 +129,8 @@ add_task(async function test_filter_sources() {
     }
     get sources() {
       return [
-        UrlbarUtils.MATCH_SOURCE.TABS,
-        UrlbarUtils.MATCH_SOURCE.HISTORY,
+        UrlbarUtils.RESULT_SOURCE.TABS,
+        UrlbarUtils.RESULT_SOURCE.HISTORY,
       ];
     }
     async startQuery(context, add) {
@@ -144,8 +144,8 @@ add_task(async function test_filter_sources() {
   UrlbarProvidersManager.registerProvider(new TestProvider());
 
   let badMatches = [
-    new UrlbarResult(UrlbarUtils.MATCH_TYPE.URL,
-                     UrlbarUtils.MATCH_SOURCE.BOOKMARKS,
+    new UrlbarResult(UrlbarUtils.RESULT_TYPE.URL,
+                     UrlbarUtils.RESULT_SOURCE.BOOKMARKS,
                      { url: "http://mozilla.org/foo/" }),
   ];
 
@@ -160,7 +160,7 @@ add_task(async function test_filter_sources() {
       return UrlbarUtils.PROVIDER_TYPE.PROFILE;
     }
     get sources() {
-      return [UrlbarUtils.MATCH_SOURCE.BOOKMARKS];
+      return [UrlbarUtils.RESULT_SOURCE.BOOKMARKS];
     }
     async startQuery(context, add) {
       Assert.ok(false, "Provider should no be invoked");
@@ -174,7 +174,7 @@ add_task(async function test_filter_sources() {
   UrlbarProvidersManager.registerProvider(new NoInvokeProvider());
 
   let context = createContext(undefined, {
-    sources: [UrlbarUtils.MATCH_SOURCE.TABS],
+    sources: [UrlbarUtils.RESULT_SOURCE.TABS],
     providers: ["GoodProvider", "BadProvider"],
   });
 
@@ -183,6 +183,6 @@ add_task(async function test_filter_sources() {
   await controller.startQuery(context, controller);
   await promise;
   Assert.deepEqual(context.results.length, 1, "Should find only one match");
-  Assert.deepEqual(context.results[0].source, UrlbarUtils.MATCH_SOURCE.TABS,
+  Assert.deepEqual(context.results[0].source, UrlbarUtils.RESULT_SOURCE.TABS,
                    "Should find only a tab match");
 });

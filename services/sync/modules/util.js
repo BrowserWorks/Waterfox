@@ -4,13 +4,13 @@
 
 var EXPORTED_SYMBOLS = ["Utils", "Svc", "SerializableSet"];
 
-ChromeUtils.import("resource://services-common/observers.js");
-ChromeUtils.import("resource://services-common/utils.js");
-ChromeUtils.import("resource://services-crypto/utils.js");
-ChromeUtils.import("resource://services-sync/constants.js");
-ChromeUtils.import("resource://gre/modules/Preferences.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Observers} = ChromeUtils.import("resource://services-common/observers.js");
+const {CommonUtils} = ChromeUtils.import("resource://services-common/utils.js");
+const {CryptoUtils} = ChromeUtils.import("resource://services-crypto/utils.js");
+const {DEVICE_TYPE_DESKTOP, MAXIMUM_BACKOFF_INTERVAL, PREFS_BRANCH, SYNC_KEY_DECODED_LENGTH, SYNC_KEY_ENCODED_LENGTH, WEAVE_VERSION} = ChromeUtils.import("resource://services-sync/constants.js");
+const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 ChromeUtils.defineModuleGetter(this, "OS",
                                "resource://gre/modules/osfile.jsm");
 
@@ -488,7 +488,6 @@ var Utils = {
     // 20-char sync key.
     if (pp.length == 23 &&
         [5, 11, 17].every(i => pp[i] == "-")) {
-
       return pp.slice(0, 5) + pp.slice(6, 11)
              + pp.slice(12, 17) + pp.slice(18, 23);
     }
@@ -496,7 +495,6 @@ var Utils = {
     // "Modern" 26-char key.
     if (pp.length == 31 &&
         [1, 7, 13, 19, 25].every(i => pp[i] == "-")) {
-
       return pp.slice(0, 1) + pp.slice(2, 7)
              + pp.slice(8, 13) + pp.slice(14, 19)
              + pp.slice(20, 25) + pp.slice(26, 31);

@@ -2,8 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "GeckoProfiler.h"
 #include "ProfilerIOInterposeObserver.h"
+
+#include "GeckoProfiler.h"
 #include "ProfilerMarkerPayload.h"
 
 using namespace mozilla;
@@ -18,9 +19,9 @@ void ProfilerIOInterposeObserver::Observe(Observation& aObservation) {
   nsString filename;
   aObservation.Filename(filename);
   profiler_add_marker(
-      aObservation.ObservedOperationString(),
-      js::ProfilingStackFrame::Category::OTHER,
-      MakeUnique<IOMarkerPayload>(
-          aObservation.Reference(), NS_ConvertUTF16toUTF8(filename).get(),
-          aObservation.Start(), aObservation.End(), std::move(stack)));
+      "DiskIO", js::ProfilingStackFrame::Category::OTHER,
+      MakeUnique<DiskIOMarkerPayload>(
+          aObservation.ObservedOperationString(), aObservation.Reference(),
+          NS_ConvertUTF16toUTF8(filename).get(), aObservation.Start(),
+          aObservation.End(), std::move(stack)));
 }

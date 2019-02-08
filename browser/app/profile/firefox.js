@@ -58,11 +58,6 @@ pref("extensions.autoDisableScopes", 15);
 pref("extensions.startupScanScopes", 0);
 
 pref("extensions.geckoProfiler.acceptedExtensionIds", "geckoprofiler@mozilla.com,quantum-foxfooding@mozilla.com,raptor@mozilla.org");
-#if defined(XP_LINUX) || defined (XP_MACOSX)
-pref("extensions.geckoProfiler.getSymbolRules", "localBreakpad,nm");
-#else // defined(XP_WIN)
-pref("extensions.geckoProfiler.getSymbolRules", "localBreakpad,dump_syms.exe");
-#endif
 
 
 // Add-on content security policies.
@@ -241,6 +236,8 @@ pref("browser.startup.page",                1);
 pref("browser.startup.homepage",            "about:home");
 // Whether we should skip the homepage when opening the first-run page
 pref("browser.startup.firstrunSkipsHomepage", true);
+
+pref("browser.dedicatedprofile.welcome.accounts.endpoint", "https://accounts.firefox.com/");
 
 // Show an about:blank window as early as possible for quick startup feedback.
 // Held to nightly on Linux due to bug 1450626.
@@ -480,6 +477,9 @@ pref("browser.tabs.showAudioPlayingIcon", true);
 // This should match Chromium's audio indicator delay.
 pref("browser.tabs.delayHidingAudioPlayingIconMS", 3000);
 
+// New, experimental, tab open/close animations.
+pref("browser.tabs.newanimations", false);
+
 // Pref to control whether we use separate privileged content processes.
 #if defined(NIGHTLY_BUILD) && !defined(MOZ_ASAN)
 pref("browser.tabs.remote.separatePrivilegedContentProcess", true);
@@ -504,9 +504,6 @@ pref("browser.bookmarks.openInTabClosesMenu", true);
 // Scripts & Windows prefs
 pref("dom.disable_open_during_load",              true);
 pref("javascript.options.showInConsole",          true);
-#ifdef DEBUG
-pref("general.warnOnAboutConfig",                 false);
-#endif
 
 // This is the pref to control the location bar, change this to true to
 // force this - this makes the origin of popup windows more obvious to avoid
@@ -823,7 +820,7 @@ pref("browser.sessionstore.idleDelay", 180000); // 3 minutes
 // 0 = everywhere, 1 = unencrypted sites, 2 = nowhere
 pref("browser.sessionstore.privacy_level", 0);
 // how many tabs can be reopened (per window)
-pref("browser.sessionstore.max_tabs_undo", 10);
+pref("browser.sessionstore.max_tabs_undo", 25);
 // how many windows can be reopened (per session) - on non-OS X platforms this
 // pref may be ignored when dealing with pop-up windows to ensure proper startup
 pref("browser.sessionstore.max_windows_undo", 3);
@@ -858,8 +855,6 @@ pref("browser.sessionstore.debug", false);
 pref("browser.sessionstore.debug.no_auto_updates", false);
 // Forget closed windows/tabs after two weeks
 pref("browser.sessionstore.cleanup.forget_closed_after", 1209600000);
-// Maximum number of bytes of DOMSessionStorage data we collect per origin.
-pref("browser.sessionstore.dom_storage_limit", 2048);
 // Amount of failed SessionFile writes until we restart the worker.
 pref("browser.sessionstore.max_write_failures", 5);
 
@@ -1043,10 +1038,11 @@ pref("security.sandbox.windows.log.stackTraceDepth", 0);
 // security/sandbox/win/src/sandboxbroker/sandboxBroker.cpp
 pref("security.sandbox.gpu.level", 0);
 
-// Controls whether we disable win32k for the GMP processes.
+// Controls whether we disable win32k for the processes.
 // true means that win32k system calls are not permitted.
-// Note: win32k is currently _not_ disabled due to intermittent test failures,
-// where the GMP process fails very early. See bug 1449348.
+pref("security.sandbox.rdd.win32k-disable", true);
+// Note: win32k is currently _not_ disabled for GMP due to intermittent test
+// failures, where the GMP process fails very early. See bug 1449348.
 pref("security.sandbox.gmp.win32k-disable", false);
 #endif
 
@@ -1177,6 +1173,7 @@ pref("services.sync.prefs.sync.addons.ignoreUserEnabledChanges", true);
 // uncompromised Sync-connected devices.
 pref("services.sync.prefs.sync.browser.contentblocking.category", true);
 pref("services.sync.prefs.sync.browser.contentblocking.introCount", true);
+pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", true);
 pref("services.sync.prefs.sync.browser.ctrlTab.recentlyUsedOrder", true);
 pref("services.sync.prefs.sync.browser.download.useDownloadDir", true);
 pref("services.sync.prefs.sync.browser.formfill.enable", true);
@@ -1207,6 +1204,7 @@ pref("services.sync.prefs.sync.browser.startup.page", true);
 pref("services.sync.prefs.sync.browser.tabs.loadInBackground", true);
 pref("services.sync.prefs.sync.browser.tabs.warnOnClose", true);
 pref("services.sync.prefs.sync.browser.tabs.warnOnOpen", true);
+pref("services.sync.prefs.sync.browser.taskbar.previews.enable", true);
 pref("services.sync.prefs.sync.browser.urlbar.matchBuckets", true);
 pref("services.sync.prefs.sync.browser.urlbar.maxRichResults", true);
 pref("services.sync.prefs.sync.browser.urlbar.suggest.bookmark", true);
@@ -1223,6 +1221,7 @@ pref("services.sync.prefs.sync.intl.accept_languages", true);
 pref("services.sync.prefs.sync.layout.spellcheckDefault", true);
 pref("services.sync.prefs.sync.lightweightThemes.selectedThemeID", true);
 pref("services.sync.prefs.sync.lightweightThemes.usedThemes", true);
+pref("services.sync.prefs.sync.media.eme.enabled", true);
 pref("services.sync.prefs.sync.network.cookie.cookieBehavior", true);
 pref("services.sync.prefs.sync.network.cookie.lifetimePolicy", true);
 pref("services.sync.prefs.sync.network.cookie.thirdparty.sessionOnly", true);
@@ -1550,6 +1549,9 @@ pref("browser.contentblocking.rejecttrackers.control-center.ui.enabled", true);
 pref("browser.contentblocking.control-center.ui.showBlockedLabels", true);
 pref("browser.contentblocking.control-center.ui.showAllowedLabels", false);
 
+pref("browser.contentblocking.cryptomining.preferences.ui.enabled", false);
+pref("browser.contentblocking.fingerprinting.preferences.ui.enabled", false);
+
 // Enable the Report Breakage UI on Nightly and Beta but not on Release yet.
 #ifdef EARLY_BETA_OR_EARLIER
 pref("browser.contentblocking.reportBreakage.enabled", true);
@@ -1620,6 +1622,11 @@ pref("dom.ipc.cpows.forbid-unsafe-from-browser", true);
 // Enable e10s hang monitoring (slow script checking and plugin hang
 // detection).
 pref("dom.ipc.processHangMonitor", true);
+
+#if defined(NIGHTLY_BUILD) && defined(XP_WIN)
+// Allows us to deprioritize the processes of background tabs at an OS level
+pref("dom.ipc.processPriorityManager.enabled", true);
+#endif
 
 #ifdef DEBUG
 // Don't report hangs in DEBUG builds. They're too slow and often a
@@ -1700,11 +1707,10 @@ pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false);
 // "detect" means it's enabled if conditions defined in the extension are met.
 #ifdef NIGHTLY_BUILD
 pref("extensions.formautofill.available", "on");
-pref("extensions.formautofill.creditCards.available", true);
 #else
 pref("extensions.formautofill.available", "detect");
-pref("extensions.formautofill.creditCards.available", false);
 #endif
+pref("extensions.formautofill.creditCards.available", false);
 pref("extensions.formautofill.addresses.enabled", true);
 pref("extensions.formautofill.creditCards.enabled", true);
 // Pref for shield/heartbeat to recognize users who have used Credit Card
@@ -1803,10 +1809,7 @@ pref("browser.discovery.sites", "addons.mozilla.org");
 
 pref("browser.engagement.recent_visited_origins.expiry", 86400); // 24 * 60 * 60 (24 hours in seconds)
 
-// Show the warning page for the new about config. Will replace general.warnOnAboutConfig.
-#ifdef NIGHTLY_BUILD
 pref("browser.aboutConfig.showWarning", true);
-#endif
 
 #if defined(XP_WIN) && defined(MOZ_LAUNCHER_PROCESS)
 // Launcher process is disabled by default, will be selectively enabled via SHIELD

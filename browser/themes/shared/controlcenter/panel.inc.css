@@ -174,7 +174,6 @@
 #identity-popup-content-blocking-report-breakage,
 .identity-popup-content-blocking-category-label,
 .identity-popup-content-blocking-category-state-label,
-.identity-popup-content-blocking-category-add-blocking,
 .identity-popup-permission-label,
 .identity-popup-permission-state-label,
 .identity-popup-security-content > description,
@@ -442,6 +441,11 @@ description#identity-popup-content-verifier,
 
 .identity-popup-content-blocking-list-host-label {
   -moz-box-flex: 1;
+  direction: ltr;
+}
+
+.identity-popup-content-blocking-list-host-label:-moz-locale-dir(rtl) {
+  text-align: right;
 }
 
 .identity-popup-content-blocking-list-state-label {
@@ -471,6 +475,22 @@ description#identity-popup-content-verifier,
 
 .identity-popup-cookiesView-icon.allowed {
   list-style-image: url(chrome://browser/skin/controlcenter/3rdpartycookies.svg);
+}
+
+.identity-popup-fingerprintersView-icon {
+  list-style-image: url(chrome://browser/skin/controlcenter/fingerprinters-disabled.svg);
+}
+
+.identity-popup-fingerprintersView-icon.allowed {
+  list-style-image: url(chrome://browser/skin/controlcenter/fingerprinters.svg);
+}
+
+.identity-popup-cryptominersView-icon {
+  list-style-image: url(chrome://browser/skin/controlcenter/cryptominers-disabled.svg);
+}
+
+.identity-popup-cryptominersView-icon.allowed {
+  list-style-image: url(chrome://browser/skin/controlcenter/cryptominers.svg);
 }
 
 #identity-popup-trackersView-strict-info {
@@ -519,6 +539,14 @@ description#identity-popup-content-verifier,
 
 .thirdpartycookies-icon {
   list-style-image: url(chrome://browser/skin/controlcenter/3rdpartycookies.svg);
+}
+
+.cryptominers-icon {
+  list-style-image: url(chrome://browser/skin/controlcenter/cryptominers.svg);
+}
+
+.fingerprinters-icon {
+  list-style-image: url(chrome://browser/skin/controlcenter/fingerprinters.svg);
 }
 
 /* Content Blocking action button */
@@ -676,7 +704,6 @@ description#identity-popup-content-verifier,
 }
 
 .identity-popup-content-blocking-category-state-label,
-.identity-popup-content-blocking-category-add-blocking,
 .identity-popup-permission-state-label {
   margin-inline-end: 5px;
   text-align: end;

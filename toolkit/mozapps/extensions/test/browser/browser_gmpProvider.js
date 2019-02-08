@@ -5,8 +5,8 @@
 "use strict";
 
 ChromeUtils.import("resource://gre/modules/Promise.jsm", this);
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-var GMPScope = ChromeUtils.import("resource://gre/modules/addons/GMPProvider.jsm", {});
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+var GMPScope = ChromeUtils.import("resource://gre/modules/addons/GMPProvider.jsm", null);
 
 const TEST_DATE = new Date(2013, 0, 1, 12);
 
@@ -263,7 +263,6 @@ add_task(async function testInstalledGlobalEmeDisabled() {
 });
 
 add_task(async function testPreferencesButton() {
-
   let prefValues = [
     { enabled: false, version: "" },
     { enabled: false, version: "1.2.3.4" },
@@ -374,7 +373,6 @@ add_task(async function testEmeSupport() {
   }
   await GMPScope.GMPProvider.shutdown();
   GMPScope.GMPProvider.startup();
-
 });
 
 add_task(async function test_cleanup() {

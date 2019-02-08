@@ -10,7 +10,7 @@ ChromeUtils.import("resource://normandy/lib/ActionsManager.jsm", this);
 ChromeUtils.import("resource://normandy/lib/AddonStudies.jsm", this);
 ChromeUtils.import("resource://normandy/lib/Uptake.jsm", this);
 
-const { RemoteSettings } = ChromeUtils.import("resource://services-settings/remote-settings.js", {});
+const { RemoteSettings } = ChromeUtils.import("resource://services-settings/remote-settings.js");
 
 add_task(async function getFilterContext() {
   const recipe = {id: 17, arguments: {foo: "bar"}, unrelated: false};
@@ -60,7 +60,6 @@ add_task(async function getFilterContext() {
   is(context.env.userId, "some id", "User id is read from prefs when accessed");
   await SpecialPowers.pushPrefEnv({set: [["app.normandy.user_id", "real id"]]});
   is(context.env.userId, "some id", "userId was cached");
-
 });
 
 add_task(async function checkFilter() {
@@ -381,7 +380,6 @@ decorate_task(
       RecipeRunner.disable();
       RecipeRunner.disable();
       is(registerTimerStub.callCount, 1, "Disable should be idempotent");
-
     } finally {
       RecipeRunner.enabled = originalEnabled;
     }

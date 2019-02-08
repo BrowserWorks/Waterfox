@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-const {actionTypes: at, actionCreators: ac} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm", {});
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {actionTypes: at, actionCreators: ac} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm");
 
 ChromeUtils.defineModuleGetter(this, "AddonManager",
   "resource://gre/modules/AddonManager.jsm");
@@ -71,20 +71,14 @@ this.SnippetsFeed = class SnippetsFeed {
   getSelectedSearchEngine() {
     return new Promise(resolve => {
       // Note: calling init ensures this code is only executed after Search has been initialized
-      Services.search.init(rv => {
-        // istanbul ignore else
-        if (Components.isSuccessCode(rv)) {
-          let engines = Services.search.getVisibleEngines();
-          resolve({
-            searchEngineIdentifier: Services.search.defaultEngine.identifier,
-            engines: engines
-              .filter(engine => engine.identifier)
-              .map(engine => `${TARGET_SEARCHENGINE_PREFIX}${engine.identifier}`),
-          });
-        } else {
-          resolve({engines: [], searchEngineIdentifier: ""});
-        }
-      });
+      Services.search.getVisibleEngines().then(engines => {
+        resolve({
+          searchEngineIdentifier: Services.search.defaultEngine.identifier,
+          engines: engines
+            .filter(engine => engine.identifier)
+            .map(engine => `${TARGET_SEARCHENGINE_PREFIX}${engine.identifier}`),
+        });
+      }).catch(() => resolve({engines: [], searchEngineIdentifier: ""}));
     });
   }
 

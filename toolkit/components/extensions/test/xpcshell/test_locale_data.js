@@ -1,22 +1,9 @@
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Extension.jsm");
-
-/* globals ExtensionData */
-
-const uuidGenerator = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
+const {ExtensionData} = ChromeUtils.import("resource://gre/modules/Extension.jsm");
 
 async function generateAddon(data) {
-  let id = uuidGenerator.generateUUID().number;
-
-  data = Object.assign({}, data);
-  data.manifest = Object.assign({applications: {gecko: {id}}}, data.manifest || {});
-
-  let xpi = Extension.generateXPI(data);
-  registerCleanupFunction(() => {
-    Services.obs.notifyObservers(xpi, "flush-cache-entry");
-    xpi.remove(false);
-  });
+  let xpi = AddonTestUtils.createTempWebExtensionFile(data);
 
   let fileURI = Services.io.newFileURI(xpi);
   let jarURI = NetUtil.newURI(`jar:${fileURI.spec}!/`);
@@ -127,4 +114,28 @@ add_task(async function testInvalidSyntax() {
 
   ok(extension.errors[1].includes("Loading locale file _locales\/en_US\/messages\.json: SyntaxError"),
      "Got syntax error");
+});
+
+add_task(async function testExtractLocalizedManifest() {
+  let extension = await generateAddon({
+    "manifest": {
+      "name": "__MSG_extensionName__",
+      "default_locale": "en_US",
+    },
+
+    "files": {
+      "_locales/en_US/messages.json": '{"extensionName": {"message": "foo"}}',
+      "_locales/de_DE/messages.json": '{"extensionName": {"message": "bar"}}',
+    },
+  });
+
+  await extension.loadManifest();
+  equal(extension.manifest.name, "foo", "name localized");
+
+  let manifest = await extension.getLocalizedManifest("de-DE");
+  ok(extension.localeData.has("de-DE"), "has de_DE locale");
+  equal(manifest.name, "bar", "name localized");
+
+  await Assert.rejects(extension.getLocalizedManifest("xx-XX"),
+                       /does not contain the locale xx-XX/, "xx-XX does not exist");
 });

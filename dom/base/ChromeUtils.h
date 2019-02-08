@@ -163,13 +163,6 @@ class ChromeUtils {
   static already_AddRefed<Promise> RequestIOActivity(GlobalObject& aGlobal,
                                                      ErrorResult& aRv);
 
-  static already_AddRefed<BrowsingContext> GetBrowsingContext(
-      GlobalObject& aGlobal, uint64_t id);
-
-  static void GetRootBrowsingContexts(
-      GlobalObject& aGlobal,
-      nsTArray<RefPtr<BrowsingContext>>& aBrowsingContexts);
-
   static bool HasReportingHeaderForOrigin(GlobalObject& global,
                                           const nsAString& aOrigin,
                                           ErrorResult& aRv);
@@ -180,10 +173,18 @@ class ChromeUtils {
 
   static double LastExternalProtocolIframeAllowed(GlobalObject& aGlobal);
 
+  static void ResetLastExternalProtocolIframeAllowed(GlobalObject& aGlobal);
+
   static void RegisterWindowActor(const GlobalObject& aGlobal,
                                   const nsAString& aName,
                                   const WindowActorOptions& aOptions,
                                   ErrorResult& aRv);
+
+  static void UnregisterWindowActor(const GlobalObject& aGlobal,
+                                    const nsAString& aName);
+
+  static bool IsClassifierBlockingErrorCode(GlobalObject& aGlobal,
+                                            uint32_t aError);
 };
 
 }  // namespace dom

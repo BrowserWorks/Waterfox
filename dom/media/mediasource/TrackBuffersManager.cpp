@@ -447,6 +447,7 @@ void TrackBuffersManager::CompleteResetParserState() {
   }
 
   // 7. Remove all bytes from the input buffer.
+  mPendingInputBuffer = nullptr;
   mInputBuffer = nullptr;
   if (mCurrentInputBuffer) {
     mCurrentInputBuffer->EvictAll();
@@ -2023,24 +2024,19 @@ uint32_t TrackBuffersManager::RemoveFrames(const TimeIntervals& aIntervals,
   //   timestamp greater than or equal to highest end timestamp and less than
   //   frame end timestamp"
   TimeUnit intervalsEnd = aIntervals.GetEnd();
-  bool mayBreakLoop = false;
   for (uint32_t i = aStartIndex; i < data.Length(); i++) {
     const RefPtr<MediaRawData> sample = data[i];
-    TimeInterval sampleInterval =
-        TimeInterval(sample->mTime, sample->GetEndTime());
-    if (aIntervals.Contains(sampleInterval)) {
+    if (aIntervals.ContainsWithStrictEnd(sample->mTime)) {
       if (firstRemovedIndex.isNothing()) {
         firstRemovedIndex = Some(i);
       }
       lastRemovedIndex = i;
-      mayBreakLoop = false;
       continue;
     }
-    if (sample->mKeyframe && mayBreakLoop) {
+    if (sample->mTime >= intervalsEnd) {
+      // We can break the loop now. All frames up to the next keyframe will be
+      // removed during the next step.
       break;
-    }
-    if (sampleInterval.mStart > intervalsEnd) {
-      mayBreakLoop = true;
     }
   }
 

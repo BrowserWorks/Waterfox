@@ -25,9 +25,9 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=963835
 
 SimpleTest.waitForExplicitFinish();
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/FxAccounts.jsm");
-ChromeUtils.import("resource://gre/modules/FxAccountsClient.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {FxAccounts} = ChromeUtils.import("resource://gre/modules/FxAccounts.jsm");
+const {FxAccountsClient} = ChromeUtils.import("resource://gre/modules/FxAccountsClient.jsm");
 ChromeUtils.import("resource://services-common/hawkclient.js");
 
 const TEST_SERVER =
@@ -86,12 +86,10 @@ function runTest() {
   // It will automatically try to sign in again.  We expect this to succeed.
   client.signIn(wrongEmail, password).then(
     user => {
-
       // Now store the signed-in user state.  This will include the correct
       // email capitalization.
       fxa.setSignedInUser(user).then(
         () => {
-
           // Confirm that the correct email got stored.
           fxa.getSignedInUser().then(
             data => {

@@ -14,8 +14,6 @@ ChromeUtils.defineModuleGetter(this, "Services",
                                "resource://gre/modules/Services.jsm");
 ChromeUtils.defineModuleGetter(this, "SessionStore",
                                "resource:///modules/sessionstore/SessionStore.jsm");
-ChromeUtils.defineModuleGetter(this, "Utils",
-                               "resource://gre/modules/sessionstore/Utils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "strBundle", function() {
   return Services.strings.createBundle("chrome://global/locale/extensions.properties");
@@ -608,7 +606,7 @@ this.tabs = class extends ExtensionAPI {
             }
 
             // Simple properties
-            const properties = ["index", "pinned", "title"];
+            const properties = ["index", "pinned"];
             for (let prop of properties) {
               if (createProperties[prop] != null) {
                 options[prop] = createProperties[prop];
@@ -628,21 +626,13 @@ this.tabs = class extends ExtensionAPI {
                 return Promise.reject({message: `Cannot create a discarded new tab or "about" urls.`});
               }
               options.createLazyBrowser = true;
+              options.lazyTabTitle = createProperties.title;
             } else if (createProperties.title) {
               return Promise.reject({message: `Title may only be set for discarded tabs.`});
             }
 
             options.triggeringPrincipal = principal;
             let nativeTab = window.gBrowser.addTab(url, options);
-            if (createProperties.discarded) {
-              SessionStore.setTabState(nativeTab, {
-                entries: [{
-                  url: url,
-                  title: options.title,
-                  triggeringPrincipal_base64: Utils.serializePrincipal(principal),
-                }],
-              });
-            }
 
             if (active) {
               window.gBrowser.selectedTab = nativeTab;

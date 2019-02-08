@@ -2042,16 +2042,6 @@ MessageChannel::MessageTask::GetPriority(uint32_t* aPriority) {
   return NS_OK;
 }
 
-bool MessageChannel::MessageTask::GetAffectedSchedulerGroups(
-    SchedulerGroupSet& aGroups) {
-  if (!mChannel) {
-    return false;
-  }
-
-  mChannel->AssertWorkerThread();
-  return mChannel->mListener->GetMessageSchedulerGroups(mMessage, aGroups);
-}
-
 void MessageChannel::DispatchMessage(Message&& aMsg) {
   AssertWorkerThread();
   mMonitor->AssertCurrentThreadOwns();
@@ -2761,7 +2751,7 @@ void MessageChannel::DebugAbort(const char* file, int line, const char* cond,
     pending.popFirst();
   }
 
-  MOZ_CRASH_UNSAFE_OOL(why);
+  MOZ_CRASH_UNSAFE(why);
 }
 
 void MessageChannel::DumpInterruptStack(const char* const pfx) const {

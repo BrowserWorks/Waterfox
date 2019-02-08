@@ -7,9 +7,6 @@
 
 // Globals
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-
 function checkService(service, interface) {
   info("Checking that Services." + service + " is an " + interface);
   Assert.ok(service in Services);
@@ -56,8 +53,8 @@ function run_test() {
   checkService("vc", Ci.nsIVersionComparator);
   checkService("wm", Ci.nsIWindowMediator);
   checkService("ww", Ci.nsIWindowWatcher);
-  if ("nsIBrowserSearchService" in Ci) {
-    checkService("search", Ci.nsIBrowserSearchService);
+  if ("nsISearchService" in Ci) {
+    checkService("search", Ci.nsISearchService);
   }
   if ("nsIAndroidBridge" in Ci) {
     checkService("androidBridge", Ci.nsIAndroidBridge);
@@ -76,7 +73,7 @@ function run_test() {
 
   // We need to reload the module to update the lazy getter.
   Cu.unload("resource://gre/modules/Services.jsm");
-  ChromeUtils.import("resource://gre/modules/Services.jsm");
+  ({Services} = ChromeUtils.import("resource://gre/modules/Services.jsm"));
 
   checkService("appinfo", Ci.nsIXULAppInfo);
 

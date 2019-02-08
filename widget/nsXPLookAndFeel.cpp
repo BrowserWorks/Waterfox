@@ -78,7 +78,6 @@ nsLookAndFeelIntPref nsXPLookAndFeel::sIntPrefs[] = {
     {"ui.GtkCSDMinimizeButton", eIntID_GTKCSDMinimizeButton, false, 0},
     {"ui.GtkCSDMaximizeButton", eIntID_GTKCSDMaximizeButton, false, 0},
     {"ui.GtkCSDCloseButton", eIntID_GTKCSDCloseButton, false, 0},
-    {"ui.GtkCSDReversedPlacement", eIntID_GTKCSDReversedPlacement, false, 0},
     {"ui.systemUsesDarkTheme", eIntID_SystemUsesDarkTheme, false, 0},
     {"ui.prefersReducedMotion", eIntID_PrefersReducedMotion, false, 0},
     {"ui.primaryPointerCapabilities", eIntID_PrimaryPointerCapabilities, false,
@@ -214,8 +213,9 @@ int32_t nsXPLookAndFeel::sCachedColorBits[COLOR_CACHE_SIZE] = {0};
 
 bool nsXPLookAndFeel::sInitialized = false;
 bool nsXPLookAndFeel::sUseNativeColors = true;
-bool nsXPLookAndFeel::sUseStandinsForNativeColors = false;
 bool nsXPLookAndFeel::sFindbarModalHighlight = false;
+bool nsXPLookAndFeel::sIsInPrefersReducedMotionForTest = false;
+bool nsXPLookAndFeel::sPrefersReducedMotionForTest = false;
 
 nsXPLookAndFeel* nsXPLookAndFeel::sInstance = nullptr;
 bool nsXPLookAndFeel::sShutdown = false;
@@ -416,9 +416,6 @@ void nsXPLookAndFeel::Init() {
 
   Preferences::AddBoolVarCache(&sUseNativeColors, "ui.use_native_colors",
                                sUseNativeColors);
-  Preferences::AddBoolVarCache(&sUseStandinsForNativeColors,
-                               "ui.use_standins_for_native_colors",
-                               sUseStandinsForNativeColors);
   Preferences::AddBoolVarCache(&sFindbarModalHighlight,
                                "findbar.modalHighlight",
                                sFindbarModalHighlight);
@@ -828,7 +825,8 @@ nsresult nsXPLookAndFeel::GetColorImpl(ColorID aID,
 #endif  // DEBUG_SYSTEM_COLOR_USE
 
   if (aUseStandinsForNativeColors &&
-      (ColorIsNotCSSAccessible(aID) || !sUseStandinsForNativeColors)) {
+      (ColorIsNotCSSAccessible(aID) ||
+       !nsContentUtils::UseStandinsForNativeColors())) {
     aUseStandinsForNativeColors = false;
   }
 

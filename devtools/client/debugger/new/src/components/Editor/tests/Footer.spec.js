@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
+// @flow
+
 import React from "react";
 import { shallow } from "enzyme";
 
@@ -26,7 +28,8 @@ function generateDefaults(overrides) {
         on: jest.fn()
       }
     },
-    selectedSource: makeSource("foo"),
+    endPanelCollapsed: false,
+    selectedSource: makeSource("foo").source,
     ...overrides
   };
 }
@@ -38,6 +41,7 @@ function render(overrides = {}, position = { line: 0, column: 0 }) {
   const doc = createMockDocument(clear, position);
   setDocument(props.selectedSource.id, doc);
 
+  // $FlowIgnore
   const component = shallow(<SourceFooter.WrappedComponent {...props} />, {
     lifecycleExperimental: true
   });

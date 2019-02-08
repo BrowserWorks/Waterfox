@@ -66,7 +66,7 @@ def filter_release_tasks(task, parameters):
     if platform in (
             'linux', 'linux64',
             'macosx64',
-            'win32', 'win64',
+            'win32', 'win64', 'win64-aarch64',
             ):
         if task.attributes['kind'] == 'l10n':
             # This is on-change l10n
@@ -216,22 +216,6 @@ def target_tasks_ash(full_task_graph, parameters, graph_config):
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
 
 
-@_target_task('cedar_tasks')
-def target_tasks_cedar(full_task_graph, parameters, graph_config):
-    """Target tasks that only run on the cedar branch."""
-    def filter(task):
-        platform = task.attributes.get('build_platform')
-        # only select platforms
-        if platform not in ('linux64', 'macosx64'):
-            return False
-        if task.attributes.get('unittest_suite'):
-            if not (task.attributes['unittest_suite'].startswith('mochitest') or
-                    'xpcshell' in task.attributes['unittest_suite']):
-                return False
-        return True
-    return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
-
-
 @_target_task('graphics_tasks')
 def target_tasks_graphics(full_task_graph, parameters, graph_config):
     """In addition to doing the filtering by project that the 'default'
@@ -249,7 +233,7 @@ def target_tasks_graphics(full_task_graph, parameters, graph_config):
 
 @_target_task('mochitest_valgrind')
 def target_tasks_valgrind(full_task_graph, parameters, graph_config):
-    """Target tasks that only run on the cedar branch."""
+    """Target tasks for mochitest valgrind jobs."""
     def filter(task):
         platform = task.attributes.get('test_platform', '').split('/')[0]
         if platform not in ['linux64']:
@@ -478,13 +462,15 @@ def target_tasks_nightly_fennec(full_task_graph, parameters, graph_config):
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
 
 
-def make_nightly_filter(platforms):
+def make_desktop_nightly_filter(platforms):
     """Returns a filter that gets all nightly tasks on the given platform."""
     def filter(task, parameters):
         return all([
             filter_on_platforms(task, platforms),
             filter_for_project(task, parameters),
             task.attributes.get('nightly', False),
+            # Tests and nightly only builds don't have `shipping_product` set
+            task.attributes.get('shipping_product') in {None, "firefox", "thunderbird"},
         ])
     return filter
 
@@ -494,7 +480,7 @@ def target_tasks_nightly_linux(full_task_graph, parameters, graph_config):
     """Select the set of tasks required for a nightly build of linux. The
     nightly build process involves a pipeline of builds, signing,
     and, eventually, uploading the tasks to balrog."""
-    filter = make_nightly_filter({'linux64-nightly', 'linux-nightly'})
+    filter = make_desktop_nightly_filter({'linux64-nightly', 'linux-nightly'})
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t, parameters)]
 
 
@@ -503,7 +489,7 @@ def target_tasks_nightly_macosx(full_task_graph, parameters, graph_config):
     """Select the set of tasks required for a nightly build of macosx. The
     nightly build process involves a pipeline of builds, signing,
     and, eventually, uploading the tasks to balrog."""
-    filter = make_nightly_filter({'macosx64-nightly'})
+    filter = make_desktop_nightly_filter({'macosx64-nightly'})
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t, parameters)]
 
 
@@ -512,7 +498,7 @@ def target_tasks_nightly_win32(full_task_graph, parameters, graph_config):
     """Select the set of tasks required for a nightly build of win32 and win64.
     The nightly build process involves a pipeline of builds, signing,
     and, eventually, uploading the tasks to balrog."""
-    filter = make_nightly_filter({'win32-nightly'})
+    filter = make_desktop_nightly_filter({'win32-nightly'})
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t, parameters)]
 
 
@@ -521,7 +507,7 @@ def target_tasks_nightly_win64(full_task_graph, parameters, graph_config):
     """Select the set of tasks required for a nightly build of win32 and win64.
     The nightly build process involves a pipeline of builds, signing,
     and, eventually, uploading the tasks to balrog."""
-    filter = make_nightly_filter({'win64-nightly'})
+    filter = make_desktop_nightly_filter({'win64-nightly'})
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t, parameters)]
 
 
@@ -530,7 +516,7 @@ def target_tasks_nightly_win64_aarch64(full_task_graph, parameters, graph_config
     """Select the set of tasks required for a nightly build of win32 and win64.
     The nightly build process involves a pipeline of builds, signing,
     and, eventually, uploading the tasks to balrog."""
-    filter = make_nightly_filter({'win64-aarch64-nightly'})
+    filter = make_desktop_nightly_filter({'win64-aarch64-nightly'})
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t, parameters)]
 
 
@@ -539,7 +525,10 @@ def target_tasks_nightly_asan(full_task_graph, parameters, graph_config):
     """Select the set of tasks required for a nightly build of asan. The
     nightly build process involves a pipeline of builds, signing,
     and, eventually, uploading the tasks to balrog."""
-    filter = make_nightly_filter({'linux64-asan-reporter-nightly', 'win64-asan-reporter-nightly'})
+    filter = make_desktop_nightly_filter({
+        'linux64-asan-reporter-nightly',
+        'win64-asan-reporter-nightly'
+    })
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t, parameters)]
 
 
@@ -547,6 +536,12 @@ def target_tasks_nightly_asan(full_task_graph, parameters, graph_config):
 def target_tasks_nightly_desktop(full_task_graph, parameters, graph_config):
     """Select the set of tasks required for a nightly build of linux, mac,
     windows."""
+    # Tasks that aren't platform specific
+    release_filter = make_desktop_nightly_filter({None})
+    release_tasks = [
+        l for l, t in full_task_graph.tasks.iteritems()
+        if release_filter(t, parameters)
+    ]
     # Avoid duplicate tasks.
     return list(
         set(target_tasks_nightly_win32(full_task_graph, parameters, graph_config))
@@ -555,6 +550,7 @@ def target_tasks_nightly_desktop(full_task_graph, parameters, graph_config):
         | set(target_tasks_nightly_macosx(full_task_graph, parameters, graph_config))
         | set(target_tasks_nightly_linux(full_task_graph, parameters, graph_config))
         | set(target_tasks_nightly_asan(full_task_graph, parameters, graph_config))
+        | set(release_tasks)
     )
 
 

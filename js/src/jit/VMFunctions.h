@@ -210,7 +210,7 @@ struct VMFunction {
   // Whether this function returns anything more than a boolean flag for
   // failures.
   bool returnsData() const {
-    return returnType == Type_Pointer || outParam != Type_Void;
+    return returnType == Type_Object || outParam != Type_Void;
   }
 
   ArgProperties argProperties(uint32_t explicitArg) const {
@@ -1092,6 +1092,9 @@ void AssertValidObjectPtr(JSContext* cx, JSObject* obj);
 void AssertValidObjectOrNullPtr(JSContext* cx, JSObject* obj);
 void AssertValidStringPtr(JSContext* cx, JSString* str);
 void AssertValidSymbolPtr(JSContext* cx, JS::Symbol* sym);
+#ifdef ENABLE_BIGINT
+void AssertValidBigIntPtr(JSContext* cx, JS::BigInt* bi);
+#endif
 void AssertValidValue(JSContext* cx, Value* v);
 
 void MarkValueFromJit(JSRuntime* rt, Value* vp);
@@ -1181,6 +1184,8 @@ bool DoConcatStringObject(JSContext* cx, HandleValue lhs, HandleValue rhs,
 // the JS_CANNOT_SKIP_AWAIT magic value to `resolved`.
 MOZ_MUST_USE bool TrySkipAwait(JSContext* cx, HandleValue val,
                                MutableHandleValue resolved);
+
+bool IsPossiblyWrappedTypedArray(JSContext* cx, JSObject* obj, bool* result);
 
 // VMFunctions shared by JITs
 extern const VMFunction SetArrayLengthInfo;

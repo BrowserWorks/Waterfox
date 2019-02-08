@@ -4238,15 +4238,15 @@ static void RelazifyFunctionsForShrinkingGC(JSRuntime* rt) {
   }
 }
 
-static void PurgeShapeTablesForShrinkingGC(JSRuntime* rt) {
-  gcstats::AutoPhase ap(rt->gc.stats(), gcstats::PhaseKind::PURGE_SHAPE_TABLES);
+static void PurgeShapeCachesForShrinkingGC(JSRuntime* rt) {
+  gcstats::AutoPhase ap(rt->gc.stats(), gcstats::PhaseKind::PURGE_SHAPE_CACHES);
   for (GCZonesIter zone(rt); !zone.done(); zone.next()) {
-    if (!CanRelocateZone(zone) || zone->keepShapeTables()) {
+    if (!CanRelocateZone(zone) || zone->keepShapeCaches()) {
       continue;
     }
     for (auto baseShape = zone->cellIter<BaseShape>(); !baseShape.done();
          baseShape.next()) {
-      baseShape->maybePurgeTable();
+      baseShape->maybePurgeCache();
     }
   }
 }
@@ -4337,7 +4337,7 @@ bool GCRuntime::beginMarkPhase(JS::GCReason reason, AutoGCSession& session) {
      */
     if (invocationKind == GC_SHRINK) {
       RelazifyFunctionsForShrinkingGC(rt);
-      PurgeShapeTablesForShrinkingGC(rt);
+      PurgeShapeCachesForShrinkingGC(rt);
     }
 
     /*
@@ -5003,7 +5003,7 @@ void GCRuntime::getNextSweepGroup() {
       zone->setNeedsIncrementalBarrier(false);
       zone->changeGCState(Zone::MarkBlackOnly, Zone::NoGC);
       zone->arenas.unmarkPreMarkedFreeCells();
-      zone->gcGrayRoots().clearAndFree();
+      zone->gcGrayRoots().Clear();
     }
 
     for (SweepGroupCompartmentsIter comp(rt); !comp.done(); comp.next()) {
@@ -5413,17 +5413,9 @@ static void SweepMisc(GCParallelTask* task) {
 static void SweepCompressionTasks(GCParallelTask* task) {
   JSRuntime* runtime = task->runtime();
 
-  AutoLockHelperThreadState lock;
-
   // Attach finished compression tasks.
-  auto& finished = HelperThreadState().compressionFinishedList(lock);
-  for (size_t i = 0; i < finished.length(); i++) {
-    if (finished[i]->runtimeMatches(runtime)) {
-      UniquePtr<SourceCompressionTask> compressionTask(std::move(finished[i]));
-      HelperThreadState().remove(finished, &i);
-      compressionTask->complete();
-    }
-  }
+  AutoLockHelperThreadState lock;
+  AttachFinishedCompressions(runtime, lock);
 
   // Sweep pending tasks that are holding onto should-be-dead ScriptSources.
   auto& pending = HelperThreadState().compressionPendingList(lock);
@@ -6961,15 +6953,16 @@ void GCRuntime::incrementalSlice(SliceBudget& budget, JS::GCReason reason,
         bool(isIncremental), bool(lastMarkSlice), bool(useZeal), budgetBuffer);
   }
 #endif
-  MOZ_ASSERT_IF(isIncrementalGCInProgress(), isIncremental || lastMarkSlice);
+
+  MOZ_ASSERT_IF(isIncrementalGCInProgress(), isIncremental);
 
   /*
-   * It's possible to be in the middle of an incremental collection, but not
-   * doing an incremental collection IF we had to return and re-enter the GC
-   * in order to collect the nursery.
+   * Non-incremental collection expects that the nursery is empty.
    */
-  MOZ_ASSERT_IF(isIncrementalGCInProgress() && !isIncremental,
-                lastMarkSlice && nursery().isEmpty());
+  if (!isIncremental) {
+    MOZ_ASSERT(nursery().isEmpty());
+    storeBuffer().checkEmpty();
+  }
 
   isIncremental = !budget.isUnlimited();
 
@@ -7390,7 +7383,7 @@ MOZ_NEVER_INLINE GCRuntime::IncrementalResult GCRuntime::gcCycle(
   if (shouldCollectNurseryForSlice(nonincrementalByAPI, budget)) {
     minorGC(reason, gcstats::PhaseKind::EVICT_NURSERY_FOR_MAJOR_GC);
   } else {
-    ++number; // This otherwise happens in minorGC().
+    ++number;  // This otherwise happens in minorGC().
   }
 
   AutoGCSession session(rt, JS::HeapState::MajorCollecting);
@@ -8058,7 +8051,7 @@ void GCRuntime::mergeRealms(Realm* source, Realm* target) {
        script.next()) {
     MOZ_ASSERT(script->realm() == source);
     script->realm_ = target;
-    script->setTypesGeneration(target->zone()->types.generation);
+    MOZ_ASSERT(!script->types());
   }
 
   GlobalObject* global = target->maybeGlobal();
@@ -8463,9 +8456,8 @@ void js::gc::CheckHashTablesAfterMovingGC(JSRuntime* rt) {
     JS::AutoCheckCannotGC nogc;
     for (auto baseShape = zone->cellIter<BaseShape>(); !baseShape.done();
          baseShape.next()) {
-      if (ShapeTable* table = baseShape->maybeTable(nogc)) {
-        table->checkAfterMovingGC();
-      }
+      ShapeCachePtr p = baseShape->getCache(nogc);
+      p.checkAfterMovingGC();
     }
   }
 

@@ -12,7 +12,7 @@ Login Manager test: forms and logins without a username.
 <script>
 runChecksAfterCommonInit(() => startTest());
 runInParent(() => {
-  const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm", {});
+  const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
   var nsLoginInfo = Components.Constructor("@mozilla.org/login-manager/loginInfo;1", Ci.nsILoginInfo);
 
   // pwlogin1 uses a unique formSubmitURL, to check forms where no other logins
@@ -21,8 +21,8 @@ runInParent(() => {
   //
   // Note: pwlogin2 is deleted at the end of the test.
 
-  pwlogin1 = new nsLoginInfo();
-  pwlogin2 = new nsLoginInfo();
+  let pwlogin1 = new nsLoginInfo();
+  let pwlogin2 = new nsLoginInfo();
 
   pwlogin1.init("http://mochi.test:8888", "http://mochi.test:1111", null,
                 "", "1234", "uname", "pword");
@@ -182,7 +182,6 @@ password-only, the other is username+password)
 
 /** Test for Login Manager: password-only logins **/
 function startTest() {
-
   checkForm(1, "1234");
   checkForm(2, "1234", "");
   checkForm(3, "1234", "", "");

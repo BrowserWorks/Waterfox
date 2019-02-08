@@ -49,12 +49,12 @@ function update(state: PendingBreakpointsState = {}, action: Action) {
       return updateAllBreakpoints(state, action);
     }
 
-    case "SET_BREAKPOINT_CONDITION": {
+    case "SET_BREAKPOINT_OPTIONS": {
       return updateBreakpoint(state, action);
     }
 
     case "REMOVE_BREAKPOINT": {
-      if (action.breakpoint.hidden) {
+      if (action.breakpoint.options.hidden) {
         return state;
       }
       return removeBreakpoint(state, action);
@@ -65,19 +65,11 @@ function update(state: PendingBreakpointsState = {}, action: Action) {
 }
 
 function addBreakpoint(state, action) {
-  if (action.breakpoint.hidden || action.status !== "done") {
+  if (action.breakpoint.options.hidden || action.status !== "done") {
     return state;
   }
   // when the action completes, we can commit the breakpoint
-  const {
-    breakpoint,
-    previousLocation
-  } = ((action: any): DonePromiseAction).value;
-
-  if (previousLocation) {
-    const previousLocationId = makePendingLocationId(previousLocation);
-    state = deleteBreakpoint(state, previousLocationId);
-  }
+  const breakpoint = ((action: any): DonePromiseAction).value;
 
   const locationId = makePendingLocationId(breakpoint.location);
   const pendingBreakpoint = createPendingBreakpoint(breakpoint);

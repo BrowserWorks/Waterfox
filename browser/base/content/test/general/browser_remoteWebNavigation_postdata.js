@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/BrowserUtils.jsm");
-
 function makeInputStream(aString) {
   let stream = Cc["@mozilla.org/io/string-input-stream;1"]
                  .createInstance(Ci.nsIStringInputStream);
@@ -20,7 +18,6 @@ add_task(async function test_remoteWebNavigation_postdata() {
   server.start(-1);
 
   await new Promise(resolve => {
-
     server.registerPathHandler("/test", (request, response) => {
       let body = obj.CommonUtils.readBytesFromInputStream(request.bodyInputStream);
       is(body, "success", "request body is correct");

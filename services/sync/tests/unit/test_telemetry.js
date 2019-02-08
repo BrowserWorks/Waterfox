@@ -1,21 +1,12 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-ChromeUtils.import("resource://services-common/observers.js");
-ChromeUtils.import("resource://services-common/utils.js");
-ChromeUtils.import("resource://services-sync/telemetry.js");
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/record.js");
-ChromeUtils.import("resource://services-sync/resource.js");
-ChromeUtils.import("resource://services-sync/constants.js");
-ChromeUtils.import("resource://services-sync/engines.js");
-ChromeUtils.import("resource://services-sync/engines/bookmarks.js");
-ChromeUtils.import("resource://services-sync/engines/clients.js");
-ChromeUtils.import("resource://testing-common/services/sync/fxa_utils.js");
-ChromeUtils.import("resource://testing-common/services/sync/rotaryengine.js");
-ChromeUtils.import("resource://gre/modules/osfile.jsm", this);
-
-ChromeUtils.import("resource://services-sync/util.js");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
+const {WBORecord} = ChromeUtils.import("resource://services-sync/record.js");
+const {Resource} = ChromeUtils.import("resource://services-sync/resource.js");
+const {BookmarksEngine} = ChromeUtils.import("resource://services-sync/engines/bookmarks.js");
+const {RotaryEngine} = ChromeUtils.import("resource://testing-common/services/sync/rotaryengine.js");
+const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 
 
 function SteamStore(engine) {
@@ -177,7 +168,6 @@ add_task(async function test_processIncoming_error() {
       name: "httperror",
       code: 500,
     });
-
   } finally {
     await store.wipe();
     await cleanAndGo(engine, server);
@@ -219,7 +209,6 @@ add_task(async function test_uploading() {
     equal(ping.engines[0].name, "bookmarks");
     equal(ping.engines[0].outgoing.length, 1);
     ok(!!ping.engines[0].incoming);
-
   } finally {
     // Clean up.
     await store.wipe();
@@ -276,7 +265,6 @@ add_task(async function test_upload_failed() {
     equal(ping.engines.length, 1);
     equal(ping.engines[0].incoming.reconciled, 1);
     deepEqual(ping.engines[0].outgoing, [{ sent: 2, failed: 2 }]);
-
   } finally {
     await cleanAndGo(engine, server);
     await engine.finalize();
@@ -358,7 +346,6 @@ add_task(async function test_sync_partialUpload() {
     });
     ok(!ping.engines[0].outgoing);
     deepEqual(ping.engines[0].failureReason, uploadFailureError);
-
   } finally {
     await cleanAndGo(engine, server);
     await engine.finalize();
@@ -637,7 +624,6 @@ add_task(async function test_discarding() {
 
   let server;
   try {
-
     let handlers = {
       "/1.1/johndoe/info/collections": helper.handler,
       "/1.1/johndoe/storage/crypto/keys": upd("crypto", new ServerWBO("keys").handler()),

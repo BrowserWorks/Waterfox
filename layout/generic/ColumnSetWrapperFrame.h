@@ -32,6 +32,9 @@ class ColumnSetWrapperFrame final : public nsBlockFrame {
                                                      ComputedStyle* aStyle,
                                                      nsFrameState aStateFlags);
 
+  void Init(nsIContent* aContent, nsContainerFrame* aParent,
+            nsIFrame* aPrevInFlow) override;
+
   nsContainerFrame* GetContentInsertionFrame() override;
 
   void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
@@ -47,8 +50,11 @@ class ColumnSetWrapperFrame final : public nsBlockFrame {
 
   void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
 
+  void MarkIntrinsicISizesDirty() override;
+
  private:
-  explicit ColumnSetWrapperFrame(ComputedStyle* aStyle);
+  explicit ColumnSetWrapperFrame(ComputedStyle* aStyle,
+                                 nsPresContext* aPresContext);
   ~ColumnSetWrapperFrame() override = default;
 
 #ifdef DEBUG

@@ -32,6 +32,7 @@
   background: var(--autocomplete-popup-background);
   color: var(--autocomplete-popup-color);
   border: 1px solid var(--autocomplete-popup-border-color);
+  font: menu;
 }
 
 .urlbarView-body-inner {
@@ -39,6 +40,7 @@
 }
 
 .urlbarView-results {
+  box-sizing: border-box;
   padding: @urlbarViewPadding@;
   white-space: nowrap;
 }
@@ -91,7 +93,8 @@
   background-image: url(chrome://browser/skin/bookmark.svg);
 }
 
-.urlbarView-row[type=tab] > .urlbarView-row-inner > .urlbarView-type-icon {
+.urlbarView-row[type=remotetab] > .urlbarView-row-inner > .urlbarView-type-icon,
+#urlbar-results:not([actionoverride]) .urlbarView-row[type=switchtab] > .urlbarView-row-inner > .urlbarView-type-icon {
   background-image: url(chrome://browser/skin/tab.svg);
 }
 
@@ -103,6 +106,10 @@
   content: "\2014";
   color: var(--panel-disabled-color);
   margin: 0 .4em;
+}
+
+.urlbarView-title:empty + .urlbarView-secondary::before {
+  display: none;
 }
 
 .urlbarView-secondary {
@@ -120,9 +127,18 @@
   font-weight: 600;
 }
 
-.urlbarView-row[selected] > .urlbarView-row-inner > .urlbarView-title::after,
+.urlbarView-row[selected] > .urlbarView-row-inner > .urlbarView-secondary::before,
 .urlbarView-row[selected] > .urlbarView-row-inner > .urlbarView-secondary {
   color: inherit;
+}
+
+.urlbarView-row[type=remotetab][selected] > .urlbarView-row-inner > .urlbarView-action,
+.urlbarView-row[type=remotetab]:hover > .urlbarView-row-inner > .urlbarView-action,
+.urlbarView-row[type=remotetab]:not([selected]):not(:hover) > .urlbarView-row-inner > .urlbarView-url,
+.urlbarView-row[type=search]:not([selected]):not(:hover) > .urlbarView-row-inner > .urlbarView-action,
+#urlbar-results[actionoverride] .urlbarView-row[type=switchtab] > .urlbarView-row-inner > .urlbarView-action,
+#urlbar-results:not([actionoverride]) .urlbarView-row[type=switchtab] > .urlbarView-row-inner > .urlbarView-url {
+  display: none;
 }
 
 .urlbarView-tags {

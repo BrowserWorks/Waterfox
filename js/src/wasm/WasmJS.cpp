@@ -111,7 +111,7 @@ bool wasm::HasOptimizedCompilerTier(JSContext* cx) {
 #ifdef ENABLE_WASM_CRANELIFT
          || (cx->options().wasmCranelift() && CraneliftCanCompile())
 #endif
-  ;
+      ;
 }
 
 // Return whether wasm compilation is allowed by prefs.  This check
@@ -417,7 +417,8 @@ bool wasm::Eval(JSContext* cx, Handle<TypedArrayObject*> code,
     return false;
   }
 
-  SharedCompileArgs compileArgs = CompileArgs::build(cx, std::move(scriptedCaller));
+  SharedCompileArgs compileArgs =
+      CompileArgs::build(cx, std::move(scriptedCaller));
   if (!compileArgs) {
     return false;
   }
@@ -1489,10 +1490,16 @@ static bool EnsureLazyEntryStub(const Instance& instance,
       return false;
     }
 
+    bool disableJitEntry = funcType.temporarilyUnsupportedAnyRef()
+#ifdef WASM_CODEGEN_DEBUG
+      || !JitOptions.enableWasmJitEntry;
+#endif
+    ;
+
     // Functions with anyref don't have jit entries yet, so they should
     // mostly behave like asm.js functions. Pretend it's the case, until
     // jit entries are implemented.
-    JSFunction::Flags flags = funcType.temporarilyUnsupportedAnyRef()
+    JSFunction::Flags flags = disableJitEntry
                                   ? JSFunction::ASMJS_NATIVE
                                   : JSFunction::WASM_FUN;
 
@@ -1503,7 +1510,7 @@ static bool EnsureLazyEntryStub(const Instance& instance,
       return false;
     }
 
-    if (funcType.temporarilyUnsupportedAnyRef()) {
+    if (disableJitEntry) {
       fun->setAsmJSIndex(funcIndex);
     } else {
       fun->setWasmJitEntry(instance.code().getAddressOfJitEntry(funcIndex));

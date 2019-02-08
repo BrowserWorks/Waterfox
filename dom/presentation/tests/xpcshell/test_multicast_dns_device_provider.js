@@ -7,9 +7,8 @@
 
 const Cm = Components.manager;
 
-ChromeUtils.import("resource://gre/modules/Promise.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Promise} = ChromeUtils.import("resource://gre/modules/Promise.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const INFO_CONTRACT_ID = "@mozilla.org/toolkit/components/mdnsresponder/dns-info;1";
 const PROVIDER_CONTRACT_ID = "@mozilla.org/presentation-device/multicastdns-provider;1";
@@ -31,7 +30,6 @@ var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
 
 function sleep(aMs) {
   return new Promise(resolve => {
-
     let timer = Cc["@mozilla.org/timer;1"]
                   .createInstance(Ci.nsITimer);
 
@@ -40,7 +38,6 @@ function sleep(aMs) {
         resolve();
       },
     }, aMs, timer.TYPE_ONE_SHOT);
-
   });
 }
 

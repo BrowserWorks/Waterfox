@@ -18,7 +18,7 @@ const kEnginePref = "browser.translation.engine";
 const kApiKeyPref = "browser.translation.yandex.apiKeyOverride";
 const kShowUIPref = "browser.translation.ui.show";
 
-const {Translation} = ChromeUtils.import("resource:///modules/translation/Translation.jsm", {});
+const {Translation} = ChromeUtils.import("resource:///modules/translation/Translation.jsm");
 
 add_task(async function setup() {
   Services.prefs.setCharPref(kEnginePref, "Yandex");
@@ -37,7 +37,6 @@ add_task(async function setup() {
  * a sample page.
  */
 add_task(async function test_yandex_translation() {
-
   // Loading the fixture page.
   let url = constructFixtureURL("bug1022725-fr.html");
   let tab = await promiseTestPageLoad(url);
@@ -47,8 +46,8 @@ add_task(async function test_yandex_translation() {
   let browser = tab.linkedBrowser;
 
   await ContentTask.spawn(browser, null, async function() {
-    ChromeUtils.import("resource:///modules/translation/TranslationDocument.jsm");
-    ChromeUtils.import("resource:///modules/translation/YandexTranslator.jsm");
+    const {TranslationDocument} = ChromeUtils.import("resource:///modules/translation/TranslationDocument.jsm");
+    const {YandexTranslator} = ChromeUtils.import("resource:///modules/translation/YandexTranslator.jsm");
 
     let client = new YandexTranslator(
       new TranslationDocument(content.document), "fr", "en");

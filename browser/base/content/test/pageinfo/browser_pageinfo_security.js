@@ -1,5 +1,3 @@
-ChromeUtils.import("resource:///modules/SitePermissions.jsm");
-
 ChromeUtils.defineModuleGetter(this, "SiteDataTestUtils",
                                "resource://testing-common/SiteDataTestUtils.jsm");
 ChromeUtils.defineModuleGetter(this, "DownloadUtils",
@@ -14,7 +12,6 @@ add_task(async function test_SiteData() {
   await SiteDataTestUtils.addToIndexedDB(TEST_ORIGIN);
 
   await BrowserTestUtils.withNewTab(TEST_ORIGIN, async function(browser) {
-
     let totalUsage = await SiteDataTestUtils.getQuotaUsage(TEST_ORIGIN);
     Assert.greater(totalUsage, 0, "The total usage should not be 0");
 

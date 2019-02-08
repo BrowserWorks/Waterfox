@@ -278,7 +278,7 @@ class MOZ_STACK_CLASS WebRenderScrollDataWrapper {
     return mLayer->GetScrollbarData();
   }
 
-  uint64_t GetScrollbarAnimationId() const {
+  Maybe<uint64_t> GetScrollbarAnimationId() const {
     MOZ_ASSERT(IsValid());
     return mLayer->GetScrollbarAnimationId();
   }
@@ -296,6 +296,12 @@ class MOZ_STACK_CLASS WebRenderScrollDataWrapper {
   bool IsBackfaceHidden() const {
     // This is only used by APZCTM hit testing, and WR does its own
     // hit testing, so no need to implement this.
+    return false;
+  }
+
+  bool IsAsyncZoomContainer() const {
+    // Similar to IsBackfaceHidden, this is only used by APZCTM hit testing,
+    // so there is no need to implement it.
     return false;
   }
 

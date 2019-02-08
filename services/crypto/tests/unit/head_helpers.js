@@ -1,13 +1,12 @@
 /* import-globals-from ../../../common/tests/unit/head_helpers.js */
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 try {
   // In the context of xpcshell tests, there won't be a default AppInfo
   // eslint-disable-next-line mozilla/use-services
   Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
 } catch (ex) {
-
 // Make sure to provide the right OS so crypto loads the right binaries
 var OS = "XPCShell";
 if (mozinfo.os == "win")
@@ -52,7 +51,7 @@ function base64UrlDecode(s) {
 
 // Register resource alias. Normally done in SyncComponents.manifest.
 function addResourceAlias() {
-  ChromeUtils.import("resource://gre/modules/Services.jsm");
+  const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
   const resProt = Services.io.getProtocolHandler("resource")
                           .QueryInterface(Ci.nsIResProtocolHandler);
   let uri = Services.io.newURI("resource://gre/modules/services-crypto/");

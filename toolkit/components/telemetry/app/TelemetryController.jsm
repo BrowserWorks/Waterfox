@@ -7,14 +7,13 @@
 
 const myScope = this;
 
-ChromeUtils.import("resource://gre/modules/Log.jsm");
+const {Log} = ChromeUtils.import("resource://gre/modules/Log.jsm");
 ChromeUtils.import("resource://gre/modules/Services.jsm", this);
 ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm", this);
 ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm", this);
 ChromeUtils.import("resource://gre/modules/DeferredTask.jsm", this);
-ChromeUtils.import("resource://gre/modules/Timer.jsm");
 ChromeUtils.import("resource://gre/modules/TelemetryUtils.jsm", this);
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 const Utils = TelemetryUtils;
 
@@ -529,8 +528,12 @@ var Impl = {
     }
 
     try {
-      await TelemetryStorage.addPendingPing(ping);
-      await TelemetryArchive.promiseArchivePing(ping);
+      // Previous aborted-session might have been with a canary client ID.
+      // Don't send it.
+      if (ping.clientId != Utils.knownClientID) {
+        await TelemetryStorage.addPendingPing(ping);
+        await TelemetryArchive.promiseArchivePing(ping);
+      }
     } catch (e) {
       this._log.error("checkAbortedSessionPing - Unable to add the pending ping", e);
     } finally {

@@ -11,6 +11,7 @@ const { ELEMENT_STYLE } = require("devtools/shared/specs/styles");
 
 loader.lazyRequireGetter(this, "promiseWarn", "devtools/client/inspector/shared/utils", true);
 loader.lazyRequireGetter(this, "parseDeclarations", "devtools/shared/css/parsing-utils", true);
+loader.lazyRequireGetter(this, "parseNamedDeclarations", "devtools/shared/css/parsing-utils", true);
 loader.lazyRequireGetter(this, "parseSingleValue", "devtools/shared/css/parsing-utils", true);
 loader.lazyRequireGetter(this, "isCssVariable", "devtools/shared/fronts/css-properties", true);
 
@@ -52,6 +53,12 @@ function ElementStyle(element, ruleView, store, pageStyle, showUserAgentStyles) 
   if (!("disabled" in this.store)) {
     this.store.disabled = new WeakMap();
   }
+
+  this.onStyleSheetUpdated = this.onStyleSheetUpdated.bind(this);
+
+  if (this.ruleView.isNewRulesView) {
+    this.pageStyle.on("stylesheet-updated", this.onStyleSheetUpdated);
+  }
 }
 
 ElementStyle.prototype = {
@@ -66,6 +73,10 @@ ElementStyle.prototype = {
       if (rule.editor) {
         rule.editor.destroy();
       }
+    }
+
+    if (this.ruleView.isNewRulesView) {
+      this.pageStyle.off("stylesheet-updated", this.onStyleSheetUpdated);
     }
   },
 
@@ -335,6 +346,38 @@ ElementStyle.prototype = {
   },
 
   /**
+   * Adds a new declaration to the rule.
+   *
+   * @param {String} ruleId
+   *        The id of the Rule to be modified.
+   * @param {String} value
+   *        The new declaration value.
+   */
+  addNewDeclaration: function(ruleId, value) {
+    const rule = this.getRule(ruleId);
+    if (!rule) {
+      return;
+    }
+
+    const declarationsToAdd = parseNamedDeclarations(this.cssProperties.isKnown,
+      value, true);
+    if (!declarationsToAdd.length) {
+      return;
+    }
+
+    this._addMultipleDeclarations(rule, declarationsToAdd);
+  },
+
+  /**
+   * Adds a new rule. The rules view is updated from a "stylesheet-updated" event
+   * emitted the PageStyleActor as a result of the rule being inserted into the
+   * the stylesheet.
+   */
+  async addNewRule() {
+    await this.pageStyle.addNewRule(this.element, this.element.pseudoClassLocks);
+  },
+
+  /**
    * Given the id of the rule and the new declaration name, modifies the existing
    * declaration name to the new given value.
    *
@@ -367,6 +410,26 @@ ElementStyle.prototype = {
 
     if (!declaration.enabled) {
       await declaration.setEnabled(true);
+    }
+  },
+
+  /**
+   * Helper function to addNewDeclaration() and modifyDeclarationValue() for
+   * adding multiple declarations to a rule.
+   *
+   * @param  {Rule} rule
+   *         The Rule object to write new declarations to.
+   * @param  {Array<Object>} declarationsToAdd
+   *         An array of object containg the parsed declaration data to be added.
+   * @param  {TextProperty|null} siblingDeclaration
+   *         Optional declaration next to which the new declaration will be added.
+   */
+  _addMultipleDeclarations: function(rule, declarationsToAdd, siblingDeclaration = null) {
+    for (const { commentOffsets, name, value, priority } of declarationsToAdd) {
+      const isCommented = Boolean(commentOffsets);
+      const enabled = !isCommented;
+      siblingDeclaration = rule.createProperty(name, value, priority, enabled,
+        siblingDeclaration);
     }
   },
 
@@ -455,13 +518,7 @@ ElementStyle.prototype = {
       await declaration.setEnabled(true);
     }
 
-    let siblingDeclaration = declaration;
-    for (const { commentOffsets, name, value: val, priority } of declarationsToAdd) {
-      const isCommented = Boolean(commentOffsets);
-      const enabled = !isCommented;
-      siblingDeclaration = rule.createProperty(name, val, priority, enabled,
-        siblingDeclaration);
-    }
+    this._addMultipleDeclarations(rule, declarationsToAdd, declaration);
   },
 
   /**
@@ -592,6 +649,24 @@ ElementStyle.prototype = {
   */
   getVariable: function(name) {
     return this.variables.get(name);
+  },
+
+  /**
+   * Handler for page style events "stylesheet-updated". Refreshes the list of rules on
+   * the page.
+   */
+  onStyleSheetUpdated: async function() {
+    // Repopulate the element style once the current modifications are done.
+    const promises = [];
+    for (const rule of this.rules) {
+      if (rule._applyingModifications) {
+        promises.push(rule._applyingModifications);
+      }
+    }
+
+    await Promise.all(promises);
+    await this.populate();
+    this._changed();
   },
 };
 

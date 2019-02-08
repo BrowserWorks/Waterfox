@@ -280,11 +280,50 @@ PartiallySeekableInputStream::OnInputStreamReady(nsIAsyncInputStream* aStream) {
 
 void PartiallySeekableInputStream::Serialize(
     mozilla::ipc::InputStreamParams& aParams,
-    FileDescriptorArray& aFileDescriptors) {
+    FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
+    uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::dom::nsIContentChild* aManager) {
+  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
+                    aSizeUsed, aManager);
+}
+
+void PartiallySeekableInputStream::Serialize(
+    mozilla::ipc::InputStreamParams& aParams,
+    FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
+    uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::PBackgroundChild* aManager) {
+  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
+                    aSizeUsed, aManager);
+}
+
+void PartiallySeekableInputStream::Serialize(
+    mozilla::ipc::InputStreamParams& aParams,
+    FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
+    uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::dom::nsIContentParent* aManager) {
+  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
+                    aSizeUsed, aManager);
+}
+
+void PartiallySeekableInputStream::Serialize(
+    mozilla::ipc::InputStreamParams& aParams,
+    FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
+    uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::PBackgroundParent* aManager) {
+  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
+                    aSizeUsed, aManager);
+}
+
+template <typename M>
+void PartiallySeekableInputStream::SerializeInternal(
+    mozilla::ipc::InputStreamParams& aParams,
+    FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
+    uint32_t aMaxSize, uint32_t* aSizeUsed, M* aManager) {
   MOZ_ASSERT(mWeakIPCSerializableInputStream);
   MOZ_DIAGNOSTIC_ASSERT(mCachedBuffer.IsEmpty());
-  mozilla::ipc::InputStreamHelper::SerializeInputStream(mInputStream, aParams,
-                                                        aFileDescriptors);
+  mozilla::ipc::InputStreamHelper::SerializeInputStream(
+      mInputStream, aParams, aFileDescriptors, aDelayedStart, aMaxSize,
+      aSizeUsed, aManager);
 }
 
 bool PartiallySeekableInputStream::Deserialize(
@@ -292,15 +331,6 @@ bool PartiallySeekableInputStream::Deserialize(
     const FileDescriptorArray& aFileDescriptors) {
   MOZ_CRASH("This method should never be called!");
   return false;
-}
-
-mozilla::Maybe<uint64_t>
-PartiallySeekableInputStream::ExpectedSerializedLength() {
-  if (!mWeakIPCSerializableInputStream) {
-    return mozilla::Nothing();
-  }
-
-  return mWeakIPCSerializableInputStream->ExpectedSerializedLength();
 }
 
 // nsISeekableStream

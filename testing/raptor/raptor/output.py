@@ -21,7 +21,7 @@ LOG = get_proxy_logger(component="raptor-output")
 class Output(object):
     """class for raptor output"""
 
-    def __init__(self, results, supporting_data):
+    def __init__(self, results, supporting_data, subtest_alert_on):
         """
         - results : list of RaptorTestResult instances
         """
@@ -30,8 +30,9 @@ class Output(object):
         self.supporting_data = supporting_data
         self.summarized_supporting_data = []
         self.summarized_screenshots = []
+        self.subtest_alert_on = subtest_alert_on
 
-    def summarize(self):
+    def summarize(self, test_names):
         suites = []
         test_results = {
             'framework': {
@@ -42,7 +43,8 @@ class Output(object):
 
         # check if we actually have any results
         if len(self.results) == 0:
-            LOG.error("error: no raptor test results found!")
+            LOG.error("error: no raptor test results found for %s" %
+                      ', '.join(test_names))
             return
 
         for test in self.results:
@@ -77,7 +79,7 @@ class Output(object):
 
                 for measurement_name, replicates in test.measurements.iteritems():
                     new_subtest = {}
-                    new_subtest['name'] = test.name + "-" + measurement_name
+                    new_subtest['name'] = measurement_name
                     new_subtest['replicates'] = replicates
                     new_subtest['lowerIsBetter'] = test.subtest_lower_is_better
                     new_subtest['alertThreshold'] = float(test.alert_threshold)
@@ -99,6 +101,14 @@ class Output(object):
                         # valid TTFI values available for this pageload just remove it from results
                         if len(filtered_values) < 1:
                             continue
+
+                    # if 'alert_on' is set for this particular measurement, then we want to set the
+                    # flag in the perfherder output to turn on alerting for this subtest
+                    if self.subtest_alert_on is not None:
+                        if measurement_name in self.subtest_alert_on:
+                            LOG.info("turning on subtest alerting for measurement type: %s"
+                                     % measurement_name)
+                            new_subtest['shouldAlert'] = True
 
                     new_subtest['value'] = filter.median(filtered_values)
 
@@ -125,7 +135,8 @@ class Output(object):
                 suite['subtests'] = subtests
 
             else:
-                LOG.error("output.summarize received unsupported test results type")
+                LOG.error("output.summarize received unsupported test results type for %s" %
+                          test.name)
                 return
 
             # for benchmarks there is generally  more than one subtest in each cycle
@@ -593,10 +604,11 @@ class Output(object):
 
         self.summarized_screenshots.append("""</table></body> </html>""")
 
-    def output(self):
+    def output(self, test_names):
         """output to file and perfherder data json """
         if self.summarized_results == {}:
-            LOG.error("error: no summarized raptor results found!")
+            LOG.error("error: no summarized raptor results found for %s" %
+                      ', '.join(test_names))
             return False
 
         if os.environ['MOZ_UPLOAD_DIR']:
@@ -641,7 +653,7 @@ class Output(object):
 
         return True
 
-    def output_supporting_data(self):
+    def output_supporting_data(self, test_names):
         '''
         Supporting data was gathered outside of the main raptor test; it has already
         been summarized, now output it appropriately.
@@ -652,7 +664,8 @@ class Output(object):
         from the actual Raptor test that was ran when the supporting data was gathered.
         '''
         if len(self.summarized_supporting_data) == 0:
-            LOG.error("error: no summarized supporting data found!")
+            LOG.error("error: no summarized supporting data found for %s" %
+                      ', '.join(test_names))
             return False
 
         for next_data_set in self.summarized_supporting_data:

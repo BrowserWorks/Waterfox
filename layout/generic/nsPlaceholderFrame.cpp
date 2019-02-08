@@ -29,7 +29,8 @@ using namespace mozilla::gfx;
 nsPlaceholderFrame* NS_NewPlaceholderFrame(nsIPresShell* aPresShell,
                                            ComputedStyle* aStyle,
                                            nsFrameState aTypeBits) {
-  return new (aPresShell) nsPlaceholderFrame(aStyle, aTypeBits);
+  return new (aPresShell)
+      nsPlaceholderFrame(aStyle, aPresShell->GetPresContext(), aTypeBits);
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsPlaceholderFrame)
@@ -267,7 +268,7 @@ void nsPlaceholderFrame::List(FILE* out, const char* aPrefix,
 
   if (mOutOfFlowFrame) {
     str += " outOfFlowFrame=";
-    nsFrame::ListTag(str, mOutOfFlowFrame);
+    str += mOutOfFlowFrame->ListTag();
   }
   fprintf_stderr(out, "%s\n", str.get());
 }

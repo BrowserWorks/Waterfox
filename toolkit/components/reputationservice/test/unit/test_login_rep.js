@@ -4,8 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
 // LoginReputationService
 const gLoginRep = Cc["@mozilla.org/reputationservice/login-reputation-service;1"].
@@ -27,7 +26,6 @@ const LOCAL_WHITELIST_DATA = {
 };
 
 add_task(async function test_setup() {
-
   // Enable login reputation service
   Services.prefs.setBoolPref("browser.safebrowsing.passwords.enabled", true);
   gLoginRep.init();

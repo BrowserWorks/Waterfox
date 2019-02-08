@@ -341,7 +341,7 @@ async function waitUntilApzStable() {
     /* eslint-env mozilla/frame-script */
     function parentProcessFlush() {
       addMessageListener("apz-flush", function() {
-        ChromeUtils.import("resource://gre/modules/Services.jsm");
+        const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
         var topWin = Services.wm.getMostRecentWindow("navigator:browser");
         if (!topWin) {
           topWin = Services.wm.getMostRecentWindow("navigator:geckoview");
@@ -486,7 +486,7 @@ function runContinuation(testFunction) {
 function getSnapshot(rect) {
   function parentProcessSnapshot() {
     addMessageListener("snapshot", function(parentRect) {
-      ChromeUtils.import("resource://gre/modules/Services.jsm");
+      const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
       var topWin = Services.wm.getMostRecentWindow("navigator:browser");
       if (!topWin) {
         topWin = Services.wm.getMostRecentWindow("navigator:geckoview");
@@ -751,6 +751,8 @@ function getPrefs(ident) {
         // position is synced back to the main thread. So we disable displayport
         // expiry for these tests.
         ["apz.displayport_expiry_ms", 0],
+        // All of test cases should define viewport meta tag.
+        ["dom.meta-viewport.enabled", true],
       ];
     default:
       return [];

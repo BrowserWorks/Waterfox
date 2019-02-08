@@ -1000,40 +1000,34 @@ fi
 
 dnl Checks for library functions.
 dnl ========================================================
-AC_PROG_GCC_TRADITIONAL
-AC_FUNC_MEMCMP
 AC_CHECK_FUNCS([getc_unlocked _getc_nolock gmtime_r localtime_r pthread_getname_np pthread_get_name_np])
 
 dnl check for clock_gettime(), the CLOCK_MONOTONIC clock
-dnl avoid this on Darwin, since depending on your system config, we may think
-dnl it exists but it really doesn't
-case "$OS_TARGET" in
-Darwin)
-  ;;
-*)
-  AC_CACHE_CHECK(for clock_gettime(CLOCK_MONOTONIC),
-                 ac_cv_clock_monotonic,
-                 [for libs in "" -lrt; do
-                      _SAVE_LIBS="$LIBS"
-                      LIBS="$LIBS $libs"
-                      AC_TRY_LINK([#include <time.h>],
-                                   [ struct timespec ts;
-                                     clock_gettime(CLOCK_MONOTONIC, &ts); ],
-                                   ac_cv_clock_monotonic=$libs
-                                   LIBS="$_SAVE_LIBS"
-                                   break,
-                                   ac_cv_clock_monotonic=no)
-                      LIBS="$_SAVE_LIBS"
-                  done])
-  if test "$ac_cv_clock_monotonic" != "no"; then
-      HAVE_CLOCK_MONOTONIC=1
-      REALTIME_LIBS=$ac_cv_clock_monotonic
-      AC_DEFINE(HAVE_CLOCK_MONOTONIC)
-      AC_SUBST(HAVE_CLOCK_MONOTONIC)
-      AC_SUBST_LIST(REALTIME_LIBS)
-  fi
-  ;;
-esac
+AC_CACHE_CHECK(for clock_gettime(CLOCK_MONOTONIC),
+               ac_cv_clock_monotonic,
+               [for libs in "" -lrt; do
+                    _SAVE_LIBS="$LIBS"
+                    LIBS="$LIBS $libs"
+dnl clock_gettime is available on OSX since 10.12, so depending on MACOSX_DEPLOYMENT_TARGET,
+dnl we should or not be able to use it. To detect if we can, we need to make the
+dnl availability attribute strict, so that compilation fails when the target is < 10.12.
+                    AC_TRY_LINK([#define availability(os, ...) availability(os, strict, __VA_ARGS)
+                                 #include <time.h>],
+                                 [ struct timespec ts;
+                                   clock_gettime(CLOCK_MONOTONIC, &ts); ],
+                                 ac_cv_clock_monotonic=$libs
+                                 LIBS="$_SAVE_LIBS"
+                                 break,
+                                 ac_cv_clock_monotonic=no)
+                    LIBS="$_SAVE_LIBS"
+                done])
+if test "$ac_cv_clock_monotonic" != "no"; then
+    HAVE_CLOCK_MONOTONIC=1
+    REALTIME_LIBS=$ac_cv_clock_monotonic
+    AC_DEFINE(HAVE_CLOCK_MONOTONIC)
+    AC_SUBST(HAVE_CLOCK_MONOTONIC)
+    AC_SUBST_LIST(REALTIME_LIBS)
+fi
 
 dnl Checks for math functions.
 dnl ========================================================
@@ -1152,30 +1146,6 @@ if test "$GNU_CC"; then
 
   TARGET_COMPILER_ABI="${TARGET_COMPILER_ABI-${ARM_ABI_PREFIX}gcc3}"
 fi
-
-dnl See if a dynamic_cast to void* gives the most derived object.
-AC_CACHE_CHECK(for C++ dynamic_cast to void*,
-               ac_cv_cpp_dynamic_cast_void_ptr,
-               [AC_TRY_RUN([class X { int i; public: virtual ~X() { } };
-                            class Y { int j; public: virtual ~Y() { } };
-                            class Z : public X, public Y { int k; };
-
-                            int main() {
-                                 Z mdo;
-                                 X *subx = (X*)&mdo;
-                                 Y *suby = (Y*)&mdo;
-                                 return !((((void*)&mdo != (void*)subx) &&
-                                           ((void*)&mdo == dynamic_cast<void*>(subx))) ||
-                                          (((void*)&mdo != (void*)suby) &&
-                                           ((void*)&mdo == dynamic_cast<void*>(suby))));
-                            }],
-                           ac_cv_cpp_dynamic_cast_void_ptr=yes,
-                           ac_cv_cpp_dynamic_cast_void_ptr=no,
-                           ac_cv_cpp_dynamic_cast_void_ptr=no)])
-if test "$ac_cv_cpp_dynamic_cast_void_ptr" = yes ; then
-   AC_DEFINE(HAVE_CPP_DYNAMIC_CAST_TO_VOID_PTR)
-fi
-
 
 # try harder, when checking for __thread support, see bug 521750 comment #33 and below
 # We pass MOZ_OPTIMIZE_LDFLAGS to the linker because if dead_strip is

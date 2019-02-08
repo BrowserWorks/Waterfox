@@ -5,7 +5,7 @@
 
 var EXPORTED_SYMBOLS = ["WebrtcUI"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   DoorHanger: "resource://gre/modules/Prompt.jsm",
@@ -241,7 +241,6 @@ var WebrtcUI = {
 
   _addDevicesToOptions: function(aDevices, aType, aOptions) {
     if (aDevices.length) {
-
       // Filter out empty items from the list
       let list = this._getList(aDevices, aType);
 
@@ -252,7 +251,6 @@ var WebrtcUI = {
           label: Strings.browser.GetStringFromName("getUserMedia." + aType + ".prompt"),
           values: list,
         });
-
       }
     }
   },

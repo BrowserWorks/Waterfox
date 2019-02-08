@@ -12,7 +12,6 @@ function deactivateDomainPolicy() {
 }
 
 async function test_domainPolicy() {
-
   ChromeUtils.defineModuleGetter(this, "Promise", "resource://gre/modules/Promise.jsm");
   let outerDeferred = Promise.defer();
   let currentTask = outerDeferred.promise;
@@ -32,7 +31,7 @@ async function test_domainPolicy() {
     gBrowser.selectedTab = tab;
 
     let initPromise = ContentTask.spawn(tab.linkedBrowser, null, function() {
-      ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
+      const {PromiseUtils} = ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
       function loadBase() {
         let deferred = PromiseUtils.defer();
         let listener = (event) => {
@@ -94,7 +93,7 @@ async function test_domainPolicy() {
   function testDomain(domain) {
     ipcArgs.domain = domain;
     return (aUtils) => {
-      ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
+      const {PromiseUtils} = ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
       // eslint-disable-next-line no-shadow
       var ipcArgs;
       var utils = {};
@@ -135,7 +134,7 @@ async function test_domainPolicy() {
     ipcArgs.expectEnabled = expectEnabled;
     ipcArgs.list = list;
     return (aUtils) => {
-      ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
+      const {PromiseUtils} = ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
       // eslint-disable-next-line no-shadow
       var ipcArgs;
       var utils = {};

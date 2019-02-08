@@ -6,7 +6,7 @@
 
 const BYTES_PER_MEBIBYTE = 1048576;
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetters(this, {
   Services: "resource://gre/modules/Services.jsm",
   OS: "resource://gre/modules/osfile.jsm",
@@ -949,7 +949,6 @@ var PlacesDBUtils = {
       await db.execute(query, params, r => {
         logs.push(`Trigger ${r.getResultByIndex(0)}`);
       });
-
     } catch (ex) {
       throw new Error("Unable to collect stats.");
     }

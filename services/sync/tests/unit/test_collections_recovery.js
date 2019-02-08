@@ -2,8 +2,7 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Verify that we wipe the server if we have to regenerate keys.
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/util.js");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
 
 add_task(async function test_missing_crypto_collection() {
   enableValidationPrefs();
@@ -69,7 +68,6 @@ add_task(async function test_missing_crypto_collection() {
     _("Regular sync: no need to freshStart.");
     await sync_and_validate_telem();
     Assert.equal(fresh, 0);
-
   } finally {
     Svc.Prefs.resetBranch("");
     await promiseStopServer(server);

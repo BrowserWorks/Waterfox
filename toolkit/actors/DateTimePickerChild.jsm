@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.defineModuleGetter(this, "BrowserUtils",
   "resource://gre/modules/BrowserUtils.jsm");
 
 var EXPORTED_SYMBOLS = ["DateTimePickerChild"];
 
-ChromeUtils.import("resource://gre/modules/ActorChild.jsm");
+const {ActorChild} = ChromeUtils.import("resource://gre/modules/ActorChild.jsm");
 
 /**
  * DateTimePickerChild is the communication channel between the input box
@@ -36,9 +36,7 @@ class DateTimePickerChild extends ActorChild {
       return;
     }
 
-    if (dateTimeBoxElement instanceof Ci.nsIDateTimeInputArea) {
-      dateTimeBoxElement.wrappedJSObject.setPickerState(false);
-    } else if (this._inputElement.openOrClosedShadowRoot) {
+    if (this._inputElement.openOrClosedShadowRoot) {
       // dateTimeBoxElement is within UA Widget Shadow DOM.
       // An event dispatch to it can't be accessed by document.
       let win = this._inputElement.ownerGlobal;
@@ -111,9 +109,7 @@ class DateTimePickerChild extends ActorChild {
 
         let win = this._inputElement.ownerGlobal;
 
-        if (dateTimeBoxElement instanceof Ci.nsIDateTimeInputArea) {
-          dateTimeBoxElement.wrappedJSObject.setValueFromPicker(Cu.cloneInto(aMessage.data, win));
-        } else if (this._inputElement.openOrClosedShadowRoot) {
+        if (this._inputElement.openOrClosedShadowRoot) {
           // dateTimeBoxElement is within UA Widget Shadow DOM.
           // An event dispatch to it can't be accessed by document.
           dateTimeBoxElement.dispatchEvent(
@@ -154,9 +150,7 @@ class DateTimePickerChild extends ActorChild {
           throw new Error("How do we get this event without a UA Widget or XBL binding?");
         }
 
-        if (dateTimeBoxElement instanceof Ci.nsIDateTimeInputArea) {
-          dateTimeBoxElement.wrappedJSObject.setPickerState(true);
-        } else if (this._inputElement.openOrClosedShadowRoot) {
+        if (this._inputElement.openOrClosedShadowRoot) {
           // dateTimeBoxElement is within UA Widget Shadow DOM.
           // An event dispatch to it can't be accessed by document, because
           // the event is not composed.

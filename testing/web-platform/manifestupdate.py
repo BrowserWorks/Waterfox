@@ -49,7 +49,7 @@ def create_parser():
         "--rewrite-config", action="store_true", default=False,
         help="Force the local configuration to be regenerated")
     p.add_argument(
-        "--cache-root", action="store", default=os.path.join(get_state_dir()[0], "cache", "wpt"),
+        "--cache-root", action="store", default=os.path.join(get_state_dir(), "cache", "wpt"),
         help="Path to use for the metadata cache")
     commandline.add_logging_group(p)
 
@@ -114,12 +114,12 @@ def run(src_root, obj_root, logger=None, **kwargs):
     else:
         logger.debug("Skipping manifest download")
 
-    if kwargs["update"] or kwargs["rebuild"]:
-        manifests = update(logger, src_wpt_dir, test_paths, rebuild=kwargs["rebuild"],
-                           cache_root=kwargs["cache_root"])
-    else:
-        logger.debug("Skipping manifest update")
-        manifests = load_manifests(test_paths)
+    update = kwargs["update"] or kwargs["rebuild"]
+    manifests = load_and_update(logger, src_wpt_dir, test_paths,
+                                update=update,
+                                rebuild=kwargs["rebuild"],
+                                cache_root=kwargs["cache_root"],
+                                meta_filters=kwargs.get("meta_filters"))
 
     return manifests
 
@@ -175,7 +175,8 @@ def generate_config(logger, repo_root, wpt_dir, dest_path, force_rewrite=False):
     return dest_config_path
 
 
-def update(logger, wpt_dir, test_paths, rebuild=False, config_dir=None, cache_root=None):
+def load_and_update(logger, wpt_dir, test_paths, rebuild=False, config_dir=None, cache_root=None,
+                    meta_filters=None, update=True):
     rv = {}
     wptdir_hash = hashlib.sha256(os.path.abspath(wpt_dir)).hexdigest()
     for url_base, paths in test_paths.iteritems():
@@ -184,22 +185,15 @@ def update(logger, wpt_dir, test_paths, rebuild=False, config_dir=None, cache_ro
         m = manifest.manifest.load_and_update(paths["tests_path"],
                                               manifest_path,
                                               url_base,
+                                              update=update,
+                                              rebuild=rebuild,
                                               working_copy=True,
-                                              cache_root=this_cache_root)
+                                              cache_root=this_cache_root,
+                                              meta_filters=meta_filters)
         path_data = {"url_base": url_base}
         path_data.update(paths)
         rv[m] = path_data
 
-    return rv
-
-
-def load_manifests(test_paths):
-    rv = {}
-    for url_base, paths in test_paths.iteritems():
-        m = manifest.manifest.load(paths["tests_path"], manifest_path)
-        path_data = {"url_base": url_base}
-        path_data.update(paths)
-        rv[m] = path_data
     return rv
 
 

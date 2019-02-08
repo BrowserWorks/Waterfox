@@ -390,10 +390,6 @@ button > hbox > label {
 
 /* Privacy Pane */
 
-#formAutofillGroup {
-  margin-top: 28px;
-}
-
 .doNotTrackLearnMore {
   margin-inline-start: calc(1em + 30px);
   margin-bottom: 1em;
@@ -900,4 +896,28 @@ menulist[indicator=true] > menupopup menuitem[indicator=true]:not([image]) > .me
 /* Menulist styles */
 .label-item {
   font-size: 0.8em;
+}
+
+.updateSettingCrossUserWarningContainer {
+  background: var(--grey-20);
+  border-radius: 5px;
+  padding-inline: 8px;
+  padding-block-start: 2px;
+  padding-block-end: 8px;
+  margin-block-end: 17px;
+}
+
+#updateSettingCrossUserWarning {
+  padding-inline-start: 30px;
+  margin-block-start: 20px;
+  line-height: 20px;
+  background-image: url("chrome://global/skin/icons/info.svg");
+  background-position-x: left 2px;
+  background-position-y: top 2px;
+  background-size: 16px 16px;
+  background-repeat: no-repeat;
+}
+
+#updateSettingCrossUserWarning:-moz-locale-dir(rtl) {
+  background-position-x: right 2px;
 }

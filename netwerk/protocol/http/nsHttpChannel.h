@@ -169,7 +169,7 @@ class nsHttpChannel final : public HttpBaseChannel,
   NS_IMETHOD SetChannelIsForDownload(bool aChannelIsForDownload) override;
   NS_IMETHOD GetNavigationStartTimeStamp(TimeStamp *aTimeStamp) override;
   NS_IMETHOD SetNavigationStartTimeStamp(TimeStamp aTimeStamp) override;
-  NS_IMETHOD CancelForTrackingProtection() override;
+  NS_IMETHOD CancelByChannelClassifier(nsresult aErrorCode) override;
   // nsISupportsPriority
   NS_IMETHOD SetPriority(int32_t value) override;
   // nsIClassOfService
@@ -310,9 +310,9 @@ class nsHttpChannel final : public HttpBaseChannel,
       const std::function<nsresult(nsHttpChannel *)> &aFunc);
 
   bool RequestIsConditional();
-  void HandleContinueCancelledByTrackingProtection();
+  void HandleContinueCancellingByChannelClassifier(nsresult aErrorCode);
   nsresult CancelInternal(nsresult status);
-  void ContinueCancelledByTrackingProtection();
+  void ContinueCancellingByChannelClassifier(nsresult aErrorCode);
 
   // Connections will only be established in this function.
   // (including DNS prefetch and speculative connection.)
@@ -431,15 +431,18 @@ class nsHttpChannel final : public HttpBaseChannel,
   MOZ_MUST_USE nsresult OnDoneReadingPartialCacheEntry(bool *streamDone);
 
   MOZ_MUST_USE nsresult
-  DoAuthRetry(nsAHttpConnection *,
-              const std::function<nsresult(nsHttpChannel *, nsresult)> &aOuter);
-  MOZ_MUST_USE nsresult ContinueDoAuthRetry(
-      nsAHttpConnection *aConn,
-      const std::function<nsresult(nsHttpChannel *, nsresult)> &aOuter);
-  MOZ_MUST_USE nsresult DoConnect(nsAHttpConnection *aConn = nullptr);
+  DoAuthRetry(nsHttpTransaction *aTransWithStickyConn,
+              const std::function<nsresult(nsHttpChannel *, nsresult)>
+                  &aContinueOnStopRequestFunc);
+  MOZ_MUST_USE nsresult
+  ContinueDoAuthRetry(nsHttpTransaction *aTransWithStickyConn,
+                      const std::function<nsresult(nsHttpChannel *, nsresult)>
+                          &aContinueOnStopRequestFunc);
+  MOZ_MUST_USE nsresult
+  DoConnect(nsHttpTransaction *aTransWithStickyConn = nullptr);
   MOZ_MUST_USE nsresult ContinueOnStopRequestAfterAuthRetry(
       nsresult aStatus, bool aAuthRetry, bool aIsFromNet, bool aContentComplete,
-      nsAHttpConnection *aStickyConn);
+      nsHttpTransaction *aTransWithStickyConn);
   MOZ_MUST_USE nsresult ContinueOnStopRequest(nsresult status, bool aIsFromNet,
                                               bool aContentComplete);
 
@@ -652,7 +655,6 @@ class nsHttpChannel final : public HttpBaseChannel,
   uint32_t mCacheEntryIsWriteOnly : 1;
   // see WAIT_FOR_* constants above
   uint32_t mCacheEntriesToWaitFor : 2;
-  uint32_t mHasQueryString : 1;
   // whether cache entry data write was in progress during cache entry check
   // when true, after we finish read from cache we must check all data
   // had been loaded from cache. If not, then an error has to be propagated
@@ -679,10 +681,10 @@ class nsHttpChannel final : public HttpBaseChannel,
   // the next authentication request can be sent on a whole new connection
   uint32_t mAuthConnectionRestartable : 1;
 
-  // True if the channel classifier has marked the channel to be cancelled
-  // due to the tracking protection rules, but the asynchronous cancellation
+  // True if the channel classifier has marked the channel to be cancelled due
+  // to the safe-browsing classifier rules, but the asynchronous cancellation
   // process hasn't finished yet.
-  uint32_t mTrackingProtectionCancellationPending : 1;
+  uint32_t mChannelClassifierCancellationPending : 1;
 
   // True only when we are between Resume and async fire of mCallOnResume.
   // Used to suspend any newly created pumps in mCallOnResume handler.

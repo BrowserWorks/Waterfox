@@ -6,10 +6,10 @@ var EXPORTED_SYMBOLS = [
   "Troubleshoot",
 ];
 
-ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {AddonManager} = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyGlobalGetters(this, ["DOMParser"]);
 
 // We use a preferences whitelist to make sure we only show preferences that
@@ -95,6 +95,7 @@ const PREFS_BLACKLIST = [
   /^network[.]proxy[.]/,
   /[.]print_to_filename$/,
   /^print[.]macosx[.]pagesetup/,
+  /^print[.]printer/,
 ];
 
 // Table of getters for various preference types.
@@ -640,7 +641,7 @@ var dataProviders = {
 
 if (AppConstants.MOZ_CRASHREPORTER) {
   dataProviders.crashes = function crashes(done) {
-    let CrashReports = ChromeUtils.import("resource://gre/modules/CrashReports.jsm").CrashReports;
+    const {CrashReports} = ChromeUtils.import("resource://gre/modules/CrashReports.jsm");
     let reports = CrashReports.getReports();
     let now = new Date();
     let reportsNew = reports.filter(report => (now - report.date < Troubleshoot.kMaxCrashAge));

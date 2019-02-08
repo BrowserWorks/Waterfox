@@ -434,6 +434,9 @@ void CodeGeneratorShared::encodeAllocation(LSnapshot* snapshot,
     case MIRType::Int32:
     case MIRType::String:
     case MIRType::Symbol:
+#ifdef ENABLE_BIGINT
+    case MIRType::BigInt:
+#endif
     case MIRType::Object:
     case MIRType::ObjectOrNull:
     case MIRType::Boolean:
@@ -1228,13 +1231,12 @@ class VerifyOp {
     masm.branchPtr(Assembler::NotEqual, dump, reg, failure_);
   }
   void operator()(FloatRegister reg, Address dump) {
-    FloatRegister scratch;
     if (reg.isDouble()) {
-      scratch = ScratchDoubleReg;
+      ScratchDoubleScope scratch(masm);
       masm.loadDouble(dump, scratch);
       masm.branchDouble(Assembler::DoubleNotEqual, scratch, reg, failure_);
     } else if (reg.isSingle()) {
-      scratch = ScratchFloat32Reg;
+      ScratchFloat32Scope scratch(masm);
       masm.loadFloat32(dump, scratch);
       masm.branchFloat(Assembler::DoubleNotEqual, scratch, reg, failure_);
     }

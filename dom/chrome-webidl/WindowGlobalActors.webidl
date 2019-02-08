@@ -11,7 +11,7 @@ interface nsIDocShell;
 interface WindowGlobalParent {
   readonly attribute boolean isClosed;
   readonly attribute boolean isInProcess;
-  readonly attribute ChromeBrowsingContext browsingContext;
+  readonly attribute CanonicalBrowsingContext browsingContext;
 
   readonly attribute boolean isCurrentGlobal;
 
@@ -27,6 +27,9 @@ interface WindowGlobalParent {
   readonly attribute URI? documentURI;
 
   static WindowGlobalParent? getByInnerWindowId(unsigned long long innerWindowId);
+
+  [Throws]
+  JSWindowActorParent getActor(DOMString name);
 };
 
 [Exposed=Window, ChromeOnly]
@@ -43,4 +46,7 @@ interface WindowGlobalChild {
   readonly attribute WindowGlobalParent? parentActor; // in-process only
 
   static WindowGlobalChild? getByInnerWindowId(unsigned long long innerWIndowId);
+
+  [Throws]
+  JSWindowActorChild getActor(DOMString name);
 };

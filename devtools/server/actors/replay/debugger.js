@@ -42,6 +42,7 @@ function ReplayDebugger() {
 
   // We should have been connected to control.js by the call above.
   assert(this._control);
+  assert(this._searchControl);
 
   // Preferred direction of travel when not explicitly resumed.
   this._direction = Direction.NONE;
@@ -74,6 +75,9 @@ function ReplayDebugger() {
 
   // After we are done pausing, callback describing how to resume.
   this._resumeCallback = null;
+
+  // Information about all searches that exist.
+  this._searches = [];
 
   // Handler called when hitting the beginning/end of the recording, or when
   // a time warp target has been reached.
@@ -349,6 +353,47 @@ ReplayDebugger.prototype = {
   },
 
   /////////////////////////////////////////////////////////
+  // Search management
+  /////////////////////////////////////////////////////////
+
+  _forEachSearch(callback) {
+    for (const { position } of this._searches) {
+      callback(position);
+    }
+  },
+
+  _virtualConsoleLog(position, text, callback) {
+    this._searches.push({ position, text, callback, results: [] });
+    this._searchControl.reset();
+  },
+
+  _onSearchPause(point) {
+    for (const { position, text, callback, results } of this._searches) {
+      if (RecordReplayControl.positionSubsumes(position, point.position)) {
+        if (!results.some(existing => point.progress == existing.progress)) {
+          let evaluateResult;
+          if (text) {
+            const frameData = this._searchControl.sendRequest({
+              type: "getFrame",
+              index: NewestFrameIndex,
+            });
+            if ("index" in frameData) {
+              const rv = this._searchControl.sendRequest({
+                type: "frameEvaluate",
+                index: frameData.index,
+                text,
+              });
+              evaluateResult = this._convertCompletionValue(rv, { forSearch: true });
+            }
+          }
+          results.push(point);
+          callback(point, evaluateResult);
+        }
+      }
+    }
+  },
+
+  /////////////////////////////////////////////////////////
   // Breakpoint management
   /////////////////////////////////////////////////////////
 
@@ -485,14 +530,20 @@ ReplayDebugger.prototype = {
   // Object methods
   /////////////////////////////////////////////////////////
 
-  // Objects which |forConsole| is set are objects that were logged in console
-  // messages, and had their properties recorded so that they can be inspected
-  // without switching to a replaying child.
-  _getObject(id, forConsole) {
+  _getObject(id, options) {
+    if (options && options.forSearch) {
+      // Returning objects through searches is NYI.
+      return "<UnknownSearchObject>";
+    }
+    const forConsole = options && options.forConsole;
+
     if (id && !this._objects[id]) {
       const data = this._sendRequest({ type: "getObject", id });
       switch (data.kind) {
       case "Object":
+        // Objects which |forConsole| is set are objects that were logged in
+        // console messages, and had their properties recorded so that they can
+        // be inspected without switching to a replaying child.
         this._objects[id] = new ReplayDebuggerObject(this, data, forConsole);
         break;
       case "Environment":
@@ -509,32 +560,47 @@ ReplayDebugger.prototype = {
     return rv;
   },
 
-  _convertValue(value, forConsole) {
+  // Convert a value we received from the child.
+  _convertValue(value, options) {
     if (isNonNullObject(value)) {
       if (value.object) {
-        return this._getObject(value.object, forConsole);
-      } else if (value.special == "undefined") {
-        return undefined;
-      } else if (value.special == "NaN") {
-        return NaN;
-      } else if (value.special == "Infinity") {
-        return Infinity;
-      } else if (value.special == "-Infinity") {
-        return -Infinity;
+        return this._getObject(value.object, options);
+      }
+      switch (value.special) {
+      case "undefined": return undefined;
+      case "Infinity": return Infinity;
+      case "-Infinity": return -Infinity;
+      case "NaN": return NaN;
+      case "0": return -0;
       }
     }
     return value;
   },
 
-  _convertCompletionValue(value) {
+  _convertCompletionValue(value, options) {
     if ("return" in value) {
-      return { return: this._convertValue(value.return) };
+      return { return: this._convertValue(value.return, options) };
     }
     if ("throw" in value) {
-      return { throw: this._convertValue(value.throw) };
+      return { throw: this._convertValue(value.throw, options) };
     }
     ThrowError("Unexpected completion value");
     return null; // For eslint
+  },
+
+  // Convert a value for sending to the child.
+  _convertValueForChild(value) {
+    if (isNonNullObject(value)) {
+      assert(value instanceof ReplayDebuggerObject);
+      return { object: value._data.id };
+    } else if (value === undefined ||
+               value == Infinity ||
+               value == -Infinity ||
+               Object.is(value, NaN) ||
+               Object.is(value, -0)) {
+      return { special: "" + value };
+    }
+    return value;
   },
 
   /////////////////////////////////////////////////////////
@@ -582,7 +648,7 @@ ReplayDebugger.prototype = {
     if (message.messageType == "ConsoleAPI" && message.arguments) {
       for (let i = 0; i < message.arguments.length; i++) {
         message.arguments[i] = this._convertValue(message.arguments[i],
-                                                  /* forConsole = */ true);
+                                                  { forConsole: true });
       }
     }
     return message;
@@ -662,6 +728,7 @@ ReplayDebuggerScript.prototype = {
   get format() { return this._data.format; },
 
   _forward(type, value) {
+    this._dbg._ensurePaused();
     return this._dbg._sendRequest({ type, id: this._data.id, value });
   },
 
@@ -681,6 +748,11 @@ ReplayDebuggerScript.prototype = {
     this._dbg._clearMatchingBreakpoints(({position, data}) => {
       return position.script == this._data.id && handler == data;
     });
+  },
+
+  replayVirtualConsoleLog(offset, text, callback) {
+    this._dbg._virtualConsoleLog({ kind: "Break", script: this._data.id, offset },
+                                 text, callback);
   },
 
   get isGeneratorFunction() { NYI(); },
@@ -828,12 +900,14 @@ function ReplayDebuggerObject(dbg, data, forConsole) {
   this._data = data;
   this._forConsole = forConsole;
   this._properties = null;
+  this._proxyData = null;
 }
 
 ReplayDebuggerObject.prototype = {
   _invalidate() {
     this._data = null;
     this._properties = null;
+    this._proxyData = null;
   },
 
   get callable() { return this._data.callable; },
@@ -856,7 +930,6 @@ ReplayDebuggerObject.prototype = {
   isExtensible() { return this._data.isExtensible; },
   isSealed() { return this._data.isSealed; },
   isFrozen() { return this._data.isFrozen; },
-  unwrap() { return this.isProxy ? NYI() : this; },
 
   get proto() {
     // Don't allow inspection of the prototypes of objects logged to the
@@ -883,7 +956,7 @@ ReplayDebuggerObject.prototype = {
   getOwnPropertyDescriptor(name) {
     this._ensureProperties();
     const desc = this._properties[name];
-    return desc ? this._convertPropertyDescriptor(desc) : null;
+    return desc ? this._convertPropertyDescriptor(desc) : undefined;
   },
 
   _ensureProperties() {
@@ -892,7 +965,7 @@ ReplayDebuggerObject.prototype = {
       const properties = this._forConsole
         ? this._dbg._sendRequest({ type: "getObjectPropertiesForConsole", id })
         : this._dbg._sendRequestAllowDiverge({ type: "getObjectProperties", id });
-      this._properties = {};
+      this._properties = Object.create(null);
       properties.forEach(({name, desc}) => { this._properties[name] = desc; });
     }
   },
@@ -911,16 +984,60 @@ ReplayDebuggerObject.prototype = {
     return rv;
   },
 
+  _ensureProxyData() {
+    if (!this._proxyData) {
+      const data = this._dbg._sendRequestAllowDiverge({
+        type: "objectProxyData",
+        id: this._data.id,
+      });
+      if (data.exception) {
+        throw new Error(data.exception);
+      }
+      this._proxyData = data;
+    }
+  },
+
+  unwrap() {
+    if (!this.isProxy) {
+      return this;
+    }
+    this._ensureProxyData();
+    return this._dbg._convertValue(this._proxyData.unwrapped);
+  },
+
+  get proxyTarget() {
+    this._ensureProxyData();
+    return this._dbg._convertValue(this._proxyData.target);
+  },
+
+  get proxyHandler() {
+    this._ensureProxyData();
+    return this._dbg._convertValue(this._proxyData.handler);
+  },
+
+  call(thisv, ...args) {
+    return this.apply(thisv, args);
+  },
+
+  apply(thisv, args) {
+    thisv = this._dbg._convertValueForChild(thisv);
+    args = (args || []).map(v => this._dbg._convertValueForChild(v));
+
+    const rv = this._dbg._sendRequestAllowDiverge({
+      type: "objectApply",
+      id: this._data.id,
+      thisv,
+      args,
+    });
+    return this._dbg._convertCompletionValue(rv);
+  },
+
   get allocationSite() { NYI(); },
   get errorMessageName() { NYI(); },
   get errorNotes() { NYI(); },
   get errorLineNumber() { NYI(); },
   get errorColumnNumber() { NYI(); },
-  get proxyTarget() { NYI(); },
-  get proxyHandler() { NYI(); },
   get isPromise() { NYI(); },
-  call: NYI,
-  apply: NYI,
   asEnvironment: NYI,
   executeInGlobal: NYI,
   executeInGlobalWithBindings: NYI,

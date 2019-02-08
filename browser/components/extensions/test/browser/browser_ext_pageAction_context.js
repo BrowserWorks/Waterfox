@@ -2,8 +2,7 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-Services.scriptloader.loadSubScript(new URL("head_pageAction.js", gTestPath).href,
-                                    this);
+loadTestSubscript("head_pageAction.js");
 
 add_task(async function testTabSwitchContext() {
   await runTests({
@@ -281,7 +280,7 @@ add_task(async function testNavigationClearsData() {
   let default_title = "Default title";
   let tab_title = "Tab title";
 
-  let {Management: {global: {tabTracker}}} = ChromeUtils.import("resource://gre/modules/Extension.jsm", {});
+  let {Management: {global: {tabTracker}}} = ChromeUtils.import("resource://gre/modules/Extension.jsm", null);
   let extension, tabs = [];
   async function addTab(...args) {
     let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, ...args);

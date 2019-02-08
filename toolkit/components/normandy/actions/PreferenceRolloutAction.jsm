@@ -4,8 +4,8 @@
 
 "use strict";
 
-ChromeUtils.import("resource://normandy/actions/BaseAction.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {BaseAction} = ChromeUtils.import("resource://normandy/actions/BaseAction.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.defineModuleGetter(this, "TelemetryEnvironment", "resource://gre/modules/TelemetryEnvironment.jsm");
 ChromeUtils.defineModuleGetter(this, "PreferenceRollouts", "resource://normandy/lib/PreferenceRollouts.jsm");
 ChromeUtils.defineModuleGetter(this, "PrefUtils", "resource://normandy/lib/PrefUtils.jsm");
@@ -68,7 +68,6 @@ class PreferenceRolloutAction extends BaseAction {
       } else {
         this.log.debug(`No updates to preference rollout ${args.slug}`);
       }
-
     } else { // new enrollment
       // Check if this rollout would be a no-op, which is not allowed.
       if (newRollout.preferences.every(({value, previousValue}) => value === previousValue)) {

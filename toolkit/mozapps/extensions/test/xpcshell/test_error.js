@@ -35,7 +35,7 @@ add_task(async function run_test_2() {
 
 // Checks that an empty file shows an error
 add_task(async function run_test_3() {
-  let xpi = await createTempXPIFile({});
+  let xpi = await AddonTestUtils.createTempXPIFile({});
   let install = await AddonManager.getInstallForFile(xpi);
   Assert.notEqual(install, null);
   Assert.equal(install.state, AddonManager.STATE_DOWNLOAD_FAILED);
@@ -46,7 +46,7 @@ add_task(async function run_test_3() {
 add_task(async function run_test_4() {
   let xpi = await createTempWebExtensionFile({});
   let url = Services.io.newFileURI(xpi).spec;
-  let install = await AddonManager.getInstallForURL(url, "application/x-xpinstall", "sha1:foo");
+  let install = await AddonManager.getInstallForURL(url, {hash: "sha1:foo"});
   Assert.notEqual(install, null);
   Assert.equal(install.state, AddonManager.STATE_DOWNLOAD_FAILED);
   Assert.equal(install.error, AddonManager.ERROR_INCORRECT_HASH);

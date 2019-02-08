@@ -176,6 +176,24 @@ panelview[mainview] > .panel-header {
   min-width: calc(var(--tab-min-width) + 10px);
 }
 
+@supports -moz-bool-pref("browser.tabs.newanimations") {
+
+.tabbrowser-tab:not([pinned]):not([tabdrop-samewindow]) {
+  transition: transform 100ms ease-in-out;
+}
+
+#tabbrowser-tabs[movingtab] > .tabbrowser-tab[selected] {
+  transition: none;
+}
+
+.tabbrowser-tab:not([pinned]):not([fadein]) {
+  transform: translateY(var(--tab-min-height));
+}
+
+} /* end @supports -moz-bool-pref("browser.tabs.newanimations") */
+
+@supports not -moz-bool-pref("browser.tabs.newanimations") {
+
 .tabbrowser-tab:not([pinned]):not([fadein]) {
   max-width: 0.1px;
   min-width: 0.1px;
@@ -202,6 +220,8 @@ panelview[mainview] > .panel-header {
 .tab-throbber:not([fadein]) {
   display: none;
 }
+
+} /* end @supports not -moz-bool-pref("browser.tabs.newanimations") */
 
 %ifdef NIGHTLY_BUILD
 @supports -moz-bool-pref("browser.tabs.hideThrobber") {
@@ -281,8 +301,8 @@ window:not([chromehidden~="toolbar"]) #nav-bar[nonemptyoverflow] > .overflow-but
 
 
 %ifdef MENUBAR_CAN_AUTOHIDE
-#toolbar-menubar:not([autohide=true]) + #TabsToolbar > .titlebar-buttonbox-container,
-#toolbar-menubar:not([autohide=true]) + #TabsToolbar .titlebar-spacer,
+:root:not([chromehidden~="menubar"]) #toolbar-menubar:not([autohide=true]) + #TabsToolbar > .titlebar-buttonbox-container,
+:root:not([chromehidden~="menubar"]) #toolbar-menubar:not([autohide=true]) + #TabsToolbar .titlebar-spacer,
 %endif
 %ifndef MOZ_WIDGET_COCOA
 %ifndef MOZ_WIDGET_GTK
@@ -697,6 +717,7 @@ html|input.urlbar-input {
   list-style-image: none;
 }
 
+#urlbar[actionoverride] > #urlbar-display-box,
 #urlbar:not([actiontype="switchtab"]):not([actiontype="extension"]) > #urlbar-display-box,
 #urlbar:not([actiontype="switchtab"]) > #urlbar-display-box > #switchtab,
 #urlbar:not([actiontype="extension"]) > #urlbar-display-box > #extension {
@@ -708,7 +729,7 @@ html|input.urlbar-input {
 }
 
 #PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"] {
-  -moz-binding: url("chrome://global/content/bindings/autocomplete.xml#autocomplete-richlistitem-insecure-field");
+  -moz-binding: none;
   height: auto;
 }
 
@@ -759,22 +780,13 @@ html|input.urlbar-input {
 #identity-box.chromeUI ~ #page-action-buttons > .urlbar-page-action:not(#star-button-box),
 .urlbar-history-dropmarker[usertyping],
 .urlbar-go-button:not([usertyping]),
-.urlbar-go-button:not([parentfocused="true"]),
-#urlbar[pageproxystate="invalid"] > #identity-box > #blocked-permissions-container,
-#urlbar[pageproxystate="invalid"] > #identity-box > #notification-popup-box,
-#urlbar[pageproxystate="invalid"] > #identity-box > #identity-icon-labels {
+.urlbar-go-button:not([parentfocused="true"]) {
   display: none;
 }
 
 #identity-box {
   -moz-user-focus: normal;
 }
-
-#urlbar[pageproxystate="invalid"] > #identity-box {
-  pointer-events: none;
-  -moz-user-focus: ignore;
-}
-
 
 /* We leave 49ch plus whatever space the download button will need when it
  * appears. Normally this should be 16px for the icon, plus 2 * 2px padding
@@ -993,10 +1005,6 @@ html|*#fullscreen-exit-button {
   opacity: 0;
   pointer-events: none;
   -moz-stack-sizing: ignore;
-}
-
-#addon-progress-notification {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#addon-progress-notification");
 }
 
 browser[tabmodalPromptShowing] {

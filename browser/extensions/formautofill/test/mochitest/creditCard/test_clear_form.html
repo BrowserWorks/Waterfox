@@ -1,0 +1,168 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test form autofill - clear form button</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/AddTask.js"></script>
+  <script type="text/javascript" src="../formautofill_common.js"></script>
+  <script type="text/javascript" src="../../../../../../toolkit/components/satchel/test/satchel_common.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+Form autofill test: clear form button
+
+<script>
+"use strict";
+
+const MOCK_ADDR_STORAGE = [{
+  organization: "Sesame Street",
+  "street-address": "2 Harrison St\nline2\nline3",
+  tel: "+13453453456",
+}, {
+  organization: "Mozilla",
+  "street-address": "331 E. Evelyn Avenue",
+}, {
+  organization: "Tel org",
+  tel: "+12223334444",
+}];
+const MOCK_CC_STORAGE = [{
+  "cc-name": "John Doe",
+  "cc-number": "4929001587121045",
+  "cc-exp-month": 4,
+  "cc-exp-year": 2017,
+}, {
+  "cc-name": "Timothy Berners-Lee",
+  "cc-number": "5103059495477870",
+  "cc-exp-month": 12,
+  "cc-exp-year": 2022,
+}];
+
+initPopupListener();
+
+add_task(async function setup_storage() {
+  await addAddress(MOCK_ADDR_STORAGE[0]);
+  await addAddress(MOCK_ADDR_STORAGE[1]);
+  await addAddress(MOCK_ADDR_STORAGE[2]);
+
+  await addCreditCard(MOCK_CC_STORAGE[0]);
+  await addCreditCard(MOCK_CC_STORAGE[1]);
+});
+
+
+function checkIsFormCleared(patch = {}) {
+  const form = document.getElementById("form1");
+
+  for (const elem of form.elements) {
+    const expectedValue = patch[elem.id] || "";
+    checkFieldValue(elem, expectedValue);
+    checkFieldHighlighted(elem, false);
+    checkFieldPreview(elem, "");
+  }
+}
+
+async function confirmClear(selector) {
+  info("Await for clearing input");
+  let promise = new Promise(resolve =>
+    document.querySelector(selector).addEventListener("input", (event) => {
+      ok(event instanceof InputEvent,
+         '"input" event should be dispatched with InputEvent interface');
+      is(event.cancelable, false,
+         '"input" event should be never cancelable');
+      is(event.bubbles, true,
+         '"input" event should always bubble');
+      is(event.inputType, "insertReplacementText",
+         'inputType value should be "insertReplacementText"');
+      resolve();
+    }, {once: true})
+  );
+  synthesizeKey("KEY_Enter");
+  await promise;
+}
+
+add_task(async function simple_clear() {
+  await triggerPopupAndHoverItem("#organization", 0);
+  await triggerAutofillAndCheckProfile(MOCK_ADDR_STORAGE[0]);
+
+  await triggerPopupAndHoverItem("#tel", 0);
+  await confirmClear("#tel");
+  checkIsFormCleared();
+});
+
+add_task(async function clear_adapted_record() {
+  await triggerPopupAndHoverItem("#street-address", 0);
+  await triggerAutofillAndCheckProfile(MOCK_ADDR_STORAGE[0]);
+
+  await triggerPopupAndHoverItem("#street-address", 0);
+  await confirmClear("#street-address");
+  checkIsFormCleared();
+});
+
+add_task(async function clear_modified_form() {
+  await triggerPopupAndHoverItem("#organization", 0);
+  await triggerAutofillAndCheckProfile(MOCK_ADDR_STORAGE[0]);
+
+  await setInput("#tel", "+1111111111", true);
+
+  await triggerPopupAndHoverItem("#street-address", 0);
+  await confirmClear("#street-address");
+  checkIsFormCleared({tel: "+1111111111"});
+});
+
+add_task(async function clear_distinct_section() {
+  if (!(await canTestOSKeyStoreLogin())) {
+    todo(false, "Cannot test OS key store login on official builds.");
+    return;
+  }
+
+  document.getElementById("form1").reset();
+  await triggerPopupAndHoverItem("#cc-name", 0);
+  let osKeyStoreLoginShown = waitForOSKeyStoreLogin(true);
+  await triggerAutofillAndCheckProfile(MOCK_CC_STORAGE[0]);
+  await osKeyStoreLoginShown;
+
+  await triggerPopupAndHoverItem("#organization", 0);
+  await triggerAutofillAndCheckProfile(MOCK_ADDR_STORAGE[0]);
+  await triggerPopupAndHoverItem("#street-address", 0);
+  await confirmClear("#street-address");
+
+  for (const [id, val] of Object.entries(MOCK_CC_STORAGE[0])) {
+    const element = document.getElementById(id);
+    if (!element) {
+      return;
+    }
+    checkFieldValue(element, val);
+    checkFieldHighlighted(element, true);
+  }
+
+  await triggerPopupAndHoverItem("#cc-name", 0);
+  await confirmClear("#cc-name");
+  checkIsFormCleared();
+});
+
+</script>
+
+<p id="display"></p>
+
+<div id="content">
+
+  <form id="form1">
+    <p>This is a basic form.</p>
+    <p><label>organization: <input id="organization" autocomplete="organization"></label></p>
+    <p><label>streetAddress: <input id="street-address" autocomplete="street-address"></label></p>
+    <p><label>tel: <input id="tel" autocomplete="tel"></label></p>
+    <p><label>country: <input id="country" autocomplete="country"></label></p>
+
+    <p><label>Name: <input id="cc-name" autocomplete="cc-name"></label></p>
+    <p><label>Card Number: <input id="cc-number" autocomplete="cc-number"></label></p>
+    <p><label>Expiration month: <input id="cc-exp-month" autocomplete="cc-exp-month"></label></p>
+    <p><label>Expiration year: <input id="cc-exp-year" autocomplete="cc-exp-year"></label></p>
+    <p><label>CSC: <input id="cc-csc" autocomplete="cc-csc"></label></p>
+  </form>
+
+</div>
+
+<pre id="test"></pre>
+</body>
+</html>

@@ -22,11 +22,14 @@ XPIDL_SOURCES += [
 
 XPIDL_MODULE = 'xpcom_threads'
 
+XPCOM_MANIFESTS += [
+    'components.conf',
+]
+
 EXPORTS += [
     'MainThreadUtils.h',
     'nsICancelableRunnable.h',
     'nsIIdleRunnable.h',
-    'nsILabelableRunnable.h',
     'nsMemoryPressure.h',
     'nsProcess.h',
     'nsProxyRelease.h',
@@ -85,7 +88,6 @@ UNIFIED_SOURCES += [
     'LazyIdleThread.cpp',
     'MainThreadIdlePeriod.cpp',
     'nsEnvironment.cpp',
-    'nsILabelableRunnable.cpp',
     'nsMemoryPressure.cpp',
     'nsProcessCommon.cpp',
     'nsProxyRelease.cpp',

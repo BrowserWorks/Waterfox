@@ -80,6 +80,15 @@ class nsXPLookAndFeel : public mozilla::LookAndFeel {
 
   virtual void NativeInit() = 0;
 
+  void SetPrefersReducedMotionOverrideForTest(bool aValue) {
+    sIsInPrefersReducedMotionForTest = true;
+    sPrefersReducedMotionForTest = aValue;
+  }
+  void ResetPrefersReducedMotionOverrideForTest() {
+    sIsInPrefersReducedMotionForTest = false;
+    sPrefersReducedMotionForTest = false;
+  }
+
  protected:
   nsXPLookAndFeel();
 
@@ -106,11 +115,13 @@ class nsXPLookAndFeel : public mozilla::LookAndFeel {
   static int32_t sCachedColors[LookAndFeel::eColorID_LAST_COLOR];
   static int32_t sCachedColorBits[COLOR_CACHE_SIZE];
   static bool sUseNativeColors;
-  static bool sUseStandinsForNativeColors;
   static bool sFindbarModalHighlight;
 
   static nsXPLookAndFeel* sInstance;
   static bool sShutdown;
+
+  static bool sIsInPrefersReducedMotionForTest;
+  static bool sPrefersReducedMotionForTest;
 
   // True if we shouldn't clear the cache value in RefreshImpl().
   // NOTE: This should be used only for testing.

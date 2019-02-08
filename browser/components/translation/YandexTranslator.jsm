@@ -6,11 +6,11 @@
 
 var EXPORTED_SYMBOLS = [ "YandexTranslator" ];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
-ChromeUtils.import("resource://services-common/async.js");
-ChromeUtils.import("resource://gre/modules/Http.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {PromiseUtils} = ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
+const {Async} = ChromeUtils.import("resource://services-common/async.js");
+const {httpRequest} = ChromeUtils.import("resource://gre/modules/Http.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["XMLHttpRequest"]);
 
@@ -243,7 +243,6 @@ this.YandexTranslator.prototype = {
 
       if (newCurSize > MAX_REQUEST_DATA ||
           newChunks > MAX_REQUEST_CHUNKS) {
-
         // If we've reached the API limits, let's stop accumulating data
         // for this request and return. We return information useful for
         // the caller to pass back on the next call, so that the function
@@ -322,7 +321,6 @@ YandexRequest.prototype = {
 
         // Fire the request.
         this.networkRequest = httpRequest(url, options);
-
       });
     })();
   },

@@ -125,7 +125,6 @@ def set_vars_from_script(script, vars):
         parse_state = 'scanning'
     stdout = subprocess.check_output(['sh', '-x', '-c', script_text])
     tograb = vars[:]
-    originals = {}
     for line in stdout.splitlines():
         if parse_state == 'scanning':
             if line == 'VAR SETTINGS:':
@@ -140,18 +139,6 @@ def set_vars_from_script(script, vars):
                 if var in tograb:
                     env[var] = value
                     info("Setting %s = %s" % (var, value))
-                if var.startswith("ORIGINAL_"):
-                    originals[var[9:]] = value
-
-    # An added wrinkle: on Windows developer systems, the sourced script will
-    # blow away current settings for eg LIBS, to point to the ones that would
-    # be installed via automation. So we will append the original settings. (On
-    # an automation system, the original settings will be empty or point to
-    # nonexistent stuff.)
-    if platform.system() == 'Windows':
-        for var in vars:
-            if var in originals and len(originals[var]) > 0:
-                env[var] = "%s;%s" % (env[var], originals[var])
 
 
 def ensure_dir_exists(name, clobber=True, creation_marker_filename="CREATED-BY-AUTOSPIDER"):
@@ -276,16 +263,16 @@ elif platform.system() == 'Windows':
     if word_bits == 64:
         os.environ['USE_64BIT'] = '1'
     set_vars_from_script(posixpath.join(PDIR.scripts, 'winbuildenv.sh'),
-                         ['PATH', 'INCLUDE', 'LIB', 'LIBPATH', 'CC', 'CXX',
+                         ['PATH', 'VC_PATH', 'DIA_SDK_PATH', 'CC', 'CXX',
                           'WINDOWSSDKDIR'])
 
 # Configure flags, based on word length and cross-compilation
 if word_bits == 32:
     if platform.system() == 'Windows':
-        CONFIGURE_ARGS += ' --target=i686-pc-mingw32 --host=i686-pc-mingw32'
+        CONFIGURE_ARGS += ' --target=i686-pc-mingw32'
     elif platform.system() == 'Linux':
         if not platform.machine().startswith('arm'):
-            CONFIGURE_ARGS += ' --target=i686-pc-linux --host=i686-pc-linux'
+            CONFIGURE_ARGS += ' --target=i686-pc-linux'
 
     # Add SSE2 support for x86/x64 architectures.
     if not platform.machine().startswith('arm'):
@@ -297,7 +284,7 @@ if word_bits == 32:
         env['CXXFLAGS'] = '{0} {1}'.format(env.get('CXXFLAGS', ''), sse_flags)
 else:
     if platform.system() == 'Windows':
-        CONFIGURE_ARGS += ' --target=x86_64-pc-mingw32 --host=x86_64-pc-mingw32'
+        CONFIGURE_ARGS += ' --target=x86_64-pc-mingw32'
 
 if platform.system() == 'Linux' and AUTOMATION:
     CONFIGURE_ARGS = '--enable-stdcxx-compat --disable-gold ' + CONFIGURE_ARGS

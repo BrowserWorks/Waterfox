@@ -7,7 +7,7 @@
 
 var EXPORTED_SYMBOLS = [ "BrowserUtils" ];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.defineModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
 
@@ -319,7 +319,6 @@ var BrowserUtils = {
    */
   canFindInPage(location) {
     return !location.startsWith("about:addons") &&
-           !location.startsWith("about:config") &&
            !location.startsWith("about:preferences");
   },
 

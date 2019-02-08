@@ -25,7 +25,7 @@
  */
 
 const {StreamUtils} =
-    ChromeUtils.import("chrome://marionette/content/stream-utils.js", {});
+    ChromeUtils.import("chrome://marionette/content/stream-utils.js");
 
 const unicodeConverter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
     .createInstance(Ci.nsIScriptableUnicodeConverter);
@@ -159,7 +159,6 @@ Object.defineProperty(JSONPacket.prototype, "object", {
 });
 
 JSONPacket.prototype.read = function(stream, scriptableStream) {
-
   // Read in more packet data.
   this._readData(stream, scriptableStream);
 
@@ -192,7 +191,6 @@ JSONPacket.prototype._readData = function(stream, scriptableStream) {
 };
 
 JSONPacket.prototype.write = function(stream) {
-
   if (this._outgoing === undefined) {
     // Format the serialized packet to a buffer
     this._outgoing = this.length + ":" + this._data;

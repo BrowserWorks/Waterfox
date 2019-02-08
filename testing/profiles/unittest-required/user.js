@@ -37,9 +37,6 @@ user_pref("browser.firstrun.show.localepicker", false);
 user_pref("browser.firstrun.show.uidiscovery", false);
 user_pref("browser.newtabpage.activity-stream.default.sites", "");
 user_pref("browser.newtabpage.activity-stream.telemetry", false);
-// Background thumbnails in particular cause grief, and disabling thumbnails
-// in general can't hurt - we re-enable them when tests need them.
-user_pref("browser.pagethumbnails.capturing_disabled", true);
 // Make sure PingCentre doesn't hit the network.
 user_pref("browser.ping-centre.production.endpoint", "");
 user_pref("browser.ping-centre.staging.endpoint", "");
@@ -88,9 +85,6 @@ user_pref("captivedetect.canonicalURL", "http://{server}/captive-detect/success.
 user_pref("datareporting.healthreport.documentServerURI", "http://{server}/healthreport/");
 user_pref("datareporting.healthreport.uploadEnabled", false);
 user_pref("devtools.browsertoolbox.panel", "jsdebugger");
-user_pref("devtools.chrome.enabled", false);
-user_pref("devtools.debugger.prompt-connection", true);
-user_pref("devtools.debugger.remote-enabled", false);
 user_pref("devtools.debugger.remote-port", 6023);
 user_pref("devtools.testing", true);
 // Required to set values in wpt metadata files (bug 1485842)
@@ -137,6 +131,7 @@ user_pref("extensions.update.background.url", "http://{server}/extensions-dummy/
 user_pref("extensions.update.url", "http://{server}/extensions-dummy/updateURL");
 // Make sure opening about:addons won't hit the network
 user_pref("extensions.webservice.discoverURL", "http://{server}/extensions-dummy/discoveryURL");
+user_pref("extensions.privatebrowsing.notification", true);
 user_pref("findbar.highlightAll", false);
 user_pref("findbar.modalHighlight", false);
 // Existing tests assume there is no font size inflation.

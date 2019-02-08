@@ -237,8 +237,10 @@ nsresult MemoryTelemetry::GatherReports(
   do {                                                                  \
     int64_t amt;                                                        \
     nsresult rv = mgr->Get##metric(&amt);                               \
-    if (!NS_WARN_IF(NS_FAILED(rv))) {                                   \
+    if (NS_SUCCEEDED(rv)) {                                             \
       HandleMemoryReport(Telemetry::id, nsIMemoryReporter::units, amt); \
+    } else if (rv != NS_ERROR_NOT_AVAILABLE) {                          \
+      NS_WARNING("Failed to retrieve memory telemetry for " #metric);   \
     }                                                                   \
   } while (0)
 
@@ -525,9 +527,11 @@ nsresult MemoryTelemetry::Observe(nsISupports* aSubject, const char* aTopic,
 
     mLastPoll = now;
 
-    NS_IdleDispatchToCurrentThread(NewRunnableMethod<std::function<void()>>(
-        "MemoryTelemetry::GatherReports", this, &MemoryTelemetry::GatherReports,
-        nullptr));
+    NS_DispatchToCurrentThreadQueue(
+        NewRunnableMethod<std::function<void()>>(
+            "MemoryTelemetry::GatherReports", this,
+            &MemoryTelemetry::GatherReports, nullptr),
+        EventQueuePriority::Idle);
   } else if (strcmp(aTopic, "content-child-shutdown") == 0) {
     if (nsCOMPtr<nsITelemetry> telemetry =
             do_GetService("@mozilla.org/base/telemetry;1")) {

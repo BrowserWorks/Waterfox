@@ -5,10 +5,9 @@
 
 ChromeUtils.import("resource://gre/modules/osfile.jsm", this);
 ChromeUtils.import("resource://gre/modules/Services.jsm", this);
-ChromeUtils.import("resource://gre/modules/Timer.jsm");
 ChromeUtils.import("resource://testing-common/AppData.jsm", this);
 ChromeUtils.import("resource://testing-common/CrashManagerTest.jsm", this);
-var bsp = ChromeUtils.import("resource://gre/modules/CrashManager.jsm", {});
+var bsp = ChromeUtils.import("resource://gre/modules/CrashManager.jsm", null);
 
 add_task(async function test_instantiation() {
   Assert.ok(!bsp.gCrashManager, "CrashManager global instance not initially defined.");
@@ -49,7 +48,6 @@ async function setup(crashId) {
   await OS.File.copy(minidump, gDumpFile);
   gExtraFile = OS.Path.join(gMinidumpDir.path, crashId + ".extra");
   await OS.File.copy(extra, gExtraFile);
-
 }
 
 // Cleans up the fake crash dump and resets the minidump path

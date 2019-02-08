@@ -178,7 +178,6 @@ module.exports = {
 
     // Rules from the mozilla plugin
     "mozilla/no-aArgs": "error",
-    "mozilla/no-single-arg-cu-import": "error",
     // See bug 1224289.
     "mozilla/reject-importGlobalProperties": ["error", "everything"],
     // devtools/shared/platform is special; see the README.md in that
@@ -379,8 +378,6 @@ module.exports = {
     "object-shorthand": "off",
     // Allow more than one variable declaration per function.
     "one-var": "off",
-    // Disallow padding within blocks.
-    "padded-blocks": ["error", "never"],
     // Enforce using `let` only when variables are reassigned.
     "prefer-const": ["error", { "destructuring": "all" }],
     // Don't require quotes around object literal property names.

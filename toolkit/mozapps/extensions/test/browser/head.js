@@ -5,7 +5,7 @@
 
 /* eslint no-unused-vars: ["error", {vars: "local", args: "none"}] */
 
-ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
+var {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
 var tmp = {};
 ChromeUtils.import("resource://gre/modules/AddonManager.jsm", tmp);
@@ -368,9 +368,8 @@ function wait_for_manager_load(aManagerWindow, aCallback) {
   return log_callback(p, aCallback);
 }
 
-function open_manager(aView, aCallback, aLoadCallback, aLongerTimeout) {
+function open_manager(aView, aCallback, aLoadCallback, aLongerTimeout, aWin = window) {
   let p = new Promise((resolve, reject) => {
-
     async function setup_manager(aManagerWindow) {
       if (aLoadCallback)
         log_exceptions(aLoadCallback, aManagerWindow);
@@ -399,8 +398,8 @@ function open_manager(aView, aCallback, aLoadCallback, aLongerTimeout) {
       setup_manager(aSubject);
     }, "EM-loaded");
 
-    gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
-    switchToTabHavingURI(MANAGER_URI, true, {
+    aWin.gBrowser.selectedTab = BrowserTestUtils.addTab(aWin.gBrowser);
+    aWin.switchToTabHavingURI(MANAGER_URI, true, {
       triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
     });
   });
@@ -515,7 +514,7 @@ function promiseAddonsByIDs(aIDs) {
  */
 function install_addon(path, cb, pathPrefix = TESTROOT) {
   let p = new Promise(async (resolve, reject) => {
-    let install = await AddonManager.getInstallForURL(pathPrefix + path, "application/x-xpinstall");
+    let install = await AddonManager.getInstallForURL(pathPrefix + path);
     install.addListener({
       onInstallEnded: () => resolve(install.addon),
     });
@@ -584,7 +583,6 @@ CategoryUtilities.prototype = {
   },
 
   open(aCategory, aCallback) {
-
     isnot(this.window, null, "Should not open category when manager window is not loaded");
     ok(this.isVisible(aCategory), "Category should be visible if attempting to open it");
 
@@ -944,21 +942,12 @@ MockProvider.prototype = {
   /**
    * Called to get an AddonInstall to download and install an add-on from a URL.
    *
-   * @param  aUrl
+   * @param  {string} aUrl
    *         The URL to be installed
-   * @param  aHash
-   *         A hash for the install
-   * @param  aName
-   *         A name for the install
-   * @param  aIconURL
-   *         An icon URL for the install
-   * @param  aVersion
-   *         A version for the install
-   * @param  aLoadGroup
-   *         An nsILoadGroup to associate requests with
+   * @param  {object} aOptions
+   *         Options for the install
    */
-  getInstallForURL: function MP_getInstallForURL(aUrl, aHash, aName, aIconURL,
-                                                  aVersion, aLoadGroup) {
+  getInstallForURL: function MP_getInstallForURL(aUrl, aOptions) {
     // Not yet implemented
   },
 
@@ -1414,7 +1403,7 @@ function promisePopupNotificationShown(name = "addon-webext-permissions") {
 }
 
 function acceptAppMenuNotificationWhenShown(id) {
-  ChromeUtils.import("resource://gre/modules/AppMenuNotifications.jsm");
+  const {AppMenuNotifications} = ChromeUtils.import("resource://gre/modules/AppMenuNotifications.jsm");
   return new Promise(resolve => {
     function popupshown() {
       let notification = AppMenuNotifications.activeNotification;

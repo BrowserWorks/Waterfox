@@ -8,8 +8,7 @@
 // This is loaded into chrome windows with the subscript loader. Wrap in
 // a block to prevent accidentally leaking globals onto `window`.
 {
-
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 class MozFindbar extends XULElement {
   constructor() {
@@ -230,7 +229,6 @@ class MozFindbar extends XULElement {
             !event.metaKey;
           if (shouldHandle &&
             this._findMode != this.FIND_NORMAL) {
-
             this._finishFAYT(event);
           }
           break;
@@ -995,7 +993,7 @@ class MozFindbar extends XULElement {
     }
 
     let { PromiseUtils } =
-      ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm", {});
+      ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
     this._startFindDeferred = PromiseUtils.defer();
     let startFindPromise = this._startFindDeferred.promise;
 
@@ -1076,7 +1074,6 @@ class MozFindbar extends XULElement {
     let searchString = this.browser.finder.setSearchStringToSelection();
     if (searchString)
       this._findField.value = searchString;
-
   }
 
   _onFindFieldFocus() {
@@ -1215,5 +1212,4 @@ class MozFindbar extends XULElement {
 }
 
 customElements.define("findbar", MozFindbar);
-
 }

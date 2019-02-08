@@ -7,9 +7,8 @@ do_get_profile();
 
 ChromeUtils.import("resource://gre/modules/osfile.jsm");
   // OS.File doesn't like to be first imported during shutdown
-ChromeUtils.import("resource://gre/modules/Sqlite.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/AsyncShutdown.jsm");
+const {Sqlite} = ChromeUtils.import("resource://gre/modules/Sqlite.jsm");
+const {AsyncShutdown} = ChromeUtils.import("resource://gre/modules/AsyncShutdown.jsm");
 
 function getConnection(dbName, extraOptions = {}) {
   let path = dbName + ".sqlite";
@@ -40,7 +39,6 @@ async function getDummyDatabase(name, extraOptions = {}) {
 
 function sleep(ms) {
   return new Promise(resolve => {
-
     let timer = Cc["@mozilla.org/timer;1"]
                   .createInstance(Ci.nsITimer);
 
@@ -49,7 +47,6 @@ function sleep(ms) {
         resolve();
       },
     }, ms, timer.TYPE_ONE_SHOT);
-
   });
 }
 

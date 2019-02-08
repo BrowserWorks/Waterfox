@@ -19,7 +19,6 @@ const noop = () => {};
  */
 function SourceClient(client, form) {
   this._form = form;
-  this._isBlackBoxed = form.isBlackBoxed;
   this._activeThread = client;
   this._client = client.client;
 }
@@ -27,9 +26,6 @@ function SourceClient(client, form) {
 SourceClient.prototype = {
   get _transport() {
     return this._client._transport;
-  },
-  get isBlackBoxed() {
-    return this._isBlackBoxed;
   },
   get actor() {
     return this._form.actor;
@@ -51,15 +47,6 @@ SourceClient.prototype = {
     },
     {
       telemetry: "BLACKBOX",
-      after: function(response) {
-        if (!response.error) {
-          this._isBlackBoxed = true;
-          if (this._activeThread) {
-            this._activeThread.emit("blackboxchange", this);
-          }
-        }
-        return response;
-      },
     },
   ),
 
@@ -73,15 +60,6 @@ SourceClient.prototype = {
     },
     {
       telemetry: "UNBLACKBOX",
-      after: function(response) {
-        if (!response.error) {
-          this._isBlackBoxed = false;
-          if (this._activeThread) {
-            this._activeThread.emit("blackboxchange", this);
-          }
-        }
-        return response;
-      },
     },
   ),
 
@@ -175,13 +153,12 @@ SourceClient.prototype = {
    * Request to set a breakpoint in the specified location.
    *
    * @param object location
-   *        The location and condition of the breakpoint in
-   *        the form of { line[, column, condition] }.
+   *        The location and options of the breakpoint in
+   *        the form of { line[, column, options] }.
    */
-  setBreakpoint: function({ line, column, condition, noSliding }) {
+  setBreakpoint: function({ line, column, options, noSliding }) {
     // A helper function that sets the breakpoint.
     const doSetBreakpoint = callback => {
-      const root = this._client.mainRoot;
       const location = {
         line,
         column,
@@ -191,15 +168,21 @@ SourceClient.prototype = {
         to: this.actor,
         type: "setBreakpoint",
         location,
-        condition,
+        options,
         noSliding,
       };
 
-      // Backwards compatibility: send the breakpoint request to the
-      // thread if the server doesn't support Debugger.Source actors.
-      if (!root.traits.debuggerSourceActors) {
-        packet.to = this._activeThread.actor;
-        packet.location.url = this.url;
+      // Older servers only support conditions, not a more general options
+      // object. Transform the packet to support the older format.
+      if (options && !this._client.mainRoot.traits.nativeLogpoints) {
+        delete packet.options;
+        if (options.logValue) {
+          // Emulate log points by setting a condition with a call to console.log,
+          // which always returns false so the server will never pause.
+          packet.condition = `console.log(${options.logValue})`;
+        } else {
+          packet.condition = options.condition;
+        }
       }
 
       return this._client.request(packet).then(response => {
@@ -212,7 +195,7 @@ SourceClient.prototype = {
             this,
             response.actor,
             location,
-            root.traits.conditionalBreakpoints ? condition : undefined
+            options
           );
         }
         if (callback) {

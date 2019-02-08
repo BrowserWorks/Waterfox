@@ -1267,8 +1267,12 @@ void AssertNoUnderflow(T aDest, U aArg) {
   MOZ_ASSERT(uint64_t(aDest) >= uint64_t(aArg));
 }
 
-bool IsOSMetadata(const nsAString& aFileName) {
-  return aFileName.EqualsLiteral(DSSTORE_FILE_NAME);
+inline bool IsDotFile(const nsAString& aFileName) {
+  return QuotaManager::IsDotFile(aFileName);
+}
+
+inline bool IsOSMetadata(const nsAString& aFileName) {
+  return QuotaManager::IsOSMetadata(aFileName);
 }
 
 bool IsOriginMetadata(const nsAString& aFileName) {
@@ -1469,6 +1473,15 @@ class MOZ_STACK_CLASS OriginParser final {
     eExpectingPort,
     eExpectingEmptyTokenOrDriveLetterOrPathnameComponent,
     eExpectingEmptyTokenOrPathnameComponent,
+
+    // We transit from eExpectingHost to this state when we encounter a host
+    // beginning with "[" which indicates an IPv6 literal. Because we mangle the
+    // IPv6 ":" delimiter to be a "+", we will receive separate tokens for each
+    // portion of the IPv6 address, including a final token that ends with "]".
+    // (Note that we do not mangle "[" or "]".) Note that the URL spec
+    // explicitly disclaims support for "<zone_id>" and so we don't have to deal
+    // with that.
+    eExpectingIPV6Token,
     eComplete,
     eHandledTrailingSeparator
   };
@@ -1491,6 +1504,9 @@ class MOZ_STACK_CLASS OriginParser final {
   bool mMaybeDriveLetter;
   bool mError;
 
+  // Number of group which a IPv6 address has. Should be less than 9.
+  uint8_t mIPGroup;
+
  public:
   OriginParser(const nsACString& aOrigin,
                const OriginAttributes& aOriginAttributes)
@@ -1504,7 +1520,8 @@ class MOZ_STACK_CLASS OriginParser final {
         mInIsolatedMozBrowser(false),
         mUniversalFileOrigin(false),
         mMaybeDriveLetter(false),
-        mError(false) {}
+        mError(false),
+        mIPGroup(0) {}
 
   static ResultType ParseOrigin(const nsACString& aOrigin, nsCString& aSpec,
                                 OriginAttributes* aAttrs);
@@ -1668,7 +1685,8 @@ int64_t GetLastModifiedTime(nsIFile* aFile, bool aPersistent) {
           return rv;
         }
 
-        if (IsOriginMetadata(leafName) || IsTempMetadata(leafName)) {
+        if (IsOriginMetadata(leafName) || IsTempMetadata(leafName) ||
+            IsDotFile(leafName)) {
           return NS_OK;
         }
 
@@ -2869,6 +2887,19 @@ QuotaManager* QuotaManager::Get() {
 // static
 bool QuotaManager::IsShuttingDown() { return gShutdown; }
 
+// static
+bool QuotaManager::IsOSMetadata(const nsAString& aFileName) {
+  return aFileName.EqualsLiteral(DSSTORE_FILE_NAME) ||
+         aFileName.EqualsLiteral(DESKTOP_FILE_NAME) ||
+         aFileName.LowerCaseEqualsLiteral(DESKTOP_INI_FILE_NAME) ||
+         aFileName.EqualsLiteral(THUMBS_DB_FILE_NAME);
+}
+
+// static
+bool QuotaManager::IsDotFile(const nsAString& aFileName) {
+  return aFileName.First() == char16_t('.');
+}
+
 auto QuotaManager::CreateDirectoryLock(
     const Nullable<PersistenceType>& aPersistenceType, const nsACString& aGroup,
     const OriginScope& aOriginScope, const Nullable<Client::Type>& aClientType,
@@ -3763,7 +3794,7 @@ nsresult QuotaManager::InitializeRepository(PersistenceType aPersistenceType) {
         CONTINUE_IN_NIGHTLY_RETURN_IN_OTHERS(rv);
       }
 
-      if (IsOSMetadata(leafName)) {
+      if (IsOSMetadata(leafName) || IsDotFile(leafName)) {
         continue;
       }
 
@@ -3877,6 +3908,10 @@ nsresult QuotaManager::InitializeOrigin(PersistenceType aPersistenceType,
           CONTINUE_IN_NIGHTLY_RETURN_IN_OTHERS(rv);
         }
 
+        continue;
+      }
+
+      if (IsOSMetadata(leafName) || IsDotFile(leafName)) {
         continue;
       }
 
@@ -6616,6 +6651,10 @@ nsresult QuotaUsageRequestBase::GetUsageForOrigin(
           continue;
         }
 
+        if (IsOSMetadata(leafName) || IsDotFile(leafName)) {
+          continue;
+        }
+
         UNKNOWN_FILE_WARNING(leafName);
         if (!initialized) {
           return NS_ERROR_UNEXPECTED;
@@ -6743,6 +6782,8 @@ nsresult GetUsageOp::TraverseRepository(QuotaManager* aQuotaManager,
         return rv;
       }
 
+      // Unknown files during getting usages are allowed. Just warn if we find
+      // them.
       if (!IsOSMetadata(leafName)) {
         UNKNOWN_FILE_WARNING(leafName);
       }
@@ -8030,6 +8071,9 @@ auto OriginParser::Parse(nsACString& aSpec, OriginAttributes* aAttrs)
 
   MOZ_ASSERT(mState == eComplete || mState == eHandledTrailingSeparator);
 
+  // For IPv6 URL, it should at least have three groups.
+  MOZ_ASSERT_IF(mIPGroup > 0, mIPGroup >= 3);
+
   if (mAppId == kNoAppId) {
     *aAttrs = mOriginAttributes;
   } else {
@@ -8260,6 +8304,16 @@ void OriginParser::HandleToken(const nsDependentCSubstring& aToken) {
 
       mHost = aToken;
 
+      if (aToken.First() == '[') {
+        MOZ_ASSERT(mIPGroup == 0);
+
+        ++mIPGroup;
+        mState = eExpectingIPV6Token;
+
+        MOZ_ASSERT(mTokenizer.hasMoreTokens());
+        return;
+      }
+
       mState = mTokenizer.hasMoreTokens() ? eExpectingPort : eComplete;
 
       return;
@@ -8347,6 +8401,22 @@ void OriginParser::HandleToken(const nsDependentCSubstring& aToken) {
       }
 
       HandlePathnameComponent(aToken);
+
+      return;
+    }
+
+    case eExpectingIPV6Token: {
+      // A safe check for preventing infinity recursion.
+      if (++mIPGroup > 8) {
+        mError = true;
+        return;
+      }
+
+      mHost.AppendLiteral(":");
+      mHost.Append(aToken);
+      if (!aToken.IsEmpty() && aToken.Last() == ']') {
+        mState = mTokenizer.hasMoreTokens() ? eExpectingPort : eComplete;
+      }
 
       return;
     }

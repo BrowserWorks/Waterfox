@@ -10,15 +10,15 @@ var EXPORTED_SYMBOLS = [
 
 const myScope = this;
 
-ChromeUtils.import("resource://gre/modules/Log.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Log} = ChromeUtils.import("resource://gre/modules/Log.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource://gre/modules/TelemetryUtils.jsm", this);
-ChromeUtils.import("resource://gre/modules/ObjectUtils.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {ObjectUtils} = ChromeUtils.import("resource://gre/modules/ObjectUtils.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 const Utils = TelemetryUtils;
 
-const { AddonManager } = ChromeUtils.import("resource://gre/modules/AddonManager.jsm", {});
+const { AddonManager } = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
 
 ChromeUtils.defineModuleGetter(this, "AttributionCode",
                                "resource:///modules/AttributionCode.jsm");
@@ -164,7 +164,7 @@ var TelemetryEnvironment = {
   RECORD_DEFAULTPREF_STATE: 4, // We only record if the pref exists
 
   // Testing method
-  testWatchPreferences(prefMap) {
+  async testWatchPreferences(prefMap) {
     return getGlobal()._watchPreferences(prefMap);
   },
 
@@ -271,6 +271,8 @@ const DEFAULT_ENVIRONMENT_PREFS = new Map([
   ["privacy.donottrackheader.enabled", {what: RECORD_PREF_VALUE}],
   ["security.mixed_content.block_active_content", {what: RECORD_PREF_VALUE}],
   ["security.mixed_content.block_display_content", {what: RECORD_PREF_VALUE}],
+  ["toolkit.telemetry.testing.overridePreRelease", {what: RECORD_PREF_VALUE}],
+  ["toolkit.telemetry.overrideUpdateChannel", {what: RECORD_PREF_STATE}],
   ["xpinstall.signatures.required", {what: RECORD_PREF_VALUE}],
 ]);
 
@@ -946,15 +948,14 @@ function EnvironmentCache() {
     system: this._getSystem(),
   };
 
-  this._updateSettings();
   this._addObservers();
 
   // Build the remaining asynchronous parts of the environment. Don't register change listeners
   // until the initial environment has been built.
 
-  let p = [];
+  let p = [ this._updateSettings() ];
   this._addonBuilder = new EnvironmentAddonBuilder(this);
-  p = [ this._addonBuilder.init() ];
+  p.push(this._addonBuilder.init());
 
   this._currentEnvironment.profile = {};
   p.push(this._updateProfile());
@@ -1110,10 +1111,10 @@ EnvironmentCache.prototype = {
    * Only used in tests, set the preferences to watch.
    * @param aPreferences A map of preferences names and their recording policy.
    */
-  _watchPreferences(aPreferences) {
+  async _watchPreferences(aPreferences) {
     this._stopWatchingPrefs();
     this._watchedPrefs = aPreferences;
-    this._updateSettings();
+    await this._updateSettings();
     this._startWatchingPrefs();
   },
 
@@ -1314,7 +1315,7 @@ EnvironmentCache.prototype = {
   /**
    * Update the default search engine value.
    */
-  _updateSearchEngine() {
+  async _updateSearchEngine() {
     if (!this._canQuerySearch) {
       this._log.trace("_updateSearchEngine - ignoring early call");
       return;
@@ -1335,7 +1336,7 @@ EnvironmentCache.prototype = {
     // Update the search engine entry in the current environment.
     this._currentEnvironment.settings.defaultSearchEngine = this._getDefaultSearchEngine();
     this._currentEnvironment.settings.defaultSearchEngineData =
-      Services.search.getDefaultEngineInfo();
+      await Services.search.getDefaultEngineInfo();
 
     // Record the cohort identifier used for search defaults A/B testing.
     if (Services.prefs.prefHasUserValue(PREF_SEARCH_COHORT)) {
@@ -1348,12 +1349,12 @@ EnvironmentCache.prototype = {
   /**
    * Update the default search engine value and trigger the environment change.
    */
-  _onSearchEngineChange() {
+  async _onSearchEngineChange() {
     this._log.trace("_onSearchEngineChange");
 
     // Finally trigger the environment change notification.
     let oldEnvironment = Cu.cloneInto(this._currentEnvironment, myScope);
-    this._updateSearchEngine();
+    await this._updateSearchEngine();
     this._onEnvironmentChange("search-engine-changed", oldEnvironment);
   },
 
@@ -1432,7 +1433,7 @@ EnvironmentCache.prototype = {
     }
 
     try {
-      let { ShellService } = ChromeUtils.import("resource:///modules/ShellService.jsm", {});
+      let { ShellService } = ChromeUtils.import("resource:///modules/ShellService.jsm");
       // This uses the same set of flags used by the pref pane.
       return isDefault(ShellService, false, true);
     } catch (ex) {
@@ -1463,7 +1464,7 @@ EnvironmentCache.prototype = {
   /**
    * Update the cached settings data.
    */
-  _updateSettings() {
+  async _updateSettings() {
     let updateChannel = null;
     try {
       updateChannel = Utils.getUpdateChannel();
@@ -1497,7 +1498,7 @@ EnvironmentCache.prototype = {
 
     this._updateAttribution();
     this._updateDefaultBrowser();
-    this._updateSearchEngine();
+    await this._updateSearchEngine();
     this._updateAutoDownload();
   },
 

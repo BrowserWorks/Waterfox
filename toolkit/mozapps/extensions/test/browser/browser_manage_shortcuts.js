@@ -1,13 +1,34 @@
 "use strict";
 
-let gManagerWindow;
-let gCategoryUtilities;
-
-const {PromiseTestUtils} = ChromeUtils.import("resource://testing-common/PromiseTestUtils.jsm", {});
+const {PromiseTestUtils} = ChromeUtils.import("resource://testing-common/PromiseTestUtils.jsm");
 PromiseTestUtils.whitelistRejectionsGlobally(/Message manager disconnected/);
+
+let gManagerWindow;
+
+async function loadShortcutsView() {
+  gManagerWindow = await open_manager(null);
+  let categoryUtilities = new CategoryUtilities(gManagerWindow);
+  await categoryUtilities.openType("extension");
+
+  // There should be a manage shortcuts link.
+  let doc = gManagerWindow.document;
+  let shortcutsLink = doc.getElementById("manage-shortcuts");
+  ok(!shortcutsLink.hidden, "The shortcuts link is visible");
+
+  // Open the shortcuts view.
+  shortcutsLink.click();
+  await wait_for_view_load(gManagerWindow);
+
+  return doc.getElementById("shortcuts-view").contentDocument;
+}
+
+function closeView() {
+  return close_manager(gManagerWindow);
+}
 
 add_task(async function testUpdatingCommands() {
   let commands = {
+    commandZero: {},
     commandOne: {
       suggested_key: {default: "Shift+Alt+4"},
     },
@@ -36,9 +57,23 @@ add_task(async function testUpdatingCommands() {
   await extension.startup();
   await extension.awaitMessage("ready");
 
-  gManagerWindow = await open_manager(null);
-  gCategoryUtilities = new CategoryUtilities(gManagerWindow);
-  await gCategoryUtilities.openType("extension");
+  let extension2 = ExtensionTestUtils.loadExtension({
+    manifest: {
+      browser_specific_settings: {
+        gecko: {
+          id: "addons@noShorcut",
+        },
+      },
+      name: "no shortcut addon",
+    },
+    background() {
+      browser.test.sendMessage("ready");
+    },
+    useAddonManager: "temporary",
+  });
+
+  await extension2.startup();
+  await extension2.awaitMessage("ready");
 
   async function checkShortcut(name, key, modifiers) {
     EventUtils.synthesizeKey(key, modifiers);
@@ -50,22 +85,19 @@ add_task(async function testUpdatingCommands() {
   await checkShortcut("commandOne", "4", {shiftKey: true, altKey: true});
   await checkShortcut("commandTwo", "4", {altKey: true});
 
-  // There should be a manage shortcuts link.
-  let doc = gManagerWindow.document;
-  let shortcutsLink = doc.getElementById("manage-shortcuts");
-  ok(!shortcutsLink.hidden, "The shortcuts link is visible");
-
-  // Open the shortcuts view.
-  shortcutsLink.click();
-  await wait_for_view_load(gManagerWindow);
-
-  doc = doc.getElementById("shortcuts-view").contentDocument;
+  let doc = await loadShortcutsView();
 
   let card = doc.querySelector(`.card[addon-id="${extension.id}"]`);
   ok(card, `There is a card for the extension`);
 
   let inputs = card.querySelectorAll(".shortcut-input");
   is(inputs.length, Object.keys(commands).length, "There is an input for each command");
+
+  let nameOrder = Array.from(inputs).map(input => input.getAttribute("name"));
+  Assert.deepEqual(
+    nameOrder,
+    ["commandOne", "commandTwo", "_execute_browser_action", "commandZero"],
+    "commandZero should be last since it is unset");
 
   for (let input of inputs) {
     // Change the shortcut.
@@ -121,6 +153,130 @@ add_task(async function testUpdatingCommands() {
   checkLabel("commandTwo", "Command Two!");
   checkLabel("_execute_browser_action", "shortcuts-browserAction");
 
-  await close_manager(gManagerWindow);
+  // Check there is only 1 shortcut card.
+  let shortcutAddonsList = doc.querySelectorAll(".shortcut");
+  is(shortcutAddonsList.length, 1, "There is only 1 addon card with shortcut");
+
+  // Check there is unordered list of shortcut-less addons.
+  let noShortcutAddonsList = doc.querySelector(".shortcuts-no-commands-list");
+  ok(noShortcutAddonsList, "There is an unordered list of addons without shortcuts");
+
+  // Check there is shortcut-less addon in the list.
+  let addon = noShortcutAddonsList.querySelector(`[addon-id="addons@noShorcut"]`);
+  ok(addon, "There is addon without shortcut in unordered list");
+  is(addon.textContent, "no shortcut addon", "The add-on's name is set in the list");
+
+  await closeView();
+  await extension.unload();
+  await extension2.unload();
+});
+
+async function startExtensionWithCommands(numCommands) {
+  let commands = {};
+
+  for (let i = 0; i < numCommands; i++) {
+    commands[`command-${i}`] = {};
+  }
+
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      commands,
+    },
+    background() {
+      browser.test.sendMessage("ready");
+    },
+    useAddonManager: "temporary",
+  });
+
+  await extension.startup();
+  await extension.awaitMessage("ready");
+
+  return extension;
+}
+
+add_task(async function testExpanding() {
+  const numCommands = 7;
+  const visibleCommands = 5;
+
+  let extension = await startExtensionWithCommands(numCommands);
+
+  let doc = await loadShortcutsView();
+
+  let card = doc.querySelector(`.card[addon-id="${extension.id}"]`);
+  ok(!card.hasAttribute("expanded"), "The card is not expanded");
+
+  let shortcutRows = card.querySelectorAll(".shortcut-row");
+  is(shortcutRows.length, numCommands, `There are ${numCommands} shortcuts`);
+
+  function assertCollapsedVisibility() {
+    for (let i = 0; i < shortcutRows.length; i++) {
+      let row = shortcutRows[i];
+      if (i < visibleCommands) {
+        ok(getComputedStyle(row).display != "none",
+          `The first ${visibleCommands} rows are visible`);
+      } else {
+        is(getComputedStyle(row).display, "none", "The other rows are hidden");
+      }
+    }
+  }
+
+  // Check the visibility of the rows.
+  assertCollapsedVisibility();
+
+  let expandButton = card.querySelector(".expand-button");
+  ok(expandButton, "There is an expand button");
+  let l10nAttrs = doc.l10n.getAttributes(expandButton);
+  is(l10nAttrs.id, "shortcuts-card-expand-button", "The expand text is shown");
+  is(l10nAttrs.args.numberToShow, numCommands - visibleCommands,
+    "The number to be shown is set on the expand button");
+
+  // Expand the card.
+  expandButton.click();
+
+  is(card.getAttribute("expanded"), "true", "The card is now expanded");
+
+  for (let row of shortcutRows) {
+    ok(getComputedStyle(row).display != "none", "All the rows are visible");
+  }
+
+  // The collapse text is now shown.
+  l10nAttrs = doc.l10n.getAttributes(expandButton);
+  is(l10nAttrs.id, "shortcuts-card-collapse-button", "The colapse text is shown");
+
+  // Collapse the card.
+  expandButton.click();
+
+  ok(!card.hasAttribute("expanded"), "The card is now collapsed again");
+
+  assertCollapsedVisibility({collapsed: true});
+
+  await closeView();
+  await extension.unload();
+});
+
+add_task(async function testOneExtraCommandIsNotCollapsed() {
+  const numCommands = 6;
+  let extension = await startExtensionWithCommands(numCommands);
+
+  let doc = await loadShortcutsView();
+
+  // The card is not expanded, since it doesn't collapse.
+  let card = doc.querySelector(`.card[addon-id="${extension.id}"]`);
+  ok(!card.hasAttribute("expanded"), "The card is not expanded");
+
+  // Each shortcut has a row.
+  let shortcutRows = card.querySelectorAll(".shortcut-row");
+  is(shortcutRows.length, numCommands, `There are ${numCommands} shortcuts`);
+
+  // There's no expand button, since it can't be expanded.
+  let expandButton = card.querySelector(".expand-button");
+  ok(!expandButton, "There is no expand button");
+
+  // All of the rows are visible, to avoid a "Show 1 More" button.
+  for (let row of shortcutRows) {
+    ok(getComputedStyle(row).display != "none", "All the rows are visible");
+  }
+
+  await closeView();
   await extension.unload();
 });

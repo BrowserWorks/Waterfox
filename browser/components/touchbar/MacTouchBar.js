@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.jsm",
@@ -232,15 +232,20 @@ class TouchBarHelper {
   }
 
   getTouchBarInput(inputName) {
+    // inputName might be undefined if an input's context() returns undefined.
+    if (!inputName || !kBuiltInInputs.hasOwnProperty(inputName)) {
+      return null;
+    }
+
     if (typeof kBuiltInInputs[inputName].context == "function") {
       inputName = kBuiltInInputs[inputName].context();
     }
 
-    let inputData = kBuiltInInputs[inputName];
-
-    if (!inputData) {
+    if (!inputName || !kBuiltInInputs.hasOwnProperty(inputName)) {
       return null;
     }
+
+    let inputData = kBuiltInInputs[inputName];
 
     let item = new TouchBarInput(inputData);
 

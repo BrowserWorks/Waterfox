@@ -32,9 +32,8 @@ PinchGestureInput CreatePinchGestureInput(
     PinchGestureInput::PinchGestureType aType, const ScreenPoint& aFocus,
     float aCurrentSpan, float aPreviousSpan) {
   ParentLayerPoint localFocus(aFocus.x, aFocus.y);
-  PinchGestureInput result(aType, 0, TimeStamp(), localFocus, aCurrentSpan,
-                           aPreviousSpan, 0);
-  result.mFocusPoint = aFocus;
+  PinchGestureInput result(aType, 0, TimeStamp(), ExternalPoint(0, 0), aFocus,
+                           aCurrentSpan, aPreviousSpan, 0);
   return result;
 }
 

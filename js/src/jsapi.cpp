@@ -872,7 +872,7 @@ JS_PUBLIC_API bool JS_ResolveStandardClass(JSContext* cx, HandleObject obj,
   JSProtoKey key = stdnm ? stdnm->key : JSProto_Null;
   if (key != JSProto_Null) {
     const Class* clasp = ProtoKeyToClass(key);
-    if (!clasp || !(clasp->flags & JSCLASS_IS_ANONYMOUS)) {
+    if (!clasp || clasp->specShouldDefineConstructor()) {
       if (!GlobalObject::ensureConstructor(cx, global, key)) {
         return false;
       }
@@ -947,9 +947,6 @@ static bool EnumerateStandardClassesInTable(JSContext* cx,
     }
 
     if (const Class* clasp = ProtoKeyToClass(key)) {
-      if (clasp->flags & JSCLASS_IS_ANONYMOUS) {
-        continue;
-      }
       if (!clasp->specShouldDefineConstructor()) {
         continue;
       }
@@ -3254,21 +3251,23 @@ static JSObject* CloneFunctionObject(JSContext* cx, HandleObject funobj,
     return nullptr;
   }
 
+  // Only allow cloning normal, interpreted functions.
   RootedFunction fun(cx, &funobj->as<JSFunction>());
+  if (fun->isNative() || fun->isBoundFunction() ||
+      fun->kind() != JSFunction::NormalFunction || fun->isExtended() ||
+      fun->isSelfHostedBuiltin()) {
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_CANT_CLONE_OBJECT);
+    return nullptr;
+  }
+
   if (fun->isInterpretedLazy()) {
     AutoRealm ar(cx, fun);
     if (!JSFunction::getOrCreateScript(cx, fun)) {
       return nullptr;
     }
   }
-
-  // Only allow cloning normal, interpreted functions.
-  if (fun->isNative() || fun->isBoundFunction() ||
-      fun->kind() != JSFunction::NormalFunction || fun->isExtended()) {
-    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                              JSMSG_CANT_CLONE_OBJECT);
-    return nullptr;
-  }
+  RootedScript script(cx, fun->nonLazyScript());
 
   if (!IsFunctionCloneable(fun)) {
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
@@ -3277,24 +3276,19 @@ static JSObject* CloneFunctionObject(JSContext* cx, HandleObject funobj,
   }
 
   if (CanReuseScriptForClone(cx->realm(), fun, env)) {
-    // If the script is to be reused, either the script can already handle
-    // non-syntactic scopes, or there is only the standard global lexical
-    // scope.
-#ifdef DEBUG
-    // Fail here if we OOM during debug asserting.
-    // CloneFunctionReuseScript will delazify the script anyways, so we
-    // are not creating an extra failure condition for DEBUG builds.
-    if (!JSFunction::getOrCreateScript(cx, fun)) {
-      return nullptr;
-    }
-    MOZ_ASSERT(scope->as<GlobalScope>().isSyntactic() ||
-               fun->nonLazyScript()->hasNonSyntacticScope());
-#endif
     return CloneFunctionReuseScript(cx, fun, env, fun->getAllocKind());
   }
 
-  JSFunction* clone =
-      CloneFunctionAndScript(cx, fun, env, scope, fun->getAllocKind());
+  Rooted<ScriptSourceObject*> sourceObject(cx, script->sourceObject());
+  if (cx->compartment() != sourceObject->compartment()) {
+    sourceObject = ScriptSourceObject::clone(cx, sourceObject);
+    if (!sourceObject) {
+      return nullptr;
+    }
+  }
+
+  JSFunction* clone = CloneFunctionAndScript(cx, fun, env, scope, sourceObject,
+                                             fun->getAllocKind());
 
 #ifdef DEBUG
   // The cloned function should itself be cloneable.
@@ -5570,6 +5564,9 @@ JS_PUBLIC_API void JS_SetGlobalJitCompilerOption(JSContext* cx,
       break;
     case JSJITCOMPILER_TRACK_OPTIMIZATIONS:
       jit::JitOptions.disableOptimizationTracking = !value;
+      break;
+    case JSJITCOMPILER_UNBOXED_OBJECTS:
+      jit::JitOptions.disableUnboxedObjects = !value;
       break;
     case JSJITCOMPILER_SPECTRE_INDEX_MASKING:
       jit::JitOptions.spectreIndexMasking = !!value;

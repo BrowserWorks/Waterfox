@@ -6,8 +6,8 @@
 
 var EXPORTED_SYMBOLS = ["E10SUtils"];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyPreferenceGetter(this, "useSeparateFileUriProcess",
                                       "browser.tabs.remote.separateFileUriProcess", false);
@@ -96,14 +96,18 @@ var E10SUtils = {
     return useHttpResponseProcessSelection;
   },
 
-  canLoadURIInRemoteType(aURL, aRemoteType = DEFAULT_REMOTE_TYPE) {
+  canLoadURIInRemoteType(aURL, aRemoteType = DEFAULT_REMOTE_TYPE,
+                         aPreferredRemoteType = undefined) {
     // We need a strict equality here because the value of `NOT_REMOTE` is
-    // `null`, and there is a possibility that `undefined` is passed as the
-    // second argument, which might result a load in the parent process.
-    let preferredRemoteType = aRemoteType === NOT_REMOTE
-      ? NOT_REMOTE
-      : DEFAULT_REMOTE_TYPE;
-    return aRemoteType == this.getRemoteTypeForURI(aURL, true, preferredRemoteType);
+    // `null`, and there is a possibility that `undefined` is passed as an
+    // argument, which might result a load in the parent process.
+    if (aPreferredRemoteType === undefined) {
+      aPreferredRemoteType = aRemoteType === NOT_REMOTE
+        ? NOT_REMOTE
+        : DEFAULT_REMOTE_TYPE;
+    }
+
+    return aRemoteType == this.getRemoteTypeForURI(aURL, true, aPreferredRemoteType);
   },
 
   getRemoteTypeForURI(aURL, aMultiProcess,

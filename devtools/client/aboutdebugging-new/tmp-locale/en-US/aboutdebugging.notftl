@@ -70,7 +70,7 @@ about-debugging-connect-wifi =
 # Temporary text displayed when wifi support is turned off via preferences.
 # { $pref } is the name of the preference that enables wifi
 # Do not localize
-about-debugging-connect-wifi-disabled = WiFi debugging currently under development. You can enable it with the preference "{ $pref }".
+about-debugging-connect-wifi-disabled = WiFi debugging currently under development. You can enable it with the preference “{ $pref }”.
 
 # WiFi section step by step guide
 about-debugging-connect-wifi-step-same-network = Ensure that your browser and device are on the same network
@@ -109,7 +109,7 @@ about-debugging-connect-network =
 # Temporary text displayed when network location support is turned off via preferences.
 # { $pref } is the name of the preference that enables network locations
 # Do not localize
-about-debugging-connect-network-disabled = Network location support currently under development. You can enable it with the preference "{ $pref }".
+about-debugging-connect-network-disabled = Network location support currently under development. You can enable it with the preference “{ $pref }”.
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
@@ -125,6 +125,11 @@ about-debugging-runtime-service-workers = Service Workers
 about-debugging-runtime-shared-workers = Shared Workers
 # Title of the other workers category.
 about-debugging-runtime-other-workers = Other Workers
+
+# This string is displayed in about:debugging#workers if the current configuration of the
+# browser is incompatible with service workers. Learn more points to MDN.
+# https://developer.mozilla.org/en-US/docs/Tools/about%3Adebugging#Service_workers_not_compatible
+about-debugging-runtime-service-workers-not-compatible = Your browser configuration is not compatible with Service Workers. <a>Learn more</a>
 
 # Displayed in the categories of "runtime" pages that don't have any debug target to
 # show. Debug targets depend on the category (extensions, tabs, workers...).
@@ -201,6 +206,9 @@ about-debugging-worker-action-push = Push
 
 # This string is displayed as a label of the button that starts a service worker.
 about-debugging-worker-action-start = Start
+
+# This string is displayed as a label of the button that unregisters a service worker.
+about-debugging-worker-action-unregister = Unregister
 
 # Displayed for service workers in runtime pages,
 # "Fetch" is an event type and should not be localized.

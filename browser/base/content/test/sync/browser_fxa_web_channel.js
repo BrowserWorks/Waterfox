@@ -12,7 +12,7 @@ ChromeUtils.defineModuleGetter(this, "WebChannel",
 
 // FxAccountsWebChannel isn't explicitly exported by FxAccountsWebChannel.jsm
 // but we can get it here via a backstage pass.
-var {FxAccountsWebChannel} = ChromeUtils.import("resource://gre/modules/FxAccountsWebChannel.jsm", {});
+var {FxAccountsWebChannel} = ChromeUtils.import("resource://gre/modules/FxAccountsWebChannel.jsm", null);
 
 const TEST_HTTP_PATH = "http://example.com";
 const TEST_BASE_URL = TEST_HTTP_PATH + "/browser/browser/base/content/test/sync/browser_fxa_web_channel.html";
@@ -45,7 +45,6 @@ var gTests = [
   {
     desc: "fxa web channel - login messages should notify the fxAccounts object",
     async run() {
-
       let promiseLogin = new Promise((resolve, reject) => {
         let login = (accountData) => {
           Assert.equal(typeof accountData.authAt, "number");
@@ -83,7 +82,6 @@ var gTests = [
       let properUrl = TEST_BASE_URL + "?can_link_account";
 
       let promiseEcho = new Promise((resolve, reject) => {
-
         let webChannelOrigin = Services.io.newURI(properUrl);
         // responses sent to content are echoed back over the
         // `fxaccounts_webchannel_response_echo` channel. Ensure the

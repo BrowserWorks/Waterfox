@@ -5,8 +5,8 @@
 
 var EXPORTED_SYMBOLS = ["PlacesUtils"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["URL"]);
 
@@ -2629,7 +2629,6 @@ var GuidHelper = {
 
     let guid = await PlacesUtils.withConnectionWrapper("GuidHelper.getItemGuid",
                                                        async function(db) {
-
       let rows = await db.executeCached(
         "SELECT b.id, b.guid from moz_bookmarks b WHERE b.id = :id LIMIT 1",
         { id: aItemId });

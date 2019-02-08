@@ -29,16 +29,25 @@ def dependentlibs_win32_objdump(lib):
     proc.wait()
     return deps
 
-def dependentlibs_elf_objdump(lib):
+def dependentlibs_readelf(lib):
     '''Returns the list of dependencies declared in the given ELF .so'''
-    proc = subprocess.Popen([substs['LLVM_OBJDUMP'], '--private-headers', lib], stdout = subprocess.PIPE)
+    proc = subprocess.Popen([substs.get('TOOLCHAIN_PREFIX', '') + 'readelf', '-d', lib], stdout = subprocess.PIPE)
     deps = []
     for line in proc.stdout:
-        # We are looking for lines with the format:
-        #   NEEDED             libname
-        tmp = line.split()
-        if len(tmp) == 2 and tmp[0] == 'NEEDED':
-            deps.append(tmp[1])
+        # Each line has the following format:
+        #  tag (TYPE)          value
+        # or with BSD readelf:
+        #  tag TYPE            value
+        # Looking for NEEDED type entries
+        tmp = line.split(' ', 3)
+        if len(tmp) > 3 and 'NEEDED' in tmp[2]:
+            # NEEDED lines look like:
+            # 0x00000001 (NEEDED)             Shared library: [libname]
+            # or with BSD readelf:
+            # 0x00000001 NEEDED               Shared library: [libname]
+            match = re.search('\[(.*)\]', tmp[3])
+            if match:
+                deps.append(match.group(1))
     proc.wait()
     return deps
 
@@ -90,7 +99,7 @@ def gen_list(output, lib):
     libpaths = [os.path.join(substs['DIST'], 'bin')]
     binary_type = get_type(lib)
     if binary_type == ELF:
-        func = dependentlibs_elf_objdump
+        func = dependentlibs_readelf
     elif binary_type == MACHO:
         func = dependentlibs_mac_objdump
     else:

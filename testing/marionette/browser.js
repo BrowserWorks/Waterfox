@@ -5,17 +5,17 @@
 "use strict";
 /* global frame */
 
-const {WebElementEventTarget} = ChromeUtils.import("chrome://marionette/content/dom.js", {});
-ChromeUtils.import("chrome://marionette/content/element.js");
+const {WebElementEventTarget} = ChromeUtils.import("chrome://marionette/content/dom.js");
+const {element} = ChromeUtils.import("chrome://marionette/content/element.js");
 const {
   NoSuchWindowError,
   UnsupportedOperationError,
-} = ChromeUtils.import("chrome://marionette/content/error.js", {});
+} = ChromeUtils.import("chrome://marionette/content/error.js");
 const {
   MessageManagerDestroyedPromise,
   waitForEvent,
   waitForObserverTopic,
-} = ChromeUtils.import("chrome://marionette/content/sync.js", {});
+} = ChromeUtils.import("chrome://marionette/content/sync.js");
 
 this.EXPORTED_SYMBOLS = ["browser", "Context", "WindowState"];
 
@@ -116,7 +116,6 @@ browser.getTabBrowser = function(window) {
  * the current environment (Firefox, Fennec).
  */
 browser.Context = class {
-
   /**
    * @param {ChromeWindow} win
    *     ChromeWindow that contains the top-level browsing context.
@@ -450,18 +449,13 @@ browser.Context = class {
       this.tab = this.tabBrowser.tabs[index];
 
       if (focus) {
-        switch (this.driver.appName) {
-          case "fennec":
-            this.tabBrowser.selectTab(this.tab);
-            break;
-
-          case "firefox":
-            this.tabBrowser.selectedTab = this.tab;
-            break;
-
-          default:
-            throw new UnsupportedOperationError(
-              `switchToTab() not supported in ${this.driver.appName}`);
+        if ("selectTab" in this.tabBrowser) {
+          this.tabBrowser.selectTab(this.tab);
+        } else if ("selectedTab" in this.tabBrowser) {
+          this.tabBrowser.selectedTab = this.tab;
+        } else {
+          throw new UnsupportedOperationError(
+            `switchToTab() not supported in ${this.driver.appName}`);
         }
       }
     }
@@ -530,7 +524,6 @@ browser.Context = class {
       cb();
     }
   }
-
 };
 
 /**
@@ -548,7 +541,6 @@ browser.Context = class {
  *
  */
 browser.Windows = class extends Map {
-
   /**
    * Save a weak reference to the Window object.
    *
@@ -585,7 +577,6 @@ browser.Windows = class extends Map {
     }
     return wref.get();
   }
-
 };
 
 /**

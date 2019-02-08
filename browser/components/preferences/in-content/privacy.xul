@@ -8,7 +8,7 @@
         src="chrome://browser/content/preferences/in-content/privacy.js"/>
 <stringbundle id="bundlePreferences" src="chrome://browser/locale/preferences/preferences.properties"/>
 <stringbundle id="signonBundle" src="chrome://passwordmgr/locale/passwordmgr.properties"/>
-
+<box id="template-panePrivacy" hidden="true"><![CDATA[
 <hbox id="browserPrivacyCategory"
       class="subcategory"
       hidden="true"
@@ -106,7 +106,7 @@
                       <label class="content-blocking-warning-title" data-l10n-id="content-blocking-warning-title"/>
                     </hbox>
                     <description class="indent">
-                      <html:span class="tail-with-learn-more" data-l10n-id="content-blocking-warning-desc"></html:span>
+                      <html:span class="tail-with-learn-more" data-l10n-id="content-blocking-warning-description"></html:span>
                       <label class="text-link content-blocking-warning-learn-how" data-l10n-id="content-blocking-learn-how"/>
                     </description>
                   </vbox>
@@ -175,6 +175,20 @@
                     </hbox>
                   </vbox>
                 </hbox>
+                <hbox class="custom-option" id="contentBlockingCryptominersOption">
+                  <checkbox id="contentBlockingCryptominersCheckbox"
+                            class="content-blocking-checkbox" flex="1"
+                            preference="privacy.trackingprotection.cryptomining.enabled"
+                            data-l10n-id="content-blocking-cryptominers-label"
+                            aria-describedby="contentBlockingCustomDesc"/>
+                </hbox>
+                <hbox class="custom-option" id="contentBlockingFingerprintersOption">
+                  <checkbox id="contentBlockingFingerprintersCheckbox"
+                            class="content-blocking-checkbox" flex="1"
+                            preference="privacy.trackingprotection.fingerprinting.enabled"
+                            data-l10n-id="content-blocking-fingerprinters-label"
+                            aria-describedby="contentBlockingCustomDesc"/>
+                </hbox>
               <vbox class="content-blocking-warning">
                 <vbox class="indent">
                   <hbox>
@@ -182,7 +196,7 @@
                     <label class="content-blocking-warning-title" data-l10n-id="content-blocking-warning-title"/>
                   </hbox>
                   <description class="indent">
-                    <html:span class="tail-with-learn-more" data-l10n-id="content-blocking-warning-desc"></html:span>
+                    <html:span class="tail-with-learn-more" data-l10n-id="content-blocking-warning-description"></html:span>
                     <label class="text-link content-blocking-warning-learn-how" data-l10n-id="content-blocking-learn-how"/>
                   </description>
                 </vbox>
@@ -322,7 +336,7 @@
      after the form autofill extension has initialized. -->
 <groupbox id="formAutofillGroupBox"
           data-category="panePrivacy"
-          data-subcategory="form-autofill"></groupbox>
+          data-subcategory="form-autofill" hidden="true"></groupbox>
 
 <!-- History -->
 <groupbox id="historyGroup" data-category="panePrivacy" hidden="true">
@@ -795,3 +809,4 @@
     </vbox>
   </hbox>
 </groupbox>
+]]></box>

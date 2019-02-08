@@ -7,8 +7,8 @@ var EXPORTED_SYMBOLS = [
   "ContentSearch",
 ];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["XMLHttpRequest"]);
 
@@ -338,7 +338,7 @@ var ContentSearch = {
     }
     let pref = Services.prefs.getCharPref("browser.search.hiddenOneOffs");
     let hiddenList = pref ? pref.split(",") : [];
-    for (let engine of Services.search.getVisibleEngines()) {
+    for (let engine of await Services.search.getVisibleEngines()) {
       let uri = engine.getIconURLBySize(16, 16);
       let iconBuffer = uri;
       if (!uriFlag) {
@@ -555,8 +555,7 @@ var ContentSearch = {
 
   _initService() {
     if (!this._initServicePromise) {
-      this._initServicePromise =
-        new Promise(resolve => Services.search.init(resolve));
+      this._initServicePromise = Services.search.init();
     }
     return this._initServicePromise;
   },

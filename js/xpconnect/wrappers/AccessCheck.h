@@ -11,18 +11,16 @@
 #include "js/Wrapper.h"
 #include "nsString.h"
 
-class nsIPrincipal;
-
 namespace xpc {
 
 class AccessCheck {
  public:
   static bool subsumes(JSObject* a, JSObject* b);
   static bool wrapperSubsumes(JSObject* wrapper);
-  static bool subsumesConsideringDomain(JS::Compartment* a, JS::Compartment* b);
-  static bool subsumesConsideringDomainIgnoringFPD(JS::Compartment* a,
-                                                   JS::Compartment* b);
+  static bool subsumesConsideringDomain(JS::Realm* a, JS::Realm* b);
+  static bool subsumesConsideringDomainIgnoringFPD(JS::Realm* a, JS::Realm* b);
   static bool isChrome(JS::Compartment* compartment);
+  static bool isChrome(JS::Realm* realm);
   static bool isChrome(JSObject* obj);
   static bool checkPassToPrivilegedCode(JSContext* cx, JS::HandleObject wrapper,
                                         JS::HandleValue value);
@@ -35,12 +33,13 @@ class AccessCheck {
                                       const nsACString& accessType);
 };
 
-enum CrossOriginObjectType {
-  CrossOriginWindow,
-  CrossOriginLocation,
-  CrossOriginOpaque
-};
-CrossOriginObjectType IdentifyCrossOriginObject(JSObject* obj);
+/**
+ * Returns true if the given object (which is expected to be stripped of
+ * cross-compartment wrappers in practice, but this function doesn't assume
+ * that) is a WindowProxy or Location object, which need special wrapping
+ * behavior due to being usable cross-origin in limited ways.
+ */
+bool IsCrossOriginAccessibleObject(JSObject* obj);
 
 struct Policy {
   static bool checkCall(JSContext* cx, JS::HandleObject wrapper,

@@ -10,6 +10,12 @@ geckodriver has a few capabilities that are specific to Firefox.
 A dictionary used to define options which control how Firefox gets
 started and run. It may contain any of the following fields:
 
+<style type="text/css">
+  table { width: 100%; margin-bottom: 2em; }
+  table, th, td { border: solid gray 1px; }
+  td, th { padding: 5px 10px; }
+</style>
+
 <table>
  <thead>
   <tr>
@@ -21,19 +27,24 @@ started and run. It may contain any of the following fields:
 
  <tr id=capability-binary>
   <td><code>binary</code>
-  <td>string
-  <td>Absolute path of the Firefox binary,
-   e.g. <code>/usr/bin/firefox</code>
-   or <code>/Applications/Firefox.app/Contents/MacOS/firefox</code>,
+  <td align="center">string
+  <td><p>
+   Absolute path of the Firefox binary
    to select which custom browser binary to use.
    If left undefined geckodriver will attempt
    to deduce the default location of Firefox
    on the current system.
+
+   <p>
+   On macOS the path must be absolute to the browser binary,
+   e.g. <code>/Applications/Firefox.app/Contents/MacOS/firefox</code>.
+   Specifying an application bundle such as <code>/Applications/Firefox.app</code>
+   will <em>not</em> work.
  </tr>
 
  <tr id=capability-args>
   <td><code>args</code>
-  <td>array&nbsp;of&nbsp;strings
+  <td align="center">array&nbsp;of&nbsp;strings
   <td><p>Command line arguments to pass to the Firefox binary.
    These must include the leading dash (<code>-</code>) where required,
    e.g. <code>["-devtools"]</code>.
@@ -44,7 +55,7 @@ started and run. It may contain any of the following fields:
 
  <tr id=capability-profile>
   <td><code>profile</code>
-  <td>string
+  <td align="center">string
   <td><p>Base64-encoded ZIP of a profile directory to use for the Firefox instance.
    This may be used to e.g. install extensions or custom certificates,
    but for setting custom preferences
@@ -67,7 +78,7 @@ started and run. It may contain any of the following fields:
 
  <tr id=capability-log>
   <td><code>log</code>
-  <td><a href=#log-object><code>log</code></a>&nbsp;object
+  <td align="center"><a href=#log-object><code>log</code></a>&nbsp;object
   <td>To increase the logging verbosity of geckodriver and Firefox,
    you may pass a <a href=#log-object><code>log</code> object</a>
    that may look like <code>{"log": {"level": "trace"}}</code>
@@ -76,7 +87,7 @@ started and run. It may contain any of the following fields:
 
  <tr id=capability-prefs>
   <td><code>prefs</code>
-  <td><a href=#prefs-object><code>prefs</code></a>&nbsp;object
+  <td align="center"><a href=#prefs-object><code>prefs</code></a>&nbsp;object
   <td>Map of preference name to preference value, which can be a
    string, a boolean or an integer.
  </tr>
@@ -141,7 +152,7 @@ it will be removed once the interactability checks have been stabilized.
 
  <tr>
   <td><code>level</code>
-  <td>string
+  <td align="center">string
   <td>Set the level of verbosity of geckodriver and Firefox.
    Available levels are <code>trace</code>,
    <code>debug</code>, <code>config</code>,
@@ -167,7 +178,7 @@ it will be removed once the interactability checks have been stabilized.
 
  <tr>
   <td><var>preference name</var>
-  <td>string, number, boolean
+  <td align="center">string, number, boolean
   <td>One entry per preference to override.
  </tr>
 </table>

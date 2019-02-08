@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
+// @flow
+
 import React from "react";
 import { mount, shallow } from "enzyme";
 import { ProjectSearch } from "../ProjectSearch";
@@ -63,6 +65,7 @@ const testResults = [
 ];
 
 const testMatch = {
+  type: "MATCH",
   match: "match1",
   value: "some thing match1",
   sourceId: "some-target/source42",
@@ -83,6 +86,7 @@ function render(overrides = {}, mounted = false) {
     updateSearchStatus: jest.fn(),
     selectSpecificLocation: jest.fn(),
     doSearchForHighlight: jest.fn(),
+    setActiveSearch: jest.fn(),
     ...overrides
   };
 
@@ -98,7 +102,7 @@ describe("ProjectSearch", () => {
   });
 
   it("renders nothing when disabled", () => {
-    const component = render({ activeSearch: null });
+    const component = render({ activeSearch: "" });
     expect(component).toMatchSnapshot();
   });
 
@@ -195,7 +199,7 @@ describe("ProjectSearch", () => {
       },
       true
     );
-    component.instance().focusedItem = {};
+    component.instance().state.focusedItem = null;
     shortcuts.dispatch("Enter");
     expect(selectSpecificLocation).not.toHaveBeenCalled();
   });
@@ -209,36 +213,13 @@ describe("ProjectSearch", () => {
       },
       true
     );
-    component.instance().focusedItem = { match: testMatch };
+    component.instance().state.focusedItem = { ...testMatch };
     shortcuts.dispatch("Enter");
     expect(selectSpecificLocation).toHaveBeenCalledWith({
       sourceId: "some-target/source42",
       line: 3,
       column: 30
     });
-  });
-
-  it("onEnterPress shortcut setExpanded", () => {
-    const selectSpecificLocation = jest.fn();
-    const component = render(
-      {
-        results: testResults,
-        selectSpecificLocation
-      },
-      true
-    );
-    const setExpanded = jest.fn();
-    const testFile = {
-      filepath: "testFilePath1",
-      matches: [testMatch]
-    };
-    component.instance().focusedItem = {
-      setExpanded,
-      file: testFile,
-      expanded: true
-    };
-    shortcuts.dispatch("Enter");
-    expect(setExpanded).toHaveBeenCalledWith(testFile, false);
   });
 
   it("state.inputValue responds to prop.query changes", () => {

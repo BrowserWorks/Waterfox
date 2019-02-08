@@ -573,14 +573,17 @@ class nsIFrame : public nsQueryFrame {
 
   NS_DECL_QUERYFRAME_TARGET(nsIFrame)
 
-  explicit nsIFrame(ClassID aID)
+  explicit nsIFrame(ComputedStyle* aStyle, nsPresContext* aPresContext,
+                    ClassID aID)
       : mRect(),
         mContent(nullptr),
-        mComputedStyle(nullptr),
+        mComputedStyle(aStyle),
+        mPresContext(aPresContext),
         mParent(nullptr),
         mNextSibling(nullptr),
         mPrevSibling(nullptr),
         mState(NS_FRAME_FIRST_REFLOW | NS_FRAME_IS_DIRTY),
+        mWritingMode(aStyle),
         mClass(aID),
         mMayHaveRoundedCorners(false),
         mHasImageRequest(false),
@@ -598,10 +601,12 @@ class nsIFrame : public nsQueryFrame {
         mMayHaveOpacityAnimation(false),
         mAllDescendantsAreInvisible(false),
         mInScrollAnchorChain(false) {
+    MOZ_ASSERT(mComputedStyle);
+    MOZ_ASSERT(mPresContext);
     mozilla::PodZero(&mOverflow);
   }
 
-  nsPresContext* PresContext() const { return Style()->PresContextForFrame(); }
+  nsPresContext* PresContext() const { return mPresContext; }
 
   nsIPresShell* PresShell() const { return PresContext()->PresShell(); }
 
@@ -777,8 +782,6 @@ class nsIFrame : public nsQueryFrame {
    */
   void SetComputedStyleWithoutNotification(ComputedStyle* aStyle) {
     if (aStyle != mComputedStyle) {
-      MOZ_DIAGNOSTIC_ASSERT(PresShell() ==
-                            aStyle->PresContextForFrame()->PresShell());
       mComputedStyle = aStyle;
     }
   }
@@ -4162,6 +4165,7 @@ class nsIFrame : public nsQueryFrame {
   RefPtr<ComputedStyle> mComputedStyle;
 
  private:
+  nsPresContext* const mPresContext;
   nsContainerFrame* mParent;
   nsIFrame* mNextSibling;  // doubly-linked list of frames
   nsIFrame* mPrevSibling;  // Do not touch outside SetNextSibling!
@@ -4528,24 +4532,8 @@ class nsIFrame : public nsQueryFrame {
   static void IndentBy(FILE* out, int32_t aIndent) {
     while (--aIndent >= 0) fputs("  ", out);
   }
-  void ListTag(FILE* out) const { ListTag(out, this); }
-  static void ListTag(FILE* out, const nsIFrame* aFrame) {
-    nsAutoCString t;
-    ListTag(t, aFrame);
-    fputs(t.get(), out);
-  }
-  static void ListTag(FILE* out, const nsFrameList& aFrameList) {
-    for (nsIFrame* frame : aFrameList) {
-      ListTag(out, frame);
-    }
-  }
-  void ListTag(nsACString& aTo) const;
-  nsAutoCString ListTag() const {
-    nsAutoCString tag;
-    ListTag(tag);
-    return tag;
-  }
-  static void ListTag(nsACString& aTo, const nsIFrame* aFrame);
+  void ListTag(FILE* out) const { fputs(ListTag().get(), out); }
+  nsAutoCString ListTag() const;
   void ListGeneric(nsACString& aTo, const char* aPrefix = "",
                    uint32_t aFlags = 0) const;
   enum {TRAVERSE_SUBDOCUMENT_FRAMES = 0x01};

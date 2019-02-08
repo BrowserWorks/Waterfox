@@ -223,7 +223,8 @@ class ScrollFrameHelper : public nsIReflowCallback {
 
   /**
    * Return the 'optimal viewing region' [1] as a rect suitable for use by
-   * scroll anchoring.
+   * scroll anchoring. This rect is in the same coordinate space as
+   * 'GetScrollPortRect'.
    *
    * [1] https://drafts.csswg.org/css-scroll-snap-1/#optimal-viewing-region
    */
@@ -811,8 +812,13 @@ class nsHTMLScrollFrame : public nsContainerFrame,
     return mHelper.ComputeCustomOverflow(aOverflowAreas);
   }
 
+  nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode) const override;
+
   bool GetVerticalAlignBaseline(mozilla::WritingMode aWM,
                                 nscoord* aBaseline) const override {
+    NS_ASSERTION(!aWM.IsOrthogonalTo(GetWritingMode()),
+                 "You should only call this on frames with a WM that's "
+                 "parallel to aWM");
     *aBaseline = GetLogicalBaseline(aWM);
     return true;
   }
@@ -1181,10 +1187,12 @@ class nsHTMLScrollFrame : public nsContainerFrame,
 #endif
 
  protected:
-  nsHTMLScrollFrame(ComputedStyle* aStyle, bool aIsRoot)
-      : nsHTMLScrollFrame(aStyle, kClassID, aIsRoot) {}
+  nsHTMLScrollFrame(ComputedStyle* aStyle, nsPresContext* aPresContext,
+                    bool aIsRoot)
+      : nsHTMLScrollFrame(aStyle, aPresContext, kClassID, aIsRoot) {}
 
-  nsHTMLScrollFrame(ComputedStyle* aStyle, nsIFrame::ClassID aID, bool aIsRoot);
+  nsHTMLScrollFrame(ComputedStyle* aStyle, nsPresContext* aPresContext,
+                    nsIFrame::ClassID aID, bool aIsRoot);
   void SetSuppressScrollbarUpdate(bool aSuppress) {
     mHelper.mSuppressScrollbarUpdate = aSuppress;
   }
@@ -1652,7 +1660,7 @@ class nsXULScrollFrame final : public nsBoxFrame,
 #endif
 
  protected:
-  nsXULScrollFrame(ComputedStyle* aStyle, bool aIsRoot,
+  nsXULScrollFrame(ComputedStyle*, nsPresContext*, bool aIsRoot,
                    bool aClipAllDescendants);
 
   void ClampAndSetBounds(nsBoxLayoutState& aState, nsRect& aRect,

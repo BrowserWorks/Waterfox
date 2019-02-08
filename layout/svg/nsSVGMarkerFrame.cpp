@@ -21,7 +21,8 @@ using namespace mozilla::image;
 
 nsContainerFrame* NS_NewSVGMarkerFrame(nsIPresShell* aPresShell,
                                        ComputedStyle* aStyle) {
-  return new (aPresShell) nsSVGMarkerFrame(aStyle);
+  return new (aPresShell)
+      nsSVGMarkerFrame(aStyle, aPresShell->GetPresContext());
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsSVGMarkerFrame)
@@ -88,7 +89,7 @@ static nsIFrame* GetAnonymousChildFrame(nsIFrame* aFrame) {
 void nsSVGMarkerFrame::PaintMark(gfxContext& aContext,
                                  const gfxMatrix& aToMarkedFrameUserSpace,
                                  SVGGeometryFrame* aMarkedFrame,
-                                 const nsSVGMark& aMark, float aStrokeWidth,
+                                 const SVGMark& aMark, float aStrokeWidth,
                                  imgDrawingParams& aImgParams) {
   // If the flag is set when we get here, it means this marker frame
   // has already been used painting the current mark, and the document
@@ -136,8 +137,7 @@ void nsSVGMarkerFrame::PaintMark(gfxContext& aContext,
 
 SVGBBox nsSVGMarkerFrame::GetMarkBBoxContribution(
     const Matrix& aToBBoxUserspace, uint32_t aFlags,
-    SVGGeometryFrame* aMarkedFrame, const nsSVGMark& aMark,
-    float aStrokeWidth) {
+    SVGGeometryFrame* aMarkedFrame, const SVGMark& aMark, float aStrokeWidth) {
   SVGBBox bbox;
 
   // If the flag is set when we get here, it means this marker frame
@@ -215,7 +215,8 @@ nsSVGMarkerFrame::AutoMarkerReferencer::~AutoMarkerReferencer() {
 
 nsContainerFrame* NS_NewSVGMarkerAnonChildFrame(nsIPresShell* aPresShell,
                                                 ComputedStyle* aStyle) {
-  return new (aPresShell) nsSVGMarkerAnonChildFrame(aStyle);
+  return new (aPresShell)
+      nsSVGMarkerAnonChildFrame(aStyle, aPresShell->GetPresContext());
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsSVGMarkerAnonChildFrame)

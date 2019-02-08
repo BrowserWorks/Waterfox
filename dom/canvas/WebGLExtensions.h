@@ -162,6 +162,8 @@ class WebGLExtensionDepthTexture : public WebGLExtensionBase {
   explicit WebGLExtensionDepthTexture(WebGLContext*);
   virtual ~WebGLExtensionDepthTexture();
 
+  static bool IsSupported(const WebGLContext*);
+
   DECL_WEBGL_EXTENSION_GOOP
 };
 
@@ -177,6 +179,16 @@ class WebGLExtensionEXTColorBufferFloat : public WebGLExtensionBase {
  public:
   explicit WebGLExtensionEXTColorBufferFloat(WebGLContext*);
   virtual ~WebGLExtensionEXTColorBufferFloat() {}
+
+  static bool IsSupported(const WebGLContext*);
+
+  DECL_WEBGL_EXTENSION_GOOP
+};
+
+class WebGLExtensionFloatBlend : public WebGLExtensionBase {
+ public:
+  explicit WebGLExtensionFloatBlend(WebGLContext* webgl);
+  virtual ~WebGLExtensionFloatBlend();
 
   static bool IsSupported(const WebGLContext*);
 

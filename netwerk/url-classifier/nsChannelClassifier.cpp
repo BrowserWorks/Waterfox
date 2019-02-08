@@ -16,7 +16,6 @@
 #include "nsIProtocolHandler.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsISecureBrowserUI.h"
-#include "nsISecurityEventSink.h"
 #include "nsISupportsPriority.h"
 #include "nsNetUtil.h"
 #include "nsXULAppAPI.h"
@@ -25,10 +24,12 @@
 #include "nsIUrlClassifierFeature.h"
 #include "nsPrintfCString.h"
 
+#include "mozilla/Components.h"
 #include "mozilla/ErrorNames.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/net/UrlClassifierCommon.h"
+#include "mozilla/net/UrlClassifierFeatureFactory.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Services.h"
 
@@ -284,7 +285,8 @@ void nsChannelClassifier::MarkEntryClassified(nsresult status) {
   MOZ_ASSERT(XRE_IsParentProcess());
 
   // Don't cache tracking classifications because we support allowlisting.
-  if (status == NS_ERROR_TRACKING_URI || mIsAllowListed) {
+  if (UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(status) ||
+      mIsAllowListed) {
     return;
   }
 
@@ -370,7 +372,7 @@ nsresult nsChannelClassifier::SendThreatHitReport(nsIChannel* aChannel,
   }
 
   nsCOMPtr<nsIURIClassifier> uriClassifier =
-      do_GetService(NS_URLCLASSIFIERDBSERVICE_CONTRACTID);
+      components::UrlClassifierDB::Service();
   if (!uriClassifier) {
     return NS_ERROR_UNEXPECTED;
   }
@@ -389,7 +391,8 @@ nsChannelClassifier::OnClassifyComplete(nsresult aErrorCode,
                                         const nsACString& aFullHash) {
   // Should only be called in the parent process.
   MOZ_ASSERT(XRE_IsParentProcess());
-  MOZ_ASSERT(aErrorCode != NS_ERROR_TRACKING_URI);
+  MOZ_ASSERT(
+      !UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(aErrorCode));
 
   if (mSuspendedChannel) {
     nsAutoCString errorName;

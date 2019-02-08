@@ -5,37 +5,37 @@
 "use strict";
 /* global XPCNativeWrapper */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
-ChromeUtils.import("chrome://marionette/content/accessibility.js");
-const {Addon} = ChromeUtils.import("chrome://marionette/content/addon.js", {});
-ChromeUtils.import("chrome://marionette/content/assert.js");
-ChromeUtils.import("chrome://marionette/content/atom.js");
+const {accessibility} = ChromeUtils.import("chrome://marionette/content/accessibility.js");
+const {Addon} = ChromeUtils.import("chrome://marionette/content/addon.js");
+const {assert} = ChromeUtils.import("chrome://marionette/content/assert.js");
+const {atom} = ChromeUtils.import("chrome://marionette/content/atom.js");
 const {
   browser,
   Context,
   WindowState,
-} = ChromeUtils.import("chrome://marionette/content/browser.js", {});
+} = ChromeUtils.import("chrome://marionette/content/browser.js");
 const {
   Capabilities,
   Timeouts,
   UnhandledPromptBehavior,
-} = ChromeUtils.import("chrome://marionette/content/capabilities.js", {});
-ChromeUtils.import("chrome://marionette/content/capture.js");
+} = ChromeUtils.import("chrome://marionette/content/capabilities.js");
+const {capture} = ChromeUtils.import("chrome://marionette/content/capture.js");
 const {
   CertificateOverrideManager,
   InsecureSweepingOverride,
-} = ChromeUtils.import("chrome://marionette/content/cert.js", {});
-ChromeUtils.import("chrome://marionette/content/cookie.js");
+} = ChromeUtils.import("chrome://marionette/content/cert.js");
+const {cookie} = ChromeUtils.import("chrome://marionette/content/cookie.js");
 const {
   WebElementEventTarget,
-} = ChromeUtils.import("chrome://marionette/content/dom.js", {});
+} = ChromeUtils.import("chrome://marionette/content/dom.js");
 const {
   ChromeWebElement,
   element,
   WebElement,
-} = ChromeUtils.import("chrome://marionette/content/element.js", {});
+} = ChromeUtils.import("chrome://marionette/content/element.js");
 const {
   InsecureCertificateError,
   InvalidArgumentError,
@@ -49,17 +49,17 @@ const {
   UnknownError,
   UnsupportedOperationError,
   WebDriverError,
-} = ChromeUtils.import("chrome://marionette/content/error.js", {});
-ChromeUtils.import("chrome://marionette/content/evaluate.js");
-const {pprint} = ChromeUtils.import("chrome://marionette/content/format.js", {});
-ChromeUtils.import("chrome://marionette/content/interaction.js");
-ChromeUtils.import("chrome://marionette/content/l10n.js");
-ChromeUtils.import("chrome://marionette/content/legacyaction.js");
-const {Log} = ChromeUtils.import("chrome://marionette/content/log.js", {});
-ChromeUtils.import("chrome://marionette/content/modal.js");
-const {MarionettePrefs} = ChromeUtils.import("chrome://marionette/content/prefs.js", {});
-ChromeUtils.import("chrome://marionette/content/proxy.js");
-ChromeUtils.import("chrome://marionette/content/reftest.js");
+} = ChromeUtils.import("chrome://marionette/content/error.js");
+const {Sandboxes, evaluate} = ChromeUtils.import("chrome://marionette/content/evaluate.js");
+const {pprint} = ChromeUtils.import("chrome://marionette/content/format.js");
+const {interaction} = ChromeUtils.import("chrome://marionette/content/interaction.js");
+const {l10n} = ChromeUtils.import("chrome://marionette/content/l10n.js");
+const {legacyaction} = ChromeUtils.import("chrome://marionette/content/legacyaction.js");
+const {Log} = ChromeUtils.import("chrome://marionette/content/log.js");
+const {modal} = ChromeUtils.import("chrome://marionette/content/modal.js");
+const {MarionettePrefs} = ChromeUtils.import("chrome://marionette/content/prefs.js", null);
+const {proxy} = ChromeUtils.import("chrome://marionette/content/proxy.js");
+const {reftest} = ChromeUtils.import("chrome://marionette/content/reftest.js");
 const {
   DebounceCallback,
   IdlePromise,
@@ -67,7 +67,7 @@ const {
   TimedPromise,
   waitForEvent,
   waitForObserverTopic,
-} = ChromeUtils.import("chrome://marionette/content/sync.js", {});
+} = ChromeUtils.import("chrome://marionette/content/sync.js");
 
 XPCOMUtils.defineLazyGetter(this, "logger", Log.get);
 XPCOMUtils.defineLazyGlobalGetters(this, ["URL"]);
@@ -727,16 +727,24 @@ GeckoDriver.prototype.newSession = async function(cmd) {
   let browserListening = this.listeningPromise();
 
   let waitForWindow = function() {
-    let windowType;
+    let windowTypes;
     switch (this.appId) {
       case APP_ID_THUNDERBIRD:
-        windowType = "mail:3pane";
+        windowTypes = ["mail:3pane"];
         break;
       default:
-        windowType = "navigator:browser";
+        // We assume that an app either has GeckoView windows, or
+        // Firefox/Fennec windows, but not both.
+        windowTypes = ["navigator:browser", "navigator:geckoview"];
         break;
     }
-    let win = Services.wm.getMostRecentWindow(windowType);
+    let win;
+    for (let windowType of windowTypes) {
+      win = Services.wm.getMostRecentWindow(windowType);
+      if (win) {
+        break;
+      }
+    }
     if (!win) {
       // if the window isn't even created, just poll wait for it
       let checkTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -978,7 +986,6 @@ GeckoDriver.prototype.execute_ = async function(
       line = 0,
       async = false,
     } = {}) {
-
   assert.open(this.getCurrentWindow());
   await this._handleUserPrompts();
 
@@ -1595,7 +1602,6 @@ GeckoDriver.prototype.setWindowHandle = async function(
       await registerBrowsers;
       await browserListening;
     }
-
   } else {
     // Otherwise switch to the known chrome window
     this.curBrowser = this.browsers[winProperties.outerId];
@@ -1814,7 +1820,6 @@ GeckoDriver.prototype.switchToFrame = async function(cmd) {
     } else {
       throw new NoSuchFrameError(`Unable to locate frame: ${id}`);
     }
-
   } else if (this.context == Context.Content) {
     cmd.commandID = cmd.id;
     await this.listener.switchToFrame(cmd.parameters);
@@ -3031,11 +3036,17 @@ GeckoDriver.prototype.minimizeWindow = async function() {
   const win = assert.open(this.getCurrentWindow());
   await this._handleUserPrompts();
 
-  if (WindowState.from(win.windowState) != WindowState.Minimized) {
-    if (WindowState.from(win.windowState) == WindowState.Fullscreen) {
+  switch (WindowState.from(win.windowState)) {
+    case WindowState.Fullscreen:
       await exitFullscreen(win);
-    }
+      break;
 
+    case WindowState.Maximized:
+      await restoreWindow(win);
+      break;
+  }
+
+  if (WindowState.from(win.windowState) != WindowState.Minimized) {
     let cb;
     let observer = new WebElementEventTarget(this.curBrowser.messageManager);
     // Use a timed promise to abort if no window manager is present
@@ -3122,8 +3133,11 @@ GeckoDriver.prototype.fullscreenWindow = async function() {
   const win = assert.open(this.getCurrentWindow());
   await this._handleUserPrompts();
 
-  if (WindowState.from(win.windowState) == WindowState.Minimized) {
-    await restoreWindow(win);
+  switch (WindowState.from(win.windowState)) {
+    case WindowState.Maximized:
+    case WindowState.Minimized:
+      await restoreWindow(win);
+      break;
   }
 
   if (WindowState.from(win.windowState) != WindowState.Fullscreen) {
@@ -3628,22 +3642,22 @@ function getOuterWindowId(win) {
   return win.windowUtils.outerWindowID;
 }
 
-async function exitFullscreen(window) {
+async function exitFullscreen(win) {
   let cb;
   // Use a timed promise to abort if no window manager is present
   await new TimedPromise(resolve => {
     cb = new DebounceCallback(resolve);
-    window.addEventListener("sizemodechange", cb);
-    window.fullScreen = false;
+    win.addEventListener("sizemodechange", cb);
+    win.fullScreen = false;
   }, {throws: null, timeout: TIMEOUT_NO_WINDOW_MANAGER});
-  window.removeEventListener("sizemodechange", cb);
+  win.removeEventListener("sizemodechange", cb);
 }
 
-async function restoreWindow(window) {
-  window.restore();
+async function restoreWindow(win) {
+  win.restore();
   // Use a poll promise to abort if no window manager is present
   await new PollPromise((resolve, reject) => {
-    if (WindowState.from(window.windowState) != WindowState.Minimized) {
+    if (WindowState.from(win.windowState) == WindowState.Normal) {
       resolve();
     } else {
       reject();

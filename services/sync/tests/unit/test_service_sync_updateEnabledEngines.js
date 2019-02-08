@@ -1,12 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-ChromeUtils.import("resource://services-sync/constants.js");
-ChromeUtils.import("resource://services-sync/engines.js");
-ChromeUtils.import("resource://services-sync/engines/clients.js");
-ChromeUtils.import("resource://services-sync/record.js");
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/util.js");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
 
 function QuietStore() {
   Store.call("Quiet");
@@ -46,7 +41,6 @@ var collectionsHelper = track_collections_helper();
 var upd = collectionsHelper.with_updated_collection;
 
 function sync_httpd_setup(handlers) {
-
   handlers["/1.1/johndoe/info/collections"] = collectionsHelper.handler;
   delete collectionsHelper.collections.crypto;
   delete collectionsHelper.collections.meta;
@@ -313,7 +307,6 @@ add_task(async function test_disabledRemotelyTwoClients() {
 
     _("Engine is disabled.");
     Assert.ok(!engine.enabled);
-
   } finally {
     await Service.startOver();
     await promiseStopServer(server);
@@ -346,7 +339,6 @@ add_task(async function test_disabledRemotely() {
 
     _("Engine is not disabled: only one client.");
     Assert.ok(engine.enabled);
-
   } finally {
     await Service.startOver();
     await promiseStopServer(server);

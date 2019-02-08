@@ -378,13 +378,12 @@ JitRealm::JitRealm() : stubCodes_(nullptr), stringsCanBeInNursery(false) {}
 
 JitRealm::~JitRealm() { js_delete(stubCodes_); }
 
-bool JitRealm::initialize(JSContext* cx) {
+bool JitRealm::initialize(JSContext* cx, bool zoneHasNurseryStrings) {
   stubCodes_ = cx->new_<ICStubCodeMap>(cx->zone());
   if (!stubCodes_) {
     return false;
   }
-
-  stringsCanBeInNursery = cx->nursery().canAllocateStrings();
+  setStringsCanBeInNursery(zoneHasNurseryStrings);
 
   return true;
 }
@@ -2161,7 +2160,7 @@ static bool CanIonCompileOrInlineScript(JSScript* script, const char** reason) {
     return false;
   }
 
-  if (script->nTypeSets() >= UINT16_MAX) {
+  if (script->numBytecodeTypeSets() >= JSScript::MaxBytecodeTypeSets) {
     // In this case multiple bytecode ops can share a single observed
     // TypeSet (see bug 1303710).
     *reason = "too many typesets";

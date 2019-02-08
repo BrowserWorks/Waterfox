@@ -1,10 +1,23 @@
 ---
-layout: geckoview
+layout: default
 title: API Changelog
 description: GeckoView API Changelog.
+nav_exclude: true
+exclude: true
 ---
 
 <h1> GeckoView API Changelog. </h1>
+
+## v67
+- Change `ContentBlocking.AT_ALL` and `ContentBlocking.SB_ALL` values to mirror
+  the actual constants they encompass.
+
+- Added nested `ContentBlocking` runtime settings.
+
+- Added `RuntimeSettings` base class to support nested settings.
+
+- Added `baseUri` to [`ContentDelegate.ContextElement`][65.21] and changed
+  `linkUri` to absolute form.
 
 ## v66
 - Removed redundant field `GeckoSession.ProgressDelegate.SecurityInformation.trackingMode`.
@@ -115,4 +128,4 @@ description: GeckoView API Changelog.
 [65.24]: ../CrashReporter.html#sendCrashReport-android.content.Context-android.os.Bundle-java.lang.String-
 [65.25]: ../GeckoResult.html
 
-[api-version]: 45d1d8774e913a3077d7c489274184fd301f14fc
+[api-version]: 1a31e792d4802cb18219b7ac5281a63a89a1df75

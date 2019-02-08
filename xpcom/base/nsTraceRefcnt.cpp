@@ -52,6 +52,11 @@
 #  include "nsMemoryInfoDumper.h"
 #endif
 
+// dynamic_cast<void*> is not supported on Windows without RTTI.
+#ifndef _WIN32
+#  define HAVE_CPP_DYNAMIC_CAST_TO_VOID_PTR
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "prthread.h"
@@ -184,7 +189,7 @@ static void AssertActivityIsLegal() {
   }
   if (gActivityTLS == BAD_TLS_INDEX || PR_GetThreadPrivate(gActivityTLS)) {
     if (PR_GetEnv("MOZ_FATAL_STATIC_XPCOM_CTORS_DTORS")) {
-      MOZ_CRASH_UNSAFE_OOL(kStaticCtorDtorWarning);
+      MOZ_CRASH_UNSAFE(kStaticCtorDtorWarning);
     } else {
       NS_WARNING(kStaticCtorDtorWarning);
     }

@@ -5,9 +5,8 @@
 /* import-globals-from report.js */
 /* eslint mozilla/avoid-Date-timing: "off" */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/E10SUtils.jsm");
+var {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+var {E10SUtils} = ChromeUtils.import("resource://gre/modules/E10SUtils.jsm");
 ChromeUtils.defineModuleGetter(this, "TalosParentProfiler",
                                "resource://talos-powers/TalosParentProfiler.jsm");
 
@@ -231,7 +230,6 @@ function plInit() {
           content.selectedBrowser.messageManager.loadFrameScript("chrome://pageloader/content/lh_hero.js", false, true);
         } else {
           content.selectedBrowser.messageManager.loadFrameScript("chrome://pageloader/content/lh_dummy.js", false, true);
-
         }
         content.selectedBrowser.messageManager.loadFrameScript("chrome://pageloader/content/talos-content.js", false);
         content.selectedBrowser.messageManager.loadFrameScript("resource://talos-powers/TalosContentProfiler.js", false, true);
@@ -608,7 +606,6 @@ function plLoadHandler(evt) {
 
 // This is called after we have received a load event, now we wait for painted
 function waitForPainted() {
-
   var utils = gPaintWindow.windowUtils;
 
   if (!utils.isMozAfterPaintPending || !useMozAfterPaint) {

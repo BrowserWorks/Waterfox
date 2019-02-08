@@ -1127,11 +1127,15 @@ class ScriptSourceHolder {
 // ScriptSourceObject stores the ScriptSource and GC pointers related to it.
 //
 // ScriptSourceObjects can be cloned when we clone the JSScript (in order to
-// execute the script in a different realm/compartment). In this case we create
-// a new SSO that stores (a wrapper for) the original SSO in its "canonical
-// slot". The canonical SSO is always used for the private, introductionScript,
+// execute the script in a different compartment). In this case we create a new
+// SSO that stores (a wrapper for) the original SSO in its "canonical slot".
+// The canonical SSO is always used for the private, introductionScript,
 // element, elementAttributeName slots. This means their accessors may return an
 // object in a different compartment, hence the "unwrapped" prefix.
+//
+// Note that we don't clone the SSO when cloning the script for a different
+// realm in the same compartment, so sso->realm() does not necessarily match the
+// script's realm.
 //
 // We need ScriptSourceObject (instead of storing these GC pointers in the
 // ScriptSource itself) to properly account for cross-zone pointers: the
@@ -1467,6 +1471,13 @@ class SharedScriptData {
 
   void traceChildren(JSTracer* trc);
 
+  static constexpr size_t offsetOfData() {
+    return offsetof(SharedScriptData, data_);
+  }
+  static constexpr size_t offsetOfNatoms() {
+    return offsetof(SharedScriptData, natoms_);
+  }
+
  private:
   SharedScriptData() = delete;
   SharedScriptData(const SharedScriptData&) = delete;
@@ -1688,6 +1699,12 @@ class JSScript : public js::gc::TenuredCell {
     // Whether the record/replay execution progress counter (see RecordReplay.h)
     // should be updated as this script runs.
     TrackRecordReplayProgress = 1 << 23,
+
+    // Whether this is a top-level module script.
+    IsModule = 1 << 24,
+
+    // Whether this function needs a call object or named lambda environment.
+    NeedsFunctionEnvironmentObjects = 1 << 25,
   };
 
  private:
@@ -1716,12 +1733,7 @@ class JSScript : public js::gc::TenuredCell {
     // Script has an entry in Realm::debugScriptMap.
     HasDebugScript = 1 << 6,
 
-    // Freeze constraints for stack type sets have been generated.
-    HasFreezeConstraints = 1 << 7,
-
-    // Generation for this script's TypeScript. If out of sync with the
-    // TypeZone's generation, the TypeScript needs to be swept.
-    TypesGeneration = 1 << 8,
+    // (1 << 7) and (1 << 8) are unused.
 
     // Do not relazify this script. This is used by the relazify() testing
     // function for scripts that are on the stack and also by the AutoDelazify
@@ -1779,7 +1791,7 @@ class JSScript : public js::gc::TenuredCell {
   uint16_t funLength_ = 0;
 
   /* Number of type sets used in this script for dynamic type monitoring. */
-  uint16_t nTypeSets_ = 0;
+  uint16_t numBytecodeTypeSets_ = 0;
 
   //
   // End of fields.  Start methods.
@@ -1986,7 +1998,14 @@ class JSScript : public js::gc::TenuredCell {
     return scope->as<js::FunctionScope>().hasParameterExprs();
   }
 
-  size_t nTypeSets() const { return nTypeSets_; }
+  // If there are more than MaxBytecodeTypeSets JOF_TYPESET ops in the script,
+  // the first MaxBytecodeTypeSets - 1 JOF_TYPESET ops have their own TypeSet
+  // and all other JOF_TYPESET ops share the last TypeSet.
+  static constexpr size_t MaxBytecodeTypeSets = UINT16_MAX;
+  static_assert(sizeof(numBytecodeTypeSets_) == 2,
+                "MaxBytecodeTypeSets must match sizeof(numBytecodeTypeSets_)");
+
+  size_t numBytecodeTypeSets() const { return numBytecodeTypeSets_; }
 
   size_t funLength() const { return funLength_; }
 
@@ -2092,13 +2111,6 @@ class JSScript : public js::gc::TenuredCell {
   }
   bool hasScriptName();
 
-  bool hasFreezeConstraints() const {
-    return hasFlag(MutableFlags::HasFreezeConstraints);
-  }
-  void setHasFreezeConstraints() {
-    setFlag(MutableFlags::HasFreezeConstraints);
-  }
-
   bool warnedAboutUndefinedProp() const {
     return hasFlag(MutableFlags::WarnedAboutUndefinedProp);
   }
@@ -2191,15 +2203,6 @@ class JSScript : public js::gc::TenuredCell {
     return needsArgsObj() && hasMappedArgsObj();
   }
 
-  uint32_t typesGeneration() const {
-    return uint32_t(hasFlag(MutableFlags::TypesGeneration));
-  }
-
-  void setTypesGeneration(uint32_t generation) {
-    MOZ_ASSERT(generation <= 1);
-    setFlag(MutableFlags::TypesGeneration, bool(generation));
-  }
-
   void setDoNotRelazify(bool b) { setFlag(MutableFlags::DoNotRelazify, b); }
 
   bool hasInnerFunctions() const {
@@ -2212,6 +2215,16 @@ class JSScript : public js::gc::TenuredCell {
   static size_t offsetOfImmutableFlags() {
     return offsetof(JSScript, immutableFlags_);
   }
+  static constexpr size_t offsetOfNfixed() {
+    return offsetof(JSScript, nfixed_);
+  }
+  static constexpr size_t offsetOfNslots() {
+    return offsetof(JSScript, nslots_);
+  }
+  static constexpr size_t offsetOfScriptData() {
+    return offsetof(JSScript, scriptData_);
+  }
+  static constexpr size_t offsetOfTypes() { return offsetof(JSScript, types_); }
 
   bool hasAnyIonScript() const { return hasIonScript(); }
 
@@ -2305,7 +2318,11 @@ class JSScript : public js::gc::TenuredCell {
    */
   inline void ensureNonLazyCanonicalFunction();
 
-  bool isModule() const { return bodyScope()->is<js::ModuleScope>(); }
+  bool isModule() const {
+    MOZ_ASSERT(hasFlag(ImmutableFlags::IsModule) ==
+               bodyScope()->is<js::ModuleScope>());
+    return hasFlag(ImmutableFlags::IsModule);
+  }
   js::ModuleObject* module() const {
     if (isModule()) {
       return bodyScope()->as<js::ModuleScope>().module();
@@ -2382,11 +2399,9 @@ class JSScript : public js::gc::TenuredCell {
   /* Ensure the script has a TypeScript. */
   inline bool ensureHasTypes(JSContext* cx, js::AutoKeepTypeScripts&);
 
-  inline js::TypeScript* types(const js::AutoSweepTypeScript& sweep);
-  inline bool typesNeedsSweep() const;
+  js::TypeScript* types() { return types_; }
 
   void maybeReleaseTypes();
-  void sweepTypes(const js::AutoSweepTypeScript& sweep);
 
   inline js::GlobalObject& global() const;
   inline bool hasGlobal(const js::GlobalObject* global) const;
@@ -2401,6 +2416,10 @@ class JSScript : public js::gc::TenuredCell {
     // the decl env scope is present.
     size_t index = 0;
     return getScope(index);
+  }
+
+  bool needsFunctionEnvironmentObjects() const {
+    return hasFlag(ImmutableFlags::NeedsFunctionEnvironmentObjects);
   }
 
   bool functionHasExtraBodyVarScope() const {
@@ -3179,7 +3198,8 @@ extern void DescribeScriptedCallerForDirectEval(
     unsigned* linenop, uint32_t* pcOffset, bool* mutedErrors);
 
 JSScript* CloneScriptIntoFunction(JSContext* cx, HandleScope enclosingScope,
-                                  HandleFunction fun, HandleScript src);
+                                  HandleFunction fun, HandleScript src,
+                                  Handle<ScriptSourceObject*> sourceObject);
 
 JSScript* CloneGlobalScript(JSContext* cx, ScopeKind scopeKind,
                             HandleScript src);

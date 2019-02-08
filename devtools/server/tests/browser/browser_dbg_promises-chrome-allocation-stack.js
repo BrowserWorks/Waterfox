@@ -22,18 +22,23 @@ const STACK_DATA = [
 add_task(async function test() {
   requestLongerTimeout(10);
 
+  // Start the DebuggerServer in a distinct loader as we want to debug system
+  // compartments. The actors have to be in a distinct compartment than the
+  // context they are debugging. `invisibleToDebugger` force loading modules in
+  // a distinct compartments.
+  const { DevToolsLoader } =
+    ChromeUtils.import("resource://devtools/shared/Loader.jsm", {});
+  const customLoader = new DevToolsLoader();
+  customLoader.invisibleToDebugger = true;
+  const { DebuggerServer } = customLoader.require("devtools/server/main");
+
   DebuggerServer.init();
   DebuggerServer.registerAllActors();
   DebuggerServer.allowChromeProcess = true;
 
   const client = new DebuggerClient(DebuggerServer.connectPipe());
   await client.connect();
-  const targetFront = await client.mainRoot.getMainProcess();
-  const target = await TargetFactory.forRemoteTab({
-    client,
-    activeTab: targetFront,
-    chrome: true,
-  });
+  const target = await client.mainRoot.getMainProcess();
   await target.attach();
 
   await testGetAllocationStack(client, target, () => {

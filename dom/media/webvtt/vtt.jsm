@@ -27,8 +27,8 @@ var EXPORTED_SYMBOLS = ["WebVTT"];
  * limitations under the License.
  */
 
-ChromeUtils.import('resource://gre/modules/Services.jsm');
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import('resource://gre/modules/Services.jsm');
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 (function(global) {
 
@@ -1012,14 +1012,8 @@ ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
     var controlBar;
     var controlBarShown;
     if (controls) {
-      if (controls.localName == "videocontrols") {
-        // controls is a NAC; The control bar is in a XBL binding.
-        controlBar = controls.ownerDocument.getAnonymousElementByAttribute(
-          controls, "anonid", "controlBar");
-      } else {
-        // controls is a <div> that is the children of the UA Widget Shadow Root.
-        controlBar = controls.parentNode.getElementById("controlBar");
-      }
+      // controls is a <div> that is the children of the UA Widget Shadow Root.
+      controlBar = controls.parentNode.getElementById("controlBar");
       controlBarShown = controlBar ? !!controlBar.clientHeight : false;
     } else {
       // There is no controls element. This only happen to UA Widget because

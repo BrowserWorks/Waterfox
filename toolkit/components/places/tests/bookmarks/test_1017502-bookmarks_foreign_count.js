@@ -59,7 +59,6 @@ add_task(async function add_remove_change_bookmark_test() {
   // Cleanup - Remove changed bookmark
   await PlacesUtils.bookmarks.remove(bm1);
   Assert.equal((await getForeignCountForURL(conn, URI2)), 0);
-
 });
 
 add_task(async function maintenance_foreign_count_test() {
@@ -84,7 +83,7 @@ add_task(async function maintenance_foreign_count_test() {
   Assert.equal((await getForeignCountForURL(conn, T_URI)), 10);
 
   // Run maintenance
-  ChromeUtils.import("resource://gre/modules/PlacesDBUtils.jsm");
+  const {PlacesDBUtils} = ChromeUtils.import("resource://gre/modules/PlacesDBUtils.jsm");
   await PlacesDBUtils.maintenanceOnIdle();
 
   // Check if the foreign_count has been adjusted to the correct value

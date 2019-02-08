@@ -297,6 +297,7 @@
 #include "mozilla/net/RequestContextService.h"
 #include "StorageAccessPermissionRequest.h"
 #include "mozilla/dom/WindowProxyHolder.h"
+#include "ThirdPartyUtil.h"
 
 #define XML_DECLARATION_BITS_DECLARATION_EXISTS (1 << 0)
 #define XML_DECLARATION_BITS_ENCODING_EXISTS (1 << 1)
@@ -1047,7 +1048,6 @@ NS_IMPL_ISUPPORTS(ExternalResourceMap::LoadgroupCallbacks,
 IMPL_SHIM(nsILoadContext)
 IMPL_SHIM(nsIProgressEventSink)
 IMPL_SHIM(nsIChannelEventSink)
-IMPL_SHIM(nsISecurityEventSink)
 IMPL_SHIM(nsIApplicationCacheContainer)
 
 #undef IMPL_SHIM
@@ -1080,7 +1080,6 @@ ExternalResourceMap::LoadgroupCallbacks::GetInterface(const nsIID& aIID,
   TRY_SHIM(nsILoadContext);
   TRY_SHIM(nsIProgressEventSink);
   TRY_SHIM(nsIChannelEventSink);
-  TRY_SHIM(nsISecurityEventSink);
   TRY_SHIM(nsIApplicationCacheContainer);
 
   return NS_NOINTERFACE;
@@ -1248,7 +1247,6 @@ Document::Document(const char* aContentType)
       mDidDocumentOpen(false),
       mHasDisplayDocument(false),
       mFontFaceSetDirty(true),
-      mGetUserFontSetCalled(false),
       mDidFireDOMContentLoaded(true),
       mHasScrollLinkedEffect(false),
       mFrameRequestCallbacksScheduled(false),
@@ -1295,6 +1293,7 @@ Document::Document(const char* aContentType)
       mAsyncOnloadBlockCount(0),
       mCompatMode(eCompatibility_FullStandards),
       mReadyState(ReadyState::READYSTATE_UNINITIALIZED),
+      mAncestorIsLoading(false),
 #ifdef MOZILLA_INTERNAL_API
       mVisibilityState(dom::VisibilityState::Hidden),
 #else
@@ -1339,7 +1338,8 @@ Document::Document(const char* aContentType)
       mThrowOnDynamicMarkupInsertionCounter(0),
       mIgnoreOpensDuringUnloadCounter(0),
       mDocLWTheme(Doc_Theme_Uninitialized),
-      mSavedResolution(1.0f) {
+      mSavedResolution(1.0f),
+      mPendingInitialTranslation(false) {
   MOZ_LOG(gDocumentLeakPRLog, LogLevel::Debug, ("DOCUMENT %p created", this));
 
   SetIsInDocument();
@@ -2855,6 +2855,13 @@ void Document::SetDocumentURI(nsIURI* aURI) {
     RefreshLinkHrefs();
   }
 
+  // Recalculate our base domain
+  mBaseDomain.Truncate();
+  ThirdPartyUtil* thirdPartyUtil = ThirdPartyUtil::GetInstance();
+  if (thirdPartyUtil) {
+    Unused << thirdPartyUtil->GetBaseDomain(mDocumentURI, mBaseDomain);
+  }
+
   // Tell our WindowGlobalParent that the document's URI has been changed.
   nsPIDOMWindowInner* inner = GetInnerWindow();
   WindowGlobalChild* wgc = inner ? inner->GetWindowGlobalChild() : nullptr;
@@ -3131,6 +3138,8 @@ void Document::LocalizationLinkAdded(Element* aLinkElement) {
     // will be resolved once the end of l10n resource
     // container is reached.
     mL10nResources.AppendElement(href);
+
+    mPendingInitialTranslation = true;
   }
 }
 
@@ -3173,9 +3182,18 @@ void Document::OnL10nResourceContainerParsed() {
 }
 
 void Document::TriggerInitialDocumentTranslation() {
+  // Let's call it again, in case the resource
+  // container has not been closed, and only
+  // now we're closing the document.
+  OnL10nResourceContainerParsed();
+
   if (mDocumentL10n) {
     mDocumentL10n->TriggerInitialDocumentTranslation();
   }
+}
+
+void Document::InitialDocumentTranslationCompleted() {
+  mPendingInitialTranslation = false;
 }
 
 bool Document::IsWebAnimationsEnabled(JSContext* aCx, JSObject* /*unused*/) {
@@ -5385,14 +5403,15 @@ void Document::ResolveScheduledSVGPresAttrs() {
   mLazySVGPresElements.Clear();
 }
 
-already_AddRefed<nsSimpleContentList> Document::BlockedTrackingNodes() const {
+already_AddRefed<nsSimpleContentList> Document::BlockedNodesByClassifier()
+    const {
   RefPtr<nsSimpleContentList> list = new nsSimpleContentList(nullptr);
 
-  nsTArray<nsWeakPtr> blockedTrackingNodes;
-  blockedTrackingNodes = mBlockedTrackingNodes;
+  nsTArray<nsWeakPtr> blockedNodes;
+  blockedNodes = mBlockedNodesByClassifier;
 
-  for (unsigned long i = 0; i < blockedTrackingNodes.Length(); i++) {
-    nsWeakPtr weakNode = blockedTrackingNodes[i];
+  for (unsigned long i = 0; i < blockedNodes.Length(); i++) {
+    nsWeakPtr weakNode = blockedNodes[i];
     nsCOMPtr<nsIContent> node = do_QueryReferent(weakNode);
     // Consider only nodes to which we have managed to get strong references.
     // Coping with nullptrs since it's expected for nodes to disappear when
@@ -7479,6 +7498,10 @@ void Document::Destroy() {
 
   mIsGoingAway = true;
 
+  if (mDocumentL10n) {
+    mDocumentL10n->Destroy();
+  }
+
   ScriptLoader()->Destroy();
   SetScriptGlobalObject(nullptr);
   RemovedFromDocShell();
@@ -7500,6 +7523,10 @@ void Document::Destroy() {
   mInUnlinkOrDeletion = oldVal;
 
   mLayoutHistoryState = nullptr;
+
+  if (mOriginalDocument) {
+    mOriginalDocument->mLatestStaticClone = nullptr;
+  }
 
   // Shut down our external resource map.  We might not need this for
   // leak-fixing if we fix nsDocumentViewer to do cycle-collection, but
@@ -8104,14 +8131,52 @@ nsresult Document::CloneDocHelper(Document* clone) const {
   return NS_OK;
 }
 
+static bool SetLoadingInSubDocument(Document* aDocument, void* aData) {
+  aDocument->SetAncestorLoading(*(static_cast<bool*>(aData)));
+  return true;
+}
+
+void Document::SetAncestorLoading(bool aAncestorIsLoading) {
+  NotifyLoading(mAncestorIsLoading, aAncestorIsLoading, mReadyState,
+                mReadyState);
+  mAncestorIsLoading = aAncestorIsLoading;
+}
+
+void Document::NotifyLoading(const bool& aCurrentParentIsLoading,
+                             bool aNewParentIsLoading,
+                             const ReadyState& aCurrentState,
+                             ReadyState aNewState) {
+  // Mirror the top-level loading state down to all subdocuments
+  bool was_loading = aCurrentParentIsLoading ||
+                     aCurrentState == READYSTATE_LOADING ||
+                     aCurrentState == READYSTATE_INTERACTIVE;
+  bool is_loading = aNewParentIsLoading || aNewState == READYSTATE_LOADING ||
+                    aNewState == READYSTATE_INTERACTIVE;  // new value for state
+  bool set_load_state = was_loading != is_loading;
+
+  if (set_load_state && StaticPrefs::dom_timeout_defer_during_load()) {
+    nsPIDOMWindowInner* inner = GetInnerWindow();
+    if (inner) {
+      inner->SetActiveLoadingState(is_loading);
+    }
+    EnumerateSubDocuments(SetLoadingInSubDocument, &is_loading);
+  }
+}
+
 void Document::SetReadyStateInternal(ReadyState rs) {
-  mReadyState = rs;
   if (rs == READYSTATE_UNINITIALIZED) {
     // Transition back to uninitialized happens only to keep assertions happy
     // right before readyState transitions to something else. Make this
     // transition undetectable by Web content.
+    mReadyState = rs;
     return;
   }
+
+  if (READYSTATE_LOADING == rs) {
+    mLoadingTimeStamp = mozilla::TimeStamp::Now();
+  }
+  NotifyLoading(mAncestorIsLoading, mAncestorIsLoading, mReadyState, rs);
+  mReadyState = rs;
   if (mTiming) {
     switch (rs) {
       case READYSTATE_LOADING:
@@ -8129,9 +8194,6 @@ void Document::SetReadyStateInternal(ReadyState rs) {
     }
   }
   // At the time of loading start, we don't have timing object, record time.
-  if (READYSTATE_LOADING == rs) {
-    mLoadingTimeStamp = mozilla::TimeStamp::Now();
-  }
 
   if (READYSTATE_INTERACTIVE == rs) {
     if (nsContentUtils::IsSystemPrincipal(NodePrincipal())) {
@@ -8141,7 +8203,6 @@ void Document::SetReadyStateInternal(ReadyState rs) {
         mXULPersist->Init();
       }
     }
-    TriggerInitialDocumentTranslation();
   }
 
   RecordNavigationTiming(rs);
@@ -8777,7 +8838,8 @@ void Document::RegisterPendingLinkUpdate(Link* aLink) {
         NewRunnableMethod("Document::FlushPendingLinkUpdatesFromRunnable", this,
                           &Document::FlushPendingLinkUpdatesFromRunnable);
     // Do this work in a second in the worst case.
-    nsresult rv = NS_IdleDispatchToCurrentThread(event.forget(), 1000);
+    nsresult rv = NS_DispatchToCurrentThreadQueue(event.forget(), 1000,
+                                                  EventQueuePriority::Idle);
     if (NS_FAILED(rv)) {
       // If during shutdown posting a runnable doesn't succeed, we probably
       // don't need to update link states.
@@ -8838,8 +8900,10 @@ already_AddRefed<Document> Document::CreateStaticClone(
     if (clonedDoc) {
       if (IsStaticDocument()) {
         clonedDoc->mOriginalDocument = mOriginalDocument;
+        mOriginalDocument->mLatestStaticClone = clonedDoc;
       } else {
         clonedDoc->mOriginalDocument = this;
+        mLatestStaticClone = clonedDoc;
       }
 
       clonedDoc->mOriginalDocument->mStaticCloneCount++;
@@ -10799,7 +10863,7 @@ bool Document::SetPointerLock(Element* aElement, StyleCursorKind aCursorStyle) {
 
   // Hide the cursor and set pointer lock for future mouse events
   RefPtr<EventStateManager> esm = presContext->EventStateManager();
-  esm->SetCursor(aCursorStyle, nullptr, false, 0.0f, 0.0f, widget, true);
+  esm->SetCursor(aCursorStyle, nullptr, Nothing(), widget, true);
   EventStateManager::SetPointerLock(widget, aElement);
 
   return true;
@@ -11554,33 +11618,7 @@ nsAutoSyncOperation::~nsAutoSyncOperation() {
   }
 }
 
-gfxUserFontSet* Document::GetUserFontSet(bool aFlushUserFontSet) {
-  // We want to initialize the user font set lazily the first time the
-  // user asks for it, rather than building it too early and forcing
-  // rule cascade creation.  Thus we try to enforce the invariant that
-  // we *never* build the user font set until the first call to
-  // GetUserFontSet.  However, once it's been requested, we can't wait
-  // for somebody to call GetUserFontSet in order to rebuild it (see
-  // comments below in MarkUserFontSetDirty for why).
-#ifdef DEBUG
-  bool userFontSetGottenBefore = mGetUserFontSetCalled;
-#endif
-  // Set mGetUserFontSetCalled up front, so that FlushUserFontSet will actually
-  // flush.
-  mGetUserFontSetCalled = true;
-  if (mFontFaceSetDirty && aFlushUserFontSet) {
-    // If this assertion fails, and there have actually been changes to
-    // @font-face rules, then we will call StyleChangeReflow in
-    // FlushUserFontSet.  If we're in the middle of reflow,
-    // that's a bad thing to do, and the caller was responsible for
-    // flushing first.  If we're not (e.g., in frame construction), it's
-    // ok.
-    NS_ASSERTION(!userFontSetGottenBefore || !GetShell() ||
-                     !GetShell()->IsReflowLocked(),
-                 "FlushUserFontSet should have been called first");
-    FlushUserFontSet();
-  }
-
+gfxUserFontSet* Document::GetUserFontSet() {
   if (!mFontFaceSet) {
     return nullptr;
   }
@@ -11589,12 +11627,6 @@ gfxUserFontSet* Document::GetUserFontSet(bool aFlushUserFontSet) {
 }
 
 void Document::FlushUserFontSet() {
-  if (!mGetUserFontSetCalled) {
-    return;  // No one cares about this font set yet, but we want to be careful
-             // to not unset our mFontFaceSetDirty bit, so when someone really
-             // does we'll create it.
-  }
-
   if (!mFontFaceSetDirty) {
     return;
   }
@@ -11631,22 +11663,20 @@ void Document::FlushUserFontSet() {
 }
 
 void Document::MarkUserFontSetDirty() {
-  if (!mGetUserFontSetCalled) {
-    // We want to lazily build the user font set the first time it's
-    // requested (so we don't force creation of rule cascades too
-    // early), so don't do anything now.
+  if (mFontFaceSetDirty) {
     return;
   }
-
   mFontFaceSetDirty = true;
+  if (nsIPresShell* shell = GetShell()) {
+    shell->EnsureStyleFlush();
+  }
 }
 
 FontFaceSet* Document::Fonts() {
   if (!mFontFaceSet) {
     nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(GetScopeObject());
     mFontFaceSet = new FontFaceSet(window, this);
-    GetUserFontSet();  // this will cause the user font set to be
-                       // created/updated
+    FlushUserFontSet();
   }
   return mFontFaceSet;
 }
@@ -11965,7 +11995,8 @@ void Document::MaybeStoreUserInteractionAsPermission() {
   }
 
   nsCOMPtr<nsIRunnable> task = new UserIntractionTimer(this);
-  nsresult rv = NS_IdleDispatchToCurrentThread(task.forget(), 2500);
+  nsresult rv = NS_DispatchToCurrentThreadQueue(task.forget(), 2500,
+                                                EventQueuePriority::Idle);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }

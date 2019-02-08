@@ -12,8 +12,8 @@
 
 var EXPORTED_SYMBOLS = ["EnsureFxAccountsWebChannel"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/FxAccountsCommon.js");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {ON_PROFILE_CHANGE_NOTIFICATION, PREF_LAST_FXA_USER, WEBCHANNEL_ID, log, logPII} = ChromeUtils.import("resource://gre/modules/FxAccountsCommon.js");
 
 ChromeUtils.defineModuleGetter(this, "Services",
                                "resource://gre/modules/Services.jsm");
@@ -282,7 +282,6 @@ this.FxAccountsWebChannelHelpers.prototype = {
    * @param accountData the user's account data and credentials
    */
   login(accountData) {
-
     // We don't act on customizeSync anymore, it used to open a dialog inside
     // the browser to selecte the engines to sync but we do it on the web now.
     delete accountData.customizeSync;

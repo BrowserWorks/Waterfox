@@ -93,6 +93,7 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(AudioContext)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(AudioContext)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mDestination)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mListener)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mWorklet)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPromiseGripArray)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPendingResumePromises)
   if (!tmp->mIsStarted) {
@@ -111,6 +112,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(AudioContext,
                                                   DOMEventTargetHelper)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDestination)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mListener)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWorklet)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPromiseGripArray)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPendingResumePromises)
   if (!tmp->mIsStarted) {
@@ -545,7 +547,8 @@ already_AddRefed<Promise> AudioContext::DecodeAudioData(
   jsapi.Init();
   JSContext* cx = jsapi.cx();
 
-  JS::Rooted<JSObject*> obj(cx, js::CheckedUnwrap(aBuffer.Obj()));
+  // CheckedUnwrapStatic is OK, since we know we have an ArrayBuffer.
+  JS::Rooted<JSObject*> obj(cx, js::CheckedUnwrapStatic(aBuffer.Obj()));
   if (!obj) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return nullptr;
@@ -882,9 +885,20 @@ void AudioContext::OnStateChanged(void* aPromise, AudioContextState aNewState) {
 nsTArray<MediaStream*> AudioContext::GetAllStreams() const {
   nsTArray<MediaStream*> streams;
   for (auto iter = mAllNodes.ConstIter(); !iter.Done(); iter.Next()) {
-    MediaStream* s = iter.Get()->GetKey()->GetStream();
+    AudioNode* node = iter.Get()->GetKey();
+    MediaStream* s = node->GetStream();
     if (s) {
       streams.AppendElement(s);
+    }
+    // Add the streams for the AudioParam that have an AudioNode input.
+    const nsTArray<RefPtr<AudioParam>>& audioParams = node->OutputParams();
+    if (!audioParams.IsEmpty()) {
+      for (auto& param : audioParams) {
+        s = param->GetStream();
+        if (s) {
+          streams.AppendElement(s);
+        }
+      }
     }
   }
   return streams;
@@ -916,7 +930,8 @@ already_AddRefed<Promise> AudioContext::Suspend(ErrorResult& aRv) {
 void AudioContext::SuspendFromChrome() {
   // Not support suspend call for these situations.
   if (mAudioContextState == AudioContextState::Suspended || mIsOffline ||
-      (mAudioContextState == AudioContextState::Closed || mCloseCalled)) {
+      (mAudioContextState == AudioContextState::Closed || mCloseCalled) ||
+      mIsShutDown) {
     return;
   }
   SuspendInternal(nullptr);
@@ -942,7 +957,8 @@ void AudioContext::SuspendInternal(void* aPromise) {
 void AudioContext::ResumeFromChrome() {
   // Not support resume call for these situations.
   if (mAudioContextState == AudioContextState::Running || mIsOffline ||
-      (mAudioContextState == AudioContextState::Closed || mCloseCalled)) {
+      (mAudioContextState == AudioContextState::Closed || mCloseCalled) ||
+      mIsShutDown) {
     return;
   }
   ResumeInternal();

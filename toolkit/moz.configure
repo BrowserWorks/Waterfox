@@ -420,22 +420,33 @@ set_config('MOZ_FFMPEG', ffmpeg)
 set_define('MOZ_FFMPEG', ffmpeg)
 imply_option('--enable-fmp4', ffmpeg, '--enable-ffmpeg')
 
-# Libaom AV1 Video Codec Support
+# AV1 Video Codec Support
 # ==============================================================
-option('--enable-av1',
-        help='Enable libaom for av1 video support')
+option('--disable-av1',
+        help='Disable av1 video support')
 
-@depends('--enable-av1', target)
-def av1(value, target):
+@depends('--enable-av1', target, c_compiler)
+def av1(value, target, c_compiler):
     enabled = bool(value)
     if value.origin == 'default':
-        if target.os == 'WINNT' and target.cpu == 'x86':
+        if target.os == 'WINNT' and target.cpu == 'x86' and \
+                c_compiler and c_compiler.type == 'msvc':
             enabled = False
         else:
             enabled = True
     if enabled:
         return True
 
+@depends(target, nasm_version, when=av1 & compile_environment)
+def dav1d_asm(target, nasm_version):
+    if target.os == 'GNU' and target.kernel == 'Linux' and target.cpu in ('x86', 'x86_64'):
+        if nasm_version < '2.13':
+            die('nasm 2.13 or greater is required for AV1 support. '
+                'Either install nasm or add --disable-av1 to your configure options.')
+        return True
+
+
+set_config('MOZ_DAV1D_ASM', dav1d_asm)
 set_config('MOZ_AV1', av1)
 set_define('MOZ_AV1', av1)
 
@@ -1077,10 +1088,13 @@ with only_when('--enable-compile-environment'):
 def idl_roots(build_env):
     return namespace(ipdl_root=os.path.join(build_env.topobjdir, 'ipc', 'ipdl'),
                      webidl_root=os.path.join(build_env.topobjdir,
-                                              'dom', 'bindings'))
+                                              'dom', 'bindings'),
+                     xpcom_root=os.path.join(build_env.topobjdir,
+                                             'xpcom', 'components'))
 
 set_config('WEBIDL_ROOT', idl_roots.webidl_root)
 set_config('IPDL_ROOT', idl_roots.ipdl_root)
+set_config('XPCOM_ROOT', idl_roots.xpcom_root)
 
 # Proxy bypass protection
 # ==============================================================
@@ -1123,10 +1137,10 @@ midl = check_prog('MIDL', midl_names, when=check_for_midl, allow_missing=True,
                   paths=sdk_bin_path)
 
 
-@depends(c_compiler, target, vc_compiler_path,
+@depends(c_compiler, target, toolchain_search_path,
          when=depends(midl, target)(lambda m, t: m and t.kernel == 'WINNT'))
 @imports(_from='mozbuild.shellutil', _import='quote')
-def midl_flags(c_compiler, target, vc_compiler_path):
+def midl_flags(c_compiler, target, toolchain_search_path):
     if c_compiler and c_compiler.type in ('msvc', 'clang-cl'):
         env = {
             'x86': 'win32',
@@ -1136,13 +1150,14 @@ def midl_flags(c_compiler, target, vc_compiler_path):
         flags = ['-env', env]
         if c_compiler.type == 'msvc':
             flags += ['-cpp_cmd', c_compiler.compiler]
-            if c_compiler.flags:
-                flags += ['-cpp_opt', quote(' '.join(list(c_compiler.flags) + ['-E']))]
         else:
             # Ideally, we'd use the same flags setup as for msvc, but clang-cl
             # currently doesn't work as a preprocessor for midl, so we need to
             # find cl. https://bugs.llvm.org/show_bug.cgi?id=40140
-            flags += ['-cpp_cmd', find_program('cl', paths=vc_compiler_path)]
+            cl = find_program('cl', paths=toolchain_search_path)
+            if not cl:
+                die('Could not find Microsoft Visual C/C++ compiler for MIDL')
+            flags += ['-cpp_cmd', cl]
         return flags
 
     # mingw
@@ -1341,7 +1356,7 @@ with only_when(compile_environment):
            help='Use system libvpx (located with pkgconfig)')
 
     with only_when('--with-system-libvpx'):
-        vpx = pkg_check_modules('MOZ_LIBVPX', 'vpx >= 1.5.0')
+        vpx = pkg_check_modules('MOZ_LIBVPX', 'vpx >= 1.7.0')
 
         check_header('vpx/vpx_decoder.h', flags=vpx.cflags, onerror=lambda: die(
             "Couldn't find vpx/vpx_decoder.h, which is required to build "

@@ -6,10 +6,10 @@
 
 var EXPORTED_SYMBOLS = [ "GoogleTranslator" ];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Http.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {PromiseUtils} = ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
+const {httpRequest} = ChromeUtils.import("resource://gre/modules/Http.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyGlobalGetters(this, ["DOMParser"]);
 
 // The maximum amount of net data allowed per request on Google's API.
@@ -213,7 +213,6 @@ this.GoogleTranslator.prototype = {
 
       if (newCurSize > MAX_REQUEST_DATA ||
           newChunks > MAX_REQUEST_CHUNKS) {
-
         // If we've reached the API limits, let's stop accumulating data
         // for this request and return. We return information useful for
         // the caller to pass back on the next call, so that the function

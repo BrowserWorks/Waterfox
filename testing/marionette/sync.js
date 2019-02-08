@@ -4,17 +4,17 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const {
   error,
   stack,
   TimeoutError,
-} = ChromeUtils.import("chrome://marionette/content/error.js", {});
-const {truncate} = ChromeUtils.import("chrome://marionette/content/format.js", {});
-const {Log} = ChromeUtils.import("chrome://marionette/content/log.js", {});
+} = ChromeUtils.import("chrome://marionette/content/error.js");
+const {truncate} = ChromeUtils.import("chrome://marionette/content/format.js");
+const {Log} = ChromeUtils.import("chrome://marionette/content/log.js");
 
 XPCOMUtils.defineLazyGetter(this, "log", Log.get);
 
@@ -160,7 +160,6 @@ function PollPromise(func, {timeout = null, interval = 10} = {}) {
     evalFn();
 
     timer.init(evalFn, interval, TYPE_REPEATING_SLACK);
-
   }).then(res => {
     timer.cancel();
     return res;
@@ -233,7 +232,6 @@ function TimedPromise(fn,
     } catch (e) {
       reject(e);
     }
-
   }).then(res => {
     timer.cancel();
     return res;

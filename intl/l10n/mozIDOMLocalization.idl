@@ -24,6 +24,13 @@ interface mozIDOMLocalization : nsISupports
   Promise translateElements(in Array<Element> aElements);
 
   void connectRoot(in Element aElement);
+  void disconnectRoot(in Element aElement);
   Promise translateRoots();
   readonly attribute Promise ready;
+};
+
+[scriptable,uuid(96532d26-2422-11e9-a1ce-9bb586acd241)]
+interface mozIDOMLocalizationJSM : nsISupports
+{
+  mozIDOMLocalization getDOMLocalization();
 };

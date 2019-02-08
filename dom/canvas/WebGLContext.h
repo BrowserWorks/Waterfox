@@ -1047,7 +1047,18 @@ class WebGLContext : public nsICanvasRenderingContextInternal,
   realGLboolean mScissorTestEnabled;
   realGLboolean mDepthTestEnabled = 0;
   realGLboolean mStencilTestEnabled;
+  realGLboolean mBlendEnabled = 0;
   GLenum mGenerateMipmapHint = 0;
+
+  struct ScissorRect final {
+    GLint x;
+    GLint y;
+    GLsizei w;
+    GLsizei h;
+
+    void Apply(gl::GLContext&) const;
+  };
+  ScissorRect mScissorRect = {};
 
   bool ValidateCapabilityEnum(GLenum cap);
   realGLboolean* GetStateTrackingSlot(GLenum cap);
@@ -1490,7 +1501,8 @@ class WebGLContext : public nsICanvasRenderingContextInternal,
   uint32_t mGLMaxVertexAttribs = 0;
   uint32_t mGLMaxFragmentUniformVectors = 0;
   uint32_t mGLMaxVertexUniformVectors = 0;
-  uint32_t mGLMaxVaryingVectors = 0;
+  uint32_t mGLMaxVertexOutputVectors = 0;
+  uint32_t mGLMaxFragmentInputVectors = 0;
 
   uint32_t mGLMaxTransformFeedbackSeparateAttribs = 0;
   uint32_t mGLMaxUniformBufferBindings = 0;
@@ -1502,12 +1514,17 @@ class WebGLContext : public nsICanvasRenderingContextInternal,
   uint32_t mGLMaxColorAttachments = 0;
   uint32_t mGLMaxDrawBuffers = 0;
 
+  // ES3:
+  uint32_t mGLMinProgramTexelOffset = 0;
+  uint32_t mGLMaxProgramTexelOffset = 0;
+
   uint32_t mGLMaxViewportDims[2];
 
  public:
   GLenum LastColorAttachmentEnum() const {
     return LOCAL_GL_COLOR_ATTACHMENT0 + mGLMaxColorAttachments - 1;
   }
+  const auto& GLMaxDrawBuffers() const { return mGLMaxDrawBuffers; }
 
   const decltype(mOptions)& Options() const { return mOptions; }
 
@@ -1701,8 +1718,8 @@ class WebGLContext : public nsICanvasRenderingContextInternal,
 
   bool ValidateArrayBufferView(const dom::ArrayBufferView& view,
                                GLuint elemOffset, GLuint elemCountOverride,
-                               uint8_t** const out_bytes,
-                               size_t* const out_byteLen);
+                               GLenum errorVal, uint8_t** const out_bytes,
+                               size_t* const out_byteLen) const;
 
  protected:
   ////

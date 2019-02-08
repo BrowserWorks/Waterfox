@@ -46,6 +46,7 @@ include protocol PVideoDecoderManager;
 include protocol PRemoteDecoderManager;
 include protocol PProfiler;
 include protocol PScriptCache;
+include protocol PSessionStorageObserver;
 include DOMTypes;
 include JavaScriptTypes;
 include IPCBlob;
@@ -227,6 +228,12 @@ struct BlobURLRegistrationData
   bool revoked;
 };
 
+struct JSWindowActorInfo
+{
+  nsString name;
+  nsCString url;
+};
+
 struct GMPAPITags
 {
     nsCString api;
@@ -346,6 +353,7 @@ nested(upto inside_cpow) sync protocol PContent
     manages PURLClassifierLocal;
     manages PScriptCache;
     manages PLoginReputation;
+    manages PSessionStorageObserver;
 
 both:
     // Depending on exactly how the new browser is being created, it might be
@@ -528,6 +536,11 @@ child:
      */
     async InitBlobURLs(BlobURLRegistrationData[] registrations);
 
+    /**
+     * Send JSWindowActorInfos to child process.
+     */
+    async InitJSWindowActorInfos(JSWindowActorInfo[] aInfos);
+
     async SetXPCOMProcessAttributes(XPCOMInitData xpcomInit,
                                     StructuredCloneData initialData,
                                     LookAndFeelInt[] lookAndFeelIntCache,
@@ -605,12 +618,6 @@ child:
      * Send a `pushsubscriptionchange` event to a service worker in the child.
      */
     async PushSubscriptionChange(nsCString scope, Principal principal);
-
-    /**
-     * Send a Push error message to all service worker clients in the child.
-     */
-    async PushError(nsCString scope, Principal principal, nsString message,
-                    uint32_t flags);
 
     /**
      * Windows specific: associate this content process with the browsers
@@ -835,6 +842,8 @@ parent:
     async PURLClassifierLocal(URIParams uri, IPCURLClassifierFeature[] features);
 
     async PLoginReputation(URIParams formURI);
+
+    async PSessionStorageObserver();
 
     // Services remoting
 
@@ -1262,6 +1271,13 @@ both:
      */
     async NotifyPushSubscriptionModifiedObservers(nsCString scope,
                                                   Principal principal);
+
+    /**
+     * Send a Push error message to all service worker clients in the parent or
+     * child.
+     */
+    async PushError(nsCString scope, Principal principal, nsString message,
+                    uint32_t flags);
 
     async WindowClose(BrowsingContextId aContextId,
                       bool aTrustedCaller);

@@ -43,7 +43,7 @@ const FALLBACK_CHARSET_LIST = "intl.fallbackCharsetList.ISO-8859-1";
 
 const VARIABLES_VIEW_URL = "chrome://devtools/content/shared/widgets/VariablesView.xul";
 
-const {require, loader} = ChromeUtils.import("resource://devtools/shared/Loader.jsm", {});
+const {require, loader} = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
 
 const Editor = require("devtools/client/sourceeditor/editor");
 const TargetFactory = require("devtools/client/framework/target").TargetFactory;
@@ -559,7 +559,7 @@ var Scratchpad = {
     const target = await TargetFactory.forTab(this.gBrowser.selectedTab);
     await target.attach();
     const onNavigate = target.once("navigate");
-    target.activeTab.reload();
+    target.reload();
     await onNavigate;
     await this.run();
   },
@@ -2017,11 +2017,8 @@ ScratchpadWindow.prototype = extend(ScratchpadTab.prototype, {
 
     const client = new DebuggerClient(DebuggerServer.connectPipe());
     await client.connect();
-    const front = await client.mainRoot.getMainProcess();
-    const target = await TargetFactory.forRemoteTab({
-      activeTab: front,
-      client,
-    });
+    const target = await client.mainRoot.getMainProcess();
+    await target.attach();
     return target;
   },
 });

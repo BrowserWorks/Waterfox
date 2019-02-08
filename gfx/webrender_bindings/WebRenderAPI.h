@@ -317,7 +317,8 @@ struct MOZ_STACK_CLASS StackingContextParams : public WrStackingContextParams {
                                 nullptr,
                                 nullptr,
                                 wr::TransformStyle::Flat,
-                                wr::ReferenceFrameKind::Transform,
+                                wr::WrReferenceFrameKind::Transform,
+                                nullptr,
                                 /* is_backface_visible = */ true,
                                 /* cache_tiles = */ false,
                                 wr::MixBlendMode::Normal} {}
@@ -332,7 +333,13 @@ struct MOZ_STACK_CLASS StackingContextParams : public WrStackingContextParams {
   const gfx::Matrix4x4* mBoundTransform = nullptr;
   const gfx::Matrix4x4* mTransformPtr = nullptr;
   Maybe<nsDisplayTransform*> mDeferredTransformItem;
+  // Whether the stacking context is possibly animated. This alters how coordinates
+  // are transformed/snapped to invalidate less when transforms change frequently.
   bool mAnimated = false;
+  // Whether items should be rasterized in a local space that is (mostly) invariant
+  // to transforms, i.e. disabling subpixel AA and screen space pixel snapping on
+  // text runs that would only make sense in screen space.
+  bool mRasterizeLocally = false;
 };
 
 /// This is a simple C++ wrapper around WrState defined in the rust bindings.
@@ -361,8 +368,7 @@ class DisplayListBuilder {
       const wr::RasterSpace& aRasterSpace);
   void PopStackingContext(bool aIsReferenceFrame);
 
-  wr::WrClipChainId DefineClipChain(const Maybe<wr::WrClipChainId>& aParent,
-                                    const nsTArray<wr::WrClipId>& aClips);
+  wr::WrClipChainId DefineClipChain(const nsTArray<wr::WrClipId>& aClips);
 
   wr::WrClipId DefineClip(
       const Maybe<wr::WrSpaceAndClip>& aParent, const wr::LayoutRect& aClipRect,

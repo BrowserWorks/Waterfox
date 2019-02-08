@@ -1124,7 +1124,7 @@ describe("Top Sites Feed", () => {
   describe("improvesearch.noDefaultSearchTile experiment", () => {
     const NO_DEFAULT_SEARCH_TILE_PREF = "improvesearch.noDefaultSearchTile";
     beforeEach(() => {
-      sandbox.stub(global.Services.search, "defaultEngine").value({identifier: "google", searchForm: "google.com"});
+      global.Services.search.getDefault = async () => ({identifier: "google", searchForm: "google.com"});
       feed.store.state.Prefs.values[NO_DEFAULT_SEARCH_TILE_PREF] = true;
     });
     it("should filter out alexa top 5 search from the default sites", async () => {
@@ -1187,7 +1187,7 @@ describe("Top Sites Feed", () => {
         {wrappedJSObject: {_internalAliases: ["@google"]}},
         {wrappedJSObject: {_internalAliases: ["@amazon"]}},
       ];
-      global.Services.search.getDefaultEngines = () => searchEngines;
+      global.Services.search.getDefaultEngines = async () => searchEngines;
       fakeNewTabUtils.pinnedLinks.pin = sinon.stub().callsFake((site, index) => {
         fakeNewTabUtils.pinnedLinks.links[index] = site;
       });
@@ -1343,6 +1343,12 @@ describe("Top Sites Feed", () => {
         assert.deepEqual(fakeNewTabUtils.pinnedLinks.links[6], {url: "https://amazon.com", searchTopSite: true, label: "@amazon"});
       });
 
+      it("should not pin shortcuts for the current default search engine", async () => {
+        feed._currentSearchHostname = "google";
+        await feed._maybeInsertSearchShortcuts(fakeNewTabUtils.pinnedLinks.links);
+        assert.deepEqual(fakeNewTabUtils.pinnedLinks.links[3], {url: "https://amazon.com", searchTopSite: true, label: "@amazon"});
+      });
+
       it("should only pin the first shortcut if there's only one available slot", async () => {
         fakeNewTabUtils.pinnedLinks.links[3] = {url: ""};
         await feed._maybeInsertSearchShortcuts(fakeNewTabUtils.pinnedLinks.links);
@@ -1361,7 +1367,7 @@ describe("Top Sites Feed", () => {
 
       it("should not pin a shortcut if the corresponding search engine is not available", async () => {
         // Make Amazon search engine unavailable
-        global.Services.search.getDefaultEngines = () => [{wrappedJSObject: {_internalAliases: ["@google"]}}];
+        global.Services.search.getDefaultEngines = async () => [{wrappedJSObject: {_internalAliases: ["@google"]}}];
         fakeNewTabUtils.pinnedLinks.links.fill(null);
         await feed._maybeInsertSearchShortcuts(fakeNewTabUtils.pinnedLinks.links);
         assert.notOk(fakeNewTabUtils.pinnedLinks.links.find(s => s && s.url === "https://amazon.com"));

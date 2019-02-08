@@ -6,8 +6,8 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {FileUtils} = ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 // The xpcshell test harness sets PYTHON so we can read it here.
 var gEnv = Cc["@mozilla.org/process/environment;1"]
@@ -91,7 +91,6 @@ function test(aPrefix, aArgs) {
     let rv = runProcess(new FileUtils.File("/usr/bin/diff"),
                         ["-u", expectedFile.path, actualFile.path]);
     success = rv == 0;
-
   } catch (e) {
     let expectedData = readFile(expectedFile);
     let actualData   = readFile(actualFile);

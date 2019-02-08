@@ -1,10 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-ChromeUtils.import("resource://gre/modules/Log.jsm");
-ChromeUtils.import("resource://services-sync/constants.js");
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/util.js");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
 
 function login_handling(handler) {
   return function(request, response) {
@@ -95,7 +92,6 @@ add_task(async function test_verifyLogin() {
     Assert.equal(false, (await Service.verifyLogin()));
     Assert.equal(Service.status.service, LOGIN_FAILED);
     Assert.equal(Service.status.login, LOGIN_FAILED_NETWORK_ERROR);
-
   } finally {
     Svc.Prefs.resetBranch("");
     server.stop(do_test_finished);

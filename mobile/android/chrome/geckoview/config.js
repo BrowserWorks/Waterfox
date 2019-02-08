@@ -4,7 +4,7 @@
 "use strict";
 
 var Cm = Components.manager;
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const VKB_ENTER_KEY = 13; // User press of VKB enter key
 const INITIAL_PAGE_DELAY = 500; // Initial pause on program start for scroll alignment
@@ -537,7 +537,6 @@ Pref.prototype = {
       default:
         return Services.prefs.getCharPref(this.name);
     }
-
   },
   set value(aPrefValue) {
     switch (this.type) {
@@ -660,7 +659,6 @@ Pref.prototype = {
 
   // Initialize list item object values
   _valueSetup: function AC_valueSetup() {
-
     this.li.setAttribute("type", this.type);
     this.li.setAttribute("value", this.value);
 

@@ -958,6 +958,11 @@ FBStatus WebGLFramebuffer::CheckFramebufferStatus() const {
     mCompletenessInfo.ResetInvalidators({});
     mCompletenessInfo.AddInvalidator(*this);
 
+    const auto fnIsFloat32 = [](const webgl::FormatInfo& info) {
+      if (info.componentType != webgl::ComponentType::Float) return false;
+      return info.r == 32;
+    };
+
     for (const auto& cur : mAttachments) {
       const auto& tex = cur->Texture();
       const auto& rb = cur->Renderbuffer();
@@ -973,6 +978,7 @@ FBStatus WebGLFramebuffer::CheckFramebufferStatus() const {
       MOZ_ASSERT(imageInfo);
       info.width = std::min(info.width, imageInfo->mWidth);
       info.height = std::min(info.height, imageInfo->mHeight);
+      info.hasFloat32 |= fnIsFloat32(*imageInfo->mFormat->format);
     }
     mCompletenessInfo = Some(std::move(info));
     return LOCAL_GL_FRAMEBUFFER_COMPLETE;
@@ -1597,6 +1603,36 @@ static void GetBackbufferFormats(const WebGLContext* webgl,
   const ScopedDrawCallWrapper wrapper(*webgl);
   gl->fBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1,
                        mask, filter);
+
+  // -
+  // glBlitFramebuffer ignores glColorMask!
+
+  if (!webgl->mBoundDrawFramebuffer && webgl->mNeedsFakeNoAlpha) {
+    if (!webgl->mScissorTestEnabled) {
+      gl->fEnable(LOCAL_GL_SCISSOR_TEST);
+    }
+    if (webgl->mRasterizerDiscardEnabled) {
+      gl->fDisable(LOCAL_GL_RASTERIZER_DISCARD);
+    }
+    const WebGLContext::ScissorRect dstRect = {
+        std::min(dstX0, dstX1), std::min(dstY0, dstY1), abs(dstX1 - dstX0),
+        abs(dstY1 - dstY0)};
+    dstRect.Apply(*gl);
+    gl->fClearColor(0, 0, 0, 1);
+
+    webgl->DoColorMask(0x8);
+    gl->fClear(LOCAL_GL_COLOR_BUFFER_BIT);
+
+    if (!webgl->mScissorTestEnabled) {
+      gl->fDisable(LOCAL_GL_SCISSOR_TEST);
+    }
+    if (webgl->mRasterizerDiscardEnabled) {
+      gl->fEnable(LOCAL_GL_RASTERIZER_DISCARD);
+    }
+    webgl->mScissorRect.Apply(*gl);
+    gl->fClearColor(webgl->mColorClearValue[0], webgl->mColorClearValue[1],
+                    webgl->mColorClearValue[2], webgl->mColorClearValue[3]);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

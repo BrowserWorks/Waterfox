@@ -8,8 +8,8 @@ const { FrontClassWithSpec, registerFront } = require("devtools/shared/protocol"
 loader.lazyRequireGetter(this, "BrowsingContextTargetFront", "devtools/shared/fronts/targets/browsing-context", true);
 
 class AddonTargetFront extends FrontClassWithSpec(addonTargetSpec) {
-  constructor(client, form) {
-    super(client, form);
+  constructor(client) {
+    super(client);
 
     this.client = client;
 
@@ -66,7 +66,8 @@ class AddonTargetFront extends FrontClassWithSpec(addonTargetSpec) {
       // To retrieve the target actor instance, we call its "connect" method, (which
       // fetches the target actor targetForm from a WebExtensionTargetActor instance).
       const { form } = await super.connect();
-      const front = new BrowsingContextTargetFront(this.client, form);
+      const front = new BrowsingContextTargetFront(this.client, { actor: form.actor });
+      front.form(form);
       this.manage(front);
       return front;
     }
@@ -74,11 +75,17 @@ class AddonTargetFront extends FrontClassWithSpec(addonTargetSpec) {
   }
 
   async attach() {
-    const response = await super.attach();
+    if (this._attach) {
+      return this._attach;
+    }
+    this._attach = (async () => {
+      const response = await super.attach();
 
-    this.threadActor = response.threadActor;
+      this.threadActor = response.threadActor;
 
-    return response;
+      return this.attachConsole();
+    })();
+    return this._attach;
   }
 
   reconfigure() {

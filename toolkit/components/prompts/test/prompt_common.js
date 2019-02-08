@@ -24,19 +24,31 @@ function onloadPromiseFor(id) {
   });
 }
 
-function handlePrompt(state, action) {
+/**
+ * Take an action on the next prompt that appears without checking the state in advance.
+ * This is useful when the action doesn't depend on which prompt is shown and you
+ * are expecting multiple prompts at once in an indeterminate order.
+ * If you know the state of the prompt you expect you should use `handlePrompt` instead.
+ * @param {object} action defining how to handle the prompt
+ * @returns {Promise} resolving with the prompt state.
+*/
+function handlePromptWithoutChecks(action) {
   return new Promise(resolve => {
     gChromeScript.addMessageListener("promptHandled", function handled(msg) {
       gChromeScript.removeMessageListener("promptHandled", handled);
-      checkPromptState(msg.promptState, state);
-      resolve(true);
+      resolve(msg.promptState);
     });
     gChromeScript.sendAsyncMessage("handlePrompt", { action, isTabModal});
   });
 }
 
+async function handlePrompt(state, action) {
+  let actualState = await handlePromptWithoutChecks(action);
+  checkPromptState(actualState, state);
+}
+
 function checkPromptState(promptState, expectedState) {
-    info(`checkPromptState: ${expectedState.msg}`);
+    info(`checkPromptState: Expected: ${expectedState.msg}`);
     // XXX check title? OS X has title in content
     is(promptState.msg, expectedState.msg, "Checking expected message");
     if (isOSX && !isTabModal)
@@ -49,7 +61,7 @@ function checkPromptState(promptState, expectedState) {
     is(promptState.checkMsg, expectedState.checkMsg, "Checking checkbox label");
     is(promptState.checked, expectedState.checked, "Checking checkbox checked");
     if (!isTabModal)
-      is(promptState.iconClass, "spaced " + expectedState.iconClass, "Checking expected icon CSS class");
+      is(promptState.iconClass, expectedState.iconClass, "Checking expected icon CSS class");
     is(promptState.textValue, expectedState.textValue, "Checking textbox value");
     is(promptState.passValue, expectedState.passValue, "Checking passbox value");
 
@@ -77,6 +89,19 @@ function checkPromptState(promptState, expectedState) {
         is(promptState.focused, "infoBody", "buttons don't focus on OS X, but infoBody does instead");
     } else {
         is(promptState.focused, expectedState.focused, "Checking focused element");
+    }
+
+    if (expectedState.hasOwnProperty("chrome")) {
+        is(promptState.chrome, expectedState.chrome, "Dialog should be opened as chrome");
+    }
+    if (expectedState.hasOwnProperty("dialog")) {
+        is(promptState.dialog, expectedState.dialog, "Dialog should be opened as a dialog");
+    }
+    if (expectedState.hasOwnProperty("chromeDependent")) {
+        is(promptState.chromeDependent, expectedState.chromeDependent, "Dialog should be opened as dependent");
+    }
+    if (expectedState.hasOwnProperty("isWindowModal")) {
+        is(promptState.isWindowModal, expectedState.isWindowModal, "Dialog should be modal");
     }
 }
 

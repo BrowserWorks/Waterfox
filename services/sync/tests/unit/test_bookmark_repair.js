@@ -3,15 +3,10 @@
 
 // Tests the bookmark repair requestor and responder end-to-end (ie, without
 // many mocks)
-ChromeUtils.import("resource://gre/modules/Log.jsm");
-ChromeUtils.import("resource://gre/modules/osfile.jsm");
-ChromeUtils.import("resource://gre/modules/PlacesSyncUtils.jsm");
-ChromeUtils.import("resource://services-sync/bookmark_repair.js");
-ChromeUtils.import("resource://services-sync/constants.js");
-ChromeUtils.import("resource://services-sync/doctor.js");
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/engines/clients.js");
-ChromeUtils.import("resource://services-sync/engines/bookmarks.js");
+const {BookmarkRepairRequestor} = ChromeUtils.import("resource://services-sync/bookmark_repair.js");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
+const {ClientEngine} = ChromeUtils.import("resource://services-sync/engines/clients.js");
+const {BufferedBookmarksEngine} = ChromeUtils.import("resource://services-sync/engines/bookmarks.js");
 
 const BOOKMARK_REPAIR_STATE_PREFS = [
   "client.GUID",
@@ -97,7 +92,6 @@ add_task(async function test_bookmark_repair_integration() {
   let initialID = Service.clientsEngine.localID;
   let remoteID = Utils.makeGUID();
   try {
-
     _("Syncing to initialize crypto etc.");
     await Service.sync();
 
@@ -362,7 +356,6 @@ add_task(async function test_repair_client_missing() {
 
   let remoteID = Utils.makeGUID();
   try {
-
     _("Syncing to initialize crypto etc.");
     await Service.sync();
 
@@ -438,7 +431,6 @@ add_task(async function test_repair_server_missing() {
 
   let remoteID = Utils.makeGUID();
   try {
-
     _("Syncing to initialize crypto etc.");
     await Service.sync();
 
@@ -500,7 +492,6 @@ add_task(async function test_repair_server_deleted() {
 
   let remoteID = Utils.makeGUID();
   try {
-
     _("Syncing to initialize crypto etc.");
     await Service.sync();
 

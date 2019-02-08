@@ -4,8 +4,8 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 ChromeUtils.defineModuleGetter(this, "NetUtil",
                                "resource://gre/modules/NetUtil.jsm");
@@ -49,12 +49,8 @@ MainProcessSingleton.prototype = {
       return;
     }
 
-    Services.search.init(function(status) {
-      if (status != Cr.NS_OK)
-        return;
-
-      Services.search.addEngine(engineURL.spec, iconURL ? iconURL.spec : null, true);
-    });
+    Services.search.addEngine(engineURL.spec, iconURL ? iconURL.spec : null, true)
+      .catch(ex => Cu.reportError("Unable to add search engine to the search service: " + ex));
   },
 
   observe(subject, topic, data) {

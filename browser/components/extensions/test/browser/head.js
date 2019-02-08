@@ -6,6 +6,7 @@
  *          getBrowserActionWidget
  *          clickBrowserAction clickPageAction
  *          getBrowserActionPopup getPageActionPopup getPageActionButton
+ *          openBrowserActionPanel
  *          closeBrowserAction closePageAction
  *          promisePopupShown promisePopupHidden
  *          toggleBookmarksToolbar
@@ -24,6 +25,7 @@
  *          awaitEvent BrowserWindowIterator
  *          navigateTab historyPushState promiseWindowRestored
  *          getIncognitoWindow startIncognitoMonitorExtension
+ *          loadTestSubscript
  */
 
 // There are shutdown issues for which multiple rejections are left uncaught.
@@ -31,17 +33,17 @@
 //
 // NOTE: Entire directory whitelisting should be kept to a minimum. Normally you
 //       should use "expectUncaughtRejection" to flag individual failures.
-const {PromiseTestUtils} = ChromeUtils.import("resource://testing-common/PromiseTestUtils.jsm", {});
+const {PromiseTestUtils} = ChromeUtils.import("resource://testing-common/PromiseTestUtils.jsm");
 PromiseTestUtils.whitelistRejectionsGlobally(/Message manager disconnected/);
 PromiseTestUtils.whitelistRejectionsGlobally(/No matching message handler/);
 PromiseTestUtils.whitelistRejectionsGlobally(/Receiving end does not exist/);
 
-const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm", {});
-const {CustomizableUI} = ChromeUtils.import("resource:///modules/CustomizableUI.jsm", {});
-const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm", {});
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {CustomizableUI} = ChromeUtils.import("resource:///modules/CustomizableUI.jsm");
+const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "Management", () => {
-  const {Management} = ChromeUtils.import("resource://gre/modules/Extension.jsm", {});
+  const {Management} = ChromeUtils.import("resource://gre/modules/Extension.jsm", null);
   return Management;
 });
 
@@ -49,6 +51,11 @@ XPCOMUtils.defineLazyGetter(this, "Management", () => {
 if (AppConstants.ASAN) {
   SimpleTest.requestLongerTimeout(10);
 }
+
+function loadTestSubscript(filePath) {
+  Services.scriptloader.loadSubScript(new URL(filePath, gTestPath).href, this);
+}
+
 
 // We run tests under two different configurations, from browser.ini and
 // browser-remote.ini. When running from browser-remote.ini, the tests are
@@ -71,7 +78,7 @@ Services.prefs.getDefaultBranch("browser.newtabpage.activity-stream.")
 {
   // Touch the recipeParentPromise lazy getter so we don't get
   // `this._recipeManager is undefined` errors during tests.
-  const {LoginManagerParent} = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm", null);
+  const {LoginManagerParent} = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
   void LoginManagerParent.recipeParentPromise;
 }
 
@@ -263,6 +270,9 @@ function getBrowserActionPopup(extension, win = window) {
 var showBrowserAction = async function(extension, win = window) {
   let group = getBrowserActionWidget(extension);
   let widget = group.forWindow(win);
+  if (!widget.node) {
+    return;
+  }
 
   if (group.areaType == CustomizableUI.TYPE_TOOLBAR) {
     ok(!widget.overflowed, "Expect widget not to be overflowed");
@@ -286,6 +296,12 @@ function closeBrowserAction(extension, win = window) {
   CustomizableUI.hidePanelForNode(node);
 
   return Promise.resolve();
+}
+
+function openBrowserActionPanel(extension, win = window, awaitLoad = false) {
+  clickBrowserAction(extension, win);
+
+  return awaitExtensionPanel(extension, win, awaitLoad);
 }
 
 async function toggleBookmarksToolbar(visible = true) {
@@ -326,11 +342,11 @@ async function openContextMenuInFrame(frameSelector) {
   return contentAreaContextMenu;
 }
 
-async function openContextMenu(selector = "#img1") {
-  let contentAreaContextMenu = document.getElementById("contentAreaContextMenu");
+async function openContextMenu(selector = "#img1", win = window) {
+  let contentAreaContextMenu = win.document.getElementById("contentAreaContextMenu");
   let popupShownPromise = BrowserTestUtils.waitForEvent(contentAreaContextMenu, "popupshown");
-  await BrowserTestUtils.synthesizeMouseAtCenter(selector, {type: "mousedown", button: 2}, gBrowser.selectedBrowser);
-  await BrowserTestUtils.synthesizeMouseAtCenter(selector, {type: "contextmenu"}, gBrowser.selectedBrowser);
+  await BrowserTestUtils.synthesizeMouseAtCenter(selector, {type: "mousedown", button: 2}, win.gBrowser.selectedBrowser);
+  await BrowserTestUtils.synthesizeMouseAtCenter(selector, {type: "contextmenu"}, win.gBrowser.selectedBrowser);
   await popupShownPromise;
   return contentAreaContextMenu;
 }
@@ -549,9 +565,10 @@ function historyPushState(tab, url) {
   return locationChange(tab, url, (url) => { content.history.pushState(null, null, url); });
 }
 
-// A monitoring extension that fails if it receives data it should not.
-async function startIncognitoMonitorExtension(failOnIncognitoEvent = true) {
-  function background(expectIncognito) {
+// This monitor extension runs with incognito: not_allowed, if it receives any
+// events with incognito data it fails.
+async function startIncognitoMonitorExtension() {
+  function background() {
     // Bug 1513220 - We're unable to get the tab during onRemoved, so we track
     // valid tabs in "seen" so we can at least validate tabs that we have "seen"
     // during onRemoved.  This means that the monitor extension must be started
@@ -574,7 +591,7 @@ async function startIncognitoMonitorExtension(failOnIncognitoEvent = true) {
           return;
         }
       }
-      browser.test.assertEq(tab.incognito, expectIncognito, `tabs.${eventName} ${tab.id}: monitor extension got expected incognito value`);
+      browser.test.assertFalse(tab.incognito, `tabs.${eventName} ${tab.id}: monitor extension got expected incognito value`);
       seenTabs.set(tab.id, tab);
     }
     async function testTabInfo(tabInfo, eventName) {
@@ -610,7 +627,7 @@ async function startIncognitoMonitorExtension(failOnIncognitoEvent = true) {
     }
 
     browser.windows.onCreated.addListener(window => {
-      browser.test.assertEq(window.incognito, expectIncognito, `windows.onCreated monitor extension got expected incognito value`);
+      browser.test.assertFalse(window.incognito, `windows.onCreated monitor extension got expected incognito value`);
       seenWindows.set(window.id, window);
     });
     browser.windows.onRemoved.addListener(async (windowId) => {
@@ -621,7 +638,7 @@ async function startIncognitoMonitorExtension(failOnIncognitoEvent = true) {
         browser.test.fail(`windows.onCreated for id ${windowId} unexpected failure ${e}\n`);
         return;
       }
-      browser.test.assertEq(window.incognito, expectIncognito, `windows.onRemoved ${window.id}: monitor extension got expected incognito value`);
+      browser.test.assertFalse(window.incognito, `windows.onRemoved ${window.id}: monitor extension got expected incognito value`);
     });
     browser.windows.onFocusChanged.addListener(async (windowId) => {
       if (windowId == browser.windows.WINDOW_ID_NONE) {
@@ -635,7 +652,7 @@ async function startIncognitoMonitorExtension(failOnIncognitoEvent = true) {
         browser.test.fail(`windows.onFocusChanged for id ${windowId} unexpected failure ${e}\n`);
         return;
       }
-      browser.test.assertEq(window.incognito, expectIncognito, `windows.onFocusChanged ${window.id}: monitor extesion got expected incognito value`);
+      browser.test.assertFalse(window.incognito, `windows.onFocusChanged ${window.id}: monitor extesion got expected incognito value`);
       seenWindows.set(window.id, window);
     });
   }
@@ -644,8 +661,8 @@ async function startIncognitoMonitorExtension(failOnIncognitoEvent = true) {
     manifest: {
       "permissions": ["tabs"],
     },
-    incognitoOverride: failOnIncognitoEvent ? "not_allowed" : undefined,
-    background: `(${background})(${!failOnIncognitoEvent})`,
+    incognitoOverride: "not_allowed",
+    background,
   });
   await extension.startup();
   return extension;
@@ -670,6 +687,7 @@ async function getIncognitoWindow(url) {
       "permissions": ["tabs"],
     },
     background: `(${background})("${url}")`,
+    incognitoOverride: "spanning",
   });
 
   await windowWatcher.startup();

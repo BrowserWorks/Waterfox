@@ -19,6 +19,10 @@ class ChangesApp extends PureComponent {
     return {
       // Nested CSS rule tree structure of CSS changes grouped by source (stylesheet)
       changesTree: PropTypes.object.isRequired,
+      // Event handler for "contextmenu" event
+      onContextMenu: PropTypes.func.isRequired,
+      // Event handler for "copy" event
+      onCopy: PropTypes.func.isRequired,
     };
   }
 
@@ -34,6 +38,7 @@ class ChangesApp extends PureComponent {
         return CSSDeclaration({
           key: "remove-" + property + index,
           className: "level diff-remove",
+          marker: getDiffMarker("diff-remove"),
           property,
           value,
         });
@@ -46,6 +51,7 @@ class ChangesApp extends PureComponent {
         return CSSDeclaration({
           key: "add-" + property + index,
           className: "level diff-add",
+          marker: getDiffMarker("diff-add"),
           property,
           value,
         });
@@ -68,6 +74,7 @@ class ChangesApp extends PureComponent {
       {
         key: ruleId,
         className: "rule devtools-monospace",
+        "data-ruleid": ruleId,
         style: {
           "--diff-level": level,
         },
@@ -77,8 +84,9 @@ class ChangesApp extends PureComponent {
           className: `level selector ${diffClass}`,
           title: selector,
         },
+        getDiffMarker(diffClass),
         selector,
-        dom.span({ className: "bracket-open" }, "{")
+        dom.span({ className: "bracket-open" }, " {")
       ),
       // Render any nested child rules if they exist.
       rule.children.map(childRule => {
@@ -86,7 +94,10 @@ class ChangesApp extends PureComponent {
       }),
       // Render any changed CSS declarations.
       this.renderDeclarations(rule.remove, rule.add),
-      dom.div({ className: `level bracket-close ${diffClass}` }, "}")
+      dom.div({ className: `level bracket-close ${diffClass}` },
+        getDiffMarker(diffClass),
+        "}"
+      )
     );
   }
 
@@ -99,6 +110,7 @@ class ChangesApp extends PureComponent {
       return dom.div(
         {
           key: sourceId,
+          "data-sourceid": sourceId,
           className: "source",
         },
         dom.div(
@@ -140,11 +152,37 @@ class ChangesApp extends PureComponent {
       {
         className: "theme-sidebar inspector-tabpanel",
         id: "sidebar-panel-changes",
+        onContextMenu: this.props.onContextMenu,
+        onCopy: this.props.onCopy,
       },
       !hasChanges && this.renderEmptyState(),
       hasChanges && this.renderDiff(this.props.changesTree)
     );
   }
+}
+
+/**
+ * Get a React element with text content of either a plus or minus sign according to
+ * the given CSS class name used to mark added or removed lines in the changes diff view.
+ * This is used as a diff line maker that can be copied over as text with the rest of the
+ * content. CSS pseudo-elements are not part of the document flow and cannot be copied.
+ *
+ * @param  {String} className
+ *         One of "diff-add" or "diff-remove"
+ * @return {Component|null}
+ *         Returns null if the given className isn't recognized. React handles it.
+ */
+function getDiffMarker(className) {
+  let marker = null;
+  switch (className) {
+    case "diff-add":
+      marker = dom.span({ className: "diff-marker" }, "+ ");
+      break;
+    case "diff-remove":
+      marker = dom.span({ className: "diff-marker" }, "- ");
+      break;
+  }
+  return marker;
 }
 
 const mapStateToProps = state => {

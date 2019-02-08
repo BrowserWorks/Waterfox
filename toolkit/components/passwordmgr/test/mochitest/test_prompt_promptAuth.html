@@ -6,7 +6,7 @@
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/AddTask.js"></script>
   <script type="text/javascript" src="pwmgr_common.js"></script>
-  <script type="text/javascript" src="prompt_common.js"></script>
+  <script type="text/javascript" src="../../../prompts/test/prompt_common.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
 <body>
@@ -34,13 +34,11 @@ var authinfo = {
 // Force parent to not look for tab-modal prompts, as they're not used for auth prompts.
 isTabModal = false;
 
-let chromeScript = runInParent(SimpleTest.getTestFileURL("pwmgr_common.js"));
-
 let prompterParent = runInParent(() => {
   const promptFac = Cc["@mozilla.org/passwordmanager/authpromptfactory;1"].
                     getService(Ci.nsIPromptFactory);
 
-  ChromeUtils.import("resource://gre/modules/Services.jsm");
+  const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
   let chromeWin = Services.wm.getMostRecentWindow("navigator:browser");
   let prompter2 = promptFac.getPrompt(chromeWin, Ci.nsIAuthPrompt2);
 

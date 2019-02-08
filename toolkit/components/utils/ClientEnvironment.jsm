@@ -4,7 +4,7 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(this, "ShellService", "resource:///modules/ShellService.jsm");
 ChromeUtils.defineModuleGetter(this, "AddonManager", "resource://gre/modules/AddonManager.jsm");
@@ -70,11 +70,8 @@ class ClientEnvironmentBase {
 
   static get searchEngine() {
     return (async () => {
-      const searchInitialized = await new Promise(resolve => Services.search.init(resolve));
-      if (Components.isSuccessCode(searchInitialized)) {
-        return Services.search.defaultEngine.identifier;
-      }
-      return null;
+      await TelemetryEnvironment.onInitialized();
+      return TelemetryEnvironment.currentEnvironment.settings.defaultSearchEngine;
     })();
   }
 

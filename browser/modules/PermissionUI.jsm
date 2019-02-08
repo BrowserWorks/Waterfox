@@ -60,7 +60,7 @@ var EXPORTED_SYMBOLS = [
  * imported, subclassed, and have prompt() called directly, without
  * the caller having called into createPermissionPrompt.
  */
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 ChromeUtils.defineModuleGetter(this, "Services",
   "resource://gre/modules/Services.jsm");
@@ -543,48 +543,19 @@ GeolocationPermissionPrompt.prototype = {
   },
 
   get promptActions() {
-    // We collect Telemetry data on Geolocation prompts and how users
-    // respond to them. The probe keys are a bit verbose, so let's alias them.
-    const SHARE_LOCATION =
-      Ci.nsISecurityUITelemetry.WARNING_GEOLOCATION_REQUEST_SHARE_LOCATION;
-    const ALWAYS_SHARE =
-      Ci.nsISecurityUITelemetry.WARNING_GEOLOCATION_REQUEST_ALWAYS_SHARE;
-    const NEVER_SHARE =
-      Ci.nsISecurityUITelemetry.WARNING_GEOLOCATION_REQUEST_NEVER_SHARE;
-
-    let secHistogram = Services.telemetry.getHistogramById("SECURITY_UI");
-
     return [{
       label: gBrowserBundle.GetStringFromName("geolocation.allowLocation"),
       accessKey:
         gBrowserBundle.GetStringFromName("geolocation.allowLocation.accesskey"),
       action: SitePermissions.ALLOW,
-      callback(state) {
-        if (state && state.checkboxChecked) {
-          secHistogram.add(ALWAYS_SHARE);
-        } else {
-          secHistogram.add(SHARE_LOCATION);
-        }
-      },
     }, {
       label: gBrowserBundle.GetStringFromName("geolocation.dontAllowLocation"),
       accessKey:
         gBrowserBundle.GetStringFromName("geolocation.dontAllowLocation.accesskey"),
       action: SitePermissions.BLOCK,
-      callback(state) {
-        if (state && state.checkboxChecked) {
-          secHistogram.add(NEVER_SHARE);
-        }
-      },
     }];
   },
 
-  onBeforeShow() {
-    let secHistogram = Services.telemetry.getHistogramById("SECURITY_UI");
-    const SHOW_REQUEST = Ci.nsISecurityUITelemetry.WARNING_GEOLOCATION_REQUEST;
-    secHistogram.add(SHOW_REQUEST);
-    return true;
-  },
 };
 
 PermissionUI.GeolocationPermissionPrompt = GeolocationPermissionPrompt;
@@ -906,11 +877,15 @@ StorageAccessPermissionPrompt.prototype = {
 
   get promptActions() {
     let self = this;
+
+    let storageAccessHistogram = Services.telemetry.getHistogramById("STORAGE_ACCESS_API_UI");
+
     return [{
         label: gBrowserBundle.GetStringFromName("storageAccess.DontAllow.label"),
         accessKey: gBrowserBundle.GetStringFromName("storageAccess.DontAllow.accesskey"),
         action: Ci.nsIPermissionManager.DENY_ACTION,
         callback(state) {
+          storageAccessHistogram.add("Deny");
           self.cancel();
         },
       },
@@ -919,6 +894,7 @@ StorageAccessPermissionPrompt.prototype = {
         accessKey: gBrowserBundle.GetStringFromName("storageAccess.Allow.accesskey"),
         action: Ci.nsIPermissionManager.ALLOW_ACTION,
         callback(state) {
+          storageAccessHistogram.add("Allow");
           self.allow({"storage-access": "allow"});
         },
       },
@@ -927,6 +903,7 @@ StorageAccessPermissionPrompt.prototype = {
         accessKey: gBrowserBundle.GetStringFromName("storageAccess.AllowOnAnySite.accesskey"),
         action: Ci.nsIPermissionManager.ALLOW_ACTION,
         callback(state) {
+          storageAccessHistogram.add("AllowOnAnySite");
           self.allow({"storage-access": "allow-on-any-site"});
         },
     }];
@@ -964,12 +941,19 @@ StorageAccessPermissionPrompt.prototype = {
   },
 
   onBeforeShow() {
+    let storageAccessHistogram = Services.telemetry.getHistogramById("STORAGE_ACCESS_API_UI");
+
+    storageAccessHistogram.add("Request");
+
     let thirdPartyOrigin = this.request.principal.origin;
     if (this._autoGrants &&
         this.getOriginsThirdPartyHasAccessTo(thirdPartyOrigin) <
           this.maxConcurrentAutomaticGrants) {
       // Automatically accept the prompt
       this.allow({"storage-access": "allow-auto-grant"});
+
+      storageAccessHistogram.add("AllowAutomatically");
+
       return false;
     }
     return true;

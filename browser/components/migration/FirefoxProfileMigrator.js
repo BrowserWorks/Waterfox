@@ -13,9 +13,9 @@
  * from the source profile.
  */
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource:///modules/MigrationUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {MigrationUtils, MigratorPrototype} = ChromeUtils.import("resource:///modules/MigrationUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(this, "PlacesBackups",
                                "resource://gre/modules/PlacesBackups.jsm");
@@ -72,7 +72,7 @@ FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
   let sourceProfileDir = aProfile ? this._getAllProfiles().get(aProfile.id) :
     Cc["@mozilla.org/toolkit/profile-service;1"]
       .getService(Ci.nsIToolkitProfileService)
-      .selectedProfile.rootDir;
+      .currentProfile.rootDir;
   if (!sourceProfileDir || !sourceProfileDir.exists() ||
       !sourceProfileDir.isReadable())
     return null;

@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const EVENT_TEST1 = "_test_event_1.1";
 const EVENT_TEST2 = "_test_event_2.1";
@@ -117,7 +117,6 @@ function expectedArraysToObjs(expectedArrays) {
         sessions: arr[3].sort(), // Sort, just in case it's not sorted by hand!
         extras: arr[4],
       };
-
     } else if (type === "session") {
       return {
         type: type,

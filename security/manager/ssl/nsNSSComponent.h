@@ -79,6 +79,7 @@ class nsNSSComponent final : public nsINSSComponent, public nsIObserver {
 
   void setValidationOptions(bool isInitialSetting,
                             const mozilla::MutexAutoLock& proofOfLock);
+  void UpdateCertVerifierWithEnterpriseRoots();
   nsresult setEnabledTLSVersions();
   nsresult RegisterObservers();
 
@@ -86,16 +87,7 @@ class nsNSSComponent final : public nsINSSComponent, public nsIObserver {
   void ImportEnterpriseRoots();
   void UnloadEnterpriseRoots();
 
-  void MaybeEnableFamilySafetyCompatibility(uint32_t familySafetyMode);
-  void UnloadFamilySafetyRoot();
-
-  nsresult TrustLoaded3rdPartyRoots();
-
-#ifdef XP_WIN
-  nsresult MaybeImportFamilySafetyRoot(PCCERT_CONTEXT certificate,
-                                       bool& wasFamilySafetyRoot);
-  nsresult LoadFamilySafetyRoot();
-#endif  // XP_WIN
+  bool ShouldEnableEnterpriseRootsForFamilySafety(uint32_t familySafetyMode);
 
   // mLoadableRootsLoadedMonitor protects mLoadableRootsLoaded.
   mozilla::Monitor mLoadableRootsLoadedMonitor;
@@ -114,8 +106,7 @@ class nsNSSComponent final : public nsINSSComponent, public nsIObserver {
   RefPtr<mozilla::psm::SharedCertVerifier> mDefaultCertVerifier;
   nsString mMitmCanaryIssuer;
   bool mMitmDetecionEnabled;
-  mozilla::UniqueCERTCertList mEnterpriseRoots;
-  mozilla::UniqueCERTCertificate mFamilySafetyRoot;
+  mozilla::Vector<mozilla::Vector<uint8_t>> mEnterpriseRoots;
 
   // The following members are accessed only on the main thread:
   static int mInstanceCount;

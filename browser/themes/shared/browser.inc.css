@@ -152,7 +152,7 @@
 
 /* Override theme colors since the picker uses extra colors that
    themes cannot set */
-#DateTimePickerPanel[active="true"] {
+#DateTimePickerPanel {
   --arrowpanel-background: var(--default-arrowpanel-background);
   --arrowpanel-color: var(--default-arrowpanel-color);
   --arrowpanel-border-color: var(--default-arrowpanel-border-color);
@@ -275,4 +275,8 @@
 
 #cfr-notification-footer-spacer {
   flex-grow: 1;
+}
+
+#content-mask {
+  background: rgba(0, 0, 0, 0.5);
 }

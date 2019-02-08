@@ -114,10 +114,6 @@ UPSTREAM_SOURCE_ARTIFACTS = [
     "source.tar.xz.asc",
 ]
 
-# Voluptuous uses marker objects as dictionary *keys*, but they are not
-# comparable, so we cast all of the keys back to regular strings
-task_description_schema = {str(k): v for k, v in task_description_schema.schema.iteritems()}
-
 transforms = TransformSequence()
 
 beetmover_description_schema = schema.extend({
@@ -174,8 +170,7 @@ def make_task_description(config, jobs):
             )
         )
 
-        dependent_kind = str(dep_job.kind)
-        dependencies = {dependent_kind: dep_job.label}
+        dependencies = {dep_job.kind: dep_job.label}
 
         if len(dep_job.dependencies) > 1:
             raise NotImplementedError(

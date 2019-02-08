@@ -29,9 +29,9 @@ HitTestingTreeNode::HitTestingTreeNode(AsyncPanZoomController* aApzc,
       mIsPrimaryApzcHolder(aIsPrimaryHolder),
       mLockCount(0),
       mLayersId(aLayersId),
-      mScrollbarAnimationId(0),
       mFixedPosTarget(ScrollableLayerGuid::NULL_SCROLL_ID),
       mIsBackfaceHidden(false),
+      mIsAsyncZoomContainer(false),
       mOverride(EventRegionsOverride::NoOverride) {
   if (mIsPrimaryApzcHolder) {
     MOZ_ASSERT(mApzc);
@@ -91,8 +91,9 @@ void HitTestingTreeNode::SetLastChild(HitTestingTreeNode* aChild) {
   }
 }
 
-void HitTestingTreeNode::SetScrollbarData(const uint64_t& aScrollbarAnimationId,
-                                          const ScrollbarData& aScrollbarData) {
+void HitTestingTreeNode::SetScrollbarData(
+    const Maybe<uint64_t>& aScrollbarAnimationId,
+    const ScrollbarData& aScrollbarData) {
   mScrollbarAnimationId = aScrollbarAnimationId;
   mScrollbarData = aScrollbarData;
 }
@@ -123,7 +124,7 @@ ScrollableLayerGuid::ViewID HitTestingTreeNode::GetScrollTargetId() const {
   return mScrollbarData.mTargetViewId;
 }
 
-const uint64_t& HitTestingTreeNode::GetScrollbarAnimationId() const {
+Maybe<uint64_t> HitTestingTreeNode::GetScrollbarAnimationId() const {
   return mScrollbarAnimationId;
 }
 
@@ -209,13 +210,15 @@ void HitTestingTreeNode::SetHitTestData(
     const EventRegions& aRegions, const LayerIntRegion& aVisibleRegion,
     const CSSTransformMatrix& aTransform,
     const Maybe<ParentLayerIntRegion>& aClipRegion,
-    const EventRegionsOverride& aOverride, bool aIsBackfaceHidden) {
+    const EventRegionsOverride& aOverride, bool aIsBackfaceHidden,
+    bool aIsAsyncZoomContainer) {
   mEventRegions = aRegions;
   mVisibleRegion = aVisibleRegion;
   mTransform = aTransform;
   mClipRegion = aClipRegion;
   mOverride = aOverride;
   mIsBackfaceHidden = aIsBackfaceHidden;
+  mIsAsyncZoomContainer = aIsAsyncZoomContainer;
 }
 
 bool HitTestingTreeNode::IsOutsideClip(const ParentLayerPoint& aPoint) const {
@@ -309,6 +312,10 @@ const CSSTransformMatrix& HitTestingTreeNode::GetTransform() const {
 
 const LayerIntRegion& HitTestingTreeNode::GetVisibleRegion() const {
   return mVisibleRegion;
+}
+
+bool HitTestingTreeNode::IsAsyncZoomContainer() const {
+  return mIsAsyncZoomContainer;
 }
 
 void HitTestingTreeNode::Dump(const char* aPrefix) const {

@@ -19,16 +19,20 @@ WebGLExtensionColorBufferHalfFloat::WebGLExtensionColorBufferHalfFloat(
   auto& fua = webgl->mFormatUsage;
 
   auto fnUpdateUsage = [&fua](GLenum sizedFormat,
-                              webgl::EffectiveFormat effFormat) {
+                              webgl::EffectiveFormat effFormat,
+                              const bool renderable) {
     auto usage = fua->EditUsage(effFormat);
-    usage->SetRenderable();
-    fua->AllowRBFormat(sizedFormat, usage);
+    if (renderable) {
+      usage->SetRenderable();
+    }
+    fua->AllowRBFormat(sizedFormat, usage, renderable);
   };
 
-#define FOO(x) fnUpdateUsage(LOCAL_GL_##x, webgl::EffectiveFormat::x)
+#define FOO(x, y) fnUpdateUsage(LOCAL_GL_##x, webgl::EffectiveFormat::x, y)
 
-  FOO(RGBA16F);
-  FOO(RGB16F);
+  FOO(RGBA16F, true);
+  FOO(RGB16F, false);  // It's not required, thus not portable. (Also there's a
+                       // wicked driver bug on Mac+Intel)
 
 #undef FOO
 }
@@ -37,6 +41,8 @@ WebGLExtensionColorBufferHalfFloat::~WebGLExtensionColorBufferHalfFloat() {}
 
 bool WebGLExtensionColorBufferHalfFloat::IsSupported(
     const WebGLContext* webgl) {
+  if (webgl->IsWebGL2()) return false;
+
   const auto& gl = webgl->gl;
   return gl->IsSupported(gl::GLFeature::renderbuffer_color_half_float) &&
          gl->IsSupported(gl::GLFeature::frag_color_float);

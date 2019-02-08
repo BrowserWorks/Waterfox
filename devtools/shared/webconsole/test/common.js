@@ -10,12 +10,11 @@
    closeDebugger, checkConsoleAPICalls, checkRawHeaders, runTests, nextTest, Ci, Cc,
    withActiveServiceWorker, Services, consoleAPICall */
 
-const {require} = ChromeUtils.import("resource://devtools/shared/Loader.jsm", {});
+const {require} = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
 const {DebuggerServer} = require("devtools/server/main");
 const {DebuggerClient} = require("devtools/shared/client/debugger-client");
 const ObjectClient = require("devtools/shared/client/object-client");
 const Services = require("Services");
-const {TargetFactory} = require("devtools/client/framework/target");
 
 function initCommon() {
   // Services.prefs.setBoolPref("devtools.debugger.log", true);
@@ -67,33 +66,22 @@ var _attachConsole = async function(
     // ParentProcessTarget / WorkerTarget / FrameTarget
     let target, worker;
     if (!attachToTab) {
-      const front = await client.mainRoot.getMainProcess();
-      target = await TargetFactory.forRemoteTab({
-        client,
-        activeTab: front,
-        chrome: true,
-      });
+      target = await client.mainRoot.getMainProcess();
     } else {
-      const targetFront = await client.mainRoot.getTab();
-      target = await TargetFactory.forRemoteTab({
-        client,
-        activeTab: targetFront,
-      });
+      target = await client.mainRoot.getTab();
       if (attachToWorker) {
         const workerName = "console-test-worker.js#" + new Date().getTime();
         worker = new Worker(workerName);
         await waitForMessage(worker);
 
-        const { workers } = await target.activeTab.listWorkers();
-        const workerTargetFront = workers.filter(w => w.url == workerName)[0];
-        if (!workerTargetFront) {
+        // listWorkers only works if the browsing context target actor is attached
+        await target.attach();
+        const { workers } = await target.listWorkers();
+        target = workers.filter(w => w.url == workerName)[0];
+        if (!target) {
           console.error("listWorkers failed. Unable to find the worker actor\n");
           return null;
         }
-        target = await TargetFactory.forRemoteTab({
-          client,
-          activeTab: workerTargetFront,
-        });
       }
     }
 

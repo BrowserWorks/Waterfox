@@ -639,22 +639,27 @@ static void ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *appDir,
   }
   *outpid = fork();
   if (*outpid == -1) {
+    delete[] argv;
     return;
   } else if (*outpid == 0) {
     exit(execv(updaterPath.get(), argv));
   }
+  delete[] argv;
 #elif defined(XP_WIN)
   if (isStaged) {
     // Launch the updater to replace the installation with the staged updated.
     if (!WinLaunchChild(updaterPathW.get(), argc, argv)) {
+      delete[] argv;
       return;
     }
   } else {
     // Launch the updater to either stage or apply an update.
     if (!WinLaunchChild(updaterPathW.get(), argc, argv, nullptr, outpid)) {
+      delete[] argv;
       return;
     }
   }
+  delete[] argv;
 #elif defined(XP_MACOSX)
 UpdateDriverSetupMacCommandLine(argc, argv, restart);
 // We need to detect whether elevation is required for this update. This can
@@ -675,9 +680,6 @@ if (isStaged) {
   // Launch the updater to either stage or apply an update.
   LaunchChildMac(argc, argv, outpid);
 }
-if (restart) {
-  exit(0);
-}
 #else
 if (isStaged) {
   // Launch the updater to replace the installation with the staged updated.
@@ -687,11 +689,9 @@ if (isStaged) {
   *outpid = PR_CreateProcess(updaterPath.get(), argv, nullptr, nullptr);
 }
 #endif
-#if !defined(USE_EXECV)
   if (restart) {
     exit(0);
   }
-#endif
 }
 
 /**
@@ -812,7 +812,7 @@ nsUpdateProcessor::nsUpdateProcessor() : mUpdaterPID(0) {}
 nsUpdateProcessor::~nsUpdateProcessor() {}
 
 NS_IMETHODIMP
-nsUpdateProcessor::ProcessUpdate(nsIUpdate *aUpdate) {
+nsUpdateProcessor::ProcessUpdate() {
   nsresult rv;
 
   nsCOMPtr<nsIProperties> ds =

@@ -58,6 +58,7 @@ use internal_types::{CacheTextureId, DebugOutput, FastHashMap, LayerIndex, Rende
 use internal_types::{TextureCacheAllocationKind, TextureCacheUpdate, TextureUpdateList, TextureUpdateSource};
 use internal_types::{RenderTargetInfo, SavedTargetIndex};
 use malloc_size_of::MallocSizeOfOps;
+use picture::RecordedDirtyRegion;
 use prim_store::DeferredResolve;
 use profiler::{BackendProfileCounters, FrameProfileCounters, TimeProfileCounter,
                GpuProfileTag, RendererProfileCounters, RendererProfileTimers};
@@ -66,7 +67,6 @@ use device::query::GpuProfiler;
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use record::ApiRecordingReceiver;
 use render_backend::{FrameId, RenderBackend};
-use render_task::ClearMode;
 use scene_builder::{SceneBuilder, LowPrioritySceneBuilder};
 use shade::{Shaders, WrShaders};
 use smallvec::SmallVec;
@@ -522,11 +522,6 @@ pub(crate) mod desc {
                 kind: VertexAttributeKind::I32,
             },
             VertexAttribute {
-                name: "aClipSegment",
-                count: 1,
-                kind: VertexAttributeKind::I32,
-            },
-            VertexAttribute {
                 name: "aClipDataResourceAddress",
                 count: 4,
                 kind: VertexAttributeKind::U16,
@@ -538,6 +533,16 @@ pub(crate) mod desc {
             },
             VertexAttribute {
                 name: "aClipTileRect",
+                count: 4,
+                kind: VertexAttributeKind::F32,
+            },
+            VertexAttribute {
+                name: "aClipDeviceArea",
+                count: 4,
+                kind: VertexAttributeKind::F32,
+            },
+            VertexAttribute {
+                name: "aClipSnapOffsets",
                 count: 4,
                 kind: VertexAttributeKind::F32,
             }
@@ -1561,6 +1566,13 @@ pub struct Renderer {
 
     framebuffer_size: Option<DeviceIntSize>,
 
+    /// A lazily created texture for the zoom debugging widget.
+    zoom_debug_texture: Option<Texture>,
+
+    /// The current mouse position. This is used for debugging
+    /// functionality only, such as the debug zoom widget.
+    cursor_position: DeviceIntPoint,
+
     #[cfg(feature = "capture")]
     read_fbo: FBOId,
     #[cfg(feature = "replay")]
@@ -1805,6 +1817,7 @@ impl Renderer {
             dual_source_blending_is_supported: ext_dual_source_blending,
             chase_primitive: options.chase_primitive,
             enable_picture_caching: options.enable_picture_caching,
+            testing: options.testing,
         };
 
         let device_pixel_ratio = options.device_pixel_ratio;
@@ -2002,6 +2015,8 @@ impl Renderer {
             owned_external_images: FastHashMap::default(),
             notifications: Vec::new(),
             framebuffer_size: None,
+            zoom_debug_texture: None,
+            cursor_position: DeviceIntPoint::zero(),
         };
 
         // We initially set the flags to default and then now call set_debug_flags
@@ -2010,6 +2025,14 @@ impl Renderer {
 
         let sender = RenderApiSender::new(api_tx, payload_tx);
         Ok((renderer, sender))
+    }
+
+    /// Update the current position of the debug cursor.
+    pub fn set_cursor_position(
+        &mut self,
+        position: DeviceIntPoint,
+    ) {
+        self.cursor_position = position;
     }
 
     pub fn get_max_texture_size(&self) -> i32 {
@@ -2455,7 +2478,7 @@ impl Renderer {
     pub fn render(
         &mut self,
         framebuffer_size: DeviceIntSize,
-    ) -> Result<RendererStats, Vec<RendererError>> {
+    ) -> Result<RenderResults, Vec<RendererError>> {
         self.framebuffer_size = Some(framebuffer_size);
 
         let result = self.render_impl(Some(framebuffer_size));
@@ -2481,14 +2504,14 @@ impl Renderer {
     fn render_impl(
         &mut self,
         framebuffer_size: Option<DeviceIntSize>,
-    ) -> Result<RendererStats, Vec<RendererError>> {
+    ) -> Result<RenderResults, Vec<RendererError>> {
         profile_scope!("render");
+        let mut results = RenderResults::default();
         if self.active_documents.is_empty() {
             self.last_time = precise_time_ns();
-            return Ok(RendererStats::empty());
+            return Ok(results);
         }
 
-        let mut stats = RendererStats::empty();
         let mut frame_profiles = Vec::new();
         let mut profile_timers = RendererProfileTimers::new();
 
@@ -2577,12 +2600,16 @@ impl Renderer {
                     framebuffer_size,
                     clear_depth_value.is_some(),
                     cpu_frame_id,
-                    &mut stats
+                    &mut results.stats
                 );
 
                 if self.debug_flags.contains(DebugFlags::PROFILER_DBG) {
                     frame_profiles.push(frame.profile_counters.clone());
                 }
+
+                let dirty_regions =
+                    mem::replace(&mut frame.recorded_dirty_regions, Vec::new());
+                results.recorded_dirty_regions.extend(dirty_regions);
             }
 
             self.unlock_external_images();
@@ -2665,13 +2692,13 @@ impl Renderer {
             self.device.echo_driver_messages();
         }
 
-        stats.texture_upload_kb = self.profile_counters.texture_data_uploaded.get();
+        results.stats.texture_upload_kb = self.profile_counters.texture_data_uploaded.get();
         self.backend_profile_counters.reset();
         self.profile_counters.reset();
         self.profile_counters.frame_counter.inc();
-        stats.resource_upload_time = self.resource_upload_time;
+        results.stats.resource_upload_time = self.resource_upload_time;
         self.resource_upload_time = 0;
-        stats.gpu_cache_upload_time = self.gpu_cache_upload_time;
+        results.stats.gpu_cache_upload_time = self.gpu_cache_upload_time;
         self.gpu_cache_upload_time = 0;
 
         profile_timers.cpu_time.profile(|| {
@@ -2687,7 +2714,7 @@ impl Renderer {
         }
 
         if self.renderer_errors.is_empty() {
-            Ok(stats)
+            Ok(results)
         } else {
             Err(mem::replace(&mut self.renderer_errors, Vec::new()))
         }
@@ -3026,7 +3053,7 @@ impl Renderer {
         }
 
         self.device.bind_read_target(draw_target.into());
-        self.device.blit_render_target(src, dest);
+        self.device.blit_render_target(src, dest, TextureFilter::Linear);
 
         // Restore draw target to current pass render target + layer, and reset
         // the read target.
@@ -3078,6 +3105,7 @@ impl Renderer {
             self.device.blit_render_target(
                 source_rect,
                 blit.target_rect,
+                TextureFilter::Linear,
             );
         }
     }
@@ -3185,22 +3213,6 @@ impl Renderer {
             };
 
             self.device.clear_target(clear_color, depth_clear, clear_rect);
-
-            // If this color target requires any tasks to be pre-cleared,
-            // go through and do that now.
-            for &task_id in &target.color_clears {
-                let task = &render_tasks[task_id];
-                let (rect, _) = task.get_target_rect();
-                let color = match task.clear_mode {
-                    ClearMode::Color(color) => color.to_array(),
-                    _ => unreachable!(),
-                };
-                self.device.clear_target(
-                    Some(color),
-                    None,
-                    Some(rect),
-                );
-            }
 
             if depth_clear.is_some() {
                 self.device.disable_depth_write();
@@ -3482,6 +3494,7 @@ impl Renderer {
                     self.device.blit_render_target(
                         src_rect,
                         dest_rect,
+                        TextureFilter::Linear,
                     );
                 }
 
@@ -3520,7 +3533,7 @@ impl Renderer {
 
                 self.device.bind_read_target(draw_target.into());
                 self.device.bind_external_draw_target(fbo_id);
-                self.device.blit_render_target(src_rect, dest_rect);
+                self.device.blit_render_target(src_rect, dest_rect, TextureFilter::Linear);
                 handler.unlock(output.pipeline_id);
             }
         }
@@ -4201,6 +4214,7 @@ impl Renderer {
             self.draw_render_target_debug(framebuffer_size);
             self.draw_texture_cache_debug(framebuffer_size);
             self.draw_gpu_cache_debug(framebuffer_size);
+            self.draw_zoom_debug(framebuffer_size);
         }
         self.draw_epoch_debug();
 
@@ -4307,6 +4321,106 @@ impl Renderer {
             framebuffer_size,
             0,
             &|_| [0.0, 1.0, 0.0, 1.0], // Use green for all RTs.
+        );
+    }
+
+    fn draw_zoom_debug(
+        &mut self,
+        framebuffer_size: DeviceIntSize,
+    ) {
+        if !self.debug_flags.contains(DebugFlags::ZOOM_DBG) {
+            return;
+        }
+
+        let debug_renderer = match self.debug.get_mut(&mut self.device) {
+            Some(render) => render,
+            None => return,
+        };
+
+        let source_size = DeviceIntSize::new(64, 64);
+        let target_size = DeviceIntSize::new(1024, 1024);
+
+        let source_origin = DeviceIntPoint::new(
+            (self.cursor_position.x - source_size.width / 2)
+                .min(framebuffer_size.width - source_size.width)
+                .max(0),
+            (self.cursor_position.y - source_size.height / 2)
+                .min(framebuffer_size.height - source_size.height)
+                .max(0),
+        );
+
+        let source_rect = DeviceIntRect::new(
+            source_origin,
+            source_size,
+        );
+
+        let target_rect = DeviceIntRect::new(
+            DeviceIntPoint::new(
+                framebuffer_size.width - target_size.width - 64,
+                framebuffer_size.height - target_size.height - 64,
+            ),
+            target_size,
+        );
+
+        let texture_rect = DeviceIntRect::new(
+            DeviceIntPoint::zero(),
+            source_rect.size,
+        );
+
+        debug_renderer.add_rect(
+            &target_rect.inflate(1, 1),
+            debug_colors::RED.into(),
+        );
+
+        if self.zoom_debug_texture.is_none() {
+            let texture = self.device.create_texture(
+                TextureTarget::Default,
+                ImageFormat::BGRA8,
+                source_rect.size.width,
+                source_rect.size.height,
+                TextureFilter::Nearest,
+                Some(RenderTargetInfo { has_depth: false }),
+                1,
+            );
+
+            self.zoom_debug_texture = Some(texture);
+        }
+
+        // Copy frame buffer into the zoom texture
+        self.device.bind_read_target(ReadTarget::Default);
+        self.device.bind_draw_target(DrawTarget::Texture {
+            texture: self.zoom_debug_texture.as_ref().unwrap(),
+            layer: 0,
+            with_depth: false,
+        });
+        self.device.blit_render_target(
+            DeviceIntRect::new(
+                DeviceIntPoint::new(
+                    source_rect.origin.x,
+                    framebuffer_size.height - source_rect.size.height - source_rect.origin.y,
+                ),
+                source_rect.size,
+            ),
+            texture_rect,
+            TextureFilter::Nearest,
+        );
+
+        // Draw the zoom texture back to the framebuffer
+        self.device.bind_read_target(ReadTarget::Texture {
+            texture: self.zoom_debug_texture.as_ref().unwrap(),
+            layer: 0,
+        });
+        self.device.bind_draw_target(DrawTarget::Default(framebuffer_size));
+        self.device.blit_render_target(
+            texture_rect,
+            DeviceIntRect::new(
+                DeviceIntPoint::new(
+                    target_rect.origin.x,
+                    framebuffer_size.height - target_rect.size.height - target_rect.origin.y,
+                ),
+                target_rect.size,
+            ),
+            TextureFilter::Nearest,
         );
     }
 
@@ -4530,6 +4644,9 @@ impl Renderer {
         self.gpu_cache_texture.deinit(&mut self.device);
         if let Some(dither_matrix_texture) = self.dither_matrix_texture {
             self.device.delete_texture(dither_matrix_texture);
+        }
+        if let Some(zoom_debug_texture) = self.zoom_debug_texture {
+            self.device.delete_texture(zoom_debug_texture);
         }
         self.transforms_texture.deinit(&mut self.device);
         self.prim_header_f_texture.deinit(&mut self.device);
@@ -4806,6 +4923,7 @@ pub struct RendererOptions {
     pub support_low_priority_transactions: bool,
     pub namespace_alloc_by_client: bool,
     pub enable_picture_caching: bool,
+    pub testing: bool,
 }
 
 impl Default for RendererOptions {
@@ -4843,6 +4961,7 @@ impl Default for RendererOptions {
             support_low_priority_transactions: false,
             namespace_alloc_by_client: false,
             enable_picture_caching: false,
+            testing: false,
         }
     }
 }
@@ -4859,11 +4978,11 @@ impl DebugServer {
     pub fn send(&mut self, _: String) {}
 }
 
-// Some basic statistics about the rendered scene
-// that we can use in wrench reftests to ensure that
-// tests are batching and/or allocating on render
-// targets as we expect them to.
+/// Some basic statistics about the rendered scene, used in Gecko, as
+/// well as in wrench reftests to ensure that tests are batching and/or
+/// allocating on render targets as we expect them to.
 #[repr(C)]
+#[derive(Debug, Default)]
 pub struct RendererStats {
     pub total_draw_calls: usize,
     pub alpha_target_count: usize,
@@ -4873,20 +4992,13 @@ pub struct RendererStats {
     pub gpu_cache_upload_time: u64,
 }
 
-impl RendererStats {
-    pub fn empty() -> Self {
-        RendererStats {
-            total_draw_calls: 0,
-            alpha_target_count: 0,
-            color_target_count: 0,
-            texture_upload_kb: 0,
-            resource_upload_time: 0,
-            gpu_cache_upload_time: 0,
-        }
-    }
+/// Return type from render(), which contains some repr(C) statistics as well as
+/// some non-repr(C) data.
+#[derive(Debug, Default)]
+pub struct RenderResults {
+    pub stats: RendererStats,
+    pub recorded_dirty_regions: Vec<RecordedDirtyRegion>,
 }
-
-
 
 #[cfg(any(feature = "capture", feature = "replay"))]
 #[cfg_attr(feature = "capture", derive(Serialize))]

@@ -1,11 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-ChromeUtils.import("resource://gre/modules/Log.jsm");
-ChromeUtils.import("resource://services-sync/constants.js");
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/policies.js");
-ChromeUtils.import("resource://services-sync/util.js");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
 
 Log.repository.rootLogger.addAppender(new Log.DumpAppender());
 
@@ -109,7 +105,6 @@ add_task(async function test_login_logout() {
     _("Logging out again won't do any harm.");
     Service.logout();
     Assert.ok(!Service.isLoggedIn);
-
   } finally {
     Svc.Prefs.resetBranch("");
     await promiseStopServer(server);
@@ -206,7 +201,6 @@ add_task(async function test_login_on_sync() {
 
     // N.B., a bunch of methods are stubbed at this point. Be careful putting
     // new tests after this point!
-
   } finally {
     Svc.Prefs.resetBranch("");
     await promiseStopServer(server);

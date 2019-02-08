@@ -107,11 +107,11 @@ class AboutConfigTest {
   }
 
   get bypassWarningButton() {
-    return this.document.querySelector("button.primary");
+    return this.document.querySelector("button[autofocus]");
   }
 
   get searchInput() {
-    return this.document.getElementById("search");
+    return this.document.getElementById("about-config-search");
   }
 
   get prefsTable() {

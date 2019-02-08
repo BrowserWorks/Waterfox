@@ -20,6 +20,7 @@
 #include "mozilla/AutoRestore.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/Casting.h"
+#include "mozilla/Components.h"
 #include "mozilla/Encoding.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/HTMLEditor.h"
@@ -61,6 +62,7 @@
 #include "mozilla/dom/LoadURIOptionsBinding.h"
 
 #include "mozilla/net/ReferrerPolicy.h"
+#include "mozilla/net/UrlClassifierFeatureFactory.h"
 
 #include "nsIApplicationCacheChannel.h"
 #include "nsIApplicationCacheContainer.h"
@@ -160,7 +162,6 @@
 #include "nsArray.h"
 #include "nsArrayUtils.h"
 #include "nsAutoPtr.h"
-#include "nsCDefaultURIFixup.h"
 #include "nsCExternalHandlerService.h"
 #include "nsContentDLF.h"
 #include "nsContentPolicyUtils.h"  // NS_CheckContentLoadPolicy(...)
@@ -219,7 +220,7 @@
 #endif
 
 #ifdef MOZ_TOOLKIT_SEARCH
-#  include "nsIBrowserSearchService.h"
+#  include "nsISearchService.h"
 #endif
 
 using namespace mozilla;
@@ -399,7 +400,8 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext)
     NS_ASSERTION(sURIFixup == nullptr,
                  "Huh, sURIFixup not null in first nsDocShell ctor!");
 
-    CallGetService(NS_URIFIXUP_CONTRACTID, &sURIFixup);
+    nsCOMPtr<nsIURIFixup> uriFixup = components::URIFixup::Service();
+    uriFixup.forget(&sURIFixup);
   }
 
   MOZ_LOG(gDocShellLeakLog, LogLevel::Debug, ("DOCSHELL %p created\n", this));
@@ -6391,7 +6393,7 @@ nsDocShell::OnStateChange(nsIWebProgress* aProgress, nsIRequest* aRequest,
         nsCOMPtr<nsIWidget> mainWidget;
         GetMainWidget(getter_AddRefs(mainWidget));
         if (mainWidget) {
-          mainWidget->SetCursor(eCursor_spinning);
+          mainWidget->SetCursor(eCursor_spinning, nullptr, 0, 0);
         }
       }
     }
@@ -6407,7 +6409,7 @@ nsDocShell::OnStateChange(nsIWebProgress* aProgress, nsIRequest* aRequest,
       nsCOMPtr<nsIWidget> mainWidget;
       GetMainWidget(getter_AddRefs(mainWidget));
       if (mainWidget) {
-        mainWidget->SetCursor(eCursor_standard);
+        mainWidget->SetCursor(eCursor_standard, nullptr, 0, 0);
       }
     }
   }
@@ -6698,7 +6700,8 @@ nsresult nsDocShell::EndPageLoad(nsIWebProgress* aProgress,
     // a tracking URL. We make a note of this iframe node by including
     // it in a dedicated array of blocked tracking nodes under its parent
     // document. (document of parent window of blocked document)
-    if (isTopFrame == false && aStatus == NS_ERROR_TRACKING_URI) {
+    if (!isTopFrame &&
+        UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(aStatus)) {
       // frameElement is our nsIContent to be annotated
       RefPtr<Element> frameElement;
       nsPIDOMWindowOuter* thisWindow = GetWindow();
@@ -6724,7 +6727,7 @@ nsresult nsDocShell::EndPageLoad(nsIWebProgress* aProgress,
         return NS_OK;
       }
 
-      parentDoc->AddBlockedTrackingNode(frameElement);
+      parentDoc->AddBlockedNodeByClassifier(frameElement);
 
       return NS_OK;
     }
@@ -9628,13 +9631,12 @@ nsresult nsDocShell::DoURILoad(nsDocShellLoadState* aLoadState,
     return NS_OK;
   }
 
-  nsresult rv;
-  nsCOMPtr<nsIURILoader> uriLoader =
-      do_GetService(NS_URI_LOADER_CONTRACTID, &rv);
-  if (NS_FAILED(rv)) {
-    return rv;
+  nsCOMPtr<nsIURILoader> uriLoader = components::URILoader::Service();
+  if (NS_WARN_IF(!uriLoader)) {
+    return NS_ERROR_UNEXPECTED;
   }
 
+  nsresult rv;
   if (IsFrame()) {
     MOZ_ASSERT(aContentPolicyType == nsIContentPolicy::TYPE_INTERNAL_IFRAME ||
                    aContentPolicyType == nsIContentPolicy::TYPE_INTERNAL_FRAME,
@@ -11267,7 +11269,7 @@ nsresult nsDocShell::AddToSessionHistory(nsIURI* aURI, nsIChannel* aChannel,
 
   // Create a new entry if necessary.
   if (!entry) {
-    entry = do_CreateInstance(NS_SHENTRY_CONTRACTID);
+    entry = components::SHEntry::Create();
 
     if (!entry) {
       return NS_ERROR_OUT_OF_MEMORY;
@@ -13162,7 +13164,7 @@ void nsDocShell::MaybeNotifyKeywordSearchLoading(const nsString& aProvider,
   }
 
 #ifdef MOZ_TOOLKIT_SEARCH
-  nsCOMPtr<nsIBrowserSearchService> searchSvc =
+  nsCOMPtr<nsISearchService> searchSvc =
       do_GetService("@mozilla.org/browser/search-service;1");
   if (searchSvc) {
     nsCOMPtr<nsISearchEngine> searchEngine;

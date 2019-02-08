@@ -424,6 +424,13 @@ void WebrtcGlobalInformation::GetAllStats(
 static nsresult RunLogQuery(const nsCString& aPattern,
                             WebrtcGlobalChild* aThisChild,
                             const int aRequestId) {
+  PeerConnectionCtx* ctx = GetPeerConnectionCtx();
+  if (!ctx) {
+    // This process has never created a PeerConnection, so no ICE logging.
+    OnGetLogging_m(aThisChild, aRequestId, Sequence<nsString>());
+    return NS_OK;
+  }
+
   nsresult rv;
   nsCOMPtr<nsISerialEventTarget> stsThread =
       do_GetService(NS_SOCKETTRANSPORTSERVICE_CONTRACTID, &rv);
@@ -435,9 +442,12 @@ static nsresult RunLogQuery(const nsCString& aPattern,
     return NS_ERROR_FAILURE;
   }
 
-  InvokeAsync(
-      stsThread, __func__,
-      [aPattern]() { return MediaTransportHandler::GetIceLog(aPattern); })
+  RefPtr<MediaTransportHandler> transportHandler = ctx->GetTransportHandler();
+
+  InvokeAsync(stsThread, __func__,
+              [transportHandler, aPattern]() {
+                return transportHandler->GetIceLog(aPattern);
+              })
       ->Then(GetMainThreadSerialEventTarget(), __func__,
              [aRequestId, aThisChild](Sequence<nsString>&& aLogLines) {
                OnGetLogging_m(aThisChild, aRequestId, std::move(aLogLines));
@@ -450,6 +460,12 @@ static nsresult RunLogQuery(const nsCString& aPattern,
 }
 
 static nsresult RunLogClear() {
+  PeerConnectionCtx* ctx = GetPeerConnectionCtx();
+  if (!ctx) {
+    // This process has never created a PeerConnection, so no ICE logging.
+    return NS_OK;
+  }
+
   nsresult rv;
   nsCOMPtr<nsIEventTarget> stsThread =
       do_GetService(NS_SOCKETTRANSPORTSERVICE_CONTRACTID, &rv);
@@ -461,9 +477,12 @@ static nsresult RunLogClear() {
     return NS_ERROR_FAILURE;
   }
 
-  return RUN_ON_THREAD(stsThread,
-                       WrapRunnableNM(&MediaTransportHandler::ClearIceLog),
-                       NS_DISPATCH_NORMAL);
+  RefPtr<MediaTransportHandler> transportHandler = ctx->GetTransportHandler();
+
+  return RUN_ON_THREAD(
+      stsThread,
+      WrapRunnable(transportHandler, &MediaTransportHandler::ClearIceLog),
+      NS_DISPATCH_NORMAL);
 }
 
 void WebrtcGlobalInformation::ClearLogging(const GlobalObject& aGlobal) {

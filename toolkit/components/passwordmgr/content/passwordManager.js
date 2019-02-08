@@ -3,9 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /** * =================== SAVED SIGNONS CODE =================== ***/
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(this, "DeferredTask",
                                "resource://gre/modules/DeferredTask.jsm");
@@ -31,6 +30,7 @@ let signonsIntro;
 let removeButton;
 let removeAllButton;
 let signonsTree;
+let autofillCheckbox;
 
 let signonReloadDisplay = {
   observe(subject, topic, data) {
@@ -73,12 +73,15 @@ function Startup() {
   filterField = document.getElementById("filter");
   togglePasswordsButton = document.getElementById("togglePasswords");
   signonsIntro = document.getElementById("signonsIntro");
+  autofillCheckbox = document.getElementById("passwordAutofillCheckbox");
   removeButton = document.getElementById("removeSignon");
   removeAllButton = document.getElementById("removeAllSignons");
 
   togglePasswordsButton.label = kSignonBundle.getString("showPasswords");
   togglePasswordsButton.accessKey = kSignonBundle.getString("showPasswordsAccessKey");
   signonsIntro.textContent = kSignonBundle.getString("loginsDescriptionAll2");
+  autofillCheckbox.label = kSignonBundle.getString("autofillLoginsAndPasswords");
+  autofillCheckbox.checked = Services.prefs.getBoolPref("signon.autofillForms");
   removeAllButton.setAttribute("label", kSignonBundle.getString("removeAll.label"));
   removeAllButton.setAttribute("accesskey", kSignonBundle.getString("removeAll.accesskey"));
   document.getElementsByTagName("treecols")[0].addEventListener("click", (event) => {
@@ -108,6 +111,10 @@ function Startup() {
   }
 
   FocusFilterBox();
+}
+
+function watchLoginAutofill() {
+  Services.prefs.setBoolPref("signon.autofillForms", autofillCheckbox.checked);
 }
 
 function Shutdown() {
@@ -207,7 +214,6 @@ let signonsTreeView = {
 
     if (col.id == "userCol") {
       _editLogin("username");
-
     } else if (col.id == "passwordCol") {
       if (!value) {
         return;
@@ -752,7 +758,7 @@ function escapeKeyHandler() {
 }
 
 function OpenMigrator() {
-  const { MigrationUtils } = ChromeUtils.import("resource:///modules/MigrationUtils.jsm", {});
+  const { MigrationUtils } = ChromeUtils.import("resource:///modules/MigrationUtils.jsm");
   // We pass in the type of source we're using for use in telemetry:
   MigrationUtils.showMigrationWizard(window, [MigrationUtils.MIGRATION_ENTRYPOINT_PASSWORDS]);
 }

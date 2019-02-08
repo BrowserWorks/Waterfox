@@ -1,9 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-ChromeUtils.import("resource://services-common/kinto-offline-client.js");
-ChromeUtils.import("resource://services-common/kinto-storage-adapter.js");
-ChromeUtils.import("resource://testing-common/httpd.js");
+const {Kinto} = ChromeUtils.import("resource://services-common/kinto-offline-client.js");
+const {FirefoxAdapter} = ChromeUtils.import("resource://services-common/kinto-storage-adapter.js");
 
 const BinaryInputStream = Components.Constructor("@mozilla.org/binaryinputstream;1",
   "nsIBinaryInputStream", "setInputStream");
@@ -455,5 +454,4 @@ function getSampleResponse(req, port) {
   };
   return responses[`${req.method}:${req.path}?${req.queryString}`] ||
          responses[req.method];
-
 }

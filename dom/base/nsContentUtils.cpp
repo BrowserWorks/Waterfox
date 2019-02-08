@@ -40,6 +40,7 @@
 #include "mozilla/Base64.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/CheckedInt.h"
+#include "mozilla/Components.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/LoadInfo.h"
 #include "mozilla/dom/BlobURLProtocolHandler.h"
@@ -107,7 +108,6 @@
 #include "nsContentList.h"
 #include "nsContentPolicyUtils.h"
 #include "nsContentSecurityManager.h"
-#include "nsCPrefetchService.h"
 #include "nsCRT.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsCycleCollector.h"
@@ -224,7 +224,7 @@
 #include "nsContentTypeParser.h"
 #include "nsICookiePermission.h"
 #include "nsICookieService.h"
-#include "mozIThirdPartyUtil.h"
+#include "ThirdPartyUtil.h"
 #include "mozilla/EnumSet.h"
 #include "mozilla/BloomFilter.h"
 #include "TabChild.h"
@@ -310,7 +310,6 @@ bool nsContentUtils::sIsPerformanceTimingEnabled = false;
 bool nsContentUtils::sIsResourceTimingEnabled = false;
 bool nsContentUtils::sIsPerformanceNavigationTimingEnabled = false;
 bool nsContentUtils::sIsFormAutofillAutocompleteEnabled = false;
-bool nsContentUtils::sIsUAWidgetEnabled = false;
 bool nsContentUtils::sSendPerformanceTimingNotifications = false;
 bool nsContentUtils::sUseActivityCursor = false;
 bool nsContentUtils::sAnimationsAPICoreEnabled = false;
@@ -657,9 +656,6 @@ nsresult nsContentUtils::Init() {
 
   Preferences::AddBoolVarCache(&sIsFormAutofillAutocompleteEnabled,
                                "dom.forms.autocomplete.formautofill", false);
-
-  Preferences::AddBoolVarCache(&sIsUAWidgetEnabled, "dom.ua_widget.enabled",
-                               false);
 
   Preferences::AddIntVarCache(&sPrivacyMaxInnerWidth,
                               "privacy.window.maxInnerWidth", 1000);
@@ -1788,7 +1784,7 @@ void nsContentUtils::GetOfflineAppManifest(Document* aDocument, nsIURI** aURI) {
 /* static */
 bool nsContentUtils::OfflineAppAllowed(nsIURI* aURI) {
   nsCOMPtr<nsIOfflineCacheUpdateService> updateService =
-      do_GetService(NS_OFFLINECACHEUPDATESERVICE_CONTRACTID);
+      components::OfflineCacheUpdate::Service();
   if (!updateService) {
     return false;
   }
@@ -1802,7 +1798,7 @@ bool nsContentUtils::OfflineAppAllowed(nsIURI* aURI) {
 /* static */
 bool nsContentUtils::OfflineAppAllowed(nsIPrincipal* aPrincipal) {
   nsCOMPtr<nsIOfflineCacheUpdateService> updateService =
-      do_GetService(NS_OFFLINECACHEUPDATESERVICE_CONTRACTID);
+      components::OfflineCacheUpdate::Service();
   if (!updateService) {
     return false;
   }
@@ -1826,7 +1822,7 @@ bool nsContentUtils::MaybeAllowOfflineAppByDefault(nsIPrincipal* aPrincipal) {
   if (!allowedByDefault) return false;
 
   nsCOMPtr<nsIOfflineCacheUpdateService> updateService =
-      do_GetService(NS_OFFLINECACHEUPDATESERVICE_CONTRACTID);
+      components::OfflineCacheUpdate::Service();
   if (!updateService) {
     return false;
   }
@@ -2098,6 +2094,12 @@ bool nsContentUtils::ShouldResistFingerprinting(Document* aDoc) {
   }
   bool isChrome = nsContentUtils::IsChromeDoc(aDoc);
   return !isChrome && ShouldResistFingerprinting();
+}
+
+/* static */
+bool nsContentUtils::UseStandinsForNativeColors() {
+  return ShouldResistFingerprinting() ||
+         StaticPrefs::ui_use_standins_for_native_colors();
 }
 
 /* static */
@@ -3674,13 +3676,16 @@ void nsContentUtils::AsyncPrecreateStringBundles() {
 
   for (uint32_t bundleIndex = 0; bundleIndex < PropertiesFile_COUNT;
        ++bundleIndex) {
-    nsresult rv = NS_IdleDispatchToCurrentThread(
-        NS_NewRunnableFunction("AsyncPrecreateStringBundles", [bundleIndex]() {
-          PropertiesFile file = static_cast<PropertiesFile>(bundleIndex);
-          EnsureStringBundle(file);
-          nsIStringBundle* bundle = sStringBundles[file];
-          bundle->AsyncPreload();
-        }));
+    nsresult rv = NS_DispatchToCurrentThreadQueue(
+        NS_NewRunnableFunction("AsyncPrecreateStringBundles",
+                               [bundleIndex]() {
+                                 PropertiesFile file =
+                                     static_cast<PropertiesFile>(bundleIndex);
+                                 EnsureStringBundle(file);
+                                 nsIStringBundle* bundle = sStringBundles[file];
+                                 bundle->AsyncPreload();
+                               }),
+        EventQueuePriority::Idle);
     Unused << NS_WARN_IF(NS_FAILED(rv));
   }
 }
@@ -5026,6 +5031,19 @@ bool nsContentUtils::IsInSameAnonymousTree(const nsINode* aNode,
   }
 
   return aNode->AsContent()->GetBindingParent() == aContent->GetBindingParent();
+}
+
+/* static */
+bool nsContentUtils::IsInInteractiveHTMLContent(const Element* aElement,
+                                                const Element* aStop) {
+  const Element* element = aElement;
+  while (element && element != aStop) {
+    if (element->IsInteractiveHTMLContent(true)) {
+      return true;
+    }
+    element = element->GetFlattenedTreeParentElement();
+  }
+  return false;
 }
 
 /* static */
@@ -6986,6 +7004,13 @@ bool nsContentUtils::IsJavascriptMIMEType(const nsAString& aMIMEType) {
     }
   }
 
+#ifdef JS_BUILD_BINAST
+  if (nsJSUtils::BinASTEncodingEnabled() &&
+      aMIMEType.LowerCaseEqualsASCII(APPLICATION_JAVASCRIPT_BINAST)) {
+    return true;
+  }
+#endif
+
   return false;
 }
 
@@ -8097,8 +8122,8 @@ nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForWindow(
     // callee is able to deal with a null channel argument, and if passed null,
     // will only fail to notify the UI in case storage gets blocked.
     nsIChannel* channel = document->GetChannel();
-    return InternalStorageAllowedForPrincipal(principal, aWindow, nullptr,
-                                              channel, *aRejectedReason);
+    return InternalStorageAllowedCheck(principal, aWindow, nullptr, channel,
+                                       *aRejectedReason);
   }
 
   // No document? Let's return a generic rejected reason.
@@ -8118,8 +8143,8 @@ nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForDocument(
     nsIChannel* channel = aDoc->GetChannel();
 
     uint32_t rejectedReason = 0;
-    return InternalStorageAllowedForPrincipal(principal, inner, nullptr,
-                                              channel, rejectedReason);
+    return InternalStorageAllowedCheck(principal, inner, nullptr, channel,
+                                       rejectedReason);
   }
 
   return StorageAccess::eDeny;
@@ -8133,8 +8158,8 @@ nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForNewWindow(
   // parent may be nullptr
 
   uint32_t rejectedReason = 0;
-  return InternalStorageAllowedForPrincipal(aPrincipal, aParent, aURI, nullptr,
-                                            rejectedReason);
+  return InternalStorageAllowedCheck(aPrincipal, aParent, aURI, nullptr,
+                                     rejectedReason);
 }
 
 // static, public
@@ -8149,18 +8174,18 @@ nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForChannel(
   NS_ENSURE_TRUE(principal, nsContentUtils::StorageAccess::eDeny);
 
   uint32_t rejectedReason = 0;
-  nsContentUtils::StorageAccess result = InternalStorageAllowedForPrincipal(
+  nsContentUtils::StorageAccess result = InternalStorageAllowedCheck(
       principal, nullptr, nullptr, aChannel, rejectedReason);
 
   return result;
 }
 
 // static, public
-nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForPrincipal(
+nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForServiceWorker(
     nsIPrincipal* aPrincipal) {
   uint32_t rejectedReason = 0;
-  return InternalStorageAllowedForPrincipal(aPrincipal, nullptr, nullptr,
-                                            nullptr, rejectedReason);
+  return InternalStorageAllowedCheck(aPrincipal, nullptr, nullptr, nullptr,
+                                     rejectedReason);
 }
 
 // static, private
@@ -8198,7 +8223,7 @@ bool nsContentUtils::IsThirdPartyWindowOrChannel(nsPIDOMWindowInner* aWindow,
   MOZ_ASSERT(!aWindow || !aChannel,
              "A window and channel should not both be provided.");
 
-  nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil = services::GetThirdPartyUtil();
+  ThirdPartyUtil* thirdPartyUtil = ThirdPartyUtil::GetInstance();
   if (!thirdPartyUtil) {
     return false;
   }
@@ -8350,12 +8375,9 @@ bool nsContentUtils::StorageDisabledByAntiTracking(nsPIDOMWindowInner* aWindow,
 }
 
 // static, private
-nsContentUtils::StorageAccess
-nsContentUtils::InternalStorageAllowedForPrincipal(nsIPrincipal* aPrincipal,
-                                                   nsPIDOMWindowInner* aWindow,
-                                                   nsIURI* aURI,
-                                                   nsIChannel* aChannel,
-                                                   uint32_t& aRejectedReason) {
+nsContentUtils::StorageAccess nsContentUtils::InternalStorageAllowedCheck(
+    nsIPrincipal* aPrincipal, nsPIDOMWindowInner* aWindow, nsIURI* aURI,
+    nsIChannel* aChannel, uint32_t& aRejectedReason) {
   MOZ_ASSERT(aPrincipal);
 
   aRejectedReason = 0;
@@ -8407,7 +8429,7 @@ nsContentUtils::InternalStorageAllowedForPrincipal(nsIPrincipal* aPrincipal,
   //
   // This is due to backwards-compatibility and the state of storage access
   // before the introducton of
-  // nsContentUtils::InternalStorageAllowedForPrincipal:
+  // nsContentUtils::InternalStorageAllowedCheck:
   //
   // BEFORE:
   // localStorage, caches: allowed in 3rd-party iframes always
@@ -10290,8 +10312,9 @@ template <prototypes::ID PrototypeID, class NativeType, typename T>
 static Result<Ok, nsresult> ExtractExceptionValues(
     JSContext* aCx, JS::HandleObject aObj, nsAString& aSourceSpecOut,
     uint32_t* aLineOut, uint32_t* aColumnOut, nsString& aMessageOut) {
+  AssertStaticUnwrapOK<PrototypeID>();
   RefPtr<T> exn;
-  MOZ_TRY((UnwrapObject<PrototypeID, NativeType>(aObj, exn)));
+  MOZ_TRY((UnwrapObject<PrototypeID, NativeType>(aObj, exn, nullptr)));
 
   exn->GetFilename(aCx, aSourceSpecOut);
   if (!aSourceSpecOut.IsEmpty()) {

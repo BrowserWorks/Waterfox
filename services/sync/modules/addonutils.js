@@ -6,9 +6,9 @@
 
 var EXPORTED_SYMBOLS = ["AddonUtils"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Log.jsm");
-ChromeUtils.import("resource://services-sync/util.js");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Log} = ChromeUtils.import("resource://gre/modules/Log.jsm");
+const {Svc} = ChromeUtils.import("resource://services-sync/util.js");
 
 ChromeUtils.defineModuleGetter(this, "AddonManager",
   "resource://gre/modules/AddonManager.jsm");
@@ -37,10 +37,12 @@ AddonUtilsInternal.prototype = {
     // reflected in the AddonInstall, so we can't use it. If we ever get rid
     // of sourceURI rewriting, we can avoid having to reconstruct the
     // AddonInstall.
-    return AddonManager.getInstallForURL(
-      addon.sourceURI.spec, "application/x-xpinstall", undefined, addon.name, addon.iconURL, addon.version,
-      null, {source: "sync"}
-    );
+    return AddonManager.getInstallForURL(addon.sourceURI.spec, {
+      name: addon.name,
+      icons: addon.iconURL,
+      version: addon.version,
+      telemetryInfo: {source: "sync"},
+    });
   },
 
   /**
@@ -246,7 +248,6 @@ AddonUtilsInternal.prototype = {
 
       let params = addon.sourceURI.query.split("&").map(
         function rewrite(param) {
-
         if (param.indexOf("src=") == 0) {
           return "src=sync";
         }

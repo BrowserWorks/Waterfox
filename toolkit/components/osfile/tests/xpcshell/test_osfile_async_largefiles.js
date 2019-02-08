@@ -3,8 +3,8 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/ctypes.jsm");
-ChromeUtils.import("resource://gre/modules/osfile.jsm");
+const {ctypes} = ChromeUtils.import("resource://gre/modules/ctypes.jsm");
+const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 
 /**
  * A test to check that .getPosition/.setPosition work with large files.
@@ -41,7 +41,6 @@ async function test_setPosition(forward, current, backward) {
       await file.setPosition(-backward, OS.File.POS_CURRENT);
       pos -= backward;
       Assert.equal((await file.getPosition()), pos);
-
     } finally {
       await file.setPosition(0, OS.File.POS_START);
       await file.close();
@@ -95,7 +94,6 @@ async function test_setPosition_failures() {
         info(ex.toString());
         Assert.ok(!!ex);
       }
-
     } finally {
       await file.setPosition(0, OS.File.POS_START);
       await file.close();

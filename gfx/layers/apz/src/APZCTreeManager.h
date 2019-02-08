@@ -512,7 +512,7 @@ class APZCTreeManager : public IAPZCTreeManager, public APZInputBridge {
    *    the last paint of the associated content. Note: this metrics should
    *    NOT reflect async scrolling, i.e. they should be the layer tree's
    *    copy of the metrics, or APZC's last-content-paint metrics.
-   * @param aThumbData The scroll thumb data for the the scroll thumb layer.
+   * @param aScrollbarData The scrollbar data for the the scroll thumb layer.
    * @param aScrollbarIsDescendant True iff. the scroll thumb layer is a
    *    descendant of the layer bearing the scroll frame's metrics.
    * @param aOutClipTransform If not null, and |aScrollbarIsDescendant| is true,
@@ -764,6 +764,11 @@ class APZCTreeManager : public IAPZCTreeManager, public APZInputBridge {
    * IMPORTANT: See the note about lock ordering at the top of this file. */
   mutable mozilla::RecursiveMutex mTreeLock;
   RefPtr<HitTestingTreeNode> mRootNode;
+
+  /* True if the current hit-testing tree contains an async zoom container
+   * node.
+   */
+  bool mUsingAsyncZoomContainer;
 
   /** A lock that protects mApzcMap and mScrollThumbInfo. */
   mutable mozilla::Mutex mMapLock;

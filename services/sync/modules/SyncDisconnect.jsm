@@ -5,7 +5,7 @@
 // This module provides a facility for disconnecting Sync and FxA, optionally
 // sanitizing profile data as part of the process.
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   Services: "resource://gre/modules/Services.jsm",
@@ -174,7 +174,6 @@ this.SyncDisconnectInternal = {
     if (sanitizeBrowserData) {
       await this.doSanitizeBrowserData();
     }
-
   },
 
   async disconnect(options) {

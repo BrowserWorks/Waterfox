@@ -25,7 +25,9 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=574663
 function waitForPaint(win, utils, callback) {
   win.document.documentElement.getBoundingClientRect();
   if (!utils.isMozAfterPaintPending) {
-    callback();
+    win.requestAnimationFrame(function() {
+      setTimeout(callback);
+    });
     return;
   }
 
@@ -106,7 +108,7 @@ function runTest() {
     // Until the blank attribute is removed, we can't send scroll events.
     SimpleTest.waitForFocus(function() {
       let chromeScript = SpecialPowers.loadChromeScript(_ => {
-        ChromeUtils.import("resource://gre/modules/Services.jsm");
+        const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
         let win = Services.wm.getMostRecentWindow("navigator:browser");
         win.requestAnimationFrame(() => {
           win.gBrowser.selectedBrowser.removeAttribute("blank");

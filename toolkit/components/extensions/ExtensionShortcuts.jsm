@@ -6,15 +6,17 @@
 /* exported ExtensionShortcuts */
 const EXPORTED_SYMBOLS = ["ExtensionShortcuts"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/ExtensionCommon.jsm");
-ChromeUtils.import("resource://gre/modules/ExtensionUtils.jsm");
-ChromeUtils.import("resource://gre/modules/ShortcutUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {ExtensionCommon} = ChromeUtils.import("resource://gre/modules/ExtensionCommon.jsm");
+const {ExtensionUtils} = ChromeUtils.import("resource://gre/modules/ExtensionUtils.jsm");
+const {ShortcutUtils} = ChromeUtils.import("resource://gre/modules/ShortcutUtils.jsm");
 
 ChromeUtils.defineModuleGetter(this, "ExtensionParent",
                                "resource://gre/modules/ExtensionParent.jsm");
 ChromeUtils.defineModuleGetter(this, "ExtensionSettingsStore",
                                "resource://gre/modules/ExtensionSettingsStore.jsm");
+ChromeUtils.defineModuleGetter(this, "PrivateBrowsingUtils",
+                               "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "windowTracker", () => {
   return ExtensionParent.apiManager.global.windowTracker;
@@ -238,6 +240,11 @@ class ExtensionShortcuts {
    * @param {Map} commands The commands to be set.
    */
   registerKeysToDocument(window, commands) {
+    if (!this.extension.privateBrowsingAllowed &&
+        PrivateBrowsingUtils.isWindowPrivate(window)) {
+      return;
+    }
+
     let doc = window.document;
     let keyset = doc.createXULElement("keyset");
     keyset.id = `ext-keyset-id-${this.id}`;

@@ -78,6 +78,11 @@ class BigInt final : public js::gc::TenuredCell {
   bool isZero() const { return digitLength() == 0; }
   bool isNegative() const { return lengthSignAndReservedBits_ & SignBit; }
 
+  // Offset for direct access from JIT code.
+  static constexpr size_t offsetOfLengthSignAndReservedBits() {
+    return offsetof(BigInt, lengthSignAndReservedBits_);
+  }
+
   void initializeDigitsToZero();
 
   void traceChildren(JSTracer* trc);
@@ -148,6 +153,7 @@ class BigInt final : public js::gc::TenuredCell {
 
   static double numberValue(BigInt* x);
 
+  template <js::AllowGC allowGC>
   static JSLinearString* toString(JSContext* cx, Handle<BigInt*> x,
                                   uint8_t radix);
   template <typename CharT>
@@ -317,8 +323,12 @@ class BigInt final : public js::gc::TenuredCell {
 
   static bool equal(BigInt* lhs, double rhs);
 
+  template <js::AllowGC allowGC>
   static JSLinearString* toStringBasePowerOfTwo(JSContext* cx, Handle<BigInt*>,
                                                 unsigned radix);
+  template <js::AllowGC allowGC>
+  static JSLinearString* toStringSingleDigitBaseTen(JSContext* cx, Digit digit,
+                                                    bool isNegative);
   static JSLinearString* toStringGeneric(JSContext* cx, Handle<BigInt*>,
                                          unsigned radix);
 
@@ -326,8 +336,8 @@ class BigInt final : public js::gc::TenuredCell {
   static BigInt* destructivelyTrimHighZeroDigits(JSContext* cx,
                                                  Handle<BigInt*> x);
 
-  friend struct JSStructuredCloneReader;
-  friend struct JSStructuredCloneWriter;
+  friend struct ::JSStructuredCloneReader;
+  friend struct ::JSStructuredCloneWriter;
   template <js::XDRMode mode>
   friend js::XDRResult js::XDRBigInt(js::XDRState<mode>* xdr,
                                      MutableHandle<BigInt*> bi);
@@ -349,6 +359,7 @@ static_assert(
 
 namespace js {
 
+template <AllowGC allowGC>
 extern JSAtom* BigIntToAtom(JSContext* cx, JS::HandleBigInt bi);
 
 extern JS::BigInt* NumberToBigInt(JSContext* cx, double d);

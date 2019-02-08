@@ -123,8 +123,8 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 
 
-var pdfjsVersion = '2.1.215';
-var pdfjsBuild = '9128335c';
+var pdfjsVersion = '2.1.243';
+var pdfjsBuild = 'c0d6e46e';
 
 var pdfjsSharedUtil = __w_pdfjs_require__(1);
 
@@ -1100,10 +1100,24 @@ function isSpace(ch) {
 }
 
 function createPromiseCapability() {
-  var capability = {};
+  const capability = Object.create(null);
+  let isSettled = false;
+  Object.defineProperty(capability, 'settled', {
+    get() {
+      return isSettled;
+    }
+
+  });
   capability.promise = new Promise(function (resolve, reject) {
-    capability.resolve = resolve;
-    capability.reject = reject;
+    capability.resolve = function (data) {
+      isSettled = true;
+      resolve(data);
+    };
+
+    capability.reject = function (reason) {
+      isSettled = true;
+      reject(reason);
+    };
   });
   return capability;
 }
@@ -1397,7 +1411,7 @@ function _fetchDocument(worker, source, pdfDataRangeTransport, docId) {
 
   return worker.messageHandler.sendWithPromise('GetDocRequest', {
     docId,
-    apiVersion: '2.1.215',
+    apiVersion: '2.1.243',
     source: {
       data: source.data,
       url: source.url,
@@ -3042,7 +3056,7 @@ const InternalRenderTask = function InternalRenderTaskClosure() {
       }
     }
 
-    cancel() {
+    cancel(error = null) {
       this.running = false;
       this.cancelled = true;
 
@@ -3054,7 +3068,7 @@ const InternalRenderTask = function InternalRenderTaskClosure() {
         canvasInRendering.delete(this._canvas);
       }
 
-      this.callback(new _dom_utils.RenderingCancelledException('Rendering cancelled, page ' + this.pageNumber, 'canvas'));
+      this.callback(error || new _dom_utils.RenderingCancelledException(`Rendering cancelled, page ${this.pageNumber}`, 'canvas'));
     }
 
     operatorListChanged() {
@@ -3094,10 +3108,10 @@ const InternalRenderTask = function InternalRenderTaskClosure() {
     _scheduleNext() {
       if (this._useRequestAnimationFrame) {
         window.requestAnimationFrame(() => {
-          this._nextBound().catch(this.callback);
+          this._nextBound().catch(this.cancel.bind(this));
         });
       } else {
-        Promise.resolve().then(this._nextBound).catch(this.callback);
+        Promise.resolve().then(this._nextBound).catch(this.cancel.bind(this));
       }
     }
 
@@ -3128,9 +3142,9 @@ const InternalRenderTask = function InternalRenderTaskClosure() {
   return InternalRenderTask;
 }();
 
-const version = '2.1.215';
+const version = '2.1.243';
 exports.version = version;
-const build = '9128335c';
+const build = 'c0d6e46e';
 exports.build = build;
 
 /***/ }),

@@ -31,6 +31,7 @@
 #include "CounterStyleManager.h"
 #include <algorithm>
 #include "mozilla/dom/HTMLInputElement.h"
+#include "nsGridContainerFrame.h"
 
 #ifdef DEBUG
 #  undef NOISY_VERTICAL_ALIGN
@@ -135,21 +136,32 @@ static nscoord FontSizeInflationListMarginAdjustment(const nsIFrame* aFrame) {
   }
 
   float inflation = nsLayoutUtils::FontSizeInflationFor(aFrame);
-  if (inflation > 1.0f) {
-    auto listStyleType = aFrame->StyleList()->mCounterStyle->GetStyle();
-    if (listStyleType != NS_STYLE_LIST_STYLE_NONE &&
-        listStyleType != NS_STYLE_LIST_STYLE_DISC &&
-        listStyleType != NS_STYLE_LIST_STYLE_CIRCLE &&
-        listStyleType != NS_STYLE_LIST_STYLE_SQUARE &&
-        listStyleType != NS_STYLE_LIST_STYLE_DISCLOSURE_CLOSED &&
-        listStyleType != NS_STYLE_LIST_STYLE_DISCLOSURE_OPEN) {
-      // The HTML spec states that the default padding for ordered lists
-      // begins at 40px, indicating that we have 40px of space to place a
-      // bullet. When performing font inflation calculations, we add space
-      // equivalent to this, but simply inflated at the same amount as the
-      // text, in app units.
-      return nsPresContext::CSSPixelsToAppUnits(40) * (inflation - 1);
-    }
+  if (inflation <= 1.0f) {
+    return 0;
+  }
+
+  // The HTML spec states that the default padding for ordered lists
+  // begins at 40px, indicating that we have 40px of space to place a
+  // bullet. When performing font inflation calculations, we add space
+  // equivalent to this, but simply inflated at the same amount as the
+  // text, in app units.
+  auto margin = nsPresContext::CSSPixelsToAppUnits(40) * (inflation - 1);
+
+  auto* list = aFrame->StyleList();
+  if (!list->mCounterStyle.IsAtom()) {
+    return margin;
+  }
+
+  // NOTE(emilio): @counter-style can override some of the styles from this
+  // list, and we won't add margin to the counter.
+  //
+  // See https://github.com/w3c/csswg-drafts/issues/3584
+  nsAtom* type = list->mCounterStyle.AsAtom();
+  if (type != nsGkAtoms::none && type != nsGkAtoms::disc &&
+      type != nsGkAtoms::circle && type != nsGkAtoms::square &&
+      type != nsGkAtoms::disclosure_closed &&
+      type != nsGkAtoms::disclosure_open) {
+    return margin;
   }
 
   return 0;
@@ -1337,12 +1349,12 @@ static bool AreAllEarlierInFlowFramesEmpty(nsIFrame* aFrame,
 // containing block. The writing-mode of the hypothetical box position will
 // have the same block direction as the absolute containing block, but may
 // differ in inline-bidi direction.
-// In the code below, |aReflowInput->frame| is the absolute containing block,
+// In the code below, |aCBReflowInput->frame| is the absolute containing block,
 // while |containingBlock| is the nearest block container of the placeholder
 // frame, which may be different from the absolute containing block.
 void ReflowInput::CalculateHypotheticalPosition(
     nsPresContext* aPresContext, nsPlaceholderFrame* aPlaceholderFrame,
-    const ReflowInput* aReflowInput, nsHypotheticalPosition& aHypotheticalPos,
+    const ReflowInput* aCBReflowInput, nsHypotheticalPosition& aHypotheticalPos,
     LayoutFrameType aFrameType) const {
   NS_ASSERTION(mStyleDisplay->mOriginalDisplay != StyleDisplay::None,
                "mOriginalDisplay has not been properly initialized");
@@ -1352,7 +1364,7 @@ void ReflowInput::CalculateHypotheticalPosition(
   nscoord blockIStartContentEdge;
   // Dummy writing mode for blockContentSize, will be changed as needed by
   // GetHypotheticalBoxContainer.
-  WritingMode cbwm = aReflowInput->GetWritingMode();
+  WritingMode cbwm = aCBReflowInput->GetWritingMode();
   LogicalSize blockContentSize(cbwm);
   nsIFrame* containingBlock = GetHypotheticalBoxContainer(
       aPlaceholderFrame, blockIStartContentEdge, blockContentSize);
@@ -1424,7 +1436,7 @@ void ReflowInput::CalculateHypotheticalPosition(
   // relatively positioned...
   nsSize containerSize =
       containingBlock->GetStateBits() & NS_FRAME_IN_REFLOW
-          ? aReflowInput->ComputedSizeAsContainerIfConstrained()
+          ? aCBReflowInput->ComputedSizeAsContainerIfConstrained()
           : containingBlock->GetSize();
   LogicalPoint placeholderOffset(
       wm, aPlaceholderFrame->GetOffsetToIgnoringScrolling(containingBlock),
@@ -1539,9 +1551,9 @@ void ReflowInput::CalculateHypotheticalPosition(
   // placeholder. Convert to the coordinate space of the absolute containing
   // block.
   nsPoint cbOffset =
-      containingBlock->GetOffsetToIgnoringScrolling(aReflowInput->mFrame);
+      containingBlock->GetOffsetToIgnoringScrolling(aCBReflowInput->mFrame);
 
-  nsSize reflowSize = aReflowInput->ComputedSizeAsContainerIfConstrained();
+  nsSize reflowSize = aCBReflowInput->ComputedSizeAsContainerIfConstrained();
   LogicalPoint logCBOffs(wm, cbOffset, reflowSize - containerSize);
   aHypotheticalPos.mIStart += logCBOffs.I(wm);
   aHypotheticalPos.mBStart += logCBOffs.B(wm);
@@ -1549,9 +1561,9 @@ void ReflowInput::CalculateHypotheticalPosition(
   // The specified offsets are relative to the absolute containing block's
   // padding edge and our current values are relative to the border edge, so
   // translate.
-  LogicalMargin border = aReflowInput->ComputedLogicalBorderPadding() -
-                         aReflowInput->ComputedLogicalPadding();
-  border = border.ConvertTo(wm, aReflowInput->GetWritingMode());
+  LogicalMargin border = aCBReflowInput->ComputedLogicalBorderPadding() -
+                         aCBReflowInput->ComputedLogicalPadding();
+  border = border.ConvertTo(wm, aCBReflowInput->GetWritingMode());
   aHypotheticalPos.mIStart -= border.IStart(wm);
   aHypotheticalPos.mBStart -= border.BStart(wm);
 
@@ -1617,11 +1629,11 @@ void ReflowInput::CalculateHypotheticalPosition(
 }
 
 void ReflowInput::InitAbsoluteConstraints(nsPresContext* aPresContext,
-                                          const ReflowInput* aReflowInput,
+                                          const ReflowInput* aCBReflowInput,
                                           const LogicalSize& aCBSize,
                                           LayoutFrameType aFrameType) {
   WritingMode wm = GetWritingMode();
-  WritingMode cbwm = aReflowInput->GetWritingMode();
+  WritingMode cbwm = aCBReflowInput->GetWritingMode();
   NS_WARNING_ASSERTION(aCBSize.BSize(cbwm) != NS_AUTOHEIGHT,
                        "containing block bsize must be constrained");
 
@@ -1663,8 +1675,28 @@ void ReflowInput::InitAbsoluteConstraints(nsPresContext* aPresContext,
       hypotheticalPos.mIStart = nscoord(0);
       hypotheticalPos.mBStart = nscoord(0);
     } else {
+      // XXXmats all this is broken for orthogonal writing-modes: bug 1521988.
       CalculateHypotheticalPosition(aPresContext, placeholderFrame,
-                                    aReflowInput, hypotheticalPos, aFrameType);
+                                    aCBReflowInput, hypotheticalPos,
+                                    aFrameType);
+      if (aCBReflowInput->mFrame->IsGridContainerFrame()) {
+        // 'hypotheticalPos' is relative to the padding rect of the CB *frame*.
+        // In grid layout the CB is the grid area rectangle, so we translate
+        // 'hypotheticalPos' to be relative that rectangle here.
+        nsRect cb = nsGridContainerFrame::GridItemCB(mFrame);
+        nscoord left(0);
+        nscoord right(0);
+        if (cbwm.IsBidiLTR()) {
+          left = cb.X();
+        } else {
+          right = aCBReflowInput->ComputedWidth() +
+                  aCBReflowInput->ComputedPhysicalPadding().LeftRight() -
+                  cb.XMost();
+        }
+        LogicalMargin offsets(cbwm, nsMargin(cb.Y(), right, nscoord(0), left));
+        hypotheticalPos.mIStart -= offsets.IStart(cbwm);
+        hypotheticalPos.mBStart -= offsets.BStart(cbwm);
+      }
     }
   }
 

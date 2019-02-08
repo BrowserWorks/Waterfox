@@ -564,7 +564,51 @@ IPCBlobInputStream::OnInputStreamReady(nsIAsyncInputStream* aStream) {
 // nsIIPCSerializableInputStream
 
 void IPCBlobInputStream::Serialize(mozilla::ipc::InputStreamParams& aParams,
-                                   FileDescriptorArray& aFileDescriptors) {
+                                   FileDescriptorArray& aFileDescriptors,
+                                   bool aDelayedStart, uint32_t aMaxSize,
+                                   uint32_t* aSizeUsed,
+                                   nsIContentChild* aManager) {
+  MOZ_ASSERT(aSizeUsed);
+  *aSizeUsed = 0;
+
+  SerializeInternal(aParams);
+}
+
+void IPCBlobInputStream::Serialize(mozilla::ipc::InputStreamParams& aParams,
+                                   FileDescriptorArray& aFileDescriptors,
+                                   bool aDelayedStart, uint32_t aMaxSize,
+                                   uint32_t* aSizeUsed,
+                                   mozilla::ipc::PBackgroundChild* aManager) {
+  MOZ_ASSERT(aSizeUsed);
+  *aSizeUsed = 0;
+
+  SerializeInternal(aParams);
+}
+
+void IPCBlobInputStream::Serialize(mozilla::ipc::InputStreamParams& aParams,
+                                   FileDescriptorArray& aFileDescriptors,
+                                   bool aDelayedStart, uint32_t aMaxSize,
+                                   uint32_t* aSizeUsed,
+                                   nsIContentParent* aManager) {
+  MOZ_ASSERT(aSizeUsed);
+  *aSizeUsed = 0;
+
+  SerializeInternal(aParams);
+}
+
+void IPCBlobInputStream::Serialize(mozilla::ipc::InputStreamParams& aParams,
+                                   FileDescriptorArray& aFileDescriptors,
+                                   bool aDelayedStart, uint32_t aMaxSize,
+                                   uint32_t* aSizeUsed,
+                                   mozilla::ipc::PBackgroundParent* aManager) {
+  MOZ_ASSERT(aSizeUsed);
+  *aSizeUsed = 0;
+
+  SerializeInternal(aParams);
+}
+
+void IPCBlobInputStream::SerializeInternal(
+    mozilla::ipc::InputStreamParams& aParams) {
   MutexAutoLock lock(mMutex);
 
   mozilla::ipc::IPCBlobInputStreamParams params;
@@ -580,10 +624,6 @@ bool IPCBlobInputStream::Deserialize(
     const FileDescriptorArray& aFileDescriptors) {
   MOZ_CRASH("This should never be called.");
   return false;
-}
-
-mozilla::Maybe<uint64_t> IPCBlobInputStream::ExpectedSerializedLength() {
-  return mozilla::Nothing();
 }
 
 // nsIAsyncFileMetadata

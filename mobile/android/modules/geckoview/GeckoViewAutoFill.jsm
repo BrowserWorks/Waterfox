@@ -6,8 +6,8 @@
 
 var EXPORTED_SYMBOLS = ["GeckoViewAutoFill"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/GeckoViewUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {GeckoViewUtils} = ChromeUtils.import("resource://gre/modules/GeckoViewUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   DeferredTask: "resource://gre/modules/DeferredTask.jsm",
@@ -149,7 +149,6 @@ class GeckoViewAutoFill {
                   winUtils.removeManuallyManagedState(element, AUTOFILL_STATE),
                   { mozSystemGroup: true, once: true });
             }
-
           } else if (element) {
             warn `Don't know how to auto-fill ${element.tagName}`;
           }

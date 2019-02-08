@@ -156,8 +156,6 @@ struct MOZ_STACK_CLASS BytecodeEmitter {
 
   int32_t stackDepth; /* current stack depth in script frame */
 
-  unsigned emitLevel; /* emitTree recursion level */
-
   uint32_t bodyScopeIndex; /* index into scopeList of the body scope */
 
   EmitterScope* varEmitterScope;
@@ -191,6 +189,9 @@ struct MOZ_STACK_CLASS BytecodeEmitter {
   // resume in the JIT (because BaselineScript stores a resumeIndex => native
   // code array).
   CGResumeOffsetList resumeOffsetList;
+
+  // Number of JOF_IC opcodes emitted.
+  size_t numICEntries;
 
   // Number of yield instructions emitted. Does not include JSOP_AWAIT.
   uint32_t numYields;
@@ -483,12 +484,8 @@ struct MOZ_STACK_CLASS BytecodeEmitter {
 
   // Emit function code for the tree rooted at body.
   enum class TopLevelFunction { No, Yes };
-  MOZ_MUST_USE bool emitFunctionScript(CodeNode* funNode,
+  MOZ_MUST_USE bool emitFunctionScript(FunctionNode* funNode,
                                        TopLevelFunction isTopLevel);
-
-  // If op is JOF_TYPESET (see the type barriers comment in TypeInference.h),
-  // reserve a type set to store its result.
-  void checkTypeSet(JSOp op);
 
   void updateDepth(ptrdiff_t target);
   MOZ_MUST_USE bool updateLineNumberNotes(uint32_t offset);
@@ -496,7 +493,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter {
 
   JSOp strictifySetNameOp(JSOp op);
 
-  MOZ_MUST_USE bool emitCheck(ptrdiff_t delta, ptrdiff_t* offset);
+  MOZ_MUST_USE bool emitCheck(JSOp op, ptrdiff_t delta, ptrdiff_t* offset);
 
   // Emit one bytecode.
   MOZ_MUST_USE bool emit1(JSOp op);
@@ -548,6 +545,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter {
   MOZ_MUST_USE bool emitCheckDerivedClassConstructorReturn();
 
   // Handle jump opcodes and jump targets.
+  MOZ_MUST_USE bool emitJumpTargetOp(JSOp op, ptrdiff_t* off);
   MOZ_MUST_USE bool emitJumpTarget(JumpTarget* target);
   MOZ_MUST_USE bool emitJumpNoFallthrough(JSOp op, JumpList* jump);
   MOZ_MUST_USE bool emitJump(JSOp op, JumpList* jump);
@@ -582,7 +580,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter {
                                      JSOp op);
   MOZ_MUST_USE bool emitRegExp(uint32_t index);
 
-  MOZ_NEVER_INLINE MOZ_MUST_USE bool emitFunction(CodeNode* funNode,
+  MOZ_NEVER_INLINE MOZ_MUST_USE bool emitFunction(FunctionNode* funNode,
                                                   bool needsProto = false);
   MOZ_NEVER_INLINE MOZ_MUST_USE bool emitObject(ListNode* objNode);
 

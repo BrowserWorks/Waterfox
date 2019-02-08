@@ -9,8 +9,7 @@
 
 const Cm = Components.manager;
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const uuidGenerator = Cc["@mozilla.org/uuid-generator;1"]
                       .getService(Ci.nsIUUIDGenerator);
@@ -227,7 +226,6 @@ const mockRequestUIGlue = {
 };
 
 function initMockAndListener() {
-
   function registerMockFactory(contractId, mockClassId, mockFactory) {
     var originalClassId, originalFactory;
 
@@ -335,7 +333,6 @@ function initMockAndListener() {
 }
 
 function teardown() {
-
   function registerOriginalFactory(contractId, mockedClassId, mockedFactory, originalClassId, originalFactory) {
     if (originalFactory) {
       var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);

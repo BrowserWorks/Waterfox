@@ -4,10 +4,9 @@
 
 const XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource:///modules/ExtensionSupport.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 ChromeUtils.defineModuleGetter(this, "ActorManagerParent",
                                "resource://gre/modules/ActorManagerParent.jsm");
@@ -362,7 +361,7 @@ let ACTORS = {
   win.stop();
 
   let { TelemetryTimestamps } =
-    ChromeUtils.import("resource://gre/modules/TelemetryTimestamps.jsm", {});
+    ChromeUtils.import("resource://gre/modules/TelemetryTimestamps.jsm");
   TelemetryTimestamps.add("blankWindowShown");
 })();
 
@@ -596,7 +595,7 @@ function BrowserGlue() {
                                      "nsIIdleService");
 
   XPCOMUtils.defineLazyGetter(this, "_distributionCustomizer", function() {
-                                ChromeUtils.import("resource:///modules/distribution.js");
+                                const {DistributionCustomizer} = ChromeUtils.import("resource:///modules/distribution.js");
                                 return new DistributionCustomizer();
                               });
 
@@ -646,7 +645,7 @@ BrowserGlue.prototype = {
     }
     delay = delay <= MAX_DELAY ? delay : MAX_DELAY;
 
-    ChromeUtils.import("resource://services-sync/main.js");
+    const {Weave} = ChromeUtils.import("resource://services-sync/main.js");
     Weave.Service.scheduler.delayedAutoConnect(delay);
   },
 
@@ -993,8 +992,7 @@ BrowserGlue.prototype = {
     os.removeObserver(this, "sync-ui-state:update");
     os.removeObserver(this, "shield-init-complete");
 
-    Services.prefs.removeObserver("privacy.trackingprotection.enabled", this._matchCBCategory);
-    Services.prefs.removeObserver("privacy.trackingprotection.pbmode.enabled", this._matchCBCategory);
+    Services.prefs.removeObserver("privacy.trackingprotection", this._matchCBCategory);
     Services.prefs.removeObserver("urlclassifier.trackingTable", this._matchCBCategory);
     Services.prefs.removeObserver("network.cookie.cookieBehavior", this._matchCBCategory);
     Services.prefs.removeObserver(ContentBlockingCategoriesPrefs.PREF_CB_CATEGORY, this._updateCBCategory);
@@ -1095,7 +1093,6 @@ BrowserGlue.prototype = {
     // check for update if our build is old
     if (AppConstants.MOZ_UPDATER &&
         Services.prefs.getBoolPref("app.update.checkInstallTime")) {
-
       let buildID = Services.appinfo.appBuildID;
       let today = new Date().getTime();
       /* eslint-disable no-multi-spaces */
@@ -1232,7 +1229,7 @@ BrowserGlue.prototype = {
     if (!win)
       return;
 
-    ChromeUtils.import("resource://gre/modules/ResetProfile.jsm");
+    const {ResetProfile} = ChromeUtils.import("resource://gre/modules/ResetProfile.jsm");
     if (!ResetProfile.resetSupported())
       return;
 
@@ -1304,7 +1301,7 @@ BrowserGlue.prototype = {
     let channel = new WebChannel("remote-troubleshooting", "remote-troubleshooting");
     channel.listen((id, data, target) => {
       if (data.command == "request") {
-        let {Troubleshoot} = ChromeUtils.import("resource://gre/modules/Troubleshoot.jsm", {});
+        let {Troubleshoot} = ChromeUtils.import("resource://gre/modules/Troubleshoot.jsm");
         Troubleshoot.snapshot(snapshotData => {
           // for privacy we remove crash IDs and all preferences (but bug 1091944
           // exists to expose prefs once we are confident of privacy implications)
@@ -1370,11 +1367,17 @@ BrowserGlue.prototype = {
     PlacesUtils.favicons.setDefaultIconURIPreferredSize(16 * aWindow.devicePixelRatio);
 
     this._matchCBCategory();
-    Services.prefs.addObserver("privacy.trackingprotection.enabled", this._matchCBCategory);
-    Services.prefs.addObserver("privacy.trackingprotection.pbmode.enabled", this._matchCBCategory);
+    // This observes the entire privacy.trackingprotection.* pref tree.
+    Services.prefs.addObserver("privacy.trackingprotection", this._matchCBCategory);
     Services.prefs.addObserver("urlclassifier.trackingTable", this._matchCBCategory);
     Services.prefs.addObserver("network.cookie.cookieBehavior", this._matchCBCategory);
     Services.prefs.addObserver(ContentBlockingCategoriesPrefs.PREF_CB_CATEGORY, this._updateCBCategory);
+    Services.prefs.addObserver("media.autoplay.default", this._updateAutoplayPref);
+  },
+
+  _updateAutoplayPref() {
+    let blocked = Services.prefs.getIntPref("media.autoplay.default", 1);
+    Services.telemetry.scalarSet("media.autoplay_default_blocked", blocked);
   },
 
   _matchCBCategory() {
@@ -1488,6 +1491,22 @@ BrowserGlue.prototype = {
     });
   },
 
+  _showNewInstallModal() {
+    // Allow other observers of the same topic to run while we open the dialog.
+    Services.tm.dispatchToMainThread(() => {
+      let win = BrowserWindowTracker.getTopWindow();
+
+      let stack = win.gBrowser.getPanel().querySelector(".browserStack");
+      let mask = win.document.createElementNS(XULNS, "box");
+      mask.setAttribute("id", "content-mask");
+      stack.appendChild(mask);
+
+      Services.ww.openWindow(win, "chrome://browser/content/newInstall.xul",
+                             "_blank", "chrome,modal,resizable=no,centerscreen", null);
+      mask.remove();
+    });
+  },
+
   // All initial windows have opened.
   _onWindowsRestored: function BG__onWindowsRestored() {
     if (this._windowsWereRestored) {
@@ -1542,6 +1561,12 @@ BrowserGlue.prototype = {
 
     this._monitorScreenshotsPref();
     this._monitorWebcompatReporterPref();
+
+    let pService = Cc["@mozilla.org/toolkit/profile-service;1"].
+                  getService(Ci.nsIToolkitProfileService);
+    if (pService.createdAlternateProfile) {
+      this._showNewInstallModal();
+    }
   },
 
   /**
@@ -1577,6 +1602,10 @@ BrowserGlue.prototype = {
         enableCertErrorUITelemetry);
     });
 
+    Services.tm.idleDispatchToMainThread(() => {
+      this._recordContentBlockingTelemetry();
+    });
+
     // Load the Login Manager data from disk off the main thread, some time
     // after startup.  If the data is required before this runs, for example
     // because a restored page contains a password field, it will be loaded on
@@ -1600,7 +1629,7 @@ BrowserGlue.prototype = {
     }
 
     if (AppConstants.ASAN_REPORTER) {
-      ChromeUtils.import("resource:///modules/AsanReporter.jsm");
+      var {AsanReporter} = ChromeUtils.import("resource:///modules/AsanReporter.jsm");
       AsanReporter.init();
     }
 
@@ -1622,7 +1651,7 @@ BrowserGlue.prototype = {
     });
 
     Services.tm.idleDispatchToMainThread(() => {
-      let {setTimeout} = ChromeUtils.import("resource://gre/modules/Timer.jsm", {});
+      let {setTimeout} = ChromeUtils.import("resource://gre/modules/Timer.jsm");
       setTimeout(function() {
         Services.tm.idleDispatchToMainThread(Services.startup.trackStartupCrashEnd);
       }, STARTUP_CRASHES_END_DELAY_MS);
@@ -2040,7 +2069,6 @@ BrowserGlue.prototype = {
           } catch (e) {
             Cu.reportError(e);
           }
-
         } else {
           Cu.reportError(new Error("Unable to find bookmarks.html file."));
         }
@@ -2087,7 +2115,6 @@ BrowserGlue.prototype = {
         }
         this._idleService.addIdleObserver(this, this._bookmarksBackupIdleTime);
       }
-
     })().catch(ex => {
       Cu.reportError(ex);
     }).then(() => {
@@ -2095,10 +2122,6 @@ BrowserGlue.prototype = {
       // we threw halfway through initializing in the Task above.
       this._placesBrowserInitComplete = true;
       Services.obs.notifyObservers(null, "places-browser-init-complete");
-    });
-
-    Services.tm.idleDispatchToMainThread(() => {
-      this._recordContentBlockingTelemetry();
     });
   },
 
@@ -2689,7 +2712,7 @@ BrowserGlue.prototype = {
     let experiment = null;
     let experimentName = "pref-flip-search-composition-57-release-1413565";
     let {PreferenceExperiments} =
-      ChromeUtils.import("resource://normandy/lib/PreferenceExperiments.jsm", {});
+      ChromeUtils.import("resource://normandy/lib/PreferenceExperiments.jsm");
     try {
       experiment = await PreferenceExperiments.get(experimentName);
     } catch (e) {}
@@ -2977,12 +3000,16 @@ var ContentBlockingCategoriesPrefs = {
       ["network.cookie.cookieBehavior", Ci.nsICookieService.BEHAVIOR_REJECT_TRACKER],
       ["privacy.trackingprotection.pbmode.enabled", true],
       ["privacy.trackingprotection.enabled", true],
+      ["privacy.trackingprotection.fingerprinting.enabled", null],
+      ["privacy.trackingprotection.cryptomining.enabled", null],
     ],
     standard: [
       ["urlclassifier.trackingTable", null],
       ["network.cookie.cookieBehavior", null],
       ["privacy.trackingprotection.pbmode.enabled", null],
       ["privacy.trackingprotection.enabled", null],
+      ["privacy.trackingprotection.fingerprinting.enabled", null],
+      ["privacy.trackingprotection.cryptomining.enabled", null],
     ],
   },
   switchingCategory: false,
@@ -3170,7 +3197,6 @@ ContentPermissionPrompt.prototype = {
       }
 
       permissionPrompt.prompt();
-
     } catch (ex) {
       Cu.reportError(ex);
       request.cancel();

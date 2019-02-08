@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource:///modules/SitePermissions.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {SitePermissions} = ChromeUtils.import("resource:///modules/SitePermissions.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const PERMISSIONS_URL = "chrome://browser/content/preferences/sitePermissions.xul";
 const URL = "http://www.example.com";
@@ -19,9 +19,7 @@ function checkPermissionItem(origin, state) {
   Assert.equal(label.value, origin);
 
   let menulist = doc.getElementsByTagName("menulist")[0];
-  let selectedIndex = menulist.selectedIndex;
-  let selectedItem = menulist.querySelectorAll("menuitem")[selectedIndex];
-  Assert.equal(selectedItem.value, state);
+  Assert.equal(menulist.value, state);
 }
 
 async function openPermissionsDialog() {

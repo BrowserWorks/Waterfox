@@ -16,7 +16,6 @@ import { highlightMatches } from "../utils/project-search";
 import { statusType } from "../reducers/project-text-search";
 import { getRelativePath } from "../utils/sources-tree";
 import {
-  getSources,
   getActiveSearch,
   getTextSearchResults,
   getTextSearchStatus,
@@ -55,11 +54,11 @@ type Item = Result | Match;
 
 type State = {
   inputValue: string,
-  inputFocused: boolean
+  inputFocused: boolean,
+  focusedItem: ?Item
 };
 
 type Props = {
-  sources: Object,
   query: string,
   results: List<Result>,
   status: StatusType,
@@ -84,17 +83,12 @@ function sanitizeQuery(query: string): string {
 }
 
 export class ProjectSearch extends Component<Props, State> {
-  focusedItem: ?{
-    setExpanded?: any,
-    file?: any,
-    expanded?: any,
-    match?: Match
-  };
   constructor(props: Props) {
     super(props);
     this.state = {
       inputValue: this.props.query || "",
-      inputFocused: false
+      inputFocused: false,
+      focusedItem: null
     };
   }
 
@@ -170,7 +164,7 @@ export class ProjectSearch extends Component<Props, State> {
     if (e.key !== "Enter") {
       return;
     }
-    this.focusedItem = null;
+    this.setState({ focusedItem: null });
     const query = sanitizeQuery(this.state.inputValue);
     if (query) {
       this.doSearch(query);
@@ -182,13 +176,21 @@ export class ProjectSearch extends Component<Props, State> {
   };
 
   onEnterPress = () => {
-    if (this.focusedItem && !this.state.inputFocused) {
-      const { setExpanded, file, expanded, match } = this.focusedItem;
-      if (setExpanded) {
-        setExpanded(file, !expanded);
-      } else if (match) {
-        this.selectMatchItem(match);
-      }
+    if (
+      !this.isProjectSearchEnabled() ||
+      !this.state.focusedItem ||
+      this.state.inputFocused
+    ) {
+      return;
+    }
+    if (this.state.focusedItem.type === "MATCH") {
+      this.selectMatchItem(this.state.focusedItem);
+    }
+  };
+
+  onFocus = (item: Item) => {
+    if (this.state.focusedItem !== item) {
+      this.setState({ focusedItem: item });
     }
   };
 
@@ -201,16 +203,7 @@ export class ProjectSearch extends Component<Props, State> {
     }
   };
 
-  renderFile = (
-    file: Result,
-    focused: boolean,
-    expanded: boolean,
-    setExpanded: Function
-  ) => {
-    if (focused) {
-      this.focusedItem = { setExpanded, file, expanded };
-    }
-
+  renderFile = (file: Result, focused: boolean, expanded: boolean) => {
     const matchesLength = file.matches.length;
     const matches = ` (${matchesLength} match${matchesLength > 1 ? "es" : ""})`;
 
@@ -228,9 +221,6 @@ export class ProjectSearch extends Component<Props, State> {
   };
 
   renderMatch = (match: Match, focused: boolean) => {
-    if (focused) {
-      this.focusedItem = { match };
-    }
     return (
       <div
         className={classnames("result", { focused })}
@@ -249,11 +239,10 @@ export class ProjectSearch extends Component<Props, State> {
     depth: number,
     focused: boolean,
     _: any,
-    expanded: boolean,
-    { setExpanded }: { setExpanded: Function }
+    expanded: boolean
   ) => {
     if (item.type === "RESULT") {
-      return this.renderFile(item, focused, expanded, setExpanded);
+      return this.renderFile(item, focused, expanded);
     }
     return this.renderMatch(item, focused);
   };
@@ -275,6 +264,8 @@ export class ProjectSearch extends Component<Props, State> {
           getParent={item => null}
           getPath={getFilePath}
           renderItem={this.renderItem}
+          focused={this.state.focusedItem}
+          onFocus={this.onFocus}
         />
       );
     }
@@ -340,7 +331,6 @@ ProjectSearch.contextTypes = {
 };
 
 const mapStateToProps = state => ({
-  sources: getSources(state),
   activeSearch: getActiveSearch(state),
   results: getTextSearchResults(state),
   query: getTextSearchQuery(state),

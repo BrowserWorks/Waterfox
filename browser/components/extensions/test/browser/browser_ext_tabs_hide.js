@@ -4,7 +4,7 @@ ChromeUtils.defineModuleGetter(this, "SessionStore",
                                "resource:///modules/sessionstore/SessionStore.jsm");
 ChromeUtils.defineModuleGetter(this, "TabStateFlusher",
                                "resource:///modules/sessionstore/TabStateFlusher.jsm");
-const {Utils} = ChromeUtils.import("resource://gre/modules/sessionstore/Utils.jsm", {});
+const {Utils} = ChromeUtils.import("resource://gre/modules/sessionstore/Utils.jsm");
 const triggeringPrincipal_base64 = Utils.SERIALIZED_SYSTEMPRINCIPAL;
 
 async function doorhangerTest(testFn) {
@@ -65,8 +65,7 @@ add_task(function test_doorhanger_keep() {
     // Click the Keep Tabs Hidden button.
     let popupnotification = document.getElementById("extension-tab-hide-notification");
     let popupHidden = promisePopupHidden(panel);
-    document.getAnonymousElementByAttribute(
-      popupnotification, "anonid", "button").click();
+    popupnotification.button.click();
     await popupHidden;
 
     // Hide another tab and ensure the popup didn't open.
@@ -97,7 +96,7 @@ add_task(function test_doorhanger_disable() {
 
     // verify the contents of the description.
     let popupnotification = document.getElementById("extension-tab-hide-notification");
-    let description = popupnotification.querySelector("description");
+    let description = popupnotification.querySelector("#extension-tab-hide-notification-description");
     let addon = await AddonManager.getAddonByID(extension.id);
     ok(description.textContent.includes(addon.name),
        "The extension name is in the description");
@@ -110,8 +109,7 @@ add_task(function test_doorhanger_disable() {
 
     // Click the Disable Extension button.
     let popupHidden = promisePopupHidden(panel);
-    document.getAnonymousElementByAttribute(
-      popupnotification, "anonid", "secondarybutton").click();
+    popupnotification.secondaryButton.click();
     await popupHidden;
     await new Promise(executeSoon);
 

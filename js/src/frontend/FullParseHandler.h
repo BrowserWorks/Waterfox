@@ -36,8 +36,7 @@ class FullParseHandler {
   ParseNodeAllocator allocator;
 
   ParseNode* allocParseNode(size_t size) {
-    MOZ_ASSERT(size == sizeof(ParseNode));
-    return static_cast<ParseNode*>(allocator.allocNode());
+    return static_cast<ParseNode*>(allocator.allocNode(size));
   }
 
   /*
@@ -429,7 +428,7 @@ class FullParseHandler {
   }
 
   MOZ_MUST_USE bool addObjectMethodDefinition(ListNodeType literal, Node key,
-                                              CodeNodeType funNode,
+                                              FunctionNodeType funNode,
                                               AccessorType atype) {
     literal->setHasNonConstInitializer();
 
@@ -446,7 +445,7 @@ class FullParseHandler {
   }
 
   MOZ_MUST_USE bool addClassMethodDefinition(ListNodeType memberList, Node key,
-                                             CodeNodeType funNode,
+                                             FunctionNodeType funNode,
                                              AccessorType atype,
                                              bool isStatic) {
     MOZ_ASSERT(memberList->isKind(ParseNodeKind::ClassMemberList));
@@ -507,7 +506,7 @@ class FullParseHandler {
     while (stmt->isKind(ParseNodeKind::LabelStmt)) {
       stmt = stmt->as<LabeledStatement>().statement();
     }
-    return stmt->isKind(ParseNodeKind::Function);
+    return stmt->is<FunctionNode>();
   }
 
   void addStatementToList(ListNodeType list, Node stmt) {
@@ -764,7 +763,7 @@ class FullParseHandler {
   }
 
   inline MOZ_MUST_USE bool setLastFunctionFormalParameterDefault(
-      CodeNodeType funNode, Node defaultValue);
+      FunctionNodeType funNode, Node defaultValue);
 
  private:
   void checkAndSetIsDirectRHSAnonFunction(Node pn) {
@@ -774,16 +773,9 @@ class FullParseHandler {
   }
 
  public:
-  CodeNodeType newFunctionStatement(const TokenPos& pos) {
-    return new_<CodeNode>(ParseNodeKind::Function, JSOP_NOP, pos);
-  }
-
-  CodeNodeType newFunctionExpression(const TokenPos& pos) {
-    return new_<CodeNode>(ParseNodeKind::Function, JSOP_LAMBDA, pos);
-  }
-
-  CodeNodeType newArrowFunction(const TokenPos& pos) {
-    return new_<CodeNode>(ParseNodeKind::Function, JSOP_LAMBDA_ARROW, pos);
+  FunctionNodeType newFunction(FunctionSyntaxKind syntaxKind,
+                               const TokenPos& pos) {
+    return new_<FunctionNode>(syntaxKind, pos);
   }
 
   BinaryNodeType newObjectMethodOrPropertyDefinition(Node key, Node value,
@@ -794,26 +786,31 @@ class FullParseHandler {
                      AccessorTypeToJSOp(atype));
   }
 
-  void setFunctionFormalParametersAndBody(CodeNodeType funNode,
+  BinaryNodeType newShorthandPropertyDefinition(Node key, Node value) {
+    MOZ_ASSERT(isUsableAsObjectPropertyName(key));
+
+    return newBinary(ParseNodeKind::Shorthand, key, value, JSOP_INITPROP);
+  }
+
+  void setFunctionFormalParametersAndBody(FunctionNodeType funNode,
                                           ListNodeType paramsBody) {
     MOZ_ASSERT_IF(paramsBody, paramsBody->isKind(ParseNodeKind::ParamsBody));
     funNode->setBody(paramsBody);
   }
-  void setFunctionBox(CodeNodeType funNode, FunctionBox* funbox) {
-    MOZ_ASSERT(funNode->isKind(ParseNodeKind::Function));
+  void setFunctionBox(FunctionNodeType funNode, FunctionBox* funbox) {
     funNode->setFunbox(funbox);
     funbox->functionNode = funNode;
   }
-  void addFunctionFormalParameter(CodeNodeType funNode, Node argpn) {
+  void addFunctionFormalParameter(FunctionNodeType funNode, Node argpn) {
     addList(/* list = */ funNode->body(), /* kid = */ argpn);
   }
-  void setFunctionBody(CodeNodeType funNode, LexicalScopeNodeType body) {
+  void setFunctionBody(FunctionNodeType funNode, LexicalScopeNodeType body) {
     MOZ_ASSERT(funNode->body()->isKind(ParseNodeKind::ParamsBody));
     addList(/* list = */ funNode->body(), /* kid = */ body);
   }
 
-  CodeNodeType newModule(const TokenPos& pos) {
-    return new_<CodeNode>(ParseNodeKind::Module, JSOP_NOP, pos);
+  ModuleNodeType newModule(const TokenPos& pos) {
+    return new_<ModuleNode>(pos);
   }
 
   LexicalScopeNodeType newLexicalScope(LexicalScope::Data* bindings,
@@ -1016,8 +1013,7 @@ class FullParseHandler {
 };
 
 inline bool FullParseHandler::setLastFunctionFormalParameterDefault(
-    CodeNodeType funNode, Node defaultValue) {
-  MOZ_ASSERT(funNode->isKind(ParseNodeKind::Function));
+    FunctionNodeType funNode, Node defaultValue) {
   ListNode* body = funNode->body();
   ParseNode* arg = body->last();
   ParseNode* pn = newAssignment(ParseNodeKind::AssignExpr, arg, defaultValue);

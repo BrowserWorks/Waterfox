@@ -9,8 +9,7 @@ var EXPORTED_SYMBOLS = [
 ];
 
 /* globals Debugger */
-const {addDebuggerToGlobal} = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm",
-                                                 {});
+const {addDebuggerToGlobal} = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm");
 addDebuggerToGlobal(Cu.getGlobalForObject(this));
 
 /**
@@ -64,7 +63,6 @@ CoverageCollector.prototype._getLinesCovered = function() {
         currentCoverage[scriptName][key] += count;
       }
     });
-
   });
 
   // Covered lines are determined by comparing every offset mentioned as of the

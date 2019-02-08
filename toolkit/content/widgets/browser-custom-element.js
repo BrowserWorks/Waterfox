@@ -7,6 +7,7 @@
 // This is loaded into all XUL windows. Wrap in a block to prevent
 // leaking to window scope.
 {
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const elementsToDestroyOnUnload = new Set();
 
@@ -150,7 +151,6 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
         event.stopPropagation();
       }
     });
-
   }
 
   resetFields() {
@@ -450,21 +450,27 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
   }
 
   get remoteType() {
-    if (!this.isRemoteBrowser) {
+    if (!this.isRemoteBrowser || !this.messageManager) {
       return null;
     }
 
-    let remoteType = this.getAttribute("remoteType");
-    if (remoteType) {
-      return remoteType;
+    return this.messageManager.remoteType;
+  }
+
+  get isCrashed() {
+    if (!this.isRemoteBrowser || !this.frameLoader) {
+      return false;
     }
 
-    let E10SUtils = ChromeUtils.import("resource://gre/modules/E10SUtils.jsm", {}).E10SUtils;
-    return E10SUtils.DEFAULT_REMOTE_TYPE;
+    return !this.frameLoader.tabParent;
   }
 
   get messageManager() {
-    if (this.frameLoader) {
+    // Bug 1524084 - Trying to get at the message manager while in the crashed state will
+    // create a new message manager that won't shut down properly when the crashed browser
+    // is removed from the DOM. We work around that right now by returning null if we're
+    // in the crashed state.
+    if (this.frameLoader && !this.isCrashed) {
       return this.frameLoader.messageManager;
     }
     return null;
@@ -545,7 +551,7 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
       return this.docShell.browsingContext;
     }
 
-    return ChromeUtils.getBrowsingContext(this._browsingContextId);
+    return BrowsingContext.get(this._browsingContextId);
   }
   /**
    * Note that this overrides webNavigation on XULFrameElement, and duplicates the return value for the non-remote case
@@ -657,7 +663,6 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
     } else {
       this.markupDocumentViewer.textZoom = val;
     }
-
   }
 
   get textZoom() {
@@ -1032,7 +1037,7 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
       this._remoteWebNavigationImpl.swapBrowser(this);
 
       // Initialize contentPrincipal to the about:blank principal for this loadcontext
-      let { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm", {});
+      let { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
       let aboutBlank = Services.io.newURI("about:blank");
       let ssm = Services.scriptSecurityManager;
       this._contentPrincipal = ssm.getLoadContextCodebasePrincipal(aboutBlank, this.loadContext);
@@ -1138,7 +1143,6 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
         this.messageManager.addMessageListener("Forms:ShowDropDown", this);
         this.messageManager.addMessageListener("Forms:HideDropDown", this);
       }
-
     }
   }
 
@@ -1350,7 +1354,6 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
         return this._receiveMessage(aMessage);
     }
     return undefined;
-
   }
 
   enableDisableCommandsRemoteOnly(aAction, aEnabledLength, aEnabledCommands, aDisabledLength, aDisabledCommands) {
@@ -1358,6 +1361,39 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
       this._controller.enableDisableCommands(aAction,
         aEnabledLength, aEnabledCommands,
         aDisabledLength, aDisabledCommands);
+    }
+  }
+
+  updateSecurityUIForContentBlockingEvent(aEvent) {
+    if (this.isRemoteBrowser && this.messageManager) {
+      // Invoking this getter triggers the generation of the underlying object,
+      // which we need to access with ._securityUI, because .securityUI returns
+      // a wrapper that makes _update inaccessible.
+      void this.securityUI;
+      this._securityUI._updateContentBlockingEvent(aEvent);
+    }
+  }
+
+  callWebProgressContentBlockingEventListeners(aIsWebProgressPassed,
+                                               aIsTopLevel,
+                                               aIsLoadingDocument,
+                                               aLoadType,
+                                               aDOMWindowID,
+                                               aRequestURI,
+                                               aOriginalRequestURI,
+                                               aMatchedList,
+                                               aEvent) {
+    if (this._remoteWebProgressManager) {
+      this._remoteWebProgressManager
+          .callWebProgressContentBlockingEventListeners(aIsWebProgressPassed,
+                                                        aIsTopLevel,
+                                                        aIsLoadingDocument,
+                                                        aLoadType,
+                                                        aDOMWindowID,
+                                                        aRequestURI,
+                                                        aOriginalRequestURI,
+                                                        aMatchedList,
+                                                        aEvent);
     }
   }
 
@@ -1717,6 +1753,7 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
         if (msg.data.id != id) {
           return;
         }
+        mm.removeMessageListener("InPermitUnload", listener);
         aCallback(msg.data.inPermitUnload);
       });
       return;
@@ -1744,7 +1781,7 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
       let permitUnload;
       let id = this._permitUnloadId++;
       let mm = this.messageManager;
-      let Services = ChromeUtils.import("resource://gre/modules/Services.jsm", {}).Services;
+      let {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
       let msgListener = msg => {
         if (msg.data.id != id) {
@@ -1850,5 +1887,4 @@ class MozBrowser extends MozElementMixin(XULFrameElement) {
 
 MozXULElement.implementCustomInterface(MozBrowser, [Ci.nsIBrowser, Ci.nsIFrameLoaderOwner]);
 customElements.define("browser", MozBrowser);
-
 }

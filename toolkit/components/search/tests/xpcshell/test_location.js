@@ -3,7 +3,7 @@
 
 function run_test() {
   Services.prefs.setCharPref("browser.search.geoip.url", 'data:application/json,{"country_code": "AU"}');
-  Services.search.init(() => {
+  Services.search.init().then(() => {
     equal(Services.prefs.getCharPref("browser.search.region"), "AU", "got the correct region.");
     // check we have "success" recorded in telemetry
     checkCountryResultTelemetry(TELEMETRY_RESULT_ENUM.SUCCESS);
@@ -13,7 +13,6 @@ function run_test() {
       let histogram = Services.telemetry.getHistogramById(hid);
       let snapshot = histogram.snapshot();
       deepEqual(snapshot.values, {0: 1, 1: 0}); // boolean probe so 3 buckets, expect 1 result for |0|.
-
     }
 
     // simple checks for our platform-specific telemetry.  We can't influence

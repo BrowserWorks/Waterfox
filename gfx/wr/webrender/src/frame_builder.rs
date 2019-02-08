@@ -5,7 +5,7 @@
 use api::{ColorF, DeviceIntPoint, DevicePixelScale, LayoutPixel, PicturePixel, RasterPixel};
 use api::{DeviceIntRect, DeviceIntSize, DocumentLayer, FontRenderMode, DebugFlags};
 use api::{LayoutPoint, LayoutRect, LayoutSize, PipelineId, RasterSpace, WorldPoint, WorldRect, WorldPixel};
-use clip::{ClipDataStore, ClipStore};
+use clip::{ClipDataStore, ClipStore, ClipChainStack};
 use clip_scroll_tree::{ClipScrollTree, ROOT_SPATIAL_NODE_INDEX, SpatialNodeIndex};
 use display_list_flattener::{DisplayListFlattener};
 use gpu_cache::GpuCache;
@@ -53,6 +53,8 @@ pub struct FrameBuilderConfig {
     pub dual_source_blending_is_enabled: bool,
     pub chase_primitive: ChasePrimitive,
     pub enable_picture_caching: bool,
+    /// True if we're running tests (i.e. via wrench).
+    pub testing: bool,
 }
 
 /// A builder structure for `tiling::Frame`
@@ -77,6 +79,7 @@ pub struct FrameVisibilityContext<'a> {
     pub surfaces: &'a [SurfaceInfo],
     pub debug_flags: DebugFlags,
     pub scene_properties: &'a SceneProperties,
+    pub config: &'a FrameBuilderConfig,
 }
 
 pub struct FrameVisibilityState<'a> {
@@ -87,6 +90,7 @@ pub struct FrameVisibilityState<'a> {
     pub tile_cache: Option<TileCache>,
     pub retained_tiles: &'a mut RetainedTiles,
     pub data_stores: &'a mut DataStores,
+    pub clip_chain_stack: ClipChainStack,
 }
 
 pub struct FrameBuildingContext<'a> {
@@ -109,6 +113,7 @@ pub struct FrameBuildingState<'a> {
     pub segment_builder: SegmentBuilder,
     pub surfaces: &'a mut Vec<SurfaceInfo>,
     pub dirty_region_stack: Vec<DirtyRegion>,
+    pub clip_chain_stack: ClipChainStack,
 }
 
 impl<'a> FrameBuildingState<'a> {
@@ -192,6 +197,7 @@ impl FrameBuilder {
                 dual_source_blending_is_supported: false,
                 chase_primitive: ChasePrimitive::Nothing,
                 enable_picture_caching: false,
+                testing: false,
             },
         }
     }
@@ -253,6 +259,7 @@ impl FrameBuilder {
     /// primitives in screen space.
     fn build_layer_screen_rects_and_cull_layers(
         &mut self,
+        screen_world_rect: WorldRect,
         clip_scroll_tree: &ClipScrollTree,
         pipelines: &FastHashMap<PipelineId, Arc<ScenePipeline>>,
         resource_cache: &mut ResourceCache,
@@ -279,8 +286,6 @@ impl FrameBuilder {
 
         const MAX_CLIP_COORD: f32 = 1.0e9;
 
-        let screen_world_rect = (self.screen_rect.to_f32() / device_pixel_scale).round_out();
-
         let frame_context = FrameBuildingContext {
             device_pixel_scale,
             scene_properties,
@@ -305,7 +310,6 @@ impl FrameBuilder {
         );
         surfaces.push(root_surface);
 
-        let mut pic_update_state = PictureUpdateState::new(surfaces);
         let mut retained_tiles = mem::replace(
             &mut self.pending_retained_tiles,
             RetainedTiles::new(),
@@ -318,13 +322,14 @@ impl FrameBuilder {
         // set up render tasks, determine scaling of surfaces, and detect
         // which surfaces have valid cached surfaces that don't need to
         // be rendered this frame.
-        self.prim_store.update_picture(
+        PictureUpdateState::update_all(
+            surfaces,
             self.root_pic_index,
-            &mut pic_update_state,
+            &mut self.prim_store.pictures,
             &frame_context,
             gpu_cache,
-            data_stores,
             &self.clip_store,
+            &data_stores.clip,
         );
 
         {
@@ -332,9 +337,10 @@ impl FrameBuilder {
                 device_pixel_scale,
                 clip_scroll_tree,
                 screen_world_rect,
-                surfaces: pic_update_state.surfaces,
+                surfaces,
                 debug_flags,
                 scene_properties,
+                config: &self.config,
             };
 
             let mut visibility_state = FrameVisibilityState {
@@ -345,6 +351,7 @@ impl FrameBuilder {
                 tile_cache: None,
                 retained_tiles: &mut retained_tiles,
                 data_stores,
+                clip_chain_stack: ClipChainStack::new(),
             };
 
             self.prim_store.update_visibility(
@@ -363,8 +370,9 @@ impl FrameBuilder {
             gpu_cache,
             transforms: transform_palette,
             segment_builder: SegmentBuilder::new(),
-            surfaces: pic_update_state.surfaces,
+            surfaces,
             dirty_region_stack: Vec::new(),
+            clip_chain_stack: ClipChainStack::new(),
         };
 
         // Push a default dirty region which culls primitives
@@ -422,7 +430,6 @@ impl FrameBuilder {
             child_tasks,
             UvRectKind::Rect,
             root_spatial_node_index,
-            None,
         );
 
         let render_task_id = frame_state.render_tasks.add(root_render_task);
@@ -477,8 +484,10 @@ impl FrameBuilder {
         let mut surfaces = Vec::new();
 
         let screen_size = self.screen_rect.size.to_i32();
+        let screen_world_rect = (self.screen_rect.to_f32() / device_pixel_scale).round_out();
 
         let main_render_task_id = self.build_layer_screen_rects_and_cull_layers(
+            screen_world_rect,
             clip_scroll_tree,
             pipelines,
             resource_cache,
@@ -545,6 +554,7 @@ impl FrameBuilder {
                 data_stores,
                 surfaces: &surfaces,
                 scratch,
+                screen_world_rect,
             };
 
             pass.build(
@@ -590,6 +600,7 @@ impl FrameBuilder {
             has_been_rendered: false,
             has_texture_cache_tasks,
             prim_headers,
+            recorded_dirty_regions: mem::replace(&mut scratch.recorded_dirty_regions, Vec::new()),
             debug_items: mem::replace(&mut scratch.debug_items, Vec::new()),
         }
     }

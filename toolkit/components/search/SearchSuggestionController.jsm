@@ -6,9 +6,9 @@
 
 var EXPORTED_SYMBOLS = ["SearchSuggestionController"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {PromiseUtils} = ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["XMLHttpRequest"]);
 
@@ -144,7 +144,7 @@ this.SearchSuggestionController.prototype = {
     if (typeof privateMode === "undefined") {
       throw new Error("The privateMode argument is required to avoid unintentional privacy leaks");
     }
-    if (!(engine instanceof Ci.nsISearchEngine)) {
+    if (!engine.getSubmission) {
       throw new Error("Invalid search engine");
     }
     if (!this.maxLocalResults && !this.maxRemoteResults) {

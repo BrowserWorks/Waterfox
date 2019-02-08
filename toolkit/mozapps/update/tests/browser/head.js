@@ -1,5 +1,5 @@
-ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var {FileUtils} = ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+var {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 ChromeUtils.defineModuleGetter(this, "AppMenuNotifications",
                                "resource://gre/modules/AppMenuNotifications.jsm");
@@ -90,7 +90,6 @@ async function continueFileHandler(leafName) {
     (!continueFile.exists()),
     "Waiting for file to be deleted, path: " + continueFile.path,
     undefined, retries);
-
 }
 
 /**
@@ -314,7 +313,6 @@ function processStep(step) {
 
   const {notificationId, button, beforeClick, cleanup} = step;
   return (async function() {
-
     await BrowserTestUtils.waitForEvent(PanelUI.notificationPanel, "popupshown");
     const shownNotification = AppMenuNotifications.activeNotification.id;
 
@@ -374,7 +372,7 @@ function waitForEvent(topic, status = null) {
 function getNotificationButton(win, notificationId, button) {
   let notification = win.document.getElementById(`appMenu-${notificationId}-notification`);
   is(notification.hidden, false, `${notificationId} notification is showing`);
-  return win.document.getAnonymousElementByAttribute(notification, "anonid", button);
+  return notification[button];
 }
 
 /**
@@ -429,10 +427,23 @@ function moveRealUpdater() {
   return (async function() {
     try {
       // Move away the real updater
-      let baseAppDir = getAppBaseDir();
-      let updater = baseAppDir.clone();
+      let greBinDir = getGREBinDir();
+      let updater = greBinDir.clone();
       updater.append(FILE_UPDATER_BIN);
-      updater.moveTo(baseAppDir, FILE_UPDATER_BIN_BAK);
+      updater.moveTo(greBinDir, FILE_UPDATER_BIN_BAK);
+
+      let greDir = getGREDir();
+      let updateSettingsIni = greDir.clone();
+      updateSettingsIni.append(FILE_UPDATE_SETTINGS_INI);
+      if (updateSettingsIni.exists()) {
+        updateSettingsIni.moveTo(greDir, FILE_UPDATE_SETTINGS_INI_BAK);
+      }
+
+      let precomplete = greDir.clone();
+      precomplete.append(FILE_PRECOMPLETE);
+      if (precomplete.exists()) {
+        precomplete.moveTo(greDir, FILE_PRECOMPLETE_BAK);
+      }
     } catch (e) {
       logTestInfo("Attempt to move the real updater out of the way failed... " +
                   "will try again, Exception: " + e);
@@ -453,7 +464,7 @@ function copyTestUpdater(attempt = 0) {
   return (async function() {
     try {
       // Copy the test updater
-      let baseAppDir = getAppBaseDir();
+      let greBinDir = getGREBinDir();
       let testUpdaterDir = Services.dirsvc.get("CurWorkD", Ci.nsIFile);
       let relPath = REL_PATH_DATA;
       let pathParts = relPath.split("/");
@@ -463,14 +474,22 @@ function copyTestUpdater(attempt = 0) {
 
       let testUpdater = testUpdaterDir.clone();
       testUpdater.append(FILE_UPDATER_BIN);
+      testUpdater.copyToFollowingLinks(greBinDir, FILE_UPDATER_BIN);
 
-      testUpdater.copyToFollowingLinks(baseAppDir, FILE_UPDATER_BIN);
+      let greDir = getGREDir();
+      let updateSettingsIni = greDir.clone();
+      updateSettingsIni.append(FILE_UPDATE_SETTINGS_INI);
+      writeFile(updateSettingsIni, UPDATE_SETTINGS_CONTENTS);
+
+      let precomplete = greDir.clone();
+      precomplete.append(FILE_PRECOMPLETE);
+      writeFile(precomplete, PRECOMPLETE_CONTENTS);
     } catch (e) {
       if (attempt < MAX_UPDATE_COPY_ATTEMPTS) {
         logTestInfo("Attempt to copy the test updater failed... " +
                     "will try again, Exception: " + e);
         await TestUtils.waitForTick();
-        await copyTestUpdater(attempt + 1);
+        await copyTestUpdater(attempt++);
       }
     }
   })();
@@ -482,16 +501,43 @@ function copyTestUpdater(attempt = 0) {
  * failed to restore the updater when the test has finished.
  */
 function restoreUpdaterBackup() {
-  let baseAppDir = getAppBaseDir();
-  let updater = baseAppDir.clone();
-  let updaterBackup = baseAppDir.clone();
+  let greBinDir = getGREBinDir();
+  let updater = greBinDir.clone();
+  let updaterBackup = greBinDir.clone();
   updater.append(FILE_UPDATER_BIN);
   updaterBackup.append(FILE_UPDATER_BIN_BAK);
   if (updaterBackup.exists()) {
     if (updater.exists()) {
       updater.remove(true);
     }
-    updaterBackup.moveTo(baseAppDir, FILE_UPDATER_BIN);
+    updaterBackup.moveTo(greBinDir, FILE_UPDATER_BIN);
+  }
+
+  let greDir = getGREDir();
+  let updateSettingsIniBackup = greDir.clone();
+  updateSettingsIniBackup.append(FILE_UPDATE_SETTINGS_INI_BAK);
+  if (updateSettingsIniBackup.exists()) {
+    let updateSettingsIni = greDir.clone();
+    updateSettingsIni.append(FILE_UPDATE_SETTINGS_INI);
+    if (updateSettingsIni.exists()) {
+      updateSettingsIni.remove(false);
+    }
+    updateSettingsIniBackup.moveTo(greDir, FILE_UPDATE_SETTINGS_INI);
+  }
+
+  let precomplete = greDir.clone();
+  let precompleteBackup = greDir.clone();
+  precomplete.append(FILE_PRECOMPLETE);
+  precompleteBackup.append(FILE_PRECOMPLETE_BAK);
+  if (precompleteBackup.exists()) {
+    if (precomplete.exists()) {
+      precomplete.remove(false);
+    }
+    precompleteBackup.moveTo(greDir, FILE_PRECOMPLETE);
+  } else if (precomplete.exists()) {
+    if (readFile(precomplete) == PRECOMPLETE_CONTENTS) {
+      precomplete.remove(false);
+    }
   }
 }
 
@@ -647,11 +693,16 @@ function runAboutDialogUpdateTest(updateParams, backgroundUpdate, steps) {
     let updateURL = URL_HTTP_UPDATE_SJS + "?detailsURL=" + detailsURL +
                     updateParams + getVersionParams();
     if (backgroundUpdate) {
-      setUpdateURL(updateURL);
       if (Services.prefs.getBoolPref(PREF_APP_UPDATE_STAGING_ENABLED)) {
-        // Don't wait on the deletion of the continueStaging file
-        continueFileHandler(CONTINUE_STAGING);
+        // Since MOZ_TEST_SKIP_UPDATE_STAGE is checked before
+        // MOZ_TEST_SLOW_SKIP_UPDATE_STAGE in updater.cpp this removes the need
+        // for the continue file to continue staging the update.
+        gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
+        registerCleanupFunction(() => {
+          gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "");
+        });
       }
+      setUpdateURL(updateURL);
       gAUS.checkForBackgroundUpdates();
       await waitForEvent("update-downloaded");
     } else {
@@ -781,11 +832,16 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
     let updateURL = URL_HTTP_UPDATE_SJS + "?detailsURL=" + detailsURL +
                     updateParams + getVersionParams();
     if (backgroundUpdate) {
-      setUpdateURL(updateURL);
       if (Services.prefs.getBoolPref(PREF_APP_UPDATE_STAGING_ENABLED)) {
-        // Don't wait on the deletion of the continueStaging file
-        continueFileHandler(CONTINUE_STAGING);
+        // Since MOZ_TEST_SKIP_UPDATE_STAGE is checked before
+        // MOZ_TEST_SLOW_SKIP_UPDATE_STAGE in updater.cpp this removes the need
+        // for the continue file to continue staging the update.
+        gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
+        registerCleanupFunction(() => {
+          gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "");
+        });
       }
+      setUpdateURL(updateURL);
       gAUS.checkForBackgroundUpdates();
       await waitForEvent("update-downloaded");
     } else {

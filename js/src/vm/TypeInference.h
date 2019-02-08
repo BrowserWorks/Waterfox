@@ -31,6 +31,7 @@
 namespace js {
 
 class TypeConstraint;
+class TypeScript;
 class TypeZone;
 class CompilerConstraintList;
 class HeapTypeSetKey;
@@ -87,7 +88,8 @@ class MOZ_RAII AutoSweepObjectGroup : public AutoSweepBase {
 // reference to this class.
 class MOZ_RAII AutoSweepTypeScript : public AutoSweepBase {
 #ifdef DEBUG
-  JSScript* script_;
+  Zone* zone_;
+  TypeScript* typeScript_;
 #endif
 
  public:
@@ -95,7 +97,8 @@ class MOZ_RAII AutoSweepTypeScript : public AutoSweepBase {
 #ifdef DEBUG
   inline ~AutoSweepTypeScript();
 
-  JSScript* script() const { return script_; }
+  TypeScript* typeScript() const { return typeScript_; }
+  Zone* zone() const { return zone_; }
 #endif
 };
 
@@ -210,19 +213,83 @@ class TypeScript {
 
   // ICScript and TypeScript have the same lifetimes, so we store a pointer to
   // ICScript here to not increase sizeof(JSScript).
-  js::UniquePtr<js::jit::ICScript> icScript_;
+  using ICScriptPtr = js::UniquePtr<js::jit::ICScript>;
+  ICScriptPtr icScript_;
 
-  // Variable-size array
+  // Number of TypeSets in typeArray_.
+  uint32_t numTypeSets_;
+
+  // This field is used to avoid binary searches for the sought entry when
+  // bytecode map queries are in linear order.
+  uint32_t bytecodeTypeMapHint_ = 0;
+
+  struct Flags {
+    // Flag set when discarding JIT code to indicate this script is on the stack
+    // and type information and JIT code should not be discarded.
+    bool active : 1;
+
+    // Generation for type sweeping. If out of sync with the TypeZone's
+    // generation, this TypeScript needs to be swept.
+    bool typesGeneration : 1;
+
+    // Whether freeze constraints for stack type sets have been generated.
+    bool hasFreezeConstraints : 1;
+  };
+  Flags flags_ = {};  // Zero-initialize flags.
+
+  // Variable-size array. This is followed by the bytecode type map.
   StackTypeSet typeArray_[1];
 
+  StackTypeSet* typeArrayDontCheckGeneration() {
+    // Ensure typeArray_ is the last data member of TypeScript.
+    static_assert(sizeof(TypeScript) ==
+                      sizeof(typeArray_) + offsetof(TypeScript, typeArray_),
+                  "typeArray_ must be the last member of TypeScript");
+    return const_cast<StackTypeSet*>(typeArray_);
+  }
+
+  uint32_t typesGeneration() const { return uint32_t(flags_.typesGeneration); }
+  void setTypesGeneration(uint32_t generation) {
+    MOZ_ASSERT(generation <= 1);
+    flags_.typesGeneration = generation;
+  }
+
  public:
-  RecompileInfoVector& inlinedCompilations() { return inlinedCompilations_; }
-  MOZ_MUST_USE bool addInlinedCompilation(RecompileInfo info) {
+  TypeScript(JSScript* script, ICScriptPtr&& icScript, uint32_t numTypeSets);
+
+  bool hasFreezeConstraints(const js::AutoSweepTypeScript& sweep) const {
+    MOZ_ASSERT(sweep.typeScript() == this);
+    return flags_.hasFreezeConstraints;
+  }
+  void setHasFreezeConstraints(const js::AutoSweepTypeScript& sweep) {
+    MOZ_ASSERT(sweep.typeScript() == this);
+    flags_.hasFreezeConstraints = true;
+  }
+
+  inline bool typesNeedsSweep(Zone* zone) const;
+  void sweepTypes(const js::AutoSweepTypeScript& sweep, Zone* zone);
+
+  RecompileInfoVector& inlinedCompilations(
+      const js::AutoSweepTypeScript& sweep) {
+    MOZ_ASSERT(sweep.typeScript() == this);
+    return inlinedCompilations_;
+  }
+  MOZ_MUST_USE bool addInlinedCompilation(const js::AutoSweepTypeScript& sweep,
+                                          RecompileInfo info) {
+    MOZ_ASSERT(sweep.typeScript() == this);
     if (!inlinedCompilations_.empty() && inlinedCompilations_.back() == info) {
       return true;
     }
     return inlinedCompilations_.append(info);
   }
+
+  uint32_t numTypeSets() const { return numTypeSets_; }
+
+  uint32_t* bytecodeTypeMapHint() { return &bytecodeTypeMapHint_; }
+
+  bool active() const { return flags_.active; }
+  void setActive() { flags_.active = true; }
+  void resetActive() { flags_.active = false; }
 
   jit::ICScript* icScript() const {
     MOZ_ASSERT(icScript_);
@@ -230,21 +297,15 @@ class TypeScript {
   }
 
   /* Array of type sets for variables and JOF_TYPESET ops. */
-  StackTypeSet* typeArray() const {
-    // Ensure typeArray_ is the last data member of TypeScript.
-    JS_STATIC_ASSERT(sizeof(TypeScript) ==
-                     sizeof(typeArray_) + offsetof(TypeScript, typeArray_));
-    return const_cast<StackTypeSet*>(typeArray_);
+  StackTypeSet* typeArray(const js::AutoSweepTypeScript& sweep) {
+    MOZ_ASSERT(sweep.typeScript() == this);
+    return typeArrayDontCheckGeneration();
   }
 
-  static inline size_t SizeIncludingTypeArray(size_t arraySize) {
-    // Ensure typeArray_ is the last data member of TypeScript.
-    JS_STATIC_ASSERT(sizeof(TypeScript) ==
-                     sizeof(StackTypeSet) + offsetof(TypeScript, typeArray_));
-    return offsetof(TypeScript, typeArray_) + arraySize * sizeof(StackTypeSet);
+  uint32_t* bytecodeTypeMap() {
+    MOZ_ASSERT(numTypeSets_ > 0);
+    return reinterpret_cast<uint32_t*>(typeArray_ + numTypeSets_);
   }
-
-  static inline unsigned NumTypeSets(JSScript* script);
 
   static inline StackTypeSet* ThisTypes(JSScript* script);
   static inline StackTypeSet* ArgTypes(JSScript* script, unsigned i);
@@ -305,8 +366,16 @@ class TypeScript {
     return mallocSizeOf(this);
   }
 
+  static constexpr size_t offsetOfICScript() {
+    // Note: icScript_ is a UniquePtr that stores the raw pointer. If that ever
+    // changes and this assertion fails, we should stop using UniquePtr.
+    static_assert(sizeof(icScript_) == sizeof(uintptr_t),
+                  "JIT code assumes icScript_ is pointer-sized");
+    return offsetof(TypeScript, icScript_);
+  }
+
 #ifdef DEBUG
-  void printTypes(JSContext* cx, HandleScript script) const;
+  void printTypes(JSContext* cx, HandleScript script);
 #endif
 };
 
@@ -322,8 +391,6 @@ class MOZ_RAII AutoKeepTypeScripts {
   explicit inline AutoKeepTypeScripts(JSContext* cx);
   inline ~AutoKeepTypeScripts();
 };
-
-void FillBytecodeTypeMap(JSScript* script, uint32_t* bytecodeMap);
 
 class RecompileInfo;
 

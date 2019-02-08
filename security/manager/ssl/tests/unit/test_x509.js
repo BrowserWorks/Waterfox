@@ -7,7 +7,7 @@
 
 // Until X509.jsm is actually used in production code, this is where we have to
 // import it from.
-var { X509 } = ChromeUtils.import("resource://testing-common/psm/X509.jsm", {});
+var { X509 } = ChromeUtils.import("resource://testing-common/psm/X509.jsm");
 
 function stringToBytes(s) {
   let b = [];
@@ -23,59 +23,61 @@ function readPEMToBytes(filename) {
 
 function run_test() {
   let certificate = new X509.Certificate();
-  certificate.parse(readPEMToBytes("bad_certs/default-ee.pem"));
+  // We use this certificate because it has a set validity period, which means that when
+  // the test certificates get regenerated each year, the values in this test won't change.
+  certificate.parse(readPEMToBytes("bad_certs/expired-ee.pem"));
 
   equal(certificate.tbsCertificate.version, 3,
-        "default-ee.pem should be x509v3");
+        "expired-ee.pem should be x509v3");
 
   // serialNumber
   deepEqual(certificate.tbsCertificate.serialNumber,
-            [ 0x59, 0xb5, 0x8b, 0x4f, 0x02, 0xc1, 0xbd, 0xfc, 0x1c, 0xa2, 0x25,
-              0x3b, 0x23, 0xc9, 0x43, 0xcf, 0xdb, 0x27, 0x7d, 0x48 ],
-            "default-ee.pem should have expected serialNumber");
+            [ 0x63, 0xd1, 0x11, 0x00, 0x82, 0xa3, 0xd2, 0x3b, 0x3f, 0x61, 0xb8,
+              0x49, 0xa0, 0xca, 0xdc, 0x2e, 0x78, 0xfe, 0xfa, 0xea ],
+            "expired-ee.pem should have expected serialNumber");
 
   deepEqual(certificate.tbsCertificate.signature.algorithm._values,
             [ 1, 2, 840, 113549, 1, 1, 11 ], // sha256WithRSAEncryption
-            "default-ee.pem should have sha256WithRSAEncryption signature");
+            "expired-ee.pem should have sha256WithRSAEncryption signature");
   deepEqual(certificate.tbsCertificate.signature.parameters._contents, [],
-            "default-ee.pem should have NULL parameters for signature");
+            "expired-ee.pem should have NULL parameters for signature");
 
   equal(certificate.tbsCertificate.issuer.rdns.length, 1,
-        "default-ee.pem should have one RDN in issuer");
+        "expired-ee.pem should have one RDN in issuer");
   equal(certificate.tbsCertificate.issuer.rdns[0].avas.length, 1,
-        "default-ee.pem should have one AVA in RDN in issuer");
+        "expired-ee.pem should have one AVA in RDN in issuer");
   deepEqual(certificate.tbsCertificate.issuer.rdns[0].avas[0].value.value,
             stringToBytes("Test CA"),
-            "default-ee.pem should have issuer 'Test CA'");
+            "expired-ee.pem should have issuer 'Test CA'");
 
   equal(certificate.tbsCertificate.validity.notBefore.time.getTime(),
-        Date.parse("2016-11-27T00:00:00.000Z"),
-        "default-ee.pem should have the correct value for notBefore");
+        Date.parse("2013-01-01T00:00:00.000Z"),
+        "expired-ee.pem should have the correct value for notBefore");
   equal(certificate.tbsCertificate.validity.notAfter.time.getTime(),
-        Date.parse("2019-02-05T00:00:00.000Z"),
-        "default-ee.pem should have the correct value for notAfter");
+        Date.parse("2014-01-01T00:00:00.000Z"),
+        "expired-ee.pem should have the correct value for notAfter");
 
   equal(certificate.tbsCertificate.subject.rdns.length, 1,
-        "default-ee.pem should have one RDN in subject");
+        "expired-ee.pem should have one RDN in subject");
   equal(certificate.tbsCertificate.subject.rdns[0].avas.length, 1,
-        "default-ee.pem should have one AVA in RDN in subject");
+        "expired-ee.pem should have one AVA in RDN in subject");
   deepEqual(certificate.tbsCertificate.subject.rdns[0].avas[0].value.value,
-            stringToBytes("Test End-entity"),
-            "default-ee.pem should have subject 'Test End-entity'");
+            stringToBytes("Expired Test End-entity"),
+            "expired-ee.pem should have subject 'Expired Test End-entity'");
 
   deepEqual(certificate.tbsCertificate.subjectPublicKeyInfo.algorithm.algorithm._values,
             [ 1, 2, 840, 113549, 1, 1, 1 ], // rsaEncryption
-            "default-ee.pem should have a spki algorithm of rsaEncryption");
+            "expired-ee.pem should have a spki algorithm of rsaEncryption");
 
   equal(certificate.tbsCertificate.extensions.length, 2,
-        "default-ee.pem should have two extensions");
+        "expired-ee.pem should have two extensions");
 
   deepEqual(certificate.signatureAlgorithm.algorithm._values,
             [ 1, 2, 840, 113549, 1, 1, 11 ], // sha256WithRSAEncryption
-            "default-ee.pem should have sha256WithRSAEncryption signatureAlgorithm");
+            "expired-ee.pem should have sha256WithRSAEncryption signatureAlgorithm");
   deepEqual(certificate.signatureAlgorithm.parameters._contents, [],
-            "default-ee.pem should have NULL parameters for signatureAlgorithm");
+            "expired-ee.pem should have NULL parameters for signatureAlgorithm");
 
   equal(certificate.signatureValue.length, 2048 / 8,
-        "length of signature on default-ee.pem should be 2048 bits");
+        "length of signature on expired-ee.pem should be 2048 bits");
 }

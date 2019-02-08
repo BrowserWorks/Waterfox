@@ -6,10 +6,8 @@
 
 const PERMISSION_SAVE_LOGINS = "login-saving";
 
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/Timer.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(this, "BrowserUtils",
                                "resource://gre/modules/BrowserUtils.jsm");
@@ -82,7 +80,6 @@ LoginManager.prototype = {
    *       delayedStartup()
    */
   init() {
-
     // Cache references to current |this| in utility objects
     this._observer._pwmgr            = this;
 
@@ -215,7 +212,7 @@ LoginManager.prototype = {
       usernamePresentHistogram.add(!!login.username);
 
       let hostname = login.hostname;
-      hostnameCount.set(hostname, (hostnameCount.get(hostname) || 0 ) + 1);
+      hostnameCount.set(hostname, (hostnameCount.get(hostname) || 0) + 1);
 
       login.QueryInterface(Ci.nsILoginMetaInfo);
       let timeLastUsedAgeMs = referenceTimeMs - login.timeLastUsed;

@@ -6,9 +6,10 @@
 
 var EXPORTED_SYMBOLS = ["UrlbarView"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetters(this, {
   Services: "resource://gre/modules/Services.jsm",
+  UrlbarPrefs: "resource:///modules/UrlbarPrefs.jsm",
   UrlbarUtils: "resource:///modules/UrlbarUtils.jsm",
 });
 
@@ -35,12 +36,14 @@ class UrlbarView {
     this._rows = this.panel.querySelector(".urlbarView-results");
 
     this._rows.addEventListener("mouseup", this);
+    this._rows.addEventListener("mousedown", this);
 
     // For the horizontal fade-out effect, set the overflow attribute on result
     // rows when they overflow.
     this._rows.addEventListener("overflow", this);
     this._rows.addEventListener("underflow", this);
 
+    this.panel.addEventListener("popupshowing", this);
     this.panel.addEventListener("popuphiding", this);
 
     this.controller.setView(this);
@@ -91,14 +94,16 @@ class UrlbarView {
 
     let row;
     if (reverse) {
-      row = this._selected.previousElementSibling ||
+      row = (this._selected && this._selected.previousElementSibling) ||
             this._rows.lastElementChild;
     } else {
-      row = this._selected.nextElementSibling ||
+      row = (this._selected && this._selected.nextElementSibling) ||
             this._rows.firstElementChild;
     }
 
-    this._selected.toggleAttribute("selected", false);
+    if (this._selected) {
+      this._selected.toggleAttribute("selected", false);
+    }
     this._selected = row;
     row.toggleAttribute("selected", true);
 
@@ -118,7 +123,7 @@ class UrlbarView {
 
   // UrlbarController listener methods.
   onQueryStarted(queryContext) {
-    this._rows.textContent = "";
+    this._rows.style.minHeight = this._getBoundsWithoutFlushing(this._rows).height + "px";
   }
 
   onQueryCancelled(queryContext) {
@@ -126,22 +131,29 @@ class UrlbarView {
   }
 
   onQueryFinished(queryContext) {
-    // Nothing.
+    this._rows.style.minHeight = "";
   }
 
   onQueryResults(queryContext) {
-    // XXX For now, clear the results for each set received. We should really
-    // be updating the existing list.
-    this._rows.textContent = "";
     this._queryContext = queryContext;
+
+    let fragment = this.document.createDocumentFragment();
     for (let resultIndex in queryContext.results) {
-      this._addRow(resultIndex);
+      fragment.appendChild(this._createRow(resultIndex));
     }
 
     if (queryContext.preselected) {
-      this._selected = this._rows.firstElementChild;
+      this._selected = fragment.firstElementChild;
       this._selected.toggleAttribute("selected", true);
+    } else if (queryContext.lastResultCount == 0) {
+      // Clear the selection when we get a new set of results.
+      this._selected = null;
     }
+
+    // TODO bug 1523602: For now, clear the results for each set received.
+    // We should be updating the existing list instead.
+    this._rows.textContent = "";
+    this._rows.appendChild(fragment);
 
     this._openPanel();
   }
@@ -181,6 +193,32 @@ class UrlbarView {
     this.input.setValueFromResult(this._queryContext.results[newSelectionIndex]);
   }
 
+  /**
+   * Passes DOM events for the view to the _on_<event type> methods.
+   * @param {Event} event
+   *   DOM event from the <view>.
+   */
+  handleEvent(event) {
+    let methodName = "_on_" + event.type;
+    if (methodName in this) {
+      this[methodName](event);
+    } else {
+      throw new Error("Unrecognized UrlbarView event: " + event.type);
+    }
+  }
+
+  /**
+   * This is called when a one-off is clicked and when "search in new tab"
+   * is selected from a one-off context menu.
+   * @param {Event} event
+   * @param {nsISearchEngine} engine
+   * @param {string} where
+   * @param {object} params
+   */
+  handleOneOffSearch(event, engine, where, params) {
+    this.input.handleCommand(event, where, params);
+  }
+
   // Private methods below.
 
   _getBoundsWithoutFlushing(element) {
@@ -197,12 +235,9 @@ class UrlbarView {
     }
 
     this.panel.removeAttribute("hidden");
+    this.panel.removeAttribute("actionoverride");
 
     this._alignPanel();
-
-    // TODO: Search one off buttons are a stub right now.
-    //       We'll need to set them up properly.
-    this.oneOffSearchButtons;
 
     this.panel.openPopup(this.input.textbox.closest("toolbar"), "after_end", 0, -1);
   }
@@ -250,15 +285,19 @@ class UrlbarView {
     }
   }
 
-  _addRow(resultIndex) {
+  _createRow(resultIndex) {
     let result = this._queryContext.results[resultIndex];
     let item = this._createElement("div");
     item.className = "urlbarView-row";
     item.setAttribute("resultIndex", resultIndex);
 
-    if (result.source == UrlbarUtils.MATCH_SOURCE.TABS) {
-      item.setAttribute("type", "tab");
-    } else if (result.source == UrlbarUtils.MATCH_SOURCE.BOOKMARKS) {
+    if (result.type == UrlbarUtils.RESULT_TYPE.SEARCH) {
+      item.setAttribute("type", "search");
+    } else if (result.type == UrlbarUtils.RESULT_TYPE.REMOTE_TAB) {
+      item.setAttribute("type", "remotetab");
+    } else if (result.type == UrlbarUtils.RESULT_TYPE.TAB_SWITCH) {
+      item.setAttribute("type", "switchtab");
+    } else if (result.source == UrlbarUtils.RESULT_SOURCE.BOOKMARKS) {
       item.setAttribute("type", "bookmark");
     }
 
@@ -272,11 +311,11 @@ class UrlbarView {
 
     let favicon = this._createElement("img");
     favicon.className = "urlbarView-favicon";
-    if (result.type == UrlbarUtils.MATCH_TYPE.SEARCH ||
-        result.type == UrlbarUtils.MATCH_TYPE.KEYWORD) {
-      favicon.src = "chrome://browser/skin/search-glass.svg";
+    if (result.type == UrlbarUtils.RESULT_TYPE.SEARCH ||
+        result.type == UrlbarUtils.RESULT_TYPE.KEYWORD) {
+      favicon.src = UrlbarUtils.ICON.SEARCH_GLASS;
     } else {
-      favicon.src = result.payload.icon || "chrome://mozapps/skin/places/defaultFavicon.svg";
+      favicon.src = result.payload.icon || UrlbarUtils.ICON.DEFAULT;
     }
     content.appendChild(favicon);
 
@@ -299,28 +338,48 @@ class UrlbarView {
       content.appendChild(tagsContainer);
     }
 
-    let secondary = this._createElement("span");
-    secondary.className = "urlbarView-secondary";
+    let action;
+    let url;
+    let setAction = text => {
+      action = this._createElement("span");
+      action.className = "urlbarView-secondary urlbarView-action";
+      action.textContent = text;
+    };
+    let setURL = () => {
+      url = this._createElement("span");
+      url.className = "urlbarView-secondary urlbarView-url";
+      this._addTextContentWithHighlights(url, result.payload.url || "",
+                                         result.payloadHighlights.url || []);
+    };
     switch (result.type) {
-      case UrlbarUtils.MATCH_TYPE.TAB_SWITCH:
-        secondary.classList.add("urlbarView-action");
-        secondary.textContent = bundle.GetStringFromName("switchToTab2");
+      case UrlbarUtils.RESULT_TYPE.TAB_SWITCH:
+        setAction(bundle.GetStringFromName("switchToTab2"));
+        setURL();
         break;
-      case UrlbarUtils.MATCH_TYPE.SEARCH:
-        secondary.classList.add("urlbarView-action");
-        secondary.textContent =
-          bundle.formatStringFromName("searchWithEngine",
-                                      [result.payload.engine], 1);
+      case UrlbarUtils.RESULT_TYPE.REMOTE_TAB:
+        setAction(result.payload.device);
+        setURL();
+        break;
+      case UrlbarUtils.RESULT_TYPE.SEARCH:
+        setAction(bundle.formatStringFromName("searchWithEngine",
+                                              [result.payload.engine], 1));
         break;
       default:
-        secondary.classList.add("urlbarView-url");
-        this._addTextContentWithHighlights(secondary, result.payload.url || "",
-                                           result.payloadHighlights.url || []);
+        if (resultIndex == 0) {
+          setAction(bundle.GetStringFromName("visit"));
+        } else {
+          setURL();
+        }
         break;
     }
-    content.appendChild(secondary);
+    if (action) {
+      content.appendChild(action);
+    }
+    if (url) {
+      content.appendChild(url);
+    }
 
-    this._rows.appendChild(item);
+    return item;
   }
 
   /**
@@ -360,18 +419,39 @@ class UrlbarView {
     }
   }
 
-  /**
-   * Passes DOM events for the view to the _on_<event type> methods.
-   * @param {Event} event
-   *   DOM event from the <view>.
-   */
-  handleEvent(event) {
-    let methodName = "_on_" + event.type;
-    if (methodName in this) {
-      this[methodName](event);
-    } else {
-      throw new Error("Unrecognized UrlbarView event: " + event.type);
+  _enableOrDisableOneOffSearches() {
+    if (UrlbarPrefs.get("oneOffSearches")) {
+      this.oneOffSearchButtons.telemetryOrigin = "urlbar";
+      this.oneOffSearchButtons.style.display = "";
+      // Set .textbox first, since the popup setter will cause
+      // a _rebuild call that uses it.
+      this.oneOffSearchButtons.textbox = this.input.textbox;
+      this.oneOffSearchButtons.view = this;
+    } else if (this._oneOffSearchButtons) {
+      this.oneOffSearchButtons.telemetryOrigin = null;
+      this.oneOffSearchButtons.style.display = "none";
+      this.oneOffSearchButtons.textbox = null;
+      this.oneOffSearchButtons.view = null;
     }
+  }
+
+  _on_mousedown(event) {
+    if (event.button == 2) {
+      // Ignore right clicks.
+      return;
+    }
+
+    let row = event.target;
+    while (!row.classList.contains("urlbarView-row")) {
+      row = row.parentNode;
+    }
+    let resultIndex = row.getAttribute("resultIndex");
+    if (this._selected) {
+      this._selected.toggleAttribute("selected", false);
+    }
+    this._selected = this._rows.children[resultIndex];
+    this._selected.toggleAttribute("selected", true);
+    this.controller.speculativeConnect(this._queryContext, resultIndex, "mousedown");
   }
 
   _on_mouseup(event) {
@@ -403,7 +483,11 @@ class UrlbarView {
     }
   }
 
-  _on_popuphiding(event) {
+  _on_popupshowing() {
+    this._enableOrDisableOneOffSearches();
+  }
+
+  _on_popuphiding() {
     this.controller.cancelQuery();
   }
 }

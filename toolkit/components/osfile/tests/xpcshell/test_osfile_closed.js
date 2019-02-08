@@ -1,6 +1,6 @@
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/osfile.jsm");
+const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 
 function run_test() {
   do_test_pending();
@@ -41,7 +41,6 @@ add_task(async function test_closed() {
   Assert.ok(!!exn);
   Assert.ok(exn instanceof OS.File.Error);
   Assert.ok(exn.becauseClosed);
-
 });
 
 add_task(do_test_finished);

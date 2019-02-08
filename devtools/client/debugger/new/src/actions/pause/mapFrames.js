@@ -136,8 +136,10 @@ async function expandFrames(
       const id = j == 0 ? frame.id : `${frame.id}-originalFrame${j}`;
       result.push({
         id,
+        thread: originalFrame.thread,
         displayName: originalFrame.displayName,
         location: originalFrame.location,
+        source: null,
         scope: frame.scope,
         this: frame.this,
         isOriginal: true,

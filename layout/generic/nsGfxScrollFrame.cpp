@@ -109,14 +109,16 @@ static uint32_t GetOverflowChange(const nsRect& aCurScrolledRect,
 
 nsHTMLScrollFrame* NS_NewHTMLScrollFrame(nsIPresShell* aPresShell,
                                          ComputedStyle* aStyle, bool aIsRoot) {
-  return new (aPresShell) nsHTMLScrollFrame(aStyle, aIsRoot);
+  return new (aPresShell)
+      nsHTMLScrollFrame(aStyle, aPresShell->GetPresContext(), aIsRoot);
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsHTMLScrollFrame)
 
 nsHTMLScrollFrame::nsHTMLScrollFrame(ComputedStyle* aStyle,
+                                     nsPresContext* aPresContext,
                                      nsIFrame::ClassID aID, bool aIsRoot)
-    : nsContainerFrame(aStyle, aID),
+    : nsContainerFrame(aStyle, aPresContext, aID),
       mHelper(ALLOW_THIS_IN_INITIALIZER_LIST(this), aIsRoot) {}
 
 void nsHTMLScrollFrame::ScrollbarActivityStarted() const {
@@ -977,6 +979,28 @@ static void GetScrollableOverflowForPerspective(
   }
 }
 
+nscoord nsHTMLScrollFrame::GetLogicalBaseline(WritingMode aWritingMode) const {
+  // This function implements some of the spec text here:
+  //  https://drafts.csswg.org/css-align/#baseline-export
+  //
+  // Specifically: if our scrolled frame is a block, we just use the inherited
+  // GetLogicalBaseline() impl, which synthesizes a baseline from the
+  // margin-box. Otherwise, we defer to our scrolled frame, considering it
+  // to be scrolled to its initial scroll position.
+  if (mHelper.mScrolledFrame->IsBlockFrame()) {
+    return nsContainerFrame::GetLogicalBaseline(aWritingMode);
+  }
+
+  // OK, here's where we defer to our scrolled frame. We have to add our
+  // border BStart thickness to whatever it returns, to produce an offset in
+  // our frame-rect's coordinate system. (We don't have to add padding,
+  // because the scrolled frame handles our padding.)
+  LogicalMargin border = GetLogicalUsedBorder(aWritingMode);
+
+  return border.BStart(aWritingMode) +
+         mHelper.mScrolledFrame->GetLogicalBaseline(aWritingMode);
+}
+
 void nsHTMLScrollFrame::AdjustForPerspective(nsRect& aScrollableOverflow) {
   // If we have perspective that is being applied to our children, then
   // the effective transform on the child depends on the relative position
@@ -1176,15 +1200,16 @@ NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 nsXULScrollFrame* NS_NewXULScrollFrame(nsIPresShell* aPresShell,
                                        ComputedStyle* aStyle, bool aIsRoot,
                                        bool aClipAllDescendants) {
-  return new (aPresShell)
-      nsXULScrollFrame(aStyle, aIsRoot, aClipAllDescendants);
+  return new (aPresShell) nsXULScrollFrame(aStyle, aPresShell->GetPresContext(),
+                                           aIsRoot, aClipAllDescendants);
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsXULScrollFrame)
 
-nsXULScrollFrame::nsXULScrollFrame(ComputedStyle* aStyle, bool aIsRoot,
+nsXULScrollFrame::nsXULScrollFrame(ComputedStyle* aStyle,
+                                   nsPresContext* aPresContext, bool aIsRoot,
                                    bool aClipAllDescendants)
-    : nsBoxFrame(aStyle, kClassID, aIsRoot),
+    : nsBoxFrame(aStyle, aPresContext, kClassID, aIsRoot),
       mHelper(ALLOW_THIS_IN_INITIALIZER_LIST(this), aIsRoot) {
   SetXULLayoutManager(nullptr);
   mHelper.mClipAllDescendants = aClipAllDescendants;
@@ -3443,7 +3468,28 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     }
   }
 
-  nsDisplayListCollection scrolledContent(aBuilder);
+  nsDisplayListCollection set(aBuilder);
+
+  bool willBuildAsyncZoomContainer =
+      aBuilder->ShouldBuildAsyncZoomContainer() && mIsRoot &&
+      mOuter->PresContext()->IsRootContentDocument();
+
+  nsRect scrollPortClip = mScrollPort + aBuilder->ToReferenceFrame(mOuter);
+  nsRect clipRect = scrollPortClip;
+  // Our override of GetBorderRadii ensures we never have a radius at
+  // the corners where we have a scrollbar.
+  nscoord radii[8];
+  bool haveRadii = mOuter->GetPaddingBoxBorderRadii(radii);
+  if (mIsRoot) {
+    clipRect.SizeTo(nsLayoutUtils::CalculateCompositionSizeForFrame(mOuter));
+    if (gfxPrefs::LayoutUseContainersForRootFrames() &&
+        mOuter->PresContext()->IsRootContentDocument()) {
+      double res = mOuter->PresShell()->GetResolution();
+      clipRect.width = NSToCoordRound(clipRect.width / res);
+      clipRect.height = NSToCoordRound(clipRect.height / res);
+    }
+  }
+
   {
     // Note that setting the current scroll parent id here means that positioned
     // children of this scroll info layer will pick up the scroll info layer as
@@ -3456,25 +3502,17 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
             ? nsLayoutUtils::FindOrCreateIDFor(mScrolledFrame->GetContent())
             : aBuilder->GetCurrentScrollParentId());
 
-    nsRect clipRect = mScrollPort + aBuilder->ToReferenceFrame(mOuter);
-    // Our override of GetBorderRadii ensures we never have a radius at
-    // the corners where we have a scrollbar.
-    nscoord radii[8];
-    bool haveRadii = mOuter->GetPaddingBoxBorderRadii(radii);
-    if (mIsRoot) {
-      clipRect.SizeTo(nsLayoutUtils::CalculateCompositionSizeForFrame(mOuter));
-      if (mOuter->PresContext()->IsRootContentDocument()) {
-        double res = mOuter->PresShell()->GetResolution();
-        clipRect.width = NSToCoordRound(clipRect.width / res);
-        clipRect.height = NSToCoordRound(clipRect.height / res);
-      }
-    }
-
     DisplayListClipState::AutoSaveRestore clipState(aBuilder);
+    // If we're building an async zoom container, clip the contents inside
+    // to the layout viewport (scrollPortClip). The composition bounds clip
+    // (clipRect) will be applied to the zoom container itself below.
+    nsRect clipRectForContents =
+        willBuildAsyncZoomContainer ? scrollPortClip : clipRect;
     if (mClipAllDescendants) {
-      clipState.ClipContentDescendants(clipRect, haveRadii ? radii : nullptr);
+      clipState.ClipContentDescendants(clipRectForContents,
+                                       haveRadii ? radii : nullptr);
     } else {
-      clipState.ClipContainingBlockDescendants(clipRect,
+      clipState.ClipContainingBlockDescendants(clipRectForContents,
                                                haveRadii ? radii : nullptr);
     }
 
@@ -3515,14 +3553,14 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
         aBuilder->SetCompositorHitTestInfo(hitInfo->HitTestArea(),
                                            hitInfo->HitTestFlags());
 
-        scrolledContent.BorderBackground()->AppendToTop(hitInfo);
+        set.BorderBackground()->AppendToTop(hitInfo);
       }
     }
 
     {
-      // Clip our contents to the unsnapped scrolled rect. This makes sure that
-      // we don't have display items over the subpixel seam at the edge of the
-      // scrolled area.
+      // Clip our contents to the unsnapped scrolled rect. This makes sure
+      // that we don't have display items over the subpixel seam at the edge
+      // of the scrolled area.
       DisplayListClipState::AutoSaveRestore scrolledRectClipState(aBuilder);
       nsRect scrolledRectClip =
           GetUnsnappedScrolledRectInternal(
@@ -3554,8 +3592,7 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
           aBuilder, mOuter, visibleRect, dirtyRect,
           aBuilder->IsAtRootOfPseudoStackingContext());
 
-      mOuter->BuildDisplayListForChild(aBuilder, mScrolledFrame,
-                                       scrolledContent);
+      mOuter->BuildDisplayListForChild(aBuilder, mScrolledFrame, set);
 
       if (dirtyRectHasBeenOverriden && gfxPrefs::LayoutDisplayListShowArea()) {
         nsDisplaySolidColor* color = MakeDisplayItem<nsDisplaySolidColor>(
@@ -3563,7 +3600,7 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
             dirtyRect + aBuilder->GetCurrentFrameOffsetToReferenceFrame(),
             NS_RGBA(0, 0, 255, 64), false);
         color->SetOverrideZIndex(INT32_MAX);
-        scrolledContent.PositionedDescendants()->AppendToTop(color);
+        set.PositionedDescendants()->AppendToTop(color);
       }
     }
 
@@ -3572,7 +3609,7 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
       // effect, so that the caret wasn't clipped unnecessarily. We apply
       // the non-inflated clip to the non-caret items now, by intersecting
       // it with their existing clip.
-      ClipListsExceptCaret(&scrolledContent, aBuilder, mScrolledFrame,
+      ClipListsExceptCaret(&set, aBuilder, mScrolledFrame,
                            *extraContentBoxClipForNonCaretContent);
     }
 
@@ -3594,9 +3631,9 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
         nsLayoutUtils::SetDisplayPortMargins(
             mOuter->GetContent(), mOuter->PresShell(), ScreenMargin(), 0,
             nsLayoutUtils::RepaintMode::DoNotRepaint);
-        // Call DecideScrollableLayer to recompute mWillBuildScrollableLayer and
-        // recompute the current animated geometry root if needed.
-        // It's too late to change the dirty rect so pass a copy.
+        // Call DecideScrollableLayer to recompute mWillBuildScrollableLayer
+        // and recompute the current animated geometry root if needed. It's
+        // too late to change the dirty rect so pass a copy.
         nsRect copyOfDirtyRect = dirtyRect;
         nsRect copyOfVisibleRect = visibleRect;
         Unused << DecideScrollableLayer(aBuilder, &copyOfVisibleRect,
@@ -3610,23 +3647,50 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     }
   }
 
+  if (willBuildAsyncZoomContainer) {
+    MOZ_ASSERT(mClipAllDescendants);
+
+    // Wrap all our scrolled contents in an nsDisplayAsyncZoom. This will be
+    // the layer that gets scaled for APZ zooming. It does not have the
+    // scrolled ASR, but it does have the composition bounds clip applied to
+    // it. The children have the layout viewport clip applied to them (above).
+    // Effectively we are double clipping to the viewport, at potentially
+    // different async scales.
+
+    nsDisplayList resultList;
+    set.SerializeWithCorrectZOrder(&resultList, mOuter->GetContent());
+
+    mozilla::layers::FrameMetrics::ViewID viewID =
+        nsLayoutUtils::FindOrCreateIDFor(mScrolledFrame->GetContent());
+
+    DisplayListClipState::AutoSaveRestore clipState(aBuilder);
+    clipState.ClipContentDescendants(clipRect, haveRadii ? radii : nullptr);
+
+    set.Content()->AppendToTop(MakeDisplayItem<nsDisplayAsyncZoom>(
+        aBuilder, mOuter, &resultList, aBuilder->CurrentActiveScrolledRoot(),
+        viewID));
+  }
+
+  nsDisplayListCollection scrolledContent(aBuilder);
+  set.MoveTo(scrolledContent);
+
   if (mWillBuildScrollableLayer && aBuilder->IsPaintingToWindow()) {
     aBuilder->ForceLayerForScrollParent();
   }
 
   if (couldBuildLayer) {
-    // Make sure that APZ will dispatch events back to content so we can create
-    // a displayport for this frame. We'll add the item later on.
+    // Make sure that APZ will dispatch events back to content so we can
+    // create a displayport for this frame. We'll add the item later on.
     if (!mWillBuildScrollableLayer) {
       if (aBuilder->BuildCompositorHitTestInfo()) {
         CompositorHitTestInfo info(CompositorHitTestFlags::eVisibleToHitTest,
                                    CompositorHitTestFlags::eDispatchToContent);
         // If the scroll frame has non-default overscroll-behavior, instruct
         // APZ to require a target confirmation before processing events that
-        // hit this scroll frame (that is, to drop the events if a confirmation
-        // does not arrive within the timeout period). Otherwise, APZ's
-        // fallback behaviour of scrolling the enclosing scroll frame would
-        // violate the specified overscroll-behavior.
+        // hit this scroll frame (that is, to drop the events if a
+        // confirmation does not arrive within the timeout period). Otherwise,
+        // APZ's fallback behaviour of scrolling the enclosing scroll frame
+        // would violate the specified overscroll-behavior.
         ScrollStyles scrollStyles = GetScrollStylesFromFrame();
         if (scrollStyles.mOverscrollBehaviorX !=
                 StyleOverscrollBehavior::Auto ||
@@ -3648,6 +3712,7 @@ void ScrollFrameHelper::BuildDisplayList(nsDisplayListBuilder* aBuilder,
                                                     mOuter));
     }
   }
+
   // Now display overlay scrollbars and the resizer, if we have one.
   AppendScrollPartsTo(aBuilder, scrolledContent, createLayersForScrollbars,
                       true);
@@ -3846,9 +3911,7 @@ Maybe<ScrollMetadata> ScrollFrameHelper::ComputeScrollMetadata(
       mOuter->GetOffsetToCrossDoc(aContainerReferenceFrame);
 
   Maybe<nsRect> parentLayerClip;
-  // For containerful frames, the clip is on the container layer.
-  if (aClip &&
-      (!gfxPrefs::LayoutUseContainersForRootFrames() || mAddClipRectToLayer)) {
+  if (aClip && mAddClipRectToLayer) {
     parentLayerClip = Some(aClip->GetClipRect());
   }
 
@@ -3988,7 +4051,8 @@ nsRect ScrollFrameHelper::GetVisualOptimalViewingRect() const {
 
   if (mIsRoot && presShell->IsVisualViewportSizeSet() &&
       presShell->IsVisualViewportOffsetSet()) {
-    return nsRect(presShell->GetVisualViewportOffset(),
+    return nsRect(mScrollPort.TopLeft() - GetScrollPosition() +
+                      presShell->GetVisualViewportOffset(),
                   presShell->GetVisualViewportSize());
   }
   return mScrollPort;
@@ -5483,13 +5547,6 @@ void ScrollFrameHelper::UpdateMinimumScaleSize(
   nsPresContext* pc = mOuter->PresContext();
   MOZ_ASSERT(pc->IsRootContentDocument(),
              "The pres context should be for the root content document");
-
-  const ScrollStyles& styles = pc->GetViewportScrollStylesOverride();
-  // FIXME: Bug 1520077 - Drop this check. We should use the minimum-scale size
-  // even if no overflow:hidden is specified.
-  if (styles.mHorizontal != StyleOverflow::Hidden) {
-    return;
-  }
 
   RefPtr<MobileViewportManager> manager =
       mOuter->PresShell()->GetMobileViewportManager();

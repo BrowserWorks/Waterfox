@@ -136,9 +136,11 @@ void LiveSavedFrameCache::find(JSContext* cx, FramePtr& framePtr,
     // everything younger than framePtr, so this entry should be popped.
     frames->popBack();
 
-    // Since the cache does contain an entry for framePtr's frame somewhere,
-    // popping this younger frame had better not empty the cache.
-    MOZ_ALWAYS_TRUE(!frames->empty());
+    // If the frame's bit was set, the frame should always have an entry in
+    // the cache. (If we purged the entire cache because its SavedFrames had
+    // been captured for a different compartment, then we would have
+    // returned early above.)
+    MOZ_RELEASE_ASSERT(!frames->empty());
   }
 
   // The youngest valid frame may have run some code, so its current pc may
@@ -352,7 +354,7 @@ const ClassSpec SavedFrame::classSpec_ = {
 /* static */ const Class SavedFrame::class_ = {
     "SavedFrame",
     JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(SavedFrame::JSSLOT_COUNT) |
-        JSCLASS_HAS_CACHED_PROTO(JSProto_SavedFrame) | JSCLASS_IS_ANONYMOUS |
+        JSCLASS_HAS_CACHED_PROTO(JSProto_SavedFrame) |
         JSCLASS_FOREGROUND_FINALIZE,
     &SavedFrameClassOps, &SavedFrame::classSpec_};
 

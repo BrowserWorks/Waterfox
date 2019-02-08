@@ -38,6 +38,7 @@
 #include "gc/Nursery-inl.h"
 #include "gc/PrivateIterators-inl.h"
 #include "gc/Zone-inl.h"
+#include "vm/GeckoProfiler-inl.h"
 #include "vm/NativeObject-inl.h"
 #include "vm/Realm-inl.h"
 #include "vm/StringType-inl.h"
@@ -1096,8 +1097,8 @@ inline void js::GCMarker::eagerlyMarkChildren(Shape* shape) {
     BaseShape* base = shape->base();
     CheckTraversedEdge(shape, base);
     if (mark(base)) {
-      MOZ_ASSERT(base->canSkipMarkingShapeTable(shape));
-      base->traceChildrenSkipShapeTable(this);
+      MOZ_ASSERT(base->canSkipMarkingShapeCache(shape));
+      base->traceChildrenSkipShapeCache(this);
     }
 
     traverseEdge(shape, shape->propidRef().get());
@@ -1327,95 +1328,95 @@ void Scope::traceChildren(JSTracer* trc) {
   }
 }
 inline void js::GCMarker::eagerlyMarkChildren(Scope* scope) {
-  if (scope->enclosing_) {
-    traverseEdge(scope, scope->enclosing_.get());
-  }
-  if (scope->environmentShape_) {
-    traverseEdge(scope, scope->environmentShape_.get());
-  }
-  TrailingNamesArray* names = nullptr;
-  uint32_t length = 0;
-  switch (scope->kind()) {
-    case ScopeKind::Function: {
-      FunctionScope::Data& data = scope->as<FunctionScope>().data();
-      traverseObjectEdge(scope, data.canonicalFunction);
-      names = &data.trailingNames;
-      length = data.length;
-      break;
+  do {
+    if (scope->environmentShape_) {
+      traverseEdge(scope, scope->environmentShape_.get());
     }
+    TrailingNamesArray* names = nullptr;
+    uint32_t length = 0;
+    switch (scope->kind()) {
+      case ScopeKind::Function: {
+        FunctionScope::Data& data = scope->as<FunctionScope>().data();
+        traverseObjectEdge(scope, data.canonicalFunction);
+        names = &data.trailingNames;
+        length = data.length;
+        break;
+      }
 
-    case ScopeKind::FunctionBodyVar:
-    case ScopeKind::ParameterExpressionVar: {
-      VarScope::Data& data = scope->as<VarScope>().data();
-      names = &data.trailingNames;
-      length = data.length;
-      break;
-    }
+      case ScopeKind::FunctionBodyVar:
+      case ScopeKind::ParameterExpressionVar: {
+        VarScope::Data& data = scope->as<VarScope>().data();
+        names = &data.trailingNames;
+        length = data.length;
+        break;
+      }
 
-    case ScopeKind::Lexical:
-    case ScopeKind::SimpleCatch:
-    case ScopeKind::Catch:
-    case ScopeKind::NamedLambda:
-    case ScopeKind::StrictNamedLambda: {
-      LexicalScope::Data& data = scope->as<LexicalScope>().data();
-      names = &data.trailingNames;
-      length = data.length;
-      break;
-    }
+      case ScopeKind::Lexical:
+      case ScopeKind::SimpleCatch:
+      case ScopeKind::Catch:
+      case ScopeKind::NamedLambda:
+      case ScopeKind::StrictNamedLambda: {
+        LexicalScope::Data& data = scope->as<LexicalScope>().data();
+        names = &data.trailingNames;
+        length = data.length;
+        break;
+      }
 
-    case ScopeKind::Global:
-    case ScopeKind::NonSyntactic: {
-      GlobalScope::Data& data = scope->as<GlobalScope>().data();
-      names = &data.trailingNames;
-      length = data.length;
-      break;
-    }
+      case ScopeKind::Global:
+      case ScopeKind::NonSyntactic: {
+        GlobalScope::Data& data = scope->as<GlobalScope>().data();
+        names = &data.trailingNames;
+        length = data.length;
+        break;
+      }
 
-    case ScopeKind::Eval:
-    case ScopeKind::StrictEval: {
-      EvalScope::Data& data = scope->as<EvalScope>().data();
-      names = &data.trailingNames;
-      length = data.length;
-      break;
-    }
+      case ScopeKind::Eval:
+      case ScopeKind::StrictEval: {
+        EvalScope::Data& data = scope->as<EvalScope>().data();
+        names = &data.trailingNames;
+        length = data.length;
+        break;
+      }
 
-    case ScopeKind::Module: {
-      ModuleScope::Data& data = scope->as<ModuleScope>().data();
-      traverseObjectEdge(scope, data.module);
-      names = &data.trailingNames;
-      length = data.length;
-      break;
-    }
+      case ScopeKind::Module: {
+        ModuleScope::Data& data = scope->as<ModuleScope>().data();
+        traverseObjectEdge(scope, data.module);
+        names = &data.trailingNames;
+        length = data.length;
+        break;
+      }
 
-    case ScopeKind::With:
-      break;
+      case ScopeKind::With:
+        break;
 
-    case ScopeKind::WasmInstance: {
-      WasmInstanceScope::Data& data = scope->as<WasmInstanceScope>().data();
-      traverseObjectEdge(scope, data.instance);
-      names = &data.trailingNames;
-      length = data.length;
-      break;
-    }
+      case ScopeKind::WasmInstance: {
+        WasmInstanceScope::Data& data = scope->as<WasmInstanceScope>().data();
+        traverseObjectEdge(scope, data.instance);
+        names = &data.trailingNames;
+        length = data.length;
+        break;
+      }
 
-    case ScopeKind::WasmFunction: {
-      WasmFunctionScope::Data& data = scope->as<WasmFunctionScope>().data();
-      names = &data.trailingNames;
-      length = data.length;
-      break;
-    }
-  }
-  if (scope->kind_ == ScopeKind::Function) {
-    for (uint32_t i = 0; i < length; i++) {
-      if (JSAtom* name = names->get(i).name()) {
-        traverseStringEdge(scope, name);
+      case ScopeKind::WasmFunction: {
+        WasmFunctionScope::Data& data = scope->as<WasmFunctionScope>().data();
+        names = &data.trailingNames;
+        length = data.length;
+        break;
       }
     }
-  } else {
-    for (uint32_t i = 0; i < length; i++) {
-      traverseStringEdge(scope, names->get(i).name());
+    if (scope->kind_ == ScopeKind::Function) {
+      for (uint32_t i = 0; i < length; i++) {
+        if (JSAtom* name = names->get(i).name()) {
+          traverseStringEdge(scope, name);
+        }
+      }
+    } else {
+      for (uint32_t i = 0; i < length; i++) {
+        traverseStringEdge(scope, names->get(i).name());
+      }
     }
-  }
+    scope = scope->enclosing_;
+  } while (scope && mark(scope));
 }
 
 void js::ObjectGroup::traceChildren(JSTracer* trc) {
@@ -2716,7 +2717,7 @@ void GCMarker::checkZone(void* p) {
 size_t GCMarker::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
   size_t size = stack.sizeOfExcludingThis(mallocSizeOf);
   for (ZonesIter zone(runtime(), WithAtoms); !zone.done(); zone.next()) {
-    size += zone->gcGrayRoots().sizeOfExcludingThis(mallocSizeOf);
+    size += zone->gcGrayRoots().SizeOfExcludingThis(mallocSizeOf);
   }
   return size;
 }
@@ -2775,10 +2776,9 @@ void TenuringTracer::traverse(T* thingp) {
 }  // namespace js
 
 template <typename T>
-void js::gc::StoreBuffer::MonoTypeBuffer<T>::trace(StoreBuffer* owner,
-                                                   TenuringTracer& mover) {
-  mozilla::ReentrancyGuard g(*owner);
-  MOZ_ASSERT(owner->isEnabled());
+void js::gc::StoreBuffer::MonoTypeBuffer<T>::trace(TenuringTracer& mover) {
+  mozilla::ReentrancyGuard g(*owner_);
+  MOZ_ASSERT(owner_->isEnabled());
   if (last_) {
     last_.trace(mover);
   }
@@ -2790,11 +2790,11 @@ void js::gc::StoreBuffer::MonoTypeBuffer<T>::trace(StoreBuffer* owner,
 namespace js {
 namespace gc {
 template void StoreBuffer::MonoTypeBuffer<StoreBuffer::ValueEdge>::trace(
-    StoreBuffer*, TenuringTracer&);
+    TenuringTracer&);
 template void StoreBuffer::MonoTypeBuffer<StoreBuffer::SlotsEdge>::trace(
-    StoreBuffer*, TenuringTracer&);
+    TenuringTracer&);
 template void StoreBuffer::MonoTypeBuffer<StoreBuffer::CellPtrEdge>::trace(
-    StoreBuffer*, TenuringTracer&);
+    TenuringTracer&);
 }  // namespace gc
 }  // namespace js
 
@@ -2874,9 +2874,8 @@ static void TraceBufferedCells(TenuringTracer& mover, Arena* arena,
   }
 }
 
-void js::gc::StoreBuffer::WholeCellBuffer::trace(StoreBuffer* owner,
-                                                 TenuringTracer& mover) {
-  MOZ_ASSERT(owner->isEnabled());
+void js::gc::StoreBuffer::WholeCellBuffer::trace(TenuringTracer& mover) {
+  MOZ_ASSERT(owner_->isEnabled());
 
   for (ArenaCellSet* cells = head_; cells; cells = cells->next) {
     cells->check();
@@ -3643,6 +3642,11 @@ static bool UnmarkGrayGCThing(JSRuntime* rt, JS::GCCellPtr thing) {
   // Gray cell unmarking can occur at different points between recording and
   // replay, so disallow recorded events from occurring in the tracer.
   mozilla::recordreplay::AutoDisallowThreadEvents d;
+
+  AutoGeckoProfilerEntry profilingStackFrame(
+    rt->mainContextFromOwnThread(),
+    "UnmarkGrayGCThing",
+    ProfilingStackFrame::Category::GCCC);
 
   UnmarkGrayTracer unmarker(rt);
   gcstats::AutoPhase innerPhase(rt->gc.stats(),

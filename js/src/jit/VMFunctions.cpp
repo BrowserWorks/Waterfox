@@ -1263,6 +1263,17 @@ void AssertValidSymbolPtr(JSContext* cx, JS::Symbol* sym) {
   MOZ_ASSERT(sym->getAllocKind() == gc::AllocKind::SYMBOL);
 }
 
+#ifdef ENABLE_BIGINT
+void AssertValidBigIntPtr(JSContext* cx, JS::BigInt* bi) {
+  AutoUnsafeCallWithABI unsafe;
+  // FIXME: check runtime?
+  MOZ_ASSERT(cx->zone() == bi->zone());
+  MOZ_ASSERT(bi->isAligned());
+  MOZ_ASSERT(bi->isTenured());
+  MOZ_ASSERT(bi->getAllocKind() == gc::AllocKind::BIGINT);
+}
+#endif
+
 void AssertValidValue(JSContext* cx, Value* v) {
   AutoUnsafeCallWithABI unsafe;
   if (v->isObject()) {
@@ -1272,6 +1283,11 @@ void AssertValidValue(JSContext* cx, Value* v) {
   } else if (v->isSymbol()) {
     AssertValidSymbolPtr(cx, v->toSymbol());
   }
+#ifdef ENABLE_BIGINT
+  else if (v->isBigInt()) {
+    AssertValidBigIntPtr(cx, v->toBigInt());
+  }
+#endif
 }
 
 bool ObjectIsCallable(JSObject* obj) {
@@ -1794,6 +1810,17 @@ MOZ_MUST_USE bool TrySkipAwait(JSContext* cx, HandleValue val,
     resolved.setMagic(JS_CANNOT_SKIP_AWAIT);
   }
 
+  return true;
+}
+
+bool IsPossiblyWrappedTypedArray(JSContext* cx, JSObject* obj, bool* result) {
+  JSObject* unwrapped = CheckedUnwrap(obj);
+  if (!unwrapped) {
+    ReportAccessDenied(cx);
+    return false;
+  }
+
+  *result = unwrapped->is<TypedArrayObject>();
   return true;
 }
 

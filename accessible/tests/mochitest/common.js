@@ -87,7 +87,7 @@ const MAX_TRIM_LENGTH = 100;
 /**
  * Services to determine if e10s is enabled.
  */
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 /**
  * nsIAccessibilityService service.
@@ -256,10 +256,8 @@ function getAccessible(aAccOrElmOrID, aInterfaces, aElmObj, aDoNotFailIf) {
 
   if (aAccOrElmOrID instanceof nsIAccessible) {
     try { elm = aAccOrElmOrID.DOMNode; } catch (e) { }
-
   } else if (Node.isInstance(aAccOrElmOrID)) {
     elm = aAccOrElmOrID;
-
   } else {
     elm = document.getElementById(aAccOrElmOrID);
     if (!elm) {
@@ -503,7 +501,6 @@ function testAccessibleTree(aAccOrElmOrID, aAccTree, aFlags) {
           }
           info("Matching " + prettyName(accTree) + " and " + prettyName(acc) +
                " child at index " + i + " : " + prettyName(accChild));
-
         } catch (e) {
           ok(false, prettyName(accTree) + " is expected to have a child at index " + i +
              " : " + prettyName(testChild) + ", original tested: " +

@@ -43,6 +43,17 @@ nsresult nsXMLPrettyPrinter::PrettyPrint(Document* aDocument,
     return NS_OK;
   }
 
+  // Find the root element
+  RefPtr<Element> rootElement = aDocument->GetRootElement();
+  NS_ENSURE_TRUE(rootElement, NS_ERROR_UNEXPECTED);
+
+  // nsXMLContentSink should not ask us to pretty print an XML doc that comes
+  // with a CanAttachShadowDOM() == true root element, but just in case:
+  if (rootElement->CanAttachShadowDOM()) {
+    MOZ_DIAGNOSTIC_ASSERT(false, "We shouldn't be getting this root element");
+    return NS_ERROR_UNEXPECTED;
+  }
+
   // Ok, we should prettyprint. Let's do it!
   *aDidPrettyPrint = true;
   nsresult rv = NS_OK;
@@ -75,13 +86,11 @@ nsresult nsXMLPrettyPrinter::PrettyPrint(Document* aDocument,
     return err.StealNSResult();
   }
 
-  // Find the root element
-  RefPtr<Element> rootElement = aDocument->GetRootElement();
-  NS_ENSURE_TRUE(rootElement, NS_ERROR_UNEXPECTED);
-
-  // Attach a closed shadow root on it.
-  RefPtr<ShadowRoot> shadowRoot =
-      rootElement->AttachShadowWithoutNameChecks(ShadowRootMode::Closed);
+  // Attach an UA Widget Shadow Root on it.
+  rootElement->AttachAndSetUAShadowRoot();
+  RefPtr<ShadowRoot> shadowRoot = rootElement->GetShadowRoot();
+  MOZ_RELEASE_ASSERT(shadowRoot && shadowRoot->IsUAWidget(),
+                     "There should be a UA Shadow Root here.");
 
   // Append the document fragment to the shadow dom.
   shadowRoot->AppendChild(*resultFragment, err);

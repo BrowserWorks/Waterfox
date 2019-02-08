@@ -36,7 +36,11 @@ static MOZ_THREAD_LOCAL(PRThread*) gTlsCurrentVirtualThread;
 
 bool NS_IsMainThreadTLSInitialized() { return sTLSIsMainThread.initialized(); }
 
+extern "C" {
+// This uses the C language linkage because it's exposed to Rust
+// via the xpcom/rust/moz_task crate.
 bool NS_IsMainThread() { return sTLSIsMainThread.get(); }
+}
 
 void NS_SetMainThread() {
   if (!sTLSIsMainThread.init()) {
@@ -580,16 +584,18 @@ bool nsThreadManager::MainThreadHasPendingHighPriorityEvents() {
 NS_IMETHODIMP
 nsThreadManager::IdleDispatchToMainThread(nsIRunnable* aEvent,
                                           uint32_t aTimeout) {
-  // Note: C++ callers should instead use NS_IdleDispatchToThread or
-  // NS_IdleDispatchToCurrentThread.
+  // Note: C++ callers should instead use NS_DispatchToThreadQueue or
+  // NS_DispatchToCurrentThreadQueue.
   MOZ_ASSERT(NS_IsMainThread());
 
   nsCOMPtr<nsIRunnable> event(aEvent);
   if (aTimeout) {
-    return NS_IdleDispatchToThread(event.forget(), aTimeout, mMainThread);
+    return NS_DispatchToThreadQueue(event.forget(), aTimeout, mMainThread,
+                                    EventQueuePriority::Idle);
   }
 
-  return NS_IdleDispatchToThread(event.forget(), mMainThread);
+  return NS_DispatchToThreadQueue(event.forget(), mMainThread,
+                                  EventQueuePriority::Idle);
 }
 
 namespace mozilla {

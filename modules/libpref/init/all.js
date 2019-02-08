@@ -23,18 +23,16 @@ pref("general.useragent.site_specific_overrides", true);
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
 
+#ifndef MOZ_BUILD_APP_IS_BROWSER
 pref("general.warnOnAboutConfig", true);
+#endif
 
 // maximum number of dated backups to keep at any time
 pref("browser.bookmarks.max_backups",       5);
 
 pref("browser.cache.disk.enable",           true);
-// Is this the first-time smartsizing has been introduced?
-pref("browser.cache.disk.smart_size.first_run", true);
 // Does the user want smart-sizing?
 pref("browser.cache.disk.smart_size.enabled", true);
-// Which max value should we use for smart-sizing?
-pref("browser.cache.disk.smart_size.use_old_max", true);
 // Size (in KB) explicitly set by the user. Used when smart_size.enabled == false
 pref("browser.cache.disk.capacity",         256000);
 // When smartsizing is disabled we could potentially fill all disk space by
@@ -909,23 +907,19 @@ pref("gfx.logging.peak-texture-usage.enabled", false);
 
 pref("gfx.ycbcr.accurate-conversion", false);
 
-// On Nightly, we expose two prefs: gfx.webrender.all and gfx.webrender.enabled.
+// We expose two prefs: gfx.webrender.all and gfx.webrender.enabled.
 // The first enables WR+additional features, and the second just enables WR.
 // For developer convenience, building with --enable-webrender=true or just
 // --enable-webrender will set gfx.webrender.enabled to true by default.
-// On non-Nightly, we ignore these prefs.
 //
-// On both Nightly and non-Nightly, we have a pref gfx.webrender.all.qualified
-// which is not exposed via about:config. That pref enables WR but only on
-// qualified hardware. This is the pref we'll eventually flip to deploy WebRender
-// to the target population.
-#ifdef NIGHTLY_BUILD
+// We also have a pref gfx.webrender.all.qualified which is not exposed via
+// about:config. That pref enables WR but only on qualified hardware. This is
+// the pref we'll eventually flip to deploy WebRender to the target population.
 pref("gfx.webrender.all", false);
 #ifdef MOZ_ENABLE_WEBRENDER
 pref("gfx.webrender.enabled", true);
 #else
 pref("gfx.webrender.enabled", false);
-#endif
 #endif
 
 // Also expose a pref to allow users to force-disable WR. This is exposed
@@ -1459,13 +1453,12 @@ pref("dom.event.clipboardevents.enabled",   true);
 pref("dom.event.highrestimestamp.enabled",  true);
 pref("dom.event.coalesce_mouse_move",       true);
 
-pref("dom.ua_widget.enabled", true);
-
 pref("javascript.enabled",                  true);
 pref("javascript.options.strict",           false);
 #ifdef DEBUG
 pref("javascript.options.strict.debug",     false);
 #endif
+pref("javascript.options.unboxed_objects",  true);
 pref("javascript.options.baselinejit",      true);
 //Duplicated in JitOptions - ensure both match.
 pref("javascript.options.baselinejit.threshold", 10);
@@ -1606,7 +1599,11 @@ pref("javascript.options.streams", true);
 pref("javascript.options.bigint", false);
 
 // Dynamic module import.
+#ifdef NIGHTLY_BUILD
+pref("javascript.options.dynamicImport", true);
+#else
 pref("javascript.options.dynamicImport", false);
+#endif
 
 // advanced prefs
 pref("advanced.mailftp",                    false);
@@ -2706,6 +2703,9 @@ pref("security.sri.enable", true);
 
 // Block scripts with wrong MIME type such as image/ or video/.
 pref("security.block_script_with_wrong_mime", true);
+
+// Block scripts with wrong MIME type when loading via importScripts() in workers.
+pref("security.block_importScripts_with_wrong_mime", true);
 
 // OCSP must-staple
 pref("security.ssl.enable_ocsp_must_staple", true);
@@ -4836,6 +4836,7 @@ pref("gl.multithreaded", true);
 #endif
 pref("gl.ignore-dx-interop2-blacklist", false);
 pref("gl.use-tls-is-current", 0);
+pref("gl.allow-high-power", true);
 
 #ifdef XP_MACOSX
 pref("webgl.1.allow-core-profiles", true);
@@ -4850,6 +4851,7 @@ pref("webgl.min_capability_mode", false);
 pref("webgl.disable-extensions", false);
 pref("webgl.msaa-force", false);
 pref("webgl.prefer-16bpp", false);
+pref("webgl.default-low-power", false);
 pref("webgl.default-no-alpha", false);
 pref("webgl.force-layers-readback", false);
 pref("webgl.force-index-validation", 0);
@@ -5106,7 +5108,7 @@ pref("extensions.webextensions.keepStorageOnUninstall", false);
 pref("extensions.webextensions.keepUuidOnUninstall", false);
 // Redirect basedomain used by identity api
 pref("extensions.webextensions.identity.redirectDomain", "extensions.allizom.org");
-pref("extensions.webextensions.restrictedDomains", "accounts-static.cdn.mozilla.net,accounts.firefox.com,addons.cdn.mozilla.net,addons.mozilla.org,api.accounts.firefox.com,content.cdn.mozilla.net,discovery.addons.mozilla.org,input.mozilla.org,install.mozilla.org,oauth.accounts.firefox.com,profile.accounts.firefox.com,support.mozilla.org,sync.services.mozilla.com,testpilot.firefox.com");
+pref("extensions.webextensions.restrictedDomains", "accounts-static.cdn.mozilla.net,accounts.firefox.com,addons.cdn.mozilla.net,addons.mozilla.org,api.accounts.firefox.com,content.cdn.mozilla.net,discovery.addons.mozilla.org,input.mozilla.org,install.mozilla.org,oauth.accounts.firefox.com,profile.accounts.firefox.com,support.mozilla.org,sync.services.mozilla.com");
 // Whether or not webextension icon theming is supported.
 pref("extensions.webextensions.themes.icons.enabled", false);
 pref("extensions.webextensions.remote", false);
@@ -5572,7 +5574,7 @@ pref("urlclassifier.features.cryptomining.blacklistTables", "base-cryptomining-t
 pref("urlclassifier.features.cryptomining.whitelistTables", "mozstd-trackwhite-digest256");
 
 // These tables will never trigger a gethash call.
-pref("urlclassifier.disallow_completions", "test-malware-simple,test-harmful-simple,test-phish-simple,test-unwanted-simple,test-track-simple,test-trackwhite-simple,test-block-simple,goog-downloadwhite-digest256,base-track-digest256,mozstd-trackwhite-digest256,content-track-digest256,mozplugin-block-digest256,mozplugin2-block-digest256,block-flash-digest256,except-flash-digest256,allow-flashallow-digest256,except-flashallow-digest256,block-flashsubdoc-digest256,except-flashsubdoc-digest256,goog-passwordwhite-proto,ads-track-digest256,social-track-digest256,analytics-track-digest256,base-fingerprinting-track-digest256,content-fingerprinting-track-digest256,base-cryptomining-track-digest256,content-cryptomining-track-digest256,fanboyannoyance-ads-digest256,fanboysocial-ads-digest256,easylist-ads-digest256,easyprivacy-ads-digest256,adguard-ads-digest256");
+pref("urlclassifier.disallow_completions", "goog-downloadwhite-digest256,base-track-digest256,mozstd-trackwhite-digest256,content-track-digest256,mozplugin-block-digest256,mozplugin2-block-digest256,block-flash-digest256,except-flash-digest256,allow-flashallow-digest256,except-flashallow-digest256,block-flashsubdoc-digest256,except-flashsubdoc-digest256,goog-passwordwhite-proto,ads-track-digest256,social-track-digest256,analytics-track-digest256,base-fingerprinting-track-digest256,content-fingerprinting-track-digest256,base-cryptomining-track-digest256,content-cryptomining-track-digest256,fanboyannoyance-ads-digest256,fanboysocial-ads-digest256,easylist-ads-digest256,easyprivacy-ads-digest256,adguard-ads-digest256");
 
 // Number of random entries to send with a gethash request
 pref("urlclassifier.gethashnoise", 4);
@@ -5587,9 +5589,7 @@ pref("urlclassifier.update.timeout_ms", 90000);
 // Name of the about: page to display Safe Browsing warnings (bug 399233)
 pref("urlclassifier.alternate_error_page", "blocked");
 
-// Enable phishing & malware protection.
-pref("browser.safebrowsing.phishing.enabled", true);
-pref("browser.safebrowsing.malware.enabled", true);
+// Enable safe-browsing debugging
 pref("browser.safebrowsing.debug", false);
 
 // Allow users to ignore Safe Browsing warnings.
@@ -5652,7 +5652,6 @@ pref("browser.safebrowsing.provider.mozilla.lists.base", "moz-std");
 pref("browser.safebrowsing.provider.mozilla.lists.content", "moz-full");
 
 // The table and global pref for blocking plugin content
-pref("browser.safebrowsing.blockedURIs.enabled", true);
 pref("urlclassifier.blockedTable", "test-block-simple,mozplugin-block-digest256");
 
 // Flash blocking tables
@@ -5893,6 +5892,8 @@ pref("dom.storageManager.prompt.testing.allow", false);
 
 pref("browser.storageManager.pressureNotification.minIntervalMS", 1200000);
 pref("browser.storageManager.pressureNotification.usageThresholdGB", 5);
+
+pref("browser.sanitizer.loglevel", "Warn");
 
 // When a user cancels this number of authentication dialogs coming from
 // a single web page in a row, all following authentication dialogs will

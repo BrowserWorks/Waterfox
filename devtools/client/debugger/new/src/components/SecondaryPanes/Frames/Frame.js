@@ -12,9 +12,9 @@ import AccessibleImage from "../../shared/AccessibleImage";
 import { formatDisplayName } from "../../../utils/pause/frames";
 import { getFilename, getFileURL } from "../../../utils/source";
 import FrameMenu from "./FrameMenu";
+import FrameIndent from "./FrameIndent";
 
 import type { Frame } from "../../../types";
-import type { LocalFrame } from "./types";
 
 type FrameTitleProps = {
   frame: Frame,
@@ -27,7 +27,7 @@ function FrameTitle({ frame, options = {}, l10n }: FrameTitleProps) {
   return <span className="title">{displayName}</span>;
 }
 
-type FrameLocationProps = { frame: LocalFrame, displayFullUrl: boolean };
+type FrameLocationProps = { frame: Frame, displayFullUrl: boolean };
 
 function FrameLocation({ frame, displayFullUrl = false }: FrameLocationProps) {
   if (!frame.source) {
@@ -61,8 +61,8 @@ function FrameLocation({ frame, displayFullUrl = false }: FrameLocationProps) {
 FrameLocation.displayName = "FrameLocation";
 
 type FrameComponentProps = {
-  frame: LocalFrame,
-  selectedFrame: LocalFrame,
+  frame: Frame,
+  selectedFrame: Frame,
   copyStackTrace: Function,
   toggleFrameworkGrouping: Function,
   selectFrame: Function,
@@ -72,7 +72,8 @@ type FrameComponentProps = {
   toggleBlackBox: Function,
   displayFullUrl: boolean,
   getFrameTitle?: string => string,
-  disableContextMenu: boolean
+  disableContextMenu: boolean,
+  selectable: boolean
 };
 
 export default class FrameComponent extends Component<FrameComponentProps> {
@@ -128,7 +129,8 @@ export default class FrameComponent extends Component<FrameComponentProps> {
       shouldMapDisplayName,
       displayFullUrl,
       getFrameTitle,
-      disableContextMenu
+      disableContextMenu,
+      selectable
     } = this.props;
     const { l10n } = this.context;
 
@@ -136,17 +138,19 @@ export default class FrameComponent extends Component<FrameComponentProps> {
       selected: selectedFrame && selectedFrame.id === frame.id
     });
 
+    if (!frame.source) {
+      throw new Error("no frame source");
+    }
+
     const title = getFrameTitle
       ? getFrameTitle(
           `${getFileURL(frame.source, false)}:${frame.location.line}`
         )
       : undefined;
 
-    const tabChar = "\t";
-    const newLineChar = "\n";
-
     return (
-      <li
+      <div
+        role="listitem"
         key={frame.id}
         className={className}
         onMouseDown={e => this.onMouseDown(e, frame, selectedFrame)}
@@ -155,18 +159,18 @@ export default class FrameComponent extends Component<FrameComponentProps> {
         tabIndex={0}
         title={title}
       >
-        {tabChar}
+        {selectable && <FrameIndent />}
         <FrameTitle
           frame={frame}
           options={{ shouldMapDisplayName }}
           l10n={l10n}
         />
-        {!hideLocation && " "}
+        {!hideLocation && <span className="clipboard-only"> </span>}
         {!hideLocation && (
           <FrameLocation frame={frame} displayFullUrl={displayFullUrl} />
         )}
-        {newLineChar}
-      </li>
+        {selectable && <br className="clipboard-only" />}
+      </div>
     );
   }
 }

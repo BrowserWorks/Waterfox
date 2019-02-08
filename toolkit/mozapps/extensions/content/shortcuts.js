@@ -5,7 +5,7 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   AddonManager: "resource://gre/modules/AddonManager.jsm",
@@ -14,6 +14,10 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 });
 
 const FALLBACK_ICON = "chrome://mozapps/skin/extensions/extensionGeneric.svg";
+const COLLAPSE_OPTIONS = {
+  limit: 5, // We only want to show 5 when collapsed.
+  allowOver: 1, // Avoid collapsing to hide 1 row.
+};
 
 let templatesLoaded = false;
 const templates = {};
@@ -24,8 +28,9 @@ function loadTemplates() {
 
   templates.card = document.getElementById("card-template");
   templates.row = document.getElementById("shortcut-row-template");
-  templates.empty = document.getElementById("shortcuts-empty-template");
   templates.noAddons = document.getElementById("shortcuts-no-addons");
+  templates.expandRow = document.getElementById("expand-row-template");
+  templates.noShortcutAddons = document.getElementById("shortcuts-no-commands-template");
 }
 
 function extensionForAddonId(id) {
@@ -256,26 +261,61 @@ function onShortcutChange(e) {
   }
 }
 
+function renderNoShortcutAddons(addons) {
+  let fragment = document.importNode(templates.noShortcutAddons.content, true);
+  let list = fragment.querySelector(".shortcuts-no-commands-list");
+  for (let addon of addons) {
+    let addonItem = document.createElement("li");
+    addonItem.textContent = addon.name;
+    addonItem.setAttribute("addon-id", addon.id);
+    list.appendChild(addonItem);
+  }
+
+  return fragment;
+}
+
 async function renderAddons(addons) {
   let frag = document.createDocumentFragment();
+  let noShortcutAddons = [];
   for (let addon of addons) {
     let extension = extensionForAddonId(addon.id);
 
     // Skip this extension if it isn't a webextension.
     if (!extension) continue;
 
-    let card = document.importNode(
-      templates.card.content, true).firstElementChild;
-    let icon = AddonManager.getPreferredIconURL(addon, 24, window);
-    card.setAttribute("addon-id", addon.id);
-    card.querySelector(".addon-icon").src = icon || FALLBACK_ICON;
-    card.querySelector(".addon-name").textContent = addon.name;
-
     if (extension.shortcuts) {
+      let card = document.importNode(
+        templates.card.content, true).firstElementChild;
+      let icon = AddonManager.getPreferredIconURL(addon, 24, window);
+      card.setAttribute("addon-id", addon.id);
+      card.querySelector(".addon-icon").src = icon || FALLBACK_ICON;
+      card.querySelector(".addon-name").textContent = addon.name;
+
       let commands = await extension.shortcuts.allCommands();
 
-      for (let command of commands) {
-        let row = document.importNode(templates.row.content, true);
+      // Sort the commands so the ones with shortcuts are at the top.
+      commands.sort((a, b) => {
+        // Boolean compare the shortcuts to see if they're both set or unset.
+        if (!a.shortcut == !b.shortcut)
+          return 0;
+        if (a.shortcut)
+          return -1;
+        return 1;
+      });
+
+      let {limit, allowOver} = COLLAPSE_OPTIONS;
+      let willHideCommands = commands.length > limit + allowOver;
+      let firstHiddenInput;
+
+      for (let i = 0; i < commands.length; i++) {
+        let command = commands[i];
+
+        let row = document.importNode(templates.row.content, true).firstElementChild;
+
+        if (willHideCommands && i >= limit) {
+          row.setAttribute("hide-before-expand", "true");
+        }
+
         let label = row.querySelector(".shortcut-label");
         let descriptionId = getCommandDescriptionId(command);
         if (descriptionId) {
@@ -292,14 +332,52 @@ async function renderAddons(addons) {
         input.addEventListener("blur", inputBlurred);
         input.addEventListener("focus", clearValue);
 
+        if (willHideCommands && i == limit) {
+          firstHiddenInput = input;
+        }
+
         card.appendChild(row);
       }
-    } else {
-      card.appendChild(document.importNode(templates.empty.content, true));
-    }
 
-    frag.appendChild(card);
+      // Add an expand button, if needed.
+      if (willHideCommands) {
+        let row = document.importNode(templates.expandRow.content, true);
+        let button = row.querySelector(".expand-button");
+        let numberToShow = commands.length - limit;
+        let setLabel = (type) => {
+          document.l10n.setAttributes(button, `shortcuts-card-${type}-button`, {
+            numberToShow,
+          });
+        };
+
+        setLabel("expand");
+        button.addEventListener("click", (event) => {
+          let expanded = card.hasAttribute("expanded");
+          if (expanded) {
+            card.removeAttribute("expanded");
+            setLabel("expand");
+          } else {
+            card.setAttribute("expanded", "true");
+            setLabel("collapse");
+            // If this as a keyboard event then focus the next input.
+            if (event.mozInputSource == MouseEvent.MOZ_SOURCE_KEYBOARD) {
+              firstHiddenInput.focus();
+            }
+          }
+        });
+        card.appendChild(row);
+      }
+
+      frag.appendChild(card);
+    } else {
+      noShortcutAddons.push({ id: addon.id, name: addon.name });
+    }
   }
+
+  if (noShortcutAddons.length > 0) {
+    frag.appendChild(renderNoShortcutAddons(noShortcutAddons));
+  }
+
   return frag;
 }
 

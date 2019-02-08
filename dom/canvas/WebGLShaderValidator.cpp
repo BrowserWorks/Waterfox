@@ -33,7 +33,9 @@ static ShCompileOptions ChooseValidatorCompileOptions(
                              SH_INITIALIZE_UNINITIALIZED_LOCALS |
                              SH_INIT_OUTPUT_VARIABLES;
 
-#ifndef XP_MACOSX
+#ifdef XP_MACOSX
+  options |= SH_REMOVE_INVARIANT_AND_CENTROID_FOR_ESSL3;
+#else
   // We want to do this everywhere, but to do this on Mac, we need
   // to do it only on Mac OSX > 10.6 as this causes the shader
   // compiler in 10.6 to crash
@@ -50,9 +52,11 @@ static ShCompileOptions ChooseValidatorCompileOptions(
     options |= SH_REGENERATE_STRUCT_NAMES;
     options |= SH_INIT_OUTPUT_VARIABLES;
 
-    // Work around that Intel drivers on Mac OSX handle for-loop incorrectly.
     if (gl->Vendor() == gl::GLVendor::Intel) {
+      // Work around that Intel drivers on Mac OSX handle for-loop incorrectly.
       options |= SH_ADD_AND_TRUE_TO_LOOP_CONDITION;
+
+      options |= SH_REWRITE_TEXELFETCHOFFSET_TO_TEXELFETCH;
     }
 #endif
 
@@ -150,11 +154,19 @@ webgl::ShaderValidator* WebGLContext::CreateShaderValidator(
 
   resources.MaxVertexAttribs = mGLMaxVertexAttribs;
   resources.MaxVertexUniformVectors = mGLMaxVertexUniformVectors;
-  resources.MaxVaryingVectors = mGLMaxVaryingVectors;
   resources.MaxVertexTextureImageUnits = mGLMaxVertexTextureImageUnits;
   resources.MaxCombinedTextureImageUnits = mGLMaxCombinedTextureImageUnits;
   resources.MaxTextureImageUnits = mGLMaxFragmentTextureImageUnits;
   resources.MaxFragmentUniformVectors = mGLMaxFragmentUniformVectors;
+
+  resources.MaxVertexOutputVectors = mGLMaxVertexOutputVectors;
+  resources.MaxFragmentInputVectors = mGLMaxFragmentInputVectors;
+  resources.MaxVaryingVectors = mGLMaxFragmentInputVectors;
+
+  if (IsWebGL2()) {
+    resources.MinProgramTexelOffset = mGLMinProgramTexelOffset;
+    resources.MaxProgramTexelOffset = mGLMaxProgramTexelOffset;
+  }
 
   const bool hasMRTs =
       (IsWebGL2() || IsExtensionEnabled(WebGLExtensionID::WEBGL_draw_buffers));
@@ -570,18 +582,6 @@ bool ShaderValidator::UnmapUniformBlockName(
   }
 
   return false;
-}
-
-void ShaderValidator::EnumerateFragOutputs(
-    std::map<nsCString, const nsCString>& out_FragOutputs) const {
-  const auto* fragOutputs = sh::GetOutputVariables(mHandle);
-
-  if (fragOutputs) {
-    for (const auto& fragOutput : *fragOutputs) {
-      out_FragOutputs.insert({nsCString(fragOutput.name.c_str()),
-                              nsCString(fragOutput.mappedName.c_str())});
-    }
-  }
 }
 
 }  // namespace webgl

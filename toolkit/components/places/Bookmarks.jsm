@@ -59,7 +59,7 @@
 
 var EXPORTED_SYMBOLS = [ "Bookmarks" ];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["URL"]);
 
@@ -350,7 +350,7 @@ var Bookmarks = Object.freeze({
    *           bugs in the calling code.
    *
    * @return {Promise} resolved when the creation is complete.
-   * @resolves to an object representing the created bookmark.
+   * @resolves to an array of objects representing the created bookmark(s).
    * @rejects if it's not possible to create the requested bookmark.
    * @throws if the arguments are invalid.
    */
@@ -495,6 +495,12 @@ var Bookmarks = Object.freeze({
     // we're inserting into the parent. We just use NULL instead,
     // and the SQL query with which we insert will update it as necessary.
     let lastAddedForParent = appendInsertionInfoForInfoArray(tree.children, null, tree.guid);
+
+    // appendInsertionInfoForInfoArray will remove invalid items and may leave
+    // us with nothing to insert, if so, just return early.
+    if (!insertInfos.length) {
+      return [];
+    }
 
     return (async function() {
       let treeParent = await fetchBookmark({ guid: tree.guid });
@@ -1712,7 +1718,6 @@ async function updateBookmark(db, info, item, oldIndex, newParent, syncChangeDel
 function insertBookmark(item, parent) {
   return PlacesUtils.withConnectionWrapper("Bookmarks.jsm: insertBookmark",
     async function(db) {
-
     // If a guid was not provided, generate one, so we won't need to fetch the
     // bookmark just after having created it.
     let hasExistingGuid = item.hasOwnProperty("guid");
@@ -2261,8 +2266,6 @@ function reorderChildren(parent, orderedChildrenGuids, options) {
       }
 
       if (needReorder) {
-
-
         // Reorder the children array according to the specified order, provided
         // GUIDs come first, others are appended in somehow random order.
         children.sort((a, b) => {

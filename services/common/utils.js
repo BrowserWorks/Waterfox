@@ -4,9 +4,9 @@
 
 var EXPORTED_SYMBOLS = ["CommonUtils"];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Log.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Log} = ChromeUtils.import("resource://gre/modules/Log.jsm");
 ChromeUtils.defineModuleGetter(this, "OS",
                                "resource://gre/modules/osfile.jsm");
 
@@ -561,7 +561,6 @@ var CommonUtils = {
    */
   getDatePref: function getDatePref(branch, pref, def = 0, log = null,
                                     oldestYear = 2010) {
-
     let valueInt = this.getEpochPref(branch, pref, def, log);
     let date = new Date(valueInt);
 

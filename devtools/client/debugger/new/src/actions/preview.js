@@ -101,10 +101,10 @@ export function setPreview(
 
         const { result } = await client.evaluateInFrame(expression, {
           frameId: selectedFrame.id,
-          thread: source.thread
+          thread: selectedFrame.thread
         });
 
-        if (result === undefined) {
+        if (!result) {
           return;
         }
 

@@ -16,11 +16,9 @@
 #include "nsStyleStructInlines.h"
 #include "UnitTransforms.h"
 
-#define CLIP_LOG(...)
-
-//#define CLIP_LOG(...) printf_stderr("CLIP: " __VA_ARGS__)
-
 // clang-format off
+#define CLIP_LOG(...)
+//#define CLIP_LOG(...) printf_stderr("CLIP: " __VA_ARGS__)
 //#define CLIP_LOG(...) if (XRE_IsContentProcess()) printf_stderr("CLIP: " __VA_ARGS__)
 // clang-format on
 
@@ -358,22 +356,11 @@ Maybe<wr::WrClipChainId> ClipManager::DefineClipChain(
     CLIP_LOG("cache[%p] <= %zu\n", chain, clipId.id);
   }
 
-  // Now find the parent display item's clipchain id
-  Maybe<wr::WrClipChainId> parentChainId;
-  if (!mItemClipStack.empty()) {
-    parentChainId = mItemClipStack.top().mClipChainId;
+  if (clipIds.IsEmpty()) {
+    return Nothing();
   }
 
-  // And define the current display item's clipchain using the clips and the
-  // parent. If the current item has no clips of its own, just use the parent
-  // item's clipchain.
-  Maybe<wr::WrClipChainId> chainId;
-  if (clipIds.Length() > 0) {
-    chainId = Some(mBuilder->DefineClipChain(parentChainId, clipIds));
-  } else {
-    chainId = parentChainId;
-  }
-  return chainId;
+  return Some(mBuilder->DefineClipChain(clipIds));
 }
 
 ClipManager::~ClipManager() {

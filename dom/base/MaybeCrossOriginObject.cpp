@@ -27,8 +27,8 @@ namespace mozilla {
 namespace dom {
 
 /* static */
-bool MaybeCrossOriginObjectMixins::IsPlatformObjectSameOrigin(
-    JSContext* cx, JS::Handle<JSObject*> obj) {
+bool MaybeCrossOriginObjectMixins::IsPlatformObjectSameOrigin(JSContext* cx,
+                                                              JSObject* obj) {
   MOZ_ASSERT(!js::IsCrossCompartmentWrapper(obj));
   // WindowProxy and Window must always be same-Realm, so we can do
   // our IsPlatformObjectSameOrigin check against either one.  But verify that
@@ -41,7 +41,8 @@ bool MaybeCrossOriginObjectMixins::IsPlatformObjectSameOrigin(
 
   BasePrincipal* subjectPrincipal =
       BasePrincipal::Cast(nsContentUtils::SubjectPrincipal(cx));
-  nsIPrincipal* objectPrincipal = nsContentUtils::ObjectPrincipal(obj);
+  BasePrincipal* objectPrincipal =
+      BasePrincipal::Cast(nsContentUtils::ObjectPrincipal(obj));
 
   // The spec effectively has an EqualsConsideringDomain check here,
   // because the spec has no concept of asymmetric security
@@ -53,11 +54,25 @@ bool MaybeCrossOriginObjectMixins::IsPlatformObjectSameOrigin(
   // SubsumesConsideringDomain give the same results and use
   // EqualsConsideringDomain for the check we actually do, since it's
   // stricter and more closely matches the spec.
+  //
+  // That said, if the (not very well named)
+  // OriginAttributes::IsRestrictOpenerAccessForFPI() method returns
+  // false, we want to use FastSubsumesConsideringDomainIgnoringFPD
+  // instead of FastEqualsConsideringDomain, because in that case we
+  // still want to treat things which are in different first-party
+  // contexts as same-origin.
   MOZ_ASSERT(
       subjectPrincipal->FastEqualsConsideringDomain(objectPrincipal) ==
           subjectPrincipal->FastSubsumesConsideringDomain(objectPrincipal),
       "Why are we in an asymmetric case here?");
-  return subjectPrincipal->FastEqualsConsideringDomain(objectPrincipal);
+  if (OriginAttributes::IsRestrictOpenerAccessForFPI()) {
+    return subjectPrincipal->FastEqualsConsideringDomain(objectPrincipal);
+  }
+
+  return subjectPrincipal->FastSubsumesConsideringDomainIgnoringFPD(
+             objectPrincipal) &&
+         objectPrincipal->FastSubsumesConsideringDomainIgnoringFPD(
+             subjectPrincipal);
 }
 
 bool MaybeCrossOriginObjectMixins::CrossOriginGetOwnPropertyHelper(
@@ -422,12 +437,36 @@ bool MaybeCrossOriginObject<Base>::defineProperty(
 template <typename Base>
 JSObject* MaybeCrossOriginObject<Base>::enumerate(
     JSContext* cx, JS::Handle<JSObject*> proxy) const {
-  // We want to avoid any possible magic here and just do the BaseProxyHandler
-  // thing of using our property keys to enumerate.
+  // We need to be a little careful here.  We want to get our list of property
+  // keys in whatever Realm we're in right now (which might be different from
+  // the Realm of "proxy"), and invoke our ownPropertyKeys which will return the
+  // right list.  In particular we do NOT want to invoke
+  // ForwardingProxyHandler::enumerate here, because that will get the keys from
+  // our target, which may produce the wrong list.
   //
-  // Note that we do not need to enter the Realm of "proxy" here, nor do we want
-  // to: if this is a cross-origin access we want to handle it appropriately.
-  return js::BaseProxyHandler::enumerate(cx, proxy);
+  // Once we have the list, we want to create the iterator object targeting the
+  // representation of "proxy" in our current Realm, since that's what the
+  // caller is working with.
+  //
+  // We could handle parts of this this by overriding enumerate() in
+  // CrossOriginObjectWrapper, but we'd still need special-case code here, so
+  // let's just do all the work here.
+  //
+  // BaseProxyHandler::enumerate would do the right thing if we passed the right
+  // object to it, but it would assert that we've entered the policy of the
+  // proxy we passed it, which may be a CCW, not us, and the policy we actually
+  // entered is ours.  So we basically reimplemnt it, but without that assert.
+  JS::Rooted<JSObject*> self(cx, proxy);
+  if (!MaybeWrapObject(cx, &self)) {
+    return nullptr;
+  }
+
+  js::AutoIdVector props(cx);
+  if (!js::GetPropertyKeys(cx, self, 0, &props)) {
+    return nullptr;
+  }
+
+  return js::EnumeratedIdVectorToIterator(cx, self, props);
 }
 
 // Force instantiations of the out-of-line template methods we need.

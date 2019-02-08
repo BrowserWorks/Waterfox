@@ -3,9 +3,8 @@
 */
 "use strict";
 
-ChromeUtils.import("resource://services-sync/main.js");
-ChromeUtils.import("resource://services-sync/SyncedTabs.jsm");
-ChromeUtils.import("resource://gre/modules/Log.jsm");
+const {Weave} = ChromeUtils.import("resource://services-sync/main.js");
+const {SyncedTabs} = ChromeUtils.import("resource://services-sync/SyncedTabs.jsm");
 
 const faviconService = Cc["@mozilla.org/browser/favicon-service;1"]
                        .getService(Ci.nsIFaviconService);
@@ -226,7 +225,6 @@ add_task(async function test_filter() {
 });
 
 add_task(async function test_duplicatesTabsAcrossClients() {
-
   await configureClients({
     guid_desktop: {
       clientName: "My Desktop",

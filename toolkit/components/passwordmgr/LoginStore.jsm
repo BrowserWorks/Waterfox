@@ -31,10 +31,6 @@
  *       (...)
  *     }
  *   ],
- *   "disabledHosts": [
- *     "http://www.example.org",
- *     "http://www.example.net"
- *   ],
  *   "nextId": 10,
  *   "version": 1
  * }
@@ -48,8 +44,7 @@ var EXPORTED_SYMBOLS = [
 
 // Globals
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(this, "JSONFile",
                                "resource://gre/modules/JSONFile.jsm");
@@ -102,33 +97,8 @@ LoginStore.prototype._dataPostProcessor = function(data) {
     data.logins = [];
   }
 
-  // Stub needed for login imports before data has been migrated.
-  if (!data.disabledHosts) {
-    data.disabledHosts = [];
-  }
-
-  if (data.version === 1) {
-    this._migrateDisabledHosts(data);
-  }
-
   // Indicate that the current version of the code has touched the file.
   data.version = kDataVersion;
 
   return data;
-};
-
-/**
- * Migrates disabled hosts to the permission manager.
- */
-LoginStore.prototype._migrateDisabledHosts = function(data) {
-  for (let host of data.disabledHosts) {
-    try {
-      let uri = Services.io.newURI(host);
-      Services.perms.add(uri, PERMISSION_SAVE_LOGINS, Services.perms.DENY_ACTION);
-    } catch (e) {
-      Cu.reportError(e);
-    }
-  }
-
-  delete data.disabledHosts;
 };

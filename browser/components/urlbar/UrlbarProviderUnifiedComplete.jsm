@@ -12,14 +12,14 @@
 
 var EXPORTED_SYMBOLS = ["UrlbarProviderUnifiedComplete"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetters(this, {
   Log: "resource://gre/modules/Log.jsm",
   PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
+  PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
   UrlbarProvider: "resource:///modules/UrlbarUtils.jsm",
   UrlbarResult: "resource:///modules/UrlbarResult.jsm",
   UrlbarUtils: "resource:///modules/UrlbarUtils.jsm",
-  PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
 });
 
 XPCOMUtils.defineLazyServiceGetter(this, "unifiedComplete",
@@ -60,16 +60,16 @@ class ProviderUnifiedComplete extends UrlbarProvider {
 
   /**
    * Returns the sources returned by this provider.
-   * @returns {array} one or multiple types from UrlbarUtils.MATCH_SOURCE.*
+   * @returns {array} one or multiple types from UrlbarUtils.RESULT_SOURCE.*
    */
   get sources() {
     return [
-      UrlbarUtils.MATCH_SOURCE.BOOKMARKS,
-      UrlbarUtils.MATCH_SOURCE.HISTORY,
-      UrlbarUtils.MATCH_SOURCE.SEARCH,
-      UrlbarUtils.MATCH_SOURCE.TABS,
-      UrlbarUtils.MATCH_SOURCE.OTHER_LOCAL,
-      UrlbarUtils.MATCH_SOURCE.OTHER_NETWORK,
+      UrlbarUtils.RESULT_SOURCE.BOOKMARKS,
+      UrlbarUtils.RESULT_SOURCE.HISTORY,
+      UrlbarUtils.RESULT_SOURCE.SEARCH,
+      UrlbarUtils.RESULT_SOURCE.TABS,
+      UrlbarUtils.RESULT_SOURCE.OTHER_LOCAL,
+      UrlbarUtils.RESULT_SOURCE.OTHER_NETWORK,
     ];
   }
 
@@ -197,16 +197,26 @@ function convertResultToMatches(context, result, urls) {
     if (!match) {
       continue;
     }
-    matches.push(match);
-    // Manage autofillValue and preselected properties for the first match.
+    // Manage autofill and preselected properties for the first match.
     if (i == 0) {
       if (style.includes("autofill") && result.defaultIndex == 0) {
-        context.autofillValue = result.getValueAt(i);
+        let autofillValue = result.getValueAt(i);
+        if (autofillValue.toLocaleLowerCase()
+            .startsWith(context.searchString.toLocaleLowerCase())) {
+          match.autofill = {
+            value: context.searchString +
+                   autofillValue.substring(context.searchString.length),
+            selectionStart: context.searchString.length,
+            selectionEnd: autofillValue.length,
+          };
+        }
       }
       if (style.includes("heuristic")) {
         context.preselected = true;
+        match.heuristic = true;
       }
     }
+    matches.push(match);
   }
   return {matches, done};
 }
@@ -223,8 +233,8 @@ function makeUrlbarResult(tokens, info) {
     switch (action.type) {
       case "searchengine":
         return new UrlbarResult(
-          UrlbarUtils.MATCH_TYPE.SEARCH,
-          UrlbarUtils.MATCH_SOURCE.SEARCH,
+          UrlbarUtils.RESULT_TYPE.SEARCH,
+          UrlbarUtils.RESULT_SOURCE.SEARCH,
           ...UrlbarResult.payloadAndSimpleHighlights(tokens, {
             engine: [action.params.engineName, true],
             suggestion: [action.params.searchSuggestion, true],
@@ -235,8 +245,8 @@ function makeUrlbarResult(tokens, info) {
         );
       case "keyword":
         return new UrlbarResult(
-          UrlbarUtils.MATCH_TYPE.KEYWORD,
-          UrlbarUtils.MATCH_SOURCE.BOOKMARKS,
+          UrlbarUtils.RESULT_TYPE.KEYWORD,
+          UrlbarUtils.RESULT_SOURCE.BOOKMARKS,
           ...UrlbarResult.payloadAndSimpleHighlights(tokens, {
             url: [action.params.url, true],
             keyword: [info.firstToken, true],
@@ -246,8 +256,8 @@ function makeUrlbarResult(tokens, info) {
         );
       case "extension":
         return new UrlbarResult(
-          UrlbarUtils.MATCH_TYPE.OMNIBOX,
-          UrlbarUtils.MATCH_SOURCE.OTHER_NETWORK,
+          UrlbarUtils.RESULT_TYPE.OMNIBOX,
+          UrlbarUtils.RESULT_SOURCE.OTHER_NETWORK,
           ...UrlbarResult.payloadAndSimpleHighlights(tokens, {
             title: [info.comment, true],
             content: [action.params.content, true],
@@ -257,8 +267,8 @@ function makeUrlbarResult(tokens, info) {
         );
       case "remotetab":
         return new UrlbarResult(
-          UrlbarUtils.MATCH_TYPE.REMOTE_TAB,
-          UrlbarUtils.MATCH_SOURCE.TABS,
+          UrlbarUtils.RESULT_TYPE.REMOTE_TAB,
+          UrlbarUtils.RESULT_SOURCE.TABS,
           ...UrlbarResult.payloadAndSimpleHighlights(tokens, {
             url: [action.params.url, true],
             title: [info.comment, true],
@@ -268,8 +278,8 @@ function makeUrlbarResult(tokens, info) {
         );
       case "switchtab":
         return new UrlbarResult(
-          UrlbarUtils.MATCH_TYPE.TAB_SWITCH,
-          UrlbarUtils.MATCH_SOURCE.TABS,
+          UrlbarUtils.RESULT_TYPE.TAB_SWITCH,
+          UrlbarUtils.RESULT_SOURCE.TABS,
           ...UrlbarResult.payloadAndSimpleHighlights(tokens, {
             url: [action.params.url, true],
             title: [info.comment, true],
@@ -279,8 +289,8 @@ function makeUrlbarResult(tokens, info) {
         );
       case "visiturl":
         return new UrlbarResult(
-          UrlbarUtils.MATCH_TYPE.URL,
-          UrlbarUtils.MATCH_SOURCE.OTHER_LOCAL,
+          UrlbarUtils.RESULT_TYPE.URL,
+          UrlbarUtils.RESULT_SOURCE.OTHER_LOCAL,
           ...UrlbarResult.payloadAndSimpleHighlights(tokens, {
             title: [info.comment, true],
             url: [action.params.url, true],
@@ -295,8 +305,8 @@ function makeUrlbarResult(tokens, info) {
 
   if (info.style.includes("priority-search")) {
     return new UrlbarResult(
-      UrlbarUtils.MATCH_TYPE.SEARCH,
-      UrlbarUtils.MATCH_SOURCE.SEARCH,
+      UrlbarUtils.RESULT_TYPE.SEARCH,
+      UrlbarUtils.RESULT_SOURCE.SEARCH,
       ...UrlbarResult.payloadAndSimpleHighlights(tokens, {
         engine: [info.comment, true],
         icon: [info.icon, false],
@@ -310,19 +320,23 @@ function makeUrlbarResult(tokens, info) {
   let comment = info.comment;
   let hasTags = info.style.includes("tag");
   if (info.style.includes("bookmark") || hasTags) {
-    source = UrlbarUtils.MATCH_SOURCE.BOOKMARKS;
+    source = UrlbarUtils.RESULT_SOURCE.BOOKMARKS;
     if (hasTags) {
       // Split title and tags.
       [comment, tags] = info.comment.split(TITLE_TAGS_SEPARATOR);
-      tags = tags.split(",").map(t => t.trim());
+      // Tags are separated by a comma and in a random order.
+      // We should also just include tags that match the searchString.
+      tags = tags.split(",").map(t => t.trim()).filter(tag => {
+        return tokens.some(token => tag.includes(token.value));
+      }).sort();
     }
   } else if (info.style.includes("preloaded-top-sites")) {
-    source = UrlbarUtils.MATCH_SOURCE.OTHER_LOCAL;
+    source = UrlbarUtils.RESULT_SOURCE.OTHER_LOCAL;
   } else {
-    source = UrlbarUtils.MATCH_SOURCE.HISTORY;
+    source = UrlbarUtils.RESULT_SOURCE.HISTORY;
   }
   return new UrlbarResult(
-    UrlbarUtils.MATCH_TYPE.URL,
+    UrlbarUtils.RESULT_TYPE.URL,
     source,
     ...UrlbarResult.payloadAndSimpleHighlights(tokens, {
       url: [info.url, true],

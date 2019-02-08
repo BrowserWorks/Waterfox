@@ -308,6 +308,9 @@ class nsContentUtils {
   static bool ShouldResistFingerprinting(nsIDocShell* aDocShell);
   static bool ShouldResistFingerprinting(Document* aDoc);
 
+  // Prevent system colors from being exposed to CSS or canvas.
+  static bool UseStandinsForNativeColors();
+
   // A helper function to calculate the rounded window size for fingerprinting
   // resistance. The rounded size is based on the chrome UI size and available
   // screen size. If the inputWidth/Height is greater than the available content
@@ -997,6 +1000,15 @@ class nsContentUtils {
    */
   static bool IsInSameAnonymousTree(const nsINode* aNode,
                                     const nsIContent* aContent);
+
+  /*
+   * Traverse the parent chain from aElement up to aStop, and return true if
+   * there's an interactive html content; false otherwise.
+   *
+   * Note: This crosses shadow boundaries but not document boundaries.
+   */
+  static bool IsInInteractiveHTMLContent(const Element* aElement,
+                                         const Element* aStop);
 
   /**
    * Return the nsIXPConnect service.
@@ -2967,10 +2979,9 @@ class nsContentUtils {
 
   /*
    * Checks if storage for the given principal is permitted by the user's
-   * preferences. The caller is assumed to not be a third-party iframe.
-   * (if that is possible, the caller should use StorageAllowedForWindow)
+   * preferences. This method should be used only by ServiceWorker loading.
    */
-  static StorageAccess StorageAllowedForPrincipal(nsIPrincipal* aPrincipal);
+  static StorageAccess StorageAllowedForServiceWorker(nsIPrincipal* aPrincipal);
 
   /*
    * Returns true if this document should disable storages because of the
@@ -3151,17 +3162,6 @@ class nsContentUtils {
   static nsresult CreateJSValueFromSequenceOfObject(
       JSContext* aCx, const mozilla::dom::Sequence<JSObject*>& aTransfer,
       JS::MutableHandle<JS::Value> aValue);
-
-  /**
-   * Returns whether or not UA Widget is enabled, controlled by pref
-   * dom.ua_widget.enabled.
-   *
-   * When enabled, UA Widget will replace legacy XBL when rendering
-   * JS-implemented web content widgets (videocontrols/datetimebox/etc.)
-   *
-   * It is really enabled only if Shadow DOM is also enabled.
-   */
-  static bool IsUAWidgetEnabled() { return sIsUAWidgetEnabled; }
 
   /**
    * Returns true if reserved key events should be prevented from being sent
@@ -3367,7 +3367,7 @@ class nsContentUtils {
    * Gets the current cookie lifetime policy for a given principal by checking
    * with preferences and the permission manager.
    *
-   * Used in the implementation of InternalStorageAllowedForPrincipal.
+   * Used in the implementation of InternalStorageAllowedCheck.
    */
   static void GetCookieLifetimePolicyForPrincipal(nsIPrincipal* aPrincipal,
                                                   uint32_t* aLifetimePolicy);
@@ -3381,12 +3381,14 @@ class nsContentUtils {
    * allow a channel instead of the window reference when determining 3rd party
    * status.
    *
-   * Used in the implementation of StorageAllowedForWindow and
-   * StorageAllowedForPrincipal.
+   * Used in the implementation of StorageAllowedForWindow,
+   * StorageAllowedForChannel and StorageAllowedForServiceWorker.
    */
-  static StorageAccess InternalStorageAllowedForPrincipal(
-      nsIPrincipal* aPrincipal, nsPIDOMWindowInner* aWindow, nsIURI* aURI,
-      nsIChannel* aChannel, uint32_t& aRejectedReason);
+  static StorageAccess InternalStorageAllowedCheck(nsIPrincipal* aPrincipal,
+                                                   nsPIDOMWindowInner* aWindow,
+                                                   nsIURI* aURI,
+                                                   nsIChannel* aChannel,
+                                                   uint32_t& aRejectedReason);
 
   static nsINode* GetCommonAncestorHelper(nsINode* aNode1, nsINode* aNode2);
   static nsIContent* GetCommonFlattenedTreeAncestorHelper(
@@ -3446,7 +3448,6 @@ class nsContentUtils {
   static bool sIsUpgradableDisplayContentPrefEnabled;
   static bool sIsFrameTimingPrefEnabled;
   static bool sIsFormAutofillAutocompleteEnabled;
-  static bool sIsUAWidgetEnabled;
   static bool sSendPerformanceTimingNotifications;
   static bool sUseActivityCursor;
   static bool sAnimationsAPICoreEnabled;

@@ -509,16 +509,15 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(ContentPermissionRequestBase)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(ContentPermissionRequestBase)
 
 ContentPermissionRequestBase::ContentPermissionRequestBase(
-    nsIPrincipal* aPrincipal, bool aIsHandlingUserInput,
-    nsPIDOMWindowInner* aWindow, const nsACString& aPrefName,
-    const nsACString& aType)
+    nsIPrincipal* aPrincipal, nsPIDOMWindowInner* aWindow,
+    const nsACString& aPrefName, const nsACString& aType)
     : mPrincipal(aPrincipal),
       mTopLevelPrincipal(aWindow ? ::GetTopLevelPrincipal(aWindow) : nullptr),
       mWindow(aWindow),
       mRequester(aWindow ? new nsContentPermissionRequester(aWindow) : nullptr),
       mPrefName(aPrefName),
       mType(aType),
-      mIsHandlingUserInput(aIsHandlingUserInput) {}
+      mIsHandlingUserInput(EventStateManager::IsHandlingUserInput()) {}
 
 NS_IMETHODIMP
 ContentPermissionRequestBase::GetPrincipal(
@@ -670,7 +669,9 @@ nsresult TranslateChoices(
       nsCString type = aPermissionRequests[i].type();
 
       JS::Rooted<JSObject*> obj(RootingCx(), &aChoices.toObject());
-      obj = CheckedUnwrap(obj);
+      // People really shouldn't be passing WindowProxy or Location
+      // objects for the choices here.
+      obj = js::CheckedUnwrapStatic(obj);
       if (!obj) {
         return NS_ERROR_FAILURE;
       }

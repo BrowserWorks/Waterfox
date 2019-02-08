@@ -51,6 +51,20 @@ class nsHtml5ExecutorReflusher : public Runnable {
   explicit nsHtml5ExecutorReflusher(nsHtml5TreeOpExecutor* aExecutor)
       : mozilla::Runnable("nsHtml5ExecutorReflusher"), mExecutor(aExecutor) {}
   NS_IMETHOD Run() override {
+    Document* doc = mExecutor->GetDocument();
+    if (XRE_IsContentProcess() &&
+        nsContentUtils::
+            HighPriorityEventPendingForTopLevelDocumentBeforeContentfulPaint(
+                doc)) {
+      // Possible early paint pending, reuse the runnable and try to
+      // call RunFlushLoop later.
+      nsCOMPtr<nsIRunnable> flusher = this;
+      if (NS_SUCCEEDED(
+              doc->Dispatch(TaskCategory::Network, flusher.forget()))) {
+        PROFILER_ADD_MARKER("HighPrio blocking parser flushing(2)", DOM);
+        return NS_OK;
+      }
+    }
     mExecutor->RunFlushLoop();
     return NS_OK;
   }
@@ -170,6 +184,7 @@ nsHtml5TreeOpExecutor::DidBuildModel(bool aTerminated) {
     }
 
     if (!destroying) {
+      mDocument->TriggerInitialDocumentTranslation();
       nsContentSink::StartLayout(false);
     }
   }
@@ -226,6 +241,10 @@ NS_IMETHODIMP
 nsHtml5TreeOpExecutor::SetParser(nsParserBase* aParser) {
   mParser = aParser;
   return NS_OK;
+}
+
+void nsHtml5TreeOpExecutor::InitialDocumentTranslationCompleted() {
+  nsContentSink::StartLayout(false);
 }
 
 void nsHtml5TreeOpExecutor::FlushPendingNotifications(FlushType aType) {

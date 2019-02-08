@@ -5,9 +5,9 @@
 const Cm = Components.manager;
 Cm.QueryInterface(Ci.nsIServiceManager);
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 let firstPaintNotification = "widget-first-paint";
 // widget-first-paint fires much later than expected on Linux.
@@ -76,7 +76,6 @@ startupRecorder.prototype = {
   },
 
   observe(subject, topic, data) {
-
     if (topic == "app-startup") {
       // We can't ensure our observer will be called first or last, so the list of
       // topics we observe here should avoid the topics used to trigger things

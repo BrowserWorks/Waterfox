@@ -4,11 +4,11 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
-const {ElementNotAccessibleError} = ChromeUtils.import("chrome://marionette/content/error.js", {});
-const {Log} = ChromeUtils.import("chrome://marionette/content/log.js", {});
+const {ElementNotAccessibleError} = ChromeUtils.import("chrome://marionette/content/error.js");
+const {Log} = ChromeUtils.import("chrome://marionette/content/log.js");
 
 XPCOMUtils.defineLazyGetter(this, "logger", Log.get);
 
@@ -98,7 +98,6 @@ accessibility.get = function(strict = false) {
  * accessibility as well as accessibility of user interactions.
  */
 accessibility.Checks = class {
-
   /**
    * @param {boolean} strict
    *     Flag indicating whether the accessibility issue should be logged
@@ -440,5 +439,4 @@ accessibility.Checks = class {
 
     throw new ElementNotAccessibleError(message);
   }
-
 };

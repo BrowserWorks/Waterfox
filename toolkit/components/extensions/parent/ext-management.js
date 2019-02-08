@@ -12,7 +12,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "promptService",
                                    "nsIPromptService");
 
 XPCOMUtils.defineLazyGetter(this, "GlobalManager", () => {
-  const {GlobalManager} = ChromeUtils.import("resource://gre/modules/Extension.jsm", {});
+  const {GlobalManager} = ChromeUtils.import("resource://gre/modules/Extension.jsm", null);
   return GlobalManager;
 });
 
@@ -201,8 +201,7 @@ this.management = class extends ExtensionAPI {
             source: "extension",
             method: "management-webext-api",
           };
-          let install = await AddonManager.getInstallForURL(url, "application/x-xpinstall", hash,
-                                                            null, null, null, null, telemetryInfo);
+          let install = await AddonManager.getInstallForURL(url, {hash, telemetryInfo});
           install.addListener(listener);
           try {
             await install.install();

@@ -2,18 +2,14 @@
 
 do_get_profile();
 
-ChromeUtils.import("resource://gre/modules/Promise.jsm");
-ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
-ChromeUtils.import("resource://gre/modules/osfile.jsm");
-ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/Sqlite.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
+const {Promise} = ChromeUtils.import("resource://gre/modules/Promise.jsm");
+const {PromiseUtils} = ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
+const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
+const {FileUtils} = ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+const {Sqlite} = ChromeUtils.import("resource://gre/modules/Sqlite.jsm");
 
 function sleep(ms) {
   return new Promise(resolve => {
-
     let timer = Cc["@mozilla.org/timer;1"]
                   .createInstance(Ci.nsITimer);
 
@@ -22,7 +18,6 @@ function sleep(ms) {
         resolve();
       },
     }, ms, timer.TYPE_ONE_SHOT);
-
   });
 }
 
@@ -78,7 +73,7 @@ async function getDummyTempDatabase(name, extraOptions = {}) {
 }
 
 add_task(async function test_setup() {
-  ChromeUtils.import("resource://testing-common/services/common/logging.js");
+  const {initTestLogging} = ChromeUtils.import("resource://testing-common/services/common/logging.js");
   initTestLogging("Trace");
 });
 
@@ -299,13 +294,11 @@ add_task(async function test_execute_invalid_statement() {
   let c = await getDummyDatabase("invalid_statement");
 
   await new Promise(resolve => {
-
     Assert.equal(c._connectionData._anonymousStatements.size, 0);
 
     c.execute("SELECT invalid FROM unknown").then(do_throw, function onError(error) {
       resolve();
     });
-
   });
 
   // Ensure we don't leak the statement instance.

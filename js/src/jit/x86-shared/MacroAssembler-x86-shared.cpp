@@ -254,35 +254,6 @@ void MacroAssembler::flush() {}
 
 void MacroAssembler::comment(const char* msg) { masm.comment(msg); }
 
-class MOZ_RAII ScopedMoveResolution {
-  MacroAssembler& masm_;
-  MoveResolver& resolver_;
-
- public:
-  explicit ScopedMoveResolution(MacroAssembler& masm)
-      : masm_(masm), resolver_(masm.moveResolver()) {}
-
-  void addMove(Register src, Register dest) {
-    if (src != dest) {
-      masm_.propagateOOM(resolver_.addMove(MoveOperand(src), MoveOperand(dest),
-                                           MoveOp::GENERAL));
-    }
-  }
-
-  ~ScopedMoveResolution() {
-    masm_.propagateOOM(resolver_.resolve());
-    if (masm_.oom()) {
-      return;
-    }
-
-    resolver_.sortMemoryToMemoryMoves();
-
-    MoveEmitter emitter(masm_);
-    emitter.emit(resolver_);
-    emitter.finish();
-  }
-};
-
 // This operation really consists of five phases, in order to enforce the
 // restriction that on x86_shared, srcDest must be eax and edx will be
 // clobbered.
@@ -324,12 +295,8 @@ void MacroAssembler::flexibleDivMod32(Register rhs, Register lhsOutput,
 
   PushRegsInMask(preserve);
 
-  // Marshal Registers For operation
-  {
-    ScopedMoveResolution resolution(*this);
-    resolution.addMove(rhs, regForRhs);
-    resolution.addMove(lhsOutput, eax);
-  }
+  // Shuffle input into place.
+  moveRegPair(lhsOutput, rhs, eax, regForRhs);
   if (oom()) {
     return;
   }
@@ -343,11 +310,7 @@ void MacroAssembler::flexibleDivMod32(Register rhs, Register lhsOutput,
     idiv(regForRhs);
   }
 
-  {
-    ScopedMoveResolution resolution(*this);
-    resolution.addMove(eax, lhsOutput);
-    resolution.addMove(edx, remOutput);
-  }
+  moveRegPair(eax, edx, lhsOutput, remOutput);
   if (oom()) {
     return;
   }
@@ -741,8 +704,9 @@ void MacroAssembler::oolWasmTruncateCheckF64ToI32(FloatRegister input,
       // other case is positive overflow which is converted to
       // UINT32_MAX.
       Label nonNegative;
-      loadConstantDouble(0.0, ScratchDoubleReg);
-      branchDouble(Assembler::DoubleGreaterThanOrEqual, input, ScratchDoubleReg,
+      ScratchDoubleScope fpscratch(*this);
+      loadConstantDouble(0.0, fpscratch);
+      branchDouble(Assembler::DoubleGreaterThanOrEqual, input, fpscratch,
                    &nonNegative);
       move32(Imm32(0), output);
       jump(rejoin);
@@ -758,8 +722,9 @@ void MacroAssembler::oolWasmTruncateCheckF64ToI32(FloatRegister input,
       jump(rejoin);
 
       bind(&notNaN);
-      loadConstantDouble(0.0, ScratchDoubleReg);
-      branchDouble(Assembler::DoubleLessThan, input, ScratchDoubleReg, rejoin);
+      ScratchDoubleScope fpscratch(*this);
+      loadConstantDouble(0.0, fpscratch);
+      branchDouble(Assembler::DoubleLessThan, input, fpscratch, rejoin);
       sub32(Imm32(1), output);
     }
     jump(rejoin);
@@ -780,12 +745,13 @@ void MacroAssembler::oolWasmTruncateCheckF64ToI32(FloatRegister input,
 
   // We've used vcvttsd2si. The only valid double values that can
   // truncate to INT32_MIN are in ]INT32_MIN - 1; INT32_MIN].
-  loadConstantDouble(double(INT32_MIN) - 1.0, ScratchDoubleReg);
-  branchDouble(Assembler::DoubleLessThanOrEqual, input, ScratchDoubleReg,
+  ScratchDoubleScope fpscratch(*this);
+  loadConstantDouble(double(INT32_MIN) - 1.0, fpscratch);
+  branchDouble(Assembler::DoubleLessThanOrEqual, input, fpscratch,
                &traps.intOverflow);
 
-  loadConstantDouble(0.0, ScratchDoubleReg);
-  branchDouble(Assembler::DoubleGreaterThan, input, ScratchDoubleReg,
+  loadConstantDouble(0.0, fpscratch);
+  branchDouble(Assembler::DoubleGreaterThan, input, fpscratch,
                &traps.intOverflow);
   jump(rejoin);
 }
@@ -804,8 +770,9 @@ void MacroAssembler::oolWasmTruncateCheckF32ToI32(FloatRegister input,
       // other case is positive overflow which is converted to
       // UINT32_MAX.
       Label nonNegative;
-      loadConstantFloat32(0.0f, ScratchDoubleReg);
-      branchFloat(Assembler::DoubleGreaterThanOrEqual, input, ScratchDoubleReg,
+      ScratchFloat32Scope fpscratch(*this);
+      loadConstantFloat32(0.0f, fpscratch);
+      branchFloat(Assembler::DoubleGreaterThanOrEqual, input, fpscratch,
                   &nonNegative);
       move32(Imm32(0), output);
       jump(rejoin);
@@ -821,8 +788,9 @@ void MacroAssembler::oolWasmTruncateCheckF32ToI32(FloatRegister input,
       jump(rejoin);
 
       bind(&notNaN);
-      loadConstantFloat32(0.0f, ScratchFloat32Reg);
-      branchFloat(Assembler::DoubleLessThan, input, ScratchFloat32Reg, rejoin);
+      ScratchFloat32Scope fpscratch(*this);
+      loadConstantFloat32(0.0f, fpscratch);
+      branchFloat(Assembler::DoubleLessThan, input, fpscratch, rejoin);
       sub32(Imm32(1), output);
     }
     jump(rejoin);
@@ -844,9 +812,9 @@ void MacroAssembler::oolWasmTruncateCheckF32ToI32(FloatRegister input,
   // We've used vcvttss2si. Check that the input wasn't
   // float(INT32_MIN), which is the only legimitate input that
   // would truncate to INT32_MIN.
-  loadConstantFloat32(float(INT32_MIN), ScratchFloat32Reg);
-  branchFloat(Assembler::DoubleNotEqual, input, ScratchFloat32Reg,
-              &traps.intOverflow);
+  ScratchFloat32Scope fpscratch(*this);
+  loadConstantFloat32(float(INT32_MIN), fpscratch);
+  branchFloat(Assembler::DoubleNotEqual, input, fpscratch, &traps.intOverflow);
   jump(rejoin);
 }
 
@@ -864,9 +832,9 @@ void MacroAssembler::oolWasmTruncateCheckF64ToI64(FloatRegister input,
       // other case is positive overflow which is converted to
       // UINT64_MAX.
       Label positive;
-      loadConstantDouble(0.0, ScratchDoubleReg);
-      branchDouble(Assembler::DoubleGreaterThan, input, ScratchDoubleReg,
-                   &positive);
+      ScratchDoubleScope fpscratch(*this);
+      loadConstantDouble(0.0, fpscratch);
+      branchDouble(Assembler::DoubleGreaterThan, input, fpscratch, &positive);
       move64(Imm64(0), output);
       jump(rejoin);
 
@@ -881,8 +849,9 @@ void MacroAssembler::oolWasmTruncateCheckF64ToI64(FloatRegister input,
       jump(rejoin);
 
       bind(&notNaN);
-      loadConstantDouble(0.0, ScratchDoubleReg);
-      branchDouble(Assembler::DoubleLessThan, input, ScratchDoubleReg, rejoin);
+      ScratchDoubleScope fpscratch(*this);
+      loadConstantDouble(0.0, fpscratch);
+      branchDouble(Assembler::DoubleLessThan, input, fpscratch, rejoin);
       sub64(Imm64(1), output);
     }
     jump(rejoin);
@@ -896,11 +865,12 @@ void MacroAssembler::oolWasmTruncateCheckF64ToI64(FloatRegister input,
 
   // Handle special values.
   if (isUnsigned) {
-    loadConstantDouble(0.0, ScratchDoubleReg);
-    branchDouble(Assembler::DoubleGreaterThan, input, ScratchDoubleReg,
+    ScratchDoubleScope fpscratch(*this);
+    loadConstantDouble(0.0, fpscratch);
+    branchDouble(Assembler::DoubleGreaterThan, input, fpscratch,
                  &traps.intOverflow);
-    loadConstantDouble(-1.0, ScratchDoubleReg);
-    branchDouble(Assembler::DoubleLessThanOrEqual, input, ScratchDoubleReg,
+    loadConstantDouble(-1.0, fpscratch);
+    branchDouble(Assembler::DoubleLessThanOrEqual, input, fpscratch,
                  &traps.intOverflow);
     jump(rejoin);
     return;
@@ -909,9 +879,9 @@ void MacroAssembler::oolWasmTruncateCheckF64ToI64(FloatRegister input,
   // We've used vcvtsd2sq. The only legit value whose i64
   // truncation is INT64_MIN is double(INT64_MIN): exponent is so
   // high that the highest resolution around is much more than 1.
-  loadConstantDouble(double(int64_t(INT64_MIN)), ScratchDoubleReg);
-  branchDouble(Assembler::DoubleNotEqual, input, ScratchDoubleReg,
-               &traps.intOverflow);
+  ScratchDoubleScope fpscratch(*this);
+  loadConstantDouble(double(int64_t(INT64_MIN)), fpscratch);
+  branchDouble(Assembler::DoubleNotEqual, input, fpscratch, &traps.intOverflow);
   jump(rejoin);
 }
 
@@ -929,9 +899,9 @@ void MacroAssembler::oolWasmTruncateCheckF32ToI64(FloatRegister input,
       // other case is positive overflow which is converted to
       // UINT64_MAX.
       Label positive;
-      loadConstantFloat32(0.0f, ScratchFloat32Reg);
-      branchFloat(Assembler::DoubleGreaterThan, input, ScratchFloat32Reg,
-                  &positive);
+      ScratchFloat32Scope fpscratch(*this);
+      loadConstantFloat32(0.0f, fpscratch);
+      branchFloat(Assembler::DoubleGreaterThan, input, fpscratch, &positive);
       move64(Imm64(0), output);
       jump(rejoin);
 
@@ -946,8 +916,9 @@ void MacroAssembler::oolWasmTruncateCheckF32ToI64(FloatRegister input,
       jump(rejoin);
 
       bind(&notNaN);
-      loadConstantFloat32(0.0f, ScratchFloat32Reg);
-      branchFloat(Assembler::DoubleLessThan, input, ScratchFloat32Reg, rejoin);
+      ScratchFloat32Scope fpscratch(*this);
+      loadConstantFloat32(0.0f, fpscratch);
+      branchFloat(Assembler::DoubleLessThan, input, fpscratch, rejoin);
       sub64(Imm64(1), output);
     }
     jump(rejoin);
@@ -961,20 +932,21 @@ void MacroAssembler::oolWasmTruncateCheckF32ToI64(FloatRegister input,
 
   // Handle special values.
   if (isUnsigned) {
-    loadConstantFloat32(0.0f, ScratchFloat32Reg);
-    branchFloat(Assembler::DoubleGreaterThan, input, ScratchFloat32Reg,
+    ScratchFloat32Scope fpscratch(*this);
+    loadConstantFloat32(0.0f, fpscratch);
+    branchFloat(Assembler::DoubleGreaterThan, input, fpscratch,
                 &traps.intOverflow);
-    loadConstantFloat32(-1.0f, ScratchFloat32Reg);
-    branchFloat(Assembler::DoubleLessThanOrEqual, input, ScratchFloat32Reg,
+    loadConstantFloat32(-1.0f, fpscratch);
+    branchFloat(Assembler::DoubleLessThanOrEqual, input, fpscratch,
                 &traps.intOverflow);
     jump(rejoin);
     return;
   }
 
   // We've used vcvtss2sq. See comment in outOfLineWasmTruncateDoubleToInt64.
-  loadConstantFloat32(float(int64_t(INT64_MIN)), ScratchFloat32Reg);
-  branchFloat(Assembler::DoubleNotEqual, input, ScratchFloat32Reg,
-              &traps.intOverflow);
+  ScratchFloat32Scope fpscratch(*this);
+  loadConstantFloat32(float(int64_t(INT64_MIN)), fpscratch);
+  branchFloat(Assembler::DoubleNotEqual, input, fpscratch, &traps.intOverflow);
   jump(rejoin);
 }
 

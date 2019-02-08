@@ -79,6 +79,13 @@ void MacroAssembler::move32To64SignExtend(Register src, Register64 dest) {
 }
 
 // ===============================================================
+// Load instructions
+
+void MacroAssembler::load32SignExtendToPtr(const Address& src, Register dest) {
+  load32(src, dest);
+}
+
+// ===============================================================
 // Logical instructions
 
 void MacroAssembler::not32(Register reg) { ma_mvn(reg, reg); }
@@ -1693,6 +1700,37 @@ void MacroAssembler::branchTestSymbolImpl(Condition cond, const T& t,
   Condition c = testSymbol(cond, t);
   ma_b(label, c);
 }
+
+#ifdef ENABLE_BIGINT
+void MacroAssembler::branchTestBigInt(Condition cond, Register tag,
+                                      Label* label) {
+  branchTestBigIntImpl(cond, tag, label);
+}
+
+void MacroAssembler::branchTestBigInt(Condition cond, const BaseIndex& address,
+                                      Label* label) {
+  branchTestBigIntImpl(cond, address, label);
+}
+
+void MacroAssembler::branchTestBigInt(Condition cond, const ValueOperand& value,
+                                      Label* label) {
+  branchTestBigIntImpl(cond, value, label);
+}
+
+template <typename T>
+void MacroAssembler::branchTestBigIntImpl(Condition cond, const T& t,
+                                          Label* label) {
+  Condition c = testBigInt(cond, t);
+  ma_b(label, c);
+}
+
+void MacroAssembler::branchTestBigIntTruthy(bool truthy,
+                                            const ValueOperand& value,
+                                            Label* label) {
+  Condition c = testBigIntTruthy(truthy, value);
+  ma_b(label, c);
+}
+#endif
 
 void MacroAssembler::branchTestNull(Condition cond, Register tag,
                                     Label* label) {

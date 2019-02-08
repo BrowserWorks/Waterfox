@@ -2591,7 +2591,7 @@ bool CanvasRenderingContext2D::ParseFilter(
     return false;
   }
 
-  nsString usedFont;  // unused
+  nsAutoString usedFont; // unused
 
   RefPtr<ComputedStyle> parentStyle = GetFontStyleForServo(
       mCanvasElement, GetFont(), presShell, usedFont, aError);
@@ -2599,16 +2599,13 @@ bool CanvasRenderingContext2D::ParseFilter(
     return false;
   }
 
-  RefPtr<ComputedStyle> computedValues =
+  RefPtr<ComputedStyle> style =
       ResolveFilterStyleForServo(aString, parentStyle, presShell, aError);
-  if (!computedValues) {
+  if (!style) {
     return false;
   }
 
-  const nsStyleEffects* effects =
-      computedValues->ComputedData()->GetStyleEffects();
-  // XXX: This mFilters is a one shot object, we probably could avoid copying.
-  aFilterChain = effects->mFilters;
+  aFilterChain = style->StyleEffects()->mFilters;
   return true;
 }
 
@@ -3486,6 +3483,8 @@ bool CanvasRenderingContext2D::SetFontInternal(const nsAString& aFont,
   resizedFont.size =
       (fontStyle->mSize * c->AppUnitsPerDevPixel()) / AppUnitsPerCSSPixel();
 
+  c->Document()->FlushUserFontSet();
+
   nsFontMetrics::Params params;
   params.language = fontStyle->mLanguage;
   params.explicitLanguage = fontStyle->mExplicitLanguage;
@@ -4026,6 +4025,7 @@ nsresult CanvasRenderingContext2D::DrawOrMeasureText(
   nsPresContext* presContext = presShell->GetPresContext();
 
   // ensure user font set is up to date
+  presContext->Document()->FlushUserFontSet();
   currentFontStyle->SetUserFontSet(presContext->GetUserFontSet());
 
   if (currentFontStyle->GetStyle()->size == 0.0F) {

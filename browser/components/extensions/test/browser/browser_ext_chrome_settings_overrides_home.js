@@ -7,8 +7,6 @@ ChromeUtils.defineModuleGetter(this, "AddonManager",
                                "resource://gre/modules/AddonManager.jsm");
 ChromeUtils.defineModuleGetter(this, "ExtensionSettingsStore",
                                "resource://gre/modules/ExtensionSettingsStore.jsm");
-ChromeUtils.defineModuleGetter(this, "Services",
-                               "resource://gre/modules/Services.jsm");
 
 // Named this way so they correspond to the extensions
 const HOME_URI_2 = "http://example.com/";
@@ -328,8 +326,7 @@ add_task(async function test_doorhanger_homepage_button() {
   // Click Restore Settings.
   let popupHidden = promisePopupHidden(panel);
   let prefPromise = promisePrefChangeObserved(HOMEPAGE_URL_PREF);
-  document.getAnonymousElementByAttribute(
-    popupnotification, "anonid", "secondarybutton").click();
+  popupnotification.secondaryButton.click();
   await prefPromise;
   await popupHidden;
 
@@ -341,7 +338,7 @@ add_task(async function test_doorhanger_homepage_button() {
   // Click Restore Settings again.
   popupHidden = promisePopupHidden(panel);
   prefPromise = promisePrefChangeObserved(HOMEPAGE_URL_PREF);
-  document.getAnonymousElementByAttribute(popupnotification, "anonid", "secondarybutton").click();
+  popupnotification.secondaryButton.click();
   await popupHidden;
   await prefPromise;
 
@@ -401,7 +398,7 @@ add_task(async function test_doorhanger_new_window() {
   let popupHidden = promisePopupHidden(panel);
   let prefPromise = promisePrefChangeObserved(HOMEPAGE_URL_PREF);
   let popupnotification = doc.getElementById("extension-homepage-notification");
-  doc.getAnonymousElementByAttribute(popupnotification, "anonid", "secondarybutton").click();
+  popupnotification.secondaryButton.click();
   await prefPromise;
   await popupHidden;
 
@@ -414,7 +411,7 @@ add_task(async function test_doorhanger_new_window() {
      "The extension name is in the popup");
 
   // Click Keep Changes.
-  doc.getAnonymousElementByAttribute(popupnotification, "anonid", "button").click();
+  popupnotification.button.click();
   await TestUtils.waitForCondition(() => isConfirmed(ext1Id));
 
   ok(getHomePageURL().endsWith("ext1.html"), "The homepage is still the set");

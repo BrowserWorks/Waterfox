@@ -52,8 +52,9 @@ class nsTextFrame : public nsFrame {
   typedef gfxTextRun::Range Range;
 
  public:
-  explicit nsTextFrame(ComputedStyle* aStyle, ClassID aID = kClassID)
-      : nsFrame(aStyle, aID),
+  explicit nsTextFrame(ComputedStyle* aStyle, nsPresContext* aPresContext,
+                       ClassID aID = kClassID)
+      : nsFrame(aStyle, aPresContext, aID),
         mNextContinuation(nullptr),
         mContentOffset(0),
         mContentLengthHint(0),
@@ -405,20 +406,17 @@ class nsTextFrame : public nsFrame {
     mozilla::SVGContextPaint* contextPaint = nullptr;
     DrawPathCallbacks* callbacks = nullptr;
     enum {
-      PaintText,         // Normal text painting.
-      PaintTextBGColor,  // Only paint background color of the selected text
-                         // range in this state.
-      GenerateTextMask   // To generate a mask from a text frame. Should
-                         // only paint text itself with opaque color.
-                         // Text shadow, text selection color and text
-                         // decoration are all discarded in this state.
+      PaintText,        // Normal text painting.
+      GenerateTextMask  // To generate a mask from a text frame. Should
+                        // only paint text itself with opaque color.
+                        // Text shadow, text selection color and text
+                        // decoration are all discarded in this state.
     };
     uint8_t state = PaintText;
     explicit PaintTextParams(gfxContext* aContext) : context(aContext) {}
 
     bool IsPaintText() const { return state == PaintText; }
     bool IsGenerateTextMask() const { return state == GenerateTextMask; }
-    bool IsPaintBGColor() const { return state == PaintTextBGColor; }
   };
 
   struct PaintTextSelectionParams : PaintTextParams {

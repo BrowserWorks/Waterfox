@@ -6,8 +6,6 @@
 const NS_CHROME_MANIFESTS_FILE_LIST = "ChromeML";
 const XUL_CACHE_PREF = "nglayout.debug.disable_xul_cache";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-
 var gChromeReg = Cc["@mozilla.org/chrome/chrome-registry;1"].
                     getService(Ci.nsIXULChromeRegistry);
 
@@ -46,7 +44,6 @@ function getParent(path) {
 }
 
 function copyDirToTempProfile(path, subdirname) {
-
   if (subdirname === undefined) {
     subdirname = "mochikit-tmp";
   }
@@ -66,7 +63,6 @@ function copyDirToTempProfile(path, subdirname) {
     files[f].copyTo(tmpdir, "");
   }
   return tmpdir;
-
 }
 
 function convertChromeURI(chromeURI) {

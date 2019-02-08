@@ -121,11 +121,6 @@ RootActor.prototype = {
     storageInspector: true,
     // Whether storage inspector is read only
     storageInspectorReadOnly: true,
-    // Whether conditional breakpoints are supported
-    conditionalBreakpoints: true,
-    // Whether the server supports full source actors (breakpoints on
-    // eval scripts, etc)
-    debuggerSourceActors: true,
     // Whether the server can return wasm binary source
     wasmBinarySource: true,
     bulk: true,
@@ -175,6 +170,9 @@ RootActor.prototype = {
     // `front.startProfiler`. This is an optional parameter but it will throw an error if
     // the profiled Firefox doesn't accept it.
     perfActorVersion: 1,
+    // Supports native log points and modifying the condition/log of an existing
+    // breakpoints. Fx66+
+    nativeLogpoints: true,
   },
 
   /**

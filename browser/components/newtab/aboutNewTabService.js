@@ -6,10 +6,10 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/E10SUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {E10SUtils} = ChromeUtils.import("resource://gre/modules/E10SUtils.jsm");
 
 ChromeUtils.defineModuleGetter(this, "AboutNewTab",
                                "resource:///modules/AboutNewTab.jsm");
@@ -47,6 +47,7 @@ function AboutNewTabService() {
   // More initialization happens here
   this.toggleActivityStream(true);
   this.initialized = true;
+  this.alreadyRecordedTopsitesPainted = false;
 
   if (IS_MAIN_PROCESS) {
     AboutNewTab.init();
@@ -329,6 +330,20 @@ AboutNewTabService.prototype = {
     this._newTabURL = ABOUT_URL;
     this.toggleActivityStream(true, true);
     this.notifyChange();
+  },
+
+  maybeRecordTopsitesPainted(timestamp) {
+    if (this.alreadyRecordedTopsitesPainted) {
+      return;
+    }
+
+    const SCALAR_KEY = "timestamps.about_home_topsites_first_paint";
+
+    let startupInfo = Services.startup.getStartupInfo();
+    let processStartTs = startupInfo.process.getTime();
+    let delta = Math.round(timestamp - processStartTs);
+    Services.telemetry.scalarSet(SCALAR_KEY, delta);
+    this.alreadyRecordedTopsitesPainted = true;
   },
 
   uninit() {

@@ -180,7 +180,11 @@ var gEnvXPCOMDebugBreak;
 var gEnvXPCOMMemLeakLog;
 var gEnvDyldLibraryPath;
 var gEnvLdLibraryPath;
-var gASanOptions;
+
+const DATA_URI_SPEC = Services.io.newFileURI(do_get_file("", false)).spec;
+
+/* import-globals-from shared.js */
+load("shared.js");
 
 // Set to true to log additional information for debugging. To log additional
 // information for an individual test set DEBUG_AUS_TEST to true in the test's
@@ -199,10 +203,6 @@ var gDebugTestLog = false;
 var gTestsToLog = [];
 var gRealDump;
 var gFOS;
-
-const DATA_URI_SPEC = Services.io.newFileURI(do_get_file("../data", false)).spec;
-/* import-globals-from ../data/shared.js */
-Services.scriptloader.loadSubScript(DATA_URI_SPEC + "shared.js", this);
 
 ChromeUtils.defineModuleGetter(this, "MockRegistrar",
                                "resource://testing-common/MockRegistrar.jsm");
@@ -2081,8 +2081,7 @@ function stageUpdate(aCheckSvcLog) {
   try {
     // Stage the update.
     Cc["@mozilla.org/updates/update-processor;1"].
-      createInstance(Ci.nsIUpdateProcessor).
-      processUpdate(gUpdateManager.activeUpdate);
+      createInstance(Ci.nsIUpdateProcessor).processUpdate();
   } catch (e) {
     Assert.ok(false,
               "error thrown while calling processUpdate, exception: " + e);
@@ -3642,7 +3641,7 @@ function checkFilesInDirRecursive(aDir, aCallback) {
  *          The callback to call if the update prompt component is called.
  */
 function overrideUpdatePrompt(aCallback) {
-  ChromeUtils.import("resource://testing-common/MockRegistrar.jsm");
+  const {MockRegistrar} = ChromeUtils.import("resource://testing-common/MockRegistrar.jsm");
   MockRegistrar.register("@mozilla.org/updates/update-prompt;1", UpdatePrompt, [aCallback]);
 }
 
@@ -3746,7 +3745,7 @@ function start_httpserver() {
              "registerDirectory! Path: " + dir.path);
   }
 
-  let { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js", {});
+  let { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
   gTestserver = new HttpServer();
   gTestserver.registerDirectory("/", dir);
   gTestserver.registerPathHandler("/" + gHTTPHandlerPath, pathHandler);
@@ -4264,14 +4263,6 @@ function setEnvironment() {
 
   gShouldResetEnv = true;
 
-  // See bug 1279108.
-  if (gEnv.exists("ASAN_OPTIONS")) {
-    gASanOptions = gEnv.get("ASAN_OPTIONS");
-    gEnv.set("ASAN_OPTIONS", gASanOptions + ":detect_leaks=0");
-  } else {
-    gEnv.set("ASAN_OPTIONS", "detect_leaks=0");
-  }
-
   if (IS_WIN && !gEnv.exists("XRE_NO_WINDOWS_CRASH_DIALOG")) {
     gAddedEnvXRENoWindowsCrashDialog = true;
     debugDump("setting the XRE_NO_WINDOWS_CRASH_DIALOG environment " +
@@ -4352,9 +4343,6 @@ function resetEnvironment() {
   }
 
   gShouldResetEnv = false;
-
-  // Restore previous ASAN_OPTIONS if there were any.
-  gEnv.set("ASAN_OPTIONS", gASanOptions ? gASanOptions : "");
 
   if (gEnvXPCOMMemLeakLog) {
     debugDump("setting the XPCOM_MEM_LEAK_LOG environment variable back to " +

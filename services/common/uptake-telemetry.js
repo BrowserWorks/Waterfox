@@ -7,7 +7,7 @@
 
 var EXPORTED_SYMBOLS = ["UptakeTelemetry"];
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm", {});
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 
 // Telemetry report results.
@@ -17,7 +17,6 @@ const TELEMETRY_HISTOGRAM_ID = "UPTAKE_REMOTE_CONTENT_RESULT_1";
  * A Telemetry helper to report uptake of remote content.
  */
 class UptakeTelemetry {
-
   /**
    * Supported uptake statuses:
    *

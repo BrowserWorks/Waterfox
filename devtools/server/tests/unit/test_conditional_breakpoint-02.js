@@ -27,15 +27,22 @@ function run_test() {
 }
 
 function test_simple_breakpoint() {
-  gThreadClient.addOneTimeListener("paused", function(event, packet) {
-    const source = gThreadClient.source(packet.frame.where.source);
-    source.setBreakpoint({
+  gThreadClient.addOneTimeListener("paused", async function(event, packet) {
+    const source = await getSourceById(
+      gThreadClient,
+      packet.frame.where.actor
+    );
+    await source.setBreakpoint({
       line: 3,
-      condition: "a === 2",
+      options: { condition: "a === 2" },
+    });
+    source.setBreakpoint({
+      line: 4,
+      options: { condition: "a === 1" },
     }).then(function([response, bpClient]) {
       gThreadClient.addOneTimeListener("paused", function(event, packet) {
         // Check the return value.
-        Assert.equal(packet.why.type, "debuggerStatement");
+        Assert.equal(packet.why.type, "breakpoint");
         Assert.equal(packet.frame.where.line, 4);
 
         // Remove the breakpoint.
@@ -54,7 +61,8 @@ function test_simple_breakpoint() {
   Cu.evalInSandbox("debugger;\n" +   // 1
                    "var a = 1;\n" +  // 2
                    "var b = 2;\n" +  // 3
-                   "debugger;",      // 4
+                   "b++;" +          // 4
+                   "debugger;",      // 5
                    gDebuggee,
                    "1.8",
                    "test.js",

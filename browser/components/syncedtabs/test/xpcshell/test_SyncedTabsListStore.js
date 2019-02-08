@@ -1,7 +1,7 @@
 "use strict";
 
-let { SyncedTabs } = ChromeUtils.import("resource://services-sync/SyncedTabs.jsm", {});
-let { SyncedTabsListStore } = ChromeUtils.import("resource:///modules/syncedtabs/SyncedTabsListStore.js", {});
+let { SyncedTabs } = ChromeUtils.import("resource://services-sync/SyncedTabs.jsm");
+let { SyncedTabsListStore } = ChromeUtils.import("resource:///modules/syncedtabs/SyncedTabsListStore.js");
 
 const FIXTURE = [
   {
@@ -189,7 +189,6 @@ add_task(async function testRowSelectionWithFilter() {
   store.selectRow(1);
   Assert.equal(spy.callCount, 2,
     "doesn't trigger change if same row selected");
-
 });
 
 

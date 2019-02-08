@@ -487,7 +487,6 @@ function linksToListItems(links) {
       var bug_url = "https://bugzilla.mozilla.org/show_bug.cgi?id=" + bug_num;
       response += LI({class: classVal}, A({href: link}, link), " - ", A({href: bug_url}, "Bug " + bug_num), children);
     }
-
   }
   return response;
 }
@@ -586,7 +585,7 @@ function regularListing(metadata, response) {
  * it into an object for creating a table of clickable links for each test.
  */
 function convertManifestToTestLinks(root, manifest) {
-  ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
+  const {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
   var manifestFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
   manifestFile.initWithFile(serverBasePath);

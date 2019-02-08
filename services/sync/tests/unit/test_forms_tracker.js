@@ -1,10 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-ChromeUtils.import("resource://gre/modules/Log.jsm");
-ChromeUtils.import("resource://services-sync/engines/forms.js");
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/util.js");
+const {FormEngine} = ChromeUtils.import("resource://services-sync/engines/forms.js");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
 
 add_task(async function run_test() {
   _("Verify we've got an empty tracker to work with.");
@@ -72,9 +70,6 @@ add_task(async function run_test() {
     await removeEntry("email", "john@doe.com");
     changes = await tracker.getChangedIDs();
     do_check_empty(changes);
-
-
-
   } finally {
     _("Clean up.");
     await engine._store.wipe();

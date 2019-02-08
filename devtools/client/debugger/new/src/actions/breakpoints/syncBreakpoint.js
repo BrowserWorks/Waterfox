@@ -3,18 +3,23 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // @flow
+
+import { setBreakpointPositions } from "./breakpointPositions";
 import {
   locationMoved,
   createBreakpoint,
   assertBreakpoint,
   assertPendingBreakpoint,
-  findScopeByName
+  findScopeByName,
+  makeSourceActorLocation
 } from "../../utils/breakpoint";
 
 import { getGeneratedLocation } from "../../utils/source-maps";
 import { getTextAtPosition } from "../../utils/source";
 import { originalToGeneratedId, isOriginalId } from "devtools-source-map";
-import { getSource } from "../../selectors";
+import { getSource, getSourceActors } from "../../selectors";
+import { features } from "../../utils/prefs";
+
 import type { ThunkArgs, Action } from "../types";
 
 import type {
@@ -49,7 +54,6 @@ async function makeScopedLocation(
 }
 
 function createSyncData(
-  id: SourceId,
   pendingBreakpoint: PendingBreakpoint,
   location: SourceLocation,
   generatedLocation: SourceLocation,
@@ -60,7 +64,6 @@ function createSyncData(
   const overrides = {
     ...pendingBreakpoint,
     generatedLocation,
-    id,
     text,
     originalText
   };
@@ -76,6 +79,7 @@ export async function syncBreakpointPromise(
   getState: Function,
   client: Object,
   sourceMaps: Object,
+  dispatch: Function,
   sourceId: SourceId,
   pendingBreakpoint: PendingBreakpoint
 ): Promise<BreakpointSyncData | null> {
@@ -121,18 +125,41 @@ export async function syncBreakpointPromise(
     scopedGeneratedLocation
   );
 
-  const existingClient = client.getBreakpointByLocation(generatedLocation);
+  const sourceActors = getSourceActors(getState(), sourceId);
+  let possiblePosition = true;
+  if (features.columnBreakpoints && generatedLocation.column != undefined) {
+    const { positions } = await dispatch(
+      setBreakpointPositions(generatedLocation)
+    );
+    if (!positions.includes(generatedLocation.column)) {
+      possiblePosition = false;
+    }
+  }
 
   /** ******* CASE 1: No server change ***********/
   // early return if breakpoint is disabled or we are in the sameLocation
-  // send update only to redux
-  if (pendingBreakpoint.disabled || (existingClient && isSameLocation)) {
-    const id = pendingBreakpoint.disabled ? "" : existingClient.id;
+  if (possiblePosition && (pendingBreakpoint.disabled || isSameLocation)) {
+    // Make sure the breakpoint is installed on all source actors.
+    if (!pendingBreakpoint.disabled) {
+      for (const sourceActor of sourceActors) {
+        const sourceActorLocation = makeSourceActorLocation(
+          sourceActor,
+          generatedLocation
+        );
+        if (!client.getBreakpointByLocation(sourceActorLocation)) {
+          await client.setBreakpoint(
+            sourceActorLocation,
+            pendingBreakpoint.options,
+            isOriginalId(sourceId)
+          );
+        }
+      }
+    }
+
     const originalText = getTextAtPosition(source, previousLocation);
     const text = getTextAtPosition(generatedSource, generatedLocation);
 
     return createSyncData(
-      id,
       pendingBreakpoint,
       scopedLocation,
       scopedGeneratedLocation,
@@ -143,39 +170,43 @@ export async function syncBreakpointPromise(
   }
 
   // clear server breakpoints if they exist and we have moved
-  if (existingClient) {
-    await client.removeBreakpoint(generatedLocation);
+  for (const sourceActor of sourceActors) {
+    const sourceActorLocation = makeSourceActorLocation(
+      sourceActor,
+      generatedLocation
+    );
+    if (client.getBreakpointByLocation(sourceActorLocation)) {
+      await client.removeBreakpoint(sourceActorLocation);
+    }
+  }
+
+  if (!possiblePosition || !scopedGeneratedLocation.line) {
+    return { previousLocation, breakpoint: null };
   }
 
   /** ******* Case 2: Add New Breakpoint ***********/
   // If we are not disabled, set the breakpoint on the server and get
   // that info so we can set it on our breakpoints.
 
-  if (!scopedGeneratedLocation.line) {
-    return { previousLocation, breakpoint: null };
+  for (const sourceActor of sourceActors) {
+    const sourceActorLocation = makeSourceActorLocation(
+      sourceActor,
+      scopedGeneratedLocation
+    );
+    await client.setBreakpoint(
+      sourceActorLocation,
+      pendingBreakpoint.options,
+      isOriginalId(sourceId)
+    );
   }
 
-  const { id, actualLocation } = await client.setBreakpoint(
-    scopedGeneratedLocation,
-    pendingBreakpoint.condition,
-    isOriginalId(sourceId)
-  );
-
-  // the breakpoint might have slid server side, so we want to get the location
-  // based on the server's return value
-  const newGeneratedLocation = actualLocation;
-  const newLocation = await sourceMaps.getOriginalLocation(
-    newGeneratedLocation
-  );
-
-  const originalText = getTextAtPosition(source, newLocation);
-  const text = getTextAtPosition(generatedSource, newGeneratedLocation);
+  const originalText = getTextAtPosition(source, scopedLocation);
+  const text = getTextAtPosition(generatedSource, scopedGeneratedLocation);
 
   return createSyncData(
-    id,
     pendingBreakpoint,
-    newLocation,
-    newGeneratedLocation,
+    scopedLocation,
+    scopedGeneratedLocation,
     previousLocation,
     text,
     originalText
@@ -200,6 +231,7 @@ export function syncBreakpoint(
       getState,
       client,
       sourceMaps,
+      dispatch,
       sourceId,
       pendingBreakpoint
     );

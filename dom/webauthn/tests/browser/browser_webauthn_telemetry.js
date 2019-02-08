@@ -4,18 +4,13 @@
 
 "use strict";
 
+ChromeUtils.defineModuleGetter(this, "TelemetryTestUtils",
+  "resource://testing-common/TelemetryTestUtils.jsm");
+
 const TEST_URL = "https://example.com/";
 
-// Return the scalars from the parent-process.
-function getParentProcessScalars(aKeyed = false, aClear = false) {
-  const scalars = aKeyed ?
-    Services.telemetry.getSnapshotForKeyedScalars("main", aClear)["parent"] :
-    Services.telemetry.getSnapshotForScalars("main", aClear)["parent"];
-  return scalars || {};
-}
-
 function getTelemetryForScalar(aName) {
-  let scalars = getParentProcessScalars(true);
+  let scalars = TelemetryTestUtils.getProcessScalars("parent", true);
   return scalars[aName] || 0;
 }
 

@@ -424,6 +424,12 @@ class nsRefreshDriver final : public mozilla::layers::TransactionIdAllocator,
   // Schedule a refresh so that any delayed events will run soon.
   void RunDelayedEventsSoon();
 
+  void InitializeTimer()
+  {
+    MOZ_ASSERT(!mActiveTimer);
+    EnsureTimerStarted();
+  }
+
  private:
   typedef nsTObserverArray<nsARefreshObserver*> ObserverArray;
   typedef nsTArray<RefPtr<VVPResizeEvent>> VisualViewportResizeEventArray;
@@ -539,6 +545,7 @@ class nsRefreshDriver final : public mozilla::layers::TransactionIdAllocator,
   mozilla::TimeStamp mTickVsyncTime;
   mozilla::TimeStamp mNextThrottledFrameRequestTick;
   mozilla::TimeStamp mNextRecomputeVisibilityTick;
+  mozilla::TimeStamp mInitialTimerRunningLimit;
 
   // separate arrays for each flush type we support
   ObserverArray mObservers[4];

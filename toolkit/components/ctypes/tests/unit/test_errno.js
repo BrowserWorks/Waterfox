@@ -1,5 +1,3 @@
-ChromeUtils.import("resource://gre/modules/ctypes.jsm");
-
 // Scope used to relaunch the tests with |ctypes| opened in a limited scope.
 var scope = {};
 var ctypes = ctypes;
@@ -43,7 +41,6 @@ function main_test() {
                                      ctypes.int);
     get_last_error = library.declare("get_last_error", ctypes.default_abi,
                                      ctypes.int);
-
   } catch (x) {
     Assert.equal(ctypes.winLastError, undefined);
   }

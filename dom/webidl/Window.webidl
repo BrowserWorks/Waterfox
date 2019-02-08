@@ -370,6 +370,9 @@ partial interface Window {
 
   [ChromeOnly]
   readonly attribute boolean hasOpenerForInitialContentBrowser;
+
+  [ChromeOnly]
+  WindowGlobalChild getWindowGlobalChild();
 };
 
 Window implements TouchEventHandlers;
@@ -462,6 +465,11 @@ partial interface Window {
    * In the event that the window goes away before a flush can occur, the
    * callback will still be called and the Promise resolved as the window
    * tears itself down.
+   *
+   * The callback _must not modify the DOM for any window in any way_. If it
+   * does, after finishing executing, the Promise returned by
+   * promiseDocumentFlushed will reject with
+   * NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR.
    *
    * Note that the callback can be called either synchronously or asynchronously
    * depending on whether or not flushes are pending:

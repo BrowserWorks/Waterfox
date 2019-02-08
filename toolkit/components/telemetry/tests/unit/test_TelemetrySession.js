@@ -8,10 +8,9 @@
  * checked in the second request.
  */
 
-ChromeUtils.import("resource://services-common/utils.js");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/ClientID.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {CommonUtils} = ChromeUtils.import("resource://services-common/utils.js");
+const {ClientID} = ChromeUtils.import("resource://gre/modules/ClientID.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource://gre/modules/LightweightThemeManager.jsm", this);
 ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm", this);
 ChromeUtils.import("resource://gre/modules/TelemetryController.jsm", this);
@@ -21,8 +20,7 @@ ChromeUtils.import("resource://gre/modules/TelemetryEnvironment.jsm", this);
 ChromeUtils.import("resource://gre/modules/TelemetrySend.jsm", this);
 ChromeUtils.import("resource://gre/modules/TelemetryUtils.jsm", this);
 ChromeUtils.import("resource://gre/modules/TelemetryReportingPolicy.jsm", this);
-ChromeUtils.import("resource://gre/modules/Preferences.jsm");
-ChromeUtils.import("resource://gre/modules/osfile.jsm", this);
+const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm");
 
 const PING_FORMAT_VERSION = 4;
 const PING_TYPE_MAIN = "main";
@@ -80,18 +78,17 @@ function sendPing() {
 }
 
 function fakeGenerateUUID(sessionFunc, subsessionFunc) {
-  let session = ChromeUtils.import("resource://gre/modules/TelemetrySession.jsm", {});
+  let session = ChromeUtils.import("resource://gre/modules/TelemetrySession.jsm", null);
   session.Policy.generateSessionUUID = sessionFunc;
   session.Policy.generateSubsessionUUID = subsessionFunc;
 }
 
 function fakeIdleNotification(topic) {
-  let session = ChromeUtils.import("resource://gre/modules/TelemetrySession.jsm", {});
+  let session = ChromeUtils.import("resource://gre/modules/TelemetrySession.jsm", null);
   return session.TelemetryScheduler.observe(null, topic, null);
 }
 
 function setupTestData() {
-
   Services.startup.interrupted = true;
   let h2 = Telemetry.getHistogramById("TELEMETRY_TEST_COUNT");
   h2.add();
@@ -488,7 +485,6 @@ add_task(async function asyncSetup() {
 
 // Ensures that expired histograms are not part of the payload.
 add_task(async function test_expiredHistogram() {
-
   let dummy = Telemetry.getHistogramById("TELEMETRY_TEST_EXPIRED");
 
   dummy.add(1);
@@ -882,7 +878,7 @@ add_task(async function test_environmentChange() {
   // Setup.
   await TelemetryController.testReset();
   TelemetrySend.setServer("http://localhost:" + PingServer.port);
-  TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
+  await TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
 
   // Set histograms to expected state.
   const COUNT_ID = "TELEMETRY_TEST_COUNT";
@@ -1349,7 +1345,7 @@ add_task(async function test_savedSessionData() {
   // _watchPreferences triggers a subsession notification
   gMonotonicNow = fakeMonotonicNow(gMonotonicNow + 10 * MILLISECONDS_PER_MINUTE);
   fakeNow(new Date(2050, 1, 1, 12, 0, 0));
-  TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
+  await TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
   let changePromise = new Promise(resolve =>
     TelemetryEnvironment.registerChangeListener("test_fake_change", resolve));
   Preferences.set(PREF_TEST, 1);
@@ -1699,7 +1695,7 @@ add_task(async function test_schedulerEnvironmentReschedules() {
   let schedulerTickCallback = null;
   fakeSchedulerTimer(callback => schedulerTickCallback = callback, () => {});
   await TelemetryController.testReset();
-  TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
+  await TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
 
   // Set the current time at midnight.
   fakeNow(futureDate(nowDate, MS_IN_ONE_DAY));
@@ -1990,7 +1986,7 @@ add_task(async function test_changeThrottling() {
   Assert.equal(getSubsessionCount(), 1);
 
   // Set the Environment preferences to watch.
-  TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
+  await TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
 
   // The first pref change should not trigger a notification.
   Preferences.set(PREF_TEST, 1);

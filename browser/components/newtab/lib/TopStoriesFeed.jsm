@@ -3,18 +3,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/NewTabUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {NewTabUtils} = ChromeUtils.import("resource://gre/modules/NewTabUtils.jsm");
 XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
 
-const {actionTypes: at, actionCreators: ac} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm", {});
-const {Prefs} = ChromeUtils.import("resource://activity-stream/lib/ActivityStreamPrefs.jsm", {});
-const {shortURL} = ChromeUtils.import("resource://activity-stream/lib/ShortURL.jsm", {});
-const {SectionsManager} = ChromeUtils.import("resource://activity-stream/lib/SectionsManager.jsm", {});
-const {UserDomainAffinityProvider} = ChromeUtils.import("resource://activity-stream/lib/UserDomainAffinityProvider.jsm", {});
-const {PersonalityProvider} = ChromeUtils.import("resource://activity-stream/lib/PersonalityProvider.jsm", {});
-const {PersistentCache} = ChromeUtils.import("resource://activity-stream/lib/PersistentCache.jsm", {});
+const {actionTypes: at, actionCreators: ac} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm");
+const {Prefs} = ChromeUtils.import("resource://activity-stream/lib/ActivityStreamPrefs.jsm");
+const {shortURL} = ChromeUtils.import("resource://activity-stream/lib/ShortURL.jsm");
+const {SectionsManager} = ChromeUtils.import("resource://activity-stream/lib/SectionsManager.jsm");
+const {UserDomainAffinityProvider} = ChromeUtils.import("resource://activity-stream/lib/UserDomainAffinityProvider.jsm");
+const {PersonalityProvider} = ChromeUtils.import("resource://activity-stream/lib/PersonalityProvider.jsm");
+const {PersistentCache} = ChromeUtils.import("resource://activity-stream/lib/PersistentCache.jsm");
 
 ChromeUtils.defineModuleGetter(this, "perfService", "resource://activity-stream/common/PerfService.jsm");
 ChromeUtils.defineModuleGetter(this, "pktApi", "chrome://pocket/content/pktApi.jsm");
@@ -25,6 +25,7 @@ const STORIES_NOW_THRESHOLD = 24 * 60 * 60 * 1000; // 24 hours
 const MIN_DOMAIN_AFFINITIES_UPDATE_TIME = 12 * 60 * 60 * 1000; // 12 hours
 const DEFAULT_RECS_EXPIRE_TIME = 60 * 60 * 1000; // 1 hour
 const SECTION_ID = "topstories";
+const IMPRESSION_SOURCE = "TOP_STORIES";
 const SPOC_IMPRESSION_TRACKING_PREF = "feeds.section.topstories.spoc.impressions";
 const REC_IMPRESSION_TRACKING_PREF = "feeds.section.topstories.rec.impressions";
 const OPTIONS_PREF = "feeds.section.topstories.options";
@@ -656,21 +657,27 @@ this.TopStoriesFeed = class TopStoriesFeed {
         }
         break;
       case at.TELEMETRY_IMPRESSION_STATS: {
-        const payload = action.data;
-        const viewImpression = !("click" in payload || "block" in payload || "pocket" in payload);
-        if (payload.tiles && viewImpression) {
-          if (this.shouldShowSpocs()) {
-            payload.tiles.forEach(t => {
-              if (this.spocCampaignMap.has(t.id)) {
-                this.recordCampaignImpression(this.spocCampaignMap.get(t.id));
-              }
-            });
-          }
-          if (this.personalized) {
-            const topRecs = payload.tiles
-              .filter(t => !this.spocCampaignMap.has(t.id))
-              .map(t => t.id);
-            this.recordTopRecImpressions(topRecs);
+        // We want to make sure we only track impressions from Top Stories,
+        // otherwise unexpected things that are not properly handled can happen.
+        // Example: Impressions from spocs on Discovery Stream can cause the
+        // Top Stories impressions pref to continuously grow, see bug #1523408
+        if (action.data.source === IMPRESSION_SOURCE) {
+          const payload = action.data;
+          const viewImpression = !("click" in payload || "block" in payload || "pocket" in payload);
+          if (payload.tiles && viewImpression) {
+            if (this.shouldShowSpocs()) {
+              payload.tiles.forEach(t => {
+                if (this.spocCampaignMap.has(t.id)) {
+                  this.recordCampaignImpression(this.spocCampaignMap.get(t.id));
+                }
+              });
+            }
+            if (this.personalized) {
+              const topRecs = payload.tiles
+                .filter(t => !this.spocCampaignMap.has(t.id))
+                .map(t => t.id);
+              this.recordTopRecImpressions(topRecs);
+            }
           }
         }
         break;

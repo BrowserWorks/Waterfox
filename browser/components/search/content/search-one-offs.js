@@ -40,8 +40,8 @@ class SearchOneOffs {
       </menupopup>
       `, ["chrome://browser/locale/browser.dtd"]));
 
+    this._view = null;
     this._popup = null;
-
     this._textbox = null;
 
     this._textboxWidth = 0;
@@ -77,6 +77,12 @@ class SearchOneOffs {
     this._contextEngine = null;
 
     this._engines = null;
+
+    /**
+     * `_rebuild()` is async, because it queries the Search Service, which means
+     * there is a potential for a race when it's called multiple times in succession.
+     */
+    this._rebuilding = false;
 
     /**
      * If a page offers more than this number of engines, the add-engines
@@ -172,6 +178,15 @@ class SearchOneOffs {
   }
 
   /**
+   * @param {UrlbarView} val
+   */
+  set view(val) {
+    this._view = val;
+    this.popup = val && val.panel;
+    return val;
+  }
+
+  /**
    * The popup that contains the one-offs.  This is required, so it should
    * never be null or undefined, except possibly before the one-offs are
    * used.
@@ -247,7 +262,8 @@ class SearchOneOffs {
    */
   set query(val) {
     this._query = val;
-    if (this.popup && this.popup.popupOpen) {
+    if (this._view && this._view.isOpen ||
+        this.popup && this.popup.popupOpen) {
       this._updateAfterQueryChanged();
     }
     return val;
@@ -330,18 +346,18 @@ class SearchOneOffs {
     return this._bundle;
   }
 
-  get engines() {
+  async getEngines() {
     if (this._engines) {
       return this._engines;
     }
     let currentEngineNameToIgnore;
     if (!this.getAttribute("includecurrentengine"))
-      currentEngineNameToIgnore = Services.search.defaultEngine.name;
+      currentEngineNameToIgnore = (await Services.search.getDefault()).name;
 
     let pref = Services.prefs.getStringPref("browser.search.hiddenOneOffs");
     let hiddenList = pref ? pref.split(",") : [];
 
-    this._engines = Services.search.getVisibleEngines().filter(e => {
+    this._engines = (await Services.search.getVisibleEngines()).filter(e => {
       let name = e.name;
       return (!currentEngineNameToIgnore ||
               name != currentEngineNameToIgnore) &&
@@ -389,9 +405,27 @@ class SearchOneOffs {
   }
 
   /**
+   * Infallible, non-re-entrant version of `__rebuild()`.
+   */
+  async _rebuild() {
+    if (this._rebuilding) {
+      return;
+    }
+
+    this._rebuilding = true;
+    try {
+      await this.__rebuild();
+    } catch (ex) {
+      Cu.reportError("Search-one-offs::_rebuild() error: " + ex);
+    } finally {
+      this._rebuilding = false;
+    }
+  }
+
+  /**
    * Builds all the UI.
    */
-  _rebuild() {
+  async __rebuild() {
     // Update the 'Search for <keywords> with:" header.
     this._updateAfterQueryChanged();
 
@@ -428,10 +462,11 @@ class SearchOneOffs {
       this.settingsButtonCompact.nextElementSibling.remove();
     }
 
-    let engines = this.engines;
+    let engines = await this.getEngines();
+    let defaultEngine = await Services.search.getDefault();
     let oneOffCount = engines.length;
     let collapsed = !oneOffCount ||
-                    (oneOffCount == 1 && engines[0].name == Services.search.defaultEngine.name);
+                    (oneOffCount == 1 && engines[0].name == defaultEngine.name);
 
     // header is a xul:deck so collapsed doesn't work on it, see bug 589569.
     this.header.hidden = this.buttons.collapsed = collapsed;
@@ -732,7 +767,7 @@ class SearchOneOffs {
       }
     }
 
-    this.popup.handleOneOffSearch(aEvent, aEngine, where, params);
+    (this._view || this.popup).handleOneOffSearch(aEvent, aEngine, where, params);
   }
 
   /**
@@ -1141,12 +1176,12 @@ class SearchOneOffs {
     if (target.classList.contains("addengine-item")) {
       // On success, hide the panel and tell event listeners to reshow it to
       // show the new engine.
-      let installCallback = {
-        onSuccess: engine => {
+      Services.search.addEngine(target.getAttribute("uri"), target.getAttribute("image"))
+        .then(engine => {
           this._rebuild();
-        },
-        onError(errorCode) {
-          if (errorCode != Ci.nsISearchInstallCallback.ERROR_DUPLICATE_ENGINE) {
+        })
+        .catch(errorCode => {
+          if (errorCode != Ci.nsISearchService.ERROR_DUPLICATE_ENGINE) {
             // Download error is shown by the search service
             return;
           }
@@ -1171,11 +1206,7 @@ class SearchOneOffs {
           prompt.QueryInterface(Ci.nsIWritablePropertyBag2);
           prompt.setPropertyAsBool("allowTabModal", true);
           prompt.alert(title, text);
-        },
-      };
-      Services.search.addEngine(target.getAttribute("uri"),
-                                target.getAttribute("image"), false,
-                                installCallback);
+        });
     }
 
     if (target.classList.contains("search-one-offs-context-open-in-new-tab")) {

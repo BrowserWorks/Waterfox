@@ -1,9 +1,8 @@
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/osfile.jsm");
-ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
-ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
+const {FileUtils} = ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+const {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
 function run_test() {
   do_test_pending();
@@ -48,7 +47,6 @@ var reference_fetch_file = function reference_fetch_file(path) {
           resolve(result);
         }
       });
-
   });
 };
 

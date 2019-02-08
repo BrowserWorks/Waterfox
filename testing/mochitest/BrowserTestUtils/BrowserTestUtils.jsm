@@ -19,11 +19,11 @@ var EXPORTED_SYMBOLS = [
   "BrowserTestUtils",
 ];
 
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://testing-common/TestUtils.jsm");
-ChromeUtils.import("resource://testing-common/ContentTask.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {TestUtils} = ChromeUtils.import("resource://testing-common/TestUtils.jsm");
+const {ContentTask} = ChromeUtils.import("resource://testing-common/ContentTask.jsm");
 
 ChromeUtils.defineModuleGetter(this, "BrowserWindowTracker",
   "resource:///modules/BrowserWindowTracker.jsm");
@@ -343,7 +343,6 @@ var BrowserTestUtils = {
       }
         // It's a string.
         return wantLoad == url;
-
     }
 
     return new Promise(resolve => {
@@ -601,7 +600,8 @@ var BrowserTestUtils = {
           let browser = win.gBrowser.selectedBrowser;
 
           if (win.gMultiProcessBrowser &&
-              !E10SUtils.canLoadURIInRemoteType(url, browser.remoteType)) {
+              !E10SUtils.canLoadURIInRemoteType(url, browser.remoteType,
+                                                browser.remoteType /* aPreferredRemoteType */)) {
             await this.waitForEvent(browser, "XULFrameLoaderCreated");
           }
 
@@ -1456,7 +1456,7 @@ var BrowserTestUtils = {
     // a bad pointer. The crash should happen immediately upon loading this
     // frame script.
     let frame_script = () => {
-      ChromeUtils.import("resource://gre/modules/ctypes.jsm");
+      const {ctypes} = ChromeUtils.import("resource://gre/modules/ctypes.jsm");
 
       let dies = function() {
         privateNoteIntentionalCrash();
@@ -1584,7 +1584,6 @@ var BrowserTestUtils = {
             (value && element.getAttribute(attr) === value)) {
           resolve();
           mut.disconnect();
-
         }
       });
 

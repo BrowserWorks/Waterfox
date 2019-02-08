@@ -4,8 +4,6 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/LoginHelper.jsm");
-
 const DOMAIN1_HTTP_TO_HTTP_U1_P1 = TestData.formLogin({
   timePasswordChanged: 3000,
   timeLastUsed: 2000,
@@ -245,7 +243,6 @@ add_task(async function test_dedupeLogins_resolveBy() {
       Assert.strictEqual(actual[i], login, `Check index ${i}`);
     }
   }
-
 });
 
 add_task(async function test_dedupeLogins_preferredOriginMissing() {

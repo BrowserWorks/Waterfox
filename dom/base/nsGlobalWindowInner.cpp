@@ -149,11 +149,6 @@
 #include "nsContentUtils.h"
 #include "nsCSSProps.h"
 #include "nsIURIFixup.h"
-#ifndef DEBUG
-#  include "nsIAppStartup.h"
-#  include "nsToolkitCompsCID.h"
-#endif
-#include "nsCDefaultURIFixup.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventStateManager.h"
 #include "nsIObserverService.h"
@@ -617,7 +612,7 @@ void IdleRequestExecutor::ScheduleDispatch() {
   MOZ_ASSERT(mWindow);
   mDelayedExecutorHandle = Nothing();
   RefPtr<IdleRequestExecutor> request = this;
-  NS_IdleDispatchToCurrentThread(request.forget());
+  NS_DispatchToCurrentThreadQueue(request.forget(), EventQueuePriority::Idle);
 }
 
 void IdleRequestExecutor::DelayedDispatch(uint32_t aDelay) {
@@ -819,12 +814,16 @@ class PromiseDocumentFlushedResolver final {
   virtual ~PromiseDocumentFlushedResolver() = default;
 
   void Call() {
+    nsMutationGuard guard;
     ErrorResult error;
     JS::Rooted<JS::Value> returnVal(RootingCx());
     mCallback->Call(&returnVal, error);
 
     if (error.Failed()) {
       mPromise->MaybeReject(error);
+    } else if (guard.Mutated(0)) {
+      // Something within the callback mutated the DOM.
+      mPromise->MaybeReject(NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR);
     } else {
       mPromise->MaybeResolve(returnVal);
     }
@@ -886,7 +885,8 @@ nsGlobalWindowInner::nsGlobalWindowInner(nsGlobalWindowOuter* aOuterWindow)
   // add this inner window to the outer window list of inners.
   PR_INSERT_AFTER(this, aOuterWindow);
 
-  mTimeoutManager = MakeUnique<dom::TimeoutManager>(*this);
+  mTimeoutManager = MakeUnique<dom::TimeoutManager>(
+      *this, StaticPrefs::dom_timeout_max_idle_defer_ms());
 
   mObserver = new nsGlobalWindowObserver(this);
   nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
@@ -1274,7 +1274,7 @@ void nsGlobalWindowInner::FreeInnerObjects(bool aForDocumentOpen) {
   }
 
   if (mWindowGlobalChild && !mWindowGlobalChild->IsClosed()) {
-    mWindowGlobalChild->Send__delete__(mWindowGlobalChild);
+    mWindowGlobalChild->Destroy();
   }
   mWindowGlobalChild = nullptr;
 
@@ -2538,6 +2538,12 @@ void nsPIDOMWindowInner::SetAudioCapture(bool aCapture) {
   RefPtr<AudioChannelService> service = AudioChannelService::GetOrCreate();
   if (service) {
     service->SetWindowAudioCaptured(GetOuterWindow(), mWindowID, aCapture);
+  }
+}
+
+void nsPIDOMWindowInner::SetActiveLoadingState(bool aIsLoading) /* const? */ {
+  if (!nsGlobalWindowInner::Cast(this)->IsChromeWindow()) {
+    mTimeoutManager->SetLoading(aIsLoading);
   }
 }
 

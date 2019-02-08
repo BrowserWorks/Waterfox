@@ -13,6 +13,10 @@ ChromeUtils.defineModuleGetter(this, "ActorManagerParent",
 
 var isDevtools = SimpleTest.harnessParameters.subsuite == "devtools";
 
+// This list should contain only path prefixes. It is meant to stop the test
+// from reporting things that *are* referenced, but for which the test can't
+// find any reference because the URIs are constructed programatically.
+// If you need to whitelist specific files, please use the 'whitelist' object.
 var gExceptionPaths = [
   "chrome://browser/content/defaultthemes/",
   "resource://app/defaults/settings/blocklists/",
@@ -41,9 +45,6 @@ var gExceptionPaths = [
 
   // Exclude all search-plugins because they aren't referenced by filename
   "resource://search-plugins/",
-
-  // This is only in Nightly, and accessed using a direct chrome URL
-  "chrome://browser/content/aboutconfig/",
 ];
 
 // These are not part of the omni.ja file, so we find them only when running
@@ -53,6 +54,9 @@ if (AppConstants.platform == "macosx") {
   gExceptionPaths.push("resource://gre/res/touchbar/");
 }
 
+// Each whitelist entry should have a comment indicating which file is
+// referencing the whitelisted file in a way that the test can't detect, or a
+// bug number to remove or use the file if it is indeed currently unreferenced.
 var whitelist = [
   // browser/extensions/pdfjs/content/PdfStreamConverter.jsm
   {file: "chrome://pdf.js/locale/chrome.properties"},
@@ -173,10 +177,13 @@ var whitelist = [
   {file: "chrome://devtools/skin/images/aboutdebugging-firefox-release.svg",
    isFromDevTools: true},
   {file: "chrome://devtools/skin/images/next.svg", isFromDevTools: true},
-   // Feature gates are available but not used yet - Bug 1479127
-   {file: "resource://gre-resources/featuregates/FeatureGate.jsm"},
-   {file: "resource://gre-resources/featuregates/FeatureGateImplementation.jsm"},
-   {file: "resource://gre-resources/featuregates/feature_definitions.json"},
+  // Feature gates are available but not used yet - Bug 1479127
+  {file: "resource://gre-resources/featuregates/FeatureGate.jsm"},
+  {file: "resource://gre-resources/featuregates/FeatureGateImplementation.jsm"},
+  {file: "resource://gre-resources/featuregates/feature_definitions.json"},
+  // kvstore.jsm wraps the API in nsIKeyValue.idl in a more ergonomic API
+  // It landed in bug 1490496, and we expect to start using it shortly.
+  {file: "resource://gre/modules/kvstore.jsm"},
 ];
 
 whitelist = new Set(whitelist.filter(item =>
@@ -211,7 +218,6 @@ if (!isDevtools) {
                       "extension-storage.js"]) {
     whitelist.add("resource://services-sync/engines/" + module);
   }
-
 }
 
 if (AppConstants.MOZ_CODE_COVERAGE) {

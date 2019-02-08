@@ -7,7 +7,7 @@
 const promise = require("devtools/shared/deprecated-sync-thenables");
 
 const eventSource = require("devtools/shared/client/event-source");
-const {DebuggerClient} = require("devtools/shared/client/debugger-client");
+const {arg, DebuggerClient} = require("devtools/shared/client/debugger-client");
 
 /**
  * Breakpoint clients are used to remove breakpoints that are no longer used.
@@ -21,10 +21,10 @@ const {DebuggerClient} = require("devtools/shared/client/debugger-client");
  * @param location object
  *        The location of the breakpoint. This is an object with two properties:
  *        url and line.
- * @param condition string
- *        The conditional expression of the breakpoint
+ * @param options object
+ *        Any options associated with the breakpoint
  */
-function BreakpointClient(client, sourceClient, actor, location, condition) {
+function BreakpointClient(client, sourceClient, actor, location, options) {
   this._client = client;
   this._actor = actor;
   this.location = location;
@@ -32,11 +32,7 @@ function BreakpointClient(client, sourceClient, actor, location, condition) {
   this.location.url = sourceClient.url;
   this.source = sourceClient;
   this.request = this._client.request;
-
-  // The condition property should only exist if it's a truthy value
-  if (condition) {
-    this.condition = condition;
-  }
+  this.options = options;
 }
 
 BreakpointClient.prototype = {
@@ -56,71 +52,46 @@ BreakpointClient.prototype = {
     type: "delete",
   }),
 
-  /**
-   * Determines if this breakpoint has a condition
-   */
-  hasCondition: function() {
-    const root = this._client.mainRoot;
-    // XXX bug 990137: We will remove support for client-side handling of
-    // conditional breakpoints
-    if (root.traits.conditionalBreakpoints) {
-      return "condition" in this;
-    }
-    return "conditionalExpression" in this;
-  },
+  // Send a setOptions request to newer servers.
+  setOptionsRequester: DebuggerClient.requester({
+    type: "setOptions",
+    options: arg(0),
+  }, {
+    before(packet) {
+      this.options = packet.options;
+      return packet;
+    },
+  }),
 
   /**
-   * Get the condition of this breakpoint. Currently we have to
-   * support locally emulated conditional breakpoints until the
-   * debugger servers are updated (see bug 990137). We used a
-   * different property when moving it server-side to ensure that we
-   * are testing the right code.
+   * Set any options for this breakpoint.
    */
-  getCondition: function() {
-    const root = this._client.mainRoot;
-    if (root.traits.conditionalBreakpoints) {
-      return this.condition;
+  setOptions: function(options) {
+    if (this._client.mainRoot.traits.nativeLogpoints) {
+      return this.setOptionsRequester(options).then(() => this);
     }
-    return this.conditionalExpression;
-  },
-
-  /**
-   * Set the condition of this breakpoint
-   */
-  setCondition: function(gThreadClient, condition) {
-    const root = this._client.mainRoot;
+    // Older servers need to reinstall breakpoints when the condition changes.
     const deferred = promise.defer();
 
-    if (root.traits.conditionalBreakpoints) {
-      const info = {
-        line: this.location.line,
-        column: this.location.column,
-        condition: condition,
-      };
+    const info = {
+      line: this.location.line,
+      column: this.location.column,
+      options,
+    };
 
-      // Remove the current breakpoint and add a new one with the
-      // condition.
-      this.remove(response => {
-        if (response && response.error) {
-          deferred.reject(response);
-          return;
-        }
-
-        deferred.resolve(this.source.setBreakpoint(info).then(([, newBreakpoint]) => {
-          return newBreakpoint;
-        }));
-      });
-    } else {
-      // The property shouldn't even exist if the condition is blank
-      if (condition === "") {
-        delete this.conditionalExpression;
-      } else {
-        this.conditionalExpression = condition;
+    // Remove the current breakpoint and add a new one with the specified
+    // information.
+    this.remove(response => {
+      if (response && response.error) {
+        deferred.reject(response);
+        return;
       }
-      deferred.resolve(this);
-    }
 
-    return deferred.promise;
+      deferred.resolve(this.source.setBreakpoint(info).then(([, newBreakpoint]) => {
+        return newBreakpoint;
+      }));
+    });
+    return deferred;
   },
 };
 

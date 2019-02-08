@@ -151,6 +151,11 @@ void ICEntry::trace(JSTracer* trc) {
   // Add ICEntries and fallback stubs for JOF_IC bytecode ops.
   for (jsbytecode* pc = script->code(); pc < pcEnd; pc = GetNextPc(pc)) {
     JSOp op = JSOp(*pc);
+
+    // Assert the frontend stored the correct IC index in jump target ops.
+    MOZ_ASSERT_IF(BytecodeIsJumpTarget(op),
+                  GET_ICINDEX(pc) == icEntries.length());
+
     if (!BytecodeOpHasIC(op)) {
       continue;
     }
@@ -494,11 +499,12 @@ void ICStubIterator::unlink(JSContext* cx) {
     case Call_ScriptedFunCall:
     case Call_ConstStringSplit:
     case WarmUpCounter_Fallback:
-    // These two fallback stubs don't actually make non-tail calls,
+    // These three fallback stubs don't actually make non-tail calls,
     // but the fallback code for the bailout path needs to pop the stub frame
     // pushed during the bailout.
     case GetProp_Fallback:
     case SetProp_Fallback:
+    case GetElem_Fallback:
       return true;
     default:
       return false;
@@ -1479,6 +1485,12 @@ bool ICTypeMonitor_PrimitiveSet::Compiler::generateStubCode(
     masm.branchTestSymbol(Assembler::Equal, R0, &success);
   }
 
+#ifdef ENABLE_BIGINT
+  if (flags_ & TypeToFlag(JSVAL_TYPE_BIGINT)) {
+    masm.branchTestBigInt(Assembler::Equal, R0, &success);
+  }
+#endif
+
   if (flags_ & TypeToFlag(JSVAL_TYPE_OBJECT)) {
     masm.branchTestObject(Assembler::Equal, R0, &success);
   }
@@ -1818,6 +1830,12 @@ bool ICTypeUpdate_PrimitiveSet::Compiler::generateStubCode(
   if (flags_ & TypeToFlag(JSVAL_TYPE_SYMBOL)) {
     masm.branchTestSymbol(Assembler::Equal, R0, &success);
   }
+
+#ifdef ENABLE_BIGINT
+  if (flags_ & TypeToFlag(JSVAL_TYPE_BIGINT)) {
+    masm.branchTestBigInt(Assembler::Equal, R0, &success);
+  }
+#endif
 
   if (flags_ & TypeToFlag(JSVAL_TYPE_OBJECT)) {
     masm.branchTestObject(Assembler::Equal, R0, &success);
@@ -2178,22 +2196,55 @@ bool ICGetElem_Fallback::Compiler::generateStubCode(MacroAssembler& masm) {
     masm.pushValue(R1);  // Index
     masm.pushValue(Address(masm.getStackPointer(), sizeof(Value) * 5));  // Obj
     masm.push(ICStubReg);
-    pushStubPayload(masm, R0.scratchReg());
+    masm.pushBaselineFramePtr(BaselineFrameReg, R0.scratchReg());
 
-    return tailCallVM(DoGetElemSuperFallbackInfo, masm);
+    if (!tailCallVM(DoGetElemSuperFallbackInfo, masm)) {
+      return false;
+    }
+  } else {
+    // Ensure stack is fully synced for the expression decompiler.
+    masm.pushValue(R0);
+    masm.pushValue(R1);
+
+    // Push arguments.
+    masm.pushValue(R1);
+    masm.pushValue(R0);
+    masm.push(ICStubReg);
+    masm.pushBaselineFramePtr(BaselineFrameReg, R0.scratchReg());
+
+    if (!tailCallVM(DoGetElemFallbackInfo, masm)) {
+      return false;
+    }
   }
 
-  // Ensure stack is fully synced for the expression decompiler.
-  masm.pushValue(R0);
-  masm.pushValue(R1);
+  // This is the resume point used when bailout rewrites call stack to undo
+  // Ion inlined frames. The return address pushed onto reconstructed stack
+  // will point here.
+  assumeStubFrame();
+  bailoutReturnOffset_.bind(masm.currentOffset());
 
-  // Push arguments.
-  masm.pushValue(R1);
-  masm.pushValue(R0);
-  masm.push(ICStubReg);
-  pushStubPayload(masm, R0.scratchReg());
+  leaveStubFrame(masm, true);
 
-  return tailCallVM(DoGetElemFallbackInfo, masm);
+  // When we get here, ICStubReg contains the ICGetElem_Fallback stub,
+  // which we can't use to enter the TypeMonitor IC, because it's a
+  // MonitoredFallbackStub instead of a MonitoredStub. So, we cheat. Note that
+  // we must have a non-null fallbackMonitorStub here because InitFromBailout
+  // delazifies.
+  masm.loadPtr(Address(ICStubReg,
+                       ICMonitoredFallbackStub::offsetOfFallbackMonitorStub()),
+               ICStubReg);
+  EmitEnterTypeMonitorIC(masm,
+                         ICTypeMonitor_Fallback::offsetOfFirstMonitorStub());
+
+  return true;
+}
+
+void ICGetElem_Fallback::Compiler::postGenerateStubCode(MacroAssembler& masm,
+                                                        Handle<JitCode*> code) {
+  BailoutReturnStub kind = hasReceiver_ ? BailoutReturnStub::GetElemSuper
+                                        : BailoutReturnStub::GetElem;
+  void* address = code->raw() + bailoutReturnOffset_.offset();
+  cx->realm()->jitRealm()->initBailoutReturnAddr(address, getKey(), kind);
 }
 
 static void SetUpdateStubData(ICCacheIR_Updated* stub,
@@ -2426,8 +2477,9 @@ void StoreToTypedArray(JSContext* cx, MacroAssembler& masm, Scalar::Type type,
   if (type == Scalar::Float32 || type == Scalar::Float64) {
     masm.ensureDouble(value, FloatReg0, failure);
     if (type == Scalar::Float32) {
-      masm.convertDoubleToFloat32(FloatReg0, ScratchFloat32Reg);
-      masm.storeToTypedFloatArray(type, ScratchFloat32Reg, dest);
+      ScratchFloat32Scope fpscratch(masm);
+      masm.convertDoubleToFloat32(FloatReg0, fpscratch);
+      masm.storeToTypedFloatArray(type, fpscratch, dest);
     } else {
       masm.storeToTypedFloatArray(type, FloatReg0, dest);
     }
@@ -3283,86 +3335,94 @@ static bool TryAttachFunCallStub(JSContext* cx, ICCall_Fallback* stub,
 static bool GetTemplateObjectForNative(JSContext* cx, HandleFunction target,
                                        const CallArgs& args,
                                        MutableHandleObject res) {
-  Native native = target->native();
+  if (!target->hasJitInfo() ||
+      target->jitInfo()->type() != JSJitInfo::InlinableNative) {
+    return true;
+  }
 
   // Check for natives to which template objects can be attached. This is
   // done to provide templates to Ion for inlining these natives later on.
+  switch (target->jitInfo()->inlinableNative) {
+    case InlinableNative::Array: {
+      // Note: the template array won't be used if its length is inaccurately
+      // computed here.  (We allocate here because compilation may occur on a
+      // separate thread where allocation is impossible.)
+      size_t count = 0;
+      if (args.length() != 1) {
+        count = args.length();
+      } else if (args.length() == 1 && args[0].isInt32() &&
+                 args[0].toInt32() >= 0) {
+        count = args[0].toInt32();
+      }
 
-  if (native == ArrayConstructor || native == array_construct) {
-    // Note: the template array won't be used if its length is inaccurately
-    // computed here.  (We allocate here because compilation may occur on a
-    // separate thread where allocation is impossible.)
-    size_t count = 0;
-    if (args.length() != 1) {
-      count = args.length();
-    } else if (args.length() == 1 && args[0].isInt32() &&
-               args[0].toInt32() >= 0) {
-      count = args[0].toInt32();
-    }
+      if (count > ArrayObject::EagerAllocationMaxLength) {
+        return true;
+      }
 
-    if (count <= ArrayObject::EagerAllocationMaxLength) {
       // With this and other array templates, analyze the group so that
       // we don't end up with a template whose structure might change later.
       res.set(NewFullyAllocatedArrayForCallingAllocationSite(cx, count,
                                                              TenuredObject));
       return !!res;
     }
-  }
 
-  if (args.length() == 1) {
-    size_t len = 0;
-
-    if (args[0].isInt32() && args[0].toInt32() >= 0) {
-      len = args[0].toInt32();
-    }
-
-    if (!TypedArrayObject::GetTemplateObjectForNative(cx, native, len, res)) {
-      return false;
-    }
-    if (res) {
-      return true;
-    }
-  }
-
-  if (native == js::array_slice) {
-    if (args.thisv().isObject()) {
-      RootedObject obj(cx, &args.thisv().toObject());
-      if (!obj->isSingleton()) {
-        res.set(NewFullyAllocatedArrayTryReuseGroup(cx, obj, 0, TenuredObject));
-        return !!res;
+    case InlinableNative::ArraySlice: {
+      if (!args.thisv().isObject()) {
+        return true;
       }
+
+      RootedObject obj(cx, &args.thisv().toObject());
+      if (obj->isSingleton()) {
+        return true;
+      }
+
+      res.set(NewFullyAllocatedArrayTryReuseGroup(cx, obj, 0, TenuredObject));
+      return !!res;
     }
-  }
 
-  if (native == StringConstructor) {
-    RootedString emptyString(cx, cx->runtime()->emptyString);
-    res.set(StringObject::create(cx, emptyString, /* proto = */ nullptr,
-                                 TenuredObject));
-    return !!res;
-  }
+    case InlinableNative::String: {
+      RootedString emptyString(cx, cx->runtime()->emptyString);
+      res.set(StringObject::create(cx, emptyString, /* proto = */ nullptr,
+                                   TenuredObject));
+      return !!res;
+    }
 
-  if (native == obj_create && args.length() == 1 && args[0].isObjectOrNull()) {
-    RootedObject proto(cx, args[0].toObjectOrNull());
-    res.set(ObjectCreateImpl(cx, proto, TenuredObject));
-    return !!res;
-  }
+    case InlinableNative::ObjectCreate: {
+      if (args.length() != 1 || !args[0].isObjectOrNull()) {
+        return true;
+      }
+      RootedObject proto(cx, args[0].toObjectOrNull());
+      res.set(ObjectCreateImpl(cx, proto, TenuredObject));
+      return !!res;
+    }
 
-  if (native == js::intrinsic_NewArrayIterator) {
-    res.set(NewArrayIteratorObject(cx, TenuredObject));
-    return !!res;
-  }
+    case InlinableNative::IntrinsicNewArrayIterator: {
+      res.set(NewArrayIteratorObject(cx, TenuredObject));
+      return !!res;
+    }
 
-  if (native == js::intrinsic_NewStringIterator) {
-    res.set(NewStringIteratorObject(cx, TenuredObject));
-    return !!res;
-  }
+    case InlinableNative::IntrinsicNewStringIterator: {
+      res.set(NewStringIteratorObject(cx, TenuredObject));
+      return !!res;
+    }
 
-  if (native == js::intrinsic_NewRegExpStringIterator) {
-    res.set(NewRegExpStringIteratorObject(cx, TenuredObject));
-    return !!res;
-  }
+    case InlinableNative::IntrinsicNewRegExpStringIterator: {
+      res.set(NewRegExpStringIteratorObject(cx, TenuredObject));
+      return !!res;
+    }
 
-  return true;
+    case InlinableNative::TypedArrayConstructor: {
+      if (args.length() != 1) {
+        return true;
+      }
+
+      return TypedArrayObject::GetTemplateObjectForNative(cx, target->native(),
+                                                          args[0], res);
+    }
+
+    default:
+      return true;
+  }
 }
 
 static bool GetTemplateObjectForClassHook(JSContext* cx, JSNative hook,

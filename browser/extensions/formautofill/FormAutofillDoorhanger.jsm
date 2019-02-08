@@ -11,10 +11,10 @@
 
 var EXPORTED_SYMBOLS = ["FormAutofillDoorhanger"];
 
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://formautofill/FormAutofill.jsm");
-ChromeUtils.import("resource://formautofill/FormAutofillUtils.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {FormAutofill} = ChromeUtils.import("resource://formautofill/FormAutofill.jsm");
+const {FormAutofillUtils} = ChromeUtils.import("resource://formautofill/FormAutofillUtils.jsm");
 
 this.log = null;
 FormAutofill.defineLazyLogGetter(this, EXPORTED_SYMBOLS[0]);
@@ -388,7 +388,7 @@ let FormAutofillDoorhanger = {
           notificationContent.setAttribute("orient", "vertical");
           this._appendDescription(notificationContent, descriptionLabel, descriptionIcon);
           this._appendPrivacyPanelLink(notificationContent, linkMessage, spotlightURL);
-          notification.append(notificationContent);
+          notification.appendNotificationContent(notificationContent);
         }
         this._updateDescription(notificationContent, description);
       };

@@ -15,7 +15,7 @@ allprojects {
         topsrcdir = gradle.mozconfig.topsrcdir
         topobjdir = gradle.mozconfig.topobjdir
 
-        compileSdkVersion = 26
+        compileSdkVersion = 28
         targetSdkVersion = tryInt(mozconfig.substs.ANDROID_TARGET_SDK)
         minSdkVersion = tryInt(mozconfig.substs.MOZ_ANDROID_MIN_SDK_VERSION)
         manifestPlaceholders = [
@@ -84,6 +84,7 @@ buildscript {
 
     if (gradle.mozconfig.substs.MOZ_ANDROID_GOOGLE_PLAY_SERVICES) {
         ext.google_play_services_version = '15.0.1'
+        ext.google_play_services_cast_version = '16.0.0'
     }
 
     dependencies {

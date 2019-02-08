@@ -4,8 +4,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsAppRunner.h"
-#include "nsToolkitCompsCID.h"
 #include "nsXREDirProvider.h"
+#ifndef ANDROID
+#  include "commonupdatedir.h"
+#endif
 
 #include "jsapi.h"
 #include "xpcpublic.h"
@@ -38,6 +40,7 @@
 #include "mozilla/dom/ScriptSettings.h"
 
 #include "mozilla/AutoRestore.h"
+#include "mozilla/Components.h"
 #include "mozilla/Services.h"
 #include "mozilla/Omnijar.h"
 #include "mozilla/Preferences.h"
@@ -962,7 +965,8 @@ nsXREDirProvider::DoStartup() {
     MOZ_ASSERT(mPrefsInitialized);
 
     bool safeModeNecessary = false;
-    nsCOMPtr<nsIAppStartup> appStartup(do_GetService(NS_APPSTARTUP_CONTRACTID));
+    nsCOMPtr<nsIAppStartup> appStartup(
+        mozilla::components::AppStartup::Service());
     if (appStartup) {
       rv = appStartup->TrackStartupCrashBegin(&safeModeNecessary);
       if (NS_FAILED(rv) && rv != NS_ERROR_NOT_AVAILABLE)
@@ -1620,7 +1624,7 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
     vendor = gAppData->vendor;
   }
 
-  nsresult rv;
+  nsresult rv = NS_OK;
 
 #if defined(XP_MACOSX)
   if (!profile.IsEmpty()) {
@@ -1682,10 +1686,13 @@ nsresult nsXREDirProvider::AppendProfilePath(nsIFile* aFile, bool aLocal) {
       folder.Truncate();
     }
 
-    folder.Append(appName);
-    ToLowerCase(folder);
+    // This can be the case in tests.
+    if (!appName.IsEmpty()) {
+      folder.Append(appName);
+      ToLowerCase(folder);
 
-    rv = aFile->AppendNative(folder);
+      rv = aFile->AppendNative(folder);
+    }
   }
   NS_ENSURE_SUCCESS(rv, rv);
 

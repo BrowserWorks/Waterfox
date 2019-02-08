@@ -33,12 +33,13 @@
 #include "mozilla/AntiTrackingCommon.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/ClearOnShutdown.h"
+#include "mozilla/Components.h"
 #include "mozilla/StyleSheetInlines.h"
 #include "mozilla/DataStorage.h"
 #include "mozilla/devtools/HeapSnapshotTempFileHelperParent.h"
 #include "mozilla/docshell/OfflineCacheUpdateParent.h"
 #include "mozilla/dom/BrowsingContext.h"
-#include "mozilla/dom/ChromeBrowsingContext.h"
+#include "mozilla/dom/CanonicalBrowsingContext.h"
 #include "mozilla/dom/ClientManager.h"
 #include "mozilla/dom/ClientOpenWindowOpActors.h"
 #include "mozilla/dom/DataTransfer.h"
@@ -50,6 +51,7 @@
 #include "mozilla/dom/ExternalHelperAppParent.h"
 #include "mozilla/dom/GetFilesHelper.h"
 #include "mozilla/dom/GeolocationBinding.h"
+#include "mozilla/dom/JSWindowActorService.h"
 #include "mozilla/dom/LocalStorageCommon.h"
 #include "mozilla/dom/MemoryReportRequest.h"
 #include "mozilla/dom/Notification.h"
@@ -87,6 +89,7 @@
 #include "mozilla/layers/LayerTreeOwnerTracker.h"
 #include "mozilla/loader/ScriptCacheActors.h"
 #include "mozilla/LoginReputationIPC.h"
+#include "mozilla/dom/StorageIPC.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/media/MediaParent.h"
 #include "mozilla/Move.h"
@@ -112,7 +115,6 @@
 #include "mozilla/HangDetails.h"
 #include "nsAnonymousTemporaryFile.h"
 #include "nsAppRunner.h"
-#include "nsCDefaultURIFixup.h"
 #include "nsCExternalHandlerService.h"
 #include "nsCOMPtr.h"
 #include "nsChromeRegistryChrome.h"
@@ -179,7 +181,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsStyleSheetService.h"
 #include "nsThreadUtils.h"
-#include "nsToolkitCompsCID.h"
 #include "nsWidgetsCID.h"
 #include "PreallocatedProcessManager.h"
 #include "ProcessPriorityManager.h"
@@ -261,7 +262,7 @@
 #endif
 
 #ifdef MOZ_TOOLKIT_SEARCH
-#  include "nsIBrowserSearchService.h"
+#  include "nsISearchService.h"
 #endif
 
 #ifdef XP_WIN
@@ -1590,16 +1591,6 @@ void ContentParent::ProcessingError(Result aCode, const char* aReason) {
 #endif
 }
 
-namespace {
-
-void DelayedDeleteSubprocess(GeckoChildProcessHost* aSubprocess) {
-  RefPtr<DeleteTask<GeckoChildProcessHost>> task =
-      new DeleteTask<GeckoChildProcessHost>(aSubprocess);
-  XRE_GetIOMessageLoop()->PostTask(task.forget());
-}
-
-}  // namespace
-
 void ContentParent::ActorDestroy(ActorDestroyReason why) {
   RefPtr<ContentParent> kungFuDeathGrip(mSelfRef.forget());
   MOZ_RELEASE_ASSERT(kungFuDeathGrip);
@@ -1700,14 +1691,16 @@ void ContentParent::ActorDestroy(ActorDestroyReason why) {
   }
   mIdleListeners.Clear();
 
-  MessageLoop::current()->PostTask(NewRunnableFunction(
-      "DelayedDeleteSubprocessRunnable", DelayedDeleteSubprocess, mSubprocess));
+  // FIXME (bug 1520997): does this really need an additional dispatch?
+  MessageLoop::current()->PostTask(NS_NewRunnableFunction(
+      "DelayedDeleteSubprocessRunnable",
+      [subprocess = mSubprocess] { subprocess->Destroy(); }));
   mSubprocess = nullptr;
 
   // Delete any remaining replaying children.
   for (auto& replayingProcess : mReplayingChildren) {
     if (replayingProcess) {
-      DelayedDeleteSubprocess(replayingProcess);
+      replayingProcess->Destroy();
       replayingProcess = nullptr;
     }
   }
@@ -1750,7 +1743,7 @@ void ContentParent::ActorDestroy(ActorDestroyReason why) {
   a11y::AccessibleWrap::ReleaseContentProcessIdFor(ChildID());
 #endif
 
-  ChromeBrowsingContext::CleanupContexts(ChildID());
+  CanonicalBrowsingContext::CleanupContexts(ChildID());
 }
 
 bool ContentParent::TryToRecycle() {
@@ -2411,7 +2404,7 @@ ContentParent::~ContentParent() {
   // Normally mSubprocess is destroyed in ActorDestroy, but that won't
   // happen if the process wasn't launched or if it failed to launch.
   if (mSubprocess) {
-    DelayedDeleteSubprocess(mSubprocess);
+    mSubprocess->Destroy();
   }
 }
 
@@ -2716,6 +2709,14 @@ void ContentParent::InitInternal(ProcessPriority aInitialPriority) {
 
       Unused << SendInitBlobURLs(registrations);
     }
+  }
+
+  // Send down WindowActorOptions at startup to content process.
+  RefPtr<JSWindowActorService> actorSvc = JSWindowActorService::GetSingleton();
+  if (actorSvc) {
+    nsTArray<JSWindowActorInfo> infos;
+    actorSvc->GetJSWindowActorInfos(infos);
+    Unused << SendInitJSWindowActorInfos(infos);
   }
 
   // Start up nsPluginHost and run FindPlugins to cache the plugin list.
@@ -3794,8 +3795,7 @@ mozilla::ipc::IPCResult ContentParent::RecvShowAlert(
     return IPC_OK();
   }
 
-  nsCOMPtr<nsIAlertsService> sysAlerts(
-      do_GetService(NS_ALERTSERVICE_CONTRACTID));
+  nsCOMPtr<nsIAlertsService> sysAlerts(components::Alerts::Service());
   if (sysAlerts) {
     sysAlerts->ShowAlert(aAlert, this);
   }
@@ -3808,8 +3808,7 @@ mozilla::ipc::IPCResult ContentParent::RecvCloseAlert(
     return IPC_OK();
   }
 
-  nsCOMPtr<nsIAlertsService> sysAlerts(
-      do_GetService(NS_ALERTSERVICE_CONTRACTID));
+  nsCOMPtr<nsIAlertsService> sysAlerts(components::Alerts::Service());
   if (sysAlerts) {
     sysAlerts->CloseAlert(aName, aPrincipal);
   }
@@ -4111,7 +4110,7 @@ mozilla::ipc::IPCResult ContentParent::RecvKeywordToURI(
   *aPostData = nullptr;
   *aURI = void_t();
 
-  nsCOMPtr<nsIURIFixup> fixup = do_GetService(NS_URIFIXUP_CONTRACTID);
+  nsCOMPtr<nsIURIFixup> fixup = components::URIFixup::Service();
   if (!fixup) {
     return IPC_OK();
   }
@@ -4133,7 +4132,7 @@ mozilla::ipc::IPCResult ContentParent::RecvKeywordToURI(
 mozilla::ipc::IPCResult ContentParent::RecvNotifyKeywordSearchLoading(
     const nsString& aProvider, const nsString& aKeyword) {
 #ifdef MOZ_TOOLKIT_SEARCH
-  nsCOMPtr<nsIBrowserSearchService> searchSvc =
+  nsCOMPtr<nsISearchService> searchSvc =
       do_GetService("@mozilla.org/browser/search-service;1");
   if (searchSvc) {
     nsCOMPtr<nsISearchEngine> searchEngine;
@@ -4996,7 +4995,7 @@ mozilla::ipc::IPCResult ContentParent::RecvNotifyPushObservers(
     const nsCString& aScope, const IPC::Principal& aPrincipal,
     const nsString& aMessageId) {
   PushMessageDispatcher dispatcher(aScope, aPrincipal, aMessageId, Nothing());
-  Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObservers()));
+  Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObserversAndWorkers()));
   return IPC_OK();
 }
 
@@ -5004,7 +5003,7 @@ mozilla::ipc::IPCResult ContentParent::RecvNotifyPushObserversWithData(
     const nsCString& aScope, const IPC::Principal& aPrincipal,
     const nsString& aMessageId, InfallibleTArray<uint8_t>&& aData) {
   PushMessageDispatcher dispatcher(aScope, aPrincipal, aMessageId, Some(aData));
-  Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObservers()));
+  Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObserversAndWorkers()));
   return IPC_OK();
 }
 
@@ -5012,7 +5011,15 @@ mozilla::ipc::IPCResult
 ContentParent::RecvNotifyPushSubscriptionChangeObservers(
     const nsCString& aScope, const IPC::Principal& aPrincipal) {
   PushSubscriptionChangeDispatcher dispatcher(aScope, aPrincipal);
-  Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObservers()));
+  Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObserversAndWorkers()));
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvPushError(
+    const nsCString& aScope, const IPC::Principal& aPrincipal,
+    const nsString& aMessage, const uint32_t& aFlags) {
+  PushErrorDispatcher dispatcher(aScope, aPrincipal, aMessage, aFlags);
+  Unused << NS_WARN_IF(NS_FAILED(dispatcher.NotifyObserversAndWorkers()));
   return IPC_OK();
 }
 
@@ -5437,6 +5444,32 @@ bool ContentParent::DeallocPLoginReputationParent(
   return true;
 }
 
+PSessionStorageObserverParent*
+ContentParent::AllocPSessionStorageObserverParent() {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  return mozilla::dom::AllocPSessionStorageObserverParent();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvPSessionStorageObserverConstructor(
+    PSessionStorageObserverParent* aActor) {
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aActor);
+
+  if (!mozilla::dom::RecvPSessionStorageObserverConstructor(aActor)) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  return IPC_OK();
+}
+
+bool ContentParent::DeallocPSessionStorageObserverParent(
+    PSessionStorageObserverParent* aActor) {
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aActor);
+
+  return mozilla::dom::DeallocPSessionStorageObserverParent(aActor);
+}
+
 mozilla::ipc::IPCResult ContentParent::RecvFileCreationRequest(
     const nsID& aID, const nsString& aFullPath, const nsString& aType,
     const nsString& aName, const bool& aLastModifiedPassed,
@@ -5578,7 +5611,8 @@ mozilla::ipc::IPCResult ContentParent::RecvStoreUserInteractionAsPermission(
 mozilla::ipc::IPCResult ContentParent::RecvAttachBrowsingContext(
     const BrowsingContextId& aParentId, const BrowsingContextId& aOpenerId,
     const BrowsingContextId& aChildId, const nsString& aName) {
-  RefPtr<ChromeBrowsingContext> parent = ChromeBrowsingContext::Get(aParentId);
+  RefPtr<CanonicalBrowsingContext> parent =
+      CanonicalBrowsingContext::Get(aParentId);
   if (aParentId && !parent) {
     // Unless 'aParentId' is 0 (which it is when the child is a root
     // BrowsingContext) there should always be a corresponding
@@ -5644,8 +5678,8 @@ mozilla::ipc::IPCResult ContentParent::RecvAttachBrowsingContext(
 
 mozilla::ipc::IPCResult ContentParent::RecvDetachBrowsingContext(
     const BrowsingContextId& aContextId, const bool& aMoveToBFCache) {
-  RefPtr<ChromeBrowsingContext> context =
-      ChromeBrowsingContext::Get(aContextId);
+  RefPtr<CanonicalBrowsingContext> context =
+      CanonicalBrowsingContext::Get(aContextId);
 
   if (!context) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
@@ -5680,8 +5714,8 @@ mozilla::ipc::IPCResult ContentParent::RecvDetachBrowsingContext(
 mozilla::ipc::IPCResult ContentParent::RecvSetOpenerBrowsingContext(
     const BrowsingContextId& aContextId,
     const BrowsingContextId& aOpenerContextId) {
-  RefPtr<ChromeBrowsingContext> context =
-      ChromeBrowsingContext::Get(aContextId);
+  RefPtr<CanonicalBrowsingContext> context =
+      CanonicalBrowsingContext::Get(aContextId);
 
   if (!context) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
@@ -5713,8 +5747,8 @@ mozilla::ipc::IPCResult ContentParent::RecvSetOpenerBrowsingContext(
 
 mozilla::ipc::IPCResult ContentParent::RecvSetUserGestureActivation(
     const BrowsingContextId& aContextId, const bool& aNewValue) {
-  RefPtr<ChromeBrowsingContext> context =
-      ChromeBrowsingContext::Get(aContextId);
+  RefPtr<CanonicalBrowsingContext> context =
+      CanonicalBrowsingContext::Get(aContextId);
 
   if (!context) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
@@ -5749,7 +5783,8 @@ void ContentParent::UnregisterRemoveWorkerActor() {
 
 mozilla::ipc::IPCResult ContentParent::RecvWindowClose(
     const BrowsingContextId& aContextId, const bool& aTrustedCaller) {
-  RefPtr<ChromeBrowsingContext> bc = ChromeBrowsingContext::Get(aContextId);
+  RefPtr<CanonicalBrowsingContext> bc =
+      CanonicalBrowsingContext::Get(aContextId);
   if (!bc) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
             ("ParentIPC: Trying to send a message to dead or detached context "
@@ -5771,7 +5806,8 @@ mozilla::ipc::IPCResult ContentParent::RecvWindowClose(
 
 mozilla::ipc::IPCResult ContentParent::RecvWindowFocus(
     const BrowsingContextId& aContextId) {
-  RefPtr<ChromeBrowsingContext> bc = ChromeBrowsingContext::Get(aContextId);
+  RefPtr<CanonicalBrowsingContext> bc =
+      CanonicalBrowsingContext::Get(aContextId);
   if (!bc) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
             ("ParentIPC: Trying to send a message to dead or detached context "
@@ -5789,7 +5825,8 @@ mozilla::ipc::IPCResult ContentParent::RecvWindowFocus(
 
 mozilla::ipc::IPCResult ContentParent::RecvWindowBlur(
     const BrowsingContextId& aContextId) {
-  RefPtr<ChromeBrowsingContext> bc = ChromeBrowsingContext::Get(aContextId);
+  RefPtr<CanonicalBrowsingContext> bc =
+      CanonicalBrowsingContext::Get(aContextId);
   if (!bc) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
             ("ParentIPC: Trying to send a message to dead or detached context "
@@ -5808,7 +5845,8 @@ mozilla::ipc::IPCResult ContentParent::RecvWindowBlur(
 mozilla::ipc::IPCResult ContentParent::RecvWindowPostMessage(
     const BrowsingContextId& aContextId, const ClonedMessageData& aMessage,
     const PostMessageData& aData) {
-  RefPtr<ChromeBrowsingContext> bc = ChromeBrowsingContext::Get(aContextId);
+  RefPtr<CanonicalBrowsingContext> bc =
+      CanonicalBrowsingContext::Get(aContextId);
   if (!bc) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
             ("ParentIPC: Trying to send a message to dead or detached context "

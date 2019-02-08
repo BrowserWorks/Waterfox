@@ -18,6 +18,29 @@
 #include "mozilla/FloatingPoint.h"
 
 namespace mozilla {
+
+struct ExternalPixel;
+
+template <>
+struct IsPixel<ExternalPixel> : TrueType {};
+
+typedef gfx::CoordTyped<ExternalPixel> ExternalCoord;
+typedef gfx::IntCoordTyped<ExternalPixel> ExternalIntCoord;
+typedef gfx::PointTyped<ExternalPixel> ExternalPoint;
+typedef gfx::IntPointTyped<ExternalPixel> ExternalIntPoint;
+typedef gfx::SizeTyped<ExternalPixel> ExternalSize;
+typedef gfx::IntSizeTyped<ExternalPixel> ExternalIntSize;
+typedef gfx::RectTyped<ExternalPixel> ExternalRect;
+typedef gfx::IntRectTyped<ExternalPixel> ExternalIntRect;
+typedef gfx::MarginTyped<ExternalPixel> ExternalMargin;
+typedef gfx::IntMarginTyped<ExternalPixel> ExternalIntMargin;
+typedef gfx::IntRegionTyped<ExternalPixel> ExternalIntRegion;
+
+typedef gfx::Matrix4x4Typed<ExternalPixel, ParentLayerPixel>
+    ExternalToParentLayerMatrix4x4;
+
+struct ExternalPixel {};
+
 namespace layers {
 
 class AsyncPanZoomController;
@@ -114,6 +137,13 @@ class MOZ_RAII AutoApplyAsyncTestAttributes {
   AsyncPanZoomController* mApzc;
   FrameMetrics mPrevFrameMetrics;
 };
+
+enum class AsyncTransformComponent { eScroll, eZoom };
+
+using AsyncTransformComponents = EnumSet<AsyncTransformComponent>;
+
+constexpr AsyncTransformComponents ScrollAndZoom(
+    AsyncTransformComponent::eScroll, AsyncTransformComponent::eZoom);
 
 namespace apz {
 

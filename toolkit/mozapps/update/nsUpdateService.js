@@ -6,11 +6,11 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/UpdateTelemetry.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {FileUtils} = ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {AUSTLMY} = ChromeUtils.import("resource://gre/modules/UpdateTelemetry.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyGlobalGetters(this, ["DOMParser", "XMLHttpRequest"]);
 
 XPCOMUtils.defineLazyModuleGetters(this, {
@@ -3308,8 +3308,8 @@ Checker.prototype = {
                         .securityInfo.QueryInterface(Ci.nsITransportSecurityInfo);
       if (sslStatus && sslStatus.succeededCertChain) {
         let rootCert = null;
-        for (rootCert of XPCOMUtils.IterSimpleEnumerator(sslStatus.succeededCertChain.getEnumerator(),
-                                                         Ci.nsIX509Cert));
+        // The root cert is the last cert in the chain.
+        for (rootCert of sslStatus.succeededCertChain.getEnumerator());
         if (rootCert) {
           Services.prefs.setStringPref("security.pki.mitm_detected", !rootCert.isBuiltInRoot);
         }
@@ -4011,8 +4011,7 @@ Downloader.prototype = {
         // Stage the update
         try {
           Cc["@mozilla.org/updates/update-processor;1"].
-            createInstance(Ci.nsIUpdateProcessor).
-            processUpdate(this._update);
+            createInstance(Ci.nsIUpdateProcessor).processUpdate();
         } catch (e) {
           // Fail gracefully in case the application does not support the update
           // processor service.

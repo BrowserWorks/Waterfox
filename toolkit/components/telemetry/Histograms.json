@@ -1891,162 +1891,162 @@
   },
   "HTTP_NET_VS_CACHE_ONSTART_QSMALL_NORMALPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a normal priority and small queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTART_QMED_NORMALPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a normal priority and medium queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTART_QBIG_NORMALPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a normal priority and large queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTART_QSMALL_HIGHPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a high priority and small queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTART_QMED_HIGHPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a high priority and medium queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTART_QBIG_HIGHPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStartRequest) difference (ms) for requests with a high priority and large queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTOP_QSMALL_NORMALPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a normal priority and small queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTOP_QMED_NORMALPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a normal priority and medium queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTOP_QBIG_NORMALPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a normal priority and large queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTOP_QSMALL_HIGHPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a high priority and small queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTOP_QMED_HIGHPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a high priority and medium queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTOP_QBIG_HIGHPRI_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStopRequest) difference (ms) for requests with a high priority and large queue. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTOP_SMALL_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStopRequest) difference (ms) for cache files with a small size (<256K). Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTOP_LARGE_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStopRequest) difference (ms) for cache files with a large size (>=256K). Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTART_REVALIDATED_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStartRequest) difference revalidated cache entries. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTART_NOTREVALIDATED_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStartRequest) difference (ms) not revalidated cache entries. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTOP_REVALIDATED_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStopRequest) difference (ms) revalidated cache entries. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
   },
   "HTTP_NET_VS_CACHE_ONSTOP_NOTREVALIDATED_V2": {
     "record_in_processes": ["main", "content"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
       "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
-      "bug_numbers": [1325322],
+      "bug_numbers": [1325322, 1524552],
       "kind": "enumerated",
       "n_values": 80,
       "description": "Network vs cache time load (OnStopRequest) difference (ms) not revalidated cache entries. Cache wins: 41-50 for 1-100ms, 51-59 for 101-1000ms, 60-68 for 1-10s, 69-73 for 11-60s and 74 for > 1m. Network wins: 39-30 for 1-100ms, 29-21 for 101-1000ms, 20-12 for 1-10s, 11-7 for 11-60s and 6 for > 1m."
@@ -2134,27 +2134,27 @@
   },
   "NETWORK_BACK_PRESSURE_SUSPENSION_RATE_V2": {
     "record_in_processes": ["main"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
     "alert_emails": ["necko@mozilla.com", "junior@mozilla.com"],
-    "bug_numbers": [1280629, 1494133],
+    "bug_numbers": [1280629, 1494133, 1524552],
     "kind": "categorical",
     "labels": ["Suspended", "NotSuspended", "SuspendedLocal", "NotSuspendedLocal"],
     "description": "Collect whether the resource is suspended by back pressure. And split by local-ness."
   },
   "NETWORK_BACK_PRESSURE_SUSPENSION_CP_TYPE": {
     "record_in_processes": ["main"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
     "alert_emails": ["necko@mozilla.com", "junior@mozilla.com"],
-    "bug_numbers": [1487559],
+    "bug_numbers": [1487559, 1524552],
     "kind": "enumerated",
     "n_values": 64,
     "description": "Collect the content policy when the resource is non-local and suspended by back pressure (0-44 from nsContentPolicyType in nsIContentPolicy.idl)."
   },
   "NETWORK_BACK_PRESSURE_SUSPENSION_DELAY_TIME_MS": {
     "record_in_processes": ["main"],
-    "expires_in_version": "68",
+    "expires_in_version": "76",
     "alert_emails": ["necko@mozilla.com", "junior@mozilla.com"],
-    "bug_numbers": [1498434],
+    "bug_numbers": [1498434, 1524552],
     "kind": "exponential",
     "high": 60000,
     "n_buckets": 100,
@@ -8113,6 +8113,15 @@
     "n_values": 100,
     "description": "Security-related UI events (addons, form submission, TLS certs, Safe Browsing, updates and geolocation). See /security/manager/ssl/nsISecurityUITelemetry.idl for the specific values."
   },
+  "STORAGE_ACCESS_API_UI": {
+    "record_in_processes": ["main"],
+    "alert_emails": ["seceng-telemetry@mozilla.com", "ehsan+telemetry@mozilla.com"],
+    "bug_numbers": [1513309],
+    "expires_in_version": "73",
+    "kind": "categorical",
+    "labels": ["Request", "AllowAutomatically", "Deny", "Allow", "AllowOnAnySite"],
+    "description": "Storage Access API UI events."
+  },
   "IPC_TRANSACTION_CANCEL": {
     "record_in_processes": ["main", "content"],
     "alert_emails": ["billm@mozilla.com"],
@@ -10484,7 +10493,7 @@
     "bug_numbers": [1205845, 1389995],
     "n_values": 9,
     "releaseChannelCollection": "opt-out",
-    "description": "Records DevTools toolbox host each time the toolbox is opened and when the host is changed (0:Bottom, 1:Side, 2:Window, 3:Custom, 9:Unknown)."
+    "description": "Records DevTools toolbox host each time the toolbox is opened and when the host is changed (0:Bottom, 1:RIGHT, 2:WINDOW, 3:CUSTOM, 4:LEFT, 5:PAGE, 9:Unknown)."
   },
   "DEVTOOLS_NUMBER_OF_CSS_GRIDS_IN_A_PAGE": {
     "record_in_processes": ["main", "content"],
@@ -10497,47 +10506,15 @@
     "description": "On page load, record the number of CSS Grid elements present on a page when the DevTools is open",
     "releaseChannelCollection": "opt-out"
   },
-  "DEVTOOLS_FONTEDITOR_N_FONT_AXES": {
-    "record_in_processes": ["main"],
-    "alert_emails": ["dev-developer-tools@lists.mozilla.org", "mbalfanz@mozilla.com"],
-    "expires_in_version": "66",
-    "bug_numbers": [1465424],
-    "description": "Indicates the number of variation axes of the variable fonts that are displayed in the font editor UI",
-    "releaseChannelCollection": "opt-out",
-    "kind": "exponential",
-    "high": 100,
-    "n_buckets": 20
-  },
-  "DEVTOOLS_FONTEDITOR_N_FONTS_RENDERED": {
-    "record_in_processes": ["main"],
-    "alert_emails": ["dev-developer-tools@lists.mozilla.org", "mbalfanz@mozilla.com"],
-    "expires_in_version": "66",
-    "bug_numbers": [1465424],
-    "description": "Indicates how many fonts the font editor displayed as being needed to render the selected element's content",
-    "releaseChannelCollection": "opt-out",
-    "kind": "exponential",
-    "high": 50,
-    "n_buckets": 10
-  },
   "DEVTOOLS_FONTEDITOR_FONT_TYPE_DISPLAYED": {
     "record_in_processes": ["main"],
     "alert_emails": ["dev-developer-tools@lists.mozilla.org", "mbalfanz@mozilla.com"],
-    "expires_in_version": "66",
-    "bug_numbers": [1465424],
+    "expires_in_version": "never",
+    "bug_numbers": [1523656],
     "description": "Indicates if the font editor displayed its UI for a non-variable font or a variable font",
     "releaseChannelCollection": "opt-out",
     "kind": "categorical",
     "labels": ["variable", "nonvariable"]
-  },
-  "DEVTOOLS_FLEXINSPECTOR_ELEMENT_TYPE_DISPLAYED": {
-    "record_in_processes": ["main"],
-    "alert_emails": ["dev-developer-tools@lists.mozilla.org", "mbalfanz@mozilla.com"],
-    "expires_in_version": "68",
-    "bug_numbers": [1503197],
-    "description": "Records the type of flex element displayed in the flex inspector (container, item, or both)",
-    "releaseChannelCollection": "opt-out",
-    "kind": "categorical",
-    "labels": ["container", "item", "both"]
   },
   "BROWSER_IS_USER_DEFAULT": {
     "record_in_processes": ["main"],
@@ -11253,7 +11230,9 @@
   },
   "CERT_PINNING_MOZ_RESULTS_BY_HOST": {
     "record_in_processes": ["main", "content"],
-    "alert_emails": ["pinning@mozilla.org"],
+    "alert_emails": ["dkeeler@mozilla.com", "pinning@mozilla.org"],
+    "releaseChannelCollection": "opt-out",
+    "bug_numbers": [1007844, 1521940],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 512,
@@ -11261,7 +11240,9 @@
   },
   "CERT_PINNING_MOZ_TEST_RESULTS_BY_HOST": {
     "record_in_processes": ["main", "content"],
-    "alert_emails": ["pinning@mozilla.org"],
+    "alert_emails": ["dkeeler@mozilla.com", "pinning@mozilla.org"],
+    "releaseChannelCollection": "opt-out",
+    "bug_numbers": [1007844, 1521940],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 512,
@@ -13362,24 +13343,12 @@
   },
   "TAB_AUDIO_INDICATOR_USED": {
     "record_in_processes": ["main", "content"],
-    "alert_emails": ["alwu@mozilla.com"],
-    "expires_in_version": "58",
+    "alert_emails": ["alwu@mozilla.com", "nohlmeier@mozilla.com"],
+    "expires_in_version": "72",
     "kind": "enumerated",
     "n_values": 6,
-    "bug_numbers": [1314220],
+    "bug_numbers": [1314220, 1525374],
     "description": "The total usage amount of the operations of tab audio indicator, mute=0 , unmuted=1, unblockByVisitingTab=2, unblockingByClickingIcon=3",
-    "releaseChannelCollection": "opt-out"
-  },
-  "TAB_MEDIA_BLOCKING_TIME_MS": {
-    "record_in_processes": ["main", "content"],
-    "alert_emails": ["alwu@mozilla.com"],
-    "expires_in_version": "58",
-    "kind": "linear",
-    "low": 1000,
-    "high": 90000,
-    "n_buckets": 91,
-    "bug_numbers": [1314220],
-    "description": "The time duration from tab's media was blocked to unblocked. Now we record from 1 to 90 seconds, but the record by milliseconds, so the bucket is like [1000ms, 2000ms], [2000ms, 3000ms], e.t.c.",
     "releaseChannelCollection": "opt-out"
   },
   "MOZ_CHUNKED_ARRAYBUFFER_IN_XHR": {
@@ -14517,8 +14486,8 @@
   },
   "QM_REPOSITORIES_INITIALIZATION_TIME": {
     "record_in_processes": ["main"],
-    "expires_in_version": "68",
-    "bug_numbers": [1481716],
+    "expires_in_version": "72",
+    "bug_numbers": [1481716, 1523682],
     "kind": "exponential",
     "high": 30000,
     "n_buckets": 30,
@@ -14679,7 +14648,8 @@
           "IDB_InitDirectory",
           "IDB_GetFileSize",
           "IDB_GetWalFileSize",
-          "IDB_GetUsage"
+          "IDB_GetUsage",
+          "IDB_RemoveDBFiles"
       ],
       "keyed": true,
       "description": "Getting the number of errors in QuotaManager initialization."

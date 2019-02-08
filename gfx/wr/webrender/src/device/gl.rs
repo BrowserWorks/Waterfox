@@ -27,7 +27,7 @@ use std::ptr;
 use std::rc::Rc;
 use std::slice;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread;
 use webrender_build::shader::ProgramSourceDigest;
 use webrender_build::shader::{parse_shader_source, shader_source_from_file};
@@ -44,7 +44,7 @@ pub struct GpuFrameId(usize);
 /// to be atomic per se, but we make it atomic to satisfy the thread safety
 /// invariants in the type system. We could also put the value in TLS, but that
 /// would be more expensive to access.
-static GPU_BYTES_ALLOCATED: AtomicUsize = ATOMIC_USIZE_INIT;
+static GPU_BYTES_ALLOCATED: AtomicUsize = AtomicUsize::new(0);
 
 /// Returns the number of GPU bytes currently allocated.
 pub fn total_gpu_bytes_allocated() -> usize {
@@ -1260,7 +1260,7 @@ impl Device {
     #[cfg(debug_assertions)]
     fn print_shader_errors(source: &str, log: &str) {
         // hacky way to extract the offending lines
-        if !log.starts_with("0:") {
+        if !log.starts_with("0:") && !log.starts_with("0(") {
             return;
         }
         let end_pos = match log[2..].chars().position(|c| !c.is_digit(10)) {
@@ -1791,7 +1791,7 @@ impl Device {
             for (read_fbo, draw_fbo) in src.fbos.iter().zip(&dst.fbos) {
                 self.bind_read_target_impl(*read_fbo);
                 self.bind_draw_target_impl(*draw_fbo);
-                self.blit_render_target(rect, rect);
+                self.blit_render_target(rect, rect, TextureFilter::Linear);
             }
             self.reset_draw_target();
             self.reset_read_target();
@@ -1942,8 +1942,18 @@ impl Device {
         }
     }
 
-    pub fn blit_render_target(&mut self, src_rect: DeviceIntRect, dest_rect: DeviceIntRect) {
+    pub fn blit_render_target(
+        &mut self,
+        src_rect: DeviceIntRect,
+        dest_rect: DeviceIntRect,
+        filter: TextureFilter,
+    ) {
         debug_assert!(self.inside_frame);
+
+        let filter = match filter {
+            TextureFilter::Nearest => gl::NEAREST,
+            TextureFilter::Linear | TextureFilter::Trilinear => gl::LINEAR,
+        };
 
         self.gl.blit_framebuffer(
             src_rect.origin.x,
@@ -1955,7 +1965,7 @@ impl Device {
             dest_rect.origin.x + dest_rect.size.width,
             dest_rect.origin.y + dest_rect.size.height,
             gl::COLOR_BUFFER_BIT,
-            gl::LINEAR,
+            filter,
         );
     }
 

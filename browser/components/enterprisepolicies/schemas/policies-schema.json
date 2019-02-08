@@ -88,6 +88,10 @@
       }
     },
 
+    "CaptivePortal": {
+      "type": "boolean"
+    },
+
     "Certificates": {
       "type": "object",
       "properties": {
@@ -364,6 +368,10 @@
           "type": "boolean"
         }
       }
+    },
+
+    "NetworkPrediction": {
+      "type": "boolean"
     },
 
     "NoDefaultBookmarks": {
@@ -652,6 +660,16 @@
       "patternProperties": {
         "^.*$": { "type": "string" }
       }
+    },
+
+    "SSLVersionMax": {
+      "type": "string",
+      "enum": ["tls1", "tls1.1", "tls1.2", "tls1.3"]
+    },
+
+    "SSLVersionMin": {
+      "type": "string",
+      "enum": ["tls1", "tls1.1", "tls1.2", "tls1.3"]
     },
 
     "WebsiteFilter": {

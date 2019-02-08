@@ -57,7 +57,68 @@ MARKUPMAP(del, New_HyperText, roles::CONTENT_DELETION)
 
 MARKUPMAP(details, New_HyperText, roles::DETAILS)
 
-MARKUPMAP(div, nullptr, roles::SECTION)
+MARKUPMAP(
+    div,
+    [](Element* aElement, Accessible* aContext) -> Accessible* {
+      // Never create an accessible if we're part of an anonymous
+      // subtree.
+      if (aElement->IsInAnonymousSubtree()) {
+        return nullptr;
+      }
+      // Always create an accessible if the div has an id.
+      if (aElement->HasAttr(kNameSpaceID_None, nsGkAtoms::id)) {
+        return new HyperTextAccessibleWrap(aElement, aContext->Document());
+      }
+      // Never create an accessible if the div is not display:block; or
+      // display:inline-block;
+      nsAutoString displayValue;
+      StyleInfo styleInfo(aElement);
+      styleInfo.Display(displayValue);
+      if (displayValue != NS_LITERAL_STRING("block") &&
+          displayValue != NS_LITERAL_STRING("inline-block")) {
+        return nullptr;
+      }
+      // Check for various conditions to determine if this is a block
+      // break and needs to be rendered.
+      // If its previous sibling is an inline element, we probably want
+      // to break, so render.
+      nsIContent* prevSibling = aElement->GetPreviousSibling();
+      if (prevSibling) {
+        nsIFrame* prevSiblingFrame = prevSibling->GetPrimaryFrame();
+        if (prevSiblingFrame && prevSiblingFrame->IsInlineFrame()) {
+          return new HyperTextAccessibleWrap(aElement, aContext->Document());
+        }
+      }
+      // Now, check the children.
+      nsIContent* firstChild = aElement->GetFirstChild();
+      if (firstChild) {
+        // Render it if it is a text node.
+        if (firstChild->IsText()) {
+          return new HyperTextAccessibleWrap(aElement, aContext->Document());
+        }
+        // Check to see if first child has an inline frame.
+        nsIFrame* firstChildFrame = firstChild->GetPrimaryFrame();
+        if (firstChildFrame && (firstChildFrame->IsInlineFrame() ||
+                                firstChildFrame->IsBrFrame())) {
+          return new HyperTextAccessibleWrap(aElement, aContext->Document());
+        }
+        nsIContent* lastChild = aElement->GetLastChild();
+        if (lastChild && lastChild != firstChild) {
+          // Render it if it is a text node.
+          if (lastChild->IsText()) {
+            return new HyperTextAccessibleWrap(aElement, aContext->Document());
+          }
+          // Check to see if last child has an inline frame.
+          nsIFrame* lastChildFrame = lastChild->GetPrimaryFrame();
+          if (lastChildFrame && (lastChildFrame->IsInlineFrame() ||
+                                 lastChildFrame->IsBrFrame())) {
+            return new HyperTextAccessibleWrap(aElement, aContext->Document());
+          }
+        }
+      }
+      return nullptr;
+    },
+    roles::SECTION)
 
 MARKUPMAP(dl,
           [](Element* aElement, Accessible* aContext) -> Accessible* {
@@ -351,6 +412,17 @@ MARKUPMAP(table,
 MARKUPMAP(time, New_HyperText, 0, Attr(xmlroles, time),
           AttrFromDOM(datetime, datetime))
 
+MARKUPMAP(tbody,
+          [](Element* aElement, Accessible* aContext) -> Accessible* {
+            // Expose this as a grouping if its frame type is non-standard.
+            if (aElement->GetPrimaryFrame() &&
+                aElement->GetPrimaryFrame()->IsTableRowGroupFrame()) {
+              return nullptr;
+            }
+            return new HyperTextAccessibleWrap(aElement, aContext->Document());
+          },
+          roles::GROUPING)
+
 MARKUPMAP(td,
           [](Element* aElement, Accessible* aContext) -> Accessible* {
             if (aContext->IsTableRow() &&
@@ -376,6 +448,17 @@ MARKUPMAP(td,
           },
           0)
 
+MARKUPMAP(tfoot,
+          [](Element* aElement, Accessible* aContext) -> Accessible* {
+            // Expose this as a grouping if its frame type is non-standard.
+            if (aElement->GetPrimaryFrame() &&
+                aElement->GetPrimaryFrame()->IsTableRowGroupFrame()) {
+              return nullptr;
+            }
+            return new HyperTextAccessibleWrap(aElement, aContext->Document());
+          },
+          roles::GROUPING)
+
 MARKUPMAP(th,
           [](Element* aElement, Accessible* aContext) -> Accessible* {
             if (aContext->IsTableRow() &&
@@ -390,6 +473,17 @@ MARKUPMAP(th,
             return nullptr;
           },
           0)
+
+MARKUPMAP(tfoot,
+          [](Element* aElement, Accessible* aContext) -> Accessible* {
+            // Expose this as a grouping if its frame type is non-standard.
+            if (aElement->GetPrimaryFrame() &&
+                aElement->GetPrimaryFrame()->IsTableRowGroupFrame()) {
+              return nullptr;
+            }
+            return new HyperTextAccessibleWrap(aElement, aContext->Document());
+          },
+          roles::GROUPING)
 
 MARKUPMAP(tr,
           [](Element* aElement, Accessible* aContext) -> Accessible* {

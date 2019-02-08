@@ -1,13 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-ChromeUtils.import("resource://gre/modules/BookmarkJSONUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Log.jsm");
-ChromeUtils.import("resource://services-sync/constants.js");
-ChromeUtils.import("resource://services-sync/engines.js");
-ChromeUtils.import("resource://services-sync/engines/bookmarks.js");
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/util.js");
+const {BookmarksEngine} = ChromeUtils.import("resource://services-sync/engines/bookmarks.js");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
 
 // A stored reference to the collection won't be valid after disabling.
 function getBookmarkWBO(server, guid) {
@@ -47,7 +42,6 @@ add_task(async function test_decline_undecline() {
     engine.enabled = true;
     await Service.sync();
     ok(getBookmarkWBO(server, bzGuid), "Should be present on server again");
-
   } finally {
     await PlacesSyncUtils.bookmarks.reset();
     await promiseStopServer(server);

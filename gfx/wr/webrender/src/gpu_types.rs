@@ -3,9 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use api::{
-    DevicePoint, DeviceSize, DeviceRect, LayoutRect, LayoutToWorldTransform, LayoutTransform,
+    DeviceHomogeneousVector, DevicePoint, DeviceSize, DeviceRect,
+    LayoutRect, LayoutToWorldTransform, LayoutTransform,
     PremultipliedColorF, LayoutToPictureTransform, PictureToLayoutTransform, PicturePixel,
-    WorldPixel, WorldToLayoutTransform, LayoutPoint,
+    WorldPixel, WorldToLayoutTransform, LayoutPoint, DeviceVector2D
 };
 use clip_scroll_tree::{ClipScrollTree, ROOT_SPATIAL_NODE_INDEX, SpatialNodeIndex};
 use gpu_cache::{GpuCacheAddress, GpuDataRequest};
@@ -137,11 +138,12 @@ pub struct ClipMaskInstance {
     pub render_task_address: RenderTaskAddress,
     pub clip_transform_id: TransformPaletteId,
     pub prim_transform_id: TransformPaletteId,
-    pub segment: i32,
     pub clip_data_address: GpuCacheAddress,
     pub resource_address: GpuCacheAddress,
     pub local_pos: LayoutPoint,
     pub tile_rect: LayoutRect,
+    pub sub_rect: DeviceRect,
+    pub snap_offsets: SnapOffsets,
 }
 
 /// A border corner dot or dash drawn into the clipping mask.
@@ -565,11 +567,33 @@ pub enum UvRectKind {
     // use a bilerp() to correctly interpolate a
     // UV coord in the vertex shader.
     Quad {
-        top_left: DevicePoint,
-        top_right: DevicePoint,
-        bottom_left: DevicePoint,
-        bottom_right: DevicePoint,
+        top_left: DeviceHomogeneousVector,
+        top_right: DeviceHomogeneousVector,
+        bottom_left: DeviceHomogeneousVector,
+        bottom_right: DeviceHomogeneousVector,
     },
+}
+
+/// Represents offsets in device pixels that a primitive
+/// was snapped to.
+#[cfg_attr(feature = "capture", derive(Serialize))]
+#[cfg_attr(feature = "replay", derive(Deserialize))]
+#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct SnapOffsets {
+    /// How far the top left corner was snapped
+    pub top_left: DeviceVector2D,
+    /// How far the bottom right corner was snapped
+    pub bottom_right: DeviceVector2D,
+}
+
+impl SnapOffsets {
+    pub fn empty() -> Self {
+        SnapOffsets {
+            top_left: DeviceVector2D::zero(),
+            bottom_right: DeviceVector2D::zero(),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -585,6 +609,8 @@ pub struct ImageSource {
 
 impl ImageSource {
     pub fn write_gpu_blocks(&self, request: &mut GpuDataRequest) {
+        // see fetch_image_resource in GLSL
+        // has to be VECS_PER_IMAGE_RESOURCE vectors
         request.push([
             self.p0.x,
             self.p0.y,
@@ -600,19 +626,12 @@ impl ImageSource {
 
         // If this is a polygon uv kind, then upload the four vertices.
         if let UvRectKind::Quad { top_left, top_right, bottom_left, bottom_right } = self.uv_rect_kind {
-            request.push([
-                top_left.x,
-                top_left.y,
-                top_right.x,
-                top_right.y,
-            ]);
-
-            request.push([
-                bottom_left.x,
-                bottom_left.y,
-                bottom_right.x,
-                bottom_right.y,
-            ]);
+            // see fetch_image_resource_extra in GLSL
+            //Note: we really need only 3 components per point here: X, Y, and W
+            request.push(top_left);
+            request.push(top_right);
+            request.push(bottom_left);
+            request.push(bottom_right);
         }
     }
 }

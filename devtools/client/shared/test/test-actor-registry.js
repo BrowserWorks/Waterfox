@@ -6,7 +6,7 @@
 (function(exports) {
   const CC = Components.Constructor;
 
-  const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm", {});
+  const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
   const { fetch } = require("devtools/shared/DevToolsUtils");
 
   const TEST_URL_ROOT = "http://example.com/browser/devtools/client/shared/test/";
@@ -88,6 +88,11 @@
 
     const { TestActorFront } = await loadFront();
 
-    return new TestActorFront(client, form, toolbox);
+    const front = new TestActorFront(client, toolbox);
+    // Since we manually instantiate this front instead of going through protocol.js,
+    // we have to manually set its actor ID and manage it.
+    front.actorID = form.testActor;
+    front.manage(front);
+    return front;
   };
 })(this);

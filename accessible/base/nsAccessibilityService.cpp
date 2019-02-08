@@ -20,6 +20,7 @@
 #include "HTMLTableAccessibleWrap.h"
 #include "HyperTextAccessibleWrap.h"
 #include "RootAccessible.h"
+#include "StyleInfo.h"
 #include "nsAccUtils.h"
 #include "nsArrayUtils.h"
 #include "nsAttrName.h"
@@ -1041,8 +1042,10 @@ Accessible* nsAccessibilityService::CreateAccessible(nsINode* aNode,
           newAcc = new ARIAGridCellAccessibleWrap(content, document);
 
       } else if (roleMapEntry->IsOfType(eTableRow)) {
-        if (aContext->IsTable())
+        if (aContext->IsTable() ||
+            (aContext->Parent() && aContext->Parent()->IsTable())) {
           newAcc = new ARIARowAccessible(content, document);
+        }
 
       } else if (roleMapEntry->IsOfType(eTable)) {
         newAcc = new ARIAGridAccessibleWrap(content, document);
@@ -1408,8 +1411,10 @@ nsAccessibilityService::CreateAccessibleByFrameType(nsIFrame* aFrame,
       newAcc = new HTMLTextFieldAccessible(aContent, document);
       break;
     case eHyperTextType:
-      if (!aContent->IsAnyOfHTMLElements(nsGkAtoms::dt, nsGkAtoms::dd))
+      if (!aContent->IsAnyOfHTMLElements(nsGkAtoms::dt, nsGkAtoms::dd,
+                                         nsGkAtoms::div)) {
         newAcc = new HyperTextAccessibleWrap(aContent, document);
+      }
       break;
 
     case eImageType:

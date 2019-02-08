@@ -4,7 +4,7 @@
 
 var EXPORTED_SYMBOLS = [ "ZipUtils" ];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(this, "FileUtils",
                                "resource://gre/modules/FileUtils.jsm");
@@ -31,7 +31,6 @@ const EXTRACTION_BUFFER               = 1024 * 512;
  */
 function saveStreamAsync(aPath, aStream, aFile) {
   return new Promise((resolve, reject) => {
-
     // Read the input stream on a background thread
     let sts = Cc["@mozilla.org/network/stream-transport-service;1"].
               getService(Ci.nsIStreamTransportService);
@@ -76,7 +75,6 @@ function saveStreamAsync(aPath, aStream, aFile) {
     }
 
     input.asyncWait(readData, 0, 0, Services.tm.currentThread);
-
   });
 }
 

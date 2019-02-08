@@ -27,7 +27,7 @@ typedef nsAbsoluteContainingBlock::AbsPosReflowFlags AbsPosReflowFlags;
 
 ViewportFrame* NS_NewViewportFrame(nsIPresShell* aPresShell,
                                    ComputedStyle* aStyle) {
-  return new (aPresShell) ViewportFrame(aStyle);
+  return new (aPresShell) ViewportFrame(aStyle, aPresShell->GetPresContext());
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(ViewportFrame)
@@ -268,6 +268,11 @@ nsRect ViewportFrame::AdjustReflowInputAsContainingBlock(
       rect.Size() < ps->GetVisualViewportSize()) {
     rect.SizeTo(ps->GetVisualViewportSize());
   }
+  // Expand the size to the layout viewport size if necessary.
+  const nsSize layoutViewportSize = ps->GetLayoutViewportSize();
+  if (rect.Size() < layoutViewportSize) {
+    rect.SizeTo(layoutViewportSize);
+  }
   return rect;
 }
 
@@ -381,12 +386,6 @@ void ViewportFrame::UpdateStyle(ServoRestyleState& aRestyleState) {
   RefPtr<ComputedStyle> newStyle =
       aRestyleState.StyleSet().ResolveInheritingAnonymousBoxStyle(pseudo,
                                                                   nullptr);
-
-  // We're special because we have a null GetContent(), so don't call things
-  // like UpdateStyleOfOwnedChildFrame that try to append changes for the
-  // content to the change list.  Nor do we computed a changehint, since we have
-  // no way to apply it anyway.
-  newStyle->ResolveSameStructsAs(Style());
 
   MOZ_ASSERT(!GetNextContinuation(), "Viewport has continuations?");
   SetComputedStyle(newStyle);

@@ -18,18 +18,20 @@ static const char pluginSandboxRules[] = R"SANDBOX_LITERAL(
   (define app-path (param "APP_PATH"))
   (define app-binary-path (param "APP_BINARY_PATH"))
 
-  (if (string=? should-log "TRUE")
-      (deny default)
-      (deny default (with no-log)))
+  (define (moz-deny feature)
+    (if (string=? should-log "TRUE")
+      (deny feature)
+      (deny feature (with no-log))))
 
+  (moz-deny default)
   ; These are not included in (deny default)
-  (deny process-info*)
+  (moz-deny process-info*)
   ; This isn't available in some older macOS releases.
   (if (defined? 'nvram*)
-    (deny nvram*))
-  ; This property require macOS 10.10+
+    (moz-deny nvram*))
+  ; This property requires macOS 10.10+
   (if (defined? 'file-map-executable)
-    (deny file-map-executable))
+    (moz-deny file-map-executable))
 
   (if (defined? 'file-map-executable)
     (allow file-map-executable file-read*
@@ -81,20 +83,25 @@ static const char contentSandboxRules[] = R"SANDBOX_LITERAL(
   (define testingReadPath4 (param "TESTING_READ_PATH4"))
   (define crashPort (param "CRASH_PORT"))
 
-  (if (string=? should-log "TRUE")
-    (deny default)
-    (deny default (with no-log)))
-  (debug deny)
+  (define (moz-deny feature)
+    (if (string=? should-log "TRUE")
+      (deny feature)
+      (deny feature (with no-log))))
+
+  (moz-deny default)
   ; These are not included in (deny default)
-  (deny process-info*)
+  (moz-deny process-info*)
   ; This isn't available in some older macOS releases.
   (if (defined? 'nvram*)
-    (deny nvram*))
+    (moz-deny nvram*))
   ; The next two properties both require macOS 10.10+
   (if (defined? 'iokit-get-properties)
-    (deny iokit-get-properties))
+    (moz-deny iokit-get-properties))
   (if (defined? 'file-map-executable)
-    (deny file-map-executable))
+    (moz-deny file-map-executable))
+
+  (if (string=? should-log "TRUE")
+    (debug deny))
 
   (if (defined? 'file-map-executable)
     (allow file-map-executable file-read*
@@ -251,6 +258,7 @@ static const char contentSandboxRules[] = R"SANDBOX_LITERAL(
   (allow file-read-data (literal "/Library/Preferences/.GlobalPreferences.plist"))
 
   (allow file-read*
+      (subpath "/Library/ColorSync/Profiles")
       (subpath "/Library/Spelling")
       (literal "/")
       (literal "/private/tmp")
@@ -258,6 +266,7 @@ static const char contentSandboxRules[] = R"SANDBOX_LITERAL(
       (home-literal "/.CFUserTextEncoding")
       (home-literal "/Library/Preferences/com.apple.DownloadAssessment.plist")
       (home-subpath "/Library/Colors")
+      (home-subpath "/Library/ColorSync/Profiles")
       (home-subpath "/Library/Keyboard Layouts")
       (home-subpath "/Library/Input Methods")
       (home-subpath "/Library/Spelling"))

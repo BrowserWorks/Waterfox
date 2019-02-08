@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 // dialog is just an array we'll use to store various properties from the dialog document...
 var dialog;
@@ -186,7 +186,6 @@ function replaceInsert( text, index, value ) {
 }
 
 function onLoad() {
-
     // Set global variables.
     printProgress = window.arguments[0];
     if (window.arguments[1]) {

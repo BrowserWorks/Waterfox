@@ -124,6 +124,8 @@ class Raptor(object):
             self.log.info("creating android device handler using mozdevice")
             self.device = ADBDevice(verbose=True)
             self.device.clear_logcat()
+            self.log.info("Clear %s app data" % self.config['binary'])
+            self.device.shell("pm clear %s" % self.config['binary'])
             if self.config['power_test']:
                 init_geckoview_power_test(self)
         else:
@@ -213,6 +215,11 @@ class Raptor(object):
             else:
                 self.log.info("preferences were configured for the test, \
                               but we do not install them on non Firefox browsers.")
+
+        # if 'alert_on' was provided in the test INI, we must add that to our config
+        # for use in our results.py and output.py
+        # test['alert_on'] has already been converted to a list and stripped of spaces
+        self.config['subtest_alert_on'] = test.get('alert_on', None)
 
         # on firefox we can get an addon id; chrome addon actually is just cmd line arg
         if self.config['app'] in ['firefox', 'geckoview', 'fennec']:
@@ -357,11 +364,10 @@ class Raptor(object):
             # if using host localhost, 127.0.0.1.
             if self.config['app'] == "chrome" and test.get('playback', None) is not None:
                 chrome_args = [
-                    '--proxy-server="http=127.0.0.1:8080;' +
-                    'https=127.0.0.1:8080;ssl=127.0.0.1:8080"',
+                    '--proxy-server=127.0.0.1:8080',
+                    '--proxy-bypass-list=localhost;127.0.0.1',
                     '--ignore-certificate-errors',
                     '--no-default-browser-check',
-                    'disable-sync'
                 ]
                 if self.config['host'] not in ('localhost', '127.0.0.1'):
                     chrome_args[0] = chrome_args[0].replace('127.0.0.1', self.config['host'])
@@ -460,7 +466,7 @@ class Raptor(object):
                                                self.config,
                                                test)
 
-    def process_results(self):
+    def process_results(self, test_names):
         # when running locally output results in build/raptor.json; when running
         # in production output to a local.json to be turned into tc job artifact
         if self.config.get('run_local', False):
@@ -473,14 +479,18 @@ class Raptor(object):
             raptor_json_path = os.path.join(os.getcwd(), 'local.json')
 
         self.config['raptor_json_path'] = raptor_json_path
-        return self.results_handler.summarize_and_output(self.config)
+        return self.results_handler.summarize_and_output(self.config, test_names)
 
     def get_page_timeout_list(self):
         return self.results_handler.page_timeout_list
 
     def check_for_crashes(self):
         if self.config['app'] in ["geckoview", "fennec"]:
+            # Turn off verbose to prevent logcat from being inserted into the main log.
+            verbose = self.device._verbose
+            self.device._verbose = False
             logcat = self.device.get_logcat()
+            self.device._verbose = verbose
             if logcat:
                 if mozcrash.check_for_java_exception(logcat, "raptor"):
                     return
@@ -585,6 +595,7 @@ def main(args=sys.argv[1:]):
     # if a test name specified on command line, and it exists, just run that one
     # otherwise run all available raptor tests that are found for this browser
     raptor_test_list = get_raptor_test_list(args, mozinfo.os)
+    raptor_test_names = [raptor_test['name'] for raptor_test in raptor_test_list]
 
     # ensure we have at least one valid test to run
     if len(raptor_test_list) == 0:
@@ -618,12 +629,13 @@ def main(args=sys.argv[1:]):
 
         raptor.run_test(next_test, timeout=int(next_test['page_timeout']))
 
-    success = raptor.process_results()
+    success = raptor.process_results(raptor_test_names)
     raptor.clean_up()
 
     if not success:
         # didn't get test results; test timed out or crashed, etc. we want job to fail
-        LOG.critical("TEST-UNEXPECTED-FAIL: no raptor test results were found")
+        LOG.critical("TEST-UNEXPECTED-FAIL: no raptor test results were found for %s" %
+                     ', '.join(raptor_test_names))
         os.sys.exit(1)
 
     # if we have results but one test page timed out (i.e. one tp6 test page didn't load

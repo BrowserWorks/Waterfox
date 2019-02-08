@@ -4,7 +4,7 @@
 
 use api::{DeviceIntPoint, DeviceIntRect, DeviceIntSize, DeviceSize, DeviceIntSideOffsets};
 use api::{DevicePixelScale, ImageDescriptor, ImageFormat, LayoutPoint};
-use api::{LineStyle, LineOrientation, LayoutSize, ColorF, DirtyRect};
+use api::{LineStyle, LineOrientation, LayoutSize, DirtyRect};
 #[cfg(feature = "pathfinder")]
 use api::FontRenderMode;
 use border::BorderSegmentCacheKey;
@@ -17,7 +17,7 @@ use euclid::{TypedPoint2D, TypedVector2D};
 use freelist::{FreeList, FreeListHandle, WeakFreeListHandle};
 use glyph_rasterizer::GpuGlyphCacheKey;
 use gpu_cache::{GpuCache, GpuCacheAddress, GpuCacheHandle};
-use gpu_types::{BorderInstance, ImageSource, UvRectKind};
+use gpu_types::{BorderInstance, ImageSource, UvRectKind, SnapOffsets};
 use internal_types::{CacheTextureId, FastHashMap, LayerIndex, SavedTargetIndex};
 #[cfg(feature = "pathfinder")]
 use pathfinder_partitioner::mesh::Mesh;
@@ -28,7 +28,6 @@ use prim_store::line_dec::LineDecorationCacheKey;
 use print_tree::{PrintTreePrinter};
 use render_backend::FrameId;
 use resource_cache::{CacheItem, ResourceCache};
-use surface::SurfaceCacheKey;
 use std::{ops, mem, usize, f32, i32, u32};
 use texture_cache::{TextureCache, TextureCacheHandle, Eviction};
 use tiling::{RenderPass, RenderTargetIndex};
@@ -39,7 +38,7 @@ use webrender_api::DevicePixel;
 const RENDER_TASK_SIZE_SANITY_CHECK: i32 = 16000;
 const FLOATS_PER_RENDER_TASK_INFO: usize = 8;
 pub const MAX_BLUR_STD_DEVIATION: f32 = 4.0;
-pub const MIN_DOWNSCALING_RT_SIZE: i32 = 128;
+pub const MIN_DOWNSCALING_RT_SIZE: i32 = 8;
 
 fn render_task_sanity_check(size: &DeviceIntSize) {
     if size.width > RENDER_TASK_SIZE_SANITY_CHECK ||
@@ -237,9 +236,10 @@ impl RenderTaskLocation {
 #[cfg_attr(feature = "capture", derive(Serialize))]
 #[cfg_attr(feature = "replay", derive(Deserialize))]
 pub struct CacheMaskTask {
-    actual_rect: DeviceIntRect,
+    pub actual_rect: DeviceIntRect,
     pub root_spatial_node_index: SpatialNodeIndex,
     pub clip_node_range: ClipNodeRange,
+    pub snap_offsets: SnapOffsets,
 }
 
 #[derive(Debug)]
@@ -391,7 +391,6 @@ pub enum ClearMode {
 
     // Applicable to color targets only.
     Transparent,
-    Color(ColorF),
 }
 
 #[derive(Debug)]
@@ -432,7 +431,6 @@ impl RenderTask {
         children: Vec<RenderTaskId>,
         uv_rect_kind: UvRectKind,
         root_spatial_node_index: SpatialNodeIndex,
-        clear_color: Option<ColorF>,
     ) -> Self {
         let size = match location {
             RenderTaskLocation::Dynamic(_, size) => size,
@@ -445,11 +443,6 @@ impl RenderTask {
         let can_merge = size.width as f32 >= unclipped_size.width &&
                         size.height as f32 >= unclipped_size.height;
 
-        let clear_mode = match clear_color {
-            Some(color) => ClearMode::Color(color),
-            None => ClearMode::Transparent,
-        };
-
         RenderTask {
             location,
             children,
@@ -461,7 +454,7 @@ impl RenderTask {
                 uv_rect_kind,
                 root_spatial_node_index,
             }),
-            clear_mode,
+            clear_mode: ClearMode::Transparent,
             saved_index: None,
         }
     }
@@ -541,6 +534,7 @@ impl RenderTask {
         resource_cache: &mut ResourceCache,
         render_tasks: &mut RenderTaskTree,
         clip_data_store: &mut ClipDataStore,
+        snap_offsets: SnapOffsets,
     ) -> Self {
         // Step through the clip sources that make up this mask. If we find
         // any box-shadow clip sources, request that image from the render
@@ -610,6 +604,7 @@ impl RenderTask {
                 actual_rect: outer_rect,
                 clip_node_range,
                 root_spatial_node_index,
+                snap_offsets,
             }),
             ClearMode::One,
         )
@@ -1090,8 +1085,6 @@ pub enum RenderTaskCacheKeyKind {
     Image(ImageCacheKey),
     #[allow(dead_code)]
     Glyph(GpuGlyphCacheKey),
-    #[allow(dead_code)]
-    Picture(SurfaceCacheKey),
     BorderSegment(BorderSegmentCacheKey),
     LineDecoration(LineDecorationCacheKey),
 }

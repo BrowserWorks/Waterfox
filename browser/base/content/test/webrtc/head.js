@@ -1,5 +1,5 @@
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource:///modules/SitePermissions.jsm");
+var {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var {SitePermissions} = ChromeUtils.import("resource:///modules/SitePermissions.jsm");
 
 const PREF_PERMISSION_FAKE = "media.navigator.permission.fake";
 const PREF_AUDIO_LOOPBACK = "media.audio_loopback_dev";
@@ -280,7 +280,6 @@ function promiseMessage(aMessage, aAction) {
 
 function promisePopupNotificationShown(aName, aAction) {
   return new Promise(resolve => {
-
     // In case the global webrtc indicator has stolen focus (bug 1421724)
     window.focus();
 
@@ -294,13 +293,11 @@ function promisePopupNotificationShown(aName, aAction) {
 
     if (aAction)
       aAction();
-
   });
 }
 
 function promisePopupNotification(aName) {
   return new Promise(resolve => {
-
     waitForCondition(() => PopupNotifications.getNotification(aName),
                      () => {
       ok(!!PopupNotifications.getNotification(aName),
@@ -308,20 +305,17 @@ function promisePopupNotification(aName) {
 
       resolve();
     }, "timeout waiting for popup notification " + aName);
-
   });
 }
 
 function promiseNoPopupNotification(aName) {
   return new Promise(resolve => {
-
     waitForCondition(() => !PopupNotifications.getNotification(aName),
                      () => {
       ok(!PopupNotifications.getNotification(aName),
          aName + " notification removed");
       resolve();
     }, "timeout waiting for popup notification " + aName + " to disappear");
-
   });
 }
 
@@ -333,12 +327,17 @@ function activateSecondaryAction(aAction) {
   let notification = PopupNotifications.panel.firstElementChild;
   switch (aAction) {
     case kActionNever:
-      notification.checkbox.setAttribute("checked", true); // fallthrough
+      if (!notification.checkbox.checked) {
+        notification.checkbox.click();
+      }
+      // fallthrough
     case kActionDeny:
       notification.secondaryButton.click();
       break;
     case kActionAlways:
-      notification.checkbox.setAttribute("checked", true);
+      if (!notification.checkbox.checked) {
+        notification.checkbox.click();
+      }
       notification.button.click();
       break;
   }

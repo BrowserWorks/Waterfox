@@ -2,11 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
+// @flow
+
 import React from "react";
 import { mount, shallow } from "enzyme";
 import Frames from "../index.js";
 // eslint-disable-next-line
 import { formatCallStackFrames } from "../../../../selectors/getCallStackFrames";
+import { makeMockFrame, makeMockSource } from "../../../../utils/test-mockup";
 
 function render(overrides = {}) {
   const defaultProps = {
@@ -20,6 +23,7 @@ function render(overrides = {}) {
   };
 
   const props = { ...defaultProps, ...overrides };
+  // $FlowIgnore
   const component = shallow(<Frames.WrappedComponent {...props} />, {
     context: { l10n: L10N }
   });
@@ -108,6 +112,7 @@ describe("Frames", () => {
       ];
 
       const component = mount(
+        // $FlowIgnore
         <Frames.WrappedComponent
           frames={frames}
           disableFrameTruncate={true}
@@ -115,7 +120,7 @@ describe("Frames", () => {
         />
       );
       expect(component.text()).toBe(
-        "\trenderFoo http://myfile.com/mahscripts.js:55\n"
+        "renderFoo http://myfile.com/mahscripts.js:55"
       );
     });
 
@@ -187,23 +192,23 @@ describe("Frames", () => {
 
   describe("Blackboxed Frames", () => {
     it("filters blackboxed frames", () => {
+      const source1 = makeMockSource(undefined, "1");
+      const source2 = makeMockSource(undefined, "2");
+      source2.isBlackBoxed = true;
+
       const frames = [
-        { id: 1, location: { sourceId: "1" } },
-        { id: 2, location: { sourceId: "2" } },
-        { id: 3, location: { sourceId: "1" } },
-        { id: 8, location: { sourceId: "2" } }
+        makeMockFrame("1", source1),
+        makeMockFrame("2", source2),
+        makeMockFrame("3", source1),
+        makeMockFrame("8", source2)
       ];
 
       const sources = {
-        1: { id: "1" },
-        2: { id: "2", isBlackBoxed: true }
+        "1": source1,
+        "2": source2
       };
 
-      const processedFrames = formatCallStackFrames(
-        frames,
-        sources,
-        sources["1"]
-      );
+      const processedFrames = formatCallStackFrames(frames, sources, source1);
       const selectedFrame = frames[0];
 
       const component = render({
@@ -263,6 +268,28 @@ describe("Frames", () => {
       const frameworkGroupingOn = true;
       const component = render({ frames, frameworkGroupingOn, selectedFrame });
 
+      expect(component).toMatchSnapshot();
+    });
+
+    it("selectable framework frames", () => {
+      const frames = [
+        { id: 1 },
+        { id: 2, library: "back" },
+        { id: 3, library: "back" },
+        { id: 8 }
+      ];
+
+      const selectedFrame = frames[0];
+
+      const component = render({
+        frames,
+        frameworkGroupingOn: false,
+        selectedFrame,
+        selectable: true
+      });
+      expect(component).toMatchSnapshot();
+
+      component.setProps({ frameworkGroupingOn: true });
       expect(component).toMatchSnapshot();
     });
   });

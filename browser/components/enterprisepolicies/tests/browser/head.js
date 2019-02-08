@@ -7,7 +7,8 @@
 const {
   EnterprisePolicyTesting,
   PoliciesPrefTracker,
-} = ChromeUtils.import("resource://testing-common/EnterprisePolicyTesting.jsm", {});
+} = ChromeUtils.import("resource://testing-common/EnterprisePolicyTesting.jsm", null);
+const {TestUtils} = ChromeUtils.import("resource://testing-common/TestUtils.jsm", null);
 
 PoliciesPrefTracker.start();
 

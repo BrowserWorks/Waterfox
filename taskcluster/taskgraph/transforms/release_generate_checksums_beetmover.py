@@ -37,10 +37,6 @@ CHECKSUMS_SIGNING_ARTIFACTS = [
 ]
 
 
-# Voluptuous uses marker objects as dictionary *keys*, but they are not
-# comparable, so we cast all of the keys back to regular strings
-task_description_schema = {str(k): v for k, v in task_description_schema.schema.iteritems()}
-
 release_generate_checksums_beetmover_schema = schema.extend({
     # depname is used in taskref's to identify the taskID of the unsigned things
     Required('depname', default='build'): basestring,
@@ -85,9 +81,7 @@ def make_task_description(config, jobs):
         description = "Transfer *SUMS and *SUMMARY checksums file to S3."
 
         # first dependency is the signing task for the *SUMS files
-        dependencies = {
-            str(dep_job.kind): dep_job.label
-        }
+        dependencies = {dep_job.kind: dep_job.label}
 
         if len(dep_job.dependencies) > 1:
             raise NotImplementedError(

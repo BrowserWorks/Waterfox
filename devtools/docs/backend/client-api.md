@@ -22,7 +22,7 @@ function start() {
   client = new DebuggerClient(transport);
 
   client.connect((type, traits) => {
-    // Now the client is conected to the server.
+    // Now the client is connected to the server.
     debugTab();
   });
 }
@@ -50,7 +50,7 @@ async function startClient() {
   client = new DebuggerClient(transport);
 
   client.connect((type, traits) => {
-    // Now the client is conected to the server.
+    // Now the client is connected to the server.
     debugTab();
   });
 }
@@ -99,7 +99,7 @@ async function onTab() {
   // Detach from the previous thread.
   await client.activeThread.detach();
   // Detach from the previous tab.
-  await targetFront.activeTab.detach();
+  await targetFront.detach();
   // Start debugging the new tab.
   start();
 }
@@ -164,7 +164,7 @@ function startDebugger() {
   // Start the client.
   client = new DebuggerClient(transport);
   client.connect((type, traits) => {
-    // Now the client is conected to the server.
+    // Now the client is connected to the server.
     debugTab();
   });
 }
@@ -209,7 +209,7 @@ function onTab() {
   // Detach from the previous thread.
   client.activeThread.detach(() => {
     // Detach from the previous tab.
-    client.activeTab.detach(() => {
+    client.detach(() => {
       // Start debugging the new tab.
       debugTab();
     });

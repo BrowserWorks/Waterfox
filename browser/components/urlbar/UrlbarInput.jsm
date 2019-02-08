@@ -6,7 +6,7 @@
 
 var EXPORTED_SYMBOLS = ["UrlbarInput"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   AppConstants: "resource://gre/modules/AppConstants.jsm",
@@ -17,6 +17,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   UrlbarController: "resource:///modules/UrlbarController.jsm",
   UrlbarPrefs: "resource:///modules/UrlbarPrefs.jsm",
   UrlbarQueryContext: "resource:///modules/UrlbarUtils.jsm",
+  UrlbarTokenizer: "resource:///modules/UrlbarTokenizer.jsm",
   UrlbarUtils: "resource:///modules/UrlbarUtils.jsm",
   UrlbarValueFormatter: "resource:///modules/UrlbarValueFormatter.jsm",
   UrlbarView: "resource:///modules/UrlbarView.jsm",
@@ -57,8 +58,10 @@ class UrlbarInput {
     this.valueIsTyped = false;
     this.userInitiatedFocus = false;
     this.isPrivate = PrivateBrowsingUtils.isWindowPrivate(this.window);
+    this.lastQueryContextPromise = Promise.resolve();
     this._untrimmedValue = "";
     this._suppressStartQuery = false;
+    this._actionOverrideKeyCount = 0;
 
     // Forward textbox methods and properties.
     const METHODS = ["addEventListener", "removeEventListener",
@@ -106,9 +109,11 @@ class UrlbarInput {
     this.inputField.addEventListener("mouseover", this);
     this.inputField.addEventListener("overflow", this);
     this.inputField.addEventListener("underflow", this);
+    this.inputField.addEventListener("paste", this);
     this.inputField.addEventListener("scrollend", this);
     this.inputField.addEventListener("select", this);
     this.inputField.addEventListener("keydown", this);
+    this.inputField.addEventListener("keyup", this);
     this.view.panel.addEventListener("popupshowing", this);
     this.view.panel.addEventListener("popuphidden", this);
 
@@ -299,19 +304,18 @@ class UrlbarInput {
     //   event, this.userSelectionBehavior);
 
     let where = this._whereToOpen(event);
+    let {url, postData} = UrlbarUtils.getUrlFromResult(result);
     let openParams = {
-      postData: null,
+      postData,
       allowInheritPrincipal: false,
     };
 
     // TODO bug 1521702: Call _maybeCanonizeURL for autofilled results with the
     // typed string (not the autofilled one).
 
-    let url = result.payload.url;
-
     switch (result.type) {
-      case UrlbarUtils.MATCH_TYPE.TAB_SWITCH: {
-        if (this._overrideDefaultAction(event)) {
+      case UrlbarUtils.RESULT_TYPE.TAB_SWITCH: {
+        if (this.hasAttribute("actionoverride")) {
           where = "current";
           break;
         }
@@ -322,38 +326,39 @@ class UrlbarInput {
           adoptIntoActiveWindow: UrlbarPrefs.get("switchTabs.adoptIntoActiveWindow"),
         };
 
-        if (this.window.switchToTabHavingURI(Services.io.newURI(result.payload.url), false, loadOpts) &&
+        if (this.window.switchToTabHavingURI(Services.io.newURI(url), false, loadOpts) &&
             prevTab.isEmpty) {
           this.window.gBrowser.removeTab(prevTab);
         }
         return;
       }
-      case UrlbarUtils.MATCH_TYPE.SEARCH: {
-        url = this._maybeCanonizeURL(event,
+      case UrlbarUtils.RESULT_TYPE.SEARCH: {
+        let canonizedUrl = this._maybeCanonizeURL(event,
                 result.payload.suggestion || result.payload.query);
-        if (url) {
+        if (canonizedUrl) {
+          url = canonizedUrl;
           break;
         }
-
         const actionDetails = {
           isSuggestion: !!result.payload.suggestion,
           alias: result.payload.keyword,
         };
         const engine = Services.search.getEngineByName(result.payload.engine);
-
-        [url, openParams.postData] = this._getSearchQueryUrl(
-          engine, result.payload.suggestion || result.payload.query);
         this._recordSearch(engine, event, actionDetails);
         break;
       }
-      case UrlbarUtils.MATCH_TYPE.OMNIBOX:
+      case UrlbarUtils.RESULT_TYPE.OMNIBOX: {
         // Give the extension control of handling the command.
         ExtensionSearchHandler.handleInputEntered(result.payload.keyword,
                                                   result.payload.content,
                                                   where);
         return;
+      }
     }
 
+    if (!url) {
+      throw new Error(`Invalid url for result ${JSON.stringify(result)}`);
+    }
     this._loadURL(url, where, openParams);
   }
 
@@ -363,28 +368,24 @@ class UrlbarInput {
    * @param {UrlbarResult} result The result that was selected.
    */
   setValueFromResult(result) {
-    let val;
-
-    switch (result.type) {
-      case UrlbarUtils.MATCH_TYPE.SEARCH:
-        val = result.payload.suggestion || result.payload.query;
-        break;
-      default: {
-        // FIXME: This is wrong, not all the other matches have a url. For example
-        // extension matches will call into the extension code rather than loading
-        // a url. That means we likely can't use the url as our value.
-        val = result.payload.url;
-        let uri;
-        try {
-          uri = Services.io.newURI(val);
-        } catch (ex) {}
-        if (uri) {
-          val = this.window.losslessDecodeURI(uri);
-        }
-        break;
-      }
+    if (result.autofill) {
+      this._setValueFromResultAutofill(result);
+    } else {
+      this.value = this._valueFromResultPayload(result);
     }
-    this.value = val;
+
+    // Also update userTypedValue. See bug 287996.
+    this.window.gBrowser.userTypedValue = this.value;
+
+    // The value setter clobbers the actiontype attribute, so update this after that.
+    switch (result.type) {
+      case UrlbarUtils.RESULT_TYPE.TAB_SWITCH:
+        this.setAttribute("actiontype", "switchtab");
+        break;
+      case UrlbarUtils.RESULT_TYPE.OMNIBOX:
+        this.setAttribute("actiontype", "extension");
+        break;
+    }
   }
 
   /**
@@ -409,8 +410,12 @@ class UrlbarInput {
       UrlbarPrefs.get("autoFill") &&
       (!this._lastSearchString ||
        !this._lastSearchString.startsWith(searchString));
+    this._lastSearchString = searchString;
 
-    this.controller.startQuery(new UrlbarQueryContext({
+    // TODO (Bug 1522902): This promise is necessary for tests, because some
+    // tests are not listening for completion when starting a query through
+    // other methods than startQuery (input events for example).
+    this.lastQueryContextPromise = this.controller.startQuery(new UrlbarQueryContext({
       enableAutofill,
       isPrivate: this.isPrivate,
       lastKey,
@@ -419,13 +424,27 @@ class UrlbarInput {
       providers: ["UnifiedComplete"],
       searchString,
     }));
-    this._lastSearchString = searchString;
   }
 
-  typeRestrictToken(char) {
+  /**
+   * Sets the input's value, starts a search, and opens the popup.
+   *
+   * @param {string} value
+   *   The input's value will be set to this value, and the search will
+   *   use it as its query.
+   */
+  search(value) {
     this.window.focusAndSelectUrlBar();
 
-    this.inputField.value = char + " ";
+    // If the value is a restricted token, append a space.
+    if (Object.values(UrlbarTokenizer.RESTRICT).includes(value)) {
+      this.inputField.value = value + " ";
+    } else {
+      this.inputField.value = value;
+    }
+
+    // Avoid selecting the text if this method is called twice in a row.
+    this.selectionStart = -1;
 
     let event = this.document.createEvent("UIEvents");
     event.initUIEvent("input", true, false, this.window, 0);
@@ -447,27 +466,6 @@ class UrlbarInput {
    */
   removeHiddenFocus() {
     this.textbox.classList.remove("hidden-focus");
-  }
-
-  /**
-   * Autofills the given value into the input.  That is, sets the input's value
-   * to the given value and selects the portion of the new value that comes
-   * after the current value.  The given value should therefore start with the
-   * input's current value.  If it doesn't, then this method doesn't do
-   * anything.
-   *
-   * @param {string} value
-   *   The value to autofill.
-   */
-  autofill(value) {
-    if (!value.toLocaleLowerCase()
-        .startsWith(this.textValue.toLocaleLowerCase())) {
-      return;
-    }
-    let len = this.textValue.length;
-    this.value = this.textValue + value.substring(len);
-    this.selectionStart = len;
-    this.selectionEnd = value.length;
   }
 
   // Getters and Setters below.
@@ -502,6 +500,7 @@ class UrlbarInput {
     this.valueIsTyped = false;
     this.inputField.value = val;
     this.formatValue();
+    this.removeAttribute("actiontype");
 
     // Dispatch ValueChange event for accessibility.
     let event = this.document.createEvent("Events");
@@ -512,6 +511,30 @@ class UrlbarInput {
   }
 
   // Private methods below.
+
+  _setValueFromResultAutofill(result) {
+    this.value = result.autofill.value;
+    this.selectionStart = result.autofill.selectionStart;
+    this.selectionEnd = result.autofill.selectionEnd;
+  }
+
+  _valueFromResultPayload(result) {
+    switch (result.type) {
+      case UrlbarUtils.RESULT_TYPE.SEARCH:
+        return result.payload.suggestion || result.payload.query;
+      case UrlbarUtils.RESULT_TYPE.OMNIBOX:
+        return result.payload.content;
+    }
+
+    try {
+      let uri = Services.io.newURI(result.payload.url);
+      if (uri) {
+        return this.window.losslessDecodeURI(uri);
+      }
+    } catch (ex) {}
+
+    return "";
+  }
 
   _updateTextOverflow() {
     if (!this._overflowing) {
@@ -613,28 +636,22 @@ class UrlbarInput {
     return selectedVal;
   }
 
-  _overrideDefaultAction(event) {
-    return event.shiftKey ||
-           event.altKey ||
-           (AppConstants.platform == "macosx" ?
-              event.metaKey : event.ctrlKey);
-  }
-
-  /**
-   * Get the url to load for the search query and records in telemetry that it
-   * is being loaded.
-   *
-   * @param {nsISearchEngine} engine
-   *   The engine to generate the query for.
-   * @param {string} query
-   *   The query string to search for.
-   * @returns {array}
-   *   Returns an array containing the query url (string) and the
-   *    post data (object).
-   */
-  _getSearchQueryUrl(engine, query) {
-    let submission = engine.getSubmission(query, null, "keyword");
-    return [submission.uri.spec, submission.postData];
+  _toggleActionOverride(event) {
+    if (event.keyCode == KeyEvent.DOM_VK_SHIFT ||
+        event.keyCode == KeyEvent.DOM_VK_ALT ||
+        event.keyCode == (AppConstants.platform == "macosx" ?
+                            KeyEvent.DOM_VK_META :
+                            KeyEvent.DOM_VK_CONTROL)) {
+      if (event.type == "keydown") {
+        this._actionOverrideKeyCount++;
+        this.setAttribute("actionoverride", "true");
+        this.view.panel.setAttribute("actionoverride", "true");
+      } else if (this._actionOverrideKeyCount &&
+                 --this._actionOverrideKeyCount == 0) {
+        this.removeAttribute("actionoverride");
+        this.view.panel.removeAttribute("actionoverride");
+      }
+    }
   }
 
   /**
@@ -737,7 +754,7 @@ class UrlbarInput {
     // this.value = url;
     // browser.userTypedValue = url;
     if (this.window.gInitialPages.includes(url)) {
-      browser.initialPageLoadedFromURLBar = url;
+      browser.initialPageLoadedFromUserAction = url;
     }
     try {
       UrlbarUtils.addToUrlbarHistory(url, this.window);
@@ -915,6 +932,7 @@ class UrlbarInput {
     } else {
       this.removeAttribute("usertyping");
     }
+    this.removeAttribute("actiontype");
 
     // XXX Fill in lastKey, and add anything else we need.
     this.startQuery({
@@ -966,6 +984,37 @@ class UrlbarInput {
     this._updateUrlTooltip();
   }
 
+  _on_paste(event) {
+    let originalPasteData = event.clipboardData.getData("text/plain");
+    if (!originalPasteData) {
+      return;
+    }
+
+    let oldValue = this.inputField.value;
+    let oldStart = oldValue.substring(0, this.inputField.selectionStart);
+    // If there is already non-whitespace content in the URL bar
+    // preceding the pasted content, it's not necessary to check
+    // protocols used by the pasted content:
+    if (oldStart.trim()) {
+      return;
+    }
+    let oldEnd = oldValue.substring(this.inputField.selectionEnd);
+
+    let pasteData = UrlbarUtils.stripUnsafeProtocolOnPaste(originalPasteData);
+    if (originalPasteData != pasteData) {
+      // Unfortunately we're not allowed to set the bits being pasted
+      // so cancel this event:
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      this.inputField.value = oldStart + pasteData + oldEnd;
+      // Fix up cursor/selection:
+      let newCursorPos = oldStart.length + pasteData.length;
+      this.inputField.selectionStart = newCursorPos;
+      this.inputField.selectionEnd = newCursorPos;
+    }
+  }
+
   _on_scrollend(event) {
     this._updateTextOverflow();
   }
@@ -976,6 +1025,11 @@ class UrlbarInput {
 
   _on_keydown(event) {
     this.controller.handleKeyNavigation(event);
+    this._toggleActionOverride(event);
+  }
+
+  _on_keyup(event) {
+    this._toggleActionOverride(event);
   }
 
   _on_popupshowing() {

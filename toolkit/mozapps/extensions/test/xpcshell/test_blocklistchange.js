@@ -25,8 +25,6 @@
 
 const URI_EXTENSION_BLOCKLIST_DIALOG = "chrome://mozapps/content/extensions/blocklist.xul";
 
-ChromeUtils.import("resource://testing-common/MockRegistrar.jsm");
-
 // Allow insecure updates
 Services.prefs.setBoolPref("extensions.checkUpdateSecurity", false);
 
@@ -61,7 +59,6 @@ var WindowWatcher = {
 
     // run the code after the blocklist is closed
     Services.obs.notifyObservers(null, "addon-blocklist-closed");
-
   },
 
   QueryInterface: ChromeUtils.generateQI(["nsIWindowWatcher"]),
@@ -161,7 +158,7 @@ function Pmanual_update(aVersion) {
   const names = ["soft1", "soft2", "soft3", "soft4", "hard", "regexp"];
   return Promise.all(names.map(async name => {
     let url = `http://example.com/addons/blocklist_${name}_${aVersion}.xpi`;
-    let install = await AddonManager.getInstallForURL(url, "application/x-xpinstall");
+    let install = await AddonManager.getInstallForURL(url);
 
     // installAddonFromAOM() does more checking than install.install().
     // In particular, it will refuse to install an incompatible addon.
@@ -352,7 +349,7 @@ add_task(async function update_schema_2() {
 
   await changeXPIDBVersion(100);
   gAppInfo.version = "2";
-  let bsPassBlocklist = ChromeUtils.import("resource://gre/modules/Blocklist.jsm", {});
+  let bsPassBlocklist = ChromeUtils.import("resource://gre/modules/Blocklist.jsm", null);
   Object.defineProperty(bsPassBlocklist, "gAppVersion", {value: "2"});
   await promiseStartupManager();
 
@@ -378,7 +375,7 @@ add_task(async function update_schema_3() {
   await promiseShutdownManager();
   await changeXPIDBVersion(100);
   gAppInfo.version = "2.5";
-  let bsPassBlocklist = ChromeUtils.import("resource://gre/modules/Blocklist.jsm", {});
+  let bsPassBlocklist = ChromeUtils.import("resource://gre/modules/Blocklist.jsm", null);
   Object.defineProperty(bsPassBlocklist, "gAppVersion", {value: "2.5"});
   await promiseStartupManager();
 
@@ -413,7 +410,7 @@ add_task(async function update_schema_5() {
 
   await changeXPIDBVersion(100);
   gAppInfo.version = "1";
-  let bsPassBlocklist = ChromeUtils.import("resource://gre/modules/Blocklist.jsm", {});
+  let bsPassBlocklist = ChromeUtils.import("resource://gre/modules/Blocklist.jsm", null);
   Object.defineProperty(bsPassBlocklist, "gAppVersion", {value: "1"});
   await promiseStartupManager();
 

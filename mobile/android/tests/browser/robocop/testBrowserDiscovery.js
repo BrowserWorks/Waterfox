@@ -5,7 +5,7 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 // We use a global variable to track the <browser> where the tests are happening
 var browser;
@@ -24,7 +24,8 @@ add_test(function setup_browser() {
 
   let url = "http://mochi.test:8888/tests/robocop/link_discovery.html";
   browser = BrowserApp.addTab(url, { selected: true, parentId: BrowserApp.selectedTab.id }).browser;
-  browser.addEventListener("load", function(event) {
+  browser.addEventListener("load", async function(event) {
+    await Services.search.init();
     Services.tm.dispatchToMainThread(run_next_test);
   }, {capture: true, once: true});
 });
@@ -58,9 +59,6 @@ function execute_search_test(test) {
 }
 
 function prep_search_test(test) {
-  // Syncrhonously load the search service.
-  Services.search.getVisibleEngines();
-
   setHandlerFunc(execute_search_test, test);
 
   let rel = test.rel || "search";

@@ -30,13 +30,13 @@ StackingContextHelper::StackingContextHelper(
       mScale(1.0f, 1.0f),
       mDeferredTransformItem(aParams.mDeferredTransformItem),
       mIsPreserve3D(aParams.transform_style == wr::TransformStyle::Preserve3D),
-      mRasterizeLocally(aParams.mAnimated || aParentSC.mRasterizeLocally) {
+      mRasterizeLocally(aParams.mRasterizeLocally || aParentSC.mRasterizeLocally) {
   // Compute scale for fallback rendering. We don't try to guess a scale for 3d
   // transformed items
   gfx::Matrix transform2d;
   if (aParams.mBoundTransform &&
       aParams.mBoundTransform->CanDraw2D(&transform2d) &&
-      aParams.reference_frame_kind != wr::ReferenceFrameKind::Perspective &&
+      aParams.reference_frame_kind != wr::WrReferenceFrameKind::Perspective &&
       !aParentSC.mIsPreserve3D) {
     mInheritedTransform = transform2d * aParentSC.mInheritedTransform;
 
@@ -63,6 +63,7 @@ StackingContextHelper::StackingContextHelper(
           ? wr::RasterSpace::Local(std::max(mScale.width, mScale.height))
           : wr::RasterSpace::Screen();
 
+  MOZ_ASSERT(!aParams.clip.IsNone());
   mReferenceFrameId = mBuilder->PushStackingContext(
       aParams, wr::ToLayoutRect(aBounds), rasterSpace);
 

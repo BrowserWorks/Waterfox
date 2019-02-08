@@ -1,11 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-ChromeUtils.import("resource://services-sync/constants.js");
-ChromeUtils.import("resource://services-sync/engines/passwords.js");
-ChromeUtils.import("resource://services-sync/engines.js");
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/util.js");
+const {PasswordEngine} = ChromeUtils.import("resource://services-sync/engines/passwords.js");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
 
 let engine;
 let store;
@@ -79,7 +76,6 @@ add_task(async function test_tracking() {
     changes = await tracker.getChangedIDs();
     do_check_empty(changes);
     Assert.equal(tracker.score, 0);
-
   } finally {
     _("Clean up.");
     await store.wipe();

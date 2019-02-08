@@ -20,7 +20,7 @@ from .parameters import Parameters, get_version, get_app_version
 from .taskgraph import TaskGraph
 from .try_option_syntax import parse_message
 from .util.schema import validate_schema, Schema
-from taskgraph.util.hg import get_hg_revision_branch
+from taskgraph.util.hg import get_hg_revision_branch, get_hg_commit_message
 from taskgraph.util.partials import populate_release_history
 from taskgraph.util.yaml import load_yaml
 from voluptuous import Required, Optional
@@ -46,7 +46,12 @@ PER_PROJECT_PARAMETERS = {
     },
 
     'cedar': {
-        'target_tasks_method': 'cedar_tasks',
+        'target_tasks_method': 'default',
+    },
+
+    'oak': {
+        'target_tasks_method': 'nightly_desktop',
+        'release_type': 'nightly-oak',
     },
 
     'graphics': {
@@ -128,6 +133,17 @@ def full_task_graph_to_runnable_jobs(full_task_json):
     return runnable_jobs
 
 
+def try_syntax_from_message(message):
+    """
+    Parse the try syntax out of a commit message, returning '' if none is
+    found.
+    """
+    try_idx = message.find('try:')
+    if try_idx == -1:
+        return ''
+    return message[try_idx:].split('\n', 1)[0]
+
+
 def taskgraph_decision(options, parameters=None):
     """
     Run the decision task.  This function implements `mach taskgraph decision`,
@@ -188,7 +204,6 @@ def get_decision_parameters(config, options):
         'head_repository',
         'head_rev',
         'head_ref',
-        'message',
         'project',
         'pushlog_id',
         'pushdate',
@@ -217,6 +232,8 @@ def get_decision_parameters(config, options):
     parameters['build_number'] = 1
     parameters['version'] = get_version(product_dir)
     parameters['app_version'] = get_app_version(product_dir)
+    parameters['message'] = try_syntax_from_message(
+            get_hg_commit_message(os.path.join(GECKO, product_dir)))
     parameters['hg_branch'] = get_hg_revision_branch(GECKO, revision=parameters['head_rev'])
     parameters['next_version'] = None
     parameters['release_type'] = ''

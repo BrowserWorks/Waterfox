@@ -3,9 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/GeckoViewChildModule.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {GeckoViewChildModule} = ChromeUtils.import("resource://gre/modules/GeckoViewChildModule.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   BrowserUtils: "resource://gre/modules/BrowserUtils.jsm",
@@ -50,6 +50,16 @@ class GeckoViewNavigationChild extends GeckoViewChildModule {
     debug `handleLoadError: uri=${aUri && aUri.spec}
                              uri2=${aUri && aUri.displaySpec}
                              error=${aError}`;
+
+    if (aUri && LoadURIDelegate.isSafeBrowsingError(aError)) {
+      const message = {
+        type: "GeckoView:ContentBlocked",
+        uri: aUri.spec,
+        error: aError,
+      };
+
+      this.eventDispatcher.sendRequest(message);
+    }
 
     if (!this.enabled) {
       Components.returnCode = Cr.NS_ERROR_ABORT;

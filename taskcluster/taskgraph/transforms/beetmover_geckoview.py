@@ -37,8 +37,6 @@ _MOZ_UPDATE_CHANNEL_PER_BRANCH = {
     'maple': '-nightly-maple',
 }
 
-task_description_schema = {str(k): v for k, v in task_description_schema.schema.iteritems()}
-
 beetmover_description_schema = schema.extend({
     Required('depname', default='build'): basestring,
     Optional('label'): basestring,
@@ -98,8 +96,7 @@ def make_task_description(config, jobs):
             )
         )
 
-        dependent_kind = str(dep_job.kind)
-        dependencies = {dependent_kind: dep_job.label}
+        dependencies = {dep_job.kind: dep_job.label}
 
         attributes = copy_attributes_from_dependent_job(dep_job)
         attributes.update(job.get('attributes', {}))

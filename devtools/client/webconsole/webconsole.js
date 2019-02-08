@@ -253,7 +253,11 @@ WebConsole.prototype = {
     }
 
     if (this.parserService && expression.includes("await ")) {
-      return this.parserService.mapExpression(expression);
+      const shouldMapBindings = false;
+      const shouldMapAwait = true;
+      const res = this.parserService.mapExpression(
+        expression, null, null, shouldMapBindings, shouldMapAwait);
+      return res;
     }
 
     return null;
@@ -320,7 +324,7 @@ WebConsole.prototype = {
 
       if (!this._browserConsole) {
         try {
-          await this.target.activeTab.focus();
+          await this.target.focus();
         } catch (ex) {
           // Tab focus can fail if the tab or target is closed.
         }

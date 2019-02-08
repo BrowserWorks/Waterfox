@@ -95,8 +95,8 @@
 
 var EXPORTED_SYMBOLS = ["ActorManagerParent"];
 
-ChromeUtils.import("resource://gre/modules/ExtensionUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {ExtensionUtils} = ChromeUtils.import("resource://gre/modules/ExtensionUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const {DefaultMap} = ExtensionUtils;
 
@@ -182,6 +182,15 @@ let ACTORS = {
       messages: [
         "Finder:Initialize",
       ],
+    },
+  },
+
+  KeyPressEventModelChecker: {
+    child: {
+      module: "resource://gre/actors/KeyPressEventModelCheckerChild.jsm",
+      events: {
+        "CheckKeyPressEventModel": {capture: true, mozSystemGroup: true},
+      },
     },
   },
 

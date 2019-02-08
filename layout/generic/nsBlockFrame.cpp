@@ -289,7 +289,7 @@ NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(BlockEndEdgeOfChildrenProperty, nscoord)
 
 nsBlockFrame* NS_NewBlockFrame(nsIPresShell* aPresShell,
                                ComputedStyle* aStyle) {
-  return new (aPresShell) nsBlockFrame(aStyle);
+  return new (aPresShell) nsBlockFrame(aStyle, aPresShell->GetPresContext());
 }
 
 nsBlockFrame* NS_NewBlockFormattingContext(nsIPresShell* aPresShell,
@@ -487,7 +487,8 @@ bool nsBlockFrame::GetNaturalBaselineBOffset(
     if (line->IsBlock()) {
       nscoord offset;
       nsIFrame* kid = line->mFirstChild;
-      if (kid->GetVerticalAlignBaseline(aWM, &offset)) {
+      if (!aWM.IsOrthogonalTo(kid->GetWritingMode()) &&
+          kid->GetVerticalAlignBaseline(aWM, &offset)) {
         // Ignore relative positioning for baseline calculations.
         const nsSize& sz = line->mContainerSize;
         offset += kid->GetLogicalNormalPosition(aWM, sz).B(aWM);
@@ -3645,7 +3646,7 @@ void nsBlockFrame::ReflowBlockFrame(BlockReflowInput& aState,
 #ifdef NOISY_BLOCK_DIR_MARGINS
             ListTag(stdout);
             printf(": reflow incomplete, frame=");
-            nsFrame::ListTag(stdout, mFrame);
+            frame->ListTag(stdout);
             printf(" prevBEndMargin=%d, setting to zero\n",
                    aState.mPrevBEndMargin.get());
 #endif
@@ -3671,7 +3672,7 @@ void nsBlockFrame::ReflowBlockFrame(BlockReflowInput& aState,
 #ifdef NOISY_BLOCK_DIR_MARGINS
             ListTag(stdout);
             printf(": reflow complete but overflow incomplete for ");
-            nsFrame::ListTag(stdout, mFrame);
+            frame->ListTag(stdout);
             printf(" prevBEndMargin=%d collapsedBEndMargin=%d\n",
                    aState.mPrevBEndMargin.get(), collapsedBEndMargin.get());
 #endif
@@ -3681,7 +3682,7 @@ void nsBlockFrame::ReflowBlockFrame(BlockReflowInput& aState,
 #ifdef NOISY_BLOCK_DIR_MARGINS
           ListTag(stdout);
           printf(": reflow complete for ");
-          nsFrame::ListTag(stdout, mFrame);
+          frame->ListTag(stdout);
           printf(" prevBEndMargin=%d collapsedBEndMargin=%d\n",
                  aState.mPrevBEndMargin.get(), collapsedBEndMargin.get());
 #endif
@@ -3690,7 +3691,7 @@ void nsBlockFrame::ReflowBlockFrame(BlockReflowInput& aState,
 #ifdef NOISY_BLOCK_DIR_MARGINS
         ListTag(stdout);
         printf(": frame=");
-        nsFrame::ListTag(stdout, mFrame);
+        frame->ListTag(stdout);
         printf(" carriedOutBEndMargin=%d collapsedBEndMargin=%d => %d\n",
                brc.GetCarriedOutBEndMargin().get(), collapsedBEndMargin.get(),
                aState.mPrevBEndMargin.get());
@@ -4068,7 +4069,7 @@ void nsBlockFrame::ReflowInlineFrame(BlockReflowInput& aState,
 #ifdef NOISY_FIRST_LETTER
   ListTag(stdout);
   printf(": reflowing ");
-  nsFrame::ListTag(stdout, aFrame);
+  aFrame->ListTag(stdout);
   printf(" reflowingFirstLetter=%s\n",
          aLineLayout.GetFirstLetterStyleOK() ? "on" : "off");
 #endif
@@ -4088,7 +4089,7 @@ void nsBlockFrame::ReflowInlineFrame(BlockReflowInput& aState,
   }
 
 #ifdef REALLY_NOISY_REFLOW
-  nsFrame::ListTag(stdout, aFrame);
+  aFrame->ListTag(stdout);
   printf(": status=%s\n", ToString(frameReflowStatus).c_str());
 #endif
 
@@ -4296,7 +4297,7 @@ void nsBlockFrame::SplitLine(BlockReflowInput& aState,
     printf("split line: from line=%p pushCount=%d aFrame=",
            static_cast<void*>(aLine.get()), pushCount);
     if (aFrame) {
-      nsFrame::ListTag(stdout, aFrame);
+      aFrame->ListTag(stdout);
     } else {
       printf("(null)");
     }
@@ -5070,10 +5071,12 @@ void nsBlockFrame::AppendFrames(ChildListID aListID, nsFrameList& aFrameList) {
 #ifdef NOISY_REFLOW_REASON
   ListTag(stdout);
   printf(": append ");
-  nsFrame::ListTag(stdout, aFrameList);
+  for (nsIFrame* frame : aFrameList) {
+    frame->ListTag(out);
+  }
   if (lastKid) {
     printf(" after ");
-    nsFrame::ListTag(stdout, lastKid);
+    lastKid->ListTag(stdout);
   }
   printf("\n");
 #endif
@@ -5111,10 +5114,12 @@ void nsBlockFrame::InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
 #ifdef NOISY_REFLOW_REASON
   ListTag(stdout);
   printf(": insert ");
-  nsFrame::ListTag(stdout, aFrameList);
+  for (nsIFrame* frame : aFrameList) {
+    frame->ListTag(out);
+  }
   if (aPrevFrame) {
     printf(" after ");
-    nsFrame::ListTag(stdout, aPrevFrame);
+    aPrevFrame->ListTag(stdout);
   }
   printf("\n");
 #endif
@@ -5131,7 +5136,7 @@ void nsBlockFrame::RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) {
 #ifdef NOISY_REFLOW_REASON
   ListTag(stdout);
   printf(": remove ");
-  nsFrame::ListTag(stdout, aOldFrame);
+  aOldFrame->ListTag(stdout);
   printf("\n");
 #endif
 
@@ -5752,7 +5757,7 @@ void nsBlockFrame::DoRemoveFrameInternal(nsIFrame* aDeletedFrame,
 #ifdef NOISY_REMOVE_FRAME
     printf("DoRemoveFrame: %s line=%p frame=",
            searchingOverflowList ? "overflow" : "normal", line.get());
-    nsFrame::ListTag(stdout, aDeletedFrame);
+    aDeletedFrame->ListTag(stdout);
     printf(" prevSibling=%p deletedNextContinuation=%p\n",
            aDeletedFrame->GetPrevSibling(), deletedNextContinuation);
 #endif
@@ -6779,10 +6784,13 @@ void nsBlockFrame::CreateBulletFrameForListItem() {
                                 NS_BLOCK_FRAME_HAS_OUTSIDE_BULLET)) == 0,
              "How can we have a bullet already?");
 
-  nsIPresShell* shell = PresShell();
+  nsPresContext* pc = PresContext();
+  nsIPresShell* shell = pc->PresShell();
   const nsStyleList* styleList = StyleList();
+  CounterStyle* style =
+      pc->CounterStyleManager()->ResolveCounterStyle(styleList->mCounterStyle);
 
-  CSSPseudoElementType pseudoType = styleList->mCounterStyle->IsBullet()
+  CSSPseudoElementType pseudoType = style->IsBullet()
                                         ? CSSPseudoElementType::mozListBullet
                                         : CSSPseudoElementType::mozListNumber;
 
@@ -6790,7 +6798,7 @@ void nsBlockFrame::CreateBulletFrameForListItem() {
       ResolveBulletStyle(pseudoType, shell->StyleSet());
 
   // Create bullet frame
-  nsBulletFrame* bullet = new (shell) nsBulletFrame(kidSC);
+  nsBulletFrame* bullet = new (shell) nsBulletFrame(kidSC, pc);
   bullet->Init(mContent, this, nullptr);
 
   // If the list bullet frame should be positioned inside then add
@@ -6813,7 +6821,7 @@ bool nsBlockFrame::BulletIsEmpty() const {
                    HasOutsideBullet(),
                "should only care when we have an outside bullet");
   const nsStyleList* list = StyleList();
-  return list->mCounterStyle->IsNone() && !list->GetListStyleImage();
+  return list->mCounterStyle.IsNone() && !list->GetListStyleImage();
 }
 
 void nsBlockFrame::GetSpokenBulletText(nsAString& aText) const {

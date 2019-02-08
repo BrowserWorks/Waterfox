@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 const permissionExceptionsL10n = {
   "trackingprotection": {
@@ -420,8 +420,11 @@ var gPermissionManager = {
 
       case "statusCol":
         sortFunc = (a, b) => {
-          return a.querySelector(".website-capability-value").getAttribute("value") >
-                 b.querySelector(".website-capability-value").getAttribute("value");
+          // The capabilities values ("Allow" and "Block") are localized asynchronously.
+          // Sort based on the guaranteed-present localization ID instead, note that the
+          // ascending/descending arrow may be pointing the wrong way.
+          return a.querySelector(".website-capability-value").getAttribute("data-l10n-id") >
+                 b.querySelector(".website-capability-value").getAttribute("data-l10n-id");
         };
         break;
     }

@@ -19,6 +19,7 @@
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/Likely.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/dom/MaybeCrossOriginObject.h"
 #include "nsContentUtils.h"
 #include "nsXULAppAPI.h"
 
@@ -326,34 +327,83 @@ void WrapperFactory::PrepareForWrapping(JSContext* cx, HandleObject scope,
   retObj.set(waive ? WaiveXray(cx, obj) : obj);
 }
 
+// This check is completely symmetric, so we don't need to keep track of origin
+// vs target here.  Two compartments may have had transparent CCWs between them
+// only if they are same-origin (ignoring document.domain) or have both had
+// document.domain set at some point and are same-site.  In either case they
+// will have the same SiteIdentifier, so check that first.
+static bool CompartmentsMayHaveHadTransparentCCWs(
+    CompartmentPrivate* private1, CompartmentPrivate* private2) {
+  auto& info1 = private1->originInfo;
+  auto& info2 = private2->originInfo;
+
+  if (!info1.SiteRef().Equals(info2.SiteRef())) {
+    return false;
+  }
+
+  return info1.GetPrincipalIgnoringDocumentDomain()->FastEquals(
+             info2.GetPrincipalIgnoringDocumentDomain()) ||
+         (info1.HasChangedDocumentDomain() && info2.HasChangedDocumentDomain());
+}
+
 #ifdef DEBUG
 static void DEBUG_CheckUnwrapSafety(HandleObject obj,
                                     const js::Wrapper* handler,
-                                    JS::Realm* origin,
-                                    JS::Compartment* target) {
-  if (!js::AllowNewWrapper(target, obj)) {
+                                    JS::Realm* origin, JS::Realm* target) {
+  JS::Compartment* targetCompartment = JS::GetCompartmentForRealm(target);
+  if (!js::AllowNewWrapper(targetCompartment, obj)) {
     // The JS engine should have returned a dead wrapper in this case and we
     // shouldn't even get here.
     MOZ_ASSERT_UNREACHABLE("CheckUnwrapSafety called for a dead wrapper");
-  } else if (AccessCheck::isChrome(target) ||
-             xpc::IsUniversalXPConnectEnabled(target)) {
+  } else if (AccessCheck::isChrome(targetCompartment) ||
+             xpc::IsUniversalXPConnectEnabled(targetCompartment)) {
     // If the caller is chrome (or effectively so), unwrap should always be
-    // allowed.
-    MOZ_ASSERT(!handler->hasSecurityPolicy());
+    // allowed, but we might have a CrossOriginObjectWrapper here which allows
+    // it dynamically.
+    MOZ_ASSERT(!handler->hasSecurityPolicy() ||
+               handler == &CrossOriginObjectWrapper::singleton);
   } else if (RealmPrivate::Get(origin)->forcePermissiveCOWs) {
     // Similarly, if this is a privileged scope that has opted to make itself
     // accessible to the world (allowed only during automation), unwrap should
-    // be allowed.
-    MOZ_ASSERT(!handler->hasSecurityPolicy());
+    // be allowed.  Again, it might be allowed dynamically.
+    MOZ_ASSERT(!handler->hasSecurityPolicy() ||
+               handler == &CrossOriginObjectWrapper::singleton);
   } else {
     // Otherwise, it should depend on whether the target subsumes the origin.
-    JS::Compartment* originComp = JS::GetCompartmentForRealm(origin);
     bool subsumes =
         (OriginAttributes::IsRestrictOpenerAccessForFPI()
-             ? AccessCheck::subsumesConsideringDomain(target, originComp)
+             ? AccessCheck::subsumesConsideringDomain(target, origin)
              : AccessCheck::subsumesConsideringDomainIgnoringFPD(target,
-                                                                 originComp));
-    MOZ_ASSERT(handler->hasSecurityPolicy() == !subsumes);
+                                                                 origin));
+    if (!subsumes) {
+      // If the target (which is where the wrapper lives) does not subsume the
+      // origin (which is where the wrapped object lives), then we should
+      // generally have a security check on the wrapper here.  There is one
+      // exception, though: things that used to be same-origin and then stopped
+      // due to document.domain changes.  In that case we will have a
+      // transparent cross-compartment wrapper here even though "subsumes" is no
+      // longer true.
+      CompartmentPrivate* originCompartmentPrivate =
+          CompartmentPrivate::Get(origin);
+      CompartmentPrivate* targetCompartmentPrivate =
+          CompartmentPrivate::Get(target);
+      if (!originCompartmentPrivate->wantXrays &&
+          !targetCompartmentPrivate->wantXrays &&
+          CompartmentsMayHaveHadTransparentCCWs(originCompartmentPrivate,
+                                                targetCompartmentPrivate)) {
+        // We should have a transparent CCW, unless we have a cross-origin
+        // object, in which case it will be a CrossOriginObjectWrapper.
+        MOZ_ASSERT(handler == &CrossCompartmentWrapper::singleton ||
+                   handler == &CrossOriginObjectWrapper::singleton);
+      } else {
+        MOZ_ASSERT(handler->hasSecurityPolicy());
+      }
+    } else {
+      // Even if target subsumes origin, we might have a wrapper with a security
+      // policy here, if it happens to be a CrossOriginObjectWrapper.
+      MOZ_ASSERT(!handler->hasSecurityPolicy() ||
+                 handler == &CrossOriginObjectWrapper::singleton);
+    }
   }
 }
 #else
@@ -362,6 +412,15 @@ static void DEBUG_CheckUnwrapSafety(HandleObject obj,
 #endif
 
 const CrossOriginObjectWrapper CrossOriginObjectWrapper::singleton;
+
+bool CrossOriginObjectWrapper::dynamicCheckedUnwrapAllowed(
+    HandleObject obj, JSContext* cx) const {
+  MOZ_ASSERT(js::GetProxyHandler(obj) == this,
+             "Why are we getting called for some random object?");
+  JSObject* target = wrappedObject(obj);
+  return dom::MaybeCrossOriginObjectMixins::IsPlatformObjectSameOrigin(cx,
+                                                                       target);
+}
 
 static const Wrapper* SelectWrapper(bool securityWrapper, XrayType xrayType,
                                     bool waiveXrays, JSObject* obj) {
@@ -394,12 +453,6 @@ static const Wrapper* SelectWrapper(bool securityWrapper, XrayType xrayType,
     return &PermissiveXrayOpaque::singleton;
   }
 
-  // This is a security wrapper. Use the security versions and filter.
-  if (xrayType == XrayForDOMObject &&
-      IdentifyCrossOriginObject(obj) != CrossOriginOpaque) {
-    return &CrossOriginObjectWrapper::singleton;
-  }
-
   // There's never any reason to expose other objects to non-subsuming actors.
   // Just use an opaque wrapper in these cases.
   //
@@ -424,8 +477,9 @@ JSObject* WrapperFactory::Rewrap(JSContext* cx, HandleObject existing,
   MOZ_ASSERT(dom::IsJSAPIActive());
 
   // Compute the information we need to select the right wrapper.
-  JS::Compartment* origin = js::GetObjectCompartment(obj);
-  JS::Compartment* target = js::GetContextCompartment(cx);
+  JS::Realm* origin = js::GetNonCCWObjectRealm(obj);
+  JS::Realm* target = js::GetContextRealm(cx);
+  MOZ_ASSERT(target, "Why is our JSContext not in a Realm?");
   bool originIsChrome = AccessCheck::isChrome(origin);
   bool targetIsChrome = AccessCheck::isChrome(target);
   bool originSubsumesTarget =
@@ -445,8 +499,11 @@ JSObject* WrapperFactory::Rewrap(JSContext* cx, HandleObject existing,
   CompartmentPrivate* targetCompartmentPrivate =
       CompartmentPrivate::Get(target);
 
-  JS::Realm* originRealm = js::GetNonCCWObjectRealm(obj);
-  RealmPrivate* originRealmPrivate = RealmPrivate::Get(originRealm);
+  RealmPrivate* originRealmPrivate = RealmPrivate::Get(origin);
+
+  // Track whether we decided to use a transparent wrapper because of
+  // document.domain usage, so we don't override that decision.
+  bool isTransparentWrapperDueToDocumentDomain = false;
 
   //
   // First, handle the special cases.
@@ -491,6 +548,31 @@ JSObject* WrapperFactory::Rewrap(JSContext* cx, HandleObject existing,
     }
   }
 
+  // Special handling for the web's cross-origin objects (WindowProxy and
+  // Location).  We only need or want to do this in web-like contexts, where all
+  // security relationships are symmetric and there are no forced Xrays.
+  else if (originSubsumesTarget == targetSubsumesOrigin &&
+           // Check for the more rare case of cross-origin objects before doing
+           // the more-likely-to-pass checks for wantXrays.
+           IsCrossOriginAccessibleObject(obj) &&
+           (!targetSubsumesOrigin || (!originCompartmentPrivate->wantXrays &&
+                                      !targetCompartmentPrivate->wantXrays))) {
+    wrapper = &CrossOriginObjectWrapper::singleton;
+  }
+
+  // Special handling for other web objects.  Again, we only want this in
+  // web-like contexts (symmetric security relationships, no forced Xrays).  In
+  // this situation, if the two compartments may ever have had transparent CCWs
+  // between them, we want to keep using transparent CCWs.
+  else if (originSubsumesTarget == targetSubsumesOrigin &&
+           !originCompartmentPrivate->wantXrays &&
+           !targetCompartmentPrivate->wantXrays &&
+           CompartmentsMayHaveHadTransparentCCWs(originCompartmentPrivate,
+                                                 targetCompartmentPrivate)) {
+    isTransparentWrapperDueToDocumentDomain = true;
+    wrapper = &CrossCompartmentWrapper::singleton;
+  }
+
   //
   // Now, handle the regular cases.
   //
@@ -523,7 +605,8 @@ JSObject* WrapperFactory::Rewrap(JSContext* cx, HandleObject existing,
     wrapper = SelectWrapper(securityWrapper, xrayType, waiveXrays, obj);
   }
 
-  if (!targetSubsumesOrigin && !originRealmPrivate->forcePermissiveCOWs) {
+  if (!targetSubsumesOrigin && !originRealmPrivate->forcePermissiveCOWs &&
+      !isTransparentWrapperDueToDocumentDomain) {
     // Do a belt-and-suspenders check against exposing eval()/Function() to
     // non-subsuming content.  But don't worry about doing it in the
     // SpecialPowers case.
@@ -538,7 +621,7 @@ JSObject* WrapperFactory::Rewrap(JSContext* cx, HandleObject existing,
     }
   }
 
-  DEBUG_CheckUnwrapSafety(obj, wrapper, originRealm, target);
+  DEBUG_CheckUnwrapSafety(obj, wrapper, origin, target);
 
   if (existing) {
     return Wrapper::Renew(existing, obj, wrapper);

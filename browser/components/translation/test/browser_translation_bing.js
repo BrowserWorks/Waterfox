@@ -9,8 +9,8 @@
 const kClientIdPref = "browser.translation.bing.clientIdOverride";
 const kClientSecretPref = "browser.translation.bing.apiKeyOverride";
 
-const {BingTranslator} = ChromeUtils.import("resource:///modules/translation/BingTranslator.jsm", {});
-const {TranslationDocument} = ChromeUtils.import("resource:///modules/translation/TranslationDocument.jsm", {});
+const {BingTranslator} = ChromeUtils.import("resource:///modules/translation/BingTranslator.jsm");
+const {TranslationDocument} = ChromeUtils.import("resource:///modules/translation/TranslationDocument.jsm");
 
 add_task(async function setup() {
   Services.prefs.setCharPref(kClientIdPref, "testClient");
@@ -26,7 +26,6 @@ add_task(async function setup() {
  * Checks if the translation is happening.
  */
 add_task(async function test_bing_translation() {
-
   // Ensure the correct client id is used for authentication.
   Services.prefs.setCharPref(kClientIdPref, "testClient");
 
@@ -39,8 +38,10 @@ add_task(async function test_bing_translation() {
   let browser = tab.linkedBrowser;
 
   await ContentTask.spawn(browser, null, async function() {
-    ChromeUtils.import("resource:///modules/translation/BingTranslator.jsm");
-    ChromeUtils.import("resource:///modules/translation/TranslationDocument.jsm");
+    // eslint-disable-next-line no-shadow
+    const {BingTranslator} = ChromeUtils.import("resource:///modules/translation/BingTranslator.jsm");
+    // eslint-disable-next-line no-shadow
+    const {TranslationDocument} = ChromeUtils.import("resource:///modules/translation/TranslationDocument.jsm");
 
     let client = new BingTranslator(
       new TranslationDocument(content.document), "fr", "en");
@@ -61,7 +62,6 @@ add_task(async function test_bing_translation() {
  *
  */
 add_task(async function test_handling_out_of_valid_key_error() {
-
   // Simulating request from inactive subscription.
   Services.prefs.setCharPref(kClientIdPref, "testInactive");
 
@@ -74,8 +74,10 @@ add_task(async function test_handling_out_of_valid_key_error() {
   let browser = tab.linkedBrowser;
 
   await ContentTask.spawn(browser, null, async function() {
-    ChromeUtils.import("resource:///modules/translation/BingTranslator.jsm");
-    ChromeUtils.import("resource:///modules/translation/TranslationDocument.jsm");
+    // eslint-disable-next-line no-shadow
+    const {BingTranslator} = ChromeUtils.import("resource:///modules/translation/BingTranslator.jsm");
+    // eslint-disable-next-line no-shadow
+    const {TranslationDocument} = ChromeUtils.import("resource:///modules/translation/TranslationDocument.jsm");
 
     let client = new BingTranslator(
       new TranslationDocument(content.document), "fr", "en");

@@ -8,7 +8,7 @@ const Cm = Components.manager;
 
 const CONTRACT_ID = "@mozilla.org/content-permission/prompt;1";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
 var oldClassID, oldFactory;
@@ -64,7 +64,6 @@ MockPermissionPromptInstance.prototype = {
   promptResult: Ci.nsIPermissionManager.UNKNOWN_ACTION,
 
   prompt(request) {
-
     let perms = request.types.QueryInterface(Ci.nsIArray);
     for (let idx = 0; idx < perms.length; idx++) {
       let perm = perms.queryElementAt(idx, Ci.nsIContentPermissionType);

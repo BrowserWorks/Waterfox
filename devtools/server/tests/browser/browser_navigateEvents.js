@@ -98,9 +98,8 @@ function onMessage({ data }) {
 async function connectAndAttachTab(tab) {
   const target = await TargetFactory.forTab(tab);
   await target.attach();
-  const targetFront = target.activeTab;
-  const actorID = targetFront.targetForm.actor;
-  targetFront.on("tabNavigated", function(packet) {
+  const actorID = target.targetForm.actor;
+  target.on("tabNavigated", function(packet) {
     assertEvent("tabNavigated", packet);
   });
   return { target, actorID };
@@ -123,7 +122,7 @@ add_task(async function() {
   const tab = gBrowser.getTabForBrowser(browser);
   const { target, actorID } = await connectAndAttachTab(tab);
   await ContentTask.spawn(browser, [actorID], async function(actorId) {
-    const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm", {});
+    const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
     const { DebuggerServer } = require("devtools/server/main");
     const EventEmitter = require("devtools/shared/event-emitter");
 

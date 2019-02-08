@@ -7,6 +7,7 @@ package org.mozilla.geckoview.test
 
 import android.os.Parcel
 import android.support.test.InstrumentationRegistry
+import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.test.rule.GeckoSessionTestRule
 
@@ -47,7 +48,9 @@ open class BaseSessionTest(noErrorCollector: Boolean = false) {
         const val VIDEO_BAD_PATH = "/assets/www/badVideoPath.html"
         const val UNKNOWN_HOST_URI = "http://www.test.invalid/"
         const val FULLSCREEN_PATH = "/assets/www/fullscreen.html"
-        const val VEIWPORT_PATH = "/assets/www/viewport.html"
+        const val VIEWPORT_PATH = "/assets/www/viewport.html"
+        const val IFRAME_REDIRECT_LOCAL = "/assets/www/iframe_redirect_local.html"
+        const val IFRAME_REDIRECT_AUTOMATION = "/assets/www/iframe_redirect_automation.html"
     }
 
     @get:Rule val sessionRule = GeckoSessionTestRule()
@@ -99,6 +102,22 @@ open class BaseSessionTest(noErrorCollector: Boolean = false) {
         }
     }
 
+    inline fun GeckoRuntimeSettings.toParcel(lambda: (Parcel) -> Unit) {
+        val parcel = Parcel.obtain()
+        try {
+            this.writeToParcel(parcel, 0)
+
+            val pos = parcel.dataPosition()
+            parcel.setDataPosition(0)
+
+            lambda(parcel)
+
+            assertThat("Read parcel matches written parcel",
+                       parcel.dataPosition(), Matchers.equalTo(pos))
+        } finally {
+            parcel.recycle()
+        }
+    }
 
     fun GeckoSession.open() =
             sessionRule.openSession(this)

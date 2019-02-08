@@ -3613,10 +3613,24 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
       DisplayListChecker toBeMergedChecker;
       DisplayListChecker afterMergeChecker;
 
+      // If we transition between wrapping the RCD-RSF contents into an async
+      // zoom container vs. not, we need to rebuild the display list. This only
+      // happens when the zooming or container scrolling prefs are toggled
+      // (manually by the user, or during test setup).
+      bool shouldAttemptPartialUpdate = useRetainedBuilder;
+      bool didBuildAsyncZoomContainer = builder.ShouldBuildAsyncZoomContainer();
+      builder.SetBuildAsyncZoomContainer(
+          gfxPrefs::APZAllowZooming() &&
+          !gfxPrefs::LayoutUseContainersForRootFrames());
+      if (builder.ShouldBuildAsyncZoomContainer() !=
+          didBuildAsyncZoomContainer) {
+        shouldAttemptPartialUpdate = false;
+      }
+
       // Attempt to do a partial build and merge into the existing list.
       // This calls BuildDisplayListForStacking context on a subset of the
       // viewport.
-      if (useRetainedBuilder) {
+      if (shouldAttemptPartialUpdate) {
         if (gfxPrefs::LayoutVerifyRetainDisplayList()) {
           beforeMergeChecker.Set(&list, "BM");
         }
@@ -9569,8 +9583,7 @@ static nsRect ComputeHTMLReferenceRect(nsIFrame* aFrame,
 /* static */
 already_AddRefed<nsFontMetrics> nsLayoutUtils::GetMetricsFor(
     nsPresContext* aPresContext, bool aIsVertical,
-    const nsStyleFont* aStyleFont, nscoord aFontSize, bool aUseUserFontSet,
-    FlushUserFontSet aFlushUserFontSet) {
+    const nsStyleFont* aStyleFont, nscoord aFontSize, bool aUseUserFontSet) {
   nsFont font = aStyleFont->mFont;
   font.size = aFontSize;
   gfxFont::Orientation orientation =
@@ -9579,10 +9592,8 @@ already_AddRefed<nsFontMetrics> nsLayoutUtils::GetMetricsFor(
   params.language = aStyleFont->mLanguage;
   params.explicitLanguage = aStyleFont->mExplicitLanguage;
   params.orientation = orientation;
-  params.userFontSet = aUseUserFontSet
-                           ? aPresContext->GetUserFontSet(aFlushUserFontSet ==
-                                                          FlushUserFontSet::Yes)
-                           : nullptr;
+  params.userFontSet =
+      aUseUserFontSet ? aPresContext->GetUserFontSet() : nullptr;
   params.textPerf = aPresContext->GetTextPerfMetrics();
   return aPresContext->DeviceContext()->GetMetricsFor(font, params);
 }

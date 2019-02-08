@@ -7,7 +7,7 @@ const TRACKING_PAGE = "http://tracking.example.org/browser/browser/base/content/
 const TOOLTIP_PANEL = document.getElementById("UITourTooltip");
 const TOOLTIP_ANCHOR = document.getElementById("tracking-protection-icon-animatable-box");
 
-var {UrlClassifierTestUtils} = ChromeUtils.import("resource://testing-common/UrlClassifierTestUtils.jsm", {});
+var {UrlClassifierTestUtils} = ChromeUtils.import("resource://testing-common/UrlClassifierTestUtils.jsm");
 
 registerCleanupFunction(function() {
   UrlClassifierTestUtils.cleanupTestTrackers();
@@ -34,7 +34,6 @@ add_task(async function test_benignPage() {
            () => {
              ok(true, "Info panel didn't appear on a benign page");
            });
-
   });
 });
 
@@ -83,6 +82,5 @@ add_task(async function test_trackingPages() {
            () => {
              ok(true, "Info panel didn't appear more than MAX_INTROS on tracking pages");
            });
-
   });
 });

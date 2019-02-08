@@ -19,8 +19,7 @@ namespace mozilla {
 namespace dom {
 
 StructuredCloneBlob::StructuredCloneBlob() {
-  mHolder.emplace(Holder::CloningSupported,
-                  Holder::TransferringNotSupported,
+  mHolder.emplace(Holder::CloningSupported, Holder::TransferringNotSupported,
                   Holder::StructuredCloneScope::DifferentProcess);
 }
 
@@ -40,7 +39,9 @@ StructuredCloneBlob::Constructor(GlobalObject& aGlobal, JS::HandleValue aValue,
   JS::RootedValue value(cx, aValue);
 
   if (aTargetGlobal) {
-    JS::RootedObject targetGlobal(cx, js::CheckedUnwrap(aTargetGlobal));
+    // OK to unwrap if our caller (represented by cx's Realm) can do it.
+    JS::RootedObject targetGlobal(cx,
+                                  js::CheckedUnwrapDynamic(aTargetGlobal, cx));
     if (!targetGlobal) {
       js::ReportAccessDenied(cx);
       aRv.NoteJSContextException(cx);
@@ -54,7 +55,8 @@ StructuredCloneBlob::Constructor(GlobalObject& aGlobal, JS::HandleValue aValue,
       return nullptr;
     }
   } else if (value.isObject()) {
-    JS::RootedObject obj(cx, js::CheckedUnwrap(&value.toObject()));
+    // OK to unwrap if our caller (represented by cx's Realm) can do it.
+    JS::RootedObject obj(cx, js::CheckedUnwrapDynamic(&value.toObject(), cx));
     if (!obj) {
       js::ReportAccessDenied(cx);
       aRv.NoteJSContextException(cx);
@@ -78,7 +80,8 @@ void StructuredCloneBlob::Deserialize(JSContext* aCx,
                                       bool aKeepData,
                                       JS::MutableHandleValue aResult,
                                       ErrorResult& aRv) {
-  JS::RootedObject scope(aCx, js::CheckedUnwrap(aTargetScope));
+  // OK to unwrap if our caller (represented by aCx's Realm) can do it.
+  JS::RootedObject scope(aCx, js::CheckedUnwrapDynamic(aTargetScope, aCx));
   if (!scope) {
     js::ReportAccessDenied(aCx);
     aRv.NoteJSContextException(aCx);
@@ -173,9 +176,9 @@ bool StructuredCloneBlob::WriteStructuredClone(JSContext* aCx,
   return mHolder->WriteStructuredClone(aCx, aWriter, aHolder);
 }
 
-bool StructuredCloneBlob::Holder::WriteStructuredClone(JSContext* aCx,
-                                                       JSStructuredCloneWriter* aWriter,
-                                                       StructuredCloneHolder* aHolder) {
+bool StructuredCloneBlob::Holder::WriteStructuredClone(
+    JSContext* aCx, JSStructuredCloneWriter* aWriter,
+    StructuredCloneHolder* aHolder) {
   auto& data = mBuffer->data();
   if (!JS_WriteUint32Pair(aWriter, SCTAG_DOM_STRUCTURED_CLONE_HOLDER, 0) ||
       !JS_WriteUint32Pair(aWriter, data.Size(), JS_STRUCTURED_CLONE_VERSION) ||
@@ -206,8 +209,7 @@ StructuredCloneBlob::CollectReports(nsIHandleReportCallback* aHandleReport,
   }
 
   MOZ_COLLECT_REPORT("explicit/dom/structured-clone-holder", KIND_HEAP,
-                     UNITS_BYTES,
-                     size,
+                     UNITS_BYTES, size,
                      "Memory used by StructuredCloneHolder DOM objects.");
 
   return NS_OK;

@@ -61,20 +61,20 @@ add_task(async function setup() {
   // Create two new search engines. Mark one as the default engine, so
   // the test don't crash. We need to engines for this test as the searchbar
   // doesn't display the default search engine among the one-off engines.
-  Services.search.addEngineWithDetails("MozSearch", "", "mozalias", "", "GET",
-                                       "http://example.com/?q={searchTerms}");
+  await Services.search.addEngineWithDetails("MozSearch", "", "mozalias", "", "GET",
+                                             "http://example.com/?q={searchTerms}");
 
-  Services.search.addEngineWithDetails("MozSearch2", "", "mozalias2", "", "GET",
-                                       "http://example.com/?q={searchTerms}");
+  await Services.search.addEngineWithDetails("MozSearch2", "", "mozalias2", "", "GET",
+                                             "http://example.com/?q={searchTerms}");
 
   // Make the first engine the default search engine.
   let engineDefault = Services.search.getEngineByName("MozSearch");
-  let originalEngine = Services.search.defaultEngine;
-  Services.search.defaultEngine = engineDefault;
+  let originalEngine = await Services.search.getDefault();
+  await Services.search.setDefault(engineDefault);
 
   // Move the second engine at the beginning of the one-off list.
   let engineOneOff = Services.search.getEngineByName("MozSearch2");
-  Services.search.moveEngine(engineOneOff, 0);
+  await Services.search.moveEngine(engineOneOff, 0);
 
   // Enable local telemetry recording for the duration of the tests.
   let oldCanRecord = Services.telemetry.canRecordExtended;
@@ -84,11 +84,11 @@ add_task(async function setup() {
   Services.telemetry.setEventRecordingEnabled("navigation", true);
 
   // Make sure to restore the engine once we're done.
-  registerCleanupFunction(function() {
+  registerCleanupFunction(async function() {
     Services.telemetry.canRecordExtended = oldCanRecord;
-    Services.search.defaultEngine = originalEngine;
-    Services.search.removeEngine(engineDefault);
-    Services.search.removeEngine(engineOneOff);
+    await Services.search.setDefault(originalEngine);
+    await Services.search.removeEngine(engineDefault);
+    await Services.search.removeEngine(engineOneOff);
     Services.telemetry.setEventRecordingEnabled("navigation", false);
   });
 });
@@ -111,8 +111,7 @@ add_task(async function test_plainQuery() {
   await p;
 
   // Check if the scalars contain the expected values.
-  const scalars = TelemetryTestUtils.getParentProcessScalars(
-    Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
+  const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
   TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_SEARCHBAR, "search_enter", 1);
   Assert.equal(Object.keys(scalars[SCALAR_SEARCHBAR]).length, 1,
                "This search must only increment one entry in the scalar.");
@@ -159,8 +158,7 @@ add_task(async function test_oneOff_enter() {
   await p;
 
   // Check if the scalars contain the expected values.
-  const scalars = TelemetryTestUtils.getParentProcessScalars(
-    Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
+  const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
   TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_SEARCHBAR, "search_oneoff", 1);
   Assert.equal(Object.keys(scalars[SCALAR_SEARCHBAR]).length, 1,
                "This search must only increment one entry in the scalar.");
@@ -196,15 +194,9 @@ add_task(async function test_oneOff_enterSelection() {
   // Create an engine to generate search suggestions and add it as default
   // for this test.
   const url = getRootDirectory(gTestPath) + "usageTelemetrySearchSuggestions.xml";
-  let suggestionEngine = await new Promise((resolve, reject) => {
-    Services.search.addEngine(url, "", false, {
-      onSuccess(engine) { resolve(engine); },
-      onError() { reject(); },
-    });
-  });
-
-  let previousEngine = Services.search.defaultEngine;
-  Services.search.defaultEngine = suggestionEngine;
+  let suggestionEngine = await Services.search.addEngine(url, "", false);
+  let previousEngine = await Services.search.getDefault();
+  await Services.search.setDefault(suggestionEngine);
 
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
 
@@ -223,8 +215,8 @@ add_task(async function test_oneOff_enterSelection() {
     URLBAR_SELECTED_RESULT_METHODS.enterSelection,
     "FX_SEARCHBAR_SELECTED_RESULT_METHOD");
 
-  Services.search.defaultEngine = previousEngine;
-  Services.search.removeEngine(suggestionEngine);
+  await Services.search.setDefault(previousEngine);
+  await Services.search.removeEngine(suggestionEngine);
   BrowserTestUtils.removeTab(tab);
 });
 
@@ -267,15 +259,9 @@ add_task(async function test_suggestion_click() {
   // Create an engine to generate search suggestions and add it as default
   // for this test.
   const url = getRootDirectory(gTestPath) + "usageTelemetrySearchSuggestions.xml";
-  let suggestionEngine = await new Promise((resolve, reject) => {
-    Services.search.addEngine(url, "", false, {
-      onSuccess(engine) { resolve(engine); },
-      onError() { reject(); },
-    });
-  });
-
-  let previousEngine = Services.search.defaultEngine;
-  Services.search.defaultEngine = suggestionEngine;
+  let suggestionEngine = await Services.search.addEngine(url, "", false);
+  let previousEngine = await Services.search.getDefault();
+  await Services.search.setDefault(suggestionEngine);
 
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
 
@@ -287,8 +273,7 @@ add_task(async function test_suggestion_click() {
   await p;
 
   // Check if the scalars contain the expected values.
-  const scalars = TelemetryTestUtils.getParentProcessScalars(
-    Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
+  const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
   TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_SEARCHBAR, "search_suggestion", 1);
   Assert.equal(Object.keys(scalars[SCALAR_SEARCHBAR]).length, 1,
                "This search must only increment one entry in the scalar.");
@@ -310,8 +295,8 @@ add_task(async function test_suggestion_click() {
     URLBAR_SELECTED_RESULT_METHODS.click,
     "FX_SEARCHBAR_SELECTED_RESULT_METHOD");
 
-  Services.search.defaultEngine = previousEngine;
-  Services.search.removeEngine(suggestionEngine);
+  await Services.search.setDefault(previousEngine);
+  await Services.search.removeEngine(suggestionEngine);
   BrowserTestUtils.removeTab(tab);
 });
 
@@ -328,15 +313,9 @@ add_task(async function test_suggestion_enterSelection() {
   // Create an engine to generate search suggestions and add it as default
   // for this test.
   const url = getRootDirectory(gTestPath) + "usageTelemetrySearchSuggestions.xml";
-  let suggestionEngine = await new Promise((resolve, reject) => {
-    Services.search.addEngine(url, "", false, {
-      onSuccess(engine) { resolve(engine); },
-      onError() { reject(); },
-    });
-  });
-
-  let previousEngine = Services.search.defaultEngine;
-  Services.search.defaultEngine = suggestionEngine;
+  let suggestionEngine = await Services.search.addEngine(url, "", false);
+  let previousEngine = await Services.search.getDefault();
+  await Services.search.setDefault(suggestionEngine);
 
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank");
 
@@ -353,7 +332,7 @@ add_task(async function test_suggestion_enterSelection() {
     URLBAR_SELECTED_RESULT_METHODS.enterSelection,
     "FX_SEARCHBAR_SELECTED_RESULT_METHOD");
 
-  Services.search.defaultEngine = previousEngine;
-  Services.search.removeEngine(suggestionEngine);
+  await Services.search.setDefault(previousEngine);
+  await Services.search.removeEngine(suggestionEngine);
   BrowserTestUtils.removeTab(tab);
 });

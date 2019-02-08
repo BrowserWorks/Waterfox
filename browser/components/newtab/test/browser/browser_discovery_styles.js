@@ -64,7 +64,9 @@ test_newtab({
         components: [{
           type: "HorizontalRule",
           styles: {
-            "hr": `background-image: url(https://example.com/background);
+            // NB: Use display: none to avoid network requests to unfiltered urls
+            "hr": `display: none;
+                   background-image: url(https://example.com/background);
                    content: url(chrome://browser/content);
                    cursor: url(  resource://activity-stream/cursor  ), auto;
                    list-style-image: url('https://img-getpocket.cdn.mozilla.net/list');`,

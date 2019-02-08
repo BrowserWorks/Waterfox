@@ -20,6 +20,7 @@ const {
   togglePseudoClass,
 } = require("./actions/pseudo-classes");
 const {
+  updateAddRuleEnabled,
   updateHighlightedSelector,
   updateRules,
 } = require("./actions/rules");
@@ -47,10 +48,12 @@ class RulesView {
     this.store = inspector.store;
     this.telemetry = inspector.telemetry;
     this.toolbox = inspector.toolbox;
+    this.isNewRulesView = true;
 
     this.showUserAgentStyles = Services.prefs.getBoolPref(PREF_UA_STYLES);
 
     this.onAddClass = this.onAddClass.bind(this);
+    this.onAddRule = this.onAddRule.bind(this);
     this.onSelection = this.onSelection.bind(this);
     this.onSetClassState = this.onSetClassState.bind(this);
     this.onToggleClassPanelExpanded = this.onToggleClassPanelExpanded.bind(this);
@@ -59,6 +62,7 @@ class RulesView {
     this.onToggleSelectorHighlighter = this.onToggleSelectorHighlighter.bind(this);
     this.showDeclarationNameEditor = this.showDeclarationNameEditor.bind(this);
     this.showDeclarationValueEditor = this.showDeclarationValueEditor.bind(this);
+    this.showNewDeclarationEditor = this.showNewDeclarationEditor.bind(this);
     this.showSelectorEditor = this.showSelectorEditor.bind(this);
     this.updateClassList = this.updateClassList.bind(this);
     this.updateRules = this.updateRules.bind(this);
@@ -79,6 +83,7 @@ class RulesView {
 
     const rulesApp = RulesApp({
       onAddClass: this.onAddClass,
+      onAddRule: this.onAddRule,
       onSetClassState: this.onSetClassState,
       onToggleClassPanelExpanded: this.onToggleClassPanelExpanded,
       onToggleDeclaration: this.onToggleDeclaration,
@@ -86,6 +91,7 @@ class RulesView {
       onToggleSelectorHighlighter: this.onToggleSelectorHighlighter,
       showDeclarationNameEditor: this.showDeclarationNameEditor,
       showDeclarationValueEditor: this.showDeclarationValueEditor,
+      showNewDeclarationEditor: this.showNewDeclarationEditor,
       showSelectorEditor: this.showSelectorEditor,
     });
 
@@ -267,6 +273,13 @@ class RulesView {
   async onAddClass(value) {
     await this.classList.addClassName(value);
     this.updateClassList();
+  }
+
+  /**
+   * Handler for adding a new CSS rule.
+   */
+  async onAddRule() {
+    await this.elementStyle.addNewRule();
   }
 
   /**
@@ -467,6 +480,39 @@ class RulesView {
   }
 
   /**
+   * Shows the new inplace editor for a new declaration.
+   *
+   * @param  {DOMNode} element
+   *         A new declaration span element to be edited.
+   * @param  {String} ruleId
+   *         The id of the Rule object to be edited.
+   * @param  {Function} callback
+   *         A callback function that is called when the inplace editor is destroyed.
+   */
+  showNewDeclarationEditor(element, ruleId, callback) {
+    new InplaceEditor({
+      advanceChars: ":",
+      contentType: InplaceEditor.CONTENT_TYPES.CSS_PROPERTY,
+      cssProperties: this.cssProperties,
+      destroy: () => {
+        callback();
+      },
+      done: (value, commit) => {
+        if (!commit || !value || !value.trim()) {
+          return;
+        }
+
+        this.elementStyle.addNewDeclaration(ruleId, value);
+        this.telemetry.recordEvent("edit_rule", "ruleview", null, {
+          "session_id": this.toolbox.sessionId,
+        });
+      },
+      element,
+      popup: this.autocompletePopup,
+    });
+  }
+
+  /**
    * Shows the inplace editor for the a selector.
    *
    * @param  {DOMNode} element
@@ -506,6 +552,7 @@ class RulesView {
   async update(element) {
     if (!element) {
       this.store.dispatch(disableAllPseudoClasses());
+      this.store.dispatch(updateAddRuleEnabled(false));
       this.store.dispatch(updateClasses([]));
       this.store.dispatch(updateRules([]));
       return;
@@ -516,6 +563,9 @@ class RulesView {
     this.elementStyle.onChanged = this.updateRules;
     await this.elementStyle.populate();
 
+    const isAddRuleEnabled = this.selection.isElementNode() &&
+                             !this.selection.isAnonymousNode();
+    this.store.dispatch(updateAddRuleEnabled(isAddRuleEnabled));
     this.store.dispatch(setPseudoClassLocks(this.elementStyle.element.pseudoClassLocks));
     this.updateClassList();
     this.updateRules();

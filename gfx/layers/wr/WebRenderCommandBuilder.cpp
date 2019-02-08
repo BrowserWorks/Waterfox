@@ -96,17 +96,13 @@ struct BlobItemData {
 
   // properties that are used to emulate layer tree invalidation
   Matrix mMatrix;  // updated to track the current transform to device space
-  Matrix4x4Flagged mTransform;  // only used with nsDisplayTransform items to
-                                // detect transform changes
-  float mOpacity;  // only used with nsDisplayOpacity items to detect change to
-                   // opacity
   RefPtr<BasicLayerManager> mLayerManager;
 
   IntRect mImageRect;
   LayerIntPoint mGroupOffset;
 
   BlobItemData(DIGroup* aGroup, nsDisplayItem* aItem)
-      : mUsed(false), mGroup(aGroup), mOpacity(0.0) {
+      : mUsed(false), mGroup(aGroup) {
     mInvalid = false;
     mInvalidRegion = false;
     mEmpty = false;
@@ -254,34 +250,10 @@ static bool IsContainerLayerItem(nsDisplayItem* aItem) {
 
 #include <sstream>
 
-bool UpdateContainerLayerPropertiesAndDetectChange(
+bool DetectContainerLayerPropertiesBoundsChange(
     nsDisplayItem* aItem, BlobItemData* aData,
     nsDisplayItemGeometry& aGeometry) {
-  bool changed = false;
   switch (aItem->GetType()) {
-    case DisplayItemType::TYPE_TRANSFORM: {
-      auto transformItem = static_cast<nsDisplayTransform*>(aItem);
-      Matrix4x4Flagged trans = transformItem->GetTransform();
-      changed = aData->mTransform != trans;
-
-      if (changed) {
-        std::stringstream ss;
-        // ss << trans << ' ' << aData->mTransform;
-        // GP("UpdateContainerLayerPropertiesAndDetectChange Matrix %d %s\n",
-        //   changed, ss.str().c_str());
-      }
-
-      aData->mTransform = trans;
-      break;
-    }
-    case DisplayItemType::TYPE_OPACITY: {
-      auto opacityItem = static_cast<nsDisplayOpacity*>(aItem);
-      float opacity = opacityItem->GetOpacity();
-      changed = aData->mOpacity != opacity;
-      aData->mOpacity = opacity;
-      GP("UpdateContainerLayerPropertiesAndDetectChange Opacity\n");
-      break;
-    }
     case DisplayItemType::TYPE_MASK:
     case DisplayItemType::TYPE_FILTER: {
       // These two items go through BasicLayerManager composition which clips to
@@ -293,7 +265,7 @@ bool UpdateContainerLayerPropertiesAndDetectChange(
       break;
   }
 
-  return changed || !aGeometry.mBounds.IsEqualEdges(aData->mGeometry->mBounds);
+  return !aGeometry.mBounds.IsEqualEdges(aData->mGeometry->mBounds);
 }
 
 struct DIGroup {
@@ -547,8 +519,8 @@ struct DIGroup {
               aItem->AllocateGeometry(aBuilder));
           // we need to catch bounds changes of containers so that we continue
           // to have the correct bounds rects in the recording
-          if (UpdateContainerLayerPropertiesAndDetectChange(aItem, aData,
-                                                            *geometry)) {
+          if (DetectContainerLayerPropertiesBoundsChange(aItem, aData,
+                                                         *geometry)) {
             nsRect clippedBounds = clip.ApplyNonRoundedIntersection(
                 geometry->ComputeInvalidationRegion());
             aData->mGeometry = std::move(geometry);
@@ -558,7 +530,7 @@ struct DIGroup {
             InvalidateRect(aData->mRect.Intersect(mImageBounds));
             aData->mRect = transformedRect.Intersect(mClippedImageBounds);
             InvalidateRect(aData->mRect);
-            GP("UpdateContainerLayerPropertiesAndDetectChange change\n");
+            GP("DetectContainerLayerPropertiesBoundsChange change\n");
           } else if (!aData->mImageRect.IsEqualEdges(mClippedImageBounds)) {
             // Make sure we update mRect for mClippedImageBounds changes
             nsRect clippedBounds = clip.ApplyNonRoundedIntersection(
@@ -669,6 +641,7 @@ struct DIGroup {
 
     gfx::SurfaceFormat format = gfx::SurfaceFormat::B8G8R8A8;
     std::vector<RefPtr<ScaledFont>> fonts;
+    bool validFonts = true;
     RefPtr<WebRenderDrawEventRecorder> recorder =
         MakeAndAddRef<WebRenderDrawEventRecorder>(
             [&](MemStream& aStream,
@@ -676,10 +649,14 @@ struct DIGroup {
               size_t count = aScaledFonts.size();
               aStream.write((const char*)&count, sizeof(count));
               for (auto& scaled : aScaledFonts) {
-                BlobFont font = {
+                Maybe<wr::FontInstanceKey> key =
                     aWrManager->WrBridge()->GetFontKeyForScaledFont(
-                        scaled, &aResources),
-                    scaled};
+                        scaled, &aResources);
+                if (key.isNothing()) {
+                  validFonts = false;
+                  break;
+                }
+                BlobFont font = {key.value(), scaled};
                 aStream.write((const char*)&font, sizeof(font));
               }
               fonts = std::move(aScaledFonts);
@@ -716,6 +693,10 @@ struct DIGroup {
                          aWrManager->GetRenderRootStateManager(), aResources);
     bool hasItems = recorder->Finish();
     GP("%d Finish\n", hasItems);
+    if (!validFonts) {
+      gfxCriticalNote << "Failed serializing fonts for blob image";
+      return;
+    }
     Range<uint8_t> bytes((uint8_t*)recorder->mOutputStream.mData,
                          recorder->mOutputStream.mLength);
     if (!mKey) {
@@ -1329,6 +1310,16 @@ void WebRenderCommandBuilder::DoGroupingForDisplayList(
 
   bool snapped;
   nsRect groupBounds = aWrappingItem->GetBounds(aDisplayListBuilder, &snapped);
+  // We don't want to restrict the size of the blob to the building rect of the
+  // display item, since that will change when we scroll and trigger a resize
+  // invalidation of the blob (will be fixed by blob recoordination).
+  // Instead we retrieve the bounds of the overflow clip on the <svg> and use
+  // that to restrict our size and prevent invisible content from affecting
+  // our bounds.
+  if (mClippedGroupBounds) {
+    groupBounds = groupBounds.Intersect(mClippedGroupBounds.value());
+    mClippedGroupBounds = Nothing();
+  }
   DIGroup& group = groupData->mSubGroup;
 
   gfx::Size scale = aSc.GetInheritedScale();
@@ -1460,6 +1451,8 @@ void WebRenderCommandBuilder::BuildWebRenderCommands(
     params.mFilters = std::move(aFilters);
     params.animation = mZoomProp.ptrOr(nullptr);
     params.cache_tiles = isTopLevelContent;
+    params.clip =
+        wr::WrStackingContextClip::ClipChain(aBuilder.CurrentClipChainId());
 
     StackingContextHelper pageRootSc(sc, nullptr, nullptr, nullptr, aBuilder,
                                      params);
@@ -1513,7 +1506,8 @@ bool WebRenderCommandBuilder::ShouldDumpDisplayList(
 void WebRenderCommandBuilder::CreateWebRenderCommandsFromDisplayList(
     nsDisplayList* aDisplayList, nsDisplayItem* aWrappingItem,
     nsDisplayListBuilder* aDisplayListBuilder, const StackingContextHelper& aSc,
-    wr::DisplayListBuilder& aBuilder, wr::IpcResourceUpdateQueue& aResources) {
+    wr::DisplayListBuilder& aBuilder, wr::IpcResourceUpdateQueue& aResources,
+    nsDisplayItem* aOuterItem) {
   if (mDoGrouping) {
     MOZ_RELEASE_ASSERT(
         aWrappingItem,
@@ -1623,6 +1617,25 @@ void WebRenderCommandBuilder::CreateWebRenderCommandsFromDisplayList(
         // animated geometry root, so we can combine subsequent items of that
         // type into the same image.
         mContainsSVGGroup = mDoGrouping = true;
+        if (aOuterItem &&
+            aOuterItem->GetType() == DisplayItemType::TYPE_TRANSFORM) {
+          // Inline <svg> should always have an overflow clip, but it gets put
+          // outside the nsDisplayTransform we create for scaling the svg
+          // viewport. Converting the clip into inner coordinates lets us
+          // restrict the size of the blob images and prevents unnecessary
+          // resizes.
+          nsDisplayTransform* transform =
+              static_cast<nsDisplayTransform*>(aOuterItem);
+
+          nsRect clippedBounds =
+              transform->GetClippedBounds(aDisplayListBuilder);
+          nsRect innerClippedBounds;
+          DebugOnly<bool> result = transform->UntransformRect(
+              aDisplayListBuilder, clippedBounds, &innerClippedBounds);
+          MOZ_ASSERT(result);
+
+          mClippedGroupBounds = Some(innerClippedBounds);
+        }
         GP("attempting to enter the grouping code\n");
       }
 
@@ -2116,7 +2129,7 @@ WebRenderCommandBuilder::GenerateFallbackData(
               ? wr::OpacityType::Opaque
               : wr::OpacityType::HasAlphaChannel;
       std::vector<RefPtr<ScaledFont>> fonts;
-
+      bool validFonts = true;
       RefPtr<WebRenderDrawEventRecorder> recorder =
           MakeAndAddRef<WebRenderDrawEventRecorder>(
               [&](MemStream& aStream,
@@ -2124,10 +2137,14 @@ WebRenderCommandBuilder::GenerateFallbackData(
                 size_t count = aScaledFonts.size();
                 aStream.write((const char*)&count, sizeof(count));
                 for (auto& scaled : aScaledFonts) {
-                  BlobFont font = {
+                  Maybe<wr::FontInstanceKey> key =
                       mManager->WrBridge()->GetFontKeyForScaledFont(
-                          scaled, &aResources),
-                      scaled};
+                          scaled, &aResources);
+                  if (key.isNothing()) {
+                    validFonts = false;
+                    break;
+                  }
+                  BlobFont font = {key.value(), scaled};
                   aStream.write((const char*)&font, sizeof(font));
                 }
                 fonts = std::move(aScaledFonts);
@@ -2147,6 +2164,11 @@ WebRenderCommandBuilder::GenerateFallbackData(
       TakeExternalSurfaces(recorder, fallbackData->mExternalSurfaces,
                            mManager->GetRenderRootStateManager(), aResources);
       recorder->Finish();
+
+      if (!validFonts) {
+        gfxCriticalNote << "Failed serializing fonts for blob image";
+        return nullptr;
+      }
 
       if (isInvalidated) {
         Range<uint8_t> bytes((uint8_t*)recorder->mOutputStream.mData,
@@ -2310,6 +2332,7 @@ Maybe<wr::WrImageMask> WebRenderCommandBuilder::BuildWrMaskImage(
     IntSize size = itemRect.Size().ToUnknownSize();
 
     std::vector<RefPtr<ScaledFont>> fonts;
+    bool validFonts = true;
     RefPtr<WebRenderDrawEventRecorder> recorder =
         MakeAndAddRef<WebRenderDrawEventRecorder>(
             [&](MemStream& aStream,
@@ -2318,9 +2341,14 @@ Maybe<wr::WrImageMask> WebRenderCommandBuilder::BuildWrMaskImage(
               aStream.write((const char*)&count, sizeof(count));
 
               for (auto& scaled : aScaledFonts) {
-                BlobFont font = {mManager->WrBridge()->GetFontKeyForScaledFont(
-                                     scaled, &aResources),
-                                 scaled};
+                Maybe<wr::FontInstanceKey> key =
+                    mManager->WrBridge()->GetFontKeyForScaledFont(
+                        scaled, &aResources);
+                if (key.isNothing()) {
+                  validFonts = false;
+                  break;
+                }
+                BlobFont font = {key.value(), scaled};
                 aStream.write((const char*)&font, sizeof(font));
               }
 
@@ -2350,6 +2378,11 @@ Maybe<wr::WrImageMask> WebRenderCommandBuilder::BuildWrMaskImage(
     TakeExternalSurfaces(recorder, maskData->mExternalSurfaces,
                          mManager->GetRenderRootStateManager(), aResources);
     recorder->Finish();
+
+    if (!validFonts) {
+      gfxCriticalNote << "Failed serializing fonts for blob mask image";
+      return Nothing();
+    }
 
     Range<uint8_t> bytes((uint8_t*)recorder->mOutputStream.mData,
                          recorder->mOutputStream.mLength);

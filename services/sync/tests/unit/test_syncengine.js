@@ -1,10 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-ChromeUtils.import("resource://gre/modules/osfile.jsm");
-ChromeUtils.import("resource://services-sync/engines.js");
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/util.js");
+const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
 
 async function makeSteamEngine() {
   let engine = new SyncEngine("Steam", Service);
@@ -265,7 +263,6 @@ add_task(async function test_wipeServer() {
     Assert.equal(steamCollection.payload, undefined);
     Assert.equal(await engine.getLastSync(), 0);
     Assert.equal(engine.toFetch.size, 0);
-
   } finally {
     steamServer.stop(do_test_finished);
     Svc.Prefs.resetBranch("");

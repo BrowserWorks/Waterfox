@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm", this);
-ChromeUtils.import("resource://gre/modules/NetUtil.jsm", this);
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
 /* import-globals-from manifestLibrary.js */
 
@@ -53,7 +53,6 @@ function getResolvedURI(url) {
  *  resolvedURI: nsIURI (from getResolvedURI) that points to a file:/// url
  */
 function getChromeDir(resolvedURI) {
-
   var fileHandler = Cc["@mozilla.org/network/protocol;1?name=file"].
                     getService(Ci.nsIFileProtocolHandler);
   var chromeDir = fileHandler.getFileFromURLSpec(resolvedURI.spec);
@@ -77,7 +76,6 @@ function getRootDirectory(path, chromeURI) {
 
 // used by tests to determine their directory based off window.location.path
 function getChromePrePath(path, chromeURI) {
-
   if (chromeURI === undefined) {
     chromeURI = getChromeURI(path);
   }
@@ -251,5 +249,4 @@ function getTestList(params, callback) {
   }
   params = config;
   getTestManifest("http://mochi.test:8888/" + params.manifestFile, params, callback);
-
 }

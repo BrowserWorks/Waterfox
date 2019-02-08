@@ -1,5 +1,3 @@
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-
 ChromeUtils.defineModuleGetter(this, "NetUtil",
                                "resource://gre/modules/NetUtil.jsm");
 
@@ -291,7 +289,6 @@ function run_test() {
 
       info("Wait for all sever-involved tests to be done ...");
     });
-
   });
 
   gHttpServV4.start(5555);

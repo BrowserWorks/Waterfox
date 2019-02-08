@@ -4,11 +4,12 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://formautofill/FormAutofillUtils.jsm");
-ChromeUtils.import("resource://testing-common/OSKeyStoreTestUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {FormAutofill} = ChromeUtils.import("resource://formautofill/FormAutofill.jsm");
+const {FormAutofillUtils} = ChromeUtils.import("resource://formautofill/FormAutofillUtils.jsm");
+const {OSKeyStoreTestUtils} = ChromeUtils.import("resource://testing-common/OSKeyStoreTestUtils.jsm");
 
-let {formAutofillStorage} = ChromeUtils.import("resource://formautofill/FormAutofillStorage.jsm", {});
+let {formAutofillStorage} = ChromeUtils.import("resource://formautofill/FormAutofillStorage.jsm");
 
 const {ADDRESSES_COLLECTION_NAME, CREDITCARDS_COLLECTION_NAME} = FormAutofillUtils;
 
@@ -105,6 +106,9 @@ var ParentUtils = {
   },
 
   async cleanUpCreditCards() {
+    if (!FormAutofill.isAutofillCreditCardsAvailable) {
+      return;
+    }
     const guids = (await this._getRecords(CREDITCARDS_COLLECTION_NAME)).map(record => record.guid);
 
     if (guids.length == 0) {

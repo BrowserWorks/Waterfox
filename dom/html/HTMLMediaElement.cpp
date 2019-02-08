@@ -79,6 +79,7 @@
 #include "mozilla/dom/VideoTrackList.h"
 #include "mozilla/dom/WakeLock.h"
 #include "mozilla/dom/power/PowerManagerService.h"
+#include "mozilla/net/UrlClassifierFeatureFactory.h"
 #include "nsAttrValueInlines.h"
 #include "nsContentPolicyUtils.h"
 #include "nsContentUtils.h"
@@ -639,13 +640,15 @@ HTMLMediaElement::MediaLoadListener::OnStartRequest(nsIRequest* aRequest,
   NS_ENSURE_SUCCESS(rv, rv);
   if (NS_FAILED(status)) {
     if (element) {
-      // Handle media not loading error because source was a tracking URL.
+      // Handle media not loading error because source was a tracking URL (or
+      // fingerprinting, cryptomining, etc).
       // We make a note of this media node by including it in a dedicated
       // array of blocked tracking nodes under its parent document.
-      if (status == NS_ERROR_TRACKING_URI) {
+      if (net::UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(
+              status)) {
         Document* ownerDoc = element->OwnerDoc();
         if (ownerDoc) {
-          ownerDoc->AddBlockedTrackingNode(element);
+          ownerDoc->AddBlockedNodeByClassifier(element);
         }
       }
       element->NotifyLoadError(
@@ -3979,8 +3982,7 @@ nsresult HTMLMediaElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
       if (mDecoder) {
         mDecoder->SetLooping(!!aValue);
       }
-    } else if (nsContentUtils::IsUAWidgetEnabled() &&
-               aName == nsGkAtoms::controls && IsInComposedDoc()) {
+    } else if (aName == nsGkAtoms::controls && IsInComposedDoc()) {
       NotifyUAWidgetSetupOrChange();
     }
   }
@@ -4018,7 +4020,7 @@ nsresult HTMLMediaElement::BindToTree(Document* aDocument, nsIContent* aParent,
   nsresult rv =
       nsGenericHTMLElement::BindToTree(aDocument, aParent, aBindingParent);
 
-  if (nsContentUtils::IsUAWidgetEnabled() && IsInComposedDoc()) {
+  if (IsInComposedDoc()) {
     // Construct Shadow Root so web content can be hidden in the DOM.
     AttachAndSetUAShadowRoot();
 #ifdef ANDROID
@@ -4252,7 +4254,7 @@ void HTMLMediaElement::UnbindFromTree(bool aDeep, bool aNullParent) {
   mUnboundFromTree = true;
   mVisibilityState = Visibility::UNTRACKED;
 
-  if (nsContentUtils::IsUAWidgetEnabled() && IsInComposedDoc()) {
+  if (IsInComposedDoc()) {
     NotifyUAWidgetTeardown();
   }
 

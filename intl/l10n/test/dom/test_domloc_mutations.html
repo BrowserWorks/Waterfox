@@ -8,9 +8,9 @@
   <script type="application/javascript">
   "use strict";
   const { DOMLocalization } =
-    ChromeUtils.import("resource://gre/modules/DOMLocalization.jsm", {});
+    ChromeUtils.import("resource://gre/modules/DOMLocalization.jsm");
   const { FluentBundle } =
-    ChromeUtils.import("resource://gre/modules/Fluent.jsm", {});
+    ChromeUtils.import("resource://gre/modules/Fluent.jsm");
 
   async function* mockGenerateMessages(locales, resourceIds) {
     const bundle = new FluentBundle(locales);
@@ -29,6 +29,7 @@
 
     const h1 = document.querySelectorAll("h1")[0];
 
+    domLoc.addResourceIds(["dummy.ftl"]);
     domLoc.connectRoot(document.body);
 
     await domLoc.translateRoots();

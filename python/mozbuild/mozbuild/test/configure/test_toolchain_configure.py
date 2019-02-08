@@ -263,7 +263,6 @@ CLANG_CL_3_9 = (CLANG_BASE('3.9.0') + VS('18.00.00000') + DEFAULT_C11 +
         '__STDC_VERSION__': False,
         '__cplusplus': '201103L',
     },
-    '-fms-compatibility-version=19.15.26726': VS('19.15.26726')[None],
 }
 
 CLANG_CL_PLATFORM_X86 = FakeCompiler(VS_PLATFORM_X86, GCC_PLATFORM_X86[None])
@@ -749,10 +748,10 @@ class LinuxSimpleCrossToolchainTest(BaseToolchainTest):
     def test_cross_clang(self):
         self.do_toolchain_test(self.PATHS, {
             'c_compiler': self.DEFAULT_CLANG_RESULT + {
-                'flags': ['--target=i686-linux-gnu'],
+                'flags': ['-m32']
             },
             'cxx_compiler': self.DEFAULT_CLANGXX_RESULT + {
-                'flags': ['--target=i686-linux-gnu'],
+                'flags': ['-m32']
             },
             'host_c_compiler': self.DEFAULT_CLANG_RESULT,
             'host_cxx_compiler': self.DEFAULT_CLANGXX_RESULT,
@@ -790,10 +789,10 @@ class LinuxX86_64CrossToolchainTest(BaseToolchainTest):
     def test_cross_clang(self):
         self.do_toolchain_test(self.PATHS, {
             'c_compiler': self.DEFAULT_CLANG_RESULT + {
-                'flags': ['--target=x86_64-linux-gnu'],
+                'flags': ['-m64']
             },
             'cxx_compiler': self.DEFAULT_CLANGXX_RESULT + {
-                'flags': ['--target=x86_64-linux-gnu'],
+                'flags': ['-m64']
             },
             'host_c_compiler': self.DEFAULT_CLANG_RESULT,
             'host_cxx_compiler': self.DEFAULT_CLANGXX_RESULT,
@@ -928,17 +927,15 @@ class WindowsToolchainTest(BaseToolchainTest):
         language='C++',
     )
     CLANG_CL_3_9_RESULT = CompilerResult(
-        flags=['-Xclang', '-std=gnu99',
-               '-fms-compatibility-version=19.15.26726'],
-        version='19.15.26726',
+        version='3.9.0',
+        flags=['-Xclang', '-std=gnu99'],
         type='clang-cl',
         compiler='/usr/bin/clang-cl',
         language='C',
     )
     CLANGXX_CL_3_9_RESULT = CompilerResult(
-        flags=['-Xclang', '-std=c++14',
-               '-fms-compatibility-version=19.15.26726'],
-        version='19.15.26726',
+        version='3.9.0',
+        flags=['-Xclang', '-std=c++14'],
         type='clang-cl',
         compiler='/usr/bin/clang-cl',
         language='C++',

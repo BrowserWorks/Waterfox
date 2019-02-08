@@ -467,7 +467,34 @@ static inline void* FuncCast(F* funcPtr, ABIFunctionType abiType) {
   return pf;
 }
 
-static void* AddressOf(SymbolicAddress imm, ABIFunctionType* abiType) {
+#ifdef WASM_CODEGEN_DEBUG
+void wasm::PrintI32(int32_t val)
+{
+  fprintf(stderr, "i32(%d) ", val);
+}
+
+void wasm::PrintPtr(uint8_t* val)
+{
+  fprintf(stderr, "ptr(%p) ", val);
+}
+
+void wasm::PrintF32(float val)
+{
+  fprintf(stderr, "f32(%f) ", val);
+}
+
+void wasm::PrintF64(double val)
+{
+  fprintf(stderr, "f64(%lf) ", val);
+}
+
+void wasm::PrintText(const char* out)
+{
+  fprintf(stderr, "%s", out);
+}
+#endif
+
+void* wasm::AddressOf(SymbolicAddress imm, ABIFunctionType* abiType) {
   switch (imm) {
     case SymbolicAddress::HandleDebugTrap:
       *abiType = Args_General0;
@@ -627,9 +654,9 @@ static void* AddressOf(SymbolicAddress imm, ABIFunctionType* abiType) {
     case SymbolicAddress::MemCopy:
       *abiType = Args_General4;
       return FuncCast(Instance::memCopy, *abiType);
-    case SymbolicAddress::MemDrop:
+    case SymbolicAddress::DataDrop:
       *abiType = Args_General2;
-      return FuncCast(Instance::memDrop, *abiType);
+      return FuncCast(Instance::dataDrop, *abiType);
     case SymbolicAddress::MemFill:
       *abiType = Args_General4;
       return FuncCast(Instance::memFill, *abiType);
@@ -639,9 +666,9 @@ static void* AddressOf(SymbolicAddress imm, ABIFunctionType* abiType) {
     case SymbolicAddress::TableCopy:
       *abiType = Args_General6;
       return FuncCast(Instance::tableCopy, *abiType);
-    case SymbolicAddress::TableDrop:
+    case SymbolicAddress::ElemDrop:
       *abiType = Args_General2;
-      return FuncCast(Instance::tableDrop, *abiType);
+      return FuncCast(Instance::elemDrop, *abiType);
     case SymbolicAddress::TableInit:
       *abiType = Args_General6;
       return FuncCast(Instance::tableInit, *abiType);
@@ -670,6 +697,23 @@ static void* AddressOf(SymbolicAddress imm, ABIFunctionType* abiType) {
     case SymbolicAddress::js_jit_gAtomic64Lock:
       return &js::jit::gAtomic64Lock;
 #endif
+#ifdef WASM_CODEGEN_DEBUG
+    case SymbolicAddress::PrintI32:
+      *abiType = Args_General1;
+      return FuncCast(PrintI32, *abiType);
+    case SymbolicAddress::PrintPtr:
+      *abiType = Args_General1;
+      return FuncCast(PrintPtr, *abiType);
+    case SymbolicAddress::PrintF32:
+      *abiType = Args_Int_Float32;
+      return FuncCast(PrintF32, *abiType);
+    case SymbolicAddress::PrintF64:
+      *abiType = Args_Int_Double;
+      return FuncCast(PrintF64, *abiType);
+    case SymbolicAddress::PrintText:
+      *abiType = Args_General1;
+      return FuncCast(PrintText, *abiType);
+#endif
     case SymbolicAddress::Limit:
       break;
   }
@@ -693,6 +737,13 @@ bool wasm::NeedsBuiltinThunk(SymbolicAddress sym) {
     case SymbolicAddress::CoerceInPlace_ToNumber:
 #if defined(JS_CODEGEN_MIPS32)
     case SymbolicAddress::js_jit_gAtomic64Lock:
+#endif
+#ifdef WASM_CODEGEN_DEBUG
+    case SymbolicAddress::PrintI32:
+    case SymbolicAddress::PrintPtr:
+    case SymbolicAddress::PrintF32:
+    case SymbolicAddress::PrintF64:
+    case SymbolicAddress::PrintText: // Used only in stubs
 #endif
       return false;
     case SymbolicAddress::ToInt32:
@@ -739,11 +790,11 @@ bool wasm::NeedsBuiltinThunk(SymbolicAddress sym) {
     case SymbolicAddress::CoerceInPlace_JitEntry:
     case SymbolicAddress::ReportInt64JSCall:
     case SymbolicAddress::MemCopy:
-    case SymbolicAddress::MemDrop:
+    case SymbolicAddress::DataDrop:
     case SymbolicAddress::MemFill:
     case SymbolicAddress::MemInit:
     case SymbolicAddress::TableCopy:
-    case SymbolicAddress::TableDrop:
+    case SymbolicAddress::ElemDrop:
     case SymbolicAddress::TableGet:
     case SymbolicAddress::TableGrow:
     case SymbolicAddress::TableInit:
@@ -993,13 +1044,13 @@ bool wasm::EnsureBuiltinThunksInitialized() {
          allocSize - masm.bytesNeeded());
 
   masm.processCodeLabels(thunks->codeBase);
+  PatchDebugSymbolicAccesses(thunks->codeBase, masm);
 
   MOZ_ASSERT(masm.callSites().empty());
   MOZ_ASSERT(masm.callSiteTargets().empty());
   MOZ_ASSERT(masm.callFarJumps().empty());
   MOZ_ASSERT(masm.trapSites().empty());
   MOZ_ASSERT(masm.callFarJumps().empty());
-  MOZ_ASSERT(masm.symbolicAccesses().empty());
 
   ExecutableAllocator::cacheFlush(thunks->codeBase, thunks->codeSize);
   if (!ExecutableAllocator::makeExecutable(thunks->codeBase,

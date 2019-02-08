@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var gDialog;
 var paramBlock;
@@ -59,7 +59,6 @@ function initDialog() {
   gDialog.strings["marginUnits.metric"]  = document.getElementById("marginUnits.metric").childNodes[0].nodeValue;
   gDialog.strings["customPrompt.title"]  = document.getElementById("customPrompt.title").childNodes[0].nodeValue;
   gDialog.strings["customPrompt.prompt"] = document.getElementById("customPrompt.prompt").childNodes[0].nodeValue;
-
 }
 
 // ---------------------------------------------------
@@ -362,7 +361,6 @@ function convertMarginInchesToUnits(aVal, aIsMetric) {
 
 // ---------------------------------------------------
 function onAccept() {
-
   if (gPrintSettings) {
     if ( gDialog.orientation.selectedItem == gDialog.portrait ) {
       gPrintSettings.orientation = gPrintSettingsInterface.kPortraitOrientation;

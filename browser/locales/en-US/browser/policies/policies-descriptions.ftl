@@ -23,6 +23,8 @@ policy-BlockAboutSupport = Block access to the about:support page.
 
 policy-Bookmarks = Create bookmarks in the Bookmarks toolbar, Bookmarks menu, or a specified folder inside them.
 
+policy-CaptivePortal = Enable or disable captive portal support.
+
 policy-CertificatesDescription = Add certificates or use built-in certificates.
 
 policy-Cookies = Allow or deny websites to set cookies.
@@ -91,6 +93,8 @@ policy-Homepage = Set and optionally lock the homepage.
 
 policy-InstallAddonsPermission = Allow certain websites to install add-ons.
 
+policy-NetworkPrediction = Enable or disable network prediction (DNS prefetching).
+
 policy-NoDefaultBookmarks = Disable creation of the default bookmarks bundled with { -brand-short-name }, and the Smart Bookmarks (Most Visited, Recent Tags). Note: this policy is only effective if used before the first run of the profile.
 
 policy-OfferToSaveLogins = Enforce the setting to allow { -brand-short-name } to offer to remember saved logins and passwords. Both true and false values are accepted.
@@ -115,6 +119,10 @@ policy-SearchEngines = Configure search engine settings. This policy is only ava
 
 # For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = Install PKCS #11 modules.
+
+policy-SSLVersionMax = Set the maximum SSL version.
+
+policy-SSLVersionMin = Set the minimum SSL version.
 
 # “format” refers to the format used for the value of this policy.
 policy-WebsiteFilter = Block websites from being visited. See documentation for more details on the format.

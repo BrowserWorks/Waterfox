@@ -5,12 +5,12 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
-const {actionTypes: at, actionUtils: au} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm", {});
-const {Prefs} = ChromeUtils.import("resource://activity-stream/lib/ActivityStreamPrefs.jsm", {});
-const {classifySite} = ChromeUtils.import("resource://activity-stream/lib/SiteClassifier.jsm", {});
+const {actionTypes: at, actionUtils: au} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm");
+const {Prefs} = ChromeUtils.import("resource://activity-stream/lib/ActivityStreamPrefs.jsm");
+const {classifySite} = ChromeUtils.import("resource://activity-stream/lib/SiteClassifier.jsm");
 
 ChromeUtils.defineModuleGetter(this, "ASRouterPreferences",
   "resource://activity-stream/lib/ASRouterPreferences.jsm");
@@ -620,6 +620,15 @@ this.TelemetryFeed = class TelemetryFeed {
     //
     if (data.visibility_event_rcvd_ts && session.page !== "about:home") {
       this.setLoadTriggerInfo(port);
+    }
+
+    let timestamp = data.topsites_first_painted_ts;
+
+    if (timestamp &&
+        session.page === "about:home" &&
+        !HomePage.overridden &&
+        Services.prefs.getIntPref("browser.startup.page") === 1) {
+      aboutNewTabService.maybeRecordTopsitesPainted(timestamp);
     }
 
     Object.assign(session.perf, data);

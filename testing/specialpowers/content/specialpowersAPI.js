@@ -12,8 +12,7 @@
 
 var EXPORTED_SYMBOLS = ["SpecialPowersAPI", "bindDOMWindowUtils"];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("resource://specialpowers/MozillaLogger.js", this);
 
@@ -137,7 +136,6 @@ function doApply(fun, invocant, args) {
 }
 
 function wrapPrivileged(obj) {
-
   // Primitives pass straight through.
   if (!isWrappable(obj))
     return obj;
@@ -156,7 +154,6 @@ function wrapPrivileged(obj) {
 }
 
 function unwrapPrivileged(x) {
-
   // We don't wrap primitives, so sometimes we have a primitive where we'd
   // expect to have a wrapper. The proxy pretends to be the type that it's
   // emulating, so we can just as easily check isWrappable() on a proxy as
@@ -645,7 +642,6 @@ SpecialPowersAPI.prototype = {
     if (message.hadError) {
       throw "SpecialPowers.importInMainProcess failed with error " + message.errorMessage;
     }
-
   },
 
   get Services() {
@@ -1259,6 +1255,10 @@ SpecialPowersAPI.prototype = {
     "specialpowers-http-notify-request": function(aMessage) {
       let uri = aMessage.json.uri;
       Services.obs.notifyObservers(null, "specialpowers-http-notify-request", uri);
+    },
+
+    "specialpowers-service-worker-shutdown": function(aMessage) {
+      Services.obs.notifyObservers(null, "specialpowers-service-worker-shutdown");
     },
   },
 

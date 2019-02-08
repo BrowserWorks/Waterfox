@@ -13,13 +13,13 @@
 #include "nsIPropertyBag2.h"
 #include "ProcessPriorityManager.h"
 #include "nsServiceManagerUtils.h"
+#include "nsIXULRuntime.h"
 
 // This number is fairly arbitrary ... the intention is to put off
 // launching another app process until the last one has finished
 // loading its content, to reduce CPU/memory/IO contention.
 #define DEFAULT_ALLOCATE_DELAY 1000
 
-using namespace mozilla;
 using namespace mozilla::hal;
 using namespace mozilla::dom;
 
@@ -245,9 +245,10 @@ void PreallocatedProcessManagerImpl::AllocateOnIdle() {
     return;
   }
 
-  NS_IdleDispatchToCurrentThread(
+  NS_DispatchToCurrentThreadQueue(
       NewRunnableMethod("PreallocatedProcessManagerImpl::AllocateNow", this,
-                        &PreallocatedProcessManagerImpl::AllocateNow));
+                        &PreallocatedProcessManagerImpl::AllocateNow),
+      EventQueuePriority::Idle);
 }
 
 void PreallocatedProcessManagerImpl::AllocateNow() {

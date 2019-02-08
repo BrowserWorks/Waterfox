@@ -1,7 +1,7 @@
 /* eslint-env mozilla/frame-script */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/Timer.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {clearInterval, setInterval} = ChromeUtils.import("resource://gre/modules/Timer.jsm");
 
 // Define these to make EventUtils happy.
 let window = this;
@@ -48,7 +48,6 @@ function handlePrompt(action, isTabModal, isSelect) {
       ui = doc;
     else
       ui = doc.defaultView.Dialog.ui;
-
   }
 
   let promptState;
@@ -127,6 +126,22 @@ function getPromptState(ui) {
     state.focused = "infoBody";
   } else {
     state.focused = "ERROR: unexpected element focused: " + (e ? e.localName : "<null>");
+  }
+
+  let treeOwner = ui.prompt &&
+                  ui.prompt.docShell &&
+                  ui.prompt.docShell.treeOwner;
+  if (treeOwner && treeOwner.QueryInterface(Ci.nsIInterfaceRequestor)) {
+    // Check that the dialog is modal, chrome and dependent;
+    // We can't just check window.opener because that'll be
+    // a content window, which therefore isn't exposed (it'll lie and
+    // be null).
+    let flags = treeOwner.getInterface(Ci.nsIXULWindow).chromeFlags;
+    state.chrome = (flags & Ci.nsIWebBrowserChrome.CHROME_OPENAS_CHROME) != 0;
+    state.dialog = (flags & Ci.nsIWebBrowserChrome.CHROME_OPENAS_DIALOG) != 0;
+    state.chromeDependent = (flags & Ci.nsIWebBrowserChrome.CHROME_DEPENDENT) != 0;
+    let wbc = treeOwner.getInterface(Ci.nsIWebBrowserChrome);
+    state.isWindowModal = wbc.isWindowModal();
   }
 
   return state;

@@ -17,8 +17,8 @@
 
 <script src="head.js"></script>
 <script class="testbody" type="text/javascript">
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://testing-common/BrowserTestUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {BrowserTestUtils} = ChromeUtils.import("resource://testing-common/BrowserTestUtils.jsm");
 ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 var mainWindow = window.docShell.rootTreeItem.domWindow;
@@ -210,7 +210,10 @@ function testOnWindow(aTestData) {
   });
 }
 SpecialPowers.pushPrefEnv(
-  {"set": [["browser.safebrowsing.phishing.enabled", true]]},
+  {"set": [
+    ["browser.safebrowsing.phishing.enabled", true],
+    ["dom.testing.sync-content-blocking-notifications", true],
+  ]},
   test);
 
 function test() {

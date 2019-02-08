@@ -43,9 +43,7 @@ rustfmt = check_prog('RUSTFMT', ['rustfmt'], paths=toolchain_search_path,
 # installer of LLVM/Clang doesn't provide llvm-config, so we need both
 # methods to support all of our tier-1 platforms.
 @depends(host)
-@imports('which')
 @imports('os')
-@imports('subprocess')
 def llvm_config_paths(host):
     llvm_supported_versions = ['6.0', '5.0', '4.0', '3.9']
     llvm_config_progs = []
@@ -60,9 +58,9 @@ def llvm_config_paths(host):
     # Homebrew on macOS doesn't make clang available on PATH, so we have to
     # look for it in non-standard places.
     if host.kernel == 'Darwin':
-        try:
-            brew = which.which('brew')
-            brew_config = subprocess.check_output([brew, 'config']).strip()
+        brew = find_program('brew')
+        if brew:
+            brew_config = check_cmd_output(brew, 'config').strip()
 
             for line in brew_config.splitlines():
                 if line.startswith('HOMEBREW_PREFIX'):
@@ -71,9 +69,6 @@ def llvm_config_paths(host):
                     path = ['opt', 'llvm', 'bin', 'llvm-config']
                     llvm_config_progs.append(os.path.join(prefix, *path))
                     break
-        except which.WhichError:
-            # Homebrew not installed, which is fine.
-            pass
 
     # Also add in the location to which `mach bootstrap` or
     # `mach artifact toolchain` installs clang.
@@ -248,10 +243,11 @@ set_config('MOZ_LIBCLANG_PATH', bindgen_config_paths.libclang_path)
 set_config('MOZ_CLANG_PATH', bindgen_config_paths.clang_path)
 
 
-@depends(host, target, target_is_unix, c_compiler, bindgen_cflags_android)
-def basic_bindgen_cflags(host, target, is_unix, compiler_info, android_cflags):
+@depends(target, target_is_unix, cxx_compiler, bindgen_cflags_android,
+         bindgen_config_paths.clang_path)
+def basic_bindgen_cflags(target, is_unix, compiler_info, android_cflags, clang_path):
     args = [
-        '-x', 'c++', '-std=gnu++14', '-fno-sized-deallocation',
+        '-x', 'c++', '-fno-sized-deallocation',
         '-DTRACING=1', '-DIMPL_LIBXUL', '-DMOZILLA_INTERNAL_API',
         '-DRUST_BINDGEN'
     ]
@@ -262,99 +258,43 @@ def basic_bindgen_cflags(host, target, is_unix, compiler_info, android_cflags):
     if target.os == 'Android':
         args += android_cflags
 
-    def handle_cpu(obj):
-        if 'cpu' in obj and target.cpu in obj['cpu']:
-            return obj['cpu'][target.cpu]
-        return []
+    args += {
+        'Android': ['-DOS_ANDROID=1'],
+        'DragonFly': ['-DOS_BSD=1', '-DOS_DRAGONFLY=1'],
+        'FreeBSD': ['-DOS_BSD=1', '-DOS_FREEBSD=1'],
+        'GNU': ['-DOS_LINUX=1'],
+        'NetBSD': ['-DOS_BSD=1', '-DOS_NETBSD=1'],
+        'OpenBSD': ['-DOS_BSD=1', '-DOS_OPENBSD=1'],
+        'OSX': ['-DOS_MACOSX=1', '-stdlib=libc++'],
+        'SunOS': ['-DOS_SOLARIS=1'],
+        'WINNT': [
+            '-DOS_WIN=1',
+            '-DWIN32=1',
+        ],
+    }.get(target.os, [])
 
-    if target.os == 'WINNT' and host.raw_os.startswith('gnu'):
-        args += handle_cpu({
-            'cpu': {
-                'x86': ['--target=i686-pc-mingw32'],
-                'x86_64': ['--target=x86_64-w64-mingw32'],
-            },
-        })
+    if compiler_info.type in ('msvc', 'clang-cl'):
+        args += [
+            # To enable the builtin __builtin_offsetof so that CRT wouldn't
+            # use reinterpret_cast in offsetof() which is not allowed inside
+            # static_assert().
+            '-D_CRT_USE_BUILTIN_OFFSETOF',
+            # Enable hidden attribute (which is not supported by MSVC and
+            # thus not enabled by default with a MSVC-compatibile build)
+            # to exclude hidden symbols from the generated file.
+            '-DHAVE_VISIBILITY_HIDDEN_ATTRIBUTE=1',
+        ]
 
-    os_dict = {
-        'Android': {
-            'default': ['-DOS_ANDROID=1'],
-            'cpu': {
-                'aarch64': ['--target=aarch64-linux-android'],
-                'arm': ['--target=armv7-linux-androideabi'],
-                'x86': ['--target=i686-linux-android'],
-                'x86_64': ['--target=x86_64-linux-android'],
-            },
-        },
-        'DragonFly': {
-            'default': ['-DOS_BSD=1', '-DOS_DRAGONFLY=1'],
-        },
-        'FreeBSD': {
-            'default': ['-DOS_BSD=1', '-DOS_FREEBSD=1'],
-        },
-        'GNU': {
-            'default': ['-DOS_LINUX=1'],
-            'cpu': {
-                'x86': ['-m32'],
-                'x86_64': ['-m64'],
-            },
-        },
-        'NetBSD': {
-            'default': ['-DOS_BSD=1', '-DOS_NETBSD=1'],
-        },
-        'OpenBSD': {
-            'default': ['-DOS_BSD=1', '-DOS_OPENBSD=1'],
-        },
-        'OSX': {
-            'default': [
-                '-DOS_MACOSX=1',
-                '-stdlib=libc++',
-                # To disable the fixup bindgen applies which adds search
-                # paths from clang command line in order to avoid potential
-                # conflict with -stdlib=libc++.
-                '--target=x86_64-apple-darwin',
-            ],
-        },
-        'SunOS': {
-            'default': ['-DOS_SOLARIS=1'],
-        },
-        'WINNT': {
-            'default': [
-                '-DOS_WIN=1',
-                '-DWIN32=1',
-            ],
-            'compiler': {
-                'msvc': {
-                    'default': [
-                        # For compatibility with MSVC 2015
-                        '-fms-compatibility-version=19',
-                        # To enable the builtin __builtin_offsetof so that CRT wouldn't
-                        # use reinterpret_cast in offsetof() which is not allowed inside
-                        # static_assert().
-                        '-D_CRT_USE_BUILTIN_OFFSETOF',
-                        # Enable hidden attribute (which is not supported by MSVC and
-                        # thus not enabled by default with a MSVC-compatibile build)
-                        # to exclude hidden symbols from the generated file.
-                        '-DHAVE_VISIBILITY_HIDDEN_ATTRIBUTE=1',
-                    ],
-                    'cpu': {
-                        'x86': ['--target=i686-pc-win32'],
-                        'x86_64': ['--target=x86_64-pc-win32'],
-                        'aarch64': ['--target=aarch64-pc-windows-msvc'],
-                    },
-                },
-            },
-        },
-    }.get(target.os, {})
+    # We want to pass the same base flags as we'd pass clang.
+    # check_compiler from toolchain.configure gives us that, but we don't need
+    # to use that when the compiler used for the build is already clang-based,
+    # in which case we can use the same flags.
+    if compiler_info.type in ('clang-cl', 'clang'):
+        info = compiler_info
+    else:
+        info = check_compiler([clang_path], 'C++', target)
 
-    if 'default' in os_dict:
-        args += os_dict['default']
-
-    args += handle_cpu(os_dict)
-    if 'compiler' in os_dict and compiler_info and compiler_info in os_dict['compiler']:
-        compiler_dict = os_dict['compiler'].get(compiler_info)
-        if 'default' in compiler_dict:
-            args += compiler_dict['default']
-        args += handle_cpu(compiler_dict)
+    args += info.flags
 
     return args
 

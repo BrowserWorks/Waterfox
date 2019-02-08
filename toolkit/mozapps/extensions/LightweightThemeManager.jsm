@@ -6,10 +6,10 @@
 
 var EXPORTED_SYMBOLS = ["LightweightThemeManager"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {AddonManager, AddonManagerPrivate} = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
 /* globals AddonManagerPrivate*/
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const ID_SUFFIX              = "@personas.mozilla.org";
 const ADDON_TYPE             = "theme";
@@ -283,7 +283,7 @@ var LightweightThemeManager = {
       return theme;
     }
 
-    let req = new ServiceRequest();
+    let req = new ServiceRequest({mozAnon: true});
 
     req.mozBackgroundRequest = true;
     req.overrideMimeType("text/plain");
@@ -310,8 +310,10 @@ var LightweightThemeManager = {
 
     if ("converted_theme" in parsed) {
       const {url, hash} = parsed.converted_theme;
-      let install = await AddonManager.getInstallForURL(url, "application/x-xpinstall", hash,
-                                                        null, null, null, null, {source: "lwt-converted-theme"});
+      let install = await AddonManager.getInstallForURL(url, {
+        hash,
+        telemetryInfo: {source: "lwt-converted-theme"},
+      });
 
       install.addListener({
         onDownloadEnded() {

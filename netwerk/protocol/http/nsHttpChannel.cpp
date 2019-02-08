@@ -122,6 +122,7 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/ServiceWorkerUtils.h"
 #include "mozilla/net/AsyncUrlChannelClassifier.h"
+#include "mozilla/net/UrlClassifierFeatureFactory.h"
 
 #ifdef MOZ_TASK_TRACER
 #  include "GeckoTaskTracer.h"
@@ -318,7 +319,6 @@ nsHttpChannel::nsHttpChannel()
       mCacheEntryIsReadOnly(false),
       mCacheEntryIsWriteOnly(false),
       mCacheEntriesToWaitFor(0),
-      mHasQueryString(0),
       mConcurrentCacheAccess(0),
       mIsPartialRequest(0),
       mHasAutoRedirectVetoNotifier(0),
@@ -327,7 +327,7 @@ nsHttpChannel::nsHttpChannel()
       mStronglyFramed(false),
       mUsedNetwork(0),
       mAuthConnectionRestartable(0),
-      mTrackingProtectionCancellationPending(0),
+      mChannelClassifierCancellationPending(0),
       mAsyncResumePending(0),
       mPushedStream(nullptr),
       mLocalBlocklist(false),
@@ -448,24 +448,27 @@ nsresult nsHttpChannel::PrepareToConnect() {
   return OnBeforeConnect();
 }
 
-void nsHttpChannel::HandleContinueCancelledByTrackingProtection() {
+void nsHttpChannel::HandleContinueCancellingByChannelClassifier(
+    nsresult aErrorCode) {
+  MOZ_ASSERT(
+      UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(aErrorCode));
   MOZ_ASSERT(!mCallOnResume, "How did that happen?");
 
   if (mSuspendCount) {
     LOG(
-        ("Waiting until resume HandleContinueCancelledByTrackingProtection "
+        ("Waiting until resume HandleContinueCancellingByChannelClassifier "
          "[this=%p]\n",
          this));
-    mCallOnResume = [](nsHttpChannel *self) {
-      self->HandleContinueCancelledByTrackingProtection();
+    mCallOnResume = [aErrorCode](nsHttpChannel *self) {
+      self->HandleContinueCancellingByChannelClassifier(aErrorCode);
       return NS_OK;
     };
     return;
   }
 
-  LOG(("nsHttpChannel::HandleContinueCancelledByTrackingProtection [this=%p]\n",
+  LOG(("nsHttpChannel::HandleContinueCancellingByChannelClassifier [this=%p]\n",
        this));
-  ContinueCancelledByTrackingProtection();
+  ContinueCancellingByChannelClassifier(aErrorCode);
 }
 
 void nsHttpChannel::HandleOnBeforeConnect() {
@@ -791,20 +794,22 @@ nsresult nsHttpChannel::ContinueConnect() {
   return DoConnect();
 }
 
-nsresult nsHttpChannel::DoConnect(nsAHttpConnection *aConn) {
-  LOG(("nsHttpChannel::DoConnect [this=%p]\n", this));
+nsresult nsHttpChannel::DoConnect(nsHttpTransaction *aTransWithStickyConn) {
+  LOG(("nsHttpChannel::DoConnect [this=%p, aTransWithStickyConn=%p]\n", this,
+       aTransWithStickyConn));
 
   nsresult rv = SetupTransaction();
   if (NS_FAILED(rv)) {
     return rv;
   }
 
-  // transfer ownership of connection to transaction
-  if (aConn) {
-    mTransaction->SetConnection(aConn);
+  if (aTransWithStickyConn) {
+    rv = gHttpHandler->InitiateTransactionWithStickyConn(
+        mTransaction, mPriority, aTransWithStickyConn);
+  } else {
+    rv = gHttpHandler->InitiateTransaction(mTransaction, mPriority);
   }
 
-  rv = gHttpHandler->InitiateTransaction(mTransaction, mPriority);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -1471,7 +1476,8 @@ nsresult EnsureMIMEOfScript(nsHttpChannel *aChannel, nsIURI *aURI,
     if (!sIsInited) {
       sIsInited = true;
       Preferences::AddBoolVarCache(&sCachedBlockScriptWithWrongMime,
-                                   "security.block_script_with_wrong_mime");
+                                   "security.block_script_with_wrong_mime",
+                                   true);
     }
 
     // Do not block the load if the feature is not enabled.
@@ -1488,62 +1494,67 @@ nsresult EnsureMIMEOfScript(nsHttpChannel *aChannel, nsIURI *aURI,
     // script load has type text/plain
     AccumulateCategorical(
         Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::text_plain);
-    return NS_OK;
-  }
-
-  if (StringBeginsWith(contentType, NS_LITERAL_CSTRING("text/xml"))) {
+  } else if (StringBeginsWith(contentType, NS_LITERAL_CSTRING("text/xml"))) {
     // script load has type text/xml
     AccumulateCategorical(
         Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::text_xml);
-    return NS_OK;
-  }
-
-  if (StringBeginsWith(contentType,
-                       NS_LITERAL_CSTRING("application/octet-stream"))) {
+  } else if (StringBeginsWith(contentType,
+                              NS_LITERAL_CSTRING("application/octet-stream"))) {
     // script load has type application/octet-stream
     AccumulateCategorical(
         Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::app_octet_stream);
-    return NS_OK;
-  }
-
-  if (StringBeginsWith(contentType, NS_LITERAL_CSTRING("application/xml"))) {
+  } else if (StringBeginsWith(contentType,
+                              NS_LITERAL_CSTRING("application/xml"))) {
     // script load has type application/xml
     AccumulateCategorical(
         Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::app_xml);
-    return NS_OK;
-  }
-
-  if (StringBeginsWith(contentType, NS_LITERAL_CSTRING("application/json"))) {
+  } else if (StringBeginsWith(contentType,
+                              NS_LITERAL_CSTRING("application/json"))) {
     // script load has type application/json
     AccumulateCategorical(
         Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::app_json);
-    return NS_OK;
-  }
-
-  if (StringBeginsWith(contentType, NS_LITERAL_CSTRING("text/json"))) {
+  } else if (StringBeginsWith(contentType, NS_LITERAL_CSTRING("text/json"))) {
     // script load has type text/json
     AccumulateCategorical(
         Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::text_json);
-    return NS_OK;
-  }
-
-  if (StringBeginsWith(contentType, NS_LITERAL_CSTRING("text/html"))) {
+  } else if (StringBeginsWith(contentType, NS_LITERAL_CSTRING("text/html"))) {
     // script load has type text/html
     AccumulateCategorical(
         Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::text_html);
-    return NS_OK;
-  }
-
-  if (contentType.IsEmpty()) {
+  } else if (contentType.IsEmpty()) {
     // script load has no type
     AccumulateCategorical(
         Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::empty);
-    return NS_OK;
+  } else {
+    // script load has unknown type
+    AccumulateCategorical(
+        Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::unknown);
   }
 
-  // script load has unknown type
-  AccumulateCategorical(
-      Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::unknown);
+  // We restrict importScripts() in worker code to JavaScript MIME types.
+  if (aLoadInfo->InternalContentPolicyType() ==
+      nsIContentPolicy::TYPE_INTERNAL_WORKER_IMPORT_SCRIPTS) {
+    // Instead of consulting Preferences::GetBool() all the time we
+    // can cache the result to speed things up.
+    static bool sCachedBlockImportScriptsWithWrongMime = false;
+    static bool sIsInited = false;
+    if (!sIsInited) {
+      sIsInited = true;
+      Preferences::AddBoolVarCache(
+          &sCachedBlockImportScriptsWithWrongMime,
+          "security.block_importScripts_with_wrong_mime", true);
+    }
+
+    // Do not block the load if the feature is not enabled.
+    if (!sCachedBlockImportScriptsWithWrongMime) {
+      return NS_OK;
+    }
+
+    ReportMimeTypeMismatch(aChannel, "BlockImportScriptsWithWrongMimeType",
+                           aURI, contentType, Report::Error);
+    return NS_ERROR_CORRUPTED_CONTENT;
+  }
+
   return NS_OK;
 }
 
@@ -3734,7 +3745,6 @@ nsresult nsHttpChannel::OpenCacheEntry(bool isHttps) {
   mConcurrentCacheAccess = 0;
 
   mLoadedFromApplicationCache = false;
-  mHasQueryString = HasQueryString(mRequestHead.ParsedMethod(), mURI);
 
   LOG(("nsHttpChannel::OpenCacheEntry [this=%p]", this));
 
@@ -4765,22 +4775,6 @@ nsresult nsHttpChannel::UpdateExpirationTime() {
   return NS_OK;
 }
 
-/*static*/ inline bool nsHttpChannel::HasQueryString(
-    nsHttpRequestHead::ParsedMethodType method, nsIURI *uri) {
-  // Must be called on the main thread because nsIURI does not implement
-  // thread-safe QueryInterface.
-  MOZ_ASSERT(NS_IsMainThread());
-
-  if (method != nsHttpRequestHead::kMethod_Get &&
-      method != nsHttpRequestHead::kMethod_Head)
-    return false;
-
-  nsAutoCString query;
-  nsCOMPtr<nsIURL> url = do_QueryInterface(uri);
-  nsresult rv = url->GetQuery(query);
-  return NS_SUCCEEDED(rv) && !query.IsEmpty();
-}
-
 bool nsHttpChannel::ShouldUpdateOfflineCacheEntry() {
   if (!mApplicationCacheForWrite || !mOfflineCacheEntry) {
     return false;
@@ -5686,6 +5680,12 @@ nsresult nsHttpChannel::AsyncProcessRedirection(uint32_t redirectType) {
   if (NS_FAILED(mResponseHead->GetHeader(nsHttp::Location, location)))
     return NS_ERROR_FAILURE;
 
+  // If we were told to not follow redirects automatically, then again
+  // carry on as though this were a normal response.
+  if (mLoadInfo && mLoadInfo->GetDontFollowRedirects()) {
+    return NS_ERROR_FAILURE;
+  }
+
   // make sure non-ASCII characters in the location header are escaped.
   nsAutoCString locationBuf;
   if (NS_EscapeURL(location.get(), -1, esc_OnlyNonASCII | esc_Spaces,
@@ -5914,15 +5914,7 @@ NS_IMETHODIMP nsHttpChannel::CloseStickyConnection() {
     return NS_OK;
   }
 
-  RefPtr<nsAHttpConnection> conn = mTransaction->GetConnectionReference();
-  if (!conn) {
-    LOG(("  no connection"));
-    return NS_OK;
-  }
-
-  // This turns the IsPersistent() indicator on the connection to false,
-  // and makes us throw it away in OnStopRequest.
-  conn->DontReuse();
+  mTransaction->DontReuseConnection();
   return NS_OK;
 }
 
@@ -5984,9 +5976,14 @@ nsHttpChannel::Cancel(nsresult status) {
   MOZ_ASSERT(NS_IsMainThread());
   // We should never have a pump open while a CORS preflight is in progress.
   MOZ_ASSERT_IF(mPreflightChannel, !mCachePump);
-  MOZ_ASSERT(status != NS_ERROR_TRACKING_URI,
-             "NS_ERROR_TRACKING_URI needs to be handled by "
-             "CancelForTrackingProtection()");
+#ifdef DEBUG
+  if (UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(status)) {
+    MOZ_CRASH_UNSAFE_PRINTF(
+        "Blocking classifier error %" PRIx32
+        " need to be handled by CancelByChannelClassifier()",
+        static_cast<uint32_t>(status));
+  }
+#endif
 
   LOG(("nsHttpChannel::Cancel [this=%p status=%" PRIx32 "]\n", this,
        static_cast<uint32_t>(status)));
@@ -6003,12 +6000,14 @@ nsHttpChannel::Cancel(nsresult status) {
 }
 
 NS_IMETHODIMP
-nsHttpChannel::CancelForTrackingProtection() {
+nsHttpChannel::CancelByChannelClassifier(nsresult aErrorCode) {
+  MOZ_ASSERT(
+      UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(aErrorCode));
   MOZ_ASSERT(NS_IsMainThread());
   // We should never have a pump open while a CORS preflight is in progress.
   MOZ_ASSERT_IF(mPreflightChannel, !mCachePump);
 
-  LOG(("nsHttpChannel::CancelForTrackingProtection [this=%p]\n", this));
+  LOG(("nsHttpChannel::CancelByChannelClassifier [this=%p]\n", this));
 
   if (mCanceled) {
     LOG(("  ignoring; already canceled\n"));
@@ -6039,9 +6038,9 @@ nsHttpChannel::CancelForTrackingProtection() {
   if (mSuspendCount) {
     LOG(("Waiting until resume in Cancel [this=%p]\n", this));
     MOZ_ASSERT(!mCallOnResume);
-    mTrackingProtectionCancellationPending = 1;
-    mCallOnResume = [](nsHttpChannel *self) {
-      self->HandleContinueCancelledByTrackingProtection();
+    mChannelClassifierCancellationPending = 1;
+    mCallOnResume = [aErrorCode](nsHttpChannel *self) {
+      self->HandleContinueCancellingByChannelClassifier(aErrorCode);
       return NS_OK;
     };
     return NS_OK;
@@ -6050,19 +6049,21 @@ nsHttpChannel::CancelForTrackingProtection() {
   // Check to see if we should redirect this channel elsewhere by
   // nsIHttpChannel.redirectTo API request
   if (mAPIRedirectToURI) {
-    mTrackingProtectionCancellationPending = 1;
+    mChannelClassifierCancellationPending = 1;
     return AsyncCall(&nsHttpChannel::HandleAsyncAPIRedirect);
   }
 
-  return CancelInternal(NS_ERROR_TRACKING_URI);
+  return CancelInternal(aErrorCode);
 }
 
-void nsHttpChannel::ContinueCancelledByTrackingProtection() {
+void nsHttpChannel::ContinueCancellingByChannelClassifier(nsresult aErrorCode) {
+  MOZ_ASSERT(
+      UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(aErrorCode));
   MOZ_ASSERT(NS_IsMainThread());
   // We should never have a pump open while a CORS preflight is in progress.
   MOZ_ASSERT_IF(mPreflightChannel, !mCachePump);
 
-  LOG(("nsHttpChannel::ContinueCancelledByTrackingProtection [this=%p]\n",
+  LOG(("nsHttpChannel::ContinueCancellingByChannelClassifier [this=%p]\n",
        this));
   if (mCanceled) {
     LOG(("  ignoring; already canceled\n"));
@@ -6076,14 +6077,14 @@ void nsHttpChannel::ContinueCancelledByTrackingProtection() {
     return;
   }
 
-  Unused << CancelInternal(NS_ERROR_TRACKING_URI);
+  Unused << CancelInternal(aErrorCode);
 }
 
 nsresult nsHttpChannel::CancelInternal(nsresult status) {
-  bool trackingProtectionCancellationPending =
-      !!mTrackingProtectionCancellationPending;
-  if (status == NS_ERROR_TRACKING_URI) {
-    mTrackingProtectionCancellationPending = 0;
+  bool channelClassifierCancellationPending =
+      !!mChannelClassifierCancellationPending;
+  if (UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(status)) {
+    mChannelClassifierCancellationPending = 0;
   }
 
   mCanceled = true;
@@ -6099,9 +6100,9 @@ nsresult nsHttpChannel::CancelInternal(nsresult status) {
     mRequestContext->CancelTailedRequest(this);
     CloseCacheEntry(false);
     Unused << AsyncAbort(status);
-  } else if (trackingProtectionCancellationPending) {
+  } else if (channelClassifierCancellationPending) {
     // If we're coming from an asynchronous path when canceling a channel due
-    // to tracking protection, we need to AsyncAbort the channel now.
+    // to safe-browsing protection, we need to AsyncAbort the channel now.
     Unused << AsyncAbort(status);
   }
   return NS_OK;
@@ -6621,10 +6622,12 @@ nsresult nsHttpChannel::BeginConnectActual() {
     return mStatus;
   }
 
-  if (mTrackingProtectionCancellationPending) {
+  AUTO_PROFILER_LABEL("nsHttpChannel::BeginConnectActual", NETWORK);
+
+  if (mChannelClassifierCancellationPending) {
     LOG(
-        ("Waiting for tracking protection cancellation in BeginConnectActual "
-         "[this=%p]\n",
+        ("Waiting for safe-browsing protection cancellation in "
+         "BeginConnectActual [this=%p]\n",
          this));
     return NS_OK;
   }
@@ -7448,16 +7451,22 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt,
     LOG(("nsHttpChannel %p has a strongly framed transaction: %d", this,
          mStronglyFramed));
 
-    //
-    // grab references to connection in case we need to retry an
-    // authentication request over it or use it for an upgrade
-    // to another protocol.
-    //
+    // Save the reference of |mTransaction| to |transactionWithStickyConn|
+    // when it has a sticky connection.
+    // In the case we need to retry an authentication request, we need to
+    // reuse the connection of |transactionWithStickyConn|.
+    RefPtr<nsHttpTransaction> transactionWithStickyConn;
+    if (mCaps & NS_HTTP_STICKY_CONNECTION ||
+        mTransaction->Caps() & NS_HTTP_STICKY_CONNECTION) {
+      transactionWithStickyConn = mTransaction;
+      LOG(("  transaction %p has sticky connection",
+           transactionWithStickyConn.get()));
+    }
+
     // this code relies on the code in nsHttpTransaction::Close, which
     // tests for NS_HTTP_STICKY_CONNECTION to determine whether or not to
     // keep the connection around after the transaction is finished.
     //
-    RefPtr<nsAHttpConnection> conn;
     LOG(("  mAuthRetryPending=%d, status=%" PRIx32 ", sticky conn cap=%d",
          mAuthRetryPending, static_cast<uint32_t>(status),
          mCaps & NS_HTTP_STICKY_CONNECTION));
@@ -7465,37 +7474,22 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt,
     // might have been updated by the transaction itself during inspection of
     // the reposnse headers yet on the socket thread (found connection based
     // auth schema).
-    if ((mAuthRetryPending || NS_FAILED(status)) &&
-        (mCaps & NS_HTTP_STICKY_CONNECTION ||
-         mTransaction->Caps() & NS_HTTP_STICKY_CONNECTION)) {
-      conn = mTransaction->GetConnectionReference();
-      LOG(("  transaction %p provides connection %p", mTransaction.get(),
-           conn.get()));
 
-      if (conn) {
-        if (NS_FAILED(status)) {
-          // Close (don't reuse) the sticky connection if it's in the middle
-          // of an NTLM negotiation and this channel has been cancelled.
-          // There are proxy servers known to get confused when we send
-          // a new request over such a half-stated connection.
-          if (!mAuthConnectionRestartable) {
-            LOG(("  not reusing a half-authenticated sticky connection"));
-            conn->DontReuse();
-          }
-          conn = nullptr;
-        } else if (!conn->IsPersistent()) {
-          // This is so far a workaround to fix leak when reusing unpersistent
-          // connection for authentication retry. See bug 459620 comment 4
-          // for details.
-          LOG(("  connection is not persistent, not reusing it"));
-          conn = nullptr;
+    if ((mAuthRetryPending || NS_FAILED(status)) && transactionWithStickyConn) {
+      if (NS_FAILED(status)) {
+        // Close (don't reuse) the sticky connection if it's in the middle
+        // of an NTLM negotiation and this channel has been cancelled.
+        // There are proxy servers known to get confused when we send
+        // a new request over such a half-stated connection.
+        if (!mAuthConnectionRestartable) {
+          LOG(("  not reusing a half-authenticated sticky connection"));
+          transactionWithStickyConn->DontReuseConnection();
         }
       }
     }
 
-    RefPtr<nsAHttpConnection> stickyConn;
     if (mCaps & NS_HTTP_STICKY_CONNECTION) {
-      stickyConn = mTransaction->GetConnectionReference();
+      mTransaction->SetH2WSConnRefTaken();
     }
 
     mTransferSize = mTransaction->GetTransferSize();
@@ -7539,18 +7533,20 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt,
     if (authRetry) {
       mAuthRetryPending = false;
       auto continueOSR = [authRetry, isFromNet, contentComplete,
-                          stickyConn{std::move(stickyConn)}](auto *self,
-                                                             nsresult aStatus) {
+                          transactionWithStickyConn](auto *self,
+                                                     nsresult aStatus) {
         return self->ContinueOnStopRequestAfterAuthRetry(
-            aStatus, authRetry, isFromNet, contentComplete, stickyConn);
+            aStatus, authRetry, isFromNet, contentComplete,
+            transactionWithStickyConn);
       };
-      status = DoAuthRetry(conn, continueOSR);
+      status = DoAuthRetry(transactionWithStickyConn, continueOSR);
       if (NS_SUCCEEDED(status)) {
         return NS_OK;
       }
     }
     return ContinueOnStopRequestAfterAuthRetry(status, authRetry, isFromNet,
-                                               contentComplete, stickyConn);
+                                               contentComplete,
+                                               transactionWithStickyConn);
   }
 
   return ContinueOnStopRequest(status, isFromNet, contentComplete);
@@ -7558,13 +7554,13 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt,
 
 nsresult nsHttpChannel::ContinueOnStopRequestAfterAuthRetry(
     nsresult aStatus, bool aAuthRetry, bool aIsFromNet, bool aContentComplete,
-    nsAHttpConnection *aStickyConn) {
+    nsHttpTransaction *aTransWithStickyConn) {
   LOG(
       ("nsHttpChannel::ContinueOnStopRequestAfterAuthRetry "
        "[this=%p, aStatus=%" PRIx32
-       " aAuthRetry=%d, aIsFromNet=%d, aStickyConn=%p]\n",
+       " aAuthRetry=%d, aIsFromNet=%d, aTransWithStickyConn=%p]\n",
        this, static_cast<uint32_t>(aStatus), aAuthRetry, aIsFromNet,
-       aStickyConn));
+       aTransWithStickyConn));
 
   if (aAuthRetry && NS_SUCCEEDED(aStatus)) {
     return NS_OK;
@@ -7596,20 +7592,20 @@ nsresult nsHttpChannel::ContinueOnStopRequestAfterAuthRetry(
     return NS_OK;
   }
 
-  bool upgradeWebsocket = mUpgradeProtocolCallback && aStickyConn &&
+  bool upgradeWebsocket = mUpgradeProtocolCallback && aTransWithStickyConn &&
                           mResponseHead &&
                           ((mResponseHead->Status() == 101 &&
                             mResponseHead->Version() == HttpVersion::v1_1) ||
                            (mResponseHead->Status() == 200 &&
                             mResponseHead->Version() == HttpVersion::v2_0));
 
-  bool upgradeConnect = mUpgradeProtocolCallback && aStickyConn &&
+  bool upgradeConnect = mUpgradeProtocolCallback && aTransWithStickyConn &&
                         (mCaps & NS_HTTP_CONNECT_ONLY) && mResponseHead &&
                         mResponseHead->Status() == 200;
 
   if (upgradeWebsocket || upgradeConnect) {
     nsresult rv = gHttpHandler->ConnMgr()->CompleteUpgrade(
-        aStickyConn, mUpgradeProtocolCallback);
+        aTransWithStickyConn, mUpgradeProtocolCallback);
     if (NS_FAILED(rv)) {
       LOG(("  CompleteUpgrade failed with %08x", static_cast<uint32_t>(rv)));
     }
@@ -8374,10 +8370,11 @@ nsHttpChannel::ResumeAt(uint64_t aStartPos, const nsACString &aEntityID) {
 }
 
 nsresult nsHttpChannel::DoAuthRetry(
-    nsAHttpConnection *conn,
+    nsHttpTransaction *aTransWithStickyConn,
     const std::function<nsresult(nsHttpChannel *, nsresult)>
         &aContinueOnStopRequestFunc) {
-  LOG(("nsHttpChannel::DoAuthRetry [this=%p]\n", this));
+  LOG(("nsHttpChannel::DoAuthRetry [this=%p, aTransWithStickyConn=%p]\n", this,
+       aTransWithStickyConn));
 
   MOZ_ASSERT(!mTransaction, "should not have a transaction");
 
@@ -8400,15 +8397,15 @@ nsresult nsHttpChannel::DoAuthRetry(
   // notify "http-on-modify-request" observers
   CallOnModifyRequestObservers();
 
-  RefPtr<nsAHttpConnection> connRef(conn);
+  RefPtr<nsHttpTransaction> trans(aTransWithStickyConn);
   return CallOrWaitForResume(
-      [conn{std::move(connRef)}, aContinueOnStopRequestFunc](auto *self) {
-        return self->ContinueDoAuthRetry(conn, aContinueOnStopRequestFunc);
+      [trans{std::move(trans)}, aContinueOnStopRequestFunc](auto *self) {
+        return self->ContinueDoAuthRetry(trans, aContinueOnStopRequestFunc);
       });
 }
 
 nsresult nsHttpChannel::ContinueDoAuthRetry(
-    nsAHttpConnection *aConn,
+    nsHttpTransaction *aTransWithStickyConn,
     const std::function<nsresult(nsHttpChannel *, nsresult)>
         &aContinueOnStopRequestFunc) {
   LOG(("nsHttpChannel::ContinueDoAuthRetry [this=%p]\n", this));
@@ -8441,10 +8438,10 @@ nsresult nsHttpChannel::ContinueDoAuthRetry(
   // notify "http-on-before-connect" observers
   gHttpHandler->OnBeforeConnect(this);
 
-  RefPtr<nsAHttpConnection> connRef(aConn);
+  RefPtr<nsHttpTransaction> trans(aTransWithStickyConn);
   return CallOrWaitForResume(
-      [conn{std::move(connRef)}, aContinueOnStopRequestFunc](auto *self) {
-        nsresult rv = self->DoConnect(conn);
+      [trans{std::move(trans)}, aContinueOnStopRequestFunc](auto *self) {
+        nsresult rv = self->DoConnect(trans);
         return aContinueOnStopRequestFunc(self, rv);
       });
 }

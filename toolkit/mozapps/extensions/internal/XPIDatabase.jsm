@@ -16,7 +16,7 @@
 
 var EXPORTED_SYMBOLS = ["AddonInternal", "XPIDatabase", "XPIDatabaseReconcile"];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   AddonManager: "resource://gre/modules/AddonManager.jsm",
@@ -59,7 +59,7 @@ for (let sym of [
   XPCOMUtils.defineLazyGetter(this, sym, () => XPIInternal[sym]);
 }
 
-ChromeUtils.import("resource://gre/modules/Log.jsm");
+const {Log} = ChromeUtils.import("resource://gre/modules/Log.jsm");
 const LOGGER_ID = "addons.xpi-utils";
 
 const nsIFile = Components.Constructor("@mozilla.org/file/local;1", "nsIFile",
@@ -82,6 +82,7 @@ const TOOLKIT_ID                      = "toolkit@mozilla.org";
 
 const KEY_APP_SYSTEM_ADDONS           = "app-system-addons";
 const KEY_APP_SYSTEM_DEFAULTS         = "app-system-defaults";
+const KEY_APP_BUILTINS                = "app-builtin";
 const KEY_APP_SYSTEM_LOCAL            = "app-system-local";
 const KEY_APP_SYSTEM_SHARE            = "app-system-share";
 const KEY_APP_GLOBAL                  = "app-global";
@@ -108,10 +109,11 @@ const PROP_JSON_FIELDS = ["id", "syncGUID", "version", "type",
                           "softDisabled", "foreignInstall",
                           "strictCompatibility", "locales", "targetApplications",
                           "targetPlatforms", "signedState",
-                          "seen", "dependencies",
+                          "seen", "dependencies", "incognito",
                           "userPermissions", "icons", "iconURL",
                           "blocklistState", "blocklistURL", "startupData",
-                          "previewImage", "hidden", "installTelemetryInfo"];
+                          "previewImage", "hidden", "installTelemetryInfo",
+                          "rootURI"];
 
 const LEGACY_TYPES = new Set([
   "extension",
@@ -235,6 +237,7 @@ class AddonInternal {
     this.startupData = null;
     this._hidden = false;
     this.installTelemetryInfo = null;
+    this.rootURI = null;
 
     this.inDatabase = false;
 
@@ -256,10 +259,6 @@ class AddonInternal {
 
       if (this.location) {
         this.addedToDatabase();
-      }
-
-      if (!addonData._sourceBundle) {
-        throw new Error("Expected passed argument to contain a path");
       }
 
       this._sourceBundle = addonData._sourceBundle;
@@ -342,8 +341,9 @@ class AddonInternal {
         return this.signedState == AddonManager.SIGNEDSTATE_SYSTEM;
 
       case KEY_APP_SYSTEM_DEFAULTS:
+      case KEY_APP_BUILTINS:
       case KEY_APP_TEMPORARY:
-        // Temporary and built-in system add-ons do not require signing.
+        // Temporary and built-in add-ons do not require signing.
         return true;
 
       case KEY_APP_SYSTEM_SHARE:
@@ -366,7 +366,7 @@ class AddonInternal {
   }
 
   get hidden() {
-    return this.location.isSystem ||
+    return this.location.isBuiltin ||
            (this._hidden && this.signedState == AddonManager.SIGNEDSTATE_PRIVILEGED);
   }
 
@@ -444,7 +444,6 @@ class AddonInternal {
     // Dictionaries are compatible by default unless requested by the dictinary.
     if (!this.strictCompatibility &&
         (!AddonManager.strictCompatibility || this.type == "dictionary")) {
-
       // The repository can specify compatibility overrides.
       // Note: For now, only blacklisting is supported by overrides.
       let overrides = AddonRepository.getCompatibilityOverridesSync(this.id);
@@ -732,6 +731,10 @@ AddonWrapper = class {
     return addon.optionsBrowserStyle;
   }
 
+  get incognito() {
+    return addonFor(this).incognito;
+  }
+
   async getBlocklistURL() {
     return addonFor(this).blocklistURL;
   }
@@ -946,6 +949,10 @@ AddonWrapper = class {
   get isSystem() {
     let addon = addonFor(this);
     return addon.location.isSystem;
+  }
+
+  get isBuiltin() {
+    return addonFor(this).location.isBuiltin;
   }
 
   // Returns true if Firefox Sync should sync this addon. Only addons
@@ -1336,12 +1343,14 @@ this.XPIDatabase = {
       // Make AddonInternal instances from the loaded data and save them
       let addonDB = new Map();
       await forEach(inputAddons.addons, loadedAddon => {
-        try {
-          loadedAddon._sourceBundle = new nsIFile(loadedAddon.path);
-        } catch (e) {
-          // We can fail here when the path is invalid, usually from the
-          // wrong OS
-          logger.warn("Could not find source bundle for add-on " + loadedAddon.id, e);
+        if (loadedAddon.path) {
+          try {
+            loadedAddon._sourceBundle = new nsIFile(loadedAddon.path);
+          } catch (e) {
+            // We can fail here when the path is invalid, usually from the
+            // wrong OS
+            logger.warn("Could not find source bundle for add-on " + loadedAddon.id, e);
+          }
         }
         loadedAddon.location = XPIStates.getLocation(loadedAddon.location);
 
@@ -2332,6 +2341,7 @@ this.XPIDatabaseReconcile = {
         // Load the manifest from the add-on.
         let file = new nsIFile(aAddonState.path);
         aNewAddon = XPIInstall.syncLoadManifestFromFile(file, aLocation);
+        aNewAddon.rootURI = XPIInternal.getURIForResourceInFile(file, "").spec;
       }
       // The add-on in the manifest should match the add-on ID.
       if (aNewAddon.id != aId) {
@@ -2427,6 +2437,9 @@ this.XPIDatabaseReconcile = {
       if (!aNewAddon) {
         let file = new nsIFile(aAddonState.path);
         aNewAddon = XPIInstall.syncLoadManifestFromFile(file, aLocation, aOldAddon);
+        aNewAddon.rootURI = XPIInternal.getURIForResourceInFile(file, "").spec;
+      } else if (!aNewAddon.rootURI) {
+        aNewAddon.rootURI = aOldAddon.rootURI;
       }
 
       // The ID in the manifest that was loaded must match the ID of the old
@@ -2503,6 +2516,7 @@ this.XPIDatabaseReconcile = {
       try {
         let file = new nsIFile(aAddonState.path);
         manifest = XPIInstall.syncLoadManifestFromFile(file, aLocation);
+        manifest.rootURI = aOldAddon.rootURI;
       } catch (err) {
         // If we can no longer read the manifest, it is no longer compatible.
         aOldAddon.brokenManifest = true;
@@ -2548,7 +2562,8 @@ this.XPIDatabaseReconcile = {
    */
   isAppBundledLocation(location) {
     return (location.name == KEY_APP_GLOBAL ||
-            location.name == KEY_APP_SYSTEM_DEFAULTS);
+            location.name == KEY_APP_SYSTEM_DEFAULTS ||
+            location.name == KEY_APP_BUILTINS);
   },
 
   /**
@@ -2608,6 +2623,11 @@ this.XPIDatabaseReconcile = {
     } else {
       newAddon = oldAddon;
     }
+
+    if (newAddon) {
+      newAddon.rootURI = newAddon.rootURI || xpiState.rootURI;
+    }
+
     return newAddon;
   },
 

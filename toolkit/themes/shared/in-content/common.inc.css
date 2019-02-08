@@ -48,6 +48,9 @@
   --in-content-table-border-dark-color: #d1d1d1;
   --in-content-table-header-background: #0a84ff;
 
+  /* The photon animation curve */
+  --animation-curve: cubic-bezier(.07,.95,0,1);
+
   --blue-40: #45a1ff;
   --blue-40-a10: rgb(69, 161, 255, 0.1);
   --blue-50: #0a84ff;
@@ -57,6 +60,7 @@
   --blue-80: #002275;
   --grey-20: #ededf0;
   --grey-30: #d7d7db;
+  --grey-50: #737373;
   --grey-60: #4a4a4f;
   --grey-90: #0c0c0d;
   --grey-90-a10: rgba(12, 12, 13, 0.1);
@@ -64,6 +68,8 @@
   --grey-90-a30: rgba(12, 12, 13, 0.3);
   --grey-90-a40: rgba(12, 12, 13, 0.4);
   --grey-90-a50: rgba(12, 12, 13, 0.5);
+  --purple-70: #6200a4;
+  --purple-70-a40: rgba(98, 0, 164, 0.4);
   --red-50: #ff0039;
   --red-50-a30: rgba(255, 0, 57, 0.3);
   --red-60: #d70022;
@@ -249,16 +255,19 @@ xul|menulist[disabled="true"] {
   opacity: 0.4;
 }
 
+html|button[autofocus],
 *|button.primary {
   background-color: var(--in-content-primary-button-background);
   color: var(--in-content-selected-text) !important;
 }
 
+html|button[autofocus]:enabled:hover,
 html|button.primary:enabled:hover,
 xul|button.primary:not([disabled="true"]):hover {
   background-color: var(--in-content-primary-button-background-hover);
 }
 
+html|button[autofocus]:enabled:hover:active,
 html|button.primary:enabled:hover:active,
 xul|button.primary:not([disabled="true"]):hover:active {
   background-color: var(--in-content-primary-button-background-active);
@@ -804,7 +813,7 @@ xul|treechildren::-moz-tree-image(selected) {
 }
 
 .message-bar-description {
-  margin: 0;
+  margin: 2px 0;
   line-height: 1.25;
 }
 

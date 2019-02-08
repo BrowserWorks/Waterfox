@@ -3,12 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-ChromeUtils.import("resource://gre/modules/GeckoViewChildModule.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-
-XPCOMUtils.defineLazyModuleGetters(this, {
-  Services: "resource://gre/modules/Services.jsm",
-});
+const {GeckoViewChildModule} = ChromeUtils.import("resource://gre/modules/GeckoViewChildModule.jsm");
+var {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 // Dispatches GeckoView:ShowSelectionAction and GeckoView:HideSelectionAction to
 // the GeckoSession on accessible caret changes.
@@ -154,7 +151,6 @@ class GeckoViewSelectionActionChild extends GeckoViewChildModule {
          "releasecaret",
          "taponcaret",
          "updateposition"].includes(reason)) {
-
       const actions = this._actions.filter(
           action => action.predicate.call(this, aEvent));
 
@@ -215,12 +211,10 @@ class GeckoViewSelectionActionChild extends GeckoViewChildModule {
           // Do nothing; we can get here if the delegate was just unregistered.
         },
       });
-
     } else if (["invisibleselection",
                 "presscaret",
                 "scroll",
                 "visibilitychange"].includes(reason)) {
-
       if (!this._isActive) {
         return;
       }
@@ -238,7 +232,6 @@ class GeckoViewSelectionActionChild extends GeckoViewChildModule {
         type: "GeckoView:HideSelectionAction",
         reason: reason,
       });
-
     } else {
       warn `Unknown reason: ${reason}`;
     }

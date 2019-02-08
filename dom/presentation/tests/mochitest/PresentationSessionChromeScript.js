@@ -7,9 +7,8 @@
 
 const Cm = Components.manager;
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/Timer.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {setTimeout} = ChromeUtils.import("resource://gre/modules/Timer.jsm");
 
 const uuidGenerator = Cc["@mozilla.org/uuid-generator;1"]
                       .getService(Ci.nsIUUIDGenerator);
@@ -26,9 +25,6 @@ function registerMockedFactory(contractId, mockedClassId, mockedFactory) {
       originalClassId = "";
       originalFactory = null;
     }
-    if (originalFactory) {
-      registrar.unregisterFactory(originalClassId, originalFactory);
-    }
     registrar.registerFactory(mockedClassId, "", contractId, mockedFactory);
   }
 
@@ -43,7 +39,9 @@ function registerOriginalFactory(contractId, mockedClassId, mockedFactory, origi
   if (originalFactory) {
     var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
     registrar.unregisterFactory(mockedClassId, mockedFactory);
-    registrar.registerFactory(originalClassId, "", contractId, originalFactory);
+    // Passing null for the factory remaps the original CID to the
+    // contract ID.
+    registrar.registerFactory(originalClassId, "", contractId, null);
   }
 }
 

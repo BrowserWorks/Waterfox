@@ -27,7 +27,6 @@
 #include "mozilla/dom/Document.h"
 #include "nsPrintfCString.h"
 #include "RubyUtils.h"
-#include "mozilla/ArenaObjectID.h"
 #include "mozilla/ComputedStyleInlines.h"
 #include "mozilla/Preferences.h"
 
@@ -46,17 +45,13 @@ namespace mozilla {
 ComputedStyle::ComputedStyle(nsPresContext* aPresContext, nsAtom* aPseudoTag,
                              CSSPseudoElementType aPseudoType,
                              ServoComputedDataForgotten aComputedValues)
-    : mPresContext(aPresContext),
-      mSource(aComputedValues),
+    : mSource(aComputedValues),
       mPseudoTag(aPseudoTag),
       mBits(static_cast<Bit>(Servo_ComputedValues_GetStyleBits(this))),
-      mPseudoType(aPseudoType) {
-  MOZ_ASSERT(ComputedData());
-}
+      mPseudoType(aPseudoType) {}
 
-nsChangeHint ComputedStyle::CalcStyleDifference(ComputedStyle* aNewContext,
-                                                uint32_t* aEqualStructs) {
-  MOZ_ASSERT(aNewContext);
+nsChangeHint ComputedStyle::CalcStyleDifference(const ComputedStyle& aNewStyle,
+                                                uint32_t* aEqualStructs) const {
   AUTO_PROFILER_LABEL("ComputedStyle::CalcStyleDifference", LAYOUT);
   static_assert(StyleStructConstants::kStyleStructCount <= 32,
                 "aEqualStructs is not big enough");
@@ -88,33 +83,27 @@ nsChangeHint ComputedStyle::CalcStyleDifference(ComputedStyle* aNewContext,
   // structs.
 #define STYLE_STRUCT_BIT(name_) \
   StyleStructConstants::BitFor(StyleStructID::name_)
-#define PEEK(struct_) ComputedData()->GetStyle##struct_()
 
 #define EXPAND(...) __VA_ARGS__
-#define DO_STRUCT_DIFFERENCE_WITH_ARGS(struct_, extra_args_)                 \
-  PR_BEGIN_MACRO                                                             \
-  const nsStyle##struct_* this##struct_ = PEEK(struct_);                     \
-  if (this##struct_) {                                                       \
-    structsFound |= STYLE_STRUCT_BIT(struct_);                               \
-                                                                             \
-    const nsStyle##struct_* other##struct_ =                                 \
-        aNewContext->ThreadsafeStyle##struct_();                             \
-    if (this##struct_ == other##struct_) {                                   \
-      /* The very same struct, so we know that there will be no */           \
-      /* differences.                                           */           \
-      *aEqualStructs |= STYLE_STRUCT_BIT(struct_);                           \
-    } else {                                                                 \
-      nsChangeHint difference =                                              \
-          this##struct_->CalcDifference(*other##struct_ EXPAND extra_args_); \
-      hint |= difference;                                                    \
-      if (!difference) {                                                     \
-        *aEqualStructs |= STYLE_STRUCT_BIT(struct_);                         \
-      }                                                                      \
-    }                                                                        \
-  } else {                                                                   \
-    *aEqualStructs |= STYLE_STRUCT_BIT(struct_);                             \
-  }                                                                          \
-  styleStructCount++;                                                        \
+#define DO_STRUCT_DIFFERENCE_WITH_ARGS(struct_, extra_args_)               \
+  PR_BEGIN_MACRO                                                           \
+  const nsStyle##struct_* this##struct_ = Style##struct_();                \
+  structsFound |= STYLE_STRUCT_BIT(struct_);                               \
+                                                                           \
+  const nsStyle##struct_* other##struct_ = aNewStyle.Style##struct_();     \
+  if (this##struct_ == other##struct_) {                                   \
+    /* The very same struct, so we know that there will be no */           \
+    /* differences.                                           */           \
+    *aEqualStructs |= STYLE_STRUCT_BIT(struct_);                           \
+  } else {                                                                 \
+    nsChangeHint difference =                                              \
+        this##struct_->CalcDifference(*other##struct_ EXPAND extra_args_); \
+    hint |= difference;                                                    \
+    if (!difference) {                                                     \
+      *aEqualStructs |= STYLE_STRUCT_BIT(struct_);                         \
+    }                                                                      \
+  }                                                                        \
+  styleStructCount++;                                                      \
   PR_END_MACRO
 #define DO_STRUCT_DIFFERENCE(struct_) \
   DO_STRUCT_DIFFERENCE_WITH_ARGS(struct_, ())
@@ -133,10 +122,10 @@ nsChangeHint ComputedStyle::CalcStyleDifference(ComputedStyle* aNewContext,
   DO_STRUCT_DIFFERENCE(Table);
   DO_STRUCT_DIFFERENCE(UIReset);
   DO_STRUCT_DIFFERENCE(Text);
-  DO_STRUCT_DIFFERENCE_WITH_ARGS(List, (, PEEK(Display)));
+  DO_STRUCT_DIFFERENCE_WITH_ARGS(List, (, StyleDisplay()));
   DO_STRUCT_DIFFERENCE(SVGReset);
   DO_STRUCT_DIFFERENCE(SVG);
-  DO_STRUCT_DIFFERENCE_WITH_ARGS(Position, (, PEEK(Visibility)));
+  DO_STRUCT_DIFFERENCE_WITH_ARGS(Position, (, StyleVisibility()));
   DO_STRUCT_DIFFERENCE(Font);
   DO_STRUCT_DIFFERENCE(Margin);
   DO_STRUCT_DIFFERENCE(Padding);
@@ -152,16 +141,6 @@ nsChangeHint ComputedStyle::CalcStyleDifference(ComputedStyle* aNewContext,
 
   MOZ_ASSERT(styleStructCount == StyleStructConstants::kStyleStructCount,
              "missing a call to DO_STRUCT_DIFFERENCE");
-
-#ifdef DEBUG
-#  define STYLE_STRUCT(name_)                                            \
-    MOZ_ASSERT(!!(structsFound & STYLE_STRUCT_BIT(name_)) ==             \
-                   (PEEK(name_) != nullptr),                             \
-               "PeekStyleData results must not change in the middle of " \
-               "difference calculation.");
-#  include "nsStyleStructList.h"
-#  undef STYLE_STRUCT
-#endif
 
   // Note that we do not check whether this->RelevantLinkVisited() !=
   // aNewContext->RelevantLinkVisited(); we don't need to since
@@ -179,8 +158,8 @@ nsChangeHint ComputedStyle::CalcStyleDifference(ComputedStyle* aNewContext,
   // here, we add nsChangeHint_RepaintFrame hints (the maximum for
   // things that can depend on :visited) for the properties on which we
   // call GetVisitedDependentColor.
-  ComputedStyle* thisVis = GetStyleIfVisited();
-  ComputedStyle* otherVis = aNewContext->GetStyleIfVisited();
+  const ComputedStyle* thisVis = GetStyleIfVisited();
+  const ComputedStyle* otherVis = aNewStyle.GetStyleIfVisited();
   if (!thisVis != !otherVis) {
     // One style has a style-if-visited and the other doesn't.
     // Presume a difference.
@@ -198,15 +177,14 @@ nsChangeHint ComputedStyle::CalcStyleDifference(ComputedStyle* aNewContext,
     // due to change being true already or due to the old style not having a
     // style-if-visited), but not the other way around.
 #define STYLE_FIELD(name_) thisVisStruct->name_ != otherVisStruct->name_
-#define STYLE_STRUCT(name_, fields_)                                           \
-  if (PEEK(name_)) {                                                           \
-    const nsStyle##name_* thisVisStruct = thisVis->ThreadsafeStyle##name_();   \
-    const nsStyle##name_* otherVisStruct = otherVis->ThreadsafeStyle##name_(); \
-    if (MOZ_FOR_EACH_SEPARATED(STYLE_FIELD, (||), (), fields_)) {              \
-      *aEqualStructs &= ~STYLE_STRUCT_BIT(name_);                              \
-      change = true;                                                           \
-    }                                                                          \
-  }
+#define STYLE_STRUCT(name_, fields_) {                                       \
+  const nsStyle##name_* thisVisStruct = thisVis->Style##name_();             \
+  const nsStyle##name_* otherVisStruct = otherVis->Style##name_();           \
+  if (MOZ_FOR_EACH_SEPARATED(STYLE_FIELD, (||), (), fields_)) {              \
+    *aEqualStructs &= ~STYLE_STRUCT_BIT(name_);                              \
+    change = true;                                                           \
+  }                                                                          \
+}
 #include "nsCSSVisitedDependentPropList.h"
 #undef STYLE_STRUCT
 #undef STYLE_FIELD
@@ -231,15 +209,14 @@ nsChangeHint ComputedStyle::CalcStyleDifference(ComputedStyle* aNewContext,
     // doesn't use Peek* functions to get the structs on the old
     // context.  But this isn't a big concern because these struct
     // getters should be called during frame construction anyway.
-    const nsStyleDisplay* oldDisp = ThreadsafeStyleDisplay();
-    const nsStyleDisplay* newDisp = aNewContext->ThreadsafeStyleDisplay();
+    const nsStyleDisplay* oldDisp = StyleDisplay();
+    const nsStyleDisplay* newDisp = aNewStyle.StyleDisplay();
     bool isFixedCB;
     if (oldDisp->IsAbsPosContainingBlockForNonSVGTextFrames() ==
             newDisp->IsAbsPosContainingBlockForNonSVGTextFrames() &&
         (isFixedCB =
              oldDisp->IsFixedPosContainingBlockForNonSVGTextFrames(*this)) ==
-            newDisp->IsFixedPosContainingBlockForNonSVGTextFrames(
-                *aNewContext) &&
+            newDisp->IsFixedPosContainingBlockForNonSVGTextFrames(aNewStyle) &&
         // transform-supporting frames are a subcategory of non-SVG-text
         // frames, so no need to test this if isFixedCB is true (both
         // before and after the change)
@@ -292,8 +269,6 @@ void ComputedStyle::List(FILE* out, int32_t aIndent) {
   fprintf_stderr(out, "%s{ServoComputedData}\n", str.get());
 }
 #endif
-
-nsIPresShell* ComputedStyle::Arena() { return mPresContext->PresShell(); }
 
 template <typename Func>
 static nscolor GetVisitedDependentColorInternal(ComputedStyle* aSc,

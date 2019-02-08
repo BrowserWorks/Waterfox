@@ -72,39 +72,33 @@ function clickURLBarSuggestion(entryName, button = 1) {
  */
 async function withNewSearchEngine(taskFn) {
   const url = getRootDirectory(gTestPath) + "usageTelemetrySearchSuggestions.xml";
-  let suggestionEngine = await new Promise((resolve, reject) => {
-    Services.search.addEngine(url, "", false, {
-      onSuccess(engine) { resolve(engine); },
-      onError() { reject(); },
-    });
-  });
-
-  let previousEngine = Services.search.defaultEngine;
-  Services.search.defaultEngine = suggestionEngine;
+  let suggestionEngine = await Services.search.addEngine(url, "", false);
+  let previousEngine = await Services.search.getDefault();
+  await Services.search.setDefault(suggestionEngine);
 
   try {
     await taskFn(suggestionEngine);
   } finally {
-    Services.search.defaultEngine = previousEngine;
-    Services.search.removeEngine(suggestionEngine);
+    await Services.search.setDefault(previousEngine);
+    await Services.search.removeEngine(suggestionEngine);
   }
 }
 
 add_task(async function setup() {
   // Create a new search engine.
-  Services.search.addEngineWithDetails("MozSearch", "", "mozalias", "", "GET",
-                                       "http://example.com/?q={searchTerms}");
+  await Services.search.addEngineWithDetails("MozSearch", "", "mozalias", "", "GET",
+                                             "http://example.com/?q={searchTerms}");
 
   // Make it the default search engine.
   let engine = Services.search.getEngineByName("MozSearch");
-  let originalEngine = Services.search.defaultEngine;
-  Services.search.defaultEngine = engine;
+  let originalEngine = await Services.search.getDefault();
+  await Services.search.setDefault(engine);
 
   // Give it some mock internal aliases.
   engine.wrappedJSObject.__internalAliases = ["@mozaliasfoo", "@mozaliasbar"];
 
   // And the first one-off engine.
-  Services.search.moveEngine(engine, 0);
+  await Services.search.moveEngine(engine, 0);
 
   // Enable search suggestions in the urlbar.
   let suggestionsEnabled = Services.prefs.getBoolPref(SUGGEST_URLBAR_PREF);
@@ -134,8 +128,8 @@ add_task(async function setup() {
   // Make sure to restore the engine once we're done.
   registerCleanupFunction(async function() {
     Services.telemetry.canRecordExtended = oldCanRecord;
-    Services.search.defaultEngine = originalEngine;
-    Services.search.removeEngine(engine);
+    await Services.search.setDefault(originalEngine);
+    await Services.search.removeEngine(engine);
     Services.prefs.setBoolPref(SUGGEST_URLBAR_PREF, suggestionsEnabled);
     Services.prefs.clearUserPref(ONEOFF_URLBAR_PREF);
     await PlacesUtils.history.clear();
@@ -162,7 +156,7 @@ add_task(async function test_simpleQuery() {
   await p;
 
   // Check if the scalars contain the expected values.
-  const scalars = TelemetryTestUtils.getParentProcessScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
+  const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
   TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_URLBAR, "search_enter", 1);
   Assert.equal(Object.keys(scalars[SCALAR_URLBAR]).length, 1,
                "This search must only increment one entry in the scalar.");
@@ -210,7 +204,7 @@ add_task(async function test_searchAlias() {
   await p;
 
   // Check if the scalars contain the expected values.
-  const scalars = TelemetryTestUtils.getParentProcessScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
+  const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
   TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_URLBAR, "search_alias", 1);
   Assert.equal(Object.keys(scalars[SCALAR_URLBAR]).length, 1,
                "This search must only increment one entry in the scalar.");
@@ -289,7 +283,7 @@ add_task(async function test_oneOff_enter() {
   await p;
 
   // Check if the scalars contain the expected values.
-  const scalars = TelemetryTestUtils.getParentProcessScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
+  const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
   TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_URLBAR, "search_oneoff", 1);
   Assert.equal(Object.keys(scalars[SCALAR_URLBAR]).length, 1,
                "This search must only increment one entry in the scalar.");
@@ -390,7 +384,7 @@ add_task(async function test_suggestion_click() {
     await p;
 
     // Check if the scalars contain the expected values.
-    const scalars = TelemetryTestUtils.getParentProcessScalars(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true, false);
+    const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
     TelemetryTestUtils.assertKeyedScalar(scalars, SCALAR_URLBAR, "search_suggestion", 1);
     Assert.equal(Object.keys(scalars[SCALAR_URLBAR]).length, 1,
                 "This search must only increment one entry in the scalar.");

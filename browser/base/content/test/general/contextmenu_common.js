@@ -147,7 +147,6 @@ function checkMenuItem(actualItem, actualEnabled, expectedItem, expectedEnabled,
 
     if (typeof expectedEnabled == "object" && expectedEnabled != null ||
         typeof actualEnabled == "object" && actualEnabled != null) {
-
         ok(!(actualEnabled == null), "actualEnabled is not null");
         ok(!(expectedEnabled == null), "expectedEnabled is not null");
         is(typeof actualEnabled, typeof expectedEnabled, "checking types");
@@ -290,8 +289,7 @@ async function test_contextmenu(selector, menuItems, options = {}) {
     info("Waiting for spell check");
     await ContentTask.spawn(gBrowser.selectedBrowser, selector, async function(contentSelector) {
       let {onSpellCheck} =
-        ChromeUtils.import("resource://testing-common/AsyncSpellCheckTestHelper.jsm",
-                           {});
+        ChromeUtils.import("resource://testing-common/AsyncSpellCheckTestHelper.jsm");
       let element = content.document.querySelector(contentSelector);
       await new Promise(resolve => onSpellCheck(element, resolve));
       info("Spell check running");

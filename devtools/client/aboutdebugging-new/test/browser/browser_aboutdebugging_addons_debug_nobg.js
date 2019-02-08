@@ -15,7 +15,7 @@ const ADDON_NOBG_NAME = "test-devtools-webextension-nobg";
 
 const {
   BrowserToolboxProcess,
-} = ChromeUtils.import("resource://devtools/client/framework/ToolboxProcess.jsm", {});
+} = ChromeUtils.import("resource://devtools/client/framework/ToolboxProcess.jsm");
 
 /**
  * This test file ensures that the webextension addon developer toolbox:
@@ -28,18 +28,11 @@ add_task(async function testWebExtensionsToolboxNoBackgroundPage() {
   await enableExtensionDebugging();
   const { document, tab } = await openAboutDebugging();
 
-  const manifest = {
-    manifest_version: 2,
+  await installTemporaryExtensionFromXPI({
+    // Do not pass any `background` script.
+    id: ADDON_NOBG_ID,
     name: ADDON_NOBG_NAME,
-    version: "1.0",
-    applications: {
-      gecko: {
-        id: ADDON_NOBG_ID,
-      },
-    },
-  };
-  await installTemporaryExtensionFromManifest(manifest, document);
-
+  }, document);
   const target = findDebugTargetByText(ADDON_NOBG_NAME, document);
 
   info("Setup the toolbox test function as environment variable");

@@ -2539,19 +2539,43 @@ bool SourceMediaStream::PullNewData(GraphTime aDesiredUpToTime) {
   if (mFinished) {
     return false;
   }
+  bool streamPullingEnabled = false;
+  for (const TrackData& track : mUpdateTracks) {
+    if (!(track.mCommands & TrackEventCommand::TRACK_EVENT_ENDED) &&
+        track.mPullingEnabled) {
+      // At least one track in this stream is pulled. We want to consume it in
+      // real-time (i.e., not block the stream).
+      streamPullingEnabled = true;
+      break;
+    }
+  }
   // Compute how much stream time we'll need assuming we don't block
   // the stream at all.
   StreamTime t = GraphTimeToStreamTime(aDesiredUpToTime);
-  StreamTime current = mTracks.GetEarliestTrackEnd();
   for (const TrackData& track : mUpdateTracks) {
-    if (!track.mPullingEnabled) {
+    if (track.mCommands & TRACK_END) {
       continue;
     }
-    if (track.mCommands & TrackEventCommand::TRACK_EVENT_ENDED) {
-      continue;
+    StreamTime current;
+    if (track.mCommands & TRACK_CREATE) {
+      // This track hasn't been created yet. Use the stream's current time
+      // (which the track will get as its start time later).
+      current = GraphTimeToStreamTime(GraphImpl()->mStateComputedTime);
+    } else {
+      current = track.mEndOfFlushedData + track.mData->GetDuration();
     }
-    current = track.mEndOfFlushedData + track.mData->GetDuration();
     if (t <= current) {
+      continue;
+    }
+    if (!track.mPullingEnabled) {
+      if (streamPullingEnabled) {
+        LOG(LogLevel::Verbose,
+            ("%p: Pulling disabled for track but enabled for stream, append "
+             "null data; stream=%p track=%d t=%f current end=%f",
+             GraphImpl(), this, track.mID, GraphImpl()->MediaTimeToSeconds(t),
+             GraphImpl()->MediaTimeToSeconds(current)));
+        track.mData->AppendNullData(t - current);
+      }
       continue;
     }
     LOG(LogLevel::Verbose,
@@ -2600,8 +2624,8 @@ void SourceMediaStream::ExtractPendingInput(GraphTime aCurrentTime) {
            GraphImpl(), this, data->mID, int64_t(streamCurrentTime),
            int64_t(segment->GetDuration())));
 
-      data->mEndOfFlushedData += segment->GetDuration();
       segment->InsertNullDataAtStart(streamCurrentTime);
+      data->mEndOfFlushedData += segment->GetDuration();
       mTracks.AddTrack(data->mID, streamCurrentTime, segment);
       // The track has taken ownership of data->mData, so let's replace
       // data->mData with an empty clone.
@@ -3038,12 +3062,27 @@ RefPtr<GenericPromise> MediaInputPort::BlockSourceTrackId(
 
   MozPromiseHolder<GenericPromise> holder;
   RefPtr<GenericPromise> p = holder.Ensure(__func__);
-  nsCOMPtr<nsIRunnable> runnable =
-      NewRunnableFrom([h = std::move(holder)]() mutable {
-        MOZ_ASSERT(NS_IsMainThread());
-        h.Resolve(true, __func__);
-        return NS_OK;
-      });
+
+  class HolderRunnable : public Runnable {
+   public:
+    explicit HolderRunnable(MozPromiseHolder<GenericPromise>&& aHolder)
+        : Runnable("MediaInputPort::HolderRunnable"),
+          mHolder(std::move(aHolder)) {}
+
+    NS_IMETHOD Run() override {
+      MOZ_ASSERT(NS_IsMainThread());
+      mHolder.Resolve(true, __func__);
+      return NS_OK;
+    }
+
+   private:
+    ~HolderRunnable() {
+      mHolder.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
+    }
+    MozPromiseHolder<GenericPromise> mHolder;
+  };
+
+  auto runnable = MakeRefPtr<HolderRunnable>(std::move(holder));
   GraphImpl()->AppendMessage(
       MakeUnique<Message>(this, aTrackId, aBlockingMode, runnable.forget()));
   return p;

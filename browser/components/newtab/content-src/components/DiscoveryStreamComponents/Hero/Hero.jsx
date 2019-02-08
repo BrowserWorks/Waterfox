@@ -1,5 +1,6 @@
 import {actionCreators as ac} from "common/Actions.jsm";
 import {DSCard} from "../DSCard/DSCard.jsx";
+import {List} from "../List/List.jsx";
 import React from "react";
 
 export class Hero extends React.PureComponent {
@@ -36,22 +37,32 @@ export class Hero extends React.PureComponent {
 
     let [heroRec, ...otherRecs] = data.recommendations.slice(0, this.props.items);
     this.heroRec = heroRec;
-    let truncateText = (text, cap) => `${text.substring(0, cap)}${text.length > cap ? `...` : ``}`;
 
     // Note that `{index + 1}` is necessary below for telemetry since we treat heroRec as index 0.
     let cards = otherRecs.map((rec, index) => (
       <DSCard
+        campaignId={rec.campaign_id}
         key={`dscard-${index}`}
         image_src={rec.image_src}
-        title={truncateText(rec.title, 44)}
+        title={rec.title}
         url={rec.url}
         id={rec.id}
         index={index + 1}
         type={this.props.type}
         dispatch={this.props.dispatch}
-        context={truncateText(rec.context || "", 22)}
-        source={truncateText(`TODO: SOURCE`, 22)} />
+        context={rec.context}
+        source={rec.domain} />
     ));
+
+    let list = (
+      <List
+        recStartingPoint={1}
+        feed={this.props.feed}
+        hasImages={true}
+        hasBorders={this.props.border === `border`}
+        items={this.props.items - 1}
+        type={`Hero`} />
+    );
 
     return (
       <div>
@@ -62,17 +73,17 @@ export class Hero extends React.PureComponent {
               <div className="img" style={{backgroundImage: `url(${heroRec.image_src})`}} />
             </div>
             <div className="meta">
-              <header>{truncateText(heroRec.title, 28)}</header>
-              <p>{truncateText(heroRec.excerpt, 114)}</p>
+              <header>{heroRec.title}</header>
+              <p>{heroRec.excerpt}</p>
               {heroRec.context ? (
-                <p className="context">{truncateText(heroRec.context, 22)}</p>
+                <p className="context">{heroRec.context}</p>
               ) : (
-                <p>{truncateText(`TODO: SOURCE`, 22)}</p>
+                <p className="source">{heroRec.domain}</p>
               )}
             </div>
           </a>
-          <div className="cards">
-            { cards }
+          <div className={`${this.props.subComponentType}`}>
+            { this.props.subComponentType === `cards` ? cards : list }
           </div>
         </div>
       </div>

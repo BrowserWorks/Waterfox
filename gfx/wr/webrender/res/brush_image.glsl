@@ -10,8 +10,10 @@
 varying vec2 vLocalPos;
 #endif
 
-// Interpolated uv coordinates in xy, and layer in z.
-varying vec3 vUv;
+// Interpolated UV coordinates to sample.
+varying vec2 vUv;
+// X = layer index to sample, Y = flag to allow perspective interpolation of UV.
+flat varying vec2 vLayerAndPerspective;
 // Normalized bounds of the source image in the texture.
 flat varying vec4 vUvBounds;
 // Normalized bounds of the source image in the texture, adjusted to avoid
@@ -92,12 +94,20 @@ void brush_vs(
 
         // If the extra data is a texel rect, modify the UVs.
         if ((brush_flags & BRUSH_FLAG_TEXEL_RECT) != 0) {
-            uv0 = res.uv_rect.p0 + segment_data.xy;
-            uv1 = res.uv_rect.p0 + segment_data.zw;
+            vec2 uv_size = res.uv_rect.p1 - res.uv_rect.p0;
+            uv0 = res.uv_rect.p0 + segment_data.xy * uv_size;
+            uv1 = res.uv_rect.p0 + segment_data.zw * uv_size;
+            if ((brush_flags & BRUSH_FLAG_SEGMENT_REPEAT_X) != 0) {
+              stretch_size.x = stretch_size.x * uv_size.x;
+            }
+            if ((brush_flags & BRUSH_FLAG_SEGMENT_REPEAT_Y) != 0) {
+              stretch_size.y = stretch_size.y * uv_size.y;
+            }
         }
     }
 
-    vUv.z = res.layer;
+    float perspective_interpolate = (brush_flags & BRUSH_FLAG_PERSPECTIVE_INTERPOLATION) != 0 ? 1.0 : 0.0;
+    vLayerAndPerspective = vec2(res.layer, perspective_interpolate);
 
     // Handle case where the UV coords are inverted (e.g. from an
     // external image).
@@ -128,10 +138,7 @@ void brush_vs(
             // Since the screen space UVs specify an arbitrary quad, do
             // a bilinear interpolation to get the correct UV for this
             // local position.
-            ImageResourceExtra extra_data = fetch_image_resource_extra(user_data.w);
-            vec2 x = mix(extra_data.st_tl, extra_data.st_tr, f.x);
-            vec2 y = mix(extra_data.st_bl, extra_data.st_br, f.x);
-            f = mix(x, y, f.y);
+            f = get_image_quad_uv(user_data.w, f);
             break;
         }
         default:
@@ -141,9 +148,12 @@ void brush_vs(
 
     // Offset and scale vUv here to avoid doing it in the fragment shader.
     vec2 repeat = local_rect.size / stretch_size;
-    vUv.xy = mix(uv0, uv1, f) - min_uv;
-    vUv.xy /= texture_size;
-    vUv.xy *= repeat.xy;
+    vUv = mix(uv0, uv1, f) - min_uv;
+    vUv /= texture_size;
+    vUv *= repeat.xy;
+    if (perspective_interpolate == 0.0) {
+        vUv *= vi.world_pos.w;
+    }
 
 #ifdef WR_FEATURE_TEXTURE_RECT
     vUvBounds = vec4(0.0, 0.0, vec2(textureSize(sColor0)));
@@ -201,12 +211,13 @@ void brush_vs(
 
 Fragment brush_fs() {
     vec2 uv_size = vUvBounds.zw - vUvBounds.xy;
+    float perspective_divisor = mix(gl_FragCoord.w, 1.0, vLayerAndPerspective.y);
 
 #ifdef WR_FEATURE_ALPHA_PASS
     // This prevents the uv on the top and left parts of the primitive that was inflated
     // for anti-aliasing purposes from going beyound the range covered by the regular
     // (non-inflated) primitive.
-    vec2 local_uv = max(vUv.xy, vec2(0.0));
+    vec2 local_uv = max(vUv * perspective_divisor, vec2(0.0));
 
     // Handle horizontal and vertical repetitions.
     vec2 repeated_uv = mod(local_uv, uv_size) + vUvBounds.xy;
@@ -222,13 +233,13 @@ Fragment brush_fs() {
     }
 #else
     // Handle horizontal and vertical repetitions.
-    vec2 repeated_uv = mod(vUv.xy, uv_size) + vUvBounds.xy;
+    vec2 repeated_uv = mod(vUv * perspective_divisor, uv_size) + vUvBounds.xy;
 #endif
 
     // Clamp the uvs to avoid sampling artifacts.
     vec2 uv = clamp(repeated_uv, vUvSampleBounds.xy, vUvSampleBounds.zw);
 
-    vec4 texel = TEX_SAMPLE(sColor0, vec3(uv, vUv.z));
+    vec4 texel = TEX_SAMPLE(sColor0, vec3(uv, vLayerAndPerspective.x));
 
     Fragment frag;
 

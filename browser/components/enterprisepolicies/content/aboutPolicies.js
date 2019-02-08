@@ -4,9 +4,8 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   schema: "resource:///modules/policies/schema.jsm",
@@ -54,7 +53,6 @@ function addMissingColumns() {
  */
 
 function generateActivePolicies(data) {
-
   let new_cont = document.getElementById("activeContent");
   new_cont.classList.add("active-policies");
 

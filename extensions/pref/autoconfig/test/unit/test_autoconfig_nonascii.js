@@ -5,7 +5,7 @@
 /* Turning off this rule to allow control flow operations in finally block
  * http://eslint.org/docs/rules/no-unsafe-finally  */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 function run_test() {
   let greD = Services.dirsvc.get("GreD", Ci.nsIFile);
@@ -69,7 +69,6 @@ function run_test() {
     }
 
     tests.forEach(testAutoConfig);
-
   } finally {
     try {
       let autoConfigJS = defaultPrefD.clone();

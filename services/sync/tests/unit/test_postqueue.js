@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let { PostQueue } = ChromeUtils.import("resource://services-sync/record.js", {});
+let { PostQueue } = ChromeUtils.import("resource://services-sync/record.js", null);
 
 function makeRecord(nbytes) {
   return {
@@ -667,7 +667,6 @@ add_task(async function test_max_records_batch() {
 
 // Test we do the right thing when the limits are met but not exceeded.
 add_task(async function test_packed_batch() {
-
   let config = {
     max_post_bytes: 41,
     max_post_records: 4,

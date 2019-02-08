@@ -93,6 +93,12 @@ class FuzzyParser(BaseTryParser):
                   "from the interface. Specifying multiple times schedules "
                   "the union of computed tasks.",
           }],
+        [['-e', '--exact'],
+         {'action': 'store_true',
+          'default': False,
+          'help': "Enable exact match mode. Terms will use an exact match "
+                  "by default, and terms prefixed with ' will become fuzzy."
+          }],
         [['-u', '--update'],
          {'action': 'store_true',
           'default': False,
@@ -130,7 +136,7 @@ def fzf_bootstrap(update=False):
     if fzf_bin and not update:
         return fzf_bin
 
-    fzf_path = os.path.join(get_state_dir()[0], 'fzf')
+    fzf_path = os.path.join(get_state_dir(), 'fzf')
     if update and not os.path.isdir(fzf_path):
         print("fzf installed somewhere other than {}, please update manually".format(fzf_path))
         sys.exit(1)
@@ -233,6 +239,9 @@ def run_fuzzy_try(update=False, query=None, templates=None, full=False, paramete
         '--preview-window=right:20%',
         '--print-query',
     ]
+
+    if kwargs['exact']:
+        base_cmd.append('--exact')
 
     query = query or []
     if isinstance(query, string_types):

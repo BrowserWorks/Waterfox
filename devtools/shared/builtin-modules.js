@@ -16,7 +16,7 @@
 const { Cu, CC, Cc, Ci } = require("chrome");
 const promise = require("resource://gre/modules/Promise.jsm").Promise;
 const jsmScope = require("resource://devtools/shared/Loader.jsm");
-const { Services } = jsmScope;
+const { Services } = require("resource://gre/modules/Services.jsm");
 // Steal various globals only available in JSM scope (and not Sandbox one)
 const {
   console,
@@ -24,6 +24,7 @@ const {
   DOMQuad,
   DOMRect,
   HeapSnapshot,
+  NamedNodeMap,
   NodeFilter,
   StructuredCloneHolder,
   TelemetryStopwatch,
@@ -233,7 +234,7 @@ defineLazyGetter(exports.modules, "Debugger", () => {
   if (global.Debugger) {
     return global.Debugger;
   }
-  const { addDebuggerToGlobal } = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm", {});
+  const { addDebuggerToGlobal } = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm");
   addDebuggerToGlobal(global);
   return global.Debugger;
 });
@@ -245,7 +246,7 @@ defineLazyGetter(exports.modules, "RecordReplayControl", () => {
   if (global.RecordReplayControl) {
     return global.RecordReplayControl;
   }
-  const { addDebuggerToGlobal } = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm", {});
+  const { addDebuggerToGlobal } = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm");
   addDebuggerToGlobal(global);
   return global.RecordReplayControl;
 });
@@ -291,6 +292,7 @@ exports.globals = {
   DOMParser,
   DOMPoint,
   DOMQuad,
+  NamedNodeMap,
   NodeFilter,
   DOMRect,
   Element,

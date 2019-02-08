@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-/*
+/**
  * Shared functions generally available for testing login components.
  */
 
@@ -11,11 +11,10 @@ var EXPORTED_SYMBOLS = [
   "LoginTestUtils",
 ];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-ChromeUtils.import("resource://testing-common/Assert.jsm");
-ChromeUtils.import("resource://testing-common/TestUtils.jsm");
+const {Assert} = ChromeUtils.import("resource://testing-common/Assert.jsm");
+const {TestUtils} = ChromeUtils.import("resource://testing-common/TestUtils.jsm");
 
 const LoginInfo =
       Components.Constructor("@mozilla.org/login-manager/loginInfo;1",
@@ -230,7 +229,7 @@ this.LoginTestUtils.testData = {
 
 this.LoginTestUtils.recipes = {
   getRecipeParent() {
-    let { LoginManagerParent } = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm", {});
+    let { LoginManagerParent } = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
     if (!LoginManagerParent.recipeParentPromise) {
       return null;
     }

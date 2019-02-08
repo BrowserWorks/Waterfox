@@ -4,14 +4,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/DelayedInit.jsm");
-ChromeUtils.import("resource://gre/modules/L10nRegistry.jsm");
-ChromeUtils.import("resource://gre/modules/Messaging.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/TelemetryController.jsm");
+var {AddonManager} = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
+var {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+var {DelayedInit} = ChromeUtils.import("resource://gre/modules/DelayedInit.jsm");
+var {FileSource, L10nRegistry} = ChromeUtils.import("resource://gre/modules/L10nRegistry.jsm");
+var {EventDispatcher} = ChromeUtils.import("resource://gre/modules/Messaging.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var {TelemetryController} = ChromeUtils.import("resource://gre/modules/TelemetryController.jsm");
 
 if (AppConstants.ACCESSIBILITY) {
   ChromeUtils.defineModuleGetter(this, "AccessFu",
@@ -371,7 +371,6 @@ var BrowserApp = {
     GlobalEventDispatcher.registerListener(this, [
       "Browser:LoadManifest",
       "Browser:Quit",
-      "Browser:ZombifyTabs",
       "Fonts:Reload",
       "FormHistory:Init",
       "FullScreen:Exit",
@@ -512,7 +511,7 @@ var BrowserApp = {
     // fxa-content-server messages.
     if (ParentalControls.isAllowed(ParentalControls.MODIFY_ACCOUNTS)) {
       console.log("browser.js: loading Firefox Accounts WebChannel");
-      ChromeUtils.import("resource://gre/modules/FxAccountsWebChannel.jsm");
+      var {EnsureFxAccountsWebChannel} = ChromeUtils.import("resource://gre/modules/FxAccountsWebChannel.jsm");
       EnsureFxAccountsWebChannel();
     } else {
       console.log("browser.js: not loading Firefox Accounts WebChannel; this profile cannot connect to Firefox Accounts.");
@@ -1032,7 +1031,7 @@ var BrowserApp = {
         name = Services.prefs.getCharPref("browser.search.defaultenginename.US");
       }
       if (name) {
-        Services.search.init(() => {
+        Services.search.init().then(() => {
           let engine = Services.search.getEngineByName(name);
           if (engine) {
             Services.search.defaultEngine = engine;
@@ -1729,13 +1728,6 @@ var BrowserApp = {
 
       case "Browser:Quit":
         this.quit(data);
-        break;
-
-      case "Browser:ZombifyTabs":
-        let tabs = this._tabs;
-        for (let i = 0; i < tabs.length; i++) {
-          tabs[i].zombify();
-        }
         break;
 
       case "Fonts:Reload":
@@ -3683,6 +3675,27 @@ function truncate(text, max) {
   return text.slice(0, max) + "…";
 }
 
+/**
+ * We want to extract base domains only from URIs using one of the following
+ * schemes.
+ */
+const PERMITTED_BASE_DOMAIN_SCHEMES = new Set(["http", "https", "ftp"]);
+
+function getBaseDomain(aURI) {
+  let baseDomain = "";
+  if (aURI && PERMITTED_BASE_DOMAIN_SCHEMES.has(aURI.scheme)) {
+    try {
+      baseDomain = Services.eTLD.getBaseDomainFromHost(aURI.displayHost);
+      if (!aURI.displayHost.endsWith(baseDomain)) {
+        // getBaseDomainFromHost converts its resultant to ACE.
+        let IDNService = Cc["@mozilla.org/network/idn-service;1"].getService(Ci.nsIIDNService);
+        baseDomain = IDNService.convertACEtoUTF8(baseDomain);
+      }
+    } catch (e) {}
+  }
+  return baseDomain;
+}
+
 Tab.prototype = {
   create: function(aURL, aParams) {
     if (this.browser)
@@ -3777,6 +3790,7 @@ Tab.prototype = {
       };
       GlobalEventDispatcher.sendRequest(message);
     }
+    this.browser.contentWindow.windowUtils.setDesktopModeViewport(this.desktopMode);
 
     let flags = Ci.nsIWebProgress.NOTIFY_STATE_ALL |
                 Ci.nsIWebProgress.NOTIFY_LOCATION |
@@ -4141,7 +4155,7 @@ Tab.prototype = {
       }
   },
 
-  sendOpenSearchMessage: function(eventTarget) {
+  sendOpenSearchMessage: async function(eventTarget) {
     let type = eventTarget.type && eventTarget.type.toLowerCase();
     // Replace all starting or trailing spaces or spaces before "*;" globally w/ "".
     type = type.replace(/^\s+|\s*(?:;.*)?$/g, "");
@@ -4149,49 +4163,47 @@ Tab.prototype = {
     // Check that type matches opensearch.
     let isOpenSearch = (type == "application/opensearchdescription+xml");
     if (isOpenSearch && eventTarget.title && /^(?:https?|ftp):/i.test(eventTarget.href)) {
-      Services.search.init(() => {
-        let visibleEngines = Services.search.getVisibleEngines();
-        // NOTE: Engines are currently identified by name, but this can be changed
-        // when Engines are identified by URL (see bug 335102).
-        if (visibleEngines.some(function(e) {
-          return e.name == eventTarget.title;
+      let visibleEngines = await Services.search.getVisibleEngines();
+      // NOTE: Engines are currently identified by name, but this can be changed
+      // when Engines are identified by URL (see bug 335102).
+      if (visibleEngines.some(function(e) {
+        return e.name == eventTarget.title;
+      })) {
+        // This engine is already present, do nothing.
+        return null;
+      }
+
+      if (this.browser.engines) {
+        // This engine has already been handled, do nothing.
+        if (this.browser.engines.some(function(e) {
+          return e.url == eventTarget.href;
         })) {
-          // This engine is already present, do nothing.
           return null;
         }
+      } else {
+          this.browser.engines = [];
+      }
 
-        if (this.browser.engines) {
-          // This engine has already been handled, do nothing.
-          if (this.browser.engines.some(function(e) {
-            return e.url == eventTarget.href;
-          })) {
-            return null;
-          }
-        } else {
-            this.browser.engines = [];
-        }
+      // Get favicon.
+      let iconURL = eventTarget.ownerDocument.documentURIObject.prePath + "/favicon.ico";
 
-        // Get favicon.
-        let iconURL = eventTarget.ownerDocument.documentURIObject.prePath + "/favicon.ico";
+      let newEngine = {
+        title: eventTarget.title,
+        url: eventTarget.href,
+        iconURL: iconURL
+      };
 
-        let newEngine = {
-          title: eventTarget.title,
-          url: eventTarget.href,
-          iconURL: iconURL
-        };
+      this.browser.engines.push(newEngine);
 
-        this.browser.engines.push(newEngine);
+      // Don't send a message to display engines if we've already handled an engine.
+      if (this.browser.engines.length > 1)
+        return null;
 
-        // Don't send a message to display engines if we've already handled an engine.
-        if (this.browser.engines.length > 1)
-          return null;
-
-        // Broadcast message that this tab contains search engines that should be visible.
-        GlobalEventDispatcher.sendRequest({
-          type: "Link:OpenSearch",
-          tabID: this.id,
-          visible: true
-        });
+      // Broadcast message that this tab contains search engines that should be visible.
+      GlobalEventDispatcher.sendRequest({
+        type: "Link:OpenSearch",
+        tabID: this.id,
+        visible: true
       });
     }
   },
@@ -4656,19 +4668,8 @@ Tab.prototype = {
       this.browser.messageManager.sendAsyncMessage("Reader:PushState", {isArticle: this.browser.isArticle});
     }
 
-    let baseDomain = "";
-    // For recognized scheme, get base domain from host.
-    let principalURI = contentWin.document.nodePrincipal.URI;
-    if (principalURI && ["http", "https", "ftp"].includes(principalURI.scheme) && principalURI.displayHost) {
-      try {
-        baseDomain = Services.eTLD.getBaseDomainFromHost(principalURI.displayHost);
-        if (!principalURI.displayHost.endsWith(baseDomain)) {
-          // getBaseDomainFromHost converts its resultant to ACE.
-          let IDNService = Cc["@mozilla.org/network/idn-service;1"].getService(Ci.nsIIDNService);
-          baseDomain = IDNService.convertACEtoUTF8(baseDomain);
-        }
-      } catch (e) {}
-    }
+    let baseDomain = getBaseDomain(contentWin.document.nodePrincipal.URI);
+    let highlightDomain = getBaseDomain(fixedURI);
 
     // If we are navigating to a new location with a different host,
     // clear any URL origin that might have been pinned to this tab.
@@ -4718,9 +4719,10 @@ Tab.prototype = {
       tabID: this.id,
       uri: truncate(fixedURI.displaySpec, MAX_URI_LENGTH),
       userRequested: this.userRequested || "",
-      baseDomain: baseDomain,
+      baseDomain,
+      highlightDomain,
       contentType: (contentType ? contentType : ""),
-      sameDocument: sameDocument,
+      sameDocument,
 
       canGoBack: webNav.canGoBack,
       canGoForward: webNav.canGoForward,
@@ -5954,18 +5956,18 @@ var SearchEngines = {
   },
 
   // Fetch list of search engines. all ? All engines : Visible engines only.
-  _handleSearchEnginesGetVisible: function _handleSearchEnginesGetVisible(rv, all) {
+  _handleSearchEnginesGetVisible: async function _handleSearchEnginesGetVisible(rv, all) {
     if (!Components.isSuccessCode(rv)) {
       Cu.reportError("Could not initialize search service, bailing out.");
       return;
     }
 
-    let engineData = Services.search.getVisibleEngines({});
+    let engineData = await Services.search.getVisibleEngines({});
 
     // Our Java UI assumes that the default engine is the first item in the array,
     // so we need to make sure that's the case.
-    if (engineData[0] !== Services.search.defaultEngine) {
-      engineData = engineData.filter(engine => engine !== Services.search.defaultEngine);
+    if (engineData[0].name !== Services.search.defaultEngine.name) {
+      engineData = engineData.filter(engine => engine.name !== Services.search.defaultEngine.name);
       engineData.unshift(Services.search.defaultEngine);
     }
 
@@ -6018,7 +6020,7 @@ var SearchEngines = {
         this.displaySearchEnginesList(data);
         break;
       case "SearchEngines:GetVisible":
-        Services.search.init(this._handleSearchEnginesGetVisible.bind(this));
+        Services.search.init().then(this._handleSearchEnginesGetVisible.bind(this));
         break;
       case "SearchEngines:Remove":
         // Make sure the engine isn't hidden before removing it, to make sure it's
@@ -6034,8 +6036,7 @@ var SearchEngines = {
       case "SearchEngines:SetDefault":
         engine = this._extractEngineFromJSON(data);
         // Move the new default search engine to the top of the search engine list.
-        Services.search.moveEngine(engine, 0);
-        Services.search.defaultEngine = engine;
+        Services.search.moveEngine(engine, 0).then(() => Services.search.defaultEngine = engine);
         break;
       default:
         dump("Unexpected message type observed: " + event);
@@ -6057,7 +6058,7 @@ var SearchEngines = {
   },
 
   migrateSearchActivityDefaultPref: function migrateSearchActivityDefaultPref() {
-    Services.search.init(() => this._setSearchActivityDefaultPref(Services.search.defaultEngine));
+    Services.search.init().then(() => this._setSearchActivityDefaultPref(Services.search.defaultEngine));
   },
 
   // Updates the search activity pref when the default engine changes.
@@ -6099,27 +6100,24 @@ var SearchEngines = {
     });
   },
 
-  addOpenSearchEngine: function addOpenSearchEngine(engine) {
-    Services.search.addEngine(engine.url, engine.iconURL, false, {
-      onSuccess: function() {
-        // Display a toast confirming addition of new search engine.
-        Snackbars.show(Strings.browser.formatStringFromName("alertSearchEngineAddedToast", [engine.title], 1), Snackbars.LENGTH_LONG);
-      },
-
-      onError: function(aCode) {
-        let errorMessage;
-        if (aCode == 2) {
-          // Engine is a duplicate.
-          errorMessage = "alertSearchEngineDuplicateToast";
-
-        } else {
-          // Unknown failure. Display general error message.
-          errorMessage = "alertSearchEngineErrorToast";
-        }
-
-        Snackbars.show(Strings.browser.formatStringFromName(errorMessage, [engine.title], 1), Snackbars.LENGTH_LONG);
+  addOpenSearchEngine: async function addOpenSearchEngine(engine) {
+    try {
+      await Services.search.addEngine(engine.url, engine.iconURL, false);
+      // Display a toast confirming addition of new search engine.
+      Snackbars.show(Strings.browser.formatStringFromName("alertSearchEngineAddedToast", [engine.title], 1), Snackbars.LENGTH_LONG);
+    } catch (ex) {
+      let code = ex.result;
+      let errorMessage;
+      if (code == 2) {
+        // Engine is a duplicate.
+        errorMessage = "alertSearchEngineDuplicateToast";
+      } else {
+        // Unknown failure. Display general error message.
+        errorMessage = "alertSearchEngineErrorToast";
       }
-    });
+
+      Snackbars.show(Strings.browser.formatStringFromName(errorMessage, [engine.title], 1), Snackbars.LENGTH_LONG);
+    }
   },
 
   /**
@@ -6169,7 +6167,7 @@ var SearchEngines = {
 
     // Return valid, pre-sorted queryParams.
     return formData.filter(a => a.name && a.value).sort((a, b) => {
-      // nsIBrowserSearchService.hasEngineWithURL() ensures sort, but this helps.
+      // nsISearchService.hasEngineWithURL() ensures sort, but this helps.
       if (a.name > b.name) {
         return 1;
       }
@@ -6206,7 +6204,7 @@ var SearchEngines = {
   },
 
   /**
-   * Adds a new search engine to the BrowserSearchService, based on its provided element. Prompts for an engine
+   * Adds a new search engine to the SearchService, based on its provided element. Prompts for an engine
    * name, and appends a simple version-number in case of collision with an existing name.
    *
    * @return callback to handle success value. Currently used for ActionBarHandler.js and UI updates.
@@ -6229,7 +6227,7 @@ var SearchEngines = {
       return;
     }
 
-    Services.search.init(function addEngine_cb(rv) {
+    Services.search.init().then(function addEngine_cb(rv) {
       if (!Components.isSuccessCode(rv)) {
         Cu.reportError("Could not initialize search service, bailing out.");
         if (resultCallback) {
@@ -6242,7 +6240,7 @@ var SearchEngines = {
         type: 'Favicon:Request',
         url: docURI.spec,
         skipNetwork: false
-      }).then(data => {
+      }).then(async data => {
         // if there's already an engine with this name, add a number to
         // make the name unique (e.g., "Google" becomes "Google 2")
         let name = title.value;
@@ -6250,7 +6248,7 @@ var SearchEngines = {
             name = title.value + " " + i;
         }
 
-        Services.search.addEngineWithDetails(name, data, null, null, method, formURL);
+        await Services.search.addEngineWithDetails(name, data, null, null, method, formURL);
         Snackbars.show(Strings.browser.formatStringFromName("alertSearchEngineAddedToast", [name], 1), Snackbars.LENGTH_LONG);
 
         let engine = Services.search.getEngineByName(name);
@@ -6550,7 +6548,7 @@ var Distribution = {
       case "Distribution:Changed":
         // Re-init the search service.
         try {
-          Services.search._asyncReInit();
+          Services.search._reInit();
         } catch (e) {
           console.log("Unable to reinit search service.");
         }
@@ -6674,7 +6672,7 @@ var Distribution = {
         let bytes = await OS.File.read(aFile.path);
         let raw = new TextDecoder().decode(bytes) || "";
       } catch (e) {
-        if (!(e instanceof OS.File.Error && reason.becauseNoSuchFile)) {
+        if (!(e instanceof OS.File.Error && e.becauseNoSuchFile)) {
           Cu.reportError("Distribution: Could not read from " + aFile.leafName + " file");
         }
         return;

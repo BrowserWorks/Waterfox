@@ -318,7 +318,7 @@ fuzzy-if(Android,0-3,0-50) fuzzy-if(skiaContent,0-1,0-133) == 273681-1.html 2736
 == 283686-2.html 283686-2-ref.html
 == 283686-3.html about:blank
 == 289384-1.xhtml 289384-ref.xhtml
-fails-if(webrender&&gtkWidget) random-if(d2d) fuzzy-if(webrender&&cocoaWidget,1-2,400-900) fuzzy-if(Android,0-8,0-1439) HTTP == 289480.html#top 289480-ref.html # basically-verbatim acid2 test, HTTP for a 404 page -- bug 578114 for the d2d failures
+random-if(d2d) fuzzy-if(Android,0-8,0-1439) fuzzy-if(webrender,0-6,0-1124) HTTP == 289480.html#top 289480-ref.html # basically-verbatim acid2 test, HTTP for a 404 page -- bug 578114 for the d2d failures
 == 290129-1.html 290129-1-ref.html
 == 291078-1.html 291078-1-ref.html
 == 291078-2.html 291078-2-ref.html
@@ -1189,12 +1189,6 @@ fails-if(usesRepeatResampling) fails-if(Android) fails-if(webrender&&!winWidget)
 fuzzy(0-127,0-2) == 448193.html 448193-ref.html
 != 449149-1a.html about:blank
 != 449149-1b.html about:blank
-# Test again with original XBL bindings
-test-pref(dom.ua_widget.enabled,false) != 449149-1a.html about:blank
-test-pref(dom.ua_widget.enabled,false) != 449149-1b.html about:blank
-# Retry the above with XBL scopes
-test-pref(dom.ua_widget.enabled,false) test-pref(dom.use_xbl_scopes_for_remote_xul,true) != 449149-1a.html about:blank
-test-pref(dom.ua_widget.enabled,false) test-pref(dom.use_xbl_scopes_for_remote_xul,true) != 449149-1b.html about:blank
 == 449149-2.html 449149-2-ref.html
 == 449171-1.html 449171-ref.html
 == 449362-1.html 449362-1-ref.html
@@ -1886,7 +1880,7 @@ fails-if(webrender) == 1059498-3.html 1059498-1-ref.html # WebRender: see bug 14
 == 1069716-1.html 1069716-1-ref.html
 == 1078262-1.html about:blank
 test-pref(layout.testing.overlay-scrollbars.always-visible,false) == 1081072-1.html 1081072-1-ref.html
-fuzzy-if(webrender,64-64,485-486) == 1081185-1.html 1081185-1-ref.html
+fuzzy-if(webrender,64-64,622-633) == 1081185-1.html 1081185-1-ref.html
 == 1097437-1.html 1097437-1-ref.html
 == 1103258-1.html 1103258-1-ref.html # assertion crash test with layers culling test
 == 1105137-1.html 1105137-1-ref.html
@@ -1909,54 +1903,54 @@ skip-if(verify) == 1121748-2.html 1121748-2-ref.html
 # The 1133905-*.html reftests only make sense on platforms where both APZ and
 # <meta viewport> are enabled.
 # (Note: bug 1308702 covers these tests' failures on Android)
-skip-if(!Android) == 1133905-1.html 1133905-ref.html
-skip-if(!Android) == 1133905-2.html 1133905-ref.html
-skip-if(!Android) == 1133905-3.html 1133905-ref.html
-skip-if(!Android) == 1133905-4.html 1133905-ref.html
-skip-if(!Android) fails-if(Android) == 1133905-5.html 1133905-ref.html
-skip-if(!Android) fails-if(Android) == 1133905-6.html 1133905-ref.html
-skip-if(!Android) == 1133905-1-v.html 1133905-ref-v.html
-skip-if(!Android) == 1133905-2-v.html 1133905-ref-v.html
-skip-if(!Android) == 1133905-3-v.html 1133905-ref-v.html
-skip-if(!Android) == 1133905-4-v.html 1133905-ref-v.html
-skip-if(!Android) fails-if(Android) == 1133905-5-v.html 1133905-ref-v.html
-skip-if(!Android) fails-if(Android) == 1133905-6-v.html 1133905-ref-v.html
-skip-if(!Android) == 1133905-1-h.html 1133905-ref-h.html
-skip-if(!Android) == 1133905-2-h.html 1133905-ref-h.html
-skip-if(!Android) == 1133905-3-h.html 1133905-ref-h.html
-skip-if(!Android) == 1133905-4-h.html 1133905-ref-h.html
-skip-if(!Android) fails-if(Android) == 1133905-5-h.html 1133905-ref-h.html
-skip-if(!Android) fails-if(Android) == 1133905-6-h.html 1133905-ref-h.html
-skip-if(!Android) == 1133905-1-vh.html 1133905-ref-vh.html
-skip-if(!Android) == 1133905-2-vh.html 1133905-ref-vh.html
-skip-if(!Android) == 1133905-3-vh.html 1133905-ref-vh.html
-skip-if(!Android) == 1133905-4-vh.html 1133905-ref-vh.html
-skip-if(!Android) fails-if(Android) == 1133905-5-vh.html 1133905-ref-vh.html
-skip-if(!Android) fails-if(Android) == 1133905-6-vh.html 1133905-ref-vh.html
-skip-if(!Android) == 1133905-1-rtl.html 1133905-ref-rtl.html
-skip-if(!Android) == 1133905-2-rtl.html 1133905-ref-rtl.html
-skip-if(!Android) == 1133905-3-rtl.html 1133905-ref-rtl.html
-skip-if(!Android) == 1133905-4-rtl.html 1133905-ref-rtl.html
-skip-if(!Android) fails-if(Android) == 1133905-5-rtl.html 1133905-ref-rtl.html
-skip-if(!Android) fails-if(Android) == 1133905-6-rtl.html 1133905-ref-rtl.html
-skip-if(!Android) == 1133905-1-v-rtl.html 1133905-ref-v-rtl.html
-skip-if(!Android) == 1133905-2-v-rtl.html 1133905-ref-v-rtl.html
-skip-if(!Android) == 1133905-3-v-rtl.html 1133905-ref-v-rtl.html
-skip-if(!Android) == 1133905-4-v-rtl.html 1133905-ref-v-rtl.html
-skip-if(!Android) fails-if(Android) == 1133905-5-v-rtl.html 1133905-ref-v-rtl.html
-skip-if(!Android) fails-if(Android) == 1133905-6-v-rtl.html 1133905-ref-v-rtl.html
-skip-if(!Android) == 1133905-1-h-rtl.html 1133905-ref-h-rtl.html
-skip-if(!Android) == 1133905-2-h-rtl.html 1133905-ref-h-rtl.html
-skip-if(!Android) == 1133905-3-h-rtl.html 1133905-ref-h-rtl.html
-skip-if(!Android) == 1133905-4-h-rtl.html 1133905-ref-h-rtl.html
-skip-if(!Android) fails-if(Android) == 1133905-5-h-rtl.html 1133905-ref-h-rtl.html
-skip-if(!Android) fails-if(Android) == 1133905-6-h-rtl.html 1133905-ref-h-rtl.html
-skip-if(!Android) == 1133905-1-vh-rtl.html 1133905-ref-vh-rtl.html
-skip-if(!Android) == 1133905-2-vh-rtl.html 1133905-ref-vh-rtl.html
-skip-if(!Android) == 1133905-3-vh-rtl.html 1133905-ref-vh-rtl.html
-skip-if(!Android) == 1133905-4-vh-rtl.html 1133905-ref-vh-rtl.html
-skip-if(!Android) fails-if(Android) == 1133905-5-vh-rtl.html 1133905-ref-vh-rtl.html
-skip-if(!Android) fails-if(Android) == 1133905-6-vh-rtl.html 1133905-ref-vh-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-1.html 1133905-ref.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-2.html 1133905-ref.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-3.html 1133905-ref.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-4.html 1133905-ref.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-5.html 1133905-ref.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-6.html 1133905-ref.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-1-v.html 1133905-ref-v.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-2-v.html 1133905-ref-v.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-3-v.html 1133905-ref-v.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-4-v.html 1133905-ref-v.html
+pref(apz.allow_zooming,true) skip-if(!Android) fails-if(Android) == 1133905-5-v.html 1133905-ref-v.html # bug 1308702
+pref(apz.allow_zooming,true) skip-if(!Android) fails-if(Android) == 1133905-6-v.html 1133905-ref-v.html # bug 1308702
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-1-h.html 1133905-ref-h.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-2-h.html 1133905-ref-h.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-3-h.html 1133905-ref-h.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-4-h.html 1133905-ref-h.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-5-h.html 1133905-ref-h.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-6-h.html 1133905-ref-h.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-1-vh.html 1133905-ref-vh.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-2-vh.html 1133905-ref-vh.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-3-vh.html 1133905-ref-vh.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-4-vh.html 1133905-ref-vh.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-5-vh.html 1133905-ref-vh.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-6-vh.html 1133905-ref-vh.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-1-rtl.html 1133905-ref-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-2-rtl.html 1133905-ref-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-3-rtl.html 1133905-ref-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-4-rtl.html 1133905-ref-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-5-rtl.html 1133905-ref-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-6-rtl.html 1133905-ref-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-1-v-rtl.html 1133905-ref-v-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-2-v-rtl.html 1133905-ref-v-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-3-v-rtl.html 1133905-ref-v-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-4-v-rtl.html 1133905-ref-v-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) fails-if(Android) == 1133905-5-v-rtl.html 1133905-ref-v-rtl.html # bug 1308702
+pref(apz.allow_zooming,true) skip-if(!Android) fails-if(Android) == 1133905-6-v-rtl.html 1133905-ref-v-rtl.html # bug 1308702
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-1-h-rtl.html 1133905-ref-h-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-2-h-rtl.html 1133905-ref-h-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-3-h-rtl.html 1133905-ref-h-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-4-h-rtl.html 1133905-ref-h-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-5-h-rtl.html 1133905-ref-h-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-6-h-rtl.html 1133905-ref-h-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-1-vh-rtl.html 1133905-ref-vh-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-2-vh-rtl.html 1133905-ref-vh-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-3-vh-rtl.html 1133905-ref-vh-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-4-vh-rtl.html 1133905-ref-vh-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-5-vh-rtl.html 1133905-ref-vh-rtl.html
+pref(apz.allow_zooming,true) skip-if(!Android) == 1133905-6-vh-rtl.html 1133905-ref-vh-rtl.html
 == 1149304-1-transform-change.html 1149304-1-transform-change-ref.html
 == 1150021-1.xul 1150021-1-ref.xul
 == 1151145-1.html 1151145-1-ref.html

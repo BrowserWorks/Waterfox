@@ -123,8 +123,8 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 
 
-const pdfjsVersion = '2.1.215';
-const pdfjsBuild = '9128335c';
+const pdfjsVersion = '2.1.243';
+const pdfjsBuild = 'c0d6e46e';
 
 const pdfjsCoreWorker = __w_pdfjs_require__(1);
 
@@ -375,7 +375,7 @@ var WorkerMessageHandler = {
     var cancelXHRs = null;
     var WorkerTasks = [];
     let apiVersion = docParams.apiVersion;
-    let workerVersion = '2.1.215';
+    let workerVersion = '2.1.243';
 
     if (apiVersion !== workerVersion) {
       throw new Error(`The API version "${apiVersion}" does not match ` + `the Worker version "${workerVersion}".`);
@@ -1737,10 +1737,24 @@ function isSpace(ch) {
 }
 
 function createPromiseCapability() {
-  var capability = {};
+  const capability = Object.create(null);
+  let isSettled = false;
+  Object.defineProperty(capability, 'settled', {
+    get() {
+      return isSettled;
+    }
+
+  });
   capability.promise = new Promise(function (resolve, reject) {
-    capability.resolve = resolve;
-    capability.reject = reject;
+    capability.resolve = function (data) {
+      isSettled = true;
+      resolve(data);
+    };
+
+    capability.reject = function (reason) {
+      isSettled = true;
+      reject(reason);
+    };
   });
   return capability;
 }
@@ -4524,10 +4538,13 @@ var XRef = function XRefClosure() {
           trailers.push(position);
           position += skipUntil(buffer, position, startxrefBytes);
         } else if (m = objRegExp.exec(token)) {
-          if (typeof this.entries[m[1]] === 'undefined') {
-            this.entries[m[1]] = {
+          const num = m[1] | 0,
+                gen = m[2] | 0;
+
+          if (typeof this.entries[num] === 'undefined') {
+            this.entries[num] = {
               offset: position - stream.start,
-              gen: m[2] | 0,
+              gen,
               uncompressed: true
             };
           }
@@ -16893,6 +16910,10 @@ class ColorSpace {
     return false;
   }
 
+  isDefaultDecode(decodeMap, bpc) {
+    return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
+  }
+
   fillRgb(dest, originalWidth, originalHeight, width, height, actualHeight, bpc, comps, alpha01) {
     let count = originalWidth * originalHeight;
     let rgbBuf = null;
@@ -17171,12 +17192,12 @@ class ColorSpace {
     throw new _util.FormatError(`unrecognized color space object: "${cs}"`);
   }
 
-  static isDefaultDecode(decode, n) {
+  static isDefaultDecode(decode, numComps) {
     if (!Array.isArray(decode)) {
       return true;
     }
 
-    if (n * 2 !== decode.length) {
+    if (numComps * 2 !== decode.length) {
       (0, _util.warn)('The decode map is not the correct length');
       return true;
     }
@@ -17265,16 +17286,16 @@ class AlternateCS extends ColorSpace {
     return this.base.getOutputLength(inputLength * this.base.numComps / this.numComps, alpha01);
   }
 
-  isDefaultDecode(decodeMap) {
-    return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
-  }
-
 }
 
 class PatternCS extends ColorSpace {
   constructor(baseCS) {
     super('Pattern', null);
     this.base = baseCS;
+  }
+
+  isDefaultDecode(decodeMap, bpc) {
+    (0, _util.unreachable)('Should not call PatternCS.isDefaultDecode');
   }
 
 }
@@ -17327,8 +17348,22 @@ class IndexedCS extends ColorSpace {
     return this.base.getOutputLength(inputLength * this.base.numComps, alpha01);
   }
 
-  isDefaultDecode(decodeMap) {
-    return true;
+  isDefaultDecode(decodeMap, bpc) {
+    if (!Array.isArray(decodeMap)) {
+      return true;
+    }
+
+    if (decodeMap.length !== 2) {
+      (0, _util.warn)('Decode map length is not correct');
+      return true;
+    }
+
+    if (!Number.isInteger(bpc) || bpc < 1) {
+      (0, _util.warn)('Bits per component is not correct');
+      return true;
+    }
+
+    return decodeMap[0] === 0 && decodeMap[1] === (1 << bpc) - 1;
   }
 
 }
@@ -17359,10 +17394,6 @@ class DeviceGrayCS extends ColorSpace {
 
   getOutputLength(inputLength, alpha01) {
     return inputLength * (3 + alpha01);
-  }
-
-  isDefaultDecode(decodeMap) {
-    return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
   }
 
 }
@@ -17404,10 +17435,6 @@ class DeviceRgbCS extends ColorSpace {
     return bits === 8;
   }
 
-  isDefaultDecode(decodeMap) {
-    return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
-  }
-
 }
 
 const DeviceCmykCS = function DeviceCmykCSClosure() {
@@ -17442,10 +17469,6 @@ const DeviceCmykCS = function DeviceCmykCSClosure() {
 
     getOutputLength(inputLength, alpha01) {
       return inputLength / 4 * (3 + alpha01) | 0;
-    }
-
-    isDefaultDecode(decodeMap) {
-      return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
     }
 
   }
@@ -17517,10 +17540,6 @@ const CalGrayCS = function CalGrayCSClosure() {
 
     getOutputLength(inputLength, alpha01) {
       return inputLength * (3 + alpha01);
-    }
-
-    isDefaultDecode(decodeMap) {
-      return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
     }
 
   }
@@ -17724,10 +17743,6 @@ const CalRGBCS = function CalRGBCSClosure() {
       return inputLength * (3 + alpha01) / 3 | 0;
     }
 
-    isDefaultDecode(decodeMap) {
-      return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
-    }
-
   }
 
   return CalRGBCS;
@@ -17843,7 +17858,7 @@ const LabCS = function LabCSClosure() {
       return inputLength * (3 + alpha01) / 3 | 0;
     }
 
-    isDefaultDecode(decodeMap) {
+    isDefaultDecode(decodeMap, bpc) {
       return true;
     }
 
@@ -19554,7 +19569,8 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
 
     var cs = _colorspace.ColorSpace.parse(dict.get('ColorSpace', 'CS'), xref, res, pdfFunctionFactory);
 
-    return (cs.numComps === 1 || cs.numComps === 3) && cs.isDefaultDecode(dict.getArray('Decode', 'D'));
+    const bpc = dict.get('BitsPerComponent', 'BPC') || 1;
+    return (cs.numComps === 1 || cs.numComps === 3) && cs.isDefaultDecode(dict.getArray('Decode', 'D'), bpc);
   };
 
   function PartialEvaluator({
@@ -20762,7 +20778,7 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
             fontFamily: font.fallbackName,
             ascent: font.ascent,
             descent: font.descent,
-            vertical: font.vertical
+            vertical: !!font.vertical
           };
         }
 
@@ -20939,8 +20955,12 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
           return;
         }
 
-        textContentItem.width *= textContentItem.textAdvanceScale;
-        textContentItem.height *= textContentItem.textAdvanceScale;
+        if (!textContentItem.vertical) {
+          textContentItem.width *= textContentItem.textAdvanceScale;
+        } else {
+          textContentItem.height *= textContentItem.textAdvanceScale;
+        }
+
         textContent.items.push(runBidiTransform(textContentItem));
         textContentItem.initialized = false;
         textContentItem.str.length = 0;
@@ -43579,17 +43599,18 @@ var PDFImage = function PDFImageClosure() {
     this.decode = dict.getArray('Decode', 'D');
     this.needsDecode = false;
 
-    if (this.decode && (this.colorSpace && !this.colorSpace.isDefaultDecode(this.decode) || isMask && !_colorspace.ColorSpace.isDefaultDecode(this.decode, 1))) {
+    if (this.decode && (this.colorSpace && !this.colorSpace.isDefaultDecode(this.decode, bitsPerComponent) || isMask && !_colorspace.ColorSpace.isDefaultDecode(this.decode, 1))) {
       this.needsDecode = true;
       var max = (1 << bitsPerComponent) - 1;
       this.decodeCoefficients = [];
       this.decodeAddends = [];
+      const isIndexed = this.colorSpace && this.colorSpace.name === 'Indexed';
 
       for (var i = 0, j = 0; i < this.decode.length; i += 2, ++j) {
         var dmin = this.decode[i];
         var dmax = this.decode[i + 1];
-        this.decodeCoefficients[j] = dmax - dmin;
-        this.decodeAddends[j] = max * dmin;
+        this.decodeCoefficients[j] = isIndexed ? (dmax - dmin) / max : dmax - dmin;
+        this.decodeAddends[j] = isIndexed ? dmin : max * dmin;
       }
     }
 

@@ -3,18 +3,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
-ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-const {actionTypes: at, actionCreators: ac} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm", {});
-const {PersistentCache} = ChromeUtils.import("resource://activity-stream/lib/PersistentCache.jsm", {});
+const {actionTypes: at, actionCreators: ac} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm");
+const {PersistentCache} = ChromeUtils.import("resource://activity-stream/lib/PersistentCache.jsm");
 
 const CACHE_KEY = "discovery_stream";
 const LAYOUT_UPDATE_TIME = 30 * 60 * 1000; // 30 minutes
 const COMPONENT_FEEDS_UPDATE_TIME = 30 * 60 * 1000; // 30 minutes
 const SPOCS_FEEDS_UPDATE_TIME = 30 * 60 * 1000; // 30 minutes
-const CONFIG_PREF_NAME = "browser.newtabpage.activity-stream.discoverystream.config";
+const MAX_LIFETIME_CAP = 500; // Guard against misconfiguration on the server
+const PREF_CONFIG = "discoverystream.config";
+const PREF_OPT_OUT = "discoverystream.optOut.0";
+const PREF_SHOW_SPONSORED = "showSponsored";
+const PREF_SPOC_IMPRESSIONS = "discoverystream.spoc.impressions";
 
 this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   constructor() {
@@ -32,83 +35,91 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
       return this._prefCache.config;
     }
     try {
-      this._prefCache.config = JSON.parse(Services.prefs.getStringPref(CONFIG_PREF_NAME, ""));
+      this._prefCache.config = JSON.parse(this.store.getState().Prefs.values[PREF_CONFIG]);
+
+      // Modify the cached config with the user set opt-out for other consumers
+      this._prefCache.config.enabled = this._prefCache.config.enabled &&
+        !this.store.getState().Prefs.values[PREF_OPT_OUT];
     } catch (e) {
       // istanbul ignore next
       this._prefCache.config = {};
       // istanbul ignore next
-      Cu.reportError(`Could not parse preference. Try resetting ${CONFIG_PREF_NAME} in about:config.`);
+      Cu.reportError(`Could not parse preference. Try resetting ${PREF_CONFIG} in about:config.`);
     }
     return this._prefCache.config;
   }
 
+  get showSpocs() {
+    // Combine user-set sponsored opt-out with Mozilla-set config
+    return this.store.getState().Prefs.values[PREF_SHOW_SPONSORED] && this.config.show_spocs;
+  }
+
   setupPrefs() {
-    Services.prefs.addObserver(CONFIG_PREF_NAME, this);
     // Send the initial state of the pref on our reducer
     this.store.dispatch(ac.BroadcastToContent({type: at.DISCOVERY_STREAM_CONFIG_SETUP, data: this.config}));
   }
 
   uninitPrefs() {
-    Services.prefs.removeObserver(CONFIG_PREF_NAME, this);
     // Reset in-memory cache
     this._prefCache = {};
   }
 
-  observe(aSubject, aTopic, aPrefName) {
-    if (aPrefName === CONFIG_PREF_NAME) {
-      this._prefCache.config = null;
-      this.store.dispatch(ac.BroadcastToContent({type: at.DISCOVERY_STREAM_CONFIG_CHANGE, data: this.config}));
-    }
-  }
-
-  async fetchLayout() {
-    const endpoint = this.config.layout_endpoint;
+  async fetchFromEndpoint(endpoint) {
     if (!endpoint) {
-      Cu.reportError("No endpoint configured for pocket, so could not fetch layout");
+      Cu.reportError("Tried to fetch endpoint but none was configured.");
       return null;
     }
     try {
       const response = await fetch(endpoint, {credentials: "omit"});
       if (!response.ok) {
         // istanbul ignore next
-        throw new Error(`Layout endpoint returned unexpected status: ${response.status}`);
+        throw new Error(`${endpoint} returned unexpected status: ${response.status}`);
       }
       return response.json();
     } catch (error) {
       // istanbul ignore next
-      Cu.reportError(`Failed to fetch layout: ${error.message}`);
+      Cu.reportError(`Failed to fetch ${endpoint}: ${error.message}`);
     }
     // istanbul ignore next
     return null;
   }
 
-  async fetchSpocs() {
-    const {DiscoveryStream} = this.store.getState();
-    const endpoint = DiscoveryStream.spocs.spocs_endpoint;
-    if (!endpoint) {
-      Cu.reportError("No endpoint configured for pocket, so could not fetch spocs");
-      return null;
+  /**
+   * Returns true if data in the cache for a particular key has expired or is missing.
+   * @param {{}} cacheData data returned from cache.get()
+   * @param {string} key a cache key
+   * @param {string?} url for "feed" only, the URL of the feed.
+   */
+  isExpired(cacheData, key, url) {
+    const {layout, spocs, feeds} = cacheData;
+    switch (key) {
+      case "layout":
+        return (!layout || !(Date.now() - layout._timestamp < LAYOUT_UPDATE_TIME));
+      case "spocs":
+        return (!spocs || !(Date.now() - spocs.lastUpdated < SPOCS_FEEDS_UPDATE_TIME));
+      case "feed":
+        return (!feeds || !feeds[url] || !(Date.now() - feeds[url].lastUpdated < COMPONENT_FEEDS_UPDATE_TIME));
+      default:
+        throw new Error(`${key} is not a valid key`);
     }
-    try {
-      const response = await fetch(endpoint, {credentials: "omit"});
-      if (!response.ok) {
-        // istanbul ignore next
-        throw new Error(`Spocs endpoint returned unexpected status: ${response.status}`);
-      }
-      return response.json();
-    } catch (error) {
-      // istanbul ignore next
-      Cu.reportError(`Failed to fetch spocs: ${error.message}`);
-    }
-    // istanbul ignore next
-    return null;
   }
 
-  async loadLayout() {
+  /**
+   * Returns true if any data for the cached endpoints has expired or is missing.
+   */
+  async checkIfAnyCacheExpired() {
+    const cachedData = await this.cache.get() || {};
+    const {feeds} = cachedData;
+    return this.isExpired(cachedData, "layout") ||
+      this.isExpired(cachedData, "spocs") ||
+      !feeds || Object.keys(feeds).some(url => this.isExpired(cachedData, "feed", url));
+  }
+
+  async loadLayout(sendUpdate) {
     const cachedData = await this.cache.get() || {};
     let {layout: layoutResponse} = cachedData;
-    if (!layoutResponse || !(Date.now() - layoutResponse._timestamp < LAYOUT_UPDATE_TIME)) {
-      layoutResponse = await this.fetchLayout();
+    if (this.isExpired(cachedData, "layout")) {
+      layoutResponse = await this.fetchFromEndpoint(this.config.layout_endpoint);
       if (layoutResponse && layoutResponse.layout) {
         layoutResponse._timestamp = Date.now();
         await this.cache.set("layout", layoutResponse);
@@ -118,23 +129,23 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     }
 
     if (layoutResponse && layoutResponse.layout) {
-      this.store.dispatch(ac.BroadcastToContent({
+      sendUpdate({
         type: at.DISCOVERY_STREAM_LAYOUT_UPDATE,
         data: {
           layout: layoutResponse.layout,
           lastUpdated: layoutResponse._timestamp,
         },
-      }));
+      });
     }
     if (layoutResponse && layoutResponse.spocs && layoutResponse.spocs.url) {
-      this.store.dispatch(ac.BroadcastToContent({
+      sendUpdate({
         type: at.DISCOVERY_STREAM_SPOCS_ENDPOINT,
         data: layoutResponse.spocs.url,
-      }));
+      });
     }
   }
 
-  async loadComponentFeeds() {
+  async loadComponentFeeds(sendUpdate) {
     const {DiscoveryStream} = this.store.getState();
     const newFeeds = {};
     if (DiscoveryStream && DiscoveryStream.layout) {
@@ -151,45 +162,108 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
       }
 
       await this.cache.set("feeds", newFeeds);
-      this.store.dispatch(ac.BroadcastToContent({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: newFeeds}));
+      sendUpdate({type: at.DISCOVERY_STREAM_FEEDS_UPDATE, data: newFeeds});
     }
   }
 
-  async loadSpocs() {
+  async loadSpocs(sendUpdate) {
     const cachedData = await this.cache.get() || {};
-    let {spocs} = cachedData;
-    if (!spocs || !(Date.now() - spocs.lastUpdated < SPOCS_FEEDS_UPDATE_TIME)) {
-      const spocsResponse = await this.fetchSpocs();
-      if (spocsResponse) {
-        spocs = {
-          lastUpdated: Date.now(),
-          data: spocsResponse,
-        };
-        await this.cache.set("spocs", spocs);
-      } else {
-        Cu.reportError("No response for spocs_endpoint prop");
-        // Use old data if we have it, otherwise nothing.
-        spocs = spocs || {};
+    let spocs;
+
+    if (this.showSpocs) {
+      spocs = cachedData.spocs;
+      if (this.isExpired(cachedData, "spocs")) {
+        const endpoint = this.store.getState().DiscoveryStream.spocs.spocs_endpoint;
+        const spocsResponse = await this.fetchFromEndpoint(endpoint);
+        if (spocsResponse) {
+          spocs = {
+            lastUpdated: Date.now(),
+            data: spocsResponse,
+          };
+
+          this.cleanUpCampaignImpressionPref(spocs.data);
+          await this.cache.set("spocs", spocs);
+        } else {
+          Cu.reportError("No response for spocs_endpoint prop");
+        }
       }
     }
 
-    if (spocs) {
-      this.store.dispatch(ac.BroadcastToContent({
-        type: at.DISCOVERY_STREAM_SPOCS_UPDATE,
-        data: {
-          lastUpdated: spocs.lastUpdated,
-          spocs: spocs.data,
-        },
-      }));
+    // Use good data if we have it, otherwise nothing.
+    // We can have no data if spocs set to off.
+    // We can have no data if request fails and there is no good cache.
+    // We want to send an update spocs or not, so client can render something.
+    spocs = spocs || {
+      lastUpdated: Date.now(),
+      data: {},
+    };
+
+    sendUpdate({
+      type: at.DISCOVERY_STREAM_SPOCS_UPDATE,
+      data: {
+        lastUpdated: spocs.lastUpdated,
+        spocs: this.filterSpocs(spocs.data),
+      },
+    });
+  }
+
+  // Filter spocs based on frequency caps
+  filterSpocs(data) {
+    if (data && data.spocs && data.spocs.length) {
+      const {spocs} = data;
+      const impressions = this.readImpressionsPref(PREF_SPOC_IMPRESSIONS);
+      return {
+        ...data,
+        spocs: spocs.filter(s => this.isBelowFrequencyCap(impressions, s)),
+      };
     }
+    return data;
+  }
+
+  // Frequency caps are based on campaigns, which may include multiple spocs.
+  // We currently support two types of frequency caps:
+  // - lifetime: Indicates how many times spocs from a campaign can be shown in total
+  // - period: Indicates how many times spocs from a campaign can be shown within a period
+  //
+  // So, for example, the feed configuration below defines that for campaign 1 no more
+  // than 5 spocs can be shown in total, and no more than 2 per hour.
+  // "campaign_id": 1,
+  // "caps": {
+  //  "lifetime": 5,
+  //  "campaign": {
+  //    "count": 2,
+  //    "period": 3600
+  //  }
+  // }
+  isBelowFrequencyCap(impressions, spoc) {
+    const campaignImpressions = impressions[spoc.campaign_id];
+    if (!campaignImpressions) {
+      return true;
+    }
+
+    const lifetime = spoc.caps && spoc.caps.lifetime;
+
+    const lifeTimeCap = Math.min(lifetime || MAX_LIFETIME_CAP, MAX_LIFETIME_CAP);
+    const lifeTimeCapExceeded = campaignImpressions.length >= lifeTimeCap;
+    if (lifeTimeCapExceeded) {
+      return false;
+    }
+
+    const campaignCap = spoc.caps && spoc.caps.campaign;
+    if (campaignCap) {
+      const campaignCapExceeded = campaignImpressions
+        .filter(i => (Date.now() - i) < (campaignCap.period * 1000)).length >= campaignCap.count;
+      return !campaignCapExceeded;
+    }
+    return true;
   }
 
   async getComponentFeed(feedUrl) {
     const cachedData = await this.cache.get() || {};
     const {feeds} = cachedData;
-    let feed = feeds && feeds[feedUrl];
-    if (!feed || !(Date.now() - feed.lastUpdated < COMPONENT_FEEDS_UPDATE_TIME)) {
-      const feedResponse = await this.fetchComponentFeed(feedUrl);
+    let feed = feeds ? feeds[feedUrl] : null;
+    if (this.isExpired(cachedData, "feed", feedUrl)) {
+      const feedResponse = await this.fetchFromEndpoint(feedUrl);
       if (feedResponse) {
         feed = {
           lastUpdated: Date.now(),
@@ -203,27 +277,27 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     return feed;
   }
 
-  async fetchComponentFeed(feedUrl) {
-    try {
-      const response = await fetch(feedUrl, {credentials: "omit"});
-      if (!response.ok) {
-        // istanbul ignore next
-        throw new Error(`Component feed endpoint returned unexpected status: ${response.status}`);
-      }
-      return response.json();
-    } catch (error) {
-      // istanbul ignore next
-      Cu.reportError(`Failed to fetch Component feed: ${error.message}`);
-    }
-    // istanbul ignore next
-    return null;
+  /**
+   * @typedef {Object} RefreshAllOptions
+   * @property {boolean} updateOpenTabs - Sends updates to open tabs immediately if true,
+   *                                      updates in background if false
+
+   * Refreshes layout, component feeds, and spocs in order if caches have expired.
+   * @param {RefreshAllOptions} options
+   */
+  async refreshAll(options = {}) {
+    const dispatch = options.updateOpenTabs ?
+      action => this.store.dispatch(ac.BroadcastToContent(action)) :
+      this.store.dispatch;
+
+    await this.loadLayout(dispatch);
+    await this.loadComponentFeeds(dispatch);
+    await this.loadSpocs(dispatch);
+    this.loaded = true;
   }
 
   async enable() {
-    await this.loadLayout();
-    await this.loadComponentFeeds();
-    await this.loadSpocs();
-    this.loaded = true;
+    await this.refreshAll({updateOpenTabs: true});
   }
 
   async disable() {
@@ -253,6 +327,50 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     }
   }
 
+  recordCampaignImpression(campaignId) {
+    let impressions = this.readImpressionsPref(PREF_SPOC_IMPRESSIONS);
+
+    const timeStamps = impressions[campaignId] || [];
+    timeStamps.push(Date.now());
+    impressions = {...impressions, [campaignId]: timeStamps};
+
+    this.writeImpressionsPref(PREF_SPOC_IMPRESSIONS, impressions);
+  }
+
+  cleanUpCampaignImpressionPref(data) {
+    if (data.spocs && data.spocs.length) {
+      const campaignIds = data.spocs.map(s => `${s.campaign_id}`);
+      this.cleanUpImpressionPref(id => !campaignIds.includes(id), PREF_SPOC_IMPRESSIONS);
+    }
+  }
+
+  writeImpressionsPref(pref, impressions) {
+    this.store.dispatch(ac.SetPref(pref, JSON.stringify(impressions)));
+  }
+
+  readImpressionsPref(pref) {
+    const prefVal = this.store.getState().Prefs.values[pref];
+    return prefVal ? JSON.parse(prefVal) : {};
+  }
+
+  cleanUpImpressionPref(isExpired, pref) {
+    const impressions = this.readImpressionsPref(pref);
+    let changed = false;
+
+    Object
+      .keys(impressions)
+      .forEach(id => {
+        if (isExpired(id)) {
+          changed = true;
+          delete impressions[id];
+        }
+      });
+
+    if (changed) {
+      this.writeImpressionsPref(pref, impressions);
+    }
+  }
+
   async onAction(action) {
     switch (action.type) {
       case at.INIT:
@@ -264,16 +382,68 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
           await this.enable();
         }
         break;
+      case at.SYSTEM_TICK:
+        // Only refresh if we loaded once in .enable()
+        if (this.config.enabled && this.loaded && await this.checkIfAnyCacheExpired()) {
+          await this.refreshAll({updateOpenTabs: false});
+        }
+        break;
       case at.DISCOVERY_STREAM_CONFIG_SET_VALUE:
-        Services.prefs.setStringPref(CONFIG_PREF_NAME, JSON.stringify({...this.config, [action.data.name]: action.data.value}));
+        // Disable opt-out if we're explicitly trying to enable
+        if (action.data.name === "enabled" && action.data.value) {
+          this.store.dispatch(ac.SetPref(PREF_OPT_OUT, false));
+        }
+
+        // Use the original string pref to then set a value instead of
+        // this.config which has some modifications
+        this.store.dispatch(ac.SetPref(PREF_CONFIG, JSON.stringify({
+          ...JSON.parse(this.store.getState().Prefs.values[PREF_CONFIG]),
+          [action.data.name]: action.data.value,
+        })));
         break;
       case at.DISCOVERY_STREAM_CONFIG_CHANGE:
         // When the config pref changes, load or unload data as needed.
         await this.onPrefChange();
         break;
+      case at.DISCOVERY_STREAM_OPT_OUT:
+        this.store.dispatch(ac.SetPref(PREF_OPT_OUT, true));
+        break;
+      case at.DISCOVERY_STREAM_SPOC_IMPRESSION:
+        if (this.showSpocs) {
+          this.recordCampaignImpression(action.data.campaignId);
+
+          const cachedData = await this.cache.get() || {};
+          const {spocs} = cachedData;
+
+          this.store.dispatch(ac.AlsoToPreloaded({
+            type: at.DISCOVERY_STREAM_SPOCS_UPDATE,
+            data: {
+              lastUpdated: spocs.lastUpdated,
+              spocs: this.filterSpocs(spocs.data),
+            },
+          }));
+        }
+        break;
       case at.UNINIT:
         // When this feed is shutting down:
         this.uninitPrefs();
+        break;
+      case at.PREF_CHANGED:
+        switch (action.data.name) {
+          case PREF_CONFIG:
+          case PREF_OPT_OUT:
+            // Clear the cached config and broadcast the newly computed value
+            this._prefCache.config = null;
+            this.store.dispatch(ac.BroadcastToContent({
+              type: at.DISCOVERY_STREAM_CONFIG_CHANGE,
+              data: this.config,
+            }));
+            break;
+          // Check if spocs was disabled. Remove them if they were.
+          case PREF_SHOW_SPONSORED:
+            await this.loadSpocs();
+            break;
+        }
         break;
     }
   }

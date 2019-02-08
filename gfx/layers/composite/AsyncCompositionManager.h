@@ -156,7 +156,7 @@ class AsyncCompositionManager final {
    * zooming.
    * |aTransformScrollId| is the scroll id of the scroll frame that scrolls
    * |aTransformedSubtreeRoot|.
-   * |aClipPartsCache| optionally maps layers to separate fixed and scrolled
+   * |aClipPartsCache| maps layers to separate fixed and scrolled
    * clips, so we can only adjust the fixed portion.
    * This function has a recursive implementation; aStartTraversalAt specifies
    * where to start the current recursion of the traversal. For the initial
@@ -167,7 +167,19 @@ class AsyncCompositionManager final {
       ScrollableLayerGuid::ViewID aTransformScrollId,
       const LayerToParentLayerMatrix4x4& aPreviousTransformForRoot,
       const LayerToParentLayerMatrix4x4& aCurrentTransformForRoot,
-      const ScreenMargin& aFixedLayerMargins, ClipPartsCache* aClipPartsCache);
+      const ScreenMargin& aFixedLayerMargins, ClipPartsCache& aClipPartsCache);
+
+  /**
+   * Helper function for AlignFixedAndStickyLayers() to perform a transform
+   * adjustment for a single fixed or sticky layer, rather than all such
+   * layers rooted at a subtree. May also be called directly.
+   */
+  void AdjustFixedOrStickyLayer(
+      Layer* aTransformedSubtreeRoot, Layer* aFixedOrSticky,
+      ScrollableLayerGuid::ViewID aTransformScrollId,
+      const LayerToParentLayerMatrix4x4& aPreviousTransformForRoot,
+      const LayerToParentLayerMatrix4x4& aCurrentTransformForRoot,
+      const ScreenMargin& aFixedLayerMargins, ClipPartsCache& aClipPartsCache);
 
   /**
    * DRAWING PHASE ONLY

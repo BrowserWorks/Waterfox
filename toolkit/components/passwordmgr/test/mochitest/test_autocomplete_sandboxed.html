@@ -6,21 +6,20 @@
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/AddTask.js"></script>
-  <script type="text/javascript" src="satchel_common.js"></script>
+  <script type="text/javascript" src="../../../satchel/test/satchel_common.js"></script>
   <script type="text/javascript" src="pwmgr_common.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
 <body>
 
 <script>
-
 SpecialPowers.pushPrefEnv({"set": [["security.allow_eval_with_system_principal",
                                     true]]});
 
 var chromeScript = runChecksAfterCommonInit();
 
 var setupScript = runInParent(function setup() {
-  ChromeUtils.import("resource://gre/modules/Services.jsm");
+  const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
   var nsLoginInfo = Components.Constructor("@mozilla.org/login-manager/loginInfo;1",
                                            Ci.nsILoginInfo, "init");

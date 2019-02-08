@@ -6,6 +6,7 @@
 
 #include "VRService.h"
 #include "gfxPrefs.h"
+#include "../gfxVRMutex.h"
 #include "base/thread.h"  // for Thread
 #include <cstring>        // for memcmp
 
@@ -68,6 +69,9 @@ VRService::VRService()
       mTargetShmemFile(0),
       mLastHapticState{},
       mFrameStartTime{},
+#if defined(XP_WIN)
+      mMutex(NULL),
+#endif
       mVRProcessEnabled(gfxPrefs::VRProcessEnabled()) {
   // When we have the VR process, we map the memory
   // of mAPIShmem from GPU process.
@@ -99,6 +103,27 @@ void VRService::Refresh() {
 }
 
 void VRService::Start() {
+#if defined(XP_WIN)
+  // Adding `!XRE_IsParentProcess()` to avoid Win 7 32-bit WebVR tests
+  // to OpenMutex when there is no GPU process to create
+  // VRSystemManagerExternal and its mutex.
+  if (!mMutex && !XRE_IsParentProcess()) {
+     mMutex = OpenMutex(
+        MUTEX_ALL_ACCESS,       // request full access
+        false,                  // handle not inheritable
+        TEXT("mozilla::vr::ShmemMutex"));  // object name
+
+    if (mMutex == NULL) {
+      nsAutoCString msg;
+      msg.AppendPrintf("VRService OpenMutex error \"%lu\".",
+                       GetLastError());
+      NS_WARNING(msg.get());
+      MOZ_ASSERT(false);
+    }
+    MOZ_ASSERT(GetLastError() == 0);
+  }
+#endif
+
   if (!mServiceThread) {
     /**
      * We must ensure that any time the service is re-started, that
@@ -153,6 +178,11 @@ void VRService::Stop() {
 #endif
     mAPIShmem = nullptr;
   }
+#if defined(XP_WIN)
+  if (mMutex) {
+    CloseHandle(mMutex);
+  }
+#endif
   mSession = nullptr;
 }
 
@@ -430,10 +460,19 @@ void VRService::PushState(const mozilla::gfx::VRSystemState& aState) {
     pthread_mutex_unlock((pthread_mutex_t*)&(mExternalShmem->systemMutex));
   }
 #else
-  mAPIShmem->generationA++;
-  memcpy((void*)&mAPIShmem->state, &aState, sizeof(VRSystemState));
-  mAPIShmem->generationB++;
-#endif
+  bool state = true;
+#if defined(XP_WIN)
+  if (!XRE_IsParentProcess()) {
+    WaitForMutex lock(mMutex);
+    state = lock.GetStatus();
+  }
+#endif  // defined(XP_WIN)
+  if (state) {
+    mAPIShmem->generationA++;
+    memcpy((void*)&mAPIShmem->state, &aState, sizeof(VRSystemState));
+    mAPIShmem->generationB++;
+  }
+#endif    // defined(MOZ_WIDGET_ANDROID)
 }
 
 void VRService::PullState(mozilla::gfx::VRBrowserState& aState) {
@@ -445,27 +484,36 @@ void VRService::PullState(mozilla::gfx::VRBrowserState& aState) {
   // locked for the duration of the memcpy to and from shmem on
   // both sides.
   // On x86/x64 It is fallable -- If a dirty copy is detected by
-  // a mismatch of browserGenerationA and browserGenerationB,
+  // a mismatch of geckoGenerationA and geckoGenerationB,
   // the copy is discarded and will not replace the last known
   // browser state.
 
 #if defined(MOZ_WIDGET_ANDROID)
-  if (pthread_mutex_lock((pthread_mutex_t*)&(mExternalShmem->browserMutex)) ==
+  if (pthread_mutex_lock((pthread_mutex_t*)&(mExternalShmem->geckoMutex)) ==
       0) {
-    memcpy(&aState, &tmp.browserState, sizeof(VRBrowserState));
-    pthread_mutex_unlock((pthread_mutex_t*)&(mExternalShmem->browserMutex));
+    memcpy(&aState, &tmp.geckoState, sizeof(VRBrowserState));
+    pthread_mutex_unlock((pthread_mutex_t*)&(mExternalShmem->geckoMutex));
   }
 #else
-  VRExternalShmem tmp;
-  if (mAPIShmem->browserGenerationA != mBrowserGeneration) {
-    memcpy(&tmp, mAPIShmem, sizeof(VRExternalShmem));
-    if (tmp.browserGenerationA == tmp.browserGenerationB &&
-        tmp.browserGenerationA != 0 && tmp.browserGenerationA != -1) {
-      memcpy(&aState, &tmp.browserState, sizeof(VRBrowserState));
-      mBrowserGeneration = tmp.browserGenerationA;
+  bool status = true;
+#if defined(XP_WIN)
+  if (!XRE_IsParentProcess()) {
+    WaitForMutex lock(mMutex);
+    status = lock.GetStatus();
+  }
+#endif  // defined(XP_WIN)
+  if (status) {
+    VRExternalShmem tmp;
+    if (mAPIShmem->geckoGenerationA != mBrowserGeneration) {
+      memcpy(&tmp, mAPIShmem, sizeof(VRExternalShmem));
+      if (tmp.geckoGenerationA == tmp.geckoGenerationB &&
+          tmp.geckoGenerationA != 0 && tmp.geckoGenerationA != -1) {
+        memcpy(&aState, &tmp.geckoState, sizeof(VRBrowserState));
+        mBrowserGeneration = tmp.geckoGenerationA;
+      }
     }
   }
-#endif
+#endif    // defined(MOZ_WIDGET_ANDROID)
 }
 
 VRExternalShmem* VRService::GetAPIShmem() { return mAPIShmem; }

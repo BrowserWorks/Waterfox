@@ -17,9 +17,9 @@ var EXPORTED_SYMBOLS = [
 
 ChromeUtils.import("resource://gre/modules/AppConstants.jsm", this);
 ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm", this);
-ChromeUtils.import("resource://gre/modules/ClientID.jsm");
+const {ClientID} = ChromeUtils.import("resource://gre/modules/ClientID.jsm");
 ChromeUtils.import("resource://gre/modules/Log.jsm", this);
-ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
+const {PromiseUtils} = ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
 ChromeUtils.import("resource://gre/modules/ServiceRequest.jsm", this);
 ChromeUtils.import("resource://gre/modules/Services.jsm", this);
 ChromeUtils.import("resource://gre/modules/TelemetryUtils.jsm", this);
@@ -54,8 +54,6 @@ const TOPIC_PROFILE_CHANGE_NET_TEARDOWN = "profile-change-net-teardown";
 // Whether the FHR/Telemetry unification features are enabled.
 // Changing this pref requires a restart.
 const IS_UNIFIED_TELEMETRY = Services.prefs.getBoolPref(TelemetryUtils.Preferences.Unified, false);
-
-const PING_FORMAT_VERSION = 4;
 
 const MS_IN_A_MINUTE = 60 * 1000;
 
@@ -1046,7 +1044,7 @@ var TelemetrySendImpl = {
   },
 
   _buildSubmissionURL(ping) {
-    const version = isV4PingFormat(ping) ? PING_FORMAT_VERSION : 1;
+    const version = isV4PingFormat(ping) ? AppConstants.TELEMETRY_PING_FORMAT_VERSION : 1;
     return this._server + this._getSubmissionPath(ping) + "?v=" + version;
   },
 

@@ -9,7 +9,6 @@
  * @module actions/breakpoints
  */
 
-import { isOriginalId } from "devtools-source-map";
 import { PROMISE } from "../utils/middleware/promise";
 import {
   getBreakpoint,
@@ -17,10 +16,15 @@ import {
   getXHRBreakpoints,
   getSelectedSource,
   getBreakpointAtLocation,
-  getBreakpointsAtLine,
-  getBreakpointsForSource
+  getConditionalPanelLocation,
+  getBreakpointsForSource,
+  getSourceActors
 } from "../../selectors";
-import { assertBreakpoint, createXHRBreakpoint } from "../../utils/breakpoint";
+import {
+  assertBreakpoint,
+  createXHRBreakpoint,
+  makeSourceActorLocation
+} from "../../utils/breakpoint";
 import {
   addBreakpoint,
   addHiddenBreakpoint,
@@ -28,6 +32,7 @@ import {
 } from "./addBreakpoint";
 import remapLocations from "./remapLocations";
 import { syncBreakpoint } from "./syncBreakpoint";
+import { closeConditionalPanel } from "../ui";
 import { isEmptyLineInSource } from "../../reducers/ast";
 
 // this will need to be changed so that addCLientBreakpoint is removed
@@ -35,6 +40,7 @@ import { isEmptyLineInSource } from "../../reducers/ast";
 import type { ThunkArgs, Action } from "../types";
 import type {
   Breakpoint,
+  BreakpointOptions,
   Source,
   SourceLocation,
   XHRBreakpoint
@@ -42,11 +48,21 @@ import type {
 
 import { recordEvent } from "../../utils/telemetry";
 
-export type addBreakpointOptions = {
-  condition?: string,
-  hidden?: boolean,
-  log?: boolean
-};
+async function removeBreakpointsPromise(client, state, breakpoint) {
+  const sourceActors = getSourceActors(
+    state,
+    breakpoint.generatedLocation.sourceId
+  );
+  for (const sourceActor of sourceActors) {
+    const sourceActorLocation = makeSourceActorLocation(
+      sourceActor,
+      breakpoint.generatedLocation
+    );
+    if (client.getBreakpointByLocation(sourceActorLocation)) {
+      await client.removeBreakpoint(sourceActorLocation);
+    }
+  }
+}
 
 /**
  * Remove a single breakpoint
@@ -54,10 +70,9 @@ export type addBreakpointOptions = {
  * @memberof actions/breakpoints
  * @static
  */
-export function removeBreakpoint(location: SourceLocation) {
+export function removeBreakpoint(breakpoint: Breakpoint) {
   return ({ dispatch, getState, client }: ThunkArgs) => {
-    const bp = getBreakpoint(getState(), location);
-    if (!bp || bp.loading) {
+    if (breakpoint.loading) {
       return;
     }
 
@@ -66,21 +81,17 @@ export function removeBreakpoint(location: SourceLocation) {
     // If the breakpoint is already disabled, we don't need to communicate
     // with the server. We just need to dispatch an action
     // simulating a successful server request
-    if (bp.disabled) {
+    if (breakpoint.disabled) {
       return dispatch(
-        ({
-          type: "REMOVE_BREAKPOINT",
-          breakpoint: bp,
-          status: "done"
-        }: Action)
+        ({ type: "REMOVE_BREAKPOINT", breakpoint, status: "done" }: Action)
       );
     }
 
     return dispatch({
       type: "REMOVE_BREAKPOINT",
-      breakpoint: bp,
+      breakpoint,
       disabled: false,
-      [PROMISE]: client.removeBreakpoint(bp.generatedLocation)
+      [PROMISE]: removeBreakpointsPromise(client, getState(), breakpoint)
     });
   };
 }
@@ -91,22 +102,18 @@ export function removeBreakpoint(location: SourceLocation) {
  * @memberof actions/breakpoints
  * @static
  */
-export function disableBreakpoint(location: SourceLocation) {
+export function disableBreakpoint(breakpoint: Breakpoint) {
   return async ({ dispatch, getState, client }: ThunkArgs) => {
-    const bp = getBreakpoint(getState(), location);
-
-    if (!bp || bp.loading) {
+    if (breakpoint.loading) {
       return;
     }
 
-    await client.removeBreakpoint(bp.generatedLocation);
-    const newBreakpoint: Breakpoint = { ...bp, disabled: true };
+    await removeBreakpointsPromise(client, getState(), breakpoint);
+
+    const newBreakpoint: Breakpoint = { ...breakpoint, disabled: true };
 
     return dispatch(
-      ({
-        type: "DISABLE_BREAKPOINT",
-        breakpoint: newBreakpoint
-      }: Action)
+      ({ type: "DISABLE_BREAKPOINT", breakpoint: newBreakpoint }: Action)
     );
   };
 }
@@ -122,7 +129,7 @@ export function disableBreakpointsInSource(source: Source) {
     const breakpoints = getBreakpointsForSource(getState(), source.id);
     for (const breakpoint of breakpoints) {
       if (!breakpoint.disabled) {
-        dispatch(disableBreakpoint(breakpoint.generatedLocation));
+        dispatch(disableBreakpoint(breakpoint));
       }
     }
   };
@@ -139,7 +146,7 @@ export function enableBreakpointsInSource(source: Source) {
     const breakpoints = getBreakpointsForSource(getState(), source.id);
     for (const breakpoint of breakpoints) {
       if (breakpoint.disabled) {
-        dispatch(enableBreakpoint(breakpoint.generatedLocation));
+        dispatch(enableBreakpoint(breakpoint));
       }
     }
   };
@@ -159,7 +166,7 @@ export function toggleAllBreakpoints(shouldDisableBreakpoints: boolean) {
 
     for (const breakpoint of breakpoints) {
       if (shouldDisableBreakpoints) {
-        await client.removeBreakpoint(breakpoint.generatedLocation);
+        await removeBreakpointsPromise(client, getState(), breakpoint);
         const newBreakpoint: Breakpoint = { ...breakpoint, disabled: true };
         modifiedBreakpoints.push(newBreakpoint);
       } else {
@@ -200,8 +207,8 @@ export function toggleBreakpoints(
     const promises = breakpoints.map(
       breakpoint =>
         shouldDisableBreakpoints
-          ? dispatch(disableBreakpoint(breakpoint.location))
-          : dispatch(enableBreakpoint(breakpoint.location))
+          ? dispatch(disableBreakpoint(breakpoint))
+          : dispatch(enableBreakpoint(breakpoint))
     );
 
     await Promise.all(promises);
@@ -218,7 +225,7 @@ export function removeAllBreakpoints() {
   return async ({ dispatch, getState }: ThunkArgs) => {
     const breakpointList = getBreakpointsList(getState());
     return Promise.all(
-      breakpointList.map(bp => dispatch(removeBreakpoint(bp.location)))
+      breakpointList.map(bp => dispatch(removeBreakpoint(bp)))
     );
   };
 }
@@ -231,9 +238,7 @@ export function removeAllBreakpoints() {
  */
 export function removeBreakpoints(breakpoints: Breakpoint[]) {
   return async ({ dispatch }: ThunkArgs) => {
-    return Promise.all(
-      breakpoints.map(bp => dispatch(removeBreakpoint(bp.location)))
-    );
+    return Promise.all(breakpoints.map(bp => dispatch(removeBreakpoint(bp))));
   };
 }
 
@@ -247,7 +252,7 @@ export function removeBreakpointsInSource(source: Source) {
   return async ({ dispatch, getState, client }: ThunkArgs) => {
     const breakpoints = getBreakpointsForSource(getState(), source.id);
     for (const breakpoint of breakpoints) {
-      dispatch(removeBreakpoint(breakpoint.generatedLocation));
+      dispatch(removeBreakpoint(breakpoint));
     }
   };
 }
@@ -271,25 +276,24 @@ export function remapBreakpoints(sourceId: string) {
 }
 
 /**
- * Update the condition of a breakpoint.
+ * Update the options of a breakpoint.
  *
  * @throws {Error} "not implemented"
  * @memberof actions/breakpoints
  * @static
  * @param {SourceLocation} location
  *        @see DebuggerController.Breakpoints.addBreakpoint
- * @param {string} condition
- *        The condition to set on the breakpoint
- * @param {Boolean} $1.disabled Disable value for breakpoint value
+ * @param {Object} options
+ *        Any options to set on the breakpoint
  */
-export function setBreakpointCondition(
+export function setBreakpointOptions(
   location: SourceLocation,
-  { condition, log = false }: addBreakpointOptions = {}
+  options: BreakpointOptions = {}
 ) {
   return async ({ dispatch, getState, client, sourceMaps }: ThunkArgs) => {
     const bp = getBreakpoint(getState(), location);
     if (!bp) {
-      return dispatch(addBreakpoint(location, { condition, log }));
+      return dispatch(addBreakpoint(location, options));
     }
 
     if (bp.loading) {
@@ -297,30 +301,37 @@ export function setBreakpointCondition(
     }
 
     if (bp.disabled) {
-      await dispatch(enableBreakpoint(location));
+      await dispatch(enableBreakpoint(bp));
     }
 
-    await client.setBreakpointCondition(
-      bp.id,
-      location,
-      condition,
-      isOriginalId(bp.location.sourceId)
+    const sourceActors = getSourceActors(
+      getState(),
+      bp.generatedLocation.sourceId
     );
+    for (const sourceActor of sourceActors) {
+      const sourceActorLocation = makeSourceActorLocation(
+        sourceActor,
+        bp.generatedLocation
+      );
+      if (client.getBreakpointByLocation(sourceActorLocation)) {
+        await client.setBreakpointOptions(sourceActorLocation, options);
+      }
+    }
 
-    const newBreakpoint = { ...bp, disabled: false, condition, log };
+    const newBreakpoint = { ...bp, disabled: false, options };
 
     assertBreakpoint(newBreakpoint);
 
     return dispatch(
       ({
-        type: "SET_BREAKPOINT_CONDITION",
+        type: "SET_BREAKPOINT_OPTIONS",
         breakpoint: newBreakpoint
       }: Action)
     );
   };
 }
 
-export function toggleBreakpoint(line: number, column?: number) {
+export function toggleBreakpointAtLine(line: number) {
   return ({ dispatch, getState, client, sourceMaps }: ThunkArgs) => {
     const state = getState();
     const selectedSource = getSelectedSource(state);
@@ -329,105 +340,67 @@ export function toggleBreakpoint(line: number, column?: number) {
       return;
     }
 
-    const bp = getBreakpointAtLocation(state, { line, column });
+    const bp = getBreakpointAtLocation(state, { line, column: undefined });
     const isEmptyLine = isEmptyLineInSource(state, line, selectedSource.id);
 
     if ((!bp && isEmptyLine) || (bp && bp.loading)) {
       return;
     }
 
+    if (getConditionalPanelLocation(getState())) {
+      dispatch(closeConditionalPanel());
+    }
+
     if (bp) {
-      // NOTE: it's possible the breakpoint has slid to a column
-      return dispatch(
-        removeBreakpoint({
-          sourceId: bp.location.sourceId,
-          sourceUrl: bp.location.sourceUrl,
-          line: bp.location.line,
-          column: column || bp.location.column
-        })
-      );
+      return dispatch(removeBreakpoint(bp));
     }
     return dispatch(
       addBreakpoint({
         sourceId: selectedSource.id,
         sourceUrl: selectedSource.url,
-        line: line,
-        column: column
+        line: line
       })
     );
   };
 }
 
-export function toggleBreakpointsAtLine(line: number, column?: number) {
+export function addBreakpointAtLine(line: number) {
   return ({ dispatch, getState, client, sourceMaps }: ThunkArgs) => {
     const state = getState();
-    const selectedSource = getSelectedSource(state);
+    const source = getSelectedSource(state);
 
-    if (!selectedSource) {
+    if (!source || isEmptyLineInSource(state, line, source.id)) {
       return;
-    }
-
-    const bps = getBreakpointsAtLine(state, line);
-    const isEmptyLine = isEmptyLineInSource(state, line, selectedSource.id);
-
-    if (bps.length === 0 && !isEmptyLine) {
-      return dispatch(
-        addBreakpoint({
-          sourceId: selectedSource.id,
-          sourceUrl: selectedSource.url,
-          line,
-          column
-        })
-      );
-    }
-
-    return Promise.all(bps.map(bp => dispatch(removeBreakpoint(bp.location))));
-  };
-}
-
-export function addOrToggleDisabledBreakpoint(line: number, column?: number) {
-  return ({ dispatch, getState, client, sourceMaps }: ThunkArgs) => {
-    const selectedSource = getSelectedSource(getState());
-
-    if (!selectedSource) {
-      return;
-    }
-
-    const bp = getBreakpointAtLocation(getState(), { line, column });
-
-    if (bp && bp.loading) {
-      return;
-    }
-
-    if (bp) {
-      // NOTE: it's possible the breakpoint has slid to a column
-      return dispatch(
-        toggleDisabledBreakpoint(line, column || bp.location.column)
-      );
     }
 
     return dispatch(
       addBreakpoint({
-        sourceId: selectedSource.id,
-        sourceUrl: selectedSource.url,
-        line: line,
-        column: column
+        sourceId: source.id,
+        sourceUrl: source.url,
+        column: undefined,
+        line
       })
     );
   };
 }
 
-export function toggleDisabledBreakpoint(line: number, column?: number) {
+export function removeBreakpointsAtLine(sourceId: string, line: number) {
   return ({ dispatch, getState, client, sourceMaps }: ThunkArgs) => {
-    const bp = getBreakpointAtLocation(getState(), { line, column });
-    if (!bp || bp.loading) {
+    const breakpoints = getBreakpointsForSource(getState(), sourceId, line);
+    return dispatch(removeBreakpoints(breakpoints));
+  };
+}
+
+export function toggleDisabledBreakpoint(breakpoint: Breakpoint) {
+  return ({ dispatch, getState, client, sourceMaps }: ThunkArgs) => {
+    if (breakpoint.loading) {
       return;
     }
 
-    if (!bp.disabled) {
-      return dispatch(disableBreakpoint(bp.location));
+    if (!breakpoint.disabled) {
+      return dispatch(disableBreakpoint(breakpoint));
     }
-    return dispatch(enableBreakpoint(bp.location));
+    return dispatch(enableBreakpoint(breakpoint));
   };
 }
 

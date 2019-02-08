@@ -1,12 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-ChromeUtils.import("resource://gre/modules/Preferences.jsm");
-ChromeUtils.import("resource://services-common/utils.js");
-ChromeUtils.import("resource://services-sync/constants.js");
-ChromeUtils.import("resource://services-sync/engines/prefs.js");
-ChromeUtils.import("resource://services-sync/service.js");
-ChromeUtils.import("resource://services-sync/util.js");
+const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm");
+const {Service} = ChromeUtils.import("resource://services-sync/service.js");
 
 add_task(async function run_test() {
   let engine = Service.engineManager.get("prefs");
@@ -18,7 +14,6 @@ add_task(async function run_test() {
   let prefs = new Preferences();
 
   try {
-
     _("tracker.modified corresponds to preference.");
     Assert.equal(Svc.Prefs.get("engine.prefs.modified"), undefined);
     Assert.ok(!tracker.modified);
@@ -85,7 +80,6 @@ add_task(async function run_test() {
     await tracker.asyncObserver.promiseObserversComplete();
     Assert.equal(tracker.score, SCORE_INCREMENT_XLARGE * 3);
     Assert.equal(tracker.modified, false);
-
   } finally {
     await tracker.stop();
     prefs.resetBranch("");

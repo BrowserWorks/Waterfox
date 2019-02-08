@@ -87,8 +87,11 @@ class APZSampler {
   CSSRect GetCurrentAsyncLayoutViewport(const LayerMetricsWrapper& aLayer);
   ParentLayerPoint GetCurrentAsyncScrollOffset(
       const LayerMetricsWrapper& aLayer);
-  AsyncTransform GetCurrentAsyncTransform(const LayerMetricsWrapper& aLayer);
+  AsyncTransform GetCurrentAsyncTransform(const LayerMetricsWrapper& aLayer,
+                                          AsyncTransformComponents aComponents);
   AsyncTransform GetCurrentAsyncTransformForFixedAdjustment(
+      const LayerMetricsWrapper& aLayer);
+  AsyncTransform GetCurrentAsyncViewportRelativeTransform(
       const LayerMetricsWrapper& aLayer);
   AsyncTransformComponentMatrix GetOverscrollTransform(
       const LayerMetricsWrapper& aLayer);
@@ -97,6 +100,8 @@ class APZSampler {
 
   void MarkAsyncTransformAppliedToContent(const LayerMetricsWrapper& aLayer);
   bool HasUnusedAsyncTransform(const LayerMetricsWrapper& aLayer);
+
+  ScrollableLayerGuid GetGuid(const LayerMetricsWrapper& aLayer);
 
   /**
    * This can be used to assert that the current thread is the

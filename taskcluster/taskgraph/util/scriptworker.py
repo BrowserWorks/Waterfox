@@ -48,6 +48,7 @@ SIGNING_SCOPE_ALIAS_TO_PROJECT = [[
     'all-nightly-branches', set([
         'mozilla-central',
         'comm-central',
+        'oak',
     ])
 ], [
     'all-release-branches', set([
@@ -84,6 +85,7 @@ BEETMOVER_SCOPE_ALIAS_TO_PROJECT = [[
     'all-nightly-branches', set([
         'mozilla-central',
         'comm-central',
+        'oak',
     ])
 ], [
     'all-release-branches', set([
@@ -107,6 +109,7 @@ BEETMOVER_BUCKET_SCOPES = {
 """
 BEETMOVER_ACTION_SCOPES = {
     'nightly': 'beetmover:action:push-to-nightly',
+    'nightly-oak': 'beetmover:action:push-to-nightly',
     'default': 'beetmover:action:push-to-candidates',
 }
 
@@ -121,7 +124,8 @@ This is a list of list-pairs, for ordering.
 BALROG_SCOPE_ALIAS_TO_PROJECT = [[
     'nightly', set([
         'mozilla-central',
-        'comm-central'
+        'comm-central',
+        'oak',
     ])
 ], [
     'beta', set([
@@ -413,7 +417,7 @@ def generate_beetmover_upstream_artifacts(job, platform, locale=None, dependenci
     """
     base_artifact_prefix = get_artifact_prefix(job)
     resolve_keyed_by(job, 'attributes.artifact_map', 'artifact map', platform=platform)
-    map_config = load_yaml(*os.path.split(job['attributes']['artifact_map']))
+    map_config = load_yaml(job['attributes']['artifact_map'])
     upstream_artifacts = list()
 
     if not locale:
@@ -476,7 +480,7 @@ def generate_beetmover_compressed_upstream_artifacts(job, dependencies=None):
         list: A list of dictionaries conforming to the upstream_artifacts spec.
     """
     base_artifact_prefix = get_artifact_prefix(job)
-    map_config = load_yaml(*os.path.split(job['attributes']['artifact_map']))
+    map_config = load_yaml(job['attributes']['artifact_map'])
     upstream_artifacts = list()
 
     if not dependencies:
@@ -528,7 +532,7 @@ def generate_beetmover_artifact_map(config, job, **kwargs):
     """
     platform = kwargs.get('platform', '')
     resolve_keyed_by(job, 'attributes.artifact_map', 'artifact map', platform=platform)
-    map_config = load_yaml(*os.path.split(job['attributes']['artifact_map']))
+    map_config = load_yaml(job['attributes']['artifact_map'])
     base_artifact_prefix = map_config.get('base_artifact_prefix', get_artifact_prefix(job))
 
     artifacts = list()

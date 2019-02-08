@@ -127,11 +127,6 @@ class JitTest:
         self.valgrind = False
         # True means force Pacific time for the test
         self.tz_pacific = False
-        # True means run with and without asm.js
-        self.test_also_noasmjs = False
-        # enabled.
-        # True means run with and and without wasm baseline compiler enabled.
-        self.test_also_wasm_baseline = False
         # Additional files to include, in addition to prologue.js
         self.other_includes = []
         # List of other configurations to test with.
@@ -165,8 +160,6 @@ class JitTest:
         t.allow_overrecursed = self.allow_overrecursed
         t.valgrind = self.valgrind
         t.tz_pacific = self.tz_pacific
-        t.test_also_noasmjs = self.test_also_noasmjs
-        t.test_also_wasm_baseline = self.test_also_wasm_baseline
         t.other_includes = self.other_includes[:]
         t.test_also = self.test_also
         t.test_join = self.test_join
@@ -301,18 +294,6 @@ class JitTest:
                         test.valgrind = options.valgrind
                     elif name == 'tz-pacific':
                         test.tz_pacific = True
-                    elif name == 'test-also-noasmjs':
-                        if options.asmjs_enabled:
-                            test.test_also.append(['--no-asmjs'])
-                    elif name == 'test-also-wasm-compiler-ion':
-                        if options.wasm_enabled:
-                            test.test_also.append(['--wasm-compiler=ion'])
-                    elif name == 'test-also-wasm-compiler-baseline':
-                        if options.wasm_enabled:
-                            test.test_also.append(['--wasm-compiler=baseline'])
-                    elif name == 'test-also-wasm-tiering':
-                        if options.wasm_enabled:
-                            test.test_also.append(['--test-wasm-await-tier2'])
                     elif name.startswith('test-also='):
                         test.test_also.append([name[len('test-also='):]])
                     elif name.startswith('test-join='):
@@ -412,6 +393,8 @@ def find_tests(substring=None, run_binast=False):
                 continue
             if os.path.join('binast', 'nonlazy') in dirpath:
                 continue
+            if os.path.join('binast', 'invalid') in dirpath:
+                continue
 
         for filename in filenames:
             if not (filename.endswith('.js') or filename.endswith('.binjs')):
@@ -453,8 +436,7 @@ def run_test_remote(test, device, prefix, options):
     except ADBTimeoutError:
         raise
     except ADBProcessError as e:
-        out = e.adb_process.stdout
-        print("exception output: %s" % str(out))
+        out = str(e.adb_process.stdout)
         returncode = e.adb_process.exitcode
 
     elapsed = (datetime.now() - start).total_seconds()

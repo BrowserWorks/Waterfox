@@ -4,9 +4,8 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(
   this,
@@ -14,33 +13,6 @@ XPCOMUtils.defineLazyServiceGetter(
   "@mozilla.org/toolkit/profile-service;1",
   "nsIToolkitProfileService"
 );
-
-// nsIToolkitProfileService.selectProfile can be used only during the selection
-// of the profile in the ProfileManager. If we are showing about:profiles in a
-// tab, the selectedProfile returns the default profile.
-// In this function we use the ProfD to find the current profile.
-function findCurrentProfile() {
-  let cpd;
-  try {
-    cpd = Services.dirsvc.get("ProfD", Ci.nsIFile);
-  } catch (e) {}
-
-  if (cpd) {
-    for (let profile of ProfileService.profiles) {
-      if (profile.rootDir.path == cpd.path) {
-        return profile;
-      }
-    }
-  }
-
-  // selectedProfile can throw if nothing is selected or if the selected profile
-  // has been deleted.
-  try {
-    return ProfileService.selectedProfile;
-  } catch (e) {
-    return null;
-  }
-}
 
 function refreshUI() {
   let parent = document.getElementById("profiles");
@@ -53,7 +25,7 @@ function refreshUI() {
     defaultProfile = ProfileService.defaultProfile;
   } catch (e) {}
 
-  let currentProfile = findCurrentProfile();
+  let currentProfile = ProfileService.currentProfile;
 
   for (let profile of ProfileService.profiles) {
     let isCurrentProfile = profile == currentProfile;
@@ -198,10 +170,10 @@ function display(profileData) {
   div.appendChild(sep);
 }
 
+// This is called from the createProfileWizard.xul dialog.
 function CreateProfile(profile) {
-  ProfileService.selectedProfile = profile;
-  ProfileService.flush();
-  refreshUI();
+  // The wizard created a profile, just make it the default.
+  defaultProfile(profile);
 }
 
 function createProfileWizard() {
@@ -212,7 +184,6 @@ function createProfileWizard() {
 }
 
 async function renameProfile(profile) {
-
   let newName = { value: profile.name };
   let [title, msg] = await document.l10n.formatValues([
     { id: "profiles-rename-profile-title" },
@@ -271,30 +242,26 @@ async function removeProfile(profile) {
     }
   }
 
-  // If we are deleting the selected or the default profile we must choose a
-  // different one.
-  let isSelected = false;
-  try {
-    isSelected = ProfileService.selectedProfile == profile;
-  } catch (e) {}
-
+  // If we are deleting the default profile we must choose a different one.
   let isDefault = false;
   try {
     isDefault = ProfileService.defaultProfile == profile;
   } catch (e) {}
 
-  if (isSelected || isDefault) {
+  if (isDefault) {
     for (let p of ProfileService.profiles) {
       if (profile == p) {
         continue;
       }
 
-      if (isSelected) {
-        ProfileService.selectedProfile = p;
-      }
-
       if (isDefault) {
-        ProfileService.defaultProfile = p;
+        try {
+          ProfileService.defaultProfile = p;
+        } catch (e) {
+          // This can happen on dev-edition if a non-default profile is in use.
+          // In such a case the next time that dev-edition is started it will
+          // find no default profile and just create a new one.
+        }
       }
 
       break;
@@ -317,10 +284,19 @@ async function removeProfile(profile) {
   refreshUI();
 }
 
-function defaultProfile(profile) {
-  ProfileService.defaultProfile = profile;
-  ProfileService.selectedProfile = profile;
-  ProfileService.flush();
+async function defaultProfile(profile) {
+  try {
+    ProfileService.defaultProfile = profile;
+    ProfileService.flush();
+  } catch (e) {
+    // This can happen on dev-edition.
+    let [title, msg] = await document.l10n.formatValues([
+        { id: "profiles-cannot-set-as-default-title" },
+        { id: "profiles-cannot-set-as-default-message" },
+    ]);
+
+    Services.prompt.alert(window, title, msg);
+  }
   refreshUI();
 }
 

@@ -417,7 +417,7 @@ class MarionetteCoverageProtocolPart(CoverageProtocolPart):
             return
 
         script = """
-            ChromeUtils.import("chrome://marionette/content/PerTestCoverageUtils.jsm");
+            const {PerTestCoverageUtils} = ChromeUtils.import("chrome://marionette/content/PerTestCoverageUtils.jsm");
             return PerTestCoverageUtils.enabled;
             """
         with self.marionette.using_context(self.marionette.CONTEXT_CHROME):
@@ -427,7 +427,7 @@ class MarionetteCoverageProtocolPart(CoverageProtocolPart):
         script = """
             var callback = arguments[arguments.length - 1];
 
-            ChromeUtils.import("chrome://marionette/content/PerTestCoverageUtils.jsm");
+            const {PerTestCoverageUtils} = ChromeUtils.import("chrome://marionette/content/PerTestCoverageUtils.jsm");
             PerTestCoverageUtils.beforeTest().then(callback, callback);
             """
         with self.marionette.using_context(self.marionette.CONTEXT_CHROME):
@@ -447,7 +447,7 @@ class MarionetteCoverageProtocolPart(CoverageProtocolPart):
         script = """
             var callback = arguments[arguments.length - 1];
 
-            ChromeUtils.import("chrome://marionette/content/PerTestCoverageUtils.jsm");
+            const {PerTestCoverageUtils} = ChromeUtils.import("chrome://marionette/content/PerTestCoverageUtils.jsm");
             PerTestCoverageUtils.afterTest().then(callback, callback);
             """
         with self.marionette.using_context(self.marionette.CONTEXT_CHROME):
@@ -722,11 +722,6 @@ class MarionetteTestharnessExecutor(TestharnessExecutor):
             done, rv = handler(result)
             if done:
                 break
-
-        try:
-            self.protocol.testharness.close_old_windows(protocol)
-        except Exception:
-            pass
 
         if self.protocol.coverage.is_enabled:
             self.protocol.coverage.dump()

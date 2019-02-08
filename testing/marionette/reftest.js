@@ -4,14 +4,14 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/Preferences.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
-ChromeUtils.import("chrome://marionette/content/assert.js");
-ChromeUtils.import("chrome://marionette/content/capture.js");
-const {InvalidArgumentError} = ChromeUtils.import("chrome://marionette/content/error.js", {});
-const {Log} = ChromeUtils.import("chrome://marionette/content/log.js", {});
+const {assert} = ChromeUtils.import("chrome://marionette/content/assert.js");
+const {capture} = ChromeUtils.import("chrome://marionette/content/capture.js");
+const {InvalidArgumentError} = ChromeUtils.import("chrome://marionette/content/error.js");
+const {Log} = ChromeUtils.import("chrome://marionette/content/log.js");
 
 XPCOMUtils.defineLazyGetter(this, "logger", Log.get);
 
@@ -228,7 +228,6 @@ max-width: ${width}px; max-height: ${height}px`;
   async run(testUrl, references, expected, timeout,
       width = DEFAULT_REFTEST_WIDTH,
       height = DEFAULT_REFTEST_HEIGHT) {
-
     let timeoutHandle;
 
     let timeoutPromise = new Promise(resolve => {
@@ -350,7 +349,6 @@ max-width: ${width}px; max-height: ${height}px`;
         }
       });
       logger.debug(`Canvas pool (${cacheKey}) is of length ${canvasPool.length}`);
-
     }
 
     if (screenshotData.length) {
@@ -403,8 +401,6 @@ max-width: ${width}px; max-height: ${height}px`;
           break;
         default:
           throw new InvalidArgumentError("Reftest operator should be '==' or '!='");
-
-
       }
     }
     return {lhs, rhs, passed, error};

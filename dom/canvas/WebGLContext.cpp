@@ -9,6 +9,7 @@
 #include <queue>
 
 #include "AccessCheck.h"
+#include "gfxConfig.h"
 #include "gfxContext.h"
 #include "gfxCrashReporterUtils.h"
 #include "gfxPattern.h"
@@ -483,6 +484,10 @@ bool WebGLContext::CreateAndInitGL(
     case dom::WebGLPowerPreference::Low_power:
       break;
 
+    case dom::WebGLPowerPreference::High_performance:
+      flags |= gl::CreateContextFlags::HIGH_POWER;
+      break;
+
       // Eventually add a heuristic, but for now default to high-performance.
       // We can even make it dynamic by holding on to a
       // ForceDiscreteGPUHelperCGL iff we decide it's a high-performance
@@ -491,10 +496,16 @@ bool WebGLContext::CreateAndInitGL(
       // - Many draw calls
       // - Same origin with root page (try to stem bleeding from WebGL
       // ads/trackers)
-    case dom::WebGLPowerPreference::High_performance:
     default:
-      flags |= gl::CreateContextFlags::HIGH_POWER;
+      if (!gfxPrefs::WebGLDefaultLowPower()) {
+        flags |= gl::CreateContextFlags::HIGH_POWER;
+      }
       break;
+  }
+
+  // If "Use hardware acceleration when available" option is disabled:
+  if (!gfxConfig::IsEnabled(Feature::HW_COMPOSITING)) {
+    flags &= ~gl::CreateContextFlags::HIGH_POWER;
   }
 
 #ifdef XP_MACOSX
@@ -934,7 +945,8 @@ WebGLContext::SetDimensions(int32_t signedWidth, int32_t signedHeight) {
   mViewportHeight = size.height;
   gl->fViewport(mViewportX, mViewportY, mViewportWidth, mViewportHeight);
 
-  gl->fScissor(0, 0, size.width, size.height);
+  mScissorRect = {0, 0, size.width, size.height};
+  mScissorRect.Apply(*gl);
 
   //////
   // Check everything
@@ -1876,6 +1888,12 @@ ScopedDrawCallWrapper::~ScopedDrawCallWrapper() {
   mWebGL.mShouldPresent = true;
 }
 
+// -
+
+void WebGLContext::ScissorRect::Apply(gl::GLContext& gl) const {
+  gl.fScissor(x, y, w, h);
+}
+
 ////////////////////////////////////////
 
 IndexedBufferBinding::IndexedBufferBinding() : mRangeStart(0), mRangeSize(0) {}
@@ -2198,8 +2216,9 @@ static inline size_t SizeOfViewElem(const dom::ArrayBufferView& view) {
 bool WebGLContext::ValidateArrayBufferView(const dom::ArrayBufferView& view,
                                            GLuint elemOffset,
                                            GLuint elemCountOverride,
+                                           const GLenum errorEnum,
                                            uint8_t** const out_bytes,
-                                           size_t* const out_byteLen) {
+                                           size_t* const out_byteLen) const {
   view.ComputeLengthAndData();
   uint8_t* const bytes = view.DataAllowShared();
   const size_t byteLen = view.LengthAllowShared();
@@ -2208,14 +2227,14 @@ bool WebGLContext::ValidateArrayBufferView(const dom::ArrayBufferView& view,
 
   size_t elemCount = byteLen / elemSize;
   if (elemOffset > elemCount) {
-    ErrorInvalidValue("Invalid offset into ArrayBufferView.");
+    GenerateError(errorEnum, "Invalid offset into ArrayBufferView.");
     return false;
   }
   elemCount -= elemOffset;
 
   if (elemCountOverride) {
     if (elemCountOverride > elemCount) {
-      ErrorInvalidValue("Invalid sub-length for ArrayBufferView.");
+      GenerateError(errorEnum, "Invalid sub-length for ArrayBufferView.");
       return false;
     }
     elemCount = elemCountOverride;

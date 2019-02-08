@@ -10,9 +10,9 @@ const TOPIC_WILL_IMPORT_BOOKMARKS = "initial-migration-will-import-default-bookm
 const TOPIC_DID_IMPORT_BOOKMARKS = "initial-migration-did-import-default-bookmarks";
 const TOPIC_PLACES_DEFAULTS_FINISHED = "places-browser-init-complete";
 
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["URL"]);
 
@@ -1023,6 +1023,17 @@ var MigrationUtils = Object.freeze({
   },
 
   insertVisitsWrapper(pageInfos) {
+    let now = new Date();
+    // Ensure that none of the dates are in the future. If they are, rewrite
+    // them to be now. This means we don't loose history entries, but they will
+    // be valid for the history store.
+    for (let pageInfo of pageInfos) {
+      for (let visit of pageInfo.visits) {
+        if (visit.date && visit.date > now) {
+          visit.date = now;
+        }
+      }
+    }
     this._importQuantities.history += pageInfos.length;
     if (gKeepUndoData) {
       this._updateHistoryUndo(pageInfos);

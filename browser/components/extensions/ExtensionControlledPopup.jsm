@@ -19,9 +19,9 @@
 
 var EXPORTED_SYMBOLS = ["ExtensionControlledPopup"];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/ExtensionCommon.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {ExtensionCommon} = ChromeUtils.import("resource://gre/modules/ExtensionCommon.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 ChromeUtils.defineModuleGetter(this, "AddonManager",
                                "resource://gre/modules/AddonManager.jsm");
@@ -228,7 +228,7 @@ class ExtensionControlledPopup {
     // Setup the command handler.
     let handleCommand = async (event) => {
       panel.hidePopup();
-      if (event.originalTarget.getAttribute("anonid") == "button") {
+      if (event.originalTarget == popupnotification.button) {
         // Main action is to keep changes.
         await this.setConfirmation(extensionId);
       } else {
@@ -271,7 +271,7 @@ class ExtensionControlledPopup {
     let anchor = doc.getAnonymousElementByAttribute(
       anchorButton, "class", "toolbarbutton-icon");
     panel.hidden = false;
-    popupnotification.hidden = false;
+    popupnotification.show();
     panel.openPopup(anchor);
   }
 

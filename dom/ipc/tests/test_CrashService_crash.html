@@ -21,7 +21,6 @@ SpecialPowers.pushPrefEnv({"set": [
   ["network.disable.ipc.security", true],
   ["dom.ipc.tabs.disabled", false],
 ]}, function() {
-
   var iframe =  document.createElementNS("http://www.w3.org/1999/xhtml", "iframe");
   iframe.setAttribute("remote", "true");
   SpecialPowers.wrap(iframe).mozbrowser = true;
@@ -37,13 +36,12 @@ SpecialPowers.pushPrefEnv({"set": [
   info("Waiting for pruneOldCrashes");
   var future = new Date(Date.now() + 1000 * 60 * 60 * 24);
   crashMan.pruneOldCrashes(future).then(function() {
-
     var crashDateMS = Date.now();
 
     // Inject a frame script that crashes the content process.
     var mm = SpecialPowers.getBrowserFrameMessageManager(iframe);
     mm.loadFrameScript("data:,new " + function ContentScriptScope() {
-      ChromeUtils.import("resource://gre/modules/ctypes.jsm");
+      const {ctypes} = ChromeUtils.import("resource://gre/modules/ctypes.jsm");
       let crash = function() {
         let zero = new ctypes.intptr_t(8);
         let badptr = ctypes.cast(zero, ctypes.PointerType(ctypes.int32_t));
@@ -81,7 +79,6 @@ SpecialPowers.pushPrefEnv({"set": [
       });
     }
     setTimeout(tryGetCrash, 1000);
-
   }, function() {
     ok(false, "pruneOldCrashes error");
     SimpleTest.finish();

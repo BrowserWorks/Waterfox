@@ -7,7 +7,6 @@
 
 const URI_EXTENSION_BLOCKLIST_DIALOG = "chrome://mozapps/content/extensions/blocklist.xul";
 
-ChromeUtils.import("resource://testing-common/MockRegistrar.jsm");
 var testserver = AddonTestUtils.createHttpServer({hosts: ["example.com"]});
 gPort = testserver.identity.primaryPort;
 
@@ -32,7 +31,6 @@ var WindowWatcher = {
 
     // run the code after the blocklist is closed
     Services.obs.notifyObservers(null, "addon-blocklist-closed");
-
   },
 
   QueryInterface: ChromeUtils.generateQI(["nsIWindowWatcher"]),

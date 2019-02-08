@@ -40,7 +40,7 @@ window.gActivityStreamStrings = {
   "section_disclaimer_topstories_buttontext": "Oĩma, hesakãma chéve",
   "prefs_home_header": "Kuatiarogue retepy Firefox ñepyrũháme",
   "prefs_home_description": "Eiporavo mba’e retepýpa eipota Firefox mba’erechaha ñepyrũháme.",
-  "prefs_content_discovery_header": "Firefox Home",
+  "prefs_content_discovery_header": "Firefox kuatiarogue ñepyrũ",
   "prefs_content_discovery_description": "Content Discovery in Firefox Home allows you to discover high-quality, relevant articles from across the web.",
   "prefs_content_discovery_button": "Turn Off Content Discovery",
   "prefs_section_rows_option": "{num} rysýi; {num} rysýi",
@@ -94,7 +94,7 @@ window.gActivityStreamStrings = {
   "section_menu_action_manage_section": "Eñagareko vorére",
   "section_menu_action_manage_webext": "Emongu'e jepysokue",
   "section_menu_action_add_topsite": "Embojuaju Tenda ojeikeveha",
-  "section_menu_action_add_search_engine": "Embojuaju hekaha",
+  "section_menu_action_add_search_engine": "Embojuaju jehekaha mongu’eha",
   "section_menu_action_move_up": "Jupi",
   "section_menu_action_move_down": "Guejy",
   "section_menu_action_privacy_notice": "Marandu’i ñemiguáva",
@@ -110,6 +110,5 @@ window.gActivityStreamStrings = {
   "firstrun_privacy_notice": "Ñemigua purureko",
   "firstrun_continue_to_login": "Eku'ejey",
   "firstrun_skip_login": "Ehejánte kóva",
-  "context_menu_title": "Eike poravorãme",
-  "pocket_learn_more": "Kuaave"
+  "context_menu_title": "Eike poravorãme"
 };

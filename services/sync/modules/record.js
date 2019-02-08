@@ -13,14 +13,14 @@ var EXPORTED_SYMBOLS = [
 const CRYPTO_COLLECTION = "crypto";
 const KEYS_WBO = "keys";
 
-ChromeUtils.import("resource://gre/modules/Log.jsm");
-ChromeUtils.import("resource://services-sync/constants.js");
-ChromeUtils.import("resource://services-sync/keys.js");
-ChromeUtils.import("resource://services-sync/main.js");
-ChromeUtils.import("resource://services-sync/resource.js");
-ChromeUtils.import("resource://services-sync/util.js");
-ChromeUtils.import("resource://services-common/async.js");
-ChromeUtils.import("resource://services-common/utils.js");
+const {Log} = ChromeUtils.import("resource://gre/modules/Log.jsm");
+const {DEFAULT_DOWNLOAD_BATCH_SIZE, DEFAULT_KEYBUNDLE_NAME} = ChromeUtils.import("resource://services-sync/constants.js");
+const {BulkKeyBundle} = ChromeUtils.import("resource://services-sync/keys.js");
+const {Weave} = ChromeUtils.import("resource://services-sync/main.js");
+const {Resource} = ChromeUtils.import("resource://services-sync/resource.js");
+const {Utils} = ChromeUtils.import("resource://services-sync/util.js");
+const {Async} = ChromeUtils.import("resource://services-common/async.js");
+const {CommonUtils} = ChromeUtils.import("resource://services-common/utils.js");
 
 function WBORecord(collection, id) {
   this.data = {};
@@ -474,7 +474,6 @@ CollectionKeyManager.prototype = {
   // Take the fetched info/collections WBO, checking the change
   // time of the crypto collection.
   updateNeeded(info_collections) {
-
     this._log.info("Testing for updateNeeded. Last modified: " + this.lastModified);
 
     // No local record of modification time? Need an update.
@@ -502,7 +501,6 @@ CollectionKeyManager.prototype = {
   // * Otherwise, return false -- we were up-to-date.
   //
   setContents: function setContents(payload, modified) {
-
     let self = this;
 
     this._log.info("Setting collection keys contents. Our last modified: " +

@@ -35,7 +35,7 @@ void ListNode::checkConsistency() const {
 
     tailNode = &last->pn_next;
   } else {
-    tailNode = &pn_u.list.head;
+    tailNode = &head_;
   }
   MOZ_ASSERT(tail() == tailNode);
   MOZ_ASSERT(count() == actualCount);
@@ -46,9 +46,9 @@ void ListNode::checkConsistency() const {
  * Allocate a ParseNode from parser's node freelist or, failing that, from
  * cx's temporary arena.
  */
-void* ParseNodeAllocator::allocNode() {
+void* ParseNodeAllocator::allocNode(size_t size) {
   LifoAlloc::AutoFallibleScope fallibleAllocator(&alloc);
-  void* p = alloc.alloc(sizeof(ParseNode));
+  void* p = alloc.alloc(size);
   if (!p) {
     ReportOutOfMemory(cx);
   }
@@ -78,7 +78,7 @@ ParseNode* ParseNode::appendOrCreateList(ParseNodeKind kind, ParseNode* left,
     // processed with a left fold because (+) is left-associative.
     //
     if (left->isKind(kind) &&
-        (kind == ParseNodeKind::PowExpr ? !left->pn_parens
+        (kind == ParseNodeKind::PowExpr ? !left->isInParens()
                                         : left->isBinaryOperation())) {
       ListNode* list = &left->as<ListNode>();
 
@@ -151,8 +151,11 @@ void ParseNode::dump(GenericPrinter& out, int indent) {
     case PN_TERNARY:
       as<TernaryNode>().dump(out, indent);
       return;
-    case PN_CODE:
-      as<CodeNode>().dump(out, indent);
+    case PN_FUNCTION:
+      as<FunctionNode>().dump(out, indent);
+      return;
+    case PN_MODULE:
+      as<ModuleNode>().dump(out, indent);
       return;
     case PN_LIST:
       as<ListNode>().dump(out, indent);
@@ -283,7 +286,15 @@ void TernaryNode::dump(GenericPrinter& out, int indent) {
   out.printf(")");
 }
 
-void CodeNode::dump(GenericPrinter& out, int indent) {
+void FunctionNode::dump(GenericPrinter& out, int indent) {
+  const char* name = parseNodeNames[size_t(getKind())];
+  out.printf("(%s ", name);
+  indent += strlen(name) + 2;
+  DumpParseTree(body(), out, indent);
+  out.printf(")");
+}
+
+void ModuleNode::dump(GenericPrinter& out, int indent) {
   const char* name = parseNodeNames[size_t(getKind())];
   out.printf("(%s ", name);
   indent += strlen(name) + 2;
@@ -478,8 +489,8 @@ bool js::frontend::IsAnonymousFunctionDefinition(ParseNode* pn) {
   // 14.1.12 (FunctionExpression).
   // 14.4.8 (Generatoression).
   // 14.6.8 (AsyncFunctionExpression)
-  if (pn->isKind(ParseNodeKind::Function) &&
-      !pn->as<CodeNode>().funbox()->function()->explicitName()) {
+  if (pn->is<FunctionNode>() &&
+      !pn->as<FunctionNode>().funbox()->function()->explicitName()) {
     return true;
   }
 

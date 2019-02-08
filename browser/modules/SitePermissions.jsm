@@ -4,8 +4,8 @@
 
 var EXPORTED_SYMBOLS = [ "SitePermissions" ];
 
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 var gStringBundle =
   Services.strings.createBundle("chrome://browser/locale/sitePermissions.properties");
@@ -493,7 +493,6 @@ var SitePermissions = {
    *        This needs to be provided if the scope is SCOPE_TEMPORARY!
    */
   set(uri, permissionID, state, scope = this.SCOPE_PERSISTENT, browser = null) {
-
     if (scope == this.SCOPE_GLOBAL && state == this.BLOCK) {
       GloballyBlockedPermissions.set(browser, permissionID);
       browser.dispatchEvent(new browser.ownerGlobal.CustomEvent("PermissionStateChange"));

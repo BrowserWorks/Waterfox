@@ -36,7 +36,6 @@ DIRS += [
 ]
 
 XPIDL_SOURCES += [
-    'nsCDefaultURIFixup.idl',
     'nsIContentViewer.idl',
     'nsIContentViewerEdit.idl',
     'nsIDocShell.idl',
@@ -77,14 +76,16 @@ EXPORTS.mozilla += [
 
 EXPORTS.mozilla.dom += [
     'BrowsingContext.h',
+    'BrowsingContextGroup.h',
+    'CanonicalBrowsingContext.h',
     'ChildProcessChannelListener.h',
-    'ChromeBrowsingContext.h'
 ]
 
 UNIFIED_SOURCES += [
     'BrowsingContext.cpp',
+    'BrowsingContextGroup.cpp',
+    'CanonicalBrowsingContext.cpp',
     'ChildProcessChannelListener.cpp',
-    'ChromeBrowsingContext.cpp',
     'LoadContext.cpp',
     'nsAboutRedirector.cpp',
     'nsDefaultURIFixup.cpp',

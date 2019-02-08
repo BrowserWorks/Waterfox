@@ -18,11 +18,12 @@
   padding-left: 24px;
 }
 
-
 /*** global warnings ***/
 
 .global-warning-container {
   overflow-x: hidden;
+  margin-right: 28px;
+  margin-left: 28px;
 }
 
 .global-warning {
@@ -97,8 +98,9 @@
 
 .alert-container {
   -moz-box-align: center;
-  margin-right: 48px;
-  margin-left: 48px;
+  margin-right: 28px;
+  margin-left: 28px;
+  margin-bottom: 10px;
 }
 
 .alert-spacer-before {
@@ -152,6 +154,11 @@ button.warning {
 
 
 /*** category selector ***/
+
+#categories {
+  /* Make room for outlines */
+  padding: 1px;
+}
 
 #categories > .category[disabled] {
   overflow: hidden;
@@ -250,10 +257,12 @@ button.warning {
   }
 }
 
+#go-back,
 #header-utils-btn {
   -moz-context-properties: fill;
   fill: currentColor;
   min-width: auto;
+  margin-inline-end: 0;
 }
 
 #header-utils-btn > .button-box > hbox > .button-icon {
@@ -268,13 +277,35 @@ button.warning {
   margin-inline-end: 1px; /* Match the 1px margin-inline-start on the icon. */
 }
 
+#go-back > .button-box > .button-text,
 #header-utils-btn > .button-box > hbox > .button-text {
   display: none;
 }
 
+#go-back {
+  margin-inline-start: 0;
+  margin-inline-end: 16px;
+}
+
+#go-back > .button-box > .button-icon {
+  list-style-image: url("chrome://global/skin/icons/calendar-arrow-left.svg");
+  margin: 0;
+}
+
+#go-back > .button-box > .button-icon:-moz-locale-dir(rtl) {
+  list-style-image: url("chrome://global/skin/icons/calendar-arrow-right.svg");
+}
+
 #heading {
-  margin-top: 26px;
+  /* This should be margin-top: 26px to match preferences, but we want to lower
+   * .header-name to be closer to centre with the buttons. */
+  margin-top: 21px;
   margin-bottom: 16px;
+}
+
+.header-name {
+  /* Add some top margin to try to centre the heading next to the back button. */
+  margin-top: 5px;
 }
 
 .heading-inner {
@@ -375,6 +406,26 @@ button.warning {
   -moz-box-flex: 1;
 }
 
+.privateBrowsing-notice {
+  background-color: var(--purple-70);
+  color: #fff;
+  margin: 4px 0 0;
+  padding: 4px 5px 3px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  -moz-user-focus: ignore;
+  transition-property: color, background-color;
+  transition-timing-function: var(--animation-curve);
+  transition-duration: 150ms;
+}
+
+.message-container {
+  /* private-browsing-notice.max-width(664)
+     - message-bar.padding(8)
+     - message-bar-icon.computed-width(28) */
+  max-width: 628px;
+}
+
 .legacy-warning {
   background-color: #FFE900;
   color: #3E2800;
@@ -383,7 +434,7 @@ button.warning {
   font-weight: 600;
   -moz-user-focus: ignore;
   transition-property: color, background-color;
-  transition-timing-function: cubic-bezier(.07,.95,0,1);
+  transition-timing-function: var(--animation-curve);
   transition-duration: 150ms;
 }
 
@@ -423,7 +474,11 @@ button.warning {
   -moz-box-align: center;
 }
 
-.content-container,
+.content-container {
+  -moz-box-align: center;
+}
+
+#updates-list > .addon > .content-container,
 .basicinfo-container {
   -moz-box-align: start;
 }
@@ -769,7 +824,7 @@ button.warning {
 }
 
 .preferences-description {
-  font-size: 90.9%;
+  font-size: 1.1rem;
   color: graytext;
   margin-top: -2px;
   margin-inline-start: 2em;
@@ -780,6 +835,18 @@ button.warning {
   display: none;
 }
 
+.detail-row-footer {
+  padding-bottom: 6px;
+}
+
+.detail-row-footer > .preferences-description {
+  margin-inline-start: 6px;
+  margin-top: 0;
+  margin-bottom: 0;
+  /* card-width - card-padding - description-margins */
+  width: calc(664px - 32px - 11px);
+  color: var(--grey-60);
+}
 
 /*** creator ***/
 

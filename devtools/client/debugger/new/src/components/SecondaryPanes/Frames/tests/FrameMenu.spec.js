@@ -2,11 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
+// @flow
+
 import FrameMenu from "../FrameMenu";
 import { kebabCase } from "lodash";
 
 import { showMenu } from "devtools-contextmenu";
 import { copyToTheClipboard } from "../../../../utils/clipboard";
+import { makeMockFrame, makeMockSource } from "../../../../utils/test-mockup";
+
 jest.mock("devtools-contextmenu", () => ({ showMenu: jest.fn() }));
 jest.mock("../../../../utils/clipboard", () => ({
   copyToTheClipboard: jest.fn()
@@ -18,20 +22,15 @@ function generateMockId(labelString) {
 }
 
 describe("FrameMenu", () => {
-  let mockEvent;
+  let mockEvent: any;
   let mockFrame;
-  let emptyFrame;
+  let emptyFrame: any;
   let callbacks;
   let frameworkGroupingOn;
   let toggleFrameworkGrouping;
 
   beforeEach(() => {
-    mockFrame = {
-      source: {
-        url: "isFake",
-        isBlackBoxed: false
-      }
-    };
+    mockFrame = makeMockFrame(undefined, makeMockSource("isFake"));
     mockEvent = {
       stopPropagation: jest.fn(),
       preventDefault: jest.fn()

@@ -45,31 +45,33 @@ using mozilla::Maybe;
 namespace js {
 namespace jit {
 
-BaselineCompilerHandler::BaselineCompilerHandler(MacroAssembler& masm,
+BaselineCompilerHandler::BaselineCompilerHandler(JSContext* cx,
+                                                 MacroAssembler& masm,
                                                  TempAllocator& alloc,
                                                  JSScript* script)
     : frame_(script, masm),
       alloc_(alloc),
+      analysis_(alloc, script),
       script_(script),
       pc_(script->code()),
-      compileDebugInstrumentation_(script->isDebuggee()) {}
+      icEntryIndex_(0),
+      compileDebugInstrumentation_(script->isDebuggee()),
+      ionCompileable_(jit::IsIonEnabled(cx) &&
+                      CanIonCompileScript(cx, script)) {}
 
-BaselineInterpreterHandler::BaselineInterpreterHandler(MacroAssembler& masm)
+BaselineInterpreterHandler::BaselineInterpreterHandler(JSContext* cx,
+                                                       MacroAssembler& masm)
     : frame_(masm) {}
 
 template <typename Handler>
 template <typename... HandlerArgs>
-BaselineCodeGen<Handler>::BaselineCodeGen(JSContext* cx, TempAllocator& alloc,
-                                          JSScript* script,
-                                          HandlerArgs&&... args)
-    : handler(masm, std::forward<HandlerArgs>(args)...),
+BaselineCodeGen<Handler>::BaselineCodeGen(JSContext* cx, HandlerArgs&&... args)
+    : handler(cx, masm, std::forward<HandlerArgs>(args)...),
       cx(cx),
-      ionCompileable_(jit::IsIonEnabled(cx) && CanIonCompileScript(cx, script)),
-      alloc_(alloc),
-      analysis_(alloc, script),
       frame(handler.frame()),
       traceLoggerToggleOffsets_(cx),
-      icEntryIndex_(0),
+      profilerEnterFrameToggleOffset_(),
+      profilerExitFrameToggleOffset_(),
       pushedBeforeCall_(0),
 #ifdef DEBUG
       inCall_(false),
@@ -79,24 +81,23 @@ BaselineCodeGen<Handler>::BaselineCodeGen(JSContext* cx, TempAllocator& alloc,
 
 BaselineCompiler::BaselineCompiler(JSContext* cx, TempAllocator& alloc,
                                    JSScript* script)
-    : BaselineCodeGen(cx, alloc, script,
-                      /* HandlerArgs = */ alloc, script),
+    : BaselineCodeGen(cx, /* HandlerArgs = */ alloc, script),
       pcMappingEntries_(),
       profilerPushToggleOffset_(),
-      profilerEnterFrameToggleOffset_(),
-      profilerExitFrameToggleOffset_(),
       traceLoggerScriptTextIdOffset_() {
 #ifdef JS_CODEGEN_NONE
   MOZ_CRASH();
 #endif
 }
 
-BaselineInterpreterGenerator::BaselineInterpreterGenerator(JSContext* cx,
-                                                           TempAllocator& alloc)
-    // Note: the nullptr script here is temporary. See bug 1519378.
-    : BaselineCodeGen(cx, alloc, /* script = */ nullptr) {}
+BaselineInterpreterGenerator::BaselineInterpreterGenerator(JSContext* cx)
+    : BaselineCodeGen(cx /* no handlerArgs */) {}
 
-bool BaselineCompilerHandler::init() {
+bool BaselineCompilerHandler::init(JSContext* cx) {
+  if (!analysis_.init(alloc_, cx->caches().gsnCache)) {
+    return false;
+  }
+
   uint32_t len = script_->length();
 
   if (!labels_.init(alloc_, len)) {
@@ -107,19 +108,15 @@ bool BaselineCompilerHandler::init() {
     new (&labels_[i]) Label();
   }
 
+  if (!frame_.init(alloc_)) {
+    return false;
+  }
+
   return true;
 }
 
 bool BaselineCompiler::init() {
-  if (!analysis_.init(alloc_, cx->caches().gsnCache)) {
-    return false;
-  }
-
-  if (!handler.init()) {
-    return false;
-  }
-
-  if (!frame.init(alloc_)) {
+  if (!handler.init(cx)) {
     return false;
   }
 
@@ -269,20 +266,17 @@ MethodStatus BaselineCompiler::compile() {
     return Method_Error;
   }
 
-  // Note: There is an extra entry in the bytecode type map for the search
-  // hint, see below.
-  size_t bytecodeTypeMapEntries = script->nTypeSets() + 1;
   size_t resumeEntries =
       script->hasResumeOffsets() ? script->resumeOffsets().size() : 0;
   UniquePtr<BaselineScript> baselineScript(
-      BaselineScript::New(
-          script, bailoutPrologueOffset_.offset(),
-          debugOsrPrologueOffset_.offset(), debugOsrEpilogueOffset_.offset(),
-          profilerEnterFrameToggleOffset_.offset(),
-          profilerExitFrameToggleOffset_.offset(),
-          handler.retAddrEntries().length(), pcMappingIndexEntries.length(),
-          pcEntries.length(), bytecodeTypeMapEntries, resumeEntries,
-          traceLoggerToggleOffsets_.length()),
+      BaselineScript::New(script, bailoutPrologueOffset_.offset(),
+                          debugOsrPrologueOffset_.offset(),
+                          debugOsrEpilogueOffset_.offset(),
+                          profilerEnterFrameToggleOffset_.offset(),
+                          profilerExitFrameToggleOffset_.offset(),
+                          handler.retAddrEntries().length(),
+                          pcMappingIndexEntries.length(), pcEntries.length(),
+                          resumeEntries, traceLoggerToggleOffsets_.length()),
       JS::DeletePolicy<BaselineScript>(cx->runtime()));
   if (!baselineScript) {
     ReportOutOfMemory(cx);
@@ -318,7 +312,7 @@ MethodStatus BaselineCompiler::compile() {
   if (modifiesArguments_) {
     baselineScript->setModifiesArguments();
   }
-  if (analysis_.usesEnvironmentChain()) {
+  if (handler.analysis().usesEnvironmentChain()) {
     baselineScript->setUsesEnvironmentChain();
   }
 
@@ -326,13 +320,6 @@ MethodStatus BaselineCompiler::compile() {
   // Initialize the tracelogger instrumentation.
   baselineScript->initTraceLogger(script, traceLoggerToggleOffsets_);
 #endif
-
-  uint32_t* bytecodeMap = baselineScript->bytecodeTypeMap();
-  FillBytecodeTypeMap(script, bytecodeMap);
-
-  // The last entry in the last index found, and is used to avoid binary
-  // searches for the sought entry when queries are in linear order.
-  bytecodeMap[script->nTypeSets()] = 0;
 
   // Compute yield/await native resume addresses.
   baselineScript->computeResumeNativeOffsets(script);
@@ -384,7 +371,38 @@ MethodStatus BaselineCompiler::compile() {
   return Method_Compiled;
 }
 
-void BaselineCompiler::emitInitializeLocals() {
+template <>
+void BaselineCompilerCodeGen::loadScript(Register dest) {
+  masm.movePtr(ImmGCPtr(handler.script()), dest);
+}
+
+template <>
+void BaselineInterpreterCodeGen::loadScript(Register dest) {
+  // TODO(bug 1522394): consider adding interpreterScript to BaselineFrame once
+  // we are able to run benchmarks.
+
+  masm.loadPtr(frame.addressOfCalleeToken(), dest);
+
+  Label notFunction, done;
+  masm.branchTestPtr(Assembler::NonZero, dest, Imm32(CalleeTokenScriptBit),
+                     &notFunction);
+  {
+    // CalleeToken_Function or CalleeToken_FunctionConstructing.
+    masm.andPtr(Imm32(uint32_t(CalleeTokenMask)), dest);
+    masm.loadPtr(Address(dest, JSFunction::offsetOfScript()), dest);
+    masm.jump(&done);
+  }
+  masm.bind(&notFunction);
+  {
+    // CalleeToken_Script.
+    masm.andPtr(Imm32(uint32_t(CalleeTokenMask)), dest);
+  }
+
+  masm.bind(&done);
+}
+
+template <>
+void BaselineCompilerCodeGen::emitInitializeLocals() {
   // Initialize all locals to |undefined|. Lexical bindings are temporal
   // dead zoned in bytecode.
 
@@ -423,13 +441,34 @@ void BaselineCompiler::emitInitializeLocals() {
   }
 }
 
+template <>
+void BaselineInterpreterCodeGen::emitInitializeLocals() {
+  // Push |undefined| for all locals.
+
+  Register scratch = R0.scratchReg();
+  loadScript(scratch);
+  masm.load32(Address(scratch, JSScript::offsetOfNfixed()), scratch);
+
+  Label top, done;
+  masm.bind(&top);
+  masm.branchTest32(Assembler::Zero, scratch, scratch, &done);
+  {
+    masm.pushValue(UndefinedValue());
+    masm.sub32(Imm32(1), scratch);
+    masm.jump(&top);
+  }
+
+  masm.bind(&done);
+}
+
 // On input:
 //  R2.scratchReg() contains object being written to.
 //  Called with the baseline stack synced, except for R0 which is preserved.
 //  All other registers are usable as scratch.
 // This calls:
 //    void PostWriteBarrier(JSRuntime* rt, JSObject* obj);
-bool BaselineCompiler::emitOutOfLinePostBarrierSlot() {
+template <typename Handler>
+bool BaselineCodeGen<Handler>::emitOutOfLinePostBarrierSlot() {
   masm.bind(&postBarrierSlot_);
 
   Register objReg = R2.scratchReg();
@@ -471,8 +510,8 @@ bool BaselineCompilerCodeGen::emitNextIC() {
   // to loop until we find an ICEntry for the current pc.
   const ICEntry* entry;
   do {
-    entry = &script->icScript()->icEntry(icEntryIndex_);
-    icEntryIndex_++;
+    entry = &script->icScript()->icEntry(handler.icEntryIndex());
+    handler.moveToNextICEntry();
   } while (entry->pcOffset() < pcOffset);
 
   MOZ_RELEASE_ASSERT(entry->pcOffset() == pcOffset);
@@ -513,7 +552,8 @@ void BaselineCodeGen<Handler>::prepareVMCall() {
 
 template <>
 void BaselineCompilerCodeGen::storeFrameSizeAndPushDescriptor(
-    uint32_t frameBaseSize, uint32_t argSize, const Address& frameSizeAddr) {
+    uint32_t frameBaseSize, uint32_t argSize, const Address& frameSizeAddr,
+    Register scratch1, Register scratch2) {
   uint32_t frameVals = frame.nlocals() + frame.stackDepth();
 
   uint32_t frameFullSize = frameBaseSize + (frameVals * sizeof(Value));
@@ -526,22 +566,22 @@ void BaselineCompilerCodeGen::storeFrameSizeAndPushDescriptor(
 
 template <>
 void BaselineInterpreterCodeGen::storeFrameSizeAndPushDescriptor(
-    uint32_t frameBaseSize, uint32_t argSize, const Address& frameSizeAddr) {
-  MOZ_CRASH("NYI: interpreter storeFrameSizeAndPushDescriptor");
-}
+    uint32_t frameBaseSize, uint32_t argSize, const Address& frameSizeAddr,
+    Register scratch1, Register scratch2) {
+  // scratch1 = FramePointer + BaselineFrame::FramePointerOffset - StackPointer.
+  masm.computeEffectiveAddress(
+      Address(BaselineFrameReg, BaselineFrame::FramePointerOffset), scratch1);
+  masm.subStackPtrFrom(scratch1);
 
-template <>
-void BaselineCompilerCodeGen::computeFullFrameSize(uint32_t frameBaseSize,
-                                                   Register dest) {
-  uint32_t frameVals = frame.nlocals() + frame.stackDepth();
-  uint32_t frameFullSize = frameBaseSize + (frameVals * sizeof(Value));
-  masm.move32(Imm32(frameFullSize), dest);
-}
+  // Store the frame size without VMFunction arguments. Use
+  // computeEffectiveAddress instead of sub32 to avoid an extra move.
+  masm.computeEffectiveAddress(Address(scratch1, -int32_t(argSize)), scratch2);
+  masm.store32(scratch2, frameSizeAddr);
 
-template <>
-void BaselineInterpreterCodeGen::computeFullFrameSize(uint32_t frameBaseSize,
-                                                      Register dest) {
-  MOZ_CRASH("NYI: interpreter computeFullFrameSize");
+  // Push frame descriptor based on the full frame size.
+  masm.makeFrameDescriptor(scratch1, FrameType::BaselineJS,
+                           ExitFrameLayout::Size());
+  masm.push(scratch1);
 }
 
 template <typename Handler>
@@ -578,29 +618,29 @@ bool BaselineCodeGen<Handler>::callVM(const VMFunction& fun,
   uint32_t frameBaseSize =
       BaselineFrame::FramePointerOffset + BaselineFrame::Size();
   if (phase == POST_INITIALIZE) {
-    storeFrameSizeAndPushDescriptor(frameBaseSize, argSize, frameSizeAddress);
+    storeFrameSizeAndPushDescriptor(frameBaseSize, argSize, frameSizeAddress,
+                                    R0.scratchReg(), R1.scratchReg());
   } else {
     MOZ_ASSERT(phase == CHECK_OVER_RECURSED);
-    Label afterWrite;
-    Label writePostInitialize;
+    Label done, pushedFrameLocals;
 
     // If OVER_RECURSED is set, then frame locals haven't been pushed yet.
     masm.branchTest32(Assembler::Zero, frame.addressOfFlags(),
-                      Imm32(BaselineFrame::OVER_RECURSED),
-                      &writePostInitialize);
-
-    masm.move32(Imm32(frameBaseSize), ICTailCallReg);
-    masm.jump(&afterWrite);
-
-    masm.bind(&writePostInitialize);
-    computeFullFrameSize(frameBaseSize, ICTailCallReg);
-
-    masm.bind(&afterWrite);
-    masm.store32(ICTailCallReg, frameSizeAddress);
-    masm.add32(Imm32(argSize), ICTailCallReg);
-    masm.makeFrameDescriptor(ICTailCallReg, FrameType::BaselineJS,
-                             ExitFrameLayout::Size());
-    masm.push(ICTailCallReg);
+                      Imm32(BaselineFrame::OVER_RECURSED), &pushedFrameLocals);
+    {
+      masm.store32(Imm32(frameBaseSize), frameSizeAddress);
+      uint32_t descriptor =
+          MakeFrameDescriptor(frameBaseSize + argSize, FrameType::BaselineJS,
+                              ExitFrameLayout::Size());
+      masm.push(Imm32(descriptor));
+      masm.jump(&done);
+    }
+    masm.bind(&pushedFrameLocals);
+    {
+      storeFrameSizeAndPushDescriptor(frameBaseSize, argSize, frameSizeAddress,
+                                      R0.scratchReg(), R1.scratchReg());
+    }
+    masm.bind(&done);
   }
   MOZ_ASSERT(fun.expectTailCall == NonTailCall);
   // Perform the call.
@@ -628,7 +668,8 @@ static const VMFunction CheckOverRecursedBaselineInfo =
     FunctionInfo<CheckOverRecursedBaselineFn>(CheckOverRecursedBaseline,
                                               "CheckOverRecursedBaseline");
 
-bool BaselineCompiler::emitStackCheck() {
+template <typename Handler>
+bool BaselineCodeGen<Handler>::emitStackCheck() {
   // If this is the late stack check for a frame which contains an early stack
   // check, then the early stack check might have failed and skipped past the
   // pushing of locals on the stack.
@@ -637,7 +678,7 @@ bool BaselineCompiler::emitStackCheck() {
   // and the VMCall to CheckOverRecursedBaseline done unconditionally if it's
   // set.
   Label forceCall;
-  if (needsEarlyStackCheck()) {
+  if (handler.needsEarlyStackCheck()) {
     masm.branchTest32(Assembler::NonZero, frame.addressOfFlags(),
                       Imm32(BaselineFrame::OVER_RECURSED), &forceCall);
   }
@@ -647,7 +688,7 @@ bool BaselineCompiler::emitStackCheck() {
                          AbsoluteAddress(cx->addressOfJitStackLimit()),
                          &skipCall);
 
-  if (needsEarlyStackCheck()) {
+  if (handler.needsEarlyStackCheck()) {
     masm.bind(&forceCall);
   }
 
@@ -656,7 +697,7 @@ bool BaselineCompiler::emitStackCheck() {
   pushArg(R1.scratchReg());
 
   CallVMPhase phase = POST_INITIALIZE;
-  if (needsEarlyStackCheck()) {
+  if (handler.needsEarlyStackCheck()) {
     phase = CHECK_OVER_RECURSED;
   }
 
@@ -670,8 +711,9 @@ bool BaselineCompiler::emitStackCheck() {
   return true;
 }
 
-void BaselineCompiler::emitIsDebuggeeCheck() {
-  if (compileDebugInstrumentation()) {
+template <>
+void BaselineCompilerCodeGen::emitIsDebuggeeCheck() {
+  if (handler.compileDebugInstrumentation()) {
     masm.Push(BaselineFrameReg);
     masm.setupUnalignedABICall(R0.scratchReg());
     masm.loadBaselineFramePtr(BaselineFrameReg, R0.scratchReg());
@@ -682,13 +724,28 @@ void BaselineCompiler::emitIsDebuggeeCheck() {
 }
 
 template <>
-void BaselineCompilerCodeGen::loadScript(Register dest) {
-  masm.movePtr(ImmGCPtr(handler.script()), dest);
+void BaselineInterpreterCodeGen::emitIsDebuggeeCheck() {
+  MOZ_CRASH("NYI: interpreter emitIsDebuggeeCheck");
 }
 
 template <>
-void BaselineInterpreterCodeGen::loadScript(Register dest) {
-  MOZ_CRASH("NYI: interpreter loadScript");
+void BaselineCompilerCodeGen::subtractScriptSlotsSize(Register reg,
+                                                      Register scratch) {
+  uint32_t slotsSize = handler.script()->nslots() * sizeof(Value);
+  masm.subPtr(Imm32(slotsSize), reg);
+}
+
+template <>
+void BaselineInterpreterCodeGen::subtractScriptSlotsSize(Register reg,
+                                                         Register scratch) {
+  // reg = reg - script->nslots() * sizeof(Value)
+  MOZ_ASSERT(reg != scratch);
+  loadScript(scratch);
+  masm.load32(Address(scratch, JSScript::offsetOfNslots()), scratch);
+  static_assert(sizeof(Value) == 8,
+                "shift by 3 below assumes Value is 8 bytes");
+  masm.lshiftPtr(Imm32(3), scratch);
+  masm.subPtr(scratch, reg);
 }
 
 template <>
@@ -698,7 +755,13 @@ void BaselineCompilerCodeGen::loadGlobalLexicalEnvironment(Register dest) {
 
 template <>
 void BaselineInterpreterCodeGen::loadGlobalLexicalEnvironment(Register dest) {
-  MOZ_CRASH("NYI: interpreter loadGlobalLexicalEnvironment");
+  // TODO(bug 1522394): consider storing a pointer to the global lexical in
+  // Realm to eliminate some dependent loads and unboxing.
+  masm.loadPtr(AbsoluteAddress(cx->addressOfRealm()), dest);
+  masm.loadPtr(Address(dest, Realm::offsetOfActiveGlobal()), dest);
+  masm.loadPtr(Address(dest, NativeObject::offsetOfSlots()), dest);
+  Address lexicalSlot(dest, GlobalObject::offsetOfLexicalEnvironmentSlot());
+  masm.unboxObject(lexicalSlot, dest);
 }
 
 template <>
@@ -722,17 +785,22 @@ void BaselineCompilerCodeGen::loadGlobalThisValue(ValueOperand dest) {
 
 template <>
 void BaselineInterpreterCodeGen::loadGlobalThisValue(ValueOperand dest) {
-  MOZ_CRASH("NYI: interpreter loadGlobalThisValue");
+  Register scratch = dest.scratchReg();
+  loadGlobalLexicalEnvironment(scratch);
+  static constexpr size_t SlotOffset =
+      LexicalEnvironmentObject::offsetOfThisValueOrScopeSlot();
+  masm.loadValue(Address(scratch, SlotOffset), dest);
 }
 
 template <>
-void BaselineCompilerCodeGen::pushScriptArg() {
+void BaselineCompilerCodeGen::pushScriptArg(Register scratch) {
   pushArg(ImmGCPtr(handler.script()));
 }
 
 template <>
-void BaselineInterpreterCodeGen::pushScriptArg() {
-  MOZ_CRASH("NYI: interpreter pushScriptArg");
+void BaselineInterpreterCodeGen::pushScriptArg(Register scratch) {
+  loadScript(scratch);
+  pushArg(scratch);
 }
 
 template <>
@@ -765,9 +833,6 @@ void BaselineCompilerCodeGen::pushScriptObjectArg(ScriptObjectType type) {
       return;
     case ScriptObjectType::Function:
       pushArg(ImmGCPtr(script->getFunction(handler.pc())));
-      return;
-    case ScriptObjectType::ObjectLiteral:
-      pushArg(ImmGCPtr(script->getObject(handler.pc())));
       return;
   }
   MOZ_CRASH("Unexpected object type");
@@ -824,8 +889,9 @@ typedef bool (*DebugPrologueFn)(JSContext*, BaselineFrame*, jsbytecode*, bool*);
 static const VMFunction DebugPrologueInfo =
     FunctionInfo<DebugPrologueFn>(jit::DebugPrologue, "DebugPrologue");
 
-bool BaselineCompiler::emitDebugPrologue() {
-  if (compileDebugInstrumentation()) {
+template <typename Handler>
+bool BaselineCodeGen<Handler>::emitDebugPrologue() {
+  auto ifDebuggee = [this]() {
     // Load pointer to BaselineFrame in R0.
     masm.loadBaselineFramePtr(BaselineFrameReg, R0.scratchReg());
 
@@ -848,6 +914,10 @@ bool BaselineCompiler::emitDebugPrologue() {
       masm.jump(&return_);
     }
     masm.bind(&done);
+    return true;
+  };
+  if (!emitDebugInstrumentation(ifDebuggee)) {
+    return false;
   }
 
   debugOsrPrologueOffset_ = CodeOffset(masm.currentOffset());
@@ -868,9 +938,26 @@ static const VMFunction InitFunctionEnvironmentObjectsInfo =
     FunctionInfo<InitFunctionEnvironmentObjectsFn>(
         jit::InitFunctionEnvironmentObjects, "InitFunctionEnvironmentObjects");
 
-bool BaselineCompiler::initEnvironmentChain() {
+template <>
+void BaselineCompilerCodeGen::emitPreInitEnvironmentChain(
+    Register nonFunctionEnv) {
+  if (handler.function()) {
+    masm.storePtr(ImmPtr(nullptr), frame.addressOfEnvironmentChain());
+  } else {
+    masm.storePtr(nonFunctionEnv, frame.addressOfEnvironmentChain());
+  }
+}
+
+template <>
+void BaselineInterpreterCodeGen::emitPreInitEnvironmentChain(
+    Register nonFunctionEnv) {
+  MOZ_CRASH("NYI: interpreter emitPreInitEnvironmentChain");
+}
+
+template <>
+bool BaselineCompilerCodeGen::initEnvironmentChain() {
   CallVMPhase phase = POST_INITIALIZE;
-  if (needsEarlyStackCheck()) {
+  if (handler.needsEarlyStackCheck()) {
     phase = CHECK_OVER_RECURSED;
   }
 
@@ -903,7 +990,7 @@ bool BaselineCompiler::initEnvironmentChain() {
 
     prepareVMCall();
 
-    pushScriptArg();
+    pushScriptArg(R2.scratchReg());
     masm.loadPtr(frame.addressOfEnvironmentChain(), R0.scratchReg());
     pushArg(R0.scratchReg());
 
@@ -913,6 +1000,11 @@ bool BaselineCompiler::initEnvironmentChain() {
   }
 
   return true;
+}
+
+template <>
+bool BaselineInterpreterCodeGen::initEnvironmentChain() {
+  MOZ_CRASH("NYI: interpreter initEnvironmentChain");
 }
 
 typedef bool (*InterruptCheckFn)(JSContext*);
@@ -947,7 +1039,7 @@ bool BaselineCompilerCodeGen::emitWarmUpCounterIncrement() {
   // Emit no warm-up counter increments or bailouts if Ion is not
   // enabled, or if the script will never be Ion-compileable
 
-  if (!ionCompileable_) {
+  if (!handler.maybeIonCompileable()) {
     return true;
   }
 
@@ -967,7 +1059,7 @@ bool BaselineCompilerCodeGen::emitWarmUpCounterIncrement() {
   if (JSOp(*pc) == JSOP_LOOPENTRY) {
     // If this is a loop inside a catch or finally block, increment the warmup
     // counter but don't attempt OSR (Ion only compiles the try block).
-    if (analysis_.info(pc).loopEntryInCatchOrFinally) {
+    if (handler.analysis().info(pc).loopEntryInCatchOrFinally) {
       return true;
     }
 
@@ -1022,7 +1114,8 @@ bool BaselineInterpreterCodeGen::emitWarmUpCounterIncrement() {
   MOZ_CRASH("NYI: interpreter emitWarmUpCounterIncrement");
 }
 
-bool BaselineCompiler::emitArgumentTypeChecks() {
+template <>
+bool BaselineCompilerCodeGen::emitArgumentTypeChecks() {
   if (!handler.function()) {
     return true;
   }
@@ -1046,6 +1139,11 @@ bool BaselineCompiler::emitArgumentTypeChecks() {
   }
 
   return true;
+}
+
+template <>
+bool BaselineInterpreterCodeGen::emitArgumentTypeChecks() {
+  MOZ_CRASH("NYI: interpreter emitArgumentTypeChecks");
 }
 
 bool BaselineCompiler::emitDebugTrap() {
@@ -1084,7 +1182,8 @@ bool BaselineCompiler::emitDebugTrap() {
 }
 
 #ifdef JS_TRACE_LOGGING
-bool BaselineCompiler::emitTraceLoggerEnter() {
+template <>
+bool BaselineCompilerCodeGen::emitTraceLoggerEnter() {
   AllocatableRegisterSet regs(RegisterSet::Volatile());
   Register loggerReg = regs.takeAnyGeneral();
   Register scriptReg = regs.takeAnyGeneral();
@@ -1119,7 +1218,13 @@ bool BaselineCompiler::emitTraceLoggerEnter() {
   return true;
 }
 
-bool BaselineCompiler::emitTraceLoggerExit() {
+template <>
+bool BaselineInterpreterCodeGen::emitTraceLoggerEnter() {
+  MOZ_CRASH("NYI: interpreter emitTraceLoggerEnter");
+}
+
+template <typename Handler>
+bool BaselineCodeGen<Handler>::emitTraceLoggerExit() {
   AllocatableRegisterSet regs(RegisterSet::Volatile());
   Register loggerReg = regs.takeAnyGeneral();
 
@@ -1169,7 +1274,8 @@ bool BaselineCodeGen<Handler>::emitTraceLoggerResume(
 }
 #endif
 
-void BaselineCompiler::emitProfilerEnterFrame() {
+template <typename Handler>
+void BaselineCodeGen<Handler>::emitProfilerEnterFrame() {
   // Store stack position to lastProfilingFrame variable, guarded by a toggled
   // jump. Starts off initially disabled.
   Label noInstrument;
@@ -1182,7 +1288,8 @@ void BaselineCompiler::emitProfilerEnterFrame() {
   profilerEnterFrameToggleOffset_ = toggleOffset;
 }
 
-void BaselineCompiler::emitProfilerExitFrame() {
+template <typename Handler>
+void BaselineCodeGen<Handler>::emitProfilerExitFrame() {
   // Store previous frame to lastProfilingFrame variable, guarded by a toggled
   // jump. Starts off initially disabled.
   Label noInstrument;
@@ -1942,51 +2049,52 @@ bool BaselineInterpreterCodeGen::emit_JSOP_SYMBOL() {
   MOZ_CRASH("NYI: interpreter JSOP_SYMBOL");
 }
 
-typedef JSObject* (*DeepCloneObjectLiteralFn)(JSContext*, HandleObject,
-                                              NewObjectKind);
-static const VMFunction DeepCloneObjectLiteralInfo =
-    FunctionInfo<DeepCloneObjectLiteralFn>(DeepCloneObjectLiteral,
-                                           "DeepCloneObjectLiteral");
+JSObject* BaselineCompilerHandler::maybeNoCloneSingletonObject() {
+  Realm* realm = script()->realm();
+  if (realm->creationOptions().cloneSingletons()) {
+    return nullptr;
+  }
 
-template <>
-bool BaselineCompilerCodeGen::emit_JSOP_OBJECT() {
-  if (cx->realm()->creationOptions().cloneSingletons()) {
-    prepareVMCall();
+  realm->behaviors().setSingletonsAsValues();
+  return script()->getObject(pc());
+}
 
-    pushArg(ImmWord(TenuredObject));
-    pushScriptObjectArg(ScriptObjectType::ObjectLiteral);
+typedef JSObject* (*SingletonObjectLiteralFn)(JSContext*, HandleScript,
+                                              jsbytecode*);
+static const VMFunction SingletonObjectLiteralInfo =
+    FunctionInfo<SingletonObjectLiteralFn>(SingletonObjectLiteralOperation,
+                                           "SingletonObjectLiteralOperation");
 
-    if (!callVM(DeepCloneObjectLiteralInfo)) {
-      return false;
-    }
-
-    // Box and push return value.
-    masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
-    frame.push(R0);
+template <typename Handler>
+bool BaselineCodeGen<Handler>::emit_JSOP_OBJECT() {
+  // If we know we don't have to clone the object literal, just push it
+  // directly. Note that the interpreter always does the VM call; that's fine
+  // because this op is only used in run-once code.
+  if (JSObject* obj = handler.maybeNoCloneSingletonObject()) {
+    frame.push(ObjectValue(*obj));
     return true;
   }
 
-  cx->realm()->behaviors().setSingletonsAsValues();
-  frame.push(ObjectValue(*handler.script()->getObject(handler.pc())));
+  prepareVMCall();
+
+  pushBytecodePCArg();
+  pushScriptArg(R2.scratchReg());
+
+  if (!callVM(SingletonObjectLiteralInfo)) {
+    return false;
+  }
+
+  // Box and push return value.
+  masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
+  frame.push(R0);
   return true;
 }
 
 template <>
-bool BaselineInterpreterCodeGen::emit_JSOP_OBJECT() {
-  MOZ_CRASH("NYI: interpreter JSOP_OBJECT");
-}
-
-template <>
 bool BaselineCompilerCodeGen::emit_JSOP_CALLSITEOBJ() {
-  JSScript* script = handler.script();
-  jsbytecode* pc = handler.pc();
-  RootedObject cso(cx, script->getObject(pc));
-  RootedObject raw(cx, script->getObject(GET_UINT32_INDEX(pc) + 1));
-  if (!cso || !raw) {
-    return false;
-  }
-
-  if (!ProcessCallSiteObjOperation(cx, cso, raw)) {
+  RootedScript script(cx, handler.script());
+  JSObject* cso = ProcessCallSiteObjOperation(cx, script, handler.pc());
+  if (!cso) {
     return false;
   }
 
@@ -1994,9 +2102,27 @@ bool BaselineCompilerCodeGen::emit_JSOP_CALLSITEOBJ() {
   return true;
 }
 
+typedef ArrayObject* (*ProcessCallSiteObjFn)(JSContext*, HandleScript,
+                                             jsbytecode*);
+static const VMFunction ProcessCallSiteObjInfo =
+    FunctionInfo<ProcessCallSiteObjFn>(ProcessCallSiteObjOperation,
+                                       "ProcessCallSiteObjOperation");
+
 template <>
 bool BaselineInterpreterCodeGen::emit_JSOP_CALLSITEOBJ() {
-  MOZ_CRASH("NYI: interpreter JSOP_CALLSITEOBJ");
+  prepareVMCall();
+
+  pushBytecodePCArg();
+  pushScriptArg(R2.scratchReg());
+
+  if (!callVM(ProcessCallSiteObjInfo)) {
+    return false;
+  }
+
+  // Box and push return value.
+  masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
+  frame.push(R0);
+  return true;
 }
 
 typedef JSObject* (*CloneRegExpObjectFn)(JSContext*, Handle<RegExpObject*>);
@@ -2318,6 +2444,9 @@ const VMFunction NewArrayCopyOnWriteInfo = FunctionInfo<NewArrayCopyOnWriteFn>(
 
 template <>
 bool BaselineCompilerCodeGen::emit_JSOP_NEWARRAY_COPYONWRITE() {
+  // This is like the interpreter implementation, but we can call
+  // getOrFixupCopyOnWriteObject at compile-time.
+
   RootedScript scriptRoot(cx, handler.script());
   JSObject* obj =
       ObjectGroup::getOrFixupCopyOnWriteObject(cx, scriptRoot, handler.pc());
@@ -2340,9 +2469,27 @@ bool BaselineCompilerCodeGen::emit_JSOP_NEWARRAY_COPYONWRITE() {
   return true;
 }
 
+typedef ArrayObject* (*NewArrayCopyOnWriteOperationFn)(JSContext*, HandleScript,
+                                                       jsbytecode*);
+const VMFunction NewArrayCopyOnWriteOperationInfo =
+    FunctionInfo<NewArrayCopyOnWriteOperationFn>(
+        NewArrayCopyOnWriteOperation, "NewArrayCopyOnWriteOperation");
+
 template <>
 bool BaselineInterpreterCodeGen::emit_JSOP_NEWARRAY_COPYONWRITE() {
-  MOZ_CRASH("NYI: interpreter JSOP_NEWARRAY_COPYONWRITE");
+  prepareVMCall();
+
+  pushBytecodePCArg();
+  pushScriptArg(R2.scratchReg());
+
+  if (!callVM(NewArrayCopyOnWriteOperationInfo)) {
+    return false;
+  }
+
+  // Box and push return value.
+  masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
+  frame.push(R0);
+  return true;
 }
 
 template <>
@@ -2993,7 +3140,7 @@ bool BaselineCodeGen<Handler>::emit_JSOP_GETALIASEDVAR() {
   Address address = getEnvironmentCoordinateAddress(R0.scratchReg());
   masm.loadValue(address, R0);
 
-  if (ionCompileable_) {
+  if (handler.maybeIonCompileable()) {
     // No need to monitor types if we know Ion can't compile this script.
     if (!emitNextIC()) {
       return false;
@@ -3154,7 +3301,7 @@ bool BaselineCompilerCodeGen::emit_JSOP_GETIMPORT() {
     }
   }
 
-  if (ionCompileable_) {
+  if (handler.maybeIonCompileable()) {
     // No need to monitor types if we know Ion can't compile this script.
     if (!emitNextIC()) {
       return false;
@@ -3165,9 +3312,35 @@ bool BaselineCompilerCodeGen::emit_JSOP_GETIMPORT() {
   return true;
 }
 
+typedef bool (*GetImportOperationFn)(JSContext*, HandleObject, HandleScript,
+                                     jsbytecode*, MutableHandleValue);
+static const VMFunction GetImportOperationInfo =
+    FunctionInfo<GetImportOperationFn>(GetImportOperation,
+                                       "GetImportOperation");
+
 template <>
 bool BaselineInterpreterCodeGen::emit_JSOP_GETIMPORT() {
-  MOZ_CRASH("NYI: interpreter JSOP_GETIMPORT");
+  frame.syncStack(0);
+
+  masm.loadPtr(frame.addressOfEnvironmentChain(), R0.scratchReg());
+
+  prepareVMCall();
+
+  pushBytecodePCArg();
+  pushScriptArg(R2.scratchReg());
+  pushArg(R0.scratchReg());
+
+  if (!callVM(GetImportOperationInfo)) {
+    return false;
+  }
+
+  // Enter the type monitor IC.
+  if (!emitNextIC()) {
+    return false;
+  }
+
+  frame.push(R0);
+  return true;
 }
 
 template <typename Handler>
@@ -3180,6 +3353,24 @@ bool BaselineCodeGen<Handler>::emit_JSOP_GETINTRINSIC() {
 
   frame.push(R0);
   return true;
+}
+
+typedef bool (*SetIntrinsicFn)(JSContext*, JSScript*, jsbytecode*, HandleValue);
+static const VMFunction SetIntrinsicInfo = FunctionInfo<SetIntrinsicFn>(
+    SetIntrinsicOperation, "SetIntrinsicOperation");
+
+template <typename Handler>
+bool BaselineCodeGen<Handler>::emit_JSOP_SETINTRINSIC() {
+  frame.syncStack(0);
+  masm.loadValue(frame.addressOfStackValue(-1), R0);
+
+  prepareVMCall();
+
+  pushArg(R0);
+  pushBytecodePCArg();
+  pushScriptArg(R2.scratchReg());
+
+  return callVM(SetIntrinsicInfo);
 }
 
 typedef bool (*DefVarFn)(JSContext*, HandleObject, HandleScript, jsbytecode*);
@@ -3195,7 +3386,7 @@ bool BaselineCodeGen<Handler>::emit_JSOP_DEFVAR() {
   prepareVMCall();
 
   pushBytecodePCArg();
-  pushScriptArg();
+  pushScriptArg(R2.scratchReg());
   pushArg(R0.scratchReg());
 
   return callVM(DefVarInfo);
@@ -3217,7 +3408,7 @@ bool BaselineCodeGen<Handler>::emitDefLexical(JSOp op) {
   prepareVMCall();
 
   pushBytecodePCArg();
-  pushScriptArg();
+  pushScriptArg(R2.scratchReg());
   pushArg(R0.scratchReg());
 
   return callVM(DefLexicalInfo);
@@ -3248,7 +3439,7 @@ bool BaselineCodeGen<Handler>::emit_JSOP_DEFFUN() {
 
   pushArg(R0.scratchReg());
   pushArg(R1.scratchReg());
-  pushScriptArg();
+  pushScriptArg(R2.scratchReg());
 
   return callVM(DefFunOperationInfo);
 }
@@ -3893,10 +4084,6 @@ bool BaselineCodeGen<Handler>::emit_JSOP_THROW() {
 
 template <typename Handler>
 bool BaselineCodeGen<Handler>::emit_JSOP_TRY() {
-  if (!emit_JSOP_JUMPTARGET()) {
-    return false;
-  }
-
   // Ionmonkey can't inline function with JSOP_TRY.
   if (JSScript* script = handler.maybeScript()) {
     script->setUninlineable();
@@ -4661,9 +4848,6 @@ bool BaselineCodeGen<Handler>::emit_JSOP_ISNOITER() {
 
 template <typename Handler>
 bool BaselineCodeGen<Handler>::emit_JSOP_ENDITER() {
-  if (!emit_JSOP_JUMPTARGET()) {
-    return false;
-  }
   frame.popRegsAndSync(1);
 
   if (!emitNextIC()) {
@@ -5417,9 +5601,7 @@ bool BaselineCodeGen<Handler>::emit_JSOP_INITHOMEOBJECT() {
 template <>
 bool BaselineCompilerCodeGen::emit_JSOP_BUILTINPROTO() {
   // The builtin prototype is a constant for a given global.
-  JSProtoKey key = static_cast<JSProtoKey>(GET_UINT8(handler.pc()));
-  MOZ_ASSERT(key < JSProto_LIMIT);
-  JSObject* builtin = GlobalObject::getOrCreatePrototype(cx, key);
+  JSObject* builtin = BuiltinProtoOperation(cx, handler.pc());
   if (!builtin) {
     return false;
   }
@@ -5427,9 +5609,24 @@ bool BaselineCompilerCodeGen::emit_JSOP_BUILTINPROTO() {
   return true;
 }
 
+typedef JSObject* (*BuiltinProtoOperationFn)(JSContext*, jsbytecode*);
+static const VMFunction BuiltinProtoOperationInfo =
+    FunctionInfo<BuiltinProtoOperationFn>(BuiltinProtoOperation,
+                                          "BuiltinProtoOperation");
+
 template <>
 bool BaselineInterpreterCodeGen::emit_JSOP_BUILTINPROTO() {
-  MOZ_CRASH("NYI: interpreter JSOP_BUILTINPROTO");
+  prepareVMCall();
+
+  pushBytecodePCArg();
+
+  if (!callVM(BuiltinProtoOperationInfo)) {
+    return false;
+  }
+
+  masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
+  frame.push(R0);
+  return true;
 }
 
 typedef JSObject* (*ObjectWithProtoOperationFn)(JSContext*, HandleValue);
@@ -5495,7 +5692,7 @@ bool BaselineCodeGen<Handler>::emit_JSOP_CLASSCONSTRUCTOR() {
   prepareVMCall();
   pushArg(ImmPtr(nullptr));
   pushBytecodePCArg();
-  pushScriptArg();
+  pushScriptArg(R2.scratchReg());
   if (!callVM(MakeDefaultConstructorInfo)) {
     return false;
   }
@@ -5514,7 +5711,7 @@ bool BaselineCodeGen<Handler>::emit_JSOP_DERIVEDCONSTRUCTOR() {
   prepareVMCall();
   pushArg(R0.scratchReg());
   pushBytecodePCArg();
-  pushScriptArg();
+  pushScriptArg(R2.scratchReg());
   if (!callVM(MakeDefaultConstructorInfo)) {
     return false;
   }
@@ -5531,6 +5728,9 @@ static const VMFunction GetOrCreateModuleMetaObjectInfo =
 
 template <>
 bool BaselineCompilerCodeGen::emit_JSOP_IMPORTMETA() {
+  // Note: this is like the interpreter implementation, but optimized a bit by
+  // calling GetModuleObjectForScript at compile-time.
+
   RootedModuleObject module(cx, GetModuleObjectForScript(handler.script()));
   MOZ_ASSERT(module);
 
@@ -5547,9 +5747,24 @@ bool BaselineCompilerCodeGen::emit_JSOP_IMPORTMETA() {
   return true;
 }
 
+typedef JSObject* (*ImportMetaOperationFn)(JSContext*, HandleScript);
+static const VMFunction ImportMetaOperationInfo =
+    FunctionInfo<ImportMetaOperationFn>(ImportMetaOperation,
+                                        "ImportMetaOperation");
+
 template <>
 bool BaselineInterpreterCodeGen::emit_JSOP_IMPORTMETA() {
-  MOZ_CRASH("NYI: interpreter JSOP_IMPORTMETA");
+  prepareVMCall();
+
+  pushScriptArg(R2.scratchReg());
+
+  if (!callVM(ImportMetaOperationInfo)) {
+    return false;
+  }
+
+  masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
+  frame.push(R0);
+  return true;
 }
 
 typedef JSObject* (*StartDynamicModuleImportFn)(JSContext*, HandleScript,
@@ -5565,7 +5780,7 @@ bool BaselineCodeGen<Handler>::emit_JSOP_DYNAMIC_IMPORT() {
 
   prepareVMCall();
   pushArg(R0);
-  pushScriptArg();
+  pushScriptArg(R2.scratchReg());
   if (!callVM(StartDynamicModuleImportInfo)) {
     return false;
   }
@@ -5575,19 +5790,14 @@ bool BaselineCodeGen<Handler>::emit_JSOP_DYNAMIC_IMPORT() {
   return true;
 }
 
-bool BaselineCompiler::emitPrologue() {
+template <typename Handler>
+bool BaselineCodeGen<Handler>::emitPrologue() {
 #ifdef JS_USE_LINK_REGISTER
   // Push link register from generateEnterJIT()'s BLR.
   masm.pushReturnAddress();
   masm.checkStackAlignment();
 #endif
   emitProfilerEnterFrame();
-
-  JSScript* script = handler.script();
-  if (script->trackRecordReplayProgress()) {
-    masm.inc64(
-        AbsoluteAddress(mozilla::recordreplay::ExecutionProgressCounter()));
-  }
 
   masm.push(BaselineFrameReg);
   masm.moveStackPtrTo(BaselineFrameReg);
@@ -5604,10 +5814,16 @@ bool BaselineCompiler::emitPrologue() {
   // chain is in R1.  For function scripts, the env chain is in
   // the callee, nullptr is stored for now so that GC doesn't choke
   // on a bogus EnvironmentChain value in the frame.
-  if (handler.function()) {
-    masm.storePtr(ImmPtr(nullptr), frame.addressOfEnvironmentChain());
-  } else {
-    masm.storePtr(R1.scratchReg(), frame.addressOfEnvironmentChain());
+  emitPreInitEnvironmentChain(R1.scratchReg());
+
+  auto incCounter = [this]() {
+    masm.inc64(
+        AbsoluteAddress(mozilla::recordreplay::ExecutionProgressCounter()));
+    return true;
+  };
+  if (!emitTestScriptFlag(JSScript::ImmutableFlags::TrackRecordReplayProgress,
+                          true, incCounter, R2.scratchReg())) {
+    return false;
   }
 
   // Functions with a large number of locals require two stack checks.
@@ -5624,12 +5840,11 @@ bool BaselineCompiler::emitPrologue() {
   // of the locals, and directly to env chain initialization followed by the
   // actual stack check, which will throw the correct exception.
   Label earlyStackCheckFailed;
-  if (needsEarlyStackCheck()) {
+  if (handler.needsEarlyStackCheck()) {
     // Subtract the size of script->nslots() from the stack pointer.
-    uint32_t slotsSize = script->nslots() * sizeof(Value);
     Register scratch = R1.scratchReg();
     masm.moveStackPtrTo(scratch);
-    masm.subPtr(Imm32(slotsSize), scratch);
+    subtractScriptSlotsSize(scratch, R2.scratchReg());
 
     // Set the OVER_RECURSED flag on the frame if the computed stack pointer
     // overflows the stack limit. We have to use the actual (*NoInterrupt)
@@ -5648,7 +5863,7 @@ bool BaselineCompiler::emitPrologue() {
 
   emitInitializeLocals();
 
-  if (needsEarlyStackCheck()) {
+  if (handler.needsEarlyStackCheck()) {
     masm.bind(&earlyStackCheckFailed);
   }
 
@@ -5673,7 +5888,10 @@ bool BaselineCompiler::emitPrologue() {
   }
 
   frame.assertSyncedStack();
-  masm.debugAssertContextRealm(script->realm(), R1.scratchReg());
+
+  if (JSScript* script = handler.maybeScript()) {
+    masm.debugAssertContextRealm(script->realm(), R1.scratchReg());
+  }
 
   if (!emitStackCheck()) {
     return false;
@@ -5694,7 +5912,8 @@ bool BaselineCompiler::emitPrologue() {
   return true;
 }
 
-bool BaselineCompiler::emitEpilogue() {
+template <typename Handler>
+bool BaselineCodeGen<Handler>::emitEpilogue() {
   // Record the offset of the epilogue, so we can do early return from
   // Debugger handlers during on-stack recompile.
   debugOsrEpilogueOffset_ = CodeOffset(masm.currentOffset());
@@ -5729,7 +5948,7 @@ MethodStatus BaselineCompiler::emitBody() {
     JitSpew(JitSpew_BaselineOp, "Compiling op @ %d: %s",
             int(script->pcToOffset(handler.pc())), CodeName[op]);
 
-    BytecodeInfo* info = analysis_.maybeInfo(handler.pc());
+    BytecodeInfo* info = handler.analysis().maybeInfo(handler.pc());
 
     // Skip unreachable ops.
     if (!info) {
@@ -5785,14 +6004,12 @@ MethodStatus BaselineCompiler::emitBody() {
       // ===== NOT Yet Implemented =====
       case JSOP_FORCEINTERPRETER:
         // Intentionally not implemented.
-      case JSOP_SETINTRINSIC:
-        // Run-once opcode during self-hosting initialization.
       case JSOP_UNUSED71:
       case JSOP_UNUSED151:
       case JSOP_LIMIT:
         // === !! WARNING WARNING WARNING !! ===
-        // Do you really want to sacrifice performance by not implementing
-        // this operation in the BaselineCompiler?
+        // DO NOT add new ops to this list! All bytecode ops MUST have Baseline
+        // support. Follow-up bugs are not acceptable.
         JitSpew(JitSpew_BaselineAbort, "Unhandled op: %s", CodeName[op]);
         return Method_CantCompile;
 

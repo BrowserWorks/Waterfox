@@ -102,11 +102,15 @@ VertexInfo write_vertex(RectWithSize instance_rect,
     // Clamp to the two local clip rects.
     vec2 clamped_local_pos = clamp_rect(local_pos, local_clip_rect);
 
+    // Compute the visible rect to snap against. This ensures segments along the
+    // edges are snapped consistently with other nearby primitives.
+    RectWithSize visible_rect = intersect_rects(local_clip_rect, snap_rect);
+
     /// Compute the snapping offset.
     vec2 snap_offset = compute_snap_offset(
         clamped_local_pos,
         transform.m,
-        snap_rect,
+        visible_rect,
         task.common_data.device_pixel_scale
     );
 
@@ -221,6 +225,16 @@ void write_clip(vec4 world_pos, vec2 snap_offset, ClipArea area) {
         area.common_data.task_rect.p0 + area.common_data.task_rect.size
     );
     vClipMaskUv = vec4(uv, area.common_data.texture_layer_index, world_pos.w);
+}
+
+// Read the exta image data containing the homogeneous screen space coordinates
+// of the corners, interpolate between them, and return real screen space UV.
+vec2 get_image_quad_uv(int address, vec2 f) {
+    ImageResourceExtra extra_data = fetch_image_resource_extra(address);
+    vec4 x = mix(extra_data.st_tl, extra_data.st_tr, f.x);
+    vec4 y = mix(extra_data.st_bl, extra_data.st_br, f.x);
+    vec4 z = mix(x, y, f.y);
+    return z.xy / z.w;
 }
 #endif //WR_VERTEX_SHADER
 

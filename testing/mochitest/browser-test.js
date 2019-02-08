@@ -9,9 +9,8 @@ var gTimeoutSeconds = 45;
 var gConfig;
 var gSaveInstrumentationData = null;
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+var {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(this, "ContentSearch",
   "resource:///modules/ContentSearch.jsm");
@@ -127,7 +126,6 @@ function testInit() {
 }
 
 function takeInstrumentation() {
-
   let instrumentData = {
     elements: {},
   };
@@ -433,7 +431,7 @@ function Tester(aTests, structuredLogger, aCallback) {
 
   this._coverageCollector = null;
 
-  const XPCOMUtilsMod = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm", {});
+  const XPCOMUtilsMod = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm", null);
 
   // Avoid failing tests when XPCOMUtils.defineLazyScriptGetter is used.
   XPCOMUtilsMod.Services = Object.create(Services, {
@@ -496,8 +494,7 @@ Tester.prototype = {
 
     if (gConfig.jscovDirPrefix) {
       let coveragePath = gConfig.jscovDirPrefix;
-      let {CoverageCollector} = ChromeUtils.import("resource://testing-common/CoverageUtils.jsm",
-                                                   {});
+      let {CoverageCollector} = ChromeUtils.import("resource://testing-common/CoverageUtils.jsm");
       this._coverageCollector = new CoverageCollector(coveragePath);
     }
 
@@ -585,9 +582,10 @@ Tester.prototype = {
     // Remove stale windows
     this.structuredLogger.info("checking window state");
     for (let win of Services.wm.getEnumerator(null)) {
+      let type = win.document.documentElement.getAttribute("windowtype");
       if (win != window && !win.closed &&
-          win.document.documentElement.getAttribute("id") != "browserTestHarness") {
-        let type = win.document.documentElement.getAttribute("windowtype");
+          win.document.documentElement.getAttribute("id") != "browserTestHarness" &&
+          type != "devtools:webconsole") {
         switch (type) {
         case "navigator:browser":
           type = "browser window";
@@ -927,7 +925,7 @@ Tester.prototype = {
 
           // Destroy BackgroundPageThumbs resources.
           let {BackgroundPageThumbs} =
-            ChromeUtils.import("resource://gre/modules/BackgroundPageThumbs.jsm", {});
+            ChromeUtils.import("resource://gre/modules/BackgroundPageThumbs.jsm");
           BackgroundPageThumbs._destroy();
 
           if (window.gBrowser) {
@@ -955,7 +953,7 @@ Tester.prototype = {
 
 
         let {AsyncShutdown} =
-          ChromeUtils.import("resource://gre/modules/AsyncShutdown.jsm", {});
+          ChromeUtils.import("resource://gre/modules/AsyncShutdown.jsm");
 
         let barrier = new AsyncShutdown.Barrier(
           "ShutdownLeaks: Wait for cleanup to be finished before checking for leaks");
@@ -1128,7 +1126,6 @@ Tester.prototype = {
                   stack: (typeof ex == "object" && "stack" in ex) ? ex.stack : null,
                   allowFailure: currentTest.allowFailure,
                 }));
-
             }
             PromiseTestUtils.assertNoUncaughtRejections();
             this.SimpleTest.info("Leaving test " + task.name);

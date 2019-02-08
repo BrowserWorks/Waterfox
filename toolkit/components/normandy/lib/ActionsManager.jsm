@@ -1,5 +1,5 @@
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://normandy/lib/LogManager.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {LogManager} = ChromeUtils.import("resource://normandy/lib/LogManager.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   ActionSandboxManager: "resource://normandy/lib/ActionSandboxManager.jsm",
@@ -97,7 +97,6 @@ class ActionsManager {
       log.info(`Executing recipe "${recipe.name}" (action=${recipe.action})`);
       const action = this.localActions[actionName];
       await action.runRecipe(recipe);
-
     } else if (actionName in this.remoteActionSandboxes) {
       let status;
       const manager = this.remoteActionSandboxes[recipe.action];
@@ -119,7 +118,6 @@ class ActionsManager {
         }
       }
       Uptake.reportRecipe(recipe.id, status);
-
     } else {
       log.error(
         `Could not execute recipe ${recipe.name}:`,

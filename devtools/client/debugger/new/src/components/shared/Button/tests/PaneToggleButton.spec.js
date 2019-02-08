@@ -2,13 +2,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
+// @flow
+
 import React from "react";
 import { shallow } from "enzyme";
 import { PaneToggleButton } from "../";
 
 describe("PaneToggleButton", () => {
   const handleClickSpy = jest.fn();
-  const wrapper = shallow(<PaneToggleButton handleClick={handleClickSpy} />);
+  const wrapper = shallow(
+    <PaneToggleButton
+      handleClick={handleClickSpy}
+      collapsed={false}
+      position={""}
+    />
+  );
 
   it("renders default", () => {
     expect(wrapper.hasClass("vertical")).toBe(true);
@@ -37,9 +45,9 @@ describe("PaneToggleButton", () => {
 
   it("handleClick is called", () => {
     const position = "testPosition";
-    const collapsed = "testCollapsed";
+    const collapsed = false;
     wrapper.setProps({ position, collapsed });
     wrapper.simulate("click");
-    expect(handleClickSpy).toBeCalledWith(position, collapsed);
+    expect(handleClickSpy).toBeCalledWith(position, true);
   });
 });

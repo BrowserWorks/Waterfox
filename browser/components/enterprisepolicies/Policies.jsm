@@ -4,9 +4,9 @@
 
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyServiceGetters(this, {
   gCertDB: ["@mozilla.org/security/x509certdb;1", "nsIX509CertDB"],
@@ -27,7 +27,7 @@ const PREF_LOGLEVEL           = "browser.policies.loglevel";
 const BROWSER_DOCUMENT_URL    = AppConstants.BROWSER_CHROME_URL;
 
 XPCOMUtils.defineLazyGetter(this, "log", () => {
-  let { ConsoleAPI } = ChromeUtils.import("resource://gre/modules/Console.jsm", {});
+  let { ConsoleAPI } = ChromeUtils.import("resource://gre/modules/Console.jsm");
   return new ConsoleAPI({
     prefix: "Policies.jsm",
     // tip: set maxLogLevel to "debug" and use log.debug() to create detailed
@@ -130,6 +130,12 @@ var Policies = {
   "Bookmarks": {
     onAllWindowsRestored(manager, param) {
       BookmarksPolicies.processBookmarks(param);
+    },
+  },
+
+  "CaptivePortal": {
+    onBeforeAddons(manager, param) {
+      setAndLockPref("network.captive-portal-service.enabled", param);
     },
   },
 
@@ -539,8 +545,9 @@ var Policies = {
               }
               url = Services.io.newFileURI(xpiFile).spec;
             }
-            AddonManager.getInstallForURL(url, "application/x-xpinstall", null, null, null, null, null,
-                                          {source: "enterprise-policy"}).then(install => {
+            AddonManager.getInstallForURL(url, {
+              telemetryInfo: {source: "enterprise-policy"},
+            }).then(install => {
               if (install.addon && install.addon.appDisabled) {
                 log.error(`Incompatible add-on - ${location}`);
                 install.cancel();
@@ -672,6 +679,13 @@ var Policies = {
     },
   },
 
+  "NetworkPrediction": {
+    onBeforeAddons(manager, param) {
+      setAndLockPref("network.dns.disablePrefetch", !param);
+      setAndLockPref("network.dns.disablePrefetchFromHTTPS", !param);
+    },
+  },
+
   "NoDefaultBookmarks": {
     onProfileAfterChange(manager, param) {
       if (param) {
@@ -800,17 +814,17 @@ var Policies = {
       }
     },
     onAllWindowsRestored(manager, param) {
-      Services.search.init(() => {
+      Services.search.init().then(async () => {
         if (param.Remove) {
           // Only rerun if the list of engine names has changed.
-          runOncePerModification("removeSearchEngines",
-                                 JSON.stringify(param.Remove),
-                                 () => {
+          await runOncePerModification("removeSearchEngines",
+                                       JSON.stringify(param.Remove),
+                                       async function() {
             for (let engineName of param.Remove) {
               let engine = Services.search.getEngineByName(engineName);
               if (engine) {
                 try {
-                  Services.search.removeEngine(engine);
+                  await Services.search.removeEngine(engine);
                 } catch (ex) {
                   log.error("Unable to remove the search engine", ex);
                 }
@@ -821,9 +835,9 @@ var Policies = {
         if (param.Add) {
           // Only rerun if the list of engine names has changed.
           let engineNameList = param.Add.map(engine => engine.Name);
-          runOncePerModification("addSearchEngines",
-                                 JSON.stringify(engineNameList),
-                                 () => {
+          await runOncePerModification("addSearchEngines",
+                                       JSON.stringify(engineNameList),
+                                       async function() {
             for (let newEngine of param.Add) {
               let newEngineParameters = {
                 template:    newEngine.URLTemplate,
@@ -836,8 +850,8 @@ var Policies = {
                 queryCharset: "UTF-8",
               };
               try {
-                Services.search.addEngineWithDetails(newEngine.Name,
-                                                     newEngineParameters);
+                await Services.search.addEngineWithDetails(newEngine.Name,
+                                                           newEngineParameters);
               } catch (ex) {
                 log.error("Unable to add search engine", ex);
               }
@@ -845,7 +859,7 @@ var Policies = {
           });
         }
         if (param.Default) {
-          runOncePerModification("setDefaultSearchEngine", param.Default, () => {
+          await runOncePerModification("setDefaultSearchEngine", param.Default, async () => {
             let defaultEngine;
             try {
               defaultEngine = Services.search.getEngineByName(param.Default);
@@ -859,7 +873,7 @@ var Policies = {
             }
             if (defaultEngine) {
               try {
-                Services.search.defaultEngine = defaultEngine;
+                await Services.search.setDefault(defaultEngine);
               } catch (ex) {
                 log.error("Unable to set the default search engine", ex);
               }
@@ -893,6 +907,48 @@ var Policies = {
           log.debug(ex);
         }
       }
+    },
+  },
+
+  "SSLVersionMax": {
+    onBeforeAddons(manager, param) {
+      let tlsVersion;
+      switch (param) {
+        case "tls1":
+          tlsVersion = 1;
+          break;
+        case "tls1.1":
+          tlsVersion = 2;
+          break;
+        case "tls1.2":
+          tlsVersion = 3;
+          break;
+        case "tls1.3":
+          tlsVersion = 4;
+          break;
+      }
+      setAndLockPref("security.tls.version.max", tlsVersion);
+    },
+  },
+
+  "SSLVersionMin": {
+    onBeforeAddons(manager, param) {
+      let tlsVersion;
+      switch (param) {
+        case "tls1":
+          tlsVersion = 1;
+          break;
+        case "tls1.1":
+          tlsVersion = 2;
+          break;
+        case "tls1.2":
+          tlsVersion = 3;
+          break;
+        case "tls1.3":
+          tlsVersion = 4;
+          break;
+      }
+      setAndLockPref("security.tls.version.min", tlsVersion);
     },
   },
 

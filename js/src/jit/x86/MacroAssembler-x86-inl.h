@@ -41,15 +41,14 @@ void MacroAssembler::moveDoubleToGPR64(FloatRegister src, Register64 dest) {
 }
 
 void MacroAssembler::moveGPR64ToDouble(Register64 src, FloatRegister dest) {
-  ScratchDoubleScope scratch(*this);
-
   if (Assembler::HasSSE41()) {
     vmovd(src.low, dest);
     vpinsrd(1, src.high, dest, dest);
   } else {
+    ScratchDoubleScope fpscratch(*this);
     vmovd(src.low, dest);
-    vmovd(src.high, ScratchDoubleReg);
-    vunpcklps(ScratchDoubleReg, dest, dest);
+    vmovd(src.high, fpscratch);
+    vunpcklps(fpscratch, dest, dest);
   }
 }
 
@@ -87,6 +86,13 @@ void MacroAssembler::move32To64SignExtend(Register src, Register64 dest) {
     movl(src, eax);
   }
   masm.cdq();
+}
+
+// ===============================================================
+// Load instructions
+
+void MacroAssembler::load32SignExtendToPtr(const Address& src, Register dest) {
+  load32(src, dest);
 }
 
 // ===============================================================

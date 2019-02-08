@@ -177,7 +177,7 @@ void WasmFrameIter::popFrame() {
     // |      WASM FRAME     | (already unwound)
     // |---------------------|
     //
-    // The next value of FP is just a regular jit frame used marked to
+    // The next value of FP is just a regular jit frame used as a marker to
     // know that we should transition to a JSJit frame iterator.
     unwoundIonCallerFP_ = (uint8_t*)fp_;
     unwoundIonFrameType_ = FrameType::JSJitToWasm;
@@ -1347,16 +1347,16 @@ static const char* ThunkedNativeToDescription(SymbolicAddress func) {
       return "jit call to int64 wasm function";
     case SymbolicAddress::MemCopy:
       return "call to native memory.copy function";
-    case SymbolicAddress::MemDrop:
-      return "call to native memory.drop function";
+    case SymbolicAddress::DataDrop:
+      return "call to native data.drop function";
     case SymbolicAddress::MemFill:
       return "call to native memory.fill function";
     case SymbolicAddress::MemInit:
       return "call to native memory.init function";
     case SymbolicAddress::TableCopy:
       return "call to native table.copy function";
-    case SymbolicAddress::TableDrop:
-      return "call to native table.drop function";
+    case SymbolicAddress::ElemDrop:
+      return "call to native elem.drop function";
     case SymbolicAddress::TableGet:
       return "call to native table.get function";
     case SymbolicAddress::TableGrow:
@@ -1376,6 +1376,13 @@ static const char* ThunkedNativeToDescription(SymbolicAddress func) {
 #if defined(JS_CODEGEN_MIPS32)
     case SymbolicAddress::js_jit_gAtomic64Lock:
       MOZ_CRASH();
+#endif
+#ifdef WASM_CODEGEN_DEBUG
+    case SymbolicAddress::PrintI32:
+    case SymbolicAddress::PrintPtr:
+    case SymbolicAddress::PrintF32:
+    case SymbolicAddress::PrintF64:
+    case SymbolicAddress::PrintText:
 #endif
     case SymbolicAddress::Limit:
       break;

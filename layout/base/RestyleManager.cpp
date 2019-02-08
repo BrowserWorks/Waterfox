@@ -54,6 +54,7 @@
 #endif
 
 using mozilla::layers::AnimationInfo;
+using mozilla::layout::ScrollAnchorContainer;
 
 using namespace mozilla::dom;
 using namespace mozilla::layers;
@@ -2439,7 +2440,7 @@ struct RestyleManager::TextPostTraversalState {
     if (mShouldComputeHints) {
       mShouldComputeHints = false;
       uint32_t equalStructs;
-      mComputedHint = oldStyle->CalcStyleDifference(&aNewStyle, &equalStructs);
+      mComputedHint = oldStyle->CalcStyleDifference(aNewStyle, &equalStructs);
       mComputedHint = NS_RemoveSubsumedHints(
           mComputedHint, mParentRestyleState.ChangesHandledFor(aTextFrame));
     }
@@ -2545,7 +2546,7 @@ static void UpdateOneAdditionalComputedStyle(nsIFrame* aFrame, uint32_t aIndex,
 
   uint32_t equalStructs;  // Not used, actually.
   nsChangeHint childHint =
-      aOldContext.CalcStyleDifference(newStyle, &equalStructs);
+      aOldContext.CalcStyleDifference(*newStyle, &equalStructs);
   if (!aFrame->HasAnyStateBits(NS_FRAME_OUT_OF_FLOW)) {
     childHint = NS_RemoveSubsumedHints(childHint,
                                        aRestyleState.ChangesHandledFor(aFrame));
@@ -2793,9 +2794,11 @@ bool RestyleManager::ProcessPostTraversal(Element* aElement,
     MOZ_ASSERT(styleFrame || isDisplayContents);
 
     // Note that upToDateContext could be the same as oldOrDisplayContentsStyle,
-    // but it doesn't matter, since the only point of it is calling FinishStyle
-    // on the relevant structs, and those don't matter for display: contents.
-    upToDateContext->ResolveSameStructsAs(oldOrDisplayContentsStyle);
+    // but it doesn't matter, since the only point of it is calling
+    // TriggerImageLoads on the relevant structs, and those don't matter for
+    // display: contents.
+    upToDateContext->StartImageLoads(*mPresContext->Document(),
+                                     oldOrDisplayContentsStyle);
 
     // We want to walk all the continuations here, even the ones with different
     // styles.  In practice, the only reason we get continuations with different
@@ -3009,11 +3012,6 @@ void RestyleManager::DoProcessPendingRestyles(ServoTraversalFlags aFlags) {
     return;
   }
 
-  // Select scroll anchors for frames that have been scrolled. Do this
-  // before restyling so that anchor nodes are correctly marked for
-  // scroll anchor update suppressions.
-  presContext->PresShell()->FlushPendingScrollAnchorSelections();
-
   // Create a AnimationsWithDestroyedFrame during restyling process to
   // stop animations and transitions on elements that have no frame at the end
   // of the restyling process.
@@ -3040,6 +3038,11 @@ void RestyleManager::DoProcessPendingRestyles(ServoTraversalFlags aFlags) {
 
   while (styleSet->StyleDocument(aFlags)) {
     ClearSnapshots();
+
+    // Select scroll anchors for frames that have been scrolled. Do this
+    // before processing restyled frames so that anchor nodes are correctly
+    // marked when directly moving frames with RecomputePosition.
+    presContext->PresShell()->FlushPendingScrollAnchorSelections();
 
     nsStyleChangeList currentChanges;
     bool anyStyleChanged = false;
@@ -3279,8 +3282,7 @@ static inline bool NeedToRecordAttrChange(
 
 void RestyleManager::AttributeWillChange(Element* aElement,
                                          int32_t aNameSpaceID,
-                                         nsAtom* aAttribute, int32_t aModType,
-                                         const nsAttrValue* aNewValue) {
+                                         nsAtom* aAttribute, int32_t aModType) {
   TakeSnapshotForAttributeChange(*aElement, aNameSpaceID, aAttribute);
 }
 

@@ -348,7 +348,6 @@
           var showInstallRemote = false;
 
           if (this.mInstall) {
-
             switch (this.mInstall.state) {
               case AddonManager.STATE_AVAILABLE:
                 if (this.mControl.getAttribute("remote") != "true")
@@ -381,7 +380,6 @@
                 this.showMessage("installCancelled", true);
                 break;
             }
-
           }
 
           this._installRemote.hidden = !showInstallRemote;
@@ -571,7 +569,7 @@
 
       <xul:image class="card-heading-image" anonid="theme-screenshot" xbl:inherits="src=previewURL"/>
 
-      <xul:hbox class="content-container" align="center">
+      <xul:hbox class="content-container">
         <xul:vbox class="icon-container">
           <xul:image anonid="icon" class="icon"/>
         </xul:vbox>
@@ -686,10 +684,15 @@
           </xul:hbox>
         </xul:vbox>
       </xul:hbox>
+      <xul:hbox class="description-container privateBrowsing-notice-container">
+        <xul:label anonid="privateBrowsing" class="description privateBrowsing-notice" value="&addon.privateBrowsing.label;"/>
+      </xul:hbox>
     </content>
 
     <implementation>
       <constructor><![CDATA[
+        window.customElements.upgrade(this._stateMenulist);
+
         this._installStatus = document.getAnonymousElementByAttribute(this, "anonid", "install-status");
         this._installStatus.mControl = this;
 
@@ -899,6 +902,13 @@
             isLegacyExtension(this.mAddon);
           this.setAttribute("legacy", legacyWarning);
           document.getAnonymousElementByAttribute(this, "anonid", "legacy").href = SUPPORT_URL + "webextensions";
+
+          if (!allowPrivateBrowsingByDefault) {
+            ExtensionPermissions.get(this.mAddon.id).then((perms) => {
+              let allowed = perms.permissions.includes("internal:privateBrowsingAllowed");
+              this.setAttribute("privateBrowsing", allowed);
+            });
+          }
 
           if (!("applyBackgroundUpdates" in this.mAddon) ||
               (this.mAddon.applyBackgroundUpdates == AddonManager.AUTOUPDATE_DISABLE ||
@@ -1212,14 +1222,14 @@
             }
           }
 
-          var dataReq = new XMLHttpRequest();
+          var dataReq = new XMLHttpRequest({mozAnon: true});
           dataReq.open("GET", aURI.spec, true);
           dataReq.responseType = "document";
           dataReq.addEventListener("load", handleResponse);
           dataReq.addEventListener("error", handleError);
           dataReq.send(null);
 
-          var styleReq = new XMLHttpRequest();
+          var styleReq = new XMLHttpRequest({mozAnon: true});
           styleReq.open("GET", UPDATES_RELEASENOTES_TRANSFORMFILE, true);
           styleReq.responseType = "document";
           styleReq.addEventListener("load", handleResponse);
@@ -1383,6 +1393,12 @@
               aProperties.includes("signedState") ||
               aProperties.includes("userDisabled"))
             this._updateState();
+        ]]></body>
+      </method>
+
+      <method name="onUpdateAvailable">
+        <body><![CDATA[
+          this._showStatus("update-available");
         ]]></body>
       </method>
 

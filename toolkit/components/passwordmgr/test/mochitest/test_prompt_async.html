@@ -7,7 +7,7 @@
     <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
     <script type="text/javascript" src="/tests/SimpleTest/AddTask.js"></script>
     <script type="text/javascript" src="pwmgr_common.js"></script>
-    <script type="text/javascript" src="prompt_common.js"></script>
+    <script type="text/javascript" src="../../../prompts/test/prompt_common.js"></script>
     <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 
     <script class="testbody" type="text/javascript">
@@ -21,13 +21,16 @@
       // Used by prompt_common.js.
       isTabModal = false;
 
+      // These are magically defined on the window due to the iframe IDs
+      /* global iframe1, iframe2a, iframe2b */
+
       let chromeScript = runInParent(SimpleTest.getTestFileURL("pwmgr_common.js"));
 
       /**
        * Add a listener to add some logins to be autofilled in the HTTP/proxy auth. prompts later.
        */
       let pwmgrParent = runInParent(() => {
-        ChromeUtils.import("resource://gre/modules/Services.jsm");
+        const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
         Services.prefs.setIntPref("network.auth.subresource-http-auth-allow", 2);
 
@@ -176,26 +179,50 @@
         };
         await handlePrompt(state, action);
 
-        Object.assign(state, {
+        // We don't know what order these prompts appear in so get both states and check them.
+        // We can't use Promise.all here since we can't start the 2nd timer in chromeScript.js until
+        // the first timer is done since the timer variable gets clobbered, plus we don't want
+        // different actions racing each other.
+        let promptStates = [
+          await handlePromptWithoutChecks(action),
+          await handlePromptWithoutChecks(action),
+        ];
+
+        let expected1 = Object.assign({}, state, {
           msg: "http://example.com is requesting your username and password. WARNING: Your password will not be sent to the website you are currently visiting!",
           textValue: "user1name",
           passValue: "user1pass",
         });
-        await handlePrompt(state, action);
 
-        Object.assign(state, {
+        let expected2 = Object.assign({}, state, {
           msg: "http://example.org is requesting your username and password. WARNING: Your password will not be sent to the website you are currently visiting!",
           textValue: "user2name",
           passValue: "user2pass",
         });
-        await handlePrompt(state, action);
+
+        // The order isn't important.
+        let expectedPromptStates = [
+          expected1,
+          expected2,
+        ];
+
+        is(promptStates.length, expectedPromptStates.length,
+           "Check we handled the right number of prompts");
+        for (let promptState of promptStates) {
+          let expectedStateIndexForMessage = expectedPromptStates.findIndex(eps => {
+            return eps.msg == promptState.msg;
+          });
+          isnot(expectedStateIndexForMessage, -1, "Check state message was found in expected array");
+          let expectedPromptState = expectedPromptStates.splice(expectedStateIndexForMessage, 1)[0];
+          checkPromptState(promptState, expectedPromptState);
+        }
 
         let iframe1Doc = await iframe1DocPromise;
         let iframe2aDoc = await iframe2aDocPromise;
         let iframe2bDoc = await iframe2bDocPromise;
 
-        authok1 = iframe1Doc.getElementById("ok").textContent;
-        proxyok1 = iframe1Doc.getElementById("proxy").textContent;
+        let authok1 = iframe1Doc.getElementById("ok").textContent;
+        let proxyok1 = iframe1Doc.getElementById("proxy").textContent;
 
         let authok2a = iframe2aDoc.getElementById("ok").textContent;
         let proxyok2a = iframe2aDoc.getElementById("proxy").textContent;
@@ -217,8 +244,6 @@
         // and web authentication.
 
         let iframe1DocPromise = promiseLoadedContentDoc(iframe1);
-        let iframe2aDocPromise = promiseLoadedContentDoc(iframe2a);
-        let iframe2bDocPromise = promiseLoadedContentDoc(iframe2b);
 
         iframe1.src = EXAMPLE_COM + "subtst_prompt_async.html";
         iframe2a.src = "about:blank";
@@ -350,8 +375,8 @@
 
         let iframe1Doc = await iframe1DocPromise;
 
-        authok1 = iframe1Doc.getElementById("ok").textContent;
-        proxyok1 = iframe1Doc.getElementById("proxy").textContent;
+        let authok1 = iframe1Doc.getElementById("ok").textContent;
+        let proxyok1 = iframe1Doc.getElementById("proxy").textContent;
 
         is(authok1, "FAIL", "WWW Authorization FAILED, frame1");
         is(proxyok1, "PASS", "Proxy Authorization OK, frame1");
@@ -442,9 +467,9 @@
 
         let iframe1Doc = await iframe1DocPromise;
 
-        authok1 = iframe1Doc.getElementById("ok").textContent;
-        proxyok1 = iframe1Doc.getElementById("proxy").textContent;
-        footnote = iframe1Doc.getElementById("footnote").textContent;
+        let authok1 = iframe1Doc.getElementById("ok").textContent;
+        let proxyok1 = iframe1Doc.getElementById("proxy").textContent;
+        let footnote = iframe1Doc.getElementById("footnote").textContent;
 
         is(authok1, "FAIL", "WWW Authorization FAILED, frame1");
         is(proxyok1, "PASS", "Proxy Authorization OK, frame1");
@@ -481,9 +506,9 @@
         await handlePrompt(state, action);
 
         let iframe1Doc = await iframe1DocPromise;
-        authok1 = iframe1Doc.getElementById("ok").textContent;
-        proxyok1 = iframe1Doc.getElementById("proxy").textContent;
-        footnote = iframe1Doc.getElementById("footnote").textContent;
+        let authok1 = iframe1Doc.getElementById("ok").textContent;
+        let proxyok1 = iframe1Doc.getElementById("proxy").textContent;
+        let footnote = iframe1Doc.getElementById("footnote").textContent;
 
         is(authok1, "PASS", "WWW Authorization OK, frame1");
         is(proxyok1, "PASS", "Proxy Authorization OK, frame1");
@@ -495,7 +520,6 @@
         // Check we process all challenges sent by server when
         // user cancels prompts
         let iframe1DocPromise = promiseLoadedContentDoc(iframe1);
-        expectedDialogs = 5;
         iframe1.src = EXAMPLE_COM + "authenticate.sjs?" +
           "user=user6name&" +
           "pass=user6pass&" +
@@ -553,9 +577,9 @@
         await handlePrompt(state, action);
 
         let iframe1Doc = await iframe1DocPromise;
-        authok1 = iframe1Doc.getElementById("ok").textContent;
-        proxyok1 = iframe1Doc.getElementById("proxy").textContent;
-        footnote = iframe1Doc.getElementById("footnote").textContent;
+        let authok1 = iframe1Doc.getElementById("ok").textContent;
+        let proxyok1 = iframe1Doc.getElementById("proxy").textContent;
+        let footnote = iframe1Doc.getElementById("footnote").textContent;
 
         is(authok1, "PASS", "WWW Authorization OK, frame1");
         is(proxyok1, "PASS", "Proxy Authorization OK, frame1");

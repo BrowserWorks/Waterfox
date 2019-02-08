@@ -53,11 +53,11 @@
 #include "nsAboutProtocolUtils.h"
 #include "nsIClassInfo.h"
 #include "nsIURIFixup.h"
-#include "nsCDefaultURIFixup.h"
 #include "nsIChromeRegistry.h"
 #include "nsIResProtocolHandler.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
+#include "mozilla/Components.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/NullPrincipal.h"
@@ -932,6 +932,19 @@ nsresult nsScriptSecurityManager::CheckLoadURIFlags(
     return rv;
   }
 
+  // Used by ExtensionProtocolHandler to prevent loading extension resources
+  // in private contexts if the extension does not have permission.
+  if (aFromPrivateWindow) {
+    rv = DenyAccessIfURIHasFlags(
+        aTargetURI, nsIProtocolHandler::URI_DISALLOW_IN_PRIVATE_CONTEXT);
+    if (NS_FAILED(rv)) {
+      if (reportErrors) {
+        ReportError(errorTag, aSourceURI, aTargetURI, aFromPrivateWindow);
+      }
+      return rv;
+    }
+  }
+
   // Check for chrome target URI
   bool hasFlags = false;
   rv = NS_URIChainHasFlags(aTargetURI, nsIProtocolHandler::URI_IS_UI_RESOURCE,
@@ -1137,7 +1150,7 @@ nsScriptSecurityManager::CheckLoadURIStrWithPrincipal(
   // Now start testing fixup -- since aTargetURIStr is a string, not
   // an nsIURI, we may well end up fixing it up before loading.
   // Note: This needs to stay in sync with the nsIURIFixup api.
-  nsCOMPtr<nsIURIFixup> fixup = do_GetService(NS_URIFIXUP_CONTRACTID);
+  nsCOMPtr<nsIURIFixup> fixup = components::URIFixup::Service();
   if (!fixup) {
     return rv;
   }

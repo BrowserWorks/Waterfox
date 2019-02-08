@@ -106,12 +106,12 @@ class HitTestingTreeNode {
                       const CSSTransformMatrix& aTransform,
                       const Maybe<ParentLayerIntRegion>& aClipRegion,
                       const EventRegionsOverride& aOverride,
-                      bool aIsBackfaceHidden);
+                      bool aIsBackfaceHidden, bool aIsAsyncZoomContainer);
   bool IsOutsideClip(const ParentLayerPoint& aPoint) const;
 
   /* Scrollbar info */
 
-  void SetScrollbarData(const uint64_t& aScrollbarAnimationId,
+  void SetScrollbarData(const Maybe<uint64_t>& aScrollbarAnimationId,
                         const ScrollbarData& aScrollbarData);
   bool MatchesScrollDragMetrics(const AsyncDragMetrics& aDragMetrics) const;
   bool IsScrollbarNode() const;  // Scroll thumb or scrollbar container layer.
@@ -120,7 +120,7 @@ class HitTestingTreeNode {
   bool IsScrollThumbNode() const;  // Scroll thumb container layer.
   ScrollableLayerGuid::ViewID GetScrollTargetId() const;
   const ScrollbarData& GetScrollbarData() const;
-  const uint64_t& GetScrollbarAnimationId() const;
+  Maybe<uint64_t> GetScrollbarAnimationId() const;
 
   /* Fixed pos info */
 
@@ -140,6 +140,8 @@ class HitTestingTreeNode {
   EventRegionsOverride GetEventRegionsOverride() const;
   const CSSTransformMatrix& GetTransform() const;
   const LayerIntRegion& GetVisibleRegion() const;
+
+  bool IsAsyncZoomContainer() const;
 
   /* Debug helpers */
   void Dump(const char* aPrefix = "") const;
@@ -162,10 +164,10 @@ class HitTestingTreeNode {
 
   LayersId mLayersId;
 
-  // This is only set to non-zero if WebRender is enabled, and only for HTTNs
+  // This is only set if WebRender is enabled, and only for HTTNs
   // where IsScrollThumbNode() returns true. It holds the animation id that we
   // use to move the thumb node to reflect async scrolling.
-  uint64_t mScrollbarAnimationId;
+  Maybe<uint64_t> mScrollbarAnimationId;
 
   // This is set for scrollbar Container and Thumb layers.
   ScrollbarData mScrollbarData;
@@ -194,6 +196,9 @@ class HitTestingTreeNode {
    * vice versa, so it's sufficient to record this at hit test tree
    * building time. */
   bool mIsBackfaceHidden;
+
+  /* Whether layer L is the async zoom container layer. */
+  bool mIsAsyncZoomContainer;
 
   /* This is clip rect for L that we wish to use for hit-testing purposes. Note
    * that this may not be exactly the same as the clip rect on layer L because

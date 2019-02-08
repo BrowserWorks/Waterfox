@@ -27,9 +27,9 @@
   </linkset>
 
   <script type="application/javascript"
-          src="chrome://mozapps/content/extensions/extensions.js"/>
-  <script type="application/javascript"
           src="chrome://global/content/contentAreaUtils.js"/>
+  <script type="application/javascript"
+          src="chrome://mozapps/content/extensions/extensions.js"/>
 
   <popupset>
     <!-- menu for an addon item -->
@@ -231,6 +231,10 @@
 
           <hbox id="heading">
             <hbox class="heading-inner" align="stretch">
+              <hbox id="go-back-wrapper">
+                <button id="go-back" command="cmd_back" data-l10n-id="go-back-button" hidden="true"/>
+              </hbox>
+
               <label id="heading-name" class="header-name" flex="1"/>
 
               <hbox id="updates-container" align="center">
@@ -251,8 +255,6 @@
                         data-l10n-id="extensions-updates-restart"
                         command="cmd_restartApp"/>
               </hbox>
-
-              <button id="manage-shortcuts" data-l10n-id="shortcuts-manage" command="cmd_showShortcuts" hidden="true"/>
 
               <button id="header-utils-btn" type="menu" data-l10n-id="tools-menu">
                 <menupopup id="utils-menu">
@@ -280,6 +282,10 @@
                   <menuitem id="utils-resetAddonUpdatesToManual"
                             data-l10n-id="extensions-updates-reset-updates-to-manual"
                             command="cmd_resetAddonAutoUpdate"/>
+                  <menuseparator/>
+                  <menuitem id="manage-shortcuts"
+                            data-l10n-id="manage-extensions-shortcuts"
+                            command="cmd_showShortcuts"/>
                 </menupopup>
               </button>
             </hbox>
@@ -289,7 +295,7 @@
             <!-- list view -->
             <vbox id="list-view" flex="1" class="view-pane" align="stretch" tabindex="0">
               <!-- info UI for add-ons that have been disabled for being unsigned -->
-              <vbox id="disabled-unsigned-addons-info" hidden="true">
+              <vbox id="disabled-unsigned-addons-info" class="alert-container" hidden="true">
                 <label id="disabled-unsigned-addons-heading" data-l10n-id="disabled-unsigned-heading"/>
                 <description data-l10n-id="disabled-unsigned-description">
                   <label class="text-link plain" id="find-alternative-addons" data-l10n-name="find-addons"/>
@@ -305,6 +311,16 @@
                     <label class="text-link plain" id="legacy-extensions-learnmore-link" data-l10n-id="legacy-warning-show-legacy"/>
                   </description>
                 </vbox>
+              </vbox>
+              <vbox id="private-browsing-notice" class="alert-container" hidden="true" align="start">
+                <hbox class="message-bar" align="start">
+                  <image class="message-bar-icon"/>
+                  <vbox class="message-container">
+                    <description class="message-bar-description" data-l10n-id="private-browsing-description">
+                      <label class="text-link plain" id="private-browsing-learnmore-link" data-l10n-name="private-browsing-learn-more"/>
+                    </description>
+                  </vbox>
+                </hbox>
               </vbox>
               <vbox id="plugindeprecation-notice" class="list-view-notice" align="start">
                 <hbox class="message-bar">
@@ -530,6 +546,22 @@
                            <column flex="2"/>
                         </columns>
                         <rows id="detail-rows">
+                          <row class="detail-row-complex" id="detail-privateBrowsing-row">
+                            <label class="detail-row-label" data-l10n-id="detail-private-browsing-label"/>
+                            <hbox align="center">
+                              <radiogroup id="detail-privateBrowsing" orient="horizontal">
+                                <radio data-l10n-id="detail-private-browsing-on"
+                                       value="1"/>
+                                <radio data-l10n-id="detail-private-browsing-off"
+                                       value="0"/>
+                              </radiogroup>
+                            </hbox>
+                          </row>
+                          <hbox class="detail-row-footer" id="detail-privateBrowsing-row-footer">
+                            <description class="indent preferences-description" data-l10n-id="detail-private-browsing-description">
+                              <label id="detail-private-browsing-learnmore-link" class="learnMore text-link" data-l10n-name="detail-private-browsing-learn-more"/>
+                            </description>
+                          </hbox>
                           <row class="detail-row-complex" id="detail-updates-row">
                             <label class="detail-row-label" data-l10n-id="detail-update-type"/>
                             <hbox align="center">

@@ -69,6 +69,15 @@
 }
 
 /**
+ * For text that needs to be cut with an ellipsis …
+ */
+.devtools-ellipsis-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/**
  * Override wrong system font from forms.css
  * Bug 1458224: buttons use a wrong default font-size on Linux
  */
@@ -276,7 +285,6 @@ checkbox:-moz-focusring {
 }
 
 /* Toolbar buttons */
-.devtools-menulist,
 .devtools-toolbarbutton,
 .devtools-button {
   -moz-appearance: none;
@@ -816,6 +824,10 @@ checkbox:-moz-focusring {
   box-sizing: content-box;
   /* Animate the thumb position between states of the checkbox. */
   transition: background-color .1s ease-out;
+}
+
+.devtools-checkbox-toggle[disabled]{
+  opacity: 0.5;
 }
 
 /* For right-to-left layout, the toggle thumb goes in the opposite direction. */

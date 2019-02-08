@@ -967,10 +967,6 @@ skip script test262/language/expressions/postfix-increment/bigint.js
 skip script test262/language/expressions/postfix-decrement/bigint.js
 skip script test262/language/expressions/prefix-decrement/bigint.js
 
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1522433
-skip script test262/built-ins/JSON/stringify/bigint-order.js
-skip script test262/built-ins/JSON/stringify/bigint-tojson.js
-
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1317405
 skip script test262/language/computed-property-names/class/static/method-number.js
 skip script test262/language/computed-property-names/class/static/method-string.js
@@ -1264,3 +1260,7 @@ skip script test262/harness/detachArrayBuffer.js
 # https://github.com/tc39/test262/pull/1965
 skip script test262/language/expressions/dynamic-import/indirect-resolution.js
 skip script test262/language/expressions/dynamic-import/namespace/default-property-not-set-own.js
+
+# https://github.com/tc39/test262/pull/2023
+skip script test262/language/statements/try/early-catch-var.js
+skip script test262/language/eval-code/direct/var-env-lower-lex-catch-non-strict.js

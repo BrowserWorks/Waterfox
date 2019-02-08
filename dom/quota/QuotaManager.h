@@ -104,6 +104,11 @@ class QuotaManager final : public BackgroundThreadObject {
     return kRunningXPCShellTests;
   }
 
+  static bool IsRunningGTests() {
+    static bool kRunningGTests = !!PR_GetEnv("MOZ_RUN_GTEST");
+    return kRunningGTests;
+  }
+
   static const char kReplaceChars[];
 
   static void GetOrCreate(nsIRunnable* aCallback,
@@ -114,6 +119,10 @@ class QuotaManager final : public BackgroundThreadObject {
 
   // Returns true if we've begun the shutdown process.
   static bool IsShuttingDown();
+
+  static bool IsOSMetadata(const nsAString& aFileName);
+
+  static bool IsDotFile(const nsAString& aFileName);
 
   bool IsOriginInitialized(const nsACString& aOrigin) const {
     AssertIsOnIOThread();

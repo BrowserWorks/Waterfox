@@ -42,9 +42,11 @@
 #include "mozilla/dom/FileCreatorHelper.h"
 #include "mozilla/dom/GetFilesHelper.h"
 #include "mozilla/dom/IPCBlobUtils.h"
+#include "mozilla/dom/JSWindowActorService.h"
 #include "mozilla/dom/LSObject.h"
 #include "mozilla/dom/MemoryReportRequest.h"
 #include "mozilla/dom/PLoginReputationChild.h"
+#include "mozilla/dom/PSessionStorageObserverChild.h"
 #include "mozilla/dom/PostMessageEvent.h"
 #include "mozilla/dom/PushNotifier.h"
 #include "mozilla/dom/RemoteWorkerService.h"
@@ -1718,7 +1720,8 @@ mozilla::ipc::IPCResult ContentChild::RecvPBrowserConstructor(
     RefPtr<CancelableRunnable> firstIdleTask =
         NewCancelableRunnableFunction("FirstIdleRunnable", FirstIdle);
     gFirstIdleTask = firstIdleTask;
-    if (NS_FAILED(NS_IdleDispatchToCurrentThread(firstIdleTask.forget()))) {
+    if (NS_FAILED(NS_DispatchToCurrentThreadQueue(firstIdleTask.forget(),
+                                                  EventQueuePriority::Idle))) {
       gFirstIdleTask = nullptr;
       hasRunOnce = false;
     }
@@ -2566,6 +2569,13 @@ mozilla::ipc::IPCResult ContentChild::RecvInitBlobURLs(
   return IPC_OK();
 }
 
+mozilla::ipc::IPCResult ContentChild::RecvInitJSWindowActorInfos(
+    nsTArray<JSWindowActorInfo>&& aInfos) {
+  RefPtr<JSWindowActorService> actSvc = JSWindowActorService::GetSingleton();
+  actSvc->LoadJSWindowActorInfos(aInfos);
+  return IPC_OK();
+}
+
 mozilla::ipc::IPCResult ContentChild::RecvLastPrivateDocShellDestroyed() {
   nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
   obs->NotifyObservers(nullptr, "last-pb-context-exited", nullptr);
@@ -3230,6 +3240,20 @@ PLoginReputationChild* ContentChild::AllocPLoginReputationChild(
 
 bool ContentChild::DeallocPLoginReputationChild(PLoginReputationChild* aActor) {
   MOZ_ASSERT(aActor);
+  delete aActor;
+  return true;
+}
+
+PSessionStorageObserverChild*
+ContentChild::AllocPSessionStorageObserverChild() {
+  MOZ_CRASH(
+      "PSessionStorageObserverChild actors should be manually constructed!");
+}
+
+bool ContentChild::DeallocPSessionStorageObserverChild(
+    PSessionStorageObserverChild* aActor) {
+  MOZ_ASSERT(aActor);
+
   delete aActor;
   return true;
 }

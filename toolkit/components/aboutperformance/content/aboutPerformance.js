@@ -6,9 +6,9 @@
 
 "use strict";
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm", {});
-const { AddonManager } = ChromeUtils.import("resource://gre/modules/AddonManager.jsm", {});
-const { ExtensionParent } = ChromeUtils.import("resource://gre/modules/ExtensionParent.jsm", {});
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { AddonManager } = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
+const { ExtensionParent } = ChromeUtils.import("resource://gre/modules/ExtensionParent.jsm");
 
 const {WebExtensionPolicy} = Cu.getGlobalForObject(Services);
 
@@ -257,7 +257,7 @@ var State = {
         Cc["@mozilla.org/url-classifier/dbservice;1"].getService(Ci.nsIURIClassifier);
       classifier.classify(principal, null, true,
                           (aErrorCode, aList, aProvider, aFullHash) => {
-        this._trackingState.set(host, aErrorCode == Cr.NS_ERROR_TRACKING_URI);
+        this._trackingState.set(host, ChromeUtils.IsClassifierBlockingErrorCode(aErrorCode));
       });
     }
     return this._trackingState.get(host);
@@ -740,7 +740,6 @@ var Control = {
 };
 
 var go = async function() {
-
   Control.init();
 
   let addons = await AddonManager.getAddonsByTypes(["extension"]);
