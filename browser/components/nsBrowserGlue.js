@@ -7,6 +7,7 @@ const XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+ChromeUtils.import("resource:///modules/ExtensionSupport.jsm");
 
 ChromeUtils.defineModuleGetter(this, "ActorManagerParent",
                                "resource://gre/modules/ActorManagerParent.jsm");
@@ -709,6 +710,11 @@ BrowserGlue.prototype = {
   // nsIObserver implementation
   observe: async function BG_observe(subject, topic, data) {
     switch (topic) {
+      case "app-startup":
+        const {BootstrapLoader} = ChromeUtils.import("resource:///modules/BootstrapLoader.jsm");
+        AddonManager.addExternalExtensionLoader(BootstrapLoader);
+        console.log("Loaded BootstrapLoader");
+      break;
       case "notifications-open-settings":
         this._openPreferences("privacy-permissions", { origin: "notifOpenSettings" });
         break;

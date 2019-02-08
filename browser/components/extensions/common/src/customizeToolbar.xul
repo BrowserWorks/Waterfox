@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE dialog [
+<!ENTITY % customizeToolbarDTD SYSTEM
+#ifdef MOZ_SUITE
+  "chrome://communicator/locale/customizeToolbar.dtd">
+#else
+  "chrome://browser/locale/customizeToolbar.dtd">
+#endif
+  %customizeToolbarDTD;
+]>
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+#ifdef MOZ_SUITE
+<?xml-stylesheet href="chrome://communicator/content/customizeToolbar.css" type="text/css"?>
+<?xml-stylesheet href="chrome://communicator/skin/customizeToolbar.css" type="text/css"?>
+#else
+<?xml-stylesheet href="chrome://browser/content/customizeToolbar.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/customizeToolbar.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/content/bindings.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/content/messenger.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/messageHeader.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/primaryToolbar.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/chat.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/addressbook/addressbook.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/messengercompose/messengercompose.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/smime/msgCompSMIMEOverlay.css" type="text/css"?>
+#endif
+
+<window id="CustomizeToolbarWindow"
+        title="&dialog.title;"
+#ifdef MOZ_SUITE
+        onload="onLoad();"
+#else
+        windowtype="mailnews:customizeToolbar"
+        onload="overlayOnLoad();"
+#endif
+        onunload="onUnload();"
+        style="&dialog.dimensions;"
+        persist="width height"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+#ifdef MOZ_SUITE
+<script type="application/javascript" src="chrome://communicator/content/customizeToolbar.js"/>
+<stringbundle id="stringBundle" src="chrome://communicator/locale/customizeToolbar.properties"/>
+#else
+<script type="application/javascript" src="chrome://browser/content/customizeToolbar.js"/>
+<script type="application/javascript" src="chrome://browser/content/mailCore.js"/>
+<stringbundle id="stringBundle" src="chrome://browser/locale/customizeToolbar.properties"/>
+#endif
+
+<keyset id="CustomizeToolbarKeyset">
+  <key id="cmd_close1" keycode="VK_ESCAPE" oncommand="onClose();"/>
+  <key id="cmd_close2" keycode="VK_RETURN" oncommand="onClose();"/>
+</keyset>
+
+<vbox id="main-box" flex="1">
+  <description id="instructions">
+  &instructions.description;
+  </description>
+
+  <vbox flex="1" id="palette-box"
+        ondragstart="onToolbarDragStart(event)"
+        ondragover="onPaletteDragOver(event)"
+        ondrop="onPaletteDrop(event)"/>
+
+  <box align="center">
+    <label value="&show.label;"/>
+    <menulist id="modelist"
+              value="icons"
+#ifdef MOZ_SUITE
+              oncommand="updateToolbarMode(this.value);">
+#else
+              oncommand="overlayUpdateToolbarMode(this.value, 'mail-toolbox');">
+#endif
+      <menupopup id="modelistpopup">
+        <menuitem id="modefull" value="full" label="&iconsAndText.label;"/>
+        <menuitem id="modeicons" value="icons" label="&icons.label;"/>
+        <menuitem id="modetext" value="text" label="&text.label;"/>
+#ifndef MOZ_SUITE
+        <menuitem id="textbesideiconItem" value="textbesideicon" label="&iconsBesideText.label;"/>
+#endif
+      </menupopup>
+    </menulist>
+
+    <checkbox id="smallicons" oncommand="updateIconSize(this.checked ? 'small' : 'large');" label="&useSmallIcons.label;"/>
+
+    <button id="newtoolbar" label="&addNewToolbar.label;" oncommand="addNewToolbar();" icon="add"/>
+    <button id="restoreDefault" label="&restoreDefaultSet.label;" oncommand="restoreDefaultSet();" icon="revert"/>
+#ifndef MOZ_SUITE
+    <vbox id="titlebarSettings" hidden="true">
+      <checkbox id="showTitlebar" oncommand="updateTitlebar();" label="&showTitlebar.label;"/>
+      <checkbox id="showDragSpace" oncommand="updateDragSpace();" label="&extraDragSpace.label;"/>
+    </vbox>
+#endif
+  </box>
+
+  <separator class="groove"/>
+
+  <hbox align="center" pack="end">
+    <button id="donebutton" label="&saveChanges.label;" oncommand="onClose();"
+            default="true" icon="close"/>
+  </hbox>
+</vbox>
+
+</window>

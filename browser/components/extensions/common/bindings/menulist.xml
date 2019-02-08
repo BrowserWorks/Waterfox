@@ -1,0 +1,210 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<bindings id="menulistEditableBindings"
+   xmlns="http://www.mozilla.org/xbl"
+   xmlns:html="http://www.w3.org/1999/xhtml"
+   xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+   xmlns:xbl="http://www.mozilla.org/xbl">
+  <binding id="menulist-editable" extends="chrome://global/content/bindings/menulist.xml#menulist">
+    <content sizetopopup="pref">
+      <xul:moz-input-box class="menulist-editable-box moz-input-box" xbl:inherits="context,disabled,readonly,focused" flex="1">
+        <html:input class="menulist-editable-input" anonid="input" allowevents="true"
+                    xbl:inherits="value=label,value,disabled,tabindex,readonly,placeholder"/>
+      </xul:moz-input-box>
+      <xul:dropmarker class="menulist-dropmarker" type="menu"
+                      xbl:inherits="open,disabled,parentfocused=focused"/>
+      <children includes="menupopup"/>
+    </content>
+
+    <implementation>
+      <constructor><![CDATA[
+        // This block needs to be kept in sync with the parent constructor in
+        // toolkit/content/widgets/menulist.xml.
+        this.mSelectedInternal = null;
+        this.mAttributeObserver = null;
+        this.setInitialSelection();
+
+        this.dispatchEvent(new CustomEvent("bindingattached", { bubbles: false }));
+      ]]></constructor>
+      <method name="_selectInputFieldValueInList">
+        <body><![CDATA[
+            if (this.hasAttribute("disableautoselect"))
+                return;
+
+            // Find and select the menuitem that matches inputField's "value"
+            var arr = null;
+            var popup = this.menupopup;
+
+            if (popup)
+                arr = popup.getElementsByAttribute("label", this.inputField.value);
+
+            this.setSelectionInternal(arr ? arr.item(0) : null);
+        ]]></body>
+      </method>
+
+      <method name="setSelectionInternal">
+        <parameter name="val"/>
+        <body><![CDATA[
+            // This is called internally to set selected item
+            //  without triggering infinite loop
+            //  when using selectedItem's setter
+            if (this.mSelectedInternal == val)
+                return val;
+
+            if (this.mSelectedInternal)
+                this.mSelectedInternal.removeAttribute("selected");
+
+            this.mSelectedInternal = val;
+
+            if (val)
+                val.setAttribute("selected", "true");
+
+            // Do NOT change the "value", which is owned by inputField
+            return val;
+        ]]></body>
+      </method>
+
+      <property name="editable" readonly="true" onget="return true;"/>
+
+      <property name="inputField" readonly="true">
+        <getter><![CDATA[
+            if (!this.mInputField)
+                this.mInputField = document.getAnonymousElementByAttribute(this, "anonid", "input");
+            return this.mInputField;
+        ]]></getter>
+      </property>
+
+      <property name="label" onget="return this.inputField.value;"
+                             onset="return this.inputField.value = val;"/>
+
+      <property name="value" onget="return this.inputField.value;">
+        <setter><![CDATA[
+            // Override menulist's value setter to refer to the inputField's value
+            // (Allows using "menulist.value" instead of "menulist.inputField.value")
+            this.inputField.value = val;
+            this.setAttribute("value", val);
+            this.setAttribute("label", val);
+            this._selectInputFieldValueInList();
+            return val;
+        ]]></setter>
+      </property>
+
+      <property name="selectedItem">
+        <getter><![CDATA[
+            // Make sure internally-selected item
+            //  is in sync with inputField.value
+            this._selectInputFieldValueInList();
+            return this.mSelectedInternal;
+        ]]></getter>
+        <setter><![CDATA[
+            var oldval = this.mSelectedInternal;
+            if (oldval == val)
+              return val;
+
+            if (val && !this.contains(val))
+              return val;
+
+            // This doesn't touch inputField.value or "value" and "label" attributes
+            this.setSelectionInternal(val);
+            if (val) {
+              // Editable menulist uses "label" as its "value"
+              var label = val.getAttribute("label");
+              this.inputField.value = label;
+              this.setAttribute("value", label);
+              this.setAttribute("label", label);
+            } else {
+              this.inputField.value = "";
+              this.removeAttribute("value");
+              this.removeAttribute("label");
+            }
+
+            var event = document.createEvent("Events");
+            event.initEvent("select", true, true);
+            this.dispatchEvent(event);
+
+            event = document.createEvent("Events");
+            event.initEvent("ValueChange", true, true);
+            this.dispatchEvent(event);
+
+            return val;
+        ]]></setter>
+      </property>
+      <property name="disableautoselect"
+                onget="return this.hasAttribute('disableautoselect');">
+        <setter><![CDATA[
+            if (val) {
+                this.setAttribute("disableautoselect", "true");
+            } else {
+                this.removeAttribute("disableautoselect");
+            }
+            return val;
+        ]]></setter>
+      </property>
+
+      <property name="editor" readonly="true">
+        <getter><![CDATA[
+            return this.inputField.editor;
+        ]]></getter>
+      </property>
+
+      <property name="readOnly" onget="return this.inputField.readOnly;">
+        <setter><![CDATA[
+            this.inputField.readOnly = val;
+            if (val) {
+                this.setAttribute("readonly", "true");
+            } else {
+                this.removeAttribute("readonly");
+            }
+            return val;
+        ]]></setter>
+      </property>
+
+      <method name="select">
+        <body><![CDATA[
+            this.inputField.select();
+        ]]></body>
+      </method>
+    </implementation>
+
+    <handlers>
+      <handler event="focus" phase="capturing"><![CDATA[
+          this.setAttribute("focused", "true");
+      ]]></handler>
+
+      <handler event="blur" phase="capturing"><![CDATA[
+          this.removeAttribute("focused");
+      ]]></handler>
+
+      <handler event="popupshowing"><![CDATA[
+          // editable menulists elements aren't in the focus order,
+          // so when the popup opens we need to force the focus to the inputField
+          if (event.target.parentNode == this) {
+              if (document.commandDispatcher.focusedElement != this.inputField)
+                  this.inputField.focus();
+
+              this.activeChild = null;
+              if (this.selectedItem)
+                  // Not ready for auto-setting the active child in hierarchies yet.
+                  // For now, only do this when the outermost menupopup opens.
+                  this.activeChild = this.mSelectedInternal;
+          }
+      ]]></handler>
+
+      <handler event="keypress"><![CDATA[
+          // open popup if key is up arrow, down arrow, or F4
+          if (!event.ctrlKey && !event.shiftKey) {
+              if (event.keyCode == KeyEvent.DOM_VK_UP ||
+                  event.keyCode == KeyEvent.DOM_VK_DOWN ||
+                  (event.keyCode == KeyEvent.DOM_VK_F4 && !event.altKey)) {
+                  event.preventDefault();
+                  this.open = true;
+              }
+          }
+      ]]></handler>
+    </handlers>
+  </binding>
+</bindings>

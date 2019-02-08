@@ -15,6 +15,7 @@ browser.jar:
     content/browser/schemas/find.json
     content/browser/schemas/geckoProfiler.json
     content/browser/schemas/history.json
+    content/browser/schemas/legacy.json
     content/browser/schemas/menus.json
     content/browser/schemas/menus_child.json
     content/browser/schemas/omnibox.json

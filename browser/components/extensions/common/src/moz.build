@@ -1,0 +1,25 @@
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXTRA_JS_MODULES += [
+    'BootstrapLoader.jsm',
+    'ChromeManifest.jsm',
+    'ExtensionSupport.jsm',
+    'IOUtils.js',
+    'iteratorUtils.jsm',
+    'Overlays.jsm',
+    'RDFManifestConverter.jsm',
+]
+
+SOURCES += [
+    'nsCommonModule.cpp',
+    'nsComponentManagerExtra.cpp',
+]
+
+LOCAL_INCLUDES += [
+    '/netwerk/base'
+]
+
+FINAL_LIBRARY = 'xul'

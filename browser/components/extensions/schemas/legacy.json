@@ -1,0 +1,38 @@
+[
+    {
+      "namespace": "manifest",
+      "types": [
+        {
+          "$extend": "WebExtensionManifest",
+          "properties": {
+            "legacy": {
+              "optional": true,
+              "choices": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "options": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "string"
+                        },
+                        "open_in_tab": {
+                          "type": "boolean",
+                          "optional": true
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+  
