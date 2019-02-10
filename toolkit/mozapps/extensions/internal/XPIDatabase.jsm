@@ -1869,8 +1869,8 @@ this.XPIDatabase = {
 
     if (AddonManager.checkCompatibility) {
       if (!aAddon.isCompatible) {
-        logger.warn(`Add-on ${aAddon.id} is not compatible with application version.`);
-        return false;
+        logger.warn(`Add-on ${aAddon.id} is not compatible with application version, enabling anyway.`);
+        return true;
       }
     } else {
       let app = aAddon.matchingTargetApplication;
