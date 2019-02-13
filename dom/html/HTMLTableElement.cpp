@@ -686,14 +686,11 @@ HTMLTableElement::CreateTHead()
   return head.forget();
 }
 
-void
-HTMLTableElement::DeleteTHead()
-{
-  HTMLTableSectionElement* tHead = GetTHead();
+void HTMLTableElement::DeleteTHead() {
+  RefPtr<HTMLTableSectionElement> tHead = GetTHead();
   if (tHead) {
-    mozilla::ErrorResult rv;
+    mozilla::IgnoredErrorResult rv;
     nsINode::RemoveChild(*tHead, rv);
-    MOZ_ASSERT(!rv.Failed());
   }
 }
 
@@ -717,14 +714,11 @@ HTMLTableElement::CreateTFoot()
   return foot.forget();
 }
 
-void
-HTMLTableElement::DeleteTFoot()
-{
-  HTMLTableSectionElement* tFoot = GetTFoot();
+void HTMLTableElement::DeleteTFoot() {
+  RefPtr<HTMLTableSectionElement> tFoot = GetTFoot();
   if (tFoot) {
-    mozilla::ErrorResult rv;
+    mozilla::IgnoredErrorResult rv;
     nsINode::RemoveChild(*tFoot, rv);
-    MOZ_ASSERT(!rv.Failed());
   }
 }
 
@@ -750,14 +744,11 @@ HTMLTableElement::CreateCaption()
   return caption.forget();
 }
 
-void
-HTMLTableElement::DeleteCaption()
-{
-  HTMLTableCaptionElement* caption = GetCaption();
+void HTMLTableElement::DeleteCaption() {
+  RefPtr<HTMLTableCaptionElement> caption = GetCaption();
   if (caption) {
-    mozilla::ErrorResult rv;
+    mozilla::IgnoredErrorResult rv;
     nsINode::RemoveChild(*caption, rv);
-    MOZ_ASSERT(!rv.Failed());
   }
 }
 
