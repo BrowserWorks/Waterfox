@@ -6265,6 +6265,13 @@ CanvasRenderingContext2D::ShouldForceInactiveLayer(LayerManager* aManager)
   return !aManager->CanUseCanvasLayerForSize(GetSize());
 }
 
+void CanvasRenderingContext2D::SetWriteOnly() {
+  mWriteOnly = true;
+  if (mCanvasElement) {
+    mCanvasElement->SetWriteOnly();
+  }
+}
+
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(CanvasPath, AddRef)
 NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(CanvasPath, Release)
 
