@@ -52,7 +52,7 @@ class ByteBufferStream final : public nsIInputStream {
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  ByteBufferStream(jni::ByteBuffer::Param buffer)
+  explicit ByteBufferStream(jni::ByteBuffer::Param buffer)
       : mBuffer(buffer), mPosition(0), mClosed(false) {
     MOZ_ASSERT(mBuffer);
     MOZ_ASSERT(mBuffer->Address());
@@ -117,7 +117,7 @@ class HeaderVisitor final : public nsIHttpHeaderVisitor {
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  HeaderVisitor(java::WebResponse::Builder::Param aBuilder)
+  explicit HeaderVisitor(java::WebResponse::Builder::Param aBuilder)
       : mBuilder(aBuilder) {}
 
   NS_IMETHOD
@@ -139,7 +139,7 @@ class LoaderListener final : public nsIStreamLoaderObserver,
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  LoaderListener(java::GeckoResult::Param aResult) : mResult(aResult) {
+  explicit LoaderListener(java::GeckoResult::Param aResult) : mResult(aResult) {
     MOZ_ASSERT(mResult);
   }
 
@@ -362,14 +362,19 @@ nsresult WebExecutorSupport::CreateStreamLoader(
   // Headers
   const auto keys = reqBase->GetHeaderKeys();
   const auto values = reqBase->GetHeaderValues();
+  auto contentType = EmptyCString();
   for (size_t i = 0; i < keys->Length(); i++) {
-    const auto key = jni::String::LocalRef(keys->GetElement(i));
-    const auto value = jni::String::LocalRef(values->GetElement(i));
+    const auto key = jni::String::LocalRef(keys->GetElement(i))->ToCString();
+    const auto value =
+        jni::String::LocalRef(values->GetElement(i))->ToCString();
+
+    if (key.LowerCaseEqualsASCII("content-type")) {
+      contentType = value;
+    }
 
     // We clobber any duplicate keys here because we've already merged them
     // in the upstream WebRequest.
-    rv = httpChannel->SetRequestHeader(key->ToCString(), value->ToCString(),
-                                       false /* merge */);
+    rv = httpChannel->SetRequestHeader(key, value, false /* merge */);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -382,7 +387,7 @@ nsresult WebExecutorSupport::CreateStreamLoader(
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = uploadChannel->ExplicitSetUploadStream(
-        stream, EmptyCString(), -1, aRequest->Method()->ToCString(), false);
+        stream, contentType, -1, aRequest->Method()->ToCString(), false);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -421,7 +426,7 @@ nsresult WebExecutorSupport::CreateStreamLoader(
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Finally, open the channel
-  rv = httpChannel->AsyncOpen2(loader);
+  rv = httpChannel->AsyncOpen(loader);
   NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;

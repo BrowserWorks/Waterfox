@@ -133,7 +133,7 @@ enum {
 ASSERT_NODE_FLAGS_SPACE(ELEMENT_TYPE_SPECIFIC_BITS_OFFSET);
 
 namespace mozilla {
-enum class CSSPseudoElementType : uint8_t;
+enum class PseudoStyleType : uint8_t;
 class EventChainPostVisitor;
 class EventChainPreVisitor;
 class EventChainVisitor;
@@ -347,12 +347,11 @@ class Element : public FragmentOrElement {
   DeclarationBlock* GetSMILOverrideStyleDeclaration();
 
   /**
-   * Set the SMIL override style declaration for this element. If
-   * aNotify is true, this method will notify the document's pres
-   * context, so that the style changes will be noticed.
+   * Set the SMIL override style declaration for this element. This method will
+   * notify the document's pres context, so that the style changes will be
+   * noticed.
    */
-  nsresult SetSMILOverrideStyleDeclaration(DeclarationBlock* aDeclaration,
-                                           bool aNotify);
+  nsresult SetSMILOverrideStyleDeclaration(DeclarationBlock* aDeclaration);
 
   /**
    * Returns a new SMILAttr that allows the caller to animate the given
@@ -1081,19 +1080,19 @@ class Element : public FragmentOrElement {
   already_AddRefed<nsIHTMLCollection> GetElementsByClassName(
       const nsAString& aClassNames);
 
-  CSSPseudoElementType GetPseudoElementType() const {
+  PseudoStyleType GetPseudoElementType() const {
     nsresult rv = NS_OK;
     auto raw = GetProperty(nsGkAtoms::pseudoProperty, &rv);
     if (rv == NS_PROPTABLE_PROP_NOT_THERE) {
-      return CSSPseudoElementType::NotPseudo;
+      return PseudoStyleType::NotPseudo;
     }
-    return CSSPseudoElementType(reinterpret_cast<uintptr_t>(raw));
+    return PseudoStyleType(reinterpret_cast<uintptr_t>(raw));
   }
 
-  void SetPseudoElementType(CSSPseudoElementType aPseudo) {
-    static_assert(sizeof(CSSPseudoElementType) <= sizeof(uintptr_t),
+  void SetPseudoElementType(PseudoStyleType aPseudo) {
+    static_assert(sizeof(PseudoStyleType) <= sizeof(uintptr_t),
                   "Need to be able to store this in a void*");
-    MOZ_ASSERT(aPseudo != CSSPseudoElementType::NotPseudo);
+    MOZ_ASSERT(PseudoStyle::IsPseudoElement(aPseudo));
     SetProperty(nsGkAtoms::pseudoProperty, reinterpret_cast<void*>(aPseudo));
   }
 
@@ -1252,11 +1251,6 @@ class Element : public FragmentOrElement {
   MOZ_CAN_RUN_SCRIPT void ScrollTo(const ScrollToOptions& aOptions);
   MOZ_CAN_RUN_SCRIPT void ScrollBy(double aXScrollDif, double aYScrollDif);
   MOZ_CAN_RUN_SCRIPT void ScrollBy(const ScrollToOptions& aOptions);
-  /* Scrolls without flushing the layout.
-   * aDx is the x offset, aDy the y offset in CSS pixels.
-   * Returns true if we actually scrolled.
-   */
-  MOZ_CAN_RUN_SCRIPT bool ScrollByNoFlush(int32_t aDx, int32_t aDy);
   MOZ_CAN_RUN_SCRIPT int32_t ScrollTop();
   MOZ_CAN_RUN_SCRIPT void SetScrollTop(int32_t aScrollTop);
   MOZ_CAN_RUN_SCRIPT int32_t ScrollLeft();
@@ -1326,7 +1320,7 @@ class Element : public FragmentOrElement {
   void GetAnimations(const AnimationFilter& filter,
                      nsTArray<RefPtr<Animation>>& aAnimations);
   static void GetAnimationsUnsorted(Element* aElement,
-                                    CSSPseudoElementType aPseudoType,
+                                    PseudoStyleType aPseudoType,
                                     nsTArray<RefPtr<Animation>>& aAnimations);
 
   virtual void GetInnerHTML(nsAString& aInnerHTML, OOMReporter& aError);

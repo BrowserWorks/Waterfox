@@ -424,6 +424,7 @@ STATIC_ATOMS = [
     Atom("figure", "figure"),
     Atom("findbar", "findbar"),
     Atom("fixed", "fixed"),
+    Atom("fission", "fission"),
     Atom("flags", "flags"),
     Atom("flex", "flex"),
     Atom("flip", "flip"),
@@ -966,6 +967,7 @@ STATIC_ATOMS = [
     Atom("preceding", "preceding"),
     Atom("precedingSibling", "preceding-sibling"),
     Atom("prefersReducedMotion", "prefers-reduced-motion"),
+    Atom("prefersColorScheme", "prefers-color-scheme"),
     Atom("prefix", "prefix"),
     Atom("preload", "preload"),
     Atom("mozpresentation", "mozpresentation"),
@@ -2061,7 +2063,7 @@ STATIC_ATOMS = [
     Atom("restylableAnonymousNode", "restylableAnonymousNode"),  # bool
     Atom("docLevelNativeAnonymousContent", "docLevelNativeAnonymousContent"),  # bool
     Atom("paintRequestTime", "PaintRequestTime"),
-    Atom("pseudoProperty", "PseudoProperty"),  # CSSPseudoElementType
+    Atom("pseudoProperty", "PseudoProperty"),  # PseudoStyleType
     Atom("manualNACProperty", "ManualNACProperty"),  # ManualNAC*
 
     # Languages for lang-specific transforms

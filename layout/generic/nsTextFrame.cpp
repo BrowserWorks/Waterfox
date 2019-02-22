@@ -1433,7 +1433,7 @@ static void BuildTextRuns(DrawTarget* aDrawTarget, nsTextFrame* aForFrame,
   BuildTextRunsScanner scanner(presContext, aDrawTarget, aLineContainer,
                                aWhichTextRun);
 
-  nsBlockFrame* block = nsLayoutUtils::GetAsBlock(aLineContainer);
+  nsBlockFrame* block = do_QueryFrame(aLineContainer);
 
   if (!block) {
     nsIFrame* textRunContainer = aLineContainer;
@@ -1853,49 +1853,49 @@ bool BuildTextRunsScanner::ContinueTextRunAcrossFrames(nsTextFrame* aFrame1,
       aFrame2->GetParent()->GetContent()) {
     // Does aFrame, or any ancestor between it and aAncestor, have a property
     // that should inhibit cross-element-boundary shaping on aSide?
-    auto PreventCrossBoundaryShaping = [](const nsIFrame* aFrame,
-                                          const nsIFrame* aAncestor,
-                                          Side aSide) {
-      while (aFrame != aAncestor) {
-        ComputedStyle* ctx = aFrame->Style();
-        // According to https://drafts.csswg.org/css-text/#boundary-shaping:
-        //
-        // Text shaping must be broken at inline box boundaries when any of the
-        // following are true for any box whose boundary separates the two
-        // typographic character units:
-        //
-        // 1. Any of margin/border/padding separating the two typographic
-        //    character units in the inline axis is non-zero.
-        const nsStyleCoord& margin = ctx->StyleMargin()->mMargin.Get(aSide);
-        if (!margin.ConvertsToLength() || margin.ToLength() != 0) {
-          return true;
-        }
-        const nsStyleCoord& padding = ctx->StylePadding()->mPadding.Get(aSide);
-        if (!padding.ConvertsToLength() || padding.ToLength() != 0) {
-          return true;
-        }
-        if (ctx->StyleBorder()->GetComputedBorderWidth(aSide) != 0) {
-          return true;
-        }
+    auto PreventCrossBoundaryShaping =
+        [](const nsIFrame* aFrame, const nsIFrame* aAncestor, Side aSide) {
+          while (aFrame != aAncestor) {
+            ComputedStyle* ctx = aFrame->Style();
+            // According to https://drafts.csswg.org/css-text/#boundary-shaping:
+            //
+            // Text shaping must be broken at inline box boundaries when any of
+            // the following are true for any box whose boundary separates the
+            // two typographic character units:
+            //
+            // 1. Any of margin/border/padding separating the two typographic
+            //    character units in the inline axis is non-zero.
+            const auto& margin = ctx->StyleMargin()->mMargin.Get(aSide);
+            if (!margin.ConvertsToLength() ||
+                margin.AsLengthPercentage().ToLength() != 0) {
+              return true;
+            }
+            const auto& padding = ctx->StylePadding()->mPadding.Get(aSide);
+            if (!padding.ConvertsToLength() || padding.ToLength() != 0) {
+              return true;
+            }
+            if (ctx->StyleBorder()->GetComputedBorderWidth(aSide) != 0) {
+              return true;
+            }
 
-        // 2. vertical-align is not baseline.
-        const nsStyleCoord& coord = ctx->StyleDisplay()->mVerticalAlign;
-        if (coord.GetUnit() != eStyleUnit_Enumerated ||
-            coord.GetIntValue() != NS_STYLE_VERTICAL_ALIGN_BASELINE) {
-          return true;
-        }
+            // 2. vertical-align is not baseline.
+            const nsStyleCoord& coord = ctx->StyleDisplay()->mVerticalAlign;
+            if (coord.GetUnit() != eStyleUnit_Enumerated ||
+                coord.GetIntValue() != NS_STYLE_VERTICAL_ALIGN_BASELINE) {
+              return true;
+            }
 
-        // 3. The boundary is a bidi isolation boundary.
-        const uint8_t unicodeBidi = ctx->StyleTextReset()->mUnicodeBidi;
-        if (unicodeBidi == NS_STYLE_UNICODE_BIDI_ISOLATE ||
-            unicodeBidi == NS_STYLE_UNICODE_BIDI_ISOLATE_OVERRIDE) {
-          return true;
-        }
+            // 3. The boundary is a bidi isolation boundary.
+            const uint8_t unicodeBidi = ctx->StyleTextReset()->mUnicodeBidi;
+            if (unicodeBidi == NS_STYLE_UNICODE_BIDI_ISOLATE ||
+                unicodeBidi == NS_STYLE_UNICODE_BIDI_ISOLATE_OVERRIDE) {
+              return true;
+            }
 
-        aFrame = aFrame->GetParent();
-      }
-      return false;
-    };
+            aFrame = aFrame->GetParent();
+          }
+          return false;
+        };
 
     const nsIFrame* ancestor =
         nsLayoutUtils::FindNearestCommonAncestorFrame(aFrame1, aFrame2);
@@ -3440,14 +3440,15 @@ static bool CanAddSpacingAfter(const gfxTextRun* aTextRun, uint32_t aOffset) {
 
 static gfxFloat ComputeTabWidthAppUnits(const nsIFrame* aFrame,
                                         gfxTextRun* aTextRun) {
-  const nsStyleText* textStyle = aFrame->StyleText();
-  if (textStyle->mTabSize.GetUnit() != eStyleUnit_Factor) {
-    nscoord w = textStyle->mTabSize.GetCoordValue();
+  const auto& tabSize = aFrame->StyleText()->mMozTabSize;
+  if (tabSize.IsLength()) {
+    nscoord w = tabSize.length._0.ToAppUnits();
     MOZ_ASSERT(w >= 0);
     return w;
   }
 
-  gfxFloat spaces = textStyle->mTabSize.GetFactorValue();
+  MOZ_ASSERT(tabSize.IsNumber());
+  gfxFloat spaces = tabSize.number._0;
   MOZ_ASSERT(spaces >= 0);
 
   // Round the space width when converting to appunits the same way
@@ -5151,7 +5152,7 @@ void nsTextFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 static nsIFrame* GetGeneratedContentOwner(nsIFrame* aFrame, bool* aIsBefore) {
   *aIsBefore = false;
   while (aFrame && (aFrame->GetStateBits() & NS_FRAME_GENERATED_CONTENT)) {
-    if (aFrame->Style()->GetPseudo() == nsCSSPseudoElements::before()) {
+    if (aFrame->Style()->GetPseudoType() == PseudoStyleType::before) {
       *aIsBefore = true;
     }
     aFrame = aFrame->GetParent();
@@ -5293,7 +5294,7 @@ void nsTextFrame::GetTextDecorations(
           nsLayoutUtils::GetColor(f, &nsStyleTextReset::mTextDecorationColor);
     }
 
-    nsBlockFrame* fBlock = nsLayoutUtils::GetAsBlock(f);
+    nsBlockFrame* fBlock = do_QueryFrame(f);
     const bool firstBlock = !nearestBlockFound && fBlock;
 
     // Not updating positions once we hit a parent block is equivalent to
@@ -8734,7 +8735,7 @@ static void RemoveEmptyInFlows(nsTextFrame* aFrame,
   lastRemoved->SetNextInFlow(nullptr);
 
   nsContainerFrame* parent = aFrame->GetParent();
-  nsBlockFrame* parentBlock = nsLayoutUtils::GetAsBlock(parent);
+  nsBlockFrame* parentBlock = do_QueryFrame(parent);
   if (parentBlock) {
     // Manually call DoRemoveFrame so we can tell it that we're
     // removing empty frames; this will keep it from blowing away
@@ -10048,7 +10049,7 @@ bool nsTextFrame::ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas) {
   } else {
     nsIFrame* f = this;
     for (;;) {
-      nsBlockFrame* fBlock = nsLayoutUtils::GetAsBlock(f);
+      nsBlockFrame* fBlock = do_QueryFrame(f);
       if (fBlock) {
         decorationsBlock = fBlock;
         break;

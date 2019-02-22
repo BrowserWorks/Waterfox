@@ -2890,7 +2890,6 @@ impl ComputedValues {
 impl ComputedValues {
     /// Create a new refcounted `ComputedValues`
     pub fn new(
-        _: &Device,
         _: Option<<&PseudoElement>,
         custom_properties: Option<Arc<crate::custom_properties::CustomPropertiesMap>>,
         writing_mode: WritingMode,
@@ -3017,7 +3016,7 @@ impl ComputedValuesInner {
 
     /// Get the logical computed inline size.
     #[inline]
-    pub fn content_inline_size(&self) -> computed::LengthPercentageOrAuto {
+    pub fn content_inline_size(&self) -> computed::Size {
         let position_style = self.get_position();
         if self.writing_mode.is_vertical() {
             position_style.height
@@ -3028,35 +3027,35 @@ impl ComputedValuesInner {
 
     /// Get the logical computed block size.
     #[inline]
-    pub fn content_block_size(&self) -> computed::LengthPercentageOrAuto {
+    pub fn content_block_size(&self) -> computed::Size {
         let position_style = self.get_position();
         if self.writing_mode.is_vertical() { position_style.width } else { position_style.height }
     }
 
     /// Get the logical computed min inline size.
     #[inline]
-    pub fn min_inline_size(&self) -> computed::LengthPercentage {
+    pub fn min_inline_size(&self) -> computed::Size {
         let position_style = self.get_position();
         if self.writing_mode.is_vertical() { position_style.min_height } else { position_style.min_width }
     }
 
     /// Get the logical computed min block size.
     #[inline]
-    pub fn min_block_size(&self) -> computed::LengthPercentage {
+    pub fn min_block_size(&self) -> computed::Size {
         let position_style = self.get_position();
         if self.writing_mode.is_vertical() { position_style.min_width } else { position_style.min_height }
     }
 
     /// Get the logical computed max inline size.
     #[inline]
-    pub fn max_inline_size(&self) -> computed::LengthPercentageOrNone {
+    pub fn max_inline_size(&self) -> computed::MaxSize {
         let position_style = self.get_position();
         if self.writing_mode.is_vertical() { position_style.max_height } else { position_style.max_width }
     }
 
     /// Get the logical computed max block size.
     #[inline]
-    pub fn max_block_size(&self) -> computed::LengthPercentageOrNone {
+    pub fn max_block_size(&self) -> computed::MaxSize {
         let position_style = self.get_position();
         if self.writing_mode.is_vertical() { position_style.max_width } else { position_style.max_height }
     }
@@ -3359,7 +3358,7 @@ impl<'a> StyleBuilder<'a> {
         debug_assert!(parent_style.is_none() ||
                       std::ptr::eq(parent_style.unwrap(),
                                      parent_style_ignoring_first_line.unwrap()) ||
-                      parent_style.unwrap().pseudo() == Some(PseudoElement::FirstLine));
+                      parent_style.unwrap().is_first_line_style());
         let reset_style = device.default_computed_values();
         let inherited_style = parent_style.unwrap_or(reset_style);
         let inherited_style_ignoring_first_line = parent_style_ignoring_first_line.unwrap_or(reset_style);
@@ -3403,7 +3402,7 @@ impl<'a> StyleBuilder<'a> {
         let inherited_style = parent_style.unwrap_or(reset_style);
         #[cfg(feature = "gecko")]
         debug_assert!(parent_style.is_none() ||
-                      parent_style.unwrap().pseudo() != Some(PseudoElement::FirstLine));
+                      !parent_style.unwrap().is_first_line_style());
         StyleBuilder {
             device,
             inherited_style,
@@ -3508,14 +3507,11 @@ impl<'a> StyleBuilder<'a> {
         self.modified_reset = true;
         % endif
 
-        <% props_need_device = ["content", "list_style_type", "font_variant_alternates"] %>
         self.${property.style_struct.ident}.mutate()
             .set_${property.ident}(
                 value,
                 % if property.logical:
                 self.writing_mode,
-                % elif product == "gecko" and property.ident in props_need_device:
-                self.device,
                 % endif
             );
     }
@@ -3627,11 +3623,12 @@ impl<'a> StyleBuilder<'a> {
                  Position::Absolute | Position::Fixed)
     }
 
-    /// Whether this style has a top-layer style. That's implemented in Gecko
-    /// via the -moz-top-layer property, but servo doesn't have any concept of a
-    /// top layer (yet, it's needed for fullscreen).
+    /// Whether this style has a top-layer style.
     #[cfg(feature = "servo")]
-    pub fn in_top_layer(&self) -> bool { false }
+    pub fn in_top_layer(&self) -> bool {
+        matches!(self.get_box().clone__servo_top_layer(),
+                 longhands::_servo_top_layer::computed_value::T::Top)
+    }
 
     /// Whether this style has a top-layer style.
     #[cfg(feature = "gecko")]
@@ -3654,7 +3651,6 @@ impl<'a> StyleBuilder<'a> {
     /// Turns this `StyleBuilder` into a proper `ComputedValues` instance.
     pub fn build(self) -> Arc<ComputedValues> {
         ComputedValues::new(
-            self.device,
             self.pseudo,
             self.custom_properties,
             self.writing_mode,

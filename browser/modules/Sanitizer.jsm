@@ -669,9 +669,14 @@ async function sanitizeOnShutdown(progress) {
 
   if (Sanitizer.shouldSanitizeOnShutdown) {
     // Need to sanitize upon shutdown
+    progress.advancement = "shutdown-cleaner";
     let itemsToClear = getItemsToClearFromPrefBranch(Sanitizer.PREF_SHUTDOWN_BRANCH);
     await Sanitizer.sanitize(itemsToClear, { progress });
   }
+
+  // Here is the list of principals with site data.
+  progress.advancement = "get-principals";
+  let principals = await getAllPrincipals(progress);
 
   // Clear out QuotaManager storage for principals that have been marked as
   // session only.  The cookie service has special logic that avoids writing
@@ -698,9 +703,12 @@ async function sanitizeOnShutdown(progress) {
   if (Services.prefs.getIntPref(PREF_COOKIE_LIFETIME,
                                 Ci.nsICookieService.ACCEPT_NORMALLY) == Ci.nsICookieService.ACCEPT_SESSION) {
     log("Session-only configuration detected");
-    let principals = await getAllPrincipals();
-    await maybeSanitizeSessionPrincipals(principals);
+    progress.advancement = "session-only";
+    await maybeSanitizeSessionPrincipals(progress, principals);
+    return;
   }
+
+  progress.advancement = "session-permission";
 
   // Let's see if we have to forget some particular site.
   for (let permission of Services.perms.enumerator) {
@@ -717,11 +725,12 @@ async function sanitizeOnShutdown(progress) {
     log("Custom session cookie permission detected for: " + permission.principal.URI.spec);
 
     // We use just the URI here, because permissions ignore OriginAttributes.
-    let principals = await getAllPrincipals(permission.principal.URI);
-    await maybeSanitizeSessionPrincipals(principals);
+    let selectedPrincipals = extractMatchingPrincipals(principals, permission.principal.URI);
+    await maybeSanitizeSessionPrincipals(progress, selectedPrincipals);
   }
 
   if (Sanitizer.shouldSanitizeNewTabContainer) {
+    progress.advancement = "newtab-segregation";
     sanitizeNewTabSegregation();
     removePendingSanitization("newtab-container");
   }
@@ -732,12 +741,13 @@ async function sanitizeOnShutdown(progress) {
     removePendingSanitization("shutdown");
     Services.prefs.savePrefFile(null);
   }
+
+  progress.advancement = "done";
 }
 
-// Retrieve the list of nsIPrincipals with site data. If matchUri is not null,
-// it returns only the principals matching that URI, ignoring the
-// OriginAttributes.
-async function getAllPrincipals(matchUri = null) {
+// Retrieve the list of nsIPrincipals with site data.
+async function getAllPrincipals(progress) {
+  progress.step = "principals-quota-manager";
   let principals = await new Promise(resolve => {
     quotaManagerService.getUsage(request => {
       if (request.resultCode != Cr.NS_OK) {
@@ -751,11 +761,7 @@ async function getAllPrincipals(matchUri = null) {
       for (let item of request.result) {
         let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(item.origin);
         let uri = principal.URI;
-        if (!isSupportedURI(uri)) {
-          continue;
-        }
-
-        if (!matchUri || Services.eTLD.hasRootDomain(matchUri.host, uri.host)) {
+        if (isSupportedURI(uri)) {
           list.push(principal);
         }
       }
@@ -763,25 +769,23 @@ async function getAllPrincipals(matchUri = null) {
     });
   }).catch(() => []);
 
+  progress.step = "principals-service-workers";
   let serviceWorkers = serviceWorkerManager.getAllRegistrations();
   for (let i = 0; i < serviceWorkers.length; i++) {
     let sw = serviceWorkers.queryElementAt(i, Ci.nsIServiceWorkerRegistrationInfo);
-    let uri = sw.principal.URI;
     // We don't need to check the scheme. SW are just exposed to http/https URLs.
-    if (!matchUri || Services.eTLD.hasRootDomain(matchUri.host, uri.host)) {
-      principals.push(sw.principal);
-    }
+    principals.push(sw.principal);
   }
 
   // Let's take the list of unique hosts+OA from cookies.
+  progress.step = "principals-cookies";
   let enumerator = Services.cookies.enumerator;
   let hosts = new Set();
   for (let cookie of enumerator) {
-    if (!matchUri || Services.eTLD.hasRootDomain(matchUri.host, cookie.rawHost)) {
-      hosts.add(cookie.rawHost + ChromeUtils.originAttributesToSuffix(cookie.originAttributes));
-    }
+    hosts.add(cookie.rawHost + ChromeUtils.originAttributesToSuffix(cookie.originAttributes));
   }
 
+  progress.step = "principals-host-cookie";
   hosts.forEach(host => {
     // Cookies and permissions are handled by origin/host. Doesn't matter if we
     // use http: or https: schema here.
@@ -789,22 +793,35 @@ async function getAllPrincipals(matchUri = null) {
       Services.scriptSecurityManager.createCodebasePrincipalFromOrigin("https://" + host));
   });
 
+  progress.step = "total-principals:" + principals.length;
   return principals;
+}
+
+// Extracts the principals matching matchUri as root domain.
+function extractMatchingPrincipals(principals, matchUri) {
+  return principals.filter(principal => {
+    return Services.eTLD.hasRootDomain(matchUri.host, principal.URI.host);
+  });
 }
 
 // This method receives a list of principals and it checks if some of them or
 // some of their sub-domain need to be sanitize.
-async function maybeSanitizeSessionPrincipals(principals) {
+async function maybeSanitizeSessionPrincipals(progress, principals) {
   log("Sanitizing " + principals.length + " principals");
 
   let promises = [];
 
   principals.forEach(principal => {
-    if (!cookiesAllowedForDomainOrSubDomain(principal)) {
-      promises.push(sanitizeSessionPrincipal(principal));
+    progress.step = "checking-principal";
+    let cookieAllowed = cookiesAllowedForDomainOrSubDomain(principal);
+    progress.step = "principal-checked:" + cookieAllowed;
+
+    if (!cookieAllowed) {
+      promises.push(sanitizeSessionPrincipal(progress, principal));
     }
   });
 
+  progress.step = "promises:" + promises.length;
   return Promise.all(promises);
 }
 
@@ -853,15 +870,17 @@ function cookiesAllowedForDomainOrSubDomain(principal) {
   return false;
 }
 
-async function sanitizeSessionPrincipal(principal) {
+async function sanitizeSessionPrincipal(progress, principal) {
   log("Sanitizing principal: " + principal.URI.spec);
 
+  progress.step = "sanitizing";
   await new Promise(resolve => {
     Services.clearData.deleteDataFromPrincipal(principal, true /* user request */,
                                                Ci.nsIClearDataService.CLEAR_DOM_STORAGES |
                                                Ci.nsIClearDataService.CLEAR_COOKIES,
                                                resolve);
   });
+  progress.step = "sanitized";
 }
 
 function sanitizeNewTabSegregation() {

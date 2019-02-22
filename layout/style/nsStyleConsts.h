@@ -274,9 +274,11 @@ enum class StyleImageLayerRepeat : uint8_t {
 };
 
 // Mask mode
-#define NS_STYLE_MASK_MODE_ALPHA 0
-#define NS_STYLE_MASK_MODE_LUMINANCE 1
-#define NS_STYLE_MASK_MODE_MATCH_SOURCE 2
+enum class StyleMaskMode : uint8_t {
+  Alpha = 0,
+  Luminance,
+  MatchSource
+};
 
 // See nsStyleTable
 #define NS_STYLE_BORDER_COLLAPSE 0
@@ -284,9 +286,6 @@ enum class StyleImageLayerRepeat : uint8_t {
 
 // border-image-repeat
 enum class StyleBorderImageRepeat : uint8_t { Stretch, Repeat, Round, Space };
-
-#define NS_STYLE_BORDER_IMAGE_SLICE_NOFILL 0
-#define NS_STYLE_BORDER_IMAGE_SLICE_FILL 1
 
 // See nsStyleContent
 enum class StyleContent : uint8_t {
@@ -386,10 +385,12 @@ enum class StyleContent : uint8_t {
 #define NS_STYLE_JUSTIFY_ALL_SHIFT NS_STYLE_ALIGN_ALL_SHIFT
 
 // See nsStylePosition
-#define NS_STYLE_FLEX_DIRECTION_ROW 0
-#define NS_STYLE_FLEX_DIRECTION_ROW_REVERSE 1
-#define NS_STYLE_FLEX_DIRECTION_COLUMN 2
-#define NS_STYLE_FLEX_DIRECTION_COLUMN_REVERSE 3
+enum class StyleFlexDirection : uint8_t {
+	Row,
+	RowReverse,
+	Column,
+	ColumnReverse,
+};
 
 // See nsStylePosition
 #define NS_STYLE_FLEX_WRAP_NOWRAP 0
@@ -477,27 +478,6 @@ enum class StyleGridTrackBreadth : uint8_t {
 // See nsStyleFont::mMathDisplay
 #define NS_MATHML_DISPLAYSTYLE_INLINE 0
 #define NS_MATHML_DISPLAYSTYLE_BLOCK 1
-
-// See nsStylePosition::mWidth, mMinWidth, mMaxWidth
-#define NS_STYLE_WIDTH_MAX_CONTENT \
-  ((uint8_t)mozilla::StyleExtremumLength::MaxContent)
-#define NS_STYLE_WIDTH_MIN_CONTENT \
-  ((uint8_t)mozilla::StyleExtremumLength::MinContent)
-#define NS_STYLE_WIDTH_FIT_CONTENT \
-  ((uint8_t)mozilla::StyleExtremumLength::MozFitContent)
-#define NS_STYLE_WIDTH_AVAILABLE \
-  ((uint8_t)mozilla::StyleExtremumLength::MozAvailable)
-// The 'content' keyword is only valid for 'flex-basis' (not for 'width').  But
-// aside from that, the 'flex-basis' property accepts exactly the same values
-// as 'width'. So I'm listing this one 'flex-basis'-specific enumerated value
-// alongside the 'width' ones, to be sure we don't accidentally overload this
-// numeric value with two different meanings if new 'width' keywords are added.
-#define NS_STYLE_FLEX_BASIS_CONTENT 4
-static_assert(NS_STYLE_FLEX_BASIS_CONTENT != NS_STYLE_WIDTH_MAX_CONTENT &&
-                  NS_STYLE_FLEX_BASIS_CONTENT != NS_STYLE_WIDTH_MIN_CONTENT &&
-                  NS_STYLE_FLEX_BASIS_CONTENT != NS_STYLE_WIDTH_FIT_CONTENT &&
-                  NS_STYLE_FLEX_BASIS_CONTENT != NS_STYLE_WIDTH_AVAILABLE,
-              "Should use different enum value for flex basis content");
 
 // See nsStyleDisplay.mPosition
 #define NS_STYLE_POSITION_STATIC 0

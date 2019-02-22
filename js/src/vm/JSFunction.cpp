@@ -22,6 +22,7 @@
 #include "jstypes.h"
 
 #include "builtin/Array.h"
+#include "builtin/BigInt.h"
 #include "builtin/Eval.h"
 #include "builtin/Object.h"
 #include "builtin/SelfHostingDefines.h"
@@ -301,7 +302,7 @@ bool CallerGetterImpl(JSContext* cx, const CallArgs& args) {
   // caller is a function with strict mode code, throw a TypeError per ES5.
   // If we pass these checks, we can return the computed caller.
   {
-    JSObject* callerObj = CheckedUnwrap(caller);
+    JSObject* callerObj = CheckedUnwrapStatic(caller);
     if (!callerObj) {
       args.rval().setNull();
       return true;
@@ -1544,7 +1545,10 @@ static JSAtom* AppendBoundFunctionPrefix(JSContext* cx, JSString* str) {
 /* static */ bool JSFunction::createScriptForLazilyInterpretedFunction(
     JSContext* cx, HandleFunction fun) {
   MOZ_ASSERT(fun->isInterpretedLazy());
+  MOZ_ASSERT(cx->compartment() == fun->compartment());
 
+  // The function must be same-compartment but might be cross-realm. Make sure
+  // the script is created in the function's realm.
   AutoRealm ar(cx, fun);
 
   Rooted<LazyScript*> lazy(cx, fun->lazyScriptOrNull());
@@ -2213,8 +2217,8 @@ static inline JSFunction* NewFunctionClone(JSContext* cx, HandleFunction fun,
   // runtime. In the latter case we should actually clear the flag before
   // cloning the function, but since we can't differentiate between both
   // cases here, we'll end up with a momentarily incorrect function name.
-  // This will be fixed up in SetFunctionNameIfNoOwnName(), which should
-  // happen through JSOP_SETFUNNAME directly after JSOP_LAMBDA.
+  // This will be fixed up in SetFunctionName(), which should happen through
+  // JSOP_SETFUNNAME directly after JSOP_LAMBDA.
   constexpr uint16_t NonCloneableFlags = JSFunction::EXTENDED |
                                          JSFunction::RESOLVED_LENGTH |
                                          JSFunction::RESOLVED_NAME;
@@ -2471,28 +2475,23 @@ JSAtom* js::IdToFunctionName(
   return NameToFunctionName(cx, idv, prefixKind);
 }
 
-bool js::SetFunctionNameIfNoOwnName(JSContext* cx, HandleFunction fun,
-                                    HandleValue name,
-                                    FunctionPrefixKind prefixKind) {
+bool js::SetFunctionName(JSContext* cx, HandleFunction fun, HandleValue name,
+                         FunctionPrefixKind prefixKind) {
   MOZ_ASSERT(name.isString() || name.isSymbol() || name.isNumber());
 
-  // An inferred name may already be set if this function is a clone of a
-  // singleton function. Clear the inferred name in all cases, even if we
-  // end up not adding a new inferred name if |fun| is a class constructor.
+  // `fun` is a newly created function, so normally it can't already have an
+  // inferred name. The rare exception is when `fun` was created by cloning
+  // a singleton function; see the comment in NewFunctionClone. In that case,
+  // the inferred name is bogus, so clear it out.
   if (fun->hasInferredName()) {
     MOZ_ASSERT(fun->isSingleton());
     fun->clearInferredName();
   }
 
-  if (fun->isClassConstructor()) {
-    // A class may have static 'name' method or accessor.
-    if (fun->contains(cx, cx->names().name)) {
-      return true;
-    }
-  } else {
-    // Anonymous function shouldn't have own 'name' property at this point.
-    MOZ_ASSERT(!fun->containsPure(cx->names().name));
-  }
+  // Anonymous functions should neither have an own 'name' property nor a
+  // resolved name at this point.
+  MOZ_ASSERT(!fun->containsPure(cx->names().name));
+  MOZ_ASSERT(!fun->hasResolvedName());
 
   JSAtom* funName = name.isSymbol()
                         ? SymbolToFunctionName(cx, name.toSymbol(), prefixKind)
@@ -2500,13 +2499,6 @@ bool js::SetFunctionNameIfNoOwnName(JSContext* cx, HandleFunction fun,
   if (!funName) {
     return false;
   }
-
-  // RESOLVED_NAME shouldn't yet be set, at least as long as we don't
-  // support the "static public fields" or "decorators" proposal.
-  // These two proposals allow to access class constructors before
-  // JSOP_SETFUNNAME is executed, which means user code may have set the
-  // RESOLVED_NAME flag when we reach this point.
-  MOZ_ASSERT(!fun->hasResolvedName());
 
   fun->setInferredName(funName);
 
@@ -2562,6 +2554,8 @@ void js::ReportIncompatibleMethod(JSContext* cx, const CallArgs& args,
     MOZ_ASSERT(clasp != &BooleanObject::class_);
   } else if (thisv.isSymbol()) {
     MOZ_ASSERT(clasp != &SymbolObject::class_);
+  } else if (thisv.isBigInt()) {
+    MOZ_ASSERT(clasp != &BigIntObject::class_);
   } else {
     MOZ_ASSERT(thisv.isUndefined() || thisv.isNull());
   }

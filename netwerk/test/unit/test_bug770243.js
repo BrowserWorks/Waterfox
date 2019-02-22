@@ -139,7 +139,7 @@ var tests = [
   // Test 1: 200 (cacheable)
   function() {
     var ch = makeChan();
-    ch.asyncOpen2(new ChannelListener(function(req, body) {
+    ch.asyncOpen(new ChannelListener(function(req, body) {
       Assert.equal(body, "Response body 1");
       sync_and_run_next_test();
     }, null, CL_NOT_FROM_CACHE));
@@ -148,7 +148,7 @@ var tests = [
   // Test 2: 401 and 200 + new content
   function() {
     var ch = makeChan();
-    ch.asyncOpen2(new ChannelListener(function(req, body) {
+    ch.asyncOpen(new ChannelListener(function(req, body) {
       Assert.equal(body, "Response body 2");
       sync_and_run_next_test();
     }, null, CL_NOT_FROM_CACHE));
@@ -157,7 +157,7 @@ var tests = [
   // Test 3: 401 and 304
   function() {
     var ch = makeChan();
-    ch.asyncOpen2(new ChannelListener(function(req, body) {
+    ch.asyncOpen(new ChannelListener(function(req, body) {
       Assert.equal(body, "Response body 2");
       sync_and_run_next_test();
     }, null, CL_FROM_CACHE));
@@ -166,7 +166,7 @@ var tests = [
   // Test 4: 407 and 200 + new content
   function() {
     var ch = makeChan();
-    ch.asyncOpen2(new ChannelListener(function(req, body) {
+    ch.asyncOpen(new ChannelListener(function(req, body) {
       Assert.equal(body, "Response body 3");
       sync_and_run_next_test();
     }, null, CL_NOT_FROM_CACHE));
@@ -175,7 +175,7 @@ var tests = [
   // Test 5: 407 and 304
   function() {
     var ch = makeChan();
-    ch.asyncOpen2(new ChannelListener(function(req, body) {
+    ch.asyncOpen(new ChannelListener(function(req, body) {
       Assert.equal(body, "Response body 3");
       sync_and_run_next_test();
     }, null, CL_FROM_CACHE));
@@ -199,7 +199,7 @@ function run_test()
                          .getService(Ci.nsIPrefBranch);
   prefs.setCharPref("network.proxy.http", "localhost");
   prefs.setIntPref("network.proxy.http_port", httpserv.identity.primaryPort);
-  prefs.setCharPref("network.proxy.no_proxies_on", "");
+  prefs.setBoolPref("network.proxy.allow_hijacking_localhost", true);
   prefs.setIntPref("network.proxy.type", 1);
   prefs.setBoolPref("network.http.rcwn.enabled", false);
 

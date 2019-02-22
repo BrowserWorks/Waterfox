@@ -10,15 +10,22 @@ from __future__ import absolute_import, print_function, unicode_literals
 from taskgraph.transforms.task import taskref_or_string
 from taskgraph.transforms.job import run_job_using
 from taskgraph.util.schema import Schema
-from taskgraph.transforms.job.common import support_vcs_checkout
-from voluptuous import Required, Any
+from taskgraph.transforms.job.common import (
+        docker_worker_add_tooltool,
+        support_vcs_checkout
+)
+from voluptuous import Any, Optional, Required
 
 run_task_schema = Schema({
     Required('using'): 'run-task',
 
     # if true, add a cache at ~worker/.cache, which is where things like pip
     # tend to hide their caches.  This cache is never added for level-1 jobs.
+    # TODO Once bug 1526028 is fixed, this and 'use-caches' should be merged.
     Required('cache-dotcache'): bool,
+
+    # Whether or not to use caches.
+    Optional('use-caches'): bool,
 
     # if true (the default), perform a checkout of gecko on the worker
     Required('checkout'): bool,
@@ -38,6 +45,16 @@ run_task_schema = Schema({
 
     # Base work directory used to set up the task.
     Required('workdir'): basestring,
+
+    # If not false, tooltool downloads will be enabled via relengAPIProxy
+    # for either just public files, or all files. Only supported on
+    # docker-worker.
+    Required('tooltool-downloads'): Any(
+        False,
+        'public',
+        'internal',
+    ),
+
 })
 
 
@@ -60,6 +77,7 @@ worker_defaults = {
     'checkout': True,
     'comm-checkout': False,
     'sparse-profile': None,
+    'tooltool-downloads': False,
 }
 
 
@@ -75,10 +93,14 @@ def docker_worker_run_task(config, job, taskdesc):
     command = ['/builds/worker/bin/run-task']
     common_setup(config, job, taskdesc, command)
 
+    if run['tooltool-downloads']:
+        internal = run['tooltool-downloads'] == 'internal'
+        docker_worker_add_tooltool(config, job, taskdesc, internal=internal)
+
     if run.get('cache-dotcache'):
         worker['caches'].append({
             'type': 'persistent',
-            'name': 'level-{level}-{project}-dotcache'.format(**config.params),
+            'name': '{project}-dotcache'.format(**config.params),
             'mount-point': '{workdir}/.cache'.format(**run),
             'skip-untrusted': True,
         })
@@ -90,26 +112,6 @@ def docker_worker_run_task(config, job, taskdesc):
     if run['comm-checkout']:
         command.append('--comm-checkout={workdir}/checkouts/gecko/comm'.format(**run))
     command.append('--fetch-hgfingerprint')
-    command.append('--')
-    command.extend(run_command)
-    worker['command'] = command
-
-
-@run_job_using("native-engine", "run-task", schema=run_task_schema, defaults=worker_defaults)
-def native_engine_run_task(config, job, taskdesc):
-    run = job['run']
-    worker = taskdesc['worker'] = job['worker']
-    command = ['./run-task']
-    common_setup(config, job, taskdesc, command)
-
-    worker['context'] = run_task_url(config)
-
-    if run.get('cache-dotcache'):
-        raise Exception("No cache support on native-worker; can't use cache-dotcache")
-
-    run_command = run['command']
-    if isinstance(run_command, basestring):
-        run_command = ['bash', '-cx', run_command]
     command.append('--')
     command.extend(run_command)
     worker['command'] = command
@@ -134,7 +136,7 @@ def generic_worker_run_task(config, job, taskdesc):
     worker.setdefault('mounts', [])
     if run.get('cache-dotcache'):
         worker['mounts'].append({
-            'cache-name': 'level-{level}-{project}-dotcache'.format(**config.params),
+            'cache-name': '{project}-dotcache'.format(**config.params),
             'directory': '{workdir}/.cache'.format(**run),
         })
     worker['mounts'].append({

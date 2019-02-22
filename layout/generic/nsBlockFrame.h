@@ -144,8 +144,7 @@ class nsBlockFrame : public nsContainerFrame {
                         const nsDisplayListSet& aLists) override;
   bool IsFrameOfType(uint32_t aFlags) const override {
     return nsContainerFrame::IsFrameOfType(
-        aFlags &
-        ~(nsIFrame::eCanContainOverflowContainers | nsIFrame::eBlockFrame));
+        aFlags & ~(nsIFrame::eCanContainOverflowContainers));
   }
 
   void InvalidateFrame(uint32_t aDisplayItemKey = 0,
@@ -908,7 +907,7 @@ class nsBlockFrame : public nsContainerFrame {
   // mozListBullet or mozListNumber.  Passing in the style set is an
   // optimization, because all callsites have it.
   already_AddRefed<ComputedStyle> ResolveBulletStyle(
-      mozilla::CSSPseudoElementType aType, mozilla::ServoStyleSet* aStyleSet);
+      mozilla::PseudoStyleType aType, mozilla::ServoStyleSet* aStyleSet);
 
 #ifdef DEBUG
   void VerifyLines(bool aFinalCheckOK);

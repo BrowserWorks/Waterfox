@@ -74,7 +74,7 @@ class LogCollector;
 namespace net {
 extern mozilla::LazyLogModule gHttpLog;
 
-typedef nsTArray<Tuple<nsCString, nsCString>> ArrayOfStringPairs;
+class PreferredAlternativeDataTypeParams;
 
 enum CacheDisposition : uint8_t {
   kCacheUnresolved = 0,
@@ -169,7 +169,6 @@ class HttpBaseChannel : public nsHashPropertyBag,
   NS_IMETHOD GetContentLength(int64_t *aContentLength) override;
   NS_IMETHOD SetContentLength(int64_t aContentLength) override;
   NS_IMETHOD Open(nsIInputStream **aResult) override;
-  NS_IMETHOD Open2(nsIInputStream **aResult) override;
   NS_IMETHOD GetBlockAuthPrompt(bool *aValue) override;
   NS_IMETHOD SetBlockAuthPrompt(bool aValue) override;
 
@@ -221,6 +220,7 @@ class HttpBaseChannel : public nsHashPropertyBag,
   NS_IMETHOD RedirectTo(nsIURI *newURI) override;
   NS_IMETHOD SwitchProcessTo(mozilla::dom::Promise *aTabParent,
                              uint64_t aIdentifier) override;
+  NS_IMETHOD HasCrossOriginOpenerPolicyMismatch(bool *aMismatch) override;
   NS_IMETHOD UpgradeToSecure() override;
   NS_IMETHOD GetRequestContextID(uint64_t *aRCID) override;
   NS_IMETHOD GetTransferSize(uint64_t *aTransferSize) override;
@@ -295,6 +295,7 @@ class HttpBaseChannel : public nsHashPropertyBag,
   NS_IMETHOD SetFetchCacheMode(uint32_t aFetchCacheMode) override;
   NS_IMETHOD GetTopWindowURI(nsIURI **aTopWindowURI) override;
   NS_IMETHOD SetTopWindowURIIfUnknown(nsIURI *aTopWindowURI) override;
+  NS_IMETHOD SetTopWindowPrincipal(nsIPrincipal *aTopWindowPrincipal) override;
   NS_IMETHOD GetProxyURI(nsIURI **proxyURI) override;
   virtual void SetCorsPreflightParameters(
       const nsTArray<nsCString> &unsafeHeaders) override;
@@ -454,6 +455,7 @@ class HttpBaseChannel : public nsHashPropertyBag,
 
  protected:
   nsresult GetTopWindowURI(nsIURI *aURIBeingLoaded, nsIURI **aTopWindowURI);
+  nsresult GetTopWindowPrincipal(nsIPrincipal **aTopWindowPrincipal);
 
   // Handle notifying listener, removing from loadgroup if request failed.
   void DoNotifyListener();
@@ -549,8 +551,8 @@ class HttpBaseChannel : public nsHashPropertyBag,
   nsCOMPtr<nsIURI> mProxyURI;
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsCOMPtr<nsIURI> mTopWindowURI;
+  nsCOMPtr<nsIPrincipal> mTopWindowPrincipal;
   nsCOMPtr<nsIStreamListener> mListener;
-  nsCOMPtr<nsISupports> mListenerContext;
   // An instance of nsHTTPCompressConv
   nsCOMPtr<nsIStreamListener> mCompressListener;
 
@@ -578,7 +580,7 @@ class HttpBaseChannel : public nsHashPropertyBag,
   // the HTML file.
   nsString mInitiatorType;
   // Holds the name of the preferred alt-data type for each contentType.
-  ArrayOfStringPairs mPreferredCachedAltDataTypes;
+  nsTArray<PreferredAlternativeDataTypeParams> mPreferredCachedAltDataTypes;
   // Holds the name of the alternative data type the channel returned.
   nsCString mAvailableCachedAltDataType;
   nsString mIntegrityMetadata;

@@ -27,6 +27,7 @@
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/BackgroundHangMonitor.h"
+#include "mozilla/Components.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/FStream.h"
 #include "mozilla/IOInterposer.h"
@@ -102,6 +103,7 @@ using namespace mozilla;
 using mozilla::dom::AutoJSAPI;
 using mozilla::dom::Promise;
 using mozilla::Telemetry::CombinedStacks;
+using mozilla::Telemetry::EventExtraEntry;
 using mozilla::Telemetry::TelemetryIOInterposeObserver;
 using Telemetry::Common::AutoHashtable;
 using Telemetry::Common::GetCurrentProduct;
@@ -1105,12 +1107,14 @@ TelemetryImpl::SetCanRecordBase(bool canRecord) {
   if (recordreplay::IsRecordingOrReplaying()) {
     return NS_OK;
   }
+#ifndef FUZZING
   if (canRecord != mCanRecordBase) {
     TelemetryHistogram::SetCanRecordBase(canRecord);
     TelemetryScalar::SetCanRecordBase(canRecord);
     TelemetryEvent::SetCanRecordBase(canRecord);
     mCanRecordBase = canRecord;
   }
+#endif
   return NS_OK;
 }
 
@@ -1132,12 +1136,14 @@ TelemetryImpl::SetCanRecordExtended(bool canRecord) {
   if (recordreplay::IsRecordingOrReplaying()) {
     return NS_OK;
   }
+#ifndef FUZZING
   if (canRecord != mCanRecordExtended) {
     TelemetryHistogram::SetCanRecordExtended(canRecord);
     TelemetryScalar::SetCanRecordExtended(canRecord);
     TelemetryEvent::SetCanRecordExtended(canRecord);
     mCanRecordExtended = canRecord;
   }
+#endif
   return NS_OK;
 }
 
@@ -1170,6 +1176,7 @@ already_AddRefed<nsITelemetry> TelemetryImpl::CreateTelemetryInstance() {
       "CreateTelemetryInstance may only be called once, via GetService()");
 
   bool useTelemetry = false;
+#ifndef FUZZING
   if ((XRE_IsParentProcess() || XRE_IsContentProcess() || XRE_IsGPUProcess() ||
        XRE_IsSocketProcess()) &&
       // Telemetry is never accumulated when recording or replaying, both
@@ -1179,6 +1186,7 @@ already_AddRefed<nsITelemetry> TelemetryImpl::CreateTelemetryInstance() {
       !recordreplay::IsRecordingOrReplaying()) {
     useTelemetry = true;
   }
+#endif
 
   // Set current product (determines Fennec/GeckoView at runtime).
   SetCurrentProduct();
@@ -1538,35 +1546,6 @@ bool TelemetryImpl::CanRecordReleaseData() { return CanRecordBase(); }
 bool TelemetryImpl::CanRecordPrereleaseData() { return CanRecordExtended(); }
 
 NS_IMPL_ISUPPORTS(TelemetryImpl, nsITelemetry, nsIMemoryReporter)
-NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsITelemetry,
-                                         TelemetryImpl::CreateTelemetryInstance)
-
-#define NS_TELEMETRY_CID                             \
-  {                                                  \
-    0xaea477f2, 0xb3a2, 0x469c, {                    \
-      0xaa, 0x29, 0x0a, 0x82, 0xd1, 0x32, 0xb8, 0x29 \
-    }                                                \
-  }
-NS_DEFINE_NAMED_CID(NS_TELEMETRY_CID);
-
-const Module::CIDEntry kTelemetryCIDs[] = {
-    {&kNS_TELEMETRY_CID, false, nullptr, nsITelemetryConstructor,
-     Module::ALLOW_IN_GPU_VR_AND_SOCKET_PROCESS},
-    {nullptr}};
-
-const Module::ContractIDEntry kTelemetryContracts[] = {
-    {"@mozilla.org/base/telemetry;1", &kNS_TELEMETRY_CID,
-     Module::ALLOW_IN_GPU_VR_AND_SOCKET_PROCESS},
-    {nullptr}};
-
-const Module kTelemetryModule = {Module::kVersion,
-                                 kTelemetryCIDs,
-                                 kTelemetryContracts,
-                                 nullptr,
-                                 nullptr,
-                                 nullptr,
-                                 TelemetryImpl::ShutdownTelemetry,
-                                 Module::ALLOW_IN_GPU_VR_AND_SOCKET_PROCESS};
 
 NS_IMETHODIMP
 TelemetryImpl::GetFileIOReports(JSContext* cx, JS::MutableHandleValue ret) {
@@ -1825,8 +1804,6 @@ TelemetryImpl::GetAllStores(JSContext* aCx, JS::MutableHandleValue aResult) {
 //
 // EXTERNALLY VISIBLE FUNCTIONS in no name space
 // These are NOT listed in Telemetry.h
-
-NSMODULE_DEFN(nsTelemetryModule) = &kTelemetryModule;
 
 /**
  * The XRE_TelemetryAdd function is to be used by embedding applications
@@ -2126,5 +2103,21 @@ void ScalarSetMaximum(mozilla::Telemetry::ScalarID aId, const nsAString& aKey,
   TelemetryScalar::SetMaximum(aId, aKey, aVal);
 }
 
+void RecordEvent(mozilla::Telemetry::EventID aId,
+                 const mozilla::Maybe<nsCString>& aValue,
+                 const mozilla::Maybe<nsTArray<EventExtraEntry>>& aExtra) {
+  TelemetryEvent::RecordEventNative(aId, aValue, aExtra);
+}
+
+void SetEventRecordingEnabled(const nsACString& aCategory, bool aEnabled) {
+  TelemetryEvent::SetEventRecordingEnabled(aCategory, aEnabled);
+}
+
+void ShutdownTelemetry() { TelemetryImpl::ShutdownTelemetry(); }
+
 }  // namespace Telemetry
 }  // namespace mozilla
+
+NS_IMPL_COMPONENT_FACTORY(nsITelemetry) {
+  return TelemetryImpl::CreateTelemetryInstance().downcast<nsISupports>();
+}

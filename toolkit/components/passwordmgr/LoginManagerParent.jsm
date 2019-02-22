@@ -15,6 +15,8 @@ ChromeUtils.defineModuleGetter(this, "DeferredTask",
                                "resource://gre/modules/DeferredTask.jsm");
 ChromeUtils.defineModuleGetter(this, "LoginHelper",
                                "resource://gre/modules/LoginHelper.jsm");
+ChromeUtils.defineModuleGetter(this, "PrivateBrowsingUtils",
+                               "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "log", () => {
   let logger = LoginHelper.createLogger("LoginManagerParent");
@@ -65,7 +67,7 @@ var LoginManagerParent = {
     return LoginHelper.dedupeLogins(logins, ["username"], resolveBy, formOrigin);
   },
 
-  // Listeners are added in nsBrowserGlue.js on desktop
+  // Listeners are added in BrowserGlue.jsm on desktop
   // and in BrowserCLH.js on mobile.
   receiveMessage(msg) {
     let data = msg.data;
@@ -315,6 +317,10 @@ var LoginManagerParent = {
     }
 
     function recordLoginUse(login) {
+      if (!target || PrivateBrowsingUtils.isBrowserPrivate(target)) {
+        // don't record non-interactive use in private browsing
+        return;
+      }
       // Update the lastUsed timestamp and increment the use count.
       let propBag = Cc["@mozilla.org/hash-property-bag;1"].
                     createInstance(Ci.nsIWritablePropertyBag);

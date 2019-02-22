@@ -17,13 +17,12 @@ import {
   getSelectedSource,
   getBreakpointAtLocation,
   getConditionalPanelLocation,
-  getBreakpointsForSource,
-  getSourceActors
+  getBreakpointsForSource
 } from "../../selectors";
 import {
   assertBreakpoint,
   createXHRBreakpoint,
-  makeSourceActorLocation
+  makeBreakpointLocation
 } from "../../utils/breakpoint";
 import {
   addBreakpoint,
@@ -49,19 +48,11 @@ import type {
 import { recordEvent } from "../../utils/telemetry";
 
 async function removeBreakpointsPromise(client, state, breakpoint) {
-  const sourceActors = getSourceActors(
+  const breakpointLocation = makeBreakpointLocation(
     state,
-    breakpoint.generatedLocation.sourceId
+    breakpoint.generatedLocation
   );
-  for (const sourceActor of sourceActors) {
-    const sourceActorLocation = makeSourceActorLocation(
-      sourceActor,
-      breakpoint.generatedLocation
-    );
-    if (client.getBreakpointByLocation(sourceActorLocation)) {
-      await client.removeBreakpoint(sourceActorLocation);
-    }
-  }
+  await client.removeBreakpoint(breakpointLocation);
 }
 
 /**
@@ -304,19 +295,11 @@ export function setBreakpointOptions(
       await dispatch(enableBreakpoint(bp));
     }
 
-    const sourceActors = getSourceActors(
+    const breakpointLocation = makeBreakpointLocation(
       getState(),
-      bp.generatedLocation.sourceId
+      bp.generatedLocation
     );
-    for (const sourceActor of sourceActors) {
-      const sourceActorLocation = makeSourceActorLocation(
-        sourceActor,
-        bp.generatedLocation
-      );
-      if (client.getBreakpointByLocation(sourceActorLocation)) {
-        await client.setBreakpointOptions(sourceActorLocation, options);
-      }
-    }
+    await client.setBreakpoint(breakpointLocation, options);
 
     const newBreakpoint = { ...bp, disabled: false, options };
 
@@ -386,8 +369,34 @@ export function addBreakpointAtLine(line: number) {
 
 export function removeBreakpointsAtLine(sourceId: string, line: number) {
   return ({ dispatch, getState, client, sourceMaps }: ThunkArgs) => {
-    const breakpoints = getBreakpointsForSource(getState(), sourceId, line);
-    return dispatch(removeBreakpoints(breakpoints));
+    const breakpointsAtLine = getBreakpointsForSource(
+      getState(),
+      sourceId,
+      line
+    );
+    return dispatch(removeBreakpoints(breakpointsAtLine));
+  };
+}
+
+export function disableBreakpointsAtLine(sourceId: string, line: number) {
+  return ({ dispatch, getState, client, sourceMaps }: ThunkArgs) => {
+    const breakpointsAtLine = getBreakpointsForSource(
+      getState(),
+      sourceId,
+      line
+    );
+    return dispatch(toggleBreakpoints(true, breakpointsAtLine));
+  };
+}
+
+export function enableBreakpointsAtLine(sourceId: string, line: number) {
+  return ({ dispatch, getState, client, sourceMaps }: ThunkArgs) => {
+    const breakpointsAtLine = getBreakpointsForSource(
+      getState(),
+      sourceId,
+      line
+    );
+    return dispatch(toggleBreakpoints(false, breakpointsAtLine));
   };
 }
 

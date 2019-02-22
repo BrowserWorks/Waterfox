@@ -20,8 +20,7 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(nsOpenURIInFrameParams)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(nsOpenURIInFrameParams)
 
 nsOpenURIInFrameParams::nsOpenURIInFrameParams(
-    const mozilla::OriginAttributes& aOriginAttributes,
-    nsIFrameLoaderOwner* aOpener)
+    const mozilla::OriginAttributes& aOriginAttributes, Element* aOpener)
     : mOpenerOriginAttributes(aOriginAttributes),
       mOpenerBrowser(aOpener),
       mReferrerPolicy(mozilla::net::RP_Unset) {}
@@ -74,9 +73,8 @@ nsOpenURIInFrameParams::SetTriggeringPrincipal(
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsOpenURIInFrameParams::GetOpenerBrowser(nsIFrameLoaderOwner** aOpenerBrowser) {
-  nsCOMPtr<nsIFrameLoaderOwner> owner = mOpenerBrowser;
+nsresult nsOpenURIInFrameParams::GetOpenerBrowser(Element** aOpenerBrowser) {
+  RefPtr<Element> owner = mOpenerBrowser;
   owner.forget(aOpenerBrowser);
   return NS_OK;
 }

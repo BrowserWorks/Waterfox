@@ -472,6 +472,16 @@ bool nsXULElement::IsFocusableInternal(int32_t* aTabIndex, bool aWithMouse) {
   return shouldFocus;
 }
 
+int32_t nsXULElement::ScreenX() {
+  nsIFrame* frame = GetPrimaryFrame(FlushType::Layout);
+  return frame ? frame->GetScreenRect().x : 0;
+}
+
+int32_t nsXULElement::ScreenY() {
+  nsIFrame* frame = GetPrimaryFrame(FlushType::Layout);
+  return frame ? frame->GetScreenRect().y : 0;
+}
+
 bool nsXULElement::HasMenu() {
   nsMenuFrame* menu = do_QueryFrame(GetPrimaryFrame());
   return menu != nullptr;
@@ -720,6 +730,15 @@ void nsXULElement::UnbindFromTree(bool aDeep, bool aNullParent) {
   }
 
   nsStyledElement::UnbindFromTree(aDeep, aNullParent);
+}
+
+void nsXULElement::DoneAddingChildren(bool aHaveNotified) {
+  if (IsXULElement(nsGkAtoms::linkset)) {
+    Document* doc = GetComposedDoc();
+    if (doc) {
+      doc->OnL10nResourceContainerParsed();
+    }
+  }
 }
 
 void nsXULElement::UnregisterAccessKey(const nsAString& aOldValue) {

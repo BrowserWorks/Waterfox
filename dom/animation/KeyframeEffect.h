@@ -39,7 +39,7 @@ class nsIPresShell;
 namespace mozilla {
 
 class AnimValuesStyleRule;
-enum class CSSPseudoElementType : uint8_t;
+enum class PseudoStyleType : uint8_t;
 class ErrorResult;
 struct AnimationRule;
 struct TimingParams;
@@ -179,9 +179,9 @@ class KeyframeEffect : public AnimationEffect {
   void SetKeyframes(nsTArray<Keyframe>&& aKeyframes,
                     const ComputedStyle* aStyle);
 
-  // Returns true if the effect includes |aProperty| regardless of whether the
-  // property is overridden by !important rule.
-  bool HasAnimationOfProperty(nsCSSPropertyID aProperty) const;
+  // Returns true if the effect includes a property in |aPropertySet| regardless
+  // of whether any property in the set is overridden by !important rule.
+  bool HasAnimationOfPropertySet(const nsCSSPropertyIDSet& aPropertySet) const;
 
   // GetEffectiveAnimationOfProperty returns AnimationProperty corresponding
   // to a given CSS property if the effect includes the property and the
@@ -361,7 +361,12 @@ class KeyframeEffect : public AnimationEffect {
   // context. That's because calling GetComputedStyle when we are in the process
   // of building a ComputedStyle may trigger various forms of infinite
   // recursion.
-  already_AddRefed<ComputedStyle> GetTargetComputedStyle() const;
+  enum class Flush {
+    Style,
+    None,
+  };
+  already_AddRefed<ComputedStyle> GetTargetComputedStyle(
+      Flush aFlushType) const;
 
   // A wrapper for marking cascade update according to the current
   // target and its effectSet.
@@ -403,6 +408,12 @@ class KeyframeEffect : public AnimationEffect {
   // used as an optimization to avoid unnecessary hashmap lookups on the
   // EffectSet.
   bool mInEffectSet = false;
+
+  // True if the last time we tried to update the cumulative change hint we
+  // didn't have style data to do so. We set this flag so that the next time
+  // our style context changes we know to update the cumulative change hint even
+  // if our properties haven't changed.
+  bool mNeedsStyleData = false;
 
   // The non-animated values for properties in this effect that contain at
   // least one animation value that is composited with the underlying value

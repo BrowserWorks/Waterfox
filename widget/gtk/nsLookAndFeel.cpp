@@ -706,6 +706,18 @@ nsresult nsLookAndFeel::GetIntImpl(IntID aID, int32_t& aResult) {
       aResult = enableAnimations ? 0 : 1;
       break;
     }
+    case eIntID_SystemUsesDarkTheme: {
+      // It seems GTK doesn't have an API to query if the current theme is
+      // "light" or "dark", so we synthesize it from the CSS2 Window/WindowText
+      // colors instead, by comparing their luminosity.
+      nscolor fg, bg;
+      if (NS_SUCCEEDED(NativeGetColor(eColorID_windowtext, fg)) &&
+          NS_SUCCEEDED(NativeGetColor(eColorID_window, bg))) {
+        aResult = NS_GetLuminosity(bg) < NS_GetLuminosity(fg) ? 1 : 0;
+        break;
+      }
+      MOZ_FALLTHROUGH;
+    }
     default:
       aResult = 0;
       res = NS_ERROR_FAILURE;
@@ -767,18 +779,15 @@ static void GetSystemFontInfo(GtkStyleContext* aStyle, nsString* aFontName,
     // |size| is in pango-points, so convert to pixels.
     size *= float(gfxPlatformGtk::GetFontScaleDPI()) / POINTS_PER_INCH_FLOAT;
   }
-  // |size| is now pixels but not scaled for the hidpi displays,
-  // this needs to be done in GetFontImpl where the aDevPixPerCSSPixel
-  // parameter is provided.
 
+  // |size| is now pixels but not scaled for the hidpi displays,
   aFontStyle->size = size;
 
   pango_font_description_free(desc);
 }
 
 bool nsLookAndFeel::GetFontImpl(FontID aID, nsString& aFontName,
-                                gfxFontStyle& aFontStyle,
-                                float aDevPixPerCSSPixel) {
+                                gfxFontStyle& aFontStyle) {
   switch (aID) {
     case eFont_Menu:          // css2
     case eFont_PullDownMenu:  // css3
@@ -815,17 +824,17 @@ bool nsLookAndFeel::GetFontImpl(FontID aID, nsString& aFontName,
       aFontStyle = mDefaultFontStyle;
       break;
   }
+
   // Scale the font for the current monitor
   double scaleFactor = nsIWidget::DefaultScaleOverride();
   if (scaleFactor > 0) {
     aFontStyle.size *=
-        mozilla::widget::ScreenHelperGTK::GetGTKMonitorScaleFactor();
+        widget::ScreenHelperGTK::GetGTKMonitorScaleFactor() / scaleFactor;
   } else {
-    // Remove effect of font scale because it has been already applied in
-    // GetSystemFontInfo
-    aFontStyle.size *=
-        aDevPixPerCSSPixel / gfxPlatformGtk::GetFontScaleFactor();
+    // Convert gdk pixels to CSS pixels.
+    aFontStyle.size /= gfxPlatformGtk::GetFontScaleFactor();
   }
+
   return true;
 }
 

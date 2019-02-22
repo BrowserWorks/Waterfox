@@ -30,8 +30,6 @@ function TabSources(threadActor, allowSourceFn = () => true) {
 
   // Debugger.Source -> SourceActor
   this._sourceActors = new Map();
-  // url -> SourceActor
-  this._htmlDocumentSourceActors = Object.create(null);
 }
 
 /**
@@ -63,7 +61,6 @@ TabSources.prototype = {
    */
   reset: function() {
     this._sourceActors = new Map();
-    this._htmlDocumentSourceActors = Object.create(null);
   },
 
   /**
@@ -88,43 +85,18 @@ TabSources.prototype = {
       return null;
     }
 
-    // It's a hack, but inline HTML scripts each have real sources,
-    // but we want to represent all of them as one source as the
-    // HTML page. The actor representing this fake HTML source is
-    // stored in this array, which always has a URL, so check it
-    // first.
-    if (isInlineSource && source.url in this._htmlDocumentSourceActors) {
-      return this._htmlDocumentSourceActors[source.url];
-    }
-
-    let originalUrl = null;
-    if (isInlineSource) {
-      // If it's an inline source, the fake HTML source hasn't been
-      // created yet (would have returned above), so flip this source
-      // into a sourcemapped state by giving it an `originalUrl` which
-      // is the HTML url.
-      originalUrl = source.url;
-      source = null;
-    } else if (this._sourceActors.has(source)) {
+    if (this._sourceActors.has(source)) {
       return this._sourceActors.get(source);
     }
 
     const actor = new SourceActor({
       thread: this._thread,
-      source: source,
-      originalUrl: originalUrl,
-      isInlineSource: isInlineSource,
-      contentType: contentType,
+      source,
+      isInlineSource,
+      contentType,
     });
 
-    const sourceActorStore = this._thread.sourceActorStore;
-    const id = sourceActorStore.getReusableActorId(source, originalUrl);
-    if (id) {
-      actor.actorID = id;
-    }
-
     this._thread.threadLifetimePool.addActor(actor);
-    sourceActorStore.setReusableActorId(source, originalUrl, actor.actorID);
 
     if (this._autoBlackBox &&
         !this.neverAutoBlackBoxSources.has(actor.url) &&
@@ -133,21 +105,13 @@ TabSources.prototype = {
       this.neverAutoBlackBoxSources.add(actor.url);
     }
 
-    if (source) {
-      this._sourceActors.set(source, actor);
-    } else {
-      this._htmlDocumentSourceActors[originalUrl] = actor;
-    }
+    this._sourceActors.set(source, actor);
 
     this.emit("newSource", actor);
     return actor;
   },
 
   _getSourceActor: function(source) {
-    if (source.url in this._htmlDocumentSourceActors) {
-      return this._htmlDocumentSourceActors[source.url];
-    }
-
     if (this._sourceActors.has(source)) {
       return this._sourceActors.get(source);
     }
@@ -170,20 +134,25 @@ TabSources.prototype = {
     return sourceActor;
   },
 
-  getSourceActorByURL: function(url) {
+  getSourceActorsByURL: function(url) {
+    const rv = [];
     if (url) {
       for (const [source, actor] of this._sourceActors) {
         if (source.url === url) {
-          return actor;
+          rv.push(actor);
         }
       }
+    }
+    return rv;
+  },
 
-      if (url in this._htmlDocumentSourceActors) {
-        return this._htmlDocumentSourceActors[url];
+  getSourceActorById(actorId) {
+    for (const [, actor] of this._sourceActors) {
+      if (actor.actorID == actorId) {
+        return actor;
       }
     }
-
-    throw new Error("getSourceActorByURL: could not find source for " + url);
+    return null;
   },
 
   /**
@@ -304,7 +273,7 @@ TabSources.prototype = {
    *          Returns an object of the form { source, line, column }
    */
   getScriptOffsetLocation: function(script, offset) {
-    const {lineNumber, columnNumber} = script.getOffsetLocation(offset);
+    const {lineNumber, columnNumber} = script.getOffsetMetadata(offset);
     return new GeneratedLocation(
       this.createSourceActor(script.source),
       lineNumber,
@@ -400,13 +369,7 @@ TabSources.prototype = {
   },
 
   iter: function() {
-    const actors = Object.keys(this._htmlDocumentSourceActors).map(k => {
-      return this._htmlDocumentSourceActors[k];
-    });
-    for (const actor of this._sourceActors.values()) {
-      actors.push(actor);
-    }
-    return actors;
+    return [...this._sourceActors.values()];
   },
 };
 

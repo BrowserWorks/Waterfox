@@ -281,8 +281,9 @@ class ContentChild final : public PContentChild,
       PPSMContentDownloaderChild* aDownloader);
 
   PExternalHelperAppChild* AllocPExternalHelperAppChild(
-      const OptionalURIParams& uri, const nsCString& aMimeContentType,
-      const nsCString& aContentDisposition,
+      const OptionalURIParams& uri,
+      const mozilla::net::OptionalLoadInfoArgs& aLoadInfoArgs,
+      const nsCString& aMimeContentType, const nsCString& aContentDisposition,
       const uint32_t& aContentDispositionHint,
       const nsString& aContentDispositionFilename, const bool& aForceSave,
       const int64_t& aContentLength, const bool& aWasFileChannel,
@@ -714,13 +715,16 @@ class ContentChild final : public PContentChild,
 
   virtual void OnChannelReceivedMessage(const Message& aMsg) override;
 
-  mozilla::ipc::IPCResult RecvWindowClose(const BrowsingContextId& aContextId,
-                                          const bool& aTrustedCaller);
-  mozilla::ipc::IPCResult RecvWindowFocus(const BrowsingContextId& aContextId);
-  mozilla::ipc::IPCResult RecvWindowBlur(const BrowsingContextId& aContextId);
+  mozilla::ipc::IPCResult RecvWindowClose(BrowsingContext* aContext,
+                                          bool aTrustedCaller);
+  mozilla::ipc::IPCResult RecvWindowFocus(BrowsingContext* aContext);
+  mozilla::ipc::IPCResult RecvWindowBlur(BrowsingContext* aContext);
   mozilla::ipc::IPCResult RecvWindowPostMessage(
-      const BrowsingContextId& aContextId, const ClonedMessageData& aMessage,
+      BrowsingContext* aContext, const ClonedMessageData& aMessage,
       const PostMessageData& aData);
+
+  mozilla::ipc::IPCResult RecvCommitBrowsingContextTransaction(
+      BrowsingContext* aContext, BrowsingContext::Transaction&& aTransaction);
 
 #ifdef NIGHTLY_BUILD
   virtual PContentChild::Result OnMessageReceived(const Message& aMsg) override;

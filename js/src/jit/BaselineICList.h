@@ -32,8 +32,6 @@ namespace jit {
                                       \
   _(ToBool_Fallback)                  \
                                       \
-  _(ToNumber_Fallback)                \
-                                      \
   _(UnaryArith_Fallback)              \
                                       \
   _(Call_Fallback)                    \
@@ -61,9 +59,6 @@ namespace jit {
   _(SetProp_Fallback)                 \
                                       \
   _(GetIterator_Fallback)             \
-  _(IteratorMore_Fallback)            \
-  _(IteratorMore_Native)              \
-  _(IteratorClose_Fallback)           \
                                       \
   _(InstanceOf_Fallback)              \
   _(InstanceOf_Function)              \

@@ -42,12 +42,6 @@ const Types = exports.__TypesForTests = [
     spec: "devtools/shared/specs/animation",
     front: "devtools/shared/fronts/animation",
   },
-  /* breakpoint has old fashion client and no front */
-  {
-    types: ["breakpoint"],
-    spec: "devtools/shared/specs/breakpoint",
-    front: null,
-  },
   {
     types: ["frame-snapshot", "canvas"],
     spec: "devtools/shared/specs/canvas",
@@ -282,7 +276,7 @@ const Types = exports.__TypesForTests = [
   {
     types: ["console"],
     spec: "devtools/shared/specs/webconsole",
-    front: null,
+    front: "devtools/shared/fronts/webconsole",
   },
   {
     types: ["gl-shader", "gl-program", "webgl"],

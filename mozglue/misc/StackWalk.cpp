@@ -8,6 +8,7 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/StackWalk.h"
 
@@ -838,6 +839,7 @@ MFBT_API bool MozDescribeCodeAddress(void* aPC,
 
 #if defined(XP_WIN) || defined(XP_MACOSX) || defined(XP_LINUX)
 namespace mozilla {
+MOZ_ASAN_BLACKLIST
 void FramePointerStackWalk(MozWalkStackCallback aCallback, uint32_t aSkipFrames,
                            uint32_t aMaxFrames, void* aClosure, void** aBp,
                            void* aStackEnd) {
@@ -853,7 +855,7 @@ void FramePointerStackWalk(MozWalkStackCallback aCallback, uint32_t aSkipFrames,
     // a little if the stack has been corrupted.)
     // We don't need to check against the begining of the stack because
     // we can assume that aBp > sp
-    if (next <= aBp || next > aStackEnd || (uintptr_t(next) & 3)) {
+    if (next <= aBp || next >= aStackEnd || (uintptr_t(next) & 3)) {
       break;
     }
 #  if (defined(__ppc__) && defined(XP_MACOSX)) || defined(__powerpc64__)

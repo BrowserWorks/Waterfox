@@ -38,7 +38,7 @@ ScrollAnchorContainer* ScrollAnchorContainer::FindFor(nsIFrame* aFrame) {
       aFrame, nsLayoutUtils::SCROLLABLE_SAME_DOC |
                   nsLayoutUtils::SCROLLABLE_INCLUDE_HIDDEN);
   if (nearest) {
-    return nearest->GetAnchor();
+    return nearest->Anchor();
   }
   return nullptr;
 }
@@ -345,15 +345,12 @@ void ScrollAnchorContainer::ApplyAdjustments() {
       break;
     }
   }
-  nsIntPoint physicalDevicePixels = physicalAdjustment.ToNearestPixels(
-      Frame()->PresContext()->AppUnitsPerDevPixel());
 
   MOZ_ASSERT(!mApplyingAnchorAdjustment);
   // We should use AutoRestore here, but that doesn't work with bitfields
   mApplyingAnchorAdjustment = true;
-  mScrollFrame->ScrollBy(
-      physicalDevicePixels, nsIScrollableFrame::DEVICE_PIXELS,
-      nsIScrollableFrame::INSTANT, nullptr, nsGkAtoms::relative);
+  mScrollFrame->ScrollTo(mScrollFrame->GetScrollPosition() + physicalAdjustment,
+                         nsIScrollableFrame::INSTANT, nsGkAtoms::relative);
   mApplyingAnchorAdjustment = false;
 
   nsPresContext* pc = Frame()->PresContext();

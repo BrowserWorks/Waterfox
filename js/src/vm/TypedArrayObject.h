@@ -43,6 +43,9 @@ class TypedArrayObject : public ArrayBufferViewObject {
   static constexpr int lengthOffset() {
     return NativeObject::getFixedSlotOffset(LENGTH_SLOT);
   }
+  static constexpr int byteOffsetOffset() {
+    return NativeObject::getFixedSlotOffset(BYTEOFFSET_SLOT);
+  }
   static constexpr int dataOffset() {
     return NativeObject::getPrivateDataOffset(DATA_SLOT);
   }
@@ -136,17 +139,19 @@ class TypedArrayObject : public ArrayBufferViewObject {
   void getElements(Value* vp);
 
   static bool GetTemplateObjectForNative(JSContext* cx, Native native,
-                                         HandleValue arg,
+                                         const CallArgs& args,
                                          MutableHandleObject res);
 
   /*
-   * Byte length above which created typed arrays will have singleton types
-   * regardless of the context in which they are created. This only applies to
-   * typed arrays created with an existing ArrayBuffer.
+   * Byte length above which created typed arrays will have singleton types.
+   * This only applies to typed arrays created with an existing ArrayBuffer and
+   * when not inlined from Ion.
    */
   static constexpr uint32_t SINGLETON_BYTE_LENGTH = 1024 * 1024 * 10;
 
   static bool isOriginalLengthGetter(Native native);
+
+  static bool isOriginalByteOffsetGetter(Native native);
 
   static void finalize(FreeOp* fop, JSObject* obj);
   static size_t objectMoved(JSObject* obj, JSObject* old);
@@ -195,6 +200,12 @@ extern TypedArrayObject* TypedArrayCreateWithTemplate(JSContext* cx,
 extern TypedArrayObject* TypedArrayCreateWithTemplate(JSContext* cx,
                                                       HandleObject templateObj,
                                                       HandleObject array);
+
+extern TypedArrayObject* TypedArrayCreateWithTemplate(JSContext* cx,
+                                                      HandleObject templateObj,
+                                                      HandleObject arrayBuffer,
+                                                      HandleValue byteOffset,
+                                                      HandleValue length);
 
 inline bool IsTypedArrayClass(const Class* clasp) {
   return &TypedArrayObject::classes[0] <= clasp &&
@@ -268,7 +279,7 @@ bool DefineTypedArrayElement(JSContext* cx, HandleObject arr, uint64_t index,
                              Handle<PropertyDescriptor> desc,
                              ObjectOpResult& result);
 
-static inline unsigned TypedArrayShift(Scalar::Type viewType) {
+static inline constexpr unsigned TypedArrayShift(Scalar::Type viewType) {
   switch (viewType) {
     case Scalar::Int8:
     case Scalar::Uint8:
@@ -284,9 +295,9 @@ static inline unsigned TypedArrayShift(Scalar::Type viewType) {
     case Scalar::Int64:
     case Scalar::Float64:
       return 3;
-    default:;
+    default:
+      MOZ_CRASH("Unexpected array type");
   }
-  MOZ_CRASH("Unexpected array type");
 }
 
 static inline unsigned TypedArrayElemSize(Scalar::Type viewType) {

@@ -151,7 +151,10 @@ MODERN_MERCURIAL_VERSION = LooseVersion('4.3.3')
 MODERN_PYTHON_VERSION = LooseVersion('2.7.3')
 
 # Upgrade rust older than this.
-MODERN_RUST_VERSION = LooseVersion('1.31.0')
+MODERN_RUST_VERSION = LooseVersion('1.32.0')
+
+# Upgrade nasm older than this.
+MODERN_NASM_VERSION = LooseVersion('2.14')
 
 
 class BaseBootstrapper(object):
@@ -253,7 +256,7 @@ class BaseBootstrapper(object):
             '%s does not yet implement suggest_mobile_android_artifact_mode_mozconfig()'
             % __name__)
 
-    def ensure_clang_static_analysis_package(self, checkout_root):
+    def ensure_clang_static_analysis_package(self, state_dir, checkout_root):
         '''
         Install the clang static analysis package
         '''
@@ -276,23 +279,15 @@ class BaseBootstrapper(object):
             '%s does not yet implement ensure_node_packages()'
             % __name__)
 
-    def install_toolchain_static_analysis(self, checkout_root):
-        mach_binary = os.path.join(checkout_root, 'mach')
-        mach_binary = os.path.abspath(mach_binary)
-        if not os.path.exists(mach_binary):
-            raise ValueError("mach not found at %s" % mach_binary)
+    def install_toolchain_static_analysis(self, state_dir, checkout_root, toolchain_job):
+        clang_tools_path = os.path.join(state_dir, 'clang-tools')
+        import shutil
+        if os.path.exists(clang_tools_path):
+            shutil.rmtree(clang_tools_path)
 
-        if not sys.executable:
-            raise ValueError("cannot determine path to Python executable")
-
-        cmd = [sys.executable, mach_binary, 'static-analysis', 'install',
-               '--force', '--minimal-install']
-
-        from subprocess import CalledProcessError
-        try:
-            subprocess.check_call(cmd)
-        except CalledProcessError as e:
-            print(e.output)
+        # Re-create the directory for clang_tools
+        os.mkdir(clang_tools_path)
+        self.install_toolchain_artifact(clang_tools_path, checkout_root, toolchain_job)
 
     def install_toolchain_artifact(self, state_dir, checkout_root, toolchain_job):
         mach_binary = os.path.join(checkout_root, 'mach')
@@ -461,7 +456,7 @@ class BaseBootstrapper(object):
         This should be defined in child classes.
         """
 
-    def _parse_version(self, path, name=None, env=None):
+    def _parse_version_impl(self, path, name, env, version_param):
         '''Execute the given path, returning the version.
 
         Invokes the path argument with the --version switch
@@ -481,7 +476,7 @@ class BaseBootstrapper(object):
         if name.endswith('.exe'):
             name = name[:-4]
 
-        info = self.check_output([path, '--version'],
+        info = self.check_output([path, version_param],
                                  env=env,
                                  stderr=subprocess.STDOUT)
         match = re.search(name + ' ([a-z0-9\.]+)', info)
@@ -490,6 +485,12 @@ class BaseBootstrapper(object):
             return None
 
         return LooseVersion(match.group(1))
+
+    def _parse_version(self, path, name=None, env=None):
+        return self._parse_version_impl(path, name, env, "--version")
+
+    def _parse_version_short(self, path, name=None, env=None):
+        return self._parse_version_impl(path, name, env, "-v")
 
     def _hg_cleanenv(self, load_hgrc=False):
         """ Returns a copy of the current environment updated with the HGPLAIN
@@ -600,6 +601,17 @@ class BaseBootstrapper(object):
         Child classes should reimplement this.
         """
         print(PYTHON_UNABLE_UPGRADE % (current, MODERN_PYTHON_VERSION))
+
+    def is_nasm_modern(self):
+        nasm = self.which('nasm')
+        if not nasm:
+            return False
+
+        our = self._parse_version_short(nasm, 'version')
+        if not our:
+            return False
+
+        return our >= MODERN_NASM_VERSION
 
     def is_rust_modern(self, cargo_bin):
         rustc = self.which('rustc', cargo_bin)

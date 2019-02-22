@@ -472,6 +472,7 @@ class CompileFlags(BaseCompileFlags):
              ('CFLAGS', 'C_LDFLAGS')),
             ('MOZBUILD_CFLAGS', None, ('CFLAGS',)),
             ('MOZBUILD_CXXFLAGS', None, ('CXXFLAGS',)),
+            ('COVERAGE', context.config.substs.get('COVERAGE_CFLAGS'), ('CXXFLAGS', 'CFLAGS')),
         )
 
         BaseCompileFlags.__init__(self, context)
@@ -484,12 +485,6 @@ class CompileFlags(BaseCompileFlags):
 
     def _warnings_as_errors(self):
         warnings_as_errors = self._context.config.substs.get('WARNINGS_AS_ERRORS')
-        if self._context.config.substs.get('MOZ_PGO'):
-            # Don't use warnings-as-errors in MSVC PGO builds because it is suspected of
-            # causing problems in that situation. (See bug 437002.)
-            if self._context.config.substs.get('CC_TYPE') == 'msvc':
-                warnings_as_errors = None
-
         if warnings_as_errors:
             return [warnings_as_errors]
 

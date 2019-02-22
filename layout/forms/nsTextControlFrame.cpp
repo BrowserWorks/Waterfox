@@ -479,7 +479,7 @@ void nsTextControlFrame::CreatePlaceholderIfNeeded() {
 
   mPlaceholderDiv = CreateEmptyDivWithTextNode(*this);
   // Associate ::placeholder pseudo-element with the placeholder node.
-  mPlaceholderDiv->SetPseudoElementType(CSSPseudoElementType::placeholder);
+  mPlaceholderDiv->SetPseudoElementType(PseudoStyleType::placeholder);
   mPlaceholderDiv->GetFirstChild()->AsText()->SetText(placeholderTxt, false);
 }
 
@@ -534,8 +534,8 @@ LogicalSize nsTextControlFrame::ComputeAutoSize(
 
   // Note: nsContainerFrame::ComputeAutoSize only computes the inline-size (and
   // only for 'auto'), the block-size it returns is always NS_UNCONSTRAINEDSIZE.
-  const nsStyleCoord& iSizeCoord = StylePosition()->ISize(aWM);
-  if (iSizeCoord.GetUnit() == eStyleUnit_Auto) {
+  const auto& iSizeCoord = StylePosition()->ISize(aWM);
+  if (iSizeCoord.IsAuto()) {
     if (aFlags & ComputeSizeFlags::eIClampMarginBoxMinSize) {
       // CalcIntrinsicSize isn't aware of grid-item margin-box clamping, so we
       // fall back to nsContainerFrame's ComputeAutoSize to handle that.

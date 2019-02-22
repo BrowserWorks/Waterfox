@@ -75,13 +75,13 @@ bool ForwardingProxyHandler::delete_(JSContext* cx, HandleObject proxy,
   return DeleteProperty(cx, target, id, result);
 }
 
-JSObject* ForwardingProxyHandler::enumerate(JSContext* cx,
-                                            HandleObject proxy) const {
+bool ForwardingProxyHandler::enumerate(JSContext* cx, HandleObject proxy,
+                                       AutoIdVector& props) const {
   assertEnteredPolicy(cx, proxy, JSID_VOID, ENUMERATE);
   MOZ_ASSERT(
       !hasPrototype());  // Should never be called if there's a prototype.
   RootedObject target(cx, proxy->as<ProxyObject>().target());
-  return GetIterator(cx, target);
+  return EnumerateProperties(cx, target, props);
 }
 
 bool ForwardingProxyHandler::getPrototype(JSContext* cx, HandleObject proxy,
@@ -273,10 +273,10 @@ bool ForwardingProxyHandler::isConstructor(JSObject* obj) const {
 JSObject* Wrapper::New(JSContext* cx, JSObject* obj, const Wrapper* handler,
                        const WrapperOptions& options) {
   // If this is a cross-compartment wrapper allocate it in the compartment's
-  // first realm. See Realm::realmForNewCCW.
-  mozilla::Maybe<AutoRealmUnchecked> ar;
+  // first global. See Compartment::globalForNewCCW.
+  mozilla::Maybe<AutoRealm> ar;
   if (handler->isCrossCompartmentWrapper()) {
-    ar.emplace(cx, cx->compartment()->realmForNewCCW());
+    ar.emplace(cx, &cx->compartment()->globalForNewCCW());
   }
   RootedValue priv(cx, ObjectValue(*obj));
   return NewProxyObject(cx, handler, priv, options.proto(), options);

@@ -51,6 +51,7 @@
 
 using namespace mozilla;
 using namespace mozilla::dom;
+using ValueChangeKind = nsITextControlElement::ValueChangeKind;
 
 inline nsresult SetEditorFlagsIfNecessary(EditorBase& aEditorBase,
                                           uint32_t aFlags) {
@@ -987,7 +988,7 @@ void TextInputListener::HandleValueChanged(nsTextControlFrame* aFrame) {
 
   if (!mSettingValue) {
     mTxtCtrlElement->OnValueChanged(/* aNotify = */ true,
-                                    /* aWasInteractiveUserChange = */ true);
+                                    ValueChangeKind::UserInteraction);
   }
 }
 
@@ -1640,7 +1641,9 @@ void nsTextEditorState::SetSelectionRange(
     if (aRv.Failed() || !self.get()) {
       return;
     }
-    rv = mBoundFrame->ScrollSelectionIntoView();
+    if (mBoundFrame) {
+      rv = mBoundFrame->ScrollSelectionIntoView();
+    }
     // Press on to firing the event even if that failed, like our old code did.
     // But is that really what we want?  Firing the event _and_ throwing from
     // here is weird.  Maybe we should just ignore ScrollSelectionIntoView
@@ -2432,9 +2435,11 @@ bool nsTextEditorState::SetValue(const nsAString& aValue,
       if (aFlags & eSetValue_BySetUserInput) {
         nsCOMPtr<Element> element = do_QueryInterface(textControlElement);
         MOZ_ASSERT(element);
+        MOZ_ASSERT(!newValue.IsVoid());
         RefPtr<TextEditor> textEditor;  // See bug 1506439
         DebugOnly<nsresult> rvIgnored = nsContentUtils::DispatchInputEvent(
-            element, EditorInputType::eInsertReplacementText, textEditor);
+            element, EditorInputType::eInsertReplacementText, textEditor,
+            nsContentUtils::InputEventOptions(newValue));
         NS_WARNING_ASSERTION(NS_SUCCEEDED(rvIgnored),
                              "Failed to dispatch input event");
       }
@@ -2454,11 +2459,15 @@ bool nsTextEditorState::SetValue(const nsAString& aValue,
     ValueWasChanged(!!mBoundFrame);
   }
 
+  // TODO(emilio): It seems wrong to pass ValueChangeKind::Script if
+  // BySetUserInput is in aFlags.
+  auto changeKind = (aFlags & eSetValue_Internal)
+    ? ValueChangeKind::Internal
+    : ValueChangeKind::Script;
+
   // XXX Should we stop notifying "value changed" if mTextCtrlElement has
   //     been cleared?
-  textControlElement->OnValueChanged(/* aNotify = */ !!mBoundFrame,
-                                     /* aWasInteractiveUserChange = */ false);
-
+  textControlElement->OnValueChanged(/* aNotify = */ !!mBoundFrame, changeKind);
   return true;
 }
 

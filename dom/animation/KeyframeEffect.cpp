@@ -27,8 +27,9 @@
 #include "nsComputedDOMStyle.h"  // nsComputedDOMStyle::GetComputedStyle
 #include "nsContentUtils.h"
 #include "nsCSSPropertyIDSet.h"
-#include "nsCSSProps.h"           // For nsCSSProps::PropHasFlags
-#include "nsCSSPseudoElements.h"  // For CSSPseudoElementType
+#include "nsCSSProps.h"             // For nsCSSProps::PropHasFlags
+#include "nsCSSPseudoElements.h"    // For PseudoStyleType
+#include "nsDOMMutationObserver.h"  // For nsAutoAnimationMutationBatch
 #include "nsIFrame.h"
 #include "nsIPresShell.h"
 #include "nsIScriptError.h"
@@ -111,7 +112,7 @@ void KeyframeEffect::SetComposite(const CompositeOperation& aComposite) {
   }
 
   if (mTarget) {
-    RefPtr<ComputedStyle> computedStyle = GetTargetComputedStyle();
+    RefPtr<ComputedStyle> computedStyle = GetTargetComputedStyle(Flush::None);
     if (computedStyle) {
       UpdateProperties(computedStyle);
     }
@@ -205,7 +206,7 @@ void KeyframeEffect::SetKeyframes(JSContext* aContext,
     return;
   }
 
-  RefPtr<ComputedStyle> style = GetTargetComputedStyle();
+  RefPtr<ComputedStyle> style = GetTargetComputedStyle(Flush::None);
   SetKeyframes(std::move(keyframes), style);
 }
 
@@ -289,9 +290,10 @@ nsCSSPropertyIDSet KeyframeEffect::GetPropertiesForCompositor(
   return properties;
 }
 
-bool KeyframeEffect::HasAnimationOfProperty(nsCSSPropertyID aProperty) const {
+bool KeyframeEffect::HasAnimationOfPropertySet(
+    const nsCSSPropertyIDSet& aPropertySet) const {
   for (const AnimationProperty& property : mProperties) {
-    if (property.mProperty == aProperty) {
+    if (aPropertySet.HasProperty(property.mProperty)) {
       return true;
     }
   }
@@ -334,6 +336,11 @@ void KeyframeEffect::UpdateProperties(const ComputedStyle* aStyle) {
   if (!propertiesChanged) {
     if (baseStylesChanged) {
       RequestRestyle(EffectCompositor::RestyleType::Layer);
+    }
+    // Check if we need to update the cumulative change hint because we now have
+    // style data.
+    if (mNeedsStyleData && mTarget && mTarget->mElement->HasServoData()) {
+      CalculateCumulativeChangeHint(aStyle);
     }
     return;
   }
@@ -432,6 +439,9 @@ void KeyframeEffect::EnsureBaseStyle(
   if (!aBaseComputedStyle) {
     Element* animatingElement = EffectCompositor::GetElementToRestyle(
         mTarget->mElement, mTarget->mPseudoType);
+    if (!animatingElement) {
+      return;
+    }
     aBaseComputedStyle = aPresContext->StyleSet()->GetBaseContextForElement(
         animatingElement, aComputedStyle);
   }
@@ -762,7 +772,8 @@ void KeyframeEffect::RequestRestyle(
   }
 }
 
-already_AddRefed<ComputedStyle> KeyframeEffect::GetTargetComputedStyle() const {
+already_AddRefed<ComputedStyle> KeyframeEffect::GetTargetComputedStyle(
+    Flush aFlushType) const {
   if (!GetRenderedDocument()) {
     return nullptr;
   }
@@ -771,14 +782,17 @@ already_AddRefed<ComputedStyle> KeyframeEffect::GetTargetComputedStyle() const {
              "Should only have a document when we have a target element");
 
   nsAtom* pseudo =
-      mTarget->mPseudoType < CSSPseudoElementType::Count
+      PseudoStyle::IsPseudoElement(mTarget->mPseudoType)
           ? nsCSSPseudoElements::GetPseudoAtom(mTarget->mPseudoType)
           : nullptr;
 
   OwningAnimationTarget kungfuDeathGrip(mTarget->mElement,
                                         mTarget->mPseudoType);
 
-  return nsComputedDOMStyle::GetComputedStyle(mTarget->mElement, pseudo);
+  return aFlushType == Flush::Style
+             ? nsComputedDOMStyle::GetComputedStyle(mTarget->mElement, pseudo)
+             : nsComputedDOMStyle::GetComputedStyleNoFlush(mTarget->mElement,
+                                                           pseudo);
 }
 
 #ifdef DEBUG
@@ -853,14 +867,14 @@ void KeyframeEffect::GetTarget(
   }
 
   switch (mTarget->mPseudoType) {
-    case CSSPseudoElementType::before:
-    case CSSPseudoElementType::after:
+    case PseudoStyleType::before:
+    case PseudoStyleType::after:
       aRv.SetValue().SetAsCSSPseudoElement() =
           CSSPseudoElement::GetCSSPseudoElement(mTarget->mElement,
                                                 mTarget->mPseudoType);
       break;
 
-    case CSSPseudoElementType::NotPseudo:
+    case PseudoStyleType::NotPseudo:
       aRv.SetValue().SetAsElement() = mTarget->mElement;
       break;
 
@@ -894,7 +908,7 @@ void KeyframeEffect::SetTarget(
 
   if (mTarget) {
     UpdateTargetRegistration();
-    RefPtr<ComputedStyle> computedStyle = GetTargetComputedStyle();
+    RefPtr<ComputedStyle> computedStyle = GetTargetComputedStyle(Flush::None);
     if (computedStyle) {
       UpdateProperties(computedStyle);
     }
@@ -1026,7 +1040,7 @@ void KeyframeEffect::GetKeyframes(JSContext*& aCx, nsTArray<JSObject*>& aResult,
     // we might end up returning variables as-is or empty string. That should be
     // acceptable however, since such a case is rare and this is only
     // short-term (and unshipped) behavior until bug 1391537 is fixed.
-    computedStyle = GetTargetComputedStyle();
+    computedStyle = GetTargetComputedStyle(Flush::Style);
   }
 
   for (const Keyframe& keyframe : mKeyframes) {
@@ -1300,13 +1314,13 @@ nsIFrame* KeyframeEffect::GetPrimaryFrame() const {
     return frame;
   }
 
-  if (mTarget->mPseudoType == CSSPseudoElementType::before) {
+  if (mTarget->mPseudoType == PseudoStyleType::before) {
     frame = nsLayoutUtils::GetBeforeFrame(mTarget->mElement);
-  } else if (mTarget->mPseudoType == CSSPseudoElementType::after) {
+  } else if (mTarget->mPseudoType == PseudoStyleType::after) {
     frame = nsLayoutUtils::GetAfterFrame(mTarget->mElement);
   } else {
     frame = mTarget->mElement->GetPrimaryFrame();
-    MOZ_ASSERT(mTarget->mPseudoType == CSSPseudoElementType::NotPseudo,
+    MOZ_ASSERT(mTarget->mPseudoType == PseudoStyleType::NotPseudo,
                "unknown mTarget->mPseudoType");
   }
 
@@ -1467,10 +1481,15 @@ KeyframeEffect::CreateComputedStyleForAnimationValue(
              "CreateComputedStyleForAnimationValue needs to be called "
              "with a valid ComputedStyle");
 
-  ServoStyleSet* styleSet = aPresContext->StyleSet();
   Element* elementForResolve = EffectCompositor::GetElementToRestyle(
       mTarget->mElement, mTarget->mPseudoType);
-  MOZ_ASSERT(elementForResolve, "The target element shouldn't be null");
+  // The element may be null if, for example, we target a pseudo-element that no
+  // longer exists.
+  if (!elementForResolve) {
+    return nullptr;
+  }
+
+  ServoStyleSet* styleSet = aPresContext->StyleSet();
   return styleSet->ResolveServoStyleByAddingAnimation(
       elementForResolve, aBaseComputedStyle, aValue.mServo);
 }
@@ -1478,6 +1497,7 @@ KeyframeEffect::CreateComputedStyleForAnimationValue(
 void KeyframeEffect::CalculateCumulativeChangeHint(
     const ComputedStyle* aComputedStyle) {
   mCumulativeChangeHint = nsChangeHint(0);
+  mNeedsStyleData = false;
 
   nsPresContext* presContext =
       nsContentUtils::GetContextForContent(mTarget->mElement);
@@ -1485,6 +1505,7 @@ void KeyframeEffect::CalculateCumulativeChangeHint(
     // Change hints make no sense if we're not rendered.
     //
     // Actually, we cannot even post them anywhere.
+    mNeedsStyleData = true;
     return;
   }
 
@@ -1525,6 +1546,7 @@ void KeyframeEffect::CalculateCumulativeChangeHint(
           property.mProperty, segment.mFromValue, presContext, aComputedStyle);
       if (!fromContext) {
         mCumulativeChangeHint = ~nsChangeHint_Hints_CanIgnoreIfNotVisible;
+        mNeedsStyleData = true;
         return;
       }
 
@@ -1532,6 +1554,7 @@ void KeyframeEffect::CalculateCumulativeChangeHint(
           property.mProperty, segment.mToValue, presContext, aComputedStyle);
       if (!toContext) {
         mCumulativeChangeHint = ~nsChangeHint_Hints_CanIgnoreIfNotVisible;
+        mNeedsStyleData = true;
         return;
       }
 
@@ -1687,12 +1710,13 @@ void KeyframeEffect::UpdateEffectSet(EffectSet* aEffectSet) const {
   }
 
   nsIFrame* frame = GetStyleFrame();
-  if (HasAnimationOfProperty(eCSSProperty_opacity)) {
+  if (HasAnimationOfPropertySet(nsCSSPropertyIDSet::OpacityProperties())) {
     effectSet->SetMayHaveOpacityAnimation();
     EnumerateContinuationsOrIBSplitSiblings(
         frame, [](nsIFrame* aFrame) { aFrame->SetMayHaveOpacityAnimation(); });
   }
-  if (HasAnimationOfProperty(eCSSProperty_transform)) {
+  if (HasAnimationOfPropertySet(
+          nsCSSPropertyIDSet::TransformLikeProperties())) {
     effectSet->SetMayHaveTransformAnimation();
     EnumerateContinuationsOrIBSplitSiblings(frame, [](nsIFrame* aFrame) {
       aFrame->SetMayHaveTransformAnimation();

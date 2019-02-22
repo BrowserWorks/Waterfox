@@ -2842,8 +2842,8 @@ RefPtr<RTCStatsQueryPromise> PeerConnectionImpl::ExecuteStatsQuery_s(
             s.mPacketsReceived.Construct(packetsReceived);
             s.mBytesReceived.Construct(bytesReceived);
             s.mPacketsLost.Construct(packetsLost);
-            if (rtt > 0) {
-              s.mRoundTripTime.Construct(rtt);
+            if (rtt > 0) {  // RTT is not reported when it is zero
+              s.mRoundTripTime.Construct(static_cast<double>(rtt) / 1000);
             }
             query->report->mInboundRTPStreamStats.Value().AppendElement(
                 s, fallible);
@@ -2939,7 +2939,7 @@ RefPtr<RTCStatsQueryPromise> PeerConnectionImpl::ExecuteStatsQuery_s(
         s.mMediaType.Construct(kind);  // mediaType is the old name for kind.
         s.mKind.Construct(kind);
         unsigned int jitterMs, packetsLost;
-        if (mp.Conduit()->GetRTPStats(&jitterMs, &packetsLost)) {
+        if (mp.Conduit()->GetRTPReceiverStats(&jitterMs, &packetsLost)) {
           s.mJitter.Construct(double(jitterMs) / 1000);
           s.mPacketsLost.Construct(packetsLost);
         }
@@ -2993,9 +2993,9 @@ RefPtr<RTCStatsQueryPromise> PeerConnectionImpl::ExecuteStatsQuery_s(
     transportId = query->transportId;
   }
   auto report = std::move(query->report);
+  auto now = query->now;
 
-  return aTransportHandler
-      ->GetIceStats(transportId, query->now, std::move(report))
+  return aTransportHandler->GetIceStats(transportId, now, std::move(report))
       ->Then(
           GetMainThreadSerialEventTarget(), __func__,
           [query = std::move(query)](

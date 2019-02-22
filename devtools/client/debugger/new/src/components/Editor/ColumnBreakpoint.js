@@ -32,11 +32,14 @@ ReactDOM.render(<Svg name={"column-marker"} />, breakpointImg);
 
 function makeBookmark({ breakpoint }, { onClick, onContextMenu }) {
   const bp = breakpointImg.cloneNode(true);
-  const condition = breakpoint && breakpoint.options.condition;
+
   const isActive = breakpoint && !breakpoint.disabled;
+  const condition = breakpoint && breakpoint.options.condition;
+  const logValue = breakpoint && breakpoint.options.logValue;
 
   bp.className = classnames("column-breakpoint", {
     "has-condition": condition,
+    "has-log": logValue,
     active: isActive,
     disabled: !isActive
   });

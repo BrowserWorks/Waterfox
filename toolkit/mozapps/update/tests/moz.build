@@ -40,8 +40,7 @@ USE_LIBS += [
     'updatecommon',
 ]
 
-for var in ('MOZ_APP_NAME', 'MOZ_APP_BASENAME', 'MOZ_APP_DISPLAYNAME',
-            'MOZ_APP_VENDOR', 'BIN_SUFFIX', 'MOZ_DEBUG'):
+for var in ('MOZ_APP_VENDOR', 'MOZ_APP_BASENAME'):
     DEFINES[var] = CONFIG[var]
 
 DEFINES['NS_NO_XPCOM'] = True
@@ -97,7 +96,6 @@ FINAL_TARGET_FILES += [
     'data/partial_update_manifest',
     'data/replace_log_success',
     'data/simple.mar',
-    'data/wrong_product_channel.mar',
     'TestAUSReadStrings1.ini',
     'TestAUSReadStrings2.ini',
     'TestAUSReadStrings3.ini',

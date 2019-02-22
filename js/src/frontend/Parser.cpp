@@ -275,11 +275,9 @@ ObjectBox* ParserBase::newObjectBox(JSObject* obj) {
   return newTraceListNode<ObjectBox, JSObject>(obj);
 }
 
-#ifdef ENABLE_BIGINT
 BigIntBox* ParserBase::newBigIntBox(BigInt* val) {
   return newTraceListNode<BigIntBox, BigInt>(val);
 }
-#endif
 
 template <class ParseHandler>
 FunctionBox* PerHandlerParser<ParseHandler>::newFunctionBox(
@@ -8026,7 +8024,8 @@ typename ParseHandler::Node GeneralParser<ParseHandler, Unit>::assignExpr(
     if (!tokenStream.getToken(&next, TokenStream::Operand)) {
       return null();
     }
-    uint32_t toStringStart = pos().begin;
+    TokenPos startPos = pos();
+    uint32_t toStringStart = startPos.begin;
     anyChars.ungetToken();
 
     FunctionAsyncKind asyncKind = FunctionAsyncKind::SyncFunction;
@@ -8051,7 +8050,7 @@ typename ParseHandler::Node GeneralParser<ParseHandler, Unit>::assignExpr(
     }
 
     FunctionSyntaxKind syntaxKind = FunctionSyntaxKind::Arrow;
-    FunctionNodeType funNode = handler.newFunction(syntaxKind, pos());
+    FunctionNodeType funNode = handler.newFunction(syntaxKind, startPos);
     if (!funNode) {
       return null();
     }
@@ -9020,7 +9019,6 @@ GeneralParser<ParseHandler, Unit>::newRegExp() {
   return asFinalParser()->newRegExp();
 }
 
-#ifdef ENABLE_BIGINT
 template <typename Unit>
 BigIntLiteral* Parser<FullParseHandler, Unit>::newBigInt() {
   // The token's charBuffer contains the DecimalIntegerLiteral or
@@ -9054,7 +9052,6 @@ typename ParseHandler::BigIntLiteralType
 GeneralParser<ParseHandler, Unit>::newBigInt() {
   return asFinalParser()->newBigInt();
 }
-#endif /* ENABLE_BIGINT */
 
 // |exprPossibleError| is the PossibleError state within |expr|,
 // |possibleError| is the surrounding PossibleError state.
@@ -10080,10 +10077,8 @@ typename ParseHandler::Node GeneralParser<ParseHandler, Unit>::primaryExpr(
     case TokenKind::Number:
       return newNumber(anyChars.currentToken());
 
-#ifdef ENABLE_BIGINT
     case TokenKind::BigInt:
       return newBigInt();
-#endif
 
     case TokenKind::True:
       return handler.newBooleanLiteral(true, pos());

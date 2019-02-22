@@ -356,7 +356,7 @@ ProxyMessenger = {
 
     let extension = GlobalManager.extensionMap.get(sender.extensionId);
 
-    if (extension.wakeupBackground) {
+    if (extension && extension.wakeupBackground) {
       await extension.wakeupBackground();
     }
 
@@ -1781,8 +1781,9 @@ class CacheStore {
   async delete(path) {
     let [store, key] = await this.getStore(path);
 
-    store.delete(key);
-    StartupCache.save();
+    if (store.delete(key)) {
+      StartupCache.save();
+    }
   }
 }
 

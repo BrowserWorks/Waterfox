@@ -52,16 +52,14 @@ bool is_in_render_thread() {
 
 void gecko_profiler_start_marker(const char* name) {
 #ifdef MOZ_GECKO_PROFILER
-  profiler_tracing("WebRender", name,
-                   js::ProfilingStackFrame::Category::GRAPHICS,
+  profiler_tracing("WebRender", name, JS::ProfilingCategoryPair::GRAPHICS,
                    TRACING_INTERVAL_START);
 #endif
 }
 
 void gecko_profiler_end_marker(const char* name) {
 #ifdef MOZ_GECKO_PROFILER
-  profiler_tracing("WebRender", name,
-                   js::ProfilingStackFrame::Category::GRAPHICS,
+  profiler_tracing("WebRender", name, JS::ProfilingCategoryPair::GRAPHICS,
                    TRACING_INTERVAL_END);
 #endif
 }
@@ -206,8 +204,7 @@ class SceneBuiltNotification : public wr::NotificationHandler {
 
             profiler_add_marker_for_thread(
                 profiler_current_thread_id(),
-                js::ProfilingStackFrame::Category::GRAPHICS,
-                "CONTENT_FULL_PAINT_TIME",
+                JS::ProfilingCategoryPair::GRAPHICS, "CONTENT_FULL_PAINT_TIME",
                 MakeUnique<ContentFullPaintPayload>(startTime, endTime));
           }
 #endif
@@ -1357,7 +1354,6 @@ void WebRenderBridgeParent::AddPipelineIdForCompositable(
   }
 
   wrHost->SetWrBridge(this);
-  wrHost->EnableUseAsyncImagePipeline();
   mAsyncCompositables.emplace(wr::AsUint64(aPipelineId), wrHost);
   mAsyncImageManager->AddAsyncImagePipeline(aPipelineId, wrHost);
 

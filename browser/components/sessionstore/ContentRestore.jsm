@@ -12,7 +12,8 @@ ChromeUtils.defineModuleGetter(this, "SessionHistory",
   "resource://gre/modules/sessionstore/SessionHistory.jsm");
 ChromeUtils.defineModuleGetter(this, "Utils",
   "resource://gre/modules/sessionstore/Utils.jsm");
-
+ChromeUtils.defineModuleGetter(this, "E10SUtils",
+  "resource://gre/modules/E10SUtils.jsm");
 /**
  * This module implements the content side of session restoration. The chrome
  * side is handled by SessionStore.jsm. The functions in this module are called
@@ -185,22 +186,34 @@ ContentRestoreInternal.prototype = {
         // If the load was started in another process, and the in-flight channel
         // was redirected into this process, resume that load within our process.
         if (loadArguments.redirectLoadSwitchId) {
-          webNavigation.resumeRedirectedLoad(loadArguments.redirectLoadSwitchId);
+          webNavigation.resumeRedirectedLoad(loadArguments.redirectLoadSwitchId,
+                                             loadArguments.redirectHistoryIndex);
           return true;
         }
 
         // A load has been redirected to a new process so get history into the
         // same state it was before the load started then trigger the load.
-        let referrer = loadArguments.referrer ?
-                       Services.io.newURI(loadArguments.referrer) : null;
-        let referrerPolicy = ("referrerPolicy" in loadArguments
+        // Referrer information is now stored as a referrerInfo property. We
+        // should also cope with the old format of passing `referrer` and
+        // `referrerPolicy` separately.
+        let referrerInfo = loadArguments.referrerInfo;
+        if (referrerInfo) {
+          referrerInfo = E10SUtils.deserializeReferrerInfo(referrerInfo);
+        } else {
+          let referrer = loadArguments.referrer ?
+            Services.io.newURI(loadArguments.referrer) : null;
+          let referrerPolicy = ("referrerPolicy" in loadArguments
             ? loadArguments.referrerPolicy
             : Ci.nsIHttpChannel.REFERRER_POLICY_UNSET);
+          let ReferrerInfo = Components.Constructor(
+            "@mozilla.org/referrer-info;1",
+            "nsIReferrerInfo",
+            "init");
+          referrerInfo = new ReferrerInfo(referrerPolicy, true, referrer);
+        }
         let postData = loadArguments.postData ?
-                       Utils.makeInputStream(loadArguments.postData) : null;
-        let triggeringPrincipal = loadArguments.triggeringPrincipal
-                                  ? Utils.deserializePrincipal(loadArguments.triggeringPrincipal)
-                                  : Services.scriptSecurityManager.createNullPrincipal({});
+                       E10SUtils.makeInputStream(loadArguments.postData) : null;
+        let triggeringPrincipal = E10SUtils.deserializePrincipal(loadArguments.triggeringPrincipal, () => Services.scriptSecurityManager.createNullPrincipal({}));
 
         if (loadArguments.userContextId) {
           webNavigation.setOriginAttributesBeforeLoading({ userContextId: loadArguments.userContextId });
@@ -208,8 +221,7 @@ ContentRestoreInternal.prototype = {
         let loadURIOptions = {
           triggeringPrincipal,
           loadFlags: loadArguments.flags,
-          referrerURI: referrer,
-          referrerPolicy,
+          referrerInfo,
           postData,
         };
         webNavigation.loadURI(loadArguments.uri, loadURIOptions);

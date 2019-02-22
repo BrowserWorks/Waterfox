@@ -552,6 +552,10 @@ extern JS_FRIEND_API JS::Realm* GetAnyRealmInZone(JS::Zone* zone);
 extern JS_FRIEND_API JSObject* GetFirstGlobalInCompartment(
     JS::Compartment* comp);
 
+// Returns true if the compartment contains a global object and this global is
+// not being collected.
+extern JS_FRIEND_API bool CompartmentHasLiveGlobal(JS::Compartment* comp);
+
 /*
  * Shadow declarations of JS internal structures, for access by inline access
  * functions below. Do not use these structures in any other way. When adding
@@ -1939,7 +1943,9 @@ extern JS_FRIEND_API JSObject* JS_GetArrayBufferViewBuffer(
  * Detach an ArrayBuffer, causing all associated views to no longer refer to
  * the ArrayBuffer's original attached memory.
  *
- * The |changeData| argument is obsolete and ignored.
+ * This function throws only if it is provided a non-ArrayBuffer object or if
+ * the provided ArrayBuffer is a WASM-backed ArrayBuffer or an ArrayBuffer used
+ * in asm.js code.
  */
 extern JS_FRIEND_API bool JS_DetachArrayBuffer(JSContext* cx,
                                                JS::HandleObject obj);
@@ -1960,40 +1966,6 @@ extern JS_FRIEND_API bool JS_IsDetachedArrayBufferObject(JSObject* obj);
  */
 JS_FRIEND_API JSObject* JS_NewDataView(JSContext* cx, JS::HandleObject buffer,
                                        uint32_t byteOffset, int32_t byteLength);
-
-/**
- * Return the byte offset of a data view into its array buffer. |obj| must be a
- * DataView.
- *
- * |obj| must have passed a JS_IsDataViewObject test, or somehow be known that
- * it would pass such a test: it is a data view or a wrapper of a data view,
- * and the unwrapping will succeed.
- */
-JS_FRIEND_API uint32_t JS_GetDataViewByteOffset(JSObject* obj);
-
-/**
- * Return the byte length of a data view.
- *
- * |obj| must have passed a JS_IsDataViewObject test, or somehow be known that
- * it would pass such a test: it is a data view or a wrapper of a data view,
- * and the unwrapping will succeed. If cx is nullptr, then DEBUG builds may be
- * unable to assert when unwrapping should be disallowed.
- */
-JS_FRIEND_API uint32_t JS_GetDataViewByteLength(JSObject* obj);
-
-/**
- * Return a pointer to the beginning of the data referenced by a DataView.
- *
- * |obj| must have passed a JS_IsDataViewObject test, or somehow be known that
- * it would pass such a test: it is a data view or a wrapper of a data view,
- * and the unwrapping will succeed. If cx is nullptr, then DEBUG builds may be
- * unable to assert when unwrapping should be disallowed.
- *
- * |*isSharedMemory| will be set to true if the DataView maps a
- * SharedArrayBuffer, otherwise to false.
- */
-JS_FRIEND_API void* JS_GetDataViewData(JSObject* obj, bool* isSharedMemory,
-                                       const JS::AutoRequireNoGC&);
 
 namespace js {
 namespace jit {
@@ -2795,12 +2767,6 @@ extern JS_FRIEND_API void LogDtor(void* self, const char* type, uint32_t sz);
  */
 extern JS_FRIEND_API uint64_t GetGCHeapUsageForObjectZone(JSObject* obj);
 
-/**
- * Create an iterator for the given list of props and the given object
- * being iterated.
- */
-extern JS_FRIEND_API JSObject* EnumeratedIdVectorToIterator(
-    JSContext* cx, JS::HandleObject obj, JS::AutoIdVector& props);
 } /* namespace js */
 
 #endif /* jsfriendapi_h */

@@ -26,11 +26,11 @@ class RemoteDecoderManagerParent final : public PRemoteDecoderManagerParent {
   bool OnManagerThread();
 
  protected:
-  PRemoteVideoDecoderParent* AllocPRemoteVideoDecoderParent(
-      const VideoInfo& aVideoInfo, const float& aFramerate,
+  PRemoteDecoderParent* AllocPRemoteDecoderParent(
+      const RemoteDecoderInfoIPDL& aRemoteDecoderInfo,
       const CreateDecoderParams::OptionSet& aOptions, bool* aSuccess,
       nsCString* aErrorDescription);
-  bool DeallocPRemoteVideoDecoderParent(PRemoteVideoDecoderParent* actor);
+  bool DeallocPRemoteDecoderParent(PRemoteDecoderParent* actor);
 
   void ActorDestroy(mozilla::ipc::IProtocol::ActorDestroyReason) override;
 

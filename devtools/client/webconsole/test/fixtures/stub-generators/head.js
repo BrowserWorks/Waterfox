@@ -306,21 +306,21 @@ async function generateConsoleApiStubs() {
   const hud = toolbox.getCurrentPanel().hud;
   const {ui} = hud;
   ok(ui.jsterm, "jsterm exists");
-  ok(ui.consoleOutput, "consoleOutput exists");
+  ok(ui.wrapper, "wrapper exists");
 
   for (const [key, {keys, code}] of consoleApi) {
     const received = new Promise(resolve => {
       let i = 0;
-      const listener = async (type, res) => {
+      const listener = async (res) => {
         const callKey = keys[i];
         stubs.packets.push(formatPacket(callKey, res));
         stubs.preparedMessages.push(formatStub(callKey, res));
         if (++i === keys.length) {
-          toolbox.target.client.removeListener("consoleAPICall", listener);
+          toolbox.target.activeConsole.off("consoleAPICall", listener);
           resolve();
         }
       };
-      toolbox.target.client.addListener("consoleAPICall", listener);
+      toolbox.target.activeConsole.on("consoleAPICall", listener);
     });
 
     await ContentTask.spawn(
@@ -358,9 +358,9 @@ async function generateCssMessageStubs() {
   for (const [key, code] of cssMessage) {
     const received = new Promise(resolve => {
       /* CSS errors are considered as pageError on the server */
-      toolbox.target.client.addListener("pageError", function onPacket(e, packet) {
-        toolbox.target.client.removeListener("pageError", onPacket);
-        info("Received css message:" + e + " " + JSON.stringify(packet, null, "\t"));
+      toolbox.target.activeConsole.on("pageError", function onPacket(packet) {
+        toolbox.target.activeConsole.off("pageError", onPacket);
+        info("Received css message: pageError " + JSON.stringify(packet, null, "\t"));
 
         const message = prepareMessage(packet, {getNextId: () => 1});
         stubs.packets.push(formatPacket(message.messageText, packet));
@@ -435,7 +435,7 @@ async function generateNetworkEventStubs() {
 
     const onNetworkUpdate = new Promise(resolve => {
       let i = 0;
-      ui.jsterm.hud.on("network-message-updated", function onNetworkUpdated(res) {
+      ui.on("network-message-updated", function onNetworkUpdated(res) {
         const updateKey = `${keys[i++]} update`;
         // We cannot ensure the form of the network update packet, some properties
         // might be in another order than in the original packet.
@@ -453,7 +453,7 @@ async function generateNetworkEventStubs() {
         stubs.packets.push(formatPacket(updateKey, packet));
         stubs.preparedMessages.push(formatNetworkEventStub(updateKey, res));
         if (i === keys.length) {
-          ui.jsterm.hud.off("network-message-updated", onNetworkUpdated);
+          ui.off("network-message-updated", onNetworkUpdated);
           resolve();
         }
       });
@@ -491,8 +491,8 @@ async function generatePageErrorStubs() {
 
   for (const [key, code] of pageError) {
     const received = new Promise(resolve => {
-      toolbox.target.client.addListener("pageError", function onPacket(e, packet) {
-        toolbox.target.client.removeListener("pageError", onPacket);
+      toolbox.target.activeConsole.on("pageError", function onPacket(packet) {
+        toolbox.target.activeConsole.off("pageError", onPacket);
         stubs.packets.push(formatPacket(key, packet));
         stubs.preparedMessages.push(formatStub(key, packet));
         resolve();

@@ -2844,7 +2844,8 @@ nsresult nsFocusManager::DetermineElementToMoveFocus(
 }
 
 static bool IsHostOrSlot(const nsIContent* aContent) {
-  return aContent->GetShadowRoot() || aContent->IsHTMLElement(nsGkAtoms::slot);
+  return aContent && (aContent->GetShadowRoot() ||
+                      aContent->IsHTMLElement(nsGkAtoms::slot));
 }
 
 // Helper class to iterate contents in scope by traversing flattened tree
@@ -3146,6 +3147,8 @@ nsIContent* nsFocusManager::GetNextTabbableContentInAncestorScopes(
     int32_t tabIndex = 0;
     if (IsHostOrSlot(startContent)) {
       tabIndex = HostOrSlotTabIndexValue(startContent);
+    } else if (nsIFrame* frame = startContent->GetPrimaryFrame()) {
+      frame->IsFocusable(&tabIndex);
     } else {
       startContent->IsFocusable(&tabIndex);
     }

@@ -11,6 +11,7 @@
 #include "mozilla/dom/nsIContentParent.h"
 #include "mozilla/gfx/gfxVarReceiver.h"
 #include "mozilla/gfx/GPUProcessListener.h"
+#include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/FileUtils.h"
@@ -96,6 +97,7 @@ struct TextureFactoryIdentifier;
 
 namespace dom {
 
+class BrowsingContextGroup;
 class Element;
 class TabParent;
 class ClonedMessageData;
@@ -122,6 +124,7 @@ class ContentParent final : public PContentParent,
   typedef mozilla::ipc::URIParams URIParams;
   typedef mozilla::ipc::PrincipalInfo PrincipalInfo;
   typedef mozilla::dom::ClonedMessageData ClonedMessageData;
+  typedef mozilla::dom::BrowsingContextGroup BrowsingContextGroup;
 
   friend class mozilla::PreallocatedProcessManagerImpl;
   friend class PContentParent;
@@ -618,27 +621,25 @@ class ContentParent final : public PContentParent,
   static bool IsInputEventQueueSupported();
 
   mozilla::ipc::IPCResult RecvAttachBrowsingContext(
-      const BrowsingContextId& aParentContextId,
-      const BrowsingContextId& aOpenerId, const BrowsingContextId& aContextId,
-      const nsString& aName);
+      BrowsingContext* aParentContext, BrowsingContext* aOpener,
+      BrowsingContextId aContextId, const nsString& aName);
 
-  mozilla::ipc::IPCResult RecvDetachBrowsingContext(
-      const BrowsingContextId& aContextId, const bool& aMoveToBFCache);
+  mozilla::ipc::IPCResult RecvDetachBrowsingContext(BrowsingContext* aContext,
+                                                    bool aMoveToBFCache);
 
   mozilla::ipc::IPCResult RecvSetOpenerBrowsingContext(
-      const BrowsingContextId& aContextId,
-      const BrowsingContextId& aOpenerContextId);
+      BrowsingContext* aContext, BrowsingContext* aOpener);
 
-  mozilla::ipc::IPCResult RecvWindowClose(const BrowsingContextId& aContextId,
-                                          const bool& aTrustedCaller);
-  mozilla::ipc::IPCResult RecvWindowFocus(const BrowsingContextId& aContextId);
-  mozilla::ipc::IPCResult RecvWindowBlur(const BrowsingContextId& aContextId);
+  mozilla::ipc::IPCResult RecvWindowClose(BrowsingContext* aContext,
+                                          bool aTrustedCaller);
+  mozilla::ipc::IPCResult RecvWindowFocus(BrowsingContext* aContext);
+  mozilla::ipc::IPCResult RecvWindowBlur(BrowsingContext* aContext);
   mozilla::ipc::IPCResult RecvWindowPostMessage(
-      const BrowsingContextId& aContextId, const ClonedMessageData& aMessage,
+      BrowsingContext* aContext, const ClonedMessageData& aMessage,
       const PostMessageData& aData);
 
   mozilla::ipc::IPCResult RecvSetUserGestureActivation(
-      const BrowsingContextId& aContextId, const bool& aNewValue);
+      BrowsingContext* aContext, bool aNewValue);
 
  protected:
   void OnChannelConnected(int32_t pid) override;
@@ -897,8 +898,9 @@ class ContentParent final : public PContentParent,
       PPSMContentDownloaderParent* aDownloader);
 
   PExternalHelperAppParent* AllocPExternalHelperAppParent(
-      const OptionalURIParams& aUri, const nsCString& aMimeContentType,
-      const nsCString& aContentDisposition,
+      const OptionalURIParams& aUri,
+      const mozilla::net::OptionalLoadInfoArgs& aLoadInfoArgs,
+      const nsCString& aMimeContentType, const nsCString& aContentDisposition,
       const uint32_t& aContentDispositionHint,
       const nsString& aContentDispositionFilename, const bool& aForceSave,
       const int64_t& aContentLength, const bool& aWasFileChannel,
@@ -1041,6 +1043,9 @@ class ContentParent final : public PContentParent,
  public:
   mozilla::ipc::IPCResult RecvPrivateDocShellsExist(const bool& aExist);
 
+  mozilla::ipc::IPCResult RecvCommitBrowsingContextTransaction(
+      BrowsingContext* aContext, BrowsingContext::Transaction&& aTransaction);
+
   mozilla::ipc::IPCResult RecvFirstIdle();
 
   mozilla::ipc::IPCResult RecvDeviceReset();
@@ -1106,8 +1111,6 @@ class ContentParent final : public PContentParent,
 
   mozilla::ipc::IPCResult RecvGetGraphicsDeviceInitData(
       ContentDeviceData* aOut);
-
-  mozilla::ipc::IPCResult RecvGetAndroidSystemInfo(AndroidSystemInfo* aInfo);
 
   mozilla::ipc::IPCResult RecvNotifyBenchmarkResult(const nsString& aCodecName,
                                                     const uint32_t& aDecodeFPS);
@@ -1192,6 +1195,9 @@ class ContentParent final : public PContentParent,
   bool IsRecordingOrReplaying() const {
     return mRecordReplayState != eNotRecordingOrReplaying;
   }
+
+  void OnBrowsingContextGroupSubscribe(BrowsingContextGroup* aGroup);
+  void OnBrowsingContextGroupUnsubscribe(BrowsingContextGroup* aGroup);
 
  private:
   // Released in ActorDestroy; deliberately not exposed to the CC.
@@ -1328,6 +1334,8 @@ class ContentParent final : public PContentParent,
   // for the SetProcessSandbox IPDL message.
   static bool sEarlySandboxInit;
 #endif
+
+  nsTHashtable<nsRefPtrHashKey<BrowsingContextGroup>> mGroups;
 };
 
 }  // namespace dom

@@ -17,7 +17,6 @@
 #include "mozilla/dom/MediaSource.h"
 #include "mozilla/ipc/IPCStreamUtils.h"
 #include "mozilla/LoadInfo.h"
-#include "mozilla/ModuleUtils.h"
 #include "mozilla/NullPrincipal.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/SystemGroup.h"
@@ -765,8 +764,8 @@ BlobURLProtocolHandler::NewURI(const nsACString& aSpec, const char* aCharset,
 }
 
 NS_IMETHODIMP
-BlobURLProtocolHandler::NewChannel2(nsIURI* aURI, nsILoadInfo* aLoadInfo,
-                                    nsIChannel** aResult) {
+BlobURLProtocolHandler::NewChannel(nsIURI* aURI, nsILoadInfo* aLoadInfo,
+                                   nsIChannel** aResult) {
   RefPtr<BlobURLChannel> channel = new BlobURLChannel(aURI, aLoadInfo);
 
   auto raii = MakeScopeExit([&] {
@@ -812,11 +811,6 @@ BlobURLProtocolHandler::NewChannel2(nsIURI* aURI, nsILoadInfo* aLoadInfo,
   channel->Initialize(info->mBlobImpl);
   channel.forget(aResult);
   return NS_OK;
-}
-
-NS_IMETHODIMP
-BlobURLProtocolHandler::NewChannel(nsIURI* uri, nsIChannel** result) {
-  return NewChannel2(uri, nullptr, result);
 }
 
 NS_IMETHODIMP
@@ -907,33 +901,6 @@ nsresult NS_GetSourceForMediaSourceURI(nsIURI* aURI, MediaSource** aSource) {
 
 namespace mozilla {
 namespace dom {
-
-#define NS_BLOBPROTOCOLHANDLER_CID                   \
-  {                                                  \
-    0xb43964aa, 0xa078, 0x44b2, {                    \
-      0xb0, 0x6b, 0xfd, 0x4d, 0x1b, 0x17, 0x2e, 0x66 \
-    }                                                \
-  }
-
-NS_GENERIC_FACTORY_CONSTRUCTOR(BlobURLProtocolHandler)
-
-NS_DEFINE_NAMED_CID(NS_BLOBPROTOCOLHANDLER_CID);
-
-static const Module::CIDEntry kBlobURLProtocolHandlerCIDs[] = {
-    {&kNS_BLOBPROTOCOLHANDLER_CID, false, nullptr,
-     BlobURLProtocolHandlerConstructor},
-    {nullptr}};
-
-static const Module::ContractIDEntry kBlobURLProtocolHandlerContracts[] = {
-    {NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX BLOBURI_SCHEME,
-     &kNS_BLOBPROTOCOLHANDLER_CID},
-    {nullptr}};
-
-static const Module kBlobURLProtocolHandlerModule = {
-    Module::kVersion, kBlobURLProtocolHandlerCIDs,
-    kBlobURLProtocolHandlerContracts};
-
-NSMODULE_DEFN(BlobURLProtocolHandler) = &kBlobURLProtocolHandlerModule;
 
 bool IsType(nsIURI* aUri, DataInfo::ObjectType aType) {
   DataInfo* info = GetDataInfoFromURI(aUri);

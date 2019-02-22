@@ -69,15 +69,16 @@
 
 "use strict";
 
+// Definitions needed to run eslint on this file.
 /* globals TESTS, runTest, finishTest */
 
-ChromeUtils.import("resource://gre/modules/Services.jsm", this);
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+
+const DATA_URI_SPEC = "chrome://mochitests/content/chrome/toolkit/mozapps/update/tests/chrome/";
 
 /* import-globals-from testConstants.js */
-Services.scriptloader.loadSubScript("chrome://mochitests/content/chrome/toolkit/mozapps/update/tests/chrome/testConstants.js", this);
-
-const IS_MACOSX = ("nsILocalFileMac" in Ci);
-const IS_WIN = ("@mozilla.org/windows-registry-key;1" in Cc);
+Services.scriptloader.loadSubScript(DATA_URI_SPEC + "testConstants.js", this);
 
 // The tests have to use the pageid instead of the pageIndex due to the
 // app update wizard's access method being random.
@@ -103,13 +104,10 @@ const URL_HTTPS_UPDATE_XML = "https://example.com" + URL_PATH_UPDATE_XML;
 
 const URI_UPDATE_PROMPT_DIALOG  = "chrome://mozapps/content/update/updates.xul";
 
-const PREF_APP_UPDATE_INTERVAL = "app.update.interval";
-const PREF_APP_UPDATE_LASTUPDATETIME = "app.update.lastUpdateTime.background-update-timer";
-
 const LOG_FUNCTION = info;
 
-const BIN_SUFFIX = (IS_WIN ? ".exe" : "");
-const FILE_UPDATER_BIN = "updater" + (IS_MACOSX ? ".app" : BIN_SUFFIX);
+const BIN_SUFFIX = (AppConstants.platform == "win" ? ".exe" : "");
+const FILE_UPDATER_BIN = "updater" + (AppConstants.platform == "macosx" ? ".app" : BIN_SUFFIX);
 const FILE_UPDATER_BIN_BAK = FILE_UPDATER_BIN + ".bak";
 
 var gURLData = URL_HOST + "/" + REL_PATH_DATA + "/";
@@ -138,14 +136,13 @@ var gDocElem;
 var gPrefToCheck;
 var gUseTestUpdater = false;
 
-// Set to true to log additional information for debugging. To log additional
-// information for an individual test set DEBUG_AUS_TEST to true in the test's
-// onload function.
-var DEBUG_AUS_TEST = true;
-
-const DATA_URI_SPEC = "chrome://mochitests/content/chrome/toolkit/mozapps/update/tests/chrome/";
 /* import-globals-from ../data/shared.js */
 Services.scriptloader.loadSubScript(DATA_URI_SPEC + "shared.js", this);
+
+// Set to true to log additional information for debugging. To log additional
+// information for individual tests set gDebugTest to false here and to true in
+// the test's onload function.
+gDebugTest = true;
 
 /**
  * The current test in TESTS array.
@@ -255,7 +252,7 @@ function runTestDefaultWaitForWindowClosed() {
 
     setupPrefs();
     gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
-    removeUpdateDirsAndFiles();
+    removeUpdateFiles(true);
     setupTimer(gTestTimeout);
     SimpleTest.executeSoon(setupTestUpdater);
   }
@@ -284,9 +281,8 @@ function finishTestDefault() {
 
   resetPrefs();
   gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "");
-  resetFiles();
-  removeUpdateDirsAndFiles();
   reloadUpdateManagerData(true);
+  removeUpdateFiles(true);
 
   Services.ww.unregisterNotification(gWindowObserver);
   if (gDocElem) {
@@ -491,7 +487,7 @@ function getContinueFile() {
  */
 function createContinueFile() {
   debugDump("creating 'continue' file for slow mar downloads");
-  writeFile(getContinueFile(), "");
+  getContinueFile().create(Ci.nsIFile.NORMAL_FILE_TYPE, PERMS_FILE);
 }
 
 /**
@@ -803,7 +799,7 @@ function restoreUpdaterBackup() {
  * finished.
  */
 function setupPrefs() {
-  if (DEBUG_AUS_TEST) {
+  if (gDebugTest) {
     Services.prefs.setBoolPref(PREF_APP_UPDATE_LOG, true);
   }
 
@@ -820,8 +816,8 @@ function setupPrefs() {
   }
   Services.prefs.setBoolPref(PREF_APP_UPDATE_DISABLEDFORTESTING, false);
 
-  if (IS_WIN) {
-    let configFile = getUpdateConfigFile();
+  if (AppConstants.platform == "win") {
+    let configFile = getUpdateDirFile(FILE_UPDATE_CONFIG_JSON);
     if (configFile.exists()) {
       let configData = JSON.parse(readFileBytes(configFile));
       gAppUpdateAuto = !!configData[CONFIG_APP_UPDATE_AUTO];
@@ -847,31 +843,6 @@ function setupPrefs() {
   Services.prefs.setIntPref(PREF_APP_UPDATE_PROMPTWAITTIME, 0);
   Services.prefs.setBoolPref(PREF_APP_UPDATE_SILENT, false);
   Services.prefs.setBoolPref(PREF_APP_UPDATE_DOORHANGER, false);
-}
-
-/**
- * Restores files that were backed up for the tests and general file cleanup.
- */
-function resetFiles() {
-  // Not being able to remove the "updated" directory will not adversely affect
-  // subsequent tests so wrap it in a try block and don't test whether its
-  // removal was successful.
-  let updatedDir;
-  if (IS_MACOSX) {
-    updatedDir = getUpdatesDir();
-    updatedDir.append(DIR_PATCH);
-  } else {
-    updatedDir = getAppBaseDir();
-  }
-  updatedDir.append(DIR_UPDATED);
-  if (updatedDir.exists()) {
-    try {
-      removeDirRecursive(updatedDir);
-    } catch (e) {
-      logTestInfo("Unable to remove directory. Path: " + updatedDir.path +
-                  ", Exception: " + e);
-    }
-  }
 }
 
 /**

@@ -16,6 +16,7 @@
 #include "nsStreamUtils.h"
 #include "nsStringStream.h"
 #include "nsUrlClassifierStreamUpdater.h"
+#include "nsUrlClassifierUtils.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/ErrorNames.h"
 #include "mozilla/Logging.h"
@@ -139,12 +140,10 @@ nsresult nsUrlClassifierStreamUpdater::FetchUpdate(
 
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsILoadInfo> loadInfo = mChannel->GetLoadInfo();
+  nsCOMPtr<nsILoadInfo> loadInfo = mChannel->LoadInfo();
   mozilla::OriginAttributes attrs;
   attrs.mFirstPartyDomain.AssignLiteral(NECKO_SAFEBROWSING_FIRST_PARTY_DOMAIN);
-  if (loadInfo) {
-    loadInfo->SetOriginAttributes(attrs);
-  }
+  loadInfo->SetOriginAttributes(attrs);
 
   mBeganStream = false;
 
@@ -191,7 +190,7 @@ nsresult nsUrlClassifierStreamUpdater::FetchUpdate(
   }
 
   // Make the request.
-  rv = mChannel->AsyncOpen2(this);
+  rv = mChannel->AsyncOpen(this);
   NS_ENSURE_SUCCESS(rv, rv);
 
   mTelemetryClockStart = PR_IntervalNow();
@@ -326,8 +325,10 @@ nsUrlClassifierStreamUpdater::DownloadUpdates(
     return rv;
   }
 
-  nsCOMPtr<nsIUrlClassifierUtils> urlUtil =
-      mozilla::components::UrlClassifierUtils::Service();
+  nsUrlClassifierUtils *urlUtil = nsUrlClassifierUtils::GetInstance();
+  if (NS_WARN_IF(!urlUtil)) {
+    return NS_ERROR_FAILURE;
+  }
 
   nsTArray<nsCString> tables;
   mozilla::safebrowsing::Classifier::SplitTables(aRequestTables, tables);

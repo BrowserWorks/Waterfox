@@ -151,7 +151,7 @@ nsresult nsPrefetchNode::OpenChannel() {
     priorityChannel->AdjustPriority(nsISupportsPriority::PRIORITY_LOWEST);
   }
 
-  rv = mChannel->AsyncOpen2(this);
+  rv = mChannel->AsyncOpen(this);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     // Drop the ref to the channel, because we don't want to end up with
     // cycles through it.
@@ -188,13 +188,11 @@ nsPrefetchNode::OnStartRequest(nsIRequest *aRequest, nsISupports *aContext) {
 
   // if the load is cross origin without CORS, or the CORS access is rejected,
   // always fire load event to avoid leaking site information.
-  nsCOMPtr<nsILoadInfo> loadInfo = httpChannel->GetLoadInfo();
-  if (loadInfo) {
-    mShouldFireLoadEvent =
-        loadInfo->GetTainting() == LoadTainting::Opaque ||
-        (loadInfo->GetTainting() == LoadTainting::CORS &&
-         (NS_FAILED(httpChannel->GetStatus(&rv)) || NS_FAILED(rv)));
-  }
+  nsCOMPtr<nsILoadInfo> loadInfo = httpChannel->LoadInfo();
+  mShouldFireLoadEvent =
+      loadInfo->GetTainting() == LoadTainting::Opaque ||
+      (loadInfo->GetTainting() == LoadTainting::CORS &&
+       (NS_FAILED(httpChannel->GetStatus(&rv)) || NS_FAILED(rv)));
 
   // no need to prefetch http error page
   bool requestSucceeded;

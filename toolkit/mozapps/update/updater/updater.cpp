@@ -2448,14 +2448,11 @@ static void UpdateThreadFunc(void *param) {
                      gInstallDirPath);
         MARChannelStringTable MARStrings;
         if (ReadMARChannelIDs(updateSettingsPath, &MARStrings) != OK) {
-          // If we can't read from update-settings.ini then we shouldn't impose
-          // a MAR restriction.  Some installations won't even include this
-          // file.
-          MARStrings.MARChannelID[0] = '\0';
+          rv = UPDATE_SETTINGS_FILE_CHANNEL;
+        } else {
+          rv = gArchiveReader.VerifyProductInformation(MARStrings.MARChannelID,
+                                                       MOZ_APP_VERSION);
         }
-
-        rv = gArchiveReader.VerifyProductInformation(MARStrings.MARChannelID,
-                                                     MOZ_APP_VERSION);
       }
     }
 #endif
@@ -2473,21 +2470,21 @@ static void UpdateThreadFunc(void *param) {
         NS_tchar continueFilePath[MAXPATHLEN] = {NS_T('\0')};
         NS_tsnprintf(continueFilePath,
                      sizeof(continueFilePath) / sizeof(continueFilePath[0]),
-                     NS_T("%s/continueStaging"), gPatchDirPath);
-        // Use 100 retries for staging requests to lessen the likelihood of
-        // tests intermittently failing on debug builds due to launching the
-        // updater. The total time to wait with the default interval of 100 ms
-        // is approximately 10 seconds. The tests use the same values.
-        const int max_retries = 100;
-        int retries = 1;
+                     NS_T("%s/continueStaging"), gInstallDirPath);
+        // Use 50 retries for staging requests to lessen the likelihood of tests
+        // intermittently failing on verify tasks due to launching the updater.
+        // The total time to wait with the default interval of 100 ms is
+        // approximately 5 seconds. The total time for tests is longer to
+        // account for the extra time it takes for the updater to launch.
+        const int max_retries = 50;
+        int retries = 0;
         while (retries++ < max_retries) {
 #  ifdef XP_WIN
           Sleep(100);
 #  else
           usleep(100000);
 #  endif
-          // Continue after the continue file exists and it is successfully
-          // removed.
+          // Continue after the continue file exists and is removed.
           if (!NS_taccess(continueFilePath, F_OK) &&
               !NS_tremove(continueFilePath)) {
             break;
@@ -2686,7 +2683,7 @@ int NS_main(int argc, NS_tchar **argv) {
   // need to initialize NSS at all there.
   // Otherwise, minimize the amount of NSS we depend on by avoiding all the NSS
   // databases.
-  if (NSS_NoDB_Init(NULL) != SECSuccess) {
+  if (NSS_NoDB_Init(nullptr) != SECSuccess) {
     PRErrorCode error = PR_GetError();
     fprintf(stderr, "Could not initialize NSS: %s (%d)", PR_ErrorToName(error),
             (int)error);

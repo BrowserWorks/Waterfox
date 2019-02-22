@@ -36,6 +36,7 @@ use prim_store::{PrimitiveScratchBuffer, PrimitiveInstance};
 use prim_store::{PrimitiveInstanceKind, PrimTemplateCommonData};
 use profiler::{BackendProfileCounters, IpcProfileCounters, ResourceProfileCounters};
 use record::ApiRecordingReceiver;
+use render_task::RenderTaskTreeCounters;
 use renderer::{AsyncPropertySampler, PipelineInfo};
 use resource_cache::ResourceCache;
 #[cfg(feature = "replay")]
@@ -346,6 +347,9 @@ struct Document {
     /// where we want to recycle the memory each new display list, to avoid constantly
     /// re-allocating and moving memory around.
     scratch: PrimitiveScratchBuffer,
+    /// Keep track of the size of render task tree to pre-allocate memory up-front
+    /// the next frame.
+    render_task_counters: RenderTaskTreeCounters,
 }
 
 impl Document {
@@ -379,6 +383,7 @@ impl Document {
             has_built_scene: false,
             data_stores: DataStores::default(),
             scratch: PrimitiveScratchBuffer::new(),
+            render_task_counters: RenderTaskTreeCounters::new(),
         }
     }
 
@@ -521,6 +526,7 @@ impl Document {
                 &self.dynamic_properties,
                 &mut self.data_stores,
                 &mut self.scratch,
+                &mut self.render_task_counters,
                 debug_flags,
             );
             self.hit_tester = Some(frame_builder.create_hit_tester(
@@ -611,15 +617,18 @@ impl Document {
         // surface tiles, that can be provided to the next frame builder.
         let mut retained_tiles = RetainedTiles::new();
         if let Some(frame_builder) = self.frame_builder.take() {
-            frame_builder.destroy(
+            let globals = frame_builder.destroy(
                 &mut retained_tiles,
                 &self.clip_scroll_tree,
             );
-        }
 
-        // Provide any cached tiles from the previous frame builder to
-        // the newly built one.
-        built_scene.frame_builder.set_retained_tiles(retained_tiles);
+            // Provide any cached tiles from the previous frame builder to
+            // the newly built one.
+            built_scene.frame_builder.set_retained_resources(
+                retained_tiles,
+                globals,
+            );
+        }
 
         self.frame_builder = Some(built_scene.frame_builder);
 
@@ -1635,6 +1644,8 @@ impl RenderBackend {
                 config.serialize(&rendered_document.frame, file_name);
                 let file_name = format!("clip-scroll-{}-{}", (id.0).0, id.1);
                 config.serialize_tree(&doc.clip_scroll_tree, file_name);
+                let file_name = format!("builder-{}-{}", (id.0).0, id.1);
+                config.serialize(doc.frame_builder.as_ref().unwrap(), file_name);
             }
 
             let data_stores_name = format!("data-stores-{}-{}", (id.0).0, id.1);
@@ -1746,6 +1757,7 @@ impl RenderBackend {
                 has_built_scene: false,
                 data_stores,
                 scratch: PrimitiveScratchBuffer::new(),
+                render_task_counters: RenderTaskTreeCounters::new(),
             };
 
             let frame_name = format!("frame-{}-{}", (id.0).0, id.1);

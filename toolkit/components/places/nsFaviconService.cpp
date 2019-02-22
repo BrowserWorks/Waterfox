@@ -43,6 +43,8 @@
 using namespace mozilla;
 using namespace mozilla::places;
 
+const uint16_t gFaviconSizes[7] = {192, 144, 96, 64, 48, 32, 16};
+
 /**
  * Used to notify a topic to system observers on async execute completion.
  * Will throw on error.
@@ -77,9 +79,9 @@ nsresult GetFramesInfoForContainer(imgIContainer* aContainer,
           continue;
         }
         // Check if it's one of the sizes we care about.
-        auto end = std::end(sFaviconSizes);
-        uint16_t* matchingSize =
-            std::find(std::begin(sFaviconSizes), end, nativeSize.width);
+        auto end = std::end(gFaviconSizes);
+        const uint16_t* matchingSize =
+            std::find(std::begin(gFaviconSizes), end, nativeSize.width);
         if (matchingSize != end) {
           // We must avoid duped sizes, an image could contain multiple frames
           // of the same size, but we can only store one. We could use an
@@ -430,7 +432,10 @@ nsFaviconService::ReplaceFaviconData(nsIURI* aFaviconURI, const uint8_t* aData,
   }
 
   // Note we can't set rootIcon here, because don't know the page it will be
-  // associated with. We'll do that later in SetAndFetchFaviconForPage.
+  // associated with. We'll do that later in SetAndFetchFaviconForPage if the
+  // icon doesn't exist; otherwise, if AsyncReplaceFaviconData updates an
+  // existing icon, it will take care of not overwriting an existing
+  // root = 1 value.
 
   IconPayload payload;
   payload.mimeType = aMimeType;
@@ -514,12 +519,12 @@ nsFaviconService::ReplaceFaviconDataFromDataURL(
       nsIContentPolicy::TYPE_INTERNAL_IMAGE_FAVICON);
 
   nsCOMPtr<nsIChannel> channel;
-  rv = protocolHandler->NewChannel2(dataURI, loadInfo, getter_AddRefs(channel));
+  rv = protocolHandler->NewChannel(dataURI, loadInfo, getter_AddRefs(channel));
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Blocking stream is OK for data URIs.
   nsCOMPtr<nsIInputStream> stream;
-  rv = channel->Open2(getter_AddRefs(stream));
+  rv = channel->Open(getter_AddRefs(stream));
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint64_t available64;
@@ -724,7 +729,7 @@ nsresult nsFaviconService::OptimizeIconSizes(IconData& aIcon) {
     IconPayload newPayload;
     newPayload.mimeType = NS_LITERAL_CSTRING(PNG_MIME_TYPE);
     newPayload.width = frameInfo.width;
-    for (uint16_t size : sFaviconSizes) {
+    for (uint16_t size : gFaviconSizes) {
       // The icon could be smaller than 16, that is our minimum.
       // Icons smaller than 16px are kept as-is.
       if (frameInfo.width >= 16) {

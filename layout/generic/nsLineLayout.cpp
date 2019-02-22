@@ -212,8 +212,7 @@ void nsLineLayout::BeginLineReflow(nscoord aICoord, nscoord aBCoord,
 
   if (0 == mLineNumber && !HasPrevInFlow(mBlockReflowInput->mFrame)) {
     nscoord pctBasis = mBlockReflowInput->ComputedISize();
-    mTextIndent = nsLayoutUtils::ResolveToLength<false>(mStyleText->mTextIndent,
-                                                        pctBasis);
+    mTextIndent = mStyleText->mTextIndent.Resolve(pctBasis);
     psd->mICoord += mTextIndent;
   }
 
@@ -667,11 +666,9 @@ bool nsLineLayout::LineIsBreakable() const {
 // only be used for things (margin, padding) where percentages on top
 // and bottom depend on the *width* just like percentages on left and
 // right.
-static bool HasPercentageUnitSide(const nsStyleSides& aSides) {
-  NS_FOR_CSS_SIDES(side) {
-    if (aSides.Get(side).HasPercent()) return true;
-  }
-  return false;
+template <typename T>
+static bool HasPercentageUnitSide(const StyleRect<T>& aSides) {
+  return aSides.Any([](const auto& aLength) { return aLength.HasPercent(); });
 }
 
 static bool IsPercentageAware(const nsIFrame* aFrame, WritingMode aWM) {
@@ -702,8 +699,7 @@ static bool IsPercentageAware(const nsIFrame* aFrame, WritingMode aWM) {
 
   const nsStylePosition* pos = aFrame->StylePosition();
 
-  if ((pos->ISizeDependsOnContainer(aWM) &&
-       pos->ISize(aWM).GetUnit() != eStyleUnit_Auto) ||
+  if ((pos->ISizeDependsOnContainer(aWM) && !pos->ISize(aWM).IsAuto()) ||
       pos->MaxISizeDependsOnContainer(aWM) ||
       pos->MinISizeDependsOnContainer(aWM) ||
       pos->OffsetHasPercent(aWM.IsVertical() ? eSideBottom : eSideRight) ||
@@ -711,7 +707,7 @@ static bool IsPercentageAware(const nsIFrame* aFrame, WritingMode aWM) {
     return true;
   }
 
-  if (eStyleUnit_Auto == pos->ISize(aWM).GetUnit()) {
+  if (pos->ISize(aWM).IsAuto()) {
     // We need to check for frames that shrink-wrap when they're auto
     // width.
     const nsStyleDisplay* disp = aFrame->StyleDisplay();
@@ -734,7 +730,7 @@ static bool IsPercentageAware(const nsIFrame* aFrame, WritingMode aWM) {
     nsIFrame* f = const_cast<nsIFrame*>(aFrame);
     if (f->GetIntrinsicRatio() != nsSize(0, 0) &&
         // Some percents are treated like 'auto', so check != coord
-        pos->BSize(aWM).GetUnit() != eStyleUnit_Coord) {
+        !pos->BSize(aWM).ConvertsToLength()) {
       const IntrinsicSize& intrinsicSize = f->GetIntrinsicSize();
       if (intrinsicSize.width.GetUnit() == eStyleUnit_None &&
           intrinsicSize.height.GetUnit() == eStyleUnit_None) {
@@ -1393,10 +1389,9 @@ void nsLineLayout::AddBulletFrame(nsBulletFrame* aFrame,
   NS_ASSERTION(mCurrentSpan == mRootSpan, "bad linelayout user");
   NS_ASSERTION(mGotLineBox, "must have line box");
 
-  nsIFrame* blockFrame = mBlockReflowInput->mFrame;
-  NS_ASSERTION(blockFrame->IsFrameOfType(nsIFrame::eBlockFrame),
-               "must be for block");
-  if (!static_cast<nsBlockFrame*>(blockFrame)->BulletIsEmpty()) {
+  nsBlockFrame* blockFrame = do_QueryFrame(mBlockReflowInput->mFrame);
+  MOZ_ASSERT(blockFrame, "must be for block");
+  if (!blockFrame->BulletIsEmpty()) {
     mHasBullet = true;
     mLineBox->SetHasBullet();
   }

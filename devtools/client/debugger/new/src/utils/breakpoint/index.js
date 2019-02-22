@@ -6,7 +6,7 @@
 
 import { sortBy } from "lodash";
 
-import { getBreakpoint } from "../../selectors";
+import { getBreakpoint, getSource } from "../../selectors";
 import { isGenerated } from "../source";
 
 import assert from "../assert";
@@ -22,6 +22,7 @@ import type {
   SourceActorLocation,
   PendingLocation,
   Breakpoint,
+  BreakpointLocation,
   PendingBreakpoint
 } from "../../types";
 
@@ -66,6 +67,26 @@ export function makePendingLocationId(location: SourceLocation) {
   const columnString = column || "";
 
   return `${sourceUrlString}:${line}:${columnString}`;
+}
+
+export function makeBreakpointLocation(
+  state: State,
+  location: SourceLocation
+): BreakpointLocation {
+  const source = getSource(state, location.sourceId);
+  if (!source) {
+    throw new Error("no source");
+  }
+  const breakpointLocation: any = {
+    line: location.line,
+    column: location.column
+  };
+  if (source.url) {
+    breakpointLocation.sourceUrl = source.url;
+  } else {
+    breakpointLocation.sourceId = source.actors[0].actor;
+  }
+  return breakpointLocation;
 }
 
 export function makeSourceActorLocation(
@@ -147,14 +168,12 @@ export function createBreakpoint(
   overrides: Object = {}
 ): Breakpoint {
   const {
-    condition,
     disabled,
-    hidden,
     generatedLocation,
     astLocation,
     text,
     originalText,
-    logValue
+    options
   } = overrides;
 
   const defaultASTLocation = {
@@ -165,9 +184,9 @@ export function createBreakpoint(
   const properties = {
     id: makeBreakpointId(location),
     options: {
-      condition: condition || null,
-      logValue: logValue || null,
-      hidden: hidden || false
+      condition: options.condition || null,
+      logValue: options.logValue || null,
+      hidden: options.hidden || false
     },
     disabled: disabled || false,
     loading: false,

@@ -282,11 +282,11 @@ function createProxy() {
 function test_connectonly() {
   Services.prefs.setCharPref("network.proxy.ssl", "localhost");
   Services.prefs.setIntPref("network.proxy.ssl_port", socketserver_port);
-  Services.prefs.setCharPref("network.proxy.no_proxies_on", "");
+  Services.prefs.setBoolPref("network.proxy.allow_hijacking_localhost", true);
   Services.prefs.setIntPref("network.proxy.type", 1);
 
   var chan = makeChan();
-  chan.asyncOpen2(listener);
+  chan.asyncOpen(listener);
 
   do_test_pending();
 }
@@ -294,7 +294,7 @@ function test_connectonly() {
 function test_connectonly_noproxy() {
   clearPrefs()
   var chan = makeChan();
-  chan.asyncOpen2(listener);
+  chan.asyncOpen(listener);
 
   do_test_pending();
 }
@@ -304,11 +304,11 @@ function test_connectonly_nonhttp() {
 
   Services.prefs.setCharPref("network.proxy.socks", "localhost")
   Services.prefs.setIntPref("network.proxy.socks_port", socketserver_port)
-  Services.prefs.setCharPref("network.proxy.no_proxies_on", "")
+  Services.prefs.setBoolPref("network.proxy.allow_hijacking_localhost", true);
   Services.prefs.setIntPref("network.proxy.type", 1)
 
   var chan = makeChan()
-  chan.asyncOpen2(listener)
+  chan.asyncOpen(listener)
 
   do_test_pending()
 }
@@ -336,7 +336,7 @@ function clearPrefs() {
   Services.prefs.clearUserPref("network.proxy.ssl_port");
   Services.prefs.clearUserPref("network.proxy.socks");
   Services.prefs.clearUserPref("network.proxy.socks_port");
-  Services.prefs.clearUserPref("network.proxy.no_proxies_on");
+  Services.prefs.clearUserPref("network.proxy.allow_hijacking_localhost");
   Services.prefs.clearUserPref("network.proxy.type");
 }
 

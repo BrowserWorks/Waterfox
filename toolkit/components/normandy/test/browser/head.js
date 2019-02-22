@@ -6,6 +6,8 @@ ChromeUtils.import("resource://normandy/lib/SandboxManager.jsm", this);
 ChromeUtils.import("resource://normandy/lib/NormandyDriver.jsm", this);
 ChromeUtils.import("resource://normandy/lib/NormandyApi.jsm", this);
 ChromeUtils.import("resource://normandy/lib/TelemetryEvents.jsm", this);
+ChromeUtils.defineModuleGetter(this, "TelemetryTestUtils",
+                               "resource://testing-common/TelemetryTestUtils.jsm");
 
 // Load mocking/stubbing library, sinon
 // docs: http://sinonjs.org/docs/
@@ -347,35 +349,19 @@ this.studyEndObserved = function(recipeId) {
 
 this.withSendEventStub = function(testFunction) {
   return async function wrappedTestFunction(...args) {
-    /* Checks that calls match the event schema. */
-    function checkEventMatchesSchema(method, object, value, extra) {
-      let match = true;
-      const spec = Array.from(Object.values(TelemetryEvents.eventSchema))
-        .filter(spec => spec.methods.includes(method))[0];
-
-      if (spec) {
-        if (!spec.objects.includes(object)) {
-          match = false;
-        }
-
-        for (const key of Object.keys(extra)) {
-          if (!spec.extra_keys.includes(key)) {
-            match = false;
-          }
-        }
-      } else {
-        match = false;
-      }
-
-      ok(match, `sendEvent(${method}, ${object}, ${value}, ${JSON.stringify(extra)}) should match spec`);
-    }
-
-    const stub = sinon.stub(TelemetryEvents, "sendEvent");
-    stub.callsFake(checkEventMatchesSchema);
+    const stub = sinon.spy(TelemetryEvents, "sendEvent");
+    stub.assertEvents = (expected) => {
+      let events = Services.telemetry.snapshotEvents(Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, false);
+      events = (events.parent || []).filter(e => e[1] == "normandy");
+      expected = expected.map(event => ["normandy"].concat(event));
+      TelemetryTestUtils.assertEvents(events, expected);
+    };
+    Services.telemetry.clearEvents();
     try {
       await testFunction(...args, stub);
     } finally {
       stub.restore();
+      Assert.ok(!stub.threw(), "some telemetry call failed");
     }
   };
 };

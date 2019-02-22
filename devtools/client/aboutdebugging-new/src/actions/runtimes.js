@@ -14,6 +14,7 @@ const {
 
 const { l10n } = require("../modules/l10n");
 const { createClientForRuntime } = require("../modules/runtime-client-factory");
+const { isExtensionDebugSettingNeeded } = require("../modules/debug-target-support");
 
 const { remoteClientManager } =
   require("devtools/client/shared/remote-debugging/remote-client-manager");
@@ -36,6 +37,9 @@ const {
   UPDATE_CONNECTION_PROMPT_SETTING_FAILURE,
   UPDATE_CONNECTION_PROMPT_SETTING_START,
   UPDATE_CONNECTION_PROMPT_SETTING_SUCCESS,
+  UPDATE_EXTENSION_DEBUG_SETTING_FAILURE,
+  UPDATE_EXTENSION_DEBUG_SETTING_START,
+  UPDATE_EXTENSION_DEBUG_SETTING_SUCCESS,
   UPDATE_RUNTIME_MULTIE10S_FAILURE,
   UPDATE_RUNTIME_MULTIE10S_START,
   UPDATE_RUNTIME_MULTIE10S_SUCCESS,
@@ -44,23 +48,10 @@ const {
   WATCH_RUNTIME_SUCCESS,
 } = require("../constants");
 
-async function getRuntimeInfo(runtime, clientWrapper) {
-  const { type } = runtime;
-  const { name, channel, deviceName, isMultiE10s, version } =
-    await clientWrapper.getDeviceDescription();
-  const icon =
-    (channel === "release" || channel === "beta" || channel === "aurora")
-      ? `chrome://devtools/skin/images/aboutdebugging-firefox-${ channel }.svg`
-      : "chrome://devtools/skin/images/aboutdebugging-firefox-nightly.svg";
-
-  return {
-    deviceName,
-    icon,
-    isMultiE10s,
-    name,
-    type,
-    version,
-  };
+async function getRuntimeIcon(channel) {
+  return (channel === "release" || channel === "beta" || channel === "aurora")
+    ? `chrome://devtools/skin/images/aboutdebugging-firefox-${ channel }.svg`
+    : "chrome://devtools/skin/images/aboutdebugging-firefox-nightly.svg";
 }
 
 function onRemoteDebuggerClientClosed() {
@@ -78,19 +69,25 @@ function connectRuntime(id) {
     try {
       const runtime = findRuntimeById(id, getState().runtimes);
       const clientWrapper = await createClientForRuntime(runtime);
-      const info = await getRuntimeInfo(runtime, clientWrapper);
-      const { isMultiE10s } = info;
-      delete info.isMultiE10s;
+
+      const deviceDescription = await clientWrapper.getDeviceDescription();
+      const compatibilityReport = await clientWrapper.checkVersionCompatibility();
+      const icon = await getRuntimeIcon(deviceDescription.channel);
 
       const {
+        CHROME_DEBUG_ENABLED,
         CONNECTION_PROMPT,
         PERMANENT_PRIVATE_BROWSING,
+        REMOTE_DEBUG_ENABLED,
         SERVICE_WORKERS_ENABLED,
       } = RUNTIME_PREFERENCE;
-
       const connectionPromptEnabled =
         await clientWrapper.getPreference(CONNECTION_PROMPT, false);
-
+      const extensionDebugEnabled =
+        isExtensionDebugSettingNeeded(runtime.type)
+          ? await clientWrapper.getPreference(CHROME_DEBUG_ENABLED, true) &&
+            await clientWrapper.getPreference(REMOTE_DEBUG_ENABLED, true)
+          : true;
       const privateBrowsing =
         await clientWrapper.getPreference(PERMANENT_PRIVATE_BROWSING, false);
       const serviceWorkersEnabled =
@@ -99,9 +96,17 @@ function connectRuntime(id) {
 
       const runtimeDetails = {
         clientWrapper,
+        compatibilityReport,
         connectionPromptEnabled,
-        info,
-        isMultiE10s,
+        extensionDebugEnabled,
+        info: {
+          deviceName: deviceDescription.deviceName,
+          icon,
+          name: deviceDescription.name,
+          type: runtime.type,
+          version: deviceDescription.version,
+        },
+        isMultiE10s: deviceDescription.isMultiE10s,
         serviceWorkersAvailable,
       };
 
@@ -189,6 +194,32 @@ function updateConnectionPromptSetting(connectionPromptEnabled) {
                  runtime, connectionPromptEnabled });
     } catch (e) {
       dispatch({ type: UPDATE_CONNECTION_PROMPT_SETTING_FAILURE, error: e });
+    }
+  };
+}
+
+function updateExtensionDebugSetting(extensionDebugEnabled) {
+  return async (dispatch, getState) => {
+    dispatch({ type: UPDATE_EXTENSION_DEBUG_SETTING_START });
+    try {
+      const runtime = getCurrentRuntime(getState().runtimes);
+      const { clientWrapper } = runtime.runtimeDetails;
+
+      const { CHROME_DEBUG_ENABLED, REMOTE_DEBUG_ENABLED } = RUNTIME_PREFERENCE;
+      await clientWrapper.setPreference(CHROME_DEBUG_ENABLED, extensionDebugEnabled);
+      await clientWrapper.setPreference(REMOTE_DEBUG_ENABLED, extensionDebugEnabled);
+
+      // Re-get actual value from the runtime.
+      const isChromeDebugEnabled =
+        await clientWrapper.getPreference(CHROME_DEBUG_ENABLED, extensionDebugEnabled);
+      const isRemoveDebugEnabled =
+        await clientWrapper.getPreference(REMOTE_DEBUG_ENABLED, extensionDebugEnabled);
+      extensionDebugEnabled = isChromeDebugEnabled && isRemoveDebugEnabled;
+
+      dispatch({ type: UPDATE_EXTENSION_DEBUG_SETTING_SUCCESS,
+                 runtime, extensionDebugEnabled });
+    } catch (e) {
+      dispatch({ type: UPDATE_EXTENSION_DEBUG_SETTING_FAILURE, error: e });
     }
   };
 }
@@ -382,6 +413,7 @@ module.exports = {
   removeRuntimeListeners,
   unwatchRuntime,
   updateConnectionPromptSetting,
+  updateExtensionDebugSetting,
   updateNetworkRuntimes,
   updateUSBRuntimes,
   watchRuntime,

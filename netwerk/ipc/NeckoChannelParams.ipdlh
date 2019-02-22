@@ -14,17 +14,29 @@ include URIParams;
 include IPCServiceWorkerDescriptor;
 include IPCStream;
 include PBackgroundSharedTypes;
+include DOMTypes;
 
 using mozilla::OriginAttributes from "mozilla/ipc/BackgroundUtils.h";
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 using RequestHeaderTuples from "mozilla/net/PHttpChannelParams.h";
-using ArrayOfStringPairs from "mozilla/net/PHttpChannelParams.h";
 using struct nsHttpAtom from "nsHttp.h";
 using class mozilla::net::nsHttpResponseHead from "nsHttpResponseHead.h";
 using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
+using nsILoadInfo::CrossOriginOpenerPolicy from "ipc/IPCMessageUtils.h";
 
 namespace mozilla {
 namespace net {
+
+//-----------------------------------------------------------------------------
+// Preferrer alternative data type
+//-----------------------------------------------------------------------------
+
+struct PreferredAlternativeDataTypeParams
+{
+  nsCString type;
+  nsCString contentType;
+  bool deliverAltData;
+};
 
 //-----------------------------------------------------------------------------
 // LoadInfo IPDL structs
@@ -64,7 +76,7 @@ struct LoadInfoArgs
   uint64_t                    topOuterWindowID;
   uint64_t                    frameOuterWindowID;
   uint64_t                    browsingContextID;
-  bool                        enforceSecurity;
+  uint64_t                    frameBrowsingContextID;
   bool                        initialSecurityCheckDone;
   bool                        isInThirdPartyContext;
   bool                        isDocshellReload;
@@ -110,7 +122,9 @@ struct LoadInfoArgs
   bool                        serviceWorkerTaintingSynthesized;
   bool                        documentHasUserInteracted;
   bool                        documentHasLoaded;
+  nsString                    cspNonce;
   bool                        isFromProcessingFrameAttributes;
+  CrossOriginOpenerPolicy     openerPolicy;
 };
 
 /**
@@ -150,6 +164,8 @@ struct ParentLoadInfoForwarderArgs
 
   bool documentHasUserInteracted;
   bool documentHasLoaded;
+
+  CrossOriginOpenerPolicy openerPolicy;
 
   // IMPORTANT: when you add new properites here you must also update
   // LoadInfoToParentLoadInfoForwarder and MergeParentLoadInfoForwarder
@@ -208,6 +224,7 @@ struct HttpChannelOpenArgs
   uint32_t                    referrerPolicy;
   OptionalURIParams           apiRedirectTo;
   OptionalURIParams           topWindowURI;
+  nsIPrincipal                topWindowPrincipal;
   uint32_t                    loadFlags;
   RequestHeaderTuples         requestHeaders;
   nsCString                   requestMethod;
@@ -243,7 +260,7 @@ struct HttpChannelOpenArgs
   uint64_t                    channelId;
   nsString                    integrityMetadata;
   uint64_t                    contentWindowId;
-  ArrayOfStringPairs          preferredAlternativeTypes;
+  PreferredAlternativeDataTypeParams[] preferredAlternativeTypes;
   uint64_t                    topLevelOuterContentWindowId;
   TimeStamp                   launchServiceWorkerStart;
   TimeStamp                   launchServiceWorkerEnd;

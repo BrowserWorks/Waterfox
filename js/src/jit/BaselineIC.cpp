@@ -214,13 +214,6 @@ void ICEntry::trace(JSTracer* trc) {
         }
         break;
       }
-      case JSOP_POS: {
-        ICToNumber_Fallback::Compiler stubCompiler(cx);
-        if (!addIC(pc, stubCompiler.getStub(&stubSpace))) {
-          return nullptr;
-        }
-        break;
-      }
       case JSOP_LOOPENTRY: {
         ICWarmUpCounter_Fallback::Compiler stubCompiler(cx);
         if (!addIC(pc, stubCompiler.getStub(&stubSpace))) {
@@ -393,20 +386,6 @@ void ICEntry::trace(JSTracer* trc) {
       }
       case JSOP_ITER: {
         ICGetIterator_Fallback::Compiler compiler(cx);
-        if (!addIC(pc, compiler.getStub(&stubSpace))) {
-          return nullptr;
-        }
-        break;
-      }
-      case JSOP_MOREITER: {
-        ICIteratorMore_Fallback::Compiler compiler(cx);
-        if (!addIC(pc, compiler.getStub(&stubSpace))) {
-          return nullptr;
-        }
-        break;
-      }
-      case JSOP_ENDITER: {
-        ICIteratorClose_Fallback::Compiler compiler(cx);
         if (!addIC(pc, compiler.getStub(&stubSpace))) {
           return nullptr;
         }
@@ -1485,11 +1464,9 @@ bool ICTypeMonitor_PrimitiveSet::Compiler::generateStubCode(
     masm.branchTestSymbol(Assembler::Equal, R0, &success);
   }
 
-#ifdef ENABLE_BIGINT
   if (flags_ & TypeToFlag(JSVAL_TYPE_BIGINT)) {
     masm.branchTestBigInt(Assembler::Equal, R0, &success);
   }
-#endif
 
   if (flags_ & TypeToFlag(JSVAL_TYPE_OBJECT)) {
     masm.branchTestObject(Assembler::Equal, R0, &success);
@@ -1831,11 +1808,9 @@ bool ICTypeUpdate_PrimitiveSet::Compiler::generateStubCode(
     masm.branchTestSymbol(Assembler::Equal, R0, &success);
   }
 
-#ifdef ENABLE_BIGINT
   if (flags_ & TypeToFlag(JSVAL_TYPE_BIGINT)) {
     masm.branchTestBigInt(Assembler::Equal, R0, &success);
   }
-#endif
 
   if (flags_ & TypeToFlag(JSVAL_TYPE_OBJECT)) {
     masm.branchTestObject(Assembler::Equal, R0, &success);
@@ -1941,40 +1916,6 @@ bool ICToBool_Fallback::Compiler::generateStubCode(MacroAssembler& masm) {
   pushStubPayload(masm, R0.scratchReg());
 
   return tailCallVM(fun, masm);
-}
-
-//
-// ToNumber_Fallback
-//
-
-static bool DoToNumberFallback(JSContext* cx, ICToNumber_Fallback* stub,
-                               HandleValue arg, MutableHandleValue ret) {
-  stub->incrementEnteredCount();
-  FallbackICSpew(cx, stub, "ToNumber");
-  ret.set(arg);
-  return ToNumber(cx, ret);
-}
-
-typedef bool (*DoToNumberFallbackFn)(JSContext*, ICToNumber_Fallback*,
-                                     HandleValue, MutableHandleValue);
-static const VMFunction DoToNumberFallbackInfo =
-    FunctionInfo<DoToNumberFallbackFn>(DoToNumberFallback, "DoToNumberFallback",
-                                       TailCall, PopValues(1));
-
-bool ICToNumber_Fallback::Compiler::generateStubCode(MacroAssembler& masm) {
-  MOZ_ASSERT(R0 == JSReturnOperand);
-
-  // Restore the tail call register.
-  EmitRestoreTailCallReg(masm);
-
-  // Ensure stack is fully synced for the expression decompiler.
-  masm.pushValue(R0);
-
-  // Push arguments.
-  masm.pushValue(R0);
-  masm.push(ICStubReg);
-
-  return tailCallVM(DoToNumberFallbackInfo, masm);
 }
 
 static void StripPreliminaryObjectStubs(JSContext* cx, ICFallbackStub* stub) {
@@ -2291,6 +2232,7 @@ static bool DoSetElemFallback(JSContext* cx, BaselineFrame* frame,
   }
 
   bool isTemporarilyUnoptimizable = false;
+  bool canAddSlot = false;
   bool attached = false;
 
   if (stub->state().maybeTransition()) {
@@ -2300,7 +2242,7 @@ static bool DoSetElemFallback(JSContext* cx, BaselineFrame* frame,
   if (stub->state().canAttachStub()) {
     SetPropIRGenerator gen(cx, script, pc, CacheKind::SetElem,
                            stub->state().mode(), &isTemporarilyUnoptimizable,
-                           objv, index, rhs);
+                           &canAddSlot, objv, index, rhs);
     if (gen.tryAttachStub()) {
       ICStub* newStub = AttachBaselineCacheIRStub(
           cx, gen.writerRef(), gen.cacheKind(),
@@ -2370,8 +2312,8 @@ static bool DoSetElemFallback(JSContext* cx, BaselineFrame* frame,
   if (stub->state().canAttachStub()) {
     SetPropIRGenerator gen(cx, script, pc, CacheKind::SetElem,
                            stub->state().mode(), &isTemporarilyUnoptimizable,
-                           objv, index, rhs);
-    if (gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
+                           &canAddSlot, objv, index, rhs);
+    if (canAddSlot && gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
       ICStub* newStub = AttachBaselineCacheIRStub(
           cx, gen.writerRef(), gen.cacheKind(),
           BaselineCacheIRStubKind::Updated, frame->script(), stub, &attached);
@@ -3077,6 +3019,7 @@ static bool DoSetPropFallback(JSContext* cx, BaselineFrame* frame,
   // failed to attach a stub is one of those temporary reasons, since we might
   // end up attaching a stub for the exact same access later.
   bool isTemporarilyUnoptimizable = false;
+  bool canAddSlot = false;
 
   bool attached = false;
   if (stub->state().maybeTransition()) {
@@ -3087,7 +3030,7 @@ static bool DoSetPropFallback(JSContext* cx, BaselineFrame* frame,
     RootedValue idVal(cx, StringValue(name));
     SetPropIRGenerator gen(cx, script, pc, CacheKind::SetProp,
                            stub->state().mode(), &isTemporarilyUnoptimizable,
-                           lhs, idVal, rhs);
+                           &canAddSlot, lhs, idVal, rhs);
     if (gen.tryAttachStub()) {
       ICStub* newStub = AttachBaselineCacheIRStub(
           cx, gen.writerRef(), gen.cacheKind(),
@@ -3155,8 +3098,8 @@ static bool DoSetPropFallback(JSContext* cx, BaselineFrame* frame,
     RootedValue idVal(cx, StringValue(name));
     SetPropIRGenerator gen(cx, script, pc, CacheKind::SetProp,
                            stub->state().mode(), &isTemporarilyUnoptimizable,
-                           lhs, idVal, rhs);
-    if (gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
+                           &canAddSlot, lhs, idVal, rhs);
+    if (canAddSlot && gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
       ICStub* newStub = AttachBaselineCacheIRStub(
           cx, gen.writerRef(), gen.cacheKind(),
           BaselineCacheIRStubKind::Updated, frame->script(), stub, &attached);
@@ -3412,12 +3355,8 @@ static bool GetTemplateObjectForNative(JSContext* cx, HandleFunction target,
     }
 
     case InlinableNative::TypedArrayConstructor: {
-      if (args.length() != 1) {
-        return true;
-      }
-
       return TypedArrayObject::GetTemplateObjectForNative(cx, target->native(),
-                                                          args[0], res);
+                                                          args, res);
     }
 
     default:
@@ -3628,6 +3567,7 @@ static bool TryAttachCallStub(JSContext* cx, ICCall_Fallback* stub,
       }
 
       if (protov.isObject()) {
+        AutoRealm ar(cx, fun);
         TaggedProto proto(&protov.toObject());
         ObjectGroup* group =
             ObjectGroup::defaultNewGroup(cx, nullptr, proto, newTarget);
@@ -3647,17 +3587,17 @@ static bool TryAttachCallStub(JSContext* cx, ICCall_Fallback* stub,
         }
       }
 
-      if (cx->realm() == fun->realm()) {
-        JSObject* thisObject =
-            CreateThisForFunction(cx, fun, newTarget, TenuredObject);
-        if (!thisObject) {
-          return false;
-        }
+      JSObject* thisObject =
+          CreateThisForFunction(cx, fun, newTarget, TenuredObject);
+      if (!thisObject) {
+        return false;
+      }
 
-        if (thisObject->is<PlainObject>() ||
-            thisObject->is<UnboxedPlainObject>()) {
-          templateObject = thisObject;
-        }
+      MOZ_ASSERT(thisObject->nonCCWRealm() == fun->realm());
+
+      if (thisObject->is<PlainObject>() ||
+          thisObject->is<UnboxedPlainObject>()) {
+        templateObject = thisObject;
       }
     }
 
@@ -5444,131 +5384,6 @@ bool ICGetIterator_Fallback::Compiler::generateStubCode(MacroAssembler& masm) {
   pushStubPayload(masm, R0.scratchReg());
 
   return tailCallVM(DoGetIteratorFallbackInfo, masm);
-}
-
-//
-// IteratorMore_Fallback
-//
-
-static bool DoIteratorMoreFallback(JSContext* cx, BaselineFrame* frame,
-                                   ICIteratorMore_Fallback* stub,
-                                   HandleObject iterObj,
-                                   MutableHandleValue res) {
-  stub->incrementEnteredCount();
-
-  FallbackICSpew(cx, stub, "IteratorMore");
-
-  if (!IteratorMore(cx, iterObj, res)) {
-    return false;
-  }
-
-  if (!res.isMagic(JS_NO_ITER_VALUE) && !res.isString()) {
-    stub->setHasNonStringResult();
-  }
-
-  if (iterObj->is<PropertyIteratorObject>() &&
-      !stub->hasStub(ICStub::IteratorMore_Native)) {
-    ICIteratorMore_Native::Compiler compiler(cx);
-    ICStub* newStub = compiler.getStub(compiler.getStubSpace(frame->script()));
-    if (!newStub) {
-      return false;
-    }
-    stub->addNewStub(newStub);
-  }
-
-  return true;
-}
-
-typedef bool (*DoIteratorMoreFallbackFn)(JSContext*, BaselineFrame*,
-                                         ICIteratorMore_Fallback*, HandleObject,
-                                         MutableHandleValue);
-static const VMFunction DoIteratorMoreFallbackInfo =
-    FunctionInfo<DoIteratorMoreFallbackFn>(DoIteratorMoreFallback,
-                                           "DoIteratorMoreFallback", TailCall);
-
-bool ICIteratorMore_Fallback::Compiler::generateStubCode(MacroAssembler& masm) {
-  EmitRestoreTailCallReg(masm);
-
-  masm.unboxObject(R0, R0.scratchReg());
-  masm.push(R0.scratchReg());
-  masm.push(ICStubReg);
-  pushStubPayload(masm, R0.scratchReg());
-
-  return tailCallVM(DoIteratorMoreFallbackInfo, masm);
-}
-
-//
-// IteratorMore_Native
-//
-
-bool ICIteratorMore_Native::Compiler::generateStubCode(MacroAssembler& masm) {
-  Label failure;
-
-  Register obj = masm.extractObject(R0, ExtractTemp0);
-
-  AllocatableGeneralRegisterSet regs(availableGeneralRegs(1));
-  Register nativeIterator = regs.takeAny();
-  Register scratch = regs.takeAny();
-
-  masm.branchTestObjClass(Assembler::NotEqual, obj,
-                          &PropertyIteratorObject::class_, scratch, obj,
-                          &failure);
-  masm.loadObjPrivate(obj, JSObject::ITER_CLASS_NFIXED_SLOTS, nativeIterator);
-
-  // If propertyCursor_ < propertiesEnd_, load the next string and advance
-  // the cursor.  Otherwise return MagicValue(JS_NO_ITER_VALUE).
-  Label iterDone;
-  Address cursorAddr(nativeIterator, NativeIterator::offsetOfPropertyCursor());
-  Address cursorEndAddr(nativeIterator,
-                        NativeIterator::offsetOfPropertiesEnd());
-  masm.loadPtr(cursorAddr, scratch);
-  masm.branchPtr(Assembler::BelowOrEqual, cursorEndAddr, scratch, &iterDone);
-
-  // Get next string.
-  masm.loadPtr(Address(scratch, 0), scratch);
-
-  // Increase the cursor.
-  masm.addPtr(Imm32(sizeof(JSString*)), cursorAddr);
-
-  masm.tagValue(JSVAL_TYPE_STRING, scratch, R0);
-  EmitReturnFromIC(masm);
-
-  masm.bind(&iterDone);
-  masm.moveValue(MagicValue(JS_NO_ITER_VALUE), R0);
-  EmitReturnFromIC(masm);
-
-  // Failure case - jump to next stub
-  masm.bind(&failure);
-  EmitStubGuardFailure(masm);
-  return true;
-}
-
-//
-// IteratorClose_Fallback
-//
-
-static void DoIteratorCloseFallback(JSContext* cx,
-                                    ICIteratorClose_Fallback* stub,
-                                    HandleValue iterValue) {
-  FallbackICSpew(cx, stub, "IteratorClose");
-
-  CloseIterator(&iterValue.toObject());
-}
-
-typedef void (*DoIteratorCloseFallbackFn)(JSContext*, ICIteratorClose_Fallback*,
-                                          HandleValue);
-static const VMFunction DoIteratorCloseFallbackInfo =
-    FunctionInfo<DoIteratorCloseFallbackFn>(
-        DoIteratorCloseFallback, "DoIteratorCloseFallback", TailCall);
-
-bool ICIteratorClose_Fallback::Compiler::generateStubCode(
-    MacroAssembler& masm) {
-  EmitRestoreTailCallReg(masm);
-
-  masm.pushValue(R0);
-  masm.push(ICStubReg);
-
-  return tailCallVM(DoIteratorCloseFallbackInfo, masm);
 }
 
 //

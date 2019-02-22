@@ -84,6 +84,8 @@ policy-EnableTrackingProtection = Enable or disable Content Blocking and optiona
 # English or translate them as verbs.
 policy-Extensions = Install, uninstall or lock extensions. The Install option takes URLs or paths as parameters. The Uninstall and Locked options take extension IDs.
 
+policy-ExtensionUpdate = Enable or disable automatic extension updates.
+
 policy-FlashPlugin = Allow or deny usage of the Flash plugin.
 
 policy-HardwareAcceleration = If false, turn off hardware acceleration.
@@ -123,6 +125,8 @@ policy-SecurityDevices = Install PKCS #11 modules.
 policy-SSLVersionMax = Set the maximum SSL version.
 
 policy-SSLVersionMin = Set the minimum SSL version.
+
+policy-SupportMenu = Add a custom support menu item to the help menu.
 
 # “format” refers to the format used for the value of this policy.
 policy-WebsiteFilter = Block websites from being visited. See documentation for more details on the format.

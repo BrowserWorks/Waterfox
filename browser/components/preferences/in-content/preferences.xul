@@ -25,26 +25,26 @@
       data-l10n-attrs="title">
 
   <linkset>
-    <link rel="localization" href="branding/brand.ftl"/>
-    <link rel="localization" href="browser/branding/sync-brand.ftl"/>
-    <link rel="localization" href="browser/preferences/preferences.ftl"/>
+    <html:link rel="localization" href="branding/brand.ftl"/>
+    <html:link rel="localization" href="browser/branding/sync-brand.ftl"/>
+    <html:link rel="localization" href="browser/preferences/preferences.ftl"/>
     <!-- Used by fontbuilder.js -->
-    <link rel="localization" href="browser/preferences/fonts.ftl"/>
+    <html:link rel="localization" href="browser/preferences/fonts.ftl"/>
 
     <!-- Links below are only used for search-l10n-ids into subdialogs -->
-    <link rel="localization" href="browser/preferences/blocklists.ftl"/>
-    <link rel="localization" href="browser/preferences/clearSiteData.ftl"/>
-    <link rel="localization" href="browser/preferences/colors.ftl"/>
-    <link rel="localization" href="browser/preferences/connection.ftl"/>
-    <link rel="localization" href="browser/preferences/languages.ftl"/>
-    <link rel="localization" href="browser/preferences/permissions.ftl"/>
-    <link rel="localization" href="browser/preferences/selectBookmark.ftl"/>
-    <link rel="localization" href="browser/preferences/siteDataSettings.ftl"/>
-    <link rel="localization" href="browser/aboutDialog.ftl"/>
-    <link rel="localization" href="browser/sanitize.ftl"/>
-    <link rel="localization" href="toolkit/updates/history.ftl"/>
-    <link rel="localization" href="security/certificates/deviceManager.ftl"/>
-    <link rel="localization" href="security/certificates/certManager.ftl"/>
+    <html:link rel="localization" href="browser/preferences/blocklists.ftl"/>
+    <html:link rel="localization" href="browser/preferences/clearSiteData.ftl"/>
+    <html:link rel="localization" href="browser/preferences/colors.ftl"/>
+    <html:link rel="localization" href="browser/preferences/connection.ftl"/>
+    <html:link rel="localization" href="browser/preferences/languages.ftl"/>
+    <html:link rel="localization" href="browser/preferences/permissions.ftl"/>
+    <html:link rel="localization" href="browser/preferences/selectBookmark.ftl"/>
+    <html:link rel="localization" href="browser/preferences/siteDataSettings.ftl"/>
+    <html:link rel="localization" href="browser/aboutDialog.ftl"/>
+    <html:link rel="localization" href="browser/sanitize.ftl"/>
+    <html:link rel="localization" href="toolkit/updates/history.ftl"/>
+    <html:link rel="localization" href="security/certificates/deviceManager.ftl"/>
+    <html:link rel="localization" href="security/certificates/certManager.ftl"/>
   </linkset>
 
   <html:link rel="shortcut icon"
@@ -143,7 +143,7 @@
       <spacer flex="1"/>
 
       <hbox class="sidebar-footer-button" pack="center">
-        <label id="addonsButton" class="text-link">
+        <label id="addonsButton" is="text-link">
           <hbox align="center">
             <image class="sidebar-footer-icon addons-icon"/>
             <label class="sidebar-footer-label" flex="1" data-l10n-id="addons-button-label"></label>
@@ -152,7 +152,7 @@
       </hbox>
 
       <hbox class="sidebar-footer-button help-button" pack="center">
-        <label id="helpButton" class="text-link">
+        <label id="helpButton" is="text-link">
           <hbox align="center">
             <image class="sidebar-footer-icon help-icon"/>
             <label class="sidebar-footer-label" flex="1" data-l10n-id="help-button-label"></label>

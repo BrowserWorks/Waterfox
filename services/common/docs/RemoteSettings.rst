@@ -32,26 +32,44 @@ The ``get()`` method returns the list of entries for a specific key. Each entry 
     });
 
 .. note::
-    The data updates are managed internally, and ``.get()`` only returns the local data.
-    The data is pulled from the server only if this collection has no local data yet and no JSON dump
-    could be found (see :ref:`services/initial-data` below).
-
-.. note::
     The ``id`` and ``last_modified`` (timestamp) attributes are assigned by the server.
+
+
+Empty local database
+--------------------
+
+On new user profiles or for recently added use-cases, the local database will be empty until a synchronization with the server happens. Synchronizations are managed internally, and can sometimes be triggered minutes after browser starts.
+
+By default, if ``.get()`` is called before the local database had the chance to be synchronized, and if no initial data was provided (:ref:`see below <services/initial-data>`), then the settings will be pulled from the server in order to avoid returning an empty list. In that case, the first call to ``.get()`` will thus take longer than the following ones.
+
+This behaviour can be disabled using the ``syncIfEmpty`` option.
+
+.. important::
+
+    If the implicit synchronization fails (e.g network is not available) then errors are silent and an empty list is returned. :ref:`Uptake Telemetry <services/settings/uptake-telemetry>` status is sent though.
+
 
 Options
 -------
 
-The list can optionally be filtered or ordered:
+* ``filters``, ``order``: The list can optionally be filtered or ordered:
 
-.. code-block:: js
+    .. code-block:: js
 
-    const subset = await RemoteSettings("a-key").get({
-      filters: {
-        "property": "value"
-      },
-      order: "-weight"
-    });
+        const subset = await RemoteSettings("a-key").get({
+        filters: {
+            "property": "value"
+        },
+        order: "-weight"
+        });
+
+* ``syncIfEmpty``: implicit synchronization if local data is empty (default: ``true``).
+  Set it to ``false`` if your use-case can tolerate an empty list until the first synchronization happens.
+
+    .. code-block:: js
+
+        await RemoteSettings("a-key").get({ syncIfEmpty: false });
+
 
 Events
 ------
@@ -75,7 +93,7 @@ The ``sync`` event allows to be notified when the remote settings are changed on
 
 .. note::
 
-    Currently, the synchronization of remote settings is triggered by its own timer every 24H (see the preference ``services.settings.poll_interval`` ).
+    Currently, the synchronization of remote settings is triggered via push notifications, and also by its own timer every 24H (see the preference ``services.settings.poll_interval`` ).
 
 File attachments
 ----------------
@@ -123,6 +141,7 @@ From the client API standpoint, this is completely transparent: the ``.get()`` m
 
     The remote settings targets follow the same approach as the :ref:`Normandy recipe client <components/normandy>` (ie. JEXL filter expressions),
 
+.. _services/settings/uptake-telemetry:
 
 Uptake Telemetry
 ================
@@ -189,8 +208,14 @@ By default, the entries returned by ``.get()`` are filtered based on the JEXL ex
     });
 
 
-Debugging and testing
-=====================
+Debugging and manual testing
+============================
+
+Remote Settings Dev Tools
+-------------------------
+
+The Remote Settings Dev Tools extension provides some tooling to inspect synchronization statuses, to change the remote server or to switch to *preview* mode in order to sign-off pending changes. `More information on the dedicated repository <https://github.com/mozilla/remote-settings-devtools>`_.
+
 
 Trigger a synchronization manually
 ----------------------------------
@@ -210,6 +235,39 @@ The synchronization of a single client can be forced with the ``.sync()`` method
 .. important::
 
     The above methods are only relevant during development or debugging and should never be called in production code.
+
+
+Inspect local data
+------------------
+
+The internal IndexedDB of Remote Settings can be accessed via the Storage Inspector in the `browser toolbox <https://developer.mozilla.org/en-US/docs/Tools/Browser_Toolbox>`_.
+
+For example, the local data of the ``"key"`` collection can be accessed in the ``remote-settings`` database at *Browser Toolbox* > *Storage* > *IndexedDB* > *chrome*, in the ``records`` store.
+
+
+Unit Tests
+==========
+
+As a foreword, we would like to underline the fact that your tests should not test Remote Settings itself. Your tests should assume Remote Settings works, and should only run assertions on the integration part. For example, if you see yourself mocking the server responses, your tests may go over their responsability.
+
+If your code relies on the ``"sync"`` event, you are likely to be interested in faking this event and make sure your code runs as expected. If it relies on ``.get()``, you will probably want to insert some fake local data.
+
+
+Simulate ``"sync"`` events
+--------------------------
+
+You can forge a ``payload`` that contains the events attributes as described above, and emit it :)
+
+.. code-block:: js
+
+    const payload = {
+      current: [{ id: "", age: 43 }],
+      created: [],
+      updated: [{ old: { id: "abc", age: 42 }, new: { id: "abc", age: 43 }}],
+      deleted: [],
+    };
+
+    await RemoteSettings("a-key").emit("sync", { "data": payload });
 
 
 Manipulate local data
@@ -250,19 +308,10 @@ The local data can be flushed with ``clear()``:
 For further documentation in collection API, checkout the `kinto.js library <https://kintojs.readthedocs.io/>`_, which is in charge of the IndexedDB interactions behind-the-scenes.
 
 
-Inspect local data
-------------------
+Misc
+====
 
-The internal IndexedDB of Remote Settings can be accessed via the Storage Inspector in the `browser toolbox <https://developer.mozilla.org/en-US/docs/Tools/Browser_Toolbox>`_.
-
-For example, the local data of the ``"key"`` collection can be accessed in the ``remote-settings`` database at *Browser Toolbox* > *Storage* > *IndexedDB* > *chrome*, in the ``records`` store.
-
-
-Remote Settings Dev Tools
--------------------------
-
-The Remote Settings Dev Tools extension provides some tooling to inspect synchronization statuses, to change the remote server or to switch to *preview* mode in order to sign-off pending changes. `More information on the dedicated repository <https://github.com/mozilla/remote-settings-devtools>`_.
-
+We host more documentation on https://remote-settings.readthedocs.io/, on how to run a server locally, manage attachments, or use the REST API etc.
 
 About blocklists
 ----------------

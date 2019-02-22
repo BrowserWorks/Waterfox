@@ -1,7 +1,9 @@
-$card-header-in-hero-font-size: 13;
+$card-header-in-hero-font-size: 14;
 $card-header-in-hero-line-height: 20;
 
 .ds-hero {
+  position: relative;
+
   .img {
     @include image-as-background;
   }
@@ -12,6 +14,12 @@ $card-header-in-hero-line-height: 20;
 
   p {
     line-height: 1.538;
+    margin: 8px 0;
+  }
+
+  .excerpt {
+    @include limit-visibile-lines(3, 20, 14);
+    margin: 4px 0 8px;
   }
 
   .ds-list {
@@ -21,6 +29,11 @@ $card-header-in-hero-line-height: 20;
 
   .ds-card {
     border: 0;
+    padding-bottom: 20px;
+
+    p {
+      margin-top: 4px;
+    }
 
     &:hover {
       border: 0;
@@ -30,11 +43,6 @@ $card-header-in-hero-line-height: 20;
 
     .meta {
       padding: 0;
-
-      .title {
-        // show only 2 lines of copy
-        @include limit-visibile-lines(2, $card-header-in-hero-line-height, $card-header-in-hero-font-size);
-      }
     }
 
     .img-wrapper {
@@ -50,15 +58,15 @@ $card-header-in-hero-line-height: 20;
   .wrapper {
     color: $grey-50;
     display: block;
-    margin: 16px 0 24px;
-    padding: 24px 0;
+    margin: 12px 0 16px;
+    padding: 16px 0;
     border-top: $border-secondary;
     border-bottom: $border-secondary;
 
     @at-root .ds-hero-no-border .wrapper {
       border-top: 0;
       border-bottom: 0;
-      padding: 0;
+      padding: 0 0 8px;
     }
 
     &:hover .meta header {
@@ -79,21 +87,26 @@ $card-header-in-hero-line-height: 20;
     }
 
     .meta {
+      display: block;
+      flex-direction: column;
+      justify-content: space-between;
+
       header {
-        font-size: 22px;
+        @include limit-visibile-lines(4, 28, 22);
         color: $grey-90;
+        margin-bottom: 8px;
       }
 
-      p {
-        font-size: 13px;
-
-        &.context {
-          color: $teal-70;
-        }
+      .context {
+        color: $teal-70;
       }
 
       .source {
+        font-size: 13px;
+        color: $teal-80;
         margin-bottom: 0;
+        overflow-x: hidden;
+        text-overflow: ellipsis;
       }
     }
   }
@@ -117,6 +130,7 @@ $card-header-in-hero-line-height: 20;
       .meta {
         grid-column: 1;
         grid-row: 1;
+        display: flex;
       }
 
       .img {
@@ -137,40 +151,61 @@ $card-header-in-hero-line-height: 20;
   .ds-column-10 &,
   .ds-column-11 &,
   .ds-column-12 & {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-column-gap: 24px;
+
+    &.ds-hero-border {
+      border-top: $border-secondary;
+      padding: 20px 0;
+
+      .ds-card:nth-child(-n+2) {
+        border-bottom: $border-secondary;
+        margin-bottom: 20px;
+      }
+    }
+
     .wrapper {
+      border-top: 0;
+      border-bottom: 0;
+      margin: 0;
+      padding: 0 0 20px;
       display: flex;
-      align-items: flex-start;
-      flex-direction: row-reverse;
+      flex-direction: column;
 
       .img-wrapper {
-        width: 67%;
         margin: 0;
       }
 
       .img {
+        margin-bottom: 16px;
         height: 0;
         padding-top: 50%; // 2:1 aspect ratio
       }
 
       .meta {
-        width: 33%;
+        flex-grow: 1;
+        display: flex;
         padding: 0 24px 0 0;
 
         header {
-          font-size: 22px;
+          @include limit-visibile-lines(3, 28, 22);
         }
 
-        p {
-          font-size: 15px;
-          line-height: 1.6;
+        .source {
+          margin-bottom: 0;
         }
       }
     }
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       grid-column-gap: 24px;
+
+      .title {
+        @include limit-visibile-lines(3, 20, 14);
+      }
     }
   }
 }

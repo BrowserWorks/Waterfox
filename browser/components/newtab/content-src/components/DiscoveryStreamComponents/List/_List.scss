@@ -1,7 +1,7 @@
 // Type sizes
 $bordered-spacing: 16px;
-$item-font-size: 13;
-$item-image-size: 72px;
+$item-font-size: 14;
+$item-image-size: 80px;
 $item-line-height: 20;
 
 // XXX this is gross, and attaches the bottom-border to the item above.
@@ -21,10 +21,11 @@ $item-line-height: 20;
     // XXX see if we really want absolute units, maybe hoist somewhere central?
     font-size: $font-size * 1px;
     line-height: $line-height * 1px;
+    position: relative;
   }
 
   .ds-list-item-title {
-    @include limit-visibile-lines(2, $line-height, $font-size);
+    @include limit-visibile-lines(3, $line-height, $font-size);
   }
 
   .ds-list-image {
@@ -162,28 +163,38 @@ $item-line-height: 20;
 
     display: flex;
     justify-content: space-between;
+    height: 100%;
   }
 
   .ds-list-item-excerpt {
     @include limit-visibile-lines(2, $item-line-height, $item-font-size);
     color: var(--newtab-text-secondary-color);
-    margin-bottom: 8px;
+    margin: 4px 0 8px;
   }
 
-  .ds-list-item-info {
+  p {
+    font-size: $item-font-size * 1px;
+    line-height: $item-line-height * 1px;
+    margin: 0;
+  }
+
+  .ds-list-item-info,
+  .ds-list-item-context {
     @include limit-visibile-lines(1, $item-line-height, $item-font-size);
-    color: var(--newtab-text-secondary-color);
+    color: $teal-80;
+    font-size: 13px;
     text-overflow: ellipsis;
   }
 
   .ds-list-item-title {
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .ds-list-item-text {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
   }
 
   .ds-list-image {

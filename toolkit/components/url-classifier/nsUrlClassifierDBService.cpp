@@ -778,8 +778,10 @@ nsresult nsUrlClassifierDBServiceWorker::NotifyUpdateObserver(
 
   mUpdateStatus = aUpdateStatus;
 
-  nsCOMPtr<nsIUrlClassifierUtils> urlUtil =
-      components::UrlClassifierUtils::Service();
+  nsUrlClassifierUtils* urlUtil = nsUrlClassifierUtils::GetInstance();
+  if (NS_WARN_IF(!urlUtil)) {
+    return NS_ERROR_FAILURE;
+  }
 
   nsCString provider;
   // Assume that all the tables in update should have the same provider.
@@ -1548,8 +1550,10 @@ nsUrlClassifierClassifyCallback::HandleResult(const nsACString& aTable,
   matchedInfo->table = aTable;
   matchedInfo->fullhash = aFullHash;
 
-  nsCOMPtr<nsIUrlClassifierUtils> urlUtil =
-      components::UrlClassifierUtils::Service();
+  nsUrlClassifierUtils* urlUtil = nsUrlClassifierUtils::GetInstance();
+  if (NS_WARN_IF(!urlUtil)) {
+    return NS_ERROR_FAILURE;
+  }
 
   nsCString provider;
   nsresult rv = urlUtil->GetProvider(aTable, provider);
@@ -1644,17 +1648,14 @@ nsresult nsUrlClassifierDBService::Init() {
   sGethashNoise =
       Preferences::GetUint(GETHASH_NOISE_PREF, GETHASH_NOISE_DEFAULT);
   ReadDisallowCompletionsTablesFromPrefs();
-  nsresult rv;
 
-  {
-    // Force nsIUrlClassifierUtils loading on main thread.
-    nsCOMPtr<nsIUrlClassifierUtils> dummy =
-        components::UrlClassifierUtils::Service(&rv);
-    Unused << dummy;
-    NS_ENSURE_SUCCESS(rv, rv);
+  // Force nsUrlClassifierUtils loading on main thread.
+  if (NS_WARN_IF(!nsUrlClassifierUtils::GetInstance())) {
+    return NS_ERROR_FAILURE;
   }
 
   // Directory providers must also be accessed on the main thread.
+  nsresult rv;
   nsCOMPtr<nsIFile> cacheDir;
   rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_LOCAL_50_DIR,
                               getter_AddRefs(cacheDir));
@@ -1788,10 +1789,13 @@ nsUrlClassifierDBService::Classify(nsIPrincipal* aPrincipal,
   uri = NS_GetInnermostURI(uri);
   NS_ENSURE_TRUE(uri, NS_ERROR_FAILURE);
 
-  nsAutoCString key;
+  nsUrlClassifierUtils* utilsService = nsUrlClassifierUtils::GetInstance();
+  if (NS_WARN_IF(!utilsService)) {
+    return NS_ERROR_FAILURE;
+  }
+
   // Canonicalize the url
-  nsCOMPtr<nsIUrlClassifierUtils> utilsService =
-      components::UrlClassifierUtils::Service();
+  nsAutoCString key;
   rv = utilsService->GetKeyForURI(uri, key);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1960,9 +1964,8 @@ nsUrlClassifierDBService::SendThreatHitReport(nsIChannel* aChannel,
     return NS_OK;
   }
 
-  nsCOMPtr<nsIUrlClassifierUtils> utilsService =
-      components::UrlClassifierUtils::Service();
-  if (!utilsService) {
+  nsUrlClassifierUtils* utilsService = nsUrlClassifierUtils::GetInstance();
+  if (NS_WARN_IF(!utilsService)) {
     return NS_ERROR_FAILURE;
   }
 
@@ -1997,12 +2000,10 @@ nsUrlClassifierDBService::SendThreatHitReport(nsIChannel* aChannel,
                      nullptr, loadFlags);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsILoadInfo> loadInfo = reportChannel->GetLoadInfo();
+  nsCOMPtr<nsILoadInfo> loadInfo = reportChannel->LoadInfo();
   mozilla::OriginAttributes attrs;
   attrs.mFirstPartyDomain.AssignLiteral(NECKO_SAFEBROWSING_FIRST_PARTY_DOMAIN);
-  if (loadInfo) {
-    loadInfo->SetOriginAttributes(attrs);
-  }
+  loadInfo->SetOriginAttributes(attrs);
 
   nsCOMPtr<nsIUploadChannel> uploadChannel(do_QueryInterface(reportChannel));
   NS_ENSURE_TRUE(uploadChannel, NS_ERROR_FAILURE);
@@ -2020,7 +2021,7 @@ nsUrlClassifierDBService::SendThreatHitReport(nsIChannel* aChannel,
   NS_ENSURE_SUCCESS(rv, rv);
 
   RefPtr<ThreatHitReportListener> listener = new ThreatHitReportListener();
-  rv = reportChannel->AsyncOpen2(listener);
+  rv = reportChannel->AsyncOpen(listener);
   if (NS_FAILED(rv)) {
     LOG(("Failure to send Safe Browsing ThreatHit report"));
     return rv;
@@ -2067,10 +2068,13 @@ nsUrlClassifierDBService::Lookup(nsIPrincipal* aPrincipal,
   uri = NS_GetInnermostURI(uri);
   NS_ENSURE_TRUE(uri, NS_ERROR_FAILURE);
 
+  nsUrlClassifierUtils* utilsService = nsUrlClassifierUtils::GetInstance();
+  if (NS_WARN_IF(!utilsService)) {
+    return NS_ERROR_FAILURE;
+  }
+
   nsAutoCString key;
   // Canonicalize the url
-  nsCOMPtr<nsIUrlClassifierUtils> utilsService =
-      components::UrlClassifierUtils::Service();
   rv = utilsService->GetKeyForURI(uri, key);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2427,10 +2431,13 @@ nsUrlClassifierDBService::AsyncClassifyLocalWithFeatures(
     return NS_OK;
   }
 
+  nsUrlClassifierUtils* utilsService = nsUrlClassifierUtils::GetInstance();
+  if (NS_WARN_IF(!utilsService)) {
+    return NS_ERROR_FAILURE;
+  }
+
   nsAutoCString key;
   // Canonicalize the url
-  nsCOMPtr<nsIUrlClassifierUtils> utilsService =
-      components::UrlClassifierUtils::Service();
   nsresult rv = utilsService->GetKeyForURI(uri, key);
   NS_ENSURE_SUCCESS(rv, rv);
 

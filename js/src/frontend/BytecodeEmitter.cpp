@@ -102,6 +102,9 @@ BytecodeEmitter::BytecodeEmitter(BytecodeEmitter* parent, SharedContext* sc,
       lastNoteOffset_(0),
       currentLine_(lineNum),
       lastColumn_(0),
+      lastSeparatorOffet_(0),
+      lastSeparatorLine_(0),
+      lastSeparatorColumn_(0),
       mainOffset_(),
       lastTarget{-1 - ptrdiff_t(JSOP_JUMPTARGET_LENGTH)},
       parser(nullptr),
@@ -192,6 +195,50 @@ Maybe<NameLocation> BytecodeEmitter::locationOfNameBoundInFunctionScope(
     funScope = funScope->enclosingInFrame();
   }
   return source->locationBoundInScope(name, funScope);
+}
+
+bool BytecodeEmitter::markStepBreakpoint() {
+  if (inPrologue()) {
+    return true;
+  }
+
+  if (!newSrcNote(SRC_STEP_SEP)) {
+    return false;
+  }
+
+  if (!newSrcNote(SRC_BREAKPOINT)) {
+    return false;
+  }
+
+  // We track the location of the most recent separator for use in
+  // markSimpleBreakpoint. Note that this means that the position must already
+  // be set before markStepBreakpoint is called.
+  lastSeparatorOffet_ = code().length();
+  lastSeparatorLine_ = currentLine_;
+  lastSeparatorColumn_ = lastColumn_;
+
+  return true;
+}
+
+bool BytecodeEmitter::markSimpleBreakpoint() {
+  if (inPrologue()) {
+    return true;
+  }
+
+  // If a breakable call ends up being the same location as the most recent
+  // expression start, we need to skip marking it breakable in order to avoid
+  // having two breakpoints with the same line/column position.
+  // Note: This assumes that the position for the call has already been set.
+  bool isDuplicateLocation =
+      lastSeparatorLine_ == currentLine_ && lastSeparatorColumn_ == lastColumn_;
+
+  if (!isDuplicateLocation) {
+    if (!newSrcNote(SRC_BREAKPOINT)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool BytecodeEmitter::emitCheck(JSOp op, ptrdiff_t delta, ptrdiff_t* offset) {
@@ -520,6 +567,8 @@ bool BytecodeEmitter::updateLineNumberNotes(uint32_t offset) {
         }
       } while (--delta != 0);
     }
+
+    updateSeparatorPosition();
   }
   return true;
 }
@@ -550,8 +599,17 @@ bool BytecodeEmitter::updateSourceCoordNotes(uint32_t offset) {
       return false;
     }
     lastColumn_ = columnIndex;
+    updateSeparatorPosition();
   }
   return true;
+}
+
+/* Updates the last separator position, if present */
+void BytecodeEmitter::updateSeparatorPosition() {
+  if (!inPrologue() && lastSeparatorOffet_ == code().length()) {
+    lastSeparatorLine_ = currentLine_;
+    lastSeparatorColumn_ = lastColumn_;
+  }
 }
 
 Maybe<uint32_t> BytecodeEmitter::getOffsetForLoop(ParseNode* nextpn) {
@@ -1003,12 +1061,10 @@ restart:
       *answer = false;
       return true;
 
-#ifdef ENABLE_BIGINT
     case ParseNodeKind::BigIntExpr:
       MOZ_ASSERT(pn->is<BigIntLiteral>());
       *answer = false;
       return true;
-#endif
 
     // |this| can throw in derived class constructors, including nested arrow
     // functions or eval.
@@ -1946,7 +2002,7 @@ bool BytecodeEmitter::emitCallIncDec(UnaryNode* incDec) {
     //              [stack] CALLRESULT
     return false;
   }
-  if (!emit1(JSOP_POS)) {
+  if (!emit1(JSOP_TONUMERIC)) {
     //              [stack] N
     return false;
   }
@@ -2009,7 +2065,11 @@ MOZ_NEVER_INLINE bool BytecodeEmitter::emitSwitch(SwitchStatement* switchStmt) {
   MOZ_ASSERT(cases->isKind(ParseNodeKind::StatementList));
 
   SwitchEmitter se(this);
-  if (!se.emitDiscriminant(Some(switchStmt->pn_pos.begin))) {
+  if (!se.emitDiscriminant(Some(switchStmt->discriminant().pn_pos.begin))) {
+    return false;
+  }
+
+  if (!markStepBreakpoint()) {
     return false;
   }
   if (!emitTree(&switchStmt->discriminant())) {
@@ -2392,6 +2452,9 @@ bool BytecodeEmitter::emitScript(ParseNode* body) {
       return false;
     }
   }
+  if (!markSimpleBreakpoint()) {
+    return false;
+  }
 
   if (!emit1(JSOP_RETRVAL)) {
     return false;
@@ -2452,6 +2515,9 @@ bool BytecodeEmitter::emitFunctionScript(FunctionNode* funNode,
   }
 
   if (!updateSourceCoordNotes(body->pn_pos.end)) {
+    return false;
+  }
+  if (!markSimpleBreakpoint()) {
     return false;
   }
 
@@ -3079,19 +3145,64 @@ bool BytecodeEmitter::emitDefault(ParseNode* defaultExpr, ParseNode* pattern) {
   return true;
 }
 
-bool BytecodeEmitter::setOrEmitSetFunName(ParseNode* maybeFun,
-                                          HandleAtom name) {
-  MOZ_ASSERT(maybeFun->isDirectRHSAnonFunction());
+bool BytecodeEmitter::emitAnonymousFunctionWithName(ParseNode* node,
+                                                    HandleAtom name) {
+  MOZ_ASSERT(node->isDirectRHSAnonFunction());
 
-  if (maybeFun->is<FunctionNode>()) {
+  if (node->is<FunctionNode>()) {
+    if (!emitTree(node)) {
+      return false;
+    }
+
     // Function doesn't have 'name' property at this point.
     // Set function's name at compile time.
-    return setFunName(maybeFun->as<FunctionNode>().funbox()->function(), name);
+    return setFunName(node->as<FunctionNode>().funbox()->function(), name);
   }
 
-  MOZ_ASSERT(maybeFun->isKind(ParseNodeKind::ClassDecl));
+  MOZ_ASSERT(node->is<ClassNode>());
 
-  return emitSetClassConstructorName(name);
+  return emitClass(&node->as<ClassNode>(), ClassNameKind::InferredName, name);
+}
+
+bool BytecodeEmitter::emitAnonymousFunctionWithComputedName(
+    ParseNode* node, FunctionPrefixKind prefixKind) {
+  MOZ_ASSERT(node->isDirectRHSAnonFunction());
+
+  if (node->is<FunctionNode>()) {
+    if (!emitTree(node)) {
+      //            [stack] # !isAsync || !needsHomeObject
+      //            [stack] NAME FUN
+      //            [stack] # isAsync && needsHomeObject
+      //            [stack] NAME UNWRAPPED WRAPPED
+      return false;
+    }
+    unsigned depth = 1;
+    FunctionNode* funNode = &node->as<FunctionNode>();
+    FunctionBox* funbox = funNode->funbox();
+    if (funbox->isAsync() && funbox->needsHomeObject()) {
+      depth = 2;
+    }
+    if (!emitDupAt(depth)) {
+      //            [stack] # !isAsync || !needsHomeObject
+      //            [stack] NAME FUN NAME
+      //            [stack] # isAsync && needsHomeObject
+      //            [stack] NAME UNWRAPPED WRAPPED NAME
+      return false;
+    }
+    if (!emit2(JSOP_SETFUNNAME, uint8_t(prefixKind))) {
+      //            [stack] # !isAsync || !needsHomeObject
+      //            [stack] NAME FUN
+      //            [stack] # isAsync && needsHomeObject
+      //            [stack] NAME UNWRAPPED WRAPPED
+      return false;
+    }
+    return true;
+  }
+
+  MOZ_ASSERT(node->is<ClassNode>());
+  MOZ_ASSERT(prefixKind == FunctionPrefixKind::None);
+
+  return emitClass(&node->as<ClassNode>(), ClassNameKind::ComputedName);
 }
 
 bool BytecodeEmitter::setFunName(JSFunction* fun, JSAtom* name) {
@@ -3109,33 +3220,16 @@ bool BytecodeEmitter::setFunName(JSFunction* fun, JSAtom* name) {
   return true;
 }
 
-bool BytecodeEmitter::emitSetClassConstructorName(JSAtom* name) {
-  uint32_t nameIndex;
-  if (!makeAtomIndex(name, &nameIndex)) {
-    return false;
-  }
-  if (!emitIndexOp(JSOP_STRING, nameIndex)) {
-    //              [stack] FUN NAME
-    return false;
-  }
-  uint8_t kind = uint8_t(FunctionPrefixKind::None);
-  if (!emit2(JSOP_SETFUNNAME, kind)) {
-    //              [stack] FUN
-    return false;
-  }
-  return true;
-}
-
 bool BytecodeEmitter::emitInitializer(ParseNode* initializer,
                                       ParseNode* pattern) {
-  if (!emitTree(initializer)) {
-    return false;
-  }
-
   if (initializer->isDirectRHSAnonFunction()) {
     MOZ_ASSERT(!pattern->isInParens());
     RootedAtom name(cx, pattern->as<NameNode>().name());
-    if (!setOrEmitSetFunName(initializer, name)) {
+    if (!emitAnonymousFunctionWithName(initializer, name)) {
+      return false;
+    }
+  } else {
+    if (!emitTree(initializer)) {
       return false;
     }
   }
@@ -3917,10 +4011,6 @@ bool BytecodeEmitter::emitDeclarationList(ListNode* declList) {
   MOZ_ASSERT(declList->isOp(JSOP_NOP));
 
   for (ParseNode* decl : declList->contents()) {
-    if (!updateSourceCoordNotes(decl->pn_pos.begin)) {
-      return false;
-    }
-
     if (decl->isKind(ParseNodeKind::AssignExpr)) {
       MOZ_ASSERT(decl->isOp(JSOP_NOP));
 
@@ -3929,6 +4019,12 @@ bool BytecodeEmitter::emitDeclarationList(ListNode* declList) {
       MOZ_ASSERT(pattern->isKind(ParseNodeKind::ArrayExpr) ||
                  pattern->isKind(ParseNodeKind::ObjectExpr));
 
+      if (!updateSourceCoordNotes(assignNode->right()->pn_pos.begin)) {
+        return false;
+      }
+      if (!markStepBreakpoint()) {
+        return false;
+      }
       if (!emitTree(assignNode->right())) {
         return false;
       }
@@ -3976,6 +4072,13 @@ bool BytecodeEmitter::emitSingleDeclaration(ListNode* declList, NameNode* decl,
     }
   } else {
     MOZ_ASSERT(initializer);
+
+    if (!updateSourceCoordNotes(initializer->pn_pos.begin)) {
+      return false;
+    }
+    if (!markStepBreakpoint()) {
+      return false;
+    }
     if (!emitInitializer(initializer, decl)) {
       //            [stack] ENV? V
       return false;
@@ -4061,17 +4164,18 @@ bool BytecodeEmitter::emitAssignment(ParseNode* lhs, JSOp compoundOp,
       return false;
     }
 
-    // Emit the RHS. If we emitted a BIND[G]NAME, then the scope is on
-    // the top of the stack and we need to pick the right RHS value.
-    uint8_t offset = noe.emittedBindOp() ? 2 : 1;
-    if (!EmitAssignmentRhs(this, rhs, offset)) {
-      //            [stack] ENV? VAL? RHS
-      return false;
-    }
     if (rhs && rhs->isDirectRHSAnonFunction()) {
       MOZ_ASSERT(!nameNode->isInParens());
       MOZ_ASSERT(!isCompound);
-      if (!setOrEmitSetFunName(rhs, name)) {
+      if (!emitAnonymousFunctionWithName(rhs, name)) {
+        //          [stack] ENV? VAL? RHS
+        return false;
+      }
+    } else {
+      // Emit the RHS. If we emitted a BIND[G]NAME, then the scope is on
+      // the top of the stack and we need to pick the right RHS value.
+      uint8_t offset = noe.emittedBindOp() ? 2 : 1;
+      if (!EmitAssignmentRhs(this, rhs, offset)) {
         //          [stack] ENV? VAL? RHS
         return false;
       }
@@ -4303,11 +4407,9 @@ bool ParseNode::getConstantValue(JSContext* cx,
     case ParseNodeKind::NumberExpr:
       vp.setNumber(as<NumericLiteral>().value());
       return true;
-#ifdef ENABLE_BIGINT
     case ParseNodeKind::BigIntExpr:
       vp.setBigInt(as<BigIntLiteral>().box()->value());
       return true;
-#endif
     case ParseNodeKind::TemplateStringExpr:
     case ParseNodeKind::StringExpr:
       vp.setString(as<NameNode>().atom());
@@ -4629,11 +4731,15 @@ MOZ_MUST_USE bool BytecodeEmitter::emitGoSub(JumpList* jump) {
 bool BytecodeEmitter::emitIf(TernaryNode* ifNode) {
   IfEmitter ifThenElse(this);
 
-  if (!ifThenElse.emitIf(Some(ifNode->pn_pos.begin))) {
+  if (!ifThenElse.emitIf(Some(ifNode->kid1()->pn_pos.begin))) {
     return false;
   }
 
 if_again:
+  if (!markStepBreakpoint()) {
+    return false;
+  }
+
   /* Emit code for the condition before pushing stmtInfo. */
   if (!emitTree(ifNode->kid1())) {
     return false;
@@ -4659,7 +4765,7 @@ if_again:
     if (elseNode->isKind(ParseNodeKind::IfStmt)) {
       ifNode = &elseNode->as<TernaryNode>();
 
-      if (!ifThenElse.emitElseIf(Some(ifNode->pn_pos.begin))) {
+      if (!ifThenElse.emitElseIf(Some(ifNode->kid1()->pn_pos.begin))) {
         return false;
       }
 
@@ -4798,7 +4904,11 @@ MOZ_NEVER_INLINE bool BytecodeEmitter::emitLexicalScope(
 
 bool BytecodeEmitter::emitWith(BinaryNode* withNode) {
   // Ensure that the column of the 'with' is set properly.
-  if (!updateSourceCoordNotes(withNode->pn_pos.begin)) {
+  if (!updateSourceCoordNotes(withNode->left()->pn_pos.begin)) {
+    return false;
+  }
+
+  if (!markStepBreakpoint()) {
     return false;
   }
 
@@ -4878,14 +4988,12 @@ bool BytecodeEmitter::emitCopyDataProperties(CopyOption option) {
   return true;
 }
 
-#ifdef ENABLE_BIGINT
 bool BytecodeEmitter::emitBigIntOp(BigInt* bigint) {
   if (!numberList.append(BigIntValue(bigint))) {
     return false;
   }
   return emitIndex32(JSOP_BIGINT, numberList.length() - 1);
 }
-#endif
 
 bool BytecodeEmitter::emitIterator() {
   // Convert iterable to iterator.
@@ -5256,6 +5364,12 @@ bool BytecodeEmitter::emitForOf(ForNode* forOfLoop,
     return false;
   }
 
+  if (!updateSourceCoordNotes(forHeadExpr->pn_pos.begin)) {
+    return false;
+  }
+  if (!markStepBreakpoint()) {
+    return false;
+  }
   if (!emitTree(forHeadExpr)) {
     //              [stack] ITERABLE
     return false;
@@ -5350,6 +5464,13 @@ bool BytecodeEmitter::emitForIn(ForNode* forInLoop,
 
   // Evaluate the expression being iterated.
   ParseNode* expr = forInHead->kid3();
+
+  if (!updateSourceCoordNotes(expr->pn_pos.begin)) {
+    return false;
+  }
+  if (!markStepBreakpoint()) {
+    return false;
+  }
   if (!emitTree(expr)) {
     //              [stack] EXPR
     return false;
@@ -5422,6 +5543,13 @@ bool BytecodeEmitter::emitCStyleFor(
         return false;
       }
     } else {
+      if (!updateSourceCoordNotes(init->pn_pos.begin)) {
+        return false;
+      }
+      if (!markStepBreakpoint()) {
+        return false;
+      }
+
       // 'init' is an expression, not a declaration. emitTree left its
       // value on the stack.
       if (!emitTree(init, ValueUsage::IgnoreValue)) {
@@ -5456,6 +5584,12 @@ bool BytecodeEmitter::emitCStyleFor(
 
   // Check for update code to do before the condition (if any).
   if (update) {
+    if (!updateSourceCoordNotes(update->pn_pos.begin)) {
+      return false;
+    }
+    if (!markStepBreakpoint()) {
+      return false;
+    }
     if (!emitTree(update, ValueUsage::IgnoreValue)) {
       //            [stack] VAL
       return false;
@@ -5470,6 +5604,12 @@ bool BytecodeEmitter::emitCStyleFor(
   }
 
   if (cond) {
+    if (!updateSourceCoordNotes(cond->pn_pos.begin)) {
+      return false;
+    }
+    if (!markStepBreakpoint()) {
+      return false;
+    }
     if (!emitTree(cond)) {
       //            [stack] VAL
       return false;
@@ -5831,6 +5971,12 @@ bool BytecodeEmitter::emitDo(BinaryNode* doNode) {
   }
 
   ParseNode* condNode = doNode->right();
+  if (!updateSourceCoordNotes(condNode->pn_pos.begin)) {
+    return false;
+  }
+  if (!markStepBreakpoint()) {
+    return false;
+  }
   if (!emitTree(condNode)) {
     return false;
   }
@@ -5860,6 +6006,12 @@ bool BytecodeEmitter::emitWhile(BinaryNode* whileNode) {
     return false;
   }
 
+  if (!updateSourceCoordNotes(condNode->pn_pos.begin)) {
+    return false;
+  }
+  if (!markStepBreakpoint()) {
+    return false;
+  }
   if (!emitTree(condNode)) {
     return false;
   }
@@ -5986,6 +6138,13 @@ bool BytecodeEmitter::emitReturn(UnaryNode* returnNode) {
     if (!emitPrepareIteratorResult()) {
       return false;
     }
+  }
+
+  if (!updateSourceCoordNotes(returnNode->pn_pos.begin)) {
+    return false;
+  }
+  if (!markStepBreakpoint()) {
+    return false;
   }
 
   /* Push a return value */
@@ -6699,6 +6858,9 @@ bool BytecodeEmitter::emitExpressionStatement(UnaryNode* exprStmt) {
     if (!ese.prepareForExpr(Some(exprStmt->pn_pos.begin))) {
       return false;
     }
+    if (!markStepBreakpoint()) {
+      return false;
+    }
     if (!emitTree(expr, valueUsage)) {
       return false;
     }
@@ -7369,41 +7531,30 @@ bool BytecodeEmitter::emitCallOrNew(
   }
 
   ParseNode* coordNode = callNode;
-  if (op == JSOP_CALL || op == JSOP_SPREADCALL) {
-    switch (calleeNode->getKind()) {
-      case ParseNodeKind::DotExpr: {
-        // Check if this member is a simple chain of simple chain of
-        // property accesses, e.g. x.y.z, this.x.y, super.x.y
-        bool simpleDotChain = false;
-        for (ParseNode* cur = calleeNode; cur->isKind(ParseNodeKind::DotExpr);
-             cur = &cur->as<PropertyAccess>().expression()) {
-          PropertyAccess* prop = &cur->as<PropertyAccess>();
-          ParseNode* left = &prop->expression();
-          // TODO(khyperia): Implement private field access.
-          if (left->isKind(ParseNodeKind::Name) ||
-              left->isKind(ParseNodeKind::ThisExpr) ||
-              left->isKind(ParseNodeKind::SuperBase)) {
-            simpleDotChain = true;
-          }
-        }
+  if (op == JSOP_CALL || op == JSOP_SPREADCALL || op == JSOP_FUNCALL ||
+      op == JSOP_FUNAPPLY) {
+    // Default to using the location of the `(` itself.
+    // obj[expr]() // expression
+    //          ^  // column coord
+    coordNode = argsList;
 
-        if (!simpleDotChain) {
-          // obj().aprop() // expression
-          //       ^       // column coord
-          //
-          // Note: Because of the constant folding logic in FoldElement,
-          // this case also applies for constant string properties.
-          //
-          // obj()['aprop']() // expression
-          //       ^          // column coord
-          coordNode = &calleeNode->as<PropertyAccess>().key();
-        }
+    switch (calleeNode->getKind()) {
+      case ParseNodeKind::DotExpr:
+        // Use the position of a property access identifier.
+        //
+        // obj().aprop() // expression
+        //       ^       // column coord
+        //
+        // Note: Because of the constant folding logic in FoldElement,
+        // this case also applies for constant string properties.
+        //
+        // obj()['aprop']() // expression
+        //       ^          // column coord
+        coordNode = &calleeNode->as<PropertyAccess>().key();
         break;
-      }
-      case ParseNodeKind::ElemExpr:
-        // obj[expr]() // expression
-        //          ^  // column coord
-        coordNode = argsList;
+      case ParseNodeKind::Name:
+        // Use the start of callee names.
+        coordNode = calleeNode;
         break;
       default:
         break;
@@ -7661,17 +7812,54 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
 
     ParseNode* key = prop->left();
     ParseNode* propVal = prop->right();
-    bool isPropertyAnonFunctionOrClass = propVal->isDirectRHSAnonFunction();
     JSOp op = propdef->getOp();
     MOZ_ASSERT(op == JSOP_INITPROP || op == JSOP_INITPROP_GETTER ||
                op == JSOP_INITPROP_SETTER);
 
-    auto emitValue = [this, &propVal, &pe]() {
+    auto emitValue = [this, &key, &propVal, op, &pe]() {
       //            [stack] CTOR? OBJ CTOR? KEY?
 
-      if (!emitTree(propVal)) {
-        //          [stack] CTOR? OBJ CTOR? KEY? VAL
-        return false;
+      if (propVal->isDirectRHSAnonFunction()) {
+        if (key->isKind(ParseNodeKind::NumberExpr)) {
+          MOZ_ASSERT(op == JSOP_INITPROP);
+
+          NumericLiteral* literal = &key->as<NumericLiteral>();
+          RootedAtom keyAtom(cx, NumberToAtom(cx, literal->value()));
+          if (!keyAtom) {
+            return false;
+          }
+          if (!emitAnonymousFunctionWithName(propVal, keyAtom)) {
+            //      [stack] CTOR? OBJ CTOR? KEY VAL
+            return false;
+          }
+        } else if (key->isKind(ParseNodeKind::ObjectPropertyName) ||
+                   key->isKind(ParseNodeKind::StringExpr)) {
+          MOZ_ASSERT(op == JSOP_INITPROP);
+
+          RootedAtom keyAtom(cx, key->as<NameNode>().atom());
+          if (!emitAnonymousFunctionWithName(propVal, keyAtom)) {
+            //      [stack] CTOR? OBJ CTOR? VAL
+            return false;
+          }
+        } else {
+          MOZ_ASSERT(key->isKind(ParseNodeKind::ComputedName));
+
+          FunctionPrefixKind prefix = op == JSOP_INITPROP
+                                          ? FunctionPrefixKind::None
+                                          : op == JSOP_INITPROP_GETTER
+                                                ? FunctionPrefixKind::Get
+                                                : FunctionPrefixKind::Set;
+
+          if (!emitAnonymousFunctionWithComputedName(propVal, prefix)) {
+            //      [stack] CTOR? OBJ CTOR? KEY VAL
+            return false;
+          }
+        }
+      } else {
+        if (!emitTree(propVal)) {
+          //        [stack] CTOR? OBJ CTOR? KEY? VAL
+          return false;
+        }
       }
 
       if (propVal->is<FunctionNode>() &&
@@ -7712,20 +7900,18 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
 
       switch (op) {
         case JSOP_INITPROP:
-          if (!pe.emitInitIndexProp(isPropertyAnonFunctionOrClass)) {
+          if (!pe.emitInitIndexProp()) {
             //      [stack] CTOR? OBJ
             return false;
           }
           break;
         case JSOP_INITPROP_GETTER:
-          MOZ_ASSERT(!isPropertyAnonFunctionOrClass);
           if (!pe.emitInitIndexGetter()) {
             //      [stack] CTOR? OBJ
             return false;
           }
           break;
         case JSOP_INITPROP_SETTER:
-          MOZ_ASSERT(!isPropertyAnonFunctionOrClass);
           if (!pe.emitInitIndexSetter()) {
             //      [stack] CTOR? OBJ
             return false;
@@ -7758,43 +7944,21 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
         return false;
       }
 
-      RootedFunction anonFunction(cx);
-      if (isPropertyAnonFunctionOrClass) {
-        MOZ_ASSERT(op == JSOP_INITPROP);
-
-        if (propVal->is<FunctionNode>()) {
-          // When the value is function, we set the function's name
-          // at the compile-time, instead of emitting SETFUNNAME.
-          FunctionBox* funbox = propVal->as<FunctionNode>().funbox();
-          anonFunction = funbox->function();
-        } else {
-          // Only object literal can have a property where key is
-          // name and value is an anonymous class.
-          //
-          //   ({ foo: class {} });
-          MOZ_ASSERT(type == ObjectLiteral);
-          MOZ_ASSERT(propVal->isKind(ParseNodeKind::ClassDecl));
-        }
-      }
-
       RootedAtom keyAtom(cx, key->as<NameNode>().atom());
       switch (op) {
         case JSOP_INITPROP:
-          if (!pe.emitInitProp(keyAtom, isPropertyAnonFunctionOrClass,
-                               anonFunction)) {
+          if (!pe.emitInitProp(keyAtom)) {
             //      [stack] CTOR? OBJ
             return false;
           }
           break;
         case JSOP_INITPROP_GETTER:
-          MOZ_ASSERT(!isPropertyAnonFunctionOrClass);
           if (!pe.emitInitGetter(keyAtom)) {
             //      [stack] CTOR? OBJ
             return false;
           }
           break;
         case JSOP_INITPROP_SETTER:
-          MOZ_ASSERT(!isPropertyAnonFunctionOrClass);
           if (!pe.emitInitSetter(keyAtom)) {
             //      [stack] CTOR? OBJ
             return false;
@@ -7830,20 +7994,18 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
 
     switch (op) {
       case JSOP_INITPROP:
-        if (!pe.emitInitComputedProp(isPropertyAnonFunctionOrClass)) {
+        if (!pe.emitInitComputedProp()) {
           //        [stack] CTOR? OBJ
           return false;
         }
         break;
       case JSOP_INITPROP_GETTER:
-        MOZ_ASSERT(isPropertyAnonFunctionOrClass);
         if (!pe.emitInitComputedGetter()) {
           //        [stack] CTOR? OBJ
           return false;
         }
         break;
       case JSOP_INITPROP_SETTER:
-        MOZ_ASSERT(isPropertyAnonFunctionOrClass);
         if (!pe.emitInitComputedSetter()) {
           //        [stack] CTOR? OBJ
           return false;
@@ -8500,18 +8662,27 @@ static MOZ_ALWAYS_INLINE FunctionNode* FindConstructor(JSContext* cx,
 
 // This follows ES6 14.5.14 (ClassDefinitionEvaluation) and ES6 14.5.15
 // (BindingClassDeclarationEvaluation).
-bool BytecodeEmitter::emitClass(ClassNode* classNode) {
-  ClassNames* names = classNode->names();
+bool BytecodeEmitter::emitClass(
+    ClassNode* classNode,
+    ClassNameKind nameKind /* = ClassNameKind::BindingName */,
+    HandleAtom nameForAnonymousClass /* = nullptr */) {
+  MOZ_ASSERT((nameKind == ClassNameKind::InferredName) ==
+             (nameForAnonymousClass != nullptr));
+
   ParseNode* heritageExpression = classNode->heritage();
   ListNode* classMembers = classNode->memberList();
   FunctionNode* constructor = FindConstructor(cx, classMembers);
 
+  // If |nameKind != ClassNameKind::ComputedName|
   //                [stack]
+  // Else
+  //                [stack] NAME
 
   ClassEmitter ce(this);
   RootedAtom innerName(cx);
   ClassEmitter::Kind kind = ClassEmitter::Kind::Expression;
-  if (names) {
+  if (ClassNames* names = classNode->names()) {
+    MOZ_ASSERT(nameKind == ClassNameKind::BindingName);
     innerName = names->innerBinding()->name();
     MOZ_ASSERT(innerName);
 
@@ -8532,17 +8703,25 @@ bool BytecodeEmitter::emitClass(ClassNode* classNode) {
   // on top for EmitPropertyList, because we expect static properties to be
   // rarer. The result is a few more swaps than we would like. Such is life.
   bool isDerived = !!heritageExpression;
+  bool hasNameOnStack = nameKind == ClassNameKind::ComputedName;
   if (isDerived) {
+    if (!updateSourceCoordNotes(classNode->pn_pos.begin)) {
+      return false;
+    }
+    if (!markStepBreakpoint()) {
+      return false;
+    }
     if (!emitTree(heritageExpression)) {
       //            [stack] HERITAGE
       return false;
     }
-    if (!ce.emitDerivedClass(innerName)) {
+    if (!ce.emitDerivedClass(innerName, nameForAnonymousClass,
+                             hasNameOnStack)) {
       //            [stack] HERITAGE HOMEOBJ
       return false;
     }
   } else {
-    if (!ce.emitClass(innerName)) {
+    if (!ce.emitClass(innerName, nameForAnonymousClass, hasNameOnStack)) {
       //            [stack] HOMEOBJ
       return false;
     }
@@ -8556,6 +8735,12 @@ bool BytecodeEmitter::emitClass(ClassNode* classNode) {
     if (!emitFunction(constructor, isDerived)) {
       //            [stack] HOMEOBJ CTOR
       return false;
+    }
+    if (nameKind == ClassNameKind::InferredName) {
+      if (!setFunName(constructor->funbox()->function(),
+                      nameForAnonymousClass)) {
+        return false;
+      }
     }
     if (!ce.emitInitConstructor(needsHomeObject)) {
       //            [stack] CTOR HOMEOBJ
@@ -8586,21 +8771,23 @@ bool BytecodeEmitter::emitClass(ClassNode* classNode) {
 bool BytecodeEmitter::emitExportDefault(BinaryNode* exportNode) {
   MOZ_ASSERT(exportNode->isKind(ParseNodeKind::ExportDefaultStmt));
 
-  ParseNode* nameNode = exportNode->left();
-  if (!emitTree(nameNode)) {
-    return false;
+  ParseNode* valueNode = exportNode->left();
+  if (valueNode->isDirectRHSAnonFunction()) {
+    MOZ_ASSERT(exportNode->right());
+
+    HandlePropertyName name = cx->names().default_;
+    if (!emitAnonymousFunctionWithName(valueNode, name)) {
+      return false;
+    }
+  } else {
+    if (!emitTree(valueNode)) {
+      return false;
+    }
   }
 
   if (ParseNode* binding = exportNode->right()) {
     if (!emitLexicalInitialization(&binding->as<NameNode>())) {
       return false;
-    }
-
-    if (nameNode->isDirectRHSAnonFunction()) {
-      HandlePropertyName name = cx->names().default_;
-      if (!setOrEmitSetFunName(nameNode, name)) {
-        return false;
-      }
     }
 
     if (!emit1(JSOP_POP)) {
@@ -8676,6 +8863,9 @@ bool BytecodeEmitter::emitTree(
       if (!updateSourceCoordNotes(pn->pn_pos.begin)) {
         return false;
       }
+      if (!markStepBreakpoint()) {
+        return false;
+      }
 
       if (!emitBreak(pn->as<BreakStatement>().label())) {
         return false;
@@ -8685,6 +8875,9 @@ bool BytecodeEmitter::emitTree(
     case ParseNodeKind::ContinueStmt:
       // Ensure that the column of the 'continue' is set properly.
       if (!updateSourceCoordNotes(pn->pn_pos.begin)) {
+        return false;
+      }
+      if (!markStepBreakpoint()) {
         return false;
       }
 
@@ -8868,6 +9061,13 @@ bool BytecodeEmitter::emitTree(
       break;
 
     case ParseNodeKind::ThrowStmt:
+      if (!updateSourceCoordNotes(pn->pn_pos.begin)) {
+        return false;
+      }
+      if (!markStepBreakpoint()) {
+        return false;
+      }
+      MOZ_FALLTHROUGH;
     case ParseNodeKind::VoidExpr:
     case ParseNodeKind::NotExpr:
     case ParseNodeKind::BitNotExpr:
@@ -9053,13 +9253,11 @@ bool BytecodeEmitter::emitTree(
       }
       break;
 
-#ifdef ENABLE_BIGINT
     case ParseNodeKind::BigIntExpr:
       if (!emitBigIntOp(pn->as<BigIntLiteral>().box()->value())) {
         return false;
       }
       break;
-#endif
 
     case ParseNodeKind::RegExpExpr:
       if (!emitRegExp(objectList.add(pn->as<RegExpLiteral>().objbox()))) {
@@ -9084,6 +9282,9 @@ bool BytecodeEmitter::emitTree(
 
     case ParseNodeKind::DebuggerStmt:
       if (!updateSourceCoordNotes(pn->pn_pos.begin)) {
+        return false;
+      }
+      if (!markStepBreakpoint()) {
         return false;
       }
       if (!emit1(JSOP_DEBUGGER)) {

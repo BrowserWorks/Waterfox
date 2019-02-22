@@ -90,6 +90,7 @@ raptor-firefox:
     - raptor-tp6-8-firefox
     - raptor-tp6-9-firefox
     - raptor-tp6-10-firefox
+    - raptor-tp6-binast-1-firefox
     - raptor-speedometer-firefox
     - raptor-stylebench-firefox
     - raptor-motionmark-htmlsuite-firefox
@@ -184,6 +185,7 @@ linux-qr-tests:
     - jsreftest
     - mochitest
     - mochitest-a11y
+    - mochitest-chrome
     - mochitest-gpu
     - mochitest-media
     - mochitest-webgl1-core
@@ -373,7 +375,7 @@ android-x86_64-opt-tests:
     # crashtests failing on debug; bug 1524493
     - crashtest
     # geckoview-junit perma-fail on opt and debug; bug 1521195
-    - geckoview-junit
+    # - geckoview-junit
 
 android-x86_64-tests:
     - jsreftest

@@ -43,6 +43,10 @@ const declaration = exports.declaration = {
   // Whether or not the declaration is enabled.
   isEnabled: PropTypes.bool,
 
+  // Whether or not the declaration is invisible. In an inherited rule, only the
+  // inherited declarations are shown and the rest are considered invisible.
+  isInvisible: PropTypes.bool,
+
   // Whether or not the declaration's property name is known.
   isKnownProperty: PropTypes.bool,
 
@@ -114,21 +118,6 @@ const selector = exports.selector = {
 };
 
 /**
- * A CSS rule's stylesheet source.
- */
-const sourceLink = exports.sourceLink = {
-  // The CSS rule's column number within the stylesheet.
-  column: PropTypes.number,
-  // The CSS rule's line number within the stylesheet.
-  line: PropTypes.number,
-  // The media query text within a @media rule.
-  // Note: Abstract this to support other at-rules in the future.
-  mediaText: PropTypes.string,
-  // The title used for the stylesheet source.
-  title: PropTypes.string,
-};
-
-/**
  * A CSS Rule.
  */
 exports.rule = {
@@ -167,7 +156,12 @@ exports.rule = {
   selector: PropTypes.shape(selector),
 
   // An object containing information about the CSS rule's stylesheet source.
-  sourceLink: PropTypes.shape(sourceLink),
+  sourceLink: PropTypes.shape({
+    // The label used for the stylesheet source
+    label: PropTypes.string,
+    // The title used for the stylesheet source.
+    title: PropTypes.string,
+  }),
 
   // The CSS rule type.
   type: PropTypes.number,

@@ -128,7 +128,7 @@ exports[`ProjectSearch found search results 1`] = `
           summaryMsg="5 results"
         >
           <div
-            className="search-shadow"
+            className="search-outline"
           >
             <div
               aria-expanded={false}
@@ -137,26 +137,13 @@ exports[`ProjectSearch found search results 1`] = `
               className="search-field big"
               role="combobox"
             >
-              <Svg
-                name="magnifying-glass"
+              <AccessibleImage
+                className="search"
               >
-                <InlineSVG
-                  className="magnifying-glass "
-                  element="i"
-                  raw={false}
-                  src="<svg></svg>"
-                >
-                  <i
-                    className="magnifying-glass "
-                    dangerouslySetInnerHTML={
-                      Object {
-                        "__html": "<svg></svg>",
-                      }
-                    }
-                    src={null}
-                  />
-                </InlineSVG>
-              </Svg>
+                <span
+                  className="img search"
+                />
+              </AccessibleImage>
               <input
                 aria-activedescendant=""
                 aria-autocomplete="list"
@@ -171,7 +158,7 @@ exports[`ProjectSearch found search results 1`] = `
                 value="match"
               />
               <div
-                className="summary"
+                className="search-field-summary"
               >
                 5 results
               </div>
@@ -242,6 +229,7 @@ exports[`ProjectSearch found search results 1`] = `
               tabIndex="0"
             >
               <TreeNode
+                active={false}
                 depth={0}
                 expanded={true}
                 focused={false}
@@ -274,7 +262,7 @@ exports[`ProjectSearch found search results 1`] = `
                     "type": "RESULT",
                   }
                 }
-                key="undefined-$"
+                key="undefined-$-inactive"
                 onClick={[Function]}
                 onCollapse={[Function]}
                 onExpand={[Function]}
@@ -287,6 +275,7 @@ exports[`ProjectSearch found search results 1`] = `
                   data-expandable={true}
                   id="undefined-$"
                   onClick={[Function]}
+                  onKeyDownCapture={null}
                   role="treeitem"
                 >
                   <div
@@ -318,6 +307,7 @@ exports[`ProjectSearch found search results 1`] = `
                 </div>
               </TreeNode>
               <TreeNode
+                active={false}
                 depth={1}
                 expanded={false}
                 focused={false}
@@ -332,7 +322,7 @@ exports[`ProjectSearch found search results 1`] = `
                     "value": "some thing match1",
                   }
                 }
-                key="undefined-undefined-30-1"
+                key="undefined-undefined-30-1-inactive"
                 onClick={[Function]}
                 onCollapse={[Function]}
                 onExpand={[Function]}
@@ -344,6 +334,7 @@ exports[`ProjectSearch found search results 1`] = `
                   data-expandable={false}
                   id="undefined-undefined-30-1"
                   onClick={[Function]}
+                  onKeyDownCapture={null}
                   role="treeitem"
                 >
                   <span
@@ -384,6 +375,7 @@ exports[`ProjectSearch found search results 1`] = `
                 </div>
               </TreeNode>
               <TreeNode
+                active={false}
                 depth={1}
                 expanded={false}
                 focused={false}
@@ -398,7 +390,7 @@ exports[`ProjectSearch found search results 1`] = `
                     "value": "some thing match2",
                   }
                 }
-                key="undefined-undefined-60-2"
+                key="undefined-undefined-60-2-inactive"
                 onClick={[Function]}
                 onCollapse={[Function]}
                 onExpand={[Function]}
@@ -410,6 +402,7 @@ exports[`ProjectSearch found search results 1`] = `
                   data-expandable={false}
                   id="undefined-undefined-60-2"
                   onClick={[Function]}
+                  onKeyDownCapture={null}
                   role="treeitem"
                 >
                   <span
@@ -450,6 +443,7 @@ exports[`ProjectSearch found search results 1`] = `
                 </div>
               </TreeNode>
               <TreeNode
+                active={false}
                 depth={1}
                 expanded={false}
                 focused={false}
@@ -464,7 +458,7 @@ exports[`ProjectSearch found search results 1`] = `
                     "value": "some thing match3",
                   }
                 }
-                key="undefined-undefined-90-3"
+                key="undefined-undefined-90-3-inactive"
                 onClick={[Function]}
                 onCollapse={[Function]}
                 onExpand={[Function]}
@@ -476,6 +470,7 @@ exports[`ProjectSearch found search results 1`] = `
                   data-expandable={false}
                   id="undefined-undefined-90-3"
                   onClick={[Function]}
+                  onKeyDownCapture={null}
                   role="treeitem"
                 >
                   <span
@@ -516,6 +511,7 @@ exports[`ProjectSearch found search results 1`] = `
                 </div>
               </TreeNode>
               <TreeNode
+                active={false}
                 depth={0}
                 expanded={true}
                 focused={false}
@@ -542,7 +538,7 @@ exports[`ProjectSearch found search results 1`] = `
                     "type": "RESULT",
                   }
                 }
-                key="undefined-4"
+                key="undefined-4-inactive"
                 onClick={[Function]}
                 onCollapse={[Function]}
                 onExpand={[Function]}
@@ -555,6 +551,7 @@ exports[`ProjectSearch found search results 1`] = `
                   data-expandable={true}
                   id="undefined-4"
                   onClick={[Function]}
+                  onKeyDownCapture={null}
                   role="treeitem"
                 >
                   <div
@@ -586,6 +583,7 @@ exports[`ProjectSearch found search results 1`] = `
                 </div>
               </TreeNode>
               <TreeNode
+                active={false}
                 depth={1}
                 expanded={false}
                 focused={false}
@@ -600,7 +598,7 @@ exports[`ProjectSearch found search results 1`] = `
                     "value": "some thing match4",
                   }
                 }
-                key="undefined-undefined-80-5"
+                key="undefined-undefined-80-5-inactive"
                 onClick={[Function]}
                 onCollapse={[Function]}
                 onExpand={[Function]}
@@ -612,6 +610,7 @@ exports[`ProjectSearch found search results 1`] = `
                   data-expandable={false}
                   id="undefined-undefined-80-5"
                   onClick={[Function]}
+                  onKeyDownCapture={null}
                   role="treeitem"
                 >
                   <span
@@ -652,6 +651,7 @@ exports[`ProjectSearch found search results 1`] = `
                 </div>
               </TreeNode>
               <TreeNode
+                active={false}
                 depth={1}
                 expanded={false}
                 focused={false}
@@ -666,7 +666,7 @@ exports[`ProjectSearch found search results 1`] = `
                     "value": "some thing match5",
                   }
                 }
-                key="undefined-undefined-40-6"
+                key="undefined-undefined-40-6-inactive"
                 onClick={[Function]}
                 onCollapse={[Function]}
                 onExpand={[Function]}
@@ -678,6 +678,7 @@ exports[`ProjectSearch found search results 1`] = `
                   data-expandable={false}
                   id="undefined-undefined-40-6"
                   onClick={[Function]}
+                  onKeyDownCapture={null}
                   role="treeitem"
                 >
                   <span

@@ -7,8 +7,7 @@
 "use strict";
 
 const { Ci } = require("chrome");
-const { BreakpointActor, setBreakpointAtEntryPoints } = require("devtools/server/actors/breakpoint");
-const { GeneratedLocation } = require("devtools/server/actors/common");
+const { setBreakpointAtEntryPoints } = require("devtools/server/actors/breakpoint");
 const { createValueGrip } = require("devtools/server/actors/object/utils");
 const { ActorClassWithSpec } = require("devtools/shared/protocol");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
@@ -71,31 +70,13 @@ function getSourceURL(source, window) {
 exports.getSourceURL = getSourceURL;
 
 /**
- * A SourceActor provides information about the source of a script. There
- * are two kinds of source actors: ones that represent real source objects,
- * and ones that represent non-existant "original" sources when the real
- * sources are HTML documents. We separate these because there isn't a
- * 1:1 mapping of HTML to sources; one source may represent a subsection
- * of an HTML source, so we need to create N + 1 separate
- * actors.
- *
- * There are 2 different scenarios for sources that you should
- * understand:
- *
- * - A single source that is not inlined in HTML
- *   (separate JS file, eval'ed code, etc)
- * - An HTML page with multiple inline scripts, which are distinct
- *   sources, but should be represented as a single source
- *
- * The complexity of `SourceActor` and `ThreadSources` are to handle
- * all of thise cases and hopefully internalize the complexities.
+ * A SourceActor provides information about the source of a script. Source
+ * actors are 1:1 with Debugger.Source objects.
  *
  * @param Debugger.Source source
  *        The source object we are representing.
  * @param ThreadActor thread
  *        The current thread actor.
- * @param String originalUrl
- *        Optional. For HTML documents urls, the original url this is representing.
  * @param Boolean isInlineSource
  *        Optional. True if this is an inline source from a HTML or XUL page.
  * @param String contentType
@@ -104,10 +85,9 @@ exports.getSourceURL = getSourceURL;
 const SourceActor = ActorClassWithSpec(sourceSpec, {
   typeName: "source",
 
-  initialize: function({ source, thread, originalUrl,
-                          isInlineSource, contentType }) {
+  initialize: function({ source, thread, isInlineSource, contentType }) {
     this._threadActor = thread;
-    this._url = originalUrl;
+    this._url = null;
     this._source = source;
     this._contentType = contentType;
     this._isInlineSource = isInlineSource;
@@ -138,10 +118,7 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
     return this.threadActor.breakpointActorMap;
   },
   get url() {
-    if (this._url) {
-      return this._url;
-    }
-    if (this.source) {
+    if (!this._url) {
       this._url = getSourceURL(this.source, this.threadActor._parent.window);
     }
     return this._url;
@@ -156,10 +133,9 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
 
   form: function() {
     const source = this.source;
-    // This might not have a source because we treat HTML pages with
-    // inline scripts as a special SourceActor that doesn't have either.
+
     let introductionUrl = null;
-    if (source && source.introductionScript) {
+    if (source.introductionScript) {
       introductionUrl = source.introductionScript.source.url;
     }
 
@@ -186,15 +162,7 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
       "Debuggee source and URL are set automatically"
     );
 
-    // For most cases, we have a real source to query for. The
-    // only time we don't is for HTML pages. In that case we want
-    // to query for scripts in an HTML page based on its URL, as
-    // there could be several sources within an HTML page.
-    if (this.source) {
-      query.source = this.source;
-    } else {
-      query.url = this.url;
-    }
+    query.source = this.source;
     return this.dbg.findScripts(query);
   },
 
@@ -214,7 +182,7 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
       content: t,
       contentType: this._contentType,
     });
-    const isWasm = this.source && this.source.introductionType === "wasm";
+    const isWasm = this.source.introductionType === "wasm";
 
     if (isWasm) {
       const wasm = this.source.binary;
@@ -300,7 +268,7 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
   getExecutableLines: async function() {
     const offsetsLines = new Set();
     for (const s of this._findDebuggeeScripts()) {
-      for (const offset of s.getAllColumnOffsets()) {
+      for (const offset of s.getPossibleBreakpoints()) {
         offsetsLines.add(offset.lineNumber);
       }
     }
@@ -339,7 +307,7 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
 
     const positions = [];
     for (const script of scripts) {
-      const offsets = script.getAllColumnOffsets();
+      const offsets = script.getPossibleBreakpoints();
       for (const { lineNumber, columnNumber } of offsets) {
         if (
           lineNumber < startLine ||
@@ -362,13 +330,7 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
       .sort((a, b) => {
         const lineDiff = a.line - b.line;
         return lineDiff === 0 ? a.column - b.column : lineDiff;
-      })
-      // Filter out duplicate locations since they are useless in this context.
-      .filter((item, i, arr) => (
-        i === 0 ||
-        item.line !== arr[i - 1].line ||
-        item.column !== arr[i - 1].column
-      ));
+      });
   },
 
   getBreakpointPositionsCompressed(query) {
@@ -461,228 +423,48 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
     this.pausePoints = uncompressed;
   },
 
-  /**
-   * Handle a request to set a breakpoint.
-   *
-   * @param Number line
-   *        Line to break on.
-   * @param Number column
-   *        Column to break on.
-   * @param Object options
-   *        Any options for the breakpoint.
-   * @param Boolean noSliding
-   *        If true, disables breakpoint sliding.
-   *
-   * @returns Promise
-   *          A promise that resolves to a JSON object representing the
-   *          response.
-   */
-  setBreakpoint: function(line, column, options, noSliding) {
-    const location = new GeneratedLocation(this, line, column);
-    const actor = this._getOrCreateBreakpointActor(
-      location,
-      options,
-      noSliding
-    );
-
-    const response = {
-      actor: actor.actorID,
-      isPending: actor.isPending,
-    };
-
-    const actualLocation = actor.generatedLocation;
-    if (!actualLocation.equals(location)) {
-      response.actualLocation = actualLocation.toJSON();
-    }
-
-    return response;
-  },
-
-  /**
-   * Get or create a BreakpointActor for the given location in the generated
-   * source, and ensure it is set as a breakpoint handler on all scripts that
-   * match the given location.
-   *
-   * @param GeneratedLocation generatedLocation
-   *        A GeneratedLocation representing the location of the breakpoint in
-   *        the generated source.
-   * @param Object options
-   *        Any options for the breakpoint.
-   * @param Boolean noSliding
-   *        If true, disables breakpoint sliding.
-   *
-   * @returns BreakpointActor
-   *          A BreakpointActor representing the breakpoint.
-   */
-  _getOrCreateBreakpointActor: function(generatedLocation, options, noSliding) {
-    let actor = this.breakpointActorMap.getActor(generatedLocation);
-    if (!actor) {
-      actor = new BreakpointActor(this.threadActor, generatedLocation);
-      this.threadActor.threadLifetimePool.addActor(actor);
-      this.breakpointActorMap.setActor(generatedLocation, actor);
-    }
-
-    actor.setOptions(options);
-
-    return this._setBreakpoint(actor, noSliding);
-  },
-
   /*
    * Ensure the given BreakpointActor is set as a breakpoint handler on all
    * scripts that match its location in the generated source.
    *
-   * If there are no scripts that match the location of the BreakpointActor,
-   * we slide its location to the next closest line (for line breakpoints) or
-   * column (for column breakpoint) that does.
-   *
-   * If breakpoint sliding fails, then either there are no scripts that contain
-   * any code for the given location, or they were all garbage collected before
-   * the debugger started running. We cannot distinguish between these two
-   * cases, so we insert the BreakpointActor in the BreakpointActorMap as
-   * a pending breakpoint. Whenever a new script is introduced, this method is
-   * called again for each pending breakpoint.
-   *
    * @param BreakpointActor actor
    *        The BreakpointActor to be set as a breakpoint handler.
-   * @param Boolean noSliding
-   *        If true, disables breakpoint sliding.
    *
    * @returns A Promise that resolves to the given BreakpointActor.
    */
-  _setBreakpoint: function(actor, noSliding) {
-    const { generatedLocation } = actor;
-    const { generatedLine, generatedSourceActor } = generatedLocation;
-
-    const isWasm = this.source && this.source.introductionType === "wasm";
-    if (!this._setBreakpointAtGeneratedLocation(actor, generatedLocation) &&
-        !noSliding &&
-        !isWasm) {
-      const scripts = this._findDebuggeeScripts({ line: generatedLine });
-
-      // Never do breakpoint sliding for column breakpoints.
-      // Additionally, never do breakpoint sliding if no scripts
-      // exist on this line.
-      //
-      // Sliding can go horribly wrong if we always try to find the
-      // next line with valid entry points in the entire file.
-      // Scripts may be completely GCed and we never knew they
-      // existed, so we end up sliding through whole functions to
-      // the user's bewilderment.
-      //
-      // We can slide reliably if any scripts exist, however, due
-      // to how scripts are kept alive. A parent Debugger.Script
-      // keeps all of its children alive, so as long as we have a
-      // valid script, we can slide through it and know we won't
-      // slide through any of its child scripts. Additionally, if a
-      // script gets GCed, that means that all parents scripts are
-      // GCed as well, and no scripts will exist on those lines
-      // anymore. We will never slide through a GCed script.
-      if (generatedLocation.generatedColumn || scripts.length === 0) {
-        return actor;
-      }
-
-      // Find the script that spans the largest amount of code to
-      // determine the bounds for sliding.
-      const largestScript = scripts.reduce((largestScr, script) => {
-        if (script.lineCount > largestScr.lineCount) {
-          return script;
-        }
-        return largestScr;
-      });
-      const maxLine = largestScript.startLine + largestScript.lineCount - 1;
-
-      let actualLine = generatedLine;
-      for (; actualLine <= maxLine; actualLine++) {
-        const loc = new GeneratedLocation(this, actualLine);
-        if (this._setBreakpointAtGeneratedLocation(actor, loc)) {
-          break;
-        }
-      }
-
-      // The above loop should never complete. We only did breakpoint sliding
-      // because we found scripts on the line we started from,
-      // which means there must be valid entry points somewhere
-      // within those scripts.
-      if (actualLine > maxLine) {
-        // eslint-disable-next-line no-throw-literal
-        throw {
-          error: "noCodeAtLineColumn",
-          message:
-            "Could not find any entry points to set a breakpoint on, " +
-            "even though I was told a script existed on the line I started " +
-            "the search with.",
-        };
-      }
-
-      // Update the actor to use the new location (reusing a
-      // previous breakpoint if it already exists on that line).
-      const actualLocation = new GeneratedLocation(generatedSourceActor, actualLine);
-      const existingActor = this.breakpointActorMap.getActor(actualLocation);
-      this.breakpointActorMap.deleteActor(generatedLocation);
-      if (existingActor) {
-        actor.delete();
-        actor = existingActor;
-      } else {
-        actor.generatedLocation = actualLocation;
-        this.breakpointActorMap.setActor(actualLocation, actor);
-      }
-    }
-
-    return actor;
-  },
-
-  _setBreakpointAtAllGeneratedLocations: function(actor, generatedLocations) {
-    let success = false;
-    for (const generatedLocation of generatedLocations) {
-      if (this._setBreakpointAtGeneratedLocation(
-        actor,
-        generatedLocation
-      )) {
-        success = true;
-      }
-    }
-    return success;
-  },
-
-  /*
-   * Ensure the given BreakpointActor is set as breakpoint handler on all
-   * scripts that match the given location in the generated source.
-   *
-   * @param BreakpointActor actor
-   *        The BreakpointActor to be set as a breakpoint handler.
-   * @param GeneratedLocation generatedLocation
-   *        A GeneratedLocation representing the location in the generated
-   *        source for which the given BreakpointActor is to be set as a
-   *        breakpoint handler.
-   *
-   * @returns A Boolean that is true if the BreakpointActor was set as a
-   *          breakpoint handler on at least one script, and false otherwise.
-   */
-  _setBreakpointAtGeneratedLocation: function(actor, generatedLocation) {
-    const {
-      generatedSourceActor,
-      generatedLine,
-      generatedColumn,
-      generatedLastColumn,
-    } = generatedLocation;
+  applyBreakpoint: function(actor) {
+    const { line, column } = actor.location;
 
     // Find all scripts that match the given source actor and line
     // number.
-    let scripts = generatedSourceActor._findDebuggeeScripts(
-      { line: generatedLine }
-    );
-
+    let scripts = this._findDebuggeeScripts({ line });
     scripts = scripts.filter((script) => !actor.hasScript(script));
 
     // Find all entry points that correspond to the given location.
     const entryPoints = [];
-    if (generatedColumn === undefined) {
-      // This is a line breakpoint, so we are interested in all offsets
-      // that correspond to the given line number.
+    if (column === undefined) {
+      // This is a line breakpoint, so we add a breakpoint on the first
+      // breakpoint on the line.
+      const lineMatches = [];
       for (const script of scripts) {
-        const offsets = script.getLineOffsets(generatedLine);
-        if (offsets.length > 0) {
-          entryPoints.push({ script, offsets });
+        const possibleBreakpoints = script.getPossibleBreakpoints({ line });
+        for (const possibleBreakpoint of possibleBreakpoints) {
+          lineMatches.push({ ...possibleBreakpoint, script });
+        }
+      }
+      lineMatches.sort((a, b) => a.columnNumber - b.columnNumber);
+
+      if (lineMatches.length > 0) {
+        // A single Debugger.Source may have _multiple_ Debugger.Scripts
+        // at the same position from multiple evaluations of the source,
+        // so we explicitly want to take all of the matches for the matched
+        // column number.
+        const firstColumn = lineMatches[0].columnNumber;
+        const firstColumnMatches = lineMatches
+          .filter(m => m.columnNumber === firstColumn);
+
+        for (const { script, offset } of firstColumnMatches) {
+          entryPoints.push({ script, offsets: [offset] });
         }
       }
     } else {
@@ -691,16 +473,15 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
       const columnToOffsetMaps = scripts.map(script =>
         [
           script,
-          script.getAllColumnOffsets()
-            .filter(({ lineNumber }) => lineNumber === generatedLine),
+          script.getPossibleBreakpoints({ line }),
         ]
       );
 
       // This is a column breakpoint, so we are interested in all column
       // offsets that correspond to the given line *and* column number.
       for (const [script, columnToOffsetMap] of columnToOffsetMaps) {
-        for (const { columnNumber: column, offset } of columnToOffsetMap) {
-          if (column >= generatedColumn && column <= generatedLastColumn) {
+        for (const { columnNumber, offset } of columnToOffsetMap) {
+          if (columnNumber >= column && columnNumber <= column + 1) {
             entryPoints.push({ script, offsets: [offset] });
           }
         }
@@ -715,8 +496,8 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
         // of caution by handling it here.
         const closestScripts = findClosestScriptBySource(
           columnToOffsetMaps.map(pair => pair[0]),
-          generatedLine,
-          generatedColumn,
+          line,
+          column,
         );
 
         const columnToOffsetLookup = new Map(columnToOffsetMaps);
@@ -727,11 +508,11 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
             const firstColumnOffset = columnToOffsetMap[0];
             const lastColumnOffset = columnToOffsetMap[columnToOffsetMap.length - 1];
 
-            if (generatedColumn < firstColumnOffset.columnNumber) {
+            if (column < firstColumnOffset.columnNumber) {
               entryPoints.push({ script, offsets: [firstColumnOffset.offset] });
             }
 
-            if (generatedColumn > lastColumnOffset.columnNumber) {
+            if (column > lastColumnOffset.columnNumber) {
               entryPoints.push({ script, offsets: [lastColumnOffset.offset] });
             }
           }
@@ -739,12 +520,7 @@ const SourceActor = ActorClassWithSpec(sourceSpec, {
       }
     }
 
-    if (entryPoints.length === 0) {
-      return false;
-    }
-
     setBreakpointAtEntryPoints(actor, entryPoints);
-    return true;
   },
 });
 

@@ -352,6 +352,9 @@ bool ModuleGenerator::init(Metadata* maybeAsmJSMetadata) {
           return false;
         }
         for (uint32_t funcIndex : seg->elemFuncIndices) {
+          if (funcIndex == NullFuncIndex) {
+            continue;
+          }
           exportedFuncs.infallibleEmplaceBack(funcIndex, false);
         }
         break;
@@ -1091,8 +1094,7 @@ SharedMetadata ModuleGenerator::finishMetadata(const Bytes& bytecode) {
 
 SharedModule ModuleGenerator::finishModule(
     const ShareableBytes& bytecode,
-    JS::OptimizedEncodingListener* maybeTier2Listener,
-    UniqueLinkData* maybeLinkData) {
+    JS::OptimizedEncodingListener* maybeTier2Listener) {
   MOZ_ASSERT(mode() == CompileMode::Once || mode() == CompileMode::Tier1);
 
   UniqueCodeTier codeTier = finishCodeTier();
@@ -1208,11 +1210,6 @@ SharedModule ModuleGenerator::finishModule(
     module->startTier2(*compileArgs_, bytecode, maybeTier2Listener);
   } else if (tier() == Tier::Serialized && maybeTier2Listener) {
     module->serialize(*linkData_, *maybeTier2Listener);
-  }
-
-  if (maybeLinkData) {
-    MOZ_ASSERT(!env_->debugEnabled());
-    *maybeLinkData = std::move(linkData_);
   }
 
   return module;

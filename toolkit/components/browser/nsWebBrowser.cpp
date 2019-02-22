@@ -579,8 +579,9 @@ nsWebBrowser::SetOriginAttributesBeforeLoading(
 }
 
 NS_IMETHODIMP
-nsWebBrowser::ResumeRedirectedLoad(uint64_t aIdentifier) {
-  return mDocShellAsNav->ResumeRedirectedLoad(aIdentifier);
+nsWebBrowser::ResumeRedirectedLoad(uint64_t aIdentifier,
+                                   int32_t aHistoryIndex) {
+  return mDocShellAsNav->ResumeRedirectedLoad(aIdentifier, aHistoryIndex);
 }
 
 NS_IMETHODIMP
@@ -609,13 +610,6 @@ nsWebBrowser::GetCurrentURI(nsIURI** aURI) {
   NS_ENSURE_STATE(mDocShell);
 
   return mDocShellAsNav->GetCurrentURI(aURI);
-}
-
-NS_IMETHODIMP
-nsWebBrowser::GetReferringURI(nsIURI** aURI) {
-  NS_ENSURE_STATE(mDocShell);
-
-  return mDocShellAsNav->GetReferringURI(aURI);
 }
 
 // XXX(nika): Consider making the mozilla::dom::ChildSHistory version the

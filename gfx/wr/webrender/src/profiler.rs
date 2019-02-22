@@ -7,9 +7,10 @@ use debug_render::DebugRenderer;
 use device::query::{GpuSampler, GpuTimer, NamedTag};
 use euclid::{Point2D, Rect, Size2D, vec2};
 use internal_types::FastHashMap;
-use renderer::MAX_VERTEX_TEXTURE_WIDTH;
+use renderer::{MAX_VERTEX_TEXTURE_WIDTH, wr_has_been_initialized};
 use std::collections::vec_deque::VecDeque;
 use std::{f32, mem};
+use std::ffi::CStr;
 use time::precise_time_ns;
 
 const GRAPH_WIDTH: f32 = 1024.0;
@@ -19,6 +20,68 @@ const GRAPH_FRAME_HEIGHT: f32 = 16.0;
 const PROFILE_PADDING: f32 = 10.0;
 
 const ONE_SECOND_NS: u64 = 1000000000;
+
+/// Defines the interface for hooking up an external profiler to WR.
+pub trait ProfilerHooks : Send + Sync {
+    /// Called at the beginning of a profile scope. The label must
+    /// be a C string (null terminated).
+    fn begin_marker(&self, label: &CStr);
+
+    /// Called at the end of a profile scope. The label must
+    /// be a C string (null terminated).
+    fn end_marker(&self, label: &CStr);
+}
+
+/// The current global profiler callbacks, if set by embedder.
+static mut PROFILER_HOOKS: Option<&'static ProfilerHooks> = None;
+
+/// Set the profiler callbacks, or None to disable the profiler.
+/// This function must only ever be called before any WR instances
+/// have been created, or the hooks will not be set.
+pub fn set_profiler_hooks(hooks: Option<&'static ProfilerHooks>) {
+    if !wr_has_been_initialized() {
+        unsafe {
+            PROFILER_HOOKS = hooks;
+        }
+    }
+}
+
+/// A simple RAII style struct to manage a profile scope.
+pub struct ProfileScope {
+    name: &'static CStr,
+}
+
+impl ProfileScope {
+    /// Begin a new profile scope
+    pub fn new(name: &'static CStr) -> Self {
+        unsafe {
+            if let Some(ref hooks) = PROFILER_HOOKS {
+                hooks.begin_marker(name);
+            }
+        }
+
+        ProfileScope {
+            name,
+        }
+    }
+}
+
+impl Drop for ProfileScope {
+    fn drop(&mut self) {
+        unsafe {
+            if let Some(ref hooks) = PROFILER_HOOKS {
+                hooks.end_marker(self.name);
+            }
+        }
+    }
+}
+
+/// A helper macro to define profile scopes.
+macro_rules! profile_marker {
+    ($string:expr) => {
+        let _scope = $crate::profiler::ProfileScope::new(cstr!($string));
+    };
+}
 
 #[derive(Debug, Clone)]
 pub struct GpuProfileTag {
@@ -328,6 +391,7 @@ pub struct TextureCacheProfileCounters {
     pub pages_a16_linear: ResourceProfileCounter,
     pub pages_rgba8_linear: ResourceProfileCounter,
     pub pages_rgba8_nearest: ResourceProfileCounter,
+    pub pages_picture: ResourceProfileCounter,
 }
 
 impl TextureCacheProfileCounters {
@@ -337,6 +401,7 @@ impl TextureCacheProfileCounters {
             pages_a16_linear: ResourceProfileCounter::new("Texture A16 cached pages"),
             pages_rgba8_linear: ResourceProfileCounter::new("Texture RGBA8 cached pages (L)"),
             pages_rgba8_nearest: ResourceProfileCounter::new("Texture RGBA8 cached pages (N)"),
+            pages_picture: ResourceProfileCounter::new("Picture cached pages"),
         }
     }
 }

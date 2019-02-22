@@ -22,6 +22,7 @@ namespace dom {
 class CanonicalBrowsingContext;
 class WindowGlobalChild;
 class JSWindowActorParent;
+class TabParent;
 
 /**
  * A handle in the parent process to a specific nsGlobalWindowInner object.
@@ -61,6 +62,10 @@ class WindowGlobalParent final : public nsISupports,
   // Get this actor's manager if it is not an in-process actor. Returns
   // |nullptr| if the actor has been torn down, or is in-process.
   already_AddRefed<TabParent> GetTabParent();
+
+  void HandleAsyncMessage(const nsString& aActorName,
+                          const nsString& aMessageName,
+                          ipc::StructuredCloneData& aData);
 
   // The principal of this WindowGlobal. This value will not change over the
   // lifetime of the WindowGlobal object, even to reflect changes in
@@ -102,6 +107,9 @@ class WindowGlobalParent final : public nsISupports,
   mozilla::ipc::IPCResult RecvUpdateDocumentURI(nsIURI* aURI);
   mozilla::ipc::IPCResult RecvBecomeCurrentWindowGlobal();
   mozilla::ipc::IPCResult RecvDestroy();
+  mozilla::ipc::IPCResult RecvAsyncMessage(const nsString& aActorName,
+                                           const nsString& aMessageName,
+                                           const ClonedMessageData& aData);
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
 

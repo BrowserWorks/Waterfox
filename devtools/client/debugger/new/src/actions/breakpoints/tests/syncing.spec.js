@@ -98,11 +98,12 @@ function pendingBreakpoint(overrides) {
       },
       index: 0
     },
-    condition: null,
+    options: {
+      logValue: "",
+      hidden: false
+    },
     disabled: false,
-    hidden: false,
     loading: false,
-    options: {},
     text: "",
     ...overrides
   };
@@ -136,7 +137,7 @@ describe("loading the debugger", () => {
       threadClient,
       sourceMaps,
       dispatch,
-      reloadedSource.source.id,
+      reloadedSource.id,
       pendingBreakpoint()
     );
 
@@ -167,7 +168,7 @@ describe("loading the debugger", () => {
       threadClient,
       sourceMaps,
       dispatch,
-      reloadedSource.source.id,
+      reloadedSource.id,
       pendingBreakpoint()
     );
 
@@ -212,7 +213,7 @@ describe("reloading debuggee", () => {
       threadClient,
       sourceMaps,
       dispatch,
-      reloadedSource.source.id,
+      reloadedSource.id,
       pendingBreakpoint({ location: loc1 })
     );
     expect(threadClient.removeBreakpoint.mock.calls).toHaveLength(0);
@@ -256,7 +257,7 @@ describe("reloading debuggee", () => {
       threadClient,
       sourceMaps,
       dispatch,
-      reloadedSource.source.id,
+      reloadedSource.id,
       pendingBreakpoint()
     );
     expect(threadClient.removeBreakpoint.mock.calls).toHaveLength(1);
@@ -278,7 +279,7 @@ describe("reloading debuggee", () => {
     await dispatch(actions.newSource(generatedSource));
 
     const location = {
-      sourceId: reloadedSource.source.id,
+      sourceId: reloadedSource.id,
       line: 3,
       column: undefined
     };
@@ -292,7 +293,7 @@ describe("reloading debuggee", () => {
 
     await dispatch(
       actions.syncBreakpoint(
-        reloadedSource.source.id,
+        reloadedSource.id,
         pendingBreakpoint({ disabled: true })
       )
     );

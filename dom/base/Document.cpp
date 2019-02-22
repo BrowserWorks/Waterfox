@@ -1036,7 +1036,7 @@ nsresult ExternalResourceMap::PendingLoad::StartLoad(nsIURI* aURI,
 
   mURI = aURI;
 
-  return channel->AsyncOpen2(this);
+  return channel->AsyncOpen(this);
 }
 
 NS_IMPL_ISUPPORTS(ExternalResourceMap::LoadgroupCallbacks,
@@ -1227,6 +1227,8 @@ Document::Document(const char* aContentType)
       mInUnlinkOrDeletion(false),
       mHasHadScriptHandlingObject(false),
       mIsBeingUsedAsImage(false),
+      mDocURISchemeIsChrome(false),
+      mInChromeDocShell(false),
       mIsSyntheticDocument(false),
       mHasLinksToUpdateRunnable(false),
       mFlushingPendingLinkUpdates(false),
@@ -2417,7 +2419,7 @@ static void WarnIfSandboxIneffective(nsIDocShell* aDocShell,
 }
 
 bool Document::IsSynthesized() {
-  nsCOMPtr<nsILoadInfo> loadInfo = mChannel ? mChannel->GetLoadInfo() : nullptr;
+  nsCOMPtr<nsILoadInfo> loadInfo = mChannel ? mChannel->LoadInfo() : nullptr;
   return loadInfo && loadInfo->GetServiceWorkerTaintingSynthesized();
 }
 
@@ -2517,8 +2519,8 @@ nsresult Document::StartDocumentLoad(const char* aCommand, nsIChannel* aChannel,
   nsCOMPtr<nsIDocShell> docShell = do_QueryInterface(aContainer);
 
   // If this is an error page, don't inherit sandbox flags from docshell
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  if (docShell && !(loadInfo && loadInfo->GetLoadErrorPage())) {
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
+  if (docShell && !loadInfo->GetLoadErrorPage()) {
     nsresult rv = docShell->GetSandboxFlags(&mSandboxFlags);
     NS_ENSURE_SUCCESS(rv, rv);
     WarnIfSandboxIneffective(docShell, mSandboxFlags, GetChannel());
@@ -2665,8 +2667,8 @@ nsresult Document::InitCSP(nsIChannel* aChannel) {
 
   // Check if this is a signed content to apply default CSP.
   bool applySignedContentCSP = false;
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  if (loadInfo && loadInfo->GetVerifySignedContent()) {
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
+  if (loadInfo->GetVerifySignedContent()) {
     applySignedContentCSP = true;
   }
 
@@ -2834,6 +2836,8 @@ void Document::SetDocumentURI(nsIURI* aURI) {
   nsCOMPtr<nsIURI> oldBase = GetDocBaseURI();
   mDocumentURI = aURI;
   nsIURI* newBase = GetDocBaseURI();
+
+  mDocURISchemeIsChrome = aURI && IsChromeURI(aURI);
 
   bool equalBases = false;
   // Changing just the ref of a URI does not change how relative URIs would
@@ -4301,6 +4305,9 @@ void Document::SetContainer(nsDocShell* aContainer) {
     mDocumentContainer = WeakPtr<nsDocShell>();
   }
 
+  mInChromeDocShell =
+      aContainer && aContainer->ItemType() == nsIDocShellTreeItem::typeChrome;
+
   EnumerateActivityObservers(NotifyActivityChanged, nullptr);
 
   // IsTopLevelWindowInactive depends on the docshell, so
@@ -5167,13 +5174,13 @@ bool IsLowercaseASCII(const nsAString& aValue) {
 }
 
 // We only support pseudo-elements with two colons in this function.
-static CSSPseudoElementType GetPseudoElementType(const nsString& aString,
-                                                 ErrorResult& aRv) {
+static PseudoStyleType GetPseudoElementType(const nsString& aString,
+                                            ErrorResult& aRv) {
   MOZ_ASSERT(!aString.IsEmpty(),
              "GetPseudoElementType aString should be non-null");
   if (aString.Length() <= 2 || aString[0] != ':' || aString[1] != ':') {
     aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-    return CSSPseudoElementType::NotPseudo;
+    return PseudoStyleType::NotPseudo;
   }
   RefPtr<nsAtom> pseudo = NS_Atomize(Substring(aString, 1));
   return nsCSSPseudoElements::GetPseudoType(pseudo,
@@ -5195,7 +5202,7 @@ already_AddRefed<Element> Document::CreateElement(
   }
 
   const nsString* is = nullptr;
-  CSSPseudoElementType pseudoType = CSSPseudoElementType::NotPseudo;
+  PseudoStyleType pseudoType = PseudoStyleType::NotPseudo;
   if (aOptions.IsElementCreationOptions()) {
     const ElementCreationOptions& options =
         aOptions.GetAsElementCreationOptions();
@@ -5208,7 +5215,7 @@ already_AddRefed<Element> Document::CreateElement(
     // with CSS_PSEUDO_ELEMENT_IS_JS_CREATED_NAC.
     if (options.mPseudo.WasPassed()) {
       pseudoType = GetPseudoElementType(options.mPseudo.Value(), rv);
-      if (rv.Failed() || pseudoType == CSSPseudoElementType::NotPseudo ||
+      if (rv.Failed() || pseudoType == PseudoStyleType::NotPseudo ||
           !nsCSSPseudoElements::PseudoElementIsJSCreatedNAC(pseudoType)) {
         rv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
         return nullptr;
@@ -5219,7 +5226,7 @@ already_AddRefed<Element> Document::CreateElement(
   RefPtr<Element> elem = CreateElem(needsLowercase ? lcTagName : aTagName,
                                     nullptr, mDefaultElementType, is);
 
-  if (pseudoType != CSSPseudoElementType::NotPseudo) {
+  if (pseudoType != PseudoStyleType::NotPseudo) {
     elem->SetPseudoElementType(pseudoType);
   }
 
@@ -7416,13 +7423,10 @@ bool Document::CanSavePresentation(nsIRequest* aNewRequest) {
         // Favicon loads don't need to block caching.
         nsCOMPtr<nsIChannel> channel = do_QueryInterface(request);
         if (channel) {
-          nsCOMPtr<nsILoadInfo> li;
-          channel->GetLoadInfo(getter_AddRefs(li));
-          if (li) {
-            if (li->InternalContentPolicyType() ==
-                nsIContentPolicy::TYPE_INTERNAL_IMAGE_FAVICON) {
-              continue;
-            }
+          nsCOMPtr<nsILoadInfo> li = channel->LoadInfo();
+          if (li->InternalContentPolicyType() ==
+              nsIContentPolicy::TYPE_INTERNAL_IMAGE_FAVICON) {
+            continue;
           }
         }
 #ifdef DEBUG_PAGE_CACHE
@@ -11705,8 +11709,8 @@ void Document::SetUserHasInteracted() {
 
   mUserHasInteracted = true;
 
-  nsCOMPtr<nsILoadInfo> loadInfo = mChannel ? mChannel->GetLoadInfo() : nullptr;
-  if (loadInfo) {
+  if (mChannel) {
+    nsCOMPtr<nsILoadInfo> loadInfo = mChannel->LoadInfo();
     loadInfo->SetDocumentHasUserInteracted(true);
   }
 

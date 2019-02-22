@@ -231,6 +231,12 @@ pref("dom.keyboardevent.keypress.hack.dispatch_non_printable_keys", "");
 // check its explanation for the detail.
 pref("dom.keyboardevent.keypress.hack.use_legacy_keycode_and_charcode", "");
 
+// Whether InputEvent.data is enabled.
+pref("dom.inputevent.data.enabled", true);
+
+// Whether InputEvent.dataTransfer is enabled.
+pref("dom.inputevent.datatransfer.enabled", true);
+
 // Whether InputEvent.inputType is enabled.
 pref("dom.inputevent.inputtype.enabled", true);
 
@@ -287,7 +293,6 @@ pref("ui.popup.disable_autohide", false);
 pref("ui.touchbar.layout", "Back,Reload,OpenOrFocus,AddBookmark,NewTab,Share");
 #endif
 
-pref("browser.display.use_document_fonts",  1);  // 0 = never, 1 = quick, 2 = always
 // 0 = default: always, except in high contrast mode
 // 1 = always
 // 2 = never
@@ -968,7 +973,7 @@ pref("gfx.webrender.dl.dump-parent", false);
 pref("gfx.webrender.dl.dump-content", false);
 pref("gfx.webrender.picture-caching", true);
 
-#ifdef EARLY_BETA_OR_EARLIER
+#ifdef NIGHTLY_BUILD
 pref("performance.adjust_to_machine", true);
 #else
 pref("performance.adjust_to_machine", false);
@@ -1291,7 +1296,7 @@ pref("dom.allow_scripts_to_close_windows",          false);
 pref("dom.require_user_interaction_for_beforeunload", true);
 
 pref("dom.popup_maximum",                           20);
-pref("dom.popup_allowed_events", "change click dblclick mouseup pointerup notificationclick reset submit touchend");
+pref("dom.popup_allowed_events", "change click dblclick mouseup pointerup notificationclick reset submit touchend contextmenu");
 
 pref("dom.disable_open_click_delay", 1000);
 pref("dom.serviceWorkers.disable_open_click_delay", 1000);
@@ -1370,8 +1375,6 @@ pref("dom.forms.select.customstyling", false);
 pref("dom.forms.select.customstyling", true);
 #endif
 pref("dom.select_popup_in_parent.enabled", false);
-// Bug 1421229 - content-select
-pref("dom.select_popup_in_content.enabled", false);
 
 // Enable Directory API. By default, disabled.
 pref("dom.input.dirpicker", false);
@@ -1439,6 +1442,9 @@ pref("privacy.firstparty.isolate.restrict_opener_access", true);
 // If you do set it, to work around some broken website, please file a bug with
 // information so we can understand why it is needed.
 pref("privacy.resistFingerprinting.autoDeclineNoUserInputCanvasPrompts", true);
+// The log level for browser console messages logged in RFPHelper.jsm
+// Change to 'All' and restart to see the messages
+pref("privacy.resistFingerprinting.jsmloglevel", "Warn");
 // A subset of Resist Fingerprinting protections focused specifically on timers for testing
 // This affects the Animation API, the performance APIs, Date.getTime, Event.timestamp,
 //   File.lastModified, audioContext.currentTime, canvas.captureStream.currentTime
@@ -1458,11 +1464,15 @@ pref("javascript.options.strict",           false);
 #ifdef DEBUG
 pref("javascript.options.strict.debug",     false);
 #endif
-pref("javascript.options.unboxed_objects",  true);
+pref("javascript.options.unboxed_objects",  false);
 pref("javascript.options.baselinejit",      true);
 //Duplicated in JitOptions - ensure both match.
 pref("javascript.options.baselinejit.threshold", 10);
+#ifdef _ARM64_
+pref("javascript.options.ion",              false);
+#else
 pref("javascript.options.ion",              true);
+#endif
 //Duplicated in JitOptions - ensure both match.
 pref("javascript.options.ion.threshold",    1000);
 //Duplicated in JitOptions - ensure both match.
@@ -2360,12 +2370,13 @@ pref("network.proxy.socks_port",            0);
 pref("network.proxy.socks_version",         5);
 pref("network.proxy.socks_remote_dns",      false);
 pref("network.proxy.proxy_over_tls",        true);
-pref("network.proxy.no_proxies_on",         "localhost, 127.0.0.1");
+pref("network.proxy.no_proxies_on",         "");
+// Set true to allow resolving proxy for localhost
+pref("network.proxy.allow_hijacking_localhost", false);
 pref("network.proxy.failover_timeout",      1800); // 30 minutes
 pref("network.online",                      true); //online/offline
 pref("network.cookie.thirdparty.sessionOnly", false);
 pref("network.cookie.thirdparty.nonsecureSessionOnly", false);
-pref("network.cookie.leave-secure-alone",   true);
 pref("network.cookie.same-site.enabled",    true); // Honor the SameSite cookie attribute
 
 // Cookie lifetime policy. Possible values:
@@ -2682,7 +2693,7 @@ pref("csp.overrule_about_uris_without_csp_whitelist", false);
 pref("csp.skip_about_page_has_csp_assert", false);
 // assertion flag will be set to false after fixing Bug 1473549
 pref("security.allow_eval_with_system_principal", false);
-pref("security.uris_using_eval_with_system_principal", "autocomplete.xml,redux.js,react-redux.js,content-task.js,content-task.js,tree.xml,dialog.xml,preferencesbindings.js,wizard.xml,lodash.js,jszip.js,ajv-4.1.1.js,updates.js,setup,jsol.js,parent_utils.js");
+pref("security.uris_using_eval_with_system_principal", "autocomplete.xml,redux.js,react-redux.js,content-task.js,content-task.js,tree.xml,dialog.xml,preferencesbindings.js,wizard.xml,lodash.js,jszip.js,ajv-4.1.1.js,updates.js,setup,jsol.js,parent_utils.js,chrometask_chromescript");
 #endif
 
 // Default Content Security Policy to apply to signed contents.
@@ -4659,6 +4670,7 @@ pref("signon.autofillForms",                true);
 pref("signon.autofillForms.http",           false);
 pref("signon.autologin.proxy",              false);
 pref("signon.formlessCapture.enabled",      true);
+pref("signon.privateBrowsingCapture.enabled", false);
 pref("signon.storeWhenAutocompleteOff",     true);
 pref("signon.debug",                        false);
 pref("signon.recipes.path",                 "chrome://passwordmgr/content/recipes.json");
@@ -5140,6 +5152,9 @@ pref("extensions.webextensions.enablePerformanceCounters", true);
 // When reached, the counters are sent to the main process and
 // reset, so we reduce memory footprint.
 pref("extensions.webextensions.performanceCountersMaxAge", 1000);
+
+// The HTML about:addons page.
+pref("extensions.htmlaboutaddons.enabled", false);
 
 // Report Site Issue button
 // Note that on enabling the button in other release channels, make sure to
@@ -5990,9 +6005,7 @@ pref("dom.datatransfer.mozAtAPIs", true);
 #endif
 
 // Whether or not Prio is supported on this platform.
-#ifdef MOZ_LIBPRIO
 pref("prio.enabled", false);
-#endif
 
 // External.AddSearchProvider is deprecated and it will be removed in the next
 // cycles.

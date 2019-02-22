@@ -22,6 +22,7 @@
 #include "mozilla/dom/indexedDB/ActorsParent.h"
 #include "mozilla/dom/IPCBlobUtils.h"
 #include "mozilla/dom/PaymentRequestParent.h"
+#include "mozilla/dom/RemoteFrameParent.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
@@ -48,6 +49,7 @@
 #include "nsDebug.h"
 #include "nsFocusManager.h"
 #include "nsFrameLoader.h"
+#include "nsFrameLoaderOwner.h"
 #include "nsFrameManager.h"
 #include "nsIBaseWindow.h"
 #include "nsIBrowser.h"
@@ -75,6 +77,7 @@
 #endif
 #include "nsPIDOMWindow.h"
 #include "nsPrintfCString.h"
+#include "nsQueryObject.h"
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
 #include "PermissionMessageUtils.h"
@@ -303,6 +306,10 @@ void TabParent::SetOwnerElement(Element* aElement) {
       Unused << SendSetWidgetNativeData(widgetNativeData);
     }
   }
+
+  if (mRenderFrame.IsInitialized()) {
+    mRenderFrame.OwnerContentChanged();
+  }
 }
 
 NS_IMETHODIMP TabParent::GetOwnerElement(Element** aElement) {
@@ -450,7 +457,7 @@ void TabParent::ActorDestroy(ActorDestroyReason why) {
     if (why == AbnormalShutdown && os) {
       os->NotifyObservers(ToSupports(frameLoader), "oop-frameloader-crashed",
                           nullptr);
-      nsCOMPtr<nsIFrameLoaderOwner> owner = do_QueryInterface(frameElement);
+      RefPtr<nsFrameLoaderOwner> owner = do_QueryObject(frameElement);
       if (owner) {
         RefPtr<nsFrameLoader> currentFrameLoader = owner->GetFrameLoader();
         // It's possible that the frameloader owner has already moved on
@@ -616,16 +623,8 @@ void TabParent::LoadURL(nsIURI* aURI) {
 }
 
 void TabParent::InitRendering() {
-  RefPtr<nsFrameLoader> frameLoader = GetFrameLoader();
-
   MOZ_ASSERT(!mRenderFrame.IsInitialized());
-  MOZ_ASSERT(frameLoader);
-
-  if (!frameLoader) {
-    return;
-  }
-
-  mRenderFrame.Initialize(frameLoader);
+  mRenderFrame.Initialize(this);
   MOZ_ASSERT(mRenderFrame.IsInitialized());
 
   layers::LayersId layersId = mRenderFrame.GetLayersId();
@@ -1015,6 +1014,25 @@ bool TabParent::DeallocPWindowGlobalParent(PWindowGlobalParent* aActor) {
   return true;
 }
 
+IPCResult TabParent::RecvPRemoteFrameConstructor(PRemoteFrameParent* aActor,
+                                                 const nsString& aName,
+                                                 const nsString& aRemoteType) {
+  static_cast<RemoteFrameParent*>(aActor)->Init(aName, aRemoteType);
+  return IPC_OK();
+}
+
+PRemoteFrameParent* TabParent::AllocPRemoteFrameParent(
+    const nsString& aName, const nsString& aRemoteType) {
+  // Reference freed in DeallocPRemoteFrameParent.
+  return do_AddRef(new RemoteFrameParent()).take();
+}
+
+bool TabParent::DeallocPRemoteFrameParent(PRemoteFrameParent* aActor) {
+  // Free reference from AllocPRemoteFrameParent.
+  static_cast<RemoteFrameParent*>(aActor)->Release();
+  return true;
+}
+
 void TabParent::SendMouseEvent(const nsAString& aType, float aX, float aY,
                                int32_t aButton, int32_t aClickCount,
                                int32_t aModifiers,
@@ -1198,11 +1216,6 @@ void TabParent::SendRealDragEvent(WidgetDragEvent& aEvent, uint32_t aDragAction,
       aEvent, aDragAction, aDropEffect, aPrincipal);
   NS_WARNING_ASSERTION(ret, "PBrowserParent::SendRealDragEvent() failed");
   MOZ_ASSERT(!ret || aEvent.HasBeenPostedToRemoteProcess());
-}
-
-LayoutDevicePoint TabParent::AdjustTapToChildWidget(
-    const LayoutDevicePoint& aPoint) {
-  return aPoint + LayoutDevicePoint(GetChildProcessOffset());
 }
 
 void TabParent::SendMouseWheelEvent(WidgetWheelEvent& aEvent) {
@@ -1725,10 +1738,17 @@ mozilla::ipc::IPCResult TabParent::RecvShowTooltip(const uint32_t& aX,
     return IPC_OK();
   }
 
-  nsCOMPtr<nsIFrameLoaderOwner> frame = do_QueryInterface(mFrameElement);
-  if (!frame) return IPC_OK();
+  // ShowTooltip will end up accessing XULElement properties in JS (specifically
+  // BoxObject). However, to get it to JS, we need to make sure we're a
+  // nsFrameLoaderOwner, which implies we're a XULFrameElement. We can then
+  // safely pass Element into JS.
+  RefPtr<nsFrameLoaderOwner> flo = do_QueryObject(mFrameElement);
+  if (!flo) return IPC_OK();
 
-  xulBrowserWindow->ShowTooltip(aX, aY, aTooltip, aDirection, frame);
+  nsCOMPtr<Element> el = do_QueryInterface(flo);
+  if (!el) return IPC_OK();
+
+  xulBrowserWindow->ShowTooltip(aX, aY, aTooltip, aDirection, el);
   return IPC_OK();
 }
 
@@ -2231,7 +2251,7 @@ bool TabParent::SendPasteTransferable(
 }
 
 /*static*/ TabParent* TabParent::GetFrom(nsIContent* aContent) {
-  nsCOMPtr<nsIFrameLoaderOwner> loaderOwner = do_QueryInterface(aContent);
+  RefPtr<nsFrameLoaderOwner> loaderOwner = do_QueryObject(aContent);
   if (!loaderOwner) {
     return nullptr;
   }
@@ -2443,8 +2463,7 @@ already_AddRefed<nsFrameLoader> TabParent::GetFrameLoader(
     RefPtr<nsFrameLoader> fl = mFrameLoader;
     return fl.forget();
   }
-  nsCOMPtr<nsIFrameLoaderOwner> frameLoaderOwner =
-      do_QueryInterface(mFrameElement);
+  RefPtr<nsFrameLoaderOwner> frameLoaderOwner = do_QueryObject(mFrameElement);
   return frameLoaderOwner ? frameLoaderOwner->GetFrameLoader() : nullptr;
 }
 
@@ -3031,9 +3050,7 @@ class FakeChannel final : public nsIChannel,
       GetContentLength(int64_t*) NO_IMPL NS_IMETHOD
       SetContentLength(int64_t) NO_IMPL NS_IMETHOD
       Open(nsIInputStream**) NO_IMPL NS_IMETHOD
-      Open2(nsIInputStream**) NO_IMPL NS_IMETHOD
-      AsyncOpen(nsIStreamListener*, nsISupports*) NO_IMPL NS_IMETHOD
-      AsyncOpen2(nsIStreamListener*) NO_IMPL NS_IMETHOD
+      AsyncOpen(nsIStreamListener*) NO_IMPL NS_IMETHOD
       GetContentDisposition(uint32_t*) NO_IMPL NS_IMETHOD
       SetContentDisposition(uint32_t) NO_IMPL NS_IMETHOD
       GetContentDispositionFilename(nsAString&) NO_IMPL NS_IMETHOD
@@ -3430,9 +3447,9 @@ mozilla::ipc::IPCResult TabParent::RecvGetSystemFont(nsCString* aFontName) {
 }
 
 mozilla::ipc::IPCResult TabParent::RecvRootBrowsingContext(
-    const BrowsingContextId& aId) {
+    BrowsingContext* aBrowsingContext) {
   MOZ_ASSERT(!mBrowsingContext, "May only set browsing context once!");
-  mBrowsingContext = CanonicalBrowsingContext::Get(aId);
+  mBrowsingContext = CanonicalBrowsingContext::Cast(aBrowsingContext);
   MOZ_ASSERT(mBrowsingContext, "Invalid ID!");
   return IPC_OK();
 }

@@ -38,7 +38,6 @@ UNIFIED_SOURCES += [
     'nsNPAPIPluginInstance.cpp',
     'nsNPAPIPluginStreamListener.cpp',
     'nsPluginInstanceOwner.cpp',
-    'nsPluginModule.cpp',
     'nsPluginStreamListenerPeer.cpp',
     'nsPluginTags.cpp',
 ]
@@ -67,6 +66,10 @@ else:
         'nsPluginsDirUnix.cpp',
     ]
 
+XPCOM_MANIFESTS += [
+    'components.conf',
+]
+
 LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/plugins/ipc',
@@ -92,6 +95,3 @@ CXXFLAGS += CONFIG['TK_CFLAGS']
 
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += ['-Wno-error=shadow']
-
-if CONFIG['CC_TYPE'] == 'clang-cl':
-    AllowCompilerWarnings()  # workaround for bug 1090497

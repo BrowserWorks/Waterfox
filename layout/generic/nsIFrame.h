@@ -128,7 +128,7 @@ struct CharacterDataChangeInfo;
 
 namespace mozilla {
 
-enum class CSSPseudoElementType : uint8_t;
+enum class PseudoStyleType : uint8_t;
 class EventStates;
 struct ReflowInput;
 class ReflowOutput;
@@ -551,6 +551,10 @@ class nsIFrame : public nsQueryFrame {
   using ReflowInput = mozilla::ReflowInput;
   using ReflowOutput = mozilla::ReflowOutput;
   using Visibility = mozilla::Visibility;
+  using StyleFlexBasis = mozilla::StyleFlexBasis;
+  using StyleSize = mozilla::StyleSize;
+  using LengthPercentage = mozilla::LengthPercentage;
+  using StyleExtremumLength = mozilla::StyleExtremumLength;
 
   typedef mozilla::ComputedStyle ComputedStyle;
   typedef mozilla::FrameProperties FrameProperties;
@@ -2834,23 +2838,22 @@ class nsIFrame : public nsQueryFrame {
     eLineParticipant = 1 << 9,
     eXULBox = 1 << 10,
     eCanContainOverflowContainers = 1 << 11,
-    eBlockFrame = 1 << 12,
-    eTablePart = 1 << 13,
+    eTablePart = 1 << 12,
     // If this bit is set, the frame doesn't allow ignorable whitespace as
     // children. For example, the whitespace between <table>\n<tr>\n<td>
     // will be excluded during the construction of children.
-    eExcludesIgnorableWhitespace = 1 << 14,
-    eSupportsCSSTransforms = 1 << 15,
+    eExcludesIgnorableWhitespace = 1 << 13,
+    eSupportsCSSTransforms = 1 << 14,
 
     // A replaced element that has replaced-element sizing
     // characteristics (i.e., like images or iframes), as opposed to
     // inline-block sizing characteristics (like form controls).
-    eReplacedSizing = 1 << 16,
+    eReplacedSizing = 1 << 15,
 
     // Does this frame class support 'contain: layout' and
     // 'contain:paint' (supporting one is equivalent to supporting the
     // other).
-    eSupportsContainLayoutAndPaint = 1 << 17,
+    eSupportsContainLayoutAndPaint = 1 << 16,
 
     // These are to allow nsFrame::Init to assert that IsFrameOfType
     // implementations all call the base class method.  They are only
@@ -2879,6 +2882,12 @@ class nsIFrame : public nsQueryFrame {
    * Returns true if the frame is a block wrapper.
    */
   bool IsBlockWrapper() const;
+
+  /**
+   * Returns true if the frame is an instance of nsBlockFrame or one of its
+   * subclasses.
+   */
+  bool IsBlockFrameOrSubclass() const;
 
   /**
    * Get this frame's CSS containing block.
@@ -4084,14 +4093,39 @@ class nsIFrame : public nsQueryFrame {
   }
 
   /**
-   * Helper function - computes the content-box inline size for aCoord.
+   * Helper function - computes the content-box inline size for aSize.
    */
   nscoord ComputeISizeValue(gfxContext* aRenderingContext,
                             nscoord aContainingBlockISize,
                             nscoord aContentEdgeToBoxSizing,
                             nscoord aBoxSizingToMarginEdge,
-                            const nsStyleCoord& aCoord,
-                            ComputeSizeFlags aFlags = eDefault);
+                            StyleExtremumLength aSize, ComputeSizeFlags aFlags);
+
+  nscoord ComputeISizeValue(gfxContext* aRenderingContext,
+                            nscoord aContainingBlockISize,
+                            nscoord aContentEdgeToBoxSizing,
+                            nscoord aBoxSizingToMarginEdge,
+                            const LengthPercentage& aSize,
+                            ComputeSizeFlags aFlags);
+
+  template <typename SizeOrMaxSize>
+  nscoord ComputeISizeValue(gfxContext* aRenderingContext,
+                            nscoord aContainingBlockISize,
+                            nscoord aContentEdgeToBoxSizing,
+                            nscoord aBoxSizingToMarginEdge,
+                            const SizeOrMaxSize& aSize,
+                            ComputeSizeFlags aFlags = eDefault) {
+    MOZ_ASSERT(aSize.IsExtremumLength() || aSize.IsLengthPercentage(),
+               "This doesn't handle auto / none");
+    if (aSize.IsLengthPercentage()) {
+      return ComputeISizeValue(aRenderingContext, aContainingBlockISize,
+                               aContentEdgeToBoxSizing, aBoxSizingToMarginEdge,
+                               aSize.AsLengthPercentage(), aFlags);
+    }
+    return ComputeISizeValue(aRenderingContext, aContainingBlockISize,
+                             aContentEdgeToBoxSizing, aBoxSizingToMarginEdge,
+                             aSize.AsExtremumLength(), aFlags);
+  }
 
   DisplayItemDataArray& DisplayItemData() { return mDisplayItemData; }
   const DisplayItemDataArray& DisplayItemData() const {

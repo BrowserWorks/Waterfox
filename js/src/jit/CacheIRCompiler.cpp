@@ -1477,6 +1477,22 @@ bool CacheIRCompiler::emitGuardIsSymbol() {
   return true;
 }
 
+bool CacheIRCompiler::emitGuardIsBigInt() {
+  JitSpew(JitSpew_Codegen, __FUNCTION__);
+  ValOperandId inputId = reader.valOperandId();
+  if (allocator.knownType(inputId) == JSVAL_TYPE_BIGINT) {
+    return true;
+  }
+
+  ValueOperand input = allocator.useValueRegister(masm, inputId);
+  FailurePath* failure;
+  if (!addFailurePath(&failure)) {
+    return false;
+  }
+  masm.branchTestBigInt(Assembler::NotEqual, input, failure->label());
+  return true;
+}
+
 bool CacheIRCompiler::emitGuardIsInt32() {
   JitSpew(JitSpew_Codegen, __FUNCTION__);
   ValOperandId inputId = reader.valOperandId();
@@ -1573,11 +1589,9 @@ bool CacheIRCompiler::emitGuardType() {
     case JSVAL_TYPE_SYMBOL:
       masm.branchTestSymbol(Assembler::NotEqual, input, failure->label());
       break;
-#ifdef ENABLE_BIGINT
     case JSVAL_TYPE_BIGINT:
       masm.branchTestBigInt(Assembler::NotEqual, input, failure->label());
       break;
-#endif
     case JSVAL_TYPE_INT32:
       masm.branchTestInt32(Assembler::NotEqual, input, failure->label());
       break;

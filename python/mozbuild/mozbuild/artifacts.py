@@ -592,6 +592,13 @@ JOB_DETAILS = {
     'win64-debug': (WinArtifactJob, (r'public/build/firefox-(.*)\.win64\.(zip|tar\.gz)|public/build/target\.(zip|tar\.gz)',
                                      r'public/build/firefox-(.*)\.common\.tests\.(zip|tar\.gz)|'
                                      r'public/build/target\.common\.tests\.(zip|tar\.gz)')),
+    'win64-aarch64-opt': (WinArtifactJob, (r'public/build/firefox-(.*)\.win64\.(zip|tar\.gz)|'
+                                           r'public/build/target\.(zip|tar\.gz)',
+                                           r'public/build/firefox-(.*)\.common\.tests\.(zip|tar\.gz)|'
+                                           r'public/build/target\.common\.tests\.(zip|tar\.gz)')),
+    'win64-aarch64-debug': (WinArtifactJob, (r'public/build/firefox-(.*)\.win64\.(zip|tar\.gz)|public/build/target\.(zip|tar\.gz)',
+                                             r'public/build/firefox-(.*)\.common\.tests\.(zip|tar\.gz)|'
+                                             r'public/build/target\.common\.tests\.(zip|tar\.gz)')),
 }
 
 
@@ -1023,6 +1030,8 @@ class Artifacts(object):
         if self._defines.get('XP_LINUX', False):
             return ('linux64' if target_64bit else 'linux') + target_suffix
         if self._defines.get('XP_WIN', False):
+            if self._substs['target_cpu'] == 'aarch64':
+                return 'win64-aarch64' + target_suffix
             return ('win64' if target_64bit else 'win32') + target_suffix
         if self._defines.get('XP_MACOSX', False):
             # We only produce unified builds in automation, so the target_cpu
@@ -1042,13 +1051,6 @@ class Artifacts(object):
             found_pushids = {}
 
             search_trees = list(CANDIDATE_TREES)
-            # We aren't generally interested in pushes from autoland because
-            # people aren't generally working off of autoland locally, but we
-            # sometimes find errant public pushheads on autoland in automation,
-            # so we check autoland in automation as a workaround.
-            if os.environ.get('MOZ_AUTOMATION'):
-                search_trees += ['integration/autoland']
-
             for tree in search_trees:
                 self.log(logging.INFO, 'artifact',
                          {'tree': tree,
@@ -1309,6 +1311,23 @@ class Artifacts(object):
         pushheads = [(list(CANDIDATE_TREES) + ['try'], revision)]
         return self._install_from_hg_pushheads(pushheads, distdir)
 
+    def install_from_task(self, taskId, distdir):
+        artifacts = list_artifacts(taskId)
+
+        urls = []
+        for artifact_name in self._artifact_job.find_candidate_artifacts(artifacts):
+            # We can easily extract the task ID from the URL.  We can't easily
+            # extract the build ID; we use the .ini files embedded in the
+            # downloaded artifact for this.
+            url = get_artifact_url(taskId, artifact_name)
+            urls.append(url)
+        if not urls:
+            raise ValueError('Task {taskId} existed, but no artifacts found!'.format(taskId=taskId))
+        for url in urls:
+            if self.install_from_url(url, distdir):
+                return 1
+        return 0
+
     def install_from(self, source, distdir):
         """Install artifacts from a ``source`` into the given ``distdir``.
         """
@@ -1322,6 +1341,9 @@ class Artifacts(object):
 
             if source:
                 return self.install_from_revset(source, distdir)
+
+            if 'MOZ_ARTIFACT_TASK' in os.environ:
+                return self.install_from_task(os.environ['MOZ_ARTIFACT_TASK'], distdir)
 
             return self.install_from_recent(distdir)
 

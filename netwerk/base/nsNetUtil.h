@@ -728,17 +728,14 @@ inline nsresult NS_GetInnermostURIHost(nsIURI *aURI, nsACString &aHost) {
   // This block is optimized in order to avoid the overhead of calling
   // NS_GetInnermostURI() which incurs a lot of overhead in terms of
   // AddRef/Release calls.
-  nsINestedURI *nestedURI = nullptr;
-  nsresult rv = CallQueryInterface(aURI, &nestedURI);
-  if (NS_SUCCEEDED(rv)) {
+  nsCOMPtr<nsINestedURI> nestedURI = do_QueryInterface(aURI);
+  if (nestedURI) {
     // We have a nested URI!
     nsCOMPtr<nsIURI> uri;
-    rv = nestedURI->GetInnermostURI(getter_AddRefs(uri));
+    nsresult rv = nestedURI->GetInnermostURI(getter_AddRefs(uri));
     if (NS_FAILED(rv)) {
       return rv;
     }
-
-    NS_RELEASE(nestedURI);
 
     rv = uri->GetAsciiHost(aHost);
     if (NS_FAILED(rv)) {
@@ -746,7 +743,7 @@ inline nsresult NS_GetInnermostURIHost(nsIURI *aURI, nsACString &aHost) {
     }
   } else {
     // We have a non-nested URI!
-    rv = aURI->GetAsciiHost(aHost);
+    nsresult rv = aURI->GetAsciiHost(aHost);
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -795,19 +792,19 @@ nsresult NS_LinkRedirectChannels(uint32_t channelId,
 
 /**
  * Helper function which checks whether the channel can be
- * openend using Open2() or has to fall back to opening
+ * openend using Open() or has to fall back to opening
  * the channel using Open().
  */
-nsresult NS_MaybeOpenChannelUsingOpen2(nsIChannel *aChannel,
-                                       nsIInputStream **aStream);
+nsresult NS_MaybeOpenChannelUsingOpen(nsIChannel *aChannel,
+                                      nsIInputStream **aStream);
 
 /**
  * Helper function which checks whether the channel can be
- * openend using AsyncOpen2() or has to fall back to opening
+ * openend using AsyncOpen() or has to fall back to opening
  * the channel using AsyncOpen().
  */
-nsresult NS_MaybeOpenChannelUsingAsyncOpen2(nsIChannel *aChannel,
-                                            nsIStreamListener *aListener);
+nsresult NS_MaybeOpenChannelUsingAsyncOpen(nsIChannel *aChannel,
+                                           nsIStreamListener *aListener);
 
 /** Given the first (disposition) token from a Content-Disposition header,
  * tell whether it indicates the content is inline or attachment

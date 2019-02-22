@@ -457,6 +457,9 @@ nsresult LoadInfoToLoadInfoArgs(nsILoadInfo* aLoadInfo,
     ipcController = controller.ref().ToIPC();
   }
 
+  nsAutoString cspNonce;
+  Unused << NS_WARN_IF(NS_FAILED(aLoadInfo->GetCspNonce(cspNonce)));
+
   *aOptionalLoadInfoArgs = LoadInfoArgs(
       loadingPrincipalInfo, triggeringPrincipalInfo, principalToInheritInfo,
       sandboxedLoadingPrincipalInfo, topLevelPrincipalInfo,
@@ -474,7 +477,8 @@ nsresult LoadInfoToLoadInfoArgs(nsILoadInfo* aLoadInfo,
       aLoadInfo->GetInnerWindowID(), aLoadInfo->GetOuterWindowID(),
       aLoadInfo->GetParentOuterWindowID(), aLoadInfo->GetTopOuterWindowID(),
       aLoadInfo->GetFrameOuterWindowID(), aLoadInfo->GetBrowsingContextID(),
-      aLoadInfo->GetEnforceSecurity(), aLoadInfo->GetInitialSecurityCheckDone(),
+      aLoadInfo->GetFrameBrowsingContextID(),
+      aLoadInfo->GetInitialSecurityCheckDone(),
       aLoadInfo->GetIsInThirdPartyContext(), aLoadInfo->GetIsDocshellReload(),
       aLoadInfo->GetSendCSPViolationEvents(), aLoadInfo->GetOriginAttributes(),
       redirectChainIncludingInternalRedirects, redirectChain,
@@ -484,8 +488,9 @@ nsresult LoadInfoToLoadInfoArgs(nsILoadInfo* aLoadInfo,
       aLoadInfo->GetIsPreflight(), aLoadInfo->GetLoadTriggeredFromExternal(),
       aLoadInfo->GetServiceWorkerTaintingSynthesized(),
       aLoadInfo->GetDocumentHasUserInteracted(),
-      aLoadInfo->GetDocumentHasLoaded(),
-      aLoadInfo->GetIsFromProcessingFrameAttributes());
+      aLoadInfo->GetDocumentHasLoaded(), cspNonce,
+      aLoadInfo->GetIsFromProcessingFrameAttributes(),
+      aLoadInfo->GetOpenerPolicy());
 
   return NS_OK;
 }
@@ -631,7 +636,7 @@ nsresult LoadInfoArgsToLoadInfo(
       loadInfoArgs.forceInheritPrincipalDropped(), loadInfoArgs.innerWindowID(),
       loadInfoArgs.outerWindowID(), loadInfoArgs.parentOuterWindowID(),
       loadInfoArgs.topOuterWindowID(), loadInfoArgs.frameOuterWindowID(),
-      loadInfoArgs.browsingContextID(), loadInfoArgs.enforceSecurity(),
+      loadInfoArgs.browsingContextID(), loadInfoArgs.frameBrowsingContextID(),
       loadInfoArgs.initialSecurityCheckDone(),
       loadInfoArgs.isInThirdPartyContext(), loadInfoArgs.isDocshellReload(),
       loadInfoArgs.sendCSPViolationEvents(), loadInfoArgs.originAttributes(),
@@ -641,11 +646,13 @@ nsresult LoadInfoArgsToLoadInfo(
       loadInfoArgs.isPreflight(), loadInfoArgs.loadTriggeredFromExternal(),
       loadInfoArgs.serviceWorkerTaintingSynthesized(),
       loadInfoArgs.documentHasUserInteracted(),
-      loadInfoArgs.documentHasLoaded());
+      loadInfoArgs.documentHasLoaded(), loadInfoArgs.cspNonce());
 
   if (loadInfoArgs.isFromProcessingFrameAttributes()) {
     loadInfo->SetIsFromProcessingFrameAttributes();
   }
+
+  loadInfo->SetOpenerPolicy(loadInfoArgs.openerPolicy());
 
   loadInfo.forget(outLoadInfo);
   return NS_OK;
@@ -658,8 +665,8 @@ void LoadInfoToParentLoadInfoForwarder(
         false, void_t(), nsILoadInfo::TAINTING_BASIC,
         false,  // serviceWorkerTaintingSynthesized
         false,  // documentHasUserInteracted
-        false   // documentHasLoaded
-    );
+        false,  // documentHasLoaded
+        nsILoadInfo::OPENER_POLICY_NULL);
     return;
   }
 
@@ -672,11 +679,14 @@ void LoadInfoToParentLoadInfoForwarder(
   uint32_t tainting = nsILoadInfo::TAINTING_BASIC;
   Unused << aLoadInfo->GetTainting(&tainting);
 
+  nsILoadInfo::CrossOriginOpenerPolicy openerPolicy =
+      aLoadInfo->GetOpenerPolicy();
+
   *aForwarderArgsOut = ParentLoadInfoForwarderArgs(
       aLoadInfo->GetAllowInsecureRedirectToDataURI(), ipcController, tainting,
       aLoadInfo->GetServiceWorkerTaintingSynthesized(),
       aLoadInfo->GetDocumentHasUserInteracted(),
-      aLoadInfo->GetDocumentHasLoaded());
+      aLoadInfo->GetDocumentHasLoaded(), openerPolicy);
 }
 
 nsresult MergeParentLoadInfoForwarder(
@@ -704,6 +714,9 @@ nsresult MergeParentLoadInfoForwarder(
   } else {
     aLoadInfo->MaybeIncreaseTainting(aForwarderArgs.tainting());
   }
+
+  MOZ_ALWAYS_SUCCEEDS(
+      aLoadInfo->SetOpenerPolicy(aForwarderArgs.openerPolicy()));
 
   MOZ_ALWAYS_SUCCEEDS(aLoadInfo->SetDocumentHasUserInteracted(
       aForwarderArgs.documentHasUserInteracted()));

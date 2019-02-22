@@ -1194,7 +1194,7 @@ static void CheckForOutdatedParent(nsINode* aParent, nsINode* aNode,
 }
 
 static nsresult UpdateGlobalsInSubtree(nsIContent* aRoot) {
-  MOZ_ASSERT(ShouldUseXBLScope(aRoot));
+  MOZ_ASSERT(ShouldUseNACScope(aRoot));
   // Start off with no global so we don't fire any error events on failure.
   AutoJSAPI jsapi;
   jsapi.Init();
@@ -1272,12 +1272,13 @@ nsresult nsINode::InsertChildBefore(nsIContent* aKid,
 
   nsIContent* parent = IsContent() ? AsContent() : nullptr;
 
-  bool wasInXBLScope = ShouldUseXBLScope(aKid);
+  // XXXbz Do we even need this code anymore?
+  bool wasInNACScope = ShouldUseNACScope(aKid);
   nsresult rv = aKid->BindToTree(doc, parent,
                                  parent ? parent->GetBindingParent() : nullptr);
-  if (NS_SUCCEEDED(rv) && !wasInXBLScope && ShouldUseXBLScope(aKid)) {
-    MOZ_ASSERT(ShouldUseXBLScope(this),
-               "Why does the kid need to use an XBL scope?");
+  if (NS_SUCCEEDED(rv) && !wasInNACScope && ShouldUseNACScope(aKid)) {
+    MOZ_ASSERT(ShouldUseNACScope(this),
+               "Why does the kid need to use an the anonymous content scope?");
     rv = UpdateGlobalsInSubtree(aKid);
   }
   if (NS_FAILED(rv)) {
@@ -2584,8 +2585,8 @@ inline static Element* FindMatchingElementWithId(
 
 Element* nsINode::QuerySelector(const nsAString& aSelector,
                                 ErrorResult& aResult) {
-  AUTO_PROFILER_LABEL_DYNAMIC_LOSSY_NSSTRING("nsINode::QuerySelector", DOM,
-                                             aSelector);
+  AUTO_PROFILER_LABEL_DYNAMIC_LOSSY_NSSTRING("nsINode::QuerySelector",
+                                             LAYOUT_SelectorQuery, aSelector);
 
   const RawServoSelectorList* list = ParseSelectorList(aSelector, aResult);
   if (!list) {
@@ -2598,8 +2599,8 @@ Element* nsINode::QuerySelector(const nsAString& aSelector,
 
 already_AddRefed<nsINodeList> nsINode::QuerySelectorAll(
     const nsAString& aSelector, ErrorResult& aResult) {
-  AUTO_PROFILER_LABEL_DYNAMIC_LOSSY_NSSTRING("nsINode::QuerySelectorAll", DOM,
-                                             aSelector);
+  AUTO_PROFILER_LABEL_DYNAMIC_LOSSY_NSSTRING("nsINode::QuerySelectorAll",
+                                             LAYOUT_SelectorQuery, aSelector);
 
   RefPtr<nsSimpleContentList> contentList = new nsSimpleContentList(this);
   const RawServoSelectorList* list = ParseSelectorList(aSelector, aResult);
@@ -2657,9 +2658,11 @@ JSObject* nsINode::WrapObject(JSContext* aCx,
   }
 
   JS::Rooted<JSObject*> obj(aCx, WrapNode(aCx, aGivenProto));
-  MOZ_ASSERT_IF(obj && ChromeOnlyAccess(),
-                xpc::IsInContentXBLScope(obj) ||
-                    !xpc::UseContentXBLScope(JS::GetObjectRealmOrNull(obj)));
+  if (obj && ChromeOnlyAccess()) {
+    MOZ_RELEASE_ASSERT(
+        JS::GetNonCCWObjectGlobal(obj) == xpc::UnprivilegedJunkScope() ||
+        xpc::IsInUAWidgetScope(obj) || xpc::AccessCheck::isChrome(obj));
+  }
   return obj;
 }
 

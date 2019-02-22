@@ -188,7 +188,7 @@ def taskgraph_decision(options, parameters=None):
     write_artifact('label-to-taskid.json', tgg.label_to_taskid)
 
     # actually create the graph
-    create_tasks(tgg.morphed_task_graph, tgg.label_to_taskid, tgg.parameters)
+    create_tasks(tgg.graph_config, tgg.morphed_task_graph, tgg.label_to_taskid, tgg.parameters)
 
 
 def get_decision_parameters(config, options):
@@ -330,7 +330,7 @@ def set_try_config(parameters, task_config_file):
     else:
         parameters['try_options'] = None
 
-    if parameters['try_mode']:
+    if parameters['try_mode'] == 'try_task_config':
         # The user has explicitly requested a set of jobs, so run them all
         # regardless of optimization.  Their dependencies can be optimized,
         # though.

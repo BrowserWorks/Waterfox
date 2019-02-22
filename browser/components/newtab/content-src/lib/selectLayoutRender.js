@@ -41,11 +41,20 @@ export const selectLayoutRender = createSelector(
       // Loops through all the components and adds a .data property
       // containing data from feeds
       components: row.components.map(component => {
-        if (!component.feed || !feeds[component.feed.url]) {
+        if (!component.feed || !feeds.data[component.feed.url]) {
           return component;
         }
 
-        return {...component, data: maybeInjectSpocs(feeds[component.feed.url].data, component.spocs)};
+        let {data} = feeds.data[component.feed.url];
+
+        if (component && component.properties && component.properties.offset) {
+          data = {
+            ...data,
+            recommendations: data.recommendations.slice(component.properties.offset),
+          };
+        }
+
+        return {...component, data: maybeInjectSpocs(data, component.spocs)};
       }),
     }));
   }

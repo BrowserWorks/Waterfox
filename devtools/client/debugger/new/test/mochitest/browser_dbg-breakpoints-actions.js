@@ -1,10 +1,10 @@
-/* Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
-function openFirstBreakpointContextMenu(dbg){
+function openFirstBreakpointContextMenu(dbg) {
   rightClickElement(dbg, "breakpointItem", 3);
 }
-
 
 // Tests to see if we can trigger a breakpoint action via the context menu
 add_task(async function() {
@@ -14,11 +14,14 @@ add_task(async function() {
 
   await addBreakpoint(dbg, "simple2", 3);
 
-  openFirstBreakpointContextMenu(dbg)
+  openFirstBreakpointContextMenu(dbg);
   // select "Remove breakpoint"
   selectContextMenuItem(dbg, selectors.breakpointContextMenu.remove);
 
-  await waitForState(dbg, state => dbg.selectors.getBreakpointCount(state) === 0);
+  await waitForState(
+    dbg,
+    state => dbg.selectors.getBreakpointCount(state) === 0
+  );
   ok("successfully removed the breakpoint");
 });
 
@@ -28,21 +31,26 @@ add_task(async function() {
   await selectSource(dbg, "simple1");
   await waitForSelectedSource(dbg, "simple1");
 
-  await addBreakpoint(dbg, "simple1", 1);
   await addBreakpoint(dbg, "simple1", 4);
   await addBreakpoint(dbg, "simple1", 5);
   await addBreakpoint(dbg, "simple1", 6);
 
   openFirstBreakpointContextMenu(dbg);
   // select "Disable Others"
-  let dispatched = waitForDispatch(dbg, "DISABLE_BREAKPOINT", 3);
+  // FIXME bug 1524374 this waitForDispatch call only sees one dispatch for
+  // DISABLE_BREAKPOINT even though three are triggered, due to the order in
+  // which promises get resolved. The problem seems to indicate a coverage gap
+  // in waitUntilService(). Workaround this by only waiting for one dispatch,
+  // though this is fragile and could break again in the future.
+  let dispatched = waitForDispatch(dbg, "DISABLE_BREAKPOINT", /* 2*/ 1);
   selectContextMenuItem(dbg, selectors.breakpointContextMenu.disableOthers);
   await waitForState(dbg, state =>
-    dbg.selectors.getBreakpointsList(state)
-      .every(bp => (bp.location.line !== 1) === bp.disabled)
+    dbg.selectors
+      .getBreakpointsList(state)
+      .every(bp => (bp.location.line !== 4) === bp.disabled)
   );
   await dispatched;
-  ok("breakpoint at 1 is the only enabled breakpoint");
+  ok("breakpoint at 4 is the only enabled breakpoint");
 
   openFirstBreakpointContextMenu(dbg);
   // select "Disable All"
@@ -56,23 +64,26 @@ add_task(async function() {
 
   openFirstBreakpointContextMenu(dbg);
   // select "Enable Others"
-  dispatched = waitForDispatch(dbg, "ENABLE_BREAKPOINT", 3);
+  dispatched = waitForDispatch(dbg, "ENABLE_BREAKPOINT", 2);
   selectContextMenuItem(dbg, selectors.breakpointContextMenu.enableOthers);
   await waitForState(dbg, state =>
-    dbg.selectors.getBreakpointsList(state)
-      .every(bp => (bp.location.line === 1) === bp.disabled)
+    dbg.selectors
+      .getBreakpointsList(state)
+      .every(bp => (bp.location.line === 4) === bp.disabled)
   );
   await dispatched;
   ok("all breakpoints except line 1 are enabled");
 
   openFirstBreakpointContextMenu(dbg);
   // select "Remove Others"
-  dispatched = waitForDispatch(dbg, "REMOVE_BREAKPOINT", 3);
+  dispatched = waitForDispatch(dbg, "REMOVE_BREAKPOINT", 2);
   selectContextMenuItem(dbg, selectors.breakpointContextMenu.removeOthers);
-  await waitForState(dbg, state =>
-    dbg.selectors.getBreakpointsList(state).length === 1 &&
-    dbg.selectors.getBreakpointsList(state)[0].location.line === 1
+  await waitForState(
+    dbg,
+    state =>
+      dbg.selectors.getBreakpointsList(state).length === 1 &&
+      dbg.selectors.getBreakpointsList(state)[0].location.line === 4
   );
   await dispatched;
-  ok("remaining breakpoint should be on line 1");
+  ok("remaining breakpoint should be on line 4");
 });

@@ -3,6 +3,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 /* eslint no-unused-vars: [2, {"vars": "local"}] */
+/* import-globals-from ../../../shared/test/telemetry-test-helpers.js */
 
 "use strict";
 
@@ -23,6 +24,12 @@ Services.scriptloader.loadSubScript(
 /* import-globals-from ../../../debugger/new/test/mochitest/helpers/context.js */
 Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/devtools/client/debugger/new/test/mochitest/helpers/context.js",
+  this);
+
+// Import helpers for the new debugger
+/* import-globals-from ../../../debugger/new/test/mochitest/helpers.js*/
+Services.scriptloader.loadSubScript(
+  "chrome://mochitests/content/browser/devtools/client/debugger/new/test/mochitest/helpers.js",
   this);
 
 var {HUDService} = require("devtools/client/webconsole/hudservice");
@@ -51,9 +58,7 @@ registerCleanupFunction(async function() {
   });
   const browserConsole = HUDService.getBrowserConsole();
   if (browserConsole) {
-    if (browserConsole.jsterm) {
-      browserConsole.jsterm.hud.clearOutput(true);
-    }
+    browserConsole.ui.clearOutput(true);
     await HUDService.toggleBrowserConsole();
   }
 });
@@ -75,7 +80,7 @@ async function openNewTabAndConsole(url, clearJstermHistory = true) {
 
   if (clearJstermHistory) {
     // Clearing history that might have been set in previous tests.
-    await hud.ui.consoleOutput.dispatchClearHistory();
+    await hud.ui.wrapper.dispatchClearHistory();
   }
 
   return hud;
@@ -89,7 +94,7 @@ async function openNewTabAndConsole(url, clearJstermHistory = true) {
  * @param object hud
  */
 function logAllStoreChanges(hud) {
-  const store = hud.ui.consoleOutput.getStore();
+  const store = hud.ui.wrapper.getStore();
   // Adding logging each time the store is modified in order to check
   // the store state in case of failure.
   store.subscribe(() => {
@@ -272,10 +277,10 @@ function findMessages(hud, text, selector = ".message") {
  * @return promise
  */
 async function openContextMenu(hud, element) {
-  const onConsoleMenuOpened = hud.ui.consoleOutput.once("menu-open");
+  const onConsoleMenuOpened = hud.ui.wrapper.once("menu-open");
   synthesizeContextMenuEvent(element);
   await onConsoleMenuOpened;
-  const doc = hud.ui.consoleOutput.owner.chromeWindow.document;
+  const doc = hud.ui.wrapper.owner.chromeWindow.document;
   return doc.getElementById("webconsole-menu");
 }
 
@@ -288,7 +293,7 @@ async function openContextMenu(hud, element) {
  * @return promise
  */
 function hideContextMenu(hud) {
-  const doc = hud.ui.consoleOutput.owner.chromeWindow.document;
+  const doc = hud.ui.wrapper.owner.chromeWindow.document;
   const popup = doc.getElementById("webconsole-menu");
   if (!popup) {
     return Promise.resolve();
@@ -901,7 +906,7 @@ async function setFilterState(hud, settings) {
 async function resetFilters(hud) {
   info("Resetting filters to their default state");
 
-  const store = hud.ui.consoleOutput.getStore();
+  const store = hud.ui.wrapper.getStore();
   store.dispatch(wcActions.filtersClear());
 }
 
@@ -1113,3 +1118,17 @@ function isConfirmDialogOpened(toolbox) {
   return tooltip.classList.contains("tooltip-visible");
 }
 
+async function selectFrame(dbg, frame) {
+  const onScopes = waitForDispatch(dbg, "ADD_SCOPES");
+  await dbg.actions.selectFrame(frame);
+  await onScopes;
+}
+
+async function pauseDebugger(dbg) {
+  info("Waiting for debugger to pause");
+  const onPaused = waitForPaused(dbg);
+  ContentTask.spawn(gBrowser.selectedBrowser, {}, async function() {
+    content.wrappedJSObject.firstCall();
+  });
+  await onPaused;
+}

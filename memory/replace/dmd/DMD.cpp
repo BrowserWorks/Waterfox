@@ -133,7 +133,7 @@ class InfallibleAllocPolicy {
     return p;
   }
 
-  static void* calloc_(size_t aSize) {
+  static void* calloc_(size_t aCount, size_t aSize) {
     void* p = gMallocTable.calloc(1, aSize);
     ExitOnFailure(p);
     return p;
@@ -1127,9 +1127,12 @@ static void* replace_calloc(size_t aCount, size_t aSize) {
 
   Thread* t = Thread::Fetch();
   if (t->InterceptsAreBlocked()) {
-    return InfallibleAllocPolicy::calloc_(aCount * aSize);
+    return InfallibleAllocPolicy::calloc_(aCount, aSize);
   }
 
+  // |aCount * aSize| could overflow, but if that happens then
+  // |gMallocTable.calloc()| will return nullptr and |AllocCallback()| will
+  // return immediately without using the overflowed value.
   void* ptr = gMallocTable.calloc(aCount, aSize);
   AllocCallback(ptr, aCount * aSize, t);
   return ptr;
@@ -1351,6 +1354,7 @@ const char* Options::ModeString() const {
 // DMD start-up
 //---------------------------------------------------------------------------
 
+#ifndef XP_WIN
 static void prefork() {
   if (gStateLock) {
     gStateLock->Lock();
@@ -1362,6 +1366,7 @@ static void postfork() {
     gStateLock->Unlock();
   }
 }
+#endif
 
 // WARNING: this function runs *very* early -- before all static initializers
 // have run.  For this reason, non-scalar globals such as gStateLock and

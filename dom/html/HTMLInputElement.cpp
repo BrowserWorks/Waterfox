@@ -2601,8 +2601,14 @@ nsresult HTMLInputElement::SetValueInternal(const nsAString& aValue,
         if (!mInputData.mState->SetValue(value, aOldValue, aFlags)) {
           return NS_ERROR_OUT_OF_MEMORY;
         }
-        if (mType == NS_FORM_INPUT_EMAIL) {
-          UpdateAllValidityStates(!mDoneCreating);
+        // If the caller won't dispatch "input" event via
+        // nsContentUtils::DispatchInputEvent(), we need to modify
+        // validationMessage value here.
+        //
+        // FIXME(emilio): eSetValue_Internal is not supposed to change state,
+        // but maybe we could run this too?
+        if (aFlags & nsTextEditorState::eSetValue_ByContent) {
+          MaybeUpdateAllValidityStates();
         }
       } else {
         free(mInputData.mValue);
@@ -2636,8 +2642,7 @@ nsresult HTMLInputElement::SetValueInternal(const nsAString& aValue,
           }
         }
         if (mDoneCreating) {
-          OnValueChanged(/* aNotify = */ true,
-                         /* aWasInteractiveUserChange = */ false);
+          OnValueChanged(/* aNotify = */ true, ValueChangeKind::Internal);
         }
         // else DoneCreatingElement calls us again once mDoneCreating is true
       }
@@ -6749,8 +6754,10 @@ HTMLInputElement::InitializeKeyboardEventListeners() {
 }
 
 NS_IMETHODIMP_(void)
-HTMLInputElement::OnValueChanged(bool aNotify, bool aWasInteractiveUserChange) {
-  mLastValueChangeWasInteractive = aWasInteractiveUserChange;
+HTMLInputElement::OnValueChanged(bool aNotify, ValueChangeKind aKind) {
+  if (aKind != ValueChangeKind::Internal) {
+    mLastValueChangeWasInteractive = aKind == ValueChangeKind::UserInteraction;
+  }
 
   UpdateAllValidityStates(aNotify);
 

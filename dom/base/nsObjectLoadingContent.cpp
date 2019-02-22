@@ -1073,23 +1073,9 @@ nsObjectLoadingContent::OnDataAvailable(nsIRequest* aRequest,
   return NS_ERROR_UNEXPECTED;
 }
 
-// nsIFrameLoaderOwner
-NS_IMETHODIMP_(already_AddRefed<nsFrameLoader>)
-nsObjectLoadingContent::GetFrameLoader() {
-  RefPtr<nsFrameLoader> loader = mFrameLoader;
-  return loader.forget();
-}
-
 void nsObjectLoadingContent::PresetOpenerWindow(
     const Nullable<WindowProxyHolder>& aOpenerWindow, ErrorResult& aRv) {
   aRv.Throw(NS_ERROR_FAILURE);
-}
-
-void nsObjectLoadingContent::InternalSetFrameLoader(
-    nsFrameLoader* aNewFrameLoader) {
-  MOZ_CRASH(
-      "You shouldn't be calling this function, it doesn't make any sense on "
-      "this type.");
 }
 
 NS_IMETHODIMP
@@ -1974,7 +1960,7 @@ nsresult nsObjectLoadingContent::LoadObject(bool aNotify, bool aForceLoad,
     int16_t contentPolicy = nsIContentPolicy::ACCEPT;
     // If mChannelLoaded is set we presumably already passed load policy
     // If mType == eType_Loading then we call OpenChannel() which internally
-    // creates a new channel and calls asyncOpen2() on that channel which
+    // creates a new channel and calls asyncOpen() on that channel which
     // then enforces content policy checks.
     if (allowLoad && mURI && !mChannelLoaded && mType != eType_Loading) {
       allowLoad = CheckLoadPolicy(&contentPolicy);
@@ -2426,8 +2412,7 @@ nsresult nsObjectLoadingContent::OpenChannel() {
           nsIRequest::LOAD_HTML_OBJECT_DATA);
   NS_ENSURE_SUCCESS(rv, rv);
   if (inherit) {
-    nsCOMPtr<nsILoadInfo> loadinfo = chan->GetLoadInfo();
-    NS_ENSURE_STATE(loadinfo);
+    nsCOMPtr<nsILoadInfo> loadinfo = chan->LoadInfo();
     loadinfo->SetPrincipalToInherit(thisContent->NodePrincipal());
   }
 
@@ -2456,8 +2441,8 @@ nsresult nsObjectLoadingContent::OpenChannel() {
     scriptChannel->SetExecutionPolicy(nsIScriptChannel::EXECUTE_NORMAL);
   }
 
-  // AsyncOpen2 can fail if a file does not exist.
-  rv = chan->AsyncOpen2(shim);
+  // AsyncOpen can fail if a file does not exist.
+  rv = chan->AsyncOpen(shim);
   NS_ENSURE_SUCCESS(rv, rv);
   LOG(("OBJLC [%p]: Channel opened", this));
   mChannel = chan;

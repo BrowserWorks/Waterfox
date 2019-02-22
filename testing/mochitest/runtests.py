@@ -1879,7 +1879,6 @@ toolbar#nav-bar {
         prefs = {
             "browser.tabs.remote.autostart": options.e10s,
             "dom.ipc.tabs.nested.enabled": options.nested_oop,
-            "idle.lastDailyNotification": int(time.time()),
             # Enable tracing output for detailed failures in case of
             # failing connection attempts, and hangs (bug 1397201)
             "marionette.log.level": "Trace",
@@ -1895,6 +1894,14 @@ toolbar#nav-bar {
                 options.flavor == 'browser' and options.timeout is None:
             self.log.info("Increasing default timeout to 90 seconds")
             prefs["testing.browserTestHarness.timeout"] = 90
+
+        if (mozinfo.info["os"] == "win" and
+                mozinfo.info["processor"] == "aarch64"):
+            extended_timeout = self.DEFAULT_TIMEOUT * 4
+            self.log.info("Increasing default timeout to {} seconds".format(
+                extended_timeout
+            ))
+            prefs["testing.browserTestHarness.timeout"] = extended_timeout
 
         if getattr(self, 'testRootAbs', None):
             prefs['mochitest.testRoot'] = self.testRootAbs

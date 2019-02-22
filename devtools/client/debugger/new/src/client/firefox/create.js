@@ -10,8 +10,7 @@ import type {
   PausedPacket,
   FramesResponse,
   FramePacket,
-  SourcePayload,
-  CreateSourceResult
+  SourcePayload
 } from "./types";
 
 import { clientCommands } from "./commands";
@@ -20,21 +19,9 @@ export function createFrame(thread: ThreadId, frame: FramePacket): ?Frame {
   if (!frame) {
     return null;
   }
-  let title;
-  if (frame.type == "call") {
-    const c = frame.callee;
-    title = c.name || c.userDisplayName || c.displayName;
-  } else {
-    title = `(${frame.type})`;
-  }
-
-  // NOTE: Firefox 66 switched from where.source to where.actor
-  const actor = frame.where.source
-    ? frame.where.source.actor
-    : frame.where.actor;
 
   const location = {
-    sourceId: clientCommands.getSourceForActor(actor),
+    sourceId: clientCommands.getSourceForActor(frame.where.actor),
     line: frame.where.line,
     column: frame.where.column
   };
@@ -42,7 +29,7 @@ export function createFrame(thread: ThreadId, frame: FramePacket): ?Frame {
   return {
     id: frame.actor,
     thread,
-    displayName: title,
+    displayName: frame.displayName,
     location,
     generatedLocation: location,
     this: frame.this,
@@ -59,9 +46,15 @@ export function createSource(
   thread: string,
   source: SourcePayload,
   { supportsWasm }: { supportsWasm: boolean }
-): CreateSourceResult {
+): Source {
+  const id = makeSourceId(source);
+  const sourceActor = {
+    actor: source.actor,
+    source: id,
+    thread
+  };
   const createdSource: any = {
-    id: makeSourceId(source),
+    id,
     url: source.url,
     relativeUrl: source.url,
     isPrettyPrinted: false,
@@ -69,15 +62,11 @@ export function createSource(
     introductionUrl: source.introductionUrl,
     isBlackBoxed: false,
     loadedState: "unloaded",
-    isWasm: supportsWasm && source.introductionType === "wasm"
-  };
-  const sourceActor = {
-    actor: source.actor,
-    source: createdSource.id,
-    thread
+    isWasm: supportsWasm && source.introductionType === "wasm",
+    actors: [sourceActor]
   };
   clientCommands.registerSourceActor(sourceActor);
-  return { sourceActor, source: (createdSource: Source) };
+  return createdSource;
 }
 
 export function createPause(

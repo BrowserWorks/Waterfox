@@ -3,18 +3,20 @@
  */
 
 /**
- * Helper functions for creating xml strings used by application update tests.
- *
- * !IMPORTANT - This file contains everything needed (along with dependencies)
- * by the updates.sjs file used by the mochitest-chrome tests. Since xpcshell
- * used by the http server is launched with -v 170 this file must not use
- * features greater than JavaScript 1.7.
+ * Shared code for xpcshell, mochitests-chrome, mochitest-browser-chrome, and
+ * SJS server-side scripts for the test http server.
  */
 
-/* eslint-disable no-undef */
+/**
+ * Helper functions for creating xml strings used by application update tests.
+ */
+
+/* import-globals-from ../browser/testConstants.js */
+
+/* global Services, UpdateUtils, gURLData */
 
 const FILE_SIMPLE_MAR = "simple.mar";
-const SIZE_SIMPLE_MAR = "1404";
+const SIZE_SIMPLE_MAR = "1419";
 
 const STATE_NONE            = "null";
 const STATE_DOWNLOADING     = "downloading";
@@ -33,6 +35,7 @@ const READ_ERROR                               = 6;
 const WRITE_ERROR                              = 7;
 const MAR_CHANNEL_MISMATCH_ERROR               = 22;
 const VERSION_DOWNGRADE_ERROR                  = 23;
+const UPDATE_SETTINGS_FILE_CHANNEL             = 38;
 const SERVICE_COULD_NOT_COPY_UPDATER           = 49;
 const SERVICE_INVALID_APPLYTO_DIR_STAGED_ERROR = 52;
 const SERVICE_INVALID_APPLYTO_DIR_ERROR        = 54;
@@ -65,6 +68,8 @@ const STATE_FAILED_MAR_CHANNEL_MISMATCH_ERROR =
   STATE_FAILED + STATE_FAILED_DELIMETER + MAR_CHANNEL_MISMATCH_ERROR;
 const STATE_FAILED_VERSION_DOWNGRADE_ERROR =
   STATE_FAILED + STATE_FAILED_DELIMETER + VERSION_DOWNGRADE_ERROR;
+const STATE_FAILED_UPDATE_SETTINGS_FILE_CHANNEL =
+  STATE_FAILED + STATE_FAILED_DELIMETER + UPDATE_SETTINGS_FILE_CHANNEL;
 const STATE_FAILED_SERVICE_COULD_NOT_COPY_UPDATER =
   STATE_FAILED + STATE_FAILED_DELIMETER + SERVICE_COULD_NOT_COPY_UPDATER;
 const STATE_FAILED_SERVICE_INVALID_APPLYTO_DIR_STAGED_ERROR =
@@ -132,9 +137,11 @@ function getRemoteUpdateString(aUpdateProps, aPatches) {
     updateProps[name] = aUpdateProps[name];
   }
 
+  // To test that text nodes are handled properly the string returned contains
+  // spaces and newlines.
   return getUpdateString(updateProps) + ">\n " +
          aPatches +
-         "\n</update>";
+         "\n</update>\n";
 }
 
 /**
@@ -217,7 +224,7 @@ function getLocalUpdateString(aUpdateProps, aPatches) {
       this._appVersion = val;
     },
     buildID: "20080811053724",
-    channel: gDefaultPrefBranch.getCharPref(PREF_APP_UPDATE_CHANNEL),
+    channel: UpdateUtils ? UpdateUtils.getUpdateChannel() : "default",
     custom1: null,
     custom2: null,
     detailsURL: URL_HTTP_UPDATE_SJS + "?uiURL=DETAILS",
@@ -347,4 +354,35 @@ function getPatchString(aPatchProps) {
          custom1 +
          custom2 +
          size;
+}
+
+/**
+ * Reads the binary contents of a file and returns it as a string.
+ *
+ * @param  aFile
+ *         The file to read from.
+ * @return The contents of the file as a string.
+ */
+function readFileBytes(aFile) {
+  let fis = Cc["@mozilla.org/network/file-input-stream;1"].
+            createInstance(Ci.nsIFileInputStream);
+  // Specifying -1 for ioFlags will open the file with the default of PR_RDONLY.
+  // Specifying -1 for perm will open the file with the default of 0.
+  fis.init(aFile, -1, -1, Ci.nsIFileInputStream.CLOSE_ON_EOF);
+  let bis = Cc["@mozilla.org/binaryinputstream;1"].
+            createInstance(Ci.nsIBinaryInputStream);
+  bis.setInputStream(fis);
+  let data = [];
+  let count = fis.available();
+  while (count > 0) {
+    let bytes = bis.readByteArray(Math.min(65535, count));
+    data.push(String.fromCharCode.apply(null, bytes));
+    count -= bytes.length;
+    if (bytes.length == 0) {
+      throw new Error("Nothing read from input stream!");
+    }
+  }
+  data = data.join("");
+  fis.close();
+  return data.toString();
 }

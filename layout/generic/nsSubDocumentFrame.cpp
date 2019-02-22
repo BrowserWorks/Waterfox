@@ -41,6 +41,7 @@
 #include "nsContentUtils.h"
 #include "nsIPermissionManager.h"
 #include "nsServiceManagerUtils.h"
+#include "nsQueryObject.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/HTMLFrameElement.h"
 #include "RetainedDisplayListBuilder.h"
@@ -301,10 +302,7 @@ void nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   if (!IsVisibleForPainting()) return;
 
   nsFrameLoader* frameLoader = FrameLoader();
-  RenderFrame* rf = nullptr;
-  if (frameLoader) {
-    rf = frameLoader->GetCurrentRenderFrame();
-  }
+  bool isRemoteFrame = frameLoader && frameLoader->IsRemoteFrame();
 
   // If we are pointer-events:none then we don't need to HitTest background
   bool pointerEventsNone =
@@ -312,7 +310,7 @@ void nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   if (!aBuilder->IsForEventDelivery() || !pointerEventsNone) {
     nsDisplayListCollection decorations(aBuilder);
     DisplayBorderBackgroundOutline(aBuilder, decorations);
-    if (rf) {
+    if (isRemoteFrame) {
       // Wrap background colors of <iframe>s with remote subdocuments in their
       // own layer so we generate a ColorLayer. This is helpful for optimizing
       // compositing; we can skip compositing the ColorLayer when the
@@ -335,7 +333,7 @@ void nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     return;
   }
 
-  if (rf) {
+  if (isRemoteFrame) {
     // We're the subdoc for <browser remote="true"> and it has
     // painted content.  Display its shadow layer tree.
     DisplayListClipState::AutoSaveRestore clipState(aBuilder);
@@ -470,8 +468,8 @@ void nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     // is used to compute the visible rect if AddCanvasBackgroundColorItem
     // creates a display item.
     nsIFrame* frame = subdocRootFrame ? subdocRootFrame : this;
-    nsDisplayListBuilder::AutoBuildingDisplayList building(
-        aBuilder, frame, visible, dirty, true);
+    nsDisplayListBuilder::AutoBuildingDisplayList building(aBuilder, frame,
+                                                           visible, dirty);
 
     if (subdocRootFrame) {
       nsIFrame* rootScrollFrame = presShell->GetRootScrollFrame();
@@ -585,8 +583,8 @@ void nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     // Invoke AutoBuildingDisplayList to ensure that the correct dirty rect
     // is used to compute the visible rect if AddCanvasBackgroundColorItem
     // creates a display item.
-    nsDisplayListBuilder::AutoBuildingDisplayList building(
-        aBuilder, this, visible, dirty, true);
+    nsDisplayListBuilder::AutoBuildingDisplayList building(aBuilder, this,
+                                                           visible, dirty);
     // Add the canvas background color to the bottom of the list. This
     // happens after we've built the list so that AddCanvasBackgroundColorItem
     // can monkey with the contents if necessary.
@@ -990,16 +988,12 @@ nsFrameLoader* nsSubDocumentFrame::FrameLoader() const {
   if (!content) return nullptr;
 
   if (!mFrameLoader) {
-    nsCOMPtr<nsIFrameLoaderOwner> loaderOwner = do_QueryInterface(content);
+    RefPtr<nsFrameLoaderOwner> loaderOwner = do_QueryObject(content);
     if (loaderOwner) {
       mFrameLoader = loaderOwner->GetFrameLoader();
     }
   }
   return mFrameLoader;
-}
-
-mozilla::layout::RenderFrame* nsSubDocumentFrame::GetRenderFrame() const {
-  return FrameLoader() ? FrameLoader()->GetCurrentRenderFrame() : nullptr;
 }
 
 // XXX this should be called ObtainDocShell or something like that,

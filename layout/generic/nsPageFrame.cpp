@@ -94,9 +94,9 @@ void nsPageFrame::Reflow(nsPresContext* aPresContext,
     // Use the margins given in the @page rule.
     // If a margin is 'auto', use the margin from the print settings for that
     // side.
-    const nsStyleSides& marginStyle = kidReflowInput.mStyleMargin->mMargin;
+    const auto& marginStyle = kidReflowInput.mStyleMargin->mMargin;
     NS_FOR_CSS_SIDES(side) {
-      if (marginStyle.GetUnit(side) == eStyleUnit_Auto) {
+      if (marginStyle.Get(side).IsAuto()) {
         mPageContentMargin.Side(side) = mPD->mReflowMargin.Side(side);
       } else {
         mPageContentMargin.Side(side) =
@@ -510,8 +510,7 @@ void nsPageFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 
     nsRect visibleRect = child->GetVisualOverflowRectRelativeToSelf();
     nsDisplayListBuilder::AutoBuildingDisplayList buildingForChild(
-        aBuilder, child, visibleRect, visibleRect,
-        aBuilder->IsAtRootOfPseudoStackingContext());
+        aBuilder, child, visibleRect, visibleRect);
     child->BuildDisplayListForStackingContext(aBuilder, &content);
 
     // We may need to paint out-of-flow frames whose placeholders are
@@ -526,8 +525,7 @@ void nsPageFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
       nsRect childVisible = visibleRect + child->GetOffsetTo(page);
 
       nsDisplayListBuilder::AutoBuildingDisplayList buildingForChild(
-          aBuilder, page, childVisible, childVisible,
-          aBuilder->IsAtRootOfPseudoStackingContext());
+          aBuilder, page, childVisible, childVisible);
       BuildDisplayListForExtraPage(aBuilder, this, page, &content);
     }
 
@@ -535,7 +533,7 @@ void nsPageFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     // is used to compute the visible rect if AddCanvasBackgroundColorItem
     // creates a display item.
     nsDisplayListBuilder::AutoBuildingDisplayList building(
-        aBuilder, child, visibleRect, visibleRect, true);
+        aBuilder, child, visibleRect, visibleRect);
 
     // Add the canvas background color to the bottom of the list. This
     // happens after we've built the list so that AddCanvasBackgroundColorItem
@@ -587,6 +585,7 @@ void nsPageFrame::PaintHeaderFooter(gfxContext& aRenderingContext, nsPoint aPt,
   nsFontMetrics::Params params;
   params.userFontSet = pc->GetUserFontSet();
   params.textPerf = pc->GetTextPerfMetrics();
+  params.featureValueLookup = pc->GetFontFeatureValuesLookup();
   RefPtr<nsFontMetrics> fontMet =
       pc->DeviceContext()->GetMetricsFor(mPD->mHeadFootFont, params);
 

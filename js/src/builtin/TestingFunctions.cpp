@@ -57,6 +57,7 @@
 #include "js/UniquePtr.h"
 #include "js/Vector.h"
 #include "js/Wrapper.h"
+#include "threading/CpuCount.h"
 #include "util/StringBuffer.h"
 #include "util/Text.h"
 #include "vm/AsyncFunction.h"
@@ -330,12 +331,12 @@ static bool GetBuildConfiguration(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-#ifdef ENABLE_BINARYDATA
+#ifdef ENABLE_TYPED_OBJECTS
   value = BooleanValue(true);
 #else
   value = BooleanValue(false);
 #endif
-  if (!JS_SetProperty(cx, info, "binary-data", value)) {
+  if (!JS_SetProperty(cx, info, "typed-objects", value)) {
     return false;
   }
 
@@ -847,13 +848,12 @@ static bool WasmExtractCode(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  JSObject* unwrapped = CheckedUnwrap(&args.get(0).toObject());
-  if (!unwrapped || !unwrapped->is<WasmModuleObject>()) {
+  Rooted<WasmModuleObject*> module(
+      cx, args[0].toObject().maybeUnwrapIf<WasmModuleObject>());
+  if (!module) {
     JS_ReportErrorASCII(cx, "argument is not a WebAssembly.Module");
     return false;
   }
-
-  Rooted<WasmModuleObject*> module(cx, &unwrapped->as<WasmModuleObject>());
 
   bool stableTier = false;
   bool bestTier = false;
@@ -908,13 +908,13 @@ static bool WasmHasTier2CompilationCompleted(JSContext* cx, unsigned argc,
     return false;
   }
 
-  JSObject* unwrapped = CheckedUnwrap(&args.get(0).toObject());
-  if (!unwrapped || !unwrapped->is<WasmModuleObject>()) {
+  Rooted<WasmModuleObject*> module(
+      cx, args[0].toObject().maybeUnwrapIf<WasmModuleObject>());
+  if (!module) {
     JS_ReportErrorASCII(cx, "argument is not a WebAssembly.Module");
     return false;
   }
 
-  Rooted<WasmModuleObject*> module(cx, &unwrapped->as<WasmModuleObject>());
   args.rval().set(BooleanValue(!module->module().testingTier2Active()));
   return true;
 }
@@ -1448,7 +1448,7 @@ static bool CaptureFirstSubsumedFrame(JSContext* cx, unsigned argc,
   }
 
   RootedObject obj(cx, &args[0].toObject());
-  obj = CheckedUnwrap(obj);
+  obj = CheckedUnwrapStatic(obj);
   if (!obj) {
     JS_ReportErrorASCII(cx, "Denied permission to object.");
     return false;
@@ -3346,7 +3346,7 @@ static bool SharedAddress(JSContext* cx, unsigned argc, Value* vp) {
 #  ifdef JS_MORE_DETERMINISTIC
   args.rval().setString(cx->staticStrings().getUint(0));
 #  else
-  RootedObject obj(cx, CheckedUnwrap(&args[0].toObject()));
+  RootedObject obj(cx, CheckedUnwrapStatic(&args[0].toObject()));
   if (!obj) {
     ReportAccessDenied(cx);
     return false;
@@ -3907,7 +3907,7 @@ static bool EvalReturningScope(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   if (global) {
-    global = CheckedUnwrap(global);
+    global = CheckedUnwrapDynamic(global, cx);
     if (!global) {
       JS_ReportErrorASCII(cx, "Permission denied to access global");
       return false;
@@ -4010,7 +4010,7 @@ static bool ShellCloneAndExecuteScript(JSContext* cx, unsigned argc,
     return false;
   }
 
-  global = CheckedUnwrap(global);
+  global = CheckedUnwrapDynamic(global, cx);
   if (!global) {
     JS_ReportErrorASCII(cx, "Permission denied to access global");
     return false;
@@ -4383,7 +4383,7 @@ static bool GetLcovInfo(JSContext* cx, unsigned argc, Value* vp) {
       JS_ReportErrorASCII(cx, "Permission denied to access global");
       return false;
     }
-    global = CheckedUnwrap(global);
+    global = CheckedUnwrapDynamic(global, cx);
     if (!global) {
       ReportAccessDenied(cx);
       return false;
@@ -5072,6 +5072,19 @@ static bool SetTimeZone(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
+static bool GetCoreCount(JSContext* cx, unsigned argc, Value* vp) {
+  CallArgs args = CallArgsFromVp(argc, vp);
+  RootedObject callee(cx, &args.callee());
+
+  if (args.length() != 0) {
+    ReportUsageErrorASCII(cx, callee, "Wrong number of arguments");
+    return false;
+  }
+
+  args.rval().setInt32(GetCPUCount());
+  return true;
+}
+
 static bool GetDefaultLocale(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
   RootedObject callee(cx, &args.callee());
@@ -5317,6 +5330,26 @@ static bool ObjectGlobal(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   obj = ToWindowProxyIfWindow(&obj->nonCCWGlobal());
+
+  args.rval().setObject(*obj);
+  return true;
+}
+
+static bool FirstGlobalInCompartment(JSContext* cx, unsigned argc, Value* vp) {
+  CallArgs args = CallArgsFromVp(argc, vp);
+  RootedObject callee(cx, &args.callee());
+
+  if (!args.get(0).isObject()) {
+    ReportUsageErrorASCII(cx, callee, "Argument must be an object");
+    return false;
+  }
+
+  RootedObject obj(cx, UncheckedUnwrap(&args[0].toObject()));
+  obj = ToWindowProxyIfWindow(GetFirstGlobalInCompartment(obj->compartment()));
+
+  if (!cx->compartment()->wrap(cx, &obj)) {
+    return false;
+  }
 
   args.rval().setObject(*obj);
   return true;
@@ -6292,6 +6325,11 @@ gc::ZealModeHelpText),
 "getDefaultLocale()",
 "  Get the current default locale.\n"),
 
+    JS_FN_HELP("getCoreCount", GetCoreCount, 0, 0,
+"getCoreCount()",
+"  Get the number of CPU cores from the platform layer.  Typically this\n"
+"  means the number of hyperthreads on systems where that makes sense.\n"),
+
     JS_FN_HELP("setTimeResolution", SetTimeResolution, 2, 0,
 "setTimeResolution(resolution, jitter)",
 "  Enables time clamping and jittering. Specify a time resolution in\n"
@@ -6304,6 +6342,10 @@ gc::ZealModeHelpText),
     JS_FN_HELP("objectGlobal", ObjectGlobal, 1, 0,
 "objectGlobal(obj)",
 "  Returns the object's global object or null if the object is a wrapper.\n"),
+
+    JS_FN_HELP("firstGlobalInCompartment", FirstGlobalInCompartment, 1, 0,
+"firstGlobalInCompartment(obj)",
+"  Returns the first global in obj's compartment.\n"),
 
     JS_FN_HELP("assertCorrectRealm", AssertCorrectRealm, 0, 0,
 "assertCorrectRealm()",

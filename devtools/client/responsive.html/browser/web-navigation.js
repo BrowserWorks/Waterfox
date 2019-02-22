@@ -4,11 +4,11 @@
 
 "use strict";
 
-const { Ci, Cu, Cr } = require("chrome");
+const { Cc, Ci, Cu, Cr } = require("chrome");
 const ChromeUtils = require("ChromeUtils");
 const Services = require("Services");
 const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
-const { Utils } = require("resource://gre/modules/sessionstore/Utils.jsm");
+const { E10SUtils } = require("resource://gre/modules/E10SUtils.jsm");
 const Telemetry = require("devtools/client/shared/telemetry");
 
 const telemetry = new Telemetry();
@@ -71,15 +71,18 @@ BrowserElementWebNavigation.prototype = {
   loadURIWithOptions(uri, flags, referrer, referrerPolicy, postData, headers,
                      baseURI, triggeringPrincipal) {
     // No equivalent in the current BrowserElement API
+    let referrerInfo = Cc["@mozilla.org/referrer-info;1"]
+                         .createInstance(Ci.nsIReferrerInfo);
+    referrerInfo.init(referrerPolicy, true, referrer);
+    referrerInfo = E10SUtils.serializeReferrerInfo(referrerInfo);
     this._sendMessage("WebNavigation:LoadURI", {
       uri,
       flags,
-      referrer: referrer ? referrer.spec : null,
-      referrerPolicy: referrerPolicy,
+      referrerInfo,
       postData: postData ? readInputStreamToString(postData) : null,
       headers: headers ? readInputStreamToString(headers) : null,
       baseURI: baseURI ? baseURI.spec : null,
-      triggeringPrincipal: Utils.serializePrincipal(
+      triggeringPrincipal: E10SUtils.serializePrincipal(
                            triggeringPrincipal ||
                            Services.scriptSecurityManager.createNullPrincipal({})),
       requestTime: telemetry.msSystemNow(),

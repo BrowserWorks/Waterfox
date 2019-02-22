@@ -26,7 +26,7 @@ const EXPECTED_APPMENU_OPEN_REFLOWS = [
       "onxblpopuppositioned@chrome://global/content/bindings/popup.xml",
     ],
 
-    maxCount: 3, // This number should only ever go down - never up.
+    maxCount: 22, // This number should only ever go down - never up.
   },
 
   {
@@ -42,7 +42,7 @@ const EXPECTED_APPMENU_OPEN_REFLOWS = [
 add_task(async function() {
   await ensureNoPreloadedBrowser();
 
-  let textBoxRect = document.getAnonymousElementByAttribute(gURLBar,
+  let textBoxRect = document.getAnonymousElementByAttribute(gURLBar.textbox,
     "anonid", "moz-input-box").getBoundingClientRect();
   let menuButtonRect =
     document.getElementById("PanelUI-menu-button").getBoundingClientRect();

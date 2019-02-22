@@ -293,7 +293,6 @@ void HttpBaseChannel::ReleaseMainThreadOnlyReferences() {
   arrayToRelease.AppendElement(mPrincipal.forget());
   arrayToRelease.AppendElement(mTopWindowURI.forget());
   arrayToRelease.AppendElement(mListener.forget());
-  arrayToRelease.AppendElement(mListenerContext.forget());
   arrayToRelease.AppendElement(mCompressListener.forget());
 
   if (mAddedAsNonTailRequest) {
@@ -741,19 +740,7 @@ HttpBaseChannel::SetContentLength(int64_t value) {
 }
 
 NS_IMETHODIMP
-HttpBaseChannel::Open(nsIInputStream** aResult) {
-  NS_ENSURE_TRUE(!mWasOpened, NS_ERROR_IN_PROGRESS);
-
-  if (!gHttpHandler->Active()) {
-    LOG(("HttpBaseChannel::Open after HTTP shutdown..."));
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-
-  return NS_ImplementChannelOpen(this, aResult);
-}
-
-NS_IMETHODIMP
-HttpBaseChannel::Open2(nsIInputStream** aStream) {
+HttpBaseChannel::Open(nsIInputStream** aStream) {
   if (!gHttpHandler->Active()) {
     LOG(("HttpBaseChannel::Open after HTTP shutdown..."));
     return NS_ERROR_NOT_AVAILABLE;
@@ -763,7 +750,15 @@ HttpBaseChannel::Open2(nsIInputStream** aStream) {
   nsresult rv =
       nsContentSecurityManager::doContentSecurityCheck(this, listener);
   NS_ENSURE_SUCCESS(rv, rv);
-  return Open(aStream);
+
+  NS_ENSURE_TRUE(!mWasOpened, NS_ERROR_IN_PROGRESS);
+
+  if (!gHttpHandler->Active()) {
+    LOG(("HttpBaseChannel::Open after HTTP shutdown..."));
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  return NS_ImplementChannelOpen(this, aStream);
 }
 
 //-----------------------------------------------------------------------------
@@ -1087,7 +1082,6 @@ bool HttpBaseChannel::MaybeWaitForUploadStreamLength(
   }
 
   mListener = aListener;
-  mListenerContext = aContext;
   mAsyncOpenWaitingForStreamLength = true;
   return true;
 }
@@ -1103,12 +1097,9 @@ void HttpBaseChannel::MaybeResumeAsyncOpen() {
   nsCOMPtr<nsIStreamListener> listener;
   listener.swap(mListener);
 
-  nsCOMPtr<nsISupports> context;
-  context.swap(mListenerContext);
-
   mAsyncOpenWaitingForStreamLength = false;
 
-  nsresult rv = AsyncOpen(listener, context);
+  nsresult rv = AsyncOpen(listener);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     DoAsyncAbort(rv);
   }
@@ -1134,8 +1125,7 @@ HttpBaseChannel::SetApplyConversion(bool value) {
 
 nsresult HttpBaseChannel::DoApplyContentConversions(
     nsIStreamListener* aNextListener, nsIStreamListener** aNewNextListener) {
-  return DoApplyContentConversions(aNextListener, aNewNextListener,
-                                   mListenerContext);
+  return DoApplyContentConversions(aNextListener, aNewNextListener, nullptr);
 }
 
 // create a listener chain that looks like this
@@ -2233,6 +2223,11 @@ HttpBaseChannel::SwitchProcessTo(mozilla::dom::Promise* aTabParent,
 }
 
 NS_IMETHODIMP
+HttpBaseChannel::HasCrossOriginOpenerPolicyMismatch(bool* aMismatch) {
+  return NS_ERROR_NOT_AVAILABLE;
+}
+
+NS_IMETHODIMP
 HttpBaseChannel::UpgradeToSecure() {
   // Upgrades are handled internally between http-on-modify-request and
   // http-on-before-connect, which means upgrades are only possible during
@@ -2327,6 +2322,16 @@ HttpBaseChannel::SetTopWindowURIIfUnknown(nsIURI* aTopWindowURI) {
 }
 
 NS_IMETHODIMP
+HttpBaseChannel::SetTopWindowPrincipal(nsIPrincipal* aTopWindowPrincipal) {
+  if (!aTopWindowPrincipal) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  mTopWindowPrincipal = aTopWindowPrincipal;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 HttpBaseChannel::GetTopWindowURI(nsIURI** aTopWindowURI) {
   nsCOMPtr<nsIURI> uriBeingLoaded =
       AntiTrackingCommon::MaybeGetDocumentURIBeingLoaded(this);
@@ -2362,6 +2367,18 @@ nsresult HttpBaseChannel::GetTopWindowURI(nsIURI* aURIBeingLoaded,
   }
   NS_IF_ADDREF(*aTopWindowURI = mTopWindowURI);
   return rv;
+}
+
+nsresult HttpBaseChannel::GetTopWindowPrincipal(
+    nsIPrincipal** aTopWindowPrincipal) {
+  nsCOMPtr<mozIThirdPartyUtil> util = services::GetThirdPartyUtil();
+  nsCOMPtr<mozIDOMWindowProxy> win;
+  nsresult rv =
+      util->GetTopWindowForChannel(this, nullptr, getter_AddRefs(win));
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  return util->GetPrincipalFromWindow(win, getter_AddRefs(mTopWindowPrincipal));
 }
 
 NS_IMETHODIMP
@@ -2564,9 +2581,6 @@ nsresult HttpBaseChannel::AddSecurityMessage(
 
   nsCOMPtr<nsILoadInfo> loadInfo;
   GetLoadInfo(getter_AddRefs(loadInfo));
-  if (!loadInfo) {
-    return NS_ERROR_FAILURE;
-  }
 
   auto innerWindowID = loadInfo->GetInnerWindowID();
 
@@ -3263,7 +3277,6 @@ void HttpBaseChannel::ReleaseListeners() {
   MOZ_ASSERT(NS_IsMainThread(), "Should only be called on the main thread.");
 
   mListener = nullptr;
-  mListenerContext = nullptr;
   mCallbacks = nullptr;
   mProgressSink = nullptr;
   mCompressListener = nullptr;
@@ -3284,7 +3297,7 @@ void HttpBaseChannel::DoNotifyListener() {
                "We should not call OnStartRequest twice");
 
     nsCOMPtr<nsIStreamListener> listener = mListener;
-    listener->OnStartRequest(this, mListenerContext);
+    listener->OnStartRequest(this, nullptr);
 
     mOnStartRequestCalled = true;
   }
@@ -3298,7 +3311,7 @@ void HttpBaseChannel::DoNotifyListener() {
     MOZ_ASSERT(!mOnStopRequestCalled, "We should not call OnStopRequest twice");
 
     nsCOMPtr<nsIStreamListener> listener = mListener;
-    listener->OnStopRequest(this, mListenerContext, mStatus);
+    listener->OnStopRequest(this, nullptr, mStatus);
 
     mOnStopRequestCalled = true;
   }
@@ -3424,16 +3437,13 @@ nsresult HttpBaseChannel::SetupReplacementChannel(nsIURI* newURI,
   // If the protocol handler that created the channel wants to use
   // the originalURI of the channel as the principal URI, this fulfills
   // that request - newURI is the original URI of the channel.
-  nsCOMPtr<nsILoadInfo> newLoadInfo = newChannel->GetLoadInfo();
-  if (newLoadInfo) {
-    nsCOMPtr<nsIURI> resultPrincipalURI;
-    rv = newLoadInfo->GetResultPrincipalURI(getter_AddRefs(resultPrincipalURI));
+  nsCOMPtr<nsILoadInfo> newLoadInfo = newChannel->LoadInfo();
+  nsCOMPtr<nsIURI> resultPrincipalURI;
+  rv = newLoadInfo->GetResultPrincipalURI(getter_AddRefs(resultPrincipalURI));
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (!resultPrincipalURI) {
+    rv = newLoadInfo->SetResultPrincipalURI(newURI);
     NS_ENSURE_SUCCESS(rv, rv);
-
-    if (!resultPrincipalURI) {
-      rv = newLoadInfo->SetResultPrincipalURI(newURI);
-      NS_ENSURE_SUCCESS(rv, rv);
-    }
   }
 
   uint32_t newLoadFlags = mLoadFlags | LOAD_REPLACE;
@@ -3746,9 +3756,9 @@ nsresult HttpBaseChannel::SetupReplacementChannel(nsIURI* newURI,
   // Pass the preferred alt-data type on to the new channel.
   nsCOMPtr<nsICacheInfoChannel> cacheInfoChan(do_QueryInterface(newChannel));
   if (cacheInfoChan) {
-    for (auto& pair : mPreferredCachedAltDataTypes) {
-      cacheInfoChan->PreferAlternativeDataType(mozilla::Get<0>(pair),
-                                               mozilla::Get<1>(pair));
+    for (auto& data : mPreferredCachedAltDataTypes) {
+      cacheInfoChan->PreferAlternativeDataType(data.type(), data.contentType(),
+                                               data.deliverAltData());
     }
   }
 

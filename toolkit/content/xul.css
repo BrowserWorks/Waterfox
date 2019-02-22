@@ -61,7 +61,7 @@ broadcasterset, broadcaster, observes,
 keyset, key, toolbarpalette, toolbarset,
 template, rule, conditions, action,
 bindings, binding, content, member, triple,
-treechildren, treeitem, treeseparator, treerow, treecell {
+treeitem, treeseparator, treerow, treecell {
   display: none;
 }
 
@@ -100,8 +100,8 @@ vbox {
 /********** label **********/
 
 label.text-link, label[onclick] {
-  -moz-binding: url("chrome://global/content/bindings/text.xml#text-link");
   -moz-user-focus: normal;
+  -moz-binding: none;
 }
 
 label[control], label.radio-label, label.checkbox-label, label.toolbarbutton-multiline-text {
@@ -291,10 +291,6 @@ menuitem[type="radio"] {
   -moz-binding: url("chrome://global/content/bindings/menu.xml#menuitem-iconic");
 }
 
-menucaption {
-  -moz-binding: url("chrome://global/content/bindings/menu.xml#menucaption");
-}
-
 .menu-text {
   -moz-box-flex: 1;
 }
@@ -430,29 +426,24 @@ column {
 
 /******** tree ******/
 
-tree {
-  -moz-binding: url("chrome://global/content/bindings/tree.xml#tree");
-}
-
 treecolpicker {
   -moz-box-ordinal-group: 2147483646;
 }
 
-tree > treechildren {
+treechildren {
   display: -moz-box;
   -moz-user-select: none;
   -moz-box-flex: 1;
 }
 
 tree {
+  -moz-binding: none;
   -moz-box-orient: vertical;
-  min-width: 0px;
-  min-height: 0px;
   width: 10px;
   height: 10px;
 }
 
-tree[hidecolumnpicker="true"] > treecols > treecolpicker {
+tree[hidecolumnpicker="true"] treecolpicker {
   display: none;
 }
 
@@ -466,7 +457,7 @@ treecol[hidden="true"] {
 }
 
 /* ::::: lines connecting cells ::::: */
-tree:not([treelines="true"]) > treechildren::-moz-tree-line {
+tree:not([treelines="true"]) treechildren::-moz-tree-line {
   visibility: hidden;
 }
 

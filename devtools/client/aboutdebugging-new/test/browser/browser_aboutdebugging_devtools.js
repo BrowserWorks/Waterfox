@@ -15,6 +15,7 @@ add_task(async function() {
   prepareCollapsibilitiesTest();
 
   const { document, tab, window } = await openAboutDebugging();
+  await selectThisFirefoxPage(document, window.AboutDebugging.store);
 
   const connectSidebarItem = findSidebarItemByText("Connect", document);
   const connectLink = connectSidebarItem.querySelector(".js-sidebar-link");
@@ -26,7 +27,6 @@ add_task(async function() {
 
   info("DevTools starts workers, wait for requests to settle");
   const store = window.AboutDebugging.store;
-  await waitForDispatch(store, "REQUEST_WORKERS_SUCCESS");
   await waitForRequestsToSettle(store);
 
   info("Click on the Connect item in the sidebar");

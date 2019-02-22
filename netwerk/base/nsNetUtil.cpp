@@ -232,10 +232,7 @@ nsresult NS_NewChannelInternal(
   }
 
   if (aPerformanceStorage) {
-    nsCOMPtr<nsILoadInfo> loadInfo;
-    rv = channel->GetLoadInfo(getter_AddRefs(loadInfo));
-    NS_ENSURE_SUCCESS(rv, rv);
-
+    nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
     loadInfo->SetPerformanceStorage(aPerformanceStorage);
   }
 
@@ -387,10 +384,7 @@ nsresult NS_NewChannelInternal(
   }
 
   if (aPerformanceStorage) {
-    nsCOMPtr<nsILoadInfo> loadInfo;
-    rv = channel->GetLoadInfo(getter_AddRefs(loadInfo));
-    NS_ENSURE_SUCCESS(rv, rv);
-
+    nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
     loadInfo->SetPerformanceStorage(aPerformanceStorage);
   }
 
@@ -646,6 +640,7 @@ nsresult NS_NewInputStreamChannelInternal(
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
+  MOZ_ASSERT(aLoadInfo, "need a loadinfo to create a inputstreamchannel");
   channel->SetLoadInfo(aLoadInfo);
 
   // If we're sandboxed, make sure to clear any owner the channel
@@ -919,7 +914,7 @@ nsresult NS_NewStreamLoaderInternal(
   }
   rv = NS_NewStreamLoader(outStream, aObserver);
   NS_ENSURE_SUCCESS(rv, rv);
-  return channel->AsyncOpen2(*outStream);
+  return channel->AsyncOpen(*outStream);
 }
 
 nsresult NS_NewStreamLoader(
@@ -973,7 +968,7 @@ nsresult NS_ImplementChannelOpen(nsIChannel *channel, nsIInputStream **result) {
                                          getter_AddRefs(stream));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = NS_MaybeOpenChannelUsingAsyncOpen2(channel, listener);
+  rv = NS_MaybeOpenChannelUsingAsyncOpen(channel, listener);
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint64_t n;
@@ -1683,7 +1678,7 @@ nsresult NS_LoadPersistentPropertiesFromURISpec(
                      nsIContentPolicy::TYPE_OTHER);
   NS_ENSURE_SUCCESS(rv, rv);
   nsCOMPtr<nsIInputStream> in;
-  rv = channel->Open2(getter_AddRefs(in));
+  rv = channel->Open(getter_AddRefs(in));
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIPersistentProperties> properties = new nsPersistentProperties();
@@ -1703,12 +1698,8 @@ bool NS_UsePrivateBrowsing(nsIChannel *channel) {
 
 bool NS_GetOriginAttributes(nsIChannel *aChannel,
                             mozilla::OriginAttributes &aAttributes) {
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  // For some channels, they might not have loadInfo, like
-  // ExternalHelperAppParent..
-  if (loadInfo) {
-    loadInfo->GetOriginAttributes(&aAttributes);
-  }
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
+  loadInfo->GetOriginAttributes(&aAttributes);
 
   bool isPrivate = false;
   nsCOMPtr<nsIPrivateBrowsingChannel> pbChannel = do_QueryInterface(aChannel);
@@ -1726,15 +1717,7 @@ bool NS_GetOriginAttributes(nsIChannel *aChannel,
 }
 
 bool NS_HasBeenCrossOrigin(nsIChannel *aChannel, bool aReport) {
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  MOZ_RELEASE_ASSERT(
-      loadInfo,
-      "Origin tracking only works for channels created with a loadinfo");
-
-  if (!loadInfo) {
-    return false;
-  }
-
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
   // TYPE_DOCUMENT loads have a null LoadingPrincipal and can not be cross
   // origin.
   if (!loadInfo->LoadingPrincipal()) {
@@ -1795,10 +1778,7 @@ bool NS_IsSafeTopLevelNav(nsIChannel *aChannel) {
   if (!aChannel) {
     return false;
   }
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  if (!loadInfo) {
-    return false;
-  }
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
   if (loadInfo->GetExternalContentPolicyType() !=
       nsIContentPolicy::TYPE_DOCUMENT) {
     return false;
@@ -1818,11 +1798,7 @@ bool NS_IsSameSiteForeign(nsIChannel *aChannel, nsIURI *aHostURI) {
   if (!aChannel) {
     return false;
   }
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  if (!loadInfo) {
-    return false;
-  }
-
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
   // Do not treat loads triggered by web extensions as foreign
   nsCOMPtr<nsIURI> channelURI;
   NS_GetFinalChannelURI(aChannel, getter_AddRefs(channelURI));
@@ -2024,16 +2000,13 @@ already_AddRefed<nsIURI> NS_GetInnermostURI(nsIURI *aURI) {
 nsresult NS_GetFinalChannelURI(nsIChannel *channel, nsIURI **uri) {
   *uri = nullptr;
 
-  nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
-  if (loadInfo) {
-    nsCOMPtr<nsIURI> resultPrincipalURI;
-    loadInfo->GetResultPrincipalURI(getter_AddRefs(resultPrincipalURI));
-    if (resultPrincipalURI) {
-      resultPrincipalURI.forget(uri);
-      return NS_OK;
-    }
+  nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+  nsCOMPtr<nsIURI> resultPrincipalURI;
+  loadInfo->GetResultPrincipalURI(getter_AddRefs(resultPrincipalURI));
+  if (resultPrincipalURI) {
+    resultPrincipalURI.forget(uri);
+    return NS_OK;
   }
-
   return channel->GetOriginalURI(uri);
 }
 
@@ -2357,22 +2330,16 @@ nsresult NS_LinkRedirectChannels(uint32_t channelId,
   return registrar->LinkChannels(channelId, parentChannel, _result);
 }
 
-nsresult NS_MaybeOpenChannelUsingOpen2(nsIChannel *aChannel,
-                                       nsIInputStream **aStream) {
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  if (loadInfo && loadInfo->GetSecurityMode() != 0) {
-    return aChannel->Open2(aStream);
-  }
+nsresult NS_MaybeOpenChannelUsingOpen(nsIChannel *aChannel,
+                                      nsIInputStream **aStream) {
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
   return aChannel->Open(aStream);
 }
 
-nsresult NS_MaybeOpenChannelUsingAsyncOpen2(nsIChannel *aChannel,
-                                            nsIStreamListener *aListener) {
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  if (loadInfo && loadInfo->GetSecurityMode() != 0) {
-    return aChannel->AsyncOpen2(aListener);
-  }
-  return aChannel->AsyncOpen(aListener, nullptr);
+nsresult NS_MaybeOpenChannelUsingAsyncOpen(nsIChannel *aChannel,
+                                           nsIStreamListener *aListener) {
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
+  return aChannel->AsyncOpen(aListener);
 }
 
 /** Given the first (disposition) token from a Content-Disposition header,
@@ -2694,12 +2661,11 @@ nsresult NS_GetSecureUpgradedURI(nsIURI *aURI, nsIURI **aUpgradedURI) {
 }
 
 nsresult NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel) {
-  nsCOMPtr<nsILoadInfo> loadInfo;
-  aChannel->GetLoadInfo(getter_AddRefs(loadInfo));
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
 
   nsCOMPtr<nsILoadContext> loadContext;
   NS_QueryNotificationCallbacks(aChannel, loadContext);
-  if (!loadInfo || !loadContext) {
+  if (!loadContext) {
     return NS_OK;
   }
 

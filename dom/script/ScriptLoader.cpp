@@ -285,13 +285,24 @@ static bool IsScriptEventHandler(ScriptKind kind, nsIContent* aScriptElement) {
   return false;
 }
 
+nsContentPolicyType ScriptLoadRequestToContentPolicyType(
+    ScriptLoadRequest* aRequest) {
+  if (aRequest->IsPreload()) {
+    return aRequest->IsModuleRequest()
+               ? nsIContentPolicy::TYPE_INTERNAL_MODULE_PRELOAD
+               : nsIContentPolicy::TYPE_INTERNAL_SCRIPT_PRELOAD;
+  }
+
+  return aRequest->IsModuleRequest() ? nsIContentPolicy::TYPE_INTERNAL_MODULE
+                                     : nsIContentPolicy::TYPE_INTERNAL_SCRIPT;
+}
+
 nsresult ScriptLoader::CheckContentPolicy(Document* aDocument,
-                                          nsISupports* aContext, nsIURI* aURI,
+                                          nsISupports* aContext,
                                           const nsAString& aType,
-                                          bool aIsPreLoad) {
+                                          ScriptLoadRequest* aRequest) {
   nsContentPolicyType contentPolicyType =
-      aIsPreLoad ? nsIContentPolicy::TYPE_INTERNAL_SCRIPT_PRELOAD
-                 : nsIContentPolicy::TYPE_INTERNAL_SCRIPT;
+      ScriptLoadRequestToContentPolicyType(aRequest);
 
   nsCOMPtr<nsINode> requestingNode = do_QueryInterface(aContext);
   nsCOMPtr<nsILoadInfo> secCheckLoadInfo = new net::LoadInfo(
@@ -300,10 +311,21 @@ nsresult ScriptLoader::CheckContentPolicy(Document* aDocument,
       requestingNode, nsILoadInfo::SEC_ONLY_FOR_EXPLICIT_CONTENTSEC_CHECK,
       contentPolicyType);
 
+  // snapshot the nonce at load start time for performing CSP checks
+  if (contentPolicyType == nsIContentPolicy::TYPE_INTERNAL_SCRIPT ||
+      contentPolicyType == nsIContentPolicy::TYPE_INTERNAL_MODULE) {
+    nsCOMPtr<Element> element = do_QueryInterface(aContext);
+    if (element && element->IsHTMLElement()) {
+      nsAutoString cspNonce;
+      element->GetAttribute(NS_LITERAL_STRING("nonce"), cspNonce);
+      secCheckLoadInfo->SetCspNonce(cspNonce);
+    }
+  }
+
   int16_t shouldLoad = nsIContentPolicy::ACCEPT;
   nsresult rv = NS_CheckContentLoadPolicy(
-      aURI, secCheckLoadInfo, NS_LossyConvertUTF16toASCII(aType), &shouldLoad,
-      nsContentUtils::GetContentPolicy());
+      aRequest->mURI, secCheckLoadInfo, NS_LossyConvertUTF16toASCII(aType),
+      &shouldLoad, nsContentUtils::GetContentPolicy());
   if (NS_FAILED(rv) || NS_CP_REJECTED(shouldLoad)) {
     if (NS_FAILED(rv) || shouldLoad != nsIContentPolicy::REJECT_TYPE) {
       return NS_ERROR_CONTENT_BLOCKED;
@@ -738,6 +760,10 @@ RefPtr<GenericPromise> ScriptLoader::StartFetchingModuleAndDependencies(
 }
 
 static ScriptLoader* GetCurrentScriptLoader(JSContext* aCx) {
+  auto reportError = mozilla::MakeScopeExit([aCx]() {
+    JS_ReportErrorASCII(aCx, "No ScriptLoader found for the current context");
+  });
+
   JSObject* object = JS::CurrentGlobalOrNull(aCx);
   if (!object) {
     return nullptr;
@@ -764,6 +790,7 @@ static ScriptLoader* GetCurrentScriptLoader(JSContext* aCx) {
     return nullptr;
   }
 
+  reportError.release();
   return loader;
 }
 
@@ -1193,8 +1220,7 @@ nsresult ScriptLoader::StartLoad(ScriptLoadRequest* aRequest) {
   }
 
   nsContentPolicyType contentPolicyType =
-      aRequest->IsPreload() ? nsIContentPolicy::TYPE_INTERNAL_SCRIPT_PRELOAD
-                            : nsIContentPolicy::TYPE_INTERNAL_SCRIPT;
+      ScriptLoadRequestToContentPolicyType(aRequest);
   nsCOMPtr<nsINode> context;
   if (aRequest->Element()) {
     context = do_QueryInterface(aRequest->Element());
@@ -1242,6 +1268,18 @@ nsresult ScriptLoader::StartLoad(ScriptLoadRequest* aRequest) {
 
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // snapshot the nonce at load start time for performing CSP checks
+  if (contentPolicyType == nsIContentPolicy::TYPE_INTERNAL_SCRIPT ||
+      contentPolicyType == nsIContentPolicy::TYPE_INTERNAL_MODULE) {
+    nsCOMPtr<Element> element = do_QueryInterface(context);
+    if (element && element->IsHTMLElement()) {
+      nsAutoString cspNonce;
+      element->GetAttribute(NS_LITERAL_STRING("nonce"), cspNonce);
+      nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+      loadInfo->SetCspNonce(cspNonce);
+    }
+  }
+
   // To avoid decoding issues, the build-id is part of the JSBytecodeMimeType
   // constant.
   aRequest->mCacheInfo = nullptr;
@@ -1255,7 +1293,7 @@ nsresult ScriptLoader::StartLoad(ScriptLoadRequest* aRequest) {
       // registered.
       LOG(("ScriptLoadRequest (%p): Maybe request bytecode", aRequest));
       cic->PreferAlternativeDataType(nsContentUtils::JSBytecodeMimeType(),
-                                     EmptyCString());
+                                     EmptyCString(), true);
     } else {
       // If we are explicitly loading from the sources, such as after a
       // restarted request, we might still want to save the bytecode after.
@@ -1264,7 +1302,7 @@ nsresult ScriptLoader::StartLoad(ScriptLoadRequest* aRequest) {
       // does not exist, such that we can later save the bytecode with a
       // different alternative data type.
       LOG(("ScriptLoadRequest (%p): Request saving bytecode later", aRequest));
-      cic->PreferAlternativeDataType(kNullMimeType, EmptyCString());
+      cic->PreferAlternativeDataType(kNullMimeType, EmptyCString(), true);
     }
   }
 
@@ -1356,7 +1394,7 @@ nsresult ScriptLoader::StartLoad(ScriptLoadRequest* aRequest) {
   rv = NS_NewIncrementalStreamLoader(getter_AddRefs(loader), handler);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = channel->AsyncOpen2(loader);
+  rv = channel->AsyncOpen(loader);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (aRequest->IsModuleRequest()) {
@@ -1507,8 +1545,8 @@ bool ScriptLoader::ProcessExternalScript(nsIScriptElement* aElement,
   RefPtr<ScriptLoadRequest> request =
       LookupPreloadRequest(aElement, aScriptKind);
 
-  if (request && NS_FAILED(CheckContentPolicy(
-                     mDocument, aElement, request->mURI, aTypeAttr, false))) {
+  if (request &&
+      NS_FAILED(CheckContentPolicy(mDocument, aElement, aTypeAttr, request))) {
     LOG(("ScriptLoader (%p): content policy check failed for preload", this));
 
     // Probably plans have changed; even though the preload was allowed seems
@@ -2534,11 +2572,16 @@ nsresult ScriptLoader::EvaluateScript(ScriptLoadRequest* aRequest) {
     return NS_ERROR_FAILURE;
   }
 
+  nsCOMPtr<nsPIDOMWindowOuter> window = mDocument->GetWindow();
+  nsIDocShell* docShell = window ? window->GetDocShell() : nullptr;
+  nsAutoCString profilerLabelString;
+  GetProfilerLabelForRequest(aRequest, profilerLabelString);
+  AUTO_PROFILER_TEXT_MARKER_DOCSHELL("Script", profilerLabelString, JS,
+                                     docShell);
+
   // New script entry point required, due to the "Create a script" sub-step of
   // http://www.whatwg.org/specs/web-apps/current-work/#execute-the-script-block
   nsAutoMicroTask mt;
-  nsAutoCString profilerLabelString;
-  GetProfilerLabelForRequest(aRequest, profilerLabelString);
   AutoEntryScript aes(globalObject, profilerLabelString.get(), true);
   JSContext* cx = aes.cx();
   JS::Rooted<JSObject*> global(cx, globalObject->GetGlobalJSObject());
@@ -3165,9 +3208,9 @@ nsresult ScriptLoader::VerifySRI(ScriptLoadRequest* aRequest,
       rv = NS_ERROR_SRI_CORRUPT;
     }
   } else {
-    nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
+    nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
 
-    if (loadInfo && loadInfo->GetEnforceSRI()) {
+    if (loadInfo->GetEnforceSRI()) {
       MOZ_LOG(SRILogHelper::GetSriLog(), mozilla::LogLevel::Debug,
               ("ScriptLoader::OnStreamComplete, required SRI not found"));
       nsCOMPtr<nsIContentSecurityPolicy> csp;

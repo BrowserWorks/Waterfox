@@ -119,6 +119,7 @@
 #include "nsDOMMutationObserver.h"
 #include "nsError.h"
 #include "nsFocusManager.h"
+#include "nsFrameLoaderOwner.h"
 #include "nsGenericHTMLElement.h"
 #include "nsGenericHTMLFrameElement.h"
 #include "nsGkAtoms.h"
@@ -201,6 +202,7 @@
 #include "nsPIDOMWindow.h"
 #include "nsPresContext.h"
 #include "nsPrintfCString.h"
+#include "nsQueryObject.h"
 #include "nsSandboxFlags.h"
 #include "nsScriptSecurityManager.h"
 #include "nsSerializationHelper.h"
@@ -2088,7 +2090,7 @@ bool nsContentUtils::ShouldResistFingerprinting(nsIDocShell* aDocShell) {
 }
 
 /* static */
-bool nsContentUtils::ShouldResistFingerprinting(Document* aDoc) {
+bool nsContentUtils::ShouldResistFingerprinting(const Document* aDoc) {
   if (!aDoc) {
     return false;
   }
@@ -3849,10 +3851,6 @@ void nsContentUtils::LogMessageToConsole(const char* aMsg) {
   sConsoleService->LogStringMessage(NS_ConvertUTF8toUTF16(aMsg).get());
 }
 
-bool nsContentUtils::IsChromeDoc(const Document* aDocument) {
-  return aDocument && aDocument->NodePrincipal() == sSystemPrincipal;
-}
-
 bool nsContentUtils::IsChildOfSameType(Document* aDoc) {
   nsCOMPtr<nsIDocShellTreeItem> docShellAsItem(aDoc->GetDocShell());
   nsCOMPtr<nsIDocShellTreeItem> sameTypeParent;
@@ -3884,24 +3882,6 @@ bool nsContentUtils::IsUtf8OnlyPlainTextType(const nsACString& aContentType) {
          aContentType.EqualsLiteral(APPLICATION_JSON) ||
          aContentType.EqualsLiteral(TEXT_JSON) ||
          aContentType.EqualsLiteral(TEXT_VTT);
-}
-
-// static
-bool nsContentUtils::IsInChromeDocshell(Document* aDocument) {
-  if (!aDocument) {
-    return false;
-  }
-
-  if (aDocument->GetDisplayDocument()) {
-    return IsInChromeDocshell(aDocument->GetDisplayDocument());
-  }
-
-  nsCOMPtr<nsIDocShellTreeItem> docShell = aDocument->GetDocShell();
-  if (!docShell) {
-    return false;
-  }
-
-  return docShell->ItemType() == nsIDocShellTreeItem::typeChrome;
 }
 
 // static
@@ -4126,13 +4106,21 @@ nsresult nsContentUtils::DispatchEvent(Document* aDoc, nsISupports* aTarget,
 nsresult nsContentUtils::DispatchInputEvent(Element* aEventTargetElement) {
   RefPtr<TextEditor> textEditor;  // See bug 1506439
   return DispatchInputEvent(aEventTargetElement, EditorInputType::eUnknown,
-                            textEditor);
+                            textEditor, InputEventOptions());
+}
+
+nsContentUtils::InputEventOptions::InputEventOptions(
+    DataTransfer* aDataTransfer)
+    : mDataTransfer(aDataTransfer) {
+  MOZ_ASSERT(mDataTransfer);
+  MOZ_ASSERT(mDataTransfer->IsReadOnly());
 }
 
 // static
 nsresult nsContentUtils::DispatchInputEvent(Element* aEventTargetElement,
                                             EditorInputType aEditorInputType,
-                                            TextEditor* aTextEditor) {
+                                            TextEditor* aTextEditor,
+                                            const InputEventOptions& aOptions) {
   if (NS_WARN_IF(!aEventTargetElement)) {
     return NS_ERROR_INVALID_ARG;
   }
@@ -4163,6 +4151,15 @@ nsresult nsContentUtils::DispatchInputEvent(Element* aEventTargetElement,
                "The event target may have editor, but we've not known it yet.");
   }
 #endif  // #ifdef DEBUG
+
+  // If the event target is an <input> element, we need to update
+  // validationMessage value before dispatching "input" event because
+  // "input" event listener may need to check it.
+  HTMLInputElement* inputElement =
+      HTMLInputElement::FromNode(aEventTargetElement);
+  if (inputElement) {
+    inputElement->MaybeUpdateAllValidityStates();
+  }
 
   if (!useInputEvent) {
     MOZ_ASSERT(aEditorInputType == EditorInputType::eUnknown);
@@ -4219,6 +4216,41 @@ nsresult nsContentUtils::DispatchInputEvent(Element* aEventTargetElement,
   // composition without editor.
   inputEvent.mIsComposing =
       aTextEditor ? !!aTextEditor->GetComposition() : false;
+
+  if (!aTextEditor || !aTextEditor->AsHTMLEditor()) {
+    if (IsDataAvailableOnTextEditor(aEditorInputType)) {
+      inputEvent.mData = aOptions.mData;
+      MOZ_ASSERT(!inputEvent.mData.IsVoid(),
+                 "inputEvent.mData shouldn't be void");
+    }
+#ifdef DEBUG
+    else {
+      MOZ_ASSERT(inputEvent.mData.IsVoid(), "inputEvent.mData should be void");
+    }
+#endif  // #ifdef DEBUG
+  } else {
+    MOZ_ASSERT(aTextEditor->AsHTMLEditor());
+    if (IsDataAvailableOnHTMLEditor(aEditorInputType)) {
+      inputEvent.mData = aOptions.mData;
+      MOZ_ASSERT(!inputEvent.mData.IsVoid(),
+                 "inputEvent.mData shouldn't be void");
+    } else {
+      MOZ_ASSERT(inputEvent.mData.IsVoid(), "inputEvent.mData should be void");
+      if (IsDataTransferAvailableOnHTMLEditor(aEditorInputType)) {
+        inputEvent.mDataTransfer = aOptions.mDataTransfer;
+        MOZ_ASSERT(inputEvent.mDataTransfer,
+                   "inputEvent.mDataTransfer shouldn't be nullptr");
+        MOZ_ASSERT(inputEvent.mDataTransfer->IsReadOnly(),
+                   "inputEvent.mDataTransfer should be read only");
+      }
+#ifdef DEBUG
+      else {
+        MOZ_ASSERT(!inputEvent.mDataTransfer,
+                   "inputEvent.mDataTransfer should be nullptr");
+      }
+#endif  // #ifdef DEBUG
+    }
+  }
 
   inputEvent.mInputType = aEditorInputType;
 
@@ -6461,7 +6493,8 @@ nsContentUtils::FindInternalContentViewer(const nsACString& aType,
 }
 
 static void ReportPatternCompileFailure(nsAString& aPattern,
-                                        Document* aDocument, JSContext* cx) {
+                                        const Document* aDocument,
+                                        JSContext* cx) {
   MOZ_ASSERT(JS_IsExceptionPending(cx));
 
   JS::RootedValue exn(cx);
@@ -6500,7 +6533,7 @@ static void ReportPatternCompileFailure(nsAString& aPattern,
 
 // static
 bool nsContentUtils::IsPatternMatching(nsAString& aValue, nsAString& aPattern,
-                                       Document* aDocument) {
+                                       const Document* aDocument) {
   NS_ASSERTION(aDocument, "aDocument should be a valid pointer (not null)");
 
   // The fact that we're using a JS regexp under the hood should not be visible
@@ -7307,7 +7340,7 @@ nsresult nsContentUtils::SlurpFileToString(nsIFile* aFile,
   }
 
   nsCOMPtr<nsIInputStream> stream;
-  rv = channel->Open2(getter_AddRefs(stream));
+  rv = channel->Open(getter_AddRefs(stream));
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -7982,6 +8015,7 @@ already_AddRefed<nsPIWindowRoot> nsContentUtils::GetWindowRoot(Document* aDoc) {
 /* static */
 bool nsContentUtils::IsPreloadType(nsContentPolicyType aType) {
   return (aType == nsIContentPolicy::TYPE_INTERNAL_SCRIPT_PRELOAD ||
+          aType == nsIContentPolicy::TYPE_INTERNAL_MODULE_PRELOAD ||
           aType == nsIContentPolicy::TYPE_INTERNAL_IMAGE_PRELOAD ||
           aType == nsIContentPolicy::TYPE_INTERNAL_STYLESHEET_PRELOAD);
 }
@@ -8088,10 +8122,7 @@ bool nsContentUtils::IsNonSubresourceRequest(nsIChannel* aChannel) {
     return true;
   }
 
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  if (!loadInfo) {
-    return false;
-  }
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
   nsContentPolicyType type = loadInfo->InternalContentPolicyType();
   return IsNonSubresourceInternalPolicyType(type);
 }
@@ -9776,10 +9807,7 @@ nsContentUtils::LookupCustomElementDefinition(Document* aDoc, nsAtom* aNameAtom,
   rv = aChannel->GetReferrer(getter_AddRefs(referrer));
   NS_ENSURE_SUCCESS(rv, false);
 
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  if (!loadInfo) {
-    return false;
-  }
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
   nsCOMPtr<nsIPrincipal> triggeringPrincipal = loadInfo->TriggeringPrincipal();
 
   // Get the channel's load flags, and use them to generate nsIWebNavigation
@@ -10413,7 +10441,7 @@ static Result<Ok, nsresult> ExtractExceptionValues(
 
 /* static */ already_AddRefed<ContentFrameMessageManager>
 nsContentUtils::TryGetTabChildGlobal(nsISupports* aFrom) {
-  nsCOMPtr<nsIFrameLoaderOwner> frameLoaderOwner = do_QueryInterface(aFrom);
+  RefPtr<nsFrameLoaderOwner> frameLoaderOwner = do_QueryObject(aFrom);
   if (!frameLoaderOwner) {
     return nullptr;
   }

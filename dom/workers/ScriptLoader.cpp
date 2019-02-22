@@ -247,11 +247,7 @@ nsresult ChannelFromScriptURL(nsIPrincipal* principal, Document* parentDoc,
     NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_SECURITY_ERR);
 
     if (cspEventListener) {
-      nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
-      if (NS_WARN_IF(!loadInfo)) {
-        return NS_ERROR_UNEXPECTED;
-      }
-
+      nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
       rv = loadInfo->SetCspEventListener(cspEventListener);
       NS_ENSURE_SUCCESS(rv, rv);
     }
@@ -997,7 +993,7 @@ class ScriptLoaderRunnable final : public nsIRunnable, public nsINamed {
     }
 
     if (loadInfo.mCacheStatus != ScriptLoadInfo::ToBeCached) {
-      rv = channel->AsyncOpen2(loader);
+      rv = channel->AsyncOpen(loader);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
       }
@@ -1022,7 +1018,7 @@ class ScriptLoaderRunnable final : public nsIRunnable, public nsINamed {
         return rv;
       }
 
-      nsresult rv = channel->AsyncOpen2(tee);
+      nsresult rv = channel->AsyncOpen(tee);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
       }
@@ -1156,8 +1152,8 @@ class ScriptLoaderRunnable final : public nsIRunnable, public nsINamed {
       aLoadInfo.mURL.Assign(NS_ConvertUTF8toUTF16(filename));
     }
 
-    nsCOMPtr<nsILoadInfo> chanLoadInfo = channel->GetLoadInfo();
-    if (chanLoadInfo && chanLoadInfo->GetEnforceSRI()) {
+    nsCOMPtr<nsILoadInfo> chanLoadInfo = channel->LoadInfo();
+    if (chanLoadInfo->GetEnforceSRI()) {
       // importScripts() and the Worker constructor do not support integrity
       // metadata
       //  (or any fetch options). Until then, we can just block.

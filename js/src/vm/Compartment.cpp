@@ -46,15 +46,6 @@ Compartment::Compartment(Zone* zone, bool invisibleToDebugger)
 
 #ifdef JSGC_HASH_TABLE_CHECKS
 
-namespace {
-struct CheckGCThingAfterMovingGCFunctor {
-  template <class T>
-  void operator()(T* t) {
-    CheckGCThingAfterMovingGC(*t);
-  }
-};
-}  // namespace
-
 void Compartment::checkWrapperMapAfterMovingGC() {
   /*
    * Assert that the postbarriers have worked and that nothing is left in
@@ -62,8 +53,9 @@ void Compartment::checkWrapperMapAfterMovingGC() {
    * are discoverable.
    */
   for (WrapperMap::Enum e(crossCompartmentWrappers); !e.empty(); e.popFront()) {
-    e.front().mutableKey().applyToWrapped(CheckGCThingAfterMovingGCFunctor());
-    e.front().mutableKey().applyToDebugger(CheckGCThingAfterMovingGCFunctor());
+    auto checkGCThing = [](auto tp) { CheckGCThingAfterMovingGC(*tp); };
+    e.front().mutableKey().applyToWrapped(checkGCThing);
+    e.front().mutableKey().applyToDebugger(checkGCThing);
 
     WrapperMap::Ptr ptr = crossCompartmentWrappers.lookup(e.front().key());
     MOZ_RELEASE_ASSERT(ptr.found() && &*ptr == &e.front());
@@ -176,7 +168,6 @@ bool Compartment::wrap(JSContext* cx, MutableHandleString strp) {
   return true;
 }
 
-#ifdef ENABLE_BIGINT
 bool Compartment::wrap(JSContext* cx, MutableHandleBigInt bi) {
   MOZ_ASSERT(cx->compartment() == this);
 
@@ -191,7 +182,6 @@ bool Compartment::wrap(JSContext* cx, MutableHandleBigInt bi) {
   bi.set(copy);
   return true;
 }
-#endif
 
 bool Compartment::getNonWrapperObjectForCurrentCompartment(
     JSContext* cx, MutableHandleObject obj) {
@@ -228,7 +218,8 @@ bool Compartment::getNonWrapperObjectForCurrentCompartment(
   // Disallow creating new wrappers if we nuked the object's realm or the
   // current compartment.
   if (!AllowNewWrapper(this, obj)) {
-    JSObject* res = NewDeadProxyObject(cx);
+    JSObject* res = NewDeadProxyObject(cx, IsCallableFlag(obj->isCallable()),
+                                       IsConstructorFlag(obj->isConstructor()));
     if (!res) {
       return false;
     }
@@ -444,32 +435,16 @@ void Compartment::sweepCrossCompartmentWrappers() {
   crossCompartmentWrappers.sweep();
 }
 
-namespace {
-struct TraceRootFunctor {
-  JSTracer* trc;
-  const char* name;
-  TraceRootFunctor(JSTracer* trc, const char* name) : trc(trc), name(name) {}
-  template <class T>
-  void operator()(T* t) {
-    return TraceRoot(trc, t, name);
-  }
-};
-struct NeedsSweepUnbarrieredFunctor {
-  template <class T>
-  bool operator()(T* t) const {
-    return IsAboutToBeFinalizedUnbarriered(t);
-  }
-};
-}  // namespace
-
 void CrossCompartmentKey::trace(JSTracer* trc) {
-  applyToWrapped(TraceRootFunctor(trc, "CrossCompartmentKey::wrapped"));
-  applyToDebugger(TraceRootFunctor(trc, "CrossCompartmentKey::debugger"));
+  applyToWrapped(
+      [trc](auto tp) { TraceRoot(trc, tp, "CrossCompartmentKey::wrapped"); });
+  applyToDebugger(
+      [trc](auto tp) { TraceRoot(trc, tp, "CrossCompartmentKey::debugger"); });
 }
 
 bool CrossCompartmentKey::needsSweep() {
-  return applyToWrapped(NeedsSweepUnbarrieredFunctor()) ||
-         applyToDebugger(NeedsSweepUnbarrieredFunctor());
+  auto needsSweep = [](auto tp) { return IsAboutToBeFinalizedUnbarriered(tp); };
+  return applyToWrapped(needsSweep) || applyToDebugger(needsSweep);
 }
 
 /* static */ void Compartment::fixupCrossCompartmentWrappersAfterMovingGC(
@@ -509,4 +484,30 @@ void Compartment::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
   if (auto callback = runtime_->sizeOfIncludingThisCompartmentCallback) {
     *compartmentsPrivateData += callback(mallocSizeOf, this);
   }
+}
+
+GlobalObject& Compartment::firstGlobal() const {
+  for (Realm* realm : realms_) {
+    if (!realm->hasLiveGlobal()) {
+      continue;
+    }
+    GlobalObject* global = realm->maybeGlobal();
+    ExposeObjectToActiveJS(global);
+    return *global;
+  }
+  MOZ_CRASH("If all our globals are dead, why is someone expecting a global?");
+}
+
+JS_FRIEND_API JSObject* js::GetFirstGlobalInCompartment(JS::Compartment* comp) {
+  return &comp->firstGlobal();
+}
+
+JS_FRIEND_API bool js::CompartmentHasLiveGlobal(JS::Compartment* comp) {
+  MOZ_ASSERT(comp);
+  for (Realm* r : comp->realms()) {
+    if (r->hasLiveGlobal()) {
+      return true;
+    }
+  }
+  return false;
 }

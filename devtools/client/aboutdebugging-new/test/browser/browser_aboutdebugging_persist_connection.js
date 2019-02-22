@@ -9,9 +9,6 @@ const USB_RUNTIME_ID = "test-runtime-id";
 const USB_DEVICE_NAME = "test device name";
 const USB_APP_NAME = "TestApp";
 
-/* import-globals-from helper-mocks.js */
-Services.scriptloader.loadSubScript(CHROME_URL_ROOT + "helper-mocks.js", this);
-
 // Test that remote runtime connections are persisted across about:debugging reloads.
 add_task(async function() {
   const mocks = new Mocks();
@@ -45,7 +42,9 @@ add_task(async function() {
 async function testRemoteClientPersistConnection(mocks,
   { client, id, runtimeName, sidebarName }) {
   info("Open about:debugging and connect to the test runtime");
-  let { document, tab } = await openAboutDebugging();
+  let { document, tab, window } = await openAboutDebugging();
+  await selectThisFirefoxPage(document, window.AboutDebugging.store);
+
   await connectToRuntime(sidebarName, document);
   await selectRuntime(sidebarName, runtimeName, document);
 

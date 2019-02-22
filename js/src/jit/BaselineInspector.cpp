@@ -485,6 +485,9 @@ static bool GuardType(CacheIRReader& reader,
     case CacheOp::GuardIsSymbol:
       guardType[guardOperand] = MIRType::Symbol;
       break;
+    case CacheOp::GuardIsBigInt:
+      guardType[guardOperand] = MIRType::BigInt;
+      break;
     case CacheOp::GuardIsNumber:
       guardType[guardOperand] = MIRType::Double;
       break;
@@ -691,6 +694,11 @@ MIRType BaselineInspector::expectedBinaryArithSpecialization(jsbytecode* pc) {
   MIRType result;
   ICStub* stubs[2];
 
+  if (JSOp(*pc) == JSOP_POS) {
+    // +x expanding to x*1, but no corresponding IC.
+    return MIRType::None;
+  }
+
   const ICEntry& entry = icEntryFromPC(pc);
   ICFallbackStub* stub = entry.fallbackStub();
   if (stub->state().hasFailures()) {
@@ -739,19 +747,6 @@ bool BaselineInspector::hasSeenAccessedGetter(jsbytecode* pc) {
     return stub->toGetProp_Fallback()->hasAccessedGetter();
   }
   return false;
-}
-
-bool BaselineInspector::hasSeenNonStringIterMore(jsbytecode* pc) {
-  MOZ_ASSERT(JSOp(*pc) == JSOP_MOREITER);
-
-  if (!hasICScript()) {
-    return false;
-  }
-
-  const ICEntry& entry = icEntryFromPC(pc);
-  ICStub* stub = entry.fallbackStub();
-
-  return stub->toIteratorMore_Fallback()->hasNonStringResult();
 }
 
 bool BaselineInspector::hasSeenDoubleResult(jsbytecode* pc) {
@@ -1662,6 +1657,9 @@ static MIRType GetCacheIRExpectedInputType(ICCacheIR_Monitored* stub) {
   }
   if (reader.matchOp(CacheOp::GuardIsString, ValOperandId(0))) {
     return MIRType::String;
+  }
+  if (reader.matchOp(CacheOp::GuardIsNumber, ValOperandId(0))) {
+    return MIRType::Double;
   }
   if (reader.matchOp(CacheOp::GuardType, ValOperandId(0))) {
     JSValueType type = reader.valueType();

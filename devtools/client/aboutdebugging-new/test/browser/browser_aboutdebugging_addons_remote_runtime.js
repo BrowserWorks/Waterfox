@@ -9,14 +9,12 @@ const USB_RUNTIME_ID = "test-runtime-id";
 const USB_RUNTIME_DEVICE_NAME = "test device name";
 const USB_RUNTIME_APP_NAME = "TestUsbApp";
 
-/* import-globals-from helper-mocks.js */
-Services.scriptloader.loadSubScript(CHROME_URL_ROOT + "helper-mocks.js", this);
-
 // Test that addons are displayed and updated for USB runtimes when expected.
 add_task(async function() {
   const mocks = new Mocks();
 
-  const { document, tab } = await openAboutDebugging();
+  const { document, tab, window } = await openAboutDebugging();
+  await selectThisFirefoxPage(document, window.AboutDebugging.store);
 
   info("Prepare USB client mock");
   const usbClient = mocks.createUSBRuntime(USB_RUNTIME_ID, {

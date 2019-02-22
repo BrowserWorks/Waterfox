@@ -363,10 +363,11 @@ services.sync:
   sync_login_state_transitions:
     bug_numbers:
       - 1375635
+      - 1523644
     description: >
       Records transitions between login states of "success", "unverified"
       and "rejected.
-    expires: "68"
+    expires: "72"
     kind: boolean
     keyed: true
     notification_emails:
@@ -423,6 +424,30 @@ security:
     release_channel_collection: opt-out
     record_in_processes:
       - main
+  intermediate_preloading_num_preloaded:
+    bug_numbers:
+      - 1519273
+    description: >
+      Number of intermediate certificates pre-loaded.
+    expires: "70"
+    kind: uint
+    notification_emails:
+      - seceng-telemetry@mozilla.com
+      - jjones@mozilla.com
+    record_in_processes:
+      - main
+  intermediate_preloading_num_pending:
+    bug_numbers:
+      - 1519273
+    description: >
+      Number of intermediate certificates pending pre-load.
+    expires: "70"
+    kind: uint
+    notification_emails:
+      - seceng-telemetry@mozilla.com
+      - jjones@mozilla.com
+    record_in_processes:
+      - main
   client_cert:
     bug_numbers:
       - 1255120
@@ -451,6 +476,32 @@ contentblocking:
     notification_emails:
       - jhofmann@mozilla.com
       - pdol@mozilla.com
+      - seceng-telemetry@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+  cryptomining_blocking_enabled:
+    bug_numbers:
+      - 1522919
+    description: >
+      True if cryptominer blocking is enabled globally at startup.
+    expires: never
+    kind: boolean
+    notification_emails:
+      - aedelstein@mozilla.com
+      - seceng-telemetry@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+  fingerprinting_blocking_enabled:
+    bug_numbers:
+      - 1522919
+    description: >
+      True if fingerprinter blocking is enabled globally at startup.
+    expires: never
+    kind: boolean
+    notification_emails:
+      - aedelstein@mozilla.com
       - seceng-telemetry@mozilla.com
     release_channel_collection: opt-out
     record_in_processes:
@@ -1805,6 +1856,20 @@ telemetry:
     release_channel_collection: opt-out
     record_in_processes:
       - 'main'
+
+  process_creation_timestamp_inconsistent:
+    bug_numbers:
+      - 1514392
+    description: >
+      The number of times ProcessCreation saw an inconsistent value.
+    expires: "72"
+    kind: uint
+    notification_emails:
+      - jrediger@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+      - 'content'
 
 telemetry.discarded:
   accumulations:

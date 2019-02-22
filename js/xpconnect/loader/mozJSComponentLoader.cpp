@@ -30,7 +30,6 @@
 #include "mozJSComponentLoader.h"
 #include "mozJSLoaderUtils.h"
 #include "nsIXPConnect.h"
-#include "nsIObserverService.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIFileURL.h"
 #include "nsIJARURI.h"
@@ -65,9 +64,6 @@ using namespace mozilla::scache;
 using namespace mozilla::loader;
 using namespace xpc;
 using namespace JS;
-
-static const char kObserverServiceContractID[] =
-    "@mozilla.org/observer-service;1";
 
 #define JS_CACHE_PREFIX(aType) "jsloader/" aType
 
@@ -297,7 +293,7 @@ static nsresult ReportOnCallerUTF8(JSCLContextHelper& helper,
 mozJSComponentLoader::~mozJSComponentLoader() {
   if (mInitialized) {
     NS_ERROR(
-        "'xpcom-shutdown-loaders' was not fired before cleaning up "
+        "UnloadModules() was not explicitly called before cleaning up "
         "mozJSComponentLoader");
     UnloadModules();
   }
@@ -306,8 +302,6 @@ mozJSComponentLoader::~mozJSComponentLoader() {
 }
 
 StaticRefPtr<mozJSComponentLoader> mozJSComponentLoader::sSelf;
-
-NS_IMPL_ISUPPORTS(mozJSComponentLoader, nsIObserver)
 
 nsresult mozJSComponentLoader::ReallyInit() {
   MOZ_ASSERT(!mInitialized);
@@ -322,14 +316,6 @@ nsresult mozJSComponentLoader::ReallyInit() {
   } else {
     mShareLoaderGlobal = Preferences::GetBool("jsloader.shareGlobal");
   }
-
-  nsresult rv;
-  nsCOMPtr<nsIObserverService> obsSvc =
-      do_GetService(kObserverServiceContractID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = obsSvc->AddObserver(this, "xpcom-shutdown-loaders", false);
-  NS_ENSURE_SUCCESS(rv, rv);
 
   mInitialized = true;
 
@@ -409,6 +395,8 @@ const mozilla::Module* mozJSComponentLoader::LoadModule(FileLocation& aFile) {
     }
   }
 
+  AUTO_PROFILER_TEXT_MARKER_CAUSE("JS XPCOM", spec, JS,
+                                  profiler_get_backtrace());
   AUTO_PROFILER_LABEL_DYNAMIC_NSCSTRING("mozJSComponentLoader::LoadModule",
                                         OTHER, spec);
 
@@ -536,6 +524,12 @@ void mozJSComponentLoader::FindTargetObject(JSContext* aCx,
 void mozJSComponentLoader::InitStatics() {
   MOZ_ASSERT(!sSelf);
   sSelf = new mozJSComponentLoader();
+}
+
+void mozJSComponentLoader::Unload() {
+  if (sSelf) {
+    sSelf->UnloadModules();
+  }
 }
 
 void mozJSComponentLoader::Shutdown() {
@@ -747,8 +741,8 @@ static mozilla::Result<nsCString, nsresult> ReadScript(
   MOZ_TRY(aInfo.EnsureScriptChannel());
 
   nsCOMPtr<nsIInputStream> scriptStream;
-  MOZ_TRY(NS_MaybeOpenChannelUsingOpen2(aInfo.ScriptChannel(),
-                                        getter_AddRefs(scriptStream)));
+  MOZ_TRY(NS_MaybeOpenChannelUsingOpen(aInfo.ScriptChannel(),
+                                       getter_AddRefs(scriptStream)));
 
   uint64_t len64;
   uint32_t bytesRead;
@@ -1276,8 +1270,9 @@ nsresult mozJSComponentLoader::Import(JSContext* aCx,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  AUTO_PROFILER_LABEL_DYNAMIC_NSCSTRING("mozJSComponentLoader::Import", JS,
-                                        aLocation);
+  AUTO_PROFILER_TEXT_MARKER_CAUSE("ChromeUtils.import", aLocation, JS,
+                                  profiler_get_backtrace());
+
   ComponentLoaderInfo info(aLocation);
 
   rv = info.EnsureKey();
@@ -1402,18 +1397,6 @@ nsresult mozJSComponentLoader::Unload(const nsACString& aLocation) {
 
   // If this is the last module to be unloaded, we will leak mLoaderGlobal
   // until UnloadModules is called. So be it.
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-mozJSComponentLoader::Observe(nsISupports* subject, const char* topic,
-                              const char16_t* data) {
-  if (!strcmp(topic, "xpcom-shutdown-loaders")) {
-    UnloadModules();
-  } else {
-    NS_ERROR("Unexpected observer topic.");
-  }
 
   return NS_OK;
 }

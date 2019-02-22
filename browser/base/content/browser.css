@@ -253,19 +253,13 @@ panelview[mainview] > .panel-header {
   z-index: 2;
 }
 
-/* The next 3 rules allow dragging tabs slightly outside of the tabstrip
- * to make it easier to drag tabs. */
-#navigator-toolbox[movingtab] > #titlebar > #TabsToolbar {
-  padding-bottom: 15px;
-}
-
-#navigator-toolbox[movingtab] #tabbrowser-tabs {
+/* Make it easier to drag tabs by expanding the drag area downwards. */
+#tabbrowser-tabs[movingtab] {
   padding-bottom: 15px;
   margin-bottom: -15px;
 }
 
 #navigator-toolbox[movingtab] > #nav-bar {
-  margin-top: -15px;
   pointer-events: none;
 }
 
@@ -784,7 +778,7 @@ html|input.urlbar-input {
   display: none;
 }
 
-#identity-box {
+#nav-bar:not([keyNav=true]) #identity-box {
   -moz-user-focus: normal;
 }
 
@@ -987,7 +981,7 @@ html|*#fullscreen-exit-button {
 
 /* notification anchors should only be visible when their associated
    notifications are */
-.notification-anchor-icon {
+#nav-bar:not([keyNav=true]) .notification-anchor-icon {
   -moz-user-focus: normal;
 }
 
@@ -1431,6 +1425,10 @@ toolbarpaletteitem > toolbaritem {
   #sidebar-box[sidebarcommand$="-sidebar-action"] > #sidebar-header > #sidebar-switcher-target > #sidebar-icon {
     list-style-image: var(--webextension-menuitem-image-2x, inherit);
   }
+}
+
+toolbar[keyNav=true]:not([collapsed=true]):not([customizing=true]) toolbartabstop {
+  -moz-user-focus: normal;
 }
 
 %include theme-vars.inc.css

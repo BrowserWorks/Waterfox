@@ -138,6 +138,7 @@
 #  include "jit/mips64/Assembler-mips64.h"
 #endif
 
+#include "wasm/WasmGC.h"
 #include "wasm/WasmGenerator.h"
 #include "wasm/WasmInstance.h"
 #include "wasm/WasmOpIter.h"
@@ -949,11 +950,11 @@ using ScratchI8 = ScratchI32;
 
 // The stack frame.
 //
-// The frame has four parts ("below" means at lower addresses):
+// The stack frame has four parts ("below" means at lower addresses):
 //
-//  - the Header, comprising the Frame and DebugFrame elements;
-//  - the Local area, allocated below the header with various forms of
-//    alignment;
+//  - the Frame element;
+//  - the Local area, including the DebugFrame element; allocated below the
+//    header with various forms of alignment;
 //  - the Dynamic area, comprising the temporary storage the compiler uses for
 //    register spilling, allocated below the Local area;
 //  - the Arguments area, comprising memory allocated for outgoing calls,
@@ -962,33 +963,31 @@ using ScratchI8 = ScratchI32;
 //                 +============================+
 //                 |    Incoming arg            |
 //                 |    ...                     |
-//                 +----------------------------+
-//                 |    unspecified             |
 // --------------  +============================+
-//  ^              |    Frame (fixed size)      |
-// fixedSize       +----------------------------+ <------------------ FP
-//  |              |    DebugFrame (optional)   |               ^^
-//  |    --------  +============================+ ---------     ||
-//  |       ^      |    Local (static size)     |    ^          ||
-//  | localSize    |    ...                     |    |        framePushed
-//  v       v      |    (padding)               |    |          ||
-// --------------  +============================+ stackHeight   ||
-//          ^      |    Dynamic (variable)      |    |          ||
-//   dynamicSize   |    ...                     |    |          ||
-//          v      |    ...                     |    v          ||
-// --------------  |    (free space, sometimes) | ---------     v|
+//                 |    Frame (fixed size)      |
+// --------------  +============================+ <-------------------- FP
+//          ^      |    DebugFrame (optional)   |    ^                ^^
+//          |      +----------------------------+    |                ||
+//    localSize    |    Local (static size)     |    |                ||
+//          |      |    ...                     |    |        framePushed
+//          v      |    (padding)               |    |                ||
+// --------------  +============================+ currentStackHeight  ||
+//          ^      |    Dynamic (variable size) |    |                ||
+//   dynamicSize   |    ...                     |    |                ||
+//          v      |    ...                     |    v                ||
+// --------------  |    (free space, sometimes) | ---------           v|
 //                 +============================+ <----- SP not-during calls
-//                 |    Arguments (sometimes)   |                |
-//                 |    ...                     |                v
+//                 |    Arguments (sometimes)   |                      |
+//                 |    ...                     |                      v
 //                 +============================+ <----- SP during calls
 //
-// The Header is addressed off the stack pointer.  masm.framePushed() is always
+// The Frame is addressed off the stack pointer.  masm.framePushed() is always
 // correct, and masm.getStackPointer() + masm.framePushed() always addresses the
 // Frame, with the DebugFrame optionally below it.
 //
-// The Local area is laid out by BaseLocalIter and is allocated and deallocated
-// by standard prologue and epilogue functions that manipulate the stack
-// pointer, but it is accessed via BaseStackFrame.
+// The Local area (including the DebugFrame) is laid out by BaseLocalIter and is
+// allocated and deallocated by standard prologue and epilogue functions that
+// manipulate the stack pointer, but it is accessed via BaseStackFrame.
 //
 // The Dynamic area is maintained by and accessed via BaseStackFrame.  On some
 // systems (such as ARM64), the Dynamic memory may be allocated in chunks
@@ -1036,7 +1035,7 @@ void BaseLocalIter::settle() {
       case MIRType::Int64:
       case MIRType::Double:
       case MIRType::Float32:
-      case MIRType::Pointer:
+      case MIRType::RefOrNull:
         if (argsIter_->argInRegister()) {
           frameOffset_ = pushLocal(MIRTypeToSize(mirType_));
         } else {
@@ -1147,11 +1146,14 @@ class BaseStackFrameAllocator {
   static constexpr uint32_t ChunkSize = 8 * sizeof(void*);
   static constexpr uint32_t InitialChunk = ChunkSize;
 
-  // The current logical height of the frame, ie the sum of space for the
-  // Local and Dynamic areas.  The allocated size of the frame -- provided by
-  // masm.framePushed() -- is usually larger than currentStackHeight_, notably
-  // at the beginning of execution when we've allocated InitialChunk extra
-  // space.
+  // The current logical height of the frame is
+  //   currentStackHeight_ = localSize_ + dynamicSize
+  // where dynamicSize is not accounted for explicitly and localSize_ also
+  // includes size for the DebugFrame.
+  //
+  // The allocated size of the frame, provided by masm.framePushed(), is usually
+  // larger than currentStackHeight_, notably at the beginning of execution when
+  // we've allocated InitialChunk extra space.
 
   uint32_t currentStackHeight_;
 #endif
@@ -1205,9 +1207,10 @@ class BaseStackFrameAllocator {
  public:
   // The fixed amount of memory, in bytes, allocated on the stack below the
   // Header for purposes such as locals and other fixed values.  Includes all
-  // necessary alignment.
+  // necessary alignment, and on ARM64 also the initial chunk for the working
+  // stack memory.
 
-  uint32_t fixedSize() const {
+  uint32_t fixedAllocSize() const {
     MOZ_ASSERT(localSize_ != UINT32_MAX);
 #ifdef RABALDR_CHUNKY_STACK
     return localSize_ + InitialChunk;
@@ -1215,6 +1218,19 @@ class BaseStackFrameAllocator {
     return localSize_;
 #endif
   }
+
+#ifdef RABALDR_CHUNKY_STACK
+  // The allocated frame size is frequently larger than the logical stack
+  // height; we round up to a chunk boundary, and special case the initial
+  // chunk.
+  uint32_t framePushedForHeight(uint32_t logicalHeight) {
+    if (logicalHeight <= fixedAllocSize()) {
+      return fixedAllocSize();
+    }
+    return fixedAllocSize() +
+           AlignBytes(logicalHeight - fixedAllocSize(), ChunkSize);
+  }
+#endif
 
  protected:
   //////////////////////////////////////////////////////////////////////
@@ -1240,17 +1256,18 @@ class BaseStackFrameAllocator {
   void popChunkyBytes(uint32_t bytes) {
     checkChunkyInvariants();
     currentStackHeight_ -= bytes;
-    // Sometimes, popChunkyBytes() is used to pop a larger area, as when we
-    // drop values consumed by a call, and we may need to drop several
-    // chunks.  But never drop the initial chunk.
-    if (masm.framePushed() - currentStackHeight_ >= ChunkSize) {
-      uint32_t target =
-          Max(fixedSize(), AlignBytes(currentStackHeight_, ChunkSize));
-      uint32_t amount = masm.framePushed() - target;
-      if (amount) {
-        masm.freeStack(amount);
+    // Sometimes, popChunkyBytes() is used to pop a larger area, as when we drop
+    // values consumed by a call, and we may need to drop several chunks.  But
+    // never drop the initial chunk.  Crucially, the amount we drop is always an
+    // integral number of chunks.
+    uint32_t freeSpace = masm.framePushed() - currentStackHeight_;
+    if (freeSpace >= ChunkSize) {
+      uint32_t targetAllocSize = framePushedForHeight(currentStackHeight_);
+      uint32_t amountToFree = masm.framePushed() - targetAllocSize;
+      MOZ_ASSERT(amountToFree % ChunkSize == 0);
+      if (amountToFree) {
+        masm.freeStack(amountToFree);
       }
-      MOZ_ASSERT(masm.framePushed() >= fixedSize());
     }
     checkChunkyInvariants();
   }
@@ -1267,9 +1284,11 @@ class BaseStackFrameAllocator {
  private:
 #ifdef RABALDR_CHUNKY_STACK
   void checkChunkyInvariants() {
+    MOZ_ASSERT(masm.framePushed() >= fixedAllocSize());
     MOZ_ASSERT(masm.framePushed() >= currentStackHeight_);
-    MOZ_ASSERT(masm.framePushed() == fixedSize() ||
+    MOZ_ASSERT(masm.framePushed() == fixedAllocSize() ||
                masm.framePushed() - currentStackHeight_ < ChunkSize);
+    MOZ_ASSERT((masm.framePushed() - localSize_) % ChunkSize == 0);
   }
 #endif
 
@@ -1278,12 +1297,8 @@ class BaseStackFrameAllocator {
 
   uint32_t framePushedForHeight(StackHeight stackHeight) {
 #ifdef RABALDR_CHUNKY_STACK
-    // The allocated frame size is frequently larger than the stack height;
-    // we round up to a chunk boundary, and special case the initial chunk.
-    return stackHeight.height <= fixedSize()
-               ? fixedSize()
-               : fixedSize() +
-                     AlignBytes(stackHeight.height - fixedSize(), ChunkSize);
+    // A more complicated adjustment is needed.
+    return framePushedForHeight(stackHeight.height);
 #else
     // The allocated frame size equals the stack height.
     return stackHeight.height;
@@ -2078,39 +2093,45 @@ struct StackMapGenerator {
   // --- These are constant once we've completed beginFunction() ---
 
   // The number of words of arguments passed to this function in memory.
-  size_t numStackArgWords_;
+  size_t numStackArgWords;
 
-  MachineStackTracker mst_;  // tracks machine stack pointerness
+  MachineStackTracker machineStackTracker;  // tracks machine stack pointerness
 
   // This holds masm.framePushed at entry to the function's body.  It is a
   // Maybe because createStackMap needs to know whether or not we're still
   // in the prologue.  It makes a Nothing-to-Some transition just once per
   // function.
-  Maybe<uint32_t> framePushedAtEntryToBody_;
+  Maybe<uint32_t> framePushedAtEntryToBody;
 
   // --- These can change at any point ---
 
-  // This holds masm.framePushed immediately before we move the stack
-  // pointer down so as to reserve space, in a function call, for arguments
-  // passed in memory.  To be more precise: this holds the value
-  // masm.framePushed would have had after moving the stack pointer over any
-  // alignment padding pushed before the arguments proper, but before the
-  // downward movement of the stack pointer that allocates space for the
-  // arguments proper.
+  // This holds masm.framePushed at it would be be for a function call
+  // instruction, but excluding the stack area used to pass arguments in
+  // memory.  That is, for an upcoming function call, this will hold
+  //
+  //   masm.framePushed() at the call instruction -
+  //      StackArgAreaSizeUnaligned(argumentTypes)
+  //
+  // This value denotes the lowest-addressed stack word covered by the current
+  // function's stackmap.  Words below this point form the highest-addressed
+  // area of the callee's stackmap.  Note that all alignment padding above the
+  // arguments-in-memory themselves belongs to the caller's stack map, which
+  // is why this is defined in terms of StackArgAreaSizeUnaligned() rather than
+  // StackArgAreaSizeAligned().
   //
   // When not inside a function call setup/teardown sequence, it is Nothing.
   // It can make Nothing-to/from-Some transitions arbitrarily as we progress
   // through the function body.
-  Maybe<uint32_t> framePushedBeforePushingCallArgs_;
+  Maybe<uint32_t> framePushedExcludingOutboundCallArgs;
 
   // The number of memory-resident, ref-typed entries on the containing
   // BaseCompiler::stk_.
-  size_t memRefsOnStk_;
+  size_t memRefsOnStk;
 
-  // This is a copy of mst_ that is used only within individual calls to
-  // createStackMap.  It is here only to avoid possible heap allocation costs
-  // resulting from making it local to createStackMap().
-  MachineStackTracker augmentedMst_;
+  // This is a copy of machineStackTracker that is used only within individual
+  // calls to createStackMap. It is here only to avoid possible heap allocation
+  // costs resulting from making it local to createStackMap().
+  MachineStackTracker augmentedMst;
 
   StackMapGenerator(StackMaps* stackMaps, const MachineState& trapExitLayout,
                     const size_t trapExitLayoutNumWords,
@@ -2119,7 +2140,8 @@ struct StackMapGenerator {
         trapExitLayoutNumWords_(trapExitLayoutNumWords),
         stackMaps_(stackMaps),
         masm_(masm),
-        memRefsOnStk_(0) {}
+        numStackArgWords(0),
+        memRefsOnStk(0) {}
 
   // At the beginning of a function, we may have live roots in registers (as
   // arguments) at the point where we perform a stack overflow check.  This
@@ -2145,7 +2167,7 @@ struct StackMapGenerator {
     }
 
     for (ABIArgIter<const ValTypeVector> i(args); !i.done(); i++) {
-      if (!i->argInRegister() || i.mirType() != MIRType::Pointer) {
+      if (!i->argInRegister() || i.mirType() != MIRType::RefOrNull) {
         continue;
       }
 
@@ -2178,7 +2200,7 @@ struct StackMapGenerator {
                                    uint32_t assemblerOffset,
                                    HasRefTypedDebugFrame refDebugFrame,
                                    const StkVector& stk) {
-    size_t countedPointers = mst_.numPtrs() + memRefsOnStk_;
+    size_t countedPointers = machineStackTracker.numPtrs() + memRefsOnStk;
 #ifndef DEBUG
     // An important optimization.  If there are obviously no pointers, as
     // we expect in the majority of cases, exit quickly.
@@ -2198,10 +2220,10 @@ struct StackMapGenerator {
 #endif
 
     // Start with the frame-setup map, and add operand-stack information to
-    // that.  augmentedMst_ holds live data only within individual calls to
+    // that.  augmentedMst holds live data only within individual calls to
     // createStackMap.
-    augmentedMst_.clear();
-    if (!mst_.cloneTo(&augmentedMst_)) {
+    augmentedMst.clear();
+    if (!machineStackTracker.cloneTo(&augmentedMst)) {
       return false;
     }
 
@@ -2213,24 +2235,31 @@ struct StackMapGenerator {
     // upcoming function call, since those words "belong" to the stackmap of
     // the callee, not to the stackmap of this function.  Note however that
     // any alignment padding pushed prior to pushing the args *does* belong to
-    // this function.  That padding is taken into account at the point where
-    // framePushedBeforePushingCallArgs_ is set.
+    // this function.
+    //
+    // That padding is taken into account at the point where
+    // framePushedExcludingOutboundCallArgs is set, viz, in startCallArgs(),
+    // and comprises two components:
+    //
+    // * call->frameAlignAdjustment
+    // * the padding applied to the stack arg area itself.  That is:
+    //   StackArgAreaSize(argTys) - StackArgAreaSizeUnpadded(argTys)
     Maybe<uint32_t> framePushedExcludingArgs;
-    if (framePushedAtEntryToBody_.isNothing()) {
+    if (framePushedAtEntryToBody.isNothing()) {
       // Still in the prologue.  framePushedExcludingArgs remains Nothing.
-      MOZ_ASSERT(framePushedBeforePushingCallArgs_.isNothing());
+      MOZ_ASSERT(framePushedExcludingOutboundCallArgs.isNothing());
     } else {
       // In the body.
-      MOZ_ASSERT(masm_.framePushed() >= framePushedAtEntryToBody_.value());
-      if (framePushedBeforePushingCallArgs_.isSome()) {
+      MOZ_ASSERT(masm_.framePushed() >= framePushedAtEntryToBody.value());
+      if (framePushedExcludingOutboundCallArgs.isSome()) {
         // In the body, and we've potentially pushed some args onto the stack.
         // We must ignore them when sizing the stackmap.
         MOZ_ASSERT(masm_.framePushed() >=
-                   framePushedBeforePushingCallArgs_.value());
-        MOZ_ASSERT(framePushedBeforePushingCallArgs_.value() >=
-                   framePushedAtEntryToBody_.value());
+                   framePushedExcludingOutboundCallArgs.value());
+        MOZ_ASSERT(framePushedExcludingOutboundCallArgs.value() >=
+                   framePushedAtEntryToBody.value());
         framePushedExcludingArgs =
-            Some(framePushedBeforePushingCallArgs_.value());
+            Some(framePushedExcludingOutboundCallArgs.value());
       } else {
         // In the body, but not with call args on the stack.  The stackmap
         // must be sized so as to extend all the way "down" to
@@ -2241,16 +2270,16 @@ struct StackMapGenerator {
 
     if (framePushedExcludingArgs.isSome()) {
       uint32_t bodyPushedBytes =
-          framePushedExcludingArgs.value() - framePushedAtEntryToBody_.value();
+          framePushedExcludingArgs.value() - framePushedAtEntryToBody.value();
       MOZ_ASSERT(0 == bodyPushedBytes % sizeof(void*));
-      if (!augmentedMst_.pushNonGCPointers(bodyPushedBytes / sizeof(void*))) {
+      if (!augmentedMst.pushNonGCPointers(bodyPushedBytes / sizeof(void*))) {
         return false;
       }
     }
 
     // Scan the operand stack, marking pointers in the just-added new
     // section.
-    MOZ_ASSERT_IF(framePushedAtEntryToBody_.isNothing(), stk.empty());
+    MOZ_ASSERT_IF(framePushedAtEntryToBody.isNothing(), stk.empty());
     MOZ_ASSERT_IF(framePushedExcludingArgs.isNothing(), stk.empty());
 
     for (const Stk& v : stk) {
@@ -2283,7 +2312,7 @@ struct StackMapGenerator {
           // These also have uninteresting type.  Check that they live in the
           // section of stack set up by beginFunction().  The unguarded use of
           // |value()| here is safe due to the assertion above this loop.
-          MOZ_ASSERT(v.offs() <= framePushedAtEntryToBody_.value());
+          MOZ_ASSERT(v.offs() <= framePushedAtEntryToBody.value());
           continue;
         case Stk::RegisterI32:
         case Stk::RegisterI64:
@@ -2300,8 +2329,9 @@ struct StackMapGenerator {
           break;
         case Stk::LocalRef:
           // We need the stackmap to mention this pointer, but it should
-          // already be in the mst_ section created by beginFunction().
-          MOZ_ASSERT(v.offs() <= framePushedAtEntryToBody_.value());
+          // already be in the machineStackTracker section created by
+          // beginFunction().
+          MOZ_ASSERT(v.offs() <= framePushedAtEntryToBody.value());
           continue;
         case Stk::ConstRef:
           // This can currently only be a null pointer.
@@ -2320,13 +2350,13 @@ struct StackMapGenerator {
       MOZ_ASSERT(v.offs() <= framePushedExcludingArgs.value());
       uint32_t offsFromMapLowest = framePushedExcludingArgs.value() - v.offs();
       MOZ_ASSERT(0 == offsFromMapLowest % sizeof(void*));
-      augmentedMst_.setGCPointer(offsFromMapLowest / sizeof(void*));
+      augmentedMst.setGCPointer(offsFromMapLowest / sizeof(void*));
     }
 
     // Create the final StackMap.  The initial map is zeroed out, so there's
     // no need to write zero bits in it.
     const uint32_t extraWords = extras.length();
-    const uint32_t augmentedMstWords = augmentedMst_.length();
+    const uint32_t augmentedMstWords = augmentedMst.length();
     const uint32_t numMappedWords = extraWords + augmentedMstWords;
     StackMap* stackMap = StackMap::create(numMappedWords);
     if (!stackMap) {
@@ -2345,7 +2375,7 @@ struct StackMapGenerator {
     }
     // Followed by the "main" part of the map.
     for (uint32_t i = 0; i < augmentedMstWords; i++) {
-      if (augmentedMst_.isGCPointer(i)) {
+      if (augmentedMst.isGCPointer(i)) {
         stackMap->setBit(numMappedWords - 1 - i);
       }
     }
@@ -2355,7 +2385,7 @@ struct StackMapGenerator {
     // Record in the map, how far down from the highest address the Frame* is.
     // Take the opportunity to check that we haven't marked any part of the
     // Frame itself as a pointer.
-    stackMap->setFrameOffsetFromTop(numStackArgWords_ +
+    stackMap->setFrameOffsetFromTop(numStackArgWords +
                                     sizeof(Frame) / sizeof(void*));
 #ifdef DEBUG
     for (uint32_t i = 0; i < sizeof(Frame) / sizeof(void*); i++) {
@@ -2520,10 +2550,10 @@ class BaseCompiler final : public BaseCompilerInterface {
   MIRTypeVector SigPI_;
   MIRTypeVector SigPL_;
   MIRTypeVector SigPII_;
-  MIRTypeVector SigPIPI_;
+  MIRTypeVector SigPIRI_;
   MIRTypeVector SigPIII_;
   MIRTypeVector SigPIIL_;
-  MIRTypeVector SigPIIP_;
+  MIRTypeVector SigPIIR_;
   MIRTypeVector SigPILL_;
   MIRTypeVector SigPIIII_;
   MIRTypeVector SigPIIIII_;
@@ -2542,7 +2572,7 @@ class BaseCompiler final : public BaseCompilerInterface {
   BaseRegAlloc ra;       // Ditto
   BaseStackFrame fr;
 
-  StackMapGenerator smgen_;
+  StackMapGenerator stackMapGenerator_;
 
   BaseStackFrame::LocalVector localInfo_;
   Vector<OutOfLineCode*, 8, SystemAllocPolicy> outOfLine_;
@@ -2884,7 +2914,7 @@ class BaseCompiler final : public BaseCompilerInterface {
   template <typename T>
   void push(T item) {
     // None of the single-arg Stk constructors create a Stk::MemRef, so
-    // there's no need to increment smgen_.memRefsOnStk_ here.
+    // there's no need to increment stackMapGenerator_.memRefsOnStk here.
     stk_.infallibleEmplaceBack(Stk(item));
   }
 
@@ -2931,7 +2961,7 @@ class BaseCompiler final : public BaseCompilerInterface {
   }
 
   void loadLocalRef(const Stk& src, RegPtr dest) {
-    fr.loadLocalPtr(localFromSlot(src.slot(), MIRType::Pointer), dest);
+    fr.loadLocalPtr(localFromSlot(src.slot(), MIRType::RefOrNull), dest);
   }
 
   void loadRegisterRef(const Stk& src, RegPtr dest) {
@@ -3217,14 +3247,14 @@ class BaseCompiler final : public BaseCompilerInterface {
           loadLocalRef(v, scratch);
           uint32_t offs = fr.pushPtr(scratch);
           v.setOffs(Stk::MemRef, offs);
-          smgen_.memRefsOnStk_++;
+          stackMapGenerator_.memRefsOnStk++;
           break;
         }
         case Stk::RegisterRef: {
           uint32_t offs = fr.pushPtr(v.refReg());
           freeRef(v.refReg());
           v.setOffs(Stk::MemRef, offs);
-          smgen_.memRefsOnStk_++;
+          stackMapGenerator_.memRefsOnStk++;
           break;
         }
         default: { break; }
@@ -3242,16 +3272,17 @@ class BaseCompiler final : public BaseCompilerInterface {
   // Create a vanilla stack map.
   MOZ_MUST_USE bool createStackMap(const char* who) {
     const ExitStubMapVector noExtras;
-    return smgen_.createStackMap(who, noExtras, masm.currentOffset(),
-                                 HasRefTypedDebugFrame::No, stk_);
+    return stackMapGenerator_.createStackMap(
+        who, noExtras, masm.currentOffset(), HasRefTypedDebugFrame::No, stk_);
   }
 
   // Create a stack map as vanilla, but for a custom assembler offset.
   MOZ_MUST_USE bool createStackMap(const char* who,
                                    CodeOffset assemblerOffset) {
     const ExitStubMapVector noExtras;
-    return smgen_.createStackMap(who, noExtras, assemblerOffset.offset(),
-                                 HasRefTypedDebugFrame::No, stk_);
+    return stackMapGenerator_.createStackMap(who, noExtras,
+                                             assemblerOffset.offset(),
+                                             HasRefTypedDebugFrame::No, stk_);
   }
 
   // Create a stack map as vanilla, and note the presence of a ref-typed
@@ -3259,8 +3290,8 @@ class BaseCompiler final : public BaseCompilerInterface {
   MOZ_MUST_USE bool createStackMap(const char* who,
                                    HasRefTypedDebugFrame refDebugFrame) {
     const ExitStubMapVector noExtras;
-    return smgen_.createStackMap(who, noExtras, masm.currentOffset(),
-                                 refDebugFrame, stk_);
+    return stackMapGenerator_.createStackMap(
+        who, noExtras, masm.currentOffset(), refDebugFrame, stk_);
   }
 
   // The most general stack map construction.
@@ -3268,8 +3299,8 @@ class BaseCompiler final : public BaseCompilerInterface {
                                    const ExitStubMapVector& extras,
                                    uint32_t assemblerOffset,
                                    HasRefTypedDebugFrame refDebugFrame) {
-    return smgen_.createStackMap(who, extras, assemblerOffset, refDebugFrame,
-                                 stk_);
+    return stackMapGenerator_.createStackMap(who, extras, assemblerOffset,
+                                             refDebugFrame, stk_);
   }
 
   // This is an optimization used to avoid calling sync() for
@@ -3509,7 +3540,7 @@ class BaseCompiler final : public BaseCompilerInterface {
 
     stk_.popBack();
     if (v.kind() == Stk::MemRef) {
-      smgen_.memRefsOnStk_--;
+      stackMapGenerator_.memRefsOnStk--;
     }
     return specific;
   }
@@ -3524,7 +3555,7 @@ class BaseCompiler final : public BaseCompilerInterface {
     }
     stk_.popBack();
     if (v.kind() == Stk::MemRef) {
-      smgen_.memRefsOnStk_--;
+      stackMapGenerator_.memRefsOnStk--;
     }
     return r;
   }
@@ -3902,7 +3933,7 @@ class BaseCompiler final : public BaseCompilerInterface {
           freeRef(v.refReg());
           break;
         case Stk::MemRef:
-          smgen_.memRefsOnStk_--;
+          stackMapGenerator_.memRefsOnStk--;
           break;
         default:
           break;
@@ -4035,32 +4066,32 @@ class BaseCompiler final : public BaseCompilerInterface {
 
     // Make a start on the stack map for this function.  Inspect the args so
     // as to determine which of them are both in-memory and pointer-typed, and
-    // add entries to mst_ as appropriate.
+    // add entries to machineStackTracker as appropriate.
 
     const ValTypeVector& argTys = env_.funcTypes[func_.index]->args();
 
-    size_t nStackArgBytes = stackArgAreaSize(argTys);
-    MOZ_ASSERT(nStackArgBytes % sizeof(void*) == 0);
-    smgen_.numStackArgWords_ = nStackArgBytes / sizeof(void*);
+    size_t nInboundStackArgBytes = StackArgAreaSizeUnaligned(argTys);
+    MOZ_ASSERT(nInboundStackArgBytes % sizeof(void*) == 0);
+    stackMapGenerator_.numStackArgWords = nInboundStackArgBytes / sizeof(void*);
 
-    MOZ_ASSERT(smgen_.mst_.length() == 0);
-    if (!smgen_.mst_.pushNonGCPointers(smgen_.numStackArgWords_)) {
+    MOZ_ASSERT(stackMapGenerator_.machineStackTracker.length() == 0);
+    if (!stackMapGenerator_.machineStackTracker.pushNonGCPointers(
+            stackMapGenerator_.numStackArgWords)) {
       return false;
     }
 
     for (ABIArgIter<const ValTypeVector> i(argTys); !i.done(); i++) {
       ABIArg argLoc = *i;
-      if (argLoc.kind() != ABIArg::Stack) {
-        continue;
-      }
       const ValType& ty = argTys[i.index()];
-      if (!ty.isReference()) {
+      MOZ_ASSERT(ToMIRType(ty) != MIRType::Pointer);
+      if (argLoc.kind() != ABIArg::Stack || !ty.isReference()) {
         continue;
       }
       uint32_t offset = argLoc.offsetFromArgBase();
-      MOZ_ASSERT(offset < nStackArgBytes);
+      MOZ_ASSERT(offset < nInboundStackArgBytes);
       MOZ_ASSERT(offset % sizeof(void*) == 0);
-      smgen_.mst_.setGCPointer(offset / sizeof(void*));
+      stackMapGenerator_.machineStackTracker.setGCPointer(offset /
+                                                          sizeof(void*));
     }
 
     GenerateFunctionPrologue(
@@ -4070,7 +4101,8 @@ class BaseCompiler final : public BaseCompilerInterface {
 
     // GenerateFunctionPrologue pushes exactly one wasm::Frame's worth of
     // stuff, and none of the values are GC pointers.  Hence:
-    if (!smgen_.mst_.pushNonGCPointers(sizeof(Frame) / sizeof(void*))) {
+    if (!stackMapGenerator_.machineStackTracker.pushNonGCPointers(
+            sizeof(Frame) / sizeof(void*))) {
       return false;
     }
 
@@ -4083,8 +4115,8 @@ class BaseCompiler final : public BaseCompilerInterface {
                     "aligned");
 #endif
       masm.reserveStack(DebugFrame::offsetOfFrame());
-      if (!smgen_.mst_.pushNonGCPointers(DebugFrame::offsetOfFrame() /
-                                         sizeof(void*))) {
+      if (!stackMapGenerator_.machineStackTracker.pushNonGCPointers(
+              DebugFrame::offsetOfFrame() / sizeof(void*))) {
         return false;
       }
 
@@ -4115,7 +4147,7 @@ class BaseCompiler final : public BaseCompilerInterface {
 
     const ValTypeVector& args = funcType().args();
     ExitStubMapVector extras;
-    if (!smgen_.generateStackmapEntriesForTrapExit(args, extras)) {
+    if (!stackMapGenerator_.generateStackmapEntriesForTrapExit(args, extras)) {
       return false;
     }
     if (!createStackMap("stack check", extras, masm.currentOffset(),
@@ -4123,12 +4155,13 @@ class BaseCompiler final : public BaseCompilerInterface {
       return false;
     }
 
-    size_t reservedBytes = fr.fixedSize() - masm.framePushed();
+    size_t reservedBytes = fr.fixedAllocSize() - masm.framePushed();
     MOZ_ASSERT(0 == (reservedBytes % sizeof(void*)));
 
     masm.reserveStack(reservedBytes);
     fr.onFixedStackAllocated();
-    if (!smgen_.mst_.pushNonGCPointers(reservedBytes / sizeof(void*))) {
+    if (!stackMapGenerator_.machineStackTracker.pushNonGCPointers(
+            reservedBytes / sizeof(void*))) {
       return false;
     }
 
@@ -4145,11 +4178,12 @@ class BaseCompiler final : public BaseCompilerInterface {
         case MIRType::Int64:
           fr.storeLocalI64(RegI64(i->gpr64()), l);
           break;
-        case MIRType::Pointer: {
+        case MIRType::RefOrNull: {
           uint32_t offs = fr.localOffset(l);
           MOZ_ASSERT(0 == (offs % sizeof(void*)));
           fr.storeLocalPtr(RegPtr(i->gpr()), l);
-          smgen_.mst_.setGCPointer(offs / sizeof(void*));
+          stackMapGenerator_.machineStackTracker.setGCPointer(offs /
+                                                              sizeof(void*));
           break;
         }
         case MIRType::Double:
@@ -4175,8 +4209,8 @@ class BaseCompiler final : public BaseCompilerInterface {
     JitSpew(JitSpew_Codegen,
             "# beginFunction: enter body with masm.framePushed = %u",
             masm.framePushed());
-    MOZ_ASSERT(smgen_.framePushedAtEntryToBody_.isNothing());
-    smgen_.framePushedAtEntryToBody_.emplace(masm.framePushed());
+    MOZ_ASSERT(stackMapGenerator_.framePushedAtEntryToBody.isNothing());
+    stackMapGenerator_.framePushedAtEntryToBody.emplace(masm.framePushed());
 
     return true;
   }
@@ -4284,7 +4318,7 @@ class BaseCompiler final : public BaseCompilerInterface {
       restoreResult();
     }
 
-    GenerateFunctionEpilogue(masm, fr.fixedSize(), &offsets_);
+    GenerateFunctionEpilogue(masm, fr.fixedAllocSize(), &offsets_);
 
 #if defined(JS_ION_PERF)
     // FIXME - profiling code missing.  No bug for this.
@@ -4369,8 +4403,9 @@ class BaseCompiler final : public BaseCompilerInterface {
     size_t adjustment = call.stackArgAreaSize + call.frameAlignAdjustment;
     fr.freeArgAreaAndPopBytes(adjustment, stackSpace);
 
-    MOZ_ASSERT(smgen_.framePushedBeforePushingCallArgs_.isSome());
-    smgen_.framePushedBeforePushingCallArgs_.reset();
+    MOZ_ASSERT(
+        stackMapGenerator_.framePushedExcludingOutboundCallArgs.isSome());
+    stackMapGenerator_.framePushedExcludingOutboundCallArgs.reset();
 
     if (call.isInterModule) {
       masm.loadWasmTlsRegFromFrame();
@@ -4386,32 +4421,26 @@ class BaseCompiler final : public BaseCompilerInterface {
     }
   }
 
-  // TODO / OPTIMIZE (Bug 1316821): This is expensive; let's roll the iterator
-  // walking into the walking done for passArg.  See comments in passArg.
+  void startCallArgs(size_t stackArgAreaSizeUnaligned, FunctionCall* call) {
+    size_t stackArgAreaSizeAligned =
+        AlignStackArgAreaSize(stackArgAreaSizeUnaligned);
+    MOZ_ASSERT(stackArgAreaSizeUnaligned <= stackArgAreaSizeAligned);
 
-  // Note, stackArgAreaSize() must process all the arguments to get the
-  // alignment right; the signature must therefore be the complete call
-  // signature.
-
-  template <class T>
-  size_t stackArgAreaSize(const T& args) {
-    ABIArgIter<const T> i(args);
-    while (!i.done()) {
-      i++;
-    }
-    return AlignBytes(i.stackBytesConsumedSoFar(), 16u);
-  }
-
-  void startCallArgs(size_t stackArgAreaSize, FunctionCall* call) {
     // Record the masm.framePushed() value at this point, before we push args
     // for the call, but including the alignment space placed above the args.
     // This defines the lower limit of the stackmap that will be created for
     // this call.
-    MOZ_ASSERT(smgen_.framePushedBeforePushingCallArgs_.isNothing());
-    smgen_.framePushedBeforePushingCallArgs_.emplace(
-        masm.framePushed() + call->frameAlignAdjustment);
+    MOZ_ASSERT(
+        stackMapGenerator_.framePushedExcludingOutboundCallArgs.isNothing());
+    stackMapGenerator_.framePushedExcludingOutboundCallArgs.emplace(
+        // However much we've pushed so far
+        masm.framePushed() +
+        // Extra space we'll push to get the frame aligned
+        call->frameAlignAdjustment +
+        // Extra space we'll push to get the outbound arg area 16-aligned
+        (stackArgAreaSizeAligned - stackArgAreaSizeUnaligned));
 
-    call->stackArgAreaSize = stackArgAreaSize;
+    call->stackArgAreaSize = stackArgAreaSizeAligned;
 
     size_t adjustment = call->stackArgAreaSize + call->frameAlignAdjustment;
     fr.allocArgArea(adjustment);
@@ -4430,17 +4459,17 @@ class BaseCompiler final : public BaseCompilerInterface {
   //
   // The bulk of the work here (60%) is in the next() call, though.
   //
-  // Notably, since next() is so expensive, stackArgAreaSize() becomes
-  // expensive too.
+  // Notably, since next() is so expensive, StackArgAreaSizeUnaligned()
+  // becomes expensive too.
   //
-  // Somehow there could be a trick here where the sequence of
-  // argument types (read from the input stream) leads to a cached
-  // entry for stackArgAreaSize() and for how to pass arguments...
+  // Somehow there could be a trick here where the sequence of argument types
+  // (read from the input stream) leads to a cached entry for
+  // StackArgAreaSizeUnaligned() and for how to pass arguments...
   //
-  // But at least we could reduce the cost of stackArgAreaSize() by
-  // first reading the argument types into a (reusable) vector, then
-  // we have the outgoing size at low cost, and then we can pass
-  // args based on the info we read.
+  // But at least we could reduce the cost of StackArgAreaSizeUnaligned() by
+  // first reading the argument types into a (reusable) vector, then we have
+  // the outgoing size at low cost, and then we can pass args based on the
+  // info we read.
 
   void passArg(ValType type, const Stk& arg, FunctionCall* call) {
     switch (type.code()) {
@@ -4550,7 +4579,7 @@ class BaseCompiler final : public BaseCompilerInterface {
       }
       case ValType::Ref:
       case ValType::AnyRef: {
-        ABIArg argLoc = call->abi.next(MIRType::Pointer);
+        ABIArg argLoc = call->abi.next(MIRType::RefOrNull);
         if (argLoc.kind() == ABIArg::Stack) {
           ScratchPtr scratch(*this);
           loadRef(arg, scratch);
@@ -6421,80 +6450,27 @@ class BaseCompiler final : public BaseCompilerInterface {
 
   void emitPreBarrier(RegPtr valueAddr) {
     Label skipBarrier;
-
-    MOZ_ASSERT(valueAddr == PreBarrierReg);
-
     ScratchPtr scratch(*this);
 
-    // If no incremental GC has started, we don't need the barrier.
     masm.loadWasmTlsRegFromFrame(scratch);
-    masm.loadPtr(
-        Address(scratch, offsetof(TlsData, addressOfNeedsIncrementalBarrier)),
-        scratch);
-    masm.branchTest32(Assembler::Zero, Address(scratch, 0), Imm32(0x1),
-                      &skipBarrier);
+    EmitWasmPreBarrierGuard(masm, scratch, scratch, valueAddr, &skipBarrier);
 
-    // If the previous value is null, we don't need the barrier.
-    masm.loadPtr(Address(valueAddr, 0), scratch);
-    masm.branchTestPtr(Assembler::Zero, scratch, scratch, &skipBarrier);
-
-    // Call the barrier. This assumes PreBarrierReg contains the address of
-    // the stored value.
-    //
-    // PreBarrierReg is volatile and is preserved by the barrier.
     masm.loadWasmTlsRegFromFrame(scratch);
-    masm.loadPtr(Address(scratch, offsetof(TlsData, instance)), scratch);
-    masm.loadPtr(Address(scratch, Instance::offsetOfPreBarrierCode()), scratch);
 #ifdef JS_CODEGEN_ARM64
-    // The prebarrier stub assumes the PseudoStackPointer is set up.  We do
-    // not need to save and restore x28 because it is not yet allocatable.
+    // The prebarrier stub assumes the PseudoStackPointer is set up.  It is OK
+    // to just move the sp to x28 here because x28 is not being used by the
+    // baseline compiler and need not be saved or restored.
     MOZ_ASSERT(!GeneralRegisterSet::All().hasRegisterIndex(x28.asUnsized()));
     masm.Mov(x28, sp);
 #endif
-    masm.call(scratch);
+    EmitWasmPreBarrierCall(masm, scratch, scratch, valueAddr);
 
     masm.bind(&skipBarrier);
   }
 
-  // Emit a GC post-write barrier.  The barrier is needed to ensure that the
-  // GC is aware of slots of tenured things containing references to nursery
-  // values.
-  //
-  // The barrier has five easy steps:
-  //
-  //   Label skipBarrier;
-  //   sync();
-  //   emitPostBarrierGuard(..., &skipBarrier);
-  //   emitPostBarrier(...);
-  //   bind(&skipBarrier);
-  //
-  // These are divided up to allow other actions to be placed between them,
-  // such as saving and restoring live registers.  postBarrier() will make a
-  // call to C++ and will kill all live registers.  The initial sync() is
-  // required to make sure all paths sync the same amount.
-
-  // Pass None for `object` when the field's owner object is known to be
-  // tenured or heap-allocated.
-
-  void emitPostBarrierGuard(const Maybe<RegPtr>& object, RegPtr otherScratch,
-                            RegPtr setValue, Label* skipBarrier) {
-    // If the pointer being stored is null, no barrier.
-    masm.branchTestPtr(Assembler::Zero, setValue, setValue, skipBarrier);
-
-    // If there is a containing object and it is in the nursery, no barrier.
-    if (object) {
-      masm.branchPtrInNurseryChunk(Assembler::Equal, *object, otherScratch,
-                                   skipBarrier);
-    }
-
-    // If the pointer being stored is to a tenured object, no barrier.
-    masm.branchPtrInNurseryChunk(Assembler::NotEqual, setValue, otherScratch,
-                                 skipBarrier);
-  }
-
   // This frees the register `valueAddr`.
 
-  MOZ_MUST_USE bool emitPostBarrier(RegPtr valueAddr) {
+  MOZ_MUST_USE bool emitPostBarrierCall(RegPtr valueAddr) {
     uint32_t bytecodeOffset = iter_.lastOpcodeOffset();
 
     // The `valueAddr` is a raw pointer to the cell within some GC object or
@@ -6503,13 +6479,15 @@ class BaseCompiler final : public BaseCompilerInterface {
 #ifdef JS_64BIT
     pushI64(RegI64(Register64(valueAddr)));
     if (!emitInstanceCall(bytecodeOffset, SigPL_, ExprType::Void,
-                          SymbolicAddress::PostBarrier)) {
+                          SymbolicAddress::PostBarrier,
+                          /*pushReturnedValue=*/false)) {
       return false;
     }
 #else
     pushI32(RegI32(valueAddr));
     if (!emitInstanceCall(bytecodeOffset, SigPI_, ExprType::Void,
-                          SymbolicAddress::PostBarrier)) {
+                          SymbolicAddress::PostBarrier,
+                          /*pushReturnedValue=*/false)) {
       return false;
     }
 #endif
@@ -6530,10 +6508,10 @@ class BaseCompiler final : public BaseCompilerInterface {
     sync();
 
     RegPtr otherScratch = needRef();
-    emitPostBarrierGuard(object, otherScratch, value, &skipBarrier);
+    EmitWasmPostBarrierGuard(masm, object, otherScratch, value, &skipBarrier);
     freeRef(otherScratch);
 
-    if (!emitPostBarrier(valueAddr)) {
+    if (!emitPostBarrierCall(valueAddr)) {
       return false;
     }
     masm.bind(&skipBarrier);
@@ -6729,7 +6707,7 @@ class BaseCompiler final : public BaseCompilerInterface {
   void endIfThenElse(ExprType type);
 
   void doReturn(ExprType returnType, bool popStack);
-  void pushReturnedIfNonVoid(const FunctionCall& call, ExprType type);
+  void pushReturnValueOfCall(const FunctionCall& call, ExprType type);
 
   void emitCompareI32(Assembler::Condition compareOp, ValType compareType);
   void emitCompareI64(Assembler::Condition compareOp, ValType compareType);
@@ -6847,9 +6825,10 @@ class BaseCompiler final : public BaseCompilerInterface {
   void emitRound(RoundingMode roundingMode, ValType operandType);
   MOZ_MUST_USE bool emitInstanceCall(uint32_t lineOrBytecode,
                                      const MIRTypeVector& sig, ExprType retType,
-                                     SymbolicAddress builtin);
-  MOZ_MUST_USE bool emitGrowMemory();
-  MOZ_MUST_USE bool emitCurrentMemory();
+                                     SymbolicAddress builtin,
+                                     bool pushReturnedValue = true);
+  MOZ_MUST_USE bool emitMemoryGrow();
+  MOZ_MUST_USE bool emitMemorySize();
 
   MOZ_MUST_USE bool emitRefNull();
   void emitRefIsNull();
@@ -8363,6 +8342,12 @@ bool BaseCompiler::emitEnd() {
   }
 
   switch (kind) {
+    case LabelKind::Body:
+      endBlock(type);
+      iter_.popEnd();
+      MOZ_ASSERT(iter_.controlStackEmpty());
+      doReturn(type, PopStack(false));
+      return iter_.readFunctionEnd(iter_.end());
     case LabelKind::Block:
       endBlock(type);
       break;
@@ -8526,6 +8511,9 @@ bool BaseCompiler::emitDrop() {
 }
 
 void BaseCompiler::doReturn(ExprType type, bool popStack) {
+  if (deadCode_) {
+    return;
+  }
   switch (type.code()) {
     case ExprType::Void: {
       returnCleanup(popStack);
@@ -8587,7 +8575,7 @@ bool BaseCompiler::emitCallArgs(const ValTypeVector& argTypes,
                                 FunctionCall* baselineCall) {
   MOZ_ASSERT(!deadCode_);
 
-  startCallArgs(stackArgAreaSize(argTypes), baselineCall);
+  startCallArgs(StackArgAreaSizeUnaligned(argTypes), baselineCall);
 
   uint32_t numArgs = argTypes.length();
   for (size_t i = 0; i < numArgs; ++i) {
@@ -8598,12 +8586,9 @@ bool BaseCompiler::emitCallArgs(const ValTypeVector& argTypes,
   return true;
 }
 
-void BaseCompiler::pushReturnedIfNonVoid(const FunctionCall& call,
+void BaseCompiler::pushReturnValueOfCall(const FunctionCall& call,
                                          ExprType type) {
   switch (type.code()) {
-    case ExprType::Void:
-      // There's no return value.  Do nothing.
-      break;
     case ExprType::I32: {
       RegI32 rv = captureReturnedI32();
       pushI32(rv);
@@ -8633,6 +8618,8 @@ void BaseCompiler::pushReturnedIfNonVoid(const FunctionCall& call,
     case ExprType::NullRef:
       MOZ_CRASH("NullRef not expressible");
     default:
+      // In particular, passing |type| == ExprType::Void to this function is
+      // an error.
       MOZ_CRASH("Function return type");
   }
 }
@@ -8695,7 +8682,9 @@ bool BaseCompiler::emitCall() {
 
   popValueStackBy(numArgs);
 
-  pushReturnedIfNonVoid(baselineCall, funcType.ret());
+  if (funcType.ret() != ExprType::Void) {
+    pushReturnValueOfCall(baselineCall, funcType.ret());
+  }
 
   return true;
 }
@@ -8747,7 +8736,9 @@ bool BaseCompiler::emitCallIndirect() {
 
   popValueStackBy(numArgs);
 
-  pushReturnedIfNonVoid(baselineCall, funcType.ret());
+  if (funcType.ret() != ExprType::Void) {
+    pushReturnValueOfCall(baselineCall, funcType.ret());
+  }
 
   return true;
 }
@@ -8810,7 +8801,8 @@ bool BaseCompiler::emitUnaryMathBuiltinCall(SymbolicAddress callee,
 
   popValueStackBy(numArgs);
 
-  pushReturnedIfNonVoid(baselineCall, retType);
+  // We know retType isn't ExprType::Void here, so there's no need to check it.
+  pushReturnValueOfCall(baselineCall, retType);
 
   return true;
 }
@@ -9057,7 +9049,7 @@ bool BaseCompiler::emitSetOrTeeLocal(uint32_t slot) {
     case ValType::AnyRef: {
       RegPtr rv = popRef();
       syncLocal(slot);
-      fr.storeLocalPtr(rv, localFromSlot(slot, MIRType::Pointer));
+      fr.storeLocalPtr(rv, localFromSlot(slot, MIRType::RefOrNull));
       if (isSetLocal) {
         freeRef(rv);
       } else {
@@ -9557,7 +9549,7 @@ bool BaseCompiler::emitSelect() {
   BranchState b(&done);
   emitBranchSetup(&b);
 
-  switch (NonAnyToValType(type).code()) {
+  switch (NonTVarToValType(type).code()) {
     case ValType::I32: {
       RegI32 r, rs;
       pop2xI32(&r, &rs);
@@ -9739,7 +9731,8 @@ void BaseCompiler::emitCompareRef(Assembler::Condition compareOp,
 
 bool BaseCompiler::emitInstanceCall(uint32_t lineOrBytecode,
                                     const MIRTypeVector& sig, ExprType retType,
-                                    SymbolicAddress builtin) {
+                                    SymbolicAddress builtin,
+                                    bool pushReturnedValue /*=true*/) {
   MOZ_ASSERT(sig[0] == MIRType::Pointer);
 
   sync();
@@ -9752,7 +9745,7 @@ bool BaseCompiler::emitInstanceCall(uint32_t lineOrBytecode,
 
   ABIArg instanceArg = reservePointerArgument(&baselineCall);
 
-  startCallArgs(stackArgAreaSize(sig), &baselineCall);
+  startCallArgs(StackArgAreaSizeUnaligned(sig), &baselineCall);
   for (uint32_t i = 1; i < sig.length(); i++) {
     ValType t;
     switch (sig[i]) {
@@ -9762,7 +9755,7 @@ bool BaseCompiler::emitInstanceCall(uint32_t lineOrBytecode,
       case MIRType::Int64:
         t = ValType::I64;
         break;
-      case MIRType::Pointer:
+      case MIRType::RefOrNull:
         t = ValType::AnyRef;
         break;
       default:
@@ -9790,15 +9783,18 @@ bool BaseCompiler::emitInstanceCall(uint32_t lineOrBytecode,
   // a return value.  Examples include memory and table operations that are
   // implemented as callouts.
 
-  pushReturnedIfNonVoid(baselineCall, retType);
+  if (pushReturnedValue) {
+    MOZ_ASSERT(retType != ExprType::Void);
+    pushReturnValueOfCall(baselineCall, retType);
+  }
   return true;
 }
 
-bool BaseCompiler::emitGrowMemory() {
+bool BaseCompiler::emitMemoryGrow() {
   uint32_t lineOrBytecode = readCallSiteLineOrBytecode();
 
   Nothing arg;
-  if (!iter_.readGrowMemory(&arg)) {
+  if (!iter_.readMemoryGrow(&arg)) {
     return false;
   }
 
@@ -9807,13 +9803,13 @@ bool BaseCompiler::emitGrowMemory() {
   }
 
   return emitInstanceCall(lineOrBytecode, SigPI_, ExprType::I32,
-                          SymbolicAddress::GrowMemory);
+                          SymbolicAddress::MemoryGrow);
 }
 
-bool BaseCompiler::emitCurrentMemory() {
+bool BaseCompiler::emitMemorySize() {
   uint32_t lineOrBytecode = readCallSiteLineOrBytecode();
 
-  if (!iter_.readCurrentMemory()) {
+  if (!iter_.readMemorySize()) {
     return false;
   }
 
@@ -9822,7 +9818,7 @@ bool BaseCompiler::emitCurrentMemory() {
   }
 
   return emitInstanceCall(lineOrBytecode, SigP_, ExprType::I32,
-                          SymbolicAddress::CurrentMemory);
+                          SymbolicAddress::MemorySize);
 }
 
 bool BaseCompiler::emitRefNull() {
@@ -10206,15 +10202,17 @@ bool BaseCompiler::emitMemOrTableCopy(bool isMem) {
   if (isMem) {
     MOZ_ASSERT(srcMemOrTableIndex == 0);
     MOZ_ASSERT(dstMemOrTableIndex == 0);
-    if (!emitInstanceCall(lineOrBytecode, SigPIII_, ExprType::Void,
-                          SymbolicAddress::MemCopy)) {
+    if (!emitInstanceCall(lineOrBytecode, SigPIII_, ExprType::I32,
+                          SymbolicAddress::MemCopy,
+                          /*pushReturnedValue=*/false)) {
       return false;
     }
   } else {
     pushI32(dstMemOrTableIndex);
     pushI32(srcMemOrTableIndex);
-    if (!emitInstanceCall(lineOrBytecode, SigPIIIII_, ExprType::Void,
-                          SymbolicAddress::TableCopy)) {
+    if (!emitInstanceCall(lineOrBytecode, SigPIIIII_, ExprType::I32,
+                          SymbolicAddress::TableCopy,
+                          /*pushReturnedValue=*/false)) {
       return false;
     }
   }
@@ -10245,7 +10243,8 @@ bool BaseCompiler::emitDataOrElemDrop(bool isData) {
   pushI32(int32_t(segIndex));
   SymbolicAddress callee =
       isData ? SymbolicAddress::DataDrop : SymbolicAddress::ElemDrop;
-  if (!emitInstanceCall(lineOrBytecode, SigPI_, ExprType::Void, callee)) {
+  if (!emitInstanceCall(lineOrBytecode, SigPI_, ExprType::Void, callee,
+                        /*pushReturnedValue=*/false)) {
     return false;
   }
 
@@ -10271,7 +10270,8 @@ bool BaseCompiler::emitMemFill() {
 
   // Returns -1 on trap, otherwise 0.
   if (!emitInstanceCall(lineOrBytecode, SigPIII_, ExprType::Void,
-                        SymbolicAddress::MemFill)) {
+                        SymbolicAddress::MemFill,
+                        /*pushReturnedValue=*/false)) {
     return false;
   }
 
@@ -10302,13 +10302,15 @@ bool BaseCompiler::emitMemOrTableInit(bool isMem) {
   pushI32(int32_t(segIndex));
   if (isMem) {
     if (!emitInstanceCall(lineOrBytecode, SigPIIII_, ExprType::Void,
-                          SymbolicAddress::MemInit)) {
+                          SymbolicAddress::MemInit,
+                          /*pushReturnedValue=*/false)) {
       return false;
     }
   } else {
     pushI32(dstTableIndex);
     if (!emitInstanceCall(lineOrBytecode, SigPIIIII_, ExprType::Void,
-                          SymbolicAddress::TableInit)) {
+                          SymbolicAddress::TableInit,
+                          /*pushReturnedValue=*/false)) {
       return false;
     }
   }
@@ -10367,7 +10369,7 @@ bool BaseCompiler::emitTableGrow() {
   //
   // infallible.
   pushI32(tableIndex);
-  return emitInstanceCall(lineOrBytecode, SigPIPI_, ExprType::I32,
+  return emitInstanceCall(lineOrBytecode, SigPIRI_, ExprType::I32,
                           SymbolicAddress::TableGrow);
 }
 
@@ -10386,8 +10388,9 @@ bool BaseCompiler::emitTableSet() {
   //
   // Returns -1 on range error, otherwise 0 (which is then ignored).
   pushI32(tableIndex);
-  if (!emitInstanceCall(lineOrBytecode, SigPIPI_, ExprType::Void,
-                        SymbolicAddress::TableSet)) {
+  if (!emitInstanceCall(lineOrBytecode, SigPIRI_, ExprType::I32,
+                        SymbolicAddress::TableSet,
+                        /*pushReturnedValue=*/false)) {
     return false;
   }
   Label noTrap;
@@ -10519,7 +10522,7 @@ bool BaseCompiler::emitStructNew() {
         }
 
         RegPtr otherScratch = needRef();
-        emitPostBarrierGuard(Some(rowner), otherScratch, value, &skipBarrier);
+        EmitWasmPostBarrierGuard(masm, Some(rowner), otherScratch, value, &skipBarrier);
         freeRef(otherScratch);
 
         if (!structType.isInline_) {
@@ -10535,7 +10538,7 @@ bool BaseCompiler::emitStructNew() {
         pushRef(rp);  // Save rp across the call
         RegPtr valueAddr = needRef();
         masm.computeEffectiveAddress(Address(rdata, offs), valueAddr);
-        if (!emitPostBarrier(valueAddr)) {  // Consumes valueAddr
+        if (!emitPostBarrierCall(valueAddr)) {  // Consumes valueAddr
           return false;
         }
         popRef(rp);  // Restore rp
@@ -10770,12 +10773,12 @@ bool BaseCompiler::emitStructNarrow() {
   pushI32(mustUnboxAnyref);
   pushI32(outputStruct.moduleIndex_);
   pushRef(rp);
-  return emitInstanceCall(lineOrBytecode, SigPIIP_, ExprType::AnyRef,
+  return emitInstanceCall(lineOrBytecode, SigPIIR_, ExprType::AnyRef,
                           SymbolicAddress::StructNarrow);
 }
 
 bool BaseCompiler::emitBody() {
-  MOZ_ASSERT(smgen_.framePushedAtEntryToBody_.isSome());
+  MOZ_ASSERT(stackMapGenerator_.framePushedAtEntryToBody.isSome());
 
   if (!iter_.readFunctionStart(funcType().ret())) {
     return false;
@@ -10822,9 +10825,9 @@ bool BaseCompiler::emitBody() {
 #ifdef DEBUG
     // Check that the number of ref-typed entries in the operand stack matches
     // reality.
-#  define CHECK_POINTER_COUNT                                  \
-    do {                                                       \
-      MOZ_ASSERT(countMemRefsOnStk() == smgen_.memRefsOnStk_); \
+#  define CHECK_POINTER_COUNT                                             \
+    do {                                                                  \
+      MOZ_ASSERT(countMemRefsOnStk() == stackMapGenerator_.memRefsOnStk); \
     } while (0)
 #else
 #  define CHECK_POINTER_COUNT \
@@ -10882,25 +10885,23 @@ bool BaseCompiler::emitBody() {
       }
     }
 
-    // Going below framePushedAtEntryToBody_ would imply that we've
+    // Going below framePushedAtEntryToBody would imply that we've
     // popped off the machine stack, part of the frame created by
     // beginFunction().
-    MOZ_ASSERT(masm.framePushed() >= smgen_.framePushedAtEntryToBody_.value());
+    MOZ_ASSERT(masm.framePushed() >=
+               stackMapGenerator_.framePushedAtEntryToBody.value());
 
     // At this point we're definitely not generating code for a function call.
-    MOZ_ASSERT(smgen_.framePushedBeforePushingCallArgs_.isNothing());
+    MOZ_ASSERT(
+        stackMapGenerator_.framePushedExcludingOutboundCallArgs.isNothing());
 
     switch (op.b0) {
       case uint16_t(Op::End):
         if (!emitEnd()) {
           return false;
         }
-
         if (iter_.controlStackEmpty()) {
-          if (!deadCode_) {
-            doReturn(funcType().ret(), PopStack(false));
-          }
-          return iter_.readFunctionEnd(iter_.end());
+          return true;
         }
         NEXT();
 
@@ -10950,6 +10951,12 @@ bool BaseCompiler::emitBody() {
         CHECK_NEXT(emitGetGlobal());
       case uint16_t(Op::SetGlobal):
         CHECK_NEXT(emitSetGlobal());
+#ifdef ENABLE_WASM_GENERALIZED_TABLES
+      case uint16_t(Op::TableGet):
+        CHECK_NEXT(emitTableGet());
+      case uint16_t(Op::TableSet):
+        CHECK_NEXT(emitTableSet());
+#endif
 
       // Select
       case uint16_t(Op::Select):
@@ -11442,10 +11449,10 @@ bool BaseCompiler::emitBody() {
             emitConversion(emitExtendI64_32, ValType::I64, ValType::I64));
 
       // Memory Related
-      case uint16_t(Op::GrowMemory):
-        CHECK_NEXT(emitGrowMemory());
-      case uint16_t(Op::CurrentMemory):
-        CHECK_NEXT(emitCurrentMemory());
+      case uint16_t(Op::MemoryGrow):
+        CHECK_NEXT(emitMemoryGrow());
+      case uint16_t(Op::MemorySize):
+        CHECK_NEXT(emitMemorySize());
 
 #ifdef ENABLE_WASM_GC
       case uint16_t(Op::RefEq):
@@ -11547,12 +11554,8 @@ bool BaseCompiler::emitBody() {
             CHECK_NEXT(emitMemOrTableInit(/*isMem=*/false));
 #endif  // ENABLE_WASM_BULKMEM_OPS
 #ifdef ENABLE_WASM_GENERALIZED_TABLES
-          case uint16_t(MiscOp::TableGet):
-            CHECK_NEXT(emitTableGet());
           case uint16_t(MiscOp::TableGrow):
             CHECK_NEXT(emitTableGrow());
-          case uint16_t(MiscOp::TableSet):
-            CHECK_NEXT(emitTableSet());
           case uint16_t(MiscOp::TableSize):
             CHECK_NEXT(emitTableSize());
 #endif
@@ -11834,7 +11837,8 @@ BaseCompiler::BaseCompiler(const ModuleEnvironment& env,
       masm(*masm),
       ra(*this),
       fr(*masm),
-      smgen_(stackMaps, trapExitLayout, trapExitLayoutNumWords, *masm),
+      stackMapGenerator_(stackMaps, trapExitLayout, trapExitLayoutNumWords,
+                         *masm),
       joinRegI32_(RegI32(ReturnReg)),
       joinRegI64_(RegI64(ReturnReg64)),
       joinRegPtr_(RegPtr(ReturnReg)),
@@ -11861,8 +11865,9 @@ bool BaseCompiler::init() {
       !SigPII_.append(MIRType::Int32)) {
     return false;
   }
-  if (!SigPIPI_.append(MIRType::Pointer) || !SigPIPI_.append(MIRType::Int32) ||
-      !SigPIPI_.append(MIRType::Pointer) || !SigPIPI_.append(MIRType::Int32)) {
+  if (!SigPIRI_.append(MIRType::Pointer) || !SigPIRI_.append(MIRType::Int32) ||
+      !SigPIRI_.append(MIRType::RefOrNull) ||
+      !SigPIRI_.append(MIRType::Int32)) {
     return false;
   }
   if (!SigPIII_.append(MIRType::Pointer) || !SigPIII_.append(MIRType::Int32) ||
@@ -11873,8 +11878,9 @@ bool BaseCompiler::init() {
       !SigPIIL_.append(MIRType::Int32) || !SigPIIL_.append(MIRType::Int64)) {
     return false;
   }
-  if (!SigPIIP_.append(MIRType::Pointer) || !SigPIIP_.append(MIRType::Int32) ||
-      !SigPIIP_.append(MIRType::Int32) || !SigPIIP_.append(MIRType::Pointer)) {
+  if (!SigPIIR_.append(MIRType::Pointer) || !SigPIIR_.append(MIRType::Int32) ||
+      !SigPIIR_.append(MIRType::Int32) ||
+      !SigPIIR_.append(MIRType::RefOrNull)) {
     return false;
   }
   if (!SigPILL_.append(MIRType::Pointer) || !SigPILL_.append(MIRType::Int32) ||
@@ -11908,7 +11914,7 @@ FuncOffsets BaseCompiler::finish() {
   MOZ_ASSERT(func_.callSiteLineNums.length() == lastReadCallSite_);
 
   MOZ_ASSERT(stk_.empty());
-  MOZ_ASSERT(smgen_.memRefsOnStk_ == 0);
+  MOZ_ASSERT(stackMapGenerator_.memRefsOnStk == 0);
 
   masm.flushBuffer();
 
@@ -11975,8 +11981,7 @@ bool js::wasm::BaselineCompileFunctions(const ModuleEnvironment& env,
     if (!locals.appendAll(env.funcTypes[func.index]->args())) {
       return false;
     }
-    if (!DecodeLocalEntries(d, env.kind, env.types, env.gcTypesEnabled(),
-                            &locals)) {
+    if (!DecodeLocalEntries(d, env.types, env.gcTypesEnabled(), &locals)) {
       return false;
     }
 

@@ -219,7 +219,7 @@ fuzzy-if(skiaContent,0-1,0-5) == 212563-2.html 212563-2-ref.html
 == 214077-1a.html 214077-1-ref.html
 == 214077-1b.html 214077-1-ref.html
 == 218473-1.html 218473-1-ref.html
-fuzzy-if(skiaContent,0-1,0-4) fuzzy-if(webrender&&debug,0-1,0-8) == 220165-1.svg 220165-1-ref.svg
+fuzzy-if(skiaContent,0-1,0-4) fuzzy-if(webrender&&isDebugBuild,0-1,0-8) == 220165-1.svg 220165-1-ref.svg
 == 223809-1.html 223809-1-ref.html
 == 228856-1.html 228856-1-ref.html
 == 228856-2.html 228856-2-ref.html
@@ -318,7 +318,7 @@ fuzzy-if(Android,0-3,0-50) fuzzy-if(skiaContent,0-1,0-133) == 273681-1.html 2736
 == 283686-2.html 283686-2-ref.html
 == 283686-3.html about:blank
 == 289384-1.xhtml 289384-ref.xhtml
-random-if(d2d) fuzzy-if(Android,0-8,0-1439) fuzzy-if(webrender,0-6,0-1124) HTTP == 289480.html#top 289480-ref.html # basically-verbatim acid2 test, HTTP for a 404 page -- bug 578114 for the d2d failures
+random-if(d2d) fuzzy-if(Android,0-8,0-1439) fuzzy-if(webrender,0-6,0-1124) skip-if(webrender&&gtkWidget) HTTP == 289480.html#top 289480-ref.html # basically-verbatim acid2 test, HTTP for a 404 page -- bug 578114 for the d2d failures
 == 290129-1.html 290129-1-ref.html
 == 291078-1.html 291078-1-ref.html
 == 291078-2.html 291078-2-ref.html
@@ -1385,7 +1385,6 @@ random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 495385-2b.html 495385-2-
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 495385-2c.html 495385-2-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 495385-2d.html 495385-2-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 495385-2e.html 495385-2-ref.html # Bug 1392106
-pref(dom.use_xbl_scopes_for_remote_xul,true) random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 495385-2f.xhtml 495385-2-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 495385-2g.html 495385-2-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 495385-2h.html 495385-2-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 495385-2i.html 495385-2-ref.html # Bug 1392106
@@ -1662,7 +1661,7 @@ fuzzy-if(Android,0-8,0-300) fuzzy-if(skiaContent,0-1,0-40000) == 625409-1.html 6
 == 627393-1.html about:blank
 fuzzy-if(skiaContent,0-1,0-500) == 630835-1.html about:blank
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 631352-1.html 631352-1-ref.html # bug 1392106
-skip-if(!haveTestPlugin) fails-if(Android) fuzzy-if(winWidget&&!layersGPUAccelerated,0-102,0-535) fuzzy-if(skiaContent&&!Android,0-102,0-11000) random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) HTTP == 632423-1.html 632423-1-ref.html # Bug 1392106
+skip-if(!haveTestPlugin) fails-if(Android) fails-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)&&webrender&&isDebugBuild) fuzzy-if(winWidget&&!layersGPUAccelerated,0-102,0-535) fuzzy-if(skiaContent&&!Android,0-102,0-11000) random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) HTTP == 632423-1.html 632423-1-ref.html # Bug 1392106
 skip-if(Android) random-if(winWidget||OSX==1010) == 632781-verybig.html 632781-ref.html
 == 632781-normalsize.html 632781-ref.html
 fuzzy-if(d2d&&/^Windows\x20NT\x206\.2/.test(http.oscpu),0-1,0-559) fuzzy-if(!isDebugBuild&&gtkWidget&&/^Linux\x20i686/.test(http.oscpu),0-102,0-140) == 633344-1.html 633344-1-ref.html # bug 1103623, Linux32 from GCC update
@@ -1880,7 +1879,7 @@ fails-if(webrender) == 1059498-3.html 1059498-1-ref.html # WebRender: see bug 14
 == 1069716-1.html 1069716-1-ref.html
 == 1078262-1.html about:blank
 test-pref(layout.testing.overlay-scrollbars.always-visible,false) == 1081072-1.html 1081072-1-ref.html
-fuzzy-if(webrender,64-64,622-633) == 1081185-1.html 1081185-1-ref.html
+fuzzy-if(webrender,64-64,407-409) == 1081185-1.html 1081185-1-ref.html
 == 1097437-1.html 1097437-1-ref.html
 == 1103258-1.html 1103258-1-ref.html # assertion crash test with layers culling test
 == 1105137-1.html 1105137-1-ref.html

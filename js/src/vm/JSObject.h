@@ -447,12 +447,6 @@ class JSObject : public js::gc::Cell {
 
  public:
   /*
-   * Iterator-specific getters and setters.
-   */
-
-  static const uint32_t ITER_CLASS_NFIXED_SLOTS = 1;
-
-  /*
    * Back to generic stuff.
    */
   MOZ_ALWAYS_INLINE bool isCallable() const;
@@ -539,6 +533,22 @@ class JSObject : public js::gc::Cell {
   template <class T>
   T& unwrapAs();
 
+  /*
+   * Tries to unwrap and downcast to class T. Returns nullptr if (and only if) a
+   * wrapper with a security policy is involved. Crashes in all builds if the
+   * (possibly unwrapped) object is not of class T (for example because it's a
+   * dead wrapper).
+   */
+  template <class T>
+  T* maybeUnwrapAs();
+
+  /*
+   * Tries to unwrap and downcast to class T. Returns nullptr if a wrapper with
+   * a security policy is involved or if the object does not have class T.
+   */
+  template <class T>
+  T* maybeUnwrapIf();
+
 #if defined(DEBUG) || defined(JS_JITSPEW)
   void dump(js::GenericPrinter& fp) const;
   void dump() const;
@@ -600,7 +610,7 @@ bool JSObject::canUnwrapAs() {
   if (is<T>()) {
     return true;
   }
-  JSObject* obj = js::CheckedUnwrap(this);
+  JSObject* obj = js::CheckedUnwrapStatic(this);
   return obj && obj->is<T>();
 }
 
@@ -616,9 +626,43 @@ T& JSObject::unwrapAs() {
   // Since the caller just called canUnwrapAs<T>(), which does a
   // CheckedUnwrap, this does not need to repeat the security check.
   JSObject* unwrapped = js::UncheckedUnwrap(this);
-  MOZ_ASSERT(js::CheckedUnwrap(this) == unwrapped,
+  MOZ_ASSERT(js::CheckedUnwrapStatic(this) == unwrapped,
              "check that the security check we skipped really is redundant");
   return unwrapped->as<T>();
+}
+
+template <class T>
+T* JSObject::maybeUnwrapAs() {
+  static_assert(!std::is_convertible<T*, js::Wrapper*>::value,
+                "T can't be a Wrapper type; this function discards wrappers");
+
+  if (is<T>()) {
+    return &as<T>();
+  }
+
+  JSObject* unwrapped = js::CheckedUnwrapStatic(this);
+  if (!unwrapped) {
+    return nullptr;
+  }
+
+  if (MOZ_LIKELY(unwrapped->is<T>())) {
+    return &unwrapped->as<T>();
+  }
+
+  MOZ_CRASH("Invalid object. Dead wrapper?");
+}
+
+template <class T>
+T* JSObject::maybeUnwrapIf() {
+  static_assert(!std::is_convertible<T*, js::Wrapper*>::value,
+                "T can't be a Wrapper type; this function discards wrappers");
+
+  if (is<T>()) {
+    return &as<T>();
+  }
+
+  JSObject* unwrapped = js::CheckedUnwrapStatic(this);
+  return (unwrapped && unwrapped->is<T>()) ? &unwrapped->as<T>() : nullptr;
 }
 
 /*
@@ -826,11 +870,11 @@ MOZ_ALWAYS_INLINE bool GetPrototypeFromBuiltinConstructor(
 // Specialized call for constructing |this| with a known function callee,
 // and a known prototype.
 extern JSObject* CreateThisForFunctionWithProto(
-    JSContext* cx, js::HandleObject callee, HandleObject newTarget,
+    JSContext* cx, js::HandleFunction callee, HandleObject newTarget,
     HandleObject proto, NewObjectKind newKind = GenericObject);
 
 // Specialized call for constructing |this| with a known function callee.
-extern JSObject* CreateThisForFunction(JSContext* cx, js::HandleObject callee,
+extern JSObject* CreateThisForFunction(JSContext* cx, js::HandleFunction callee,
                                        js::HandleObject newTarget,
                                        NewObjectKind newKind);
 

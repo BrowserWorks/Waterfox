@@ -637,6 +637,17 @@ JSObject* UnprivilegedJunkScope() {
   return XPCJSRuntime::Get()->UnprivilegedJunkScope();
 }
 
+JSObject* NACScope(JSObject* global) {
+  // If we're a chrome global, just use ourselves.
+  if (AccessCheck::isChrome(global)) {
+    return global;
+  }
+
+  JSObject* scope = UnprivilegedJunkScope();
+  JS::ExposeObjectToActiveJS(scope);
+  return scope;
+}
+
 JSObject* PrivilegedJunkScope() { return XPCJSRuntime::Get()->LoaderGlobal(); }
 
 JSObject* CompilationScope() { return XPCJSRuntime::Get()->LoaderGlobal(); }
@@ -2832,7 +2843,7 @@ static nsresult ReadSourceFromFilename(JSContext* cx, const char* filename,
   scriptChannel->SetContentType(NS_LITERAL_CSTRING("text/plain"));
 
   nsCOMPtr<nsIInputStream> scriptStream;
-  rv = scriptChannel->Open2(getter_AddRefs(scriptStream));
+  rv = scriptChannel->Open(getter_AddRefs(scriptStream));
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint64_t rawLen;

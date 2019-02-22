@@ -3,13 +3,6 @@
 
 "use strict";
 
-/* import-globals-from mocks/helper-client-wrapper-mock.js */
-Services.scriptloader.loadSubScript(
-  CHROME_URL_ROOT + "mocks/helper-client-wrapper-mock.js", this);
-/* import-globals-from mocks/helper-runtime-client-factory-mock.js */
-Services.scriptloader.loadSubScript(
-  CHROME_URL_ROOT + "mocks/helper-runtime-client-factory-mock.js", this);
-
 /**
  * Check that the runtime info is correctly displayed for ThisFirefox.
  * Also acts as basic sanity check for the default mock of the this-firefox client.
@@ -34,7 +27,8 @@ add_task(async function() {
     disableRuntimeClientFactoryMock();
   });
 
-  const { document, tab } = await openAboutDebugging();
+  const { document, tab, window } = await openAboutDebugging();
+  await selectThisFirefoxPage(document, window.AboutDebugging.store);
 
   info("Check that the 'This Firefox' mock is properly displayed");
   const thisFirefoxRuntimeInfo = document.querySelector(".js-runtime-info");

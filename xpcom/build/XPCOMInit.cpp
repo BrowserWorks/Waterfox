@@ -14,6 +14,7 @@
 #include "mozilla/SharedThreadPool.h"
 #include "mozilla/VideoDecoderManagerChild.h"
 #include "mozilla/XPCOM.h"
+#include "mozJSComponentLoader.h"
 #include "nsXULAppAPI.h"
 
 #ifndef ANDROID
@@ -173,6 +174,26 @@ const mozilla::Module kXPCOMModule = {
     nullptr,
     nullptr,
     Module::ALLOW_IN_GPU_VR_AND_SOCKET_PROCESS};
+
+// FIXME: Dummy modules to avoid Windows PGO bustage when we have too few
+// modules registered.
+static const mozilla::Module kDummy1 = {mozilla::Module::kVersion};
+static const mozilla::Module kDummy2 = {mozilla::Module::kVersion};
+static const mozilla::Module kDummy3 = {mozilla::Module::kVersion};
+static const mozilla::Module kDummy4 = {mozilla::Module::kVersion};
+static const mozilla::Module kDummy5 = {mozilla::Module::kVersion};
+static const mozilla::Module kDummy6 = {mozilla::Module::kVersion};
+static const mozilla::Module kDummy7 = {mozilla::Module::kVersion};
+static const mozilla::Module kDummy8 = {mozilla::Module::kVersion};
+
+NSMODULE_DEFN(Dummy1) = &kDummy1;
+NSMODULE_DEFN(Dummy2) = &kDummy2;
+NSMODULE_DEFN(Dummy3) = &kDummy3;
+NSMODULE_DEFN(Dummy4) = &kDummy4;
+NSMODULE_DEFN(Dummy5) = &kDummy5;
+NSMODULE_DEFN(Dummy6) = &kDummy6;
+NSMODULE_DEFN(Dummy7) = &kDummy7;
+NSMODULE_DEFN(Dummy8) = &kDummy8;
 
 // gDebug will be freed during shutdown.
 static nsIDebug2* gDebug = nullptr;
@@ -591,7 +612,6 @@ nsresult ShutdownXPCOM(nsIServiceManager* aServMgr) {
   }
 
   nsresult rv;
-  nsCOMPtr<nsISimpleEnumerator> moduleLoaders;
 
   // Notify observers of xpcom shutting down
   {
@@ -662,13 +682,8 @@ nsresult ShutdownXPCOM(nsIServiceManager* aServMgr) {
     // xpcshell tests replacing the service) modules being unloaded.
     mozilla::InitLateWriteChecks();
 
-    // We save the "xpcom-shutdown-loaders" observers to notify after
-    // the observerservice is gone.
     if (observerService) {
       mozilla::KillClearOnShutdown(ShutdownPhase::ShutdownLoaders);
-      observerService->EnumerateObservers(NS_XPCOM_SHUTDOWN_LOADERS_OBSERVER_ID,
-                                          getter_AddRefs(moduleLoaders));
-
       observerService->Shutdown();
     }
   }
@@ -698,28 +713,11 @@ nsresult ShutdownXPCOM(nsIServiceManager* aServMgr) {
   free(gGREBinPath);
   gGREBinPath = nullptr;
 
-  if (moduleLoaders) {
-    bool more;
-    nsCOMPtr<nsISupports> el;
-    while (NS_SUCCEEDED(moduleLoaders->HasMoreElements(&more)) && more) {
-      moduleLoaders->GetNext(getter_AddRefs(el));
-
-      // Don't worry about weak-reference observers here: there is
-      // no reason for weak-ref observers to register for
-      // xpcom-shutdown-loaders
-
-      // FIXME: This can cause harmless writes from sqlite committing
-      // log files. We have to ignore them before we can move
-      // the mozilla::PoisonWrite call before this point. See bug
-      // 834945 for the details.
-      nsCOMPtr<nsIObserver> obs(do_QueryInterface(el));
-      if (obs) {
-        obs->Observe(nullptr, NS_XPCOM_SHUTDOWN_LOADERS_OBSERVER_ID, nullptr);
-      }
-    }
-
-    moduleLoaders = nullptr;
-  }
+  // FIXME: This can cause harmless writes from sqlite committing
+  // log files. We have to ignore them before we can move
+  // the mozilla::PoisonWrite call before this point. See bug
+  // 834945 for the details.
+  mozJSComponentLoader::Unload();
 
   // Clear the profiler's JS context before cycle collection. The profiler will
   // notify the JS engine that it can let go of any data it's holding on to for

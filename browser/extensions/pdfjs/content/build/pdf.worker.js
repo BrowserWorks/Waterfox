@@ -123,8 +123,8 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 
 
-const pdfjsVersion = '2.1.243';
-const pdfjsBuild = 'c0d6e46e';
+const pdfjsVersion = '2.2.15';
+const pdfjsBuild = 'ece6a31a';
 
 const pdfjsCoreWorker = __w_pdfjs_require__(1);
 
@@ -375,7 +375,7 @@ var WorkerMessageHandler = {
     var cancelXHRs = null;
     var WorkerTasks = [];
     let apiVersion = docParams.apiVersion;
-    let workerVersion = '2.1.243';
+    let workerVersion = '2.2.15';
 
     if (apiVersion !== workerVersion) {
       throw new Error(`The API version "${apiVersion}" does not match ` + `the Worker version "${workerVersion}".`);
@@ -765,6 +765,9 @@ var WorkerMessageHandler = {
           throw reason;
         });
       });
+    });
+    handler.on('FontFallback', function (data) {
+      return pdfManager.fontFallback(data.id, handler);
     });
     handler.on('Cleanup', function wphCleanup(data) {
       return pdfManager.cleanup();
@@ -1905,6 +1908,10 @@ class BasePdfManager {
     return this.pdfDocument.getPage(pageIndex);
   }
 
+  fontFallback(id, handler) {
+    return this.pdfDocument.fontFallback(id, handler);
+  }
+
   cleanup() {
     return this.pdfDocument.cleanup();
   }
@@ -3000,7 +3007,7 @@ class PDFDocument {
         this.xfa = this.acroForm.get('XFA');
         const fields = this.acroForm.get('Fields');
 
-        if ((!fields || !Array.isArray(fields) || fields.length === 0) && !this.xfa) {
+        if ((!Array.isArray(fields) || fields.length === 0) && !this.xfa) {
           this.acroForm = null;
         }
       }
@@ -3011,6 +3018,20 @@ class PDFDocument {
 
       (0, _util.info)('Cannot fetch AcroForm entry; assuming no AcroForms are present');
       this.acroForm = null;
+    }
+
+    try {
+      const collection = this.catalog.catDict.get('Collection');
+
+      if ((0, _primitives.isDict)(collection) && collection.getKeys().length > 0) {
+        this.collection = collection;
+      }
+    } catch (ex) {
+      if (ex instanceof _util.MissingDataException) {
+        throw ex;
+      }
+
+      (0, _util.info)('Cannot fetch Collection dictionary.');
     }
   }
 
@@ -3140,7 +3161,8 @@ class PDFDocument {
       PDFFormatVersion: this.pdfFormatVersion,
       IsLinearized: !!this.linearization,
       IsAcroFormPresent: !!this.acroForm,
-      IsXFAPresent: !!this.xfa
+      IsXFAPresent: !!this.xfa,
+      IsCollectionPresent: !!this.collection
     };
     let infoDict;
 
@@ -3267,6 +3289,10 @@ class PDFDocument {
         throw new _util.XRefParseException();
       }
     });
+  }
+
+  fontFallback(id, handler) {
+    return this.catalog.fontFallback(id, handler);
   }
 
   cleanup() {
@@ -3812,6 +3838,21 @@ class Catalog {
     }
 
     return (0, _util.shadow)(this, 'javaScript', javaScript);
+  }
+
+  fontFallback(id, handler) {
+    const promises = [];
+    this.fontCache.forEach(function (promise) {
+      promises.push(promise);
+    });
+    return Promise.all(promises).then(translatedFonts => {
+      for (const translatedFont of translatedFonts) {
+        if (translatedFont.loadedName === id) {
+          translatedFont.fallback(handler);
+          return;
+        }
+      }
+    });
   }
 
   cleanup() {
@@ -20067,32 +20108,22 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
         return translated.loadedName;
       });
     },
-    handleText: function PartialEvaluator_handleText(chars, state) {
-      var font = state.font;
-      var glyphs = font.charsToGlyphs(chars);
-      var isAddToPathSet = !!(state.textRenderingMode & _util.TextRenderingMode.ADD_TO_PATH_FLAG);
 
-      if (font.data && (isAddToPathSet || this.options.disableFontFace || state.fillColorSpace.name === 'Pattern')) {
-        var buildPath = fontChar => {
-          if (!font.renderer.hasBuiltPath(fontChar)) {
-            var path = font.renderer.getPathJs(fontChar);
-            this.handler.send('commonobj', [font.loadedName + '_path_' + fontChar, 'FontPath', path]);
-          }
-        };
+    handleText(chars, state) {
+      const font = state.font;
+      const glyphs = font.charsToGlyphs(chars);
 
-        for (var i = 0, ii = glyphs.length; i < ii; i++) {
-          var glyph = glyphs[i];
-          buildPath(glyph.fontChar);
-          var accent = glyph.accent;
+      if (font.data) {
+        const isAddToPathSet = !!(state.textRenderingMode & _util.TextRenderingMode.ADD_TO_PATH_FLAG);
 
-          if (accent && accent.fontChar) {
-            buildPath(accent.fontChar);
-          }
+        if (isAddToPathSet || state.fillColorSpace.name === 'Pattern' || font.disableFontFace || this.options.disableFontFace) {
+          PartialEvaluator.buildFontPaths(font, glyphs, this.handler);
         }
       }
 
       return glyphs;
     },
+
     setGState: function PartialEvaluator_setGState(resources, gState, operatorList, task, stateManager) {
       var gStateObj = [];
       var gStateKeys = gState.getKeys();
@@ -21483,7 +21514,7 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
               }
             }
 
-            toUnicode[charcode] = String.fromCharCode(code);
+            toUnicode[charcode] = String.fromCodePoint(code);
           }
 
           continue;
@@ -21583,7 +21614,7 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
               str.push(((w1 & 0x3ff) << 10) + (w2 & 0x3ff) + 0x10000);
             }
 
-            map[charCode] = String.fromCharCode.apply(String, str);
+            map[charCode] = String.fromCodePoint.apply(String, str);
           });
           return new _fonts.ToUnicodeMap(map);
         });
@@ -22011,6 +22042,26 @@ var PartialEvaluator = function PartialEvaluatorClosure() {
       });
     }
   };
+
+  PartialEvaluator.buildFontPaths = function (font, glyphs, handler) {
+    function buildPath(fontChar) {
+      if (font.renderer.hasBuiltPath(fontChar)) {
+        return;
+      }
+
+      handler.send('commonobj', [`${font.loadedName}_path_${fontChar}`, 'FontPath', font.renderer.getPathJs(fontChar)]);
+    }
+
+    for (const glyph of glyphs) {
+      buildPath(glyph.fontChar);
+      const accent = glyph.accent;
+
+      if (accent && accent.fontChar) {
+        buildPath(accent.fontChar);
+      }
+    }
+  };
+
   return PartialEvaluator;
 }();
 
@@ -22031,9 +22082,18 @@ var TranslatedFont = function TranslatedFontClosure() {
         return;
       }
 
-      var fontData = this.font.exportData();
-      handler.send('commonobj', [this.loadedName, 'Font', fontData]);
       this.sent = true;
+      handler.send('commonobj', [this.loadedName, 'Font', this.font.exportData()]);
+    },
+
+    fallback(handler) {
+      if (!this.font.data) {
+        return;
+      }
+
+      this.font.disableFontFace = true;
+      const glyphs = this.font.glyphCacheValues;
+      PartialEvaluator.buildFontPaths(this.font, glyphs, handler);
     },
 
     loadType3Data(evaluator, resources, parentOperatorList, task) {
@@ -24597,6 +24657,7 @@ var Font = function FontClosure() {
     font: null,
     mimetype: null,
     encoding: null,
+    disableFontFace: false,
 
     get renderer() {
       var renderer = _font_renderer.FontRendererFactory.create(this, SEAC_ANALYSIS_ENABLED);
@@ -26288,7 +26349,12 @@ var Font = function FontClosure() {
       }
 
       return charsCache[charsCacheKey] = glyphs;
+    },
+
+    get glyphCacheValues() {
+      return Object.values(this.glyphCache);
     }
+
   };
   return Font;
 }();

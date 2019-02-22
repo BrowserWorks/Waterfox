@@ -16,6 +16,7 @@ from .registry import register_callback_action
 from .util import find_decision_task, create_tasks, combine_task_graph_files
 from taskgraph.util.taskcluster import get_artifact_from_index
 from taskgraph.taskgraph import TaskGraph
+from taskgraph.util import taskcluster
 
 PUSHLOG_TMPL = '{}/json-pushes?version=2&startID={}&endID={}'
 INDEX_TMPL = 'gecko.v2.{}.pushlog-id.{}.decision'
@@ -71,7 +72,8 @@ logger = logging.getLogger(__name__)
     },
     available=lambda parameters: True
 )
-def backfill_action(parameters, graph_config, input, task_group_id, task_id, task):
+def backfill_action(parameters, graph_config, input, task_group_id, task_id):
+    task = taskcluster.get_task_definition(task_id)
     label = task['metadata']['name']
     pushes = []
     inclusive_tweak = 1 if input.get('inclusive') else 0
@@ -182,7 +184,7 @@ def backfill_action(parameters, graph_config, input, task_group_id, task_id, tas
 
             times = input.get('times', 1)
             for i in xrange(times):
-                create_tasks([label], full_task_graph, label_to_taskid,
+                create_tasks(graph_config, [label], full_task_graph, label_to_taskid,
                              push_params, push_decision_task_id, push, modifier=modifier)
             backfill_pushes.append(push)
         else:

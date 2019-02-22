@@ -329,12 +329,16 @@ class nsXULElement : public nsStyledElement {
                               nsIContent* aBindingParent) override;
   virtual void UnbindFromTree(bool aDeep, bool aNullParent) override;
   virtual void DestroyContent() override;
+  virtual void DoneAddingChildren(bool aHaveNotified) override;
 
 #ifdef DEBUG
   virtual void List(FILE* out, int32_t aIndent) const override;
   virtual void DumpContent(FILE* out, int32_t aIndent,
                            bool aDumpAll) const override {}
 #endif
+
+  MOZ_CAN_RUN_SCRIPT int32_t ScreenX();
+  MOZ_CAN_RUN_SCRIPT int32_t ScreenY();
 
   bool HasMenu();
   MOZ_CAN_RUN_SCRIPT void OpenMenu(bool aOpenFlag);

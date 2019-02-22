@@ -995,7 +995,11 @@
             this._collapseUnusedItems();
           }
           this.richlistbox.style.removeProperty("height");
-          this.richlistbox.height = height;
+          // We need to get the ceiling of the calculated value to ensure that the box fully contains
+          // all of its contents and doesn't cause a scrollbar since nsIBoxObject only expects a
+          // `long`. e.g. if `height` is 99.5 the richlistbox would render at height 99px with a
+          // scrollbar for the extra 0.5px.
+          this.richlistbox.height = Math.ceil(height);
           ]]>
         </body>
       </method>
@@ -1044,6 +1048,7 @@
                 "autofill-footer",
                 "autofill-clear-button",
                 "autofill-insecureWarning",
+                "insecureWarning",
               ];
               // Reuse the item when its style is exactly equal to the previous style or
               // neither of their style are in the UNREUSEABLE_STYLES.
@@ -1056,10 +1061,16 @@
               let options = null;
               switch (style) {
                 case "autofill-profile":
+                  options = { is: "autocomplete-profile-listitem" };
+                  break;
                 case "autofill-footer":
+                  options = { is: "autocomplete-profile-listitem-footer" };
+                  break;
                 case "autofill-clear-button":
+                  options = { is: "autocomplete-profile-listitem-clear-button" };
+                  break;
                 case "autofill-insecureWarning":
-                  // implemented via XBL bindings, no CE for them
+                  options = { is: "autocomplete-creditcard-insecure-field" };
                   break;
                 case "insecureWarning":
                   options = { is: "autocomplete-richlistitem-insecure-warning" };

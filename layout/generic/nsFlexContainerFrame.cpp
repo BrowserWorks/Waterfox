@@ -156,12 +156,10 @@ static uint8_t ConvertLegacyStyleToJustifyContent(const nsStyleXUL* aStyleXUL) {
 // Helper-function to find the first non-anonymous-box descendent of aFrame.
 static nsIFrame* GetFirstNonAnonBoxDescendant(nsIFrame* aFrame) {
   while (aFrame) {
-    nsAtom* pseudoTag = aFrame->Style()->GetPseudo();
-
-    // If aFrame isn't an anonymous container, then it'll do.
-    if (!pseudoTag ||                               // No pseudotag.
-        !nsCSSAnonBoxes::IsAnonBox(pseudoTag) ||    // Pseudotag isn't anon.
-        nsCSSAnonBoxes::IsNonElement(pseudoTag)) {  // Text, not a container.
+    // If aFrame isn't an anonymous container, or it's text or such, then it'll
+    // do.
+    if (!aFrame->Style()->IsAnonBox() ||
+        nsCSSAnonBoxes::IsNonElement(aFrame->Style()->GetPseudoType())) {
       break;
     }
 
@@ -254,10 +252,8 @@ static nscoord AddChecked(nscoord aFirst, nscoord aSecond) {
 // max-content and min-content should behave as property's initial value.
 // Bug 567039: We treat -moz-fit-content and -moz-available as property's
 // initial value for now.
-static inline bool IsAutoOrEnumOnBSize(const nsStyleCoord& aSize,
-                                       bool aIsInline) {
-  return aSize.GetUnit() == eStyleUnit_Auto ||
-         (!aIsInline && aSize.GetUnit() == eStyleUnit_Enumerated);
+static inline bool IsAutoOrEnumOnBSize(const StyleSize& aSize, bool aIsInline) {
+  return aSize.IsAuto() || (!aIsInline && aSize.IsExtremumLength());
 }
 
 // Helper-macros to let us pick one of two expressions to evaluate
@@ -1403,7 +1399,7 @@ static bool IsCrossSizeDefinite(const ReflowInput& aItemReflowInput,
 
   if (aAxisTracker.IsColumnOriented()) {
     // Column-oriented means cross axis is container's inline axis.
-    return pos->ISize(containerWM).GetUnit() != eStyleUnit_Auto;
+    return !pos->ISize(containerWM).IsAuto();
   }
   // Else, we're row-oriented, which means cross axis is container's block
   // axis. We need to use IsAutoBSize() to catch e.g. %-BSize applied to
@@ -1486,8 +1482,7 @@ static nscoord PartiallyResolveAutoMinSize(
   // We need the smallest of:
   // * the used flex-basis, if the computed flex-basis was 'auto':
   // XXXdholbert ('auto' might be renamed to 'main-size'; see bug 1032922)
-  if (eStyleUnit_Auto ==
-          aItemReflowInput.mStylePosition->mFlexBasis.GetUnit() &&
+  if (aItemReflowInput.mStylePosition->mFlexBasis.IsAuto() &&
       aFlexItem.GetFlexBaseSize() != NS_AUTOHEIGHT) {
     // NOTE: We skip this if the flex base size depends on content & isn't yet
     // resolved. This is OK, because the caller is responsible for computing
@@ -1937,16 +1932,16 @@ FlexItem::FlexItem(ReflowInput& aFlexItemReflowInput, float aFlexGrow,
   SetFlexBaseSizeAndMainSize(aFlexBaseSize);
   CheckForMinSizeAuto(aFlexItemReflowInput, aAxisTracker);
 
-  const nsStyleSides& styleMargin = aFlexItemReflowInput.mStyleMargin->mMargin;
+  const nsStyleMargin* styleMargin = aFlexItemReflowInput.mStyleMargin;
   mHasAnyAutoMargin =
-      styleMargin.HasInlineAxisAuto(mWM) || styleMargin.HasBlockAxisAuto(mWM);
+      styleMargin->HasInlineAxisAuto(mWM) || styleMargin->HasBlockAxisAuto(mWM);
 
   // Assert that any "auto" margin components are set to 0.
   // (We'll resolve them later; until then, we want to treat them as 0-sized.)
 #ifdef DEBUG
   {
     NS_FOR_CSS_SIDES(side) {
-      if (styleMargin.GetUnit(side) == eStyleUnit_Auto) {
+      if (styleMargin->mMargin.Get(side).IsAuto()) {
         MOZ_ASSERT(GetMarginComponentForSide(side) == 0,
                    "Someone else tried to resolve our auto margin");
       }
@@ -2025,10 +2020,9 @@ void FlexItem::CheckForMinSizeAuto(const ReflowInput& aFlexItemReflowInput,
   // (a) its computed value is "auto"
   // (b) the "overflow" sub-property in the same axis (the main axis) has a
   //     computed value of "visible"
-  const nsStyleCoord& mainMinSize =
-      aAxisTracker.IsRowOriented()
-          ? pos->MinISize(aAxisTracker.GetWritingMode())
-          : pos->MinBSize(aAxisTracker.GetWritingMode());
+  const auto& mainMinSize = aAxisTracker.IsRowOriented()
+                                ? pos->MinISize(aAxisTracker.GetWritingMode())
+                                : pos->MinBSize(aAxisTracker.GetWritingMode());
 
   // NOTE: Technically we should be checking the 'overflow' subproperty in the
   // main axis. But since we only care whether it's 'visible', we can check
@@ -2083,17 +2077,16 @@ bool FlexItem::IsCrossSizeAuto() const {
   // Check whichever component is in the flex container's cross axis.
   // (IsInlineAxisCrossAxis() tells us whether that's our ISize or BSize, in
   // terms of our own WritingMode, mWM.)
-  return eStyleUnit_Auto == (IsInlineAxisCrossAxis()
-                                 ? stylePos->ISize(mWM).GetUnit()
-                                 : stylePos->BSize(mWM).GetUnit());
+  return IsInlineAxisCrossAxis() ? stylePos->ISize(mWM).IsAuto()
+                                 : stylePos->BSize(mWM).IsAuto();
 }
 
 uint32_t FlexItem::GetNumAutoMarginsInAxis(AxisOrientationType aAxis) const {
   uint32_t numAutoMargins = 0;
-  const nsStyleSides& styleMargin = mFrame->StyleMargin()->mMargin;
+  const auto& styleMargin = mFrame->StyleMargin()->mMargin;
   for (uint32_t i = 0; i < eNumAxisEdges; i++) {
     mozilla::Side side = kAxisOrientationToSidesMap[aAxis][i];
-    if (styleMargin.GetUnit(side) == eStyleUnit_Auto) {
+    if (styleMargin.Get(side).IsAuto()) {
       numAutoMargins++;
     }
   }
@@ -2356,9 +2349,8 @@ void nsFlexContainerFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
   if (!isLegacyBox && styleDisp->mDisplay == mozilla::StyleDisplay::Block) {
     ComputedStyle* parentComputedStyle = GetParent()->Style();
     NS_ASSERTION(
-        parentComputedStyle &&
-            (mComputedStyle->GetPseudo() == nsCSSAnonBoxes::buttonContent() ||
-             mComputedStyle->GetPseudo() == nsCSSAnonBoxes::scrolledContent()),
+        Style()->GetPseudoType() == PseudoStyleType::buttonContent ||
+            Style()->GetPseudoType() == PseudoStyleType::scrolledContent,
         "The only way a nsFlexContainerFrame can have 'display:block' "
         "should be if it's the inner part of a scrollable or button "
         "element");
@@ -2396,9 +2388,8 @@ nscoord nsFlexContainerFrame::GetLogicalBaseline(
 // http://www.w3.org/TR/2012/CR-css3-flexbox-20120918/#painting
 static uint32_t GetDisplayFlagsForFlexItem(nsIFrame* aFrame) {
   MOZ_ASSERT(aFrame->IsFlexItem(), "Should only be called on flex items");
-
   const nsStylePosition* pos = aFrame->StylePosition();
-  if (pos->mZIndex.GetUnit() == eStyleUnit_Integer) {
+  if (pos->mZIndex.IsInteger()) {
     return nsIFrame::DISPLAY_CHILD_FORCE_STACKING_CONTEXT;
   }
   return nsIFrame::DISPLAY_CHILD_FORCE_PSEUDO_STACKING_CONTEXT;
@@ -3002,10 +2993,10 @@ MainAxisPositionTracker::MainAxisPositionTracker(
 
 void MainAxisPositionTracker::ResolveAutoMarginsInMainAxis(FlexItem& aItem) {
   if (mNumAutoMarginsInMainAxis) {
-    const nsStyleSides& styleMargin = aItem.Frame()->StyleMargin()->mMargin;
+    const auto& styleMargin = aItem.Frame()->StyleMargin()->mMargin;
     for (uint32_t i = 0; i < eNumAxisEdges; i++) {
       mozilla::Side side = kAxisOrientationToSidesMap[mAxis][i];
-      if (styleMargin.GetUnit(side) == eStyleUnit_Auto) {
+      if (styleMargin.Get(side).IsAuto()) {
         // NOTE: This integer math will skew the distribution of remainder
         // app-units towards the end, which is fine.
         nscoord curAutoMarginSize =
@@ -3385,10 +3376,10 @@ void SingleLineCrossAxisPositionTracker::ResolveAutoMarginsInCrossAxis(
 
   // OK, we have at least one auto margin and we have some available space.
   // Give each auto margin a share of the space.
-  const nsStyleSides& styleMargin = aItem.Frame()->StyleMargin()->mMargin;
+  const auto& styleMargin = aItem.Frame()->StyleMargin()->mMargin;
   for (uint32_t i = 0; i < eNumAxisEdges; i++) {
     mozilla::Side side = kAxisOrientationToSidesMap[mAxis][i];
-    if (styleMargin.GetUnit(side) == eStyleUnit_Auto) {
+    if (styleMargin.Get(side).IsAuto()) {
       MOZ_ASSERT(aItem.GetMarginComponentForSide(side) == 0,
                  "Expecting auto margins to have value '0' before we "
                  "update them");
@@ -3635,7 +3626,7 @@ void FlexboxAxisTracker::InitAxesFromLegacyProps(
 void FlexboxAxisTracker::InitAxesFromModernProps(
     const nsFlexContainerFrame* aFlexContainer) {
   const nsStylePosition* stylePos = aFlexContainer->StylePosition();
-  uint32_t flexDirection = stylePos->mFlexDirection;
+  StyleFlexDirection flexDirection = stylePos->mFlexDirection;
 
   // Inline dimension ("start-to-end"):
   // (NOTE: I'm intentionally not calling these "inlineAxis"/"blockAxis", since
@@ -3648,22 +3639,22 @@ void FlexboxAxisTracker::InitAxesFromModernProps(
 
   // Determine main axis:
   switch (flexDirection) {
-    case NS_STYLE_FLEX_DIRECTION_ROW:
+    case StyleFlexDirection::Row:
       mMainAxis = inlineDimension;
       mIsRowOriented = true;
       mIsMainAxisReversed = false;
       break;
-    case NS_STYLE_FLEX_DIRECTION_ROW_REVERSE:
+    case StyleFlexDirection::RowReverse:
       mMainAxis = GetReverseAxis(inlineDimension);
       mIsRowOriented = true;
       mIsMainAxisReversed = true;
       break;
-    case NS_STYLE_FLEX_DIRECTION_COLUMN:
+    case StyleFlexDirection::Column:
       mMainAxis = blockDimension;
       mIsRowOriented = false;
       mIsMainAxisReversed = false;
       break;
-    case NS_STYLE_FLEX_DIRECTION_COLUMN_REVERSE:
+    case StyleFlexDirection::ColumnReverse:
       mMainAxis = GetReverseAxis(blockDimension);
       mIsRowOriented = false;
       mIsMainAxisReversed = true;
@@ -3675,8 +3666,8 @@ void FlexboxAxisTracker::InitAxesFromModernProps(
   // Determine cross axis:
   // (This is set up so that a bogus |flexDirection| value will
   // give us blockDimension.
-  if (flexDirection == NS_STYLE_FLEX_DIRECTION_COLUMN ||
-      flexDirection == NS_STYLE_FLEX_DIRECTION_COLUMN_REVERSE) {
+  if (flexDirection == StyleFlexDirection::Column ||
+      flexDirection == StyleFlexDirection::ColumnReverse) {
     mCrossAxis = inlineDimension;
   } else {
     mCrossAxis = blockDimension;
@@ -3723,9 +3714,9 @@ bool nsFlexContainerFrame::ShouldUseMozBoxCollapseBehavior(
 
   // Check our parent's display value, if we're an anonymous box (with a
   // potentially-untrustworthy display value):
-  auto pseudoType = Style()->GetPseudo();
-  if (pseudoType == nsCSSAnonBoxes::scrolledContent() ||
-      pseudoType == nsCSSAnonBoxes::buttonContent()) {
+  auto pseudoType = Style()->GetPseudoType();
+  if (pseudoType == PseudoStyleType::scrolledContent ||
+      pseudoType == PseudoStyleType::buttonContent) {
     const nsStyleDisplay* disp = GetParent()->StyleDisplay();
     if (disp->mDisplay == mozilla::StyleDisplay::MozBox ||
         disp->mDisplay == mozilla::StyleDisplay::MozInlineBox) {
@@ -4206,11 +4197,11 @@ void nsFlexContainerFrame::Reflow(nsPresContext* aPresContext,
   // flexible -- but we'll let our ancestors handle those sorts of cases.)
   WritingMode wm = aReflowInput.GetWritingMode();
   const nsStylePosition* stylePos = StylePosition();
-  const nsStyleCoord& bsize = stylePos->BSize(wm);
-  if (bsize.HasPercent() ||
-      (StyleDisplay()->IsAbsolutelyPositionedStyle() && bsize.IsAutoOrEnum() &&
-       eStyleUnit_Auto != stylePos->mOffset.GetBStartUnit(wm) &&
-       eStyleUnit_Auto != stylePos->mOffset.GetBEndUnit(wm))) {
+  const auto& bsize = stylePos->BSize(wm);
+  if (bsize.HasPercent() || (StyleDisplay()->IsAbsolutelyPositionedStyle() &&
+                             (bsize.IsAuto() || bsize.IsExtremumLength()) &&
+                             !stylePos->mOffset.GetBStart(wm).IsAuto() &&
+                             !stylePos->mOffset.GetBEnd(wm).IsAuto())) {
     AddStateBits(NS_FRAME_CONTAINS_RELATIVE_BSIZE);
   }
 
@@ -4455,8 +4446,8 @@ bool nsFlexContainerFrame::IsItemInlineAxisMainAxis(nsIFrame* aFrame) {
   // whether the flex container's main axis is its inline axis.)
   auto flexDirection = flexContainer->StylePosition()->mFlexDirection;
   bool flexContainerIsRowOriented =
-      flexDirection == NS_STYLE_FLEX_DIRECTION_ROW ||
-      flexDirection == NS_STYLE_FLEX_DIRECTION_ROW_REVERSE;
+      flexDirection == StyleFlexDirection::Row ||
+      flexDirection == StyleFlexDirection::RowReverse;
 
   // aFrame's inline axis is its flex container's main axis IFF the above
   // questions have the same answer.
@@ -4465,15 +4456,15 @@ bool nsFlexContainerFrame::IsItemInlineAxisMainAxis(nsIFrame* aFrame) {
 
 /* static */
 bool nsFlexContainerFrame::IsUsedFlexBasisContent(
-    const nsStyleCoord* aFlexBasis, const nsStyleCoord* aMainSize) {
+    const StyleFlexBasis& aFlexBasis, const StyleSize& aMainSize) {
   // We have a used flex-basis of 'content' if flex-basis explicitly has that
   // value, OR if flex-basis is 'auto' (deferring to the main-size property)
   // and the main-size property is also 'auto'.
   // See https://drafts.csswg.org/css-flexbox-1/#valdef-flex-basis-auto
-  return (aFlexBasis->GetUnit() == eStyleUnit_Enumerated &&
-          aFlexBasis->GetIntValue() == NS_STYLE_FLEX_BASIS_CONTENT) ||
-         (aFlexBasis->GetUnit() == eStyleUnit_Auto &&
-          aMainSize->GetUnit() == eStyleUnit_Auto);
+  if (aFlexBasis.IsContent()) {
+    return true;
+  }
+  return aFlexBasis.IsAuto() && aMainSize.IsAuto();
 }
 
 static mozilla::dom::FlexPhysicalDirection ConvertAxisOrientationTypeToAPIEnum(

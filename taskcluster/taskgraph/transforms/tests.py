@@ -77,6 +77,11 @@ WINDOWS_WORKER_TYPES = {
       'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
       'hardware': 'releng-hardware/gecko-t-win10-64-hw',
     },
+    'windows10-aarch64': {
+      'virtual': 'bitbar/gecko-t-win64-aarch64-laptop',
+      'virtual-with-gpu': 'bitbar/gecko-t-win64-aarch64-laptop',
+      'hardware': 'bitbar/gecko-t-win64-aarch64-laptop',
+    },
     'windows10-64-ccov': {
       'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
       'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
@@ -103,6 +108,11 @@ WINDOWS_WORKER_TYPES = {
       'hardware': 'releng-hardware/gecko-t-win10-64-hw',
     },
     'windows10-64-qr': {
+      'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
+      'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
+      'hardware': 'releng-hardware/gecko-t-win10-64-hw',
+    },
+    'windows10-64-pgo-qr': {
       'virtual': 'aws-provisioner-v1/gecko-t-win10-64',
       'virtual-with-gpu': 'aws-provisioner-v1/gecko-t-win10-64-gpu',
       'hardware': 'releng-hardware/gecko-t-win10-64-hw',
@@ -237,7 +247,7 @@ test_description_schema = Schema({
     # unit tests on linux platforms and false otherwise
     Optional('allow-software-gl-layers'): bool,
 
-    # For tasks that will run in docker-worker or docker-engine, this is the
+    # For tasks that will run in docker-worker, this is the
     # name of the docker image or in-tree docker image to run the task in.  If
     # in-tree, then a dependency will be created automatically.  This is
     # generally `desktop-test`, or an image that acts an awful lot like it.
@@ -297,8 +307,13 @@ test_description_schema = Schema({
         # generally set in a per-kind transformation
         Optional('build-artifact-name'): basestring,
 
-        # If true, tooltool downloads will be enabled via relengAPIProxy.
-        Required('tooltool-downloads'): bool,
+        # If not false, tooltool downloads will be enabled via relengAPIProxy
+        # for either just public files, or all files.  Not supported on Windows
+        Required('tooltool-downloads'): Any(
+            False,
+            'public',
+            'internal',
+        ),
 
         # Add --blob-upload-branch=<project> mozharness parameter
         Optional('include-blob-upload-branch'): bool,
@@ -427,7 +442,7 @@ def set_defaults(config, tests):
         build_platform = test['build-platform']
         if build_platform.startswith('android'):
             # all Android test tasks download internal objects from tooltool
-            test['mozharness']['tooltool-downloads'] = True
+            test['mozharness']['tooltool-downloads'] = 'internal'
             test['mozharness']['actions'] = ['get-secrets']
             # Fennec is non-e10s; geckoview handled in set_target
             test['e10s'] = False
@@ -473,7 +488,7 @@ def set_defaults(config, tests):
 
         test['mozharness'].setdefault('extra-options', [])
         test['mozharness'].setdefault('requires-signed-builds', False)
-        test['mozharness'].setdefault('tooltool-downloads', False)
+        test['mozharness'].setdefault('tooltool-downloads', 'public')
         test['mozharness'].setdefault('set-moz-node-path', False)
         test['mozharness'].setdefault('chunked', False)
         test['mozharness'].setdefault('chunking-args', 'this-chunk')
@@ -578,6 +593,7 @@ def set_treeherder_machine_platform(config, tests):
         'macosx64/debug': 'osx-10-10/debug',
         'macosx64/opt': 'osx-10-10/opt',
         'win64-asan/opt': 'windows10-64/asan',
+        'win64-aarch64/opt': 'windows10-aarch64/opt',
         'win32-pgo/opt': 'windows7-32/pgo',
         'win64-pgo/opt': 'windows10-64/pgo',
         # The build names for Android platforms have partially evolved over the
@@ -602,7 +618,7 @@ def set_treeherder_machine_platform(config, tests):
             test['treeherder-machine-platform'] = test['test-platform']
         elif 'android-em-7.0-x86_64' in test['test-platform']:
             opt = test['test-platform'].split('/')[1]
-            test['treeherder-machine-platform'] = 'Android-7_0-x86_64/'+opt
+            test['treeherder-machine-platform'] = 'android-em-7-0-x86_64/'+opt
         elif 'android-em-7.0-x86' in test['test-platform']:
             opt = test['test-platform'].split('/')[1]
             test['treeherder-machine-platform'] = 'android-em-7-0-x86/'+opt
@@ -634,11 +650,13 @@ def set_tier(config, tests):
                                          'linux64-asan/opt',
                                          'linux64-qr/opt',
                                          'linux64-qr/debug',
+                                         'linux64-pgo-qr/opt',
                                          'windows7-32/debug',
                                          'windows7-32/opt',
                                          'windows7-32-pgo/opt',
                                          'windows7-32-devedition/opt',
                                          'windows7-32-nightly/opt',
+                                         'windows10-aarch64/opt',
                                          'windows10-64/debug',
                                          'windows10-64/opt',
                                          'windows10-64-pgo/opt',
@@ -647,6 +665,7 @@ def set_tier(config, tests):
                                          'windows10-64-asan/opt',
                                          'windows10-64-qr/opt',
                                          'windows10-64-qr/debug',
+                                         'windows10-64-pgo-qr/opt',
                                          'macosx64/opt',
                                          'macosx64/debug',
                                          'macosx64-nightly/opt',
@@ -860,9 +879,7 @@ def split_serviceworker_e10s(config, tests):
             test['treeherder-symbol'] = join_symbol(group, symbol)
             test['mozharness']['extra-options'].append(
                 '--setpref="dom.serviceWorkers.parent_intercept=true"')
-
-            if 'web-platform' in test['suite']:
-                test['tier'] = 2
+            test['tier'] = 2
         yield test
 
 

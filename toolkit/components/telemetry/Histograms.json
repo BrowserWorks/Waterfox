@@ -2412,14 +2412,6 @@
     "n_values": 16,
     "description": "Websockets Handshake Results (ws-ok-plain, ws-ok-proxy, ws-failed-plain, ws-failed-proxy, wss-ok-plain, wss-ok-proxy, wss-failed-plain, wss-failed-proxy)"
   },
-  "SPDY_VERSION2": {
-    "record_in_processes": ["main", "content"],
-    "alert_emails": ["necko@mozilla.com"],
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 48,
-    "description": "SPDY: Protocol Version Used"
-  },
   "HTTP_RESPONSE_VERSION": {
     "record_in_processes": ["main", "content"],
     "alert_emails": ["necko@mozilla.com"],
@@ -2850,22 +2842,6 @@
     "n_buckets": 50,
     "description": "Time to search cache (ms)"
   },
-  "CACHE_MEMORY_SEARCH_2": {
-    "record_in_processes": ["main", "content"],
-    "expires_in_version": "default",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 50,
-    "description": "Time to search memory cache (ms)"
-  },
-  "CACHE_DISK_SEARCH_2": {
-    "record_in_processes": ["main", "content"],
-    "expires_in_version": "default",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 50,
-    "description": "Time to search disk cache (ms)"
-  },
   "CACHE_OFFLINE_SEARCH_2": {
     "record_in_processes": ["main", "content"],
     "expires_in_version": "never",
@@ -2906,14 +2882,6 @@
     "kind": "enumerated",
     "n_values": 6,
     "description": "encoding removed: 0=unknown, 1=gzip, 2=deflate, 3=brotli"
-  },
-  "HTTP_DISK_CACHE_OVERHEAD": {
-    "record_in_processes": ["main", "content"],
-    "expires_in_version": "default",
-    "kind": "exponential",
-    "high": 32000000,
-    "n_buckets": 100,
-    "description": "HTTP Disk cache memory overhead (bytes)"
   },
   "CACHE_LM_INCONSISTENT": {
     "record_in_processes": ["main", "content"],
@@ -4703,14 +4671,6 @@
     "kind": "enumerated",
     "n_values": 16,
     "description": "Flags errors in startup calculation()"
-  },
-  "NETWORK_DISK_CACHE_OPEN": {
-    "record_in_processes": ["main", "content"],
-    "expires_in_version": "default",
-    "kind": "exponential",
-    "high": 10000,
-    "n_buckets": 10,
-    "description": "Time spent opening disk cache (ms)"
   },
   "NETWORK_DISK_CACHE_TRASHRENAME": {
     "record_in_processes": ["main", "content"],
@@ -8688,6 +8648,31 @@
     "n_values": 10,
     "description": "Counts types of deprecation warnings logged on every successful call to navigator.requestMediaKeySystemAccess(). 0=No warnings logged, 1=MediaEMENoCapabilitiesDeprecatedWarning, 2=MediaEMENoCodecsDeprecatedWarning."
   },
+  "MEDIA_MP4_PARSE_SAMPLE_DESCRIPTION_ENTRIES_HAVE_MULTIPLE_CODECS": {
+    "record_in_processes": ["main", "content"],
+    "alert_emails": ["bvandyk@mozilla.com", "jya@mozilla.com", "drno@ohlmeier.org"],
+    "bug_numbers": [1513651],
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Records if multiple codecs are present in a track's sample description entries. Recorded each time we process a track's metadata while parsing mp4s."
+  },
+  "MEDIA_MP4_PARSE_SAMPLE_DESCRIPTION_ENTRIES_HAVE_MULTIPLE_CRYPTO": {
+    "record_in_processes": ["main", "content"],
+    "alert_emails": ["bvandyk@mozilla.com", "jya@mozilla.com", "drno@ohlmeier.org"],
+    "bug_numbers": [1513651],
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Records if multiple sets of crypto info are present in a track's sample description entries. Recorded each time we process a track's metadata while parsing mp4s."
+  },
+  "MEDIA_MP4_PARSE_NUM_SAMPLE_DESCRIPTION_ENTRIES": {
+    "record_in_processes": ["main", "content"],
+    "alert_emails": ["bvandyk@mozilla.com", "jya@mozilla.com", "drno@ohlmeier.org"],
+    "bug_numbers": [1513651],
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 5,
+    "description": "Counts the number of entries in the sample description box (stsd) for a track in an mp4. Recorded each time we process a track's metadata while parsing mp4s."
+  },
   "MEDIACACHE_WATERMARK_KB": {
     "record_in_processes": ["main", "content"],
     "alert_emails": ["gsquelart@mozilla.com"],
@@ -10635,16 +10620,6 @@
     "releaseChannelCollection": "opt-out",
     "description": "How often are secure cookies set from non-secure origins, and vice-versa? 0=nonsecure/http, 1=nonsecure/https, 2=secure/http, 3=secure/https"
   },
-  "COOKIE_LEAVE_SECURE_ALONE": {
-    "record_in_processes": ["main", "content"],
-    "alert_emails": ["seceng-telemetry@mozilla.com"],
-    "bug_numbers": [976073, 1325909],
-    "expires_in_version": "60",
-    "kind": "enumerated",
-    "n_values": 10,
-    "releaseChannelCollection": "opt-out",
-    "description": "Strict Secure Cookies: 0=blocked secure cookie from http; 1=blocked shadowing secure cookie from http; 2=shadowing secure cookie from https; 3=evicted newer insecure cookie; 4=evicted oldest insecure cookie; 5=evicted secure cookie; 6=evicting secure cookie blocked; 7=blocked downgrading secure cookie from http; 8=downgraded secure cookie from https"
-  },
   "COOKIE_SCHEME_HTTPS": {
     "record_in_processes": ["main", "content"],
     "alert_emails": ["cpeterson@mozilla.com", "seceng-telemetry@mozilla.com"],
@@ -11293,13 +11268,13 @@
   },
   "WEAVE_LOGIN_FAILED_FOR": {
     "record_in_processes": ["main"],
-    "expires_in_version": "68",
+    "expires_in_version": "72",
     "alert_emails": ["sync-dev@mozilla.org"],
     "kind": "exponential",
     "high": 20000,
     "n_buckets": 100,
     "releaseChannelCollection": "opt-out",
-    "bug_numbers": [1375635],
+    "bug_numbers": [1375635, 1523644],
     "description": "The number of minutes the user was in a bad login state."
   },
   "WEAVE_WIPE_SERVER_SUCCEEDED": {
@@ -13341,6 +13316,17 @@
     "bug_numbers": [1411632],
     "description": "The time between navigation start and the first non-blank paint of a foreground root content document, in milliseconds. This only records documents that were in an active docshell throughout the whole time between navigation start and non-blank paint. The non-blank paint timestamp is taken during display list building and does not include rasterization or compositing of that paint.  This probe only accumulates when there were no active-tab network load optimizations happening during the interval."
   },
+  "TIME_TO_FIRST_CONTENTFUL_PAINT_MS": {
+    "record_in_processes": ["main", "content"],
+    "alert_emails": ["hkirschner@mozilla.com", "vchin@mozilla.com", "sphilp@mozilla.com", "dstrohmeier@mozilla.com"],
+    "expires_in_version": "never",
+    "releaseChannelCollection": "opt-out",
+    "kind": "exponential",
+    "high": 100000,
+    "n_buckets": 100,
+    "bug_numbers": [1515132],
+    "description": "The time between navigation start and the first contentful paint of a foreground root content document, in milliseconds. This only records documents that were in an active docshell throughout the whole time between navigation start and contentful paint. The contentful paint timestamp is taken during display list building and does not include rasterization or compositing of that paint."
+  },
   "TAB_AUDIO_INDICATOR_USED": {
     "record_in_processes": ["main", "content"],
     "alert_emails": ["alwu@mozilla.com", "nohlmeier@mozilla.com"],
@@ -13359,15 +13345,6 @@
     "bug_numbers": [1335365],
     "releaseChannelCollection": "opt-out",
     "description": "XMLHttpRequest.responseType set to moz-chunked-arraybuffer"
-  },
-  "BUSY_TAB_ABANDONED": {
-    "record_in_processes": ["main"],
-    "alert_emails": ["hkirschner@mozilla.com"],
-    "expires_in_version": "68",
-    "kind": "categorical",
-    "bug_numbers": [1307689],
-    "description": "Records a value each time a tab that is showing the loading throbber is interrupted. Desktop only.",
-    "labels": ["stop", "back", "forward", "historyNavigation", "reload", "tabClosed", "newURI"]
   },
   "EXTENSION_INSTALL_PROMPT_RESULT": {
     "record_in_processes": ["main", "content"],
@@ -13450,6 +13427,33 @@
     "n_buckets": 100,
     "bug_numbers": [1341531],
     "description": "Time (ms) for the APZ handled wheel event to dispatch, but before handlers executing."
+  },
+  "INTERMEDIATE_PRELOADING_ERRORS": {
+    "record_in_processes": ["main"],
+    "alert_emails": ["seceng-telemetry@mozilla.com", "jjones@mozilla.com"],
+    "expires_in_version": "70",
+    "kind": "categorical",
+    "labels": ["emptyAttachment",
+               "failedToDownloadMisc",
+               "failedToFetch",
+               "failedToObserve",
+               "failedToRemove",
+               "failedToUpdateNSS",
+               "failedToUpdateDB",
+               "unexpectedHash",
+               "unexpectedLength"],
+    "bug_numbers": [1519273],
+    "description": "Errors occurred during intermediate certificate preloading."
+  },
+  "INTERMEDIATE_PRELOADING_UPDATE_TIME_MS": {
+    "record_in_processes": ["main"],
+    "alert_emails": ["seceng-telemetry@mozilla.com", "jjones@mozilla.com"],
+    "expires_in_version": "70",
+    "kind": "exponential",
+    "high": 180000,
+    "n_buckets": 50,
+    "bug_numbers": [1519273],
+    "description": "Number of milliseconds to update the pre-loaded data, if updated."
   },
   "IPC_SYNC_MESSAGE_MANAGER_LATENCY_MS": {
     "record_in_processes": ["main", "content"],

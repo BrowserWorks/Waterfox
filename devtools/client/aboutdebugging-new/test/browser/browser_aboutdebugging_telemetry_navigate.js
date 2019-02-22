@@ -2,9 +2,6 @@
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
-
-/* import-globals-from helper-mocks.js */
-Services.scriptloader.loadSubScript(CHROME_URL_ROOT + "helper-mocks.js", this);
 /* import-globals-from helper-telemetry.js */
 Services.scriptloader.loadSubScript(CHROME_URL_ROOT + "helper-telemetry.js", this);
 
@@ -18,7 +15,8 @@ add_task(async function() {
 
   setupTelemetryTest();
 
-  const { tab, document } = await openAboutDebugging();
+  const { tab, document, window } = await openAboutDebugging();
+  await selectThisFirefoxPage(document, window.AboutDebugging.store);
 
   const sessionId = getOpenEventSessionId();
   ok(!isNaN(sessionId), "Open event has a valid session id");
@@ -31,6 +29,7 @@ add_task(async function() {
   info("Navigate to 'USB device runtime' page");
   await navigateToUSBRuntime(mocks, document);
   checkSelectPageEvent("runtime", sessionId);
+  await waitForRequestsToSettle(window.AboutDebugging.store);
 
   await removeTab(tab);
 });

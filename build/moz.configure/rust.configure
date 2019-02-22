@@ -54,9 +54,9 @@ def cargo_info(cargo):
     )
 
 
-@depends(rustc_info, cargo_info)
+@depends(rustc_info, cargo_info, build_project)
 @imports(_from='textwrap', _import='dedent')
-def rust_compiler(rustc_info, cargo_info):
+def rust_compiler(rustc_info, cargo_info, build_project):
     if not rustc_info:
         die(dedent('''\
         Rust compiler not found.
@@ -66,8 +66,12 @@ def rust_compiler(rustc_info, cargo_info):
         You can install rust by running './mach bootstrap'
         or by directly running the installer from https://rustup.rs/
         '''))
-    rustc_min_version = Version('1.31.0')
-    cargo_min_version = rustc_min_version
+    if build_project == 'tools/crashreporter':
+        rustc_min_version = Version('1.22.0')
+        cargo_min_version = Version('0.23.0')
+    else:
+        rustc_min_version = Version('1.32.0')
+        cargo_min_version = rustc_min_version
 
     version = rustc_info.version
     if version < rustc_min_version:
@@ -241,7 +245,7 @@ rust_host_triple = rust_triple_alias(host)
 def validate_rust_host_triple(host, rust_host, rustc_host):
     if rust_host != rustc_host:
         if host.alias == rust_host:
-            configure_host = host_alias
+            configure_host = host.alias
         else:
             configure_host = '{}/{}'.format(host.alias, rust_host)
         die("The rust compiler host ({}) is not suitable for the configure host ({})."
@@ -321,7 +325,7 @@ set_config('WIN64_CARGO_LINKER_CONFIG', win64_cargo_linker_config)
 @depends(target, c_compiler, rustc)
 @imports('os')
 def rustc_natvis_ldflags(target, compiler_info, rustc):
-    if target.kernel == 'WINNT' and compiler_info.type in ('msvc', 'clang-cl'):
+    if target.kernel == 'WINNT' and compiler_info.type == 'clang-cl':
         sysroot = check_cmd_output(rustc, '--print', 'sysroot').strip()
         etc = os.path.join(sysroot, 'lib/rustlib/etc')
         ldflags = []

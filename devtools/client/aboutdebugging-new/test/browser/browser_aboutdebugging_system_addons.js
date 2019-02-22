@@ -3,13 +3,6 @@
 
 "use strict";
 
-/* import-globals-from mocks/helper-client-wrapper-mock.js */
-Services.scriptloader.loadSubScript(
-  CHROME_URL_ROOT + "mocks/helper-client-wrapper-mock.js", this);
-/* import-globals-from mocks/helper-runtime-client-factory-mock.js */
-Services.scriptloader.loadSubScript(
-  CHROME_URL_ROOT + "mocks/helper-runtime-client-factory-mock.js", this);
-
 // Test that system addons are only displayed when the showSystemAddons preference is
 // true.
 
@@ -25,7 +18,8 @@ add_task(async function testShowSystemAddonsFalse() {
   info("Hide system addons in aboutdebugging via preference");
   await pushPref("devtools.aboutdebugging.showSystemAddons", false);
 
-  const { document, tab } = await openAboutDebugging();
+  const { document, tab, window } = await openAboutDebugging();
+  await selectThisFirefoxPage(document, window.AboutDebugging.store);
 
   const hasSystemAddon = !!findDebugTargetByText("System Addon", document);
   const hasInstalledAddon = !!findDebugTargetByText("Installed Addon", document);
@@ -42,7 +36,9 @@ add_task(async function testShowSystemAddonsTrue() {
   info("Show system addons in aboutdebugging via preference");
   await pushPref("devtools.aboutdebugging.showSystemAddons", true);
 
-  const { document, tab } = await openAboutDebugging();
+  const { document, tab, window } = await openAboutDebugging();
+  await selectThisFirefoxPage(document, window.AboutDebugging.store);
+
   const hasSystemAddon = !!findDebugTargetByText("System Addon", document);
   const hasInstalledAddon = !!findDebugTargetByText("Installed Addon", document);
   ok(hasSystemAddon, "System addon is displayed when system addon pref is true");

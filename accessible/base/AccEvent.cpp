@@ -259,6 +259,15 @@ already_AddRefed<nsIAccessibleEvent> a11y::MakeXPCEvent(AccEvent* aEvent) {
     xpEvent = new xpcAccScrollingEvent(
         type, ToXPC(acc), ToXPCDocument(doc), node, fromUser, sa->ScrollX(),
         sa->ScrollY(), sa->MaxScrollX(), sa->MaxScrollY());
+    return xpEvent.forget();
+  }
+
+  if (eventGroup & (1 << AccEvent::eAnnouncementEvent)) {
+    AccAnnouncementEvent* aa = downcast_accEvent(aEvent);
+    xpEvent = new xpcAccAnnouncementEvent(type, ToXPC(acc), ToXPCDocument(doc),
+                                          node, fromUser, aa->Announcement(),
+                                          aa->Priority());
+    return xpEvent.forget();
   }
 
   xpEvent =

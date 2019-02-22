@@ -13,9 +13,7 @@
 
 #include <stdint.h>
 
-#ifdef ENABLE_BIGINT
-#  include "builtin/BigInt.h"
-#endif
+#include "builtin/BigInt.h"
 #include "builtin/Promise.h"
 #include "builtin/TestingFunctions.h"
 #include "gc/GCInternals.h"
@@ -306,10 +304,8 @@ JS_FRIEND_API bool js::GetBuiltinClass(JSContext* cx, HandleObject obj,
     *cls = ESClass::Arguments;
   } else if (obj->is<ErrorObject>()) {
     *cls = ESClass::Error;
-#ifdef ENABLE_BIGINT
   } else if (obj->is<BigIntObject>()) {
     *cls = ESClass::BigInt;
-#endif
   } else {
     *cls = ESClass::Other;
   }
@@ -544,29 +540,16 @@ JS_FRIEND_API bool js::IsCompartmentZoneSweepingOrCompacting(
   return comp->zone()->isGCSweepingOrCompacting();
 }
 
-namespace {
-struct VisitGrayCallbackFunctor {
-  GCThingCallback callback_;
-  void* closure_;
-  VisitGrayCallbackFunctor(GCThingCallback callback, void* closure)
-      : callback_(callback), closure_(closure) {}
-
-  template <class T>
-  void operator()(T tp) const {
-    if ((*tp)->isMarkedGray()) {
-      callback_(closure_, JS::GCCellPtr(*tp));
-    }
-  }
-};
-}  // namespace
-
 JS_FRIEND_API void js::VisitGrayWrapperTargets(Zone* zone,
                                                GCThingCallback callback,
                                                void* closure) {
   for (CompartmentsInZoneIter comp(zone); !comp.done(); comp.next()) {
     for (Compartment::WrapperEnum e(comp); !e.empty(); e.popFront()) {
-      e.front().mutableKey().applyToWrapped(
-          VisitGrayCallbackFunctor(callback, closure));
+      e.front().mutableKey().applyToWrapped([callback, closure](auto tp) {
+        if ((*tp)->isMarkedGray()) {
+          callback(closure, JS::GCCellPtr(*tp));
+        }
+      });
     }
   }
 }
@@ -1146,12 +1129,6 @@ JS_FRIEND_API JS::Realm* js::GetAnyRealmInZone(JS::Zone* zone) {
   RealmsInZoneIter realm(zone);
   MOZ_ASSERT(!realm.done());
   return realm.get();
-}
-
-JS_FRIEND_API JSObject* js::GetFirstGlobalInCompartment(JS::Compartment* comp) {
-  JSObject* global = comp->firstRealm()->maybeGlobal();
-  MOZ_ASSERT(global);
-  return global;
 }
 
 void JS::ObjectPtr::finalize(JSRuntime* rt) {

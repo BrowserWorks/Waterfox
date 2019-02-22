@@ -38,6 +38,7 @@ namespace jit {
   _(JSOP_OR)                    \
   _(JSOP_NOT)                   \
   _(JSOP_POS)                   \
+  _(JSOP_TONUMERIC)             \
   _(JSOP_LOOPHEAD)              \
   _(JSOP_LOOPENTRY)             \
   _(JSOP_VOID)                  \
@@ -54,7 +55,7 @@ namespace jit {
   _(JSOP_UINT24)                \
   _(JSOP_RESUMEINDEX)           \
   _(JSOP_DOUBLE)                \
-  IF_BIGINT(_(JSOP_BIGINT), )   \
+  _(JSOP_BIGINT)                \
   _(JSOP_STRING)                \
   _(JSOP_SYMBOL)                \
   _(JSOP_OBJECT)                \

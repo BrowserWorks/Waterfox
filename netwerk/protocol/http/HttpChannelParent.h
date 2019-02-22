@@ -129,6 +129,8 @@ class HttpChannelParent final : public nsIInterfaceRequestor,
   // child channel.
   void CancelChildCrossProcessRedirect();
 
+  already_AddRefed<HttpChannelParentListener> GetParentListener();
+
  protected:
   // used to connect redirected-to channel in parent with just created
   // ChildChannel.  Used during redirects.
@@ -140,17 +142,17 @@ class HttpChannelParent final : public nsIInterfaceRequestor,
       const OptionalURIParams& docUri, const OptionalURIParams& referrerUri,
       const uint32_t& referrerPolicy,
       const OptionalURIParams& internalRedirectUri,
-      const OptionalURIParams& topWindowUri, const uint32_t& loadFlags,
-      const RequestHeaderTuples& requestHeaders, const nsCString& requestMethod,
-      const OptionalIPCStream& uploadStream, const bool& uploadStreamHasHeaders,
-      const int16_t& priority, const uint32_t& classOfService,
-      const uint8_t& redirectionLimit, const bool& allowSTS,
-      const uint32_t& thirdPartyFlags, const bool& doResumeAt,
-      const uint64_t& startPos, const nsCString& entityID,
-      const bool& chooseApplicationCache, const nsCString& appCacheClientID,
-      const bool& allowSpdy, const bool& allowAltSvc,
-      const bool& beConservative, const uint32_t& tlsFlags,
-      const OptionalLoadInfoArgs& aLoadInfoArgs,
+      const OptionalURIParams& topWindowUri, nsIPrincipal* aTopWindowPrincipal,
+      const uint32_t& loadFlags, const RequestHeaderTuples& requestHeaders,
+      const nsCString& requestMethod, const OptionalIPCStream& uploadStream,
+      const bool& uploadStreamHasHeaders, const int16_t& priority,
+      const uint32_t& classOfService, const uint8_t& redirectionLimit,
+      const bool& allowSTS, const uint32_t& thirdPartyFlags,
+      const bool& doResumeAt, const uint64_t& startPos,
+      const nsCString& entityID, const bool& chooseApplicationCache,
+      const nsCString& appCacheClientID, const bool& allowSpdy,
+      const bool& allowAltSvc, const bool& beConservative,
+      const uint32_t& tlsFlags, const OptionalLoadInfoArgs& aLoadInfoArgs,
       const OptionalHttpResponseHead& aSynthesizedResponseHead,
       const nsCString& aSecurityInfoSerialization, const uint32_t& aCacheKey,
       const uint64_t& aRequestContextID,
@@ -161,7 +163,8 @@ class HttpChannelParent final : public nsIInterfaceRequestor,
       const uint32_t& aCorsMode, const uint32_t& aRedirectMode,
       const uint64_t& aChannelId, const nsString& aIntegrityMetadata,
       const uint64_t& aContentWindowId,
-      const ArrayOfStringPairs& aPreferredAlternativeTypes,
+      const nsTArray<PreferredAlternativeDataTypeParams>&
+          aPreferredAlternativeTypes,
       const uint64_t& aTopLevelOuterContentWindowId,
       const TimeStamp& aLaunchServiceWorkerStart,
       const TimeStamp& aLaunchServiceWorkerEnd,
@@ -205,6 +208,8 @@ class HttpChannelParent final : public nsIInterfaceRequestor,
       const mozilla::ipc::PrincipalInfo& requestingPrincipal) override;
   virtual mozilla::ipc::IPCResult RecvBytesRead(const int32_t& aCount) override;
   virtual mozilla::ipc::IPCResult RecvOpenOriginalCacheInputStream() override;
+  virtual mozilla::ipc::IPCResult RecvOpenAltDataCacheInputStream(
+      const nsCString& aType) override;
   virtual void ActorDestroy(ActorDestroyReason why) override;
 
   // Supporting function for ADivertableParentChannel.

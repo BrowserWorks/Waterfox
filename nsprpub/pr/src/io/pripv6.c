@@ -16,8 +16,8 @@ static PRIOMethods ipv6_to_v4_tcpMethods;
 static PRIOMethods ipv6_to_v4_udpMethods;
 static PRDescIdentity _pr_ipv6_to_ipv4_id;
 extern PRBool IsValidNetAddr(const PRNetAddr *addr);
-extern PRIPv6Addr _pr_in6addr_any;
-extern PRIPv6Addr _pr_in6addr_loopback;
+extern const PRIPv6Addr _pr_in6addr_any;
+extern const PRIPv6Addr _pr_in6addr_loopback;
 
 /*
  * convert an IPv4-mapped IPv6 addr to an IPv4 addr
@@ -247,7 +247,7 @@ static PRInt32 PR_CALLBACK Ipv6ToIpv4SocketRecvFrom(PRFileDesc *fd, void *buf,
 
 #if defined(_PR_INET6_PROBE)
 static PRBool ipv6_is_present;
-extern PRBool _pr_test_ipv6_socket(void);
+PR_EXTERN(PRBool) _pr_test_ipv6_socket(void);
 
 #if !defined(_PR_INET6) && defined(_PR_HAVE_GETIPNODEBYNAME)
 extern PRStatus _pr_find_getipnodebyname(void);

@@ -10,7 +10,7 @@ use api::{
 use api::ImageKey as ApiImageKey;
 use display_list_flattener::{AsInstanceKind, CreateShadow, IsVisible};
 use frame_builder::FrameBuildingState;
-use gpu_cache::{GpuCacheHandle, GpuDataRequest};
+use gpu_cache::{GpuDataRequest};
 use intern::{Internable, InternDebug};
 use intern_types;
 use prim_store::{
@@ -31,7 +31,6 @@ use util::pack_as_float;
 #[cfg_attr(feature = "replay", derive(Deserialize))]
 pub struct VisibleImageTile {
     pub tile_offset: TileOffset,
-    pub handle: GpuCacheHandle,
     pub edge_flags: EdgeAaSegmentMask,
     pub local_rect: LayoutRect,
     pub local_clip_rect: LayoutRect,
@@ -60,9 +59,11 @@ pub struct ImageCacheKey {
 ///     now to reduce the number of changes, and because image
 ///     tiling is very rare on real pages.
 #[derive(Debug)]
+#[cfg_attr(feature = "capture", derive(Serialize))]
 pub struct ImageInstance {
     pub opacity_binding_index: OpacityBindingIndex,
     pub segment_instance_index: SegmentInstanceIndex,
+    pub tight_local_clip_rect: LayoutRect,
     pub visible_tiles: Vec<VisibleImageTile>,
 }
 
@@ -114,6 +115,7 @@ impl AsInstanceKind<ImageDataHandle> for ImageKey {
         let image_instance_index = prim_store.images.push(ImageInstance {
             opacity_binding_index: OpacityBindingIndex::INVALID,
             segment_instance_index: SegmentInstanceIndex::INVALID,
+            tight_local_clip_rect: LayoutRect::zero(),
             visible_tiles: Vec::new(),
         });
 
@@ -311,6 +313,7 @@ impl ImageData {
     pub fn write_prim_gpu_blocks(&self, request: &mut GpuDataRequest) {
         // Images are drawn as a white color, modulated by the total
         // opacity coming from any collapsed property bindings.
+        // Size has to match `VECS_PER_SPECIFIC_BRUSH` from `brush_image.glsl` exactly.
         request.push(self.color.premultiplied());
         request.push(PremultipliedColorF::WHITE);
         request.push([

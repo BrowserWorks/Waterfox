@@ -187,6 +187,10 @@ public final class GeckoRuntime implements Parcelable {
             flags |= GeckoThread.FLAG_DEBUGGING;
         }
 
+        if (settings.getRemoteDebuggingEnabled()) {
+            flags |= GeckoThread.FLAG_ENABLE_MARIONETTE;
+        }
+
         final Class<?> crashHandler = settings.getCrashHandler();
         if (crashHandler != null) {
             try {
@@ -208,6 +212,7 @@ public final class GeckoRuntime implements Parcelable {
         GeckoAppShell.setDisplayDpiOverride(settings.getDisplayDpiOverride());
         GeckoAppShell.setScreenSizeOverride(settings.getScreenSizeOverride());
         GeckoAppShell.setCrashHandlerService(settings.getCrashHandler());
+        GeckoFontScaleListener.getInstance().attachToContext(context, settings);
 
         final GeckoThread.InitInfo info = new GeckoThread.InitInfo();
         info.args = settings.getArguments();

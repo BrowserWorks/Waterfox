@@ -297,10 +297,6 @@ ElementEditor.prototype = {
   },
 
   updateScrollableBadge: function() {
-    if (!this.markup.isScrollableBadgesEnabled) {
-      return;
-    }
-
     if (this.node.isScrollable && !this._scrollableBadge) {
       this._createScrollableBadge();
     } else if (this._scrollableBadge && !this.node.isScrollable) {
@@ -362,8 +358,7 @@ ElementEditor.prototype = {
       this.highlighters.gridHighlighters.has(this.node));
 
     if (displayType === "flex" || displayType === "inline-flex") {
-      this._displayBadge.classList.toggle("interactive",
-        Services.prefs.getBoolPref("devtools.inspector.flexboxHighlighter.enabled"));
+      this._displayBadge.classList.toggle("interactive", true);
     } else if (displayType === "grid" || displayType === "inline-grid") {
       this._displayBadge.classList.toggle("interactive",
         this.highlighters.canGridHighlighterToggle(this.node));
@@ -767,8 +762,7 @@ ElementEditor.prototype = {
 
     const target = event.target;
 
-    if (Services.prefs.getBoolPref("devtools.inspector.flexboxHighlighter.enabled") &&
-        (target.dataset.display === "flex" || target.dataset.display === "inline-flex")) {
+    if (target.dataset.display === "flex" || target.dataset.display === "inline-flex") {
       // Stop tracking highlighter events to avoid flickering of the active class.
       this.stopTrackingFlexboxHighlighterEvents();
 

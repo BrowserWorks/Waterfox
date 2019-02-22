@@ -35,11 +35,11 @@ class RemoteDecoderManagerChild final : public PRemoteDecoderManagerChild {
   void ActorDestroy(ActorDestroyReason aWhy) override;
   void DeallocPRemoteDecoderManagerChild() override;
 
-  PRemoteVideoDecoderChild* AllocPRemoteVideoDecoderChild(
-      const VideoInfo& aVideoInfo, const float& aFramerate,
+  PRemoteDecoderChild* AllocPRemoteDecoderChild(
+      const RemoteDecoderInfoIPDL& aRemoteDecoderInfo,
       const CreateDecoderParams::OptionSet& aOptions, bool* aSuccess,
       nsCString* aErrorDescription);
-  bool DeallocPRemoteVideoDecoderChild(PRemoteVideoDecoderChild* actor);
+  bool DeallocPRemoteDecoderChild(PRemoteDecoderChild* actor);
 
  private:
   // Main thread only

@@ -18,6 +18,7 @@ from .util import (
     create_task_from_def,
 )
 from .registry import register_callback_action
+from taskgraph.util import taskcluster
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +39,14 @@ logger = logging.getLogger(__name__)
         {'kind': 'cron-task'},
     ],
 )
-def retrigger_decision_action(parameters, graph_config, input, task_group_id, task_id, task):
+def retrigger_decision_action(parameters, graph_config, input, task_group_id, task_id):
     """For a single task, we try to just run exactly the same task once more.
     It's quite possible that we don't have the scopes to do so (especially for
     an action), but this is best-effort."""
 
     # make all of the timestamps relative; they will then be turned back into
     # absolute timestamps relative to the current time.
+    task = taskcluster.get_task_definition(task_id)
     task = relativize_datestamps(task)
     create_task_from_def(slugid(), task, parameters['level'])
 
@@ -82,10 +84,11 @@ def retrigger_decision_action(parameters, graph_config, input, task_group_id, ta
         }
     }
 )
-def retrigger_action(parameters, graph_config, input, task_group_id, task_id, task):
+def retrigger_action(parameters, graph_config, input, task_group_id, task_id):
     decision_task_id, full_task_graph, label_to_taskid = fetch_graph_and_labels(
         parameters, graph_config)
 
+    task = taskcluster.get_task_definition(task_id)
     label = task['metadata']['name']
 
     with_downstream = ' '
@@ -98,7 +101,15 @@ def retrigger_action(parameters, graph_config, input, task_group_id, task_id, ta
 
     times = input.get('times', 1)
     for i in xrange(times):
-        create_tasks(to_run, full_task_graph, label_to_taskid, parameters, decision_task_id, i)
+        create_tasks(
+            graph_config,
+            to_run,
+            full_task_graph,
+            label_to_taskid,
+            parameters,
+            decision_task_id,
+            i,
+        )
 
         logger.info('Scheduled {}{}(time {}/{})'.format(label, with_downstream, i+1, times))
     combine_task_graph_files(list(range(times)))

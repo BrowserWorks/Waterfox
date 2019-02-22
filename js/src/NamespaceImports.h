@@ -104,51 +104,43 @@ using JS::IsAcceptableThis;
 using JS::NativeImpl;
 
 using JS::Rooted;
+using JS::RootedBigInt;
 using JS::RootedFunction;
 using JS::RootedId;
 using JS::RootedObject;
 using JS::RootedScript;
 using JS::RootedString;
 using JS::RootedSymbol;
-#ifdef ENABLE_BIGINT
-using JS::RootedBigInt;
-#endif
 using JS::RootedValue;
 
 using JS::PersistentRooted;
+using JS::PersistentRootedBigInt;
 using JS::PersistentRootedFunction;
 using JS::PersistentRootedId;
 using JS::PersistentRootedObject;
 using JS::PersistentRootedScript;
 using JS::PersistentRootedString;
 using JS::PersistentRootedSymbol;
-#ifdef ENABLE_BIGINT
-using JS::PersistentRootedBigInt;
-#endif
 using JS::PersistentRootedValue;
 
 using JS::Handle;
+using JS::HandleBigInt;
 using JS::HandleFunction;
 using JS::HandleId;
 using JS::HandleObject;
 using JS::HandleScript;
 using JS::HandleString;
 using JS::HandleSymbol;
-#ifdef ENABLE_BIGINT
-using JS::HandleBigInt;
-#endif
 using JS::HandleValue;
 
 using JS::MutableHandle;
+using JS::MutableHandleBigInt;
 using JS::MutableHandleFunction;
 using JS::MutableHandleId;
 using JS::MutableHandleObject;
 using JS::MutableHandleScript;
 using JS::MutableHandleString;
 using JS::MutableHandleSymbol;
-#ifdef ENABLE_BIGINT
-using JS::MutableHandleBigInt;
-#endif
 using JS::MutableHandleValue;
 
 using JS::FalseHandleValue;
@@ -168,9 +160,7 @@ using JS::Zone;
 using JS::Symbol;
 using JS::SymbolCode;
 
-#ifdef ENABLE_BIGINT
 using JS::BigInt;
-#endif
 
 } /* namespace js */
 

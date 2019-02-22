@@ -802,7 +802,7 @@ class js::jit::OutOfLineTableSwitch
   }
 
  public:
-  OutOfLineTableSwitch(MTableSwitch* mir) : mir_(mir) {}
+  explicit OutOfLineTableSwitch(MTableSwitch* mir) : mir_(mir) {}
 
   MTableSwitch* mir() const { return mir_; }
 
@@ -1252,11 +1252,9 @@ void CodeGenerator::visitUnbox(LUnbox* unbox) {
       case MIRType::Symbol:
         cond = masm.testSymbol(Assembler::NotEqual, value);
         break;
-#ifdef ENABLE_BIGINT
       case MIRType::BigInt:
         cond = masm.testBigInt(Assembler::NotEqual, value);
         break;
-#endif
       default:
         MOZ_CRASH("Given MIRType cannot be unboxed.");
     }
@@ -1294,11 +1292,9 @@ void CodeGenerator::visitUnbox(LUnbox* unbox) {
     case MIRType::Symbol:
       masm.unboxSymbol(input, result);
       break;
-#ifdef ENABLE_BIGINT
     case MIRType::BigInt:
       masm.unboxBigInt(input, result);
       break;
-#endif
     default:
       MOZ_CRASH("Given MIRType cannot be unboxed.");
   }
@@ -1847,7 +1843,7 @@ void CodeGenerator::visitAtomicTypedArrayElementBinop(
   Register elements = ToRegister(lir->elements());
   Register flagTemp = ToRegister(lir->temp1());
   Register outTemp =
-    lir->temp2()->isBogusTemp() ? InvalidReg : ToRegister(lir->temp2());
+      lir->temp2()->isBogusTemp() ? InvalidReg : ToRegister(lir->temp2());
   Register value = ToRegister(lir->value());
 
   Scalar::Type arrayType = lir->mir()->arrayType();

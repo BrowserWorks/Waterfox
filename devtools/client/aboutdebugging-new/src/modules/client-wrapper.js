@@ -4,7 +4,11 @@
 
 "use strict";
 
+const { checkVersionCompatibility } =
+  require("devtools/client/shared/remote-debugging/version-checker");
+
 const { RUNTIME_PREFERENCE } = require("../constants");
+const { WorkersListener } = require("./workers-listener");
 
 const PREF_TYPES = {
   BOOL: "BOOL",
@@ -12,18 +16,17 @@ const PREF_TYPES = {
 
 // Map of preference to preference type.
 const PREF_TO_TYPE = {
+  [RUNTIME_PREFERENCE.CHROME_DEBUG_ENABLED]: PREF_TYPES.BOOL,
   [RUNTIME_PREFERENCE.CONNECTION_PROMPT]: PREF_TYPES.BOOL,
   [RUNTIME_PREFERENCE.PERMANENT_PRIVATE_BROWSING]: PREF_TYPES.BOOL,
+  [RUNTIME_PREFERENCE.REMOTE_DEBUG_ENABLED]: PREF_TYPES.BOOL,
   [RUNTIME_PREFERENCE.SERVICE_WORKERS_ENABLED]: PREF_TYPES.BOOL,
 };
 
 // Some events are fired by mainRoot rather than client.
 const MAIN_ROOT_EVENTS = [
   "addonListChanged",
-  "processListChanged",
-  "serviceWorkerRegistrationListChanged",
   "tabListChanged",
-  "workerListChanged",
 ];
 
 /**
@@ -33,9 +36,7 @@ const MAIN_ROOT_EVENTS = [
 class ClientWrapper {
   constructor(client) {
     this.client = client;
-    // Array of contentProcessTarget fronts on which we will listen for worker events.
-    this.contentProcessFronts = [];
-    this.serviceWorkerRegistrationFronts = [];
+    this.workersListener = new WorkersListener(client.mainRoot);
   }
 
   addOneTimeListener(evt, listener) {
@@ -47,7 +48,9 @@ class ClientWrapper {
   }
 
   addListener(evt, listener) {
-    if (MAIN_ROOT_EVENTS.includes(evt)) {
+    if (evt === "workersUpdated") {
+      this.workersListener.addListener(listener);
+    } else if (MAIN_ROOT_EVENTS.includes(evt)) {
       this.client.mainRoot.on(evt, listener);
     } else {
       this.client.addListener(evt, listener);
@@ -55,7 +58,9 @@ class ClientWrapper {
   }
 
   removeListener(evt, listener) {
-    if (MAIN_ROOT_EVENTS.includes(evt)) {
+    if (evt === "workersUpdated") {
+      this.workersListener.removeListener(listener);
+    } else if (MAIN_ROOT_EVENTS.includes(evt)) {
       this.client.mainRoot.off(evt, listener);
     } else {
       this.client.removeListener(evt, listener);
@@ -72,16 +77,19 @@ class ClientWrapper {
 
   async getDeviceDescription() {
     const deviceFront = await this.getFront("device");
-    const { brandName, channel, deviceName, isMultiE10s, version } =
-      await deviceFront.getDescription();
+    const description = await deviceFront.getDescription();
     // Only expose a specific set of properties.
     return {
-      channel,
-      deviceName,
-      isMultiE10s,
-      name: brandName,
-      version,
+      channel: description.channel,
+      deviceName: description.deviceName,
+      isMultiE10s: description.isMultiE10s,
+      name: description.brandName,
+      version: description.version,
     };
+  }
+
+  async checkVersionCompatibility() {
+    return checkVersionCompatibility(this.client);
   }
 
   async setPreference(prefName, value) {
@@ -153,6 +161,18 @@ class ClientWrapper {
 
   isClosed() {
     return this.client._closed;
+  }
+
+  // This method will be mocked to return a dummy URL during mochitests
+  getPerformancePanelUrl() {
+    return "chrome://devtools/content/performance-new/index.xhtml";
+  }
+
+  async loadPerformanceProfiler(win) {
+    const preferenceFront = await this.getFront("preference");
+    const perfFront = await this.getFront("perf");
+    const perfActorVersion = this.client.mainRoot.traits.perfActorVersion;
+    win.gInit(perfFront, preferenceFront, perfActorVersion);
   }
 }
 

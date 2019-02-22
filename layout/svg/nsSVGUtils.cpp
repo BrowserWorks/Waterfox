@@ -697,7 +697,7 @@ void nsSVGUtils::PaintFrameWithEffects(nsIFrame* aFrame, gfxContext& aContext,
     // Since we only uses nsSVGUtils with SVG elements, not like mask on an
     // HTML element, we should treat an unresolvable mask as no-mask here.
     if (maskUsage.shouldGenerateMaskLayer && maskFrame) {
-      uint8_t maskMode = aFrame->StyleSVGReset()->mMask.mLayers[0].mMaskMode;
+      StyleMaskMode maskMode = aFrame->StyleSVGReset()->mMask.mLayers[0].mMaskMode;
       nsSVGMaskFrame::MaskParams params(&aContext, aFrame, aTransform,
                                         maskUsage.opacity, &maskTransform,
                                         maskMode, aImgParams);
@@ -1193,7 +1193,8 @@ bool nsSVGUtils::CanOptimizeOpacity(nsIFrame* aFrame) {
     return false;
   }
 
-  if (nsLayoutUtils::HasAnimationOfProperty(aFrame, eCSSProperty_opacity)) {
+  if (nsLayoutUtils::HasAnimationOfPropertySet(
+          aFrame, nsCSSPropertyIDSet::OpacityProperties())) {
     return false;
   }
 

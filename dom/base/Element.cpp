@@ -913,26 +913,6 @@ void Element::SetScrollLeft(int32_t aScrollLeft) {
   }
 }
 
-bool Element::ScrollByNoFlush(int32_t aDx, int32_t aDy) {
-  nsIScrollableFrame* sf = GetScrollFrame(nullptr, FlushType::None);
-  if (!sf) {
-    return false;
-  }
-
-  AutoWeakFrame weakRef(sf->GetScrolledFrame());
-
-  CSSIntPoint before = sf->GetScrollPositionCSSPixels();
-  sf->ScrollToCSSPixelsApproximate(CSSIntPoint(before.x + aDx, before.y + aDy));
-
-  // The frame was destroyed, can't keep on scrolling.
-  if (!weakRef.IsAlive()) {
-    return false;
-  }
-
-  CSSIntPoint after = sf->GetScrollPositionCSSPixels();
-  return (before != after);
-}
-
 void Element::MozScrollSnap() {
   nsIScrollableFrame* sf = GetScrollFrame(nullptr, FlushType::None);
   if (sf) {
@@ -993,11 +973,40 @@ int32_t Element::ScrollWidth() {
 }
 
 nsRect Element::GetClientAreaRect() {
+  Document* doc = OwnerDoc();
+  nsPresContext* presContext = doc->GetPresContext();
+
+  // We can avoid a layout flush if this is the scrolling element of the
+  // document, we have overlay scrollbars, and we aren't embedded in another
+  // document
+  bool overlayScrollbars =
+      LookAndFeel::GetInt(LookAndFeel::eIntID_UseOverlayScrollbars) != 0;
+  bool rootContentDocument =
+      presContext && presContext->IsRootContentDocument();
+  if (overlayScrollbars && rootContentDocument &&
+      doc->IsScrollingElement(this)) {
+    // We will always have a pres shell if we have a pres context, and we will
+    // only get here if we have a pres context from the root content document
+    // check
+    nsIPresShell* presShell = doc->GetShell();
+
+    // Ensure up to date dimensions, but don't reflow
+    RefPtr<nsViewManager> viewManager = presShell->GetViewManager();
+    if (viewManager) {
+      viewManager->FlushDelayedResize(false);
+    }
+    return nsRect(nsPoint(), presContext->GetVisibleArea().Size());
+  }
+
   nsIFrame* frame;
   nsIScrollableFrame* sf = GetScrollFrame(&frame);
 
   if (sf) {
-    return sf->GetScrollPortRect();
+    nsRect scrollPort = sf->GetScrollPortRect();
+    // The scroll port value might be expanded to the minimum scale size, we
+    // should limit the size to the ICB in such cases.
+    scrollPort.SizeTo(sf->GetLayoutSize());
+    return scrollPort;
   }
 
   if (frame &&
@@ -1766,10 +1775,10 @@ nsresult Element::BindToTree(Document* aDocument, nsIContent* aParent,
   // Also, if this _is_ needed, then it's wrong and should use GetComposedDoc()
   // to account for Shadow DOM.
   if (aDocument && MayHaveAnimations()) {
-    CSSPseudoElementType pseudoType = GetPseudoElementType();
-    if ((pseudoType == CSSPseudoElementType::NotPseudo ||
-         pseudoType == CSSPseudoElementType::before ||
-         pseudoType == CSSPseudoElementType::after) &&
+    PseudoStyleType pseudoType = GetPseudoElementType();
+    if ((pseudoType == PseudoStyleType::NotPseudo ||
+         pseudoType == PseudoStyleType::before ||
+         pseudoType == PseudoStyleType::after) &&
         EffectSet::GetEffectSet(this, pseudoType)) {
       if (nsPresContext* presContext = aDocument->GetPresContext()) {
         presContext->EffectCompositor()->RequestRestyle(
@@ -2020,21 +2029,19 @@ DeclarationBlock* Element::GetSMILOverrideStyleDeclaration() {
 }
 
 nsresult Element::SetSMILOverrideStyleDeclaration(
-    DeclarationBlock* aDeclaration, bool aNotify) {
+    DeclarationBlock* aDeclaration) {
   Element::nsExtendedDOMSlots* slots = ExtendedDOMSlots();
 
   slots->mSMILOverrideStyleDeclaration = aDeclaration;
 
-  if (aNotify) {
-    Document* doc = GetComposedDoc();
-    // Only need to request a restyle if we're in a document.  (We might not
-    // be in a document, if we're clearing animation effects on a target node
-    // that's been detached since the previous animation sample.)
-    if (doc) {
-      nsCOMPtr<nsIPresShell> shell = doc->GetShell();
-      if (shell) {
-        shell->RestyleForAnimation(this, eRestyle_StyleAttribute_Animations);
-      }
+  Document* doc = GetComposedDoc();
+  // Only need to request a restyle if we're in a document.  (We might not
+  // be in a document, if we're clearing animation effects on a target node
+  // that's been detached since the previous animation sample.)
+  if (doc) {
+    nsCOMPtr<nsIPresShell> shell = doc->GetShell();
+    if (shell) {
+      shell->RestyleForAnimation(this, eRestyle_StyleAttribute_Animations);
     }
   }
 
@@ -3477,23 +3484,23 @@ void Element::GetAnimations(const AnimationFilter& filter,
   }
 
   Element* elem = this;
-  CSSPseudoElementType pseudoType = CSSPseudoElementType::NotPseudo;
+  PseudoStyleType pseudoType = PseudoStyleType::NotPseudo;
   // For animations on generated-content elements, the animations are stored
   // on the parent element.
   if (IsGeneratedContentContainerForBefore()) {
     elem = GetParentElement();
-    pseudoType = CSSPseudoElementType::before;
+    pseudoType = PseudoStyleType::before;
   } else if (IsGeneratedContentContainerForAfter()) {
     elem = GetParentElement();
-    pseudoType = CSSPseudoElementType::after;
+    pseudoType = PseudoStyleType::after;
   }
 
   if (!elem) {
     return;
   }
 
-  if (!filter.mSubtree || pseudoType == CSSPseudoElementType::before ||
-      pseudoType == CSSPseudoElementType::after) {
+  if (!filter.mSubtree || pseudoType == PseudoStyleType::before ||
+      pseudoType == PseudoStyleType::after) {
     GetAnimationsUnsorted(elem, pseudoType, aAnimations);
   } else {
     for (nsIContent* node = this; node; node = node->GetNextNode(this)) {
@@ -3501,11 +3508,11 @@ void Element::GetAnimations(const AnimationFilter& filter,
         continue;
       }
       Element* element = node->AsElement();
-      Element::GetAnimationsUnsorted(element, CSSPseudoElementType::NotPseudo,
+      Element::GetAnimationsUnsorted(element, PseudoStyleType::NotPseudo,
                                      aAnimations);
-      Element::GetAnimationsUnsorted(element, CSSPseudoElementType::before,
+      Element::GetAnimationsUnsorted(element, PseudoStyleType::before,
                                      aAnimations);
-      Element::GetAnimationsUnsorted(element, CSSPseudoElementType::after,
+      Element::GetAnimationsUnsorted(element, PseudoStyleType::after,
                                      aAnimations);
     }
   }
@@ -3513,11 +3520,11 @@ void Element::GetAnimations(const AnimationFilter& filter,
 }
 
 /* static */ void Element::GetAnimationsUnsorted(
-    Element* aElement, CSSPseudoElementType aPseudoType,
+    Element* aElement, PseudoStyleType aPseudoType,
     nsTArray<RefPtr<Animation>>& aAnimations) {
-  MOZ_ASSERT(aPseudoType == CSSPseudoElementType::NotPseudo ||
-                 aPseudoType == CSSPseudoElementType::after ||
-                 aPseudoType == CSSPseudoElementType::before,
+  MOZ_ASSERT(aPseudoType == PseudoStyleType::NotPseudo ||
+                 aPseudoType == PseudoStyleType::after ||
+                 aPseudoType == PseudoStyleType::before,
              "Unsupported pseudo type");
   MOZ_ASSERT(aElement, "Null element");
 
@@ -4110,7 +4117,7 @@ void Element::AddSizeOfExcludingThis(nsWindowSizes& aSizes,
         sc->AddSizeOfIncludingThis(aSizes, &aSizes.mLayoutComputedValuesDom);
       }
 
-      for (size_t i = 0; i < nsCSSPseudoElements::kEagerPseudoCount; i++) {
+      for (size_t i = 0; i < PseudoStyle::kEagerPseudoCount; i++) {
         if (Servo_Element_HasPseudoComputedValues(this, i)) {
           sc = Servo_Element_GetPseudoComputedValues(this, i).Consume();
           if (!aSizes.mState.HaveSeenPtr(sc.get())) {

@@ -50,11 +50,10 @@ function emptyPermissions() {
 }
 
 var ExtensionPermissions = {
-  async _saveSoon(extensionId) {
-    await lazyInit();
-
-    prefs.data[extensionId] = await this._getCached(extensionId);
-    return prefs.saveSoon();
+  _update(extensionId, perms) {
+    prefs.data[extensionId] = perms;
+    prefs.saveSoon();
+    return StartupCache.permissions.set(extensionId, perms);
   },
 
   async _get(extensionId) {
@@ -63,7 +62,6 @@ var ExtensionPermissions = {
     let perms = prefs.data[extensionId];
     if (!perms) {
       perms = emptyPermissions();
-      prefs.data[extensionId] = perms;
     }
 
     return perms;
@@ -74,6 +72,16 @@ var ExtensionPermissions = {
                                         () => this._get(extensionId));
   },
 
+  /**
+   * Retrieves the optional permissions for the given extension.
+   * The information may be retrieved from the StartupCache, and otherwise fall
+   * back to data from the disk (and cache the result in the StartupCache).
+   *
+   * @param {string} extensionId The extensionId
+   * @returns {object} An object with "permissions" and "origins" array.
+   *   The object may be a direct reference to the storage or cache, so its
+   *   value should immediately be used and not be modified by callers.
+   */
   get(extensionId) {
     return this._getCached(extensionId);
   },
@@ -87,7 +95,7 @@ var ExtensionPermissions = {
    * @param {EventEmitter} emitter optional object implementing emitter interfaces
    */
   async add(extensionId, perms, emitter) {
-    let {permissions, origins} = await this._getCached(extensionId);
+    let {permissions, origins} = await this._get(extensionId);
 
     let added = emptyPermissions();
 
@@ -107,7 +115,7 @@ var ExtensionPermissions = {
     }
 
     if (added.permissions.length > 0 || added.origins.length > 0) {
-      this._saveSoon(extensionId);
+      await this._update(extensionId, {permissions, origins});
       if (emitter) {
         emitter.emit("add-permissions", added);
       }
@@ -123,7 +131,7 @@ var ExtensionPermissions = {
    * @param {EventEmitter} emitter optional object implementing emitter interfaces
    */
   async remove(extensionId, perms, emitter) {
-    let {permissions, origins} = await this._getCached(extensionId);
+    let {permissions, origins} = await this._get(extensionId);
 
     let removed = emptyPermissions();
 
@@ -146,7 +154,7 @@ var ExtensionPermissions = {
     }
 
     if (removed.permissions.length > 0 || removed.origins.length > 0) {
-      this._saveSoon(extensionId);
+      await this._update(extensionId, {permissions, origins});
       if (emitter) {
         emitter.emit("remove-permissions", removed);
       }
@@ -154,10 +162,10 @@ var ExtensionPermissions = {
   },
 
   async removeAll(extensionId) {
-    let perms = await this._getCached(extensionId);
-
-    if (perms.permissions.length || perms.origins.length) {
-      Object.assign(perms, emptyPermissions());
+    await lazyInit();
+    StartupCache.permissions.delete(extensionId);
+    if (prefs.data[extensionId]) {
+      delete prefs.data[extensionId];
       prefs.saveSoon();
     }
   },

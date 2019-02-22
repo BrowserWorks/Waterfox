@@ -11,12 +11,11 @@ import {
   getASTLocation,
   assertLocation,
   makeBreakpointId,
-  makeSourceActorLocation
+  makeBreakpointLocation
 } from "../../utils/breakpoint";
 import { PROMISE } from "../utils/middleware/promise";
 import {
   getSource,
-  getSourceActors,
   getSymbols,
   getFirstVisibleBreakpointPosition
 } from "../../selectors";
@@ -71,15 +70,11 @@ async function addBreakpointPromise(getState, client, sourceMaps, breakpoint) {
     return newBreakpoint;
   }
 
-  const sourceActors = getSourceActors(state, generatedSource.id);
-
-  for (const sourceActor of sourceActors) {
-    const sourceActorLocation = makeSourceActorLocation(
-      sourceActor,
-      generatedLocation
-    );
-    await client.setBreakpoint(sourceActorLocation, breakpoint.options);
-  }
+  const breakpointLocation = makeBreakpointLocation(
+    getState(),
+    generatedLocation
+  );
+  await client.setBreakpoint(breakpointLocation, breakpoint.options);
 
   const symbols = getSymbols(getState(), source);
   const astLocation = await getASTLocation(source, symbols, location);
@@ -146,7 +141,7 @@ export function addBreakpoint(
       return;
     }
 
-    const breakpoint = createBreakpoint(breakpointPosition, options);
+    const breakpoint = createBreakpoint(breakpointPosition, { options });
 
     return dispatch({
       type: "ADD_BREAKPOINT",

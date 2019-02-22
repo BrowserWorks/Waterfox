@@ -109,6 +109,7 @@ SERIALIZED_PREDEFINED_TYPES = [
     "LengthPercentage",
     "NonNegativeLength",
     "NonNegativeLengthPercentage",
+    "NonNegativeLengthPercentageOrAuto",
     "ListStyleType",
     "OffsetPath",
     "Opacity",
@@ -122,6 +123,7 @@ SERIALIZED_PREDEFINED_TYPES = [
     "TextAlign",
     "Translate",
     "TimingFunction",
+    "TransformOrigin",
     "TransformStyle",
     "UserSelect",
     "background::BackgroundSize",
@@ -134,9 +136,15 @@ SERIALIZED_PREDEFINED_TYPES = [
     "OverscrollBehavior",
     "OverflowAnchor",
     "OverflowClipBox",
+    "ScrollSnapAlign",
     "ScrollSnapType",
     "Float",
     "Overflow",
+    "BorderImageSlice",
+    "NonNegativeLengthOrNumberRect",
+    "NonNegativeLengthOrNumber",
+    "ZIndex",
+    "Perspective",
 ]
 
 def serialized_by_servo(prop):

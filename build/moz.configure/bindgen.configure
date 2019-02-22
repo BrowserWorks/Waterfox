@@ -14,7 +14,7 @@ cbindgen = check_prog('CBINDGEN', ['cbindgen'], paths=toolchain_search_path,
 @checking('cbindgen version')
 @imports(_from='textwrap', _import='dedent')
 def cbindgen_version(cbindgen):
-    cbindgen_min_version = Version('0.6.8')
+    cbindgen_min_version = Version('0.7.1')
 
     # cbindgen x.y.z
     version = Version(check_cmd_output(cbindgen, '--version').strip().split(" ")[1])
@@ -273,7 +273,7 @@ def basic_bindgen_cflags(target, is_unix, compiler_info, android_cflags, clang_p
         ],
     }.get(target.os, [])
 
-    if compiler_info.type in ('msvc', 'clang-cl'):
+    if compiler_info.type == 'clang-cl':
         args += [
             # To enable the builtin __builtin_offsetof so that CRT wouldn't
             # use reinterpret_cast in offsetof() which is not allowed inside
@@ -286,13 +286,10 @@ def basic_bindgen_cflags(target, is_unix, compiler_info, android_cflags, clang_p
         ]
 
     # We want to pass the same base flags as we'd pass clang.
-    # check_compiler from toolchain.configure gives us that, but we don't need
-    # to use that when the compiler used for the build is already clang-based,
-    # in which case we can use the same flags.
-    if compiler_info.type in ('clang-cl', 'clang'):
-        info = compiler_info
-    else:
-        info = check_compiler([clang_path], 'C++', target)
+    # check_compiler from toolchain.configure gives us that.
+    # XXX: We should actually use the compiler from toolchain.configure.
+    # See bug 1526857.
+    info = check_compiler([clang_path], 'C++', target)
 
     args += info.flags
 

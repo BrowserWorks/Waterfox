@@ -141,7 +141,7 @@ ComputedStyle* nsTableFrame::GetParentComputedStyle(
   // must return whatever our parent would normally have returned.
 
   MOZ_ASSERT(GetParent(), "table constructed without table wrapper");
-  if (!mContent->GetParent() && !Style()->GetPseudo()) {
+  if (!mContent->GetParent() && !Style()->IsPseudoOrAnonBox()) {
     // We're the root.  We have no ComputedStyle parent.
     *aProviderFrame = nullptr;
     return nullptr;
@@ -641,7 +641,7 @@ nsTableColGroupFrame* nsTableFrame::CreateSyntheticColGroupFrame() {
 
   RefPtr<ComputedStyle> colGroupStyle;
   colGroupStyle = shell->StyleSet()->ResolveNonInheritingAnonymousBoxStyle(
-      nsCSSAnonBoxes::tableColGroup());
+      PseudoStyleType::tableColGroup);
   // Create a col group frame
   nsTableColGroupFrame* newFrame =
       NS_NewTableColGroupFrame(shell, colGroupStyle);
@@ -695,7 +695,7 @@ void nsTableFrame::AppendAnonymousColFrames(
     nsIContent* iContent = aColGroupFrame->GetContent();
     RefPtr<ComputedStyle> computedStyle =
         shell->StyleSet()->ResolveNonInheritingAnonymousBoxStyle(
-            nsCSSAnonBoxes::tableCol());
+            PseudoStyleType::tableCol);
     // ASSERTION to check for bug 54454 sneaking back in...
     NS_ASSERTION(iContent, "null content in CreateAnonymousColFrames");
 
@@ -1761,15 +1761,15 @@ bool nsTableFrame::AncestorsHaveStyleBSize(
     LayoutFrameType frameType = rs->mFrame->Type();
     if (IsTableCell(frameType) || (LayoutFrameType::TableRow == frameType) ||
         (LayoutFrameType::TableRowGroup == frameType)) {
-      const nsStyleCoord& bsize = rs->mStylePosition->BSize(wm);
-      // calc() with percentages treated like 'auto' on internal table elements
-      if (bsize.GetUnit() != eStyleUnit_Auto &&
-          (!bsize.IsCalcUnit() || !bsize.HasPercent())) {
+      const auto& bsize = rs->mStylePosition->BSize(wm);
+      // calc() with both lengths and percentages treated like 'auto' on
+      // internal table elements
+      if (!bsize.IsAuto() && !bsize.HasLengthAndPercentage()) {
         return true;
       }
     } else if (LayoutFrameType::Table == frameType) {
       // we reached the containing table, so always return
-      return rs->mStylePosition->BSize(wm).GetUnit() != eStyleUnit_Auto;
+      return !rs->mStylePosition->BSize(wm).IsAuto();
     }
   }
   return false;
@@ -1789,8 +1789,8 @@ void nsTableFrame::CheckRequestSpecialBSizeReflow(
       (NS_UNCONSTRAINEDSIZE ==
            aReflowInput.ComputedBSize() ||  // no computed bsize
        0 == aReflowInput.ComputedBSize()) &&
-      eStyleUnit_Percent ==
-          aReflowInput.mStylePosition->BSize(wm).GetUnit() &&  // pct bsize
+      aReflowInput.mStylePosition->BSize(wm)
+          .ConvertsToPercentage() &&  // pct bsize
       nsTableFrame::AncestorsHaveStyleBSize(*aReflowInput.mParentReflowInput)) {
     nsTableFrame::RequestSpecialBSizeReflow(aReflowInput);
   }
@@ -3894,11 +3894,14 @@ nsTableFrame* nsTableFrame::GetTableFramePassingThrough(
 }
 
 bool nsTableFrame::IsAutoBSize(WritingMode aWM) {
-  const nsStyleCoord& bsize = StylePosition()->BSize(aWM);
+  const auto& bsize = StylePosition()->BSize(aWM);
+  if (bsize.IsAuto()) {
+    return true;
+  }
   // Don't consider calc() here like this quirk for percent.
-  return bsize.GetUnit() == eStyleUnit_Auto ||
-         (bsize.GetUnit() == eStyleUnit_Percent &&
-          bsize.GetPercentValue() <= 0.0f);
+  // FIXME(emilio): calc() causing this behavior change seems odd.
+  return bsize.HasPercent() && !bsize.AsLengthPercentage().was_calc &&
+         bsize.ToPercentage() <= 0.0f;
 }
 
 nscoord nsTableFrame::CalcBorderBoxBSize(const ReflowInput& aReflowInput) {
@@ -3919,10 +3922,10 @@ bool nsTableFrame::IsAutoLayout() {
   // and tables with inline size set to 'max-content' must be
   // auto-layout (at least as long as
   // FixedTableLayoutStrategy::GetPrefISize returns nscoord_MAX)
-  const nsStyleCoord& iSize = StylePosition()->ISize(GetWritingMode());
-  return (iSize.GetUnit() == eStyleUnit_Auto) ||
-         (iSize.GetUnit() == eStyleUnit_Enumerated &&
-          iSize.GetIntValue() == NS_STYLE_WIDTH_MAX_CONTENT);
+  const auto& iSize = StylePosition()->ISize(GetWritingMode());
+  return iSize.IsAuto() ||
+         (iSize.IsExtremumLength() &&
+          iSize.AsExtremumLength() == StyleExtremumLength::MaxContent);
 }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -7665,7 +7668,7 @@ void nsTableFrame::InvalidateTableFrame(nsIFrame* aFrame,
 void nsTableFrame::AppendDirectlyOwnedAnonBoxes(
     nsTArray<OwnedAnonBox>& aResult) {
   nsIFrame* wrapper = GetParent();
-  MOZ_ASSERT(wrapper->Style()->GetPseudo() == nsCSSAnonBoxes::tableWrapper(),
+  MOZ_ASSERT(wrapper->Style()->GetPseudoType() == PseudoStyleType::tableWrapper,
              "What happened to our parent?");
   aResult.AppendElement(
       OwnedAnonBox(wrapper, &UpdateStyleOfOwnedAnonBoxesForTableWrapper));
@@ -7675,12 +7678,12 @@ void nsTableFrame::AppendDirectlyOwnedAnonBoxes(
     nsIFrame* aOwningFrame, nsIFrame* aWrapperFrame,
     ServoRestyleState& aRestyleState) {
   MOZ_ASSERT(
-      aWrapperFrame->Style()->GetPseudo() == nsCSSAnonBoxes::tableWrapper(),
+      aWrapperFrame->Style()->GetPseudoType() == PseudoStyleType::tableWrapper,
       "What happened to our parent?");
 
   RefPtr<ComputedStyle> newStyle =
       aRestyleState.StyleSet().ResolveInheritingAnonymousBoxStyle(
-          nsCSSAnonBoxes::tableWrapper(), aOwningFrame->Style());
+          PseudoStyleType::tableWrapper, aOwningFrame->Style());
 
   // Figure out whether we have an actual change.  It's important that we do
   // this, even though all the wrapper's changes are due to properties it

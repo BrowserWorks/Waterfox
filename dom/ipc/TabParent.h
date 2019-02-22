@@ -257,11 +257,10 @@ class TabParent final : public PBrowserParent,
       const nsCursor& aValue, const bool& aHasCustomCursor,
       const nsCString& aUri, const uint32_t& aWidth, const uint32_t& aHeight,
       const uint32_t& aStride, const gfx::SurfaceFormat& aFormat,
-      const uint32_t& aHotspotX, const uint32_t& aHotspotY,
-      const bool& aForce);
+      const uint32_t& aHotspotX, const uint32_t& aHotspotY, const bool& aForce);
 
-  mozilla::ipc::IPCResult RecvSetStatus(
-      const uint32_t& aType, const nsString& aStatus);
+  mozilla::ipc::IPCResult RecvSetStatus(const uint32_t& aType,
+                                        const nsString& aStatus);
 
   mozilla::ipc::IPCResult RecvShowTooltip(const uint32_t& aX,
                                           const uint32_t& aY,
@@ -315,6 +314,15 @@ class TabParent final : public PBrowserParent,
 
   virtual mozilla::ipc::IPCResult RecvPWindowGlobalConstructor(
       PWindowGlobalParent* aActor, const WindowGlobalInit& aInit) override;
+
+  PRemoteFrameParent* AllocPRemoteFrameParent(const nsString& aPresentationURL,
+                                              const nsString& aRemoteType);
+
+  bool DeallocPRemoteFrameParent(PRemoteFrameParent* aActor);
+
+  virtual mozilla::ipc::IPCResult RecvPRemoteFrameConstructor(
+      PRemoteFrameParent* aActor, const nsString& aPresentationURL,
+      const nsString& aRemoteType) override;
 
   void LoadURL(nsIURI* aURI);
 
@@ -496,8 +504,6 @@ class TabParent final : public PBrowserParent,
   // PuppetWidget's origin to absolute screen coordinates in the child.
   LayoutDeviceIntPoint GetClientOffset();
 
-  LayoutDevicePoint AdjustTapToChildWidget(const LayoutDevicePoint& aPoint);
-
   /**
    * Native widget remoting protocol for use with windowed plugins with e10s.
    */
@@ -549,6 +555,8 @@ class TabParent final : public PBrowserParent,
 
   void NavigateByKey(bool aForward, bool aForDocumentNavigation);
 
+  ShowInfo GetShowInfo();
+
  protected:
   bool ReceiveMessage(
       const nsString& aMessage, bool aSync, ipc::StructuredCloneData* aData,
@@ -584,7 +592,7 @@ class TabParent final : public PBrowserParent,
   mozilla::ipc::IPCResult RecvShowCanvasPermissionPrompt(
       const nsCString& aFirstPartyURI, const bool& aHideDoorHanger);
 
-  mozilla::ipc::IPCResult RecvRootBrowsingContext(const BrowsingContextId& aId);
+  mozilla::ipc::IPCResult RecvRootBrowsingContext(BrowsingContext* aContext);
 
   mozilla::ipc::IPCResult RecvSetSystemFont(const nsCString& aFontName);
   mozilla::ipc::IPCResult RecvGetSystemFont(nsCString* aFontName);
@@ -716,8 +724,6 @@ class TabParent final : public PBrowserParent,
 #ifdef DEBUG
   int32_t mActiveSupressDisplayportCount;
 #endif
-
-  ShowInfo GetShowInfo();
 
  private:
   // This is used when APZ needs to find the TabParent associated with a layer

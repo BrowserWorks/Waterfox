@@ -41,6 +41,10 @@ from mozbuild.util import (
 import mozpack.path as mozpath
 
 
+# TRACE logging level, below (thus more verbose than) DEBUG
+TRACE = 5
+
+
 class ConfigureError(Exception):
     pass
 
@@ -149,8 +153,7 @@ class DependsFunction(object):
         return self._func(*resolved_args)
 
     def __repr__(self):
-        return '<%s.%s %s(%s)>' % (
-            self.__class__.__module__,
+        return '<%s %s(%s)>' % (
             self.__class__.__name__,
             self.name,
             ', '.join(repr(d) for d in self.dependencies),
@@ -282,7 +285,7 @@ class ConfigureSandbox(dict):
         b: getattr(__builtin__, b)
         for b in ('None', 'False', 'True', 'int', 'bool', 'any', 'all', 'len',
                   'list', 'tuple', 'set', 'dict', 'isinstance', 'getattr',
-                  'hasattr', 'enumerate', 'range', 'zip')
+                  'hasattr', 'enumerate', 'range', 'zip', 'AssertionError')
     }, __import__=forbidden_import, str=unicode)
 
     # Expose a limited set of functions from os.path
@@ -333,6 +336,7 @@ class ConfigureSandbox(dict):
         assert isinstance(config, dict)
         self._config = config
 
+        logging.addLevelName(TRACE, 'TRACE')
         if logger is None:
             logger = moz_logger = logging.getLogger('moz.configure')
             logger.setLevel(logging.DEBUG)
@@ -478,7 +482,7 @@ class ConfigureSandbox(dict):
             raise KeyError('Cannot reassign builtins')
 
         if inspect.isfunction(value) and value not in self._templates:
-            value, _ = self._prepare_function(value)
+            value = self._prepare_function(value)
 
         elif (not isinstance(value, SandboxDependsFunction) and
                 value not in self._templates and
@@ -511,7 +515,9 @@ class ConfigureSandbox(dict):
 
     @memoize
     def _value_for_depends(self, obj):
-        return obj.result()
+        value = obj.result()
+        self._logger.log(TRACE, '%r = %r', obj, value)
+        return value
 
     @memoize
     def _value_for_option(self, option):
@@ -572,8 +578,10 @@ class ConfigureSandbox(dict):
                 raise InvalidOptionError(
                     '%s is not available in this configuration'
                     % option_string.split('=', 1)[0])
+            self._logger.log(TRACE, '%r = None', option)
             return None
 
+        self._logger.log(TRACE, '%r = %r', option, value)
         return value
 
     def _dependency(self, arg, callee_name, arg_name=None):
@@ -705,7 +713,7 @@ class ConfigureSandbox(dict):
             if inspect.isgeneratorfunction(func):
                 raise ConfigureError(
                     'Cannot decorate generator functions with @depends')
-            func, glob = self._prepare_function(func)
+            func = self._prepare_function(func)
             depends = DependsFunction(self, func, dependencies, when=when)
             return depends.sandboxed
 
@@ -734,12 +742,14 @@ class ConfigureSandbox(dict):
         Templates allow to simplify repetitive constructs, or to implement
         helper decorators and somesuch.
         '''
-        template, glob = self._prepare_function(func)
-        glob.update(
-            (k[:-len('_impl')], getattr(self, k))
-            for k in dir(self) if k.endswith('_impl') and k != 'template_impl'
-        )
-        glob.update((k, v) for k, v in self.iteritems() if k not in glob)
+        def update_globals(glob):
+            glob.update(
+                (k[:-len('_impl')], getattr(self, k))
+                for k in dir(self) if k.endswith('_impl') and k != 'template_impl'
+            )
+            glob.update((k, v) for k, v in self.iteritems() if k not in glob)
+
+        template = self._prepare_function(func, update_globals)
 
         # Any function argument to the template must be prepared to be sandboxed.
         # If the template itself returns a function (in which case, it's very
@@ -750,8 +760,7 @@ class ConfigureSandbox(dict):
 
             def maybe_prepare_function(obj):
                 if isfunction(obj):
-                    func, _ = self._prepare_function(obj)
-                    return func
+                    return self._prepare_function(obj)
                 return obj
 
             # The following function may end up being prepared to be sandboxed,
@@ -905,6 +914,11 @@ class ConfigureSandbox(dict):
                 "exists" % name)
         value = self._resolve(value)
         if value is not None:
+            if self._logger.isEnabledFor(TRACE):
+                if data is self._config:
+                    self._logger.log(TRACE, 'set_config(%s, %r)', name, value)
+                elif data is self._config.get('DEFINES'):
+                    self._logger.log(TRACE, 'set_define(%s, %r)', name, value)
             data[name] = value
 
     def set_config_impl(self, name, value, when=None):
@@ -1016,14 +1030,14 @@ class ConfigureSandbox(dict):
             when=when,
         ))
 
-    def _prepare_function(self, func):
+    def _prepare_function(self, func, update_globals=None):
         '''Alter the given function global namespace with the common ground
         for @depends, and @template.
         '''
         if not inspect.isfunction(func):
             raise TypeError("Unexpected type: '%s'" % type(func).__name__)
         if func in self._prepared_functions:
-            return func, func.func_globals
+            return func
 
         glob = SandboxedGlobal(
             (k, v) for k, v in func.func_globals.iteritems()
@@ -1037,6 +1051,8 @@ class ConfigureSandbox(dict):
             os=self.OS,
             log=self.log_impl,
         )
+        if update_globals:
+            update_globals(glob)
 
         # The execution model in the sandbox doesn't guarantee the execution
         # order will always be the same for a given function, and if it uses
@@ -1070,4 +1086,4 @@ class ConfigureSandbox(dict):
             return new_func(*args, **kwargs)
 
         self._prepared_functions.add(wrapped)
-        return wrapped, glob
+        return wrapped

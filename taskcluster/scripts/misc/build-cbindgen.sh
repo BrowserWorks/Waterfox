@@ -3,7 +3,7 @@ set -x -e -v
 
 # If you update this, make sure to update the minimum version in
 # build/moz.configure/bindgen.configure as well.
-CBINDGEN_VERSION=v0.6.8
+CBINDGEN_REVISION=fbe9eff351c15c6ef348c33016fb72ad3520f32b # v0.7.1
 TARGET="$1"
 
 case "$(uname -s)" in
@@ -18,11 +18,13 @@ MINGW*)
     WIN_WORKSPACE="$(pwd -W)"
     COMPRESS_EXT=bz2
 
-    export INCLUDE="$WIN_WORKSPACE/build/src/vs2017_15.4.2/VC/include;$WIN_WORKSPACE/build/src/vs2017_15.4.2/VC/atlmfc/include;$WIN_WORKSPACE/build/src/vs2017_15.4.2/SDK/Include/10.0.15063.0/ucrt;$WIN_WORKSPACE/build/src/vs2017_15.4.2/SDK/Include/10.0.15063.0/shared;$WIN_WORKSPACE/build/src/vs2017_15.4.2/SDK/Include/10.0.15063.0/um;$WIN_WORKSPACE/build/src/vs2017_15.4.2/SDK/Include/10.0.15063.0/winrt;$WIN_WORKSPACE/build/src/vs2017_15.4.2/DIA SDK/include"
+    export INCLUDE="$WIN_WORKSPACE/build/src/vs2017_15.8.4/VC/include;$WIN_WORKSPACE/build/src/vs2017_15.8.4/VC/atlmfc/include;$WIN_WORKSPACE/build/src/vs2017_15.8.4/SDK/Include/10.0.17134.0/ucrt;$WIN_WORKSPACE/build/src/vs2017_15.8.4/SDK/Include/10.0.17134.0/shared;$WIN_WORKSPACE/build/src/vs2017_15.8.4/SDK/Include/10.0.17134.0/um;$WIN_WORKSPACE/build/src/vs2017_15.8.4/SDK/Include/10.0.17134.0/winrt;$WIN_WORKSPACE/build/src/vs2017_15.8.4/DIA SDK/include"
 
-    export LIB="$WIN_WORKSPACE/build/src/vs2017_15.4.2/VC/lib/x64;$WIN_WORKSPACE/build/src/vs2017_15.4.2/VC/atlmfc/lib/x64;$WIN_WORKSPACE/build/src/vs2017_15.4.2/SDK/lib/10.0.15063.0/um/x64;$WIN_WORKSPACE/build/src/vs2017_15.4.2/SDK/lib/10.0.15063.0/ucrt/x64;$WIN_WORKSPACE/build/src/vs2017_15.4.2/DIA SDK/lib/amd64"
+    export LIB="$WIN_WORKSPACE/build/src/vs2017_15.8.4/VC/lib/x64;$WIN_WORKSPACE/build/src/vs2017_15.8.4/VC/atlmfc/lib/x64;$WIN_WORKSPACE/build/src/vs2017_15.8.4/SDK/lib/10.0.17134.0/um/x64;$WIN_WORKSPACE/build/src/vs2017_15.8.4/SDK/lib/10.0.17134.0/ucrt/x64;$WIN_WORKSPACE/build/src/vs2017_15.8.4/DIA SDK/lib/amd64"
 
-    PATH="$WORKSPACE/build/src/vs2017_15.4.2/VC/bin/Hostx64/x64:$WORKSPACE/build/src/vs2017_15.4.2/VC/bin/Hostx86/x86:$WORKSPACE/build/src/vs2017_15.4.2/SDK/bin/10.0.15063.0/x64:$WORKSPACE/build/src/vs2017_15.4.2/redist/x64/Microsoft.VC141.CRT:$WORKSPACE/build/src/vs2017_15.4.2/SDK/Redist/ucrt/DLLs/x64:$WORKSPACE/build/src/vs2017_15.4.2/DIA SDK/bin/amd64:$WORKSPACE/build/src/mingw64/bin:$PATH"
+    PATH="$WORKSPACE/build/src/vs2017_15.8.4/VC/bin/Hostx64/x64:$WORKSPACE/build/src/vs2017_15.8.4/VC/bin/Hostx86/x86:$WORKSPACE/build/src/vs2017_15.8.4/SDK/bin/10.0.17134.0/x64:$WORKSPACE/build/src/vs2017_15.8.4/redist/x64/Microsoft.VC141.CRT:$WORKSPACE/build/src/vs2017_15.8.4/SDK/Redist/ucrt/DLLs/x64:$WORKSPACE/build/src/vs2017_15.8.4/DIA SDK/bin/amd64:$WORKSPACE/build/src/mingw64/bin:$PATH"
+
+    export CC=clang-cl
     ;;
 esac
 
@@ -60,7 +62,7 @@ git clone https://github.com/eqrion/cbindgen cbindgen
 
 cd $_
 
-git checkout $CBINDGEN_VERSION
+git checkout $CBINDGEN_REVISION
 
 cargo build --verbose --release --target "$TARGET"
 

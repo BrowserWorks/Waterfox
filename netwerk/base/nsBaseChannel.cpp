@@ -83,55 +83,48 @@ nsresult nsBaseChannel::Redirect(nsIChannel *newChannel, uint32_t redirectFlags,
 
   // make a copy of the loadinfo, append to the redirectchain
   // and set it on the new channel
-  if (mLoadInfo) {
-    nsSecurityFlags secFlags = mLoadInfo->GetSecurityFlags() &
-                               ~nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL;
-    nsCOMPtr<nsILoadInfo> newLoadInfo =
-        static_cast<mozilla::net::LoadInfo *>(mLoadInfo.get())
-            ->CloneWithNewSecFlags(secFlags);
+  nsSecurityFlags secFlags =
+      mLoadInfo->GetSecurityFlags() & ~nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL;
+  nsCOMPtr<nsILoadInfo> newLoadInfo =
+      static_cast<mozilla::net::LoadInfo *>(mLoadInfo.get())
+          ->CloneWithNewSecFlags(secFlags);
 
-    nsCOMPtr<nsIPrincipal> uriPrincipal;
-    nsIScriptSecurityManager *sm = nsContentUtils::GetSecurityManager();
-    sm->GetChannelURIPrincipal(this, getter_AddRefs(uriPrincipal));
-    bool isInternalRedirect =
-        (redirectFlags & (nsIChannelEventSink::REDIRECT_INTERNAL |
-                          nsIChannelEventSink::REDIRECT_STS_UPGRADE));
+  nsCOMPtr<nsIPrincipal> uriPrincipal;
+  nsIScriptSecurityManager *sm = nsContentUtils::GetSecurityManager();
+  sm->GetChannelURIPrincipal(this, getter_AddRefs(uriPrincipal));
+  bool isInternalRedirect =
+      (redirectFlags & (nsIChannelEventSink::REDIRECT_INTERNAL |
+                        nsIChannelEventSink::REDIRECT_STS_UPGRADE));
 
-    // nsBaseChannel hst no thing to do with HttpBaseChannel, we would not care
-    // about referrer and remote address in this case
-    nsCOMPtr<nsIRedirectHistoryEntry> entry =
-        new nsRedirectHistoryEntry(uriPrincipal, nullptr, EmptyCString());
+  // nsBaseChannel hst no thing to do with HttpBaseChannel, we would not care
+  // about referrer and remote address in this case
+  nsCOMPtr<nsIRedirectHistoryEntry> entry =
+      new nsRedirectHistoryEntry(uriPrincipal, nullptr, EmptyCString());
 
-    newLoadInfo->AppendRedirectHistoryEntry(entry, isInternalRedirect);
+  newLoadInfo->AppendRedirectHistoryEntry(entry, isInternalRedirect);
 
-    // Ensure the channel's loadInfo's result principal URI so that it's
-    // either non-null or updated to the redirect target URI.
-    // We must do this because in case the loadInfo's result principal URI
-    // is null, it would be taken from OriginalURI of the channel.  But we
-    // overwrite it with the whole redirect chain first URI before opening
-    // the target channel, hence the information would be lost.
-    // If the protocol handler that created the channel wants to use
-    // the originalURI of the channel as the principal URI, it has left
-    // the result principal URI on the load info null.
-    nsCOMPtr<nsIURI> resultPrincipalURI;
+  // Ensure the channel's loadInfo's result principal URI so that it's
+  // either non-null or updated to the redirect target URI.
+  // We must do this because in case the loadInfo's result principal URI
+  // is null, it would be taken from OriginalURI of the channel.  But we
+  // overwrite it with the whole redirect chain first URI before opening
+  // the target channel, hence the information would be lost.
+  // If the protocol handler that created the channel wants to use
+  // the originalURI of the channel as the principal URI, it has left
+  // the result principal URI on the load info null.
+  nsCOMPtr<nsIURI> resultPrincipalURI;
 
-    nsCOMPtr<nsILoadInfo> existingLoadInfo = newChannel->GetLoadInfo();
-    if (existingLoadInfo) {
-      existingLoadInfo->GetResultPrincipalURI(
-          getter_AddRefs(resultPrincipalURI));
-    }
-    if (!resultPrincipalURI) {
-      newChannel->GetOriginalURI(getter_AddRefs(resultPrincipalURI));
-    }
-
-    newLoadInfo->SetResultPrincipalURI(resultPrincipalURI);
-
-    newChannel->SetLoadInfo(newLoadInfo);
-  } else {
-    // the newChannel was created with a dummy loadInfo, we should clear
-    // it in case the original channel does not have a loadInfo
-    newChannel->SetLoadInfo(nullptr);
+  nsCOMPtr<nsILoadInfo> existingLoadInfo = newChannel->LoadInfo();
+  if (existingLoadInfo) {
+    existingLoadInfo->GetResultPrincipalURI(getter_AddRefs(resultPrincipalURI));
   }
+  if (!resultPrincipalURI) {
+    newChannel->GetOriginalURI(getter_AddRefs(resultPrincipalURI));
+  }
+
+  newLoadInfo->SetResultPrincipalURI(resultPrincipalURI);
+
+  newChannel->SetLoadInfo(newLoadInfo);
 
   // Preserve the privacy bit if it has been overridden
   if (mPrivateBrowsingOverriden) {
@@ -179,12 +172,7 @@ nsresult nsBaseChannel::ContinueRedirect() {
 
   if (mOpenRedirectChannel) {
     nsresult rv = NS_OK;
-    if (mLoadInfo && mLoadInfo->GetEnforceSecurity()) {
-      MOZ_ASSERT(!mListenerContext, "mListenerContext should be null!");
-      rv = mRedirectChannel->AsyncOpen2(mListener);
-    } else {
-      rv = mRedirectChannel->AsyncOpen(mListener, mListenerContext);
-    }
+    rv = mRedirectChannel->AsyncOpen(mListener);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -214,7 +202,7 @@ nsresult nsBaseChannel::PushStreamConverter(const char *fromType,
   if (NS_FAILED(rv)) return rv;
 
   nsCOMPtr<nsIStreamListener> converter;
-  rv = scs->AsyncConvertData(fromType, toType, mListener, mListenerContext,
+  rv = scs->AsyncConvertData(fromType, toType, mListener, nullptr,
                              getter_AddRefs(converter));
   if (NS_SUCCEEDED(rv)) {
     mListener = converter;
@@ -293,8 +281,8 @@ void nsBaseChannel::ContinueHandleAsyncRedirect(nsresult result) {
 
   if (NS_FAILED(result) && mListener) {
     // Notify our consumer ourselves
-    mListener->OnStartRequest(this, mListenerContext);
-    mListener->OnStopRequest(this, mListenerContext, mStatus);
+    mListener->OnStartRequest(this, nullptr);
+    mListener->OnStopRequest(this, nullptr, mStatus);
     ChannelDone();
   }
 
@@ -576,20 +564,25 @@ nsBaseChannel::SetContentLength(int64_t aContentLength) {
 }
 
 NS_IMETHODIMP
-nsBaseChannel::Open(nsIInputStream **result) {
+nsBaseChannel::Open(nsIInputStream **aStream) {
+  nsCOMPtr<nsIStreamListener> listener;
+  nsresult rv =
+      nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   NS_ENSURE_TRUE(mURI, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_TRUE(!mPumpingData, NS_ERROR_IN_PROGRESS);
   NS_ENSURE_TRUE(!mWasOpened, NS_ERROR_IN_PROGRESS);
 
   nsCOMPtr<nsIChannel> chan;
-  nsresult rv = OpenContentStream(false, result, getter_AddRefs(chan));
-  NS_ASSERTION(!chan || !*result, "Got both a channel and a stream?");
+  rv = OpenContentStream(false, aStream, getter_AddRefs(chan));
+  NS_ASSERTION(!chan || !*aStream, "Got both a channel and a stream?");
   if (NS_SUCCEEDED(rv) && chan) {
     rv = Redirect(chan, nsIChannelEventSink::REDIRECT_INTERNAL, false);
     if (NS_FAILED(rv)) return rv;
-    rv = chan->Open(result);
+    rv = chan->Open(aStream);
   } else if (rv == NS_ERROR_NOT_IMPLEMENTED)
-    return NS_ImplementChannelOpen(this, result);
+    return NS_ImplementChannelOpen(this, aStream);
 
   if (NS_SUCCEEDED(rv)) {
     mWasOpened = true;
@@ -600,23 +593,23 @@ nsBaseChannel::Open(nsIInputStream **result) {
 }
 
 NS_IMETHODIMP
-nsBaseChannel::Open2(nsIInputStream **aStream) {
-  nsCOMPtr<nsIStreamListener> listener;
+nsBaseChannel::AsyncOpen(nsIStreamListener *aListener) {
+  nsCOMPtr<nsIStreamListener> listener = aListener;
+
   nsresult rv =
       nsContentSecurityManager::doContentSecurityCheck(this, listener);
-  NS_ENSURE_SUCCESS(rv, rv);
-  return Open(aStream);
-}
+  if (NS_FAILED(rv)) {
+    mCallbacks = nullptr;
+    return rv;
+  }
 
-NS_IMETHODIMP
-nsBaseChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctxt) {
   MOZ_ASSERT(
       !mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
           mLoadInfo->GetInitialSecurityCheckDone() ||
           (mLoadInfo->GetSecurityMode() ==
                nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL &&
            nsContentUtils::IsSystemPrincipal(mLoadInfo->LoadingPrincipal())),
-      "security flags in loadInfo but asyncOpen2() not called");
+      "security flags in loadInfo but doContentSecurityCheck() not called");
 
   NS_ENSURE_TRUE(mURI, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_TRUE(!mPumpingData, NS_ERROR_IN_PROGRESS);
@@ -633,7 +626,7 @@ nsBaseChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctxt) {
   }
 
   // Ensure that this is an allowed port before proceeding.
-  nsresult rv = NS_CheckPortSafety(mURI);
+  rv = NS_CheckPortSafety(mURI);
   if (NS_FAILED(rv)) {
     mCallbacks = nullptr;
     return rv;
@@ -645,7 +638,6 @@ nsBaseChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctxt) {
   // this typically introduces a reference cycle between this and the listener,
   // we need to be sure to break the reference if this method does not succeed.
   mListener = listener;
-  mListenerContext = ctxt;
 
   // This method assigns mPump as a side-effect.  We need to clear mPump if
   // this method fails.
@@ -670,18 +662,6 @@ nsBaseChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctxt) {
   ClassifyURI();
 
   return NS_OK;
-}
-
-NS_IMETHODIMP
-nsBaseChannel::AsyncOpen2(nsIStreamListener *aListener) {
-  nsCOMPtr<nsIStreamListener> listener = aListener;
-  nsresult rv =
-      nsContentSecurityManager::doContentSecurityCheck(this, listener);
-  if (NS_FAILED(rv)) {
-    mCallbacks = nullptr;
-    return rv;
-  }
-  return AsyncOpen(listener, nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -713,12 +693,12 @@ nsBaseChannel::OnTransportStatus(nsITransport *transport, nsresult status,
   if (!HasLoadFlag(LOAD_BACKGROUND)) {
     nsAutoString statusArg;
     if (GetStatusArg(status, statusArg)) {
-      mProgressSink->OnStatus(this, mListenerContext, status, statusArg.get());
+      mProgressSink->OnStatus(this, nullptr, status, statusArg.get());
     }
   }
 
   if (progress) {
-    mProgressSink->OnProgress(this, mListenerContext, progress, progressMax);
+    mProgressSink->OnProgress(this, nullptr, progress, progressMax);
   }
 
   return NS_OK;
@@ -780,7 +760,7 @@ nsBaseChannel::OnStartRequest(nsIRequest *request, nsISupports *ctxt) {
   SUSPEND_PUMP_FOR_SCOPE();
 
   if (mListener)  // null in case of redirect
-    return mListener->OnStartRequest(this, mListenerContext);
+    return mListener->OnStartRequest(this, nullptr);
   return NS_OK;
 }
 
@@ -797,7 +777,7 @@ nsBaseChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt,
   mPumpingData = false;
 
   if (mListener)  // null in case of redirect
-    mListener->OnStopRequest(this, mListenerContext, mStatus);
+    mListener->OnStopRequest(this, nullptr, mStatus);
   ChannelDone();
 
   // No need to suspend pump in this scope since we will not be receiving
@@ -822,7 +802,7 @@ nsBaseChannel::OnDataAvailable(nsIRequest *request, nsISupports *ctxt,
   SUSPEND_PUMP_FOR_SCOPE();
 
   nsresult rv =
-      mListener->OnDataAvailable(this, mListenerContext, stream, offset, count);
+      mListener->OnDataAvailable(this, nullptr, stream, offset, count);
   if (mSynthProgressEvents && NS_SUCCEEDED(rv)) {
     int64_t prog = offset + count;
     if (NS_IsMainThread()) {

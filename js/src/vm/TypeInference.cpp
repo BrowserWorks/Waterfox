@@ -107,10 +107,8 @@ const char* js::TypeIdStringImpl(jsid id) {
         return "string";
       case JSVAL_TYPE_SYMBOL:
         return "symbol";
-#ifdef ENABLE_BIGINT
       case JSVAL_TYPE_BIGINT:
         return "BigInt";
-#endif
       case JSVAL_TYPE_MAGIC:
         return "lazyargs";
       default:
@@ -391,10 +389,8 @@ bool TypeSet::mightBeMIRType(jit::MIRType type) const {
       return baseFlags() & TYPE_FLAG_STRING;
     case jit::MIRType::Symbol:
       return baseFlags() & TYPE_FLAG_SYMBOL;
-#ifdef ENABLE_BIGINT
     case jit::MIRType::BigInt:
       return baseFlags() & TYPE_FLAG_BIGINT;
-#endif
     case jit::MIRType::MagicOptimizedArguments:
       return baseFlags() & TYPE_FLAG_LAZYARGS;
     case jit::MIRType::MagicHole:
@@ -826,11 +822,9 @@ void TypeSet::print(FILE* fp) {
   if (flags & TYPE_FLAG_SYMBOL) {
     fprintf(fp, " symbol");
   }
-#ifdef ENABLE_BIGINT
   if (flags & TYPE_FLAG_BIGINT) {
     fprintf(fp, " BigInt");
   }
-#endif
   if (flags & TYPE_FLAG_LAZYARGS) {
     fprintf(fp, " lazyargs");
   }
@@ -1713,10 +1707,8 @@ static inline jit::MIRType GetMIRTypeFromTypeFlags(TypeFlags flags) {
       return jit::MIRType::String;
     case TYPE_FLAG_SYMBOL:
       return jit::MIRType::Symbol;
-#ifdef ENABLE_BIGINT
     case TYPE_FLAG_BIGINT:
       return jit::MIRType::BigInt;
-#endif
     case TYPE_FLAG_LAZYARGS:
       return jit::MIRType::MagicOptimizedArguments;
     case TYPE_FLAG_ANYOBJECT:
@@ -1979,15 +1971,16 @@ namespace {
 class ConstraintDataFreezeObjectForTypedArrayData {
   NativeObject* obj;
 
-  uintptr_t viewData;
+  void* viewData;
   uint32_t length;
 
  public:
   explicit ConstraintDataFreezeObjectForTypedArrayData(TypedArrayObject& tarray)
       : obj(&tarray),
-        viewData(tarray.dataPointerEither().unwrapValue()),
+        viewData(tarray.dataPointerUnshared()),
         length(tarray.length()) {
     MOZ_ASSERT(tarray.isSingleton());
+    MOZ_ASSERT(!tarray.isSharedMemory());
   }
 
   const char* kind() { return "freezeObjectForTypedArrayData"; }
@@ -1998,8 +1991,7 @@ class ConstraintDataFreezeObjectForTypedArrayData {
                                   ObjectGroup* group) {
     MOZ_ASSERT(obj->group() == group);
     TypedArrayObject& tarr = obj->as<TypedArrayObject>();
-    return tarr.dataPointerEither().unwrapValue() != viewData ||
-           tarr.length() != length;
+    return tarr.dataPointerUnshared() != viewData || tarr.length() != length;
   }
 
   bool constraintHolds(const AutoSweepObjectGroup& sweep, JSContext* cx,
@@ -4813,11 +4805,9 @@ void TypeZone::endSweep(JSRuntime* rt) {
 }
 
 void TypeZone::clearAllNewScriptsOnOOM() {
-  for (auto iter = zone()->cellIter<ObjectGroup>(); !iter.done(); iter.next()) {
-    ObjectGroup* group = iter;
-    if (!IsAboutToBeFinalizedUnbarriered(&group)) {
-      group->maybeClearNewScriptOnOOM();
-    }
+  for (auto group = zone()->cellIter<ObjectGroup>(); !group.done();
+       group.next()) {
+    group->maybeClearNewScriptOnOOM();
   }
 }
 

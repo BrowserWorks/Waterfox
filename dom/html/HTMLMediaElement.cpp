@@ -1244,7 +1244,7 @@ class HTMLMediaElement::ChannelLoader final {
       return;
     }
 
-    // determine what security checks need to be performed in AsyncOpen2().
+    // determine what security checks need to be performed in AsyncOpen().
     nsSecurityFlags securityFlags =
         aElement->ShouldCheckAllowOrigin()
             ? nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS
@@ -1293,12 +1293,10 @@ class HTMLMediaElement::ChannelLoader final {
     }
 
     if (setAttrs) {
-      nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
-      if (loadInfo) {
-        // The function simply returns NS_OK, so we ignore the return value.
-        Unused << loadInfo->SetOriginAttributes(
-            triggeringPrincipal->OriginAttributesRef());
-      }
+      nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+      // The function simply returns NS_OK, so we ignore the return value.
+      Unused << loadInfo->SetOriginAttributes(
+          triggeringPrincipal->OriginAttributesRef());
     }
 
     nsCOMPtr<nsIClassOfService> cos(do_QueryInterface(channel));
@@ -1337,7 +1335,7 @@ class HTMLMediaElement::ChannelLoader final {
       aElement->SetRequestHeaders(hc);
     }
 
-    rv = channel->AsyncOpen2(loadListener);
+    rv = channel->AsyncOpen(loadListener);
     if (NS_FAILED(rv)) {
       // Notify load error so the element will try next resource candidate.
       aElement->NotifyLoadError(NS_LITERAL_CSTRING("Failed to open channel"));

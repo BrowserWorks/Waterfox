@@ -189,20 +189,24 @@ finish:
   return rv;
 }
 
-NS_IMETHODIMP nsExtProtocolChannel::Open(nsIInputStream **_retval) {
-  return OpenURL();
-}
-
-NS_IMETHODIMP nsExtProtocolChannel::Open2(nsIInputStream **aStream) {
+NS_IMETHODIMP nsExtProtocolChannel::Open(nsIInputStream **aStream) {
   nsCOMPtr<nsIStreamListener> listener;
   nsresult rv =
       nsContentSecurityManager::doContentSecurityCheck(this, listener);
   NS_ENSURE_SUCCESS(rv, rv);
-  return Open(aStream);
+
+  return OpenURL();
 }
 
-NS_IMETHODIMP nsExtProtocolChannel::AsyncOpen(nsIStreamListener *listener,
-                                              nsISupports *ctxt) {
+NS_IMETHODIMP nsExtProtocolChannel::AsyncOpen(nsIStreamListener *aListener) {
+  nsCOMPtr<nsIStreamListener> listener = aListener;
+  nsresult rv =
+      nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  if (NS_FAILED(rv)) {
+    mCallbacks = nullptr;
+    return rv;
+  }
+
   if (mConnectedParent) {
     return NS_OK;
   }
@@ -213,7 +217,7 @@ NS_IMETHODIMP nsExtProtocolChannel::AsyncOpen(nsIStreamListener *listener,
           (mLoadInfo->GetSecurityMode() ==
                nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL &&
            nsContentUtils::IsSystemPrincipal(mLoadInfo->LoadingPrincipal())),
-      "security flags in loadInfo but asyncOpen2() not called");
+      "security flags in loadInfo but doContentSecurityCheck() not called");
 
   NS_ENSURE_ARG_POINTER(listener);
   NS_ENSURE_TRUE(!mWasOpened, NS_ERROR_ALREADY_OPENED);
@@ -222,17 +226,6 @@ NS_IMETHODIMP nsExtProtocolChannel::AsyncOpen(nsIStreamListener *listener,
   mListener = listener;
 
   return OpenURL();
-}
-
-NS_IMETHODIMP nsExtProtocolChannel::AsyncOpen2(nsIStreamListener *aListener) {
-  nsCOMPtr<nsIStreamListener> listener = aListener;
-  nsresult rv =
-      nsContentSecurityManager::doContentSecurityCheck(this, listener);
-  if (NS_FAILED(rv)) {
-    mCallbacks = nullptr;
-    return rv;
-  }
-  return AsyncOpen(listener, nullptr);
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::GetLoadFlags(nsLoadFlags *aLoadFlags) {
@@ -370,7 +363,7 @@ NS_IMETHODIMP nsExtProtocolChannel::CompleteRedirectSetup(
   // For redirects to external protocols we AsyncOpen on the child
   // (not the parent) because child channel has the right docshell
   // (which is needed for the select dialog).
-  return AsyncOpen(listener, context);
+  return AsyncOpen(listener);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -522,8 +515,8 @@ NS_IMETHODIMP nsExternalProtocolHandler::NewURI(
 }
 
 NS_IMETHODIMP
-nsExternalProtocolHandler::NewChannel2(nsIURI *aURI, nsILoadInfo *aLoadInfo,
-                                       nsIChannel **aRetval) {
+nsExternalProtocolHandler::NewChannel(nsIURI *aURI, nsILoadInfo *aLoadInfo,
+                                      nsIChannel **aRetval) {
   NS_ENSURE_TRUE(aURI, NS_ERROR_UNKNOWN_PROTOCOL);
   NS_ENSURE_TRUE(aRetval, NS_ERROR_UNKNOWN_PROTOCOL);
 
@@ -538,11 +531,6 @@ nsExternalProtocolHandler::NewChannel2(nsIURI *aURI, nsILoadInfo *aLoadInfo,
   nsCOMPtr<nsIChannel> channel = new nsExtProtocolChannel(aURI, aLoadInfo);
   channel.forget(aRetval);
   return NS_OK;
-}
-
-NS_IMETHODIMP nsExternalProtocolHandler::NewChannel(nsIURI *aURI,
-                                                    nsIChannel **_retval) {
-  return NewChannel2(aURI, nullptr, _retval);
 }
 
 ///////////////////////////////////////////////////////////////////////

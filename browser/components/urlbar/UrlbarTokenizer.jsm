@@ -18,7 +18,7 @@ const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.defineModuleGetter(this, "Log",
                                "resource://gre/modules/Log.jsm");
 XPCOMUtils.defineLazyGetter(this, "logger", () =>
-  Log.repository.getLogger("Places.Urlbar.Tokenizer"));
+  Log.repository.getLogger("Urlbar.Tokenizer"));
 
 var UrlbarTokenizer = {
   // Regex matching on whitespaces.
@@ -173,7 +173,7 @@ var UrlbarTokenizer = {
   tokenize(queryContext) {
     logger.info("Tokenizing", queryContext);
     let searchString = queryContext.searchString;
-    if (searchString.length == 0) {
+    if (!searchString.trim()) {
       queryContext.tokens = [];
       return queryContext;
     }

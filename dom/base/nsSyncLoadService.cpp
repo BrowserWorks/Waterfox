@@ -135,14 +135,12 @@ nsresult nsSyncLoader::LoadDocument(nsIChannel *aChannel, bool aChannelIsSync,
             "text/xml,application/xml,application/xhtml+xml,*/*;q=0.1"),
         false);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
-    nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-    if (loadInfo) {
-      nsCOMPtr<nsIURI> loaderUri;
-      loadInfo->TriggeringPrincipal()->GetURI(getter_AddRefs(loaderUri));
-      if (loaderUri) {
-        rv = http->SetReferrerWithPolicy(loaderUri, aReferrerPolicy);
-        MOZ_ASSERT(NS_SUCCEEDED(rv));
-      }
+    nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
+    nsCOMPtr<nsIURI> loaderUri;
+    loadInfo->TriggeringPrincipal()->GetURI(getter_AddRefs(loaderUri));
+    if (loaderUri) {
+      rv = http->SetReferrerWithPolicy(loaderUri, aReferrerPolicy);
+      MOZ_ASSERT(NS_SUCCEEDED(rv));
     }
   }
 
@@ -205,7 +203,7 @@ nsresult nsSyncLoader::PushAsyncStream(nsIStreamListener *aListener) {
   mAsyncLoadStatus = NS_OK;
 
   // Start reading from the channel
-  nsresult rv = mChannel->AsyncOpen2(this);
+  nsresult rv = mChannel->AsyncOpen(this);
 
   if (NS_SUCCEEDED(rv)) {
     // process events until we're finished.
@@ -230,7 +228,7 @@ nsresult nsSyncLoader::PushAsyncStream(nsIStreamListener *aListener) {
 
 nsresult nsSyncLoader::PushSyncStream(nsIStreamListener *aListener) {
   nsCOMPtr<nsIInputStream> in;
-  nsresult rv = mChannel->Open2(getter_AddRefs(in));
+  nsresult rv = mChannel->Open(getter_AddRefs(in));
   NS_ENSURE_SUCCESS(rv, rv);
 
   mLoading = true;

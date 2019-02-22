@@ -39,6 +39,7 @@
 #include "mozilla/devtools/HeapSnapshotTempFileHelperParent.h"
 #include "mozilla/docshell/OfflineCacheUpdateParent.h"
 #include "mozilla/dom/BrowsingContext.h"
+#include "mozilla/dom/BrowsingContextGroup.h"
 #include "mozilla/dom/CanonicalBrowsingContext.h"
 #include "mozilla/dom/ClientManager.h"
 #include "mozilla/dom/ClientOpenWindowOpActors.h"
@@ -177,6 +178,7 @@
 #include "mozilla/dom/nsMixedContentBlocker.h"
 #include "nsMemoryInfoDumper.h"
 #include "nsMemoryReporterManager.h"
+#include "nsQueryObject.h"
 #include "nsScriptError.h"
 #include "nsServiceManagerUtils.h"
 #include "nsStyleSheetService.h"
@@ -1743,7 +1745,14 @@ void ContentParent::ActorDestroy(ActorDestroyReason why) {
   a11y::AccessibleWrap::ReleaseContentProcessIdFor(ChildID());
 #endif
 
-  CanonicalBrowsingContext::CleanupContexts(ChildID());
+  nsTHashtable<nsRefPtrHashKey<BrowsingContextGroup>> groups;
+  mGroups.SwapElements(groups);
+
+  for (auto iter = groups.Iter(); !iter.Done(); iter.Next()) {
+    iter.Get()->GetKey()->Unsubscribe(this);
+  }
+
+  MOZ_DIAGNOSTIC_ASSERT(mGroups.IsEmpty());
 }
 
 bool ContentParent::TryToRecycle() {
@@ -3587,14 +3596,15 @@ bool ContentParent::DeallocPPSMContentDownloaderParent(
 }
 
 PExternalHelperAppParent* ContentParent::AllocPExternalHelperAppParent(
-    const OptionalURIParams& uri, const nsCString& aMimeContentType,
-    const nsCString& aContentDisposition,
+    const OptionalURIParams& uri,
+    const mozilla::net::OptionalLoadInfoArgs& aLoadInfoArgs,
+    const nsCString& aMimeContentType, const nsCString& aContentDisposition,
     const uint32_t& aContentDispositionHint,
     const nsString& aContentDispositionFilename, const bool& aForceSave,
     const int64_t& aContentLength, const bool& aWasFileChannel,
     const OptionalURIParams& aReferrer, PBrowserParent* aBrowser) {
   ExternalHelperAppParent* parent = new ExternalHelperAppParent(
-      uri, aContentLength, aWasFileChannel, aContentDisposition,
+      uri, aLoadInfoArgs, aContentLength, aWasFileChannel, aContentDisposition,
       aContentDispositionHint, aContentDispositionFilename);
   parent->AddRef();
   parent->Init(this, aMimeContentType, aForceSave, aReferrer, aBrowser);
@@ -4672,25 +4682,27 @@ mozilla::ipc::IPCResult ContentParent::CommonCreateWindow(
       return IPC_OK();
     }
 
-    nsCOMPtr<nsIFrameLoaderOwner> opener = do_QueryInterface(frame);
+    RefPtr<Element> openerElement = do_QueryObject(frame);
 
     nsCOMPtr<nsIOpenURIInFrameParams> params =
-        new nsOpenURIInFrameParams(openerOriginAttributes, opener);
+        new nsOpenURIInFrameParams(openerOriginAttributes, openerElement);
     params->SetReferrer(NS_ConvertUTF8toUTF16(aBaseURI));
     MOZ_ASSERT(aTriggeringPrincipal, "need a valid triggeringPrincipal");
     params->SetTriggeringPrincipal(aTriggeringPrincipal);
     params->SetReferrerPolicy(aReferrerPolicy);
 
-    nsCOMPtr<nsIFrameLoaderOwner> frameLoaderOwner;
+    RefPtr<Element> el;
+
     if (aLoadURI) {
       aResult = browserDOMWin->OpenURIInFrame(
           aURIToLoad, params, aOpenLocation, nsIBrowserDOMWindow::OPEN_NEW,
-          aNextTabParentId, aName, getter_AddRefs(frameLoaderOwner));
+          aNextTabParentId, aName, getter_AddRefs(el));
     } else {
       aResult = browserDOMWin->CreateContentWindowInFrame(
           aURIToLoad, params, aOpenLocation, nsIBrowserDOMWindow::OPEN_NEW,
-          aNextTabParentId, aName, getter_AddRefs(frameLoaderOwner));
+          aNextTabParentId, aName, getter_AddRefs(el));
     }
+    RefPtr<nsFrameLoaderOwner> frameLoaderOwner = do_QueryObject(el);
     if (NS_SUCCEEDED(aResult) && frameLoaderOwner) {
       RefPtr<nsFrameLoader> frameLoader = frameLoaderOwner->GetFrameLoader();
       if (frameLoader) {
@@ -4744,8 +4756,7 @@ mozilla::ipc::IPCResult ContentParent::CommonCreateWindow(
     nsCOMPtr<Element> frameElement =
         TabParent::GetFrom(aNewTabParent)->GetOwnerElement();
     MOZ_ASSERT(frameElement);
-    nsCOMPtr<nsIFrameLoaderOwner> frameLoaderOwner =
-        do_QueryInterface(frameElement);
+    RefPtr<nsFrameLoaderOwner> frameLoaderOwner = do_QueryObject(frameElement);
     MOZ_ASSERT(frameLoaderOwner);
     RefPtr<nsFrameLoader> frameLoader = frameLoaderOwner->GetFrameLoader();
     MOZ_ASSERT(frameLoader);
@@ -4966,17 +4977,6 @@ mozilla::ipc::IPCResult ContentParent::RecvEndDriverCrashGuard(
     const uint32_t& aGuardType) {
   mDriverCrashGuard = nullptr;
   return IPC_OK();
-}
-
-mozilla::ipc::IPCResult ContentParent::RecvGetAndroidSystemInfo(
-    AndroidSystemInfo* aInfo) {
-#ifdef MOZ_WIDGET_ANDROID
-  nsSystemInfo::GetAndroidSystemInfo(aInfo);
-  return IPC_OK();
-#else
-  MOZ_CRASH("wrong platform!");
-  return IPC_FAIL_NO_REASON(this);
-#endif
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvNotifyBenchmarkResult(
@@ -5609,31 +5609,9 @@ mozilla::ipc::IPCResult ContentParent::RecvStoreUserInteractionAsPermission(
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvAttachBrowsingContext(
-    const BrowsingContextId& aParentId, const BrowsingContextId& aOpenerId,
-    const BrowsingContextId& aChildId, const nsString& aName) {
-  RefPtr<CanonicalBrowsingContext> parent =
-      CanonicalBrowsingContext::Get(aParentId);
-  if (aParentId && !parent) {
-    // Unless 'aParentId' is 0 (which it is when the child is a root
-    // BrowsingContext) there should always be a corresponding
-    // 'parent'. The only reason for there not beeing one is if the
-    // parent has already been detached, in which case the
-    // BrowsingContext that tries to attach itself to the context with
-    // 'aParentId' is surely doomed and we can safely do nothing.
-
-    // TODO(farre): When we start syncing/moving BrowsingContexts to
-    // other child processes is it possible to get into races where
-    // constructive operations on already detached BrowsingContexts
-    // are requested? This needs to be answered/handled, but for now
-    // return early. [Bug 1471598]
-    MOZ_LOG(
-        BrowsingContext::GetLog(), LogLevel::Debug,
-        ("ParentIPC: Trying to attach to already detached parent 0x%08" PRIx64,
-         (uint64_t)aParentId));
-    return IPC_OK();
-  }
-
-  if (parent && !parent->IsOwnedByProcess(ChildID())) {
+    BrowsingContext* aParent, BrowsingContext* aOpener,
+    BrowsingContextId aChildId, const nsString& aName) {
+  if (aParent && !aParent->Canonical()->IsOwnedByProcess(ChildID())) {
     // Where trying attach a child BrowsingContext to a parent
     // BrowsingContext in another process. This is illegal since the
     // only thing that could create that child BrowsingContext is a
@@ -5648,7 +5626,7 @@ mozilla::ipc::IPCResult ContentParent::RecvAttachBrowsingContext(
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
             ("ParentIPC: Trying to attach to out of process parent context "
              "0x%08" PRIx64,
-             parent->Id()));
+             aParent->Id()));
     return IPC_OK();
   }
 
@@ -5663,13 +5641,12 @@ mozilla::ipc::IPCResult ContentParent::RecvAttachBrowsingContext(
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
             ("ParentIPC: Trying to attach already attached 0x%08" PRIx64
              " to 0x%08" PRIx64,
-             child->Id(), (uint64_t)aParentId));
+             child->Id(), aParent ? aParent->Id() : 0));
     return IPC_OK();
   }
 
   if (!child) {
-    RefPtr<BrowsingContext> opener = BrowsingContext::Get(aOpenerId);
-    child = BrowsingContext::CreateFromIPC(parent, opener, aName,
+    child = BrowsingContext::CreateFromIPC(aParent, aOpener, aName,
                                            (uint64_t)aChildId, this);
   }
 
@@ -5677,18 +5654,14 @@ mozilla::ipc::IPCResult ContentParent::RecvAttachBrowsingContext(
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvDetachBrowsingContext(
-    const BrowsingContextId& aContextId, const bool& aMoveToBFCache) {
-  RefPtr<CanonicalBrowsingContext> context =
-      CanonicalBrowsingContext::Get(aContextId);
-
-  if (!context) {
+    BrowsingContext* aContext, bool aMoveToBFCache) {
+  if (!aContext) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
-            ("ParentIPC: Trying to detach already detached 0x%08" PRIx64,
-             (uint64_t)aContextId));
+            ("ParentIPC: Trying to detach already detached"));
     return IPC_OK();
   }
 
-  if (!context->IsOwnedByProcess(ChildID())) {
+  if (!aContext->Canonical()->IsOwnedByProcess(ChildID())) {
     // Where trying to detach a child BrowsingContext in another child
     // process. This is illegal since the owner of the BrowsingContext
     // is the proccess with the in-process docshell, which is tracked
@@ -5698,33 +5671,28 @@ mozilla::ipc::IPCResult ContentParent::RecvDetachBrowsingContext(
     // above TODO. [Bug 1471598]
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
             ("ParentIPC: Trying to detach out of process context 0x%08" PRIx64,
-             context->Id()));
+             aContext->Id()));
     return IPC_OK();
   }
 
   if (aMoveToBFCache) {
-    context->CacheChildren();
+    aContext->CacheChildren();
   } else {
-    context->Detach();
+    aContext->Detach();
   }
 
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvSetOpenerBrowsingContext(
-    const BrowsingContextId& aContextId,
-    const BrowsingContextId& aOpenerContextId) {
-  RefPtr<CanonicalBrowsingContext> context =
-      CanonicalBrowsingContext::Get(aContextId);
-
-  if (!context) {
+    BrowsingContext* aContext, BrowsingContext* aOpener) {
+  if (!aContext) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
-            ("ParentIPC: Trying to set opener already detached 0x%08" PRIx64,
-             (uint64_t)aContextId));
+            ("ParentIPC: Trying to set opener already detached"));
     return IPC_OK();
   }
 
-  if (!context->IsOwnedByProcess(ChildID())) {
+  if (!aContext->Canonical()->IsOwnedByProcess(ChildID())) {
     // Where trying to set opener on a child BrowsingContext in
     // another child process. This is illegal since the owner of the
     // BrowsingContext is the proccess with the in-process docshell,
@@ -5735,29 +5703,24 @@ mozilla::ipc::IPCResult ContentParent::RecvSetOpenerBrowsingContext(
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
             ("ParentIPC: Trying to set opener on out of process context "
              "0x%08" PRIx64,
-             context->Id()));
+             aContext->Id()));
     return IPC_OK();
   }
 
-  RefPtr<BrowsingContext> opener = BrowsingContext::Get(aOpenerContextId);
-  context->SetOpener(opener);
+  aContext->SetOpener(aOpener);
 
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvSetUserGestureActivation(
-    const BrowsingContextId& aContextId, const bool& aNewValue) {
-  RefPtr<CanonicalBrowsingContext> context =
-      CanonicalBrowsingContext::Get(aContextId);
-
-  if (!context) {
+    BrowsingContext* aContext, bool aNewValue) {
+  if (!aContext) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
-            ("ParentIPC: Trying to activate wrong context 0x%08" PRIx64,
-             (uint64_t)aContextId));
+            ("ParentIPC: Trying to activate wrong context"));
     return IPC_OK();
   }
 
-  context->NotifySetUserGestureActivationFromIPC(aNewValue);
+  aContext->Canonical()->NotifySetUserGestureActivationFromIPC(aNewValue);
   return IPC_OK();
 }
 
@@ -5782,14 +5745,11 @@ void ContentParent::UnregisterRemoveWorkerActor() {
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvWindowClose(
-    const BrowsingContextId& aContextId, const bool& aTrustedCaller) {
-  RefPtr<CanonicalBrowsingContext> bc =
-      CanonicalBrowsingContext::Get(aContextId);
-  if (!bc) {
-    MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
-            ("ParentIPC: Trying to send a message to dead or detached context "
-             "0x%08" PRIx64,
-             (uint64_t)aContextId));
+    BrowsingContext* aContext, bool aTrustedCaller) {
+  if (!aContext) {
+    MOZ_LOG(
+        BrowsingContext::GetLog(), LogLevel::Debug,
+        ("ParentIPC: Trying to send a message to dead or detached context"));
     return IPC_OK();
   }
 
@@ -5798,66 +5758,57 @@ mozilla::ipc::IPCResult ContentParent::RecvWindowClose(
   //       browsing contexts of bc.
 
   ContentProcessManager* cpm = ContentProcessManager::GetSingleton();
-  ContentParent* cp =
-      cpm->GetContentProcessById(ContentParentId(bc->OwnerProcessId()));
-  Unused << cp->SendWindowClose(aContextId, aTrustedCaller);
+  ContentParent* cp = cpm->GetContentProcessById(
+      ContentParentId(aContext->Canonical()->OwnerProcessId()));
+  Unused << cp->SendWindowClose(aContext, aTrustedCaller);
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvWindowFocus(
-    const BrowsingContextId& aContextId) {
-  RefPtr<CanonicalBrowsingContext> bc =
-      CanonicalBrowsingContext::Get(aContextId);
-  if (!bc) {
-    MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
-            ("ParentIPC: Trying to send a message to dead or detached context "
-             "0x%08" PRIx64,
-             (uint64_t)aContextId));
+    BrowsingContext* aContext) {
+  if (!aContext) {
+    MOZ_LOG(
+        BrowsingContext::GetLog(), LogLevel::Debug,
+        ("ParentIPC: Trying to send a message to dead or detached context"));
     return IPC_OK();
   }
 
   ContentProcessManager* cpm = ContentProcessManager::GetSingleton();
-  ContentParent* cp =
-      cpm->GetContentProcessById(ContentParentId(bc->OwnerProcessId()));
-  Unused << cp->SendWindowFocus(aContextId);
+  ContentParent* cp = cpm->GetContentProcessById(
+      ContentParentId(aContext->Canonical()->OwnerProcessId()));
+  Unused << cp->SendWindowFocus(aContext);
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvWindowBlur(
-    const BrowsingContextId& aContextId) {
-  RefPtr<CanonicalBrowsingContext> bc =
-      CanonicalBrowsingContext::Get(aContextId);
-  if (!bc) {
-    MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
-            ("ParentIPC: Trying to send a message to dead or detached context "
-             "0x%08" PRIx64,
-             (uint64_t)aContextId));
+    BrowsingContext* aContext) {
+  if (!aContext) {
+    MOZ_LOG(
+        BrowsingContext::GetLog(), LogLevel::Debug,
+        ("ParentIPC: Trying to send a message to dead or detached context"));
     return IPC_OK();
   }
 
   ContentProcessManager* cpm = ContentProcessManager::GetSingleton();
-  ContentParent* cp =
-      cpm->GetContentProcessById(ContentParentId(bc->OwnerProcessId()));
-  Unused << cp->SendWindowBlur(aContextId);
+  ContentParent* cp = cpm->GetContentProcessById(
+      ContentParentId(aContext->Canonical()->OwnerProcessId()));
+  Unused << cp->SendWindowBlur(aContext);
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvWindowPostMessage(
-    const BrowsingContextId& aContextId, const ClonedMessageData& aMessage,
+    BrowsingContext* aContext, const ClonedMessageData& aMessage,
     const PostMessageData& aData) {
-  RefPtr<CanonicalBrowsingContext> bc =
-      CanonicalBrowsingContext::Get(aContextId);
-  if (!bc) {
-    MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
-            ("ParentIPC: Trying to send a message to dead or detached context "
-             "0x%08" PRIx64,
-             (uint64_t)aContextId));
+  if (!aContext) {
+    MOZ_LOG(
+        BrowsingContext::GetLog(), LogLevel::Debug,
+        ("ParentIPC: Trying to send a message to dead or detached context"));
     return IPC_OK();
   }
 
   ContentProcessManager* cpm = ContentProcessManager::GetSingleton();
-  ContentParent* cp =
-      cpm->GetContentProcessById(ContentParentId(bc->OwnerProcessId()));
+  ContentParent* cp = cpm->GetContentProcessById(
+      ContentParentId(aContext->Canonical()->OwnerProcessId()));
   StructuredCloneData messageFromChild;
   UnpackClonedMessageDataForParent(aMessage, messageFromChild);
   ClonedMessageData message;
@@ -5865,10 +5816,44 @@ mozilla::ipc::IPCResult ContentParent::RecvWindowPostMessage(
     // FIXME Logging?
     return IPC_OK();
   }
-  Unused << cp->SendWindowPostMessage(aContextId, message, aData);
+  Unused << cp->SendWindowPostMessage(aContext, message, aData);
   return IPC_OK();
 }
 
+void ContentParent::OnBrowsingContextGroupSubscribe(
+    BrowsingContextGroup* aGroup) {
+  MOZ_DIAGNOSTIC_ASSERT(aGroup);
+  mGroups.PutEntry(aGroup);
+}
+
+void ContentParent::OnBrowsingContextGroupUnsubscribe(
+    BrowsingContextGroup* aGroup) {
+  MOZ_DIAGNOSTIC_ASSERT(aGroup);
+  mGroups.RemoveEntry(aGroup);
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvCommitBrowsingContextTransaction(
+    BrowsingContext* aContext, BrowsingContext::Transaction&& aTransaction) {
+  if (!aContext) {
+    MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
+            ("ParentIPC: Trying to run transaction on missing context."));
+    return IPC_OK();
+  }
+
+  for (auto iter = aContext->Group()->ContentParentsIter(); !iter.Done();
+       iter.Next()) {
+    auto* entry = iter.Get();
+    ContentParent* parent = entry->GetKey();
+    if (parent != this) {
+      Unused << parent->SendCommitBrowsingContextTransaction(aContext,
+                                                             aTransaction);
+    }
+  }
+
+  aTransaction.Apply(aContext);
+
+  return IPC_OK();
+}
 }  // namespace dom
 }  // namespace mozilla
 

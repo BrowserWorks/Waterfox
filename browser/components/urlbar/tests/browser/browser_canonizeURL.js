@@ -8,11 +8,11 @@
 const TEST_ENGINE_BASENAME = "searchSuggestionEngine.xml";
 
 add_task(async function checkCtrlWorks() {
+  let defaultEngine = await Services.search.getDefault();
   let testcases = [
     ["example", "http://www.example.com/", { ctrlKey: true }],
     // Check that a direct load is not overwritten by a previous canonization.
     ["http://example.com/test/", "http://example.com/test/", {}],
-
     ["ex-ample", "http://www.ex-ample.com/", { ctrlKey: true }],
     ["  example ", "http://www.example.com/", { ctrlKey: true }],
     [" example/foo ", "http://www.example.com/foo", { ctrlKey: true }],
@@ -25,8 +25,8 @@ add_task(async function checkCtrlWorks() {
     ["1.1.1.1", "http://1.1.1.1/", { ctrlKey: true }],
     ["ftp://example", "ftp://example/", { ctrlKey: true }],
     ["ftp.example.bar", "http://ftp.example.bar/", { ctrlKey: true }],
-    ["ex ample", (await Services.search.getDefault()).getSubmission("ex ample", null, "keyword").uri.spec,
-      { ctrlKey: true }],
+    ["ex ample", defaultEngine.getSubmission("ex ample", null, "keyword").uri.spec,
+     { ctrlKey: true }],
   ];
 
   // Disable autoFill for this test, since it could mess up the results.
@@ -36,6 +36,7 @@ add_task(async function checkCtrlWorks() {
   ]});
 
   for (let [inputValue, expectedURL, options] of testcases) {
+    info(`Testing input string: "${inputValue}" - expected: "${expectedURL}"`);
     let promiseLoad =
       BrowserTestUtils.waitForDocLoadAndStopIt(expectedURL, gBrowser.selectedBrowser);
     gURLBar.focus();
@@ -79,4 +80,56 @@ add_task(async function checkPrefTurnsOffCanonize() {
   for (let t of tabsToClose) {
     gBrowser.removeTab(t);
   }
+});
+
+add_task(async function autofill() {
+  // Re-enable autofill and canonization.
+  await SpecialPowers.pushPrefEnv({set: [
+    ["browser.urlbar.autoFill", true],
+    ["browser.urlbar.ctrlCanonizesURLs", true],
+  ]});
+
+  // Quantumbar automatically disables autofill when the old search string
+  // starts with the new search string, so to make sure that doesn't happen and
+  // that earlier tests don't conflict with this one, start a new search for
+  // some other string.
+  gURLBar.focus();
+  EventUtils.sendString("blah");
+
+  // Add a visit that will be autofilled.
+  await PlacesUtils.history.clear();
+  await PlacesTestUtils.addVisits([{
+    uri: "http://example.com/",
+  }]);
+
+  let testcases = [
+    ["ex", "http://www.ex.com/", { ctrlKey: true }],
+    // Check that a direct load is not overwritten by a previous canonization.
+    ["ex", "http://example.com/", {}],
+    // search alias
+    ["@goo", "http://www%2E@goo.com/", { ctrlKey: true }],
+  ];
+
+  function promiseAutofill() {
+    return BrowserTestUtils.waitForEvent(gURLBar.inputField, "select");
+  }
+
+  for (let [inputValue, expectedURL, options] of testcases) {
+    let promiseLoad =
+      BrowserTestUtils.waitForDocLoadAndStopIt(expectedURL, gBrowser.selectedBrowser);
+    gURLBar.focus();
+    gURLBar.inputField.value = inputValue.slice(0, -1);
+    let autofillPromise = promiseAutofill();
+    EventUtils.sendString(inputValue.slice(-1));
+    await autofillPromise;
+    EventUtils.synthesizeKey("KEY_Enter", options);
+    await promiseLoad;
+
+    // Here again, make sure autofill isn't disabled for the next search.  See
+    // the comment above.
+    gURLBar.focus();
+    EventUtils.sendString("blah");
+  }
+
+  await PlacesUtils.history.clear();
 });

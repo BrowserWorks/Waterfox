@@ -162,7 +162,7 @@ void nsDOMNavigationTiming::NotifyLoadEventEnd() {
       DECLARE_DOCSHELL_AND_HISTORY_ID(mDocShell);
       PAGELOAD_LOG(("%s", marker.get()));
       profiler_add_marker(
-          "DocumentLoad", js::ProfilingStackFrame::Category::DOM,
+          "DocumentLoad", JS::ProfilingCategoryPair::DOM,
           MakeUnique<TextMarkerPayload>(marker, mNavigationStart, mLoadEventEnd,
                                         docShellId, docShellHistoryId));
     }
@@ -357,7 +357,7 @@ void nsDOMNavigationTiming::TTITimeout(nsITimer* aTimer) {
 
     DECLARE_DOCSHELL_AND_HISTORY_ID(mDocShell);
     profiler_add_marker(
-        "TTFI", js::ProfilingStackFrame::Category::DOM,
+        "TTFI", JS::ProfilingCategoryPair::DOM,
         MakeUnique<TextMarkerPayload>(marker, mNavigationStart, mTTFI,
                                       docShellId, docShellHistoryId));
   }
@@ -392,7 +392,7 @@ void nsDOMNavigationTiming::NotifyNonBlankPaintForRootContentDocument() {
     PAGELOAD_LOG(("%s", marker.get()));
     DECLARE_DOCSHELL_AND_HISTORY_ID(mDocShell);
     profiler_add_marker(
-        "FirstNonBlankPaint", js::ProfilingStackFrame::Category::DOM,
+        "FirstNonBlankPaint", JS::ProfilingCategoryPair::DOM,
         MakeUnique<TextMarkerPayload>(marker, mNavigationStart, mNonBlankPaint,
                                       docShellId, docShellHistoryId));
   }
@@ -414,7 +414,8 @@ void nsDOMNavigationTiming::NotifyNonBlankPaintForRootContentDocument() {
   }
 }
 
-void nsDOMNavigationTiming::NotifyContentfulPaintForRootContentDocument() {
+void nsDOMNavigationTiming::NotifyContentfulPaintForRootContentDocument(
+    const mozilla::TimeStamp& aCompositeEndTime) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!mNavigationStart.IsNull());
 
@@ -422,7 +423,7 @@ void nsDOMNavigationTiming::NotifyContentfulPaintForRootContentDocument() {
     return;
   }
 
-  mContentfulPaint = TimeStamp::Now();
+  mContentfulPaint = aCompositeEndTime;
 
 #ifdef MOZ_GECKO_PROFILER
   if (profiler_is_active() || PAGELOAD_LOG_ENABLED()) {
@@ -440,11 +441,10 @@ void nsDOMNavigationTiming::NotifyContentfulPaintForRootContentDocument() {
               "and first non-blank paint");
     DECLARE_DOCSHELL_AND_HISTORY_ID(mDocShell);
     PAGELOAD_LOG(("%s", marker.get()));
-    profiler_add_marker(
-        "FirstContentfulPaint", js::ProfilingStackFrame::Category::DOM,
-        MakeUnique<TextMarkerPayload>(marker, mNavigationStart,
-                                      mContentfulPaint, docShellId,
-                                      docShellHistoryId));
+    profiler_add_marker("FirstContentfulPaint", JS::ProfilingCategoryPair::DOM,
+                        MakeUnique<TextMarkerPayload>(
+                            marker, mNavigationStart, mContentfulPaint,
+                            docShellId, docShellHistoryId));
   }
 #endif
 
@@ -458,6 +458,11 @@ void nsDOMNavigationTiming::NotifyContentfulPaintForRootContentDocument() {
                                        TTI_WINDOW_SIZE_MS,
                                        nsITimer::TYPE_ONE_SHOT_LOW_PRIORITY,
                                        "nsDOMNavigationTiming::TTITimeout");
+
+  if (mDocShellHasBeenActiveSinceNavigationStart) {
+    Telemetry::AccumulateTimeDelta(Telemetry::TIME_TO_FIRST_CONTENTFUL_PAINT_MS,
+                                   mNavigationStart, mContentfulPaint);
+  }
 }
 
 void nsDOMNavigationTiming::NotifyDOMContentFlushedForRootContentDocument() {
@@ -486,11 +491,10 @@ void nsDOMNavigationTiming::NotifyDOMContentFlushedForRootContentDocument() {
               "and DOMContentFlushed");
     DECLARE_DOCSHELL_AND_HISTORY_ID(mDocShell);
     PAGELOAD_LOG(("%s", marker.get()));
-    profiler_add_marker(
-        "DOMContentFlushed", js::ProfilingStackFrame::Category::DOM,
-        MakeUnique<TextMarkerPayload>(marker, mNavigationStart,
-                                      mDOMContentFlushed, docShellId,
-                                      docShellHistoryId));
+    profiler_add_marker("DOMContentFlushed", JS::ProfilingCategoryPair::DOM,
+                        MakeUnique<TextMarkerPayload>(
+                            marker, mNavigationStart, mDOMContentFlushed,
+                            docShellId, docShellHistoryId));
   }
 #endif
 }

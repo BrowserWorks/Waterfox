@@ -60,7 +60,7 @@ nsresult nsViewSourceChannel::Init(nsIURI *uri) {
     return NS_ERROR_INVALID_ARG;
   }
 
-  // This function is called from within nsViewSourceHandler::NewChannel2
+  // This function is called from within nsViewSourceHandler::NewChannel
   // and sets the right loadInfo right after returning from this function.
   // Until then we follow the principal of least privilege and use
   // nullPrincipal as the loadingPrincipal and the least permissive
@@ -68,7 +68,7 @@ nsresult nsViewSourceChannel::Init(nsIURI *uri) {
   nsCOMPtr<nsIPrincipal> nullPrincipal =
       mozilla::NullPrincipal::CreateWithoutOriginAttributes();
 
-  rv = pService->NewChannel2(
+  rv = pService->NewChannel(
       path,
       nullptr,  // aOriginCharset
       nullptr,  // aCharSet
@@ -136,11 +136,7 @@ nsresult nsViewSourceChannel::UpdateLoadInfoResultPrincipalURI() {
 
   MOZ_ASSERT(mChannel);
 
-  nsCOMPtr<nsILoadInfo> channelLoadInfo = mChannel->GetLoadInfo();
-  if (!channelLoadInfo) {
-    return NS_OK;
-  }
-
+  nsCOMPtr<nsILoadInfo> channelLoadInfo = mChannel->LoadInfo();
   nsCOMPtr<nsIURI> channelResultPrincipalURI;
   rv = channelLoadInfo->GetResultPrincipalURI(
       getter_AddRefs(channelResultPrincipalURI));
@@ -288,42 +284,14 @@ nsViewSourceChannel::GetURI(nsIURI **aURI) {
 }
 
 NS_IMETHODIMP
-nsViewSourceChannel::Open(nsIInputStream **_retval) {
+nsViewSourceChannel::Open(nsIInputStream **aStream) {
   NS_ENSURE_TRUE(mChannel, NS_ERROR_FAILURE);
-
-  nsresult rv = NS_MaybeOpenChannelUsingOpen2(mChannel, _retval);
-  if (NS_SUCCEEDED(rv)) {
-    mOpened = true;
-  }
-  return rv;
-}
-
-NS_IMETHODIMP
-nsViewSourceChannel::Open2(nsIInputStream **aStream) {
-  NS_ENSURE_TRUE(mChannel, NS_ERROR_FAILURE);
-  nsCOMPtr<nsILoadInfo> loadInfo = mChannel->GetLoadInfo();
-  if (!loadInfo) {
-    MOZ_ASSERT(loadInfo, "can not enforce security without loadInfo");
-    return NS_ERROR_UNEXPECTED;
-  }
-  // setting the flag on the loadInfo indicates that the underlying
-  // channel will be openend using Open2() and hence performs
-  // the necessary security checks.
-  loadInfo->SetEnforceSecurity(true);
   return Open(aStream);
 }
 
 NS_IMETHODIMP
-nsViewSourceChannel::AsyncOpen(nsIStreamListener *aListener,
-                               nsISupports *ctxt) {
-#ifdef DEBUG
-  {
-    nsCOMPtr<nsILoadInfo> loadInfo = mChannel->GetLoadInfo();
-    MOZ_ASSERT(!loadInfo || loadInfo->GetSecurityMode() == 0 ||
-                   loadInfo->GetEnforceSecurity(),
-               "security flags in loadInfo but asyncOpen2() not called");
-  }
-#endif
+nsViewSourceChannel::AsyncOpen(nsIStreamListener *aListener) {
+  // We can't ensure GetInitialSecurityCheckDone here
 
   NS_ENSURE_TRUE(mChannel, NS_ERROR_FAILURE);
 
@@ -341,12 +309,7 @@ nsViewSourceChannel::AsyncOpen(nsIStreamListener *aListener,
     loadGroup->AddRequest(static_cast<nsIViewSourceChannel *>(this), nullptr);
 
   nsresult rv = NS_OK;
-  nsCOMPtr<nsILoadInfo> loadInfo = mChannel->GetLoadInfo();
-  if (loadInfo && loadInfo->GetEnforceSecurity()) {
-    rv = mChannel->AsyncOpen2(this);
-  } else {
-    rv = mChannel->AsyncOpen(this, ctxt);
-  }
+  rv = mChannel->AsyncOpen(this);
 
   if (NS_FAILED(rv) && loadGroup)
     loadGroup->RemoveRequest(static_cast<nsIViewSourceChannel *>(this), nullptr,
@@ -359,19 +322,6 @@ nsViewSourceChannel::AsyncOpen(nsIStreamListener *aListener,
   return rv;
 }
 
-NS_IMETHODIMP
-nsViewSourceChannel::AsyncOpen2(nsIStreamListener *aListener) {
-  nsCOMPtr<nsILoadInfo> loadInfo = mChannel->GetLoadInfo();
-  if (!loadInfo) {
-    MOZ_ASSERT(loadInfo, "can not enforce security without loadInfo");
-    return NS_ERROR_UNEXPECTED;
-  }
-  // setting the flag on the loadInfo indicates that the underlying
-  // channel will be openend using AsyncOpen2() and hence performs
-  // the necessary security checks.
-  loadInfo->SetEnforceSecurity(true);
-  return AsyncOpen(aListener, nullptr);
-}
 /*
  * Both the view source channel and mChannel are added to the
  * loadgroup.  There should never be more than one request in the
@@ -1009,6 +959,16 @@ nsViewSourceChannel::SwitchProcessTo(mozilla::dom::Promise *aTabParent,
 }
 
 NS_IMETHODIMP
+nsViewSourceChannel::HasCrossOriginOpenerPolicyMismatch(bool *aMismatch) {
+  MOZ_ASSERT(aMismatch);
+  if (!aMismatch) {
+    return NS_ERROR_INVALID_ARG;
+  }
+  *aMismatch = false;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsViewSourceChannel::UpgradeToSecure() {
   return !mHttpChannel ? NS_ERROR_NULL_POINTER
                        : mHttpChannel->UpgradeToSecure();
@@ -1071,7 +1031,7 @@ nsViewSourceChannel::LogMimeTypeMismatch(const nsACString &aMessageName,
                                            aContentType);
 }
 
-const nsTArray<mozilla::Tuple<nsCString, nsCString>>
+const nsTArray<mozilla::net::PreferredAlternativeDataTypeParams>
     &nsViewSourceChannel::PreferredAlternativeDataTypes() {
   if (mCacheInfoChannel) {
     return mCacheInfoChannel->PreferredAlternativeDataTypes();

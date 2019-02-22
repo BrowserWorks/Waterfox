@@ -34,6 +34,17 @@ ${helpers.single_keyword(
     spec="Internal (not web-exposed)",
 )}
 
+// An internal-only property for elements in a top layer
+// https://fullscreen.spec.whatwg.org/#top-layer
+${helpers.single_keyword(
+    "-servo-top-layer",
+    "none top",
+    products="servo",
+    animation_value_type="none",
+    enabled_in="ua",
+    spec="Internal (not web-exposed)",
+)}
+
 ${helpers.single_keyword(
     "position",
     "static absolute relative fixed sticky",
@@ -403,6 +414,16 @@ ${helpers.single_keyword(
     "auto smooth",
     products="gecko",
     spec="https://drafts.csswg.org/cssom-view/#propdef-scroll-behavior",
+    animation_value_type="discrete",
+)}
+
+${helpers.predefined_type(
+    "scroll-snap-align",
+    "ScrollSnapAlign",
+    "computed::ScrollSnapAlign::none()",
+    products="gecko",
+    gecko_pref="layout.css.scroll-snap-v1.enabled",
+    spec="https://drafts.csswg.org/css-scroll-snap-1/#scroll-snap-align",
     animation_value_type="discrete",
 )}
 

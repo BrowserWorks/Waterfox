@@ -132,6 +132,7 @@ class TextEditor;
 namespace dom {
 class ContentFrameMessageManager;
 struct CustomElementDefinition;
+class DataTransfer;
 class DocumentFragment;
 class Element;
 class Event;
@@ -306,7 +307,7 @@ class nsContentUtils {
   // This function can be called both in the main thread and worker threads.
   static bool ShouldResistFingerprinting();
   static bool ShouldResistFingerprinting(nsIDocShell* aDocShell);
-  static bool ShouldResistFingerprinting(Document* aDoc);
+  static bool ShouldResistFingerprinting(const Document* aDoc);
 
   // Prevent system colors from being exposed to CSS or canvas.
   static bool UseStandinsForNativeColors();
@@ -1226,7 +1227,9 @@ class nsContentUtils {
   /**
    * Returns true if aDocument is a chrome document
    */
-  static bool IsChromeDoc(const Document* aDocument);
+  static bool IsChromeDoc(const Document* aDocument) {
+    return aDocument && aDocument->NodePrincipal() == sSystemPrincipal;
+  }
 
   /**
    * Returns true if aDocument is in a docshell whose parent is the same type
@@ -1249,7 +1252,9 @@ class nsContentUtils {
    * display purposes.  Returns false for null documents or documents
    * which do not belong to a docshell.
    */
-  static bool IsInChromeDocshell(Document* aDocument);
+  static bool IsInChromeDocshell(const Document* aDocument) {
+    return aDocument && aDocument->IsInChromeDocShell();
+  }
 
   /**
    * Return the content policy service
@@ -1415,13 +1420,26 @@ class nsContentUtils {
    * @param aTextEditor         Optional.  If this is called by editor,
    *                            editor should set this.  Otherwise, leave
    *                            nullptr.
+   * @param aOptions            Optional.  If aEditorInputType value requires
+   *                            some additional data, they should be properly
+   *                            set with this argument.
    */
   MOZ_CAN_RUN_SCRIPT
   static nsresult DispatchInputEvent(Element* aEventTarget);
+  struct MOZ_STACK_CLASS InputEventOptions final {
+    InputEventOptions() = default;
+    explicit InputEventOptions(const nsAString& aData)
+        : mData(aData), mDataTransfer(nullptr) {}
+    explicit InputEventOptions(mozilla::dom::DataTransfer* aDataTransfer);
+
+    nsString mData;
+    mozilla::dom::DataTransfer* mDataTransfer;
+  };
   MOZ_CAN_RUN_SCRIPT
   static nsresult DispatchInputEvent(Element* aEventTarget,
                                      mozilla::EditorInputType aEditorInputType,
-                                     mozilla::TextEditor* aTextEditor);
+                                     mozilla::TextEditor* aTextEditor,
+                                     const InputEventOptions& aOptions);
 
   /**
    * This method creates and dispatches a untrusted event.
@@ -2532,7 +2550,7 @@ class nsContentUtils {
    * @result          whether the given string is matches the pattern.
    */
   static bool IsPatternMatching(nsAString& aValue, nsAString& aPattern,
-                                Document* aDocument);
+                                const Document* aDocument);
 
   /**
    * Calling this adds support for
@@ -3503,6 +3521,8 @@ nsContentUtils::InternalContentPolicyTypeToExternal(nsContentPolicyType aType) {
   switch (aType) {
     case nsIContentPolicy::TYPE_INTERNAL_SCRIPT:
     case nsIContentPolicy::TYPE_INTERNAL_SCRIPT_PRELOAD:
+    case nsIContentPolicy::TYPE_INTERNAL_MODULE:
+    case nsIContentPolicy::TYPE_INTERNAL_MODULE_PRELOAD:
     case nsIContentPolicy::TYPE_INTERNAL_WORKER:
     case nsIContentPolicy::TYPE_INTERNAL_SHARED_WORKER:
     case nsIContentPolicy::TYPE_INTERNAL_SERVICE_WORKER:

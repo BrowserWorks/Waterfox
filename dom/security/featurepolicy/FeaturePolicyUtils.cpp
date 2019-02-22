@@ -25,6 +25,10 @@ struct FeatureMap {
  * DOM Security peer!
  */
 static FeatureMap sSupportedFeatures[] = {
+    // We don't support 'autoplay' for now, because it would be overwrote by
+    // 'user-gesture-activation' policy. However, we can still keep it in the
+    // list as we might start supporting it after we use different autoplay
+    // policy.
     {"autoplay", FeaturePolicyUtils::FeaturePolicyValue::eAll},
     {"camera", FeaturePolicyUtils::FeaturePolicyValue::eSelf},
     {"encrypted-media", FeaturePolicyUtils::FeaturePolicyValue::eAll},
@@ -34,6 +38,7 @@ static FeatureMap sSupportedFeatures[] = {
     {"midi", FeaturePolicyUtils::FeaturePolicyValue::eSelf},
     {"payment", FeaturePolicyUtils::FeaturePolicyValue::eAll},
     {"document-domain", FeaturePolicyUtils::FeaturePolicyValue::eAll},
+    {"display-capture", FeaturePolicyUtils::FeaturePolicyValue::eSelf},
     // TODO: not supported yet!!!
     {"speaker", FeaturePolicyUtils::FeaturePolicyValue::eSelf},
     {"vr", FeaturePolicyUtils::FeaturePolicyValue::eAll},

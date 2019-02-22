@@ -17,9 +17,9 @@ add_task(threadClientTest(async ({ threadClient, debuggee }) => {
       packet.frame.where.actor
     );
 
-    const location = { line: debuggee.line0 + 3 };
+    const location = { sourceUrl: source.url, line: debuggee.line0 + 3 };
 
-    const [, bpClient] = await source.setBreakpoint(location);
+    threadClient.setBreakpoint(location, {});
 
     await threadClient.resume();
     packet = await waitForPause(threadClient);
@@ -29,23 +29,28 @@ add_task(threadClientTest(async ({ threadClient, debuggee }) => {
     Assert.equal(packet.frame.where.actor, source.actor);
     Assert.equal(packet.frame.where.line, location.line);
     Assert.equal(packet.why.type, "breakpoint");
-    Assert.equal(packet.why.actors[0], bpClient.actor);
 
     info("Check that the breakpoint worked.");
     Assert.equal(debuggee.a, 1);
     Assert.equal(debuggee.b, undefined);
 
-    await bpClient.remove();
     await threadClient.resume();
   })();
 
-  /* eslint-disable */
-  Cu.evalInSandbox(
-    "var line0 = Error().lineNumber;\n" +
-    "debugger;\n" +   // line0 + 1
-    "var a = 1;\n" +  // line0 + 2
-    "var b = 2;\n",   // line0 + 3
-     debuggee
-  );
-  /* eslint-enable */
+  /*
+   * Be sure to run debuggee code in its own HTML 'task', so that when we call
+   * the onDebuggerStatement hook, the test's own microtasks don't get suspended
+   * along with the debuggee's.
+   */
+  do_timeout(0, () => {
+    /* eslint-disable */
+    Cu.evalInSandbox(
+      "var line0 = Error().lineNumber;\n" +
+        "debugger;\n" +   // line0 + 1
+        "var a = 1;\n" +  // line0 + 2
+        "var b = 2;\n",   // line0 + 3
+        debuggee
+    );
+    /* eslint-enable */
+  });
 }));

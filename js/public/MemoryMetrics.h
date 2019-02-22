@@ -560,18 +560,18 @@ struct RuntimeSizes {
 };
 
 struct UnusedGCThingSizes {
-#define FOR_EACH_SIZE(MACRO)                      \
-  MACRO(Other, GCHeapUnused, object)              \
-  MACRO(Other, GCHeapUnused, script)              \
-  MACRO(Other, GCHeapUnused, lazyScript)          \
-  MACRO(Other, GCHeapUnused, shape)               \
-  MACRO(Other, GCHeapUnused, baseShape)           \
-  MACRO(Other, GCHeapUnused, objectGroup)         \
-  MACRO(Other, GCHeapUnused, string)              \
-  MACRO(Other, GCHeapUnused, symbol)              \
-  IF_BIGINT(MACRO(Other, GCHeapUnused, bigInt), ) \
-  MACRO(Other, GCHeapUnused, jitcode)             \
-  MACRO(Other, GCHeapUnused, scope)               \
+#define FOR_EACH_SIZE(MACRO)              \
+  MACRO(Other, GCHeapUnused, object)      \
+  MACRO(Other, GCHeapUnused, script)      \
+  MACRO(Other, GCHeapUnused, lazyScript)  \
+  MACRO(Other, GCHeapUnused, shape)       \
+  MACRO(Other, GCHeapUnused, baseShape)   \
+  MACRO(Other, GCHeapUnused, objectGroup) \
+  MACRO(Other, GCHeapUnused, string)      \
+  MACRO(Other, GCHeapUnused, symbol)      \
+  MACRO(Other, GCHeapUnused, bigInt)      \
+  MACRO(Other, GCHeapUnused, jitcode)     \
+  MACRO(Other, GCHeapUnused, scope)       \
   MACRO(Other, GCHeapUnused, regExpShared)
 
   UnusedGCThingSizes() : FOR_EACH_SIZE(ZERO_SIZE) dummy() {}
@@ -590,11 +590,9 @@ struct UnusedGCThingSizes {
       case JS::TraceKind::Symbol:
         symbol += n;
         break;
-#ifdef ENABLE_BIGINT
       case JS::TraceKind::BigInt:
         bigInt += n;
         break;
-#endif
       case JS::TraceKind::Script:
         script += n;
         break;
@@ -648,8 +646,8 @@ struct UnusedGCThingSizes {
 struct ZoneStats {
 #define FOR_EACH_SIZE(MACRO)                               \
   MACRO(Other, GCHeapUsed, symbolsGCHeap)                  \
-  IF_BIGINT(MACRO(Other, GCHeapUsed, bigIntsGCHeap), )     \
-  IF_BIGINT(MACRO(Other, MallocHeap, bigIntsMallocHeap), ) \
+  MACRO(Other, GCHeapUsed, bigIntsGCHeap)                  \
+  MACRO(Other, MallocHeap, bigIntsMallocHeap)              \
   MACRO(Other, GCHeapAdmin, gcHeapArenaAdmin)              \
   MACRO(Other, GCHeapUsed, lazyScriptsGCHeap)              \
   MACRO(Other, MallocHeap, lazyScriptsMallocHeap)          \

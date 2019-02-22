@@ -88,6 +88,7 @@ class nsIURIFixup;
 class nsIURILoader;
 class nsIWebBrowserFind;
 class nsIWidget;
+class nsIReferrerInfo;
 
 class nsDocShell;
 class nsDocShellEditorData;
@@ -401,6 +402,7 @@ class nsDocShell final : public nsDocLoader,
   friend class FramingChecker;
   friend class OnLinkClickEvent;
   friend class nsIDocShell;
+  friend class mozilla::dom::BrowsingContext;
 
   // It is necessary to allow adding a timeline marker wherever a docshell
   // instance is available. This operation happens frequently and needs to
@@ -523,21 +525,20 @@ class nsDocShell final : public nsDocLoader,
   //
 
   // Actually open a channel and perform a URI load. Callers need to pass a
-  // non-null aTriggeringPrincipal which initiated the URI load. Please note
-  // that aTriggeringPrincipal will be used for performing security checks.
-  // If the argument aURI is provided by the web, then please do not pass a
-  // SystemPrincipal as the triggeringPrincipal. If principalToInherit is
-  // null, then no inheritance of any sort will happen and the load will
-  // get a principal based on the URI being loaded.
-  // If aSrcdoc is not void, the load will be considered as a srcdoc load,
-  // and the contents of aSrcdoc will be loaded instead of aURI.
-  // aOriginalURI will be set as the originalURI on the channel that does the
-  // load. If aOriginalURI is null, aURI will be set as the originalURI.
-  // If aLoadReplace is true, LOAD_REPLACE flag will be set to the nsIChannel.
+  // non-null aLoadState->TriggeringPrincipal() which initiated the URI load.
+  // Please note that the TriggeringPrincipal will be used for performing
+  // security checks. If aLoadState->URI() is provided by the web, then please
+  // do not pass a SystemPrincipal as the triggeringPrincipal. If
+  // aLoadState()->PrincipalToInherit is null, then no inheritance of any sort
+  // will happen and the load will get a principal based on the URI being
+  // loaded. If the Srcdoc flag is set (INTERNAL_LOAD_FLAGS_IS_SRCDOC), the load
+  // will be considered as a srcdoc load, and the contents of Srcdoc will be
+  // loaded instead of the URI. aLoadState->OriginalURI() will be set as the
+  // originalURI on the channel that does the load. If OriginalURI is null, URI
+  // will be set as the originalURI. If LoadReplace is true, LOAD_REPLACE flag
+  // will be set on the nsIChannel.
   nsresult DoURILoad(nsDocShellLoadState* aLoadState, bool aLoadFromExternal,
-                     nsIDocShell** aDocShell, nsIRequest** aRequest,
-                     const nsAString& aSrcdoc,
-                     nsContentPolicyType aContentPolicyType);
+                     nsIDocShell** aDocShell, nsIRequest** aRequest);
 
   nsresult AddHeadersToChannel(nsIInputStream* aHeadersData,
                                nsIChannel* aChannel);
@@ -662,23 +663,21 @@ class nsDocShell final : public nsDocLoader,
    *
    * Visits can be saved either during a redirect or when the request has
    * reached its final destination. The previous URI in the visit may be
-   * from another redirect or it may be the referrer.
+   * from another redirect.
    *
    * @pre aURI is not null.
    *
    * @param aURI
    *        The URI that was just visited
-   * @param aReferrerURI
-   *        The referrer URI of this request
    * @param aPreviousURI
-   *        The previous URI of this visit (may be the same as aReferrerURI)
+   *        The previous URI of this visit
    * @param aChannelRedirectFlags
    *        For redirects, the redirect flags from nsIChannelEventSink
    *        (0 otherwise)
    * @param aResponseStatus
    *        For HTTP channels, the response code (0 otherwise).
    */
-  void AddURIVisit(nsIURI* aURI, nsIURI* aReferrerURI, nsIURI* aPreviousURI,
+  void AddURIVisit(nsIURI* aURI, nsIURI* aPreviousURI,
                    uint32_t aChannelRedirectFlags,
                    uint32_t aResponseStatus = 0);
 
@@ -829,9 +828,8 @@ class nsDocShell final : public nsDocLoader,
   nsresult DispatchToTabGroup(mozilla::TaskCategory aCategory,
                               already_AddRefed<nsIRunnable>&& aRunnable);
 
-  void SetupReferrerFromChannel(nsIChannel* aChannel);
-  void SetReferrerURI(nsIURI* aURI);
-  void SetReferrerPolicy(uint32_t aReferrerPolicy);
+  void SetupReferrerInfoFromChannel(nsIChannel* aChannel);
+  void SetReferrerInfo(nsIReferrerInfo* aReferrerInfo);
   void ReattachEditorToWindow(nsISHEntry* aSHEntry);
   void RecomputeCanExecuteScripts();
   void ClearFrameHistory(nsISHEntry* aEntry);
@@ -884,6 +882,30 @@ class nsDocShell final : public nsDocLoader,
   // some cases (like reloads), the history load may need to be cancelled. See
   // function comments for in-depth logic descriptions.
   void MaybeHandleSubframeHistory(nsDocShellLoadState* aLoadState);
+
+  // If we are passed a named target during InternalLoad, this method handles
+  // moving the load to the browsing context the target name resolves to.
+  nsresult PerformRetargeting(nsDocShellLoadState* aLoadState,
+                              nsIDocShell** aDocShell, nsIRequest** aRequest);
+
+  // Returns one of nsIContentPolicy::TYPE_DOCUMENT,
+  // nsIContentPolicy::TYPE_INTERNAL_IFRAME, or
+  // nsIContentPolicy::TYPE_INTERNAL_FRAME depending on who is responsible for
+  // this docshell.
+  uint32_t DetermineContentType();
+
+  // In cases where we have a LoadURIDelegate (loading external links via
+  // GeckoView), a load may need to be handled through the delegate. aWindowType
+  // is either nsIBrowserDOMWindow::OPEN_CURRENTWINDOW or
+  // nsIBrowserDOMWindow::OPEN_NEWWINDOW.
+  nsresult MaybeHandleLoadDelegate(nsDocShellLoadState* aLoadState,
+                                   uint32_t aWindowType, bool* aDidHandleLoad);
+
+  // Check to see if we're loading a prior history entry in the same document.
+  // If so, handle the scrolling or other action required instead of continuing
+  // with new document navigation.
+  nsresult MaybeHandleSameDocumentNavigation(nsDocShellLoadState* aLoadState,
+                                             bool* aWasSameDocument);
 
  private:  // data members
   static nsIURIFixup* sURIFixup;
@@ -941,7 +963,7 @@ class nsDocShell final : public nsDocLoader,
 
   // mCurrentURI should be marked immutable on set if possible.
   nsCOMPtr<nsIURI> mCurrentURI;
-  nsCOMPtr<nsIURI> mReferrerURI;
+  nsCOMPtr<nsIReferrerInfo> mReferrerInfo;
 
   // Reference to the SHEntry for this docshell until the page is destroyed.
   // Somebody give me better name
@@ -1030,7 +1052,6 @@ class nsDocShell final : public nsDocLoader,
   AppType mAppType;
   uint32_t mLoadType;
   uint32_t mDefaultLoadFlags;
-  uint32_t mReferrerPolicy;
   uint32_t mFailedLoadType;
 
   // Are we a regular frame, a browser frame, or an app frame?

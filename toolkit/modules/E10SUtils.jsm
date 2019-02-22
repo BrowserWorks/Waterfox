@@ -17,8 +17,15 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "useSeparatePrivilegedContentProcess
                                       "browser.tabs.remote.separatePrivilegedContentProcess", false);
 XPCOMUtils.defineLazyPreferenceGetter(this, "useHttpResponseProcessSelection",
                                       "browser.tabs.remote.useHTTPResponseProcessSelection", false);
-ChromeUtils.defineModuleGetter(this, "Utils",
-                               "resource://gre/modules/sessionstore/Utils.jsm");
+XPCOMUtils.defineLazyPreferenceGetter(this, "useCrossOriginOpenerPolicy",
+                                      "browser.tabs.remote.useCrossOriginOpenerPolicy", false);
+XPCOMUtils.defineLazyServiceGetter(this, "serializationHelper",
+                                   "@mozilla.org/network/serialization-helper;1",
+                                   "nsISerializationHelper");
+
+function debug(msg) {
+  Cu.reportError(new Error("E10SUtils: " + msg));
+}
 
 function getAboutModule(aURL) {
   // Needs to match NS_GetAboutModuleName
@@ -94,6 +101,9 @@ var E10SUtils = {
 
   useHttpResponseProcessSelection() {
     return useHttpResponseProcessSelection;
+  },
+  useCrossOriginOpenerPolicy() {
+    return useCrossOriginOpenerPolicy;
   },
 
   canLoadURIInRemoteType(aURL, aRemoteType = DEFAULT_REMOTE_TYPE,
@@ -266,6 +276,83 @@ var E10SUtils = {
                                                currentURI);
   },
 
+  makeInputStream(data) {
+    if (typeof data == "string") {
+      let stream = Cc["@mozilla.org/io/string-input-stream;1"].
+                   createInstance(Ci.nsISupportsCString);
+      stream.data = data;
+      return stream; // XPConnect will QI this to nsIInputStream for us.
+    }
+
+    let stream = Cc["@mozilla.org/io/string-input-stream;1"].
+                 createInstance(Ci.nsISupportsCString);
+    stream.data = data.content;
+
+    if (data.headers) {
+      let mimeStream = Cc["@mozilla.org/network/mime-input-stream;1"]
+          .createInstance(Ci.nsIMIMEInputStream);
+
+      mimeStream.setData(stream);
+      for (let [name, value] of data.headers) {
+        mimeStream.addHeader(name, value);
+      }
+      return mimeStream;
+    }
+
+    return stream; // XPConnect will QI this to nsIInputStream for us.
+  },
+
+  /**
+   * Serialize principal data.
+   *
+   * @param {nsIPrincipal} principal The principal to serialize.
+   * @return {String} The base64 encoded principal data.
+   */
+  serializePrincipal(principal) {
+    let serializedPrincipal = null;
+
+    try {
+      if (principal) {
+        serializedPrincipal = serializationHelper.serializeToString(principal);
+      }
+    } catch (e) {
+      debug(`Failed to serialize principal '${principal}' ${e}`);
+    }
+
+    return serializedPrincipal;
+  },
+
+  /**
+   * Deserialize a base64 encoded principal (serialized with
+   * serializePrincipal).
+   *
+   * @param {String} principal_b64 A base64 encoded serialized principal.
+   * @return {nsIPrincipal} A deserialized principal.
+   */
+  deserializePrincipal(principal_b64, fallbackPrincipalCallback = null) {
+    if (!principal_b64) {
+      if (!fallbackPrincipalCallback) {
+        debug("No principal passed to deserializePrincipal and no fallbackPrincipalCallback");
+        return null;
+      }
+
+      return fallbackPrincipalCallback();
+    }
+
+    try {
+      let principal = serializationHelper.deserializeObject(principal_b64);
+      principal.QueryInterface(Ci.nsIPrincipal);
+      return principal;
+    } catch (e) {
+      debug(`Failed to deserialize principal_b64 '${principal_b64}' ${e}`);
+    }
+    if (!fallbackPrincipalCallback) {
+      debug("No principal passed to deserializePrincipal and no fallbackPrincipalCallback");
+      return null;
+    }
+    return fallbackPrincipalCallback();
+  },
+
   shouldLoadURIInBrowser(browser, uri, multiProcess = true,
                          flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE) {
     let currentRemoteType = browser.remoteType;
@@ -320,6 +407,20 @@ var E10SUtils = {
       return true;
     }
 
+    let webNav = aDocShell.QueryInterface(Ci.nsIWebNavigation);
+    let sessionHistory = webNav.sessionHistory;
+    if (!aHasPostData &&
+        Services.appinfo.remoteType == WEB_REMOTE_TYPE &&
+        sessionHistory.count == 1 &&
+        webNav.currentURI.spec == "about:newtab") {
+      // This is possibly a preloaded browser and we're about to navigate away for
+      // the first time. On the child side there is no way to tell for sure if that
+      // is the case, so let's redirect this request to the parent to decide if a new
+      // process is needed. But we don't currently properly handle POST data in
+      // redirects (bug 1457520), so if there is POST data, don't return false here.
+      return false;
+    }
+
     // If we are performing HTTP response process selection, and are loading an
     // HTTP URI, we can start the load in the current process, and then perform
     // the switch later-on using the RedirectProcessChooser mechanism.
@@ -344,8 +445,6 @@ var E10SUtils = {
     }
 
     // Allow history load if loaded in this process before.
-    let webNav = aDocShell.QueryInterface(Ci.nsIWebNavigation);
-    let sessionHistory = webNav.sessionHistory;
     let requestedIndex = sessionHistory.legacySHistory.requestedIndex;
     if (requestedIndex >= 0) {
       if (sessionHistory.legacySHistory.getEntryAtIndex(requestedIndex).loadedInThisProcess) {
@@ -357,18 +456,6 @@ var E10SUtils = {
       let remoteType = Services.appinfo.remoteType;
       return remoteType ==
         this.getRemoteTypeForURIObject(aURI, true, remoteType, webNav.currentURI);
-    }
-
-    if (!aHasPostData &&
-        Services.appinfo.remoteType == WEB_REMOTE_TYPE &&
-        sessionHistory.count == 1 &&
-        webNav.currentURI.spec == "about:newtab") {
-      // This is possibly a preloaded browser and we're about to navigate away for
-      // the first time. On the child side there is no way to tell for sure if that
-      // is the case, so let's redirect this request to the parent to decide if a new
-      // process is needed. But we don't currently properly handle POST data in
-      // redirects (bug 1457520), so if there is POST data, don't return false here.
-      return false;
     }
 
     // If the URI can be loaded in the current process then continue
@@ -385,7 +472,7 @@ var E10SUtils = {
         uri: aURI.spec,
         flags: aFlags || Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
         referrer: aReferrer ? aReferrer.spec : null,
-        triggeringPrincipal: Utils.serializePrincipal(aTriggeringPrincipal || Services.scriptSecurityManager.createNullPrincipal({})),
+        triggeringPrincipal: this.serializePrincipal(aTriggeringPrincipal || Services.scriptSecurityManager.createNullPrincipal({})),
         reloadInFreshProcess: !!aFreshProcess,
       },
       historyIndex: sessionHistory.legacySHistory.requestedIndex,
@@ -403,4 +490,44 @@ var E10SUtils = {
       handlingUserInput.destruct();
     }
   },
+
+  /**
+   * Serialize referrerInfo.
+   *
+   * @param {nsIReferrerInfo} The referrerInfo to serialize.
+   * @return {String} The base64 encoded referrerInfo.
+   */
+  serializeReferrerInfo(referrerInfo) {
+    let serialized = null;
+    if (referrerInfo) {
+      try {
+        serialized = serializationHelper.serializeToString(referrerInfo);
+      } catch (e) {
+        debug(`Failed to serialize referrerInfo '${referrerInfo}' ${e}`);
+      }
+    }
+    return serialized;
+  },
+  /**
+   * Deserialize a base64 encoded referrerInfo
+   *
+   * @param {String} referrerInfo_b64 A base64 encoded serialized referrerInfo.
+   * @return {nsIReferrerInfo} A deserialized referrerInfo.
+   */
+  deserializeReferrerInfo(referrerInfo_b64) {
+    let deserialized = null;
+    if (referrerInfo_b64) {
+      try {
+        deserialized = serializationHelper.deserializeObject(referrerInfo_b64);
+        deserialized.QueryInterface(Ci.nsIReferrerInfo);
+      } catch (e) {
+        debug(`Failed to deserialize referrerInfo_b64 '${referrerInfo_b64}' ${e}`);
+      }
+    }
+    return deserialized;
+  },
 };
+
+XPCOMUtils.defineLazyGetter(E10SUtils, "SERIALIZED_SYSTEMPRINCIPAL", function() {
+  return E10SUtils.serializePrincipal(Services.scriptSecurityManager.getSystemPrincipal());
+});

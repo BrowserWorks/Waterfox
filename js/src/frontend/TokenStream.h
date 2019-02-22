@@ -1954,12 +1954,10 @@ class GeneralTokenStreamChars : public SpecializedTokenStreamCharsBase<Unit> {
     token->setNumber(dval, decimalPoint);
   }
 
-#ifdef ENABLE_BIGINT
   void newBigIntToken(TokenStart start, TokenStreamShared::Modifier modifier,
                       TokenKind* out) {
     newToken(TokenKind::BigInt, start, modifier, out);
   }
-#endif
 
   void newAtomToken(TokenKind kind, JSAtom* atom, TokenStart start,
                     TokenStreamShared::Modifier modifier, TokenKind* out) {
@@ -2396,6 +2394,7 @@ class MOZ_STACK_CLASS TokenStreamSpecific
   using CharsBase::fillCharBufferFromSourceNormalizingAsciiLineBreaks;
   using CharsBase::matchCodeUnit;
   using CharsBase::matchLineTerminator;
+  using CharsBase::peekCodeUnit;
   using GeneralCharsBase::computeColumn;
   using GeneralCharsBase::fillExceptingContext;
   using GeneralCharsBase::getCodeUnit;
@@ -2404,20 +2403,17 @@ class MOZ_STACK_CLASS TokenStreamSpecific
   using GeneralCharsBase::matchUnicodeEscapeIdent;
   using GeneralCharsBase::matchUnicodeEscapeIdStart;
   using GeneralCharsBase::newAtomToken;
+  using GeneralCharsBase::newBigIntToken;
   using GeneralCharsBase::newNameToken;
   using GeneralCharsBase::newNumberToken;
   using GeneralCharsBase::newPrivateNameToken;
+  using GeneralCharsBase::newRegExpToken;
+  using GeneralCharsBase::newSimpleToken;
   using SpecializedChars::getNonAsciiCodePoint;
   using SpecializedChars::getNonAsciiCodePointDontNormalize;
   using TokenStreamCharsShared::copyCharBufferTo;
   using TokenStreamCharsShared::drainCharBufferIntoAtom;
   using TokenStreamCharsShared::isAsciiCodePoint;
-#ifdef ENABLE_BIGINT
-  using GeneralCharsBase::newBigIntToken;
-#endif
-  using CharsBase::peekCodeUnit;
-  using GeneralCharsBase::newRegExpToken;
-  using GeneralCharsBase::newSimpleToken;
   // Deliberately don't |using| |sourceUnits| because of bug 1472569.  :-(
   using CharsBase::toUnit;
   using GeneralCharsBase::ungetCodeUnit;

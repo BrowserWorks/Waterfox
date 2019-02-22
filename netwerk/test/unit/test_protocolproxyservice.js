@@ -54,10 +54,7 @@ TestProtocolHandler.prototype = {
              .setSpec(spec)
              .finalize();
   },
-  newChannel2: function(uri, aLoadInfo) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-  },
-  newChannel: function(uri) {
+  newChannel: function(uri, aLoadInfo) {
     throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
   allowPort: function(port, scheme) {
@@ -939,7 +936,7 @@ function failed_script_callback(pi)
     uri: "http://127.0.0.1:7247",
     loadUsingSystemPrincipal: true
   });
-  chan.asyncOpen2(directFilterListener);
+  chan.asyncOpen(directFilterListener);
 }
 
 var directFilterListener = {

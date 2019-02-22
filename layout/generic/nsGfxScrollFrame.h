@@ -195,6 +195,12 @@ class ScrollFrameHelper : public nsIReflowCallback {
    */
   void UpdateScrollbarPosition();
 
+  nsSize GetLayoutSize() const {
+    if (mIsUsingMinimumScaleSize) {
+      return mICBSize;
+    }
+    return mScrollPort.Size();
+  }
   nsRect GetScrollPortRect() const { return mScrollPort; }
   nsPoint GetScrollPosition() const {
     return mScrollPort.TopLeft() - mScrolledFrame->GetPosition();
@@ -563,6 +569,10 @@ class ScrollFrameHelper : public nsIReflowCallback {
   nsRect mScrollPort;
   nsSize mMinimumScaleSize;
 
+  // Stores the ICB size for the root document if this frame is using the
+  // minimum scale size for |mScrollPort|.
+  nsSize mICBSize;
+
   // Where we're currently scrolling to, if we're scrolling asynchronously.
   // If we're not in the middle of an asynchronous scroll then this is
   // just the current scroll position. ScrollBy will choose its
@@ -888,6 +898,9 @@ class nsHTMLScrollFrame : public nsContainerFrame,
     nsBoxLayoutState bls(aPresContext, aRC, 0);
     return mHelper.GetNondisappearingScrollbarWidth(&bls, aWM);
   }
+  virtual nsSize GetLayoutSize() const override {
+    return mHelper.GetLayoutSize();
+  }
   virtual nsRect GetScrolledRect() const override {
     return mHelper.GetScrolledRect();
   }
@@ -1165,13 +1178,11 @@ class nsHTMLScrollFrame : public nsContainerFrame,
     return mHelper.IsRootScrollFrameOfDocument();
   }
 
-  virtual const ScrollAnchorContainer* GetAnchor() const override {
+  virtual const ScrollAnchorContainer* Anchor() const override {
     return &mHelper.mAnchor;
   }
 
-  virtual ScrollAnchorContainer* GetAnchor() override {
-    return &mHelper.mAnchor;
-  }
+  virtual ScrollAnchorContainer* Anchor() override { return &mHelper.mAnchor; }
 
   // Return the scrolled frame.
   void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override {
@@ -1361,6 +1372,9 @@ class nsXULScrollFrame final : public nsBoxFrame,
       mozilla::WritingMode aWM) override {
     nsBoxLayoutState bls(aPresContext, aRC, 0);
     return mHelper.GetNondisappearingScrollbarWidth(&bls, aWM);
+  }
+  virtual nsSize GetLayoutSize() const override {
+    return mHelper.GetLayoutSize();
   }
   virtual nsRect GetScrolledRect() const override {
     return mHelper.GetScrolledRect();
@@ -1642,13 +1656,11 @@ class nsXULScrollFrame final : public nsBoxFrame,
     return mHelper.IsRootScrollFrameOfDocument();
   }
 
-  virtual const ScrollAnchorContainer* GetAnchor() const override {
+  virtual const ScrollAnchorContainer* Anchor() const override {
     return &mHelper.mAnchor;
   }
 
-  virtual ScrollAnchorContainer* GetAnchor() override {
-    return &mHelper.mAnchor;
-  }
+  virtual ScrollAnchorContainer* Anchor() override { return &mHelper.mAnchor; }
 
   // Return the scrolled frame.
   void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override {

@@ -39,7 +39,6 @@ function createClientMock() {
     removeListener: (evt, listener) => {
       eventEmitter.off(evt, listener);
     },
-
     client: {
       addOneTimeListener: (evt, listener) => {
         eventEmitter.once(evt, listener);
@@ -86,6 +85,14 @@ function createClientMock() {
     // stores the preference locally (doesn't update about:config)
     setPreference: function(prefName, value) {
       this._preferences[prefName] = value;
+    },
+    getPerformancePanelUrl: () => "data:text/html;charset=UTF-8,fake_profiler_page",
+    loadPerformanceProfiler: () => {},
+    // Valid compatibility report
+    checkVersionCompatibility: () => {
+      const { COMPATIBILITY_STATUS } =
+        require("devtools/client/shared/remote-debugging/version-checker");
+      return { status: COMPATIBILITY_STATUS.COMPATIBLE };
     },
   };
 }

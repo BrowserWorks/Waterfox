@@ -9,15 +9,17 @@
 <!DOCTYPE dialog [
 <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
 %brandDTD;
+#ifdef MOZ_SERVICES_SYNC
 <!ENTITY % syncBrandDTD SYSTEM "chrome://browser/locale/syncBrand.dtd">
 %syncBrandDTD;
+#endif
 <!ENTITY % profileDTD SYSTEM "chrome://mozapps/locale/profile/profileDowngrade.dtd">
 %profileDTD;
 ]>
 
 <dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         title="&window.title;" onload="init()" style="&window.style;"
-        buttonlabelextra1="&window.create;" ondialogextra1="createProfile()"
+        buttonlabelextra1="&window.create;"
 #ifdef XP_WIN
         buttonlabelaccept="&window.quit-win;"
 #else
@@ -32,7 +34,9 @@
     <image id="info" role="presentation"/>
     <vbox flex="1">
       <description id="nosync">&window.nosync;</description>
+#ifdef MOZ_SERVICES_SYNC
       <description id="sync">&window.sync;</description>
+#endif
     </vbox>
   </hbox>
 

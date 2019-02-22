@@ -83,18 +83,30 @@ nsresult ThirdPartyUtil::IsThirdPartyInternal(const nsCString& aFirstDomain,
   return NS_OK;
 }
 
-// Get the URI associated with a window.
 NS_IMETHODIMP
-ThirdPartyUtil::GetURIFromWindow(mozIDOMWindowProxy* aWin, nsIURI** result) {
-  nsresult rv;
+ThirdPartyUtil::GetPrincipalFromWindow(mozIDOMWindowProxy* aWin,
+                                       nsIPrincipal** result) {
   nsCOMPtr<nsIScriptObjectPrincipal> scriptObjPrin = do_QueryInterface(aWin);
   if (!scriptObjPrin) {
     return NS_ERROR_INVALID_ARG;
   }
 
-  nsIPrincipal* prin = scriptObjPrin->GetPrincipal();
+  nsCOMPtr<nsIPrincipal> prin = scriptObjPrin->GetPrincipal();
   if (!prin) {
     return NS_ERROR_INVALID_ARG;
+  }
+
+  prin.forget(result);
+  return NS_OK;
+}
+
+// Get the URI associated with a window.
+NS_IMETHODIMP
+ThirdPartyUtil::GetURIFromWindow(mozIDOMWindowProxy* aWin, nsIURI** result) {
+  nsCOMPtr<nsIPrincipal> prin;
+  nsresult rv = GetPrincipalFromWindow(aWin, getter_AddRefs(prin));
+  if (NS_FAILED(rv)) {
+    return rv;
   }
 
   if (prin->GetIsNullPrincipal()) {
@@ -228,7 +240,7 @@ ThirdPartyUtil::IsThirdPartyChannel(nsIChannel* aChannel, nsIURI* aURI,
   if (NS_FAILED(rv)) return rv;
 
   if (!doForce) {
-    if (nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo()) {
+    if (nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo()) {
       parentIsThird = loadInfo->GetIsInThirdPartyContext();
       if (!parentIsThird && loadInfo->GetExternalContentPolicyType() !=
                                 nsIContentPolicy::TYPE_DOCUMENT) {

@@ -778,7 +778,7 @@ window._gBrowser = {
 
     try {
       // Use the passed in resolvedURI if we have one
-      const resolvedURI = aResolvedURI || Services.io.newChannelFromURI2(
+      const resolvedURI = aResolvedURI || Services.io.newChannelFromURI(
         aURI,
         null, // loadingNode
         Services.scriptSecurityManager.getSystemPrincipal(), // loadingPrincipal
@@ -2554,7 +2554,7 @@ window._gBrowser = {
           entries: [{
             url: lazyBrowserURI ? lazyBrowserURI.spec : "about:blank",
             title: lazyTabTitle,
-            triggeringPrincipal_base64: Utils.serializePrincipal(triggeringPrincipal),
+            triggeringPrincipal_base64: E10SUtils.serializePrincipal(triggeringPrincipal),
           }],
         });
       } else {
@@ -2615,12 +2615,16 @@ window._gBrowser = {
       if (!allowInheritPrincipal) {
         flags |= Ci.nsIWebNavigation.LOAD_FLAGS_DISALLOW_INHERIT_PRINCIPAL;
       }
+
+      let ReferrerInfo = Components.Constructor("@mozilla.org/referrer-info;1",
+                                                "nsIReferrerInfo",
+                                                "init");
       try {
         b.loadURI(aURI, {
           flags,
           triggeringPrincipal,
-          referrerURI: noReferrer ? null : referrerURI,
-          referrerPolicy,
+          referrerInfo: new ReferrerInfo(
+            referrerPolicy, !noReferrer, referrerURI),
           charset,
           postData,
         });
@@ -2832,7 +2836,6 @@ window._gBrowser = {
       TelemetryStopwatch.start("FX_TAB_CLOSE_TIME_ANIM_MS", aTab);
       TelemetryStopwatch.start("FX_TAB_CLOSE_TIME_NO_ANIM_MS", aTab);
     }
-    window.maybeRecordAbandonmentTelemetry(aTab, "tabClosed");
 
     // Handle requests for synchronously removing an already
     // asynchronously closing tab.
@@ -5596,7 +5599,7 @@ var TabContextMenu = {
         // from SessionStore
         let tabState = JSON.parse(SessionStore.getTabState(tab));
         try {
-          triggeringPrincipal = Utils.deserializePrincipal(tabState.triggeringPrincipal_base64);
+          triggeringPrincipal = E10SUtils.deserializePrincipal(tabState.triggeringPrincipal_base64);
         } catch (ex) {
           continue;
         }

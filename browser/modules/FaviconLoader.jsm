@@ -90,7 +90,7 @@ class FaviconLoad {
   constructor(iconInfo) {
     this.icon = iconInfo;
 
-    this.channel = Services.io.newChannelFromURI2(
+    this.channel = Services.io.newChannelFromURI(
       iconInfo.iconUri,
       iconInfo.node,
       iconInfo.node.nodePrincipal,
@@ -144,7 +144,7 @@ class FaviconLoad {
     this.stream = new BufferedOutputStream(this.dataBuffer.getOutputStream(0), STREAM_SEGMENT_SIZE * 2);
 
     try {
-      this.channel.asyncOpen2(this);
+      this.channel.asyncOpen(this);
     } catch (e) {
       this._deferred.reject(e);
     }

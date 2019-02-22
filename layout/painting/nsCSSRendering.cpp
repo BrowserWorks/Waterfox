@@ -969,7 +969,7 @@ Maybe<nsCSSBorderRenderer> nsCSSRendering::CreateBorderRendererForOutline(
   nsRect innerRect;
   if (
 #ifdef MOZ_XUL
-      aComputedStyle->GetPseudoType() == CSSPseudoElementType::XULTree
+      aComputedStyle->GetPseudoType() == PseudoStyleType::XULTree
 #else
       false
 #endif
@@ -1129,23 +1129,18 @@ void nsCSSRendering::PaintFocus(nsPresContext* aPresContext,
  * that function, except they're for a single coordinate / a single size
  * dimension. (so, x/width vs. y/height)
  */
-static void ComputeObjectAnchorCoord(const Position::Coord& aCoord,
+static void ComputeObjectAnchorCoord(const LengthPercentage& aCoord,
                                      const nscoord aOriginBounds,
                                      const nscoord aImageSize,
                                      nscoord* aTopLeftCoord,
                                      nscoord* aAnchorPointCoord) {
-  *aAnchorPointCoord = aCoord.mLength;
-  *aTopLeftCoord = aCoord.mLength;
+  nscoord extraSpace = aOriginBounds - aImageSize;
 
-  if (aCoord.mHasPercent) {
-    // Adjust aTopLeftCoord by the specified % of the extra space.
-    nscoord extraSpace = aOriginBounds - aImageSize;
-    *aTopLeftCoord += NSToCoordRound(aCoord.mPercent * extraSpace);
-
-    // The anchor-point doesn't care about our image's size; just the size
-    // of the region we're rendering into.
-    *aAnchorPointCoord += NSToCoordRound(aCoord.mPercent * aOriginBounds);
-  }
+  // The anchor-point doesn't care about our image's size; just the size
+  // of the region we're rendering into.
+  *aAnchorPointCoord = aCoord.Resolve(aOriginBounds, NSToCoordRoundWithClamp);
+  // Adjust aTopLeftCoord by the specified % of the extra space.
+  *aTopLeftCoord = aCoord.Resolve(extraSpace, NSToCoordRoundWithClamp);
 }
 
 void nsImageRenderer::ComputeObjectAnchorPoint(const Position& aPos,
@@ -1153,10 +1148,10 @@ void nsImageRenderer::ComputeObjectAnchorPoint(const Position& aPos,
                                                const nsSize& aImageSize,
                                                nsPoint* aTopLeft,
                                                nsPoint* aAnchorPoint) {
-  ComputeObjectAnchorCoord(aPos.mXPosition, aOriginBounds.width,
+  ComputeObjectAnchorCoord(aPos.horizontal, aOriginBounds.width,
                            aImageSize.width, &aTopLeft->x, &aAnchorPoint->x);
 
-  ComputeObjectAnchorCoord(aPos.mYPosition, aOriginBounds.height,
+  ComputeObjectAnchorCoord(aPos.vertical, aOriginBounds.height,
                            aImageSize.height, &aTopLeft->y, &aAnchorPoint->y);
 }
 
@@ -1289,7 +1284,9 @@ inline bool FindElementBackground(nsIFrame* aForFrame,
   // It could be a non-HTML "body" element but that's OK, we'd fail the
   // bodyContent check below
 
-  if (aForFrame->Style()->GetPseudo()) return true;  // A pseudo-element frame.
+  if (aForFrame->Style()->GetPseudoType() != PseudoStyleType::NotPseudo) {
+    return true;  // A pseudo-element frame.
+  }
 
   // We should only look at the <html> background if we're in an HTML document
   Document* document = content->OwnerDoc();
@@ -2826,29 +2823,30 @@ nsRect nsCSSRendering::ComputeImageLayerPositioningArea(
 // It can be found by calling nsImageRenderer::ComputeIntrinsicSize.
 static nsSize ComputeDrawnSizeForBackground(
     const CSSSizeOrRatio& aIntrinsicSize, const nsSize& aBgPositioningArea,
-    const nsStyleImageLayers::Size& aLayerSize, StyleImageLayerRepeat aXRepeat,
+    const StyleBackgroundSize& aLayerSize, StyleImageLayerRepeat aXRepeat,
     StyleImageLayerRepeat aYRepeat) {
   nsSize imageSize;
 
   // Size is dictated by cover or contain rules.
-  if (aLayerSize.mWidthType == nsStyleImageLayers::Size::eContain ||
-      aLayerSize.mWidthType == nsStyleImageLayers::Size::eCover) {
-    nsImageRenderer::FitType fitType =
-        aLayerSize.mWidthType == nsStyleImageLayers::Size::eCover
-            ? nsImageRenderer::COVER
-            : nsImageRenderer::CONTAIN;
+  if (aLayerSize.IsContain() || aLayerSize.IsCover()) {
+    nsImageRenderer::FitType fitType = aLayerSize.IsCover()
+                                           ? nsImageRenderer::COVER
+                                           : nsImageRenderer::CONTAIN;
     imageSize = nsImageRenderer::ComputeConstrainedSize(
         aBgPositioningArea, aIntrinsicSize.mRatio, fitType);
   } else {
+    MOZ_ASSERT(aLayerSize.IsExplicitSize());
+    const auto& width = aLayerSize.explicit_size.width;
+    const auto& height = aLayerSize.explicit_size.height;
     // No cover/contain constraint, use default algorithm.
     CSSSizeOrRatio specifiedSize;
-    if (aLayerSize.mWidthType == nsStyleImageLayers::Size::eLengthPercentage) {
+    if (width.IsLengthPercentage()) {
       specifiedSize.SetWidth(
-          aLayerSize.ResolveWidthLengthPercentage(aBgPositioningArea));
+          width.AsLengthPercentage().Resolve(aBgPositioningArea.width));
     }
-    if (aLayerSize.mHeightType == nsStyleImageLayers::Size::eLengthPercentage) {
+    if (height.IsLengthPercentage()) {
       specifiedSize.SetHeight(
-          aLayerSize.ResolveHeightLengthPercentage(aBgPositioningArea));
+          height.AsLengthPercentage().Resolve(aBgPositioningArea.height));
     }
 
     imageSize = nsImageRenderer::ComputeConcreteSize(
@@ -2874,9 +2872,8 @@ static nsSize ComputeDrawnSizeForBackground(
   if (imageSize.width && aXRepeat == StyleImageLayerRepeat::Round) {
     imageSize.width = nsCSSRendering::ComputeRoundedSize(
         imageSize.width, aBgPositioningArea.width);
-    if (!isRepeatRoundInBothDimensions &&
-        aLayerSize.mHeightType ==
-            nsStyleImageLayers::Size::DimensionType::eAuto) {
+    if (!isRepeatRoundInBothDimensions && aLayerSize.IsExplicitSize() &&
+        aLayerSize.explicit_size.height.IsAuto()) {
       // Restore intrinsic rato
       if (aIntrinsicSize.mRatio.width) {
         float scale =
@@ -2892,9 +2889,8 @@ static nsSize ComputeDrawnSizeForBackground(
   if (imageSize.height && aYRepeat == StyleImageLayerRepeat::Round) {
     imageSize.height = nsCSSRendering::ComputeRoundedSize(
         imageSize.height, aBgPositioningArea.height);
-    if (!isRepeatRoundInBothDimensions &&
-        aLayerSize.mWidthType ==
-            nsStyleImageLayers::Size::DimensionType::eAuto) {
+    if (!isRepeatRoundInBothDimensions && aLayerSize.IsExplicitSize() &&
+        aLayerSize.explicit_size.width.IsAuto()) {
       // Restore intrinsic rato
       if (aIntrinsicSize.mRatio.height) {
         float scale =

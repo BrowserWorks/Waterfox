@@ -200,6 +200,26 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
   },
 
   /**
+   * Get the StyleRuleActor matching the given rule id or null if no match is found.
+   *
+   * @param  {String} ruleId
+   *         Actor ID of the StyleRuleActor
+   * @return {StyleRuleActor|null}
+   */
+  getRule: function(ruleId) {
+    let match = null;
+
+    for (const actor of this.refMap.values()) {
+      if (actor.actorID === ruleId) {
+        match = actor;
+        continue;
+      }
+    }
+
+    return match;
+  },
+
+  /**
    * Get the computed style for a node.
    *
    * @param NodeActor node
@@ -966,6 +986,14 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
 });
 exports.PageStyleActor = PageStyleActor;
 
+const SUPPORTED_RULE_TYPES = [
+  CSSRule.STYLE_RULE,
+  CSSRule.SUPPORTS_RULE,
+  CSSRule.KEYFRAME_RULE,
+  CSSRule.KEYFRAMES_RULE,
+  CSSRule.MEDIA_RULE,
+];
+
 /**
  * An actor that represents a CSS style object on the protocol.
  *
@@ -990,9 +1018,7 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
       this.type = item.type;
       this.rawRule = item;
       this._computeRuleIndex();
-      if ((this.type === CSSRule.STYLE_RULE ||
-           this.type === CSSRule.KEYFRAME_RULE) &&
-          this.rawRule.parentStyleSheet) {
+      if (SUPPORTED_RULE_TYPES.includes(this.type) && this.rawRule.parentStyleSheet) {
         this.line = InspectorUtils.getRelativeRuleLine(this.rawRule);
         this.column = InspectorUtils.getRuleColumn(this.rawRule);
         this._parentSheet = this.rawRule.parentStyleSheet;
@@ -1064,7 +1090,7 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
     let rule = this.rawRule;
 
     while (rule.parentRule) {
-      ancestors.push(this.pageStyle._styleRef(rule.parentRule));
+      ancestors.unshift(this.pageStyle._styleRef(rule.parentRule));
       rule = rule.parentRule;
     }
 
@@ -1085,10 +1111,12 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
    */
   get metadata() {
     const data = {};
+    data.id = this.actorID;
     // Collect information about the rule's ancestors (@media, @supports, @keyframes).
     // Used to show context for this change in the UI and to match the rule for undo/redo.
     data.ancestors = this.ancestorRules.map(rule => {
       return {
+        id: rule.actorID,
         // Rule type as number defined by CSSRule.type (ex: 4, 7, 12)
         // @see https://developer.mozilla.org/en-US/docs/Web/API/CSSRule
         type: rule.rawRule.type,
@@ -1106,7 +1134,7 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
     });
 
     // For changes in element style attributes, generate a unique selector.
-    if (this.type === ELEMENT_STYLE) {
+    if (this.type === ELEMENT_STYLE && this.rawNode) {
       // findCssSelector() fails on XUL documents. Catch and silently ignore that error.
       try {
         data.selector = findCssSelector(this.rawNode);
@@ -1122,6 +1150,12 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
         // Whether the element lives in a different frame than the host document.
         isFramed: this.rawNode.ownerGlobal !== this.pageStyle.ownerWindow,
       };
+
+      const nodeActor = this.pageStyle.walker.getNode(this.rawNode);
+      if (nodeActor) {
+        data.source.id = nodeActor.actorID;
+      }
+
       data.ruleIndex = 0;
     } else {
       data.selector = (this.type === CSSRule.KEYFRAME_RULE)
@@ -1131,6 +1165,7 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
         // Inline stylesheets have a null href; Use window URL instead.
         type: this.sheetActor.href ? "stylesheet" : "inline",
         href: this.sheetActor.href || this.sheetActor.window.location.toString(),
+        id: this.sheetActor.actorID,
         index: this.sheetActor.styleSheetIndex,
         // Whether the stylesheet lives in a different frame than the host document.
         isFramed: this.sheetActor.ownerWindow !== this.sheetActor.window,
@@ -1362,9 +1397,7 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
    * properties.
    */
   getAuthoredCssText: function() {
-    if (!this.canSetRuleText ||
-        (this.type !== CSSRule.STYLE_RULE &&
-         this.type !== CSSRule.KEYFRAME_RULE)) {
+    if (!this.canSetRuleText || !SUPPORTED_RULE_TYPES.includes(this.type)) {
       return Promise.resolve("");
     }
 
@@ -1372,9 +1405,7 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
       return Promise.resolve(this.authoredText);
     }
 
-    const parentStyleSheet =
-        this.pageStyle._sheetRef(this._parentSheet);
-    return parentStyleSheet.getText().then((longStr) => {
+    return this.sheetActor.getText().then((longStr) => {
       const cssText = longStr.str;
       const {text} = getRuleText(cssText, this.line, this.column);
 
@@ -1382,6 +1413,47 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
       this.authoredText = text;
       return this.authoredText;
     });
+  },
+
+  /**
+   * Return a promise that resolves to the complete cssText of the rule as authored.
+   *
+   * Unlike |getAuthoredCssText()|, which only returns the contents of the rule, this
+   * method includes the CSS selectors and at-rules (@media, @supports, @keyframes, etc.)
+   *
+   * If the rule type is unrecongized, the promise resolves to an empty string.
+   * If the rule is an element inline style, the promise resolves to the text content of
+   * the element's style attribute.
+   *
+   * @return {String}
+   */
+  getRuleText: async function() {
+    if (this.type === ELEMENT_STYLE) {
+      return Promise.resolve(this.rawNode.getAttribute("style"));
+    }
+
+    if (!SUPPORTED_RULE_TYPES.includes(this.type)) {
+      return Promise.resolve("");
+    }
+
+    const ruleBodyText = await this.getAuthoredCssText();
+    const { str: stylesheetText } = await this.sheetActor.getText();
+    const [start, end] = getSelectorOffsets(stylesheetText, this.line, this.column);
+    const selectorText = stylesheetText.substring(start, end);
+
+    // CSS rule type as a string "@media", "@supports", "@keyframes", etc.
+    const typeName = CSSRuleTypeName[this.type];
+
+    let text;
+    // When dealing with at-rules, getSelectorOffsets() will not return the rule type.
+    // We prepend it ourselves.
+    if (typeName) {
+      text = `${typeName}${selectorText} {${ruleBodyText}}`;
+    } else {
+      text = `${selectorText} {${ruleBodyText}}`;
+    }
+
+    return text;
   },
 
   /**
@@ -1625,8 +1697,7 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
 
   /**
    * Helper method for tracking CSS changes. Logs the change of this rule's selector as
-   * two operations: a rule removal, including its CSS declarations, using the old
-   * selector and a rule addition using the new selector.
+   * two operations: a removal using the old selector and an addition using the new one.
    *
    * @param {String} oldSelector
    *        This rule's previous selector.
@@ -1634,31 +1705,18 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
    *        This rule's new selector.
    */
   logSelectorChange(oldSelector, newSelector) {
-    // Build a collection of CSS declarations existing on this rule.
-    const declarations = this._declarations.reduce((acc, decl, index) => {
-      acc.push({
-        property: decl.name,
-        value: decl.priority ? decl.value + " !important" : decl.value,
-        index,
-      });
-      return acc;
-    }, []);
-
-    // Logging two distinct operations to remove the old rule and add a new one.
-    // TODO: Make TrackChangeEmitter support transactions so these two operations are
-    // grouped together when implementing undo/redo.
     TrackChangeEmitter.trackChange({
       ...this.metadata,
-      type: "rule-remove",
+      type: "selector-remove",
       add: null,
-      remove: declarations,
+      remove: null,
       selector: oldSelector,
     });
 
     TrackChangeEmitter.trackChange({
       ...this.metadata,
-      type: "rule-add",
-      add: declarations,
+      type: "selector-add",
+      add: null,
       remove: null,
       selector: newSelector,
     });

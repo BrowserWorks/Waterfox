@@ -24,6 +24,7 @@
 #include "nsIURL.h"
 #include "nsNetUtil.h"
 #include "mozilla/Services.h"
+#include "mozilla/Unused.h"
 #include "nsIOutputStream.h"
 #include "nscore.h"
 #include "nsDirectoryServiceDefs.h"
@@ -75,7 +76,7 @@ nsresult nsDataObj::CStream::Init(nsIURI* pSourceURI,
                      nsIRequest::LOAD_FROM_CACHE);
 
   NS_ENSURE_SUCCESS(rv, rv);
-  rv = mChannel->AsyncOpen2(this);
+  rv = mChannel->AsyncOpen(this);
   NS_ENSURE_SUCCESS(rv, rv);
   return NS_OK;
 }
@@ -824,7 +825,7 @@ nsDataObj::GetDib(const nsACString& inFlavor, FORMATETC& aFormat,
   nsCOMPtr<imgITools> imgTools =
       do_CreateInstance("@mozilla.org/image/tools;1");
 
-  nsAutoString options;
+  nsAutoString options(NS_LITERAL_STRING("bpp=32;"));
   if (aFormat.cfFormat == CF_DIBV5) {
     options.AppendLiteral("version=5");
   } else {
@@ -1444,7 +1445,7 @@ HRESULT nsDataObj::DropImage(FORMATETC& aFE, STGMEDIUM& aSTG) {
         do_CreateInstance("@mozilla.org/image/tools;1");
     nsCOMPtr<nsIInputStream> inputStream;
     rv = imgTools->EncodeImage(image, NS_LITERAL_CSTRING(IMAGE_BMP),
-                               NS_LITERAL_STRING("version=3"),
+                               NS_LITERAL_STRING("bpp=32;version=3"),
                                getter_AddRefs(inputStream));
     if (NS_FAILED(rv) || !inputStream) {
       return E_FAIL;
@@ -1964,9 +1965,8 @@ HRESULT nsDataObj::GetDownloadDetails(nsIURI** aSourceURI,
 
   nsAutoString srcFileName;
   nsCOMPtr<nsISupports> fileNamePrimitive;
-  rv = mTransferable->GetTransferData(kFilePromiseDestFilename,
-                                      getter_AddRefs(fileNamePrimitive));
-  NS_ENSURE_SUCCESS(rv, E_FAIL);
+  Unused << mTransferable->GetTransferData(kFilePromiseDestFilename,
+                                           getter_AddRefs(fileNamePrimitive));
   nsCOMPtr<nsISupportsString> srcFileNamePrimitive =
       do_QueryInterface(fileNamePrimitive);
   if (srcFileNamePrimitive) {

@@ -11,13 +11,13 @@ import {
   assertBreakpoint,
   assertPendingBreakpoint,
   findScopeByName,
-  makeSourceActorLocation
+  makeBreakpointLocation
 } from "../../utils/breakpoint";
 
 import { getGeneratedLocation } from "../../utils/source-maps";
 import { getTextAtPosition } from "../../utils/source";
 import { originalToGeneratedId, isOriginalId } from "devtools-source-map";
-import { getSource, getSourceActors } from "../../selectors";
+import { getSource } from "../../selectors";
 import { features } from "../../utils/prefs";
 
 import type { ThunkArgs, Action } from "../types";
@@ -34,6 +34,17 @@ type BreakpointSyncData = {
   previousLocation: SourceLocation,
   breakpoint: ?Breakpoint
 };
+
+async function isPossiblePosition(location, dispatch) {
+  if (features.columnBreakpoints && location.column != undefined) {
+    const { positions } = await dispatch(setBreakpointPositions(location));
+    if (!positions.some(({ generatedLocation }) => generatedLocation.column)) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 async function makeScopedLocation(
   { name, offset, index }: ASTLocation,
@@ -125,35 +136,28 @@ export async function syncBreakpointPromise(
     scopedGeneratedLocation
   );
 
-  const sourceActors = getSourceActors(getState(), sourceId);
-  let possiblePosition = true;
-  if (features.columnBreakpoints && generatedLocation.column != undefined) {
-    const { positions } = await dispatch(
-      setBreakpointPositions(generatedLocation)
-    );
-    if (!positions.includes(generatedLocation.column)) {
-      possiblePosition = false;
-    }
+  // makeBreakpointLocation requires the source to still exist, which might not
+  // be the case if we navigated.
+  if (!getSource(getState(), generatedSourceId)) {
+    return null;
   }
+
+  const breakpointLocation = makeBreakpointLocation(
+    getState(),
+    generatedLocation
+  );
+
+  const possiblePosition = await isPossiblePosition(
+    generatedLocation,
+    dispatch
+  );
 
   /** ******* CASE 1: No server change ***********/
   // early return if breakpoint is disabled or we are in the sameLocation
   if (possiblePosition && (pendingBreakpoint.disabled || isSameLocation)) {
     // Make sure the breakpoint is installed on all source actors.
     if (!pendingBreakpoint.disabled) {
-      for (const sourceActor of sourceActors) {
-        const sourceActorLocation = makeSourceActorLocation(
-          sourceActor,
-          generatedLocation
-        );
-        if (!client.getBreakpointByLocation(sourceActorLocation)) {
-          await client.setBreakpoint(
-            sourceActorLocation,
-            pendingBreakpoint.options,
-            isOriginalId(sourceId)
-          );
-        }
-      }
+      await client.setBreakpoint(breakpointLocation, pendingBreakpoint.options);
     }
 
     const originalText = getTextAtPosition(source, previousLocation);
@@ -170,15 +174,7 @@ export async function syncBreakpointPromise(
   }
 
   // clear server breakpoints if they exist and we have moved
-  for (const sourceActor of sourceActors) {
-    const sourceActorLocation = makeSourceActorLocation(
-      sourceActor,
-      generatedLocation
-    );
-    if (client.getBreakpointByLocation(sourceActorLocation)) {
-      await client.removeBreakpoint(sourceActorLocation);
-    }
-  }
+  await client.removeBreakpoint(breakpointLocation);
 
   if (!possiblePosition || !scopedGeneratedLocation.line) {
     return { previousLocation, breakpoint: null };
@@ -187,18 +183,10 @@ export async function syncBreakpointPromise(
   /** ******* Case 2: Add New Breakpoint ***********/
   // If we are not disabled, set the breakpoint on the server and get
   // that info so we can set it on our breakpoints.
-
-  for (const sourceActor of sourceActors) {
-    const sourceActorLocation = makeSourceActorLocation(
-      sourceActor,
-      scopedGeneratedLocation
-    );
-    await client.setBreakpoint(
-      sourceActorLocation,
-      pendingBreakpoint.options,
-      isOriginalId(sourceId)
-    );
-  }
+  await client.setBreakpoint(
+    scopedGeneratedLocation,
+    pendingBreakpoint.options
+  );
 
   const originalText = getTextAtPosition(source, scopedLocation);
   const text = getTextAtPosition(generatedSource, scopedGeneratedLocation);

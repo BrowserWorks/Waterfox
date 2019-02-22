@@ -59,12 +59,16 @@ XPCOM_MANIFESTS += [
 # ship them with the browser.
 TESTING_JS_MODULES.psm += [
     'DER.jsm',
-    'RemoteSecuritySettings.jsm',
     'X509.jsm',
+]
+
+EXTRA_JS_MODULES.psm += [
+    'RemoteSecuritySettings.jsm',
 ]
 
 EXPORTS += [
     'CryptoTask.h',
+    'EnterpriseRoots.h',
     'nsClientAuthRemember.h',
     'nsNSSCallbacks.h',
     'nsNSSCertificate.h',
@@ -231,6 +235,3 @@ if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += [
         '-Wno-unused-parameter',
     ]
-
-if CONFIG['CC_TYPE'] == 'clang-cl':
-    AllowCompilerWarnings()  # workaround for bug 1090497

@@ -1531,7 +1531,7 @@ nsresult WebSocketImpl::Init(JSContext* aCx, nsIPrincipal* aLoadingPrincipal,
     // The 'real' nsHttpChannel of the websocket gets opened in the parent.
     // Since we don't serialize the CSP within child and parent and also not
     // the context, we have to perform content policy checks here instead of
-    // AsyncOpen2().
+    // AsyncOpen().
     // Please note that websockets can't follow redirects, hence there is no
     // need to perform a CSP check after redirects.
     nsCOMPtr<nsILoadInfo> secCheckLoadInfo = new net::LoadInfo(
@@ -1850,7 +1850,10 @@ nsresult WebSocket::CreateAndDispatchMessageEvent(const nsACString& aData,
     }
   } else {
     // JS string
-    NS_ConvertUTF8toUTF16 utf16Data(aData);
+    nsAutoString utf16Data;
+    if (!AppendUTF8toUTF16(aData, utf16Data, mozilla::fallible)) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
     JSString* jsString;
     jsString = JS_NewUCStringCopyN(cx, utf16Data.get(), utf16Data.Length());
     NS_ENSURE_TRUE(jsString, NS_ERROR_FAILURE);

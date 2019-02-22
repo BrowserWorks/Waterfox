@@ -191,6 +191,8 @@ class StorageUI {
 
     this._refreshButton = this._panelDoc.getElementById("refresh-button");
     this._refreshButton.addEventListener("command", this.onRefreshTable);
+    this._refreshButton.setAttribute("tooltiptext",
+    L10N.getFormatStr("storage.popupMenu.refreshItemLabel"));
 
     this._addButton = this._panelDoc.getElementById("add-button");
     this._addButton.addEventListener("command", this.onAddItem);
@@ -396,6 +398,11 @@ class StorageUI {
       if (this.tree.isSelected(path)) {
         this.table.clear();
         this.hideSidebar();
+
+        // Reset itemOffset to 0 so that items added after local storate is
+        // cleared will be shown
+        this.itemOffset = 0;
+
         this.emit("store-objects-cleared");
         break;
       }

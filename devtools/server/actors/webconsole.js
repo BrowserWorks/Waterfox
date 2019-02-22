@@ -1010,7 +1010,7 @@ WebConsoleActor.prototype =
     const helperResult = evalInfo.helperResult;
 
     let result, errorDocURL, errorMessage, errorNotes = null, errorGrip = null,
-      frame = null, awaitResult;
+      frame = null, awaitResult, errorMessageName;
     if (evalResult) {
       if ("return" in evalResult) {
         result = evalResult.return;
@@ -1058,6 +1058,7 @@ WebConsoleActor.prototype =
         // object and retrieve its errorMessageName.
         try {
           errorDocURL = ErrorDocs.GetURL(error);
+          errorMessageName = error.errorMessageName;
         } catch (ex) {
           // ignored
         }
@@ -1131,6 +1132,7 @@ WebConsoleActor.prototype =
       exception: errorGrip,
       exceptionMessage: this._createStringGrip(errorMessage),
       exceptionDocURL: errorDocURL,
+      errorMessageName,
       frame,
       helperResult: helperResult,
       notes: errorNotes,
@@ -1240,11 +1242,11 @@ WebConsoleActor.prototype =
 
       // Sort the results in order to display lowercased item first (e.g. we want to
       // display `document` then `Document` as we loosely match the user input if the
-      // first letter they typed was lowercase).
+      // first letter was lowercase).
+      const firstMeaningfulCharIndex = isElementAccess ? 1 : 0;
       matches = Array.from(matches).sort((a, b) => {
-        const startingQuoteRegex = /^('|"|`)/;
-        const aFirstMeaningfulChar = startingQuoteRegex.test(a) ? a[1] : a[0];
-        const bFirstMeaningfulChar = startingQuoteRegex.test(b) ? b[1] : b[0];
+        const aFirstMeaningfulChar = a[firstMeaningfulCharIndex];
+        const bFirstMeaningfulChar = b[firstMeaningfulCharIndex];
         const lA = aFirstMeaningfulChar.toLocaleLowerCase() === aFirstMeaningfulChar;
         const lB = bFirstMeaningfulChar.toLocaleLowerCase() === bFirstMeaningfulChar;
         if (lA === lB) {
@@ -1280,7 +1282,6 @@ WebConsoleActor.prototype =
     if (this.parentActor.isRootActor) {
       Services.console.reset();
     }
-    return {};
   },
 
   /**
@@ -1526,12 +1527,9 @@ WebConsoleActor.prototype =
    *        The console API call we need to send to the remote client.
    */
   onConsoleAPICall: function(message) {
-    const packet = {
-      from: this.actorID,
-      type: "consoleAPICall",
+    this.conn.sendActorEvent(this.actorID, "consoleAPICall", {
       message: this.prepareConsoleMessageForRemote(message),
-    };
-    this.conn.send(packet);
+    });
   },
 
   /**
@@ -1604,8 +1602,10 @@ WebConsoleActor.prototype =
 
     channel.requestMethod = method;
 
-    for (const {name, value} of headers) {
-      channel.setRequestHeader(name, value, false);
+    if (headers) {
+      for (const {name, value} of headers) {
+        channel.setRequestHeader(name, value, false);
+      }
     }
 
     if (body) {
@@ -1658,28 +1658,6 @@ WebConsoleActor.prototype =
       type: "fileActivity",
       uri: fileURI,
     };
-    this.conn.send(packet);
-  },
-
-  /**
-   * Handler for reflow activity. This method forwards reflow events to the
-   * remote Web Console client.
-   *
-   * @see ConsoleReflowListener
-   * @param Object reflowInfo
-   */
-  onReflowActivity: function(reflowInfo) {
-    const packet = {
-      from: this.actorID,
-      type: "reflowActivity",
-      interruptible: reflowInfo.interruptible,
-      start: reflowInfo.start,
-      end: reflowInfo.end,
-      sourceURL: reflowInfo.sourceURL,
-      sourceLine: reflowInfo.sourceLine,
-      functionName: reflowInfo.functionName,
-    };
-
     this.conn.send(packet);
   },
 

@@ -24,6 +24,9 @@
 #include "jit/OptimizationTracking.h"
 
 namespace js {
+
+class TypedArrayObject;
+
 namespace jit {
 
 class CodeGenerator;
@@ -343,8 +346,13 @@ class IonBuilder : public MIRGenerator,
   // jsop_binary_arith helpers.
   MBinaryArithInstruction* binaryArithInstruction(JSOp op, MDefinition* left,
                                                   MDefinition* right);
+  MIRType binaryArithNumberSpecialization(MDefinition* left,
+                                          MDefinition* right);
   AbortReasonOr<Ok> binaryArithTryConcat(bool* emitted, JSOp op,
                                          MDefinition* left, MDefinition* right);
+  AbortReasonOr<MBinaryArithInstruction*> binaryArithEmitSpecialized(
+      MDefinition::Opcode op, MIRType specialization, MDefinition* left,
+      MDefinition* right);
   AbortReasonOr<Ok> binaryArithTrySpecialized(bool* emitted, JSOp op,
                                               MDefinition* left,
                                               MDefinition* right);
@@ -355,6 +363,13 @@ class IonBuilder : public MIRGenerator,
 
   // jsop_bitnot helpers.
   AbortReasonOr<Ok> bitnotTrySpecialized(bool* emitted, MDefinition* input);
+
+  // jsop_inc_or_dec helpers.
+  MDefinition* unaryArithConvertToBinary(JSOp op, MDefinition::Opcode* defOp);
+  AbortReasonOr<Ok> unaryArithTrySpecialized(bool* emitted, JSOp op,
+                                             MDefinition* value);
+  AbortReasonOr<Ok> unaryArithTrySpecializedOnBaselineInspector(
+      bool* emitted, JSOp op, MDefinition* value);
 
   // jsop_pow helpers.
   AbortReasonOr<Ok> powTrySpecialized(bool* emitted, MDefinition* base,
@@ -493,6 +508,8 @@ class IonBuilder : public MIRGenerator,
 
   MInstruction* addArrayBufferByteLength(MDefinition* obj);
 
+  TypedArrayObject* tryTypedArrayEmbedConstantElements(MDefinition* obj);
+
   // Add instructions to compute a typed array's length and data.  Also
   // optionally convert |*index| into a bounds-checked definition, if
   // requested.
@@ -510,6 +527,10 @@ class IonBuilder : public MIRGenerator,
     addTypedArrayLengthAndData(obj, SkipBoundsCheck, nullptr, &length, nullptr);
     return length;
   }
+
+  // Add an instruction to compute a typed array's byte offset to the current
+  // block.
+  MInstruction* addTypedArrayByteOffset(MDefinition* obj);
 
   AbortReasonOr<Ok> improveThisTypesForCall();
 
@@ -533,6 +554,7 @@ class IonBuilder : public MIRGenerator,
   AbortReasonOr<Ok> jsop_pow();
   AbortReasonOr<Ok> jsop_pos();
   AbortReasonOr<Ok> jsop_neg();
+  AbortReasonOr<Ok> jsop_tonumeric();
   AbortReasonOr<Ok> jsop_inc_or_dec(JSOp op);
   AbortReasonOr<Ok> jsop_tostring();
   AbortReasonOr<Ok> jsop_setarg(uint32_t arg);
@@ -778,6 +800,8 @@ class IonBuilder : public MIRGenerator,
   InliningResult inlineIsPossiblyWrappedTypedArray(CallInfo& callInfo);
   InliningResult inlineTypedArrayLength(CallInfo& callInfo);
   InliningResult inlinePossiblyWrappedTypedArrayLength(CallInfo& callInfo);
+  InliningResult inlineTypedArrayByteOffset(CallInfo& callInfo);
+  InliningResult inlineTypedArrayElementShift(CallInfo& callInfo);
   InliningResult inlineSetDisjointTypedElements(CallInfo& callInfo);
 
   // TypedObject intrinsics and natives.

@@ -192,7 +192,8 @@ void nsXBLBinding::BindAnonymousContent(nsIContent* aAnonParent,
     // FIXME(emilio): Is this needed anymore? Do we really use <linkset> or
     // <link> from XBL stuff?
     if (doc && doc->IsXULDocument()) {
-      doc->AsXULDocument()->AddSubtreeToDocument(child);
+      MOZ_ASSERT(!child->IsXULElement(nsGkAtoms::linkset),
+                 "Linkset not allowed in XBL.");
     }
 #endif
   }
@@ -218,16 +219,8 @@ void nsXBLBinding::SetBoundElement(Element* aElement) {
     return;
   }
 
-  // Compute whether we're using an XBL scope.
-  //
-  // We disable XBL scopes for remote XUL, where we care about compat more
-  // than security. So we need to know whether we're using an XBL scope so that
-  // we can decide what to do about untrusted events when "allowuntrusted"
-  // is not given in the handler declaration.
-  nsCOMPtr<nsIGlobalObject> go = mBoundElement->OwnerDoc()->GetScopeObject();
-  NS_ENSURE_TRUE_VOID(go && go->GetGlobalJSObject());
-  mUsingContentXBLScope = xpc::UseContentXBLScope(
-      JS::GetObjectRealmOrNull(go->GetGlobalJSObject()));
+  // mUsingContentXBLScope can go away.  See bug 1527116.
+  mUsingContentXBLScope = false;
 }
 
 bool nsXBLBinding::HasStyleSheets() const {

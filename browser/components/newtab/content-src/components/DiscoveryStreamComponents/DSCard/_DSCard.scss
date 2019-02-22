@@ -1,12 +1,13 @@
 // Type sizes
 $header-font-size: 17;
 $header-line-height: 24;
-$excerpt-font-size: 13;
+$excerpt-font-size: 14;
 $excerpt-line-height: 20;
 
 .ds-card {
   display: flex;
   flex-direction: column;
+  position: relative;
 
   &:hover {
     header {
@@ -41,14 +42,20 @@ $excerpt-line-height: 20;
     }
 
     .title {
-      // show only 2 lines of copy
-      @include limit-visibile-lines(2, $header-line-height, $header-font-size);
+      // show only 3 lines of copy
+      @include limit-visibile-lines(3, $header-line-height, $header-font-size);
       font-weight: 600;
     }
 
     .excerpt {
-      // show only 4 lines of copy
-      @include limit-visibile-lines(4, $excerpt-line-height, $excerpt-font-size);
+      // show only 3 lines of copy
+      @include limit-visibile-lines(3, $excerpt-line-height, $excerpt-font-size);
+    }
+
+    .context,
+    .source {
+      font-size: 13px;
+      color: $teal-80;
     }
   }
 
@@ -64,9 +71,5 @@ $excerpt-line-height: 20;
     line-height: $excerpt-line-height * 1px;
     color: $grey-50;
     margin: 8px 0 0;
-  }
-
-  .context {
-    color: $teal-70;
   }
 }

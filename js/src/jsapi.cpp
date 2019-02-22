@@ -41,7 +41,7 @@
 #include "builtin/Stream.h"
 #include "builtin/String.h"
 #include "builtin/Symbol.h"
-#ifdef ENABLE_BINARYDATA
+#ifdef ENABLE_TYPED_OBJECTS
 #  include "builtin/TypedObject.h"
 #endif
 #include "frontend/BytecodeCompiler.h"
@@ -97,7 +97,6 @@
 #include "vm/SymbolType.h"
 #include "vm/WrapperObject.h"
 #include "vm/Xdr.h"
-#include "wasm/AsmJS.h"
 #include "wasm/WasmModule.h"
 
 #include "vm/Compartment-inl.h"
@@ -685,6 +684,7 @@ JS_PUBLIC_API JSObject* JS_TransplantObject(JSContext* cx, HandleObject origobj,
   MOZ_ASSERT(!target->is<CrossCompartmentWrapperObject>());
   MOZ_ASSERT(origobj->getClass() == target->getClass());
   ReleaseAssertObjectHasNoWrappers(cx, target);
+  JS::AssertCellIsNotGray(origobj);
   JS::AssertCellIsNotGray(target);
 
   RootedValue origv(cx, ObjectValue(*origobj));
@@ -702,13 +702,9 @@ JS_PUBLIC_API JSObject* JS_TransplantObject(JSContext* cx, HandleObject origobj,
     // destination, then we know that we won't find a wrapper in the
     // destination's cross compartment map and that the same
     // object will continue to work.
-    AutoRealmUnchecked ar(cx, origobj->nonCCWRealm());
+    AutoRealm ar(cx, origobj);
     JSObject::swap(cx, origobj, target);
     newIdentity = origobj;
-
-    // |origobj| might be gray so unmark it to avoid returning a possibly-gray
-    // object.
-    JS::ExposeObjectToActiveJS(newIdentity);
   } else if (WrapperMap::Ptr p = destination->lookupWrapper(origv)) {
     // There might already be a wrapper for the original object in
     // the new compartment. If there is, we use its identity and swap
@@ -739,7 +735,7 @@ JS_PUBLIC_API JSObject* JS_TransplantObject(JSContext* cx, HandleObject origobj,
   // Lastly, update the original object to point to the new one.
   if (origobj->compartment() != destination) {
     RootedObject newIdentityWrapper(cx, newIdentity);
-    AutoRealmUnchecked ar(cx, origobj->nonCCWRealm());
+    AutoRealm ar(cx, origobj);
     if (!JS_WrapObject(cx, &newIdentityWrapper)) {
       MOZ_CRASH();
     }
@@ -1163,12 +1159,12 @@ JS_PUBLIC_API void JS_RemoveExtraGCRootsTracer(JSContext* cx,
 
 JS_PUBLIC_API bool JS::IsIdleGCTaskNeeded(JSRuntime* rt) {
   // Currently, we only collect nursery during idle time.
-  return rt->gc.nursery().needIdleTimeCollection();
+  return rt->gc.nursery().shouldCollect();
 }
 
 JS_PUBLIC_API void JS::RunIdleTimeGCTask(JSRuntime* rt) {
   gc::GCRuntime& gc = rt->gc;
-  if (gc.nursery().needIdleTimeCollection()) {
+  if (gc.nursery().shouldCollect()) {
     gc.minorGC(JS::GCReason::IDLE_TIME_COLLECTION);
   }
 }
@@ -1579,6 +1575,13 @@ JS::RealmCreationOptions& JS::RealmCreationOptions::setExistingCompartment(
     JSObject* obj) {
   compSpec_ = CompartmentSpecifier::ExistingCompartment;
   comp_ = obj->compartment();
+  return *this;
+}
+
+JS::RealmCreationOptions& JS::RealmCreationOptions::setExistingCompartment(
+    JS::Compartment* compartment) {
+  compSpec_ = CompartmentSpecifier::ExistingCompartment;
+  comp_ = compartment;
   return *this;
 }
 
@@ -3421,9 +3424,7 @@ void JS::TransitiveCompileOptions::copyPODTransitiveOptions(
   hasIntroductionInfo = rhs.hasIntroductionInfo;
   isProbablySystemCode = rhs.isProbablySystemCode;
   hideScriptFromDebugger = rhs.hideScriptFromDebugger;
-#ifdef ENABLE_BIGINT
   bigIntEnabledOption = rhs.bigIntEnabledOption;
-#endif
 };
 
 void JS::ReadOnlyCompileOptions::copyPODOptions(
@@ -3550,9 +3551,7 @@ JS::CompileOptions::CompileOptions(JSContext* cx)
   }
   throwOnAsmJSValidationFailureOption =
       cx->options().throwOnAsmJSValidationFailure();
-#ifdef ENABLE_BIGINT
   bigIntEnabledOption = cx->realm()->creationOptions().getBigIntEnabled();
-#endif
 }
 
 CompileOptions& CompileOptions::setIntroductionInfoToCaller(
@@ -3869,16 +3868,8 @@ JS_PUBLIC_API void JS_ResetInterruptCallback(JSContext* cx, bool enable) {
 /*
  * Promises.
  */
-JS_PUBLIC_API void JS::SetGetIncumbentGlobalCallback(
-    JSContext* cx, GetIncumbentGlobalCallback callback) {
-  cx->getIncumbentGlobalCallback = callback;
-}
-
-JS_PUBLIC_API void JS::SetEnqueuePromiseJobCallback(
-    JSContext* cx, EnqueuePromiseJobCallback callback,
-    void* data /* = nullptr */) {
-  cx->enqueuePromiseJobCallback = callback;
-  cx->enqueuePromiseJobCallbackData = data;
+JS_PUBLIC_API void JS::SetJobQueue(JSContext* cx, JobQueue* queue) {
+  cx->jobQueue = queue;
 }
 
 extern JS_PUBLIC_API void JS::SetPromiseRejectionTrackerCallback(
@@ -3929,12 +3920,12 @@ JS_PUBLIC_API JSObject* JS::GetPromisePrototype(JSContext* cx) {
 
 JS_PUBLIC_API JS::PromiseState JS::GetPromiseState(
     JS::HandleObject promiseObj_) {
-  JSObject* promiseObj = CheckedUnwrap(promiseObj_);
-  if (!promiseObj || !promiseObj->is<PromiseObject>()) {
+  PromiseObject* promiseObj = promiseObj_->maybeUnwrapIf<PromiseObject>();
+  if (!promiseObj) {
     return JS::PromiseState::Pending;
   }
 
-  return promiseObj->as<PromiseObject>().state();
+  return promiseObj->state();
 }
 
 JS_PUBLIC_API uint64_t JS::GetPromiseID(JS::HandleObject promise) {
@@ -3991,7 +3982,7 @@ JS_PUBLIC_API JSObject* JS::CallOriginalPromiseResolve(
 
   RootedObject promise(cx,
                        PromiseObject::unforgeableResolve(cx, resolutionValue));
-  MOZ_ASSERT_IF(promise, CheckedUnwrap(promise)->is<PromiseObject>());
+  MOZ_ASSERT_IF(promise, promise->canUnwrapAs<PromiseObject>());
   return promise;
 }
 
@@ -4003,7 +3994,7 @@ JS_PUBLIC_API JSObject* JS::CallOriginalPromiseReject(
 
   RootedObject promise(cx,
                        PromiseObject::unforgeableReject(cx, rejectionValue));
-  MOZ_ASSERT_IF(promise, CheckedUnwrap(promise)->is<PromiseObject>());
+  MOZ_ASSERT_IF(promise, promise->canUnwrapAs<PromiseObject>());
   return promise;
 }
 
@@ -4018,12 +4009,11 @@ static bool ResolveOrRejectPromise(JSContext* cx, JS::HandleObject promiseObj,
   Rooted<PromiseObject*> promise(cx);
   RootedValue resultOrReason(cx, resultOrReason_);
   if (IsWrapper(promiseObj)) {
-    JSObject* unwrappedPromiseObj = CheckedUnwrap(promiseObj);
-    if (!unwrappedPromiseObj) {
+    promise = promiseObj->maybeUnwrapAs<PromiseObject>();
+    if (!promise) {
       ReportAccessDenied(cx);
       return false;
     }
-    promise = &unwrappedPromiseObj->as<PromiseObject>();
     ar.emplace(cx, promise);
     if (!cx->compartment()->wrap(cx, &resultOrReason)) {
       return false;
@@ -4090,16 +4080,15 @@ JS_PUBLIC_API bool JS::AddPromiseReactions(JSContext* cx,
 
 JS_PUBLIC_API JS::PromiseUserInputEventHandlingState
 JS::GetPromiseUserInputEventHandlingState(JS::HandleObject promiseObj_) {
-  JSObject* promiseObj = CheckedUnwrap(promiseObj_);
-  if (!promiseObj || !promiseObj->is<PromiseObject>()) {
+  PromiseObject* promise = promiseObj_->maybeUnwrapIf<PromiseObject>();
+  if (!promise) {
     return JS::PromiseUserInputEventHandlingState::DontCare;
   }
 
-  auto& promise = promiseObj->as<PromiseObject>();
-  if (!promise.requiresUserInteractionHandling()) {
+  if (!promise->requiresUserInteractionHandling()) {
     return JS::PromiseUserInputEventHandlingState::DontCare;
   }
-  if (promise.hadUserInteractionUponCreation()) {
+  if (promise->hadUserInteractionUponCreation()) {
     return JS::PromiseUserInputEventHandlingState::HadUserInteractionAtCreation;
   }
   return JS::PromiseUserInputEventHandlingState::
@@ -4109,25 +4098,23 @@ JS::GetPromiseUserInputEventHandlingState(JS::HandleObject promiseObj_) {
 JS_PUBLIC_API bool JS::SetPromiseUserInputEventHandlingState(
     JS::HandleObject promiseObj_,
     JS::PromiseUserInputEventHandlingState state) {
-  JSObject* promiseObj = CheckedUnwrap(promiseObj_);
-  if (!promiseObj || !promiseObj->is<PromiseObject>()) {
+  PromiseObject* promise = promiseObj_->maybeUnwrapIf<PromiseObject>();
+  if (!promise) {
     return false;
   }
 
-  auto& promise = promiseObj->as<PromiseObject>();
-
   switch (state) {
     case JS::PromiseUserInputEventHandlingState::DontCare:
-      promise.setRequiresUserInteractionHandling(false);
+      promise->setRequiresUserInteractionHandling(false);
       break;
     case JS::PromiseUserInputEventHandlingState::HadUserInteractionAtCreation:
-      promise.setRequiresUserInteractionHandling(true);
-      promise.setHadUserInteractionUponCreation(true);
+      promise->setRequiresUserInteractionHandling(true);
+      promise->setHadUserInteractionUponCreation(true);
       break;
     case JS::PromiseUserInputEventHandlingState::
         DidntHaveUserInteractionAtCreation:
-      promise.setRequiresUserInteractionHandling(true);
-      promise.setHadUserInteractionUponCreation(false);
+      promise->setRequiresUserInteractionHandling(true);
+      promise->setHadUserInteractionUponCreation(false);
       break;
     default:
       MOZ_ASSERT_UNREACHABLE(
@@ -6012,23 +5999,14 @@ JS_PUBLIC_API bool JS::FinishIncrementalEncoding(JSContext* cx,
   return true;
 }
 
-JS_PUBLIC_API void JS::SetAsmJSCacheOps(JSContext* cx,
-                                        const JS::AsmJSCacheOps* ops) {
-  cx->runtime()->asmJSCacheOps = *ops;
-}
-
 bool JS::IsWasmModuleObject(HandleObject obj) {
-  JSObject* unwrapped = CheckedUnwrap(obj);
-  if (!unwrapped) {
-    return false;
-  }
-  return unwrapped->is<WasmModuleObject>();
+  return obj->canUnwrapAs<WasmModuleObject>();
 }
 
 JS_PUBLIC_API RefPtr<JS::WasmModule> JS::GetWasmModule(HandleObject obj) {
   MOZ_ASSERT(JS::IsWasmModuleObject(obj));
-  return const_cast<wasm::Module*>(
-      &CheckedUnwrap(obj)->as<WasmModuleObject>().module());
+  WasmModuleObject& mobj = obj->unwrapAs<WasmModuleObject>();
+  return const_cast<wasm::Module*>(&mobj.module());
 }
 
 JS_PUBLIC_API RefPtr<JS::WasmModule> JS::DeserializeWasmModule(

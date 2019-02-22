@@ -399,10 +399,6 @@ struct JSRuntime : public js::MallocProvider<JSRuntime> {
 
   void finishRoots();
 
- public:
-  /* AsmJSCache callbacks are runtime-wide. */
-  js::UnprotectedData<JS::AsmJSCacheOps> asmJSCacheOps;
-
  private:
   js::UnprotectedData<const JSPrincipals*> trustedPrincipals_;
 
@@ -971,6 +967,18 @@ struct JSRuntime : public js::MallocProvider<JSRuntime> {
   // Hooks called when script private references are created and destroyed.
   js::MainThreadData<JS::ScriptPrivateReferenceHook> scriptPrivateAddRefHook;
   js::MainThreadData<JS::ScriptPrivateReferenceHook> scriptPrivateReleaseHook;
+
+  void addRefScriptPrivate(const JS::Value& value) {
+    if (!value.isUndefined() && scriptPrivateAddRefHook) {
+      scriptPrivateAddRefHook(value);
+    }
+  }
+
+  void releaseScriptPrivate(const JS::Value& value) {
+    if (!value.isUndefined() && scriptPrivateReleaseHook) {
+      scriptPrivateReleaseHook(value);
+    }
+  }
 
  public:
 #if defined(JS_BUILD_BINAST)

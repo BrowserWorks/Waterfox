@@ -390,11 +390,9 @@ static MOZ_ALWAYS_INLINE bool NegOperation(JSContext* cx,
     return false;
   }
 
-#ifdef ENABLE_BIGINT
   if (val.isBigInt()) {
     return BigInt::neg(cx, val, res);
   }
-#endif
 
   res.setNumber(-val.toNumber());
   return true;
@@ -403,31 +401,37 @@ static MOZ_ALWAYS_INLINE bool NegOperation(JSContext* cx,
 static MOZ_ALWAYS_INLINE bool IncOperation(JSContext* cx,
                                            MutableHandleValue val,
                                            MutableHandleValue res) {
-  MOZ_ASSERT(val.isNumber(), "+1 only callable on result of JSOP_TONUMERIC");
-
   int32_t i;
   if (val.isInt32() && (i = val.toInt32()) != INT32_MAX) {
     res.setInt32(i + 1);
     return true;
   }
 
-  res.setNumber(val.toNumber() + 1);
-  return true;
+  if (val.isNumber()) {
+    res.setNumber(val.toNumber() + 1);
+    return true;
+  }
+
+  MOZ_ASSERT(val.isBigInt(), "+1 only callable on result of JSOP_TONUMERIC");
+  return BigInt::inc(cx, val, res);
 }
 
 static MOZ_ALWAYS_INLINE bool DecOperation(JSContext* cx,
                                            MutableHandleValue val,
                                            MutableHandleValue res) {
-  MOZ_ASSERT(val.isNumber(), "-1 only callable on result of JSOP_TONUMERIC");
-
   int32_t i;
   if (val.isInt32() && (i = val.toInt32()) != INT32_MIN) {
     res.setInt32(i - 1);
     return true;
   }
 
-  res.setNumber(val.toNumber() - 1);
-  return true;
+  if (val.isNumber()) {
+    res.setNumber(val.toNumber() - 1);
+    return true;
+  }
+
+  MOZ_ASSERT(val.isBigInt(), "-1 only callable on result of JSOP_TONUMERIC");
+  return BigInt::dec(cx, val, res);
 }
 
 static MOZ_ALWAYS_INLINE bool ToIdOperation(JSContext* cx, HandleValue idval,
@@ -723,7 +727,6 @@ static MOZ_ALWAYS_INLINE bool LessThanImpl(JSContext* cx,
     return true;
   }
 
-#ifdef ENABLE_BIGINT
   // Step 4a.
   if (lhs.isBigInt() && rhs.isString()) {
     return BigInt::lessThan(cx, lhs, rhs, res);
@@ -733,19 +736,16 @@ static MOZ_ALWAYS_INLINE bool LessThanImpl(JSContext* cx,
   if (lhs.isString() && rhs.isBigInt()) {
     return BigInt::lessThan(cx, lhs, rhs, res);
   }
-#endif
 
   // Steps 4c and 4d.
   if (!ToNumeric(cx, lhs) || !ToNumeric(cx, rhs)) {
     return false;
   }
 
-#ifdef ENABLE_BIGINT
   // Steps 4e-j.
   if (lhs.isBigInt() || rhs.isBigInt()) {
     return BigInt::lessThan(cx, lhs, rhs, res);
   }
-#endif
 
   // Step 4e for Number operands.
   MOZ_ASSERT(lhs.isNumber() && rhs.isNumber());
@@ -865,11 +865,9 @@ static MOZ_ALWAYS_INLINE bool BitNot(JSContext* cx, MutableHandleValue in,
     return false;
   }
 
-#ifdef ENABLE_BIGINT
   if (in.isBigInt()) {
     return BigInt::bitNot(cx, in, out);
   }
-#endif
 
   out.setInt32(~in.toInt32());
   return true;
@@ -882,11 +880,9 @@ static MOZ_ALWAYS_INLINE bool BitXor(JSContext* cx, MutableHandleValue lhs,
     return false;
   }
 
-#ifdef ENABLE_BIGINT
   if (lhs.isBigInt() || rhs.isBigInt()) {
     return BigInt::bitXor(cx, lhs, rhs, out);
   }
-#endif
 
   out.setInt32(lhs.toInt32() ^ rhs.toInt32());
   return true;
@@ -899,11 +895,9 @@ static MOZ_ALWAYS_INLINE bool BitOr(JSContext* cx, MutableHandleValue lhs,
     return false;
   }
 
-#ifdef ENABLE_BIGINT
   if (lhs.isBigInt() || rhs.isBigInt()) {
     return BigInt::bitOr(cx, lhs, rhs, out);
   }
-#endif
 
   out.setInt32(lhs.toInt32() | rhs.toInt32());
   return true;
@@ -916,11 +910,9 @@ static MOZ_ALWAYS_INLINE bool BitAnd(JSContext* cx, MutableHandleValue lhs,
     return false;
   }
 
-#ifdef ENABLE_BIGINT
   if (lhs.isBigInt() || rhs.isBigInt()) {
     return BigInt::bitAnd(cx, lhs, rhs, out);
   }
-#endif
 
   out.setInt32(lhs.toInt32() & rhs.toInt32());
   return true;
@@ -933,11 +925,9 @@ static MOZ_ALWAYS_INLINE bool BitLsh(JSContext* cx, MutableHandleValue lhs,
     return false;
   }
 
-#ifdef ENABLE_BIGINT
   if (lhs.isBigInt() || rhs.isBigInt()) {
     return BigInt::lsh(cx, lhs, rhs, out);
   }
-#endif
 
   out.setInt32(lhs.toInt32() << (rhs.toInt32() & 31));
   return true;
@@ -950,11 +940,9 @@ static MOZ_ALWAYS_INLINE bool BitRsh(JSContext* cx, MutableHandleValue lhs,
     return false;
   }
 
-#ifdef ENABLE_BIGINT
   if (lhs.isBigInt() || rhs.isBigInt()) {
     return BigInt::rsh(cx, lhs, rhs, out);
   }
-#endif
 
   out.setInt32(lhs.toInt32() >> (rhs.toInt32() & 31));
   return true;
@@ -964,7 +952,6 @@ static MOZ_ALWAYS_INLINE bool UrshOperation(JSContext* cx,
                                             MutableHandleValue lhs,
                                             MutableHandleValue rhs,
                                             MutableHandleValue out) {
-#ifdef ENABLE_BIGINT
   if (!ToNumeric(cx, lhs) || !ToNumeric(cx, rhs)) {
     return false;
   }
@@ -974,7 +961,6 @@ static MOZ_ALWAYS_INLINE bool UrshOperation(JSContext* cx,
                               JSMSG_BIGINT_TO_NUMBER);
     return false;
   }
-#endif
 
   uint32_t left;
   int32_t right;

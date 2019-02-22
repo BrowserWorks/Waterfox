@@ -122,7 +122,9 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/ServiceWorkerUtils.h"
 #include "mozilla/net/AsyncUrlChannelClassifier.h"
+#include "mozilla/net/NeckoChannelParams.h"
 #include "mozilla/net/UrlClassifierFeatureFactory.h"
+#include "nsIWebNavigation.h"
 
 #ifdef MOZ_TASK_TRACER
 #  include "GeckoTaskTracer.h"
@@ -1381,6 +1383,8 @@ nsresult EnsureMIMEOfScript(nsHttpChannel *aChannel, nsIURI *aURI,
     case nsIContentPolicy::TYPE_SCRIPT:
     case nsIContentPolicy::TYPE_INTERNAL_SCRIPT:
     case nsIContentPolicy::TYPE_INTERNAL_SCRIPT_PRELOAD:
+    case nsIContentPolicy::TYPE_INTERNAL_MODULE:
+    case nsIContentPolicy::TYPE_INTERNAL_MODULE_PRELOAD:
       AccumulateCategorical(
           Telemetry::LABELS_SCRIPT_BLOCK_INCORRECT_MIME_3::script_load);
       break;
@@ -1532,8 +1536,8 @@ nsresult EnsureMIMEOfScript(nsHttpChannel *aChannel, nsIURI *aURI,
   }
 
   // We restrict importScripts() in worker code to JavaScript MIME types.
-  if (aLoadInfo->InternalContentPolicyType() ==
-      nsIContentPolicy::TYPE_INTERNAL_WORKER_IMPORT_SCRIPTS) {
+  nsContentPolicyType internalType = aLoadInfo->InternalContentPolicyType();
+  if (internalType == nsIContentPolicy::TYPE_INTERNAL_WORKER_IMPORT_SCRIPTS) {
     // Instead of consulting Preferences::GetBool() all the time we
     // can cache the result to speed things up.
     static bool sCachedBlockImportScriptsWithWrongMime = false;
@@ -1552,6 +1556,14 @@ nsresult EnsureMIMEOfScript(nsHttpChannel *aChannel, nsIURI *aURI,
 
     ReportMimeTypeMismatch(aChannel, "BlockImportScriptsWithWrongMimeType",
                            aURI, contentType, Report::Error);
+    return NS_ERROR_CORRUPTED_CONTENT;
+  }
+
+  // ES6 modules require a strict MIME type check.
+  if (internalType == nsIContentPolicy::TYPE_INTERNAL_MODULE ||
+      internalType == nsIContentPolicy::TYPE_INTERNAL_MODULE_PRELOAD) {
+    ReportMimeTypeMismatch(aChannel, "BlockModuleWithWrongMimeType", aURI,
+                           contentType, Report::Error);
     return NS_ERROR_CORRUPTED_CONTENT;
   }
 
@@ -1618,7 +1630,7 @@ nsresult nsHttpChannel::CallOnStartRequest() {
 
     if (mListener) {
       nsCOMPtr<nsIStreamListener> deleteProtector(mListener);
-      deleteProtector->OnStartRequest(this, mListenerContext);
+      deleteProtector->OnStartRequest(this, nullptr);
     }
 
     mOnStartRequestCalled = true;
@@ -1667,9 +1679,8 @@ nsresult nsHttpChannel::CallOnStartRequest() {
       // If we failed, we just fall through to the "normal" case
       if (NS_SUCCEEDED(rv)) {
         nsCOMPtr<nsIStreamListener> converter;
-        rv =
-            serv->AsyncConvertData(UNKNOWN_CONTENT_TYPE, "*/*", mListener,
-                                   mListenerContext, getter_AddRefs(converter));
+        rv = serv->AsyncConvertData(UNKNOWN_CONTENT_TYPE, "*/*", mListener,
+                                    nullptr, getter_AddRefs(converter));
         if (NS_SUCCEEDED(rv)) {
           mListener = converter;
           unknownDecoderStarted = true;
@@ -1691,7 +1702,7 @@ nsresult nsHttpChannel::CallOnStartRequest() {
     MOZ_ASSERT(!mOnStartRequestCalled,
                "We should not call OsStartRequest twice");
     nsCOMPtr<nsIStreamListener> deleteProtector(mListener);
-    rv = deleteProtector->OnStartRequest(this, mListenerContext);
+    rv = deleteProtector->OnStartRequest(this, nullptr);
     mOnStartRequestCalled = true;
     if (NS_FAILED(rv)) return rv;
   } else {
@@ -1704,8 +1715,8 @@ nsresult nsHttpChannel::CallOnStartRequest() {
   // nsUnknownDecoder) after OnStartRequest is called for the real listener.
   if (!unknownDecoderStarted) {
     nsCOMPtr<nsIStreamListener> listener;
-    nsISupports *ctxt = mListenerContext;
-    rv = DoApplyContentConversions(mListener, getter_AddRefs(listener), ctxt);
+    rv =
+        DoApplyContentConversions(mListener, getter_AddRefs(listener), nullptr);
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -1840,6 +1851,12 @@ nsresult nsHttpChannel::ProcessFailedProxyConnect(uint32_t httpStatus) {
   }
   LOG(("Cancelling failed proxy CONNECT [this=%p httpStatus=%u]\n", this,
        httpStatus));
+
+  // Make sure the connection is thrown away as it can be in a bad state
+  // and the proxy may just hang on the next request.
+  MOZ_ASSERT(mTransaction);
+  mTransaction->DontReuseConnection();
+
   Cancel(rv);
   {
     nsresult rv = CallOnStartRequest();
@@ -2083,9 +2100,8 @@ nsresult nsHttpChannel::ProcessContentSignatureHeader(
   }
   // create a new listener that meadiates the content
   RefPtr<ContentVerifier> contentVerifyingMediator =
-      new ContentVerifier(mListener, mListenerContext);
-  rv = contentVerifyingMediator->Init(contentSignatureHeader, this,
-                                      mListenerContext);
+      new ContentVerifier(mListener, nullptr);
+  rv = contentVerifyingMediator->Init(contentSignatureHeader, this, nullptr);
   NS_ENSURE_SUCCESS(rv, NS_ERROR_INVALID_SIGNATURE);
   mListener = contentVerifyingMediator;
 
@@ -2436,15 +2452,20 @@ nsresult nsHttpChannel::ContinueProcessResponse1() {
   }
 
   rv = NS_OK;
-  if (mRedirectTabPromise && !mCanceled) {
-    MOZ_ASSERT(!mOnStartRequestCalled);
+  if (!mCanceled) {
+    // notify "http-on-may-change-process" observers
+    gHttpHandler->OnMayChangeProcess(this);
 
-    PushRedirectAsyncFunc(&nsHttpChannel::ContinueProcessResponse2);
-    rv = StartCrossProcessRedirect();
-    if (NS_SUCCEEDED(rv)) {
-      return NS_OK;
+    if (mRedirectTabPromise) {
+      MOZ_ASSERT(!mOnStartRequestCalled);
+
+      PushRedirectAsyncFunc(&nsHttpChannel::ContinueProcessResponse2);
+      rv = StartCrossProcessRedirect();
+      if (NS_SUCCEEDED(rv)) {
+        return NS_OK;
+      }
+      PopRedirectAsyncFunc(&nsHttpChannel::ContinueProcessResponse2);
     }
-    PopRedirectAsyncFunc(&nsHttpChannel::ContinueProcessResponse2);
   }
 
   // No process switch needed, continue as normal.
@@ -3080,12 +3101,8 @@ nsresult nsHttpChannel::OpenRedirectChannel(nsresult rv) {
   mRedirectChannel->SetOriginalURI(mOriginalURI);
 
   // open new channel
-  if (mLoadInfo && mLoadInfo->GetEnforceSecurity()) {
-    MOZ_ASSERT(!mListenerContext, "mListenerContext should be null!");
-    rv = mRedirectChannel->AsyncOpen2(mListener);
-  } else {
-    rv = mRedirectChannel->AsyncOpen(mListener, mListenerContext);
-  }
+  rv = mRedirectChannel->AsyncOpen(mListener);
+
   NS_ENSURE_SUCCESS(rv, rv);
 
   mStatus = NS_BINDING_REDIRECTED;
@@ -3102,8 +3119,8 @@ nsresult nsHttpChannel::AsyncDoReplaceWithProxy(nsIProxyInfo *pi) {
   nsresult rv;
 
   nsCOMPtr<nsIChannel> newChannel;
-  rv = gHttpHandler->NewProxiedChannel2(mURI, pi, mProxyResolveFlags, mProxyURI,
-                                        mLoadInfo, getter_AddRefs(newChannel));
+  rv = gHttpHandler->NewProxiedChannel(mURI, pi, mProxyResolveFlags, mProxyURI,
+                                       mLoadInfo, getter_AddRefs(newChannel));
   if (NS_FAILED(rv)) return rv;
 
   uint32_t flags = nsIChannelEventSink::REDIRECT_INTERNAL;
@@ -3139,12 +3156,7 @@ nsresult nsHttpChannel::ContinueDoReplaceWithProxy(nsresult rv) {
   mRedirectChannel->SetOriginalURI(mOriginalURI);
 
   // open new channel
-  if (mLoadInfo && mLoadInfo->GetEnforceSecurity()) {
-    MOZ_ASSERT(!mListenerContext, "mListenerContext should be null!");
-    rv = mRedirectChannel->AsyncOpen2(mListener);
-  } else {
-    rv = mRedirectChannel->AsyncOpen(mListener, mListenerContext);
-  }
+  rv = mRedirectChannel->AsyncOpen(mListener);
   NS_ENSURE_SUCCESS(rv, rv);
 
   mStatus = NS_BINDING_REDIRECTED;
@@ -3656,7 +3668,7 @@ nsresult nsHttpChannel::ProcessFallback(bool *waitingForRedirectCallback) {
 
   // Create a new channel to load the fallback entry.
   RefPtr<nsIChannel> newChannel;
-  rv = gHttpHandler->NewChannel2(mURI, mLoadInfo, getter_AddRefs(newChannel));
+  rv = gHttpHandler->NewChannel(mURI, mLoadInfo, getter_AddRefs(newChannel));
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint32_t redirectFlags = nsIChannelEventSink::REDIRECT_INTERNAL;
@@ -3706,12 +3718,7 @@ nsresult nsHttpChannel::ContinueProcessFallback(nsresult rv) {
   // i.e. after all sinks had been notified
   mRedirectChannel->SetOriginalURI(mOriginalURI);
 
-  if (mLoadInfo && mLoadInfo->GetEnforceSecurity()) {
-    MOZ_ASSERT(!mListenerContext, "mListenerContext should be null!");
-    rv = mRedirectChannel->AsyncOpen2(mListener);
-  } else {
-    rv = mRedirectChannel->AsyncOpen(mListener, mListenerContext);
-  }
+  rv = mRedirectChannel->AsyncOpen(mListener);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (mLoadFlags & LOAD_INITIAL_DOCUMENT_URI) {
@@ -4898,27 +4905,33 @@ nsresult nsHttpChannel::OpenCacheInputStream(nsICacheEntry *cacheEntry,
   mCachedResponseHead->ContentType(contentType);
 
   bool foundAltData = false;
+  bool deliverAltData = true;
   if (!altDataType.IsEmpty() && !mPreferredCachedAltDataTypes.IsEmpty() &&
       altDataFromChild == mAltDataForChild) {
     for (auto &pref : mPreferredCachedAltDataTypes) {
-      if (mozilla::Get<0>(pref) == altDataType &&
-          (mozilla::Get<1>(pref).IsEmpty() ||
-           mozilla::Get<1>(pref) == contentType)) {
+      if (pref.type() == altDataType &&
+          (pref.contentType().IsEmpty() || pref.contentType() == contentType)) {
         foundAltData = true;
+        deliverAltData = pref.deliverAltData();
         break;
       }
     }
   }
+
+  nsCOMPtr<nsIInputStream> altData;
+  int64_t altDataSize;
   if (foundAltData) {
     rv = cacheEntry->OpenAlternativeInputStream(altDataType,
-                                                getter_AddRefs(stream));
+                                                getter_AddRefs(altData));
     if (NS_SUCCEEDED(rv)) {
       LOG(("Opened alt-data input stream type=%s", altDataType.get()));
       // We have succeeded.
       mAvailableCachedAltDataType = altDataType;
-      // Set the correct data size on the channel.
-      int64_t altDataSize;
-      if (NS_SUCCEEDED(cacheEntry->GetAltDataSize(&altDataSize))) {
+
+      if (deliverAltData) {
+        // Set the correct data size on the channel.
+        Unused << cacheEntry->GetAltDataSize(&altDataSize);
+        stream = altData;
         mAltDataLength = altDataSize;
       }
     }
@@ -5126,7 +5139,7 @@ nsresult nsHttpChannel::ReadFromCache(bool alreadyMarkedValid) {
     return rv;
   }
 
-  rv = mCachePump->AsyncRead(this, mListenerContext);
+  rv = mCachePump->AsyncRead(this, nullptr);
   if (NS_FAILED(rv)) return rv;
 
   if (mTimingEnabled) mCacheReadStart = TimeStamp::Now();
@@ -5819,12 +5832,7 @@ nsresult nsHttpChannel::ContinueProcessRedirection(nsresult rv) {
   // should really be handled by the event sink implementation.
 
   // begin loading the new channel
-  if (mLoadInfo && mLoadInfo->GetEnforceSecurity()) {
-    MOZ_ASSERT(!mListenerContext, "mListenerContext should be null!");
-    rv = mRedirectChannel->AsyncOpen2(mListener);
-  } else {
-    rv = mRedirectChannel->AsyncOpen(mListener, mListenerContext);
-  }
+  rv = mRedirectChannel->AsyncOpen(mListener);
   LOG(("  new channel AsyncOpen returned %" PRIX32, static_cast<uint32_t>(rv)));
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -6160,14 +6168,21 @@ nsHttpChannel::GetSecurityInfo(nsISupports **securityInfo) {
 // If AsyncOpen returns NS_OK, after that point AsyncAbort must be called on
 // any error.
 NS_IMETHODIMP
-nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context) {
+nsHttpChannel::AsyncOpen(nsIStreamListener *aListener) {
+  nsCOMPtr<nsIStreamListener> listener = aListener;
+  nsresult rv =
+      nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    ReleaseListeners();
+    return rv;
+  }
   MOZ_ASSERT(
       !mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
           mLoadInfo->GetInitialSecurityCheckDone() ||
           (mLoadInfo->GetSecurityMode() ==
                nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL &&
            nsContentUtils::IsSystemPrincipal(mLoadInfo->LoadingPrincipal())),
-      "security flags in loadInfo but asyncOpen2() not called");
+      "security flags in loadInfo but doContentSecurityCheck() not called");
 
   LOG(("nsHttpChannel::AsyncOpen [this=%p]\n", this));
 
@@ -6202,11 +6217,9 @@ nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context) {
   NS_ENSURE_TRUE(!mIsPending, NS_ERROR_IN_PROGRESS);
   NS_ENSURE_TRUE(!mWasOpened, NS_ERROR_ALREADY_OPENED);
 
-  if (MaybeWaitForUploadStreamLength(listener, context)) {
+  if (MaybeWaitForUploadStreamLength(listener, nullptr)) {
     return NS_OK;
   }
-
-  nsresult rv;
 
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -6254,7 +6267,6 @@ nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context) {
     // When tail is unblocked, OnTailUnblock on this channel will be called
     // to continue AsyncOpen.
     mListener = listener;
-    mListenerContext = context;
     MOZ_DIAGNOSTIC_ASSERT(!mOnTailUnblock);
     mOnTailUnblock = &nsHttpChannel::AsyncOpenOnTailUnblock;
 
@@ -6288,7 +6300,6 @@ nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context) {
   mWasOpened = true;
 
   mListener = listener;
-  mListenerContext = context;
 
   // PauseTask/DelayHttpChannel queuing
   if (!DelayHttpChannelQueue::AttemptQueueChannel(this)) {
@@ -6338,7 +6349,7 @@ nsresult nsHttpChannel::AsyncOpenFinal(TimeStamp aTimeStamp) {
 }
 
 nsresult nsHttpChannel::AsyncOpenOnTailUnblock() {
-  return AsyncOpen(mListener, mListenerContext);
+  return AsyncOpen(mListener);
 }
 
 already_AddRefed<nsChannelClassifier>
@@ -6351,18 +6362,6 @@ nsHttpChannel::GetOrCreateChannelClassifier() {
 
   RefPtr<nsChannelClassifier> classifier = mChannelClassifier;
   return classifier.forget();
-}
-
-NS_IMETHODIMP
-nsHttpChannel::AsyncOpen2(nsIStreamListener *aListener) {
-  nsCOMPtr<nsIStreamListener> listener = aListener;
-  nsresult rv =
-      nsContentSecurityManager::doContentSecurityCheck(this, listener);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    ReleaseListeners();
-    return rv;
-  }
-  return AsyncOpen(listener, nullptr);
 }
 
 // BeginConnect() SHOULD NOT call AsyncAbort(). AsyncAbort will be called by
@@ -7134,11 +7133,25 @@ NS_IMETHODIMP nsHttpChannel::SwitchProcessTo(dom::Promise *aTabPromise,
 nsresult nsHttpChannel::StartCrossProcessRedirect() {
   nsresult rv;
 
+  LOG(("nsHttpChannel::StartCrossProcessRedirect [this=%p]", this));
+
   rv = CheckRedirectLimit(nsIChannelEventSink::REDIRECT_INTERNAL);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  RefPtr<HttpChannelParentListener> listener = do_QueryObject(mCallbacks);
+  // We can't do QueryObject mCallbacks into HttpChannelParentListener, because
+  // the notification callbacks can be replaced with another object.
+  // Rather we do GetInterface for HttpChannelParent, which should always be
+  // there if the new callbacks properly forward to the original channel's
+  // callbacks, and get the listener from there using QueryObject.
+  nsCOMPtr<nsIParentChannel> parentChannel;
+  NS_QueryNotificationCallbacks(this, parentChannel);
+  RefPtr<HttpChannelParent> httpParent = do_QueryObject(parentChannel);
+  MOZ_ASSERT(httpParent);
+  NS_ENSURE_TRUE(httpParent, NS_ERROR_UNEXPECTED);
+
+  RefPtr<HttpChannelParentListener> listener = httpParent->GetParentListener();
   MOZ_ASSERT(listener);
+  NS_ENSURE_TRUE(listener, NS_ERROR_UNEXPECTED);
 
   nsCOMPtr<nsILoadInfo> redirectLoadInfo =
       CloneLoadInfoForRedirect(mURI, nsIChannelEventSink::REDIRECT_INTERNAL);
@@ -7150,6 +7163,149 @@ nsresult nsHttpChannel::StartCrossProcessRedirect() {
   rv = WaitForRedirectCallback();
 
   return rv;
+}
+
+static nsILoadInfo::CrossOriginOpenerPolicy GetCrossOriginOpenerPolicy(
+    nsHttpResponseHead *responseHead) {
+  MOZ_ASSERT(responseHead);
+
+  nsAutoCString openerPolicy;
+  Unused << responseHead->GetHeader(nsHttp::Cross_Origin_Opener_Policy,
+                                    openerPolicy);
+
+  // Cross-Origin-Opener-Policy = sameness [ RWS outgoing ]
+  // sameness = %s"same-origin" / %s"same-site" ; case-sensitive
+  // outgoing = %s"unsafe-allow-outgoing" ; case-sensitive
+
+  Tokenizer t(openerPolicy);
+  nsAutoCString sameness;
+  nsAutoCString outgoing;
+
+  // The return value will be true if we find any whitespace. If there is
+  // whitespace, then it must be followed by "unsafe-allow-outgoing" otherwise
+  // this is a malformed header value.
+  bool allowOutgoing = t.ReadUntil(Tokenizer::Token::Whitespace(), sameness);
+  if (allowOutgoing) {
+    t.SkipWhites();
+    bool foundEOF = t.ReadUntil(Tokenizer::Token::EndOfFile(), outgoing);
+    if (!foundEOF) {
+      // Malformed response. There should be no text after the second token.
+      return nsILoadInfo::OPENER_POLICY_NULL;
+    }
+    if (!outgoing.EqualsLiteral("unsafe-allow-outgoing")) {
+      // Malformed response. Only one allowed value for the second token.
+      return nsILoadInfo::OPENER_POLICY_NULL;
+    }
+  }
+
+  nsILoadInfo::CrossOriginOpenerPolicy policy = nsILoadInfo::OPENER_POLICY_NULL;
+  if (sameness.EqualsLiteral("same-origin")) {
+    policy = nsILoadInfo::OPENER_POLICY_SAME_ORIGIN;
+    if (allowOutgoing) {
+      policy = nsILoadInfo::OPENER_POLICY_SAME_ORIGIN_ALLOW_OUTGOING;
+    }
+  } else if (sameness.EqualsLiteral("same-site")) {
+    policy = nsILoadInfo::OPENER_POLICY_SAME_SITE;
+    if (allowOutgoing) {
+      policy = nsILoadInfo::OPENER_POLICY_SAME_SITE_ALLOW_OUTGOING;
+    }
+  }
+
+  return policy;
+}
+
+static bool CompareCrossOriginOpenerPolicies(
+    nsILoadInfo::CrossOriginOpenerPolicy documentPolicy,
+    nsIPrincipal *documentOrigin,
+    nsILoadInfo::CrossOriginOpenerPolicy resultPolicy,
+    nsIPrincipal *resultOrigin) {
+  if (documentPolicy == nsILoadInfo::OPENER_POLICY_NULL &&
+      resultPolicy == nsILoadInfo::OPENER_POLICY_NULL) {
+    return true;
+  }
+
+  if (documentPolicy != resultPolicy) {
+    return false;
+  }
+  // For the next checks the document and result will have matching policies.
+
+  // We either check if they are same origin or same site.
+  if ((documentPolicy & nsILoadInfo::OPENER_POLICY_SAME_ORIGIN) &&
+      documentOrigin->Equals(resultOrigin)) {
+    return true;
+  }
+
+  if (documentPolicy & nsILoadInfo::OPENER_POLICY_SAME_SITE) {
+    nsAutoCString siteOriginA;
+    nsAutoCString siteOriginB;
+
+    documentOrigin->GetSiteOrigin(siteOriginA);
+    resultOrigin->GetSiteOrigin(siteOriginB);
+    if (siteOriginA == siteOriginB) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+NS_IMETHODIMP
+nsHttpChannel::HasCrossOriginOpenerPolicyMismatch(bool *aMismatch) {
+  MOZ_ASSERT(aMismatch);
+  if (!aMismatch) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  *aMismatch = false;
+  // Only consider Cross-Origin-Opener-Policy for toplevel document loads.
+  if (mLoadInfo->GetExternalContentPolicyType() !=
+      nsIContentPolicy::TYPE_DOCUMENT) {
+    return NS_OK;
+  }
+
+  // Maybe the channel failed and we have no response head?
+  nsHttpResponseHead *head =
+      mResponseHead ? mResponseHead : mCachedResponseHead;
+  if (!head) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  // Get the policy of the active document, and the policy for the result.
+  nsILoadInfo::CrossOriginOpenerPolicy documentPolicy =
+      mLoadInfo->GetOpenerPolicy();
+  nsILoadInfo::CrossOriginOpenerPolicy resultPolicy =
+      GetCrossOriginOpenerPolicy(head);
+
+  mLoadInfo->SetOpenerPolicy(resultPolicy);
+
+  // We use the top window principal as the documentOrigin
+  if (!mTopWindowPrincipal) {
+    GetTopWindowPrincipal(getter_AddRefs(mTopWindowPrincipal));
+  }
+
+  nsCOMPtr<nsIPrincipal> documentOrigin = mTopWindowPrincipal;
+  nsCOMPtr<nsIPrincipal> resultOrigin;
+
+  nsContentUtils::GetSecurityManager()->GetChannelResultPrincipal(
+      this, getter_AddRefs(resultOrigin));
+
+  if (!CompareCrossOriginOpenerPolicies(documentPolicy, documentOrigin,
+                                        resultPolicy, resultOrigin)) {
+    // If one of the following is false:
+    //   - doc is the initial about:blank document
+    //   - document's unsafe-allow-outgoing is true
+    //   - resultPolicy is null
+    // then we have a mismatch.
+    if (!documentOrigin->GetIsNullPrincipal() ||
+        !(documentPolicy &
+          nsILoadInfo::OPENER_POLICY_UNSAFE_ALLOW_OUTGOING_FLAG) ||
+        !(resultPolicy == nsILoadInfo::OPENER_POLICY_NULL)) {
+      *aMismatch = true;
+      return NS_OK;
+    }
+  }
+
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -7270,13 +7426,18 @@ nsHttpChannel::OnStartRequest(nsIRequest *request, nsISupports *ctxt) {
   // before we check for redirects, check if the load should be shifted into a
   // new process.
   rv = NS_OK;
-  if (mRedirectTabPromise && !mCanceled) {
-    PushRedirectAsyncFunc(&nsHttpChannel::ContinueOnStartRequest1);
-    rv = StartCrossProcessRedirect();
-    if (NS_SUCCEEDED(rv)) {
-      return NS_OK;
+  if (!mCanceled) {
+    // notify "http-on-may-change-process" observers
+    gHttpHandler->OnMayChangeProcess(this);
+
+    if (mRedirectTabPromise) {
+      PushRedirectAsyncFunc(&nsHttpChannel::ContinueOnStartRequest1);
+      rv = StartCrossProcessRedirect();
+      if (NS_SUCCEEDED(rv)) {
+        return NS_OK;
+      }
+      PopRedirectAsyncFunc(&nsHttpChannel::ContinueOnStartRequest1);
     }
-    PopRedirectAsyncFunc(&nsHttpChannel::ContinueOnStartRequest1);
   }
 
   // No process change is needed, so continue on to ContinueOnStartRequest1.
@@ -7577,7 +7738,7 @@ nsresult nsHttpChannel::ContinueOnStopRequestAfterAuthRetry(
     if (mListener) {
       MOZ_ASSERT(!mOnStartRequestCalled,
                  "We should not call OnStartRequest twice.");
-      mListener->OnStartRequest(this, mListenerContext);
+      mListener->OnStartRequest(this, nullptr);
       mOnStartRequestCalled = true;
     } else {
       NS_WARNING("OnStartRequest skipped because of null listener");
@@ -7780,7 +7941,7 @@ nsresult nsHttpChannel::ContinueOnStopRequest(nsresult aStatus, bool aIsFromNet,
     MOZ_ASSERT(mOnStartRequestCalled,
                "OnStartRequest should be called before OnStopRequest");
     MOZ_ASSERT(!mOnStopRequestCalled, "We should not call OnStopRequest twice");
-    mListener->OnStopRequest(this, mListenerContext, aStatus);
+    mListener->OnStopRequest(this, nullptr, aStatus);
     mOnStopRequestCalled = true;
   }
 
@@ -7935,8 +8096,8 @@ nsHttpChannel::OnDataAvailable(nsIRequest *request, nsISupports *ctxt,
       seekable = nullptr;
     }
 
-    nsresult rv = mListener->OnDataAvailable(this, mListenerContext, input,
-                                             mLogicalOffset, count);
+    nsresult rv =
+        mListener->OnDataAvailable(this, nullptr, input, mLogicalOffset, count);
     if (NS_SUCCEEDED(rv)) {
       // by contract mListener must read all of "count" bytes, but
       // nsInputStreamPump is tolerant to seekable streams that violate that
@@ -8187,14 +8348,15 @@ nsHttpChannel::GetAllowStaleCacheContent(bool *aAllowStaleCacheContent) {
 
 NS_IMETHODIMP
 nsHttpChannel::PreferAlternativeDataType(const nsACString &aType,
-                                         const nsACString &aContentType) {
+                                         const nsACString &aContentType,
+                                         bool aDeliverAltData) {
   ENSURE_CALLED_BEFORE_ASYNC_OPEN();
-  mPreferredCachedAltDataTypes.AppendElement(
-      MakePair(nsCString(aType), nsCString(aContentType)));
+  mPreferredCachedAltDataTypes.AppendElement(PreferredAlternativeDataTypeParams(
+      nsCString(aType), nsCString(aContentType), aDeliverAltData));
   return NS_OK;
 }
 
-const nsTArray<mozilla::Tuple<nsCString, nsCString>>
+const nsTArray<PreferredAlternativeDataTypeParams>
     &nsHttpChannel::PreferredAlternativeDataTypes() {
   return mPreferredCachedAltDataTypes;
 }
@@ -8242,6 +8404,26 @@ nsHttpChannel::GetOriginalInputStream(nsIInputStreamReceiver *aReceiver) {
   if (cacheEntry) {
     cacheEntry->OpenInputStream(0, getter_AddRefs(inputStream));
   }
+  aReceiver->OnInputStreamReady(inputStream);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsHttpChannel::GetAltDataInputStream(const nsACString &aType,
+                                     nsIInputStreamReceiver *aReceiver) {
+  if (aReceiver == nullptr) {
+    return NS_ERROR_INVALID_ARG;
+  }
+  nsCOMPtr<nsIInputStream> inputStream;
+
+  nsCOMPtr<nsICacheEntry> cacheEntry =
+      mCacheEntry ? mCacheEntry : mAltDataCacheEntry;
+  if (cacheEntry) {
+    nsresult rv = cacheEntry->OpenAlternativeInputStream(
+        aType, getter_AddRefs(inputStream));
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
   aReceiver->OnInputStreamReady(inputStream);
   return NS_OK;
 }

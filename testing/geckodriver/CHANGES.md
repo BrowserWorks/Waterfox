@@ -4,6 +4,29 @@ Change log
 All notable changes to this program is documented in this file.
 
 
+Unreleased
+----------
+
+### Removed
+
+- Removed `--webdriver-port` command-line option
+
+  `--webdriver-port <PORT>` was an undocumented alias for `--port`,
+  initially used for backwards compatibility with clients
+  prior to Selenium 3.0.0.
+
+### Changed
+
+- Improved error messages for incorrect command-line usage
+
+### Fixed
+
+- Errors related to incorrect command-line usage no longer hidden
+
+  By mistake, earlier versions of geckodriver failed to print incorrect
+  flag use.  With this release problems are again written to stderr.
+
+
 0.24.0 (2019-01-28, `917474f3473e`)
 -----------------------------------
 
@@ -25,7 +48,8 @@ All notable changes to this program is documented in this file.
 
 - Added new endpoint `POST /session/{session_id}/window/new`
   for the [New Window] command to create a new top-level browsing
-  context, which can be either a window or a tab.
+  context, which can be either a window or a tab. The first version
+  of Firefox supporting this command is Firefox 66.0.
 
 - When using the preference `devtools.console.stdout.content` set to
   `true` logging of console API calls like `info()`, `warn()`, and

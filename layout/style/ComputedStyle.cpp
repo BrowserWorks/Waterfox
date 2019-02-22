@@ -42,11 +42,9 @@ namespace mozilla {
 
 //----------------------------------------------------------------------
 
-ComputedStyle::ComputedStyle(nsPresContext* aPresContext, nsAtom* aPseudoTag,
-                             CSSPseudoElementType aPseudoType,
+ComputedStyle::ComputedStyle(PseudoStyleType aPseudoType,
                              ServoComputedDataForgotten aComputedValues)
     : mSource(aComputedValues),
-      mPseudoTag(aPseudoTag),
       mBits(static_cast<Bit>(Servo_ComputedValues_GetStyleBits(this))),
       mPseudoType(aPseudoType) {}
 
@@ -122,10 +120,10 @@ nsChangeHint ComputedStyle::CalcStyleDifference(const ComputedStyle& aNewStyle,
   DO_STRUCT_DIFFERENCE(Table);
   DO_STRUCT_DIFFERENCE(UIReset);
   DO_STRUCT_DIFFERENCE(Text);
-  DO_STRUCT_DIFFERENCE_WITH_ARGS(List, (, StyleDisplay()));
+  DO_STRUCT_DIFFERENCE_WITH_ARGS(List, (, *StyleDisplay()));
   DO_STRUCT_DIFFERENCE(SVGReset);
   DO_STRUCT_DIFFERENCE(SVG);
-  DO_STRUCT_DIFFERENCE_WITH_ARGS(Position, (, StyleVisibility()));
+  DO_STRUCT_DIFFERENCE_WITH_ARGS(Position, (, *StyleVisibility()));
   DO_STRUCT_DIFFERENCE(Font);
   DO_STRUCT_DIFFERENCE(Margin);
   DO_STRUCT_DIFFERENCE(Padding);
@@ -177,14 +175,15 @@ nsChangeHint ComputedStyle::CalcStyleDifference(const ComputedStyle& aNewStyle,
     // due to change being true already or due to the old style not having a
     // style-if-visited), but not the other way around.
 #define STYLE_FIELD(name_) thisVisStruct->name_ != otherVisStruct->name_
-#define STYLE_STRUCT(name_, fields_) {                                       \
-  const nsStyle##name_* thisVisStruct = thisVis->Style##name_();             \
-  const nsStyle##name_* otherVisStruct = otherVis->Style##name_();           \
-  if (MOZ_FOR_EACH_SEPARATED(STYLE_FIELD, (||), (), fields_)) {              \
-    *aEqualStructs &= ~STYLE_STRUCT_BIT(name_);                              \
-    change = true;                                                           \
-  }                                                                          \
-}
+#define STYLE_STRUCT(name_, fields_)                                 \
+  {                                                                  \
+    const nsStyle##name_* thisVisStruct = thisVis->Style##name_();   \
+    const nsStyle##name_* otherVisStruct = otherVis->Style##name_(); \
+    if (MOZ_FOR_EACH_SEPARATED(STYLE_FIELD, (||), (), fields_)) {    \
+      *aEqualStructs &= ~STYLE_STRUCT_BIT(name_);                    \
+      change = true;                                                 \
+    }                                                                \
+  }
 #include "nsCSSVisitedDependentPropList.h"
 #undef STYLE_STRUCT
 #undef STYLE_FIELD
@@ -259,11 +258,8 @@ void ComputedStyle::List(FILE* out, int32_t aIndent) {
     str.AppendLiteral("  ");
   }
   str.Append(nsPrintfCString("%p(%d) parent=%p ", (void*)this, 0, nullptr));
-  if (mPseudoTag) {
-    nsAutoString buffer;
-    mPseudoTag->ToString(buffer);
-    AppendUTF16toUTF8(buffer, str);
-    str.Append(' ');
+  if (mPseudoType != PseudoStyleType::NotPseudo) {
+    str.Append(nsPrintfCString("pseudo-%d ", static_cast<int>(mPseudoType)));
   }
 
   fprintf_stderr(out, "%s{ServoComputedData}\n", str.get());
@@ -366,10 +362,8 @@ static const ColorIndexSet gVisitedIndices[2] = {{0, 0}, {1, 0}};
 #endif  // DEBUG
 
 ComputedStyle* ComputedStyle::GetCachedLazyPseudoStyle(
-    CSSPseudoElementType aPseudo) const {
-  MOZ_ASSERT(aPseudo != CSSPseudoElementType::NotPseudo &&
-             aPseudo != CSSPseudoElementType::InheritingAnonBox &&
-             aPseudo != CSSPseudoElementType::NonInheritingAnonBox);
+    PseudoStyleType aPseudo) const {
+  MOZ_ASSERT(PseudoStyle::IsPseudoElement(aPseudo));
   MOZ_ASSERT(!IsLazilyCascadedPseudoElement(),
              "Lazy pseudos can't inherit lazy pseudos");
 
@@ -377,8 +371,7 @@ ComputedStyle* ComputedStyle::GetCachedLazyPseudoStyle(
     return nullptr;
   }
 
-  return mCachedInheritingStyles.Lookup(
-      nsCSSPseudoElements::GetPseudoAtom(aPseudo));
+  return mCachedInheritingStyles.Lookup(aPseudo);
 }
 
 MOZ_DEFINE_MALLOC_ENCLOSING_SIZE_OF(ServoComputedValuesMallocEnclosingSizeOf)

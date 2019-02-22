@@ -328,6 +328,7 @@ var Policies = {
     onBeforeAddons(manager, param) {
       if (param) {
         manager.disallowFeature("Shield");
+        setAndLockPref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr", false);
       }
     },
   },
@@ -589,6 +590,14 @@ var Policies = {
     },
   },
 
+  "ExtensionUpdate": {
+    onBeforeAddons(manager, param) {
+      if (!param) {
+        setAndLockPref("extensions.update.enabled", param);
+      }
+    },
+  },
+
   "FlashPlugin": {
     onBeforeUIStartup(manager, param) {
       addAllowDenyPermissions("plugin:flash", param.Allow, param.Block);
@@ -674,6 +683,8 @@ var Policies = {
         setAndLockPref("xpinstall.enabled", param.Default);
         if (!param.Default) {
           blockAboutPage(manager, "about:debugging");
+          setAndLockPref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr", false);
+          manager.disallowFeature("xpinstall");
         }
       }
     },
@@ -845,6 +856,7 @@ var Policies = {
                 alias:       newEngine.Alias,
                 description: newEngine.Description,
                 method:      newEngine.Method,
+                postData:    newEngine.PostData,
                 suggestURL:  newEngine.SuggestURLTemplate,
                 extensionID: "set-via-policy",
                 queryCharset: "UTF-8",
@@ -949,6 +961,12 @@ var Policies = {
           break;
       }
       setAndLockPref("security.tls.version.min", tlsVersion);
+    },
+  },
+
+  "SupportMenu": {
+    onProfileAfterChange(manager, param) {
+      manager.setSupportMenu(param);
     },
   },
 

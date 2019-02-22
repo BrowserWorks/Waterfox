@@ -208,9 +208,9 @@ function waitForSource(dbg, url) {
   );
 }
 
-async function waitForElement(dbg, name) {
-  await waitUntil(() => findElement(dbg, name));
-  return findElement(dbg, name);
+async function waitForElement(dbg, name, ...args) {
+  await waitUntil(() => findElement(dbg, name, ...args));
+  return findElement(dbg, name, ...args);
 }
 
 async function waitForElementWithSelector(dbg, selector) {
@@ -243,8 +243,7 @@ function waitForSelectedSource(dbg, url) {
         state,
         source.id
       );
-      const hasPausePoints = dbg.selectors.hasPausePoints(state, source.id);
-      return hasSymbols && hasSourceMetaData && hasPausePoints;
+      return hasSymbols && hasSourceMetaData;
     },
     "selected source"
   );
@@ -768,9 +767,9 @@ function findBreakpoint(dbg, url, line) {
     Services.prefs.getBoolPref("devtools.debugger.features.column-breakpoints")
   ) {
     ({ column } = dbg.selectors.getFirstVisibleBreakpointPosition(
-      dbg.store.getState(), 
+      dbg.store.getState(),
       {
-        sourceId: source.id, 
+        sourceId: source.id,
         line
       }
     ));
@@ -1106,14 +1105,16 @@ const selectors = {
   scopeValue: i =>
     `.scopes-list .tree-node:nth-child(${i}) .object-delimiter + *`,
   frame: i => `.frames [role="list"] [role="listitem"]:nth-child(${i})`,
-  frames: `.frames [role="list"] [role="listitem"]`,
+  frames: '.frames [role="list"] [role="listitem"]',
   gutter: i => `.CodeMirror-code *:nth-child(${i}) .CodeMirror-linenumber`,
   // These work for bobth the breakpoint listing and gutter marker
   gutterContextMenu: {
     addConditionalBreakpoint:
       "#node-menu-add-condition, #node-menu-add-conditional-breakpoint",
     editConditionalBreakpoint:
-      "#node-menu-edit-condition, #node-menu-edit-conditional-breakpoint"
+      "#node-menu-edit-condition, #node-menu-edit-conditional-breakpoint",
+    addLogPoint: "#node-menu-add-log-point",
+    editLogPoint: "#node-menu-edit-log-point"
   },
   menuitem: i => `menupopup menuitem:nth-child(${i})`,
   pauseOnExceptions: ".pause-exceptions",
@@ -1138,6 +1139,11 @@ const selectors = {
   editorFooter: ".editor-pane .source-footer",
   sourceNode: i => `.sources-list .tree-node:nth-child(${i}) .node`,
   sourceNodes: ".sources-list .tree-node",
+  threadSourceTree: i => `.threads-list .sources-pane:nth-child(${i})`,
+  threadSourceTreeHeader: i =>
+    `${selectors.threadSourceTree(i)} .thread-header`,
+  threadSourceTreeSourceNode: (i, j) =>
+    `${selectors.threadSourceTree(i)} .tree-node:nth-child(${j}) .node`,
   sourceDirectoryLabel: i => `.sources-list .tree-node:nth-child(${i}) .label`,
   resultItems: ".result-list .result-item",
   fileMatch: ".project-text-search .line-value",
@@ -1147,11 +1153,13 @@ const selectors = {
   outlineItem: i =>
     `.outline-list__element:nth-child(${i}) .function-signature`,
   outlineItems: ".outline-list__element",
-  conditionalPanelInput: ".conditional-breakpoint-panel input",
+  conditionalPanelInput: ".conditional-breakpoint-panel textarea",
   searchField: ".search-field",
   blackbox: ".action.black-box",
   projectSearchCollapsed: ".project-text-search .arrow:not(.expanded)",
   projectSerchExpandedResults: ".project-text-search .result",
+  threadsPaneItems: `.workers-pane .worker`,
+  threadsPaneItem: i => `.workers-pane .worker:nth-child(${i})`,
   CodeMirrorLines: ".CodeMirror-lines"
 };
 
@@ -1184,6 +1192,12 @@ function findAllElements(dbg, elementName, ...args) {
 
 function findAllElementsWithSelector(dbg, selector) {
   return dbg.win.document.querySelectorAll(selector);
+}
+
+function getSourceNodeLabel(dbg, index) {
+  return findElement(dbg, "sourceNode", index)
+    .textContent.trim()
+    .replace(/^[\s\u200b]*/g, "");
 }
 
 /**
@@ -1315,7 +1329,17 @@ async function hoverAtPos(dbg, { line, ch }) {
   await waitForScrolling(cm);
 
   const coords = getCoordsFromPosition(cm, { line: line - 1, ch });
-  const tokenEl = dbg.win.document.elementFromPoint(coords.left, coords.top);
+
+  const { left, top } = coords;
+
+  // Adds a vertical offset due to increased line height
+  // https://github.com/firefox-devtools/debugger.html/pull/7934
+  const lineHeightOffset = 3;
+
+  const tokenEl = dbg.win.document.elementFromPoint(
+    left,
+    top + lineHeightOffset
+  );
 
   if (!tokenEl) {
     return false;
@@ -1505,15 +1529,15 @@ async function getDebuggerSplitConsole(dbg) {
 }
 
 async function openConsoleContextMenu(hud, element) {
-  const onConsoleMenuOpened = hud.ui.consoleOutput.once("menu-open");
+  const onConsoleMenuOpened = hud.ui.wrapper.once("menu-open");
   synthesizeContextMenuEvent(element);
   await onConsoleMenuOpened;
-  const doc = hud.ui.consoleOutput.owner.chromeWindow.document;
+  const doc = hud.ui.wrapper.owner.chromeWindow.document;
   return doc.getElementById("webconsole-menu");
 }
 
 function hideConsoleContextMenu(hud) {
-  const doc = hud.ui.consoleOutput.owner.chromeWindow.document;
+  const doc = hud.ui.wrapper.owner.chromeWindow.document;
   const popup = doc.getElementById("webconsole-menu");
   if (!popup) {
     return Promise.resolve();

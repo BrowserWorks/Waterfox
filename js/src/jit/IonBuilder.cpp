@@ -622,7 +622,7 @@ AbortReasonOr<Ok> IonBuilder::analyzeNewLoopTypes(
 
     MPhi* phi = entry->getSlot(slot)->toPhi();
 
-    if (*last == JSOP_POS) {
+    if (*last == JSOP_POS || *last == JSOP_TONUMERIC) {
       last = earlier;
     }
 
@@ -717,11 +717,9 @@ AbortReasonOr<Ok> IonBuilder::analyzeNewLoopTypes(
         case JSOP_DEC:
           type = inspector->expectedResultType(last);
           break;
-#ifdef ENABLE_BIGINT
         case JSOP_BIGINT:
           type = MIRType::BigInt;
           break;
-#endif
         default:
           break;
       }
@@ -1341,9 +1339,7 @@ AbortReasonOr<Ok> IonBuilder::addOsrValueTypeBarrier(
     case MIRType::Double:
     case MIRType::String:
     case MIRType::Symbol:
-#ifdef ENABLE_BIGINT
     case MIRType::BigInt:
-#endif
     case MIRType::Object:
       if (type != def->type()) {
         MUnbox* unbox = MUnbox::New(alloc(), def, type, MUnbox::Fallible);
@@ -1659,6 +1655,7 @@ AbortReasonOr<Ok> IonBuilder::visitBlock(const CFGBlock* cfgblock,
           break;
 
         case JSOP_POS:
+        case JSOP_TONUMERIC:
         case JSOP_TOID:
         case JSOP_TOSTRING:
           // These ops may leave their input on the stack without setting
@@ -1901,6 +1898,9 @@ AbortReasonOr<Ok> IonBuilder::inspectOpcode(JSOp op) {
     case JSOP_POS:
       return jsop_pos();
 
+    case JSOP_TONUMERIC:
+      return jsop_tonumeric();
+
     case JSOP_NEG:
       return jsop_neg();
 
@@ -1932,9 +1932,7 @@ AbortReasonOr<Ok> IonBuilder::inspectOpcode(JSOp op) {
       return jsop_compare(op);
 
     case JSOP_DOUBLE:
-#ifdef ENABLE_BIGINT
     case JSOP_BIGINT:
-#endif
       pushConstant(info().getConst(pc));
       return Ok();
 
@@ -2805,6 +2803,8 @@ AbortReasonOr<Ok> IonBuilder::improveTypesAtTypeOfCompare(MCompare* ins,
     filter.addType(TypeSet::StringType(), alloc_->lifoAlloc());
   } else if (constant->toString() == TypeName(JSTYPE_SYMBOL, names)) {
     filter.addType(TypeSet::SymbolType(), alloc_->lifoAlloc());
+  } else if (constant->toString() == TypeName(JSTYPE_BIGINT, names)) {
+    filter.addType(TypeSet::BigIntType(), alloc_->lifoAlloc());
   } else if (constant->toString() == TypeName(JSTYPE_OBJECT, names)) {
     filter.addType(TypeSet::NullType(), alloc_->lifoAlloc());
     if (trueBranch) {
@@ -3049,6 +3049,8 @@ AbortReasonOr<Ok> IonBuilder::improveTypesAtTest(MDefinition* ins,
                  alloc_->lifoAlloc());  // ToBoolean(0.0) == false
     base.addType(TypeSet::StringType(),
                  alloc_->lifoAlloc());  // ToBoolean("") == false
+    base.addType(TypeSet::BigIntType(),
+                 alloc_->lifoAlloc());  // ToBoolean(0n) == false
 
     // If the typeset does emulate undefined, then we cannot filter out
     // objects.
@@ -3357,7 +3359,7 @@ AbortReasonOr<Ok> IonBuilder::bitnotTrySpecialized(bool* emitted,
 
   if (input->mightBeType(MIRType::Object) ||
       input->mightBeType(MIRType::Symbol) ||
-      IF_BIGINT(input->mightBeType(MIRType::BigInt), false)) {
+      input->mightBeType(MIRType::BigInt)) {
     return Ok();
   }
 
@@ -3441,7 +3443,7 @@ AbortReasonOr<Ok> IonBuilder::jsop_bitop(JSOp op) {
   return Ok();
 }
 
-MDefinition::Opcode JSOpToMDefinition(JSOp op) {
+MDefinition::Opcode BinaryJSOpToMDefinition(JSOp op) {
   switch (op) {
     case JSOP_ADD:
       return MDefinition::Opcode::Add;
@@ -3549,6 +3551,36 @@ AbortReasonOr<Ok> IonBuilder::powTrySpecialized(bool* emitted,
   return Ok();
 }
 
+MIRType IonBuilder::binaryArithNumberSpecialization(MDefinition* left,
+                                                    MDefinition* right) {
+  // Try to specialize as int32.
+  if (left->type() == MIRType::Int32 && right->type() == MIRType::Int32 &&
+      !inspector->hasSeenDoubleResult(pc)) {
+    return MIRType::Int32;
+  }
+  return MIRType::Double;
+}
+
+AbortReasonOr<MBinaryArithInstruction*> IonBuilder::binaryArithEmitSpecialized(
+    MDefinition::Opcode op, MIRType specialization, MDefinition* left,
+    MDefinition* right) {
+  MBinaryArithInstruction* ins =
+      MBinaryArithInstruction::New(alloc(), op, left, right);
+  ins->setSpecialization(specialization);
+
+  if (op == MDefinition::Opcode::Add || op == MDefinition::Opcode::Mul) {
+    ins->setCommutative();
+  }
+
+  current->add(ins);
+  current->push(ins);
+
+  MOZ_ASSERT(!ins->isEffectful());
+  MOZ_TRY(maybeInsertResume());
+
+  return ins;
+}
+
 AbortReasonOr<Ok> IonBuilder::binaryArithTrySpecialized(bool* emitted, JSOp op,
                                                         MDefinition* left,
                                                         MDefinition* right) {
@@ -3571,20 +3603,18 @@ AbortReasonOr<Ok> IonBuilder::binaryArithTrySpecialized(bool* emitted, JSOp op,
     return Ok();
   }
 
-  MDefinition::Opcode defOp = JSOpToMDefinition(op);
-  MBinaryArithInstruction* ins =
-      MBinaryArithInstruction::New(alloc(), defOp, left, right);
-  ins->setNumberSpecialization(alloc(), inspector, pc);
+  MDefinition::Opcode defOp = BinaryJSOpToMDefinition(op);
+  MIRType specialization = binaryArithNumberSpecialization(left, right);
+  MBinaryArithInstruction* ins;
+  MOZ_TRY_VAR(ins,
+              binaryArithEmitSpecialized(defOp, specialization, left, right));
 
-  if (op == JSOP_ADD || op == JSOP_MUL) {
-    ins->setCommutative();
+  // Relax int32 to double if, despite the fact that we have int32 operands and
+  // we've never seen a double result, we know the result may overflow or be a
+  // double.
+  if (specialization == MIRType::Int32 && ins->constantDoubleResult(alloc())) {
+    ins->setSpecialization(MIRType::Double);
   }
-
-  current->add(ins);
-  current->push(ins);
-
-  MOZ_ASSERT(!ins->isEffectful());
-  MOZ_TRY(maybeInsertResume());
 
   trackOptimizationSuccess();
   *emitted = true;
@@ -3607,16 +3637,8 @@ AbortReasonOr<Ok> IonBuilder::binaryArithTrySpecializedOnBaselineInspector(
     return Ok();
   }
 
-  MDefinition::Opcode def_op = JSOpToMDefinition(op);
-  MBinaryArithInstruction* ins =
-      MBinaryArithInstruction::New(alloc(), def_op, left, right);
-  ins->setSpecialization(specialization);
-
-  current->add(ins);
-  current->push(ins);
-
-  MOZ_ASSERT(!ins->isEffectful());
-  MOZ_TRY(maybeInsertResume());
+  MDefinition::Opcode defOp = BinaryJSOpToMDefinition(op);
+  MOZ_TRY(binaryArithEmitSpecialized(defOp, specialization, left, right));
 
   trackOptimizationSuccess();
   *emitted = true;
@@ -3649,14 +3671,6 @@ AbortReasonOr<Ok> IonBuilder::arithTryBinaryStub(bool* emitted, JSOp op,
                         left->maybeConstantValue()->toInt32() == -1);
       MOZ_ASSERT_IF(op != JSOP_MUL, !left);
       stub = MUnaryCache::New(alloc(), right);
-      break;
-    case JSOP_INC:
-      MOZ_ASSERT(op == JSOP_ADD && right->toConstant()->toInt32() == 1);
-      stub = MUnaryCache::New(alloc(), left);
-      break;
-    case JSOP_DEC:
-      MOZ_ASSERT(op == JSOP_SUB && right->toConstant()->toInt32() == 1);
-      stub = MUnaryCache::New(alloc(), left);
       break;
     case JSOP_ADD:
     case JSOP_SUB:
@@ -3719,9 +3733,9 @@ AbortReasonOr<Ok> IonBuilder::jsop_binary_arith(JSOp op, MDefinition* left,
   trackOptimizationAttempt(TrackedStrategy::BinaryArith_Call);
   trackOptimizationSuccess();
 
-  MDefinition::Opcode def_op = JSOpToMDefinition(op);
+  MDefinition::Opcode defOp = BinaryJSOpToMDefinition(op);
   MBinaryArithInstruction* ins =
-      MBinaryArithInstruction::New(alloc(), def_op, left, right);
+      MBinaryArithInstruction::New(alloc(), defOp, left, right);
 
   // Decrease type from 'any type' to 'empty type' when one of the operands
   // is 'empty typed'.
@@ -3794,25 +3808,142 @@ AbortReasonOr<Ok> IonBuilder::jsop_neg() {
   return jsop_binary_arith(JSOP_MUL, negator, right);
 }
 
-AbortReasonOr<Ok> IonBuilder::jsop_inc_or_dec(JSOp op) {
-  // As above, pass constant without slot traffic.
-  MConstant* one = MConstant::New(alloc(), Int32Value(1));
-  current->add(one);
+AbortReasonOr<Ok> IonBuilder::jsop_tonumeric() {
+  MDefinition* peeked = current->peek(-1);
 
-  MDefinition* value = current->pop();
-
-  switch (op) {
-    case JSOP_INC:
-      op = JSOP_ADD;
-      break;
-    case JSOP_DEC:
-      op = JSOP_SUB;
-      break;
-    default:
-      MOZ_CRASH("jsop_inc_or_dec with bad op");
+  if (IsNumericType(peeked->type())) {
+    // Elide the ToNumeric as we already unboxed the value.
+    peeked->setImplicitlyUsedUnchecked();
+    return Ok();
   }
 
-  return jsop_binary_arith(op, value, one);
+  LifoAlloc* lifoAlloc = alloc().lifoAlloc();
+  TemporaryTypeSet* types = lifoAlloc->new_<TemporaryTypeSet>();
+  if (!types) {
+    return abort(AbortReason::Alloc);
+  }
+
+  types->addType(TypeSet::Int32Type(), lifoAlloc);
+  types->addType(TypeSet::DoubleType(), lifoAlloc);
+  types->addType(TypeSet::BigIntType(), lifoAlloc);
+
+  if (peeked->type() == MIRType::Value && peeked->resultTypeSet() &&
+      peeked->resultTypeSet()->isSubset(types)) {
+    // Elide the ToNumeric because the arg is already a boxed numeric.
+    peeked->setImplicitlyUsedUnchecked();
+    return Ok();
+  }
+
+  // Otherwise, pop the value and add an MToNumeric.
+  MDefinition* popped = current->pop();
+  MToNumeric* ins = MToNumeric::New(alloc(), popped, types);
+  current->add(ins);
+  current->push(ins);
+
+  // toValue() is effectful, so add a resume point.
+  return resumeAfter(ins);
+}
+
+MDefinition* IonBuilder::unaryArithConvertToBinary(JSOp op,
+                                                   MDefinition::Opcode* defOp) {
+  switch (op) {
+    case JSOP_INC: {
+      *defOp = MDefinition::Opcode::Add;
+      MConstant* right = MConstant::New(alloc(), Int32Value(1));
+      current->add(right);
+      return right;
+    }
+    case JSOP_DEC: {
+      *defOp = MDefinition::Opcode::Sub;
+      MConstant* right = MConstant::New(alloc(), Int32Value(1));
+      current->add(right);
+      return right;
+    }
+    default:
+      MOZ_CRASH("unexpected unary opcode");
+  }
+}
+
+AbortReasonOr<Ok> IonBuilder::unaryArithTrySpecialized(bool* emitted, JSOp op,
+                                                       MDefinition* value) {
+  MOZ_ASSERT(*emitted == false);
+
+  // Try to convert Inc(x) or Dec(x) to Add(x,1) or Sub(x,1) if the operand is a
+  // number.
+
+  trackOptimizationAttempt(TrackedStrategy::UnaryArith_SpecializedTypes);
+
+  if (!IsNumberType(value->type())) {
+    trackOptimizationOutcome(TrackedOutcome::OperandNotNumber);
+    return Ok();
+  }
+
+  MDefinition::Opcode defOp;
+  MDefinition* rhs = unaryArithConvertToBinary(op, &defOp);
+  MIRType specialization = binaryArithNumberSpecialization(value, rhs);
+  MOZ_TRY(binaryArithEmitSpecialized(defOp, specialization, value, rhs));
+
+  trackOptimizationSuccess();
+  *emitted = true;
+  return Ok();
+}
+
+AbortReasonOr<Ok> IonBuilder::unaryArithTrySpecializedOnBaselineInspector(
+    bool* emitted, JSOp op, MDefinition* value) {
+  MOZ_ASSERT(*emitted == false);
+
+  // Try to emit a specialized binary instruction speculating the
+  // type using the baseline caches.
+
+  trackOptimizationAttempt(
+      TrackedStrategy::UnaryArith_SpecializedOnBaselineTypes);
+
+  MIRType specialization = inspector->expectedBinaryArithSpecialization(pc);
+  if (specialization == MIRType::None) {
+    trackOptimizationOutcome(TrackedOutcome::SpeculationOnInputTypesFailed);
+    return Ok();
+  }
+
+  MDefinition::Opcode defOp;
+  MDefinition* rhs = unaryArithConvertToBinary(op, &defOp);
+  MOZ_TRY(binaryArithEmitSpecialized(defOp, specialization, value, rhs));
+
+  trackOptimizationSuccess();
+  *emitted = true;
+  return Ok();
+}
+
+AbortReasonOr<Ok> IonBuilder::jsop_inc_or_dec(JSOp op) {
+  bool emitted = false;
+  MDefinition* value = current->pop();
+
+  startTrackingOptimizations();
+
+  trackTypeInfo(TrackedTypeSite::Operand, value->type(),
+                value->resultTypeSet());
+
+  MOZ_TRY(unaryArithTrySpecialized(&emitted, op, value));
+  if (emitted) {
+    return Ok();
+  }
+
+  MOZ_TRY(unaryArithTrySpecializedOnBaselineInspector(&emitted, op, value));
+  if (emitted) {
+    return Ok();
+  }
+
+  trackOptimizationAttempt(TrackedStrategy::UnaryArith_InlineCache);
+  trackOptimizationSuccess();
+
+  MInstruction* stub = MUnaryCache::New(alloc(), value);
+  current->add(stub);
+  current->push(stub);
+
+  // Decrease type from 'any type' to 'empty type' when one of the operands
+  // is 'empty typed'.
+  maybeMarkEmpty(stub);
+
+  return resumeAfter(stub);
 }
 
 AbortReasonOr<Ok> IonBuilder::jsop_tostring() {
@@ -5141,6 +5272,9 @@ MDefinition* IonBuilder::createThisScriptedSingleton(JSFunction* target) {
   if (templateObject->staticPrototype() != proto) {
     return nullptr;
   }
+  if (templateObject->nonCCWRealm() != target->realm()) {
+    return nullptr;
+  }
 
   TypeSet::ObjectKey* templateObjectKey =
       TypeSet::ObjectKey::get(templateObject->group());
@@ -5185,6 +5319,9 @@ MDefinition* IonBuilder::createThisScriptedBaseline(MDefinition* callee) {
   }
   if (!templateObject->is<PlainObject>() &&
       !templateObject->is<UnboxedPlainObject>()) {
+    return nullptr;
+  }
+  if (templateObject->nonCCWRealm() != target->realm()) {
     return nullptr;
   }
 
@@ -5245,8 +5382,8 @@ MDefinition* IonBuilder::createThisScriptedBaseline(MDefinition* callee) {
 
 MDefinition* IonBuilder::createThis(JSFunction* target, MDefinition* callee,
                                     MDefinition* newTarget) {
-  // Create |this| for unknown target or cross-realm target.
-  if (!target || target->realm() != script()->realm()) {
+  // Create |this| for unknown target.
+  if (!target) {
     if (MDefinition* createThis = createThisScriptedBaseline(callee)) {
       return createThis;
     }
@@ -6218,7 +6355,7 @@ static bool ObjectOrSimplePrimitive(MDefinition* op) {
   // Return true if op is either undefined/null/boolean/int32/symbol or an
   // object.
   return !op->mightBeType(MIRType::String) &&
-         IF_BIGINT(!op->mightBeType(MIRType::BigInt), true) &&
+         !op->mightBeType(MIRType::BigInt) &&
          !op->mightBeType(MIRType::Double) &&
          !op->mightBeType(MIRType::Float32) &&
          !op->mightBeType(MIRType::MagicOptimizedArguments) &&
@@ -7469,11 +7606,9 @@ JSObject* IonBuilder::testSingletonPropertyTypes(MDefinition* obj, jsid id) {
       key = JSProto_Symbol;
       break;
 
-#ifdef ENABLE_BIGINT
     case MIRType::BigInt:
       key = JSProto_BigInt;
       break;
-#endif
 
     case MIRType::Int32:
     case MIRType::Double:
@@ -9076,6 +9211,45 @@ MInstruction* IonBuilder::addArrayBufferByteLength(MDefinition* obj) {
   return ins;
 }
 
+TypedArrayObject* IonBuilder::tryTypedArrayEmbedConstantElements(
+    MDefinition* obj) {
+  JSObject* object = nullptr;
+  if (MConstant* objConst = obj->maybeConstantValue()) {
+    if (objConst->type() == MIRType::Object) {
+      object = &objConst->toObject();
+    }
+  } else if (TemporaryTypeSet* types = obj->resultTypeSet()) {
+    object = types->maybeSingleton();
+  }
+  if (!object || !object->isSingleton()) {
+    return nullptr;
+  }
+
+  TypedArrayObject* tarr = &object->as<TypedArrayObject>();
+
+  // TypedArrays are only singletons when created with a (Shared)ArrayBuffer
+  // and a length greater or equal to |SINGLETON_BYTE_LENGTH|.
+  MOZ_ASSERT(tarr->hasBuffer());
+  MOZ_ASSERT(tarr->byteLength() >= TypedArrayObject::SINGLETON_BYTE_LENGTH ||
+             tarr->hasDetachedBuffer());
+
+  // TypedArrays using an ArrayBuffer don't have nursery-allocated data, see
+  // |ArrayBufferViewObject::init(...)|.
+  MOZ_ASSERT(!tarr->runtimeFromMainThread()->gc.nursery().isInside(
+      tarr->dataPointerEither()));
+
+  // The 'data' pointer of TypedArrayObject can change in rare circumstances
+  // (ArrayBufferObject::setNewData).
+  TypeSet::ObjectKey* tarrKey = TypeSet::ObjectKey::get(tarr);
+  if (tarrKey->unknownProperties()) {
+    return nullptr;
+  }
+  if (!tarr->isSharedMemory()) {
+    tarrKey->watchStateChangeForTypedArrayData(constraints());
+  }
+  return tarr;
+}
+
 void IonBuilder::addTypedArrayLengthAndData(MDefinition* obj,
                                             BoundsChecking checking,
                                             MDefinition** index,
@@ -9083,49 +9257,25 @@ void IonBuilder::addTypedArrayLengthAndData(MDefinition* obj,
                                             MInstruction** elements) {
   MOZ_ASSERT((index != nullptr) == (elements != nullptr));
 
-  JSObject* tarr = nullptr;
-
-  if (MConstant* objConst = obj->maybeConstantValue()) {
-    if (objConst->type() == MIRType::Object) {
-      tarr = &objConst->toObject();
-    }
-  } else if (TemporaryTypeSet* types = obj->resultTypeSet()) {
-    tarr = types->maybeSingleton();
-  }
-
-  if (tarr) {
-    SharedMem<void*> data = tarr->as<TypedArrayObject>().dataPointerEither();
+  if (TypedArrayObject* tarr = tryTypedArrayEmbedConstantElements(obj)) {
     // Bug 979449 - Optimistically embed the elements and use TI to
     //              invalidate if we move them.
-    bool isTenured =
-        !tarr->runtimeFromMainThread()->gc.nursery().isInside(data);
-    if (isTenured && tarr->isSingleton()) {
-      // The 'data' pointer of TypedArrayObject can change in rare circumstances
-      // (ArrayBufferObject::changeContents).
-      TypeSet::ObjectKey* tarrKey = TypeSet::ObjectKey::get(tarr);
-      if (!tarrKey->unknownProperties()) {
-        if (tarr->is<TypedArrayObject>()) {
-          tarrKey->watchStateChangeForTypedArrayData(constraints());
-        }
 
-        obj->setImplicitlyUsedUnchecked();
+    obj->setImplicitlyUsedUnchecked();
 
-        int32_t len =
-            AssertedCast<int32_t>(tarr->as<TypedArrayObject>().length());
-        *length = MConstant::New(alloc(), Int32Value(len));
-        current->add(*length);
+    int32_t len = AssertedCast<int32_t>(tarr->length());
+    *length = MConstant::New(alloc(), Int32Value(len));
+    current->add(*length);
 
-        if (index) {
-          if (checking == DoBoundsCheck) {
-            *index = addBoundsCheck(*index, *length);
-          }
-
-          *elements = MConstantElements::New(alloc(), data);
-          current->add(*elements);
-        }
-        return;
+    if (index) {
+      if (checking == DoBoundsCheck) {
+        *index = addBoundsCheck(*index, *length);
       }
+
+      *elements = MConstantElements::New(alloc(), tarr->dataPointerEither());
+      current->add(*elements);
     }
+    return;
   }
 
   *length = MTypedArrayLength::New(alloc(), obj);
@@ -9139,6 +9289,21 @@ void IonBuilder::addTypedArrayLengthAndData(MDefinition* obj,
     *elements = MTypedArrayElements::New(alloc(), obj);
     current->add(*elements);
   }
+}
+
+MInstruction* IonBuilder::addTypedArrayByteOffset(MDefinition* obj) {
+  MInstruction* byteOffset;
+  if (TypedArrayObject* tarr = tryTypedArrayEmbedConstantElements(obj)) {
+    obj->setImplicitlyUsedUnchecked();
+
+    int32_t offset = AssertedCast<int32_t>(tarr->byteOffset());
+    byteOffset = MConstant::New(alloc(), Int32Value(offset));
+  } else {
+    byteOffset = MTypedArrayByteOffset::New(alloc(), obj);
+  }
+
+  current->add(byteOffset);
+  return byteOffset;
 }
 
 AbortReasonOr<Ok> IonBuilder::jsop_getelem_typed(MDefinition* obj,
@@ -13073,16 +13238,15 @@ MDefinition* IonBuilder::walkEnvironmentChain(unsigned hops) {
 MDefinition* IonBuilder::getAliasedVar(EnvironmentCoordinate ec) {
   MDefinition* obj = walkEnvironmentChain(ec.hops());
 
-  Shape* shape = EnvironmentCoordinateToEnvironmentShape(script(), pc);
-
   MInstruction* load;
-  if (shape->numFixedSlots() <= ec.slot()) {
+  if (EnvironmentObject::nonExtensibleIsFixedSlot(ec)) {
+    load = MLoadFixedSlot::New(alloc(), obj, ec.slot());
+  } else {
     MInstruction* slots = MSlots::New(alloc(), obj);
     current->add(slots);
 
-    load = MLoadSlot::New(alloc(), slots, ec.slot() - shape->numFixedSlots());
-  } else {
-    load = MLoadFixedSlot::New(alloc(), obj, ec.slot());
+    uint32_t slot = EnvironmentObject::nonExtensibleDynamicSlotIndex(ec);
+    load = MLoadSlot::New(alloc(), slots, slot);
   }
 
   current->add(load);
@@ -13105,21 +13269,19 @@ AbortReasonOr<Ok> IonBuilder::jsop_setaliasedvar(EnvironmentCoordinate ec) {
   MDefinition* rval = current->peek(-1);
   MDefinition* obj = walkEnvironmentChain(ec.hops());
 
-  Shape* shape = EnvironmentCoordinateToEnvironmentShape(script(), pc);
-
   if (needsPostBarrier(rval)) {
     current->add(MPostWriteBarrier::New(alloc(), obj, rval));
   }
 
   MInstruction* store;
-  if (shape->numFixedSlots() <= ec.slot()) {
+  if (EnvironmentObject::nonExtensibleIsFixedSlot(ec)) {
+    store = MStoreFixedSlot::NewBarriered(alloc(), obj, ec.slot(), rval);
+  } else {
     MInstruction* slots = MSlots::New(alloc(), obj);
     current->add(slots);
 
-    store = MStoreSlot::NewBarriered(alloc(), slots,
-                                     ec.slot() - shape->numFixedSlots(), rval);
-  } else {
-    store = MStoreFixedSlot::NewBarriered(alloc(), obj, ec.slot(), rval);
+    uint32_t slot = EnvironmentObject::nonExtensibleDynamicSlotIndex(ec);
+    store = MStoreSlot::NewBarriered(alloc(), slots, slot, rval);
   }
 
   current->add(store);

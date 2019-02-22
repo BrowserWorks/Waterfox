@@ -11,17 +11,16 @@
 <dialog id="exceptiondialog"
         windowtype="mozilla:exceptiondialog"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        xmlns:html="http://www.w3.org/1999/xhtml"
         data-l10n-id="exception-mgr"
         buttonidextra1="exception-mgr-extra-button"
         buttons="cancel,extra1,extra2"
         onload="initExceptionDialog();"
-        ondialogextra1="addException();"
-        ondialogextra2="checkCert();"
         defaultButton="extra2">
 
   <linkset>
-    <link rel="localization" href="branding/brand.ftl"/>
-    <link rel="localization" href="security/certificates/certManager.ftl"/>
+    <html:link rel="localization" href="branding/brand.ftl"/>
+    <html:link rel="localization" href="security/certificates/certManager.ftl"/>
   </linkset>
 
   <script type="application/javascript"

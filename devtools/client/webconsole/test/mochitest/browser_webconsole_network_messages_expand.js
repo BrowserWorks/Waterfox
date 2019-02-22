@@ -115,7 +115,7 @@ async function openRequestBeforeUpdates(target, hud, tab) {
   ok(messageNode, "Network message found.");
 
   // Set the default panel.
-  const state = hud.ui.consoleOutput.getStore().getState();
+  const state = hud.ui.wrapper.getStore().getState();
   state.ui.networkMessageActiveTabId = tab.id;
 
   // Expand network log
@@ -323,7 +323,7 @@ function expandXhrMessage(node) {
  */
 async function waitForLazyRequests(toolbox) {
   const {ui} = toolbox.getCurrentPanel().hud;
-  const proxy = ui.jsterm.hud.proxy;
+  const proxy = ui.proxy;
   return waitUntil(() => {
     return !proxy.networkDataProvider.lazyRequestData.size;
   });

@@ -23,7 +23,6 @@
 #include "nsNetUtil.h"
 #include "nsNetCID.h"
 #include "nsCRT.h"
-#include "nsSecCheckWrapChannel.h"
 #include "nsSimpleNestedURI.h"
 #include "nsTArray.h"
 #include "nsIConsoleService.h"
@@ -837,18 +836,18 @@ nsIOService::NewFileURI(nsIFile *file, nsIURI **result) {
 }
 
 NS_IMETHODIMP
-nsIOService::NewChannelFromURI2(nsIURI *aURI, nsINode *aLoadingNode,
-                                nsIPrincipal *aLoadingPrincipal,
-                                nsIPrincipal *aTriggeringPrincipal,
-                                uint32_t aSecurityFlags,
-                                uint32_t aContentPolicyType,
-                                nsIChannel **result) {
-  return NewChannelFromURIWithProxyFlags2(aURI,
-                                          nullptr,  // aProxyURI
-                                          0,        // aProxyFlags
-                                          aLoadingNode, aLoadingPrincipal,
-                                          aTriggeringPrincipal, aSecurityFlags,
-                                          aContentPolicyType, result);
+nsIOService::NewChannelFromURI(nsIURI *aURI, nsINode *aLoadingNode,
+                               nsIPrincipal *aLoadingPrincipal,
+                               nsIPrincipal *aTriggeringPrincipal,
+                               uint32_t aSecurityFlags,
+                               uint32_t aContentPolicyType,
+                               nsIChannel **result) {
+  return NewChannelFromURIWithProxyFlags(aURI,
+                                         nullptr,  // aProxyURI
+                                         0,        // aProxyFlags
+                                         aLoadingNode, aLoadingPrincipal,
+                                         aTriggeringPrincipal, aSecurityFlags,
+                                         aContentPolicyType, result);
 }
 nsresult nsIOService::NewChannelFromURIWithClientAndController(
     nsIURI *aURI, nsINode *aLoadingNode, nsIPrincipal *aLoadingPrincipal,
@@ -899,7 +898,7 @@ nsresult nsIOService::NewChannelFromURIWithProxyFlagsInternal(
                             aLoadingNode, aSecurityFlags, aContentPolicyType,
                             aLoadingClientInfo, aController);
   }
-  NS_ASSERTION(loadInfo, "Please pass security info when creating a channel");
+  MOZ_ASSERT(loadInfo, "Please pass security info when creating a channel");
   return NewChannelFromURIWithProxyFlagsInternal(aURI, aProxyURI, aProxyFlags,
                                                  loadInfo, result);
 }
@@ -922,58 +921,21 @@ nsresult nsIOService::NewChannelFromURIWithProxyFlagsInternal(
   rv = handler->DoGetProtocolFlags(aURI, &protoFlags);
   if (NS_FAILED(rv)) return rv;
 
-  // Ideally we are creating new channels by calling NewChannel2
-  // (NewProxiedChannel2). Keep in mind that Addons can implement their own
-  // Protocolhandlers, hence NewChannel2() might *not* be implemented. We do not
-  // want to break those addons, therefore we first try to create a channel
-  // calling NewChannel2(); if that fails:
-  // * we fall back to creating a channel by calling NewChannel()
-  // * wrap the addon channel
-  // * and attach the loadInfo to the channel wrapper
   nsCOMPtr<nsIChannel> channel;
   nsCOMPtr<nsIProxiedProtocolHandler> pph = do_QueryInterface(handler);
   if (pph) {
-    rv = pph->NewProxiedChannel2(aURI, nullptr, aProxyFlags, aProxyURI,
-                                 aLoadInfo, getter_AddRefs(channel));
-    // if calling NewProxiedChannel2() fails we try to fall back to
-    // creating a new proxied channel by calling NewProxiedChannel().
-    if (NS_FAILED(rv)) {
-      rv = pph->NewProxiedChannel(aURI, nullptr, aProxyFlags, aProxyURI,
-                                  getter_AddRefs(channel));
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      // The protocol handler does not implement NewProxiedChannel2, so
-      // maybe we need to wrap the channel (see comment in MaybeWrap
-      // function).
-      channel = nsSecCheckWrapChannel::MaybeWrap(channel, aLoadInfo);
-    }
+    rv = pph->NewProxiedChannel(aURI, nullptr, aProxyFlags, aProxyURI,
+                                aLoadInfo, getter_AddRefs(channel));
   } else {
-    rv = handler->NewChannel2(aURI, aLoadInfo, getter_AddRefs(channel));
-    // if an implementation of NewChannel2() is missing we try to fall back to
-    // creating a new channel by calling NewChannel().
-    if (rv == NS_ERROR_NOT_IMPLEMENTED ||
-        rv == NS_ERROR_XPC_JSOBJECT_HAS_NO_FUNCTION_NAMED) {
-      LOG(("NewChannel2 not implemented rv=%" PRIx32
-           ". Falling back to NewChannel\n",
-           static_cast<uint32_t>(rv)));
-      rv = handler->NewChannel(aURI, getter_AddRefs(channel));
-      if (NS_FAILED(rv)) {
-        return rv;
-      }
-      // The protocol handler does not implement NewChannel2, so
-      // maybe we need to wrap the channel (see comment in MaybeWrap
-      // function).
-      channel = nsSecCheckWrapChannel::MaybeWrap(channel, aLoadInfo);
-    } else if (NS_FAILED(rv)) {
-      return rv;
-    }
+    rv = handler->NewChannel(aURI, aLoadInfo, getter_AddRefs(channel));
   }
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // Make sure that all the individual protocolhandlers attach a loadInfo.
   if (aLoadInfo) {
     // make sure we have the same instance of loadInfo on the newly created
     // channel
-    nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
+    nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
     if (aLoadInfo != loadInfo) {
       MOZ_ASSERT(false, "newly created channel must have a loadinfo attached");
       return NS_ERROR_UNEXPECTED;
@@ -1014,7 +976,7 @@ nsresult nsIOService::NewChannelFromURIWithProxyFlagsInternal(
 }
 
 NS_IMETHODIMP
-nsIOService::NewChannelFromURIWithProxyFlags2(
+nsIOService::NewChannelFromURIWithProxyFlags(
     nsIURI *aURI, nsIURI *aProxyURI, uint32_t aProxyFlags,
     nsINode *aLoadingNode, nsIPrincipal *aLoadingPrincipal,
     nsIPrincipal *aTriggeringPrincipal, uint32_t aSecurityFlags,
@@ -1027,20 +989,20 @@ nsIOService::NewChannelFromURIWithProxyFlags2(
 }
 
 NS_IMETHODIMP
-nsIOService::NewChannel2(const nsACString &aSpec, const char *aCharset,
-                         nsIURI *aBaseURI, nsINode *aLoadingNode,
-                         nsIPrincipal *aLoadingPrincipal,
-                         nsIPrincipal *aTriggeringPrincipal,
-                         uint32_t aSecurityFlags, uint32_t aContentPolicyType,
-                         nsIChannel **result) {
+nsIOService::NewChannel(const nsACString &aSpec, const char *aCharset,
+                        nsIURI *aBaseURI, nsINode *aLoadingNode,
+                        nsIPrincipal *aLoadingPrincipal,
+                        nsIPrincipal *aTriggeringPrincipal,
+                        uint32_t aSecurityFlags, uint32_t aContentPolicyType,
+                        nsIChannel **result) {
   nsresult rv;
   nsCOMPtr<nsIURI> uri;
   rv = NewURI(aSpec, aCharset, aBaseURI, getter_AddRefs(uri));
   if (NS_FAILED(rv)) return rv;
 
-  return NewChannelFromURI2(uri, aLoadingNode, aLoadingPrincipal,
-                            aTriggeringPrincipal, aSecurityFlags,
-                            aContentPolicyType, result);
+  return NewChannelFromURI(uri, aLoadingNode, aLoadingPrincipal,
+                           aTriggeringPrincipal, aSecurityFlags,
+                           aContentPolicyType, result);
 }
 
 bool nsIOService::IsLinkUp() {
@@ -1747,11 +1709,8 @@ IOServiceProxyCallback::OnProxyAvailable(nsICancelable *request,
       do_QueryInterface(handler);
   if (!speculativeHandler) return NS_OK;
 
-  nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
-  nsCOMPtr<nsIPrincipal> principal;
-  if (loadInfo) {
-    principal = loadInfo->LoadingPrincipal();
-  }
+  nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+  nsCOMPtr<nsIPrincipal> principal = loadInfo->LoadingPrincipal();
 
   nsLoadFlags loadFlags = 0;
   channel->GetLoadFlags(&loadFlags);
@@ -1804,13 +1763,13 @@ nsresult nsIOService::SpeculativeConnectInternal(
   // channel we create underneath - hence it's safe to use
   // the systemPrincipal as the loadingPrincipal for this channel.
   nsCOMPtr<nsIChannel> channel;
-  rv = NewChannelFromURI2(aURI,
-                          nullptr,  // aLoadingNode,
-                          loadingPrincipal,
-                          nullptr,  // aTriggeringPrincipal,
-                          nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-                          nsIContentPolicy::TYPE_SPECULATIVE,
-                          getter_AddRefs(channel));
+  rv = NewChannelFromURI(aURI,
+                         nullptr,  // aLoadingNode,
+                         loadingPrincipal,
+                         nullptr,  // aTriggeringPrincipal,
+                         nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                         nsIContentPolicy::TYPE_SPECULATIVE,
+                         getter_AddRefs(channel));
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (aAnonymous) {

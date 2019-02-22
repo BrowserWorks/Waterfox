@@ -338,7 +338,7 @@ nsresult nsComponentManagerImpl::Create(nsISupports* aOuter, REFNSIID aIID,
   return gComponentManager->QueryInterface(aIID, aResult);
 }
 
-static const int CONTRACTID_HASHTABLE_INITIAL_LENGTH = 256;
+static const int CONTRACTID_HASHTABLE_INITIAL_LENGTH = 32;
 
 nsComponentManagerImpl::nsComponentManagerImpl()
     : mFactories(CONTRACTID_HASHTABLE_INITIAL_LENGTH),
@@ -530,6 +530,8 @@ nsresult nsComponentManagerImpl::Init() {
     // This needs to be called very early, before anything in nsLayoutModule is
     // used, and before any calls are made into the JS engine.
     nsLayoutModuleInitialize();
+
+    mJSLoaderReady = true;
 
     // The overall order in which chrome.manifests are expected to be treated
     // is the following:
@@ -1594,10 +1596,13 @@ nsComponentManagerImpl::RegisterFactory(const nsCID& aClass, const char* aName,
       return NS_ERROR_INVALID_ARG;
     }
 
+    nsDependentCString contractID(aContractID);
+
     SafeMutexAutoLock lock(mLock);
     nsFactoryEntry* oldf = mFactories.Get(&aClass);
     if (oldf) {
-      mContractIDs.Put(nsDependentCString(aContractID), oldf);
+      StaticComponents::InvalidateContractID(contractID);
+      mContractIDs.Put(contractID, oldf);
       return NS_OK;
     }
 
@@ -1605,7 +1610,6 @@ nsComponentManagerImpl::RegisterFactory(const nsCID& aClass, const char* aName,
       // If this is the CID of a static module, just reset the invalid bit of
       // the static entry for this contract ID, and assume it points to the
       // correct class.
-      nsDependentCString contractID(aContractID);
       if (StaticComponents::InvalidateContractID(contractID, false)) {
         mContractIDs.Remove(contractID);
         return NS_OK;
@@ -1962,6 +1966,8 @@ XRE_AddStaticComponent(const mozilla::Module* aComponent) {
 
 NS_IMETHODIMP
 nsComponentManagerImpl::AddBootstrappedManifestLocation(nsIFile* aLocation) {
+  NS_ENSURE_ARG_POINTER(aLocation);
+
   nsString path;
   nsresult rv = aLocation->GetPath(path);
   if (NS_FAILED(rv)) {
@@ -1979,6 +1985,8 @@ nsComponentManagerImpl::AddBootstrappedManifestLocation(nsIFile* aLocation) {
 
 NS_IMETHODIMP
 nsComponentManagerImpl::RemoveBootstrappedManifestLocation(nsIFile* aLocation) {
+  NS_ENSURE_ARG_POINTER(aLocation);
+
   nsCOMPtr<nsIChromeRegistry> cr =
       mozilla::services::GetChromeRegistryService();
   if (!cr) {
@@ -2008,6 +2016,14 @@ nsComponentManagerImpl::RemoveBootstrappedManifestLocation(nsIFile* aLocation) {
 
   rv = cr->CheckForNewChrome();
   return rv;
+}
+
+NS_IMETHODIMP
+nsComponentManagerImpl::GetComponentJSMs(nsIUTF8StringEnumerator** aJSMs) {
+  nsCOMPtr<nsIUTF8StringEnumerator> result =
+      StaticComponents::GetComponentJSMs();
+  result.forget(aJSMs);
+  return NS_OK;
 }
 
 NS_IMETHODIMP

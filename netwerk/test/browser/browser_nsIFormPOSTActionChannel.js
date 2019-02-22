@@ -37,11 +37,8 @@ CustomProtocolHandler.prototype = {
              .setSpec(aSpec)
              .finalize()
   },
-  newChannel2: function(aURI, aLoadInfo) {
+  newChannel: function(aURI, aLoadInfo) {
     return new CustomChannel(aURI, aLoadInfo);
-  },
-  newChannel: function(aURI) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
   allowPort: function(port, scheme) {
     return port != -1;
@@ -115,10 +112,7 @@ CustomChannel.prototype = {
   open: function() {
     throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
-  open2: function() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-  },
-  asyncOpen: function(aListener, aContext) {
+  asyncOpen: function(aListener) {
     var data = `
 <!DOCTYPE html>
 <html>
@@ -179,20 +173,17 @@ document.getElementById('form').submit();
     var runnable = {
       run: () => {
         try {
-          aListener.onStartRequest(this, aContext);
+          aListener.onStartRequest(this, null);
         } catch(e) {}
         try {
-          aListener.onDataAvailable(this, aContext, stream, 0, stream.available());
+          aListener.onDataAvailable(this, null, stream, 0, stream.available());
         } catch(e) {}
         try {
-          aListener.onStopRequest(this, aContext, Cr.NS_OK);
+          aListener.onStopRequest(this, null, Cr.NS_OK);
         } catch(e) {}
       }
     };
     Services.tm.dispatchToMainThread(runnable);
-  },
-  asyncOpen2: function(aListener) {
-    this.asyncOpen(aListener, null);
   },
 
   /** nsIRequest */

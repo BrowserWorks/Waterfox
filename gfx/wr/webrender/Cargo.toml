@@ -1,6 +1,6 @@
 [package]
 name = "webrender"
-version = "0.59.0"
+version = "0.60.0"
 authors = ["Glenn Watson <gw@intuitionlibrary.com>"]
 license = "MPL-2.0"
 repository = "https://github.com/servo/webrender"
@@ -12,7 +12,7 @@ default = ["freetype-lib"]
 freetype-lib = ["freetype/servo-freetype-sys"]
 profiler = ["thread_profiler/thread_profiler"]
 debugger = ["ws", "serde_json", "serde", "image", "base64"]
-capture = ["webrender_api/serialize", "ron", "serde"]
+capture = ["webrender_api/serialize", "ron", "serde", "smallvec/serde"]
 replay = ["webrender_api/deserialize", "ron", "serde"]
 pathfinder = ["pathfinder_font_renderer", "pathfinder_gfx_utils", "pathfinder_partitioner", "pathfinder_path_utils"]
 serialize_program = ["serde", "webrender_build/serialize_program"]
@@ -28,6 +28,7 @@ bincode = "1.0"
 bitflags = "1.0"
 byteorder = "1.0"
 cfg-if = "0.1.2"
+cstr = "0.1.2"
 fxhash = "0.2.1"
 gleam = "0.6.8"
 image = { optional = true, version = "0.21" }
@@ -45,7 +46,7 @@ sha2 = "0.8"
 smallvec = "0.6"
 thread_profiler = "0.1.1"
 time = "0.1"
-webrender_api = { version = "0.58.0", path = "../webrender_api" }
+webrender_api = { version = "0.60.0", path = "../webrender_api" }
 webrender_build = { version = "0.0.1", path = "../webrender_build" }
 wr_malloc_size_of = { version = "0.0.1", path = "../wr_malloc_size_of" }
 ws = { optional = true, version = "0.7.3" }

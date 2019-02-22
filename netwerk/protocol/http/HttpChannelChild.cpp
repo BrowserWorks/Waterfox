@@ -589,7 +589,7 @@ void HttpChannelChild::OnStartRequest(
 
   mTransactionTimings = aTiming;
 
-  DoOnStartRequest(this, mListenerContext);
+  DoOnStartRequest(this, nullptr);
 }
 
 class SyntheticDiversionListener final : public nsIStreamListener {
@@ -669,7 +669,6 @@ void HttpChannelChild::DoOnStartRequest(nsIRequest* aRequest,
 
   if (mDivertingToParent) {
     mListener = nullptr;
-    mListenerContext = nullptr;
     mCompressListener = nullptr;
     if (mLoadGroup) {
       mLoadGroup->RemoveRequest(this, nullptr, mStatus);
@@ -687,8 +686,7 @@ void HttpChannelChild::DoOnStartRequest(nsIRequest* aRequest,
   }
 
   nsCOMPtr<nsIStreamListener> listener;
-  rv = DoApplyContentConversions(mListener, getter_AddRefs(listener),
-                                 mListenerContext);
+  rv = DoApplyContentConversions(mListener, getter_AddRefs(listener), nullptr);
   if (NS_FAILED(rv)) {
     Cancel(rv);
   } else if (listener) {
@@ -851,7 +849,7 @@ void HttpChannelChild::OnTransportAndData(const nsresult& channelStatus,
     return;
   }
 
-  DoOnDataAvailable(this, mListenerContext, stringStream, offset, count);
+  DoOnDataAvailable(this, nullptr, stringStream, offset, count);
   stringStream->Close();
 
   if (NeedToReportBytesRead()) {
@@ -1100,7 +1098,7 @@ void HttpChannelChild::OnStopRequest(
     // so make sure this goes out of scope before then.
     AutoEventEnqueuer ensureSerialDispatch(mEventQ);
 
-    DoOnStopRequest(this, channelStatus, mListenerContext);
+    DoOnStopRequest(this, channelStatus, nullptr);
     // DoOnStopRequest() calls ReleaseListeners()
   }
 
@@ -1510,12 +1508,9 @@ void HttpChannelChild::DeleteSelf() { Send__delete__(this); }
 
 void HttpChannelChild::FinishInterceptedRedirect() {
   nsresult rv;
-  if (mLoadInfo && mLoadInfo->GetEnforceSecurity()) {
-    MOZ_ASSERT(!mInterceptedRedirectContext, "the context should be null!");
-    rv = AsyncOpen2(mInterceptedRedirectListener);
-  } else {
-    rv = AsyncOpen(mInterceptedRedirectListener, mInterceptedRedirectContext);
-  }
+  MOZ_ASSERT(!mInterceptedRedirectContext, "the context should be null!");
+  rv = AsyncOpen(mInterceptedRedirectListener);
+
   mInterceptedRedirectListener = nullptr;
   mInterceptedRedirectContext = nullptr;
 
@@ -1945,8 +1940,7 @@ bool HttpChannelChild::Redirect3Complete(OverrideRunnable* aRunnable) {
       httpChannelChild->mOverrideRunnable = aRunnable;
       httpChannelChild->mInterceptingChannel = this;
     }
-    rv = mRedirectChannelChild->CompleteRedirectSetup(mListener,
-                                                      mListenerContext);
+    rv = mRedirectChannelChild->CompleteRedirectSetup(mListener, nullptr);
   }
 
   if (!httpChannelChild || !httpChannelChild->mShouldParentIntercept) {
@@ -2119,7 +2113,6 @@ HttpChannelChild::CompleteRedirectSetup(nsIStreamListener* listener,
   mIsPending = true;
   mWasOpened = true;
   mListener = listener;
-  mListenerContext = aContext;
 
   // add ourselves to the load group.
   if (mLoadGroup) mLoadGroup->AddRequest(this, nullptr);
@@ -2181,7 +2174,7 @@ HttpChannelChild::OnRedirectVerifyCallback(nsresult result) {
     // nsIHttpChannelChild (it could be a DataChannelChild).
 
     RefPtr<InterceptStreamListener> streamListener =
-        new InterceptStreamListener(redirectedChannel, mListenerContext);
+        new InterceptStreamListener(redirectedChannel, nullptr);
 
     nsCOMPtr<nsIEventTarget> neckoTarget = GetNeckoTarget();
     MOZ_ASSERT(neckoTarget);
@@ -2388,15 +2381,22 @@ HttpChannelChild::GetSecurityInfo(nsISupports** aSecurityInfo) {
 }
 
 NS_IMETHODIMP
-HttpChannelChild::AsyncOpen(nsIStreamListener* listener,
-                            nsISupports* aContext) {
+HttpChannelChild::AsyncOpen(nsIStreamListener* aListener) {
+  nsCOMPtr<nsIStreamListener> listener = aListener;
+  nsresult rv =
+      nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    ReleaseListeners();
+    return rv;
+  }
+
   MOZ_ASSERT(
       !mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
           mLoadInfo->GetInitialSecurityCheckDone() ||
           (mLoadInfo->GetSecurityMode() ==
                nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL &&
            nsContentUtils::IsSystemPrincipal(mLoadInfo->LoadingPrincipal())),
-      "security flags in loadInfo but asyncOpen2() not called");
+      "security flags in loadInfo but doContentSecurityCheck() not called");
 
   LOG(("HttpChannelChild::AsyncOpen [this=%p uri=%s]\n", this, mSpec.get()));
   LogCallingScriptLocation(this);
@@ -2419,7 +2419,7 @@ HttpChannelChild::AsyncOpen(nsIStreamListener* listener,
   NS_ENSURE_TRUE(!mIsPending, NS_ERROR_IN_PROGRESS);
   NS_ENSURE_TRUE(!mWasOpened, NS_ERROR_ALREADY_OPENED);
 
-  if (MaybeWaitForUploadStreamLength(listener, aContext)) {
+  if (MaybeWaitForUploadStreamLength(listener, nullptr)) {
     return NS_OK;
   }
 
@@ -2439,7 +2439,6 @@ HttpChannelChild::AsyncOpen(nsIStreamListener* listener,
 
   // Port checked in parent, but duplicate here so we can return with error
   // immediately
-  nsresult rv;
   rv = NS_CheckPortSafety(mURI);
   if (NS_FAILED(rv)) {
     ReleaseListeners();
@@ -2474,7 +2473,6 @@ HttpChannelChild::AsyncOpen(nsIStreamListener* listener,
   mIsPending = true;
   mWasOpened = true;
   mListener = listener;
-  mListenerContext = aContext;
 
   // add ourselves to the load group.
   if (mLoadGroup) mLoadGroup->AddRequest(this, nullptr);
@@ -2511,8 +2509,7 @@ HttpChannelChild::AsyncOpen(nsIStreamListener* listener,
       nsCOMPtr<nsINetworkInterceptController> controller;
       self->GetCallback(controller);
 
-      self->mInterceptListener =
-          new InterceptStreamListener(self, self->mListenerContext);
+      self->mInterceptListener = new InterceptStreamListener(self, nullptr);
 
       RefPtr<InterceptedChannelContent> intercepted =
           new InterceptedChannelContent(
@@ -2537,18 +2534,6 @@ HttpChannelChild::AsyncOpen(nsIStreamListener* listener,
   }
 
   return ContinueAsyncOpen();
-}
-
-NS_IMETHODIMP
-HttpChannelChild::AsyncOpen2(nsIStreamListener* aListener) {
-  nsCOMPtr<nsIStreamListener> listener = aListener;
-  nsresult rv =
-      nsContentSecurityManager::doContentSecurityCheck(this, listener);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    ReleaseListeners();
-    return rv;
-  }
-  return AsyncOpen(listener, nullptr);
 }
 
 // Assigns an nsIEventTarget to our IPDL actor so that IPC messages are sent to
@@ -2599,6 +2584,7 @@ already_AddRefed<nsIEventTarget> HttpChannelChild::GetODATarget() {
 }
 
 nsresult HttpChannelChild::ContinueAsyncOpen() {
+  nsresult rv;
   nsCString appCacheClientId;
   if (mInheritApplicationCache) {
     // Pick up an application cache from the notification
@@ -2693,6 +2679,11 @@ nsresult HttpChannelChild::ContinueAsyncOpen() {
 
   SerializeURI(mTopWindowURI, openArgs.topWindowURI());
 
+  if (!mTopWindowPrincipal) {
+    GetTopWindowPrincipal(getter_AddRefs(mTopWindowPrincipal));
+  }
+  openArgs.topWindowPrincipal() = mTopWindowPrincipal;
+
   openArgs.preflightArgs() = optionalCorsPreflightArgs;
 
   openArgs.uploadStreamHasHeaders() = mUploadStreamHasHeaders;
@@ -2720,8 +2711,7 @@ nsresult HttpChannelChild::ContinueAsyncOpen() {
 
   openArgs.contentTypeHint() = mContentTypeHint;
 
-  nsresult rv =
-      mozilla::ipc::LoadInfoToLoadInfoArgs(mLoadInfo, &openArgs.loadInfo());
+  rv = mozilla::ipc::LoadInfoToLoadInfoArgs(mLoadInfo, &openArgs.loadInfo());
   NS_ENSURE_SUCCESS(rv, rv);
 
   EnsureRequestContextID();
@@ -3039,20 +3029,21 @@ HttpChannelChild::GetAllowStaleCacheContent(bool* aAllowStaleCacheContent) {
 
 NS_IMETHODIMP
 HttpChannelChild::PreferAlternativeDataType(const nsACString& aType,
-                                            const nsACString& aContentType) {
+                                            const nsACString& aContentType,
+                                            bool aDeliverAltData) {
   ENSURE_CALLED_BEFORE_ASYNC_OPEN();
 
   if (mSynthesizedCacheInfo) {
-    return mSynthesizedCacheInfo->PreferAlternativeDataType(aType,
-                                                            aContentType);
+    return mSynthesizedCacheInfo->PreferAlternativeDataType(aType, aContentType,
+                                                            aDeliverAltData);
   }
 
-  mPreferredCachedAltDataTypes.AppendElement(
-      MakePair(nsCString(aType), nsCString(aContentType)));
+  mPreferredCachedAltDataTypes.AppendElement(PreferredAlternativeDataTypeParams(
+      nsCString(aType), nsCString(aContentType), aDeliverAltData));
   return NS_OK;
 }
 
-const nsTArray<mozilla::Tuple<nsCString, nsCString>>&
+const nsTArray<PreferredAlternativeDataTypeParams>&
 HttpChannelChild::PreferredAlternativeDataTypes() {
   return mPreferredCachedAltDataTypes;
 }
@@ -3117,8 +3108,25 @@ HttpChannelChild::GetOriginalInputStream(nsIInputStreamReceiver* aReceiver) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  mInputStreamReceiver = aReceiver;
+  mOriginalInputStreamReceiver = aReceiver;
   Unused << SendOpenOriginalCacheInputStream();
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpChannelChild::GetAltDataInputStream(const nsACString& aType,
+                                        nsIInputStreamReceiver* aReceiver) {
+  if (aReceiver == nullptr) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  if (!mIPCOpen) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  mAltDataInputStreamReceiver = aReceiver;
+  Unused << SendOpenAltDataCacheInputStream(nsCString(aType));
 
   return NS_OK;
 }
@@ -3127,7 +3135,19 @@ mozilla::ipc::IPCResult HttpChannelChild::RecvOriginalCacheInputStreamAvailable(
     const OptionalIPCStream& aStream) {
   nsCOMPtr<nsIInputStream> stream = DeserializeIPCStream(aStream);
   nsCOMPtr<nsIInputStreamReceiver> receiver;
-  receiver.swap(mInputStreamReceiver);
+  receiver.swap(mOriginalInputStreamReceiver);
+  if (receiver) {
+    receiver->OnInputStreamReady(stream);
+  }
+
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult HttpChannelChild::RecvAltDataCacheInputStreamAvailable(
+    const OptionalIPCStream& aStream) {
+  nsCOMPtr<nsIInputStream> stream = DeserializeIPCStream(aStream);
+  nsCOMPtr<nsIInputStreamReceiver> receiver;
+  receiver.swap(mAltDataInputStreamReceiver);
   if (receiver) {
     receiver->OnInputStreamReady(stream);
   }

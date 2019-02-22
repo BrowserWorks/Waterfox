@@ -160,6 +160,7 @@ js::NativeObject::updateDictionaryListPointerAfterMinorGC(NativeObject* old) {
 inline void JSObject::setGroup(js::ObjectGroup* group) {
   MOZ_RELEASE_ASSERT(group);
   MOZ_ASSERT(!isSingleton());
+  MOZ_ASSERT(compartment() == group->compartment());
   group_ = group;
 }
 
@@ -622,7 +623,7 @@ inline bool IsConstructor(const Value& v) {
   return v.isObject() && v.toObject().isConstructor();
 }
 
-MOZ_ALWAYS_INLINE bool CreateThis(JSContext* cx, HandleObject callee,
+MOZ_ALWAYS_INLINE bool CreateThis(JSContext* cx, HandleFunction callee,
                                   JSScript* calleeScript,
                                   HandleObject newTarget, NewObjectKind newKind,
                                   MutableHandleValue thisv) {
@@ -644,6 +645,7 @@ MOZ_ALWAYS_INLINE bool CreateThis(JSContext* cx, HandleObject callee,
     return false;
   }
 
+  MOZ_ASSERT(obj->nonCCWRealm() == callee->realm());
   thisv.setObject(*obj);
   return true;
 }

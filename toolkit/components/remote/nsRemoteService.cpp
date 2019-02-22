@@ -19,7 +19,6 @@
 #include "nsIAppShellService.h"
 #include "nsAppShellCID.h"
 #include "nsInterfaceHashtable.h"
-#include "mozilla/ModuleUtils.h"
 #include "nsGTKToolkit.h"
 #include "nsICommandLineRunner.h"
 #include "nsCommandLine.h"
@@ -56,15 +55,6 @@ nsRemoteService::Startup(const char* aAppName, const char* aProfileName) {
     obs->AddObserver(this, "quit-application", false);
   }
 
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsRemoteService::RegisterWindow(mozIDOMWindow* aWindow) {
-  // Note: RegisterWindow() is not implemented/needed by DBus service.
-  if (mGtkRemoteService) {
-    mGtkRemoteService->RegisterWindow(aWindow);
-  }
   return NS_OK;
 }
 
@@ -140,7 +130,6 @@ static bool FindExtensionParameterInCommand(const char* aParameterName,
 }
 
 const char* nsRemoteService::HandleCommandLine(const char* aBuffer,
-                                               nsIDOMWindow* aWindow,
                                                uint32_t aTimestamp) {
   nsCOMPtr<nsICommandLineRunner> cmdline(new nsCommandLine());
 
@@ -182,8 +171,6 @@ const char* nsRemoteService::HandleCommandLine(const char* aBuffer,
     return "509 internal error";
   }
 
-  if (aWindow) cmdline->SetWindowContext(aWindow);
-
   SetDesktopStartupIDOrTimestamp(desktopStartupID, aTimestamp);
 
   rv = cmdline->Run();
@@ -194,27 +181,3 @@ const char* nsRemoteService::HandleCommandLine(const char* aBuffer,
 
   return "200 executed command";
 }
-
-// {C0773E90-5799-4eff-AD03-3EBCD85624AC}
-#define NS_REMOTESERVICE_CID                        \
-  {                                                 \
-    0xc0773e90, 0x5799, 0x4eff, {                   \
-      0xad, 0x3, 0x3e, 0xbc, 0xd8, 0x56, 0x24, 0xac \
-    }                                               \
-  }
-
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsRemoteService)
-NS_DEFINE_NAMED_CID(NS_REMOTESERVICE_CID);
-
-static const mozilla::Module::CIDEntry kRemoteCIDs[] = {
-    {&kNS_REMOTESERVICE_CID, false, nullptr, nsRemoteServiceConstructor},
-    {nullptr}};
-
-static const mozilla::Module::ContractIDEntry kRemoteContracts[] = {
-    {"@mozilla.org/toolkit/remote-service;1", &kNS_REMOTESERVICE_CID},
-    {nullptr}};
-
-static const mozilla::Module kRemoteModule = {mozilla::Module::kVersion,
-                                              kRemoteCIDs, kRemoteContracts};
-
-NSMODULE_DEFN(RemoteServiceModule) = &kRemoteModule;

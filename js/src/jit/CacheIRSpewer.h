@@ -21,9 +21,9 @@ namespace js {
 namespace jit {
 
 class CacheIRSpewer {
-  Mutex outputLock;
-  Fprinter output;
-  mozilla::Maybe<JSONPrinter> json;
+  Mutex outputLock_;
+  Fprinter output_;
+  mozilla::Maybe<JSONPrinter> json_;
   static CacheIRSpewer cacheIRspewer;
 
   // Counter to record how many times Guard class is called. This is used to
@@ -39,17 +39,23 @@ class CacheIRSpewer {
   CacheIRSpewer();
   ~CacheIRSpewer();
 
-  bool enabled() { return json.isSome(); }
+  bool enabled() { return json_.isSome(); }
 
   // These methods can only be called when enabled() is true.
   Mutex& lock() {
     MOZ_ASSERT(enabled());
-    return outputLock;
+    return outputLock_;
   }
 
   void beginCache(const IRGenerator& generator);
   void valueProperty(const char* name, const Value& v);
   void opcodeProperty(const char* name, const JSOp op);
+  void cacheIRSequence(CacheIRReader& reader);
+  void CacheIRArgs(JSONPrinter& j, CacheIRReader& r,
+                   CacheIROpFormat::ArgType arg);
+  template <typename... Args>
+  void CacheIRArgs(JSONPrinter& j, CacheIRReader& r,
+                   CacheIROpFormat::ArgType arg, Args... args);
   void attached(const char* name);
   void endCache();
 
@@ -73,12 +79,16 @@ class CacheIRSpewer {
 
     ~Guard() {
       if (sp_.enabled()) {
+        if (gen_.writerRef().codeLength() > 0) {
+          CacheIRReader reader(gen_.writerRef());
+          sp_.cacheIRSequence(reader);
+        }
         if (name_ != nullptr) {
           sp_.attached(name_);
         }
         sp_.endCache();
         if (sp_.guardCount_++ % sp_.spewInterval_ == 0) {
-          sp_.output.flush();
+          sp_.output_.flush();
         }
         sp_.lock().unlock();
       }

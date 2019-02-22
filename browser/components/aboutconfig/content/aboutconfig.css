@@ -6,6 +6,10 @@ html {
   height: 100%;
 }
 
+.hidden {
+  display: none;
+}
+
 body.config-background {
   min-height: 100%;
   background-image: url("chrome://browser/content/aboutconfig/background.svg");
@@ -42,8 +46,23 @@ body.config-warning {
   background-repeat: no-repeat;
   background-position: 9px center;
   background-size: 12px 12px;
-  padding-left: 30px;
+  padding-inline-start: 30px;
   z-index: 1;
+}
+
+#about-config-search:dir(rtl) {
+  background-position-x: right 9px;
+}
+
+#show-all:not(.hidden) {
+  display: block;
+  margin: 10px auto;
+}
+
+/* Ghost the button when it's not selected. */
+#show-all:not(:focus):not(:hover):not(:active) {
+  background-color: transparent;
+  opacity: .7;
 }
 
 #prefs {
@@ -57,7 +76,7 @@ body.config-warning {
   border-spacing: 0;
 }
 
-#prefs > tr:nth-child(odd) {
+#prefs > tr.odd {
   background-color: var(--in-content-box-background-odd);
 }
 
@@ -77,6 +96,10 @@ body.config-warning {
   background-size: 16px 16px;
 }
 
+#prefs > tr.locked:dir(rtl) {
+  background-position-x: right 9px;
+}
+
 #prefs > tr > td,
 #prefs > tr > th {
   padding: 4px;
@@ -92,6 +115,11 @@ body.config-warning {
 #prefs > tr.deleted > th {
   font-weight: bold;
   opacity: 0.4;
+}
+
+#prefs > tr > td.cell-edit,
+#prefs > tr > td.cell-reset {
+  padding: 0;
 }
 
 .cell-value {

@@ -1,50 +1,88 @@
-var {FileUtils} = ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
-var {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
+
+"use strict";
+
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 ChromeUtils.defineModuleGetter(this, "AppMenuNotifications",
                                "resource://gre/modules/AppMenuNotifications.jsm");
 ChromeUtils.defineModuleGetter(this, "UpdateListener",
                                "resource://gre/modules/UpdateListener.jsm");
 
-const IS_MACOSX = ("nsILocalFileMac" in Ci);
-const IS_WIN = ("@mozilla.org/windows-registry-key;1" in Cc);
-
-const BIN_SUFFIX = (IS_WIN ? ".exe" : "");
-const FILE_UPDATER_BIN = "updater" + (IS_MACOSX ? ".app" : BIN_SUFFIX);
+const BIN_SUFFIX = (AppConstants.platform == "win" ? ".exe" : "");
+const FILE_UPDATER_BIN =
+  "updater" + (AppConstants.platform == "macosx" ? ".app" : BIN_SUFFIX);
 const FILE_UPDATER_BIN_BAK = FILE_UPDATER_BIN + ".bak";
-
-const PREF_APP_UPDATE_INTERVAL = "app.update.interval";
-const PREF_APP_UPDATE_LASTUPDATETIME = "app.update.lastUpdateTime.background-update-timer";
-
-const DATA_URI_SPEC =  "chrome://mochitests/content/browser/toolkit/mozapps/update/tests/browser/";
-
-var DEBUG_AUS_TEST = true;
 
 const LOG_FUNCTION = info;
 
 const MAX_UPDATE_COPY_ATTEMPTS = 10;
 
+const DATA_URI_SPEC =
+  "chrome://mochitests/content/browser/toolkit/mozapps/update/tests/browser/";
 /* import-globals-from testConstants.js */
 Services.scriptloader.loadSubScript(DATA_URI_SPEC + "testConstants.js", this);
-/* import-globals-from ../data/shared.js */
-Services.scriptloader.loadSubScript(DATA_URI_SPEC + "shared.js", this);
 
 var gURLData = URL_HOST + "/" + REL_PATH_DATA;
 const URL_MANUAL_UPDATE = gURLData + "downloadPage.html";
 
-const gEnv = Cc["@mozilla.org/process/environment;1"].
-             getService(Ci.nsIEnvironment);
+/* import-globals-from ../data/shared.js */
+Services.scriptloader.loadSubScript(DATA_URI_SPEC + "shared.js", this);
 
 let gOriginalUpdateAutoValue = null;
+
+// Set to true to log additional information for debugging. To log additional
+// information for individual tests set gDebugTest to false here and to true in
+// the test's onload function.
+gDebugTest = true;
+
+// This is to accommodate the TV task which runs the tests with --verify.
+requestLongerTimeout(10);
+
+/**
+ * Common tasks to perform for all tests before each one has started.
+ */
+add_task(async function setupTestCommon() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      [PREF_APP_UPDATE_LOG, gDebugTest],
+    ],
+  });
+
+  setUpdateTimerPrefs();
+  removeUpdateFiles(true);
+  // Most app update mochitest-browser-chrome tests expect auto update to be
+  // enabled. Those that don't will explicitly change this.
+  await setAppUpdateAutoEnabledHelper(true);
+});
+
+/**
+ * Common tasks to perform for all tests after each one has finished.
+ */
+registerCleanupFunction(async () => {
+  gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "");
+  gEnv.set("MOZ_TEST_SLOW_SKIP_UPDATE_STAGE", "");
+  UpdateListener.reset();
+  reloadUpdateManagerData(true);
+  // Pass false when the log files are needed for troubleshooting the tests.
+  removeUpdateFiles(true);
+  // Always try to restore the original updater files. If none of the updater
+  // backup files are present then this is just a no-op.
+  await finishTestRestoreUpdaterBackup();
+});
 
 /**
  * Creates the continue file used to signal that update staging or the mock http
  * server should continue. The delay this creates allows the tests to verify the
- * user interfaces before they auto advance to phases of an update. The continue
- * file for staging will be deleted by the test updater and the continue file
- * for update check and update download requests will be deleted by the test
- * http server handler implemented in app_update.sjs. The test returns a promise
- * so the test can wait on the deletion of the continue file when necessary.
+ * user interfaces before they auto advance to other phases of an update. The
+ * continue file for staging will be deleted by the test updater and the
+ * continue file for the update check and update download requests will be
+ * deleted by the test http server handler implemented in app_update.sjs. The
+ * test returns a promise so the test can wait on the deletion of the continue
+ * file when necessary. If the continue file still exists at the end of a test
+ * it will be removed to prevent it from affecting tests that run after the test
+ * that created it.
  *
  * @param  leafName
  *         The leafName of the file to create. This should be one of the
@@ -53,27 +91,27 @@ let gOriginalUpdateAutoValue = null;
  *         CONTINUE_DOWNLOAD
  *         CONTINUE_STAGING
  * @return Promise
- *         Resolves when the file is deleted.
- *         Rejects if timeout is exceeded or condition ever throws.
+ *         Resolves when the file is deleted or if the file is not deleted when
+ *         the check for the file's existence times out. If the file isn't
+ *         deleted before the check for the file's existence times out it will
+ *         be deleted when the test ends so it doesn't affect tests that run
+ *         after the test that created the continue file.
  * @throws If the file already exists.
  */
 async function continueFileHandler(leafName) {
-  // The default number of retries of 50 in TestUtils.waitForCondition is
-  // sufficient for test http server requests. The total time to wait with the
-  // default interval of 100 is approximately 5 seconds.
-  let retries = undefined;
+  // The total time to wait with 200 retries and the default interval of 100 is
+  // approximately 20 seconds.
+  let interval = 100;
+  let retries = 200;
   let continueFile;
   if (leafName == CONTINUE_STAGING) {
-    debugDump("creating " + leafName + " file for slow update staging");
-    // Use 100 retries for staging requests to lessen the likelihood of tests
-    // intermittently failing on debug builds due to launching the updater. The
-    // total time to wait with the default interval of 100 is approximately 10
-    // seconds. The test updater uses the same values.
-    retries = 100;
-    continueFile = getUpdatesPatchDir();
+    // The total time to wait with 600 retries and an interval of 200 is
+    // approximately 120 seconds.
+    interval = 200;
+    retries = 600;
+    continueFile = getGREBinDir();
     continueFile.append(leafName);
   } else {
-    debugDump("creating " + leafName + " file for slow http server requests");
     continueFile = Services.dirsvc.get("CurWorkD", Ci.nsIFile);
     let continuePath = REL_PATH_DATA + leafName;
     let continuePathParts = continuePath.split("/");
@@ -85,11 +123,26 @@ async function continueFileHandler(leafName) {
     throw new Error("The continue file should not exist, path: " +
                     continueFile.path);
   }
+  debugDump("Creating continue file, path: " + continueFile.path);
   continueFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, PERMS_FILE);
-  return BrowserTestUtils.waitForCondition(() =>
-    (!continueFile.exists()),
+  // If for whatever reason the continue file hasn't been removed when a test
+  // has finished remove it during cleanup so it doesn't affect tests that run
+  // after the test that created it.
+  registerCleanupFunction(() => {
+    if (continueFile.exists()) {
+      logTestInfo("Removing continue file during test cleanup, path: " +
+                  continueFile.path);
+      continueFile.remove(false);
+    }
+  });
+  return BrowserTestUtils.waitForCondition(() => (
+    !continueFile.exists()),
     "Waiting for file to be deleted, path: " + continueFile.path,
-    undefined, retries);
+    interval, retries
+  ).catch(e => {
+    logTestInfo("Continue file was not removed after checking " +
+                retries + " times, path: " + continueFile.path);
+  });
 }
 
 /**
@@ -102,12 +155,10 @@ async function continueFileHandler(leafName) {
  * @throws If the function is called on a platform other than Windows.
  */
 function lockWriteTestFile() {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     throw new Error("Windows only test function called");
   }
-  let file = getUpdatesRootDir();
-  file.append(FILE_UPDATE_TEST);
-  file.QueryInterface(Ci.nsILocalFileWin);
+  let file = getUpdateDirFile(FILE_UPDATE_TEST).QueryInterface(Ci.nsILocalFileWin);
   // Remove the file if it exists just in case.
   if (file.exists()) {
     file.fileAttributesWin |= file.WFA_READWRITE;
@@ -124,8 +175,15 @@ function lockWriteTestFile() {
   });
 }
 
+/**
+ * Closes the update mutex handle in nsUpdateService.js if it exists and then
+ * creates a new update mutex handle so the update code thinks there is another
+ * instance of the application handling updates.
+ *
+ * @throws If the function is called on a platform other than Windows.
+ */
 function setOtherInstanceHandlingUpdates() {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     throw new Error("Windows only test function called");
   }
   gAUS.observe(null, "test-close-handle-update-mutex", "");
@@ -151,14 +209,6 @@ function getVersionParams(aAppVersion) {
 }
 
 /**
- * Clean up updates list and the updates directory.
- */
-function cleanUpUpdates() {
-  reloadUpdateManagerData(true);
-  removeUpdateDirsAndFiles();
-}
-
-/**
  * Prevent nsIUpdateTimerManager from notifying nsIApplicationUpdateService
  * to check for updates by setting the app update last update time to the
  * current time minus one minute in seconds and the interval time to 12 hours
@@ -171,8 +221,11 @@ function setUpdateTimerPrefs() {
 }
 
 /*
- * In addition to changing the value of the Auto Update setting, this function
- * also takes care of cleaning up after itself.
+ * Sets the value of the App Auto Update setting and sets it back to the
+ * original value at the start of the test when the test finishes.
+ *
+ * @param  enabled
+ *         The value to set App Auto Update to.
  */
 async function setAppUpdateAutoEnabledHelper(enabled) {
   if (gOriginalUpdateAutoValue == null) {
@@ -183,19 +236,6 @@ async function setAppUpdateAutoEnabledHelper(enabled) {
   }
   await UpdateUtils.setAppUpdateAutoEnabled(enabled);
 }
-
-add_task(async function setDefaults() {
-  await SpecialPowers.pushPrefEnv({
-    set: [
-      [PREF_APP_UPDATE_LOG, DEBUG_AUS_TEST],
-      // See bug 1505790 - uses a very large value to prevent the sync code
-      // from running since it has nothing to do with these tests.
-      ["services.sync.autoconnectDelay", 600000],
-    ]});
-  // Most tests in this directory expect auto update to be enabled. Those that
-  // don't will explicitly change this.
-  await setAppUpdateAutoEnabledHelper(true);
-});
 
 /**
  * Runs a typical update test. Will set various common prefs for using the
@@ -215,22 +255,15 @@ add_task(async function setDefaults() {
  */
 function runUpdateTest(updateParams, checkAttempts, steps) {
   return (async function() {
-    registerCleanupFunction(() => {
-      gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "");
-      UpdateListener.reset();
-      cleanUpUpdates();
-    });
-
     gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
-    setUpdateTimerPrefs();
-    removeUpdateDirsAndFiles();
     await SpecialPowers.pushPrefEnv({
       set: [
         [PREF_APP_UPDATE_DOWNLOADPROMPTATTEMPTS, 0],
         [PREF_APP_UPDATE_DISABLEDFORTESTING, false],
         [PREF_APP_UPDATE_IDLETIME, 0],
         [PREF_APP_UPDATE_URL_MANUAL, URL_MANUAL_UPDATE],
-      ]});
+      ],
+    });
 
     await setupTestUpdater();
 
@@ -253,8 +286,6 @@ function runUpdateTest(updateParams, checkAttempts, steps) {
     for (let step of steps) {
       await processStep(step);
     }
-
-    await finishTestRestoreUpdaterBackup();
   })();
 }
 
@@ -271,22 +302,15 @@ function runUpdateTest(updateParams, checkAttempts, steps) {
  */
 function runUpdateProcessingTest(updates, steps) {
   return (async function() {
-    registerCleanupFunction(() => {
-      gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "");
-      UpdateListener.reset();
-      cleanUpUpdates();
-    });
-
     gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
-    setUpdateTimerPrefs();
-    removeUpdateDirsAndFiles();
     await SpecialPowers.pushPrefEnv({
       set: [
         [PREF_APP_UPDATE_DOWNLOADPROMPTATTEMPTS, 0],
         [PREF_APP_UPDATE_DISABLEDFORTESTING, false],
         [PREF_APP_UPDATE_IDLETIME, 0],
         [PREF_APP_UPDATE_URL_MANUAL, URL_MANUAL_UPDATE],
-      ]});
+      ],
+    });
 
     await setupTestUpdater();
 
@@ -301,8 +325,6 @@ function runUpdateProcessingTest(updates, steps) {
     for (let step of steps) {
       await processStep(step);
     }
-
-    await finishTestRestoreUpdaterBackup();
   })();
 }
 
@@ -370,7 +392,8 @@ function waitForEvent(topic, status = null) {
  * @return The button element.
  */
 function getNotificationButton(win, notificationId, button) {
-  let notification = win.document.getElementById(`appMenu-${notificationId}-notification`);
+  let notification =
+    win.document.getElementById(`appMenu-${notificationId}-notification`);
   is(notification.hidden, false, `${notificationId} notification is showing`);
   return notification[button];
 }
@@ -496,9 +519,11 @@ function copyTestUpdater(attempt = 0) {
 }
 
 /**
- * Restores the updater that was backed up. This is called in setupTestUpdater
- * before the backup of the real updater is done in case the previous test
- * failed to restore the updater when the test has finished.
+ * Restores the updater and updater related file that if there a backup exists.
+ * This is called in setupTestUpdater before the backup of the real updater is
+ * done in case the previous test failed to restore the file when a test has
+ * finished. This is also called in finishTestRestoreUpdaterBackup to restore
+ * the files when a test finishes.
  */
 function restoreUpdaterBackup() {
   let greBinDir = getGREBinDir();
@@ -542,23 +567,21 @@ function restoreUpdaterBackup() {
 }
 
 /**
- * When a staging test finishes this will repeatedly attempt to restore the real
- * updater.
+ * When a test finishes this will repeatedly attempt to restore the real updater
+ * and the other files for the updater if a backup of the file exists.
  */
 function finishTestRestoreUpdaterBackup() {
   return (async function() {
-    if (Services.prefs.getBoolPref(PREF_APP_UPDATE_STAGING_ENABLED)) {
-      try {
-        // Windows debug builds keep the updater file in use for a short period of
-        // time after the updater process exits.
-        restoreUpdaterBackup();
-      } catch (e) {
-        logTestInfo("Attempt to restore the backed up updater failed... " +
-                    "will try again, Exception: " + e);
+    try {
+      // Windows debug builds keep the updater file in use for a short period of
+      // time after the updater process exits.
+      restoreUpdaterBackup();
+    } catch (e) {
+      logTestInfo("Attempt to restore the backed up updater failed... " +
+                  "will try again, Exception: " + e);
 
-        await TestUtils.waitForTick();
-        await finishTestRestoreUpdaterBackup();
-      }
+      await TestUtils.waitForTick();
+      await finishTestRestoreUpdaterBackup();
     }
   })();
 }
@@ -579,7 +602,8 @@ function waitForAboutDialog() {
          async function aboutDialogOnLoad() {
           domwindow.removeEventListener("load", aboutDialogOnLoad, true);
           let chromeURI = "chrome://browser/content/aboutDialog.xul";
-          is(domwindow.document.location.href, chromeURI, "About dialog appeared");
+          is(domwindow.document.location.href, chromeURI,
+             "About dialog appeared");
           resolve(domwindow);
         }
 
@@ -624,7 +648,8 @@ function runAboutDialogUpdateTest(updateParams, backgroundUpdate, steps) {
       await BrowserTestUtils.waitForCondition(() =>
         (updateDeck.selectedPanel && updateDeck.selectedPanel.id == panelId),
         "Waiting for expected panel ID - got: \"" +
-        updateDeck.selectedPanel.id + "\", expected \"" + panelId + "\"");
+        updateDeck.selectedPanel.id + "\", expected \"" + panelId + "\"",
+        undefined, 200);
       let selectedPanel = updateDeck.selectedPanel;
       is(selectedPanel.id, panelId, "The panel ID should equal " + panelId);
 
@@ -668,6 +693,7 @@ function runAboutDialogUpdateTest(updateParams, backgroundUpdate, steps) {
   }
 
   return (async function() {
+    gEnv.set("MOZ_TEST_SLOW_SKIP_UPDATE_STAGE", "1");
     await SpecialPowers.pushPrefEnv({
       set: [
         [PREF_APP_UPDATE_SERVICE_ENABLED, false],
@@ -675,20 +701,8 @@ function runAboutDialogUpdateTest(updateParams, backgroundUpdate, steps) {
         [PREF_APP_UPDATE_URL_MANUAL, detailsURL],
       ],
     });
-    registerCleanupFunction(() => {
-      gEnv.set("MOZ_TEST_SLOW_SKIP_UPDATE_STAGE", "");
-      UpdateListener.reset();
-      cleanUpUpdates();
-    });
-
-    gEnv.set("MOZ_TEST_SLOW_SKIP_UPDATE_STAGE", "1");
-    setUpdateTimerPrefs();
-    removeUpdateDirsAndFiles();
 
     await setupTestUpdater();
-    registerCleanupFunction(async () => {
-      await finishTestRestoreUpdaterBackup();
-    });
 
     let updateURL = URL_HTTP_UPDATE_SJS + "?detailsURL=" + detailsURL +
                     updateParams + getVersionParams();
@@ -698,9 +712,6 @@ function runAboutDialogUpdateTest(updateParams, backgroundUpdate, steps) {
         // MOZ_TEST_SLOW_SKIP_UPDATE_STAGE in updater.cpp this removes the need
         // for the continue file to continue staging the update.
         gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
-        registerCleanupFunction(() => {
-          gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "");
-        });
       }
       setUpdateURL(updateURL);
       gAUS.checkForBackgroundUpdates();
@@ -747,12 +758,14 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
 
     const {panelId, checkActiveUpdate, continueFile} = step;
     return (async function() {
-      await ContentTask.spawn(tab.linkedBrowser, {panelId}, async ({panelId}) => {
+      await ContentTask.spawn(tab.linkedBrowser, {panelId},
+                              async ({panelId}) => {
         let updateDeck = content.document.getElementById("updateDeck");
         await ContentTaskUtils.waitForCondition(() =>
           (updateDeck.selectedPanel && updateDeck.selectedPanel.id == panelId),
           "Waiting for expected panel ID - got: \"" +
-          updateDeck.selectedPanel.id + "\", expected \"" + panelId + "\"");
+          updateDeck.selectedPanel.id + "\", expected \"" + panelId + "\"",
+          undefined, 200);
         is(updateDeck.selectedPanel.id, panelId,
            "The panel ID should equal " + panelId);
       });
@@ -770,7 +783,8 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
         await continueFileHandler(continueFile);
       }
 
-      await ContentTask.spawn(tab.linkedBrowser, {panelId, detailsURL}, async ({panelId, detailsURL}) => {
+      await ContentTask.spawn(tab.linkedBrowser, {panelId, detailsURL},
+                              async ({panelId, detailsURL}) => {
         let linkPanels = ["downloadFailed", "manualUpdate", "unsupportedSystem"];
         if (linkPanels.includes(panelId)) {
           let selectedPanel =
@@ -791,13 +805,14 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
 
         let buttonPanels = ["downloadAndInstall", "apply"];
         if (buttonPanels.includes(panelId)) {
-          let selectedPanel = content.document.getElementById("updateDeck").selectedPanel;
+          let selectedPanel =
+            content.document.getElementById("updateDeck").selectedPanel;
           let buttonEl = selectedPanel.querySelector("button");
           // Note: The about:preferences doesn't focus the button like the
           // About Dialog does.
           ok(!buttonEl.disabled, "The button should be enabled");
-          // Don't click the button on the apply panel since this will restart the
-          // application.
+          // Don't click the button on the apply panel since this will restart
+          // the application.
           if (selectedPanel.id != "apply") {
             buttonEl.click();
           }
@@ -807,6 +822,7 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
   }
 
   return (async function() {
+    gEnv.set("MOZ_TEST_SLOW_SKIP_UPDATE_STAGE", "1");
     await SpecialPowers.pushPrefEnv({
       set: [
         [PREF_APP_UPDATE_SERVICE_ENABLED, false],
@@ -814,20 +830,8 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
         [PREF_APP_UPDATE_URL_MANUAL, detailsURL],
       ],
     });
-    registerCleanupFunction(() => {
-      gEnv.set("MOZ_TEST_SLOW_SKIP_UPDATE_STAGE", "");
-      UpdateListener.reset();
-      cleanUpUpdates();
-    });
-
-    gEnv.set("MOZ_TEST_SLOW_SKIP_UPDATE_STAGE", "1");
-    setUpdateTimerPrefs();
-    removeUpdateDirsAndFiles();
 
     await setupTestUpdater();
-    registerCleanupFunction(async () => {
-      await finishTestRestoreUpdaterBackup();
-    });
 
     let updateURL = URL_HTTP_UPDATE_SJS + "?detailsURL=" + detailsURL +
                     updateParams + getVersionParams();
@@ -837,9 +841,6 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
         // MOZ_TEST_SLOW_SKIP_UPDATE_STAGE in updater.cpp this removes the need
         // for the continue file to continue staging the update.
         gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
-        registerCleanupFunction(() => {
-          gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "");
-        });
       }
       setUpdateURL(updateURL);
       gAUS.checkForBackgroundUpdates();
@@ -849,7 +850,8 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
       setUpdateURL(updateURL);
     }
 
-    tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:preferences");
+    tab = await BrowserTestUtils.openNewForegroundTab(gBrowser,
+                                                      "about:preferences");
     registerCleanupFunction(async () => {
       await BrowserTestUtils.removeTab(tab);
     });

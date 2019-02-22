@@ -244,8 +244,7 @@ class HTMLInputElement final : public nsGenericHTMLFormElementWithState,
   NS_IMETHOD_(bool) GetPlaceholderVisibility() override;
   NS_IMETHOD_(bool) GetPreviewVisibility() override;
   NS_IMETHOD_(void) InitializeKeyboardEventListeners() override;
-  NS_IMETHOD_(void)
-  OnValueChanged(bool aNotify, bool aWasInteractiveUserChange) override;
+  NS_IMETHOD_(void) OnValueChanged(bool aNotify, ValueChangeKind) override;
   virtual void GetValueFromSetRangeText(nsAString& aValue) override;
   MOZ_CAN_RUN_SCRIPT_BOUNDARY
   virtual nsresult SetValueFromSetRangeText(const nsAString& aValue) override;
@@ -346,6 +345,14 @@ class HTMLInputElement final : public nsGenericHTMLFormElementWithState,
   // as needed.  aNotify controls whether the element state update
   // needs to notify.
   void UpdateAllValidityStates(bool aNotify);
+  void MaybeUpdateAllValidityStates() {
+    // If you need to add new type which supports validationMessage, you should
+    // add test cases into test_MozEditableElement_setUserInput.html.
+    if (mType == NS_FORM_INPUT_EMAIL) {
+      UpdateAllValidityStates(!mDoneCreating);
+    }
+  }
+
   // Update all our validity states without updating element state.
   // This should be called instead of UpdateAllValidityStates any time
   // we're guaranteed that element state will be updated anyway.

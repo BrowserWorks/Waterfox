@@ -16,10 +16,10 @@
 #include "mozilla/NullPrincipal.h"
 #include "mozIThirdPartyUtil.h"
 #include "nsFrameLoader.h"
+#include "nsFrameLoaderOwner.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIDocShell.h"
 #include "mozilla/dom/Document.h"
-#include "nsIFrameLoaderOwner.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsISupportsImpl.h"
 #include "nsISupportsUtils.h"
@@ -28,6 +28,7 @@
 #include "nsDocShell.h"
 #include "nsGlobalWindow.h"
 #include "nsMixedContentBlocker.h"
+#include "nsQueryObject.h"
 #include "nsRedirectHistoryEntry.h"
 #include "nsSandboxFlags.h"
 #include "LoadInfo.h"
@@ -80,7 +81,7 @@ LoadInfo::LoadInfo(
       mTopOuterWindowID(0),
       mFrameOuterWindowID(0),
       mBrowsingContextID(0),
-      mEnforceSecurity(false),
+      mFrameBrowsingContextID(0),
       mInitialSecurityCheckDone(false),
       mIsThirdPartyContext(false),
       mIsDocshellReload(false),
@@ -91,7 +92,8 @@ LoadInfo::LoadInfo(
       mServiceWorkerTaintingSynthesized(false),
       mDocumentHasUserInteracted(false),
       mDocumentHasLoaded(false),
-      mIsFromProcessingFrameAttributes(false) {
+      mIsFromProcessingFrameAttributes(false),
+      mOpenerPolicy(nsILoadInfo::OPENER_POLICY_NULL) {
   MOZ_ASSERT(mLoadingPrincipal);
   MOZ_ASSERT(mTriggeringPrincipal);
 
@@ -221,8 +223,8 @@ LoadInfo::LoadInfo(
     // must be coming from an object (such as a plugin) that's loaded into it
     // instead of a document being loaded. In that case, treat this object like
     // any other non-document-loading element.
-    nsCOMPtr<nsIFrameLoaderOwner> frameLoaderOwner =
-        do_QueryInterface(aLoadingContext);
+    RefPtr<nsFrameLoaderOwner> frameLoaderOwner =
+        do_QueryObject(aLoadingContext);
     RefPtr<nsFrameLoader> fl =
         frameLoaderOwner ? frameLoaderOwner->GetFrameLoader() : nullptr;
     if (fl) {
@@ -231,6 +233,9 @@ LoadInfo::LoadInfo(
         nsCOMPtr<nsPIDOMWindowOuter> outerWindow = do_GetInterface(docShell);
         if (outerWindow) {
           mFrameOuterWindowID = outerWindow->WindowID();
+
+          RefPtr<dom::BrowsingContext> bc = outerWindow->GetBrowsingContext();
+          mFrameBrowsingContextID = bc ? bc->Id() : 0;
         }
       }
     }
@@ -264,10 +269,8 @@ LoadInfo::LoadInfo(
     // if owner doc has content signature, we enforce SRI
     nsCOMPtr<nsIChannel> channel = aLoadingContext->OwnerDoc()->GetChannel();
     if (channel) {
-      nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
-      if (loadInfo) {
-        mEnforceSRI = loadInfo->GetVerifySignedContent();
-      }
+      nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+      mEnforceSRI = loadInfo->GetVerifySignedContent();
     }
   }
 
@@ -363,7 +366,7 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
       mTopOuterWindowID(0),
       mFrameOuterWindowID(0),
       mBrowsingContextID(0),
-      mEnforceSecurity(false),
+      mFrameBrowsingContextID(0),
       mInitialSecurityCheckDone(false),
       mIsThirdPartyContext(false),  // NB: TYPE_DOCUMENT implies !third-party.
       mIsDocshellReload(false),
@@ -374,7 +377,8 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
       mServiceWorkerTaintingSynthesized(false),
       mDocumentHasUserInteracted(false),
       mDocumentHasLoaded(false),
-      mIsFromProcessingFrameAttributes(false) {
+      mIsFromProcessingFrameAttributes(false),
+      mOpenerPolicy(nsILoadInfo::OPENER_POLICY_NULL) {
   // Top-level loads are never third-party
   // Grab the information we can out of the window.
   MOZ_ASSERT(aOuterWindow);
@@ -461,7 +465,7 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
       mTopOuterWindowID(rhs.mTopOuterWindowID),
       mFrameOuterWindowID(rhs.mFrameOuterWindowID),
       mBrowsingContextID(rhs.mBrowsingContextID),
-      mEnforceSecurity(rhs.mEnforceSecurity),
+      mFrameBrowsingContextID(rhs.mFrameBrowsingContextID),
       mInitialSecurityCheckDone(rhs.mInitialSecurityCheckDone),
       mIsThirdPartyContext(rhs.mIsThirdPartyContext),
       mIsDocshellReload(rhs.mIsDocshellReload),
@@ -481,7 +485,9 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
       mServiceWorkerTaintingSynthesized(false),
       mDocumentHasUserInteracted(rhs.mDocumentHasUserInteracted),
       mDocumentHasLoaded(rhs.mDocumentHasLoaded),
-      mIsFromProcessingFrameAttributes(rhs.mIsFromProcessingFrameAttributes) {}
+      mCspNonce(rhs.mCspNonce),
+      mIsFromProcessingFrameAttributes(rhs.mIsFromProcessingFrameAttributes),
+      mOpenerPolicy(rhs.mOpenerPolicy) {}
 
 LoadInfo::LoadInfo(
     nsIPrincipal* aLoadingPrincipal, nsIPrincipal* aTriggeringPrincipal,
@@ -502,7 +508,7 @@ LoadInfo::LoadInfo(
     bool aForceInheritPrincipalDropped, uint64_t aInnerWindowID,
     uint64_t aOuterWindowID, uint64_t aParentOuterWindowID,
     uint64_t aTopOuterWindowID, uint64_t aFrameOuterWindowID,
-    uint64_t aBrowsingContextID, bool aEnforceSecurity,
+    uint64_t aBrowsingContextID, uint64_t aFrameBrowsingContextID,
     bool aInitialSecurityCheckDone, bool aIsThirdPartyContext,
     bool aIsDocshellReload, bool aSendCSPViolationEvents,
     const OriginAttributes& aOriginAttributes,
@@ -513,7 +519,7 @@ LoadInfo::LoadInfo(
     const nsTArray<nsCString>& aCorsUnsafeHeaders, bool aForcePreflight,
     bool aIsPreflight, bool aLoadTriggeredFromExternal,
     bool aServiceWorkerTaintingSynthesized, bool aDocumentHasUserInteracted,
-    bool aDocumentHasLoaded)
+    bool aDocumentHasLoaded, const nsAString& aCspNonce)
     : mLoadingPrincipal(aLoadingPrincipal),
       mTriggeringPrincipal(aTriggeringPrincipal),
       mPrincipalToInherit(aPrincipalToInherit),
@@ -545,7 +551,7 @@ LoadInfo::LoadInfo(
       mTopOuterWindowID(aTopOuterWindowID),
       mFrameOuterWindowID(aFrameOuterWindowID),
       mBrowsingContextID(aBrowsingContextID),
-      mEnforceSecurity(aEnforceSecurity),
+      mFrameBrowsingContextID(aFrameBrowsingContextID),
       mInitialSecurityCheckDone(aInitialSecurityCheckDone),
       mIsThirdPartyContext(aIsThirdPartyContext),
       mIsDocshellReload(aIsDocshellReload),
@@ -560,7 +566,9 @@ LoadInfo::LoadInfo(
       mServiceWorkerTaintingSynthesized(aServiceWorkerTaintingSynthesized),
       mDocumentHasUserInteracted(aDocumentHasUserInteracted),
       mDocumentHasLoaded(aDocumentHasLoaded),
-      mIsFromProcessingFrameAttributes(false) {
+      mCspNonce(aCspNonce),
+      mIsFromProcessingFrameAttributes(false),
+      mOpenerPolicy(nsILoadInfo::OPENER_POLICY_NULL) {
   // Only top level TYPE_DOCUMENT loads can have a null loadingPrincipal
   MOZ_ASSERT(mLoadingPrincipal ||
              aContentPolicyType == nsIContentPolicy::TYPE_DOCUMENT);
@@ -606,7 +614,6 @@ already_AddRefed<nsILoadInfo> LoadInfo::CloneWithNewSecFlags(
 
 already_AddRefed<nsILoadInfo> LoadInfo::CloneForNewRequest() const {
   RefPtr<LoadInfo> copy(new LoadInfo(*this));
-  copy->mEnforceSecurity = false;
   copy->mInitialSecurityCheckDone = false;
   copy->mRedirectChainIncludingInternalRedirects.Clear();
   copy->mRedirectChain.Clear();
@@ -765,7 +772,6 @@ LoadInfo::GetCookiePolicy(uint32_t* aResult) {
 }
 
 void LoadInfo::SetIncludeCookiesSecFlag() {
-  MOZ_ASSERT(!mEnforceSecurity, "Request should not have been opened yet");
   MOZ_ASSERT((mSecurityFlags & sCookiePolicyMask) ==
              nsILoadInfo::SEC_COOKIES_DEFAULT);
   mSecurityFlags =
@@ -998,8 +1004,20 @@ LoadInfo::GetBrowsingContextID(uint64_t* aResult) {
 }
 
 NS_IMETHODIMP
+LoadInfo::GetFrameBrowsingContextID(uint64_t* aResult) {
+  *aResult = mFrameBrowsingContextID;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 LoadInfo::GetBrowsingContext(dom::BrowsingContext** aResult) {
   *aResult = BrowsingContext::Get(mBrowsingContextID).take();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetFrameBrowsingContext(dom::BrowsingContext** aResult) {
+  *aResult = BrowsingContext::Get(mFrameBrowsingContextID).take();
   return NS_OK;
 }
 
@@ -1051,22 +1069,6 @@ nsresult LoadInfo::GetOriginAttributes(
 nsresult LoadInfo::SetOriginAttributes(
     const mozilla::OriginAttributes& aOriginAttributes) {
   mOriginAttributes = aOriginAttributes;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-LoadInfo::SetEnforceSecurity(bool aEnforceSecurity) {
-  // Indicates whether the channel was openend using AsyncOpen2. Once set
-  // to true, it must remain true throughout the lifetime of the channel.
-  // Setting it to anything else than true will be discarded.
-  MOZ_ASSERT(aEnforceSecurity, "aEnforceSecurity must be true");
-  mEnforceSecurity = mEnforceSecurity || aEnforceSecurity;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-LoadInfo::GetEnforceSecurity(bool* aResult) {
-  *aResult = mEnforceSecurity;
   return NS_OK;
 }
 
@@ -1277,6 +1279,20 @@ LoadInfo::SetDocumentHasLoaded(bool aDocumentHasLoaded) {
 }
 
 NS_IMETHODIMP
+LoadInfo::GetCspNonce(nsAString& aCspNonce) {
+  aCspNonce = mCspNonce;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::SetCspNonce(const nsAString& aCspNonce) {
+  MOZ_ASSERT(!mInitialSecurityCheckDone,
+             "setting the nonce is only allowed before any sec checks");
+  mCspNonce = aCspNonce;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 LoadInfo::GetIsTopLevelLoad(bool* aResult) {
   *aResult = mFrameOuterWindowID ? mFrameOuterWindowID == mOuterWindowID
                                  : mParentOuterWindowID == mOuterWindowID;
@@ -1396,6 +1412,18 @@ LoadInfo::GetCspEventListener(nsICSPEventListener** aCSPEventListener) {
 NS_IMETHODIMP
 LoadInfo::SetCspEventListener(nsICSPEventListener* aCSPEventListener) {
   mCSPEventListener = aCSPEventListener;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetOpenerPolicy(nsILoadInfo::CrossOriginOpenerPolicy* aOpenerPolicy) {
+  *aOpenerPolicy = mOpenerPolicy;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::SetOpenerPolicy(nsILoadInfo::CrossOriginOpenerPolicy aOpenerPolicy) {
+  mOpenerPolicy = aOpenerPolicy;
   return NS_OK;
 }
 

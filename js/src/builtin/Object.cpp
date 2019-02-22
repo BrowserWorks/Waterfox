@@ -8,9 +8,7 @@
 
 #include "mozilla/MaybeOneOf.h"
 
-#ifdef ENABLE_BIGINT
-#  include "builtin/BigInt.h"
-#endif
+#include "builtin/BigInt.h"
 #include "builtin/Eval.h"
 #include "builtin/SelfHostingDefines.h"
 #include "builtin/String.h"
@@ -515,7 +513,7 @@ static bool GetBuiltinTagSlow(JSContext* cx, HandleObject obj,
     default:
       if (obj->isCallable()) {
         // Non-standard: Prevent <object> from showing up as Function.
-        RootedObject unwrapped(cx, CheckedUnwrap(obj));
+        RootedObject unwrapped(cx, CheckedUnwrapDynamic(obj, cx));
         if (!unwrapped || !unwrapped->getClass()->isDOMClass()) {
           builtinTag.set(cx->names().objectFunction);
           return true;

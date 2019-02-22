@@ -16,41 +16,52 @@ add_task(threadClientTest(({ threadClient, debuggee }) => {
         threadClient,
         packet.frame.where.actor
       );
-      const location = { line: debuggee.line0 + 2 };
+      const location = {
+        sourceUrl: source.url,
+        line: debuggee.line0 + 2,
+        column: 8,
+      };
 
-      source.setBreakpoint(location).then(function([response, bpClient]) {
-        // actualLocation is not returned when breakpoints don't skip forward.
-        Assert.equal(response.actualLocation, undefined);
+      threadClient.setBreakpoint(location, {});
+
+      threadClient.addOneTimeListener("paused", function(event, packet) {
+        // Check the return value.
+        Assert.equal(packet.type, "paused");
+        Assert.equal(packet.why.type, "breakpoint");
+        // Check that the breakpoint worked.
+        Assert.equal(debuggee.a, undefined);
+
+        // Remove the breakpoint.
+        threadClient.removeBreakpoint(location);
+
+        const location2 = {
+          sourceUrl: source.url,
+          line: debuggee.line0 + 2,
+          column: 32,
+        };
+
+        threadClient.setBreakpoint(location2, {});
 
         threadClient.addOneTimeListener("paused", function(event, packet) {
           // Check the return value.
           Assert.equal(packet.type, "paused");
           Assert.equal(packet.why.type, "breakpoint");
-          Assert.equal(packet.why.actors[0], bpClient.actor);
           // Check that the breakpoint worked.
-          Assert.equal(debuggee.a, undefined);
+          Assert.equal(debuggee.a.b, 1);
+          Assert.equal(debuggee.res, undefined);
 
-          threadClient.addOneTimeListener("paused", function(event, packet) {
-            // Check the return value.
-            Assert.equal(packet.type, "paused");
-            Assert.equal(packet.why.type, "breakpoint");
-            Assert.equal(packet.why.actors[0], bpClient.actor);
-            // Check that the breakpoint worked.
-            Assert.equal(debuggee.a.b, 1);
-            Assert.equal(debuggee.res, undefined);
+          // Remove the breakpoint.
+          threadClient.removeBreakpoint(location2);
 
-            // Remove the breakpoint.
-            bpClient.remove(function(response) {
-              threadClient.resume(resolve);
-            });
-          });
-
-          // Continue until the breakpoint is hit again.
-          threadClient.resume();
+          threadClient.resume(resolve);
         });
-        // Continue until the breakpoint is hit.
+
+        // Continue until the breakpoint is hit again.
         threadClient.resume();
       });
+
+      // Continue until the breakpoint is hit.
+      threadClient.resume();
     });
 
     /* eslint-disable */

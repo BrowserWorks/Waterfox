@@ -138,18 +138,6 @@ typedef Vector<UniqueChars, 0, SystemAllocPolicy> UniqueCharsVector;
   const uint8_t* deserialize(const uint8_t* cursor); \
   size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
 
-#define WASM_DECLARE_SERIALIZABLE_VIRTUAL(Type)              \
-  virtual size_t serializedSize() const;                     \
-  virtual uint8_t* serialize(uint8_t* cursor) const;         \
-  virtual const uint8_t* deserialize(const uint8_t* cursor); \
-  virtual size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
-
-#define WASM_DECLARE_SERIALIZABLE_OVERRIDE(Type)              \
-  size_t serializedSize() const override;                     \
-  uint8_t* serialize(uint8_t* cursor) const override;         \
-  const uint8_t* deserialize(const uint8_t* cursor) override; \
-  size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const override;
-
 template <class T>
 struct SerializableRefPtr : RefPtr<T> {
   using RefPtr<T>::operator=;
@@ -235,6 +223,7 @@ static inline PackedTypeCode PackTypeCode(TypeCode tc, uint32_t refTypeIndex) {
   MOZ_ASSERT(uint32_t(tc) <= 0xFF);
   MOZ_ASSERT_IF(tc != TypeCode::Ref, refTypeIndex == NoRefTypeIndex);
   MOZ_ASSERT_IF(tc == TypeCode::Ref, refTypeIndex <= MaxTypes);
+  static_assert(MaxTypes < (1 << (32 - 8)), "enough bits");
   return PackedTypeCode((refTypeIndex << 8) | uint32_t(tc));
 }
 
@@ -472,11 +461,9 @@ static inline jit::MIRType ToMIRType(ValType vt) {
     case ValType::F64:
       return jit::MIRType::Double;
     case ValType::Ref:
-      return jit::MIRType::Pointer;
     case ValType::AnyRef:
-      return jit::MIRType::Pointer;
     case ValType::NullRef:
-      return jit::MIRType::Pointer;
+      return jit::MIRType::RefOrNull;
   }
   MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("bad type");
 }
@@ -636,6 +623,11 @@ enum class CompileMode { Once, Tier1, Tier2 };
 // Typed enum for whether debugging is enabled.
 
 enum class DebugEnabled { False, True };
+
+// A wasm module can either use no memory, a unshared memory (ArrayBuffer) or
+// shared memory (SharedArrayBuffer).
+
+enum class MemoryUsage { None = false, Unshared = 1, Shared = 2 };
 
 // Iterator over tiers present in a tiered data structure.
 
@@ -1156,7 +1148,7 @@ typedef Vector<GlobalDesc, 0, SystemAllocPolicy> GlobalDescVector;
 struct ElemSegment : AtomicRefCounted<ElemSegment> {
   uint32_t tableIndex;
   Maybe<InitExpr> offsetIfActive;
-  Uint32Vector elemFuncIndices;
+  Uint32Vector elemFuncIndices; // Element may be NullFuncIndex
 
   bool active() const { return !!offsetIfActive; }
 
@@ -1166,6 +1158,11 @@ struct ElemSegment : AtomicRefCounted<ElemSegment> {
 
   WASM_DECLARE_SERIALIZABLE(ElemSegment)
 };
+
+// NullFuncIndex represents the case when an element segment (of type anyfunc)
+// contains a null element.
+constexpr uint32_t NullFuncIndex = UINT32_MAX;
+static_assert(NullFuncIndex > MaxFuncs, "Invariant");
 
 typedef RefPtr<ElemSegment> MutableElemSegment;
 typedef SerializableRefPtr<const ElemSegment> SharedElemSegment;
@@ -2061,8 +2058,8 @@ enum class SymbolicAddress {
   Uint64ToDouble,
   Int64ToFloat32,
   Int64ToDouble,
-  GrowMemory,
-  CurrentMemory,
+  MemoryGrow,
+  MemorySize,
   WaitI32,
   WaitI64,
   Wake,
@@ -2078,6 +2075,7 @@ enum class SymbolicAddress {
   TableSet,
   TableSize,
   PostBarrier,
+  PostBarrierFiltering,
   StructNew,
   StructNarrow,
 #if defined(JS_CODEGEN_MIPS32)

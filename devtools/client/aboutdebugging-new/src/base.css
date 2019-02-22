@@ -34,7 +34,10 @@
   --error-50: #ff0039;
   --error-60: #d70022;
   --highlight-50: #0a84ff;
+  --grey-20: #ededf0;
   --grey-30: #d7d7db; /* for ui, no special semantic */
+  --grey-90-a60: rgba(12, 12, 13, 0.6);
+  --grey-90-a80: rgba(12, 12, 13, 0.8);
   --white-100: #fff; /* for ui, no special semantic */
 
   /* Global layout vars */
@@ -99,8 +102,8 @@ a:active {
 }
 
 p {
-  /* reset for the default <p> styles */
-  margin: initial;
+  /* remove default browser margins on <p> elements */
+  margin: 0;
 }
 
 
@@ -118,6 +121,11 @@ p {
 /* Technical text that should use a monospace font, such as code, error messages. */
 .technical-text {
   font-family: var(--monospace-font-family);
+}
+
+/* Text that is not selectable */
+.unselectable-text {
+  -moz-user-select: none;
 }
 
 /*
@@ -264,6 +272,26 @@ Form controls
   height: calc(var(--base-unit) * 6);
 }
 
+/* ghost button. icon button with no background from Photon guidelines */
+.ghost-button {
+  border: none;
+  border-radius: calc(var(--base-unit) / 2);
+  fill: var(--grey-90-a80);
+  height: calc(var(--base-unit) * 8);
+  padding: calc(var(--base-unit) * 2);
+  width: calc(var(--base-unit) * 8);
+
+  -moz-context-properties: fill;
+}
+
+.ghost-button:hover {
+  background-color: var(--grey-30);
+}
+
+.ghost-button:active {
+  background-color: var(--grey-40);
+}
+
 /* standard inputs */
 .default-input {
   line-height: unset;
@@ -274,6 +302,13 @@ Form controls
   border-radius: 2px;
   color: var(--text-color);
   background-color: var(--box-background);
+}
+
+.default-checkbox {
+  /* Note: this styles are from Photon, not common.css */
+  height: calc(var(--base-unit) * 4);
+  margin-inline-end: var(--base-unit);
+  width: calc(var(--base-unit) * 4);
 }
 
 /*

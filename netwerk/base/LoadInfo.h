@@ -12,6 +12,7 @@
 #include "nsIPrincipal.h"
 #include "nsIWeakReferenceUtils.h"  // for nsWeakPtr
 #include "nsIURI.h"
+#include "nsString.h"
 #include "nsTArray.h"
 
 #include "mozilla/BasePrincipal.h"
@@ -110,7 +111,7 @@ class LoadInfo final : public nsILoadInfo {
            bool aForceInheritPrincipalDropped, uint64_t aInnerWindowID,
            uint64_t aOuterWindowID, uint64_t aParentOuterWindowID,
            uint64_t aTopOuterWindowID, uint64_t aFrameOuterWindowID,
-           uint64_t aBrowsingContextID, bool aEnforceSecurity,
+           uint64_t aBrowsingContextID, uint64_t aFrameBrowsingContextID,
            bool aInitialSecurityCheckDone, bool aIsThirdPartyRequest,
            bool aIsDocshellReload, bool aSendCSPViolationEvents,
            const OriginAttributes& aOriginAttributes,
@@ -121,7 +122,8 @@ class LoadInfo final : public nsILoadInfo {
            const nsTArray<nsCString>& aUnsafeHeaders, bool aForcePreflight,
            bool aIsPreflight, bool aLoadTriggeredFromExternal,
            bool aServiceWorkerTaintingSynthesized,
-           bool aDocumentHasUserInteracted, bool aDocumentHasLoaded);
+           bool aDocumentHasUserInteracted, bool aDocumentHasLoaded,
+           const nsAString& aCspNonce);
   LoadInfo(const LoadInfo& rhs);
 
   NS_IMETHOD GetRedirects(JSContext* aCx,
@@ -182,7 +184,7 @@ class LoadInfo final : public nsILoadInfo {
   uint64_t mTopOuterWindowID;
   uint64_t mFrameOuterWindowID;
   uint64_t mBrowsingContextID;
-  bool mEnforceSecurity;
+  uint64_t mFrameBrowsingContextID;
   bool mInitialSecurityCheckDone;
   bool mIsThirdPartyContext;
   bool mIsDocshellReload;
@@ -199,11 +201,14 @@ class LoadInfo final : public nsILoadInfo {
   bool mServiceWorkerTaintingSynthesized;
   bool mDocumentHasUserInteracted;
   bool mDocumentHasLoaded;
+  nsString mCspNonce;
 
   // Is true if this load was triggered by processing the attributes of the
   // browsing context container.
   // See nsILoadInfo.isFromProcessingFrameAttributes
   bool mIsFromProcessingFrameAttributes;
+
+  nsILoadInfo::CrossOriginOpenerPolicy mOpenerPolicy;
 };
 
 }  // namespace net

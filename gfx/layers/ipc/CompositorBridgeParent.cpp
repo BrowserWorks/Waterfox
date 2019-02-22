@@ -1732,11 +1732,11 @@ PWebRenderBridgeParent* CompositorBridgeParent::AllocPWebRenderBridgeParent(
   MOZ_ASSERT(!mCompositorScheduler);
   MOZ_ASSERT(mWidget);
 
-#  ifdef XP_WIN
+#ifdef XP_WIN
   if (mWidget && DeviceManagerDx::Get()->CanUseDComp()) {
     mWidget->AsWindows()->EnsureCompositorWindow();
   }
-#  endif
+#endif
 
   RefPtr<widget::CompositorWidget> widget = mWidget;
   wr::WrWindowId windowId = wr::NewWindowId();
@@ -1908,8 +1908,7 @@ CompositorBridgeParent::GetAPZCTreeManager(LayersId aLayersId) {
 static void InsertVsyncProfilerMarker(TimeStamp aVsyncTimestamp) {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
   if (profiler_thread_is_being_profiled()) {
-    profiler_add_marker("VsyncTimestamp",
-                        js::ProfilingStackFrame::Category::GRAPHICS,
+    profiler_add_marker("VsyncTimestamp", JS::ProfilingCategoryPair::GRAPHICS,
                         MakeUnique<VsyncMarkerPayload>(aVsyncTimestamp));
   }
 }
@@ -2452,8 +2451,8 @@ int32_t RecordContentFrameTime(
       }
     };
     profiler_add_marker_for_thread(
-        profiler_current_thread_id(),
-        js::ProfilingStackFrame::Category::GRAPHICS, "CONTENT_FRAME_TIME",
+        profiler_current_thread_id(), JS::ProfilingCategoryPair::GRAPHICS,
+        "CONTENT_FRAME_TIME",
         MakeUnique<ContentFramePayload>(aTxnStart, aCompositeEnd));
   }
 #endif

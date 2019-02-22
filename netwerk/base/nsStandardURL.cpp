@@ -60,10 +60,6 @@ const char nsStandardURL::gHostLimitDigits[] = {'/', '\\', '?', '#', 0};
 bool nsStandardURL::gPunycodeHost = true;
 
 // Invalid host characters
-// We still allow % because it is in the ID of addons.
-// Any percent encoded ASCII characters that are not allowed in the
-// hostname are not percent decoded, and will be parsed just fine.
-//
 // Note that the array below will be initialized at compile time,
 // so we do not need to "optimize" TestForInvalidHostCharacters.
 //
@@ -73,7 +69,12 @@ constexpr bool TestForInvalidHostCharacters(char c) {
   return (c > 0 && c < 32) ||  // The control characters are [1, 31]
          c == ' ' || c == '#' || c == '/' || c == ':' || c == '?' || c == '@' ||
          c == '[' || c == '\\' || c == ']' || c == '*' || c == '<' ||
+#if defined(MOZ_THUNDERBIRD) || defined(MOZ_SUITE)
+         // Mailnews %-escapes file paths into URLs.
          c == '>' || c == '|' || c == '"';
+#else
+         c == '>' || c == '|' || c == '"' || c == '%';
+#endif
 }
 constexpr ASCIIMaskArray sInvalidHostChars =
     CreateASCIIMask(TestForInvalidHostCharacters);
@@ -3446,9 +3447,8 @@ bool nsStandardURL::Deserialize(const URIParams &aParams) {
 //----------------------------------------------------------------------------
 
 NS_IMETHODIMP
-nsStandardURL::GetInterfaces(uint32_t *count, nsIID ***array) {
-  *count = 0;
-  *array = nullptr;
+nsStandardURL::GetInterfaces(nsTArray<nsIID> &array) {
+  array.Clear();
   return NS_OK;
 }
 

@@ -19,6 +19,7 @@ class TestCapabilities(MarionetteTestCase):
                   name: Services.appinfo.name,
                   version: Services.appinfo.version,
                   processID: Services.appinfo.processID,
+                  buildID: Services.appinfo.appBuildID,
                 }
                 """)
             self.os_name = self.marionette.execute_script("""
@@ -47,10 +48,14 @@ class TestCapabilities(MarionetteTestCase):
             import re
             device = self.marionette.instance.runner.device.app_ctx.device
             root = posixpath.sep.join(profile.split(posixpath.sep)[0:2])
-            ls_out = device.shell_output("ls -l %s" % root)
-            match = re.match(r'.*->\s(.*)', ls_out)
-            if match:
-                new_root = match.group(1)
+            new_root = root
+            match = True
+            while match:
+                ls_out = device.shell_output("ls -l %s" % new_root)
+                match = re.match(r'.*->\s(.*)', ls_out)
+                if match:
+                    new_root = match.group(1)
+            if new_root != root:
                 profile = profile.replace(root, new_root)
         return profile
 
@@ -99,6 +104,8 @@ class TestCapabilities(MarionetteTestCase):
         self.assertIn("moz:accessibilityChecks", self.caps)
         self.assertFalse(self.caps["moz:accessibilityChecks"])
 
+        self.assertIn("moz:buildID", self.caps)
+        self.assertEqual(self.caps["moz:buildID"], self.appinfo["buildID"])
         self.assertIn("moz:useNonSpecCompliantPointerOrigin", self.caps)
         self.assertFalse(self.caps["moz:useNonSpecCompliantPointerOrigin"])
 
@@ -228,4 +235,3 @@ class TestCapabilityMatching(MarionetteTestCase):
             print("invalid unhandled prompt behavior {}".format(behavior))
             with self.assertRaisesRegexp(SessionNotCreatedException, "InvalidArgumentError"):
                 self.marionette.start_session({"unhandledPromptBehavior": behavior})
-

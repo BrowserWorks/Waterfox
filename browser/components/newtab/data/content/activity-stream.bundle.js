@@ -94,8 +94,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var content_src_lib_snippets__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(3);
 /* harmony import */ var content_src_asrouter_asrouter_content__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(4);
 /* harmony import */ var content_src_components_Base_Base__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(25);
-/* harmony import */ var content_src_lib_detect_user_session_start__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(54);
-/* harmony import */ var content_src_lib_asroutercontent__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(55);
+/* harmony import */ var content_src_lib_detect_user_session_start__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(53);
+/* harmony import */ var content_src_lib_asroutercontent__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(54);
 /* harmony import */ var content_src_lib_init_store__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(6);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(24);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_7__);
@@ -103,7 +103,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_8__);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(14);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_9___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_9__);
-/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(60);
+/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(59);
 
 
 
@@ -211,7 +211,7 @@ const globalImportContext = typeof Window === "undefined" ? BACKGROUND_PROCESS :
 // }
 const actionTypes = {};
 
-for (const type of ["ADDONS_INFO_REQUEST", "ADDONS_INFO_RESPONSE", "ARCHIVE_FROM_POCKET", "AS_ROUTER_INITIALIZED", "AS_ROUTER_PREF_CHANGED", "AS_ROUTER_TELEMETRY_USER_EVENT", "BLOCK_URL", "BOOKMARK_URL", "COPY_DOWNLOAD_LINK", "DELETE_BOOKMARK_BY_ID", "DELETE_FROM_POCKET", "DELETE_HISTORY_URL", "DIALOG_CANCEL", "DIALOG_OPEN", "DISCOVERY_STREAM_CONFIG_CHANGE", "DISCOVERY_STREAM_CONFIG_SETUP", "DISCOVERY_STREAM_CONFIG_SET_VALUE", "DISCOVERY_STREAM_FEEDS_UPDATE", "DISCOVERY_STREAM_LAYOUT_RESET", "DISCOVERY_STREAM_LAYOUT_UPDATE", "DISCOVERY_STREAM_OPT_OUT", "DISCOVERY_STREAM_SPOCS_ENDPOINT", "DISCOVERY_STREAM_SPOCS_UPDATE", "DISCOVERY_STREAM_SPOC_IMPRESSION", "DOWNLOAD_CHANGED", "FAKE_FOCUS_SEARCH", "FILL_SEARCH_TERM", "HANDOFF_SEARCH_TO_AWESOMEBAR", "HIDE_SEARCH", "INIT", "MIGRATION_CANCEL", "MIGRATION_COMPLETED", "MIGRATION_START", "NEW_TAB_INIT", "NEW_TAB_INITIAL_STATE", "NEW_TAB_LOAD", "NEW_TAB_REHYDRATED", "NEW_TAB_STATE_REQUEST", "NEW_TAB_UNLOAD", "OPEN_DOWNLOAD_FILE", "OPEN_LINK", "OPEN_NEW_WINDOW", "OPEN_PRIVATE_WINDOW", "OPEN_WEBEXT_SETTINGS", "PAGE_PRERENDERED", "PLACES_BOOKMARK_ADDED", "PLACES_BOOKMARK_REMOVED", "PLACES_HISTORY_CLEARED", "PLACES_LINKS_CHANGED", "PLACES_LINK_BLOCKED", "PLACES_LINK_DELETED", "PLACES_SAVED_TO_POCKET", "POCKET_CTA", "POCKET_LOGGED_IN", "POCKET_WAITING_FOR_SPOC", "PREFS_INITIAL_VALUES", "PREF_CHANGED", "PREVIEW_REQUEST", "PREVIEW_REQUEST_CANCEL", "PREVIEW_RESPONSE", "REMOVE_DOWNLOAD_FILE", "RICH_ICON_MISSING", "SAVE_SESSION_PERF_DATA", "SAVE_TO_POCKET", "SCREENSHOT_UPDATED", "SECTION_DEREGISTER", "SECTION_DISABLE", "SECTION_ENABLE", "SECTION_MOVE", "SECTION_OPTIONS_CHANGED", "SECTION_REGISTER", "SECTION_UPDATE", "SECTION_UPDATE_CARD", "SETTINGS_CLOSE", "SETTINGS_OPEN", "SET_PREF", "SHOW_DOWNLOAD_FILE", "SHOW_FIREFOX_ACCOUNTS", "SHOW_SEARCH", "SKIPPED_SIGNIN", "SNIPPETS_BLOCKLIST_CLEARED", "SNIPPETS_BLOCKLIST_UPDATED", "SNIPPETS_DATA", "SNIPPETS_PREVIEW_MODE", "SNIPPETS_RESET", "SNIPPET_BLOCKED", "SUBMIT_EMAIL", "SYSTEM_TICK", "TELEMETRY_IMPRESSION_STATS", "TELEMETRY_PERFORMANCE_EVENT", "TELEMETRY_UNDESIRED_EVENT", "TELEMETRY_USER_EVENT", "TOP_SITES_CANCEL_EDIT", "TOP_SITES_CLOSE_SEARCH_SHORTCUTS_MODAL", "TOP_SITES_EDIT", "TOP_SITES_INSERT", "TOP_SITES_OPEN_SEARCH_SHORTCUTS_MODAL", "TOP_SITES_PIN", "TOP_SITES_PREFS_UPDATED", "TOP_SITES_UNPIN", "TOP_SITES_UPDATED", "TOTAL_BOOKMARKS_REQUEST", "TOTAL_BOOKMARKS_RESPONSE", "UNINIT", "UPDATE_PINNED_SEARCH_SHORTCUTS", "UPDATE_SEARCH_SHORTCUTS", "UPDATE_SECTION_PREFS", "WEBEXT_CLICK", "WEBEXT_DISMISS"]) {
+for (const type of ["ADDONS_INFO_REQUEST", "ADDONS_INFO_RESPONSE", "ARCHIVE_FROM_POCKET", "AS_ROUTER_INITIALIZED", "AS_ROUTER_PREF_CHANGED", "AS_ROUTER_TELEMETRY_USER_EVENT", "BLOCK_URL", "BOOKMARK_URL", "COPY_DOWNLOAD_LINK", "DELETE_BOOKMARK_BY_ID", "DELETE_FROM_POCKET", "DELETE_HISTORY_URL", "DIALOG_CANCEL", "DIALOG_OPEN", "DISCOVERY_STREAM_CONFIG_CHANGE", "DISCOVERY_STREAM_CONFIG_SETUP", "DISCOVERY_STREAM_CONFIG_SET_VALUE", "DISCOVERY_STREAM_FEEDS_UPDATE", "DISCOVERY_STREAM_IMPRESSION_STATS", "DISCOVERY_STREAM_LAYOUT_RESET", "DISCOVERY_STREAM_LAYOUT_UPDATE", "DISCOVERY_STREAM_OPT_OUT", "DISCOVERY_STREAM_REC_IMPRESSION", "DISCOVERY_STREAM_SPOCS_ENDPOINT", "DISCOVERY_STREAM_SPOCS_UPDATE", "DISCOVERY_STREAM_SPOC_IMPRESSION", "DOWNLOAD_CHANGED", "FAKE_FOCUS_SEARCH", "FILL_SEARCH_TERM", "HANDOFF_SEARCH_TO_AWESOMEBAR", "HIDE_SEARCH", "INIT", "MIGRATION_CANCEL", "MIGRATION_COMPLETED", "MIGRATION_START", "NEW_TAB_INIT", "NEW_TAB_INITIAL_STATE", "NEW_TAB_LOAD", "NEW_TAB_REHYDRATED", "NEW_TAB_STATE_REQUEST", "NEW_TAB_UNLOAD", "OPEN_DOWNLOAD_FILE", "OPEN_LINK", "OPEN_NEW_WINDOW", "OPEN_PRIVATE_WINDOW", "OPEN_WEBEXT_SETTINGS", "PAGE_PRERENDERED", "PLACES_BOOKMARK_ADDED", "PLACES_BOOKMARK_REMOVED", "PLACES_HISTORY_CLEARED", "PLACES_LINKS_CHANGED", "PLACES_LINK_BLOCKED", "PLACES_LINK_DELETED", "PLACES_SAVED_TO_POCKET", "POCKET_CTA", "POCKET_LOGGED_IN", "POCKET_WAITING_FOR_SPOC", "PREFS_INITIAL_VALUES", "PREF_CHANGED", "PREVIEW_REQUEST", "PREVIEW_REQUEST_CANCEL", "PREVIEW_RESPONSE", "REMOVE_DOWNLOAD_FILE", "RICH_ICON_MISSING", "SAVE_SESSION_PERF_DATA", "SAVE_TO_POCKET", "SCREENSHOT_UPDATED", "SECTION_DEREGISTER", "SECTION_DISABLE", "SECTION_ENABLE", "SECTION_MOVE", "SECTION_OPTIONS_CHANGED", "SECTION_REGISTER", "SECTION_UPDATE", "SECTION_UPDATE_CARD", "SETTINGS_CLOSE", "SETTINGS_OPEN", "SET_PREF", "SHOW_DOWNLOAD_FILE", "SHOW_FIREFOX_ACCOUNTS", "SHOW_SEARCH", "SKIPPED_SIGNIN", "SNIPPETS_BLOCKLIST_CLEARED", "SNIPPETS_BLOCKLIST_UPDATED", "SNIPPETS_DATA", "SNIPPETS_PREVIEW_MODE", "SNIPPETS_RESET", "SNIPPET_BLOCKED", "SUBMIT_EMAIL", "SYSTEM_TICK", "TELEMETRY_IMPRESSION_STATS", "TELEMETRY_PERFORMANCE_EVENT", "TELEMETRY_UNDESIRED_EVENT", "TELEMETRY_USER_EVENT", "TOP_SITES_CANCEL_EDIT", "TOP_SITES_CLOSE_SEARCH_SHORTCUTS_MODAL", "TOP_SITES_EDIT", "TOP_SITES_INSERT", "TOP_SITES_OPEN_SEARCH_SHORTCUTS_MODAL", "TOP_SITES_PIN", "TOP_SITES_PREFS_UPDATED", "TOP_SITES_UNPIN", "TOP_SITES_UPDATED", "TOTAL_BOOKMARKS_REQUEST", "TOTAL_BOOKMARKS_RESPONSE", "UNINIT", "UPDATE_PINNED_SEARCH_SHORTCUTS", "UPDATE_SEARCH_SHORTCUTS", "UPDATE_SECTION_PREFS", "WEBEXT_CLICK", "WEBEXT_DISMISS"]) {
   actionTypes[type] = type;
 }
 
@@ -404,6 +404,21 @@ function ImpressionStats(data, importContext = globalImportContext) {
   return importContext === UI_CODE ? AlsoToMain(action) : action;
 }
 
+/**
+ * DiscoveryStreamImpressionStats - A telemetry ping indicating an impression stats in Discovery Stream.
+ *
+ * @param  {object} data Fields to include in the ping
+ * @param  {int} importContext (For testing) Override the import context for testing.
+ * #return {object} An action. For UI code, a AlsoToMain action.
+ */
+function DiscoveryStreamImpressionStats(data, importContext = globalImportContext) {
+  const action = {
+    type: actionTypes.DISCOVERY_STREAM_IMPRESSION_STATS,
+    data
+  };
+  return importContext === UI_CODE ? AlsoToMain(action) : action;
+}
+
 function SetPref(name, value, importContext = globalImportContext) {
   const action = { type: actionTypes.SET_PREF, data: { name, value } };
   return importContext === UI_CODE ? AlsoToMain(action) : action;
@@ -430,7 +445,8 @@ var actionCreators = {
   OnlyToMain,
   AlsoToPreloaded,
   SetPref,
-  WebExtEvent
+  WebExtEvent,
+  DiscoveryStreamImpressionStats
 };
 
 // These are helpers to test for certain kinds of actions
@@ -936,14 +952,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var content_src_lib_init_store__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6);
 /* harmony import */ var _rich_text_strings__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(8);
 /* harmony import */ var _components_ImpressionsWrapper_ImpressionsWrapper__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(9);
-/* harmony import */ var fluent_react__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(59);
+/* harmony import */ var fluent_react__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(58);
 /* harmony import */ var _templates_OnboardingMessage_OnboardingMessage__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(12);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_7__);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(14);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_8__);
 /* harmony import */ var _templates_ReturnToAMO_ReturnToAMO__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(15);
-/* harmony import */ var _templates_template_manifest__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(57);
+/* harmony import */ var _templates_template_manifest__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(56);
 /* harmony import */ var _templates_StartupOverlay_StartupOverlay__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(23);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
@@ -1458,7 +1474,7 @@ module.exports = Redux;
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "RICH_TEXT_KEYS", function() { return RICH_TEXT_KEYS; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "generateMessages", function() { return generateMessages; });
-/* harmony import */ var fluent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(58);
+/* harmony import */ var fluent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(57);
 
 
 /**
@@ -1854,7 +1870,7 @@ class ReturnToAMO extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCompo
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "convertLinks", function() { return convertLinks; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "RichText", function() { return RichText; });
-/* harmony import */ var fluent_react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(59);
+/* harmony import */ var fluent_react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(58);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _rich_text_strings__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(8);
@@ -2221,14 +2237,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(24);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_4__);
 /* harmony import */ var content_src_components_DarkModeMessage_DarkModeMessage__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(29);
-/* harmony import */ var content_src_components_DiscoveryStreamBase_DiscoveryStreamBase__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(56);
-/* harmony import */ var content_src_components_ErrorBoundary_ErrorBoundary__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(35);
-/* harmony import */ var content_src_components_ManualMigration_ManualMigration__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(46);
-/* harmony import */ var common_PrerenderData_jsm__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(47);
+/* harmony import */ var content_src_components_DiscoveryStreamBase_DiscoveryStreamBase__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(55);
+/* harmony import */ var content_src_components_ErrorBoundary_ErrorBoundary__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(34);
+/* harmony import */ var content_src_components_ManualMigration_ManualMigration__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(45);
+/* harmony import */ var common_PrerenderData_jsm__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(46);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_10___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_10__);
-/* harmony import */ var content_src_components_Search_Search__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(48);
-/* harmony import */ var content_src_components_Sections_Sections__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(50);
+/* harmony import */ var content_src_components_Search_Search__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(47);
+/* harmony import */ var content_src_components_Sections_Sections__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(49);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -2398,7 +2414,7 @@ class BaseContent extends react__WEBPACK_IMPORTED_MODULE_10___default.a.PureComp
       this.disableDarkTheme();
     }
 
-    const outerClassName = ["outer-wrapper", shouldBeFixedToTop && "fixed-to-top", prefs.showSearch && this.state.fixedSearch && !noSectionsEnabled && "fixed-search", prefs.showSearch && noSectionsEnabled && "only-search"].filter(v => v).join(" ");
+    const outerClassName = ["outer-wrapper", isDiscoveryStream && "ds-outer-wrapper-search-alignment", isDiscoveryStream && "ds-outer-wrapper-breakpoint-override", shouldBeFixedToTop && "fixed-to-top", prefs.showSearch && this.state.fixedSearch && !noSectionsEnabled && "fixed-search", prefs.showSearch && noSectionsEnabled && "only-search"].filter(v => v).join(" ");
 
     return react__WEBPACK_IMPORTED_MODULE_10___default.a.createElement(
       "div",
@@ -2500,10 +2516,21 @@ function relativeTime(timestamp) {
   return new Date(timestamp).toLocaleString();
 }
 
+const OPT_OUT_PREF = "discoverystream.optOut.0";
+const LAYOUT_VARIANTS = {
+  "basic": "Basic default layout (on by default in nightly)",
+  "dev-test-all": "A little bit of everything. Good layout for testing all components",
+  "dev-test-feeds": "Stress testing for slow feeds"
+};
 class DiscoveryStreamAdmin extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureComponent {
   constructor(props) {
     super(props);
     this.onEnableToggle = this.onEnableToggle.bind(this);
+    this.changeEndpointVariant = this.changeEndpointVariant.bind(this);
+  }
+
+  get isOptedOut() {
+    return this.props.otherPrefs[OPT_OUT_PREF];
   }
 
   setConfigValue(name, value) {
@@ -2512,6 +2539,13 @@ class DiscoveryStreamAdmin extends react__WEBPACK_IMPORTED_MODULE_4___default.a.
 
   onEnableToggle(event) {
     this.setConfigValue("enabled", event.target.checked);
+  }
+
+  changeEndpointVariant(event) {
+    const endpoint = this.props.state.config.layout_endpoint;
+    if (endpoint) {
+      this.setConfigValue("layout_endpoint", endpoint.replace(/layout_variant=.+/, `layout_variant=${event.target.value}`));
+    }
   }
 
   renderComponent(width, component) {
@@ -2554,6 +2588,12 @@ class DiscoveryStreamAdmin extends react__WEBPACK_IMPORTED_MODULE_4___default.a.
     );
   }
 
+  isCurrentVariant(id) {
+    const endpoint = this.props.state.config.layout_endpoint;
+    const isMatch = endpoint && !!endpoint.match(`layout_variant=${id}`);
+    return isMatch;
+  }
+
   renderFeed(feed) {
     const { feeds } = this.props.state;
     if (!feed.url) {
@@ -2587,13 +2627,15 @@ class DiscoveryStreamAdmin extends react__WEBPACK_IMPORTED_MODULE_4___default.a.
         react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
           "td",
           null,
-          relativeTime(feeds[feed.url] ? feeds[feed.url].lastUpdated : null) || "(no data)"
+          relativeTime(feeds.data[feed.url] ? feeds.data[feed.url].lastUpdated : null) || "(no data)"
         )
       )
     );
   }
 
   render() {
+    const { isOptedOut } = this;
+
     const { config, lastUpdated, layout } = this.props.state;
     return react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
       "div",
@@ -2602,7 +2644,59 @@ class DiscoveryStreamAdmin extends react__WEBPACK_IMPORTED_MODULE_4___default.a.
         "div",
         { className: "dsEnabled" },
         react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("input", { type: "checkbox", checked: config.enabled, onChange: this.onEnableToggle }),
-        " enabled"
+        " enabled",
+        isOptedOut ? react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+          "span",
+          { className: "optOutNote" },
+          "(Note: User has opted-out. Check this box to reset)"
+        ) : ""
+      ),
+      react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+        "h3",
+        null,
+        "Endpoint variant"
+      ),
+      react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+        "p",
+        null,
+        "You can also change this manually by changing this pref: ",
+        react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+          "code",
+          null,
+          "browser.newtabpage.activity-stream.discoverystream.config"
+        )
+      ),
+      react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+        "table",
+        { style: config.enabled ? null : { opacity: 0.5 } },
+        react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+          "tbody",
+          null,
+          Object.keys(LAYOUT_VARIANTS).map(id => react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+            Row,
+            { key: id },
+            react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+              "td",
+              { className: "min" },
+              react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("input", { type: "radio", value: id, checked: this.isCurrentVariant(id), onChange: this.changeEndpointVariant })
+            ),
+            react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+              "td",
+              { className: "min" },
+              id
+            ),
+            react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+              "td",
+              null,
+              LAYOUT_VARIANTS[id]
+            )
+          ))
+        )
+      ),
+      react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
+        "h3",
+        null,
+        "Caching info"
       ),
       react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
         "table",
@@ -2622,20 +2716,6 @@ class DiscoveryStreamAdmin extends react__WEBPACK_IMPORTED_MODULE_4___default.a.
               "td",
               null,
               relativeTime(lastUpdated) || "(no data)"
-            )
-          ),
-          react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
-            Row,
-            null,
-            react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
-              "td",
-              { className: "min" },
-              "Endpoint"
-            ),
-            react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
-              "td",
-              null,
-              config.layout_endpoint || "(empty)"
             )
           )
         )
@@ -3446,7 +3526,7 @@ class ASRouterAdminInner extends react__WEBPACK_IMPORTED_MODULE_4___default.a.Pu
             null,
             "Discovery Stream"
           ),
-          react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(DiscoveryStreamAdmin, { state: this.props.DiscoveryStream, dispatch: this.props.dispatch })
+          react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(DiscoveryStreamAdmin, { state: this.props.DiscoveryStream, otherPrefs: this.props.Prefs.values, dispatch: this.props.dispatch })
         );
       default:
         return react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(
@@ -3558,7 +3638,7 @@ const _ASRouterAdmin = props => react__WEBPACK_IMPORTED_MODULE_4___default.a.cre
   null,
   react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(ASRouterAdminInner, props)
 );
-const ASRouterAdmin = Object(react_redux__WEBPACK_IMPORTED_MODULE_2__["connect"])(state => ({ Sections: state.Sections, DiscoveryStream: state.DiscoveryStream }))(_ASRouterAdmin);
+const ASRouterAdmin = Object(react_redux__WEBPACK_IMPORTED_MODULE_2__["connect"])(state => ({ Sections: state.Sections, DiscoveryStream: state.DiscoveryStream, Prefs: state.Prefs }))(_ASRouterAdmin);
 
 /***/ }),
 /* 27 */
@@ -3759,7 +3839,7 @@ class _DarkModeMessage extends react__WEBPACK_IMPORTED_MODULE_2___default.a.Pure
         react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(
           "span",
           null,
-          "This version of New Tab doesn not support dark mode yet."
+          "This version of New Tab doesn't support dark mode yet."
         )
       ),
       react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(
@@ -3796,7 +3876,8 @@ const DarkModeMessage = Object(react_redux__WEBPACK_IMPORTED_MODULE_1__["connect
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* WEBPACK VAR INJECTION */(function(global) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DSCard", function() { return DSCard; });
+/* WEBPACK VAR INJECTION */(function(global) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "INTERSECTION_RATIO", function() { return INTERSECTION_RATIO; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ImpressionStats", function() { return ImpressionStats; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_1__);
@@ -3805,150 +3886,29 @@ __webpack_require__.r(__webpack_exports__);
 
 const VISIBLE = "visible";
 const VISIBILITY_CHANGE_EVENT = "visibilitychange";
+
+// Per analytical requirement, we set the minimal intersection ratio to
+// 0.5, and an impression is identified when the wrapped item has at least
+// 50% visibility.
+//
+// This constant is exported for unit test
 const INTERSECTION_RATIO = 0.5;
 
-class DSCard extends react__WEBPACK_IMPORTED_MODULE_1___default.a.PureComponent {
-  constructor(props) {
-    super(props);
-
-    this.cardElementRef = this.cardElementRef.bind(this);
-    this.onLinkClick = this.onLinkClick.bind(this);
-  }
-
-  componentDidMount() {
-    if (this.props.document.visibilityState === VISIBLE) {
-      this.setupIntersectionObserver();
-    } else {
-      this._onVisibilityChange = () => {
-        if (this.props.document.visibilityState === VISIBLE) {
-          this.setupIntersectionObserver();
-          this.props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
-        }
-      };
-      this.props.document.addEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
-    }
-  }
-
-  componentWillUnmount() {
-    if (this._onVisibilityChange) {
-      this.props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
-    }
-    if (this._intersectionObserver) {
-      this._intersectionObserver.unobserve(this.cardElement);
-    }
-  }
-
-  setupIntersectionObserver() {
-    const options = { threshold: INTERSECTION_RATIO };
-    this._intersectionObserver = new IntersectionObserver(entries => {
-      for (let entry of entries) {
-        if (entry.isIntersecting && entry.intersectionRatio >= INTERSECTION_RATIO) {
-          this.dispatchSpocImpression();
-          break;
-        }
-      }
-    }, options);
-    this._intersectionObserver.observe(this.cardElement);
-  }
-
-  dispatchSpocImpression() {
-    if (this.props.campaignId) {
-      this.props.dispatch(common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionCreators"].OnlyToMain({ type: common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionTypes"].DISCOVERY_STREAM_SPOC_IMPRESSION, data: { campaignId: this.props.campaignId } }));
-    }
-    this._intersectionObserver.unobserve(this.cardElement);
-  }
-
-  cardElementRef(element) {
-    this.cardElement = element;
-  }
-
-  onLinkClick(event) {
-    if (this.props.dispatch) {
-      this.props.dispatch(common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionCreators"].UserEvent({
-        event: "CLICK",
-        source: this.props.type.toUpperCase(),
-        action_position: this.props.index
-      }));
-
-      this.props.dispatch(common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionCreators"].ImpressionStats({
-        source: this.props.type.toUpperCase(),
-        click: 0,
-        tiles: [{ id: this.props.id, pos: this.props.index }]
-      }));
-    }
-  }
-
-  render() {
-    return react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
-      "a",
-      { href: this.props.url, className: "ds-card", onClick: this.onLinkClick, ref: this.cardElementRef },
-      react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
-        "div",
-        { className: "img-wrapper" },
-        react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("div", { className: "img", style: { backgroundImage: `url(${this.props.image_src}` } })
-      ),
-      react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
-        "div",
-        { className: "meta" },
-        react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
-          "div",
-          { className: "info-wrap" },
-          react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
-            "header",
-            { className: "title" },
-            this.props.title
-          ),
-          this.props.excerpt && react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
-            "p",
-            { className: "excerpt" },
-            this.props.excerpt
-          )
-        ),
-        react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
-          "p",
-          null,
-          this.props.context && react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
-            "span",
-            null,
-            react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
-              "span",
-              { className: "context" },
-              this.props.context
-            ),
-            react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("br", null)
-          ),
-          react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
-            "span",
-            { className: "source" },
-            this.props.source
-          )
-        )
-      )
-    );
-  }
-}
-
-DSCard.defaultProps = {
-  document: global.document
-};
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
-
-/***/ }),
-/* 31 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* WEBPACK VAR INJECTION */(function(global) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ImpressionStats", function() { return ImpressionStats; });
-/* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(10);
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_1__);
-
-
-
-const VISIBLE = "visible";
-const VISIBILITY_CHANGE_EVENT = "visibilitychange";
-
+/**
+ * Impression wrapper for Discovery Stream related React components.
+ *
+ * It makses use of the Intersection Observer API to detect the visibility,
+ * and relies on page visibility to ensure the impression is reported
+ * only when the component is visible on the page.
+ *
+ * Note:
+ *   * This wrapper could be used either at the individual card level,
+ *     or by the card container components
+ *   * Each impression will be sent only once as soon as the desired
+ *     visibility is detected
+ *   * Batching is not yet implemented, hence it might send multiple
+ *     impression pings separately
+ */
 class ImpressionStats extends react__WEBPACK_IMPORTED_MODULE_1___default.a.PureComponent {
   // This checks if the given cards are the same as those in the last impression ping.
   // If so, it should not send the same impression ping again.
@@ -3970,8 +3930,12 @@ class ImpressionStats extends react__WEBPACK_IMPORTED_MODULE_1___default.a.PureC
     const { props } = this;
     const cards = props.rows;
 
+    if (this.props.campaignId) {
+      this.props.dispatch(common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionCreators"].OnlyToMain({ type: common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionTypes"].DISCOVERY_STREAM_SPOC_IMPRESSION, data: { campaignId: this.props.campaignId } }));
+    }
+
     if (this._needsImpressionStats(cards)) {
-      props.dispatch(common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionCreators"].ImpressionStats({
+      props.dispatch(common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionCreators"].DiscoveryStreamImpressionStats({
         source: props.source.toUpperCase(),
         tiles: cards.map(link => ({ id: link.id }))
       }));
@@ -3979,10 +3943,7 @@ class ImpressionStats extends react__WEBPACK_IMPORTED_MODULE_1___default.a.PureC
     }
   }
 
-  // This sends an event when a user sees a set of new content. If content
-  // changes while the page is hidden (i.e. preloaded or on a hidden tab),
-  // only send the event if the page becomes visible again.
-  sendImpressionStatsOrAddListener() {
+  setImpressionObserverOrAddListener() {
     const { props } = this;
 
     if (!props.dispatch) {
@@ -3990,7 +3951,7 @@ class ImpressionStats extends react__WEBPACK_IMPORTED_MODULE_1___default.a.PureC
     }
 
     if (props.document.visibilityState === VISIBLE) {
-      this._dispatchImpressionStats();
+      this.setImpressionObserver();
     } else {
       // We should only ever send the latest impression stats ping, so remove any
       // older listeners.
@@ -4000,7 +3961,7 @@ class ImpressionStats extends react__WEBPACK_IMPORTED_MODULE_1___default.a.PureC
 
       this._onVisibilityChange = () => {
         if (props.document.visibilityState === VISIBLE) {
-          this._dispatchImpressionStats();
+          this.setImpressionObserver();
           props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
         }
       };
@@ -4008,30 +3969,65 @@ class ImpressionStats extends react__WEBPACK_IMPORTED_MODULE_1___default.a.PureC
     }
   }
 
+  /**
+   * Set an impression observer for the wrapped component. It makes use of
+   * the Intersection Observer API to detect if the wrapped component is
+   * visible with a desired ratio, and only sends impression if that's the case.
+   *
+   * See more details about Intersection Observer API at:
+   * https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
+   */
+  setImpressionObserver() {
+    const { props } = this;
+
+    if (!props.rows.length) {
+      return;
+    }
+
+    this._handleIntersect = entries => {
+      if (entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= INTERSECTION_RATIO)) {
+        this._dispatchImpressionStats();
+        this.impressionObserver.unobserve(this.refs.impression);
+      }
+    };
+
+    const options = { threshold: INTERSECTION_RATIO };
+    this.impressionObserver = new props.IntersectionObserver(this._handleIntersect, options);
+    this.impressionObserver.observe(this.refs.impression);
+  }
+
   componentDidMount() {
     if (this.props.rows.length) {
-      this.sendImpressionStatsOrAddListener();
+      this.setImpressionObserverOrAddListener();
     }
   }
 
   componentDidUpdate(prevProps) {
     if (this.props.rows.length && this.props.rows !== prevProps.rows) {
-      this.sendImpressionStatsOrAddListener();
+      this.setImpressionObserverOrAddListener();
     }
   }
 
   componentWillUnmount() {
+    if (this._handleIntersect && this.impressionObserver) {
+      this.impressionObserver.unobserve(this.refs.impression);
+    }
     if (this._onVisibilityChange) {
       this.props.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
     }
   }
 
   render() {
-    return this.props.children;
+    return react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(
+      "div",
+      { ref: "impression", className: "impression-observer" },
+      this.props.children
+    );
   }
 }
 
 ImpressionStats.defaultProps = {
+  IntersectionObserver: global.IntersectionObserver,
   document: global.document,
   rows: [],
   source: ""
@@ -4039,7 +4035,7 @@ ImpressionStats.defaultProps = {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 32 */
+/* 31 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4047,19 +4043,19 @@ __webpack_require__.r(__webpack_exports__);
 /* WEBPACK VAR INJECTION */(function(global) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_TopSites", function() { return _TopSites; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TopSites", function() { return TopSites; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(33);
-/* harmony import */ var content_src_components_CollapsibleSection_CollapsibleSection__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(34);
-/* harmony import */ var content_src_components_ComponentPerfTimer_ComponentPerfTimer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(39);
+/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(32);
+/* harmony import */ var content_src_components_CollapsibleSection_CollapsibleSection__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(33);
+/* harmony import */ var content_src_components_ComponentPerfTimer_ComponentPerfTimer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(38);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(24);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_4__);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(5);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_5__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_6__);
-/* harmony import */ var _SearchShortcutsForm__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(41);
-/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(60);
-/* harmony import */ var _TopSiteForm__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(62);
-/* harmony import */ var _TopSite__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(42);
+/* harmony import */ var _SearchShortcutsForm__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(40);
+/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(59);
+/* harmony import */ var _TopSiteForm__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(61);
+/* harmony import */ var _TopSite__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(41);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -4248,7 +4244,7 @@ const TopSites = Object(react_redux__WEBPACK_IMPORTED_MODULE_4__["connect"])(sta
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 33 */
+/* 32 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4268,7 +4264,7 @@ const MIN_RICH_FAVICON_SIZE = 96;
 const MIN_CORNER_FAVICON_SIZE = 16;
 
 /***/ }),
-/* 34 */
+/* 33 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4278,11 +4274,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(5);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2);
-/* harmony import */ var content_src_components_ErrorBoundary_ErrorBoundary__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(35);
+/* harmony import */ var content_src_components_ErrorBoundary_ErrorBoundary__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(34);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var content_src_components_SectionMenu_SectionMenu__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(36);
-/* harmony import */ var content_src_lib_section_menu_options__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(38);
+/* harmony import */ var content_src_components_SectionMenu_SectionMenu__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(35);
+/* harmony import */ var content_src_lib_section_menu_options__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(37);
 
 
 
@@ -4535,7 +4531,7 @@ const CollapsibleSection = Object(react_intl__WEBPACK_IMPORTED_MODULE_0__["injec
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 35 */
+/* 34 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4622,7 +4618,7 @@ class ErrorBoundary extends react__WEBPACK_IMPORTED_MODULE_1___default.a.PureCom
 ErrorBoundary.defaultProps = { FallbackComponent: ErrorBoundaryFallback };
 
 /***/ }),
-/* 36 */
+/* 35 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4630,12 +4626,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_SectionMenu", function() { return _SectionMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "SectionMenu", function() { return SectionMenu; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var content_src_components_ContextMenu_ContextMenu__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(37);
+/* harmony import */ var content_src_components_ContextMenu_ContextMenu__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(36);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(5);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var content_src_lib_section_menu_options__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(38);
+/* harmony import */ var content_src_lib_section_menu_options__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(37);
 
 
 
@@ -4694,7 +4690,7 @@ class _SectionMenu extends react__WEBPACK_IMPORTED_MODULE_3___default.a.PureComp
 const SectionMenu = Object(react_intl__WEBPACK_IMPORTED_MODULE_2__["injectIntl"])(_SectionMenu);
 
 /***/ }),
-/* 37 */
+/* 36 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4793,7 +4789,7 @@ class ContextMenuItem extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureC
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 38 */
+/* 37 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4882,14 +4878,14 @@ const SectionMenuOptions = {
 };
 
 /***/ }),
-/* 39 */
+/* 38 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ComponentPerfTimer", function() { return ComponentPerfTimer; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var common_PerfService_jsm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(40);
+/* harmony import */ var common_PerfService_jsm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(39);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_2__);
 
@@ -5056,7 +5052,7 @@ class ComponentPerfTimer extends react__WEBPACK_IMPORTED_MODULE_2___default.a.Co
 }
 
 /***/ }),
-/* 40 */
+/* 39 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5192,7 +5188,7 @@ _PerfService.prototype = {
 var perfService = new _PerfService();
 
 /***/ }),
-/* 41 */
+/* 40 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5203,7 +5199,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(33);
+/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(32);
 
 
 
@@ -5372,7 +5368,7 @@ class SearchShortcutsForm extends react__WEBPACK_IMPORTED_MODULE_2___default.a.P
 }
 
 /***/ }),
-/* 42 */
+/* 41 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5385,12 +5381,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(5);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(33);
-/* harmony import */ var content_src_components_LinkMenu_LinkMenu__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(43);
+/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(32);
+/* harmony import */ var content_src_components_LinkMenu_LinkMenu__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(42);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var content_src_lib_screenshot_utils__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(45);
-/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(60);
+/* harmony import */ var content_src_lib_screenshot_utils__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(44);
+/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(59);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -5915,7 +5911,7 @@ class _TopSiteList extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureComp
 const TopSiteList = Object(react_intl__WEBPACK_IMPORTED_MODULE_1__["injectIntl"])(_TopSiteList);
 
 /***/ }),
-/* 43 */
+/* 42 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5925,10 +5921,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(24);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var content_src_components_ContextMenu_ContextMenu__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(37);
+/* harmony import */ var content_src_components_ContextMenu_ContextMenu__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(36);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(5);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var content_src_lib_link_menu_options__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(44);
+/* harmony import */ var content_src_lib_link_menu_options__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(43);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_5__);
 
@@ -5989,7 +5985,7 @@ const getState = state => ({ isPrivateBrowsingEnabled: state.Prefs.values.isPriv
 const LinkMenu = Object(react_redux__WEBPACK_IMPORTED_MODULE_1__["connect"])(getState)(Object(react_intl__WEBPACK_IMPORTED_MODULE_3__["injectIntl"])(_LinkMenu));
 
 /***/ }),
-/* 44 */
+/* 43 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6216,7 +6212,7 @@ const LinkMenuOptions = {
 };
 
 /***/ }),
-/* 45 */
+/* 44 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6273,7 +6269,7 @@ const ScreenshotUtils = {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 46 */
+/* 45 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6348,7 +6344,7 @@ class _ManualMigration extends react__WEBPACK_IMPORTED_MODULE_3___default.a.Pure
 const ManualMigration = Object(react_redux__WEBPACK_IMPORTED_MODULE_1__["connect"])()(_ManualMigration);
 
 /***/ }),
-/* 47 */
+/* 46 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6395,9 +6391,9 @@ class _PrerenderData {
   _isPrefEnabled(prefObj) {
     try {
       let data = JSON.parse(prefObj);
-      return data && data.enabled;
+      return data && data.enabled ? true : false; // eslint-disable-line no-unneeded-ternary
     } catch (e) {
-      return null;
+      return false;
     }
   }
 
@@ -6471,7 +6467,7 @@ var PrerenderData = new _PrerenderData({
 });
 
 /***/ }),
-/* 48 */
+/* 47 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6483,7 +6479,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(24);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var content_src_lib_constants__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(49);
+/* harmony import */ var content_src_lib_constants__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(48);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_4__);
 /* globals ContentSearchUIController */
@@ -6665,7 +6661,7 @@ class _Search extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureComponent
 const Search = Object(react_redux__WEBPACK_IMPORTED_MODULE_2__["connect"])()(Object(react_intl__WEBPACK_IMPORTED_MODULE_1__["injectIntl"])(_Search));
 
 /***/ }),
-/* 49 */
+/* 48 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6675,7 +6671,7 @@ const IS_NEWTAB = global.document && global.document.documentURI === "about:newt
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 50 */
+/* 49 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6685,19 +6681,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_Sections", function() { return _Sections; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Sections", function() { return Sections; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var content_src_components_Card_Card__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(61);
+/* harmony import */ var content_src_components_Card_Card__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(60);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(5);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var content_src_components_CollapsibleSection_CollapsibleSection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(34);
-/* harmony import */ var content_src_components_ComponentPerfTimer_ComponentPerfTimer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(39);
+/* harmony import */ var content_src_components_CollapsibleSection_CollapsibleSection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(33);
+/* harmony import */ var content_src_components_ComponentPerfTimer_ComponentPerfTimer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(38);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(24);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var content_src_components_MoreRecommendations_MoreRecommendations__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(51);
-/* harmony import */ var content_src_components_PocketLoggedInCta_PocketLoggedInCta__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(52);
+/* harmony import */ var content_src_components_MoreRecommendations_MoreRecommendations__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(50);
+/* harmony import */ var content_src_components_PocketLoggedInCta_PocketLoggedInCta__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(51);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(10);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_8__);
-/* harmony import */ var content_src_components_Topics_Topics__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(53);
-/* harmony import */ var content_src_components_TopSites_TopSites__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(32);
+/* harmony import */ var content_src_components_Topics_Topics__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(52);
+/* harmony import */ var content_src_components_TopSites_TopSites__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(31);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -7021,7 +7017,7 @@ const Sections = Object(react_redux__WEBPACK_IMPORTED_MODULE_5__["connect"])(sta
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 51 */
+/* 50 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7049,7 +7045,7 @@ class MoreRecommendations extends react__WEBPACK_IMPORTED_MODULE_1___default.a.P
 }
 
 /***/ }),
-/* 52 */
+/* 51 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7093,7 +7089,7 @@ class _PocketLoggedInCta extends react__WEBPACK_IMPORTED_MODULE_2___default.a.Pu
 const PocketLoggedInCta = Object(react_redux__WEBPACK_IMPORTED_MODULE_0__["connect"])(state => ({ Pocket: state.Pocket }))(_PocketLoggedInCta);
 
 /***/ }),
-/* 53 */
+/* 52 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7143,14 +7139,14 @@ class Topics extends react__WEBPACK_IMPORTED_MODULE_1___default.a.PureComponent 
 }
 
 /***/ }),
-/* 54 */
+/* 53 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* WEBPACK VAR INJECTION */(function(global) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DetectUserSessionStart", function() { return DetectUserSessionStart; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var common_PerfService_jsm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(40);
+/* harmony import */ var common_PerfService_jsm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(39);
 
 
 
@@ -7218,7 +7214,7 @@ class DetectUserSessionStart {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 55 */
+/* 54 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7241,18 +7237,133 @@ function enableASRouterContent(store, asrouterContent) {
 }
 
 /***/ }),
-/* 56 */
+/* 55 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 
-// EXTERNAL MODULE: ./content-src/components/DiscoveryStreamComponents/DSCard/DSCard.jsx
-var DSCard = __webpack_require__(30);
+// EXTERNAL MODULE: ./common/Actions.jsm
+var Actions = __webpack_require__(2);
+
+// EXTERNAL MODULE: ./content-src/components/DiscoveryStreamImpressionStats/ImpressionStats.jsx
+var ImpressionStats = __webpack_require__(30);
 
 // EXTERNAL MODULE: external "React"
 var external_React_ = __webpack_require__(10);
 var external_React_default = /*#__PURE__*/__webpack_require__.n(external_React_);
 
+// CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/SafeAnchor/SafeAnchor.jsx
+
+
+class SafeAnchor_SafeAnchor extends external_React_default.a.PureComponent {
+  safeURI(url) {
+    let protocol = null;
+    try {
+      protocol = new URL(url).protocol;
+    } catch (e) {
+      return "";
+    }
+
+    const isAllowed = ["http:", "https:"].includes(protocol);
+    if (!isAllowed) {
+      console.warn(`${url} is not allowed for anchor targets.`); // eslint-disable-line no-console
+      return "";
+    }
+    return url;
+  }
+
+  render() {
+    const { url, className, onLinkClick } = this.props;
+    return external_React_default.a.createElement(
+      "a",
+      { href: this.safeURI(url), className: className, onClick: onLinkClick },
+      this.props.children
+    );
+  }
+}
+// CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/DSCard/DSCard.jsx
+
+
+
+
+
+class DSCard_DSCard extends external_React_default.a.PureComponent {
+  constructor(props) {
+    super(props);
+
+    this.onLinkClick = this.onLinkClick.bind(this);
+  }
+
+  onLinkClick(event) {
+    if (this.props.dispatch) {
+      this.props.dispatch(Actions["actionCreators"].UserEvent({
+        event: "CLICK",
+        source: this.props.type.toUpperCase(),
+        action_position: this.props.index
+      }));
+
+      this.props.dispatch(Actions["actionCreators"].ImpressionStats({
+        source: this.props.type.toUpperCase(),
+        click: 0,
+        tiles: [{ id: this.props.id, pos: this.props.index }]
+      }));
+    }
+  }
+
+  render() {
+    return external_React_default.a.createElement(
+      SafeAnchor_SafeAnchor,
+      { url: this.props.url, className: "ds-card", onLinkClick: this.onLinkClick },
+      external_React_default.a.createElement(
+        "div",
+        { className: "img-wrapper" },
+        external_React_default.a.createElement("div", { className: "img", style: { backgroundImage: `url(${this.props.image_src}` } })
+      ),
+      external_React_default.a.createElement(
+        "div",
+        { className: "meta" },
+        external_React_default.a.createElement(
+          "div",
+          { className: "info-wrap" },
+          external_React_default.a.createElement(
+            "header",
+            { className: "title" },
+            this.props.title
+          ),
+          this.props.excerpt && external_React_default.a.createElement(
+            "p",
+            { className: "excerpt" },
+            this.props.excerpt
+          )
+        ),
+        external_React_default.a.createElement(
+          "p",
+          null,
+          this.props.context && external_React_default.a.createElement(
+            "span",
+            null,
+            external_React_default.a.createElement(
+              "span",
+              { className: "context" },
+              this.props.context
+            ),
+            external_React_default.a.createElement("br", null)
+          ),
+          external_React_default.a.createElement(
+            "span",
+            { className: "source" },
+            this.props.source
+          )
+        )
+      ),
+      external_React_default.a.createElement(ImpressionStats["ImpressionStats"], {
+        campaignId: this.props.campaignId,
+        rows: [{ id: this.props.id }],
+        dispatch: this.props.dispatch,
+        source: this.props.type })
+    );
+  }
+}
 // CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/CardGrid/CardGrid.jsx
 
 
@@ -7266,9 +7377,9 @@ class CardGrid_CardGrid extends external_React_default.a.PureComponent {
       return external_React_default.a.createElement("div", null);
     }
 
-    let cards = data.recommendations.slice(0, this.props.items).map((rec, index) => external_React_default.a.createElement(DSCard["DSCard"], {
-      campaignId: rec.campaign_id,
+    let cards = data.recommendations.slice(0, this.props.items).map((rec, index) => external_React_default.a.createElement(DSCard_DSCard, {
       key: `dscard-${index}`,
+      campaignId: rec.campaign_id,
       image_src: rec.image_src,
       title: rec.title,
       excerpt: rec.excerpt,
@@ -7315,46 +7426,33 @@ var external_ReactRedux_ = __webpack_require__(24);
 // CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/DSMessage/DSMessage.jsx
 
 
+
 class DSMessage_DSMessage extends external_React_default.a.PureComponent {
   render() {
-    let hasSubtitleAndOrLink = this.props.link_text && this.props.link_url;
-    hasSubtitleAndOrLink = hasSubtitleAndOrLink || this.props.subtitle;
-
     return external_React_default.a.createElement(
       "div",
       { className: "ds-message" },
-      this.props.title && external_React_default.a.createElement(
+      external_React_default.a.createElement(
         "header",
         { className: "title" },
-        this.props.icon && external_React_default.a.createElement("img", { src: this.props.icon }),
-        external_React_default.a.createElement(
+        this.props.icon && external_React_default.a.createElement("div", { className: "glyph", style: { backgroundImage: `url(${this.props.icon})` } }),
+        this.props.title && external_React_default.a.createElement(
           "span",
-          null,
+          { className: "title-text" },
           this.props.title
-        )
-      ),
-      hasSubtitleAndOrLink && external_React_default.a.createElement(
-        "p",
-        { className: "subtitle" },
-        this.props.subtitle && external_React_default.a.createElement(
-          "span",
-          null,
-          this.props.subtitle
         ),
         this.props.link_text && this.props.link_url && external_React_default.a.createElement(
-          "a",
-          { href: this.props.link_url },
+          SafeAnchor_SafeAnchor,
+          { className: "link", url: this.props.link_url },
           this.props.link_text
         )
-      ),
-      external_React_default.a.createElement("hr", { className: "ds-hr" })
+      )
     );
   }
 }
-// EXTERNAL MODULE: ./common/Actions.jsm
-var Actions = __webpack_require__(2);
-
 // CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/List/List.jsx
+
+
 
 
 
@@ -7391,28 +7489,51 @@ class List_ListItem extends external_React_default.a.PureComponent {
       "li",
       { className: "ds-list-item" },
       external_React_default.a.createElement(
-        "a",
-        { className: "ds-list-item-link", href: this.props.url, onClick: this.onLinkClick },
+        SafeAnchor_SafeAnchor,
+        { url: this.props.url, className: "ds-list-item-link", onLinkClick: this.onLinkClick },
         external_React_default.a.createElement(
           "div",
           { className: "ds-list-item-text" },
           external_React_default.a.createElement(
             "div",
-            { className: "ds-list-item-title" },
-            this.props.title
-          ),
-          this.props.excerpt && external_React_default.a.createElement(
-            "div",
-            { className: "ds-list-item-excerpt" },
-            this.props.excerpt
+            null,
+            external_React_default.a.createElement(
+              "div",
+              { className: "ds-list-item-title" },
+              this.props.title
+            ),
+            this.props.excerpt && external_React_default.a.createElement(
+              "div",
+              { className: "ds-list-item-excerpt" },
+              this.props.excerpt
+            )
           ),
           external_React_default.a.createElement(
-            "div",
-            { className: "ds-list-item-info" },
-            this.props.domain
+            "p",
+            null,
+            this.props.context && external_React_default.a.createElement(
+              "span",
+              null,
+              external_React_default.a.createElement(
+                "span",
+                { className: "ds-list-item-context" },
+                this.props.context
+              ),
+              external_React_default.a.createElement("br", null)
+            ),
+            external_React_default.a.createElement(
+              "span",
+              { className: "ds-list-item-info" },
+              this.props.domain
+            )
           )
         ),
-        external_React_default.a.createElement("div", { className: "ds-list-image", style: { backgroundImage: `url(${this.props.image_src})` } })
+        external_React_default.a.createElement("div", { className: "ds-list-image", style: { backgroundImage: `url(${this.props.image_src})` } }),
+        external_React_default.a.createElement(ImpressionStats["ImpressionStats"], {
+          campaignId: this.props.campaignId,
+          rows: [{ id: this.props.id }],
+          dispatch: this.props.dispatch,
+          source: this.props.type })
       )
     );
   }
@@ -7422,25 +7543,23 @@ class List_ListItem extends external_React_default.a.PureComponent {
  * @note exported for testing only
  */
 function _List(props) {
-  const feed = props.DiscoveryStream.feeds[props.feed.url];
-
-  if (!feed || !feed.data || !feed.data.recommendations) {
+  const feed = props.data;
+  if (!feed || !feed.recommendations) {
     return null;
   }
-
-  const recs = feed.data.recommendations;
-
+  const recs = feed.recommendations;
   let recMarkup = recs.slice(props.recStartingPoint, props.recStartingPoint + props.items).map((rec, index) => external_React_default.a.createElement(List_ListItem, { key: `ds-list-item-${index}`,
     dispatch: props.dispatch,
+    campaignId: rec.campaign_id,
     domain: rec.domain,
     excerpt: rec.excerpt,
     id: rec.id,
     image_src: rec.image_src,
     index: index,
     title: rec.title,
+    context: rec.context,
     type: props.type,
     url: rec.url }));
-
   const listStyles = ["ds-list", props.fullWidth ? "ds-list-full-width" : "", props.hasBorders ? "ds-list-borders" : "", props.hasImages ? "ds-list-images" : "", props.hasNumbers ? "ds-list-numbers" : ""];
   return external_React_default.a.createElement(
     "div",
@@ -7469,6 +7588,8 @@ _List.defaultProps = {
 
 const List = Object(external_ReactRedux_["connect"])(state => ({ DiscoveryStream: state.DiscoveryStream }))(_List);
 // CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/Hero/Hero.jsx
+
+
 
 
 
@@ -7508,8 +7629,7 @@ class Hero_Hero extends external_React_default.a.PureComponent {
     this.heroRec = heroRec;
 
     // Note that `{index + 1}` is necessary below for telemetry since we treat heroRec as index 0.
-    let cards = otherRecs.map((rec, index) => external_React_default.a.createElement(DSCard["DSCard"], {
-      campaignId: rec.campaign_id,
+    let cards = otherRecs.map((rec, index) => external_React_default.a.createElement(DSCard_DSCard, {
       key: `dscard-${index}`,
       image_src: rec.image_src,
       title: rec.title,
@@ -7523,7 +7643,7 @@ class Hero_Hero extends external_React_default.a.PureComponent {
 
     let list = external_React_default.a.createElement(List, {
       recStartingPoint: 1,
-      feed: this.props.feed,
+      data: data,
       hasImages: true,
       hasBorders: this.props.border === `border`,
       items: this.props.items - 1,
@@ -7541,8 +7661,8 @@ class Hero_Hero extends external_React_default.a.PureComponent {
         "div",
         { className: `ds-hero ds-hero-${this.props.border}` },
         external_React_default.a.createElement(
-          "a",
-          { href: heroRec.url, className: "wrapper", onClick: this.onLinkClick },
+          SafeAnchor_SafeAnchor,
+          { url: heroRec.url, className: "wrapper", onLinkClick: this.onLinkClick },
           external_React_default.a.createElement(
             "div",
             { className: "img-wrapper" },
@@ -7552,14 +7672,18 @@ class Hero_Hero extends external_React_default.a.PureComponent {
             "div",
             { className: "meta" },
             external_React_default.a.createElement(
-              "header",
-              null,
-              heroRec.title
-            ),
-            external_React_default.a.createElement(
-              "p",
-              null,
-              heroRec.excerpt
+              "div",
+              { className: "header-and-excerpt" },
+              external_React_default.a.createElement(
+                "header",
+                null,
+                heroRec.title
+              ),
+              external_React_default.a.createElement(
+                "p",
+                { className: "excerpt" },
+                heroRec.excerpt
+              )
             ),
             heroRec.context ? external_React_default.a.createElement(
               "p",
@@ -7570,7 +7694,12 @@ class Hero_Hero extends external_React_default.a.PureComponent {
               { className: "source" },
               heroRec.domain
             )
-          )
+          ),
+          external_React_default.a.createElement(ImpressionStats["ImpressionStats"], {
+            campaignId: heroRec.campaignId,
+            rows: [{ id: heroRec.id }],
+            dispatch: this.props.dispatch,
+            source: this.props.type })
         ),
         external_React_default.a.createElement(
           "div",
@@ -7595,10 +7724,8 @@ class HorizontalRule_HorizontalRule extends external_React_default.a.PureCompone
     return external_React_default.a.createElement("hr", { className: "ds-hr" });
   }
 }
-// EXTERNAL MODULE: ./content-src/components/DiscoveryStreamImpressionStats/ImpressionStats.jsx
-var ImpressionStats = __webpack_require__(31);
-
 // CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/Navigation/Navigation.jsx
+
 
 
 class Navigation_Topic extends external_React_default.a.PureComponent {
@@ -7608,8 +7735,8 @@ class Navigation_Topic extends external_React_default.a.PureComponent {
       "li",
       null,
       external_React_default.a.createElement(
-        "a",
-        { key: name, href: url },
+        SafeAnchor_SafeAnchor,
+        { key: name, url: url },
         name
       )
     );
@@ -7820,16 +7947,24 @@ function layoutRender(layout, feeds, spocs) {
     // Loops through all the components and adds a .data property
     // containing data from feeds
     components: row.components.map(component => {
-      if (!component.feed || !feeds[component.feed.url]) {
+      if (!component.feed || !feeds.data[component.feed.url]) {
         return component;
       }
 
-      return Object.assign({}, component, { data: maybeInjectSpocs(feeds[component.feed.url].data, component.spocs) });
+      let { data } = feeds.data[component.feed.url];
+
+      if (component && component.properties && component.properties.offset) {
+        data = Object.assign({}, data, {
+          recommendations: data.recommendations.slice(component.properties.offset)
+        });
+      }
+
+      return Object.assign({}, component, { data: maybeInjectSpocs(data, component.spocs) });
     })
   }));
 });
 // EXTERNAL MODULE: ./content-src/components/TopSites/TopSites.jsx
-var TopSites = __webpack_require__(32);
+var TopSites = __webpack_require__(31);
 
 // CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/TopSites/TopSites.jsx
 
@@ -7874,17 +8009,6 @@ const TopSites_TopSites_TopSites = Object(external_ReactRedux_["connect"])(state
 
 
 
-
-// According to the Pocket API endpoint specs, `component.properties.items` is a required property with following values:
-//   - List 1-12 items
-//   - Hero 1-5 items
-//   - CardGrid 1-16 items
-// To enforce that, we define various maximium items for individual components as an extra check.
-// Note that these values are subject to the future changes of the specs.
-const MAX_ROWS_HERO = 5;
-const MAX_ROWS_LIST = 12;
-const MAX_ROWS_CARDGRID = 16;
-
 const ALLOWED_CSS_URL_PREFIXES = ["chrome://", "resource://", "https://img-getpocket.cdn.mozilla.net/"];
 const DUMMY_CSS_SELECTOR = "DUMMY#CSS.SELECTOR";
 
@@ -7908,25 +8032,6 @@ class DiscoveryStreamBase_DiscoveryStreamBase extends external_React_default.a.P
   constructor(props) {
     super(props);
     this.onStyleMount = this.onStyleMount.bind(this);
-  }
-
-  /**
-   * Extracts the recommendation rows from component for the impression ping.
-   * If `component.data.recommendations` is unset, returns an empty array.
-   *
-   * The row size is determined by the following rules:
-   *   - Use `component.properties.items` from the endpoint if it's specified
-   *   - Otherwise, use the length of recommendation array
-   *   - The row size is capped by the argument `limit`, which could be one of
-   *     [`MAX_ROW_HERO`, `MAX_ROWS_LIST`, `MAX_ROWS_CARDGRID`]
-   */
-  extractRows(component, limit) {
-    if (component.data && component.data.recommendations) {
-      const items = Math.min(limit, component.properties.items || component.data.recommendations.length);
-      return component.data.recommendations.slice(0, items);
-    }
-
-    return [];
   }
 
   onStyleMount(style) {
@@ -7978,16 +8083,6 @@ class DiscoveryStreamBase_DiscoveryStreamBase extends external_React_default.a.P
   }
 
   renderComponent(component, embedWidth) {
-    let rows;
-    const { spocs } = this.props.DiscoveryStream;
-
-    // TODO: Can we make this a bit better visually while it loads?
-    // If this component expects spocs,
-    // wait until spocs are loaded before attempting to use it.
-    if (component.spocs && !spocs.loaded) {
-      return null;
-    }
-
     switch (component.type) {
       case "TopSites":
         return external_React_default.a.createElement(TopSites_TopSites_TopSites, { header: component.header });
@@ -8007,51 +8102,36 @@ class DiscoveryStreamBase_DiscoveryStreamBase extends external_React_default.a.P
           alignment: component.properties.alignment,
           header: component.header });
       case "CardGrid":
-        rows = this.extractRows(component, MAX_ROWS_CARDGRID);
-        return external_React_default.a.createElement(
-          ImpressionStats["ImpressionStats"],
-          { rows: rows, dispatch: this.props.dispatch, source: component.type },
-          external_React_default.a.createElement(CardGrid_CardGrid, {
-            title: component.header && component.header.title,
-            data: component.data,
-            feed: component.feed,
-            border: component.properties.border,
-            type: component.type,
-            dispatch: this.props.dispatch,
-            items: component.properties.items })
-        );
+        return external_React_default.a.createElement(CardGrid_CardGrid, {
+          title: component.header && component.header.title,
+          data: component.data,
+          feed: component.feed,
+          border: component.properties.border,
+          type: component.type,
+          dispatch: this.props.dispatch,
+          items: component.properties.items });
       case "Hero":
-        rows = this.extractRows(component, MAX_ROWS_HERO);
-        return external_React_default.a.createElement(
-          ImpressionStats["ImpressionStats"],
-          { rows: rows, dispatch: this.props.dispatch, source: component.type },
-          external_React_default.a.createElement(Hero_Hero, {
-            subComponentType: embedWidth >= 9 ? `cards` : `list`,
-            feed: component.feed,
-            title: component.header && component.header.title,
-            data: component.data,
-            border: component.properties.border,
-            type: component.type,
-            dispatch: this.props.dispatch,
-            items: component.properties.items })
-        );
+        return external_React_default.a.createElement(Hero_Hero, {
+          subComponentType: embedWidth >= 9 ? `cards` : `list`,
+          feed: component.feed,
+          title: component.header && component.header.title,
+          data: component.data,
+          border: component.properties.border,
+          type: component.type,
+          dispatch: this.props.dispatch,
+          items: component.properties.items });
       case "HorizontalRule":
         return external_React_default.a.createElement(HorizontalRule_HorizontalRule, null);
       case "List":
-        rows = this.extractRows(component, MAX_ROWS_LIST);
-        return external_React_default.a.createElement(
-          ImpressionStats["ImpressionStats"],
-          { rows: rows, dispatch: this.props.dispatch, source: component.type },
-          external_React_default.a.createElement(List, {
-            feed: component.feed,
-            fullWidth: component.properties.full_width,
-            hasBorders: component.properties.border === "border",
-            hasImages: component.properties.has_images,
-            hasNumbers: component.properties.has_numbers,
-            items: component.properties.items,
-            type: component.type,
-            header: component.header })
-        );
+        return external_React_default.a.createElement(List, {
+          data: component.data,
+          fullWidth: component.properties.full_width,
+          hasBorders: component.properties.border === "border",
+          hasImages: component.properties.has_images,
+          hasNumbers: component.properties.has_numbers,
+          items: component.properties.items,
+          type: component.type,
+          header: component.header });
       default:
         return external_React_default.a.createElement(
           "div",
@@ -8071,6 +8151,12 @@ class DiscoveryStreamBase_DiscoveryStreamBase extends external_React_default.a.P
   render() {
     const { layoutRender } = this.props.DiscoveryStream;
     const styles = [];
+    const { spocs, feeds } = this.props.DiscoveryStream;
+
+    if (!spocs.loaded || !feeds.loaded) {
+      return null;
+    }
+
     return external_React_default.a.createElement(
       "div",
       { className: "discovery-stream ds-layout" },
@@ -8106,7 +8192,7 @@ function transform(state) {
 const DiscoveryStreamBase = Object(external_ReactRedux_["connect"])(transform)(DiscoveryStreamBase_DiscoveryStreamBase);
 
 /***/ }),
-/* 57 */
+/* 56 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8948,7 +9034,7 @@ const SnippetsTemplates = {
 };
 
 /***/ }),
-/* 58 */
+/* 57 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11049,7 +11135,7 @@ function ftl(strings) {
 
 
 /***/ }),
-/* 59 */
+/* 58 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11062,7 +11148,7 @@ var external_PropTypes_ = __webpack_require__(11);
 var external_PropTypes_default = /*#__PURE__*/__webpack_require__.n(external_PropTypes_);
 
 // EXTERNAL MODULE: ./node_modules/fluent/src/index.js + 8 modules
-var src = __webpack_require__(58);
+var src = __webpack_require__(57);
 
 // CONCATENATED MODULE: ./node_modules/fluent-react/src/localization.js
 
@@ -11564,7 +11650,7 @@ localized_Localized.propTypes = {
 
 
 /***/ }),
-/* 60 */
+/* 59 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11667,7 +11753,10 @@ const INITIAL_STATE = {
     layout: [],
     lastUpdated: null,
     feeds: {
-      // "https://foo.com/feed1": {lastUpdated: 123, data: []}
+      data: {
+        // "https://foo.com/feed1": {lastUpdated: 123, data: []}
+      },
+      loaded: false
     },
     spocs: {
       spocs_endpoint: "",
@@ -12079,7 +12168,12 @@ function DiscoveryStream(prevState = INITIAL_STATE.DiscoveryStream, action) {
     case Actions["actionTypes"].DISCOVERY_STREAM_LAYOUT_RESET:
       return Object.assign({}, prevState, { lastUpdated: INITIAL_STATE.DiscoveryStream.lastUpdated, layout: INITIAL_STATE.DiscoveryStream.layout });
     case Actions["actionTypes"].DISCOVERY_STREAM_FEEDS_UPDATE:
-      return Object.assign({}, prevState, { feeds: action.data || prevState.feeds });
+      return Object.assign({}, prevState, {
+        feeds: Object.assign({}, prevState.feeds, {
+          data: action.data || prevState.feeds.data,
+          loaded: true
+        })
+      });
     case Actions["actionTypes"].DISCOVERY_STREAM_SPOCS_ENDPOINT:
       return Object.assign({}, prevState, {
         spocs: Object.assign({}, INITIAL_STATE.DiscoveryStream.spocs, {
@@ -12129,7 +12223,7 @@ var reducers = {
 };
 
 /***/ }),
-/* 61 */
+/* 60 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12171,17 +12265,17 @@ const cardContextTypes = {
 var external_ReactRedux_ = __webpack_require__(24);
 
 // EXTERNAL MODULE: ./content-src/lib/link-menu-options.js
-var link_menu_options = __webpack_require__(44);
+var link_menu_options = __webpack_require__(43);
 
 // EXTERNAL MODULE: ./content-src/components/LinkMenu/LinkMenu.jsx
-var LinkMenu = __webpack_require__(43);
+var LinkMenu = __webpack_require__(42);
 
 // EXTERNAL MODULE: external "React"
 var external_React_ = __webpack_require__(10);
 var external_React_default = /*#__PURE__*/__webpack_require__.n(external_React_);
 
 // EXTERNAL MODULE: ./content-src/lib/screenshot-utils.js
-var screenshot_utils = __webpack_require__(45);
+var screenshot_utils = __webpack_require__(44);
 
 // CONCATENATED MODULE: ./content-src/components/Card/Card.jsx
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_Card", function() { return Card_Card; });
@@ -12493,7 +12587,7 @@ const Card = Object(external_ReactRedux_["connect"])(state => ({ platform: state
 const PlaceholderCard = props => external_React_default.a.createElement(Card, { placeholder: true, className: props.className });
 
 /***/ }),
-/* 62 */
+/* 61 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12509,7 +12603,7 @@ var external_React_ = __webpack_require__(10);
 var external_React_default = /*#__PURE__*/__webpack_require__.n(external_React_);
 
 // EXTERNAL MODULE: ./content-src/components/TopSites/TopSitesConstants.js
-var TopSitesConstants = __webpack_require__(33);
+var TopSitesConstants = __webpack_require__(32);
 
 // CONCATENATED MODULE: ./content-src/components/TopSites/TopSiteFormInput.jsx
 
@@ -12587,7 +12681,7 @@ TopSiteFormInput_TopSiteFormInput.defaultProps = {
   validationError: false
 };
 // EXTERNAL MODULE: ./content-src/components/TopSites/TopSite.jsx
-var TopSite = __webpack_require__(42);
+var TopSite = __webpack_require__(41);
 
 // CONCATENATED MODULE: ./content-src/components/TopSites/TopSiteForm.jsx
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TopSiteForm", function() { return TopSiteForm_TopSiteForm; });

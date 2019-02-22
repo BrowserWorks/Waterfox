@@ -34,6 +34,45 @@ const char* const js::jit::CacheKindNames[] = {
 #undef DEFINE_KIND
 };
 
+// We need to enter the namespace here so that the definition of
+// CacheIROpFormat::OpLengths can see CacheIROpFormat::ArgType
+// (without defining None/Id/Field/etc everywhere else in this file.)
+namespace js {
+namespace jit {
+namespace CacheIROpFormat {
+
+static constexpr uint32_t CacheIROpLength(ArgType arg) {
+  switch (arg) {
+    case None:
+      return 0;
+    case Id:
+      return sizeof(uint8_t);
+    case Field:
+      return sizeof(uint8_t);
+    case Byte:
+      return sizeof(uint8_t);
+    case Int32:
+    case UInt32:
+      return sizeof(uint32_t);
+    case Word:
+      return sizeof(uintptr_t);
+  }
+}
+template <typename... Args>
+static constexpr uint32_t CacheIROpLength(ArgType arg, Args... args) {
+  return CacheIROpLength(arg) + CacheIROpLength(args...);
+}
+
+const uint32_t OpLengths[] = {
+#define OPLENGTH(op, ...) 1 + CacheIROpLength(__VA_ARGS__),
+    CACHE_IR_OPS(OPLENGTH)
+#undef OPLENGTH
+};
+
+}  // namespace CacheIROpFormat
+}  // namespace jit
+}  // namespace js
+
 void CacheIRWriter::assertSameCompartment(JSObject* obj) {
   cx_->debugOnlyCheck(obj);
 }
@@ -1939,36 +1978,27 @@ bool GetPropIRGenerator::tryAttachModuleNamespace(HandleObject obj,
 }
 
 bool GetPropIRGenerator::tryAttachPrimitive(ValOperandId valId, HandleId id) {
-  JSValueType primitiveType;
-  RootedNativeObject proto(cx_);
+  JSProtoKey protoKey;
   if (val_.isString()) {
     if (JSID_IS_ATOM(id, cx_->names().length)) {
       // String length is special-cased, see js::GetProperty.
       return false;
     }
-    primitiveType = JSVAL_TYPE_STRING;
-    proto = MaybeNativeObject(cx_->global()->maybeGetPrototype(JSProto_String));
+    protoKey = JSProto_String;
   } else if (val_.isNumber()) {
-    primitiveType = JSVAL_TYPE_DOUBLE;
-    proto = MaybeNativeObject(cx_->global()->maybeGetPrototype(JSProto_Number));
+    protoKey = JSProto_Number;
   } else if (val_.isBoolean()) {
-    primitiveType = JSVAL_TYPE_BOOLEAN;
-    proto =
-        MaybeNativeObject(cx_->global()->maybeGetPrototype(JSProto_Boolean));
+    protoKey = JSProto_Boolean;
   } else if (val_.isSymbol()) {
-    primitiveType = JSVAL_TYPE_SYMBOL;
-    proto = MaybeNativeObject(cx_->global()->maybeGetPrototype(JSProto_Symbol));
-  }
-#ifdef ENABLE_BIGINT
-  else if (val_.isBigInt()) {
-    primitiveType = JSVAL_TYPE_BIGINT;
-    proto = MaybeNativeObject(cx_->global()->maybeGetPrototype(JSProto_BigInt));
-  }
-#endif
-  else {
+    protoKey = JSProto_Symbol;
+  } else if (val_.isBigInt()) {
+    protoKey = JSProto_BigInt;
+  } else {
     MOZ_ASSERT(val_.isNullOrUndefined() || val_.isMagic());
     return false;
   }
+
+  RootedObject proto(cx_, cx_->global()->maybeGetPrototype(protoKey));
   if (!proto) {
     return false;
   }
@@ -1989,7 +2019,11 @@ bool GetPropIRGenerator::tryAttachPrimitive(ValOperandId valId, HandleId id) {
     }
   }
 
-  writer.guardType(valId, primitiveType);
+  if (val_.isNumber()) {
+    writer.guardIsNumber(valId);
+  } else {
+    writer.guardType(valId, val_.extractNonDoubleType());
+  }
   maybeEmitIdGuard(id);
 
   ObjOperandId protoId = writer.loadObject(proto);
@@ -3361,14 +3395,15 @@ bool IRGenerator::maybeGuardInt32Index(const Value& index, ValOperandId indexId,
 
 SetPropIRGenerator::SetPropIRGenerator(
     JSContext* cx, HandleScript script, jsbytecode* pc, CacheKind cacheKind,
-    ICState::Mode mode, bool* isTemporarilyUnoptimizable, HandleValue lhsVal,
-    HandleValue idVal, HandleValue rhsVal, bool needsTypeBarrier,
-    bool maybeHasExtraIndexedProps)
+    ICState::Mode mode, bool* isTemporarilyUnoptimizable, bool* canAddSlot,
+    HandleValue lhsVal, HandleValue idVal, HandleValue rhsVal,
+    bool needsTypeBarrier, bool maybeHasExtraIndexedProps)
     : IRGenerator(cx, script, pc, cacheKind, mode),
       lhsVal_(lhsVal),
       idVal_(idVal),
       rhsVal_(rhsVal),
       isTemporarilyUnoptimizable_(isTemporarilyUnoptimizable),
+      canAddSlot_(canAddSlot),
       typeCheckInfo_(cx, needsTypeBarrier),
       preliminaryObjectAction_(PreliminaryObjectAction::None),
       attachedTypedArrayOOBStub_(false),
@@ -3430,6 +3465,9 @@ bool SetPropIRGenerator::tryAttachStub() {
         if (tryAttachProxy(obj, objId, id, rhsValId)) {
           return true;
         }
+      }
+      if (canAttachAddSlotStub(obj, id)) {
+        *canAddSlot_ = true;
       }
       return false;
     }
@@ -4480,6 +4518,79 @@ bool SetPropIRGenerator::tryAttachWindowProxy(HandleObject obj,
   return true;
 }
 
+bool SetPropIRGenerator::canAttachAddSlotStub(HandleObject obj, HandleId id) {
+  // Special-case JSFunction resolve hook to allow redefining the 'prototype'
+  // property without triggering lazy expansion of property and object
+  // allocation.
+  if (obj->is<JSFunction>() && JSID_IS_ATOM(id, cx_->names().prototype)) {
+    MOZ_ASSERT(ClassMayResolveId(cx_->names(), obj->getClass(), id, obj));
+
+    // We check group->maybeInterpretedFunction() here and guard on the
+    // group. The group is unique for a particular function so this ensures
+    // we don't add the default prototype property to functions that don't
+    // have it.
+    JSFunction* fun = &obj->as<JSFunction>();
+    if (!obj->group()->maybeInterpretedFunction() ||
+        !fun->needsPrototypeProperty()) {
+      return false;
+    }
+
+    // If property exists this isn't an "add"
+    if (fun->lookupPure(id)) {
+      return false;
+    }
+  } else {
+    // Normal Case: If property exists this isn't an "add"
+    PropertyResult prop;
+    if (!LookupOwnPropertyPure(cx_, obj, id, &prop)) {
+      return false;
+    }
+    if (prop) {
+      return false;
+    }
+  }
+
+  // Object must be extensible.
+  if (!obj->nonProxyIsExtensible()) {
+    return false;
+  }
+
+  // Also watch out for addProperty hooks. Ignore the Array addProperty hook,
+  // because it doesn't do anything for non-index properties.
+  DebugOnly<uint32_t> index;
+  MOZ_ASSERT_IF(obj->is<ArrayObject>(), !IdIsIndex(id, &index));
+  if (!obj->is<ArrayObject>() && obj->getClass()->getAddProperty()) {
+    return false;
+  }
+
+  // Walk up the object prototype chain and ensure that all prototypes are
+  // native, and that all prototypes have no setter defined on the property.
+  for (JSObject* proto = obj->staticPrototype(); proto;
+       proto = proto->staticPrototype()) {
+    if (!proto->isNative()) {
+      return false;
+    }
+
+    // If prototype defines this property in a non-plain way, don't optimize.
+    Shape* protoShape = proto->as<NativeObject>().lookup(cx_, id);
+    if (protoShape && !protoShape->isDataDescriptor()) {
+      return false;
+    }
+
+    // Otherwise, if there's no such property, watch out for a resolve hook
+    // that would need to be invoked and thus prevent inlining of property
+    // addition. Allow the JSFunction resolve hook as it only defines plain
+    // data properties and we don't need to invoke it for objects on the
+    // proto chain.
+    if (ClassMayResolveId(cx_->names(), proto->getClass(), id, proto) &&
+        !proto->is<JSFunction>()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool SetPropIRGenerator::tryAttachAddSlotStub(HandleObjectGroup oldGroup,
                                               HandleShape oldShape) {
   ValOperandId objValId(writer.setInputOperandId(0));
@@ -4507,11 +4618,10 @@ bool SetPropIRGenerator::tryAttachAddSlotStub(HandleObjectGroup oldGroup,
   RootedObject obj(cx_, &lhsVal_.toObject());
 
   PropertyResult prop;
-  JSObject* holder;
-  if (!LookupPropertyPure(cx_, obj, id, &holder, &prop)) {
+  if (!LookupOwnPropertyPure(cx_, obj, id, &prop)) {
     return false;
   }
-  if (obj != holder) {
+  if (!prop) {
     return false;
   }
 
@@ -4540,13 +4650,12 @@ bool SetPropIRGenerator::tryAttachAddSlotStub(HandleObjectGroup oldGroup,
   MOZ_ASSERT(propShape);
 
   // The property must be the last added property of the object.
-  if (holderOrExpando->lastProperty() != propShape) {
-    return false;
-  }
+  MOZ_RELEASE_ASSERT(holderOrExpando->lastProperty() == propShape);
 
-  // Object must be extensible, oldShape must be immediate parent of
-  // current shape.
-  if (!obj->nonProxyIsExtensible() || propShape->previous() != oldShape) {
+  // Old shape should be parent of new shape. Object flag updates may make this
+  // false even for simple data properties. It may be possible to support these
+  // transitions in the future, but ignore now for simplicity.
+  if (propShape->previous() != oldShape) {
     return false;
   }
 
@@ -4556,66 +4665,15 @@ bool SetPropIRGenerator::tryAttachAddSlotStub(HandleObjectGroup oldGroup,
     return false;
   }
 
-  // Watch out for resolve hooks.
-  if (ClassMayResolveId(cx_->names(), obj->getClass(), id, obj)) {
-    // The JSFunction resolve hook defines a (non-configurable and
-    // non-enumerable) |prototype| property on certain functions. Scripts
-    // often assign a custom |prototype| object and we want to optimize
-    // this |prototype| set and eliminate the default object allocation.
-    //
-    // We check group->maybeInterpretedFunction() here and guard on the
-    // group. The group is unique for a particular function so this ensures
-    // we don't add the default prototype property to functions that don't
-    // have it.
-    if (!obj->is<JSFunction>() || !JSID_IS_ATOM(id, cx_->names().prototype) ||
-        !oldGroup->maybeInterpretedFunction() ||
-        !obj->as<JSFunction>().needsPrototypeProperty()) {
-      return false;
-    }
-    MOZ_ASSERT(!propShape->configurable());
-    MOZ_ASSERT(!propShape->enumerable());
-  }
-
-  // Also watch out for addProperty hooks. Ignore the Array addProperty hook,
-  // because it doesn't do anything for non-index properties.
-  DebugOnly<uint32_t> index;
-  MOZ_ASSERT_IF(obj->is<ArrayObject>(), !IdIsIndex(id, &index));
-  if (!obj->is<ArrayObject>() && obj->getClass()->getAddProperty()) {
-    return false;
-  }
-
-  // Walk up the object prototype chain and ensure that all prototypes are
-  // native, and that all prototypes have no setter defined on the property.
-  for (JSObject* proto = obj->staticPrototype(); proto;
-       proto = proto->staticPrototype()) {
-    if (!proto->isNative()) {
-      return false;
-    }
-
-    // If prototype defines this property in a non-plain way, don't optimize.
-    Shape* protoShape = proto->as<NativeObject>().lookup(cx_, id);
-    if (protoShape && !protoShape->hasDefaultSetter()) {
-      return false;
-    }
-
-    // Otherwise, if there's no such property, watch out for a resolve hook
-    // that would need to be invoked and thus prevent inlining of property
-    // addition. Allow the JSFunction resolve hook as it only defines plain
-    // data properties and we don't need to invoke it for objects on the
-    // proto chain.
-    if (ClassMayResolveId(cx_->names(), proto->getClass(), id, proto) &&
-        !proto->is<JSFunction>()) {
-      return false;
-    }
-  }
-
   ObjOperandId objId = writer.guardIsObject(objValId);
   maybeEmitIdGuard(id);
 
   // In addition to guarding for type barrier, we need this group guard (or
-  // shape guard below) to ensure class is unchanged.
+  // shape guard below) to ensure class is unchanged. This group guard may also
+  // implay maybeInterpretedFunction() for the special-case of function
+  // prototype property set.
   MOZ_ASSERT(!oldGroup->hasUncacheableClass() || obj->is<ShapedObject>());
-  writer.guardGroupForTypeBarrier(objId, oldGroup);
+  writer.guardGroup(objId, oldGroup);
 
   // If we are adding a property to an object for which the new script
   // properties analysis hasn't been performed yet, make sure the stub fails
@@ -5444,7 +5502,8 @@ bool CompareIRGenerator::tryAttachPrimitiveUndefined(ValOperandId lhsId,
   // The set of primitive cases we want to handle here (excluding null,
   // undefined)
   auto isPrimitive = [](HandleValue& x) {
-    return x.isString() || x.isSymbol() || x.isBoolean() || x.isNumber();
+    return x.isString() || x.isSymbol() || x.isBoolean() || x.isNumber() ||
+           x.isBigInt();
   };
 
   if (!(lhsVal_.isNullOrUndefined() && isPrimitive(rhsVal_)) &&
@@ -5463,6 +5522,9 @@ bool CompareIRGenerator::tryAttachPrimitiveUndefined(ValOperandId lhsId,
         return;
       case JSVAL_TYPE_SYMBOL:
         writer.guardIsSymbol(id);
+        return;
+      case JSVAL_TYPE_BIGINT:
+        writer.guardIsBigInt(id);
         return;
       case JSVAL_TYPE_STRING:
         writer.guardIsString(id);

@@ -29,6 +29,8 @@ XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
 // IndexedDB name.
 const DB_NAME = "remote-settings";
 
+const TELEMETRY_COMPONENT = "remotesettings";
+
 const INVALID_SIGNATURE = "Invalid content signature";
 const MISSING_SIGNATURE = "Missing signature";
 
@@ -208,15 +210,20 @@ class RemoteSettingsClient extends EventEmitter {
   /**
    * Lists settings.
    *
-   * @param  {Object} options         The options object.
-   * @param  {Object} options.filters Filter the results (default: `{}`).
-   * @param  {Object} options.order   The order to apply (eg. `-last_modified`).
+   * @param  {Object} options             The options object.
+   * @param  {Object} options.filters     Filter the results (default: `{}`).
+   * @param  {Object} options.order       The order to apply (eg. `"-last_modified"`).
+   * @param  {Object} options.syncIfEmpty Synchronize from server if local data is empty (default: `true`).
    * @return {Promise}
    */
   async get(options = {}) {
-    const { filters = {}, order = "" } = options; // not sorted by default.
+    const {
+      filters = {},
+      order = "", // not sorted by default.
+      syncIfEmpty = true,
+    } = options;
 
-    if (!(await Utils.hasLocalData(this))) {
+    if (syncIfEmpty && !(await Utils.hasLocalData(this))) {
       try {
         // .get() was called before we had the chance to synchronize the local database.
         // We'll try to avoid returning an empty list.
@@ -383,7 +390,7 @@ class RemoteSettingsClient extends EventEmitter {
         reportStatus = UptakeTelemetry.STATUS.SUCCESS;
       }
       // Report success/error status to Telemetry.
-      UptakeTelemetry.report(this.identifier, reportStatus);
+      UptakeTelemetry.report(TELEMETRY_COMPONENT, reportStatus, { source: this.identifier });
     }
   }
 

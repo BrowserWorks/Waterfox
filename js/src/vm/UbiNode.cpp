@@ -23,9 +23,7 @@
 #include "js/Utility.h"
 #include "js/Vector.h"
 #include "util/Text.h"
-#ifdef ENABLE_BIGINT
-#  include "vm/BigIntType.h"
-#endif
+#include "vm/BigIntType.h"
 #include "vm/Debugger.h"
 #include "vm/EnvironmentObject.h"
 #include "vm/GlobalObject.h"
@@ -42,7 +40,7 @@
 
 using namespace js;
 
-using JS::DispatchTyped;
+using JS::ApplyGCThingTyped;
 using JS::HandleValue;
 using JS::Value;
 using JS::ZoneSet;
@@ -153,20 +151,12 @@ Node::Size Concrete<void>::size(mozilla::MallocSizeOf mallocSizeof) const {
   MOZ_CRASH("null ubi::Node");
 }
 
-struct Node::ConstructFunctor : public js::BoolDefaultAdaptor<Value, false> {
-  template <typename T>
-  bool operator()(T* t, Node* node) {
-    node->construct(t);
-    return true;
-  }
-};
-
 Node::Node(const JS::GCCellPtr& thing) {
-  DispatchTyped(ConstructFunctor(), thing, this);
+  ApplyGCThingTyped(thing, [this](auto t) { this->construct(t); });
 }
 
 Node::Node(HandleValue value) {
-  if (!DispatchTyped(ConstructFunctor(), value, this)) {
+  if (!ApplyGCThingTyped(value, [this](auto t) { this->construct(t); })) {
     construct<void>(nullptr);
   }
 }
@@ -187,13 +177,9 @@ Value Node::exposeToJS() const {
     v.setString(as<JSString>());
   } else if (is<JS::Symbol>()) {
     v.setSymbol(as<JS::Symbol>());
-  }
-#ifdef ENABLE_BIGINT
-  else if (is<BigInt>()) {
+  } else if (is<BigInt>()) {
     v.setBigInt(as<BigInt>());
-  }
-#endif
-  else {
+  } else {
     v.setUndefined();
   }
 
@@ -277,9 +263,7 @@ template JS::Zone* TracerConcrete<js::ObjectGroup>::zone() const;
 template JS::Zone* TracerConcrete<js::RegExpShared>::zone() const;
 template JS::Zone* TracerConcrete<js::Scope>::zone() const;
 template JS::Zone* TracerConcrete<JS::Symbol>::zone() const;
-#ifdef ENABLE_BIGINT
 template JS::Zone* TracerConcrete<BigInt>::zone() const;
-#endif
 template JS::Zone* TracerConcrete<JSString>::zone() const;
 
 template <typename Referent>
@@ -318,10 +302,8 @@ template UniquePtr<EdgeRange> TracerConcrete<js::Scope>::edges(
     JSContext* cx, bool wantNames) const;
 template UniquePtr<EdgeRange> TracerConcrete<JS::Symbol>::edges(
     JSContext* cx, bool wantNames) const;
-#ifdef ENABLE_BIGINT
 template UniquePtr<EdgeRange> TracerConcrete<BigInt>::edges(
     JSContext* cx, bool wantNames) const;
-#endif
 template UniquePtr<EdgeRange> TracerConcrete<JSString>::edges(
     JSContext* cx, bool wantNames) const;
 
@@ -388,9 +370,7 @@ Realm* Concrete<JSObject>::realm() const {
 }
 
 const char16_t Concrete<JS::Symbol>::concreteTypeName[] = u"JS::Symbol";
-#ifdef ENABLE_BIGINT
 const char16_t Concrete<BigInt>::concreteTypeName[] = u"JS::BigInt";
-#endif
 const char16_t Concrete<JSScript>::concreteTypeName[] = u"JSScript";
 const char16_t Concrete<js::LazyScript>::concreteTypeName[] = u"js::LazyScript";
 const char16_t Concrete<js::jit::JitCode>::concreteTypeName[] =

@@ -3,12 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use api::{ColorF, DeviceIntPoint, DevicePixelScale, LayoutPixel, PicturePixel, RasterPixel};
-use api::{DeviceIntRect, DeviceIntSize, DocumentLayer, FontRenderMode, DebugFlags};
+use api::{DeviceIntRect, DeviceIntSize, DocumentLayer, FontRenderMode, DebugFlags, PremultipliedColorF};
 use api::{LayoutPoint, LayoutRect, LayoutSize, PipelineId, RasterSpace, WorldPoint, WorldRect, WorldPixel};
 use clip::{ClipDataStore, ClipStore, ClipChainStack};
 use clip_scroll_tree::{ClipScrollTree, ROOT_SPATIAL_NODE_INDEX, SpatialNodeIndex};
 use display_list_flattener::{DisplayListFlattener};
-use gpu_cache::GpuCache;
+use gpu_cache::{GpuCache, GpuCacheHandle};
 use gpu_types::{PrimitiveHeaders, TransformPalette, UvRectKind, ZBufferIdGenerator};
 use hit_test::{HitTester, HitTestingRun};
 use internal_types::{FastHashMap, PlaneSplitter};
@@ -19,7 +19,7 @@ use prim_store::{PrimitiveStore, SpaceMapper, PictureIndex, PrimitiveDebugId, Pr
 use prim_store::{PrimitiveStoreStats};
 use profiler::{FrameProfileCounters, GpuCacheProfileCounters, TextureCacheProfileCounters};
 use render_backend::{DataStores, FrameStamp};
-use render_task::{RenderTask, RenderTaskId, RenderTaskLocation, RenderTaskTree};
+use render_task::{RenderTask, RenderTaskId, RenderTaskLocation, RenderTaskTree, RenderTaskTreeCounters};
 use resource_cache::{ResourceCache};
 use scene::{ScenePipeline, SceneProperties};
 use segment::SegmentBuilder;
@@ -55,9 +55,45 @@ pub struct FrameBuilderConfig {
     pub enable_picture_caching: bool,
     /// True if we're running tests (i.e. via wrench).
     pub testing: bool,
+    pub gpu_supports_fast_clears: bool,
+}
+
+/// A set of common / global resources that are retained between
+/// new display lists, such that any GPU cache handles can be
+/// persisted even when a new display list arrives.
+#[cfg_attr(feature = "capture", derive(Serialize))]
+pub struct FrameGlobalResources {
+    /// The image shader block for the most common / default
+    /// set of image parameters (color white, stretch == rect.size).
+    pub default_image_handle: GpuCacheHandle,
+}
+
+impl FrameGlobalResources {
+    pub fn empty() -> Self {
+        FrameGlobalResources {
+            default_image_handle: GpuCacheHandle::new(),
+        }
+    }
+
+    pub fn update(
+        &mut self,
+        gpu_cache: &mut GpuCache,
+    ) {
+        if let Some(mut request) = gpu_cache.request(&mut self.default_image_handle) {
+            request.push(PremultipliedColorF::WHITE);
+            request.push(PremultipliedColorF::WHITE);
+            request.push([
+                -1.0,       // -ve means use prim rect for stretch size
+                0.0,
+                0.0,
+                0.0,
+            ]);
+        }
+    }
 }
 
 /// A builder structure for `tiling::Frame`
+#[cfg_attr(feature = "capture", derive(Serialize))]
 pub struct FrameBuilder {
     screen_rect: DeviceIntRect,
     background_color: Option<ColorF>,
@@ -68,14 +104,16 @@ pub struct FrameBuilder {
     pending_retained_tiles: RetainedTiles,
     pub prim_store: PrimitiveStore,
     pub clip_store: ClipStore,
+    #[cfg_attr(feature = "capture", serde(skip))] //TODO
     pub hit_testing_runs: Vec<HitTestingRun>,
     pub config: FrameBuilderConfig,
+    pub globals: FrameGlobalResources,
 }
 
 pub struct FrameVisibilityContext<'a> {
     pub clip_scroll_tree: &'a ClipScrollTree,
     pub screen_world_rect: WorldRect,
-    pub device_pixel_scale: DevicePixelScale,
+    pub global_device_pixel_scale: DevicePixelScale,
     pub surfaces: &'a [SurfaceInfo],
     pub debug_flags: DebugFlags,
     pub scene_properties: &'a SceneProperties,
@@ -94,13 +132,14 @@ pub struct FrameVisibilityState<'a> {
 }
 
 pub struct FrameBuildingContext<'a> {
-    pub device_pixel_scale: DevicePixelScale,
+    pub global_device_pixel_scale: DevicePixelScale,
     pub scene_properties: &'a SceneProperties,
     pub pipelines: &'a FastHashMap<PipelineId, Arc<ScenePipeline>>,
     pub screen_world_rect: WorldRect,
     pub clip_scroll_tree: &'a ClipScrollTree,
     pub max_local_clip: LayoutRect,
     pub debug_flags: DebugFlags,
+    pub fb_config: &'a FrameBuilderConfig,
 }
 
 pub struct FrameBuildingState<'a> {
@@ -137,7 +176,6 @@ impl<'a> FrameBuildingState<'a> {
 #[derive(Debug)]
 pub struct PictureContext {
     pub pic_index: PictureIndex,
-    pub pipeline_id: PipelineId,
     pub apply_local_clip_rect: bool,
     pub allow_subpixel_aa: bool,
     pub is_passthrough: bool,
@@ -152,12 +190,11 @@ pub struct PictureContext {
 /// Mutable state of a picture that gets modified when
 /// the children are processed.
 pub struct PictureState {
-    pub is_cacheable: bool,
     pub map_local_to_pic: SpaceMapper<LayoutPixel, PicturePixel>,
     pub map_pic_to_world: SpaceMapper<PicturePixel, WorldPixel>,
     pub map_pic_to_raster: SpaceMapper<PicturePixel, RasterPixel>,
     pub map_raster_to_world: SpaceMapper<RasterPixel, WorldPixel>,
-    /// If the plane splitter, the primitives get added to it insted of
+    /// If the plane splitter, the primitives get added to it instead of
     /// batching into their parent pictures.
     pub plane_splitter: Option<PlaneSplitter>,
 }
@@ -191,6 +228,7 @@ impl FrameBuilder {
             background_color: None,
             root_pic_index: PictureIndex(0),
             pending_retained_tiles: RetainedTiles::new(),
+            globals: FrameGlobalResources::empty(),
             config: FrameBuilderConfig {
                 default_font_render_mode: FontRenderMode::Mono,
                 dual_source_blending_is_enabled: true,
@@ -198,6 +236,7 @@ impl FrameBuilder {
                 chase_primitive: ChasePrimitive::Nothing,
                 enable_picture_caching: false,
                 testing: false,
+                gpu_supports_fast_clears: false,
             },
         }
     }
@@ -205,12 +244,14 @@ impl FrameBuilder {
     /// Provide any cached surface tiles from the previous frame builder
     /// to a new frame builder. These will be consumed or dropped the
     /// first time a new frame builder creates a frame.
-    pub fn set_retained_tiles(
+    pub fn set_retained_resources(
         &mut self,
         retained_tiles: RetainedTiles,
+        globals: FrameGlobalResources,
     ) {
         debug_assert!(self.pending_retained_tiles.tiles.is_empty());
         self.pending_retained_tiles = retained_tiles;
+        self.globals = globals;
     }
 
     pub fn with_display_list_flattener(
@@ -229,6 +270,7 @@ impl FrameBuilder {
             window_size,
             pending_retained_tiles: RetainedTiles::new(),
             config: flattener.config,
+            globals: FrameGlobalResources::empty(),
         }
     }
 
@@ -238,7 +280,7 @@ impl FrameBuilder {
         self,
         retained_tiles: &mut RetainedTiles,
         clip_scroll_tree: &ClipScrollTree,
-    ) {
+    ) -> FrameGlobalResources {
         self.prim_store.destroy(
             retained_tiles,
             clip_scroll_tree,
@@ -253,6 +295,8 @@ impl FrameBuilder {
         // avoid this, if there are still pending tiles, include them in
         // the retained tiles passed to the next frame builder.
         retained_tiles.merge(self.pending_retained_tiles);
+
+        self.globals
     }
 
     /// Compute the contribution (bounding rectangles, and resources) of layers and their
@@ -266,7 +310,7 @@ impl FrameBuilder {
         gpu_cache: &mut GpuCache,
         render_tasks: &mut RenderTaskTree,
         profile_counters: &mut FrameProfileCounters,
-        device_pixel_scale: DevicePixelScale,
+        global_device_pixel_scale: DevicePixelScale,
         scene_properties: &SceneProperties,
         transform_palette: &mut TransformPalette,
         data_stores: &mut DataStores,
@@ -287,7 +331,7 @@ impl FrameBuilder {
         const MAX_CLIP_COORD: f32 = 1.0e9;
 
         let frame_context = FrameBuildingContext {
-            device_pixel_scale,
+            global_device_pixel_scale,
             scene_properties,
             pipelines,
             screen_world_rect,
@@ -297,6 +341,7 @@ impl FrameBuilder {
                 LayoutSize::new(2.0 * MAX_CLIP_COORD, 2.0 * MAX_CLIP_COORD),
             ),
             debug_flags,
+            fb_config: &self.config,
         };
 
         // Construct a dummy root surface, that represents the
@@ -307,6 +352,7 @@ impl FrameBuilder {
             0.0,
             screen_world_rect,
             clip_scroll_tree,
+            global_device_pixel_scale,
         );
         surfaces.push(root_surface);
 
@@ -333,8 +379,10 @@ impl FrameBuilder {
         );
 
         {
+            profile_marker!("UpdateVisibility");
+
             let visibility_context = FrameVisibilityContext {
-                device_pixel_scale,
+                global_device_pixel_scale,
                 clip_scroll_tree,
                 screen_world_rect,
                 surfaces,
@@ -398,15 +446,19 @@ impl FrameBuilder {
             )
             .unwrap();
 
-        self.prim_store.prepare_primitives(
-            &mut prim_list,
-            &pic_context,
-            &mut pic_state,
-            &frame_context,
-            &mut frame_state,
-            data_stores,
-            scratch,
-        );
+        {
+            profile_marker!("PreparePrims");
+
+            self.prim_store.prepare_primitives(
+                &mut prim_list,
+                &pic_context,
+                &mut pic_state,
+                &frame_context,
+                &mut frame_state,
+                data_stores,
+                scratch,
+            );
+        }
 
         let pic = &mut self.prim_store.pictures[self.root_pic_index.0];
         pic.restore_context(
@@ -430,6 +482,7 @@ impl FrameBuilder {
             child_tasks,
             UvRectKind::Rect,
             root_spatial_node_index,
+            global_device_pixel_scale,
         );
 
         let render_task_id = frame_state.render_tasks.add(root_render_task);
@@ -448,7 +501,7 @@ impl FrameBuilder {
         stamp: FrameStamp,
         clip_scroll_tree: &mut ClipScrollTree,
         pipelines: &FastHashMap<PipelineId, Arc<ScenePipeline>>,
-        device_pixel_scale: DevicePixelScale,
+        global_device_pixel_scale: DevicePixelScale,
         layer: DocumentLayer,
         pan: WorldPoint,
         texture_cache_profile: &mut TextureCacheProfileCounters,
@@ -456,9 +509,11 @@ impl FrameBuilder {
         scene_properties: &SceneProperties,
         data_stores: &mut DataStores,
         scratch: &mut PrimitiveScratchBuffer,
+        render_task_counters: &mut RenderTaskTreeCounters,
         debug_flags: DebugFlags,
     ) -> Frame {
         profile_scope!("build");
+        profile_marker!("BuildFrame");
         debug_assert!(
             DeviceIntRect::new(DeviceIntPoint::zero(), self.window_size)
                 .contains_rect(&self.screen_rect)
@@ -472,6 +527,8 @@ impl FrameBuilder {
         resource_cache.begin_frame(stamp);
         gpu_cache.begin_frame(stamp);
 
+        self.globals.update(gpu_cache);
+
         let mut transform_palette = TransformPalette::new();
         clip_scroll_tree.update_tree(
             pan,
@@ -480,11 +537,14 @@ impl FrameBuilder {
         );
         self.clip_store.clear_old_instances();
 
-        let mut render_tasks = RenderTaskTree::new(stamp.frame_id());
+        let mut render_tasks = RenderTaskTree::new(
+            stamp.frame_id(),
+            render_task_counters,
+        );
         let mut surfaces = Vec::new();
 
         let screen_size = self.screen_rect.size.to_i32();
-        let screen_world_rect = (self.screen_rect.to_f32() / device_pixel_scale).round_out();
+        let screen_world_rect = (self.screen_rect.to_f32() / global_device_pixel_scale).round_out();
 
         let main_render_task_id = self.build_layer_screen_rects_and_cull_layers(
             screen_world_rect,
@@ -494,7 +554,7 @@ impl FrameBuilder {
             gpu_cache,
             &mut render_tasks,
             &mut profile_counters,
-            device_pixel_scale,
+            global_device_pixel_scale,
             scene_properties,
             &mut transform_palette,
             data_stores,
@@ -503,92 +563,101 @@ impl FrameBuilder {
             debug_flags,
         );
 
-        resource_cache.block_until_all_resources_added(gpu_cache,
-                                                       &mut render_tasks,
-                                                       texture_cache_profile);
+        {
+            profile_marker!("BlockOnResources");
+
+            resource_cache.block_until_all_resources_added(gpu_cache,
+                                                           &mut render_tasks,
+                                                           texture_cache_profile);
+        }
 
         let mut passes = vec![];
-
-        // Add passes as required for our cached render tasks.
-        if !render_tasks.cacheable_render_tasks.is_empty() {
-            passes.push(RenderPass::new_off_screen(screen_size));
-            for cacheable_render_task in &render_tasks.cacheable_render_tasks {
-                render_tasks.assign_to_passes(
-                    *cacheable_render_task,
-                    0,
-                    screen_size,
-                    &mut passes,
-                );
-            }
-            passes.reverse();
-        }
-
-        if let Some(main_render_task_id) = main_render_task_id {
-            let passes_start = passes.len();
-            passes.push(RenderPass::new_main_framebuffer(screen_size));
-            render_tasks.assign_to_passes(
-                main_render_task_id,
-                passes_start,
-                screen_size,
-                &mut passes,
-            );
-            passes[passes_start..].reverse();
-        }
-
-
         let mut deferred_resolves = vec![];
         let mut has_texture_cache_tasks = false;
         let mut prim_headers = PrimitiveHeaders::new();
-        // Used to generated a unique z-buffer value per primitive.
-        let mut z_generator = ZBufferIdGenerator::new();
-        let use_dual_source_blending = self.config.dual_source_blending_is_enabled &&
-                                       self.config.dual_source_blending_is_supported;
 
-        for pass in &mut passes {
-            let mut ctx = RenderTargetContext {
-                device_pixel_scale,
-                prim_store: &self.prim_store,
-                resource_cache,
-                use_dual_source_blending,
-                clip_scroll_tree,
-                data_stores,
-                surfaces: &surfaces,
-                scratch,
-                screen_world_rect,
-            };
+        {
+            profile_marker!("Batching");
 
-            pass.build(
-                &mut ctx,
-                gpu_cache,
-                &mut render_tasks,
-                &mut deferred_resolves,
-                &self.clip_store,
-                &mut transform_palette,
-                &mut prim_headers,
-                &mut z_generator,
-            );
-
-            match pass.kind {
-                RenderPassKind::MainFramebuffer(ref color) => {
-                    has_texture_cache_tasks |= color.must_be_drawn();
+            // Add passes as required for our cached render tasks.
+            if !render_tasks.cacheable_render_tasks.is_empty() {
+                passes.push(RenderPass::new_off_screen(screen_size, self.config.gpu_supports_fast_clears));
+                for cacheable_render_task in &render_tasks.cacheable_render_tasks {
+                    render_tasks.assign_to_passes(
+                        *cacheable_render_task,
+                        0,
+                        screen_size,
+                        &mut passes,
+                        self.config.gpu_supports_fast_clears,
+                    );
                 }
-                RenderPassKind::OffScreen { ref texture_cache, ref color, .. } => {
-                    has_texture_cache_tasks |= !texture_cache.is_empty();
-                    has_texture_cache_tasks |= color.must_be_drawn();
+                passes.reverse();
+            }
+
+            if let Some(main_render_task_id) = main_render_task_id {
+                let passes_start = passes.len();
+                passes.push(RenderPass::new_main_framebuffer(screen_size, self.config.gpu_supports_fast_clears));
+                render_tasks.assign_to_passes(
+                    main_render_task_id,
+                    passes_start,
+                    screen_size,
+                    &mut passes,
+                    self.config.gpu_supports_fast_clears,
+                );
+                passes[passes_start..].reverse();
+            }
+
+            // Used to generated a unique z-buffer value per primitive.
+            let mut z_generator = ZBufferIdGenerator::new();
+            let use_dual_source_blending = self.config.dual_source_blending_is_enabled &&
+                                           self.config.dual_source_blending_is_supported;
+
+            for pass in &mut passes {
+                let mut ctx = RenderTargetContext {
+                    global_device_pixel_scale,
+                    prim_store: &self.prim_store,
+                    resource_cache,
+                    use_dual_source_blending,
+                    clip_scroll_tree,
+                    data_stores,
+                    surfaces: &surfaces,
+                    scratch,
+                    screen_world_rect,
+                    globals: &self.globals,
+                };
+
+                pass.build(
+                    &mut ctx,
+                    gpu_cache,
+                    &mut render_tasks,
+                    &mut deferred_resolves,
+                    &self.clip_store,
+                    &mut transform_palette,
+                    &mut prim_headers,
+                    &mut z_generator,
+                );
+
+                match pass.kind {
+                    RenderPassKind::MainFramebuffer(ref color) => {
+                        has_texture_cache_tasks |= color.must_be_drawn();
+                    }
+                    RenderPassKind::OffScreen { ref texture_cache, ref color, .. } => {
+                        has_texture_cache_tasks |= !texture_cache.is_empty();
+                        has_texture_cache_tasks |= color.must_be_drawn();
+                    }
                 }
             }
         }
 
         let gpu_cache_frame_id = gpu_cache.end_frame(gpu_cache_profile).frame_id();
 
-        render_tasks.write_task_data(device_pixel_scale);
-
+        render_tasks.write_task_data();
+        *render_task_counters = render_tasks.counters();
         resource_cache.end_frame(texture_cache_profile);
 
         Frame {
             window_size: self.window_size,
             inner_rect: self.screen_rect,
-            device_pixel_ratio: device_pixel_scale.0,
             background_color: self.background_color,
             layer,
             profile_counters,

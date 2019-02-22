@@ -2591,7 +2591,7 @@ bool CanvasRenderingContext2D::ParseFilter(
     return false;
   }
 
-  nsAutoString usedFont; // unused
+  nsAutoString usedFont;  // unused
 
   RefPtr<ComputedStyle> parentStyle = GetFontStyleForServo(
       mCanvasElement, GetFont(), presShell, usedFont, aError);
@@ -2645,6 +2645,7 @@ class CanvasUserSpaceMetrics : public UserSpaceMetricsWithSize {
     params.language = mFontLanguage;
     params.explicitLanguage = mExplicitLanguage;
     params.textPerf = mPresContext->GetTextPerfMetrics();
+    params.featureValueLookup = mPresContext->GetFontFeatureValuesLookup();
     RefPtr<nsFontMetrics> fontMetrics = dc->GetMetricsFor(mFont, params);
     return NSAppUnitsToFloatPixels(fontMetrics->XHeight(),
                                    AppUnitsPerCSSPixel());
@@ -5730,6 +5731,13 @@ bool CanvasRenderingContext2D::IsContextCleanForFrameCapture() {
 bool CanvasRenderingContext2D::ShouldForceInactiveLayer(
     LayerManager* aManager) {
   return !aManager->CanUseCanvasLayerForSize(GetSize());
+}
+
+void CanvasRenderingContext2D::SetWriteOnly() {
+  mWriteOnly = true;
+  if (mCanvasElement) {
+    mCanvasElement->SetWriteOnly();
+  }
 }
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(CanvasPath, AddRef)

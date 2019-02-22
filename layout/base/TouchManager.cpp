@@ -273,8 +273,8 @@ bool TouchManager::PreHandleEvent(WidgetEvent* aEvent, nsEventStatus* aStatus,
           touches.RemoveElementAt(i);
           continue;
         }
-        RefPtr<Touch> oldTouch = info.mTouch;
-        if (!touch->Equals(oldTouch)) {
+        const RefPtr<Touch> oldTouch = info.mTouch;
+        if (!oldTouch->Equals(touch)) {
           touch->mChanged = true;
           haveChanged = true;
         }
@@ -439,7 +439,25 @@ TouchManager::GetAnyCapturedTouchTarget() {
     // pre-handling touch events.
     return aEvent->mMessage == eTouchStart;
   }
-  return info.mConvertToPointer && aEvent->mMessage != eTouchStart;
+
+  if (!info.mConvertToPointer) {
+    return false;
+  }
+
+  switch (aEvent->mMessage) {
+    case eTouchStart: {
+      // We don't want to fire duplicated pointerdown.
+      return false;
+    }
+    case eTouchMove: {
+      // Always fire first pointermove event.
+      return info.mTouch->mMessage != eTouchMove ||
+             !aTouch->Equals(info.mTouch);
+    }
+    default:
+      break;
+  }
+  return true;
 }
 
 }  // namespace mozilla

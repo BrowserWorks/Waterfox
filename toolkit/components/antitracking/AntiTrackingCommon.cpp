@@ -122,16 +122,36 @@ bool GetParentPrincipalAndTrackingOrigin(
 };
 
 void CreatePermissionKey(const nsCString& aTrackingOrigin,
+                         nsACString& aPermissionKey) {
+  MOZ_ASSERT(aPermissionKey.IsEmpty());
+
+  static const nsLiteralCString prefix =
+      NS_LITERAL_CSTRING(ANTITRACKING_PERM_KEY "^");
+
+  aPermissionKey.SetCapacity(prefix.Length() + aTrackingOrigin.Length());
+  aPermissionKey.Append(prefix);
+  aPermissionKey.Append(aTrackingOrigin);
+}
+
+void CreatePermissionKey(const nsCString& aTrackingOrigin,
                          const nsCString& aGrantedOrigin,
                          nsACString& aPermissionKey) {
+  MOZ_ASSERT(aPermissionKey.IsEmpty());
+
   if (aTrackingOrigin == aGrantedOrigin) {
-    aPermissionKey =
-        nsPrintfCString(ANTITRACKING_PERM_KEY "^%s", aTrackingOrigin.get());
+    CreatePermissionKey(aTrackingOrigin, aPermissionKey);
     return;
   }
 
-  aPermissionKey = nsPrintfCString(ANTITRACKING_PERM_KEY "^%s^%s",
-                                   aTrackingOrigin.get(), aGrantedOrigin.get());
+  static const nsLiteralCString prefix =
+      NS_LITERAL_CSTRING(ANTITRACKING_PERM_KEY "^");
+
+  aPermissionKey.SetCapacity(prefix.Length() + 1 + aTrackingOrigin.Length() +
+                             aGrantedOrigin.Length());
+  aPermissionKey.Append(prefix);
+  aPermissionKey.Append(aTrackingOrigin);
+  aPermissionKey.AppendLiteral("^");
+  aPermissionKey.Append(aGrantedOrigin);
 }
 
 // This internal method returns ACCESS_DENY if the access is denied,
@@ -1021,7 +1041,7 @@ bool AntiTrackingCommon::IsStorageAccessPermission(nsIPermission* aPermission,
   // shorter permission key and will then do a prefix match on the type of the
   // input permission to see if it is a storage access permission or not.
   nsAutoCString permissionKey;
-  CreatePermissionKey(origin, origin, permissionKey);
+  CreatePermissionKey(origin, permissionKey);
 
   nsAutoCString type;
   rv = aPermission->GetType(type);
@@ -1252,12 +1272,7 @@ bool AntiTrackingCommon::IsFirstPartyStorageAccessGrantedFor(
       ("Computing whether channel %p has access to URI %s", aChannel, _spec),
       channelURI);
 
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
-  if (!loadInfo) {
-    LOG(("No loadInfo, bail out early"));
-    return true;
-  }
-
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
   // We need to find the correct principal to check the cookie permission. For
   // third-party contexts, we want to check if the top-level window has a custom
   // cookie permission.
@@ -1545,7 +1560,7 @@ bool AntiTrackingCommon::IsFirstPartyStorageAccessGrantedFor(
   }
 
   nsAutoCString type;
-  CreatePermissionKey(origin, origin, type);
+  CreatePermissionKey(origin, type);
 
   nsPermissionManager* permManager = nsPermissionManager::GetInstance();
   if (NS_WARN_IF(!permManager)) {

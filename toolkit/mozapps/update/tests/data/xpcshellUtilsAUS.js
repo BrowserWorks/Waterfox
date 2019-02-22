@@ -32,31 +32,22 @@
 
 /* eslint-disable no-undef */
 
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {TestUtils} = ChromeUtils.import("resource://testing-common/TestUtils.jsm");
+
+ChromeUtils.defineModuleGetter(this, "MockRegistrar",
+                               "resource://testing-common/MockRegistrar.jsm");
+
 const Cm = Components.manager;
 
-const URL_HTTP_UPDATE_SJS = "http://test_details/";
-
-/* global INSTALL_LOCALE, MOZ_APP_NAME, BIN_SUFFIX, MOZ_APP_VENDOR */
-/* global MOZ_APP_BASENAME, APP_BIN_SUFFIX, APP_INFO_NAME, APP_INFO_VENDOR */
-/* global IS_WIN, IS_MACOSX, IS_UNIX, MOZ_VERIFY_MAR_SIGNATURE */
-/* global IS_AUTHENTICODE_CHECK_ENABLED */
+/* global MOZ_APP_VENDOR, MOZ_APP_BASENAME */
+/* global MOZ_VERIFY_MAR_SIGNATURE, IS_AUTHENTICODE_CHECK_ENABLED */
 load("../data/xpcshellConstantsPP.js");
 
-function getLogSuffix() {
-  if (IS_WIN) {
-    return "_win";
-  }
-  if (IS_MACOSX) {
-    return "_mac";
-  }
-  return "_linux";
-}
-
-ChromeUtils.import("resource://gre/modules/Services.jsm", this);
-
-const DIR_MACOS = IS_MACOSX ? "Contents/MacOS/" : "";
-const DIR_RESOURCES = IS_MACOSX ? "Contents/Resources/" : "";
-const TEST_FILE_SUFFIX = IS_MACOSX ? "_mac" : "";
+const DIR_MACOS = AppConstants.platform == "macosx" ? "Contents/MacOS/" : "";
+const DIR_RESOURCES = AppConstants.platform == "macosx" ? "Contents/Resources/" : "";
+const TEST_FILE_SUFFIX = AppConstants.platform == "macosx" ? "_mac" : "";
 const FILE_COMPLETE_MAR = "complete" + TEST_FILE_SUFFIX + ".mar";
 const FILE_PARTIAL_MAR = "partial" + TEST_FILE_SUFFIX + ".mar";
 const FILE_COMPLETE_PRECOMPLETE = "complete_precomplete" + TEST_FILE_SUFFIX;
@@ -64,25 +55,28 @@ const FILE_PARTIAL_PRECOMPLETE = "partial_precomplete" + TEST_FILE_SUFFIX;
 const FILE_COMPLETE_REMOVEDFILES = "complete_removed-files" + TEST_FILE_SUFFIX;
 const FILE_PARTIAL_REMOVEDFILES = "partial_removed-files" + TEST_FILE_SUFFIX;
 const FILE_UPDATE_IN_PROGRESS_LOCK = "updated.update_in_progress.lock";
-const COMPARE_LOG_SUFFIX = getLogSuffix();
+const COMPARE_LOG_SUFFIX = "_" + mozinfo.os;
 const LOG_COMPLETE_SUCCESS = "complete_log_success" + COMPARE_LOG_SUFFIX;
 const LOG_PARTIAL_SUCCESS = "partial_log_success" + COMPARE_LOG_SUFFIX;
 const LOG_PARTIAL_FAILURE = "partial_log_failure" + COMPARE_LOG_SUFFIX;
 const LOG_REPLACE_SUCCESS = "replace_log_success";
 
-const USE_EXECV = IS_UNIX && !IS_MACOSX;
+const USE_EXECV = AppConstants.platform == "linux";
 
 const URL_HOST = "http://localhost";
 
-const FILE_APP_BIN = MOZ_APP_NAME + APP_BIN_SUFFIX;
+const APP_INFO_NAME = "XPCShell";
+const APP_INFO_VENDOR = "Mozilla";
+
+const APP_BIN_SUFFIX = AppConstants.platform == "linux" ? "-bin" : mozinfo.bin_suffix;
+const FILE_APP_BIN = AppConstants.MOZ_APP_NAME + APP_BIN_SUFFIX;
 const FILE_COMPLETE_EXE = "complete.exe";
-const FILE_HELPER_BIN = "TestAUSHelper" + BIN_SUFFIX;
+const FILE_HELPER_BIN = "TestAUSHelper" + mozinfo.bin_suffix;
 const FILE_MAINTENANCE_SERVICE_BIN = "maintenanceservice.exe";
 const FILE_MAINTENANCE_SERVICE_INSTALLER_BIN = "maintenanceservice_installer.exe";
 const FILE_OLD_VERSION_MAR = "old_version.mar";
 const FILE_PARTIAL_EXE = "partial.exe";
-const FILE_UPDATER_BIN = "updater" + BIN_SUFFIX;
-const FILE_WRONG_CHANNEL_MAR = "wrong_product_channel.mar";
+const FILE_UPDATER_BIN = "updater" + mozinfo.bin_suffix;
 
 const PERFORMING_STAGED_UPDATE = "Performing a staged update";
 const CALL_QUIT = "calling QuitProgressUI";
@@ -124,7 +118,7 @@ const APP_TIMER_TIMEOUT = 120000;
 const FILE_IN_USE_MAX_TIMEOUT_RUNS = 60;
 const FILE_IN_USE_TIMEOUT_MS = 1000;
 
-const PIPE_TO_NULL = IS_WIN ? ">nul" : "> /dev/null 2>&1";
+const PIPE_TO_NULL = AppConstants.platform == "win" ? ">nul" : "> /dev/null 2>&1";
 
 const LOG_FUNCTION = info;
 
@@ -155,15 +149,14 @@ var gHandle;
 
 var gGREDirOrig;
 var gGREBinDirOrig;
-var gAppDirOrig;
 
 var gPIDPersistProcess;
 
 // Variables are used instead of contants so tests can override these values if
 // necessary.
-var gCallbackBinFile = "callback_app" + BIN_SUFFIX;
+var gCallbackBinFile = "callback_app" + mozinfo.bin_suffix;
 var gCallbackArgs = ["./", "callback.log", "Test Arg 2", "Test Arg 3"];
-var gPostUpdateBinFile = "postup_app" + BIN_SUFFIX;
+var gPostUpdateBinFile = "postup_app" + mozinfo.bin_suffix;
 var gSvcOriginalLogContents;
 // Some update staging failures can remove the update. This allows tests to
 // specify that the status file and the active update should not be checked
@@ -181,15 +174,16 @@ var gEnvXPCOMMemLeakLog;
 var gEnvDyldLibraryPath;
 var gEnvLdLibraryPath;
 
+const URL_HTTP_UPDATE_SJS = "http://test_details/";
 const DATA_URI_SPEC = Services.io.newFileURI(do_get_file("", false)).spec;
 
 /* import-globals-from shared.js */
 load("shared.js");
 
 // Set to true to log additional information for debugging. To log additional
-// information for an individual test set DEBUG_AUS_TEST to true in the test's
-// run_test function.
-var DEBUG_AUS_TEST = true;
+// information for individual tests set gDebugTest to false here and to true in
+// the test's onload function.
+gDebugTest = true;
 
 // Setting gDebugTestLog to true will create log files for the tests in
 // <objdir>/_tests/xpcshell/toolkit/mozapps/update/tests/<testdir>/ except for
@@ -203,9 +197,6 @@ var gDebugTestLog = false;
 var gTestsToLog = [];
 var gRealDump;
 var gFOS;
-
-ChromeUtils.defineModuleGetter(this, "MockRegistrar",
-                               "resource://testing-common/MockRegistrar.jsm");
 
 var gTestFiles = [];
 var gTestDirs = [];
@@ -812,13 +803,12 @@ function setupTestCommon(aAppUpdateAutoEnabled = false) {
 
   gGREDirOrig = getGREDir();
   gGREBinDirOrig = getGREBinDir();
-  gAppDirOrig = getAppBaseDir();
 
-  let applyDir = getApplyDirFile(null, true).parent;
+  let applyDir = getApplyDirFile().parent;
 
   // Try to remove the directory used to apply updates and the updates directory
-  // on platforms other than Windows. Since the test hasn't ran yet and the
-  // directory shouldn't exist finished this is non-fatal for the test.
+  // on platforms other than Windows. This is non-fatal for the test since if
+  // this fails a different directory will be used.
   if (applyDir.exists()) {
     debugDump("attempting to remove directory. Path: " + applyDir.path);
     try {
@@ -838,12 +828,10 @@ function setupTestCommon(aAppUpdateAutoEnabled = false) {
     }
   }
 
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     Services.prefs.setBoolPref(PREF_APP_UPDATE_SERVICE_ENABLED, !!IS_SERVICE_TEST);
   }
 
-  // adjustGeneralPaths registers a cleanup function that calls end_test when
-  // it is defined as a function.
   adjustGeneralPaths();
   createWorldWritableAppUpdateDir();
 
@@ -866,7 +854,7 @@ function setupTestCommon(aAppUpdateAutoEnabled = false) {
   // outside of the application directory after the call to adjustGeneralPaths
   // has set it up. Since the test hasn't ran yet and the directory shouldn't
   // exist this is non-fatal for the test.
-  if (IS_WIN || IS_MACOSX) {
+  if (AppConstants.platform == "win" || AppConstants.platform == "macosx") {
     let updatesDir = getMockUpdRootD();
     if (updatesDir.exists()) {
       debugDump("attempting to remove directory. Path: " + updatesDir.path);
@@ -898,13 +886,13 @@ function cleanupTestCommon() {
 
   gTestserver = null;
 
-  if (IS_UNIX) {
+  if (AppConstants.platform == "macosx" || AppConstants.platform == "linux") {
     // This will delete the launch script if it exists.
     getLaunchScript();
   }
 
-  if (IS_WIN && MOZ_APP_BASENAME) {
-    let appDir = getApplyDirFile(null, true);
+  if (AppConstants.platform == "win" && MOZ_APP_BASENAME) {
+    let appDir = getApplyDirFile();
     let vendor = MOZ_APP_VENDOR ? MOZ_APP_VENDOR : "Mozilla";
     const REG_PATH = "SOFTWARE\\" + vendor + "\\" + MOZ_APP_BASENAME +
                      "\\TaskBarIDs";
@@ -930,7 +918,7 @@ function cleanupTestCommon() {
 
   // The updates directory is located outside of the application directory and
   // needs to be removed on Windows and Mac OS X.
-  if (IS_WIN || IS_MACOSX) {
+  if (AppConstants.platform == "win" || AppConstants.platform == "macosx") {
     let updatesDir = getMockUpdRootD();
     // Try to remove the directory used to apply updates. Since the test has
     // already finished this is non-fatal for the test.
@@ -942,7 +930,7 @@ function cleanupTestCommon() {
         logTestInfo("non-fatal error removing directory. Path: " +
                     updatesDir.path + ", Exception: " + e);
       }
-      if (IS_MACOSX) {
+      if (AppConstants.platform == "macosx") {
         let updatesRootDir = gUpdatesRootDir.clone();
         while (updatesRootDir.path != updatesDir.path) {
           if (updatesDir.exists()) {
@@ -968,7 +956,7 @@ function cleanupTestCommon() {
     }
   }
 
-  let applyDir = getApplyDirFile(null, true).parent;
+  let applyDir = getApplyDirFile().parent;
 
   // Try to remove the directory used to apply updates. Since the test has
   // already finished this is non-fatal for the test.
@@ -1012,7 +1000,7 @@ function dumpOverride(aText) {
  * inspected.
  */
 function doTestFinish() {
-  if (DEBUG_AUS_TEST) {
+  if (gDebugTest) {
     // This prevents do_print errors from being printed by the xpcshell test
     // harness due to nsUpdateService.js logging to the console when the
     // app.update.log preference is true.
@@ -1037,7 +1025,7 @@ function doTestFinish() {
  */
 function setDefaultPrefs() {
   Services.prefs.setBoolPref(PREF_APP_UPDATE_DISABLEDFORTESTING, false);
-  if (DEBUG_AUS_TEST) {
+  if (gDebugTest) {
     // Enable Update logging
     Services.prefs.setBoolPref(PREF_APP_UPDATE_LOG, true);
   } else {
@@ -1085,7 +1073,7 @@ function preventDistributionFiles() {
  * update has been successfully applied (bug 600098).
  */
 function setAppBundleModTime() {
-  if (!IS_MACOSX) {
+  if (AppConstants.platform != "macosx") {
     return;
   }
   let now = Date.now();
@@ -1100,7 +1088,7 @@ function setAppBundleModTime() {
  * (bug 600098).
  */
 function checkAppBundleModTime() {
-  if (!IS_MACOSX) {
+  if (AppConstants.platform != "macosx") {
     return;
   }
   let now = Date.now();
@@ -1161,76 +1149,31 @@ function checkUpdateManager(aStatusFileState, aHasActiveUpdate,
  * when calling this function or the default values if the parameters are not
  * specified. After these conditions are met the waitForUpdateXMLFilesFinished
  * function is called.  This is necessary due to the update xml files being
- * written asynchronously by nsIUpdateManager. Uses do_timeout instead of
- * do_execute_soon to lessen log spew.
+ * written asynchronously by nsIUpdateManager.
  *
  * @param   aActiveUpdateExists (optional)
  *          Whether the active-update.xml file should exist (default is false).
  * @param   aUpdatesExists (optional)
  *          Whether the updates.xml file should exist (default is true).
  */
-function waitForUpdateXMLFiles(aActiveUpdateExists = false, aUpdatesExists = true) {
-  /**
-   * Waits until the update tmp files don't exist and then calls
-   * testFinishReloadUpdateXMLFiles.
-   *
-   * @param   aActiveUpdateExists (optional)
-   *          Whether the active-update.xml file should exist (default is false).
-   * @param   aUpdatesExists (optional)
-   *          Whether the updates.xml file should exist (default is true).
-   */
-  function waitForUpdateTmpXMLFiles(aActiveUpdateExists = false, aUpdatesExists = true) {
-    let tmpActiveUpdateXML = getUpdatesRootDir();
-    tmpActiveUpdateXML.append(FILE_ACTIVE_UPDATE_XML + ".tmp");
-    if (tmpActiveUpdateXML.exists()) {
-      // The xml files are written asynchronously so wait until it has been
-      // removed.
-      do_timeout(10, () => waitForUpdateTmpXMLFiles(aActiveUpdateExists, aUpdatesExists));
-      return;
-    }
+async function waitForUpdateXMLFiles(aActiveUpdateExists = false, aUpdatesExists = true) {
+  let file = getUpdateDirFile(FILE_ACTIVE_UPDATE_XML_TMP);
+  await TestUtils.waitForCondition(() => (!file.exists()),
+    "Waiting for file to be deleted, path: " + file.path);
 
-    let tmpUpdatesXML = getUpdatesRootDir();
-    tmpUpdatesXML.append(FILE_UPDATES_XML + ".tmp");
-    if (tmpUpdatesXML.exists()) {
-      // The xml files are written asynchronously so wait until it has been
-      // removed.
-      do_timeout(10, () => waitForUpdateTmpXMLFiles(aActiveUpdateExists, aUpdatesExists));
-      return;
-    }
+  file = getUpdateDirFile(FILE_UPDATES_XML_TMP);
+  await TestUtils.waitForCondition(() => (!file.exists()),
+    "Waiting for file to be deleted, path: " + file.path);
 
-    do_timeout(10, () => waitForUpdateXMLFilesExist(aActiveUpdateExists, aUpdatesExists));
-  }
+  file = getUpdateDirFile(FILE_ACTIVE_UPDATE_XML);
+  await TestUtils.waitForCondition(() => (file.exists() == aActiveUpdateExists),
+    "Waiting for file to be deleted, path: " + file.path);
 
-  /**
-   * Waits until the update files exist or not based on the parameters specified
-   * when calling this function or the default values if the parameters are not
-   * specified. After these conditions are met the waitForUpdateXMLFilesFinished
-   * function is called.
-   *
-   * @param   aActiveUpdateExists (optional)
-   *          Whether the active-update.xml file should exist (default is false).
-   * @param   aUpdatesExists (optional)
-   *          Whether the updates.xml file should exist (default is true).
-   */
-  function waitForUpdateXMLFilesExist(aActiveUpdateExists = false, aUpdatesExists = true) {
-    let activeUpdateXML = getUpdatesXMLFile(true);
-    if (activeUpdateXML.exists() != aActiveUpdateExists) {
-      // Since the file is removed asynchronously wait until it has been removed.
-      do_timeout(10, () => waitForUpdateXMLFilesExist(aActiveUpdateExists, aUpdatesExists));
-      return;
-    }
+  file = getUpdateDirFile(FILE_UPDATES_XML);
+  await TestUtils.waitForCondition(() => (file.exists() == aUpdatesExists),
+    "Waiting for file to be deleted, path: " + file.path);
 
-    let updatesXML = getUpdatesXMLFile(false);
-    if (updatesXML.exists() != aUpdatesExists) {
-      // Since the file is removed asynchronously wait until it has been removed.
-      do_timeout(10, () => waitForUpdateXMLFilesExist(aActiveUpdateExists, aUpdatesExists));
-      return;
-    }
-
-    do_timeout(10, waitForUpdateXMLFilesFinished);
-  }
-
-  do_timeout(10, () => waitForUpdateTmpXMLFiles(aActiveUpdateExists, aUpdatesExists));
+  executeSoon(waitForUpdateXMLFilesFinished);
 }
 
 /**
@@ -1241,7 +1184,7 @@ function waitForUpdateXMLFiles(aActiveUpdateExists = false, aUpdatesExists = tru
  *          Whether the post update '.running' file should exist.
  */
 function checkPostUpdateRunningFile(aShouldExist) {
-  if (!IS_WIN && !IS_MACOSX) {
+  if (AppConstants.platform == "linux") {
     return;
   }
   let postUpdateRunningFile = getPostUpdateFile(".running");
@@ -1315,63 +1258,12 @@ function getApplyDirPath() {
  *          The relative path to the file or directory to get from the root of
  *          the test's directory. If not specified the test's directory will be
  *          returned.
- * @param   aAllowNonexistent (optional)
- *          Whether the file must exist. If false or not specified the file must
- *          exist or the function will throw.
  * @return  The nsIFile for the file in the directory where the update will be
  *          applied.
- * @throws  If aAllowNonexistent is not specified or is false and the file or
- *          directory does not exist.
  */
-function getApplyDirFile(aRelPath, aAllowNonexistent) {
+function getApplyDirFile(aRelPath) {
   let relpath = getApplyDirPath() + (aRelPath ? aRelPath : "");
-  return do_get_file(relpath, aAllowNonexistent);
-}
-
-/**
- * Helper function for getting the nsIFile for a file in the directory where the
- * update will be staged.
- *
- * The files for the update are located two directories below the stage
- * directory since Mac OS X sets the last modified time for the root directory
- * to the current time and if the update changes any files in the root directory
- * then it wouldn't be possible to test (bug 600098).
- *
- * @param   aRelPath (optional)
- *          The relative path to the file or directory to get from the root of
- *          the stage directory. If not specified the stage directory will be
- *          returned.
- * @param   aAllowNonexistent (optional)
- *          Whether the file must exist. If false or not specified the file must
- *          exist or the function will throw.
- * @return  The nsIFile for the file in the directory where the update will be
- *          staged.
- * @throws  If aAllowNonexistent is not specified or is false and the file or
- *          directory does not exist.
- */
-function getStageDirFile(aRelPath, aAllowNonexistent) {
-  if (IS_MACOSX) {
-    let file = getMockUpdRootD();
-    file.append(DIR_UPDATES);
-    file.append(DIR_PATCH);
-    file.append(DIR_UPDATED);
-    if (aRelPath) {
-      let pathParts = aRelPath.split("/");
-      for (let i = 0; i < pathParts.length; i++) {
-        if (pathParts[i]) {
-          file.append(pathParts[i]);
-        }
-      }
-    }
-    if (!aAllowNonexistent) {
-      Assert.ok(file.exists(),
-                MSG_SHOULD_EXIST + getMsgPath(file.path));
-    }
-    return file;
-  }
-
-  let relpath = getApplyDirPath() + DIR_UPDATED + "/" + (aRelPath ? aRelPath : "");
-  return do_get_file(relpath, aAllowNonexistent);
+  return do_get_file(relpath, true);
 }
 
 /**
@@ -1409,9 +1301,10 @@ function getTestDirFile(aRelPath, aAllowNonExists) {
  * directory on Windows.
  *
  * @return  The nsIFile for the maintenance service directory.
+ * @throws  If called from a platform other than Windows.
  */
 function getMaintSvcDir() {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -1449,7 +1342,7 @@ function getMaintSvcDir() {
  * @throws  If called from a platform other than Windows.
  */
 function getSpecialFolderDir(aCSIDL) {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -1477,7 +1370,7 @@ function getSpecialFolderDir(aCSIDL) {
 }
 
 XPCOMUtils.defineLazyGetter(this, "gInstallDirPathHash", function test_gIDPH() {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -1486,7 +1379,7 @@ XPCOMUtils.defineLazyGetter(this, "gInstallDirPathHash", function test_gIDPH() {
   }
 
   let vendor = MOZ_APP_VENDOR ? MOZ_APP_VENDOR : "Mozilla";
-  let appDir = getApplyDirFile(null, true);
+  let appDir = getApplyDirFile();
 
   const REG_PATH = "SOFTWARE\\" + vendor + "\\" + MOZ_APP_BASENAME +
                    "\\TaskBarIDs";
@@ -1516,7 +1409,7 @@ XPCOMUtils.defineLazyGetter(this, "gInstallDirPathHash", function test_gIDPH() {
 });
 
 XPCOMUtils.defineLazyGetter(this, "gLocalAppDataDir", function test_gLADD() {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -1525,7 +1418,7 @@ XPCOMUtils.defineLazyGetter(this, "gLocalAppDataDir", function test_gLADD() {
 });
 
 XPCOMUtils.defineLazyGetter(this, "gCommonAppDataDir", function test_gCDD() {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -1534,7 +1427,7 @@ XPCOMUtils.defineLazyGetter(this, "gCommonAppDataDir", function test_gCDD() {
 });
 
 XPCOMUtils.defineLazyGetter(this, "gProgFilesDir", function test_gPFD() {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -1553,15 +1446,15 @@ XPCOMUtils.defineLazyGetter(this, "gProgFilesDir", function test_gPFD() {
  * the old (pre-migration) update directory is returned.
  */
 function getMockUpdRootD(aGetOldLocation = false) {
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     return getMockUpdRootDWin(aGetOldLocation);
   }
 
-  if (IS_MACOSX) {
+  if (AppConstants.platform == "macosx") {
     return getMockUpdRootDMac();
   }
 
-  return getApplyDirFile(DIR_MACOS, true);
+  return getApplyDirFile(DIR_MACOS);
 }
 
 /**
@@ -1569,9 +1462,11 @@ function getMockUpdRootD(aGetOldLocation = false) {
  * returns the same directory as returned by nsXREDirProvider::GetUpdateRootDir
  * in nsXREDirProvider.cpp so an application will be able to find the update
  * when running a test that launches the application.
+ *
+ * @throws  If called from a platform other than Windows.
  */
 function getMockUpdRootDWin(aGetOldLocation) {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -1598,7 +1493,7 @@ function getMockUpdRootDWin(aGetOldLocation) {
 
 function createWorldWritableAppUpdateDir() {
   // This function is only necessary in Windows
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     let installDir = Services.dirsvc.get(XRE_EXECUTABLE_FILE, Ci.nsIFile).parent;
     let exitValue = runTestHelperSync(["create-update-dir", installDir.path]);
     Assert.equal(exitValue, 0, "The helper process exit value should be 0");
@@ -1606,7 +1501,7 @@ function createWorldWritableAppUpdateDir() {
 }
 
 XPCOMUtils.defineLazyGetter(this, "gUpdatesRootDir", function test_gURD() {
-  if (!IS_MACOSX) {
+  if (AppConstants.platform != "macosx") {
     do_throw("Mac OS X only function called by a different platform!");
   }
 
@@ -1628,7 +1523,7 @@ XPCOMUtils.defineLazyGetter(this, "gUpdatesRootDir", function test_gURD() {
  * when running a test that launches the application.
  */
 function getMockUpdRootDMac() {
-  if (!IS_MACOSX) {
+  if (AppConstants.platform != "macosx") {
     do_throw("Mac OS X only function called by a different platform!");
   }
 
@@ -1650,9 +1545,10 @@ function getMockUpdRootDMac() {
  *
  * @param   aDir
  *          The nsIFile for the directory where the lock file should be created.
+ * @throws  If called from a platform other than Windows.
  */
 function createUpdateInProgressLockFile(aDir) {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -1674,9 +1570,10 @@ function createUpdateInProgressLockFile(aDir) {
  *
  * @param   aDir
  *          The nsIFile for the directory where the lock file is located.
+ * @throws  If called from a platform other than Windows.
  */
 function removeUpdateInProgressLockFile(aDir) {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -1731,22 +1628,20 @@ function copyTestUpdaterToBinDir() {
  * @return  nsIFIle for the copied test updater.
  */
 function copyTestUpdaterForRunUsingUpdater() {
-  if (IS_WIN) {
+  if (AppConstants.platform == "win" || AppConstants.platform == "linux") {
     return copyTestUpdaterToBinDir();
   }
 
   let testUpdater = getTestUpdater();
-  let updater = getUpdatesPatchDir();
+  let updater = getUpdateDirFile(DIR_PATCH);
   updater.append(testUpdater.leafName);
   if (!updater.exists()) {
     testUpdater.copyToFollowingLinks(updater.parent, updater.leafName);
   }
 
-  if (IS_MACOSX) {
-    updater.append("Contents");
-    updater.append("MacOS");
-    updater.append("org.mozilla.updater");
-  }
+  updater.append("Contents");
+  updater.append("MacOS");
+  updater.append("org.mozilla.updater");
   return updater;
 }
 
@@ -1758,7 +1653,7 @@ function copyTestUpdaterForRunUsingUpdater() {
  *          The leaf name of the update log.
  */
 function logUpdateLog(aLogLeafName) {
-  let updateLog = getUpdateLog(aLogLeafName);
+  let updateLog = getUpdateDirFile(aLogLeafName);
   if (updateLog.exists()) {
     // xpcshell tests won't display the entire contents so log each line.
     let updateLogContents = readFileBytes(updateLog).replace(/\r\n/g, "\n");
@@ -1857,12 +1752,14 @@ function runUpdate(aExpectedStatus, aSwitchApp, aExpectedExitValue, aCheckSvcLog
   Assert.ok(updateBin.exists(),
             MSG_SHOULD_EXIST + getMsgPath(updateBin.path));
 
-  let updatesDirPath = aPatchDirPath || getUpdatesPatchDir().path;
-  let installDirPath = aInstallDirPath || getApplyDirFile(null, true).path;
-  let applyToDirPath = aApplyToDirPath || getApplyDirFile(null, true).path;
-  let stageDirPath = aApplyToDirPath || getStageDirFile(null, true).path;
+  let updatesDirPath = aPatchDirPath || getUpdateDirFile(DIR_PATCH).path;
+  let installDirPath = aInstallDirPath || getApplyDirFile().path;
+  let applyToDirPath = aApplyToDirPath || getApplyDirFile().path;
+  let stageDirPath = aApplyToDirPath || getStageDirFile().path;
 
   let callbackApp = getApplyDirFile(DIR_RESOURCES + gCallbackBinFile);
+  Assert.ok(callbackApp.exists(),
+            MSG_SHOULD_EXIST + ", path: " + callbackApp.path);
   callbackApp.permissions = PERMS_DIRECTORY;
 
   setAppBundleModTime();
@@ -1973,7 +1870,10 @@ function createSymlink() {
   let exitValue = runTestHelperSync(args);
   Assert.equal(exitValue, 0,
                "the helper process exit value should be 0");
-  getApplyDirFile(DIR_RESOURCES + "link", false).permissions = 0o666;
+  let file = getApplyDirFile(DIR_RESOURCES + "link");
+  Assert.ok(file.exists(),
+            MSG_SHOULD_EXIST + ", path: " + file.path);
+  file.permissions = 0o666;
   args = ["setup-symlink", "moz-foo2", "moz-bar2", "target2",
           getApplyDirFile().path + "/" + DIR_RESOURCES + "link2", "change-perm"];
   exitValue = runTestHelperSync(args);
@@ -2022,22 +1922,6 @@ function setupActiveUpdate() {
   reloadUpdateManagerData();
   Assert.ok(!!gUpdateManager.activeUpdate,
             "the active update should be defined");
-}
-
-/**
- * Gets the specified update log.
- *
- * @param   aLogLeafName
- *          The leaf name of the log to get.
- * @return  nsIFile for the update log.
- */
-function getUpdateLog(aLogLeafName) {
-  let updateLog = getUpdatesDir();
-  if (aLogLeafName == FILE_UPDATE_LOG) {
-    updateLog.append(DIR_PATCH);
-  }
-  updateLog.append(aLogLeafName);
-  return updateLog;
 }
 
 /**
@@ -2105,11 +1989,11 @@ function stageUpdate(aCheckSvcLog) {
  *          The update state received by the observer notification.
  */
 function checkUpdateStagedState(aUpdateState) {
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     if (IS_SERVICE_TEST) {
       waitForServiceStop(false);
     } else {
-      let updater = getApplyDirFile(FILE_UPDATER_BIN, true);
+      let updater = getApplyDirFile(FILE_UPDATER_BIN);
       if (isFileInUse(updater)) {
         do_timeout(FILE_IN_USE_TIMEOUT_MS,
                    checkUpdateStagedState.bind(null, aUpdateState));
@@ -2129,19 +2013,19 @@ function checkUpdateStagedState(aUpdateState) {
                  "the update state" + MSG_SHOULD_EQUAL);
   }
 
-  let log = getUpdateLog(FILE_LAST_UPDATE_LOG);
+  let log = getUpdateDirFile(FILE_LAST_UPDATE_LOG);
   Assert.ok(log.exists(),
             MSG_SHOULD_EXIST + getMsgPath(log.path));
 
-  log = getUpdateLog(FILE_UPDATE_LOG);
+  log = getUpdateDirFile(FILE_UPDATE_LOG);
   Assert.ok(!log.exists(),
             MSG_SHOULD_NOT_EXIST + getMsgPath(log.path));
 
-  log = getUpdateLog(FILE_BACKUP_UPDATE_LOG);
+  log = getUpdateDirFile(FILE_BACKUP_UPDATE_LOG);
   Assert.ok(!log.exists(),
             MSG_SHOULD_NOT_EXIST + getMsgPath(log.path));
 
-  let stageDir = getStageDirFile(null, true);
+  let stageDir = getStageDirFile();
   if (STATE_AFTER_STAGE == STATE_APPLIED ||
       STATE_AFTER_STAGE == STATE_APPLIED_SVC) {
     Assert.ok(stageDir.exists(),
@@ -2169,9 +2053,10 @@ function checkUpdateStagedState(aUpdateState) {
  * run. See bug 711660 for more details.
  *
  * @return true if the test should run and false if it shouldn't.
+ * @throws  If called from a platform other than Windows.
  */
 function shouldRunServiceTest() {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -2283,7 +2168,7 @@ function setupAppFiles() {
   debugDump("start - copying or creating symlinks to application files " +
             "for the test");
 
-  let destDir = getApplyDirFile(null, true);
+  let destDir = getApplyDirFile();
   if (!destDir.exists()) {
     try {
       destDir.create(Ci.nsIFile.DIRECTORY_TYPE, PERMS_DIRECTORY);
@@ -2303,9 +2188,12 @@ function setupAppFiles() {
                   {relPath: "dependentlibs.list",
                    inGreDir: true}];
 
-  // On Linux the updater.png must also be copied
-  if (IS_UNIX && !IS_MACOSX) {
+  // On Linux the updater.png must also be copied and libsoftokn3.so must be
+  // symlinked or copied.
+  if (AppConstants.platform == "linux") {
     appFiles.push({relPath: "icons/updater.png",
+                   inGreDir: true},
+                  {relPath: "libsoftokn3.so",
                    inGreDir: true});
   }
 
@@ -2366,7 +2254,7 @@ function copyFileToTestAppDir(aFileRelPath, aInGreDir) {
     }
   }
 
-  if (IS_MACOSX && !srcFile.exists()) {
+  if (AppConstants.platform == "macosx" && !srcFile.exists()) {
     debugDump("unable to copy file since it doesn't exist! Checking if " +
               fileRelPath + ".app exists. Path: " + srcFile.path);
     // gGREDirOrig and gGREBinDirOrig must always be cloned when changing its
@@ -2400,11 +2288,11 @@ function copyFileToTestAppDir(aFileRelPath, aInGreDir) {
             destFile.remove(true);
           } catch (ex) {
             logTestInfo("unable to remove file that failed to copy! Path: " +
-                        destFile.path);
+                        destFile.path + ", Exception: " + ex);
           }
         }
         do_throw("Unable to copy file! Path: " + srcFile.path +
-                 ", Exception: " + ex);
+                 ", Exception: " + e);
       }
     }
   } else {
@@ -2436,9 +2324,10 @@ function copyFileToTestAppDir(aFileRelPath, aInGreDir) {
  * @return true if the installed service is from this build. If the installed
  *         service is not from this build the test will fail instead of
  *         returning false.
+ * @throws  If called from a platform other than Windows.
  */
 function attemptServiceInstall() {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -2485,9 +2374,11 @@ function attemptServiceInstall() {
 /**
  * Waits for the applications that are launched by the maintenance service to
  * stop.
+ *
+ * @throws  If called from a platform other than Windows.
  */
 function waitServiceApps() {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -2501,9 +2392,11 @@ function waitServiceApps() {
 
 /**
  * Waits for the maintenance service to stop.
+ *
+ * @throws  If called from a platform other than Windows.
  */
 function waitForServiceStop(aFailTest) {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -2533,9 +2426,10 @@ function waitForServiceStop(aFailTest) {
  *
  * @param   aApplication
  *          The application binary name to wait until it has stopped.
+ * @throws  If called from a platform other than Windows.
  */
 function waitForApplicationStop(aApplication) {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -2560,7 +2454,7 @@ function waitForApplicationStop(aApplication) {
  */
 function getLaunchBin() {
   let launchBin;
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     launchBin = Services.dirsvc.get("WinD", Ci.nsIFile);
     launchBin.append("System32");
     launchBin.append("cmd.exe");
@@ -2581,9 +2475,10 @@ function getLaunchBin() {
  *
  * @param   aDirPath
  *          The test file object that describes the file to make in use.
+ * @throws  If called from a platform other than Windows.
  */
 function lockDirectory(aDirPath) {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -2690,7 +2585,7 @@ function runHelperLockFile(aTestFile) {
   // Strip off the first two directories so the path has to be from the helper's
   // working directory.
   let lockFileRelPath = aTestFile.relPathDir.split("/");
-  if (IS_MACOSX) {
+  if (AppConstants.platform == "macosx") {
     lockFileRelPath = lockFileRelPath.slice(2);
   }
   lockFileRelPath = lockFileRelPath.join("/") + "/" + aTestFile.fileName;
@@ -2712,7 +2607,7 @@ function waitForHelperSleep() {
   gTimeoutRuns++;
   // Give the lock file process time to lock the file before updating otherwise
   // this test can fail intermittently on Windows debug builds.
-  let output = getApplyDirFile(DIR_RESOURCES + "output", true);
+  let output = getApplyDirFile(DIR_RESOURCES + "output");
   if (readFile(output) != "sleeping\n") {
     if (gTimeoutRuns > MAX_TIMEOUT_RUNS) {
       do_throw("Exceeded MAX_TIMEOUT_RUNS while waiting for the helper to " +
@@ -2745,7 +2640,7 @@ function waitForHelperSleep() {
 function waitForHelperFinished() {
   // Give the lock file process time to lock the file before updating otherwise
   // this test can fail intermittently on Windows debug builds.
-  let output = getApplyDirFile(DIR_RESOURCES + "output", true);
+  let output = getApplyDirFile(DIR_RESOURCES + "output");
   if (readFile(output) != "finished\n") {
     // Uses do_timeout instead of do_execute_soon to lessen log spew.
     do_timeout(FILE_IN_USE_TIMEOUT_MS, waitForHelperFinished);
@@ -2762,11 +2657,11 @@ function waitForHelperFinished() {
  */
 function waitForHelperFinishFileUnlock() {
   try {
-    let output = getApplyDirFile(DIR_RESOURCES + "output", true);
+    let output = getApplyDirFile(DIR_RESOURCES + "output");
     if (output.exists()) {
       output.remove(false);
     }
-    let input = getApplyDirFile(DIR_RESOURCES + "input", true);
+    let input = getApplyDirFile(DIR_RESOURCES + "input");
     if (input.exists()) {
       input.remove(false);
     }
@@ -2783,7 +2678,7 @@ function waitForHelperFinishFileUnlock() {
  * Helper function to tell the helper to finish and exit its sleep state.
  */
 function waitForHelperExit() {
-  let input = getApplyDirFile(DIR_RESOURCES + "input", true);
+  let input = getApplyDirFile(DIR_RESOURCES + "input");
   writeFile(input, "finish\n");
   waitForHelperFinished();
 }
@@ -2807,7 +2702,7 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync,
                           aPostUpdateExeRelPathPrefix = "",
                           aSetupActiveUpdate = true) {
   debugDump("start - updater test setup");
-  let updatesPatchDir = getUpdatesPatchDir();
+  let updatesPatchDir = getUpdateDirFile(DIR_PATCH);
   if (!updatesPatchDir.exists()) {
     updatesPatchDir.create(Ci.nsIFile.DIRECTORY_TYPE, PERMS_DIRECTORY);
   }
@@ -2817,14 +2712,14 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync,
 
   let helperBin = getTestDirFile(FILE_HELPER_BIN);
   helperBin.permissions = PERMS_DIRECTORY;
-  let afterApplyBinDir = getApplyDirFile(DIR_RESOURCES, true);
+  let afterApplyBinDir = getApplyDirFile(DIR_RESOURCES);
   helperBin.copyToFollowingLinks(afterApplyBinDir, gCallbackBinFile);
   helperBin.copyToFollowingLinks(afterApplyBinDir, gPostUpdateBinFile);
 
   gTestFiles.forEach(function SUT_TF_FE(aTestFile) {
     debugDump("start - setup test file: " + aTestFile.fileName);
     if (aTestFile.originalFile || aTestFile.originalContents) {
-      let testDir = getApplyDirFile(aTestFile.relPathDir, true);
+      let testDir = getApplyDirFile(aTestFile.relPathDir);
       if (!testDir.exists()) {
         testDir.create(Ci.nsIFile.DIRECTORY_TYPE, PERMS_DIRECTORY);
       }
@@ -2834,15 +2729,16 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync,
         testFile = getTestDirFile(aTestFile.originalFile);
         testFile.copyToFollowingLinks(testDir, aTestFile.fileName);
         testFile = getApplyDirFile(aTestFile.relPathDir + aTestFile.fileName);
+        Assert.ok(testFile.exists(),
+                  MSG_SHOULD_EXIST + ", path: " + testFile.path);
       } else {
-        testFile = getApplyDirFile(aTestFile.relPathDir + aTestFile.fileName,
-                                   true);
+        testFile = getApplyDirFile(aTestFile.relPathDir + aTestFile.fileName);
         writeFile(testFile, aTestFile.originalContents);
       }
 
       // Skip these tests on Windows since chmod doesn't really set permissions
       // on Windows.
-      if (!IS_WIN && aTestFile.originalPerms) {
+      if (AppConstants.platform != "win" && aTestFile.originalPerms) {
         testFile.permissions = aTestFile.originalPerms;
         // Store the actual permissions on the file for reference later after
         // setting the permissions.
@@ -2858,14 +2754,14 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync,
   // in the initial state for a failed update.
   gTestDirs.forEach(function SUT_TD_FE(aTestDir) {
     debugDump("start - setup test directory: " + aTestDir.relPathDir);
-    let testDir = getApplyDirFile(aTestDir.relPathDir, true);
+    let testDir = getApplyDirFile(aTestDir.relPathDir);
     if (!testDir.exists()) {
       testDir.create(Ci.nsIFile.DIRECTORY_TYPE, PERMS_DIRECTORY);
     }
 
     if (aTestDir.files) {
       aTestDir.files.forEach(function SUT_TD_F_FE(aTestFile) {
-        let testFile = getApplyDirFile(aTestDir.relPathDir + aTestFile, true);
+        let testFile = getApplyDirFile(aTestDir.relPathDir + aTestFile);
         if (!testFile.exists()) {
           testFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, PERMS_FILE);
         }
@@ -2874,14 +2770,14 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync,
 
     if (aTestDir.subDirs) {
       aTestDir.subDirs.forEach(function SUT_TD_SD_FE(aSubDir) {
-        let testSubDir = getApplyDirFile(aTestDir.relPathDir + aSubDir, true);
+        let testSubDir = getApplyDirFile(aTestDir.relPathDir + aSubDir);
         if (!testSubDir.exists()) {
           testSubDir.create(Ci.nsIFile.DIRECTORY_TYPE, PERMS_DIRECTORY);
         }
 
         if (aTestDir.subDirFiles) {
           aTestDir.subDirFiles.forEach(function SUT_TD_SDF_FE(aTestFile) {
-            let testFile = getApplyDirFile(aTestDir.relPathDir + aSubDir + aTestFile, true);
+            let testFile = getApplyDirFile(aTestDir.relPathDir + aSubDir + aTestFile);
             if (!testFile.exists()) {
               testFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, PERMS_FILE);
             }
@@ -2902,15 +2798,6 @@ function setupUpdaterTest(aMarFile, aPostUpdateAsync,
 
   debugDump("finish - updater test setup");
   setupAppFilesAsync();
-}
-
-/**
- * Helper function for updater binary tests that creates the update-settings.ini
- * file.
- */
-function createUpdateSettingsINI() {
-  let ini = getApplyDirFile(DIR_RESOURCES + FILE_UPDATE_SETTINGS_INI, true);
-  writeFile(ini, UPDATE_SETTINGS_CONTENTS);
 }
 
 /**
@@ -2936,7 +2823,7 @@ function createUpdaterINI(aIsExeAsync, aExeRelPathPrefix) {
     }
   }
 
-  if (aExeRelPathPrefix && IS_WIN) {
+  if (AppConstants.platform == "win" && aExeRelPathPrefix) {
     aExeRelPathPrefix = aExeRelPathPrefix.replace("/", "\\");
   }
 
@@ -2955,7 +2842,7 @@ function createUpdaterINI(aIsExeAsync, aExeRelPathPrefix) {
                            exeRelPathWin +
                            exeArg +
                            exeAsync;
-  let updaterIni = getApplyDirFile(DIR_RESOURCES + FILE_UPDATER_INI, true);
+  let updaterIni = getApplyDirFile(DIR_RESOURCES + FILE_UPDATER_INI);
   writeFile(updaterIni, updaterIniContents);
 }
 
@@ -2986,20 +2873,20 @@ function replaceLogPaths(aLogContents) {
   // Remove the majority of the path up to the test directory. This is needed
   // since Assert.equal won't print long strings to the test logs.
   let testDirPath = do_get_file(gTestID, false).path;
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     // Replace \\ with \\\\ so the regexp works.
     testDirPath = testDirPath.replace(/\\/g, "\\\\");
   }
   logContents = logContents.replace(new RegExp(testDirPath, "g"),
                                     "<test_dir_path>/" + gTestID);
   let updatesDirPath = getMockUpdRootD().path;
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     // Replace \\ with \\\\ so the regexp works.
     updatesDirPath = updatesDirPath.replace(/\\/g, "\\\\");
   }
   logContents = logContents.replace(new RegExp(updatesDirPath, "g"),
                                     "<update_dir_path>/" + gTestID);
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     // Replace \ with /
     logContents = logContents.replace(/\\/g, "/");
   }
@@ -3022,13 +2909,13 @@ function replaceLogPaths(aLogContents) {
  */
 function checkUpdateLogContents(aCompareLogFile, aStaged = false,
                                 aReplace = false, aExcludeDistDir = false) {
-  if (IS_UNIX) {
+  if (AppConstants.platform == "macosx" || AppConstants.platform == "linux") {
     // The order that files are returned when enumerating the file system on
     // Linux and Mac is not deterministic so skip checking the logs.
     return;
   }
 
-  let updateLog = getUpdateLog(FILE_LAST_UPDATE_LOG);
+  let updateLog = getUpdateDirFile(FILE_LAST_UPDATE_LOG);
   let updateLogContents = readFileBytes(updateLog);
 
   // The channel-prefs.js is defined in gTestFilesCommon which will always be
@@ -3056,7 +2943,7 @@ function checkUpdateLogContents(aCompareLogFile, aStaged = false,
   // Remove carriage returns.
   updateLogContents = updateLogContents.replace(/\r/g, "");
 
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     // The FindFile results when enumerating the filesystem on Windows is not
     // determistic so the results matching the following need to be fixed.
     let re = new RegExp("([^\n]* 7\/7text1[^\n]*)\n" +
@@ -3159,7 +3046,7 @@ function checkUpdateLogContents(aCompareLogFile, aStaged = false,
  *          The string to check if the update log contains.
  */
 function checkUpdateLogContains(aCheckString) {
-  let updateLog = getUpdateLog(FILE_LAST_UPDATE_LOG);
+  let updateLog = getUpdateDirFile(FILE_LAST_UPDATE_LOG);
   let updateLogContents = readFileBytes(updateLog).replace(/\r\n/g, "\n");
   updateLogContents = replaceLogPaths(updateLogContents);
   Assert.notEqual(updateLogContents.indexOf(aCheckString), -1,
@@ -3194,7 +3081,7 @@ function checkFilesAfterUpdateSuccess(aGetFileFunc, aStageDirExists = false,
 
       // Skip these tests on Windows since chmod doesn't really set permissions
       // on Windows.
-      if (!IS_WIN && aTestFile.comparePerms) {
+      if (AppConstants.platform != "win" && aTestFile.comparePerms) {
         // Check if the permssions as set in the complete mar file are correct.
         Assert.equal(testFile.permissions & 0xfff,
                      aTestFile.comparePerms & 0xfff,
@@ -3262,8 +3149,7 @@ function checkFilesAfterUpdateSuccess(aGetFileFunc, aStageDirExists = false,
     }
   });
 
-  checkFilesAfterUpdateCommon(aGetFileFunc, aStageDirExists,
-                              aToBeDeletedDirExists);
+  checkFilesAfterUpdateCommon(aStageDirExists, aToBeDeletedDirExists);
 }
 
 /**
@@ -3293,7 +3179,7 @@ function checkFilesAfterUpdateFailure(aGetFileFunc, aStageDirExists = false,
 
       // Skip these tests on Windows since chmod doesn't really set permissions
       // on Windows.
-      if (!IS_WIN && aTestFile.comparePerms) {
+      if (AppConstants.platform != "win" && aTestFile.comparePerms) {
         // Check the original permssions are retained on the file.
         Assert.equal(testFile.permissions & 0xfff,
                      aTestFile.comparePerms & 0xfff,
@@ -3350,16 +3236,13 @@ function checkFilesAfterUpdateFailure(aGetFileFunc, aStageDirExists = false,
     }
   });
 
-  checkFilesAfterUpdateCommon(aGetFileFunc, aStageDirExists,
-                              aToBeDeletedDirExists);
+  checkFilesAfterUpdateCommon(aStageDirExists, aToBeDeletedDirExists);
 }
 
 /**
  * Helper function for updater binary tests for verifying the state of common
  * files and directories after a successful or failed update.
  *
- * @param   aGetFileFunc
- *          the function used to get the files in the directory to be checked.
  * @param   aStageDirExists
  *          If true the staging directory will be tested for existence and if
  *          false the staging directory will be tested for non-existence.
@@ -3369,10 +3252,9 @@ function checkFilesAfterUpdateFailure(aGetFileFunc, aStageDirExists = false,
  *          non-existence. On all othere platforms it will be tested for
  *          non-existence.
  */
-function checkFilesAfterUpdateCommon(aGetFileFunc, aStageDirExists,
-                                     aToBeDeletedDirExists) {
+function checkFilesAfterUpdateCommon(aStageDirExists, aToBeDeletedDirExists) {
   debugDump("testing extra directories");
-  let stageDir = getStageDirFile(null, true);
+  let stageDir = getStageDirFile();
   if (aStageDirExists) {
     Assert.ok(stageDir.exists(),
               MSG_SHOULD_EXIST + getMsgPath(stageDir.path));
@@ -3381,8 +3263,9 @@ function checkFilesAfterUpdateCommon(aGetFileFunc, aStageDirExists,
               MSG_SHOULD_NOT_EXIST + getMsgPath(stageDir.path));
   }
 
-  let toBeDeletedDirExists = IS_WIN ? aToBeDeletedDirExists : false;
-  let toBeDeletedDir = getApplyDirFile(DIR_TOBEDELETED, true);
+  let toBeDeletedDirExists =
+    AppConstants.platform == "win" ? aToBeDeletedDirExists : false;
+  let toBeDeletedDir = getApplyDirFile(DIR_TOBEDELETED);
   if (toBeDeletedDirExists) {
     Assert.ok(toBeDeletedDir.exists(),
               MSG_SHOULD_EXIST + getMsgPath(toBeDeletedDir.path));
@@ -3391,7 +3274,7 @@ function checkFilesAfterUpdateCommon(aGetFileFunc, aStageDirExists,
               MSG_SHOULD_NOT_EXIST + getMsgPath(toBeDeletedDir.path));
   }
 
-  let updatingDir = getApplyDirFile("updating", true);
+  let updatingDir = getApplyDirFile("updating");
   Assert.ok(!updatingDir.exists(),
             MSG_SHOULD_NOT_EXIST + getMsgPath(updatingDir.path));
 
@@ -3404,13 +3287,12 @@ function checkFilesAfterUpdateCommon(aGetFileFunc, aStageDirExists,
 
   debugDump("testing backup files should not be left behind in the " +
             "application directory");
-  let applyToDir = getApplyDirFile(null, true);
+  let applyToDir = getApplyDirFile();
   checkFilesInDirRecursive(applyToDir, checkForBackupFiles);
 
   if (stageDir.exists()) {
     debugDump("testing backup files should not be left behind in the " +
               "staging directory");
-    applyToDir = getApplyDirFile(null, true);
     checkFilesInDirRecursive(stageDir, checkForBackupFiles);
   }
 }
@@ -3421,7 +3303,7 @@ function checkFilesAfterUpdateCommon(aGetFileFunc, aStageDirExists,
  * the callback application.
  */
 function checkCallbackLog() {
-  let appLaunchLog = getApplyDirFile(DIR_RESOURCES + gCallbackArgs[1], true);
+  let appLaunchLog = getApplyDirFile(DIR_RESOURCES + gCallbackArgs[1]);
   if (!appLaunchLog.exists()) {
     // Uses do_timeout instead of do_execute_soon to lessen log spew.
     do_timeout(FILE_IN_USE_TIMEOUT_MS, checkCallbackLog);
@@ -3478,7 +3360,7 @@ function checkCallbackLog() {
  *          The string to append to the post update test helper binary path.
  */
 function getPostUpdateFile(aSuffix) {
-  return getApplyDirFile(DIR_RESOURCES + gPostUpdateBinFile + aSuffix, true);
+  return getApplyDirFile(DIR_RESOURCES + gPostUpdateBinFile + aSuffix);
 }
 
 /**
@@ -3487,7 +3369,7 @@ function getPostUpdateFile(aSuffix) {
  */
 function checkPostUpdateAppLog() {
   // Only Mac OS X and Windows support post update.
-  if (IS_MACOSX || IS_WIN) {
+  if (AppConstants.platform == "macosx" || AppConstants.platform == "win") {
     gTimeoutRuns++;
     let postUpdateLog = getPostUpdateFile(".log");
     if (!postUpdateLog.exists()) {
@@ -3532,9 +3414,10 @@ function checkPostUpdateAppLog() {
  * @param   aFile
  *          An nsIFile for the file to be checked if it is in use.
  * @return  true if the file can't be deleted and false otherwise.
+ * @throws  If called from a platform other than Windows.
  */
 function isFileInUse(aFile) {
-  if (!IS_WIN) {
+  if (AppConstants.platform != "win") {
     do_throw("Windows only function called by a different platform!");
   }
 
@@ -3573,11 +3456,11 @@ function isFileInUse(aFile) {
  * then calls doTestFinish to end the test.
  */
 function waitForFilesInUse() {
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     let fileNames = [FILE_APP_BIN, FILE_UPDATER_BIN,
                      FILE_MAINTENANCE_SERVICE_INSTALLER_BIN];
     for (let i = 0; i < fileNames.length; ++i) {
-      let file = getApplyDirFile(fileNames[i], true);
+      let file = getApplyDirFile(fileNames[i]);
       if (isFileInUse(file)) {
         do_timeout(FILE_IN_USE_TIMEOUT_MS, waitForFilesInUse);
         return;
@@ -3641,7 +3524,6 @@ function checkFilesInDirRecursive(aDir, aCallback) {
  *          The callback to call if the update prompt component is called.
  */
 function overrideUpdatePrompt(aCallback) {
-  const {MockRegistrar} = ChromeUtils.import("resource://testing-common/MockRegistrar.jsm");
   MockRegistrar.register("@mozilla.org/updates/update-prompt;1", UpdatePrompt, [aCallback]);
 }
 
@@ -3671,11 +3553,7 @@ function UpdatePrompt(aCallback) {
 UpdatePrompt.prototype = {
   flags: Ci.nsIClassInfo.SINGLETON,
   getScriptableHelper: () => null,
-  getInterfaces(aCount) {
-    let interfaces = [Ci.nsISupports, Ci.nsIUpdatePrompt];
-    aCount.value = interfaces.length;
-    return interfaces;
-  },
+  interfaces: [Ci.nsISupports, Ci.nsIUpdatePrompt],
   QueryInterface: ChromeUtils.generateQI([Ci.nsIClassInfo, Ci.nsIUpdatePrompt]),
 };
 
@@ -3796,7 +3674,7 @@ function createAppInfo(aID, aName, aVersion, aPlatformVersion) {
   const XULAPPINFO_CONTRACTID = "@mozilla.org/xre/app-info;1";
   const XULAPPINFO_CID = Components.ID("{c763b610-9d49-455a-bbd2-ede71682a1ac}");
   let ifaces = [Ci.nsIXULAppInfo, Ci.nsIPlatformInfo, Ci.nsIXULRuntime];
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     ifaces.push(Ci.nsIWinAppHelper);
   }
   const XULAppInfo = {
@@ -3854,13 +3732,16 @@ function getProcessArgs(aExtraArgs) {
     aExtraArgs = [];
   }
 
-  let appBinPath = getApplyDirFile(DIR_MACOS + FILE_APP_BIN, false).path;
+  let appBin = getApplyDirFile(DIR_MACOS + FILE_APP_BIN);
+  Assert.ok(appBin.exists(),
+            MSG_SHOULD_EXIST + ", path: " + appBin.path);
+  let appBinPath = appBin.path;
   if (/ /.test(appBinPath)) {
     appBinPath = '"' + appBinPath + '"';
   }
 
   let args;
-  if (IS_UNIX) {
+  if (AppConstants.platform == "macosx" || AppConstants.platform == "linux") {
     let launchScript = getLaunchScript();
     // Precreate the script with executable permissions
     launchScript.create(Ci.nsIFile.NORMAL_FILE_TYPE, PERMS_DIRECTORY);
@@ -3923,11 +3804,11 @@ function adjustGeneralPaths() {
       aPersistent.value = false;
       switch (aProp) {
         case NS_GRE_DIR:
-          return getApplyDirFile(DIR_RESOURCES, true);
+          return getApplyDirFile(DIR_RESOURCES);
         case NS_GRE_BIN_DIR:
-          return getApplyDirFile(DIR_MACOS, true);
+          return getApplyDirFile(DIR_MACOS);
         case XRE_EXECUTABLE_FILE:
-          return getApplyDirFile(DIR_MACOS + FILE_APP_BIN, true);
+          return getApplyDirFile(DIR_MACOS + FILE_APP_BIN);
         case XRE_UPDATE_ROOT_DIR:
           return getMockUpdRootD();
         case XRE_OLD_UPDATE_ROOT_DIR:
@@ -3940,7 +3821,6 @@ function adjustGeneralPaths() {
   let ds = Services.dirsvc.QueryInterface(Ci.nsIDirectoryService);
   ds.QueryInterface(Ci.nsIProperties).undefine(NS_GRE_DIR);
   ds.QueryInterface(Ci.nsIProperties).undefine(NS_GRE_BIN_DIR);
-  ds.QueryInterface(Ci.nsIProperties).undefine(XRE_EXECUTABLE_FILE);
   ds.registerProvider(dirProvider);
   registerCleanupFunction(function AGP_cleanup() {
     debugDump("start - unregistering directory provider");
@@ -3990,12 +3870,6 @@ function adjustGeneralPaths() {
       } catch (e) {
         debugDump("call to CloseHandle failed. Exception: " + e);
       }
-    }
-
-    // Call end_test first before the directory provider is unregistered
-    if (typeof end_test == typeof Function) {
-      debugDump("calling end_test");
-      end_test();
     }
 
     ds.unregisterProvider(dirProvider);
@@ -4055,7 +3929,7 @@ function runUpdateUsingApp(aExpectedStatus) {
   function afterAppExits() {
     gTimeoutRuns++;
 
-    if (IS_WIN) {
+    if (AppConstants.platform == "win") {
       waitForApplicationStop(FILE_UPDATER_BIN);
     }
 
@@ -4086,7 +3960,7 @@ function runUpdateUsingApp(aExpectedStatus) {
         aExpectedStatus != STATE_APPLIED &&
         aExpectedStatus != STATE_APPLIED_SVC) {
       // Don't proceed until the update log has been created.
-      let log = getUpdateLog(FILE_UPDATE_LOG);
+      let log = getUpdateDirFile(FILE_UPDATE_LOG);
       if (!log.exists()) {
         if (gTimeoutRuns > MAX_TIMEOUT_RUNS) {
           do_throw("Exceeded MAX_TIMEOUT_RUNS while waiting for the update " +
@@ -4248,7 +4122,7 @@ IncrementalDownload.prototype = {
  * launched.
  */
 function setEnvironment() {
-  if (IS_WIN) {
+  if (AppConstants.platform == "win") {
     // The tests use nsIProcess to launch the updater and it is simpler to just
     // set an environment variable and have the test updater set the current
     // working directory than it is to set the current working directory in the
@@ -4263,49 +4137,40 @@ function setEnvironment() {
 
   gShouldResetEnv = true;
 
-  if (IS_WIN && !gEnv.exists("XRE_NO_WINDOWS_CRASH_DIALOG")) {
+  if (AppConstants.platform == "win" && !gEnv.exists("XRE_NO_WINDOWS_CRASH_DIALOG")) {
     gAddedEnvXRENoWindowsCrashDialog = true;
     debugDump("setting the XRE_NO_WINDOWS_CRASH_DIALOG environment " +
               "variable to 1... previously it didn't exist");
     gEnv.set("XRE_NO_WINDOWS_CRASH_DIALOG", "1");
   }
 
-  if (IS_UNIX) {
+  if (AppConstants.platform == "macosx") {
+    let shouldSetEnv = true;
     let appGreBinDir = gGREBinDirOrig.clone();
     let envGreBinDir = Cc["@mozilla.org/file/local;1"].
                        createInstance(Ci.nsIFile);
-    let shouldSetEnv = true;
-    if (IS_MACOSX) {
-      if (gEnv.exists("DYLD_LIBRARY_PATH")) {
-        gEnvDyldLibraryPath = gEnv.get("DYLD_LIBRARY_PATH");
-        envGreBinDir.initWithPath(gEnvDyldLibraryPath);
-        if (envGreBinDir.path == appGreBinDir.path) {
-          gEnvDyldLibraryPath = null;
-          shouldSetEnv = false;
-        }
-      }
-
-      if (shouldSetEnv) {
-        debugDump("setting DYLD_LIBRARY_PATH environment variable value to " +
-                  appGreBinDir.path);
-        gEnv.set("DYLD_LIBRARY_PATH", appGreBinDir.path);
-      }
-    } else {
-      if (gEnv.exists("LD_LIBRARY_PATH")) {
-        gEnvLdLibraryPath = gEnv.get("LD_LIBRARY_PATH");
-        envGreBinDir.initWithPath(gEnvLdLibraryPath);
-        if (envGreBinDir.path == appGreBinDir.path) {
-          gEnvLdLibraryPath = null;
-          shouldSetEnv = false;
-        }
-      }
-
-      if (shouldSetEnv) {
-        debugDump("setting LD_LIBRARY_PATH environment variable value to " +
-                  appGreBinDir.path);
-        gEnv.set("LD_LIBRARY_PATH", appGreBinDir.path);
+    if (gEnv.exists("DYLD_LIBRARY_PATH")) {
+      gEnvDyldLibraryPath = gEnv.get("DYLD_LIBRARY_PATH");
+      envGreBinDir.initWithPath(gEnvDyldLibraryPath);
+      if (envGreBinDir.path == appGreBinDir.path) {
+        gEnvDyldLibraryPath = null;
+        shouldSetEnv = false;
       }
     }
+
+    if (shouldSetEnv) {
+      debugDump("setting DYLD_LIBRARY_PATH environment variable value to " +
+                appGreBinDir.path);
+      gEnv.set("DYLD_LIBRARY_PATH", appGreBinDir.path);
+    }
+  }
+
+  if (AppConstants.platform == "linux" && gEnv.exists("LD_LIBRARY_PATH")) {
+    gEnvLdLibraryPath = gEnv.get("LD_LIBRARY_PATH");
+    debugDump("removing LD_LIBRARY_PATH environment variable");
+    // By removing the LD_LIBRARY_PATH environment variable this will test
+    // that setting the rpath for the updater is working properly.
+    gEnv.set("LD_LIBRARY_PATH", "");
   }
 
   if (gEnv.exists("XPCOM_MEM_LEAK_LOG")) {
@@ -4359,27 +4224,24 @@ function resetEnvironment() {
     gEnv.set("XPCOM_DEBUG_BREAK", "");
   }
 
-  if (IS_UNIX) {
-    if (IS_MACOSX) {
-      if (gEnvDyldLibraryPath) {
-        debugDump("setting DYLD_LIBRARY_PATH environment variable value " +
-                  "back to " + gEnvDyldLibraryPath);
-        gEnv.set("DYLD_LIBRARY_PATH", gEnvDyldLibraryPath);
-      } else if (gEnvDyldLibraryPath !== null) {
-        debugDump("removing DYLD_LIBRARY_PATH environment variable");
-        gEnv.set("DYLD_LIBRARY_PATH", "");
-      }
-    } else if (gEnvLdLibraryPath) {
-      debugDump("setting LD_LIBRARY_PATH environment variable value back " +
-                "to " + gEnvLdLibraryPath);
-      gEnv.set("LD_LIBRARY_PATH", gEnvLdLibraryPath);
-    } else if (gEnvLdLibraryPath !== null) {
-      debugDump("removing LD_LIBRARY_PATH environment variable");
-      gEnv.set("LD_LIBRARY_PATH", "");
+  if (AppConstants.platform == "macosx") {
+    if (gEnvDyldLibraryPath) {
+      debugDump("setting DYLD_LIBRARY_PATH environment variable value " +
+                "back to " + gEnvDyldLibraryPath);
+      gEnv.set("DYLD_LIBRARY_PATH", gEnvDyldLibraryPath);
+    } else if (gEnvDyldLibraryPath !== null) {
+      debugDump("removing DYLD_LIBRARY_PATH environment variable");
+      gEnv.set("DYLD_LIBRARY_PATH", "");
     }
   }
 
-  if (IS_WIN && gAddedEnvXRENoWindowsCrashDialog) {
+  if (AppConstants.platform == "linux" && gEnvLdLibraryPath) {
+    debugDump("setting LD_LIBRARY_PATH environment variable value back " +
+              "to " + gEnvLdLibraryPath);
+    gEnv.set("LD_LIBRARY_PATH", gEnvLdLibraryPath);
+  }
+
+  if (AppConstants.platform == "win" && gAddedEnvXRENoWindowsCrashDialog) {
     debugDump("removing the XRE_NO_WINDOWS_CRASH_DIALOG environment " +
               "variable");
     gEnv.set("XRE_NO_WINDOWS_CRASH_DIALOG", "");

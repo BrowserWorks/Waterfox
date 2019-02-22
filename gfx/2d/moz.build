@@ -222,8 +222,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'QuartzSupport.mm',
     ]
 
-if CONFIG['CC_TYPE'] in ('clang', 'gcc') and (CONFIG['CPU_ARCH'] == 'aarch64' or CONFIG['BUILD_ARM_NEON']):
-    # MSVC cannot use arm_neon.h.
+if CONFIG['CC_TYPE'] in ('clang', 'clang-cl', 'gcc') and (CONFIG['CPU_ARCH'] == 'aarch64' or CONFIG['BUILD_ARM_NEON']):
     SOURCES += [
         'BlurNEON.cpp',
         'LuminanceNEON.cpp',
@@ -261,6 +260,3 @@ if CONFIG['MOZ_ENABLE_SKIA_GPU']:
     LOCAL_INCLUDES += [
         '/gfx/skia/skia/src/gpu',
     ]
-
-if CONFIG['CC_TYPE'] == 'clang-cl':
-    AllowCompilerWarnings()  # workaround for bug 1090497

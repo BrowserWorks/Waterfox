@@ -500,6 +500,8 @@ class PresShell final : public nsIPresShell,
     EventHandler() = delete;
     EventHandler(const EventHandler& aOther) = delete;
     explicit EventHandler(PresShell& aPresShell) : mPresShell(aPresShell) {}
+    explicit EventHandler(RefPtr<PresShell>&& aPresShell)
+        : mPresShell(aPresShell.forget()) {}
 
     /**
      * HandleEvent() may dispatch aGUIEvent.  This may redirect the event to
@@ -580,6 +582,93 @@ class PresShell final : public nsIPresShell,
         nsIPresShell* aPresShell);
     static already_AddRefed<nsIURI> GetDocumentURIToCompareWithBlacklist(
         PresShell& aPresShell);
+
+    /**
+     * EventTargetData struct stores a set of a PresShell (event handler),
+     * a frame (to handle the event) and a content (event target for the frame).
+     */
+    struct MOZ_STACK_CLASS EventTargetData final {
+      EventTargetData() = delete;
+      EventTargetData(const EventTargetData& aOther) = delete;
+      EventTargetData(PresShell* aPresShell, nsIFrame* aFrameToHandleEvent)
+          : mPresShell(aPresShell), mFrame(aFrameToHandleEvent) {}
+
+      void SetPresShellAndFrame(PresShell* aPresShell,
+                                nsIFrame* aFrameToHandleEvent) {
+        mPresShell = aPresShell;
+        mFrame = aFrameToHandleEvent;
+        mContent = nullptr;
+      }
+      void SetFrameAndComputePresShell(nsIFrame* aFrameToHandleEvent);
+      void SetFrameAndComputePresShellAndContent(nsIFrame* aFrameToHandleEvent,
+                                                 WidgetGUIEvent* aGUIEvent);
+      void SetContentForEventFromFrame(WidgetGUIEvent* aGUIEvent);
+
+      nsPresContext* GetPresContext() const {
+        return mPresShell ? mPresShell->GetPresContext() : nullptr;
+      };
+      EventStateManager* GetEventStateManager() const {
+        nsPresContext* presContext = GetPresContext();
+        return presContext ? presContext->EventStateManager() : nullptr;
+      }
+      Document* GetDocument() const {
+        return mPresShell ? mPresShell->GetDocument() : nullptr;
+      }
+      nsIContent* GetFrameContent() const;
+
+      /**
+       * MaybeRetargetToActiveDocument() tries retarget aGUIEvent into
+       * active document if there is.  Note that this does not support to
+       * retarget mContent.  Make sure it is nullptr before calling this.
+       *
+       * @param aGUIEvent       The handling event.
+       * @return                true if retargetted.
+       */
+      bool MaybeRetargetToActiveDocument(WidgetGUIEvent* aGUIEvent);
+
+      /**
+       * ComputeElementFromFrame() computes mContent for aGUIEvent.  If
+       * mContent is set by this method, mContent is always nullptr or an
+       * Element.
+       *
+       * @param aGUIEvent       The handling event.
+       * @return                true if caller can keep handling the event.
+       *                        Otherwise, false.
+       *                        Note that even if this returns true, mContent
+       *                        may be nullptr.
+       */
+      bool ComputeElementFromFrame(WidgetGUIEvent* aGUIEvent);
+
+      RefPtr<PresShell> mPresShell;
+      nsIFrame* mFrame;
+      nsCOMPtr<nsIContent> mContent;
+    };
+
+    /**
+     * MaybeFlushPendingNotifications() maybe flush pending notifications if
+     * aGUIEvent should be handled with the latest layout.
+     *
+     * @param aGUIEvent                 The handling event.
+     * @return                          true if this actually flushes pending
+     *                                  layout and that has caused changing the
+     *                                  layout.
+     */
+    MOZ_CAN_RUN_SCRIPT
+    bool MaybeFlushPendingNotifications(WidgetGUIEvent* aGUIEvent);
+
+    /**
+     * GetFrameToHandleNonTouchEvent() returns a frame to handle the event.
+     * This may flush pending layout if the target is in child PresShell.
+     *
+     * @param aRootFrameToHandleEvent   The root frame to handle the event.
+     * @param aGUIEvent                 The handling event.
+     * @return                          The frame which should handle the
+     *                                  event.  nullptr if the caller should
+     *                                  stop handling the event.
+     */
+    MOZ_CAN_RUN_SCRIPT
+    nsIFrame* GetFrameToHandleNonTouchEvent(nsIFrame* aRootFrameToHandleEvent,
+                                            WidgetGUIEvent* aGUIEvent);
 
     /**
      * MaybeDiscardEvent() checks whether it's safe to handle aGUIEvent right
@@ -684,6 +773,22 @@ class PresShell final : public nsIPresShell,
     bool MaybeDiscardOrDelayKeyboardEvent(WidgetGUIEvent* aGUIEvent);
 
     /**
+     * MaybeDiscardOrDelayMouseEvent() may discard or put aGUIEvent into the
+     * delayed event queue if it's a mouse event and if we should do so.
+     * If aGUIEvent is not a mouse event, this does nothing.
+     * If there is suppressed event listener like debugger of devtools, this
+     * notifies it of the event after discard or put it into the delayed
+     * event queue.
+     *
+     * @param aFrameToHandleEvent       The frame to handle aGUIEvent.
+     * @param aGUIEvent                 The handling event.
+     * @return                          true if this method discard the event
+     *                                  or put it into the delayed event queue.
+     */
+    bool MaybeDiscardOrDelayMouseEvent(nsIFrame* aFrameToHandleEvent,
+                                       WidgetGUIEvent* aGUIEvent);
+
+    /**
      * MaybeFlushThrottledStyles() tries to flush pending animation.  If it's
      * flushed and then aFrameForPresShell is destroyed, returns new frame
      * which contains mPresShell.
@@ -697,6 +802,97 @@ class PresShell final : public nsIPresShell,
      */
     MOZ_CAN_RUN_SCRIPT
     nsIFrame* MaybeFlushThrottledStyles(nsIFrame* aFrameForPresShell);
+
+    /**
+     * ComputeRootFrameToHandleEvent() returns root frame to handle the event.
+     * For example, if there is a popup, this returns the popup frame.
+     * If there is capturing content and it's in a scrolled frame, returns
+     * the scrolled frame.
+     *
+     * @param aFrameForPresShell                The frame for mPresShell.
+     * @param aGUIEvent                         The handling event.
+     * @param aCapturingContent                 Capturing content if there is.
+     *                                          nullptr, otherwise.
+     * @param aIsCapturingContentIgnored        [out] true if aCapturingContent
+     *                                          is not nullptr but it should be
+     *                                          ignored to handle the event.
+     * @param aIsCaptureRetargeted              [out] true if aCapturingContent
+     *                                          is not nullptr but it's
+     *                                          retargeted.
+     * @return                                  Root frame to handle the event.
+     */
+    nsIFrame* ComputeRootFrameToHandleEvent(nsIFrame* aFrameForPresShell,
+                                            WidgetGUIEvent* aGUIEvent,
+                                            nsIContent* aCapturingContent,
+                                            bool* aIsCapturingContentIgnored,
+                                            bool* aIsCaptureRetargeted);
+
+    /**
+     * ComputeRootFrameToHandleEventWithPopup() returns popup frame if there
+     * is a popup and we should handle the event in it.  Otherwise, returns
+     * aRootFrameToHandleEvent.
+     *
+     * @param aRootFrameToHandleEvent           Candidate root frame to handle
+     *                                          the event.
+     * @param aGUIEvent                         The handling event.
+     * @param aCapturingContent                 Capturing content if there is.
+     *                                          nullptr, otherwise.
+     * @param aIsCapturingContentIgnored        [out] true if aCapturingContent
+     *                                          is not nullptr but it should be
+     *                                          ignored to handle the event.
+     * @return                                  A popup frame if there is a
+     *                                          popup and we should handle the
+     *                                          event in it.  Otherwise,
+     *                                          aRootFrameToHandleEvent.
+     *                                          I.e., never returns nullptr.
+     */
+    nsIFrame* ComputeRootFrameToHandleEventWithPopup(
+        nsIFrame* aRootFrameToHandleEvent, WidgetGUIEvent* aGUIEvent,
+        nsIContent* aCapturingContent, bool* aIsCapturingContentIgnored);
+
+    /**
+     * ComputeRootFrameToHandleEventWithCapturingContent() returns root frame
+     * to handle event for the capturing content, or aRootFrameToHandleEvent
+     * if it should be ignored.
+     *
+     * @param aRootFrameToHandleEvent           Candidate root frame to handle
+     *                                          the event.
+     * @param aCapturingContent                 Capturing content.  nullptr is
+     *                                          not allowed.
+     * @param aIsCapturingContentIgnored        [out] true if aCapturingContent
+     *                                          is not nullptr but it should be
+     *                                          ignored to handle the event.
+     * @param aIsCaptureRetargeted              [out] true if aCapturingContent
+     *                                          is not nullptr but it's
+     *                                          retargeted.
+     * @return                                  A popup frame if there is a
+     *                                          popup and we should handle the
+     *                                          event in it.  Otherwise,
+     *                                          aRootFrameToHandleEvent.
+     *                                          I.e., never returns nullptr.
+     */
+    nsIFrame* ComputeRootFrameToHandleEventWithCapturingContent(
+        nsIFrame* aRootFrameToHandleEvent, nsIContent* aCapturingContent,
+        bool* aIsCapturingContentIgnored, bool* aIsCaptureRetargeted);
+
+    /**
+     * HandleEventWithPointerCapturingContentWithoutItsFrame() handles
+     * aGUIEvent with aPointerCapturingContent when it does not have primary
+     * frame.
+     *
+     * @param aFrameForPresShell        The frame for mPresShell.  Typically,
+     *                                  aFrame of HandleEvent().
+     * @param aGUIEvent                 The handling event.
+     * @param aPointerCapturingContent  Current pointer capturing content.
+     *                                  Must not be nullptr.
+     * @param aEventStatus              [in/out] The event status of aGUIEvent.
+     * @return                          Basically, result of
+     *                                  HandeEventWithTraget().
+     */
+    MOZ_CAN_RUN_SCRIPT
+    nsresult HandleEventWithPointerCapturingContentWithoutItsFrame(
+        nsIFrame* aFrameForPresShell, WidgetGUIEvent* aGUIEvent,
+        nsIContent* aPointerCapturingContent, nsEventStatus* aEventStatus);
 
     /**
      * XXX Needs better name.

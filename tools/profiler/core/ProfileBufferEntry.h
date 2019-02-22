@@ -10,6 +10,7 @@
 #include "ProfileJSONWriter.h"
 
 #include "gtest/MozGtestFriend.h"
+#include "js/ProfilingCategory.h"
 #include "js/ProfilingFrameIterator.h"
 #include "js/TrackedOptimizationInfo.h"
 #include "mozilla/HashFunctions.h"
@@ -27,7 +28,7 @@ class ProfilerMarker;
 // NOTE!  If you add entries, you need to verify if they need to be added to the
 // switch statement in DuplicateLastSample!
 #define FOR_EACH_PROFILE_BUFFER_ENTRY_KIND(MACRO)                   \
-  MACRO(Category, int)                                              \
+  MACRO(CategoryPair, int)                                          \
   MACRO(CollectionStart, double)                                    \
   MACRO(CollectionEnd, double)                                      \
   MACRO(Label, const char*)                                         \
@@ -51,11 +52,6 @@ class ProfilerMarker;
   MACRO(Count, int64_t)                                             \
   MACRO(ProfilerOverheadTime, double)                               \
   MACRO(ProfilerOverheadDuration, double)
-
-// NB: Packing this structure has been shown to cause SIGBUS issues on ARM.
-#if !defined(GP_ARCH_arm)
-#  pragma pack(push, 1)
-#endif
 
 class ProfileBufferEntry {
  public:
@@ -108,23 +104,20 @@ class ProfileBufferEntry {
   friend class ProfileBuffer;
 
   Kind mKind;
-  union {
-    const char* mString;
-    char mChars[kNumChars];
-    void* mPtr;
-    ProfilerMarker* mMarker;
-    double mDouble;
-    int mInt;
-    int64_t mInt64;
-    uint64_t mUint64;
-  } u;
+  uint8_t mStorage[kNumChars];
+
+  const char* GetString() const;
+  void* GetPtr() const;
+  ProfilerMarker* GetMarker() const;
+  double GetDouble() const;
+  int GetInt() const;
+  int64_t GetInt64() const;
+  uint64_t GetUint64() const;
+  void CopyCharsInto(char (&aOutArray)[kNumChars]) const;
 };
 
-#if !defined(GP_ARCH_arm)
 // Packed layout: 1 byte for the tag + 8 bytes for the value.
 static_assert(sizeof(ProfileBufferEntry) == 9, "bad ProfileBufferEntry size");
-#  pragma pack(pop)
-#endif
 
 class UniqueJSONStrings {
  public:
@@ -232,9 +225,9 @@ class UniqueStacks {
     FrameKey(nsCString&& aLocation, bool aRelevantForJS,
              const mozilla::Maybe<unsigned>& aLine,
              const mozilla::Maybe<unsigned>& aColumn,
-             const mozilla::Maybe<unsigned>& aCategory)
+             const mozilla::Maybe<JS::ProfilingCategoryPair>& aCategoryPair)
         : mData(NormalFrameData{aLocation, aRelevantForJS, aLine, aColumn,
-                                aCategory}) {}
+                                aCategoryPair}) {}
 
     FrameKey(void* aJITAddress, uint32_t aJITDepth, uint32_t aRangeIndex)
         : mData(JITFrameData{aJITAddress, aJITDepth, aRangeIndex}) {}
@@ -253,7 +246,7 @@ class UniqueStacks {
       bool mRelevantForJS;
       mozilla::Maybe<unsigned> mLine;
       mozilla::Maybe<unsigned> mColumn;
-      mozilla::Maybe<unsigned> mCategory;
+      mozilla::Maybe<JS::ProfilingCategoryPair> mCategoryPair;
     };
     struct JITFrameData {
       bool operator==(const JITFrameData& aOther) const;

@@ -775,9 +775,7 @@ bool ToDoublePolicy::staticAdjustInputs(TempAllocator& alloc,
     case MIRType::Object:
     case MIRType::String:
     case MIRType::Symbol:
-#ifdef ENABLE_BIGINT
     case MIRType::BigInt:
-#endif
       // Objects might be effectful. Symbols and BigInts give TypeError.
       break;
     default:
@@ -830,9 +828,7 @@ bool ToInt32Policy::staticAdjustInputs(TempAllocator& alloc,
     case MIRType::Object:
     case MIRType::String:
     case MIRType::Symbol:
-#ifdef ENABLE_BIGINT
     case MIRType::BigInt:
-#endif
       // Objects might be effectful. Symbols and BigInts give TypeError.
       break;
     default:
@@ -850,7 +846,7 @@ bool ToStringPolicy::staticAdjustInputs(TempAllocator& alloc,
 
   MIRType type = ins->getOperand(0)->type();
   if (type == MIRType::Object || type == MIRType::Symbol ||
-      IF_BIGINT(type == MIRType::BigInt, false)) {
+      type == MIRType::BigInt) {
     ins->replaceOperand(0, BoxAt(alloc, ins, ins->getOperand(0)));
     return true;
   }
@@ -969,9 +965,7 @@ bool StoreUnboxedScalarPolicy::adjustValueInput(TempAllocator& alloc,
     case MIRType::Object:
     case MIRType::String:
     case MIRType::Symbol:
-#ifdef ENABLE_BIGINT
     case MIRType::BigInt:
-#endif
       value = BoxAt(alloc, ins, value);
       break;
     default:
@@ -1224,6 +1218,7 @@ bool FilterTypeSetPolicy::adjustInputs(TempAllocator& alloc,
 
 // Lists of all TypePolicy specializations which are used by MIR Instructions.
 #define TYPE_POLICY_LIST(_)         \
+  _(AllDoublePolicy)                \
   _(ArithPolicy)                    \
   _(BitwisePolicy)                  \
   _(BoxInputsPolicy)                \
@@ -1241,7 +1236,6 @@ bool FilterTypeSetPolicy::adjustInputs(TempAllocator& alloc,
   _(StoreUnboxedObjectOrNullPolicy) \
   _(StoreUnboxedStringPolicy)       \
   _(TestPolicy)                     \
-  _(AllDoublePolicy)                \
   _(ToDoublePolicy)                 \
   _(ToInt32Policy)                  \
   _(ToStringPolicy)                 \

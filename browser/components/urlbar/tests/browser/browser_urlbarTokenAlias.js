@@ -19,6 +19,14 @@ add_task(async function init() {
     gURLBar.handleRevert();
     await UrlbarTestUtils.promisePopupClose(window, () => gURLBar.blur());
   });
+
+  // Search results aren't shown in quantumbar unless search suggestions are
+  // enabled.
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.urlbar.suggest.searches", true],
+    ],
+  });
 });
 
 
@@ -107,9 +115,9 @@ add_task(async function inputDoesntMatchHeuristicResult() {
     () => EventUtils.synthesizeKey("KEY_Escape"));
 
   // Manually set the urlbar value to a string that contains the alias at the
-  // beginning but is not the same as the search string.
-  let value = `${ALIAS} xxx`;
-  gURLBar.value = `${ALIAS} xxx`;
+  // beginning but is not the alias.
+  let value = `${ALIAS}xxx`;
+  gURLBar.value = `${ALIAS}xxx`;
 
   // The alias substring should not be highlighted.
   Assert.equal(gURLBar.value, value);
@@ -144,10 +152,6 @@ add_task(async function inputDoesntMatchHeuristicResult() {
 // Selecting a non-heuristic (non-first) search engine result with an alias and
 // empty query should put the alias in the urlbar and highlight it.
 add_task(async function nonHeuristicAliases() {
-  // TODO Bug 1524714 - This currently isn't working correctly in QuantumBar.
-  if (UrlbarPrefs.get("quantumbar")) {
-    return;
-  }
   // Get the list of token alias engines (those with aliases that start with
   // "@").
   let tokenEngines = [];
@@ -209,22 +213,17 @@ add_task(async function nonTokenAlias() {
 
 // Clicking on an @ alias in the popup should fill it in the urlbar input.
 add_task(async function clickAndFillAlias() {
-  // TODO Bug 1524714 - This currently isn't working correctly in QuantumBar.
-  if (UrlbarPrefs.get("quantumbar")) {
-    return;
-  }
   // Do a search for "@" to show all the @ aliases.
   gURLBar.search("@");
   await promiseSearchComplete();
 
-  // Find our test engine in the results.  It's probably last, but for test
+  // Find our test engine in the results.  It's probably last, but for
   // robustness don't assume it is.
   let testEngineItem;
   for (let i = 0; !testEngineItem; i++) {
-    let item = await waitForAutocompleteResultAt(i);
-    let action = PlacesUtils.parseActionUrl(item.getAttribute("url"));
-    if (action && action.params.alias == ALIAS) {
-      testEngineItem = item;
+    let details = await UrlbarTestUtils.getDetailsOfResultAt(window, i);
+    if (details.searchParams && details.searchParams.keyword == ALIAS) {
+      testEngineItem = await waitForAutocompleteResultAt(i);
     }
   }
 
@@ -233,10 +232,9 @@ add_task(async function clickAndFillAlias() {
     EventUtils.synthesizeMouseAtCenter(testEngineItem, {});
   });
 
-  // The popup will close and then open again with the new search string, which
-  // should be the test alias.
+  // A new search will start and its result should be the alias.
   await promiseSearchComplete();
-  await promisePopupShown(gURLBar.popup);
+  await waitForAutocompleteResultAt(0);
   await assertAlias(true);
 
   // The urlbar input value should be the alias followed by a space so that it's
@@ -331,10 +329,6 @@ async function assertFirstResultIsAlias(isAlias, expectedAlias) {
 }
 
 function assertHighlighted(highlighted, expectedAlias) {
-  // TODO Bug 1499648 - These tests don't currently work in QuantumBar.
-  if (UrlbarPrefs.get("quantumbar")) {
-    return;
-  }
   let selection = gURLBar.editor.selectionController.getSelection(
     Ci.nsISelectionController.SELECTION_FIND
   );

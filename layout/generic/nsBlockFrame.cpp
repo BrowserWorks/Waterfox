@@ -78,7 +78,7 @@ static void MarkAllDescendantLinesDirty(nsBlockFrame* aBlock) {
   while (line != endLine) {
     if (line->IsBlock()) {
       nsIFrame* f = line->mFirstChild;
-      nsBlockFrame* bf = nsLayoutUtils::GetAsBlock(f);
+      nsBlockFrame* bf = do_QueryFrame(f);
       if (bf) {
         MarkAllDescendantLinesDirty(bf);
       }
@@ -91,8 +91,7 @@ static void MarkAllDescendantLinesDirty(nsBlockFrame* aBlock) {
 static void MarkSameFloatManagerLinesDirty(nsBlockFrame* aBlock) {
   nsBlockFrame* blockWithFloatMgr = aBlock;
   while (!(blockWithFloatMgr->GetStateBits() & NS_BLOCK_FLOAT_MGR)) {
-    nsBlockFrame* bf =
-        nsLayoutUtils::GetAsBlock(blockWithFloatMgr->GetParent());
+    nsBlockFrame* bf = do_QueryFrame(blockWithFloatMgr->GetParent());
     if (!bf) {
       break;
     }
@@ -110,7 +109,7 @@ static void MarkSameFloatManagerLinesDirty(nsBlockFrame* aBlock) {
  * Returns true if aFrame is a block that has one or more float children.
  */
 static bool BlockHasAnyFloats(nsIFrame* aFrame) {
-  nsBlockFrame* block = nsLayoutUtils::GetAsBlock(aFrame);
+  nsBlockFrame* block = do_QueryFrame(aFrame);
   if (!block) return false;
   if (block->GetChildList(nsIFrame::kFloatList).FirstChild()) return true;
 
@@ -271,11 +270,6 @@ static void RecordReflowStatus(bool aChildIsBlock,
   }
 }
 #endif
-
-static nscoord ResolveTextIndent(const nsStyleCoord& aStyle,
-                                 nscoord aPercentageBasis) {
-  return nsLayoutUtils::ResolveToLength<false>(aStyle, aPercentageBasis);
-}
 
 NS_DECLARE_FRAME_PROPERTY_WITH_DTOR_NEVER_CALLED(OverflowLinesProperty,
                                                  nsBlockFrame::FrameLines)
@@ -769,7 +763,7 @@ void nsBlockFrame::CheckIntrinsicCacheAgainstShrinkWrapState() {
       } else {
         if (!curFrame->GetPrevContinuation() &&
             line == curFrame->LinesBegin()) {
-          data.mCurrentLine += ::ResolveTextIndent(StyleText()->mTextIndent, 0);
+          data.mCurrentLine += StyleText()->mTextIndent.Resolve(0);
         }
         data.mLine = &line;
         data.SetLineContainer(curFrame);
@@ -856,7 +850,7 @@ void nsBlockFrame::CheckIntrinsicCacheAgainstShrinkWrapState() {
       } else {
         if (!curFrame->GetPrevContinuation() &&
             line == curFrame->LinesBegin()) {
-          nscoord indent = ::ResolveTextIndent(StyleText()->mTextIndent, 0);
+          nscoord indent = StyleText()->mTextIndent.Resolve(0);
           data.mCurrentLine += indent;
           // XXXmats should the test below be indent > 0?
           if (indent != nscoord(0)) {
@@ -922,7 +916,7 @@ nsRect nsBlockFrame::ComputeTightBounds(DrawTarget* aDrawTarget) const {
       } else {
         if (!curFrame->GetPrevContinuation() &&
             line == curFrame->LinesBegin()) {
-          data.mCurrentLine += ::ResolveTextIndent(StyleText()->mTextIndent, 0);
+          data.mCurrentLine += StyleText()->mTextIndent.Resolve(0);
         }
         data.mLine = &line;
         data.SetLineContainer(curFrame);
@@ -1381,6 +1375,20 @@ void nsBlockFrame::Reflow(nsPresContext* aPresContext, ReflowOutput& aMetrics,
         absoluteContainer->MarkAllFramesDirty();
       } else {
         absoluteContainer->MarkSizeDependentFramesDirty();
+      }
+      if (haveInterrupt) {
+        // We're not going to reflow absolute frames; make sure to account for
+        // their existing overflow areas, which is usually a side effect of this
+        // reflow.
+        //
+        // TODO(emilio): nsAbsoluteContainingBlock::Reflow already checks for
+        // interrupt, can we just rely on it and unconditionally take the else
+        // branch below? That's a bit more subtle / risky, since I don't see
+        // what would reflow them in that case if they depended on our size.
+        for (nsIFrame* kid = absoluteContainer->GetChildList().FirstChild();
+             kid; kid = kid->GetNextSibling()) {
+          ConsiderChildOverflow(aMetrics.mOverflowAreas, kid);
+        }
       }
     } else {
       LogicalSize containingBlockSize =
@@ -1905,10 +1913,11 @@ static inline bool IsAlignedLeft(uint8_t aAlignment, uint8_t aDirection,
 
 void nsBlockFrame::PrepareResizeReflow(BlockReflowInput& aState) {
   // See if we can try and avoid marking all the lines as dirty
+  // FIXME(emilio): This should be writing-mode aware, I guess.
   bool tryAndSkipLines =
       // The left content-edge must be a constant distance from the left
       // border-edge.
-      !StylePadding()->mPadding.GetLeft().HasPercent();
+      !StylePadding()->mPadding.Get(eSideLeft).HasPercent();
 
 #ifdef DEBUG
   if (gDisableResizeOpt) {
@@ -2745,7 +2754,7 @@ void nsBlockFrame::MarkLineDirtyForInterrupt(nsLineBox* aLine) {
     // Would need to sort out the exact business with mBlockDelta for that....
     // This marks way too much dirty.  If we ever make this better, revisit
     // which lines we mark dirty in the interrupt case in ReflowDirtyLines.
-    nsBlockFrame* bf = nsLayoutUtils::GetAsBlock(aLine->mFirstChild);
+    nsBlockFrame* bf = do_QueryFrame(aLine->mFirstChild);
     if (bf) {
       MarkAllDescendantLinesDirty(bf);
     }
@@ -3004,28 +3013,26 @@ nsresult nsBlockFrame::AttributeChanged(int32_t aNameSpaceID,
   return rv;
 }
 
-static inline bool IsNonAutoNonZeroBSize(const nsStyleCoord& aCoord) {
-  nsStyleUnit unit = aCoord.GetUnit();
-  if (unit == eStyleUnit_Auto ||
-      // The enumerated values were originally aimed at inline-size
-      // (or width, as it was before logicalization). For now, let them
-      // return false here, so we treat them like 'auto' pending a
-      // real implementation. (See bug 1126420.)
-      //
-      // FIXME (bug 567039, bug 527285)
-      // This isn't correct for the 'fill' value, which should more
-      // likely (but not necessarily, depending on the available space)
-      // be returning true.
-      unit == eStyleUnit_Enumerated) {
+static inline bool IsNonAutoNonZeroBSize(const StyleSize& aCoord) {
+  // The "extremum length" values (see ExtremumLength) were originally aimed at
+  // inline-size (or width, as it was before logicalization). For now, let them
+  // return false here, so we treat them like 'auto' pending a real
+  // implementation. (See bug 1126420.)
+  //
+  // FIXME (bug 567039, bug 527285)
+  // This isn't correct for the 'fill' value, which should more
+  // likely (but not necessarily, depending on the available space)
+  // be returning true.
+  if (aCoord.IsAuto() || aCoord.IsExtremumLength()) {
     return false;
   }
-  if (aCoord.IsCoordPercentCalcUnit()) {
+  if (aCoord.IsLengthPercentage()) {
     // If we evaluate the length/percent/calc at a percentage basis of
     // both nscoord_MAX and 0, and it's zero both ways, then it's a zero
     // length, percent, or combination thereof.  Test > 0 so we clamp
     // negative calc() results to 0.
-    return aCoord.ComputeCoordPercentCalc(nscoord_MAX) > 0 ||
-           aCoord.ComputeCoordPercentCalc(0) > 0;
+    return aCoord.AsLengthPercentage().Resolve(nscoord_MAX) > 0 ||
+           aCoord.AsLengthPercentage().Resolve(0) > 0;
   }
   MOZ_ASSERT(false, "unexpected unit for height or min-height");
   return true;
@@ -3622,8 +3629,7 @@ void nsBlockFrame::ReflowBlockFrame(BlockReflowInput& aState,
               // the line is already marked dirty, so just handle the
               // first case.
               if (!madeContinuation) {
-                nsBlockFrame* nifBlock =
-                    nsLayoutUtils::GetAsBlock(nextFrame->GetParent());
+                nsBlockFrame* nifBlock = do_QueryFrame(nextFrame->GetParent());
                 NS_ASSERTION(
                     nifBlock,
                     "A block's child's next in flow's parent must be a block!");
@@ -5439,12 +5445,12 @@ void nsBlockFrame::UpdateFirstLetterStyle(ServoRestyleState& aRestyleState) {
   if (inFlowFrame->GetStateBits() & NS_FRAME_OUT_OF_FLOW) {
     inFlowFrame = inFlowFrame->GetPlaceholderFrame();
   }
-  nsIFrame* styleParent = CorrectStyleParentFrame(
-      inFlowFrame->GetParent(), nsCSSPseudoElements::firstLetter());
+  nsIFrame* styleParent = CorrectStyleParentFrame(inFlowFrame->GetParent(),
+                                                  PseudoStyleType::firstLetter);
   ComputedStyle* parentStyle = styleParent->Style();
   RefPtr<ComputedStyle> firstLetterStyle =
       aRestyleState.StyleSet().ResolvePseudoElementStyle(
-          mContent->AsElement(), CSSPseudoElementType::firstLetter, parentStyle,
+          mContent->AsElement(), PseudoStyleType::firstLetter, parentStyle,
           nullptr);
   // Note that we don't need to worry about changehints for the continuation
   // styles: those will be handled by the styleParent already.
@@ -5874,8 +5880,7 @@ void nsBlockFrame::DoRemoveFrameInternal(nsIFrame* aDeletedFrame,
   if (!aDeletedFrame) {
     return;
   }
-  nsBlockFrame* nextBlock =
-      nsLayoutUtils::GetAsBlock(aDeletedFrame->GetParent());
+  nsBlockFrame* nextBlock = do_QueryFrame(aDeletedFrame->GetParent());
   NS_ASSERTION(nextBlock, "Our child's continuation's parent is not a block?");
   uint32_t flags = (aFlags & REMOVE_FIXED_CONTINUATIONS);
   nextBlock->DoRemoveFrameInternal(aDeletedFrame, flags, aPostDestroyData);
@@ -6298,7 +6303,7 @@ void nsBlockFrame::RecoverFloatsFor(nsIFrame* aFrame,
   MOZ_ASSERT(aFrame, "null frame");
 
   // Only blocks have floats
-  nsBlockFrame* block = nsLayoutUtils::GetAsBlock(aFrame);
+  nsBlockFrame* block = do_QueryFrame(aFrame);
   // Don't recover any state inside a block that has its own float manager
   // (we don't currently have any blocks like this, though, thanks to our
   // use of extra frames for 'overflow')
@@ -6755,17 +6760,17 @@ void nsBlockFrame::SetInitialChildList(ChildListID aListID,
     // the anonymous block in {ib} splits do NOT get first-letter frames.
     // Note that NS_BLOCK_HAS_FIRST_LETTER_STYLE gets set on all continuations
     // of the block.
-    nsAtom* pseudo = Style()->GetPseudo();
+    auto pseudo = Style()->GetPseudoType();
     bool haveFirstLetterStyle =
-        (!pseudo ||
-         (pseudo == nsCSSAnonBoxes::cellContent() &&
-          GetParent()->Style()->GetPseudo() == nullptr) ||
-         pseudo == nsCSSAnonBoxes::fieldsetContent() ||
-         pseudo == nsCSSAnonBoxes::buttonContent() ||
-         pseudo == nsCSSAnonBoxes::columnContent() ||
-         (pseudo == nsCSSAnonBoxes::scrolledContent() &&
+        (pseudo == PseudoStyleType::NotPseudo ||
+         (pseudo == PseudoStyleType::cellContent &&
+          !GetParent()->Style()->IsPseudoOrAnonBox()) ||
+         pseudo == PseudoStyleType::fieldsetContent ||
+         pseudo == PseudoStyleType::buttonContent ||
+         pseudo == PseudoStyleType::columnContent ||
+         (pseudo == PseudoStyleType::scrolledContent &&
           !GetParent()->IsListControlFrame()) ||
-         pseudo == nsCSSAnonBoxes::mozSVGText()) &&
+         pseudo == PseudoStyleType::mozSVGText) &&
         !IsComboboxControlFrame() && !IsFrameOfType(eMathML) &&
         RefPtr<ComputedStyle>(GetFirstLetterStyle(PresContext())) != nullptr;
     NS_ASSERTION(haveFirstLetterStyle ==
@@ -6790,9 +6795,9 @@ void nsBlockFrame::CreateBulletFrameForListItem() {
   CounterStyle* style =
       pc->CounterStyleManager()->ResolveCounterStyle(styleList->mCounterStyle);
 
-  CSSPseudoElementType pseudoType = style->IsBullet()
-                                        ? CSSPseudoElementType::mozListBullet
-                                        : CSSPseudoElementType::mozListNumber;
+  PseudoStyleType pseudoType = style->IsBullet()
+                                   ? PseudoStyleType::mozListBullet
+                                   : PseudoStyleType::mozListNumber;
 
   RefPtr<ComputedStyle> kidSC =
       ResolveBulletStyle(pseudoType, shell->StyleSet());
@@ -7067,7 +7072,7 @@ void nsBlockFrame::IsMarginRoot(bool* aBStartMarginRoot,
 /* static */
 bool nsBlockFrame::BlockNeedsFloatManager(nsIFrame* aBlock) {
   MOZ_ASSERT(aBlock, "Must have a frame");
-  NS_ASSERTION(nsLayoutUtils::GetAsBlock(aBlock), "aBlock must be a block");
+  NS_ASSERTION(aBlock->IsBlockFrameOrSubclass(), "aBlock must be a block");
 
   nsIFrame* parent = aBlock->GetParent();
   return (aBlock->GetStateBits() & NS_BLOCK_FLOAT_MGR) ||
@@ -7076,7 +7081,7 @@ bool nsBlockFrame::BlockNeedsFloatManager(nsIFrame* aBlock) {
 
 /* static */
 bool nsBlockFrame::BlockCanIntersectFloats(nsIFrame* aFrame) {
-  return aFrame->IsFrameOfType(nsIFrame::eBlockFrame) &&
+  return aFrame->IsBlockFrameOrSubclass() &&
          !aFrame->IsFrameOfType(nsIFrame::eReplaced) &&
          !(aFrame->GetStateBits() & NS_BLOCK_FLOAT_MGR);
 }
@@ -7126,7 +7131,7 @@ nsBlockFrame::ReplacedElementISizeToClear nsBlockFrame::ISizeToClearPastFloats(
 nsBlockFrame* nsBlockFrame::GetNearestAncestorBlock(nsIFrame* aCandidate) {
   nsBlockFrame* block = nullptr;
   while (aCandidate) {
-    block = nsLayoutUtils::GetAsBlock(aCandidate);
+    block = do_QueryFrame(aCandidate);
     if (block) {
       // yay, candidate is a block!
       return block;
@@ -7204,27 +7209,27 @@ void nsBlockFrame::UpdatePseudoElementStyles(ServoRestyleState& aRestyleState) {
   }
 
   if (nsBulletFrame* bullet = GetBullet()) {
-    CSSPseudoElementType type = bullet->Style()->GetPseudoType();
+    PseudoStyleType type = bullet->Style()->GetPseudoType();
     RefPtr<ComputedStyle> newBulletStyle =
         ResolveBulletStyle(type, &aRestyleState.StyleSet());
     UpdateStyleOfOwnedChildFrame(bullet, newBulletStyle, aRestyleState);
   }
 
   if (nsIFrame* firstLineFrame = GetFirstLineFrame()) {
-    nsIFrame* styleParent = CorrectStyleParentFrame(
-        firstLineFrame->GetParent(), nsCSSPseudoElements::firstLine());
+    nsIFrame* styleParent = CorrectStyleParentFrame(firstLineFrame->GetParent(),
+                                                    PseudoStyleType::firstLine);
 
     ComputedStyle* parentStyle = styleParent->Style();
     RefPtr<ComputedStyle> firstLineStyle =
         aRestyleState.StyleSet().ResolvePseudoElementStyle(
-            mContent->AsElement(), CSSPseudoElementType::firstLine, parentStyle,
+            mContent->AsElement(), PseudoStyleType::firstLine, parentStyle,
             nullptr);
 
     // FIXME(bz): Can we make first-line continuations be non-inheriting anon
     // boxes?
     RefPtr<ComputedStyle> continuationStyle =
         aRestyleState.StyleSet().ResolveInheritingAnonymousBoxStyle(
-            nsCSSAnonBoxes::mozLineFrame(), parentStyle);
+            PseudoStyleType::mozLineFrame, parentStyle);
 
     UpdateStyleOfOwnedChildFrame(firstLineFrame, firstLineStyle, aRestyleState,
                                  Some(continuationStyle.get()));
@@ -7240,11 +7245,8 @@ void nsBlockFrame::UpdatePseudoElementStyles(ServoRestyleState& aRestyleState) {
 }
 
 already_AddRefed<ComputedStyle> nsBlockFrame::ResolveBulletStyle(
-    CSSPseudoElementType aType, ServoStyleSet* aStyleSet) {
-  ComputedStyle* parentStyle =
-      CorrectStyleParentFrame(this, nsCSSPseudoElements::GetPseudoAtom(aType))
-          ->Style();
-
+    PseudoStyleType aType, ServoStyleSet* aStyleSet) {
+  ComputedStyle* parentStyle = CorrectStyleParentFrame(this, aType)->Style();
   return aStyleSet->ResolvePseudoElementStyle(mContent->AsElement(), aType,
                                               parentStyle, nullptr);
 }
@@ -7431,6 +7433,6 @@ int32_t nsBlockFrame::GetDepth() const {
 already_AddRefed<ComputedStyle> nsBlockFrame::GetFirstLetterStyle(
     nsPresContext* aPresContext) {
   return aPresContext->StyleSet()->ProbePseudoElementStyle(
-      *mContent->AsElement(), CSSPseudoElementType::firstLetter, Style());
+      *mContent->AsElement(), PseudoStyleType::firstLetter, Style());
 }
 #endif

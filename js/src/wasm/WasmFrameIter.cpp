@@ -1123,6 +1123,8 @@ ProfilingFrameIterator::ProfilingFrameIterator(const JitActivation& activation,
     return;
   }
 
+  MOZ_ASSERT(unwindState.codeRange);
+
   if (unwoundCaller) {
     callerFP_ = unwindState.fp;
     callerPC_ = unwindState.pc;
@@ -1131,7 +1133,7 @@ ProfilingFrameIterator::ProfilingFrameIterator(const JitActivation& activation,
     // and the jit entry don't set FP's low bit). We can't observe
     // transient tagged values of FP (during wasm::SetExitFP) here because
     // StartUnwinding would not have unwound then.
-    if (unwindState.codeRange && unwindState.codeRange->isFunction() &&
+    if (unwindState.codeRange->isFunction() &&
         (uintptr_t(state.fp) & ExitOrJitEntryFPTag)) {
       unwoundIonCallerFP_ = (uint8_t*)callerFP_;
     }
@@ -1331,10 +1333,10 @@ static const char* ThunkedNativeToDescription(SymbolicAddress func) {
       return "call to asm.js native f64 Math.pow";
     case SymbolicAddress::ATan2D:
       return "call to asm.js native f64 Math.atan2";
-    case SymbolicAddress::GrowMemory:
-      return "call to native grow_memory (in wasm)";
-    case SymbolicAddress::CurrentMemory:
-      return "call to native current_memory (in wasm)";
+    case SymbolicAddress::MemoryGrow:
+      return "call to native memory.grow (in wasm)";
+    case SymbolicAddress::MemorySize:
+      return "call to native memory.size (in wasm)";
     case SymbolicAddress::WaitI32:
       return "call to native i32.wait (in wasm)";
     case SymbolicAddress::WaitI64:
@@ -1369,6 +1371,8 @@ static const char* ThunkedNativeToDescription(SymbolicAddress func) {
       return "call to native table.size function";
     case SymbolicAddress::PostBarrier:
       return "call to native GC postbarrier (in wasm)";
+    case SymbolicAddress::PostBarrierFiltering:
+      return "call to native filtering GC postbarrier (in wasm)";
     case SymbolicAddress::StructNew:
       return "call to native struct.new (in wasm)";
     case SymbolicAddress::StructNarrow:

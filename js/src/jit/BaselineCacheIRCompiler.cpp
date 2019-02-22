@@ -67,7 +67,7 @@ class MOZ_RAII BaselineCacheIRCompiler : public CacheIRCompiler {
   bool makesGCCalls() const { return makesGCCalls_; }
 
  private:
-#define DEFINE_OP(op) MOZ_MUST_USE bool emit##op();
+#define DEFINE_OP(op, ...) MOZ_MUST_USE bool emit##op();
   CACHE_IR_OPS(DEFINE_OP)
 #undef DEFINE_OP
 
@@ -192,7 +192,7 @@ JitCode* BaselineCacheIRCompiler::compile() {
 
   do {
     switch (reader.readOp()) {
-#define DEFINE_OP(op)                \
+#define DEFINE_OP(op, ...)           \
   case CacheOp::op:                  \
     if (!emit##op()) return nullptr; \
     break;
@@ -202,7 +202,9 @@ JitCode* BaselineCacheIRCompiler::compile() {
       default:
         MOZ_CRASH("Invalid op");
     }
-
+#ifdef DEBUG
+    assertAllArgumentsConsumed();
+#endif
     allocator.nextOp();
   } while (reader.more());
 
@@ -1981,7 +1983,8 @@ bool BaselineCacheIRCompiler::emitGuardAndGetIterator() {
 
   // Load our PropertyIteratorObject* and its NativeIterator.
   masm.loadPtr(iterAddr, output);
-  masm.loadObjPrivate(output, JSObject::ITER_CLASS_NFIXED_SLOTS, niScratch);
+  masm.loadObjPrivate(output, PropertyIteratorObject::NUM_FIXED_SLOTS,
+                      niScratch);
 
   // Ensure the iterator is reusable: see NativeIterator::isReusable.
   masm.branchIfNativeIteratorNotReusable(niScratch, failure->label());

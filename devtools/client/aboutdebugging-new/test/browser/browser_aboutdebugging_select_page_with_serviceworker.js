@@ -3,9 +3,6 @@
 
 "use strict";
 
-/* import-globals-from helper-mocks.js */
-Services.scriptloader.loadSubScript(CHROME_URL_ROOT + "helper-mocks.js", this);
-
 const NETWORK_RUNTIME_HOST = "localhost:6080";
 const NETWORK_RUNTIME_APP_NAME = "TestNetworkApp";
 const WORKER_NAME = "testserviceworker";
@@ -18,7 +15,9 @@ const WORKER_NAME = "testserviceworker";
 add_task(async function() {
   const mocks = new Mocks();
 
-  const { document, tab, window } = await openAboutDebugging();
+  const { document, tab, window } =
+    await openAboutDebugging({ enableWorkerUpdates: true });
+  await selectThisFirefoxPage(document, window.AboutDebugging.store);
 
   info("Prepare Network client mock");
   const networkClient = mocks.createNetworkRuntime(NETWORK_RUNTIME_HOST, {
@@ -39,7 +38,7 @@ add_task(async function() {
     sharedWorkers: [],
   };
   networkClient.listWorkers = () => workers;
-  networkClient._eventEmitter.emit("workerListChanged");
+  networkClient._eventEmitter.emit("workersUpdated");
 
   info("Wait until the service worker is displayed");
   await waitUntil(() => findDebugTargetByText(WORKER_NAME, document));
@@ -48,7 +47,7 @@ add_task(async function() {
   const thisFirefoxSidebarItem = findSidebarItemByText("This Firefox", document);
   const thisFirefoxLink = thisFirefoxSidebarItem.querySelector(".js-sidebar-link");
   info("Click on the ThisFirefox item in the sidebar");
-  const requestsSuccess = waitForRequestsSuccess(window);
+  const requestsSuccess = waitForRequestsSuccess(window.AboutDebugging.store);
   thisFirefoxLink.click();
 
   info("Wait for all target requests to complete");

@@ -12,6 +12,7 @@ ChromeUtils.import("resource://gre/modules/NotificationDB.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   AddonManager: "resource://gre/modules/AddonManager.jsm",
+  AMTelemetry: "resource://gre/modules/AddonManager.jsm",
   BrowserUsageTelemetry: "resource:///modules/BrowserUsageTelemetry.jsm",
   BrowserUtils: "resource://gre/modules/BrowserUtils.jsm",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.jsm",
@@ -27,7 +28,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   E10SUtils: "resource://gre/modules/E10SUtils.jsm",
   ExtensionsUI: "resource:///modules/ExtensionsUI.jsm",
   FormValidationHandler: "resource:///modules/FormValidationHandler.jsm",
-  LanguagePrompt: "resource://gre/modules/LanguagePrompt.jsm",
   HomePage: "resource:///modules/HomePage.jsm",
   LightweightThemeConsumer: "resource://gre/modules/LightweightThemeConsumer.jsm",
   LightweightThemeManager: "resource://gre/modules/LightweightThemeManager.jsm",
@@ -49,6 +49,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   ProcessHangMonitor: "resource:///modules/ProcessHangMonitor.jsm",
   PromiseUtils: "resource://gre/modules/PromiseUtils.jsm",
   ReaderParent: "resource:///modules/ReaderParent.jsm",
+  RFPHelper: "resource://gre/modules/RFPHelper.jsm",
   SafeBrowsing: "resource://gre/modules/SafeBrowsing.jsm",
   Sanitizer: "resource:///modules/Sanitizer.jsm",
   SessionStartup: "resource:///modules/sessionstore/SessionStartup.jsm",
@@ -68,7 +69,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   UrlbarTokenizer: "resource:///modules/UrlbarTokenizer.jsm",
   UrlbarUtils: "resource:///modules/UrlbarUtils.jsm",
   UrlbarValueFormatter: "resource:///modules/UrlbarValueFormatter.jsm",
-  Utils: "resource://gre/modules/sessionstore/Utils.jsm",
   Weave: "resource://services-sync/main.js",
   WebNavigationFrames: "resource://gre/modules/WebNavigationFrames.jsm",
   fxAccounts: "resource://gre/modules/FxAccounts.jsm",
@@ -147,6 +147,8 @@ if (AppConstants.NIGHTLY_BUILD) {
 }
 
 XPCOMUtils.defineLazyScriptGetter(this, "pktUI", "chrome://pocket/content/main.js");
+XPCOMUtils.defineLazyScriptGetter(this, "ToolbarKeyboardNavigator",
+  "chrome://browser/content/browser-toolbarKeyNav.js");
 
 // lazy service getters
 
@@ -281,6 +283,16 @@ XPCOMUtils.defineLazyGetter(this, "Win7Features", () => {
   }
   return null;
 });
+
+XPCOMUtils.defineLazyPreferenceGetter(this, "gToolbarKeyNavEnabled",
+  "browser.toolbars.keyboard_navigation", false,
+  (aPref, aOldVal, aNewVal) => {
+    if (aNewVal) {
+      ToolbarKeyboardNavigator.init();
+    } else {
+      ToolbarKeyboardNavigator.uninit();
+    }
+  });
 
 customElements.setElementCreationCallback("translation-notification", () => {
   Services.scriptloader.loadSubScript(
@@ -1034,21 +1046,14 @@ function _createNullPrincipalFromTabUserContextId(tab = gBrowser.selectedTab) {
 // A shared function used by both remote and non-remote browser XBL bindings to
 // load a URI or redirect it to the correct process.
 function _loadURI(browser, uri, params = {}) {
-  let tab = gBrowser.getTabForBrowser(browser);
-  // Preloaded browsers don't have tabs, so we ignore those.
-  if (tab) {
-    maybeRecordAbandonmentTelemetry(tab, "newURI");
-  }
-
   if (!uri) {
     uri = "about:blank";
   }
 
   let {
     flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-    referrerURI,
-    referrerPolicy = Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
     triggeringPrincipal,
+    referrerInfo,
     postData,
     userContextId,
   } = params || {};
@@ -1081,8 +1086,7 @@ function _loadURI(browser, uri, params = {}) {
   let loadURIOptions = {
     triggeringPrincipal,
     loadFlags: flags,
-    referrerURI,
-    referrerPolicy,
+    referrerInfo,
     postData,
   };
   try {
@@ -1111,8 +1115,7 @@ function _loadURI(browser, uri, params = {}) {
           ? gSerializationHelper.serializeToString(triggeringPrincipal)
           : null,
         flags,
-        referrer: referrerURI ? referrerURI.spec : null,
-        referrerPolicy,
+        referrerInfo: E10SUtils.serializeReferrerInfo(referrerInfo),
         remoteType: requiredRemoteType,
         postData,
         newFrameloader,
@@ -1392,6 +1395,9 @@ var gBrowserInit = {
     BrowserPageActions.init();
     gAccessibilityServiceIndicator.init();
     AccessibilityRefreshBlocker.init();
+    if (gToolbarKeyNavEnabled) {
+      ToolbarKeyboardNavigator.init();
+    }
 
     gRemoteControl.updateVisualCue(Marionette.running);
 
@@ -1731,7 +1737,7 @@ var gBrowserInit = {
    * The functions scheduled here will fire from idle callbacks
    * once every window has finished being restored by session
    * restore, and after the equivalent only-once tasks
-   * have run (from _scheduleStartupIdleTasks in nsBrowserGlue.js).
+   * have run (from _scheduleStartupIdleTasks in BrowserGlue.jsm).
    */
   _schedulePerWindowIdleTasks() {
     // Bail out if the window has been closed in the meantime.
@@ -1938,7 +1944,9 @@ var gBrowserInit = {
 
     AccessibilityRefreshBlocker.uninit();
 
-    LanguagePrompt.uninit();
+    if (gToolbarKeyNavEnabled) {
+      ToolbarKeyboardNavigator.uninit();
+    }
 
     BrowserSearch.uninit();
 
@@ -2048,17 +2056,9 @@ function HandleAppCommandEvent(evt) {
   evt.preventDefault();
 }
 
-function maybeRecordAbandonmentTelemetry(tab, type) {
-  if (!tab.hasAttribute("busy")) {
-    return;
-  }
-
-  let histogram = Services.telemetry
-                          .getHistogramById("BUSY_TAB_ABANDONED");
-  histogram.add(type);
-}
-
 function gotoHistoryIndex(aEvent) {
+  aEvent = getRootEvent(aEvent);
+
   let index = aEvent.target.getAttribute("index");
   if (!index)
     return false;
@@ -2069,8 +2069,6 @@ function gotoHistoryIndex(aEvent) {
     // Normal click. Go there in the current tab and update session history.
 
     try {
-      maybeRecordAbandonmentTelemetry(gBrowser.selectedTab,
-                                      "historyNavigation");
       gBrowser.gotoIndex(index);
     } catch (ex) {
       return false;
@@ -2089,7 +2087,6 @@ function BrowserForward(aEvent) {
 
   if (where == "current") {
     try {
-      maybeRecordAbandonmentTelemetry(gBrowser.selectedTab, "forward");
       gBrowser.goForward();
     } catch (ex) {
     }
@@ -2103,7 +2100,6 @@ function BrowserBack(aEvent) {
 
   if (where == "current") {
     try {
-      maybeRecordAbandonmentTelemetry(gBrowser.selectedTab, "back");
       gBrowser.goBack();
     } catch (ex) {
     }
@@ -2135,11 +2131,11 @@ function BrowserHandleShiftBackspace() {
 }
 
 function BrowserStop() {
-  maybeRecordAbandonmentTelemetry(gBrowser.selectedTab, "stop");
   gBrowser.webNavigation.stop(Ci.nsIWebNavigation.STOP_ALL);
 }
 
 function BrowserReloadOrDuplicate(aEvent) {
+  aEvent = getRootEvent(aEvent);
   let metaKeyPressed = AppConstants.platform == "macosx"
                        ? aEvent.metaKey
                        : aEvent.ctrlKey;
@@ -2178,7 +2174,7 @@ function BrowserHome(aEvent) {
       aEvent.button == 2) // right-click: do nothing
     return;
 
-  var homePage = HomePage.get();
+  var homePage = HomePage.get(window);
   var where = whereToOpenLink(aEvent, false, true);
   var urls;
   var notifyObservers;
@@ -3109,7 +3105,7 @@ var BrowserOnClick = {
   },
 
   ignoreWarningLink(reason, blockedInfo) {
-    let triggeringPrincipal = Utils.deserializePrincipal(blockedInfo.triggeringPrincipal) || _createNullPrincipalFromTabUserContextId();
+    let triggeringPrincipal = E10SUtils.deserializePrincipal(blockedInfo.triggeringPrincipal, _createNullPrincipalFromTabUserContextId());
     // Allow users to override and continue through to the site,
     // but add a notify bar as a reminder, so that they don't lose
     // track after, e.g., tab switching.
@@ -3262,14 +3258,6 @@ function BrowserReloadWithFlags(reloadFlags) {
 
   if (unchangedRemoteness.length == 0) {
     return;
-  }
-
-  // Do this after the above case where we might flip remoteness.
-  // Unfortunately, we'll count the remoteness flip case as a
-  // "newURL" load, since we're using loadURI, but hopefully
-  // that's rare enough to not matter.
-  for (let tab of unchangedRemoteness) {
-    maybeRecordAbandonmentTelemetry(tab, "reload");
   }
 
   // Reset temporary permissions on the remaining tabs to reload.
@@ -4657,7 +4645,7 @@ var XULBrowserWindow = {
     elt.label = tooltip;
     elt.style.direction = direction;
 
-    elt.openPopupAtScreen(browser.boxObject.screenX + x, browser.boxObject.screenY + y, false, null);
+    elt.openPopupAtScreen(browser.screenX + x, browser.screenY + y, false, null);
   },
 
   hideTooltip() {
@@ -6374,6 +6362,12 @@ var ToolbarContextMenu = {
     let btnFlags = BUTTON_POS_0 * titleString + BUTTON_POS_1 * titleCancel;
     let response = confirmEx(null, title, message, btnFlags, btnTitle, null, null, null,
                              {value: 0});
+    AMTelemetry.recordActionEvent({
+      object: "browserAction",
+      action: "uninstall",
+      value: response ? "cancelled" : "accepted",
+      extra: {addonId: addon.id},
+    });
     if (response == 0) {
       addon.uninstall();
     }
@@ -6384,6 +6378,11 @@ var ToolbarContextMenu = {
     if (id) {
       let viewID = "addons://detail/" + encodeURIComponent(id);
       BrowserOpenAddonsMgr(viewID);
+      AMTelemetry.recordActionEvent({
+        object: "browserAction",
+        action: "manage",
+        extra: {addonId: id},
+      });
     }
   },
 };

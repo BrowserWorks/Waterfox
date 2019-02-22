@@ -108,7 +108,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "FontEnumerator",
   "@mozilla.org/gfx/fontenumerator;1",
   "nsIFontEnumerator");
 
-ChromeUtils.defineModuleGetter(this, "Utils", "resource://gre/modules/sessionstore/Utils.jsm");
+ChromeUtils.defineModuleGetter(this, "E10SUtils", "resource://gre/modules/E10SUtils.jsm");
 
 ChromeUtils.defineModuleGetter(this, "FormLikeFactory",
                                "resource://gre/modules/FormLikeFactory.jsm");
@@ -986,7 +986,7 @@ var BrowserApp = {
   },
 
   _migrateUI: function() {
-    const UI_VERSION = 3;
+    const UI_VERSION = 4;
     let currentUIVersion = Services.prefs.getIntPref("browser.migration.version", 0);
     if (currentUIVersion >= UI_VERSION) {
       return;
@@ -1053,6 +1053,12 @@ var BrowserApp = {
         // only in about:config
         Services.prefs.clearUserPref(kOldSafeBrowsingPref);
       }
+    }
+
+    if (currentUIVersion < 4) {
+      // The handler app service will read this. We need to wait with migrating
+      // until the handler service has started up, so just set a pref here.
+      Services.prefs.setCharPref("browser.handlers.migrations", "30boxes");
     }
 
     // Update the migration version.
@@ -3835,7 +3841,7 @@ Tab.prototype = {
     // Always initialise new tabs with basic session store data to avoid
     // problems with functions that always expect it to be present
     let triggeringPrincipal_base64 = aParams.triggeringPrincipal ?
-      Utils.serializePrincipal(aParams.triggeringPrincipal) : Utils.SERIALIZED_SYSTEMPRINCIPAL;
+      E10SUtils.serializePrincipal(aParams.triggeringPrincipal) : E10SUtils.SERIALIZED_SYSTEMPRINCIPAL;
     this.browser.__SS_data = {
       entries: [{
         url: uri,
@@ -6480,7 +6486,9 @@ var ExternalApps = {
             buttons: [
               Strings.browser.GetStringFromName("openInApp.ok"),
               Strings.browser.GetStringFromName("openInApp.cancel")
-            ]
+            ],
+            // Support double tapping to launch an app
+            doubleTapButton: 0
           }, (result) => {
             if (result.button != 0) {
               if (wasPlaying) {

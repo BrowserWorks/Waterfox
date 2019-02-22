@@ -1,6 +1,8 @@
 import {actionCreators as ac} from "common/Actions.jsm";
 import {connect} from "react-redux";
+import {ImpressionStats} from "../../DiscoveryStreamImpressionStats/ImpressionStats";
 import React from "react";
+import {SafeAnchor} from "../SafeAnchor/SafeAnchor";
 
 /**
  * @note exported for testing only
@@ -32,14 +34,29 @@ export class ListItem extends React.PureComponent {
   render() {
     return (
       <li className="ds-list-item">
-        <a className="ds-list-item-link" href={this.props.url} onClick={this.onLinkClick}>
+        <SafeAnchor url={this.props.url} className="ds-list-item-link" onLinkClick={this.onLinkClick}>
           <div className="ds-list-item-text">
-            <div className="ds-list-item-title">{this.props.title}</div>
-            {this.props.excerpt && <div className="ds-list-item-excerpt">{this.props.excerpt}</div>}
-            <div className="ds-list-item-info">{this.props.domain}</div>
+            <div>
+              <div className="ds-list-item-title">{this.props.title}</div>
+              {this.props.excerpt && <div className="ds-list-item-excerpt">{this.props.excerpt}</div>}
+            </div>
+            <p>
+              {this.props.context && (
+                <span>
+                  <span className="ds-list-item-context">{this.props.context}</span>
+                  <br />
+                </span>
+              )}
+              <span className="ds-list-item-info">{this.props.domain}</span>
+            </p>
           </div>
           <div className="ds-list-image" style={{backgroundImage: `url(${this.props.image_src})`}} />
-        </a>
+          <ImpressionStats
+            campaignId={this.props.campaignId}
+            rows={[{id: this.props.id}]}
+            dispatch={this.props.dispatch}
+            source={this.props.type} />
+        </SafeAnchor>
       </li>
     );
   }
@@ -49,28 +66,26 @@ export class ListItem extends React.PureComponent {
  * @note exported for testing only
  */
 export function _List(props) {
-  const feed = props.DiscoveryStream.feeds[props.feed.url];
-
-  if (!feed || !feed.data || !feed.data.recommendations) {
+  const feed = props.data;
+  if (!feed || !feed.recommendations) {
     return null;
   }
-
-  const recs = feed.data.recommendations;
-
+  const recs = feed.recommendations;
   let recMarkup = recs.slice(props.recStartingPoint,
                              props.recStartingPoint + props.items).map((rec, index) => (
     <ListItem key={`ds-list-item-${index}`}
       dispatch={props.dispatch}
+      campaignId={rec.campaign_id}
       domain={rec.domain}
       excerpt={rec.excerpt}
       id={rec.id}
       image_src={rec.image_src}
       index={index}
       title={rec.title}
+      context={rec.context}
       type={props.type}
-      url={rec.url} />)
-  );
-
+      url={rec.url} />
+  ));
   const listStyles = [
     "ds-list",
     props.fullWidth ? "ds-list-full-width" : "",

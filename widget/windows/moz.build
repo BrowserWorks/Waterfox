@@ -116,6 +116,10 @@ if CONFIG['NS_ENABLE_TSF']:
         'TSFTextStore.cpp',
     ]
 
+XPCOM_MANIFESTS += [
+    'components.conf',
+]
+
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -151,7 +155,7 @@ OS_LIBS += [
     'rpcrt4',
 ]
 
-if CONFIG['CC_TYPE'] in ('msvc', 'clang-cl'):
+if CONFIG['CC_TYPE'] == 'clang-cl':
     SOURCES += [
         'ToastNotification.cpp',
         'ToastNotificationHandler.cpp',

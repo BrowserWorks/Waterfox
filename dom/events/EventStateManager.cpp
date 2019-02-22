@@ -42,6 +42,7 @@
 #include "nsIContentInlines.h"
 #include "mozilla/dom/Document.h"
 #include "nsIFrame.h"
+#include "nsFrameLoaderOwner.h"
 #include "nsITextControlElement.h"
 #include "nsIWidget.h"
 #include "nsPresContext.h"
@@ -1343,7 +1344,7 @@ bool EventStateManager::HandleCrossProcessEvent(WidgetEvent* aEvent,
   // then dispatch the event to the remote content they represent.
   for (uint32_t i = 0; i < targets.Length(); ++i) {
     nsIContent* target = targets[i];
-    nsCOMPtr<nsIFrameLoaderOwner> loaderOwner = do_QueryInterface(target);
+    RefPtr<nsFrameLoaderOwner> loaderOwner = do_QueryObject(target);
     if (!loaderOwner) {
       continue;
     }
@@ -3689,7 +3690,7 @@ static bool ShouldBlockCustomCursor(nsPresContext* aPresContext,
   // TODO(emilio, bug 1525561): In a fission world, we should have a better way
   // to find the event coordinates relative to the content area.
   nsPresContext* topLevel =
-    aPresContext->GetToplevelContentDocumentPresContext();
+      aPresContext->GetToplevelContentDocumentPresContext();
   if (!topLevel) {
     return false;
   }
