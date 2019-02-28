@@ -159,6 +159,7 @@
 #include "nsIDOMXULSelectCntrlEl.h"
 #include "nsIDOMXULSelectCntrlItemEl.h"
 #include "nsIBrowser.h"
+#include "nsIAutoCompletePopup.h"
 
 #include "nsISpeculativeConnect.h"
 #include "nsIIOService.h"
@@ -1632,8 +1633,8 @@ nsresult Element::BindToTree(Document* aDocument, nsIContent* aParent,
     if (aParent->IsInNativeAnonymousSubtree()) {
       SetFlags(NODE_IS_IN_NATIVE_ANONYMOUS_SUBTREE);
     }
-    if (aParent->HasFlag(NODE_CHROME_ONLY_ACCESS)) {
-      SetFlags(NODE_CHROME_ONLY_ACCESS);
+    if (aParent->HasFlag(NODE_HAS_BEEN_IN_UA_WIDGET)) {
+      SetFlags(NODE_HAS_BEEN_IN_UA_WIDGET);
     }
     if (HasFlag(NODE_IS_ANONYMOUS_ROOT)) {
       aParent->SetMayHaveAnonymousChildren();
@@ -1731,9 +1732,7 @@ nsresult Element::BindToTree(Document* aDocument, nsIContent* aParent,
         OwnerDoc()->BindingManager()->GetBindingWithContent(this);
 
     if (binding) {
-      binding->BindAnonymousContent(
-          binding->GetAnonymousContent(), this,
-          binding->PrototypeBinding()->ChromeOnlyContent());
+      binding->BindAnonymousContent(binding->GetAnonymousContent(), this);
     }
   }
 
@@ -3105,7 +3104,7 @@ nsresult Element::PostHandleEventForLinks(EventChainPostVisitor& aVisitor) {
           nsCOMPtr<nsISpeculativeConnect> sc =
               do_QueryInterface(nsContentUtils::GetIOService());
           nsCOMPtr<nsIInterfaceRequestor> ir = do_QueryInterface(handler);
-          sc->SpeculativeConnect2(absURI, NodePrincipal(), ir);
+          sc->SpeculativeConnect(absURI, NodePrincipal(), ir);
         }
       }
     } break;
@@ -3423,7 +3422,7 @@ already_AddRefed<Animation> Element::Animate(
   if (aTarget.Value().IsElement()) {
     referenceElement = &aTarget.Value().GetAsElement();
   } else {
-    referenceElement = aTarget.Value().GetAsCSSPseudoElement().ParentElement();
+    referenceElement = aTarget.Value().GetAsCSSPseudoElement().Element();
   }
 
   nsCOMPtr<nsIGlobalObject> ownerGlobal = referenceElement->GetOwnerGlobal();
@@ -4082,6 +4081,12 @@ Element::AsXULSelectControlItem() {
 
 already_AddRefed<nsIBrowser> Element::AsBrowser() {
   nsCOMPtr<nsIBrowser> value;
+  GetCustomInterface(getter_AddRefs(value));
+  return value.forget();
+}
+
+already_AddRefed<nsIAutoCompletePopup> Element::AsAutoCompletePopup() {
+  nsCOMPtr<nsIAutoCompletePopup> value;
   GetCustomInterface(getter_AddRefs(value));
   return value.forget();
 }

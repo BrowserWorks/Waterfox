@@ -365,21 +365,6 @@ static nsresult DoContentSecurityChecks(nsIChannel* aChannel,
   nsresult rv = NS_GetFinalChannelURI(aChannel, getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (contentPolicyType == nsIContentPolicy::TYPE_DOCUMENT ||
-      contentPolicyType == nsIContentPolicy::TYPE_SUBDOCUMENT) {
-    // TYPE_DOCUMENT and TYPE_SUBDOCUMENT loads might potentially
-    // be wyciwyg:// channels. Let's fix up the URI so we can
-    // perform proper security checks.
-    nsCOMPtr<nsIURIFixup> urifixup(components::URIFixup::Service());
-    if (urifixup) {
-      nsCOMPtr<nsIURI> fixedURI;
-      rv = urifixup->CreateExposableURI(uri, getter_AddRefs(fixedURI));
-      if (NS_SUCCEEDED(rv)) {
-        uri = fixedURI;
-      }
-    }
-  }
-
   switch (contentPolicyType) {
     case nsIContentPolicy::TYPE_OTHER: {
       mimeTypeGuess = EmptyCString();
@@ -882,24 +867,6 @@ nsresult nsContentSecurityManager::CheckChannel(nsIChannel* aChannel) {
   nsresult rv = NS_GetFinalChannelURI(aChannel, getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsContentPolicyType contentPolicyType =
-      loadInfo->GetExternalContentPolicyType();
-
-  if (contentPolicyType == nsIContentPolicy::TYPE_DOCUMENT ||
-      contentPolicyType == nsIContentPolicy::TYPE_SUBDOCUMENT) {
-    // TYPE_DOCUMENT and TYPE_SUBDOCUMENT loads might potentially
-    // be wyciwyg:// channels. Let's fix up the URI so we can
-    // perform proper security checks.
-    nsCOMPtr<nsIURIFixup> urifixup(components::URIFixup::Service());
-    if (urifixup) {
-      nsCOMPtr<nsIURI> fixedURI;
-      rv = urifixup->CreateExposableURI(uri, getter_AddRefs(fixedURI));
-      if (NS_SUCCEEDED(rv)) {
-        uri = fixedURI;
-      }
-    }
-  }
-
   // Handle cookie policies
   uint32_t cookiePolicy = loadInfo->GetCookiePolicy();
   if (cookiePolicy == nsILoadInfo::SEC_COOKIES_SAME_ORIGIN) {
@@ -1004,10 +971,13 @@ nsContentSecurityManager::IsOriginPotentiallyTrustworthy(
              "Nobody is expected to call us with an nsIExpandedPrincipal");
 
   nsCOMPtr<nsIURI> uri;
-  aPrincipal->GetURI(getter_AddRefs(uri));
+  nsresult rv = aPrincipal->GetURI(getter_AddRefs(uri));
+  if (NS_FAILED(rv)) {
+    return NS_OK;
+  }
 
   nsAutoCString scheme;
-  nsresult rv = uri->GetScheme(scheme);
+  rv = uri->GetScheme(scheme);
   if (NS_FAILED(rv)) {
     return NS_OK;
   }

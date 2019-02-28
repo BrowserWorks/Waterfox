@@ -1833,17 +1833,9 @@ bool JSStructuredCloneWriter::transferOwnership() {
         return false;
       }
 
-      size_t nbytes = arrayBuffer->byteLength();
-
-      if (arrayBuffer->isWasm() || arrayBuffer->isPreparedForAsmJS()) {
+      if (arrayBuffer->isPreparedForAsmJS()) {
         JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                                   JSMSG_WASM_NO_TRANSFER);
-        return false;
-      }
-
-      if (arrayBuffer->isDetached()) {
-        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                                  JSMSG_TYPED_ARRAY_DETACHED);
         return false;
       }
 
@@ -1874,11 +1866,12 @@ bool JSStructuredCloneWriter::transferOwnership() {
           return false;
         }
       } else {
-        bool hasStealableContents = arrayBuffer->hasStealableContents();
+        size_t nbytes = arrayBuffer->byteLength();
 
-        ArrayBufferObject::BufferContents bufContents =
-            ArrayBufferObject::stealContents(cx, arrayBuffer,
-                                             hasStealableContents);
+        using BufferContents = ArrayBufferObject::BufferContents;
+
+        BufferContents bufContents =
+            ArrayBufferObject::extractStructuredCloneContents(cx, arrayBuffer);
         if (!bufContents) {
           return false;  // out of memory
         }
@@ -1887,6 +1880,8 @@ bool JSStructuredCloneWriter::transferOwnership() {
         if (bufContents.kind() == ArrayBufferObject::MAPPED) {
           ownership = JS::SCTAG_TMO_MAPPED_DATA;
         } else {
+          MOZ_ASSERT(bufContents.kind() == ArrayBufferObject::MALLOCED,
+                     "failing to handle new ArrayBuffer kind?");
           ownership = JS::SCTAG_TMO_ALLOC_DATA;
         }
         extraData = nbytes;
@@ -2202,7 +2197,7 @@ bool JSStructuredCloneReader::readDataView(uint32_t byteLength,
 
 bool JSStructuredCloneReader::readArrayBuffer(uint32_t nbytes,
                                               MutableHandleValue vp) {
-  JSObject* obj = ArrayBufferObject::create(context(), nbytes);
+  JSObject* obj = ArrayBufferObject::createZeroed(context(), nbytes);
   if (!obj) {
     return false;
   }
@@ -2320,7 +2315,7 @@ bool JSStructuredCloneReader::readV1ArrayBuffer(uint32_t arrayType,
     return false;
   }
 
-  JSObject* obj = ArrayBufferObject::create(context(), nbytes.value());
+  JSObject* obj = ArrayBufferObject::createZeroed(context(), nbytes.value());
   if (!obj) {
     return false;
   }
@@ -2817,6 +2812,10 @@ JSObject* JSStructuredCloneReader::readSavedFrame(uint32_t principalsTag) {
     return nullptr;
   }
   savedFrame->initColumn(column);
+
+  // Don't specify a source ID when reading a cloned saved frame, as these IDs
+  // are only valid within a specific process.
+  savedFrame->initSourceId(0);
 
   RootedValue name(context());
   if (!startRead(&name) || !(name.isString() || name.isNull())) {

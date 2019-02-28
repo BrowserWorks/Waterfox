@@ -347,8 +347,11 @@ static const bool CompactingEnabled = true;
 static const uint32_t NurseryFreeThresholdForIdleCollection =
     Nursery::NurseryChunkUsableSize / 4;
 
+/* JSGC_NURSERY_FREE_THRESHOLD_FOR_IDLE_COLLECTION_PERCENT */
+static const float NurseryFreeThresholdForIdleCollectionFraction = 0.25f;
+
 /* JSGC_PRETENURE_THRESHOLD */
-static const float PretenureThreashold = 0.6f;
+static const float PretenureThreshold = 0.6f;
 
 /* JSGC_PRETENURE_GROUP_THRESHOLD */
 static const float PretenureGroupThreshold = 3000;
@@ -1476,6 +1479,12 @@ bool GCSchedulingTunables::setParameter(JSGCParamKey key, uint32_t value,
       }
       nurseryFreeThresholdForIdleCollection_ = value;
       break;
+    case JSGC_NURSERY_FREE_THRESHOLD_FOR_IDLE_COLLECTION_PERCENT:
+      if (value == 0 || value > 100) {
+        return false;
+      }
+      nurseryFreeThresholdForIdleCollectionFraction_ = value / 100.0f;
+      break;
     case JSGC_PRETENURE_THRESHOLD: {
       // 100 disables pretenuring
       if (value == 0 || value > 100) {
@@ -1578,7 +1587,9 @@ GCSchedulingTunables::GCSchedulingTunables()
       maxEmptyChunkCount_(TuningDefaults::MaxEmptyChunkCount),
       nurseryFreeThresholdForIdleCollection_(
           TuningDefaults::NurseryFreeThresholdForIdleCollection),
-      pretenureThreshold_(TuningDefaults::PretenureThreashold),
+      nurseryFreeThresholdForIdleCollectionFraction_(
+          TuningDefaults::NurseryFreeThresholdForIdleCollectionFraction),
+      pretenureThreshold_(TuningDefaults::PretenureThreshold),
       pretenureGroupThreshold_(TuningDefaults::PretenureGroupThreshold) {}
 
 void GCRuntime::resetParameter(JSGCParamKey key, AutoLockGC& lock) {
@@ -1661,8 +1672,12 @@ void GCSchedulingTunables::resetParameter(JSGCParamKey key,
       nurseryFreeThresholdForIdleCollection_ =
           TuningDefaults::NurseryFreeThresholdForIdleCollection;
       break;
+    case JSGC_NURSERY_FREE_THRESHOLD_FOR_IDLE_COLLECTION_PERCENT:
+      nurseryFreeThresholdForIdleCollectionFraction_ =
+          TuningDefaults::NurseryFreeThresholdForIdleCollectionFraction;
+      break;
     case JSGC_PRETENURE_THRESHOLD:
-      pretenureThreshold_ = TuningDefaults::PretenureThreashold;
+      pretenureThreshold_ = TuningDefaults::PretenureThreshold;
       break;
     case JSGC_PRETENURE_GROUP_THRESHOLD:
       pretenureGroupThreshold_ = TuningDefaults::PretenureGroupThreshold;
@@ -2453,6 +2468,7 @@ void MovingTracer::onScopeEdge(Scope** scopep) { updateEdge(scopep); }
 void MovingTracer::onRegExpSharedEdge(RegExpShared** sharedp) {
   updateEdge(sharedp);
 }
+void MovingTracer::onBigIntEdge(BigInt** bip) { updateEdge(bip); }
 
 void Zone::prepareForCompacting() {
   FreeOp* fop = runtimeFromMainThread()->defaultFreeOp();
@@ -8370,18 +8386,32 @@ JS_FRIEND_API const char* JS::GCTraceKindToAscii(JS::TraceKind kind) {
 }
 
 JS::GCCellPtr::GCCellPtr(const Value& v) : ptr(0) {
-  if (v.isString()) {
-    ptr = checkedCast(v.toString(), JS::TraceKind::String);
-  } else if (v.isObject()) {
-    ptr = checkedCast(&v.toObject(), JS::TraceKind::Object);
-  } else if (v.isSymbol()) {
-    ptr = checkedCast(v.toSymbol(), JS::TraceKind::Symbol);
-  } else if (v.isBigInt()) {
-    ptr = checkedCast(v.toBigInt(), JS::TraceKind::BigInt);
-  } else if (v.isPrivateGCThing()) {
-    ptr = checkedCast(v.toGCThing(), v.toGCThing()->getTraceKind());
-  } else {
-    ptr = checkedCast(nullptr, JS::TraceKind::Null);
+  switch (v.type()) {
+    case ValueType::String:
+      ptr = checkedCast(v.toString(), JS::TraceKind::String);
+      break;
+    case ValueType::Object:
+      ptr = checkedCast(&v.toObject(), JS::TraceKind::Object);
+      break;
+    case ValueType::Symbol:
+      ptr = checkedCast(v.toSymbol(), JS::TraceKind::Symbol);
+      break;
+    case ValueType::BigInt:
+      ptr = checkedCast(v.toBigInt(), JS::TraceKind::BigInt);
+      break;
+    case ValueType::PrivateGCThing:
+      ptr = checkedCast(v.toGCThing(), v.toGCThing()->getTraceKind());
+      break;
+    case ValueType::Double:
+    case ValueType::Int32:
+    case ValueType::Boolean:
+    case ValueType::Undefined:
+    case ValueType::Null:
+    case ValueType::Magic: {
+      MOZ_ASSERT(!v.isGCThing());
+      ptr = checkedCast(nullptr, JS::TraceKind::Null);
+      break;
+    }
   }
 }
 

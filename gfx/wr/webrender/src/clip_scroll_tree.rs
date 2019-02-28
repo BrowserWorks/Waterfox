@@ -11,7 +11,7 @@ use print_tree::{PrintableTree, PrintTree, PrintTreePrinter};
 use scene::SceneProperties;
 use spatial_node::{ScrollFrameInfo, SpatialNode, SpatialNodeType, StickyFrameInfo, ScrollFrameKind};
 use std::ops;
-use util::{LayoutToWorldFastTransform, MatrixHelpers, ScaleOffset};
+use util::{project_rect, LayoutToWorldFastTransform, MatrixHelpers, ScaleOffset};
 
 pub type ScrollStates = FastHashMap<ExternalScrollId, ScrollFrameInfo>;
 
@@ -211,6 +211,35 @@ impl ClipScrollTree {
         })
     }
 
+    /// Map a rectangle in some child space to a parent.
+    /// Doesn't handle preserve-3d islands.
+    pub fn map_rect_to_parent_space(
+        &self,
+        mut rect: LayoutRect,
+        child_index: SpatialNodeIndex,
+        parent_index: SpatialNodeIndex,
+        parent_bounds: &LayoutRect,
+    ) -> Option<LayoutRect> {
+        if child_index == parent_index {
+            return Some(rect);
+        }
+        assert!(child_index.0 > parent_index.0);
+
+        let child = &self.spatial_nodes[child_index.0 as usize];
+        let parent = &self.spatial_nodes[parent_index.0 as usize];
+
+        let mut coordinate_system_id = child.coordinate_system_id;
+        rect = child.coordinate_system_relative_scale_offset.map_rect(&rect);
+
+        while coordinate_system_id != parent.coordinate_system_id {
+            let coord_system = &self.coord_systems[coordinate_system_id.0 as usize];
+            coordinate_system_id = coord_system.parent.expect("invalid parent!");
+            rect = project_rect(&coord_system.transform, &rect, parent_bounds)?;
+        }
+
+        Some(parent.coordinate_system_relative_scale_offset.unmap_rect(&rect))
+    }
+
     /// Returns true if the spatial node is the same as the parent, or is
     /// a child of the parent.
     pub fn is_same_or_child_of(
@@ -404,6 +433,7 @@ impl ClipScrollTree {
         content_size: &LayoutSize,
         scroll_sensitivity: ScrollSensitivity,
         frame_kind: ScrollFrameKind,
+        external_scroll_offset: LayoutVector2D,
     ) -> SpatialNodeIndex {
         let node = SpatialNode::new_scroll_frame(
             pipeline_id,
@@ -413,6 +443,7 @@ impl ClipScrollTree {
             content_size,
             scroll_sensitivity,
             frame_kind,
+            external_scroll_offset,
         );
         self.add_spatial_node(node)
     }

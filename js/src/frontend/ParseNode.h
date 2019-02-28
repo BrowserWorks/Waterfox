@@ -81,7 +81,7 @@ class BigIntBox;
   F(TemplateStringListExpr, ListNode)                                        \
   F(TemplateStringExpr, NameNode)                                            \
   F(TaggedTemplateExpr, BinaryNode)                                          \
-  F(CallSiteObjExpr, CallSiteNode)                                           \
+  F(CallSiteObj, CallSiteNode)                                               \
   F(RegExpExpr, RegExpLiteral)                                               \
   F(TrueExpr, BooleanLiteral)                                                \
   F(FalseExpr, BooleanLiteral)                                               \
@@ -381,8 +381,14 @@ inline bool IsTypeofKind(ParseNodeKind kind) {
  *   right: Name node for assignment
  *
  * <Expressions>
+ * The `Expr` suffix is used for nodes that can appear anywhere an expression
+ * could appear.  It is not used on a few weird kinds like Arguments and
+ * CallSiteObj that are always the child node of an expression node, but which
+ * can't stand alone.
+ *
  * All left-associated binary trees of the same type are optimized into lists
  * to avoid recursion when processing expression chains.
+ *
  * CommaExpr (ListNode)
  *   head: list of N comma-separated exprs
  *   count: N >= 2
@@ -481,7 +487,7 @@ inline bool IsTypeofKind(ParseNodeKind kind) {
  *   left: tag expression
  *   right: Arguments, with the first being the call site object, then
  *          arg1, arg2, ... argN
- * CallSiteObjExpr (CallSiteNode)
+ * CallSiteObj (CallSiteNode)
  *   head:  an Array of raw TemplateString, then corresponding cooked
  *          TemplateString nodes
  *            Array [, cooked TemplateString]+
@@ -520,22 +526,6 @@ inline bool IsTypeofKind(ParseNodeKind kind) {
  * YieldExpr, YieldStarExpr, AwaitExpr (UnaryNode)
  *   kid: expr or null
  */
-enum ParseNodeArity {
-  PN_NULLARY,  /* 0 kids */
-  PN_UNARY,    /* one kid, plus a couple of scalars */
-  PN_BINARY,   /* two kids, plus a couple of scalars */
-  PN_TERNARY,  /* three kids */
-  PN_FUNCTION, /* function definition node */
-  PN_MODULE,   /* module node */
-  PN_LIST,     /* generic singly linked list */
-  PN_NAME,     /* name, label, string */
-  PN_FIELD,    /* field name, optional initializer */
-  PN_NUMBER,   /* numeric literal */
-  PN_BIGINT,   /* BigInt literal */
-  PN_REGEXP,   /* regexp literal */
-  PN_LOOP,     /* loop control (break/continue) */
-  PN_SCOPE     /* lexical scope */
-};
 
 // FIXME: Remove `*Type` (bug 1489008)
 #define FOR_EACH_PARSENODE_SUBCLASS(MACRO)                                   \
@@ -589,9 +579,6 @@ enum ParseNodeArity {
 #define DECLARE_CLASS(typeName, longTypeName, asMethodName) class typeName;
 FOR_EACH_PARSENODE_SUBCLASS(DECLARE_CLASS)
 #undef DECLARE_CLASS
-
-// ParseNodeKindArity[size_t(pnk)] is the arity of a ParseNode of kind pnk.
-extern const ParseNodeArity ParseNodeKindArity[];
 
 enum class FunctionSyntaxKind {
   // A non-arrow function expression.
@@ -666,10 +653,25 @@ class ParseNode {
   }
   bool isKind(ParseNodeKind kind) const { return getKind() == kind; }
 
-  ParseNodeArity getArity() const {
-    return ParseNodeKindArity[size_t(getKind())];
-  }
-  bool isArity(ParseNodeArity a) const { return getArity() == a; }
+ protected:
+  // Used to implement test() on a few ParseNodes efficiently.
+  // (This enum doesn't fully reflect the ParseNode class hierarchy,
+  // so don't use it for anything else.)
+  enum class TypeCode : uint8_t {
+    Nullary,
+    Unary,
+    Binary,
+    Ternary,
+    List,
+    Name,
+    Other
+  };
+
+  // typeCodeTable[size_t(pnk)] is the type code of a ParseNode of kind pnk.
+  static const TypeCode typeCodeTable[];
+
+ public:
+  TypeCode typeCode() const { return typeCodeTable[size_t(getKind())]; }
 
   bool isBinaryOperation() const {
     ParseNodeKind kind = getKind();
@@ -777,9 +779,11 @@ class NullaryNode : public ParseNode {
     MOZ_ASSERT(is<NullaryNode>());
   }
 
-  static bool test(const ParseNode& node) { return node.isArity(PN_NULLARY); }
+  static bool test(const ParseNode& node) {
+    return node.typeCode() == TypeCode::Nullary;
+  }
 
-  static constexpr ParseNodeArity arity() { return PN_NULLARY; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Nullary; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -787,7 +791,7 @@ class NullaryNode : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 };
 
@@ -809,9 +813,11 @@ class NameNode : public ParseNode {
     MOZ_ASSERT(is<NameNode>());
   }
 
-  static bool test(const ParseNode& node) { return node.isArity(PN_NAME); }
+  static bool test(const ParseNode& node) {
+    return node.typeCode() == TypeCode::Name;
+  }
 
-  static constexpr ParseNodeArity arity() { return PN_NAME; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Name; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -824,7 +830,7 @@ class NameNode : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   JSAtom* atom() const { return atom_; }
@@ -855,9 +861,11 @@ class UnaryNode : public ParseNode {
     MOZ_ASSERT(is<UnaryNode>());
   }
 
-  static bool test(const ParseNode& node) { return node.isArity(PN_UNARY); }
+  static bool test(const ParseNode& node) {
+    return node.typeCode() == TypeCode::Unary;
+  }
 
-  static constexpr ParseNodeArity arity() { return PN_UNARY; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Unary; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -870,7 +878,7 @@ class UnaryNode : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   ParseNode* kid() const { return kid_; }
@@ -925,9 +933,11 @@ class BinaryNode : public ParseNode {
     MOZ_ASSERT(is<BinaryNode>());
   }
 
-  static bool test(const ParseNode& node) { return node.isArity(PN_BINARY); }
+  static bool test(const ParseNode& node) {
+    return node.typeCode() == TypeCode::Binary;
+  }
 
-  static constexpr ParseNodeArity arity() { return PN_BINARY; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Binary; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -945,7 +955,7 @@ class BinaryNode : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   ParseNode* left() const { return left_; }
@@ -1020,9 +1030,11 @@ class TernaryNode : public ParseNode {
     MOZ_ASSERT(is<TernaryNode>());
   }
 
-  static bool test(const ParseNode& node) { return node.isArity(PN_TERNARY); }
+  static bool test(const ParseNode& node) {
+    return node.typeCode() == TypeCode::Ternary;
+  }
 
-  static constexpr ParseNodeArity arity() { return PN_TERNARY; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Ternary; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -1045,7 +1057,7 @@ class TernaryNode : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   ParseNode* kid1() const { return kid1_; }
@@ -1129,9 +1141,11 @@ class ListNode : public ParseNode {
     MOZ_ASSERT(is<ListNode>());
   }
 
-  static bool test(const ParseNode& node) { return node.isArity(PN_LIST); }
+  static bool test(const ParseNode& node) {
+    return node.typeCode() == TypeCode::List;
+  }
 
-  static constexpr ParseNodeArity arity() { return PN_LIST; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::List; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -1152,7 +1166,7 @@ class ListNode : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   ParseNode* head() const { return head_; }
@@ -1418,12 +1432,10 @@ class FunctionNode : public ParseNode {
   }
 
   static bool test(const ParseNode& node) {
-    bool match = node.isKind(ParseNodeKind::Function);
-    MOZ_ASSERT_IF(match, node.isArity(PN_FUNCTION));
-    return match;
+    return node.isKind(ParseNodeKind::Function);
   }
 
-  static constexpr ParseNodeArity arity() { return PN_FUNCTION; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Other; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -1437,7 +1449,7 @@ class FunctionNode : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   FunctionBox* funbox() const { return funbox_; }
@@ -1466,12 +1478,10 @@ class ModuleNode : public ParseNode {
   }
 
   static bool test(const ParseNode& node) {
-    bool match = node.isKind(ParseNodeKind::Module);
-    MOZ_ASSERT_IF(match, node.isArity(PN_MODULE));
-    return match;
+    return node.isKind(ParseNodeKind::Module);
   }
 
-  static constexpr ParseNodeArity arity() { return PN_MODULE; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Other; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -1479,7 +1489,7 @@ class ModuleNode : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   ListNode* body() const { return &body_->as<ListNode>(); }
@@ -1498,12 +1508,10 @@ class NumericLiteral : public ParseNode {
         decimalPoint_(decimalPoint) {}
 
   static bool test(const ParseNode& node) {
-    bool match = node.isKind(ParseNodeKind::NumberExpr);
-    MOZ_ASSERT_IF(match, node.isArity(PN_NUMBER));
-    return match;
+    return node.isKind(ParseNodeKind::NumberExpr);
   }
 
-  static constexpr ParseNodeArity arity() { return PN_NUMBER; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Other; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -1511,7 +1519,7 @@ class NumericLiteral : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   double value() const { return value_; }
@@ -1531,12 +1539,10 @@ class BigIntLiteral : public ParseNode {
       : ParseNode(ParseNodeKind::BigIntExpr, JSOP_NOP, pos), box_(bibox) {}
 
   static bool test(const ParseNode& node) {
-    bool match = node.isKind(ParseNodeKind::BigIntExpr);
-    MOZ_ASSERT_IF(match, node.isArity(PN_BIGINT));
-    return match;
+    return node.isKind(ParseNodeKind::BigIntExpr);
   }
 
-  static constexpr ParseNodeArity arity() { return PN_BIGINT; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Other; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -1544,7 +1550,7 @@ class BigIntLiteral : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   BigIntBox* box() const { return box_; }
@@ -1561,12 +1567,10 @@ class LexicalScopeNode : public ParseNode {
         body(body) {}
 
   static bool test(const ParseNode& node) {
-    bool match = node.isKind(ParseNodeKind::LexicalScope);
-    MOZ_ASSERT_IF(match, node.isArity(PN_SCOPE));
-    return match;
+    return node.isKind(ParseNodeKind::LexicalScope);
   }
 
-  static constexpr ParseNodeArity arity() { return PN_SCOPE; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Other; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -1574,7 +1578,7 @@ class LexicalScopeNode : public ParseNode {
   }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   Handle<LexicalScope::Data*> scopeBindings() const {
@@ -1602,10 +1606,7 @@ class LabeledStatement : public NameNode {
   ParseNode* statement() const { return initializer(); }
 
   static bool test(const ParseNode& node) {
-    bool match = node.isKind(ParseNodeKind::LabelStmt);
-    MOZ_ASSERT_IF(match, node.isArity(PN_NAME));
-    MOZ_ASSERT_IF(match, node.isOp(JSOP_NOP));
-    return match;
+    return node.isKind(ParseNodeKind::LabelStmt);
   }
 };
 
@@ -1649,18 +1650,15 @@ class LoopControlStatement : public ParseNode {
   PropertyName* label() const { return label_; }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   static bool test(const ParseNode& node) {
-    bool match = node.isKind(ParseNodeKind::BreakStmt) ||
-                 node.isKind(ParseNodeKind::ContinueStmt);
-    MOZ_ASSERT_IF(match, node.isArity(PN_LOOP));
-    MOZ_ASSERT_IF(match, node.isOp(JSOP_NOP));
-    return match;
+    return node.isKind(ParseNodeKind::BreakStmt) ||
+           node.isKind(ParseNodeKind::ContinueStmt);
   }
 
-  static constexpr ParseNodeArity arity() { return PN_LOOP; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Other; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -1823,17 +1821,14 @@ class RegExpLiteral : public ParseNode {
   ObjectBox* objbox() const { return objbox_; }
 
 #ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
+  void dumpImpl(GenericPrinter& out, int indent);
 #endif
 
   static bool test(const ParseNode& node) {
-    bool match = node.isKind(ParseNodeKind::RegExpExpr);
-    MOZ_ASSERT_IF(match, node.isArity(PN_REGEXP));
-    MOZ_ASSERT_IF(match, node.isOp(JSOP_REGEXP));
-    return match;
+    return node.isKind(ParseNodeKind::RegExpExpr);
   }
 
-  static constexpr ParseNodeArity arity() { return PN_REGEXP; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Other; }
 
   template <typename Visitor>
   bool accept(Visitor& visitor) {
@@ -1910,10 +1905,10 @@ class PropertyByValue : public BinaryNode {
 class CallSiteNode : public ListNode {
  public:
   explicit CallSiteNode(uint32_t begin)
-      : ListNode(ParseNodeKind::CallSiteObjExpr, TokenPos(begin, begin + 1)) {}
+      : ListNode(ParseNodeKind::CallSiteObj, TokenPos(begin, begin + 1)) {}
 
   static bool test(const ParseNode& node) {
-    bool match = node.isKind(ParseNodeKind::CallSiteObjExpr);
+    bool match = node.isKind(ParseNodeKind::CallSiteObj);
     MOZ_ASSERT_IF(match, node.is<ListNode>());
     return match;
   }
@@ -1954,49 +1949,26 @@ class ClassMethod : public BinaryNode {
   bool isStatic() const { return isStatic_; }
 };
 
-class ClassField : public ParseNode {
-  ParseNode* name_;
-  ParseNode* initializer_; /* field initializer - optional */
-
+class ClassField : public BinaryNode {
  public:
   ClassField(ParseNode* name, ParseNode* initializer)
-      : ParseNode(ParseNodeKind::ClassField, JSOP_NOP,
-                  initializer == nullptr
-                      ? name->pn_pos
-                      : TokenPos::box(name->pn_pos, initializer->pn_pos)),
-        name_(name),
-        initializer_(initializer) {}
+      : BinaryNode(ParseNodeKind::ClassField, JSOP_NOP,
+                   initializer == nullptr
+                       ? name->pn_pos
+                       : TokenPos::box(name->pn_pos, initializer->pn_pos),
+                   name, initializer) {}
 
   static bool test(const ParseNode& node) {
-    bool match = node.isKind(ParseNodeKind::ClassField);
-    MOZ_ASSERT_IF(match, node.isArity(PN_FIELD));
-    return match;
+    return node.isKind(ParseNodeKind::ClassField);
   }
 
-  static constexpr ParseNodeArity arity() { return PN_FIELD; }
+  static constexpr TypeCode classTypeCode() { return TypeCode::Other; }
 
-  template <typename Visitor>
-  bool accept(Visitor& visitor) {
-    if (!visitor.visit(name_)) {
-      return false;
-    }
-    if (initializer_) {
-      if (!visitor.visit(initializer_)) {
-        return false;
-      }
-    }
-    return true;
-  }
+  ParseNode& name() const { return *left(); }
 
-  ParseNode& name() const { return *name_; }
+  bool hasInitializer() const { return right() != nullptr; }
 
-  bool hasInitializer() const { return initializer_ != nullptr; }
-
-  ParseNode& initializer() const { return *initializer_; }
-
-#ifdef DEBUG
-  void dump(GenericPrinter& out, int indent);
-#endif
+  FunctionNode& initializer() const { return right()->as<FunctionNode>(); }
 };
 
 class SwitchStatement : public BinaryNode {

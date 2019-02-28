@@ -114,6 +114,7 @@ class UrlbarInput {
     const inputFieldEvents = [
       "focus", "input", "keyup", "mouseover", "paste", "scrollend", "select",
       "overflow", "underflow", "dragstart", "dragover", "drop",
+      "compositionstart", "compositionend",
     ];
     for (let name of inputFieldEvents) {
       this.inputField.addEventListener(name, this);
@@ -125,6 +126,9 @@ class UrlbarInput {
 
     this.inputField.controllers.insertControllerAt(0, new CopyCutController(this));
     this._initPasteAndGo();
+
+    // Tracks IME composition.
+    this._compositionState == UrlbarUtils.COMPOSITION.NONE;
   }
 
   /**
@@ -162,8 +166,8 @@ class UrlbarInput {
   }
 
   /**
-   * Converts an internal URI (e.g. a wyciwyg URI) into one which we can
-   * expose to the user.
+   * Converts an internal URI (e.g. a URI with a username or password) into one
+   * which we can expose to the user.
    *
    * @param {nsIURI} uri
    *   The URI to be converted
@@ -313,28 +317,22 @@ class UrlbarInput {
    */
   pickResult(event, resultIndex) {
     let result = this.view.getResult(resultIndex);
-    this.setValueFromResult(result);
-
-    this.view.close();
-
-    this.controller.recordSelectedResult(event, resultIndex);
-
+    let isCanonized = this.setValueFromResult(result, event);
     let where = this._whereToOpen(event);
-    let {url, postData} = UrlbarUtils.getUrlFromResult(result);
     let openParams = {
-      postData,
       allowInheritPrincipal: false,
     };
 
-    if (result.autofill) {
-      // For autofilled results, the value that should be canonized is not the
-      // autofilled value but the value that the user typed.
-      let canonizedUrl = this._maybeCanonizeURL(event, this._lastSearchString);
-      if (canonizedUrl) {
-        this._loadURL(canonizedUrl, where, openParams);
-        return;
-      }
+    this.view.close();
+    this.controller.recordSelectedResult(event, resultIndex);
+
+    if (isCanonized) {
+      this._loadURL(this.value, where, openParams);
+      return;
     }
+
+    let {url, postData} = UrlbarUtils.getUrlFromResult(result);
+    openParams.postData = postData;
 
     switch (result.type) {
       case UrlbarUtils.RESULT_TYPE.TAB_SWITCH: {
@@ -356,12 +354,6 @@ class UrlbarInput {
         return;
       }
       case UrlbarUtils.RESULT_TYPE.SEARCH: {
-        let canonizedUrl = this._maybeCanonizeURL(event,
-                result.payload.suggestion || result.payload.query);
-        if (canonizedUrl) {
-          url = canonizedUrl;
-          break;
-        }
         if (result.payload.isKeywordOffer) {
           // Picking a keyword offer just fills it in the input and doesn't
           // visit anything.  The user can then type a search string.  Also
@@ -379,7 +371,12 @@ class UrlbarInput {
         break;
       }
       case UrlbarUtils.RESULT_TYPE.OMNIBOX: {
-        // Give the extension control of handling the command.
+        // We don't directly handle a load when an Omnibox API result is picked,
+        // instead we forward the request to the WebExtension itself, because
+        // the value may not even be a url.
+        // We pass the keyword and content, that actually is the retrieved value
+        // prefixed by the keyword. ExtensionSearchHandler uses this keyword
+        // redundancy as a sanity check.
         ExtensionSearchHandler.handleInputEntered(result.payload.keyword,
                                                   result.payload.content,
                                                   where);
@@ -397,12 +394,23 @@ class UrlbarInput {
    * Called by the view when moving through results with the keyboard.
    *
    * @param {UrlbarResult} result The result that was selected.
+   * @param {Event} [event] The event that picked the result.
+   * @returns {boolean}
+   *   Whether the value has been canonized
    */
-  setValueFromResult(result) {
-    if (result.autofill) {
-      this._setValueFromResultAutofill(result);
+  setValueFromResult(result, event = null) {
+    // For autofilled results, the value that should be canonized is not the
+    // autofilled value but the value that the user typed.
+    let canonizedUrl = this._maybeCanonizeURL(event, result.autofill ?
+                         this._lastSearchString : this.textValue);
+    if (canonizedUrl) {
+      this.value = canonizedUrl;
     } else {
-      this.value = this._valueFromResultPayload(result);
+      this.value = this._getValueFromResult(result);
+      if (result.autofill) {
+        this.selectionStart = result.autofill.selectionStart;
+        this.selectionEnd = result.autofill.selectionEnd;
+      }
     }
     this._resultForCurrentValue = result;
 
@@ -418,6 +426,8 @@ class UrlbarInput {
         this.setAttribute("actiontype", "extension");
         break;
     }
+
+    return !!canonizedUrl;
   }
 
   /**
@@ -548,13 +558,11 @@ class UrlbarInput {
 
   // Private methods below.
 
-  _setValueFromResultAutofill(result) {
-    this.value = result.autofill.value;
-    this.selectionStart = result.autofill.selectionStart;
-    this.selectionEnd = result.autofill.selectionEnd;
-  }
+  _getValueFromResult(result) {
+    if (result.autofill) {
+      return result.autofill.value;
+    }
 
-  _valueFromResultPayload(result) {
     switch (result.type) {
       case UrlbarUtils.RESULT_TYPE.KEYWORD:
         return result.payload.input;
@@ -796,9 +804,9 @@ class UrlbarInput {
   _loadURL(url, openUILinkWhere, params) {
     let browser = this.window.gBrowser.selectedBrowser;
 
-    // TODO: These should probably be set by the input field.
-    // this.value = url;
-    // browser.userTypedValue = url;
+    this.value = url;
+    browser.userTypedValue = url;
+
     if (this.window.gInitialPages.includes(url)) {
       browser.initialPageLoadedFromUserAction = url;
     }
@@ -808,6 +816,14 @@ class UrlbarInput {
       // Things may go wrong when adding url to session history,
       // but don't let that interfere with the loading of the url.
       Cu.reportError(ex);
+    }
+
+    // Reset DOS mitigations for the basic auth prompt.
+    // TODO: When bug 1498553 is resolved, we should be able to
+    // remove the !triggeringPrincipal condition here.
+    if (!params.triggeringPrincipal ||
+        params.triggeringPrincipal.isSystemPrincipal) {
+      delete browser.canceledAuthenticationPromptCounter;
     }
 
     params.allowThirdPartyFixup = true;
@@ -985,6 +1001,26 @@ class UrlbarInput {
       return;
     }
 
+    // During composition with an IME, the following events happen in order:
+    // 1. a compositionstart event
+    // 2. some input events
+    // 3. a compositionend event
+    // 4. an input event
+
+    // We should do nothing during composition.
+    if (this._compositionState == UrlbarUtils.COMPOSITION.COMPOSING) {
+      return;
+    }
+
+    if (this._compositionState == UrlbarUtils.COMPOSITION.COMMIT) {
+      this._compositionState = UrlbarUtils.COMPOSITION.NONE;
+    }
+
+    // Note: if in the future we should re-implement the legacy optimization
+    // where we didn't search again when the string is the same, skip it if we
+    // are committing a composition; since the search was canceled on
+    // composition start, we should restart it.
+
     // XXX Fill in lastKey, and add anything else we need.
     this.startQuery({
       lastKey: null,
@@ -1071,7 +1107,7 @@ class UrlbarInput {
   }
 
   _on_TabSelect(event) {
-    this.controller.tabContextChanged();
+    this.controller.viewContextChanged();
   }
 
   _on_keydown(event) {
@@ -1081,6 +1117,26 @@ class UrlbarInput {
 
   _on_keyup(event) {
     this._toggleActionOverride(event);
+  }
+
+  _on_compositionstart(event) {
+    if (this._compositionState == UrlbarUtils.COMPOSITION.COMPOSING) {
+      throw new Error("Trying to start a nested composition?");
+    }
+    this._compositionState = UrlbarUtils.COMPOSITION.COMPOSING;
+
+    // Close the view. This will also stop searching.
+    this.closePopup();
+  }
+
+  _on_compositionend(event) {
+    if (this._compositionState != UrlbarUtils.COMPOSITION.COMPOSING) {
+      throw new Error("Trying to stop a non existing composition?");
+    }
+
+    // We can't yet retrieve the committed value from the editor, since it isn't
+    // completely committed yet. We'll handle it at the next input event.
+    this._compositionState = UrlbarUtils.COMPOSITION.COMMIT;
   }
 
   _on_popupshowing() {

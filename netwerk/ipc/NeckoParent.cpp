@@ -14,7 +14,6 @@
 #include "mozilla/net/NeckoParent.h"
 #include "mozilla/net/HttpChannelParent.h"
 #include "mozilla/net/CookieServiceParent.h"
-#include "mozilla/net/WyciwygChannelParent.h"
 #include "mozilla/net/FTPChannelParent.h"
 #include "mozilla/net/WebSocketChannelParent.h"
 #include "mozilla/net/WebSocketEventListenerParent.h"
@@ -427,18 +426,6 @@ bool NeckoParent::DeallocPCookieServiceParent(PCookieServiceParent* cs) {
   return true;
 }
 
-PWyciwygChannelParent* NeckoParent::AllocPWyciwygChannelParent() {
-  WyciwygChannelParent* p = new WyciwygChannelParent();
-  p->AddRef();
-  return p;
-}
-
-bool NeckoParent::DeallocPWyciwygChannelParent(PWyciwygChannelParent* channel) {
-  WyciwygChannelParent* p = static_cast<WyciwygChannelParent*>(channel);
-  p->Release();
-  return true;
-}
-
 PWebSocketParent* NeckoParent::AllocPWebSocketParent(
     const PBrowserOrId& browser, const SerializedLoadContext& serialized,
     const uint32_t& aSerial) {
@@ -632,9 +619,9 @@ mozilla::ipc::IPCResult NeckoParent::RecvSpeculativeConnect(
   nsCOMPtr<nsIPrincipal> principal(aPrincipal);
   if (uri && speculator) {
     if (aAnonymous) {
-      speculator->SpeculativeAnonymousConnect2(uri, principal, nullptr);
+      speculator->SpeculativeAnonymousConnect(uri, principal, nullptr);
     } else {
-      speculator->SpeculativeConnect2(uri, principal, nullptr);
+      speculator->SpeculativeConnect(uri, principal, nullptr);
     }
   }
   return IPC_OK();

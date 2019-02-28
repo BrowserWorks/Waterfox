@@ -97,7 +97,7 @@ class ModuleSharedContext;
  */
 class SharedContext {
  public:
-  JSContext* const context;
+  JSContext* const cx_;
 
  protected:
   enum class Kind : uint8_t { FunctionBox, Global, Eval, Module };
@@ -155,7 +155,7 @@ class SharedContext {
  public:
   SharedContext(JSContext* cx, Kind kind, Directives directives,
                 bool extraWarnings)
-      : context(cx),
+      : cx_(cx),
         kind_(kind),
         thisBinding_(ThisBinding::Global),
         strictScript(directives.strict()),
@@ -477,6 +477,7 @@ class FunctionBox : public ObjectBox, public SharedContext {
   bool needsFinalYield() const { return isGenerator() || isAsync(); }
   bool needsDotGeneratorName() const { return isGenerator() || isAsync(); }
   bool needsIteratorResult() const { return isGenerator(); }
+  bool needsPromiseResult() const { return isAsync() && !isGenerator(); }
 
   bool isArrow() const { return function()->isArrow(); }
 

@@ -50,6 +50,7 @@
 #include "frontend/TryEmitter.h"
 #include "frontend/WhileEmitter.h"
 #include "js/CompileOptions.h"
+#include "vm/AsyncFunction.h"
 #include "vm/BytecodeUtil.h"
 #include "vm/Debugger.h"
 #include "vm/GeneratorObject.h"
@@ -93,48 +94,25 @@ BytecodeEmitter::BytecodeEmitter(BytecodeEmitter* parent, SharedContext* sc,
                                  Handle<LazyScript*> lazyScript,
                                  uint32_t lineNum, EmitterMode emitterMode)
     : sc(sc),
-      cx(sc->context),
+      cx(sc->cx_),
       parent(parent),
       script(cx, script),
       lazyScript(cx, lazyScript),
       code_(cx),
       notes_(cx),
-      lastNoteOffset_(0),
       currentLine_(lineNum),
-      lastColumn_(0),
-      lastSeparatorOffet_(0),
-      lastSeparatorLine_(0),
-      lastSeparatorColumn_(0),
-      mainOffset_(),
-      lastTarget{-1 - ptrdiff_t(JSOP_JUMPTARGET_LENGTH)},
-      parser(nullptr),
       atomIndices(cx->frontendCollectionPool()),
       firstLine(lineNum),
-      maxFixedSlots(0),
-      maxStackDepth(0),
-      stackDepth(0),
-      bodyScopeIndex(UINT32_MAX),
-      varEmitterScope(nullptr),
-      innermostNestableControl(nullptr),
-      innermostEmitterScope_(nullptr),
-      innermostTDZCheckCache(nullptr),
-#ifdef DEBUG
-      unstableEmitterScope(false),
-#endif
+      fieldInitializers_(parent
+                             ? parent->fieldInitializers_
+                             : lazyScript ? lazyScript->getFieldInitializers()
+                                          : FieldInitializers::Invalid()),
       numberList(cx),
       scopeList(cx),
       tryNoteList(cx),
       scopeNoteList(cx),
       resumeOffsetList(cx),
-      numICEntries(0),
-      numYields(0),
-      typesetCount(0),
-      hasSingletons(false),
-      hasTryFinally(false),
-      emittingRunOnceLambda(false),
-      emitterMode(emitterMode),
-      scriptStartOffsetSet(false),
-      functionBodyEndPosSet(false) {
+      emitterMode(emitterMode) {
   MOZ_ASSERT_IF(emitterMode == LazyFunction, lazyScript);
 
   if (sc->isFunctionBox()) {
@@ -1501,7 +1479,7 @@ restart:
     case ParseNodeKind::ExportBatchSpecStmt:  // by ParseNodeKind::Export
     case ParseNodeKind::ExportSpecList:       // by ParseNodeKind::Export
     case ParseNodeKind::ExportSpec:           // by ParseNodeKind::Export
-    case ParseNodeKind::CallSiteObjExpr:   // by ParseNodeKind::TaggedTemplate
+    case ParseNodeKind::CallSiteObj:       // by ParseNodeKind::TaggedTemplate
     case ParseNodeKind::PosHolder:         // by ParseNodeKind::NewTarget
     case ParseNodeKind::SuperBase:         // by ParseNodeKind::Elem and others
     case ParseNodeKind::PropertyNameExpr:  // by ParseNodeKind::Dot
@@ -1618,8 +1596,7 @@ void BytecodeEmitter::reportNeedMoreArgsError(ParseNode* pn,
 }
 
 void BytecodeEmitter::reportError(ParseNode* pn, unsigned errorNumber, ...) {
-  MOZ_ASSERT_IF(!pn, this->scriptStartOffsetSet);
-  uint32_t offset = pn ? pn->pn_pos.begin : this->scriptStartOffset;
+  uint32_t offset = pn ? pn->pn_pos.begin : *scriptStartOffset;
 
   va_list args;
   va_start(args, errorNumber);
@@ -1632,8 +1609,7 @@ void BytecodeEmitter::reportError(ParseNode* pn, unsigned errorNumber, ...) {
 
 void BytecodeEmitter::reportError(const Maybe<uint32_t>& maybeOffset,
                                   unsigned errorNumber, ...) {
-  MOZ_ASSERT_IF(!maybeOffset, this->scriptStartOffsetSet);
-  uint32_t offset = maybeOffset ? *maybeOffset : this->scriptStartOffset;
+  uint32_t offset = maybeOffset ? *maybeOffset : *scriptStartOffset;
 
   va_list args;
   va_start(args, errorNumber);
@@ -1646,8 +1622,7 @@ void BytecodeEmitter::reportError(const Maybe<uint32_t>& maybeOffset,
 
 bool BytecodeEmitter::reportExtraWarning(ParseNode* pn, unsigned errorNumber,
                                          ...) {
-  MOZ_ASSERT_IF(!pn, this->scriptStartOffsetSet);
-  uint32_t offset = pn ? pn->pn_pos.begin : this->scriptStartOffset;
+  uint32_t offset = pn ? pn->pn_pos.begin : *scriptStartOffset;
 
   va_list args;
   va_start(args, errorNumber);
@@ -1661,8 +1636,7 @@ bool BytecodeEmitter::reportExtraWarning(ParseNode* pn, unsigned errorNumber,
 
 bool BytecodeEmitter::reportExtraWarning(const Maybe<uint32_t>& maybeOffset,
                                          unsigned errorNumber, ...) {
-  MOZ_ASSERT_IF(!maybeOffset, this->scriptStartOffsetSet);
-  uint32_t offset = maybeOffset ? *maybeOffset : this->scriptStartOffset;
+  uint32_t offset = maybeOffset ? *maybeOffset : *scriptStartOffset;
 
   va_list args;
   va_start(args, errorNumber);
@@ -2238,9 +2212,9 @@ bool BytecodeEmitter::allocateResumeIndex(ptrdiff_t offset,
   static constexpr uint32_t MaxResumeIndex = JS_BITMASK(24);
 
   static_assert(
-      MaxResumeIndex < uint32_t(GeneratorObject::RESUME_INDEX_CLOSING),
-      "resumeIndex should not include magic GeneratorObject resumeIndex "
-      "values");
+      MaxResumeIndex < uint32_t(AbstractGeneratorObject::RESUME_INDEX_CLOSING),
+      "resumeIndex should not include magic AbstractGeneratorObject "
+      "resumeIndex values");
   static_assert(
       MaxResumeIndex <= INT32_MAX / sizeof(uintptr_t),
       "resumeIndex * sizeof(uintptr_t) must fit in an int32. JIT code relies "
@@ -2473,6 +2447,61 @@ bool BytecodeEmitter::emitScript(ParseNode* body) {
   }
 
   tellDebuggerAboutCompiledScript(cx);
+
+  return true;
+}
+
+bool BytecodeEmitter::emitInitializeInstanceFields() {
+  FieldInitializers fieldInfo = this->fieldInitializers_;
+  MOZ_ASSERT(fieldInfo.valid);
+  size_t numFields = fieldInfo.numFieldInitializers;
+
+  if (numFields == 0) {
+    return true;
+  }
+
+  if (!emitGetName(cx->names().dotInitializers)) {
+    //              [stack] ARRAY
+    return false;
+  }
+
+  for (size_t fieldIndex = 0; fieldIndex < numFields; fieldIndex++) {
+    if (fieldIndex < numFields - 1) {
+      // We DUP to keep the array around (it is consumed in the bytecode below)
+      // for next iterations of this loop, except for the last iteration, which
+      // avoids an extra POP at the end of the loop.
+      if (!emit1(JSOP_DUP)) {
+        //          [stack] ARRAY ARRAY
+        return false;
+      }
+    }
+
+    if (!emitNumberOp(fieldIndex)) {
+      //            [stack] ARRAY? ARRAY INDEX
+      return false;
+    }
+
+    if (!emit1(JSOP_CALLELEM)) {
+      //            [stack] ARRAY? FUNC
+      return false;
+    }
+
+    // This is guaranteed to run after super(), so we don't need TDZ checks.
+    if (!emitGetName(cx->names().dotThis)) {
+      //            [stack] ARRAY? FUNC THIS
+      return false;
+    }
+
+    if (!emitCall(JSOP_CALL_IGNORES_RV, 0)) {
+      //            [stack] ARRAY? RVAL
+      return false;
+    }
+
+    if (!emit1(JSOP_POP)) {
+      //            [stack] ARRAY?
+      return false;
+    }
+  }
 
   return true;
 }
@@ -3170,30 +3199,15 @@ bool BytecodeEmitter::emitAnonymousFunctionWithComputedName(
 
   if (node->is<FunctionNode>()) {
     if (!emitTree(node)) {
-      //            [stack] # !isAsync || !needsHomeObject
       //            [stack] NAME FUN
-      //            [stack] # isAsync && needsHomeObject
-      //            [stack] NAME UNWRAPPED WRAPPED
       return false;
     }
-    unsigned depth = 1;
-    FunctionNode* funNode = &node->as<FunctionNode>();
-    FunctionBox* funbox = funNode->funbox();
-    if (funbox->isAsync() && funbox->needsHomeObject()) {
-      depth = 2;
-    }
-    if (!emitDupAt(depth)) {
-      //            [stack] # !isAsync || !needsHomeObject
+    if (!emitDupAt(1)) {
       //            [stack] NAME FUN NAME
-      //            [stack] # isAsync && needsHomeObject
-      //            [stack] NAME UNWRAPPED WRAPPED NAME
       return false;
     }
     if (!emit2(JSOP_SETFUNNAME, uint8_t(prefixKind))) {
-      //            [stack] # !isAsync || !needsHomeObject
       //            [stack] NAME FUN
-      //            [stack] # isAsync && needsHomeObject
-      //            [stack] NAME UNWRAPPED WRAPPED
       return false;
     }
     return true;
@@ -4426,7 +4440,7 @@ bool ParseNode::getConstantValue(JSContext* cx,
     case ParseNodeKind::RawUndefinedExpr:
       vp.setUndefined();
       return true;
-    case ParseNodeKind::CallSiteObjExpr:
+    case ParseNodeKind::CallSiteObj:
     case ParseNodeKind::ArrayExpr: {
       unsigned count;
       ParseNode* pn;
@@ -4442,7 +4456,7 @@ bool ParseNode::getConstantValue(JSContext* cx,
         allowObjects = DontAllowObjects;
       }
 
-      if (getKind() == ParseNodeKind::CallSiteObjExpr) {
+      if (getKind() == ParseNodeKind::CallSiteObj) {
         count = as<CallSiteNode>().count() - 1;
         pn = as<CallSiteNode>().head()->pn_next;
       } else {
@@ -5779,11 +5793,6 @@ MOZ_NEVER_INLINE bool BytecodeEmitter::emitFunction(FunctionNode* funNode,
     // JSOP_LAMBDA_ARROW is always preceded by a new.target
     MOZ_ASSERT(fun->isArrow() ==
                (funNode->syntaxKind() == FunctionSyntaxKind::Arrow));
-    if (funbox->isAsync()) {
-      MOZ_ASSERT(!needsProto);
-      return emitAsyncWrapper(index, funbox->needsHomeObject(), fun->isArrow(),
-                              fun->isGenerator());
-    }
 
     if (fun->isArrow()) {
       if (sc->allowNewTarget()) {
@@ -5839,15 +5848,8 @@ MOZ_NEVER_INLINE bool BytecodeEmitter::emitFunction(FunctionNode* funNode,
       MOZ_ASSERT(sc->isGlobalContext() || sc->isEvalContext());
       MOZ_ASSERT(funNode->syntaxKind() == FunctionSyntaxKind::Statement);
       MOZ_ASSERT(inPrologue());
-      if (funbox->isAsync()) {
-        if (!emitAsyncWrapper(index, fun->isMethod(), fun->isArrow(),
-                              fun->isGenerator())) {
-          return false;
-        }
-      } else {
-        if (!emitIndex32(JSOP_LAMBDA, index)) {
-          return false;
-        }
+      if (!emitIndex32(JSOP_LAMBDA, index)) {
+        return false;
       }
       if (!emit1(JSOP_DEFFUN)) {
         return false;
@@ -5861,15 +5863,8 @@ MOZ_NEVER_INLINE bool BytecodeEmitter::emitFunction(FunctionNode* funNode,
     if (!noe.prepareForRhs()) {
       return false;
     }
-    if (funbox->isAsync()) {
-      if (!emitAsyncWrapper(index, /* needsHomeObject = */ false,
-                            /* isArrow = */ false, funbox->isGenerator())) {
-        return false;
-      }
-    } else {
-      if (!emitIndexOp(JSOP_LAMBDA, index)) {
-        return false;
-      }
+    if (!emitIndexOp(JSOP_LAMBDA, index)) {
+      return false;
     }
     if (!noe.emitAssignment()) {
       return false;
@@ -5879,77 +5874,6 @@ MOZ_NEVER_INLINE bool BytecodeEmitter::emitFunction(FunctionNode* funNode,
     }
   }
 
-  return true;
-}
-
-bool BytecodeEmitter::emitAsyncWrapperLambda(unsigned index, bool isArrow) {
-  if (isArrow) {
-    if (sc->allowNewTarget()) {
-      if (!emit1(JSOP_NEWTARGET)) {
-        return false;
-      }
-    } else {
-      if (!emit1(JSOP_NULL)) {
-        return false;
-      }
-    }
-    if (!emitIndex32(JSOP_LAMBDA_ARROW, index)) {
-      return false;
-    }
-  } else {
-    if (!emitIndex32(JSOP_LAMBDA, index)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-bool BytecodeEmitter::emitAsyncWrapper(unsigned index, bool needsHomeObject,
-                                       bool isArrow, bool isGenerator) {
-  // needsHomeObject can be true for propertyList for extended class.
-  // In that case push both unwrapped and wrapped function, in order to
-  // initialize home object of unwrapped function, and set wrapped function
-  // as a property.
-  //
-  //   lambda       // unwrapped
-  //   dup          // unwrapped unwrapped
-  //   toasync      // unwrapped wrapped
-  //
-  // Emitted code is surrounded by the following code.
-  //
-  //                    // classObj classCtor classProto
-  //   (emitted code)   // classObj classCtor classProto unwrapped wrapped
-  //   swap             // classObj classCtor classProto wrapped unwrapped
-  //   dupat 2          // classObj classCtor classProto wrapped unwrapped
-  //   classProto inithomeobject   // classObj classCtor classProto wrapped
-  //   unwrapped
-  //                    //   initialize the home object of unwrapped
-  //                    //   with classProto here
-  //   pop              // classObj classCtor classProto wrapped
-  //   inithiddenprop   // classObj classCtor classProto wrapped
-  //                    //   initialize the property of the classProto
-  //                    //   with wrapped function here
-  //   pop              // classObj classCtor classProto
-  //
-  // needsHomeObject is false for other cases, push wrapped function only.
-  if (!emitAsyncWrapperLambda(index, isArrow)) {
-    return false;
-  }
-  if (needsHomeObject) {
-    if (!emit1(JSOP_DUP)) {
-      return false;
-    }
-  }
-  if (isGenerator) {
-    if (!emit1(JSOP_TOASYNCGEN)) {
-      return false;
-    }
-  } else {
-    if (!emit1(JSOP_TOASYNC)) {
-      return false;
-    }
-  }
   return true;
 }
 
@@ -6153,9 +6077,7 @@ bool BytecodeEmitter::emitReturn(UnaryNode* returnNode) {
       return false;
     }
 
-    bool isAsyncGenerator =
-        sc->asFunctionBox()->isAsync() && sc->asFunctionBox()->isGenerator();
-    if (isAsyncGenerator) {
+    if (sc->asFunctionBox()->isAsync() && sc->asFunctionBox()->isGenerator()) {
       if (!emitAwaitInInnermostScope()) {
         return false;
       }
@@ -6176,8 +6098,7 @@ bool BytecodeEmitter::emitReturn(UnaryNode* returnNode) {
   // We know functionBodyEndPos is set because "return" is only
   // valid in a function, and so we've passed through
   // emitFunctionScript.
-  MOZ_ASSERT(functionBodyEndPosSet);
-  if (!updateSourceCoordNotes(functionBodyEndPos)) {
+  if (!updateSourceCoordNotes(*functionBodyEndPos)) {
     return false;
   }
 
@@ -6224,6 +6145,28 @@ bool BytecodeEmitter::emitReturn(UnaryNode* returnNode) {
     // all nested scopes.
     NameLocation loc = *locationOfNameBoundInFunctionScope(
         cx->names().dotGenerator, varEmitterScope);
+
+    // Resolve the return value before emitting the final yield.
+    if (sc->asFunctionBox()->needsPromiseResult()) {
+      if (!emit1(JSOP_GETRVAL)) {
+        //          [stack] RVAL
+        return false;
+      }
+      if (!emitGetNameAtLocation(cx->names().dotGenerator, loc)) {
+        //          [stack] RVAL GEN
+        return false;
+      }
+      if (!emit2(JSOP_ASYNCRESOLVE,
+                 uint8_t(AsyncFunctionResolveKind::Fulfill))) {
+        //          [stack] PROMISE
+        return false;
+      }
+      if (!emit1(JSOP_SETRVAL)) {
+        //          [stack]
+        return false;
+      }
+    }
+
     if (!emitGetNameAtLocation(cx->names().dotGenerator, loc)) {
       return false;
     }
@@ -6291,8 +6234,7 @@ bool BytecodeEmitter::emitYield(UnaryNode* yieldNode) {
   }
 
   // 11.4.3.7 AsyncGeneratorYield step 5.
-  bool isAsyncGenerator = sc->asFunctionBox()->isAsync();
-  if (isAsyncGenerator) {
+  if (sc->asFunctionBox()->isAsync()) {
     if (!emitAwaitInInnermostScope()) {
       //            [stack] ITEROBJ RESULT
       return false;
@@ -6346,8 +6288,19 @@ bool BytecodeEmitter::emitAwaitInScope(EmitterScope& currentScope) {
     return false;
   }
 
+  if (sc->asFunctionBox()->needsPromiseResult()) {
+    if (!emitGetDotGeneratorInScope(currentScope)) {
+      //            [stack] VALUE GENERATOR
+      return false;
+    }
+    if (!emit1(JSOP_ASYNCAWAIT)) {
+      //            [stack] PROMISE
+      return false;
+    }
+  }
+
   if (!emitGetDotGeneratorInScope(currentScope)) {
-    //              [stack] VALUE GENERATOR
+    //              [stack] VALUE|PROMISE GENERATOR
     return false;
   }
   if (!emitYieldOp(JSOP_AWAIT)) {
@@ -7145,8 +7098,8 @@ bool BytecodeEmitter::emitSelfHostedResumeGenerator(BinaryNode* callNode) {
 
   ParseNode* kindNode = valNode->pn_next;
   MOZ_ASSERT(kindNode->isKind(ParseNodeKind::StringExpr));
-  uint16_t operand =
-      GeneratorObject::getResumeKind(cx, kindNode->as<NameNode>().atom());
+  uint16_t operand = AbstractGeneratorObject::getResumeKind(
+      cx, kindNode->as<NameNode>().atom());
   MOZ_ASSERT(!kindNode->pn_next);
 
   if (!emitCall(JSOP_RESUME, operand)) {
@@ -7764,10 +7717,18 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
                                        PropListType type) {
   //                [stack] CTOR? OBJ
 
+  size_t numFields = 0;
   for (ParseNode* propdef : obj->contents()) {
     if (propdef->is<ClassField>()) {
-      // TODO(khyperia): Implement private field access.
-      return false;
+      // Skip over class fields and emit them at the end.  This is needed
+      // because they're all emitted into a single array, which is then stored
+      // into a private slot.
+      FunctionNode* initializer = &propdef->as<ClassField>().initializer();
+      // Don't include fields without initializers.
+      if (initializer != nullptr) {
+        numFields++;
+      }
+      continue;
     }
 
     // Handle __proto__: v specially because *only* this form, and no other
@@ -7864,10 +7825,12 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
 
       if (propVal->is<FunctionNode>() &&
           propVal->as<FunctionNode>().funbox()->needsHomeObject()) {
-        FunctionBox* funbox = propVal->as<FunctionNode>().funbox();
-        MOZ_ASSERT(funbox->function()->allowSuperProperty());
+        MOZ_ASSERT(propVal->as<FunctionNode>()
+                       .funbox()
+                       ->function()
+                       ->allowSuperProperty());
 
-        if (!pe.emitInitHomeObject(funbox->asyncKind())) {
+        if (!pe.emitInitHomeObject()) {
           //        [stack] CTOR? OBJ CTOR? KEY? FUN
           return false;
         }
@@ -8013,6 +7976,55 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
         break;
       default:
         MOZ_CRASH("Invalid op");
+    }
+  }
+
+  if (numFields > 0) {
+    // .initializers is a variable that stores an array of lambdas containing
+    // code (the initializer) for each field. Upon an object's construction,
+    // these lambdas will be called, defining the values.
+
+    NameOpEmitter noe(this, cx->names().dotInitializers,
+                      NameOpEmitter::Kind::Initialize);
+    if (!noe.prepareForRhs()) {
+      return false;
+    }
+
+    if (!emitUint32Operand(JSOP_NEWARRAY, numFields)) {
+      //            [stack] CTOR? OBJ ARRAY
+      return false;
+    }
+
+    size_t curFieldIndex = 0;
+    for (ParseNode* propdef : obj->contents()) {
+      if (propdef->is<ClassField>()) {
+        FunctionNode* initializer = &propdef->as<ClassField>().initializer();
+        if (initializer == nullptr) {
+          continue;
+        }
+
+        if (!emitTree(initializer)) {
+          //        [stack] CTOR? OBJ ARRAY LAMBDA
+          return false;
+        }
+
+        if (!emitUint32Operand(JSOP_INITELEM_ARRAY, curFieldIndex)) {
+          //        [stack] CTOR? OBJ ARRAY
+          return false;
+        }
+
+        curFieldIndex++;
+      }
+    }
+
+    if (!noe.emitAssignment()) {
+      //            [stack] CTOR? OBJ ARRAY
+      return false;
+    }
+
+    if (!emit1(JSOP_POP)) {
+      //            [stack] CTOR? OBJ
+      return false;
     }
   }
   return true;
@@ -8393,6 +8405,18 @@ bool BytecodeEmitter::emitFunctionFormalParameters(ListNode* paramsBody) {
   bool hasParameterExprs = funbox->hasParameterExprs;
   bool hasRest = funbox->hasRest();
 
+  // Parameters can't reuse the reject try-catch block from the function body,
+  // because the body may have pushed an additional var-environment. This
+  // messes up scope resolution for the |.generator| variable, because we'd
+  // need different hops to reach |.generator| depending on whether the error
+  // was thrown from the parameters or the function body.
+  Maybe<TryEmitter> rejectTryCatch;
+  if (hasParameterExprs && funbox->needsPromiseResult()) {
+    if (!emitAsyncFunctionRejectPrologue(rejectTryCatch)) {
+      return false;
+    }
+  }
+
   uint16_t argSlot = 0;
   for (ParseNode* arg = paramsBody->head(); arg != funBody;
        arg = arg->pn_next, argSlot++) {
@@ -8504,6 +8528,12 @@ bool BytecodeEmitter::emitFunctionFormalParameters(ListNode* paramsBody) {
     }
   }
 
+  if (rejectTryCatch) {
+    if (!emitAsyncFunctionRejectEpilogue(*rejectTryCatch)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -8551,11 +8581,33 @@ bool BytecodeEmitter::emitInitializeFunctionSpecialNames() {
     }
   }
 
+  // Do nothing if the function doesn't implicitly return a promise result.
+  if (funbox->needsPromiseResult()) {
+    if (!emitInitializeFunctionSpecialName(this, cx->names().dotGenerator,
+                                           JSOP_GENERATOR)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
 bool BytecodeEmitter::emitFunctionBody(ParseNode* funBody) {
   FunctionBox* funbox = sc->asFunctionBox();
+
+  Maybe<TryEmitter> rejectTryCatch;
+  if (funbox->needsPromiseResult()) {
+    if (!emitAsyncFunctionRejectPrologue(rejectTryCatch)) {
+      return false;
+    }
+  }
+
+  if (funbox->function()->kind() ==
+      JSFunction::FunctionKind::ClassConstructor) {
+    if (!emitInitializeInstanceFields()) {
+      return false;
+    }
+  }
 
   if (!emitTree(funBody)) {
     return false;
@@ -8576,6 +8628,19 @@ bool BytecodeEmitter::emitFunctionBody(ParseNode* funBody) {
 
     if (needsIteratorResult) {
       if (!emitFinishIteratorResult(true)) {
+        return false;
+      }
+    }
+
+    if (funbox->needsPromiseResult()) {
+      if (!emitGetDotGeneratorInInnermostScope()) {
+        //          [stack] RVAL GEN
+        return false;
+      }
+
+      if (!emit2(JSOP_ASYNCRESOLVE,
+                 uint8_t(AsyncFunctionResolveKind::Fulfill))) {
+        //          [stack] PROMISE
         return false;
       }
     }
@@ -8614,6 +8679,12 @@ bool BytecodeEmitter::emitFunctionBody(ParseNode* funBody) {
     }
   }
 
+  if (rejectTryCatch) {
+    if (!emitAsyncFunctionRejectEpilogue(*rejectTryCatch)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -8639,26 +8710,77 @@ bool BytecodeEmitter::emitLexicalInitialization(JSAtom* name) {
   return true;
 }
 
+bool BytecodeEmitter::emitAsyncFunctionRejectPrologue(
+    Maybe<TryEmitter>& tryCatch) {
+  tryCatch.emplace(this, TryEmitter::Kind::TryCatch,
+                   TryEmitter::ControlKind::NonSyntactic);
+  return tryCatch->emitTry();
+}
+
+bool BytecodeEmitter::emitAsyncFunctionRejectEpilogue(TryEmitter& tryCatch) {
+  if (!tryCatch.emitCatch()) {
+    return false;
+  }
+
+  if (!emit1(JSOP_EXCEPTION)) {
+    //              [stack] EXC
+    return false;
+  }
+  if (!emitGetDotGeneratorInInnermostScope()) {
+    //              [stack] EXC GEN
+    return false;
+  }
+  if (!emit2(JSOP_ASYNCRESOLVE, uint8_t(AsyncFunctionResolveKind::Reject))) {
+    //              [stack] PROMISE
+    return false;
+  }
+  if (!emit1(JSOP_SETRVAL)) {
+    //              [stack]
+    return false;
+  }
+  if (!emitGetDotGeneratorInInnermostScope()) {
+    //              [stack] GEN
+    return false;
+  }
+  if (!emit1(JSOP_FINALYIELDRVAL)) {
+    //              [stack]
+    return false;
+  }
+
+  return tryCatch.emitEnd();
+}
+
 static MOZ_ALWAYS_INLINE FunctionNode* FindConstructor(JSContext* cx,
                                                        ListNode* classMethods) {
   for (ParseNode* mn : classMethods->contents()) {
-    if (mn->is<ClassField>()) {
-      // TODO(khyperia): Implement private field access.
-      continue;
-    }
-
-    ClassMethod& method = mn->as<ClassMethod>();
-    ParseNode& methodName = method.name();
-    if (!method.isStatic() &&
-        (methodName.isKind(ParseNodeKind::ObjectPropertyName) ||
-         methodName.isKind(ParseNodeKind::StringExpr)) &&
-        methodName.as<NameNode>().atom() == cx->names().constructor) {
-      return &method.method();
+    if (mn->is<ClassMethod>()) {
+      ClassMethod& method = mn->as<ClassMethod>();
+      ParseNode& methodName = method.name();
+      if (!method.isStatic() &&
+          (methodName.isKind(ParseNodeKind::ObjectPropertyName) ||
+           methodName.isKind(ParseNodeKind::StringExpr)) &&
+          methodName.as<NameNode>().atom() == cx->names().constructor) {
+        return &method.method();
+      }
     }
   }
 
   return nullptr;
 }
+
+class AutoResetFieldInitializers {
+  BytecodeEmitter* bce;
+  FieldInitializers oldFieldInfo;
+
+ public:
+  AutoResetFieldInitializers(BytecodeEmitter* bce,
+                             FieldInitializers newFieldInfo)
+      : bce(bce), oldFieldInfo(bce->fieldInitializers_) {
+    bce->fieldInitializers_ = newFieldInfo;
+  }
+
+  ~AutoResetFieldInitializers() { bce->fieldInitializers_ = oldFieldInfo; }
+};
 
 // This follows ES6 14.5.14 (ClassDefinitionEvaluation) and ES6 14.5.15
 // (BindingClassDeclarationEvaluation).
@@ -8672,6 +8794,20 @@ bool BytecodeEmitter::emitClass(
   ParseNode* heritageExpression = classNode->heritage();
   ListNode* classMembers = classNode->memberList();
   FunctionNode* constructor = FindConstructor(cx, classMembers);
+
+  // set this->fieldInitializers_
+  size_t numFields = 0;
+  for (ParseNode* propdef : classMembers->contents()) {
+    if (propdef->is<ClassField>()) {
+      FunctionNode* initializer = &propdef->as<ClassField>().initializer();
+      // Don't include fields without initializers.
+      if (initializer != nullptr) {
+        numFields++;
+      }
+    }
+  }
+  FieldInitializers fieldInfo(numFields);
+  AutoResetFieldInitializers _innermostClassAutoReset(this, fieldInfo);
 
   // If |nameKind != ClassNameKind::ComputedName|
   //                [stack]
@@ -9210,7 +9346,7 @@ bool BytecodeEmitter::emitTree(
       MOZ_ASSERT(sc->isModuleContext());
       break;
 
-    case ParseNodeKind::CallSiteObjExpr:
+    case ParseNodeKind::CallSiteObj:
       if (!emitCallSiteObject(&pn->as<CallSiteNode>())) {
         return false;
       }

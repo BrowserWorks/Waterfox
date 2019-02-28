@@ -3043,7 +3043,7 @@ static mozilla::Maybe<JS::StructuredCloneScope> ParseCloneScope(
   return scope;
 }
 
-static bool Serialize(JSContext* cx, unsigned argc, Value* vp) {
+bool js::testingFunc_serialize(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
 
   mozilla::Maybe<JSAutoStructuredCloneBuffer> clonebuf;
@@ -5439,14 +5439,6 @@ JSScript* js::TestingFunctionArgumentToScript(
     }
   }
 
-  // Get unwrapped async function.
-  if (IsWrappedAsyncFunction(fun)) {
-    fun = GetUnwrappedAsyncFunction(fun);
-  }
-  if (IsWrappedAsyncGenerator(fun)) {
-    fun = GetUnwrappedAsyncGenerator(fun);
-  }
-
   if (!fun->isInterpreted()) {
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                               JSMSG_TESTING_SCRIPTS_ONLY);
@@ -6094,7 +6086,7 @@ gc::ZealModeHelpText),
 "  are valuable and should be generally enabled, however they can be very expensive for large\n"
 "  (wasm) programs."),
 
-    JS_FN_HELP("serialize", Serialize, 1, 0,
+    JS_FN_HELP("serialize", testingFunc_serialize, 1, 0,
 "serialize(data, [transferables, [policy]])",
 "  Serialize 'data' using JS_WriteStructuredClone. Returns a structured\n"
 "  clone buffer object. 'policy' may be an options hash. Valid keys:\n"

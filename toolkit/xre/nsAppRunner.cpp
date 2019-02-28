@@ -1669,8 +1669,11 @@ static void RegisterApplicationRestartChanged(const char* aPref, void* aData) {
 
 #  if defined(MOZ_LAUNCHER_PROCESS)
 
+static const char kShieldPrefName[] = "app.shield.optoutstudies.enabled";
+
 static void OnLauncherPrefChanged(const char* aPref, void* aData) {
-  bool prefVal = Preferences::GetBool(PREF_WIN_LAUNCHER_PROCESS_ENABLED, false);
+  bool prefVal = Preferences::GetBool(kShieldPrefName, false) &&
+                 Preferences::GetBool(PREF_WIN_LAUNCHER_PROCESS_ENABLED, false);
 
   mozilla::LauncherRegistryInfo launcherRegInfo;
   mozilla::LauncherVoidResult reflectResult =
@@ -1679,6 +1682,16 @@ static void OnLauncherPrefChanged(const char* aPref, void* aData) {
 }
 
 static void SetupLauncherProcessPref() {
+  // In addition to the launcher pref itself, we also tie the launcher process
+  // state to the SHIELD opt-out pref.
+
+#    if defined(NIGHTLY_BUILD)
+  // On Nightly, fire the callback immediately to ensure the pref is reflected
+  // to the registry and we get immediate enablement of the launcher process
+  // for all users.
+  Preferences::RegisterCallbackAndCall(&OnLauncherPrefChanged, kShieldPrefName);
+#    endif  // defined(NIGHTLY_BUILD)
+
   mozilla::LauncherRegistryInfo launcherRegInfo;
 
   mozilla::LauncherResult<mozilla::LauncherRegistryInfo::EnabledState>
@@ -1697,6 +1710,11 @@ static void SetupLauncherProcessPref() {
 
   Preferences::RegisterCallback(&OnLauncherPrefChanged,
                                 PREF_WIN_LAUNCHER_PROCESS_ENABLED);
+#    if !defined(NIGHTLY_BUILD)
+  // We register for SHIELD notifications, but we don't fire the callback
+  // immediately in the non-Nightly case.
+  Preferences::RegisterCallback(&OnLauncherPrefChanged, kShieldPrefName);
+#    endif  // !defined(NIGHTLY_BUILD)
 }
 
 #  endif  // defined(MOZ_LAUNCHER_PROCESS)
@@ -4375,7 +4393,7 @@ nsresult XREMain::XRE_mainRun() {
 #if defined(XP_WIN)
   RefPtr<mozilla::DllServices> dllServices(mozilla::DllServices::Get());
   auto dllServicesDisable =
-      MakeScopeExit([&dllServices]() { dllServices->Disable(); });
+      MakeScopeExit([&dllServices]() { dllServices->DisableFull(); });
 #endif  // defined(XP_WIN)
 
 #ifdef NS_FUNCTION_TIMER
@@ -4618,10 +4636,14 @@ nsresult XREMain::XRE_mainRun() {
     // after we are sure that we're not restarting
     cmdLine = new nsCommandLine();
 
-    CommandLineServiceMac::SetupMacCommandLine(gArgc, gArgv, false);
-
-    rv = cmdLine->Init(gArgc, gArgv, workingDir,
+    char** tempArgv = static_cast<char**>(malloc(gArgc * sizeof(char*)));
+    for (int i = 0; i < gArgc; i++) {
+      tempArgv[i] = strdup(gArgv[i]);
+    }
+    CommandLineServiceMac::SetupMacCommandLine(gArgc, tempArgv, false);
+    rv = cmdLine->Init(gArgc, tempArgv, workingDir,
                        nsICommandLine::STATE_INITIAL_LAUNCH);
+    free(tempArgv);
     NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
 #endif
 
@@ -4965,10 +4987,13 @@ nsresult XRE_InitCommandLine(int aArgc, char* aArgv[]) {
   recordreplay::parent::InitializeUIProcess(gArgc, gArgv);
 
   const char* path = nullptr;
-  ArgResult ar = CheckArg("greomni", &path);
+  ArgResult ar = CheckArg("greomni", &path,
+                          CheckArgFlag::CheckOSInt | CheckArgFlag::RemoveArg);
   if (ar == ARG_BAD) {
     PR_fprintf(PR_STDERR,
-               "Error: argument --greomni requires a path argument\n");
+               "Error: argument --greomni requires a path argument or the "
+               "--osint argument was specified with the --appomni argument "
+               "which is invalid\n");
     return NS_ERROR_FAILURE;
   }
 
@@ -4981,10 +5006,13 @@ nsresult XRE_InitCommandLine(int aArgc, char* aArgv[]) {
     return rv;
   }
 
-  ar = CheckArg("appomni", &path);
+  ar = CheckArg("appomni", &path,
+                CheckArgFlag::CheckOSInt | CheckArgFlag::RemoveArg);
   if (ar == ARG_BAD) {
     PR_fprintf(PR_STDERR,
-               "Error: argument --appomni requires a path argument\n");
+               "Error: argument --appomni requires a path argument or the "
+               "--osint argument was specified with the --appomni argument "
+               "which is invalid\n");
     return NS_ERROR_FAILURE;
   }
 

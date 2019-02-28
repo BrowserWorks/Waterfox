@@ -270,8 +270,22 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
       thread: this,
     });
 
+    if (request.options.breakpoints) {
+      for (const { location, options } of Object.values(request.options.breakpoints)) {
+        this.setBreakpoint(location, options);
+      }
+    }
+
     this.dbg.addDebuggees();
     this.dbg.enabled = true;
+
+    // Notify the parent that we've finished attaching. If this is a worker
+    // thread which was paused until attaching, this will allow content to
+    // begin executing.
+    if (this._parent.onThreadAttached) {
+      this._parent.onThreadAttached();
+    }
+
     try {
       // Put ourselves in the paused state.
       const packet = this._paused();
@@ -447,6 +461,12 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
 
     if ("skipBreakpoints" in options) {
       this.skipBreakpoints = options.skipBreakpoints;
+    }
+
+    if ("pauseWorkersUntilAttach" in options) {
+      if (this._parent.pauseWorkersUntilAttach) {
+        this._parent.pauseWorkersUntilAttach(options.pauseWorkersUntilAttach);
+      }
     }
 
     Object.assign(this._options, options);
@@ -1104,6 +1124,8 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   },
 
   onSources: function(request) {
+    // FIXME bug 1530699 we should make sure that existing breakpoints are
+    // applied to any sources we find here.
     for (const source of this.dbg.findSources()) {
       this.sources.createSourceActor(source);
     }
@@ -1296,13 +1318,13 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
       return undefined;
     }
 
+    this._state = "paused";
+
     // Clear stepping hooks.
     this.dbg.onEnterFrame = undefined;
     this.dbg.replayingOnPopFrame = undefined;
     this.dbg.onExceptionUnwind = undefined;
     this._clearSteppingHooks();
-
-    this._state = "paused";
 
     // Create the actor pool that will hold the pause actor and its
     // children.
@@ -1724,7 +1746,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
 
   /**
    * A function called when there's a new source from a thread actor's sources.
-   * Emits `newSource` on the target actor.
+   * Emits `newSource` on the thread actor.
    *
    * @param {SourceActor} source
    */
@@ -1734,18 +1756,9 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     // We use executeSoon because we don't want to block those operations
     // by sending packets in the middle of them.
     DevToolsUtils.executeSoon(() => {
-      const type = "newSource";
-      this.conn.send({
-        from: this._parent.actorID,
-        type,
-        source: source.form(),
-      });
-
-      // For compatibility and debugger still using `newSource` on the thread client,
-      // still emit this event here. Clean up in bug 1247084
       this.conn.send({
         from: this.actorID,
-        type,
+        type: "newSource",
         source: source.form(),
       });
     });
@@ -1814,32 +1827,6 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     return true;
   },
 
-  /**
-   * Get prototypes and properties of multiple objects.
-   */
-  onPrototypesAndProperties: function(request) {
-    const result = {};
-    for (const actorID of request.actors) {
-      // This code assumes that there are no lazily loaded actors returned
-      // by this call.
-      const actor = this.conn.getActor(actorID);
-      if (!actor) {
-        return { from: this.actorID,
-                 error: "noSuchActor" };
-      }
-      const handler = actor.prototypeAndProperties;
-      if (!handler) {
-        return { from: this.actorID,
-                 error: "unrecognizedPacketType",
-                 message: ('Actor "' + actorID +
-                           '" does not recognize the packet type ' +
-                           '"prototypeAndProperties"') };
-      }
-      result[actorID] = handler.call(actor, {});
-    }
-    return { from: this.actorID,
-             actors: result };
-  },
 });
 
 Object.assign(ThreadActor.prototype.requestTypes, {
@@ -1854,7 +1841,6 @@ Object.assign(ThreadActor.prototype.requestTypes, {
   "releaseMany": ThreadActor.prototype.onReleaseMany,
   "sources": ThreadActor.prototype.onSources,
   "threadGrips": ThreadActor.prototype.onThreadGrips,
-  "prototypesAndProperties": ThreadActor.prototype.onPrototypesAndProperties,
   "skipBreakpoints": ThreadActor.prototype.onSkipBreakpoints,
 });
 

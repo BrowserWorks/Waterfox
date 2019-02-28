@@ -13,16 +13,25 @@ Services.scriptloader.loadSubScript(
 
 var originalEngine;
 
+var arrayBufferIconTested = false;
+var plainURIIconTested = false;
+
 add_task(async function setup() {
   originalEngine = await Services.search.getDefault();
 
   await SpecialPowers.pushPrefEnv({
-    set: [["browser.newtab.preload", false]],
+    set: [
+      ["browser.newtab.preload", false],
+    ],
   });
 
   await promiseNewEngine("testEngine.xml", {
     setAsCurrent: true,
     testPath: "chrome://mochitests/content/browser/browser/components/search/test/browser/",
+  });
+
+  await promiseNewEngine("testEngine_chromeicon.xml", {
+    setAsCurrent: false,
   });
 
   registerCleanupFunction(async () => {
@@ -40,6 +49,9 @@ add_task(async function GetState() {
     type: "State",
     data: await currentStateObj(),
   });
+
+  ok(arrayBufferIconTested, "ArrayBuffer path for the iconData was tested");
+  ok(plainURIIconTested, "Plain URI path for the iconData was tested");
 });
 
 add_task(async function SetDefaultEngine() {
@@ -157,9 +169,9 @@ add_task(async function badImage() {
   let expectedEngine =
     expectedCurrentState.engines.find(e => e.name == engine.name);
   ok(!!expectedEngine, "Sanity check: engine should be in expected state");
-  ok(expectedEngine.iconBuffer === null,
+  ok(expectedEngine.iconData === null,
      "Sanity check: icon array buffer of engine in expected state " +
-     "should be null: " + expectedEngine.iconBuffer);
+     "should be null: " + expectedEngine.iconData);
   checkMsg(finalCurrentStateMsg, {
     type: "CurrentState",
     data: expectedCurrentState,
@@ -358,7 +370,7 @@ var currentStateObj = async function() {
     let uri = engine.getIconURLBySize(16, 16);
     state.engines.push({
       name: engine.name,
-      iconBuffer: await arrayBufferFromDataURI(uri),
+      iconData: await iconDataFromURI(uri),
       hidden: false,
       identifier: engine.identifier,
     });
@@ -373,14 +385,20 @@ var defaultEngineObj = async function() {
   return {
     name: engine.name,
     placeholder: bundle.formatStringFromName("searchWithEngine", [engine.name], 1),
-    iconBuffer: await arrayBufferFromDataURI(uriFavicon),
+    iconData: await iconDataFromURI(uriFavicon),
   };
 };
 
-function arrayBufferFromDataURI(uri) {
+function iconDataFromURI(uri) {
   if (!uri) {
     return Promise.resolve(null);
   }
+
+  if (!uri.startsWith("data:")) {
+    plainURIIconTested = true;
+    return Promise.resolve(uri);
+  }
+
   return new Promise(resolve => {
     let xhr = new XMLHttpRequest();
     xhr.open("GET", uri, true);
@@ -389,6 +407,7 @@ function arrayBufferFromDataURI(uri) {
       resolve(null);
     };
     xhr.onload = () => {
+      arrayBufferIconTested = true;
       resolve(xhr.response);
     };
     try {

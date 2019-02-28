@@ -10,6 +10,7 @@ var {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
+  E10SUtils: "resource://gre/modules/E10SUtils.jsm",
   SpellCheckHelper: "resource://gre/modules/InlineSpellChecker.jsm",
   LoginHelper: "resource://gre/modules/LoginHelper.jsm",
   LoginManagerContextMenu: "resource://gre/modules/LoginManagerContextMenu.jsm",
@@ -230,6 +231,8 @@ nsContextMenu.prototype = {
 
     // Everything after this isn't sent directly from ContextMenu
     this.ownerDoc = this.target.ownerDocument;
+
+    this.csp = E10SUtils.deserializeCSP(context.csp);
 
     // Remember the CSS selectors corresponding to clicked node. gContextMenuContentData
     // can be null if the menu was triggered by tests in which case use an empty array.
@@ -718,8 +721,9 @@ nsContextMenu.prototype = {
     // don't want to show the form fill option.
     let showFill = loginFillInfo && loginFillInfo.passwordField.found;
 
-    // Disable the fill option if the user has set a master password
+    // Disable the fill option if the user hasn't unlocked with their master password
     // or if the password field or target field are disabled.
+    // XXX: Bug 1529025 to respect signon.rememberSignons
     let disableFill = !loginFillInfo ||
                       !Services.logins ||
                       !Services.logins.isLoggedIn ||
@@ -776,6 +780,7 @@ nsContextMenu.prototype = {
     let params = { charset: gContextMenuContentData.charSet,
                    originPrincipal: this.principal,
                    triggeringPrincipal: this.principal,
+                   csp: this.csp,
                    referrerURI: gContextMenuContentData.documentURIObject,
                    referrerPolicy: gContextMenuContentData.referrerPolicy,
                    frameOuterWindowID: gContextMenuContentData.frameOuterWindowID,
@@ -1101,7 +1106,7 @@ nsContextMenu.prototype = {
     saveAsListener.prototype = {
       extListener: null,
 
-      onStartRequest: function saveLinkAs_onStartRequest(aRequest, aContext) {
+      onStartRequest: function saveLinkAs_onStartRequest(aRequest) {
         // if the timer fired, the error status will have been caused by that,
         // and we'll be restarting in onStopRequest, so no reason to notify
         // the user
@@ -1132,10 +1137,10 @@ nsContextMenu.prototype = {
         this.extListener =
           extHelperAppSvc.doContent(channel.contentType, aRequest,
                                     null, true, window);
-        this.extListener.onStartRequest(aRequest, aContext);
+        this.extListener.onStartRequest(aRequest);
       },
 
-      onStopRequest: function saveLinkAs_onStopRequest(aRequest, aContext,
+      onStopRequest: function saveLinkAs_onStopRequest(aRequest,
                                                        aStatusCode) {
         if (aStatusCode == NS_ERROR_SAVE_LINK_AS_TIMEOUT) {
           // do it the old fashioned way, which will pick the best filename
@@ -1144,13 +1149,13 @@ nsContextMenu.prototype = {
                   doc, isContentWindowPrivate);
         }
         if (this.extListener)
-          this.extListener.onStopRequest(aRequest, aContext, aStatusCode);
+          this.extListener.onStopRequest(aRequest, aStatusCode);
       },
 
-      onDataAvailable: function saveLinkAs_onDataAvailable(aRequest, aContext,
+      onDataAvailable: function saveLinkAs_onDataAvailable(aRequest,
                                                            aInputStream,
                                                            aOffset, aCount) {
-        this.extListener.onDataAvailable(aRequest, aContext, aInputStream,
+        this.extListener.onDataAvailable(aRequest, aInputStream,
                                          aOffset, aCount);
       },
     };

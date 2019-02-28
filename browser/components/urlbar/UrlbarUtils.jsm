@@ -107,6 +107,13 @@ var UrlbarUtils = {
     SEARCH_GLASS: "chrome://browser/skin/search-glass.svg",
   },
 
+  // IME composition states.
+  COMPOSITION: {
+    NONE: 1,
+    COMPOSING: 2,
+    COMMIT: 3,
+  },
+
   /**
    * Adds a url to history as long as it isn't in a private browsing window,
    * and it is valid.
@@ -313,7 +320,7 @@ var UrlbarUtils = {
     try {
       let uri = urlOrEngine instanceof Ci.nsIURI ? urlOrEngine
                                                   : Services.io.newURI(urlOrEngine);
-      Services.io.speculativeConnect2(uri, window.gBrowser.contentPrincipal, null);
+      Services.io.speculativeConnect(uri, window.gBrowser.contentPrincipal, null);
     } catch (ex) {
       // Can't setup speculative connection for this url, just ignore it.
     }

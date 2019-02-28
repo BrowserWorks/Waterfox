@@ -368,6 +368,14 @@ class GlobalObject : public NativeObject {
     return &global->getPrototype(JSProto_Symbol).toObject().as<NativeObject>();
   }
 
+  static NativeObject* getOrCreateBigIntPrototype(
+      JSContext* cx, Handle<GlobalObject*> global) {
+    if (!ensureConstructor(cx, global, JSProto_BigInt)) {
+      return nullptr;
+    }
+    return &global->getPrototype(JSProto_BigInt).toObject().as<NativeObject>();
+  }
+
   static NativeObject* getOrCreatePromisePrototype(
       JSContext* cx, Handle<GlobalObject*> global) {
     if (!ensureConstructor(cx, global, JSProto_Promise)) {
@@ -602,6 +610,14 @@ class GlobalObject : public NativeObject {
       JSContext* cx, Handle<GlobalObject*> global) {
     return MaybeNativeObject(getOrCreateObject(cx, global, ARRAY_ITERATOR_PROTO,
                                                initArrayIteratorProto));
+  }
+
+  NativeObject* maybeGetArrayIteratorPrototype() {
+    Value v = getSlotRef(ARRAY_ITERATOR_PROTO);
+    if (v.isObject()) {
+      return &v.toObject().as<NativeObject>();
+    }
+    return nullptr;
   }
 
   static NativeObject* getOrCreateStringIteratorPrototype(

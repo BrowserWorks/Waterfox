@@ -36,6 +36,7 @@ class nsIDownloadObserver;
 class nsIEventTarget;
 class nsIFileProtocolHandler;
 class nsIFileStream;
+class nsIHttpChannel;
 class nsIInputStream;
 class nsIInputStreamPump;
 class nsIInterfaceRequestor;
@@ -900,9 +901,15 @@ nsresult NS_CompareLoadInfoAndLoadContext(nsIChannel *aChannel);
  * Return default referrer policy which is controlled by user
  * prefs:
  * network.http.referer.defaultPolicy for regular mode
+ * network.http.referer.defaultPolicy.trackers for third-party trackers
+ * in regular mode
  * network.http.referer.defaultPolicy.pbmode for private mode
+ * network.http.referer.defaultPolicy.trackers.pbmode for third-party trackers
+ * in private mode
  */
-uint32_t NS_GetDefaultReferrerPolicy(bool privateBrowsing = false);
+uint32_t NS_GetDefaultReferrerPolicy(nsIHttpChannel *aChannel = nullptr,
+                                     nsIURI *aURI = nullptr,
+                                     bool privateBrowsing = false);
 
 namespace mozilla {
 namespace net {
@@ -946,7 +953,6 @@ bool SchemeIsAbout(nsIURI *aURI);
 bool SchemeIsBlob(nsIURI *aURI);
 bool SchemeIsFile(nsIURI *aURI);
 bool SchemeIsData(nsIURI *aURI);
-bool SchemeIsWYCIWYG(nsIURI *aURI);
 bool SchemeIsViewSource(nsIURI *aURI);
 bool SchemeIsResource(nsIURI *aURI);
 bool SchemeIsFTP(nsIURI *aURI);

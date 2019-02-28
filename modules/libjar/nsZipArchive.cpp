@@ -23,6 +23,7 @@
 #include "mozilla/UniquePtrExtensions.h"
 #include "stdlib.h"
 #include "nsWildCard.h"
+#include "nsXULAppAPI.h"
 #include "nsZipArchive.h"
 #include "nsString.h"
 #include "prenv.h"
@@ -78,6 +79,9 @@ static uint32_t HashName(const char *aName, uint16_t nameLen);
 class ZipArchiveLogger {
  public:
   void Write(const nsACString &zip, const char *entry) const {
+    if (!XRE_IsParentProcess()) {
+      return;
+    }
     if (!fd) {
       char *env = PR_GetEnv("MOZ_JAR_LOG_FILE");
       if (!env) return;
@@ -591,7 +595,11 @@ nsresult nsZipArchive::BuildFileList(PRFileDesc *aFd) {
   const uint8_t *endp = startp + mFd->mLen;
   MOZ_WIN_MEM_TRY_BEGIN
   uint32_t centralOffset = 4;
-  if (mFd->mLen > ZIPCENTRAL_SIZE &&
+  // Only perform readahead in the parent process. Children processes
+  // don't need readahead when the file has already been readahead by
+  // the parent process, and readahead only really happens for omni.ja,
+  // which is used in the parent process.
+  if (XRE_IsParentProcess() && mFd->mLen > ZIPCENTRAL_SIZE &&
       xtolong(startp + centralOffset) == CENTRALSIG) {
     // Success means optimized jar layout from bug 559961 is in effect
     uint32_t readaheadLength = xtolong(startp);
@@ -602,7 +610,25 @@ nsresult nsZipArchive::BuildFileList(PRFileDesc *aFd) {
 #elif defined(XP_UNIX)
       madvise(const_cast<uint8_t *>(startp), readaheadLength, MADV_WILLNEED);
 #elif defined(XP_WIN)
-      if (aFd) {
+      static auto prefetchVirtualMemory =
+          reinterpret_cast<BOOL (WINAPI *)(HANDLE, ULONG_PTR, PVOID, ULONG)>(
+              GetProcAddress(GetModuleHandle(L"kernel32.dll"),
+                             "PrefetchVirtualMemory"));
+      if (prefetchVirtualMemory) {
+        // Normally, we'd use WIN32_MEMORY_RANGE_ENTRY, but that requires
+        // a different _WIN32_WINNT value before including windows.h, but
+        // that causes complications with unified sources. It's a simple
+        // enough struct anyways.
+        struct {
+          PVOID VirtualAddress;
+          SIZE_T NumberOfBytes;
+        } entry;
+        entry.VirtualAddress = const_cast<uint8_t *>(startp);
+        entry.NumberOfBytes = readaheadLength;
+        prefetchVirtualMemory(GetCurrentProcess(), 1, &entry, 0);
+        readaheadLength = 0;
+      }
+      if (readaheadLength && aFd) {
         HANDLE hFile = (HANDLE)PR_FileDesc2NativeHandle(aFd);
         mozilla::ReadAhead(hFile, 0, readaheadLength);
       }

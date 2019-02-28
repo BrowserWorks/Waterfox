@@ -144,8 +144,8 @@ struct LifecycleCallbackArgs;
 struct LifecycleAdoptedCallbackArgs;
 class MessageBroadcaster;
 class NodeInfo;
-class nsIContentChild;
-class nsIContentParent;
+class ContentChild;
+class ContentParent;
 class TabChild;
 class Selection;
 class TabParent;
@@ -218,9 +218,6 @@ class nsContentUtils {
 
  public:
   static nsresult Init();
-
-  // Strip off "wyciwyg://n/" part of a URL. aURI must have "wyciwyg" scheme.
-  static nsresult RemoveWyciwygScheme(nsIURI* aURI, nsIURI** aReturn);
 
   static bool IsCallerChrome();
   static bool ThreadsafeIsCallerChrome();
@@ -761,13 +758,14 @@ class nsContentUtils {
   // If the pref doesn't exist or if it isn't ALLOW_ACTION, false is
   // returned, otherwise true is returned. Always returns true for the
   // system principal, and false for a null principal.
-  static bool IsSitePermAllow(nsIPrincipal* aPrincipal, const char* aType);
+  static bool IsSitePermAllow(nsIPrincipal* aPrincipal,
+                              const nsACString& aType);
 
   // Get a permission-manager setting for the given principal and type.
   // If the pref doesn't exist or if it isn't DENY_ACTION, false is
   // returned, otherwise true is returned. Always returns false for the
   // system principal, and true for a null principal.
-  static bool IsSitePermDeny(nsIPrincipal* aPrincipal, const char* aType);
+  static bool IsSitePermDeny(nsIPrincipal* aPrincipal, const nsACString& aType);
 
   // Get a permission-manager setting for the given principal and type.
   // If the pref doesn't exist or if it isn't ALLOW_ACTION, false is
@@ -775,7 +773,8 @@ class nsContentUtils {
   // system principal, and false for a null principal.
   // This version checks the permission for an exact host match on
   // the principal
-  static bool IsExactSitePermAllow(nsIPrincipal* aPrincipal, const char* aType);
+  static bool IsExactSitePermAllow(nsIPrincipal* aPrincipal,
+                                   const nsACString& aType);
 
   // Get a permission-manager setting for the given principal and type.
   // If the pref doesn't exist or if it isn't DENY_ACTION, false is
@@ -783,7 +782,8 @@ class nsContentUtils {
   // system principal, and true for a null principal.
   // This version checks the permission for an exact host match on
   // the principal
-  static bool IsExactSitePermDeny(nsIPrincipal* aPrincipal, const char* aType);
+  static bool IsExactSitePermDeny(nsIPrincipal* aPrincipal,
+                                  const nsACString& aType);
 
   // Returns true if aDoc1 and aDoc2 have equal NodePrincipal()s.
   static bool HaveEqualPrincipals(Document* aDoc1, Document* aDoc2);
@@ -2830,19 +2830,19 @@ class nsContentUtils {
       const bool& aIsPrivateData, nsIPrincipal* aRequestingPrincipal,
       const nsContentPolicyType& aContentPolicyType,
       nsITransferable* aTransferable,
-      mozilla::dom::nsIContentParent* aContentParent,
+      mozilla::dom::ContentParent* aContentParent,
       mozilla::dom::TabChild* aTabChild);
 
   static void TransferablesToIPCTransferables(
       nsIArray* aTransferables, nsTArray<mozilla::dom::IPCDataTransfer>& aIPC,
-      bool aInSyncMessage, mozilla::dom::nsIContentChild* aChild,
-      mozilla::dom::nsIContentParent* aParent);
+      bool aInSyncMessage, mozilla::dom::ContentChild* aChild,
+      mozilla::dom::ContentParent* aParent);
 
   static void TransferableToIPCTransferable(
       nsITransferable* aTransferable,
       mozilla::dom::IPCDataTransfer* aIPCDataTransfer, bool aInSyncMessage,
-      mozilla::dom::nsIContentChild* aChild,
-      mozilla::dom::nsIContentParent* aParent);
+      mozilla::dom::ContentChild* aChild,
+      mozilla::dom::ContentParent* aParent);
 
   /*
    * Get the pixel data from the given source surface and return it as a buffer.

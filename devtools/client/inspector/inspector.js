@@ -55,7 +55,6 @@ const THREE_PANE_ENABLED_PREF = "devtools.inspector.three-pane-enabled";
 const THREE_PANE_ENABLED_SCALAR = "devtools.inspector.three_pane_enabled";
 const THREE_PANE_CHROME_ENABLED_PREF = "devtools.inspector.chrome.three-pane-enabled";
 const TELEMETRY_EYEDROPPER_OPENED = "devtools.toolbar.eyedropper.opened";
-const TRACK_CHANGES_PREF = "devtools.inspector.changes.enabled";
 
 /**
  * Represents an open instance of the Inspector for a tab.
@@ -153,6 +152,7 @@ Inspector.prototype = {
       this._getPageStyle(),
       this._getDefaultSelection(),
       this._getAccessibilityFront(),
+      this._getChangesFront(),
     ]);
 
     return this._deferredOpen();
@@ -239,17 +239,6 @@ Inspector.prototype = {
   },
 
   /**
-   * Check if the changes panel is enabled and supported by the server.
-   */
-  _supportsChangesPanel() {
-    // The changes actor was introduced in Fx65, we are checking this for backward
-    // compatibility when connecting to an older server. Can be removed once Fx65 hit the
-    // release channel.
-    return this._target.hasActor("changes") &&
-      Services.prefs.getBoolPref(TRACK_CHANGES_PREF);
-  },
-
-  /**
    * Handle promise rejections for various asynchronous actions, and only log errors if
    * the inspector panel still exists.
    * This is useful to silence useless errors that happen when the inspector is closed
@@ -269,14 +258,6 @@ Inspector.prototype = {
     // nodeFront ready when they're initialized.
     if (this._defaultNode) {
       this.selection.setNodeFront(this._defaultNode, { reason: "inspector-open" });
-    }
-
-    if (this._supportsChangesPanel()) {
-      // Get the Changes front, then call a method on it, which will instantiate
-      // the ChangesActor. We want the ChangesActor to be guaranteed available before
-      // the user makes any changes.
-      this.changesFront = await this.toolbox.target.getFront("changes");
-      this.changesFront.start();
     }
 
     // Setup the splitter before the sidebar is displayed so, we don't miss any events.
@@ -332,6 +313,15 @@ Inspector.prototype = {
   _getAccessibilityFront: async function() {
     this.accessibilityFront = await this.target.getFront("accessibility");
     return this.accessibilityFront;
+  },
+
+  _getChangesFront: async function() {
+    // Get the Changes front, then call a method on it, which will instantiate
+    // the ChangesActor. We want the ChangesActor to be guaranteed available before
+    // the user makes any changes.
+    this.changesFront = await this.toolbox.target.getFront("changes");
+    this.changesFront.start();
+    return this.changesFront;
   },
 
   _getDefaultSelection: function() {
@@ -892,6 +882,10 @@ Inspector.prototype = {
         title: INSPECTOR_L10N.getStr("inspector.sidebar.computedViewTitle"),
       },
       {
+        id: "changesview",
+        title: INSPECTOR_L10N.getStr("inspector.sidebar.changesViewTitle"),
+      },
+      {
         id: "fontinspector",
         title: INSPECTOR_L10N.getStr("inspector.sidebar.fontInspectorTitle"),
       },
@@ -900,15 +894,6 @@ Inspector.prototype = {
         title: INSPECTOR_L10N.getStr("inspector.sidebar.animationInspectorTitle"),
       },
     ];
-
-    if (this._supportsChangesPanel()) {
-      // Insert Changes as third tab, right after Computed.
-      // TODO: move this inline to `sidebarPanels` above when addressing Bug 1511877.
-      sidebarPanels.splice(2, 0, {
-        id: "changesview",
-        title: INSPECTOR_L10N.getStr("inspector.sidebar.changesViewTitle"),
-      });
-    }
 
     if (Services.prefs.getBoolPref("devtools.inspector.new-rulesview.enabled")) {
       sidebarPanels.push({

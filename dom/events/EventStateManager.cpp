@@ -976,7 +976,8 @@ bool EventStateManager::CheckIfEventMatchesAccessKey(
 }
 
 bool EventStateManager::LookForAccessKeyAndExecute(
-    nsTArray<uint32_t>& aAccessCharCodes, bool aIsTrustedEvent, bool aExecute) {
+    nsTArray<uint32_t>& aAccessCharCodes, bool aIsTrustedEvent, bool aIsRepeat,
+    bool aExecute) {
   int32_t count, start = -1;
   nsIContent* focusedContent = GetFocusedContent();
   if (focusedContent) {
@@ -1000,6 +1001,11 @@ bool EventStateManager::LookForAccessKeyAndExecute(
           return true;
         }
         bool shouldActivate = Prefs::KeyCausesActivation();
+
+        if (aIsRepeat && nsContentUtils::IsChromeDoc(element->OwnerDoc())) {
+          shouldActivate = false;
+        }
+
         while (shouldActivate && ++count <= length) {
           nsIContent* oc = mAccessKeys[(start + count) % length];
           nsIFrame* of = oc->GetPrimaryFrame();
@@ -1124,7 +1130,7 @@ bool EventStateManager::WalkESMTreeToHandleAccessKey(
       aEvent->ModifiersMatchWithAccessKey(accessKeyType)) {
     // Someone registered an accesskey.  Find and activate it.
     if (LookForAccessKeyAndExecute(aAccessCharCodes, aEvent->IsTrusted(),
-                                   aExecute)) {
+                                   aEvent->mIsRepeat, aExecute)) {
       return true;
     }
   }
@@ -1245,10 +1251,7 @@ void EventStateManager::DispatchCrossProcessEvent(WidgetEvent* aEvent,
     }
     case eDragEventClass: {
       RefPtr<TabParent> tabParent = remote;
-      if (tabParent->Manager()->IsContentParent()) {
-        tabParent->Manager()->AsContentParent()->MaybeInvokeDragSession(
-            tabParent);
-      }
+      tabParent->Manager()->MaybeInvokeDragSession(tabParent);
 
       nsCOMPtr<nsIDragSession> dragSession = nsContentUtils::GetDragSession();
       uint32_t dropEffect = nsIDragService::DRAGDROP_ACTION_NONE;
@@ -5510,14 +5513,10 @@ nsresult EventStateManager::DoContentCommandEvent(
           nsIContent* focusedContent = fm ? fm->GetFocusedElement() : nullptr;
           RefPtr<TabParent> remote = TabParent::GetFrom(focusedContent);
           if (remote) {
-            NS_ENSURE_TRUE(remote->Manager()->IsContentParent(),
-                           NS_ERROR_FAILURE);
-
             nsCOMPtr<nsITransferable> transferable = aEvent->mTransferable;
             IPCDataTransfer ipcDataTransfer;
-            ContentParent* cp = remote->Manager()->AsContentParent();
             nsContentUtils::TransferableToIPCTransferable(
-                transferable, &ipcDataTransfer, false, nullptr, cp);
+                transferable, &ipcDataTransfer, false, nullptr, remote->Manager());
             bool isPrivateData = transferable->GetIsPrivateData();
             nsCOMPtr<nsIPrincipal> requestingPrincipal =
                 transferable->GetRequestingPrincipal();

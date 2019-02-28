@@ -191,8 +191,6 @@ namespace jit {
   _(JSOP_DEBUGGER)              \
   _(JSOP_ARGUMENTS)             \
   _(JSOP_REST)                  \
-  _(JSOP_TOASYNC)               \
-  _(JSOP_TOASYNCGEN)            \
   _(JSOP_TOASYNCITER)           \
   _(JSOP_TOID)                  \
   _(JSOP_TOSTRING)              \
@@ -210,6 +208,8 @@ namespace jit {
   _(JSOP_DEBUGAFTERYIELD)       \
   _(JSOP_FINALYIELDRVAL)        \
   _(JSOP_RESUME)                \
+  _(JSOP_ASYNCAWAIT)            \
+  _(JSOP_ASYNCRESOLVE)          \
   _(JSOP_CALLEE)                \
   _(JSOP_ENVCALLEE)             \
   _(JSOP_SUPERBASE)             \
@@ -377,6 +377,10 @@ class BaselineCodeGen {
   // If |script->hasFlag(flag) == value|, execute the code emitted by |emit|.
   template <typename F>
   MOZ_MUST_USE bool emitTestScriptFlag(JSScript::ImmutableFlags flag,
+                                       bool value, const F& emit,
+                                       Register scratch);
+  template <typename F>
+  MOZ_MUST_USE bool emitTestScriptFlag(JSScript::MutableFlags flag,
                                        bool value, const F& emit,
                                        Register scratch);
 

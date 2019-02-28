@@ -13,7 +13,6 @@ const eventSource = require("devtools/shared/client/event-source");
 const {ThreadStateTypes} = require("devtools/shared/client/constants");
 
 loader.lazyRequireGetter(this, "ArrayBufferClient", "devtools/shared/client/array-buffer-client");
-loader.lazyRequireGetter(this, "EnvironmentClient", "devtools/shared/client/environment-client");
 loader.lazyRequireGetter(this, "LongStringClient", "devtools/shared/client/long-string-client");
 loader.lazyRequireGetter(this, "ObjectClient", "devtools/shared/client/object-client");
 loader.lazyRequireGetter(this, "SourceClient", "devtools/shared/client/source-client");
@@ -25,15 +24,12 @@ const noop = () => {};
  * is a front to the thread actor created in the server side, hiding the
  * protocol details in a traditional JavaScript API.
  *
- * @param client DebuggerClient, WorkerTargetFront or BrowsingContextTargetFront
- *        The parent of the thread (tab for target-scoped debuggers,
- *        DebuggerClient for chrome debuggers).
+ * @param client DebuggerClient
  * @param actor string
  *        The actor ID for this thread.
  */
 function ThreadClient(client, actor) {
-  this._parent = client;
-  this.client = client instanceof DebuggerClient ? client : client.client;
+  this.client = client;
   this._actor = actor;
   this._frameCache = [];
   this._scriptCache = {};
@@ -347,7 +343,6 @@ ThreadClient.prototype = {
   }, {
     after: function(response) {
       this.client.unregisterClient(this);
-      this._parent.thread = null;
       return response;
     },
   }),
@@ -699,13 +694,6 @@ ThreadClient.prototype = {
   }),
 
   /**
-   * Return an EnvironmentClient instance for the given environment actor form.
-   */
-  environment: function(form) {
-    return new EnvironmentClient(this.client, form);
-  },
-
-  /**
    * Return an instance of SourceClient for the given source actor form.
    */
   source: function(form) {
@@ -716,19 +704,6 @@ ThreadClient.prototype = {
     this._threadGrips[form.actor] = new SourceClient(this, form);
     return this._threadGrips[form.actor];
   },
-
-  /**
-   * Request the prototype and own properties of mutlipleObjects.
-   *
-   * @param onResponse function
-   *        Called with the request's response.
-   * @param actors [string]
-   *        List of actor ID of the queried objects.
-   */
-  getPrototypesAndProperties: DebuggerClient.requester({
-    type: "prototypesAndProperties",
-    actors: arg(0),
-  }),
 
   events: ["newSource", "progress"],
 };

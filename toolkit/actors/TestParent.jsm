@@ -4,22 +4,30 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
 var EXPORTED_SYMBOLS = ["TestParent"];
 
 class TestParent extends JSWindowActorParent {
   constructor() {
     super();
+    this.wrappedJSObject = this;
   }
 
   recvAsyncMessage(aMessage) {
     switch (aMessage.name) {
       case "init":
         aMessage.data.initial =  true;
-        this.sendAsyncMessage("Test", "toChild", aMessage.data);
+        this.sendAsyncMessage("toChild", aMessage.data);
         break;
       case "toParent":
         aMessage.data.toParent = true;
-        this.sendAsyncMessage("Test", "done", aMessage.data);
+        this.sendAsyncMessage("done", aMessage.data);
+        break;
+
+      case "event":
+        Services.obs.notifyObservers(
+          this, "test-js-window-actor-parent-event", aMessage.data.type);
         break;
     }
   }

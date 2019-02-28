@@ -264,13 +264,7 @@ about-debugging-worker-push-service =
 # Displayed for runtime info in runtime pages.
 # { $name } is brand name such as "Firefox Nightly"
 # { $version } is version such as "64.0a1"
-about-debugging-runtime-info = { $name } ({ $version })
-
-# Displayed for runtime info in runtime page when we display the device model as well.
-# { $name } is brand name such as "Firefox Nightly"
-# { $version } is version such as "64.0a1"
-# { $deviceName } is model name of device
-about-debugging-runtime-info-with-model = { $name } on { $deviceName } ({ $version })
+about-debugging-runtime-name = { $name } ({ $version })
 
 # Text of the connection prompt button displayed in Runtime pages, when the preference
 # "devtools.debugger.prompt-connection" is false on the target runtime.
@@ -306,3 +300,8 @@ about-debugging-profiler-dialog-title = Performance Profiler
 # The "Learn more" link points to MDN.
 # https://developer.mozilla.org/docs/Tools/about:debugging#Enabling_add-on_debugging
 about-debugging-extension-debug-setting-label = Enable extension debugging <a>Learn more</a>
+
+# Clicking on the header of a debug target category will expand or collapse the debug
+# target items in the category. This text is used as ’title’ attribute of the header,
+# to describe this feature.
+about-debugging-collapse-expand-debug-targets = Collapse / expand

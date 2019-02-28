@@ -5,7 +5,7 @@
 //! Generic types for CSS values related to borders.
 
 use crate::values::generics::rect::Rect;
-use crate::values::generics::size::Size;
+use crate::values::generics::size::Size2D;
 use std::fmt::{self, Write};
 use style_traits::{CssWriter, ToCss};
 
@@ -53,12 +53,15 @@ pub use self::GenericBorderImageSlice as BorderImageSlice;
     ToComputedValue,
     ToCss,
 )]
-pub struct BorderCornerRadius<L>(#[css(field_bound)] pub Size<L>);
+#[repr(C)]
+pub struct GenericBorderCornerRadius<L>(#[css(field_bound)] pub Size2D<L>);
+
+pub use self::GenericBorderCornerRadius as BorderCornerRadius;
 
 impl<L> BorderCornerRadius<L> {
     /// Trivially create a `BorderCornerRadius`.
     pub fn new(w: L, h: L) -> Self {
-        BorderCornerRadius(Size::new(w, h))
+        BorderCornerRadius(Size2D::new(w, h))
     }
 }
 
@@ -77,12 +80,13 @@ impl<L> BorderCornerRadius<L> {
     ToComputedValue,
     ToCss,
 )]
-pub struct BorderSpacing<L>(#[css(field_bound)] pub Size<L>);
+#[repr(transparent)]
+pub struct BorderSpacing<L>(#[css(field_bound)] pub Size2D<L>);
 
 impl<L> BorderSpacing<L> {
     /// Trivially create a `BorderCornerRadius`.
     pub fn new(w: L, h: L) -> Self {
-        BorderSpacing(Size::new(w, h))
+        BorderSpacing(Size2D::new(w, h))
     }
 }
 
@@ -101,16 +105,19 @@ impl<L> BorderSpacing<L> {
     ToAnimatedValue,
     ToComputedValue,
 )]
-pub struct BorderRadius<LengthPercentage> {
+#[repr(C)]
+pub struct GenericBorderRadius<LengthPercentage> {
     /// The top left radius.
-    pub top_left: BorderCornerRadius<LengthPercentage>,
+    pub top_left: GenericBorderCornerRadius<LengthPercentage>,
     /// The top right radius.
-    pub top_right: BorderCornerRadius<LengthPercentage>,
+    pub top_right: GenericBorderCornerRadius<LengthPercentage>,
     /// The bottom right radius.
-    pub bottom_right: BorderCornerRadius<LengthPercentage>,
+    pub bottom_right: GenericBorderCornerRadius<LengthPercentage>,
     /// The bottom left radius.
-    pub bottom_left: BorderCornerRadius<LengthPercentage>,
+    pub bottom_left: GenericBorderCornerRadius<LengthPercentage>,
 }
+
+pub use self::GenericBorderRadius as BorderRadius;
 
 impl<L> BorderRadius<L> {
     /// Returns a new `BorderRadius<L>`.
@@ -145,11 +152,7 @@ where
         W: Write,
     {
         widths.to_css(dest)?;
-        if widths.0 != heights.0 ||
-            widths.1 != heights.1 ||
-            widths.2 != heights.2 ||
-            widths.3 != heights.3
-        {
+        if widths != heights {
             dest.write_str(" / ")?;
             heights.to_css(dest)?;
         }
@@ -172,8 +175,8 @@ where
             bottom_left: BorderCornerRadius(ref bl),
         } = *self;
 
-        let widths = Rect::new(&tl.0.width, &tr.0.width, &br.0.width, &bl.0.width);
-        let heights = Rect::new(&tl.0.height, &tr.0.height, &br.0.height, &bl.0.height);
+        let widths = Rect::new(&tl.width, &tr.width, &br.width, &bl.width);
+        let heights = Rect::new(&tl.height, &tr.height, &br.height, &bl.height);
 
         Self::serialize_rects(widths, heights, dest)
     }

@@ -12,7 +12,6 @@ const { LocalizationHelper } = require("devtools/shared/l10n");
 
 loader.lazyRequireGetter(this, "Menu", "devtools/client/framework/menu");
 loader.lazyRequireGetter(this, "MenuItem", "devtools/client/framework/menu-item");
-loader.lazyRequireGetter(this, "copyLongString", "devtools/client/inspector/shared/utils", true);
 loader.lazyRequireGetter(this, "clipboardHelper", "devtools/shared/platform/clipboard");
 
 loader.lazyGetter(this, "TOOLBOX_L10N", function() {
@@ -34,6 +33,16 @@ class MarkupContextMenu {
     this.telemetry = this.inspector.telemetry;
     this.toolbox = this.inspector.toolbox;
     this.walker = this.inspector.walker;
+  }
+
+  destroy() {
+    this.markup = null;
+    this.inspector = null;
+    this.selection = null;
+    this.target = null;
+    this.telemetry = null;
+    this.toolbox = null;
+    this.walker = null;
   }
 
   show(event) {
@@ -91,21 +100,13 @@ class MarkupContextMenu {
    * Copy the innerHTML of the selected Node to the clipboard.
    */
   _copyInnerHTML() {
-    if (!this.selection.isNode()) {
-      return;
-    }
-
-    copyLongString(this.walker.innerHTML(this.selection.nodeFront));
+    this.markup.copyInnerHTML();
   }
 
   /**
    * Copy the outerHTML of the selected Node to the clipboard.
    */
   _copyOuterHTML() {
-    if (!this.selection.isNode()) {
-      return;
-    }
-
     this.markup.copyOuterHTML();
   }
 
@@ -323,8 +324,7 @@ class MarkupContextMenu {
    */
   _useInConsole() {
     this.toolbox.openSplitConsole().then(() => {
-      const panel = this.toolbox.getPanel("webconsole");
-      const jsterm = panel.hud.jsterm;
+      const {hud} = this.toolbox.getPanel("webconsole");
 
       const evalString = `{ let i = 0;
         while (window.hasOwnProperty("temp" + i) && i < 1000) {
@@ -337,8 +337,8 @@ class MarkupContextMenu {
       const options = {
         selectedNodeActor: this.selection.nodeFront.actorID,
       };
-      jsterm.requestEvaluation(evalString, options).then((res) => {
-        jsterm.setInputValue(res.result);
+      hud.jsterm.requestEvaluation(evalString, options).then((res) => {
+        hud.setInputValue(res.result);
         this.inspector.emit("console-var-ready");
       });
     });

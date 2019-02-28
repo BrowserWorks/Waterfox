@@ -224,6 +224,10 @@ var SessionHistoryInternal = {
       entry.triggeringPrincipal_base64 = E10SUtils.serializePrincipal(shEntry.triggeringPrincipal);
     }
 
+    if (shEntry.csp) {
+      entry.csp = E10SUtils.serializeCSP(shEntry.csp);
+    }
+
     entry.docIdentifier = shEntry.BFCacheEntry.ID;
 
     if (shEntry.stateData != null) {
@@ -238,7 +242,8 @@ var SessionHistoryInternal = {
 
         if (child) {
           // Don't try to restore framesets containing wyciwyg URLs.
-          // (cf. bug 424689 and bug 450595)
+          // (cf. bug 424689 and bug 450595).  Note that these may be left
+          // over from pre-wyciwyg-removal profiles.
           if (child.URI.schemeIs("wyciwyg")) {
             children.length = 0;
             break;
@@ -459,6 +464,9 @@ var SessionHistoryInternal = {
     }
     if (entry.principalToInherit_base64) {
       shEntry.principalToInherit = E10SUtils.deserializePrincipal(entry.principalToInherit_base64);
+    }
+    if (entry.csp) {
+      shEntry.csp = E10SUtils.deserializeCSP(entry.csp);
     }
 
     if (entry.children) {

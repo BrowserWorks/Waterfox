@@ -1961,6 +1961,25 @@ bool ExpressionDecompiler::decompilePC(jsbytecode* pc, uint8_t defIndex) {
 #endif
       break;
 
+    case JSOP_TONUMERIC:
+      return write("(tonumeric ") && decompilePCForStackOperand(pc, -1) &&
+             write(")");
+
+    case JSOP_INC:
+      return write("(inc ") && decompilePCForStackOperand(pc, -1) && write(")");
+
+    case JSOP_DEC:
+      return write("(dec ") && decompilePCForStackOperand(pc, -1) && write(")");
+
+    case JSOP_BIGINT:
+#if defined(DEBUG) || defined(JS_JITSPEW)
+      // BigInt::dump() only available in this configuration.
+      script->getConst(GET_UINT32_INDEX(pc)).toBigInt()->dump(sprinter);
+      return !sprinter.hadOutOfMemory();
+#else
+      return write("[bigint]");
+#endif
+
     default:
       break;
   }
@@ -2044,8 +2063,6 @@ bool ExpressionDecompiler::decompilePC(jsbytecode* pc, uint8_t defIndex) {
 
       case JSOP_LAMBDA:
       case JSOP_LAMBDA_ARROW:
-      case JSOP_TOASYNC:
-      case JSOP_TOASYNCGEN:
         return write("FUN");
 
       case JSOP_TOASYNCITER:
@@ -2094,6 +2111,10 @@ bool ExpressionDecompiler::decompilePC(jsbytecode* pc, uint8_t defIndex) {
         // match to the syntax, since the stack operand for "yield 10" is
         // the result object, not 10.
         return write("RVAL");
+
+      case JSOP_ASYNCAWAIT:
+      case JSOP_ASYNCRESOLVE:
+        return write("PROMISE");
 
       default:
         break;

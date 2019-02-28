@@ -92,9 +92,8 @@ class UrlbarController {
    */
   async startQuery(queryContext) {
     // Cancel any running query.
-    if (this._lastQueryContext) {
-      this.cancelQuery(this._lastQueryContext);
-    }
+    this.cancelQuery();
+
     this._lastQueryContext = queryContext;
 
     queryContext.lastResultCount = 0;
@@ -174,11 +173,14 @@ class UrlbarController {
   }
 
   /**
-   * When switching tabs, clear some internal caches to handle cases like
-   * backspace, autofill or repeated searches.
+   * When the containing context changes (for example when switching tabs),
+   * clear any caches that connects consecutive searches in the same context.
+   * For example it can be used to clear information used to improve autofill
+   * or save resourced on repeated searches.
    */
-  tabContextChanged() {
-    // TODO: implementation needed (bug 1496685)
+  viewContextChanged() {
+    this.cancelQuery();
+    this._notify("onViewContextChanged");
   }
 
   /**
@@ -225,8 +227,6 @@ class UrlbarController {
           // Prevent beep on Mac.
           event.preventDefault();
         }
-        // TODO: We should have an input bufferrer so that we can use search results
-        // if appropriate.
         this.input.handleCommand(event);
         break;
       case KeyEvent.DOM_VK_TAB:
@@ -257,16 +257,8 @@ class UrlbarController {
         event.preventDefault();
         break;
       case KeyEvent.DOM_VK_DELETE:
-        if (isMac && !event.shiftKey) {
-          break;
-        }
-        if (this._handleDeleteEntry()) {
-          event.preventDefault();
-        }
-        break;
       case KeyEvent.DOM_VK_BACK_SPACE:
-        if (isMac && event.shiftKey &&
-            this._handleDeleteEntry()) {
+        if (event.shiftKey && this.view.isOpen && this._handleDeleteEntry()) {
           event.preventDefault();
         }
         break;

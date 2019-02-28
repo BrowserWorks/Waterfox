@@ -44,6 +44,7 @@ namespace mozilla {
     WEBGL_EXTENSION_IDENTIFIER(EXT_texture_filter_anisotropic)
     WEBGL_EXTENSION_IDENTIFIER(MOZ_debug)
     WEBGL_EXTENSION_IDENTIFIER(OES_element_index_uint)
+    WEBGL_EXTENSION_IDENTIFIER(OES_fbo_render_mipmap)
     WEBGL_EXTENSION_IDENTIFIER(OES_standard_derivatives)
     WEBGL_EXTENSION_IDENTIFIER(OES_texture_float)
     WEBGL_EXTENSION_IDENTIFIER(OES_texture_float_linear)
@@ -67,10 +68,6 @@ namespace mozilla {
   }
 
   return sExtensionNamesEnumeratedArray[ext];
-}
-
-bool WebGLContext::IsExtensionEnabled(WebGLExtensionID ext) const {
-  return mExtensions[ext];
 }
 
 bool WebGLContext::IsExtensionSupported(dom::CallerType callerType,
@@ -152,6 +149,9 @@ bool WebGLContext::IsExtensionSupported(WebGLExtensionID ext) const {
     case WebGLExtensionID::OES_element_index_uint:
       if (IsWebGL2()) return false;
       return gl->IsSupported(gl::GLFeature::element_index_uint);
+
+    case WebGLExtensionID::OES_fbo_render_mipmap:
+      return WebGLExtensionFBORenderMipmap::IsSupported(this);
 
     case WebGLExtensionID::OES_standard_derivatives:
       if (IsWebGL2()) return false;
@@ -344,6 +344,9 @@ void WebGLContext::EnableExtension(WebGLExtensionID ext) {
     // OES_
     case WebGLExtensionID::OES_element_index_uint:
       obj = new WebGLExtensionElementIndexUint(this);
+      break;
+    case WebGLExtensionID::OES_fbo_render_mipmap:
+      obj = new WebGLExtensionFBORenderMipmap(this);
       break;
     case WebGLExtensionID::OES_standard_derivatives:
       obj = new WebGLExtensionStandardDerivatives(this);

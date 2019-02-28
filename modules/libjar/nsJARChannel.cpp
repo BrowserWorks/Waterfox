@@ -27,6 +27,7 @@
 #include "private/pprio.h"
 #include "nsInputStreamPump.h"
 #include "nsThreadUtils.h"
+#include "nsJARProtocolHandler.h"
 
 using namespace mozilla;
 using namespace mozilla::net;
@@ -529,8 +530,8 @@ void nsJARChannel::NotifyError(nsresult aError) {
 
   mStatus = aError;
 
-  OnStartRequest(nullptr, nullptr);
-  OnStopRequest(nullptr, nullptr, aError);
+  OnStartRequest(nullptr);
+  OnStopRequest(nullptr, aError);
 }
 
 void nsJARChannel::FireOnProgress(uint64_t aProgress) {
@@ -949,12 +950,10 @@ nsJARChannel::EnsureCached(bool *aIsCached) {
   rv = ioService->GetProtocolHandler("jar", getter_AddRefs(handler));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsIJARProtocolHandler> jarHandler = do_QueryInterface(handler);
+  auto jarHandler = static_cast<nsJARProtocolHandler *>(handler.get());
   MOZ_ASSERT(jarHandler);
 
-  nsCOMPtr<nsIZipReaderCache> jarCache;
-  rv = jarHandler->GetJARCache(getter_AddRefs(jarCache));
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsIZipReaderCache *jarCache = jarHandler->JarCache();
 
   rv = jarCache->GetZipIfCached(jarFile, getter_AddRefs(mPreCachedJarReader));
   if (rv == NS_ERROR_CACHE_KEY_NOT_FOUND) {
@@ -985,11 +984,11 @@ nsJARChannel::GetZipEntry(nsIZipEntry **aZipEntry) {
 //-----------------------------------------------------------------------------
 
 NS_IMETHODIMP
-nsJARChannel::OnStartRequest(nsIRequest *req, nsISupports *ctx) {
+nsJARChannel::OnStartRequest(nsIRequest *req) {
   LOG(("nsJARChannel::OnStartRequest [this=%p %s]\n", this, mSpec.get()));
 
   mRequest = req;
-  nsresult rv = mListener->OnStartRequest(this, nullptr);
+  nsresult rv = mListener->OnStartRequest(this);
   mRequest = nullptr;
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1016,7 +1015,7 @@ nsJARChannel::OnStartRequest(nsIRequest *req, nsISupports *ctx) {
 }
 
 NS_IMETHODIMP
-nsJARChannel::OnStopRequest(nsIRequest *req, nsISupports *ctx,
+nsJARChannel::OnStopRequest(nsIRequest *req,
                             nsresult status) {
   LOG(("nsJARChannel::OnStopRequest [this=%p %s status=%" PRIx32 "]\n", this,
        mSpec.get(), static_cast<uint32_t>(status)));
@@ -1024,7 +1023,7 @@ nsJARChannel::OnStopRequest(nsIRequest *req, nsISupports *ctx,
   if (NS_SUCCEEDED(mStatus)) mStatus = status;
 
   if (mListener) {
-    mListener->OnStopRequest(this, nullptr, status);
+    mListener->OnStopRequest(this, status);
     mListener = nullptr;
   }
 
@@ -1047,14 +1046,14 @@ nsJARChannel::OnStopRequest(nsIRequest *req, nsISupports *ctx,
 }
 
 NS_IMETHODIMP
-nsJARChannel::OnDataAvailable(nsIRequest *req, nsISupports *ctx,
+nsJARChannel::OnDataAvailable(nsIRequest *req,
                               nsIInputStream *stream, uint64_t offset,
                               uint32_t count) {
   LOG(("nsJARChannel::OnDataAvailable [this=%p %s]\n", this, mSpec.get()));
 
   nsresult rv;
 
-  rv = mListener->OnDataAvailable(this, nullptr, stream, offset, count);
+  rv = mListener->OnDataAvailable(this, stream, offset, count);
 
   // simply report progress here instead of hooking ourselves up as a
   // nsITransportEventSink implementation.

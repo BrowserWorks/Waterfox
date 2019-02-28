@@ -190,13 +190,12 @@ MethodStatus BaselineCompiler::compile() {
     return Method_Error;
   }
 
-  Linker linker(masm);
+  Linker linker(masm, "Baseline");
   if (masm.oom()) {
     ReportOutOfMemory(cx);
     return Method_Error;
   }
 
-  AutoFlushICache afc("Baseline");
   JitCode* code = linker.newCode(cx, CodeKind::Baseline);
   if (!code) {
     return Method_Error;
@@ -1551,6 +1550,17 @@ MOZ_MUST_USE bool BaselineCompilerCodeGen::emitTestScriptFlag(
 
 template <>
 template <typename F>
+MOZ_MUST_USE bool BaselineCompilerCodeGen::emitTestScriptFlag(
+    JSScript::MutableFlags flag, bool value, const F& emit,
+    Register scratch) {
+  if (handler.script()->hasFlag(flag) == value) {
+    return emit();
+  }
+  return true;
+}
+
+template <>
+template <typename F>
 MOZ_MUST_USE bool BaselineInterpreterCodeGen::emitTestScriptFlag(
     JSScript::ImmutableFlags flag, bool value, const F& emit,
     Register scratch) {
@@ -1558,6 +1568,26 @@ MOZ_MUST_USE bool BaselineInterpreterCodeGen::emitTestScriptFlag(
   loadScript(scratch);
   masm.branchTest32(value ? Assembler::Zero : Assembler::NonZero,
                     Address(scratch, JSScript::offsetOfImmutableFlags()),
+                    Imm32(uint32_t(flag)), &done);
+  {
+    if (!emit()) {
+      return false;
+    }
+  }
+
+  masm.bind(&done);
+  return true;
+}
+
+template <>
+template <typename F>
+MOZ_MUST_USE bool BaselineInterpreterCodeGen::emitTestScriptFlag(
+    JSScript::MutableFlags flag, bool value, const F& emit,
+    Register scratch) {
+  Label done;
+  loadScript(scratch);
+  masm.branchTest32(value ? Assembler::Zero : Assembler::NonZero,
+                    Address(scratch, JSScript::offsetOfMutableFlags()),
                     Imm32(uint32_t(flag)), &done);
   {
     if (!emit()) {
@@ -1722,7 +1752,7 @@ bool BaselineCodeGen<Handler>::emit_JSOP_LOOPENTRY() {
         AbsoluteAddress(mozilla::recordreplay::ExecutionProgressCounter()));
     return true;
   };
-  return emitTestScriptFlag(JSScript::ImmutableFlags::TrackRecordReplayProgress,
+  return emitTestScriptFlag(JSScript::MutableFlags::TrackRecordReplayProgress,
                             true, incCounter, R2.scratchReg());
 }
 
@@ -4586,50 +4616,6 @@ bool BaselineCodeGen<Handler>::emit_JSOP_TOID() {
   return true;
 }
 
-typedef JSObject* (*ToAsyncFn)(JSContext*, HandleFunction);
-static const VMFunction ToAsyncInfo =
-    FunctionInfo<ToAsyncFn>(js::WrapAsyncFunction, "ToAsync");
-
-template <typename Handler>
-bool BaselineCodeGen<Handler>::emit_JSOP_TOASYNC() {
-  frame.syncStack(0);
-  masm.unboxObject(frame.addressOfStackValue(-1), R0.scratchReg());
-
-  prepareVMCall();
-  pushArg(R0.scratchReg());
-
-  if (!callVM(ToAsyncInfo)) {
-    return false;
-  }
-
-  masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
-  frame.pop();
-  frame.push(R0);
-  return true;
-}
-
-typedef JSObject* (*ToAsyncGenFn)(JSContext*, HandleFunction);
-static const VMFunction ToAsyncGenInfo =
-    FunctionInfo<ToAsyncGenFn>(js::WrapAsyncGenerator, "ToAsyncGen");
-
-template <typename Handler>
-bool BaselineCodeGen<Handler>::emit_JSOP_TOASYNCGEN() {
-  frame.syncStack(0);
-  masm.unboxObject(frame.addressOfStackValue(-1), R0.scratchReg());
-
-  prepareVMCall();
-  pushArg(R0.scratchReg());
-
-  if (!callVM(ToAsyncGenInfo)) {
-    return false;
-  }
-
-  masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
-  frame.pop();
-  frame.push(R0);
-  return true;
-}
-
 typedef JSObject* (*ToAsyncIterFn)(JSContext*, HandleObject, HandleValue);
 static const VMFunction ToAsyncIterInfo =
     FunctionInfo<ToAsyncIterFn>(js::CreateAsyncFromSyncIterator, "ToAsyncIter");
@@ -4685,6 +4671,61 @@ bool BaselineCodeGen<Handler>::emit_JSOP_TRYSKIPAWAIT() {
   frame.pop();
   frame.push(R0);
   frame.push(R1);
+  return true;
+}
+
+typedef JSObject* (*AsyncFunctionAwaitFn)(JSContext*,
+                                          Handle<AsyncFunctionGeneratorObject*>,
+                                          HandleValue);
+static const VMFunction AsyncFunctionAwaitInfo =
+    FunctionInfo<AsyncFunctionAwaitFn>(js::AsyncFunctionAwait,
+                                       "AsyncFunctionAwait");
+
+template <typename Handler>
+bool BaselineCodeGen<Handler>::emit_JSOP_ASYNCAWAIT() {
+  frame.syncStack(0);
+  masm.loadValue(frame.addressOfStackValue(-2), R1);
+  masm.unboxObject(frame.addressOfStackValue(-1), R0.scratchReg());
+
+  prepareVMCall();
+  pushArg(R1);
+  pushArg(R0.scratchReg());
+
+  if (!callVM(AsyncFunctionAwaitInfo)) {
+    return false;
+  }
+
+  masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
+  frame.popn(2);
+  frame.push(R0);
+  return true;
+}
+
+typedef JSObject* (*AsyncFunctionResolveFn)(
+    JSContext*, Handle<AsyncFunctionGeneratorObject*>, HandleValue,
+    AsyncFunctionResolveKind);
+static const VMFunction AsyncFunctionResolveInfo =
+    FunctionInfo<AsyncFunctionResolveFn>(js::AsyncFunctionResolve,
+                                         "AsyncFunctionResolve");
+
+template <typename Handler>
+bool BaselineCodeGen<Handler>::emit_JSOP_ASYNCRESOLVE() {
+  frame.syncStack(0);
+  masm.loadValue(frame.addressOfStackValue(-2), R1);
+  masm.unboxObject(frame.addressOfStackValue(-1), R0.scratchReg());
+
+  prepareVMCall();
+  pushUint8BytecodeOperandArg();
+  pushArg(R1);
+  pushArg(R0.scratchReg());
+
+  if (!callVM(AsyncFunctionResolveInfo)) {
+    return false;
+  }
+
+  masm.tagValue(JSVAL_TYPE_OBJECT, ReturnReg, R0);
+  frame.popn(2);
+  frame.push(R0);
   return true;
 }
 
@@ -5127,12 +5168,14 @@ bool BaselineCodeGen<Handler>::emit_JSOP_INITIALYIELD() {
   masm.unboxObject(frame.addressOfStackValue(-1), genObj);
 
   MOZ_ASSERT_IF(handler.maybePC(), GET_RESUMEINDEX(handler.maybePC()) == 0);
-  masm.storeValue(Int32Value(0),
-                  Address(genObj, GeneratorObject::offsetOfResumeIndexSlot()));
+  masm.storeValue(
+      Int32Value(0),
+      Address(genObj, AbstractGeneratorObject::offsetOfResumeIndexSlot()));
 
   Register envObj = R0.scratchReg();
   Register temp = R1.scratchReg();
-  Address envChainSlot(genObj, GeneratorObject::offsetOfEnvironmentChainSlot());
+  Address envChainSlot(genObj,
+                       AbstractGeneratorObject::offsetOfEnvironmentChainSlot());
   masm.loadPtr(frame.addressOfEnvironmentChain(), envObj);
   masm.guardedCallPreBarrierAnyZone(envChainSlot, MIRType::Value, temp);
   masm.storeValue(JSVAL_TYPE_OBJECT, envObj, envChainSlot);
@@ -5167,13 +5210,14 @@ bool BaselineCodeGen<Handler>::emit_JSOP_YIELD() {
     // If the expression stack is empty, we can inline the YIELD.
 
     Register temp = R1.scratchReg();
-    Address resumeIndexSlot(genObj, GeneratorObject::offsetOfResumeIndexSlot());
+    Address resumeIndexSlot(genObj,
+                            AbstractGeneratorObject::offsetOfResumeIndexSlot());
     loadResumeIndexBytecodeOperand(temp);
     masm.storeValue(JSVAL_TYPE_INT32, temp, resumeIndexSlot);
 
     Register envObj = R0.scratchReg();
-    Address envChainSlot(genObj,
-                         GeneratorObject::offsetOfEnvironmentChainSlot());
+    Address envChainSlot(
+        genObj, AbstractGeneratorObject::offsetOfEnvironmentChainSlot());
     masm.loadPtr(frame.addressOfEnvironmentChain(), envObj);
     masm.guardedCallPreBarrier(envChainSlot, MIRType::Value);
     masm.storeValue(JSVAL_TYPE_OBJECT, envObj, envChainSlot);
@@ -5266,7 +5310,7 @@ static const VMFunction InterpretResumeInfo =
     FunctionInfo<InterpretResumeFn>(jit::InterpretResume, "InterpretResume");
 
 typedef bool (*GeneratorThrowFn)(JSContext*, BaselineFrame*,
-                                 Handle<GeneratorObject*>, HandleValue,
+                                 Handle<AbstractGeneratorObject*>, HandleValue,
                                  uint32_t);
 static const VMFunction GeneratorThrowOrReturnInfo =
     FunctionInfo<GeneratorThrowFn>(jit::GeneratorThrowOrReturn,
@@ -5274,8 +5318,7 @@ static const VMFunction GeneratorThrowOrReturnInfo =
 
 template <>
 bool BaselineCompilerCodeGen::emit_JSOP_RESUME() {
-  GeneratorObject::ResumeKind resumeKind =
-      GeneratorObject::getResumeKind(handler.pc());
+  auto resumeKind = AbstractGeneratorObject::getResumeKind(handler.pc());
 
   frame.syncStack(0);
   masm.assertStackAlignment(sizeof(Value), 0);
@@ -5289,8 +5332,8 @@ bool BaselineCompilerCodeGen::emit_JSOP_RESUME() {
 
   // Load callee.
   Register callee = regs.takeAny();
-  masm.unboxObject(Address(genObj, GeneratorObject::offsetOfCalleeSlot()),
-                   callee);
+  masm.unboxObject(
+      Address(genObj, AbstractGeneratorObject::offsetOfCalleeSlot()), callee);
 
   // Load the script. Note that we don't relazify generator scripts, so it's
   // guaranteed to be non-lazy.
@@ -5394,13 +5437,13 @@ bool BaselineCompilerCodeGen::emit_JSOP_RESUME() {
   // Store flags and env chain.
   masm.store32(Imm32(BaselineFrame::HAS_INITIAL_ENV), frame.addressOfFlags());
   masm.unboxObject(
-      Address(genObj, GeneratorObject::offsetOfEnvironmentChainSlot()),
+      Address(genObj, AbstractGeneratorObject::offsetOfEnvironmentChainSlot()),
       scratch2);
   masm.storePtr(scratch2, frame.addressOfEnvironmentChain());
 
   // Store the arguments object if there is one.
   Label noArgsObj;
-  Address argsObjSlot(genObj, GeneratorObject::offsetOfArgsObjSlot());
+  Address argsObjSlot(genObj, AbstractGeneratorObject::offsetOfArgsObjSlot());
   masm.branchTestUndefined(Assembler::Equal, argsObjSlot, &noArgsObj);
   masm.unboxObject(argsObjSlot, scratch2);
   {
@@ -5411,7 +5454,8 @@ bool BaselineCompilerCodeGen::emit_JSOP_RESUME() {
 
   // Push expression slots if needed.
   Label noExprStack;
-  Address exprStackSlot(genObj, GeneratorObject::offsetOfExpressionStackSlot());
+  Address exprStackSlot(genObj,
+                        AbstractGeneratorObject::offsetOfExpressionStackSlot());
   masm.branchTestNull(Assembler::Equal, exprStackSlot, &noExprStack);
   {
     masm.unboxObject(exprStackSlot, scratch2);
@@ -5443,27 +5487,28 @@ bool BaselineCompilerCodeGen::emit_JSOP_RESUME() {
 
   masm.switchToObjectRealm(genObj, scratch2);
 
-  if (resumeKind == GeneratorObject::NEXT) {
+  if (resumeKind == AbstractGeneratorObject::NEXT) {
     // Determine the resume address based on the resumeIndex and the
     // resumeIndex -> native table in the BaselineScript.
     masm.load32(
         Address(scratch1, BaselineScript::offsetOfResumeEntriesOffset()),
         scratch2);
     masm.addPtr(scratch2, scratch1);
-    masm.unboxInt32(Address(genObj, GeneratorObject::offsetOfResumeIndexSlot()),
-                    scratch2);
+    masm.unboxInt32(
+        Address(genObj, AbstractGeneratorObject::offsetOfResumeIndexSlot()),
+        scratch2);
     masm.loadPtr(
         BaseIndex(scratch1, scratch2, ScaleFromElemWidth(sizeof(uintptr_t))),
         scratch1);
 
     // Mark as running and jump to the generator's JIT code.
     masm.storeValue(
-        Int32Value(GeneratorObject::RESUME_INDEX_RUNNING),
-        Address(genObj, GeneratorObject::offsetOfResumeIndexSlot()));
+        Int32Value(AbstractGeneratorObject::RESUME_INDEX_RUNNING),
+        Address(genObj, AbstractGeneratorObject::offsetOfResumeIndexSlot()));
     masm.jump(scratch1);
   } else {
-    MOZ_ASSERT(resumeKind == GeneratorObject::THROW ||
-               resumeKind == GeneratorObject::RETURN);
+    MOZ_ASSERT(resumeKind == AbstractGeneratorObject::THROW ||
+               resumeKind == AbstractGeneratorObject::RETURN);
 
     // Update the frame's frameSize field.
     masm.computeEffectiveAddress(
@@ -5515,12 +5560,12 @@ bool BaselineCompilerCodeGen::emit_JSOP_RESUME() {
   masm.bind(&interpret);
 
   prepareVMCall();
-  if (resumeKind == GeneratorObject::NEXT) {
+  if (resumeKind == AbstractGeneratorObject::NEXT) {
     pushArg(ImmGCPtr(cx->names().next));
-  } else if (resumeKind == GeneratorObject::THROW) {
+  } else if (resumeKind == AbstractGeneratorObject::THROW) {
     pushArg(ImmGCPtr(cx->names().throw_));
   } else {
-    MOZ_ASSERT(resumeKind == GeneratorObject::RETURN);
+    MOZ_ASSERT(resumeKind == AbstractGeneratorObject::RETURN);
     pushArg(ImmGCPtr(cx->names().return_));
   }
 
@@ -5855,7 +5900,7 @@ bool BaselineCodeGen<Handler>::emitPrologue() {
         AbsoluteAddress(mozilla::recordreplay::ExecutionProgressCounter()));
     return true;
   };
-  if (!emitTestScriptFlag(JSScript::ImmutableFlags::TrackRecordReplayProgress,
+  if (!emitTestScriptFlag(JSScript::MutableFlags::TrackRecordReplayProgress,
                           true, incCounter, R2.scratchReg())) {
     return false;
   }
@@ -6039,7 +6084,7 @@ MethodStatus BaselineCompiler::emitBody() {
       case JSOP_FORCEINTERPRETER:
         // Intentionally not implemented.
       case JSOP_UNUSED71:
-      case JSOP_UNUSED151:
+      case JSOP_UNUSED149:
       case JSOP_LIMIT:
         // === !! WARNING WARNING WARNING !! ===
         // DO NOT add new ops to this list! All bytecode ops MUST have Baseline

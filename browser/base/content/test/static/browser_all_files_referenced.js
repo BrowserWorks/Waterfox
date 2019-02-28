@@ -95,10 +95,6 @@ var whitelist = [
   {file: "resource://gre/res/fonts/mathfontSTIXGeneral.properties"},
   {file: "resource://gre/res/fonts/mathfontUnicode.properties"},
 
-  // toolkit/components/places/ColorAnalyzer_worker.js
-  {file: "resource://gre/modules/ClusterLib.js"},
-  {file: "resource://gre/modules/ColorConversion.js"},
-
   // Needed by HiddenFrame.jsm, but can't be packaged test-only
   {file: "chrome://global/content/win.xul"},
 
@@ -148,8 +144,6 @@ var whitelist = [
    platforms: ["linux"]},
   // Bug 1348559
   {file: "chrome://pippki/content/resetpassword.xul"},
-  // Bug 1351078
-  {file: "resource://gre/modules/Battery.jsm"},
   // Bug 1337345
   {file: "resource://gre/modules/Manifest.jsm"},
   // Bug 1351097
@@ -187,6 +181,8 @@ var whitelist = [
   // Bug 1526672
   {file: "resource://app/localization/en-US/browser/touchbar/touchbar.ftl",
    platforms: ["linux", "win"]},
+  // Referenced by the webcompat system addon for localization
+  {file: "resource://gre/localization/en-US/toolkit/about/aboutCompat.ftl"},
 ];
 
 whitelist = new Set(whitelist.filter(item =>
@@ -284,8 +280,11 @@ function parseManifest(manifestUri) {
         // The webcompat reporter's locale directory may not exist if
         // the addon is preffed-off, and since it's a hack until we
         // get bz1425104 landed, we'll just skip it for now.
+        // Same issue with fxmonitor, which is also pref'd off.
         if (chromeUri === "chrome://webcompat-reporter/locale/") {
           gChromeMap.set("chrome://webcompat-reporter/locale/", true);
+        } else if (chromeUri === "chrome://fxmonitor/locale/") {
+          gChromeMap.set("chrome://fxmonitor/locale/", true);
         } else {
           trackChromeUri(chromeUri);
         }

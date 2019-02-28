@@ -163,13 +163,12 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsFrameLoader)
 NS_INTERFACE_MAP_END
 
 nsFrameLoader::nsFrameLoader(Element* aOwner, nsPIDOMWindowOuter* aOpener,
-                             bool aNetworkCreated, int32_t aJSPluginID)
+                             bool aNetworkCreated)
     : mOwnerContent(aOwner),
       mDetachedSubdocFrame(nullptr),
       mOpener(aOpener),
       mRemoteBrowser(nullptr),
       mChildID(0),
-      mJSPluginID(aJSPluginID),
       mDepthTooGreat(false),
       mIsTopLevelContent(false),
       mDestroyCalled(false),
@@ -197,8 +196,7 @@ nsFrameLoader::~nsFrameLoader() {
 
 nsFrameLoader* nsFrameLoader::Create(Element* aOwner,
                                      nsPIDOMWindowOuter* aOpener,
-                                     bool aNetworkCreated,
-                                     int32_t aJSPluginId) {
+                                     bool aNetworkCreated) {
   NS_ENSURE_TRUE(aOwner, nullptr);
   Document* doc = aOwner->OwnerDoc();
 
@@ -227,7 +225,7 @@ nsFrameLoader* nsFrameLoader::Create(Element* aOwner,
                       doc->IsStaticDocument()),
                  nullptr);
 
-  return new nsFrameLoader(aOwner, aOpener, aNetworkCreated, aJSPluginId);
+  return new nsFrameLoader(aOwner, aOpener, aNetworkCreated);
 }
 
 void nsFrameLoader::LoadFrame(bool aOriginalSrc) {
@@ -318,14 +316,8 @@ nsresult nsFrameLoader::LoadURI(nsIURI* aURI,
   nsCOMPtr<Document> doc = mOwnerContent->OwnerDoc();
 
   nsresult rv;
-  // If IsForJSPlugin() returns true then we want to allow the load. We're just
-  // loading the source for the implementation of the JS plugin from a URI
-  // that's under our control. We will already have done the security checks for
-  // loading the plugin content itself in the object/embed loading code.
-  if (!IsForJSPlugin()) {
-    rv = CheckURILoad(aURI, aTriggeringPrincipal);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
+  rv = CheckURILoad(aURI, aTriggeringPrincipal);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   mURIToLoad = aURI;
   mTriggeringPrincipal = aTriggeringPrincipal;
@@ -403,6 +395,13 @@ nsresult nsFrameLoader::ReallyStartLoadingInternal() {
   } else {
     loadState->SetTriggeringPrincipal(mOwnerContent->NodePrincipal());
   }
+
+  // Currently we query the CSP from the principal, but after
+  // Bug 1529877 we should query the CSP from within GetURL and
+  // store it as a member, similar to mTriggeringPrincipal.
+  nsCOMPtr<nsIContentSecurityPolicy> csp;
+  loadState->TriggeringPrincipal()->GetCsp(getter_AddRefs(csp));
+  loadState->SetCsp(csp);
 
   nsCOMPtr<nsIURI> referrer;
 
@@ -1784,10 +1783,6 @@ bool nsFrameLoader::OwnerIsIsolatedMozBrowserFrame() {
 }
 
 bool nsFrameLoader::ShouldUseRemoteProcess() {
-  if (IsForJSPlugin()) {
-    return true;
-  }
-
   if (PR_GetEnv("MOZ_DISABLE_OOP_TABS") ||
       Preferences::GetBool("dom.ipc.tabs.disabled", false)) {
     return false;
@@ -2401,9 +2396,8 @@ static Tuple<ContentParent*, TabParent*> GetContentParent(Element* aBrowser) {
   }
 
   TabParent* tabParent = TabParent::GetFrom(otherLoader);
-  if (tabParent && tabParent->Manager() &&
-      tabParent->Manager()->IsContentParent()) {
-    return MakeTuple(tabParent->Manager()->AsContentParent(), tabParent);
+  if (tabParent && tabParent->Manager()) {
+    return MakeTuple(tabParent->Manager(), tabParent);
   }
 
   return ReturnTuple(nullptr, nullptr);
@@ -2447,9 +2441,8 @@ bool nsFrameLoader::TryRemoteBrowser() {
   RefPtr<ContentParent> openerContentParent;
   RefPtr<TabParent> sameTabGroupAs;
 
-  if (openingTab && openingTab->Manager() &&
-      openingTab->Manager()->IsContentParent()) {
-    openerContentParent = openingTab->Manager()->AsContentParent();
+  if (openingTab && openingTab->Manager()) {
+    openerContentParent = openingTab->Manager();
   }
 
   // <iframe mozbrowser> gets to skip these checks.
@@ -2457,8 +2450,7 @@ bool nsFrameLoader::TryRemoteBrowser() {
   // that gets loaded, but the load is triggered from the document containing
   // the plugin.
   // out of process iframes also get to skip this check.
-  if (!OwnerIsMozBrowserFrame() && !IsForJSPlugin() &&
-      !XRE_IsContentProcess()) {
+  if (!OwnerIsMozBrowserFrame() && !XRE_IsContentProcess()) {
     if (parentDocShell->ItemType() != nsIDocShellTreeItem::typeChrome) {
       // Allow about:addon an exception to this rule so it can load remote
       // extension options pages.
@@ -2736,7 +2728,7 @@ nsresult nsFrameLoader::DoSendAsyncMessage(JSContext* aCx,
   TabParent* tabParent = mRemoteBrowser;
   if (tabParent) {
     ClonedMessageData data;
-    nsIContentParent* cp = tabParent->Manager();
+    ContentParent* cp = tabParent->Manager();
     if (!BuildClonedMessageDataForParent(cp, aData, data)) {
       MOZ_CRASH();
       return NS_ERROR_DOM_DATA_CLONE_ERR;
@@ -2975,7 +2967,7 @@ void nsFrameLoader::Print(uint64_t aOuterWindowID,
 #if defined(NS_PRINTING)
   if (mRemoteBrowser) {
     RefPtr<embedding::PrintingParent> printingParent =
-        mRemoteBrowser->Manager()->AsContentParent()->GetPrintingParent();
+        mRemoteBrowser->Manager()->GetPrintingParent();
 
     embedding::PrintData printData;
     nsresult rv = printingParent->SerializeAndEnsureRemotePrintJob(
@@ -3173,12 +3165,6 @@ void nsFrameLoader::MaybeUpdatePrimaryTabParent(TabParentChange aChange) {
 
 nsresult nsFrameLoader::GetNewTabContext(MutableTabContext* aTabContext,
                                          nsIURI* aURI) {
-  if (IsForJSPlugin()) {
-    return aTabContext->SetTabContextForJSPluginFrame(mJSPluginID)
-               ? NS_OK
-               : NS_ERROR_FAILURE;
-  }
-
   OriginAttributes attrs;
   attrs.mInIsolatedMozBrowser = OwnerIsIsolatedMozBrowserFrame();
   nsresult rv;

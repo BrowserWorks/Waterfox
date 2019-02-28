@@ -626,8 +626,7 @@ AsyncFetchAndSetIconForPage::Cancel() {
 }
 
 NS_IMETHODIMP
-AsyncFetchAndSetIconForPage::OnStartRequest(nsIRequest* aRequest,
-                                            nsISupports* aContext) {
+AsyncFetchAndSetIconForPage::OnStartRequest(nsIRequest* aRequest) {
   // mRequest should already be set from ::FetchFromNetwork, but in the case of
   // a redirect we might get a new request, and we should make sure we keep a
   // reference to the most current request.
@@ -640,7 +639,6 @@ AsyncFetchAndSetIconForPage::OnStartRequest(nsIRequest* aRequest,
 
 NS_IMETHODIMP
 AsyncFetchAndSetIconForPage::OnDataAvailable(nsIRequest* aRequest,
-                                             nsISupports* aContext,
                                              nsIInputStream* aInputStream,
                                              uint64_t aOffset,
                                              uint32_t aCount) {
@@ -683,7 +681,6 @@ AsyncFetchAndSetIconForPage::AsyncOnChannelRedirect(
 
 NS_IMETHODIMP
 AsyncFetchAndSetIconForPage::OnStopRequest(nsIRequest* aRequest,
-                                           nsISupports* aContext,
                                            nsresult aStatusCode) {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1224,8 +1221,8 @@ nsresult FetchAndConvertUnsupportedPayloads::ConvertPayload(
 
   // Convert the payload to an input stream.
   nsCOMPtr<nsIInputStream> stream;
-  nsresult rv = NS_NewByteInputStream(getter_AddRefs(stream), aPayload.get(),
-                                      aPayload.Length(), NS_ASSIGNMENT_DEPEND);
+  nsresult rv = NS_NewByteInputStream(getter_AddRefs(stream), aPayload,
+                                      NS_ASSIGNMENT_DEPEND);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Decode the input stream to a surface.

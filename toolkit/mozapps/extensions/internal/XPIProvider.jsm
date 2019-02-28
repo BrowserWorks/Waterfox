@@ -855,7 +855,7 @@ class TemporaryLocation extends XPIStateLocation {
    *        The string identifier for the install location.
    */
   constructor(name) {
-    super(name, null, null);
+    super(name, null, AddonManager.SCOPE_TEMPORARY);
     this.locked = false;
   }
 
@@ -888,7 +888,7 @@ var TemporaryInstallLocation = new TemporaryLocation(KEY_APP_TEMPORARY);
  */
 var BuiltInLocation = new class _BuiltInLocation extends XPIStateLocation {
   constructor() {
-    super(KEY_APP_BUILTINS, null, null);
+    super(KEY_APP_BUILTINS, null, AddonManager.SCOPE_APPLICATION);
     this.locked = false;
   }
 
@@ -2232,6 +2232,27 @@ var XPIProvider = {
                                                AddonManager.checkCompatibility);
         } catch (e) { }
         this.addAddonsToCrashReporter();
+      }
+
+      // This is a one-time migration when incognito is turned on.  Any previously
+      // enabled extension will be migrated.
+      try {
+        if (!Services.prefs.getBoolPref("extensions.allowPrivateBrowsingByDefault", true) &&
+            !Services.prefs.getBoolPref("extensions.incognito.migrated", false)) {
+          XPIDatabase.syncLoadDB(false);
+          let promises = [];
+          for (let addon of XPIDatabase.getAddons()) {
+            if (addon.type == "extension" && addon.active) {
+              promises.push(Extension.migratePrivateBrowsing(addon));
+            }
+          }
+          if (promises.length) {
+            awaitPromise(Promise.all(promises));
+          }
+          Services.prefs.setBoolPref("extensions.incognito.migrated", true);
+        }
+      } catch (e) {
+        logger.error("private browsing migration failed", e);
       }
 
       try {

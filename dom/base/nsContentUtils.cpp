@@ -44,6 +44,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/LoadInfo.h"
 #include "mozilla/dom/BlobURLProtocolHandler.h"
+#include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/CustomElementRegistry.h"
 #include "mozilla/dom/Document.h"
@@ -745,33 +746,6 @@ nsresult nsContentUtils::Init() {
   sInitialized = true;
 
   return NS_OK;
-}
-
-nsresult nsContentUtils::RemoveWyciwygScheme(nsIURI* aURI, nsIURI** aReturn) {
-#ifdef DEBUG
-  bool isWyciwyg = false;
-  aURI->SchemeIs("wyciwyg", &isWyciwyg);
-  MOZ_ASSERT(isWyciwyg, "Scheme should be wyciwyg");
-#endif
-  nsAutoCString path;
-  nsresult rv = aURI->GetPathQueryRef(path);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  uint32_t pathLength = path.Length();
-  if (pathLength <= 2) {
-    return NS_ERROR_FAILURE;
-  }
-
-  // Path is of the form "//123/http://foo/bar", with a variable number of
-  // digits. To figure out where the "real" URL starts, search path for a '/',
-  // starting at the third character.
-  int32_t slashIndex = path.FindChar('/', 2);
-  if (slashIndex == kNotFound) {
-    return NS_ERROR_FAILURE;
-  }
-
-  return NS_NewURI(
-      aReturn, Substring(path, slashIndex + 1, pathLength - slashIndex - 1));
 }
 
 void nsContentUtils::GetShiftText(nsAString& text) {
@@ -3553,7 +3527,7 @@ nsresult nsContentUtils::QNameChanged(mozilla::dom::NodeInfo* aNodeInfo,
   return NS_OK;
 }
 
-static bool TestSitePerm(nsIPrincipal* aPrincipal, const char* aType,
+static bool TestSitePerm(nsIPrincipal* aPrincipal, const nsACString& aType,
                          uint32_t aPerm, bool aExactHostMatch) {
   if (!aPrincipal) {
     // We always deny (i.e. don't allow) the permission if we don't have a
@@ -3577,25 +3551,25 @@ static bool TestSitePerm(nsIPrincipal* aPrincipal, const char* aType,
 }
 
 bool nsContentUtils::IsSitePermAllow(nsIPrincipal* aPrincipal,
-                                     const char* aType) {
+                                     const nsACString& aType) {
   return TestSitePerm(aPrincipal, aType, nsIPermissionManager::ALLOW_ACTION,
                       false);
 }
 
 bool nsContentUtils::IsSitePermDeny(nsIPrincipal* aPrincipal,
-                                    const char* aType) {
+                                    const nsACString& aType) {
   return TestSitePerm(aPrincipal, aType, nsIPermissionManager::DENY_ACTION,
                       false);
 }
 
 bool nsContentUtils::IsExactSitePermAllow(nsIPrincipal* aPrincipal,
-                                          const char* aType) {
+                                          const nsACString& aType) {
   return TestSitePerm(aPrincipal, aType, nsIPermissionManager::ALLOW_ACTION,
                       true);
 }
 
 bool nsContentUtils::IsExactSitePermDeny(nsIPrincipal* aPrincipal,
-                                         const char* aType) {
+                                         const nsACString& aType) {
   return TestSitePerm(aPrincipal, aType, nsIPermissionManager::DENY_ACTION,
                       true);
 }
@@ -5179,10 +5153,17 @@ void nsContentUtils::TriggerLink(nsIContent* aContent,
       fileName.SetIsVoid(true);  // No actionable download attribute was found.
     }
 
+    // Currently we query the CSP from the triggeringPrincipal, which is
+    // aContent->NodePrincipal(). After Bug 965637 we can query the CSP
+    // directly from the doc instead (aContent->OwnerDoc()).
+    nsCOMPtr<nsIPrincipal> triggeringPrincipal = aContent->NodePrincipal();
+    nsCOMPtr<nsIContentSecurityPolicy> csp;
+    triggeringPrincipal->GetCsp(getter_AddRefs(csp));
+
     handler->OnLinkClick(
         aContent, aLinkURI, fileName.IsVoid() ? aTargetSpec : EmptyString(),
         fileName, nullptr, nullptr, EventStateManager::IsHandlingUserInput(),
-        aIsTrusted, aContent->NodePrincipal());
+        aIsTrusted, triggeringPrincipal, csp);
   }
 }
 
@@ -6440,8 +6421,9 @@ bool nsContentUtils::AllowXULXBLForPrincipal(nsIPrincipal* aPrincipal) {
   nsCOMPtr<nsIURI> princURI;
   aPrincipal->GetURI(getter_AddRefs(princURI));
 
-  return princURI && ((sAllowXULXBL_for_file && SchemeIs(princURI, "file")) ||
-                      IsSitePermAllow(aPrincipal, "allowXULXBL"));
+  return princURI &&
+         ((sAllowXULXBL_for_file && SchemeIs(princURI, "file")) ||
+          IsSitePermAllow(aPrincipal, NS_LITERAL_CSTRING("allowXULXBL")));
 }
 
 bool nsContentUtils::IsPDFJSEnabled() {
@@ -7243,7 +7225,7 @@ nsresult nsContentUtils::IPCTransferableToTransferable(
     nsIPrincipal* aRequestingPrincipal,
     const nsContentPolicyType& aContentPolicyType,
     nsITransferable* aTransferable,
-    mozilla::dom::nsIContentParent* aContentParent,
+    mozilla::dom::ContentParent* aContentParent,
     mozilla::dom::TabChild* aTabChild) {
   nsresult rv;
 
@@ -7304,8 +7286,8 @@ nsresult nsContentUtils::IPCTransferableToTransferable(
 
 void nsContentUtils::TransferablesToIPCTransferables(
     nsIArray* aTransferables, nsTArray<IPCDataTransfer>& aIPC,
-    bool aInSyncMessage, mozilla::dom::nsIContentChild* aChild,
-    mozilla::dom::nsIContentParent* aParent) {
+    bool aInSyncMessage, mozilla::dom::ContentChild* aChild,
+    mozilla::dom::ContentParent* aParent) {
   aIPC.Clear();
   if (aTransferables) {
     uint32_t transferableCount = 0;
@@ -7437,8 +7419,8 @@ bool nsContentUtils::IsFlavorImage(const nsACString& aFlavor) {
          aFlavor.EqualsLiteral(kGIFImageMime);
 }
 
-static Shmem ConvertToShmem(mozilla::dom::nsIContentChild* aChild,
-                            mozilla::dom::nsIContentParent* aParent,
+static Shmem ConvertToShmem(mozilla::dom::ContentChild* aChild,
+                            mozilla::dom::ContentParent* aParent,
                             const nsACString& aInput) {
   MOZ_ASSERT((aChild && !aParent) || (!aChild && aParent));
 
@@ -7458,8 +7440,8 @@ static Shmem ConvertToShmem(mozilla::dom::nsIContentChild* aChild,
 
 void nsContentUtils::TransferableToIPCTransferable(
     nsITransferable* aTransferable, IPCDataTransfer* aIPCDataTransfer,
-    bool aInSyncMessage, mozilla::dom::nsIContentChild* aChild,
-    mozilla::dom::nsIContentParent* aParent) {
+    bool aInSyncMessage, mozilla::dom::ContentChild* aChild,
+    mozilla::dom::ContentParent* aParent) {
   MOZ_ASSERT((aChild && !aParent) || (!aChild && aParent));
 
   if (aTransferable) {
@@ -8233,7 +8215,8 @@ void nsContentUtils::GetCookieLifetimePolicyForPrincipal(
   }
 
   uint32_t perm;
-  permissionManager->TestPermissionFromPrincipal(aPrincipal, "cookie", &perm);
+  permissionManager->TestPermissionFromPrincipal(
+      aPrincipal, NS_LITERAL_CSTRING("cookie"), &perm);
   switch (perm) {
     case nsICookiePermission::ACCESS_ALLOW:
       *aLifetimePolicy = nsICookieService::ACCEPT_NORMALLY;
@@ -9810,6 +9793,15 @@ nsContentUtils::LookupCustomElementDefinition(Document* aDoc, nsAtom* aNameAtom,
   nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
   nsCOMPtr<nsIPrincipal> triggeringPrincipal = loadInfo->TriggeringPrincipal();
 
+  // Currently we query the CSP from the triggeringPrincipal within the
+  // loadInfo. After Bug 965637, we can query the CSP from the loadInfo, which
+  // internally queries the CSP from the Client.
+  nsCOMPtr<nsIContentSecurityPolicy> csp;
+  if (triggeringPrincipal) {
+    rv = triggeringPrincipal->GetCsp(getter_AddRefs(csp));
+    NS_ENSURE_SUCCESS(rv, false);
+  }
+
   // Get the channel's load flags, and use them to generate nsIWebNavigation
   // load flags. We want to make sure to propagate the refresh and cache busting
   // flags.
@@ -9827,7 +9819,7 @@ nsContentUtils::LookupCustomElementDefinition(Document* aDoc, nsAtom* aNameAtom,
   // Actually perform the cross process load
   bool reloadSucceeded = false;
   rv = wbc3->ReloadInFreshProcess(docShell, uri, referrer, triggeringPrincipal,
-                                  webnavLoadFlags, &reloadSucceeded);
+                                  webnavLoadFlags, csp, &reloadSucceeded);
   NS_ENSURE_SUCCESS(rv, false);
 
   return reloadSucceeded;
@@ -10040,7 +10032,8 @@ bool nsContentUtils::ShouldBlockReservedKeys(WidgetKeyboardEvent* aKeyEvent) {
   }
 
   if (principal) {
-    return nsContentUtils::IsSitePermDeny(principal, "shortcuts");
+    return nsContentUtils::IsSitePermDeny(principal,
+                                          NS_LITERAL_CSTRING("shortcuts"));
   }
 
   return false;

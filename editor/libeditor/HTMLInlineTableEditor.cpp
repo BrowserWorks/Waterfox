@@ -145,8 +145,6 @@ nsresult HTMLEditor::ShowInlineTableEditingUIInternal(Element& aCellElement) {
     AddMouseClickListener(mRemoveRowButton);
     AddMouseClickListener(mAddRowAfterButton);
 
-    mHasShownInlineTableEditor = true;
-
     nsresult rv = RefreshInlineTableEditingUIInternal();
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
@@ -209,7 +207,9 @@ nsresult HTMLEditor::DoInlineTableEditingAction(const Element& aElement) {
   RefPtr<Element> tableElement = GetEnclosingTable(mInlineEditedCell);
   int32_t rowCount, colCount;
   nsresult rv = GetTableSize(tableElement, &rowCount, &colCount);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return EditorBase::ToGenericNSResult(rv);
+  }
 
   bool hideUI = false;
   bool hideResizersWithInlineTableUI = (mResizedObject == tableElement);
@@ -278,8 +278,6 @@ nsresult HTMLEditor::DoInlineTableEditingAction(const Element& aElement) {
     return NS_OK;
   }
 
-  ++mInlineTableEditorUsedCount;
-
   // InsertTableRowsWithTransaction() might causes reframe.
   if (Destroyed()) {
     return NS_OK;
@@ -319,7 +317,7 @@ HTMLEditor::RefreshInlineTableEditingUI() {
 
   nsresult rv = RefreshInlineTableEditingUIInternal();
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
+    return EditorBase::ToGenericNSResult(rv);
   }
   return NS_OK;
 }

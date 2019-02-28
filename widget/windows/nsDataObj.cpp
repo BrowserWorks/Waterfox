@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/TextUtils.h"
 
 #include <ole2.h>
 #include <shlobj.h>
@@ -104,7 +105,7 @@ STDMETHODIMP nsDataObj::CStream::QueryInterface(REFIID refiid,
 // nsIStreamListener implementation
 NS_IMETHODIMP
 nsDataObj::CStream::OnDataAvailable(
-    nsIRequest* aRequest, nsISupports* aContext, nsIInputStream* aInputStream,
+    nsIRequest* aRequest, nsIInputStream* aInputStream,
     uint64_t aOffset,  // offset within the stream
     uint32_t aCount)   // bytes available on this call
 {
@@ -129,14 +130,12 @@ nsDataObj::CStream::OnDataAvailable(
   return rv;
 }
 
-NS_IMETHODIMP nsDataObj::CStream::OnStartRequest(nsIRequest* aRequest,
-                                                 nsISupports* aContext) {
+NS_IMETHODIMP nsDataObj::CStream::OnStartRequest(nsIRequest* aRequest) {
   mChannelResult = NS_OK;
   return NS_OK;
 }
 
 NS_IMETHODIMP nsDataObj::CStream::OnStopRequest(nsIRequest* aRequest,
-                                                nsISupports* aContext,
                                                 nsresult aStatusCode) {
   mChannelRead = true;
   mChannelResult = aStatusCode;
@@ -1157,7 +1156,7 @@ nsDataObj ::GetFileContentsInternetShortcut(FORMATETC& aFE, STGMEDIUM& aSTG) {
     rv = icoFile->GetPath(path);
     NS_ENSURE_SUCCESS(rv, E_FAIL);
 
-    if (NS_IsAscii(path.get())) {
+    if (IsAsciiNullTerminated(static_cast<const char16_t*>(path.get()))) {
       LossyCopyUTF16toASCII(path, asciiPath);
       shortcutFormatStr =
           "[InternetShortcut]\r\nURL=%s\r\n"

@@ -149,7 +149,6 @@
 #include "nsIWidget.h"
 #include "nsIWindowWatcher.h"
 #include "nsIWritablePropertyBag2.h"
-#include "nsIWyciwygChannel.h"
 
 #include "nsCommandManager.h"
 #include "nsPIDOMWindow.h"
@@ -3276,18 +3275,11 @@ nsDocShell::AddChild(nsIDocShellTreeItem* aChild) {
     return NS_OK;
   }
 
-  if (!(mCurrentURI && SchemeIsWYCIWYG(mCurrentURI))) {
-    // If this docshell is loaded from a wyciwyg: URI, don't
-    // advertise our charset since it does not in any way reflect
-    // the actual source charset, which is what we're trying to
-    // expose here.
-
-    const Encoding* parentCS = doc->GetDocumentCharacterSet();
-    int32_t charsetSource = doc->GetDocumentCharacterSetSource();
-    // set the child's parentCharset
-    childAsDocShell->SetParentCharset(parentCS, charsetSource,
-                                      doc->NodePrincipal());
-  }
+  const Encoding* parentCS = doc->GetDocumentCharacterSet();
+  int32_t charsetSource = doc->GetDocumentCharacterSetSource();
+  // set the child's parentCharset
+  childAsDocShell->SetParentCharset(parentCS, charsetSource,
+                                    doc->NodePrincipal());
 
   // printf("### 1 >>> Adding child. Parent CS = %s. ItemType = %d.\n",
   //        NS_LossyConvertUTF16toASCII(parentCS).get(), mItemType);
@@ -3916,6 +3908,7 @@ nsresult nsDocShell::LoadURI(const nsAString& aURI,
   loadState->SetHeadersStream(aLoadURIOptions.mHeaders);
   loadState->SetBaseURI(aLoadURIOptions.mBaseURI);
   loadState->SetTriggeringPrincipal(aLoadURIOptions.mTriggeringPrincipal);
+  loadState->SetCsp(aLoadURIOptions.mCsp);
   loadState->SetForceAllowDataURI(forceAllowDataURI);
 
   if (fixupInfo) {
@@ -4558,6 +4551,13 @@ nsDocShell::Reload(uint32_t aReloadFlags) {
     bool loadReplace = false;
 
     nsIPrincipal* triggeringPrincipal = doc->NodePrincipal();
+    // Currently the NodePrincipal holds the CSP for that document,
+    // after Bug 965637 we can query the CSP directly from the doc
+    // instead of doc->NodePrincipal().
+    nsCOMPtr<nsIContentSecurityPolicy> csp;
+    rv = doc->NodePrincipal()->GetCsp(getter_AddRefs(csp));
+    NS_ENSURE_SUCCESS(rv, rv);
+
     nsAutoString contentTypeHint;
     doc->GetContentType(contentTypeHint);
 
@@ -4600,6 +4600,7 @@ nsDocShell::Reload(uint32_t aReloadFlags) {
     loadState->SetLoadReplace(loadReplace);
     loadState->SetTriggeringPrincipal(triggeringPrincipal);
     loadState->SetPrincipalToInherit(triggeringPrincipal);
+    loadState->SetCsp(csp);
     loadState->SetLoadFlags(flags);
     loadState->SetTypeHint(NS_ConvertUTF16toUTF8(contentTypeHint));
     loadState->SetLoadType(loadType);
@@ -5790,13 +5791,21 @@ nsDocShell::ForceRefreshURI(nsIURI* aURI, nsIPrincipal* aPrincipal,
     principal = doc->NodePrincipal();
   }
   loadState->SetTriggeringPrincipal(principal);
+  // Currently the principal (NodePrincipal) holds the CSP for that
+  // document, after Bug 965637 we can query the CSP directly from
+  // the doc instead of the principal.
+  nsCOMPtr<nsIContentSecurityPolicy> csp;
+  nsresult rv = principal->GetCsp(getter_AddRefs(csp));
+  NS_ENSURE_SUCCESS(rv, rv);
+  loadState->SetCsp(csp);
+
   loadState->SetPrincipalIsExplicit(true);
 
   /* Check if this META refresh causes a redirection
    * to another site.
    */
   bool equalUri = false;
-  nsresult rv = aURI->Equals(mCurrentURI, &equalUri);
+  rv = aURI->Equals(mCurrentURI, &equalUri);
   if (NS_SUCCEEDED(rv) && (!equalUri) && aMetaRefresh &&
       aDelay <= REFRESH_REDIRECT_TIMER) {
     /* It is a META refresh based redirection within the threshold time
@@ -6234,18 +6243,6 @@ nsresult nsDocShell::Embed(nsIContentViewer* aContentViewer,
   nsresult rv = SetupNewViewer(aContentViewer);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // If we are loading a wyciwyg url from history, change the base URI for
-  // the document to the original http url that created the document.write().
-  // This makes sure that all relative urls in a document.written page loaded
-  // via history work properly.
-  if (mCurrentURI &&
-      (mLoadType & LOAD_CMD_HISTORY || mLoadType == LOAD_RELOAD_NORMAL ||
-       mLoadType == LOAD_RELOAD_CHARSET_CHANGE ||
-       mLoadType == LOAD_RELOAD_CHARSET_CHANGE_BYPASS_CACHE ||
-       mLoadType == LOAD_RELOAD_CHARSET_CHANGE_BYPASS_PROXY_AND_CACHE) &&
-      SchemeIsWYCIWYG(mCurrentURI)) {
-    SetBaseUrlForWyciwyg(aContentViewer);
-  }
   // XXX What if SetupNewViewer fails?
   if (mLSHE) {
     // Restore the editing state, if it's stored in session history.
@@ -6304,62 +6301,12 @@ nsDocShell::OnStateChange(nsIWebProgress* aProgress, nsIRequest* aRequest,
     nsAutoCString aURI;
     uri->GetAsciiSpec(aURI);
 
-    nsCOMPtr<nsIWyciwygChannel> wcwgChannel(do_QueryInterface(aRequest));
-    nsCOMPtr<nsIWebProgress> webProgress =
-        do_QueryInterface(GetAsSupports(this));
-
-    // We don't update navigation timing for wyciwyg channels
-    if (this == aProgress && !wcwgChannel) {
+    if (this == aProgress) {
       mozilla::Unused << MaybeInitTiming();
       mTiming->NotifyFetchStart(uri,
                                 ConvertLoadTypeToNavigationType(mLoadType));
     }
 
-    // Was the wyciwyg document loaded on this docshell?
-    if (wcwgChannel && !mLSHE && (mItemType == typeContent) &&
-        aProgress == webProgress.get()) {
-      bool equalUri = true;
-      // Store the wyciwyg url in session history, only if it is
-      // being loaded fresh for the first time. We don't want
-      // multiple entries for successive loads
-      if (mCurrentURI && NS_SUCCEEDED(uri->Equals(mCurrentURI, &equalUri)) &&
-          !equalUri) {
-        nsCOMPtr<nsIDocShellTreeItem> parentAsItem;
-        GetSameTypeParent(getter_AddRefs(parentAsItem));
-        nsCOMPtr<nsIDocShell> parentDS(do_QueryInterface(parentAsItem));
-        bool inOnLoadHandler = false;
-        if (parentDS) {
-          parentDS->GetIsExecutingOnLoadHandler(&inOnLoadHandler);
-        }
-        if (inOnLoadHandler) {
-          // We're handling parent's load event listener, which causes
-          // document.write in a subdocument.
-          // Need to clear the session history for all child
-          // docshells so that we can handle them like they would
-          // all be added dynamically.
-          nsCOMPtr<nsIDocShell> parent = do_QueryInterface(parentAsItem);
-          if (parent) {
-            bool oshe = false;
-            nsCOMPtr<nsISHEntry> entry;
-            parent->GetCurrentSHEntry(getter_AddRefs(entry), &oshe);
-            static_cast<nsDocShell*>(parent.get())->ClearFrameHistory(entry);
-          }
-        }
-
-        // This is a document.write(). Get the made-up url
-        // from the channel and store it in session history.
-        // Pass false for aCloneChildren, since we're creating
-        // a new DOM here.
-        AddToSessionHistory(uri, wcwgChannel, nullptr, nullptr, false,
-                            getter_AddRefs(mLSHE));
-        SetCurrentURI(uri, aRequest, true, 0);
-        // Save history state of the previous page
-        PersistLayoutHistoryState();
-        // We'll never get an Embed() for this load, so just go ahead
-        // and SetHistoryEntry now.
-        SetHistoryEntry(&mOSHE, mLSHE);
-      }
-    }
     // Page has begun to load
     mBusyFlags = (BusyFlags)(BUSY_FLAGS_BUSY | BUSY_FLAGS_BEFORE_PAGE_LOAD);
 
@@ -6855,6 +6802,13 @@ nsresult nsDocShell::EndPageLoad(nsIWebProgress* aProgress,
 
           LoadURIOptions loadURIOptions;
           loadURIOptions.mTriggeringPrincipal = triggeringPrincipal;
+          // Currently we query the CSP from the triggeringPrincipal within
+          // the loadInfo. After Bug 965637, we can query the CSP from the
+          // loadInfo, which internally queries the CSP from the Client.
+          nsCOMPtr<nsIContentSecurityPolicy> csp;
+          nsresult rv = triggeringPrincipal->GetCsp(getter_AddRefs(csp));
+          NS_ENSURE_SUCCESS(rv, rv);
+          loadURIOptions.mCsp = csp;
           loadURIOptions.mPostData = newPostData;
           return LoadURI(newSpecW, loadURIOptions);
         }
@@ -7724,8 +7678,6 @@ nsresult nsDocShell::RestoreFromHistory() {
   // mLSHE is now our currently-loaded document.
   SetHistoryEntry(&mOSHE, mLSHE);
 
-  // XXX special wyciwyg handling in Embed()?
-
   // We aren't going to restore any items from the LayoutHistoryState,
   // but we don't want them to stay around in case the page is reloaded.
   SetLayoutHistoryState(nullptr);
@@ -8079,7 +8031,7 @@ nsresult nsDocShell::CreateContentViewer(const nsACString& aContentType,
     if (failedURI) {
       errorOnLocationChangeNeeded =
           OnNewURI(failedURI, failedChannel, triggeringPrincipal, nullptr,
-                   mLoadType, false, false, false);
+                   mLoadType, nullptr, false, false, false);
     }
 
     // Be sure to have a correct mLSHE, it may have been cleared by
@@ -8737,6 +8689,7 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState,
       // LoadReplace will always be false due to asserts above, skip setting
       // it.
       loadState->SetTriggeringPrincipal(aLoadState->TriggeringPrincipal());
+      loadState->SetCsp(aLoadState->Csp());
       loadState->SetInheritPrincipal(
           aLoadState->HasLoadFlags(INTERNAL_LOAD_FLAGS_INHERIT_PRINCIPAL));
       // Explicit principal because we do not want any guesses as to what the
@@ -8942,12 +8895,21 @@ nsresult nsDocShell::MaybeHandleSameDocumentNavigation(
    * recorded in session and global history.
    */
   nsCOMPtr<nsIPrincipal> newURITriggeringPrincipal, newURIPrincipalToInherit;
+  nsCOMPtr<nsIContentSecurityPolicy> newCsp;
   if (mOSHE) {
     newURITriggeringPrincipal = mOSHE->GetTriggeringPrincipal();
     newURIPrincipalToInherit = mOSHE->GetPrincipalToInherit();
+    newCsp = mOSHE->GetCsp();
   } else {
     newURITriggeringPrincipal = aLoadState->TriggeringPrincipal();
     newURIPrincipalToInherit = doc->NodePrincipal();
+    // This is a same-document navigation hence we query the CSP
+    // from the current document. Please note that currently the
+    // NodePrincipal holds the CSP for that document, after
+    // Bug 965637 we can query the CSP directly from
+    // the doc instead of the NodePrincipal.
+    nsresult rv = doc->NodePrincipal()->GetCsp(getter_AddRefs(newCsp));
+    NS_ENSURE_SUCCESS(rv, rv);
   }
   // Pass true for aCloneSHChildren, since we're not
   // changing documents here, so all of our subframes are
@@ -8958,7 +8920,7 @@ nsresult nsDocShell::MaybeHandleSameDocumentNavigation(
   // Anyway, aCloneSHChildren param is simply reflecting
   // doSameDocumentNavigation in this scope.
   OnNewURI(aLoadState->URI(), nullptr, newURITriggeringPrincipal,
-           newURIPrincipalToInherit, mLoadType, true, true, true);
+           newURIPrincipalToInherit, mLoadType, newCsp, true, true, true);
 
   nsCOMPtr<nsIInputStream> postData;
   uint32_t cacheKey = 0;
@@ -9137,13 +9099,6 @@ nsresult nsDocShell::InternalLoad(nsDocShellLoadState* aLoadState,
   nsresult rv = EnsureScriptEnvironment();
   if (NS_FAILED(rv)) {
     return rv;
-  }
-
-  // wyciwyg urls can only be loaded through history. Any normal load of
-  // wyciwyg through docshell is  illegal. Disallow such loads.
-  if ((aLoadState->LoadType() & LOAD_CMD_NORMAL) &&
-      SchemeIsWYCIWYG(aLoadState->URI())) {
-    return NS_ERROR_FAILURE;
   }
 
   // If we have a target to move to, do that now.
@@ -9327,7 +9282,7 @@ nsresult nsDocShell::InternalLoad(nsDocShellLoadState* aLoadState,
     }
     rv = browserChrome3->ShouldLoadURI(
         this, aLoadState->URI(), referrer, !!aLoadState->PostDataStream(),
-        aLoadState->TriggeringPrincipal(), &shouldLoad);
+        aLoadState->TriggeringPrincipal(), aLoadState->Csp(), &shouldLoad);
     if (NS_SUCCEEDED(rv) && !shouldLoad) {
       return NS_OK;
     }
@@ -9914,6 +9869,36 @@ nsresult nsDocShell::DoURILoad(nsDocShellLoadState* aLoadState,
   // holds upgrade-insecure-requests.
   nsCOMPtr<nsIContentSecurityPolicy> csp;
   aLoadState->TriggeringPrincipal()->GetCsp(getter_AddRefs(csp));
+
+#ifdef DEBUG
+  {
+    // After Bug 965637 we move the CSP from the Principal into the Client,
+    // hence we need an explicit CSP argument passed to docshell. Let's make
+    // sure the explicit CSP is the same as the CSP on the Principal.
+    uint32_t principalCSPCount = 0;
+    if (csp) {
+      csp->GetPolicyCount(&principalCSPCount);
+    }
+
+    nsCOMPtr<nsIContentSecurityPolicy> argsCSP = aLoadState->Csp();
+    uint32_t argCSPCount = 0;
+    if (argsCSP) {
+      argsCSP->GetPolicyCount(&argCSPCount);
+    }
+
+    MOZ_ASSERT(principalCSPCount == argCSPCount,
+               "Different PolicyCount for CSP as arg and Principal");
+
+    nsAutoString principalPolicyStr, argPolicyStr;
+    for (uint32_t i = 0; i < principalCSPCount; ++i) {
+      csp->GetPolicyString(i, principalPolicyStr);
+      argsCSP->GetPolicyString(i, argPolicyStr);
+      MOZ_ASSERT(principalPolicyStr.Equals(argPolicyStr),
+                 "Different PolicyStr for CSP as arg and Principal");
+    }
+  }
+#endif
+
   if (csp) {
     bool upgradeInsecureRequests = false;
     csp->GetUpgradeInsecureRequests(&upgradeInsecureRequests);
@@ -10544,6 +10529,7 @@ void nsDocShell::SetupReferrerInfoFromChannel(nsIChannel* aChannel) {
 bool nsDocShell::OnNewURI(nsIURI* aURI, nsIChannel* aChannel,
                           nsIPrincipal* aTriggeringPrincipal,
                           nsIPrincipal* aPrincipalToInherit, uint32_t aLoadType,
+                          nsIContentSecurityPolicy* aCsp,
                           bool aFireOnLocationChange, bool aAddToGlobalHistory,
                           bool aCloneSHChildren) {
   MOZ_ASSERT(aURI, "uri is null");
@@ -10719,7 +10705,7 @@ bool nsDocShell::OnNewURI(nsIURI* aURI, nsIChannel* aChannel,
        * rootDocShell
        */
       (void)AddToSessionHistory(aURI, aChannel, aTriggeringPrincipal,
-                                aPrincipalToInherit, aCloneSHChildren,
+                                aPrincipalToInherit, aCsp, aCloneSHChildren,
                                 getter_AddRefs(mLSHE));
     }
   } else if (mSessionHistory && mLSHE && mURIResultedInDocument) {
@@ -10805,7 +10791,7 @@ bool nsDocShell::OnLoadingSite(nsIChannel* aChannel, bool aFireOnLocationChange,
   NS_ENSURE_TRUE(uri, false);
 
   // Pass false for aCloneSHChildren, since we're loading a new page here.
-  return OnNewURI(uri, aChannel, nullptr, nullptr, mLoadType,
+  return OnNewURI(uri, aChannel, nullptr, nullptr, mLoadType, nullptr,
                   aFireOnLocationChange, aAddToGlobalHistory, false);
 }
 
@@ -10822,35 +10808,45 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
                      const nsAString& aURL, bool aReplace, JSContext* aCx) {
   // Implements History.pushState and History.replaceState
 
-  // Here's what we do, roughly in the order specified by HTML5:
-  // 1. Serialize aData using structured clone.
-  // 2. If the third argument is present,
-  //     a. Resolve the url, relative to the first script's base URL
-  //     b. If (a) fails, raise a SECURITY_ERR
-  //     c. Compare the resulting absolute URL to the document's address.  If
-  //        any part of the URLs difer other than the <path>, <query>, and
-  //        <fragment> components, raise a SECURITY_ERR and abort.
-  // 3. If !aReplace:
+  // Here's what we do, roughly in the order specified by HTML5.  The specific
+  // steps we are executing are at
+  // <https://html.spec.whatwg.org/multipage/history.html#dom-history-pushstate>
+  // and
+  // <https://html.spec.whatwg.org/multipage/history.html#url-and-history-update-steps>.
+  // This function basically implements #dom-history-pushstate and
+  // UpdateURLAndHistory implements #url-and-history-update-steps.
+  //
+  // A. Serialize aData using structured clone.  This is #dom-history-pushstate
+  //    step 5.
+  // B. If the third argument is present, #dom-history-pushstate step 7.
+  //     7.1. Resolve the url, relative to our document.
+  //     7.2. If (a) fails, raise a SECURITY_ERR
+  //     7.4. Compare the resulting absolute URL to the document's address.  If
+  //          any part of the URLs difer other than the <path>, <query>, and
+  //          <fragment> components, raise a SECURITY_ERR and abort.
+  // C. If !aReplace, #url-and-history-update-steps steps 2.1-2.3:
   //     Remove from the session history all entries after the current entry,
   //     as we would after a regular navigation, and save the current
   //     entry's scroll position (bug 590573).
-  // 4. As apropriate, either add a state object entry to the session history
-  //    after the current entry with the following properties, or modify the
-  //    current session history entry to set
+  // D. #url-and-history-update-steps step 2.4 or step 3.  As apropriate,
+  //    either add a state object entry to the session history after the
+  //    current entry with the following properties, or modify the current
+  //    session history entry to set
   //      a. cloned data as the state object,
   //      b. if the third argument was present, the absolute URL found in
   //         step 2
   //    Also clear the new history entry's POST data (see bug 580069).
-  // 5. If aReplace is false (i.e. we're doing a pushState instead of a
+  // E. If aReplace is false (i.e. we're doing a pushState instead of a
   //    replaceState), notify bfcache that we've navigated to a new page.
-  // 6. If the third argument is present, set the document's current address
-  //    to the absolute URL found in step 2.
+  // F. If the third argument is present, set the document's current address
+  //    to the absolute URL found in step B.  This is
+  //    #url-and-history-update-steps step 4.
   //
-  // It's important that this function not run arbitrary scripts after step 1
-  // and before completing step 5.  For example, if a script called
-  // history.back() before we completed step 5, bfcache might destroy an
+  // It's important that this function not run arbitrary scripts after step A
+  // and before completing step E.  For example, if a script called
+  // history.back() before we completed step E, bfcache might destroy an
   // active content viewer.  Since EvictOutOfRangeContentViewers at the end of
-  // step 5 might run script, we can't just put a script blocker around the
+  // step E might run script, we can't just put a script blocker around the
   // critical section.
   //
   // Note that we completely ignore the aTitle parameter.
@@ -10870,7 +10866,9 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
   RefPtr<Document> document = GetDocument();
   NS_ENSURE_TRUE(document, NS_ERROR_FAILURE);
 
-  // Step 1: Serialize aData using structured clone.
+  // Step A: Serialize aData using structured clone.
+  // https://html.spec.whatwg.org/multipage/history.html#dom-history-pushstate
+  // step 5.
   nsCOMPtr<nsIStructuredCloneContainer> scContainer;
 
   // scContainer->Init might cause arbitrary JS to run, and this code might
@@ -10913,7 +10911,9 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
 
   NS_ENSURE_TRUE(scSize <= (uint32_t)maxStateObjSize, NS_ERROR_ILLEGAL_VALUE);
 
-  // Step 2: Resolve aURL
+  // Step B: Resolve aURL.
+  // https://html.spec.whatwg.org/multipage/history.html#dom-history-pushstate
+  // step 7.
   bool equalURIs = true;
   nsCOMPtr<nsIURI> currentURI;
   if (sURIFixup && mCurrentURI) {
@@ -10922,12 +10922,11 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
   } else {
     currentURI = mCurrentURI;
   }
-  nsCOMPtr<nsIURI> oldURI = currentURI;
   nsCOMPtr<nsIURI> newURI;
   if (aURL.Length() == 0) {
     newURI = currentURI;
   } else {
-    // 2a: Resolve aURL relative to mURI
+    // 7.1: Resolve aURL relative to mURI
 
     nsIURI* docBaseURI = document->GetDocBaseURI();
     if (!docBaseURI) {
@@ -10940,12 +10939,12 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
     rv = NS_NewURI(getter_AddRefs(newURI), aURL,
                    document->GetDocumentCharacterSet(), docBaseURI);
 
-    // 2b: If 2a fails, raise a SECURITY_ERR
+    // 7.2: If 2a fails, raise a SECURITY_ERR
     if (NS_FAILED(rv)) {
       return NS_ERROR_DOM_SECURITY_ERR;
     }
 
-    // 2c: Same-origin check.
+    // 7.4 and 7.5: Same-origin check.
     if (!nsContentUtils::URIIsLocalFile(newURI)) {
       // In addition to checking that the security manager says that
       // the new URI has the same origin as our current URI, we also
@@ -10993,28 +10992,51 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
 
   }  // end of same-origin check
 
-  // Step 3: Create a new entry in the session history. This will erase
-  // all SHEntries after the new entry and make this entry the current
-  // one.  This operation may modify mOSHE, which we need later, so we
-  // keep a reference here.
-  NS_ENSURE_TRUE(mOSHE, NS_ERROR_FAILURE);
+  // Step 8: call "URL and history update steps"
+  rv = UpdateURLAndHistory(document, newURI, scContainer, aTitle, aReplace,
+                           currentURI, equalURIs);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return NS_OK;
+}
+
+nsresult nsDocShell::UpdateURLAndHistory(Document* aDocument, nsIURI* aNewURI,
+                                         nsIStructuredCloneContainer* aData,
+                                         const nsAString& aTitle, bool aReplace,
+                                         nsIURI* aCurrentURI, bool aEqualURIs) {
+  // Implements
+  // https://html.spec.whatwg.org/multipage/history.html#url-and-history-update-steps
+
+  // Step 2, if aReplace is false: Create a new entry in the session
+  // history. This will erase all SHEntries after the new entry and make this
+  // entry the current one.  This operation may modify mOSHE, which we need
+  // later, so we keep a reference here.
+  NS_ENSURE_TRUE(mOSHE || aReplace, NS_ERROR_FAILURE);
   nsCOMPtr<nsISHEntry> oldOSHE = mOSHE;
 
   mLoadType = LOAD_PUSHSTATE;
 
   nsCOMPtr<nsISHEntry> newSHEntry;
   if (!aReplace) {
-    // Save the current scroll position (bug 590573).
+    // Step 2.
+    // Save the current scroll position (bug 590573).  Step 2.3.
     nsPoint scrollPos = GetCurScrollPos();
     mOSHE->SetScrollPosition(scrollPos.x, scrollPos.y);
 
     bool scrollRestorationIsManual = mOSHE->GetScrollRestorationIsManual();
 
+    // Currently the NodePrincipal holds the CSP for that document,
+    // after Bug 965637 we can query the CSP directly from
+    // the doc instead of the NodePrincipal.
+    nsCOMPtr<nsIContentSecurityPolicy> csp;
+    aDocument->NodePrincipal()->GetCsp(getter_AddRefs(csp));
+
     // Since we're not changing which page we have loaded, pass
     // true for aCloneChildren.
-    rv = AddToSessionHistory(newURI, nullptr,
-                             document->NodePrincipal(),  // triggeringPrincipal
-                             nullptr, true, getter_AddRefs(newSHEntry));
+    nsresult rv =
+        AddToSessionHistory(aNewURI, nullptr,
+                            aDocument->NodePrincipal(),  // triggeringPrincipal
+                            nullptr, csp, true, getter_AddRefs(newSHEntry));
     NS_ENSURE_SUCCESS(rv, rv);
 
     NS_ENSURE_TRUE(newSHEntry, NS_ERROR_FAILURE);
@@ -11039,20 +11061,37 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
 #ifdef MOZ_GECKO_PROFILER
     uint32_t id = 0;
     GetOSHEId(&id);
-    profiler_register_page(mHistoryID, id, NS_ConvertUTF16toUTF8(aURL),
+    profiler_register_page(mHistoryID, id, aNewURI->GetSpecOrDefault(),
                            IsFrame());
 #endif
 
   } else {
+    // Step 3.
     newSHEntry = mOSHE;
-    newSHEntry->SetURI(newURI);
-    newSHEntry->SetOriginalURI(newURI);
+
+    // Currently the NodePrincipal holds the CSP for that document,
+    // after Bug 965637 we can query the CSP directly from
+    // the doc instead of the NodePrincipal.
+    nsCOMPtr<nsIContentSecurityPolicy> csp;
+    aDocument->NodePrincipal()->GetCsp(getter_AddRefs(csp));
+
+    // Since we're not changing which page we have loaded, pass
+    if (!newSHEntry) {
+      nsresult rv = AddToSessionHistory(
+          aNewURI, nullptr,
+          aDocument->NodePrincipal(),  // triggeringPrincipal
+          nullptr, csp, true, getter_AddRefs(newSHEntry));
+      NS_ENSURE_SUCCESS(rv, rv);
+      mOSHE = newSHEntry;
+    }
+    newSHEntry->SetURI(aNewURI);
+    newSHEntry->SetOriginalURI(aNewURI);
     newSHEntry->SetLoadReplace(false);
   }
 
-  // Step 4: Modify new/original session history entry and clear its POST
-  // data, if there is any.
-  newSHEntry->SetStateData(scContainer);
+  // Step 2.4 and 3: Modify new/original session history entry and clear its
+  // POST data, if there is any.
+  newSHEntry->SetStateData(aData);
   newSHEntry->SetPostData(nullptr);
 
   // If this push/replaceState changed the document's current URI and the new
@@ -11060,33 +11099,35 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
   // SHEntry's URI was modified in this way by a push/replaceState call
   // set URIWasModified to true for the current SHEntry (bug 669671).
   bool sameExceptHashes = true;
-  newURI->EqualsExceptRef(currentURI, &sameExceptHashes);
-  bool oldURIWasModified = oldOSHE->GetURIWasModified();
+  aNewURI->EqualsExceptRef(aCurrentURI, &sameExceptHashes);
+  bool oldURIWasModified = oldOSHE && oldOSHE->GetURIWasModified();
   newSHEntry->SetURIWasModified(!sameExceptHashes || oldURIWasModified);
 
-  // Step 5: If aReplace is false, indicating that we're doing a pushState
-  // rather than a replaceState, notify bfcache that we've added a page to
-  // the history so it can evict content viewers if appropriate. Otherwise
-  // call ReplaceEntry so that we notify nsIHistoryListeners that an entry
-  // was replaced.
+  // Step E as described at the top of AddState: If aReplace is false,
+  // indicating that we're doing a pushState rather than a replaceState, notify
+  // bfcache that we've added a page to the history so it can evict content
+  // viewers if appropriate. Otherwise call ReplaceEntry so that we notify
+  // nsIHistoryListeners that an entry was replaced.  We may not have a root
+  // session history if this call is coming from a document.open() in a docshell
+  // subtree that disables session history.
   RefPtr<ChildSHistory> rootSH = GetRootSessionHistory();
-  NS_ENSURE_TRUE(rootSH, NS_ERROR_UNEXPECTED);
+  if (rootSH) {
+    if (!aReplace) {
+      int32_t curIndex = rootSH->Index();
+      if (curIndex > -1) {
+        rootSH->LegacySHistory()->EvictOutOfRangeContentViewers(curIndex);
+      }
+    } else {
+      nsCOMPtr<nsISHEntry> rootSHEntry = nsSHistory::GetRootSHEntry(newSHEntry);
 
-  if (!aReplace) {
-    int32_t curIndex = rootSH->Index();
-    if (curIndex > -1) {
-      rootSH->LegacySHistory()->EvictOutOfRangeContentViewers(curIndex);
-    }
-  } else {
-    nsCOMPtr<nsISHEntry> rootSHEntry = nsSHistory::GetRootSHEntry(newSHEntry);
-
-    int32_t index = rootSH->LegacySHistory()->GetIndexOfEntry(rootSHEntry);
-    if (index > -1) {
-      rootSH->LegacySHistory()->ReplaceEntry(index, rootSHEntry);
+      int32_t index = rootSH->LegacySHistory()->GetIndexOfEntry(rootSHEntry);
+      if (index > -1) {
+        rootSH->LegacySHistory()->ReplaceEntry(index, rootSHEntry);
+      }
     }
   }
 
-  // Step 6: If the document's URI changed, update document's URI and update
+  // Step 4: If the document's URI changed, update document's URI and update
   // global history.
   //
   // We need to call FireOnLocationChange so that the browser's address bar
@@ -11102,29 +11143,29 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
   //
   // If the docshell is shutting down, don't update the document URI, as we
   // can't load into a docshell that is being destroyed.
-  if (!equalURIs && !mIsBeingDestroyed) {
-    document->SetDocumentURI(newURI);
+  if (!aEqualURIs && !mIsBeingDestroyed) {
+    aDocument->SetDocumentURI(aNewURI);
     // We can't trust SetCurrentURI to do always fire locationchange events
     // when we expect it to, so we hack around that by doing it ourselves...
-    SetCurrentURI(newURI, nullptr, false, LOCATION_CHANGE_SAME_DOCUMENT);
+    SetCurrentURI(aNewURI, nullptr, false, LOCATION_CHANGE_SAME_DOCUMENT);
     if (mLoadType != LOAD_ERROR_PAGE) {
       FireDummyOnLocationChange();
     }
 
-    AddURIVisit(newURI, oldURI, 0);
+    AddURIVisit(aNewURI, aCurrentURI, 0);
 
     // AddURIVisit doesn't set the title for the new URI in global history,
     // so do that here.
-    UpdateGlobalHistoryTitle(newURI);
+    UpdateGlobalHistoryTitle(aNewURI);
 
     // Inform the favicon service that our old favicon applies to this new
     // URI.
-    CopyFavicon(oldURI, newURI, document->NodePrincipal(),
+    CopyFavicon(aCurrentURI, aNewURI, aDocument->NodePrincipal(),
                 UsePrivateBrowsing());
   } else {
     FireDummyOnLocationChange();
   }
-  document->SetStateObject(scContainer);
+  aDocument->SetStateObject(aData);
 
   return NS_OK;
 }
@@ -11187,6 +11228,7 @@ bool nsDocShell::ShouldAddToSessionHistory(nsIURI* aURI, nsIChannel* aChannel) {
 nsresult nsDocShell::AddToSessionHistory(nsIURI* aURI, nsIChannel* aChannel,
                                          nsIPrincipal* aTriggeringPrincipal,
                                          nsIPrincipal* aPrincipalToInherit,
+                                         nsIContentSecurityPolicy* aCsp,
                                          bool aCloneChildren,
                                          nsISHEntry** aNewEntry) {
   MOZ_ASSERT(aURI, "uri is null");
@@ -11253,6 +11295,7 @@ nsresult nsDocShell::AddToSessionHistory(nsIURI* aURI, nsIChannel* aChannel,
   uint32_t cacheKey = 0;
   nsCOMPtr<nsIPrincipal> triggeringPrincipal = aTriggeringPrincipal;
   nsCOMPtr<nsIPrincipal> principalToInherit = aPrincipalToInherit;
+  nsCOMPtr<nsIContentSecurityPolicy> csp = aCsp;
   bool expired = false;
   bool discardLayoutState = false;
   nsCOMPtr<nsICacheInfoChannel> cacheChannel;
@@ -11292,6 +11335,14 @@ nsresult nsDocShell::AddToSessionHistory(nsIURI* aURI, nsIChannel* aChannel,
     if (!triggeringPrincipal) {
       triggeringPrincipal = loadInfo->TriggeringPrincipal();
     }
+    if (!csp && triggeringPrincipal) {
+      // Currently if no CSP is passed explicitly we query the CSP from
+      // the triggeringPrincipal from within the loadinfo. After Bug 965637,
+      // we can query the CSP from the loadInfo directly in case the CSP is
+      // not passed explicitly. Internally the loadinfo queries the CSP
+      // from the Client.
+      triggeringPrincipal->GetCsp(getter_AddRefs(csp));
+    }
 
     loadInfo->GetResultPrincipalURI(getter_AddRefs(resultPrincipalURI));
 
@@ -11321,7 +11372,7 @@ nsresult nsDocShell::AddToSessionHistory(nsIURI* aURI, nsIChannel* aChannel,
                 cacheKey,             // CacheKey
                 mContentTypeHint,     // Content-type
                 triggeringPrincipal,  // Channel or provided principal
-                principalToInherit, mHistoryID, mDynamicallyCreated);
+                principalToInherit, csp, mHistoryID, mDynamicallyCreated);
 
   entry->SetOriginalURI(originalURI);
   entry->SetResultPrincipalURI(resultPrincipalURI);
@@ -11439,6 +11490,7 @@ nsresult nsDocShell::LoadHistoryEntry(nsISHEntry* aEntry, uint32_t aLoadType) {
   aEntry->GetContentType(contentType);
   nsCOMPtr<nsIPrincipal> triggeringPrincipal = aEntry->GetTriggeringPrincipal();
   nsCOMPtr<nsIPrincipal> principalToInherit = aEntry->GetPrincipalToInherit();
+  nsCOMPtr<nsIContentSecurityPolicy> csp = aEntry->GetCsp();
   nsCOMPtr<nsIReferrerInfo> referrerInfo = aEntry->GetReferrerInfo();
 
   // Calling CreateAboutBlankContentViewer can set mOSHE to null, and if
@@ -11532,6 +11584,7 @@ nsresult nsDocShell::LoadHistoryEntry(nsISHEntry* aEntry, uint32_t aLoadType) {
   loadState->SetFirstParty(true);
   loadState->SetSrcdocData(srcdoc);
   loadState->SetBaseURI(baseURI);
+  loadState->SetCsp(csp);
 
   rv = InternalLoad(loadState,
                     nullptr,   // No nsIDocShell
@@ -12096,28 +12149,6 @@ nsDocShell::InterfaceRequestorProxy::GetInterface(const nsIID& aIID,
   return NS_NOINTERFACE;
 }
 
-nsresult nsDocShell::SetBaseUrlForWyciwyg(nsIContentViewer* aContentViewer) {
-  if (!aContentViewer) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsCOMPtr<nsIURI> baseURI;
-  nsresult rv = NS_ERROR_NOT_AVAILABLE;
-
-  if (sURIFixup) {
-    rv = sURIFixup->CreateExposableURI(mCurrentURI, getter_AddRefs(baseURI));
-  }
-
-  // Get the current document and set the base uri
-  if (baseURI) {
-    Document* document = aContentViewer->GetDocument();
-    if (document) {
-      document->SetBaseURI(baseURI);
-    }
-  }
-  return rv;
-}
-
 //*****************************************************************************
 // nsDocShell::nsIAuthPromptProvider
 //*****************************************************************************
@@ -12346,7 +12377,8 @@ class OnLinkClickEvent : public Runnable {
                    nsIInputStream* aPostDataStream,
                    nsIInputStream* aHeadersDataStream, bool aNoOpenerImplied,
                    bool aIsUserTriggered, bool aIsTrusted,
-                   nsIPrincipal* aTriggeringPrincipal);
+                   nsIPrincipal* aTriggeringPrincipal,
+                   nsIContentSecurityPolicy* aCsp);
 
   NS_IMETHOD Run() override {
     nsAutoPopupStatePusher popupStatePusher(mPopupState);
@@ -12362,7 +12394,7 @@ class OnLinkClickEvent : public Runnable {
       mHandler->OnLinkClickSync(mContent, mURI, mTargetSpec, mFileName,
                                 mPostDataStream, mHeadersDataStream,
                                 mNoOpenerImplied, nullptr, nullptr,
-                                mIsUserTriggered, mTriggeringPrincipal);
+                                mIsUserTriggered, mTriggeringPrincipal, mCsp);
     }
     return NS_OK;
   }
@@ -12380,16 +12412,15 @@ class OnLinkClickEvent : public Runnable {
   bool mIsUserTriggered;
   bool mIsTrusted;
   nsCOMPtr<nsIPrincipal> mTriggeringPrincipal;
+  nsCOMPtr<nsIContentSecurityPolicy> mCsp;
 };
 
-OnLinkClickEvent::OnLinkClickEvent(nsDocShell* aHandler, nsIContent* aContent,
-                                   nsIURI* aURI, const nsAString& aTargetSpec,
-                                   const nsAString& aFileName,
-                                   nsIInputStream* aPostDataStream,
-                                   nsIInputStream* aHeadersDataStream,
-                                   bool aNoOpenerImplied, bool aIsUserTriggered,
-                                   bool aIsTrusted,
-                                   nsIPrincipal* aTriggeringPrincipal)
+OnLinkClickEvent::OnLinkClickEvent(
+    nsDocShell* aHandler, nsIContent* aContent, nsIURI* aURI,
+    const nsAString& aTargetSpec, const nsAString& aFileName,
+    nsIInputStream* aPostDataStream, nsIInputStream* aHeadersDataStream,
+    bool aNoOpenerImplied, bool aIsUserTriggered, bool aIsTrusted,
+    nsIPrincipal* aTriggeringPrincipal, nsIContentSecurityPolicy* aCsp)
     : mozilla::Runnable("OnLinkClickEvent"),
       mHandler(aHandler),
       mURI(aURI),
@@ -12402,16 +12433,15 @@ OnLinkClickEvent::OnLinkClickEvent(nsDocShell* aHandler, nsIContent* aContent,
       mNoOpenerImplied(aNoOpenerImplied),
       mIsUserTriggered(aIsUserTriggered),
       mIsTrusted(aIsTrusted),
-      mTriggeringPrincipal(aTriggeringPrincipal) {}
+      mTriggeringPrincipal(aTriggeringPrincipal),
+      mCsp(aCsp) {}
 
 NS_IMETHODIMP
-nsDocShell::OnLinkClick(nsIContent* aContent, nsIURI* aURI,
-                        const nsAString& aTargetSpec,
-                        const nsAString& aFileName,
-                        nsIInputStream* aPostDataStream,
-                        nsIInputStream* aHeadersDataStream,
-                        bool aIsUserTriggered, bool aIsTrusted,
-                        nsIPrincipal* aTriggeringPrincipal) {
+nsDocShell::OnLinkClick(
+    nsIContent* aContent, nsIURI* aURI, const nsAString& aTargetSpec,
+    const nsAString& aFileName, nsIInputStream* aPostDataStream,
+    nsIInputStream* aHeadersDataStream, bool aIsUserTriggered, bool aIsTrusted,
+    nsIPrincipal* aTriggeringPrincipal, nsIContentSecurityPolicy* aCsp) {
 #ifndef ANDROID
   MOZ_ASSERT(aTriggeringPrincipal, "Need a valid triggeringPrincipal");
 #endif
@@ -12452,10 +12482,10 @@ nsDocShell::OnLinkClick(nsIContent* aContent, nsIURI* aURI,
     target = aTargetSpec;
   }
 
-  nsCOMPtr<nsIRunnable> ev =
-      new OnLinkClickEvent(this, aContent, aURI, target, aFileName,
-                           aPostDataStream, aHeadersDataStream, noOpenerImplied,
-                           aIsUserTriggered, aIsTrusted, aTriggeringPrincipal);
+  nsCOMPtr<nsIRunnable> ev = new OnLinkClickEvent(
+      this, aContent, aURI, target, aFileName, aPostDataStream,
+      aHeadersDataStream, noOpenerImplied, aIsUserTriggered, aIsTrusted,
+      aTriggeringPrincipal, aCsp);
   return DispatchToTabGroup(TaskCategory::UI, ev.forget());
 }
 
@@ -12466,14 +12496,12 @@ static bool IsElementAnchorOrArea(nsIContent* aContent) {
 }
 
 NS_IMETHODIMP
-nsDocShell::OnLinkClickSync(nsIContent* aContent, nsIURI* aURI,
-                            const nsAString& aTargetSpec,
-                            const nsAString& aFileName,
-                            nsIInputStream* aPostDataStream,
-                            nsIInputStream* aHeadersDataStream,
-                            bool aNoOpenerImplied, nsIDocShell** aDocShell,
-                            nsIRequest** aRequest, bool aIsUserTriggered,
-                            nsIPrincipal* aTriggeringPrincipal) {
+nsDocShell::OnLinkClickSync(
+    nsIContent* aContent, nsIURI* aURI, const nsAString& aTargetSpec,
+    const nsAString& aFileName, nsIInputStream* aPostDataStream,
+    nsIInputStream* aHeadersDataStream, bool aNoOpenerImplied,
+    nsIDocShell** aDocShell, nsIRequest** aRequest, bool aIsUserTriggered,
+    nsIPrincipal* aTriggeringPrincipal, nsIContentSecurityPolicy* aCsp) {
   // Initialize the DocShell / Request
   if (aDocShell) {
     *aDocShell = nullptr;
@@ -12523,6 +12551,14 @@ nsDocShell::OnLinkClickSync(nsIContent* aContent, nsIURI* aURI,
   // fall back to using doc->NodePrincipal() as the triggeringPrincipal.
   nsCOMPtr<nsIPrincipal> triggeringPrincipal =
       aTriggeringPrincipal ? aTriggeringPrincipal : aContent->NodePrincipal();
+
+  nsCOMPtr<nsIContentSecurityPolicy> csp = aCsp;
+  if (!csp) {
+    // Currently, if no csp is passed explicitly we fall back to querying the
+    // CSP from the NodePrincipal(). After Bug 965637 we can fall back to
+    // querying the CSP from the document (aContent->OwnerDoc()).
+    aContent->NodePrincipal()->GetCsp(getter_AddRefs(csp));
+  }
 
   uint32_t flags = INTERNAL_LOAD_FLAGS_NONE;
   if (IsElementAnchorOrArea(aContent)) {
@@ -12635,6 +12671,7 @@ nsDocShell::OnLinkClickSync(nsIContent* aContent, nsIURI* aURI,
   loadState->SetReferrerInfo(referrerInfo);
   loadState->SetTriggeringPrincipal(triggeringPrincipal);
   loadState->SetPrincipalToInherit(aContent->NodePrincipal());
+  loadState->SetCsp(csp);
   loadState->SetLoadFlags(flags);
   loadState->SetTarget(aTargetSpec);
   loadState->SetTypeHint(NS_ConvertUTF16toUTF8(typeHint));
@@ -13363,4 +13400,44 @@ NS_IMETHODIMP
 nsDocShell::GetBrowsingContext(BrowsingContext** aBrowsingContext) {
   *aBrowsingContext = do_AddRef(mBrowsingContext).take();
   return NS_OK;
+}
+
+bool nsDocShell::GetIsAttemptingToNavigate() {
+  // XXXbz the document.open spec says to abort even if there's just a
+  // queued navigation task, sort of.  It's not clear whether browsers
+  // actually do that, and we didn't use to do it, so for now let's
+  // not do that.
+  // https://github.com/whatwg/html/issues/3447 tracks the spec side of this.
+  if (mDocumentRequest) {
+    // There's definitely a navigation in progress.
+    return true;
+  }
+
+  // javascript: channels have slightly weird behavior: they're LOAD_BACKGROUND
+  // until the script runs, which means they're not sending loadgroup
+  // notifications and hence not getting set as mDocumentRequest.  Look through
+  // our loadgroup for document-level javascript: loads.
+  if (!mLoadGroup) {
+    return false;
+  }
+
+  nsCOMPtr<nsISimpleEnumerator> requests;
+  mLoadGroup->GetRequests(getter_AddRefs(requests));
+  bool hasMore = false;
+  while (NS_SUCCEEDED(requests->HasMoreElements(&hasMore)) && hasMore) {
+    nsCOMPtr<nsISupports> elem;
+    requests->GetNext(getter_AddRefs(elem));
+    nsCOMPtr<nsIScriptChannel> scriptChannel(do_QueryInterface(elem));
+    if (!scriptChannel) {
+      continue;
+    }
+
+    if (scriptChannel->GetIsDocumentLoad()) {
+      // This is a javascript: load that might lead to a new document,
+      // hence a navigation.
+      return true;
+    }
+  }
+
+  return false;
 }

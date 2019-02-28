@@ -124,9 +124,9 @@ let ACTORS = {
     },
   },
 
-  FormSubmit: {
+  FormValidation: {
     child: {
-      module: "resource:///actors/FormSubmitChild.jsm",
+      module: "resource:///actors/FormValidationChild.jsm",
       events: {
         "MozInvalidForm": {},
       },
@@ -434,6 +434,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   SessionStore: "resource:///modules/sessionstore/SessionStore.jsm",
   ShellService: "resource:///modules/ShellService.jsm",
   TabCrashHandler: "resource:///modules/ContentCrashHandlers.jsm",
+  TabUnloader: "resource:///modules/TabUnloader.jsm",
   UIState: "resource://services-sync/UIState.jsm",
   UITour: "resource:///modules/UITour.jsm",
   WebChannel: "resource://gre/modules/WebChannel.jsm",
@@ -1425,9 +1426,26 @@ BrowserGlue.prototype = {
 
     let fpEnabled = Services.prefs.getBoolPref("privacy.trackingprotection.fingerprinting.enabled");
     let cmEnabled = Services.prefs.getBoolPref("privacy.trackingprotection.cryptomining.enabled");
+    let categoryPref;
+    switch (Services.prefs.getStringPref("browser.contentblocking.category", null)) {
+    case "standard":
+      categoryPref = 0;
+      break;
+    case "strict":
+      categoryPref = 1;
+      break;
+    case "custom":
+      categoryPref = 2;
+      break;
+    default:
+      // Any other value is unsupported.
+      categoryPref = 3;
+      break;
+    }
 
     Services.telemetry.scalarSet("contentblocking.fingerprinting_blocking_enabled", fpEnabled);
     Services.telemetry.scalarSet("contentblocking.cryptomining_blocking_enabled", cmEnabled);
+    Services.telemetry.scalarSet("contentblocking.category", categoryPref);
   },
 
   _sendMediaTelemetry() {
@@ -1703,6 +1721,10 @@ BrowserGlue.prototype = {
         LiveBookmarkMigrator.migrate().catch(Cu.reportError);
       });
     }
+
+    Services.tm.idleDispatchToMainThread(() => {
+      TabUnloader.init();
+    });
   },
 
   /**

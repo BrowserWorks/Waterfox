@@ -82,7 +82,7 @@ RemoteWebNavigation.prototype = {
           };
           principal = Services.scriptSecurityManager.createCodebasePrincipal(uri, attrs);
         }
-        Services.io.speculativeConnect2(uri, principal, null);
+        Services.io.speculativeConnect(uri, principal, null);
       } catch (ex) {
         // Can't setup speculative connection for this uri string for some
         // reason (such as failing to parse the URI), just ignore it.
@@ -98,6 +98,7 @@ RemoteWebNavigation.prototype = {
       baseURI: aLoadURIOptions.baseURI ? aLoadURIOptions.baseURI.spec : null,
       triggeringPrincipal: E10SUtils.serializePrincipal(
                            aLoadURIOptions.triggeringPrincipal || Services.scriptSecurityManager.createNullPrincipal({})),
+      csp: aLoadURIOptions.csp ? E10SUtils.serializeCSP(aLoadURIOptions.csp) : null,
       requestTime: Services.telemetry.msSystemNow(),
     });
   },

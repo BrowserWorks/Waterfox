@@ -525,8 +525,7 @@ void nsObjectLoadingContent::SetupFrameLoader(int32_t aJSPluginId) {
   NS_ASSERTION(thisContent, "must be a content");
 
   mFrameLoader = nsFrameLoader::Create(thisContent->AsElement(),
-                                       /* aOpener = */ nullptr, mNetworkCreated,
-                                       aJSPluginId);
+                                       /* aOpener = */ nullptr, mNetworkCreated);
   MOZ_ASSERT(mFrameLoader, "nsFrameLoader::Create failed");
 }
 
@@ -931,8 +930,7 @@ void nsObjectLoadingContent::NotifyOwnerDocumentActivityChanged() {
 
 // nsIRequestObserver
 NS_IMETHODIMP
-nsObjectLoadingContent::OnStartRequest(nsIRequest* aRequest,
-                                       nsISupports* aContext) {
+nsObjectLoadingContent::OnStartRequest(nsIRequest* aRequest) {
   AUTO_PROFILER_LABEL("nsObjectLoadingContent::OnStartRequest", NETWORK);
 
   LOG(("OBJLC [%p]: Channel OnStartRequest", this));
@@ -953,7 +951,7 @@ nsObjectLoadingContent::OnStartRequest(nsIRequest* aRequest,
       return NS_BINDING_ABORTED;
     }
     if (MakePluginListener()) {
-      return mFinalListener->OnStartRequest(aRequest, nullptr);
+      return mFinalListener->OnStartRequest(aRequest);
     }
     MOZ_ASSERT_UNREACHABLE(
         "Failed to create PluginStreamListener, aborting "
@@ -1014,7 +1012,6 @@ nsObjectLoadingContent::OnStartRequest(nsIRequest* aRequest,
 
 NS_IMETHODIMP
 nsObjectLoadingContent::OnStopRequest(nsIRequest* aRequest,
-                                      nsISupports* aContext,
                                       nsresult aStatusCode) {
   AUTO_PROFILER_LABEL("nsObjectLoadingContent::OnStopRequest", NETWORK);
 
@@ -1040,7 +1037,7 @@ nsObjectLoadingContent::OnStopRequest(nsIRequest* aRequest,
     // This may re-enter in the case of plugin listeners
     nsCOMPtr<nsIStreamListener> listenerGrip(mFinalListener);
     mFinalListener = nullptr;
-    listenerGrip->OnStopRequest(aRequest, aContext, aStatusCode);
+    listenerGrip->OnStopRequest(aRequest, aStatusCode);
   }
 
   // Return value doesn't matter
@@ -1050,7 +1047,6 @@ nsObjectLoadingContent::OnStopRequest(nsIRequest* aRequest,
 // nsIStreamListener
 NS_IMETHODIMP
 nsObjectLoadingContent::OnDataAvailable(nsIRequest* aRequest,
-                                        nsISupports* aContext,
                                         nsIInputStream* aInputStream,
                                         uint64_t aOffset, uint32_t aCount) {
   if (aRequest != mChannel) {
@@ -1060,7 +1056,7 @@ nsObjectLoadingContent::OnDataAvailable(nsIRequest* aRequest,
   if (mFinalListener) {
     // This may re-enter in the case of plugin listeners
     nsCOMPtr<nsIStreamListener> listenerGrip(mFinalListener);
-    return listenerGrip->OnDataAvailable(aRequest, aContext, aInputStream,
+    return listenerGrip->OnDataAvailable(aRequest, aInputStream,
                                          aOffset, aCount);
   }
 
@@ -2108,100 +2104,6 @@ nsresult nsObjectLoadingContent::LoadObject(bool aNotify, bool aForceLoad,
         rv = AsyncStartPluginInstance();
       }
     } break;
-    case eType_FakePlugin: {
-      if (mChannel) {
-        /// XXX(johns): Ideally we'd have some way to pass the channel to the
-        ///             fake plugin handler, but for now handlers will need to
-        ///             request element.srcURI themselves if they want it
-        LOG(("OBJLC [%p]: Closing unused channel for fake plugin type", this));
-        CloseChannel();
-      }
-
-      /// XXX(johns) Bug FIXME - We need to cleanup the various plugintag
-      ///            classes to be more sane and avoid this dance
-      nsCOMPtr<nsIPluginTag> basetag =
-          nsContentUtils::PluginTagForType(mContentType, false);
-      nsCOMPtr<nsIFakePluginTag> tag = do_QueryInterface(basetag);
-
-      uint32_t id;
-      if (NS_FAILED(tag->GetId(&id))) {
-        rv = NS_ERROR_FAILURE;
-        break;
-      }
-
-      MOZ_ASSERT(id <= PR_INT32_MAX,
-                 "Something went wrong, nsPluginHost::RegisterFakePlugin "
-                 "shouldn't have "
-                 "given out this id.");
-
-      SetupFrameLoader(int32_t(id));
-      if (!mFrameLoader) {
-        rv = NS_ERROR_FAILURE;
-        break;
-      }
-
-      nsString sandboxScript;
-      tag->GetSandboxScript(sandboxScript);
-      if (!sandboxScript.IsEmpty()) {
-        // Create a sandbox.
-        AutoJSAPI jsapi;
-        jsapi.Init();
-        JS::Rooted<JSObject*> sandbox(jsapi.cx());
-        rv = nsContentUtils::XPConnect()->CreateSandbox(
-            jsapi.cx(), nsContentUtils::GetSystemPrincipal(),
-            sandbox.address());
-        if (NS_FAILED(rv)) {
-          break;
-        }
-
-        AutoEntryScript aes(sandbox, "JS plugin sandbox code");
-
-        JS::Rooted<JS::Value> element(aes.cx());
-        if (!ToJSValue(aes.cx(), thisContent, &element)) {
-          rv = NS_ERROR_FAILURE;
-          break;
-        }
-
-        if (!JS_DefineProperty(aes.cx(), sandbox, "pluginElement", element,
-                               JSPROP_ENUMERATE)) {
-          rv = NS_ERROR_FAILURE;
-          break;
-        }
-
-        JS::Rooted<JS::Value> rval(aes.cx());
-        // If the eval'ed code throws we won't load and do fallback instead.
-        rv = nsContentUtils::XPConnect()->EvalInSandboxObject(
-            sandboxScript, nullptr, aes.cx(), sandbox, &rval);
-        if (NS_FAILED(rv)) {
-          break;
-        }
-      }
-
-      nsCOMPtr<nsIURI> handlerURI;
-      if (tag) {
-        tag->GetHandlerURI(getter_AddRefs(handlerURI));
-      }
-
-      if (!handlerURI) {
-        MOZ_ASSERT_UNREACHABLE(
-            "Selected type is not a proper fake plugin "
-            "handler");
-        rv = NS_ERROR_FAILURE;
-        break;
-      }
-
-      nsCString spec;
-      handlerURI->GetSpec(spec);
-      LOG(("OBJLC [%p]: Loading fake plugin handler (%s)", this, spec.get()));
-
-      rv = mFrameLoader->LoadURI(
-          handlerURI, thisContent->AsElement()->NodePrincipal(), false);
-      if (NS_FAILED(rv)) {
-        LOG(("OBJLC [%p]: LoadURI() failed for fake handler", this));
-        mFrameLoader->Destroy();
-        mFrameLoader = nullptr;
-      }
-    } break;
     case eType_Document: {
       if (!mChannel) {
         // We could mFrameLoader->LoadURI(mURI), but UpdateObjectParameters
@@ -2252,6 +2154,9 @@ nsresult nsObjectLoadingContent::LoadObject(bool aNotify, bool aForceLoad,
     case eType_Null:
       // Handled below, silence compiler warnings
       break;
+    case eType_FakePlugin:
+      // We're now in the process of removing FakePlugin. See bug 1529133.
+      MOZ_CRASH("Shouldn't reach here! This means there's a fakeplugin trying to be loaded.");
   }
 
   //
@@ -2311,7 +2216,7 @@ nsresult nsObjectLoadingContent::LoadObject(bool aNotify, bool aForceLoad,
     // this in the loading block above as it requires an instance.
     if (aLoadingChannel && NS_SUCCEEDED(rv)) {
       if (NS_SUCCEEDED(rv) && MakePluginListener()) {
-        rv = mFinalListener->OnStartRequest(mChannel, nullptr);
+        rv = mFinalListener->OnStartRequest(mChannel);
         if (NS_FAILED(rv)) {
           // Plugins can reject their initial stream, but continue to run.
           CloseChannel();
@@ -2324,7 +2229,7 @@ nsresult nsObjectLoadingContent::LoadObject(bool aNotify, bool aForceLoad,
     NS_ASSERTION(mType != eType_Null && mType != eType_Loading,
                  "We should not have a final listener with a non-loaded type");
     mFinalListener = finalListener;
-    rv = finalListener->OnStartRequest(mChannel, nullptr);
+    rv = finalListener->OnStartRequest(mChannel);
   }
 
   if (NS_FAILED(rv) && mIsLoading) {
@@ -2354,7 +2259,7 @@ nsresult nsObjectLoadingContent::CloseChannel() {
     if (listenerGrip) {
       // mFinalListener is only set by LoadObject after OnStartRequest, or
       // by OnStartRequest in the case of late-opened plugin streams
-      listenerGrip->OnStopRequest(channelGrip, nullptr, NS_BINDING_ABORTED);
+      listenerGrip->OnStopRequest(channelGrip, NS_BINDING_ABORTED);
     }
   }
   return NS_OK;
@@ -3180,12 +3085,12 @@ bool nsObjectLoadingContent::ShouldPlay(FallbackType& aReason) {
     NS_ENSURE_SUCCESS(rv, false);
     uint32_t permission;
     rv = permissionManager->TestPermissionFromPrincipal(
-        topDoc->NodePrincipal(), permissionString.Data(), &permission);
+        topDoc->NodePrincipal(), permissionString, &permission);
     NS_ENSURE_SUCCESS(rv, false);
     if (permission != nsIPermissionManager::UNKNOWN_ACTION) {
       uint64_t nowms = PR_Now() / 1000;
       permissionManager->UpdateExpireTime(
-          topDoc->NodePrincipal(), permissionString.Data(), false,
+          topDoc->NodePrincipal(), permissionString, false,
           nowms + sSessionTimeoutMinutes * 60 * 1000,
           nowms / 1000 +
               uint64_t(sPersistentTimeoutDays) * 24 * 60 * 60 * 1000);

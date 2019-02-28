@@ -13,7 +13,7 @@ use std::cell::RefCell;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::ops::Range;
-use std::os::raw::{c_void, c_char};
+use std::os::raw::{c_void, c_char, c_float};
 #[cfg(target_os = "android")]
 use std::os::raw::{c_int};
 use gleam::gl;
@@ -487,6 +487,24 @@ impl ExternalImageHandler for WrExternalImageHandler {
             (self.unlock_func)(self.external_image_obj, id.into(), channel_index);
         }
     }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+// Used for ComponentTransfer only
+pub struct WrFilterData {
+    funcR_type: ComponentTransferFuncType,
+    R_values: *mut c_float,
+    R_values_count: usize,
+    funcG_type: ComponentTransferFuncType,
+    G_values: *mut c_float,
+    G_values_count: usize,
+    funcB_type: ComponentTransferFuncType,
+    B_values: *mut c_float,
+    B_values_count: usize,
+    funcA_type: ComponentTransferFuncType,
+    A_values: *mut c_float,
+    A_values_count: usize,
 }
 
 #[repr(u32)]
@@ -1108,7 +1126,7 @@ pub extern "C" fn wr_window_new(window_id: WrWindowId,
 
     let opts = RendererOptions {
         enable_aa: true,
-        enable_subpixel_aa: true,
+        enable_subpixel_aa: cfg!(not(target_os = "android")),
         support_low_priority_transactions,
         recorder: recorder,
         blob_image_handler: Some(Box::new(Moz2dBlobImageHandler::new(workers.clone()))),
@@ -1399,6 +1417,7 @@ pub extern "C" fn wr_transaction_update_dynamic_properties(
     if transform_count > 0 {
         let transform_slice = make_slice(transform_array, transform_count);
 
+        properties.transforms.reserve(transform_slice.len());
         for element in transform_slice.iter() {
             let prop = PropertyValue {
                 key: PropertyBindingKey::new(element.id),
@@ -1412,6 +1431,7 @@ pub extern "C" fn wr_transaction_update_dynamic_properties(
     if opacity_count > 0 {
         let opacity_slice = make_slice(opacity_array, opacity_count);
 
+        properties.floats.reserve(opacity_slice.len());
         for element in opacity_slice.iter() {
             let prop = PropertyValue {
                 key: PropertyBindingKey::new(element.id),
@@ -1440,7 +1460,7 @@ pub extern "C" fn wr_transaction_append_transform_properties(
     };
 
     let transform_slice = make_slice(transform_array, transform_count);
-
+    properties.transforms.reserve(transform_slice.len());
     for element in transform_slice.iter() {
         let prop = PropertyValue {
             key: PropertyBindingKey::new(element.id),
@@ -1950,6 +1970,8 @@ pub extern "C" fn wr_dp_push_stacking_context(
     transform: *const LayoutTransform,
     filters: *const FilterOp,
     filter_count: usize,
+    filter_datas: *const WrFilterData,
+    filter_datas_count: usize,
     glyph_raster_space: RasterSpace,
 ) -> WrSpatialId {
     debug_assert!(unsafe { !is_in_render_thread() });
@@ -1957,6 +1979,20 @@ pub extern "C" fn wr_dp_push_stacking_context(
     let c_filters = make_slice(filters, filter_count);
     let mut filters : Vec<FilterOp> = c_filters.iter().map(|c_filter| {
                                                            *c_filter
+    }).collect();
+
+    let c_filter_datas = make_slice(filter_datas, filter_datas_count);
+    let r_filter_datas : Vec<FilterData> = c_filter_datas.iter().map(|c_filter_data| {
+        FilterData {
+            func_r_type: c_filter_data.funcR_type,
+            r_values: make_slice(c_filter_data.R_values, c_filter_data.R_values_count).to_vec(),
+            func_g_type: c_filter_data.funcG_type,
+            g_values: make_slice(c_filter_data.G_values, c_filter_data.G_values_count).to_vec(),
+            func_b_type: c_filter_data.funcB_type,
+            b_values: make_slice(c_filter_data.B_values, c_filter_data.B_values_count).to_vec(),
+            func_a_type: c_filter_data.funcA_type,
+            a_values: make_slice(c_filter_data.A_values, c_filter_data.A_values_count).to_vec(),
+        }
     }).collect();
 
     let transform_ref = unsafe { transform.as_ref() };
@@ -2046,6 +2082,7 @@ pub extern "C" fn wr_dp_push_stacking_context(
                                 params.transform_style,
                                 params.mix_blend_mode,
                                 &filters,
+                                &r_filter_datas,
                                 glyph_raster_space,
                                 params.cache_tiles);
 
@@ -2170,7 +2207,8 @@ pub extern "C" fn wr_dp_define_scroll_layer(state: &mut WrState,
                                             external_scroll_id: u64,
                                             parent: &WrSpaceAndClip,
                                             content_rect: LayoutRect,
-                                            clip_rect: LayoutRect)
+                                            clip_rect: LayoutRect,
+                                            scroll_offset: LayoutPoint)
                                             -> WrSpaceAndClip {
     assert!(unsafe { is_in_main_thread() });
 
@@ -2181,7 +2219,10 @@ pub extern "C" fn wr_dp_define_scroll_layer(state: &mut WrState,
         clip_rect,
         vec![],
         None,
-        ScrollSensitivity::Script
+        ScrollSensitivity::Script,
+        // TODO(gw): We should also update the Gecko-side APIs to provide
+        //           this as a vector rather than a point.
+        scroll_offset.to_vector(),
     );
 
     WrSpaceAndClip::from_webrender(space_and_clip)

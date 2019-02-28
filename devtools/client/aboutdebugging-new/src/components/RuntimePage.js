@@ -29,7 +29,8 @@ const TemporaryExtensionDetail = createFactory(require("./debugtarget/TemporaryE
 const WorkerDetail = createFactory(require("./debugtarget/WorkerDetail"));
 
 const Actions = require("../actions/index");
-const { DEBUG_TARGET_PANE, MESSAGE_LEVEL, PAGE_TYPES } = require("../constants");
+const { DEBUG_TARGETS, DEBUG_TARGET_PANE, MESSAGE_LEVEL, PAGE_TYPES } =
+  require("../constants");
 const Types = require("../types/index");
 
 const { getCurrentRuntimeDetails } = require("../modules/runtimes-state-helper");
@@ -49,7 +50,7 @@ class RuntimePage extends PureComponent {
       showProfilerDialog: PropTypes.bool.isRequired,
       tabs: PropTypes.arrayOf(PropTypes.object).isRequired,
       temporaryExtensions: PropTypes.arrayOf(PropTypes.object).isRequired,
-      temporaryInstallError: PropTypes.string,
+      temporaryInstallError: PropTypes.object,
     };
   }
 
@@ -60,7 +61,20 @@ class RuntimePage extends PureComponent {
     dispatch(Actions.selectPage(PAGE_TYPES.RUNTIME, runtimeId));
   }
 
-  renderDebugTargetPane(name, targets, actionComponent,
+  getIconByType(type) {
+    switch (type) {
+      case DEBUG_TARGETS.EXTENSION:
+        return "chrome://devtools/skin/images/debugging-addons.svg";
+      case DEBUG_TARGETS.TAB:
+        return "chrome://devtools/skin/images/debugging-tabs.svg";
+      case DEBUG_TARGETS.WORKER:
+        return "chrome://devtools/skin/images/debugging-workers.svg";
+    }
+
+    throw new Error(`Unsupported type [${ type }]`);
+  }
+
+  renderDebugTargetPane(name, icon, targets, actionComponent,
                         detailComponent, paneKey, localizationId) {
     const { collapsibilities, dispatch, runtimeDetails } = this.props;
 
@@ -78,6 +92,7 @@ class RuntimePage extends PureComponent {
         collapsibilityKey: paneKey,
         detailComponent,
         dispatch,
+        icon,
         isCollapsed: collapsibilities.get(paneKey),
         name,
         targets,
@@ -94,6 +109,23 @@ class RuntimePage extends PureComponent {
       return null;
     }
 
+    let errorMessages = [temporaryInstallError.message];
+
+    // Additional error messages can be found in additionalErrors.
+    if (Array.isArray(temporaryInstallError.additionalErrors)) {
+      errorMessages = errorMessages.concat(temporaryInstallError.additionalErrors);
+    }
+
+    const errors = errorMessages.map((message, index) => {
+      return dom.div(
+        {
+          className: "technical-text",
+          key: "tmp-extension-install-error-" + index,
+        },
+        message
+      );
+    });
+
     return Message(
       {
         level: MESSAGE_LEVEL.ERROR,
@@ -106,12 +138,7 @@ class RuntimePage extends PureComponent {
           },
           dom.span({}, "There was an error during the temporary add-on installation")
         ),
-        dom.div(
-          {
-            className: "technical-text",
-          },
-          temporaryInstallError
-        )
+        errors
       )
     );
   }
@@ -148,36 +175,42 @@ class RuntimePage extends PureComponent {
       CompatibilityWarning({ compatibilityReport }),
       this.renderTemporaryExtensionInstallError(),
       this.renderDebugTargetPane("Temporary Extensions",
+                                 this.getIconByType(DEBUG_TARGETS.EXTENSION),
                                  temporaryExtensions,
                                  TemporaryExtensionAction,
                                  TemporaryExtensionDetail,
                                  DEBUG_TARGET_PANE.TEMPORARY_EXTENSION,
                                  "about-debugging-runtime-temporary-extensions"),
       this.renderDebugTargetPane("Extensions",
+                                 this.getIconByType(DEBUG_TARGETS.EXTENSION),
                                  installedExtensions,
                                  ExtensionAction,
                                  ExtensionDetail,
                                  DEBUG_TARGET_PANE.INSTALLED_EXTENSION,
                                  "about-debugging-runtime-extensions"),
       this.renderDebugTargetPane("Tabs",
+                                 this.getIconByType(DEBUG_TARGETS.TAB),
                                  tabs,
                                  InspectAction,
                                  TabDetail,
                                  DEBUG_TARGET_PANE.TAB,
                                  "about-debugging-runtime-tabs"),
       this.renderDebugTargetPane("Service Workers",
+                                 this.getIconByType(DEBUG_TARGETS.WORKER),
                                  serviceWorkers,
                                  ServiceWorkerAction,
                                  WorkerDetail,
                                  DEBUG_TARGET_PANE.SERVICE_WORKER,
                                  "about-debugging-runtime-service-workers"),
       this.renderDebugTargetPane("Shared Workers",
+                                 this.getIconByType(DEBUG_TARGETS.WORKER),
                                  sharedWorkers,
                                  InspectAction,
                                  WorkerDetail,
                                  DEBUG_TARGET_PANE.SHARED_WORKER,
                                  "about-debugging-runtime-shared-workers"),
       this.renderDebugTargetPane("Other Workers",
+                                 this.getIconByType(DEBUG_TARGETS.WORKER),
                                  otherWorkers,
                                  InspectAction,
                                  WorkerDetail,

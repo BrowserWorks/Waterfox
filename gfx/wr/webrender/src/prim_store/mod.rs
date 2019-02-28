@@ -1700,11 +1700,11 @@ impl PrimitiveStore {
     /// Destroy an existing primitive store. This is called just before
     /// a primitive store is replaced with a newly built scene.
     pub fn destroy(
-        self,
+        mut self,
         retained_tiles: &mut RetainedTiles,
         clip_scroll_tree: &ClipScrollTree,
     ) {
-        for pic in self.pictures {
+        for pic in &mut self.pictures {
             pic.destroy(
                 retained_tiles,
                 clip_scroll_tree,
@@ -2304,6 +2304,7 @@ impl PrimitiveStore {
                     pic_context.surface_index,
                     frame_context,
                     frame_state,
+                    data_stores,
                 ) {
                     if let Some(ref mut splitter) = pic_state.plane_splitter {
                         PicturePrimitive::add_split_plane(
@@ -2670,7 +2671,7 @@ impl PrimitiveStore {
                     .get_image_properties(image_data.key);
 
                 if let Some(ImageProperties { descriptor, tiling: Some(tile_size), .. }) = image_properties {
-                    let device_image_size = descriptor.size;
+                    let device_image_rect = DeviceIntRect::from_size(descriptor.size);
 
                     // Tighten the clip rect because decomposing the repeated image can
                     // produce primitives that are partially covering the original image
@@ -2710,15 +2711,15 @@ impl PrimitiveStore {
                     for Repetition { origin, edge_flags } in repetitions {
                         let edge_flags = base_edge_flags | edge_flags;
 
-                        let image_rect = LayoutRect {
+                        let layout_image_rect = LayoutRect {
                             origin,
                             size: image_data.stretch_size,
                         };
 
                         let tiles = ::image::tiles(
-                            &image_rect,
+                            &layout_image_rect,
                             &visible_rect,
-                            &device_image_size,
+                            &device_image_rect,
                             tile_size as i32,
                         );
 

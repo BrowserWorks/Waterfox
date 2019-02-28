@@ -1363,7 +1363,7 @@ class nsIFrame : public nsQueryFrame {
    *
    * Return whether any radii are nonzero.
    */
-  static bool ComputeBorderRadii(const nsStyleCorners& aBorderRadius,
+  static bool ComputeBorderRadii(const mozilla::BorderRadius&,
                                  const nsSize& aFrameSize,
                                  const nsSize& aBorderArea, Sides aSkipSides,
                                  nscoord aRadii[8]);
@@ -4488,7 +4488,8 @@ class nsIFrame : public nsQueryFrame {
                                            bool aWordSelectEatSpace,
                                            bool aIsKeyboardSelect,
                                            int32_t* aOffset,
-                                           PeekWordState* aState) = 0;
+                                           PeekWordState* aState,
+                                           bool aTrimSpaces) = 0;
 
   /**
    * Search for the first paragraph boundary before or after the given position

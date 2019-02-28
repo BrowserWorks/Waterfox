@@ -90,6 +90,7 @@ mod debug_server;
 mod device;
 mod display_list_flattener;
 mod ellipse;
+mod filterdata;
 mod frame_builder;
 mod freelist;
 #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -210,7 +211,6 @@ pub use device::{build_shader_strings, ReadPixelsFormat, UploadMethod, VertexUsa
 pub use device::{ProgramBinary, ProgramCache, ProgramCacheObserver};
 pub use device::Device;
 pub use frame_builder::ChasePrimitive;
-pub use picture::FRAMES_BEFORE_PICTURE_CACHING;
 pub use profiler::{ProfilerHooks, set_profiler_hooks};
 pub use renderer::{AsyncPropertySampler, CpuProfile, DebugFlags, OutputImageHandler, RendererKind};
 pub use renderer::{ExternalImage, ExternalImageHandler, ExternalImageSource, GpuProfile};

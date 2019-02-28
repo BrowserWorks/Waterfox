@@ -105,7 +105,7 @@ bool FTPChannelParent::Init(const FTPChannelCreationArgs& aArgs) {
 bool FTPChannelParent::DoAsyncOpen(const URIParams& aURI,
                                    const uint64_t& aStartPos,
                                    const nsCString& aEntityID,
-                                   const OptionalIPCStream& aUploadStream,
+                                   const Maybe<IPCStream>& aUploadStream,
                                    const OptionalLoadInfoArgs& aLoadInfoArgs,
                                    const uint32_t& aLoadFlags) {
   nsresult rv;
@@ -260,8 +260,9 @@ void FTPChannelParent::DivertOnDataAvailable(const nsCString& data,
   }
 
   nsCOMPtr<nsIInputStream> stringStream;
-  nsresult rv = NS_NewByteInputStream(getter_AddRefs(stringStream), data.get(),
-                                      count, NS_ASSIGNMENT_DEPEND);
+  nsresult rv =
+      NS_NewByteInputStream(getter_AddRefs(stringStream),
+                            MakeSpan(data).To(count), NS_ASSIGNMENT_DEPEND);
   if (NS_FAILED(rv)) {
     if (mChannel) {
       mChannel->Cancel(rv);
@@ -272,7 +273,7 @@ void FTPChannelParent::DivertOnDataAvailable(const nsCString& data,
 
   AutoEventEnqueuer ensureSerialDispatch(mEventQ);
 
-  rv = OnDataAvailable(mChannel, nullptr, stringStream, offset, count);
+  rv = OnDataAvailable(mChannel, stringStream, offset, count);
 
   stringStream->Close();
   if (NS_FAILED(rv)) {
@@ -332,7 +333,7 @@ void FTPChannelParent::DivertOnStopRequest(const nsresult& statusCode) {
   }
 
   AutoEventEnqueuer ensureSerialDispatch(mEventQ);
-  OnStopRequest(mChannel, nullptr, status);
+  OnStopRequest(mChannel, status);
 }
 
 class FTPDivertCompleteEvent : public MainThreadChannelEvent {
@@ -379,13 +380,13 @@ void FTPChannelParent::DivertComplete() {
 //-----------------------------------------------------------------------------
 
 NS_IMETHODIMP
-FTPChannelParent::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext) {
+FTPChannelParent::OnStartRequest(nsIRequest* aRequest) {
   LOG(("FTPChannelParent::OnStartRequest [this=%p]\n", this));
 
   if (mDivertingFromChild) {
     MOZ_RELEASE_ASSERT(mDivertToListener,
                        "Cannot divert if listener is unset!");
-    return mDivertToListener->OnStartRequest(aRequest, aContext);
+    return mDivertToListener->OnStartRequest(aRequest);
   }
 
   nsCOMPtr<nsIChannel> chan = do_QueryInterface(aRequest);
@@ -398,8 +399,8 @@ FTPChannelParent::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext) {
     PContentParent* pcp = Manager()->Manager();
     MOZ_ASSERT(pcp, "We should have a manager if our IPC isn't closed");
     DebugOnly<nsresult> rv =
-        static_cast<ContentParent*>(pcp)
-            ->AboutToLoadHttpFtpWyciwygDocumentForChild(chan);
+        static_cast<ContentParent*>(pcp)->AboutToLoadHttpFtpDocumentForChild(
+            chan);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
   }
 
@@ -440,7 +441,7 @@ FTPChannelParent::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext) {
 }
 
 NS_IMETHODIMP
-FTPChannelParent::OnStopRequest(nsIRequest* aRequest, nsISupports* aContext,
+FTPChannelParent::OnStopRequest(nsIRequest* aRequest,
                                 nsresult aStatusCode) {
   LOG(("FTPChannelParent::OnStopRequest: [this=%p status=%" PRIu32 "]\n", this,
        static_cast<uint32_t>(aStatusCode)));
@@ -448,7 +449,7 @@ FTPChannelParent::OnStopRequest(nsIRequest* aRequest, nsISupports* aContext,
   if (mDivertingFromChild) {
     MOZ_RELEASE_ASSERT(mDivertToListener,
                        "Cannot divert if listener is unset!");
-    return mDivertToListener->OnStopRequest(aRequest, aContext, aStatusCode);
+    return mDivertToListener->OnStopRequest(aRequest, aStatusCode);
   }
 
   if (mIPCClosed || !SendOnStopRequest(aStatusCode, mErrorMsg, mUseUTF8)) {
@@ -463,7 +464,7 @@ FTPChannelParent::OnStopRequest(nsIRequest* aRequest, nsISupports* aContext,
 //-----------------------------------------------------------------------------
 
 NS_IMETHODIMP
-FTPChannelParent::OnDataAvailable(nsIRequest* aRequest, nsISupports* aContext,
+FTPChannelParent::OnDataAvailable(nsIRequest* aRequest,
                                   nsIInputStream* aInputStream,
                                   uint64_t aOffset, uint32_t aCount) {
   LOG(("FTPChannelParent::OnDataAvailable [this=%p]\n", this));
@@ -471,7 +472,7 @@ FTPChannelParent::OnDataAvailable(nsIRequest* aRequest, nsISupports* aContext,
   if (mDivertingFromChild) {
     MOZ_RELEASE_ASSERT(mDivertToListener,
                        "Cannot divert if listener is unset!");
-    return mDivertToListener->OnDataAvailable(aRequest, aContext, aInputStream,
+    return mDivertToListener->OnDataAvailable(aRequest, aInputStream,
                                               aOffset, aCount);
   }
 
@@ -719,7 +720,7 @@ void FTPChannelParent::StartDiversion() {
   {
     AutoEventEnqueuer ensureSerialDispatch(mEventQ);
     // Call OnStartRequest for the "DivertTo" listener.
-    nsresult rv = OnStartRequest(mChannel, nullptr);
+    nsresult rv = OnStartRequest(mChannel);
     if (NS_FAILED(rv)) {
       if (mChannel) {
         mChannel->Cancel(rv);
@@ -799,7 +800,7 @@ void FTPChannelParent::NotifyDiversionFailed(nsresult aErrorCode,
     if (forcePendingIChan) {
       forcePendingIChan->ForcePending(true);
     }
-    mDivertToListener->OnStartRequest(mChannel, nullptr);
+    mDivertToListener->OnStartRequest(mChannel);
 
     if (forcePendingIChan) {
       forcePendingIChan->ForcePending(false);
@@ -808,7 +809,7 @@ void FTPChannelParent::NotifyDiversionFailed(nsresult aErrorCode,
   // If the channel is pending, it will call OnStopRequest itself; otherwise, do
   // it here.
   if (!isPending) {
-    mDivertToListener->OnStopRequest(mChannel, nullptr, aErrorCode);
+    mDivertToListener->OnStopRequest(mChannel, aErrorCode);
   }
   mDivertToListener = nullptr;
   mChannel = nullptr;

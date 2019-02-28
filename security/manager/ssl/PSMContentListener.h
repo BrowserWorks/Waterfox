@@ -9,6 +9,7 @@
 
 #include "nsCOMPtr.h"
 #include "nsIURIContentListener.h"
+#include "nsIStreamListener.h"
 #include "nsWeakReference.h"
 #include "mozilla/psm/PPSMContentDownloaderChild.h"
 #include "mozilla/psm/PPSMContentDownloaderParent.h"
@@ -65,7 +66,7 @@ class PSMContentDownloaderParent : public PPSMContentDownloaderParent,
   // We inherit most of nsIStreamListener from PSMContentStreamListener, but
   // we have to override OnStopRequest to know when we're done with our IPC
   // ref.
-  NS_IMETHOD OnStopRequest(nsIRequest *request, nsISupports *aContext,
+  NS_IMETHOD OnStopRequest(nsIRequest *request,
                            nsresult code) override;
 
   mozilla::ipc::IPCResult RecvDivertToParentUsing(

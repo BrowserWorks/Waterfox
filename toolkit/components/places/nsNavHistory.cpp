@@ -931,8 +931,7 @@ nsNavHistory::CanAddURI(nsIURI* aURI, bool* canAdd) {
       scheme.EqualsLiteral("imap") || scheme.EqualsLiteral("javascript") ||
       scheme.EqualsLiteral("mailbox") || scheme.EqualsLiteral("moz-anno") ||
       scheme.EqualsLiteral("news") || scheme.EqualsLiteral("page-icon") ||
-      scheme.EqualsLiteral("resource") || scheme.EqualsLiteral("view-source") ||
-      scheme.EqualsLiteral("wyciwyg")) {
+      scheme.EqualsLiteral("resource") || scheme.EqualsLiteral("view-source")) {
     return NS_OK;
   }
   *canAdd = true;
@@ -2274,7 +2273,17 @@ nsNavHistory::Observe(nsISupports* aSubject, const char* aTopic,
 
     nsCOMPtr<nsIAutoCompletePopup> popup;
     input->GetPopup(getter_AddRefs(popup));
-    if (!popup) return NS_OK;
+    if (!popup) {
+      nsCOMPtr<Element> popupEl;
+      input->GetPopupElement(getter_AddRefs(popupEl));
+      if (!popupEl) {
+        return NS_OK;
+      }
+      popup = popupEl->AsAutoCompletePopup();
+      if (!popup) {
+        return NS_OK;
+      }
+    }
 
     nsCOMPtr<nsIAutoCompleteController> controller;
     input->GetController(getter_AddRefs(controller));

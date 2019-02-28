@@ -607,6 +607,8 @@ nsresult Predictor::Create(nsISupports *aOuter, const nsIID &aIID,
 
   RefPtr<Predictor> svc = new Predictor();
   if (IsNeckoChild()) {
+    NeckoChild::InitNeckoChild();
+
     // Child threads only need to be call into the public interface methods
     // so we don't bother with initialization
     return svc->QueryInterface(aIID, aResult);
@@ -848,7 +850,7 @@ void Predictor::PredictForLink(nsIURI *targetURI, nsIURI *sourceURI,
   nsCOMPtr<nsIPrincipal> principal =
       BasePrincipal::CreateCodebasePrincipal(targetURI, originAttributes);
 
-  mSpeculativeService->SpeculativeConnect2(targetURI, principal, nullptr);
+  mSpeculativeService->SpeculativeConnect(targetURI, principal, nullptr);
   if (verifier) {
     PREDICTOR_LOG(("    sending verification"));
     verifier->OnPredictPreconnect(targetURI);
@@ -1332,7 +1334,7 @@ bool Predictor::RunPredictions(nsIURI *referrer,
     ++totalPreconnects;
     nsCOMPtr<nsIPrincipal> principal =
         BasePrincipal::CreateCodebasePrincipal(uri, originAttributes);
-    mSpeculativeService->SpeculativeConnect2(uri, principal, this);
+    mSpeculativeService->SpeculativeConnect(uri, principal, this);
     predicted = true;
     if (verifier) {
       PREDICTOR_LOG(("    sending preconnect verification"));
@@ -2320,15 +2322,13 @@ NS_IMPL_ISUPPORTS(Predictor::PrefetchListener, nsIStreamListener,
 
 // nsIRequestObserver
 NS_IMETHODIMP
-Predictor::PrefetchListener::OnStartRequest(nsIRequest *aRequest,
-                                            nsISupports *aContext) {
+Predictor::PrefetchListener::OnStartRequest(nsIRequest *aRequest) {
   mStartTime = TimeStamp::Now();
   return NS_OK;
 }
 
 NS_IMETHODIMP
 Predictor::PrefetchListener::OnStopRequest(nsIRequest *aRequest,
-                                           nsISupports *aContext,
                                            nsresult aStatusCode) {
   PREDICTOR_LOG(("OnStopRequest this=%p aStatusCode=0x%" PRIX32, this,
                  static_cast<uint32_t>(aStatusCode)));
@@ -2383,7 +2383,6 @@ Predictor::PrefetchListener::OnStopRequest(nsIRequest *aRequest,
 // nsIStreamListener
 NS_IMETHODIMP
 Predictor::PrefetchListener::OnDataAvailable(nsIRequest *aRequest,
-                                             nsISupports *aContext,
                                              nsIInputStream *aInputStream,
                                              uint64_t aOffset,
                                              const uint32_t aCount) {

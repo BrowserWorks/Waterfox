@@ -2304,8 +2304,7 @@ JitCode* JitRealm::generateRegExpMatcherStub(JSContext* cx) {
   masm.moveValue(UndefinedValue(), result);
   masm.ret();
 
-  Linker linker(masm);
-  AutoFlushICache afc("RegExpMatcherStub");
+  Linker linker(masm, "RegExpMatcherStub");
   JitCode* code = linker.newCode(cx, CodeKind::Other);
   if (!code) {
     return nullptr;
@@ -2490,8 +2489,7 @@ JitCode* JitRealm::generateRegExpSearcherStub(JSContext* cx) {
   masm.move32(Imm32(RegExpSearcherResultFailed), result);
   masm.ret();
 
-  Linker linker(masm);
-  AutoFlushICache afc("RegExpSearcherStub");
+  Linker linker(masm, "RegExpSearcherStub");
   JitCode* code = linker.newCode(cx, CodeKind::Other);
   if (!code) {
     return nullptr;
@@ -2633,8 +2631,7 @@ JitCode* JitRealm::generateRegExpTesterStub(JSContext* cx) {
   masm.freeStack(sizeof(irregexp::InputOutputData));
   masm.ret();
 
-  Linker linker(masm);
-  AutoFlushICache afc("RegExpTesterStub");
+  Linker linker(masm, "RegExpTesterStub");
   JitCode* code = linker.newCode(cx, CodeKind::Other);
   if (!code) {
     return nullptr;
@@ -5706,7 +5703,9 @@ void CodeGenerator::emitAssertGCThingResult(Register input, MIRType type,
   }
 
   // Check that we have a valid GC pointer.
-  if (JitOptions.fullDebugChecks) {
+  // Disable for wasm because we don't have a context on wasm compilation threads
+  // and this needs a context.
+  if (JitOptions.fullDebugChecks && !IsCompilingWasm()) {
     saveVolatile();
     masm.setupUnalignedABICall(temp);
     masm.loadJSContext(temp);
@@ -7391,6 +7390,10 @@ void CodeGenerator::visitWasmDerivedPointer(LWasmDerivedPointer* ins) {
   masm.addPtr(Imm32(int32_t(ins->offset())), ToRegister(ins->output()));
 }
 
+void CodeGenerator::visitWasmLoadRef(LWasmLoadRef* lir) {
+  masm.loadPtr(Address(ToRegister(lir->ptr()), 0), ToRegister(lir->output()));
+}
+
 void CodeGenerator::visitWasmStoreRef(LWasmStoreRef* ins) {
   Register tls = ToRegister(ins->tls());
   Register valueAddr = ToRegister(ins->valueAddr());
@@ -8759,8 +8762,7 @@ JitCode* JitRealm::generateStringConcatStub(JSContext* cx) {
   masm.movePtr(ImmPtr(nullptr), output);
   masm.ret();
 
-  Linker linker(masm);
-  AutoFlushICache afc("StringConcatStub");
+  Linker linker(masm, "StringConcatStub");
   JitCode* code = linker.newCode(cx, CodeKind::Other);
 
 #ifdef JS_ION_PERF
@@ -10427,8 +10429,7 @@ bool CodeGenerator::link(JSContext* cx, CompilerConstraintList* constraints) {
     js_free(ionScript);
   });
 
-  Linker linker(masm);
-  AutoFlushICache afc("IonLink");
+  Linker linker(masm, "IonLink");
   JitCode* code = linker.newCode(cx, CodeKind::Ion);
   if (!code) {
     return false;
@@ -11361,24 +11362,6 @@ void CodeGenerator::visitOutOfLineTypeOfV(OutOfLineTypeOfV* ool) {
   restoreVolatile(output);
 
   masm.jump(ool->rejoin());
-}
-
-typedef JSObject* (*ToAsyncFn)(JSContext*, HandleFunction);
-static const VMFunction ToAsyncInfo =
-    FunctionInfo<ToAsyncFn>(js::WrapAsyncFunction, "ToAsync");
-
-void CodeGenerator::visitToAsync(LToAsync* lir) {
-  pushArg(ToRegister(lir->unwrapped()));
-  callVM(ToAsyncInfo, lir);
-}
-
-typedef JSObject* (*ToAsyncGenFn)(JSContext*, HandleFunction);
-static const VMFunction ToAsyncGenInfo =
-    FunctionInfo<ToAsyncGenFn>(js::WrapAsyncGenerator, "ToAsyncGen");
-
-void CodeGenerator::visitToAsyncGen(LToAsyncGen* lir) {
-  pushArg(ToRegister(lir->unwrapped()));
-  callVM(ToAsyncGenInfo, lir);
 }
 
 typedef JSObject* (*ToAsyncIterFn)(JSContext*, HandleObject, HandleValue);
@@ -13684,6 +13667,15 @@ void CodeGenerator::visitIonToWasmCall(LIonToWasmCall* lir) {
 }
 void CodeGenerator::visitIonToWasmCallV(LIonToWasmCallV* lir) {
   emitIonToWasmCallBase(lir);
+}
+
+void CodeGenerator::visitWasmNullConstant(LWasmNullConstant* lir) {
+  masm.xorPtr(ToRegister(lir->output()), ToRegister(lir->output()));
+}
+
+void CodeGenerator::visitIsNullPointer(LIsNullPointer* lir) {
+  masm.cmpPtrSet(Assembler::Equal, ToRegister(lir->value()), ImmWord(0),
+                 ToRegister(lir->output()));
 }
 
 static_assert(!std::is_polymorphic<CodeGenerator>::value,

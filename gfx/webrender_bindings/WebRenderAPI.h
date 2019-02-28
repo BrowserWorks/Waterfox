@@ -329,6 +329,7 @@ struct MOZ_STACK_CLASS StackingContextParams : public WrStackingContextParams {
   }
 
   nsTArray<wr::FilterOp> mFilters;
+  nsTArray<wr::WrFilterData> mFilterDatas;
   wr::LayoutRect mBounds = wr::ToLayoutRect(LayoutDeviceRect());
   const gfx::Matrix4x4* mBoundTransform = nullptr;
   const gfx::Matrix4x4* mTransformPtr = nullptr;
@@ -390,9 +391,8 @@ class DisplayListBuilder {
   wr::WrSpaceAndClip DefineScrollLayer(
       const layers::ScrollableLayerGuid::ViewID& aViewId,
       const Maybe<wr::WrSpaceAndClip>& aParent,
-      const wr::LayoutRect&
-          aContentRect,  // TODO: We should work with strongly typed rects
-      const wr::LayoutRect& aClipRect);
+      const wr::LayoutRect& aContentRect, const wr::LayoutRect& aClipRect,
+      const wr::LayoutPoint& aScrollOffset);
 
   void PushRect(const wr::LayoutRect& aBounds, const wr::LayoutRect& aClip,
                 bool aIsBackfaceVisible, const wr::ColorF& aColor);

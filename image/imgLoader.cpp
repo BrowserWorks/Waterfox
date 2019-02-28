@@ -1407,9 +1407,8 @@ imgLoader::RemoveEntry(nsIURI* aURI, Document* aDoc) {
       }
     }
 
-    nsresult rv = NS_OK;
-    ImageCacheKey key(aURI, attrs, aDoc, rv);
-    if (NS_SUCCEEDED(rv) && RemoveFromCache(key)) {
+    ImageCacheKey key(aURI, attrs, aDoc);
+    if (RemoveFromCache(key)) {
       return NS_OK;
     }
   }
@@ -1429,9 +1428,7 @@ imgLoader::FindEntryProperties(nsIURI* uri, Document* aDoc,
     }
   }
 
-  nsresult rv;
-  ImageCacheKey key(uri, attrs, aDoc, rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  ImageCacheKey key(uri, attrs, aDoc);
   imgCacheTable& cache = GetCache(key);
 
   RefPtr<imgCacheEntry> entry;
@@ -2144,8 +2141,7 @@ nsresult imgLoader::LoadImage(
   if (aTriggeringPrincipal) {
     attrs = aTriggeringPrincipal->OriginAttributesRef();
   }
-  ImageCacheKey key(aURI, attrs, aLoadingDocument, rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  ImageCacheKey key(aURI, attrs, aLoadingDocument);
   imgCacheTable& cache = GetCache(key);
 
   if (cache.Get(key, getter_AddRefs(entry)) && entry) {
@@ -2374,9 +2370,7 @@ nsresult imgLoader::LoadImageWithChannel(nsIChannel* channel,
 
   OriginAttributes attrs = loadInfo->GetOriginAttributes();
 
-  nsresult rv;
-  ImageCacheKey key(uri, attrs, doc, rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  ImageCacheKey key(uri, attrs, doc);
 
   nsLoadFlags requestFlags = nsIRequest::LOAD_NORMAL;
   channel->GetLoadFlags(&requestFlags);
@@ -2475,7 +2469,7 @@ nsresult imgLoader::LoadImageWithChannel(nsIChannel* channel,
   // Filter out any load flags not from nsIRequest
   requestFlags &= nsIRequest::LOAD_REQUESTMASK;
 
-  rv = NS_OK;
+  nsresult rv = NS_OK;
   if (request) {
     // we have this in our cache already.. cancel the current (document) load
 
@@ -2496,8 +2490,7 @@ nsresult imgLoader::LoadImageWithChannel(nsIChannel* channel,
     // constructed above with the *current URI* and not the *original URI*. I'm
     // pretty sure this is a bug, and it's preventing us from ever getting a
     // cache hit in LoadImageWithChannel when redirects are involved.
-    ImageCacheKey originalURIKey(originalURI, attrs, doc, rv);
-    NS_ENSURE_SUCCESS(rv, rv);
+    ImageCacheKey originalURIKey(originalURI, attrs, doc);
 
     // Default to doing a principal check because we don't know who
     // started that load and whether their principal ended up being
@@ -2650,7 +2643,7 @@ ProxyListener::~ProxyListener() { /* destructor code */
 /** nsIRequestObserver methods **/
 
 NS_IMETHODIMP
-ProxyListener::OnStartRequest(nsIRequest* aRequest, nsISupports* ctxt) {
+ProxyListener::OnStartRequest(nsIRequest* aRequest) {
   if (!mDestListener) {
     return NS_ERROR_FAILURE;
   }
@@ -2693,30 +2686,30 @@ ProxyListener::OnStartRequest(nsIRequest* aRequest, nsISupports* ctxt) {
     }
   }
 
-  return mDestListener->OnStartRequest(aRequest, ctxt);
+  return mDestListener->OnStartRequest(aRequest);
 }
 
 NS_IMETHODIMP
-ProxyListener::OnStopRequest(nsIRequest* aRequest, nsISupports* ctxt,
+ProxyListener::OnStopRequest(nsIRequest* aRequest,
                              nsresult status) {
   if (!mDestListener) {
     return NS_ERROR_FAILURE;
   }
 
-  return mDestListener->OnStopRequest(aRequest, ctxt, status);
+  return mDestListener->OnStopRequest(aRequest, status);
 }
 
 /** nsIStreamListener methods **/
 
 NS_IMETHODIMP
-ProxyListener::OnDataAvailable(nsIRequest* aRequest, nsISupports* ctxt,
+ProxyListener::OnDataAvailable(nsIRequest* aRequest,
                                nsIInputStream* inStr, uint64_t sourceOffset,
                                uint32_t count) {
   if (!mDestListener) {
     return NS_ERROR_FAILURE;
   }
 
-  return mDestListener->OnDataAvailable(aRequest, ctxt, inStr, sourceOffset,
+  return mDestListener->OnDataAvailable(aRequest, inStr, sourceOffset,
                                         count);
 }
 
@@ -2839,7 +2832,7 @@ void imgCacheValidator::UpdateProxies(bool aCancelRequest, bool aSyncNotify) {
 /** nsIRequestObserver methods **/
 
 NS_IMETHODIMP
-imgCacheValidator::OnStartRequest(nsIRequest* aRequest, nsISupports* ctxt) {
+imgCacheValidator::OnStartRequest(nsIRequest* aRequest) {
   // We may be holding on to a document, so ensure that it's released.
   nsCOMPtr<nsISupports> context = mContext.forget();
 
@@ -2919,11 +2912,11 @@ imgCacheValidator::OnStartRequest(nsIRequest* aRequest, nsISupports* ctxt) {
   // changes the caching behaviour for imgRequests.
   mImgLoader->PutIntoCache(mNewRequest->CacheKey(), mNewEntry);
   UpdateProxies(/* aCancelRequest */ false, /* aSyncNotify */ true);
-  return mDestListener->OnStartRequest(aRequest, ctxt);
+  return mDestListener->OnStartRequest(aRequest);
 }
 
 NS_IMETHODIMP
-imgCacheValidator::OnStopRequest(nsIRequest* aRequest, nsISupports* ctxt,
+imgCacheValidator::OnStopRequest(nsIRequest* aRequest,
                                  nsresult status) {
   // Be sure we've released the document that we may have been holding on to.
   mContext = nullptr;
@@ -2932,13 +2925,13 @@ imgCacheValidator::OnStopRequest(nsIRequest* aRequest, nsISupports* ctxt,
     return NS_OK;
   }
 
-  return mDestListener->OnStopRequest(aRequest, ctxt, status);
+  return mDestListener->OnStopRequest(aRequest, status);
 }
 
 /** nsIStreamListener methods **/
 
 NS_IMETHODIMP
-imgCacheValidator::OnDataAvailable(nsIRequest* aRequest, nsISupports* ctxt,
+imgCacheValidator::OnDataAvailable(nsIRequest* aRequest,
                                    nsIInputStream* inStr, uint64_t sourceOffset,
                                    uint32_t count) {
   if (!mDestListener) {
@@ -2948,7 +2941,7 @@ imgCacheValidator::OnDataAvailable(nsIRequest* aRequest, nsISupports* ctxt,
     return NS_OK;
   }
 
-  return mDestListener->OnDataAvailable(aRequest, ctxt, inStr, sourceOffset,
+  return mDestListener->OnDataAvailable(aRequest, inStr, sourceOffset,
                                         count);
 }
 

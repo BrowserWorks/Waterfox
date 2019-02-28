@@ -21,7 +21,7 @@
 #include "nsThreadUtils.h"
 #include "nsIPrincipal.h"
 #include "nsIWidget.h"
-#include "nsCSSPropertyID.h"
+#include "nsCSSPropertyIDSet.h"
 #include "nsStyleCoord.h"
 #include "nsStyleConsts.h"
 #include "nsGkAtoms.h"
@@ -55,7 +55,6 @@ class nsContainerFrame;
 class nsView;
 class nsIFrame;
 class nsStyleCoord;
-class nsStyleCorners;
 class nsPIDOMWindowOuter;
 class imgIRequest;
 struct nsStyleFont;
@@ -1937,7 +1936,7 @@ class nsLayoutUtils {
 
   /**
    * Determine if any corner radius is of nonzero size
-   *   @param aCorners the |nsStyleCorners| object to check
+   *   @param aCorners the |BorderRadius| object to check
    *   @return true unless all the coordinates are 0%, 0 or null.
    *
    * A corner radius with one dimension zero and one nonzero is
@@ -1946,13 +1945,13 @@ class nsLayoutUtils {
    * corners are not expected to appear outside of test cases, and it's
    * simpler to implement the test this way.
    */
-  static bool HasNonZeroCorner(const nsStyleCorners& aCorners);
+  static bool HasNonZeroCorner(const mozilla::BorderRadius& aCorners);
 
   /**
    * Determine if there is any corner radius on corners adjacent to the
    * given side.
    */
-  static bool HasNonZeroCornerOnSide(const nsStyleCorners& aCorners,
+  static bool HasNonZeroCornerOnSide(const mozilla::BorderRadius& aCorners,
                                      mozilla::Side aSide);
 
   /**
@@ -2286,19 +2285,25 @@ class nsLayoutUtils {
                                         const nsCSSPropertyIDSet& aPropertySet);
 
   /**
-   * Returns true if |aEffectSet| has an animation of a property |aPropertySet|
-   * regardless of whether any property in the set is overridden by !important
-   * rule.
+   * Returns true if |aEffectSet| has an animation of a property in
+   * |aPropertySet| regardless of whether any property in the set is overridden
+   * by !important rule.
    */
   static bool HasAnimationOfPropertySet(mozilla::EffectSet* aEffectSet,
                                         const nsCSSPropertyIDSet& aPropertySet);
-
   /**
    * Returns true if |aFrame| has an animation of |aProperty| which is
    * not overridden by !important rules.
    */
   static bool HasEffectiveAnimation(const nsIFrame* aFrame,
                                     nsCSSPropertyID aProperty);
+
+  /**
+   * Returns true if |aFrame| has animations of properties in |aPropertySet|,
+   * and all of these properties are not overridden by !important rules.
+   */
+  static bool HasEffectiveAnimation(const nsIFrame* aFrame,
+                                    const nsCSSPropertyIDSet& aPropertySet);
 
   /**
    * Returns all effective animated CSS properties on |aFrame|. That means

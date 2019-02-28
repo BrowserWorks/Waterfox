@@ -84,10 +84,9 @@ NS_IMPL_ISUPPORTS(InterceptStreamListener, nsIStreamListener,
                   nsIRequestObserver, nsIProgressEventSink)
 
 NS_IMETHODIMP
-InterceptStreamListener::OnStartRequest(nsIRequest* aRequest,
-                                        nsISupports* aContext) {
+InterceptStreamListener::OnStartRequest(nsIRequest* aRequest) {
   if (mOwner) {
-    mOwner->DoOnStartRequest(mOwner, mContext);
+    mOwner->DoOnStartRequest(mOwner, nullptr);
   }
   return NS_OK;
 }
@@ -112,7 +111,6 @@ InterceptStreamListener::OnProgress(nsIRequest* aRequest, nsISupports* aContext,
 
 NS_IMETHODIMP
 InterceptStreamListener::OnDataAvailable(nsIRequest* aRequest,
-                                         nsISupports* aContext,
                                          nsIInputStream* aInputStream,
                                          uint64_t aOffset, uint32_t aCount) {
   if (!mOwner) {
@@ -129,20 +127,19 @@ InterceptStreamListener::OnDataAvailable(nsIRequest* aRequest,
     nsAutoCString host;
     uri->GetHost(host);
 
-    OnStatus(mOwner, aContext, NS_NET_STATUS_READING,
+    OnStatus(mOwner, nullptr, NS_NET_STATUS_READING,
              NS_ConvertUTF8toUTF16(host).get());
 
     int64_t progress = aOffset + aCount;
-    OnProgress(mOwner, aContext, progress, mOwner->mSynthesizedStreamLength);
+    OnProgress(mOwner, nullptr, progress, mOwner->mSynthesizedStreamLength);
   }
 
-  mOwner->DoOnDataAvailable(mOwner, mContext, aInputStream, aOffset, aCount);
+  mOwner->DoOnDataAvailable(mOwner, nullptr, aInputStream, aOffset, aCount);
   return NS_OK;
 }
 
 NS_IMETHODIMP
 InterceptStreamListener::OnStopRequest(nsIRequest* aRequest,
-                                       nsISupports* aContext,
                                        nsresult aStatusCode) {
   if (mOwner) {
     mOwner->DoPreOnStopRequest(aStatusCode);
@@ -536,6 +533,10 @@ void HttpChannelChild::OnStartRequest(
       !mDivertingToParent,
       "mDivertingToParent should be unset before OnStartRequest!");
 
+  if (mOnStartRequestCalled && !mIPCOpen) {
+    return;
+  }
+
   if (!mCanceled && NS_SUCCEEDED(mStatus)) {
     mStatus = channelStatus;
   }
@@ -604,14 +605,14 @@ class SyntheticDiversionListener final : public nsIStreamListener {
   }
 
   NS_IMETHOD
-  OnStartRequest(nsIRequest* aRequest, nsISupports* aContext) override {
+  OnStartRequest(nsIRequest* aRequest) override {
     MOZ_ASSERT_UNREACHABLE(
         "SyntheticDiversionListener should never see OnStartRequest");
     return NS_OK;
   }
 
   NS_IMETHOD
-  OnStopRequest(nsIRequest* aRequest, nsISupports* aContext,
+  OnStopRequest(nsIRequest* aRequest,
                 nsresult aStatus) override {
     if (mChannel->mIPCOpen) {
       mChannel->SendDivertOnStopRequest(aStatus);
@@ -621,7 +622,7 @@ class SyntheticDiversionListener final : public nsIStreamListener {
   }
 
   NS_IMETHOD
-  OnDataAvailable(nsIRequest* aRequest, nsISupports* aContext,
+  OnDataAvailable(nsIRequest* aRequest,
                   nsIInputStream* aInputStream, uint64_t aOffset,
                   uint32_t aCount) override {
     if (!mChannel->mIPCOpen) {
@@ -661,11 +662,12 @@ void HttpChannelChild::DoOnStartRequest(nsIRequest* aRequest,
                                          static_cast<nsIChannel*>(this));
   }
 
-  nsresult rv = mListener->OnStartRequest(aRequest, aContext);
+  nsresult rv = mListener->OnStartRequest(aRequest);
   if (NS_FAILED(rv)) {
     Cancel(rv);
     return;
   }
+  mOnStartRequestCalled = true;
 
   if (mDivertingToParent) {
     mListener = nullptr;
@@ -842,8 +844,9 @@ void HttpChannelChild::OnTransportAndData(const nsresult& channelStatus,
   // support only reading part of the data, allowing later calls to read the
   // rest.
   nsCOMPtr<nsIInputStream> stringStream;
-  nsresult rv = NS_NewByteInputStream(getter_AddRefs(stringStream), data.get(),
-                                      count, NS_ASSIGNMENT_DEPEND);
+  nsresult rv =
+      NS_NewByteInputStream(getter_AddRefs(stringStream),
+                            MakeSpan(data).To(count), NS_ASSIGNMENT_DEPEND);
   if (NS_FAILED(rv)) {
     Cancel(rv);
     return;
@@ -959,7 +962,7 @@ void HttpChannelChild::DoOnDataAvailable(nsIRequest* aRequest,
   if (mCanceled) return;
 
   nsresult rv =
-      mListener->OnDataAvailable(aRequest, aContext, aStream, offset, count);
+      mListener->OnDataAvailable(aRequest, aStream, offset, count);
   if (NS_FAILED(rv)) {
     CancelOnMainThread(rv);
   }
@@ -1029,6 +1032,10 @@ void HttpChannelChild::OnStopRequest(
   LOG(("HttpChannelChild::OnStopRequest [this=%p status=%" PRIx32 "]\n", this,
        static_cast<uint32_t>(channelStatus)));
   MOZ_ASSERT(NS_IsMainThread());
+
+  if (mOnStopRequestCalled && !mIPCOpen) {
+    return;
+  }
 
   if (mDivertingToParent) {
     MOZ_RELEASE_ASSERT(
@@ -1186,37 +1193,40 @@ void HttpChannelChild::DoOnStopRequest(nsIRequest* aRequest,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!mIsPending);
 
-  // NB: We use aChannelStatus here instead of mStatus because if there was an
-  // nsCORSListenerProxy on this request, it will override the tracking
-  // protection's return value.
-  if (UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(
-          aChannelStatus) ||
-      aChannelStatus == NS_ERROR_MALWARE_URI ||
-      aChannelStatus == NS_ERROR_UNWANTED_URI ||
-      aChannelStatus == NS_ERROR_BLOCKED_URI ||
-      aChannelStatus == NS_ERROR_HARMFUL_URI ||
-      aChannelStatus == NS_ERROR_PHISHING_URI) {
-    nsCString list, provider, fullhash;
+  auto checkForBlockedContent = [&]() {
+    // NB: We use aChannelStatus here instead of mStatus because if there was an
+    // nsCORSListenerProxy on this request, it will override the tracking
+    // protection's return value.
+    if (UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(
+            aChannelStatus) ||
+        aChannelStatus == NS_ERROR_MALWARE_URI ||
+        aChannelStatus == NS_ERROR_UNWANTED_URI ||
+        aChannelStatus == NS_ERROR_BLOCKED_URI ||
+        aChannelStatus == NS_ERROR_HARMFUL_URI ||
+        aChannelStatus == NS_ERROR_PHISHING_URI) {
+      nsCString list, provider, fullhash;
 
-    nsresult rv = GetMatchedList(list);
-    NS_ENSURE_SUCCESS_VOID(rv);
+      nsresult rv = GetMatchedList(list);
+      NS_ENSURE_SUCCESS_VOID(rv);
 
-    rv = GetMatchedProvider(provider);
-    NS_ENSURE_SUCCESS_VOID(rv);
+      rv = GetMatchedProvider(provider);
+      NS_ENSURE_SUCCESS_VOID(rv);
 
-    rv = GetMatchedFullHash(fullhash);
-    NS_ENSURE_SUCCESS_VOID(rv);
+      rv = GetMatchedFullHash(fullhash);
+      NS_ENSURE_SUCCESS_VOID(rv);
 
-    UrlClassifierCommon::SetBlockedContent(this, aChannelStatus, list, provider,
-                                           fullhash);
-  }
+      UrlClassifierCommon::SetBlockedContent(this, aChannelStatus, list,
+                                             provider, fullhash);
+    }
+  };
+  checkForBlockedContent();
 
   MOZ_ASSERT(!mOnStopRequestCalled, "We should not call OnStopRequest twice");
 
   // In theory mListener should not be null, but in practice sometimes it is.
   MOZ_ASSERT(mListener);
   if (mListener) {
-    mListener->OnStopRequest(aRequest, aContext, mStatus);
+    mListener->OnStopRequest(aRequest, mStatus);
   }
   mOnStopRequestCalled = true;
 
@@ -2641,7 +2651,7 @@ nsresult HttpChannelChild::ContinueAsyncOpen() {
   SerializeURI(mURI, openArgs.uri());
   SerializeURI(mOriginalURI, openArgs.original());
   SerializeURI(mDocumentURI, openArgs.doc());
-  SerializeURI(mReferrer, openArgs.referrer());
+  SerializeURI(mOriginalReferrer, openArgs.originalReferrer());
   openArgs.referrerPolicy() = mReferrerPolicy;
   SerializeURI(mAPIRedirectToURI, openArgs.apiRedirectTo());
   openArgs.loadFlags() = mLoadFlags;
@@ -3132,7 +3142,7 @@ HttpChannelChild::GetAltDataInputStream(const nsACString& aType,
 }
 
 mozilla::ipc::IPCResult HttpChannelChild::RecvOriginalCacheInputStreamAvailable(
-    const OptionalIPCStream& aStream) {
+    const Maybe<IPCStream>& aStream) {
   nsCOMPtr<nsIInputStream> stream = DeserializeIPCStream(aStream);
   nsCOMPtr<nsIInputStreamReceiver> receiver;
   receiver.swap(mOriginalInputStreamReceiver);
@@ -3144,7 +3154,7 @@ mozilla::ipc::IPCResult HttpChannelChild::RecvOriginalCacheInputStreamAvailable(
 }
 
 mozilla::ipc::IPCResult HttpChannelChild::RecvAltDataCacheInputStreamAvailable(
-    const OptionalIPCStream& aStream) {
+    const Maybe<IPCStream>& aStream) {
   nsCOMPtr<nsIInputStream> stream = DeserializeIPCStream(aStream);
   nsCOMPtr<nsIInputStreamReceiver> receiver;
   receiver.swap(mAltDataInputStreamReceiver);
@@ -3811,6 +3821,14 @@ void HttpChannelChild::ActorDestroy(ActorDestroyReason aWhy) {
   // and BackgroundChild might have pending IPC messages.
   // Clean up BackgroundChild at this time to prevent memleak.
   if (aWhy != Deletion) {
+    // Make sure all the messages are processed.
+    AutoEventEnqueuer ensureSerialDispatch(mEventQ);
+
+    mStatus = NS_ERROR_DOCSHELL_DYING;
+    HandleAsyncAbort();
+
+    // Cleanup the background channel before we resume the eventQ so we don't
+    // get any other events.
     CleanupBackgroundChannel();
   }
 }

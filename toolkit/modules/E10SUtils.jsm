@@ -42,7 +42,7 @@ function getAboutModule(aURL) {
 
 const NOT_REMOTE = null;
 
-// These must match any similar ones in ContentParent.h.
+// These must match any similar ones in ContentParent.h and ProcInfo.h
 const WEB_REMOTE_TYPE = "web";
 const FILE_REMOTE_TYPE = "file";
 const EXTENSION_REMOTE_TYPE = "extension";
@@ -104,6 +104,46 @@ var E10SUtils = {
   },
   useCrossOriginOpenerPolicy() {
     return useCrossOriginOpenerPolicy;
+  },
+
+  /**
+   * Serialize csp data.
+   *
+   * @param {nsIContentSecurity} csp. The csp to serialize.
+   * @return {String} The base64 encoded csp data.
+   */
+  serializeCSP(csp) {
+    let serializedCSP = null;
+
+    try {
+      if (csp) {
+        serializedCSP = serializationHelper.serializeToString(csp);
+      }
+    } catch (e) {
+      debug(`Failed to serialize csp '${csp}' ${e}`);
+    }
+    return serializedCSP;
+  },
+
+  /**
+   * Deserialize a base64 encoded csp (serialized with
+   * Utils::serializeCSP).
+   *
+   * @param {String} csp_b64 A base64 encoded serialized csp.
+   * @return {nsIContentSecurityPolicy} A deserialized csp.
+   */
+  deserializeCSP(csp_b64) {
+    if (!csp_b64)
+      return null;
+
+    try {
+      let csp = serializationHelper.deserializeObject(csp_b64);
+      csp.QueryInterface(Ci.nsIContentSecurityPolicy);
+      return csp;
+    } catch (e) {
+      debug(`Failed to deserialize csp_b64 '${csp_b64}' ${e}`);
+    }
+    return null;
   },
 
   canLoadURIInRemoteType(aURL, aRemoteType = DEFAULT_REMOTE_TYPE,
@@ -462,7 +502,7 @@ var E10SUtils = {
     return this.shouldLoadURIInThisProcess(aURI);
   },
 
-  redirectLoad(aDocShell, aURI, aReferrer, aTriggeringPrincipal, aFreshProcess, aFlags) {
+  redirectLoad(aDocShell, aURI, aReferrer, aTriggeringPrincipal, aFreshProcess, aFlags, aCsp) {
     // Retarget the load to the correct process
     let messageManager = aDocShell.messageManager;
     let sessionHistory = aDocShell.QueryInterface(Ci.nsIWebNavigation).sessionHistory;
@@ -473,6 +513,7 @@ var E10SUtils = {
         flags: aFlags || Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
         referrer: aReferrer ? aReferrer.spec : null,
         triggeringPrincipal: this.serializePrincipal(aTriggeringPrincipal || Services.scriptSecurityManager.createNullPrincipal({})),
+        csp: aCsp ? this.serializeCSP(aCsp) : null,
         reloadInFreshProcess: !!aFreshProcess,
       },
       historyIndex: sessionHistory.legacySHistory.requestedIndex,

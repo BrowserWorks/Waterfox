@@ -293,9 +293,10 @@ gfxSVGGlyphsDocument::~gfxSVGGlyphsDocument() {
 static nsresult CreateBufferedStream(const uint8_t *aBuffer, uint32_t aBufLen,
                                      nsCOMPtr<nsIInputStream> &aResult) {
   nsCOMPtr<nsIInputStream> stream;
-  nsresult rv = NS_NewByteInputStream(getter_AddRefs(stream),
-                                      reinterpret_cast<const char *>(aBuffer),
-                                      aBufLen, NS_ASSIGNMENT_DEPEND);
+  nsresult rv = NS_NewByteInputStream(
+      getter_AddRefs(stream),
+      MakeSpan(reinterpret_cast<const char *>(aBuffer), aBufLen),
+      NS_ASSIGNMENT_DEPEND);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIInputStream> aBufferedStream;
@@ -362,7 +363,7 @@ nsresult gfxSVGGlyphsDocument::ParseDocument(const uint8_t *aBuffer,
     return NS_ERROR_FAILURE;
   }
 
-  rv = listener->OnStartRequest(channel, nullptr /* aContext */);
+  rv = listener->OnStartRequest(channel);
   if (NS_FAILED(rv)) {
     channel->Cancel(rv);
   }
@@ -370,7 +371,7 @@ nsresult gfxSVGGlyphsDocument::ParseDocument(const uint8_t *aBuffer,
   nsresult status;
   channel->GetStatus(&status);
   if (NS_SUCCEEDED(rv) && NS_SUCCEEDED(status)) {
-    rv = listener->OnDataAvailable(channel, nullptr /* aContext */, stream, 0,
+    rv = listener->OnDataAvailable(channel, stream, 0,
                                    aBufLen);
     if (NS_FAILED(rv)) {
       channel->Cancel(rv);
@@ -378,7 +379,7 @@ nsresult gfxSVGGlyphsDocument::ParseDocument(const uint8_t *aBuffer,
     channel->GetStatus(&status);
   }
 
-  rv = listener->OnStopRequest(channel, nullptr /* aContext */, status);
+  rv = listener->OnStopRequest(channel, status);
   NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
 
   document.swap(mDocument);

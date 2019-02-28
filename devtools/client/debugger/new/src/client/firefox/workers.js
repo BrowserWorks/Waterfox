@@ -15,7 +15,8 @@ export async function updateWorkerClients({
   tabTarget,
   debuggerClient,
   threadClient,
-  workerClients
+  workerClients,
+  options
 }: Object) {
   if (!supportsWorkers(tabTarget)) {
     return {};
@@ -26,7 +27,7 @@ export async function updateWorkerClients({
   const { workers } = await tabTarget.listWorkers();
   for (const workerTargetFront of workers) {
     await workerTargetFront.attach();
-    const [, workerThread] = await workerTargetFront.attachThread();
+    const [, workerThread] = await workerTargetFront.attachThread(options);
 
     if (workerClients[workerThread.actor]) {
       if (workerClients[workerThread.actor].thread != workerThread) {
@@ -37,7 +38,7 @@ export async function updateWorkerClients({
       addThreadEventListeners(workerThread);
       workerThread.resume();
 
-      const consoleFront = await tabTarget.getFront("console");
+      const consoleFront = await workerTargetFront.getFront("console");
       await consoleFront.startListeners([]);
 
       newWorkerClients[workerThread.actor] = {

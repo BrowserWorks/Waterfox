@@ -2,13 +2,24 @@
 
 exports[`SourcesTree After changing expanded nodes Shows the tree with four.js, five.js and six.js expanded 1`] = `
 <div
-  className="sources-pane"
+  className="sources-pane thread"
   key="pane"
 >
   <div
+    className="node thread-header"
+  >
+    <AccessibleImage
+      className="file"
+    />
+    <span
+      className="label"
+    >
+      Main Thread
+    </span>
+  </div>
+  <div
     className="sources-list"
     key="tree"
-    onKeyDown={[Function]}
   >
     <ManagedTree
       autoExpandAll={false}
@@ -26,6 +37,7 @@ exports[`SourcesTree After changing expanded nodes Shows the tree with four.js, 
       getRoots={[Function]}
       itemHeight={21}
       key="full"
+      onActivate={[Function]}
       onCollapse={[Function]}
       onExpand={[Function]}
       onFocus={[Function]}
@@ -38,13 +50,24 @@ exports[`SourcesTree After changing expanded nodes Shows the tree with four.js, 
 
 exports[`SourcesTree Should show the tree with nothing expanded 1`] = `
 <div
-  className="sources-pane"
+  className="sources-pane thread"
   key="pane"
 >
   <div
+    className="node thread-header"
+  >
+    <AccessibleImage
+      className="file"
+    />
+    <span
+      className="label"
+    >
+      Main Thread
+    </span>
+  </div>
+  <div
     className="sources-list"
     key="tree"
-    onKeyDown={[Function]}
   >
     <ManagedTree
       autoExpandAll={false}
@@ -55,6 +78,7 @@ exports[`SourcesTree Should show the tree with nothing expanded 1`] = `
       getRoots={[Function]}
       itemHeight={21}
       key="full"
+      onActivate={[Function]}
       onCollapse={[Function]}
       onExpand={[Function]}
       onFocus={[Function]}
@@ -67,13 +91,24 @@ exports[`SourcesTree Should show the tree with nothing expanded 1`] = `
 
 exports[`SourcesTree When loading initial source Shows the tree with one.js, two.js and three.js expanded 1`] = `
 <div
-  className="sources-pane"
+  className="sources-pane thread"
   key="pane"
 >
   <div
+    className="node thread-header"
+  >
+    <AccessibleImage
+      className="file"
+    />
+    <span
+      className="label"
+    >
+      Main Thread
+    </span>
+  </div>
+  <div
     className="sources-list"
     key="tree"
-    onKeyDown={[Function]}
   >
     <ManagedTree
       autoExpandAll={false}
@@ -91,6 +126,7 @@ exports[`SourcesTree When loading initial source Shows the tree with one.js, two
       getRoots={[Function]}
       itemHeight={21}
       key="full"
+      onActivate={[Function]}
       onCollapse={[Function]}
       onExpand={[Function]}
       onFocus={[Function]}
@@ -103,13 +139,24 @@ exports[`SourcesTree When loading initial source Shows the tree with one.js, two
 
 exports[`SourcesTree on receiving new props updates highlighted items updates highlightItems if selectedSource changes 1`] = `
 <div
-  className="sources-pane"
+  className="sources-pane thread"
   key="pane"
 >
   <div
+    className="node thread-header"
+  >
+    <AccessibleImage
+      className="file"
+    />
+    <span
+      className="label"
+    >
+      Main Thread
+    </span>
+  </div>
+  <div
     className="sources-list"
     key="tree"
-    onKeyDown={[Function]}
   >
     <ManagedTree
       autoExpandAll={false}
@@ -251,6 +298,7 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
       }
       itemHeight={21}
       key="full"
+      onActivate={[Function]}
       onCollapse={[Function]}
       onExpand={[Function]}
       onFocus={[Function]}

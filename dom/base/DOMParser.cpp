@@ -87,8 +87,8 @@ already_AddRefed<Document> DOMParser::ParseFromString(const nsAString& aStr,
 
   // The new stream holds a reference to the buffer
   nsCOMPtr<nsIInputStream> stream;
-  nsresult rv = NS_NewByteInputStream(getter_AddRefs(stream), utf8str.get(),
-                                      utf8str.Length(), NS_ASSIGNMENT_DEPEND);
+  nsresult rv = NS_NewByteInputStream(getter_AddRefs(stream), utf8str,
+                                      NS_ASSIGNMENT_DEPEND);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     aRv.Throw(rv);
     return nullptr;
@@ -111,8 +111,9 @@ already_AddRefed<Document> DOMParser::ParseFromBuffer(Span<const uint8_t> aBuf,
   // The new stream holds a reference to the buffer
   nsCOMPtr<nsIInputStream> stream;
   nsresult rv = NS_NewByteInputStream(
-      getter_AddRefs(stream), reinterpret_cast<const char*>(aBuf.Elements()),
-      aBuf.Length(), NS_ASSIGNMENT_DEPEND);
+      getter_AddRefs(stream),
+      MakeSpan(reinterpret_cast<const char*>(aBuf.Elements()), aBuf.Length()),
+      NS_ASSIGNMENT_DEPEND);
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
     return nullptr;
@@ -197,18 +198,18 @@ already_AddRefed<Document> DOMParser::ParseFromStream(nsIInputStream* aStream,
   // Now start pumping data to the listener
   nsresult status;
 
-  rv = listener->OnStartRequest(parserChannel, nullptr);
+  rv = listener->OnStartRequest(parserChannel);
   if (NS_FAILED(rv)) parserChannel->Cancel(rv);
   parserChannel->GetStatus(&status);
 
   if (NS_SUCCEEDED(rv) && NS_SUCCEEDED(status)) {
-    rv = listener->OnDataAvailable(parserChannel, nullptr, stream, 0,
+    rv = listener->OnDataAvailable(parserChannel, stream, 0,
                                    aContentLength);
     if (NS_FAILED(rv)) parserChannel->Cancel(rv);
     parserChannel->GetStatus(&status);
   }
 
-  rv = listener->OnStopRequest(parserChannel, nullptr, status);
+  rv = listener->OnStopRequest(parserChannel, status);
   // Failure returned from OnStopRequest does not affect the final status of
   // the channel, so we do not need to call Cancel(rv) as we do above.
 

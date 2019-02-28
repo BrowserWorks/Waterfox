@@ -1012,11 +1012,12 @@ void LIRGenerator::visitCompare(MCompare* comp) {
     return;
   }
 
-  // Compare Int32, Symbol or Object pointers.
+  // Compare Int32, Symbol, Object or Wasm pointers.
   if (comp->isInt32Comparison() ||
       comp->compareType() == MCompare::Compare_UInt32 ||
       comp->compareType() == MCompare::Compare_Object ||
-      comp->compareType() == MCompare::Compare_Symbol) {
+      comp->compareType() == MCompare::Compare_Symbol ||
+      comp->compareType() == MCompare::Compare_RefOrNull) {
     JSOp op = ReorderComparison(comp->jsop(), &left, &right);
     LAllocation lhs = useRegister(left);
     LAllocation rhs;
@@ -1122,19 +1123,6 @@ void LIRGenerator::visitTypeOf(MTypeOf* ins) {
 
   LTypeOfV* lir = new (alloc()) LTypeOfV(useBox(opd), tempToUnbox());
   define(lir, ins);
-}
-
-void LIRGenerator::visitToAsync(MToAsync* ins) {
-  LToAsync* lir = new (alloc()) LToAsync(useRegisterAtStart(ins->input()));
-  defineReturn(lir, ins);
-  assignSafepoint(lir, ins);
-}
-
-void LIRGenerator::visitToAsyncGen(MToAsyncGen* ins) {
-  LToAsyncGen* lir =
-      new (alloc()) LToAsyncGen(useRegisterAtStart(ins->input()));
-  defineReturn(lir, ins);
-  assignSafepoint(lir, ins);
 }
 
 void LIRGenerator::visitToAsyncIter(MToAsyncIter* ins) {
@@ -4385,6 +4373,11 @@ void LIRGenerator::visitWasmDerivedPointer(MWasmDerivedPointer* ins) {
   define(new (alloc()) LWasmDerivedPointer(base), ins);
 }
 
+void LIRGenerator::visitWasmLoadRef(MWasmLoadRef* ins) {
+  define(new (alloc()) LWasmLoadRef(useRegisterAtStart(ins->getOperand(0))),
+         ins);
+}
+
 void LIRGenerator::visitWasmStoreRef(MWasmStoreRef* ins) {
   LAllocation tls = useRegister(ins->tls());
   LAllocation valueAddr = useFixed(ins->valueAddr(), PreBarrierReg);
@@ -4419,7 +4412,7 @@ void LIRGenerator::visitWasmParameter(MWasmParameter* ins) {
 #endif
     );
   } else {
-    MOZ_ASSERT(IsNumberType(ins->type()));
+    MOZ_ASSERT(IsNumberType(ins->type()) || ins->type() == MIRType::RefOrNull);
     defineFixed(new (alloc()) LWasmParameter, ins,
                 LArgument(abi.offsetFromArgBase()));
   }
@@ -4438,7 +4431,8 @@ void LIRGenerator::visitWasmReturn(MWasmReturn* ins) {
     lir->setOperand(0, useFixed(rval, ReturnFloat32Reg));
   } else if (rval->type() == MIRType::Double) {
     lir->setOperand(0, useFixed(rval, ReturnDoubleReg));
-  } else if (rval->type() == MIRType::Int32) {
+  } else if (rval->type() == MIRType::Int32 ||
+             rval->type() == MIRType::RefOrNull) {
     lir->setOperand(0, useFixed(rval, ReturnReg));
   } else {
     MOZ_CRASH("Unexpected wasm return type");
@@ -4743,6 +4737,15 @@ void LIRGenerator::visitConstant(MConstant* ins) {
       // here directly. Operations blindly consuming them require a Box.
       MOZ_CRASH("unexpected constant type");
   }
+}
+
+void LIRGenerator::visitWasmNullConstant(MWasmNullConstant* ins) {
+  define(new (alloc()) LWasmNullConstant(), ins);
+}
+
+void LIRGenerator::visitIsNullPointer(MIsNullPointer* ins) {
+  define(new (alloc()) LIsNullPointer(
+           useRegisterAtStart(ins->getOperand(0))), ins);
 }
 
 void LIRGenerator::visitWasmFloatConstant(MWasmFloatConstant* ins) {

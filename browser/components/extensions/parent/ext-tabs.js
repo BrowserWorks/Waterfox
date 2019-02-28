@@ -666,7 +666,7 @@ this.tabs = class extends ExtensionAPI {
 
         async discard(tabIds) {
           for (let nativeTab of getNativeTabsFromIDArray(tabIds)) {
-            nativeTab.ownerGlobal.gBrowser.discardBrowser(nativeTab.linkedBrowser);
+            nativeTab.ownerGlobal.gBrowser.discardBrowser(nativeTab);
           }
         },
 
@@ -867,6 +867,13 @@ this.tabs = class extends ExtensionAPI {
             // If we are not moving the tab to a different window, and the window
             // only has one tab, do nothing.
             if (nativeTab.ownerGlobal == window && gBrowser.tabs.length === 1) {
+              continue;
+            }
+            // If moving between windows, be sure privacy matches.  While gBrowser
+            // prevents this, we want to silently ignore it.
+            if (nativeTab.ownerGlobal != window &&
+                PrivateBrowsingUtils.isBrowserPrivate(window.gBrowser) !=
+                PrivateBrowsingUtils.isBrowserPrivate(nativeTab.ownerGlobal.gBrowser)) {
               continue;
             }
 

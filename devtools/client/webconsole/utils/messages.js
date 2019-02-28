@@ -101,6 +101,9 @@ function transformConsoleAPICallPacket(packet) {
         parameters = null;
       }
       break;
+    case "timeStamp":
+      type = MESSAGE_TYPE.NULL_MESSAGE;
+      break;
     case "time":
       parameters = null;
       if (timer && timer.error) {
@@ -173,6 +176,7 @@ function transformConsoleAPICallPacket(packet) {
 
   const frame = message.filename ? {
     source: message.filename,
+    sourceId: message.sourceId,
     line: message.lineNumber,
     column: message.columnNumber,
   } : null;
@@ -230,6 +234,7 @@ function transformPageErrorPacket(packet) {
 
   const frame = pageError.sourceName ? {
     source: pageError.sourceName,
+    sourceId: pageError.sourceId,
     line: pageError.lineNumber,
     column: pageError.columnNumber,
   } : null;

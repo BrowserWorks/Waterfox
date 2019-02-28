@@ -48,7 +48,7 @@ IPCBlobInputStreamParent::Create(const nsID& aID, uint64_t aSize,
 
 IPCBlobInputStreamParent::IPCBlobInputStreamParent(const nsID& aID,
                                                    uint64_t aSize,
-                                                   nsIContentParent* aManager)
+                                                   ContentParent* aManager)
     : mID(aID),
       mSize(aSize),
       mContentManager(aManager),
@@ -108,7 +108,7 @@ mozilla::ipc::IPCResult IPCBlobInputStreamParent::RecvStreamNeeded() {
   IPCBlobInputStreamStorage::Get()->GetStream(mID, 0, mSize,
                                               getter_AddRefs(stream));
   if (!stream) {
-    if (!SendStreamReady(void_t())) {
+    if (!SendStreamReady(Nothing())) {
       return IPC_FAIL(this, "SendStreamReady failed");
     }
 
@@ -130,7 +130,7 @@ mozilla::ipc::IPCResult IPCBlobInputStreamParent::RecvStreamNeeded() {
     return IPC_FAIL(this, "SendStreamReady failed");
   }
 
-  if (!SendStreamReady(ipcStream.TakeValue())) {
+  if (!SendStreamReady(Some(ipcStream.TakeValue()))) {
     return IPC_FAIL(this, "SendStreamReady failed");
   }
 

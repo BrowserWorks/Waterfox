@@ -31,6 +31,8 @@ const {createChild, promiseWarn} = require("devtools/client/inspector/shared/uti
 const {debounce} = require("devtools/shared/debounce");
 const EventEmitter = require("devtools/shared/event-emitter");
 
+loader.lazyRequireGetter(this, "flashElementOn", "devtools/client/inspector/markup/utils", true);
+loader.lazyRequireGetter(this, "flashElementOff", "devtools/client/inspector/markup/utils", true);
 loader.lazyRequireGetter(this, "ClassListPreviewer", "devtools/client/inspector/rules/views/class-list-previewer");
 loader.lazyRequireGetter(this, "StyleInspectorMenu", "devtools/client/inspector/shared/style-inspector-menu");
 loader.lazyRequireGetter(this, "AutocompletePopup", "devtools/client/shared/autocomplete-popup");
@@ -41,6 +43,7 @@ const HTML_NS = "http://www.w3.org/1999/xhtml";
 const PREF_UA_STYLES = "devtools.inspector.showUserAgentStyles";
 const PREF_DEFAULT_COLOR_UNIT = "devtools.defaultColorUnit";
 const FILTER_CHANGED_TIMEOUT = 150;
+const REMOVE_FLASH_ELEMENT_DURATION = 500;
 
 // This is used to parse user input when filtering.
 const FILTER_PROP_RE = /\s*([^:\s]*)\s*:\s*(.*?)\s*;?$/;
@@ -105,9 +108,6 @@ function CssRuleView(inspector, document, store) {
   this.styleDocument = document;
   this.styleWindow = this.styleDocument.defaultView;
   this.store = store || {};
-  // References to rules marked by various editors where they intend to write changes.
-  // @see selectRule(), unselectRule()
-  this.selectedRules = new Map();
   this.pageStyle = inspector.pageStyle;
 
   // Allow tests to override debouncing behavior, as this can cause intermittents.
@@ -123,6 +123,8 @@ function CssRuleView(inspector, document, store) {
   this._onTogglePseudoClassPanel = this._onTogglePseudoClassPanel.bind(this);
   this._onTogglePseudoClass = this._onTogglePseudoClass.bind(this);
   this._onToggleClassPanel = this._onToggleClassPanel.bind(this);
+  this.highlightElementRule = this.highlightElementRule.bind(this);
+  this.highlightProperty = this.highlightProperty.bind(this);
 
   const doc = this.styleDocument;
   this.element = doc.getElementById("ruleview-container-focusable");
@@ -722,8 +724,6 @@ CssRuleView.prototype = {
 
     this.tooltips.destroy();
 
-    this.unselectAllRules();
-
     // Remove bound listeners
     this.shortcuts.destroy();
     this.element.removeEventListener("copy", this._onCopy);
@@ -806,7 +806,6 @@ CssRuleView.prototype = {
 
     this.clearPseudoClassPanel();
     this.refreshAddRuleButtonState();
-    this.unselectAllRules();
 
     if (!this._viewedElement) {
       this._stopSelectingElement();
@@ -1051,6 +1050,8 @@ CssRuleView.prototype = {
     });
 
     if (isPseudo) {
+      container.id = "pseudo-elements-container";
+      twisty.id = "pseudo-elements-header-twisty";
       this._toggleContainerVisibility(twisty, container, isPseudo,
         this.showPseudoElements);
     }
@@ -1205,99 +1206,6 @@ CssRuleView.prototype = {
     }
 
     return isHighlighted;
-  },
-
-  /**
-  * Mark a rule as selected for the given editor id.
-  *
-  * Editing tools can mark one or more rules as selected for themselves so they have
-  * a reference of where to make changes, like add / remove properties.
-  * Each editor has an identifier string (aka editorId) which is used as a key in a map
-  * that holds references to Rule objects.
-  *
-  * Many editors may operate at the same time (ex: Font Editor and Shape Path Editor) so
-  * there are multiple possible selected rules at any given time. A rule can be selected
-  * by different editors at the same time, with each editor operating independently on it.
-  *
-  * @param {Rule} rule
-  *        Rule object for which to hold a reference.
-  * @param {String} editorId
-  *        Key to use for collecting references to selected rules.
-  * @param {Boolean} [unselectOthers=true]
-  *        Optional. Default: `true`. If true, unselect all other rules that were
-  *        selected for the given editor. Ensures only one rule at a time is selected for
-  *        a particular editor. Set to `false` if an editor may operate on multiple rules
-  *        at a time.
-  */
-  selectRule(rule, editorId, unselectOthers = true) {
-    const rules = this.getSelectedRules(editorId);
-    if (!rules.includes(rule)) {
-      this.selectedRules.set(editorId, [...rules, rule]);
-    }
-
-    // Mark other rules for this editorId as unselected.
-    if (unselectOthers) {
-      rules
-        .filter(item => item !== rule)
-        .map(item => this.unselectRule(item, editorId));
-    }
-
-    this.emit("ruleview-rule-selected", {editorId, rule});
-  },
-
-  /**
-   * Unmark a rule as selected for the given editor id.
-   *
-   * @param {Rule} rule
-   *        Rule object for which to remove the reference.
-   * @param {String} editorId
-   *        Key for which to mark the given rule as selected.
-   */
-  unselectRule(rule, editorId) {
-    const rules = this.selectedRules.get(editorId);
-    if (!Array.isArray(rules)) {
-      return;
-    }
-
-    const index = rules.findIndex(item => item === rule);
-    if (index === -1) {
-      return;
-    }
-
-    rules.splice(index, 1);
-    this.selectedRules.set(editorId, rules);
-    this.emit("ruleview-rule-unselected", {editorId, rule});
-  },
-
-  /**
-  * Unmark all selected rules for all editors. If an editor id is provided, unmark all
-  * selected rules just for that editor leaving others untouched.
-  *
-  * @param {String} editorId
-  *        Optional editor id for which to restrict unselect operation.
-  */
-  unselectAllRules(editorId) {
-    for (const [id, rules] of this.selectedRules) {
-      // If we're supposed to unselect rules from just one editorId but it did not match,
-      // skip this iteration.
-      if (editorId && id !== editorId) {
-        continue;
-      }
-      rules.map(rule => this.unselectRule(rule, id));
-    }
-  },
-
-  /**
-   * Return an array of selected rules for the given editor id.
-   * If no rules match, return an empty arrary;
-   *
-   * @param {String} editorId
-   *        Editor id for which to return selected rules.
-   * @return {Array}
-   */
-  getSelectedRules(editorId) {
-    const rules = this.selectedRules.get(editorId);
-    return Array.isArray(rules) ? rules : [];
   },
 
   /**
@@ -1607,6 +1515,170 @@ CssRuleView.prototype = {
       event.preventDefault();
       event.stopPropagation();
     }
+  },
+
+  /**
+   * Temporarily flash the given element.
+   *
+   * @param  {Element} element
+   *         The element.
+   */
+  _flashElement(element) {
+    flashElementOn(element);
+    flashElementOff(element);
+
+    if (this._removeFlashOutTimer) {
+      clearTimeout(this._removeFlashOutTimer);
+      this._removeFlashOutTimer = null;
+    }
+
+    // Remove the flash-out class to prevent the element from re-flashing when the view
+    // is resized.
+    this._removeFlashOutTimer = setTimeout(() => {
+      element.classList.remove("flash-out");
+      // Emit "scrolled-to-property" for use by tests.
+      this.emit("scrolled-to-element");
+    }, REMOVE_FLASH_ELEMENT_DURATION);
+  },
+
+  /**
+   * Scrolls to the top of either the rule or declaration. The view will try to scroll to
+   * the rule if both can fit in the viewport. If not, then scroll to the declaration.
+   *
+   * @param  {Element} rule
+   *         The rule to scroll to.
+   * @param  {Element|null} declaration
+   *         Optional. The declaration to scroll to.
+   * @param  {String} scrollBehavior
+   *         Optional. The transition animation when scrolling.
+   */
+  _scrollToElement(rule, declaration, scrollBehavior = "smooth") {
+    let elementToScrollTo = rule;
+
+    if (declaration) {
+      const { offsetTop, offsetHeight } = declaration;
+      // Get the distance between both the rule and declaration. If the distance is
+      // greater than the height of the rule view, then only scroll to the declaration.
+      const distance = (offsetTop + offsetHeight) - rule.offsetTop;
+
+      if (this.element.parentNode.offsetHeight <= distance) {
+        elementToScrollTo = declaration;
+      }
+    }
+
+    elementToScrollTo.scrollIntoView({ behavior: scrollBehavior });
+  },
+
+  /**
+   * Toggles the visibility of the pseudo element rule's container.
+   */
+  _togglePseudoElementRuleContainer() {
+    const container = this.styleDocument.getElementById("pseudo-elements-container");
+    const twisty = this.styleDocument.getElementById("pseudo-elements-header-twisty");
+    this._toggleContainerVisibility(twisty, container, true, true);
+  },
+
+  /**
+   * Finds the rule with the matching actorID and highlights it.
+   *
+   * @param  {String} ruleId
+   *         The actorID of the rule.
+   */
+  highlightElementRule: function(ruleId) {
+    let scrollBehavior = "smooth";
+
+    const rule = this.rules.find(r => r.domRule.actorID === ruleId);
+
+    if (!rule) {
+      return;
+    }
+
+    if (rule.domRule.actorID === ruleId) {
+      // If using 2-Pane mode, then switch to the Rules tab first.
+      if (!this.inspector.is3PaneModeEnabled) {
+        this.inspector.sidebar.select("ruleview");
+      }
+
+      if (rule.pseudoElement.length && !this.showPseudoElements) {
+        scrollBehavior = "auto";
+        this._togglePseudoElementRuleContainer();
+      }
+
+      const { editor: { element } } = rule;
+
+      // Scroll to the top of the rule and highlight it.
+      this._scrollToElement(element, null, scrollBehavior);
+      this._flashElement(element);
+    }
+  },
+
+  /**
+   * Finds the specified TextProperty name in the rule view. If found, scroll to and
+   * flash the TextProperty.
+   *
+   * @param  {String} name
+   *         The property name to scroll to and highlight.
+   * @return {Boolean} true if the TextProperty name is found, and false otherwise.
+   */
+  highlightProperty: function(name) {
+    for (const rule of this.rules) {
+      for (const textProp of rule.textProps) {
+        if (textProp.overridden || textProp.invisible || !textProp.enabled) {
+          continue;
+        }
+
+        const { editor: { selectorText } } = rule;
+        let scrollBehavior = "smooth";
+
+        // First, search for a matching authored property.
+        if (textProp.name === name) {
+          // If using 2-Pane mode, then switch to the Rules tab first.
+          if (!this.inspector.is3PaneModeEnabled) {
+            this.inspector.sidebar.select("ruleview");
+          }
+
+          // If the property is being applied by a pseudo element rule, expand the pseudo
+          // element list container.
+          if (rule.pseudoElement.length && !this.showPseudoElements) {
+            // Set the scroll behavior to "auto" to avoid timing issues between toggling
+            // the pseudo element container and scrolling smoothly to the rule.
+            scrollBehavior = "auto";
+            this._togglePseudoElementRuleContainer();
+          }
+
+          // Scroll to the top of the property's rule so that both the property and its
+          // rule are visible.
+          this._scrollToElement(selectorText, textProp.editor.element, scrollBehavior);
+          this._flashElement(textProp.editor.element);
+
+          return true;
+        }
+
+        // If there is no matching property, then look in computed properties.
+        for (const computed of textProp.computed) {
+          if (computed.name === name) {
+            if (!this.inspector.is3PaneModeEnabled) {
+              this.inspector.sidebar.select("ruleview");
+            }
+
+            if (textProp.rule.pseudoElement.length && !this.showPseudoElements) {
+              scrollBehavior = "auto";
+              this._togglePseudoElementRuleContainer();
+            }
+
+            // Expand the computed list.
+            textProp.editor.expandForFilter();
+
+            this._scrollToElement(selectorText, computed.element, scrollBehavior);
+            this._flashElement(computed.element);
+
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   },
 };
 

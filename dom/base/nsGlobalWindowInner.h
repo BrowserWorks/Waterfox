@@ -363,9 +363,6 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
 
   virtual nsresult FireDelayedDOMEvents() override;
 
-  virtual nsresult SetNewDocument(Document* aDocument, nsISupports* aState,
-                                  bool aForceReuseInnerWindow) override;
-
   virtual void MaybeUpdateTouchState() override;
 
   // Inner windows only.
@@ -863,6 +860,9 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
 
   bool ShouldResistFingerprinting();
 
+  bool DidFireDocElemInserted() const { return mDidFireDocElemInserted; }
+  void SetDidFireDocElemInserted() { mDidFireDocElemInserted = true; }
+
   mozilla::dom::Nullable<mozilla::dom::WindowProxyHolder> OpenDialog(
       JSContext* aCx, const nsAString& aUrl, const nsAString& aName,
       const nsAString& aOptions,
@@ -1042,7 +1042,7 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
   // Object Management
   virtual ~nsGlobalWindowInner();
 
-  void FreeInnerObjects(bool aForDocumentOpen = false);
+  void FreeInnerObjects();
 
   // Only to be called on an inner window.
   // aDocument must not be null.
@@ -1101,8 +1101,6 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
 
   CallState ShouldReportForServiceWorkerScopeInternal(const nsACString& aScope,
                                                       bool* aResultOut);
-
-  void MigrateStateForDocumentOpen(nsGlobalWindowInner* aOldInner);
 
  public:
   // Timeout Functions
@@ -1316,6 +1314,10 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
   // true if tab navigation has occurred for this window. Focus rings
   // should be displayed.
   bool mFocusByKeyOccurred : 1;
+
+  // True if we have notified document-element-inserted observers for this
+  // document.
+  bool mDidFireDocElemInserted : 1;
 
   // Indicates whether this window wants gamepad input events
   bool mHasGamepad : 1;

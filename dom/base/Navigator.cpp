@@ -108,7 +108,8 @@ namespace dom {
 static bool sVibratorEnabled = false;
 static uint32_t sMaxVibrateMS = 0;
 static uint32_t sMaxVibrateListLen = 0;
-static const char* kVibrationPermissionType = "vibration";
+static const nsLiteralCString kVibrationPermissionType =
+    NS_LITERAL_CSTRING("vibration");
 
 /* static */
 void Navigator::Init() {
@@ -1039,8 +1040,7 @@ class BeaconStreamListener final : public nsIStreamListener {
 NS_IMPL_ISUPPORTS(BeaconStreamListener, nsIStreamListener, nsIRequestObserver)
 
 NS_IMETHODIMP
-BeaconStreamListener::OnStartRequest(nsIRequest* aRequest,
-                                     nsISupports* aContext) {
+BeaconStreamListener::OnStartRequest(nsIRequest* aRequest) {
   // release the loadgroup first
   mLoadGroup = nullptr;
 
@@ -1049,13 +1049,13 @@ BeaconStreamListener::OnStartRequest(nsIRequest* aRequest,
 }
 
 NS_IMETHODIMP
-BeaconStreamListener::OnStopRequest(nsIRequest* aRequest, nsISupports* aContext,
+BeaconStreamListener::OnStopRequest(nsIRequest* aRequest,
                                     nsresult aStatus) {
   return NS_OK;
 }
 
 NS_IMETHODIMP
-BeaconStreamListener::OnDataAvailable(nsIRequest* aRequest, nsISupports* ctxt,
+BeaconStreamListener::OnDataAvailable(nsIRequest* aRequest,
                                       nsIInputStream* inStr,
                                       uint64_t sourceOffset, uint32_t count) {
   MOZ_ASSERT(false);

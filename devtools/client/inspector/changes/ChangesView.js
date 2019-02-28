@@ -10,7 +10,6 @@ const { createFactory, createElement } = require("devtools/client/shared/vendor/
 const { Provider } = require("devtools/client/shared/vendor/react-redux");
 
 loader.lazyRequireGetter(this, "ChangesContextMenu", "devtools/client/inspector/changes/ChangesContextMenu");
-loader.lazyRequireGetter(this, "prettifyCSS", "devtools/shared/inspector/css-logic", true);
 loader.lazyRequireGetter(this, "clipboardHelper", "devtools/shared/platform/clipboard");
 
 const ChangesApp = createFactory(require("./components/ChangesApp"));
@@ -40,6 +39,8 @@ class ChangesView {
     this.onChangesFront = this.onChangesFront.bind(this);
     this.onContextMenu = this.onContextMenu.bind(this);
     this.onCopy = this.onCopy.bind(this);
+    this.onCopyAllChanges = this.copyAllChanges.bind(this);
+    this.onCopyRule = this.copyRule.bind(this);
     this.destroy = this.destroy.bind(this);
 
     this.init();
@@ -57,6 +58,8 @@ class ChangesView {
     const changesApp = ChangesApp({
       onContextMenu: this.onContextMenu,
       onCopy: this.onCopy,
+      onCopyAllChanges: this.onCopyAllChanges,
+      onCopyRule: this.onCopyRule,
     });
 
     // listen to the front for initialization, add listeners
@@ -105,6 +108,14 @@ class ChangesView {
   }
 
   /**
+   * Handler for the "Copy All Changes" button. Simple wrapper that just calls
+   * |this.copyChanges()| with no filters in order to trigger default operation.
+   */
+  copyAllChanges() {
+    this.copyChanges();
+  }
+
+  /**
    * Handler for the "Copy Changes" option from the context menu.
    * Builds a CSS text with the aggregated changes and copies it to the clipboard.
    *
@@ -146,8 +157,7 @@ class ChangesView {
   async copyRule(ruleId) {
     const rule = await this.inspector.pageStyle.getRule(ruleId);
     const text = await rule.getRuleText();
-    const prettyCSS = prettifyCSS(text);
-    clipboardHelper.copyString(prettyCSS);
+    clipboardHelper.copyString(text);
   }
 
   /**

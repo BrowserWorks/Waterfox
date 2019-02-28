@@ -1644,25 +1644,15 @@ nsRect nsIFrame::GetContentRect() const {
   return GetContentRectRelativeToSelf() + GetPosition();
 }
 
-bool nsIFrame::ComputeBorderRadii(const nsStyleCorners& aBorderRadius,
+bool nsIFrame::ComputeBorderRadii(const BorderRadius& aBorderRadius,
                                   const nsSize& aFrameSize,
                                   const nsSize& aBorderArea, Sides aSkipSides,
                                   nscoord aRadii[8]) {
   // Percentages are relative to whichever side they're on.
   NS_FOR_CSS_HALF_CORNERS(i) {
-    const nsStyleCoord c = aBorderRadius.Get(i);
+    const LengthPercentage& c = aBorderRadius.Get(i);
     nscoord axis = HalfCornerIsX(i) ? aFrameSize.width : aFrameSize.height;
-
-    if (c.IsCoordPercentCalcUnit()) {
-      aRadii[i] = c.ComputeCoordPercentCalc(axis);
-      if (aRadii[i] < 0) {
-        // clamp calc()
-        aRadii[i] = 0;
-      }
-    } else {
-      MOZ_ASSERT_UNREACHABLE("ComputeBorderRadii: bad unit");
-      aRadii[i] = 0;
-    }
+    aRadii[i] = std::max(0, c.Resolve(axis));
   }
 
   if (aSkipSides.Top()) {
@@ -7440,10 +7430,7 @@ void nsIFrame::ListGeneric(nsACString& aTo, const char* aPrefix,
   aTo += nsPrintfCString(" [cs=%p", static_cast<void*>(mComputedStyle));
   if (mComputedStyle) {
     auto pseudoType = mComputedStyle->GetPseudoType();
-    if (pseudoType != PseudoStyleType::NotPseudo) {
-      // FIXME(emilio): It'd be nice to get the string from here.
-      aTo += nsPrintfCString("pseudo: %d", static_cast<int>(pseudoType));
-    }
+    aTo += ToString(pseudoType).c_str();
   }
   aTo += "]";
 }
@@ -8150,7 +8137,8 @@ nsresult nsIFrame::PeekOffset(nsPeekOffsetStruct* aPos) {
 
         done = current->PeekOffsetWord(
                    movingInFrameDirection, wordSelectEatSpace,
-                   aPos->mIsKeyboardSelect, &offset, &state) == FOUND;
+                   aPos->mIsKeyboardSelect, &offset, &state,
+                   aPos->mTrimSpaces) == FOUND;
 
         if (!done) {
           nsIFrame* nextFrame;
@@ -8401,7 +8389,8 @@ nsIFrame::FrameSearchResult nsFrame::PeekOffsetWord(bool aForward,
                                                     bool aWordSelectEatSpace,
                                                     bool aIsKeyboardSelect,
                                                     int32_t* aOffset,
-                                                    PeekWordState* aState) {
+                                                    PeekWordState* aState,
+                                                    bool aTrimSpaces) {
   NS_ASSERTION(aOffset && *aOffset <= 1, "aOffset out of range");
   int32_t startOffset = *aOffset;
   // This isn't text, so truncate the context

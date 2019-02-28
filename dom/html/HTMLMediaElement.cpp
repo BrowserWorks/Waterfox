@@ -603,8 +603,7 @@ HTMLMediaElement::MediaLoadListener::Observe(nsISupports* aSubject,
 }
 
 NS_IMETHODIMP
-HTMLMediaElement::MediaLoadListener::OnStartRequest(nsIRequest* aRequest,
-                                                    nsISupports* aContext) {
+HTMLMediaElement::MediaLoadListener::OnStartRequest(nsIRequest* aRequest) {
   nsContentUtils::UnregisterShutdownObserver(this);
 
   if (!mElement) {
@@ -681,7 +680,7 @@ HTMLMediaElement::MediaLoadListener::OnStartRequest(nsIRequest* aRequest,
       NS_SUCCEEDED(rv = element->InitializeDecoderForChannel(
                        channel, getter_AddRefs(mNextListener))) &&
       mNextListener) {
-    rv = mNextListener->OnStartRequest(aRequest, aContext);
+    rv = mNextListener->OnStartRequest(aRequest);
   } else {
     // If InitializeDecoderForChannel() returned an error, fire a network error.
     if (NS_FAILED(rv) && !mNextListener) {
@@ -700,17 +699,15 @@ HTMLMediaElement::MediaLoadListener::OnStartRequest(nsIRequest* aRequest,
 
 NS_IMETHODIMP
 HTMLMediaElement::MediaLoadListener::OnStopRequest(nsIRequest* aRequest,
-                                                   nsISupports* aContext,
                                                    nsresult aStatus) {
   if (mNextListener) {
-    return mNextListener->OnStopRequest(aRequest, aContext, aStatus);
+    return mNextListener->OnStopRequest(aRequest, aStatus);
   }
   return NS_OK;
 }
 
 NS_IMETHODIMP
 HTMLMediaElement::MediaLoadListener::OnDataAvailable(nsIRequest* aRequest,
-                                                     nsISupports* aContext,
                                                      nsIInputStream* aStream,
                                                      uint64_t aOffset,
                                                      uint32_t aCount) {
@@ -720,7 +717,7 @@ HTMLMediaElement::MediaLoadListener::OnDataAvailable(nsIRequest* aRequest,
         "canceled this request");
     return NS_BINDING_ABORTED;
   }
-  return mNextListener->OnDataAvailable(aRequest, aContext, aStream, aOffset,
+  return mNextListener->OnDataAvailable(aRequest, aStream, aOffset,
                                         aCount);
 }
 
@@ -1717,6 +1714,53 @@ void HTMLMediaElement::ShutdownDecoder() {
   ReportAudioTrackSilenceProportionTelemetry();
 }
 
+void HTMLMediaElement::ReportPlayedTimeAfterBlockedTelemetry() {
+  if (!mHasPlayEverBeenBlocked) {
+    return;
+  }
+  mHasPlayEverBeenBlocked = false;
+
+  const double playTimeThreshold = 7.0;
+  const double playTimeAfterBlocked = mCurrentLoadPlayTime.Total();
+  if (playTimeAfterBlocked <= 0.0) {
+    return;
+  }
+
+  const bool isDurationLessThanTimeThresholdAndMediaPlayedToTheEnd =
+      Duration() < playTimeThreshold && Ended();
+  LOG(LogLevel::Debug, ("%p PLAYED_TIME_AFTER_AUTOPLAY_BLOCKED=%f, isVideo=%d",
+                        this, playTimeAfterBlocked, IsVideo()));
+  if (IsVideo() && playTimeAfterBlocked >= playTimeThreshold) {
+    AccumulateCategorical(
+        mozilla::Telemetry::LABELS_MEDIA_PLAYED_TIME_AFTER_AUTOPLAY_BLOCKED::
+            VPlayedMoreThan7s);
+  } else if (IsVideo() && playTimeAfterBlocked < playTimeThreshold) {
+    if (isDurationLessThanTimeThresholdAndMediaPlayedToTheEnd) {
+      AccumulateCategorical(
+          mozilla::Telemetry::LABELS_MEDIA_PLAYED_TIME_AFTER_AUTOPLAY_BLOCKED::
+              VPlayedToTheEnd);
+    } else {
+      AccumulateCategorical(
+          mozilla::Telemetry::LABELS_MEDIA_PLAYED_TIME_AFTER_AUTOPLAY_BLOCKED::
+              VPlayedLessThan7s);
+    }
+  } else if (!IsVideo() && playTimeAfterBlocked >= playTimeThreshold) {
+    AccumulateCategorical(
+        mozilla::Telemetry::LABELS_MEDIA_PLAYED_TIME_AFTER_AUTOPLAY_BLOCKED::
+            APlayedMoreThan7s);
+  } else if (!IsVideo() && playTimeAfterBlocked < playTimeThreshold) {
+    if (isDurationLessThanTimeThresholdAndMediaPlayedToTheEnd) {
+      AccumulateCategorical(
+          mozilla::Telemetry::LABELS_MEDIA_PLAYED_TIME_AFTER_AUTOPLAY_BLOCKED::
+              APlayedToTheEnd);
+    } else {
+      AccumulateCategorical(
+          mozilla::Telemetry::LABELS_MEDIA_PLAYED_TIME_AFTER_AUTOPLAY_BLOCKED::
+              APlayedLessThan7s);
+    }
+  }
+}
+
 void HTMLMediaElement::AbortExistingLoads() {
   // Abort any already-running instance of the resource selection algorithm.
   mLoadWaitStatus = NOT_WAITING;
@@ -1838,6 +1882,7 @@ void HTMLMediaElement::AbortExistingLoads() {
 
   mEventDeliveryPaused = false;
   mPendingEvents.Clear();
+  mCurrentLoadPlayTime.Reset();
 
   AssertReadyStateIsNothing();
 }
@@ -3529,6 +3574,7 @@ HTMLMediaElement::~HTMLMediaElement() {
   }
 
   WakeLockRelease();
+  ReportPlayedTimeAfterBlockedTelemetry();
 
   DecoderDoctorLogger::LogDestruction(this);
 }
@@ -3638,7 +3684,6 @@ already_AddRefed<Promise> HTMLMediaElement::Play(ErrorResult& aRv) {
   if (AudioChannelAgentBlockedPlay()) {
     LOG(LogLevel::Debug, ("%p play blocked by AudioChannelAgent.", this));
     promise->MaybeReject(NS_ERROR_DOM_MEDIA_NOT_ALLOWED_ERR);
-    DispatchEventsWhenPlayWasNotAllowed();
     return promise.forget();
   }
 
@@ -3671,6 +3716,7 @@ void HTMLMediaElement::DispatchEventsWhenPlayWasNotAllowed() {
 #endif
   OwnerDoc()->MaybeNotifyAutoplayBlocked();
   ReportToConsole(nsIScriptError::warningFlag, "BlockAutoplayError");
+  mHasPlayEverBeenBlocked = true;
 }
 
 void HTMLMediaElement::PlayInternal(bool aHandlingUserInput) {
@@ -4429,7 +4475,11 @@ nsresult HTMLMediaElement::InitializeDecoderForChannel(
 
 #ifdef MOZ_ANDROID_HLS_SUPPORT
   if (HLSDecoder::IsSupportedType(*containerType)) {
-    RefPtr<HLSDecoder> decoder = new HLSDecoder(decoderInit);
+    RefPtr<HLSDecoder> decoder = HLSDecoder::Create(decoderInit);
+    if (!decoder) {
+      reportCanPlay(false);
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
     reportCanPlay(true);
     return SetupDecoder(decoder.get(), aChannel);
   }
@@ -5728,15 +5778,24 @@ void HTMLMediaElement::DispatchAsyncEvent(const nsAString& aName) {
 
   if ((aName.EqualsLiteral("play") || aName.EqualsLiteral("playing"))) {
     mPlayTime.Start();
+    mCurrentLoadPlayTime.Start();
     if (IsHidden()) {
       HiddenVideoStart();
     }
   } else if (aName.EqualsLiteral("waiting")) {
     mPlayTime.Pause();
+    mCurrentLoadPlayTime.Pause();
     HiddenVideoStop();
   } else if (aName.EqualsLiteral("pause")) {
     mPlayTime.Pause();
+    mCurrentLoadPlayTime.Pause();
     HiddenVideoStop();
+  }
+
+  // It would happen when (1) media aborts current load (2) media pauses (3)
+  // media end (4) media unbind from tree (because we would pause it)
+  if (aName.EqualsLiteral("pause")) {
+    ReportPlayedTimeAfterBlockedTelemetry();
   }
 }
 
@@ -5872,6 +5931,7 @@ void HTMLMediaElement::SuspendOrResumeElement(bool aPauseElement,
     UpdateSrcMediaStreamPlaying();
     UpdateAudioChannelPlayingState();
     if (aPauseElement) {
+      mCurrentLoadPlayTime.Pause();
       ReportTelemetry();
 
       // For EME content, we may force destruction of the CDM client (and CDM
@@ -5889,6 +5949,9 @@ void HTMLMediaElement::SuspendOrResumeElement(bool aPauseElement,
       }
       mEventDeliveryPaused = aSuspendEvents;
     } else {
+      if (!mPaused) {
+        mCurrentLoadPlayTime.Start();
+      }
       if (mDecoder) {
         mDecoder->Resume();
         if (!mPaused && !mDecoder->IsEnded()) {

@@ -23,9 +23,7 @@ pref("general.useragent.site_specific_overrides", true);
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
 
-#ifndef MOZ_BUILD_APP_IS_BROWSER
 pref("general.warnOnAboutConfig", true);
-#endif
 
 // maximum number of dated backups to keep at any time
 pref("browser.bookmarks.max_backups",       5);
@@ -290,7 +288,7 @@ pref("ui.menu.incremental_search.timeout", 1000);
 pref("ui.popup.disable_autohide", false);
 
 #ifdef XP_MACOSX
-pref("ui.touchbar.layout", "Back,Reload,OpenOrFocus,AddBookmark,NewTab,Share");
+pref("ui.touchbar.layout", "Back,Forward,Reload,OpenLocation,NewTab,Share");
 #endif
 
 // 0 = default: always, except in high contrast mode
@@ -1422,10 +1420,6 @@ pref("privacy.popups.maxReported", 100);
 
 // send "do not track" HTTP header, disabled by default
 pref("privacy.donottrackheader.enabled",    false);
-// If true, close button will be shown on permission prompts
-// and for all PopupNotifications, the secondary action of
-// the popup will be called when the popup is dismissed.
-pref("privacy.permissionPrompts.showCloseButton", false);
 // Enforce tracking protection in all modes
 pref("privacy.trackingprotection.enabled",  false);
 // Enforce tracking protection in Private Browsing mode
@@ -1771,10 +1765,21 @@ pref("network.http.sendRefererHeader",      2);
 // 0=no-referrer, 1=same-origin, 2=strict-origin-when-cross-origin,
 // 3=no-referrer-when-downgrade
 pref("network.http.referer.defaultPolicy", 3);
+// Set the default Referrer Policy applied to third-party trackers when the
+// default cookie policy is set to reject third-party trackers;
+// to be used unless overriden by the site;
+// values are identical to defaultPolicy above
+pref("network.http.referer.defaultPolicy.trackers", 3);
 // Set the Private Browsing Default Referrer Policy;
 // to be used unless overriden by the site;
 // values are identical to defaultPolicy above
 pref("network.http.referer.defaultPolicy.pbmode", 2);
+// Set the Private Browsing Default Referrer Policy applied to third-party
+// trackers when the default cookie policy is set to reject third-party
+// trackers;
+// to be used unless overriden by the site;
+// values are identical to defaultPolicy above
+pref("network.http.referer.defaultPolicy.trackers.pbmode", 2);
 // false=real referer, true=spoof referer (use target URI as referer)
 pref("network.http.referer.spoofSource", false);
 // false=allow onion referer, true=hide onion referer (use empty referer)
@@ -3411,6 +3416,10 @@ pref("browser.tabs.remote.allowLinkedWebInFileUriProcess", true);
 // Pref to control whether we use separate privileged content processes.
 pref("browser.tabs.remote.separatePrivilegedContentProcess", false);
 
+// When this pref is enabled top level loads with a mismatched
+// Cross-Origin-Opener-Policy header will be loaded in a separate process.
+pref("browser.tabs.remote.useCrossOriginOpenerPolicy", false);
+
 // Enable the use of display-lists for SVG hit-testing and painting.
 pref("svg.display-lists.hit-testing.enabled", true);
 pref("svg.display-lists.painting.enabled", true);
@@ -4590,55 +4599,55 @@ pref("font.size.fixed.x-western", 12);
 pref("font.name-list.emoji", "Noto Color Emoji");
 
 pref("font.name-list.serif.ar", "Noto Naskh Arabic, Noto Serif, Droid Serif");
-pref("font.name-list.sans-serif.ar", "Noto Naskh Arabic, Roboto, Droid Sans");
+pref("font.name-list.sans-serif.ar", "Noto Naskh Arabic, Roboto, Google Sans, Droid Sans");
 pref("font.name-list.monospace.ar", "Noto Naskh Arabic");
 
 pref("font.name-list.serif.el", "Droid Serif, Noto Serif"); // not Charis SIL Compact, only has a few Greek chars
-pref("font.name-list.sans-serif.el", "Roboto, Droid Sans");
+pref("font.name-list.sans-serif.el", "Roboto, Google Sans, Droid Sans");
 pref("font.name-list.monospace.el", "Droid Sans Mono");
 
 pref("font.name-list.serif.he", "Droid Serif, Noto Serif");
-pref("font.name-list.sans-serif.he", "Roboto, Droid Sans Hebrew, Droid Sans, Arial");
+pref("font.name-list.sans-serif.he", "Roboto, Google Sans, Droid Sans Hebrew, Droid Sans, Arial");
 pref("font.name-list.monospace.he", "Droid Sans Mono");
 
 pref("font.name-list.serif.ja", "Charis SIL Compact, Noto Serif CJK JP, Noto Serif, Droid Serif");
-pref("font.name-list.sans-serif.ja", "Roboto, Droid Sans, MotoyaLMaru, MotoyaLCedar, Noto Sans JP, Noto Sans CJK JP, Droid Sans Japanese");
+pref("font.name-list.sans-serif.ja", "Roboto, Google Sans, Droid Sans, MotoyaLMaru, MotoyaLCedar, Noto Sans JP, Noto Sans CJK JP, Droid Sans Japanese");
 pref("font.name-list.monospace.ja", "MotoyaLMaru, MotoyaLCedar, Noto Sans Mono CJK JP, Droid Sans Mono");
 
 pref("font.name-list.serif.ko", "Charis SIL Compact, Noto Serif CJK KR, Noto Serif, Droid Serif, HYSerif");
-pref("font.name-list.sans-serif.ko", "Roboto, SmartGothic, NanumGothic, Noto Sans KR, Noto Sans CJK KR, DroidSansFallback, Droid Sans Fallback");
+pref("font.name-list.sans-serif.ko", "Roboto, Google Sans, SmartGothic, NanumGothic, Noto Sans KR, Noto Sans CJK KR, DroidSansFallback, Droid Sans Fallback");
 pref("font.name-list.monospace.ko", "Droid Sans Mono, Noto Sans Mono CJK KR");
 
 pref("font.name-list.serif.th", "Charis SIL Compact, Noto Serif, Droid Serif");
-pref("font.name-list.sans-serif.th", "Roboto, Droid Sans Thai, Droid Sans");
+pref("font.name-list.sans-serif.th", "Roboto, Google Sans, Droid Sans Thai, Droid Sans");
 pref("font.name-list.monospace.th", "Droid Sans Mono");
 
 pref("font.name-list.serif.x-cyrillic", "Charis SIL Compact, Noto Serif, Droid Serif");
-pref("font.name-list.sans-serif.x-cyrillic", "Roboto, Droid Sans");
+pref("font.name-list.sans-serif.x-cyrillic", "Roboto, Google Sans, Droid Sans");
 pref("font.name-list.monospace.x-cyrillic", "Droid Sans Mono");
 
 pref("font.name-list.serif.x-unicode", "Charis SIL Compact, Noto Serif, Droid Serif");
-pref("font.name-list.sans-serif.x-unicode", "Roboto, Droid Sans");
+pref("font.name-list.sans-serif.x-unicode", "Roboto, Google Sans, Droid Sans");
 pref("font.name-list.monospace.x-unicode", "Droid Sans Mono");
 
 pref("font.name-list.serif.x-western", "Charis SIL Compact, Noto Serif, Droid Serif");
-pref("font.name-list.sans-serif.x-western", "Roboto, Droid Sans");
+pref("font.name-list.sans-serif.x-western", "Roboto, Google Sans, Droid Sans");
 pref("font.name-list.monospace.x-western", "Droid Sans Mono");
 
 pref("font.name-list.serif.zh-CN", "Charis SIL Compact, Noto Serif CJK SC, Noto Serif, Droid Serif, Droid Sans Fallback");
-pref("font.name-list.sans-serif.zh-CN", "Roboto, Droid Sans, Noto Sans SC, Noto Sans CJK SC, Droid Sans Fallback");
+pref("font.name-list.sans-serif.zh-CN", "Roboto, Google Sans, Droid Sans, Noto Sans SC, Noto Sans CJK SC, Droid Sans Fallback");
 pref("font.name-list.monospace.zh-CN", "Droid Sans Mono, Noto Sans Mono CJK SC, Droid Sans Fallback");
 
 pref("font.name-list.serif.zh-HK", "Charis SIL Compact, Noto Serif CJK TC, Noto Serif, Droid Serif, Droid Sans Fallback");
-pref("font.name-list.sans-serif.zh-HK", "Roboto, Droid Sans, Noto Sans TC, Noto Sans SC, Noto Sans CJK TC, Droid Sans Fallback");
+pref("font.name-list.sans-serif.zh-HK", "Roboto, Google Sans, Droid Sans, Noto Sans TC, Noto Sans SC, Noto Sans CJK TC, Droid Sans Fallback");
 pref("font.name-list.monospace.zh-HK", "Droid Sans Mono, Noto Sans Mono CJK TC, Droid Sans Fallback");
 
 pref("font.name-list.serif.zh-TW", "Charis SIL Compact, Noto Serif CJK TC, Noto Serif, Droid Serif, Droid Sans Fallback");
-pref("font.name-list.sans-serif.zh-TW", "Roboto, Droid Sans, Noto Sans TC, Noto Sans SC, Noto Sans CJK TC, Droid Sans Fallback");
+pref("font.name-list.sans-serif.zh-TW", "Roboto, Google Sans, Droid Sans, Noto Sans TC, Noto Sans SC, Noto Sans CJK TC, Droid Sans Fallback");
 pref("font.name-list.monospace.zh-TW", "Droid Sans Mono, Noto Sans Mono CJK TC, Droid Sans Fallback");
 
 pref("font.name-list.serif.x-math", "Latin Modern Math, STIX Two Math, XITS Math, Cambria Math, Libertinus Math, DejaVu Math TeX Gyre, TeX Gyre Bonum Math, TeX Gyre Pagella Math, TeX Gyre Schola, TeX Gyre Termes Math, STIX Math, Asana Math, STIXGeneral, DejaVu Serif, DejaVu Sans, Charis SIL Compact");
-pref("font.name-list.sans-serif.x-math", "Roboto");
+pref("font.name-list.sans-serif.x-math", "Roboto, Google Sans");
 pref("font.name-list.monospace.x-math", "Droid Sans Mono");
 
 #endif
@@ -4677,6 +4686,7 @@ pref("signon.recipes.path",                 "chrome://passwordmgr/content/recipe
 pref("signon.schemeUpgrades",               false);
 // This temporarily prevents the master password to reprompt for autocomplete.
 pref("signon.masterPasswordReprompt.timeout_ms", 900000); // 15 Minutes
+pref("signon.showAutoCompleteFooter", false);
 
 // Satchel (Form Manager) prefs
 pref("browser.formfill.debug",            false);
@@ -6010,7 +6020,3 @@ pref("prio.enabled", false);
 // External.AddSearchProvider is deprecated and it will be removed in the next
 // cycles.
 pref("dom.sidebar.enabled", true);
-
-#if defined(MOZ_WIDGET_GTK)
-pref("widget.default-hidden-titlebar", true);
-#endif

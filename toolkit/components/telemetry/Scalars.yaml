@@ -506,6 +506,19 @@ contentblocking:
     release_channel_collection: opt-out
     record_in_processes:
       - main
+  category:
+    bug_numbers:
+      - 1529425
+    description: >
+      This scalar reports the value of the content blocking category pref (0 = "standard", 1 = "strict", 2 = "custom", 3 = some other value, this is not supported).
+    expires: never
+    kind: uint
+    notification_emails:
+      - aedelstein@mozilla.com
+      - seceng-telemetry@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
 
 sandbox:
   no_job:
@@ -819,6 +832,7 @@ webrtc.sdp:
   parser_diff:
     bug_numbers:
       - 1432955
+      - 1529787
     description: >
       The number of differences between the C based sipcc SDP parser and
       the new rust based rsdparsa SDP parser keyed by predefined
@@ -827,7 +841,7 @@ webrtc.sdp:
       between the rsdparsa parsing result and the original sdp.
       This should help to improve the new rsdparsa to replace
       the sipcc parser.
-    expires: "64"
+    expires: "73"
     kind: uint
     keyed: true
     notification_emails:
@@ -2451,16 +2465,22 @@ startup:
         restart:
           The user restarted the application, the same profile as previous will
           be used.
-        argument-profile
+        argument-profile:
           The profile was selected by the --profile command line argument.
-        argument-p
+        argument-p:
           The profile was selected by the -p command line argument.
-        firstrun-claimed-default
+        firstrun-claimed-default:
           A first run of a dedicated profiles build chose the old default
           profile to be the default for this install.
         firstrun-skipped-default:
           A first run of a dedicated profiles build skipped over the old default
           profile and created a new profile.
+        restart-claimed-default:
+          A first run of a dedicated profiles build after a restart chose the
+          old default profile to be the default for this install.
+        restart-skipped-default:
+          A first run of a dedicated profiles build after a restart skipped over
+          the old default profile and created a new profile.
         firstrun-created-default:
           A first run of the application created a new profile to use.
         default:

@@ -50,7 +50,6 @@
 
 #define EXTENSION_SCHEME "moz-extension"
 using mozilla::ipc::FileDescriptor;
-using OptionalIPCStream = mozilla::ipc::OptionalIPCStream;
 
 namespace mozilla {
 
@@ -237,8 +236,8 @@ static void CancelRequest(nsIStreamListener* aListener, nsIChannel* aChannel,
   MOZ_ASSERT(aListener);
   MOZ_ASSERT(aChannel);
 
-  aListener->OnStartRequest(aChannel, nullptr);
-  aListener->OnStopRequest(aChannel, nullptr, aResult);
+  aListener->OnStartRequest(aChannel);
+  aListener->OnStopRequest(aChannel, aResult);
   aChannel->Cancel(NS_BINDING_ABORTED);
 }
 

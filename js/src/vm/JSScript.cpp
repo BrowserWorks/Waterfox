@@ -279,9 +279,10 @@ static XDRResult XDRRelazificationInfo(XDRState<mode>* xdr, HandleFunction fun,
     uint32_t toStringEnd = script->toStringEnd();
     uint32_t lineno = script->lineno();
     uint32_t column = script->column();
+    uint32_t numFieldInitializers;
 
     if (mode == XDR_ENCODE) {
-      packedFields = lazy->packedFields();
+      packedFields = lazy->packedFieldsForXDR();
       MOZ_ASSERT(sourceStart == lazy->sourceStart());
       MOZ_ASSERT(sourceEnd == lazy->sourceEnd());
       MOZ_ASSERT(toStringStart == lazy->toStringStart());
@@ -292,9 +293,16 @@ static XDRResult XDRRelazificationInfo(XDRState<mode>* xdr, HandleFunction fun,
       // relazify scripts with inner functions.  See
       // JSFunction::createScriptForLazilyInterpretedFunction.
       MOZ_ASSERT(lazy->numInnerFunctions() == 0);
+      if (fun->kind() == JSFunction::FunctionKind::ClassConstructor) {
+        numFieldInitializers =
+            (uint32_t)lazy->getFieldInitializers().numFieldInitializers;
+      } else {
+        numFieldInitializers = UINT32_MAX;
+      }
     }
 
     MOZ_TRY(xdr->codeUint64(&packedFields));
+    MOZ_TRY(xdr->codeUint32(&numFieldInitializers));
 
     if (mode == XDR_DECODE) {
       RootedScriptSourceObject sourceObject(cx, script->sourceObject());
@@ -306,11 +314,10 @@ static XDRResult XDRRelazificationInfo(XDRState<mode>* xdr, HandleFunction fun,
       }
 
       lazy->setToStringEnd(toStringEnd);
-
-      // As opposed to XDRLazyScript, we need to restore the runtime bits
-      // of the script, as we are trying to match the fact this function
-      // has already been parsed and that it would need to be re-lazified.
-      lazy->initRuntimeFields(packedFields);
+      if (numFieldInitializers != UINT32_MAX) {
+        lazy->setFieldInitializers(
+            FieldInitializers((size_t)numFieldInitializers));
+      }
     }
   }
 
@@ -983,6 +990,7 @@ XDRResult js::XDRLazyScript(XDRState<mode>* xdr, HandleScope enclosingScope,
     uint32_t lineno;
     uint32_t column;
     uint64_t packedFields;
+    uint32_t numFieldInitializers;
 
     if (mode == XDR_ENCODE) {
       // Note: it's possible the LazyScript has a non-null script_ pointer
@@ -997,7 +1005,13 @@ XDRResult js::XDRLazyScript(XDRState<mode>* xdr, HandleScope enclosingScope,
       toStringEnd = lazy->toStringEnd();
       lineno = lazy->lineno();
       column = lazy->column();
-      packedFields = lazy->packedFields();
+      packedFields = lazy->packedFieldsForXDR();
+      if (fun->kind() == JSFunction::FunctionKind::ClassConstructor) {
+        numFieldInitializers =
+            (uint32_t)lazy->getFieldInitializers().numFieldInitializers;
+      } else {
+        numFieldInitializers = UINT32_MAX;
+      }
     }
 
     MOZ_TRY(xdr->codeUint32(&sourceStart));
@@ -1007,6 +1021,7 @@ XDRResult js::XDRLazyScript(XDRState<mode>* xdr, HandleScope enclosingScope,
     MOZ_TRY(xdr->codeUint32(&lineno));
     MOZ_TRY(xdr->codeUint32(&column));
     MOZ_TRY(xdr->codeUint64(&packedFields));
+    MOZ_TRY(xdr->codeUint32(&numFieldInitializers));
 
     if (mode == XDR_DECODE) {
       lazy.set(LazyScript::CreateForXDR(
@@ -1016,6 +1031,10 @@ XDRResult js::XDRLazyScript(XDRState<mode>* xdr, HandleScope enclosingScope,
         return xdr->fail(JS::TranscodeResult_Throw);
       }
       lazy->setToStringEnd(toStringEnd);
+      if (numFieldInitializers != UINT32_MAX) {
+        lazy->setFieldInitializers(
+            FieldInitializers((size_t)numFieldInitializers));
+      }
       fun->initLazyScript(lazy);
     }
   }
@@ -2824,6 +2843,8 @@ bool ScriptSource::setSourceMapURL(JSContext* cx,
   return sourceMapURL_ != nullptr;
 }
 
+/* static */ mozilla::Atomic<uint32_t> ScriptSource::idCount_;
+
 /*
  * [SMDOC] JSScript data layout (shared)
  *
@@ -3274,7 +3295,7 @@ static bool ShouldTrackRecordReplayProgress(JSScript* script) {
   script->setFlag(MutableFlags::HideScriptFromDebugger,
                   options.hideScriptFromDebugger);
 
-  script->setFlag(ImmutableFlags::TrackRecordReplayProgress,
+  script->setFlag(MutableFlags::TrackRecordReplayProgress,
                   ShouldTrackRecordReplayProgress(script));
 
   if (cx->runtime()->lcovOutput().isEnabled()) {
@@ -3934,7 +3955,18 @@ static JSObject* CloneInnerInterpretedFunction(
     Handle<ScriptSourceObject*> sourceObject) {
   /* NB: Keep this in sync with XDRInterpretedFunction. */
   RootedObject cloneProto(cx);
-  if (srcFun->isGenerator() || srcFun->isAsync()) {
+  if (srcFun->isAsync() && srcFun->isGenerator()) {
+    cloneProto = GlobalObject::getOrCreateAsyncGenerator(cx, cx->global());
+    if (!cloneProto) {
+      return nullptr;
+    }
+  } else if (srcFun->isAsync()) {
+    cloneProto =
+        GlobalObject::getOrCreateAsyncFunctionPrototype(cx, cx->global());
+    if (!cloneProto) {
+      return nullptr;
+    }
+  } else if (srcFun->isGenerator()) {
     cloneProto =
         GlobalObject::getOrCreateGeneratorFunctionPrototype(cx, cx->global());
     if (!cloneProto) {
@@ -4743,6 +4775,7 @@ LazyScript::LazyScript(JSFunction* fun, ScriptSourceObject& sourceObject,
       sourceObject_(&sourceObject),
       table_(table),
       packedFields_(packedFields),
+      fieldInitializers_(FieldInitializers::Invalid()),
       sourceStart_(sourceStart),
       sourceEnd_(sourceEnd),
       toStringStart_(toStringStart),
@@ -4798,6 +4831,20 @@ ScriptSource* LazyScript::maybeForwardedScriptSource() const {
       .source();
 }
 
+uint64_t LazyScript::packedFieldsForXDR() const {
+  union {
+    PackedView p;
+    uint64_t packedFields;
+  };
+
+  packedFields = packedFields_;
+
+  // Reset runtime flags
+  p.hasBeenCloned = false;
+
+  return packedFields;
+}
+
 /* static */ LazyScript* LazyScript::CreateRaw(
     JSContext* cx, HandleFunction fun, HandleScriptSourceObject sourceObject,
     uint64_t packedFields, uint32_t sourceStart, uint32_t sourceEnd,
@@ -4814,7 +4861,6 @@ ScriptSource* LazyScript::maybeForwardedScriptSource() const {
 
   // Reset runtime flags to obtain a fresh LazyScript.
   p.hasBeenCloned = false;
-  p.treatAsRunOnce = false;
 
   size_t bytes = (p.numClosedOverBindings * sizeof(JSAtom*)) +
                  (p.numInnerFunctions * sizeof(GCPtrFunction));
@@ -4862,6 +4908,7 @@ ScriptSource* LazyScript::maybeForwardedScriptSource() const {
   p.hasDebuggerStatement = false;
   p.hasDirectEval = false;
   p.isLikelyConstructorWrapper = false;
+  p.treatAsRunOnce = false;
   p.isDerivedClassConstructor = false;
   p.needsHomeObject = false;
   p.isBinAST = false;
@@ -4938,17 +4985,6 @@ ScriptSource* LazyScript::maybeForwardedScriptSource() const {
   }
 
   return res;
-}
-
-void LazyScript::initRuntimeFields(uint64_t packedFields) {
-  union {
-    PackedView p;
-    uint64_t packed;
-  };
-
-  packed = packedFields;
-  p_.hasBeenCloned = p.hasBeenCloned;
-  p_.treatAsRunOnce = p.treatAsRunOnce;
 }
 
 void JSScript::updateJitCodeRaw(JSRuntime* rt) {

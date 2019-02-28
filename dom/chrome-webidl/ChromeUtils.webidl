@@ -368,6 +368,12 @@ partial namespace ChromeUtils {
   [Throws]
   Promise<sequence<IOActivityDataDictionary>> requestIOActivity();
 
+  /**
+  * Returns a Promise containing all processes info
+  */
+  [Throws]
+  Promise<ParentProcInfoDictionary> requestProcInfo();
+
   [ChromeOnly, Throws]
   boolean hasReportingHeaderForOrigin(DOMString aOrigin);
 
@@ -401,10 +407,62 @@ partial namespace ChromeUtils {
 };
 
 /**
+ * Holds information about Firefox running processes & threads.
+ *
+ * See widget/ProcInfo.h for fields documentation.
+ */
+enum ProcType {
+ "web",
+ "file",
+ "extension",
+ "privileged",
+ "webLargeAllocation",
+ "gpu",
+ "rdd",
+ "socket",
+ "browser",
+ "unknown"
+};
+
+dictionary ThreadInfoDictionary {
+  long long tid = 0;
+  DOMString name = "";
+  unsigned long long cpuUser = 0;
+  unsigned long long cpuKernel = 0;
+};
+
+dictionary ChildProcInfoDictionary {
+  // System info
+  long long pid = 0;
+  DOMString filename = "";
+  unsigned long long virtualMemorySize = 0;
+  long long residentSetSize = 0;
+  unsigned long long cpuUser = 0;
+  unsigned long long cpuKernel = 0;
+  sequence<ThreadInfoDictionary> threads = [];
+  // Firefox info
+  unsigned long long ChildID = 0;
+  ProcType type = "web";
+};
+
+dictionary ParentProcInfoDictionary {
+  // System info
+  long long pid = 0;
+  DOMString filename = "";
+  unsigned long long virtualMemorySize = 0;
+  long long residentSetSize = 0;
+  unsigned long long cpuUser = 0;
+  unsigned long long cpuKernel = 0;
+  sequence<ThreadInfoDictionary> threads = [];
+  sequence<ChildProcInfoDictionary> children = [];
+  // Firefox info
+  ProcType type = "browser";
+};
+
+/**
  * Dictionaries duplicating IPDL types in dom/ipc/DOMTypes.ipdlh
  * Used by requestPerformanceMetrics
  */
-
 dictionary MediaMemoryInfoDictionary {
   unsigned long long audioSize = 0;
   unsigned long long videoSize = 0;
@@ -537,12 +595,20 @@ dictionary Base64URLEncodeOptions {
 dictionary WindowActorOptions {
   /** This fields are used for configuring individual sides of the actor. */
   required WindowActorSidedOptions parent;
-  required WindowActorSidedOptions child;
+  required WindowActorChildOptions child;
 };
 
 dictionary WindowActorSidedOptions {
   /** The module path which should be loaded for the actor on this side. */
   required ByteString moduleURI;
+};
+
+dictionary WindowActorChildOptions : WindowActorSidedOptions {
+  /**
+   * Events which this actor wants to be listening to. When these events fire,
+   * it will trigger actor creation, and then forward the event to the actor.
+   */
+  record<DOMString, AddEventListenerOptions> events;
 };
 
 enum Base64URLDecodePadding {

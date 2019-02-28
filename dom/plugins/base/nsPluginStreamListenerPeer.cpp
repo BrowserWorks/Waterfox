@@ -105,8 +105,7 @@ nsresult nsPluginStreamListenerPeer::Initialize(
 }
 
 NS_IMETHODIMP
-nsPluginStreamListenerPeer::OnStartRequest(nsIRequest* request,
-                                           nsISupports* aContext) {
+nsPluginStreamListenerPeer::OnStartRequest(nsIRequest* request) {
   nsresult rv = NS_OK;
   AUTO_PROFILER_LABEL("nsPluginStreamListenerPeer::OnStartRequest", OTHER);
 
@@ -266,50 +265,6 @@ nsresult nsPluginStreamListenerPeer::GetURL(const char** result) {
   return NS_OK;
 }
 
-// XXX: Converting the channel within nsPluginStreamListenerPeer
-// to use asyncOpen() and do not want to touch the fragile logic
-// of byte range requests. Hence we just introduce this lightweight
-// wrapper to proxy the context.
-class PluginContextProxy final : public nsIStreamListener {
- public:
-  NS_DECL_ISUPPORTS
-
-  PluginContextProxy(nsIStreamListener* aListener, nsISupports* aContext)
-      : mListener(aListener), mContext(aContext) {
-    MOZ_ASSERT(aListener);
-    MOZ_ASSERT(aContext);
-  }
-
-  NS_IMETHOD
-  OnDataAvailable(nsIRequest* aRequest, nsISupports* aContext,
-                  nsIInputStream* aIStream, uint64_t aSourceOffset,
-                  uint32_t aLength) override {
-    // Proxy OnDataAvailable using the internal context
-    return mListener->OnDataAvailable(aRequest, mContext, aIStream,
-                                      aSourceOffset, aLength);
-  }
-
-  NS_IMETHOD
-  OnStartRequest(nsIRequest* aRequest, nsISupports* aContext) override {
-    // Proxy OnStartRequest using the internal context
-    return mListener->OnStartRequest(aRequest, mContext);
-  }
-
-  NS_IMETHOD
-  OnStopRequest(nsIRequest* aRequest, nsISupports* aContext,
-                nsresult aStatusCode) override {
-    // Proxy OnStopRequest using the inernal context
-    return mListener->OnStopRequest(aRequest, mContext, aStatusCode);
-  }
-
- private:
-  ~PluginContextProxy() {}
-  nsCOMPtr<nsIStreamListener> mListener;
-  nsCOMPtr<nsISupports> mContext;
-};
-
-NS_IMPL_ISUPPORTS(PluginContextProxy, nsIStreamListener)
-
 nsresult nsPluginStreamListenerPeer::GetStreamOffset(int32_t* result) {
   *result = mStreamOffset;
   return NS_OK;
@@ -321,7 +276,7 @@ nsresult nsPluginStreamListenerPeer::SetStreamOffset(int32_t value) {
 }
 
 NS_IMETHODIMP nsPluginStreamListenerPeer::OnDataAvailable(
-    nsIRequest* request, nsISupports* aContext, nsIInputStream* aIStream,
+    nsIRequest* request, nsIInputStream* aIStream,
     uint64_t sourceOffset, uint32_t aLength) {
   if (mRequests.IndexOfObject(request) == -1) {
     MOZ_ASSERT(false, "Received OnDataAvailable for untracked request.");
@@ -355,7 +310,6 @@ NS_IMETHODIMP nsPluginStreamListenerPeer::OnDataAvailable(
 }
 
 NS_IMETHODIMP nsPluginStreamListenerPeer::OnStopRequest(nsIRequest* request,
-                                                        nsISupports* aContext,
                                                         nsresult aStatus) {
   nsresult rv = NS_OK;
 

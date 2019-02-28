@@ -141,18 +141,18 @@
                       priority="1000"/>
         <richlistitem id="category-legacy" value="addons://legacy/"
                       class="category" priority="20000"
-                      disabled="true"/>
+                      hidden="true"/>
         <richlistitem id="category-availableUpdates" value="addons://updates/available"
                       class="category"
                       data-l10n-id="extensions-view-available-updates"
                       data-l10n-attrs="name"
-                      disabled="true"/>
+                      hidden="true"/>
         <richlistitem id="category-recentUpdates" value="addons://updates/recent"
                       class="category"
                       data-l10n-id="extensions-view-recent-updates"
                       data-l10n-attrs="name"
                       priority="101000"
-                      disabled="true"/>
+                      hidden="true"/>
       </richlistbox>
 
       <spacer flex="1"/>
@@ -316,7 +316,7 @@
                 <hbox class="message-bar" align="start">
                   <image class="message-bar-icon"/>
                   <vbox class="message-container">
-                    <description class="message-bar-description" data-l10n-id="private-browsing-description">
+                    <description class="message-bar-description" data-l10n-id="private-browsing-description2">
                       <label class="plain" id="private-browsing-learnmore-link" data-l10n-name="private-browsing-learn-more" is="text-link"/>
                     </description>
                   </vbox>

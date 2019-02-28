@@ -847,6 +847,11 @@ Instance::tableInit(Instance* instance, uint32_t dstOffset, uint32_t srcOffset,
   return -1;
 }
 
+// The return convention for tableGet() is awkward but avoids a situation where
+// Ion code has to hold a value that may or may not be a pointer to GC'd
+// storage, or where Ion has to pass in a pointer to storage where a return
+// value can be written.
+
 /* static */ void* /* nullptr to signal trap; pointer to table location
                       otherwise */
 Instance::tableGet(Instance* instance, uint32_t index, uint32_t tableIndex) {
@@ -1069,6 +1074,12 @@ Instance::Instance(JSContext* cx, Handle<WasmInstanceObject*> object,
                    UniqueDebugState maybeDebug)
     : realm_(cx->realm()),
       object_(object),
+      jsJitArgsRectifier_(
+          cx->runtime()->jitRuntime()->getArgumentsRectifier().value),
+      jsJitExceptionHandler_(
+          cx->runtime()->jitRuntime()->getExceptionTail().value),
+      preBarrierCode_(
+          cx->runtime()->jitRuntime()->preBarrier(MIRType::Object).value),
       code_(code),
       tlsData_(std::move(tlsDataIn)),
       memory_(memory),
@@ -1219,11 +1230,6 @@ bool Instance::init(JSContext* cx, const DataSegmentVector& dataSegments,
       *addressOfFuncTypeId(funcType.id) = funcTypeId;
     }
   }
-
-  JitRuntime* jitRuntime = cx->runtime()->jitRuntime();
-  jsJitArgsRectifier_ = jitRuntime->getArgumentsRectifier().value;
-  jsJitExceptionHandler_ = jitRuntime->getExceptionTail().value;
-  preBarrierCode_ = jitRuntime->preBarrier(MIRType::Object).value;
 
   if (!passiveDataSegments_.resize(dataSegments.length())) {
     return false;

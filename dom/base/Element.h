@@ -72,6 +72,7 @@ class nsIDOMXULRelatedElement;
 class nsIDOMXULSelectControlElement;
 class nsIDOMXULSelectControlItemElement;
 class nsIBrowser;
+class nsIAutoCompletePopup;
 
 namespace mozilla {
 class DeclarationBlock;
@@ -1591,6 +1592,7 @@ class Element : public FragmentOrElement {
   already_AddRefed<nsIDOMXULSelectControlElement> AsXULSelectControl();
   already_AddRefed<nsIDOMXULSelectControlItemElement> AsXULSelectControlItem();
   already_AddRefed<nsIBrowser> AsBrowser();
+  already_AddRefed<nsIAutoCompletePopup> AsAutoCompletePopup();
 
  protected:
   /*
@@ -2021,15 +2023,10 @@ inline mozilla::dom::Element* nsINode::GetNextElementSibling() const {
                                nsINode** aResult) const {           \
     *aResult = nullptr;                                             \
     RefPtr<mozilla::dom::NodeInfo> ni(aNodeInfo);                   \
-    _elementName* it = new _elementName(ni.forget());               \
-    if (!it) {                                                      \
-      return NS_ERROR_OUT_OF_MEMORY;                                \
-    }                                                               \
-                                                                    \
-    nsCOMPtr<nsINode> kungFuDeathGrip = it;                         \
+    RefPtr<_elementName> it = new _elementName(ni.forget());        \
     nsresult rv = const_cast<_elementName*>(this)->CopyInnerTo(it); \
     if (NS_SUCCEEDED(rv)) {                                         \
-      kungFuDeathGrip.swap(*aResult);                               \
+      it.forget(aResult);                                           \
     }                                                               \
                                                                     \
     return rv;                                                      \
@@ -2041,19 +2038,15 @@ inline mozilla::dom::Element* nsINode::GetNextElementSibling() const {
                                nsINode** aResult) const {                 \
     *aResult = nullptr;                                                   \
     RefPtr<mozilla::dom::NodeInfo> ni(aNodeInfo);                         \
-    _elementName* it = new _elementName(ni.forget() EXPAND extra_args_);  \
-    if (!it) {                                                            \
-      return NS_ERROR_OUT_OF_MEMORY;                                      \
-    }                                                                     \
-                                                                          \
-    nsCOMPtr<nsINode> kungFuDeathGrip = it;                               \
+    RefPtr<_elementName> it =                                             \
+        new _elementName(ni.forget() EXPAND extra_args_);                 \
     nsresult rv = it->Init();                                             \
     nsresult rv2 = const_cast<_elementName*>(this)->CopyInnerTo(it);      \
     if (NS_FAILED(rv2)) {                                                 \
       rv = rv2;                                                           \
     }                                                                     \
     if (NS_SUCCEEDED(rv)) {                                               \
-      kungFuDeathGrip.swap(*aResult);                                     \
+      it.forget(aResult);                                                 \
     }                                                                     \
                                                                           \
     return rv;                                                            \

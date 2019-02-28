@@ -262,13 +262,13 @@ loadListener.prototype = {
   ]),
 
   // nsIRequestObserver
-  onStartRequest: function SRCH_loadStartR(aRequest, aContext) {
+  onStartRequest: function SRCH_loadStartR(aRequest) {
     LOG("loadListener: Starting request: " + aRequest.name);
     this._stream = Cc["@mozilla.org/binaryinputstream;1"].
                    createInstance(Ci.nsIBinaryInputStream);
   },
 
-  onStopRequest: function SRCH_loadStopR(aRequest, aContext, aStatusCode) {
+  onStopRequest: function SRCH_loadStopR(aRequest, aStatusCode) {
     LOG("loadListener: Stopping request: " + aRequest.name);
 
     var requestFailed = !Components.isSuccessCode(aStatusCode);
@@ -286,7 +286,7 @@ loadListener.prototype = {
   },
 
   // nsIStreamListener
-  onDataAvailable: function SRCH_loadDAvailable(aRequest, aContext,
+  onDataAvailable: function SRCH_loadDAvailable(aRequest,
                                                 aInputStream, aOffset,
                                                 aCount) {
     this._stream.setInputStream(aInputStream);
@@ -2504,12 +2504,12 @@ Engine.prototype = {
     let principal = Services.scriptSecurityManager
                             .createCodebasePrincipal(searchURI, attrs);
 
-    connector.speculativeConnect2(searchURI, principal, callbacks);
+    connector.speculativeConnect(searchURI, principal, callbacks);
 
     if (this.supportsResponseType(URLTYPE_SUGGEST_JSON)) {
       let suggestURI = this.getSubmission("dummy", URLTYPE_SUGGEST_JSON).uri;
       if (suggestURI.prePath != searchURI.prePath)
-        connector.speculativeConnect2(suggestURI, principal, callbacks);
+        connector.speculativeConnect(suggestURI, principal, callbacks);
     }
   },
 };
@@ -2641,7 +2641,6 @@ SearchService.prototype = {
       this._initObservers.reject(this._initRV);
     }
     Services.obs.notifyObservers(null, SEARCH_SERVICE_TOPIC, "init-complete");
-    Services.telemetry.getHistogramById("SEARCH_SERVICE_INIT_SYNC").add(false);
 
     LOG("_init: Completed _init");
     return this._initRV;

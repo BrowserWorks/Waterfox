@@ -245,46 +245,36 @@ static bool MayHaveAnimationOfPropertySet(
   return aTarget->MayHaveTransformAnimation();
 }
 
-bool nsLayoutUtils::HasAnimationOfPropertySet(
-    EffectSet* aEffectSet, const nsCSSPropertyIDSet& aPropertySet) {
-  if (!aEffectSet || !MayHaveAnimationOfPropertySet(aEffectSet, aPropertySet)) {
+template <typename EffectSetOrFrame>
+static bool HasAnimationOfPropertySetImpl(
+    EffectSetOrFrame* aTarget, const nsCSSPropertyIDSet& aPropertySet) {
+  if (!aTarget || !MayHaveAnimationOfPropertySet(aTarget, aPropertySet)) {
     return false;
   }
 
   return HasMatchingAnimations(
-      aEffectSet, [&aPropertySet](KeyframeEffect& aEffect) {
+      aTarget, [&aPropertySet](KeyframeEffect& aEffect) {
         return (aEffect.IsInEffect() || aEffect.IsCurrent()) &&
                aEffect.HasAnimationOfPropertySet(aPropertySet);
       });
 }
 
 bool nsLayoutUtils::HasAnimationOfPropertySet(
-    const nsIFrame* aFrame, const nsCSSPropertyIDSet& aPropertySet) {
-  if (!MayHaveAnimationOfPropertySet(aFrame, aPropertySet)) {
-    return false;
-  }
+    EffectSet* aEffectSet, const nsCSSPropertyIDSet& aPropertySet) {
+  return HasAnimationOfPropertySetImpl(aEffectSet, aPropertySet);
+}
 
-  return HasMatchingAnimations(
-      aFrame, [&aPropertySet](KeyframeEffect& aEffect) {
-        return (aEffect.IsInEffect() || aEffect.IsCurrent()) &&
-               aEffect.HasAnimationOfPropertySet(aPropertySet);
-      });
+bool nsLayoutUtils::HasAnimationOfPropertySet(
+    const nsIFrame* aFrame, const nsCSSPropertyIDSet& aPropertySet) {
+  return HasAnimationOfPropertySetImpl(aFrame, aPropertySet);
 }
 
 bool nsLayoutUtils::HasEffectiveAnimation(const nsIFrame* aFrame,
                                           nsCSSPropertyID aProperty) {
   EffectSet* effects = EffectSet::GetEffectSet(aFrame);
+  // This function isn't called by opacity or transform, so we don't have to
+  // check MayHaveAnimationOfPropertySet.
   if (!effects) {
-    return false;
-  }
-
-  if (nsCSSPropertyIDSet::TransformLikeProperties().HasProperty(aProperty) &&
-      !effects->MayHaveTransformAnimation()) {
-    return false;
-  }
-
-  if (aProperty == eCSSProperty_opacity &&
-      !effects->MayHaveOpacityAnimation()) {
     return false;
   }
 
@@ -293,6 +283,20 @@ bool nsLayoutUtils::HasEffectiveAnimation(const nsIFrame* aFrame,
         return (aEffect.IsInEffect() || aEffect.IsCurrent()) &&
                aEffect.HasEffectiveAnimationOfProperty(aProperty, *effects);
       });
+}
+
+bool nsLayoutUtils::HasEffectiveAnimation(
+    const nsIFrame* aFrame, const nsCSSPropertyIDSet& aPropertySet) {
+  EffectSet* effects = EffectSet::GetEffectSet(aFrame);
+  if (!effects || !MayHaveAnimationOfPropertySet(aFrame, aPropertySet)) {
+    return false;
+  }
+
+  return HasMatchingAnimations(effects, [&aPropertySet,
+                                         &effects](KeyframeEffect& aEffect) {
+    return (aEffect.IsInEffect() || aEffect.IsCurrent()) &&
+           aEffect.HasEffectiveAnimationOfPropertySet(aPropertySet, *effects);
+  });
 }
 
 /* static */ nsCSSPropertyIDSet
@@ -1552,9 +1556,40 @@ int32_t nsLayoutUtils::DoCompareTreePosition(
 
   int32_t index1 = parent->ComputeIndexOf(content1Ancestor);
   int32_t index2 = parent->ComputeIndexOf(content2Ancestor);
-  if (index1 < 0 || index2 < 0) {
-    // one of them must be anonymous; we can't determine the order
+
+  // If either of the nodes are anonymous, then handle the relative ordering.
+  // We consider all anonymous content to be behind regular siblings, with the
+  // exception of ::after.
+  if (index1 < 0) {
+    if (content1Ancestor->IsContent() &&
+        content1Ancestor->AsContent()->IsGeneratedContentContainerForAfter()) {
+      // If content1 is ::after, then it must be after content2.
+      MOZ_ASSERT(!content2Ancestor->IsContent() ||
+                 !content2Ancestor->AsContent()
+                      ->IsGeneratedContentContainerForAfter());
+      return 1;
+    }
+    if (index2 >= 0 || (content2Ancestor->IsContent() &&
+                        content2Ancestor->AsContent()
+                            ->IsGeneratedContentContainerForAfter())) {
+      // content1 is anonymous, so if content2 is a regular sibling or ::after,
+      // then we must be before it.
+      return -1;
+    }
+    // Both nodes are anonymous, so no relative ordering.
     return 0;
+  }
+  if (index2 < 0) {
+    // content1 is a regular sibling, so if content2 is ::after, then
+    // content1 comes first.
+    if (content2Ancestor->IsContent() &&
+        content2Ancestor->AsContent()->IsGeneratedContentContainerForAfter()) {
+      MOZ_ASSERT(!content1Ancestor->IsContent() ||
+                 !content1Ancestor->AsContent()
+                      ->IsGeneratedContentContainerForAfter());
+      return -1;
+    }
+    return 1;
   }
 
   return index1 - index2;
@@ -6827,20 +6862,15 @@ static ImgDrawResult DrawImageInternal(
   return img.forget();
 }
 
-static bool NonZeroStyleCoord(const nsStyleCoord& aCoord) {
-  if (aCoord.IsCoordPercentCalcUnit()) {
-    // Since negative results are clamped to 0, check > 0.
-    return aCoord.ComputeCoordPercentCalc(nscoord_MAX) > 0 ||
-           aCoord.ComputeCoordPercentCalc(0) > 0;
-  }
-
-  return true;
+static bool NonZeroCorner(const LengthPercentage& aLength) {
+  // Since negative results are clamped to 0, check > 0.
+  return aLength.Resolve(nscoord_MAX) > 0 || aLength.Resolve(0) > 0;
 }
 
 /* static */ bool nsLayoutUtils::HasNonZeroCorner(
-    const nsStyleCorners& aCorners) {
+    const BorderRadius& aCorners) {
   NS_FOR_CSS_HALF_CORNERS(corner) {
-    if (NonZeroStyleCoord(aCorners.Get(corner))) return true;
+    if (NonZeroCorner(aCorners.Get(corner))) return true;
   }
   return false;
 }
@@ -6865,7 +6895,7 @@ static bool IsCornerAdjacentToSide(uint8_t aCorner, Side aSide) {
 }
 
 /* static */ bool nsLayoutUtils::HasNonZeroCornerOnSide(
-    const nsStyleCorners& aCorners, Side aSide) {
+    const BorderRadius& aCorners, Side aSide) {
   static_assert(eCornerTopLeftX / 2 == eCornerTopLeft,
                 "Check for Non Zero on side");
   static_assert(eCornerTopLeftY / 2 == eCornerTopLeft,
@@ -6886,7 +6916,7 @@ static bool IsCornerAdjacentToSide(uint8_t aCorner, Side aSide) {
   NS_FOR_CSS_HALF_CORNERS(corner) {
     // corner is a "half corner" value, so dividing by two gives us a
     // "full corner" value.
-    if (NonZeroStyleCoord(aCorners.Get(corner)) &&
+    if (NonZeroCorner(aCorners.Get(corner)) &&
         IsCornerAdjacentToSide(corner / 2, aSide))
       return true;
   }

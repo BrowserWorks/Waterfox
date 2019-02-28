@@ -1815,6 +1815,19 @@ Toolbox.prototype = {
         vbox.visibility = "visible";
       }
 
+      // TODO: remove in Firefox 68, with bug #1528296
+      if (definition.deprecated) {
+        const deprecationURL = this.doc.createXULElement("label");
+        deprecationURL.textContent = L10N.getFormatStr("options.deprecationNotice");
+        deprecationURL.setAttribute("href", definition.deprecationURL);
+        deprecationURL.setAttribute("class", "text-link");
+
+        const deprecationNotice = this.doc.createXULElement("span");
+        deprecationNotice.className = "toolbox-panel_deprecation-notice";
+        deprecationNotice.appendChild(deprecationURL);
+        iframe.parentNode.prepend(deprecationNotice);
+      }
+
       const onLoad = async () => {
         if (id === "inspector") {
           await this._initInspector;
@@ -3188,8 +3201,8 @@ Toolbox.prototype = {
    * Opens source in debugger. Falls back to plain "view-source:".
    * @see devtools/client/shared/source-utils.js
    */
-  viewSourceInDebugger: function(sourceURL, sourceLine, reason) {
-    return viewSource.viewSourceInDebugger(this, sourceURL, sourceLine, reason);
+  viewSourceInDebugger: function(sourceURL, sourceLine, sourceId, reason) {
+    return viewSource.viewSourceInDebugger(this, sourceURL, sourceLine, sourceId, reason);
   },
 
   /**

@@ -993,7 +993,7 @@ static JSString* UTF8CharsToString(JSContext* cx, const char* chars) {
       continue;
     }
 
-    buf = ArrayBufferObject::create(cx, cs.payload->length());
+    buf = ArrayBufferObject::createZeroed(cx, cs.payload->length());
     if (!buf) {
       return false;
     }
@@ -2832,8 +2832,8 @@ static bool Reject(JSContext* cx, const CompileArgs& args,
   }
 
   RootedObject errorObj(
-      cx, ErrorObject::create(cx, JSEXN_WASMCOMPILEERROR, stack, filename, line,
-                              0, nullptr, message));
+      cx, ErrorObject::create(cx, JSEXN_WASMCOMPILEERROR, stack, filename, 0,
+                              line, 0, nullptr, message));
   if (!errorObj) {
     return false;
   }
@@ -3568,14 +3568,14 @@ static bool ResolveResponse(JSContext* cx, CallArgs callArgs,
 
   RootedFunction onResolved(
       cx, NewNativeFunction(cx, ResolveResponse_OnFulfilled, 1, nullptr,
-                            gc::AllocKind::FUNCTION_EXTENDED));
+                            gc::AllocKind::FUNCTION_EXTENDED, GenericObject));
   if (!onResolved) {
     return false;
   }
 
   RootedFunction onRejected(
       cx, NewNativeFunction(cx, ResolveResponse_OnRejected, 1, nullptr,
-                            gc::AllocKind::FUNCTION_EXTENDED));
+                            gc::AllocKind::FUNCTION_EXTENDED, GenericObject));
   if (!onRejected) {
     return false;
   }

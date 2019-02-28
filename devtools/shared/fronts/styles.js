@@ -133,7 +133,9 @@ class StyleRuleFront extends FrontClassWithSpec(styleRuleSpec) {
     return this._form.cssText;
   }
   get authoredText() {
-    return this._form.authoredText || this._form.cssText;
+    return (typeof this._form.authoredText === "string")
+      ? this._form.authoredText
+      : this._form.cssText;
   }
   get declarations() {
     return this._form.declarations || [];
@@ -233,12 +235,7 @@ class StyleRuleFront extends FrontClassWithSpec(styleRuleSpec) {
   }
 
   async modifySelector(node, value) {
-    let response;
-    if (this.canSetRuleText) {
-      response = await super.modifySelector(node, value, true);
-    } else {
-      response = await super.modifySelector(node, value);
-    }
+    const response = await super.modifySelector(node, value, this.canSetRuleText);
 
     if (response.ruleProps) {
       response.ruleProps = response.ruleProps.entries[0];

@@ -258,6 +258,9 @@ static void PopulateReportBlame(JSContext* cx, JSErrorReport* report) {
   }
 
   report->filename = iter.filename();
+  if (iter.hasScript()) {
+    report->sourceId = iter.script()->scriptSource()->id();
+  }
   uint32_t column;
   report->lineno = iter.computeLine(&column);
   report->column = FixupColumnForDisplay(column);
@@ -1151,24 +1154,27 @@ JSObject* InternalJobQueue::maybeFront() const {
 
 class js::InternalJobQueue::SavedQueue : public JobQueue::SavedJobQueue {
  public:
-  SavedQueue(JSContext* cx, Queue&& saved)
-      : cx(cx), saved(cx, std::move(saved)) {
+  SavedQueue(JSContext* cx, Queue&& saved, bool draining)
+      : cx(cx), saved(cx, std::move(saved)), draining_(draining) {
     MOZ_ASSERT(cx->internalJobQueue.ref());
   }
 
   ~SavedQueue() {
     MOZ_ASSERT(cx->internalJobQueue.ref());
     cx->internalJobQueue->queue = std::move(saved.get());
+    cx->internalJobQueue->draining_ = draining_;
   }
 
  private:
   JSContext* cx;
   PersistentRooted<Queue> saved;
+  bool draining_;
 };
 
 js::UniquePtr<JS::JobQueue::SavedJobQueue> InternalJobQueue::saveJobQueue(
     JSContext* cx) {
-  auto saved = js::MakeUnique<SavedQueue>(cx, std::move(queue.get()));
+  auto saved =
+      js::MakeUnique<SavedQueue>(cx, std::move(queue.get()), draining_);
   if (!saved) {
     // When MakeUnique's allocation fails, the SavedQueue constructor is never
     // called, so this->queue is still initialized. (The move doesn't occur
@@ -1178,6 +1184,7 @@ js::UniquePtr<JS::JobQueue::SavedJobQueue> InternalJobQueue::saveJobQueue(
   }
 
   queue = Queue(SystemAllocPolicy());
+  draining_ = false;
   return saved;
 }
 

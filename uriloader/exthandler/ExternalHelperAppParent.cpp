@@ -34,7 +34,6 @@ NS_IMPL_ISUPPORTS_INHERITED(ExternalHelperAppParent, nsHashPropertyBag,
 
 ExternalHelperAppParent::ExternalHelperAppParent(
     const OptionalURIParams& uri,
-    const mozilla::net::OptionalLoadInfoArgs& aLoadInfoArgs,
     const int64_t& aContentLength, const bool& aWasFileChannel,
     const nsCString& aContentDispositionHeader,
     const uint32_t& aContentDispositionHint,
@@ -61,8 +60,6 @@ ExternalHelperAppParent::ExternalHelperAppParent(
     mContentDisposition = aContentDispositionHint;
     mContentDispositionFilename = aContentDispositionFilename;
   }
-  mozilla::ipc::LoadInfoArgsToLoadInfo(aLoadInfoArgs,
-                                       getter_AddRefs(mLoadInfo));
 }
 
 already_AddRefed<nsIInterfaceRequestor> GetWindowFromTabParent(
@@ -88,11 +85,14 @@ void UpdateContentContext(nsIStreamListener* aListener,
   static_cast<nsExternalAppHandler*>(aListener)->SetContentContext(window);
 }
 
-void ExternalHelperAppParent::Init(ContentParent* parent,
+void ExternalHelperAppParent::Init(const mozilla::net::OptionalLoadInfoArgs& aLoadInfoArgs,
                                    const nsCString& aMimeContentType,
                                    const bool& aForceSave,
                                    const OptionalURIParams& aReferrer,
                                    PBrowserParent* aBrowser) {
+  mozilla::ipc::LoadInfoArgsToLoadInfo(aLoadInfoArgs,
+                                       getter_AddRefs(mLoadInfo));
+
   nsCOMPtr<nsIExternalHelperAppService> helperAppService =
       do_GetService(NS_EXTERNALHELPERAPPSERVICE_CONTRACTID);
   NS_ASSERTION(helperAppService, "No Helper App Service!");
@@ -138,7 +138,7 @@ mozilla::ipc::IPCResult ExternalHelperAppParent::RecvOnStartRequest(
 
   mEntityID = entityID;
   mPending = true;
-  mStatus = mListener->OnStartRequest(this, nullptr);
+  mStatus = mListener->OnStartRequest(this);
   return IPC_OK();
 }
 
@@ -151,11 +151,12 @@ mozilla::ipc::IPCResult ExternalHelperAppParent::RecvOnDataAvailable(
   MOZ_ASSERT(mPending, "must be pending!");
 
   nsCOMPtr<nsIInputStream> stringStream;
-  DebugOnly<nsresult> rv = NS_NewByteInputStream(
-      getter_AddRefs(stringStream), data.get(), count, NS_ASSIGNMENT_DEPEND);
+  DebugOnly<nsresult> rv =
+      NS_NewByteInputStream(getter_AddRefs(stringStream),
+                            MakeSpan(data).To(count), NS_ASSIGNMENT_DEPEND);
   NS_ASSERTION(NS_SUCCEEDED(rv), "failed to create dependent string!");
   mStatus =
-      mListener->OnDataAvailable(this, nullptr, stringStream, offset, count);
+      mListener->OnDataAvailable(this, stringStream, offset, count);
 
   return IPC_OK();
 }
@@ -167,7 +168,7 @@ mozilla::ipc::IPCResult ExternalHelperAppParent::RecvOnStopRequest(
 
   mPending = false;
   mListener->OnStopRequest(
-      this, nullptr,
+      this,
       (NS_SUCCEEDED(code) && NS_FAILED(mStatus)) ? mStatus : code);
   Delete();
   return IPC_OK();
@@ -191,24 +192,24 @@ mozilla::ipc::IPCResult ExternalHelperAppParent::RecvDivertToParentUsing(
 //
 
 NS_IMETHODIMP
-ExternalHelperAppParent::OnDataAvailable(nsIRequest* request, nsISupports* ctx,
+ExternalHelperAppParent::OnDataAvailable(nsIRequest* request,
                                          nsIInputStream* input, uint64_t offset,
                                          uint32_t count) {
   MOZ_ASSERT(mDiverted);
-  return mListener->OnDataAvailable(request, ctx, input, offset, count);
+  return mListener->OnDataAvailable(request, input, offset, count);
 }
 
 NS_IMETHODIMP
-ExternalHelperAppParent::OnStartRequest(nsIRequest* request, nsISupports* ctx) {
+ExternalHelperAppParent::OnStartRequest(nsIRequest* request) {
   MOZ_ASSERT(mDiverted);
-  return mListener->OnStartRequest(request, ctx);
+  return mListener->OnStartRequest(request);
 }
 
 NS_IMETHODIMP
-ExternalHelperAppParent::OnStopRequest(nsIRequest* request, nsISupports* ctx,
+ExternalHelperAppParent::OnStopRequest(nsIRequest* request,
                                        nsresult status) {
   MOZ_ASSERT(mDiverted);
-  nsresult rv = mListener->OnStopRequest(request, ctx, status);
+  nsresult rv = mListener->OnStopRequest(request, status);
   Delete();
   return rv;
 }

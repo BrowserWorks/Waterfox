@@ -63,6 +63,8 @@ class Dispatcher {
     for (let topic of this.observers.keys()) {
       Services.obs.removeObserver(this, topic);
     }
+
+    this.mm.removeEventListener("unload", this);
   }
 
   get window() {
@@ -187,7 +189,7 @@ class SingletonDispatcher extends Dispatcher {
     window.addEventListener("pageshow", this, {mozSystemGroup: true});
     window.addEventListener("pagehide", this, {mozSystemGroup: true});
 
-    this._window = window;
+    this._window = Cu.getWeakReference(window);
     this.listeners = [];
   }
 
@@ -216,10 +218,12 @@ class SingletonDispatcher extends Dispatcher {
     }
 
     for (let actor of this.instances.values()) {
-      try {
-        actor.cleanup();
-      } catch (e) {
-        Cu.reportError(e);
+      if (typeof actor.cleanup == "function") {
+        try {
+          actor.cleanup();
+        } catch (e) {
+          Cu.reportError(e);
+        }
       }
     }
 
@@ -227,7 +231,7 @@ class SingletonDispatcher extends Dispatcher {
   }
 
   get window() {
-    return this._window;
+    return this._window.get();
   }
 
   handleEvent(event) {

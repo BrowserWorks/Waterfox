@@ -259,11 +259,28 @@ async function selectRuntime(deviceName, name, document) {
   sidebarItem.querySelector(".js-sidebar-link").click();
 
   await waitUntil(() => {
-    const runtimeInfo = document.querySelector(".js-runtime-info");
+    const runtimeInfo = document.querySelector(".js-runtime-name");
     return runtimeInfo && runtimeInfo.textContent.includes(name);
   });
 }
 
 function getToolbox(win) {
   return gDevTools.getToolboxes().find(toolbox => toolbox.win === win);
+}
+
+/**
+ * Open the performance profiler dialog. Assumes the client is a mocked remote runtime
+ * client.
+ */
+async function openProfilerDialog(client, doc) {
+  const onProfilerLoaded = new Promise(r => {
+    client.loadPerformanceProfiler = r;
+  });
+
+  info("Click on the Profile Runtime button");
+  const profileButton = doc.querySelector(".js-profile-runtime-button");
+  profileButton.click();
+
+  info("Wait for the loadPerformanceProfiler callback to be executed on client-wrapper");
+  return onProfilerLoaded;
 }
