@@ -406,9 +406,12 @@ ScriptLoader::GetFetchedModule(nsIURI* aURL) const
   return ms;
 }
 
-nsresult
-ScriptLoader::ProcessFetchedModuleSource(ModuleLoadRequest* aRequest)
-{
+void ScriptLoader::ClearModuleMap() {
+  MOZ_ASSERT(mFetchingModules.IsEmpty());
+  mFetchedModules.Clear();
+}
+
+nsresult ScriptLoader::ProcessFetchedModuleSource(ModuleLoadRequest* aRequest) {
   MOZ_ASSERT(!aRequest->mModuleScript);
 
   nsresult rv = CreateModuleScript(aRequest);

@@ -1650,6 +1650,9 @@ nsHTMLDocument::Open(JSContext* cx,
     // document again otherwise the document could have a non-zero onload block
     // count without the onload blocker request being in the loadgroup.
     EnsureOnloadBlocker();
+
+    // Throw away loaded modules created for the previous global.
+    ScriptLoader()->ClearModuleMap();
   }
 
   // The open occurred after the document finished loading.

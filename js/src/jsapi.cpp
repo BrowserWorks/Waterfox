@@ -4881,7 +4881,7 @@ JS::ModuleDeclarationInstantiation(JSContext* cx, JS::HandleObject moduleArg)
 {
     AssertHeapIsIdle();
     CHECK_REQUEST(cx);
-    assertSameCompartment(cx, moduleArg);
+    releaseAssertSameCompartment(cx, moduleArg);
     return ModuleObject::DeclarationInstantiation(cx, moduleArg.as<ModuleObject>());
 }
 
@@ -4890,7 +4890,7 @@ JS::ModuleEvaluation(JSContext* cx, JS::HandleObject moduleArg)
 {
     AssertHeapIsIdle();
     CHECK_REQUEST(cx);
-    assertSameCompartment(cx, moduleArg);
+    releaseAssertSameCompartment(cx, moduleArg);
     return ModuleObject::Evaluation(cx, moduleArg.as<ModuleObject>());
 }
 
@@ -4899,7 +4899,7 @@ JS::GetRequestedModules(JSContext* cx, JS::HandleObject moduleArg)
 {
     AssertHeapIsIdle();
     CHECK_REQUEST(cx);
-    assertSameCompartment(cx, moduleArg);
+    releaseAssertSameCompartment(cx, moduleArg);
     return &moduleArg->as<ModuleObject>().requestedModules();
 }
 
@@ -4908,7 +4908,7 @@ JS::GetModuleScript(JSContext* cx, JS::HandleObject moduleArg)
 {
     AssertHeapIsIdle();
     CHECK_REQUEST(cx);
-    assertSameCompartment(cx, moduleArg);
+    releaseAssertSameCompartment(cx, moduleArg);
     return moduleArg->as<ModuleObject>().script();
 }
 

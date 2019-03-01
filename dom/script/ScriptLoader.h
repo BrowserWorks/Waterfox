@@ -326,7 +326,13 @@ public:
    */
   void LoadEventFired();
 
-private:
+  /*
+   * Clear the map of loaded modules. Called when a Document object is reused
+   * for a different global.
+   */
+  void ClearModuleMap();
+
+ private:
   virtual ~ScriptLoader();
 
   ScriptLoadRequest* CreateLoadRequest(ScriptKind aKind,
