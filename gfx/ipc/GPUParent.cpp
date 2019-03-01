@@ -75,7 +75,8 @@ GPUParent::GPUParent() : mLaunchTime(TimeStamp::Now()) { sGPUParent = this; }
 
 GPUParent::~GPUParent() { sGPUParent = nullptr; }
 
-/* static */ GPUParent* GPUParent::GetSingleton() { return sGPUParent; }
+/* static */
+GPUParent* GPUParent::GetSingleton() { return sGPUParent; }
 
 bool GPUParent::Init(base::ProcessId aParentPid, const char* aParentBuildID,
                      MessageLoop* aIOLoop, IPC::Channel* aChannel) {
@@ -426,7 +427,8 @@ mozilla::ipc::IPCResult GPUParent::RecvNotifyGpuObservers(
   return IPC_OK();
 }
 
-/* static */ void GPUParent::GetGPUProcessName(nsACString& aStr) {
+/* static */
+void GPUParent::GetGPUProcessName(nsACString& aStr) {
   auto processType = XRE_GetProcessType();
   unsigned pid = 0;
   if (processType == GeckoProcessType_GPU) {
@@ -442,7 +444,7 @@ mozilla::ipc::IPCResult GPUParent::RecvNotifyGpuObservers(
 
 mozilla::ipc::IPCResult GPUParent::RecvRequestMemoryReport(
     const uint32_t& aGeneration, const bool& aAnonymize,
-    const bool& aMinimizeMemoryUsage, const MaybeFileDesc& aDMDFile) {
+    const bool& aMinimizeMemoryUsage, const Maybe<FileDescriptor>& aDMDFile) {
   nsAutoCString processName;
   GetGPUProcessName(processName);
 

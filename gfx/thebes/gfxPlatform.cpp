@@ -109,11 +109,6 @@
 #    pragma GCC diagnostic ignored "-Wshadow"
 #  endif
 #  include "skia/include/core/SkGraphics.h"
-#  ifdef USE_SKIA_GPU
-#    include "skia/include/gpu/GrContext.h"
-#    include "skia/include/gpu/gl/GrGLInterface.h"
-#    include "SkiaGLGlue.h"
-#  endif
 #  ifdef MOZ_ENABLE_FREETYPE
 #    include "skia/include/ports/SkTypeface_cairo.h"
 #  endif
@@ -123,10 +118,6 @@
 #  endif
 static const uint32_t kDefaultGlyphCacheSize = -1;
 
-#endif
-
-#if !defined(USE_SKIA) || !defined(USE_SKIA_GPU)
-class mozilla::gl::SkiaGLGlue : public GenericAtomicRefCounted {};
 #endif
 
 #include "mozilla/Preferences.h"
@@ -448,7 +439,6 @@ void gfxPlatform::OnMemoryPressure(layers::MemoryPressureReason aWhy) {
   gfxGradientCache::PurgeAllCaches();
   gfxFontMissingGlyphs::Purge();
   PurgeSkiaFontCache();
-  PurgeSkiaGPUCache();
   if (XRE_IsParentProcess()) {
     layers::CompositorManagerChild* manager =
         CompositorManagerChild::GetInstance();
@@ -475,8 +465,6 @@ gfxPlatform::gfxPlatform()
   mOpenTypeSVGEnabled = UNINITIALIZED_VALUE;
   mBidiNumeralOption = UNINITIALIZED_VALUE;
 
-  mSkiaGlue = nullptr;
-
   InitBackendPrefs(GetBackendPrefs());
 
   mTotalSystemMemory = PR_GetPhysicalMemorySize();
@@ -496,7 +484,8 @@ gfxPlatform* gfxPlatform::GetPlatform() {
 
 bool gfxPlatform::Initialized() { return !!gPlatform; }
 
-/* static */ void gfxPlatform::InitChild(const ContentDeviceData& aData) {
+/* static */
+void gfxPlatform::InitChild(const ContentDeviceData& aData) {
   MOZ_ASSERT(XRE_IsContentProcess());
   MOZ_RELEASE_ASSERT(!gPlatform,
                      "InitChild() should be called before first GetPlatform()");
@@ -887,7 +876,7 @@ void gfxPlatform::Init() {
         gfxPrefs::WebGLForceMSAA());
     // Prefs that don't fit into any of the other sections
     forcedPrefs.AppendPrintf("-T%d%d%d) ", gfxPrefs::AndroidRGB16Force(),
-                             gfxPrefs::CanvasAzureAccelerated(),
+                             0, // SkiaGL canvas no longer supported
                              gfxPrefs::ForceShmemTiles());
     ScopedGfxFeatureReporter::AppNote(forcedPrefs);
   }
@@ -1088,37 +1077,44 @@ static bool IsFeatureSupported(long aFeature) {
   }
   return status != nsIGfxInfo::FEATURE_STATUS_OK;
 }
-/* static*/ bool gfxPlatform::IsDXInterop2Blocked() {
+/* static*/
+bool gfxPlatform::IsDXInterop2Blocked() {
   return IsFeatureSupported(nsIGfxInfo::FEATURE_DX_INTEROP2);
 }
 
-/* static*/ bool gfxPlatform::IsDXNV12Blocked() {
+/* static*/
+bool gfxPlatform::IsDXNV12Blocked() {
   return IsFeatureSupported(nsIGfxInfo::FEATURE_DX_NV12);
 }
 
-/* static*/ bool gfxPlatform::IsDXP010Blocked() {
+/* static*/
+bool gfxPlatform::IsDXP010Blocked() {
   return IsFeatureSupported(nsIGfxInfo::FEATURE_DX_P010);
 }
 
-/* static*/ bool gfxPlatform::IsDXP016Blocked() {
+/* static*/
+bool gfxPlatform::IsDXP016Blocked() {
   return IsFeatureSupported(nsIGfxInfo::FEATURE_DX_P016);
 }
 
-/* static */ int32_t gfxPlatform::MaxTextureSize() {
+/* static */
+int32_t gfxPlatform::MaxTextureSize() {
   // Make sure we don't completely break rendering because of a typo in the
   // pref or whatnot.
   const int32_t kMinSizePref = 2048;
   return std::max(kMinSizePref, gfxPrefs::MaxTextureSizeDoNotUseDirectly());
 }
 
-/* static */ int32_t gfxPlatform::MaxAllocSize() {
+/* static */
+int32_t gfxPlatform::MaxAllocSize() {
   // Make sure we don't completely break rendering because of a typo in the
   // pref or whatnot.
   const int32_t kMinAllocPref = 10000000;
   return std::max(kMinAllocPref, gfxPrefs::MaxAllocSizeDoNotUseDirectly());
 }
 
-/* static */ void gfxPlatform::InitMoz2DLogging() {
+/* static */
+void gfxPlatform::InitMoz2DLogging() {
   auto fwd = new CrashStatsLogForwarder(
       CrashReporter::Annotation::GraphicsCriticalError);
   fwd->SetCircularBufferSize(gfxPrefs::GfxLoggingCrashLength());
@@ -1131,7 +1127,8 @@ static bool IsFeatureSupported(long aFeature) {
   gfx::Factory::Init(cfg);
 }
 
-/* static */ bool gfxPlatform::IsHeadless() {
+/* static */
+bool gfxPlatform::IsHeadless() {
   static bool initialized = false;
   static bool headless = false;
   if (!initialized) {
@@ -1143,7 +1140,8 @@ static bool IsFeatureSupported(long aFeature) {
 
 static bool sLayersIPCIsUp = false;
 
-/* static */ void gfxPlatform::InitNullMetadata() {
+/* static */
+void gfxPlatform::InitNullMetadata() {
   ScrollMetadata::sNullMetadata = new ScrollMetadata();
   ClearOnShutdown(&ScrollMetadata::sNullMetadata);
 }
@@ -1185,7 +1183,6 @@ void gfxPlatform::Shutdown() {
     gPlatform->mMemoryPressureObserver->Unregister();
     gPlatform->mMemoryPressureObserver = nullptr;
   }
-  gPlatform->mSkiaGlue = nullptr;
 
   if (XRE_IsParentProcess()) {
     gPlatform->mVsyncSource->Shutdown();
@@ -1228,7 +1225,8 @@ void gfxPlatform::Shutdown() {
   gPlatform = nullptr;
 }
 
-/* static */ void gfxPlatform::InitLayersIPC() {
+/* static */
+void gfxPlatform::InitLayersIPC() {
   if (sLayersIPCIsUp) {
     return;
   }
@@ -1251,7 +1249,8 @@ void gfxPlatform::Shutdown() {
   }
 }
 
-/* static */ void gfxPlatform::ShutdownLayersIPC() {
+/* static */
+void gfxPlatform::ShutdownLayersIPC() {
   if (!sLayersIPCIsUp) {
     return;
   }
@@ -1319,9 +1318,9 @@ gfxPlatform::~gfxPlatform() {
 #endif
 }
 
-/* static */ already_AddRefed<DrawTarget>
-gfxPlatform::CreateDrawTargetForSurface(gfxASurface* aSurface,
-                                        const IntSize& aSize) {
+/* static */
+already_AddRefed<DrawTarget> gfxPlatform::CreateDrawTargetForSurface(
+    gfxASurface* aSurface, const IntSize& aSize) {
   SurfaceFormat format = aSurface->GetSurfaceFormat();
   RefPtr<DrawTarget> drawTarget = Factory::CreateDrawTargetForCairoSurface(
       aSurface->CairoSurface(), aSize, &format);
@@ -1365,9 +1364,9 @@ void gfxPlatform::ClearSourceSurfaceForSurface(gfxASurface* aSurface) {
   aSurface->SetData(&kSourceSurface, nullptr, nullptr);
 }
 
-/* static */ already_AddRefed<SourceSurface>
-gfxPlatform::GetSourceSurfaceForSurface(RefPtr<DrawTarget> aTarget,
-                                        gfxASurface* aSurface, bool aIsPlugin) {
+/* static */
+already_AddRefed<SourceSurface> gfxPlatform::GetSourceSurfaceForSurface(
+    RefPtr<DrawTarget> aTarget, gfxASurface* aSurface, bool aIsPlugin) {
   if (!aSurface->CairoSurface() || aSurface->CairoStatus()) {
     return nullptr;
   }
@@ -1565,114 +1564,7 @@ bool gfxPlatform::SupportsAzureContentForDrawTarget(DrawTarget* aTarget) {
     return false;
   }
 
-#ifdef USE_SKIA_GPU
-  // Skia content rendering doesn't support GPU acceleration, so we can't
-  // use the same backend if the current backend is accelerated.
-  if ((aTarget->GetType() == DrawTargetType::HARDWARE_RASTER) &&
-      (aTarget->GetBackendType() == BackendType::SKIA)) {
-    return false;
-  }
-#endif
-
   return SupportsAzureContentForType(aTarget->GetBackendType());
-}
-
-bool gfxPlatform::AllowOpenGLCanvas() {
-  // For now, only allow Skia+OpenGL, unless it's blocked.
-  // Allow acceleration on Skia if the preference is set, unless it's blocked
-  // as long as we have the accelerated layers
-
-  // The compositor backend is only set correctly in the parent process,
-  // so we let content process always assume correct compositor backend.
-  // The callers have to do the right thing.
-  //
-  // XXX Disable SkiaGL on WebRender, since there is a case that R8G8B8X8
-  // is used, but WebRender does not support R8G8B8X8.
-  bool correctBackend =
-      !XRE_IsParentProcess() ||
-      (mCompositorBackend == LayersBackend::LAYERS_OPENGL &&
-       (GetContentBackendFor(mCompositorBackend) == BackendType::SKIA));
-
-  if (gfxPrefs::CanvasAzureAccelerated() && correctBackend) {
-    nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
-    int32_t status;
-    nsCString discardFailureId;
-    return !gfxInfo || (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(
-                            nsIGfxInfo::FEATURE_CANVAS2D_ACCELERATION,
-                            discardFailureId, &status)) &&
-                        status == nsIGfxInfo::FEATURE_STATUS_OK);
-  }
-  return false;
-}
-
-void gfxPlatform::InitializeSkiaCacheLimits() {
-  if (AllowOpenGLCanvas()) {
-#ifdef USE_SKIA_GPU
-    bool usingDynamicCache = gfxPrefs::CanvasSkiaGLDynamicCache();
-    int cacheItemLimit = gfxPrefs::CanvasSkiaGLCacheItems();
-    uint64_t cacheSizeLimit =
-        std::max(gfxPrefs::CanvasSkiaGLCacheSize(), (int32_t)0);
-
-    // Prefs are in megabytes, but we want the sizes in bytes
-    cacheSizeLimit *= 1024 * 1024;
-
-    if (usingDynamicCache) {
-      if (mTotalSystemMemory < 512 * 1024 * 1024) {
-        // We need a very minimal cache on anything smaller than 512mb.
-        // Note the large jump as we cross 512mb (from 2mb to 32mb).
-        cacheSizeLimit = 2 * 1024 * 1024;
-      } else if (mTotalSystemMemory > 0) {
-        cacheSizeLimit = mTotalSystemMemory / 16;
-      }
-    }
-
-    // Ensure cache size doesn't overflow on 32-bit platforms.
-    cacheSizeLimit = std::min(cacheSizeLimit, (uint64_t)SIZE_MAX);
-
-#  ifdef DEBUG
-    printf_stderr("Determined SkiaGL cache limits: Size %" PRIu64
-                  ", Items: %i\n",
-                  cacheSizeLimit, cacheItemLimit);
-#  endif
-
-    mSkiaGlue->GetGrContext()->setResourceCacheLimits(cacheItemLimit,
-                                                      (size_t)cacheSizeLimit);
-#endif
-  }
-}
-
-SkiaGLGlue* gfxPlatform::GetSkiaGLGlue() {
-#ifdef USE_SKIA_GPU
-  // Check the accelerated Canvas is enabled for the first time,
-  // because the callers should check it before using.
-  if (!mSkiaGlue && !AllowOpenGLCanvas()) {
-    return nullptr;
-  }
-
-  if (!mSkiaGlue) {
-    /* Dummy context. We always draw into a FBO.
-     *
-     * FIXME: This should be stored in TLS or something, since there needs to be
-     * one for each thread using it. As it stands, this only works on the main
-     * thread.
-     */
-    RefPtr<GLContext> glContext;
-    nsCString discardFailureId;
-    glContext = GLContextProvider::CreateHeadless(
-        CreateContextFlags::REQUIRE_COMPAT_PROFILE |
-            CreateContextFlags::ALLOW_OFFLINE_RENDERER,
-        &discardFailureId);
-    if (!glContext) {
-      printf_stderr("Failed to create GLContext for SkiaGL!\n");
-      return nullptr;
-    }
-    mSkiaGlue = new SkiaGLGlue(glContext);
-    MOZ_ASSERT(mSkiaGlue->GetGrContext(), "No GrContext");
-    InitializeSkiaCacheLimits();
-  }
-#endif
-
-  return mSkiaGlue;
 }
 
 void gfxPlatform::PurgeSkiaFontCache() {
@@ -1683,19 +1575,6 @@ void gfxPlatform::PurgeSkiaFontCache() {
   }
 #endif
 }
-
-void gfxPlatform::PurgeSkiaGPUCache() {
-#ifdef USE_SKIA_GPU
-  if (!mSkiaGlue) return;
-
-  mSkiaGlue->GetGrContext()->freeGpuResources();
-  // GrContext::flush() doesn't call glFlush. Call it here.
-  mSkiaGlue->GetGLContext()->MakeCurrent();
-  mSkiaGlue->GetGLContext()->fFlush();
-#endif
-}
-
-bool gfxPlatform::HasEnoughTotalSystemMemoryForSkiaGL() { return true; }
 
 already_AddRefed<DrawTarget> gfxPlatform::CreateDrawTargetForBackend(
     BackendType aBackend, const IntSize& aSize, SurfaceFormat aFormat) {
@@ -1773,7 +1652,8 @@ already_AddRefed<DrawTarget> gfxPlatform::CreateSimilarSoftwareDrawTarget(
   return dt.forget();
 }
 
-/* static */ already_AddRefed<DrawTarget> gfxPlatform::CreateDrawTargetForData(
+/* static */
+already_AddRefed<DrawTarget> gfxPlatform::CreateDrawTargetForData(
     unsigned char* aData, const IntSize& aSize, int32_t aStride,
     SurfaceFormat aFormat, bool aUninitialized) {
   BackendType backendType = gfxVars::ContentBackend();
@@ -1793,8 +1673,8 @@ already_AddRefed<DrawTarget> gfxPlatform::CreateSimilarSoftwareDrawTarget(
   return dt.forget();
 }
 
-/* static */ BackendType gfxPlatform::BackendTypeForName(
-    const nsCString& aName) {
+/* static */
+BackendType gfxPlatform::BackendTypeForName(const nsCString& aName) {
   if (aName.EqualsLiteral("cairo")) return BackendType::CAIRO;
   if (aName.EqualsLiteral("skia")) return BackendType::SKIA;
   if (aName.EqualsLiteral("direct2d")) return BackendType::DIRECT2D;
@@ -2004,18 +1884,19 @@ void gfxPlatform::InitBackendPrefs(BackendPrefsData&& aPrefsData) {
   }
 }
 
-/* static */ BackendType gfxPlatform::GetCanvasBackendPref(
-    uint32_t aBackendBitmask) {
+/* static */
+BackendType gfxPlatform::GetCanvasBackendPref(uint32_t aBackendBitmask) {
   return GetBackendPref("gfx.canvas.azure.backends", aBackendBitmask);
 }
 
-/* static */ BackendType gfxPlatform::GetContentBackendPref(
-    uint32_t& aBackendBitmask) {
+/* static */
+BackendType gfxPlatform::GetContentBackendPref(uint32_t& aBackendBitmask) {
   return GetBackendPref("gfx.content.azure.backends", aBackendBitmask);
 }
 
-/* static */ BackendType gfxPlatform::GetBackendPref(
-    const char* aBackendPrefName, uint32_t& aBackendBitmask) {
+/* static */
+BackendType gfxPlatform::GetBackendPref(const char* aBackendPrefName,
+                                        uint32_t& aBackendBitmask) {
   nsTArray<nsCString> backendList;
   nsAutoCString prefString;
   if (NS_SUCCEEDED(Preferences::GetCString(aBackendPrefName, prefString))) {
@@ -2286,7 +2167,8 @@ int32_t gfxPlatform::GetBidiNumeralOption() {
   return mBidiNumeralOption;
 }
 
-/* static */ void gfxPlatform::FlushFontAndWordCaches() {
+/* static */
+void gfxPlatform::FlushFontAndWordCaches() {
   gfxFontCache* fontCache = gfxFontCache::GetCache();
   if (fontCache) {
     fontCache->AgeAllGenerations();
@@ -2296,7 +2178,8 @@ int32_t gfxPlatform::GetBidiNumeralOption() {
   gfxPlatform::PurgeSkiaFontCache();
 }
 
-/* static */ void gfxPlatform::ForceGlobalReflow() {
+/* static */
+void gfxPlatform::ForceGlobalReflow() {
   MOZ_ASSERT(NS_IsMainThread());
   if (XRE_IsParentProcess()) {
     // Modify a preference that will trigger reflow everywhere (in all
@@ -2586,12 +2469,14 @@ void gfxPlatform::InitCompositorAccelerationPrefs() {
   }
 }
 
-/*static*/ bool gfxPlatform::WebRenderPrefEnabled() {
+/*static*/
+bool gfxPlatform::WebRenderPrefEnabled() {
   return gfxPrefs::WebRenderAll() ||
          gfxPrefs::WebRenderEnabledDoNotUseDirectly();
 }
 
-/*static*/ bool gfxPlatform::WebRenderEnvvarEnabled() {
+/*static*/
+bool gfxPlatform::WebRenderEnvvarEnabled() {
   const char* env = PR_GetEnv("MOZ_WEBRENDER");
   return (env && *env == '1');
 }
@@ -2968,7 +2853,8 @@ void gfxPlatform::DisableBufferRotation() {
   sBufferRotationCheckPref = false;
 }
 
-/* static */ bool gfxPlatform::UsesOffMainThreadCompositing() {
+/* static */
+bool gfxPlatform::UsesOffMainThreadCompositing() {
   if (XRE_GetProcessType() == GeckoProcessType_GPU) {
     return true;
   }
@@ -3022,7 +2908,8 @@ bool gfxPlatform::ContentUsesTiling() const {
           contentUsesPOMTP);
 }
 
-/* static */ bool gfxPlatform::ShouldAdjustForLowEndMachine() {
+/* static */
+bool gfxPlatform::ShouldAdjustForLowEndMachine() {
   return gfxPrefs::AdjustToMachine() && !gfxPrefs::ResistFingerprinting() &&
          gfxPrefs::IsLowEndMachineDoNotUseDirectly();
 }
@@ -3041,7 +2928,8 @@ gfxPlatform::CreateHardwareVsyncSource() {
   return softwareVsync.forget();
 }
 
-/* static */ bool gfxPlatform::IsInLayoutAsapMode() {
+/* static */
+bool gfxPlatform::IsInLayoutAsapMode() {
   // There are 2 modes of ASAP mode.
   // 1 is that the refresh driver and compositor are in lock step
   // the second is that the compositor goes ASAP and the refresh driver
@@ -3050,12 +2938,14 @@ gfxPlatform::CreateHardwareVsyncSource() {
   return gfxPrefs::LayoutFrameRate() == 0;
 }
 
-/* static */ bool gfxPlatform::ForceSoftwareVsync() {
+/* static */
+bool gfxPlatform::ForceSoftwareVsync() {
   return ShouldAdjustForLowEndMachine() || gfxPrefs::LayoutFrameRate() > 0 ||
          recordreplay::IsRecordingOrReplaying();
 }
 
-/* static */ int gfxPlatform::GetSoftwareVsyncRate() {
+/* static */
+int gfxPlatform::GetSoftwareVsyncRate() {
   int preferenceRate = gfxPrefs::LayoutFrameRate();
   if (preferenceRate <= 0) {
     return gfxPlatform::GetDefaultFrameRate();
@@ -3063,11 +2953,13 @@ gfxPlatform::CreateHardwareVsyncSource() {
   return preferenceRate;
 }
 
-/* static */ int gfxPlatform::GetDefaultFrameRate() {
+/* static */
+int gfxPlatform::GetDefaultFrameRate() {
   return ShouldAdjustForLowEndMachine() ? 30 : 60;
 }
 
-/* static */ void gfxPlatform::ReInitFrameRate() {
+/* static */
+void gfxPlatform::ReInitFrameRate() {
   if (XRE_IsParentProcess() || recordreplay::IsRecordingOrReplaying()) {
     RefPtr<VsyncSource> oldSource = gPlatform->mVsyncSource;
 
@@ -3114,8 +3006,6 @@ void gfxPlatform::GetAzureBackendInfo(mozilla::widget::InfoObject& aObj) {
                         GetBackendName(mFallbackCanvasBackend));
     aObj.DefineProperty("AzureContentBackend", GetBackendName(mContentBackend));
   }
-
-  aObj.DefineProperty("AzureCanvasAccelerated", AllowOpenGLCanvas());
 }
 
 void gfxPlatform::GetApzSupportInfo(mozilla::widget::InfoObject& aObj) {
@@ -3202,7 +3092,8 @@ void gfxPlatform::NotifyFrameStats(nsTArray<FrameStats>&& aFrameStats) {
   }
 }
 
-/*static*/ uint32_t gfxPlatform::TargetFrameRate() {
+/*static*/
+uint32_t gfxPlatform::TargetFrameRate() {
   if (gPlatform && gPlatform->mVsyncSource) {
     VsyncSource::Display& display = gPlatform->mVsyncSource->GetGlobalDisplay();
     return round(1000.0 / display.GetVsyncRate().ToMilliseconds());
@@ -3210,7 +3101,8 @@ void gfxPlatform::NotifyFrameStats(nsTArray<FrameStats>&& aFrameStats) {
   return 0;
 }
 
-/*static*/ bool gfxPlatform::AsyncPanZoomEnabled() {
+/*static*/
+bool gfxPlatform::AsyncPanZoomEnabled() {
 #if !defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_UIKIT)
   // For XUL applications (everything but Firefox on Android)
   // we only want to use APZ when E10S is enabled. If
@@ -3232,7 +3124,8 @@ void gfxPlatform::NotifyFrameStats(nsTArray<FrameStats>&& aFrameStats) {
 #endif
 }
 
-/*static*/ bool gfxPlatform::PerfWarnings() { return gfxPrefs::PerfWarnings(); }
+/*static*/
+bool gfxPlatform::PerfWarnings() { return gfxPrefs::PerfWarnings(); }
 
 void gfxPlatform::GetAcceleratedCompositorBackends(
     nsTArray<LayersBackend>& aBackends) {
@@ -3283,7 +3176,8 @@ void gfxPlatform::NotifyCompositorCreated(LayersBackend aBackend) {
       }));
 }
 
-/* static */ void gfxPlatform::NotifyGPUProcessDisabled() {
+/* static */
+void gfxPlatform::NotifyGPUProcessDisabled() {
   if (gfxConfig::IsEnabled(Feature::WEBRENDER)) {
     gfxConfig::GetFeature(Feature::WEBRENDER)
         .ForceDisable(

@@ -638,7 +638,7 @@ void CycleCollectedJSRuntime::NoteGCThingXPCOMChildren(
     return;
   }
 
-  const DOMJSClass* domClass = GetDOMClass(aObj);
+  const DOMJSClass* domClass = GetDOMClass(aClasp);
   if (domClass) {
     NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(aCb, "UnwrapDOMObject(obj)");
     // It's possible that our object is an unforgeable holder object, in
@@ -653,6 +653,12 @@ void CycleCollectedJSRuntime::NoteGCThingXPCOMChildren(
                           domClass->mParticipant);
     }
     return;
+  }
+
+  if (IsRemoteObjectProxy(aObj)) {
+    auto handler =
+        static_cast<const RemoteObjectProxyBase*>(js::GetProxyHandler(aObj));
+    return handler->NoteChildren(aObj, aCb);
   }
 
   JS::Value value = js::MaybeGetScriptPrivate(aObj);
@@ -727,8 +733,9 @@ void CycleCollectedJSRuntime::TraverseZone(
   js::IterateGrayObjects(aZone, TraverseObjectShim, &closure);
 }
 
-/* static */ void CycleCollectedJSRuntime::TraverseObjectShim(
-    void* aData, JS::GCCellPtr aThing) {
+/* static */
+void CycleCollectedJSRuntime::TraverseObjectShim(void* aData,
+                                                 JS::GCCellPtr aThing) {
   TraverseObjectShimClosure* closure =
       static_cast<TraverseObjectShimClosure*>(aData);
 
@@ -762,24 +769,24 @@ void CycleCollectedJSRuntime::TraverseNativeRoots(
   }
 }
 
-/* static */ void CycleCollectedJSRuntime::TraceBlackJS(JSTracer* aTracer,
-                                                        void* aData) {
+/* static */
+void CycleCollectedJSRuntime::TraceBlackJS(JSTracer* aTracer, void* aData) {
   CycleCollectedJSRuntime* self = static_cast<CycleCollectedJSRuntime*>(aData);
 
   self->TraceNativeBlackRoots(aTracer);
 }
 
-/* static */ void CycleCollectedJSRuntime::TraceGrayJS(JSTracer* aTracer,
-                                                       void* aData) {
+/* static */
+void CycleCollectedJSRuntime::TraceGrayJS(JSTracer* aTracer, void* aData) {
   CycleCollectedJSRuntime* self = static_cast<CycleCollectedJSRuntime*>(aData);
 
   // Mark these roots as gray so the CC can walk them later.
   self->TraceNativeGrayRoots(aTracer);
 }
 
-/* static */ void CycleCollectedJSRuntime::GCCallback(JSContext* aContext,
-                                                      JSGCStatus aStatus,
-                                                      void* aData) {
+/* static */
+void CycleCollectedJSRuntime::GCCallback(JSContext* aContext,
+                                         JSGCStatus aStatus, void* aData) {
   CycleCollectedJSRuntime* self = static_cast<CycleCollectedJSRuntime*>(aData);
 
   MOZ_ASSERT(CycleCollectedJSContext::Get()->Context() == aContext);
@@ -788,9 +795,10 @@ void CycleCollectedJSRuntime::TraverseNativeRoots(
   self->OnGC(aContext, aStatus);
 }
 
-/* static */ void CycleCollectedJSRuntime::GCSliceCallback(
-    JSContext* aContext, JS::GCProgress aProgress,
-    const JS::GCDescription& aDesc) {
+/* static */
+void CycleCollectedJSRuntime::GCSliceCallback(JSContext* aContext,
+                                              JS::GCProgress aProgress,
+                                              const JS::GCDescription& aDesc) {
   CycleCollectedJSRuntime* self = CycleCollectedJSRuntime::Get();
   MOZ_ASSERT(CycleCollectedJSContext::Get()->Context() == aContext);
 
@@ -865,7 +873,8 @@ class MinorGCMarker : public TimelineMarker {
   }
 };
 
-/* static */ void CycleCollectedJSRuntime::GCNurseryCollectionCallback(
+/* static */
+void CycleCollectedJSRuntime::GCNurseryCollectionCallback(
     JSContext* aContext, JS::GCNurseryProgress aProgress,
     JS::GCReason aReason) {
   CycleCollectedJSRuntime* self = CycleCollectedJSRuntime::Get();
@@ -897,8 +906,9 @@ class MinorGCMarker : public TimelineMarker {
   }
 }
 
-/* static */ void CycleCollectedJSRuntime::OutOfMemoryCallback(
-    JSContext* aContext, void* aData) {
+/* static */
+void CycleCollectedJSRuntime::OutOfMemoryCallback(JSContext* aContext,
+                                                  void* aData) {
   CycleCollectedJSRuntime* self = static_cast<CycleCollectedJSRuntime*>(aData);
 
   MOZ_ASSERT(CycleCollectedJSContext::Get()->Context() == aContext);
@@ -907,7 +917,8 @@ class MinorGCMarker : public TimelineMarker {
   self->OnOutOfMemory();
 }
 
-/* static */ size_t CycleCollectedJSRuntime::SizeofExternalStringCallback(
+/* static */
+size_t CycleCollectedJSRuntime::SizeofExternalStringCallback(
     JSString* aStr, MallocSizeOf aMallocSizeOf) {
   // We promised the JS engine we would not GC.  Enforce that:
   JS::AutoCheckCannotGC autoCannotGC;
@@ -1443,7 +1454,8 @@ void CycleCollectedJSRuntime::EnvironmentPreparer::invoke(
   // JSContext and report it as needed as it comes off the stack.
 }
 
-/* static */ CycleCollectedJSRuntime* CycleCollectedJSRuntime::Get() {
+/* static */
+CycleCollectedJSRuntime* CycleCollectedJSRuntime::Get() {
   auto context = CycleCollectedJSContext::Get();
   if (context) {
     return context->Runtime();
@@ -1462,7 +1474,8 @@ void CycleCollectedJSRuntime::ErrorInterceptor::Shutdown(JSRuntime* rt) {
   mThrownError.reset();
 }
 
-/* virtual */ void CycleCollectedJSRuntime::ErrorInterceptor::interceptError(
+/* virtual */
+void CycleCollectedJSRuntime::ErrorInterceptor::interceptError(
     JSContext* cx, JS::HandleValue exn) {
   if (mThrownError) {
     // We already have an error, we don't need anything more.

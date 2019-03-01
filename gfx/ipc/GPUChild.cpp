@@ -240,7 +240,7 @@ mozilla::ipc::IPCResult GPUChild::RecvNotifyDeviceReset(
 bool GPUChild::SendRequestMemoryReport(const uint32_t& aGeneration,
                                        const bool& aAnonymize,
                                        const bool& aMinimizeMemoryUsage,
-                                       const MaybeFileDesc& aDMDFile) {
+                                       const Maybe<FileDescriptor>& aDMDFile) {
   mMemoryReportRequest = MakeUnique<MemoryReportRequestHost>(aGeneration);
   Unused << PGPUChild::SendRequestMemoryReport(aGeneration, aAnonymize,
                                                aMinimizeMemoryUsage, aDMDFile);
@@ -326,7 +326,8 @@ class DeferredDeleteGPUChild : public Runnable {
   UniquePtr<GPUChild> mChild;
 };
 
-/* static */ void GPUChild::Destroy(UniquePtr<GPUChild>&& aChild) {
+/* static */
+void GPUChild::Destroy(UniquePtr<GPUChild>&& aChild) {
   NS_DispatchToMainThread(new DeferredDeleteGPUChild(std::move(aChild)));
 }
 

@@ -1408,6 +1408,9 @@ var gBrowserInit = {
     // avoid an about:blank flash.
     let tabToAdopt = this.getTabToAdopt();
     if (tabToAdopt) {
+      let evt = new CustomEvent("before-initial-tab-adopted", { bubbles: true });
+      gBrowser.tabpanels.dispatchEvent(evt);
+
       // Stop the about:blank load
       gBrowser.stop();
       // make sure it has a docshell
@@ -2791,8 +2794,9 @@ function UpdateUrlbarSearchSplitterState() {
       splitter.className = "chromeclass-toolbar-additional";
     }
     urlbar.parentNode.insertBefore(splitter, ibefore);
-  } else if (splitter)
+  } else if (splitter) {
     splitter.remove();
+  }
 }
 
 function UpdatePageProxyState() {
@@ -3970,9 +3974,9 @@ const BrowserSearch = {
                    get icon() { return browser.mIconURL; },
                  });
 
-    if (hidden)
+    if (hidden) {
       browser.hiddenEngines = engines;
-    else {
+    } else {
       browser.engines = engines;
       if (browser == gBrowser.selectedBrowser)
         this.updateOpenSearchBadge();
@@ -5406,9 +5410,9 @@ nsBrowserAccess.prototype = {
     let win, needToFocusWin;
 
     // try the current window.  if we're in a popup, fall back on the most recent browser window
-    if (window.toolbar.visible)
+    if (window.toolbar.visible) {
       win = window;
-    else {
+    } else {
       win = BrowserWindowTracker.getTopWindow({private: aIsPrivate});
       needToFocusWin = true;
     }

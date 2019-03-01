@@ -209,7 +209,7 @@ function openBrowserWindow(cmdLine, triggeringPrincipal, urlOrUrlList, postData 
   let args;
   if (!urlOrUrlList) {
     // Just pass in the defaultArgs directly. We'll use system principal on the other end.
-    args = [gBrowserContentHandler.getDefaultArgs(forcePrivate)];
+    args = [gBrowserContentHandler.defaultArgs];
   } else {
     let pService = Cc["@mozilla.org/toolkit/profile-service;1"].
                   getService(Ci.nsIToolkitProfileService);
@@ -389,31 +389,33 @@ nsBrowserContentHandler.prototype = {
           chromeParam == "chrome://browser/content/preferences/preferences.xul") {
         openPreferences(cmdLine, {origin: "commandLineLegacy"});
         cmdLine.preventDefault = true;
-      } else try {
-        let resolvedURI = resolveURIInternal(cmdLine, chromeParam);
-        let isLocal = uri => {
-          let localSchemes = new Set(["chrome", "file", "resource"]);
-          if (uri instanceof Ci.nsINestedURI) {
-            uri = uri.QueryInterface(Ci.nsINestedURI).innerMostURI;
+      } else {
+        try {
+          let resolvedURI = resolveURIInternal(cmdLine, chromeParam);
+          let isLocal = uri => {
+            let localSchemes = new Set(["chrome", "file", "resource"]);
+            if (uri instanceof Ci.nsINestedURI) {
+              uri = uri.QueryInterface(Ci.nsINestedURI).innerMostURI;
+            }
+            return localSchemes.has(uri.scheme);
+          };
+          if (isLocal(resolvedURI)) {
+            // If the URI is local, we are sure it won't wrongly inherit chrome privs
+            let features = "chrome,dialog=no,all" + this.getFeatures(cmdLine);
+            // Provide 1 null argument, as openWindow has a different behavior
+            // when the arg count is 0.
+            let argArray = Cc["@mozilla.org/array;1"]
+                            .createInstance(Ci.nsIMutableArray);
+            argArray.appendElement(null);
+            Services.ww.openWindow(null, resolvedURI.spec, "_blank", features, argArray);
+            cmdLine.preventDefault = true;
+          } else {
+            dump("*** Preventing load of web URI as chrome\n");
+            dump("    If you're trying to load a webpage, do not pass --chrome.\n");
           }
-          return localSchemes.has(uri.scheme);
-        };
-        if (isLocal(resolvedURI)) {
-          // If the URI is local, we are sure it won't wrongly inherit chrome privs
-          let features = "chrome,dialog=no,all" + this.getFeatures(cmdLine);
-          // Provide 1 null argument, as openWindow has a different behavior
-          // when the arg count is 0.
-          let argArray = Cc["@mozilla.org/array;1"]
-                           .createInstance(Ci.nsIMutableArray);
-          argArray.appendElement(null);
-          Services.ww.openWindow(null, resolvedURI.spec, "_blank", features, argArray);
-          cmdLine.preventDefault = true;
-        } else {
-          dump("*** Preventing load of web URI as chrome\n");
-          dump("    If you're trying to load a webpage, do not pass --chrome.\n");
+        } catch (e) {
+          Cu.reportError(e);
         }
-      } catch (e) {
-        Cu.reportError(e);
       }
     }
     if (cmdLine.handleFlag("preferences", false)) {
@@ -518,7 +520,7 @@ nsBrowserContentHandler.prototype = {
 
   /* nsIBrowserHandler */
 
-  getDefaultArgs(forcePrivate = false) {
+  get defaultArgs() {
     var prefb = Services.prefs;
 
     if (!gFirstWindow) {
@@ -603,7 +605,7 @@ nsBrowserContentHandler.prototype = {
     try {
       var choice = prefb.getIntPref("browser.startup.page");
       if (choice == 1 || choice == 3)
-        startPage = forcePrivate ? HomePage.getPrivate() : HomePage.get();
+        startPage = HomePage.get();
     } catch (e) {
       Cu.reportError(e);
     }
@@ -619,10 +621,6 @@ nsBrowserContentHandler.prototype = {
       return overridePage + "|" + startPage;
 
     return overridePage || startPage || "about:blank";
-  },
-
-  get defaultArgs() {
-    return this.getDefaultArgs(PrivateBrowsingUtils.permanentPrivateBrowsing);
   },
 
   mFeatures: null,

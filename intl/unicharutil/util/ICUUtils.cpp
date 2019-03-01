@@ -4,6 +4,9 @@
 
 #ifdef MOZILLA_INTERNAL_API
 
+#include "mozilla/Assertions.h"
+#include "mozilla/UniquePtr.h"
+
 #  include "ICUUtils.h"
 #  include "mozilla/Preferences.h"
 #  include "mozilla/intl/LocaleService.h"
@@ -15,6 +18,17 @@
 
 using namespace mozilla;
 using mozilla::intl::LocaleService;
+
+class NumberFormatDeleter {
+ public:
+  void operator()(UNumberFormat* aPtr) {
+    MOZ_ASSERT(aPtr != nullptr,
+               "UniquePtr deleter shouldn't be called for nullptr");
+    unum_close(aPtr);
+  }
+};
+
+using UniqueUNumberFormat = UniquePtr<UNumberFormat, NumberFormatDeleter>;
 
 /**
  * This pref just controls whether we format the number with grouping separator
@@ -78,9 +92,10 @@ void ICUUtils::LanguageTagIterForContent::GetNext(nsACString& aBCP47LangTag) {
   aBCP47LangTag.Truncate();  // Signal iterator exhausted
 }
 
-/* static */ bool ICUUtils::LocalizeNumber(double aValue,
-                                           LanguageTagIterForContent& aLangTags,
-                                           nsAString& aLocalizedValue) {
+/* static */
+bool ICUUtils::LocalizeNumber(double aValue,
+                              LanguageTagIterForContent& aLangTags,
+                              nsAString& aLocalizedValue) {
   MOZ_ASSERT(aLangTags.IsAtStart(), "Don't call Next() before passing");
 
   static const int32_t kBufferSize = 256;
@@ -91,7 +106,7 @@ void ICUUtils::LanguageTagIterForContent::GetNext(nsACString& aBCP47LangTag) {
   aLangTags.GetNext(langTag);
   while (!langTag.IsEmpty()) {
     UErrorCode status = U_ZERO_ERROR;
-    AutoCloseUNumberFormat format(
+    UniqueUNumberFormat format(
         unum_open(UNUM_DECIMAL, nullptr, 0, langTag.get(), nullptr, &status));
     // Since unum_setAttribute have no UErrorCode parameter, we have to
     // check error status.
@@ -99,14 +114,14 @@ void ICUUtils::LanguageTagIterForContent::GetNext(nsACString& aBCP47LangTag) {
       aLangTags.GetNext(langTag);
       continue;
     }
-    unum_setAttribute(format, UNUM_GROUPING_USED,
+    unum_setAttribute(format.get(), UNUM_GROUPING_USED,
                       LocaleNumberGroupingIsEnabled());
     // ICU default is a maximum of 3 significant fractional digits. We don't
     // want that limit, so we set it to the maximum that a double can represent
     // (14-16 decimal fractional digits).
-    unum_setAttribute(format, UNUM_MAX_FRACTION_DIGITS, 16);
-    int32_t length = unum_formatDouble(format, aValue, buffer, kBufferSize,
-                                       nullptr, &status);
+    unum_setAttribute(format.get(), UNUM_MAX_FRACTION_DIGITS, 16);
+    int32_t length = unum_formatDouble(format.get(), aValue, buffer,
+                                       kBufferSize, nullptr, &status);
     NS_ASSERTION(length < kBufferSize && status != U_BUFFER_OVERFLOW_ERROR &&
                      status != U_STRING_NOT_TERMINATED_WARNING,
                  "Need a bigger buffer?!");
@@ -119,8 +134,9 @@ void ICUUtils::LanguageTagIterForContent::GetNext(nsACString& aBCP47LangTag) {
   return false;
 }
 
-/* static */ double ICUUtils::ParseNumber(
-    nsAString& aValue, LanguageTagIterForContent& aLangTags) {
+/* static */
+double ICUUtils::ParseNumber(nsAString& aValue,
+                             LanguageTagIterForContent& aLangTags) {
   MOZ_ASSERT(aLangTags.IsAtStart(), "Don't call Next() before passing");
 
   if (aValue.IsEmpty()) {
@@ -133,16 +149,17 @@ void ICUUtils::LanguageTagIterForContent::GetNext(nsACString& aBCP47LangTag) {
   aLangTags.GetNext(langTag);
   while (!langTag.IsEmpty()) {
     UErrorCode status = U_ZERO_ERROR;
-    AutoCloseUNumberFormat format(
+    UniqueUNumberFormat format(
         unum_open(UNUM_DECIMAL, nullptr, 0, langTag.get(), nullptr, &status));
     if (!LocaleNumberGroupingIsEnabled()) {
-      unum_setAttribute(format.rwget(), UNUM_GROUPING_USED, UBool(0));
+      unum_setAttribute(format.get(), UNUM_GROUPING_USED, UBool(0));
     }
     int32_t parsePos = 0;
     static_assert(sizeof(UChar) == 2 && sizeof(nsAString::char_type) == 2,
                   "Unexpected character size - the following cast is unsafe");
     double val =
-        unum_parseDouble(format, (const UChar*)PromiseFlatString(aValue).get(),
+        unum_parseDouble(format.get(),
+                         (const UChar*)PromiseFlatString(aValue).get(),
                          length, &parsePos, &status);
     if (U_SUCCESS(status) && parsePos == (int32_t)length) {
       return val;
@@ -152,9 +169,9 @@ void ICUUtils::LanguageTagIterForContent::GetNext(nsACString& aBCP47LangTag) {
   return std::numeric_limits<float>::quiet_NaN();
 }
 
-/* static */ void ICUUtils::AssignUCharArrayToString(UChar* aICUString,
-                                                     int32_t aLength,
-                                                     nsAString& aMozString) {
+/* static */
+void ICUUtils::AssignUCharArrayToString(UChar* aICUString, int32_t aLength,
+                                        nsAString& aMozString) {
   // Both ICU's UnicodeString and Mozilla's nsAString use UTF-16, so we can
   // cast here.
 
@@ -166,7 +183,8 @@ void ICUUtils::LanguageTagIterForContent::GetNext(nsACString& aBCP47LangTag) {
   NS_ASSERTION((int32_t)aMozString.Length() == aLength, "Conversion failed");
 }
 
-/* static */ nsresult ICUUtils::UErrorToNsResult(const UErrorCode aErrorCode) {
+/* static */
+nsresult ICUUtils::UErrorToNsResult(const UErrorCode aErrorCode) {
   if (U_SUCCESS(aErrorCode)) {
     return NS_OK;
   }
@@ -184,7 +202,8 @@ void ICUUtils::LanguageTagIterForContent::GetNext(nsACString& aBCP47LangTag) {
 }
 
 #  if 0
-/* static */ Locale
+/* static */
+Locale
 ICUUtils::BCP47CodeToLocale(const nsAString& aBCP47Code)
 {
   MOZ_ASSERT(!aBCP47Code.IsEmpty(), "Don't pass an empty BCP 47 code");
@@ -234,7 +253,8 @@ ICUUtils::BCP47CodeToLocale(const nsAString& aBCP47Code)
   return locale;
 }
 
-/* static */ void
+/* static */
+void
 ICUUtils::ToMozString(UnicodeString& aICUString, nsAString& aMozString)
 {
   // Both ICU's UnicodeString and Mozilla's nsAString use UTF-16, so we can
@@ -251,7 +271,8 @@ ICUUtils::ToMozString(UnicodeString& aICUString, nsAString& aMozString)
                "Conversion failed");
 }
 
-/* static */ void
+/* static */
+void
 ICUUtils::ToICUString(nsAString& aMozString, UnicodeString& aICUString)
 {
   // Both ICU's UnicodeString and Mozilla's nsAString use UTF-16, so we can

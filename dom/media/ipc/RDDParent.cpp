@@ -47,7 +47,8 @@ RDDParent::RDDParent() : mLaunchTime(TimeStamp::Now()) { sRDDParent = this; }
 
 RDDParent::~RDDParent() { sRDDParent = nullptr; }
 
-/* static */ RDDParent* RDDParent::GetSingleton() { return sRDDParent; }
+/* static */
+RDDParent* RDDParent::GetSingleton() { return sRDDParent; }
 
 bool RDDParent::Init(base::ProcessId aParentPid, const char* aParentBuildID,
                      MessageLoop* aIOLoop, IPC::Channel* aChannel) {
@@ -127,15 +128,16 @@ static void StartRDDMacSandbox() {
 }
 #endif
 
-mozilla::ipc::IPCResult RDDParent::RecvInit(const MaybeFileDesc& aBrokerFd) {
+mozilla::ipc::IPCResult RDDParent::RecvInit(
+    const Maybe<FileDescriptor>& aBrokerFd) {
   Unused << SendInitComplete();
 #if defined(MOZ_SANDBOX)
 #  if defined(XP_MACOSX)
   StartRDDMacSandbox();
 #  elif defined(XP_LINUX)
   int fd = -1;
-  if (aBrokerFd.type() == MaybeFileDesc::TFileDescriptor) {
-    fd = aBrokerFd.get_FileDescriptor().ClonePlatformHandle().release();
+  if (aBrokerFd.isSome()) {
+    fd = aBrokerFd.value().ClonePlatformHandle().release();
   }
   SetRemoteDataDecoderSandbox(fd);
 #  endif  // XP_MACOSX/XP_LINUX
@@ -162,7 +164,7 @@ mozilla::ipc::IPCResult RDDParent::RecvNewContentRemoteDecoderManager(
 
 mozilla::ipc::IPCResult RDDParent::RecvRequestMemoryReport(
     const uint32_t& aGeneration, const bool& aAnonymize,
-    const bool& aMinimizeMemoryUsage, const MaybeFileDesc& aDMDFile) {
+    const bool& aMinimizeMemoryUsage, const Maybe<FileDescriptor>& aDMDFile) {
   nsPrintfCString processName("RDD (pid %u)", (unsigned)getpid());
 
   mozilla::dom::MemoryReportRequestClient::Start(

@@ -1129,22 +1129,13 @@ skip script test262/annexB/language/eval-code/indirect/global-switch-case-eval-g
 
 # Need to fix increment/decrement of arguments or eval -- bug 1530883.
 skip script test262/language/expressions/postfix-increment/eval.js
-skip script test262/language/expressions/postfix-increment/eval-nostrict.js
-skip script test262/language/expressions/postfix-increment/arguments-nostrict.js
 skip script test262/language/expressions/postfix-increment/arguments.js
 skip script test262/language/expressions/prefix-decrement/eval.js
-skip script test262/language/expressions/prefix-decrement/eval-nostrict.js
-skip script test262/language/expressions/prefix-decrement/arguments-nostrict.js
 skip script test262/language/expressions/prefix-decrement/arguments.js
 skip script test262/language/expressions/prefix-increment/eval.js
-skip script test262/language/expressions/prefix-increment/eval-nostrict.js
-skip script test262/language/expressions/prefix-increment/arguments-nostrict.js
 skip script test262/language/expressions/prefix-increment/arguments.js
 skip script test262/language/expressions/postfix-decrement/eval.js
-skip script test262/language/expressions/postfix-decrement/eval-nostrict.js
-skip script test262/language/expressions/postfix-decrement/arguments-nostrict.js
 skip script test262/language/expressions/postfix-decrement/arguments.js
-
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1340307
 skip script test262/language/module-code/instn-resolve-empty-export.js
@@ -1223,11 +1214,6 @@ skip script test262/built-ins/Reflect/ownKeys/return-on-corresponding-order-larg
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1473229
 skip include test262/intl402/RelativeTimeFormat/prototype/formatToParts/jstests.list
 
-# SupportedLocales in the Intl spec returns a non-frozen array after
-# https://github.com/tc39/ecma402/pull/278 -- bug 1530848.
-skip script test262/intl402/RelativeTimeFormat/constructor/supportedLocalesOf/result-type.js
-skip script test262/intl402/supportedLocalesOf-returned-array-elements-are-not-frozen.js
-
 # Need to add "numberingSystem" to resolvedOptions() to address
 # https://github.com/tc39/test262/pull/2011 apparently -- bug 1521819.
 skip script test262/intl402/RelativeTimeFormat/prototype/resolvedOptions/order.js
@@ -1239,6 +1225,11 @@ skip script test262/built-ins/RegExp/prototype/sticky/cross-realm.js
 skip script test262/built-ins/RegExp/prototype/ignoreCase/cross-realm.js
 skip script test262/built-ins/RegExp/prototype/unicode/cross-realm.js
 skip script test262/built-ins/RegExp/prototype/source/cross-realm.js
+
+# The Intl spec recently changed from canonicalizing locales using RFC 5646 to
+# using UTS 35.  This still needs to be implemented in bug 1522070.  See also
+# <https://github.com/tc39/ecma402/commit/77cd7634e6aef828b0d0a4d97dece622c5f8e01f>.
+skip script test262/intl402/Intl/getCanonicalLocales/non-iana-canon.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1508684
 skip script test262/language/expressions/import.meta/syntax/invalid-assignment-target-update-expr.js
@@ -1253,6 +1244,35 @@ skip script test262/intl402/Collator/missing-unicode-ext-value-defaults-to-true.
 
 # test262 importer merges all includes in a per directory shell.js file, breaking this harness test case.
 skip script test262/harness/detachArrayBuffer.js
+
+# The hashbang tests are usually raw tests -- which means they must be run
+# with no alterations.  (This because "#!" only denotes a single-line comment if
+# it appears at the very start of the script, and nowhere else.)  But jstests.py
+# expects to be told how tests should run, and what to expect from them, per the
+# // |reftest| comment on the first line -- exactly where the "#!" must appear
+# if it is to appear.  (Same for the various fake hashbangs that aren't
+# *actually* hashbangs, if they are to test what they were intended to test.)
+#
+# So for now -- until we can figure out a way to encode "this is a negative
+# test" in a way that doesn't require changing the raw source of the test --
+# these tests must be explicitly skipped.  See bug 1531202.
+skip script test262/language/comments/hashbang/escaped-hashbang.js
+skip script test262/language/comments/hashbang/preceding-hashbang.js
+skip script test262/language/comments/hashbang/escaped-hash-043.js
+skip script test262/language/comments/hashbang/preceding-line-comment.js
+skip script test262/language/comments/hashbang/escaped-hash-x23.js
+skip script test262/language/comments/hashbang/escaped-hash-u0023.js
+skip script test262/language/comments/hashbang/escaped-bang-u0021.js
+skip script test262/language/comments/hashbang/preceding-empty-statement.js
+skip script test262/language/comments/hashbang/escaped-bang-x21.js
+skip script test262/language/comments/hashbang/multi-line-comment.js
+skip script test262/language/comments/hashbang/escaped-bang-041.js
+skip script test262/language/comments/hashbang/preceding-directive-prologue.js
+skip script test262/language/comments/hashbang/preceding-multi-line-comment.js
+skip script test262/language/comments/hashbang/escaped-hash-u23.js
+skip script test262/language/comments/hashbang/escaped-bang-u21.js
+skip script test262/language/comments/hashbang/preceding-directive-prologue-sc.js
+skip script test262/language/comments/hashbang/preceding-whitespace.js
 
 
 ####################################################

@@ -2598,15 +2598,17 @@ void BuildTextRunsScanner::SetupBreakSinksForTextRun(gfxTextRun* aTextRun,
                                                      const void* aTextPtr) {
   using mozilla::intl::LineBreaker;
 
-  // for word-break style
-  switch (mLineContainer->StyleText()->mWordBreak) {
-    case NS_STYLE_WORDBREAK_BREAK_ALL:
+  auto wordBreak = mLineContainer->StyleText()->EffectiveWordBreak();
+  switch (wordBreak) {
+    case StyleWordBreak::BreakAll:
       mLineBreaker.SetWordBreak(LineBreaker::kWordBreak_BreakAll);
       break;
-    case NS_STYLE_WORDBREAK_KEEP_ALL:
+    case StyleWordBreak::KeepAll:
       mLineBreaker.SetWordBreak(LineBreaker::kWordBreak_KeepAll);
       break;
+    case StyleWordBreak::Normal:
     default:
+      MOZ_ASSERT(wordBreak == StyleWordBreak::Normal);
       mLineBreaker.SetWordBreak(LineBreaker::kWordBreak_Normal);
       break;
   }
@@ -4233,9 +4235,12 @@ void nsTextPaintStyle::InitSelectionStyle(int32_t aIndex) {
   selectionStyle->mInit = true;
 }
 
-/* static */ bool nsTextPaintStyle::GetSelectionUnderline(
-    nsPresContext* aPresContext, int32_t aIndex, nscolor* aLineColor,
-    float* aRelativeSize, uint8_t* aStyle) {
+/* static */
+bool nsTextPaintStyle::GetSelectionUnderline(nsPresContext* aPresContext,
+                                             int32_t aIndex,
+                                             nscolor* aLineColor,
+                                             float* aRelativeSize,
+                                             uint8_t* aStyle) {
   NS_ASSERTION(aPresContext, "aPresContext is null");
   NS_ASSERTION(aRelativeSize, "aRelativeSize is null");
   NS_ASSERTION(aStyle, "aStyle is null");
@@ -4551,22 +4556,26 @@ nsIFrame* nsContinuingTextFrame::FirstContinuation() const {
 // construction.
 
 // Needed for text frames in XUL.
-/* virtual */ nscoord nsTextFrame::GetMinISize(gfxContext* aRenderingContext) {
+/* virtual */
+nscoord nsTextFrame::GetMinISize(gfxContext* aRenderingContext) {
   return nsLayoutUtils::MinISizeFromInline(this, aRenderingContext);
 }
 
 // Needed for text frames in XUL.
-/* virtual */ nscoord nsTextFrame::GetPrefISize(gfxContext* aRenderingContext) {
+/* virtual */
+nscoord nsTextFrame::GetPrefISize(gfxContext* aRenderingContext) {
   return nsLayoutUtils::PrefISizeFromInline(this, aRenderingContext);
 }
 
-/* virtual */ void nsContinuingTextFrame::AddInlineMinISize(
-    gfxContext* aRenderingContext, InlineMinISizeData* aData) {
+/* virtual */
+void nsContinuingTextFrame::AddInlineMinISize(gfxContext* aRenderingContext,
+                                              InlineMinISizeData* aData) {
   // Do nothing, since the first-in-flow accounts for everything.
 }
 
-/* virtual */ void nsContinuingTextFrame::AddInlinePrefISize(
-    gfxContext* aRenderingContext, InlinePrefISizeData* aData) {
+/* virtual */
+void nsContinuingTextFrame::AddInlinePrefISize(gfxContext* aRenderingContext,
+                                               InlinePrefISizeData* aData) {
   // Do nothing, since the first-in-flow accounts for everything.
 }
 
@@ -8315,7 +8324,7 @@ void nsTextFrame::AddInlineMinISizeForFlow(gfxContext* aRenderingContext,
     return;
   }
 
-  if (textStyle->mOverflowWrap == mozilla::StyleOverflowWrap::Anywhere &&
+  if (textStyle->EffectiveOverflowWrap() == StyleOverflowWrap::Anywhere &&
       textStyle->WordCanWrap(this)) {
     aData->OptionallyBreak();
     aData->mCurrentLine +=
@@ -8421,8 +8430,9 @@ bool nsTextFrame::IsCurrentFontInflation(float aInflation) const {
 
 // XXX Need to do something here to avoid incremental reflow bugs due to
 // first-line and first-letter changing min-width
-/* virtual */ void nsTextFrame::AddInlineMinISize(
-    gfxContext* aRenderingContext, nsIFrame::InlineMinISizeData* aData) {
+/* virtual */
+void nsTextFrame::AddInlineMinISize(gfxContext* aRenderingContext,
+                                    nsIFrame::InlineMinISizeData* aData) {
   float inflation = nsLayoutUtils::FontSizeInflationFor(this);
   TextRunType trtype = (inflation == 1.0f) ? eNotInflated : eInflated;
 
@@ -8571,8 +8581,9 @@ void nsTextFrame::AddInlinePrefISizeForFlow(
 
 // XXX Need to do something here to avoid incremental reflow bugs due to
 // first-line and first-letter changing pref-width
-/* virtual */ void nsTextFrame::AddInlinePrefISize(
-    gfxContext* aRenderingContext, nsIFrame::InlinePrefISizeData* aData) {
+/* virtual */
+void nsTextFrame::AddInlinePrefISize(gfxContext* aRenderingContext,
+                                     nsIFrame::InlinePrefISizeData* aData) {
   float inflation = nsLayoutUtils::FontSizeInflationFor(this);
   TextRunType trtype = (inflation == 1.0f) ? eNotInflated : eInflated;
 
@@ -8662,8 +8673,9 @@ nsRect nsTextFrame::ComputeTightBounds(DrawTarget* aDrawTarget) const {
   return boundingBox;
 }
 
-/* virtual */ nsresult nsTextFrame::GetPrefWidthTightBounds(
-    gfxContext* aContext, nscoord* aX, nscoord* aXMost) {
+/* virtual */
+nsresult nsTextFrame::GetPrefWidthTightBounds(gfxContext* aContext, nscoord* aX,
+                                              nscoord* aXMost) {
   gfxSkipCharsIterator iter =
       const_cast<nsTextFrame*>(this)->EnsureTextRun(nsTextFrame::eInflated);
   if (!mTextRun) return NS_ERROR_FAILURE;
@@ -9546,7 +9558,8 @@ void nsTextFrame::ReflowText(nsLineLayout& aLineLayout, nscoord aAvailableWidth,
 #endif
 }
 
-/* virtual */ bool nsTextFrame::CanContinueTextRun() const {
+/* virtual */
+bool nsTextFrame::CanContinueTextRun() const {
   // We can continue a text run through a text frame
   return true;
 }
@@ -9898,7 +9911,8 @@ nsIFrame::RenderedText nsTextFrame::GetRenderedText(
   return result;
 }
 
-/* virtual */ bool nsTextFrame::IsEmpty() {
+/* virtual */
+bool nsTextFrame::IsEmpty() {
   NS_ASSERTION(!(mState & TEXT_IS_ONLY_WHITESPACE) ||
                    !(mState & TEXT_ISNOT_ONLY_WHITESPACE),
                "Invalid state");

@@ -1328,6 +1328,7 @@ impl Clone for ${style_struct.gecko_struct_name} {
         "TransformOrigin": impl_simple,
         "UserSelect": impl_simple,
         "url::UrlOrNone": impl_css_url,
+        "WordBreak": impl_simple,
         "ZIndex": impl_simple,
     }
 
@@ -4629,10 +4630,7 @@ fn set_style_svg_path(
                         inset.rect.2.to_gecko_style_coord(&mut shape.mCoordinates[2]);
                         shape.mCoordinates[3].leaky_set_null();
                         inset.rect.3.to_gecko_style_coord(&mut shape.mCoordinates[3]);
-                        shape.mRadius = match inset.round {
-                            Some(radius) => radius,
-                            None => crate::values::computed::BorderRadius::zero(),
-                        };
+                        shape.mRadius = inset.round;
                     }
                     BasicShape::Circle(circ) => {
                         let shape = init_shape(${ident}, StyleBasicShapeType::Circle);

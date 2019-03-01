@@ -311,12 +311,8 @@ void NameNode::dumpImpl(GenericPrinter& out, int indent) {
         out.put("#<null name>");
       } else if (getOp() == JSOP_GETARG && atom()->length() == 0) {
         // Dump destructuring parameter.
-        static const char ZeroLengthPrefix[] = "(#<zero-length name> ";
-        constexpr size_t ZeroLengthPrefixLength =
-            ArrayLength(ZeroLengthPrefix) - 1;
-        out.put(ZeroLengthPrefix);
-        DumpParseTree(initializer(), out, indent + ZeroLengthPrefixLength);
-        out.printf(")");
+        static const char ZeroLengthName[] = "(#<zero-length name>)";
+        out.put(ZeroLengthName);
       } else {
         JS::AutoCheckCannotGC nogc;
         if (atom()->hasLatin1Chars()) {
@@ -328,24 +324,26 @@ void NameNode::dumpImpl(GenericPrinter& out, int indent) {
       return;
 
     case ParseNodeKind::LabelStmt: {
-      const char* name = parseNodeNames[size_t(getKind())];
-      out.printf("(%s ", name);
-      atom()->dumpCharsNoNewline(out);
-      indent += strlen(name) + atom()->length() + 2;
-      DumpParseTree(initializer(), out, indent);
-      out.printf(")");
+      this->as<LabeledStatement>().dumpImpl(out, indent);
       return;
     }
 
     default: {
       const char* name = parseNodeNames[size_t(getKind())];
-      out.printf("(%s ", name);
-      indent += strlen(name) + 2;
-      DumpParseTree(initializer(), out, indent);
-      out.printf(")");
+      out.printf("(%s)", name);
       return;
     }
   }
+}
+
+void LabeledStatement::dumpImpl(GenericPrinter& out, int indent) {
+  const char* name = parseNodeNames[size_t(getKind())];
+  out.printf("(%s ", name);
+  atom()->dumpCharsNoNewline(out);
+  out.printf(" ");
+  indent += strlen(name) + atom()->length() + 3;
+  DumpParseTree(statement(), out, indent);
+  out.printf(")");
 }
 
 void LexicalScopeNode::dumpImpl(GenericPrinter& out, int indent) {
@@ -409,8 +407,8 @@ FunctionBox* ObjectBox::asFunctionBox() {
   return static_cast<FunctionBox*>(this);
 }
 
-/* static */ void TraceListNode::TraceList(JSTracer* trc,
-                                           TraceListNode* listHead) {
+/* static */
+void TraceListNode::TraceList(JSTracer* trc, TraceListNode* listHead) {
   for (TraceListNode* node = listHead; node; node = node->traceLink) {
     node->trace(trc);
   }

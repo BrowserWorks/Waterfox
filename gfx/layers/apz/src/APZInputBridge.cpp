@@ -27,7 +27,8 @@ static bool WillHandleMouseEvent(const WidgetMouseEventBase& aEvent) {
           aEvent.mMessage == eMouseHitTest);
 }
 
-/* static */ Maybe<APZWheelAction> APZInputBridge::ActionForWheelEvent(
+/* static */
+Maybe<APZWheelAction> APZInputBridge::ActionForWheelEvent(
     WidgetWheelEvent* aEvent) {
   if (!(aEvent->mDeltaMode == dom::WheelEvent_Binding::DOM_DELTA_LINE ||
         aEvent->mDeltaMode == dom::WheelEvent_Binding::DOM_DELTA_PIXEL ||
@@ -184,6 +185,7 @@ nsEventStatus APZInputBridge::ReceiveInputEvent(
 
       keyboardEvent.mFlags.mHandledByAPZ = input.mHandledByAPZ;
       keyboardEvent.mFocusSequenceNumber = input.mFocusSequenceNumber;
+      aEvent.mLayersId = input.mLayersId;
       return status;
     }
     default: {

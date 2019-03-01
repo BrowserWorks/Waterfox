@@ -114,7 +114,7 @@ nsresult CreatePrincipalInfo(nsILineInputStream* aStream,
   // CSP will be applied during the script load.
   nsTArray<mozilla::ipc::ContentSecurityPolicy> policies;
   aEntry->principal() = mozilla::ipc::ContentPrincipalInfo(
-      attrs, origin, aEntry->scope(), std::move(policies));
+      attrs, origin, aEntry->scope(), Nothing(), std::move(policies));
 
   return NS_OK;
 }
@@ -141,8 +141,8 @@ void ServiceWorkerRegistrar::Initialize() {
   }
 }
 
-/* static */ already_AddRefed<ServiceWorkerRegistrar>
-ServiceWorkerRegistrar::Get() {
+/* static */
+already_AddRefed<ServiceWorkerRegistrar> ServiceWorkerRegistrar::Get() {
   MOZ_ASSERT(XRE_IsParentProcess());
 
   MOZ_ASSERT(gServiceWorkerRegistrar);
