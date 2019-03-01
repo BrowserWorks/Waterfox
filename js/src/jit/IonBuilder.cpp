@@ -4151,6 +4151,16 @@ IonBuilder::selectInliningTargets(const InliningTargets& targets, CallInfo& call
             // Non-function targets are not supported by polymorphic inlining.
             inlineable = false;
         }
+        
+        // Only use a group guard and inline the target if we will recompile when
+        // the target function gets a new group.
+        if (inlineable && targets[i].group) {
+            ObjectGroup* group = targets[i].group;
+            TypeSet::ObjectKey* key = TypeSet::ObjectKey::get(group);
+            if (!key->hasStableClassAndProto(constraints())) {
+                inlineable = false;
+            }
+        }
 
         choiceSet.infallibleAppend(inlineable);
         if (inlineable)
