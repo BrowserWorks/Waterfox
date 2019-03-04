@@ -96,6 +96,7 @@
 
 #include "mozInlineSpellChecker.h"
 #include "nsDocShell.h"
+#include "nsIDocShellLoadInfo.h"
 #include "nsIConsoleListener.h"
 #include "nsIContentViewer.h"
 #include "nsICycleCollectorListener.h"
@@ -670,19 +671,22 @@ ContentChild::ProvideWindow(mozIDOMWindowProxy* aParent,
                             const nsAString& aName,
                             const nsACString& aFeatures,
                             bool aForceNoOpener,
+                            nsIDocShellLoadInfo* aLoadInfo,
                             bool* aWindowIsNew,
                             mozIDOMWindowProxy** aReturn)
 {
   return ProvideWindowCommon(nullptr, aParent, false, aChromeFlags,
                              aCalledFromJS, aPositionSpecified,
                              aSizeSpecified, aURI, aName, aFeatures,
-                             aForceNoOpener, aWindowIsNew, aReturn);
+                             aForceNoOpener, aLoadInfo, aWindowIsNew, aReturn);
 }
 
 static nsresult
-GetWindowParamsFromParent(mozIDOMWindowProxy* aParent,
-                          nsACString& aBaseURIString, float* aFullZoom,
-                          nsIPrincipal** aTriggeringPrincipal)
+GetCreateWindowParams(mozIDOMWindowProxy* aParent,
+                      nsIDocShellLoadInfo* aLoadInfo,
+                      nsACString& aBaseURIString, float* aFullZoom,
+                      uint32_t* aReferrerPolicy,
+                      nsIPrincipal** aTriggeringPrincipal)
 {
   *aFullZoom = 1.0f;
   auto* opener = nsPIDOMWindowOuter::From(aParent);
@@ -701,6 +705,16 @@ GetWindowParamsFromParent(mozIDOMWindowProxy* aParent,
   }
 
   baseURI->GetSpec(aBaseURIString);
+
+  bool sendReferrer = true;
+  if (aLoadInfo) {
+    aLoadInfo->GetSendReferrer(&sendReferrer);
+    if (!sendReferrer) {
+      *aReferrerPolicy = mozilla::net::RP_No_Referrer;
+    } else {
+      aLoadInfo->GetReferrerPolicy(aReferrerPolicy);
+    }
+  }
 
   RefPtr<nsDocShell> openerDocShell =
     static_cast<nsDocShell*>(opener->GetDocShell());
@@ -729,6 +743,7 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
                                   const nsAString& aName,
                                   const nsACString& aFeatures,
                                   bool aForceNoOpener,
+                                  nsIDocShellLoadInfo* aLoadInfo,
                                   bool* aWindowIsNew,
                                   mozIDOMWindowProxy** aReturn)
 {
@@ -774,8 +789,10 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
     nsAutoCString baseURIString;
     float fullZoom;
     nsCOMPtr<nsIPrincipal> triggeringPrincipal;
-    rv = GetWindowParamsFromParent(aParent, baseURIString, &fullZoom,
-                                   getter_AddRefs(triggeringPrincipal));
+    uint32_t referrerPolicy = mozilla::net::RP_Unset;
+    rv = GetCreateWindowParams(aParent, aLoadInfo, baseURIString, &fullZoom,
+                               &referrerPolicy,
+                               getter_AddRefs(triggeringPrincipal));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -792,7 +809,8 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
                                                  baseURIString,
                                                  fullZoom,
                                                  name,
-                                                 Principal(triggeringPrincipal));
+                                                 Principal(triggeringPrincipal),
+                                                 referrerPolicy);
 
     // We return NS_ERROR_ABORT, so that the caller knows that we've abandoned
     // the window open as far as it is concerned.
@@ -889,8 +907,10 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
     nsAutoCString baseURIString;
     float fullZoom;
     nsCOMPtr<nsIPrincipal> triggeringPrincipal;
-    rv = GetWindowParamsFromParent(aParent, baseURIString, &fullZoom,
-                                   getter_AddRefs(triggeringPrincipal));
+    uint32_t referrerPolicy = mozilla::net::RP_Unset;
+    rv = GetCreateWindowParams(aParent, aLoadInfo, baseURIString, &fullZoom,
+                               &referrerPolicy,
+                               getter_AddRefs(triggeringPrincipal));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -902,7 +922,8 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
                        features,
                        baseURIString,
                        fullZoom,
-                       Principal(triggeringPrincipal));
+                       Principal(triggeringPrincipal),
+                       referrerPolicy);
   }
 
   // Await the promise being resolved. When the promise is resolved, we'll set

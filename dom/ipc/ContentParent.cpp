@@ -4456,7 +4456,8 @@ ContentParent::CommonCreateWindow(PBrowserParent* aThisTab,
                                   nsresult& aResult,
                                   nsCOMPtr<nsITabParent>& aNewTabParent,
                                   bool* aWindowIsNew,
-                                  nsIPrincipal* aTriggeringPrincipal)
+                                  nsIPrincipal* aTriggeringPrincipal,
+                                  uint32_t aReferrerPolicy)
 
 {
   // The content process should never be in charge of computing whether or
@@ -4538,6 +4539,7 @@ ContentParent::CommonCreateWindow(PBrowserParent* aThisTab,
     params->SetReferrer(NS_ConvertUTF8toUTF16(aBaseURI));
     MOZ_ASSERT(aTriggeringPrincipal, "need a valid triggeringPrincipal");
     params->SetTriggeringPrincipal(aTriggeringPrincipal);
+    params->SetReferrerPolicy(aReferrerPolicy);
 
     nsCOMPtr<nsIFrameLoaderOwner> frameLoaderOwner;
     aResult = browserDOMWin->OpenURIInFrame(aURIToLoad, params, openLocation,
@@ -4622,6 +4624,7 @@ ContentParent::RecvCreateWindow(PBrowserParent* aThisTab,
                                 const nsCString& aBaseURI,
                                 const float& aFullZoom,
                                 const IPC::Principal& aTriggeringPrincipal,
+                                const uint32_t& aReferrerPolicy,
                                 CreateWindowResolver&& aResolve)
 {
   nsresult rv = NS_OK;
@@ -4667,7 +4670,7 @@ ContentParent::RecvCreateWindow(PBrowserParent* aThisTab,
                        nullptr, aFeatures, aBaseURI, aFullZoom,
                        nextTabParentId, NullString(), rv,
                        newRemoteTab, &cwi.windowOpened(),
-                       aTriggeringPrincipal);
+                       aTriggeringPrincipal, aReferrerPolicy);
   if (!ipcResult) {
     return ipcResult;
   }
@@ -4711,7 +4714,8 @@ ContentParent::RecvCreateWindowInDifferentProcess(
   const nsCString& aBaseURI,
   const float& aFullZoom,
   const nsString& aName,
-  const IPC::Principal& aTriggeringPrincipal)
+  const IPC::Principal& aTriggeringPrincipal,
+  const uint32_t& aReferrerPolicy)
 {
   nsCOMPtr<nsITabParent> newRemoteTab;
   bool windowIsNew;
@@ -4722,7 +4726,8 @@ ContentParent::RecvCreateWindowInDifferentProcess(
                        aCalledFromJS, aPositionSpecified, aSizeSpecified,
                        uriToLoad, aFeatures, aBaseURI, aFullZoom,
                        /* aNextTabParentId = */ 0, aName, rv,
-                       newRemoteTab, &windowIsNew, aTriggeringPrincipal);
+                       newRemoteTab, &windowIsNew, aTriggeringPrincipal,
+                       aReferrerPolicy);
   if (!ipcResult) {
     return ipcResult;
   }
