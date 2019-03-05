@@ -4920,10 +4920,13 @@ XRE_InitCommandLine(int aArgc, char* aArgv[])
   delete[] canonArgs;
 #endif
 
-  const char *path = nullptr;
-  ArgResult ar = CheckArg("greomni", false, &path);
+  const char* path = nullptr;
+  ArgResult ar = CheckArg("greomni", true, &path);
   if (ar == ARG_BAD) {
-    PR_fprintf(PR_STDERR, "Error: argument --greomni requires a path argument\n");
+    PR_fprintf(PR_STDERR,
+               "Error: argument --greomni requires a path argument or the "
+               "--osint argument was specified with the --appomni argument "
+               "which is invalid\n");
     return NS_ERROR_FAILURE;
   }
 
@@ -4937,9 +4940,12 @@ XRE_InitCommandLine(int aArgc, char* aArgv[])
     return rv;
   }
 
-  ar = CheckArg("appomni", false, &path);
+  ar = CheckArg("appomni", true, &path);
   if (ar == ARG_BAD) {
-    PR_fprintf(PR_STDERR, "Error: argument --appomni requires a path argument\n");
+    PR_fprintf(PR_STDERR,
+               "Error: argument --appomni requires a path argument or the "
+               "--osint argument was specified with the --appomni argument "
+               "which is invalid\n");
     return NS_ERROR_FAILURE;
   }
 
