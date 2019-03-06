@@ -101,9 +101,9 @@ class HttpChannelParent final : public nsIInterfaceRequestor,
     }
   }
 
-  MOZ_MUST_USE nsresult OpenAlternativeOutputStream(const nsACString& type,
-                                                    int64_t predictedSize,
-                                                    nsIOutputStream** _retval);
+  MOZ_MUST_USE nsresult
+  OpenAlternativeOutputStream(const nsACString& type, int64_t predictedSize,
+                              nsIAsyncOutputStream** _retval);
 
   // Callbacks for each asynchronous tasks required in AsyncOpen
   // procedure, will call InvokeAsyncOpen when all the expected
@@ -153,7 +153,7 @@ class HttpChannelParent final : public nsIInterfaceRequestor,
       const nsCString& entityID, const bool& chooseApplicationCache,
       const nsCString& appCacheClientID, const bool& allowSpdy,
       const bool& allowAltSvc, const bool& beConservative,
-      const uint32_t& tlsFlags, const OptionalLoadInfoArgs& aLoadInfoArgs,
+      const uint32_t& tlsFlags, const Maybe<LoadInfoArgs>& aLoadInfoArgs,
       const OptionalHttpResponseHead& aSynthesizedResponseHead,
       const nsCString& aSecurityInfoSerialization, const uint32_t& aCacheKey,
       const uint64_t& aRequestContextID,

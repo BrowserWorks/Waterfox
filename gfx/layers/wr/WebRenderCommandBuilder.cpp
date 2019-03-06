@@ -1439,12 +1439,6 @@ void WebRenderCommandBuilder::BuildWebRenderCommands(
   mClipManager.BeginBuild(mManager, aBuilder);
 
   {
-    if (!mZoomProp && gfxPrefs::APZAllowZooming() && XRE_IsContentProcess()) {
-      mZoomProp.emplace();
-      mZoomProp->effect_type = wr::WrAnimationType::Transform;
-      mZoomProp->id = AnimationHelper::GetNextCompositorAnimationsId();
-    }
-
     nsPresContext* presContext =
         aDisplayListBuilder->RootReferenceFrame()->PresContext();
     bool isTopLevelContent =
@@ -1453,7 +1447,6 @@ void WebRenderCommandBuilder::BuildWebRenderCommands(
     wr::StackingContextParams params;
     params.mFilters = std::move(aFilters.filters);
     params.mFilterDatas = std::move(aFilters.filter_datas);
-    params.animation = mZoomProp.ptrOr(nullptr);
     params.cache_tiles = isTopLevelContent;
     params.clip =
         wr::WrStackingContextClip::ClipChain(aBuilder.CurrentClipChainId());
@@ -1472,9 +1465,6 @@ void WebRenderCommandBuilder::BuildWebRenderCommands(
   // Make a "root" layer data that has everything else as descendants
   mLayerScrollData.emplace_back();
   mLayerScrollData.back().InitializeRoot(mLayerScrollData.size() - 1);
-  if (mZoomProp) {
-    mLayerScrollData.back().SetZoomAnimationId(mZoomProp->id);
-  }
   auto callback =
       [&aScrollData](ScrollableLayerGuid::ViewID aScrollId) -> bool {
     return aScrollData.HasMetadataFor(aScrollId).isSome();
@@ -2291,7 +2281,7 @@ class WebRenderMaskData : public WebRenderUserData {
   gfx::Size mScale;
 };
 
-Maybe<wr::WrImageMask> WebRenderCommandBuilder::BuildWrMaskImage(
+Maybe<wr::ImageMask> WebRenderCommandBuilder::BuildWrMaskImage(
     nsDisplayMasksAndClipPaths* aMaskItem, wr::DisplayListBuilder& aBuilder,
     wr::IpcResourceUpdateQueue& aResources, const StackingContextHelper& aSc,
     nsDisplayListBuilder* aDisplayListBuilder,
@@ -2412,7 +2402,7 @@ Maybe<wr::WrImageMask> WebRenderCommandBuilder::BuildWrMaskImage(
     }
   }
 
-  wr::WrImageMask imageMask;
+  wr::ImageMask imageMask;
   imageMask.image = wr::AsImageKey(maskData->mBlobKey.value());
   imageMask.rect = wr::ToLayoutRect(imageRect);
   imageMask.repeat = false;

@@ -425,7 +425,7 @@ bool HandleClosingGeneratorReturn(JSContext* cx, AbstractFramePtr frame,
 
 /************************************************************************/
 
-bool Throw(JSContext* cx, HandleValue v);
+bool ThrowOperation(JSContext* cx, HandleValue v);
 
 bool GetProperty(JSContext* cx, HandleValue value, HandlePropertyName name,
                  MutableHandleValue vp);
@@ -447,8 +447,9 @@ bool SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index,
                       HandleValue value, bool strict, HandleScript script,
                       jsbytecode* pc);
 
-bool SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index,
-                      HandleValue value, HandleValue receiver, bool strict);
+bool SetObjectElementWithReceiver(JSContext* cx, HandleObject obj,
+                                  HandleValue index, HandleValue value,
+                                  HandleValue receiver, bool strict);
 bool SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index,
                       HandleValue value, HandleValue receiver, bool strict,
                       HandleScript script, jsbytecode* pc);
@@ -515,19 +516,18 @@ bool DeleteNameOperation(JSContext* cx, HandlePropertyName name,
 bool ImplicitThisOperation(JSContext* cx, HandleObject scopeObj,
                            HandlePropertyName name, MutableHandleValue res);
 
-bool InitGetterSetterOperation(JSContext* cx, jsbytecode* pc, HandleObject obj,
-                               HandleId id, HandleObject val);
-
-bool InitGetterSetterOperation(JSContext* cx, jsbytecode* pc, HandleObject obj,
-                               HandlePropertyName name, HandleObject val);
+bool InitPropGetterSetterOperation(JSContext* cx, jsbytecode* pc,
+                                   HandleObject obj, HandlePropertyName name,
+                                   HandleObject val);
 
 unsigned GetInitDataPropAttrs(JSOp op);
 
 bool EnterWithOperation(JSContext* cx, AbstractFramePtr frame, HandleValue val,
                         Handle<WithScope*> scope);
 
-bool InitGetterSetterOperation(JSContext* cx, jsbytecode* pc, HandleObject obj,
-                               HandleValue idval, HandleObject val);
+bool InitElemGetterSetterOperation(JSContext* cx, jsbytecode* pc,
+                                   HandleObject obj, HandleValue idval,
+                                   HandleObject val);
 
 bool SpreadCallOperation(JSContext* cx, HandleScript script, jsbytecode* pc,
                          HandleValue thisv, HandleValue callee, HandleValue arr,

@@ -80,7 +80,7 @@ class WebRenderCommandBuilder {
                  const StackingContextHelper& aSc,
                  const LayoutDeviceRect& aRect, const LayoutDeviceRect& aClip);
 
-  Maybe<wr::WrImageMask> BuildWrMaskImage(
+  Maybe<wr::ImageMask> BuildWrMaskImage(
       nsDisplayMasksAndClipPaths* aMaskItem, wr::DisplayListBuilder& aBuilder,
       wr::IpcResourceUpdateQueue& aResources, const StackingContextHelper& aSc,
       nsDisplayListBuilder* aDisplayListBuilder,
@@ -193,10 +193,6 @@ class WebRenderCommandBuilder {
 
   wr::usize mBuilderDumpIndex;
   wr::usize mDumpIndent;
-
-  // When zooming is enabled, this stores the animation property that we use
-  // to manipulate the zoom from APZ.
-  Maybe<wr::WrAnimationProperty> mZoomProp;
 
  public:
   // Whether consecutive inactive display items should be grouped into one

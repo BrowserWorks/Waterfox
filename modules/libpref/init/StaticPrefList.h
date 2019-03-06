@@ -520,15 +520,28 @@ VARCACHE_PREF(
   bool, false
 )
 
+VARCACHE_PREF(
+  "dom.storage_access.auto_grants.delayed",
+   dom_storage_access_auto_grants_delayed,
+  bool, true
+)
+
 //---------------------------------------------------------------------------
 // Extension prefs
 //---------------------------------------------------------------------------
 
+#ifdef ANDROID
+// Private browsing opt-in is only supported on Firefox desktop.
+# define PREF_VALUE true
+#else
+# define PREF_VALUE false
+#endif
 VARCACHE_PREF(
   "extensions.allowPrivateBrowsingByDefault",
    extensions_allowPrivateBrowsingByDefault,
-  bool, true
+  bool, PREF_VALUE
 )
+#undef PREF_VALUE
 
 //---------------------------------------------------------------------------
 // Full-screen prefs

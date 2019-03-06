@@ -3,11 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use super::super::shader_source::SHADERS;
-use api::{ColorF, ImageFormat, MemoryReport};
-use api::{DeviceIntPoint, DeviceIntRect, DeviceIntSize};
-use api::TextureTarget;
-use api::VoidPtrToSizeFn;
-use api::ImageDescriptor;
+use api::{ColorF, ImageDescriptor, ImageFormat, MemoryReport};
+use api::{TextureTarget, VoidPtrToSizeFn};
+use api::units::*;
 use euclid::Transform3D;
 use gleam::gl;
 use internal_types::{FastHashMap, LayerIndex, RenderTargetInfo};
@@ -876,6 +874,8 @@ impl UniformLocation {
 
 pub struct Capabilities {
     pub supports_multisampling: bool,
+    /// Whether the function glCopyImageSubData is available.
+    pub supports_copy_image_sub_data: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -961,9 +961,6 @@ pub struct Device {
     /// format, we fall back to glTexImage*.
     texture_storage_usage: TexStorageUsage,
 
-    /// Whether the function glCopyImageSubData is available.
-    supports_copy_image_sub_data: bool,
-
     optimal_pbo_stride: NonZeroUsize,
 
     // GL extensions
@@ -975,7 +972,12 @@ pub struct Device {
 pub enum DrawTarget<'a> {
     /// Use the device's default draw target, with the provided dimensions,
     /// which are used to set the viewport.
-    Default(DeviceIntSize),
+    Default {
+        /// Target rectangle to draw.
+        rect: FramebufferIntRect,
+        /// Total size of the target.
+        total_size: FramebufferIntSize,
+    },
     /// Use the provided texture.
     Texture {
         /// The target texture.
@@ -988,10 +990,17 @@ pub enum DrawTarget<'a> {
 }
 
 impl<'a> DrawTarget<'a> {
+    pub fn new_default(size: FramebufferIntSize) -> Self {
+        DrawTarget::Default {
+            rect: size.into(),
+            total_size: size,
+        }
+    }
+
     /// Returns true if this draw target corresponds to the default framebuffer.
     pub fn is_default(&self) -> bool {
         match *self {
-            DrawTarget::Default(..) => true,
+            DrawTarget::Default {..} => true,
             _ => false,
         }
     }
@@ -999,9 +1008,22 @@ impl<'a> DrawTarget<'a> {
     /// Returns the dimensions of this draw-target.
     pub fn dimensions(&self) -> DeviceIntSize {
         match *self {
-            DrawTarget::Default(d) => d,
+            DrawTarget::Default { total_size, .. } => DeviceIntSize::from_untyped(&total_size.to_untyped()),
             DrawTarget::Texture { texture, .. } => texture.get_dimensions(),
         }
+    }
+
+    pub fn to_framebuffer_rect(&self, device_rect: DeviceIntRect) -> FramebufferIntRect {
+        let mut fb_rect = FramebufferIntRect::from_untyped(&device_rect.to_untyped());
+        match *self {
+            DrawTarget::Default { ref rect, .. } => {
+                // perform a Y-flip here
+                fb_rect.origin.y = rect.origin.y + rect.size.height - fb_rect.origin.y - fb_rect.size.height;
+                fb_rect.origin.x += rect.origin.x;
+            }
+            DrawTarget::Texture { .. } => (),
+        }
+        fb_rect
     }
 
     /// Given a scissor rect, convert it to the right coordinate space
@@ -1010,27 +1032,25 @@ impl<'a> DrawTarget<'a> {
     pub fn build_scissor_rect(
         &self,
         scissor_rect: Option<DeviceIntRect>,
-        framebuffer_target_rect: DeviceIntRect,
-    ) -> DeviceIntRect {
+        content_origin: DeviceIntPoint,
+    ) -> FramebufferIntRect {
         let dimensions = self.dimensions();
 
         match scissor_rect {
-            Some(scissor_rect) => {
-                // Note: `framebuffer_target_rect` needs a Y-flip before going to GL
-                if self.is_default() {
-                    let mut rect = scissor_rect
-                        .intersection(&framebuffer_target_rect.to_i32())
-                        .unwrap_or(DeviceIntRect::zero());
-                    rect.origin.y = dimensions.height as i32 - rect.origin.y - rect.size.height;
-                    rect
-                } else {
-                    scissor_rect
+            Some(scissor_rect) => match *self {
+                DrawTarget::Default { ref rect, .. } => {
+                    self.to_framebuffer_rect(scissor_rect.translate(&-content_origin.to_vector()))
+                        .intersection(rect)
+                        .unwrap_or_else(FramebufferIntRect::zero)
+                }
+                DrawTarget::Texture { .. } => {
+                    FramebufferIntRect::from_untyped(&scissor_rect.to_untyped())
                 }
             }
             None => {
-                DeviceIntRect::new(
-                    DeviceIntPoint::zero(),
-                    dimensions,
+                FramebufferIntRect::new(
+                    FramebufferIntPoint::zero(),
+                    FramebufferIntSize::from_untyped(&dimensions.to_untyped()),
                 )
             }
         }
@@ -1054,7 +1074,7 @@ pub enum ReadTarget<'a> {
 impl<'a> From<DrawTarget<'a>> for ReadTarget<'a> {
     fn from(t: DrawTarget<'a>) -> Self {
         match t {
-            DrawTarget::Default(..) => ReadTarget::Default,
+            DrawTarget::Default { .. } => ReadTarget::Default,
             DrawTarget::Texture { texture, layer, .. } =>
                 ReadTarget::Texture { texture, layer },
         }
@@ -1072,7 +1092,10 @@ impl Device {
         // this on release builds because the synchronous call can stall the
         // pipeline.
         if cfg!(debug_assertions) {
-            gl = gl::ErrorCheckingGl::wrap(gl);
+            gl = gl::ErrorReactingGl::wrap(gl, |gl, name, code| {
+                Self::echo_driver_messages(gl);
+                panic!("Caught GL error {:x} at {}", code, name);
+            });
         }
 
         let mut max_texture_size = [0];
@@ -1194,6 +1217,7 @@ impl Device {
 
             capabilities: Capabilities {
                 supports_multisampling: false, //TODO
+                supports_copy_image_sub_data,
             },
 
             bgra_format_internal,
@@ -1219,7 +1243,6 @@ impl Device {
             frame_id: GpuFrameId(0),
             extensions,
             texture_storage_usage,
-            supports_copy_image_sub_data,
             optimal_pbo_stride,
         }
     }
@@ -1425,14 +1448,17 @@ impl Device {
         &mut self,
         target: DrawTarget,
     ) {
-        let (fbo_id, dimensions, depth_available) = match target {
-            DrawTarget::Default(d) => (self.default_draw_fbo, d, true),
+        let (fbo_id, rect, depth_available) = match target {
+            DrawTarget::Default { rect, .. } => (self.default_draw_fbo, rect, true),
             DrawTarget::Texture { texture, layer, with_depth } => {
-                let dim = texture.get_dimensions();
+                let rect = FramebufferIntRect::new(
+                    FramebufferIntPoint::zero(),
+                    FramebufferIntSize::from_untyped(&texture.get_dimensions().to_untyped()),
+                );
                 if with_depth {
-                    (texture.fbos_with_depth[layer], dim, true)
+                    (texture.fbos_with_depth[layer], rect, true)
                 } else {
-                    (texture.fbos[layer], dim, false)
+                    (texture.fbos[layer], rect, false)
                 }
             }
         };
@@ -1440,10 +1466,10 @@ impl Device {
         self.depth_available = depth_available;
         self.bind_draw_target_impl(fbo_id);
         self.gl.viewport(
-            0,
-            0,
-            dimensions.width as _,
-            dimensions.height as _,
+            rect.origin.x,
+            rect.origin.y,
+            rect.size.width,
+            rect.size.height,
         );
     }
 
@@ -1782,7 +1808,7 @@ impl Device {
         debug_assert!(dst.size.height >= src.size.height);
         debug_assert!(dst.layer_count >= src.layer_count);
 
-        if self.supports_copy_image_sub_data {
+        if self.capabilities.supports_copy_image_sub_data {
             assert_ne!(src.id, dst.id,
                     "glCopyImageSubData's behaviour is undefined if src and dst images are identical and the rectangles overlap.");
             unsafe {
@@ -1794,7 +1820,10 @@ impl Device {
             }
         } else {
             // Note that zip() truncates to the shorter of the two iterators.
-            let rect = DeviceIntRect::new(DeviceIntPoint::zero(), src.get_dimensions().to_i32());
+            let rect = FramebufferIntRect::new(
+                FramebufferIntPoint::zero(),
+                FramebufferIntSize::from_untyped(&src.get_dimensions().to_untyped()),
+            );
             for (read_fbo, draw_fbo) in src.fbos.iter().zip(&dst.fbos) {
                 self.bind_read_target_impl(*read_fbo);
                 self.bind_draw_target_impl(*draw_fbo);
@@ -1951,8 +1980,8 @@ impl Device {
 
     pub fn blit_render_target(
         &mut self,
-        src_rect: DeviceIntRect,
-        dest_rect: DeviceIntRect,
+        src_rect: FramebufferIntRect,
+        dest_rect: FramebufferIntRect,
         filter: TextureFilter,
     ) {
         debug_assert!(self.inside_frame);
@@ -1981,8 +2010,8 @@ impl Device {
     /// origin-top-left).
     pub fn blit_render_target_invert_y(
         &mut self,
-        src_rect: DeviceIntRect,
-        dest_rect: DeviceIntRect,
+        src_rect: FramebufferIntRect,
+        dest_rect: FramebufferIntRect,
     ) {
         debug_assert!(self.inside_frame);
         self.gl.blit_framebuffer(
@@ -2234,7 +2263,7 @@ impl Device {
     /// Read rectangle of pixels into the specified output slice.
     pub fn read_pixels_into(
         &mut self,
-        rect: DeviceIntRect,
+        rect: FramebufferIntRect,
         format: ReadPixelsFormat,
         output: &mut [u8],
     ) {
@@ -2609,7 +2638,7 @@ impl Device {
         &self,
         color: Option<[f32; 4]>,
         depth: Option<f32>,
-        rect: Option<DeviceIntRect>,
+        rect: Option<FramebufferIntRect>,
     ) {
         let mut clear_bits = 0;
 
@@ -2676,7 +2705,7 @@ impl Device {
         self.gl.disable(gl::STENCIL_TEST);
     }
 
-    pub fn set_scissor_rect(&self, rect: DeviceIntRect) {
+    pub fn set_scissor_rect(&self, rect: FramebufferIntRect) {
         self.gl.scissor(
             rect.origin.x,
             rect.origin.y,
@@ -2772,8 +2801,8 @@ impl Device {
         supports_extension(&self.extensions, extension)
     }
 
-    pub fn echo_driver_messages(&self) {
-        for msg in self.gl.get_debug_messages() {
+    pub fn echo_driver_messages(gl: &gl::Gl) {
+        for msg in gl.get_debug_messages() {
             let level = match msg.severity {
                 gl::DEBUG_SEVERITY_HIGH => Level::Error,
                 gl::DEBUG_SEVERITY_MEDIUM => Level::Warn,

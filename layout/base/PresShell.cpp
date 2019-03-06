@@ -214,7 +214,6 @@ typedef ScrollableLayerGuid::ViewID ViewID;
 CapturingContentInfo nsIPresShell::gCaptureInfo = {
     false /* mAllowed */, false /* mPointerLock */,
     false /* mRetargetToElement */, false /* mPreventDrag */};
-nsIContent* nsIPresShell::gKeyDownTarget;
 
 // RangePaintInfo is used to paint ranges to offscreen buffers
 struct RangePaintInfo {
@@ -633,6 +632,7 @@ mozilla::LazyLogModule nsIPresShell::gLog("PresShell");
 
 mozilla::TimeStamp PresShell::EventHandler::sLastInputCreated;
 mozilla::TimeStamp PresShell::EventHandler::sLastInputProcessed;
+StaticRefPtr<Element> PresShell::EventHandler::sLastKeyDownEventTargetElement;
 
 bool PresShell::sProcessInteractable = false;
 
@@ -1203,9 +1203,7 @@ void PresShell::Destroy() {
 
   MaybeReleaseCapturingContent();
 
-  if (gKeyDownTarget && gKeyDownTarget->OwnerDoc() == mDocument) {
-    NS_RELEASE(gKeyDownTarget);
-  }
+  EventHandler::OnPresShellDestroy(mDocument);
 
   if (mContentToScrollTo) {
     mContentToScrollTo->DeleteProperty(nsGkAtoms::scrolling);
@@ -3982,7 +3980,9 @@ static inline void AssertFrameTreeIsSane(const nsIPresShell& aShell) {
 }
 
 void PresShell::DoFlushPendingNotifications(mozilla::ChangesToFlush aFlush) {
-  MOZ_RELEASE_ASSERT(!mForbiddenToFlush, "This is bad!");
+  // FIXME(emilio, bug 1530177): Turn into a release assert when bug 1530188 and
+  // bug 1530190 are fixed.
+  MOZ_DIAGNOSTIC_ASSERT(!mForbiddenToFlush, "This is bad!");
 
   // Per our API contract, hold a strong ref to ourselves until we return.
   nsCOMPtr<nsIPresShell> kungFuDeathGrip = this;
@@ -6517,335 +6517,242 @@ nsresult PresShell::EventHandler::HandleEvent(nsIFrame* aFrame,
   }
 
   if (aGUIEvent->IsUsingCoordinates()) {
-    // Flush pending notifications to handle the event with the latest layout.
-    // But if it causes destroying the frame for mPresShell, stop handling the
-    // event. (why?)
-    AutoWeakFrame weakFrame(aFrame);
-    MaybeFlushPendingNotifications(aGUIEvent);
-    if (!weakFrame.IsAlive()) {
-      *aEventStatus = nsEventStatus_eIgnore;
-      return NS_OK;
-    }
-
-    // XXX Retrieving capturing content here.  However, some of the following
-    //     methods allow to run script.  So, isn't it possible the capturing
-    //     content outdated?
-    nsCOMPtr<nsIContent> capturingContent =
-        EventHandler::GetCapturingContentFor(aGUIEvent);
-
-    if (GetDocument() && aGUIEvent->mClass == eTouchEventClass) {
-      Document::UnlockPointer();
-    }
-
-    nsIFrame* frameForPresShell = MaybeFlushThrottledStyles(aFrame);
-    if (NS_WARN_IF(!frameForPresShell)) {
-      return NS_OK;
-    }
-
-    bool isCapturingContentIgnored = false;
-    bool isCaptureRetargeted = false;
-    nsIFrame* rootFrameToHandleEvent = ComputeRootFrameToHandleEvent(
-        frameForPresShell, aGUIEvent, capturingContent,
-        &isCapturingContentIgnored, &isCaptureRetargeted);
-    if (isCapturingContentIgnored) {
-      capturingContent = nullptr;
-    }
-
-    // The order to generate pointer event is
-    // 1. check pending pointer capture.
-    // 2. check if there is a capturing content.
-    // 3. hit test
-    // 4. dispatch pointer events
-    // 5. check whether the targets of all Touch instances are in the same
-    //    document and suppress invalid instances.
-    // 6. dispatch mouse or touch events.
-
-    // Try to keep frame for following check, because frame can be damaged
-    // during MaybeProcessPointerCapture.
-    {
-      AutoWeakFrame frameKeeper(rootFrameToHandleEvent);
-      PointerEventHandler::MaybeProcessPointerCapture(aGUIEvent);
-      // Prevent application crashes, in case damaged frame.
-      if (!frameKeeper.IsAlive()) {
-        NS_WARNING("Nothing to handle this event!");
-        return NS_OK;
-      }
-    }
-
-    // Only capture mouse events and pointer events.
-    nsCOMPtr<nsIContent> pointerCapturingContent =
-        PointerEventHandler::GetPointerCapturingContent(aGUIEvent);
-
-    if (pointerCapturingContent) {
-      rootFrameToHandleEvent = pointerCapturingContent->GetPrimaryFrame();
-      if (!rootFrameToHandleEvent) {
-        return HandleEventWithPointerCapturingContentWithoutItsFrame(
-            aFrame, aGUIEvent, pointerCapturingContent, aEventStatus);
-      }
-    }
-
-    WidgetMouseEvent* mouseEvent = aGUIEvent->AsMouseEvent();
-    bool isWindowLevelMouseExit =
-        (aGUIEvent->mMessage == eMouseExitFromWidget) &&
-        (mouseEvent && mouseEvent->mExitFrom == WidgetMouseEvent::eTopLevel);
-
-    // Get the frame at the event point. However, don't do this if we're
-    // capturing and retargeting the event because the captured frame will
-    // be used instead below. Also keep using the root frame if we're dealing
-    // with a window-level mouse exit event since we want to start sending
-    // mouse out events at the root EventStateManager.
-    EventTargetData eventTargetData(mPresShell, rootFrameToHandleEvent);
-    if (!isCaptureRetargeted && !isWindowLevelMouseExit &&
-        !pointerCapturingContent) {
-      if (!ComputeEventTargetFrameAndPresShellAtEventPoint(
-              rootFrameToHandleEvent, aGUIEvent, &eventTargetData)) {
-        *aEventStatus = nsEventStatus_eIgnore;
-        return NS_OK;
-      }
-    }
-
-    // if a node is capturing the mouse, check if the event needs to be
-    // retargeted at the capturing content instead. This will be the case when
-    // capture retargeting is being used, no frame was found or the frame's
-    // content is not a descendant of the capturing content.
-    if (capturingContent && !pointerCapturingContent &&
-        (gCaptureInfo.mRetargetToElement ||
-         !eventTargetData.mFrame->GetContent() ||
-         !nsContentUtils::ContentIsCrossDocDescendantOf(
-             eventTargetData.mFrame->GetContent(), capturingContent))) {
-      // A check was already done above to ensure that capturingContent is
-      // in this presshell.
-      NS_ASSERTION(capturingContent->GetComposedDoc() == GetDocument(),
-                   "Unexpected document");
-      nsIFrame* capturingFrame = capturingContent->GetPrimaryFrame();
-      if (capturingFrame) {
-        eventTargetData.SetFrameAndComputePresShell(capturingFrame);
-      }
-    }
-
-    if (NS_WARN_IF(!eventTargetData.mFrame)) {
-      return NS_OK;
-    }
-
-    // Suppress mouse event if it's being targeted at an element inside
-    // a document which needs events suppressed
-    if (MaybeDiscardOrDelayMouseEvent(eventTargetData.mFrame, aGUIEvent)) {
-      return NS_OK;
-    }
-
-    // Check if we have an active EventStateManager which isn't the
-    // EventStateManager of the current PresContext.  If that is the case, and
-    // mouse is over some ancestor document, forward event handling to the
-    // active document.  This way content can get mouse events even when mouse
-    // is over the chrome or outside the window.
-    if (eventTargetData.MaybeRetargetToActiveDocument(aGUIEvent) &&
-        NS_WARN_IF(!eventTargetData.mFrame)) {
-      return NS_OK;
-    }
-
-    if (!eventTargetData.ComputeElementFromFrame(aGUIEvent)) {
-      return NS_OK;
-    }
-    // Note that even if ComputeElementFromFrame() returns true,
-    // eventTargetData.mContent can be nullptr here.
-
-    if (PointerEventHandler::IsPointerEventEnabled()) {
-      // Dispatch pointer events from the mouse or touch events. Regarding
-      // pointer events from mouse, we should dispatch those pointer events to
-      // the same target as the source mouse events. We pass the frame found
-      // in hit test to PointerEventHandler and dispatch pointer events to it.
-      //
-      // Regarding pointer events from touch, the behavior is different. Touch
-      // events are dispatched to the same target as the target of touchstart.
-      // Multiple touch points must be dispatched to the same document. Pointer
-      // events from touch can be dispatched to different documents. We Pass the
-      // original frame to PointerEventHandler, reentry PresShell::HandleEvent,
-      // and do hit test for each point.
-      nsIFrame* targetFrame = aGUIEvent->mClass == eTouchEventClass
-                                  ? aFrame
-                                  : eventTargetData.mFrame;
-
-      if (pointerCapturingContent) {
-        eventTargetData.mOverrideClickTarget =
-            GetOverrideClickTarget(aGUIEvent, aFrame);
-        eventTargetData.mPresShell =
-            PresShell::GetShellForEventTarget(nullptr, pointerCapturingContent);
-        if (!eventTargetData.mPresShell) {
-          // If we can't process event for the capturing content, release
-          // the capture.
-          PointerEventHandler::ReleaseIfCaptureByDescendant(
-              pointerCapturingContent);
-          return NS_OK;
-        }
-
-        targetFrame = pointerCapturingContent->GetPrimaryFrame();
-        eventTargetData.mFrame = targetFrame;
-      }
-
-      AutoWeakFrame weakTargetFrame(targetFrame);
-      AutoWeakFrame weakFrame(eventTargetData.mFrame);
-      nsCOMPtr<nsIContent> targetContent;
-      PointerEventHandler::DispatchPointerFromMouseOrTouch(
-          eventTargetData.mPresShell, eventTargetData.mFrame,
-          eventTargetData.mContent, aGUIEvent, aDontRetargetEvents,
-          aEventStatus, getter_AddRefs(targetContent));
-
-      if (!weakTargetFrame.IsAlive() && aGUIEvent->mClass == eMouseEventClass) {
-        // Spec only defines that mouse events must be dispatched to the same
-        // target as the pointer event. If the target is no longer participating
-        // in its ownerDocument's tree, fire the event at the original target's
-        // nearest ancestor node
-        if (!targetContent) {
-          return NS_OK;
-        }
-        // XXX Why don't we reset eventTargetData.mContent here?
-        eventTargetData.mFrame = targetContent->GetPrimaryFrame();
-        eventTargetData.mPresShell = PresShell::GetShellForEventTarget(
-            eventTargetData.mFrame, targetContent);
-        if (!eventTargetData.mPresShell) {
-          return NS_OK;
-        }
-      } else if (!weakFrame.IsAlive()) {
-        return NS_OK;
-      }
-    }
-
-    // frame could be null after dispatching pointer events.
-    if (aGUIEvent->mClass == eTouchEventClass) {
-      if (aGUIEvent->mMessage == eTouchStart) {
-        WidgetTouchEvent* touchEvent = aGUIEvent->AsTouchEvent();
-        if (nsIFrame* newFrame =
-                TouchManager::SuppressInvalidPointsAndGetTargetedFrame(
-                    touchEvent)) {
-          eventTargetData.SetFrameAndComputePresShellAndContent(newFrame,
-                                                                aGUIEvent);
-        }
-      } else if (PresShell* newShell =
-                     PresShell::GetShellForTouchEvent(aGUIEvent)) {
-        // Touch events (except touchstart) are dispatching to the captured
-        // element. Get correct shell from it.
-        eventTargetData.mPresShell = newShell;
-      }
-    }
-
-    // Handle the event in the correct shell.
-    // We pass the subshell's root frame as the frame to start from. This is
-    // the only correct alternative; if the event was captured then it
-    // must have been captured by us or some ancestor shell and we
-    // now ask the subshell to dispatch it normally.
-    eventTargetData.mPresShell->PushCurrentEventInfo(eventTargetData.mFrame,
-                                                     eventTargetData.mContent);
-    EventHandler eventHandler(*eventTargetData.mPresShell);
-    nsresult rv = eventHandler.HandleEventInternal(
-        aGUIEvent, aEventStatus, true, eventTargetData.mOverrideClickTarget);
-#ifdef DEBUG
-    eventTargetData.mPresShell->ShowEventTargetDebug();
-#endif
-    eventTargetData.mPresShell->PopCurrentEventInfo();
-    return rv;
+    return HandleEventUsingCoordinates(aFrame, aGUIEvent, aEventStatus,
+                                       aDontRetargetEvents);
   }
 
-  nsresult rv = NS_OK;
-
-  if (aFrame) {
-    PushCurrentEventInfo(nullptr, nullptr);
-
-    // key and IME related events go to the focused frame in this DOM window.
-    if (aGUIEvent->IsTargetedAtFocusedContent()) {
-      mPresShell->mCurrentEventContent = nullptr;
-
-      nsCOMPtr<nsPIDOMWindowOuter> window = GetDocument()->GetWindow();
-      nsCOMPtr<nsPIDOMWindowOuter> focusedWindow;
-      nsCOMPtr<nsIContent> eventTarget = nsFocusManager::GetFocusedDescendant(
-          window, nsFocusManager::eOnlyCurrentWindow,
-          getter_AddRefs(focusedWindow));
-
-      // otherwise, if there is no focused content or the focused content has
-      // no frame, just use the root content. This ensures that key events
-      // still get sent to the window properly if nothing is focused or if a
-      // frame goes away while it is focused.
-      if (!eventTarget || !eventTarget->GetPrimaryFrame()) {
-        eventTarget = GetDocument()->GetUnfocusedKeyEventTarget();
-      }
-
-      if (aGUIEvent->mMessage == eKeyDown) {
-        NS_IF_RELEASE(nsIPresShell::gKeyDownTarget);
-        NS_IF_ADDREF(nsIPresShell::gKeyDownTarget = eventTarget);
-      } else if ((aGUIEvent->mMessage == eKeyPress ||
-                  aGUIEvent->mMessage == eKeyUp) &&
-                 nsIPresShell::gKeyDownTarget) {
-        // If a different element is now focused for the keypress/keyup event
-        // than what was focused during the keydown event, check if the new
-        // focused element is not in a chrome document any more, and if so,
-        // retarget the event back at the keydown target. This prevents a
-        // content area from grabbing the focus from chrome in-between key
-        // events.
-        if (eventTarget) {
-          bool keyDownIsChrome = nsContentUtils::IsChromeDoc(
-              nsIPresShell::gKeyDownTarget->GetComposedDoc());
-          if (keyDownIsChrome !=
-                  nsContentUtils::IsChromeDoc(eventTarget->GetComposedDoc()) ||
-              (keyDownIsChrome && TabParent::GetFrom(eventTarget))) {
-            eventTarget = nsIPresShell::gKeyDownTarget;
-          }
-        }
-
-        if (aGUIEvent->mMessage == eKeyUp) {
-          NS_RELEASE(nsIPresShell::gKeyDownTarget);
-        }
-      }
-
-      mPresShell->mCurrentEventFrame = nullptr;
-      Document* targetDoc = eventTarget ? eventTarget->OwnerDoc() : nullptr;
-      if (targetDoc && targetDoc != GetDocument()) {
-        PopCurrentEventInfo();
-        nsCOMPtr<nsIPresShell> shell = targetDoc->GetShell();
-        if (shell) {
-          rv =
-              static_cast<PresShell*>(shell.get())
-                  ->HandleRetargetedEvent(aGUIEvent, aEventStatus, eventTarget);
-        }
-        return rv;
-      } else {
-        mPresShell->mCurrentEventContent = eventTarget;
-      }
-
-      if (!mPresShell->GetCurrentEventContent() ||
-          !mPresShell->GetCurrentEventFrame() ||
-          InZombieDocument(mPresShell->mCurrentEventContent)) {
-        rv = RetargetEventToParent(aGUIEvent, aEventStatus);
-        PopCurrentEventInfo();
-        return rv;
-      }
-    } else {
-      mPresShell->mCurrentEventFrame = aFrame;
-    }
-    if (mPresShell->GetCurrentEventFrame()) {
-      nsCOMPtr<nsIContent> overrideClickTarget;  // Required due to bug  1506439
-      rv = HandleEventInternal(aGUIEvent, aEventStatus, true,
-                               overrideClickTarget);
-    }
-
-#ifdef DEBUG
-    mPresShell->ShowEventTargetDebug();
-#endif
-    PopCurrentEventInfo();
-  } else {
-    // Activation events need to be dispatched even if no frame was found, since
-    // we don't want the focus to be out of sync.
-
+  // Activation events need to be dispatched even if no frame was found, since
+  // we don't want the focus to be out of sync.
+  if (!aFrame) {
     if (!NS_EVENT_NEEDS_FRAME(aGUIEvent)) {
       mPresShell->mCurrentEventFrame = nullptr;
       nsCOMPtr<nsIContent> overrideClickTarget;  // Required due to bug  1506439
       return HandleEventInternal(aGUIEvent, aEventStatus, true,
                                  overrideClickTarget);
-    } else if (aGUIEvent->HasKeyEventMessage()) {
+    }
+
+    if (aGUIEvent->HasKeyEventMessage()) {
       // Keypress events in new blank tabs should not be completely thrown away.
       // Retarget them -- the parent chrome shell might make use of them.
       return RetargetEventToParent(aGUIEvent, aEventStatus);
     }
+
+    return NS_OK;
   }
 
+  nsresult rv = NS_OK;
+
+  AutoCurrentEventInfoSetter eventInfoSetter(*this);
+
+  if (aGUIEvent->IsTargetedAtFocusedContent()) {
+    mPresShell->mCurrentEventContent = nullptr;
+
+    RefPtr<Element> eventTargetElement =
+        ComputeFocusedEventTargetElement(aGUIEvent);
+
+    mPresShell->mCurrentEventFrame = nullptr;
+    Document* targetDoc =
+        eventTargetElement ? eventTargetElement->OwnerDoc() : nullptr;
+    if (targetDoc && targetDoc != GetDocument()) {
+      nsCOMPtr<nsIPresShell> shell = targetDoc->GetShell();
+      if (shell) {
+        rv = static_cast<PresShell*>(shell.get())
+                 ->HandleRetargetedEvent(aGUIEvent, aEventStatus,
+                                         eventTargetElement);
+      }
+      return rv;
+    } else {
+      mPresShell->mCurrentEventContent = eventTargetElement;
+    }
+
+    if (!mPresShell->GetCurrentEventContent() ||
+        !mPresShell->GetCurrentEventFrame() ||
+        InZombieDocument(mPresShell->mCurrentEventContent)) {
+      rv = RetargetEventToParent(aGUIEvent, aEventStatus);
+      return rv;
+    }
+  } else {
+    mPresShell->mCurrentEventFrame = aFrame;
+  }
+  if (mPresShell->GetCurrentEventFrame()) {
+    nsCOMPtr<nsIContent> overrideClickTarget;  // Required due to bug  1506439
+    rv =
+        HandleEventInternal(aGUIEvent, aEventStatus, true, overrideClickTarget);
+  }
+
+#ifdef DEBUG
+  mPresShell->ShowEventTargetDebug();
+#endif
+
+  return rv;
+}
+
+nsresult PresShell::EventHandler::HandleEventUsingCoordinates(
+    nsIFrame* aFrameForPresShell, WidgetGUIEvent* aGUIEvent,
+    nsEventStatus* aEventStatus, bool aDontRetargetEvents) {
+  MOZ_ASSERT(aGUIEvent);
+  MOZ_ASSERT(aGUIEvent->IsUsingCoordinates());
+  MOZ_ASSERT(aEventStatus);
+
+  // Flush pending notifications to handle the event with the latest layout.
+  // But if it causes destroying the frame for mPresShell, stop handling the
+  // event. (why?)
+  AutoWeakFrame weakFrame(aFrameForPresShell);
+  MaybeFlushPendingNotifications(aGUIEvent);
+  if (!weakFrame.IsAlive()) {
+    *aEventStatus = nsEventStatus_eIgnore;
+    return NS_OK;
+  }
+
+  // XXX Retrieving capturing content here.  However, some of the following
+  //     methods allow to run script.  So, isn't it possible the capturing
+  //     content outdated?
+  nsCOMPtr<nsIContent> capturingContent =
+      EventHandler::GetCapturingContentFor(aGUIEvent);
+
+  if (GetDocument() && aGUIEvent->mClass == eTouchEventClass) {
+    Document::UnlockPointer();
+  }
+
+  nsIFrame* frameForPresShell = MaybeFlushThrottledStyles(aFrameForPresShell);
+  if (NS_WARN_IF(!frameForPresShell)) {
+    return NS_OK;
+  }
+
+  bool isCapturingContentIgnored = false;
+  bool isCaptureRetargeted = false;
+  nsIFrame* rootFrameToHandleEvent = ComputeRootFrameToHandleEvent(
+      frameForPresShell, aGUIEvent, capturingContent,
+      &isCapturingContentIgnored, &isCaptureRetargeted);
+  if (isCapturingContentIgnored) {
+    capturingContent = nullptr;
+  }
+
+  // The order to generate pointer event is
+  // 1. check pending pointer capture.
+  // 2. check if there is a capturing content.
+  // 3. hit test
+  // 4. dispatch pointer events
+  // 5. check whether the targets of all Touch instances are in the same
+  //    document and suppress invalid instances.
+  // 6. dispatch mouse or touch events.
+
+  // Try to keep frame for following check, because frame can be damaged
+  // during MaybeProcessPointerCapture.
+  {
+    AutoWeakFrame frameKeeper(rootFrameToHandleEvent);
+    PointerEventHandler::MaybeProcessPointerCapture(aGUIEvent);
+    // Prevent application crashes, in case damaged frame.
+    if (!frameKeeper.IsAlive()) {
+      NS_WARNING("Nothing to handle this event!");
+      return NS_OK;
+    }
+  }
+
+  // Only capture mouse events and pointer events.
+  nsCOMPtr<nsIContent> pointerCapturingContent =
+      PointerEventHandler::GetPointerCapturingContent(aGUIEvent);
+
+  if (pointerCapturingContent) {
+    rootFrameToHandleEvent = pointerCapturingContent->GetPrimaryFrame();
+    if (!rootFrameToHandleEvent) {
+      return HandleEventWithPointerCapturingContentWithoutItsFrame(
+          aFrameForPresShell, aGUIEvent, pointerCapturingContent, aEventStatus);
+    }
+  }
+
+  WidgetMouseEvent* mouseEvent = aGUIEvent->AsMouseEvent();
+  bool isWindowLevelMouseExit =
+      (aGUIEvent->mMessage == eMouseExitFromWidget) &&
+      (mouseEvent && mouseEvent->mExitFrom == WidgetMouseEvent::eTopLevel);
+
+  // Get the frame at the event point. However, don't do this if we're
+  // capturing and retargeting the event because the captured frame will
+  // be used instead below. Also keep using the root frame if we're dealing
+  // with a window-level mouse exit event since we want to start sending
+  // mouse out events at the root EventStateManager.
+  EventTargetData eventTargetData(mPresShell, rootFrameToHandleEvent);
+  if (!isCaptureRetargeted && !isWindowLevelMouseExit &&
+      !pointerCapturingContent) {
+    if (!ComputeEventTargetFrameAndPresShellAtEventPoint(
+            rootFrameToHandleEvent, aGUIEvent, &eventTargetData)) {
+      *aEventStatus = nsEventStatus_eIgnore;
+      return NS_OK;
+    }
+  }
+
+  // if a node is capturing the mouse, check if the event needs to be
+  // retargeted at the capturing content instead. This will be the case when
+  // capture retargeting is being used, no frame was found or the frame's
+  // content is not a descendant of the capturing content.
+  if (capturingContent && !pointerCapturingContent &&
+      (gCaptureInfo.mRetargetToElement ||
+       !eventTargetData.mFrame->GetContent() ||
+       !nsContentUtils::ContentIsCrossDocDescendantOf(
+           eventTargetData.mFrame->GetContent(), capturingContent))) {
+    // A check was already done above to ensure that capturingContent is
+    // in this presshell.
+    NS_ASSERTION(capturingContent->GetComposedDoc() == GetDocument(),
+                 "Unexpected document");
+    nsIFrame* capturingFrame = capturingContent->GetPrimaryFrame();
+    if (capturingFrame) {
+      eventTargetData.SetFrameAndComputePresShell(capturingFrame);
+    }
+  }
+
+  if (NS_WARN_IF(!eventTargetData.mFrame)) {
+    return NS_OK;
+  }
+
+  // Suppress mouse event if it's being targeted at an element inside
+  // a document which needs events suppressed
+  if (MaybeDiscardOrDelayMouseEvent(eventTargetData.mFrame, aGUIEvent)) {
+    return NS_OK;
+  }
+
+  // Check if we have an active EventStateManager which isn't the
+  // EventStateManager of the current PresContext.  If that is the case, and
+  // mouse is over some ancestor document, forward event handling to the
+  // active document.  This way content can get mouse events even when mouse
+  // is over the chrome or outside the window.
+  if (eventTargetData.MaybeRetargetToActiveDocument(aGUIEvent) &&
+      NS_WARN_IF(!eventTargetData.mFrame)) {
+    return NS_OK;
+  }
+
+  if (!eventTargetData.ComputeElementFromFrame(aGUIEvent)) {
+    return NS_OK;
+  }
+  // Note that even if ComputeElementFromFrame() returns true,
+  // eventTargetData.mContent can be nullptr here.
+
+  // Dispatch a pointer event if Pointer Events is enabled.  Note that if
+  // pointer event listeners change the layout, eventTargetData is
+  // automatically updated.
+  if (!DispatchPrecedingPointerEvent(
+          aFrameForPresShell, aGUIEvent, pointerCapturingContent,
+          aDontRetargetEvents, &eventTargetData, aEventStatus)) {
+    return NS_OK;
+  }
+
+  // frame could be null after dispatching pointer events.
+  // XXX Despite of this comment, we update the event target data outside
+  //     DispatchPrecedingPointerEvent().  Can we make it call
+  //     UpdateTouchEventTarget()?
+  eventTargetData.UpdateTouchEventTarget(aGUIEvent);
+
+  // Handle the event in the correct shell.
+  // We pass the subshell's root frame as the frame to start from. This is
+  // the only correct alternative; if the event was captured then it
+  // must have been captured by us or some ancestor shell and we
+  // now ask the subshell to dispatch it normally.
+  EventHandler eventHandler(*eventTargetData.mPresShell);
+  AutoCurrentEventInfoSetter eventInfoSetter(eventHandler, eventTargetData);
+  nsresult rv = eventHandler.HandleEventInternal(
+      aGUIEvent, aEventStatus, true, eventTargetData.mOverrideClickTarget);
+#ifdef DEBUG
+  eventTargetData.mPresShell->ShowEventTargetDebug();
+#endif
   return rv;
 }
 
@@ -6942,6 +6849,89 @@ bool PresShell::EventHandler::ComputeEventTargetFrameAndPresShellAtEventPoint(
       GetFrameToHandleNonTouchEvent(aRootFrameToHandleEvent, aGUIEvent);
   aEventTargetData->SetFrameAndComputePresShell(targetFrame);
   return !!aEventTargetData->mFrame;
+}
+
+bool PresShell::EventHandler::DispatchPrecedingPointerEvent(
+    nsIFrame* aFrameForPresShell, WidgetGUIEvent* aGUIEvent,
+    nsIContent* aPointerCapturingContent, bool aDontRetargetEvents,
+    EventTargetData* aEventTargetData, nsEventStatus* aEventStatus) {
+  MOZ_ASSERT(aFrameForPresShell);
+  MOZ_ASSERT(aGUIEvent);
+  MOZ_ASSERT(aEventTargetData);
+  MOZ_ASSERT(aEventStatus);
+
+  if (!PointerEventHandler::IsPointerEventEnabled()) {
+    return true;
+  }
+
+  // Dispatch pointer events from the mouse or touch events. Regarding
+  // pointer events from mouse, we should dispatch those pointer events to
+  // the same target as the source mouse events. We pass the frame found
+  // in hit test to PointerEventHandler and dispatch pointer events to it.
+  //
+  // Regarding pointer events from touch, the behavior is different. Touch
+  // events are dispatched to the same target as the target of touchstart.
+  // Multiple touch points must be dispatched to the same document. Pointer
+  // events from touch can be dispatched to different documents. We Pass the
+  // original frame to PointerEventHandler, reentry PresShell::HandleEvent,
+  // and do hit test for each point.
+  nsIFrame* targetFrame = aGUIEvent->mClass == eTouchEventClass
+                              ? aFrameForPresShell
+                              : aEventTargetData->mFrame;
+
+  if (aPointerCapturingContent) {
+    aEventTargetData->mOverrideClickTarget =
+        GetOverrideClickTarget(aGUIEvent, aFrameForPresShell);
+    aEventTargetData->mPresShell =
+        PresShell::GetShellForEventTarget(nullptr, aPointerCapturingContent);
+    if (!aEventTargetData->mPresShell) {
+      // If we can't process event for the capturing content, release
+      // the capture.
+      PointerEventHandler::ReleaseIfCaptureByDescendant(
+          aPointerCapturingContent);
+      return false;
+    }
+
+    targetFrame = aPointerCapturingContent->GetPrimaryFrame();
+    aEventTargetData->mFrame = targetFrame;
+  }
+
+  AutoWeakFrame weakTargetFrame(targetFrame);
+  AutoWeakFrame weakFrame(aEventTargetData->mFrame);
+  nsCOMPtr<nsIContent> targetContent;
+  PointerEventHandler::DispatchPointerFromMouseOrTouch(
+      aEventTargetData->mPresShell, aEventTargetData->mFrame,
+      aEventTargetData->mContent, aGUIEvent, aDontRetargetEvents, aEventStatus,
+      getter_AddRefs(targetContent));
+
+  // If the target frame is alive, the caller should keep handling the event
+  // unless event target frame is destroyed.
+  if (weakTargetFrame.IsAlive()) {
+    return weakFrame.IsAlive();
+  }
+
+  // If the event is not a mouse event, the caller should keep handling the
+  // event unless event target frame is destroyed.  Note that this case is
+  // not defined by the spec.
+  if (aGUIEvent->mClass != eMouseEventClass) {
+    return weakFrame.IsAlive();
+  }
+
+  // Spec defines that mouse events must be dispatched to the same target as
+  // the pointer event. If the target is no longer participating in its
+  // ownerDocument's tree, fire the event at the original target's nearest
+  // ancestor node
+  if (!targetContent) {
+    return false;
+  }
+
+  // XXX Why don't we reset aEventTargetData->mContent here?
+  aEventTargetData->mFrame = targetContent->GetPrimaryFrame();
+  aEventTargetData->mPresShell = PresShell::GetShellForEventTarget(
+      aEventTargetData->mFrame, targetContent);
+
+  // If new target PresShel is not found, we cannot keep handling the event.
+  return !!aEventTargetData->mPresShell;
 }
 
 bool PresShell::EventHandler::MaybeHandleEventWithAccessibleCaret(
@@ -7468,6 +7458,60 @@ PresShell::EventHandler::HandleEventWithPointerCapturingContentWithoutItsFrame(
       overrideClickTarget);
 }
 
+Element* PresShell::EventHandler::ComputeFocusedEventTargetElement(
+    WidgetGUIEvent* aGUIEvent) {
+  MOZ_ASSERT(aGUIEvent);
+  MOZ_ASSERT(aGUIEvent->IsTargetedAtFocusedContent());
+
+  // key and IME related events go to the focused frame in this DOM window.
+  nsPIDOMWindowOuter* window = GetDocument()->GetWindow();
+  nsCOMPtr<nsPIDOMWindowOuter> focusedWindow;
+  Element* eventTargetElement = nsFocusManager::GetFocusedDescendant(
+      window, nsFocusManager::eOnlyCurrentWindow,
+      getter_AddRefs(focusedWindow));
+
+  // otherwise, if there is no focused content or the focused content has
+  // no frame, just use the root content. This ensures that key events
+  // still get sent to the window properly if nothing is focused or if a
+  // frame goes away while it is focused.
+  if (!eventTargetElement || !eventTargetElement->GetPrimaryFrame()) {
+    eventTargetElement = GetDocument()->GetUnfocusedKeyEventTarget();
+  }
+
+  switch (aGUIEvent->mMessage) {
+    case eKeyDown:
+      sLastKeyDownEventTargetElement = eventTargetElement;
+      return eventTargetElement;
+    case eKeyPress:
+    case eKeyUp:
+      if (!sLastKeyDownEventTargetElement) {
+        return eventTargetElement;
+      }
+      // If a different element is now focused for the keypress/keyup event
+      // than what was focused during the keydown event, check if the new
+      // focused element is not in a chrome document any more, and if so,
+      // retarget the event back at the keydown target. This prevents a
+      // content area from grabbing the focus from chrome in-between key
+      // events.
+      if (eventTargetElement) {
+        bool keyDownIsChrome = nsContentUtils::IsChromeDoc(
+            sLastKeyDownEventTargetElement->GetComposedDoc());
+        if (keyDownIsChrome != nsContentUtils::IsChromeDoc(
+                                   eventTargetElement->GetComposedDoc()) ||
+            (keyDownIsChrome && TabParent::GetFrom(eventTargetElement))) {
+          eventTargetElement = sLastKeyDownEventTargetElement;
+        }
+      }
+
+      if (aGUIEvent->mMessage == eKeyUp) {
+        sLastKeyDownEventTargetElement = nullptr;
+      }
+      MOZ_FALLTHROUGH;
+    default:
+      return eventTargetElement;
+  }
+}
+
 Document* PresShell::GetPrimaryContentDocument() {
   nsPresContext* context = GetPresContext();
   if (!context || !context->IsRoot()) {
@@ -7528,10 +7572,10 @@ nsresult PresShell::EventHandler::HandleEventWithTarget(
                   aNewEventContent->GetComposedDoc() == GetDocument());
   AutoPointerEventTargetUpdater updater(mPresShell, aEvent, aNewEventFrame,
                                         aTargetContent);
-  PushCurrentEventInfo(aNewEventFrame, aNewEventContent);
+  AutoCurrentEventInfoSetter eventInfoSetter(*this, aNewEventFrame,
+                                             aNewEventContent);
   nsresult rv =
       HandleEventInternal(aEvent, aEventStatus, false, aOverrideClickTarget);
-  PopCurrentEventInfo();
   return rv;
 }
 
@@ -8087,6 +8131,9 @@ void PresShell::EventHandler::DispatchTouchEventToDOM(
 
     nsPresContext* context = doc->GetPresContext();
     if (!context) {
+      if (contentPresShell) {
+        contentPresShell->PopCurrentEventInfo();
+      }
       continue;
     }
 
@@ -10833,4 +10880,33 @@ bool PresShell::EventHandler::EventTargetData::ComputeElementFromFrame(
 
   // If we found an element, target it.  Otherwise, target *nothing*.
   return !!mContent;
+}
+
+void PresShell::EventHandler::EventTargetData::UpdateTouchEventTarget(
+    WidgetGUIEvent* aGUIEvent) {
+  MOZ_ASSERT(aGUIEvent);
+
+  if (aGUIEvent->mClass != eTouchEventClass) {
+    return;
+  }
+
+  if (aGUIEvent->mMessage == eTouchStart) {
+    WidgetTouchEvent* touchEvent = aGUIEvent->AsTouchEvent();
+    nsIFrame* newFrame =
+        TouchManager::SuppressInvalidPointsAndGetTargetedFrame(touchEvent);
+    if (!newFrame) {
+      return;  // XXX Why don't we stop handling the event in this case?
+    }
+    SetFrameAndComputePresShellAndContent(newFrame, aGUIEvent);
+    return;
+  }
+
+  PresShell* newPresShell = PresShell::GetShellForTouchEvent(aGUIEvent);
+  if (!newPresShell) {
+    return;  // XXX Why don't we stop handling the event in this case?
+  }
+
+  // Touch events (except touchstart) are dispatching to the captured
+  // element. Get correct shell from it.
+  mPresShell = newPresShell;
 }

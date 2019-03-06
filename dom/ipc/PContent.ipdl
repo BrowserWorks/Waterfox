@@ -240,9 +240,11 @@ struct JSWindowActorEventDecl
 struct JSWindowActorInfo
 {
   nsString name;
+  bool allFrames;
   nsCString url;
 
   JSWindowActorEventDecl[] events;
+  nsCString[] observers;
 };
 
 struct GMPAPITags
@@ -772,7 +774,7 @@ child:
     async CrossProcessRedirect(uint32_t aRegistrarId,
                                nsIURI aURI,
                                uint32_t aNewLoadFlags,
-                               OptionalLoadInfoArgs aLoadInfo,
+                               LoadInfoArgs? aLoadInfo,
                                uint64_t aChannelId,
                                nsIURI aOriginalURI,
                                uint64_t aIdentifier);
@@ -900,7 +902,7 @@ parent:
     async PPSMContentDownloader(uint32_t aCertType);
 
     async PExternalHelperApp(OptionalURIParams uri,
-                             OptionalLoadInfoArgs loadInfoArgs,
+                             LoadInfoArgs? loadInfoArgs,
                              nsCString aMimeContentType,
                              nsCString aContentDisposition,
                              uint32_t aContentDispositionHint,

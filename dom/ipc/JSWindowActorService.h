@@ -40,9 +40,11 @@ class JSWindowActorService final {
   // This method will not initialize the actor or set its manager,
   // which is handled by callers.
   void ConstructActor(const nsAString& aName, bool aParentSide,
+                      BrowsingContext* aBrowsingContext,
                       JS::MutableHandleObject aActor, ErrorResult& aRv);
 
-  void ReceiveMessage(JS::RootedObject& aObj, const nsString& aMessageName,
+  void ReceiveMessage(nsISupports* aActor, JS::RootedObject& aObj,
+                      const nsString& aMessageName,
                       ipc::StructuredCloneData& aData);
 
   // Register or unregister a WindowRoot object from this JSWindowActorService.

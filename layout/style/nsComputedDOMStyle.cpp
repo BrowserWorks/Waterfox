@@ -2012,14 +2012,25 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetInitialLetter() {
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetLineHeight() {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
-  nscoord lineHeight;
-  if (GetLineHeightCoord(lineHeight)) {
-    val->SetAppUnits(lineHeight);
-  } else {
-    SetValueToCoord(val, StyleText()->mLineHeight, true, nullptr,
-                    nsCSSProps::kLineHeightKTable);
+  {
+    nscoord lineHeight;
+    if (GetLineHeightCoord(lineHeight)) {
+      val->SetAppUnits(lineHeight);
+      return val.forget();
+    }
   }
 
+  auto& lh = StyleText()->mLineHeight;
+  if (lh.IsLength()) {
+    val->SetAppUnits(lh.length._0.ToAppUnits());
+  } else if (lh.IsNumber()) {
+    val->SetNumber(lh.number._0);
+  } else if (lh.IsMozBlockHeight()) {
+    val->SetIdent(eCSSKeyword__moz_block_height);
+  } else {
+    MOZ_ASSERT(lh.IsNormal());
+    val->SetIdent(eCSSKeyword_normal);
+  }
   return val.forget();
 }
 
@@ -2186,18 +2197,6 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetTextOverflow() {
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetTextShadow() {
   return GetCSSShadowArray(StyleText()->mTextShadow, false);
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetLetterSpacing() {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueToCoord(val, StyleText()->mLetterSpacing, false);
-  return val.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetWordSpacing() {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueToCoord(val, StyleText()->mWordSpacing, false);
-  return val.forget();
 }
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetWebkitTextStrokeWidth() {
@@ -2674,7 +2673,7 @@ bool nsComputedDOMStyle::GetLineHeightCoord(nscoord& aCoord) {
   AssertFlushedPendingReflows();
 
   nscoord blockHeight = NS_AUTOHEIGHT;
-  if (StyleText()->mLineHeight.GetUnit() == eStyleUnit_Enumerated) {
+  if (StyleText()->mLineHeight.IsMozBlockHeight()) {
     if (!mInnerFrame) return false;
 
     if (nsLayoutUtils::IsNonWrapperBlock(mInnerFrame)) {
@@ -3195,56 +3194,6 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetMarkerStart() {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   SetValueToURLValue(StyleSVG()->mMarkerStart, val);
 
-  return val.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetStrokeDasharray() {
-  const nsStyleSVG* svg = StyleSVG();
-
-  if (svg->mStrokeDasharray.IsEmpty()) {
-    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    val->SetIdent(eCSSKeyword_none);
-    return val.forget();
-  }
-
-  RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
-
-  for (uint32_t i = 0; i < svg->mStrokeDasharray.Length(); i++) {
-    RefPtr<nsROCSSPrimitiveValue> dash = new nsROCSSPrimitiveValue;
-    SetValueToCoord(dash, svg->mStrokeDasharray[i], true);
-    valueList->AppendCSSValue(dash.forget());
-  }
-
-  return valueList.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetStrokeDashoffset() {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueToCoord(val, StyleSVG()->mStrokeDashoffset, false);
-  return val.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetStrokeWidth() {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueToCoord(val, StyleSVG()->mStrokeWidth, true);
-  return val.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetFillOpacity() {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  val->SetNumber(StyleSVG()->mFillOpacity);
-  return val.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetStrokeMiterlimit() {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  val->SetNumber(StyleSVG()->mStrokeMiterlimit);
-  return val.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetStrokeOpacity() {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  val->SetNumber(StyleSVG()->mStrokeOpacity);
   return val.forget();
 }
 

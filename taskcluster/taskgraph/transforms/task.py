@@ -36,7 +36,7 @@ from taskgraph.util.scriptworker import (
     add_scope_prefix,
 )
 from taskgraph.util.signed_artifacts import get_signed_artifacts
-from voluptuous import Any, Required, Optional, Extra
+from voluptuous import Any, Required, Optional, Extra, Match
 from taskgraph import GECKO, MAX_DEPENDENCIES
 from ..util import docker as dockerutil
 
@@ -67,6 +67,9 @@ task_description_schema = Schema({
     # verbatim and subject to the interpretation of the Task's get_dependencies
     # method.
     Optional('dependencies'): {basestring: object},
+
+    # Soft dependencies of this task, as a list of tasks labels
+    Optional('soft-dependencies'): [basestring],
 
     Optional('requires'): Any('all-completed', 'all-resolved'),
 
@@ -109,7 +112,7 @@ task_description_schema = Schema({
         # task platform, in the form platform/collection, used to set
         # treeherder.machine.platform and treeherder.collection or
         # treeherder.labels
-        'platform': basestring,
+        'platform': Match('^[A-Za-z0-9_-]{1,50}/[A-Za-z0-9_-]{1,50}$'),
     },
 
     # information for indexing this build so its artifacts can be discovered;
@@ -1771,6 +1774,7 @@ def build_task(config, tasks):
             'label': task['label'],
             'task': task_def,
             'dependencies': task.get('dependencies', {}),
+            'soft-dependencies': task.get('soft-dependencies', []),
             'attributes': attributes,
             'optimization': task.get('optimization', None),
             'release-artifacts': task.get('release-artifacts', []),

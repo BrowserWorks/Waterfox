@@ -697,7 +697,8 @@ void nsSVGUtils::PaintFrameWithEffects(nsIFrame* aFrame, gfxContext& aContext,
     // Since we only uses nsSVGUtils with SVG elements, not like mask on an
     // HTML element, we should treat an unresolvable mask as no-mask here.
     if (maskUsage.shouldGenerateMaskLayer && maskFrame) {
-      StyleMaskMode maskMode = aFrame->StyleSVGReset()->mMask.mLayers[0].mMaskMode;
+      StyleMaskMode maskMode =
+          aFrame->StyleSVGReset()->mMask.mLayers[0].mMaskMode;
       nsSVGMaskFrame::MaskParams params(&aContext, aFrame, aTransform,
                                         maskUsage.opacity, &maskTransform,
                                         maskMode, aImgParams);
@@ -1541,7 +1542,6 @@ float nsSVGUtils::GetStrokeWidth(nsIFrame* aFrame,
   }
 
   SVGElement* ctx = static_cast<SVGElement*>(content);
-
   return SVGContentUtils::CoordToFloat(ctx, style->mStrokeWidth);
 }
 

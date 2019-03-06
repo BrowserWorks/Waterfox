@@ -61,6 +61,12 @@ unit tests, source-code analysis, or measurement work. While source-test tasks r
 a source checkout, it is still possible for them to depend on a build artifact, though
 often they do not.
 
+code-review
+-----------
+
+Publish issues found by source-test tasks on Phabricator.
+This is a part of Release Management code review Bot.
+
 upload-symbols
 --------------
 
@@ -461,6 +467,10 @@ Mar-signing takes the complete update MARs and signs them.
 mar-signing-l10n
 ----------------
 Mar-signing-l10n takes the complete update MARs and signs them for localized versions.
+
+mar-signing-autograph-stage
+---------------------------
+These tasks are only to test autograph-stage, when the autograph team asks for their staging environment to be tested.
 
 repackage-msi
 -------------

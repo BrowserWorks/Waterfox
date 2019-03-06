@@ -53,7 +53,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   NetUtil: "resource://gre/modules/NetUtil.jsm",
   OS: "resource://gre/modules/osfile.jsm",
   PluralForm: "resource://gre/modules/PluralForm.jsm",
-  PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
   Schemas: "resource://gre/modules/Schemas.jsm",
   XPIProvider: "resource://gre/modules/addons/XPIProvider.jsm",
 });
@@ -1906,15 +1905,11 @@ class Extension extends ExtensionData {
         return;
       }
 
-      // We automatically add permissions to some extensions:
-      // 1. system/built-in extensions
-      // 2. all extensions when in permanent private browsing
-      //
+      // We automatically add permissions to system/built-in extensions.
       // Extensions expliticy stating not_allowed will never get permission.
       if (!allowPrivateBrowsingByDefault && this.manifest.incognito !== "not_allowed" &&
           !this.permissions.has(PRIVATE_ALLOWED_PERMISSION)) {
-        if ((this.isPrivileged && !this.addonData.temporarilyInstalled) ||
-            (PrivateBrowsingUtils.permanentPrivateBrowsing && this.startupReason == "ADDON_INSTALL")) {
+        if (this.isPrivileged && !this.addonData.temporarilyInstalled) {
           // Add to EP so it is preserved after ADDON_INSTALL.  We don't wait on the add here
           // since we are pushing the value into this.permissions.  EP will eventually save.
           ExtensionPermissions.add(this.id, {permissions: [PRIVATE_ALLOWED_PERMISSION], origins: []});
@@ -1967,7 +1962,6 @@ class Extension extends ExtensionData {
 
       Management.emit("ready", this);
       this.emit("ready");
-      ExtensionTelemetry.extensionStartup.stopwatchFinish(this);
 
       this.state = "Startup: Complete";
     } catch (errors) {
@@ -1985,6 +1979,8 @@ class Extension extends ExtensionData {
       this.cleanupGeneratedFile();
 
       throw errors;
+    } finally {
+      ExtensionTelemetry.extensionStartup.stopwatchFinish(this);
     }
   }
 

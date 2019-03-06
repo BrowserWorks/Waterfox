@@ -383,6 +383,7 @@ class nsLayoutUtils {
    * table frame has been destroyed).
    */
   static nsIFrame* GetStyleFrame(nsIFrame* aPrimaryFrame);
+  static const nsIFrame* GetStyleFrame(const nsIFrame* aPrimaryFrame);
 
   /**
    * Given a content node,
@@ -391,6 +392,18 @@ class nsLayoutUtils {
    * This is aContent->GetPrimaryFrame() except for tableWrapper frames.
    */
   static nsIFrame* GetStyleFrame(const nsIContent* aContent);
+
+  /**
+   * The inverse of GetStyleFrame. Returns |aStyleFrame| unless it is an inner
+   * table frame, in which case the table wrapper frame is returned.
+   */
+  static nsIFrame* GetPrimaryFrameFromStyleFrame(nsIFrame* aStyleFrame);
+
+  /**
+   * Similar to nsIFrame::IsPrimaryFrame except that this will return true
+   * for the inner table frame rather than for its wrapper frame.
+   */
+  static bool IsPrimaryStyleFrame(const nsIFrame* aFrame);
 
   /**
    * Gets the real primary frame associated with the content object.

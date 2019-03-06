@@ -55,7 +55,7 @@ namespace mozilla {
 #ifdef __CLASS__
 #  undef __CLASS__
 #endif
-#define __CLASS__ "GMPService"
+#define __CLASS__ "GMPServiceParent"
 
 #define NS_DispatchToMainThread(...) CompileError_UseAbstractMainThreadInstead
 
@@ -1728,17 +1728,6 @@ mozilla::ipc::IPCResult GMPServiceParent::RecvGetGMPNodeId(
   }
   return IPC_OK();
 }
-
-class DeleteGMPServiceParent : public mozilla::Runnable {
- public:
-  explicit DeleteGMPServiceParent(GMPServiceParent* aToDelete)
-      : Runnable("gmp::DeleteGMPServiceParent"), mToDelete(aToDelete) {}
-
-  NS_IMETHOD Run() override { return NS_OK; }
-
- private:
-  nsAutoPtr<GMPServiceParent> mToDelete;
-};
 
 void GMPServiceParent::CloseTransport(Monitor* aSyncMonitor, bool* aCompleted) {
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());

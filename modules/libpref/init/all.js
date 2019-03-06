@@ -1448,7 +1448,6 @@ pref("privacy.resistFingerprinting.reduceTimerPrecision.jitter", true);
 
 pref("dom.event.contextmenu.enabled",       true);
 pref("dom.event.clipboardevents.enabled",   true);
-pref("dom.event.highrestimestamp.enabled",  true);
 pref("dom.event.coalesce_mouse_move",       true);
 
 pref("javascript.enabled",                  true);
@@ -5082,15 +5081,6 @@ pref("layers.prefer-opengl", false);
 // Copy-on-write canvas
 pref("layers.shared-buffer-provider.enabled", true);
 
-#ifdef XP_WIN
-pref("layers.shared-buffer-provider.enabled", false);
-#endif
-
-#ifdef XP_MACOSX
-// cf. Bug 1324908
-pref("layers.shared-buffer-provider.enabled", false);
-#endif
-
 // Force all possible layers to be always active layers
 pref("layers.force-active", false);
 
@@ -5332,10 +5322,6 @@ pref("memory.dump_reports_on_oom", false);
 
 // Number of stack frames to capture in createObjectURL for about:memory.
 pref("memory.blob_report.stack_frames", 0);
-
-// Disable idle observer fuzz, because only privileged content can access idle
-// observers (bug 780507).
-pref("dom.idle-observers-api.fuzz_time.disabled", true);
 
 // Activates the activity monitor
 pref("io.activity.enabled", false);

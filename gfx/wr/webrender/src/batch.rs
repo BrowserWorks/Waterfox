@@ -1072,12 +1072,19 @@ impl AlphaBatchBuilder {
 
                 match picture.raster_config {
                     Some(ref raster_config) => {
+                        // All pictures must snap to their primitive rect instead of the
+                        // visible rect like most primitives. This is because the picture's
+                        // visible rect includes the effect of the picture's clip rect,
+                        // which was not considered by the picture's children. The primitive
+                        // rect however is simply the union of the visible rect of the
+                        // children, which they snapped to, which is precisely what we also
+                        // need to snap to in order to be consistent.
+                        let mut brush_flags = BrushFlags::SNAP_TO_PRIMITIVE;
+
                         // If the child picture was rendered in local space, we can safely
                         // interpolate the UV coordinates with perspective correction.
-                        let brush_flags = if raster_config.establishes_raster_root {
-                            BrushFlags::PERSPECTIVE_INTERPOLATION
-                        } else {
-                            BrushFlags::empty()
+                        if raster_config.establishes_raster_root {
+                            brush_flags |= BrushFlags::PERSPECTIVE_INTERPOLATION;
                         };
 
                         match raster_config.composite_mode {
@@ -1464,7 +1471,7 @@ impl AlphaBatchBuilder {
                                     .expect("bug: surface must be allocated by now");
 
 
-                                let filter_data = &ctx.data_stores.filterdata[handle];
+                                let filter_data = &ctx.data_stores.filter_data[handle];
                                 let filter_mode : i32 = 13 |
                                     ((filter_data.data.r_func.to_int() << 28 |
                                       filter_data.data.g_func.to_int() << 24 |

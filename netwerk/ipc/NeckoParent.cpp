@@ -65,7 +65,6 @@ using mozilla::dom::TCPServerSocketParent;
 using mozilla::dom::TCPSocketParent;
 using mozilla::dom::UDPSocketParent;
 using mozilla::ipc::LoadInfoArgsToLoadInfo;
-using mozilla::ipc::OptionalPrincipalInfo;
 using mozilla::ipc::PrincipalInfo;
 using mozilla::net::PTCPServerSocketParent;
 using mozilla::net::PTCPSocketParent;
@@ -103,21 +102,20 @@ static PBOverrideStatus PBOverrideStatusFromLoadContext(
 }
 
 static already_AddRefed<nsIPrincipal> GetRequestingPrincipal(
-    const OptionalLoadInfoArgs& aOptionalLoadInfoArgs) {
-  if (aOptionalLoadInfoArgs.type() != OptionalLoadInfoArgs::TLoadInfoArgs) {
+    const Maybe<LoadInfoArgs>& aOptionalLoadInfoArgs) {
+  if (aOptionalLoadInfoArgs.isNothing()) {
     return nullptr;
   }
 
-  const LoadInfoArgs& loadInfoArgs = aOptionalLoadInfoArgs.get_LoadInfoArgs();
-  const OptionalPrincipalInfo& optionalPrincipalInfo =
+  const LoadInfoArgs& loadInfoArgs = aOptionalLoadInfoArgs.ref();
+  const Maybe<PrincipalInfo>& optionalPrincipalInfo =
       loadInfoArgs.requestingPrincipalInfo();
 
-  if (optionalPrincipalInfo.type() != OptionalPrincipalInfo::TPrincipalInfo) {
+  if (optionalPrincipalInfo.isNothing()) {
     return nullptr;
   }
 
-  const PrincipalInfo& principalInfo =
-      optionalPrincipalInfo.get_PrincipalInfo();
+  const PrincipalInfo& principalInfo = optionalPrincipalInfo.ref();
 
   return PrincipalInfoToPrincipal(principalInfo);
 }
@@ -357,7 +355,7 @@ PAltDataOutputStreamParent* NeckoParent::AllocPAltDataOutputStreamParent(
     const nsCString& type, const int64_t& predictedSize,
     PHttpChannelParent* channel) {
   HttpChannelParent* chan = static_cast<HttpChannelParent*>(channel);
-  nsCOMPtr<nsIOutputStream> stream;
+  nsCOMPtr<nsIAsyncOutputStream> stream;
   nsresult rv = chan->OpenAlternativeOutputStream(type, predictedSize,
                                                   getter_AddRefs(stream));
   AltDataOutputStreamParent* parent = new AltDataOutputStreamParent(stream);
@@ -909,15 +907,14 @@ mozilla::ipc::IPCResult NeckoParent::RecvGetExtensionFD(
 
 PTrackingDummyChannelParent* NeckoParent::AllocPTrackingDummyChannelParent(
     nsIURI* aURI, nsIURI* aTopWindowURI, const nsresult& aTopWindowURIResult,
-    const OptionalLoadInfoArgs& aLoadInfo) {
+    const Maybe<LoadInfoArgs>& aLoadInfo) {
   RefPtr<TrackingDummyChannelParent> c = new TrackingDummyChannelParent();
   return c.forget().take();
 }
 
 mozilla::ipc::IPCResult NeckoParent::RecvPTrackingDummyChannelConstructor(
     PTrackingDummyChannelParent* aActor, nsIURI* aURI, nsIURI* aTopWindowURI,
-    const nsresult& aTopWindowURIResult,
-    const OptionalLoadInfoArgs& aLoadInfo) {
+    const nsresult& aTopWindowURIResult, const Maybe<LoadInfoArgs>& aLoadInfo) {
   TrackingDummyChannelParent* p =
       static_cast<TrackingDummyChannelParent*>(aActor);
 

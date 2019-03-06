@@ -87,9 +87,11 @@ nsresult CallJSActorMethod(nsWrapperCache* aActor, const char* aName,
  * This object also can act as a carrier for methods and other state related to
  * a single protocol managed by the JSWindowActorService.
  */
-class JSWindowActorProtocol final : public nsIDOMEventListener {
+class JSWindowActorProtocol final : public nsIObserver,
+                                    public nsIDOMEventListener {
  public:
   NS_DECL_ISUPPORTS
+  NS_DECL_NSIOBSERVER
   NS_DECL_NSIDOMEVENTLISTENER
 
   static already_AddRefed<JSWindowActorProtocol> FromIPC(
@@ -114,14 +116,19 @@ class JSWindowActorProtocol final : public nsIDOMEventListener {
 
   struct ChildSide : public Sided {
     nsTArray<EventDecl> mEvents;
+    nsTArray<nsCString> mObservers;
   };
 
   const nsAString& Name() const { return mName; }
+  bool AllFrames() const { return mAllFrames; }
+  bool IncludeChrome() const { return mIncludeChrome; }
   const ParentSide& Parent() const { return mParent; }
   const ChildSide& Child() const { return mChild; }
 
   void RegisterListenersFor(EventTarget* aRoot);
   void UnregisterListenersFor(EventTarget* aRoot);
+  void AddObservers();
+  void RemoveObservers();
 
  private:
   explicit JSWindowActorProtocol(const nsAString& aName) : mName(aName) {}
@@ -129,17 +136,23 @@ class JSWindowActorProtocol final : public nsIDOMEventListener {
   ~JSWindowActorProtocol() = default;
 
   nsString mName;
+  bool mAllFrames = false;
+  bool mIncludeChrome = false;
   ParentSide mParent;
   ChildSide mChild;
 };
 
-NS_IMPL_ISUPPORTS(JSWindowActorProtocol, nsIDOMEventListener);
+NS_IMPL_ISUPPORTS(JSWindowActorProtocol, nsIObserver, nsIDOMEventListener);
 
 /* static */ already_AddRefed<JSWindowActorProtocol>
 JSWindowActorProtocol::FromIPC(const JSWindowActorInfo& aInfo) {
   MOZ_DIAGNOSTIC_ASSERT(XRE_IsContentProcess());
 
   RefPtr<JSWindowActorProtocol> proto = new JSWindowActorProtocol(aInfo.name());
+  // Content processes cannot load chrome browsing contexts, so this flag is
+  // irrelevant and not propagated.
+  proto->mIncludeChrome = false;
+  proto->mAllFrames = aInfo.allFrames();
   proto->mChild.mModuleURI.Assign(aInfo.url());
 
   proto->mChild.mEvents.SetCapacity(aInfo.events().Length());
@@ -154,6 +167,7 @@ JSWindowActorProtocol::FromIPC(const JSWindowActorInfo& aInfo) {
     }
   }
 
+  proto->mChild.mObservers = aInfo.observers();
   return proto.forget();
 }
 
@@ -162,6 +176,7 @@ JSWindowActorInfo JSWindowActorProtocol::ToIPC() {
 
   JSWindowActorInfo info;
   info.name() = mName;
+  info.allFrames() = mAllFrames;
   info.url() = mChild.mModuleURI;
 
   info.events().SetCapacity(mChild.mEvents.Length());
@@ -177,6 +192,7 @@ JSWindowActorInfo JSWindowActorProtocol::ToIPC() {
     }
   }
 
+  info.observers() = mChild.mObservers;
   return info;
 }
 
@@ -187,6 +203,8 @@ JSWindowActorProtocol::FromWebIDLOptions(const nsAString& aName,
   MOZ_DIAGNOSTIC_ASSERT(XRE_IsParentProcess());
 
   RefPtr<JSWindowActorProtocol> proto = new JSWindowActorProtocol(aName);
+  proto->mAllFrames = aOptions.mAllFrames;
+
   proto->mParent.mModuleURI = aOptions.mParent.mModuleURI;
   proto->mChild.mModuleURI = aOptions.mChild.mModuleURI;
 
@@ -219,6 +237,10 @@ JSWindowActorProtocol::FromWebIDLOptions(const nsAString& aName,
     }
   }
 
+  if (aOptions.mChild.mObservers.WasPassed()) {
+    proto->mChild.mObservers = aOptions.mChild.mObservers.Value();
+  }
+
   return proto.forget();
 }
 
@@ -248,13 +270,80 @@ NS_IMETHODIMP JSWindowActorProtocol::HandleEvent(Event* aEvent) {
   // Ensure our actor is present.
   ErrorResult error;
   RefPtr<JSWindowActorChild> actor = wgc->GetActor(mName, error);
-  if (NS_WARN_IF(error.Failed())) {
-    return error.StealNSResult();
+  if (error.Failed()) {
+    nsresult rv = error.StealNSResult();
+
+    // Don't raise an error if creation of our actor was vetoed.
+    if (rv == NS_ERROR_NOT_AVAILABLE) {
+      return NS_OK;
+    }
+    return rv;
   }
 
   // Call the "handleEvent" method on our actor.
   JS::Rooted<JS::Value> dummy(RootingCx());
   return CallJSActorMethod(actor, "handleEvent", aEvent, &dummy);
+}
+
+NS_IMETHODIMP JSWindowActorProtocol::Observe(nsISupports* aSubject,
+                                             const char* aTopic,
+                                             const char16_t* aData) {
+  nsCOMPtr<nsPIDOMWindowInner> inner = do_QueryInterface(aSubject);
+  if (NS_WARN_IF(!inner)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  RefPtr<WindowGlobalChild> wgc = inner->GetWindowGlobalChild();
+  if (NS_WARN_IF(!wgc)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // Ensure our actor is present.
+  ErrorResult error;
+  RefPtr<JSWindowActorChild> actor = wgc->GetActor(mName, error);
+  if (NS_WARN_IF(error.Failed())) {
+    return error.StealNSResult();
+  }
+
+  // Get the wrapper for our actor. If we don't have a wrapper, the target
+  // method won't be defined on it. so there's no reason to continue.
+  JS::Rooted<JSObject*> obj(RootingCx(), actor->GetWrapper());
+  if (NS_WARN_IF(!obj)) {
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
+  // Enter the realm of our actor object to begin running script.
+  AutoEntryScript aes(obj, "JSWindowActorProtocol::Observe");
+  JSContext* cx = aes.cx();
+  JSAutoRealm ar(cx, obj);
+
+  JS::AutoValueArray<3> argv(cx);
+  if (NS_WARN_IF(
+          !ToJSValue(cx, aSubject, argv[0]) ||
+          !NonVoidByteStringToJsval(cx, nsDependentCString(aTopic), argv[1]))) {
+    JS_ClearPendingException(cx);
+    return NS_ERROR_FAILURE;
+  }
+
+  // aData is an optional parameter.
+  if (aData) {
+    if (NS_WARN_IF(!ToJSValue(cx, nsDependentString(aData), argv[2]))) {
+      JS_ClearPendingException(cx);
+      return NS_ERROR_FAILURE;
+    }
+  } else {
+    argv[2].setNull();
+  }
+
+  // Call the "observe" method on our actor.
+  JS::Rooted<JS::Value> dummy(cx);
+  if (NS_WARN_IF(!JS_CallFunctionName(cx, obj, "observe",
+                                      JS::HandleValueArray(argv), &dummy))) {
+    JS_ClearPendingException(cx);
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
 }
 
 void JSWindowActorProtocol::RegisterListenersFor(EventTarget* aRoot) {
@@ -272,6 +361,24 @@ void JSWindowActorProtocol::UnregisterListenersFor(EventTarget* aRoot) {
   for (auto& event : mChild.mEvents) {
     elm->RemoveEventListenerByType(EventListenerHolder(this), event.mName,
                                    event.mFlags);
+  }
+}
+
+void JSWindowActorProtocol::AddObservers() {
+  nsCOMPtr<nsIObserverService> os = services::GetObserverService();
+  for (auto& topic : mChild.mObservers) {
+    // This makes the observer service hold an owning reference to the
+    // JSWindowActorProtocol. The JSWindowActorProtocol objects will be living
+    // for the full lifetime of the content process, thus the extra strong
+    // referencec doesn't have a negative impact.
+    os->AddObserver(this, topic.get(), false);
+  }
+}
+
+void JSWindowActorProtocol::RemoveObservers() {
+  nsCOMPtr<nsIObserverService> os = services::GetObserverService();
+  for (auto& topic : mChild.mObservers) {
+    os->RemoveObserver(this, topic.get());
   }
 }
 
@@ -323,6 +430,9 @@ void JSWindowActorService::RegisterWindowActor(
   for (EventTarget* root : mRoots) {
     proto->RegisterListenersFor(root);
   }
+
+  // Add observers to the protocol.
+  proto->AddObservers();
 }
 
 void JSWindowActorService::UnregisterWindowActor(const nsAString& aName) {
@@ -342,6 +452,9 @@ void JSWindowActorService::UnregisterWindowActor(const nsAString& aName) {
     for (EventTarget* root : mRoots) {
       proto->UnregisterListenersFor(root);
     }
+
+    // Remove observers for this actor from observer serivce.
+    proto->RemoveObservers();
   }
 }
 
@@ -360,6 +473,9 @@ void JSWindowActorService::LoadJSWindowActorInfos(
     for (EventTarget* root : mRoots) {
       proto->RegisterListenersFor(root);
     }
+
+    // Add observers for each actor.
+    proto->AddObservers();
   }
 }
 
@@ -375,6 +491,7 @@ void JSWindowActorService::GetJSWindowActorInfos(
 
 void JSWindowActorService::ConstructActor(const nsAString& aName,
                                           bool aParentSide,
+                                          BrowsingContext* aBrowsingContext,
                                           JS::MutableHandleObject aActor,
                                           ErrorResult& aRv) {
   MOZ_ASSERT_IF(aParentSide, XRE_IsParentProcess());
@@ -396,6 +513,18 @@ void JSWindowActorService::ConstructActor(const nsAString& aName,
     side = &proto->Parent();
   } else {
     side = &proto->Child();
+  }
+
+  // Check if our current BrowsingContext matches the requirements for this
+  // actor to load.
+  if (!proto->AllFrames() && aBrowsingContext->GetParent()) {
+    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
+    return;
+  }
+
+  if (!proto->IncludeChrome() && !aBrowsingContext->IsContent()) {
+    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
+    return;
   }
 
   // Load the module using mozJSComponentLoader.
@@ -428,7 +557,8 @@ void JSWindowActorService::ConstructActor(const nsAString& aName,
   }
 }
 
-void JSWindowActorService::ReceiveMessage(JS::RootedObject& aObj,
+void JSWindowActorService::ReceiveMessage(nsISupports* aTarget,
+                                          JS::RootedObject& aObj,
                                           const nsString& aMessageName,
                                           ipc::StructuredCloneData& aData) {
   IgnoredErrorResult error;
@@ -450,9 +580,12 @@ void JSWindowActorService::ReceiveMessage(JS::RootedObject& aObj,
 
   RootedDictionary<ReceiveMessageArgument> argument(cx);
   argument.mObjects = JS_NewPlainObject(cx);
+  argument.mTarget = aTarget;
   argument.mName = aMessageName;
   argument.mData = json;
   argument.mJson = json;
+  argument.mSync = false;
+
   JS::RootedValue argv(cx);
   if (NS_WARN_IF(!ToJSValue(cx, argument, &argv))) {
     return;

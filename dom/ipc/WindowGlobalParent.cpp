@@ -191,7 +191,7 @@ void WindowGlobalParent::HandleAsyncMessage(const nsString& aActorName,
     return;
   }
 
-  actorSvc->ReceiveMessage(obj, aMessageName, aData);
+  actorSvc->ReceiveMessage(actor, obj, aMessageName, aData);
 }
 
 already_AddRefed<JSWindowActorParent> WindowGlobalParent::GetActor(
@@ -209,7 +209,8 @@ already_AddRefed<JSWindowActorParent> WindowGlobalParent::GetActor(
   }
 
   JS::RootedObject obj(RootingCx());
-  actorSvc->ConstructActor(aName, /* aParentSide */ true, &obj, aRv);
+  actorSvc->ConstructActor(aName, /* aParentSide */ true, mBrowsingContext,
+                           &obj, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }

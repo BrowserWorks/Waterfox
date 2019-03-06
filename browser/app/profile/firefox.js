@@ -107,6 +107,11 @@ pref("app.update.altwindowtype", "Browser:About");
 
 // Enables some extra Application Update Logging (can reduce performance)
 pref("app.update.log", false);
+// Causes Application Update Logging to be sent to a file in the profile
+// directory. This preference is automatically disabled on application start to
+// prevent it from being left on accidentally. Turning this pref on enables
+// logging, even if app.update.log is false.
+pref("app.update.log.file", false);
 
 // The number of general background check failures to allow before notifying the
 // user of the failure. User initiated update checks always notify the user of
@@ -239,6 +244,10 @@ pref("browser.startup.blankWindow", true);
 #else
 pref("browser.startup.blankWindow", false);
 #endif
+
+// Don't create the hidden window during startup on
+// platforms that don't always need it (Win/Linux).
+pref("toolkit.lazyHiddenWindow", true);
 
 pref("browser.slowStartup.notificationDisabled", false);
 pref("browser.slowStartup.timeThreshold", 20000);

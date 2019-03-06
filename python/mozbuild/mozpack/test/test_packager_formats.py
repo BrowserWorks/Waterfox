@@ -23,7 +23,6 @@ from mozpack.chrome.manifest import (
     ManifestLocale,
 )
 from mozpack.errors import (
-    errors,
     ErrorMessage,
 )
 from mozpack.test.test_files import (
@@ -238,6 +237,11 @@ RESULT_OMNIJAR['omni.foo'].update({
     )
 })
 
+RESULT_OMNIJAR_WITH_SUBPATH = {
+    k.replace('omni.foo', 'bar/omni.foo'): v
+    for k, v in RESULT_OMNIJAR.items()
+}
+
 CONTENTS_WITH_BASE = {
     'bases': {
         mozpath.join('base/root', b) if b else 'base/root': a
@@ -259,6 +263,7 @@ EXTRA_CONTENTS = {
 
 CONTENTS_WITH_BASE['files'].update(EXTRA_CONTENTS)
 
+
 def result_with_base(results):
     result = {
         mozpath.join('base/root', p): v
@@ -266,6 +271,7 @@ def result_with_base(results):
     }
     result.update(EXTRA_CONTENTS)
     return result
+
 
 RESULT_FLAT_WITH_BASE = result_with_base(RESULT_FLAT)
 RESULT_JAR_WITH_BASE = result_with_base(RESULT_JAR)
@@ -367,6 +373,14 @@ class TestFormatters(TestErrors, unittest.TestCase):
         self.assertEqual(get_contents(registry), RESULT_OMNIJAR_WITH_BASE)
         self.do_test_contents(formatter, CONTENTS_WITH_BASE)
 
+    def test_omnijar_formatter_with_subpath(self):
+        registry = FileRegistry()
+        formatter = OmniJarFormatter(registry, 'bar/omni.foo')
+
+        fill_formatter(formatter, CONTENTS)
+        self.assertEqual(get_contents(registry), RESULT_OMNIJAR_WITH_SUBPATH)
+        self.do_test_contents(formatter, CONTENTS)
+
     def test_omnijar_is_resource(self):
         def is_resource(base, path):
             registry = FileRegistry()
@@ -434,8 +448,8 @@ class TestFormatters(TestErrors, unittest.TestCase):
             f.add_manifest(ManifestContent('chrome', 'foo', 'foo/'))
 
         self.assertEqual(e.exception.message,
-            'Error: "content foo foo/" overrides '
-            '"content foo foo/unix"')
+                         'Error: "content foo foo/" overrides '
+                         '"content foo foo/unix"')
 
         # Chrome with the same name and same flags overrides the previous
         # registration.
@@ -443,8 +457,8 @@ class TestFormatters(TestErrors, unittest.TestCase):
             f.add_manifest(ManifestContent('chrome', 'foo', 'foo/', 'os=WINNT'))
 
         self.assertEqual(e.exception.message,
-            'Error: "content foo foo/ os=WINNT" overrides '
-            '"content foo foo/win os=WINNT"')
+                         'Error: "content foo foo/ os=WINNT" overrides '
+                         '"content foo foo/win os=WINNT"')
 
         # We may start with the more specific entry first
         f.add_manifest(ManifestContent('chrome', 'bar', 'bar/win', 'os=WINNT'))
@@ -453,8 +467,8 @@ class TestFormatters(TestErrors, unittest.TestCase):
             f.add_manifest(ManifestContent('chrome', 'bar', 'bar/unix'))
 
         self.assertEqual(e.exception.message,
-            'Error: "content bar bar/unix" overrides '
-            '"content bar bar/win os=WINNT"')
+                         'Error: "content bar bar/unix" overrides '
+                         '"content bar bar/win os=WINNT"')
 
         # Adding something more specific still works.
         f.add_manifest(ManifestContent('chrome', 'bar', 'bar/win',
@@ -467,9 +481,9 @@ class TestFormatters(TestErrors, unittest.TestCase):
                                     'foo/skin/modern/'))
 
         f.add_manifest(ManifestLocale('chrome', 'foo', 'en-US',
-                                    'foo/locale/en-US/'))
+                                      'foo/locale/en-US/'))
         f.add_manifest(ManifestLocale('chrome', 'foo', 'ja-JP',
-                                    'foo/locale/ja-JP/'))
+                                      'foo/locale/ja-JP/'))
 
         # But same-skin/locale still error out.
         with self.assertRaises(ErrorMessage) as e:
@@ -477,16 +491,16 @@ class TestFormatters(TestErrors, unittest.TestCase):
                                         'foo/skin/classic/foo'))
 
         self.assertEqual(e.exception.message,
-            'Error: "skin foo classic/1.0 foo/skin/classic/foo" overrides '
-            '"skin foo classic/1.0 foo/skin/classic/"')
+                         'Error: "skin foo classic/1.0 foo/skin/classic/foo" overrides '
+                         '"skin foo classic/1.0 foo/skin/classic/"')
 
         with self.assertRaises(ErrorMessage) as e:
             f.add_manifest(ManifestLocale('chrome', 'foo', 'en-US',
-                                         'foo/locale/en-US/foo'))
+                                          'foo/locale/en-US/foo'))
 
         self.assertEqual(e.exception.message,
-            'Error: "locale foo en-US foo/locale/en-US/foo" overrides '
-            '"locale foo en-US foo/locale/en-US/"')
+                         'Error: "locale foo en-US foo/locale/en-US/foo" overrides '
+                         '"locale foo en-US foo/locale/en-US/"')
 
         # Duplicating existing manifest entries is not an error.
         f.add_manifest(ManifestContent('chrome', 'foo', 'foo/unix'))

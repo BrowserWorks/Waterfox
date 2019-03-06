@@ -829,12 +829,9 @@ void EventStateManager::NotifyTargetUserActivation(WidgetEvent* aEvent,
   }
 
   // Don't gesture activate for key events for keys which are likely
-  // to be interaction with the browser, OS, or likely to be scrolling.
+  // to be interaction with the browser, OS.
   WidgetKeyboardEvent* keyEvent = aEvent->AsKeyboardEvent();
-  if (keyEvent && (!keyEvent->PseudoCharCode() ||
-                   (keyEvent->IsControl() && !keyEvent->IsAltGraph()) ||
-                   (keyEvent->IsAlt() && !keyEvent->IsAltGraph()) ||
-                   keyEvent->IsMeta() || keyEvent->IsOS())) {
+  if (keyEvent && !keyEvent->CanUserGestureActivateTarget()) {
     return;
   }
 
@@ -1228,6 +1225,20 @@ void EventStateManager::DispatchCrossProcessEvent(WidgetEvent* aEvent,
   if (!remote) {
     return;
   }
+
+  if (aEvent->mLayersId.IsValid()) {
+    TabParent* preciseRemote =
+        TabParent::GetTabParentFromLayersId(aEvent->mLayersId);
+    if (preciseRemote) {
+      remote = preciseRemote;
+    }
+    // else there is a race between APZ and the LayersId to TabParent mapping,
+    // so fall back to delivering the event to the topmost child process.
+  }
+  // else if aEvent->mLayersId was not valid: APZ thinks a pointer
+  // event didn't hit anything but traditional targeting believed it
+  // belongs to a child process-backed frame loader. Dispatch to the
+  // top-level content process found by traditional targeting.
 
   switch (aEvent->mClass) {
     case eMouseEventClass: {

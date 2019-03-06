@@ -179,7 +179,7 @@ static DashState GetStrokeDashData(
       (i % 2 ? totalLengthOfGaps : totalLengthOfDashes) += dashSrc[i];
     }
   } else {
-    const nsTArray<nsStyleCoord>& dasharray = aStyleSVG->mStrokeDasharray;
+    const auto& dasharray = aStyleSVG->mStrokeDasharray;
     dashArrayLength = aStyleSVG->mStrokeDasharray.Length();
     if (dashArrayLength <= 0) {
       return eContinuousStroke;
@@ -764,24 +764,17 @@ bool SVGContentUtils::ParseInteger(const nsAString& aString, int32_t& aValue) {
 }
 
 float SVGContentUtils::CoordToFloat(SVGElement* aContent,
-                                    const nsStyleCoord& aCoord) {
-  switch (aCoord.GetUnit()) {
-    case eStyleUnit_Factor:
-      // user units
-      return aCoord.GetFactorValue();
-
-    case eStyleUnit_Coord:
-      return nsPresContext::AppUnitsToFloatCSSPixels(aCoord.GetCoordValue());
-
-    case eStyleUnit_Percent: {
-      SVGViewportElement* ctx = aContent->GetCtx();
-      return ctx ? aCoord.GetPercentValue() *
-                       ctx->GetLength(SVGContentUtils::XY)
-                 : 0.0f;
-    }
-    default:
-      return 0.0f;
+                                    const LengthPercentage& aLength) {
+  float result = aLength.ResolveToCSSPixelsWith([&] {
+    SVGViewportElement* ctx = aContent->GetCtx();
+    return CSSCoord(ctx ? ctx->GetLength(SVGContentUtils::XY) : 0.0f);
+  });
+  if (aLength.clamping_mode == StyleAllowedNumericType::NonNegative) {
+    result = std::max(result, 0.0f);
+  } else {
+    MOZ_ASSERT(aLength.clamping_mode == StyleAllowedNumericType::All);
   }
+  return result;
 }
 
 already_AddRefed<gfx::Path> SVGContentUtils::GetPath(

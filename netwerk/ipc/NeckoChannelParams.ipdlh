@@ -51,12 +51,12 @@ struct RedirectHistoryEntryInfo
 
 struct LoadInfoArgs
 {
-  OptionalPrincipalInfo       requestingPrincipalInfo;
+  PrincipalInfo?              requestingPrincipalInfo;
   PrincipalInfo               triggeringPrincipalInfo;
-  OptionalPrincipalInfo       principalToInheritInfo;
-  OptionalPrincipalInfo       sandboxedLoadingPrincipalInfo;
-  OptionalPrincipalInfo       topLevelPrincipalInfo;
-  OptionalPrincipalInfo       topLevelStorageAreaPrincipalInfo;
+  PrincipalInfo?              principalToInheritInfo;
+  PrincipalInfo?              sandboxedLoadingPrincipalInfo;
+  PrincipalInfo?              topLevelPrincipalInfo;
+  PrincipalInfo?              topLevelStorageAreaPrincipalInfo;
   OptionalURIParams           resultPrincipalURI;
   uint32_t                    securityFlags;
   uint32_t                    contentPolicyType;
@@ -125,15 +125,6 @@ struct LoadInfoArgs
   nsString                    cspNonce;
   bool                        isFromProcessingFrameAttributes;
   CrossOriginOpenerPolicy     openerPolicy;
-};
-
-/**
- * Not every channel necessarily has a loadInfo attached.
- */
-union OptionalLoadInfoArgs
-{
-  void_t;
-  LoadInfoArgs;
 };
 
 /**
@@ -244,7 +235,7 @@ struct HttpChannelOpenArgs
   bool                        allowAltSvc;
   bool                        beConservative;
   uint32_t                    tlsFlags;
-  OptionalLoadInfoArgs        loadInfo;
+  LoadInfoArgs?               loadInfo;
   OptionalHttpResponseHead    synthesizedResponseHead;
   nsCString                   synthesizedSecurityInfoSerialization;
   uint32_t                    cacheKey;
@@ -294,7 +285,7 @@ struct FTPChannelOpenArgs
   uint64_t                  startPos;
   nsCString                 entityID;
   IPCStream?                uploadStream;
-  OptionalLoadInfoArgs      loadInfo;
+  LoadInfoArgs?             loadInfo;
   uint32_t                  loadFlags;
 };
 

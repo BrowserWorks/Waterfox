@@ -67,6 +67,7 @@ use perf::PerfHarness;
 use png::save_flipped;
 use rawtest::RawtestHarness;
 use reftest::{ReftestHarness, ReftestOptions};
+use std::fs;
 #[cfg(feature = "headless")]
 use std::ffi::CString;
 #[cfg(feature = "headless")]
@@ -179,18 +180,18 @@ impl WindowWrapper {
         }
     }
 
-    fn get_inner_size(&self) -> DeviceIntSize {
-        fn inner_size(window: &winit::Window) -> DeviceIntSize {
+    fn get_inner_size(&self) -> FramebufferIntSize {
+        fn inner_size(window: &winit::Window) -> FramebufferIntSize {
             let size = window
                 .get_inner_size()
                 .unwrap()
                 .to_physical(window.get_hidpi_factor());
-            DeviceIntSize::new(size.width as i32, size.height as i32)
+            FramebufferIntSize::new(size.width as i32, size.height as i32)
         }
         match *self {
             WindowWrapper::Window(ref window, _) => inner_size(window.window()),
             WindowWrapper::Angle(ref window, ..) => inner_size(window),
-            WindowWrapper::Headless(ref context, _) => DeviceIntSize::new(context.width, context.height),
+            WindowWrapper::Headless(ref context, _) => FramebufferIntSize::new(context.width, context.height),
         }
     }
 
@@ -202,7 +203,7 @@ impl WindowWrapper {
         }
     }
 
-    fn resize(&mut self, size: DeviceIntSize) {
+    fn resize(&mut self, size: FramebufferIntSize) {
         match *self {
             WindowWrapper::Window(ref mut window, _) => {
                 window.set_inner_size(LogicalSize::new(size.width as f64, size.height as f64))
@@ -240,7 +241,7 @@ impl WindowWrapper {
 }
 
 fn make_window(
-    size: DeviceIntSize,
+    size: FramebufferIntSize,
     dp_ratio: Option<f32>,
     vsync: bool,
     events_loop: &Option<winit::EventsLoop>,
@@ -278,11 +279,11 @@ fn make_window(
             };
 
             if angle {
-                let (window, context) = angle::Context::with_window(
+                let (_window, _context) = angle::Context::with_window(
                     window_builder, context_builder, events_loop
                 ).unwrap();
-                let gl = init(&context);
-                WindowWrapper::Angle(window, context, gl)
+                let gl = init(&_context);
+                WindowWrapper::Angle(_window, _context, gl)
             } else {
                 let window = glutin::GlWindow::new(window_builder, context_builder, events_loop)
                     .unwrap();
@@ -395,9 +396,24 @@ fn main() {
     env_logger::init();
 
     let args_yaml = load_yaml!("args.yaml");
-    let args = clap::App::from_yaml(args_yaml)
-        .setting(clap::AppSettings::ArgRequiredElseHelp)
-        .get_matches();
+    let clap = clap::App::from_yaml(args_yaml)
+        .setting(clap::AppSettings::ArgRequiredElseHelp);
+
+    // On android devices, attempt to read command line arguments
+    // from a text file located at /sdcard/wrench_args.
+    let args = if cfg!(target_os = "android") {
+        let mut args = vec!["wrench".to_string()];
+
+        if let Ok(wrench_args) = fs::read_to_string("/sdcard/wrench_args") {
+            for arg in wrench_args.split_whitespace() {
+                args.push(arg.to_string());
+            }
+        }
+
+        clap.get_matches_from(&args)
+    } else {
+        clap.get_matches()
+    };
 
     // handle some global arguments
     let res_path = args.value_of("shaders").map(|s| PathBuf::from(s));
@@ -411,20 +427,20 @@ fn main() {
     });
     let size = args.value_of("size")
         .map(|s| if s == "720p" {
-            DeviceIntSize::new(1280, 720)
+            FramebufferIntSize::new(1280, 720)
         } else if s == "1080p" {
-            DeviceIntSize::new(1920, 1080)
+            FramebufferIntSize::new(1920, 1080)
         } else if s == "4k" {
-            DeviceIntSize::new(3840, 2160)
+            FramebufferIntSize::new(3840, 2160)
         } else {
             let x = s.find('x').expect(
                 "Size must be specified exactly as 720p, 1080p, 4k, or width x height",
             );
             let w = s[0 .. x].parse::<i32>().expect("Invalid size width");
             let h = s[x + 1 ..].parse::<i32>().expect("Invalid size height");
-            DeviceIntSize::new(w, h)
+            FramebufferIntSize::new(w, h)
         })
-        .unwrap_or(DeviceIntSize::new(1920, 1080));
+        .unwrap_or(FramebufferIntSize::new(1920, 1080));
     let zoom_factor = args.value_of("zoom").map(|z| z.parse::<f32>().unwrap());
     let chase_primitive = match args.value_of("chase") {
         Some(s) => {
@@ -528,7 +544,7 @@ fn main() {
 fn render<'a>(
     wrench: &mut Wrench,
     window: &mut WindowWrapper,
-    size: DeviceIntSize,
+    size: FramebufferIntSize,
     events_loop: &mut Option<winit::EventsLoop>,
     subargs: &clap::ArgMatches<'a>,
 ) {
@@ -540,7 +556,9 @@ fn render<'a>(
         let mut documents = wrench.api.load_capture(input_path);
         println!("loaded {:?}", documents.iter().map(|cd| cd.document_id).collect::<Vec<_>>());
         let captured = documents.swap_remove(0);
-        window.resize(captured.window_size);
+        if let Some(fb_size) = wrench.renderer.framebuffer_size() {
+            window.resize(fb_size);
+        }
         wrench.document_id = captured.document_id;
         Box::new(captured) as Box<WrenchThing>
     } else {
@@ -568,6 +586,13 @@ fn render<'a>(
     thing.do_frame(wrench);
 
     let mut debug_flags = DebugFlags::empty();
+
+    // Default the profile overlay on for android.
+    if cfg!(target_os = "android") {
+        debug_flags.toggle(DebugFlags::PROFILER_DBG);
+        wrench.api.send_debug_cmd(DebugCommand::SetFlags(debug_flags));
+    }
+
     let mut body = |wrench: &mut Wrench, events: Vec<winit::Event>| {
         let mut do_frame = false;
         let mut do_render = false;
@@ -768,8 +793,7 @@ fn render<'a>(
     match *events_loop {
         None => {
             while body(wrench, vec![winit::Event::Awakened]) == winit::ControlFlow::Continue {}
-            let rect = DeviceIntRect::new(DeviceIntPoint::zero(), size);
-            let pixels = wrench.renderer.read_pixels_rgba8(rect);
+            let pixels = wrench.renderer.read_pixels_rgba8(size.into());
             save_flipped("screenshot.png", pixels, size);
         }
         Some(ref mut events_loop) => {
@@ -781,15 +805,25 @@ fn render<'a>(
                 let mut pending_events = Vec::new();
 
                 // Block the thread until at least one event arrives
-                events_loop.run_forever(|event| {
-                    pending_events.push(event);
-                    winit::ControlFlow::Break
-                });
+                // On Android, we are generally profiling when running
+                // wrench, and don't want to block on UI events.
+                if cfg!(not(target_os = "android")) {
+                    events_loop.run_forever(|event| {
+                        pending_events.push(event);
+                        winit::ControlFlow::Break
+                    });
+                }
 
                 // Collect any other pending events that are also available
                 events_loop.poll_events(|event| {
                     pending_events.push(event);
                 });
+
+                // Ensure there is at least one event present so that the
+                // frame gets rendered.
+                if pending_events.is_empty() {
+                    pending_events.push(winit::Event::Awakened);
+                }
 
                 // Process all of those pending events in the next vsync period
                 if body(wrench, pending_events) == winit::ControlFlow::Break {

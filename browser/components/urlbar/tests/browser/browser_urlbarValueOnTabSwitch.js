@@ -9,9 +9,7 @@
 
 "use strict";
 
-const TEST_PATH = getRootDirectory(gTestPath)
-  .replace("chrome://mochitests/content", "http://example.com");
-const TEST_URL = `${TEST_PATH}dummy_page.html`;
+const TEST_URL = `${TEST_BASE_URL}dummy_page.html`;
 
 add_task(async function() {
   let charsToDelete, deletedURLTab, fullURLTab, partialURLTab, testPartialURL, testURL;
@@ -52,14 +50,16 @@ add_task(async function() {
     is(gURLBar.textValue, testURL, "gURLBar.textValue should be testURL after switching back to fullURLTab");
   }
 
-  function urlbarBackspace() {
+  function urlbarBackspace(removeAll) {
     return new Promise((resolve, reject) => {
       gBrowser.selectedBrowser.focus();
       gURLBar.addEventListener("input", function() {
         resolve();
       }, {once: true});
       gURLBar.focus();
-      if (gURLBar.selectionStart == gURLBar.selectionEnd) {
+      if (removeAll) {
+        gURLBar.select();
+      } else {
         gURLBar.selectionStart = gURLBar.selectionEnd = gURLBar.textValue.length;
       }
       EventUtils.synthesizeKey("KEY_Backspace");
@@ -71,13 +71,8 @@ add_task(async function() {
     is(gURLBar.textValue, testURL, "gURLBar.textValue should be testURL after initial switch to deletedURLTab");
 
     // simulate the user removing the whole url from the location bar
-    Services.prefs.setBoolPref("browser.urlbar.clickSelectsAll", true);
-
-    await urlbarBackspace();
+    await urlbarBackspace(true);
     is(gURLBar.textValue, "", 'gURLBar.textValue should be "" (just set)');
-    if (Services.prefs.prefHasUserValue("browser.urlbar.clickSelectsAll")) {
-      Services.prefs.clearUserPref("browser.urlbar.clickSelectsAll");
-    }
   }
 
   async function prepareFullURLTab() {
@@ -90,18 +85,13 @@ add_task(async function() {
     is(gURLBar.textValue, testURL, "gURLBar.textValue should be testURL after initial switch to partialURLTab");
 
     // simulate the user removing part of the url from the location bar
-    Services.prefs.setBoolPref("browser.urlbar.clickSelectsAll", false);
-
     let deleted = 0;
     while (deleted < charsToDelete) {
-      await urlbarBackspace();
+      await urlbarBackspace(false);
       deleted++;
     }
 
     is(gURLBar.textValue, testPartialURL, "gURLBar.textValue should be testPartialURL (just set)");
-    if (Services.prefs.prefHasUserValue("browser.urlbar.clickSelectsAll")) {
-      Services.prefs.clearUserPref("browser.urlbar.clickSelectsAll");
-    }
   }
 
   // prepare the three tabs required by this test

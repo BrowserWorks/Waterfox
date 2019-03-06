@@ -27,9 +27,6 @@
 #include "mozilla/dom/nsCSPContext.h"
 
 namespace mozilla {
-namespace net {
-class OptionalLoadInfoArgs;
-}
 
 using mozilla::BasePrincipal;
 using mozilla::Maybe;
@@ -368,21 +365,21 @@ nsresult RHEntryToRHEntryInfo(nsIRedirectHistoryEntry* aRHEntry,
 }
 
 nsresult LoadInfoToLoadInfoArgs(nsILoadInfo* aLoadInfo,
-                                OptionalLoadInfoArgs* aOptionalLoadInfoArgs) {
+                                Maybe<LoadInfoArgs>* aOptionalLoadInfoArgs) {
   if (!aLoadInfo) {
     // if there is no loadInfo, then there is nothing to serialize
-    *aOptionalLoadInfoArgs = void_t();
+    *aOptionalLoadInfoArgs = Nothing();
     return NS_OK;
   }
 
   nsresult rv = NS_OK;
-  OptionalPrincipalInfo loadingPrincipalInfo = mozilla::void_t();
+  Maybe<PrincipalInfo> loadingPrincipalInfo;
   if (aLoadInfo->LoadingPrincipal()) {
     PrincipalInfo loadingPrincipalInfoTemp;
     rv = PrincipalToPrincipalInfo(aLoadInfo->LoadingPrincipal(),
                                   &loadingPrincipalInfoTemp);
     NS_ENSURE_SUCCESS(rv, rv);
-    loadingPrincipalInfo = loadingPrincipalInfoTemp;
+    loadingPrincipalInfo = Some(loadingPrincipalInfoTemp);
   }
 
   PrincipalInfo triggeringPrincipalInfo;
@@ -390,40 +387,41 @@ nsresult LoadInfoToLoadInfoArgs(nsILoadInfo* aLoadInfo,
                                 &triggeringPrincipalInfo);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  OptionalPrincipalInfo principalToInheritInfo = mozilla::void_t();
+  Maybe<PrincipalInfo> principalToInheritInfo;
   if (aLoadInfo->PrincipalToInherit()) {
     PrincipalInfo principalToInheritInfoTemp;
     rv = PrincipalToPrincipalInfo(aLoadInfo->PrincipalToInherit(),
                                   &principalToInheritInfoTemp);
     NS_ENSURE_SUCCESS(rv, rv);
-    principalToInheritInfo = principalToInheritInfoTemp;
+    principalToInheritInfo = Some(principalToInheritInfoTemp);
   }
 
-  OptionalPrincipalInfo sandboxedLoadingPrincipalInfo = mozilla::void_t();
+  Maybe<PrincipalInfo> sandboxedLoadingPrincipalInfo;
   if (aLoadInfo->GetLoadingSandboxed()) {
     PrincipalInfo sandboxedLoadingPrincipalInfoTemp;
     rv = PrincipalToPrincipalInfo(aLoadInfo->GetSandboxedLoadingPrincipal(),
                                   &sandboxedLoadingPrincipalInfoTemp);
     NS_ENSURE_SUCCESS(rv, rv);
-    sandboxedLoadingPrincipalInfo = sandboxedLoadingPrincipalInfoTemp;
+    sandboxedLoadingPrincipalInfo = Some(sandboxedLoadingPrincipalInfoTemp);
   }
 
-  OptionalPrincipalInfo topLevelPrincipalInfo = mozilla::void_t();
+  Maybe<PrincipalInfo> topLevelPrincipalInfo;
   if (aLoadInfo->GetTopLevelPrincipal()) {
     PrincipalInfo topLevelPrincipalInfoTemp;
     rv = PrincipalToPrincipalInfo(aLoadInfo->GetTopLevelPrincipal(),
                                   &topLevelPrincipalInfoTemp);
     NS_ENSURE_SUCCESS(rv, rv);
-    topLevelPrincipalInfo = topLevelPrincipalInfoTemp;
+    topLevelPrincipalInfo = Some(topLevelPrincipalInfoTemp);
   }
 
-  OptionalPrincipalInfo topLevelStorageAreaPrincipalInfo = mozilla::void_t();
+  Maybe<PrincipalInfo> topLevelStorageAreaPrincipalInfo;
   if (aLoadInfo->GetTopLevelStorageAreaPrincipal()) {
     PrincipalInfo topLevelStorageAreaPrincipalInfoTemp;
     rv = PrincipalToPrincipalInfo(aLoadInfo->GetTopLevelStorageAreaPrincipal(),
                                   &topLevelStorageAreaPrincipalInfoTemp);
     NS_ENSURE_SUCCESS(rv, rv);
-    topLevelStorageAreaPrincipalInfo = topLevelStorageAreaPrincipalInfoTemp;
+    topLevelStorageAreaPrincipalInfo =
+        Some(topLevelStorageAreaPrincipalInfoTemp);
   }
 
   OptionalURIParams optionalResultPrincipalURI = mozilla::void_t();
@@ -488,7 +486,7 @@ nsresult LoadInfoToLoadInfoArgs(nsILoadInfo* aLoadInfo,
   nsAutoString cspNonce;
   Unused << NS_WARN_IF(NS_FAILED(aLoadInfo->GetCspNonce(cspNonce)));
 
-  *aOptionalLoadInfoArgs = LoadInfoArgs(
+  *aOptionalLoadInfoArgs = Some(LoadInfoArgs(
       loadingPrincipalInfo, triggeringPrincipalInfo, principalToInheritInfo,
       sandboxedLoadingPrincipalInfo, topLevelPrincipalInfo,
       topLevelStorageAreaPrincipalInfo, optionalResultPrincipalURI,
@@ -518,27 +516,26 @@ nsresult LoadInfoToLoadInfoArgs(nsILoadInfo* aLoadInfo,
       aLoadInfo->GetDocumentHasUserInteracted(),
       aLoadInfo->GetDocumentHasLoaded(), cspNonce,
       aLoadInfo->GetIsFromProcessingFrameAttributes(),
-      aLoadInfo->GetOpenerPolicy());
+      aLoadInfo->GetOpenerPolicy()));
 
   return NS_OK;
 }
 
 nsresult LoadInfoArgsToLoadInfo(
-    const OptionalLoadInfoArgs& aOptionalLoadInfoArgs,
+    const Maybe<LoadInfoArgs>& aOptionalLoadInfoArgs,
     nsILoadInfo** outLoadInfo) {
-  if (aOptionalLoadInfoArgs.type() == OptionalLoadInfoArgs::Tvoid_t) {
+  if (aOptionalLoadInfoArgs.isNothing()) {
     *outLoadInfo = nullptr;
     return NS_OK;
   }
 
-  const LoadInfoArgs& loadInfoArgs = aOptionalLoadInfoArgs.get_LoadInfoArgs();
+  const LoadInfoArgs& loadInfoArgs = aOptionalLoadInfoArgs.ref();
 
   nsresult rv = NS_OK;
   nsCOMPtr<nsIPrincipal> loadingPrincipal;
-  if (loadInfoArgs.requestingPrincipalInfo().type() !=
-      OptionalPrincipalInfo::Tvoid_t) {
-    loadingPrincipal =
-        PrincipalInfoToPrincipal(loadInfoArgs.requestingPrincipalInfo(), &rv);
+  if (loadInfoArgs.requestingPrincipalInfo().isSome()) {
+    loadingPrincipal = PrincipalInfoToPrincipal(
+        loadInfoArgs.requestingPrincipalInfo().ref(), &rv);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -548,34 +545,30 @@ nsresult LoadInfoArgsToLoadInfo(
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIPrincipal> principalToInherit;
-  if (loadInfoArgs.principalToInheritInfo().type() !=
-      OptionalPrincipalInfo::Tvoid_t) {
-    principalToInherit =
-        PrincipalInfoToPrincipal(loadInfoArgs.principalToInheritInfo(), &rv);
+  if (loadInfoArgs.principalToInheritInfo().isSome()) {
+    principalToInherit = PrincipalInfoToPrincipal(
+        loadInfoArgs.principalToInheritInfo().ref(), &rv);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
   nsCOMPtr<nsIPrincipal> sandboxedLoadingPrincipal;
-  if (loadInfoArgs.sandboxedLoadingPrincipalInfo().type() !=
-      OptionalPrincipalInfo::Tvoid_t) {
+  if (loadInfoArgs.sandboxedLoadingPrincipalInfo().isSome()) {
     sandboxedLoadingPrincipal = PrincipalInfoToPrincipal(
-        loadInfoArgs.sandboxedLoadingPrincipalInfo(), &rv);
+        loadInfoArgs.sandboxedLoadingPrincipalInfo().ref(), &rv);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
   nsCOMPtr<nsIPrincipal> topLevelPrincipal;
-  if (loadInfoArgs.topLevelPrincipalInfo().type() !=
-      OptionalPrincipalInfo::Tvoid_t) {
-    topLevelPrincipal =
-        PrincipalInfoToPrincipal(loadInfoArgs.topLevelPrincipalInfo(), &rv);
+  if (loadInfoArgs.topLevelPrincipalInfo().isSome()) {
+    topLevelPrincipal = PrincipalInfoToPrincipal(
+        loadInfoArgs.topLevelPrincipalInfo().ref(), &rv);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
   nsCOMPtr<nsIPrincipal> topLevelStorageAreaPrincipal;
-  if (loadInfoArgs.topLevelStorageAreaPrincipalInfo().type() !=
-      OptionalPrincipalInfo::Tvoid_t) {
+  if (loadInfoArgs.topLevelStorageAreaPrincipalInfo().isSome()) {
     topLevelStorageAreaPrincipal = PrincipalInfoToPrincipal(
-        loadInfoArgs.topLevelStorageAreaPrincipalInfo(), &rv);
+        loadInfoArgs.topLevelStorageAreaPrincipalInfo().ref(), &rv);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 

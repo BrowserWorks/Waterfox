@@ -2938,7 +2938,8 @@ static MOZ_NEVER_INLINE JS_HAZ_JSNATIVE_CALLER bool Interpret(JSContext* cx,
       HandleValue value = REGS.stackHandleAt(-1);
 
       bool strict = JSOp(*REGS.pc) == JSOP_STRICTSETELEM_SUPER;
-      if (!SetObjectElement(cx, obj, index, value, receiver, strict)) {
+      if (!SetObjectElementWithReceiver(cx, obj, index, value, receiver,
+                                        strict)) {
         goto error;
       }
       REGS.sp[-4] = value;
@@ -3678,7 +3679,7 @@ static MOZ_NEVER_INLINE JS_HAZ_JSNATIVE_CALLER bool Interpret(JSContext* cx,
       ReservedRooted<PropertyName*> name(&rootName0, script->getName(REGS.pc));
       ReservedRooted<JSObject*> val(&rootObject1, &REGS.sp[-1].toObject());
 
-      if (!InitGetterSetterOperation(cx, REGS.pc, obj, name, val)) {
+      if (!InitPropGetterSetterOperation(cx, REGS.pc, obj, name, val)) {
         goto error;
       }
 
@@ -3696,7 +3697,7 @@ static MOZ_NEVER_INLINE JS_HAZ_JSNATIVE_CALLER bool Interpret(JSContext* cx,
       ReservedRooted<Value> idval(&rootValue0, REGS.sp[-2]);
       ReservedRooted<JSObject*> val(&rootObject1, &REGS.sp[-1].toObject());
 
-      if (!InitGetterSetterOperation(cx, REGS.pc, obj, idval, val)) {
+      if (!InitElemGetterSetterOperation(cx, REGS.pc, obj, idval, val)) {
         goto error;
       }
 
@@ -3881,7 +3882,7 @@ static MOZ_NEVER_INLINE JS_HAZ_JSNATIVE_CALLER bool Interpret(JSContext* cx,
       CHECK_BRANCH();
       ReservedRooted<Value> v(&rootValue0);
       POP_COPY_TO(v);
-      MOZ_ALWAYS_FALSE(Throw(cx, v));
+      MOZ_ALWAYS_FALSE(ThrowOperation(cx, v));
       /* let the code at error try to catch the exception. */
       goto error;
     }
@@ -4403,7 +4404,7 @@ prologue_error:
   goto prologue_return_continuation;
 }
 
-bool js::Throw(JSContext* cx, HandleValue v) {
+bool js::ThrowOperation(JSContext* cx, HandleValue v) {
   MOZ_ASSERT(!cx->isExceptionPending());
   cx->setPendingException(v);
   return false;
@@ -4422,18 +4423,32 @@ bool js::GetProperty(JSContext* cx, HandleValue v, HandlePropertyName name,
   // create a wrapper object.
   if (v.isPrimitive() && !v.isNullOrUndefined()) {
     NativeObject* proto;
-    if (v.isNumber()) {
-      proto = GlobalObject::getOrCreateNumberPrototype(cx, cx->global());
-    } else if (v.isString()) {
-      proto = GlobalObject::getOrCreateStringPrototype(cx, cx->global());
-    } else if (v.isBoolean()) {
-      proto = GlobalObject::getOrCreateBooleanPrototype(cx, cx->global());
-    } else if (v.isBigInt()) {
-      proto = GlobalObject::getOrCreateBigIntPrototype(cx, cx->global());
-    } else {
-      MOZ_ASSERT(v.isSymbol());
-      proto = GlobalObject::getOrCreateSymbolPrototype(cx, cx->global());
+
+    switch (v.type()) {
+      case ValueType::Double:
+      case ValueType::Int32:
+        proto = GlobalObject::getOrCreateNumberPrototype(cx, cx->global());
+        break;
+      case ValueType::Boolean:
+        proto = GlobalObject::getOrCreateBooleanPrototype(cx, cx->global());
+        break;
+      case ValueType::String:
+        proto = GlobalObject::getOrCreateStringPrototype(cx, cx->global());
+        break;
+      case ValueType::Symbol:
+        proto = GlobalObject::getOrCreateSymbolPrototype(cx, cx->global());
+        break;
+      case ValueType::BigInt:
+        proto = GlobalObject::getOrCreateBigIntPrototype(cx, cx->global());
+        break;
+      case ValueType::Undefined:
+      case ValueType::Null:
+      case ValueType::Magic:
+      case ValueType::PrivateGCThing:
+      case ValueType::Object:
+        MOZ_CRASH("unexpected type");
     }
+
     if (!proto) {
       return false;
     }
@@ -4800,9 +4815,9 @@ bool js::SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index,
                                    pc);
 }
 
-bool js::SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index,
-                          HandleValue value, HandleValue receiver,
-                          bool strict) {
+bool js::SetObjectElementWithReceiver(JSContext* cx, HandleObject obj,
+                                      HandleValue index, HandleValue value,
+                                      HandleValue receiver, bool strict) {
   RootedId id(cx);
   if (!ToPropertyKey(cx, index, &id)) {
     return false;
@@ -4932,9 +4947,9 @@ unsigned js::GetInitDataPropAttrs(JSOp op) {
   MOZ_CRASH("Unknown data initprop");
 }
 
-bool js::InitGetterSetterOperation(JSContext* cx, jsbytecode* pc,
-                                   HandleObject obj, HandleId id,
-                                   HandleObject val) {
+static bool InitGetterSetterOperation(JSContext* cx, jsbytecode* pc,
+                                      HandleObject obj, HandleId id,
+                                      HandleObject val) {
   MOZ_ASSERT(val->isCallable());
 
   JSOp op = JSOp(*pc);
@@ -4957,16 +4972,17 @@ bool js::InitGetterSetterOperation(JSContext* cx, jsbytecode* pc,
   return DefineAccessorProperty(cx, obj, id, nullptr, val, attrs);
 }
 
-bool js::InitGetterSetterOperation(JSContext* cx, jsbytecode* pc,
-                                   HandleObject obj, HandlePropertyName name,
-                                   HandleObject val) {
+bool js::InitPropGetterSetterOperation(JSContext* cx, jsbytecode* pc,
+                                       HandleObject obj,
+                                       HandlePropertyName name,
+                                       HandleObject val) {
   RootedId id(cx, NameToId(name));
   return InitGetterSetterOperation(cx, pc, obj, id, val);
 }
 
-bool js::InitGetterSetterOperation(JSContext* cx, jsbytecode* pc,
-                                   HandleObject obj, HandleValue idval,
-                                   HandleObject val) {
+bool js::InitElemGetterSetterOperation(JSContext* cx, jsbytecode* pc,
+                                       HandleObject obj, HandleValue idval,
+                                       HandleObject val) {
   RootedId id(cx);
   if (!ToPropertyKey(cx, idval, &id)) {
     return false;

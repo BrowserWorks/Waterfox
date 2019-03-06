@@ -16,6 +16,7 @@
 #include "mozilla/layers/FocusTarget.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/ServoStyleSet.h"
+#include "mozilla/StaticPtr.h"
 #include "mozilla/UniquePtr.h"
 #include "nsContentUtils.h"  // For AddScriptBlocker().
 #include "nsCRT.h"
@@ -499,9 +500,10 @@ class PresShell final : public nsIPresShell,
    public:
     EventHandler() = delete;
     EventHandler(const EventHandler& aOther) = delete;
-    explicit EventHandler(PresShell& aPresShell) : mPresShell(aPresShell) {}
+    explicit EventHandler(PresShell& aPresShell)
+        : mPresShell(aPresShell), mCurrentEventInfoSetter(nullptr) {}
     explicit EventHandler(RefPtr<PresShell>&& aPresShell)
-        : mPresShell(aPresShell.forget()) {}
+        : mPresShell(aPresShell.forget()), mCurrentEventInfoSetter(nullptr) {}
 
     /**
      * HandleEvent() may dispatch aGUIEvent.  This may redirect the event to
@@ -535,16 +537,13 @@ class PresShell final : public nsIPresShell,
     nsresult HandleRetargetedEvent(WidgetGUIEvent* aGUIEvent,
                                    nsEventStatus* aEventStatus,
                                    nsIContent* aTarget) {
-      mPresShell->PushCurrentEventInfo(nullptr, nullptr);
-      mPresShell->mCurrentEventContent = aTarget;
-      nsresult rv = NS_OK;
-      if (mPresShell->GetCurrentEventFrame()) {
-        nsCOMPtr<nsIContent> overrideClickTarget;
-        rv = HandleEventInternal(aGUIEvent, aEventStatus, true,
-                                 overrideClickTarget);
+      AutoCurrentEventInfoSetter eventInfoSetter(*this, nullptr, aTarget);
+      if (!mPresShell->GetCurrentEventFrame()) {
+        return NS_OK;
       }
-      mPresShell->PopCurrentEventInfo();
-      return rv;
+      nsCOMPtr<nsIContent> overrideClickTarget;
+      return HandleEventInternal(aGUIEvent, aEventStatus, true,
+                                 overrideClickTarget);
     }
 
     /**
@@ -576,12 +575,40 @@ class PresShell final : public nsIPresShell,
                                    nsIContent** aTargetContent,
                                    nsIContent* aOverrideClickTarget);
 
+    /**
+     * OnPresShellDestroy() is called when every PresShell instance is being
+     * destroyed.
+     */
+    static inline void OnPresShellDestroy(Document* aDocument) {
+      if (sLastKeyDownEventTargetElement &&
+          sLastKeyDownEventTargetElement->OwnerDoc() == aDocument) {
+        sLastKeyDownEventTargetElement = nullptr;
+      }
+    }
+
    private:
     static bool InZombieDocument(nsIContent* aContent);
     static nsIFrame* GetNearestFrameContainingPresShell(
         nsIPresShell* aPresShell);
     static already_AddRefed<nsIURI> GetDocumentURIToCompareWithBlacklist(
         PresShell& aPresShell);
+
+    /**
+     * HandleEventUsingCoordinates() handles aGUIEvent whose
+     * IsUsingCoordinates() returns true with the following helper methods.
+     *
+     * @param aFrameForPresShell        The frame for mPresShell.
+     * @param aGUIEvent                 The handling event.  Make sure that
+     *                                  its IsUsingCoordinates() returns true.
+     * @param aEventStatus              The status of aGUIEvent.
+     * @param aDontRetargetEvents       true if we've already retarget document.
+     *                                  Otherwise, false.
+     */
+    MOZ_CAN_RUN_SCRIPT
+    nsresult HandleEventUsingCoordinates(nsIFrame* aFrameForPresShell,
+                                         WidgetGUIEvent* aGUIEvent,
+                                         nsEventStatus* aEventStatus,
+                                         bool aDontRetargetEvents);
 
     /**
      * EventTargetData struct stores a set of a PresShell (event handler),
@@ -639,6 +666,15 @@ class PresShell final : public nsIPresShell,
        */
       bool ComputeElementFromFrame(WidgetGUIEvent* aGUIEvent);
 
+      /**
+       * UpdateTouchEventTarget() updates mFrame, mPresShell and mContent if
+       * aGUIEvent is a touch event and there is new proper target.
+       *
+       * @param aGUIEvent       The handled event.  If it's not a touch event,
+       *                        this method does nothing.
+       */
+      void UpdateTouchEventTarget(WidgetGUIEvent* aGUIEvent);
+
       RefPtr<PresShell> mPresShell;
       nsIFrame* mFrame;
       nsCOMPtr<nsIContent> mContent;
@@ -687,6 +723,33 @@ class PresShell final : public nsIPresShell,
     bool ComputeEventTargetFrameAndPresShellAtEventPoint(
         nsIFrame* aRootFrameToHandleEvent, WidgetGUIEvent* aGUIEvent,
         EventTargetData* aEventTargetData);
+
+    /**
+     * DispatchPrecedingPointerEvent() dispatches preceding pointer event for
+     * aGUIEvent if Pointer Events is enabled.
+     *
+     * @param aFrameForPresShell        Set aFrame of HandleEvent() which
+     *                                  called this method.
+     * @param aGUIEvent                 The handled event.
+     * @param aPointerCapturingContent  The content which is capturing pointer
+     *                                  events if there is.  Otherwise, nullptr.
+     * @param aDontRetargetEvents       Set aDontRetargetEvents of
+     *                                  HandleEvent() which called this method.
+     * @param aEventTargetData          [in/out] Event target data of
+     *                                  aGUIEvent.  If pointer event listeners
+     *                                  change the DOM tree or reframe the
+     *                                  target, updated by this method.
+     * @param aEventStatus              [in/out] The event status of aGUIEvent.
+     * @return                          true if the caller can handle the
+     *                                  event.  Otherwise, false.
+     */
+    MOZ_CAN_RUN_SCRIPT
+    bool DispatchPrecedingPointerEvent(nsIFrame* aFrameForPresShell,
+                                       WidgetGUIEvent* aGUIEvent,
+                                       nsIContent* aPointerCapturingContent,
+                                       bool aDontRetargetEvents,
+                                       EventTargetData* aEventTargetData,
+                                       nsEventStatus* aEventStatus);
 
     /**
      * MaybeDiscardEvent() checks whether it's safe to handle aGUIEvent right
@@ -913,6 +976,17 @@ class PresShell final : public nsIPresShell,
         nsIContent* aPointerCapturingContent, nsEventStatus* aEventStatus);
 
     /**
+     * ComputeFocusedEventTargetElement() returns event target element for
+     * aGUIEvent which should be handled with focused content.
+     * This may set/unset sLastKeyDownEventTarget if necessary.
+     *
+     * @param aGUIEvent                 The handling event.
+     * @return                          The element which should be the event
+     *                                  target of aGUIEvent.
+     */
+    Element* ComputeFocusedEventTargetElement(WidgetGUIEvent* aGUIEvent);
+
+    /**
      * XXX Needs better name.
      * HandleEventInternal() dispatches aEvent into the DOM tree and
      * notify EventStateManager of that.
@@ -991,19 +1065,50 @@ class PresShell final : public nsIPresShell,
                                  bool aTouchIsNew);
 
     /**
+     * AutoCurrentEventInfoSetter() pushes and pops current event info of
+     * aEventHandler.mPresShell.
+     */
+    struct MOZ_STACK_CLASS AutoCurrentEventInfoSetter final {
+      explicit AutoCurrentEventInfoSetter(EventHandler& aEventHandler)
+          : mEventHandler(aEventHandler) {
+        MOZ_DIAGNOSTIC_ASSERT(!mEventHandler.mCurrentEventInfoSetter);
+        mEventHandler.mCurrentEventInfoSetter = this;
+        mEventHandler.mPresShell->PushCurrentEventInfo(nullptr, nullptr);
+      }
+      AutoCurrentEventInfoSetter(EventHandler& aEventHandler, nsIFrame* aFrame,
+                                 nsIContent* aContent)
+          : mEventHandler(aEventHandler) {
+        MOZ_DIAGNOSTIC_ASSERT(!mEventHandler.mCurrentEventInfoSetter);
+        mEventHandler.mCurrentEventInfoSetter = this;
+        mEventHandler.mPresShell->PushCurrentEventInfo(aFrame, aContent);
+      }
+      AutoCurrentEventInfoSetter(EventHandler& aEventHandler,
+                                 EventTargetData& aEventTargetData)
+          : mEventHandler(aEventHandler) {
+        MOZ_DIAGNOSTIC_ASSERT(!mEventHandler.mCurrentEventInfoSetter);
+        mEventHandler.mCurrentEventInfoSetter = this;
+        mEventHandler.mPresShell->PushCurrentEventInfo(
+            aEventTargetData.mFrame, aEventTargetData.mContent);
+      }
+      ~AutoCurrentEventInfoSetter() {
+        mEventHandler.mPresShell->PopCurrentEventInfo();
+        mEventHandler.mCurrentEventInfoSetter = nullptr;
+      }
+
+     private:
+      EventHandler& mEventHandler;
+    };
+
+    /**
      * Wrapper methods to access methods of mPresShell.
      */
     nsPresContext* GetPresContext() const {
       return mPresShell->GetPresContext();
     }
     Document* GetDocument() const { return mPresShell->GetDocument(); }
-    void PushCurrentEventInfo(nsIFrame* aFrame, nsIContent* aContent) {
-      mPresShell->PushCurrentEventInfo(aFrame, aContent);
-    }
     nsCSSFrameConstructor* FrameConstructor() const {
       return mPresShell->FrameConstructor();
     }
-    void PopCurrentEventInfo() { mPresShell->PopCurrentEventInfo(); }
     already_AddRefed<nsPIDOMWindowOuter> GetFocusedDOMWindowInOurWindow() {
       return mPresShell->GetFocusedDOMWindowInOurWindow();
     }
@@ -1015,8 +1120,10 @@ class PresShell final : public nsIPresShell,
     }
 
     OwningNonNull<PresShell> mPresShell;
+    AutoCurrentEventInfoSetter* mCurrentEventInfoSetter;
     static TimeStamp sLastInputCreated;
     static TimeStamp sLastInputProcessed;
+    static StaticRefPtr<Element> sLastKeyDownEventTargetElement;
   };
 
   /**

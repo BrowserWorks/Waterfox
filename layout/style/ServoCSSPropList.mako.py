@@ -88,7 +88,6 @@ LONGHANDS_NOT_SERIALIZED_WITH_SERVO = [
     "contain",
     "display",
     "fill",
-    "fill-opacity",
     "filter",
     "flex-basis",
     "flex-grow",
@@ -102,7 +101,6 @@ LONGHANDS_NOT_SERIALIZED_WITH_SERVO = [
     "grid-row-start",
     "grid-template-areas",
     "initial-letter",
-    "letter-spacing",
     "marker-end",
     "marker-mid",
     "marker-start",
@@ -129,11 +127,6 @@ LONGHANDS_NOT_SERIALIZED_WITH_SERVO = [
     "scroll-snap-points-x",
     "scroll-snap-points-y",
     "stroke",
-    "stroke-dasharray",
-    "stroke-dashoffset",
-    "stroke-miterlimit",
-    "stroke-opacity",
-    "stroke-width",
     "text-decoration-line",
     "text-emphasis-position",
     "text-emphasis-style",
@@ -146,7 +139,6 @@ LONGHANDS_NOT_SERIALIZED_WITH_SERVO = [
     "vertical-align",
     "-webkit-text-stroke-width",
     "will-change",
-    "word-spacing",
 ]
 
 def serialized_by_servo(prop):

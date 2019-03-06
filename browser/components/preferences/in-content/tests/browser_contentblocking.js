@@ -11,6 +11,21 @@ const CAT_PREF = "browser.contentblocking.category";
 const FP_PREF = "privacy.trackingprotection.fingerprinting.enabled";
 const CM_PREF = "privacy.trackingprotection.cryptomining.enabled";
 
+const {
+  EnterprisePolicyTesting,
+  PoliciesPrefTracker,
+} = ChromeUtils.import("resource://testing-common/EnterprisePolicyTesting.jsm", null);
+
+registerCleanupFunction(async function policies_headjs_finishWithCleanSlate() {
+  if (Services.policies.status != Ci.nsIEnterprisePolicies.INACTIVE) {
+    await EnterprisePolicyTesting.setupPolicyEngineWithJson("");
+  }
+  is(Services.policies.status, Ci.nsIEnterprisePolicies.INACTIVE, "Engine is inactive at the end of the test");
+
+  EnterprisePolicyTesting.resetRunOnceState();
+  PoliciesPrefTracker.stop();
+});
+
 requestLongerTimeout(2);
 
 // Tests that the content blocking main category checkboxes have the correct default state.
@@ -354,4 +369,48 @@ add_task(async function testCustomOptionsVisibility() {
 
   Services.prefs.clearUserPref("browser.contentblocking.cryptomining.preferences.ui.enabled");
   Services.prefs.clearUserPref("browser.contentblocking.fingerprinting.preferences.ui.enabled");
+});
+
+// Checks that adding a custom enterprise policy will put the user in the custom category.
+// Other categories will be disabled.
+add_task(async function testPolicyCategorization() {
+  Services.prefs.setStringPref(CAT_PREF, "standard");
+  is(Services.prefs.getStringPref(CAT_PREF), "standard", `${CAT_PREF} starts on standard`);
+  ok(!Services.prefs.prefHasUserValue(TP_PREF), `${TP_PREF} starts with the default value`);
+  PoliciesPrefTracker.start();
+
+  await EnterprisePolicyTesting.setupPolicyEngineWithJson({
+    policies: {"EnableTrackingProtection": {
+        "Value": true,
+      },
+    },
+  });
+  EnterprisePolicyTesting.checkPolicyPref(TP_PREF, true, false);
+  is(Services.prefs.getStringPref(CAT_PREF), "custom", `${CAT_PREF} has been set to custom`);
+
+  Services.prefs.setStringPref(CAT_PREF, "standard");
+  is(Services.prefs.getStringPref(CAT_PREF), "standard", `${CAT_PREF} starts on standard`);
+  ok(!Services.prefs.prefHasUserValue(NCB_PREF), `${NCB_PREF} starts with the default value`);
+
+  let uiUpdatedPromise = TestUtils.topicObserved("privacy-pane-tp-ui-updated");
+  await EnterprisePolicyTesting.setupPolicyEngineWithJson({
+    policies: {"Cookies": {
+        "AcceptThirdParty": "never",
+        "Locked": true,
+      },
+    },
+  });
+  await openPreferencesViaOpenPreferencesAPI("privacy", {leaveOpen: true});
+  await uiUpdatedPromise;
+
+  EnterprisePolicyTesting.checkPolicyPref(NCB_PREF, Ci.nsICookieService.BEHAVIOR_REJECT_FOREIGN, true);
+  is(Services.prefs.getStringPref(CAT_PREF), "custom", `${CAT_PREF} has been set to custom`);
+
+  let doc = gBrowser.contentDocument;
+  let strictRadioOption = doc.getElementById("strictRadio");
+  let standardRadioOption = doc.getElementById("standardRadio");
+  is(strictRadioOption.disabled, true, "the strict option is disabled");
+  is(standardRadioOption.disabled, true, "the standard option is disabled");
+
+  gBrowser.removeCurrentTab();
 });

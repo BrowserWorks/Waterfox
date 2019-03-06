@@ -593,6 +593,19 @@ dictionary Base64URLEncodeOptions {
 };
 
 dictionary WindowActorOptions {
+  /**
+   * If this is set to `true`, allow this actor to be created for subframes,
+   * and not just toplevel window globals.
+   */
+  boolean allFrames = false;
+
+  /**
+   * If this is set to `true`, allow this actor to be created for window
+   * globals loaded in chrome browsing contexts, such as those used to load the
+   * tabbrowser.
+   */
+  boolean includeChrome = false;
+
   /** This fields are used for configuring individual sides of the actor. */
   required WindowActorSidedOptions parent;
   required WindowActorChildOptions child;
@@ -609,6 +622,18 @@ dictionary WindowActorChildOptions : WindowActorSidedOptions {
    * it will trigger actor creation, and then forward the event to the actor.
    */
   record<DOMString, AddEventListenerOptions> events;
+
+ /**
+  * Array of observer topics to listen to. A observer will be added for each
+  * topic in the list.
+  *
+  * Observers in the list much use the nsGlobalWindowInner object as their topic,
+  * and the events will only be dispatched to the corresponding window actor. If
+  * additional observer notifications are needed with different listening
+  * conditions, please file a bug in DOM requesting support for the subject
+  * required to be added to JS WindowActor objects.
+  **/
+  sequence<ByteString> observers;
 };
 
 enum Base64URLDecodePadding {

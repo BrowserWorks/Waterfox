@@ -1476,9 +1476,9 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleText {
   mozilla::StyleComplexColor mWebkitTextStrokeColor;
 
   mozilla::StyleNonNegativeLengthOrNumber mMozTabSize;
-  nsStyleCoord mWordSpacing;    // coord, percent, calc
-  nsStyleCoord mLetterSpacing;  // coord, normal
-  nsStyleCoord mLineHeight;     // coord, factor, normal
+  mozilla::LengthPercentage mWordSpacing;
+  mozilla::StyleLetterSpacing mLetterSpacing;
+  mozilla::StyleLineHeight mLineHeight;
   mozilla::LengthPercentage mTextIndent;
   nscoord mWebkitTextStrokeWidth;  // coord
 
@@ -2708,11 +2708,11 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleSVG {
   RefPtr<mozilla::css::URLValue> mMarkerEnd;
   RefPtr<mozilla::css::URLValue> mMarkerMid;
   RefPtr<mozilla::css::URLValue> mMarkerStart;
-  nsTArray<nsStyleCoord> mStrokeDasharray;  // coord, percent, factor
+  nsTArray<mozilla::NonNegativeLengthPercentage> mStrokeDasharray;
   nsTArray<RefPtr<nsAtom>> mContextProps;
 
-  nsStyleCoord mStrokeDashoffset;  // coord, percent, factor
-  nsStyleCoord mStrokeWidth;       // coord, percent, factor
+  mozilla::LengthPercentage mStrokeDashoffset;
+  mozilla::NonNegativeLengthPercentage mStrokeWidth;
 
   float mFillOpacity;
   float mStrokeMiterlimit;

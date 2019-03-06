@@ -236,7 +236,8 @@ xmlns="http://www.w3.org/1999/xhtml"
 
     <!-- for search and content formfill/pw manager -->
 
-    <panel type="autocomplete-richlistbox"
+    <panel is="autocomplete-richlistbox-popup"
+           type="autocomplete-richlistbox"
            id="PopupAutoComplete"
            role="group"
            noautofocus="true"
@@ -261,27 +262,6 @@ xmlns="http://www.w3.org/1999/xhtml"
            flip="none"
            level="parent"
            overflowpadding="15" />
-
-    <!-- for url bar autocomplete -->
-    <panel id="urlbar-results"
-           role="group"
-           noautofocus="true"
-           hidden="true"
-           flip="none"
-           consumeoutsideclicks="never"
-           norolluponanchor="true"
-           level="parent">
-      <html:div class="urlbarView-body-outer">
-        <html:div class="urlbarView-body-inner">
-          <!-- TODO: add search suggestions notification -->
-          <html:div class="urlbarView-results"/>
-        </html:div>
-      </html:div>
-      <hbox class="search-one-offs"
-            compact="true"
-            includecurrentengine="true"
-            disabletab="true"/>
-    </panel>
 
     <!-- for date/time picker. consumeoutsideclicks is set to never, so that
          clicks on the anchored input box are never consumed. -->
@@ -897,6 +877,7 @@ xmlns="http://www.w3.org/1999/xhtml"
                      defaultPlaceholder="&urlbar.placeholder2;"
                      focused="true"
                      type="autocomplete"
+                     quantumbar="false"
                      autocompletesearch="unifiedcomplete"
                      autocompletesearchparam="enable-actions"
                      autocompletepopup="PopupAutoCompleteRichResult"
@@ -1081,6 +1062,7 @@ xmlns="http://www.w3.org/1999/xhtml"
                        class="toolbarbutton-1 chromeclass-toolbar-additional badged-button"
                        key="key_openDownloads"
                        onmousedown="DownloadsIndicatorView.onCommand(event);"
+                       onkeypress="DownloadsIndicatorView.onCommand(event);"
                        ondrop="DownloadsIndicatorView.onDrop(event);"
                        ondragover="DownloadsIndicatorView.onDragOver(event);"
                        ondragenter="DownloadsIndicatorView.onDragOver(event);"

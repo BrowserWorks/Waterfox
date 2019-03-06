@@ -4680,6 +4680,37 @@
     "kind": "boolean",
     "description": "mozStorage async requests success *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
+  "STARTUP_CACHE_REQUESTS": {
+    "record_in_processes": ["main"],
+    "alert_emails": ["dothayer@mozilla.com"],
+    "expires_in_version": "73",
+    "kind": "categorical",
+    "labels": ["HitMemory", "HitDisk", "Miss"],
+    "bug_numbers": [1364235],
+    "releaseChannelCollection": "opt-out",
+    "description": "Record hits and misses to the startup cache, with categories."
+  },
+  "SCRIPT_PRELOADER_REQUESTS": {
+    "record_in_processes": ["main", "content"],
+    "alert_emails": ["dothayer@mozilla.com"],
+    "expires_in_version": "73",
+    "kind": "categorical",
+    "labels": ["Hit", "HitChild", "Miss"],
+    "bug_numbers": [1364235],
+    "releaseChannelCollection": "opt-out",
+    "description": "Record hits and misses to the script preloader, with categories."
+  },
+  "SCRIPT_PRELOADER_WAIT_TIME": {
+    "record_in_processes": ["main", "content"],
+    "alert_emails": ["dothayer@mozilla.com"],
+    "expires_in_version": "73",
+    "kind": "exponential",
+    "high": 10000,
+    "n_buckets": 20,
+    "bug_numbers": [1364235],
+    "releaseChannelCollection": "opt-out",
+    "description": "Time spent waiting for off-thread compiles in the script preloader."
+  },
   "STARTUP_MEASUREMENT_ERRORS": {
     "record_in_processes": ["main", "content"],
     "expires_in_version": "default",
@@ -6307,7 +6338,7 @@
     "kind": "enumerated",
     "n_values": 10,
     "releaseChannelCollection": "opt-out",
-    "description": "Where the migration wizard was entered from. 0=Other/catch-all, 1=first-run, 2=refresh-firefox, 3=Places window, 4=Password manager"
+    "description": "Where the migration wizard was entered from. 0=Other/catch-all, 1=first-run, 2=refresh-firefox, 3=Places window, 4=Password manager, 5=New tab, 6=File menu"
   },
   "FX_MIGRATION_SOURCE_BROWSER": {
     "record_in_processes": ["main", "content"],
@@ -11196,20 +11227,6 @@
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Certificate pinning test results (0 = failure, 1 = success)"
-  },
-  "CERT_PINNING_MOZ_RESULTS": {
-    "record_in_processes": ["main", "content"],
-    "alert_emails": ["pinning@mozilla.org"],
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Certificate pinning results for Mozilla sites (0 = failure, 1 = success)"
-  },
-  "CERT_PINNING_MOZ_TEST_RESULTS": {
-    "record_in_processes": ["main", "content"],
-    "alert_emails": ["pinning@mozilla.org"],
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Certificate pinning test results for Mozilla sites (0 = failure, 1 = success)"
   },
   "CERT_PINNING_MOZ_RESULTS_BY_HOST": {
     "record_in_processes": ["main", "content"],

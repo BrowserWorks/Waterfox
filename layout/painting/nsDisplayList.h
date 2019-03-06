@@ -742,6 +742,10 @@ class nsDisplayListBuilder {
     return CurrentPresShellState()->mInsidePointerEventsNoneDoc;
   }
 
+  bool IsTouchEventPrefEnabledDoc() {
+    return CurrentPresShellState()->mTouchEventPrefEnabledDoc;
+  }
+
   bool GetAncestorHasApzAwareEventHandler() const {
     return mAncestorHasApzAwareEventHandler;
   }
@@ -1065,7 +1069,7 @@ class nsDisplayListBuilder {
                                                  nsDisplayListBuilder* aBuilder,
                                                  nsDisplayItem* aItem,
                                                  nsIFrame* aFrame,
-                                                 nsCSSPropertyID aProperty);
+                                                 DisplayItemType aType);
 
   /**
    * Merges the display items in |aMergedItems| and returns a new temporary
@@ -1833,6 +1837,7 @@ class nsDisplayListBuilder {
     // in the document, and is set when we enter a subdocument for a pointer-
     // events:none frame.
     bool mInsidePointerEventsNoneDoc;
+    bool mTouchEventPrefEnabledDoc;
     nsIFrame* mPresShellIgnoreScrollFrame;
   };
 
@@ -2984,9 +2989,7 @@ class nsDisplayList {
   }
 
   virtual ~nsDisplayList() {
-    if (mSentinel.mAbove) {
-      NS_WARNING("Nonempty list left over?");
-    }
+    MOZ_RELEASE_ASSERT(!mSentinel.mAbove, "Nonempty list left over?");
   }
 
   nsDisplayList(nsDisplayList&& aOther) {
@@ -5722,6 +5725,7 @@ class nsDisplayOwnLayer : public nsDisplayWrapList {
   nsDisplayOwnLayerFlags GetFlags() { return mFlags; }
   bool IsScrollThumbLayer() const;
   bool IsScrollbarContainer() const;
+  bool IsZoomingLayer() const;
 
  protected:
   nsDisplayOwnLayerFlags mFlags;

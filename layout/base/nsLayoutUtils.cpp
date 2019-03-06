@@ -382,6 +382,7 @@ static void GetMinAndMaxScaleForAnimationProperty(
     MOZ_ASSERT(effect, "A playing animation should have a keyframe effect");
     for (size_t propIdx = effect->Properties().Length(); propIdx-- != 0;) {
       const AnimationProperty& prop = effect->Properties()[propIdx];
+      // FIXME: Bug 1526847: Make this accept rotate and scale.
       if (prop.mProperty != eCSSProperty_transform) {
         continue;
       }
@@ -415,9 +416,10 @@ Size nsLayoutUtils::ComputeSuitableScaleForAnimation(
   Size minScale(std::numeric_limits<float>::max(),
                 std::numeric_limits<float>::max());
 
+  // FIXME: Bug 1526847: Add rotate and scale into this set.
   nsTArray<RefPtr<dom::Animation>> compositorAnimations =
-      EffectCompositor::GetAnimationsForCompositor(aFrame,
-                                                   eCSSProperty_transform);
+      EffectCompositor::GetAnimationsForCompositor(
+          aFrame, nsCSSPropertyIDSet{eCSSProperty_transform});
   GetMinAndMaxScaleForAnimationProperty(aFrame, compositorAnimations, maxScale,
                                         minScale);
 
@@ -1417,15 +1419,19 @@ nsIFrame* nsLayoutUtils::GetPageFrame(nsIFrame* aFrame) {
   return GetClosestFrameOfType(aFrame, LayoutFrameType::Page);
 }
 
-// static
-nsIFrame* nsLayoutUtils::GetStyleFrame(nsIFrame* aFrame) {
-  if (aFrame->IsTableWrapperFrame()) {
-    nsIFrame* inner = aFrame->PrincipalChildList().FirstChild();
-    // inner may be null, if aFrame is mid-destruction
+/* static */
+nsIFrame* nsLayoutUtils::GetStyleFrame(nsIFrame* aPrimaryFrame) {
+  if (aPrimaryFrame->IsTableWrapperFrame()) {
+    nsIFrame* inner = aPrimaryFrame->PrincipalChildList().FirstChild();
+    // inner may be null, if aPrimaryFrame is mid-destruction
     return inner;
   }
 
-  return aFrame;
+  return aPrimaryFrame;
+}
+
+const nsIFrame* nsLayoutUtils::GetStyleFrame(const nsIFrame* aPrimaryFrame) {
+  return nsLayoutUtils::GetStyleFrame(const_cast<nsIFrame*>(aPrimaryFrame));
 }
 
 nsIFrame* nsLayoutUtils::GetStyleFrame(const nsIContent* aContent) {
@@ -1435,6 +1441,26 @@ nsIFrame* nsLayoutUtils::GetStyleFrame(const nsIContent* aContent) {
   }
 
   return nsLayoutUtils::GetStyleFrame(frame);
+}
+
+/* static */
+nsIFrame* nsLayoutUtils::GetPrimaryFrameFromStyleFrame(nsIFrame* aStyleFrame) {
+  nsIFrame* parent = aStyleFrame->GetParent();
+  return parent && parent->IsTableWrapperFrame() ? parent : aStyleFrame;
+}
+
+/*static*/
+bool nsLayoutUtils::IsPrimaryStyleFrame(const nsIFrame* aFrame) {
+  if (aFrame->IsTableWrapperFrame()) {
+    return false;
+  }
+
+  const nsIFrame* parent = aFrame->GetParent();
+  if (parent && parent->IsTableWrapperFrame()) {
+    return parent->PrincipalChildList().FirstChild() == aFrame;
+  }
+
+  return aFrame->IsPrimaryFrame();
 }
 
 /* static */

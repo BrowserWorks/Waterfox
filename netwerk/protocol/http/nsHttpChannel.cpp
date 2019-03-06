@@ -5544,6 +5544,7 @@ nsresult nsHttpChannel::InstallCacheListener(int64_t offset) {
   if (rv == NS_ERROR_FILE_TOO_BIG) {
     LOG(("  entry would exceed max allowed size, not writing it [channel=%p]",
          this));
+    mCacheEntry->AsyncDoom(nullptr);
     return NS_OK;
   }
   if (NS_FAILED(rv)) return rv;
@@ -8376,7 +8377,7 @@ nsHttpChannel::GetAlternativeDataType(nsACString &aType) {
 NS_IMETHODIMP
 nsHttpChannel::OpenAlternativeOutputStream(const nsACString &type,
                                            int64_t predictedSize,
-                                           nsIOutputStream **_retval) {
+                                           nsIAsyncOutputStream **_retval) {
   // OnStopRequest will clear mCacheEntry, but we may use mAltDataCacheEntry
   // if the consumer called PreferAlternativeDataType()
   nsCOMPtr<nsICacheEntry> cacheEntry =

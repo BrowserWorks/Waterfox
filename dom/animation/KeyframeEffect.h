@@ -245,6 +245,8 @@ class KeyframeEffect : public AnimationEffect {
   // Returns true if at least one property is being animated on compositor.
   bool IsRunningOnCompositor() const;
   void SetIsRunningOnCompositor(nsCSSPropertyID aProperty, bool aIsRunning);
+  void SetIsRunningOnCompositor(const nsCSSPropertyIDSet& aPropertySet,
+                                bool aIsRunning);
   void ResetIsRunningOnCompositor();
 
   // Returns true if this effect, applied to |aFrame|, contains properties
@@ -315,7 +317,7 @@ class KeyframeEffect : public AnimationEffect {
   };
 
   MatchForCompositor IsMatchForCompositor(
-      nsCSSPropertyID aProperty, const nsIFrame* aFrame,
+      const nsCSSPropertyIDSet& aPropertySet, const nsIFrame* aFrame,
       const EffectSet& aEffects,
       AnimationPerformanceWarning::Type& aPerformanceWarning /* out */) const;
 
@@ -356,12 +358,6 @@ class KeyframeEffect : public AnimationEffect {
 
   // Remove the current effect target from its EffectSet.
   void UnregisterTarget();
-
-  // Update the associated frame state bits so that, if necessary, a stacking
-  // context will be created and the effect sent to the compositor.  We
-  // typically need to do this when the properties referenced by the keyframe
-  // have changed, or when the target frame might have changed.
-  void MaybeUpdateFrameForCompositor();
 
   // Looks up the ComputedStyle associated with the target element, if any.
   // We need to be careful to *not* call this when we are updating the style

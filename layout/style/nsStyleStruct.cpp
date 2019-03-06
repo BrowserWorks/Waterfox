@@ -642,9 +642,8 @@ nsChangeHint nsStyleColumn::CalcDifference(
 nsStyleSVG::nsStyleSVG(const Document& aDocument)
     : mFill(eStyleSVGPaintType_Color),  // Will be initialized to NS_RGB(0,0,0)
       mStroke(eStyleSVGPaintType_None),
-      mStrokeDashoffset(0, nsStyleCoord::CoordConstructor),
-      mStrokeWidth(nsPresContext::CSSPixelsToAppUnits(1),
-                   nsStyleCoord::CoordConstructor),
+      mStrokeDashoffset(LengthPercentage::Zero()),
+      mStrokeWidth(LengthPercentage::FromPixels(1.0f)),
       mFillOpacity(1.0f),
       mStrokeMiterlimit(4.0f),
       mStrokeOpacity(1.0f),
@@ -3712,9 +3711,9 @@ nsStyleText::nsStyleText(const Document& aDocument)
       mWebkitTextStrokeColor(StyleComplexColor::CurrentColor()),
       mMozTabSize(
           StyleNonNegativeLengthOrNumber::Number(NS_STYLE_TABSIZE_INITIAL)),
-      mWordSpacing(0, nsStyleCoord::CoordConstructor),
-      mLetterSpacing(eStyleUnit_Normal),
-      mLineHeight(eStyleUnit_Normal),
+      mWordSpacing(LengthPercentage::Zero()),
+      mLetterSpacing({0.}),
+      mLineHeight(StyleLineHeight::Normal()),
       mTextIndent(LengthPercentage::Zero()),
       mWebkitTextStrokeWidth(0),
       mTextShadow(nullptr) {

@@ -40,7 +40,8 @@ class UnpackFinder(BaseFinder):
     The UnpackFinder is populated with files from this Finder instance,
     or with files from a FileFinder using the given path as its root.
     '''
-    def __init__(self, source):
+
+    def __init__(self, source, omnijar_name=None):
         if isinstance(source, BaseFinder):
             self._finder = source
         else:
@@ -48,7 +49,12 @@ class UnpackFinder(BaseFinder):
         self.base = self._finder.base
         self.files = FileRegistry()
         self.kind = 'flat'
-        self.omnijar = None
+        if omnijar_name:
+            self.omnijar = omnijar_name
+        else:
+            # Can't include globally because of bootstrapping issues.
+            from buildconfig import substs
+            self.omnijar = substs.get('OMNIJAR_NAME', 'omni.ja')
         self.jarlogs = {}
         self.compressed = False
 
@@ -59,18 +65,15 @@ class UnpackFinder(BaseFinder):
             if p == 'precomplete':
                 continue
             base = mozpath.dirname(p)
-            # If the file is a zip/jar that is not a .xpi, and contains a
-            # chrome.manifest, it is an omnijar. All the files it contains
-            # go in the directory containing the omnijar. Manifests are merged
-            # if there is a corresponding manifest in the directory.
-            if not p.endswith('.xpi') and self._maybe_zip(f) and \
-                    (mozpath.basename(p) == self.omnijar or
-                     not self.omnijar):
+            # If the file matches the omnijar pattern, it is an omnijar.
+            # All the files it contains go in the directory containing the full
+            # pattern. Manifests are merged if there is a corresponding manifest
+            # in the directory.
+            if self._maybe_zip(f) and mozpath.match(p, '**/%s' % self.omnijar):
                 jar = self._open_jar(p, f)
                 if 'chrome.manifest' in jar:
                     self.kind = 'omni'
-                    self.omnijar = mozpath.basename(p)
-                    self._fill_with_jar(base, jar)
+                    self._fill_with_jar(p[:-len(self.omnijar) - 1], jar)
                     continue
             # If the file is a manifest, scan its entries for some referencing
             # jar: urls. If there are some, the files contained in the jar they
@@ -88,7 +91,7 @@ class UnpackFinder(BaseFinder):
             if p.endswith('.xpi') and self._maybe_zip(f):
                 self._fill_with_jar(p[:-4], self._open_jar(p, f))
                 continue
-            if not p in jars:
+            if p not in jars:
                 self.files.add(p, f)
 
     def _fill_with_jar(self, base, jar):
@@ -124,11 +127,11 @@ class UnpackFinder(BaseFinder):
                 jar = [f for p, f in self._finder.find(jarpath)]
                 assert len(jar) == 1
                 jar = jar[0]
-            if not jarpath in jars:
+            if jarpath not in jars:
                 base = mozpath.splitext(jarpath)[0]
                 for j in self._open_jar(jarpath, jar):
                     self.files.add(mozpath.join(base,
-                                                     j.filename),
+                                                j.filename),
                                    DeflatedFile(j))
             jars.add(jarpath)
             self.kind = 'jar'
@@ -172,23 +175,23 @@ class UnpackFinder(BaseFinder):
         return mozpath.join(base, jar), entry
 
 
-def unpack_to_registry(source, registry):
+def unpack_to_registry(source, registry, omnijar_name=None):
     '''
     Transform a jar chrome or omnijar packaged directory into a flat package.
 
     The given registry is filled with the flat package.
     '''
-    finder = UnpackFinder(source)
+    finder = UnpackFinder(source, omnijar_name)
     packager = SimplePackager(FlatFormatter(registry))
     for p, f in finder.find('*'):
         packager.add(p, f)
     packager.close()
 
 
-def unpack(source):
+def unpack(source, omnijar_name=None):
     '''
     Transform a jar chrome or omnijar packaged directory into a flat package.
     '''
     copier = FileCopier()
-    unpack_to_registry(source, copier)
+    unpack_to_registry(source, copier, omnijar_name)
     copier.copy(source, skip_if_older=False)
