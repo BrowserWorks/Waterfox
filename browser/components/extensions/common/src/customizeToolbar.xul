@@ -9,7 +9,7 @@
 #ifdef MOZ_SUITE
   "chrome://communicator/locale/customizeToolbar.dtd">
 #else
-  "chrome://browser/locale/customizeToolbar.dtd">
+  "chrome://messenger/locale/customizeToolbar.dtd">
 #endif
   %customizeToolbarDTD;
 ]>
@@ -19,17 +19,17 @@
 <?xml-stylesheet href="chrome://communicator/content/customizeToolbar.css" type="text/css"?>
 <?xml-stylesheet href="chrome://communicator/skin/customizeToolbar.css" type="text/css"?>
 #else
-<?xml-stylesheet href="chrome://browser/content/customizeToolbar.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/customizeToolbar.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/content/bindings.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/content/messenger.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/messageHeader.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/primaryToolbar.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/chat.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/addressbook/addressbook.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/messengercompose/messengercompose.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/smime/msgCompSMIMEOverlay.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/content/customizeToolbar.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/customizeToolbar.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/content/bindings.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/content/messenger.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/messageHeader.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/primaryToolbar.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/chat.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/addressbook/addressbook.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/messengercompose/messengercompose.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/smime/msgCompSMIMEOverlay.css" type="text/css"?>
 #endif
 
 <window id="CustomizeToolbarWindow"
@@ -49,9 +49,9 @@
 <script type="application/javascript" src="chrome://communicator/content/customizeToolbar.js"/>
 <stringbundle id="stringBundle" src="chrome://communicator/locale/customizeToolbar.properties"/>
 #else
-<script type="application/javascript" src="chrome://browser/content/customizeToolbar.js"/>
-<script type="application/javascript" src="chrome://browser/content/mailCore.js"/>
-<stringbundle id="stringBundle" src="chrome://browser/locale/customizeToolbar.properties"/>
+<script type="application/javascript" src="chrome://messenger/content/customizeToolbar.js"/>
+<script type="application/javascript" src="chrome://messenger/content/mailCore.js"/>
+<stringbundle id="stringBundle" src="chrome://messenger/locale/customizeToolbar.properties"/>
 #endif
 
 <keyset id="CustomizeToolbarKeyset">

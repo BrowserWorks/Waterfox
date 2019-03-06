@@ -100,9 +100,9 @@
             if (popup)
               arr = popup.getElementsByAttribute("value", val);
 
-            if (arr && arr.item(0))
+            if (arr && arr.item(0)) {
               this.selectedItem = arr[0];
-            else {
+            } else {
               this.selectedItem = null;
               this.setAttribute("value", val);
             }
@@ -174,8 +174,9 @@
             if (popup && 0 <= val) {
               if (val < popup.children.length)
                 this.selectedItem = popup.children[val];
-            } else
+            } else {
               this.selectedItem = null;
+            }
             return val;
           ]]>
         </setter>
@@ -333,13 +334,13 @@
   </binding>
 
   <binding id="menulist-popuponly"
-           extends="chrome://browser/content/menulist.xml#xbl-menulist">
+           extends="chrome://messenger/content/menulist.xml#xbl-menulist">
     <content>
       <children includes="menupopup"/>
     </content>
   </binding>
 
-  <binding id="menulist-editable" extends="chrome://browser/content/menulist.xml#xbl-menulist">
+  <binding id="menulist-editable" extends="chrome://messenger/content/menulist.xml#xbl-menulist">
     <content sizetopopup="pref">
       <xul:moz-input-box class="menulist-editable-box moz-input-box" xbl:inherits="context,disabled,readonly,focused" flex="1">
         <html:input class="menulist-editable-input" anonid="input" allowevents="true"

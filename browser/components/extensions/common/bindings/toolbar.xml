@@ -398,7 +398,7 @@
 #ifdef MOZ_SUITE
            extends="chrome://communicator/content/bindings/toolbar.xml#toolbar">
 #else
-           extends="chrome://browser/content/toolbar.xml#toolbar">
+           extends="chrome://messenger/content/toolbar.xml#toolbar">
 #endif
     <implementation>
       <constructor>
@@ -550,7 +550,7 @@
 #ifdef MOZ_SUITE
            extends="chrome://communicator/content/bindings/toolbar.xml#toolbarpaletteitem">
 #else
-           extends="chrome://browser/content/toolbar.xml#toolbarpaletteitem">
+           extends="chrome://messenger/content/toolbar.xml#toolbarpaletteitem">
 #endif
     <content>
       <xul:hbox class="toolbarpaletteitem-box" xbl:inherits="type,place">
@@ -564,7 +564,7 @@
 #ifdef MOZ_SUITE
            extends="chrome://communicator/content/bindings/toolbar.xml#toolbarpaletteitem">
 #else
-           extends="chrome://browser/content/toolbar.xml#toolbarpaletteitem">
+           extends="chrome://messenger/content/toolbar.xml#toolbarpaletteitem">
 #endif
     <content>
       <xul:hbox class="toolbarpaletteitem-box" xbl:inherits="type,place">

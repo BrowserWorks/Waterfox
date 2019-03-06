@@ -688,12 +688,13 @@ class RDFSubject extends RDFNode {
             }
             object = this._ds._getSubjectForElement(childElement);
             object._parseElement(childElement);
-          } else if (parseType == "Integer")
+          } else if (parseType == "Integer") {
             object = new RDFIntLiteral(child.textContent);
-          else if (parseType == "Date")
+          } else if (parseType == "Date") {
             object = new RDFDateLiteral(new Date(child.textContent));
-          else
+          } else {
             object = new RDFLiteral(child.textContent);
+          }
         }
 
         assertion = new RDFAssertion(this, predicate, object);

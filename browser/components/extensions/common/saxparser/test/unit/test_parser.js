@@ -91,16 +91,16 @@ function updateDocumentSourceMaps(src) {
   channel.contentType = type;
 
   saxReader.parseAsync(null, uri);
-  saxReader.onStartRequest(channel, uri);
+  saxReader.onStartRequest(channel);
 
   let pos = 0;
   let count = bStream.available();
   while (count > 0) {
-    saxReader.onDataAvailable(channel, null, bStream, pos, count);
+    saxReader.onDataAvailable(channel, bStream, pos, count);
     pos += count;
     count = bStream.available();
   }
-  saxReader.onStopRequest(channel, null, Cr.NS_OK);
+  saxReader.onStopRequest(channel, Cr.NS_OK);
 
   // Just in case it leaks.
   saxReader.contentHandler = null;

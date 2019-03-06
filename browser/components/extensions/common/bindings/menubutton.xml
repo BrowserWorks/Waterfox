@@ -106,7 +106,7 @@
   </binding>
 
   <binding id="menu-button" display="xul:menu"
-           extends="chrome://browser/content/menubutton.xml#menu-button-base">
+           extends="chrome://messenger/content/menubutton.xml#menu-button-base">
     <resources>
       <stylesheet src="chrome://global/skin/button.css"/>
     </resources>

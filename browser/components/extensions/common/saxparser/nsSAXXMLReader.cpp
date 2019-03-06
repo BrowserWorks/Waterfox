@@ -218,7 +218,7 @@ nsSAXXMLReader::ParseAsync(nsIRequestObserver *aObserver) {
 // nsIRequestObserver
 
 NS_IMETHODIMP
-nsSAXXMLReader::OnStartRequest(nsIRequest *aRequest, nsISupports *aContext) {
+nsSAXXMLReader::OnStartRequest(nsIRequest *aRequest) {
   NS_ENSURE_TRUE(mIsAsyncParse, NS_ERROR_FAILURE);
   nsresult rv;
   rv = EnsureBaseURI();
@@ -228,15 +228,15 @@ nsSAXXMLReader::OnStartRequest(nsIRequest *aRequest, nsISupports *aContext) {
   NS_ENSURE_SUCCESS(rv, rv);
   // we don't need or want this anymore
   mParserObserver = nullptr;
-  return mListener->OnStartRequest(aRequest, aContext);
+  return mListener->OnStartRequest(aRequest);
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::OnStopRequest(nsIRequest *aRequest, nsISupports *aContext,
-                              nsresult status) {
+nsSAXXMLReader::OnStopRequest(nsIRequest *aRequest, nsresult status)
+{
   NS_ENSURE_TRUE(mIsAsyncParse, NS_ERROR_FAILURE);
   NS_ENSURE_STATE(mListener);
-  nsresult rv = mListener->OnStopRequest(aRequest, aContext, status);
+  nsresult rv = mListener->OnStopRequest(aRequest, status);
   mListener = nullptr;
   mIsAsyncParse = false;
   return rv;
@@ -245,13 +245,12 @@ nsSAXXMLReader::OnStopRequest(nsIRequest *aRequest, nsISupports *aContext,
 // nsIStreamListener
 
 NS_IMETHODIMP
-nsSAXXMLReader::OnDataAvailable(nsIRequest *aRequest, nsISupports *aContext,
+nsSAXXMLReader::OnDataAvailable(nsIRequest *aRequest,
                                 nsIInputStream *aInputStream, uint64_t offset,
                                 uint32_t count) {
   NS_ENSURE_TRUE(mIsAsyncParse, NS_ERROR_FAILURE);
   NS_ENSURE_STATE(mListener);
-  return mListener->OnDataAvailable(aRequest, aContext, aInputStream, offset,
-                                    count);
+  return mListener->OnDataAvailable(aRequest, aInputStream, offset, count);
 }
 
 nsresult nsSAXXMLReader::InitParser(nsIRequestObserver *aObserver,

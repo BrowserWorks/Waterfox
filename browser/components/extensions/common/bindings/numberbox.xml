@@ -9,7 +9,7 @@
    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
    xmlns:xbl="http://www.mozilla.org/xbl">
 
-  <binding id="numberbox" extends="chrome://browser/content/textbox.xml#textbox">
+  <binding id="numberbox" extends="chrome://messenger/content/textbox.xml#textbox">
 
     <content>
       <xul:moz-input-box class="textbox-input-box numberbox-input-box" flex="1"

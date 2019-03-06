@@ -5,16 +5,16 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/content/viewSource.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/content/viewSource.css" type="text/css"?>
 
 <!DOCTYPE window [
 <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
 %brandDTD;
 #ifndef MOZ_SUITE
-<!ENTITY % baseMenuOverlayDTD SYSTEM "chrome://browser/locale/baseMenuOverlay.dtd">
+<!ENTITY % baseMenuOverlayDTD SYSTEM "chrome://messenger/locale/baseMenuOverlay.dtd">
 %baseMenuOverlayDTD;
 #endif
-<!ENTITY % sourceDTD SYSTEM "chrome://browser/locale/viewSource.dtd" >
+<!ENTITY % sourceDTD SYSTEM "chrome://messenger/locale/viewSource.dtd" >
 %sourceDTD;
 <!ENTITY % charsetDTD SYSTEM "chrome://global/locale/charsetMenu.dtd" >
 %charsetDTD;
@@ -37,13 +37,13 @@
   <script type="application/javascript" src="chrome://global/content/globalOverlay.js"/>
   <script type="application/javascript" src="chrome://global/content/printUtils.js"/>
 #ifndef MOZ_SUITE
-<script type="application/javascript" src="chrome://browser/content/mailCore.js"/>
+<script type="application/javascript" src="chrome://messenger/content/mailCore.js"/>
 #endif
-  <script type="application/javascript" src="chrome://browser/content/viewSource.js"/>
+  <script type="application/javascript" src="chrome://messenger/content/viewSource.js"/>
   <script type="application/javascript" src="chrome://global/content/viewZoomOverlay.js"/>
   <script type="application/javascript" src="chrome://global/content/contentAreaUtils.js"/>
 
-  <stringbundle id="viewSourceBundle" src="chrome://browser/locale/viewSource.properties"/>
+  <stringbundle id="viewSourceBundle" src="chrome://messenger/locale/viewSource.properties"/>
 
   <command id="cmd_savePage" oncommand="ViewSourceSavePage();"/>
   <command id="cmd_print" oncommand="PrintUtils.printWindow(gBrowser.outerWindowID, gBrowser);"/>

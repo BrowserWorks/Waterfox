@@ -7,8 +7,6 @@
  * into the application.
  */
 
-"use strict";
-
 this.EXPORTED_SYMBOLS = ["ExtensionSupport"];
 
 const {AddonManager} = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
@@ -16,7 +14,7 @@ const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 // ChromeUtils.import("resource://gre/modules/Deprecated.jsm") - needed for warning.
 const {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
-var {fixIterator} = ChromeUtils.import("resource:///modules/iteratorUtils.jsm");
+var { fixIterator } = ChromeUtils.import("resource:///modules/iteratorUtils.jsm");
 const {IOUtils} = ChromeUtils.import("resource:///modules/IOUtils.js");
 
 var extensionHooks = new Map();
@@ -36,7 +34,8 @@ var ExtensionSupport = {
       return legacyExtensions.get(id);
     },
     has(id) {
-      if (!legacyExtensions.has(id)) { return false; }
+      if (!legacyExtensions.has(id))
+        return false;
 
       let state = legacyExtensions.get(id);
       return !["install", "enable"].includes(state.pendingOperation);
@@ -45,7 +44,8 @@ var ExtensionSupport = {
       return legacyExtensions.has(id);
     },
     _maybeDelete(id, newPendingOperation) {
-      if (!legacyExtensions.has(id)) { return; }
+      if (!legacyExtensions.has(id))
+        return;
 
       let state = legacyExtensions.get(id);
       if (state.pendingOperation == "enable" && newPendingOperation == "disable") {
@@ -57,7 +57,7 @@ var ExtensionSupport = {
       }
     },
     notifyObservers(state) {
-      let wrappedState = {wrappedJSObject: state};
+      let wrappedState = { wrappedJSObject: state };
       Services.obs.notifyObservers(wrappedState, "legacy-addon-status-changed");
     },
     // AddonListener
@@ -95,12 +95,14 @@ var ExtensionSupport = {
     function walkExtensionPrefs(extensionRoot) {
       let prefFile = extensionRoot.clone();
       let foundPrefStrings = [];
-      if (!prefFile.exists()) { return []; }
+      if (!prefFile.exists())
+        return [];
 
       if (prefFile.isDirectory()) {
         prefFile.append("defaults");
         prefFile.append("preferences");
-        if (!prefFile.exists() || !prefFile.isDirectory()) { return []; }
+        if (!prefFile.exists() || !prefFile.isDirectory())
+          return [];
 
         let unsortedFiles = [];
         for (let file of fixIterator(prefFile.directoryEntries, Ci.nsIFile)) {
@@ -126,7 +128,7 @@ var ExtensionSupport = {
           let stream = zipReader.getInputStream(entryName);
           let entrySize = zipReader.getEntry(entryName).realSize;
           if (entrySize > 0) {
-            let content = NetUtil.readInputStreamToString(stream, entrySize, {charset: "utf-8", replacement: "?"});
+            let content = NetUtil.readInputStreamToString(stream, entrySize, { charset: "utf-8", replacement: "?" });
             foundPrefStrings.push(content);
           }
         }
@@ -173,7 +175,7 @@ var ExtensionSupport = {
    *                                   unloads the matching document.
    *        Both callbacks receive the matching window object as argument.
    *
-   * @returns {boolean}  True if the passed arguments were valid and the caller could be registered.
+   * @return {boolean}  True if the passed arguments were valid and the caller could be registered.
    *                    False otherwise.
    */
   registerWindowListener(aID, aExtensionHook) {
@@ -226,7 +228,7 @@ var ExtensionSupport = {
    *
    * @param aID {String}  Some identification of the caller, usually the extension ID.
    *
-   * @returns {boolean}  True if the passed arguments were valid and the caller could be unregistered.
+   * @return {boolean}  True if the passed arguments were valid and the caller could be unregistered.
    *                    False otherwise.
    */
   unregisterWindowListener(aID) {
@@ -284,7 +286,7 @@ var ExtensionSupport = {
     // aWindow.document.location.href will not be "about:blank" any more.
     aWindow.addEventListener("load", function() {
       ExtensionSupport._addToListAndNotify(aWindow, aID);
-    }, {once: true});
+    }, { once: true });
   },
 
   /**
@@ -299,7 +301,7 @@ var ExtensionSupport = {
     openWindowList.add(aWindow);
     aWindow.addEventListener("unload", function() {
       ExtensionSupport._checkAndRunMatchingExtensions(aWindow, "unload");
-    }, {once: true});
+    }, { once: true });
     ExtensionSupport._checkAndRunMatchingExtensions(aWindow, "load", aID);
   },
 
@@ -331,15 +333,18 @@ var ExtensionSupport = {
       let windowChromeURL = aWindow.document.location.href;
       // Check if extension applies to this document URL.
       if (("chromeURLs" in aExtensionHook) &&
-          (!aExtensionHook.chromeURLs.some(url => url == windowChromeURL))) { return; }
+          (!aExtensionHook.chromeURLs.some(url => url == windowChromeURL)))
+        return;
 
       // Run the relevant callback.
       switch (aEventType) {
         case "load":
-          if ("onLoadWindow" in aExtensionHook) { aExtensionHook.onLoadWindow(aWindow); }
+          if ("onLoadWindow" in aExtensionHook)
+            aExtensionHook.onLoadWindow(aWindow);
           break;
         case "unload":
-          if ("onUnloadWindow" in aExtensionHook) { aExtensionHook.onUnloadWindow(aWindow); }
+          if ("onUnloadWindow" in aExtensionHook)
+            aExtensionHook.onUnloadWindow(aWindow);
           break;
       }
     }
