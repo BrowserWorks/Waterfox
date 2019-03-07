@@ -48,8 +48,8 @@ pref("extensions.getAddons.langpacks.url", "https://services.addons.mozilla.org/
 pref("extensions.update.autoUpdateDefault", true);
 
 // Check AUS for system add-on updates.
-pref("extensions.systemAddon.update.url", "https://aus5.mozilla.org/update/3/SystemAddons/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
-pref("extensions.systemAddon.update.enabled", true);
+pref("extensions.systemAddon.update.url", "");
+pref("extensions.systemAddon.update.enabled", false);
 
 // Disable add-ons that are not installed by the user in all scopes by default.
 // See the SCOPE constants in AddonManager.jsm for values to use here.
@@ -71,8 +71,8 @@ pref("extensions.webextensions.background-delayed-startup", true);
 pref("extensions.legacy.exceptions", "testpilot@cliqz.com,@testpilot-containers,jid1-NeEaf3sAHdKHPA@jetpack,@activity-streams,pulse@mozilla.com,@testpilot-addon,@min-vid,tabcentertest1@mozilla.com,snoozetabs@mozilla.com,speaktome@mozilla.com,hoverpad@mozilla.com");
 
 // Require signed add-ons by default
-pref("extensions.langpacks.signatures.required", true);
-pref("xpinstall.signatures.required", true);
+pref("extensions.langpacks.signatures.required", false);
+pref("xpinstall.signatures.required", false);
 pref("xpinstall.signatures.devInfoURL", "https://wiki.mozilla.org/Addons/Extension_Signing");
 
 // Dictionary download preference
@@ -256,7 +256,7 @@ pref("browser.slowStartup.maxSamples", 5);
 // This url, if changed, MUST continue to point to an https url. Pulling arbitrary content to inject into
 // this page over http opens us up to a man-in-the-middle attack that we'd rather not face. If you are a downstream
 // repackager of this code using an alternate snippet url, please keep your users safe
-pref("browser.aboutHomeSnippets.updateUrl", "https://snippets.cdn.mozilla.net/%STARTPAGE_VERSION%/%NAME%/%VERSION%/%APPBUILDID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/");
+pref("browser.aboutHomeSnippets.updateUrl", "");
 
 pref("browser.enable_automatic_image_resizing", true);
 pref("browser.chrome.site_icons", true);
@@ -376,8 +376,8 @@ pref("browser.helperApps.deleteTempFileOnExit", true);
 pref("browser.search.searchEnginesURL",      "https://addons.mozilla.org/%LOCALE%/firefox/search-engines/");
 
 // Market-specific search defaults
-pref("browser.search.geoSpecificDefaults", true);
-pref("browser.search.geoSpecificDefaults.url", "https://search.services.mozilla.com/1/%APP%/%VERSION%/%CHANNEL%/%LOCALE%/%REGION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%");
+pref("browser.search.geoSpecificDefaults", false);
+pref("browser.search.geoSpecificDefaults.url", "");
 
 // search bar results always open in a new tab
 pref("browser.search.openintab", false);
@@ -389,7 +389,7 @@ pref("browser.search.context.loadInBackground", false);
 pref("browser.search.hiddenOneOffs", "");
 
 // Mirrors whether the search-container widget is in the navigation toolbar.
-pref("browser.search.widget.inNavBar", false);
+pref("browser.search.widget.inNavBar", true);
 
 #ifndef RELEASE_OR_BETA
 pref("browser.search.reset.enabled", true);
@@ -1437,8 +1437,8 @@ pref("identity.fxaccounts.autoconfig.uri", "");
 
 // URLs for promo links to mobile browsers. Note that consumers are expected to
 // append a value for utm_campaign.
-pref("identity.mobilepromo.android", "https://www.mozilla.org/firefox/android/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=");
-pref("identity.mobilepromo.ios", "https://www.mozilla.org/firefox/ios/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=");
+pref("identity.mobilepromo.android", "");
+pref("identity.mobilepromo.ios", "");
 
 // Migrate any existing Firefox Account data from the default profile to the
 // Developer Edition profile.
@@ -1501,7 +1501,7 @@ pref("media.autoplay.enabled.user-gestures-needed", true);
 pref("media.autoplay.default", 1); // 0=Allowed, 1=Blocked
 #else
 // Set Firefox to block autoplay, asking for permission by default.
-pref("media.autoplay.default", 0); // 0=Allowed, 1=Blocked
+pref("media.autoplay.default", 1); // 0=Allowed, 1=Blocked
 #endif
 
 
@@ -1509,11 +1509,11 @@ pref("media.autoplay.default", 0); // 0=Allowed, 1=Blocked
 // Block WebAudio from playing automatically.
 pref("media.autoplay.block-webaudio", true);
 #else
-pref("media.autoplay.block-webaudio", false);
+pref("media.autoplay.block-webaudio", true);
 #endif
 
 #ifdef NIGHTLY_BUILD
-pref("media.videocontrols.picture-in-picture.enabled", false);
+pref("media.videocontrols.picture-in-picture.enabled", true);
 #endif
 
 // Play with different values of the decay time and get telemetry,
@@ -1828,7 +1828,7 @@ pref("prio.enabled", true);
 #endif
 
 // Discovery prefs
-pref("browser.discovery.enabled", true);
+pref("browser.discovery.enabled", false);
 pref("browser.discovery.containers.enabled", true);
 pref("browser.discovery.sites", "addons.mozilla.org");
 
