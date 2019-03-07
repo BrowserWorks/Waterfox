@@ -1581,7 +1581,7 @@ static nsresult pref_SetPref(const char* aPrefName, PrefType aType,
     rv = pref->SetDefaultValue(aType, aValue, aIsSticky, aIsLocked,
                                &valueChanged);
   } else {
-    MOZ_ASSERT(!aIsLocked);  // `locked` is disallowed in user pref files
+    //MOZ_ASSERT(!aIsLocked);  // `locked` is disallowed in user pref files
     rv = pref->SetUserValue(aType, aValue, aFromInit, &valueChanged);
   }
   if (NS_FAILED(rv)) {
