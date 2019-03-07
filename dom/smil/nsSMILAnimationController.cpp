@@ -235,11 +235,9 @@ nsSMILAnimationController::Unlink()
 //----------------------------------------------------------------------
 // Refresh driver lifecycle related methods
 
-void
-nsSMILAnimationController::NotifyRefreshDriverCreated(
-    nsRefreshDriver* aRefreshDriver)
-{
-  if (!mPauseState) {
+void nsSMILAnimationController::NotifyRefreshDriverCreated(
+    nsRefreshDriver* aRefreshDriver) {
+  if (!mPauseState && mChildContainerTable.Count()) {
     MaybeStartSampling(aRefreshDriver);
   }
 }
