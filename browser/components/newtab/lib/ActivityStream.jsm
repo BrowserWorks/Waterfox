@@ -79,7 +79,7 @@ const PREFS_CONFIG = new Map([
   }],
   ["showSponsored", {
     title: "Show sponsored cards in spoc experiment (show_spocs in topstories.options has to be set to true as well)",
-    value: true,
+    value: false,
   }],
   ["pocketCta", {
     title: "Pocket cta and button for logged out users.",
@@ -116,7 +116,7 @@ const PREFS_CONFIG = new Map([
   }],
   ["disableSnippets", {
     title: "Disable snippets on activity stream",
-    value: false,
+    value: true,
   }],
   ["topSitesRows", {
     title: "Number of rows of Top Sites to display",
@@ -124,7 +124,7 @@ const PREFS_CONFIG = new Map([
   }],
   ["telemetry", {
     title: "Enable system error and usage data collection",
-    value: true,
+    value: false,
     value_local_dev: false,
   }],
   ["telemetry.ut.events", {
@@ -139,11 +139,11 @@ const PREFS_CONFIG = new Map([
   }],
   ["telemetry.structuredIngestion.endpoint", {
     title: "Structured Ingestion telemetry server endpoint",
-    value: "https://incoming.telemetry.mozilla.org/submit/activity-stream",
+    value: "",
   }],
   ["telemetry.ping.endpoint", {
     title: "Telemetry server endpoint",
-    value: "https://tiles.services.mozilla.com/v4/links/activity-stream",
+    value: "",
   }],
   ["section.highlights.includeVisited", {
     title: "Boolean flag that decides whether or not to show visited pages in highlights.",
@@ -325,7 +325,7 @@ const FEEDS_DATA = [
     name: "snippets",
     factory: () => new SnippetsFeed(),
     title: "Gets snippets data",
-    value: true,
+    value: false,
   },
   {
     name: "systemtick",
@@ -337,7 +337,7 @@ const FEEDS_DATA = [
     name: "telemetry",
     factory: () => new TelemetryFeed(),
     title: "Relays telemetry-related actions to PingCentre",
-    value: true,
+    value: false,
   },
   {
     name: "favicon",
@@ -349,13 +349,13 @@ const FEEDS_DATA = [
     name: "topsites",
     factory: () => new TopSitesFeed(),
     title: "Queries places and gets metadata for Top Sites section",
-    value: true,
+    value: false,
   },
   {
     name: "asrouterfeed",
     factory: () => new ASRouterFeed(),
     title: "Handles AS Router messages, such as snippets and onboaridng",
-    value: true,
+    value: false,
   },
   {
     name: "discoverystreamfeed",
