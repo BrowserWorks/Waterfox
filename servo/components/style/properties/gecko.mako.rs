@@ -3177,7 +3177,6 @@ fn static_assert() {
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_CONTENT;
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_SIZE;
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_LAYOUT;
-        use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_STYLE;
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_PAINT;
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_ALL_BITS;
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_CONTENT_BITS;
@@ -3201,9 +3200,6 @@ fn static_assert() {
         if v.contains(SpecifiedValue::LAYOUT) {
             bitfield |= NS_STYLE_CONTAIN_LAYOUT;
         }
-        if v.contains(SpecifiedValue::STYLE) {
-            bitfield |= NS_STYLE_CONTAIN_STYLE;
-        }
         if v.contains(SpecifiedValue::PAINT) {
             bitfield |= NS_STYLE_CONTAIN_PAINT;
         }
@@ -3219,7 +3215,6 @@ fn static_assert() {
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_CONTENT;
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_SIZE;
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_LAYOUT;
-        use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_STYLE;
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_PAINT;
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_ALL_BITS;
         use crate::gecko_bindings::structs::NS_STYLE_CONTAIN_CONTENT_BITS;
@@ -3248,9 +3243,6 @@ fn static_assert() {
         }
         if gecko_flags & (NS_STYLE_CONTAIN_LAYOUT as u8) != 0 {
             servo_flags.insert(SpecifiedValue::LAYOUT);
-        }
-        if gecko_flags & (NS_STYLE_CONTAIN_STYLE as u8) != 0 {
-            servo_flags.insert(SpecifiedValue::STYLE);
         }
         if gecko_flags & (NS_STYLE_CONTAIN_PAINT as u8) != 0 {
             servo_flags.insert(SpecifiedValue::PAINT);
@@ -3756,6 +3748,7 @@ fn static_assert() {
     #[allow(non_snake_case)]
     pub fn set__moz_image_region(&mut self, v: longhands::_moz_image_region::computed_value::T) {
         use crate::values::Either;
+        use crate::values::generics::length::LengthPercentageOrAuto::*;
 
         match v {
             Either::Second(_auto) => {
@@ -3765,15 +3758,21 @@ fn static_assert() {
                 self.gecko.mImageRegion.height = 0;
             }
             Either::First(rect) => {
-                self.gecko.mImageRegion.x = rect.left.map(Au::from).unwrap_or(Au(0)).0;
-                self.gecko.mImageRegion.y = rect.top.map(Au::from).unwrap_or(Au(0)).0;
+                self.gecko.mImageRegion.x = match rect.left {
+                    LengthPercentage(v) => v.to_i32_au(),
+                    Auto => 0,
+                };
+                self.gecko.mImageRegion.y = match rect.top {
+                    LengthPercentage(v) => v.to_i32_au(),
+                    Auto => 0,
+                };
                 self.gecko.mImageRegion.height = match rect.bottom {
-                    Some(value) => (Au::from(value) - Au(self.gecko.mImageRegion.y)).0,
-                    None => 0,
+                    LengthPercentage(value) => (Au::from(value) - Au(self.gecko.mImageRegion.y)).0,
+                    Auto => 0,
                 };
                 self.gecko.mImageRegion.width = match rect.right {
-                    Some(value) => (Au::from(value) - Au(self.gecko.mImageRegion.x)).0,
-                    None => 0,
+                    LengthPercentage(value) => (Au::from(value) - Au(self.gecko.mImageRegion.x)).0,
+                    Auto => 0,
                 };
             }
         }
@@ -3782,6 +3781,7 @@ fn static_assert() {
     #[allow(non_snake_case)]
     pub fn clone__moz_image_region(&self) -> longhands::_moz_image_region::computed_value::T {
         use crate::values::{Auto, Either};
+        use crate::values::generics::length::LengthPercentageOrAuto::*;
         use crate::values::computed::ClipRect;
 
         // There is no ideal way to detect auto type for structs::nsRect and its components, so
@@ -3794,10 +3794,10 @@ fn static_assert() {
         }
 
         Either::First(ClipRect {
-            top: Some(Au(self.gecko.mImageRegion.y).into()),
-            right: Some(Au(self.gecko.mImageRegion.width + self.gecko.mImageRegion.x).into()),
-            bottom: Some(Au(self.gecko.mImageRegion.height + self.gecko.mImageRegion.y).into()),
-            left: Some(Au(self.gecko.mImageRegion.x).into()),
+            top: LengthPercentage(Au(self.gecko.mImageRegion.y).into()),
+            right: LengthPercentage(Au(self.gecko.mImageRegion.width + self.gecko.mImageRegion.x).into()),
+            bottom: LengthPercentage(Au(self.gecko.mImageRegion.height + self.gecko.mImageRegion.y).into()),
+            left: LengthPercentage(Au(self.gecko.mImageRegion.x).into()),
         })
     }
 
@@ -3854,38 +3854,43 @@ fn static_assert() {
         use crate::gecko_bindings::structs::NS_STYLE_CLIP_TOP_AUTO;
         use crate::gecko_bindings::structs::NS_STYLE_CLIP_RIGHT_AUTO;
         use crate::gecko_bindings::structs::NS_STYLE_CLIP_BOTTOM_AUTO;
+        use crate::values::generics::length::LengthPercentageOrAuto::*;
         use crate::values::Either;
 
         match v {
             Either::First(rect) => {
                 self.gecko.mClipFlags = NS_STYLE_CLIP_RECT as u8;
-                if let Some(left) = rect.left {
-                    self.gecko.mClip.x = left.to_i32_au();
-                } else {
-                    self.gecko.mClip.x = 0;
-                    self.gecko.mClipFlags |= NS_STYLE_CLIP_LEFT_AUTO as u8;
-                }
+                self.gecko.mClip.x = match rect.left {
+                    LengthPercentage(l) => l.to_i32_au(),
+                    Auto => {
+                        self.gecko.mClipFlags |= NS_STYLE_CLIP_LEFT_AUTO as u8;
+                        0
+                    }
+                };
 
-                if let Some(top) = rect.top {
-                    self.gecko.mClip.y = top.to_i32_au();
-                } else {
-                    self.gecko.mClip.y = 0;
-                    self.gecko.mClipFlags |= NS_STYLE_CLIP_TOP_AUTO as u8;
-                }
+                self.gecko.mClip.y = match rect.top {
+                    LengthPercentage(l) => l.to_i32_au(),
+                    Auto => {
+                        self.gecko.mClipFlags |= NS_STYLE_CLIP_TOP_AUTO as u8;
+                        0
+                    }
+                };
 
-                if let Some(bottom) = rect.bottom {
-                    self.gecko.mClip.height = (Au::from(bottom) - Au(self.gecko.mClip.y)).0;
-                } else {
-                    self.gecko.mClip.height = 1 << 30; // NS_MAXSIZE
-                    self.gecko.mClipFlags |= NS_STYLE_CLIP_BOTTOM_AUTO as u8;
-                }
+                self.gecko.mClip.height = match rect.bottom {
+                    LengthPercentage(l) => (Au::from(l) - Au(self.gecko.mClip.y)).0,
+                    Auto => {
+                        self.gecko.mClipFlags |= NS_STYLE_CLIP_BOTTOM_AUTO as u8;
+                        1 << 30 // NS_MAXSIZE
+                    }
+                };
 
-                if let Some(right) = rect.right {
-                    self.gecko.mClip.width = (Au::from(right) - Au(self.gecko.mClip.x)).0;
-                } else {
-                    self.gecko.mClip.width = 1 << 30; // NS_MAXSIZE
-                    self.gecko.mClipFlags |= NS_STYLE_CLIP_RIGHT_AUTO as u8;
-                }
+                self.gecko.mClip.width = match rect.right {
+                    LengthPercentage(l) => (Au::from(l) - Au(self.gecko.mClip.x)).0,
+                    Auto => {
+                        self.gecko.mClipFlags |= NS_STYLE_CLIP_RIGHT_AUTO as u8;
+                        1 << 30 // NS_MAXSIZE
+                    }
+                };
             },
             Either::Second(_auto) => {
                 self.gecko.mClipFlags = NS_STYLE_CLIP_AUTO as u8;
@@ -3912,42 +3917,42 @@ fn static_assert() {
         use crate::gecko_bindings::structs::NS_STYLE_CLIP_LEFT_AUTO;
         use crate::gecko_bindings::structs::NS_STYLE_CLIP_RIGHT_AUTO;
         use crate::gecko_bindings::structs::NS_STYLE_CLIP_TOP_AUTO;
+        use crate::values::generics::length::LengthPercentageOrAuto::*;
         use crate::values::computed::{ClipRect, ClipRectOrAuto};
         use crate::values::Either;
 
         if self.gecko.mClipFlags == NS_STYLE_CLIP_AUTO as u8 {
-            ClipRectOrAuto::auto()
-        } else {
-            let left = if self.gecko.mClipFlags & NS_STYLE_CLIP_LEFT_AUTO as u8 != 0 {
-                debug_assert_eq!(self.gecko.mClip.x, 0);
-                None
-            } else {
-                Some(Au(self.gecko.mClip.x).into())
-            };
-
-            let top = if self.gecko.mClipFlags & NS_STYLE_CLIP_TOP_AUTO as u8 != 0 {
-                debug_assert_eq!(self.gecko.mClip.y, 0);
-                None
-            } else {
-                Some(Au(self.gecko.mClip.y).into())
-            };
-
-            let bottom = if self.gecko.mClipFlags & NS_STYLE_CLIP_BOTTOM_AUTO as u8 != 0 {
-                debug_assert_eq!(self.gecko.mClip.height, 1 << 30); // NS_MAXSIZE
-                None
-            } else {
-                Some(Au(self.gecko.mClip.y + self.gecko.mClip.height).into())
-            };
-
-            let right = if self.gecko.mClipFlags & NS_STYLE_CLIP_RIGHT_AUTO as u8 != 0 {
-                debug_assert_eq!(self.gecko.mClip.width, 1 << 30); // NS_MAXSIZE
-                None
-            } else {
-                Some(Au(self.gecko.mClip.x + self.gecko.mClip.width).into())
-            };
-
-            Either::First(ClipRect { top, right, bottom, left })
+            return ClipRectOrAuto::auto()
         }
+        let left = if self.gecko.mClipFlags & NS_STYLE_CLIP_LEFT_AUTO as u8 != 0 {
+            debug_assert_eq!(self.gecko.mClip.x, 0);
+            Auto
+        } else {
+            LengthPercentage(Au(self.gecko.mClip.x).into())
+        };
+
+        let top = if self.gecko.mClipFlags & NS_STYLE_CLIP_TOP_AUTO as u8 != 0 {
+            debug_assert_eq!(self.gecko.mClip.y, 0);
+            Auto
+        } else {
+            LengthPercentage(Au(self.gecko.mClip.y).into())
+        };
+
+        let bottom = if self.gecko.mClipFlags & NS_STYLE_CLIP_BOTTOM_AUTO as u8 != 0 {
+            debug_assert_eq!(self.gecko.mClip.height, 1 << 30); // NS_MAXSIZE
+            Auto
+        } else {
+            LengthPercentage(Au(self.gecko.mClip.y + self.gecko.mClip.height).into())
+        };
+
+        let right = if self.gecko.mClipFlags & NS_STYLE_CLIP_RIGHT_AUTO as u8 != 0 {
+            debug_assert_eq!(self.gecko.mClip.width, 1 << 30); // NS_MAXSIZE
+            Auto
+        } else {
+            LengthPercentage(Au(self.gecko.mClip.x + self.gecko.mClip.width).into())
+        };
+
+        Either::First(ClipRect { top, right, bottom, left })
     }
 
     <%

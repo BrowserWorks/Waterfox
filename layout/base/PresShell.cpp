@@ -1444,19 +1444,13 @@ void nsIPresShell::UpdatePreferenceStyles() {
     return;
   }
 
-  // We need to pass in mPresContext so that if the nsLayoutStylesheetCache
-  // needs to recreate the pref style sheet, it has somewhere to get the
-  // pref styling information from.  All pres contexts for
-  // IsChromeOriginImage() == false will have the same pref styling information,
-  // and similarly for IsChromeOriginImage() == true, so it doesn't really
-  // matter which pres context we pass in when it does need to be recreated.
-  // (See nsPresContext::GetDocumentColorPreferences for how whether we
-  // are a chrome origin image affects some pref styling information.)
+  PreferenceSheet::EnsureInitialized();
   auto cache = nsLayoutStylesheetCache::Singleton();
+
   RefPtr<StyleSheet> newPrefSheet =
-      mPresContext->IsChromeOriginImage()
-          ? cache->ChromePreferenceSheet(mPresContext)
-          : cache->ContentPreferenceSheet(mPresContext);
+      PreferenceSheet::ShouldUseChromePrefs(*mDocument)
+          ? cache->ChromePreferenceSheet()
+          : cache->ContentPreferenceSheet();
 
   if (mPrefStyleSheet == newPrefSheet) {
     return;
@@ -6540,51 +6534,11 @@ nsresult PresShell::EventHandler::HandleEvent(nsIFrame* aFrame,
     return NS_OK;
   }
 
-  nsresult rv = NS_OK;
-
-  AutoCurrentEventInfoSetter eventInfoSetter(*this);
-
   if (aGUIEvent->IsTargetedAtFocusedContent()) {
-    mPresShell->mCurrentEventContent = nullptr;
-
-    RefPtr<Element> eventTargetElement =
-        ComputeFocusedEventTargetElement(aGUIEvent);
-
-    mPresShell->mCurrentEventFrame = nullptr;
-    Document* targetDoc =
-        eventTargetElement ? eventTargetElement->OwnerDoc() : nullptr;
-    if (targetDoc && targetDoc != GetDocument()) {
-      nsCOMPtr<nsIPresShell> shell = targetDoc->GetShell();
-      if (shell) {
-        rv = static_cast<PresShell*>(shell.get())
-                 ->HandleRetargetedEvent(aGUIEvent, aEventStatus,
-                                         eventTargetElement);
-      }
-      return rv;
-    } else {
-      mPresShell->mCurrentEventContent = eventTargetElement;
-    }
-
-    if (!mPresShell->GetCurrentEventContent() ||
-        !mPresShell->GetCurrentEventFrame() ||
-        InZombieDocument(mPresShell->mCurrentEventContent)) {
-      rv = RetargetEventToParent(aGUIEvent, aEventStatus);
-      return rv;
-    }
-  } else {
-    mPresShell->mCurrentEventFrame = aFrame;
-  }
-  if (mPresShell->GetCurrentEventFrame()) {
-    nsCOMPtr<nsIContent> overrideClickTarget;  // Required due to bug  1506439
-    rv =
-        HandleEventInternal(aGUIEvent, aEventStatus, true, overrideClickTarget);
+    return HandleEventAtFocusedContent(aGUIEvent, aEventStatus);
   }
 
-#ifdef DEBUG
-  mPresShell->ShowEventTargetDebug();
-#endif
-
-  return rv;
+  return HandleEventWithFrameForPresShell(aFrame, aGUIEvent, aEventStatus);
 }
 
 nsresult PresShell::EventHandler::HandleEventUsingCoordinates(
@@ -7458,6 +7412,46 @@ PresShell::EventHandler::HandleEventWithPointerCapturingContentWithoutItsFrame(
       overrideClickTarget);
 }
 
+nsresult PresShell::EventHandler::HandleEventAtFocusedContent(
+    WidgetGUIEvent* aGUIEvent, nsEventStatus* aEventStatus) {
+  MOZ_ASSERT(aGUIEvent);
+  MOZ_ASSERT(aGUIEvent->IsTargetedAtFocusedContent());
+  MOZ_ASSERT(aEventStatus);
+
+  AutoCurrentEventInfoSetter eventInfoSetter(*this);
+
+  RefPtr<Element> eventTargetElement =
+      ComputeFocusedEventTargetElement(aGUIEvent);
+
+  mPresShell->mCurrentEventFrame = nullptr;
+  if (eventTargetElement) {
+    nsresult rv = NS_OK;
+    if (MaybeHandleEventWithAnotherPresShell(eventTargetElement, aGUIEvent,
+                                             aEventStatus, &rv)) {
+      return rv;
+    }
+  }
+
+  // If we cannot handle the event with mPresShell, let's try to handle it
+  // with parent PresShell.
+  mPresShell->mCurrentEventContent = eventTargetElement;
+  if (!mPresShell->GetCurrentEventContent() ||
+      !mPresShell->GetCurrentEventFrame() ||
+      InZombieDocument(mPresShell->mCurrentEventContent)) {
+    return RetargetEventToParent(aGUIEvent, aEventStatus);
+  }
+
+  nsCOMPtr<nsIContent> overrideClickTarget;  // Required due to bug  1506439
+  nsresult rv =
+      HandleEventInternal(aGUIEvent, aEventStatus, true, overrideClickTarget);
+
+#ifdef DEBUG
+  mPresShell->ShowEventTargetDebug();
+#endif
+
+  return rv;
+}
+
 Element* PresShell::EventHandler::ComputeFocusedEventTargetElement(
     WidgetGUIEvent* aGUIEvent) {
   MOZ_ASSERT(aGUIEvent);
@@ -7510,6 +7504,59 @@ Element* PresShell::EventHandler::ComputeFocusedEventTargetElement(
     default:
       return eventTargetElement;
   }
+}
+
+bool PresShell::EventHandler::MaybeHandleEventWithAnotherPresShell(
+    Element* aEventTargetElement, WidgetGUIEvent* aGUIEvent,
+    nsEventStatus* aEventStatus, nsresult* aRv) {
+  MOZ_ASSERT(aEventTargetElement);
+  MOZ_ASSERT(aGUIEvent);
+  MOZ_ASSERT(!aGUIEvent->IsUsingCoordinates());
+  MOZ_ASSERT(aEventStatus);
+  MOZ_ASSERT(aRv);
+
+  Document* eventTargetDocument = aEventTargetElement->OwnerDoc();
+  if (!eventTargetDocument || eventTargetDocument == GetDocument()) {
+    *aRv = NS_OK;
+    return false;
+  }
+
+  RefPtr<PresShell> eventTargetPresShell =
+      static_cast<PresShell*>(eventTargetDocument->GetShell());
+  if (!eventTargetPresShell) {
+    *aRv = NS_OK;
+    return true;  // No PresShell can handle the event.
+  }
+
+  EventHandler eventHandler(std::move(eventTargetPresShell));
+  *aRv = eventHandler.HandleRetargetedEvent(aGUIEvent, aEventStatus,
+                                            aEventTargetElement);
+  return true;
+}
+
+nsresult PresShell::EventHandler::HandleEventWithFrameForPresShell(
+    nsIFrame* aFrameForPresShell, WidgetGUIEvent* aGUIEvent,
+    nsEventStatus* aEventStatus) {
+  MOZ_ASSERT(aGUIEvent);
+  MOZ_ASSERT(!aGUIEvent->IsUsingCoordinates());
+  MOZ_ASSERT(!aGUIEvent->IsTargetedAtFocusedContent());
+  MOZ_ASSERT(aEventStatus);
+
+  AutoCurrentEventInfoSetter eventInfoSetter(*this, aFrameForPresShell,
+                                             nullptr);
+
+  nsresult rv = NS_OK;
+  if (mPresShell->GetCurrentEventFrame()) {
+    nsCOMPtr<nsIContent> overrideClickTarget;  // Required due to bug  1506439
+    rv =
+        HandleEventInternal(aGUIEvent, aEventStatus, true, overrideClickTarget);
+  }
+
+#ifdef DEBUG
+  mPresShell->ShowEventTargetDebug();
+#endif
+
+  return rv;
 }
 
 Document* PresShell::GetPrimaryContentDocument() {
@@ -7920,62 +7967,68 @@ nsresult PresShell::EventHandler::HandleEventInternal(
       }
     }
   }
+  RecordEventHandlingResponsePerformance(aEvent);
+  return rv;
+}
 
-  if (Telemetry::CanRecordBase() && !aEvent->mTimeStamp.IsNull() &&
-      aEvent->mTimeStamp > mPresShell->mLastOSWake && aEvent->AsInputEvent()) {
-    TimeStamp now = TimeStamp::Now();
-    double millis = (now - aEvent->mTimeStamp).ToMilliseconds();
-    Telemetry::Accumulate(Telemetry::INPUT_EVENT_RESPONSE_MS, millis);
-    if (GetDocument() &&
-        GetDocument()->GetReadyStateEnum() != Document::READYSTATE_COMPLETE) {
-      Telemetry::Accumulate(Telemetry::LOAD_INPUT_EVENT_RESPONSE_MS, millis);
-    }
-
-    if (!sLastInputProcessed || sLastInputProcessed < aEvent->mTimeStamp) {
-      if (sLastInputProcessed) {
-        // This input event was created after we handled the last one.
-        // Accumulate the previous events' coalesced duration.
-        double lastMillis =
-            (sLastInputProcessed - sLastInputCreated).ToMilliseconds();
-        Telemetry::Accumulate(Telemetry::INPUT_EVENT_RESPONSE_COALESCED_MS,
-                              lastMillis);
-
-        if (MOZ_UNLIKELY(!PresShell::sProcessInteractable)) {
-          // For content process, we use the ready state of
-          // top-level-content-document to know if the process has finished the
-          // start-up.
-          // For parent process, see the topic
-          // 'sessionstore-one-or-no-tab-restored' in PresShell::Observe.
-          if (XRE_IsContentProcess() && GetDocument() &&
-              GetDocument()->IsTopLevelContentDocument()) {
-            switch (GetDocument()->GetReadyStateEnum()) {
-              case Document::READYSTATE_INTERACTIVE:
-              case Document::READYSTATE_COMPLETE:
-                PresShell::sProcessInteractable = true;
-                break;
-              default:
-                break;
-            }
-          }
-        }
-        if (MOZ_LIKELY(PresShell::sProcessInteractable)) {
-          Telemetry::Accumulate(Telemetry::INPUT_EVENT_RESPONSE_POST_STARTUP_MS,
-                                lastMillis);
-        } else {
-          Telemetry::Accumulate(Telemetry::INPUT_EVENT_RESPONSE_STARTUP_MS,
-                                lastMillis);
-        }
-      }
-      sLastInputCreated = aEvent->mTimeStamp;
-    } else if (aEvent->mTimeStamp < sLastInputCreated) {
-      // This event was created before the last input. May be processing out
-      // of order, so coalesce backwards, too.
-      sLastInputCreated = aEvent->mTimeStamp;
-    }
-    sLastInputProcessed = now;
+void PresShell::EventHandler::RecordEventHandlingResponsePerformance(
+    const WidgetEvent* aEvent) {
+  if (!Telemetry::CanRecordBase() || aEvent->mTimeStamp.IsNull() ||
+      aEvent->mTimeStamp <= mPresShell->mLastOSWake ||
+      !aEvent->AsInputEvent()) {
+    return;
   }
 
-  return rv;
+  TimeStamp now = TimeStamp::Now();
+  double millis = (now - aEvent->mTimeStamp).ToMilliseconds();
+  Telemetry::Accumulate(Telemetry::INPUT_EVENT_RESPONSE_MS, millis);
+  if (GetDocument() &&
+      GetDocument()->GetReadyStateEnum() != Document::READYSTATE_COMPLETE) {
+    Telemetry::Accumulate(Telemetry::LOAD_INPUT_EVENT_RESPONSE_MS, millis);
+  }
+
+  if (!sLastInputProcessed || sLastInputProcessed < aEvent->mTimeStamp) {
+    if (sLastInputProcessed) {
+      // This input event was created after we handled the last one.
+      // Accumulate the previous events' coalesced duration.
+      double lastMillis =
+          (sLastInputProcessed - sLastInputCreated).ToMilliseconds();
+      Telemetry::Accumulate(Telemetry::INPUT_EVENT_RESPONSE_COALESCED_MS,
+                            lastMillis);
+
+      if (MOZ_UNLIKELY(!PresShell::sProcessInteractable)) {
+        // For content process, we use the ready state of
+        // top-level-content-document to know if the process has finished the
+        // start-up.
+        // For parent process, see the topic
+        // 'sessionstore-one-or-no-tab-restored' in PresShell::Observe.
+        if (XRE_IsContentProcess() && GetDocument() &&
+            GetDocument()->IsTopLevelContentDocument()) {
+          switch (GetDocument()->GetReadyStateEnum()) {
+            case Document::READYSTATE_INTERACTIVE:
+            case Document::READYSTATE_COMPLETE:
+              PresShell::sProcessInteractable = true;
+              break;
+            default:
+              break;
+          }
+        }
+      }
+      if (MOZ_LIKELY(PresShell::sProcessInteractable)) {
+        Telemetry::Accumulate(Telemetry::INPUT_EVENT_RESPONSE_POST_STARTUP_MS,
+                              lastMillis);
+      } else {
+        Telemetry::Accumulate(Telemetry::INPUT_EVENT_RESPONSE_STARTUP_MS,
+                              lastMillis);
+      }
+    }
+    sLastInputCreated = aEvent->mTimeStamp;
+  } else if (aEvent->mTimeStamp < sLastInputCreated) {
+    // This event was created before the last input. May be processing out
+    // of order, so coalesce backwards, too.
+    sLastInputCreated = aEvent->mTimeStamp;
+  }
+  sLastInputProcessed = now;
 }
 
 // static

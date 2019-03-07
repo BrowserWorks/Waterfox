@@ -108,7 +108,6 @@ class nsXBLBinding final {
   void ExecuteDetachedHandler();
   void UnhookEventHandlers();
 
-  nsAtom* GetBaseTag(int32_t* aNameSpaceID);
   nsXBLBinding* RootBinding();
 
   // Resolve all the fields for this binding and all ancestor bindings on the
@@ -151,7 +150,6 @@ class nsXBLBinding final {
   // MEMBER VARIABLES
  protected:
   bool mMarkedForDeath;
-  bool mUsingContentXBLScope;
 
   nsXBLPrototypeBinding*
       mPrototypeBinding;  // Weak, but we're holding a ref to the docinfo

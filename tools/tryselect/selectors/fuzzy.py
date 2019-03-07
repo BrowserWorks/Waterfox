@@ -92,6 +92,14 @@ class FuzzyParser(BaseTryParser):
                   "from the interface. Specifying multiple times schedules "
                   "the union of computed tasks.",
           }],
+        [['-x', '--and'],
+         {'dest': 'intersection',
+          'action': 'store_true',
+          'default': False,
+          'help': "When specifying queries on the command line with -q/--query, "
+                  "use the intersection of tasks rather than the union. This is "
+                  "especially useful for post filtering presets.",
+          }],
         [['-e', '--exact'],
          {'action': 'store_true',
           'default': False,
@@ -108,7 +116,7 @@ class FuzzyParser(BaseTryParser):
     templates = ['artifact', 'path', 'env', 'rebuild', 'chemspill-prio', 'gecko-profile']
 
 
-def run(cmd, cwd=None):
+def run_cmd(cmd, cwd=None):
     is_win = platform.system() == 'Windows'
     return subprocess.call(cmd, cwd=cwd, shell=True if is_win else False)
 
@@ -119,7 +127,7 @@ def run_fzf_install_script(fzf_path):
     else:
         cmd = ['./install', '--bin']
 
-    if run(cmd, cwd=fzf_path):
+    if run_cmd(cmd, cwd=fzf_path):
         print(FZF_INSTALL_FAILED)
         sys.exit(1)
 
@@ -144,7 +152,7 @@ def fzf_bootstrap(update=False):
         return find_executable('fzf', os.path.join(fzf_path, 'bin'))
 
     if update:
-        ret = run(['git', 'pull'], cwd=fzf_path)
+        ret = run_cmd(['git', 'pull'], cwd=fzf_path)
         if ret:
             print("Update fzf failed.")
             sys.exit(1)
@@ -203,8 +211,9 @@ def filter_target_task(task):
     return not any(re.search(pattern, task) for pattern in TARGET_TASK_FILTERS)
 
 
-def run_fuzzy_try(update=False, query=None, templates=None, full=False, parameters=None,
-                  save=False, push=True, message='{msg}', paths=None, **kwargs):
+def run(update=False, query=None, templates=None, full=False, parameters=None, save_query=False,
+        push=True, message='{msg}', paths=None, exact=False, closed_tree=False,
+        intersection=False):
     fzf = fzf_bootstrap(update)
 
     if not fzf:
@@ -235,7 +244,7 @@ def run_fuzzy_try(update=False, query=None, templates=None, full=False, paramete
         '--print-query',
     ]
 
-    if kwargs['exact']:
+    if exact:
         base_cmd.append('--exact')
 
     query = query or []
@@ -254,14 +263,19 @@ def run_fuzzy_try(update=False, query=None, templates=None, full=False, paramete
     for command in commands:
         query, tasks = run_fzf(command, all_tasks)
         if tasks:
+            tasks = set(tasks)
             queries.append(query)
-            selected.update(tasks)
+
+            if intersection and selected:
+                selected &= tasks
+            else:
+                selected |= tasks
 
     if not selected:
         print("no tasks selected")
         return
 
-    if save:
+    if save_query:
         return queries
 
     # build commit message
@@ -274,4 +288,4 @@ def run_fuzzy_try(update=False, query=None, templates=None, full=False, paramete
     if args:
         msg = "{} {}".format(msg, '&'.join(args))
     return push_to_try('fuzzy', message.format(msg=msg), selected, templates, push=push,
-                       closed_tree=kwargs["closed_tree"])
+                       closed_tree=closed_tree)

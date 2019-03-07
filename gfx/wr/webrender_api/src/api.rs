@@ -1008,6 +1008,7 @@ impl RenderApiSender {
 }
 
 bitflags! {
+    #[repr(C)]
     #[derive(Default, Deserialize, MallocSizeOf, Serialize)]
     pub struct DebugFlags: u32 {
         /// Display the frame profiler on screen.
@@ -1040,6 +1041,10 @@ bitflags! {
         const PRIMITIVE_DBG = 1 << 17;
         /// Draw a zoom widget showing part of the framebuffer zoomed in.
         const ZOOM_DBG = 1 << 18;
+        /// Scale the debug renderer down for a smaller screen. This will disrupt
+        /// any mapping between debug display items and page content, so shouldn't
+        /// be used with overlays like the picture caching or primitive display.
+        const SMALL_SCREEN = 1 << 19;
     }
 }
 

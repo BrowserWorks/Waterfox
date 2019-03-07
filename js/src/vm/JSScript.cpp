@@ -549,9 +549,9 @@ XDRResult js::PrivateScriptData::XDR(XDRState<mode>* xdr, HandleScript script,
                                      HandleScriptSourceObject sourceObject,
                                      HandleScope scriptEnclosingScope,
                                      HandleFunction fun) {
+  uint32_t nscopes = 0;
   uint32_t nconsts = 0;
   uint32_t nobjects = 0;
-  uint32_t nscopes = 0;
   uint32_t ntrynotes = 0;
   uint32_t nscopenotes = 0;
   uint32_t nresumeoffsets = 0;
@@ -2850,7 +2850,9 @@ bool ScriptSource::setSourceMapURL(JSContext* cx,
   return sourceMapURL_ != nullptr;
 }
 
-/* static */ mozilla::Atomic<uint32_t> ScriptSource::idCount_;
+/* static */ mozilla::Atomic<uint32_t, mozilla::SequentiallyConsistent,
+                             mozilla::recordreplay::Behavior::DontPreserve>
+    ScriptSource::idCount_;
 
 /*
  * [SMDOC] JSScript data layout (shared)
@@ -3221,6 +3223,45 @@ PrivateScriptData* PrivateScriptData::new_(JSContext* cx, uint32_t nscopes,
                                      nscopenotes, nresumeoffsets);
 }
 
+/* static */ bool PrivateScriptData::InitFromEmitter(
+    JSContext* cx, js::HandleScript script, frontend::BytecodeEmitter* bce) {
+  uint32_t nscopes = bce->scopeList.length();
+  uint32_t nconsts = bce->numberList.length();
+  uint32_t nobjects = bce->objectList.length;
+  uint32_t ntrynotes = bce->tryNoteList.length();
+  uint32_t nscopenotes = bce->scopeNoteList.length();
+  uint32_t nresumeoffsets = bce->resumeOffsetList.length();
+
+  // Create and initialize PrivateScriptData
+  if (!JSScript::createPrivateScriptData(cx, script, nscopes, nconsts, nobjects,
+                                         ntrynotes, nscopenotes,
+                                         nresumeoffsets)) {
+    return false;
+  }
+
+  js::PrivateScriptData* data = script->data_;
+  if (nscopes) {
+    bce->scopeList.finish(data->scopes());
+  }
+  if (nconsts) {
+    bce->numberList.finish(data->consts());
+  }
+  if (nobjects) {
+    bce->objectList.finish(data->objects());
+  }
+  if (ntrynotes) {
+    bce->tryNoteList.finish(data->tryNotes());
+  }
+  if (nscopenotes) {
+    bce->scopeNoteList.finish(data->scopeNotes());
+  }
+  if (nresumeoffsets) {
+    bce->resumeOffsetList.finish(data->resumeOffsets());
+  }
+
+  return true;
+}
+
 void PrivateScriptData::traceChildren(JSTracer* trc) {
   auto scopearray = scopes();
   TraceRange(trc, scopearray.size(), scopearray.data(), "scopes");
@@ -3450,70 +3491,77 @@ static void InitAtomMap(frontend::AtomIndexMap& indices, GCPtrAtom* atoms) {
   }
 }
 
-/* static */
-void JSScript::initFromFunctionBox(HandleScript script,
-                                   frontend::FunctionBox* funbox) {
-  JSFunction* fun = funbox->function();
-  if (fun->isInterpretedLazy()) {
-    fun->setUnlazifiedScript(script);
-  } else {
-    fun->setScript(script);
+static bool HasAnyAliasedFormal(frontend::BytecodeEmitter* bce) {
+  PositionalFormalParameterIter fi(bce->bodyScope());
+  for (; fi; fi++) {
+    // Check if the formal parameter is closed over.
+    if (fi.closedOver()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool NeedsFunctionEnvironmentObjects(frontend::BytecodeEmitter* bce) {
+  // See JSFunction::needsCallObject()
+  js::Scope* bodyScope = bce->bodyScope();
+  if (bodyScope->kind() == js::ScopeKind::Function) {
+    if (bodyScope->hasEnvironment()) {
+      return true;
+    }
   }
 
-  script->setFlag(ImmutableFlags::FunHasExtensibleScope,
-                  funbox->hasExtensibleScope());
-  script->setFlag(ImmutableFlags::NeedsHomeObject, funbox->needsHomeObject());
-  script->setFlag(ImmutableFlags::IsDerivedClassConstructor,
-                  funbox->isDerivedClassConstructor());
+  // See JSScript::maybeNamedLambdaScope()
+  js::Scope* outerScope = bce->outermostScope();
+  if (outerScope->kind() == js::ScopeKind::NamedLambda ||
+      outerScope->kind() == js::ScopeKind::StrictNamedLambda) {
+    MOZ_ASSERT(bce->sc->asFunctionBox()->function()->isNamedLambda());
+
+    if (outerScope->hasEnvironment()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void JSScript::initFromFunctionBox(frontend::FunctionBox* funbox) {
+  funLength_ = funbox->length;
+
+  setFlag(ImmutableFlags::FunHasExtensibleScope, funbox->hasExtensibleScope());
+  setFlag(ImmutableFlags::NeedsHomeObject, funbox->needsHomeObject());
+  setFlag(ImmutableFlags::IsDerivedClassConstructor,
+          funbox->isDerivedClassConstructor());
+  setFlag(ImmutableFlags::HasMappedArgsObj, funbox->hasMappedArgsObj());
+  setFlag(ImmutableFlags::FunctionHasThisBinding, funbox->hasThisBinding());
+  setFlag(ImmutableFlags::FunctionHasExtraBodyVarScope,
+          funbox->hasExtraBodyVarScope());
+  setFlag(ImmutableFlags::IsGenerator, funbox->isGenerator());
+  setFlag(ImmutableFlags::IsAsync, funbox->isAsync());
+  setFlag(ImmutableFlags::HasRest, funbox->hasRest());
+  setFlag(ImmutableFlags::HasInnerFunctions, funbox->hasInnerFunctions());
 
   if (funbox->argumentsHasLocalBinding()) {
-    script->setArgumentsHasVarBinding();
+    setArgumentsHasVarBinding();
     if (funbox->definitelyNeedsArgsObj()) {
-      script->setNeedsArgsObj(true);
+      setNeedsArgsObj(true);
     }
   } else {
     MOZ_ASSERT(!funbox->definitelyNeedsArgsObj());
   }
-  script->setFlag(ImmutableFlags::HasMappedArgsObj, funbox->hasMappedArgsObj());
-
-  script->setFlag(ImmutableFlags::FunctionHasThisBinding,
-                  funbox->hasThisBinding());
-  script->setFlag(ImmutableFlags::FunctionHasExtraBodyVarScope,
-                  funbox->hasExtraBodyVarScope());
-
-  script->funLength_ = funbox->length;
-
-  script->setFlag(ImmutableFlags::IsGenerator, funbox->isGenerator());
-  script->setFlag(ImmutableFlags::IsAsync, funbox->isAsync());
-  script->setFlag(ImmutableFlags::HasRest, funbox->hasRest());
-
-  PositionalFormalParameterIter fi(script);
-  while (fi && !fi.closedOver()) {
-    fi++;
-  }
-  script->setFlag(ImmutableFlags::FunHasAnyAliasedFormal, !!fi);
-
-  script->setFlag(ImmutableFlags::HasInnerFunctions,
-                  funbox->hasInnerFunctions());
-
-  script->setFlag(
-      ImmutableFlags::NeedsFunctionEnvironmentObjects,
-      (fun->needsCallObject() || fun->needsNamedLambdaEnvironment()));
-}
-
-/* static */
-void JSScript::initFromModuleContext(HandleScript script) {
-  script->setFlag(ImmutableFlags::IsModule);
-
-  // Since modules are only run once, mark the script so that initializers
-  // created within it may be given more precise types.
-  script->setTreatAsRunOnce();
-  MOZ_ASSERT(!script->hasRunOnce());
 }
 
 /* static */
 bool JSScript::fullyInitFromEmitter(JSContext* cx, HandleScript script,
                                     frontend::BytecodeEmitter* bce) {
+  MOZ_ASSERT(!script->data_, "JSScript already initialized");
+
+  // If initialization fails, we must call JSScript::freeScriptData in order to
+  // neuter the script. Various things that iterate raw scripts in a GC arena
+  // use the presense of this data to detect if initialization is complete.
+  auto scriptDataGuard =
+      mozilla::MakeScopeExit([&] { script->freeScriptData(); });
+
   /* The counts of indexed things must be checked during code generation. */
   MOZ_ASSERT(bce->atomIndices->count() <= INDEX_LIMIT);
   MOZ_ASSERT(bce->objectList.length <= INDEX_LIMIT);
@@ -3525,61 +3573,15 @@ bool JSScript::fullyInitFromEmitter(JSContext* cx, HandleScript script,
     return false;
   }
 
-  uint32_t natoms = bce->atomIndices->count();
-  if (!createPrivateScriptData(
-          cx, script, bce->scopeList.length(), bce->numberList.length(),
-          bce->objectList.length, bce->tryNoteList.length(),
-          bce->scopeNoteList.length(), bce->resumeOffsetList.length())) {
-    return false;
-  }
-
-  MOZ_ASSERT(script->mainOffset() == 0);
-  script->mainOffset_ = bce->mainOffset();
-  script->numBytecodeTypeSets_ = bce->typesetCount;
+  // Initialize POD fields
   script->lineno_ = bce->firstLine;
+  script->mainOffset_ = bce->mainOffset();
+  script->nfixed_ = bce->maxFixedSlots;
+  script->nslots_ = nslots;
+  script->bodyScopeIndex_ = bce->bodyScopeIndex;
+  script->numBytecodeTypeSets_ = bce->typesetCount;
 
-  // The + 1 is to account for the final SN_MAKE_TERMINATOR that is appended
-  // when the notes are copied to their final destination by copySrcNotes.
-  uint32_t nsrcnotes = bce->notes().length() + 1;
-  uint32_t codeLength = bce->code().length();
-  if (!script->createSharedScriptData(cx, codeLength, nsrcnotes, natoms)) {
-    return false;
-  }
-
-  // Any fallible operation after JSScript::createSharedScriptData should
-  // reset JSScript.scriptData_, in order to treat this script as
-  // uncompleted, in JSScript::isUncompleted.  JSScript::shareScriptData
-  // resets it before returning false.
-
-  jsbytecode* code = script->code();
-  PodCopy<jsbytecode>(code, bce->code().begin(), codeLength);
-  bce->copySrcNotes((jssrcnote*)(code + script->length()), nsrcnotes);
-  InitAtomMap(*bce->atomIndices, script->atoms());
-
-  if (!script->shareScriptData(cx)) {
-    return false;
-  }
-
-  js::PrivateScriptData* data = script->data_;
-  if (bce->numberList.length() != 0) {
-    bce->numberList.finish(data->consts());
-  }
-  if (bce->objectList.length != 0) {
-    bce->objectList.finish(data->objects());
-  }
-  if (bce->scopeList.length() != 0) {
-    bce->scopeList.finish(data->scopes());
-  }
-  if (bce->tryNoteList.length() != 0) {
-    bce->tryNoteList.finish(data->tryNotes());
-  }
-  if (bce->scopeNoteList.length() != 0) {
-    bce->scopeNoteList.finish(data->scopeNotes());
-  }
-  if (bce->resumeOffsetList.length() != 0) {
-    bce->resumeOffsetList.finish(data->resumeOffsets());
-  }
-
+  // Initialize script flags from BytecodeEmitter
   script->setFlag(ImmutableFlags::Strict, bce->sc->strict());
   script->setFlag(ImmutableFlags::ExplicitUseStrict,
                   bce->sc->hasExplicitUseStrict());
@@ -3587,21 +3589,48 @@ bool JSScript::fullyInitFromEmitter(JSContext* cx, HandleScript script,
                   bce->sc->bindingsAccessedDynamically());
   script->setFlag(ImmutableFlags::HasSingletons, bce->hasSingletons);
   script->setFlag(ImmutableFlags::IsForEval, bce->sc->isEvalContext());
-
-  script->nfixed_ = bce->maxFixedSlots;
-  script->nslots_ = nslots;
-  script->bodyScopeIndex_ = bce->bodyScopeIndex;
+  script->setFlag(ImmutableFlags::IsModule, bce->sc->isModuleContext());
   script->setFlag(ImmutableFlags::HasNonSyntacticScope,
                   bce->outermostScope()->hasOnChain(ScopeKind::NonSyntactic));
+  script->setFlag(ImmutableFlags::FunHasAnyAliasedFormal,
+                  HasAnyAliasedFormal(bce));
+  script->setFlag(ImmutableFlags::NeedsFunctionEnvironmentObjects,
+                  NeedsFunctionEnvironmentObjects(bce));
 
-  // There shouldn't be any fallible operation after initFromFunctionBox,
-  // JSFunction::hasUncompletedScript relies on the fact that the existence
-  // of the pointer to JSScript means the pointed JSScript is complete.
+  // Initialize script flags from FunctionBox
   if (bce->sc->isFunctionBox()) {
-    initFromFunctionBox(script, bce->sc->asFunctionBox());
-  } else if (bce->sc->isModuleContext()) {
-    initFromModuleContext(script);
+    script->initFromFunctionBox(bce->sc->asFunctionBox());
   }
+
+  // Create and initialize PrivateScriptData
+  if (!PrivateScriptData::InitFromEmitter(cx, script, bce)) {
+    return false;
+  }
+
+  // Create and initialize SharedScriptData
+  if (!SharedScriptData::InitFromEmitter(cx, script, bce)) {
+    return false;
+  }
+  if (!script->shareScriptData(cx)) {
+    return false;
+  }
+
+  // NOTE: JSScript is now constructed and should be linked in.
+
+  // Link JSFunction to this JSScript.
+  if (bce->sc->isFunctionBox()) {
+    JSFunction* fun = bce->sc->asFunctionBox()->function();
+    if (fun->isInterpretedLazy()) {
+      fun->setUnlazifiedScript(script);
+    } else {
+      fun->setScript(script);
+    }
+  }
+
+  // Part of the parse result – the scope containing each inner function – must
+  // be stored in the inner function itself. Do this now that compilation is
+  // complete and can no longer fail.
+  bce->objectList.finishInnerFunctions();
 
 #ifdef JS_STRUCTURED_SPEW
   // We want this to happen after line number initialization to allow filtering
@@ -3613,6 +3642,7 @@ bool JSScript::fullyInitFromEmitter(JSContext* cx, HandleScript script,
   script->assertValidJumpTargets();
 #endif
 
+  scriptDataGuard.release();
   return true;
 }
 
@@ -4506,6 +4536,30 @@ bool JSScript::hasBreakpointsAt(jsbytecode* pc) {
   }
 
   return site->enabledCount > 0;
+}
+
+/* static */ bool SharedScriptData::InitFromEmitter(
+    JSContext* cx, js::HandleScript script, frontend::BytecodeEmitter* bce) {
+  uint32_t natoms = bce->atomIndices->count();
+  uint32_t codeLength = bce->code().length();
+
+  // The + 1 is to account for the final SN_MAKE_TERMINATOR that is appended
+  // when the notes are copied to their final destination by copySrcNotes.
+  uint32_t noteLength = bce->notes().length() + 1;
+
+  // Create and initialize SharedScriptData
+  if (!script->createSharedScriptData(cx, codeLength, noteLength, natoms)) {
+    return false;
+  }
+
+  js::SharedScriptData* data = script->scriptData_;
+
+  // Initialize trailing arrays
+  std::copy_n(bce->code().begin(), codeLength, data->code());
+  bce->copySrcNotes(data->notes(), noteLength);
+  InitAtomMap(*bce->atomIndices, data->atoms());
+
+  return true;
 }
 
 void SharedScriptData::traceChildren(JSTracer* trc) {

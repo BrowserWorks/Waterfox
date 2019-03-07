@@ -338,8 +338,13 @@ class _ASRouter {
       // The provider should be enabled and not have a user preference set to false
       ...ASRouterPreferences.providers.filter(p => (
         p.enabled &&
-        ASRouterPreferences.getUserPreference(p.id) !== false)
-      ),
+        (
+          ASRouterPreferences.getUserPreference(p.id) !== false &&
+          // Provider is enabled or if provider has multiple categories
+          // check that at least one category is enabled
+          (!p.categories || p.categories.some(c => ASRouterPreferences.getUserPreference(c) !== false))
+        )
+      )),
     ].map(_provider => {
       // make a copy so we don't modify the source of the pref
       const provider = {..._provider};
@@ -413,7 +418,8 @@ class _ASRouter {
       let newState = {messages: [], providers: []};
       for (const provider of this.state.providers) {
         if (needsUpdate.includes(provider)) {
-          const {messages, lastUpdated} = await MessageLoaderUtils.loadMessagesForProvider(provider, this._storage);
+          let {messages, lastUpdated} = await MessageLoaderUtils.loadMessagesForProvider(provider, this._storage);
+          messages = messages.filter(({category}) => !category || ASRouterPreferences.getUserPreference(category));
           newState.providers.push({...provider, lastUpdated});
           newState.messages = [...newState.messages, ...messages];
         } else {
@@ -1040,7 +1046,9 @@ class _ASRouter {
         await MessageLoaderUtils.installAddonFromURL(target.browser, action.data.url);
         break;
       case ra.PIN_CURRENT_TAB:
-        target.browser.ownerGlobal.gBrowser.pinTab(target.browser.ownerGlobal.gBrowser.selectedTab);
+        let tab = target.browser.ownerGlobal.gBrowser.selectedTab;
+        target.browser.ownerGlobal.gBrowser.pinTab(tab);
+        target.browser.ownerGlobal.ConfirmationHint.show(tab, "pinTab", {showDescription: true});
         break;
       case ra.SHOW_FIREFOX_ACCOUNTS:
         const url = await FxAccounts.config.promiseSignUpURI("snippets");

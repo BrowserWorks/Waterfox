@@ -32,12 +32,13 @@ jobs:
             env:
                 PERFHERDER_EXTRA_OPTIONS: artifact
                 MOZ_ARTIFACT_TASK: {task-reference: '<linux64-opt>'}
+                USE_ARTIFACT: '1'
         run:
             using: mozharness
             actions: [get-secrets, build]
             config:
                 - builds/releng_base_firefox.py
-                - builds/releng_sub_linux_configs/64_artifact.py
+                - builds/releng_base_linux_64_builds.py
             script: "mozharness/scripts/fx_desktop_build.py"
             secrets: true
             tooltool-downloads: public

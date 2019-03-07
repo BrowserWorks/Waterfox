@@ -469,6 +469,12 @@ VARCACHE_PREF(
   RelaxedAtomicUint32, 30000 /* 30 seconds */
 )
 
+VARCACHE_PREF(
+  "dom.worker.use_medium_high_event_queue",
+   dom_worker_use_medium_high_event_queue,
+  RelaxedAtomicBool, true
+)
+
 // Enable content type normalization of XHR uploads via MIME Sniffing standard
 // Disabled for now in bz1499136
 VARCACHE_PREF(
@@ -552,6 +558,62 @@ VARCACHE_PREF(
    full_screen_api_unprefix_enabled,
   bool, true
 )
+
+//---------------------------------------------------------------------------
+// Preference stylesheet prefs.
+//---------------------------------------------------------------------------
+
+VARCACHE_PREF(
+  "browser.display.focus_ring_on_anything",
+   browser_display_focus_ring_on_anything,
+  bool, false
+)
+
+VARCACHE_PREF(
+  "browser.display.focus_ring_width",
+   browser_display_focus_ring_width,
+  uint32_t, 1
+)
+
+VARCACHE_PREF(
+  "browser.display.focus_ring_style",
+   browser_display_focus_ring_style,
+  bool, false
+)
+
+VARCACHE_PREF(
+  "browser.display.use_system_colors",
+   browser_display_use_system_colors,
+  bool, true
+)
+
+// 0 = default: always, except in high contrast mode
+// 1 = always
+// 2 = never
+VARCACHE_PREF(
+  "browser.display.document_color_use",
+   browser_display_document_color_use,
+  uint32_t, 0
+)
+VARCACHE_PREF(
+  "browser.display.use_focus_colors",
+   browser_display_use_focus_colors,
+  bool, false
+)
+
+VARCACHE_PREF(
+  "browser.underline_anchors",
+   browser_underline_anchors,
+  bool, true
+)
+
+PREF("browser.display.foreground_color", String, "")
+PREF("browser.display.background_color", String, "")
+PREF("browser.display.focus_background_color", String, "")
+PREF("browser.display.focus_text_color", String, "")
+PREF("browser.anchor_color", String, "")
+PREF("browser.active_color", String, "")
+PREF("browser.visited_color", String, "")
 
 //---------------------------------------------------------------------------
 // Graphics prefs
@@ -2216,6 +2278,21 @@ VARCACHE_PREF(
    dom_reporting_delivering_maxReports,
   uint32_t, 100
 )
+
+// In case Touch API is enabled, this pref controls whether to support
+// ontouch* event handlers, document.createTouch, document.createTouchList and
+// document.createEvent("TouchEvent").
+#ifdef ANDROID
+# define PREF_VALUE true
+#else
+# define PREF_VALUE false
+#endif
+VARCACHE_PREF(
+  "dom.w3c_touch_events.legacy_apis.enabled",
+   dom_w3c_touch_events_legacy_apis_enabled,
+  bool, PREF_VALUE
+)
+#undef PREF_VALUE
 
 VARCACHE_PREF(
   "medium_high_event_queue.enabled",

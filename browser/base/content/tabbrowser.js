@@ -386,11 +386,13 @@ window._gBrowser = {
 
   _preopenPinnedTabs() {
     let numPinnedTabs = 0;
-    let windows = browserWindows();
-    windows.getNext();
-    let isOnlyWindow = !windows.hasMoreElements();
-    if (isOnlyWindow) {
-      numPinnedTabs = Services.prefs.getIntPref("browser.tabs.firstWindowRestore.numPinnedTabs", 0);
+    if (!PrivateBrowsingUtils.isWindowPrivate(window)) {
+      let windows = browserWindows();
+      windows.getNext();
+      let isOnlyWindow = !windows.hasMoreElements();
+      if (isOnlyWindow) {
+        numPinnedTabs = Services.prefs.getIntPref("browser.tabs.firstWindowRestore.numPinnedTabs", 0);
+      }
     }
 
     for (let i = 0; i < numPinnedTabs; i++) {
@@ -632,7 +634,8 @@ window._gBrowser = {
   },
 
   _maybeUpdateNumPinnedTabsPref() {
-    if (BrowserWindowTracker.getTopWindow() == window) {
+    if (!PrivateBrowsingUtils.isWindowPrivate(window) &&
+        BrowserWindowTracker.getTopWindow() == window) {
       Services.prefs.setIntPref("browser.tabs.firstWindowRestore.numPinnedTabs",
                                 this._numPinnedTabs);
     }
@@ -5348,12 +5351,24 @@ var StatusPanel = {
       }
     }
 
+    // If it's a long data: URI that uses base64 encoding, truncate to
+    // a reasonable length rather than trying to display the entire thing.
+    // We can't shorten arbitrary URIs like this, as bidi etc might mean
+    // we need the trailing characters for display. But a base64-encoded
+    // data-URI is plain ASCII, so this is OK for status panel display.
+    // (See bug 1484071.)
+    let textCropped = false;
+    if (text.length > 500 && text.match(/^data:[^,]+;base64,/)) {
+      text = text.substring(0, 500) + "\u2026";
+      textCropped = true;
+    }
+
     if (this._labelElement.value != text ||
         (text && !this.isVisible)) {
       this.panel.setAttribute("previoustype", this.panel.getAttribute("type"));
       this.panel.setAttribute("type", type);
       this._label = text;
-      this._labelElement.setAttribute("crop", type == "overLink" ? "center" : "end");
+      this._labelElement.setAttribute("crop", (type == "overLink" && !textCropped) ? "center" : "end");
     }
   },
 

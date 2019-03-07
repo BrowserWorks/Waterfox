@@ -274,11 +274,7 @@ enum class StyleImageLayerRepeat : uint8_t {
 };
 
 // Mask mode
-enum class StyleMaskMode : uint8_t {
-  Alpha = 0,
-  Luminance,
-  MatchSource
-};
+enum class StyleMaskMode : uint8_t { Alpha = 0, Luminance, MatchSource };
 
 // See nsStyleTable
 #define NS_STYLE_BORDER_COLLAPSE 0
@@ -323,17 +319,15 @@ enum class StyleContent : uint8_t {
 #define NS_STYLE_CONTAIN_NONE 0
 #define NS_STYLE_CONTAIN_SIZE 0x01
 #define NS_STYLE_CONTAIN_LAYOUT 0x02
-#define NS_STYLE_CONTAIN_STYLE 0x04
-#define NS_STYLE_CONTAIN_PAINT 0x08
-#define NS_STYLE_CONTAIN_STRICT 0x10
-#define NS_STYLE_CONTAIN_CONTENT 0x20
+#define NS_STYLE_CONTAIN_PAINT 0x04
+#define NS_STYLE_CONTAIN_STRICT 0x08
+#define NS_STYLE_CONTAIN_CONTENT 0x10
 // NS_STYLE_CONTAIN_ALL_BITS does not correspond to a keyword.
-#define NS_STYLE_CONTAIN_ALL_BITS                                              \
-  (NS_STYLE_CONTAIN_LAYOUT | NS_STYLE_CONTAIN_STYLE | NS_STYLE_CONTAIN_PAINT | \
-   NS_STYLE_CONTAIN_SIZE)
+#define NS_STYLE_CONTAIN_ALL_BITS \
+  (NS_STYLE_CONTAIN_LAYOUT | NS_STYLE_CONTAIN_PAINT | NS_STYLE_CONTAIN_SIZE)
 // NS_STYLE_CONTAIN_CONTENT_BITS does not correspond to a keyword.
 #define NS_STYLE_CONTAIN_CONTENT_BITS \
-  (NS_STYLE_CONTAIN_LAYOUT | NS_STYLE_CONTAIN_STYLE | NS_STYLE_CONTAIN_PAINT)
+  (NS_STYLE_CONTAIN_LAYOUT | NS_STYLE_CONTAIN_PAINT)
 
 // Shared constants for all align/justify properties (nsStylePosition):
 #define NS_STYLE_ALIGN_AUTO 0
@@ -386,10 +380,10 @@ enum class StyleContent : uint8_t {
 
 // See nsStylePosition
 enum class StyleFlexDirection : uint8_t {
-	Row,
-	RowReverse,
-	Column,
-	ColumnReverse,
+  Row,
+  RowReverse,
+  Column,
+  ColumnReverse,
 };
 
 // See nsStylePosition

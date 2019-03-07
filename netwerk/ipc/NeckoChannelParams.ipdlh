@@ -45,7 +45,7 @@ struct PreferredAlternativeDataTypeParams
 struct RedirectHistoryEntryInfo
 {
   PrincipalInfo       principalInfo;
-  OptionalURIParams   referrerUri;
+  URIParams?          referrerUri;
   nsCString           remoteAddress;
 };
 
@@ -57,7 +57,7 @@ struct LoadInfoArgs
   PrincipalInfo?              sandboxedLoadingPrincipalInfo;
   PrincipalInfo?              topLevelPrincipalInfo;
   PrincipalInfo?              topLevelStorageAreaPrincipalInfo;
-  OptionalURIParams           resultPrincipalURI;
+  URIParams?                  resultPrincipalURI;
   uint32_t                    securityFlags;
   uint32_t                    contentPolicyType;
   uint32_t                    tainting;
@@ -94,9 +94,9 @@ struct LoadInfoArgs
 
   /**
    * ClientInfo structure representing the window or worker that triggered
-   * this network request.  May be void_t if its a system internal request.
+   * this network request.  May be Nothing if its a system internal request.
    */
-  OptionalIPCClientInfo       clientInfo;
+  IPCClientInfo?              clientInfo;
 
   /**
    * Non-subresource requests will result in the creation of a window or
@@ -105,8 +105,8 @@ struct LoadInfoArgs
    * about:blank window that will be re-used while a reserved ClientInfo
    * represents a to-be-newly-created window/worker.
    */
-  OptionalIPCClientInfo       reservedClientInfo;
-  OptionalIPCClientInfo       initialClientInfo;
+  IPCClientInfo?              reservedClientInfo;
+  IPCClientInfo?              initialClientInfo;
 
   /**
    * Subresource loads may have a controller set based on their owning
@@ -174,8 +174,8 @@ struct ChildLoadInfoForwarderArgs
 {
   // The reserved and initial ClientInfo values may change during a
   // redirect if the new channel is cross-origin to the old channel.
-  OptionalIPCClientInfo reservedClientInfo;
-  OptionalIPCClientInfo initialClientInfo;
+  IPCClientInfo? reservedClientInfo;
+  IPCClientInfo? initialClientInfo;
 
   // The ServiceWorker controller may be cleared in the child during
   // a redirect.
@@ -209,12 +209,12 @@ struct HttpChannelOpenArgs
   // - TODO: bug 571161: unclear if any HTTP channel clients ever
   // set originalURI != uri (about:credits?); also not clear if
   // chrome channel would ever need to know.  Get rid of next arg?
-  OptionalURIParams           original;
-  OptionalURIParams           doc;
-  OptionalURIParams           originalReferrer;
+  URIParams?                  original;
+  URIParams?                  doc;
+  URIParams?                  originalReferrer;
   uint32_t                    referrerPolicy;
-  OptionalURIParams           apiRedirectTo;
-  OptionalURIParams           topWindowURI;
+  URIParams?                  apiRedirectTo;
+  URIParams?                  topWindowURI;
   nsIPrincipal                topWindowPrincipal;
   uint32_t                    loadFlags;
   RequestHeaderTuples         requestHeaders;

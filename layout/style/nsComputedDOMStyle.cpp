@@ -1095,7 +1095,7 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetTransformOrigin() {
   auto position = MaybeResolvePositionForTransform(
       origin.horizontal, origin.vertical, mInnerFrame);
   SetValueToPosition(position, valueList);
-  if (origin.depth._0 != 0.0f) {
+  if (!origin.depth.IsZero()) {
     RefPtr<nsROCSSPrimitiveValue> depth = new nsROCSSPrimitiveValue;
     depth->SetAppUnits(origin.depth.ToAppUnits());
     valueList->AppendCSSValue(depth.forget());
@@ -1785,22 +1785,6 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetBorderSpacing() {
   return valueList.forget();
 }
 
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetBorderBottomLeftRadius() {
-  return GetEllipseRadii(StyleBorder()->mBorderRadius, eCornerBottomLeft);
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetBorderBottomRightRadius() {
-  return GetEllipseRadii(StyleBorder()->mBorderRadius, eCornerBottomRight);
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetBorderTopLeftRadius() {
-  return GetEllipseRadii(StyleBorder()->mBorderRadius, eCornerTopLeft);
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetBorderTopRightRadius() {
-  return GetEllipseRadii(StyleBorder()->mBorderRadius, eCornerTopRight);
-}
-
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetBorderTopWidth() {
   return GetBorderWidthFor(eSideTop);
 }
@@ -1885,48 +1869,6 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetOutlineWidth() {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   val->SetAppUnits(StyleOutline()->GetOutlineWidth());
   return val.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetOutlineRadiusBottomLeft() {
-  return GetEllipseRadii(StyleOutline()->mOutlineRadius, eCornerBottomLeft);
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetOutlineRadiusBottomRight() {
-  return GetEllipseRadii(StyleOutline()->mOutlineRadius, eCornerBottomRight);
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetOutlineRadiusTopLeft() {
-  return GetEllipseRadii(StyleOutline()->mOutlineRadius, eCornerTopLeft);
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetOutlineRadiusTopRight() {
-  return GetEllipseRadii(StyleOutline()->mOutlineRadius, eCornerTopRight);
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::GetEllipseRadii(
-    const BorderRadius& aRadius, Corner aFullCorner) {
-  const auto& radiusX = aRadius.Get(FullToHalfCorner(aFullCorner, false));
-  const auto& radiusY = aRadius.Get(FullToHalfCorner(aFullCorner, true));
-
-  // for compatibility, return a single value if X and Y are equal
-  if (radiusX == radiusY) {
-    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    SetValueToLengthPercentage(val, radiusX, true);
-    return val.forget();
-  }
-
-  RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
-
-  RefPtr<nsROCSSPrimitiveValue> valX = new nsROCSSPrimitiveValue;
-  RefPtr<nsROCSSPrimitiveValue> valY = new nsROCSSPrimitiveValue;
-
-  SetValueToLengthPercentage(valX, radiusX, true);
-  SetValueToLengthPercentage(valY, radiusY, true);
-
-  valueList->AppendCSSValue(valX.forget());
-  valueList->AppendCSSValue(valY.forget());
-
-  return valueList.forget();
 }
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::GetCSSShadowArray(
@@ -2022,9 +1964,9 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetLineHeight() {
 
   auto& lh = StyleText()->mLineHeight;
   if (lh.IsLength()) {
-    val->SetAppUnits(lh.length._0.ToAppUnits());
+    val->SetAppUnits(lh.AsLength().ToAppUnits());
   } else if (lh.IsNumber()) {
-    val->SetNumber(lh.number._0);
+    val->SetNumber(lh.AsNumber());
   } else if (lh.IsMozBlockHeight()) {
     val->SetIdent(eCSSKeyword__moz_block_height);
   } else {
@@ -2298,34 +2240,6 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetDisplay() {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   val->SetIdent(nsCSSProps::ValueToKeywordEnum(StyleDisplay()->mDisplay,
                                                nsCSSProps::kDisplayKTable));
-  return val.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetContain() {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-
-  int32_t mask = StyleDisplay()->mContain;
-
-  if (mask == 0) {
-    val->SetIdent(eCSSKeyword_none);
-  } else if (mask & NS_STYLE_CONTAIN_STRICT) {
-    NS_ASSERTION(
-        mask == (NS_STYLE_CONTAIN_STRICT | NS_STYLE_CONTAIN_ALL_BITS),
-        "contain: strict should imply contain: size layout style paint");
-    val->SetIdent(eCSSKeyword_strict);
-  } else if (mask & NS_STYLE_CONTAIN_CONTENT) {
-    NS_ASSERTION(
-        mask == (NS_STYLE_CONTAIN_CONTENT | NS_STYLE_CONTAIN_CONTENT_BITS),
-        "contain: content should imply contain: layout style paint");
-    val->SetIdent(eCSSKeyword_content);
-  } else {
-    nsAutoString valueStr;
-    nsStyleUtil::AppendBitmaskCSSValue(nsCSSProps::kContainKTable, mask,
-                                       NS_STYLE_CONTAIN_SIZE,
-                                       NS_STYLE_CONTAIN_PAINT, valueStr);
-    val->SetString(valueStr);
-  }
-
   return val.forget();
 }
 

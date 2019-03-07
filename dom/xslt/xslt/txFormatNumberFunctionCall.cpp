@@ -31,6 +31,15 @@ txFormatNumberFunctionCall::txFormatNumberFunctionCall(
     txStylesheet* aStylesheet, txNamespaceMap* aMappings)
     : mStylesheet(aStylesheet), mMappings(aMappings) {}
 
+void txFormatNumberFunctionCall::ReportInvalidArg(txIEvalContext* aContext) {
+  nsAutoString err(INVALID_PARAM_VALUE);
+#ifdef TX_TO_STRING
+  err.AppendLiteral(": ");
+  toString(err);
+#endif
+  aContext->receiveError(err, NS_ERROR_XPATH_INVALID_ARG);
+}
+
 /*
  * Evaluates this Expr based on the given context node and processor state
  * @param context the context node for evaluation of this Expr
@@ -135,24 +144,14 @@ nsresult txFormatNumberFunctionCall::evaluate(txIEvalContext* aContext,
             if (multiplier == 1)
               multiplier = 100;
             else {
-              nsAutoString err(INVALID_PARAM_VALUE);
-#ifdef TX_TO_STRING
-              err.AppendLiteral(": ");
-              toString(err);
-#endif
-              aContext->receiveError(err, NS_ERROR_XPATH_INVALID_ARG);
+              ReportInvalidArg(aContext);
               return NS_ERROR_XPATH_INVALID_ARG;
             }
           } else if (c == format->mPerMille) {
             if (multiplier == 1)
               multiplier = 1000;
             else {
-              nsAutoString err(INVALID_PARAM_VALUE);
-#ifdef TX_TO_STRING
-              err.AppendLiteral(": ");
-              toString(err);
-#endif
-              aContext->receiveError(err, NS_ERROR_XPATH_INVALID_ARG);
+              ReportInvalidArg(aContext);
               return NS_ERROR_XPATH_INVALID_ARG;
             }
           } else if (c == format->mDecimalSeparator ||
@@ -225,12 +224,7 @@ nsresult txFormatNumberFunctionCall::evaluate(txIEvalContext* aContext,
   // Did we manage to parse the entire formatstring and was it valid
   if ((c != format->mPatternSeparator && pos < formatLen) || inQuote ||
       groupSize == 0) {
-    nsAutoString err(INVALID_PARAM_VALUE);
-#ifdef TX_TO_STRING
-    err.AppendLiteral(": ");
-    toString(err);
-#endif
-    aContext->receiveError(err, NS_ERROR_XPATH_INVALID_ARG);
+    ReportInvalidArg(aContext);
     return NS_ERROR_XPATH_INVALID_ARG;
   }
 
@@ -260,12 +254,12 @@ nsresult txFormatNumberFunctionCall::evaluate(txIEvalContext* aContext,
   else
     bufsize = 1 + 30;
 
-  char* buf = new char[bufsize];
+  auto buf = MakeUnique<char[]>(bufsize);
   int bufIntDigits, sign;
   char* endp;
-  PR_dtoa(value, 0, 0, &bufIntDigits, &sign, &endp, buf, bufsize - 1);
+  PR_dtoa(value, 0, 0, &bufIntDigits, &sign, &endp, buf.get(), bufsize - 1);
 
-  int buflen = endp - buf;
+  int buflen = endp - buf.get();
   int intDigits;
   intDigits = bufIntDigits > minIntegerSize ? bufIntDigits : minIntegerSize;
 
@@ -281,7 +275,20 @@ nsresult txFormatNumberFunctionCall::evaluate(txIEvalContext* aContext,
   bool carry = (0 <= i + 1) && (i + 1 < buflen) && (buf[i + 1] >= '5');
   bool hasFraction = false;
 
-  uint32_t resPos = res.Length() - 1;
+  CheckedUint32 resPos = CheckedUint32(res.Length()) - 1;
+
+#define CHECKED_SET_CHAR(c)                                       \
+  if (!resPos.isValid() || !res.SetCharAt(c, resPos--.value())) { \
+    ReportInvalidArg(aContext);                                   \
+    return NS_ERROR_XPATH_INVALID_ARG;                            \
+  }
+
+#define CHECKED_TRUNCATE()             \
+  if (!resPos.isValid()) {             \
+    ReportInvalidArg(aContext);        \
+    return NS_ERROR_XPATH_INVALID_ARG; \
+  }                                    \
+  res.Truncate(resPos--.value());
 
   // Fractions
   for (; i >= bufIntDigits; --i) {
@@ -299,17 +306,17 @@ nsresult txFormatNumberFunctionCall::evaluate(txIEvalContext* aContext,
 
     if (hasFraction || digit != 0 || i < bufIntDigits + minFractionSize) {
       hasFraction = true;
-      res.SetCharAt((char16_t)(digit + format->mZeroDigit), resPos--);
+      CHECKED_SET_CHAR((char16_t)(digit + format->mZeroDigit));
     } else {
-      res.Truncate(resPos--);
+      CHECKED_TRUNCATE();
     }
   }
 
   // Decimal separator
   if (hasFraction) {
-    res.SetCharAt(format->mDecimalSeparator, resPos--);
+    CHECKED_SET_CHAR(format->mDecimalSeparator);
   } else {
-    res.Truncate(resPos--);
+    CHECKED_TRUNCATE();
   }
 
   // Integer digits
@@ -327,17 +334,20 @@ nsresult txFormatNumberFunctionCall::evaluate(txIEvalContext* aContext,
     }
 
     if (i != 0 && i % groupSize == 0) {
-      res.SetCharAt(format->mGroupingSeparator, resPos--);
+      CHECKED_SET_CHAR(format->mGroupingSeparator);
     }
 
-    res.SetCharAt((char16_t)(digit + format->mZeroDigit), resPos--);
+    CHECKED_SET_CHAR((char16_t)(digit + format->mZeroDigit));
   }
+
+#undef CHECKED_SET_CHAR
+#undef CHECKED_TRUNCATE
 
   if (carry) {
     if (i % groupSize == 0) {
-      res.Insert(format->mGroupingSeparator, resPos + 1);
+      res.Insert(format->mGroupingSeparator, resPos.value() + 1);
     }
-    res.Insert((char16_t)(1 + format->mZeroDigit), resPos + 1);
+    res.Insert((char16_t)(1 + format->mZeroDigit), resPos.value() + 1);
   }
 
   if (!hasFraction && !intDigits && !carry) {
@@ -345,8 +355,6 @@ nsresult txFormatNumberFunctionCall::evaluate(txIEvalContext* aContext,
     // This can only happen for formats like '##.##'
     res.Append(format->mZeroDigit);
   }
-
-  delete[] buf;
 
   // Build suffix
   res.Append(suffix);

@@ -22,9 +22,9 @@ class ChooserParser(BaseTryParser):
     templates = ['artifact', 'env', 'rebuild', 'chemspill-prio', 'gecko-profile']
 
 
-def run_try_chooser(update=False, query=None, templates=None, full=False, parameters=None,
-                    save=False, preset=None, mod_presets=False, push=True, message='{msg}',
-                    **kwargs):
+def run(update=False, query=None, templates=None, full=False, parameters=None,
+        save=False, preset=None, mod_presets=False, push=True, message='{msg}',
+        closed_tree=False):
     from .app import create_application
     check_working_directory(push)
 
@@ -49,4 +49,4 @@ def run_try_chooser(update=False, query=None, templates=None, full=False, parame
 
     msg = "Try Chooser Enhanced ({} tasks selected)".format(len(selected))
     return push_to_try('chooser', message.format(msg=msg), selected, templates, push=push,
-                       closed_tree=kwargs["closed_tree"])
+                       closed_tree=closed_tree)

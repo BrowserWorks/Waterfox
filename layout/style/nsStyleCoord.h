@@ -141,12 +141,10 @@ nscoord LengthPercentage::Resolve(T aPercentageGetter,
     return ToLength();
   }
   nscoord basis = aPercentageGetter();
-  NS_WARNING_ASSERTION(basis >= 0, "nscoord overflow?");
   return length.ToAppUnits() + aPercentageRounder(basis * Percentage());
 }
 
 nscoord LengthPercentage::Resolve(nscoord aPercentageBasis) const {
-  NS_WARNING_ASSERTION(aPercentageBasis >= 0, "nscoord overflow?");
   return Resolve([=] { return aPercentageBasis; }, NSToCoordFloorClamped);
 }
 
@@ -164,11 +162,6 @@ nscoord LengthPercentage::Resolve(nscoord aPercentageBasis,
 }
 
 #define IMPL_LENGTHPERCENTAGE_FORWARDS(ty_)                                 \
-  template <>                                                               \
-  inline const LengthPercentage& ty_::AsLengthPercentage() const {          \
-    MOZ_ASSERT(IsLengthPercentage());                                       \
-    return length_percentage._0;                                            \
-  }                                                                         \
   template <>                                                               \
   inline bool ty_::HasPercent() const {                                     \
     return IsLengthPercentage() && AsLengthPercentage().HasPercent();       \
@@ -203,20 +196,8 @@ IMPL_LENGTHPERCENTAGE_FORWARDS(StyleSize)
 IMPL_LENGTHPERCENTAGE_FORWARDS(StyleMaxSize)
 
 template <>
-inline const StyleSize& StyleFlexBasis::AsSize() const {
-  MOZ_ASSERT(IsSize());
-  return size._0;
-}
-
-template <>
 inline bool StyleFlexBasis::IsAuto() const {
   return IsSize() && AsSize().IsAuto();
-}
-
-template <>
-inline StyleExtremumLength StyleSize::AsExtremumLength() const {
-  MOZ_ASSERT(IsExtremumLength());
-  return extremum_length._0;
 }
 
 template <>
@@ -227,12 +208,6 @@ inline bool StyleSize::BehavesLikeInitialValueOnBlockAxis() const {
 template <>
 inline bool StyleMaxSize::BehavesLikeInitialValueOnBlockAxis() const {
   return IsNone() || IsExtremumLength();
-}
-
-template <>
-inline StyleExtremumLength StyleMaxSize::AsExtremumLength() const {
-  MOZ_ASSERT(IsExtremumLength());
-  return extremum_length._0;
 }
 
 template <>

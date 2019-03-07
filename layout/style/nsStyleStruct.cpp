@@ -35,6 +35,7 @@
 #include "mozilla/dom/ImageTracker.h"
 #include "mozilla/CORSMode.h"
 #include "mozilla/ClearOnShutdown.h"
+#include "mozilla/PreferenceSheet.h"
 #include "mozilla/Likely.h"
 #include "nsIURI.h"
 #include "mozilla/dom/Document.h"
@@ -314,10 +315,10 @@ nsMargin nsStyleBorder::GetImageOutset() const {
     const auto& coord = mBorderImageOutset.Get(s);
     nscoord value;
     if (coord.IsLength()) {
-      value = coord.length._0.ToAppUnits();
+      value = coord.AsLength().ToAppUnits();
     } else {
       MOZ_ASSERT(coord.IsNumber());
-      value = coord.number._0 * mComputedBorder.Side(s);
+      value = coord.AsNumber() * mComputedBorder.Side(s);
     }
     outset.Side(s) = value;
   }
@@ -1666,8 +1667,7 @@ nsChangeHint nsStyleTableBorder::CalcDifference(
 //
 
 static nscolor DefaultColor(const Document& aDocument) {
-  auto* pc = aDocument.GetPresContext();
-  return pc ? pc->DefaultColor() : NS_RGB(0, 0, 0);
+  return PreferenceSheet::PrefsFor(aDocument).mDefaultColor;
 }
 
 nsStyleColor::nsStyleColor(const Document& aDocument)
