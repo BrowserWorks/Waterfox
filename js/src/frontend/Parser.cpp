@@ -1829,6 +1829,10 @@ GeneralParser<ParseHandler, Unit>::functionBody(InHandling inHandling,
   uint32_t startYieldOffset = pc_->lastYieldOffset;
 #endif
 
+  // One might expect noteUsedName(".initializers") here when parsing a
+  // constructor. See GeneralParser<ParseHandler, Unit>::classDefinition on why
+  // it's not here.
+
   Node body;
   if (type == StatementListBody) {
     bool inheritedStrict = pc_->sc()->strict();
@@ -7044,6 +7048,37 @@ GeneralParser<ParseHandler, Unit>::classDefinition(
       }
     }
 
+    if (numFieldsWithInitializers > 0) {
+      // .initializers is always closed over by the constructor when there are
+      // fields with initializers. However, there's some strange circumstances
+      // which prevents us from using the normal noteUsedName() system. We
+      // cannot call noteUsedName(".initializers") when parsing the constructor,
+      // because .initializers should be marked as used *only if* there are
+      // fields with initializers. Even if we haven't seen any fields yet,
+      // there may be fields after the constructor.
+      // Consider the following class:
+      //
+      //  class C {
+      //    constructor() {
+      //      // do we noteUsedName(".initializers") here?
+      //    }
+      //    // ... because there might be some fields down here.
+      //  }
+      //
+      // So, instead, at the end of class parsing (where we are now), we do some
+      // tricks to pretend that noteUsedName(".initializers") was called in the
+      // constructor.
+      if (!usedNames_.markAsAlwaysClosedOver(cx_, cx_->names().dotInitializers,
+                                             pc_->scriptId(),
+                                             pc_->innermostScope()->id())) {
+        return null();
+      }
+      if (!noteDeclaredName(cx_->names().dotInitializers,
+                            DeclarationKind::Const, namePos)) {
+        return null();
+      }
+    }
+
     classEndOffset = pos().end;
     if (!finishClassConstructor(classStmt, className, classStartOffset,
                                 classEndOffset, numFieldsWithInitializers,
@@ -7103,7 +7138,7 @@ GeneralParser<ParseHandler, Unit>::synthesizeConstructor(
     HandleAtom className, uint32_t classNameOffset) {
   FunctionSyntaxKind functionSyntaxKind = FunctionSyntaxKind::ClassConstructor;
 
-  // Create the function object
+  // Create the function object.
   RootedFunction fun(cx_, newFunction(className, functionSyntaxKind,
                                       GeneratorKind::NotGenerator,
                                       FunctionAsyncKind::SyncFunction));
@@ -7111,7 +7146,7 @@ GeneralParser<ParseHandler, Unit>::synthesizeConstructor(
     return null();
   }
 
-  // Create the top-level field initializer node
+  // Create the top-level field initializer node.
   FunctionNodeType funNode = handler_.newFunction(functionSyntaxKind, pos());
   if (!funNode) {
     return null();
@@ -7129,14 +7164,14 @@ GeneralParser<ParseHandler, Unit>::synthesizeConstructor(
   handler_.setFunctionBox(funNode, funbox);
   funbox->setEnd(anyChars);
 
-  // push a SourceParseContext on to the stack.
+  // Push a SourceParseContext on to the stack.
   SourceParseContext funpc(this, funbox, /* newDirectives = */ nullptr);
   if (!funpc.init()) {
     return null();
   }
 
   TokenPos synthesizedBodyPos = TokenPos(classNameOffset, classNameOffset + 1);
-  // Create a ListNode for the parameters + body (there are no parameters)
+  // Create a ListNode for the parameters + body (there are no parameters).
   ListNodeType argsbody =
       handler_.newList(ParseNodeKind::ParamsBody, synthesizedBodyPos);
   if (!argsbody) {
@@ -7146,7 +7181,7 @@ GeneralParser<ParseHandler, Unit>::synthesizeConstructor(
   funbox->function()->setArgCount(0);
   tokenStream.setFunctionStart(funbox);
 
-  // push a LexicalScope on to the stack
+  // Push a LexicalScope on to the stack.
   ParseContext::Scope lexicalScope(this);
   if (!lexicalScope.init(pc_)) {
     return null();
@@ -7161,12 +7196,14 @@ GeneralParser<ParseHandler, Unit>::synthesizeConstructor(
     return null();
   }
 
+  // One might expect a noteUsedName(".initializers") here. See comment in
+  // GeneralParser<ParseHandler, Unit>::classDefinition on why it's not here.
+
   bool canSkipLazyClosedOverBindings = handler_.canSkipLazyClosedOverBindings();
   if (!pc_->declareFunctionThis(usedNames_, canSkipLazyClosedOverBindings)) {
     return null();
   }
 
-  // Set the function's body to the field assignment.
   auto initializerBody = finishLexicalScope(lexicalScope, stmtList);
   if (!initializerBody) {
     return null();
@@ -7191,9 +7228,9 @@ template <class ParseHandler, typename Unit>
 typename ParseHandler::FunctionNodeType
 GeneralParser<ParseHandler, Unit>::fieldInitializer(YieldHandling yieldHandling,
                                                     HandleAtom propAtom) {
-  TokenPos fieldPos = pos();
+  TokenPos firstTokenPos = pos();
 
-  // Create the function object
+  // Create the function object.
   RootedFunction fun(cx_, newFunction(propAtom, FunctionSyntaxKind::Expression,
                                       GeneratorKind::NotGenerator,
                                       FunctionAsyncKind::SyncFunction));
@@ -7201,51 +7238,42 @@ GeneralParser<ParseHandler, Unit>::fieldInitializer(YieldHandling yieldHandling,
     return null();
   }
 
-  // Create the top-level field initializer node
+  // Create the top-level field initializer node.
   FunctionNodeType funNode =
-      handler_.newFunction(FunctionSyntaxKind::Expression, fieldPos);
+      handler_.newFunction(FunctionSyntaxKind::Expression, firstTokenPos);
   if (!funNode) {
     return null();
   }
 
   // Create the FunctionBox and link it to the function object.
   Directives directives(true);
-  FunctionBox* funbox = newFunctionBox(funNode, fun, fieldPos.begin, directives,
-                                       GeneratorKind::NotGenerator,
+  FunctionBox* funbox = newFunctionBox(funNode, fun, firstTokenPos.begin,
+                                       directives, GeneratorKind::NotGenerator,
                                        FunctionAsyncKind::SyncFunction);
   if (!funbox) {
     return null();
   }
   funbox->initWithEnclosingParseContext(pc_, FunctionSyntaxKind::Expression);
   handler_.setFunctionBox(funNode, funbox);
+  tokenStream.setFunctionStart(funbox);
 
-  // push a SourceParseContext on to the stack.
+  // Push a SourceParseContext on to the stack.
   SourceParseContext funpc(this, funbox, /* newDirectives = */ nullptr);
   if (!funpc.init()) {
     return null();
   }
 
-  // push a VarScope on to the stack
+  // Push a VarScope on to the stack.
   ParseContext::VarScope varScope(this);
   if (!varScope.init(pc_)) {
     return null();
   }
 
-  // push a LexicalScope on to the stack
+  // Push a LexicalScope on to the stack.
   ParseContext::Scope lexicalScope(this);
   if (!lexicalScope.init(pc_)) {
     return null();
   }
-
-  // Create a ListNode for the parameters + body (there are no parameters)
-  ListNodeType argsbody = handler_.newList(ParseNodeKind::ParamsBody, fieldPos);
-  if (!argsbody) {
-    return null();
-  }
-  handler_.setFunctionFormalParametersAndBody(funNode, argsbody);
-  funbox->function()->setArgCount(0);
-
-  tokenStream.setFunctionStart(funbox);
 
   // Parse the expression for the field initializer.
   Node initializerExpr =
@@ -7253,6 +7281,15 @@ GeneralParser<ParseHandler, Unit>::fieldInitializer(YieldHandling yieldHandling,
   if (!initializerExpr) {
     return null();
   }
+
+  // Create a ListNode for the parameters + body (there are no parameters).
+  ListNodeType argsbody =
+      handler_.newList(ParseNodeKind::ParamsBody, firstTokenPos);
+  if (!argsbody) {
+    return null();
+  }
+  handler_.setFunctionFormalParametersAndBody(funNode, argsbody);
+  funbox->function()->setArgCount(0);
 
   funbox->setEnd(anyChars);
 
@@ -7262,14 +7299,15 @@ GeneralParser<ParseHandler, Unit>::fieldInitializer(YieldHandling yieldHandling,
     return null();
   }
 
-  // build `this.field` expression
-  ThisLiteralType propAssignThis = handler_.newThisLiteral(fieldPos, thisName);
+  // Build `this.field` expression.
+  ThisLiteralType propAssignThis =
+      handler_.newThisLiteral(firstTokenPos, thisName);
   if (!propAssignThis) {
     return null();
   }
 
   NameNodeType propAssignName =
-      handler_.newPropertyName(propAtom->asPropertyName(), fieldPos);
+      handler_.newPropertyName(propAtom->asPropertyName(), firstTokenPos);
   if (!propAssignName) {
     return null();
   }
@@ -7279,8 +7317,6 @@ GeneralParser<ParseHandler, Unit>::fieldInitializer(YieldHandling yieldHandling,
   if (!propAssignFieldAccess) {
     return null();
   }
-  handler_.setBeginPosition(propAssignFieldAccess, propAssignName);
-  handler_.setEndPosition(propAssignFieldAccess, propAssignName);
 
   // Synthesize an assignment expression for the property.
   AssignmentNodeType initializerAssignment = handler_.newAssignment(
@@ -7288,22 +7324,30 @@ GeneralParser<ParseHandler, Unit>::fieldInitializer(YieldHandling yieldHandling,
   if (!initializerAssignment) {
     return null();
   }
-  handler_.setBeginPosition(initializerAssignment, initializerExpr);
-  handler_.setEndPosition(initializerAssignment, initializerExpr);
 
   bool canSkipLazyClosedOverBindings = handler_.canSkipLazyClosedOverBindings();
   if (!pc_->declareFunctionThis(usedNames_, canSkipLazyClosedOverBindings)) {
     return null();
   }
 
+  UnaryNodeType exprStatement =
+      handler_.newExprStatement(initializerAssignment, pos().end);
+  if (!exprStatement) {
+    return null();
+  }
+
+  ListNodeType statementList = handler_.newStatementList(firstTokenPos);
+  if (!argsbody) {
+    return null();
+  }
+  handler_.addStatementToList(statementList, exprStatement);
+
   // Set the function's body to the field assignment.
   LexicalScopeNodeType initializerBody =
-      finishLexicalScope(lexicalScope, initializerAssignment);
+      finishLexicalScope(lexicalScope, statementList);
   if (!initializerBody) {
     return null();
   }
-  handler_.setBeginPosition(initializerBody, initializerAssignment);
-  handler_.setEndPosition(initializerBody, initializerAssignment);
 
   handler_.setFunctionBody(funNode, initializerBody);
 

@@ -1686,8 +1686,7 @@ class JSScript : public js::gc::TenuredCell {
     // Code is in strict mode.
     Strict = 1 << 1,
 
-    // Code has "use strict"; explicitly.
-    ExplicitUseStrict = 1 << 2,
+    // (1 << 2) is unused.
 
     // True if the script has a non-syntactic scope on its dynamic scope chain.
     // That is, there are objects about which we know nothing between the
@@ -1701,8 +1700,7 @@ class JSScript : public js::gc::TenuredCell {
     BindingsAccessedDynamically = 1 << 5,
     FunHasExtensibleScope = 1 << 6,
 
-    // True if any formalIsAliased(i).
-    FunHasAnyAliasedFormal = 1 << 7,
+    // (1 << 7) is unused.
 
     // Script has singleton objects.
     HasSingletons = 1 << 8,
@@ -2099,10 +2097,6 @@ class JSScript : public js::gc::TenuredCell {
 
   bool strict() const { return hasFlag(ImmutableFlags::Strict); }
 
-  bool explicitUseStrict() const {
-    return hasFlag(ImmutableFlags::ExplicitUseStrict);
-  }
-
   bool hasNonSyntacticScope() const {
     return hasFlag(ImmutableFlags::HasNonSyntacticScope);
   }
@@ -2113,9 +2107,6 @@ class JSScript : public js::gc::TenuredCell {
   }
   bool funHasExtensibleScope() const {
     return hasFlag(ImmutableFlags::FunHasExtensibleScope);
-  }
-  bool funHasAnyAliasedFormal() const {
-    return hasFlag(ImmutableFlags::FunHasAnyAliasedFormal);
   }
 
   bool hasSingletons() const { return hasFlag(ImmutableFlags::HasSingletons); }

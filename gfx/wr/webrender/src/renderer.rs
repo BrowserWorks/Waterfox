@@ -176,6 +176,10 @@ const GPU_TAG_CACHE_LINE_DECORATION: GpuProfileTag = GpuProfileTag {
     label: "C_LineDecoration",
     color: debug_colors::YELLOWGREEN,
 };
+const GPU_TAG_CACHE_GRADIENT: GpuProfileTag = GpuProfileTag {
+    label: "C_Gradient",
+    color: debug_colors::BROWN,
+};
 const GPU_TAG_SETUP_TARGET: GpuProfileTag = GpuProfileTag {
     label: "target init",
     color: debug_colors::SLATEGREY,
@@ -439,6 +443,62 @@ pub(crate) mod desc {
         ],
     };
 
+    pub const GRADIENT: VertexDescriptor = VertexDescriptor {
+        vertex_attributes: &[
+            VertexAttribute {
+                name: "aPosition",
+                count: 2,
+                kind: VertexAttributeKind::F32,
+            },
+        ],
+        instance_attributes: &[
+            VertexAttribute {
+                name: "aTaskRect",
+                count: 4,
+                kind: VertexAttributeKind::F32,
+            },
+            VertexAttribute {
+                name: "aStops",
+                count: 4,
+                kind: VertexAttributeKind::F32,
+            },
+            // TODO(gw): We should probably pack these as u32 colors instead
+            //           of passing as full float vec4 here. It won't make much
+            //           difference in real world, since these are only invoked
+            //           rarely, when creating the cache.
+            VertexAttribute {
+                name: "aColor0",
+                count: 4,
+                kind: VertexAttributeKind::F32,
+            },
+            VertexAttribute {
+                name: "aColor1",
+                count: 4,
+                kind: VertexAttributeKind::F32,
+            },
+            VertexAttribute {
+                name: "aColor2",
+                count: 4,
+                kind: VertexAttributeKind::F32,
+            },
+            VertexAttribute {
+                name: "aColor3",
+                count: 4,
+                kind: VertexAttributeKind::F32,
+            },
+            VertexAttribute {
+                name: "aAxisSelect",
+                count: 1,
+                kind: VertexAttributeKind::F32,
+            },
+            VertexAttribute {
+                name: "aStartStop",
+                count: 2,
+                kind: VertexAttributeKind::F32,
+            },
+        ],
+    };
+
     pub const BORDER: VertexDescriptor = VertexDescriptor {
         vertex_attributes: &[
             VertexAttribute {
@@ -681,6 +741,7 @@ pub(crate) enum VertexArrayKind {
     Border,
     Scale,
     LineDecoration,
+    Gradient,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1506,6 +1567,7 @@ pub struct RendererVAOs {
     border_vao: VAO,
     line_vao: VAO,
     scale_vao: VAO,
+    gradient_vao: VAO,
 }
 
 /// The renderer is responsible for submitting to the GPU the work prepared by the
@@ -1822,6 +1884,7 @@ impl Renderer {
         let border_vao = device.create_vao_with_new_instances(&desc::BORDER, &prim_vao);
         let scale_vao = device.create_vao_with_new_instances(&desc::SCALE, &prim_vao);
         let line_vao = device.create_vao_with_new_instances(&desc::LINE, &prim_vao);
+        let gradient_vao = device.create_vao_with_new_instances(&desc::GRADIENT, &prim_vao);
         let texture_cache_upload_pbo = device.create_pbo();
 
         let texture_resolver = TextureResolver::new(&mut device);
@@ -2025,6 +2088,7 @@ impl Renderer {
                 clip_vao,
                 border_vao,
                 scale_vao,
+                gradient_vao,
                 line_vao,
             },
             transforms_texture,
@@ -3122,9 +3186,10 @@ impl Renderer {
                 .expect("BUG: invalid source texture");
             let read_target = DrawTarget::Texture { texture, layer, with_depth: false };
 
-            device.bind_read_target(read_target.into());
             device.blit_render_target(
+                read_target.into(),
                 read_target.to_framebuffer_rect(source_rect),
+                draw_target,
                 draw_target.to_framebuffer_rect(blit.target_rect.translate(&-content_origin.to_vector())),
                 TextureFilter::Linear,
             );
@@ -3223,7 +3288,7 @@ impl Renderer {
                     // on a mostly-unused last slice of a large texture array).
                     Some(draw_target.to_framebuffer_rect(target.used_rect()))
                 }
-                DrawTarget::Texture { .. } => {
+                DrawTarget::Texture { .. } | DrawTarget::External { .. } => {
                     None
                 }
             };
@@ -3472,8 +3537,6 @@ impl Renderer {
             if !alpha_batch_container.tile_blits.is_empty() {
                 let _timer = self.gpu_profile.start_timer(GPU_TAG_BLIT);
 
-                self.device.bind_read_target(draw_target.into());
-
                 for blit in &alpha_batch_container.tile_blits {
                     let texture = self.texture_resolver
                         .resolve(&blit.target.texture_id)
@@ -3484,7 +3547,6 @@ impl Renderer {
                         layer: blit.target.texture_layer as usize,
                         with_depth: false,
                     };
-                    self.device.bind_draw_target(blit_target);
 
                     let src_rect = draw_target.to_framebuffer_rect(DeviceIntRect::new(
                         blit.src_offset - content_origin.to_vector(),
@@ -3499,7 +3561,9 @@ impl Renderer {
                     ));
 
                     self.device.blit_render_target_invert_y(
+                        draw_target.into(),
                         src_rect,
+                        blit_target,
                         dest_rect,
                     );
                 }
@@ -3531,10 +3595,10 @@ impl Renderer {
                     }
                 };
                 let (src_rect, _) = render_tasks[output.task_id].get_target_rect();
-                self.device.bind_read_target(draw_target.into());
-                self.device.bind_external_draw_target(fbo_id);
                 self.device.blit_render_target_invert_y(
+                    draw_target.into(),
                     draw_target.to_framebuffer_rect(src_rect.translate(&-content_origin.to_vector())),
+                    DrawTarget::External { fbo: fbo_id, size: output_size.into() },
                     output_size.into(),
                 );
                 handler.unlock(output.pipeline_id);
@@ -3832,22 +3896,40 @@ impl Renderer {
             self.set_blend(true, FramebufferKind::Other);
             self.set_blend_mode_premultiplied_alpha(FramebufferKind::Other);
 
-            if !target.line_decorations.is_empty() {
-                self.shaders.borrow_mut().cs_line_decoration.bind(
-                    &mut self.device,
-                    &projection,
-                    &mut self.renderer_errors,
-                );
+            self.shaders.borrow_mut().cs_line_decoration.bind(
+                &mut self.device,
+                &projection,
+                &mut self.renderer_errors,
+            );
 
-                self.draw_instanced_batch(
-                    &target.line_decorations,
-                    VertexArrayKind::LineDecoration,
-                    &BatchTextures::no_texture(),
-                    stats,
-                );
-            }
+            self.draw_instanced_batch(
+                &target.line_decorations,
+                VertexArrayKind::LineDecoration,
+                &BatchTextures::no_texture(),
+                stats,
+            );
 
             self.set_blend(false, FramebufferKind::Other);
+        }
+
+        // Draw any gradients for this target.
+        if !target.gradients.is_empty() {
+            let _timer = self.gpu_profile.start_timer(GPU_TAG_CACHE_GRADIENT);
+
+            self.set_blend(false, FramebufferKind::Other);
+
+            self.shaders.borrow_mut().cs_gradient.bind(
+                &mut self.device,
+                &projection,
+                &mut self.renderer_errors,
+            );
+
+            self.draw_instanced_batch(
+                &target.gradients,
+                VertexArrayKind::Gradient,
+                &BatchTextures::no_texture(),
+                stats,
+            );
         }
 
         // Draw any blurs for this target.
@@ -4447,26 +4529,26 @@ impl Renderer {
 
         // Copy frame buffer into the zoom texture
         let read_target = DrawTarget::new_default(framebuffer_size);
-        self.device.bind_read_target(read_target.into());
-        self.device.bind_draw_target(DrawTarget::Texture {
-            texture: self.zoom_debug_texture.as_ref().unwrap(),
-            layer: 0,
-            with_depth: false,
-        });
         self.device.blit_render_target(
+            read_target.into(),
             read_target.to_framebuffer_rect(source_rect),
+            DrawTarget::Texture {
+                texture: self.zoom_debug_texture.as_ref().unwrap(),
+                layer: 0,
+                with_depth: false,
+            },
             texture_rect,
             TextureFilter::Nearest,
         );
 
         // Draw the zoom texture back to the framebuffer
-        self.device.bind_read_target(ReadTarget::Texture {
-            texture: self.zoom_debug_texture.as_ref().unwrap(),
-            layer: 0,
-        });
-        self.device.bind_draw_target(read_target);
         self.device.blit_render_target(
+            ReadTarget::Texture {
+                texture: self.zoom_debug_texture.as_ref().unwrap(),
+                layer: 0,
+            },
             texture_rect,
+            read_target,
             read_target.to_framebuffer_rect(target_rect),
             TextureFilter::Nearest,
         );
@@ -4544,8 +4626,6 @@ impl Renderer {
 
             let layer_count = texture.get_layer_count() as usize;
             for layer in 0 .. layer_count {
-                device.bind_read_target(ReadTarget::Texture { texture, layer});
-
                 let x = fb_width - (spacing + size) * (i as i32 + 1);
 
                 // If we have more targets than fit on one row in screen, just early exit.
@@ -4585,7 +4665,9 @@ impl Renderer {
                 // use different conventions.
                 let dest_rect = rect(x, y + tag_height, size, size);
                 device.blit_render_target_invert_y(
+                    ReadTarget::Texture { texture, layer },
                     src_rect,
+                    DrawTarget::new_default(framebuffer_size),
                     FramebufferIntRect::from_untyped(&dest_rect),
                 );
                 i += 1;
@@ -4713,6 +4795,7 @@ impl Renderer {
         self.texture_resolver.deinit(&mut self.device);
         self.device.delete_vao(self.vaos.prim_vao);
         self.device.delete_vao(self.vaos.clip_vao);
+        self.device.delete_vao(self.vaos.gradient_vao);
         self.device.delete_vao(self.vaos.blur_vao);
         self.device.delete_vao(self.vaos.line_vao);
         self.device.delete_vao(self.vaos.border_vao);
@@ -5490,6 +5573,7 @@ fn get_vao<'a>(vertex_array_kind: VertexArrayKind,
         VertexArrayKind::Border => &vaos.border_vao,
         VertexArrayKind::Scale => &vaos.scale_vao,
         VertexArrayKind::LineDecoration => &vaos.line_vao,
+        VertexArrayKind::Gradient => &vaos.gradient_vao,
     }
 }
 
@@ -5506,6 +5590,7 @@ fn get_vao<'a>(vertex_array_kind: VertexArrayKind,
         VertexArrayKind::Border => &vaos.border_vao,
         VertexArrayKind::Scale => &vaos.scale_vao,
         VertexArrayKind::LineDecoration => &vaos.line_vao,
+        VertexArrayKind::Gradient => &vaos.gradient_vao,
     }
 }
 

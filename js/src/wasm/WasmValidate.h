@@ -133,14 +133,13 @@ struct ModuleEnvironment {
 
   // Module fields decoded from the module environment (or initialized while
   // validating an asm.js module) and immutable during compilation:
-#ifdef ENABLE_WASM_REFTYPES
+#ifdef ENABLE_WASM_GC
   // `gcFeatureOptIn` reflects the presence in a module of a GcFeatureOptIn
   // section.  This variable will be removed eventually, allowing it to be
   // replaced everywhere by the value true.
   //
   // The flag is used in the value of gcTypesEnabled(), which controls whether
-  // ref types and struct types and associated instructions are accepted
-  // during validation.
+  // struct types and associated instructions are accepted during validation.
   bool gcFeatureOptIn;
 #endif
   Maybe<uint32_t> dataCount;
@@ -174,7 +173,7 @@ struct ModuleEnvironment {
       : kind(kind),
         sharedMemoryEnabled(sharedMemoryEnabled),
         compilerEnv(compilerEnv),
-#ifdef ENABLE_WASM_REFTYPES
+#ifdef ENABLE_WASM_GC
         gcFeatureOptIn(false),
 #endif
         memoryUsage(MemoryUsage::None),
@@ -208,9 +207,9 @@ struct ModuleEnvironment {
   bool isRefSubtypeOf(ValType one, ValType two) const {
     MOZ_ASSERT(one.isReference());
     MOZ_ASSERT(two.isReference());
-    MOZ_ASSERT(gcTypesEnabled());
     return one == two || two == ValType::AnyRef || one == ValType::NullRef ||
-           (one.isRef() && two.isRef() && isStructPrefixOf(two, one));
+           (one.isRef() && two.isRef() && gcTypesEnabled() &&
+            isStructPrefixOf(two, one));
   }
 
  private:
@@ -346,19 +345,16 @@ class Encoder {
     return writeFixedU8(uint8_t(op));
   }
   MOZ_MUST_USE bool writeOp(MiscOp op) {
-    static_assert(size_t(MiscOp::Limit) <= 256, "fits");
     MOZ_ASSERT(size_t(op) < size_t(MiscOp::Limit));
-    return writeFixedU8(uint8_t(Op::MiscPrefix)) && writeFixedU8(uint8_t(op));
+    return writeFixedU8(uint8_t(Op::MiscPrefix)) && writeVarU32(uint32_t(op));
   }
   MOZ_MUST_USE bool writeOp(ThreadOp op) {
-    static_assert(size_t(ThreadOp::Limit) <= 256, "fits");
     MOZ_ASSERT(size_t(op) < size_t(ThreadOp::Limit));
-    return writeFixedU8(uint8_t(Op::ThreadPrefix)) && writeFixedU8(uint8_t(op));
+    return writeFixedU8(uint8_t(Op::ThreadPrefix)) && writeVarU32(uint32_t(op));
   }
   MOZ_MUST_USE bool writeOp(MozOp op) {
-    static_assert(size_t(MozOp::Limit) <= 256, "fits");
     MOZ_ASSERT(size_t(op) < size_t(MozOp::Limit));
-    return writeFixedU8(uint8_t(Op::MozPrefix)) && writeFixedU8(uint8_t(op));
+    return writeFixedU8(uint8_t(Op::MozPrefix)) && writeVarU32(uint32_t(op));
   }
 
   // Fixed-length encodings that allow back-patching.
@@ -607,14 +603,11 @@ class Decoder {
         *type = ValType::Code(code);
         return true;
       case uint8_t(ValType::AnyRef):
-        if (!gcTypesEnabled) {
-          return fail("reference types not enabled");
-        }
         *type = ValType::Code(code);
         return true;
       case uint8_t(ValType::Ref): {
         if (!gcTypesEnabled) {
-          return fail("reference types not enabled");
+          return fail("(ref T) types not enabled");
         }
         uint32_t typeIndex;
         if (!readVarU32(&typeIndex)) {

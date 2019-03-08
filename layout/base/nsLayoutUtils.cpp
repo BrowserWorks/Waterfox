@@ -1449,6 +1449,13 @@ nsIFrame* nsLayoutUtils::GetPrimaryFrameFromStyleFrame(nsIFrame* aStyleFrame) {
   return parent && parent->IsTableWrapperFrame() ? parent : aStyleFrame;
 }
 
+/* static */
+const nsIFrame* nsLayoutUtils::GetPrimaryFrameFromStyleFrame(
+    const nsIFrame* aStyleFrame) {
+  return nsLayoutUtils::GetPrimaryFrameFromStyleFrame(
+      const_cast<nsIFrame*>(aStyleFrame));
+}
+
 /*static*/
 bool nsLayoutUtils::IsPrimaryStyleFrame(const nsIFrame* aFrame) {
   if (aFrame->IsTableWrapperFrame()) {
@@ -2780,7 +2787,7 @@ bool nsLayoutUtils::GetLayerTransformForFrame(nsIFrame* aFrame,
   builder.BeginFrame();
   nsDisplayList list;
   nsDisplayTransform* item =
-      MakeDisplayItem<nsDisplayTransform>(&builder, aFrame, &list, nsRect());
+      MakeDisplayItem<nsDisplayTransform>(&builder, aFrame, &list, nsRect(), 0);
 
   *aTransform = item->GetTransform();
   item->Destroy(&builder);
