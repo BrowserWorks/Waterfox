@@ -2452,9 +2452,8 @@ bool BytecodeEmitter::emitScript(ParseNode* body) {
 }
 
 bool BytecodeEmitter::emitInitializeInstanceFields() {
-  FieldInitializers fieldInfo = this->fieldInitializers_;
-  MOZ_ASSERT(fieldInfo.valid);
-  size_t numFields = fieldInfo.numFieldInitializers;
+  MOZ_ASSERT(fieldInitializers_.valid);
+  size_t numFields = fieldInitializers_.numFieldInitializers;
 
   if (numFields == 0) {
     return true;
@@ -2546,8 +2545,15 @@ bool BytecodeEmitter::emitFunctionScript(FunctionNode* funNode,
   if (!updateSourceCoordNotes(body->pn_pos.end)) {
     return false;
   }
-  if (!markSimpleBreakpoint()) {
-    return false;
+
+  // We only want to mark the end of a function as a breakable position if
+  // there is token there that the user can easily associate with the function
+  // as a whole. Since arrow function single-expression bodies have no closing
+  // curly bracket, we do not place a breakpoint at their end position.
+  if (!funbox->hasExprBody()) {
+    if (!markSimpleBreakpoint()) {
+      return false;
+    }
   }
 
   // Always end the script with a JSOP_RETRVAL. Some other parts of the
@@ -7122,11 +7128,11 @@ bool BytecodeEmitter::emitSelfHostedResumeGenerator(BinaryNode* callNode) {
 
   ParseNode* kindNode = valNode->pn_next;
   MOZ_ASSERT(kindNode->isKind(ParseNodeKind::StringExpr));
-  uint16_t operand = AbstractGeneratorObject::getResumeKind(
+  uint8_t operand = AbstractGeneratorObject::getResumeKind(
       cx, kindNode->as<NameNode>().atom());
   MOZ_ASSERT(!kindNode->pn_next);
 
-  if (!emitCall(JSOP_RESUME, operand)) {
+  if (!emit2(JSOP_RESUME, operand)) {
     return false;
   }
 
@@ -7741,17 +7747,11 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
                                        PropListType type) {
   //                [stack] CTOR? OBJ
 
-  size_t numFields = 0;
   for (ParseNode* propdef : obj->contents()) {
     if (propdef->is<ClassField>()) {
       // Skip over class fields and emit them at the end.  This is needed
       // because they're all emitted into a single array, which is then stored
-      // into a private slot.
-      FunctionNode* initializer = &propdef->as<ClassField>().initializer();
-      // Don't include fields without initializers.
-      if (initializer != nullptr) {
-        numFields++;
-      }
+      // into a local variable.
       continue;
     }
 
@@ -8003,54 +8003,86 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
     }
   }
 
-  if (numFields > 0) {
-    // .initializers is a variable that stores an array of lambdas containing
-    // code (the initializer) for each field. Upon an object's construction,
-    // these lambdas will be called, defining the values.
-
-    NameOpEmitter noe(this, cx->names().dotInitializers,
-                      NameOpEmitter::Kind::Initialize);
-    if (!noe.prepareForRhs()) {
-      return false;
-    }
-
-    if (!emitUint32Operand(JSOP_NEWARRAY, numFields)) {
-      //            [stack] CTOR? OBJ ARRAY
-      return false;
-    }
-
-    size_t curFieldIndex = 0;
-    for (ParseNode* propdef : obj->contents()) {
-      if (propdef->is<ClassField>()) {
-        FunctionNode* initializer = &propdef->as<ClassField>().initializer();
-        if (initializer == nullptr) {
-          continue;
-        }
-
-        if (!emitTree(initializer)) {
-          //        [stack] CTOR? OBJ ARRAY LAMBDA
-          return false;
-        }
-
-        if (!emitUint32Operand(JSOP_INITELEM_ARRAY, curFieldIndex)) {
-          //        [stack] CTOR? OBJ ARRAY
-          return false;
-        }
-
-        curFieldIndex++;
-      }
-    }
-
-    if (!noe.emitAssignment()) {
-      //            [stack] CTOR? OBJ ARRAY
-      return false;
-    }
-
-    if (!emit1(JSOP_POP)) {
-      //            [stack] CTOR? OBJ
+  if (obj->getKind() == ParseNodeKind::ClassMemberList) {
+    if (!emitCreateFieldInitializers(obj)) {
       return false;
     }
   }
+
+  return true;
+}
+
+FieldInitializers BytecodeEmitter::setupFieldInitializers(
+    ListNode* classMembers) {
+  size_t numFields = 0;
+  for (ParseNode* propdef : classMembers->contents()) {
+    if (propdef->is<ClassField>()) {
+      FunctionNode* initializer = propdef->as<ClassField>().initializer();
+      // Don't include fields without initializers.
+      if (initializer != nullptr) {
+        numFields++;
+      }
+    }
+  }
+  return FieldInitializers(numFields);
+}
+
+bool BytecodeEmitter::emitCreateFieldInitializers(ListNode* obj) {
+  const FieldInitializers& fieldInitializers = fieldInitializers_;
+  MOZ_ASSERT(fieldInitializers.valid);
+  size_t numFields = fieldInitializers.numFieldInitializers;
+
+  if (numFields == 0) {
+    return true;
+  }
+
+  // .initializers is a variable that stores an array of lambdas containing
+  // code (the initializer) for each field. Upon an object's construction,
+  // these lambdas will be called, defining the values.
+
+  NameOpEmitter noe(this, cx->names().dotInitializers,
+                    NameOpEmitter::Kind::Initialize);
+  if (!noe.prepareForRhs()) {
+    return false;
+  }
+
+  if (!emitUint32Operand(JSOP_NEWARRAY, numFields)) {
+    //            [stack] CTOR? OBJ ARRAY
+    return false;
+  }
+
+  size_t curFieldIndex = 0;
+  for (ParseNode* propdef : obj->contents()) {
+    if (propdef->is<ClassField>()) {
+      FunctionNode* initializer = propdef->as<ClassField>().initializer();
+      if (initializer == nullptr) {
+        continue;
+      }
+
+      if (!emitTree(initializer)) {
+        //        [stack] CTOR? OBJ ARRAY LAMBDA
+        return false;
+      }
+
+      if (!emitUint32Operand(JSOP_INITELEM_ARRAY, curFieldIndex)) {
+        //        [stack] CTOR? OBJ ARRAY
+        return false;
+      }
+
+      curFieldIndex++;
+    }
+  }
+
+  if (!noe.emitAssignment()) {
+    //            [stack] CTOR? OBJ ARRAY
+    return false;
+  }
+
+  if (!emit1(JSOP_POP)) {
+    //            [stack] CTOR? OBJ
+    return false;
+  }
+
   return true;
 }
 
@@ -8820,18 +8852,8 @@ bool BytecodeEmitter::emitClass(
   FunctionNode* constructor = FindConstructor(cx, classMembers);
 
   // set this->fieldInitializers_
-  size_t numFields = 0;
-  for (ParseNode* propdef : classMembers->contents()) {
-    if (propdef->is<ClassField>()) {
-      FunctionNode* initializer = &propdef->as<ClassField>().initializer();
-      // Don't include fields without initializers.
-      if (initializer != nullptr) {
-        numFields++;
-      }
-    }
-  }
-  FieldInitializers fieldInfo(numFields);
-  AutoResetFieldInitializers _innermostClassAutoReset(this, fieldInfo);
+  AutoResetFieldInitializers _innermostClassAutoReset(
+      this, setupFieldInitializers(classMembers));
 
   // If |nameKind != ClassNameKind::ComputedName|
   //                [stack]

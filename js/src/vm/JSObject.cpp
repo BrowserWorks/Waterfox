@@ -792,7 +792,7 @@ static inline JSObject* NewObject(JSContext* cx, HandleObjectGroup group,
     return nullptr;
   }
 
-  gc::InitialHeap heap = GetInitialHeap(newKind, group);
+  gc::InitialHeap heap = GetInitialHeap(newKind, clasp);
 
   JSObject* obj;
   if (clasp->isJSFunction()) {
@@ -975,7 +975,7 @@ JSObject* js::NewObjectWithGroupCommon(JSContext* cx, HandleObjectGroup group,
     NewObjectCache::EntryIndex entry = -1;
     if (cache.lookupGroup(group, allocKind, &entry)) {
       JSObject* obj = cache.newObjectFromHit(
-          cx, entry, GetInitialHeap(newKind, group));
+          cx, entry, GetInitialHeap(newKind, group->clasp()));
       if (obj) {
         return obj;
       }
@@ -1357,7 +1357,10 @@ JSObject* js::CloneObject(JSContext* cx, HandleObject obj,
 
   RootedObject clone(cx);
   if (obj->isNative()) {
-    clone = NewObjectWithGivenTaggedProto(cx, obj->getClass(), proto);
+    // CloneObject is used to create the target object for JSObject::swap() and
+    // swap() requires its arguments are tenured, so ensure tenure allocation.
+    clone = NewObjectWithGivenTaggedProto(cx, obj->getClass(), proto,
+                                          NewObjectKind::TenuredObject);
     if (!clone) {
       return nullptr;
     }
@@ -1377,8 +1380,17 @@ JSObject* js::CloneObject(JSContext* cx, HandleObject obj,
     ProxyOptions options;
     options.setClass(obj->getClass());
 
-    clone = ProxyObject::New(cx, GetProxyHandler(obj), JS::NullHandleValue,
-                             proto, options);
+    auto* handler = GetProxyHandler(obj);
+
+    // Same as above, require tenure allocation of the clone. This means for
+    // proxy objects we need to reject nursery allocatable proxies.
+    if (handler->canNurseryAllocate()) {
+      JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                JSMSG_CANT_CLONE_OBJECT);
+      return nullptr;
+    }
+
+    clone = ProxyObject::New(cx, handler, JS::NullHandleValue, proto, options);
     if (!clone) {
       return nullptr;
     }
@@ -4283,8 +4295,6 @@ void JSObject::debugCheckNewObject(ObjectGroup* group, Shape* shape,
                     CanNurseryAllocateFinalizedClass(clasp) ||
                     clasp->isProxy());
   MOZ_ASSERT_IF(group->hasUnanalyzedPreliminaryObjects(),
-                heap == gc::TenuredHeap);
-  MOZ_ASSERT_IF(group->shouldPreTenureDontCheckGeneration(),
                 heap == gc::TenuredHeap);
 
   MOZ_ASSERT(!group->realm()->hasObjectPendingMetadata());

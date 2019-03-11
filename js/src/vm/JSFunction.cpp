@@ -605,23 +605,17 @@ XDRResult js::XDRInterpretedFunction(XDRState<mode>* xdr,
   MOZ_TRY(xdr->codeUint32(&flagsword));
 
   if (mode == XDR_DECODE) {
+    GeneratorKind generatorKind = (firstword & IsGenerator)
+                                      ? GeneratorKind::Generator
+                                      : GeneratorKind::NotGenerator;
+
+    FunctionAsyncKind asyncKind = (firstword & IsAsync)
+                                      ? FunctionAsyncKind::AsyncFunction
+                                      : FunctionAsyncKind::SyncFunction;
+
     RootedObject proto(cx);
-    if ((firstword & IsAsync) && (firstword & IsGenerator)) {
-      proto = GlobalObject::getOrCreateAsyncGenerator(cx, cx->global());
-      if (!proto) {
-        return xdr->fail(JS::TranscodeResult_Throw);
-      }
-    } else if (firstword & IsAsync) {
-      proto = GlobalObject::getOrCreateAsyncFunctionPrototype(cx, cx->global());
-      if (!proto) {
-        return xdr->fail(JS::TranscodeResult_Throw);
-      }
-    } else if (firstword & IsGenerator) {
-      proto =
-          GlobalObject::getOrCreateGeneratorFunctionPrototype(cx, cx->global());
-      if (!proto) {
-        return xdr->fail(JS::TranscodeResult_Throw);
-      }
+    if (!GetFunctionPrototype(cx, generatorKind, asyncKind, &proto)) {
+      return xdr->fail(JS::TranscodeResult_Throw);
     }
 
     gc::AllocKind allocKind = gc::AllocKind::FUNCTION;
@@ -682,7 +676,7 @@ template XDRResult js::XDRInterpretedFunction(XDRState<XDR_DECODE>*,
                                               MutableHandleFunction);
 
 /* ES6 (04-25-16) 19.2.3.6 Function.prototype [ @@hasInstance ] */
-bool js::fun_symbolHasInstance(JSContext* cx, unsigned argc, Value* vp) {
+static bool fun_symbolHasInstance(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
 
   if (args.length() < 1) {
@@ -829,26 +823,6 @@ static JSObject* CreateFunctionPrototype(JSContext* cx, JSProtoKey key) {
                               objectProto, gc::AllocKind::FUNCTION,
                               SingletonObject);
 }
-
-static const ClassOps JSFunctionClassOps = {
-    nullptr,                                /* addProperty */
-    nullptr,                                /* delProperty */
-    fun_enumerate, nullptr,                 /* newEnumerate */
-    fun_resolve,   fun_mayResolve, nullptr, /* finalize    */
-    nullptr,                                /* call        */
-    nullptr,       nullptr,                 /* construct   */
-    fun_trace,
-};
-
-static const ClassSpec JSFunctionClassSpec = {
-    CreateFunctionConstructor, CreateFunctionPrototype, nullptr, nullptr,
-    function_methods,          function_properties};
-
-const Class JSFunction::class_ = {js_Function_str,
-                                  JSCLASS_HAS_CACHED_PROTO(JSProto_Function),
-                                  &JSFunctionClassOps, &JSFunctionClassSpec};
-
-const Class* const js::FunctionClassPtr = &JSFunction::class_;
 
 JSString* js::FunctionToStringCache::lookup(JSScript* script) const {
   for (size_t i = 0; i < NumEntries; i++) {
@@ -1059,7 +1033,7 @@ bool js::FunctionHasDefaultHasInstance(JSFunction* fun,
       return false;
     }
     const Value hasInstance = fun->as<NativeObject>().getSlot(shape->slot());
-    return IsNativeFunction(hasInstance, js::fun_symbolHasInstance);
+    return IsNativeFunction(hasInstance, fun_symbolHasInstance);
   }
   return true;
 }
@@ -1210,6 +1184,36 @@ bool js::fun_apply(JSContext* cx, unsigned argc, Value* vp) {
   // Step 9.
   return Call(cx, fval, args[0], args2, args.rval());
 }
+
+static const JSFunctionSpec function_methods[] = {
+    JS_FN(js_toSource_str, fun_toSource, 0, 0),
+    JS_FN(js_toString_str, fun_toString, 0, 0),
+    JS_FN(js_apply_str, fun_apply, 2, 0),
+    JS_FN(js_call_str, fun_call, 1, 0),
+    JS_SELF_HOSTED_FN("bind", "FunctionBind", 2, 0),
+    JS_SYM_FN(hasInstance, fun_symbolHasInstance, 1,
+              JSPROP_READONLY | JSPROP_PERMANENT),
+    JS_FS_END};
+
+static const ClassOps JSFunctionClassOps = {
+    nullptr,                                /* addProperty */
+    nullptr,                                /* delProperty */
+    fun_enumerate, nullptr,                 /* newEnumerate */
+    fun_resolve,   fun_mayResolve, nullptr, /* finalize    */
+    nullptr,                                /* call        */
+    nullptr,       nullptr,                 /* construct   */
+    fun_trace,
+};
+
+static const ClassSpec JSFunctionClassSpec = {
+    CreateFunctionConstructor, CreateFunctionPrototype, nullptr, nullptr,
+    function_methods,          function_properties};
+
+const Class JSFunction::class_ = {js_Function_str,
+                                  JSCLASS_HAS_CACHED_PROTO(JSProto_Function),
+                                  &JSFunctionClassOps, &JSFunctionClassSpec};
+
+const Class* const js::FunctionClassPtr = &JSFunction::class_;
 
 bool JSFunction::isDerivedClassConstructor() {
   bool derived;
@@ -1756,16 +1760,6 @@ void JSFunction::maybeRelazify(JSRuntime* rt) {
   realm->scheduleDelazificationForDebugger();
 }
 
-const JSFunctionSpec js::function_methods[] = {
-    JS_FN(js_toSource_str, fun_toSource, 0, 0),
-    JS_FN(js_toString_str, fun_toString, 0, 0),
-    JS_FN(js_apply_str, fun_apply, 2, 0),
-    JS_FN(js_call_str, fun_call, 1, 0),
-    JS_SELF_HOSTED_FN("bind", "FunctionBind", 2, 0),
-    JS_SYM_FN(hasInstance, fun_symbolHasInstance, 1,
-              JSPROP_READONLY | JSPROP_PERMANENT),
-    JS_FS_END};
-
 // ES2018 draft rev 2aea8f3e617b49df06414eb062ab44fad87661d3
 // 19.2.1.1.1 CreateDynamicFunction( constructor, newTarget, kind, args )
 static bool CreateDynamicFunction(JSContext* cx, const CallArgs& args,
@@ -1910,22 +1904,8 @@ static bool CreateDynamicFunction(JSContext* cx, const CallArgs& args,
   // Initialize the function with the default prototype:
   // Leave as nullptr to get the default from clasp for normal functions.
   RootedObject defaultProto(cx);
-  if (isAsync && isGenerator) {
-    defaultProto = GlobalObject::getOrCreateAsyncGenerator(cx, cx->global());
-    if (!defaultProto) {
-      return false;
-    }
-  } else if (isAsync) {
-    defaultProto = GlobalObject::getOrCreateAsyncFunctionPrototype(cx, global);
-    if (!defaultProto) {
-      return false;
-    }
-  } else if (isGenerator) {
-    defaultProto =
-        GlobalObject::getOrCreateGeneratorFunctionPrototype(cx, global);
-    if (!defaultProto) {
-      return false;
-    }
+  if (!GetFunctionPrototype(cx, generatorKind, asyncKind, &defaultProto)) {
+    return false;
   }
 
   // Step 30-37 (reordered).
@@ -2149,6 +2129,28 @@ JSFunction* js::NewFunctionWithProto(
   return fun;
 }
 
+bool js::GetFunctionPrototype(JSContext* cx, js::GeneratorKind generatorKind,
+                              js::FunctionAsyncKind asyncKind,
+                              js::MutableHandleObject proto) {
+  if (generatorKind == js::GeneratorKind::NotGenerator) {
+    if (asyncKind == js::FunctionAsyncKind::SyncFunction) {
+      proto.set(nullptr);
+      return true;
+    }
+
+    proto.set(
+        GlobalObject::getOrCreateAsyncFunctionPrototype(cx, cx->global()));
+  } else {
+    if (asyncKind == js::FunctionAsyncKind::SyncFunction) {
+      proto.set(GlobalObject::getOrCreateGeneratorFunctionPrototype(
+          cx, cx->global()));
+    } else {
+      proto.set(GlobalObject::getOrCreateAsyncGenerator(cx, cx->global()));
+    }
+  }
+  return !!proto;
+}
+
 bool js::CanReuseScriptForClone(JS::Realm* realm, HandleFunction fun,
                                 HandleObject newParent) {
   MOZ_ASSERT(fun->isInterpreted());
@@ -2183,23 +2185,9 @@ static inline JSFunction* NewFunctionClone(JSContext* cx, HandleFunction fun,
                                            HandleObject proto) {
   RootedObject cloneProto(cx, proto);
   if (!proto) {
-    if (fun->isAsync() && fun->isGenerator()) {
-      cloneProto = GlobalObject::getOrCreateAsyncGenerator(cx, cx->global());
-      if (!cloneProto) {
-        return nullptr;
-      }
-    } else if (fun->isAsync()) {
-      cloneProto =
-          GlobalObject::getOrCreateAsyncFunctionPrototype(cx, cx->global());
-      if (!cloneProto) {
-        return nullptr;
-      }
-    } else if (fun->isGenerator()) {
-      cloneProto =
-          GlobalObject::getOrCreateGeneratorFunctionPrototype(cx, cx->global());
-      if (!cloneProto) {
-        return nullptr;
-      }
+    if (!GetFunctionPrototype(cx, fun->generatorKind(), fun->asyncKind(),
+                              &cloneProto)) {
+      return nullptr;
     }
   }
 

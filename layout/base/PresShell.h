@@ -1069,12 +1069,52 @@ class PresShell final : public nsIPresShell,
     };
 
     /**
+     * RecordEventPreparationPerformance() records event preparation performance
+     * with telemetry only when aEvent is a trusted event.
+     *
+     * @param aEvent            The handling event which we've finished
+     *                          preparing something to dispatch.
+     */
+    void RecordEventPreparationPerformance(const WidgetEvent* aEvent);
+
+    /**
      * RecordEventHandlingResponsePerformance() records event handling response
      * performance with telemetry.
      *
      * @param aEvent            The handled event.
      */
     void RecordEventHandlingResponsePerformance(const WidgetEvent* aEvent);
+
+    /**
+     * PrepareToDispatchEvent() prepares to dispatch aEvent.
+     *
+     * @param aEvent            The handling event.
+     * @return                  true if the event is user interaction.  I.e.,
+     *                          enough obvious input to allow to open popup,
+     *                          etc.  false, otherwise.
+     */
+    MOZ_CAN_RUN_SCRIPT
+    bool PrepareToDispatchEvent(WidgetEvent* aEvent);
+
+    /**
+     * MaybeHandleKeyboardEventBeforeDispatch() may handle aKeyboardEvent
+     * if it should do something before dispatched into the DOM.
+     *
+     * @param aKeyboardEvent    The handling keyboard event.
+     */
+    MOZ_CAN_RUN_SCRIPT
+    void MaybeHandleKeyboardEventBeforeDispatch(
+        WidgetKeyboardEvent* aKeyboardEvent);
+
+    /**
+     * PrepareToDispatchContextMenuEvent() prepares to dispatch aEvent into
+     * the DOM.
+     *
+     * @param aEvent            Must be eContextMenu event.
+     * @return                  true if it can be dispatched into the DOM.
+     *                          Otherwise, false.
+     */
+    bool PrepareToDispatchContextMenuEvent(WidgetEvent* aEvent);
 
     /**
      * This and the next two helper methods are used to target and position the
@@ -1107,6 +1147,27 @@ class PresShell final : public nsIPresShell,
 
     nsIContent* GetOverrideClickTarget(WidgetGUIEvent* aGUIEvent,
                                        nsIFrame* aFrame);
+
+    /**
+     * DispatchEvent() tries to dispatch aEvent and notifies aEventStateManager
+     * of doing it.
+     *
+     * @param aEventStateManager        EventStateManager which should handle
+     *                                  the event before/after dispatching
+     *                                  aEvent into the DOM.
+     * @param aEvent                    The handling event.
+     * @param aTouchIsNew               Set this to true when the message is
+     *                                  eTouchMove and it's newly touched.
+     *                                  Then, the "touchmove" event becomes
+     *                                  cancelable.
+     * @param aEventStatus              [in/out] The status of aEvent.
+     * @param aOverrideClickTarget      Override click event target.
+     */
+    MOZ_CAN_RUN_SCRIPT
+    nsresult DispatchEvent(EventStateManager* aEventStateManager,
+                           WidgetEvent* aEvent, bool aTouchIsNew,
+                           nsEventStatus* aEventStatus,
+                           nsIContent* aOverrideClickTarget);
 
     /**
      * DispatchEventToDOM() actually dispatches aEvent into the DOM tree.

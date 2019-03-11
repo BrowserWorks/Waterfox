@@ -136,6 +136,10 @@ List of current Events related data that is sent:
 {
   "event" : "E_Interact_With_Search_URL_Area"
 }
+* Interact with search widget
+{
+  "event" : "E_Interact_With_Search_Widget"
+}
 * When a screenshot is taken
 {
   "event" : "E_Screenshot"
@@ -155,6 +159,14 @@ List of current Events related data that is sent:
 * The user just dismissed on-boarding
 {
   "event" : "E_Dismiss_Onboarding"
+}
+* Sign in Firefox Account
+{
+  "event" : "E_User_Signed_In_To_FxA"
+}
+* Firefox Sync finished event
+{
+  "event" : "E_User_Finished_Sync"
 }
 * The user just resumed the app from background
 {

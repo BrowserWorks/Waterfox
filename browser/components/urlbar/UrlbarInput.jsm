@@ -57,16 +57,17 @@ class UrlbarInput {
     this.document.getElementById("mainPopupSet").appendChild(
       MozXULElement.parseXULToFragment(`
         <panel id="urlbar-results"
-                role="group"
-                noautofocus="true"
-                hidden="true"
-                flip="none"
-                consumeoutsideclicks="never"
-                norolluponanchor="true"
-                level="parent">
+               role="group"
+               noautofocus="true"
+               hidden="true"
+               flip="none"
+               consumeoutsideclicks="never"
+               norolluponanchor="true"
+               level="parent">
           <html:div class="urlbarView-body-outer">
             <html:div class="urlbarView-body-inner">
-              <html:div class="urlbarView-results"/>
+              <html:div id="urlbarView-results"
+                        role="listbox"/>
             </html:div>
           </html:div>
           <hbox class="search-one-offs"
@@ -441,25 +442,33 @@ class UrlbarInput {
   }
 
   /**
-   * Called by the view when moving through results with the keyboard.
+   * Called by the view when moving through results with the keyboard, and when
+   * picking a result.
    *
-   * @param {UrlbarResult} result The result that was selected.
+   * @param {UrlbarResult} [result]
+   *   The result that was selected or picked, null if no result was selected.
    * @param {Event} [event] The event that picked the result.
    * @returns {boolean}
    *   Whether the value has been canonized
    */
-  setValueFromResult(result, event = null) {
-    // For autofilled results, the value that should be canonized is not the
-    // autofilled value but the value that the user typed.
-    let canonizedUrl = this._maybeCanonizeURL(event, result.autofill ?
-                         this._lastSearchString : this.textValue);
-    if (canonizedUrl) {
-      this.value = canonizedUrl;
+  setValueFromResult(result = null, event = null) {
+    let canonizedUrl;
+
+    if (!result) {
+      this.value = this._lastSearchString;
     } else {
-      this.value = this._getValueFromResult(result);
-      if (result.autofill) {
-        this.selectionStart = result.autofill.selectionStart;
-        this.selectionEnd = result.autofill.selectionEnd;
+      // For autofilled results, the value that should be canonized is not the
+      // autofilled value but the value that the user typed.
+      canonizedUrl = this._maybeCanonizeURL(event, result.autofill ?
+                       this._lastSearchString : this.textValue);
+      if (canonizedUrl) {
+        this.value = canonizedUrl;
+      } else {
+        this.value = this._getValueFromResult(result);
+        if (result.autofill) {
+          this.selectionStart = result.autofill.selectionStart;
+          this.selectionEnd = result.autofill.selectionEnd;
+        }
       }
     }
     this._resultForCurrentValue = result;
@@ -468,13 +477,15 @@ class UrlbarInput {
     this.window.gBrowser.userTypedValue = this.value;
 
     // The value setter clobbers the actiontype attribute, so update this after that.
-    switch (result.type) {
-      case UrlbarUtils.RESULT_TYPE.TAB_SWITCH:
-        this.setAttribute("actiontype", "switchtab");
-        break;
-      case UrlbarUtils.RESULT_TYPE.OMNIBOX:
-        this.setAttribute("actiontype", "extension");
-        break;
+    if (result) {
+      switch (result.type) {
+        case UrlbarUtils.RESULT_TYPE.TAB_SWITCH:
+          this.setAttribute("actiontype", "switchtab");
+          break;
+        case UrlbarUtils.RESULT_TYPE.OMNIBOX:
+          this.setAttribute("actiontype", "extension");
+          break;
+      }
     }
 
     return !!canonizedUrl;

@@ -23,8 +23,6 @@ class FunctionExtended;
 typedef JSNative Native;
 }  // namespace js
 
-struct JSAtomState;
-
 static const uint32_t JSSLOT_BOUND_FUNCTION_TARGET = 2;
 static const uint32_t JSSLOT_BOUND_FUNCTION_THIS = 3;
 static const uint32_t JSSLOT_BOUND_FUNCTION_ARGS = 4;
@@ -102,7 +100,6 @@ class JSFunction : public js::NativeObject {
     ASMJS_NATIVE = ASMJS_KIND | NATIVE_FUN,
     WASM_FUN = NATIVE_FUN | WASM_OPTIMIZED,
     INTERPRETED_METHOD = INTERPRETED | METHOD_KIND,
-    INTERPRETED_METHOD_GENERATOR_OR_ASYNC = INTERPRETED | METHOD_KIND,
     INTERPRETED_CLASS_CONSTRUCTOR =
         INTERPRETED | CLASSCONSTRUCTOR_KIND | CONSTRUCTOR,
     INTERPRETED_GETTER = INTERPRETED | GETTER_KIND,
@@ -636,18 +633,21 @@ class JSFunction : public js::NativeObject {
   }
 
   js::FunctionAsyncKind asyncKind() const {
-    return isInterpretedLazy() ? lazyScript()->asyncKind()
-                               : nonLazyScript()->asyncKind();
+    if (!isInterpreted()) {
+      return js::FunctionAsyncKind::SyncFunction;
+    }
+    if (hasScript()) {
+      return nonLazyScript()->asyncKind();
+    }
+    if (js::LazyScript* lazy = lazyScriptOrNull()) {
+      return lazy->asyncKind();
+    }
+    MOZ_ASSERT(isSelfHostedBuiltin());
+    return js::FunctionAsyncKind::SyncFunction;
   }
 
   bool isAsync() const {
-    if (isInterpretedLazy()) {
-      return lazyScript()->isAsync();
-    }
-    if (hasScript()) {
-      return nonLazyScript()->isAsync();
-    }
-    return false;
+    return asyncKind() == js::FunctionAsyncKind::AsyncFunction;
   }
 
   void setScript(JSScript* script) {
@@ -893,6 +893,19 @@ extern JSFunction* NewScriptedFunction(
     HandleObject proto = nullptr,
     gc::AllocKind allocKind = gc::AllocKind::FUNCTION,
     NewObjectKind newKind = GenericObject, HandleObject enclosingEnv = nullptr);
+
+// Determine which [[Prototype]] to use when creating a new function using the
+// requested generator and async kind.
+//
+// This sets `proto` to `nullptr` for non-generator, synchronous functions to
+// mean "the builtin %FunctionPrototype% in the current realm", the common case.
+//
+// We could set it to `cx->global()->getOrCreateFunctionPrototype()`, but
+// nullptr gets a fast path in e.g. js::NewObjectWithClassProtoCommon.
+extern bool GetFunctionPrototype(JSContext* cx, js::GeneratorKind generatorKind,
+                                 js::FunctionAsyncKind asyncKind,
+                                 js::MutableHandleObject proto);
+
 extern JSAtom* IdToFunctionName(
     JSContext* cx, HandleId id,
     FunctionPrefixKind prefixKind = FunctionPrefixKind::None);
@@ -911,8 +924,6 @@ struct WellKnownSymbols;
 
 extern bool FunctionHasDefaultHasInstance(JSFunction* fun,
                                           const WellKnownSymbols& symbols);
-
-extern bool fun_symbolHasInstance(JSContext* cx, unsigned argc, Value* vp);
 
 extern void ThrowTypeErrorBehavior(JSContext* cx);
 
@@ -1039,9 +1050,6 @@ extern void ReportIncompatibleMethod(JSContext* cx, const CallArgs& args,
  * function.
  */
 extern void ReportIncompatible(JSContext* cx, const CallArgs& args);
-
-extern const JSFunctionSpec function_methods[];
-extern const JSFunctionSpec function_selfhosted_methods[];
 
 extern bool fun_apply(JSContext* cx, unsigned argc, Value* vp);
 

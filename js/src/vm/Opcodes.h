@@ -1979,6 +1979,7 @@
     MACRO(JSOP_SETFUNNAME, 182, "setfunname", NULL, 2, 2, 1, JOF_UINT8) \
     /*
      * Moves the top of the stack value under the nth element of the stack.
+     * Note: n must NOT be 0.
      *
      *   Category: Operators
      *   Type: Stack Operations
@@ -2220,7 +2221,7 @@
      *   Operands: resume kind (AbstractGeneratorObject::ResumeKind)
      *   Stack: gen, val => rval
      */ \
-    MACRO(JSOP_RESUME, 205, "resume", NULL, 3, 2, 1, JOF_UINT16|JOF_INVOKE) \
+    MACRO(JSOP_RESUME, 205, "resume", NULL, 2, 2, 1, JOF_UINT8|JOF_INVOKE) \
     /*
      * Load the callee stored in a CallObject on the environment chain. The
      * numHops operand is the number of environment objects to skip on the

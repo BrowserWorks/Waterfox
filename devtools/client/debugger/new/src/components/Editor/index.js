@@ -10,7 +10,7 @@ import { bindActionCreators } from "redux";
 import ReactDOM from "react-dom";
 import { connect } from "../../utils/connect";
 import classnames from "classnames";
-import { debounce } from "lodash";
+import { throttle } from "lodash";
 
 import { isLoaded } from "../../utils/source";
 import { isFirefox } from "devtools-environment";
@@ -205,7 +205,6 @@ class Editor extends PureComponent<Props, State> {
 
     codeMirror.on("scroll", this.onEditorScroll);
     this.onEditorScroll();
-
     this.setState({ editor });
     return editor;
   }
@@ -271,6 +270,10 @@ class Editor extends PureComponent<Props, State> {
         this.setSize(this.props);
       }
     }
+
+    if (prevProps.selectedSource != selectedSource) {
+      this.props.updateViewport();
+    }
   }
 
   getCurrentLine() {
@@ -307,7 +310,7 @@ class Editor extends PureComponent<Props, State> {
     this.toggleConditionalPanel(line);
   };
 
-  onEditorScroll = debounce(this.props.updateViewport, 200);
+  onEditorScroll = throttle(this.props.updateViewport, 100);
 
   onKeyDown(e: KeyboardEvent) {
     const { codeMirror } = this.state.editor;

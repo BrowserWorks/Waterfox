@@ -29,7 +29,8 @@ import type { NamedValue } from "../../utils/pause/scopes/types";
 
 import "./Scopes.css";
 
-const mdnLink = "https://developer.mozilla.org/en-US/docs/Tools/Debugger";
+const mdnLink =
+  "https://developer.mozilla.org/en-US/docs/Tools/Debugger/Using_the_Debugger_map_scopes_feature";
 
 const { ObjectInspector } = objectInspector;
 
@@ -112,7 +113,11 @@ class Scopes extends PureComponent<Props, State> {
   renderMapScopes() {
     const { selectedFrame, shouldMapScopes } = this.props;
 
-    if (!features.mapScopes || isGeneratedId(selectedFrame.location.sourceId)) {
+    if (
+      !features.mapScopes ||
+      !selectedFrame ||
+      isGeneratedId(selectedFrame.location.sourceId)
+    ) {
       return null;
     }
 

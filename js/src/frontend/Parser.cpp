@@ -1949,10 +1949,7 @@ JSFunction* AllocNewFunction(JSContext* cx, HandleAtom atom,
       allocKind = gc::AllocKind::FUNCTION_EXTENDED;
       break;
     case FunctionSyntaxKind::Method:
-      flags = (generatorKind == GeneratorKind::NotGenerator &&
-                       asyncKind == FunctionAsyncKind::SyncFunction
-                   ? JSFunction::INTERPRETED_METHOD
-                   : JSFunction::INTERPRETED_METHOD_GENERATOR_OR_ASYNC);
+      flags = JSFunction::INTERPRETED_METHOD;
       allocKind = gc::AllocKind::FUNCTION_EXTENDED;
       break;
     case FunctionSyntaxKind::ClassConstructor:
@@ -2557,23 +2554,8 @@ GeneralParser<ParseHandler, Unit>::functionDefinition(
   }
 
   RootedObject proto(cx_);
-  if (asyncKind == FunctionAsyncKind::AsyncFunction &&
-      generatorKind == GeneratorKind::Generator) {
-    proto = GlobalObject::getOrCreateAsyncGenerator(cx_, cx_->global());
-    if (!proto) {
-      return null();
-    }
-  } else if (asyncKind == FunctionAsyncKind::AsyncFunction) {
-    proto = GlobalObject::getOrCreateAsyncFunctionPrototype(cx_, cx_->global());
-    if (!proto) {
-      return null();
-    }
-  } else if (generatorKind == GeneratorKind::Generator) {
-    proto =
-        GlobalObject::getOrCreateGeneratorFunctionPrototype(cx_, cx_->global());
-    if (!proto) {
-      return null();
-    }
+  if (!GetFunctionPrototype(cx_, generatorKind, asyncKind, &proto)) {
+    return null();
   }
   RootedFunction fun(
       cx_, newFunction(funName, kind, generatorKind, asyncKind, proto));
@@ -7282,16 +7264,21 @@ GeneralParser<ParseHandler, Unit>::fieldInitializer(YieldHandling yieldHandling,
     return null();
   }
 
+  TokenPos wholeInitializerPos = pos();
+  wholeInitializerPos.begin = firstTokenPos.begin;
+
+  // Update the end position of the parse node.
+  handler_.setEndPosition(funNode, wholeInitializerPos.end);
+  funbox->setEnd(anyChars);
+
   // Create a ListNode for the parameters + body (there are no parameters).
   ListNodeType argsbody =
-      handler_.newList(ParseNodeKind::ParamsBody, firstTokenPos);
+      handler_.newList(ParseNodeKind::ParamsBody, wholeInitializerPos);
   if (!argsbody) {
     return null();
   }
   handler_.setFunctionFormalParametersAndBody(funNode, argsbody);
   funbox->function()->setArgCount(0);
-
-  funbox->setEnd(anyChars);
 
   funbox->usesThis = true;
   NameNodeType thisName = newThisName();
@@ -7301,13 +7288,13 @@ GeneralParser<ParseHandler, Unit>::fieldInitializer(YieldHandling yieldHandling,
 
   // Build `this.field` expression.
   ThisLiteralType propAssignThis =
-      handler_.newThisLiteral(firstTokenPos, thisName);
+      handler_.newThisLiteral(wholeInitializerPos, thisName);
   if (!propAssignThis) {
     return null();
   }
 
   NameNodeType propAssignName =
-      handler_.newPropertyName(propAtom->asPropertyName(), firstTokenPos);
+      handler_.newPropertyName(propAtom->asPropertyName(), wholeInitializerPos);
   if (!propAssignName) {
     return null();
   }
@@ -7336,7 +7323,7 @@ GeneralParser<ParseHandler, Unit>::fieldInitializer(YieldHandling yieldHandling,
     return null();
   }
 
-  ListNodeType statementList = handler_.newStatementList(firstTokenPos);
+  ListNodeType statementList = handler_.newStatementList(wholeInitializerPos);
   if (!argsbody) {
     return null();
   }

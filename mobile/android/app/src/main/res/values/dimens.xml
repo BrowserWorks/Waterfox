@@ -115,6 +115,14 @@
     <dimen name="search_suggestion_item_padding_horizontal">8dp</dimen>
     <dimen name="search_suggestion_item_padding_vertical">7dp</dimen>
 
+    <!-- Search Widget -->
+    <dimen name="search_widget_height">50dp</dimen>
+    <dimen name="search_widget_logo_width">32dp</dimen>
+    <dimen name="search_widget_logo_height">32dp</dimen>
+    <dimen name="search_widget_logo_margin">9dp</dimen>
+    <dimen name="search_widget_text_height">32dp</dimen>
+    <dimen name="search_widget_text_margin">9dp</dimen>
+
     <!-- Search Home Item Row height -->
     <dimen name="search_item_min_height">64dp</dimen>
 

@@ -975,7 +975,7 @@ bool RStringSplit::recover(JSContext* cx, SnapshotIterator& iter) const {
   }
   RootedValue result(cx);
 
-  JSObject* res = str_split_string(cx, group, str, sep, INT32_MAX);
+  JSObject* res = StringSplitString(cx, group, str, sep, INT32_MAX);
   if (!res) {
     return false;
   }
@@ -1214,7 +1214,7 @@ bool RNewTypedArray::recover(JSContext* cx, SnapshotIterator& iter) const {
 
   uint32_t length = templateObject.as<TypedArrayObject>()->length();
   JSObject* resultObject =
-      TypedArrayCreateWithTemplate(cx, templateObject, length);
+      NewTypedArrayWithTemplateAndLength(cx, templateObject, length);
   if (!resultObject) {
     return false;
   }
@@ -1254,10 +1254,12 @@ bool RNewArray::recover(JSContext* cx, SnapshotIterator& iter) const {
 bool MNewArrayCopyOnWrite::writeRecoverData(CompactBufferWriter& writer) const {
   MOZ_ASSERT(canRecoverOnBailout());
   writer.writeUnsigned(uint32_t(RInstruction::Recover_NewArrayCopyOnWrite));
+  writer.writeByte(initialHeap());
   return true;
 }
 
 RNewArrayCopyOnWrite::RNewArrayCopyOnWrite(CompactBufferReader& reader) {
+  initialHeap_ = gc::InitialHeap(reader.readByte());
 }
 
 bool RNewArrayCopyOnWrite::recover(JSContext* cx,
@@ -1267,7 +1269,7 @@ bool RNewArrayCopyOnWrite::recover(JSContext* cx,
   RootedValue result(cx);
 
   ArrayObject* resultObject =
-      NewDenseCopyOnWriteArray(cx, templateObject);
+      NewDenseCopyOnWriteArray(cx, templateObject, initialHeap_);
   if (!resultObject) {
     return false;
   }
@@ -1610,7 +1612,7 @@ bool RStringReplace::recover(JSContext* cx, SnapshotIterator& iter) const {
 
   JSString* result =
       isFlatReplacement_
-          ? js::str_flat_replace_string(cx, string, pattern, replace)
+          ? js::StringFlatReplaceString(cx, string, pattern, replace)
           : js::str_replace_string_raw(cx, string, pattern, replace);
 
   if (!result) {

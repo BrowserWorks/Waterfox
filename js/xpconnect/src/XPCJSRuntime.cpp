@@ -184,12 +184,10 @@ class AsyncFreeSnowWhite : public Runnable {
 
 namespace xpc {
 
-CompartmentPrivate::CompartmentPrivate(JS::Compartment* c,
-                                       XPCWrappedNativeScope* scope,
-                                       mozilla::BasePrincipal* origin,
-                                       const SiteIdentifier& site)
+CompartmentPrivate::CompartmentPrivate(
+    JS::Compartment* c, mozilla::UniquePtr<XPCWrappedNativeScope> scope,
+    mozilla::BasePrincipal* origin, const SiteIdentifier& site)
     : originInfo(origin, site),
-      scope(scope),
       wantXrays(false),
       allowWaivers(true),
       isWebExtensionContentScript(false),
@@ -199,7 +197,8 @@ CompartmentPrivate::CompartmentPrivate(JS::Compartment* c,
       hasExclusiveExpandos(false),
       universalXPConnectEnabled(false),
       wasShutdown(false),
-      mWrappedJSMap(JSObject2WrappedJSMap::newMap(XPC_JS_MAP_LENGTH)) {
+      mWrappedJSMap(JSObject2WrappedJSMap::newMap(XPC_JS_MAP_LENGTH)),
+      mScope(std::move(scope)) {
   MOZ_COUNT_CTOR(xpc::CompartmentPrivate);
 }
 
@@ -243,9 +242,9 @@ void RealmPrivate::Init(HandleObject aGlobal, const SiteIdentifier& aSite) {
   if (CompartmentPrivate* priv = CompartmentPrivate::Get(c)) {
     MOZ_ASSERT(priv->originInfo.IsSameOrigin(principal));
   } else {
-    auto* scope = new XPCWrappedNativeScope(c, aGlobal);
-    priv =
-        new CompartmentPrivate(c, scope, BasePrincipal::Cast(principal), aSite);
+    auto scope = mozilla::MakeUnique<XPCWrappedNativeScope>(c, aGlobal);
+    priv = new CompartmentPrivate(c, std::move(scope),
+                                  BasePrincipal::Cast(principal), aSite);
     JS_SetCompartmentPrivate(c, priv);
   }
 }
@@ -592,10 +591,8 @@ bool EnableUniversalXPConnect(JSContext* cx) {
   // but we define it when UniversalXPConnect is enabled to support legacy
   // tests.
   Compartment* comp = js::GetContextCompartment(cx);
-  XPCWrappedNativeScope* scope = CompartmentPrivate::Get(comp)->scope;
-  if (!scope) {
-    return true;
-  }
+  XPCWrappedNativeScope* scope = CompartmentPrivate::Get(comp)->GetScope();
+  MOZ_ASSERT(scope);
   scope->ForcePrivilegedComponents();
   return scope->AttachComponentsObject(cx);
 }
@@ -743,7 +740,7 @@ void XPCJSRuntime::TraceNativeBlackRoots(JSTracer* trc) {
 }
 
 void XPCJSRuntime::TraceAdditionalNativeGrayRoots(JSTracer* trc) {
-  XPCWrappedNativeScope::TraceWrappedNativesInAllScopes(trc);
+  XPCWrappedNativeScope::TraceWrappedNativesInAllScopes(this, trc);
 
   for (XPCRootSetElem* e = mVariantRoots; e; e = e->GetNextRoot()) {
     static_cast<XPCTraceableVariant*>(e)->TraceJS(trc);
@@ -885,9 +882,6 @@ void XPCJSRuntime::FinalizeCallback(JSFreeOp* fop, JSFinalizeStatus status,
       break;
     }
     case JSFINALIZE_GROUP_END: {
-      // Sweep scopes needing cleanup
-      XPCWrappedNativeScope::KillDyingScopes();
-
       MOZ_ASSERT(self->mDoingFinalization, "bad state");
       self->mDoingFinalization = false;
 
@@ -971,8 +965,6 @@ void XPCJSRuntime::WeakPointerZonesCallback(JSContext* cx, void* data) {
 
   self->mWrappedJSMap->UpdateWeakPointersAfterGC();
   self->mUAWidgetScopeMap.sweep();
-
-  XPCWrappedNativeScope::UpdateWeakPointersInAllScopesAfterGC();
 }
 
 /* static */
@@ -990,6 +982,7 @@ void XPCJSRuntime::WeakPointerCompartmentCallback(JSContext* cx,
 void CompartmentPrivate::UpdateWeakPointersAfterGC() {
   mRemoteProxies.sweep();
   mWrappedJSMap->UpdateWeakPointersAfterGC();
+  mScope->UpdateWeakPointersAfterGC();
 }
 
 void XPCJSRuntime::CustomOutOfMemoryCallback() {
@@ -1165,6 +1158,9 @@ void XPCJSRuntime::Shutdown(JSContext* cx) {
 
   delete mDyingWrappedNativeProtoMap;
   mDyingWrappedNativeProtoMap = nullptr;
+
+  // Prevent ~LinkedList assertion failures if we leaked things.
+  mWrappedNativeScopes.clear();
 
   CycleCollectedJSRuntime::Shutdown(cx);
 }
@@ -2942,6 +2938,7 @@ XPCJSRuntime::XPCJSRuntime(JSContext* aCx)
       mClassInfo2NativeSetMap(
           ClassInfo2NativeSetMap::newMap(XPC_NATIVE_SET_MAP_LENGTH)),
       mNativeSetMap(NativeSetMap::newMap(XPC_NATIVE_SET_MAP_LENGTH)),
+      mWrappedNativeScopes(),
       mDyingWrappedNativeProtoMap(
           XPCWrappedNativeProtoMap::newMap(XPC_DYING_NATIVE_PROTO_MAP_LENGTH)),
       mGCIsRunning(false),
