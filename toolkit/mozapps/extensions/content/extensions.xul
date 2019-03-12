@@ -321,9 +321,9 @@
                   <radio id="search-filter-local" class="search-filter-radio"
                          label="&search.filter2.installed.label;" value="local"
                          tooltiptext="&search.filter2.installed.tooltip;"/>
-                  <radio id="search-filter-remote" class="search-filter-radio"
+                  <!-- <radio id="search-filter-remote" class="search-filter-radio"
                          label="&search.filter2.available.label;" value="remote"
-                         tooltiptext="&search.filter2.available.tooltip;"/>
+                         tooltiptext="&search.filter2.available.tooltip;"/> -->
                 </radiogroup>
               </hbox>
               <vbox id="search-loading" class="alert-container"
@@ -420,15 +420,15 @@
                   <spacer flex="5000"/> <!-- Necessary to allow the message to wrap -->
                 </hbox>
               </hbox>
-              <hbox class="view-header global-info-container plugin-info-container">
+              <!-- <hbox class="view-header global-info-container plugin-info-container">
                 <hbox class="global-info" flex="1" align="center">
                   <button class="button-link global-info-plugincheck"
                           label="Check to see if your plugins are up to date"
                           tooltiptext="Check to see if your plugins are up to date"
                           command="cmd_pluginCheck"/>
-                  <spacer flex="5000"/> <!-- Necessary to allow the message to wrap -->
+                  <spacer flex="5000"/>
                 </hbox>
-              </hbox>
+              </hbox> -->
               <hbox class="view-header global-info-container experiment-info-container">
                 <hbox class="global-info" flex="1" align="center">
                   <label value="&experiment.info.label;"/>

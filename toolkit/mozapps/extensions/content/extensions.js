@@ -657,12 +657,12 @@ var gEventManager = {
       page.setAttribute("warning", "updatesecurity");
       return;
     }
-
+/*
     if (!AddonManager.checkCompatibility) {
       page.setAttribute("warning", "checkcompatibility");
       return;
     }
-
+*/
     page.removeAttribute("warning");
   },
 
@@ -980,7 +980,7 @@ var gViewController = {
         appStartup.quit(Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart);
       }
     },
-
+/*
     cmd_enableCheckCompatibility: {
       isEnabled() {
         return true;
@@ -989,7 +989,7 @@ var gViewController = {
         AddonManager.checkCompatibility = true;
       }
     },
-
+*/
     cmd_enableUpdateSecurity: {
       isEnabled() {
         return true;
@@ -998,7 +998,7 @@ var gViewController = {
         AddonManager.checkUpdateSecurity = true;
       }
     },
-
+/*
     cmd_pluginCheck: {
       isEnabled: function() {
         return true;
@@ -1006,7 +1006,8 @@ var gViewController = {
       doCommand: function() {
         openURL(Services.urlFormatter.formatURLPref("plugins.update.url"));
       }
-   },
+
+   }, */
 
     cmd_toggleAutoUpdateDefault: {
       isEnabled() {
@@ -2210,10 +2211,10 @@ var gDiscoverView = {
     this._browser = document.getElementById("discover-browser");
 
     let compatMode = "normal";
-    if (!AddonManager.checkCompatibility)
+/*    if (!AddonManager.checkCompatibility)
       compatMode = "ignore";
     else if (AddonManager.strictCompatibility)
-      compatMode = "strict";
+      compatMode = "strict"; */
 
     var url = Services.prefs.getCharPref(PREF_DISCOVERURL);
     url = url.replace("%COMPATIBILITY_MODE%", compatMode);
@@ -3487,14 +3488,14 @@ var gDetailView = {
         errorLink.value = gStrings.ext.GetStringFromName("details.notification.unsigned.link");
         errorLink.href = SUPPORT_URL + "unsigned-addons";
         errorLink.hidden = false;
-      } else if (!this._addon.isCompatible && (AddonManager.checkCompatibility ||
+/*      } else if (!this._addon.isCompatible && (AddonManager.checkCompatibility ||
         (this._addon.blocklistState != Ci.nsIBlocklistService.STATE_SOFTBLOCKED))) {
         this.node.setAttribute("notification", "warning");
         document.getElementById("detail-warning").textContent = gStrings.ext.formatStringFromName(
           "details.notification.incompatible",
           [this._addon.name, gStrings.brandShortName, gStrings.appVersion], 3
         );
-        document.getElementById("detail-warning-link").hidden = true;
+        document.getElementById("detail-warning-link").hidden = true; */
       } else if (this._addon.appDisabled && !this._addon.multiprocessCompatible && !ALLOW_NON_MPC) {
         this.node.setAttribute("notification", "error");
         document.getElementById("detail-error").textContent = gStrings.ext.formatStringFromName(
@@ -3503,7 +3504,7 @@ var gDetailView = {
         let errorLink = document.getElementById("detail-error-link");
         errorLink.value = gStrings.ext.GetStringFromName("details.notification.nonMpcDisabled.link");
         errorLink.href = "https://wiki.mozilla.org/Add-ons/ShimsNightly";
-      } else if (!isCorrectlySigned(this._addon)) {
+/*      } else if (!isCorrectlySigned(this._addon)) {
         this.node.setAttribute("notification", "warning");
         document.getElementById("detail-warning").textContent = gStrings.ext.formatStringFromName(
           "details.notification.unsigned", [this._addon.name, gStrings.brandShortName], 2
@@ -3511,7 +3512,7 @@ var gDetailView = {
         var warningLink = document.getElementById("detail-warning-link");
         warningLink.value = gStrings.ext.GetStringFromName("details.notification.unsigned.link");
         warningLink.href = SUPPORT_URL + "unsigned-addons";
-        warningLink.hidden = false;
+        warningLink.hidden = false; */
       } else if (this._addon.blocklistState == Ci.nsIBlocklistService.STATE_SOFTBLOCKED) {
         this.node.setAttribute("notification", "warning");
         document.getElementById("detail-warning").textContent = gStrings.ext.formatStringFromName(

@@ -1322,14 +1322,6 @@
               this._errorLink.value = gStrings.ext.GetStringFromName("notification.nonMpcDisabled.link");
               this._errorLink.href = "https://wiki.mozilla.org/Add-ons/ShimsNightly";
               this._errorLink.hidden = false;
-            } else if (!isUpgrade && !isCorrectlySigned(this.mAddon)) {
-              this.setAttribute("notification", "warning");
-              this._warning.textContent = gStrings.ext.formatStringFromName(
-                "notification.unsigned", [this.mAddon.name, gStrings.brandShortName], 2
-              );
-              this._warningLink.value = gStrings.ext.GetStringFromName("notification.unsigned.link");
-              this._warningLink.href = SUPPORT_URL + "unsigned-addons";
-              this._warningLink.hidden = false;
             } else if (!isUpgrade && this.mAddon.blocklistState == Ci.nsIBlocklistService.STATE_SOFTBLOCKED) {
               this.setAttribute("notification", "warning");
               this._warning.textContent = gStrings.ext.formatStringFromName(
