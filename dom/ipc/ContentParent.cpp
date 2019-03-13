@@ -4775,21 +4775,24 @@ ContentParent::RecvBeginDriverCrashGuard(const uint32_t& aGuardType, bool* aOutC
 
   UniquePtr<gfx::DriverCrashGuard> guard;
   switch (gfx::CrashGuardType(aGuardType)) {
-  case gfx::CrashGuardType::D3D11Layers:
-    guard = MakeUnique<gfx::D3D11LayersCrashGuard>(this);
-    break;
-  case gfx::CrashGuardType::D3D9Video:
-    guard = MakeUnique<gfx::D3D9VideoCrashGuard>(this);
-    break;
-  case gfx::CrashGuardType::GLContext:
-    guard = MakeUnique<gfx::GLContextCrashGuard>(this);
-    break;
-  case gfx::CrashGuardType::D3D11Video:
-    guard = MakeUnique<gfx::D3D11VideoCrashGuard>(this);
-    break;
-  default:
-    MOZ_ASSERT_UNREACHABLE("unknown crash guard type");
-    return IPC_FAIL_NO_REASON(this);
+    case gfx::CrashGuardType::D3D11Layers:
+      guard = MakeUnique<gfx::D3D11LayersCrashGuard>(this);
+      break;
+    case gfx::CrashGuardType::D3D9Video:
+      guard = MakeUnique<gfx::D3D9VideoCrashGuard>(this);
+      break;
+    case gfx::CrashGuardType::GLContext:
+      guard = MakeUnique<gfx::GLContextCrashGuard>(this);
+      break;
+    case gfx::CrashGuardType::D3D11Video:
+      guard = MakeUnique<gfx::D3D11VideoCrashGuard>(this);
+      break;
+    case gfx::CrashGuardType::WMFVPXVideo:
+      guard = MakeUnique<gfx::WMFVPXVideoCrashGuard>(this);
+      break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("unknown crash guard type");
+      return IPC_FAIL_NO_REASON(this);
   }
 
   if (guard->Crashed()) {

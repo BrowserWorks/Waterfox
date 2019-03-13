@@ -669,6 +669,7 @@ private:
   DECL_GFX_PREF(Live, "media.wmf.low-latency.enabled", PDMWMFLowLatencyEnabled, bool, false);
   DECL_GFX_PREF(Live, "media.wmf.skip-blacklist", PDMWMFSkipBlacklist, bool, false);
   DECL_GFX_PREF(Live, "media.wmf.allow-unsupported-resolutions",  PDMWMFAllowUnsupportedResolutions, bool, false);
+  DECL_GFX_PREF(Once, "media.wmf.vp9.enabled", PDMWMFVP9DecoderEnabled, bool, true);
 #endif
 
   // These affect how line scrolls from wheel events will be accelerated.

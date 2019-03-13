@@ -5,6 +5,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "WMFDecoderModule.h"
+#include <algorithm>
+#include <vector>
+#include "DriverCrashGuard.h"
 #include "GfxDriverInfo.h"
 #include "MFTDecoder.h"
 #include "MP4Decoder.h"
@@ -21,18 +24,23 @@
 #include "mozilla/StaticMutex.h"
 #include "mozilla/WindowsVersion.h"
 #include "mozilla/gfx/gfxVars.h"
+#include "mozilla/mscom/EnsureMTA.h"
 #include "nsAutoPtr.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIGfxInfo.h"
 #include "nsIWindowsRegKey.h"
+#include "nsIXULRuntime.h"
 #include "nsServiceManagerUtils.h"
 #include "nsWindowsHelpers.h"
 #include "prsystem.h"
 #include "nsIXULRuntime.h"
 
+extern const GUID CLSID_WebmMfVpxDec;
+
 namespace mozilla {
 
 static Atomic<bool> sDXVAEnabled(false);
+static Atomic<bool> sUsableVPXMFT(false);
 
 WMFDecoderModule::~WMFDecoderModule()
 {
@@ -42,24 +50,54 @@ WMFDecoderModule::~WMFDecoderModule()
   }
 }
 
+static bool CanCreateMFTDecoder(const GUID& aGuid) {
+  // The IMFTransform interface used by MFTDecoder is documented to require to
+  // run on an MTA thread.
+  // https://msdn.microsoft.com/en-us/library/windows/desktop/ee892371(v=vs.85).aspx#components
+  // Note: our normal SharedThreadPool task queues are initialized to MTA, but
+  // the main thread (which calls in here from our CanPlayType implementation)
+  // is not.
+  bool canCreateDecoder = false;
+  mozilla::mscom::EnsureMTA([&]() -> void {
+    if (FAILED(wmf::MFStartup())) {
+      return;
+    }
+    RefPtr<MFTDecoder> decoder(new MFTDecoder());
+    canCreateDecoder = SUCCEEDED(decoder->Create(aGuid));
+    wmf::MFShutdown();
+  });
+  return canCreateDecoder;
+}
+
 /* static */
-void
-WMFDecoderModule::Init()
-{
+void WMFDecoderModule::Init() {
+  MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread());
+  bool testForVPx;
   if (XRE_IsContentProcess()) {
     // If we're in the content process and the UseGPUDecoder pref is set, it
     // means that we've given up on the GPU process (it's been crashing) so we
     // should disable DXVA
     sDXVAEnabled = !MediaPrefs::PDMUseGPUDecoder();
+    // We need to test for VPX in the content process as the GPUDecoderModule
+    // directly calls WMFDecoderModule::Supports in the content process.
+    // This unnecessary requirement will be fixed in bug 1534815.
+    testForVPx = true;
   } else if (XRE_IsGPUProcess()) {
     // Always allow DXVA in the GPU process.
-    sDXVAEnabled = true;
+    testForVPx = sDXVAEnabled = true;
   } else {
     // Only allow DXVA in the UI process if we aren't in e10s Firefox
-    sDXVAEnabled = !mozilla::BrowserTabsRemoteAutostart();
+    testForVPx = sDXVAEnabled = !mozilla::BrowserTabsRemoteAutostart();
   }
 
   sDXVAEnabled = sDXVAEnabled && gfx::gfxVars::CanUseHardwareVideoDecoding();
+  testForVPx = testForVPx && gfx::gfxVars::CanUseHardwareVideoDecoding();
+  if (testForVPx && gfxPrefs::PDMWMFVP9DecoderEnabled()) {
+    gfx::WMFVPXVideoCrashGuard guard;
+    if (!guard.Crashed()) {
+      sUsableVPXMFT = CanCreateMFTDecoder(CLSID_WebmMfVpxDec);
+    }
+  }
 }
 
 /* static */
@@ -134,25 +172,8 @@ WMFDecoderModule::CreateAudioDecoder(const CreateDecoderParams& aParams)
   return decoder.forget();
 }
 
-static bool
-CanCreateMFTDecoder(const GUID& aGuid)
-{
-  if (FAILED(wmf::MFStartup())) {
-    return false;
-  }
-  bool hasdecoder = false;
-  {
-    RefPtr<MFTDecoder> decoder(new MFTDecoder());
-    hasdecoder = SUCCEEDED(decoder->Create(aGuid));
-  }
-  wmf::MFShutdown();
-  return hasdecoder;
-}
-
-template<const GUID& aGuid>
-static bool
-CanCreateWMFDecoder()
-{
+template <const GUID& aGuid>
+static bool CanCreateWMFDecoder() {
   static StaticMutex sMutex;
   StaticMutexAutoLock lock(sMutex);
   static Maybe<bool> result;
@@ -203,10 +224,12 @@ WMFDecoderModule::Supports(const TrackInfo& aTrackInfo,
       CanCreateWMFDecoder<CLSID_CMP3DecMediaObject>()) {
     return true;
   }
-  if (MediaPrefs::PDMWMFVP9DecoderEnabled()) {
-    if (VPXDecoder::IsVP9(aTrackInfo.mMimeType)
-        && CanCreateWMFDecoder<CLSID_WebmMfVpxDec>()) {
-      return true;
+  if (sUsableVPXMFT) {
+    static const uint32_t VP8_USABLE_BUILD = 16287;
+    if ((VPXDecoder::IsVP8(aTrackInfo.mMimeType) &&
+         IsWindowsBuildOrLater(VP8_USABLE_BUILD)) ||
+        VPXDecoder::IsVP9(aTrackInfo.mMimeType)) {
+      return CanCreateWMFDecoder<CLSID_WebmMfVpxDec>();
     }
   }
 

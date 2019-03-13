@@ -41,6 +41,7 @@ enum class CrashGuardType : uint32_t
   D3D9Video,
   GLContext,
   D3D11Video,
+  WMFVPXVideo,
   // Add new entries above this line, update the name array in
   // DriverCrashGuard.cpp, and make sure to add an entry in
   // ContentParent.cpp.
@@ -175,8 +176,17 @@ class GLContextCrashGuard final : public DriverCrashGuard
   void LogFeatureDisabled() override;
 };
 
-} // namespace gfx
-} // namespace mozilla
+class WMFVPXVideoCrashGuard final : public DriverCrashGuard {
+ public:
+  explicit WMFVPXVideoCrashGuard(dom::ContentParent* aContentParent = nullptr);
 
-#endif // gfx_src_DriverCrashGuard_h__
+ protected:
+  bool UpdateEnvironment() override;
+  void LogCrashRecovery() override;
+  void LogFeatureDisabled() override;
+};
 
+}  // namespace gfx
+}  // namespace mozilla
+
+#endif  // gfx_src_DriverCrashGuard_h__
