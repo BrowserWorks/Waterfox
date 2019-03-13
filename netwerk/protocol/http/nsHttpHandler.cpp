@@ -436,7 +436,7 @@ nsHttpHandler::Init()
 
     nsHttpChannelAuthProvider::InitializePrefs();
 
-    mMisc.AssignLiteral("rv:60.0");
+    mMisc.AssignLiteral("rv:65.0");
 
     mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
 
@@ -907,7 +907,7 @@ nsHttpHandler::BuildUserAgent()
     mUserAgent += ' ';
     mUserAgent += "Firefox";
     mUserAgent += '/';
-    mUserAgent += "60.0";
+    mUserAgent += "65.0";
     mUserAgent += ' ';
     if (mCompatFirefoxEnabled) {
         mUserAgent += mCompatFirefox;

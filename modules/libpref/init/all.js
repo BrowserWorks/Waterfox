@@ -28,26 +28,15 @@ pref("general.useragent.compatMode.firefox", false);
 // This pref exists only for testing purposes. In order to disable all
 // overrides by default, don't initialize UserAgentOverrides.jsm.
 pref("general.useragent.site_specific_overrides", true);
+pref("general.useragent.override.web.whatsapp.com", "Mozilla/5.0 (rv:65.0) Gecko/20100101 Firefox/65.0");
 #ifdef XP_WIN
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:57.0) Gecko/20100101 Firefox/57.0");
-pref("general.useragent.override.amazon.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:65.0) Gecko/20100101 Firefox/65.0");
-pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:65.0) Gecko/20100101 Firefox/65.0");
-pref("general.useragent.override.amazon.de", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:65.0) Gecko/20100101 Firefox/65.0");
-pref("general.useragent.override.amazon.co.jp", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:65.0) Gecko/20100101 Firefox/65.0");
 #endif
 #ifdef XP_MACOSX
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:57.0) Gecko/20100101 Firefox/57.0");
-pref("general.useragent.override.amazon.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:65.0) Gecko/20100101 Firefox/65.0");
-pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:65.0) Gecko/20100101 Firefox/65.0");
-pref("general.useragent.override.amazon.de", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:65.0) Gecko/20100101 Firefox/65.0");
-pref("general.useragent.override.amazon.co.jp", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:65.0) Gecko/20100101 Firefox/65.0");
 #endif
 #ifdef XP_LINUX
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0");
-pref("general.useragent.override.amazon.com", "Mozilla/5.0 (X11; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0");
-pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (X11; Linux x86_64; Win64; rv:65.0) Gecko/20100101 Firefox/65.0");
-pref("general.useragent.override.amazon.de", "Mozilla/5.0 (X11; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0");
-pref("general.useragent.override.amazon.co.jp", "Mozilla/5.0 (X11; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0");
 #endif
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
