@@ -908,8 +908,8 @@ nsHttpHandler::BuildUserAgent()
     mUserAgent += "Firefox";
     mUserAgent += '/';
     mUserAgent += "65.0";
-    mUserAgent += ' ';
     if (mCompatFirefoxEnabled) {
+        mUserAgent += ' ';
         mUserAgent += mCompatFirefox;
     }
 }
