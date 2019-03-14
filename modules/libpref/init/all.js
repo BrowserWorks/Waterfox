@@ -45,7 +45,7 @@ pref("general.useragent.override.amazon.co.jp", "Mozilla/5.0 (Macintosh; Intel M
 #ifdef XP_LINUX
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0");
 pref("general.useragent.override.amazon.com", "Mozilla/5.0 (X11; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0");
-pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (X11; Linux x86_64; Win64; rv:65.0) Gecko/20100101 Firefox/65.0");
+pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (X11; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0");
 pref("general.useragent.override.amazon.de", "Mozilla/5.0 (X11; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0");
 pref("general.useragent.override.amazon.co.jp", "Mozilla/5.0 (X11; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0");
 #endif
