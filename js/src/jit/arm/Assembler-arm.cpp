@@ -2377,7 +2377,12 @@ Assembler::as_b(Label* l, Condition c)
         if (oom())
             return BufferOffset();
 
-        as_b(BufferOffset(l).diffB<BOffImm>(ret), c, ret);
+    BOffImm off = BufferOffset(l).diffB<BOffImm>(ret);
+    if (off.isInvalid()) {
+      m_buffer.fail_bail();
+      return BufferOffset();
+    }
+    as_b(off, c, ret);
 #ifdef JS_DISASM_ARM
         spewBranch(m_buffer.getInstOrNull(ret), l);
 #endif
