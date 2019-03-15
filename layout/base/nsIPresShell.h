@@ -531,9 +531,8 @@ class nsIPresShell : public nsStubDocumentObserver {
                                 mozilla::dom::HTMLSlotElement* aOldSlot,
                                 mozilla::dom::HTMLSlotElement* aNewSlot);
 
-  void PostRecreateFramesFor(mozilla::dom::Element* aElement);
-  void RestyleForAnimation(mozilla::dom::Element* aElement,
-                           nsRestyleHint aHint);
+  void PostRecreateFramesFor(mozilla::dom::Element*);
+  void RestyleForAnimation(mozilla::dom::Element*, mozilla::RestyleHint);
 
   // ShadowRoot has APIs that can change styles. This notifies the shell that
   // stlyes applicable in the shadow tree have potentially changed.
@@ -1451,6 +1450,7 @@ class nsIPresShell : public nsStubDocumentObserver {
   };
   virtual void Paint(nsView* aViewToPaint, const nsRegion& aDirtyRegion,
                      uint32_t aFlags) = 0;
+  MOZ_CAN_RUN_SCRIPT
   virtual nsresult HandleEvent(nsIFrame* aFrame,
                                mozilla::WidgetGUIEvent* aEvent,
                                bool aDontRetargetEvents,
@@ -1489,6 +1489,7 @@ class nsIPresShell : public nsStubDocumentObserver {
   virtual void ScheduleViewManagerFlush(PaintType aType = PAINT_DEFAULT) = 0;
   virtual void ClearMouseCaptureOnView(nsView* aView) = 0;
   virtual bool IsVisible() = 0;
+  MOZ_CAN_RUN_SCRIPT
   void DispatchSynthMouseMove(mozilla::WidgetGUIEvent* aEvent);
 
   /* Temporarily ignore the Displayport for better paint performance. We

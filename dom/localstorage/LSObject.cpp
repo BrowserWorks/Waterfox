@@ -196,6 +196,34 @@ LSObject::~LSObject() {
 }
 
 // static
+void LSObject::Initialize() {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsCOMPtr<nsIEventTarget> domFileThread =
+      IPCBlobInputStreamThread::GetOrCreate();
+  if (NS_WARN_IF(!domFileThread)) {
+    return;
+  }
+
+  RefPtr<Runnable> runnable =
+      NS_NewRunnableFunction("LSObject::Initialize", []() {
+        AssertIsOnDOMFileThread();
+
+        PBackgroundChild* backgroundActor =
+            BackgroundChild::GetOrCreateForCurrentThread();
+
+        if (NS_WARN_IF(!backgroundActor)) {
+          return;
+        }
+      });
+
+  if (NS_WARN_IF(
+          NS_FAILED(domFileThread->Dispatch(runnable, NS_DISPATCH_NORMAL)))) {
+    return;
+  }
+}
+
+// static
 nsresult LSObject::CreateForWindow(nsPIDOMWindowInner* aWindow,
                                    Storage** aStorage) {
   MOZ_ASSERT(NS_IsMainThread());
@@ -392,7 +420,9 @@ LSRequestChild* LSObject::StartRequest(nsIEventTarget* aMainEventTarget,
   AssertIsOnDOMFileThread();
 
   PBackgroundChild* backgroundActor =
-      BackgroundChild::GetOrCreateForCurrentThread(aMainEventTarget);
+      XRE_IsParentProcess()
+          ? BackgroundChild::GetOrCreateForCurrentThread(aMainEventTarget)
+          : BackgroundChild::GetForCurrentThread();
   if (NS_WARN_IF(!backgroundActor)) {
     return nullptr;
   }
@@ -1019,7 +1049,8 @@ nsresult RequestHelper::StartAndReturnResponse(LSRequestResponse& aResponse) {
         new NestedEventTargetWrapper(mNestedEventTarget);
 
     nsCOMPtr<nsIEventTarget> domFileThread =
-        IPCBlobInputStreamThread::GetOrCreate();
+        XRE_IsParentProcess() ? IPCBlobInputStreamThread::GetOrCreate()
+                              : IPCBlobInputStreamThread::Get();
     if (NS_WARN_IF(!domFileThread)) {
       return NS_ERROR_FAILURE;
     }

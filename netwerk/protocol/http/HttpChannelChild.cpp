@@ -617,8 +617,7 @@ class SyntheticDiversionListener final : public nsIStreamListener {
   }
 
   NS_IMETHOD
-  OnStopRequest(nsIRequest* aRequest,
-                nsresult aStatus) override {
+  OnStopRequest(nsIRequest* aRequest, nsresult aStatus) override {
     if (mChannel->mIPCOpen) {
       mChannel->SendDivertOnStopRequest(aStatus);
       mChannel->SendDivertComplete();
@@ -627,9 +626,8 @@ class SyntheticDiversionListener final : public nsIStreamListener {
   }
 
   NS_IMETHOD
-  OnDataAvailable(nsIRequest* aRequest,
-                  nsIInputStream* aInputStream, uint64_t aOffset,
-                  uint32_t aCount) override {
+  OnDataAvailable(nsIRequest* aRequest, nsIInputStream* aInputStream,
+                  uint64_t aOffset, uint32_t aCount) override {
     if (!mChannel->mIPCOpen) {
       aRequest->Cancel(NS_ERROR_ABORT);
       return NS_ERROR_ABORT;
@@ -966,8 +964,7 @@ void HttpChannelChild::DoOnDataAvailable(nsIRequest* aRequest,
   LOG(("HttpChannelChild::DoOnDataAvailable [this=%p]\n", this));
   if (mCanceled) return;
 
-  nsresult rv =
-      mListener->OnDataAvailable(aRequest, aStream, offset, count);
+  nsresult rv = mListener->OnDataAvailable(aRequest, aStream, offset, count);
   if (NS_FAILED(rv)) {
     CancelOnMainThread(rv);
   }
@@ -1874,14 +1871,15 @@ void HttpChannelChild::ProcessNotifyCookieBlocked(uint32_t aRejectedReason) {
       NS_DISPATCH_NORMAL);
 }
 
-void HttpChannelChild::ProcessNotifyTrackingResource(bool aIsThirdParty) {
+void HttpChannelChild::ProcessNotifyClassificationFlags(
+    uint32_t aClassificationFlags, bool aIsThirdParty) {
   LOG(
-      ("HttpChannelChild::ProcessNotifyTrackingResource thirdparty=%d "
-       "[this=%p]\n",
-       static_cast<int>(aIsThirdParty), this));
+      ("HttpChannelChild::ProcessNotifyClassificationFlags thirdparty=%d "
+       "flags=%" PRIu32 " [this=%p]\n",
+       static_cast<int>(aIsThirdParty), aClassificationFlags, this));
   MOZ_ASSERT(OnSocketThread());
 
-  SetIsTrackingResource(aIsThirdParty);
+  AddClassificationFlags(aClassificationFlags, aIsThirdParty);
 }
 
 void HttpChannelChild::ProcessNotifyFlashPluginStateChanged(
@@ -2213,7 +2211,7 @@ HttpChannelChild::OnRedirectVerifyCallback(nsresult result) {
   RequestHeaderTuples emptyHeaders;
   RequestHeaderTuples* headerTuples = &emptyHeaders;
   nsLoadFlags loadFlags = 0;
-  OptionalCorsPreflightArgs corsPreflightArgs = mozilla::void_t();
+  Maybe<CorsPreflightArgs> corsPreflightArgs;
 
   nsCOMPtr<nsIHttpChannelChild> newHttpChannelChild =
       do_QueryInterface(mRedirectChannelChild);
@@ -2675,11 +2673,10 @@ nsresult HttpChannelChild::ContinueAsyncOpen() {
   }
 
   if (mResponseHead) {
-    openArgs.synthesizedResponseHead() = *mResponseHead;
+    openArgs.synthesizedResponseHead() = Some(*mResponseHead);
     openArgs.suspendAfterSynthesizeResponse() =
         mSuspendParentAfterSynthesizeResponse;
   } else {
-    openArgs.synthesizedResponseHead() = mozilla::void_t();
     openArgs.suspendAfterSynthesizeResponse() = false;
   }
 
@@ -2689,7 +2686,7 @@ nsresult HttpChannelChild::ContinueAsyncOpen() {
                          openArgs.synthesizedSecurityInfoSerialization());
   }
 
-  OptionalCorsPreflightArgs optionalCorsPreflightArgs;
+  Maybe<CorsPreflightArgs> optionalCorsPreflightArgs;
   GetClientSetCorsPreflightParameters(optionalCorsPreflightArgs);
 
   // NB: This call forces us to cache mTopWindowURI if we haven't already.
@@ -3343,13 +3340,13 @@ NS_IMETHODIMP HttpChannelChild::GetClientSetRequestHeaders(
 }
 
 void HttpChannelChild::GetClientSetCorsPreflightParameters(
-    OptionalCorsPreflightArgs& aArgs) {
+    Maybe<CorsPreflightArgs>& aArgs) {
   if (mRequireCORSPreflight) {
     CorsPreflightArgs args;
     args.unsafeHeaders() = mUnsafeHeaders;
-    aArgs = args;
+    aArgs.emplace(args);
   } else {
-    aArgs = mozilla::void_t();
+    aArgs = Nothing();
   }
 }
 

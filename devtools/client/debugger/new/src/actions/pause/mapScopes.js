@@ -5,19 +5,19 @@
 // @flow
 
 import {
-  getCurrentThread,
   getSource,
   getMapScopes,
   getSelectedFrame,
   getSelectedGeneratedScope,
-  getSelectedOriginalScope
+  getSelectedOriginalScope,
+  getCurrentThread
 } from "../../selectors";
 import { loadSourceText } from "../sources/loadSourceText";
 import { PROMISE } from "../utils/middleware/promise";
 
 import { features } from "../../utils/prefs";
 import { log } from "../../utils/log";
-import { isGenerated } from "../../utils/source";
+import { isGenerated, isOriginal } from "../../utils/source";
 import type { Frame, Scope } from "../../types";
 
 import type { ThunkArgs } from "../types";
@@ -32,12 +32,13 @@ export function toggleMapScopes() {
 
     dispatch({ type: "TOGGLE_MAP_SCOPES", mapScopes: true });
 
-    if (getSelectedOriginalScope(getState())) {
+    const thread = getCurrentThread(getState());
+    if (getSelectedOriginalScope(getState(), thread)) {
       return;
     }
 
-    const scopes = getSelectedGeneratedScope(getState());
-    const frame = getSelectedFrame(getState());
+    const scopes = getSelectedGeneratedScope(getState(), thread);
+    const frame = getSelectedFrame(getState(), thread);
     if (!scopes || !frame) {
       return;
     }
@@ -57,7 +58,7 @@ export function mapScopes(scopes: Promise<Scope>, frame: Frame) {
 
     await dispatch({
       type: "MAP_SCOPES",
-      thread: getCurrentThread(getState()),
+      thread: frame.thread,
       frame,
       [PROMISE]: (async function() {
         if (
@@ -72,6 +73,9 @@ export function mapScopes(scopes: Promise<Scope>, frame: Frame) {
         }
 
         await dispatch(loadSourceText(source));
+        if (isOriginal(source)) {
+          await dispatch(loadSourceText(generatedSource));
+        }
 
         try {
           return await buildMappedScopes(

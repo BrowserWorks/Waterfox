@@ -600,10 +600,11 @@ void nsBufferedInputStream::Serialize(InputStreamParams& aParams,
                     aSizeUsed, aManager);
 }
 
-void nsBufferedInputStream::Serialize(
-    InputStreamParams& aParams, FileDescriptorArray& aFileDescriptors,
-    bool aDelayedStart, uint32_t aMaxSize, uint32_t* aSizeUsed,
-    mozilla::dom::ContentParent* aManager) {
+void nsBufferedInputStream::Serialize(InputStreamParams& aParams,
+                                      FileDescriptorArray& aFileDescriptors,
+                                      bool aDelayedStart, uint32_t aMaxSize,
+                                      uint32_t* aSizeUsed,
+                                      mozilla::dom::ContentParent* aManager) {
   SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
                     aSizeUsed, aManager);
 }
@@ -635,9 +636,7 @@ void nsBufferedInputStream::SerializeInternal(
                                             aFileDescriptors, aDelayedStart,
                                             aMaxSize, aSizeUsed, aManager);
 
-    params.optionalStream() = wrappedParams;
-  } else {
-    params.optionalStream() = mozilla::void_t();
+    params.optionalStream().emplace(wrappedParams);
   }
 
   params.bufferSize() = mBufferSize;
@@ -655,19 +654,16 @@ bool nsBufferedInputStream::Deserialize(
 
   const BufferedInputStreamParams& params =
       aParams.get_BufferedInputStreamParams();
-  const OptionalInputStreamParams& wrappedParams = params.optionalStream();
+  const Maybe<InputStreamParams>& wrappedParams = params.optionalStream();
 
   nsCOMPtr<nsIInputStream> stream;
-  if (wrappedParams.type() == OptionalInputStreamParams::TInputStreamParams) {
-    stream = InputStreamHelper::DeserializeInputStream(
-        wrappedParams.get_InputStreamParams(), aFileDescriptors);
+  if (wrappedParams.isSome()) {
+    stream = InputStreamHelper::DeserializeInputStream(wrappedParams.ref(),
+                                                       aFileDescriptors);
     if (!stream) {
       NS_WARNING("Failed to deserialize wrapped stream!");
       return false;
     }
-  } else {
-    NS_ASSERTION(wrappedParams.type() == OptionalInputStreamParams::Tvoid_t,
-                 "Unknown type for OptionalInputStreamParams!");
   }
 
   nsresult rv = Init(stream, params.bufferSize());

@@ -5,15 +5,12 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:configure="org.mozilla.gecko.search.SearchWidgetConfigurationActivity"
     android:initialLayout="@layout/widget_search_default_col_layout"
     android:minWidth="360dp"
     android:minHeight="40dp"
     android:minResizeWidth="64dp"
     android:minResizeHeight="40dp"
     android:previewImage="@drawable/search_widget_preview"
-    android:resizeMode="horizontal"
-    android:updatePeriodMillis="300000">
+    android:resizeMode="horizontal">
 
 </appwidget-provider>
-

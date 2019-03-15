@@ -2375,7 +2375,7 @@ void nsGlobalWindowOuter::SetDocShell(nsDocShell* aDocShell) {
     return;
   }
 
-  mDocShell = aDocShell;  // Weak Reference
+  mDocShell = aDocShell;
   mBrowsingContext = aDocShell->GetBrowsingContext();
 
   nsCOMPtr<nsPIDOMWindowOuter> parentWindow = GetScriptableParentOrNull();
@@ -2468,7 +2468,7 @@ void nsGlobalWindowOuter::DetachFromDocShell() {
     mContext = nullptr;
   }
 
-  mDocShell = nullptr;  // Weak Reference
+  mDocShell = nullptr;
 
   if (mFrames) {
     mFrames->SetDocShell(nullptr);
@@ -2482,10 +2482,11 @@ void nsGlobalWindowOuter::SetOpenerWindow(nsPIDOMWindowOuter* aOpener,
                                           bool aOriginalOpener) {
   nsWeakPtr opener = do_GetWeakReference(aOpener);
   if (opener == mOpener) {
-    MOZ_DIAGNOSTIC_ASSERT(
-        !aOpener || !aOpener->GetDocShell() ||
-        (GetBrowsingContext() &&
-         GetBrowsingContext()->GetOpener() == aOpener->GetBrowsingContext()));
+    MOZ_DIAGNOSTIC_ASSERT(!aOpener || !aOpener->GetDocShell() ||
+                          (GetBrowsingContext() &&
+                           aOpener->GetBrowsingContext() &&
+                           aOpener->GetBrowsingContext()->Id() ==
+                               GetBrowsingContext()->GetOpenerId()));
     return;
   }
 
@@ -2508,7 +2509,8 @@ void nsGlobalWindowOuter::SetOpenerWindow(nsPIDOMWindowOuter* aOpener,
         // the window opener to a closed window. This needs to be
         // cleaned up, see Bug 1511353.
         nsGlobalWindowOuter::Cast(aOpener)->IsClosedOrClosing() ||
-        aOpener->GetBrowsingContext() == GetBrowsingContext()->GetOpener());
+        aOpener->GetBrowsingContext()->Id() ==
+            GetBrowsingContext()->GetOpenerId());
     // TODO(farre): Here we really wish to only consider the case
     // where 'aOriginalOpener'. See bug 1509016.
     GetBrowsingContext()->SetOpener(aOpener ? aOpener->GetBrowsingContext()
@@ -7806,7 +7808,6 @@ mozilla::dom::DocGroup* nsPIDOMWindowOuter::GetDocGroup() const {
 
 nsPIDOMWindowOuter::nsPIDOMWindowOuter(uint64_t aWindowID)
     : mFrameElement(nullptr),
-      mDocShell(nullptr),
       mModalStateDepth(0),
       mIsActive(false),
       mIsBackground(false),

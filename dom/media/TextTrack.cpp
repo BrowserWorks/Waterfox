@@ -15,8 +15,43 @@
 #include "mozilla/dom/HTMLTrackElement.h"
 #include "nsGlobalWindow.h"
 
+extern mozilla::LazyLogModule gTextTrackLog;
+
+#define WEBVTT_LOG(msg, ...) \
+  MOZ_LOG(gTextTrackLog, LogLevel::Debug, ("TextTrack=%p, " msg, this, ##__VA_ARGS__))
+
 namespace mozilla {
 namespace dom {
+
+static const char* ToStateStr(const TextTrackMode aMode) {
+  switch (aMode) {
+    case TextTrackMode::Disabled:
+      return "DISABLED";
+    case TextTrackMode::Hidden:
+      return "HIDDEN";
+    case TextTrackMode::Showing:
+      return "SHOWING";
+    default:
+      MOZ_ASSERT_UNREACHABLE("Invalid state.");
+  }
+  return "Unknown";
+}
+
+static const char* ToReadyStateStr(const TextTrackReadyState aState) {
+  switch (aState) {
+    case TextTrackReadyState::NotLoaded:
+      return "NotLoaded";
+    case TextTrackReadyState::Loading:
+      return "Loading";
+    case TextTrackReadyState::Loaded:
+      return "Loaded";
+    case TextTrackReadyState::FailedToLoad:
+      return "FailedToLoad";
+    default:
+      MOZ_ASSERT_UNREACHABLE("Invalid state.");
+  }
+  return "Unknown";
+}
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(TextTrack, DOMEventTargetHelper, mCueList,
                                    mActiveCueList, mTextTrackList,
@@ -73,37 +108,29 @@ JSObject* TextTrack::WrapObject(JSContext* aCx,
 }
 
 void TextTrack::SetMode(TextTrackMode aValue) {
-  if (mMode != aValue) {
-    mMode = aValue;
-    if (aValue == TextTrackMode::Disabled) {
-      // Remove all the cues in MediaElement.
-      if (mTextTrackList) {
-        HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
-        if (mediaElement) {
-          for (size_t i = 0; i < mCueList->Length(); ++i) {
-            mediaElement->NotifyCueRemoved(*(*mCueList)[i]);
-          }
-        }
-      }
-      SetCuesInactive();
-    } else {
-      // Add all the cues into MediaElement.
-      if (mTextTrackList) {
-        HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
-        if (mediaElement) {
-          for (size_t i = 0; i < mCueList->Length(); ++i) {
-            mediaElement->NotifyCueAdded(*(*mCueList)[i]);
-          }
-        }
-      }
-    }
-    if (mTextTrackList) {
-      mTextTrackList->CreateAndDispatchChangeEvent();
-    }
-    // Ensure the TimeMarchesOn is called in case that the mCueList
-    // is empty.
-    NotifyCueUpdated(nullptr);
+  if (mMode == aValue) {
+    return;
   }
+  WEBVTT_LOG("Set mode=%s", ToStateStr(aValue));
+  mMode = aValue;
+
+  HTMLMediaElement* mediaElement = GetMediaElement();
+  if (aValue == TextTrackMode::Disabled) {
+    for (size_t i = 0; i < mCueList->Length() && mediaElement; ++i) {
+      mediaElement->NotifyCueRemoved(*(*mCueList)[i]);
+    }
+    SetCuesInactive();
+  } else {
+    for (size_t i = 0; i < mCueList->Length() && mediaElement; ++i) {
+      mediaElement->NotifyCueAdded(*(*mCueList)[i]);
+    }
+  }
+  if (mediaElement) {
+    mediaElement->NotifyTextTrackModeChanged();
+  }
+  // Ensure the TimeMarchesOn is called in case that the mCueList
+  // is empty.
+  NotifyCueUpdated(nullptr);
 }
 
 void TextTrack::GetId(nsAString& aId) const {
@@ -115,6 +142,7 @@ void TextTrack::GetId(nsAString& aId) const {
 }
 
 void TextTrack::AddCue(TextTrackCue& aCue) {
+  WEBVTT_LOG("AddCue %p", &aCue);
   TextTrack* oldTextTrack = aCue.GetTrack();
   if (oldTextTrack) {
     ErrorResult dummy;
@@ -122,15 +150,14 @@ void TextTrack::AddCue(TextTrackCue& aCue) {
   }
   mCueList->AddCue(aCue);
   aCue.SetTrack(this);
-  if (mTextTrackList) {
-    HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
-    if (mediaElement && (mMode != TextTrackMode::Disabled)) {
-      mediaElement->NotifyCueAdded(aCue);
-    }
+  HTMLMediaElement* mediaElement = GetMediaElement();
+  if (mediaElement && (mMode != TextTrackMode::Disabled)) {
+    mediaElement->NotifyCueAdded(aCue);
   }
 }
 
 void TextTrack::RemoveCue(TextTrackCue& aCue, ErrorResult& aRv) {
+  WEBVTT_LOG("RemoveCue %p", &aCue);
   // Bug1304948, check the aCue belongs to the TextTrack.
   mCueList->RemoveCue(aCue, aRv);
   if (aRv.Failed()) {
@@ -138,11 +165,9 @@ void TextTrack::RemoveCue(TextTrackCue& aCue, ErrorResult& aRv) {
   }
   aCue.SetActive(false);
   aCue.SetTrack(nullptr);
-  if (mTextTrackList) {
-    HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
-    if (mediaElement) {
-      mediaElement->NotifyCueRemoved(aCue);
-    }
+  HTMLMediaElement* mediaElement = GetMediaElement();
+  if (mediaElement) {
+    mediaElement->NotifyCueRemoved(aCue);
   }
 }
 
@@ -174,13 +199,9 @@ void TextTrack::SetReadyState(uint32_t aReadyState) {
 }
 
 void TextTrack::SetReadyState(TextTrackReadyState aState) {
+  WEBVTT_LOG("SetReadyState=%s", ToReadyStateStr(aState));
   mReadyState = aState;
-
-  if (!mTextTrackList) {
-    return;
-  }
-
-  HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
+  HTMLMediaElement* mediaElement = GetMediaElement();
   if (mediaElement && (mReadyState == TextTrackReadyState::Loaded ||
                        mReadyState == TextTrackReadyState::FailedToLoad)) {
     mediaElement->RemoveTextTrack(this, true);
@@ -203,12 +224,11 @@ void TextTrack::SetTrackElement(HTMLTrackElement* aTrackElement) {
 void TextTrack::SetCuesInactive() { mCueList->SetCuesInactive(); }
 
 void TextTrack::NotifyCueUpdated(TextTrackCue* aCue) {
+  WEBVTT_LOG("NotifyCueUpdated, cue=%p", aCue);
   mCueList->NotifyCueUpdated(aCue);
-  if (mTextTrackList) {
-    HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
-    if (mediaElement) {
-      mediaElement->NotifyCueUpdated(aCue);
-    }
+  HTMLMediaElement* mediaElement = GetMediaElement();
+  if (mediaElement) {
+    mediaElement->NotifyCueUpdated(aCue);
   }
 }
 
@@ -259,19 +279,17 @@ void TextTrack::NotifyCueActiveStateChanged(TextTrackCue* aCue) {
   MOZ_ASSERT(aCue);
   if (aCue->GetActive()) {
     MOZ_ASSERT(!mActiveCueList->IsCueExist(aCue));
+    WEBVTT_LOG("NotifyCueActiveStateChanged, add cue %p to the active list", aCue);
     mActiveCueList->AddCue(*aCue);
   } else {
     MOZ_ASSERT(mActiveCueList->IsCueExist(aCue));
+    WEBVTT_LOG("NotifyCueActiveStateChanged, remove cue %p from the active list", aCue);
     mActiveCueList->RemoveCue(*aCue);
   }
 }
 
 void TextTrack::GetCurrentCueList(RefPtr<TextTrackCueList>& aCueList) const {
-  if (!mTextTrackList) {
-    return;
-  }
-
-  const HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
+  const HTMLMediaElement* mediaElement = GetMediaElement();
   if (!mediaElement) {
     return;
   }
@@ -285,9 +303,15 @@ void TextTrack::GetCurrentCueList(RefPtr<TextTrackCueList>& aCueList) const {
   for (uint32_t idx = 0; idx < mCueList->Length(); idx++) {
     TextTrackCue* cue = (*mCueList)[idx];
     if (cue->StartTime() <= playbackTime && cue->EndTime() > playbackTime) {
+      WEBVTT_LOG("Add cue %p [%f:%f] to current cue list",
+                 cue, cue->StartTime(), cue->EndTime());
       aCueList->AddCue(*cue);
     }
   }
+}
+
+HTMLMediaElement* TextTrack::GetMediaElement() const {
+  return mTextTrackList ? mTextTrackList->GetMediaElement() : nullptr;
 }
 
 }  // namespace dom

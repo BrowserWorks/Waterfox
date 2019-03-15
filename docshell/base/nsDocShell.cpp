@@ -59,6 +59,7 @@
 #include "mozilla/dom/TabGroup.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "mozilla/dom/ChildSHistory.h"
+#include "mozilla/dom/nsCSPContext.h"
 #include "mozilla/dom/LoadURIOptionsBinding.h"
 
 #include "mozilla/net/ReferrerPolicy.h"
@@ -5625,7 +5626,34 @@ nsresult nsDocShell::SetCurScrollPosEx(int32_t aCurHorizontalPos,
     scrollMode = nsIScrollableFrame::SMOOTH_MSD;
   }
 
-  sf->ScrollTo(nsPoint(aCurHorizontalPos, aCurVerticalPos), scrollMode);
+  nsPoint targetPos(aCurHorizontalPos, aCurVerticalPos);
+  sf->ScrollTo(targetPos, scrollMode);
+
+  // Set the visual viewport offset as well.
+
+  nsCOMPtr<nsIPresShell> shell = GetPresShell();
+  NS_ENSURE_TRUE(shell, NS_ERROR_FAILURE);
+
+  nsPresContext* presContext = shell->GetPresContext();
+  NS_ENSURE_TRUE(presContext, NS_ERROR_FAILURE);
+
+  // Only the root content document can have a distinct visual viewport offset.
+  if (!presContext->IsRootContentDocument()) {
+    return NS_OK;
+  }
+
+  // Not on a platform with a distinct visual viewport - don't bother setting
+  // the visual viewport offset.
+  if (!shell->IsVisualViewportSizeSet()) {
+    return NS_OK;
+  }
+
+  // TODO: If scrollMode == SMOOTH_MSD, this will effectively override that
+  // and jump to the target position instantly. A proper solution here would
+  // involve giving nsIScrollableFrame a visual viewport smooth scrolling API.
+  shell->SetPendingVisualScrollUpdate(targetPos,
+                                      layers::FrameMetrics::eMainThread);
+
   return NS_OK;
 }
 
@@ -9885,34 +9913,9 @@ nsresult nsDocShell::DoURILoad(nsDocShellLoadState* aLoadState,
   // holds upgrade-insecure-requests.
   nsCOMPtr<nsIContentSecurityPolicy> csp;
   aLoadState->TriggeringPrincipal()->GetCsp(getter_AddRefs(csp));
-
 #ifdef DEBUG
-  {
-    // After Bug 965637 we move the CSP from the Principal into the Client,
-    // hence we need an explicit CSP argument passed to docshell. Let's make
-    // sure the explicit CSP is the same as the CSP on the Principal.
-    uint32_t principalCSPCount = 0;
-    if (csp) {
-      csp->GetPolicyCount(&principalCSPCount);
-    }
-
-    nsCOMPtr<nsIContentSecurityPolicy> argsCSP = aLoadState->Csp();
-    uint32_t argCSPCount = 0;
-    if (argsCSP) {
-      argsCSP->GetPolicyCount(&argCSPCount);
-    }
-
-    MOZ_ASSERT(principalCSPCount == argCSPCount,
-               "Different PolicyCount for CSP as arg and Principal");
-
-    nsAutoString principalPolicyStr, argPolicyStr;
-    for (uint32_t i = 0; i < principalCSPCount; ++i) {
-      csp->GetPolicyString(i, principalPolicyStr);
-      argsCSP->GetPolicyString(i, argPolicyStr);
-      MOZ_ASSERT(principalPolicyStr.Equals(argPolicyStr),
-                 "Different PolicyStr for CSP as arg and Principal");
-    }
-  }
+  nsCOMPtr<nsIContentSecurityPolicy> argsCSP = aLoadState->Csp();
+  MOZ_ASSERT(nsCSPContext::Equals(csp, argsCSP));
 #endif
 
   if (csp) {

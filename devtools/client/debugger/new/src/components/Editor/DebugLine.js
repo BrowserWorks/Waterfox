@@ -18,7 +18,8 @@ import { connect } from "../../utils/connect";
 import {
   getVisibleSelectedFrame,
   getPauseReason,
-  getSourceFromId
+  getSourceFromId,
+  getCurrentThread
 } from "../../selectors";
 
 import type { Frame, Why, Source } from "../../types";
@@ -53,6 +54,11 @@ export class DebugLine extends Component<Props> {
   componentDidMount() {
     const { why, frame, source } = this.props;
     this.setDebugLine(why, frame, source);
+  }
+
+  componentWillUnmount() {
+    const { why, frame, source } = this.props;
+    this.clearDebugLine(why, frame, source);
   }
 
   setDebugLine(why: Why, frame: Frame, source: Source) {
@@ -113,7 +119,7 @@ const mapStateToProps = state => {
   return {
     frame,
     source: frame && getSourceFromId(state, frame.location.sourceId),
-    why: getPauseReason(state)
+    why: getPauseReason(state, getCurrentThread(state))
   };
 };
 

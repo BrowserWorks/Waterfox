@@ -67,6 +67,21 @@ class Page extends ContentProcessDomain {
     return {frameId: "42"};
   }
 
+  getFrameTree() {
+    return {
+      frameTree: {
+        frame: {
+          // id, parentId
+        },
+        childFrames: [],
+      },
+    };
+  }
+
+  setLifecycleEventsEnabled() {}
+  addScriptToEvaluateOnNewDocument() {}
+  createIsolatedWorld() {}
+
   url() {
     return this.content.location.href;
   }
@@ -81,6 +96,9 @@ class Page extends ContentProcessDomain {
 
     case "pageshow":
       this.emit("Page.loadEventFired", {timestamp});
+      // XXX this should most likely be sent differently
+      this.emit("Page.navigatedWithinDocument", {timestamp});
+      this.emit("Page.frameStoppedLoading", {timestamp});
       break;
     }
   }
@@ -89,9 +107,9 @@ class Page extends ContentProcessDomain {
 function transitionToLoadFlag(transitionType) {
   switch (transitionType) {
   case "reload":
-    return Ci.nsIWebNavigation.LOAD_FLAG_IS_REFRESH;
+    return Ci.nsIWebNavigation.LOAD_FLAGS_IS_REFRESH;
   case "link":
   default:
-    return Ci.nsIWebNavigation.LOAD_FLAG_IS_LINK;
+    return Ci.nsIWebNavigation.LOAD_FLAGS_IS_LINK;
   }
 }

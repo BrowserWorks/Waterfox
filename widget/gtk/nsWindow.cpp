@@ -3242,6 +3242,12 @@ nsresult nsWindow::Create(nsIWidget *aParent, nsNativeWidget aNativeParent,
   mBounds = aRect;
   ConstrainSize(&mBounds.width, &mBounds.height);
 
+  // eWindowType_child is not supported on Wayland. Just switch to toplevel
+  // as a workaround.
+  if (!mIsX11Display && mWindowType == eWindowType_child) {
+    mWindowType = eWindowType_toplevel;
+  }
+
   // figure out our parent window
   GtkWidget *parentMozContainer = nullptr;
   GtkContainer *parentGtkContainer = nullptr;
@@ -6808,7 +6814,6 @@ void nsWindow::ForceTitlebarRedraw(void) {
   frame = FindTitlebarFrame(frame);
   if (frame) {
     nsLayoutUtils::PostRestyleEvent(frame->GetContent()->AsElement(),
-                                    nsRestyleHint(0),
-                                    nsChangeHint_RepaintFrame);
+                                    RestyleHint{0}, nsChangeHint_RepaintFrame);
   }
 }

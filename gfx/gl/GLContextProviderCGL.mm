@@ -119,10 +119,9 @@ bool GLContextCGL::SwapBuffers() {
 
 void GLContextCGL::GetWSIInfo(nsCString* const out) const { out->AppendLiteral("CGL"); }
 
-Maybe<SymbolLoader> GLContextCGL::GetSymbolLoader() const
-{
-    const auto& lib = sCGLLibrary.Library();
-    return Some(SymbolLoader(*lib));
+Maybe<SymbolLoader> GLContextCGL::GetSymbolLoader() const {
+  const auto& lib = sCGLLibrary.Library();
+  return Some(SymbolLoader(*lib));
 }
 
 already_AddRefed<GLContext> GLContextProviderCGL::CreateWrappingExisting(void*, void*) {
@@ -166,10 +165,12 @@ static NSOpenGLContext* CreateWithFormat(const NSOpenGLPixelFormatAttribute* att
 }
 
 already_AddRefed<GLContext> GLContextProviderCGL::CreateForCompositorWidget(
-    CompositorWidget* aCompositorWidget, bool aForceAccelerated) {
-  return CreateForWindow(aCompositorWidget->RealWidget(),
-                         aCompositorWidget->GetCompositorOptions().UseWebRender(),
-                         aForceAccelerated);
+    CompositorWidget* aCompositorWidget, bool aWebRender, bool aForceAccelerated) {
+  if (!aCompositorWidget) {
+    MOZ_ASSERT(false);
+    return nullptr;
+  }
+  return CreateForWindow(aCompositorWidget->RealWidget(), aWebRender, aForceAccelerated);
 }
 
 already_AddRefed<GLContext> GLContextProviderCGL::CreateForWindow(nsIWidget* aWidget,

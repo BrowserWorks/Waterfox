@@ -45,6 +45,7 @@ class UrlbarView {
     this._rows.addEventListener("underflow", this);
 
     this.panel.addEventListener("popupshowing", this);
+    this.panel.addEventListener("popupshown", this);
     this.panel.addEventListener("popuphiding", this);
 
     this.controller.setView(this);
@@ -501,9 +502,9 @@ class UrlbarView {
     if (item) {
       item.toggleAttribute("selected", true);
       item.toggleAttribute("aria-selected", true);
-      this._rows.setAttribute("aria-activedescendant", item.id);
+      this.input.inputField.setAttribute("aria-activedescendant", item.id);
     } else {
-      this._rows.removeAttribute("aria-activedescendant");
+      this.input.inputField.removeAttribute("aria-activedescendant");
     }
 
     if (updateInput) {
@@ -657,9 +658,15 @@ class UrlbarView {
     this.window.addEventListener("resize", this);
   }
 
+  _on_popupshown() {
+    this.input.inputField.setAttribute("aria-expanded", "true");
+  }
+
   _on_popuphiding() {
     this.controller.cancelQuery();
     this.window.removeEventListener("resize", this);
+    this.input.inputField.setAttribute("aria-expanded", "false");
+    this.input.inputField.removeAttribute("aria-activedescendant");
   }
 
   _on_resize() {

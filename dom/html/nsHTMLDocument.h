@@ -68,6 +68,10 @@ class nsHTMLDocument : public mozilla::dom::Document, public nsIHTMLDocument {
   virtual void BeginLoad() override;
   virtual void EndLoad() override;
 
+ protected:
+  virtual bool UseWidthDeviceWidthFallbackViewport() const override;
+
+ public:
   // nsIHTMLDocument
   virtual void SetCompatibilityMode(nsCompatibility aMode) override;
 
@@ -169,6 +173,10 @@ class nsHTMLDocument : public mozilla::dom::Document, public nsIHTMLDocument {
   void SetDesignMode(const nsAString& aDesignMode,
                      const mozilla::Maybe<nsIPrincipal*>& aSubjectPrincipal,
                      mozilla::ErrorResult& rv);
+  // MOZ_CAN_RUN_SCRIPT_BOUNDARY because I haven't figured out how to teach the
+  // analysis that a MOZ_KnownLive(NonNull<T>) being passed as T& is OK.  See
+  // bug 1534383.
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   bool ExecCommand(const nsAString& aCommandID, bool aDoShowUI,
                    const nsAString& aValue, nsIPrincipal& aSubjectPrincipal,
                    mozilla::ErrorResult& rv);
@@ -180,6 +188,7 @@ class nsHTMLDocument : public mozilla::dom::Document, public nsIHTMLDocument {
   bool QueryCommandState(const nsAString& aCommandID, mozilla::ErrorResult& rv);
   bool QueryCommandSupported(const nsAString& aCommandID,
                              mozilla::dom::CallerType aCallerType);
+  MOZ_CAN_RUN_SCRIPT
   void QueryCommandValue(const nsAString& aCommandID, nsAString& aValue,
                          mozilla::ErrorResult& rv);
   void GetFgColor(nsAString& aFgColor);
@@ -338,6 +347,11 @@ class nsHTMLDocument : public mozilla::dom::Document, public nsIHTMLDocument {
   // mHasBeenEditable is set to true when mEditingState is firstly set to
   // eDesignMode or eContentEditable.
   bool mHasBeenEditable;
+
+  /**
+   * Set to true once we know that we are loading plain text content.
+   */
+  bool mIsPlainText;
 };
 
 namespace mozilla {

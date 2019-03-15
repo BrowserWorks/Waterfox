@@ -199,6 +199,10 @@ bool TransactionBuilder::IsResourceUpdatesEmpty() const {
   return wr_transaction_resource_updates_is_empty(mTxn);
 }
 
+bool TransactionBuilder::IsRenderedFrameInvalidated() const {
+  return wr_transaction_is_rendered_frame_invalidated(mTxn);
+}
+
 void TransactionBuilder::SetDocumentView(
     const LayoutDeviceIntRect& aDocumentRect) {
   wr::FramebufferIntRect wrDocRect;
@@ -687,7 +691,8 @@ Maybe<wr::WrSpatialId> DisplayListBuilder::PushStackingContext(
   auto spatialId = wr_dp_push_stacking_context(
       mWrState, aBounds, mCurrentSpaceAndClipChain.space, &aParams,
       maybeTransform, aParams.mFilters.Elements(), aParams.mFilters.Length(),
-      aParams.mFilterDatas.Elements(), aParams.mFilterDatas.Length(), aRasterSpace);
+      aParams.mFilterDatas.Elements(), aParams.mFilterDatas.Length(),
+      aRasterSpace);
 
   return spatialId.id != 0 ? Some(spatialId) : Nothing();
 }

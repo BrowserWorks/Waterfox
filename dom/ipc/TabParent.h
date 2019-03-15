@@ -72,6 +72,7 @@ class ClonedMessageData;
 class ContentParent;
 class Element;
 class DataTransfer;
+class BrowserBridgeParent;
 
 namespace ipc {
 class StructuredCloneData;
@@ -88,6 +89,7 @@ class TabParent final : public PBrowserParent,
   typedef mozilla::dom::ClonedMessageData ClonedMessageData;
 
   friend class PBrowserParent;
+  friend class BrowserBridgeParent;  // for clearing mBrowserBridgeParent
 
   virtual ~TabParent();
 
@@ -101,7 +103,9 @@ class TabParent final : public PBrowserParent,
   NS_DECL_NSIDOMEVENTLISTENER
 
   TabParent(ContentParent* aManager, const TabId& aTabId,
-            const TabContext& aContext, uint32_t aChromeFlags);
+            const TabContext& aContext,
+            CanonicalBrowsingContext* aBrowsingContext, uint32_t aChromeFlags,
+            BrowserBridgeParent* aBrowserBridgeParent = nullptr);
 
   Element* GetOwnerElement() const { return mFrameElement; }
   already_AddRefed<nsPIDOMWindowOuter> GetParentWindowOuter();
@@ -316,13 +320,14 @@ class TabParent final : public PBrowserParent,
       PWindowGlobalParent* aActor, const WindowGlobalInit& aInit) override;
 
   PBrowserBridgeParent* AllocPBrowserBridgeParent(
-      const nsString& aPresentationURL, const nsString& aRemoteType);
+      const nsString& aPresentationURL, const nsString& aRemoteType,
+      BrowsingContext* aBrowsingContext);
 
   bool DeallocPBrowserBridgeParent(PBrowserBridgeParent* aActor);
 
   virtual mozilla::ipc::IPCResult RecvPBrowserBridgeConstructor(
       PBrowserBridgeParent* aActor, const nsString& aPresentationURL,
-      const nsString& aRemoteType) override;
+      const nsString& aRemoteType, BrowsingContext* aBrowsingContext) override;
 
   void LoadURL(nsIURI* aURI);
 
@@ -570,6 +575,10 @@ class TabParent final : public PBrowserParent,
 
   layout::RenderFrame* GetRenderFrame();
 
+  // Returns the BrowserBridgeParent if this TabParent is for an out-of-process
+  // iframe and nullptr otherwise.
+  BrowserBridgeParent* GetBrowserBridgeParent() const;
+
   mozilla::ipc::IPCResult RecvEnsureLayersConnected(
       CompositorOptions* aCompositorOptions);
 
@@ -622,8 +631,6 @@ class TabParent final : public PBrowserParent,
 
   mozilla::ipc::IPCResult RecvShowCanvasPermissionPrompt(
       const nsCString& aFirstPartyURI, const bool& aHideDoorHanger);
-
-  mozilla::ipc::IPCResult RecvRootBrowsingContext(BrowsingContext* aContext);
 
   mozilla::ipc::IPCResult RecvSetSystemFont(const nsCString& aFontName);
   mozilla::ipc::IPCResult RecvGetSystemFont(nsCString* aFontName);
@@ -703,6 +710,12 @@ class TabParent final : public PBrowserParent,
 
   // The root browsing context loaded in this TabParent.
   RefPtr<CanonicalBrowsingContext> mBrowsingContext;
+
+  // Pointer back to BrowserBridgeParent if there is one associated with
+  // this TabParent. This is non-owning to avoid cycles and is managed
+  // by the BrowserBridgeParent instance, which has the strong reference
+  // to this TabParent.
+  BrowserBridgeParent* mBrowserBridgeParent;
 
   TabId mTabId;
 

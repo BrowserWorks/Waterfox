@@ -354,20 +354,22 @@ already_AddRefed<TabChild> TabChild::Create(ContentChild* aManager,
                                             const TabId& aTabId,
                                             const TabId& aSameTabGroupAs,
                                             const TabContext& aContext,
+                                            BrowsingContext* aBrowsingContext,
                                             uint32_t aChromeFlags) {
   RefPtr<TabChild> groupChild = FindTabChild(aSameTabGroupAs);
   dom::TabGroup* group = groupChild ? groupChild->TabGroup() : nullptr;
-  RefPtr<TabChild> iframe =
-      new TabChild(aManager, aTabId, group, aContext, aChromeFlags);
+  RefPtr<TabChild> iframe = new TabChild(aManager, aTabId, group, aContext,
+                                         aBrowsingContext, aChromeFlags);
   return iframe.forget();
 }
 
 TabChild::TabChild(ContentChild* aManager, const TabId& aTabId,
                    dom::TabGroup* aTabGroup, const TabContext& aContext,
-                   uint32_t aChromeFlags)
+                   BrowsingContext* aBrowsingContext, uint32_t aChromeFlags)
     : TabContext(aContext),
       mTabGroup(aTabGroup),
       mManager(aManager),
+      mBrowsingContext(aBrowsingContext),
       mChromeFlags(aChromeFlags),
       mMaxTouchPoints(0),
       mLayersId{0},
@@ -521,9 +523,8 @@ nsresult TabChild::Init(mozIDOMWindowProxy* aParent) {
                                   nullptr  // HandleWidgetEvent
   );
 
-  mWebBrowser =
-      nsWebBrowser::Create(this, mPuppetWidget, OriginAttributesRef(), aParent,
-                           nsIDocShellTreeItem::typeContentWrapper);
+  mWebBrowser = nsWebBrowser::Create(this, mPuppetWidget, OriginAttributesRef(),
+                                     mBrowsingContext);
   nsIWebBrowser* webBrowser = mWebBrowser;
 
   mWebNav = do_QueryInterface(webBrowser);
@@ -552,11 +553,6 @@ nsresult TabChild::Init(mozIDOMWindowProxy* aParent) {
   loadContext->SetPrivateBrowsing(OriginAttributesRef().mPrivateBrowsingId > 0);
   loadContext->SetRemoteTabs(mChromeFlags &
                              nsIWebBrowserChrome::CHROME_REMOTE_WINDOW);
-
-  // Send our browsing context to the parent process.
-  RefPtr<BrowsingContext> browsingContext =
-      nsDocShell::Cast(docShell)->GetBrowsingContext();
-  SendRootBrowsingContext(browsingContext);
 
   // Few lines before, baseWindow->Create() will end up creating a new
   // window root in nsGlobalWindow::SetDocShell.
@@ -639,10 +635,12 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(TabChild)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(TabChild, TabChildBase)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mWebNav)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mBrowsingContext)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(TabChild, TabChildBase)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWebNav)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBrowsingContext)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(TabChild, TabChildBase)
@@ -928,6 +926,10 @@ TabChild::ProvideWindow(mozIDOMWindowProxy* aParent, uint32_t aChromeFlags,
 }
 
 void TabChild::DestroyWindow() {
+  if (mBrowsingContext) {
+    mBrowsingContext = nullptr;
+  }
+
   if (mCoalescedMouseEventFlusher) {
     mCoalescedMouseEventFlusher->RemoveObserver();
     mCoalescedMouseEventFlusher = nullptr;
@@ -1278,13 +1280,15 @@ mozilla::ipc::IPCResult TabChild::RecvHandleTap(
       break;
     case GeckoContentController::TapType::eLongTap:
       if (mTabChildMessageManager) {
-        mAPZEventState->ProcessLongTap(presShell, point, scale, aModifiers,
-                                       aGuid, aInputBlockId);
+        RefPtr<APZEventState> eventState(mAPZEventState);
+        eventState->ProcessLongTap(presShell, point, scale, aModifiers, aGuid,
+                                   aInputBlockId);
       }
       break;
     case GeckoContentController::TapType::eLongTapUp:
       if (mTabChildMessageManager) {
-        mAPZEventState->ProcessLongTapUp(presShell, point, scale, aModifiers);
+        RefPtr<APZEventState> eventState(mAPZEventState);
+        eventState->ProcessLongTapUp(presShell, point, scale, aModifiers);
       }
       break;
   }
@@ -1390,8 +1394,9 @@ mozilla::ipc::IPCResult TabChild::RecvMouseEvent(
   // to be refcounted. This function can run script, which may trigger a nested
   // event loop, which may release this, so we hold a strong reference here.
   RefPtr<TabChild> kungFuDeathGrip(this);
+  nsCOMPtr<nsIPresShell> presShell(GetPresShell());
   APZCCallbackHelper::DispatchMouseEvent(
-      GetPresShell(), aType, CSSPoint(aX, aY), aButton, aClickCount, aModifiers,
+      presShell, aType, CSSPoint(aX, aY), aButton, aClickCount, aModifiers,
       aIgnoreRootScrollFrame, MouseEvent_Binding::MOZ_SOURCE_UNKNOWN,
       0 /* Use the default value here. */);
   return IPC_OK();
@@ -3196,7 +3201,8 @@ bool TabChild::DeallocPWindowGlobalChild(PWindowGlobalChild* aActor) {
 }
 
 PBrowserBridgeChild* TabChild::AllocPBrowserBridgeChild(const nsString&,
-                                                        const nsString&) {
+                                                        const nsString&,
+                                                        BrowsingContext*) {
   MOZ_CRASH(
       "We should never be manually allocating PBrowserBridgeChild actors");
   return nullptr;

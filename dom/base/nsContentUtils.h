@@ -1426,7 +1426,10 @@ class nsContentUtils {
    *                            set with this argument.
    */
   MOZ_CAN_RUN_SCRIPT
-  static nsresult DispatchInputEvent(Element* aEventTarget);
+  static nsresult DispatchInputEvent(Element* aEventTarget) {
+    return DispatchInputEvent(aEventTarget, mozilla::EditorInputType::eUnknown,
+                              nullptr, InputEventOptions());
+  }
   struct MOZ_STACK_CLASS InputEventOptions final {
     InputEventOptions() = default;
     explicit InputEventOptions(const nsAString& aData)
@@ -2842,8 +2845,7 @@ class nsContentUtils {
   static void TransferableToIPCTransferable(
       nsITransferable* aTransferable,
       mozilla::dom::IPCDataTransfer* aIPCDataTransfer, bool aInSyncMessage,
-      mozilla::dom::ContentChild* aChild,
-      mozilla::dom::ContentParent* aParent);
+      mozilla::dom::ContentChild* aChild, mozilla::dom::ContentParent* aParent);
 
   /*
    * Get the pixel data from the given source surface and return it as a buffer.

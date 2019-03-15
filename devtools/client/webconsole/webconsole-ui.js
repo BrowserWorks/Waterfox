@@ -116,8 +116,13 @@ class WebConsoleUI {
    * @param boolean clearStorage
    *        True if you want to clear the console messages storage associated to
    *        this Web Console.
+   * @param object event
+   *        If the event exists, calls preventDefault on it.
    */
-  clearOutput(clearStorage) {
+  clearOutput(clearStorage, event) {
+    if (event) {
+      event.preventDefault();
+    }
     if (this.wrapper) {
       this.wrapper.dispatchMessagesClear();
     }
@@ -262,12 +267,14 @@ class WebConsoleUI {
 
     let clearShortcut;
     if (AppConstants.platform === "macosx") {
+      const alternativaClearShortcut = l10n.getStr("webconsole.clear.alternativeKeyOSX");
+      shortcuts.on(alternativaClearShortcut, event => this.clearOutput(true, event));
       clearShortcut = l10n.getStr("webconsole.clear.keyOSX");
     } else {
       clearShortcut = l10n.getStr("webconsole.clear.key");
     }
 
-    shortcuts.on(clearShortcut, () => this.clearOutput(true));
+    shortcuts.on(clearShortcut, event => this.clearOutput(true, event));
 
     if (this.isBrowserConsole) {
       // Make sure keyboard shortcuts work immediately after opening
@@ -281,8 +288,8 @@ class WebConsoleUI {
       shortcuts.on("CmdOrCtrl+Alt+R", quickRestart);
     } else if (Services.prefs.getBoolPref(PREF_SIDEBAR_ENABLED)) {
       shortcuts.on("Esc", event => {
-        if (!this.jsterm.autocompletePopup || !this.jsterm.autocompletePopup.isOpen) {
-          this.wrapper.dispatchSidebarClose();
+        this.wrapper.dispatchSidebarClose();
+        if (this.jsterm) {
           this.jsterm.focus();
         }
       });
@@ -331,7 +338,11 @@ class WebConsoleUI {
    * @private
    */
   _onPanelSelected() {
-    this.jsterm.focus();
+    // We can only focus when we have the jsterm reference. This is fine because if the
+    // jsterm is not mounted yet, it will be focused in JSTerm's componentDidMount.
+    if (this.jsterm) {
+      this.jsterm.focus();
+    }
   }
 
   _onChangeSplitConsoleState() {

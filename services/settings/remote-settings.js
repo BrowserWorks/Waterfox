@@ -153,11 +153,11 @@ function remoteSettingsFunction() {
    *
    * @param {Object} options
 .  * @param {Object} options.expectedTimestamp (optional) The expected timestamp to be received — used by servers for cache busting.
+   * @param {string} options.trigger           (optional) label to identify what triggered this sync (eg. ``"timer"``, default: `"manual"`)
    * @returns {Promise} or throws error if something goes wrong.
    */
-  remoteSettings.pollChanges = async ({ expectedTimestamp } = {}) => {
-    const trigger = expectedTimestamp ? "broadcast" : "timer";
-    const telemetryArgs = {
+  remoteSettings.pollChanges = async ({ expectedTimestamp, trigger = "manual" } = {}) => {
+    let telemetryArgs = {
       source: TELEMETRY_SOURCE,
       trigger,
     };
@@ -203,7 +203,10 @@ function remoteSettingsFunction() {
       throw new Error(`Polling for changes failed: ${e.message}.`);
     }
 
-    const {serverTimeMillis, changes, currentEtag, backoffSeconds} = pollResult;
+    const { serverTimeMillis, changes, currentEtag, backoffSeconds, ageSeconds } = pollResult;
+
+    // Report age of server data in Telemetry.
+    telemetryArgs = { age: ageSeconds, ...telemetryArgs };
 
     // Report polling success to Uptake Telemetry.
     const reportStatus = changes.length === 0 ? UptakeTelemetry.STATUS.UP_TO_DATE
@@ -224,7 +227,7 @@ function remoteSettingsFunction() {
     const checkedServerTimeInSeconds = Math.round(serverTimeMillis / 1000);
     gPrefs.setIntPref(PREF_SETTINGS_LAST_UPDATE, checkedServerTimeInSeconds);
 
-
+    // Should the clients try to load JSON dump? (mainly disabled in tests)
     const loadDump = gPrefs.getBoolPref(PREF_SETTINGS_LOAD_DUMP, true);
 
     // Iterate through the collections version info and initiate a synchronization
@@ -326,6 +329,6 @@ var RemoteSettings = remoteSettingsFunction();
 
 var remoteSettingsBroadcastHandler = {
   async receivedBroadcastMessage(data, broadcastID) {
-    return RemoteSettings.pollChanges({ expectedTimestamp: data });
+    return RemoteSettings.pollChanges({ expectedTimestamp: data, trigger: "broadcast" });
   },
 };

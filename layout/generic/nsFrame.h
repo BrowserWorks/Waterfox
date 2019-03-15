@@ -177,7 +177,6 @@ class nsFrame : public nsBox {
                        nsEventStatus* aEventStatus) override;
   nsresult GetContentForEvent(mozilla::WidgetEvent* aEvent,
                               nsIContent** aContent) override;
-  nsresult GetCursor(const nsPoint& aPoint, nsIFrame::Cursor& aCursor) override;
 
   nsresult GetPointFromOffset(int32_t inOffset, nsPoint* outPoint) override;
   nsresult GetCharacterRectsInRange(int32_t aInOffset, int32_t aLength,
@@ -216,8 +215,8 @@ class nsFrame : public nsBox {
           PeekOffsetCharacterOptions()) override;
   FrameSearchResult PeekOffsetWord(bool aForward, bool aWordSelectEatSpace,
                                    bool aIsKeyboardSelect, int32_t* aOffset,
-                                   PeekWordState* aState, bool aTrimSpaces)
-                                   override;
+                                   PeekWordState* aState,
+                                   bool aTrimSpaces) override;
   /**
    * Check whether we should break at a boundary between punctuation and
    * non-punctuation. Only call it at a punctuation boundary
@@ -655,9 +654,6 @@ class nsFrame : public nsBox {
                                     int32_t* aContentOffset,
                                     mozilla::TableSelection* aTarget);
 
-  // Fills aCursor with the appropriate information from ui
-  static void FillCursorInformationFromStyle(const nsStyleUI* ui,
-                                             nsIFrame::Cursor& aCursor);
   NS_IMETHOD DoXULLayout(nsBoxLayoutState& aBoxLayoutState) override;
 
   nsBoxLayoutMetrics* BoxMetrics() const;

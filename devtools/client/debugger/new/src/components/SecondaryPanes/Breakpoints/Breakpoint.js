@@ -37,7 +37,8 @@ type FormattedFrame = Frame & {
 import {
   getBreakpointsList,
   getSelectedFrame,
-  getSelectedSource
+  getSelectedSource,
+  getCurrentThread
 } from "../../../selectors";
 
 type Props = {
@@ -149,6 +150,7 @@ class Breakpoint extends PureComponent<Props> {
     const { breakpoint } = this.props;
     const text = this.getBreakpointText();
     const editor = getEditor();
+    const labelId = `${breakpoint.id}-label`;
     return (
       <div
         className={classnames({
@@ -169,15 +171,16 @@ class Breakpoint extends PureComponent<Props> {
           checked={!breakpoint.disabled}
           onChange={this.handleBreakpointCheckbox}
           onClick={ev => ev.stopPropagation()}
+          aria-labelledby={labelId}
         />
-        <label
-          htmlFor={breakpoint.id}
+        <span
+          id={labelId}
           className="breakpoint-label cm-s-mozilla devtools-monospace"
           onClick={this.selectBreakpoint}
           title={text}
         >
           <span dangerouslySetInnerHTML={this.highlightText(text, editor)} />
-        </label>
+        </span>
         <div className="breakpoint-line-close">
           <div className="breakpoint-line devtools-monospace">
             {this.getBreakpointLocation()}
@@ -209,7 +212,7 @@ const getFormattedFrame = createSelector(
 
 const mapStateToProps = state => ({
   breakpoints: getBreakpointsList(state),
-  frame: getFormattedFrame(state)
+  frame: getFormattedFrame(state, getCurrentThread(state))
 });
 
 export default connect(

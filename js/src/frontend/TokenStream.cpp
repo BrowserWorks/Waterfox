@@ -759,10 +759,9 @@ MOZ_COLD void TokenStreamChars<Utf8Unit, AnyCharsAccess>::internalEncodingError(
     uint32_t line, column;
     computeLineAndColumn(offset, &line, &column);
 
-    if (!notes->addNoteASCII(anyChars.cx, anyChars.getFilename(),
-                             0, line, column,
-                             GetErrorMessage, nullptr, JSMSG_BAD_CODE_UNITS,
-                             badUnitsStr)) {
+    if (!notes->addNoteASCII(anyChars.cx, anyChars.getFilename(), 0, line,
+                             column, GetErrorMessage, nullptr,
+                             JSMSG_BAD_CODE_UNITS, badUnitsStr)) {
       break;
     }
 
@@ -1994,9 +1993,10 @@ MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::identifierName(
                "Private identifier starts with #");
     newPrivateNameToken(atom->asPropertyName(), start, modifier, out);
 
-    // TODO(khypera): Delete the below once private names are supported.
-    errorAt(start.offset(), JSMSG_FIELDS_NOT_SUPPORTED);
-    return false;
+    if (!anyCharsAccess().options().fieldsEnabledOption) {
+      errorAt(start.offset(), JSMSG_FIELDS_NOT_SUPPORTED);
+      return false;
+    }
   } else {
     newNameToken(atom->asPropertyName(), start, modifier, out);
   }

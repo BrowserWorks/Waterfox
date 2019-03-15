@@ -10,6 +10,7 @@
 #include "CrossProcessMutex.h"
 #include "mozilla/layers/GeckoContentController.h"
 #include "mozilla/layers/RepaintRequest.h"
+#include "mozilla/layers/ZoomConstraints.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/Monitor.h"
@@ -664,6 +665,7 @@ class AsyncPanZoomController {
   /**
    * Helper methods for long press gestures.
    */
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   nsEventStatus OnLongPress(const TapGestureInput& aEvent);
   nsEventStatus OnLongPressUp(const TapGestureInput& aEvent);
 
@@ -680,6 +682,7 @@ class AsyncPanZoomController {
   /**
    * Helper method for double taps.
    */
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   nsEventStatus OnDoubleTap(const TapGestureInput& aEvent);
 
   /**

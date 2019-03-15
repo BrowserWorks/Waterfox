@@ -161,7 +161,8 @@ bool RenderCompositorANGLE::Initialize() {
     desc.SampleDesc.Quality = 0;
     // DXGI_USAGE_SHADER_INPUT is set for improving performanc of copying from
     // framebuffer to texture on intel gpu.
-    desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
+    desc.BufferUsage =
+        DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
     // Do not use DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, since it makes HWND
     // unreusable.
     // desc.BufferCount = 2;
@@ -191,7 +192,8 @@ bool RenderCompositorANGLE::Initialize() {
     swapDesc.SampleDesc.Quality = 0;
     // DXGI_USAGE_SHADER_INPUT is set for improving performanc of copying from
     // framebuffer to texture on intel gpu.
-    swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
+    swapDesc.BufferUsage =
+        DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
     swapDesc.BufferCount = 1;
     swapDesc.OutputWindow = hwnd;
     swapDesc.Windowed = TRUE;
@@ -510,7 +512,7 @@ void RenderCompositorANGLE::WaitForPreviousPresentQuery() {
   while (mWaitForPresentQueries.size() >= waitLatency) {
     RefPtr<ID3D11Query>& query = mWaitForPresentQueries.front();
     BOOL result;
-    layers::WaitForGPUQuery(mDevice, mCtx, query, &result);
+    layers::WaitForFrameGPUQuery(mDevice, mCtx, query, &result);
 
     // Recycle query for later use.
     mRecycledQuery = query;

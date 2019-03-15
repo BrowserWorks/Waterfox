@@ -1885,6 +1885,12 @@ class nsIFrame : public nsQueryFrame {
   void RecomputePerspectiveChildrenOverflow(const nsIFrame* aStartFrame);
 
   /**
+   * Returns the computed z-index for this frame, returning 0 for z-index:auto
+   * and frames that don't support z-index.
+   */
+  int32_t ZIndex() const;
+
+  /**
    * Returns whether this frame is the anchor of some ancestor scroll frame. As
    * this frame is moved, the scroll frame will apply adjustments to keep this
    * scroll frame in the same relative position.
@@ -1986,22 +1992,28 @@ class nsIFrame : public nsQueryFrame {
   void AssociateImage(const nsStyleImage& aImage, nsPresContext* aPresContext,
                       uint32_t aImageLoaderFlags);
 
+  enum class AllowCustomCursorImage {
+    No,
+    Yes,
+  };
+
   /**
-   * This structure holds information about a cursor. mContainer represents a
-   * loaded image that should be preferred. If it is not possible to use it, or
-   * if it is null, mCursor should be used.
+   * This structure holds information about a cursor. AllowCustomCursorImage
+   * is `No`, then no cursor image should be loaded from the style specified on
+   * `mStyle`, or the frame's style.
+   *
+   * The `mStyle` member is used for `<area>` elements.
    */
   struct MOZ_STACK_CLASS Cursor {
-    nsCOMPtr<imgIContainer> mContainer;
     mozilla::StyleCursorKind mCursor = mozilla::StyleCursorKind::Auto;
-    bool mHaveHotspot = false;
-    bool mLoading = false;
-    float mHotspotX = 0.0f, mHotspotY = 0.0f;
+    AllowCustomCursorImage mAllowCustomCursor = AllowCustomCursorImage::Yes;
+    RefPtr<mozilla::ComputedStyle> mStyle;
   };
+
   /**
    * Get the cursor for a given frame.
    */
-  virtual nsresult GetCursor(const nsPoint& aPoint, Cursor& aCursor) = 0;
+  virtual mozilla::Maybe<Cursor> GetCursor(const nsPoint&);
 
   /**
    * Get a point (in the frame's coordinate space) given an offset into
@@ -4486,12 +4498,9 @@ class nsIFrame : public nsQueryFrame {
       mAtStart = false;
     }
   };
-  virtual FrameSearchResult PeekOffsetWord(bool aForward,
-                                           bool aWordSelectEatSpace,
-                                           bool aIsKeyboardSelect,
-                                           int32_t* aOffset,
-                                           PeekWordState* aState,
-                                           bool aTrimSpaces) = 0;
+  virtual FrameSearchResult PeekOffsetWord(
+      bool aForward, bool aWordSelectEatSpace, bool aIsKeyboardSelect,
+      int32_t* aOffset, PeekWordState* aState, bool aTrimSpaces) = 0;
 
   /**
    * Search for the first paragraph boundary before or after the given position

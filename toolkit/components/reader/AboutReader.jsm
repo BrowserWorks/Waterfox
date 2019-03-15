@@ -122,6 +122,25 @@ var AboutReader = function(mm, win, articlePromise) {
   }
 
   this._loadArticle();
+
+  let dropdown = this._toolbarElement;
+
+  let elemL10nMap = {
+    ".minus-button": "minus",
+    ".plus-button": "plus",
+    ".content-width-minus-button": "contentwidthminus",
+    ".content-width-plus-button": "contentwidthplus",
+    ".line-height-minus-button": "lineheightminus",
+    ".line-height-plus-button": "lineheightplus",
+    ".light-button": "colorschemelight",
+    ".dark-button": "colorschemedark",
+    ".sepia-button": "colorschemesepia",
+  };
+
+  for (let [selector, stringID] of Object.entries(elemL10nMap)) {
+    dropdown.querySelector(selector).setAttribute("title",
+      gStrings.GetStringFromName("aboutReader.toolbar." + stringID));
+  }
 };
 
 AboutReader.prototype = {
@@ -309,13 +328,10 @@ AboutReader.prototype = {
   },
 
   _setFontSize(newFontSize) {
-    let containerClasses = this._containerElement.classList;
-
-    if (this._fontSize > 0)
-      containerClasses.remove("font-size" + this._fontSize);
-
     this._fontSize = newFontSize;
-    containerClasses.add("font-size" + this._fontSize);
+    let size = (10 + 2 * this._fontSize) + "px";
+
+    this._containerElement.style.setProperty("--font-size", size);
     return AsyncPrefs.set("reader.font_size", this._fontSize);
   },
 

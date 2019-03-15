@@ -896,6 +896,12 @@ class nsDisplayListBuilder {
   uint32_t GetBackgroundPaintFlags();
 
   /**
+   * Helper method to generate image decoding flags based on the
+   * information available in the display list builder.
+   */
+  uint32_t GetImageDecodeFlags() const;
+
+  /**
    * Subtracts aRegion from *aVisibleRegion. We avoid letting
    * aVisibleRegion become overcomplex by simplifying it if necessary.
    */
@@ -2100,7 +2106,9 @@ class nsDisplayItem : public nsDisplayItemLink {
         mForceNotVisible(false),
         mDisableSubpixelAA(false),
         mReusedItem(false),
-        mBackfaceHidden(mFrame->In3DContextAndBackfaceIsHidden()),
+        mBackfaceIsHidden(mFrame->BackfaceIsHidden()),
+        mCombines3DTransformWithAncestors(
+            mFrame->Combines3DTransformWithAncestors()),
         mPaintRectValid(false),
         mCanBeReused(true)
 #ifdef MOZ_DUMP_PAINTING
@@ -2175,7 +2183,9 @@ class nsDisplayItem : public nsDisplayItemLink {
         mForceNotVisible(aOther.mForceNotVisible),
         mDisableSubpixelAA(aOther.mDisableSubpixelAA),
         mReusedItem(false),
-        mBackfaceHidden(mFrame->In3DContextAndBackfaceIsHidden()),
+        mBackfaceIsHidden(aOther.mBackfaceIsHidden),
+        mCombines3DTransformWithAncestors(
+            aOther.mCombines3DTransformWithAncestors),
         mPaintRectValid(false),
         mCanBeReused(true)
 #ifdef MOZ_DUMP_PAINTING
@@ -2825,9 +2835,15 @@ class nsDisplayItem : public nsDisplayItemLink {
   void FuseClipChainUpTo(nsDisplayListBuilder* aBuilder,
                          const ActiveScrolledRoot* aASR);
 
-  bool BackfaceIsHidden() const { return mFrame->BackfaceIsHidden(); }
+  bool BackfaceIsHidden() const { return mBackfaceIsHidden; }
 
-  bool In3DContextAndBackfaceIsHidden() { return mBackfaceHidden; }
+  bool Combines3DTransformWithAncestors() const {
+    return mCombines3DTransformWithAncestors;
+  }
+
+  bool In3DContextAndBackfaceIsHidden() const {
+    return mBackfaceIsHidden && mCombines3DTransformWithAncestors;
+  }
 
   bool HasDifferentFrame(const nsDisplayItem* aOther) const {
     return mFrame != aOther->mFrame;
@@ -2947,7 +2963,15 @@ class nsDisplayItem : public nsDisplayItemLink {
   // Guaranteed to be contained in GetBounds().
   nsRect mPaintRect;
 
+  OldListIndex mOldListIndex;
+  uintptr_t mOldList = 0;
+
  protected:
+  struct {
+    RefPtr<const DisplayItemClipChain> mClipChain;
+    const DisplayItemClip* mClip;
+  } mState;
+
 #ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
  public:
   uint32_t mOldListKey = 0;
@@ -2957,24 +2981,19 @@ class nsDisplayItem : public nsDisplayItemLink {
 
  protected:
 #endif
-  OldListIndex mOldListIndex;
-  uintptr_t mOldList = 0;
 
   bool mForceNotVisible;
   bool mDisableSubpixelAA;
   bool mReusedItem;
-  bool mBackfaceHidden;
+  bool mBackfaceIsHidden;
+  bool mCombines3DTransformWithAncestors;
   bool mPaintRectValid;
   bool mCanBeReused;
+
 #ifdef MOZ_DUMP_PAINTING
   // True if this frame has been painted.
   bool mPainted;
 #endif
-
-  struct {
-    RefPtr<const DisplayItemClipChain> mClipChain;
-    const DisplayItemClip* mClip;
-  } mState;
 };
 
 /**
@@ -4559,14 +4578,21 @@ class nsDisplayBackgroundColor : public nsDisplayItem {
  public:
   nsDisplayBackgroundColor(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
                            const nsRect& aBackgroundRect,
-                           mozilla::ComputedStyle* aBackgroundStyle,
-                           nscolor aColor)
+                           const mozilla::ComputedStyle* aBackgroundStyle,
+                           const nscolor& aColor)
       : nsDisplayItem(aBuilder, aFrame),
         mBackgroundRect(aBackgroundRect),
-        mBackgroundStyle(aBackgroundStyle),
+        mHasStyle(aBackgroundStyle),
         mDependentFrame(nullptr),
         mColor(Color::FromABGR(aColor)) {
     mState.mColor = mColor;
+
+    if (mHasStyle) {
+      mBottomLayerClip =
+          aBackgroundStyle->StyleBackground()->BottomLayer().mClip;
+    } else {
+      MOZ_ASSERT(aBuilder->IsForEventDelivery());
+    }
   }
 
   ~nsDisplayBackgroundColor() override {
@@ -4580,6 +4606,11 @@ class nsDisplayBackgroundColor : public nsDisplayItem {
   void RestoreState() override {
     nsDisplayItem::RestoreState();
     mColor = mState.mColor;
+  }
+
+  bool HasBackgroundClipText() const {
+    MOZ_ASSERT(mHasStyle);
+    return mBottomLayerClip == mozilla::StyleGeometryBox::Text;
   }
 
   LayerState GetLayerState(
@@ -4614,15 +4645,14 @@ class nsDisplayBackgroundColor : public nsDisplayItem {
   }
 
   bool CanPaintWithClip(const DisplayItemClip& aClip) override {
-    mozilla::StyleGeometryBox clip =
-        mBackgroundStyle->StyleBackground()->mImage.mLayers[0].mClip;
-
-    if (clip == mozilla::StyleGeometryBox::Text) {
+    if (HasBackgroundClipText()) {
       return false;
     }
+
     if (aClip.GetRoundedRectCount() > 1) {
       return false;
     }
+
     return true;
   }
 
@@ -4670,7 +4700,8 @@ class nsDisplayBackgroundColor : public nsDisplayItem {
 
  protected:
   const nsRect mBackgroundRect;
-  RefPtr<mozilla::ComputedStyle> mBackgroundStyle;
+  const bool mHasStyle;
+  mozilla::StyleGeometryBox mBottomLayerClip;
   nsIFrame* mDependentFrame;
   mozilla::gfx::Color mColor;
 
@@ -4683,8 +4714,8 @@ class nsDisplayTableBackgroundColor : public nsDisplayBackgroundColor {
  public:
   nsDisplayTableBackgroundColor(nsDisplayListBuilder* aBuilder,
                                 nsIFrame* aFrame, const nsRect& aBackgroundRect,
-                                mozilla::ComputedStyle* aBackgroundStyle,
-                                nscolor aColor, nsIFrame* aAncestorFrame)
+                                const mozilla::ComputedStyle* aBackgroundStyle,
+                                const nscolor& aColor, nsIFrame* aAncestorFrame)
       : nsDisplayBackgroundColor(aBuilder, aFrame, aBackgroundRect,
                                  aBackgroundStyle, aColor),
         mAncestorFrame(aAncestorFrame),
@@ -6771,16 +6802,14 @@ class nsDisplayTransform : public nsDisplayHitTestInfoItem {
    */
   bool IsLeafOf3DContext() {
     return (IsTransformSeparator() ||
-            (!mFrame->Extend3DContext() &&
-             mFrame->Combines3DTransformWithAncestors()));
+            (!mFrame->Extend3DContext() && Combines3DTransformWithAncestors()));
   }
   /**
    * The backing frame of this item participates a 3D rendering
    * context.
    */
   bool IsParticipating3DContext() {
-    return mFrame->Extend3DContext() ||
-           mFrame->Combines3DTransformWithAncestors();
+    return mFrame->Extend3DContext() || Combines3DTransformWithAncestors();
   }
 
  private:

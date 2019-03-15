@@ -964,6 +964,7 @@ class JS_PUBLIC_API RealmCreationOptions {
         sharedMemoryAndAtomics_(false),
         streams_(false),
         bigint_(false),
+        fields_(false),
         secureContext_(false),
         clampAndJitterTime_(true) {}
 
@@ -1045,6 +1046,12 @@ class JS_PUBLIC_API RealmCreationOptions {
     return *this;
   }
 
+  bool getFieldsEnabled() const { return fields_; }
+  RealmCreationOptions& setFieldsEnabled(bool flag) {
+    fields_ = flag;
+    return *this;
+  }
+
   // This flag doesn't affect JS engine behavior.  It is used by Gecko to
   // mark whether content windows and workers are "Secure Context"s. See
   // https://w3c.github.io/webappsec-secure-contexts/
@@ -1075,6 +1082,7 @@ class JS_PUBLIC_API RealmCreationOptions {
   bool sharedMemoryAndAtomics_;
   bool streams_;
   bool bigint_;
+  bool fields_;
   bool secureContext_;
   bool clampAndJitterTime_;
 };
@@ -2604,16 +2612,16 @@ extern JS_PUBLIC_API JSString* JS_AtomizeAndPinStringN(JSContext* cx,
 extern JS_PUBLIC_API JSString* JS_AtomizeAndPinString(JSContext* cx,
                                                       const char* s);
 
-extern JS_PUBLIC_API JSString* JS_NewLatin1String(JSContext* cx,
-                                                  JS::Latin1Char* chars,
-                                                  size_t length);
+extern JS_PUBLIC_API JSString* JS_NewLatin1String(
+    JSContext* cx, js::UniquePtr<JS::Latin1Char[], JS::FreePolicy> chars,
+    size_t length);
 
-extern JS_PUBLIC_API JSString* JS_NewUCString(JSContext* cx, char16_t* chars,
+extern JS_PUBLIC_API JSString* JS_NewUCString(JSContext* cx,
+                                              JS::UniqueTwoByteChars chars,
                                               size_t length);
 
-extern JS_PUBLIC_API JSString* JS_NewUCStringDontDeflate(JSContext* cx,
-                                                         char16_t* chars,
-                                                         size_t length);
+extern JS_PUBLIC_API JSString* JS_NewUCStringDontDeflate(
+    JSContext* cx, JS::UniqueTwoByteChars chars, size_t length);
 
 extern JS_PUBLIC_API JSString* JS_NewUCStringCopyN(JSContext* cx,
                                                    const char16_t* s, size_t n);

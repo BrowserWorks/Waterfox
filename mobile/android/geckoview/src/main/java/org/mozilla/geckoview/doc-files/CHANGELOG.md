@@ -85,6 +85,11 @@ exclude: true
 [67.20]: ../GeckoDisplay.html
 [67.21]: ../GeckoDisplay.html#capturePixels
 
+- Add missing `@Nullable` annotation to return value for
+  `GeckoSession.PromptDelegate.ChoiceCallback.onPopupResult()`
+
+- Added `default` implementations for all non-functional `interface`s.
+
 ## v66
 - Removed redundant field `trackingMode` from [`SecurityInformation`][66.6].
   Use `TrackingProtectionDelegate.onTrackerBlocked` for notification of blocked
@@ -204,4 +209,4 @@ exclude: true
 [65.24]: ../CrashReporter.html#sendCrashReport-android.content.Context-android.os.Bundle-java.lang.String-
 [65.25]: ../GeckoResult.html
 
-[api-version]: 0bcb9f0f763b746bb6f27f5d275c351818ab971b
+[api-version]: 09c473360eb5e17aa801fa0f966cd8671cf2f3d2

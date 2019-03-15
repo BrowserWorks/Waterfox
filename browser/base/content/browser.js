@@ -265,6 +265,11 @@ XPCOMUtils.defineLazyPreferenceGetter(gURLBarHandler, "quantumbar",
                                       "browser.urlbar.quantumbar", false,
                                       gURLBarHandler.handlePrefChange.bind(gURLBarHandler));
 
+XPCOMUtils.defineLazyGetter(this, "ReferrerInfo", () =>
+  Components.Constructor("@mozilla.org/referrer-info;1",
+                         "nsIReferrerInfo",
+                         "init"));
+
 // High priority notification bars shown at the top of the window.
 XPCOMUtils.defineLazyGetter(this, "gHighPriorityNotificationBox", () => {
   return new MozElements.NotificationBox(element => {
@@ -1740,7 +1745,7 @@ var gBrowserInit = {
   _handleURIToLoad() {
     this._callWithURIToLoad(uriToLoad => {
       if (!uriToLoad) {
-        // We don't check whether window.arguments[6] (userContextId) is set
+        // We don't check whether window.arguments[5] (userContextId) is set
         // because tabbrowser.js takes care of that for the initial tab.
         return;
       }
@@ -1755,43 +1760,33 @@ var gBrowserInit = {
             inBackground: false,
             replace: true,
             // See below for the semantics of window.arguments. Only the minimum is supported.
-            userContextId: window.arguments[6],
-            triggeringPrincipal: window.arguments[8] || Services.scriptSecurityManager.getSystemPrincipal(),
-            allowInheritPrincipal: window.arguments[9],
-            csp: window.arguments[10],
+            userContextId: window.arguments[5],
+            triggeringPrincipal: window.arguments[7] || Services.scriptSecurityManager.getSystemPrincipal(),
+            allowInheritPrincipal: window.arguments[8],
+            csp: window.arguments[9],
+            fromExternal: true,
           });
         } catch (e) {}
       } else if (window.arguments.length >= 3) {
         // window.arguments[1]: unused (bug 871161)
-        //                 [2]: referrer (nsIURI | string)
+        //                 [2]: referrerInfo (nsIReferrerInfo)
         //                 [3]: postData (nsIInputStream)
         //                 [4]: allowThirdPartyFixup (bool)
-        //                 [5]: referrerPolicy (int)
-        //                 [6]: userContextId (int)
-        //                 [7]: originPrincipal (nsIPrincipal)
-        //                 [8]: triggeringPrincipal (nsIPrincipal)
-        //                 [9]: allowInheritPrincipal (bool)
-        //                [10]: csp (nsIContentSecurityPolicy)
-        let referrerURI = window.arguments[2];
-        if (typeof(referrerURI) == "string") {
-          try {
-            referrerURI = makeURI(referrerURI);
-          } catch (e) {
-            referrerURI = null;
-          }
-        }
-        let referrerPolicy = (window.arguments[5] != undefined ?
-            window.arguments[5] : Ci.nsIHttpChannel.REFERRER_POLICY_UNSET);
-        let userContextId = (window.arguments[6] != undefined ?
-            window.arguments[6] : Ci.nsIScriptSecurityManager.DEFAULT_USER_CONTEXT_ID);
-        loadURI(uriToLoad, referrerURI, window.arguments[3] || null,
-                window.arguments[4] || false, referrerPolicy, userContextId,
+        //                 [5]: userContextId (int)
+        //                 [6]: originPrincipal (nsIPrincipal)
+        //                 [7]: triggeringPrincipal (nsIPrincipal)
+        //                 [8]: allowInheritPrincipal (bool)
+        //                 [9]: csp (nsIContentSecurityPolicy)
+        let userContextId = (window.arguments[5] != undefined ?
+            window.arguments[5] : Ci.nsIScriptSecurityManager.DEFAULT_USER_CONTEXT_ID);
+        loadURI(uriToLoad, window.arguments[2] || null, window.arguments[3] || null,
+                window.arguments[4] || false, userContextId,
                 // pass the origin principal (if any) and force its use to create
                 // an initial about:blank viewer if present:
-                window.arguments[7], !!window.arguments[7], window.arguments[8],
+                window.arguments[6], !!window.arguments[6], window.arguments[7],
                 // TODO fix allowInheritPrincipal to default to false.
                 // Default to true unless explicitly set to false because of bug 1475201.
-                window.arguments[9] !== false, window.arguments[10]);
+                window.arguments[8] !== false, window.arguments[9]);
         window.focus();
       } else {
         // Note: loadOneOrMoreURIs *must not* be called if window.arguments.length >= 3.
@@ -2508,7 +2503,7 @@ function BrowserTryToCloseWindow() {
     window.close(); // WindowIsClosing does all the necessary checks
 }
 
-function loadURI(uri, referrer, postData, allowThirdPartyFixup, referrerPolicy,
+function loadURI(uri, referrerInfo, postData, allowThirdPartyFixup,
                  userContextId, originPrincipal, forceAboutBlankViewerInCurrent,
                  triggeringPrincipal, allowInheritPrincipal = false, csp = null) {
   if (!triggeringPrincipal) {
@@ -2517,8 +2512,7 @@ function loadURI(uri, referrer, postData, allowThirdPartyFixup, referrerPolicy,
 
   try {
     openLinkIn(uri, "current",
-               { referrerURI: referrer,
-                 referrerPolicy,
+               { referrerInfo,
                  postData,
                  allowThirdPartyFixup,
                  userContextId,
@@ -2934,6 +2928,9 @@ function PageProxyClickHandler(aEvent) {
 const TLS_ERROR_REPORT_TELEMETRY_AUTO_CHECKED   = 2;
 const TLS_ERROR_REPORT_TELEMETRY_AUTO_UNCHECKED = 3;
 
+const SEC_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE;
+const SEC_ERROR_UNKNOWN_ISSUER = SEC_ERROR_BASE + 13;
+
 const PREF_SSL_IMPACT_ROOTS = ["security.tls.version.", "security.ssl3."];
 
 /**
@@ -2952,6 +2949,8 @@ var BrowserOnClick = {
     mm.addMessageListener("Browser:ResetSSLPreferences", this);
     mm.addMessageListener("Browser:SSLErrorReportTelemetry", this);
     mm.addMessageListener("Browser:SSLErrorGoBack", this);
+    mm.addMessageListener("Browser:PrimeMitm", this);
+    mm.addMessageListener("Browser:ResetEnterpriseRootsPref", this);
 
     Services.obs.addObserver(this, "captive-portal-login-abort");
     Services.obs.addObserver(this, "captive-portal-login-success");
@@ -2966,6 +2965,8 @@ var BrowserOnClick = {
     mm.removeMessageListener("Browser:ResetSSLPreferences", this);
     mm.removeMessageListener("Browser:SSLErrorReportTelemetry", this);
     mm.removeMessageListener("Browser:SSLErrorGoBack", this);
+    mm.removeMessageListener("Browser:PrimeMitm", this);
+    mm.removeMessageListener("Browser:ResetEnterpriseRootsPref", this);
 
     Services.obs.removeObserver(this, "captive-portal-login-abort");
     Services.obs.removeObserver(this, "captive-portal-login-success");
@@ -3030,7 +3031,74 @@ var BrowserOnClick = {
       case "Browser:SSLErrorGoBack":
         goBackFromErrorPage();
       break;
+      case "Browser:PrimeMitm":
+        this.primeMitm(msg.target);
+      break;
+      case "Browser:ResetEnterpriseRootsPref":
+        Services.prefs.clearUserPref("security.enterprise_roots.enabled");
+        Services.prefs.clearUserPref("security.enterprise_roots.auto-enabled");
+      break;
     }
+  },
+
+  /**
+   * This function does a canary request to a reliable, maintained endpoint, in
+   * order to help network code detect a system-wide man-in-the-middle.
+   */
+  primeMitm(browser) {
+    // If we already have a mitm canary issuer stored, then don't bother with the
+    // extra request. This will be cleared on every update ping.
+    if (Services.prefs.getStringPref("security.pki.mitm_canary_issuer", null)) {
+      return;
+    }
+
+    let url = Services.prefs.getStringPref("security.certerrors.mitm.priming.endpoint");
+    let request = new XMLHttpRequest({mozAnon: true});
+    request.open("HEAD", url);
+    request.channel.loadFlags |= Ci.nsIRequest.LOAD_BYPASS_CACHE;
+    request.channel.loadFlags |= Ci.nsIRequest.INHIBIT_CACHING;
+
+    request.addEventListener("error", event => {
+      // Make sure the user is still on the cert error page.
+      if (!browser.documentURI.spec.startsWith("about:certerror")) {
+        return;
+      }
+
+      let secInfo = request.channel.securityInfo.QueryInterface(Ci.nsITransportSecurityInfo);
+      if (secInfo.errorCode != SEC_ERROR_UNKNOWN_ISSUER) {
+        return;
+      }
+
+      // When we get to this point there's already something deeply wrong, it's very likely
+      // that there is indeed a system-wide MitM.
+      if (secInfo.serverCert && secInfo.serverCert.issuerName) {
+        // Grab the issuer of the certificate used in the exchange and store it so that our
+        // network-level MitM detection code has a comparison baseline.
+        Services.prefs.setStringPref("security.pki.mitm_canary_issuer", secInfo.serverCert.issuerName);
+
+        // MitM issues are sometimes caused by software not registering their root certs in the
+        // Firefox root store. We might opt for using third party roots from the system root store.
+        if (Services.prefs.getBoolPref("security.certerrors.mitm.auto_enable_enterprise_roots")) {
+          if (!Services.prefs.getBoolPref("security.enterprise_roots.enabled")) {
+            // Loading enterprise roots happens on a background thread, so wait for import to finish.
+            BrowserUtils.promiseObserved("psm:enterprise-certs-imported").then(() => {
+              if (browser.documentURI.spec.startsWith("about:certerror")) {
+                browser.reload();
+              }
+            });
+
+            Services.prefs.setBoolPref("security.enterprise_roots.enabled", true);
+            // Record that this pref was automatically set.
+            Services.prefs.setBoolPref("security.enterprise_roots.auto-enabled", true);
+          }
+        } else {
+          // Need to reload the page to make sure network code picks up the canary issuer pref.
+          browser.reload();
+        }
+      }
+    });
+
+    request.send(null);
   },
 
   onCertError(browser, elementId, isTopFrame, location, securityInfoAsString, frameId) {
@@ -3322,8 +3390,9 @@ function BrowserReloadWithFlags(reloadFlags) {
     } else if (browser.hasAttribute("recordExecution")) {
       // Recording tabs always use new content processes when reloading, to get
       // a fresh recording.
-      gBrowser.updateBrowserRemoteness(browser, true,
-                                       { recordExecution: "*", newFrameloader: true });
+      gBrowser.updateBrowserRemoteness(browser,
+                                       { recordExecution: "*", newFrameloader: true,
+                                         remoteType: E10SUtils.DEFAULT_REMOTE_TYPE });
       loadBrowserURI(browser, url);
     } else {
       unchangedRemoteness.push(tab);
@@ -4681,7 +4750,8 @@ var XULBrowserWindow = {
   },
 
   forceInitialBrowserNonRemote(aOpener) {
-    gBrowser.updateBrowserRemoteness(gBrowser.initialBrowser, false, { opener: aOpener });
+    gBrowser.updateBrowserRemoteness(gBrowser.initialBrowser, { opener: aOpener,
+                                                                remoteType: E10SUtils.NOT_REMOTE });
   },
 
   setDefaultStatus(status) {
@@ -5466,7 +5536,7 @@ function nsBrowserAccess() { }
 nsBrowserAccess.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIBrowserDOMWindow]),
 
-  _openURIInNewTab(aURI, aReferrer, aReferrerPolicy, aIsPrivate,
+  _openURIInNewTab(aURI, aReferrerInfo, aIsPrivate,
                    aIsExternal, aForceNotRemote = false,
                    aUserContextId = Ci.nsIScriptSecurityManager.DEFAULT_USER_CONTEXT_ID,
                    aOpenerWindow = null, aOpenerBrowser = null,
@@ -5496,8 +5566,7 @@ nsBrowserAccess.prototype = {
 
     let tab = win.gBrowser.loadOneTab(aURI ? aURI.spec : "about:blank", {
                                       triggeringPrincipal: aTriggeringPrincipal,
-                                      referrerURI: aReferrer,
-                                      referrerPolicy: aReferrerPolicy,
+                                      referrerInfo: aReferrerInfo,
                                       userContextId: aUserContextId,
                                       fromExternal: aIsExternal,
                                       inBackground: loadInBackground,
@@ -5561,10 +5630,10 @@ nsBrowserAccess.prototype = {
         aWhere = Services.prefs.getIntPref("browser.link.open_newwindow");
     }
 
-    let referrer = aOpener ? makeURI(aOpener.location.href) : null;
-    let referrerPolicy = Ci.nsIHttpChannel.REFERRER_POLICY_UNSET;
+    let referrerInfo = new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true,
+      aOpener ? makeURI(aOpener.location.href) : null);
     if (aOpener && aOpener.document) {
-      referrerPolicy = aOpener.document.referrerPolicy;
+      referrerInfo.referrerPolicy = aOpener.document.referrerPolicy;
     }
     // Bug 965637, query the CSP from the doc instead of the Principal
     let csp = aTriggeringPrincipal.csp;
@@ -5586,7 +5655,7 @@ nsBrowserAccess.prototype = {
         try {
           newWindow = openDialog(AppConstants.BROWSER_CHROME_URL, "_blank", features,
                       // window.arguments
-                      url, null, null, null, null, null, null, null, aTriggeringPrincipal);
+                      url, null, null, null, null, null, null, aTriggeringPrincipal);
         } catch (ex) {
           Cu.reportError(ex);
         }
@@ -5603,7 +5672,7 @@ nsBrowserAccess.prototype = {
                               ? aOpener.document.nodePrincipal.originAttributes.userContextId
                               : Ci.nsIScriptSecurityManager.DEFAULT_USER_CONTEXT_ID;
         let openerWindow = (aFlags & Ci.nsIBrowserDOMWindow.OPEN_NO_OPENER) ? null : aOpener;
-        let browser = this._openURIInNewTab(aURI, referrer, referrerPolicy,
+        let browser = this._openURIInNewTab(aURI, referrerInfo,
                                             isPrivate, isExternal,
                                             forceNotRemote, userContextId,
                                             openerWindow, null, aTriggeringPrincipal,
@@ -5621,8 +5690,7 @@ nsBrowserAccess.prototype = {
             triggeringPrincipal: aTriggeringPrincipal,
             csp,
             flags: loadflags,
-            referrerURI: referrer,
-            referrerPolicy,
+            referrerInfo,
           });
         }
         if (!Services.prefs.getBoolPref("browser.tabs.loadDivertedInBackground"))
@@ -5660,9 +5728,8 @@ nsBrowserAccess.prototype = {
                           ? aParams.openerOriginAttributes.userContextId
                           : Ci.nsIScriptSecurityManager.DEFAULT_USER_CONTEXT_ID;
 
-    let referrer = aParams.referrer ? makeURI(aParams.referrer) : null;
-    return this._openURIInNewTab(aURI, referrer,
-                                 aParams.referrerPolicy,
+    return this._openURIInNewTab(aURI,
+                                 aParams.referrerInfo,
                                  aParams.isPrivate,
                                  isExternal, false,
                                  userContextId, null, aParams.openerBrowser,
@@ -6218,6 +6285,10 @@ function handleLinkClick(event, href, linkNode) {
   }
 
   let frameOuterWindowID = WebNavigationFrames.getFrameId(doc.defaultView);
+  let referrerInfo = new ReferrerInfo(
+    referrerPolicy,
+    !BrowserUtils.linkHasNoReferrer(linkNode),
+    referrerURI);
 
   // Bug 965637, query the CSP from the doc instead of the Principal
   let csp = doc.nodePrincipal.csp;
@@ -6226,9 +6297,7 @@ function handleLinkClick(event, href, linkNode) {
   let params = {
     charset: doc.characterSet,
     allowMixedContent: persistAllowMixedContentInChildTab,
-    referrerURI,
-    referrerPolicy,
-    noReferrer: BrowserUtils.linkHasNoReferrer(linkNode),
+    referrerInfo,
     originPrincipal: doc.nodePrincipal,
     triggeringPrincipal: doc.nodePrincipal,
     csp,
@@ -8299,16 +8368,16 @@ var ConfirmationHint = {
       this._panel.setAttribute("hidearrow", "true");
     }
 
+    // The timeout value used here allows the panel to stay open for
+    // 1.5s second after the text transition (duration=120ms) has finished.
+    // If there is a description, we show for 4s after the text transition.
+    const DURATION = options.showDescription ? 4000 : 1500;
     this._panel.addEventListener("popupshown", () => {
       this._animationBox.setAttribute("animate", "true");
 
-      // The timeout value used here allows the panel to stay open for
-      // 1.5s second after the text transition (duration=120ms) has finished.
-      // If there is a description, we show for 4s and there is no text transition.
-      const DURATION = options.showDescription ? 4000 : 1500 + 120;
       setTimeout(() => {
         this._panel.hidePopup(true);
-      }, DURATION);
+      }, DURATION + 120);
     }, {once: true});
 
     this._panel.addEventListener("popuphidden", () => {

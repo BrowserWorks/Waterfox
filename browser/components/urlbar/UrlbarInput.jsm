@@ -371,7 +371,9 @@ class UrlbarInput {
       allowInheritPrincipal: false,
     };
 
-    this.view.close();
+    if (!result.payload.isKeywordOffer) {
+      this.view.close();
+    }
     this.controller.recordSelectedResult(event, resultIndex);
 
     if (isCanonized) {
@@ -921,9 +923,8 @@ class UrlbarInput {
       }
     }
 
-    // TODO This should probably be handed via input.
     // Ensure the start of the URL is visible for usability reasons.
-    // this.selectionStart = this.selectionEnd = 0;
+    this.selectionStart = this.selectionEnd = 0;
 
     this.closePopup();
   }

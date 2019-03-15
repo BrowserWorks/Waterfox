@@ -16,7 +16,6 @@
 
 class nsCaret;
 class nsIContent;
-class nsIPresShell;
 class nsPresContext;
 
 // X.h defines KeyPress
@@ -32,6 +31,7 @@ class nsPresContext;
 namespace mozilla {
 
 class EditorBase;
+class PresShell;
 
 namespace dom {
 class DragEvent;
@@ -49,7 +49,7 @@ class EditorEventListener : public nsIDOMEventListener {
   NS_DECL_ISUPPORTS
 
   // nsIDOMEventListener
-  MOZ_CAN_RUN_SCRIPT_BOUNDARY
+  MOZ_CAN_RUN_SCRIPT
   NS_IMETHOD HandleEvent(dom::Event* aEvent) override;
 
   void SpellCheckIfNeeded();
@@ -65,6 +65,7 @@ class EditorEventListener : public nsIDOMEventListener {
   MOZ_CAN_RUN_SCRIPT
   nsresult KeyUp(const WidgetKeyboardEvent* aKeyboardEvent);
 #endif
+  MOZ_CAN_RUN_SCRIPT
   nsresult KeyPress(WidgetKeyboardEvent* aKeyboardEvent);
   MOZ_CAN_RUN_SCRIPT
   nsresult HandleChangeComposition(WidgetCompositionEvent* aCompositionEvent);
@@ -85,7 +86,7 @@ class EditorEventListener : public nsIDOMEventListener {
 
   MOZ_CAN_RUN_SCRIPT bool CanDrop(dom::DragEvent* aEvent);
   void CleanupDragDropCaret();
-  nsIPresShell* GetPresShell() const;
+  PresShell* GetPresShell() const;
   nsPresContext* GetPresContext() const;
   nsIContent* GetFocusedRootContent();
   // Returns true if IME consumes the mouse event.

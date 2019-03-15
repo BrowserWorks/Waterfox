@@ -253,6 +253,40 @@ nsCSPContext::~nsCSPContext() {
   }
 }
 
+/* static */
+bool nsCSPContext::Equals(nsIContentSecurityPolicy* aCSP,
+                          nsIContentSecurityPolicy* aOtherCSP) {
+  if (aCSP == aOtherCSP) {
+    // fast path for pointer equality
+    return true;
+  }
+
+  uint32_t policyCount = 0;
+  if (aCSP) {
+    aCSP->GetPolicyCount(&policyCount);
+  }
+
+  uint32_t otherPolicyCount = 0;
+  if (aOtherCSP) {
+    aOtherCSP->GetPolicyCount(&otherPolicyCount);
+  }
+
+  if (policyCount != otherPolicyCount) {
+    return false;
+  }
+
+  nsAutoString policyStr, otherPolicyStr;
+  for (uint32_t i = 0; i < policyCount; ++i) {
+    aCSP->GetPolicyString(i, policyStr);
+    aOtherCSP->GetPolicyString(i, otherPolicyStr);
+    if (!policyStr.Equals(otherPolicyStr)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 nsresult nsCSPContext::InitFromOther(nsCSPContext* aOtherContext,
                                      Document* aDoc, nsIPrincipal* aPrincipal) {
   NS_ENSURE_ARG(aOtherContext);
@@ -382,7 +416,14 @@ nsCSPContext::AppendPolicy(const nsAString& aPolicyString, bool aReportOnly,
     }
 
     mPolicies.AppendElement(policy);
+
+    // set the flag on the document for CSP telemetry
+    nsCOMPtr<Document> doc = do_QueryReferent(mLoadingContext);
+    if (doc) {
+      doc->SetHasCSP(true);
+    }
   }
+
   return NS_OK;
 }
 
@@ -672,9 +713,6 @@ nsCSPContext::SetRequestContext(Document* aDocument, nsIPrincipal* aPrincipal) {
     // console messages until it becomes available, see flushConsoleMessages
     mQueueUpMessages = !mInnerWindowID;
     mCallingChannelLoadGroup = aDocument->GetDocumentLoadGroup();
-
-    // set the flag on the document for CSP telemetry
-    aDocument->SetHasCSP(true);
     mEventTarget = aDocument->EventTargetFor(TaskCategory::Other);
   } else {
     CSPCONTEXTLOG(

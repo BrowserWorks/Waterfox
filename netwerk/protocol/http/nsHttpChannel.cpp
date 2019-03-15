@@ -650,7 +650,7 @@ nsresult nsHttpChannel::Connect() {
     return RedirectToInterceptedChannel();
   }
 
-  bool isTrackingResource = mIsThirdPartyTrackingResource;  // is atomic
+  bool isTrackingResource = IsThirdPartyTrackingResource();
   LOG(("nsHttpChannel %p tracking resource=%d, cos=%u", this,
        isTrackingResource, mClassOfService));
 
@@ -2350,7 +2350,7 @@ nsresult nsHttpChannel::ProcessResponse() {
     nsCOMPtr<nsILoadContextInfo> lci = GetLoadContextInfo(this);
     mozilla::net::Predictor::UpdateCacheability(
         referrer, mURI, httpStatus, mRequestHead, mResponseHead, lci,
-        mIsThirdPartyTrackingResource);
+        IsThirdPartyTrackingResource());
   }
 
   // Only allow 407 (authentication required) to continue
@@ -2449,6 +2449,13 @@ nsresult nsHttpChannel::ContinueProcessResponse1() {
     }
     mAuthProvider = nullptr;
     LOG(("  continuation state has been reset"));
+  }
+
+  rv = ProcessCrossOriginHeader();
+  if (NS_FAILED(rv)) {
+    mStatus = NS_ERROR_BLOCKED_BY_POLICY;
+    HandleAsyncAbort();
+    return NS_OK;
   }
 
   rv = NS_OK;
@@ -3901,7 +3908,7 @@ nsresult nsHttpChannel::OpenCacheEntryInternal(
     extension.Append("TRR");
   }
 
-  if (mIsThirdPartyTrackingResource &&
+  if (IsThirdPartyTrackingResource() &&
       !AntiTrackingCommon::IsFirstPartyStorageAccessGrantedFor(this, mURI,
                                                                nullptr)) {
     nsCOMPtr<nsIURI> topWindowURI;
@@ -7311,6 +7318,73 @@ nsHttpChannel::HasCrossOriginOpenerPolicyMismatch(bool *aMismatch) {
   return NS_OK;
 }
 
+nsresult nsHttpChannel::GetResponseCrossOriginPolicy(
+    nsILoadInfo::CrossOriginPolicy *aResponseCrossOriginPolicy) {
+  if (!mResponseHead) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  nsILoadInfo::CrossOriginPolicy policy = nsILoadInfo::CROSS_ORIGIN_POLICY_NULL;
+
+  nsAutoCString content;
+  Unused << mResponseHead->GetHeader(nsHttp::Cross_Origin, content);
+
+  // Cross-Origin = %s"anonymous" / %s"use-credentials" ; case-sensitive
+
+  if (content.EqualsLiteral("anonymous")) {
+    policy = nsILoadInfo::CROSS_ORIGIN_POLICY_ANONYMOUS;
+  } else if (content.EqualsLiteral("use-credentials")) {
+    policy = nsILoadInfo::CROSS_ORIGIN_POLICY_USE_CREDENTIALS;
+  }
+
+  *aResponseCrossOriginPolicy = policy;
+  return NS_OK;
+}
+
+nsresult nsHttpChannel::ProcessCrossOriginHeader() {
+  nsresult rv;
+  if (!StaticPrefs::browser_tabs_remote_useCrossOriginPolicy()) {
+    return NS_OK;
+  }
+
+  // Only consider Cross-Origin for document loads.
+  if (mLoadInfo->GetExternalContentPolicyType() !=
+          nsIContentPolicy::TYPE_DOCUMENT &&
+      mLoadInfo->GetExternalContentPolicyType() !=
+          nsIContentPolicy::TYPE_SUBDOCUMENT) {
+    return NS_OK;
+  }
+
+  RefPtr<mozilla::dom::BrowsingContext> ctx;
+  if (mLoadInfo->GetExternalContentPolicyType() ==
+      nsIContentPolicy::TYPE_DOCUMENT) {
+    mLoadInfo->GetBrowsingContext(getter_AddRefs(ctx));
+  } else {
+    mLoadInfo->GetFrameBrowsingContext(getter_AddRefs(ctx));
+  }
+
+  if (!ctx) {
+    return NS_OK;
+  }
+
+  nsILoadInfo::CrossOriginPolicy documentPolicy = ctx->GetCrossOriginPolicy();
+  nsILoadInfo::CrossOriginPolicy resultPolicy =
+      nsILoadInfo::CROSS_ORIGIN_POLICY_NULL;
+  rv = GetResponseCrossOriginPolicy(&resultPolicy);
+  if (NS_FAILED(rv)) {
+    return NS_OK;
+  }
+
+  ctx->SetCrossOriginPolicy(resultPolicy);
+
+  if (documentPolicy != nsILoadInfo::CROSS_ORIGIN_POLICY_NULL &&
+      resultPolicy == nsILoadInfo::CROSS_ORIGIN_POLICY_NULL) {
+    return NS_ERROR_BLOCKED_BY_POLICY;
+  }
+
+  return NS_OK;
+}
+
 NS_IMETHODIMP
 nsHttpChannel::OnStartRequest(nsIRequest *request) {
   nsresult rv;
@@ -7426,6 +7500,13 @@ nsHttpChannel::OnStartRequest(nsIRequest *request) {
     return NS_OK;
   }
 
+  rv = ProcessCrossOriginHeader();
+  if (NS_FAILED(rv)) {
+    mStatus = NS_ERROR_BLOCKED_BY_POLICY;
+    HandleAsyncAbort();
+    return NS_OK;
+  }
+
   // before we check for redirects, check if the load should be shifted into a
   // new process.
   rv = NS_OK;
@@ -7536,8 +7617,7 @@ nsresult nsHttpChannel::ContinueOnStartRequest4(nsresult result) {
 }
 
 NS_IMETHODIMP
-nsHttpChannel::OnStopRequest(nsIRequest *request,
-                             nsresult status) {
+nsHttpChannel::OnStopRequest(nsIRequest *request, nsresult status) {
   AUTO_PROFILER_LABEL("nsHttpChannel::OnStopRequest", NETWORK);
 
   LOG(("nsHttpChannel::OnStopRequest [this=%p request=%p status=%" PRIx32 "]\n",
@@ -8011,9 +8091,8 @@ class OnTransportStatusAsyncEvent : public Runnable {
 };
 
 NS_IMETHODIMP
-nsHttpChannel::OnDataAvailable(nsIRequest *request,
-                               nsIInputStream *input, uint64_t offset,
-                               uint32_t count) {
+nsHttpChannel::OnDataAvailable(nsIRequest *request, nsIInputStream *input,
+                               uint64_t offset, uint32_t count) {
   nsresult rv;
   AUTO_PROFILER_LABEL("nsHttpChannel::OnDataAvailable", NETWORK);
 

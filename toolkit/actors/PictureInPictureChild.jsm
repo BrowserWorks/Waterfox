@@ -14,7 +14,9 @@ class PictureInPictureChild extends ActorChild {
   handleEvent(event) {
     switch (event.type) {
       case "MozTogglePictureInPicture": {
-        this.togglePictureInPicture(event.target);
+        if (event.isTrusted) {
+          this.togglePictureInPicture(event.target);
+        }
         break;
       }
     }
@@ -106,6 +108,10 @@ class PictureInPictureChild extends ActorChild {
     }, { once: true });
 
     this.content.addEventListener("unload", () => {
+      let video = gWeakVideo && gWeakVideo.get();
+      if (video) {
+        video.stopCloningElementVisually();
+      }
       gWeakVideo = null;
     }, { once: true });
   }

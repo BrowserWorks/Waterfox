@@ -9,6 +9,7 @@
 #include "GraphDriver.h"
 #include "MediaStreamGraph.h"
 #include "MediaStreamGraphImpl.h"
+#include "mozilla/dom/WorkletThread.h"
 #include "nsISupportsImpl.h"
 #include "prthread.h"
 #include "Tracing.h"
@@ -23,6 +24,12 @@ static void Start(void* aArg) {
 GraphRunner::GraphRunner(MediaStreamGraphImpl* aGraph)
     : mMonitor("GraphRunner::mMonitor"),
       mGraph(aGraph),
+      mStateEnd(0),
+      mStillProcessing(true),
+      mShutdown(false),
+      mStarted(false),
+      // Note that mThread needs to be initialized last, as it may pre-empt the
+      // thread running this ctor and enter Run() with uninitialized members.
       mThread(PR_CreateThread(PR_SYSTEM_THREAD, &Start, this,
                               PR_PRIORITY_URGENT, PR_GLOBAL_THREAD,
                               PR_JOINABLE_THREAD, 0)) {
@@ -95,6 +102,8 @@ void GraphRunner::Run() {
     mStillProcessing = mGraph->OneIterationImpl(mStateEnd);
     mMonitor.Notify();  // Signal that mStillProcessing was updated
   }
+
+  dom::WorkletThread::DeleteCycleCollectedJSContext();
 }
 
 bool GraphRunner::OnThread() { return PR_GetCurrentThread() == mThread; }

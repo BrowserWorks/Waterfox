@@ -3425,6 +3425,7 @@ void JS::TransitiveCompileOptions::copyPODTransitiveOptions(
   isProbablySystemCode = rhs.isProbablySystemCode;
   hideScriptFromDebugger = rhs.hideScriptFromDebugger;
   bigIntEnabledOption = rhs.bigIntEnabledOption;
+  fieldsEnabledOption = rhs.fieldsEnabledOption;
 };
 
 void JS::ReadOnlyCompileOptions::copyPODOptions(
@@ -3552,6 +3553,7 @@ JS::CompileOptions::CompileOptions(JSContext* cx)
   throwOnAsmJSValidationFailureOption =
       cx->options().throwOnAsmJSValidationFailure();
   bigIntEnabledOption = cx->realm()->creationOptions().getBigIntEnabled();
+  fieldsEnabledOption = cx->realm()->creationOptions().getFieldsEnabled();
 }
 
 CompileOptions& CompileOptions::setIntroductionInfoToCaller(
@@ -4278,26 +4280,28 @@ JS_PUBLIC_API JSString* JS_AtomizeAndPinStringN(JSContext* cx, const char* s,
   return atom;
 }
 
-JS_PUBLIC_API JSString* JS_NewLatin1String(JSContext* cx, JS::Latin1Char* chars,
-                                           size_t length) {
+JS_PUBLIC_API JSString* JS_NewLatin1String(
+    JSContext* cx, js::UniquePtr<JS::Latin1Char[], JS::FreePolicy> chars,
+    size_t length) {
   AssertHeapIsIdle();
   CHECK_THREAD(cx);
-  return NewString(cx, chars, length);
+  return NewString(cx, std::move(chars), length);
 }
 
-JS_PUBLIC_API JSString* JS_NewUCString(JSContext* cx, char16_t* chars,
+JS_PUBLIC_API JSString* JS_NewUCString(JSContext* cx,
+                                       JS::UniqueTwoByteChars chars,
                                        size_t length) {
   AssertHeapIsIdle();
   CHECK_THREAD(cx);
-  return NewString(cx, chars, length);
+  return NewString(cx, std::move(chars), length);
 }
 
 JS_PUBLIC_API JSString* JS_NewUCStringDontDeflate(JSContext* cx,
-                                                  char16_t* chars,
+                                                  JS::UniqueTwoByteChars chars,
                                                   size_t length) {
   AssertHeapIsIdle();
   CHECK_THREAD(cx);
-  return NewStringDontDeflate(cx, chars, length);
+  return NewStringDontDeflate(cx, std::move(chars), length);
 }
 
 JS_PUBLIC_API JSString* JS_NewUCStringCopyN(JSContext* cx, const char16_t* s,
@@ -5300,10 +5304,9 @@ JSErrorNotes::JSErrorNotes() : notes_() {}
 JSErrorNotes::~JSErrorNotes() {}
 
 static UniquePtr<JSErrorNotes::Note> CreateErrorNoteVA(
-    JSContext* cx, const char* filename, unsigned sourceId,
-    unsigned lineno, unsigned column,
-    JSErrorCallback errorCallback, void* userRef, const unsigned errorNumber,
-    ErrorArgumentsType argumentsType, va_list ap) {
+    JSContext* cx, const char* filename, unsigned sourceId, unsigned lineno,
+    unsigned column, JSErrorCallback errorCallback, void* userRef,
+    const unsigned errorNumber, ErrorArgumentsType argumentsType, va_list ap) {
   auto note = MakeUnique<JSErrorNotes::Note>();
   if (!note) {
     ReportOutOfMemory(cx);
@@ -5325,15 +5328,15 @@ static UniquePtr<JSErrorNotes::Note> CreateErrorNoteVA(
 }
 
 bool JSErrorNotes::addNoteASCII(JSContext* cx, const char* filename,
-                                unsigned sourceId,
-                                unsigned lineno, unsigned column,
-                                JSErrorCallback errorCallback, void* userRef,
-                                const unsigned errorNumber, ...) {
+                                unsigned sourceId, unsigned lineno,
+                                unsigned column, JSErrorCallback errorCallback,
+                                void* userRef, const unsigned errorNumber,
+                                ...) {
   va_list ap;
   va_start(ap, errorNumber);
-  auto note = CreateErrorNoteVA(cx, filename, sourceId, lineno, column,
-                                errorCallback,
-                                userRef, errorNumber, ArgumentsAreASCII, ap);
+  auto note =
+      CreateErrorNoteVA(cx, filename, sourceId, lineno, column, errorCallback,
+                        userRef, errorNumber, ArgumentsAreASCII, ap);
   va_end(ap);
 
   if (!note) {
@@ -5347,15 +5350,15 @@ bool JSErrorNotes::addNoteASCII(JSContext* cx, const char* filename,
 }
 
 bool JSErrorNotes::addNoteLatin1(JSContext* cx, const char* filename,
-                                 unsigned sourceId,
-                                 unsigned lineno, unsigned column,
-                                 JSErrorCallback errorCallback, void* userRef,
-                                 const unsigned errorNumber, ...) {
+                                 unsigned sourceId, unsigned lineno,
+                                 unsigned column, JSErrorCallback errorCallback,
+                                 void* userRef, const unsigned errorNumber,
+                                 ...) {
   va_list ap;
   va_start(ap, errorNumber);
-  auto note = CreateErrorNoteVA(cx, filename, sourceId, lineno, column,
-                                errorCallback,
-                                userRef, errorNumber, ArgumentsAreLatin1, ap);
+  auto note =
+      CreateErrorNoteVA(cx, filename, sourceId, lineno, column, errorCallback,
+                        userRef, errorNumber, ArgumentsAreLatin1, ap);
   va_end(ap);
 
   if (!note) {
@@ -5369,15 +5372,14 @@ bool JSErrorNotes::addNoteLatin1(JSContext* cx, const char* filename,
 }
 
 bool JSErrorNotes::addNoteUTF8(JSContext* cx, const char* filename,
-                               unsigned sourceId,
-                               unsigned lineno, unsigned column,
-                               JSErrorCallback errorCallback, void* userRef,
-                               const unsigned errorNumber, ...) {
+                               unsigned sourceId, unsigned lineno,
+                               unsigned column, JSErrorCallback errorCallback,
+                               void* userRef, const unsigned errorNumber, ...) {
   va_list ap;
   va_start(ap, errorNumber);
-  auto note = CreateErrorNoteVA(cx, filename, sourceId, lineno, column,
-                                errorCallback,
-                                userRef, errorNumber, ArgumentsAreUTF8, ap);
+  auto note =
+      CreateErrorNoteVA(cx, filename, sourceId, lineno, column, errorCallback,
+                        userRef, errorNumber, ArgumentsAreUTF8, ap);
   va_end(ap);
 
   if (!note) {

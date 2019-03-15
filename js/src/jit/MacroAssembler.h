@@ -387,7 +387,7 @@ class MacroAssembler : public MacroAssemblerSpecific {
   void Push(const Value& val);
   void Push(JSValueType type, Register reg);
   void PushValue(const Address& addr);
-  void PushEmptyRooted(VMFunction::RootType rootType);
+  void PushEmptyRooted(VMFunctionData::RootType rootType);
   inline CodeOffset PushWithPatch(ImmWord word);
   inline CodeOffset PushWithPatch(ImmPtr imm);
 
@@ -397,7 +397,7 @@ class MacroAssembler : public MacroAssemblerSpecific {
   void Pop(const ValueOperand& val) PER_SHARED_ARCH;
   void PopFlags() DEFINED_ON(x86_shared);
   void PopStackPtr() DEFINED_ON(arm, mips_shared, x86_shared);
-  void popRooted(VMFunction::RootType rootType, Register cellReg,
+  void popRooted(VMFunctionData::RootType rootType, Register cellReg,
                  const ValueOperand& valueReg);
 
   // Move the stack pointer based on the requested amount.
@@ -1763,8 +1763,8 @@ class MacroAssembler : public MacroAssemblerSpecific {
   // Returns a pair: the offset of the undefined (trapping) instruction, and
   // the number of extra bytes of stack allocated prior to the trap
   // instruction proper.
-  std::pair<CodeOffset, uint32_t>
-  wasmReserveStackChecked(uint32_t amount, wasm::BytecodeOffset trapOffset);
+  std::pair<CodeOffset, uint32_t> wasmReserveStackChecked(
+      uint32_t amount, wasm::BytecodeOffset trapOffset);
 
   // Emit a bounds check against the wasm heap limit, jumping to 'label' if
   // 'cond' holds. If JitOptions.spectreMaskIndex is true, in speculative

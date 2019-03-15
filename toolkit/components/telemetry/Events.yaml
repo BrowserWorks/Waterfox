@@ -1011,7 +1011,9 @@ uptake.remotecontent.result:
         settings collection name, ...).
       trigger: >
         A label to distinguish what triggered the polling/fetching of remote content (eg. "broadcast",
-        "timer")
+        "timer", "forced", "manual")
+      age: >
+        The age of pulled data in seconds (ie. difference between publication time and fetch time).
     bug_numbers:
       - 1517469
     record_in_processes: ["main"]
