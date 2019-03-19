@@ -736,28 +736,21 @@ static void AddAnimationsForDisplayItem(nsIFrame* aFrame,
     aAnimationInfo.ClearAnimations();
   }
 
-  nsIFrame* styleFrame = nsLayoutUtils::GetStyleFrame(aFrame);
-  if (!styleFrame) {
-    return;
-  }
-
   // Update the animation generation on the layer. We need to do this before
   // any early returns since even if we don't add any animations to the
   // layer, we still need to mark it as up-to-date with regards to animations.
   // Otherwise, in RestyleManager we'll notice the discrepancy between the
   // animation generation numbers and update the layer indefinitely.
-  // Note that EffectSet::GetEffectSet expects to work with the style frame
-  // instead of the primary frame.
-  EffectSet* effects = EffectSet::GetEffectSet(styleFrame);
+  EffectSet* effects = EffectSet::GetEffectSetForFrame(aFrame, aType);
   uint64_t animationGeneration =
       effects ? effects->GetAnimationGeneration() : 0;
   aAnimationInfo.SetAnimationGeneration(animationGeneration);
 
-  EffectCompositor::ClearIsRunningOnCompositor(styleFrame, aType);
+  EffectCompositor::ClearIsRunningOnCompositor(aFrame, aType);
   const nsCSSPropertyIDSet& propertySet =
       LayerAnimationInfo::GetCSSPropertiesFor(aType);
   const nsTArray<RefPtr<dom::Animation>> matchedAnimations =
-      EffectCompositor::GetAnimationsForCompositor(styleFrame, propertySet);
+      EffectCompositor::GetAnimationsForCompositor(aFrame, propertySet);
   if (matchedAnimations.IsEmpty()) {
     return;
   }
@@ -819,6 +812,8 @@ static bool GenerateAndPushTextMask(nsIFrame* aFrame, gfxContext* aContext,
   if (aBuilder->IsForGenerateGlyphMask()) {
     return false;
   }
+
+  SVGObserverUtils::GetAndObserveBackgroundClip(aFrame);
 
   // The main function of enabling background-clip:text property value.
   // When a nsDisplayBackgroundImage detects "text" bg-clip style, it will call
@@ -1268,7 +1263,8 @@ AnimatedGeometryRoot* nsDisplayListBuilder::FindAnimatedGeometryRootFor(
 }
 
 void nsDisplayListBuilder::UpdateShouldBuildAsyncZoomContainer() {
-  mBuildAsyncZoomContainer = gfxPrefs::APZAllowZooming() &&
+  Document* document = mReferenceFrame->PresContext()->Document();
+  mBuildAsyncZoomContainer = nsLayoutUtils::AllowZoomingForDocument(document) &&
                              !gfxPrefs::LayoutUseContainersForRootFrames();
 }
 

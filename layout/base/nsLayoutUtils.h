@@ -2285,27 +2285,22 @@ class nsLayoutUtils {
                                         bool clear);
 
   /**
-   * Returns true if the frame has any current CSS transitions.
-   * A current transition is any transition that has not yet finished playing
-   * including paused transitions.
-   */
-  static bool HasCurrentTransitions(const nsIFrame* aFrame);
-
-  /**
    * Returns true if |aFrame| has an animation of a property in |aPropertySet|
-   * regardless of whether any property in the set is overridden by !important
-   * rule.
+   * regardless of whether any property in the set is overridden by an
+   * !important rule.
    */
   static bool HasAnimationOfPropertySet(const nsIFrame* aFrame,
                                         const nsCSSPropertyIDSet& aPropertySet);
 
   /**
-   * Returns true if |aEffectSet| has an animation of a property in
-   * |aPropertySet| regardless of whether any property in the set is overridden
-   * by !important rule.
+   * A variant of the above HasAnimationOfPropertySet that takes an optional
+   * EffectSet parameter as an optimization to save redundant lookups of the
+   * EffectSet.
    */
-  static bool HasAnimationOfPropertySet(mozilla::EffectSet* aEffectSet,
-                                        const nsCSSPropertyIDSet& aPropertySet);
+  static bool HasAnimationOfPropertySet(const nsIFrame* aFrame,
+                                        const nsCSSPropertyIDSet& aPropertySet,
+                                        mozilla::EffectSet* aEffectSet);
+
   /**
    * Returns true if |aFrame| has an animation of |aProperty| which is
    * not overridden by !important rules.
@@ -2314,19 +2309,32 @@ class nsLayoutUtils {
                                     nsCSSPropertyID aProperty);
 
   /**
-   * Returns true if |aFrame| has animations of properties in |aPropertySet|,
-   * and all of these properties are not overridden by !important rules.
+   * Returns true if |aFrame| has an animation where at least one of the
+   * properties in |aPropertySet| is not overridden by !important rules.
+   *
+   * If |aPropertySet| includes transform-like properties (transform, rotate,
+   * etc.) however, this will return false if any of the transform-like
+   * properties is overriden by an !important rule since these properties should
+   * be combined on the compositor.
    */
   static bool HasEffectiveAnimation(const nsIFrame* aFrame,
                                     const nsCSSPropertyIDSet& aPropertySet);
 
   /**
-   * Returns all effective animated CSS properties on |aFrame|. That means
-   * properties that can be animated on the compositor and are not overridden by
-   * a higher cascade level.
+   * Returns all effective animated CSS properties on |aStyleFrame| and its
+   * corresponding primary frame (for content that makes this distinction,
+   * notable display:table content) that can be animated on the compositor.
+   *
+   * Properties that can be animated on the compositor but which are overridden
+   * by !important rules are not returned.
+   *
+   * Unlike HasEffectiveAnimation, however, this does not check the set of
+   * transform-like properties to ensure that if any such properties are
+   * overridden by !important rules, the other transform-like properties are
+   * not run on the compositor (see bug 1534884).
    */
   static nsCSSPropertyIDSet GetAnimationPropertiesForCompositor(
-      const nsIFrame* aFrame);
+      const nsIFrame* aStyleFrame);
 
   /**
    * Checks if off-main-thread animations are enabled.
@@ -2612,7 +2620,7 @@ class nsLayoutUtils {
   /**
    * Helper method to get touch action behaviour from the frame
    */
-  static uint32_t GetTouchActionFromFrame(nsIFrame* aFrame);
+  static mozilla::StyleTouchAction GetTouchActionFromFrame(nsIFrame* aFrame);
 
   /**
    * Helper method to transform |aBounds| from aFrame to aAncestorFrame,
@@ -2694,6 +2702,12 @@ class nsLayoutUtils {
    * enabled in Fennec it will always return 1.0.
    */
   static float GetCurrentAPZResolutionScale(nsIPresShell* aShell);
+
+  /**
+   * Returns true if aDocument should be allowed to use resolution
+   * zooming.
+   */
+  static bool AllowZoomingForDocument(const mozilla::dom::Document* aDocument);
 
   /**
    * Returns true if we need to disable async scrolling for this particular
@@ -2970,14 +2984,6 @@ class nsLayoutUtils {
   static void FixupNoneGeneric(nsFont* aFont, uint8_t aGenericFontID,
                                const nsFont* aDefaultVariableFont);
 
-  /**
-   * For an nsStyleFont with mSize set, apply minimum font size constraints
-   * from preferences, as well as -moz-min-font-size-ratio.
-   */
-  static void ApplyMinFontSize(nsStyleFont* aFont,
-                               const mozilla::dom::Document*,
-                               nscoord aMinFontSize);
-
   static void ComputeSystemFont(nsFont* aSystemFont,
                                 mozilla::LookAndFeel::FontID aFontID,
                                 const nsFont* aDefaultVariableFont);
@@ -2995,7 +3001,7 @@ class nsLayoutUtils {
    * Returns true if there are any preferences or overrides that indicate a
    * need to create a MobileViewportManager.
    */
-  static bool ShouldHandleMetaViewport(mozilla::dom::Document*);
+  static bool ShouldHandleMetaViewport(const mozilla::dom::Document*);
 
   /**
    * Resolve a CSS <length-percentage> value to a definite size.

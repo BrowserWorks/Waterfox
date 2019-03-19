@@ -706,14 +706,21 @@ pref("plugins.testmode", false);
 // Should plugins that are hidden show the infobar UI?
 pref("plugins.show_infobar", false);
 
+#if defined(_ARM64_) && defined(XP_WIN)
+pref("plugin.default.state", 0);
+#else
 pref("plugin.default.state", 1);
+#endif
 
 // Plugins bundled in XPIs are enabled by default.
 pref("plugin.defaultXpi.state", 2);
 
-
-// Flash is Click-to-Activate by default on all channels.
+// Flash is Click-to-Activate by default on all channels. Disabled for ARM builds.
+#if defined(_ARM64_) && defined(XP_WIN)
+pref("plugin.state.flash", 0);
+#else
 pref("plugin.state.flash", 1);
+#endif
 
 // Enables the download and use of the flash blocklists.
 pref("plugins.flashBlock.enabled", true);
@@ -1710,6 +1717,7 @@ pref("extensions.pocket.site", "getpocket.com");
 
 pref("signon.schemeUpgrades", true);
 pref("signon.privateBrowsingCapture.enabled", true);
+pref("signon.showAutoCompleteFooter", true);
 
 // Enable the "Simplify Page" feature in Print Preview. This feature
 // is disabled by default in toolkit.
@@ -1847,3 +1855,10 @@ pref("browser.engagement.recent_visited_origins.expiry", 86400); // 24 * 60 * 60
 pref("browser.aboutConfig.showWarning", true);
 
 pref("browser.toolbars.keyboard_navigation", true);
+
+// Prefs to control the Firefox Account toolbar menu.
+// This pref will surface existing Firefox Account information
+// as a button next to the hamburger menu. It allows
+// quick access to sign-in and manage your Firefox Account.
+pref("identity.fxaccounts.toolbar.enabled", true);
+pref("identity.fxaccounts.toolbar.accessed", false);

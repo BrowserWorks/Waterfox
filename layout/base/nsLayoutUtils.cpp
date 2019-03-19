@@ -219,9 +219,9 @@ static ContentMap& GetContentMap() {
 }
 
 template <typename TestType>
-static bool HasMatchingAnimations(EffectSet* aEffects, TestType&& aTest) {
-  for (KeyframeEffect* effect : *aEffects) {
-    if (aTest(*effect)) {
+static bool HasMatchingAnimations(EffectSet& aEffects, TestType&& aTest) {
+  for (KeyframeEffect* effect : aEffects) {
+    if (aTest(*effect, aEffects)) {
       return true;
     }
   }
@@ -230,107 +230,104 @@ static bool HasMatchingAnimations(EffectSet* aEffects, TestType&& aTest) {
 }
 
 template <typename TestType>
-static bool HasMatchingAnimations(const nsIFrame* aFrame, TestType&& aTest) {
-  EffectSet* effects = EffectSet::GetEffectSet(aFrame);
-  if (!effects) {
+static bool HasMatchingAnimations(const nsIFrame* aFrame,
+                                  const nsCSSPropertyIDSet& aPropertySet,
+                                  TestType&& aTest) {
+  MOZ_ASSERT(aFrame);
+
+  if (aPropertySet.IsSubsetOf(nsCSSPropertyIDSet::OpacityProperties()) &&
+      !aFrame->MayHaveOpacityAnimation()) {
     return false;
   }
 
-  return HasMatchingAnimations(effects, aTest);
-}
-
-bool nsLayoutUtils::HasCurrentTransitions(const nsIFrame* aFrame) {
-  return HasMatchingAnimations(aFrame, [](KeyframeEffect& aEffect) {
-    // Since |aEffect| is current, it must have an associated Animation
-    // so we don't need to null-check the result of GetAnimation().
-    return aEffect.IsCurrent() && aEffect.GetAnimation()->AsCSSTransition();
-  });
-}
-
-template <typename EffectSetOrFrame>
-static bool MayHaveAnimationOfPropertySet(
-    const EffectSetOrFrame* aTarget, const nsCSSPropertyIDSet& aPropertySet) {
-  MOZ_ASSERT(aTarget);
-  if (aPropertySet.Equals(nsCSSPropertyIDSet::OpacityProperties())) {
-    return aTarget->MayHaveOpacityAnimation();
-  }
-
-  MOZ_ASSERT(aPropertySet.Equals(nsCSSPropertyIDSet::TransformLikeProperties()),
-             "Should equal to transform-like properties at this branch");
-  return aTarget->MayHaveTransformAnimation();
-}
-
-template <typename EffectSetOrFrame>
-static bool HasAnimationOfPropertySetImpl(
-    EffectSetOrFrame* aTarget, const nsCSSPropertyIDSet& aPropertySet) {
-  if (!aTarget || !MayHaveAnimationOfPropertySet(aTarget, aPropertySet)) {
+  if (aPropertySet.IsSubsetOf(nsCSSPropertyIDSet::TransformLikeProperties()) &&
+      !aFrame->MayHaveTransformAnimation()) {
     return false;
   }
 
+  EffectSet* effectSet = EffectSet::GetEffectSetForFrame(aFrame, aPropertySet);
+  if (!effectSet) {
+    return false;
+  }
+
+  return HasMatchingAnimations(*effectSet, aTest);
+}
+
+/* static */
+bool nsLayoutUtils::HasAnimationOfPropertySet(
+    const nsIFrame* aFrame, const nsCSSPropertyIDSet& aPropertySet) {
   return HasMatchingAnimations(
-      aTarget, [&aPropertySet](KeyframeEffect& aEffect) {
+      aFrame, aPropertySet,
+      [&aPropertySet](KeyframeEffect& aEffect, const EffectSet&) {
         return (aEffect.IsInEffect() || aEffect.IsCurrent()) &&
                aEffect.HasAnimationOfPropertySet(aPropertySet);
       });
 }
 
+/* static */
 bool nsLayoutUtils::HasAnimationOfPropertySet(
-    EffectSet* aEffectSet, const nsCSSPropertyIDSet& aPropertySet) {
-  return HasAnimationOfPropertySetImpl(aEffectSet, aPropertySet);
-}
+    const nsIFrame* aFrame, const nsCSSPropertyIDSet& aPropertySet,
+    EffectSet* aEffectSet) {
+  MOZ_ASSERT(
+      !aEffectSet ||
+          EffectSet::GetEffectSetForFrame(aFrame, aPropertySet) == aEffectSet,
+      "The EffectSet, if supplied, should match what we would otherwise fetch");
 
-bool nsLayoutUtils::HasAnimationOfPropertySet(
-    const nsIFrame* aFrame, const nsCSSPropertyIDSet& aPropertySet) {
-  return HasAnimationOfPropertySetImpl(aFrame, aPropertySet);
-}
+  if (!aEffectSet) {
+    return nsLayoutUtils::HasAnimationOfPropertySet(aFrame, aPropertySet);
+  }
 
-bool nsLayoutUtils::HasEffectiveAnimation(const nsIFrame* aFrame,
-                                          nsCSSPropertyID aProperty) {
-  EffectSet* effects = EffectSet::GetEffectSet(aFrame);
-  // This function isn't called by opacity or transform, so we don't have to
-  // check MayHaveAnimationOfPropertySet.
-  if (!effects) {
+  if (aPropertySet.IsSubsetOf(nsCSSPropertyIDSet::TransformLikeProperties()) &&
+      !aEffectSet->MayHaveTransformAnimation()) {
+    return false;
+  }
+
+  if (aPropertySet.IsSubsetOf(nsCSSPropertyIDSet::OpacityProperties()) &&
+      !aEffectSet->MayHaveOpacityAnimation()) {
     return false;
   }
 
   return HasMatchingAnimations(
-      effects, [&aProperty, &effects](KeyframeEffect& aEffect) {
+      *aEffectSet,
+      [&aPropertySet](KeyframeEffect& aEffect, const EffectSet& aEffectSet) {
         return (aEffect.IsInEffect() || aEffect.IsCurrent()) &&
-               aEffect.HasEffectiveAnimationOfProperty(aProperty, *effects);
+               aEffect.HasAnimationOfPropertySet(aPropertySet);
       });
 }
 
+/* static */
 bool nsLayoutUtils::HasEffectiveAnimation(
     const nsIFrame* aFrame, const nsCSSPropertyIDSet& aPropertySet) {
-  EffectSet* effects = EffectSet::GetEffectSet(aFrame);
-  if (!effects || !MayHaveAnimationOfPropertySet(aFrame, aPropertySet)) {
-    return false;
-  }
-
-  return HasMatchingAnimations(effects, [&aPropertySet,
-                                         &effects](KeyframeEffect& aEffect) {
-    return (aEffect.IsInEffect() || aEffect.IsCurrent()) &&
-           aEffect.HasEffectiveAnimationOfPropertySet(aPropertySet, *effects);
-  });
+  return HasMatchingAnimations(
+      aFrame, aPropertySet,
+      [&aPropertySet](KeyframeEffect& aEffect, const EffectSet& aEffectSet) {
+        return (aEffect.IsInEffect() || aEffect.IsCurrent()) &&
+               aEffect.HasEffectiveAnimationOfPropertySet(aPropertySet,
+                                                          aEffectSet);
+      });
 }
 
 /* static */
 nsCSSPropertyIDSet nsLayoutUtils::GetAnimationPropertiesForCompositor(
-    const nsIFrame* aFrame) {
+    const nsIFrame* aStyleFrame) {
   nsCSSPropertyIDSet properties;
 
-  EffectSet* effects = EffectSet::GetEffectSet(aFrame);
+  // We fetch the effects for the style frame here since this method is called
+  // by RestyleManager::AddLayerChangesForAnimation which takes care to apply
+  // the relevant hints to the primary frame as needed.
+  EffectSet* effects = EffectSet::GetEffectSetForStyleFrame(aStyleFrame);
   if (!effects) {
     return properties;
   }
 
   AnimationPerformanceWarning::Type warning;
-  if (!EffectCompositor::AllowCompositorAnimationsOnFrame(aFrame, warning)) {
+  if (!EffectCompositor::AllowCompositorAnimationsOnFrame(aStyleFrame,
+                                                          warning)) {
     return properties;
   }
 
   for (const KeyframeEffect* effect : *effects) {
-    properties |= effect->GetPropertiesForCompositor(*effects, aFrame);
+    properties |= effect->GetPropertiesForCompositor(*effects, aStyleFrame);
   }
 
   return properties;
@@ -668,6 +665,16 @@ bool nsLayoutUtils::AsyncPanZoomEnabled(nsIFrame* aFrame) {
     return false;
   }
   return widget->AsyncPanZoomEnabled();
+}
+
+bool nsLayoutUtils::AllowZoomingForDocument(
+    const mozilla::dom::Document* aDocument) {
+  // True if we allow zooming for all documents on this platform, or if we are
+  // in RDM and handling meta viewports, which force zoom under some
+  // circumstances.
+  return gfxPrefs::APZAllowZooming() ||
+         (aDocument && aDocument->InRDMPane() &&
+          nsLayoutUtils::ShouldHandleMetaViewport(aDocument));
 }
 
 float nsLayoutUtils::GetCurrentAPZResolutionScale(nsIPresShell* aShell) {
@@ -9152,10 +9159,9 @@ bool nsLayoutUtils::ContainsMetricsWithId(const Layer* aLayer,
 }
 
 /* static */
-uint32_t nsLayoutUtils::GetTouchActionFromFrame(nsIFrame* aFrame) {
-  // If aFrame is null then return default value
+StyleTouchAction nsLayoutUtils::GetTouchActionFromFrame(nsIFrame* aFrame) {
   if (!aFrame) {
-    return NS_STYLE_TOUCH_ACTION_AUTO;
+    return StyleTouchAction_AUTO;
   }
 
   // The touch-action CSS property applies to: all elements except:
@@ -9164,13 +9170,13 @@ uint32_t nsLayoutUtils::GetTouchActionFromFrame(nsIFrame* aFrame) {
   bool isNonReplacedInlineElement =
       aFrame->IsFrameOfType(nsIFrame::eLineParticipant);
   if (isNonReplacedInlineElement) {
-    return NS_STYLE_TOUCH_ACTION_AUTO;
+    return StyleTouchAction_AUTO;
   }
 
   const nsStyleDisplay* disp = aFrame->StyleDisplay();
   bool isTableElement = disp->IsInternalTableStyleExceptCell();
   if (isTableElement) {
-    return NS_STYLE_TOUCH_ACTION_AUTO;
+    return StyleTouchAction_AUTO;
   }
 
   return disp->mTouchAction;
@@ -9344,7 +9350,8 @@ static void UpdateDisplayPortMarginsForPendingMetrics(
     return;
   }
 
-  if (gfxPrefs::APZAllowZooming() && aMetrics.IsRootContent()) {
+  if (nsLayoutUtils::AllowZoomingForDocument(shell->GetDocument()) &&
+      aMetrics.IsRootContent()) {
     // See APZCCallbackHelper::UpdateRootFrame for details.
     float presShellResolution = shell->GetResolution();
     if (presShellResolution != aMetrics.GetPresShellResolution()) {
@@ -9739,28 +9746,6 @@ void nsLayoutUtils::FixupNoneGeneric(nsFont* aFont, uint8_t aGenericFontID,
 }
 
 /* static */
-void nsLayoutUtils::ApplyMinFontSize(nsStyleFont* aFont,
-                                     const Document* aDocument,
-                                     nscoord aMinFontSize) {
-  nscoord fontSize = aFont->mSize;
-
-  // enforce the user' specified minimum font-size on the value that we expose
-  // (but don't change font-size:0, since that would unhide hidden text)
-  if (fontSize > 0) {
-    if (aMinFontSize < 0) {
-      aMinFontSize = 0;
-    } else {
-      aMinFontSize = (aMinFontSize * aFont->mMinFontSizeRatio) / 100;
-    }
-    if (fontSize < aMinFontSize && !nsContentUtils::IsChromeDoc(aDocument)) {
-      // override the minimum font-size constraint
-      fontSize = aMinFontSize;
-    }
-  }
-  aFont->mFont.size = fontSize;
-}
-
-/* static */
 void nsLayoutUtils::ComputeSystemFont(nsFont* aSystemFont,
                                       LookAndFeel::FontID aFontID,
                                       const nsFont* aDefaultVariableFont) {
@@ -9808,7 +9793,7 @@ void nsLayoutUtils::ComputeSystemFont(nsFont* aSystemFont,
 }
 
 /* static */
-bool nsLayoutUtils::ShouldHandleMetaViewport(Document* aDocument) {
+bool nsLayoutUtils::ShouldHandleMetaViewport(const Document* aDocument) {
   auto metaViewportOverride = nsIDocShell::META_VIEWPORT_OVERRIDE_NONE;
   if (aDocument) {
     if (nsIDocShell* docShell = aDocument->GetDocShell()) {

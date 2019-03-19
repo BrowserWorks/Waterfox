@@ -3135,9 +3135,6 @@ pref("layout.css.osx-font-smoothing.enabled", false);
 // Is support for CSS overflow-clip-box enabled for non-UA sheets?
 pref("layout.css.overflow-clip-box.enabled", false);
 
-// Is support for CSS contain enabled?
-pref("layout.css.contain.enabled", false);
-
 // Is layout of CSS outline-style:auto enabled?
 pref("layout.css.outline-style-auto.enabled", false);
 
@@ -4799,10 +4796,6 @@ pref("image.animated.decode-on-demand.batch-size", 6);
 // them. This saves on the allocation itself, and may be able to reuse the
 // contents as well. Only applies if generating full frames.
 pref("image.animated.decode-on-demand.recycle", true);
-
-// Whether we should generate full frames at decode time or partial frames which
-// are combined at display time (historical behavior and default).
-pref("image.animated.generate-full-frames", true);
 
 // Resume an animated image from the last displayed frame rather than
 // advancing when out of view.
