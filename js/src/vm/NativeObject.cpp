@@ -1264,10 +1264,14 @@ js::AddPropertyTypesAfterProtoChange(JSContext* cx, NativeObject* obj, ObjectGro
 {
     MOZ_ASSERT(obj->group() != oldGroup);
     MOZ_ASSERT(!obj->group()->unknownProperties());
+    
+    if (oldGroup->unknownProperties()) {
+        MarkObjectGroupUnknownProperties(cx, obj->group());
+        return;
+    }
 
     // First copy the dynamic flags.
-    MarkObjectGroupFlags(cx, obj, oldGroup->flags() &
-                         (OBJECT_FLAG_DYNAMIC_MASK & ~OBJECT_FLAG_UNKNOWN_PROPERTIES));
+    MarkObjectGroupFlags(cx, obj, oldGroup->flags() & OBJECT_FLAG_DYNAMIC_MASK);
 
     // Now update all property types. If the object has many properties, this
     // function may be slow so we mark all properties as unknown.
