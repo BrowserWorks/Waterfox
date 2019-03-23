@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use api::PremultipliedColorF;
+use api::{DocumentLayer, PremultipliedColorF};
 use api::units::*;
 use clip_scroll_tree::{ClipScrollTree, ROOT_SPATIAL_NODE_INDEX, SpatialNodeIndex};
 use gpu_cache::{GpuCacheAddress, GpuDataRequest};
@@ -22,6 +22,15 @@ pub const VECS_PER_TRANSFORM: usize = 8;
 #[cfg_attr(feature = "replay", derive(Deserialize))]
 pub struct ZBufferId(i32);
 
+// We get 24 bits of Z value - use up 22 bits of it to give us
+// 4 bits to account for GPU issues. This seems to manifest on
+// some GPUs under certain perspectives due to z interpolation
+// precision problems.
+const MAX_DOCUMENT_LAYERS : i8 = 1 << 3;
+const MAX_ITEMS_PER_DOCUMENT_LAYER : i32 = 1 << 19;
+const MAX_DOCUMENT_LAYER_VALUE : i8 = MAX_DOCUMENT_LAYERS / 2 - 1;
+const MIN_DOCUMENT_LAYER_VALUE : i8 = -MAX_DOCUMENT_LAYERS / 2;
+
 impl ZBufferId {
     pub fn invalid() -> Self {
         ZBufferId(i32::MAX)
@@ -32,18 +41,23 @@ impl ZBufferId {
 #[cfg_attr(feature = "capture", derive(Serialize))]
 #[cfg_attr(feature = "replay", derive(Deserialize))]
 pub struct ZBufferIdGenerator {
+    base: i32,
     next: i32,
 }
 
 impl ZBufferIdGenerator {
-    pub fn new() -> Self {
+    pub fn new(layer: DocumentLayer) -> Self {
+        debug_assert!(layer >= MIN_DOCUMENT_LAYER_VALUE);
+        debug_assert!(layer <= MAX_DOCUMENT_LAYER_VALUE);
         ZBufferIdGenerator {
+            base: layer as i32 * MAX_ITEMS_PER_DOCUMENT_LAYER,
             next: 0
         }
     }
 
     pub fn next(&mut self) -> ZBufferId {
-        let id = ZBufferId(self.next);
+        debug_assert!(self.next < MAX_ITEMS_PER_DOCUMENT_LAYER);
+        let id = ZBufferId(self.next + self.base);
         self.next += 1;
         id
     }
@@ -164,6 +178,26 @@ pub struct PrimitiveInstanceData {
     data: [i32; 4],
 }
 
+/// Vertex format for resolve style operations with pixel local storage.
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct ResolveInstanceData {
+    rect: [f32; 4],
+}
+
+impl ResolveInstanceData {
+    pub fn new(rect: DeviceIntRect) -> Self {
+        ResolveInstanceData {
+            rect: [
+                rect.origin.x as f32,
+                rect.origin.y as f32,
+                rect.size.width as f32,
+                rect.size.height as f32,
+            ],
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 #[cfg_attr(feature = "capture", derive(Serialize))]
 #[cfg_attr(feature = "replay", derive(Deserialize))]
@@ -193,7 +227,7 @@ impl PrimitiveHeaders {
         &mut self,
         prim_header: &PrimitiveHeader,
         z: ZBufferId,
-        user_data: [i32; 3],
+        user_data: [i32; 4],
     ) -> PrimitiveHeaderIndex {
         debug_assert_eq!(self.headers_int.len(), self.headers_float.len());
         let id = self.headers_float.len();
@@ -207,7 +241,6 @@ impl PrimitiveHeaders {
             z,
             task_address: prim_header.task_address,
             specific_prim_address: prim_header.specific_prim_address.as_int(),
-            clip_task_address: prim_header.clip_task_address,
             transform_id: prim_header.transform_id,
             user_data,
         });
@@ -224,7 +257,6 @@ pub struct PrimitiveHeader {
     pub local_clip_rect: LayoutRect,
     pub task_address: RenderTaskAddress,
     pub specific_prim_address: GpuCacheAddress,
-    pub clip_task_address: RenderTaskAddress,
     pub transform_id: TransformPaletteId,
 }
 
@@ -248,9 +280,8 @@ pub struct PrimitiveHeaderI {
     pub z: ZBufferId,
     pub task_address: RenderTaskAddress,
     pub specific_prim_address: i32,
-    pub clip_task_address: RenderTaskAddress,
     pub transform_id: TransformPaletteId,
-    pub user_data: [i32; 3],
+    pub user_data: [i32; 4],
 }
 
 pub struct GlyphInstance {

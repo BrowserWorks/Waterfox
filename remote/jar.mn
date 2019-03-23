@@ -4,6 +4,8 @@
 
 remote.jar:
 % content remote %content/
+  content/RemoteAgent.jsm (RemoteAgent.jsm)
+
   content/Connection.jsm (Connection.jsm)
   content/Error.jsm (Error.jsm)
   content/JSONHandler.jsm (JSONHandler.jsm)
@@ -23,6 +25,7 @@ remote.jar:
   # targets
   content/targets/MainProcessTarget.jsm (targets/MainProcessTarget.jsm)
   content/targets/TabTarget.jsm (targets/TabTarget.jsm)
+  content/targets/Target.jsm (targets/Target.jsm)
   content/targets/Targets.jsm (targets/Targets.jsm)
 
   # domains

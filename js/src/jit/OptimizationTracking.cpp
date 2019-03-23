@@ -787,9 +787,6 @@ static JSFunction* MaybeConstructorFromType(TypeSet::Type ty) {
   ObjectGroup* obj = ty.group();
   AutoSweepObjectGroup sweep(obj);
   TypeNewScript* newScript = obj->newScript(sweep);
-  if (!newScript && obj->maybeUnboxedLayout(sweep)) {
-    newScript = obj->unboxedLayout(sweep).newScript();
-  }
   return newScript ? newScript->function() : nullptr;
 }
 

@@ -99,6 +99,7 @@
 #include "js/Printf.h"
 #include "js/PropertySpec.h"
 #include "js/Realm.h"
+#include "js/RegExp.h"  // JS::ObjectIsRegExp
 #include "js/SourceText.h"
 #include "js/StableStringChars.h"
 #include "js/StructuredClone.h"
@@ -6557,24 +6558,6 @@ static bool IsLatin1(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
-static bool UnboxedObjectsEnabled(JSContext* cx, unsigned argc, Value* vp) {
-  // Note: this also returns |false| if we're using --ion-eager or if the
-  // JITs are disabled, since that affects how unboxed objects are used.
-
-  CallArgs args = CallArgsFromVp(argc, vp);
-  args.rval().setBoolean(!jit::JitOptions.disableUnboxedObjects &&
-                         !jit::JitOptions.eagerCompilation &&
-                         jit::IsIonEnabled(cx));
-  return true;
-}
-
-static bool IsUnboxedObject(JSContext* cx, unsigned argc, Value* vp) {
-  CallArgs args = CallArgsFromVp(argc, vp);
-  args.rval().setBoolean(args.get(0).isObject() &&
-                         args[0].toObject().is<UnboxedPlainObject>());
-  return true;
-}
-
 static bool HasCopyOnWriteElements(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
   args.rval().setBoolean(
@@ -8865,14 +8848,6 @@ JS_FN_HELP("parseBin", BinParse, 1, 0,
 "isLatin1(s)",
 "  Return true iff the string's characters are stored as Latin1."),
 
-    JS_FN_HELP("unboxedObjectsEnabled", UnboxedObjectsEnabled, 0, 0,
-"unboxedObjectsEnabled()",
-"  Return true if unboxed objects are enabled."),
-
-    JS_FN_HELP("isUnboxedObject", IsUnboxedObject, 1, 0,
-"isUnboxedObject(o)",
-"  Return true iff the object is an unboxed object."),
-
     JS_FN_HELP("hasCopyOnWriteElements", HasCopyOnWriteElements, 1, 0,
 "hasCopyOnWriteElements(o)",
 "  Return true iff the object has copy-on-write dense elements."),
@@ -9276,7 +9251,7 @@ static bool Help(JSContext* cx, unsigned argc, Value* vp) {
     return true;
   }
   bool isRegexp;
-  if (!JS_ObjectIsRegExp(cx, obj, &isRegexp)) {
+  if (!JS::ObjectIsRegExp(cx, obj, &isRegexp)) {
     return false;
   }
 
@@ -10208,17 +10183,15 @@ static bool SetContextOptions(JSContext* cx, const OptionParser& op) {
       .setNativeRegExp(enableNativeRegExp)
       .setAsyncStack(enableAsyncStacks);
 
-  if (op.getBoolOption("no-unboxed-objects")) {
-    jit::JitOptions.disableUnboxedObjects = true;
-  }
-
   if (const char* str = op.getStringOption("cache-ir-stubs")) {
     if (strcmp(str, "on") == 0) {
       jit::JitOptions.disableCacheIR = false;
+      jit::JitOptions.disableCacheIRCalls = true;
     } else if (strcmp(str, "off") == 0) {
       jit::JitOptions.disableCacheIR = true;
-    } else if (strcmp(str, "nobinary") == 0) {
-      jit::JitOptions.disableCacheIRBinaryArith = true;
+    } else if (strcmp(str, "call") == 0) {
+      jit::JitOptions.disableCacheIR = false;
+      jit::JitOptions.disableCacheIRCalls = false;
     } else {
       return OptionFailure("cache-ir-stubs", str);
     }
@@ -10915,10 +10888,9 @@ int main(int argc, char** argv, char** envp) {
       !op.addStringOption('\0', "spectre-mitigations", "on/off",
                           "Whether Spectre mitigations are enabled (default: "
                           "off, on to enable)") ||
-      !op.addStringOption(
-          '\0', "cache-ir-stubs", "on/off/nobinary",
-          "Use CacheIR stubs (default: on, off to disable, nobinary to"
-          "just disable binary arith)") ||
+      !op.addStringOption('\0', "cache-ir-stubs", "on/off/call",
+                          "Use CacheIR stubs (default: on, off to disable, "
+                          "call to enable work-in-progress call ICs)") ||
       !op.addStringOption('\0', "ion-shared-stubs", "on/off",
                           "Use shared stubs (default: on, off to disable)") ||
       !op.addStringOption('\0', "ion-scalar-replacement", "on/off",
@@ -11176,18 +11148,30 @@ int main(int argc, char** argv, char** envp) {
   nurseryBytes = op.getIntOption("nursery-size") * 1024L * 1024L;
 
   /* Use the same parameters as the browser in xpcjsruntime.cpp. */
-  JSContext* cx = JS_NewContext(JS::DefaultHeapMaxBytes, nurseryBytes);
+  JSContext* const cx = JS_NewContext(JS::DefaultHeapMaxBytes, nurseryBytes);
   if (!cx) {
     return 1;
   }
+  auto destroyCx = MakeScopeExit([cx] { JS_DestroyContext(cx); });
 
   UniquePtr<ShellContext> sc = MakeUnique<ShellContext>(cx);
   if (!sc) {
     return 1;
   }
+  auto destroyShellContext = MakeScopeExit([cx, &sc] {
+    // Must clear out some of sc's pointer containers before JS_DestroyContext.
+    sc->markObservers.reset();
+
+    JS_SetContextPrivate(cx, nullptr);
+    sc.reset();
+  });
 
   JS_SetContextPrivate(cx, sc.get());
   JS_SetGrayGCRootsTracer(cx, TraceGrayRoots, nullptr);
+  auto resetGrayGCRootsTracer = MakeScopeExit([cx] {
+    JS_SetGrayGCRootsTracer(cx, nullptr, nullptr);
+  });
+
   // Waiting is allowed on the shell's main thread, for now.
   JS_SetFutexCanWait(cx);
   JS::SetWarningReporter(cx, WarningReporter);
@@ -11228,6 +11212,13 @@ int main(int argc, char** argv, char** envp) {
   JS::dbg::SetDebuggerMallocSizeOf(cx, moz_malloc_size_of);
 
   js::UseInternalJobQueues(cx);
+
+  auto shutdownShellThreads = MakeScopeExit([cx] {
+    KillWatchdog(cx);
+    KillWorkerThreads(cx);
+    DestructSharedObjectMailbox();
+    CancelOffThreadJobsForRuntime(cx);
+  });
 
   if (const char* opt = op.getStringOption("nursery-strings")) {
     if (strcmp(opt, "on") == 0) {
@@ -11274,21 +11265,5 @@ int main(int argc, char** argv, char** envp) {
   }
 #endif
 
-  JS_SetGrayGCRootsTracer(cx, nullptr, nullptr);
-
-  // Must clear out some of sc's pointer containers before JS_DestroyContext.
-  sc->markObservers.reset();
-
-  KillWatchdog(cx);
-
-  KillWorkerThreads(cx);
-
-  DestructSharedObjectMailbox();
-
-  CancelOffThreadJobsForRuntime(cx);
-
-  JS_SetContextPrivate(cx, nullptr);
-  sc.reset();
-  JS_DestroyContext(cx);
   return result;
 }

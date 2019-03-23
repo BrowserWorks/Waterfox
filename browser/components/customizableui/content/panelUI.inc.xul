@@ -327,6 +327,11 @@
                        label="&places.library.title;"
                        closemenu="none"
                        oncommand="PanelUI.showSubView('appMenu-libraryView', this)"/>
+        <toolbarbutton id="appMenu-logins-button"
+                       class="subviewbutton subviewbutton-iconic"
+                       label="&logins.label;"
+                       oncommand="LoginHelper.openPasswordManager(window)"
+                       />
         <toolbarbutton id="appMenu-addons-button"
                        class="subviewbutton subviewbutton-iconic"
                        label="&addons.label;"
@@ -732,10 +737,8 @@
           <toolbarbutton class="PanelUI-fxa-signin-button" label="&fxa.unverified.button.label;" oncommand="gSync.openPrefs('fxa_discoverability_native');"/>
         </vbox>
         <vbox id="PanelUI-fxa-menu">
-          <hbox flex="1" pack="center" class="fxa-avatar-subpanel">
-            <toolbarbutton align="left" oncommand="gSync.openFxAChangeAvatar('fxa_discoverability_native');">
-              <image id="fxa-menu-avatar"/>
-            </toolbarbutton>
+          <hbox flex="1" align="center" class="fxa-avatar-subpanel">
+            <image role="presentation" id="fxa-menu-avatar"/>
             <vbox flex="1">
               <label class="fxa-avatar-subpanel-description" >&fxa.menu.signedInAs.label;</label>
               <label id="fxa-menu-email"></label>
@@ -754,9 +757,11 @@
           <toolbarbutton id="PanelUI-fxa-menu-view-sidebar"
                          class="subviewbutton subviewbutton-iconic"
                          label="&appMenuRemoteTabs.sidebar.label;"
-                         oncommand="SidebarUI.toggle('viewTabsSidebar');"/>
+                         oncommand="SidebarUI.toggle('viewTabsSidebar');">
+            <observes element="sidebar-box" attribute="positionend"/>
+          </toolbarbutton>
           <toolbarseparator/>
-          <toolbarbutton class="subviewbutton" label="&fxa.menu.connectAnotherDevice.label;" oncommand="gSync.openConnectAnotherDevice('fxa_discoverability_native');"/>
+          <toolbarbutton class="subviewbutton" label="&fxa.menu.connectAnotherDevice2.label;" oncommand="gSync.openConnectAnotherDevice('fxa_discoverability_native');"/>
           <toolbarbutton class="subviewbutton" label="&fxa.menu.manageAccount.label;" oncommand="gSync.openFxAManagePage('fxa_discoverability_native');"/>
           <toolbarbutton class="subviewbutton" label="&fxa.menu.syncSettings.label;" oncommand="gSync.openPrefs('fxa_discoverability_native');"/>
           <toolbarseparator/>

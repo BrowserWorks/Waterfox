@@ -46,7 +46,7 @@ and responsibilities.
 
 
 The UrlbarQueryContext
-================
+======================
 
 The *UrlbarQueryContext* object describes a single instance of a search.
 It is augmented as it progresses through the system, with various information:
@@ -55,7 +55,10 @@ It is augmented as it progresses through the system, with various information:
 .. code::
 
   UrlbarQueryContext {
-    enableAutofill; // {boolean} Whether or not to include autofill results.
+    allowAutofill; // {boolean} If true, providers are allowed to return
+                   // autofill results.  Even if true, it's up to providers
+                   // whether to include autofill results, but when false, no
+                   // provider should include them.
     isPrivate; // {boolean} Whether the search started in a private context.
     lastKey; // {string} The last key pressed by the user. This can affect the
              // behavior, for example by not autofilling again when the user
@@ -277,7 +280,7 @@ user and handling their input.
   reference for the default View, but may not be valid for other implementations.
 
 `UrlbarInput.jsm <https://dxr.mozilla.org/mozilla-central/source/browser/components/urlbar/UrlbarInput.jsm>`_
-----------------
+-------------------------------------------------------------------------------------------------------------
 
 Implements an input box *View*, owns an *UrlbarView*.
 
@@ -328,7 +331,7 @@ Implements an input box *View*, owns an *UrlbarView*.
   }
 
 `UrlbarView.jsm <https://dxr.mozilla.org/mozilla-central/source/browser/components/urlbar/UrlbarView.jsm>`_
----------------
+-----------------------------------------------------------------------------------------------------------
 
 Represents the base *View* implementation, communicates with the *Controller*.
 
@@ -354,7 +357,7 @@ Represents the base *View* implementation, communicates with the *Controller*.
 
 
 UrlbarResult
-===========
+============
 
 An `UrlbarResult <https://dxr.mozilla.org/mozilla-central/source/browser/components/urlbar/UrlbarResult.jsm>`_
 instance represents a single search result with a result type, that
@@ -410,7 +413,7 @@ Shared Modules
 Various modules provide shared utilities to the other components:
 
 `UrlbarPrefs.jsm <https://dxr.mozilla.org/mozilla-central/source/browser/components/urlbar/UrlbarPrefs.jsm>`_
-----------------
+-------------------------------------------------------------------------------------------------------------
 
 Implements a Map-like storage or urlbar related preferences. The values are kept
 up-to-date.
@@ -427,7 +430,7 @@ up-to-date.
   Newly added preferences should always be properly documented in UrlbarPrefs.
 
 `UrlbarUtils.jsm <https://dxr.mozilla.org/mozilla-central/source/browser/components/urlbar/UrlbarUtils.jsm>`_
-----------------
+-------------------------------------------------------------------------------------------------------------
 
 Includes shared utils and constants shared across all the components.
 

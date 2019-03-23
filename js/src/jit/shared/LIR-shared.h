@@ -4325,24 +4325,6 @@ class LStoreUnboxedPointer : public LInstructionHelper<0, 3, 0> {
   const LAllocation* value() { return getOperand(2); }
 };
 
-// If necessary, convert an unboxed object in a particular group to its native
-// representation.
-class LConvertUnboxedObjectToNative : public LInstructionHelper<1, 1, 1> {
- public:
-  LIR_HEADER(ConvertUnboxedObjectToNative)
-
-  LConvertUnboxedObjectToNative(const LAllocation& object,
-                                const LDefinition& temp)
-      : LInstructionHelper(classOpcode) {
-    setOperand(0, object);
-    setTemp(0, temp);
-  }
-  const LDefinition* temp() { return getTemp(0); }
-  MConvertUnboxedObjectToNative* mir() {
-    return mir_->toConvertUnboxedObjectToNative();
-  }
-};
-
 class LArrayPopShiftV : public LInstructionHelper<BOX_PIECES, 1, 2> {
  public:
   LIR_HEADER(ArrayPopShiftV)
@@ -4998,20 +4980,17 @@ class LGetPropertyPolymorphicV : public LInstructionHelper<BOX_PIECES, 1, 1> {
 
 // Emit code to load a typed value from an object's slots if its shape matches
 // one of the shapes observed by the baseline IC, else bails out.
-class LGetPropertyPolymorphicT : public LInstructionHelper<1, 1, 2> {
+class LGetPropertyPolymorphicT : public LInstructionHelper<1, 1, 1> {
  public:
   LIR_HEADER(GetPropertyPolymorphicT)
 
-  LGetPropertyPolymorphicT(const LAllocation& obj, const LDefinition& temp1,
-                           const LDefinition& temp2)
+  LGetPropertyPolymorphicT(const LAllocation& obj, const LDefinition& temp)
       : LInstructionHelper(classOpcode) {
     setOperand(0, obj);
-    setTemp(0, temp1);
-    setTemp(1, temp2);
+    setTemp(0, temp);
   }
   const LAllocation* obj() { return getOperand(0); }
-  const LDefinition* temp1() { return getTemp(0); }
-  const LDefinition* temp2() { return getTemp(1); }
+  const LDefinition* temp() { return getTemp(0); }
   const MGetPropertyPolymorphic* mir() const {
     return mir_->toGetPropertyPolymorphic();
   }
@@ -5023,24 +5002,22 @@ class LGetPropertyPolymorphicT : public LInstructionHelper<1, 1, 2> {
 // Emit code to store a boxed value to an object's slots if its shape matches
 // one of the shapes observed by the baseline IC, else bails out.
 class LSetPropertyPolymorphicV
-    : public LInstructionHelper<0, 1 + BOX_PIECES, 2> {
+    : public LInstructionHelper<0, 1 + BOX_PIECES, 1> {
  public:
   LIR_HEADER(SetPropertyPolymorphicV)
 
   LSetPropertyPolymorphicV(const LAllocation& obj, const LBoxAllocation& value,
-                           const LDefinition& temp1, const LDefinition& temp2)
+                           const LDefinition& temp)
       : LInstructionHelper(classOpcode) {
     setOperand(0, obj);
     setBoxOperand(Value, value);
-    setTemp(0, temp1);
-    setTemp(1, temp2);
+    setTemp(0, temp);
   }
 
   static const size_t Value = 1;
 
   const LAllocation* obj() { return getOperand(0); }
-  const LDefinition* temp1() { return getTemp(0); }
-  const LDefinition* temp2() { return getTemp(1); }
+  const LDefinition* temp() { return getTemp(0); }
   const MSetPropertyPolymorphic* mir() const {
     return mir_->toSetPropertyPolymorphic();
   }
@@ -5048,26 +5025,23 @@ class LSetPropertyPolymorphicV
 
 // Emit code to store a typed value to an object's slots if its shape matches
 // one of the shapes observed by the baseline IC, else bails out.
-class LSetPropertyPolymorphicT : public LInstructionHelper<0, 2, 2> {
+class LSetPropertyPolymorphicT : public LInstructionHelper<0, 2, 1> {
   MIRType valueType_;
 
  public:
   LIR_HEADER(SetPropertyPolymorphicT)
 
   LSetPropertyPolymorphicT(const LAllocation& obj, const LAllocation& value,
-                           MIRType valueType, const LDefinition& temp1,
-                           const LDefinition& temp2)
+                           MIRType valueType, const LDefinition& temp)
       : LInstructionHelper(classOpcode), valueType_(valueType) {
     setOperand(0, obj);
     setOperand(1, value);
-    setTemp(0, temp1);
-    setTemp(1, temp2);
+    setTemp(0, temp);
   }
 
   const LAllocation* obj() { return getOperand(0); }
   const LAllocation* value() { return getOperand(1); }
-  const LDefinition* temp1() { return getTemp(0); }
-  const LDefinition* temp2() { return getTemp(1); }
+  const LDefinition* temp() { return getTemp(0); }
   MIRType valueType() const { return valueType_; }
   const MSetPropertyPolymorphic* mir() const {
     return mir_->toSetPropertyPolymorphic();
@@ -5673,50 +5647,19 @@ class LRest : public LCallInstructionHelper<1, 1, 3> {
   MRest* mir() const { return mir_->toRest(); }
 };
 
-class LGuardReceiverPolymorphic : public LInstructionHelper<1, 1, 2> {
+class LGuardReceiverPolymorphic : public LInstructionHelper<1, 1, 1> {
  public:
   LIR_HEADER(GuardReceiverPolymorphic)
 
-  LGuardReceiverPolymorphic(const LAllocation& in, const LDefinition& temp1,
-                            const LDefinition& temp2)
+  LGuardReceiverPolymorphic(const LAllocation& in, const LDefinition& temp)
       : LInstructionHelper(classOpcode) {
     setOperand(0, in);
-    setTemp(0, temp1);
-    setTemp(1, temp2);
+    setTemp(0, temp);
   }
   const LAllocation* object() { return getOperand(0); }
-  const LDefinition* temp1() { return getTemp(0); }
-  const LDefinition* temp2() { return getTemp(1); }
+  const LDefinition* temp() { return getTemp(0); }
   const MGuardReceiverPolymorphic* mir() const {
     return mir_->toGuardReceiverPolymorphic();
-  }
-};
-
-class LGuardUnboxedExpando : public LInstructionHelper<0, 1, 0> {
- public:
-  LIR_HEADER(GuardUnboxedExpando)
-
-  explicit LGuardUnboxedExpando(const LAllocation& in)
-      : LInstructionHelper(classOpcode) {
-    setOperand(0, in);
-  }
-  const LAllocation* object() { return getOperand(0); }
-  const MGuardUnboxedExpando* mir() const {
-    return mir_->toGuardUnboxedExpando();
-  }
-};
-
-class LLoadUnboxedExpando : public LInstructionHelper<1, 1, 0> {
- public:
-  LIR_HEADER(LoadUnboxedExpando)
-
-  explicit LLoadUnboxedExpando(const LAllocation& in)
-      : LInstructionHelper(classOpcode) {
-    setOperand(0, in);
-  }
-  const LAllocation* object() { return getOperand(0); }
-  const MLoadUnboxedExpando* mir() const {
-    return mir_->toLoadUnboxedExpando();
   }
 };
 

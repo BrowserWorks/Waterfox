@@ -4198,8 +4198,7 @@ static MOZ_NEVER_INLINE JS_HAZ_JSNATIVE_CALLER bool Interpret(JSContext* cx,
 
       /* Load the home object */
       ReservedRooted<JSObject*> obj(&rootObject0, &REGS.sp[-1].toObject());
-      MOZ_ASSERT(obj->is<PlainObject>() || obj->is<UnboxedPlainObject>() ||
-                 obj->is<JSFunction>());
+      MOZ_ASSERT(obj->is<PlainObject>() || obj->is<JSFunction>());
 
       func->setExtendedSlot(FunctionExtended::METHOD_HOMEOBJECT_SLOT,
                             ObjectValue(*obj));
@@ -5138,28 +5137,16 @@ JSObject* js::NewObjectOperation(JSContext* cx, HandleScript script,
       return nullptr;
     }
 
-    bool isUnboxed;
     {
       AutoSweepObjectGroup sweep(group);
       if (group->maybePreliminaryObjects(sweep)) {
         group->maybePreliminaryObjects(sweep)->maybeAnalyze(cx, group);
-        if (group->maybeUnboxedLayout(sweep)) {
-          // This sets the allocation site so that the template object
-          // can be read back but if op is NEWINIT, then the template
-          // is null.
-          MOZ_ASSERT(JSOp(*pc) != JSOP_NEWINIT);
-          group->maybeUnboxedLayout(sweep)->setAllocationSite(script, pc);
-        }
       }
 
       if (group->shouldPreTenure(sweep) ||
           group->maybePreliminaryObjects(sweep)) {
         newKind = TenuredObject;
       }
-      isUnboxed = group->maybeUnboxedLayout(sweep);
-    }
-    if (isUnboxed) {
-      return UnboxedPlainObject::create(cx, group, newKind);
     }
   }
 
@@ -5201,16 +5188,10 @@ JSObject* js::NewObjectOperationWithTemplate(JSContext* cx,
   MOZ_ASSERT(cx->realm() == templateObject->nonCCWRealm());
 
   NewObjectKind newKind;
-  bool isUnboxed;
   {
     ObjectGroup* group = templateObject->group();
     AutoSweepObjectGroup sweep(group);
     newKind = group->shouldPreTenure(sweep) ? TenuredObject : GenericObject;
-    isUnboxed = group->maybeUnboxedLayout(sweep);
-  }
-  if (isUnboxed) {
-    RootedObjectGroup group(cx, templateObject->group());
-    return UnboxedPlainObject::create(cx, group, newKind);
   }
 
   JSObject* obj =
@@ -5396,53 +5377,8 @@ bool js::ThrowCheckIsCallable(JSContext* cx, CheckIsCallableKind kind) {
 }
 
 bool js::ThrowUninitializedThis(JSContext* cx, AbstractFramePtr frame) {
-  RootedFunction fun(cx);
-  if (frame.isFunctionFrame()) {
-    fun = frame.callee();
-  } else {
-    Scope* startingScope;
-    if (frame.isDebuggerEvalFrame()) {
-      AbstractFramePtr evalInFramePrev =
-          frame.asInterpreterFrame()->evalInFramePrev();
-      while (evalInFramePrev.isDebuggerEvalFrame()) {
-        evalInFramePrev =
-            evalInFramePrev.asInterpreterFrame()->evalInFramePrev();
-      }
-      startingScope = evalInFramePrev.script()->bodyScope();
-    } else {
-      MOZ_ASSERT(frame.isEvalFrame());
-      MOZ_ASSERT(frame.script()->isDirectEvalInFunction());
-      startingScope = frame.script()->enclosingScope();
-    }
-
-    for (ScopeIter si(startingScope); si; si++) {
-      if (si.scope()->is<FunctionScope>()) {
-        fun = si.scope()->as<FunctionScope>().canonicalFunction();
-        break;
-      }
-    }
-    MOZ_ASSERT(fun);
-  }
-
-  if (fun->isDerivedClassConstructor()) {
-    const char* name = "anonymous";
-    UniqueChars str;
-    if (fun->explicitName()) {
-      str = AtomToPrintableString(cx, fun->explicitName());
-      if (!str) {
-        return false;
-      }
-      name = str.get();
-    }
-
-    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                              JSMSG_UNINITIALIZED_THIS, name);
-    return false;
-  }
-
-  MOZ_ASSERT(fun->isArrow());
   JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                            JSMSG_UNINITIALIZED_THIS_ARROW);
+                            JSMSG_UNINITIALIZED_THIS);
   return false;
 }
 

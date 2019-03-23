@@ -6,12 +6,11 @@
 
 var EXPORTED_SYMBOLS = ["TabTarget"];
 
-const {Connection} = ChromeUtils.import("chrome://remote/content/Connection.jsm");
+const {Target} = ChromeUtils.import("chrome://remote/content/targets/Target.jsm");
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {TabSession} = ChromeUtils.import("chrome://remote/content/sessions/TabSession.jsm");
-const {WebSocketDebuggerTransport} = ChromeUtils.import("chrome://remote/content/server/WebSocketTransport.jsm");
-const {WebSocketServer} = ChromeUtils.import("chrome://remote/content/server/WebSocket.jsm");
 const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {RemoteAgent} = ChromeUtils.import("chrome://remote/content/RemoteAgent.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "Favicons",
     "@mozilla.org/browser/favicon-service;1", "nsIFaviconService");
@@ -19,15 +18,18 @@ XPCOMUtils.defineLazyServiceGetter(this, "Favicons",
 /**
  * Target for a local tab or a remoted frame.
  */
-class TabTarget {
+class TabTarget extends Target {
   /**
    * @param Targets targets
    * @param BrowserElement browser
    */
   constructor(targets, browser) {
-    this.targets = targets;
+    super(targets, TabSession);
+
     this.browser = browser;
-    this.sessions = new Map();
+
+    // Define the HTTP path to query this target
+    this.path = `/devtools/page/${this.id}`;
   }
 
   connect() {
@@ -36,7 +38,7 @@ class TabTarget {
 
   disconnect() {
     Services.obs.removeObserver(this, "message-manager-disconnect");
-    // TODO(ato): Disconnect existing client sockets
+    super.disconnect();
   }
 
   get id() {
@@ -100,10 +102,8 @@ class TabTarget {
   }
 
   get wsDebuggerURL() {
-    const RemoteAgent = Cc["@mozilla.org/remote/agent"]
-        .getService(Ci.nsISupports).wrappedJSObject;
     const {host, port} = RemoteAgent;
-    return `ws://${host}:${port}/devtools/page/${this.id}`;
+    return `ws://${host}:${port}${this.path}`;
   }
 
   toString() {
@@ -122,15 +122,6 @@ class TabTarget {
       url: this.url,
       webSocketDebuggerUrl: this.wsDebuggerURL,
     };
-  }
-
-  // nsIHttpRequestHandler
-
-  async handle(request, response) {
-    const so = await WebSocketServer.upgrade(request, response);
-    const transport = new WebSocketDebuggerTransport(so);
-    const conn = new Connection(transport);
-    this.sessions.set(conn, new TabSession(conn, this));
   }
 
   // nsIObserver

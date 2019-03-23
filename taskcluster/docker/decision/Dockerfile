@@ -25,6 +25,8 @@ RUN bash /tmp/system-setup.sh
 # %include taskcluster/scripts/run-task
 ADD topsrcdir/taskcluster/scripts/run-task /builds/worker/bin/run-task
 
+ADD comm-task-env /builds/worker/bin/comm-task-env
+
 ENV PATH=/builds/worker/bin:$PATH \
     SHELL=/bin/bash \
     HOME=/builds/worker

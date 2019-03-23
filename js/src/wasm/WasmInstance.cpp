@@ -857,6 +857,10 @@ Instance::tableInit(Instance* instance, uint32_t dstOffset, uint32_t srcOffset,
 // Ion code has to hold a value that may or may not be a pointer to GC'd
 // storage, or where Ion has to pass in a pointer to storage where a return
 // value can be written.
+//
+// Note carefully that the pointer that is returned may not be valid past
+// operations that change the size of the table or cause GC work; it is strictly
+// to be used to retrieve the return value.
 
 /* static */ void* /* nullptr to signal trap; pointer to table location
                       otherwise */
@@ -868,7 +872,7 @@ Instance::tableGet(Instance* instance, uint32_t index, uint32_t tableIndex) {
                               JSMSG_WASM_TABLE_OUT_OF_BOUNDS);
     return nullptr;
   }
-  return const_cast<void*>(table.getAnyRefLocForCompiledCode(index));
+  return const_cast<void*>(table.getShortlivedAnyRefLocForCompiledCode(index));
 }
 
 /* static */ uint32_t /* infallible */
@@ -1510,10 +1514,13 @@ bool Instance::callExport(JSContext* cx, uint32_t funcIndex, CallArgs args) {
     return false;
   }
 
+  ASSERT_ANYREF_IS_JSOBJECT;
+  Rooted<GCVector<JSObject*, 8, SystemAllocPolicy>> anyrefs(cx);
+
   DebugCodegen(DebugChannel::Function, "wasm-function[%d]; arguments ",
                funcIndex);
   RootedValue v(cx);
-  for (unsigned i = 0; i < func.funcType().args().length(); ++i) {
+  for (size_t i = 0; i < func.funcType().args().length(); ++i) {
     v = i < args.length() ? args[i] : UndefinedValue();
     switch (func.funcType().arg(i).code()) {
       case ValType::I32:
@@ -1551,9 +1558,13 @@ bool Instance::callExport(JSContext* cx, uint32_t funcIndex, CallArgs args) {
           DebugCodegen(DebugChannel::Function, "call to BoxAnyRef failed!\n");
           return false;
         }
-        *(void**)&exportArgs[i] = ar.get().forCompiledCode();
-        DebugCodegen(DebugChannel::Function, "ptr(%p) ",
-                     *(void**)&exportArgs[i]);
+        // We'll copy the value into the arguments array just before the call;
+        // for now tuck the value away in a rooted array.
+        ASSERT_ANYREF_IS_JSOBJECT;
+        if (!anyrefs.emplaceBack(ar.get().asJSObject())) {
+          return false;
+        }
+        DebugCodegen(DebugChannel::Function, "ptr(#%d) ", int(anyrefs.length()-1));
         break;
       }
       case ValType::NullRef: {
@@ -1572,6 +1583,21 @@ bool Instance::callExport(JSContext* cx, uint32_t funcIndex, CallArgs args) {
       callee = codeBase(tier) + func.eagerInterpEntryOffset();
     } else {
       callee = code(tier).lazyStubs().lock()->lookupInterpEntry(funcIndex);
+    }
+
+    // Copy over reference values from the rooted array, if any.
+    if (anyrefs.length() > 0) {
+      DebugCodegen(DebugChannel::Function, "; ");
+      size_t nextRef = 0;
+      for (size_t i = 0; i < func.funcType().args().length(); ++i) {
+        if (func.funcType().arg(i).isReference()) {
+          ASSERT_ANYREF_IS_JSOBJECT;
+          *(void**)&exportArgs[i] = (void*)anyrefs[nextRef++];
+          DebugCodegen(DebugChannel::Function, "ptr(#%d) = %p ", int(nextRef-1),
+                       *(void**)&exportArgs[i]);
+        }
+      }
+      anyrefs.clear();
     }
 
     // Call the per-exported-function trampoline created by GenerateEntry.
@@ -1594,6 +1620,9 @@ bool Instance::callExport(JSContext* cx, uint32_t funcIndex, CallArgs args) {
     return true;
   }
 
+  // Note that we're not rooting the return value; we depend on UnboxAnyRef()
+  // not allocating for this to be safe.  The constraint has been noted in that
+  // function.
   void* retAddr = &exportArgs[0];
 
   DebugCodegen(DebugChannel::Function, "wasm-function[%d]; returns ",

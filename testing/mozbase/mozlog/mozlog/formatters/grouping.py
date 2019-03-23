@@ -18,6 +18,7 @@ class GroupingFormatter(base.BaseFormatter):
     """Formatter designed to produce unexpected test results grouped
        together in a readable format."""
     def __init__(self):
+        super(GroupingFormatter, self).__init__()
         self.number_of_tests = 0
         self.completed_tests = 0
         self.need_to_erase_last_line = False
@@ -28,6 +29,12 @@ class GroupingFormatter(base.BaseFormatter):
         self.test_failure_text = ""
         self.tests_with_failing_subtests = []
         self.interactive = os.isatty(sys.stdout.fileno())
+        self.show_logs = False
+
+        self.message_handler.register_message_handlers("show_logs", {
+            "on": self._enable_show_logs,
+            "off": self._disable_show_logs,
+        })
 
         # TODO(mrobinson, 8313): We need to add support for Windows terminals here.
         if self.interactive:
@@ -57,6 +64,12 @@ class GroupingFormatter(base.BaseFormatter):
             'TIMEOUT': [],
             'CRASH': [],
         }
+
+    def _enable_show_logs(self):
+        self.show_logs = True
+
+    def _disable_show_logs(self):
+        self.show_logs = False
 
     def get_move_up_and_clear_eol_codes(self):
         try:
@@ -246,7 +259,7 @@ class GroupingFormatter(base.BaseFormatter):
             output = ""
 
         output += u"Ran %i tests finished in %.1f seconds.\n" % (
-            self.completed_tests, (self.end_time - self.start_time) / 1000)
+            self.completed_tests, (self.end_time - self.start_time) / 1000.0)
         output += u"  \u2022 %i ran as expected. %i tests skipped.\n" % (
             sum(self.expected.values()), self.expected['SKIP'])
 
@@ -283,10 +296,20 @@ class GroupingFormatter(base.BaseFormatter):
         self.test_output[test_name] += data['data'] + "\n"
 
     def log(self, data):
+        if data.get('component'):
+            message = "%s %s %s" % (data['component'], data['level'], data['message'])
+        else:
+            message = "%s %s" % (data['level'], data['message'])
+        if "stack" in data:
+            message += "\n%s" % data["stack"]
+
         # We are logging messages that begin with STDERR, because that is how exceptions
         # in this formatter are indicated.
         if data['message'].startswith('STDERR'):
-            return self.generate_output(text=data['message'] + "\n")
+            return self.generate_output(text=message + "\n")
 
         if data['level'] in ('CRITICAL', 'ERROR'):
-            return self.generate_output(text=data['message'] + "\n")
+            return self.generate_output(text=message + "\n")
+        # Show all messages if show_logs switched on.
+        if self.show_logs:
+            return self.generate_output(text=message + "\n")

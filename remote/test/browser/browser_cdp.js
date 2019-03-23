@@ -5,6 +5,8 @@
 
 /* global getCDP */
 
+const {RemoteAgent} = ChromeUtils.import("chrome://remote/content/RemoteAgent.jsm");
+
 // Test very basic CDP features.
 
 const TEST_URI = "data:text/html;charset=utf-8,default-test-page";
@@ -28,7 +30,7 @@ async function testCDP() {
   const tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, TEST_URI);
 
   // Start the CDP server
-  const RemoteAgent = Cc["@mozilla.org/remote/agent"].getService(Ci.nsISupports).wrappedJSObject;
+  RemoteAgent.init();
   RemoteAgent.tabs.start();
   RemoteAgent.listen(Services.io.newURI("http://localhost:9222"));
 
@@ -68,11 +70,20 @@ async function testCDP() {
   await Page.enable();
   ok(true, "Page domain has been enabled");
 
+  const frameStoppedLoading = Page.frameStoppedLoading();
+  const navigatedWithinDocument = Page.navigatedWithinDocument();
+  const loadEventFired = Page.loadEventFired();
   await Page.navigate({url: "data:text/html;charset=utf-8,test-page<script>console.log('foo');</script><script>'</script>"});
   ok(true, "A new page has been loaded");
 
-  await Page.loadEventFired();
-  ok(true, "The new page is done loading");
+  await loadEventFired;
+  ok(true, "`Page.loadEventFired` fired");
+
+  await frameStoppedLoading;
+  ok(true, "`Page.frameStoppedLoading` fired");
+
+  await navigatedWithinDocument;
+  ok(true, "`Page.navigatedWithinDocument` fired");
 
   await client.close();
   ok(true, "The client is closed");

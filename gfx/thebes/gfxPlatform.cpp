@@ -948,10 +948,6 @@ void gfxPlatform::Init() {
     }
   };
   gfxPrefs::SetLayoutFrameRateChangeCallback(updateFrameRateCallback);
-  gfxPrefs::SetIsLowEndMachineDoNotUseDirectlyChangeCallback(
-      updateFrameRateCallback);
-  gfxPrefs::SetAdjustToMachineChangeCallback(updateFrameRateCallback);
-  gfxPrefs::SetResistFingerprintingChangeCallback(updateFrameRateCallback);
   // Set up the vsync source for the parent process.
   ReInitFrameRate();
 
@@ -2584,12 +2580,14 @@ static FeatureState& WebRenderHardwareQualificationStatus(
           // AMD deviceIDs are not very well ordered. This
           // condition is based off the information in gpu-db
           if ((deviceID >= 0x6600 && deviceID < 0x66b0) ||
+              (deviceID >= 0x6700 && deviceID < 0x6720) ||
               (deviceID >= 0x6780 && deviceID < 0x6840) ||
               (deviceID >= 0x6860 && deviceID < 0x6880) ||
               (deviceID >= 0x6900 && deviceID < 0x6a00) ||
               (deviceID == 0x7300) ||
-              (deviceID >= 0x9830 && deviceID < 0x9870)) {
-            // we have a desktop SI, CIK, VI, or GFX9 device
+              (deviceID >= 0x9830 && deviceID < 0x9870) ||
+              (deviceID >= 0x9900 && deviceID < 0x9a00)) {
+            // we have a desktop CAYMAN, SI, CIK, VI, or GFX9 device
           } else {
             featureWebRenderQualified.Disable(
                 FeatureStatus::Blocked, "Device too old",
@@ -2742,13 +2740,9 @@ void gfxPlatform::InitWebRenderConfig() {
   }
 #endif
 
-  if (Preferences::GetBool("gfx.webrender.program-binary", false)) {
-    gfxVars::SetUseWebRenderProgramBinary(
+  if (Preferences::GetBool("gfx.webrender.program-binary-disk", false)) {
+    gfxVars::SetUseWebRenderProgramBinaryDisk(
         gfxConfig::IsEnabled(Feature::WEBRENDER));
-    if (Preferences::GetBool("gfx.webrender.program-binary-disk", false)) {
-      gfxVars::SetUseWebRenderProgramBinaryDisk(
-          gfxConfig::IsEnabled(Feature::WEBRENDER));
-    }
   }
 
 #ifdef MOZ_WIDGET_ANDROID
@@ -2916,12 +2910,6 @@ bool gfxPlatform::ContentUsesTiling() const {
           contentUsesPOMTP);
 }
 
-/* static */
-bool gfxPlatform::ShouldAdjustForLowEndMachine() {
-  return gfxPrefs::AdjustToMachine() && !gfxPrefs::ResistFingerprinting() &&
-         gfxPrefs::IsLowEndMachineDoNotUseDirectly();
-}
-
 /***
  * The preference "layout.frame_rate" has 3 meanings depending on the value:
  *
@@ -2948,8 +2936,7 @@ bool gfxPlatform::IsInLayoutAsapMode() {
 
 /* static */
 bool gfxPlatform::ForceSoftwareVsync() {
-  return ShouldAdjustForLowEndMachine() || gfxPrefs::LayoutFrameRate() > 0 ||
-         recordreplay::IsRecordingOrReplaying();
+  return gfxPrefs::LayoutFrameRate() > 0 || recordreplay::IsRecordingOrReplaying();
 }
 
 /* static */
@@ -2963,7 +2950,7 @@ int gfxPlatform::GetSoftwareVsyncRate() {
 
 /* static */
 int gfxPlatform::GetDefaultFrameRate() {
-  return ShouldAdjustForLowEndMachine() ? 30 : 60;
+  return 60;
 }
 
 /* static */

@@ -3853,7 +3853,10 @@ void nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder* aBuilder,
 
     const bool differentAGR = buildingForChild.IsAnimatedGeometryRoot();
 
-    if (!awayFromCommonPath) {
+    if (!awayFromCommonPath &&
+        // Some SVG frames might change opacity without invalidating the frame,
+        // so exclude them from the fast-path.
+        !child->IsFrameOfType(nsIFrame::eSVG)) {
       // The shortcut is available for the child for next time.
       child->AddStateBits(NS_FRAME_SIMPLE_DISPLAYLIST);
     }
@@ -10548,8 +10551,19 @@ void nsIFrame::SetParent(nsContainerFrame* aParent) {
 void nsIFrame::CreateOwnLayerIfNeeded(nsDisplayListBuilder* aBuilder,
                                       nsDisplayList* aList,
                                       bool* aCreatedContainerItem) {
-  if (GetContent() && GetContent()->IsXULElement() &&
-      GetContent()->AsElement()->HasAttr(kNameSpaceID_None, nsGkAtoms::layer)) {
+  wr::RenderRoot renderRoot = gfxUtils::GetRenderRootForFrame(this)
+      .valueOr(wr::RenderRoot::Default);
+
+  if (renderRoot != wr::RenderRoot::Default) {
+    aList->AppendToTop(MakeDisplayItem<nsDisplayRenderRoot>(
+        aBuilder, this, aList, aBuilder->CurrentActiveScrolledRoot(),
+        renderRoot));
+    if (aCreatedContainerItem) {
+      *aCreatedContainerItem = true;
+    }
+  } else if (GetContent() && GetContent()->IsXULElement() &&
+             GetContent()->AsElement()->HasAttr(kNameSpaceID_None,
+                                                nsGkAtoms::layer)) {
     aList->AppendToTop(MakeDisplayItem<nsDisplayOwnLayer>(
         aBuilder, this, aList, aBuilder->CurrentActiveScrolledRoot()));
     if (aCreatedContainerItem) {

@@ -18,6 +18,7 @@ const debugTargetListenerMiddleware = require("./middleware/debug-target-listene
 const errorLoggingMiddleware = require("./middleware/error-logging");
 const eventRecordingMiddleware = require("./middleware/event-recording");
 const extensionComponentDataMiddleware = require("./middleware/extension-component-data");
+const processComponentDataMiddleware = require("./middleware/process-component-data");
 const tabComponentDataMiddleware = require("./middleware/tab-component-data");
 const workerComponentDataMiddleware = require("./middleware/worker-component-data");
 const { getDebugTargetCollapsibilities } = require("./modules/debug-target-collapsibilities");
@@ -37,6 +38,7 @@ function configureStore() {
                                      errorLoggingMiddleware,
                                      eventRecordingMiddleware,
                                      extensionComponentDataMiddleware,
+                                     processComponentDataMiddleware,
                                      tabComponentDataMiddleware,
                                      workerComponentDataMiddleware,
                                      waitUntilService);
@@ -47,12 +49,9 @@ function configureStore() {
 function getUiState() {
   const collapsibilities = getDebugTargetCollapsibilities();
   const locations = getNetworkLocations();
-  const networkEnabled = Services.prefs.getBoolPref(PREFERENCES.NETWORK_ENABLED, false);
-  const wifiEnabled = Services.prefs.getBoolPref(PREFERENCES.WIFI_ENABLED, false);
   const showSystemAddons = Services.prefs.getBoolPref(PREFERENCES.SHOW_SYSTEM_ADDONS,
     false);
-  return new UiState(locations, collapsibilities, networkEnabled, wifiEnabled,
-    showSystemAddons);
+  return new UiState(locations, collapsibilities, showSystemAddons);
 }
 
 exports.configureStore = configureStore;

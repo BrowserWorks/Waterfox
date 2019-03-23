@@ -396,6 +396,7 @@ partial interface Window {
 };
 #endif
 
+[MOZ_CAN_RUN_SCRIPT_BOUNDARY]
 callback PromiseDocumentFlushedCallback = any ();
 
 // Mozilla extensions for Chrome windows.

@@ -14,9 +14,6 @@ obj*/**
 # We ignore all these directories by default, until we get them enabled.
 # If you are enabling a directory, please add directory specific exclusions
 # below.
-docshell/test/browser/**
-docshell/test/iframesandbox/**
-docshell/test/mochitest/**
 extensions/cookie/**
 extensions/spellcheck/**
 extensions/universalchardet/**
@@ -167,7 +164,6 @@ dom/base/test/unit/test_serializers_entities*.js
 dom/base/test/unit_ipc/**
 dom/base/test/jsmodules/**
 dom/bindings/**
-dom/browser-element/**
 dom/canvas/**
 dom/encoding/**
 dom/events/**

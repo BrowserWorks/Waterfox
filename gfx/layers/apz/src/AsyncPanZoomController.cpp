@@ -795,8 +795,10 @@ void AsyncPanZoomController::InitializeGlobalState() {
 AsyncPanZoomController::AsyncPanZoomController(
     LayersId aLayersId, APZCTreeManager* aTreeManager,
     const RefPtr<InputQueue>& aInputQueue,
-    GeckoContentController* aGeckoContentController, GestureBehavior aGestures)
+    GeckoContentController* aGeckoContentController, wr::RenderRoot aRenderRoot,
+    GestureBehavior aGestures)
     : mLayersId(aLayersId),
+      mRenderRoot(aRenderRoot),
       mGeckoContentController(aGeckoContentController),
       mRefPtrMonitor("RefPtrMonitor"),
       // mTreeManager must be initialized before GetFrameTime() is called
@@ -4648,7 +4650,17 @@ void AsyncPanZoomController::NotifyLayersUpdated(
     if (!mAnimation || !mAnimation->HandleScrollOffsetUpdate(Nothing())) {
       CancelAnimation();
     }
+    // The main thread did not actually paint a displayport at the target
+    // visual offset, so we need to ask it to repaint. We need to set the
+    // contentRepaintType to something other than eNone, otherwise the main
+    // thread will short-circuit the repaint request.
+    // Don't do this for eRestore visual updates as a repaint coming from APZ
+    // breaks the scroll offset restoration mechanism.
     needContentRepaint = true;
+    if (aLayerMetrics.GetVisualScrollUpdateType() ==
+        FrameMetrics::eMainThread) {
+      contentRepaintType = RepaintUpdateType::eVisualUpdate;
+    }
     ScheduleComposite();
   }
 

@@ -10,11 +10,7 @@ ChromeUtils.defineModuleGetter(this, "Utils",
   "resource://gre/modules/accessibility/Utils.jsm");
 ChromeUtils.defineModuleGetter(this, "Logger",
   "resource://gre/modules/accessibility/Utils.jsm");
-ChromeUtils.defineModuleGetter(this, "Roles",
-  "resource://gre/modules/accessibility/Constants.jsm");
 ChromeUtils.defineModuleGetter(this, "Events",
-  "resource://gre/modules/accessibility/Constants.jsm");
-ChromeUtils.defineModuleGetter(this, "States",
   "resource://gre/modules/accessibility/Constants.jsm");
 
 var EXPORTED_SYMBOLS = ["EventManager"];
@@ -85,24 +81,15 @@ this.EventManager.prototype = {
     }
 
     switch (aEvent.eventType) {
-      case Events.VIRTUALCURSOR_CHANGED:
+      case Events.TEXT_CARET_MOVED:
       {
-        if (!aEvent.isFromUserInput) {
-          break;
-        }
-
-        const event = aEvent.
-          QueryInterface(Ci.nsIAccessibleVirtualCursorChangeEvent);
-        const position = event.newAccessible;
-
-        // We pass control to the vc in the embedded frame.
-        if (position && position.role == Roles.INTERNAL_FRAME) {
-          break;
-        }
-
-        // Blur to document if new position is not explicitly focused.
-        if (!position || !Utils.getState(position).contains(States.FOCUSED)) {
-          aEvent.accessibleDocument.takeFocus();
+        if (aEvent.accessible != aEvent.accessibleDocument &&
+            !aEvent.isFromUserInput) {
+          // If caret moves in document without direct user
+          // we are probably stepping through results in find-in-page.
+          let acc = Utils.getTextLeafForOffset(aEvent.accessible,
+            aEvent.QueryInterface(Ci.nsIAccessibleCaretMoveEvent).caretOffset);
+          this.contentControl.autoMove(acc);
         }
         break;
       }

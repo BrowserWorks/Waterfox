@@ -13,6 +13,7 @@ ChromeUtils.import("resource://gre/modules/NotificationDB.jsm");
 XPCOMUtils.defineLazyModuleGetters(this, {
   AddonManager: "resource://gre/modules/AddonManager.jsm",
   AMTelemetry: "resource://gre/modules/AddonManager.jsm",
+  NewTabPagePreloading: "resource:///modules/NewTabPagePreloading.jsm",
   BrowserUsageTelemetry: "resource:///modules/BrowserUsageTelemetry.jsm",
   BrowserUtils: "resource://gre/modules/BrowserUtils.jsm",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.jsm",
@@ -1930,6 +1931,10 @@ var gBrowserInit = {
       }, 300 * 1000);
     });
 
+    scheduleIdleTask(async () => {
+      NewTabPagePreloading.maybeCreatePreloadedBrowser(window);
+    });
+
     // This should always go last, since the idle tasks (except for the ones with
     // timeouts) should execute in order. Note that this observer notification is
     // not guaranteed to fire, since the window could close before we get here.
@@ -2056,6 +2061,8 @@ var gBrowserInit = {
     }
 
     BrowserSearch.uninit();
+
+    NewTabPagePreloading.removePreloadedBrowser(window);
 
     // Now either cancel delayedStartup, or clean up the services initialized from
     // it.
@@ -2680,6 +2687,8 @@ async function BrowserViewSourceOfDocument(aArgsOrDocument) {
     tabBrowser = browserWindow.gBrowser;
   }
 
+  const inNewWindow = !Services.prefs.getBoolPref("view_source.tab");
+
   // `viewSourceInBrowser` will load the source content from the page
   // descriptor for the tab (when possible) or fallback to the network if
   // that fails.  Either way, the view source module will manage the tab's
@@ -2687,13 +2696,19 @@ async function BrowserViewSourceOfDocument(aArgsOrDocument) {
   // requests.
   let tab = tabBrowser.loadOneTab("about:blank", {
     relatedToCurrent: true,
-    inBackground: false,
+    inBackground: inNewWindow,
+    skipAnimation: inNewWindow,
     preferredRemoteType,
     sameProcessAsFrameLoader: args.browser ? args.browser.frameLoader : null,
     triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
   });
   args.viewSourceBrowser = tabBrowser.getBrowserForTab(tab);
   top.gViewSourceUtils.viewSourceInBrowser(args);
+
+  if (inNewWindow) {
+    tabBrowser.hideTab(tab);
+    tabBrowser.replaceTabWithWindow(tab);
+  }
 }
 
 /**
@@ -3211,7 +3226,6 @@ var BrowserOnClick = {
         break;
 
       case "advancedButton":
-      case "moreInformationButton":
         securityInfo = getSecurityInfo(securityInfoAsString);
         let errorInfo = getDetailedCertErrorInfo(location,
                                                  securityInfo);
@@ -5127,7 +5141,7 @@ var XULBrowserWindow = {
     this._lastLocationForEvent = spec;
 
     if (typeof(aIsSimulated) != "boolean" && typeof(aIsSimulated) != "undefined") {
-      throw "onContentBlockingEvent: aIsSimulated receieved an unexpected type";
+      throw new Error("onContentBlockingEvent: aIsSimulated receieved an unexpected type");
     }
 
     ContentBlocking.onContentBlockingEvent(this._event, aWebProgress, aIsSimulated);
@@ -8379,7 +8393,7 @@ TabModalPromptBox.prototype = {
   get browser() {
     let browser = this._weakBrowserRef.get();
     if (!browser) {
-      throw "Stale promptbox! The associated browser is gone.";
+      throw new Error("Stale promptbox! The associated browser is gone.");
     }
     return browser;
   },

@@ -432,12 +432,6 @@ class TabChild final : public TabChildBase,
 
   virtual bool DeallocPFilePickerChild(PFilePickerChild* aActor) override;
 
-  virtual PIndexedDBPermissionRequestChild*
-  AllocPIndexedDBPermissionRequestChild(const Principal& aPrincipal) override;
-
-  virtual bool DeallocPIndexedDBPermissionRequestChild(
-      PIndexedDBPermissionRequestChild* aActor) override;
-
   virtual nsIWebNavigation* WebNavigation() const override { return mWebNav; }
 
   virtual PuppetWidget* WebWidget() override { return mPuppetWidget; }
@@ -578,7 +572,7 @@ class TabChild final : public TabChildBase,
                                  uint64_t aInputBlockId,
                                  bool aPreventDefault) const;
   void SetTargetAPZC(uint64_t aInputBlockId,
-                     const nsTArray<ScrollableLayerGuid>& aTargets) const;
+                     const nsTArray<layers::SLGuidAndRenderRoot>& aTargets) const;
   MOZ_CAN_RUN_SCRIPT_BOUNDARY
   mozilla::ipc::IPCResult RecvHandleTap(
       const layers::GeckoContentController::TapType& aType,

@@ -181,6 +181,108 @@ static inline CSSAngle MakeCSSAngle(const nsCSSValue& aValue) {
   return CSSAngle(aValue.GetAngleValue(), aValue.GetUnit());
 }
 
+static Rotate GetRotate(const nsCSSValue& aValue) {
+  Rotate result = null_t();
+  if (aValue.GetUnit() == eCSSUnit_None) {
+    return result;
+  }
+
+  const nsCSSValue::Array* array = aValue.GetArrayValue();
+  switch (nsStyleTransformMatrix::TransformFunctionOf(array)) {
+    case eCSSKeyword_rotate:
+      result = Rotate(Rotation(MakeCSSAngle(array->Item(1))));
+      break;
+    case eCSSKeyword_rotate3d:
+      result = Rotate(Rotation3D(
+          array->Item(1).GetFloatValue(), array->Item(2).GetFloatValue(),
+          array->Item(3).GetFloatValue(), MakeCSSAngle(array->Item(4))));
+      break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unsupported rotate");
+  }
+  return result;
+}
+
+static Scale GetScale(const nsCSSValue& aValue) {
+  Scale result(1., 1., 1.);
+  if (aValue.GetUnit() == eCSSUnit_None) {
+    // Use (1, 1, 1) to replace the none case.
+    return result;
+  }
+
+  const nsCSSValue::Array* array = aValue.GetArrayValue();
+  switch (nsStyleTransformMatrix::TransformFunctionOf(array)) {
+    case eCSSKeyword_scalex:
+      result.x() = array->Item(1).GetFloatValue();
+      break;
+    case eCSSKeyword_scaley:
+      result.y() = array->Item(1).GetFloatValue();
+      break;
+    case eCSSKeyword_scalez:
+      result.z() = array->Item(1).GetFloatValue();
+      break;
+    case eCSSKeyword_scale:
+      result.x() = array->Item(1).GetFloatValue();
+      // scale(x) is shorthand for scale(x, x);
+      result.y() =
+          array->Count() == 2 ? result.x() : array->Item(2).GetFloatValue();
+      break;
+    case eCSSKeyword_scale3d:
+      result.x() = array->Item(1).GetFloatValue();
+      result.y() = array->Item(2).GetFloatValue();
+      result.z() = array->Item(3).GetFloatValue();
+      break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unsupported scale");
+  }
+  return result;
+}
+
+static Translation GetTranslate(const nsCSSValue& aValue,
+                                TransformReferenceBox& aRefBox) {
+  Translation result(0, 0, 0);
+  if (aValue.GetUnit() == eCSSUnit_None) {
+    // Use (0, 0, 0) to replace the none case.
+    return result;
+  }
+
+  const nsCSSValue::Array* array = aValue.GetArrayValue();
+  switch (nsStyleTransformMatrix::TransformFunctionOf(array)) {
+    case eCSSKeyword_translatex:
+      result.x() = nsStyleTransformMatrix::ProcessTranslatePart(
+          array->Item(1), &aRefBox, &TransformReferenceBox::Width);
+      break;
+    case eCSSKeyword_translatey:
+      result.y() = nsStyleTransformMatrix::ProcessTranslatePart(
+          array->Item(1), &aRefBox, &TransformReferenceBox::Height);
+      break;
+    case eCSSKeyword_translatez:
+      result.z() =
+          nsStyleTransformMatrix::ProcessTranslatePart(array->Item(1), nullptr);
+      break;
+    case eCSSKeyword_translate:
+      result.x() = nsStyleTransformMatrix::ProcessTranslatePart(
+          array->Item(1), &aRefBox, &TransformReferenceBox::Width);
+      // translate(x) is shorthand for translate(x, 0)
+      if (array->Count() == 3) {
+        result.y() = nsStyleTransformMatrix::ProcessTranslatePart(
+            array->Item(2), &aRefBox, &TransformReferenceBox::Height);
+      }
+      break;
+    case eCSSKeyword_translate3d:
+      result.x() = nsStyleTransformMatrix::ProcessTranslatePart(
+          array->Item(1), &aRefBox, &TransformReferenceBox::Width);
+      result.y() = nsStyleTransformMatrix::ProcessTranslatePart(
+          array->Item(2), &aRefBox, &TransformReferenceBox::Height);
+      result.z() =
+          nsStyleTransformMatrix::ProcessTranslatePart(array->Item(3), nullptr);
+      break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unsupported translate");
+  }
+  return result;
+}
+
 static void AddTransformFunctions(
     const nsCSSValueList* aList, mozilla::ComputedStyle* aStyle,
     nsPresContext* aPresContext, TransformReferenceBox& aRefBox,
@@ -210,89 +312,26 @@ static void AddTransformFunctions(
         aFunctions.AppendElement(RotationZ(theta));
         break;
       }
-      case eCSSKeyword_rotate: {
-        CSSAngle theta = MakeCSSAngle(array->Item(1));
-        aFunctions.AppendElement(Rotation(theta));
+      case eCSSKeyword_rotate:
+        aFunctions.AppendElement(GetRotate(currElem).get_Rotation());
         break;
-      }
-      case eCSSKeyword_rotate3d: {
-        double x = array->Item(1).GetFloatValue();
-        double y = array->Item(2).GetFloatValue();
-        double z = array->Item(3).GetFloatValue();
-        CSSAngle theta = MakeCSSAngle(array->Item(4));
-        aFunctions.AppendElement(Rotation3D(x, y, z, theta));
+      case eCSSKeyword_rotate3d:
+        aFunctions.AppendElement(GetRotate(currElem).get_Rotation3D());
         break;
-      }
-      case eCSSKeyword_scalex: {
-        double x = array->Item(1).GetFloatValue();
-        aFunctions.AppendElement(Scale(x, 1, 1));
+      case eCSSKeyword_scalex:
+      case eCSSKeyword_scaley:
+      case eCSSKeyword_scalez:
+      case eCSSKeyword_scale:
+      case eCSSKeyword_scale3d:
+        aFunctions.AppendElement(GetScale(currElem));
         break;
-      }
-      case eCSSKeyword_scaley: {
-        double y = array->Item(1).GetFloatValue();
-        aFunctions.AppendElement(Scale(1, y, 1));
+      case eCSSKeyword_translatex:
+      case eCSSKeyword_translatey:
+      case eCSSKeyword_translatez:
+      case eCSSKeyword_translate:
+      case eCSSKeyword_translate3d:
+        aFunctions.AppendElement(GetTranslate(currElem, aRefBox));
         break;
-      }
-      case eCSSKeyword_scalez: {
-        double z = array->Item(1).GetFloatValue();
-        aFunctions.AppendElement(Scale(1, 1, z));
-        break;
-      }
-      case eCSSKeyword_scale: {
-        double x = array->Item(1).GetFloatValue();
-        // scale(x) is shorthand for scale(x, x);
-        double y = array->Count() == 2 ? x : array->Item(2).GetFloatValue();
-        aFunctions.AppendElement(Scale(x, y, 1));
-        break;
-      }
-      case eCSSKeyword_scale3d: {
-        double x = array->Item(1).GetFloatValue();
-        double y = array->Item(2).GetFloatValue();
-        double z = array->Item(3).GetFloatValue();
-        aFunctions.AppendElement(Scale(x, y, z));
-        break;
-      }
-      case eCSSKeyword_translatex: {
-        double x = nsStyleTransformMatrix::ProcessTranslatePart(
-            array->Item(1), &aRefBox, &TransformReferenceBox::Width);
-        aFunctions.AppendElement(Translation(x, 0, 0));
-        break;
-      }
-      case eCSSKeyword_translatey: {
-        double y = nsStyleTransformMatrix::ProcessTranslatePart(
-            array->Item(1), &aRefBox, &TransformReferenceBox::Height);
-        aFunctions.AppendElement(Translation(0, y, 0));
-        break;
-      }
-      case eCSSKeyword_translatez: {
-        double z = nsStyleTransformMatrix::ProcessTranslatePart(array->Item(1),
-                                                                nullptr);
-        aFunctions.AppendElement(Translation(0, 0, z));
-        break;
-      }
-      case eCSSKeyword_translate: {
-        double x = nsStyleTransformMatrix::ProcessTranslatePart(
-            array->Item(1), &aRefBox, &TransformReferenceBox::Width);
-        // translate(x) is shorthand for translate(x, 0)
-        double y = 0;
-        if (array->Count() == 3) {
-          y = nsStyleTransformMatrix::ProcessTranslatePart(
-              array->Item(2), &aRefBox, &TransformReferenceBox::Height);
-        }
-        aFunctions.AppendElement(Translation(x, y, 0));
-        break;
-      }
-      case eCSSKeyword_translate3d: {
-        double x = nsStyleTransformMatrix::ProcessTranslatePart(
-            array->Item(1), &aRefBox, &TransformReferenceBox::Width);
-        double y = nsStyleTransformMatrix::ProcessTranslatePart(
-            array->Item(2), &aRefBox, &TransformReferenceBox::Height);
-        double z = nsStyleTransformMatrix::ProcessTranslatePart(array->Item(3),
-                                                                nullptr);
-
-        aFunctions.AppendElement(Translation(x, y, z));
-        break;
-      }
       case eCSSKeyword_skewx: {
         CSSAngle x = MakeCSSAngle(array->Item(1));
         aFunctions.AppendElement(SkewX(x));
@@ -439,11 +478,34 @@ static void SetAnimatable(nsCSSPropertyID aProperty,
     case eCSSProperty_opacity:
       aAnimatable = aAnimationValue.GetOpacity();
       break;
+    case eCSSProperty_rotate: {
+      RefPtr<const nsCSSValueSharedList> list =
+          aAnimationValue.GetTransformList();
+      MOZ_ASSERT(list && list->mHead && !list->mHead->mNext,
+                 "should have only one nsCSSValueList for rotate");
+      aAnimatable = GetRotate(list->mHead->mValue);
+      break;
+    }
+    case eCSSProperty_scale: {
+      RefPtr<const nsCSSValueSharedList> list =
+          aAnimationValue.GetTransformList();
+      MOZ_ASSERT(list && list->mHead && !list->mHead->mNext,
+                 "should have only one nsCSSValueList for scale");
+      aAnimatable = GetScale(list->mHead->mValue);
+      break;
+    }
+    case eCSSProperty_translate: {
+      RefPtr<const nsCSSValueSharedList> list =
+          aAnimationValue.GetTransformList();
+      MOZ_ASSERT(list && list->mHead && !list->mHead->mNext,
+                 "should have only one nsCSSValueList for translate");
+      aAnimatable = GetTranslate(list->mHead->mValue, aRefBox);
+      break;
+    }
     case eCSSProperty_transform: {
       aAnimatable = InfallibleTArray<TransformFunction>();
-      MOZ_ASSERT(aAnimationValue.mServo);
-      RefPtr<nsCSSValueSharedList> list;
-      Servo_AnimationValue_GetTransform(aAnimationValue.mServo, &list);
+      RefPtr<const nsCSSValueSharedList> list =
+          aAnimationValue.GetTransformList();
       AddTransformFunctions(list, aFrame, aRefBox, aAnimatable);
       break;
     }
@@ -779,10 +841,11 @@ static void AddAnimationsForDisplayItem(nsIFrame* aFrame,
 
 static uint64_t AddAnimationsForWebRender(
     nsDisplayItem* aItem, mozilla::layers::RenderRootStateManager* aManager,
-    nsDisplayListBuilder* aDisplayListBuilder) {
+    nsDisplayListBuilder* aDisplayListBuilder, wr::RenderRoot aRenderRoot) {
   RefPtr<WebRenderAnimationData> animationData =
       aManager->CommandBuilder()
-          .CreateOrRecycleWebRenderUserData<WebRenderAnimationData>(aItem);
+          .CreateOrRecycleWebRenderUserData<WebRenderAnimationData>(
+              aItem, aRenderRoot);
   AnimationInfo& animationInfo = animationData->GetAnimationInfo();
   AddAnimationsForDisplayItem(aItem->Frame(), aDisplayListBuilder, aItem,
                               aItem->GetType(), Send::Immediate,
@@ -796,7 +859,7 @@ static uint64_t AddAnimationsForWebRender(
   if (!animationInfo.GetAnimations().IsEmpty()) {
     OpAddCompositorAnimations anim(
         CompositorAnimations(animationInfo.GetAnimations(), animationsId));
-    aManager->WrBridge()->AddWebRenderParentCommand(anim);
+    aManager->WrBridge()->AddWebRenderParentCommand(anim, aRenderRoot);
     aManager->AddActiveCompositorAnimationId(animationsId);
   } else if (animationsId) {
     aManager->AddCompositorAnimationsIdForDiscard(animationsId);
@@ -1066,6 +1129,7 @@ nsDisplayListBuilder::nsDisplayListBuilder(nsIFrame* aReferenceFrame,
       mCurrentContainerASR(nullptr),
       mCurrentFrame(aReferenceFrame),
       mCurrentReferenceFrame(aReferenceFrame),
+      mNeedsDisplayListBuild{},
       mRootAGR(AnimatedGeometryRoot::CreateAGRForFrame(
           aReferenceFrame, nullptr, true, aRetainingDisplayList)),
       mCurrentAGR(mRootAGR),
@@ -1138,6 +1202,13 @@ void nsDisplayListBuilder::BeginFrame() {
   mInTransform = false;
   mInFilter = false;
   mSyncDecodeImages = false;
+  for (auto& needsDisplayListBuild : mNeedsDisplayListBuild) {
+    needsDisplayListBuild = false;
+  }
+
+  for (auto& renderRootRect : mRenderRootRects) {
+    renderRootRect = LayoutDeviceRect();
+  }
 }
 
 void nsDisplayListBuilder::EndFrame() {
@@ -3358,10 +3429,27 @@ bool nsDisplaySolidColor::CreateWebRenderCommands(
     nsDisplayListBuilder* aDisplayListBuilder) {
   LayoutDeviceRect bounds = LayoutDeviceRect::FromAppUnits(
       mBounds, mFrame->PresContext()->AppUnitsPerDevPixel());
-  wr::LayoutRect roundedRect = wr::ToRoundedLayoutRect(bounds);
 
-  aBuilder.PushRect(roundedRect, roundedRect, !BackfaceIsHidden(),
-                    wr::ToColorF(ToDeviceColor(mColor)));
+  // There is one big solid color behind everything - just split it out if it
+  // intersects multiple render roots
+  if (aBuilder.GetRenderRoot() == wr::RenderRoot::Default) {
+    for (auto renderRoot : wr::kRenderRoots) {
+      if (aBuilder.HasSubBuilder(renderRoot)) {
+        LayoutDeviceRect renderRootRect =
+            aDisplayListBuilder->GetRenderRootRect(renderRoot);
+        wr::LayoutRect intersection =
+            wr::ToRoundedLayoutRect(bounds.Intersect(renderRootRect));
+        aBuilder.SubBuilder(renderRoot)
+            .PushRect(intersection, intersection, !BackfaceIsHidden(),
+                      wr::ToColorF(ToDeviceColor(mColor)));
+      }
+    }
+  } else {
+    wr::LayoutRect roundedRect = wr::ToRoundedLayoutRect(bounds);
+
+    aBuilder.PushRect(roundedRect, roundedRect, !BackfaceIsHidden(),
+                      wr::ToColorF(ToDeviceColor(mColor)));
+  }
 
   return true;
 }
@@ -6129,8 +6217,8 @@ bool nsDisplayOpacity::CreateWebRenderCommands(
     nsDisplayListBuilder* aDisplayListBuilder) {
   float* opacityForSC = &mOpacity;
 
-  uint64_t animationsId =
-      AddAnimationsForWebRender(this, aManager, aDisplayListBuilder);
+  uint64_t animationsId = AddAnimationsForWebRender(
+      this, aManager, aDisplayListBuilder, aBuilder.GetRenderRoot());
   wr::WrAnimationProperty prop{
       wr::WrAnimationType::Opacity,
       animationsId,
@@ -6408,7 +6496,8 @@ bool nsDisplayOwnLayer::CreateWebRenderCommands(
     // zoom of this content asynchronously as needed.
     RefPtr<WebRenderAnimationData> animationData =
         aManager->CommandBuilder()
-            .CreateOrRecycleWebRenderUserData<WebRenderAnimationData>(this);
+            .CreateOrRecycleWebRenderUserData<WebRenderAnimationData>(
+                this, aBuilder.GetRenderRoot());
     AnimationInfo& animationInfo = animationData->GetAnimationInfo();
     animationInfo.EnsureAnimationsId();
     mWrAnimationId = animationInfo.GetCompositorAnimationsId();
@@ -6467,6 +6556,111 @@ void nsDisplayOwnLayer::WriteDebugInfo(std::stringstream& aStream) {
   aStream << nsPrintfCString(" (flags 0x%x) (scrolltarget %" PRIu64 ")",
                              (int)mFlags, mScrollbarData.mTargetViewId)
                  .get();
+}
+
+nsDisplayRenderRoot::nsDisplayRenderRoot(
+    nsDisplayListBuilder* aBuilder, nsIFrame* aFrame, nsDisplayList* aList,
+    const ActiveScrolledRoot* aActiveScrolledRoot, wr::RenderRoot aRenderRoot)
+    : nsDisplayWrapList(aBuilder, aFrame, aList, aActiveScrolledRoot, true),
+      mRenderRoot(aRenderRoot),
+      mBuiltWRCommands(false) {
+  MOZ_ASSERT(aRenderRoot != wr::RenderRoot::Default);
+  MOZ_ASSERT(gfxPrefs::WebRenderSplitRenderRoots());
+  mozilla::LayoutDeviceRect rect = mozilla::LayoutDeviceRect::FromAppUnits(
+      mFrame->GetRect(), mFrame->PresContext()->AppUnitsPerDevPixel());
+  aBuilder->ExpandRenderRootRect(rect, mRenderRoot);
+  MOZ_COUNT_CTOR(nsDisplayRenderRoot);
+}
+
+void nsDisplayRenderRoot::Destroy(nsDisplayListBuilder* aBuilder) {
+  if (mBuiltWRCommands && aBuilder) {
+    aBuilder->SetNeedsDisplayListBuild(mRenderRoot);
+  }
+  nsDisplayWrapList::Destroy(aBuilder);
+}
+
+void nsDisplayRenderRoot::NotifyUsed(nsDisplayListBuilder* aBuilder) {
+  mozilla::LayoutDeviceRect rect = mozilla::LayoutDeviceRect::FromAppUnits(
+      mFrame->GetRect(), mFrame->PresContext()->AppUnitsPerDevPixel());
+  aBuilder->ExpandRenderRootRect(rect, mRenderRoot);
+  nsDisplayWrapList::SetReused(aBuilder);
+}
+
+void nsDisplayRenderRoot::InvalidateCachedChildInfo(
+    nsDisplayListBuilder* aBuilder) {
+  if (mBuiltWRCommands && aBuilder) {
+    aBuilder->SetNeedsDisplayListBuild(mRenderRoot);
+    mBuiltWRCommands = false;
+  }
+}
+
+bool nsDisplayRenderRoot::UpdateScrollData(
+    mozilla::layers::WebRenderScrollData* aData,
+    mozilla::layers::WebRenderLayerScrollData* aLayerData) {
+  // Ideally we'd return false if this nsDisplayRenderRoot isn't actually
+  // establishing a render root boundary (i.e. if mRenderRoot ==
+  // aBuilder.GetRenderRoot()). But we don't have aBuilder here so we can't do
+  // that. Returning true unconditionally is suboptimal but still correct.
+  if (aLayerData) {
+    if (mBoundary) {
+      // Scroll data entries that are referents should never have direct
+      // descendants. Instead they will refer to a different subtree
+      MOZ_ASSERT(aLayerData->GetDescendantCount() == 0);
+      aLayerData->SetReferentRenderRoot(*mBoundary);
+    }
+  }
+  return true;
+}
+
+bool nsDisplayRenderRoot::CreateWebRenderCommands(
+    mozilla::wr::DisplayListBuilder& aBuilder,
+    mozilla::wr::IpcResourceUpdateQueue& aResources,
+    const StackingContextHelper& aSc, RenderRootStateManager* aManager,
+    nsDisplayListBuilder* aDisplayListBuilder) {
+  if (aDisplayListBuilder->GetNeedsDisplayListBuild(mRenderRoot) ||
+      !mBuiltWRCommands) {
+    if (aBuilder.GetRenderRoot() == mRenderRoot) {
+      nsDisplayWrapList::CreateWebRenderCommands(aBuilder, aResources, aSc,
+                                                 aManager, aDisplayListBuilder);
+    } else {
+      RefPtr<WebRenderRenderRootData> userData =
+          aManager->CommandBuilder()
+              .CreateOrRecycleWebRenderUserData<WebRenderRenderRootData>(
+                  this, aBuilder.GetRenderRoot());
+      mBoundary = Some(userData->EnsureHasBoundary(mRenderRoot));
+
+      WebRenderCommandBuilder::ScrollDataBoundaryWrapper wrapper(
+          aManager->CommandBuilder(), *mBoundary);
+
+      aBuilder.SetSendSubBuilderDisplayList(mRenderRoot);
+      wr::DisplayListBuilder& builder = aBuilder.SubBuilder(mRenderRoot);
+      wr::IpcResourceUpdateQueue& resources = aResources.SubQueue(mRenderRoot);
+
+      wr::StackingContextParams params;
+      params.clip =
+          wr::WrStackingContextClip::ClipChain(builder.CurrentClipChainId());
+      LayoutDeviceRect rrRect =
+          aDisplayListBuilder->GetRenderRootRect(mRenderRoot);
+      LayoutDevicePoint scOrigin = aSc.GetOrigin();
+      // Subtract the render root rect from this, as it already acts as the
+      // origin for our whole display list in WebRender (via SetDocumentView).
+      // However, we can't simply ignore the value of aSc.GetOrigin(), even
+      // though they will often be the same. This is because there might be
+      // multiple cousin nsDisplayRenderRoots in a tree of nsDisplayItems, and
+      // the RenderRootRect will be the union of their areas.
+      scOrigin.x -= rrRect.x;
+      scOrigin.y -= rrRect.y;
+      StackingContextHelper sc(
+          aManager->CommandBuilder().GetRootStackingContextHelper(mRenderRoot),
+          nullptr, nullptr, nullptr, builder, params,
+          LayoutDeviceRect(scOrigin, LayoutDeviceSize()));
+
+      nsDisplayWrapList::CreateWebRenderCommands(builder, resources, sc,
+                                                 aManager, aDisplayListBuilder);
+    }
+    mBuiltWRCommands = true;
+  }
+  return true;
 }
 
 nsDisplaySubDocument::nsDisplaySubDocument(nsDisplayListBuilder* aBuilder,
@@ -7681,13 +7875,14 @@ Matrix4x4 nsDisplayTransform::GetResultingTransformMatrixInternal(
 }
 
 bool nsDisplayOpacity::CanUseAsyncAnimations(nsDisplayListBuilder* aBuilder) {
-  if (ActiveLayerTracker::IsStyleAnimated(
-          aBuilder, mFrame, nsCSSPropertyIDSet::OpacityProperties())) {
+  static constexpr nsCSSPropertyIDSet opacitySet =
+      nsCSSPropertyIDSet::OpacityProperties();
+  if (ActiveLayerTracker::IsStyleAnimated(aBuilder, mFrame, opacitySet)) {
     return true;
   }
 
   EffectCompositor::SetPerformanceWarning(
-      mFrame, eCSSProperty_opacity,
+      mFrame, opacitySet,
       AnimationPerformanceWarning(
           AnimationPerformanceWarning::Type::OpacityFrameInactive));
 
@@ -7713,11 +7908,13 @@ auto nsDisplayTransform::ShouldPrerenderTransformedContent(
   // have a compositor-animated transform, can be prerendered. An element
   // might have only just had its transform animated in which case
   // the ActiveLayerManager may not have been notified yet.
+  static constexpr nsCSSPropertyIDSet transformSet =
+      nsCSSPropertyIDSet::TransformLikeProperties();
   if (!ActiveLayerTracker::IsTransformMaybeAnimated(aFrame) &&
       !EffectCompositor::HasAnimationsForCompositor(
           aFrame, DisplayItemType::TYPE_TRANSFORM)) {
     EffectCompositor::SetPerformanceWarning(
-        aFrame, eCSSProperty_transform,
+        aFrame, transformSet,
         AnimationPerformanceWarning(
             AnimationPerformanceWarning::Type::TransformFrameInactive));
 
@@ -7805,7 +8002,7 @@ auto nsDisplayTransform::ShouldPrerenderTransformedContent(
   if (frameArea > maxLimitArea) {
     uint64_t appUnitsPerPixel = AppUnitsPerCSSPixel();
     EffectCompositor::SetPerformanceWarning(
-        aFrame, eCSSProperty_transform,
+        aFrame, transformSet,
         AnimationPerformanceWarning(
             AnimationPerformanceWarning::Type::ContentTooLargeArea,
             {
@@ -7814,7 +8011,7 @@ auto nsDisplayTransform::ShouldPrerenderTransformedContent(
             }));
   } else {
     EffectCompositor::SetPerformanceWarning(
-        aFrame, eCSSProperty_transform,
+        aFrame, transformSet,
         AnimationPerformanceWarning(
             AnimationPerformanceWarning::Type::ContentTooLarge,
             {
@@ -7970,8 +8167,8 @@ bool nsDisplayTransform::CreateWebRenderCommands(
     position.Round();
   }
 
-  uint64_t animationsId =
-      AddAnimationsForWebRender(this, aManager, aDisplayListBuilder);
+  uint64_t animationsId = AddAnimationsForWebRender(
+      this, aManager, aDisplayListBuilder, aBuilder.GetRenderRoot());
   wr::WrAnimationProperty prop{
       wr::WrAnimationType::Transform,
       animationsId,

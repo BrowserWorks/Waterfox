@@ -39,6 +39,7 @@ from taskgraph.util.signed_artifacts import get_signed_artifacts
 from voluptuous import Any, Required, Optional, Extra, Match
 from taskgraph import GECKO, MAX_DEPENDENCIES
 from ..util import docker as dockerutil
+from ..util.workertypes import get_worker_type
 
 RUN_TASK = os.path.join(GECKO, 'taskcluster', 'scripts', 'run-task')
 
@@ -126,7 +127,7 @@ task_description_schema = Schema({
 
         # Type of gecko v2 index to use
         'type': Any('generic', 'nightly', 'l10n', 'nightly-with-multi-l10n',
-                    'release', 'nightly-l10n'),
+                    'release', 'nightly-l10n', 'shippable'),
 
         # The rank that the task will receive in the TaskCluster
         # index.  A newly completed task supercedes the currently
@@ -251,11 +252,25 @@ V2_NIGHTLY_TEMPLATES = [
     "index.{trust-domain}.v2.{project}.nightly.revision.{branch_rev}.{product}.{job-name}",
 ]
 
+V2_SHIPPABLE_TEMPLATES = [
+    "index.{trust-domain}.v2.{project}.shippable.latest.{product}.{job-name}",
+    "index.{trust-domain}.v2.{project}.shippable.{build_date}.revision.{branch_rev}.{product}.{job-name}",  # noqa - too long
+    "index.{trust-domain}.v2.{project}.shippable.{build_date}.latest.{product}.{job-name}",
+    "index.{trust-domain}.v2.{project}.shippable.revision.{branch_rev}.{product}.{job-name}",
+]
+
 V2_NIGHTLY_L10N_TEMPLATES = [
     "index.{trust-domain}.v2.{project}.nightly.latest.{product}-l10n.{job-name}.{locale}",
     "index.{trust-domain}.v2.{project}.nightly.{build_date}.revision.{branch_rev}.{product}-l10n.{job-name}.{locale}",  # noqa - too long
     "index.{trust-domain}.v2.{project}.nightly.{build_date}.latest.{product}-l10n.{job-name}.{locale}",  # noqa - too long
     "index.{trust-domain}.v2.{project}.nightly.revision.{branch_rev}.{product}-l10n.{job-name}.{locale}",  # noqa - too long
+]
+
+V2_SHIPPABLE_L10N_TEMPLATES = [
+    "index.{trust-domain}.v2.{project}.shippable.latest.{product}-l10n.{job-name}.{locale}",
+    "index.{trust-domain}.v2.{project}.shippable.{build_date}.revision.{branch_rev}.{product}-l10n.{job-name}.{locale}",  # noqa - too long
+    "index.{trust-domain}.v2.{project}.shippable.{build_date}.latest.{product}-l10n.{job-name}.{locale}",  # noqa - too long
+    "index.{trust-domain}.v2.{project}.shippable.revision.{branch_rev}.{product}-l10n.{job-name}.{locale}",  # noqa - too long
 ]
 
 V2_L10N_TEMPLATES = [
@@ -1458,6 +1473,35 @@ def add_nightly_index_routes(config, task):
     return task
 
 
+@index_builder('shippable')
+def add_shippable_index_routes(config, task):
+    index = task.get('index')
+    routes = task.setdefault('routes', [])
+
+    verify_index(config, index)
+
+    subs = config.params.copy()
+    subs['job-name'] = index['job-name']
+    subs['build_date_long'] = time.strftime("%Y.%m.%d.%Y%m%d%H%M%S",
+                                            time.gmtime(config.params['build_date']))
+    subs['build_date'] = time.strftime("%Y.%m.%d",
+                                       time.gmtime(config.params['build_date']))
+    subs['product'] = index['product']
+    subs['trust-domain'] = config.graph_config['trust-domain']
+    subs['branch_rev'] = get_branch_rev(config)
+
+    for tpl in V2_SHIPPABLE_TEMPLATES:
+        routes.append(tpl.format(**subs))
+
+    # Also add routes for en-US
+    task = add_shippable_l10n_index_routes(config, task, force_locale="en-US")
+
+    # For nightly-compat index:
+    # 'nightly' in config.params['target_tasks_method']
+
+    return task
+
+
 @index_builder('release')
 def add_release_index_routes(config, task):
     index = task.get('index')
@@ -1523,6 +1567,46 @@ def add_l10n_index_routes(config, task, force_locale=None):
 
     for locale in locales:
         for tpl in V2_L10N_TEMPLATES:
+            routes.append(tpl.format(locale=locale, **subs))
+
+    return task
+
+
+@index_builder('shippable-l10n')
+def add_shippable_l10n_index_routes(config, task, force_locale=None):
+    index = task.get('index')
+    routes = task.setdefault('routes', [])
+
+    verify_index(config, index)
+
+    subs = config.params.copy()
+    subs['job-name'] = index['job-name']
+    subs['build_date_long'] = time.strftime("%Y.%m.%d.%Y%m%d%H%M%S",
+                                            time.gmtime(config.params['build_date']))
+    subs['product'] = index['product']
+    subs['trust-domain'] = config.graph_config['trust-domain']
+    subs['branch_rev'] = get_branch_rev(config)
+
+    locales = task['attributes'].get('chunk_locales',
+                                     task['attributes'].get('all_locales'))
+    # Some tasks has only one locale set
+    if task['attributes'].get('locale'):
+        locales = [task['attributes']['locale']]
+
+    if force_locale:
+        # Used for en-US and multi-locale
+        locales = [force_locale]
+
+    if not locales:
+        raise Exception("Error: Unable to use l10n index for tasks without locales")
+
+    # If there are too many locales, we can't write a route for all of them
+    # See Bug 1323792
+    if len(locales) > 18:  # 18 * 3 = 54, max routes = 64
+        return task
+
+    for locale in locales:
+        for tpl in V2_SHIPPABLE_L10N_TEMPLATES:
             routes.append(tpl.format(locale=locale, **subs))
 
     return task
@@ -1599,8 +1683,13 @@ def add_index_routes(config, tasks):
 def build_task(config, tasks):
     for task in tasks:
         level = str(config.params['level'])
-        worker_type = task['worker-type'].format(level=level)
-        provisioner_id, worker_type = worker_type.split('/', 1)
+
+        provisioner_id, worker_type = get_worker_type(
+            config.graph_config,
+            task['worker-type'],
+            level,
+        )
+        task['worker-type'] = '/'.join([provisioner_id, worker_type])
         project = config.params['project']
 
         routes = task.get('routes', [])

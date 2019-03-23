@@ -99,6 +99,12 @@ VARCACHE_PREF(
    fuzzing_enabled,
   bool, false
 )
+
+VARCACHE_PREF(
+  "fuzzing.necko.enabled",
+   fuzzing_necko_enabled,
+  RelaxedAtomicBool, false
+)
 #endif
 
 //---------------------------------------------------------------------------
@@ -325,6 +331,12 @@ VARCACHE_PREF(
 )
 
 VARCACHE_PREF(
+  "dom.webnotifications.requireuserinteraction",
+   dom_webnotifications_requireuserinteraction,
+  RelaxedAtomicBool, false
+)
+
+VARCACHE_PREF(
   "dom.webnotifications.serviceworker.enabled",
    dom_webnotifications_serviceworker_enabled,
   RelaxedAtomicBool, true
@@ -483,11 +495,10 @@ VARCACHE_PREF(
 )
 
 // Enable content type normalization of XHR uploads via MIME Sniffing standard
-// Disabled for now in bz1499136
 VARCACHE_PREF(
   "dom.xhr.standard_content_type_normalization",
    dom_xhr_standard_content_type_normalization,
-  RelaxedAtomicBool, false
+  RelaxedAtomicBool, true
 )
 
 // Block multiple external protocol URLs in iframes per single event.
@@ -1012,11 +1023,17 @@ VARCACHE_PREF(
 )
 
 // Is support for CSS contain enabled?
+#ifdef EARLY_BETA_OR_EARLIER
+#define PREF_VALUE true
+#else
+#define PREF_VALUE false
+#endif
 VARCACHE_PREF(
   "layout.css.contain.enabled",
    layout_css_contain_enabled,
-  bool, false
+  bool, PREF_VALUE
 )
+#undef PREF_VALUE
 
 // Is steps(jump-*) supported in easing functions?
 VARCACHE_PREF(
@@ -1120,12 +1137,18 @@ VARCACHE_PREF(
   RelaxedAtomicBool, false
 )
 
+#ifdef NIGHTLY_BUILD
+# define PREF_VALUE true
+#else
+# define PREF_VALUE false
+#endif
 // BigInt API
 VARCACHE_PREF(
   "javascript.options.bigint",
    javascript_options_bigint,
-  RelaxedAtomicBool, false
+  RelaxedAtomicBool, PREF_VALUE
 )
+#undef PREF_VALUE
 
 VARCACHE_PREF(
   "javascript.options.experimental.fields",
@@ -1267,7 +1290,7 @@ VARCACHE_PREF(
   bool, false
 )
 
-#if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
+#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
 // Whether to allow, on a Linux system that doesn't support the necessary
 // sandboxing features, loading Gecko Media Plugins unsandboxed.  However, EME
 // CDMs will not be loaded without sandboxing even if this pref is changed.
@@ -1344,7 +1367,47 @@ VARCACHE_PREF(
 
 #endif // ANDROID
 
-// WebRTC
+//---------------------------------------------------------------------------
+// MediaCapture prefs
+//---------------------------------------------------------------------------
+
+// Enables navigator.mediaDevices and getUserMedia() support. See also
+// media.peerconnection.enabled
+VARCACHE_PREF(
+              "media.navigator.enabled",
+              media_navigator_enabled,
+              bool, true
+              )
+
+// This pref turns off [SecureContext] on the navigator.mediaDevices object, for
+// more compatible legacy behavior.
+VARCACHE_PREF(
+              "media.devices.insecure.enabled",
+              media_devices_insecure_enabled,
+              bool, true
+              )
+
+// If the above pref is also enabled, this pref enabled getUserMedia() support
+// in http, bypassing the instant NotAllowedError you get otherwise.
+VARCACHE_PREF(
+              "media.getusermedia.insecure.enabled",
+              media_getusermedia_insecure_enabled,
+              bool, false
+              )
+
+//---------------------------------------------------------------------------
+// WebRTC prefs
+//---------------------------------------------------------------------------
+
+// Enables RTCPeerConnection support. Note that, when true, this pref enables
+// navigator.mediaDevices and getUserMedia() support as well.
+// See also media.navigator.enabled
+VARCACHE_PREF(
+              "media.peerconnection.enabled",
+              media_peerconnection_enabled,
+              bool, true
+              )
+
 #ifdef MOZ_WEBRTC
 #ifdef ANDROID
 

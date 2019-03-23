@@ -78,6 +78,12 @@ class IMEStateManager {
   static void OnTabParentDestroying(TabParent* aTabParent);
 
   /**
+   * Focus moved between browsers from aBlur to aFocus. (nullptr means the
+   * chrome process.)
+   */
+  static void OnFocusMovedBetweenBrowsers(TabParent* aBlur, TabParent* aFocus);
+
+  /**
    * Called when aWidget is being deleted.
    */
   static void WidgetDestroyed(nsIWidget* aWidget);
@@ -197,15 +203,15 @@ class IMEStateManager {
    */
   static void DispatchCompositionEvent(
       nsINode* aEventTargetNode, nsPresContext* aPresContext,
-      WidgetCompositionEvent* aCompositionEvent, nsEventStatus* aStatus,
-      EventDispatchingCallback* aCallBack, bool aIsSynthesized = false);
+      TabParent* aTabParent, WidgetCompositionEvent* aCompositionEvent,
+      nsEventStatus* aStatus, EventDispatchingCallback* aCallBack,
+      bool aIsSynthesized = false);
 
   /**
    * All selection events must be handled via HandleSelectionEvent()
    * because they must be handled by same target as composition events when
    * there is a composition.
    */
-  MOZ_CAN_RUN_SCRIPT
   static void HandleSelectionEvent(nsPresContext* aPresContext,
                                    nsIContent* aEventTargetContent,
                                    WidgetSelectionEvent* aSelectionEvent);

@@ -169,7 +169,7 @@ void main(void) {
 
     PrimitiveHeader ph = fetch_prim_header(prim_header_address);
     Transform transform = fetch_transform(ph.transform_id);
-    ClipArea clip_area = fetch_clip_area(ph.clip_task_index);
+    ClipArea clip_area = fetch_clip_area(ph.user_data.w);
     PictureTask task = fetch_picture_task(ph.render_task_index);
 
     TextRun text = fetch_text_run(ph.specific_prim_address);
@@ -300,7 +300,7 @@ void main(void) {
     oFragColor = vColor * alpha_mask;
     oFragBlend = alpha_mask * vColor.a;
 #else
-    oFragColor = vColor * mask * alpha;
+    write_output(vColor * mask * alpha);
 #endif
 }
 #endif

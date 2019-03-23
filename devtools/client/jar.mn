@@ -12,8 +12,8 @@ devtools.jar:
 *   content/scratchpad/index.xul (scratchpad/index.xul)
     content/shared/splitview.css (shared/splitview.css)
     content/shared/theme-switching.js (shared/theme-switching.js)
-*   content/styleeditor/index.xul (styleeditor/index.xul)
-*   content/storage/index.xul (storage/index.xul)
+    content/styleeditor/index.xul (styleeditor/index.xul)
+    content/storage/index.xul (storage/index.xul)
     content/inspector/markup/markup.xhtml (inspector/markup/markup.xhtml)
     content/shared/sourceeditor/codemirror/addon/dialog/dialog.css (shared/sourceeditor/codemirror/addon/dialog/dialog.css)
     content/shared/sourceeditor/codemirror/addon/hint/show-hint.js (shared/sourceeditor/codemirror/addon/hint/show-hint.js)
@@ -50,9 +50,6 @@ devtools.jar:
     content/aboutdebugging/aboutdebugging.css (aboutdebugging/aboutdebugging.css)
     content/aboutdebugging-new/index.html (aboutdebugging-new/index.html)
     content/aboutdebugging-new/aboutdebugging.css (aboutdebugging-new/aboutdebugging.css)
-    # The following line is temporary until the strings for the new
-    # about:debugging feature stabilize.
-    content/aboutdebugging-new/tmp-locale/en-US/aboutdebugging.ftl (aboutdebugging-new/tmp-locale/en-US/aboutdebugging.notftl)
     content/responsive.html/index.xhtml (responsive.html/index.xhtml)
     content/dom/index.html (dom/index.html)
     content/dom/main.js (dom/main.js)

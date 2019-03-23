@@ -763,10 +763,6 @@ bool Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
   return true;
 }
 
-InfallibleTArray<AnimData>& Layer::GetAnimationData() {
-  return mAnimationInfo.GetAnimationData();
-}
-
 Maybe<ParentLayerIntRect> Layer::GetCombinedClipRect() const {
   Maybe<ParentLayerIntRect> clip = GetClipRect();
 
@@ -1773,6 +1769,12 @@ void Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix) {
       AppendToString(aStream, mScrollMetadata[i], "", "]");
     }
   }
+  // FIXME: On the compositor thread, we don't set mAnimationInfo::mAnimations,
+  // All animations are transformed by AnimationHelper::ExtractAnimations() into
+  // mAnimationInfo.mPropertyAnimationGroups, instead. So if we want to check
+  // if layer trees are properly synced up across processes, we should dump
+  // mAnimationInfo.mPropertyAnimationGroups for the compositor thread.
+  // (See AnimationInfo.h for more details.)
   if (!mAnimationInfo.GetAnimations().IsEmpty()) {
     aStream << nsPrintfCString(" [%d animations with id=%" PRIu64 " ]",
                                (int)mAnimationInfo.GetAnimations().Length(),
@@ -2232,28 +2234,40 @@ bool LayerManager::IsLogEnabled() {
 
 bool LayerManager::SetPendingScrollUpdateForNextTransaction(
     ScrollableLayerGuid::ViewID aScrollId,
-    const ScrollUpdateInfo& aUpdateInfo) {
+    const ScrollUpdateInfo& aUpdateInfo,
+    wr::RenderRoot aRenderRoot) {
   Layer* withPendingTransform = DepthFirstSearch<ForwardIterator>(
       GetRoot(), [](Layer* aLayer) { return aLayer->HasPendingTransform(); });
   if (withPendingTransform) {
     return false;
   }
 
-  mPendingScrollUpdates[aScrollId] = aUpdateInfo;
+  // If this is called on a LayerManager that's not a WebRenderLayerManager,
+  // then we don't actually need the aRenderRoot information. We force it to
+  // RenderRoot::Default so that we can make assumptions in
+  // GetPendingScrollInfoUpdate.
+  wr::RenderRoot renderRoot = (GetBackendType() == LayersBackend::LAYERS_WR)
+    ? aRenderRoot : wr::RenderRoot::Default;
+  mPendingScrollUpdates[renderRoot][aScrollId] = aUpdateInfo;
   return true;
 }
 
 Maybe<ScrollUpdateInfo> LayerManager::GetPendingScrollInfoUpdate(
     ScrollableLayerGuid::ViewID aScrollId) {
-  auto it = mPendingScrollUpdates.find(aScrollId);
-  if (it != mPendingScrollUpdates.end()) {
+  // This never gets called for WebRenderLayerManager, so we assume that all
+  // pending scroll info updates are stored under the default RenderRoot.
+  MOZ_ASSERT(GetBackendType() != LayersBackend::LAYERS_WR);
+  auto it = mPendingScrollUpdates[wr::RenderRoot::Default].find(aScrollId);
+  if (it != mPendingScrollUpdates[wr::RenderRoot::Default].end()) {
     return Some(it->second);
   }
   return Nothing();
 }
 
 void LayerManager::ClearPendingScrollInfoUpdate() {
-  mPendingScrollUpdates.clear();
+  for (auto renderRoot : wr::kRenderRoots) {
+    mPendingScrollUpdates[renderRoot].clear();
+  }
 }
 
 void PrintInfo(std::stringstream& aStream, HostLayer* aLayerComposite) {

@@ -95,13 +95,6 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
-  MOZ_CONTENT_SANDBOX:
-#ifdef MOZ_CONTENT_SANDBOX
-  true,
-#else
-  false,
-#endif
-
   MOZ_TELEMETRY_REPORTING:
 #ifdef MOZ_TELEMETRY_REPORTING
   true,
@@ -189,6 +182,13 @@ this.AppConstants = Object.freeze({
 
   MOZ_MAINTENANCE_SERVICE:
 #ifdef MOZ_MAINTENANCE_SERVICE
+  true,
+#else
+  false,
+#endif
+
+  MOZ_BITS_DOWNLOAD:
+#ifdef MOZ_BITS_DOWNLOAD
   true,
 #else
   false,

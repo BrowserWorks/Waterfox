@@ -14,8 +14,6 @@ class WorkerTargetFront extends
 
     this.traits = {};
 
-    this._isClosed = false;
-
     // The actor sends a "close" event, which is translated to "worker-close" by
     // the specification in order to not conflict with Target's "close" event.
     // This event is similar to tabDetached and means that the worker is destroyed.
@@ -34,16 +32,6 @@ class WorkerTargetFront extends
     this.type = json.type;
     this.scope = json.scope;
     this.fetch = json.fetch;
-  }
-
-  get isClosed() {
-    return this._isClosed;
-  }
-
-  destroy() {
-    this._isClosed = true;
-
-    super.destroy();
   }
 
   async attach() {
@@ -65,20 +53,6 @@ class WorkerTargetFront extends
       return this.attachConsole();
     })();
     return this._attach;
-  }
-
-  async detach() {
-    if (this.isClosed) {
-      return {};
-    }
-    let response;
-    try {
-      response = await super.detach();
-    } catch (e) {
-      console.warn(`Error while detaching the worker target front: ${e.message}`);
-    }
-    this.destroy();
-    return response;
   }
 
   reconfigure() {

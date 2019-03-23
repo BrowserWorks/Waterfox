@@ -18,8 +18,7 @@
   <script type="application/javascript"
           src="chrome://devtools/content/shared/theme-switching.js"/>
   <script type="text/javascript" src="chrome://global/content/globalOverlay.js"/>
-
-#include ../../../toolkit/content/editMenuCommands.inc.xul
+  <script type="application/javascript" src="chrome://global/content/editMenuOverlay.js"/>
 
   <popupset id="storagePopupSet">
     <menupopup id="storage-tree-popup">
@@ -28,6 +27,10 @@
       <menuitem id="storage-tree-popup-delete-all-session-cookies"
                 label="&storage.popupMenu.deleteAllSessionCookiesLabel;"/>
       <menuitem id="storage-tree-popup-delete"/>
+    </menupopup>
+    <menupopup id="variable-view-popup">
+      <menuitem id="variable-view-popup-copy"
+                label="&storage.popupMenu.copyLabel;"/>
     </menupopup>
     <menupopup id="storage-table-popup">
       <menuitem id="storage-table-popup-add"/>

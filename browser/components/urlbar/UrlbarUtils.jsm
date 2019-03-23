@@ -66,6 +66,8 @@ var UrlbarUtils = {
   },
 
   // Defines UrlbarResult types.
+  // If you add new result types, consider checking if consumers of
+  // "urlbar-user-start-navigation" need update as well.
   RESULT_TYPE: {
     // An open tab.
     // Payload: { icon, url, userContextId }
@@ -91,6 +93,8 @@ var UrlbarUtils = {
   // can return results from more than one source. This is used by the
   // ProvidersManager to decide which providers must be queried and which
   // results can be returned.
+  // If you add new source types, consider checking if consumers of
+  // "urlbar-user-start-navigation" need update as well.
   RESULT_SOURCE: {
     BOOKMARKS: 1,
     HISTORY: 2,
@@ -389,12 +393,12 @@ class UrlbarQueryContext {
    *   Set to true if this query was started from a private browsing window.
    * @param {number} options.maxResults
    *   The maximum number of results that will be displayed for this query.
-   * @param {boolean} options.enableAutofill
-   *   Whether or not to include autofill results.
+   * @param {boolean} options.allowAutofill
+   *   Whether or not to allow providers to include autofill results.
    */
   constructor(options = {}) {
     this._checkRequiredOptions(options, [
-      "enableAutofill",
+      "allowAutofill",
       "isPrivate",
       "lastKey",
       "maxResults",

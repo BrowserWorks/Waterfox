@@ -9,7 +9,8 @@ void brush_vs(
     int prim_address,
     RectWithSize local_rect,
     RectWithSize segment_rect,
-    ivec4 user_data,
+    ivec4 prim_user_data,
+    int segment_user_data,
     mat4 transform,
     PictureTask pic_task,
     int brush_flags,
@@ -118,7 +119,8 @@ void main(void) {
         ph.specific_prim_address,
         ph.local_rect,
         segment_rect,
-        ivec4(ph.user_data, segment_user_data),
+        ph.user_data,
+        segment_user_data,
         transform.m,
         pic_task,
         brush_flags,
@@ -156,8 +158,7 @@ void main(void) {
     #endif
 #endif
 
-    // TODO(gw): Handle pre-multiply common code here as required.
-    oFragColor = frag.color;
+    write_output(frag.color);
 #endif
 }
 #endif

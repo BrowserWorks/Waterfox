@@ -123,7 +123,10 @@ def rust_supported_targets(rustc):
     per_raw_os = {}
     for t in out:
         t = split_triplet(t, allow_unknown=True)
-        key = (t.cpu, t.endianness, t.os)
+        endianness = t.endianness
+        if t.cpu.startswith('thumb') and endianness not in ('big', 'little'):
+            endianness = 'little'
+        key = (t.cpu, endianness, t.os)
         if key in per_os:
             previous = per_os[key]
             per_raw_os[(previous.cpu, previous.endianness,
@@ -138,7 +141,7 @@ def rust_supported_targets(rustc):
             # normalize.
             if raw_os == 'androideabi':
                 raw_os = 'linux-androideabi'
-            per_raw_os[(t.cpu, t.endianness, raw_os)] = t
+            per_raw_os[(t.cpu, endianness, raw_os)] = t
         else:
             per_os[key] = t
     return namespace(per_os=per_os, per_raw_os=per_raw_os)
@@ -152,8 +155,11 @@ def rust_triple_alias(host_or_target):
     """
     assert host_or_target in {host, target}
 
+    host_or_target_str = {host: 'host', target: 'target'}[host_or_target]
+
     @depends(rustc, host_or_target, c_compiler, rust_supported_targets,
-             when=rust_compiler)
+             arm_target, when=rust_compiler)
+    @checking('for rust %s triplet' % host_or_target_str)
     @imports('os')
     @imports('subprocess')
     @imports(_from='mozbuild.configure.util', _import='LineIO')
@@ -161,7 +167,7 @@ def rust_triple_alias(host_or_target):
     @imports(_from='tempfile', _import='mkstemp')
     @imports(_from='textwrap', _import='dedent')
     def rust_target(rustc, host_or_target, compiler_info,
-                    rust_supported_targets):
+                    rust_supported_targets, arm_target):
         # Rust's --target options are similar to, but not exactly the same
         # as, the autoconf-derived targets we use.  An example would be that
         # Rust uses distinct target triples for targetting the GNU C++ ABI
@@ -181,13 +187,23 @@ def rust_triple_alias(host_or_target):
             host_or_target_os = host_or_target.os
             host_or_target_raw_os = host_or_target.raw_os
 
-        rustc_target = rust_supported_targets.per_os.get(
-            (host_or_target.cpu, host_or_target.endianness, host_or_target_os))
+        if host_or_target.cpu == 'arm' and arm_target.arm_arch == 7 and \
+                arm_target.fpu == 'neon' and arm_target.thumb2:
+            host_or_target_cpus = ('thumbv7neon', host_or_target.cpu)
+        else:
+            host_or_target_cpus = (host_or_target.cpu,)
 
-        if rustc_target is None:
+        for host_or_target_cpu in host_or_target_cpus:
+            rustc_target = rust_supported_targets.per_os.get(
+                (host_or_target_cpu, host_or_target.endianness, host_or_target_os))
+            if rustc_target:
+                break
+
             rustc_target = rust_supported_targets.per_raw_os.get(
-                (host_or_target.cpu, host_or_target.endianness,
+                (host_or_target_cpu, host_or_target.endianness,
                  host_or_target_raw_os))
+            if rustc_target:
+                break
 
         if rustc_target is None:
             die("Don't know how to translate {} for rustc".format(
@@ -256,16 +272,6 @@ set_config('RUST_TARGET', rust_target_triple)
 set_config('RUST_HOST_TARGET', rust_host_triple)
 
 
-@depends(rust_target_triple)
-def rust_target_env_name(triple):
-    return triple.upper().replace('-', '_')
-
-
-# We need this to form various Cargo environment variables, as there is no
-# uppercase function in make, and we don't want to shell out just for
-# converting a string to uppercase.
-set_config('RUST_TARGET_ENV_NAME', rust_target_env_name)
-
 # This is used for putting source info into symbol files.
 set_config('RUSTC_COMMIT', depends(rustc_info)(lambda i: i.commit))
 
@@ -289,37 +295,6 @@ def rust_tests(enable_rust_tests, rustdoc):
 
 
 set_config('MOZ_RUST_TESTS', rust_tests)
-
-
-@depends(target, rustc_info, c_compiler)
-def win64_cargo_linker(target, rustc_info, compiler_info):
-    # When we're building a 32-bit Windows build with a 64-bit rustc, we
-    # need to configure the linker it will use for host binaries (build scripts)
-    # specially because the compiler configuration we use for the build is for
-    # MSVC targeting 32-bit binaries.
-    if target.kernel == 'WINNT' and \
-       target.cpu in ('x86', 'aarch64') and \
-       compiler_info.type in ('msvc', 'clang-cl') and \
-       rustc_info.host == 'x86_64-pc-windows-msvc':
-        return True
-
-
-set_config('WIN64_CARGO_LINKER', win64_cargo_linker)
-
-
-@depends(win64_cargo_linker, check_build_environment)
-@imports(_from='textwrap', _import='dedent')
-def win64_cargo_linker_config(linker, env):
-    if linker:
-        return dedent('''\
-        [target.x86_64-pc-windows-msvc]
-        linker = "{objdir}/build/win64/cargo-linker.bat"
-        '''.format(objdir=env.topobjdir))
-    # We want an empty string here so we don't leave the @ variable in the config file.
-    return ''
-
-
-set_config('WIN64_CARGO_LINKER_CONFIG', win64_cargo_linker_config)
 
 
 @depends(target, c_compiler, rustc)

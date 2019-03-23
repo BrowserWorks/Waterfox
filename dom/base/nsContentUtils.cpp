@@ -22,6 +22,7 @@
 #include "jsfriendapi.h"
 #include "js/ArrayBuffer.h"  // JS::{GetArrayBufferData,IsArrayBufferObject,NewArrayBuffer}
 #include "js/JSON.h"
+#include "js/RegExp.h"  // JS::ExecuteRegExpNoStatics, JS::NewUCRegExpObject, JS::RegExpFlags
 #include "js/Value.h"
 #include "Layers.h"
 #include "nsAppRunner.h"
@@ -189,6 +190,7 @@
 #include "nsIStreamConverterService.h"
 #include "nsIStringBundle.h"
 #include "nsIURI.h"
+#include "nsIURIMutator.h"
 #include "nsIURIWithSpecialOrigin.h"
 #include "nsIURL.h"
 #include "nsIWebNavigation.h"
@@ -5898,19 +5900,19 @@ nsresult nsContentUtils::GetASCIIOrigin(nsIURI* aURI, nsACString& aOrigin) {
   rv = uri->GetAsciiHost(host);
 
   if (NS_SUCCEEDED(rv) && !host.IsEmpty()) {
-    nsAutoCString scheme;
-    rv = uri->GetScheme(scheme);
+    nsAutoCString userPass;
+    uri->GetUserPass(userPass);
+
+    nsAutoCString prePath;
+    if (!userPass.IsEmpty()) {
+      rv = NS_MutateURI(uri).SetUserPass(EmptyCString()).Finalize(uri);
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
+
+    rv = uri->GetPrePath(prePath);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    int32_t port = -1;
-    uri->GetPort(&port);
-    if (port != -1 && port == NS_GetDefaultPort(scheme.get())) port = -1;
-
-    nsAutoCString hostPort;
-    rv = NS_GenerateHostPort(host, port, hostPort);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    aOrigin = scheme + NS_LITERAL_CSTRING("://") + hostPort;
+    aOrigin = prePath;
   } else {
     aOrigin.AssignLiteral("null");
   }
@@ -5924,17 +5926,12 @@ nsresult nsContentUtils::GetUTFOrigin(nsIPrincipal* aPrincipal,
   MOZ_ASSERT(aPrincipal, "missing principal");
 
   aOrigin.Truncate();
+  nsAutoCString asciiOrigin;
 
-  nsCOMPtr<nsIURI> uri;
-  nsresult rv = aPrincipal->GetURI(getter_AddRefs(uri));
+  nsresult rv = GetASCIIOrigin(aPrincipal, asciiOrigin);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (uri) {
-    return GetUTFOrigin(uri, aOrigin);
-  }
-
-  aOrigin.AssignLiteral("null");
-
+  aOrigin = NS_ConvertUTF8toUTF16(asciiOrigin);
   return NS_OK;
 }
 
@@ -5956,53 +5953,11 @@ nsresult nsContentUtils::GetUTFOrigin(nsIURI* aURI, nsAString& aOrigin) {
   }
 #endif
 
-  bool isBlobURL = false;
-  rv = aURI->SchemeIs(BLOBURI_SCHEME, &isBlobURL);
+  nsAutoCString asciiOrigin;
+  rv = GetASCIIOrigin(aURI, asciiOrigin);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // For Blob URI, the path is the URL of the owning page.
-  if (isBlobURL) {
-    nsAutoCString path;
-    rv = aURI->GetPathQueryRef(path);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    nsCOMPtr<nsIURI> uri;
-    nsresult rv = NS_NewURI(getter_AddRefs(uri), path);
-    if (NS_FAILED(rv)) {
-      aOrigin.AssignLiteral("null");
-      return NS_OK;
-    }
-
-    return GetUTFOrigin(uri, aOrigin);
-  }
-
-  aOrigin.Truncate();
-
-  nsCOMPtr<nsIURI> uri = NS_GetInnermostURI(aURI);
-  NS_ENSURE_TRUE(uri, NS_ERROR_UNEXPECTED);
-
-  nsAutoCString host;
-  rv = uri->GetHost(host);
-
-  if (NS_SUCCEEDED(rv) && !host.IsEmpty()) {
-    nsAutoCString scheme;
-    rv = uri->GetScheme(scheme);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    int32_t port = -1;
-    uri->GetPort(&port);
-    if (port != -1 && port == NS_GetDefaultPort(scheme.get())) port = -1;
-
-    nsAutoCString hostPort;
-    rv = NS_GenerateHostPort(host, port, hostPort);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    aOrigin =
-        NS_ConvertUTF8toUTF16(scheme + NS_LITERAL_CSTRING("://") + hostPort);
-  } else {
-    aOrigin.AssignLiteral("null");
-  }
-
+  aOrigin = NS_ConvertUTF8toUTF16(asciiOrigin);
   return NS_OK;
 }
 
@@ -6557,8 +6512,8 @@ bool nsContentUtils::IsPatternMatching(nsAString& aValue, nsAString& aPattern,
 
   JS::Rooted<JSObject*> re(
       cx,
-      JS_NewUCRegExpObject(cx, static_cast<char16_t*>(aPattern.BeginWriting()),
-                           aPattern.Length(), JSREG_UNICODE));
+      JS::NewUCRegExpObject(cx, static_cast<char16_t*>(aPattern.BeginWriting()),
+                            aPattern.Length(), JS::RegExpFlags::Unicode));
   if (!re) {
     // Remove extra patterns added above to report with the original pattern.
     aPattern.Cut(0, 4);
@@ -6569,9 +6524,9 @@ bool nsContentUtils::IsPatternMatching(nsAString& aValue, nsAString& aPattern,
 
   JS::Rooted<JS::Value> rval(cx, JS::NullValue());
   size_t idx = 0;
-  if (!JS_ExecuteRegExpNoStatics(cx, re,
-                                 static_cast<char16_t*>(aValue.BeginWriting()),
-                                 aValue.Length(), &idx, true, &rval)) {
+  if (!JS::ExecuteRegExpNoStatics(cx, re,
+                                  static_cast<char16_t*>(aValue.BeginWriting()),
+                                  aValue.Length(), &idx, true, &rval)) {
     return true;
   }
 

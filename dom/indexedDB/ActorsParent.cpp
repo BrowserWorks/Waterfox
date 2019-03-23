@@ -52,7 +52,6 @@
 #include "mozilla/dom/indexedDB/PBackgroundIDBTransactionParent.h"
 #include "mozilla/dom/indexedDB/PBackgroundIDBVersionChangeTransactionParent.h"
 #include "mozilla/dom/indexedDB/PBackgroundIndexedDBUtilsParent.h"
-#include "mozilla/dom/indexedDB/PIndexedDBPermissionRequestParent.h"
 #include "mozilla/dom/IPCBlobUtils.h"
 #include "mozilla/dom/ipc/IPCBlobInputStreamParent.h"
 #include "mozilla/dom/quota/Client.h"
@@ -7667,24 +7666,6 @@ class GetFileReferencesHelper final : public Runnable {
   NS_DECL_NSIRUNNABLE
 };
 
-class PermissionRequestHelper final : public PermissionRequestBase,
-                                      public PIndexedDBPermissionRequestParent {
-  bool mActorDestroyed;
-
- public:
-  PermissionRequestHelper(Element* aOwnerElement, nsIPrincipal* aPrincipal)
-      : PermissionRequestBase(aOwnerElement, aPrincipal),
-        mActorDestroyed(false) {}
-
- protected:
-  ~PermissionRequestHelper() override = default;
-
- private:
-  void OnPromptComplete(PermissionValue aPermissionValue) override;
-
-  void ActorDestroy(ActorDestroyReason aWhy) override;
-};
-
 /*******************************************************************************
  * Other class declarations
  ******************************************************************************/
@@ -7837,6 +7818,8 @@ class QuotaClient final : public mozilla::dom::quota::Client {
   mozilla::dom::quota::Client::Type GetType() override;
 
   nsresult UpgradeStorageFrom1_0To2_0(nsIFile* aDirectory) override;
+
+  nsresult UpgradeStorageFrom2_1To2_2(nsIFile* aDirectory) override;
 
   nsresult InitOrigin(PersistenceType aPersistenceType,
                       const nsACString& aGroup, const nsACString& aOrigin,
@@ -9208,46 +9191,6 @@ bool RecvFlushPendingFileDeletions() {
     }
   }
 
-  return true;
-}
-
-PIndexedDBPermissionRequestParent* AllocPIndexedDBPermissionRequestParent(
-    Element* aOwnerElement, nsIPrincipal* aPrincipal) {
-  MOZ_ASSERT(NS_IsMainThread());
-
-  RefPtr<PermissionRequestHelper> actor =
-      new PermissionRequestHelper(aOwnerElement, aPrincipal);
-  return actor.forget().take();
-}
-
-bool RecvPIndexedDBPermissionRequestConstructor(
-    PIndexedDBPermissionRequestParent* aActor) {
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aActor);
-
-  auto* actor = static_cast<PermissionRequestHelper*>(aActor);
-
-  PermissionRequestBase::PermissionValue permission;
-  nsresult rv = actor->PromptIfNeeded(&permission);
-  if (NS_FAILED(rv)) {
-    return false;
-  }
-
-  if (permission != PermissionRequestBase::kPermissionPrompt) {
-    Unused << PIndexedDBPermissionRequestParent::Send__delete__(actor,
-                                                                permission);
-  }
-
-  return true;
-}
-
-bool DeallocPIndexedDBPermissionRequestParent(
-    PIndexedDBPermissionRequestParent* aActor) {
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aActor);
-
-  RefPtr<PermissionRequestHelper> actor =
-      dont_AddRef(static_cast<PermissionRequestHelper*>(aActor));
   return true;
 }
 
@@ -15911,6 +15854,53 @@ nsresult QuotaClient::UpgradeStorageFrom1_0To2_0(nsIFile* aDirectory) {
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
+  }
+
+  return NS_OK;
+}
+
+nsresult QuotaClient::UpgradeStorageFrom2_1To2_2(nsIFile* aDirectory) {
+  AssertIsOnIOThread();
+  MOZ_ASSERT(aDirectory);
+
+  nsCOMPtr<nsIDirectoryEnumerator> entries;
+  nsresult rv = aDirectory->GetDirectoryEntries(getter_AddRefs(entries));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  nsCOMPtr<nsIFile> file;
+  while (NS_SUCCEEDED((rv = entries->GetNextFile(getter_AddRefs(file)))) &&
+         file) {
+    nsString leafName;
+    rv = file->GetLeafName(leafName);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    bool isDirectory;
+    rv = file->IsDirectory(&isDirectory);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    if (isDirectory) {
+      continue;
+    }
+
+    // It's reported that files ending with ".tmp" somehow live in the indexedDB
+    // directories in Bug 1503883. Such files shouldn't exist in the indexedDB
+    // directory so remove them in this upgrade.
+    if (StringEndsWith(leafName, NS_LITERAL_STRING(".tmp"))) {
+      rv = file->Remove(false);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
+      }
+    }
+  }
+
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
   }
 
   return NS_OK;
@@ -26562,17 +26552,7 @@ void PermissionRequestHelper::OnPromptComplete(
     PermissionValue aPermissionValue) {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (!mActorDestroyed) {
-    Unused << PIndexedDBPermissionRequestParent::Send__delete__(
-        this, aPermissionValue);
-  }
-}
-
-void PermissionRequestHelper::ActorDestroy(ActorDestroyReason aWhy) {
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!mActorDestroyed);
-
-  mActorDestroyed = true;
+  mResolver(aPermissionValue);
 }
 
 #ifdef DEBUG

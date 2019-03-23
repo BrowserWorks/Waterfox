@@ -21,6 +21,7 @@ const SCROLL_BEHAVIOR_AUTO = 1;
 XPCOMUtils.defineLazyModuleGetters(this, {
   FormLikeFactory: "resource://gre/modules/FormLikeFactory.jsm",
   GeckoViewAutoFill: "resource://gre/modules/GeckoViewAutoFill.jsm",
+  ManifestObtainer: "resource://gre/modules/ManifestObtainer.jsm",
   PrivacyFilter: "resource://gre/modules/sessionstore/PrivacyFilter.jsm",
   SessionHistory: "resource://gre/modules/sessionstore/SessionHistory.jsm",
 });
@@ -40,7 +41,6 @@ class GeckoViewContentChild extends GeckoViewChildModule {
     this.messageManager.addMessageListener("GeckoView:DOMFullscreenExited",
                                            this);
     this.messageManager.addMessageListener("GeckoView:RestoreState", this);
-    this.messageManager.addMessageListener("GeckoView:SaveState", this);
     this.messageManager.addMessageListener("GeckoView:SetActive", this);
     this.messageManager.addMessageListener("GeckoView:UpdateInitData", this);
     this.messageManager.addMessageListener("GeckoView:ZoomToInput", this);
@@ -77,6 +77,7 @@ class GeckoViewContentChild extends GeckoViewChildModule {
     addEventListener("MozDOMFullscreen:Exited", this, false);
     addEventListener("MozDOMFullscreen:Request", this, false);
     addEventListener("contextmenu", this, { capture: true });
+    addEventListener("DOMContentLoaded", this, false);
   }
 
   onDisable() {
@@ -90,6 +91,7 @@ class GeckoViewContentChild extends GeckoViewChildModule {
     removeEventListener("MozDOMFullscreen:Exited", this);
     removeEventListener("MozDOMFullscreen:Request", this);
     removeEventListener("contextmenu", this, { capture: true });
+    removeEventListener("DOMContentLoaded", this);
   }
 
   collectSessionState() {
@@ -206,28 +208,8 @@ class GeckoViewContentChild extends GeckoViewChildModule {
         break;
       }
 
-      case "GeckoView:SaveState":
-        if (this._savedState) {
-          // Short circuit and return the pending state if we're in the process of restoring
-          sendAsyncMessage("GeckoView:SaveStateFinish", {state: JSON.stringify(this._savedState), id: aMsg.data.id});
-        } else {
-          try {
-            let state = this.collectSessionState();
-            sendAsyncMessage("GeckoView:SaveStateFinish", {
-              state: state ? JSON.stringify(state) : null,
-              id: aMsg.data.id,
-            });
-          } catch (e) {
-            sendAsyncMessage("GeckoView:SaveStateFinish", {
-              error: e.message,
-              id: aMsg.data.id,
-            });
-          }
-        }
-        break;
-
       case "GeckoView:RestoreState":
-        this._savedState = JSON.parse(aMsg.data.state);
+        this._savedState = aMsg.data;
 
         if (this._savedState.history) {
           let restoredHistory = SessionHistory.restore(docShell, this._savedState.history);
@@ -425,6 +407,24 @@ class GeckoViewContentChild extends GeckoViewChildModule {
           });
         }
         break;
+      case "DOMContentLoaded": {
+        content.requestIdleCallback(async () => {
+          let manifest = null;
+          try {
+            manifest = await ManifestObtainer.contentObtainManifest(content);
+          } catch (e) {
+            // Unfortunately, this throws if there is no manifest present, so we
+            // probably don't want to log anything here. Bug 1534756.
+          }
+
+          if (manifest) {
+            this.eventDispatcher.sendRequest({
+              type: "GeckoView:WebAppManifest",
+              manifest,
+            });
+          }
+        });
+      }
     }
   }
 

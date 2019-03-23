@@ -666,9 +666,10 @@ static nsIFrame* GetFrameForChildrenOnlyTransformHint(nsIFrame* aFrame) {
   return aFrame;
 }
 
-// Returns true if this function managed to successfully move a frame, and
-// false if it could not process the position change, and a reflow should
-// be performed instead.
+// This function tries to optimize a position style change by either
+// moving aFrame or ignoring the style change when it's safe to do so.
+// It returns true when that succeeds, otherwise it posts a reflow request
+// and returns false.
 static bool RecomputePosition(nsIFrame* aFrame) {
   // Don't process position changes on table frames, since we already handle
   // the dynamic position change on the table wrapper frame, and the
@@ -703,6 +704,12 @@ static bool RecomputePosition(nsIFrame* aFrame) {
                                     nsChangeHint_ReflowChangesSizeOrPosition);
       return false;
     }
+  }
+
+  // It's pointless to move around frames that have never been reflowed or
+  // are dirty (i.e. they will be reflowed).
+  if (aFrame->HasAnyStateBits(NS_FRAME_FIRST_REFLOW | NS_FRAME_IS_DIRTY)) {
+    return true;
   }
 
   aFrame->SchedulePaint();
@@ -1031,7 +1038,7 @@ static void DoApplyRenderingChangeToTree(nsIFrame* aFrame,
       aFrame->InvalidateFrameSubtree();
       if ((aChange & nsChangeHint_UpdateEffects) &&
           aFrame->IsFrameOfType(nsIFrame::eSVG) &&
-          !(aFrame->GetStateBits() & NS_STATE_IS_OUTER_SVG)) {
+          !aFrame->IsSVGOuterSVGFrame()) {
         // Need to update our overflow rects:
         nsSVGUtils::ScheduleReflowSVG(aFrame);
       }
@@ -1659,7 +1666,7 @@ void RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList) {
       if ((hint & nsChangeHint_InvalidateRenderingObservers) ||
           ((hint & nsChangeHint_UpdateOpacityLayer) &&
            frame->IsFrameOfType(nsIFrame::eSVG) &&
-           !(frame->GetStateBits() & NS_STATE_IS_OUTER_SVG))) {
+           !frame->IsSVGOuterSVGFrame())) {
         SVGObserverUtils::InvalidateRenderingObservers(frame);
         frame->SchedulePaint();
       }
@@ -2558,7 +2565,8 @@ static void UpdateOneAdditionalComputedStyle(nsIFrame* aFrame, uint32_t aIndex,
   uint32_t equalStructs;  // Not used, actually.
   nsChangeHint childHint =
       aOldContext.CalcStyleDifference(*newStyle, &equalStructs);
-  if (!aFrame->HasAnyStateBits(NS_FRAME_OUT_OF_FLOW)) {
+  if (!aFrame->HasAnyStateBits(NS_FRAME_OUT_OF_FLOW) &&
+      !aFrame->IsColumnSpanInMulticolSubtree()) {
     childHint = NS_RemoveSubsumedHints(childHint,
                                        aRestyleState.ChangesHandledFor(aFrame));
   }

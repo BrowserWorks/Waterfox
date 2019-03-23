@@ -48,6 +48,7 @@
 #include "nsContentListDeclarations.h"
 #include "nsExpirationTracker.h"
 #include "nsClassHashtable.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/CORSMode.h"
 #include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/ContentBlockingLog.h"
@@ -3487,7 +3488,7 @@ class Document : public nsINode,
 
   void UpdateIntersectionObservations();
   void ScheduleIntersectionObserverNotification();
-  void NotifyIntersectionObservers();
+  MOZ_CAN_RUN_SCRIPT void NotifyIntersectionObservers();
 
   // Dispatch a runnable related to the document.
   nsresult Dispatch(TaskCategory aCategory,
@@ -3606,10 +3607,9 @@ class Document : public nsINode,
   void RecomputeLanguageFromCharset();
 
  public:
-  void ResetLangPrefs() {
-    mLangGroupFontPrefs.Reset();
-    mFontGroupCacheDirty = true;
-  }
+  void SetMayNeedFontPrefsUpdate() { mMayNeedFontPrefsUpdate = true; }
+
+  bool MayNeedFontPrefsUpdate() { return mMayNeedFontPrefsUpdate; }
 
   already_AddRefed<nsAtom> GetContentLanguageAsAtomForStyle() const;
   already_AddRefed<nsAtom> GetLanguageForStyle() const;
@@ -3629,7 +3629,7 @@ class Document : public nsINode,
   }
 
   void CacheAllKnownLangPrefs() {
-    if (!mFontGroupCacheDirty) {
+    if (!mMayNeedFontPrefsUpdate) {
       return;
     }
     DoCacheAllKnownLangPrefs();
@@ -3986,8 +3986,8 @@ class Document : public nsINode,
 
   // True if BIDI is enabled.
   bool mBidiEnabled : 1;
-  // True if mLangGroupFontPrefs is not initialized or dirty in some other way.
-  bool mFontGroupCacheDirty : 1;
+  // True if we may need to recompute the language prefs for this document.
+  bool mMayNeedFontPrefsUpdate : 1;
   // True if a MathML element has ever been owned by this document.
   bool mMathMLEnabled : 1;
 

@@ -22,7 +22,6 @@
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/dom/DataTransfer.h"
 #include "mozilla/dom/Event.h"
-#include "mozilla/dom/indexedDB/PIndexedDBPermissionRequestChild.h"
 #include "mozilla/dom/LoadURIOptionsBinding.h"
 #include "mozilla/dom/MessageManagerBinding.h"
 #include "mozilla/dom/MouseEventBinding.h"
@@ -32,6 +31,7 @@
 #include "mozilla/dom/WindowProxyHolder.h"
 #include "mozilla/dom/BrowserBridgeChild.h"
 #include "mozilla/gfx/CrossProcessPaint.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/layers/APZChild.h"
@@ -478,7 +478,7 @@ void TabChild::ContentReceivedInputBlock(const ScrollableLayerGuid& aGuid,
 
 void TabChild::SetTargetAPZC(
     uint64_t aInputBlockId,
-    const nsTArray<ScrollableLayerGuid>& aTargets) const {
+    const nsTArray<SLGuidAndRenderRoot>& aTargets) const {
   if (mApzcTreeManager) {
     mApzcTreeManager->SetTargetAPZC(aInputBlockId, aTargets);
   }
@@ -499,8 +499,8 @@ bool TabChild::DoUpdateZoomConstraints(
     return false;
   }
 
-  ScrollableLayerGuid guid =
-      ScrollableLayerGuid(mLayersId, aPresShellId, aViewId);
+  SLGuidAndRenderRoot guid = SLGuidAndRenderRoot(
+      mLayersId, aPresShellId, aViewId, gfxUtils::GetContentRenderRoot());
 
   mApzcTreeManager->UpdateZoomConstraints(guid, aConstraints);
   return true;
@@ -1238,7 +1238,8 @@ void TabChild::HandleDoubleTap(const CSSPoint& aPoint,
   if (APZCCallbackHelper::GetOrCreateScrollIdentifiers(
           document->GetDocumentElement(), &presShellId, &viewId) &&
       mApzcTreeManager) {
-    ScrollableLayerGuid guid(mLayersId, presShellId, viewId);
+    SLGuidAndRenderRoot guid(mLayersId, presShellId, viewId,
+                             gfxUtils::GetContentRenderRoot());
 
     mApzcTreeManager->ZoomToRect(guid, zoomToRect, DEFAULT_BEHAVIOR);
   }
@@ -1324,8 +1325,9 @@ bool TabChild::NotifyAPZStateChange(
 
 void TabChild::StartScrollbarDrag(
     const layers::AsyncDragMetrics& aDragMetrics) {
-  ScrollableLayerGuid guid(mLayersId, aDragMetrics.mPresShellId,
-                           aDragMetrics.mViewId);
+  SLGuidAndRenderRoot guid(mLayersId, aDragMetrics.mPresShellId,
+                           aDragMetrics.mViewId,
+                           gfxUtils::GetContentRenderRoot());
 
   if (mApzcTreeManager) {
     mApzcTreeManager->StartScrollbarDrag(guid, aDragMetrics);
@@ -1335,7 +1337,8 @@ void TabChild::StartScrollbarDrag(
 void TabChild::ZoomToRect(const uint32_t& aPresShellId,
                           const ScrollableLayerGuid::ViewID& aViewId,
                           const CSSRect& aRect, const uint32_t& aFlags) {
-  ScrollableLayerGuid guid(mLayersId, aPresShellId, aViewId);
+  SLGuidAndRenderRoot guid(mLayersId, aPresShellId, aViewId,
+                           gfxUtils::GetContentRenderRoot());
 
   if (mApzcTreeManager) {
     mApzcTreeManager->ZoomToRect(guid, aRect, aFlags);
@@ -2030,20 +2033,6 @@ PFilePickerChild* TabChild::AllocPFilePickerChild(const nsString&,
 bool TabChild::DeallocPFilePickerChild(PFilePickerChild* actor) {
   nsFilePickerProxy* filePicker = static_cast<nsFilePickerProxy*>(actor);
   NS_RELEASE(filePicker);
-  return true;
-}
-
-auto TabChild::AllocPIndexedDBPermissionRequestChild(
-    const Principal& aPrincipal) -> PIndexedDBPermissionRequestChild* {
-  MOZ_CRASH(
-      "PIndexedDBPermissionRequestChild actors should always be created "
-      "manually!");
-}
-
-bool TabChild::DeallocPIndexedDBPermissionRequestChild(
-    PIndexedDBPermissionRequestChild* aActor) {
-  MOZ_ASSERT(aActor);
-  delete aActor;
   return true;
 }
 
@@ -3311,11 +3300,13 @@ NS_IMETHODIMP TabChild::OnContentBlockingEvent(nsIWebProgress* aWebProgress,
   nsresult rv = PrepareProgressListenerData(aWebProgress, aRequest,
                                             webProgressData, requestData);
   NS_ENSURE_SUCCESS(rv, rv);
+
+  Maybe<WebProgressData> maybeWebProgressData;
   if (aWebProgress) {
-    Unused << SendOnContentBlockingEvent(webProgressData, requestData, aEvent);
-  } else {
-    Unused << SendOnContentBlockingEvent(void_t(), requestData, aEvent);
+    maybeWebProgressData.emplace(webProgressData);
   }
+  Unused << SendOnContentBlockingEvent(maybeWebProgressData, requestData,
+                                       aEvent);
 
   return NS_OK;
 }

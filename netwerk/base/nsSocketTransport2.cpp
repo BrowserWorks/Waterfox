@@ -7,6 +7,7 @@
 #include "nsSocketTransport2.h"
 
 #include "mozilla/Attributes.h"
+#include "mozilla/StaticPrefs.h"
 #include "mozilla/Telemetry.h"
 #include "nsIOService.h"
 #include "nsStreamUtils.h"
@@ -40,6 +41,10 @@
 
 #include "nsPrintfCString.h"
 #include "xpcpublic.h"
+
+#if defined(FUZZING)
+#  include "FuzzyLayer.h"
+#endif
 
 #if defined(XP_WIN)
 #  include "ShutdownLayer.h"
@@ -1347,6 +1352,18 @@ nsresult nsSocketTransport::InitiateSocket() {
 
   // create proxy via IOActivityMonitor
   IOActivityMonitor::MonitorSocket(fd);
+
+#ifdef FUZZING
+  if (StaticPrefs::fuzzing_necko_enabled()) {
+    rv = AttachFuzzyIOLayer(fd);
+    if (NS_FAILED(rv)) {
+      SOCKET_LOG(("Failed to attach fuzzing IOLayer [rv=%" PRIx32 "].\n",
+                  static_cast<uint32_t>(rv)));
+      return rv;
+    }
+    SOCKET_LOG(("Successfully attached fuzzing IOLayer.\n"));
+  }
+#endif
 
   PRStatus status;
 

@@ -18,7 +18,6 @@
 #include "vm/Debugger.h"
 #include "vm/EqualityOperations.h"  // js::SameValue
 #include "vm/TypedArrayObject.h"
-#include "vm/UnboxedObject.h"
 
 #include "gc/Nursery-inl.h"
 #include "vm/ArrayObject-inl.h"
@@ -27,7 +26,6 @@
 #include "vm/JSScript-inl.h"
 #include "vm/Shape-inl.h"
 #include "vm/TypeInference-inl.h"
-#include "vm/UnboxedObject-inl.h"
 
 using namespace js;
 
@@ -339,32 +337,6 @@ void NativeObject::setLastPropertyMakeNonNative(Shape* shape) {
   }
 
   setShape(shape);
-}
-
-void NativeObject::setLastPropertyMakeNative(JSContext* cx, Shape* shape) {
-  MOZ_ASSERT(getClass()->isNative());
-  MOZ_ASSERT(shape->getObjectClass()->isNative());
-  MOZ_ASSERT(!shape->inDictionary());
-
-  // This method is used to convert unboxed objects into native objects. In
-  // this case, the shape_ field was previously used to store other data and
-  // this should be treated as an initialization.
-  initShape(shape);
-
-  slots_ = nullptr;
-  elements_ = emptyObjectElements;
-
-  size_t oldSpan = shape->numFixedSlots();
-  size_t newSpan = shape->slotSpan();
-
-  initializeSlotRange(0, oldSpan);
-
-  // A failure at this point will leave the object as a mutant, and we
-  // can't recover.
-  AutoEnterOOMUnsafeRegion oomUnsafe;
-  if (oldSpan != newSpan && !updateSlotsForSpan(cx, oldSpan, newSpan)) {
-    oomUnsafe.crash("NativeObject::setLastPropertyMakeNative");
-  }
 }
 
 bool NativeObject::setSlotSpan(JSContext* cx, uint32_t span) {
@@ -1268,12 +1240,15 @@ void js::AddPropertyTypesAfterProtoChange(JSContext* cx, NativeObject* obj,
   MOZ_ASSERT(obj->group() != oldGroup);
   MOZ_ASSERT(!obj->group()->unknownProperties(sweepObjGroup));
 
-  // First copy the dynamic flags.
   AutoSweepObjectGroup sweepOldGroup(oldGroup);
+  if (oldGroup->unknownProperties(sweepOldGroup)) {
+    MarkObjectGroupUnknownProperties(cx, obj->group());
+    return;
+  }
+
+  // First copy the dynamic flags.
   MarkObjectGroupFlags(
-      cx, obj,
-      oldGroup->flags(sweepOldGroup) &
-          (OBJECT_FLAG_DYNAMIC_MASK & ~OBJECT_FLAG_UNKNOWN_PROPERTIES));
+      cx, obj, oldGroup->flags(sweepOldGroup) & OBJECT_FLAG_DYNAMIC_MASK);
 
   // Now update all property types. If the object has many properties, this
   // function may be slow so we mark all properties as unknown.
@@ -3154,68 +3129,6 @@ bool js::CopyDataPropertiesNative(JSContext* cx, HandlePlainObject target,
     MOZ_ASSERT(from->lastProperty() == fromShape);
 
     value = from->getSlot(shape->slot());
-    if (targetHadNoOwnProperties) {
-      MOZ_ASSERT(!target->contains(cx, key),
-                 "didn't expect to find an existing property");
-
-      if (!AddDataPropertyNonDelegate(cx, target, key, value)) {
-        return false;
-      }
-    } else {
-      if (!NativeDefineDataProperty(cx, target, key, value, JSPROP_ENUMERATE)) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-
-bool js::CopyDataPropertiesNative(JSContext* cx, HandlePlainObject target,
-                                  Handle<UnboxedPlainObject*> from,
-                                  HandlePlainObject excludedItems,
-                                  bool* optimized) {
-  MOZ_ASSERT(
-      !target->isDelegate(),
-      "CopyDataPropertiesNative should only be called during object literal "
-      "construction"
-      "which precludes that |target| is the prototype of any other object");
-
-  *optimized = false;
-
-  // Don't use the fast path for unboxed objects with expandos.
-  if (from->maybeExpando()) {
-    return true;
-  }
-
-  *optimized = true;
-
-  // If |target| contains no own properties, we can directly call
-  // addProperty instead of the slower putProperty.
-  const bool targetHadNoOwnProperties = target->lastProperty()->isEmptyShape();
-
-#ifdef DEBUG
-  RootedObjectGroup fromGroup(cx, from->group());
-#endif
-
-  RootedId key(cx);
-  RootedValue value(cx);
-  const UnboxedLayout& layout = from->layout();
-  for (size_t i = 0; i < layout.properties().length(); i++) {
-    const UnboxedLayout::Property& property = layout.properties()[i];
-    key = NameToId(property.name);
-    MOZ_ASSERT(!JSID_IS_INT(key));
-
-    if (excludedItems && excludedItems->contains(cx, key)) {
-      continue;
-    }
-
-    // Ensure the object stays unboxed.
-    MOZ_ASSERT(from->group() == fromGroup);
-
-    // All unboxed properties are enumerable.
-    value = from->getValue(property);
-
     if (targetHadNoOwnProperties) {
       MOZ_ASSERT(!target->contains(cx, key),
                  "didn't expect to find an existing property");

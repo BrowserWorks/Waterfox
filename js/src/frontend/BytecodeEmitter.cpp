@@ -1249,7 +1249,7 @@ restart:
       *answer = true;
       return true;
 
-    case ParseNodeKind::Colon:
+    case ParseNodeKind::PropertyDefinition:
     case ParseNodeKind::Case: {
       BinaryNode* node = &pn->as<BinaryNode>();
       if (!checkSideEffects(node->left(), answer)) {
@@ -3620,7 +3620,7 @@ bool BytecodeEmitter::emitDestructuringOpsObject(ListNode* pattern,
         member->isKind(ParseNodeKind::Spread)) {
       subpattern = member->as<UnaryNode>().kid();
     } else {
-      MOZ_ASSERT(member->isKind(ParseNodeKind::Colon) ||
+      MOZ_ASSERT(member->isKind(ParseNodeKind::PropertyDefinition) ||
                  member->isKind(ParseNodeKind::Shorthand));
       subpattern = member->as<BinaryNode>().right();
     }
@@ -3698,7 +3698,7 @@ bool BytecodeEmitter::emitDestructuringOpsObject(ListNode* pattern,
       }
       needsGetElem = false;
     } else {
-      MOZ_ASSERT(member->isKind(ParseNodeKind::Colon) ||
+      MOZ_ASSERT(member->isKind(ParseNodeKind::PropertyDefinition) ||
                  member->isKind(ParseNodeKind::Shorthand));
 
       ParseNode* key = member->as<BinaryNode>().left();
@@ -3928,8 +3928,6 @@ bool BytecodeEmitter::emitTemplateString(ListNode* templateString) {
 }
 
 bool BytecodeEmitter::emitDeclarationList(ListNode* declList) {
-  MOZ_ASSERT(declList->isOp(JSOP_NOP));
-
   for (ParseNode* decl : declList->contents()) {
     ParseNode* pattern;
     ParseNode* initializer;
@@ -3937,8 +3935,6 @@ bool BytecodeEmitter::emitDeclarationList(ListNode* declList) {
       pattern = decl;
       initializer = nullptr;
     } else {
-      MOZ_ASSERT(decl->isOp(JSOP_NOP));
-
       AssignmentNode* assignNode = &decl->as<AssignmentNode>();
       pattern = assignNode->left();
       initializer = assignNode->right();
@@ -3951,7 +3947,6 @@ bool BytecodeEmitter::emitDeclarationList(ListNode* declList) {
         return false;
       }
     } else {
-      MOZ_ASSERT(decl->isOp(JSOP_NOP));
       MOZ_ASSERT(pattern->isKind(ParseNodeKind::ArrayExpr) ||
                  pattern->isKind(ParseNodeKind::ObjectExpr));
       MOZ_ASSERT(initializer != nullptr);
@@ -5355,8 +5350,6 @@ bool BytecodeEmitter::emitForOf(ForNode* forOfLoop,
 
 bool BytecodeEmitter::emitForIn(ForNode* forInLoop,
                                 const EmitterScope* headLexicalEmitterScope) {
-  MOZ_ASSERT(forInLoop->isOp(JSOP_ITER));
-
   TernaryNode* forInHead = forInLoop->head();
   MOZ_ASSERT(forInHead->isKind(ParseNodeKind::ForIn));
 
@@ -6605,8 +6598,6 @@ bool BytecodeEmitter::emitExpressionStatement(UnaryNode* exprStmt) {
   }
 
   if (useful) {
-    MOZ_ASSERT_IF(expr->isKind(ParseNodeKind::AssignExpr),
-                  expr->isOp(JSOP_NOP));
     ValueUsage valueUsage =
         wantval ? ValueUsage::WantValue : ValueUsage::IgnoreValue;
     ExpressionStatementEmitter ese(this, valueUsage);
@@ -6796,7 +6787,7 @@ static const char* SelfHostedCallFunctionName(JSAtom* name, JSContext* cx) {
   MOZ_CRASH("Unknown self-hosted call function name");
 }
 
-bool BytecodeEmitter::emitSelfHostedCallFunction(BinaryNode* callNode) {
+bool BytecodeEmitter::emitSelfHostedCallFunction(CallNode* callNode) {
   // Special-casing of callFunction to emit bytecode that directly
   // invokes the callee with the correct |this| object and arguments.
   // callFunction(fun, thisArg, arg0, arg1) thus becomes:
@@ -6816,7 +6807,7 @@ bool BytecodeEmitter::emitSelfHostedCallFunction(BinaryNode* callNode) {
     return false;
   }
 
-  JSOp callOp = callNode->getOp();
+  JSOp callOp = callNode->callOp();
   if (callOp != JSOP_CALL) {
     reportError(callNode, JSMSG_NOT_CONSTRUCTOR, errorName);
     return false;
@@ -7213,7 +7204,7 @@ bool BytecodeEmitter::emitArguments(ListNode* argsList, bool isCall,
 }
 
 bool BytecodeEmitter::emitCallOrNew(
-    BinaryNode* callNode, ValueUsage valueUsage /* = ValueUsage::WantValue */) {
+    CallNode* callNode, ValueUsage valueUsage /* = ValueUsage::WantValue */) {
   /*
    * Emit callable invocation or operator new (constructor call) code.
    * First, emit code for the left operand to evaluate the callable or
@@ -7233,7 +7224,7 @@ bool BytecodeEmitter::emitCallOrNew(
                 callNode->isKind(ParseNodeKind::TaggedTemplateExpr);
   ParseNode* calleeNode = callNode->left();
   ListNode* argsList = &callNode->right()->as<ListNode>();
-  bool isSpread = JOF_OPTYPE(callNode->getOp()) == JOF_BYTE;
+  bool isSpread = JOF_OPTYPE(callNode->callOp()) == JOF_BYTE;
   if (calleeNode->isKind(ParseNodeKind::Name) &&
       emitterMode == BytecodeEmitter::SelfHosting && !isSpread) {
     // Calls to "forceInterpreter", "callFunction",
@@ -7267,7 +7258,7 @@ bool BytecodeEmitter::emitCallOrNew(
     // Fall through
   }
 
-  JSOp op = callNode->getOp();
+  JSOp op = callNode->callOp();
   uint32_t argc = argsList->count();
   CallOrNewEmitter cone(
       this, op,
@@ -7569,16 +7560,21 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
 
     ParseNode* key = prop->left();
     ParseNode* propVal = prop->right();
-    JSOp op = propdef->getOp();
-    MOZ_ASSERT(op == JSOP_INITPROP || op == JSOP_INITPROP_GETTER ||
-               op == JSOP_INITPROP_SETTER);
+    AccessorType accessorType;
+    if (prop->is<ClassMethod>()) {
+      accessorType = prop->as<ClassMethod>().accessorType();
+    } else if (prop->is<PropertyDefinition>()) {
+      accessorType = prop->as<PropertyDefinition>().accessorType();
+    } else {
+      accessorType = AccessorType::None;
+    }
 
-    auto emitValue = [this, &key, &propVal, op, &pe]() {
+    auto emitValue = [this, &key, &propVal, accessorType, &pe]() {
       //            [stack] CTOR? OBJ CTOR? KEY?
 
       if (propVal->isDirectRHSAnonFunction()) {
         if (key->isKind(ParseNodeKind::NumberExpr)) {
-          MOZ_ASSERT(op == JSOP_INITPROP);
+          MOZ_ASSERT(accessorType == AccessorType::None);
 
           NumericLiteral* literal = &key->as<NumericLiteral>();
           RootedAtom keyAtom(cx, NumberToAtom(cx, literal->value()));
@@ -7591,7 +7587,7 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
           }
         } else if (key->isKind(ParseNodeKind::ObjectPropertyName) ||
                    key->isKind(ParseNodeKind::StringExpr)) {
-          MOZ_ASSERT(op == JSOP_INITPROP);
+          MOZ_ASSERT(accessorType == AccessorType::None);
 
           RootedAtom keyAtom(cx, key->as<NameNode>().atom());
           if (!emitAnonymousFunctionWithName(propVal, keyAtom)) {
@@ -7601,9 +7597,9 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
         } else {
           MOZ_ASSERT(key->isKind(ParseNodeKind::ComputedName));
 
-          FunctionPrefixKind prefix = op == JSOP_INITPROP
+          FunctionPrefixKind prefix = accessorType == AccessorType::None
                                           ? FunctionPrefixKind::None
-                                          : op == JSOP_INITPROP_GETTER
+                                          : accessorType == AccessorType::Getter
                                                 ? FunctionPrefixKind::Get
                                                 : FunctionPrefixKind::Set;
 
@@ -7657,20 +7653,20 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
         return false;
       }
 
-      switch (op) {
-        case JSOP_INITPROP:
+      switch (accessorType) {
+        case AccessorType::None:
           if (!pe.emitInitIndexProp()) {
             //      [stack] CTOR? OBJ
             return false;
           }
           break;
-        case JSOP_INITPROP_GETTER:
+        case AccessorType::Getter:
           if (!pe.emitInitIndexGetter()) {
             //      [stack] CTOR? OBJ
             return false;
           }
           break;
-        case JSOP_INITPROP_SETTER:
+        case AccessorType::Setter:
           if (!pe.emitInitIndexSetter()) {
             //      [stack] CTOR? OBJ
             return false;
@@ -7704,20 +7700,20 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
       }
 
       RootedAtom keyAtom(cx, key->as<NameNode>().atom());
-      switch (op) {
-        case JSOP_INITPROP:
+      switch (accessorType) {
+        case AccessorType::None:
           if (!pe.emitInitProp(keyAtom)) {
             //      [stack] CTOR? OBJ
             return false;
           }
           break;
-        case JSOP_INITPROP_GETTER:
+        case AccessorType::Getter:
           if (!pe.emitInitGetter(keyAtom)) {
             //      [stack] CTOR? OBJ
             return false;
           }
           break;
-        case JSOP_INITPROP_SETTER:
+        case AccessorType::Setter:
           if (!pe.emitInitSetter(keyAtom)) {
             //      [stack] CTOR? OBJ
             return false;
@@ -7751,20 +7747,20 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
       return false;
     }
 
-    switch (op) {
-      case JSOP_INITPROP:
+    switch (accessorType) {
+      case AccessorType::None:
         if (!pe.emitInitComputedProp()) {
           //        [stack] CTOR? OBJ
           return false;
         }
         break;
-      case JSOP_INITPROP_GETTER:
+      case AccessorType::Getter:
         if (!pe.emitInitComputedGetter()) {
           //        [stack] CTOR? OBJ
           return false;
         }
         break;
-      case JSOP_INITPROP_SETTER:
+      case AccessorType::Setter:
         if (!pe.emitInitComputedSetter()) {
           //        [stack] CTOR? OBJ
           return false;
@@ -7776,6 +7772,9 @@ bool BytecodeEmitter::emitPropertyList(ListNode* obj, PropertyEmitter& pe,
   }
 
   if (obj->getKind() == ParseNodeKind::ClassMemberList) {
+    if (!emitCreateFieldKeys(obj)) {
+      return false;
+    }
     if (!emitCreateFieldInitializers(obj)) {
       return false;
     }
@@ -7797,6 +7796,90 @@ FieldInitializers BytecodeEmitter::setupFieldInitializers(
     }
   }
   return FieldInitializers(numFields);
+}
+
+// Purpose of .fieldKeys:
+// Computed field names (`["x"] = 2;`) must be ran at class-evaluation time, not
+// object construction time. The transformation to do so is roughly as follows:
+//
+// class C {
+//   [keyExpr] = valueExpr;
+// }
+// -->
+// let .fieldKeys = [keyExpr];
+// let .initializers = [
+//   () => {
+//     this[.fieldKeys[0]] = valueExpr;
+//   }
+// ];
+// class C {
+//   constructor() {
+//     .initializers[0]();
+//   }
+// }
+//
+// BytecodeEmitter::emitCreateFieldKeys does `let .fieldKeys = [keyExpr, ...];`
+// See GeneralParser::fieldInitializer for the `this[.fieldKeys[0]]` part.
+bool BytecodeEmitter::emitCreateFieldKeys(ListNode* obj) {
+  size_t numFieldKeys = 0;
+  for (ParseNode* propdef : obj->contents()) {
+    if (propdef->is<ClassField>()) {
+      ClassField* field = &propdef->as<ClassField>();
+      if (field->name().getKind() == ParseNodeKind::ComputedName) {
+        numFieldKeys++;
+      }
+    }
+  }
+
+  if (numFieldKeys == 0) {
+    return true;
+  }
+
+  NameOpEmitter noe(this, cx->names().dotFieldKeys,
+                    NameOpEmitter::Kind::Initialize);
+  if (!noe.prepareForRhs()) {
+    return false;
+  }
+
+  if (!emitUint32Operand(JSOP_NEWARRAY, numFieldKeys)) {
+    //            [stack] ARRAY
+    return false;
+  }
+
+  size_t curFieldKeyIndex = 0;
+  for (ParseNode* propdef : obj->contents()) {
+    if (propdef->is<ClassField>()) {
+      ClassField* field = &propdef->as<ClassField>();
+      if (field->name().getKind() == ParseNodeKind::ComputedName) {
+        ParseNode* nameExpr = field->name().as<UnaryNode>().kid();
+
+        if (!emitTree(nameExpr)) {
+          //        [stack] ARRAY KEY
+          return false;
+        }
+
+        if (!emitUint32Operand(JSOP_INITELEM_ARRAY, curFieldKeyIndex)) {
+          //        [stack] ARRAY
+          return false;
+        }
+
+        curFieldKeyIndex++;
+      }
+    }
+  }
+  MOZ_ASSERT(curFieldKeyIndex == numFieldKeys);
+
+  if (!noe.emitAssignment()) {
+    //            [stack] ARRAY
+    return false;
+  }
+
+  if (!emit1(JSOP_POP)) {
+    //            [stack]
+    return false;
+  }
+
+  return true;
 }
 
 bool BytecodeEmitter::emitCreateFieldInitializers(ListNode* obj) {
@@ -8870,7 +8953,7 @@ bool BytecodeEmitter::emitTree(
     case ParseNodeKind::TaggedTemplateExpr:
     case ParseNodeKind::CallExpr:
     case ParseNodeKind::SuperCallExpr:
-      if (!emitCallOrNew(&pn->as<BinaryNode>(), valueUsage)) {
+      if (!emitCallOrNew(&pn->as<CallNode>(), valueUsage)) {
         return false;
       }
       break;
@@ -8971,10 +9054,22 @@ bool BytecodeEmitter::emitTree(
       break;
 
     case ParseNodeKind::TrueExpr:
+      if (!emit1(JSOP_TRUE)) {
+        return false;
+      }
+      break;
     case ParseNodeKind::FalseExpr:
+      if (!emit1(JSOP_FALSE)) {
+        return false;
+      }
+      break;
     case ParseNodeKind::NullExpr:
+      if (!emit1(JSOP_NULL)) {
+        return false;
+      }
+      break;
     case ParseNodeKind::RawUndefinedExpr:
-      if (!emit1(pn->getOp())) {
+      if (!emit1(JSOP_UNDEFINED)) {
         return false;
       }
       break;

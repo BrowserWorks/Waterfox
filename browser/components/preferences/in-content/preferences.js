@@ -31,7 +31,7 @@ var gCategoryInits = new Map();
 function init_category_if_required(category) {
   let categoryInfo = gCategoryInits.get(category);
   if (!categoryInfo) {
-    throw "Unknown in-content prefs category! Can't init " + category;
+    throw new Error("Unknown in-content prefs category! Can't init " + category);
   }
   if (categoryInfo.inited) {
     return null;
@@ -81,6 +81,9 @@ function init_all() {
   if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
     document.getElementById("category-sync").hidden = false;
     register_module("paneSync", gSyncPane);
+  } else {
+    // Remove the pane from the DOM so it doesn't get incorrectly included in search results.
+    document.getElementById("template-paneSync").remove();
   }
   register_module("paneSearchResults", gSearchResultsPane);
   gSearchResultsPane.init();

@@ -729,8 +729,11 @@ class FunctionCompiler {
   }
 
   MDefinition* derefTableElementPointer(MDefinition* base) {
+    // Table element storage may be moved by GC operations, so reads from that
+    // storage are not movable.
     MWasmLoadRef* load =
-        MWasmLoadRef::New(alloc(), base, AliasSet::WasmTableElement);
+        MWasmLoadRef::New(alloc(), base, AliasSet::WasmTableElement,
+                          /*isMovable=*/ false);
     curBlock_->add(load);
     return load;
   }
@@ -2922,7 +2925,7 @@ static bool EmitMemOrTableCopy(FunctionCompiler& f, bool isMem) {
   }
 
   if (f.inDeadCode()) {
-    return false;
+    return true;
   }
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
@@ -2982,7 +2985,7 @@ static bool EmitDataOrElemDrop(FunctionCompiler& f, bool isData) {
   }
 
   if (f.inDeadCode()) {
-    return false;
+    return true;
   }
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
@@ -3023,7 +3026,7 @@ static bool EmitMemFill(FunctionCompiler& f) {
   }
 
   if (f.inDeadCode()) {
-    return false;
+    return true;
   }
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
@@ -3068,7 +3071,7 @@ static bool EmitMemOrTableInit(FunctionCompiler& f, bool isMem) {
   }
 
   if (f.inDeadCode()) {
-    return false;
+    return true;
   }
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
@@ -3133,7 +3136,7 @@ static bool EmitTableGet(FunctionCompiler& f) {
   }
 
   if (f.inDeadCode()) {
-    return false;
+    return true;
   }
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
@@ -3160,8 +3163,8 @@ static bool EmitTableGet(FunctionCompiler& f) {
     return false;
   }
 
-  // The return value here is either null, denoting an error, or a pointer to an
-  // unmovable location containing a possibly-null ref.
+  // The return value here is either null, denoting an error, or a short-lived
+  // pointer to a location containing a possibly-null ref.
   MDefinition* result;
   if (!f.builtinInstanceMethodCall(SASigTableGet, lineOrBytecode, args,
                                    &result)) {
@@ -3189,7 +3192,7 @@ static bool EmitTableGrow(FunctionCompiler& f) {
   }
 
   if (f.inDeadCode()) {
-    return false;
+    return true;
   }
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
@@ -3239,7 +3242,7 @@ static bool EmitTableSet(FunctionCompiler& f) {
   }
 
   if (f.inDeadCode()) {
-    return false;
+    return true;
   }
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
@@ -3287,7 +3290,7 @@ static bool EmitTableSize(FunctionCompiler& f) {
   }
 
   if (f.inDeadCode()) {
-    return false;
+    return true;
   }
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
@@ -3328,7 +3331,7 @@ static bool EmitRefNull(FunctionCompiler& f) {
   }
 
   if (f.inDeadCode()) {
-    return false;
+    return true;
   }
 
   MDefinition* nullVal = f.nullRefConstant();
@@ -3346,7 +3349,7 @@ static bool EmitRefIsNull(FunctionCompiler& f) {
   }
 
   if (f.inDeadCode()) {
-    return false;
+    return true;
   }
 
   MDefinition* nullVal = f.nullRefConstant();

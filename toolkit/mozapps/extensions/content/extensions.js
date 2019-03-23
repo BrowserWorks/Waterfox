@@ -1272,9 +1272,11 @@ var gViewController = {
         if (aAddon.isWebExtension && !aAddon.seen && WEBEXT_PERMISSION_PROMPTS) {
           let perms = aAddon.userPermissions;
           if (perms.origins.length > 0 || perms.permissions.length > 0) {
+            const target = getBrowserElement();
+
             let subject = {
               wrappedJSObject: {
-                target: getBrowserElement(),
+                target,
                 info: {
                   type: "sideload",
                   addon: aAddon,
@@ -1282,7 +1284,17 @@ var gViewController = {
                   permissions: perms,
                   resolve() {
                     aAddon.markAsSeen();
-                    aAddon.enable();
+                    aAddon.enable().then(() => {
+                      // If private browsing access is not allowed by default,
+                      // show the post-install doorhanger notification to
+                      // allow the user to give the extension access from the
+                      // checkbox included in the doorhanger.
+                      if (!allowPrivateBrowsingByDefault && aAddon.incognito !== "not_allowed") {
+                        Services.obs.notifyObservers({
+                          addon: aAddon, target,
+                        }, "webextension-install-notify");
+                      }
+                    });
                   },
                   reject() {},
                 },
@@ -2980,10 +2992,11 @@ var gDetailView = {
     let privateBrowsingRow = document.getElementById("detail-privateBrowsing-row");
     let privateBrowsingFooterRow = document.getElementById("detail-privateBrowsing-row-footer");
     if (allowPrivateBrowsingByDefault || aAddon.type != "extension" ||
-        aAddon.incognito == "not_allowed") {
+        !(aAddon.permissions & AddonManager.PERM_CAN_CHANGE_PRIVATEBROWSING_ACCESS)) {
       this._privateBrowsing.hidden = true;
       privateBrowsingRow.hidden = true;
       privateBrowsingFooterRow.hidden = true;
+      this._privateBrowsing.value = "0";
     } else {
       let perms = await ExtensionPermissions.get(aAddon.id);
       this._privateBrowsing.hidden = false;

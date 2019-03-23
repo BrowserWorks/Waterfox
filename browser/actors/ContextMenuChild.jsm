@@ -272,7 +272,7 @@ class ContextMenuChild extends ActorChild {
     if (!href || !href.match(/\S/)) {
       // Without this we try to save as the current doc,
       // for example, HTML case also throws if empty
-      throw "Empty href";
+      throw new Error("Empty href");
     }
 
     return this._makeURLAbsolute(this.context.link.baseURI, href);
@@ -375,7 +375,7 @@ class ContextMenuChild extends ActorChild {
     }
 
     if (urls.length != 1) {
-      throw "found multiple URLs";
+      throw new Error("found multiple URLs");
     }
 
     return urls[0];
@@ -747,6 +747,7 @@ class ContextMenuChild extends ActorChild {
     context.onCompletedImage    = false;
     context.onCTPPlugin         = false;
     context.onDRMMedia          = false;
+    context.onPiPVideo          = false;
     context.onEditable          = false;
     context.onImage             = false;
     context.onKeywordField      = false;
@@ -869,6 +870,10 @@ class ContextMenuChild extends ActorChild {
 
       if (this._isProprietaryDRM()) {
         context.onDRMMedia = true;
+      }
+
+      if (context.target.isCloningElementVisually) {
+        context.onPiPVideo = true;
       }
 
       // Firefox always creates a HTMLVideoElement when loading an ogg file

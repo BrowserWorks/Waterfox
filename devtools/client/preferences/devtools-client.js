@@ -53,14 +53,6 @@ pref("devtools.inspector.showUserAgentShadowRoots", false);
 // Enable the new Rules View
 pref("devtools.inspector.new-rulesview.enabled", false);
 
-// Flexbox preferences
-// Whether or not to show the combined flexbox and box model highlighter.
-#if defined(NIGHTLY_BUILD) || defined(MOZ_DEV_EDITION)
-pref("devtools.inspector.flexboxHighlighter.combine", true);
-#else
-pref("devtools.inspector.flexboxHighlighter.combine", false);
-#endif
-
 // Grid highlighter preferences
 pref("devtools.gridinspector.gridOutlineMaxColumns", 50);
 pref("devtools.gridinspector.gridOutlineMaxRows", 50);
@@ -178,8 +170,8 @@ pref("devtools.netmonitor.visibleColumns",
 pref("devtools.netmonitor.columnsData",
   '[{"name":"status","minWidth":30,"width":5}, {"name":"method","minWidth":30,"width":5}, {"name":"domain","minWidth":30,"width":10}, {"name":"file","minWidth":30,"width":25}, {"name":"cause","minWidth":30,"width":10},{"name":"type","minWidth":30,"width":5},{"name":"transferred","minWidth":30,"width":10},{"name":"contentSize","minWidth":30,"width":5},{"name":"waterfall","minWidth":150,"width":25}]');
 
-// Support for columns resizing is currently hidden behind this pref.
-pref("devtools.netmonitor.features.resizeColumns", false);
+// Support for columns resizing pref is now enabled (after merge date 03/18/19).
+pref("devtools.netmonitor.features.resizeColumns", true);
 
 pref("devtools.netmonitor.response.ui.limit", 10240);
 
@@ -349,10 +341,8 @@ pref("devtools.responsive.showUserAgentInput", false);
 
 // Enable new about:debugging.
 pref("devtools.aboutdebugging.new-enabled", false);
-// Enable the network location feature.
-pref("devtools.aboutdebugging.network", false);
-// Enable the wifi feature.
-pref("devtools.aboutdebugging.wifi", false);
+// Show process debug targets.
+pref("devtools.aboutdebugging.process-debugging", false);
 // Stringified array of network locations that users can connect to.
 pref("devtools.aboutdebugging.network-locations", "[]");
 // Debug target pane collapse/expand settings.

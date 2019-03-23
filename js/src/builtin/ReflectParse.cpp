@@ -611,7 +611,7 @@ class NodeBuilder {
   MOZ_MUST_USE bool classMethod(HandleValue name, HandleValue body,
                                 PropKind kind, bool isStatic, TokenPos* pos,
                                 MutableHandleValue dst);
-  MOZ_MUST_USE bool classField(HandleValue name, HandleValue body,
+  MOZ_MUST_USE bool classField(HandleValue name, HandleValue initializer,
                                TokenPos* pos, MutableHandleValue dst);
 
   /*
@@ -820,8 +820,7 @@ bool NodeBuilder::newNodeLoc(TokenPos* pos, MutableHandleValue dst) {
 
 bool NodeBuilder::setNodeLoc(HandleObject node, TokenPos* pos) {
   if (!saveLoc) {
-    RootedValue nullVal(cx, NullValue());
-    return defineProperty(node, "loc", nullVal);
+    return true;
   }
 
   RootedValue loc(cx);
@@ -1537,8 +1536,7 @@ bool NodeBuilder::classField(HandleValue name, HandleValue initializer,
     return callback(cb, name, initializer, pos, dst);
   }
 
-  return newNode(AST_CLASS_FIELD, pos, "name", name, "initializer", initializer,
-                 dst);
+  return newNode(AST_CLASS_FIELD, pos, "name", name, "init", initializer, dst);
 }
 
 bool NodeBuilder::classMembers(NodeVector& members, MutableHandleValue dst) {
@@ -2502,16 +2500,16 @@ bool ASTSerializer::statement(ParseNode* pn, MutableHandleValue dst) {
 bool ASTSerializer::classMethod(ClassMethod* classMethod,
                                 MutableHandleValue dst) {
   PropKind kind;
-  switch (classMethod->getOp()) {
-    case JSOP_INITPROP:
+  switch (classMethod->accessorType()) {
+    case AccessorType::None:
       kind = PROP_INIT;
       break;
 
-    case JSOP_INITPROP_GETTER:
+    case AccessorType::Getter:
       kind = PROP_GETTER;
       break;
 
-    case JSOP_INITPROP_SETTER:
+    case AccessorType::Setter:
       kind = PROP_SETTER;
       break;
 
@@ -2542,8 +2540,16 @@ bool ASTSerializer::classField(ClassField* classField, MutableHandleValue dst) {
                            .kid()
                            ->as<AssignmentNode>()
                            .right();
-    if (!expression(value, &val)) {
-      return false;
+    // RawUndefinedExpr is the node we use for "there is no initializer". If one
+    // writes, literally, `x = undefined;`, it will not be a RawUndefinedExpr
+    // node, but rather a variable reference.
+    // Behavior for "there is no initializer" should be { ..., "init": null }
+    if (value->getKind() != ParseNodeKind::RawUndefinedExpr) {
+      if (!expression(value, &val)) {
+        return false;
+      }
+    } else {
+      val.setNull();
     }
   }
   return propertyName(&classField->name(), &key) &&
@@ -3107,21 +3113,26 @@ bool ASTSerializer::property(ParseNode* pn, MutableHandleValue dst) {
   }
 
   PropKind kind;
-  switch (pn->getOp()) {
-    case JSOP_INITPROP:
-      kind = PROP_INIT;
-      break;
+  if (pn->is<PropertyDefinition>()) {
+    switch (pn->as<PropertyDefinition>().accessorType()) {
+      case AccessorType::None:
+        kind = PROP_INIT;
+        break;
 
-    case JSOP_INITPROP_GETTER:
-      kind = PROP_GETTER;
-      break;
+      case AccessorType::Getter:
+        kind = PROP_GETTER;
+        break;
 
-    case JSOP_INITPROP_SETTER:
-      kind = PROP_SETTER;
-      break;
+      case AccessorType::Setter:
+        kind = PROP_SETTER;
+        break;
 
-    default:
-      LOCAL_NOT_REACHED("unexpected object-literal property");
+      default:
+        LOCAL_NOT_REACHED("unexpected object-literal property");
+    }
+  } else {
+    MOZ_ASSERT(pn->isKind(ParseNodeKind::Shorthand));
+    kind = PROP_INIT;
   }
 
   BinaryNode* node = &pn->as<BinaryNode>();
@@ -3245,8 +3256,10 @@ bool ASTSerializer::objectPattern(ListNode* obj, MutableHandleValue dst) {
       elts.infallibleAppend(spread);
       continue;
     }
-    LOCAL_ASSERT(propdef->isKind(ParseNodeKind::MutateProto) !=
-                 propdef->isOp(JSOP_INITPROP));
+    // Patterns can't have getters/setters.
+    LOCAL_ASSERT(!propdef->is<PropertyDefinition>() ||
+                 propdef->as<PropertyDefinition>().accessorType() ==
+                     AccessorType::None);
 
     RootedValue key(cx);
     ParseNode* target;

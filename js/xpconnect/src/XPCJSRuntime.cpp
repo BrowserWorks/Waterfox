@@ -757,12 +757,6 @@ void XPCJSRuntime::TraverseAdditionalNativeRoots(
 
   for (XPCRootSetElem* e = mVariantRoots; e; e = e->GetNextRoot()) {
     XPCTraceableVariant* v = static_cast<XPCTraceableVariant*>(e);
-    if (nsCCUncollectableMarker::InGeneration(cb, v->CCGeneration())) {
-      JS::Value val = v->GetJSValPreserveColor();
-      if (val.isObject() && !JS::ObjectIsMarkedGray(&val.toObject())) {
-        continue;
-      }
-    }
     cb.NoteXPCOMRoot(
         v,
         XPCTraceableVariant::NS_CYCLE_COLLECTION_INNERCLASS::GetParticipant());
@@ -2755,9 +2749,6 @@ static void AccumulateTelemetryCallback(int id, uint32_t sample,
       break;
     case JS_TELEMETRY_GC_MARK_RATE:
       Telemetry::Accumulate(Telemetry::GC_MARK_RATE, sample);
-      break;
-    case JS_TELEMETRY_DEPRECATED_STRING_GENERICS:
-      Telemetry::Accumulate(Telemetry::JS_DEPRECATED_STRING_GENERICS, sample);
       break;
     default:
       MOZ_ASSERT_UNREACHABLE("Unexpected JS_TELEMETRY id");

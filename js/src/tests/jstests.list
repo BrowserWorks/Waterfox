@@ -12,13 +12,6 @@ slow script test262/built-ins/decodeURIComponent/S15.1.3.2_A2.5_T1.js
 
 # Fields are not fully implemented yet
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1499448
-skip script non262/fields/access.js
-skip script non262/fields/basic.js
-skip script non262/fields/error.js
-skip script non262/fields/field_types.js
-skip script non262/fields/literal.js
-skip script non262/fields/mixed_methods.js
-skip script non262/fields/quirks.js
 skip script non262/reflect-parse/class-fields.js
 
 
@@ -37,6 +30,16 @@ include test262/jstests.list
 skip script test262/built-ins/Function/prototype/restricted-property-arguments.js
 skip script test262/built-ins/Function/prototype/restricted-property-caller.js
 skip script test262/built-ins/ThrowTypeError/unique-per-realm-function-proto.js
+
+# https://github.com/tc39/ecma262/issues/1049
+# The "name" property is present on all functions. V8 and JSC agree, but the
+# spec and tests say anonymous functions simply have no own .name property. The
+# spec should change.
+skip script test262/built-ins/Proxy/revocable/revocation-function-name.js
+skip script test262/built-ins/Promise/reject-function-name.js
+skip script test262/built-ins/Promise/resolve-function-name.js
+skip script test262/built-ins/Promise/executor-function-name.js
+skip script test262/built-ins/Promise/all/resolve-element-function-name.js
 
 
 #########################################################################
@@ -1003,15 +1006,6 @@ skip script test262/language/expressions/prefix-increment/S11.4.4_A6_T2.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1288457
 skip script test262/built-ins/Function/internals/Construct/base-ctor-revoked-proxy.js
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1296236
-skip script test262/built-ins/Proxy/revocable/revocation-function-name.js
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1296235
-skip script test262/built-ins/Promise/all/resolve-element-function-name.js
-skip script test262/built-ins/Promise/executor-function-name.js
-skip script test262/built-ins/Promise/reject-function-name.js
-skip script test262/built-ins/Promise/resolve-function-name.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=944846
 skip script test262/built-ins/Number/prototype/toExponential/return-values.js

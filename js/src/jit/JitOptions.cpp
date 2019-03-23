@@ -122,8 +122,8 @@ DefaultJitOptions::DefaultJitOptions() {
   // Toggles whether CacheIR stubs are used.
   SET_DEFAULT(disableCacheIR, false);
 
-  // Toggles whether CacheIR stubs for binary arith operations are used
-  SET_DEFAULT(disableCacheIRBinaryArith, false);
+  // Toggles whether CacheIR stubs for calls are used
+  SET_DEFAULT(disableCacheIRCalls, true);
 
 // Toggles whether sincos optimization is globally disabled.
 // See bug984018: The MacOS is the only one that has the sincos fast.
@@ -246,9 +246,6 @@ DefaultJitOptions::DefaultJitOptions() {
   SET_DEFAULT(spectreValueMasking, true);
   SET_DEFAULT(spectreJitToCxxCalls, true);
 #endif
-
-  // Toggles whether unboxed plain objects can be created by the VM.
-  SET_DEFAULT(disableUnboxedObjects, false);
 
   // Toggles the optimization whereby offsets are folded into loads and not
   // included in the bounds check.

@@ -157,7 +157,9 @@ EXPORTS.js += [
     '../public/ProtoKey.h',
     '../public/Proxy.h',
     '../public/Realm.h',
+    '../public/RealmOptions.h',
     '../public/RefCounted.h',
+    '../public/RegExp.h',
     '../public/RequiredDefines.h',
     '../public/Result.h',
     '../public/RootingAPI.h',
@@ -323,7 +325,6 @@ UNIFIED_SOURCES += [
     'vm/UbiNode.cpp',
     'vm/UbiNodeCensus.cpp',
     'vm/UbiNodeShortestPaths.cpp',
-    'vm/UnboxedObject.cpp',
     'vm/Value.cpp',
     'vm/Xdr.cpp',
 ]

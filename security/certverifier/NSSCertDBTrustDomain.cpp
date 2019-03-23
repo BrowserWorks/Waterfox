@@ -14,6 +14,7 @@
 #include "PublicKeyPinningService.h"
 #include "cert.h"
 #include "certdb.h"
+#include "cert_storage/src/cert_storage.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Casting.h"
 #include "mozilla/Move.h"
@@ -85,7 +86,7 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(
       mBuiltChain(builtChain),
       mPinningTelemetryInfo(pinningTelemetryInfo),
       mHostname(hostname),
-      mCertBlocklist(do_GetService(NS_CERTBLOCKLIST_CONTRACTID)),
+      mCertBlocklist(do_GetService(NS_CERT_STORAGE_CID)),
       mOCSPStaplingStatus(CertVerifier::OCSP_STAPLING_NEVER_CHECKED),
       mSCTListFromCertificate(),
       mSCTListFromOCSPStapling() {}
@@ -195,7 +196,7 @@ Result NSSCertDBTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
   // The certificate blocklist currently only applies to TLS server
   // certificates.
   if (mCertDBTrustType == trustSSL) {
-    bool isCertRevoked;
+    int16_t revocationState;
 
     nsAutoCString encIssuer;
     nsAutoCString encSerial;
@@ -209,13 +210,13 @@ Result NSSCertDBTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
       return Result::FATAL_ERROR_LIBRARY_FAILURE;
     }
 
-    nsrv = mCertBlocklist->IsCertRevoked(encIssuer, encSerial, encSubject,
-                                         encPubKey, &isCertRevoked);
+    nsrv = mCertBlocklist->GetRevocationState(encIssuer, encSerial, encSubject,
+                                              encPubKey, &revocationState);
     if (NS_FAILED(nsrv)) {
       return Result::FATAL_ERROR_LIBRARY_FAILURE;
     }
 
-    if (isCertRevoked) {
+    if (revocationState == nsICertStorage::STATE_ENFORCE) {
       MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
               ("NSSCertDBTrustDomain: certificate is in blocklist"));
       return Result::ERROR_REVOKED_CERTIFICATE;
@@ -541,76 +542,57 @@ Result NSSCertDBTrustDomain::CheckRevocation(
     return Success;
   }
 
-  // Only request a response if we didn't have a cached indication of failure
-  // (don't keep requesting responses from a failing server).
-  bool attemptedRequest;
-  Vector<uint8_t> ocspResponse;
-  Input response;
   if (cachedResponseResult == Success ||
       cachedResponseResult == Result::ERROR_OCSP_UNKNOWN_CERT ||
       cachedResponseResult == Result::ERROR_OCSP_OLD_RESPONSE) {
-    uint8_t ocspRequestBytes[OCSP_REQUEST_MAX_LENGTH];
-    size_t ocspRequestLength;
-    rv = CreateEncodedOCSPRequest(*this, certID, ocspRequestBytes,
-                                  ocspRequestLength);
-    if (rv != Success) {
-      return rv;
-    }
-    Vector<uint8_t> ocspRequest;
-    if (!ocspRequest.append(ocspRequestBytes, ocspRequestLength)) {
-      return Result::FATAL_ERROR_NO_MEMORY;
-    }
-    Result tempRV =
-        DoOCSPRequest(aiaLocation, mOriginAttributes, std::move(ocspRequest),
-                      GetOCSPTimeout(), ocspResponse);
-    if (tempRV != Success) {
-      rv = tempRV;
-    } else if (response.Init(ocspResponse.begin(), ocspResponse.length()) !=
-               Success) {
-      rv = Result::ERROR_OCSP_MALFORMED_RESPONSE;  // too big
-    }
-    attemptedRequest = true;
-  } else {
-    rv = cachedResponseResult;
-    attemptedRequest = false;
+    // Only send a request to, and process a response from, the server if we
+    // didn't have a cached indication of failure.  Also, ddon't keep requesting
+    // responses from a failing server.
+    return SynchronousCheckRevocationWithServer(
+        certID, aiaLocation, time, maxOCSPLifetimeInDays, cachedResponseResult,
+        stapledOCSPResponseResult);
   }
 
-  if (response.GetLength() == 0) {
-    Result error = rv;
-    if (attemptedRequest) {
-      Time timeout(time);
-      if (timeout.AddSeconds(ServerFailureDelaySeconds) != Success) {
-        return Result::FATAL_ERROR_LIBRARY_FAILURE;  // integer overflow
-      }
-      rv = mOCSPCache.Put(certID, mOriginAttributes, error, time, timeout);
-      if (rv != Success) {
-        return rv;
-      }
-    }
-    if (mOCSPFetching != FetchOCSPForDVSoftFail) {
-      MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
-              ("NSSCertDBTrustDomain: returning SECFailure after "
-               "OCSP request failure"));
-      return error;
-    }
-    if (cachedResponseResult == Result::ERROR_OCSP_UNKNOWN_CERT) {
-      MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
-              ("NSSCertDBTrustDomain: returning SECFailure from cached "
-               "response after OCSP request failure"));
-      return cachedResponseResult;
-    }
-    if (stapledOCSPResponseResult != Success) {
-      MOZ_LOG(
-          gCertVerifierLog, LogLevel::Debug,
-          ("NSSCertDBTrustDomain: returning SECFailure from expired/invalid "
-           "stapled response after OCSP request failure"));
-      return stapledOCSPResponseResult;
+  return HandleOCSPFailure(cachedResponseResult, stapledOCSPResponseResult,
+                           cachedResponseResult);
+}
+
+Result NSSCertDBTrustDomain::SynchronousCheckRevocationWithServer(
+    const CertID& certID, const nsCString& aiaLocation, Time time,
+    uint16_t maxOCSPLifetimeInDays, const Result cachedResponseResult,
+    const Result stapledOCSPResponseResult) {
+  uint8_t ocspRequestBytes[OCSP_REQUEST_MAX_LENGTH];
+  size_t ocspRequestLength;
+
+  Result rv = CreateEncodedOCSPRequest(*this, certID, ocspRequestBytes,
+                                       ocspRequestLength);
+  if (rv != Success) {
+    return rv;
+  }
+
+  Vector<uint8_t> ocspResponse;
+  Input response;
+  rv = DoOCSPRequest(aiaLocation, mOriginAttributes, ocspRequestBytes,
+                     ocspRequestLength, GetOCSPTimeout(), ocspResponse);
+  if (rv == Success &&
+      response.Init(ocspResponse.begin(), ocspResponse.length()) != Success) {
+    rv = Result::ERROR_OCSP_MALFORMED_RESPONSE;  // too big
+  }
+
+  if (rv != Success) {
+    Time timeout(time);
+    if (timeout.AddSeconds(ServerFailureDelaySeconds) != Success) {
+      return Result::FATAL_ERROR_LIBRARY_FAILURE;  // integer overflow
     }
 
-    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
-            ("NSSCertDBTrustDomain: returning SECSuccess after "
-             "OCSP request failure"));
-    return Success;  // Soft fail -> success :(
+    Result cacheRV =
+        mOCSPCache.Put(certID, mOriginAttributes, rv, time, timeout);
+    if (cacheRV != Success) {
+      return cacheRV;
+    }
+
+    return HandleOCSPFailure(cachedResponseResult, stapledOCSPResponseResult,
+                             rv);
   }
 
   // If the response from the network has expired but indicates a revoked
@@ -621,9 +603,9 @@ Result NSSCertDBTrustDomain::CheckRevocation(
                                               maxOCSPLifetimeInDays, response,
                                               ResponseIsFromNetwork, expired);
   if (rv == Success || mOCSPFetching != FetchOCSPForDVSoftFail) {
-    MOZ_LOG(
-        gCertVerifierLog, LogLevel::Debug,
-        ("NSSCertDBTrustDomain: returning after VerifyEncodedOCSPResponse"));
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
+            ("NSSCertDBTrustDomain: returning after "
+             "VerifyEncodedOCSPResponse"));
     return rv;
   }
 
@@ -631,6 +613,7 @@ Result NSSCertDBTrustDomain::CheckRevocation(
       rv == Result::ERROR_REVOKED_CERTIFICATE) {
     return rv;
   }
+
   if (stapledOCSPResponseResult != Success) {
     MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
             ("NSSCertDBTrustDomain: returning SECFailure from expired/invalid "
@@ -641,6 +624,36 @@ Result NSSCertDBTrustDomain::CheckRevocation(
   MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
           ("NSSCertDBTrustDomain: end of CheckRevocation"));
 
+  return Success;  // Soft fail -> success :(
+}
+
+Result NSSCertDBTrustDomain::HandleOCSPFailure(
+    const Result cachedResponseResult, const Result stapledOCSPResponseResult,
+    const Result error) {
+  if (mOCSPFetching != FetchOCSPForDVSoftFail) {
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
+            ("NSSCertDBTrustDomain: returning SECFailure after OCSP request "
+             "failure"));
+    return error;
+  }
+
+  if (cachedResponseResult == Result::ERROR_OCSP_UNKNOWN_CERT) {
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
+            ("NSSCertDBTrustDomain: returning SECFailure from cached response "
+             "after OCSP request failure"));
+    return cachedResponseResult;
+  }
+
+  if (stapledOCSPResponseResult != Success) {
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
+            ("NSSCertDBTrustDomain: returning SECFailure from expired/invalid "
+             "stapled response after OCSP request failure"));
+    return stapledOCSPResponseResult;
+  }
+
+  MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
+          ("NSSCertDBTrustDomain: returning SECSuccess after OCSP request "
+           "failure"));
   return Success;  // Soft fail -> success :(
 }
 

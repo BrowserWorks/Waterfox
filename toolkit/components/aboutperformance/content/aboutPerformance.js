@@ -52,8 +52,8 @@ let tabFinder = {
           this._map.set(id, browser);
         }
       }
-      if (tabbrowser._preloadedBrowser) {
-        let browser = tabbrowser._preloadedBrowser;
+      if (tabbrowser.preloadedBrowser) {
+        let browser = tabbrowser.preloadedBrowser;
         if (browser.outerWindowID)
           this._map.set(browser.outerWindowID, browser);
       }
@@ -470,8 +470,14 @@ var View = {
     }
     row.appendChild(elt);
 
-    if (tooltip)
+    if (tooltip) {
+      for (let key of ["dispatchesSincePrevious", "durationSincePrevious"]) {
+        if (Number.isNaN(tooltip[key]) || tooltip[key] < 0) {
+          tooltip[key] = "–";
+        }
+      }
       document.l10n.setAttributes(row, "item", tooltip);
+    }
 
     elt = document.createElement("td");
     if (type == "tab") {

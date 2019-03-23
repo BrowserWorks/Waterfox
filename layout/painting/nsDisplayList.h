@@ -40,6 +40,7 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/gfx/UserData.h"
 #include "mozilla/layers/LayerAttributes.h"
+#include "mozilla/layers/RenderRootBoundary.h"
 #include "mozilla/layers/ScrollableLayerGuid.h"
 #include "nsCSSRenderingBorders.h"
 #include "nsPresArena.h"
@@ -375,7 +376,9 @@ enum class nsDisplayListBuilderMode : uint8_t {
  */
 class nsDisplayListBuilder {
   typedef mozilla::LayoutDeviceIntRect LayoutDeviceIntRect;
+  typedef mozilla::LayoutDeviceIntSize LayoutDeviceIntSize;
   typedef mozilla::LayoutDeviceIntRegion LayoutDeviceIntRegion;
+  typedef mozilla::LayoutDeviceRect LayoutDeviceRect;
 
   /**
    * This manages status of a 3d context to collect visible rects of
@@ -907,6 +910,41 @@ class nsDisplayListBuilder {
    */
   void SubtractFromVisibleRegion(nsRegion* aVisibleRegion,
                                  const nsRegion& aRegion);
+
+  void SetNeedsDisplayListBuild(mozilla::wr::RenderRoot aRenderRoot) {
+    MOZ_ASSERT(aRenderRoot != mozilla::wr::RenderRoot::Default);
+    mNeedsDisplayListBuild[aRenderRoot] = true;
+  }
+
+  void ExpandRenderRootRect(LayoutDeviceRect aRect,
+                            mozilla::wr::RenderRoot aRenderRoot) {
+    mRenderRootRects[aRenderRoot] = mRenderRootRects[aRenderRoot].Union(aRect);
+  }
+
+  bool GetNeedsDisplayListBuild(mozilla::wr::RenderRoot aRenderRoot) {
+    if (aRenderRoot == mozilla::wr::RenderRoot::Default) {
+      return true;
+    }
+    return mNeedsDisplayListBuild[aRenderRoot];
+  }
+
+  void ComputeDefaultRenderRootRect(LayoutDeviceIntSize aClientSize) {
+    nsRegion cutout;
+    nsRect clientRect(nsPoint(),
+                      mozilla::LayoutDevicePixel::ToAppUnits(aClientSize, 1));
+    cutout.OrWith(clientRect);
+    for (auto renderRoot : mozilla::wr::kRenderRoots) {
+      cutout.SubWith(mozilla::LayoutDevicePixel::ToAppUnits(
+          mRenderRootRects[renderRoot], 1));
+    }
+
+    mRenderRootRects[mozilla::wr::RenderRoot::Default] =
+        mozilla::LayoutDevicePixel::FromAppUnits(cutout.GetBounds(), 1);
+  }
+
+  LayoutDeviceRect GetRenderRootRect(mozilla::wr::RenderRoot aRenderRoot) {
+    return mRenderRootRects[aRenderRoot];
+  }
 
   /**
    * Mark the frames in aFrames to be displayed if they intersect aDirtyRect
@@ -1891,6 +1929,9 @@ class nsDisplayListBuilder {
   // The offset from mCurrentFrame to mCurrentReferenceFrame.
   nsPoint mCurrentOffsetToReferenceFrame;
 
+  mozilla::wr::RenderRootArray<LayoutDeviceRect> mRenderRootRects;
+  mozilla::wr::NonDefaultRenderRootArray<bool> mNeedsDisplayListBuild;
+
   RefPtr<AnimatedGeometryRoot> mRootAGR;
   RefPtr<AnimatedGeometryRoot> mCurrentAGR;
 
@@ -2404,7 +2445,7 @@ class nsDisplayItem : public nsDisplayItemLink {
    * This function is called when an item's list of children has been omdified
    * by RetaineDisplayListBuilder.
    */
-  virtual void InvalidateCachedChildInfo() {}
+  virtual void InvalidateCachedChildInfo(nsDisplayListBuilder* aBuilder) {}
 
   /**
    * @param aSnap set to true if the edges of the rectangles of the opaque
@@ -2868,6 +2909,7 @@ class nsDisplayItem : public nsDisplayItemLink {
       mCanBeReused = false;
     }
   }
+  virtual void NotifyUsed(nsDisplayListBuilder* aBuilder) {}
 
   virtual nsIFrame* GetDependentFrame() { return nullptr; }
 
@@ -3542,11 +3584,48 @@ class RetainedDisplayList : public nsDisplayList {
   nsTArray<OldItemInfo> mOldItems;
 };
 
-class FlattenedDisplayItemIterator {
+class FlattenedDisplayListIterator {
  public:
-  FlattenedDisplayItemIterator(nsDisplayListBuilder* aBuilder,
+  FlattenedDisplayListIterator(nsDisplayListBuilder* aBuilder,
+                               nsDisplayList* aList)
+      : FlattenedDisplayListIterator(aBuilder, aList, true) {}
+
+  ~FlattenedDisplayListIterator() { MOZ_ASSERT(!HasNext()); }
+
+  virtual bool HasNext() const { return mNext || !mStack.IsEmpty(); }
+
+  nsDisplayItem* GetNextItem() {
+    MOZ_ASSERT(mNext);
+
+    nsDisplayItem* current = mNext;
+    nsDisplayItem* next = current->GetAbove();
+
+    // Attempt to merge |next| with |current|.
+    if (next && current->CanMerge(next)) {
+      // Merging is possible, collect all the successive mergeable items.
+      AutoTArray<nsDisplayItem*, 2> willMerge{current};
+
+      do {
+        willMerge.AppendElement(next);
+      } while ((next = next->GetAbove()) && current->CanMerge(next));
+
+      current = mBuilder->MergeItems(willMerge);
+    }
+
+    // |mNext| will be either the first item that could not be merged with
+    // |current|, or nullptr.
+    mNext = next;
+    ResolveFlattening();
+
+    return current;
+  }
+
+  nsDisplayItem* PeekNext() { return mNext; }
+
+ protected:
+  FlattenedDisplayListIterator(nsDisplayListBuilder* aBuilder,
                                nsDisplayList* aList,
-                               const bool aResolveFlattening = true)
+                               const bool aResolveFlattening)
       : mBuilder(aBuilder), mNext(aList->GetBottom()) {
     if (aResolveFlattening) {
       // This is done conditionally in case subclass overrides
@@ -3555,24 +3634,9 @@ class FlattenedDisplayItemIterator {
     }
   }
 
-  virtual ~FlattenedDisplayItemIterator() { MOZ_ASSERT(!HasNext()); }
+  virtual void EnterChildList(nsDisplayItem* aContainerItem) {}
+  virtual void ExitChildList() {}
 
-  nsDisplayItem* GetNext() {
-    nsDisplayItem* next = mNext;
-
-    // Advance mNext to the following item
-    if (next) {
-      mNext = mNext->GetAbove();
-      ResolveFlattening();
-    }
-    return next;
-  }
-
-  bool HasNext() const { return mNext || !mStack.IsEmpty(); }
-
-  nsDisplayItem* PeekNext() { return mNext; }
-
- protected:
   bool AtEndOfNestedList() const { return !mNext && mStack.Length() > 0; }
 
   virtual bool ShouldFlattenNextItem() {
@@ -3585,17 +3649,16 @@ class FlattenedDisplayItemIterator {
     // item, or the very end of the outer list.
     while (AtEndOfNestedList() || ShouldFlattenNextItem()) {
       if (AtEndOfNestedList()) {
-        // Pop the last item off the stack.
-        mNext = mStack.LastElement();
-        ExitChildList(mNext);
-        mStack.RemoveElementAt(mStack.Length() - 1);
-        // We stored the item that was flattened, so advance to the next.
-        mNext = mNext->GetAbove();
+        ExitChildList();
+
+        // We reached the end of the list, pop the next item from the stack.
+        mNext = mStack.PopLastElement();
       } else {
-        // This item wants to be flattened. Store the current item on the stack,
-        // and use the first item in the child list instead.
-        mStack.AppendElement(mNext);
         EnterChildList(mNext);
+
+        // This item wants to be flattened. Store the next item on the stack,
+        // and use the first item in the child list instead.
+        mStack.AppendElement(mNext->GetAbove());
 
         nsDisplayList* childItems =
             mNext->GetType() != DisplayItemType::TYPE_TRANSFORM
@@ -3607,12 +3670,10 @@ class FlattenedDisplayItemIterator {
     }
   }
 
-  virtual void ExitChildList(nsDisplayItem* aItem) {}
-  virtual void EnterChildList(nsDisplayItem* aItem) {}
-
+ private:
   nsDisplayListBuilder* mBuilder;
   nsDisplayItem* mNext;
-  AutoTArray<nsDisplayItem*, 10> mStack;
+  AutoTArray<nsDisplayItem*, 16> mStack;
 };
 
 struct HitTestInfo {
@@ -5348,7 +5409,7 @@ class nsDisplayOpacity : public nsDisplayWrapList {
     return MakeDisplayItem<nsDisplayOpacity>(aBuilder, *this);
   }
 
-  void InvalidateCachedChildInfo() override {
+  void InvalidateCachedChildInfo(nsDisplayListBuilder* aBuilder) override {
     mChildOpacityState = ChildOpacityState::Unknown;
   }
 
@@ -5811,6 +5872,43 @@ class nsDisplayOwnLayer : public nsDisplayWrapList {
   ScrollbarData mScrollbarData;
   bool mForceActive;
   uint64_t mWrAnimationId;
+};
+
+class nsDisplayRenderRoot : public nsDisplayWrapList {
+  nsDisplayRenderRoot(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
+                      nsDisplayList* aList,
+                      const ActiveScrolledRoot* aActiveScrolledRoot,
+                      mozilla::wr::RenderRoot aRenderRoot);
+
+#ifdef NS_BUILD_REFCNT_LOGGING
+  ~nsDisplayRenderRoot() override { MOZ_COUNT_DTOR(nsDisplayRenderRoot); }
+#endif
+
+  NS_DISPLAY_DECL_NAME("RenderRoot", TYPE_RENDER_ROOT)
+
+  void InvalidateCachedChildInfo(nsDisplayListBuilder* aBuilder) override;
+  void Destroy(nsDisplayListBuilder* aBuilder) override;
+  void NotifyUsed(nsDisplayListBuilder* aBuilder) override;
+
+  bool UpdateScrollData(
+      mozilla::layers::WebRenderScrollData* aData,
+      mozilla::layers::WebRenderLayerScrollData* aLayerData) override;
+
+  bool ShouldFlattenAway(nsDisplayListBuilder* aBuilder) override {
+    return false;
+  }
+
+  bool CreateWebRenderCommands(
+      mozilla::wr::DisplayListBuilder& aBuilder,
+      mozilla::wr::IpcResourceUpdateQueue& aResources,
+      const StackingContextHelper& aSc,
+      mozilla::layers::RenderRootStateManager* aManager,
+      nsDisplayListBuilder* aDisplayListBuilder) override;
+
+ protected:
+  mozilla::wr::RenderRoot mRenderRoot;
+  bool mBuiltWRCommands;
+  mozilla::Maybe<mozilla::layers::RenderRootBoundary> mBoundary;
 };
 
 /**
@@ -6719,14 +6817,14 @@ class nsDisplayTransform : public nsDisplayHitTestInfoItem {
     FrameTransformProperties(const nsIFrame* aFrame, float aAppUnitsPerPixel,
                              const nsRect* aBoundsOverride);
     // This constructor is used on the compositor (for animations).
-    // Bug 1186329, Bug 1425837, If we want to support compositor animationsf
-    // or individual transforms and motion path, we may need to update this.
-    // For now, let mIndividualTransformList and mMotion as nullptr and
-    // Nothing().
+    // FIXME: Bug 1186329: if we want to support compositor animations for
+    // motion path, we need to update this. For now, let mMotion be Nothing().
     FrameTransformProperties(
+        RefPtr<const nsCSSValueSharedList>&& aIndividualTransform,
         RefPtr<const nsCSSValueSharedList>&& aTransformList,
         const Point3D& aToTransformOrigin)
         : mFrame(nullptr),
+          mIndividualTransformList(std::move(aIndividualTransform)),
           mTransformList(std::move(aTransformList)),
           mToTransformOrigin(aToTransformOrigin) {}
 

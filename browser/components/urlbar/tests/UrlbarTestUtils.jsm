@@ -12,6 +12,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
   TestUtils: "resource://testing-common/TestUtils.jsm",
   UrlbarPrefs: "resource:///modules/UrlbarPrefs.jsm",
+  UrlbarTokenizer: "resource:///modules/UrlbarTokenizer.jsm",
   UrlbarUtils: "resource:///modules/UrlbarUtils.jsm",
 });
 
@@ -45,15 +46,23 @@ var UrlbarTestUtils = {
     let urlbar = getUrlbarAbstraction(win);
     let restoreAnimationsFn = urlbar.disableAnimations();
     await new Promise(resolve => waitForFocus(resolve, win));
+    let lastSearchString = urlbar.lastSearchString;
     urlbar.focus();
     urlbar.value = inputText;
     if (fireInputEvent) {
       // This is necessary to get the urlbar to set gBrowser.userTypedValue.
       urlbar.fireInputEvent();
     }
-    // In the quantum bar it's enough to fire the input event to start a query,
-    // invoking startSearch would do it twice.
-    if (!urlbar.quantumbar || !fireInputEvent) {
+    // An input event will start a new search, with a couple of exceptions, so
+    // be careful not to call startSearch if we fired an input event since that
+    // would start two searches.  The first exception is when the new search and
+    // old search are the same.  Many tests do consecutive searches with the
+    // same string and expect new searches to start, so call startSearch
+    // directly then.  The second exception is when searching with the legacy
+    // urlbar and an empty string.
+    if (!fireInputEvent ||
+        inputText == lastSearchString ||
+        (!urlbar.quantumbar && !inputText)) {
       urlbar.startSearch(inputText);
     }
     return this.promiseSearchComplete(win, restoreAnimationsFn);
@@ -287,6 +296,11 @@ class UrlbarAbstraction {
     return this.urlbar.value;
   }
 
+  get lastSearchString() {
+    return this.quantumbar ? this.urlbar._lastSearchString :
+                             this.urlbar.controller.searchString;
+  }
+
   get panel() {
     return this.quantumbar ? this.urlbar.panel : this.urlbar.popup;
   }
@@ -309,6 +323,9 @@ class UrlbarAbstraction {
       this.urlbar.value = text;
       this.urlbar.startQuery();
     } else {
+      // Force the controller to do consecutive searches for the same string by
+      // calling resetInternalState.
+      this.urlbar.controller.resetInternalState();
       this.urlbar.controller.startSearch(text);
     }
   }
@@ -339,7 +356,7 @@ class UrlbarAbstraction {
       await new Promise(resolve => this.window.requestIdleCallback(resolve, {timeout: 1000}));
       return this.panel.richlistbox.itemChildren[index];
     }
-    // TODO: Quantum Bar doesn't yet implement lazy results replacement.
+    // TODO Bug 1530338: Quantum Bar doesn't yet implement lazy results replacement.
     await this.promiseSearchComplete();
     if (index >= this.urlbar.view._rows.length) {
       throw new Error("Not enough results");
@@ -453,11 +470,17 @@ class UrlbarAbstraction {
         separator: element._separator,
         url: element._urlText,
       };
-      if (details.type == UrlbarUtils.RESULT_TYPE.SEARCH) {
+      if (details.type == UrlbarUtils.RESULT_TYPE.SEARCH && action) {
+        // Strip restriction tokens from input.
+        let query = action.params.input;
+        let restrictTokens = Object.values(UrlbarTokenizer.RESTRICT);
+        if (restrictTokens.includes(query[0])) {
+          query = query.substring(1).trim();
+        }
         details.searchParams = {
           engine: action.params.engineName,
           keyword: action.params.alias,
-          query: action.params.input,
+          query,
           suggestion: action.params.searchSuggestion,
         };
       }
@@ -481,7 +504,7 @@ class UrlbarAbstraction {
         return false;
       }, "Waiting for suggestions");
     }
-    // TODO: Quantum Bar doesn't yet implement lazy results replacement. When
+    // TODO Bug 1530338: Quantum Bar doesn't yet implement lazy results replacement. When
     // we do that, we'll have to be sure the suggestions we find are relevant
     // for the current query. For now let's just wait for the search to be
     // complete.

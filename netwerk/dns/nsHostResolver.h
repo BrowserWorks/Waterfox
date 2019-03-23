@@ -181,7 +181,7 @@ class AddrHostRecord final : public nsHostRecord {
    */
   Mutex addr_info_lock;
   int addr_info_gencnt; /* generation count of |addr_info| */
-  mozilla::net::AddrInfo *addr_info;
+  RefPtr<mozilla::net::AddrInfo> addr_info;
   mozilla::UniquePtr<mozilla::net::NetAddr> addr;
 
   // hold addr_info_lock when calling the blacklist functions
@@ -204,8 +204,8 @@ class AddrHostRecord final : public nsHostRecord {
 
   void Cancel() override;
 
-  bool RemoveOrRefresh();  // Mark records currently being resolved as needed
-                           // to resolve again.
+  bool RemoveOrRefresh(bool aTrrToo);  // Mark records currently being resolved
+                                       // as needed to resolve again.
 
   void ResolveComplete();
 
@@ -222,7 +222,7 @@ class AddrHostRecord final : public nsHostRecord {
   mozilla::TimeDuration mTrrDuration;
   mozilla::TimeDuration mNativeDuration;
 
-  nsAutoPtr<mozilla::net::AddrInfo> mFirstTRR;  // partial TRR storage
+  RefPtr<mozilla::net::AddrInfo> mFirstTRR;  // partial TRR storage
   nsresult mFirstTRRresult;
 
   uint8_t mTRRSuccess;     // number of successful TRR responses
@@ -475,7 +475,7 @@ class nsHostResolver : public nsISupports, public AHostResolver {
   /**
    * Flush the DNS cache.
    */
-  void FlushCache();
+  void FlushCache(bool aTrrToo);
 
   LookupStatus CompleteLookup(nsHostRecord *, nsresult,
                               mozilla::net::AddrInfo *, bool pb,

@@ -227,7 +227,7 @@ pref("dom.keyboardevent.keypress.hack.dispatch_non_printable_keys", "");
 // non-zero keyCode or charCode value to the other).  The format is exactly
 // same as "dom.keyboardevent.keypress.hack.dispatch_non_printable_keys". So,
 // check its explanation for the detail.
-pref("dom.keyboardevent.keypress.hack.use_legacy_keycode_and_charcode", "");
+pref("dom.keyboardevent.keypress.hack.use_legacy_keycode_and_charcode", "powerpoint.officeapps.live.com");
 
 // Whether InputEvent.data is enabled.
 pref("dom.inputevent.data.enabled", true);
@@ -427,7 +427,6 @@ pref("media.decoder-doctor.verbose", false);
 pref("media.decoder-doctor.new-issue-endpoint", "https://webcompat.com/issues/new");
 
 #ifdef MOZ_WEBRTC
-pref("media.navigator.enabled", true);
 pref("media.navigator.video.enabled", true);
 pref("media.navigator.video.default_fps",30);
 pref("media.navigator.video.use_remb", true);
@@ -445,6 +444,8 @@ pref("media.peerconnection.sdp.rust.enabled", false);
 pref("media.peerconnection.sdp.rust.compare", false);
 #endif
 
+pref("media.videocontrols.picture-in-picture.enabled", false);
+
 pref("media.webrtc.debug.trace_mask", 0);
 pref("media.webrtc.debug.multi_log", false);
 pref("media.webrtc.debug.log_file", "");
@@ -452,7 +453,6 @@ pref("media.webrtc.debug.aec_dump_max_size", 4194304); // 4MB
 
 pref("media.navigator.video.default_width",0);  // adaptive default
 pref("media.navigator.video.default_height",0); // adaptive default
-pref("media.peerconnection.enabled", true);
 pref("media.peerconnection.video.enabled", true);
 pref("media.navigator.video.max_fs", 12288); // Enough for 2048x1536
 pref("media.navigator.video.max_fr", 60);
@@ -647,7 +647,7 @@ pref("media.video_stats.enabled", true);
 pref("media.cubeb.logging_level", "");
 
 // Cubeb sandbox (remoting) control
-#ifdef XP_LINUX
+#if defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID)
 pref("media.cubeb.sandbox", true);
 pref("media.audioipc.pool_size", 2);
 // 64 * 4 kB stack per pool thread.
@@ -663,9 +663,9 @@ pref("media.av1.use-dav1d", true);
 #elif defined(XP_MACOSX)
 pref("media.av1.enabled", true);
 pref("media.av1.use-dav1d", true);
-#elif defined(XP_UNIX)
+#elif defined(XP_UNIX) && !defined(MOZ_WIDGET_ANDROID)
 pref("media.av1.enabled", true);
-pref("media.av1.use-dav1d", false);
+pref("media.av1.use-dav1d", true);
 #else
 pref("media.av1.enabled", false);
 pref("media.av1.use-dav1d", false);
@@ -938,7 +938,6 @@ pref("gfx.webrender.force-disabled", false);
 pref("gfx.webrender.force-angle", true);
 pref("gfx.webrender.dcomp-win.enabled", true);
 pref("gfx.webrender.dcomp-win-triple-buffering.enabled", true);
-pref("gfx.webrender.program-binary", true);
 pref("gfx.webrender.program-binary-disk", true);
 #endif
 
@@ -975,14 +974,7 @@ pref("gfx.webrender.debug.small-screen", false);
 pref("gfx.webrender.dl.dump-parent", false);
 pref("gfx.webrender.dl.dump-content", false);
 pref("gfx.webrender.picture-caching", true);
-
-#ifdef NIGHTLY_BUILD
-pref("performance.adjust_to_machine", true);
-#else
-pref("performance.adjust_to_machine", false);
-#endif
-
-pref("performance.low_end_machine", false);
+pref("gfx.webrender.split-render-roots", false);
 
 pref("accessibility.browsewithcaret", false);
 pref("accessibility.warn_on_browsewithcaret", true);
@@ -1468,11 +1460,7 @@ pref("javascript.options.unboxed_objects",  false);
 pref("javascript.options.baselinejit",      true);
 //Duplicated in JitOptions - ensure both match.
 pref("javascript.options.baselinejit.threshold", 10);
-#ifdef NO_ION
-pref("javascript.options.ion",              false);
-#else
 pref("javascript.options.ion",              true);
-#endif
 //Duplicated in JitOptions - ensure both match.
 pref("javascript.options.ion.threshold",    1000);
 //Duplicated in JitOptions - ensure both match.
@@ -1606,7 +1594,11 @@ pref("javascript.options.spectre.jit_to_C++_calls", true);
 pref("javascript.options.streams", true);
 
 // BigInt API
+#ifdef NIGHTLY_BUILD
+pref("javascript.options.bigint", true);
+#else
 pref("javascript.options.bigint", false);
+#endif
 
 pref("javascript.options.experimental.fields", false);
 
@@ -1773,7 +1765,12 @@ pref("network.http.referer.defaultPolicy", 3);
 // default cookie policy is set to reject third-party trackers;
 // to be used unless overriden by the site;
 // values are identical to defaultPolicy above
+#ifdef NIGHTLY_BUILD
+// On Nightly, trim referrers from trackers to origins.
+pref("network.http.referer.defaultPolicy.trackers", 2);
+#else
 pref("network.http.referer.defaultPolicy.trackers", 3);
+#endif
 // Set the Private Browsing Default Referrer Policy;
 // to be used unless overriden by the site;
 // values are identical to defaultPolicy above
@@ -1783,6 +1780,8 @@ pref("network.http.referer.defaultPolicy.pbmode", 2);
 // trackers;
 // to be used unless overriden by the site;
 // values are identical to defaultPolicy above
+// No need to change this pref for Nightly only since in private windows we
+// already trim all referrers to origin only.
 pref("network.http.referer.defaultPolicy.trackers.pbmode", 2);
 // false=real referer, true=spoof referer (use target URI as referer)
 pref("network.http.referer.spoofSource", false);
@@ -2759,6 +2758,11 @@ pref("services.settings.server", "https://firefox.settings.services.mozilla.com/
 pref("services.settings.changes.path", "/buckets/monitor/collections/changes/records");
 pref("services.settings.default_bucket", "main");
 pref("services.settings.default_signer", "remote-settings.content-signature.mozilla.org");
+
+// The percentage of clients who will report uptake telemetry as
+// events instead of just a histogram. This only applies on Release;
+// other channels always report events.
+pref("services.common.uptake.sampleRate", 1);   // 1%
 
 // Blocklist preferences
 pref("extensions.blocklist.enabled", true);
@@ -5604,6 +5608,8 @@ pref("network.trr.early-AAAA", false);
 pref("network.trr.disable-ECS", true);
 // After this many failed TRR requests in a row, consider TRR borked
 pref("network.trr.max-fails", 5);
+// Comma separated list of domains that we should not use TRR for
+pref("network.trr.excluded-domains", "");
 
 pref("captivedetect.canonicalURL", "http://detectportal.firefox.com/success.txt");
 pref("captivedetect.canonicalContent", "success\n");
@@ -5978,8 +5984,10 @@ pref("browser.sanitizer.loglevel", "Warn");
 // When a user cancels this number of authentication dialogs coming from
 // a single web page in a row, all following authentication dialogs will
 // be blocked (automatically canceled) for that page. The counter resets
-// when the page is reloaded. To turn this feature off, just set the limit to 0.
-pref("prompts.authentication_dialog_abuse_limit", 3);
+// when the page is reloaded.
+// To disable all auth prompting, set the limit to 0.
+// To disable blocking of auth prompts, set the limit to -1.
+pref("prompts.authentication_dialog_abuse_limit", 2);
 
 pref("dom.IntersectionObserver.enabled", true);
 

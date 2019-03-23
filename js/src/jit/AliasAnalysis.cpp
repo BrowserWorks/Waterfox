@@ -133,7 +133,6 @@ static inline const MDefinition* GetObject(const MDefinition* ins) {
     case MDefinition::Opcode::SetDisjointTypedElements:
     case MDefinition::Opcode::ArrayPopShift:
     case MDefinition::Opcode::ArrayPush:
-    case MDefinition::Opcode::ArraySlice:
     case MDefinition::Opcode::LoadTypedArrayElementHole:
     case MDefinition::Opcode::StoreTypedArrayElementHole:
     case MDefinition::Opcode::LoadFixedSlot:
@@ -145,8 +144,6 @@ static inline const MDefinition* GetObject(const MDefinition* ins) {
     case MDefinition::Opcode::GuardReceiverPolymorphic:
     case MDefinition::Opcode::GuardObjectGroup:
     case MDefinition::Opcode::GuardObjectIdentity:
-    case MDefinition::Opcode::GuardUnboxedExpando:
-    case MDefinition::Opcode::LoadUnboxedExpando:
     case MDefinition::Opcode::LoadSlot:
     case MDefinition::Opcode::StoreSlot:
     case MDefinition::Opcode::InArray:
@@ -158,6 +155,7 @@ static inline const MDefinition* GetObject(const MDefinition* ins) {
       object = ins->getOperand(0);
       break;
     case MDefinition::Opcode::GetPropertyCache:
+    case MDefinition::Opcode::CallGetProperty:
     case MDefinition::Opcode::GetDOMProperty:
     case MDefinition::Opcode::GetDOMMember:
     case MDefinition::Opcode::Call:
@@ -184,6 +182,7 @@ static inline const MDefinition* GetObject(const MDefinition* ins) {
     case MDefinition::Opcode::WasmLoadRef:
     case MDefinition::Opcode::WasmStoreRef:
     case MDefinition::Opcode::ArrayJoin:
+    case MDefinition::Opcode::ArraySlice:
       return nullptr;
     default:
 #ifdef DEBUG

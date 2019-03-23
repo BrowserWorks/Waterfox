@@ -31,10 +31,13 @@ extern crate env_logger;
 extern crate u2fhid;
 extern crate gkrust_utils;
 extern crate log;
+extern crate cert_storage;
 extern crate cosec;
 extern crate rsdparsa_capi;
 #[cfg(feature = "spidermonkey_rust")]
 extern crate jsrust_shared;
+#[cfg(feature = "bitsdownload")]
+extern crate bitsdownload;
 
 extern crate arrayvec;
 

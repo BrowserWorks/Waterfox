@@ -331,64 +331,19 @@ nsresult JsepSessionImpl::GetRemoteIds(const Sdp& sdp,
                                        const SdpMediaSection& msection,
                                        std::vector<std::string>* streamIds,
                                        std::string* trackId) {
-  nsresult rv = mSdpHelper.GetIdsFromMsid(sdp, msection, streamIds, trackId);
+  // Generate random track ids.
+  if (!mUuidGen->Generate(trackId)) {
+    JSEP_SET_ERROR("Failed to generate UUID for JsepTrack");
+    return NS_ERROR_FAILURE;
+  }
+
+  nsresult rv = mSdpHelper.GetIdsFromMsid(sdp, msection, streamIds);
   if (rv == NS_ERROR_NOT_AVAILABLE) {
     streamIds->push_back(mDefaultRemoteStreamId);
-
-    // Generate random track ids.
-    if (!mUuidGen->Generate(trackId)) {
-      JSEP_SET_ERROR("Failed to generate UUID for JsepTrack");
-      return NS_ERROR_FAILURE;
-    }
-
     return NS_OK;
   }
 
   return rv;
-}
-
-nsresult JsepSessionImpl::RemoveDuplicateTrackIds(Sdp* sdp) {
-  std::set<std::string> trackIds;
-
-  for (size_t i = 0; i < sdp->GetMediaSectionCount(); ++i) {
-    SdpMediaSection& msection(sdp->GetMediaSection(i));
-
-    if (mSdpHelper.MsectionIsDisabled(msection)) {
-      continue;
-    }
-
-    std::vector<std::string> streamIds;
-    std::string trackId;
-    nsresult rv =
-        mSdpHelper.GetIdsFromMsid(*sdp, msection, &streamIds, &trackId);
-
-    if (NS_SUCCEEDED(rv)) {
-      if (trackIds.count(trackId)) {
-        // Re-set trackId
-        if (!mUuidGen->Generate(&trackId)) {
-          JSEP_SET_ERROR(
-              "Tried to replace duplicate track id in SDP, but "
-              "failed to generate a UUID.");
-          return NS_ERROR_FAILURE;
-        }
-
-        auto& mediaAttrs = msection.GetAttributeList();
-        UniquePtr<SdpMsidAttributeList> newMsids(
-            new SdpMsidAttributeList(mediaAttrs.GetMsid()));
-        for (auto& msid : newMsids->mMsids) {
-          msid.appdata = trackId;
-        }
-
-        mediaAttrs.SetAttribute(newMsids.release());
-      }
-      trackIds.insert(trackId);
-    } else if (rv != NS_ERROR_NOT_AVAILABLE) {
-      // Error has already been set
-      return rv;
-    }
-  }
-
-  return NS_OK;
 }
 
 nsresult JsepSessionImpl::CreateOffer(const JsepOfferOptions& options,
@@ -417,9 +372,6 @@ nsresult JsepSessionImpl::CreateOffer(const JsepOfferOptions& options,
 
   SetupBundle(sdp.get());
 
-  rv = RemoveDuplicateTrackIds(sdp.get());
-  NS_ENSURE_SUCCESS(rv, rv);
-
   if (mCurrentLocalDescription) {
     rv = CopyPreviousTransportParams(*GetAnswer(), *mCurrentLocalDescription,
                                      *sdp, sdp.get());
@@ -428,7 +380,7 @@ nsresult JsepSessionImpl::CreateOffer(const JsepOfferOptions& options,
   }
 
   *offer = sdp->ToString();
-  mGeneratedLocalDescription = std::move(sdp);
+  mGeneratedOffer = std::move(sdp);
   ++mSessionVersion;
 
   return NS_OK;
@@ -550,9 +502,6 @@ nsresult JsepSessionImpl::CreateAnswer(const JsepAnswerOptions& options,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  rv = RemoveDuplicateTrackIds(sdp.get());
-  NS_ENSURE_SUCCESS(rv, rv);
-
   if (mCurrentLocalDescription) {
     // per discussion with bwc, 3rd parm here should be offer, not *sdp. (mjf)
     rv = CopyPreviousTransportParams(*GetAnswer(), *mCurrentRemoteDescription,
@@ -562,7 +511,7 @@ nsresult JsepSessionImpl::CreateAnswer(const JsepAnswerOptions& options,
   }
 
   *answer = sdp->ToString();
-  mGeneratedLocalDescription = std::move(sdp);
+  mGeneratedAnswer = std::move(sdp);
   ++mSessionVersion;
 
   return NS_OK;
@@ -714,7 +663,7 @@ nsresult JsepSessionImpl::SetLocalDescription(JsepSdpType type,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Check that content hasn't done anything unsupported with the SDP
-  rv = ValidateLocalDescription(*parsed);
+  rv = ValidateLocalDescription(*parsed, type);
   NS_ENSURE_SUCCESS(rv, rv);
 
   switch (type) {
@@ -997,9 +946,11 @@ nsresult JsepSessionImpl::HandleNegotiatedSession(
   }
   JsepTrack::SetUniquePayloadTypes(remoteTracks);
 
-  mGeneratedLocalDescription.reset();
-
   mNegotiations++;
+
+  mGeneratedAnswer.reset();
+  mGeneratedOffer.reset();
+
   return NS_OK;
 }
 
@@ -1334,9 +1285,6 @@ nsresult JsepSessionImpl::ParseSdp(const std::string& sdp,
     }
   }
 
-  nsresult rv = RemoveDuplicateTrackIds(parsed.get());
-  NS_ENSURE_SUCCESS(rv, rv);
-
   *parsedp = std::move(parsed);
   return NS_OK;
 }
@@ -1597,23 +1545,30 @@ void JsepSessionImpl::RollbackRemoteOffer() {
   mOldTransceivers.clear();
 }
 
-nsresult JsepSessionImpl::ValidateLocalDescription(const Sdp& description) {
+nsresult JsepSessionImpl::ValidateLocalDescription(const Sdp& description,
+                                                   JsepSdpType type) {
+  Sdp* generated = nullptr;
   // TODO(bug 1095226): Better checking.
-  if (!mGeneratedLocalDescription) {
+  if (type == kJsepSdpOffer) {
+    generated = mGeneratedOffer.get();
+  } else {
+    generated = mGeneratedAnswer.get();
+  }
+
+  if (!generated) {
     JSEP_SET_ERROR(
         "Calling SetLocal without first calling CreateOffer/Answer"
         " is not supported.");
     return NS_ERROR_UNEXPECTED;
   }
 
-  if (description.GetMediaSectionCount() !=
-      mGeneratedLocalDescription->GetMediaSectionCount()) {
+  if (description.GetMediaSectionCount() != generated->GetMediaSectionCount()) {
     JSEP_SET_ERROR("Changing the number of m-sections is not allowed");
     return NS_ERROR_INVALID_ARG;
   }
 
   for (size_t i = 0; i < description.GetMediaSectionCount(); ++i) {
-    auto& origMsection = mGeneratedLocalDescription->GetMediaSection(i);
+    auto& origMsection = generated->GetMediaSection(i);
     auto& finalMsection = description.GetMediaSection(i);
     if (origMsection.GetMediaType() != finalMsection.GetMediaType()) {
       JSEP_SET_ERROR("Changing the media-type of m-sections is not allowed");
@@ -2060,15 +2015,21 @@ nsresult JsepSessionImpl::AddRemoteIceCandidate(const std::string& candidate,
     return NS_ERROR_UNEXPECTED;
   }
 
-  JsepTransceiver* transceiver;
+  JsepTransceiver* transceiver = nullptr;
+  bool hasMidOrLevel = true;
   if (!mid.empty()) {
     transceiver = GetTransceiverForMid(mid);
   } else if (level.isSome()) {
     transceiver = GetTransceiverForLevel(level.value());
   } else {
-    JSEP_SET_ERROR("ICE candidate: \'" << candidate
-                                       << "\' is missing MID and MLineIndex");
-    return NS_ERROR_TYPE_ERR;
+    hasMidOrLevel = false;
+  }
+
+  if (candidate.empty() && !hasMidOrLevel) {
+    for (uint16_t i = 0; i < sdp->GetMediaSectionCount(); ++i) {
+      mSdpHelper.SetIceGatheringComplete(sdp, i);
+    }
+    return NS_OK;
   }
 
   if (!transceiver) {

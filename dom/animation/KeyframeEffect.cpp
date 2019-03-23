@@ -37,6 +37,22 @@
 
 namespace mozilla {
 
+void AnimationProperty::SetPerformanceWarning(
+    const AnimationPerformanceWarning& aWarning, const Element* aElement) {
+  if (mPerformanceWarning && *mPerformanceWarning == aWarning) {
+    return;
+  }
+
+  mPerformanceWarning = Some(aWarning);
+
+  nsAutoString localizedString;
+  if (nsLayoutUtils::IsAnimationLoggingEnabled() &&
+      mPerformanceWarning->ToLocalizedString(localizedString)) {
+    nsAutoCString logMessage = NS_ConvertUTF16toUTF8(localizedString);
+    AnimationUtils::LogAsyncAnimationFailure(logMessage, aElement);
+  }
+}
+
 bool PropertyValuePair::operator==(const PropertyValuePair& aOther) const {
   if (mProperty != aOther.mProperty) {
     return false;
@@ -495,7 +511,9 @@ void KeyframeEffect::ComposeStyleRule(
     const AnimationProperty& aProperty,
     const AnimationPropertySegment& aSegment,
     const ComputedTiming& aComputedTiming) {
-  Servo_AnimationCompose(&aAnimationValues, &mBaseValues, aProperty.mProperty,
+  auto* opaqueTable =
+      reinterpret_cast<RawServoAnimationValueTable*>(&mBaseValues);
+  Servo_AnimationCompose(&aAnimationValues, opaqueTable, aProperty.mProperty,
                          &aSegment, &aProperty.mSegments.LastElement(),
                          &aComputedTiming, mEffectOptions.mIterationComposite);
 }
@@ -1498,13 +1516,6 @@ bool KeyframeEffect::ShouldBlockAsyncTransformAnimations(
     }
   }
 
-  // FIXME: Bug 1425837: drop this hack.
-  // XXX cku temporarily disable async-animation when this frame has any
-  // individual transforms before bug 1425837 been fixed.
-  if (aFrame->StyleDisplay()->HasIndividualTransform()) {
-    return true;
-  }
-
   return false;
 }
 
@@ -1519,19 +1530,16 @@ bool KeyframeEffect::HasGeometricProperties() const {
 }
 
 void KeyframeEffect::SetPerformanceWarning(
-    nsCSSPropertyID aProperty, const AnimationPerformanceWarning& aWarning) {
+    const nsCSSPropertyIDSet& aPropertySet,
+    const AnimationPerformanceWarning& aWarning) {
+  nsCSSPropertyIDSet curr = aPropertySet;
   for (AnimationProperty& property : mProperties) {
-    if (property.mProperty == aProperty &&
-        (!property.mPerformanceWarning ||
-         *property.mPerformanceWarning != aWarning)) {
-      property.mPerformanceWarning = Some(aWarning);
-
-      nsAutoString localizedString;
-      if (nsLayoutUtils::IsAnimationLoggingEnabled() &&
-          property.mPerformanceWarning->ToLocalizedString(localizedString)) {
-        nsAutoCString logMessage = NS_ConvertUTF16toUTF8(localizedString);
-        AnimationUtils::LogAsyncAnimationFailure(logMessage, mTarget->mElement);
-      }
+    if (!curr.HasProperty(property.mProperty)) {
+      continue;
+    }
+    property.SetPerformanceWarning(aWarning, mTarget->mElement);
+    curr.RemoveProperty(property.mProperty);
+    if (curr.IsEmpty()) {
       return;
     }
   }
@@ -1589,7 +1597,8 @@ void KeyframeEffect::CalculateCumulativeChangeHint(
       // on invisible elements because we can't calculate the change hint for
       // such properties until we compose it.
       if (!segment.HasReplaceableValues()) {
-        if (property.mProperty != eCSSProperty_transform) {
+        if (!nsCSSPropertyIDSet::TransformLikeProperties().HasProperty(
+                property.mProperty)) {
           mCumulativeChangeHint = ~nsChangeHint_Hints_CanIgnoreIfNotVisible;
           return;
         }

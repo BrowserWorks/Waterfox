@@ -1744,7 +1744,7 @@ static nscoord GetSpaceWidthAppUnits(const gfxTextRun* aTextRun) {
 static gfxFloat GetMinTabAdvanceAppUnits(const gfxTextRun* aTextRun) {
   gfxFloat chWidthAppUnits = NS_round(
       GetFirstFontMetrics(aTextRun->GetFontGroup(), aTextRun->IsVertical())
-          .zeroOrAveCharWidth *
+          .ZeroOrAveCharWidth() *
       aTextRun->GetAppUnitsPerDevUnit());
   return 0.5 * chWidthAppUnits;
 }
@@ -7479,7 +7479,7 @@ void nsTextFrame::UpdateIteratorFromOffset(const PropertyProvider& aProperties,
 
   if (aInOffset < trimmedEnd && !aIter.IsOriginalCharSkipped() &&
       !mTextRun->IsClusterStart(aIter.GetSkippedOffset())) {
-    NS_WARNING("called for non-cluster boundary");
+    // Called for non-cluster boundary
     FindClusterStart(mTextRun, trimmedOffset, &aIter);
   }
 }

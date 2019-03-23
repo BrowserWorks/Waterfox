@@ -168,7 +168,7 @@ class JsepSessionImpl : public JsepSession {
   nsresult SetLocalDescriptionAnswer(JsepSdpType type, UniquePtr<Sdp> answer);
   nsresult SetRemoteDescriptionOffer(UniquePtr<Sdp> offer);
   nsresult SetRemoteDescriptionAnswer(JsepSdpType type, UniquePtr<Sdp> answer);
-  nsresult ValidateLocalDescription(const Sdp& description);
+  nsresult ValidateLocalDescription(const Sdp& description, JsepSdpType type);
   nsresult ValidateRemoteDescription(const Sdp& description);
   nsresult ValidateOffer(const Sdp& offer);
   nsresult ValidateAnswer(const Sdp& offer, const Sdp& answer);
@@ -200,7 +200,6 @@ class JsepSessionImpl : public JsepSession {
   nsresult GetRemoteIds(const Sdp& sdp, const SdpMediaSection& msection,
                         std::vector<std::string>* streamIds,
                         std::string* trackId);
-  nsresult RemoveDuplicateTrackIds(Sdp* sdp);
   nsresult CreateOfferMsection(const JsepOfferOptions& options,
                                JsepTransceiver& transceiver, Sdp* local);
   nsresult CreateAnswerMsection(const JsepAnswerOptions& options,
@@ -259,7 +258,8 @@ class JsepSessionImpl : public JsepSession {
   // Used to prevent duplicate local SSRCs. Not used to prevent local/remote or
   // remote-only duplication, which will be important for EKT but not now.
   std::set<uint32_t> mSsrcs;
-  UniquePtr<Sdp> mGeneratedLocalDescription;  // Created but not set.
+  UniquePtr<Sdp> mGeneratedOffer;   // Created but not set.
+  UniquePtr<Sdp> mGeneratedAnswer;  // Created but not set.
   UniquePtr<Sdp> mCurrentLocalDescription;
   UniquePtr<Sdp> mCurrentRemoteDescription;
   UniquePtr<Sdp> mPendingLocalDescription;

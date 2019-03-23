@@ -6524,9 +6524,9 @@ nsresult PresShell::EventHandler::HandleEvent(nsIFrame* aFrameForPresShell,
   // we don't want the focus to be out of sync.
   if (!aFrameForPresShell) {
     if (!NS_EVENT_NEEDS_FRAME(aGUIEvent)) {
-      mPresShell->mCurrentEventFrame = nullptr;
-      // XXX Shouldn't we create AutoCurrentEventInfoSetter instance for this
-      //     call even if we set the target to nullptr.
+      // Push nullptr for both current event target content and frame since
+      // there is no frame but the event does not require a frame.
+      AutoCurrentEventInfoSetter eventInfoSetter(*this);
       return HandleEventWithCurrentEventInfo(aGUIEvent, aEventStatus, true,
                                              nullptr);
     }
@@ -8180,9 +8180,9 @@ nsresult PresShell::EventHandler::DispatchEventToDOM(
     }
 
     if (aEvent->mClass == eCompositionEventClass) {
-      IMEStateManager::DispatchCompositionEvent(eventTarget, GetPresContext(),
-                                                aEvent->AsCompositionEvent(),
-                                                aEventStatus, eventCBPtr);
+      IMEStateManager::DispatchCompositionEvent(
+          eventTarget, GetPresContext(), TabParent::GetFocused(),
+          aEvent->AsCompositionEvent(), aEventStatus, eventCBPtr);
     } else {
       EventDispatcher::Dispatch(eventTarget, GetPresContext(), aEvent, nullptr,
                                 aEventStatus, eventCBPtr);
@@ -10697,6 +10697,19 @@ bool nsIPresShell::SetVisualViewportOffset(
     }
   }
   return didChange;
+}
+
+void nsIPresShell::SetPendingVisualScrollUpdate(
+    const nsPoint& aVisualViewportOffset,
+    FrameMetrics::ScrollOffsetUpdateType aUpdateType) {
+  mPendingVisualScrollUpdate =
+      mozilla::Some(VisualScrollUpdate{aVisualViewportOffset, aUpdateType});
+
+  // The pending update is picked up during the next paint.
+  // Schedule a paint to make sure one will happen.
+  if (nsIFrame* rootFrame = GetRootFrame()) {
+    rootFrame->SchedulePaint();
+  }
 }
 
 nsPoint nsIPresShell::GetVisualViewportOffsetRelativeToLayoutViewport() const {

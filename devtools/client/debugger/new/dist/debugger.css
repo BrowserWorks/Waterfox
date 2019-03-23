@@ -2810,7 +2810,7 @@ html[dir="rtl"] .editor-mount {
 }
 
 .debug-expression,
-.new-debug-line .column-breakpoint {
+.debug-expression ~ .CodeMirror-widget {
   background-color: var(--debug-expression-background);
 }
 
@@ -3637,7 +3637,6 @@ html .breakpoints-list .breakpoint.paused {
   padding: 0 0.5em;
   line-height: 25px;
   position: relative;
-  transition: all 0.25s ease;
   cursor: pointer;
   display: flex;
 }
@@ -4026,38 +4025,23 @@ html[dir="rtl"] .event-listeners-content .arrow.expanded {
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
-.scopes-content .toggle-map-scopes {
-  border-bottom: 1px solid var(--theme-splitter-color);
-  margin-bottom: 3px;
-  margin-left: 10px;
-  padding: 0.5em 0;
-}
+ .secondary-panes .map-scopes-header {
+  padding-inline-end: 3px;
+ }
 
-.scopes-content .toggle-map-scopes input {
-  padding-inline-start: 2px;
-  margin-inline-start: 0;
-  vertical-align: text-bottom;
-}
-
-.scopes-content .toggle-map-scopes-label {
-  padding-inline-start: 2px;
-  padding-inline-end: 8px;
-  cursor: default;
-  flex-grow: 1;
-  -moz-user-select: none;
+.secondary-panes .header-buttons .img.shortcuts {
+  width: 14px;
+  height: 14px;
+  /* Better vertical centering of the icon */
+  margin-top: -2px;
 }
 
 .scopes-content .toggle-map-scopes a.mdn {
-  padding-inline-end: 10px;
+  padding-inline-start: 3px;
 }
 
 .scopes-content .toggle-map-scopes .img.shortcuts {
   background: var(--theme-comment);
-}
-
-.scopes-content .toggle-map-scopes {
-  display: flex;
-  align-items: center;
 }
 
 .object-node.default-property {
@@ -4091,7 +4075,7 @@ html[dir="rtl"] .object-node {
   white-space: nowrap;
 }
 
-.scopes-pane {
+.scopes-pane ._content {
   overflow: auto;
 }
 

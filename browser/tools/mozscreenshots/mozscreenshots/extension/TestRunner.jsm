@@ -223,7 +223,7 @@ var TestRunner = {
   **/
   _findBoundingBox(selectors, windowType) {
     if (!selectors.length) {
-      throw "No selectors specified.";
+      throw new Error("No selectors specified.");
     }
 
     // Set window type, default "navigator:browser"
@@ -253,7 +253,7 @@ var TestRunner = {
       }
 
       if (!element) {
-        throw `No element for '${selector}' found.`;
+        throw new Error(`No element for '${selector}' found.`);
       }
 
       // Calculate box region, convert to Rect
@@ -395,7 +395,9 @@ var TestRunner = {
 
     let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
     await this._cropImage(browserWindow, OS.Path.toFileURI(imagePath), bounds, rects, imagePath).catch((msg) => {
-      throw `Cropping combo [${combo.map((e) => e.name).join(", ")}] failed: ${msg}`;
+      throw new Error(
+        `Cropping combo [${combo.map((e) => e.name).join(", ")}] failed: ${msg}`
+      );
     });
     this.completedCombos++;
     this.mochitestScope.info("_onConfigurationReady");

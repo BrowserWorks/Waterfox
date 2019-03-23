@@ -62,7 +62,7 @@ struct DefaultJitOptions {
   bool disableRecoverIns;
   bool disableScalarReplacement;
   bool disableCacheIR;
-  bool disableCacheIRBinaryArith;
+  bool disableCacheIRCalls;
   bool disableSincos;
   bool disableSink;
   bool eagerCompilation;
@@ -109,9 +109,6 @@ struct DefaultJitOptions {
   bool spectreStringMitigations;
   bool spectreValueMasking;
   bool spectreJitToCxxCalls;
-
-  // The options below affect the rest of the VM, and not just the JIT.
-  bool disableUnboxedObjects;
 
   DefaultJitOptions();
   bool isSmallFunction(JSScript* script) const;
