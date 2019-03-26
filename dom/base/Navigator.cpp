@@ -1128,9 +1128,6 @@ bool Navigator::SendBeaconInternal(const nsAString& aUrl,
     return false;
   }
 
-  nsLoadFlags loadFlags =
-      nsIRequest::LOAD_NORMAL | nsIChannel::LOAD_CLASSIFY_URI;
-
   // No need to use CORS for sendBeacon unless it's a BLOB
   nsSecurityFlags securityFlags =
       aType == eBeaconTypeBlob
@@ -1140,11 +1137,7 @@ bool Navigator::SendBeaconInternal(const nsAString& aUrl,
 
   nsCOMPtr<nsIChannel> channel;
   rv = NS_NewChannel(getter_AddRefs(channel), uri, doc, securityFlags,
-                     nsIContentPolicy::TYPE_BEACON,
-                     nullptr,  // aPerformanceStorage
-                     nullptr,  // aLoadGroup
-                     nullptr,  // aCallbacks
-                     loadFlags);
+                     nsIContentPolicy::TYPE_BEACON);
 
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
@@ -1517,13 +1510,11 @@ JSObject* Navigator::WrapObject(JSContext* cx,
 }
 
 /* static */
-bool Navigator::HasUserMediaSupport(JSContext* cx, JSObject* obj) {
-  // Make enabling peerconnection enable getUserMedia() as well.
-  // Emulate [SecureContext] unless media.devices.insecure.enabled=true
-  return (StaticPrefs::media_navigator_enabled() ||
-          StaticPrefs::media_peerconnection_enabled()) &&
-         (IsSecureContextOrObjectIsFromSecureContext(cx, obj) ||
-          StaticPrefs::media_devices_insecure_enabled());
+bool Navigator::HasUserMediaSupport(JSContext* /* unused */,
+                                    JSObject* /* unused */) {
+  // Make enabling peerconnection enable getUserMedia() as well
+  return Preferences::GetBool("media.navigator.enabled", false) ||
+         Preferences::GetBool("media.peerconnection.enabled", false);
 }
 
 /* static */

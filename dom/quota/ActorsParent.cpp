@@ -4052,6 +4052,26 @@ nsresult QuotaManager::InitializeOrigin(PersistenceType aPersistenceType,
       UNKNOWN_FILE_WARNING(leafName);
       REPORT_TELEMETRY_INIT_ERR(kInternalError, Ori_UnexpectedClient);
       RECORD_IN_NIGHTLY(statusKeeper, NS_ERROR_UNEXPECTED);
+
+      // Our upgrade process should have attempted to delete the deprecated
+      // client directory and failed to upgrade if it could not be deleted. So
+      // if we're here, either a) there's a bug in our code or b) a user copied
+      // over parts of an old profile into a new profile for some reason and the
+      // upgrade process won't be run again to fix it. If it's a bug, we want to
+      // assert, but only on nightly where the bug would have been introduced
+      // and we can do something about it. If it's the user, it's best for us to
+      // try and delete the origin and/or mark it broken, so we do that for
+      // non-nightly builds by trying to delete the deprecated client directory
+      // and return the initialization error for the origin.
+      if (Client::IsDeprecatedClient(leafName)) {
+        rv = file->Remove(true);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          CONTINUE_IN_NIGHTLY_RETURN_IN_OTHERS(rv);
+        }
+
+        MOZ_DIAGNOSTIC_ASSERT(true, "Found a deprecated client");
+      }
+
       CONTINUE_IN_NIGHTLY_RETURN_IN_OTHERS(NS_ERROR_UNEXPECTED);
     }
 
@@ -7627,52 +7647,92 @@ void ClearRequestBase::DeleteFiles(QuotaManager* aQuotaManager,
       return;
     }
 
+    bool initialized;
+    if (aPersistenceType == PERSISTENCE_TYPE_PERSISTENT) {
+      initialized = aQuotaManager->IsOriginInitialized(origin);
+    } else {
+      initialized = aQuotaManager->IsTemporaryStorageInitialized();
+    }
+
     UsageInfo usageInfo;
 
     if (!mClientType.IsNull()) {
-      Client::Type clientType = mClientType.Value();
-
-      nsAutoString clientDirectoryName;
-      rv = Client::TypeToText(clientType, clientDirectoryName);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
+      // Checking whether there is any other client in the directory is needed.
+      // If there is not, removing whole directory is needed.
+      nsCOMPtr<nsIDirectoryEnumerator> originEntries;
+      bool hasOtherClient = false;
+      if (NS_WARN_IF(NS_FAILED(
+              file->GetDirectoryEntries(getter_AddRefs(originEntries)))) ||
+          !originEntries) {
         return;
       }
 
-      rv = file->Append(clientDirectoryName);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return;
+      nsCOMPtr<nsIFile> clientFile;
+      while (NS_SUCCEEDED((rv = originEntries->GetNextFile(
+                               getter_AddRefs(clientFile)))) &&
+             clientFile) {
+        bool isDirectory;
+        rv = clientFile->IsDirectory(&isDirectory);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return;
+        }
+
+        if (!isDirectory) {
+          continue;
+        }
+
+        nsString leafName;
+        rv = clientFile->GetLeafName(leafName);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return;
+        }
+
+        Client::Type clientType;
+        rv = Client::TypeFromText(leafName, clientType);
+        if (NS_FAILED(rv)) {
+          UNKNOWN_FILE_WARNING(leafName);
+          continue;
+        }
+
+        if (clientType != mClientType.Value()) {
+          hasOtherClient = true;
+          break;
+        }
       }
 
-      bool exists;
-      rv = file->Exists(&exists);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return;
+      if (hasOtherClient) {
+        nsAutoString clientDirectoryName;
+        rv = Client::TypeToText(mClientType.Value(), clientDirectoryName);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return;
+        }
+
+        rv = file->Append(clientDirectoryName);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return;
+        }
+
+        bool exists;
+        rv = file->Exists(&exists);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return;
+        }
+
+        if (!exists) {
+          continue;
+        }
       }
 
-      if (!exists) {
-        continue;
-      }
-
-      bool initialized;
-      if (aPersistenceType == PERSISTENCE_TYPE_PERSISTENT) {
-        initialized = aQuotaManager->IsOriginInitialized(origin);
-      } else {
-        initialized = aQuotaManager->IsTemporaryStorageInitialized();
-      }
-
-      Client* client = aQuotaManager->GetClient(clientType);
-      MOZ_ASSERT(client);
-
-      Atomic<bool> dummy(false);
       if (initialized) {
+        Client* client = aQuotaManager->GetClient(mClientType.Value());
+        MOZ_ASSERT(client);
+
+        Atomic<bool> dummy(false);
         rv = client->GetUsageForOrigin(aPersistenceType, group, origin, dummy,
                                        &usageInfo);
-      } else {
-        rv = client->InitOrigin(aPersistenceType, group, origin, dummy,
-                                &usageInfo);
-      }
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return;
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return;
+        }
       }
     }
 
@@ -7689,6 +7749,12 @@ void ClearRequestBase::DeleteFiles(QuotaManager* aQuotaManager,
 
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to remove directory, giving up!");
+    }
+
+    // If it hasn't been initialized, we don't need to update the quota and
+    // notify the removing client.
+    if (!initialized) {
+      return;
     }
 
     if (aPersistenceType != PERSISTENCE_TYPE_PERSISTENT) {
@@ -9014,7 +9080,10 @@ nsresult RepositoryOperationBase::MaybeUpgradeClients(
 
     bool removed;
     rv = PrepareClientDirectory(file, leafName, removed);
-    if (NS_FAILED(rv) || removed) {
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+    if (removed) {
       continue;
     }
 

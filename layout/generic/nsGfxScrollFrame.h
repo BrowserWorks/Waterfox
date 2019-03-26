@@ -544,6 +544,10 @@ class ScrollFrameHelper : public nsIReflowCallback {
 
   bool IsRootScrollFrameOfDocument() const { return mIsRoot; }
 
+  bool SmoothScrollVisual(
+      const nsPoint& aVisualViewportOffset,
+      mozilla::layers::FrameMetrics::ScrollOffsetUpdateType aUpdateType);
+
   // Update minimum-scale size.  The minimum-scale size will be set/used only
   // if there is overflow-x:hidden region.
   void UpdateMinimumScaleSize(const nsRect& aScrollableOverflow,
@@ -752,6 +756,12 @@ class ScrollFrameHelper : public nsIReflowCallback {
   uint8_t GetScrolledFrameDir() const;
 
   bool IsForTextControlWithNoScrollbars() const;
+
+  // Ask APZ to smooth scroll to |aDestination|.
+  // This method does not clamp the destination; callers should clamp it to
+  // either the layout or the visual scroll range (APZ will happily smooth
+  // scroll to either).
+  void ApzSmoothScrollTo(const nsPoint& aDestination, nsAtom* aOrigin);
 
   // Removes any RefreshDriver observers we might have registered.
   void RemoveObservers();
@@ -1197,6 +1207,12 @@ class nsHTMLScrollFrame : public nsContainerFrame,
   // Return the scrolled frame.
   void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override {
     aResult.AppendElement(OwnedAnonBox(mHelper.GetScrolledFrame()));
+  }
+
+  bool SmoothScrollVisual(const nsPoint& aVisualViewportOffset,
+                          mozilla::layers::FrameMetrics::ScrollOffsetUpdateType
+                              aUpdateType) override {
+    return mHelper.SmoothScrollVisual(aVisualViewportOffset, aUpdateType);
   }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -1675,6 +1691,12 @@ class nsXULScrollFrame final : public nsBoxFrame,
   // Return the scrolled frame.
   void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override {
     aResult.AppendElement(OwnedAnonBox(mHelper.GetScrolledFrame()));
+  }
+
+  bool SmoothScrollVisual(const nsPoint& aVisualViewportOffset,
+                          mozilla::layers::FrameMetrics::ScrollOffsetUpdateType
+                              aUpdateType) override {
+    return mHelper.SmoothScrollVisual(aVisualViewportOffset, aUpdateType);
   }
 
 #ifdef DEBUG_FRAME_DUMP

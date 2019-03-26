@@ -100,7 +100,6 @@ class Client {
                aText.EqualsLiteral(LS_DIRECTORY_NAME)) {
       aType = LS;
     } else {
-      MOZ_RELEASE_ASSERT(!IsDeprecatedClient(aText));
       return NS_ERROR_FAILURE;
     }
 

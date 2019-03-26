@@ -5657,11 +5657,10 @@ nsresult nsDocShell::SetCurScrollPosEx(int32_t aCurHorizontalPos,
     return NS_OK;
   }
 
-  // TODO: If scrollMode == SMOOTH_MSD, this will effectively override that
-  // and jump to the target position instantly. A proper solution here would
-  // involve giving nsIScrollableFrame a visual viewport smooth scrolling API.
-  shell->SetPendingVisualScrollUpdate(targetPos,
-                                      layers::FrameMetrics::eMainThread);
+  shell->ScrollToVisual(targetPos, layers::FrameMetrics::eMainThread,
+                        scrollMode == nsIScrollableFrame::INSTANT
+                            ? nsIPresShell::ScrollMode::eInstant
+                            : nsIPresShell::ScrollMode::eSmooth);
 
   return NS_OK;
 }
@@ -10363,8 +10362,8 @@ nsresult nsDocShell::DoChannelLoad(nsIChannel* aChannel,
       break;
   }
 
-  if (!aBypassClassifier) {
-    loadFlags |= nsIChannel::LOAD_CLASSIFY_URI;
+  if (aBypassClassifier) {
+    loadFlags |= nsIChannel::LOAD_BYPASS_URL_CLASSIFIER;
   }
 
   // If the user pressed shift-reload, then do not allow ServiceWorker
