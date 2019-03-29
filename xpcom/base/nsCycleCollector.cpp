@@ -2854,6 +2854,10 @@ nsCycleCollector::ForgetSkippable(js::SliceBudget& aBudget,
 {
   CheckThreadSafety();
 
+  if (mFreeingSnowWhite) {
+    return;
+  }
+
   mozilla::Maybe<mozilla::AutoGlobalTimelineMarker> marker;
   if (NS_IsMainThread()) {
     marker.emplace("nsCycleCollector::ForgetSkippable", MarkerStackRequest::NO_STACK);
