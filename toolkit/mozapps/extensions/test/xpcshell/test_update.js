@@ -11,10 +11,6 @@ Services.prefs.setBoolPref(PREF_EM_CHECK_UPDATE_SECURITY, false);
 // doesn't support lightweight themes.
 Services.prefs.setBoolPref("lightweightThemes.update.enabled", true);
 
-const {LightweightThemeManager} = ChromeUtils.import("resource://gre/modules/LightweightThemeManager.jsm");
-
-var gInstallDate;
-
 const updateFile = "test_update.json";
 
 const profileDir = gProfD.clone();
@@ -98,23 +94,31 @@ add_task(async function test_apply_update() {
 
   let originalSyncGUID = a1.syncGUID;
 
-  prepare_test({
-    "addon1@tests.mozilla.org": [
-      ["onPropertyChanged", ["applyBackgroundUpdates"]],
-    ],
-  });
-  a1.applyBackgroundUpdates = AddonManager.AUTOUPDATE_DISABLE;
-  check_test_completed();
+  await expectEvents(
+    {
+      addonEvents: {
+        "addon1@tests.mozilla.org": [
+          {event: "onPropertyChanged",
+           properties: ["applyBackgroundUpdates"]},
+        ],
+      },
+    },
+    async () => {
+      a1.applyBackgroundUpdates = AddonManager.AUTOUPDATE_DISABLE;
+    });
 
   a1.applyBackgroundUpdates = AddonManager.AUTOUPDATE_DISABLE;
 
-  prepare_test({}, [
-    "onNewInstall",
-  ]);
-
-  let {updateAvailable: install} = await AddonTestUtils.promiseFindAddonUpdates(a1);
-
-  ensure_test_completed();
+  let install;
+  await expectEvents(
+    {
+      installEvents: [
+        {event: "onNewInstall"},
+      ],
+    },
+    async () => {
+      ({updateAvailable: install} = await AddonTestUtils.promiseFindAddonUpdates(a1));
+    });
 
   let installs = await AddonManager.getAllInstalls();
   equal(installs.length, 1);
@@ -134,18 +138,17 @@ add_task(async function test_apply_update() {
   equal(installs[0], install);
   equal(install2, install);
 
-  await new Promise(resolve => {
-    prepare_test({}, [
-      "onDownloadStarted",
-      "onDownloadEnded",
-    ], () => {
-      resolve();
-      return false;
+  await expectEvents(
+    {
+      installEvents: [
+        {event: "onDownloadStarted"},
+        {event: "onDownloadEnded", returnValue: false},
+      ],
+    },
+    () => {
+      install.install();
     });
-    install.install();
-  });
 
-  ensure_test_completed();
   equal(install.state, AddonManager.STATE_DOWNLOADED);
 
   // Continue installing the update.
@@ -158,20 +161,22 @@ add_task(async function test_apply_update() {
   equal(installs.length, 1);
   equal(installs[0], install);
 
-  await new Promise(resolve => {
-    prepare_test({
-      "addon1@tests.mozilla.org": [
-        ["onInstalling", false],
-        "onInstalled",
+  await expectEvents(
+    {
+      addonEvents: {
+        "addon1@tests.mozilla.org": [
+          {event: "onInstalling"},
+          {event: "onInstalled"},
+        ],
+      },
+      installEvents: [
+        {event: "onInstallStarted"},
+        {event: "onInstallEnded"},
       ],
-    }, [
-      "onInstallStarted",
-      "onInstallEnded",
-    ], resolve);
-    install.install();
-  });
-
-  ensure_test_completed();
+    },
+    () => {
+      install.install();
+    });
 
   await AddonTestUtils.loadAddonsList(true);
 
@@ -191,15 +196,10 @@ add_task(async function test_apply_update() {
   equal(originalSyncGUID, a1.syncGUID);
 
   // Make sure that the extension lastModifiedTime was updated.
-  let testURI = a1.getResourceURI();
-  if (testURI instanceof Ci.nsIJARURI) {
-    testURI = testURI.JARFile;
-  }
-  let testFile = testURI.QueryInterface(Ci.nsIFileURL).file;
+  let testFile = getAddonFile(a1);
   let difference = testFile.lastModifiedTime - startupTime;
   ok(Math.abs(difference) < MAX_TIME_DIFFERENCE);
 
-  clearListeners();
   await a1.uninstall();
 });
 
@@ -324,37 +324,37 @@ add_task(async function test_background_update() {
     },
   });
 
-  let install = await new Promise(resolve => {
-    prepare_test({}, [
-      "onNewInstall",
-      "onDownloadStarted",
-      "onDownloadEnded",
-    ], resolve);
+  function checkInstall(install) {
+    notEqual(install.existingAddon, null);
+    equal(install.existingAddon.id, "addon1@tests.mozilla.org");
+  }
 
-    AddonManagerInternal.backgroundUpdateCheck();
-  });
-
-  notEqual(install.existingAddon, null);
-  equal(install.existingAddon.id, "addon1@tests.mozilla.org");
-
-  await new Promise(resolve => {
-    prepare_test({
-      "addon1@tests.mozilla.org": [
-        ["onInstalling", false],
-        "onInstalled",
+  await expectEvents(
+    {
+      addonEvents: {
+        "addon1@tests.mozilla.org": [
+          {event: "onInstalling"},
+          {event: "onInstalled"},
+        ],
+      },
+      installEvents: [
+        {event: "onNewInstall"},
+        {event: "onDownloadStarted"},
+        {event: "onDownloadEnded",
+         callback: checkInstall},
+        {event: "onInstallStarted"},
+        {event: "onInstallEnded"},
       ],
-    }, [
-      "onInstallStarted",
-      "onInstallEnded",
-    ], resolve);
-  });
+    },
+    () => {
+      AddonManagerInternal.backgroundUpdateCheck();
+    });
 
   let a1 = await AddonManager.getAddonByID("addon1@tests.mozilla.org");
   notEqual(a1, null);
   equal(a1.version, "2.0");
   equal(a1.releaseNotesURI.spec, "http://example.com/updateInfo.xhtml");
 
-  end_test();
   await a1.uninstall();
 });
 
@@ -769,153 +769,6 @@ add_task(async function test_no_auto_update() {
   notEqual(a8, null);
   equal(a8.version, "1.0");
   await a8.uninstall();
-});
-
-// Test that background update checks work for lightweight themes
-add_task(async function test_lwt_update() {
-  LightweightThemeManager.currentTheme = {
-    id: "1",
-    version: "1",
-    name: "Test LW Theme",
-    description: "A test theme",
-    author: "Mozilla",
-    homepageURL: "http://example.com/data/index.html",
-    headerURL: "http://example.com/data/header.png",
-    previewURL: "http://example.com/data/preview.png",
-    iconURL: "http://example.com/data/icon.png",
-    updateURL: "http://example.com/data/lwtheme.js",
-  };
-
-  // XXX The lightweight theme manager strips non-https updateURLs so hack it
-  // back in.
-  let themes = JSON.parse(Services.prefs.getCharPref("lightweightThemes.usedThemes"));
-  equal(themes.length, 1);
-  themes[0].updateURL = "http://example.com/data/lwtheme.js";
-  Services.prefs.setCharPref("lightweightThemes.usedThemes", JSON.stringify(themes));
-
-  testserver.registerPathHandler("/data/lwtheme.js", function(request, response) {
-    // Server will specify an expiry in one year.
-    let expiry = new Date();
-    expiry.setFullYear(expiry.getFullYear() + 1);
-    response.setHeader("Expires", expiry.toUTCString(), false);
-    response.write(JSON.stringify({
-      id: "1",
-      version: "2",
-      name: "Updated Theme",
-      description: "A test theme",
-      author: "Mozilla",
-      homepageURL: "http://example.com/data/index2.html",
-      headerURL: "http://example.com/data/header.png",
-      previewURL: "http://example.com/data/preview.png",
-      iconURL: "http://example.com/data/icon2.png",
-      updateURL: "http://example.com/data/lwtheme.js",
-    }));
-  });
-
-  let p1 = await AddonManager.getAddonByID("1@personas.mozilla.org");
-  notEqual(p1, null);
-  equal(p1.version, "1");
-  equal(p1.name, "Test LW Theme");
-  ok(p1.isActive);
-  equal(p1.installDate.getTime(), p1.updateDate.getTime());
-
-  // 5 seconds leeway seems like a lot, but tests can run slow and really if
-  // this is within 5 seconds it is fine. If it is going to be wrong then it
-  // is likely to be hours out at least
-  ok((Date.now() - p1.installDate.getTime()) < 5000);
-
-  gInstallDate = p1.installDate.getTime();
-
-  await new Promise(resolve => {
-    prepare_test({
-      "1@personas.mozilla.org": [
-        ["onInstalling", false],
-        "onInstalled",
-      ],
-    }, [
-      "onExternalInstall",
-    ], resolve);
-
-    AddonManagerInternal.backgroundUpdateCheck();
-  });
-
-  p1 = await AddonManager.getAddonByID("1@personas.mozilla.org");
-  notEqual(p1, null);
-  equal(p1.version, "2");
-  equal(p1.name, "Updated Theme");
-  equal(p1.installDate.getTime(), gInstallDate);
-  ok(p1.installDate.getTime() < p1.updateDate.getTime());
-
-  // 5 seconds leeway seems like a lot, but tests can run slow and really if
-  // this is within 5 seconds it is fine. If it is going to be wrong then it
-  // is likely to be hours out at least
-  ok((Date.now() - p1.updateDate.getTime()) < 5000);
-
-  gInstallDate = p1.installDate.getTime();
-});
-
-// Test that background update checks for lightweight themes do not use the cache
-// The update body from test 7 shouldn't be used since the cache should be bypassed.
-add_task(async function() {
-  // XXX The lightweight theme manager strips non-https updateURLs so hack it
-  // back in.
-  let themes = JSON.parse(Services.prefs.getCharPref("lightweightThemes.usedThemes"));
-  equal(themes.length, 1);
-  themes[0].updateURL = "http://example.com/data/lwtheme.js";
-  Services.prefs.setCharPref("lightweightThemes.usedThemes", JSON.stringify(themes));
-
-  testserver.registerPathHandler("/data/lwtheme.js", function(request, response) {
-    response.write(JSON.stringify({
-      id: "1",
-      version: "3",
-      name: "Updated Theme v.3",
-      description: "A test theme v.3",
-      author: "John Smith",
-      homepageURL: "http://example.com/data/index3.html?v=3",
-      headerURL: "http://example.com/data/header.png?v=3",
-      previewURL: "http://example.com/data/preview.png?v=3",
-      iconURL: "http://example.com/data/icon2.png?v=3",
-      updateURL: "https://example.com/data/lwtheme.js?v=3",
-    }));
-  });
-
-  let p1 = await AddonManager.getAddonByID("1@personas.mozilla.org");
-  notEqual(p1, null);
-  equal(p1.version, "2");
-  equal(p1.name, "Updated Theme");
-  ok(p1.isActive);
-  equal(p1.installDate.getTime(), gInstallDate);
-  ok(p1.installDate.getTime() < p1.updateDate.getTime());
-
-  await new Promise(resolve => {
-    prepare_test({
-      "1@personas.mozilla.org": [
-        ["onInstalling", false],
-        "onInstalled",
-      ],
-    }, [
-      "onExternalInstall",
-    ], resolve);
-
-    AddonManagerInternal.backgroundUpdateCheck();
-  });
-
-  p1 = await AddonManager.getAddonByID("1@personas.mozilla.org");
-  let currentTheme = LightweightThemeManager.currentTheme;
-  notEqual(p1, null);
-  equal(p1.version, "3");
-  equal(p1.name, "Updated Theme v.3");
-  equal(p1.description, "A test theme v.3");
-  info(JSON.stringify(p1));
-  equal(p1.creator.name, "John Smith");
-  equal(p1.homepageURL, "http://example.com/data/index3.html?v=3");
-  equal(p1.screenshots[0].url, "http://example.com/data/preview.png?v=3");
-  equal(p1.iconURL, "http://example.com/data/icon2.png?v=3");
-  equal(currentTheme.headerURL, "http://example.com/data/header.png?v=3");
-  equal(currentTheme.updateURL, "https://example.com/data/lwtheme.js?v=3");
-
-  equal(p1.installDate.getTime(), gInstallDate);
-  ok(p1.installDate.getTime() < p1.updateDate.getTime());
 });
 
 // Test that the update check returns nothing for addons in locked install

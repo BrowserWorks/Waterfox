@@ -118,7 +118,6 @@ export type Breakpoint = {|
   +location: SourceLocation,
   +astLocation: ?ASTLocation,
   +generatedLocation: SourceLocation,
-  +loading: boolean,
   +disabled: boolean,
   +text: string,
   +originalText: string,
@@ -174,7 +173,6 @@ export type PendingBreakpoint = {
   +location: PendingLocation,
   +astLocation: ASTLocation,
   +generatedLocation: PendingLocation,
-  +loading: boolean,
   +disabled: boolean,
   +text: string,
   +options: BreakpointOptions
@@ -352,6 +350,7 @@ type BaseSource = {|
   +loadedState: "unloaded" | "loading" | "loaded",
   +relativeUrl: string,
   +introductionUrl: ?string,
+  +introductionType: ?string,
   +isExtension: boolean,
   +actors: SourceActor[]
 |};

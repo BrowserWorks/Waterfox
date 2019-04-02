@@ -460,8 +460,8 @@ bool WrapperAnswer::RecvCallOrConstruct(const ObjectId& objId,
 
   *result = JSVariant(UndefinedVariant());
 
-  AutoValueVector vals(cx);
-  AutoValueVector outobjects(cx);
+  RootedValueVector vals(cx);
+  RootedValueVector outobjects(cx);
   for (size_t i = 0; i < argv.Length(); i++) {
     if (argv[i].type() == JSParam::Tvoid_t) {
       // This is an outparam.
@@ -772,7 +772,7 @@ bool WrapperAnswer::RecvRegExpToShared(const ObjectId& objId, ReturnStatus* rs,
   }
   source->Assign(sourceStr);
 
-  *flags = JS::GetRegExpFlags(cx, obj);
+  *flags = JS::GetRegExpFlags(cx, obj).value();
 
   return ok(rs);
 }

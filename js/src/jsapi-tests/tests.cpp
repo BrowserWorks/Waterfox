@@ -82,18 +82,11 @@ JSObject* JSAPITest::createGlobal(JSPrincipals* principals) {
   options.creationOptions()
       .setStreamsEnabled(true)
       .setBigIntEnabled(true)
-      .setFieldsEnabled(true);
+      .setFieldsEnabled(true)
+      .setAwaitFixEnabled(true);
   newGlobal = JS_NewGlobalObject(cx, getGlobalClass(), principals,
                                  JS::FireOnNewGlobalHook, options);
   if (!newGlobal) {
-    return nullptr;
-  }
-
-  JSAutoRealm ar(cx, newGlobal);
-
-  // Populate the global object with the standard globals like Object and
-  // Array.
-  if (!JS::InitRealmStandardClasses(cx)) {
     return nullptr;
   }
 

@@ -54,7 +54,7 @@ from manifest import get_raptor_test_list
 from mozproxy import get_playback
 from results import RaptorResultsHandler
 from gecko_profile import GeckoProfile
-from power import init_geckoview_power_test, finish_geckoview_power_test
+from power import init_android_power_test, finish_android_power_test
 from utils import view_gecko_profile
 
 
@@ -196,6 +196,7 @@ class Raptor(object):
         self.config['playback_tool'] = test.get('playback')
         self.log.info("test uses playback tool: %s " % self.config['playback_tool'])
         platform = self.config['platform']
+        self.config['playback_version'] = test.get('playback_version', "2.0.2")
         self.config['playback_binary_zip'] = test.get('playback_binary_zip_%s' % platform)
         self.config['playback_pageset_zip'] = test.get('playback_pageset_zip_%s' % platform)
         playback_dir = os.path.join(here, 'playback')
@@ -251,28 +252,44 @@ class Raptor(object):
             self.log.info("preferences were configured for the test, \
                           but we do not install them on non Firefox browsers.")
 
+    def get_proxy_command_for_mitm(self, test, version):
+        # Generate Mitmproxy playback args
+        script = os.path.join(here, "playback", "alternate-server-replay-{}.py".format(version))
+        recordings = test.get("playback_recordings")
+        if recordings:
+            recording_paths = []
+            proxy_dir = self.playback.mozproxy_dir
+            for recording in recordings.split():
+                if not recording:
+                    continue
+                recording_paths.append(os.path.join(proxy_dir, recording))
+
+        # this part is platform-specific
+        if mozinfo.os == "win":
+            script = script.replace("\\", "\\\\\\")
+            recording_paths = [recording_path.replace("\\", "\\\\\\")
+                               for recording_path in recording_paths]
+
+        if version == "2.0.2":
+            self.playback.config['playback_tool_args'] = ["--replay-kill-extra",
+                                                          "--script",
+                                                          '""{} {}""'.
+                                                          format(script,
+                                                                 " ".join(recording_paths))]
+        elif version == "4.0.4":
+            self.playback.config['playback_tool_args'] = ["--scripts", script,
+                                                          "--set",
+                                                          "server_replay={}".
+                                                          format(" ".join(recording_paths))]
+        else:
+            raise Exception("Mitmproxy version is unknown!")
+
     def start_playback(self, test):
         # creating the playback tool
         self.get_playback_config(test)
         self.playback = get_playback(self.config, self.device)
 
-        # finish its configuration
-        script = os.path.join(here, "playback", "alternate-server-replay.py")
-        recordings = test.get("playback_recordings")
-        if recordings:
-            script_args = []
-            proxy_dir = self.playback.mozproxy_dir
-            for recording in recordings.split():
-                if not recording:
-                    continue
-                script_args.append(os.path.join(proxy_dir, recording))
-            script = '""%s %s""' % (script, " ".join(script_args))
-
-        # this part is platform-specific
-        if mozinfo.os == "win":
-            script = script.replace("\\", "\\\\\\")
-
-        self.playback.config['playback_tool_args'] = ["-s", script]
+        self.get_proxy_command_for_mitm(test, self.config['playback_version'])
 
         # let's start it!
         self.playback.start()
@@ -571,7 +588,7 @@ class RaptorAndroid(Raptor):
         proxy_prefs["network.proxy.no_proxies_on"] = self.config['host']
         self.profile.set_preferences(proxy_prefs)
 
-    def launch_firefox_android_app(self):
+    def launch_firefox_android_app(self, test_name):
         self.log.info("starting %s" % self.config['app'])
 
         extra_args = ["-profile", self.device_profile,
@@ -598,7 +615,7 @@ class RaptorAndroid(Raptor):
             self.log.error("Exception launching %s" % self.config['binary'])
             self.log.error("Exception: %s %s" % (type(e).__name__, str(e)))
             if self.config['power_test']:
-                finish_geckoview_power_test(self)
+                finish_android_power_test(self, test_name)
             raise
 
         # give our control server the device and app info
@@ -653,7 +670,7 @@ class RaptorAndroid(Raptor):
                       "page cycles" % test['name'])
 
         if self.config['power_test']:
-            init_geckoview_power_test(self)
+            init_android_power_test(self)
 
         for test['browser_cycle'] in range(1, test['expected_browser_cycles'] + 1):
 
@@ -701,7 +718,7 @@ class RaptorAndroid(Raptor):
             self.copy_profile_onto_device()
 
             # now start the browser/app under test
-            self.launch_firefox_android_app()
+            self.launch_firefox_android_app(test['name'])
 
             # set our control server flag to indicate we are running the browser/app
             self.control_server._finished = False
@@ -714,7 +731,7 @@ class RaptorAndroid(Raptor):
                 self.runner.wait(timeout=None)
 
         if self.config['power_test']:
-            finish_geckoview_power_test(self)
+            finish_android_power_test(self, test['name'])
 
         self.run_test_teardown()
 
@@ -722,7 +739,7 @@ class RaptorAndroid(Raptor):
         self.log.info("test %s is running in warm mode; browser will NOT be restarted between "
                       "page cycles" % test['name'])
         if self.config['power_test']:
-            init_geckoview_power_test(self)
+            init_android_power_test(self)
 
         self.run_test_setup(test)
         self.create_raptor_sdcard_folder()
@@ -739,7 +756,7 @@ class RaptorAndroid(Raptor):
         self.copy_profile_onto_device()
 
         # now start the browser/app under test
-        self.launch_firefox_android_app()
+        self.launch_firefox_android_app(test['name'])
 
         # set our control server flag to indicate we are running the browser/app
         self.control_server._finished = False
@@ -747,7 +764,7 @@ class RaptorAndroid(Raptor):
         self.wait_for_test_finish(test, timeout)
 
         if self.config['power_test']:
-            finish_geckoview_power_test(self)
+            finish_android_power_test(self, test['name'])
 
         self.run_test_teardown()
 
@@ -849,11 +866,12 @@ def main(args=sys.argv[1:]):
     pages_that_timed_out = raptor.get_page_timeout_list()
     if len(pages_that_timed_out) > 0:
         for _page in pages_that_timed_out:
-            LOG.critical("TEST-UNEXPECTED-FAIL: test '%s' timed out loading test page: %s "
-                         "pending metrics: %s"
-                         % (_page['test_name'],
-                            _page['url'],
-                            _page['pending_metrics']))
+            message = [("TEST-UNEXPECTED-FAIL", "test '%s'" % _page['test_name']),
+                       ("timed out loading test page", _page['url'])]
+            if raptor_test.get("type") == 'pageload':
+                message.append(("pending metrics", _page['pending_metrics']))
+
+            LOG.critical(" ".join("%s: %s" % (subject, msg) for subject, msg in message))
         os.sys.exit(1)
 
     # when running raptor locally with gecko profiling on, use the view-gecko-profile

@@ -85,25 +85,15 @@ using namespace mozilla;
 using namespace mozilla::css;
 using namespace mozilla::dom;
 
-#define SERVO_ARC_TYPE(name_, type_)                 \
-  already_AddRefed<type_> type_##Strong::Consume() { \
-    RefPtr<type_> result;                            \
-    result.swap(mPtr);                               \
-    return result.forget();                          \
-  }
-#include "mozilla/ServoArcTypeList.h"
-SERVO_ARC_TYPE(ComputedStyle, ComputedStyle)
-#undef SERVO_ARC_TYPE
-
 // Definitions of the global traversal stats.
 bool ServoTraversalStatistics::sActive = false;
 ServoTraversalStatistics ServoTraversalStatistics::sSingleton;
 
 static RWLock* sServoFFILock = nullptr;
 
-static const nsFont* ThreadSafeGetDefaultFontHelper(const Document& aDocument,
-                                                    nsAtom* aLanguage,
-                                                    uint8_t aGenericId) {
+static const nsFont* ThreadSafeGetDefaultFontHelper(
+    const Document& aDocument, nsAtom* aLanguage,
+    StyleGenericFontFamily aGenericId) {
   bool needsCache = false;
   const nsFont* retval;
 
@@ -355,7 +345,7 @@ bool Gecko_HaveSeenPtr(SeenPtrs* aTable, const void* aPtr) {
   return aTable->HaveSeenPtr(aPtr);
 }
 
-const RawServoDeclarationBlockStrong* Gecko_GetStyleAttrDeclarationBlock(
+const StyleStrong<RawServoDeclarationBlock>* Gecko_GetStyleAttrDeclarationBlock(
     const Element* aElement) {
   DeclarationBlock* decl = aElement->GetInlineStyleDeclaration();
   if (!decl) {
@@ -372,15 +362,15 @@ void Gecko_UnsetDirtyStyleAttr(const Element* aElement) {
   decl->UnsetDirty();
 }
 
-static const RawServoDeclarationBlockStrong* AsRefRawStrong(
+static const StyleStrong<RawServoDeclarationBlock>* AsRefRawStrong(
     const RefPtr<RawServoDeclarationBlock>& aDecl) {
   static_assert(sizeof(RefPtr<RawServoDeclarationBlock>) ==
-                    sizeof(RawServoDeclarationBlockStrong),
+                    sizeof(StyleStrong<RawServoDeclarationBlock>),
                 "RefPtr should just be a pointer");
-  return reinterpret_cast<const RawServoDeclarationBlockStrong*>(&aDecl);
+  return reinterpret_cast<const StyleStrong<RawServoDeclarationBlock>*>(&aDecl);
 }
 
-const RawServoDeclarationBlockStrong*
+const StyleStrong<RawServoDeclarationBlock>*
 Gecko_GetHTMLPresentationAttrDeclarationBlock(const Element* aElement) {
   const nsMappedAttributes* attrs = aElement->GetMappedAttributes();
   if (!attrs) {
@@ -396,8 +386,8 @@ Gecko_GetHTMLPresentationAttrDeclarationBlock(const Element* aElement) {
   return AsRefRawStrong(attrs->GetServoStyle());
 }
 
-const RawServoDeclarationBlockStrong* Gecko_GetExtraContentStyleDeclarations(
-    const Element* aElement) {
+const StyleStrong<RawServoDeclarationBlock>*
+Gecko_GetExtraContentStyleDeclarations(const Element* aElement) {
   if (!aElement->IsAnyOfHTMLElements(nsGkAtoms::td, nsGkAtoms::th)) {
     return nullptr;
   }
@@ -410,7 +400,7 @@ const RawServoDeclarationBlockStrong* Gecko_GetExtraContentStyleDeclarations(
   return nullptr;
 }
 
-const RawServoDeclarationBlockStrong*
+const StyleStrong<RawServoDeclarationBlock>*
 Gecko_GetUnvisitedLinkAttrDeclarationBlock(const Element* aElement) {
   nsHTMLStyleSheet* sheet = aElement->OwnerDoc()->GetAttributeStyleSheet();
   if (!sheet) {
@@ -448,8 +438,8 @@ void Gecko_StyleSheet_Release(const StyleSheet* aSheet) {
   const_cast<StyleSheet*>(aSheet)->Release();
 }
 
-const RawServoDeclarationBlockStrong* Gecko_GetVisitedLinkAttrDeclarationBlock(
-    const Element* aElement) {
+const StyleStrong<RawServoDeclarationBlock>*
+Gecko_GetVisitedLinkAttrDeclarationBlock(const Element* aElement) {
   nsHTMLStyleSheet* sheet = aElement->OwnerDoc()->GetAttributeStyleSheet();
   if (!sheet) {
     return nullptr;
@@ -458,8 +448,8 @@ const RawServoDeclarationBlockStrong* Gecko_GetVisitedLinkAttrDeclarationBlock(
   return AsRefRawStrong(sheet->GetServoVisitedLinkDecl());
 }
 
-const RawServoDeclarationBlockStrong* Gecko_GetActiveLinkAttrDeclarationBlock(
-    const Element* aElement) {
+const StyleStrong<RawServoDeclarationBlock>*
+Gecko_GetActiveLinkAttrDeclarationBlock(const Element* aElement) {
   nsHTMLStyleSheet* sheet = aElement->OwnerDoc()->GetAttributeStyleSheet();
   if (!sheet) {
     return nullptr;
@@ -478,6 +468,11 @@ static PseudoStyleType GetPseudoTypeFromElementForAnimation(
   if (aElementOrPseudo->IsGeneratedContentContainerForAfter()) {
     aElementOrPseudo = aElementOrPseudo->GetParent()->AsElement();
     return PseudoStyleType::after;
+  }
+
+  if (aElementOrPseudo->IsGeneratedContentContainerForMarker()) {
+    aElementOrPseudo = aElementOrPseudo->GetParent()->AsElement();
+    return PseudoStyleType::marker;
   }
 
   return PseudoStyleType::NotPseudo;
@@ -967,14 +962,14 @@ void Gecko_AddRefAtom(nsAtom* aAtom) { NS_ADDREF(aAtom); }
 
 void Gecko_ReleaseAtom(nsAtom* aAtom) { NS_RELEASE(aAtom); }
 
-void Gecko_nsTArray_FontFamilyName_AppendNamed(nsTArray<FontFamilyName>* aNames,
-                                               nsAtom* aName, bool aQuoted) {
-  aNames->AppendElement(
-      FontFamilyName(aName, aQuoted ? eQuotedName : eUnquotedName));
+void Gecko_nsTArray_FontFamilyName_AppendNamed(
+    nsTArray<FontFamilyName>* aNames, nsAtom* aName,
+    StyleFontFamilyNameSyntax aSyntax) {
+  aNames->AppendElement(FontFamilyName(aName, aSyntax));
 }
 
 void Gecko_nsTArray_FontFamilyName_AppendGeneric(
-    nsTArray<FontFamilyName>* aNames, FontFamilyType aType) {
+    nsTArray<FontFamilyName>* aNames, StyleGenericFontFamily aType) {
   aNames->AppendElement(FontFamilyName(aType));
 }
 
@@ -1007,7 +1002,7 @@ void Gecko_nsFont_InitSystem(nsFont* aDest, int32_t aFontId,
                              const nsStyleFont* aFont,
                              const Document* aDocument) {
   const nsFont* defaultVariableFont = ThreadSafeGetDefaultFontHelper(
-      *aDocument, aFont->mLanguage, kPresContext_DefaultVariableFont_ID);
+      *aDocument, aFont->mLanguage, StyleGenericFontFamily::None);
 
   // We have passed uninitialized memory to this function,
   // initialize it. We can't simply return an nsFont because then
@@ -1023,9 +1018,9 @@ void Gecko_nsFont_InitSystem(nsFont* aDest, int32_t aFontId,
 
 void Gecko_nsFont_Destroy(nsFont* aDest) { aDest->~nsFont(); }
 
-FontFamilyType Gecko_nsStyleFont_ComputeDefaultFontType(const Document* aDoc,
-                                                        uint8_t aGenericId,
-                                                        nsAtom* aLanguage) {
+StyleGenericFontFamily Gecko_nsStyleFont_ComputeDefaultFontType(
+    const Document* aDoc, StyleGenericFontFamily aGenericId,
+    nsAtom* aLanguage) {
   const nsFont* defaultFont =
       ThreadSafeGetDefaultFontHelper(*aDoc, aLanguage, aGenericId);
   return defaultFont->fontlist.GetDefaultFontType();
@@ -1641,7 +1636,7 @@ void Gecko_nsStyleSVG_CopyContextProperties(nsStyleSVG* aDst,
   aDst->mContextPropsBits = aSrc->mContextPropsBits;
 }
 
-URLValue* Gecko_URLValue_Create(RawServoCssUrlDataStrong aCssUrl,
+URLValue* Gecko_URLValue_Create(StyleStrong<RawServoCssUrlData> aCssUrl,
                                 CORSMode aCORSMode) {
   RefPtr<URLValue> url = new URLValue(aCssUrl.Consume(), aCORSMode);
   return url.forget().take();
@@ -1897,28 +1892,12 @@ void Gecko_nsStyleFont_CopyLangFrom(nsStyleFont* aFont,
   aFont->mLanguage = aSource->mLanguage;
 }
 
-void Gecko_nsStyleFont_FixupNoneGeneric(nsStyleFont* aFont,
-                                        const Document* aDocument) {
-  const nsFont* defaultVariableFont = ThreadSafeGetDefaultFontHelper(
-      *aDocument, aFont->mLanguage, kPresContext_DefaultVariableFont_ID);
-  nsLayoutUtils::FixupNoneGeneric(&aFont->mFont, aFont->mGenericID,
-                                  defaultVariableFont);
-}
-
-void Gecko_nsStyleFont_PrefillDefaultForGeneric(nsStyleFont* aFont,
-                                                const Document* aDocument,
-                                                uint8_t aGenericId) {
-  const nsFont* defaultFont =
-      ThreadSafeGetDefaultFontHelper(*aDocument, aFont->mLanguage, aGenericId);
-  // In case of just the language changing, the parent could have had no
-  // generic, which Gecko just does regular cascading with. Do the same. This
-  // can only happen in the case where the language changed but the family did
-  // not
-  if (aGenericId != kGenericFont_NONE) {
-    aFont->mFont.fontlist = defaultFont->fontlist;
-  } else {
-    aFont->mFont.fontlist.SetDefaultFontType(
-        defaultFont->fontlist.GetDefaultFontType());
+void Gecko_nsStyleFont_PrioritizeUserFonts(
+    nsStyleFont* aFont, StyleGenericFontFamily aDefaultGeneric) {
+  MOZ_ASSERT(!StaticPrefs::browser_display_use_document_fonts());
+  MOZ_ASSERT(aDefaultGeneric != StyleGenericFontFamily::None);
+  if (!aFont->mFont.fontlist.PrioritizeFirstGeneric()) {
+    aFont->mFont.fontlist.PrependGeneric(aDefaultGeneric);
   }
 }
 
@@ -1958,7 +1937,6 @@ nscoord Gecko_nsStyleFont_ComputeMinSize(const nsStyleFont* aFont,
 
 void FontSizePrefs::CopyFrom(const LangGroupFontPrefs& prefs) {
   mDefaultVariableSize = prefs.mDefaultVariableFont.size;
-  mDefaultFixedSize = prefs.mDefaultFixedFont.size;
   mDefaultSerifSize = prefs.mDefaultSerifFont.size;
   mDefaultSansSerifSize = prefs.mDefaultSansSerifFont.size;
   mDefaultMonospaceSize = prefs.mDefaultMonospaceFont.size;
@@ -2060,9 +2038,10 @@ GeckoFontMetrics Gecko_GetFontMetrics(const nsPresContext* aPresContext,
 NS_IMPL_THREADSAFE_FFI_REFCOUNTING(SheetLoadDataHolder, SheetLoadDataHolder);
 
 void Gecko_StyleSheet_FinishAsyncParse(
-    SheetLoadDataHolder* aData, RawServoStyleSheetContentsStrong aSheetContents,
-    StyleUseCountersOwned aUseCounters) {
-  UniquePtr<StyleUseCounters> useCounters(aUseCounters);
+    SheetLoadDataHolder* aData,
+    StyleStrong<RawServoStyleSheetContents> aSheetContents,
+    StyleOwnedOrNull<StyleUseCounters> aUseCounters) {
+  UniquePtr<StyleUseCounters> useCounters = aUseCounters.Consume();
   RefPtr<SheetLoadDataHolder> loadData = aData;
   RefPtr<RawServoStyleSheetContents> sheetContents = aSheetContents.Consume();
   NS_DispatchToMainThread(NS_NewRunnableFunction(
@@ -2128,8 +2107,8 @@ static already_AddRefed<StyleSheet> LoadImportSheet(
 StyleSheet* Gecko_LoadStyleSheet(Loader* aLoader, StyleSheet* aParent,
                                  SheetLoadData* aParentLoadData,
                                  LoaderReusableStyleSheets* aReusableSheets,
-                                 RawServoCssUrlDataStrong aCssUrl,
-                                 RawServoMediaListStrong aMediaList) {
+                                 StyleStrong<RawServoCssUrlData> aCssUrl,
+                                 StyleStrong<RawServoMediaList> aMediaList) {
   MOZ_ASSERT(NS_IsMainThread());
 
   // The CORS mode in the URLValue is irrelevant here.
@@ -2141,9 +2120,9 @@ StyleSheet* Gecko_LoadStyleSheet(Loader* aLoader, StyleSheet* aParent,
 }
 
 void Gecko_LoadStyleSheetAsync(SheetLoadDataHolder* aParentData,
-                               RawServoCssUrlDataStrong aCssUrl,
-                               RawServoMediaListStrong aMediaList,
-                               RawServoImportRuleStrong aImportRule) {
+                               StyleStrong<RawServoCssUrlData> aCssUrl,
+                               StyleStrong<RawServoMediaList> aMediaList,
+                               StyleStrong<RawServoImportRule> aImportRule) {
   RefPtr<SheetLoadDataHolder> loadData = aParentData;
   // The CORS mode in the URLValue is irrelevant here.
   // (CORS_NONE is used for all imported sheets in Load::LoadChildSheet.)
@@ -2237,14 +2216,13 @@ bool Gecko_ErrorReportingEnabled(const StyleSheet* aSheet,
   return ErrorReporter::ShouldReportErrors(aSheet, aLoader);
 }
 
-void Gecko_ReportUnexpectedCSSError(const StyleSheet* aSheet,
-                                    const Loader* aLoader, nsIURI* aURI,
-                                    const char* message, const char* param,
-                                    uint32_t paramLen, const char* prefix,
-                                    const char* prefixParam,
-                                    uint32_t prefixParamLen, const char* suffix,
-                                    const char* source, uint32_t sourceLen,
-                                    uint32_t lineNumber, uint32_t colNumber) {
+void Gecko_ReportUnexpectedCSSError(
+    const StyleSheet* aSheet, const Loader* aLoader, nsIURI* aURI,
+    const char* message, const char* param, uint32_t paramLen,
+    const char* prefix, const char* prefixParam, uint32_t prefixParamLen,
+    const char* suffix, const char* source, uint32_t sourceLen,
+    const char* selectors, uint32_t selectorsLen, uint32_t lineNumber,
+    uint32_t colNumber) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
 
   ErrorReporter reporter(aSheet, aLoader, aURI);
@@ -2271,7 +2249,8 @@ void Gecko_ReportUnexpectedCSSError(const StyleSheet* aSheet,
     reporter.ReportUnexpected(suffix);
   }
   nsDependentCSubstring sourceValue(source, sourceLen);
-  reporter.OutputError(lineNumber, colNumber, sourceValue);
+  nsDependentCSubstring selectorsValue(selectors, selectorsLen);
+  reporter.OutputError(lineNumber, colNumber, sourceValue, selectorsValue);
 }
 
 void Gecko_ContentList_AppendAll(nsSimpleContentList* aList,

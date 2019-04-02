@@ -29,6 +29,8 @@ typedef struct hb_blob_t hb_blob_t;
 
 class gfxSparseBitSet {
  private:
+  friend class SharedBitSet;
+
   enum { BLOCK_SIZE = 32 };  // ==> 256 codepoints per block
   enum { BLOCK_SIZE_BITS = BLOCK_SIZE * 8 };
   enum { NO_BLOCK = 0xffff };  // index value indicating missing (empty) block
@@ -310,6 +312,129 @@ class gfxSparseBitSet {
  private:
   nsTArray<uint16_t> mBlockIndex;
   nsTArray<Block> mBlocks;
+};
+
+/**
+ * SharedBitSet is a version of gfxSparseBitSet that is intended to be used
+ * in a shared-memory block, and can be used regardless of the address at which
+ * the block has been mapped. The SharedBitSet cannot be modified once it has
+ * been created.
+ *
+ * Max size of a SharedBitSet = 4352 * 32  ; blocks
+ *                              + 4352 * 2 ; index
+ *                              + 4        ; counts
+ *   = 147972 bytes
+ *
+ * Therefore, SharedFontList must be able to allocate a contiguous block of at
+ * least this size.
+ */
+class SharedBitSet {
+ private:
+  // We use the same Block type as gfxSparseBitSet.
+  typedef gfxSparseBitSet::Block Block;
+
+  enum { BLOCK_SIZE = gfxSparseBitSet::BLOCK_SIZE };
+  enum { BLOCK_SIZE_BITS = gfxSparseBitSet::BLOCK_SIZE_BITS };
+  enum { NO_BLOCK = gfxSparseBitSet::NO_BLOCK };
+
+ public:
+  static const size_t kMaxSize = 147972;  // see above
+
+  // Returns the size needed for a SharedBitSet version of the given
+  // gfxSparseBitSet.
+  static size_t RequiredSize(const gfxSparseBitSet& aBitset) {
+    size_t total = sizeof(SharedBitSet);
+    size_t len = aBitset.mBlockIndex.Length();
+    total += len * sizeof(uint16_t);  // add size for index array
+    // add size for blocks, excluding any missing ones
+    for (uint16_t i = 0; i < len; i++) {
+      if (aBitset.mBlockIndex[i] != NO_BLOCK) {
+        total += sizeof(Block);
+      }
+    }
+    MOZ_ASSERT(total <= kMaxSize);
+    return total;
+  }
+
+  // Create a SharedBitSet in the provided buffer, initializing it with the
+  // contents of aBitset.
+  static SharedBitSet* Create(void* aBuffer, size_t aBufSize,
+                              const gfxSparseBitSet& aBitset) {
+    MOZ_ASSERT(aBufSize >= RequiredSize(aBitset));
+    return new (aBuffer) SharedBitSet(aBitset);
+  }
+
+  bool test(uint32_t aIndex) const {
+    uint16_t i = aIndex / BLOCK_SIZE_BITS;
+    if (i >= mBlockIndexCount) {
+      return false;
+    }
+    const uint16_t* const blockIndex =
+        reinterpret_cast<const uint16_t*>(this + 1);
+    if (blockIndex[i] == NO_BLOCK) {
+      return false;
+    }
+    const Block* const blocks =
+        reinterpret_cast<const Block*>(blockIndex + mBlockIndexCount);
+    const Block& block = blocks[blockIndex[i]];
+    return ((block.mBits[(aIndex >> 3) & (BLOCK_SIZE - 1)]) &
+            (1 << (aIndex & 0x7))) != 0;
+  }
+
+  bool Equals(const gfxSparseBitSet* aOther) const {
+    if (mBlockIndexCount != aOther->mBlockIndex.Length()) {
+      return false;
+    }
+    const uint16_t* const blockIndex =
+        reinterpret_cast<const uint16_t*>(this + 1);
+    const Block* const blocks =
+        reinterpret_cast<const Block*>(blockIndex + mBlockIndexCount);
+    for (uint16_t i = 0; i < mBlockIndexCount; ++i) {
+      uint16_t index = blockIndex[i];
+      uint16_t otherIndex = aOther->mBlockIndex[i];
+      if ((index == NO_BLOCK) != (otherIndex == NO_BLOCK)) {
+        return false;
+      }
+      if (index == NO_BLOCK) {
+        continue;
+      }
+      const Block& b1 = blocks[index];
+      const Block& b2 = aOther->mBlocks[otherIndex];
+      if (memcmp(&b1.mBits, &b2.mBits, BLOCK_SIZE) != 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+ private:
+  SharedBitSet() = delete;
+
+  explicit SharedBitSet(const gfxSparseBitSet& aBitset)
+      : mBlockIndexCount(aBitset.mBlockIndex.Length()), mBlockCount(0) {
+    uint16_t* blockIndex = reinterpret_cast<uint16_t*>(this + 1);
+    Block* blocks = reinterpret_cast<Block*>(blockIndex + mBlockIndexCount);
+    for (uint16_t i = 0; i < mBlockIndexCount; i++) {
+      if (aBitset.mBlockIndex[i] != NO_BLOCK) {
+        const Block& srcBlock = aBitset.mBlocks[aBitset.mBlockIndex[i]];
+        std::memcpy(&blocks[mBlockCount], &srcBlock, sizeof(Block));
+        blockIndex[i] = mBlockCount;
+        mBlockCount++;
+      } else {
+        blockIndex[i] = NO_BLOCK;
+      }
+    }
+  }
+
+  // We never manage SharedBitSet as a "normal" object, it's a view onto a
+  // buffer of shared memory. So we should never be trying to call this.
+  ~SharedBitSet() = delete;
+
+  uint16_t mBlockIndexCount;
+  uint16_t mBlockCount;
+
+  // After the two "header" fields above, we have a block index array
+  // of uint16_t[mBlockIndexCount], followed by mBlockCount Block records.
 };
 
 #define TRUETYPE_TAG(a, b, c, d) ((a) << 24 | (b) << 16 | (c) << 8 | (d))
@@ -964,6 +1089,13 @@ class gfxFontUtils {
   static void GetVariationInstances(
       gfxFontEntry* aFontEntry, nsTArray<gfxFontVariationInstance>& aInstances);
 
+  // Helper method for reading localized family names from the name table
+  // of a single face.
+  static void ReadOtherFamilyNamesForFace(
+      const nsACString& aFamilyName, const char* aNameData,
+      uint32_t aDataLength, nsTArray<nsCString>& aOtherFamilyNames,
+      bool useFullName);
+
  protected:
   friend struct MacCharsetMappingComparator;
 
@@ -991,5 +1123,245 @@ class gfxFontUtils {
   static const mozilla::Encoding* gISOFontNameCharsets[];
   static const mozilla::Encoding* gMSFontNameCharsets[];
 };
+
+// style distance ==> [0,500]
+static inline double StyleDistance(const mozilla::SlantStyleRange& aRange,
+                                   mozilla::FontSlantStyle aTargetStyle) {
+  const mozilla::FontSlantStyle minStyle = aRange.Min();
+  if (aTargetStyle == minStyle) {
+    return 0.0;  // styles match exactly ==> 0
+  }
+
+  // bias added to angle difference when searching in the non-preferred
+  // direction from a target angle
+  const double kReverse = 100.0;
+
+  // bias added when we've crossed from positive to negative angles or
+  // vice versa
+  const double kNegate = 200.0;
+
+  if (aTargetStyle.IsNormal()) {
+    if (minStyle.IsOblique()) {
+      // to distinguish oblique 0deg from normal, we add 1.0 to the angle
+      const double minAngle = minStyle.ObliqueAngle();
+      if (minAngle >= 0.0) {
+        return 1.0 + minAngle;
+      }
+      const mozilla::FontSlantStyle maxStyle = aRange.Max();
+      const double maxAngle = maxStyle.ObliqueAngle();
+      if (maxAngle >= 0.0) {
+        // [min,max] range includes 0.0, so just return our minimum
+        return 1.0;
+      }
+      // negative oblique is even worse than italic
+      return kNegate - maxAngle;
+    }
+    // must be italic, which is worse than any non-negative oblique;
+    // treat as a match in the wrong search direction
+    MOZ_ASSERT(minStyle.IsItalic());
+    return kReverse;
+  }
+
+  const double kDefaultAngle =
+      mozilla::FontSlantStyle::Oblique().ObliqueAngle();
+
+  if (aTargetStyle.IsItalic()) {
+    if (minStyle.IsOblique()) {
+      const double minAngle = minStyle.ObliqueAngle();
+      if (minAngle >= kDefaultAngle) {
+        return 1.0 + (minAngle - kDefaultAngle);
+      }
+      const mozilla::FontSlantStyle maxStyle = aRange.Max();
+      const double maxAngle = maxStyle.ObliqueAngle();
+      if (maxAngle >= kDefaultAngle) {
+        return 1.0;
+      }
+      if (maxAngle > 0.0) {
+        // wrong direction but still > 0, add bias of 100
+        return kReverse + (kDefaultAngle - maxAngle);
+      }
+      // negative oblique angle, add bias of 300
+      return kReverse + kNegate + (kDefaultAngle - maxAngle);
+    }
+    // normal is worse than oblique > 0, but better than oblique <= 0
+    MOZ_ASSERT(minStyle.IsNormal());
+    return kNegate;
+  }
+
+  // target is oblique <angle>: four different cases depending on
+  // the value of the <angle>, which determines the preferred direction
+  // of search
+  const double targetAngle = aTargetStyle.ObliqueAngle();
+  if (targetAngle >= kDefaultAngle) {
+    if (minStyle.IsOblique()) {
+      const double minAngle = minStyle.ObliqueAngle();
+      if (minAngle >= targetAngle) {
+        return minAngle - targetAngle;
+      }
+      const mozilla::FontSlantStyle maxStyle = aRange.Max();
+      const double maxAngle = maxStyle.ObliqueAngle();
+      if (maxAngle >= targetAngle) {
+        return 0.0;
+      }
+      if (maxAngle > 0.0) {
+        return kReverse + (targetAngle - maxAngle);
+      }
+      return kReverse + kNegate + (targetAngle - maxAngle);
+    }
+    if (minStyle.IsItalic()) {
+      return kReverse + kNegate;
+    }
+    return kReverse + kNegate + 1.0;
+  }
+
+  if (targetAngle <= -kDefaultAngle) {
+    if (minStyle.IsOblique()) {
+      const mozilla::FontSlantStyle maxStyle = aRange.Max();
+      const double maxAngle = maxStyle.ObliqueAngle();
+      if (maxAngle <= targetAngle) {
+        return targetAngle - maxAngle;
+      }
+      const double minAngle = minStyle.ObliqueAngle();
+      if (minAngle <= targetAngle) {
+        return 0.0;
+      }
+      if (minAngle < 0.0) {
+        return kReverse + (minAngle - targetAngle);
+      }
+      return kReverse + kNegate + (minAngle - targetAngle);
+    }
+    if (minStyle.IsItalic()) {
+      return kReverse + kNegate;
+    }
+    return kReverse + kNegate + 1.0;
+  }
+
+  if (targetAngle >= 0.0) {
+    if (minStyle.IsOblique()) {
+      const double minAngle = minStyle.ObliqueAngle();
+      if (minAngle > targetAngle) {
+        return kReverse + (minAngle - targetAngle);
+      }
+      const mozilla::FontSlantStyle maxStyle = aRange.Max();
+      const double maxAngle = maxStyle.ObliqueAngle();
+      if (maxAngle >= targetAngle) {
+        return 0.0;
+      }
+      if (maxAngle > 0.0) {
+        return targetAngle - maxAngle;
+      }
+      return kReverse + kNegate + (targetAngle - maxAngle);
+    }
+    if (minStyle.IsItalic()) {
+      return kReverse + kNegate - 2.0;
+    }
+    return kReverse + kNegate - 1.0;
+  }
+
+  // last case: (targetAngle < 0.0 && targetAngle > kDefaultAngle)
+  if (minStyle.IsOblique()) {
+    const mozilla::FontSlantStyle maxStyle = aRange.Max();
+    const double maxAngle = maxStyle.ObliqueAngle();
+    if (maxAngle < targetAngle) {
+      return kReverse + (targetAngle - maxAngle);
+    }
+    const double minAngle = minStyle.ObliqueAngle();
+    if (minAngle <= targetAngle) {
+      return 0.0;
+    }
+    if (minAngle < 0.0) {
+      return minAngle - targetAngle;
+    }
+    return kReverse + kNegate + (minAngle - targetAngle);
+  }
+  if (minStyle.IsItalic()) {
+    return kReverse + kNegate - 2.0;
+  }
+  return kReverse + kNegate - 1.0;
+}
+
+// stretch distance ==> [0,2000]
+static inline double StretchDistance(const mozilla::StretchRange& aRange,
+                                     mozilla::FontStretch aTargetStretch) {
+  const double kReverseDistance = 1000.0;
+
+  mozilla::FontStretch minStretch = aRange.Min();
+  mozilla::FontStretch maxStretch = aRange.Max();
+
+  // The stretch value is a (non-negative) percentage; currently we support
+  // values in the range 0 .. 1000. (If the upper limit is ever increased,
+  // the kReverseDistance value used here may need to be adjusted.)
+  // If aTargetStretch is >100, we prefer larger values if available;
+  // if <=100, we prefer smaller values if available.
+  if (aTargetStretch < minStretch) {
+    if (aTargetStretch > mozilla::FontStretch::Normal()) {
+      return minStretch - aTargetStretch;
+    }
+    return (minStretch - aTargetStretch) + kReverseDistance;
+  }
+  if (aTargetStretch > maxStretch) {
+    if (aTargetStretch <= mozilla::FontStretch::Normal()) {
+      return aTargetStretch - maxStretch;
+    }
+    return (aTargetStretch - maxStretch) + kReverseDistance;
+  }
+  return 0.0;
+}
+
+// Calculate weight distance with values in the range (0..1000). In general,
+// heavier weights match towards even heavier weights while lighter weights
+// match towards even lighter weights. Target weight values in the range
+// [400..500] are special, since they will first match up to 500, then down
+// towards 0, then up again towards 999.
+//
+// Example: with target 600 and font weight 800, distance will be 200. With
+// target 300 and font weight 600, distance will be 900, since heavier
+// weights are farther away than lighter weights. If the target is 5 and the
+// font weight 995, the distance would be 1590 for the same reason.
+
+// weight distance ==> [0,1600]
+static inline double WeightDistance(const mozilla::WeightRange& aRange,
+                                    mozilla::FontWeight aTargetWeight) {
+  const double kNotWithinCentralRange = 100.0;
+  const double kReverseDistance = 600.0;
+
+  mozilla::FontWeight minWeight = aRange.Min();
+  mozilla::FontWeight maxWeight = aRange.Max();
+
+  if (aTargetWeight >= minWeight && aTargetWeight <= maxWeight) {
+    // Target is within the face's range, so it's a perfect match
+    return 0.0;
+  }
+
+  if (aTargetWeight < mozilla::FontWeight(400)) {
+    // Requested a lighter-than-400 weight
+    if (maxWeight < aTargetWeight) {
+      return aTargetWeight - maxWeight;
+    }
+    // Add reverse-search penalty for bolder faces
+    return (minWeight - aTargetWeight) + kReverseDistance;
+  }
+
+  if (aTargetWeight > mozilla::FontWeight(500)) {
+    // Requested a bolder-than-500 weight
+    if (minWeight > aTargetWeight) {
+      return minWeight - aTargetWeight;
+    }
+    // Add reverse-search penalty for lighter faces
+    return (aTargetWeight - maxWeight) + kReverseDistance;
+  }
+
+  // Special case for requested weight in the [400..500] range
+  if (minWeight > aTargetWeight) {
+    if (minWeight <= mozilla::FontWeight(500)) {
+      // Bolder weight up to 500 is first choice
+      return minWeight - aTargetWeight;
+    }
+    // Other bolder weights get a reverse-search penalty
+    return (minWeight - aTargetWeight) + kReverseDistance;
+  }
+  // Lighter weights are not as good as bolder ones within [400..500]
+  return (aTargetWeight - maxWeight) + kNotWithinCentralRange;
+}
 
 #endif /* GFX_FONT_UTILS_H */

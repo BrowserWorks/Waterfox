@@ -7,18 +7,19 @@
 /* a presentation of a document, part 1 */
 
 #include "nsPresContext.h"
+#include "nsPresContextInlines.h"
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Encoding.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventStateManager.h"
+#include "mozilla/PresShell.h"
 
 #include "base/basictypes.h"
 
 #include "nsCOMPtr.h"
 #include "nsCSSFrameConstructor.h"
-#include "nsIPresShell.h"
 #include "nsIPresShellInlines.h"
 #include "nsDocShell.h"
 #include "nsIContentViewer.h"
@@ -163,6 +164,7 @@ nsPresContext::nsPresContext(dom::Document* aDocument, nsPresContextType aType)
       // mImageAnimationMode is initialised below, in constructor body
       mImageAnimationModePref(imgIContainer::kNormalAnimMode),
       mInterruptChecksToSkip(0),
+      mNextFrameRateMultiplier(0),
       mElementsRestyled(0),
       mFramesConstructed(0),
       mFramesReflowed(0),
@@ -408,6 +410,8 @@ void nsPresContext::InvalidatePaintedLayers() {
 }
 
 void nsPresContext::AppUnitsPerDevPixelChanged() {
+  int32_t oldAppUnitsPerDevPixel = mCurAppUnitsPerDevPixel;
+
   InvalidatePaintedLayers();
 
   if (mDeviceContext) {
@@ -419,6 +423,27 @@ void nsPresContext::AppUnitsPerDevPixelChanged() {
                              MediaFeatureChangeReason::ResolutionChange});
 
   mCurAppUnitsPerDevPixel = mDeviceContext->AppUnitsPerDevPixel();
+
+  // nsSubDocumentFrame uses a AppUnitsPerDevPixel difference between parent and
+  // child document to determine if it needs to build a nsDisplayZoom item. So
+  // if we that changes then we need to invalidate the subdoc frame so that
+  // item gets created/removed.
+  if (mShell) {
+    if (nsIFrame* frame = mShell->GetRootFrame()) {
+      frame = nsLayoutUtils::GetCrossDocParentFrame(frame);
+      if (frame) {
+        int32_t parentAPD = frame->PresContext()->AppUnitsPerDevPixel();
+        if ((parentAPD == oldAppUnitsPerDevPixel) !=
+            (parentAPD == mCurAppUnitsPerDevPixel)) {
+          frame->InvalidateFrame();
+        }
+      }
+    }
+  }
+
+  // We would also have to look at all of our child subdocuments but the
+  // InvalidatePaintedLayers call above calls InvalidateFrameSubtree which
+  // would invalidate all subdocument frames already.
 }
 
 void nsPresContext::PreferenceChanged(const char* aPrefName) {
@@ -591,9 +616,10 @@ nsresult nsPresContext::Init(nsDeviceContext* aDeviceContext) {
     // printing screws up things.  Assert that in other cases it does,
     // but whenever the shell is null just fall back on using our own
     // refresh driver.
-    NS_ASSERTION(!parent || mDocument->IsStaticDocument() || parent->GetShell(),
-                 "How did we end up with a presshell if our parent doesn't "
-                 "have one?");
+    NS_ASSERTION(
+        !parent || mDocument->IsStaticDocument() || parent->GetPresShell(),
+        "How did we end up with a presshell if our parent doesn't "
+        "have one?");
     if (parent && parent->GetPresContext()) {
       nsCOMPtr<nsIDocShellTreeItem> ourItem = mDocument->GetDocShell();
       if (ourItem) {
@@ -1462,6 +1488,20 @@ void nsPresContext::ContentLanguageChanged() {
                                RestyleHint::RecascadeSubtree());
 }
 
+void nsPresContext::MediaFeatureValuesChanged(
+    const MediaFeatureChange& aChange) {
+  if (mShell) {
+    mShell->EnsureStyleFlush();
+  }
+
+  if (!mPendingMediaFeatureValuesChange) {
+    mPendingMediaFeatureValuesChange.emplace(aChange);
+    return;
+  }
+
+  *mPendingMediaFeatureValuesChange |= aChange;
+}
+
 void nsPresContext::RebuildAllStyleData(nsChangeHint aExtraHint,
                                         RestyleHint aRestyleHint) {
   if (!mShell) {
@@ -1669,7 +1709,7 @@ void nsPresContext::UserFontSetUpdated(gfxUserFontEntry* aUpdatedFont) {
   // potentially changed.
   if (!aUpdatedFont) {
     auto hint =
-      UsesExChUnits() ? RestyleHint::RecascadeSubtree() : RestyleHint{0};
+        UsesExChUnits() ? RestyleHint::RecascadeSubtree() : RestyleHint{0};
     PostRebuildAllStyleDataEvent(NS_STYLE_HINT_REFLOW, hint);
     return;
   }
@@ -2435,6 +2475,16 @@ void nsPresContext::FlushFontFeatureValues() {
     mFontFeatureValuesDirty = false;
   }
 }
+
+#ifdef DEBUG
+
+void nsPresContext::ValidatePresShellAndDocumentReleation() const {
+  NS_ASSERTION(
+      !mShell || !mShell->GetDocument() || mShell->GetDocument() == mDocument,
+      "nsPresContext doesn't have the same document as nsPresShell!");
+}
+
+#endif  // #ifdef DEBUG
 
 nsRootPresContext::nsRootPresContext(dom::Document* aDocument,
                                      nsPresContextType aType)

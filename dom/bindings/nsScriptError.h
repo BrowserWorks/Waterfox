@@ -36,6 +36,7 @@ class nsScriptErrorNote final : public nsIScriptErrorNote {
 
   nsString mMessage;
   nsString mSourceName;
+  nsString mCssSelectors;
   nsString mSourceLine;
   uint32_t mSourceId;
   uint32_t mLineNumber;
@@ -54,6 +55,8 @@ class nsScriptErrorBase : public nsIScriptError {
 
   static bool ComputeIsFromPrivateWindow(nsGlobalWindowInner* aWindow);
 
+  static bool ComputeIsFromChromeContext(nsGlobalWindowInner* aWindow);
+
  protected:
   virtual ~nsScriptErrorBase();
 
@@ -69,6 +72,7 @@ class nsScriptErrorBase : public nsIScriptError {
   nsString mMessage;
   nsString mMessageName;
   nsString mSourceName;
+  nsString mCssSelectors;
   uint32_t mSourceId;
   uint32_t mLineNumber;
   nsString mSourceLine;
@@ -80,10 +84,11 @@ class nsScriptErrorBase : public nsIScriptError {
   uint64_t mInnerWindowID;
   int64_t mTimeStamp;
   uint64_t mTimeWarpTarget;
-  // mInitializedOnMainThread and mIsFromPrivateWindow are set on the main
-  // thread from InitializeOnMainThread().
+  // mInitializedOnMainThread, mIsFromPrivateWindow and mIsFromChromeContext are
+  // set on the main thread from InitializeOnMainThread().
   mozilla::Atomic<bool> mInitializedOnMainThread;
   bool mIsFromPrivateWindow;
+  bool mIsFromChromeContext;
 };
 
 class nsScriptError final : public nsScriptErrorBase {

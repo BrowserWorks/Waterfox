@@ -44,6 +44,7 @@
 #include "jit/SharedICHelpers.h"
 #include "jit/StackSlotAllocator.h"
 #include "jit/VMFunctions.h"
+#include "js/RegExpFlags.h"  // JS::RegExpFlag
 #include "util/Unicode.h"
 #include "vm/AsyncFunction.h"
 #include "vm/AsyncIteration.h"
@@ -1943,7 +1944,7 @@ static bool PrepareAndExecuteRegExp(
 
     masm.branchTest32(Assembler::Zero,
                       Address(temp1, RegExpShared::offsetOfFlags()),
-                      Imm32(UnicodeFlag), &done);
+                      Imm32(int32_t(JS::RegExpFlag::Unicode)), &done);
 
     // If input is latin1, there should not be surrogate pair.
     masm.branchLatin1String(input, &done);
@@ -3938,8 +3939,7 @@ void CodeGenerator::visitStoreSlotV(LStoreSlotV* lir) {
 }
 
 static void GuardReceiver(MacroAssembler& masm, const ReceiverGuard& guard,
-                          Register obj,
-                          Register scratch, Label* miss) {
+                          Register obj, Register scratch, Label* miss) {
   if (guard.group) {
     masm.branchTestObjGroup(Assembler::NotEqual, obj, guard.group, scratch, obj,
                             miss);
@@ -4070,8 +4070,7 @@ void CodeGenerator::visitSetPropertyPolymorphicV(
   Register obj = ToRegister(ins->obj());
   Register temp1 = ToRegister(ins->temp());
   ValueOperand value = ToValue(ins, LSetPropertyPolymorphicV::Value);
-  emitSetPropertyPolymorphic(ins, obj, temp1,
-                             TypedOrValueRegister(value));
+  emitSetPropertyPolymorphic(ins, obj, temp1, TypedOrValueRegister(value));
 }
 
 void CodeGenerator::visitSetPropertyPolymorphicT(
@@ -8043,12 +8042,30 @@ void CodeGenerator::emitCompareS(LInstruction* lir, JSOp op, Register left,
 
   using Fn = bool (*)(JSContext*, HandleString, HandleString, bool*);
   if (op == JSOP_EQ || op == JSOP_STRICTEQ) {
-    ool = oolCallVM<Fn, jit::StringsEqual<true>>(lir, ArgList(left, right),
-                                                 StoreRegisterTo(output));
+    ool = oolCallVM<Fn, jit::StringsEqual<EqualityKind::Equal>>(
+        lir, ArgList(left, right), StoreRegisterTo(output));
+  } else if (op == JSOP_NE || op == JSOP_STRICTNE) {
+    ool = oolCallVM<Fn, jit::StringsEqual<EqualityKind::NotEqual>>(
+        lir, ArgList(left, right), StoreRegisterTo(output));
+  } else if (op == JSOP_LT) {
+    ool = oolCallVM<Fn, jit::StringsCompare<ComparisonKind::LessThan>>(
+        lir, ArgList(left, right), StoreRegisterTo(output));
+  } else if (op == JSOP_LE) {
+    // Push the operands in reverse order for JSOP_LE:
+    // - |left <= right| is implemented as |right >= left|.
+    ool =
+        oolCallVM<Fn, jit::StringsCompare<ComparisonKind::GreaterThanOrEqual>>(
+            lir, ArgList(right, left), StoreRegisterTo(output));
+  } else if (op == JSOP_GT) {
+    // Push the operands in reverse order for JSOP_GT:
+    // - |left > right| is implemented as |right < left|.
+    ool = oolCallVM<Fn, jit::StringsCompare<ComparisonKind::LessThan>>(
+        lir, ArgList(right, left), StoreRegisterTo(output));
   } else {
-    MOZ_ASSERT(op == JSOP_NE || op == JSOP_STRICTNE);
-    ool = oolCallVM<Fn, jit::StringsEqual<false>>(lir, ArgList(left, right),
-                                                  StoreRegisterTo(output));
+    MOZ_ASSERT(op == JSOP_GE);
+    ool =
+        oolCallVM<Fn, jit::StringsCompare<ComparisonKind::GreaterThanOrEqual>>(
+            lir, ArgList(left, right), StoreRegisterTo(output));
   }
 
   masm.compareStrings(op, left, right, output, ool->entry());
@@ -8099,19 +8116,19 @@ void CodeGenerator::visitCompareVM(LCompareVM* lir) {
       bool (*)(JSContext*, MutableHandleValue, MutableHandleValue, bool*);
   switch (lir->mir()->jsop()) {
     case JSOP_EQ:
-      callVM<Fn, jit::LooselyEqual<true>>(lir);
+      callVM<Fn, jit::LooselyEqual<EqualityKind::Equal>>(lir);
       break;
 
     case JSOP_NE:
-      callVM<Fn, jit::LooselyEqual<false>>(lir);
+      callVM<Fn, jit::LooselyEqual<EqualityKind::NotEqual>>(lir);
       break;
 
     case JSOP_STRICTEQ:
-      callVM<Fn, jit::StrictlyEqual<true>>(lir);
+      callVM<Fn, jit::StrictlyEqual<EqualityKind::Equal>>(lir);
       break;
 
     case JSOP_STRICTNE:
-      callVM<Fn, jit::StrictlyEqual<false>>(lir);
+      callVM<Fn, jit::StrictlyEqual<EqualityKind::NotEqual>>(lir);
       break;
 
     case JSOP_LT:
@@ -13362,13 +13379,18 @@ void CodeGenerator::visitWasmLoadTls(LWasmLoadTls* ins) {
 void CodeGenerator::visitRecompileCheck(LRecompileCheck* ins) {
   Label done;
   Register tmp = ToRegister(ins->scratch());
-  OutOfLineCode* ool;
 
-  using Fn = bool (*)(JSContext*);
-  if (ins->mir()->forceRecompilation()) {
-    ool = oolCallVM<Fn, IonForcedRecompile>(ins, ArgList(), StoreNothing());
-  } else {
-    ool = oolCallVM<Fn, IonRecompile>(ins, ArgList(), StoreNothing());
+  OutOfLineCode* ool = nullptr;
+  if (ins->mir()->checkCounter()) {
+    using Fn = bool (*)(JSContext*);
+    if (ins->mir()->forceInvalidation()) {
+      ool =
+          oolCallVM<Fn, IonForcedInvalidation>(ins, ArgList(), StoreNothing());
+    } else if (ins->mir()->forceRecompilation()) {
+      ool = oolCallVM<Fn, IonForcedRecompile>(ins, ArgList(), StoreNothing());
+    } else {
+      ool = oolCallVM<Fn, IonRecompile>(ins, ArgList(), StoreNothing());
+    }
   }
 
   // Check if warm-up counter is high enough.
@@ -13378,21 +13400,25 @@ void CodeGenerator::visitRecompileCheck(LRecompileCheck* ins) {
     masm.load32(warmUpCount, tmp);
     masm.add32(Imm32(1), tmp);
     masm.store32(tmp, warmUpCount);
-    masm.branch32(Assembler::BelowOrEqual, tmp,
-                  Imm32(ins->mir()->recompileThreshold()), &done);
+    if (ins->mir()->checkCounter()) {
+      masm.branch32(Assembler::BelowOrEqual, tmp,
+                    Imm32(ins->mir()->recompileThreshold()), &done);
+    }
   } else {
     masm.branch32(Assembler::BelowOrEqual, warmUpCount,
                   Imm32(ins->mir()->recompileThreshold()), &done);
   }
 
   // Check if not yet recompiling.
-  CodeOffset label = masm.movWithPatch(ImmWord(uintptr_t(-1)), tmp);
-  masm.propagateOOM(ionScriptLabels_.append(label));
-  masm.branch32(Assembler::Equal,
-                Address(tmp, IonScript::offsetOfRecompiling()), Imm32(0),
-                ool->entry());
-  masm.bind(ool->rejoin());
-  masm.bind(&done);
+  if (ins->mir()->checkCounter()) {
+    CodeOffset label = masm.movWithPatch(ImmWord(uintptr_t(-1)), tmp);
+    masm.propagateOOM(ionScriptLabels_.append(label));
+    masm.branch32(Assembler::Equal,
+                  Address(tmp, IonScript::offsetOfRecompiling()), Imm32(0),
+                  ool->entry());
+    masm.bind(ool->rejoin());
+    masm.bind(&done);
+  }
 }
 
 void CodeGenerator::visitLexicalCheck(LLexicalCheck* ins) {

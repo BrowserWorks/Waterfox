@@ -6,7 +6,6 @@
 
 #include "mozilla/layers/AsyncCompositionManager.h"
 #include <stdint.h>                 // for uint32_t
-#include "FrameMetrics.h"           // for FrameMetrics
 #include "LayerManagerComposite.h"  // for LayerManagerComposite, etc
 #include "Layers.h"                 // for Layer, ContainerLayer, etc
 #include "gfxPoint.h"               // for gfxPoint, gfxSize
@@ -381,32 +380,6 @@ static bool AsyncTransformShouldBeUnapplied(
   return false;
 }
 
-/**
- * Given a fixed-position layer, check if it's fixed with respect to the
- * zoomed APZC.
- */
-static bool IsFixedToZoomContainer(Layer* aFixedLayer) {
-  ScrollableLayerGuid::ViewID targetId =
-      aFixedLayer->GetFixedPositionScrollContainerId();
-  MOZ_ASSERT(targetId != ScrollableLayerGuid::NULL_SCROLL_ID);
-  LayerMetricsWrapper result(aFixedLayer, LayerMetricsWrapper::StartAt::BOTTOM);
-  while (result) {
-    if (Maybe<ScrollableLayerGuid::ViewID> zoomedScrollId =
-            result.IsAsyncZoomContainer()) {
-      return *zoomedScrollId == targetId;
-    }
-    // Don't ascend into another layer tree. Scroll IDs are not unique
-    // across layer trees, and in any case position:fixed doesn't reach
-    // across documents.
-    if (result.AsRefLayer() != nullptr) {
-      break;
-    }
-
-    result = result.GetParent();
-  }
-  return false;
-}
-
 // If |aLayer| is fixed or sticky, returns the scroll id of the scroll frame
 // that it's fixed or sticky to. Otherwise, returns Nothing().
 static Maybe<ScrollableLayerGuid::ViewID> IsFixedOrSticky(Layer* aLayer) {
@@ -620,7 +593,7 @@ static Matrix4x4 FrameTransformToTransformInDevice(
 
 static void ApplyAnimatedValue(
     Layer* aLayer, CompositorAnimationStorage* aStorage,
-    nsCSSPropertyID aProperty, const AnimationData& aAnimationData,
+    nsCSSPropertyID aProperty, const Maybe<TransformData>& aAnimationData,
     const nsTArray<RefPtr<RawServoAnimationValue>>& aValues) {
   MOZ_ASSERT(!aValues.IsEmpty());
 
@@ -656,7 +629,7 @@ static void ApplyAnimatedValue(
     case eCSSProperty_scale:
     case eCSSProperty_translate:
     case eCSSProperty_transform: {
-      const TransformData& transformData = aAnimationData.get_TransformData();
+      const TransformData& transformData = aAnimationData.ref();
 
       Matrix4x4 frameTransform =
           AnimationHelper::ServoAnimationValueToMatrix4x4(aValues,
@@ -746,7 +719,7 @@ static bool SampleAnimations(Layer* aLayer,
             MOZ_ASSERT(previousValue);
 #ifdef DEBUG
             const TransformData& transformData =
-                lastPropertyAnimationGroup.mAnimationData.get_TransformData();
+                lastPropertyAnimationGroup.mAnimationData.ref();
             Matrix4x4 frameTransform =
                 AnimationHelper::ServoAnimationValueToMatrix4x4(animationValues,
                                                                 transformData);
@@ -1022,11 +995,6 @@ bool AsyncCompositionManager::ApplyAsyncContentTransformToTree(
               continue;
             }
 
-            // Apply any additional async scrolling for testing purposes (used
-            // for reftest-async-scroll and reftest-async-zoom).
-            AutoApplyAsyncTestAttributes testAttributeApplier(
-                wrapper.GetApzc());
-
             const FrameMetrics& metrics = wrapper.Metrics();
             MOZ_ASSERT(metrics.IsScrollable());
 
@@ -1035,8 +1003,8 @@ bool AsyncCompositionManager::ApplyAsyncContentTransformToTree(
             AsyncTransformComponents asyncTransformComponents =
                 (zoomedMetrics &&
                  sampler->GetGuid(*zoomedMetrics) == sampler->GetGuid(wrapper))
-                    ? AsyncTransformComponents{AsyncTransformComponent::eScroll}
-                    : ScrollAndZoom;
+                    ? AsyncTransformComponents{AsyncTransformComponent::eLayout}
+                    : LayoutAndVisual;
 
             AsyncTransform asyncTransformWithoutOverscroll =
                 sampler->GetCurrentAsyncTransform(wrapper,
@@ -1072,18 +1040,26 @@ bool AsyncCompositionManager::ApplyAsyncContentTransformToTree(
                         compositor->GetCompositorBridgeParent()) {
                   AndroidDynamicToolbarAnimator* animator =
                       bridge->GetAndroidDynamicToolbarAnimator();
-                  if (mIsFirstPaint) {
+
+                  LayersId rootLayerTreeId = bridge->RootLayerTreeId();
+                  if (mIsFirstPaint || FrameMetricsHaveUpdated(metrics)) {
                     if (animator) {
                       animator->UpdateRootFrameMetrics(metrics);
+                    } else if (RefPtr<UiCompositorControllerParent>
+                                   uiController = UiCompositorControllerParent::
+                                       GetFromRootLayerTreeId(
+                                           rootLayerTreeId)) {
+                      uiController->NotifyUpdateScreenMetrics(metrics);
+                    }
+                    mLastMetrics = metrics;
+                  }
+                  if (mIsFirstPaint) {
+                    if (animator) {
                       animator->FirstPaint();
                     }
-                    LayersId rootLayerTreeId = bridge->RootLayerTreeId();
                     if (RefPtr<UiCompositorControllerParent> uiController =
                             UiCompositorControllerParent::
                                 GetFromRootLayerTreeId(rootLayerTreeId)) {
-                      if (!animator) {
-                        uiController->NotifyUpdateScreenMetrics(metrics);
-                      }
                       uiController->NotifyFirstPaint();
                     }
                     mIsFirstPaint = false;
@@ -1209,14 +1185,8 @@ bool AsyncCompositionManager::ApplyAsyncContentTransformToTree(
           if (Maybe<ScrollableLayerGuid::ViewID> zoomedScrollId =
                   layer->IsAsyncZoomContainer()) {
             if (zoomedMetrics) {
-              // Since we're querying the root content APZC's async transform,
-              // we need to make sure any additional async scrolling for test
-              // purposes is applied as well.
-              AutoApplyAsyncTestAttributes testAttributeApplier(
-                  zoomedMetrics->GetApzc());
-
               AsyncTransform zoomTransform = sampler->GetCurrentAsyncTransform(
-                  *zoomedMetrics, {AsyncTransformComponent::eZoom});
+                  *zoomedMetrics, {AsyncTransformComponent::eVisual});
               hasAsyncTransform = true;
               combinedAsyncTransform *=
                   AsyncTransformComponentMatrix(zoomTransform);
@@ -1225,27 +1195,6 @@ bool AsyncCompositionManager::ApplyAsyncContentTransformToTree(
               // about:config on mobile, for just one frame or so, before the
               // scroll metadata for zoomedScrollId appears in the layer tree.
             }
-          }
-
-          if (zoomedMetrics && layer->GetIsFixedPosition() &&
-              !layer->GetParent()->GetIsFixedPosition() &&
-              IsFixedToZoomContainer(layer)) {
-            // Since we're querying the root content APZC's async transform,
-            // we need to make sure any additional async scrolling for test
-            // purposes is applied as well.
-            AutoApplyAsyncTestAttributes testAttributeApplier(
-                zoomedMetrics->GetApzc());
-
-            LayerToParentLayerMatrix4x4 currentTransform;
-            LayerToParentLayerMatrix4x4 previousTransform =
-                CSSTransformMatrix() *
-                CompleteAsyncTransform(
-                    sampler->GetCurrentAsyncViewportRelativeTransform(
-                        *zoomedMetrics));
-            AdjustFixedOrStickyLayer(zoomContainer, layer,
-                                     sampler->GetGuid(*zoomedMetrics).mScrollId,
-                                     previousTransform, currentTransform,
-                                     fixedLayerMargins, clipPartsCache);
           }
         }
 
@@ -1288,6 +1237,16 @@ bool AsyncCompositionManager::ApplyAsyncContentTransformToTree(
 
   return appliedTransform;
 }
+
+#if defined(MOZ_WIDGET_ANDROID)
+bool AsyncCompositionManager::FrameMetricsHaveUpdated(
+    const FrameMetrics& aMetrics) {
+  return RoundedToInt(mLastMetrics.GetScrollOffset()) !=
+             RoundedToInt(aMetrics.GetScrollOffset()) ||
+         mLastMetrics.GetZoom() != aMetrics.GetZoom();
+  ;
+}
+#endif
 
 static bool LayerIsScrollbarTarget(const LayerMetricsWrapper& aTarget,
                                    Layer* aScrollbar) {

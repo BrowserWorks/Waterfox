@@ -22,7 +22,6 @@ import type {
   WasmSource,
   Source,
   SourceId,
-  SourceLocation,
   Why
 } from "../types";
 
@@ -40,6 +39,7 @@ function makeMockSource(
     loadedState: text ? "loaded" : "unloaded",
     relativeUrl: url,
     introductionUrl: null,
+    introductionType: undefined,
     actors: [],
     isWasm: false,
     contentType,
@@ -57,6 +57,7 @@ function makeMockWasmSource(text: {| binary: Object |}): WasmSource {
     loadedState: "unloaded",
     relativeUrl: "url",
     introductionUrl: null,
+    introductionType: undefined,
     actors: [],
     isWasm: true,
     isExtension: false,
@@ -102,7 +103,6 @@ function makeMockBreakpoint(
     location,
     astLocation: null,
     generatedLocation: location,
-    loading: false,
     disabled: false,
     text: "text",
     originalText: "text",
@@ -152,14 +152,6 @@ function makeMockExpression(value: Object): Expression {
     from: "from",
     updating: false
   };
-}
-
-export function makeMappedLocation(
-  location: SourceLocation,
-  generatedLocation: ?SourceLocation
-) {
-  generatedLocation = generatedLocation || location;
-  return { location, generatedLocation };
 }
 
 export {

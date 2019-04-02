@@ -314,8 +314,7 @@ function openLinkIn(url, where, params) {
   var aAllowThirdPartyFixup = params.allowThirdPartyFixup;
   var aPostData             = params.postData;
   var aCharset              = params.charset;
-  var aReferrerInfo       = ("referrerInfo" in params)
-    ? params.referrerInfo
+  var aReferrerInfo       = params.referrerInfo ? params.referrerInfo
     : new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, null);
   var aRelatedToCurrent     = params.relatedToCurrent;
   var aAllowInheritPrincipal = !!params.allowInheritPrincipal;
@@ -1021,34 +1020,6 @@ function openHelpLink(aHelpTopic, aCalledFromModal, aWhere) {
 function openPrefsHelp(aEvent) {
   let helpTopic = aEvent.target.getAttribute("helpTopic");
   openHelpLink(helpTopic);
-}
-
-function trimURL(aURL) {
-  // This function must not modify the given URL such that calling
-  // nsIURIFixup::createFixupURI with the result will produce a different URI.
-
-  // remove single trailing slash for http/https/ftp URLs
-  let url = aURL.replace(/^((?:http|https|ftp):\/\/[^/]+)\/$/, "$1");
-
-  // remove http://
-  if (!url.startsWith("http://")) {
-    return url;
-  }
-  let urlWithoutProtocol = url.substring(7);
-
-  let flags = Services.uriFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP |
-              Services.uriFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS;
-  let fixedUpURL, expectedURLSpec;
-  try {
-    fixedUpURL = Services.uriFixup.createFixupURI(urlWithoutProtocol, flags);
-    expectedURLSpec = makeURI(aURL).displaySpec;
-  } catch (ex) {
-    return url;
-  }
-  if (fixedUpURL.displaySpec == expectedURLSpec) {
-    return urlWithoutProtocol;
-  }
-  return url;
 }
 
 /**

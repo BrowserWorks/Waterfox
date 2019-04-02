@@ -21,7 +21,6 @@ browser.jar:
         content/browser/illustrations/blue-berror.svg (content/illustrations/blue-berror.svg)
         content/browser/aboutNetError.xhtml            (content/aboutNetError.xhtml)
         content/browser/aboutNetError.js               (content/aboutNetError.js)
-        content/browser/aboutNetError-new.xhtml        (content/aboutNetError-new.xhtml)
         content/browser/aboutRobots-icon.png          (content/aboutRobots-icon.png)
         content/browser/aboutRobots-widget-left.png   (content/aboutRobots-widget-left.png)
         content/browser/aboutTabCrashed.css           (content/aboutTabCrashed.css)
@@ -58,7 +57,7 @@ browser.jar:
         content/browser/browser-tabsintitlebar.js     (content/browser-tabsintitlebar.js)
         content/browser/browser-toolbarKeyNav.js      (content/browser-toolbarKeyNav.js)
         content/browser/browser-thumbnails.js         (content/browser-thumbnails.js)
-        content/browser/browser-webrender.js          (content/browser-webrender.js)
+        content/browser/browser-graphics-utils.js     (content/browser-graphics-utils.js)
         content/browser/tab-content.js                (content/tab-content.js)
         content/browser/content.js                    (content/content.js)
         content/browser/defaultthemes/1.header.jpg    (content/defaultthemes/1.header.jpg)
@@ -76,8 +75,6 @@ browser.jar:
         content/browser/defaultthemes/5.header.png    (content/defaultthemes/5.header.png)
         content/browser/defaultthemes/5.icon.jpg      (content/defaultthemes/5.icon.jpg)
         content/browser/defaultthemes/5.preview.jpg   (content/defaultthemes/5.preview.jpg)
-        content/browser/defaultthemes/dark.icon.svg   (content/defaultthemes/dark.icon.svg)
-        content/browser/defaultthemes/light.icon.svg  (content/defaultthemes/light.icon.svg)
         content/browser/history-swipe-arrow.svg       (content/history-swipe-arrow.svg)
 *       content/browser/pageinfo/pageInfo.xul         (content/pageinfo/pageInfo.xul)
         content/browser/pageinfo/pageInfo.js          (content/pageinfo/pageInfo.js)
@@ -129,3 +126,4 @@ browser.jar:
 % override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
 % override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
 % override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd
+% override chrome://global/locale/app-extension-fields.properties chrome://browser/locale/app-extension-fields.properties

@@ -10,6 +10,7 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/MathAlgorithms.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/ServoStyleSet.h"
 #include "mozilla/Tuple.h"
 #include "mozilla/UniquePtr.h"
@@ -316,8 +317,8 @@ AnimationValue AnimationValue::FromString(nsCSSPropertyID aProperty,
     return result;
   }
 
-  nsCOMPtr<nsIPresShell> shell = doc->GetShell();
-  if (!shell) {
+  RefPtr<PresShell> presShell = doc->GetPresShell();
+  if (!presShell) {
     return result;
   }
 
@@ -334,7 +335,7 @@ AnimationValue AnimationValue::FromString(nsCSSPropertyID aProperty,
     return result;
   }
 
-  result.mServo = shell->StyleSet()->ComputeAnimationValue(
+  result.mServo = presShell->StyleSet()->ComputeAnimationValue(
       aElement, declarations, computedStyle);
   return result;
 }
@@ -354,7 +355,7 @@ already_AddRefed<RawServoAnimationValue> AnimationValue::FromAnimatable(
       if (listOrError.isOk()) {
         RefPtr<nsCSSValueSharedList> list = listOrError.unwrap();
         MOZ_ASSERT(list, "Transform list should be non null");
-        result = Servo_AnimationValue_Transform(eCSSProperty_transform, *list)
+        result = Servo_AnimationValue_Transform(eCSSProperty_transform, list)
                      .Consume();
       }
       break;
@@ -401,7 +402,7 @@ already_AddRefed<RawServoAnimationValue> AnimationValue::FromAnimatable(
         list->mHead->mValue.SetArrayValue(arr, eCSSUnit_Function);
       }
       result =
-          Servo_AnimationValue_Transform(eCSSProperty_rotate, *list).Consume();
+          Servo_AnimationValue_Transform(eCSSProperty_rotate, list).Consume();
       break;
     }
     case layers::Animatable::TScale: {
@@ -415,7 +416,7 @@ already_AddRefed<RawServoAnimationValue> AnimationValue::FromAnimatable(
       list->mHead = new nsCSSValueList;
       list->mHead->mValue.SetArrayValue(arr, eCSSUnit_Function);
       result =
-          Servo_AnimationValue_Transform(eCSSProperty_scale, *list).Consume();
+          Servo_AnimationValue_Transform(eCSSProperty_scale, list).Consume();
       break;
     }
     case layers::Animatable::TTranslation: {
@@ -428,7 +429,7 @@ already_AddRefed<RawServoAnimationValue> AnimationValue::FromAnimatable(
       RefPtr<nsCSSValueSharedList> list = new nsCSSValueSharedList;
       list->mHead = new nsCSSValueList;
       list->mHead->mValue.SetArrayValue(arr, eCSSUnit_Function);
-      result = Servo_AnimationValue_Transform(eCSSProperty_translate, *list)
+      result = Servo_AnimationValue_Transform(eCSSProperty_translate, list)
                    .Consume();
       break;
     }

@@ -36,7 +36,9 @@ exports.viewSourceInStyleEditor = async function(toolbox, sourceURL,
 
 /**
  * Tries to open a JavaScript file in the Debugger. If the file is not found,
- * it is opened in source view instead.
+ * it is opened in source view instead. Either the source URL or source actor ID
+ * can be specified. If both are specified, the source actor ID is used.
+ *
  * Returns a promise resolving to a boolean indicating whether or not
  * the source was able to be displayed in the Debugger, as the built-in Firefox
  * View Source is the fallback.
@@ -44,20 +46,27 @@ exports.viewSourceInStyleEditor = async function(toolbox, sourceURL,
  * @param {Toolbox} toolbox
  * @param {string} sourceURL
  * @param {number} sourceLine
+ * @param {number} sourceColumn
  * @param {string} sourceID
  * @param {string} [reason=unknown]
  *
  * @return {Promise<boolean>}
  */
-exports.viewSourceInDebugger = async function(toolbox, sourceURL, sourceLine, sourceId,
-                                              reason = "unknown") {
+exports.viewSourceInDebugger = async function(
+  toolbox,
+  sourceURL,
+  sourceLine,
+  sourceColumn,
+  sourceId,
+  reason = "unknown"
+) {
   const dbg = await toolbox.loadTool("jsdebugger");
   const source =
     sourceId ? dbg.getSourceByActorId(sourceId) : dbg.getSourceByURL(sourceURL);
   if (source) {
     await toolbox.selectTool("jsdebugger", reason);
     try {
-      await dbg.selectSource(source.id, sourceLine);
+      await dbg.selectSource(source.id, sourceLine, sourceColumn);
     } catch (err) {
       console.error("Failed to view source in debugger", err);
       return false;
@@ -68,7 +77,7 @@ exports.viewSourceInDebugger = async function(toolbox, sourceURL, sourceLine, so
     // still be able to load the source.
     await toolbox.selectTool("jsdebugger", reason);
     try {
-      await dbg.selectSourceURL(sourceURL, sourceLine);
+      await dbg.selectSourceURL(sourceURL, sourceLine, sourceColumn);
     } catch (err) {
       console.error("Failed to view source in debugger", err);
       return false;
@@ -76,7 +85,7 @@ exports.viewSourceInDebugger = async function(toolbox, sourceURL, sourceLine, so
     return true;
   }
 
-  exports.viewSource(toolbox, sourceURL, sourceLine);
+  exports.viewSource(toolbox, sourceURL, sourceLine, sourceColumn);
   return false;
 };
 

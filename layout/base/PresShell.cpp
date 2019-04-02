@@ -806,6 +806,7 @@ nsIPresShell::nsIPresShell()
       mPaintingIsFrozen(false),
       mIsNeverPainting(false),
       mResolutionUpdated(false),
+      mResolutionUpdatedByApz(false),
       mPresShellId(0),
       mFontSizeInflationEmPerLine(0),
       mFontSizeInflationMinTwips(0),
@@ -1316,9 +1317,9 @@ void PresShell::Destroy() {
   // hierarchy is torn down to avoid finding deleted frames through
   // this presshell while the frames are being torn down
   if (mDocument) {
-    NS_ASSERTION(mDocument->GetShell() == this, "Wrong shell?");
+    NS_ASSERTION(mDocument->GetPresShell() == this, "Wrong shell?");
     mDocument->ClearServoRestyleRoot();
-    mDocument->DeleteShell();
+    mDocument->DeletePresShell();
 
     if (mDocument->HasAnimationController()) {
       mDocument->GetAnimationController()->NotifyRefreshDriverDestroying(rd);
@@ -2278,7 +2279,7 @@ PresShell::ScrollPage(bool aForward) {
       GetScrollableFrameToScroll(nsIPresShell::eVertical);
   if (scrollFrame) {
     scrollFrame->ScrollBy(nsIntPoint(0, aForward ? 1 : -1),
-                          nsIScrollableFrame::PAGES, nsIScrollableFrame::SMOOTH,
+                          nsIScrollableFrame::PAGES, ScrollMode::eSmooth,
                           nullptr, nullptr, nsIScrollableFrame::NOT_MOMENTUM,
                           nsIScrollableFrame::ENABLE_SNAP);
   }
@@ -2294,7 +2295,7 @@ PresShell::ScrollLine(bool aForward) {
         Preferences::GetInt("toolkit.scrollbox.verticalScrollDistance",
                             NS_DEFAULT_VERTICAL_SCROLL_DISTANCE);
     scrollFrame->ScrollBy(nsIntPoint(0, aForward ? lineCount : -lineCount),
-                          nsIScrollableFrame::LINES, nsIScrollableFrame::SMOOTH,
+                          nsIScrollableFrame::LINES, ScrollMode::eSmooth,
                           nullptr, nullptr, nsIScrollableFrame::NOT_MOMENTUM,
                           nsIScrollableFrame::ENABLE_SNAP);
   }
@@ -2310,7 +2311,7 @@ PresShell::ScrollCharacter(bool aRight) {
         Preferences::GetInt("toolkit.scrollbox.horizontalScrollDistance",
                             NS_DEFAULT_HORIZONTAL_SCROLL_DISTANCE);
     scrollFrame->ScrollBy(nsIntPoint(aRight ? h : -h, 0),
-                          nsIScrollableFrame::LINES, nsIScrollableFrame::SMOOTH,
+                          nsIScrollableFrame::LINES, ScrollMode::eSmooth,
                           nullptr, nullptr, nsIScrollableFrame::NOT_MOMENTUM,
                           nsIScrollableFrame::ENABLE_SNAP);
   }
@@ -2323,7 +2324,7 @@ PresShell::CompleteScroll(bool aForward) {
       GetScrollableFrameToScroll(nsIPresShell::eVertical);
   if (scrollFrame) {
     scrollFrame->ScrollBy(nsIntPoint(0, aForward ? 1 : -1),
-                          nsIScrollableFrame::WHOLE, nsIScrollableFrame::SMOOTH,
+                          nsIScrollableFrame::WHOLE, ScrollMode::eSmooth,
                           nullptr, nullptr, nsIScrollableFrame::NOT_MOMENTUM,
                           nsIScrollableFrame::ENABLE_SNAP);
   }
@@ -3147,7 +3148,7 @@ nsresult nsIPresShell::GoToAnchor(const nsAString& aAnchorName, bool aScroll,
       // thing whether or not |aScroll| is true.
       if (aScroll && sf) {
         // Scroll to the top of the page
-        sf->ScrollTo(nsPoint(0, 0), nsIScrollableFrame::INSTANT);
+        sf->ScrollTo(nsPoint(0, 0), ScrollMode::eInstant);
       }
     }
   }
@@ -3376,7 +3377,7 @@ static void ScrollToShowRect(nsIScrollableFrame* aFrameAsScrollable,
   // If we don't need to scroll, then don't try since it might cancel
   // a current smooth scroll operation.
   if (needToScroll) {
-    nsIScrollableFrame::ScrollMode scrollMode = nsIScrollableFrame::INSTANT;
+    ScrollMode scrollMode = ScrollMode::eInstant;
     bool autoBehaviorIsSmooth =
         (aFrameAsScrollable->GetScrollStyles().mScrollBehavior ==
          NS_STYLE_SCROLL_BEHAVIOR_SMOOTH);
@@ -3384,7 +3385,7 @@ static void ScrollToShowRect(nsIScrollableFrame* aFrameAsScrollable,
         (aFlags & nsIPresShell::SCROLL_SMOOTH) ||
         ((aFlags & nsIPresShell::SCROLL_SMOOTH_AUTO) && autoBehaviorIsSmooth);
     if (gfxPrefs::ScrollBehaviorEnabled() && smoothScroll) {
-      scrollMode = nsIScrollableFrame::SMOOTH_MSD;
+      scrollMode = ScrollMode::eSmoothMsd;
     }
     aFrameAsScrollable->ScrollTo(scrollPt, scrollMode, &allowedRange);
   }
@@ -3414,8 +3415,8 @@ nsresult nsIPresShell::ScrollContentIntoView(
   }
 
   // Flush layout and attempt to scroll in the process.
-  if (nsIPresShell* shell = composedDoc->GetShell()) {
-    shell->SetNeedLayoutFlush();
+  if (PresShell* presShell = composedDoc->GetPresShell()) {
+    presShell->SetNeedLayoutFlush();
   }
   composedDoc->FlushPendingNotifications(FlushType::InterruptibleLayout);
 
@@ -4039,8 +4040,8 @@ void PresShell::DoFlushPendingNotifications(mozilla::ChangesToFlush aFlush) {
   }
 
   // Don't flush if the doc is already in the bfcache.
-  if (MOZ_UNLIKELY(mDocument->GetShell() != this)) {
-    MOZ_DIAGNOSTIC_ASSERT(!mDocument->GetShell(),
+  if (MOZ_UNLIKELY(mDocument->GetPresShell() != this)) {
+    MOZ_DIAGNOSTIC_ASSERT(!mDocument->GetPresShell(),
                           "Where did this shell come from?");
     isSafeToFlush = false;
   }
@@ -5197,9 +5198,12 @@ nsresult PresShell::SetResolutionAndScaleTo(float aResolution,
   if (mMobileViewportManager) {
     mMobileViewportManager->ResolutionUpdated();
   }
-  if (aOrigin != ChangeOrigin::eApz) {
+  if (aOrigin == ChangeOrigin::eApz) {
+    mResolutionUpdatedByApz = true;
+  } else {
     mResolutionUpdated = true;
   }
+
   if (auto* window = nsGlobalWindowInner::Cast(mDocument->GetInnerWindow())) {
     window->VisualViewport()->PostResizeEvent();
   }
@@ -5248,6 +5252,21 @@ void PresShell::SetRenderingState(const RenderingState& aState) {
     LayerManager* manager = GetLayerManager();
     if (manager) {
       FrameLayerBuilder::InvalidateAllLayers(manager);
+    }
+  }
+
+  // nsSubDocumentFrame uses a resolution different from 1.0 to determine if it
+  // needs to build a nsDisplayResolution item. So if we are going from or
+  // to 1.0 then we need to invalidate the subdoc frame so that item gets
+  // created/removed.
+  if (mResolution.valueOr(1.0) != aState.mResolution.valueOr(1.0) &&
+      (mResolution.valueOr(1.0) == 1.0 ||
+       aState.mResolution.valueOr(1.0) == 1.0)) {
+    if (nsIFrame* frame = GetRootFrame()) {
+      frame = nsLayoutUtils::GetCrossDocParentFrame(frame);
+      if (frame) {
+        frame->InvalidateFrame();
+      }
     }
   }
 
@@ -5834,8 +5853,8 @@ void PresShell::EnsureFrameInApproximatelyVisibleList(nsIFrame* aFrame) {
   // Make sure it's in this pres shell.
   nsCOMPtr<nsIContent> content = aFrame->GetContent();
   if (content) {
-    PresShell* shell = static_cast<PresShell*>(content->OwnerDoc()->GetShell());
-    MOZ_ASSERT(!shell || shell == this, "wrong shell");
+    PresShell* presShell = content->OwnerDoc()->GetPresShell();
+    MOZ_ASSERT(!presShell || presShell == this, "wrong shell");
   }
 #endif
 
@@ -5850,8 +5869,8 @@ void PresShell::RemoveFrameFromApproximatelyVisibleList(nsIFrame* aFrame) {
   // Make sure it's in this pres shell.
   nsCOMPtr<nsIContent> content = aFrame->GetContent();
   if (content) {
-    PresShell* shell = static_cast<PresShell*>(content->OwnerDoc()->GetShell());
-    MOZ_ASSERT(!shell || shell == this, "wrong shell");
+    PresShell* presShell = content->OwnerDoc()->GetPresShell();
+    MOZ_ASSERT(!presShell || presShell == this, "wrong shell");
   }
 #endif
 
@@ -6357,9 +6376,9 @@ nsIFrame* PresShell::EventHandler::GetNearestFrameContainingPresShell(
 }
 
 static bool FlushThrottledStyles(Document* aDocument, void* aData) {
-  nsIPresShell* shell = aDocument->GetShell();
-  if (shell && shell->IsVisible()) {
-    nsPresContext* presContext = shell->GetPresContext();
+  PresShell* presShell = aDocument->GetPresShell();
+  if (presShell && presShell->IsVisible()) {
+    nsPresContext* presContext = presShell->GetPresContext();
     if (presContext) {
       presContext->RestyleManager()->UpdateOnlyAnimationStyles();
     }
@@ -6389,7 +6408,7 @@ PresShell* PresShell::GetShellForEventTarget(nsIFrame* aFrame,
     if (!doc) {
       return nullptr;
     }
-    return static_cast<PresShell*>(doc->GetShell());
+    return doc->GetPresShell();
   }
   return nullptr;
 }
@@ -6452,6 +6471,8 @@ nsresult PresShell::EventHandler::HandleEvent(nsIFrame* aFrameForPresShell,
                                               WidgetGUIEvent* aGUIEvent,
                                               bool aDontRetargetEvents,
                                               nsEventStatus* aEventStatus) {
+  MOZ_ASSERT(aGUIEvent);
+  MOZ_DIAGNOSTIC_ASSERT(aGUIEvent->IsTrusted());
   MOZ_ASSERT(aEventStatus);
 
 #ifdef MOZ_TASK_TRACER
@@ -6926,7 +6947,7 @@ bool PresShell::EventHandler::MaybeHandleEventWithAccessibleCaret(
   if (!retargetEventDoc) {
     return false;
   }
-  nsCOMPtr<nsIPresShell> presShell = retargetEventDoc->GetShell();
+  RefPtr<PresShell> presShell = retargetEventDoc->GetPresShell();
   if (!presShell) {
     return false;
   }
@@ -7053,7 +7074,7 @@ nsIFrame* PresShell::EventHandler::GetFrameForHandlingEventWith(
   MOZ_ASSERT(aGUIEvent);
   MOZ_ASSERT(aRetargetDocument);
 
-  nsCOMPtr<nsIPresShell> retargetPresShell = aRetargetDocument->GetShell();
+  RefPtr<PresShell> retargetPresShell = aRetargetDocument->GetPresShell();
   // Even if the document doesn't have PresShell, i.e., it's invisible, we
   // need to dispatch only KeyboardEvent in its nearest visible document
   // because key focus shouldn't be caught by invisible document.
@@ -7067,7 +7088,7 @@ nsIFrame* PresShell::EventHandler::GetFrameForHandlingEventWith(
       if (!retargetEventDoc) {
         return nullptr;
       }
-      retargetPresShell = retargetEventDoc->GetShell();
+      retargetPresShell = retargetEventDoc->GetPresShell();
     }
   }
 
@@ -7531,8 +7552,7 @@ bool PresShell::EventHandler::MaybeHandleEventWithAnotherPresShell(
     return false;
   }
 
-  RefPtr<PresShell> eventTargetPresShell =
-      static_cast<PresShell*>(eventTargetDocument->GetShell());
+  RefPtr<PresShell> eventTargetPresShell = eventTargetDocument->GetPresShell();
   if (!eventTargetPresShell) {
     *aRv = NS_OK;
     return true;  // No PresShell can handle the event.
@@ -7613,6 +7633,9 @@ nsresult PresShell::EventHandler::HandleEventWithTarget(
     WidgetEvent* aEvent, nsIFrame* aNewEventFrame, nsIContent* aNewEventContent,
     nsEventStatus* aEventStatus, bool aIsHandlingNativeEvent,
     nsIContent** aTargetContent, nsIContent* aOverrideClickTarget) {
+  MOZ_ASSERT(aEvent);
+  MOZ_DIAGNOSTIC_ASSERT(aEvent->IsTrusted());
+
 #if DEBUG
   MOZ_ASSERT(!aNewEventFrame ||
                  aNewEventFrame->PresContext()->GetPresShell() == mPresShell,
@@ -7661,27 +7684,16 @@ nsresult PresShell::EventHandler::HandleEventWithCurrentEventInfo(
     }
   }
 
-  bool isHandlingUserInput = PrepareToDispatchEvent(aEvent);
-
-  // If we cannot open context menu even though eContextMenu is fired, we
-  // should stop dispatching it into the DOM.
-  if (aEvent->mMessage == eContextMenu &&
-      !PrepareToDispatchContextMenuEvent(aEvent)) {
+  bool isHandlingUserInput = false;
+  bool touchIsNew = false;
+  if (!PrepareToDispatchEvent(aEvent, aEventStatus, &isHandlingUserInput,
+                              &touchIsNew)) {
     return NS_OK;
   }
 
   // We finished preparing to dispatch the event.  So, let's record the
   // performance.
   RecordEventPreparationPerformance(aEvent);
-
-  // XXX Why don't we measure the performance of TouchManager::PreHandleEvent()
-  //     with RecordEventPreparationPerformance()?
-  bool touchIsNew = false;
-  if (!mPresShell->mTouchManager.PreHandleEvent(
-          aEvent, aEventStatus, touchIsNew, isHandlingUserInput,
-          mPresShell->mCurrentEventContent)) {
-    return NS_OK;
-  }
 
   AutoHandlingUserInputStatePusher userInpStatePusher(isHandlingUserInput,
                                                       aEvent, GetDocument());
@@ -7792,11 +7804,15 @@ nsresult PresShell::EventHandler::DispatchEvent(
       aOverrideClickTarget);
 }
 
-bool PresShell::EventHandler::PrepareToDispatchEvent(WidgetEvent* aEvent) {
-  if (!aEvent->IsTrusted()) {
-    return false;
-  }
+bool PresShell::EventHandler::PrepareToDispatchEvent(
+    WidgetEvent* aEvent, nsEventStatus* aEventStatus, bool* aIsUserInteraction,
+    bool* aTouchIsNew) {
+  MOZ_ASSERT(aEvent->IsTrusted());
+  MOZ_ASSERT(aEventStatus);
+  MOZ_ASSERT(aIsUserInteraction);
+  MOZ_ASSERT(aTouchIsNew);
 
+  *aTouchIsNew = false;
   if (aEvent->IsUserAction()) {
     mPresShell->mHasHandledUserInput = true;
   }
@@ -7810,12 +7826,14 @@ bool PresShell::EventHandler::PrepareToDispatchEvent(WidgetEvent* aEvent) {
       // Not all keyboard events are treated as user input, so that popups
       // can't be opened, fullscreen mode can't be started, etc at unexpected
       // time.
-      return keyboardEvent->CanTreatAsUserInput();
+      *aIsUserInteraction = keyboardEvent->CanTreatAsUserInput();
+      return true;
     }
     case eMouseDown:
     case eMouseUp:
     case ePointerDown:
     case ePointerUp:
+      *aIsUserInteraction = true;
       return true;
 
     case eMouseMove: {
@@ -7824,7 +7842,8 @@ bool PresShell::EventHandler::PrepareToDispatchEvent(WidgetEvent* aEvent) {
                           GetPresContext()->EventStateManager() ==
                               EventStateManager::GetActiveEventStateManager();
       nsIPresShell::AllowMouseCapture(allowCapture);
-      return false;
+      *aIsUserInteraction = false;
+      return true;
     }
     case eDrop: {
       nsCOMPtr<nsIDragSession> session = nsContentUtils::GetDragSession();
@@ -7835,11 +7854,41 @@ bool PresShell::EventHandler::PrepareToDispatchEvent(WidgetEvent* aEvent) {
           aEvent->mFlags.mOnlyChromeDispatch = true;
         }
       }
-      return false;
+      *aIsUserInteraction = false;
+      return true;
     }
+    case eContextMenu: {
+      *aIsUserInteraction = false;
 
+      // If we cannot open context menu even though eContextMenu is fired, we
+      // should stop dispatching it into the DOM.
+      WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
+      if (mouseEvent->IsContextMenuKeyEvent() &&
+          !AdjustContextMenuKeyEvent(mouseEvent)) {
+        return false;
+      }
+
+      // If "Shift" state is active, context menu should be forcibly opened even
+      // if web apps want to prevent it since we respect our users' intention.
+      // In this case, we don't fire "contextmenu" event on web content because
+      // of not cancelable.
+      if (mouseEvent->IsShift()) {
+        aEvent->mFlags.mOnlyChromeDispatch = true;
+        aEvent->mFlags.mRetargetToNonNativeAnonymous = true;
+      }
+      return true;
+    }
+    case eTouchStart:
+    case eTouchMove:
+    case eTouchEnd:
+    case eTouchCancel:
+    case eTouchPointerCancel:
+      return mPresShell->mTouchManager.PreHandleEvent(
+          aEvent, aEventStatus, *aTouchIsNew, *aIsUserInteraction,
+          mPresShell->mCurrentEventContent);
     default:
-      return false;
+      *aIsUserInteraction = false;
+      return true;
   }
 }
 
@@ -7890,30 +7939,6 @@ void PresShell::EventHandler::FinalizeHandlingEvent(WidgetEvent* aEvent) {
     default:
       return;
   }
-}
-
-bool PresShell::EventHandler::PrepareToDispatchContextMenuEvent(
-    WidgetEvent* aEvent) {
-  MOZ_ASSERT(aEvent);
-  MOZ_ASSERT(aEvent->mMessage == eContextMenu);
-
-  // XXX Why do we treat untrusted eContextMenu here?
-
-  WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
-  if (mouseEvent->IsContextMenuKeyEvent() &&
-      !AdjustContextMenuKeyEvent(mouseEvent)) {
-    return false;
-  }
-
-  // If "Shift" state is active, context menu should be forcibly opened even
-  // if web apps want to prevent it since we respect our users' intention.
-  // In this case, we don't fire "contextmenu" event on web content because
-  // of not cancelable.
-  if (mouseEvent->IsShift()) {
-    aEvent->mFlags.mOnlyChromeDispatch = true;
-    aEvent->mFlags.mRetargetToNonNativeAnonymous = true;
-  }
-  return true;
 }
 
 void PresShell::EventHandler::MaybeHandleKeyboardEventBeforeDispatch(
@@ -7973,10 +7998,6 @@ void PresShell::EventHandler::RecordEventPreparationPerformance(
     const WidgetEvent* aEvent) {
   MOZ_ASSERT(aEvent);
 
-  if (!aEvent->IsTrusted()) {
-    return;
-  }
-
   switch (aEvent->mMessage) {
     case eKeyPress:
     case eKeyDown:
@@ -8035,9 +8056,6 @@ void PresShell::EventHandler::RecordEventPreparationPerformance(
 
 void PresShell::EventHandler::RecordEventHandlingResponsePerformance(
     const WidgetEvent* aEvent) {
-  // XXX Why we include the peformance of untrusted events only here?
-  //     We don't include it at recoding the preparation performance.
-
   if (!Telemetry::CanRecordBase() || aEvent->mTimeStamp.IsNull() ||
       aEvent->mTimeStamp <= mPresShell->mLastOSWake ||
       !aEvent->AsInputEvent()) {
@@ -8230,15 +8248,15 @@ void PresShell::EventHandler::DispatchTouchEventToDOM(
       content = capturingContent;
     }
     // copy the event
-    WidgetTouchEvent newEvent(touchEvent->IsTrusted(), touchEvent->mMessage,
-                              touchEvent->mWidget);
+    MOZ_ASSERT(touchEvent->IsTrusted());
+    WidgetTouchEvent newEvent(true, touchEvent->mMessage, touchEvent->mWidget);
     newEvent.AssignTouchEventData(*touchEvent, false);
     newEvent.mTarget = targetPtr;
     newEvent.mFlags.mHandledByAPZ = touchEvent->mFlags.mHandledByAPZ;
 
     RefPtr<PresShell> contentPresShell;
     if (doc == GetDocument()) {
-      contentPresShell = static_cast<PresShell*>(doc->GetShell());
+      contentPresShell = doc->GetPresShell();
       if (contentPresShell) {
         // XXXsmaug huge hack. Pushing possibly capturing content,
         //         even though event target is something else.
@@ -8815,9 +8833,10 @@ static void FreezeElement(nsISupports* aSupports, void* /* unused */) {
 }
 
 static bool FreezeSubDocument(Document* aDocument, void* aData) {
-  nsIPresShell* shell = aDocument->GetShell();
-  if (shell) shell->Freeze();
-
+  PresShell* presShell = aDocument->GetPresShell();
+  if (presShell) {
+    presShell->Freeze();
+  }
   return true;
 }
 
@@ -8885,9 +8904,10 @@ static void ThawElement(nsISupports* aSupports, void* aShell) {
 }
 
 static bool ThawSubDocument(Document* aDocument, void* aData) {
-  nsIPresShell* shell = aDocument->GetShell();
-  if (shell) shell->Thaw();
-
+  PresShell* presShell = aDocument->GetPresShell();
+  if (presShell) {
+    presShell->Thaw();
+  }
   return true;
 }
 
@@ -9578,17 +9598,19 @@ void PresShell::DelayedInputEvent::Dispatch() {
 
 PresShell::DelayedMouseEvent::DelayedMouseEvent(WidgetMouseEvent* aEvent)
     : DelayedInputEvent() {
-  WidgetMouseEvent* mouseEvent = new WidgetMouseEvent(
-      aEvent->IsTrusted(), aEvent->mMessage, aEvent->mWidget, aEvent->mReason,
-      aEvent->mContextMenuTrigger);
+  MOZ_DIAGNOSTIC_ASSERT(aEvent->IsTrusted());
+  WidgetMouseEvent* mouseEvent =
+      new WidgetMouseEvent(true, aEvent->mMessage, aEvent->mWidget,
+                           aEvent->mReason, aEvent->mContextMenuTrigger);
   mouseEvent->AssignMouseEventData(*aEvent, false);
   mEvent = mouseEvent;
 }
 
 PresShell::DelayedKeyEvent::DelayedKeyEvent(WidgetKeyboardEvent* aEvent)
     : DelayedInputEvent() {
-  WidgetKeyboardEvent* keyEvent = new WidgetKeyboardEvent(
-      aEvent->IsTrusted(), aEvent->mMessage, aEvent->mWidget);
+  MOZ_DIAGNOSTIC_ASSERT(aEvent->IsTrusted());
+  WidgetKeyboardEvent* keyEvent =
+      new WidgetKeyboardEvent(true, aEvent->mMessage, aEvent->mWidget);
   keyEvent->AssignKeyEventData(*aEvent, false);
   keyEvent->mFlags.mIsSynthesizedForTests =
       aEvent->mFlags.mIsSynthesizedForTests;
@@ -9899,23 +9921,26 @@ bool nsIPresShell::VerifyIncrementalReflow() {
   // exact same style information that this document has.
   UniquePtr<ServoStyleSet> newSet = CloneStyleSet(StyleSet());
 
-  nsCOMPtr<nsIPresShell> sh = mDocument->CreateShell(cx, vm, std::move(newSet));
-  NS_ENSURE_TRUE(sh, false);
+  RefPtr<PresShell> presShell =
+      mDocument->CreatePresShell(cx, vm, std::move(newSet));
+  NS_ENSURE_TRUE(presShell, false);
   // Note that after we create the shell, we must make sure to destroy it
-  sh->SetVerifyReflowEnable(false);  // turn off verify reflow while we're
-                                     // reflowing the test frame tree
-  vm->SetPresShell(sh);
+  presShell->SetVerifyReflowEnable(
+      false);  // turn off verify reflow while we're
+               // reflowing the test frame tree
+  vm->SetPresShell(presShell);
   {
     nsAutoCauseReflowNotifier crNotifier(this);
-    sh->Initialize();
+    presShell->Initialize();
   }
   mDocument->BindingManager()->ProcessAttachedQueue();
-  sh->FlushPendingNotifications(FlushType::Layout);
-  sh->SetVerifyReflowEnable(true);  // turn on verify reflow again now that
-                                    // we're done reflowing the test frame tree
+  presShell->FlushPendingNotifications(FlushType::Layout);
+  presShell->SetVerifyReflowEnable(
+      true);  // turn on verify reflow again now that
+              // we're done reflowing the test frame tree
   // Force the non-primary presshell to unsuppress; it doesn't want to normally
   // because it thinks it's hidden
-  ((PresShell*)sh.get())->mPaintingSuppressed = false;
+  presShell->mPaintingSuppressed = false;
   if (VERIFY_REFLOW_NOISY & gVerifyReflowFlags) {
     printf("Verification Tree built, comparing...\n");
   }
@@ -9923,7 +9948,7 @@ bool nsIPresShell::VerifyIncrementalReflow() {
   // Now that the document has been reflowed, use its frame tree to
   // compare against our frame tree.
   nsIFrame* root1 = mFrameConstructor->GetRootFrame();
-  nsIFrame* root2 = sh->GetRootFrame();
+  nsIFrame* root2 = presShell->GetRootFrame();
   bool ok = CompareTrees(mPresContext, root1, cx, root2);
   if (!ok && (VERIFY_REFLOW_NOISY & gVerifyReflowFlags)) {
     printf("Verify reflow failed, primary tree:\n");
@@ -9941,18 +9966,18 @@ bool nsIPresShell::VerifyIncrementalReflow() {
     stra.AppendLiteral("C:\\mozilla\\mozilla\\debug\\filea");
     stra.AppendInt(num);
     stra.AppendLiteral(".png");
-    gfxUtils::WriteAsPNG(sh, stra);
+    gfxUtils::WriteAsPNG(presShell, stra);
     nsString strb;
     strb.AppendLiteral("C:\\mozilla\\mozilla\\debug\\fileb");
     strb.AppendInt(num);
     strb.AppendLiteral(".png");
-    gfxUtils::WriteAsPNG(sh, strb);
+    gfxUtils::WriteAsPNG(presShell, strb);
     ++num;
   }
 #  endif
 
-  sh->EndObservingDocument();
-  sh->Destroy();
+  presShell->EndObservingDocument();
+  presShell->Destroy();
   if (VERIFY_REFLOW_NOISY & gVerifyReflowFlags) {
     printf("Finished Verifying Reflow...\n");
   }
@@ -10182,7 +10207,8 @@ void ReflowCountMgr::PaintCount(const char* aName,
 
       // We don't care about the document language or user fonts here;
       // just get a default Latin font.
-      nsFont font(eFamily_serif, nsPresContext::CSSPixelsToAppUnits(11));
+      nsFont font(StyleGenericFontFamily::Serif,
+                  nsPresContext::CSSPixelsToAppUnits(11));
       nsFontMetrics::Params params;
       params.language = nsGkAtoms::x_western;
       params.textPerf = aPresContext->GetTextPerfMetrics();
@@ -10456,9 +10482,9 @@ void PresShell::QueryIsActive() {
 
 // Helper for propagating mIsActive changes to external resources
 static bool SetExternalResourceIsActive(Document* aDocument, void* aClosure) {
-  nsIPresShell* shell = aDocument->GetShell();
-  if (shell) {
-    shell->SetIsActive(*static_cast<bool*>(aClosure));
+  PresShell* presShell = aDocument->GetPresShell();
+  if (presShell) {
+    presShell->SetIsActive(*static_cast<bool*>(aClosure));
   }
   return true;
 }
@@ -10702,7 +10728,9 @@ bool nsIPresShell::SetVisualViewportOffset(
 void nsIPresShell::ScrollToVisual(
     const nsPoint& aVisualViewportOffset,
     FrameMetrics::ScrollOffsetUpdateType aUpdateType, ScrollMode aMode) {
-  if (aMode == ScrollMode::eSmooth) {
+  MOZ_ASSERT(aMode == ScrollMode::eInstant || aMode == ScrollMode::eSmoothMsd);
+
+  if (aMode == ScrollMode::eSmoothMsd) {
     if (nsIScrollableFrame* sf = GetRootScrollFrameAsScrollable()) {
       if (sf->SmoothScrollVisual(aVisualViewportOffset, aUpdateType)) {
         return;
@@ -11092,11 +11120,11 @@ PresShell::EventHandler::HandlingTimeAccumulator::HandlingTimeAccumulator(
       mEvent(aEvent),
       mHandlingStartTime(TimeStamp::Now()) {
   MOZ_ASSERT(mEvent);
+  MOZ_ASSERT(mEvent->IsTrusted());
 }
 
 PresShell::EventHandler::HandlingTimeAccumulator::~HandlingTimeAccumulator() {
-  if (!mEvent->IsTrusted() ||
-      mEvent->mTimeStamp <= mEventHandler.mPresShell->mLastOSWake) {
+  if (mEvent->mTimeStamp <= mEventHandler.mPresShell->mLastOSWake) {
     return;
   }
 

@@ -11,7 +11,9 @@
 #include "ServoBindings.h"
 #include "mozilla/Encoding.h"
 #include "mozilla/NullPrincipalURI.h"
+#include "mozilla/css/SheetParsingMode.h"
 #include "mozilla/net/ReferrerPolicy.h"
+#include "nsCSSValue.h"
 
 using namespace mozilla;
 using namespace mozilla::css;
@@ -85,7 +87,7 @@ MOZ_GTEST_BENCH(Stylo, Servo_StyleSheet_FromUTF8Bytes_Bench,
                 [] { ServoParsingBench(nullptr); });
 
 MOZ_GTEST_BENCH(Stylo, Servo_StyleSheet_FromUTF8Bytes_Bench_UseCounters, [] {
-  UniquePtr<StyleUseCounters> counters(Servo_UseCounters_Create());
+  UniquePtr<StyleUseCounters> counters = Servo_UseCounters_Create().Consume();
   ServoParsingBench(counters.get());
 });
 

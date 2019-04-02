@@ -9,10 +9,7 @@ job-defaults:
         by-test-platform:
             android-hw.*: /builds/worker
             default: /home/cltbld
-    run-on-projects:
-        by-test-platform:
-            .*shippable(?:-qr)?/opt: built-projects
-            default: ['try', 'mozilla-central']
+    run-on-projects: ['try', 'mozilla-central']
     tier: 2
     virtualization:
         by-test-platform:
@@ -121,6 +118,16 @@ raptor-tp6-8-chrome:
     mozharness:
         extra-options:
             - --test=raptor-tp6-8
+            - --app=chrome
+
+raptor-tp6-8-404-chrome:
+    description: "Raptor tp6-8-404 on Chrome"
+    try-name: raptor-tp6-8-404-chrome
+    treeherder-symbol: Rap-C(tp6-8-404)
+    tier: 3
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-8-404
             - --app=chrome
 
 raptor-tp6-9-chrome:

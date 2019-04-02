@@ -56,7 +56,7 @@ pub fn au_to_int_px(au: f32) -> i32 {
 }
 
 /// A font relative length.
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss)]
+#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss, ToShmem)]
 pub enum FontRelativeLength {
     /// A "em" value: https://drafts.csswg.org/css-values/#em
     #[css(dimension)]
@@ -135,7 +135,9 @@ impl FontRelativeLength {
             base_size: FontBaseSize,
             orientation: FontMetricsOrientation,
         ) -> FontMetrics {
-            context.font_metrics_provider.query(context, base_size, orientation)
+            context
+                .font_metrics_provider
+                .query(context, base_size, orientation)
         }
 
         let reference_font_size = base_size.resolve(context);
@@ -160,13 +162,12 @@ impl FontRelativeLength {
                 if context.for_non_inherited_property.is_some() {
                     context.rule_cache_conditions.borrow_mut().set_uncacheable();
                 }
-                context.builder.add_flags(ComputedValueFlags::DEPENDS_ON_FONT_METRICS);
+                context
+                    .builder
+                    .add_flags(ComputedValueFlags::DEPENDS_ON_FONT_METRICS);
                 // The x-height is an intrinsically horizontal metric.
-                let metrics = query_font_metrics(
-                    context,
-                    base_size,
-                    FontMetricsOrientation::Horizontal
-                );
+                let metrics =
+                    query_font_metrics(context, base_size, FontMetricsOrientation::Horizontal);
                 let reference_size = metrics.x_height.unwrap_or_else(|| {
                     // https://drafts.csswg.org/css-values/#ex
                     //
@@ -182,7 +183,9 @@ impl FontRelativeLength {
                 if context.for_non_inherited_property.is_some() {
                     context.rule_cache_conditions.borrow_mut().set_uncacheable();
                 }
-                context.builder.add_flags(ComputedValueFlags::DEPENDS_ON_FONT_METRICS);
+                context
+                    .builder
+                    .add_flags(ComputedValueFlags::DEPENDS_ON_FONT_METRICS);
                 // https://drafts.csswg.org/css-values/#ch:
                 //
                 //     Equal to the used advance measure of the “0” (ZERO,
@@ -190,11 +193,8 @@ impl FontRelativeLength {
                 //     measure of a glyph is its advance width or height,
                 //     whichever is in the inline axis of the element.)
                 //
-                let metrics = query_font_metrics(
-                    context,
-                    base_size,
-                    FontMetricsOrientation::MatchContext,
-                );
+                let metrics =
+                    query_font_metrics(context, base_size, FontMetricsOrientation::MatchContext);
                 let reference_size = metrics.zero_advance_measure.unwrap_or_else(|| {
                     // https://drafts.csswg.org/css-values/#ch
                     //
@@ -236,7 +236,7 @@ impl FontRelativeLength {
 /// A viewport-relative length.
 ///
 /// <https://drafts.csswg.org/css-values/#viewport-relative-lengths>
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss)]
+#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss, ToShmem)]
 pub enum ViewportPercentageLength {
     /// A vw unit: https://drafts.csswg.org/css-values/#vw
     #[css(dimension)]
@@ -285,7 +285,7 @@ impl ViewportPercentageLength {
 }
 
 /// HTML5 "character width", as defined in HTML5 § 14.5.4.
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss)]
+#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss, ToShmem)]
 pub struct CharacterWidth(pub i32);
 
 impl CharacterWidth {
@@ -303,7 +303,7 @@ impl CharacterWidth {
 }
 
 /// Represents an absolute length with its unit
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss)]
+#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss, ToShmem)]
 pub enum AbsoluteLength {
     /// An absolute length in pixels (px)
     #[css(dimension)]
@@ -409,7 +409,7 @@ impl Add<AbsoluteLength> for AbsoluteLength {
 /// A `<length>` without taking `calc` expressions into account
 ///
 /// <https://drafts.csswg.org/css-values/#lengths>
-#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss)]
+#[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss, ToShmem)]
 pub enum NoCalcLength {
     /// An absolute length
     ///
@@ -522,7 +522,7 @@ impl Zero for NoCalcLength {
 /// This is commonly used for the `<length>` values.
 ///
 /// <https://drafts.csswg.org/css-values/#lengths>
-#[derive(Clone, Debug, MallocSizeOf, PartialEq, SpecifiedValueInfo, ToCss)]
+#[derive(Clone, Debug, MallocSizeOf, PartialEq, SpecifiedValueInfo, ToCss, ToShmem)]
 pub enum Length {
     /// The internal length type that cannot parse `calc`
     NoCalc(NoCalcLength),
@@ -742,7 +742,7 @@ impl NonNegativeLength {
 ///
 /// https://drafts.csswg.org/css-values-4/#typedef-length-percentage
 #[allow(missing_docs)]
-#[derive(Clone, Debug, MallocSizeOf, PartialEq, SpecifiedValueInfo, ToCss)]
+#[derive(Clone, Debug, MallocSizeOf, PartialEq, SpecifiedValueInfo, ToCss, ToShmem)]
 pub enum LengthPercentage {
     Length(NoCalcLength),
     Percentage(computed::Percentage),

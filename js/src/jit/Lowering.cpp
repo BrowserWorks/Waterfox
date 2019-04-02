@@ -542,7 +542,7 @@ void LIRGenerator::visitAssertFloat32(MAssertFloat32* assertion) {
   MIRType type = assertion->input()->type();
   DebugOnly<bool> checkIsFloat32 = assertion->mustBeFloat32();
 
-  if (type != MIRType::Value && !JitOptions.eagerCompilation) {
+  if (type != MIRType::Value && !JitOptions.eagerIonCompilation()) {
     MOZ_ASSERT_IF(checkIsFloat32, type == MIRType::Float32);
     MOZ_ASSERT_IF(!checkIsFloat32, type != MIRType::Float32);
   }
@@ -3714,8 +3714,8 @@ void LIRGenerator::visitGetPropertyPolymorphic(MGetPropertyPolymorphic* ins) {
     assignSnapshot(lir, Bailout_ShapeGuard);
     defineBox(lir, ins);
   } else {
-    LGetPropertyPolymorphicT* lir = new (alloc()) LGetPropertyPolymorphicT(
-        useRegister(ins->object()), temp());
+    LGetPropertyPolymorphicT* lir = new (alloc())
+        LGetPropertyPolymorphicT(useRegister(ins->object()), temp());
     assignSnapshot(lir, Bailout_ShapeGuard);
     define(lir, ins);
   }
@@ -3731,9 +3731,8 @@ void LIRGenerator::visitSetPropertyPolymorphic(MSetPropertyPolymorphic* ins) {
     add(lir, ins);
   } else {
     LAllocation value = useRegisterOrConstant(ins->value());
-    LSetPropertyPolymorphicT* lir = new (alloc())
-        LSetPropertyPolymorphicT(useRegister(ins->object()), value,
-                                 ins->value()->type(), temp());
+    LSetPropertyPolymorphicT* lir = new (alloc()) LSetPropertyPolymorphicT(
+        useRegister(ins->object()), value, ins->value()->type(), temp());
     assignSnapshot(lir, Bailout_ShapeGuard);
     add(lir, ins);
   }
@@ -3833,8 +3832,8 @@ void LIRGenerator::visitGuardReceiverPolymorphic(
   MOZ_ASSERT(ins->type() == MIRType::Object);
 
   if (JitOptions.spectreObjectMitigationsMisc) {
-    auto* lir = new (alloc()) LGuardReceiverPolymorphic(
-        useRegisterAtStart(ins->object()), temp());
+    auto* lir = new (alloc())
+        LGuardReceiverPolymorphic(useRegisterAtStart(ins->object()), temp());
     assignSnapshot(lir, Bailout_ShapeGuard);
     defineReuseInput(lir, ins, 0);
   } else {

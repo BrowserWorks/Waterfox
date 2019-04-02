@@ -111,6 +111,11 @@ EventTooltip.prototype = {
               const eventEditor = this._eventEditors.get(content);
               eventEditor.uri = newURI;
 
+              // Since we just changed the URI/line, we need to clear out the
+              // source actor ID. These must be consistent with each other when
+              // we call viewSourceInDebugger with the event's information.
+              eventEditor.sourceActor = null;
+
               // This is emitted for testing.
               this._tooltip.emit("event-tooltip-source-map-ready");
             }
@@ -273,7 +278,8 @@ EventTooltip.prototype = {
 
       this._tooltip.hide();
 
-      toolbox.viewSourceInDebugger(location.url, location.line, sourceActor);
+      toolbox.viewSourceInDebugger(location.url, location.line,
+        location.column, sourceActor);
     }
   },
 

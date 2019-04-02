@@ -536,7 +536,8 @@ double gfxFontconfigFontEntry::GetAspect() {
   s.size = 100.0;  // pick large size to avoid possible hinting artifacts
   RefPtr<gfxFont> font = FindOrMakeFont(&s);
   if (font) {
-    const gfxFont::Metrics& metrics = font->GetMetrics(gfxFont::eHorizontal);
+    const gfxFont::Metrics& metrics =
+        font->GetMetrics(nsFontMetrics::eHorizontal);
 
     // The factor of 0.1 ensures that xHeight is sane so fonts don't
     // become huge.  Strictly ">" ensures that xHeight and emHeight are
@@ -1738,7 +1739,7 @@ void gfxFcPlatformFontList::GetFontList(nsAtom* aLangGroup,
   if (serif) aListOfFonts.InsertElementAt(0, NS_LITERAL_STRING("serif"));
 }
 
-gfxFontFamily* gfxFcPlatformFontList::GetDefaultFontForPlatform(
+FontFamily gfxFcPlatformFontList::GetDefaultFontForPlatform(
     const gfxFontStyle* aStyle) {
   // Get the default font by using a fake name to retrieve the first
   // scalable font that fontconfig suggests for the given language.
@@ -1748,7 +1749,7 @@ gfxFontFamily* gfxFcPlatformFontList::GetDefaultFontForPlatform(
   if (prefFonts && !prefFonts->IsEmpty()) {
     return (*prefFonts)[0];
   }
-  return nullptr;
+  return FontFamily();
 }
 
 gfxFontEntry* gfxFcPlatformFontList::LookupLocalFont(
@@ -1971,14 +1972,9 @@ bool gfxFcPlatformFontList::GetStandardFamilyName(const nsCString& aFontName,
 }
 
 void gfxFcPlatformFontList::AddGenericFonts(
-    mozilla::FontFamilyType aGenericType, nsAtom* aLanguage,
+    mozilla::StyleGenericFontFamily aGenericType, nsAtom* aLanguage,
     nsTArray<FamilyAndGeneric>& aFamilyList) {
   bool usePrefFontList = false;
-
-  // treat -moz-fixed as monospace
-  if (aGenericType == eFamily_moz_fixed) {
-    aGenericType = eFamily_monospace;
-  }
 
   const char* generic = GetGenericName(aGenericType);
   NS_ASSERTION(generic, "weird generic font type");
@@ -2029,7 +2025,7 @@ void gfxFcPlatformFontList::AddGenericFonts(
   NS_ASSERTION(prefFonts, "null generic font list");
   aFamilyList.SetCapacity(aFamilyList.Length() + prefFonts->Length());
   for (auto& f : *prefFonts) {
-    aFamilyList.AppendElement(FamilyAndGeneric(f.get(), aGenericType));
+    aFamilyList.AppendElement(FamilyAndGeneric(f, aGenericType));
   }
 }
 

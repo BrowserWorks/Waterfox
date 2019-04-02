@@ -34,6 +34,14 @@ async function mapLocations(
   );
 }
 
+// Filter out positions, that are not in the original source Id
+function filterBySource(positions, sourceId) {
+  if (!isOriginalId(sourceId)) {
+    return positions;
+  }
+  return positions.filter(position => position.location.sourceId == sourceId);
+}
+
 function filterByUniqLocation(positions: MappedLocation[]) {
   return uniqBy(positions, ({ location }) => makeBreakpointId(location));
 }
@@ -96,6 +104,8 @@ async function _setBreakpointPositions(sourceId, thunkArgs) {
 
   let positions = convertToList(results, generatedSource);
   positions = await mapLocations(positions, thunkArgs);
+
+  positions = filterBySource(positions, sourceId);
   positions = filterByUniqLocation(positions);
 
   const source = getSource(getState(), sourceId);
@@ -110,6 +120,22 @@ async function _setBreakpointPositions(sourceId, thunkArgs) {
   });
 }
 
+function buildCacheKey(sourceId: string, thunkArgs: ThunkArgs): string {
+  const generatedSource = getSource(
+    thunkArgs.getState(),
+    isOriginalId(sourceId) ? originalToGeneratedId(sourceId) : sourceId
+  );
+
+  let key = sourceId;
+
+  if (generatedSource) {
+    for (const actor of generatedSource.actors) {
+      key += `:${actor.actor}`;
+    }
+  }
+  return key;
+}
+
 export function setBreakpointPositions(sourceId: string) {
   return async (thunkArgs: ThunkArgs) => {
     const { getState } = thunkArgs;
@@ -117,9 +143,11 @@ export function setBreakpointPositions(sourceId: string) {
       return getBreakpointPositionsForSource(getState(), sourceId);
     }
 
-    if (!requests.has(sourceId)) {
+    const cacheKey = buildCacheKey(sourceId, thunkArgs);
+
+    if (!requests.has(cacheKey)) {
       requests.set(
-        sourceId,
+        cacheKey,
         (async () => {
           try {
             await _setBreakpointPositions(sourceId, thunkArgs);
@@ -127,13 +155,13 @@ export function setBreakpointPositions(sourceId: string) {
             // TODO: Address exceptions originating from 1536618
             // `Debugger.Source belongs to a different Debugger`
           } finally {
-            requests.delete(sourceId);
+            requests.delete(cacheKey);
           }
         })()
       );
     }
 
-    await requests.get(sourceId);
+    await requests.get(cacheKey);
     return getBreakpointPositionsForSource(getState(), sourceId);
   };
 }

@@ -19,15 +19,13 @@ use std::os::raw::{c_int};
 use std::time::Duration;
 use gleam::gl;
 
-use webrender::api::*;
-use webrender::api::units::*;
-use webrender::{ReadPixelsFormat, Renderer, RendererOptions, RendererStats, ThreadListener};
-use webrender::{ExternalImage, ExternalImageHandler, ExternalImageSource};
-use webrender::DebugFlags;
-use webrender::{ApiRecordingReceiver, BinaryRecorder};
-use webrender::{AsyncPropertySampler, PipelineInfo, SceneBuilderHooks};
-use webrender::{UploadMethod, VertexUsageHint, ProfilerHooks, set_profiler_hooks};
-use webrender::{Device, Shaders, WrShaders, ShaderPrecacheFlags};
+use webrender::{
+    api::*, api::units::*, ApiRecordingReceiver, AsyncPropertySampler, AsyncScreenshotHandle,
+    BinaryRecorder, DebugFlags, Device, ExternalImage, ExternalImageHandler, ExternalImageSource,
+    PipelineInfo, ProfilerHooks, ReadPixelsFormat, Renderer, RendererOptions, RendererStats,
+    SceneBuilderHooks, ShaderPrecacheFlags, Shaders, ThreadListener, UploadMethod, VertexUsageHint,
+    WrShaders, set_profiler_hooks,
+};
 use thread_profiler::register_thread_with_profiler;
 use moz2d_renderer::Moz2dBlobImageHandler;
 use program_cache::{WrProgramCache, remove_disk_cache};
@@ -669,6 +667,59 @@ pub extern "C" fn wr_renderer_render(renderer: &mut Renderer,
     }
 }
 
+#[no_mangle]
+pub extern "C" fn wr_renderer_get_screenshot_async(
+    renderer: &mut Renderer,
+    window_x: i32,
+    window_y: i32,
+    window_width: i32,
+    window_height: i32,
+    buffer_width: i32,
+    buffer_height: i32,
+    image_format: ImageFormat,
+    screenshot_width: *mut i32,
+    screenshot_height: *mut i32,
+) -> AsyncScreenshotHandle {
+    assert!(!screenshot_width.is_null());
+    assert!(!screenshot_height.is_null());
+
+    let (handle, size) = renderer.get_screenshot_async(
+        DeviceIntRect::new(
+            DeviceIntPoint::new(window_x, window_y),
+            DeviceIntSize::new(window_width, window_height),
+        ),
+        DeviceIntSize::new(buffer_width, buffer_height),
+        image_format,
+    );
+
+    unsafe {
+        *screenshot_width = size.width;
+        *screenshot_height = size.height;
+    }
+
+    handle
+}
+
+#[no_mangle]
+pub extern "C" fn wr_renderer_map_and_recycle_screenshot(
+    renderer: &mut Renderer,
+    handle: AsyncScreenshotHandle,
+    dst_buffer: *mut u8,
+    dst_buffer_len: usize,
+    dst_stride: usize,
+) -> bool {
+    renderer.map_and_recycle_screenshot(
+        handle,
+        make_slice_mut(dst_buffer, dst_buffer_len),
+        dst_stride,
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn wr_renderer_release_profiler_structures(renderer: &mut Renderer) {
+    renderer.release_profiler_structures();
+}
+
 // Call wr_renderer_render() before calling this function.
 #[no_mangle]
 pub unsafe extern "C" fn wr_renderer_readback(renderer: &mut Renderer,
@@ -1159,10 +1210,11 @@ pub extern "C" fn wr_window_new(window_id: WrWindowId,
     // Ensure the WR profiler callbacks are hooked up to the Gecko profiler.
     set_profiler_hooks(Some(&PROFILER_HOOKS));
 
+    let window_size = FramebufferIntSize::new(window_width, window_height);
     let notifier = Box::new(CppNotifier {
         window_id: window_id,
     });
-    let (renderer, sender) = match Renderer::new(gl, notifier, opts, shaders) {
+    let (renderer, sender) = match Renderer::new(gl, notifier, opts, shaders, window_size) {
         Ok((renderer, sender)) => (renderer, sender),
         Err(e) => {
             warn!(" Failed to create a Renderer: {:?}", e);
@@ -1177,7 +1229,6 @@ pub extern "C" fn wr_window_new(window_id: WrWindowId,
     unsafe {
         *out_max_texture_size = renderer.get_max_texture_size();
     }
-    let window_size = FramebufferIntSize::new(window_width, window_height);
     let layer = 0;
     *out_handle = Box::into_raw(Box::new(
             DocumentHandle::new_with_id(sender.create_api_by_client(next_namespace_id()),
@@ -1350,8 +1401,7 @@ pub extern "C" fn wr_transaction_set_display_list(
     txn: &mut Transaction,
     epoch: WrEpoch,
     background: ColorF,
-    viewport_width: f32,
-    viewport_height: f32,
+    viewport_size: LayoutSize,
     pipeline_id: WrPipelineId,
     content_size: LayoutSize,
     dl_descriptor: BuiltDisplayListDescriptor,
@@ -1370,7 +1420,7 @@ pub extern "C" fn wr_transaction_set_display_list(
     txn.set_display_list(
         epoch,
         color,
-        LayoutSize::new(viewport_width, viewport_height),
+        viewport_size,
         (pipeline_id, content_size, dl),
         preserve_frame_state,
     );

@@ -505,6 +505,7 @@ static bool enableAsyncStacks = false;
 static bool enableStreams = false;
 static bool enableBigInt = false;
 static bool enableFields = false;
+static bool enableAwaitFix = false;
 #ifdef JS_GC_ZEAL
 static uint32_t gZealBits = 0;
 static uint32_t gZealFrequency = 0;
@@ -2007,7 +2008,7 @@ static bool Evaluate(JSContext* cx, unsigned argc, Value* vp) {
   bool saveBytecode = false;
   bool saveIncrementalBytecode = false;
   bool assertEqBytecode = false;
-  JS::AutoObjectVector envChain(cx);
+  JS::RootedObjectVector envChain(cx);
   RootedObject callerGlobal(cx, cx->global());
 
   options.setIntroductionType("js shell evaluate")
@@ -3649,7 +3650,7 @@ static bool Clone(JSContext* cx, unsigned argc, Value* vp) {
 
   // Should it worry us that we might be getting with wrappers
   // around with wrappers here?
-  JS::AutoObjectVector envChain(cx);
+  JS::RootedObjectVector envChain(cx);
   if (env && !env->is<GlobalObject>() && !envChain.append(env)) {
     return false;
   }
@@ -3766,7 +3767,8 @@ static void SetStandardRealmOptions(JS::RealmOptions& options) {
       .setSharedMemoryAndAtomicsEnabled(enableSharedMemory)
       .setBigIntEnabled(enableBigInt)
       .setStreamsEnabled(enableStreams)
-      .setFieldsEnabled(enableFields);
+      .setFieldsEnabled(enableFields)
+      .setAwaitFixEnabled(enableAwaitFix);
 }
 
 static MOZ_MUST_USE bool CheckRealmOptions(JSContext* cx,
@@ -4127,7 +4129,7 @@ static bool ShapeOf(JSContext* cx, unsigned argc, JS::Value* vp) {
     return false;
   }
   JSObject* obj = &args[0].toObject();
-  args.rval().set(JS_NumberValue(double(uintptr_t(obj->maybeShape()) >> 3)));
+  args.rval().set(JS_NumberValue(double(uintptr_t(obj->shape()) >> 3)));
   return true;
 }
 
@@ -4157,13 +4159,7 @@ static bool UnwrappedObjectsHaveSameShape(JSContext* cx, unsigned argc,
   RootedObject obj1(cx, UncheckedUnwrap(&args[0].toObject()));
   RootedObject obj2(cx, UncheckedUnwrap(&args[1].toObject()));
 
-  if (!obj1->is<ShapedObject>() || !obj2->is<ShapedObject>()) {
-    JS_ReportErrorASCII(cx, "object does not have a Shape");
-    return false;
-  }
-
-  args.rval().setBoolean(obj1->as<ShapedObject>().shape() ==
-                         obj2->as<ShapedObject>().shape());
+  args.rval().setBoolean(obj1->shape() == obj2->shape());
   return true;
 }
 
@@ -6524,7 +6520,7 @@ static bool DisableSingleStepProfiling(JSContext* cx, unsigned argc,
 
   ShellContext* sc = GetShellContext(cx);
 
-  AutoValueVector elems(cx);
+  RootedValueVector elems(cx);
   for (size_t i = 0; i < sc->stacks.length(); i++) {
     JSString* stack =
         JS_NewUCStringCopyN(cx, sc->stacks[i].begin(), sc->stacks[i].length());
@@ -8146,9 +8142,11 @@ static bool TransplantObject(JSContext* cx, unsigned argc, Value* vp) {
   // 1. Check the recursion depth using CheckRecursionLimitConservative.
   // 2. Enter the target compartment.
   // 3. Clone the source object using JS_CloneObject.
-  // 4. Copy all properties from source to a temporary holder object.
-  // 5. Actually transplant the object.
-  // 6. And finally copy the properties back to the source object.
+  // 4. Check if new wrappers can be created if source and target are in
+  //    different compartments.
+  // 5. Copy all properties from source to a temporary holder object.
+  // 6. Actually transplant the object.
+  // 7. And finally copy the properties back to the source object.
   //
   // As an extension to the algorithm in UpdateReflectorGlobal, we also allow
   // to transplant an object into the same compartment as the source object to
@@ -8179,6 +8177,12 @@ static bool TransplantObject(JSContext* cx, unsigned argc, Value* vp) {
 
   RootedObject target(cx, JS_CloneObject(cx, source, proto));
   if (!target) {
+    return false;
+  }
+
+  if (GetObjectCompartment(source) != GetObjectCompartment(target) &&
+      !AllowNewWrapper(GetObjectCompartment(source), target)) {
+    JS_ReportErrorASCII(cx, "Cannot transplant into nuked compartment");
     return false;
   }
 
@@ -10163,6 +10167,7 @@ static bool SetContextOptions(JSContext* cx, const OptionParser& op) {
   enableStreams = !op.getBoolOption("no-streams");
   enableBigInt = !op.getBoolOption("no-bigint");
   enableFields = op.getBoolOption("enable-experimental-fields");
+  enableAwaitFix = op.getBoolOption("enable-experimental-await-fix");
 
   JS::ContextOptionsRef(cx)
       .setBaseline(enableBaseline)
@@ -10351,7 +10356,12 @@ static bool SetContextOptions(JSContext* cx, const OptionParser& op) {
 
   int32_t warmUpThreshold = op.getIntOption("ion-warmup-threshold");
   if (warmUpThreshold >= 0) {
-    jit::JitOptions.setCompilerWarmUpThreshold(warmUpThreshold);
+    jit::JitOptions.setNormalIonWarmUpThreshold(warmUpThreshold);
+  }
+
+  warmUpThreshold = op.getIntOption("ion-full-warmup-threshold");
+  if (warmUpThreshold >= 0) {
+    jit::JitOptions.setFullIonWarmUpThreshold(warmUpThreshold);
   }
 
   warmUpThreshold = op.getIntOption("baseline-warmup-threshold");
@@ -10371,7 +10381,7 @@ static bool SetContextOptions(JSContext* cx, const OptionParser& op) {
   }
 
   if (op.getBoolOption("ion-eager")) {
-    jit::JitOptions.setEagerCompilation();
+    jit::JitOptions.setEagerIonCompilation();
   }
 
   offthreadCompilation = true;
@@ -10784,7 +10794,8 @@ int main(int argc, char** argv, char** envp) {
   SetOutputFile("JS_STDERR", &rcStderr, &gErrFile);
 
   // Start the engine.
-  if (!JS_Init()) {
+  if (const char* message = JS_InitWithFailureDiagnostic()) {
+    fprintf(gErrFile->fp, "JS_Init failed: %s\n", message);
     return 1;
   }
 
@@ -10876,6 +10887,8 @@ int main(int argc, char** argv, char** envp) {
       !op.addBoolOption('\0', "no-bigint", "Disable BigInt support") ||
       !op.addBoolOption('\0', "enable-experimental-fields",
                         "Enable fields in classes") ||
+      !op.addBoolOption('\0', "enable-experimental-await-fix",
+                        "Enable new, faster await semantics") ||
       !op.addStringOption('\0', "shared-memory", "on/off",
                           "SharedArrayBuffer and Atomics "
 #if SHARED_MEMORY_DEFAULT
@@ -10940,7 +10953,11 @@ int main(int argc, char** argv, char** envp) {
           "Don't compile very large scripts (default: on, off to disable)") ||
       !op.addIntOption('\0', "ion-warmup-threshold", "COUNT",
                        "Wait for COUNT calls or iterations before compiling "
-                       "(default: 1000)",
+                       "at the normal optimization level (default: 1000)",
+                       -1) ||
+      !op.addIntOption('\0', "ion-full-warmup-threshold", "COUNT",
+                       "Wait for COUNT calls or iterations before compiling "
+                       "at the 'full' optimization level (default: 100,000)",
                        -1) ||
       !op.addStringOption(
           '\0', "ion-regalloc", "[mode]",
@@ -11167,9 +11184,8 @@ int main(int argc, char** argv, char** envp) {
 
   JS_SetContextPrivate(cx, sc.get());
   JS_SetGrayGCRootsTracer(cx, TraceGrayRoots, nullptr);
-  auto resetGrayGCRootsTracer = MakeScopeExit([cx] {
-    JS_SetGrayGCRootsTracer(cx, nullptr, nullptr);
-  });
+  auto resetGrayGCRootsTracer =
+      MakeScopeExit([cx] { JS_SetGrayGCRootsTracer(cx, nullptr, nullptr); });
 
   // Waiting is allowed on the shell's main thread, for now.
   JS_SetFutexCanWait(cx);
@@ -11235,7 +11251,7 @@ int main(int argc, char** argv, char** envp) {
 
   EnvironmentPreparer environmentPreparer(cx);
 
-  JS_SetGCParameter(cx, JSGC_MODE, JSGC_MODE_INCREMENTAL);
+  JS_SetGCParameter(cx, JSGC_MODE, JSGC_MODE_ZONE_INCREMENTAL);
 
   JS::SetProcessLargeAllocationFailureCallback(my_LargeAllocFailCallback);
 

@@ -41,6 +41,7 @@
 #include "PromiseWorkerProxy.h"
 #include "WrapperFactory.h"
 #include "xpcpublic.h"
+#include "xpcprivate.h"
 
 namespace mozilla {
 namespace dom {
@@ -158,7 +159,7 @@ already_AddRefed<Promise> Promise::All(
     return nullptr;
   }
 
-  JS::AutoObjectVector promises(aCx);
+  JS::RootedVector<JSObject*> promises(aCx);
   if (!promises.reserve(aPromiseList.Length())) {
     aRv.NoteJSContextException(aCx);
     return nullptr;
@@ -546,6 +547,32 @@ void Promise::ReportRejectedPromise(JSContext* aCx, JS::HandleObject aPromise) {
   } else {
     NS_DispatchToMainThread(event);
   }
+}
+
+void Promise::MaybeResolveWithClone(JSContext* aCx,
+                                    JS::Handle<JS::Value> aValue) {
+  JS::Rooted<JSObject*> sourceScope(aCx, JS::CurrentGlobalOrNull(aCx));
+  AutoEntryScript aes(GetParentObject(), "Promise resolution");
+  JSContext* cx = aes.cx();
+  JS::Rooted<JS::Value> value(cx, aValue);
+
+  xpc::StackScopedCloneOptions options;
+  options.wrapReflectors = true;
+  StackScopedClone(cx, options, sourceScope, &value);
+  MaybeResolve(aCx, value);
+}
+
+void Promise::MaybeRejectWithClone(JSContext* aCx,
+                                   JS::Handle<JS::Value> aValue) {
+  JS::Rooted<JSObject*> sourceScope(aCx, JS::CurrentGlobalOrNull(aCx));
+  AutoEntryScript aes(GetParentObject(), "Promise rejection");
+  JSContext* cx = aes.cx();
+  JS::Rooted<JS::Value> value(cx, aValue);
+
+  xpc::StackScopedCloneOptions options;
+  options.wrapReflectors = true;
+  StackScopedClone(cx, options, sourceScope, &value);
+  MaybeReject(aCx, value);
 }
 
 JSObject* Promise::GlobalJSObject() const {

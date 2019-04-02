@@ -926,12 +926,6 @@ class RTCPeerConnection {
                                        "NotSupportedError");
     }
 
-    if (!sdp && action != Ci.IPeerConnection.kActionRollback) {
-      throw new this._win.DOMException(
-          "Empty or null SDP provided to setLocalDescription",
-          "InvalidParameterError");
-    }
-
     // The fippo butter finger filter AKA non-ASCII chars
     // Note: SDP allows non-ASCII character in the subject (who cares?)
     // eslint-disable-next-line no-control-regex
@@ -973,23 +967,21 @@ class RTCPeerConnection {
   }
 
   async _validateIdentity(sdp, origin) {
-    let expectedIdentity;
-
     // Only run a single identity verification at a time.  We have to do this to
     // avoid problems with the fact that identity validation doesn't block the
     // resolution of setRemoteDescription().
     let p = (async () => {
+      // Should never throw
+      await this._lastIdentityValidation;
       try {
-        await this._lastIdentityValidation;
-        let msg = await this._remoteIdp.verifyIdentityFromSDP(sdp, origin);
-        expectedIdentity = this._impl.peerIdentity;
+        const msg = await this._remoteIdp.verifyIdentityFromSDP(sdp, origin);
         // If this pc has an identity already, then the identity in sdp must match
-        if (expectedIdentity && (!msg || msg.identity !== expectedIdentity)) {
-          this.close();
+        if (this._impl.peerIdentity && (!msg || msg.identity !== this._impl.peerIdentity)) {
           throw new this._win.DOMException(
-            "Peer Identity mismatch, expected: " + expectedIdentity,
+            "Peer Identity mismatch, expected: " + this._impl.peerIdentity,
             "IncompatibleSessionDescriptionError");
         }
+
         if (msg) {
           // Set new identity and generate an event.
           this._impl.peerIdentity = msg.identity;
@@ -1012,7 +1004,7 @@ class RTCPeerConnection {
     this._lastIdentityValidation = p.catch(() => {});
 
     // Only wait for IdP validation if we need identity matching
-    if (expectedIdentity) {
+    if (this._impl.peerIdentity) {
       await p;
     }
   }
@@ -1061,6 +1053,7 @@ class RTCPeerConnection {
   setIdentityProvider(provider,
                       {protocol, usernameHint, peerIdentity} = {}) {
     this._checkClosed();
+    peerIdentity = peerIdentity || this._impl.peerIdentity;
     this._localIdp.setIdentityProvider(provider,
                                        protocol, usernameHint, peerIdentity);
   }
@@ -1703,13 +1696,13 @@ class PeerConnectionObserver {
     this._dompc._onAddIceCandidateError(this.newError(message, code));
   }
 
-  onIceCandidate(sdpMLineIndex, sdpMid, candidate, ufrag) {
+  onIceCandidate(sdpMLineIndex, sdpMid, candidate, usernameFragment) {
     let win = this._dompc._win;
-    if (candidate) {
+    if (candidate || sdpMid || usernameFragment) {
       if (candidate.includes(" typ relay ")) {
         this._dompc._iceGatheredRelayCandidates = true;
       }
-      candidate = new win.RTCIceCandidate({ candidate, sdpMid, sdpMLineIndex, ufrag });
+      candidate = new win.RTCIceCandidate({ candidate, sdpMid, sdpMLineIndex, usernameFragment });
     } else {
       candidate = null;
     }

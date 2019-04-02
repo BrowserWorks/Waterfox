@@ -37,7 +37,7 @@ load 331292.html
 load 334105-1.xhtml
 load 334107-1.xhtml
 load 334147-1.xhtml
-load 334148-1.xhtml
+asserts(1-11) load 334148-1.xhtml # XBL interacts poorly with CSS counters.
 load 334602-1.html
 load 337412-1.html
 load 337883-1.html
@@ -721,6 +721,7 @@ load 1505817.html
 pref(layout.css.column-span.enabled,true) load 1506216.html
 pref(layout.css.column-span.enabled,true) load 1506306.html
 pref(layout.css.column-span.enabled,true) load 1507196.html
+load 1515124.html
 pref(layout.css.column-span.enabled,true) load 1517033.html
 pref(layout.css.column-span.enabled,true) load 1517297.html
 load 1520798-1.xul

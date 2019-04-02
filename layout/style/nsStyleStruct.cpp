@@ -112,12 +112,12 @@ nsStyleFont::nsStyleFont(const nsStyleFont& aSrc)
 
 nsStyleFont::nsStyleFont(const Document& aDocument)
     : mFont(*aDocument.GetFontPrefsForLang(nullptr)->GetDefaultFont(
-          kPresContext_DefaultVariableFont_ID)),
+          StyleGenericFontFamily::None)),
       mSize(ZoomText(aDocument, mFont.size)),
       mFontSizeFactor(1.0),
       mFontSizeOffset(0),
       mFontSizeKeyword(NS_STYLE_FONT_SIZE_MEDIUM),
-      mGenericID(kGenericFont_NONE),
+      mGenericID(StyleGenericFontFamily::None),
       mScriptLevel(0),
       mMathVariant(NS_MATHML_MATHVARIANT_NONE),
       mMathDisplay(NS_MATHML_DISPLAYSTYLE_INLINE),
@@ -1897,6 +1897,10 @@ bool nsStyleImageRequest::Resolve(Document& aDocument,
     // The URL resolution or image load failed.
     return false;
   }
+
+  // Boost priority now that we know the image is present in the ComputedStyle
+  // of some frame.
+  mRequestProxy->BoostPriority(imgIRequest::CATEGORY_FRAME_STYLE);
 
   if (mModeFlags & Mode::Track) {
     mImageTracker = aDocument.ImageTracker();

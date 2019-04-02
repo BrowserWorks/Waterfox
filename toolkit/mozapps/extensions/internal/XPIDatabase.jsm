@@ -32,13 +32,15 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   Services: "resource://gre/modules/Services.jsm",
 
   Blocklist: "resource://gre/modules/Blocklist.jsm",
-  LightweightThemeManager: "resource://gre/modules/LightweightThemeManager.jsm",
   UpdateChecker: "resource://gre/modules/addons/XPIInstall.jsm",
   XPIInstall: "resource://gre/modules/addons/XPIInstall.jsm",
   XPIInternal: "resource://gre/modules/addons/XPIProvider.jsm",
   XPIProvider: "resource://gre/modules/addons/XPIProvider.jsm",
   verifyBundleSignedState: "resource://gre/modules/addons/XPIInstall.jsm",
 });
+
+XPCOMUtils.defineLazyPreferenceGetter(this, "allowPrivateBrowsingByDefault",
+                                      "extensions.allowPrivateBrowsingByDefault", true);
 
 const {nsIBlocklistService} = Ci;
 
@@ -127,6 +129,11 @@ const SIGNED_TYPES = new Set([
 
 // Time to wait before async save of XPI JSON database, in milliseconds
 const ASYNC_SAVE_DELAY_MS = 20;
+
+const LOCALE_BUNDLES = [
+  "chrome://global/locale/global-extension-fields.properties",
+  "chrome://global/locale/app-extension-fields.properties",
+].map(url => Services.strings.createBundle(url));
 
 /**
  * Schedules an idle task, and returns a promise which resolves to an
@@ -261,7 +268,18 @@ class AddonInternal {
         this.addedToDatabase();
       }
 
-      this._sourceBundle = addonData._sourceBundle;
+      this.sourceBundle = addonData._sourceBundle;
+    }
+  }
+
+  get sourceBundle() {
+    return this._sourceBundle;
+  }
+
+  set sourceBundle(file) {
+    this._sourceBundle = file;
+    if (file) {
+      this.rootURI = XPIInternal.getURIForResourceInFile(file, "").spec;
     }
   }
 
@@ -270,6 +288,10 @@ class AddonInternal {
       this._wrapper = new AddonWrapper(this);
     }
     return this._wrapper;
+  }
+
+  get resolvedRootURI() {
+    return XPIInternal.maybeResolveURI(Services.io.newURI(this.rootURI));
   }
 
   addedToDatabase() {
@@ -366,7 +388,7 @@ class AddonInternal {
   }
 
   get hidden() {
-    return this.location.isBuiltin ||
+    return this.location.hidden ||
            (this._hidden && this.signedState == AddonManager.SIGNEDSTATE_PRIVILEGED);
   }
 
@@ -598,7 +620,7 @@ class AddonInternal {
     if (!this.appDisabled) {
       if (this.userDisabled || this.softDisabled) {
         permissions |= AddonManager.PERM_CAN_ENABLE;
-      } else {
+      } else if (this.type != "theme" || this.id != DEFAULT_THEME_ID) {
         permissions |= AddonManager.PERM_CAN_DISABLE;
       }
     }
@@ -613,13 +635,17 @@ class AddonInternal {
         permissions |= AddonManager.PERM_CAN_UPGRADE;
       }
 
-      permissions |= AddonManager.PERM_CAN_UNINSTALL;
+      permissions |= AddonManager.PERM_API_CAN_UNINSTALL;
+      if (!this.location.isBuiltin) {
+        permissions |= AddonManager.PERM_CAN_UNINSTALL;
+      }
     }
 
     // The permission to "toggle the private browsing access" is locked down
     // when the extension has opted out or it gets the permission automatically
     // on every extension startup (as system, privileged and builtin addons).
-    if (this.incognito !== "not_allowed" &&
+    if (!allowPrivateBrowsingByDefault && this.type === "extension" &&
+        this.incognito !== "not_allowed" &&
         this.signedState !== AddonManager.SIGNEDSTATE_PRIVILEGED &&
         this.signedState !== AddonManager.SIGNEDSTATE_SYSTEM &&
         !this.location.isBuiltin) {
@@ -1059,6 +1085,15 @@ function chooseValue(aAddon, aObj, aProp) {
     return [repositoryAddon[aProp], true];
   }
 
+  let id = `extension.${aAddon.id}.${aProp}`;
+  for (let bundle of LOCALE_BUNDLES) {
+    try {
+      return [bundle.GetStringFromName(id), false];
+    } catch (e) {
+      // Ignore missing overrides.
+    }
+  }
+
   return [objValue, false];
 }
 
@@ -1444,9 +1479,7 @@ this.XPIDatabase = {
       return this.addonDB;
     })();
 
-    this._dbPromise.then(() => {
-      Services.obs.notifyObservers(null, "xpi-database-loaded");
-    });
+    XPIInternal.resolveDBReady(this._dbPromise);
 
     return this._dbPromise;
   },
@@ -1543,7 +1576,7 @@ this.XPIDatabase = {
 
       for (let addon of addons) {
         // The add-on might have vanished, we'll catch that on the next startup
-        if (!addon._sourceBundle.exists())
+        if (!addon._sourceBundle || !addon._sourceBundle.exists())
           continue;
 
         let signedState = await verifyBundleSignedState(addon._sourceBundle, addon);
@@ -1591,20 +1624,21 @@ this.XPIDatabase = {
     if (aType !== "theme")
       return;
 
+    let enableTheme;
+
     let addons = this.getAddonsByType("theme");
     for (let theme of addons) {
-      if (theme.visible && theme.id != aId)
-        await this.updateAddonDisabledState(theme, true, undefined, true);
+      if (theme.visible) {
+        if (!aId && theme.id == DEFAULT_THEME_ID) {
+          enableTheme = theme;
+        } else if (theme.id != aId) {
+          this.updateAddonDisabledState(theme, true, undefined, true);
+        }
+      }
     }
 
-    if (!aId && (!LightweightThemeManager.currentTheme ||
-                 LightweightThemeManager.currentTheme !== DEFAULT_THEME_ID)) {
-      let theme = LightweightThemeManager.getUsedTheme(DEFAULT_THEME_ID);
-      // This can only ever be null in tests.
-      // This can all go away once lightweight themes are gone.
-      if (theme) {
-        LightweightThemeManager.currentTheme = theme;
-      }
+    if (enableTheme) {
+      await this.updateAddonDisabledState(enableTheme, false, undefined, true);
     }
   },
 

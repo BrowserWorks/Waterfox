@@ -685,9 +685,7 @@ bool LazyStubTier::createMany(const Uint32Vector& funcExportIndices,
 
   MOZ_ASSERT(masm.callSites().empty());
   MOZ_ASSERT(masm.callSiteTargets().empty());
-  MOZ_ASSERT(masm.callFarJumps().empty());
   MOZ_ASSERT(masm.trapSites().empty());
-  MOZ_ASSERT(masm.callFarJumps().empty());
 
   if (masm.oom()) {
     return false;
@@ -834,8 +832,10 @@ bool LazyStubTier::hasStub(uint32_t funcIndex) const {
 
 void* LazyStubTier::lookupInterpEntry(uint32_t funcIndex) const {
   size_t match;
-  MOZ_ALWAYS_TRUE(BinarySearch(ProjectLazyFuncIndex(exports_), 0,
-                               exports_.length(), funcIndex, &match));
+  if (!BinarySearch(ProjectLazyFuncIndex(exports_), 0, exports_.length(),
+                    funcIndex, &match)) {
+    return nullptr;
+  }
   const LazyFuncExport& fe = exports_[match];
   const LazyStubSegment& stub = *stubSegments_[fe.lazyStubSegmentIndex];
   return stub.base() + stub.codeRanges()[fe.funcCodeRangeIndex].begin();
@@ -1163,8 +1163,9 @@ void Code::commitTier2() const {
 }
 
 uint32_t Code::getFuncIndex(JSFunction* fun) const {
-  if (fun->isAsmJSNative()) {
-    return fun->asmJSFuncIndex();
+  MOZ_ASSERT(fun->isWasm() || fun->isAsmJSNative());
+  if (!fun->isWasmWithJitEntry()) {
+    return fun->wasmFuncIndex();
   }
   return jumpTables_.funcIndexFromJitEntry(fun->wasmJitEntry());
 }

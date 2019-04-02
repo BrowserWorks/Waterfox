@@ -401,6 +401,8 @@ void AudioDestinationNode::DestroyMediaStream() {
 
   if (!mStream) return;
 
+  Context()->ShutdownWorklet();
+
   mStream->RemoveMainThreadListener(this);
   MediaStreamGraph* graph = mStream->Graph();
   if (graph->IsNonRealtime()) {
@@ -413,8 +415,8 @@ void AudioDestinationNode::NotifyMainThreadStreamFinished() {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mStream->IsFinished());
 
-  if (mIsOffline) {
-    AbstractMainThread()->Dispatch(NewRunnableMethod(
+  if (mIsOffline && GetAbstractMainThread()) {
+    GetAbstractMainThread()->Dispatch(NewRunnableMethod(
         "dom::AudioDestinationNode::FireOfflineCompletionEvent", this,
         &AudioDestinationNode::FireOfflineCompletionEvent));
   }

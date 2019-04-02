@@ -14,6 +14,7 @@
 #include "gfxPlatform.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/dom/SVGSVGElement.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/SVGContextPaint.h"
 #include "mozilla/TextUtils.h"
@@ -23,6 +24,7 @@
 #include "nsIScriptError.h"
 #include "nsLayoutUtils.h"
 #include "nsMathUtils.h"
+#include "nsWhitespaceTokenizer.h"
 #include "SVGAnimationElement.h"
 #include "SVGAnimatedPreserveAspectRatio.h"
 #include "nsContentUtils.h"
@@ -515,7 +517,7 @@ static gfx::Matrix GetCTMInternal(SVGElement* aElement, bool aScreenCTM,
   float x = 0.0f, y = 0.0f;
   if (currentDoc &&
       element->NodeInfo()->Equals(nsGkAtoms::svg, kNameSpaceID_SVG)) {
-    nsIPresShell* presShell = currentDoc->GetShell();
+    PresShell* presShell = currentDoc->GetPresShell();
     if (presShell) {
       nsIFrame* frame = element->GetPrimaryFrame();
       nsIFrame* ancestorFrame = presShell->GetRootFrame();
@@ -796,6 +798,24 @@ already_AddRefed<gfx::Path> SVGContentUtils::GetPath(
 bool SVGContentUtils::ShapeTypeHasNoCorners(const nsIContent* aContent) {
   return aContent &&
          aContent->IsAnyOfSVGElements(nsGkAtoms::circle, nsGkAtoms::ellipse);
+}
+
+nsDependentSubstring SVGContentUtils::GetAndEnsureOneToken(
+    const nsAString& aString, bool& aSuccess) {
+  nsWhitespaceTokenizerTemplate<nsContentUtils::IsHTMLWhitespace> tokenizer(
+      aString);
+
+  aSuccess = false;
+  if (!tokenizer.hasMoreTokens()) {
+    return {};
+  }
+  auto token = tokenizer.nextToken();
+  if (tokenizer.hasMoreTokens()) {
+    return {};
+  }
+
+  aSuccess = true;
+  return token;
 }
 
 }  // namespace mozilla

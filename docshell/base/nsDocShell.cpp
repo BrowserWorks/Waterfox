@@ -28,7 +28,9 @@
 #include "mozilla/Logging.h"
 #include "mozilla/MediaFeatureChange.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/ResultExtensions.h"
+#include "mozilla/ScrollTypes.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPrefs.h"
 #include "mozilla/StartupTimeline.h"
@@ -316,7 +318,6 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext)
       mForcedCharset(nullptr),
       mParentCharset(nullptr),
       mTreeOwner(nullptr),
-      mChromeEventHandler(nullptr),
       mDefaultScrollbarPref(Scrollbar_Auto, Scrollbar_Auto),
       mCharsetReloadState(eCharsetReloadInit),
       mOrientationLock(hal::eScreenOrientation_None),
@@ -541,7 +542,7 @@ void nsDocShell::DestroyChildren() {
 NS_IMPL_CYCLE_COLLECTION_INHERITED(nsDocShell, nsDocLoader,
                                    mSessionStorageManager, mScriptGlobal,
                                    mInitialClientSource, mSessionHistory,
-                                   mBrowsingContext)
+                                   mBrowsingContext, mChromeEventHandler)
 
 NS_IMPL_ADDREF_INHERITED(nsDocShell, nsDocLoader)
 NS_IMPL_RELEASE_INHERITED(nsDocShell, nsDocLoader)
@@ -1141,7 +1142,6 @@ nsDocShell::GetOuterWindowID(uint64_t* aWindowID) {
 
 NS_IMETHODIMP
 nsDocShell::SetChromeEventHandler(EventTarget* aChromeEventHandler) {
-  // Weak reference. Don't addref.
   mChromeEventHandler = aChromeEventHandler;
 
   if (mScriptGlobal) {
@@ -1154,7 +1154,7 @@ nsDocShell::SetChromeEventHandler(EventTarget* aChromeEventHandler) {
 NS_IMETHODIMP
 nsDocShell::GetChromeEventHandler(EventTarget** aChromeEventHandler) {
   NS_ENSURE_ARG_POINTER(aChromeEventHandler);
-  nsCOMPtr<EventTarget> handler = mChromeEventHandler;
+  RefPtr<EventTarget> handler = mChromeEventHandler;
   handler.forget(aChromeEventHandler);
   return NS_OK;
 }
@@ -4199,7 +4199,7 @@ nsDocShell::DisplayLoadError(nsresult aError, nsIURI* aURI,
     errorPage.AssignLiteral("tabcrashed");
     error = "tabcrashed";
 
-    nsCOMPtr<EventTarget> handler = mChromeEventHandler;
+    RefPtr<EventTarget> handler = mChromeEventHandler;
     if (handler) {
       nsCOMPtr<Element> element = do_QueryInterface(handler);
       element->GetAttribute(NS_LITERAL_STRING("crashedPageTitle"), messageStr);
@@ -4993,6 +4993,8 @@ nsDocShell::Destroy() {
 
   mTabChild = nullptr;
 
+  mChromeEventHandler = nullptr;
+
   mOnePermittedSandboxedNavigator = nullptr;
 
   // required to break ref cycle
@@ -5629,10 +5631,10 @@ nsresult nsDocShell::SetCurScrollPosEx(int32_t aCurHorizontalPos,
   nsIScrollableFrame* sf = GetRootScrollFrame();
   NS_ENSURE_TRUE(sf, NS_ERROR_FAILURE);
 
-  nsIScrollableFrame::ScrollMode scrollMode = nsIScrollableFrame::INSTANT;
+  ScrollMode scrollMode = ScrollMode::eInstant;
   if (sf->GetScrollStyles().mScrollBehavior ==
       NS_STYLE_SCROLL_BEHAVIOR_SMOOTH) {
-    scrollMode = nsIScrollableFrame::SMOOTH_MSD;
+    scrollMode = ScrollMode::eSmoothMsd;
   }
 
   nsPoint targetPos(aCurHorizontalPos, aCurVerticalPos);
@@ -5658,9 +5660,7 @@ nsresult nsDocShell::SetCurScrollPosEx(int32_t aCurHorizontalPos,
   }
 
   shell->ScrollToVisual(targetPos, layers::FrameMetrics::eMainThread,
-                        scrollMode == nsIScrollableFrame::INSTANT
-                            ? nsIPresShell::ScrollMode::eInstant
-                            : nsIPresShell::ScrollMode::eSmooth);
+                        scrollMode);
 
   return NS_OK;
 }
@@ -7879,8 +7879,9 @@ nsresult nsDocShell::RestoreFromHistory() {
   } else {
     rootViewParent = nullptr;
   }
-  if (sibling && sibling->GetShell() && sibling->GetShell()->GetViewManager()) {
-    rootViewSibling = sibling->GetShell()->GetViewManager()->GetRootView();
+  if (sibling && sibling->GetPresShell() &&
+      sibling->GetPresShell()->GetViewManager()) {
+    rootViewSibling = sibling->GetPresShell()->GetViewManager()->GetRootView();
   } else {
     rootViewSibling = nullptr;
   }

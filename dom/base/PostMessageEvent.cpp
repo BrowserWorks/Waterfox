@@ -8,6 +8,7 @@
 
 #include "MessageEvent.h"
 #include "mozilla/dom/BlobBinding.h"
+#include "mozilla/dom/DocumentInlines.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FileList.h"
 #include "mozilla/dom/FileListBinding.h"
@@ -18,7 +19,6 @@
 #include "mozilla/dom/StructuredCloneTags.h"
 #include "mozilla/dom/UnionConversions.h"
 #include "mozilla/EventDispatcher.h"
-#include "nsContentUtils.h"
 #include "nsDocShell.h"
 #include "nsGlobalWindow.h"
 #include "nsIConsoleService.h"
@@ -136,9 +136,10 @@ PostMessageEvent::Run() {
         rv = NS_GetSanitizedURIStringFromURI(callerDocumentURI, uriSpec);
         NS_ENSURE_SUCCESS(rv, rv);
 
-        rv = errorObject->Init(errorText, uriSpec, EmptyString(), 0, 0,
-                               nsIScriptError::errorFlag, "DOM Window",
-                               mIsFromPrivateWindow);
+        rv = errorObject->Init(
+            errorText, uriSpec, EmptyString(), 0, 0, nsIScriptError::errorFlag,
+            "DOM Window", mIsFromPrivateWindow,
+            nsContentUtils::IsSystemPrincipal(mProvidedPrincipal));
       }
       NS_ENSURE_SUCCESS(rv, rv);
 

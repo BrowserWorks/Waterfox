@@ -63,10 +63,12 @@ class MOZ_STACK_CLASS AutoSelectionSetterAfterTableEdit final {
         mDirection(aDirection),
         mSelected(aSelected) {}
 
+  MOZ_CAN_RUN_SCRIPT
   ~AutoSelectionSetterAfterTableEdit() {
     if (mHTMLEditor) {
-      mHTMLEditor->SetSelectionAfterTableEdit(mTable, mRow, mCol, mDirection,
-                                              mSelected);
+      MOZ_KnownLive(mHTMLEditor)
+          ->SetSelectionAfterTableEdit(MOZ_KnownLive(mTable), mRow, mCol,
+                                       mDirection, mSelected);
     }
   }
 
@@ -2201,8 +2203,8 @@ nsresult HTMLEditor::SplitCellIntoColumns(Element* aTable, int32_t aRowIndex,
   // Insert new cell after using the remaining span
   // and always get the new cell so we can copy the background color;
   RefPtr<Element> newCellElement;
-  rv = InsertCell(cellData.mElement, cellData.mEffectiveRowSpan, aColSpanRight,
-                  true, false, getter_AddRefs(newCellElement));
+  rv = InsertCell(MOZ_KnownLive(cellData.mElement), cellData.mEffectiveRowSpan,
+                  aColSpanRight, true, false, getter_AddRefs(newCellElement));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -2372,7 +2374,7 @@ HTMLEditor::SwitchTableCellHeaderType(Element* aSourceCell,
   // This creates new node, moves children, copies attributes (true)
   //   and manages the selection!
   RefPtr<Element> newCell = ReplaceContainerAndCloneAttributesWithTransaction(
-      *aSourceCell, *newCellName);
+      *aSourceCell, MOZ_KnownLive(*newCellName));
   if (NS_WARN_IF(!newCell)) {
     return NS_ERROR_FAILURE;
   }

@@ -696,6 +696,13 @@ class IonBuilder : public MIRGenerator,
                                           BoolVector& choiceSet,
                                           uint32_t* numInlineable);
 
+  OptimizationLevel optimizationLevel() const {
+    return optimizationInfo().level();
+  }
+  bool isHighestOptimizationLevel() const {
+    return IonOptimizations.isLastLevel(optimizationLevel());
+  }
+
   // Native inlining helpers.
   // The typeset for the return value of our function.  These are
   // the types it's been observed returning in the past.
@@ -909,8 +916,7 @@ class IonBuilder : public MIRGenerator,
 
   MDefinition* addShapeGuardsForGetterSetter(
       MDefinition* obj, JSObject* holder, Shape* holderShape,
-      const BaselineInspector::ReceiverVector& receivers,
-      bool isOwnProperty);
+      const BaselineInspector::ReceiverVector& receivers, bool isOwnProperty);
 
   AbortReasonOr<Ok> annotateGetPropertyCache(MDefinition* obj,
                                              PropertyName* name,

@@ -19,6 +19,7 @@
 #include "mozilla/dom/Animation.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/BlobBinding.h"
+#include "mozilla/dom/DocumentInlines.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/Touch.h"
 #include "mozilla/PendingAnimationTracker.h"
@@ -44,6 +45,7 @@
 #include "mozilla/EventStateManager.h"
 #include "mozilla/MiscEvents.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/TextEventDispatcher.h"
 #include "mozilla/TouchEvents.h"
@@ -52,7 +54,6 @@
 
 #include "nsLayoutUtils.h"
 #include "nsComputedDOMStyle.h"
-#include "nsIPresShell.h"
 #include "nsCSSProps.h"
 #include "nsIDocShell.h"
 #include "nsIContentViewer.h"
@@ -255,6 +256,17 @@ WebRenderBridgeChild* nsDOMWindowUtils::GetWebRenderBridge() {
     if (LayerManager* lm = widget->GetLayerManager()) {
       if (WebRenderLayerManager* wrlm = lm->AsWebRenderLayerManager()) {
         return wrlm->WrBridge();
+      }
+    }
+  }
+  return nullptr;
+}
+
+CompositorBridgeChild* nsDOMWindowUtils::GetCompositorBridge() {
+  if (nsIWidget* widget = GetWidget()) {
+    if (LayerManager* lm = widget->GetLayerManager()) {
+      if (CompositorBridgeChild* cbc = lm->GetCompositorBridgeChild()) {
+        return cbc;
       }
     }
   }
@@ -1028,7 +1040,7 @@ nsIWidget* nsDOMWindowUtils::GetWidgetForElement(Element* aElement) {
   if (!aElement) return GetWidget();
 
   Document* doc = aElement->GetUncomposedDoc();
-  nsIPresShell* presShell = doc ? doc->GetShell() : nullptr;
+  PresShell* presShell = doc ? doc->GetPresShell() : nullptr;
 
   if (presShell) {
     nsIFrame* frame = aElement->GetPrimaryFrame();
@@ -1364,7 +1376,7 @@ static nsresult getScrollXYAppUnits(const nsWeakPtr& aWindow, bool aFlushLayout,
     doc->FlushPendingNotifications(FlushType::Layout);
   }
 
-  nsIPresShell* presShell = doc->GetShell();
+  PresShell* presShell = doc->GetPresShell();
   if (presShell) {
     nsIScrollableFrame* sf = presShell->GetRootScrollFrameAsScrollable();
     if (sf) {
@@ -1422,13 +1434,13 @@ nsDOMWindowUtils::ScrollToVisual(float aOffsetX, float aOffsetY,
       return NS_ERROR_INVALID_ARG;
   }
 
-  nsIPresShell::ScrollMode scrollMode;
+  ScrollMode scrollMode;
   switch (aScrollMode) {
     case SCROLL_MODE_INSTANT:
-      scrollMode = nsIPresShell::ScrollMode::eInstant;
+      scrollMode = ScrollMode::eInstant;
       break;
     case SCROLL_MODE_SMOOTH:
-      scrollMode = nsIPresShell::ScrollMode::eSmooth;
+      scrollMode = ScrollMode::eSmoothMsd;
       break;
     default:
       return NS_ERROR_INVALID_ARG;
@@ -1450,7 +1462,7 @@ nsDOMWindowUtils::GetVisualViewportOffsetRelativeToLayoutViewport(
   nsCOMPtr<Document> doc = GetDocument();
   NS_ENSURE_STATE(doc);
 
-  nsIPresShell* presShell = doc->GetShell();
+  PresShell* presShell = doc->GetPresShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_NOT_AVAILABLE);
 
   nsPoint offset = presShell->GetVisualViewportOffsetRelativeToLayoutViewport();
@@ -1469,7 +1481,7 @@ nsDOMWindowUtils::GetVisualViewportOffset(int32_t* aOffsetX,
   nsCOMPtr<Document> doc = GetDocument();
   NS_ENSURE_STATE(doc);
 
-  nsIPresShell* presShell = doc->GetShell();
+  PresShell* presShell = doc->GetPresShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_NOT_AVAILABLE);
 
   nsPoint offset = presShell->GetVisualViewportOffset();
@@ -1492,7 +1504,7 @@ nsDOMWindowUtils::GetScrollbarSize(bool aFlushLayout, int32_t* aWidth,
     doc->FlushPendingNotifications(FlushType::Layout);
   }
 
-  nsIPresShell* presShell = doc->GetShell();
+  PresShell* presShell = doc->GetPresShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_NOT_AVAILABLE);
 
   nsIScrollableFrame* scrollFrame = presShell->GetRootScrollFrameAsScrollable();
@@ -1534,7 +1546,7 @@ nsDOMWindowUtils::NeedsFlush(int32_t aFlushType, bool* aResult) {
   nsCOMPtr<Document> doc = GetDocument();
   NS_ENSURE_STATE(doc);
 
-  nsIPresShell* presShell = doc->GetShell();
+  PresShell* presShell = doc->GetPresShell();
   NS_ENSURE_STATE(presShell);
 
   FlushType flushType;
@@ -1576,7 +1588,7 @@ nsDOMWindowUtils::GetRootBounds(DOMRect** aResult) {
   NS_ENSURE_STATE(doc);
 
   nsRect bounds(0, 0, 0, 0);
-  nsIPresShell* presShell = doc->GetShell();
+  PresShell* presShell = doc->GetPresShell();
   if (presShell) {
     nsIScrollableFrame* sf = presShell->GetRootScrollFrameAsScrollable();
     if (sf) {
@@ -1673,9 +1685,9 @@ nsDOMWindowUtils::GetFullZoom(float* aFullZoom) {
 
 NS_IMETHODIMP
 nsDOMWindowUtils::DispatchDOMEventViaPresShell(nsINode* aTarget, Event* aEvent,
-                                               bool aTrusted, bool* aRetVal) {
+                                               bool* aRetVal) {
   NS_ENSURE_STATE(aEvent);
-  aEvent->SetTrusted(aTrusted);
+  aEvent->SetTrusted(true);
   WidgetEvent* internalEvent = aEvent->WidgetEventPtr();
   NS_ENSURE_STATE(internalEvent);
   nsCOMPtr<nsIContent> content = do_QueryInterface(aTarget);
@@ -1686,13 +1698,14 @@ nsDOMWindowUtils::DispatchDOMEventViaPresShell(nsINode* aTarget, Event* aEvent,
   }
   nsCOMPtr<Document> targetDoc = content->GetUncomposedDoc();
   NS_ENSURE_STATE(targetDoc);
-  RefPtr<nsIPresShell> targetShell = targetDoc->GetShell();
-  NS_ENSURE_STATE(targetShell);
+  RefPtr<PresShell> targetPresShell = targetDoc->GetPresShell();
+  NS_ENSURE_STATE(targetPresShell);
 
   targetDoc->FlushPendingNotifications(FlushType::Layout);
 
   nsEventStatus status = nsEventStatus_eIgnore;
-  targetShell->HandleEventWithTarget(internalEvent, nullptr, content, &status);
+  targetPresShell->HandleEventWithTarget(internalEvent, nullptr, content,
+                                         &status);
   *aRetVal = (status != nsEventStatus_eConsumeNoDefault);
   return NS_OK;
 }
@@ -2487,6 +2500,18 @@ nsDOMWindowUtils::ZoomToFocusedInput() {
     } else {
       flags |= layers::ONLY_ZOOM_TO_DEFAULT_SCALE;
     }
+
+    // The content may be inside a scrollable subframe inside a non-scrollable
+    // root content document. In this scenario, we want to ensure that the
+    // main-thread side knows to scroll the content into view before we get
+    // the bounding content rect and ask APZ to adjust the visual viewport.
+    shell->ScrollContentIntoView(
+        content,
+        nsIPresShell::ScrollAxis(nsIPresShell::SCROLL_MINIMUM,
+                                 nsIPresShell::SCROLL_IF_NOT_VISIBLE),
+        nsIPresShell::ScrollAxis(nsIPresShell::SCROLL_MINIMUM,
+                                 nsIPresShell::SCROLL_IF_NOT_VISIBLE),
+        nsIPresShell::SCROLL_OVERFLOW_HIDDEN);
 
     CSSRect bounds =
         nsLayoutUtils::GetBoundingContentRect(content, rootScrollFrame);
@@ -3500,14 +3525,14 @@ nsDOMWindowUtils::GetOMTCTransform(Element* aElement,
     return NS_OK;
   }
 
-  MaybeTransform transform;
+  Maybe<Matrix4x4> transform;
   forwarder->GetShadowManager()->SendGetTransform(
       layer->AsShadowableLayer()->GetShadow(), &transform);
-  if (transform.type() != MaybeTransform::TMatrix4x4) {
+  if (transform.isNothing()) {
     return NS_OK;
   }
 
-  Matrix4x4 matrix = transform.get_Matrix4x4();
+  Matrix4x4 matrix = transform.value();
   RefPtr<nsROCSSPrimitiveValue> cssValue =
       nsComputedDOMStyle::MatrixToCSSValue(matrix);
   if (!cssValue) {
@@ -3758,7 +3783,7 @@ nsDOMWindowUtils::GetFrameUniformityTestData(
 }
 
 NS_IMETHODIMP
-nsDOMWindowUtils::XpconnectArgument(nsIDOMWindowUtils* aThis) {
+nsDOMWindowUtils::XpconnectArgument(nsISupports* aObj) {
   // Do nothing.
   return NS_OK;
 }
@@ -4020,7 +4045,7 @@ nsDOMWindowUtils::GetDirectionFromText(const nsAString& aString,
 NS_IMETHODIMP
 nsDOMWindowUtils::EnsureDirtyRootFrame() {
   Document* doc = GetDocument();
-  nsIPresShell* presShell = doc ? doc->GetShell() : nullptr;
+  PresShell* presShell = doc ? doc->GetPresShell() : nullptr;
 
   if (!presShell) {
     return NS_ERROR_FAILURE;
@@ -4095,6 +4120,18 @@ NS_IMETHODIMP
 nsDOMWindowUtils::WrCapture() {
   if (WebRenderBridgeChild* wrbc = GetWebRenderBridge()) {
     wrbc->Capture();
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::SetCompositionRecording(bool aValue) {
+  if (CompositorBridgeChild* cbc = GetCompositorBridge()) {
+    if (aValue) {
+      cbc->SendBeginRecording(TimeStamp::Now());
+    } else {
+      cbc->SendEndRecording();
+    }
   }
   return NS_OK;
 }

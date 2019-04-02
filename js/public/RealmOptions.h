@@ -28,7 +28,7 @@ class Compartment;
 class Realm;
 class Zone;
 
-} // namespace JS
+}  // namespace JS
 
 namespace JS {
 
@@ -146,6 +146,12 @@ class JS_PUBLIC_API RealmCreationOptions {
     return *this;
   }
 
+  bool getAwaitFixEnabled() const { return awaitFix_; }
+  RealmCreationOptions& setAwaitFixEnabled(bool flag) {
+    awaitFix_ = flag;
+    return *this;
+  }
+
   // This flag doesn't affect JS engine behavior.  It is used by Gecko to
   // mark whether content windows and workers are "Secure Context"s. See
   // https://w3c.github.io/webappsec-secure-contexts/
@@ -177,6 +183,7 @@ class JS_PUBLIC_API RealmCreationOptions {
   bool streams_ = false;
   bool bigint_ = false;
   bool fields_ = false;
+  bool awaitFix_ = false;
   bool secureContext_ = false;
   bool clampAndJitterTime_ = true;
 };
@@ -287,6 +294,6 @@ extern JS_PUBLIC_API RealmBehaviors& RealmBehaviorsRef(Realm* realm);
 
 extern JS_PUBLIC_API RealmBehaviors& RealmBehaviorsRef(JSContext* cx);
 
-} // namespace JS
+}  // namespace JS
 
-#endif // js_RealmOptions_h
+#endif  // js_RealmOptions_h

@@ -69,21 +69,24 @@ class NewRenderer : public RendererEvent {
     *mUseDComp = compositor->UseDComp();
     *mUseTripleBuffering = compositor->UseTripleBuffering();
 
-    bool supportLowPriorityTransactions = true;  // TODO only for main windows.
+    bool isMainWindow = true;  // TODO!
+    bool supportLowPriorityTransactions = isMainWindow;
+    bool supportPictureCaching = isMainWindow;
     wr::Renderer* wrRenderer = nullptr;
-    if (!wr_window_new(aWindowId, mSize.width, mSize.height,
-                       supportLowPriorityTransactions,
-                       gfxPrefs::WebRenderPictureCaching(), compositor->gl(),
-                       aRenderThread.GetProgramCache()
-                           ? aRenderThread.GetProgramCache()->Raw()
-                           : nullptr,
-                       aRenderThread.GetShaders()
-                           ? aRenderThread.GetShaders()->RawShaders()
-                           : nullptr,
-                       aRenderThread.ThreadPool().Raw(), &WebRenderMallocSizeOf,
-                       &WebRenderMallocEnclosingSizeOf,
-                       (uint32_t)wr::RenderRoot::Default,
-                       mDocHandle, &wrRenderer, mMaxTextureSize)) {
+    if (!wr_window_new(
+            aWindowId, mSize.width, mSize.height,
+            supportLowPriorityTransactions,
+            gfxPrefs::WebRenderPictureCaching() && supportPictureCaching,
+            compositor->gl(),
+            aRenderThread.GetProgramCache()
+                ? aRenderThread.GetProgramCache()->Raw()
+                : nullptr,
+            aRenderThread.GetShaders()
+                ? aRenderThread.GetShaders()->RawShaders()
+                : nullptr,
+            aRenderThread.ThreadPool().Raw(), &WebRenderMallocSizeOf,
+            &WebRenderMallocEnclosingSizeOf, (uint32_t)wr::RenderRoot::Default,
+            mDocHandle, &wrRenderer, mMaxTextureSize)) {
       // wr_window_new puts a message into gfxCriticalNote if it returns false
       return;
     }
@@ -162,13 +165,12 @@ void TransactionBuilder::RemovePipeline(PipelineId aPipelineId) {
 }
 
 void TransactionBuilder::SetDisplayList(
-    gfx::Color aBgColor, Epoch aEpoch, mozilla::LayerSize aViewportSize,
+    gfx::Color aBgColor, Epoch aEpoch, const wr::LayoutSize& aViewportSize,
     wr::WrPipelineId pipeline_id, const wr::LayoutSize& content_size,
     wr::BuiltDisplayListDescriptor dl_descriptor, wr::Vec<uint8_t>& dl_data) {
   wr_transaction_set_display_list(mTxn, aEpoch, ToColorF(aBgColor),
-                                  aViewportSize.width, aViewportSize.height,
-                                  pipeline_id, content_size, dl_descriptor,
-                                  &dl_data.inner);
+                                  aViewportSize, pipeline_id, content_size,
+                                  dl_descriptor, &dl_data.inner);
 }
 
 void TransactionBuilder::ClearDisplayList(Epoch aEpoch,

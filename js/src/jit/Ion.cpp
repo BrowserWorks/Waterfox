@@ -200,6 +200,23 @@ bool JitRuntime::initialize(JSContext* cx) {
 
   JitContext jctx(cx, nullptr);
 
+  if (!generateTrampolines(cx)) {
+    return false;
+  }
+
+  if (!generateBaselineICFallbackCode(cx)) {
+    return false;
+  }
+
+  jitcodeGlobalTable_ = cx->new_<JitcodeGlobalTable>();
+  if (!jitcodeGlobalTable_) {
+    return false;
+  }
+
+  return true;
+}
+
+bool JitRuntime::generateTrampolines(JSContext* cx) {
   StackMacroAssembler masm;
 
   Label bailoutTail;
@@ -304,11 +321,6 @@ bool JitRuntime::initialize(JSContext* cx) {
 #ifdef MOZ_VTUNE
   vtune::MarkStub(trampolineCode_, "Trampolines");
 #endif
-
-  jitcodeGlobalTable_ = cx->new_<JitcodeGlobalTable>();
-  if (!jitcodeGlobalTable_) {
-    return false;
-  }
 
   return true;
 }
@@ -560,14 +572,6 @@ void JitRealm::sweep(JS::Realm* realm) {
   MOZ_ASSERT(!HasOffThreadIonCompile(realm));
 
   stubCodes_->sweep();
-
-  // If the sweep removed a bailout Fallback stub, nullptr the corresponding
-  // return addr.
-  for (auto& it : bailoutReturnStubInfo_) {
-    if (!stubCodes_->lookup(it.key)) {
-      it = BailoutReturnStubInfo();
-    }
-  }
 
   for (ReadBarrieredJitCode& stub : stubs_) {
     if (stub && IsAboutToBeFinalized(&stub)) {
@@ -2240,6 +2244,10 @@ static MethodStatus Compile(JSContext* cx, HandleScript script,
     return Method_Skipped;
   }
 
+  if (script->baselineScript()->hasPendingIonBuilder()) {
+    LinkIonScript(cx, script);
+  }
+
   if (script->hasIonScript()) {
     IonScript* scriptIon = script->ionScript();
     if (!scriptIon->method()) {
@@ -2260,16 +2268,6 @@ static MethodStatus Compile(JSContext* cx, HandleScript script,
 
     if (osrPc) {
       scriptIon->resetOsrPcMismatchCounter();
-    }
-
-    recompile = true;
-  }
-
-  if (script->baselineScript()->hasPendingIonBuilder()) {
-    IonBuilder* buildIon = script->baselineScript()->pendingIonBuilder();
-    if (optimizationLevel <= buildIon->optimizationInfo().level() &&
-        !forceRecompile) {
-      return Method_Compiled;
     }
 
     recompile = true;
@@ -2354,7 +2352,7 @@ MethodStatus jit::CanEnterIon(JSContext* cx, RunState& state) {
 
   // If --ion-eager is used, compile with Baseline first, so that we
   // can directly enter IonMonkey.
-  if (JitOptions.eagerCompilation && !script->hasBaselineScript()) {
+  if (JitOptions.eagerIonCompilation() && !script->hasBaselineScript()) {
     MethodStatus status = CanEnterBaselineMethod(cx, state);
     if (status != Method_Compiled) {
       return status;
@@ -2580,6 +2578,8 @@ MethodStatus jit::Recompile(JSContext* cx, HandleScript script,
   if (script->ionScript()->isRecompiling()) {
     return Method_Compiled;
   }
+
+  MOZ_ASSERT(!script->baselineScript()->hasPendingIonBuilder());
 
   MethodStatus status = Compile(cx, script, osrFrame, osrPc, force);
   if (status != Method_Compiled) {

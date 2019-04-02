@@ -51,8 +51,16 @@ NS_INTERFACE_MAP_END_INHERITING(WebAuthnManagerBase)
 NS_IMPL_ADDREF_INHERITED(U2F, WebAuthnManagerBase)
 NS_IMPL_RELEASE_INHERITED(U2F, WebAuthnManagerBase)
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_INHERITED(U2F, WebAuthnManagerBase,
-                                                mTransaction)
+NS_IMPL_CYCLE_COLLECTION_CLASS(U2F)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(U2F, WebAuthnManagerBase)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mTransaction)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
+  tmp->ClearTransaction();
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(U2F, WebAuthnManagerBase)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTransaction)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(U2F)
 
 /***********************************************************************
  * Utility Functions
@@ -174,10 +182,6 @@ void U2F::ExecuteCallback(T& aResp, nsMainThreadPtrHandle<C>& aCb) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aCb);
 
-  // Assert that mTransaction was cleared before before we were called to allow
-  // reentrancy from microtask checkpoints.
-  MOZ_ASSERT(mTransaction.isNothing());
-
   ErrorResult error;
   aCb->Call(aResp, error);
   NS_WARNING_ASSERTION(!error.Failed(), "dom::U2F::Promise callback failed");
@@ -192,10 +196,6 @@ void U2F::Register(const nsAString& aAppId,
                    ErrorResult& aRv) {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (mTransaction.isSome()) {
-    CancelTransaction(NS_ERROR_ABORT);
-  }
-
   nsMainThreadPtrHandle<U2FRegisterCallback> callback(
       new nsMainThreadPtrHolder<U2FRegisterCallback>("U2F::Register::callback",
                                                      &aCallback));
@@ -205,9 +205,26 @@ void U2F::Register(const nsAString& aAppId,
     return;
   }
 
+  if (mTransaction.isSome()) {
+    // If there hasn't been a visibility change during the current
+    // transaction, then let's let that one complete rather than
+    // cancelling it on a subsequent call.
+    if (!mTransaction.ref().mVisibilityChanged) {
+      RegisterResponse response;
+      response.mErrorCode.Construct(
+          static_cast<uint32_t>(ErrorCode::OTHER_ERROR));
+      ExecuteCallback(response, callback);
+      return;
+    }
+
+    // Otherwise, the user may well have clicked away, so let's
+    // abort the old transaction and take over control from here.
+    CancelTransaction(NS_ERROR_ABORT);
+  }
+
   // Evaluate the AppID
   nsString adjustedAppId(aAppId);
-  if (!EvaluateAppID(mParent, mOrigin, U2FOperation::Register, adjustedAppId)) {
+  if (!EvaluateAppID(mParent, mOrigin, adjustedAppId)) {
     RegisterResponse response;
     response.mErrorCode.Construct(
         static_cast<uint32_t>(ErrorCode::BAD_REQUEST));
@@ -342,10 +359,6 @@ void U2F::Sign(const nsAString& aAppId, const nsAString& aChallenge,
                ErrorResult& aRv) {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (mTransaction.isSome()) {
-    CancelTransaction(NS_ERROR_ABORT);
-  }
-
   nsMainThreadPtrHandle<U2FSignCallback> callback(
       new nsMainThreadPtrHolder<U2FSignCallback>("U2F::Sign::callback",
                                                  &aCallback));
@@ -355,9 +368,26 @@ void U2F::Sign(const nsAString& aAppId, const nsAString& aChallenge,
     return;
   }
 
+  if (mTransaction.isSome()) {
+    // If there hasn't been a visibility change during the current
+    // transaction, then let's let that one complete rather than
+    // cancelling it on a subsequent call.
+    if (!mTransaction.ref().mVisibilityChanged) {
+      SignResponse response;
+      response.mErrorCode.Construct(
+          static_cast<uint32_t>(ErrorCode::OTHER_ERROR));
+      ExecuteCallback(response, callback);
+      return;
+    }
+
+    // Otherwise, the user may well have clicked away, so let's
+    // abort the old transaction and take over control from here.
+    CancelTransaction(NS_ERROR_ABORT);
+  }
+
   // Evaluate the AppID
   nsString adjustedAppId(aAppId);
-  if (!EvaluateAppID(mParent, mOrigin, U2FOperation::Sign, adjustedAppId)) {
+  if (!EvaluateAppID(mParent, mOrigin, adjustedAppId)) {
     SignResponse response;
     response.mErrorCode.Construct(
         static_cast<uint32_t>(ErrorCode::BAD_REQUEST));
@@ -491,7 +521,7 @@ void U2F::FinishGetAssertion(const uint64_t& aTransactionId,
 }
 
 void U2F::ClearTransaction() {
-  if (!NS_WARN_IF(mTransaction.isNothing())) {
+  if (!mTransaction.isNothing()) {
     StopListeningForVisibilityEvents();
   }
 
@@ -542,6 +572,12 @@ void U2F::RequestAborted(const uint64_t& aTransactionId,
 
   if (mTransaction.isSome() && mTransaction.ref().mId == aTransactionId) {
     RejectTransaction(aError);
+  }
+}
+
+void U2F::HandleVisibilityChange() {
+  if (mTransaction.isSome()) {
+    mTransaction.ref().mVisibilityChanged = true;
   }
 }
 

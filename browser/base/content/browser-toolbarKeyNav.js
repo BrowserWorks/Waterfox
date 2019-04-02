@@ -51,7 +51,8 @@ ToolbarKeyboardNavigator = {
       }
 
       // Skip invisible or disabled elements.
-      if (aNode.hidden || aNode.disabled) {
+      if (aNode.hidden || aNode.disabled
+          || aNode.style.visibility == "hidden") {
         return NodeFilter.FILTER_REJECT;
       }
       // This width check excludes the overflow button when there's no overflow.
@@ -185,10 +186,12 @@ ToolbarKeyboardNavigator = {
 
     switch (aEvent.key) {
       case "ArrowLeft":
-        this.navigateButtons(aEvent.currentTarget, true);
+        // Previous if UI is LTR, next if UI is RTL.
+        this.navigateButtons(aEvent.currentTarget, !window.RTL_UI);
         break;
       case "ArrowRight":
-        this.navigateButtons(aEvent.currentTarget, false);
+        // Previous if UI is RTL, next if UI is LTR.
+        this.navigateButtons(aEvent.currentTarget, window.RTL_UI);
         break;
       default:
         return;

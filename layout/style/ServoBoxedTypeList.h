@@ -6,7 +6,7 @@
 
 /* a list of all Servo Box<T> types used across bindings, for preprocessing */
 
-// The first argument is the name of the Servo type used inside the Box.
+// The first argument is the name of the Servo type used inside the Arc.
 // This doesn't need to be accurate; it's only used to generate nice looking
 // FFI function names.
 //
@@ -17,18 +17,15 @@
 //
 // See the comment at the top of ServoBindingTypes.h for how to use these.
 //
-// If you add an entry to this file, you should also add impls of HasFFI
-// (with FFIType equal to ::gecko_bindings::structs::RawServo{Type}),
-// HasSimpleFFI, and HasBoxFFI to the Servo type. You will also need to
-// add a Servo_{FriendlyServoName}_Drop function to servo/ports/gecko/glue.rs.
+// If you add an entry to this file, you should also add an implementation of
+// HasBoxFFI in Rust.
 //
-// TODO(heycam): Do some of this automatically.
+// TODO(emilio): We should remove the opaque type now, cbindgen should be able
+// to just generate the forward declaration.
 
-// clang-format off
-// Needs to be a on single line
 SERVO_BOXED_TYPE(StyleSet, RawServoStyleSet)
 SERVO_BOXED_TYPE(AuthorStyles, RawServoAuthorStyles)
 SERVO_BOXED_TYPE(SelectorList, RawServoSelectorList)
+SERVO_BOXED_TYPE(SharedMemoryBuilder, RawServoSharedMemoryBuilder)
 SERVO_BOXED_TYPE(SourceSizeList, RawServoSourceSizeList)
 SERVO_BOXED_TYPE(UseCounters, StyleUseCounters)
-// clang-format on

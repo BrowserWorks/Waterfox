@@ -469,7 +469,7 @@ class gfxTextRun : public gfxShapedText {
     uint32_t mCharacterOffset;  // into original UTF16 string
     mozilla::gfx::ShapedTextFlags
         mOrientation;  // gfxTextRunFactory::TEXT_ORIENT_* value
-    gfxTextRange::MatchType mMatchType;
+    FontMatchType mMatchType;
   };
 
   class MOZ_STACK_CLASS GlyphRunIterator {
@@ -524,8 +524,8 @@ class gfxTextRun : public gfxShapedText {
    * are added before any further operations are performed with this
    * TextRun.
    */
-  nsresult AddGlyphRun(gfxFont* aFont, gfxTextRange::MatchType aMatchType,
-                       uint32_t aStartCharIndex, bool aForceNewRun,
+  nsresult AddGlyphRun(gfxFont* aFont, FontMatchType aMatchType,
+                       uint32_t aUTF16Offset, bool aForceNewRun,
                        mozilla::gfx::ShapedTextFlags aOrientation);
   void ResetGlyphRuns() {
     if (mHasGlyphRunArray) {
@@ -851,8 +851,8 @@ class gfxFontGroup final : public gfxTextRunFactory {
   // Initiates userfont loads if userfont not loaded.
   // aGeneric: if non-null, returns the CSS generic type that was mapped to
   //           this font
-  gfxFont* GetFirstValidFont(uint32_t aCh = 0x20,
-                             mozilla::FontFamilyType* aGeneric = nullptr);
+  gfxFont* GetFirstValidFont(
+      uint32_t aCh = 0x20, mozilla::StyleGenericFontFamily* aGeneric = nullptr);
 
   // Returns the first font in the font-group that has an OpenType MATH table,
   // or null if no such font is available. The GetMathConstant methods may be
@@ -941,7 +941,7 @@ class gfxFontGroup final : public gfxTextRunFactory {
 
   gfxFont* FindFontForChar(uint32_t ch, uint32_t prevCh, uint32_t aNextCh,
                            Script aRunScript, gfxFont* aPrevMatchedFont,
-                           gfxTextRange::MatchType* aMatchType);
+                           FontMatchType* aMatchType);
 
   gfxUserFontSet* GetUserFontSet();
 
@@ -991,6 +991,22 @@ class gfxFontGroup final : public gfxTextRunFactory {
       LazyReferenceDrawTargetGetter& aRefDrawTargetGetter);
 
  protected:
+  struct TextRange {
+    TextRange(uint32_t aStart, uint32_t aEnd, gfxFont* aFont,
+              FontMatchType aMatchType,
+              mozilla::gfx::ShapedTextFlags aOrientation)
+        : start(aStart),
+          end(aEnd),
+          font(aFont),
+          matchType(aMatchType),
+          orientation(aOrientation) {}
+    uint32_t Length() const { return end - start; }
+    uint32_t start, end;
+    RefPtr<gfxFont> font;
+    FontMatchType matchType;
+    mozilla::gfx::ShapedTextFlags orientation;
+  };
+
   // search through pref fonts for a character, return nullptr if no matching
   // pref font
   gfxFont* WhichPrefFontSupportsChar(uint32_t aCh, uint32_t aNextCh);
@@ -999,7 +1015,7 @@ class gfxFontGroup final : public gfxTextRunFactory {
                                        Script aRunScript);
 
   template <typename T>
-  void ComputeRanges(nsTArray<gfxTextRange>& mRanges, const T* aString,
+  void ComputeRanges(nsTArray<TextRange>& aRanges, const T* aString,
                      uint32_t aLength, Script aRunScript,
                      mozilla::gfx::ShapedTextFlags aOrientation);
 
@@ -1008,14 +1024,14 @@ class gfxFontGroup final : public gfxTextRunFactory {
     FamilyFace()
         : mFamily(nullptr),
           mFontEntry(nullptr),
-          mGeneric(mozilla::eFamily_none),
+          mGeneric(mozilla::StyleGenericFontFamily::None),
           mFontCreated(false),
           mLoading(false),
           mInvalid(false),
           mCheckForFallbackFaces(false) {}
 
     FamilyFace(gfxFontFamily* aFamily, gfxFont* aFont,
-               mozilla::FontFamilyType aGeneric)
+               mozilla::StyleGenericFontFamily aGeneric)
         : mFamily(aFamily),
           mGeneric(aGeneric),
           mFontCreated(true),
@@ -1030,7 +1046,7 @@ class gfxFontGroup final : public gfxTextRunFactory {
     }
 
     FamilyFace(gfxFontFamily* aFamily, gfxFontEntry* aFontEntry,
-               mozilla::FontFamilyType aGeneric)
+               mozilla::StyleGenericFontFamily aGeneric)
         : mFamily(aFamily),
           mGeneric(aGeneric),
           mFontCreated(false),
@@ -1099,7 +1115,7 @@ class gfxFontGroup final : public gfxTextRunFactory {
       return mFontCreated ? mFont->GetFontEntry() : mFontEntry;
     }
 
-    mozilla::FontFamilyType Generic() const { return mGeneric; }
+    mozilla::StyleGenericFontFamily Generic() const { return mGeneric; }
 
     bool IsUserFontContainer() const {
       return FontEntry()->mIsUserFontContainer;
@@ -1136,7 +1152,7 @@ class gfxFontGroup final : public gfxTextRunFactory {
       gfxFont* MOZ_OWNING_REF mFont;
       gfxFontEntry* MOZ_OWNING_REF mFontEntry;
     };
-    mozilla::FontFamilyType mGeneric;
+    mozilla::StyleGenericFontFamily mGeneric;
     bool mFontCreated : 1;
     bool mLoading : 1;
     bool mInvalid : 1;
@@ -1170,7 +1186,7 @@ class gfxFontGroup final : public gfxTextRunFactory {
   RefPtr<gfxTextRun> mCachedEllipsisTextRun;
 
   // cache the most recent pref font to avoid general pref font lookup
-  RefPtr<gfxFontFamily> mLastPrefFamily;
+  FontFamily mLastPrefFamily;
   RefPtr<gfxFont> mLastPrefFont;
   eFontPrefLang mLastPrefLang;  // lang group for last pref font
   eFontPrefLang mPageLang;
@@ -1245,7 +1261,7 @@ class gfxFontGroup final : public gfxTextRunFactory {
 
   // do style selection and add entries to list
   void AddFamilyToFontList(gfxFontFamily* aFamily,
-                           mozilla::FontFamilyType aGeneric);
+                           mozilla::StyleGenericFontFamily aGeneric);
 };
 
 // A "missing font recorder" is to be used during text-run creation to keep

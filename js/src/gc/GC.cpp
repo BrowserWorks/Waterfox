@@ -26,8 +26,8 @@
  * For a collection to be carried out incrementally the following conditions
  * must be met:
  *  - the collection must be run by calling js::GCSlice() rather than js::GC()
- *  - the GC mode must have been set to JSGC_MODE_INCREMENTAL with
- *    JS_SetGCParameter()
+ *  - the GC mode must have been set to JSGC_MODE_INCREMENTAL or
+ *    JSGC_MODE_ZONE_INCREMENTAL with JS_SetGCParameter()
  *  - no thread may have an AutoKeepAtoms instance on the stack
  *
  * The last condition is an engine-internal mechanism to ensure that incremental
@@ -346,7 +346,7 @@ static const uint32_t MaxEmptyChunkCount = 30;
 static const int64_t DefaultTimeBudget = SliceBudget::UnlimitedTimeBudget;
 
 /* JSGC_MODE */
-static const JSGCMode Mode = JSGC_MODE_INCREMENTAL;
+static const JSGCMode Mode = JSGC_MODE_ZONE_INCREMENTAL;
 
 /* JSGC_COMPACTING_ENABLED */
 static const bool CompactingEnabled = true;
@@ -1372,7 +1372,7 @@ bool GCRuntime::setParameter(JSGCParamKey key, uint32_t value,
       break;
     case JSGC_MODE:
       if (mode != JSGC_MODE_GLOBAL && mode != JSGC_MODE_ZONE &&
-          mode != JSGC_MODE_INCREMENTAL) {
+          mode != JSGC_MODE_INCREMENTAL && mode != JSGC_MODE_ZONE_INCREMENTAL) {
         return false;
       }
       mode = JSGCMode(value);
@@ -1806,6 +1806,7 @@ void GCRuntime::removeBlackRootsTracer(JSTraceDataOp traceOp, void* data) {
     Callback<JSTraceDataOp>* e = &blackRootTracers.ref()[i];
     if (e->op == traceOp && e->data == data) {
       blackRootTracers.ref().erase(e);
+      break;
     }
   }
 }
@@ -7234,7 +7235,8 @@ GCRuntime::IncrementalResult GCRuntime::budgetIncrementalGC(
   if (unsafeReason == AbortReason::None) {
     if (reason == JS::GCReason::COMPARTMENT_REVIVED) {
       unsafeReason = gc::AbortReason::CompartmentRevived;
-    } else if (mode != JSGC_MODE_INCREMENTAL) {
+    } else if (mode != JSGC_MODE_INCREMENTAL &&
+               mode != JSGC_MODE_ZONE_INCREMENTAL) {
       unsafeReason = gc::AbortReason::ModeChange;
     }
   }
@@ -7299,7 +7301,8 @@ static void ScheduleZones(GCRuntime* gc) {
       continue;
     }
 
-    if (gc->gcMode() == JSGC_MODE_GLOBAL) {
+    if (gc->gcMode() == JSGC_MODE_GLOBAL ||
+        gc->gcMode() == JSGC_MODE_INCREMENTAL) {
       zone->scheduleGC();
     }
 
@@ -8688,8 +8691,15 @@ JS_PUBLIC_API void JS::IncrementalPreWriteBarrier(JSObject* obj) {
     return;
   }
 
-  MOZ_ASSERT(!JS::RuntimeHeapIsMajorCollecting());
   JSObject::writeBarrierPre(obj);
+}
+
+JS_PUBLIC_API void JS::IncrementalPreWriteBarrier(GCCellPtr thing) {
+  if (!thing) {
+    return;
+  }
+
+  TenuredCell::writeBarrierPre(&thing.asCell()->asTenured());
 }
 
 JS_PUBLIC_API void JS::IncrementalReadBarrier(GCCellPtr thing) {

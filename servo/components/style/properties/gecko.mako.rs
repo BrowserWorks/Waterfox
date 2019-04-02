@@ -826,7 +826,7 @@ def set_gecko_property(ffi_name, expr):
     pub fn set_${ident}(&mut self, v: longhands::${ident}::computed_value::T) {
         match v {
             UrlOrNone::Url(ref url) => {
-                self.gecko.${gecko_ffi_name}.set_move(url.0.url_value.clone())
+                self.gecko.${gecko_ffi_name}.set_move(url.clone_url_value())
             }
             UrlOrNone::None => {
                 unsafe {
@@ -1984,18 +1984,20 @@ fn static_assert() {
     <% impl_font_settings("font_variation_settings", "gfxFontVariation", "VariationValue", "f32", "f32") %>
 
     pub fn set_font_family(&mut self, v: longhands::font_family::computed_value::T) {
-        use crate::gecko_bindings::structs::FontFamilyType;
+        use crate::values::computed::font::GenericFontFamily;
 
         let is_system_font = v.is_system_font;
         self.gecko.mFont.systemFont = is_system_font;
         self.gecko.mGenericID = if is_system_font {
-            structs::kGenericFont_NONE
+            GenericFontFamily::None
         } else {
-            v.families.single_generic().unwrap_or(structs::kGenericFont_NONE)
+            v.families.single_generic().unwrap_or(GenericFontFamily::None)
         };
-        self.gecko.mFont.fontlist.mFontlist.mBasePtr.set_move(v.families.0.clone());
+        self.gecko.mFont.fontlist.mFontlist.mBasePtr.set_move(
+            v.families.shared_font_list().clone()
+        );
         // Fixed-up if needed in Cascade::fixup_font_stuff.
-        self.gecko.mFont.fontlist.mDefaultFontType = FontFamilyType::eFamily_none;
+        self.gecko.mFont.fontlist.mDefaultFontType = GenericFontFamily::None;
     }
 
     pub fn copy_font_family_from(&mut self, other: &Self) {
@@ -2009,36 +2011,16 @@ fn static_assert() {
     }
 
     pub fn clone_font_family(&self) -> longhands::font_family::computed_value::T {
-        use crate::gecko_bindings::structs::FontFamilyType;
         use crate::values::computed::font::{FontFamily, SingleFontFamily, FontFamilyList};
 
         let fontlist = &self.gecko.mFont.fontlist;
         let shared_fontlist = unsafe { fontlist.mFontlist.mBasePtr.to_safe() };
 
         let families = if shared_fontlist.mNames.is_empty() {
-            let default = fontlist.mDefaultFontType;
-            let default = match default {
-                FontFamilyType::eFamily_serif => {
-                    SingleFontFamily::Generic(atom!("serif"))
-                }
-                _ => {
-                    // This can break with some combinations of user prefs, see
-                    // bug 1442195 for example. It doesn't really matter in this
-                    // case...
-                    //
-                    // FIXME(emilio): Probably should be storing the whole
-                    // default font name instead though.
-                    debug_assert_eq!(
-                        default,
-                        FontFamilyType::eFamily_sans_serif,
-                        "Default generic should be serif or sans-serif"
-                    );
-                    SingleFontFamily::Generic(atom!("sans-serif"))
-                }
-            };
+            let default = SingleFontFamily::Generic(fontlist.mDefaultFontType);
             FontFamilyList::new(Box::new([default]))
         } else {
-            FontFamilyList(shared_fontlist)
+            FontFamilyList::SharedFontList(shared_fontlist)
         };
 
         FontFamily {
@@ -3781,7 +3763,7 @@ fn static_assert() {
                 },
                 Url(ref url) => {
                     unsafe {
-                        bindings::Gecko_nsStyleFilter_SetURLValue(gecko_filter, url.0.url_value.get());
+                        bindings::Gecko_nsStyleFilter_SetURLValue(gecko_filter, url.url_value_ptr());
                     }
                 },
             }
@@ -4162,7 +4144,7 @@ fn set_style_svg_path(
             % if ident == "clip_path":
             ShapeSource::ImageOrUrl(ref url) => {
                 unsafe {
-                    bindings::Gecko_StyleShapeSource_SetURLValue(${ident}, url.0.url_value.get())
+                    bindings::Gecko_StyleShapeSource_SetURLValue(${ident}, url.url_value_ptr())
                 }
             }
             % elif ident == "shape_outside":

@@ -153,7 +153,6 @@ const EXTRA_CLANG_FLAGS: &'static [&'static str] = &[
 const WHITELIST_TYPES: &'static [&'static str] = &[
     "JS::AutoCheckCannotGC",
     "JS::AutoIdVector",
-    "JS::AutoObjectVector",
     "JS::CallArgs",
     "js::Class",
     "JS::RealmOptions",
@@ -221,6 +220,8 @@ const WHITELIST_TYPES: &'static [&'static str] = &[
     "JS::PropertyDescriptor",
     "JS::Rooted",
     "JS::RootedObject",
+    "JS::RootedObjectVector",
+    "JS::RootedValue",
     "JS::RootingContext",
     "JS::RootKind",
     "js::Scalar::Type",
@@ -301,8 +302,10 @@ const WHITELIST_FUNCTIONS: &'static [&'static str] = &[
     "JS_HasOwnPropertyById",
     "JS_HasProperty",
     "JS_HasPropertyById",
-    "JS::HeapObjectPostBarrier",
-    "JS::HeapValuePostBarrier",
+    "JS::HeapObjectWriteBarriers",
+    "JS::HeapScriptWriteBarriers",
+    "JS::HeapStringWriteBarriers",
+    "JS::HeapValueWriteBarriers",
     "JS_InitializePropertiesFromCompatibleNativeObject",
     "JS::InitSelfHostedCode",
     "JS::IsConstructor",
@@ -473,8 +476,10 @@ const OPAQUE_TYPES: &'static [&'static str] = &[
     "JS::ReadOnlyCompileOptions",
     "mozilla::BufferList",
     "mozilla::UniquePtr.*",
+    "JS::RootedVector",
     "JS::Rooted<JS::Auto.*Vector.*>",
-    "JS::Auto.*Vector"
+    "JS::Auto.*Vector",
+    "JS::StackGCVector"
 ];
 
 /// Types for which we should NEVER generate bindings, even if it is used within

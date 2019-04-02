@@ -39,8 +39,7 @@ WebRenderLayerManager::WebRenderLayerManager(nsIWidget* aWidget)
       mIsFirstPaint(false),
       mTarget(nullptr),
       mPaintSequenceNumber(0),
-      mWebRenderCommandBuilder(this),
-      mLastDisplayListSizes{0} {
+      mWebRenderCommandBuilder(this) {
   MOZ_COUNT_CTOR(WebRenderLayerManager);
   for (auto renderRoot : wr::kRenderRoots) {
     mStateManagers[renderRoot].mRenderRoot = renderRoot;
@@ -423,7 +422,7 @@ void WebRenderLayerManager::EndTransactionWithoutLayer(
         resourceUpdates.SubQueue(renderRoot)
             .Flush(renderRootDL->mResourceUpdates, renderRootDL->mSmallShmems,
                    renderRootDL->mLargeShmems);
-        renderRootDL->mRect = RoundedToInt(rects[renderRoot]).ToUnknownRect();
+        renderRootDL->mRect = rects[renderRoot];
         renderRootDL->mScrollData.emplace(std::move(mScrollDatas[renderRoot]));
       } else if (WrBridge()->HasWebRenderParentCommands(renderRoot)) {
         auto renderRootDL = renderRootDLs.AppendElement();

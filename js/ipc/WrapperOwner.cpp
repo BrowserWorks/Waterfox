@@ -12,6 +12,7 @@
 #include "jsfriendapi.h"
 #include "js/CharacterEncoding.h"
 #include "js/RegExp.h"
+#include "js/RegExpFlags.h"
 #include "xpcprivate.h"
 #include "WrapperFactory.h"
 
@@ -580,7 +581,7 @@ bool WrapperOwner::callOrConstruct(JSContext* cx, HandleObject proxy,
   ObjectId objId = idOf(proxy);
 
   InfallibleTArray<JSParam> vals;
-  AutoValueVector outobjects(cx);
+  RootedValueVector outobjects(cx);
 
   RootedValue v(cx);
   for (size_t i = 0; i < args.length() + 2; i++) {
@@ -833,7 +834,8 @@ RegExpShared* WrapperOwner::regexp_toShared(JSContext* cx, HandleObject proxy) {
   }
 
   RootedObject regexp(cx);
-  regexp = JS::NewUCRegExpObject(cx, source.get(), source.Length(), flags);
+  regexp = JS::NewUCRegExpObject(cx, source.get(), source.Length(),
+                                 RegExpFlags(flags));
   if (!regexp) {
     return nullptr;
   }

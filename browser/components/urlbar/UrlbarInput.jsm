@@ -196,7 +196,7 @@ class UrlbarInput {
    *   The trimmed string
    */
   trimValue(val) {
-    return UrlbarPrefs.get("trimURLs") ? this.window.trimURL(val) : val;
+    return UrlbarPrefs.get("trimURLs") ? BrowserUtils.trimURL(val) : val;
   }
 
   /**
@@ -537,7 +537,8 @@ class UrlbarInput {
     }
 
     if (!searchString) {
-      searchString = this.textValue;
+      searchString = (this.getAttribute("pageproxystate") == "valid") ?
+                     "" : this.textValue;
     } else if (!this.textValue.startsWith(searchString)) {
       throw new Error("The current value doesn't start with the search string");
     }
@@ -554,6 +555,7 @@ class UrlbarInput {
       muxer: "UnifiedComplete",
       providers: ["UnifiedComplete"],
       searchString,
+      userContextId: this.window.gBrowser.selectedBrowser.getAttribute("usercontextid"),
     }));
   }
 
@@ -708,26 +710,23 @@ class UrlbarInput {
       !deletedAutofilledSubstring &&
       this.selectionEnd == value.length;
 
-    // The autofill placeholder is a string that we autofill now, before we
-    // start waiting on the new search's first result, in order to prevent a
-    // flicker in the input caused by the previous autofilled substring
-    // disappearing and reappearing when the new first result arrives.  Of
-    // course we can only autofill the placeholder if it starts with the new
-    // search string.
+    // Determine whether we can autofill the placeholder.  The placeholder is a
+    // value that we autofill now, when the search starts and before we wait on
+    // its first result, in order to prevent a flicker in the input caused by
+    // the previous autofilled substring disappearing and reappearing when the
+    // first result arrives.  Of course we can only autofill the placeholder if
+    // it starts with the new search string, and we shouldn't autofill anything
+    // if the caret isn't at the end of the input.
     if (!allowAutofill ||
         this._autofillPlaceholder.length <= value.length ||
-        !this._autofillPlaceholder.startsWith(value)) {
-      this._autofillPlaceholder = "";
-    }
-
-    // Don't ever autofill on input if the caret/selection isn't at the end, or
-    // if the placeholder doesn't start with what the user typed.
-    if (this._autofillPlaceholder &&
-        this.selectionEnd == this.value.length &&
-        this._autofillPlaceholder.toLocaleLowerCase()
+        !this._autofillPlaceholder.toLocaleLowerCase()
           .startsWith(value.toLocaleLowerCase())) {
-      this._autofillValue(this._autofillPlaceholder, value.length,
-                          this._autofillPlaceholder.length);
+      this._autofillPlaceholder = "";
+    } else if (this._autofillPlaceholder &&
+               this.selectionEnd == this.value.length) {
+      let autofillValue =
+        value + this._autofillPlaceholder.substring(value.length);
+      this._autofillValue(autofillValue, value.length, autofillValue.length);
     }
 
     return allowAutofill;
@@ -989,12 +988,18 @@ class UrlbarInput {
    */
   _loadURL(url, openUILinkWhere, params, result = {},
            browser = this.window.gBrowser.selectedBrowser) {
-    this.value = url;
-    browser.userTypedValue = url;
+    // No point in setting these because we'll handleRevert() a few rows below.
+    if (openUILinkWhere == "current") {
+      this.value = url;
+      browser.userTypedValue = url;
+    }
 
-    if (this.window.gInitialPages.includes(url)) {
+    // No point in setting this if we are loading in a new window.
+    if (openUILinkWhere != "window" &&
+        this.window.gInitialPages.includes(url)) {
       browser.initialPageLoadedFromUserAction = url;
     }
+
     try {
       UrlbarUtils.addToUrlbarHistory(url, this.window);
     } catch (ex) {
@@ -1218,6 +1223,8 @@ class UrlbarInput {
       this.view.close();
       return;
     }
+
+    this.view.removeAccessibleFocus();
 
     // During composition with an IME, the following events happen in order:
     // 1. a compositionstart event

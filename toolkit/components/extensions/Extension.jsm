@@ -49,6 +49,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   ExtensionTelemetry: "resource://gre/modules/ExtensionTelemetry.jsm",
   FileSource: "resource://gre/modules/L10nRegistry.jsm",
   L10nRegistry: "resource://gre/modules/L10nRegistry.jsm",
+  LightweightThemeManager: "resource://gre/modules/LightweightThemeManager.jsm",
   Log: "resource://gre/modules/Log.jsm",
   MessageChannel: "resource://gre/modules/MessageChannel.jsm",
   NetUtil: "resource://gre/modules/NetUtil.jsm",
@@ -578,6 +579,13 @@ class ExtensionData {
     if (!this.type || !this.localeData) {
       throw new Error("The extension has not been initialized.");
     }
+    // Upon update or reinstall, the Extension.manifest may be read from
+    // StartupCache.manifest, however rawManifest is *not*.  We need the
+    // raw manifest in order to get a localized manifest.
+    if (!this.rawManifest) {
+      this.rawManifest = await this.readJSON("manifest.json");
+    }
+
     if (!this.localeData.has(locale)) {
       // Locales are not avialable until some additional
       // initialization is done.  We could just call initAllLocales,
@@ -1433,6 +1441,10 @@ class Extension extends ExtensionData {
     this.registeredContentScripts = new Map();
 
     this.emitter = new EventEmitter();
+
+    if (this.startupData.lwtData && this.startupReason == "APP_STARTUP") {
+      LightweightThemeManager.fallbackThemeData = this.startupData.lwtData;
+    }
 
     /* eslint-disable mozilla/balanced-listeners */
     this.on("add-permissions", (ignoreEvent, permissions) => {

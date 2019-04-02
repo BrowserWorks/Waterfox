@@ -99,7 +99,9 @@ using refcounted class nsIInputStream from "mozilla/ipc/IPCStreamUtils.h";
 using refcounted class mozilla::dom::BrowsingContext from "mozilla/dom/BrowsingContext.h";
 using mozilla::dom::BrowsingContextId from "mozilla/dom/ipc/IdType.h";
 using mozilla::dom::BrowsingContextTransaction from "mozilla/dom/BrowsingContext.h";
+using mozilla::dom::BrowsingContextFieldEpochs from "mozilla/dom/BrowsingContext.h";
 using mozilla::dom::BrowsingContextInitializer from "mozilla/dom/BrowsingContext.h";
+using base::SharedMemoryHandle from "base/shared_memory.h";
 
 union ChromeRegistryItem
 {
@@ -242,6 +244,8 @@ struct JSWindowActorInfo
 
   JSWindowActorEventDecl[] events;
   nsCString[] observers;
+  nsString[] matches;
+  nsString[] remoteTypes;
 };
 
 struct GMPAPITags
@@ -560,7 +564,9 @@ child:
                                     StructuredCloneData initialData,
                                     LookAndFeelInt[] lookAndFeelIntCache,
                                     /* used on MacOSX and Linux only: */
-                                    SystemFontListEntry[] systemFontList);
+                                    SystemFontListEntry[] systemFontList,
+                                    SharedMemoryHandle? sharedUASheetHandle,
+                                    uintptr_t sharedUASheetAddress);
 
     // Notify child that last-pb-context-exited notification was observed
     async LastPrivateDocShellDestroyed();
@@ -930,11 +936,12 @@ parent:
     async ConsoleMessage(nsString message);
     async ScriptError(nsString message, nsString sourceName, nsString sourceLine,
                       uint32_t lineNumber, uint32_t colNumber, uint32_t flags,
-                      nsCString category, bool privateWindow);
+                      nsCString category, bool privateWindow,
+                      bool fromChromeContext);
     async ScriptErrorWithStack(nsString message, nsString sourceName, nsString sourceLine,
                                uint32_t lineNumber, uint32_t colNumber, uint32_t flags,
                                nsCString category, bool privateWindow,
-                               ClonedMessageData stack);
+                               bool fromChromeContext, ClonedMessageData stack);
 
     // Places the items within dataTransfer on the clipboard.
     async SetClipboard(IPCDataTransfer aDataTransfer,
@@ -1235,7 +1242,8 @@ parent:
 
 both:
     async CommitBrowsingContextTransaction(BrowsingContext aContext,
-                                           BrowsingContextTransaction aTransaction);
+                                           BrowsingContextTransaction aTransaction,
+                                           BrowsingContextFieldEpochs aEpochs);
 
     async AsyncMessage(nsString aMessage, CpowEntry[] aCpows,
                        Principal aPrincipal, ClonedMessageData aData);

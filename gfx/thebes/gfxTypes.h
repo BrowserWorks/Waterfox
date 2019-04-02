@@ -7,6 +7,8 @@
 #define GFX_TYPES_H
 
 #include <stdint.h>
+#include "mozilla/TypedEnumBits.h"
+#include "nsStyleConsts.h"
 
 typedef struct _cairo_surface cairo_surface_t;
 typedef struct _cairo_user_data_key cairo_user_data_key_t;
@@ -81,5 +83,47 @@ enum class gfxAlphaType {
   Premult,
   NonPremult,
 };
+
+/**
+ * Type used to record how a particular font is selected during the font-
+ * matching process, so that this can be exposed to the Inspector.
+ */
+struct FontMatchType {
+  enum class Kind : uint8_t {
+    kFontGroup = 1,
+    kPrefsFallback = 1 << 1,
+    kSystemFallback = 1 << 2,
+  };
+
+  inline FontMatchType& operator|=(const FontMatchType& aOther);
+
+  bool operator==(const FontMatchType& aOther) const {
+    return kind == aOther.kind && generic == aOther.generic;
+  }
+
+  bool operator!=(const FontMatchType& aOther) const {
+    return !(*this == aOther);
+  }
+
+  MOZ_IMPLICIT FontMatchType() = default;
+  MOZ_IMPLICIT FontMatchType(Kind aKind) : kind(aKind) {}
+  FontMatchType(Kind aKind, mozilla::StyleGenericFontFamily aGeneric)
+      : kind(aKind), generic(aGeneric) {}
+
+  Kind kind = static_cast<Kind>(0);
+  mozilla::StyleGenericFontFamily generic =
+      mozilla::StyleGenericFontFamily::None;
+};
+
+MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(FontMatchType::Kind)
+
+FontMatchType& FontMatchType::operator|=(const FontMatchType& aOther) {
+  kind |= aOther.kind;
+  // We only keep track of one generic.
+  if (generic != aOther.generic) {
+    generic = mozilla::StyleGenericFontFamily::None;
+  }
+  return *this;
+}
 
 #endif /* GFX_TYPES_H */

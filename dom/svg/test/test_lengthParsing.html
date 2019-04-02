@@ -28,12 +28,17 @@ checkParseOk("1ex", 1, "ex");
 checkParseOk("1e1em", 10, "em");
 checkParseOk("1E+2", 100);
 checkParseOk(".1e-2", 0.001);
+checkParseOk("   10", 10);
+checkParseOk("10  ", 10);
+checkParseOk("  10  ", 10);
+checkParseOk("  10em  ", 10, "em");
 
 // Fail cases
 checkParseFail("1e");
 checkParseFail("1 e");
 checkParseFail("1 em");
 checkParseFail("1ee");
+checkParseFail(" 10 20");
 
 function checkParseOk(spec, valueInUnits, units) {
   var rect = document.getElementById("rect");
@@ -46,7 +51,7 @@ function checkParseOk(spec, valueInUnits, units) {
   const tolerance = 1 / 65535;
   var actual = rect.x.baseVal.valueInSpecifiedUnits;
   ok(Math.abs(actual - valueInUnits) < tolerance,
-     spec + ' (value) - got ' + actual + ', expected ' + valueInUnits);
+     spec + " (value) - got " + actual + ", expected " + valueInUnits);
 
   // Check unit part
   var unitMapping = {
@@ -60,7 +65,7 @@ function checkParseOk(spec, valueInUnits, units) {
     "mm": SVGLength.SVG_LENGTHTYPE_MM,
     "in": SVGLength.SVG_LENGTHTYPE_IN,
     "pt": SVGLength.SVG_LENGTHTYPE_PT,
-    "pc": SVGLength.SVG_LENGTHTYPE_PC
+    "pc": SVGLength.SVG_LENGTHTYPE_PC,
   };
   if (typeof units == "undefined") {
     units = "";

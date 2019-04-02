@@ -8,7 +8,6 @@
 #include "mozilla/TextInputListener.h"
 
 #include "nsCOMPtr.h"
-#include "nsIPresShell.h"
 #include "nsView.h"
 #include "nsCaret.h"
 #include "nsLayoutCID.h"
@@ -35,6 +34,7 @@
 #include "nsTextNode.h"
 #include "nsIController.h"
 #include "mozilla/AutoRestore.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -641,8 +641,7 @@ nsTextInputSelectionImpl::CompleteScroll(bool aForward) {
   if (!mScrollFrame) return NS_ERROR_NOT_INITIALIZED;
 
   mScrollFrame->ScrollBy(nsIntPoint(0, aForward ? 1 : -1),
-                         nsIScrollableFrame::WHOLE,
-                         nsIScrollableFrame::INSTANT);
+                         nsIScrollableFrame::WHOLE, ScrollMode::eInstant);
   return NS_OK;
 }
 
@@ -685,7 +684,7 @@ nsTextInputSelectionImpl::ScrollPage(bool aForward) {
   if (!mScrollFrame) return NS_ERROR_NOT_INITIALIZED;
 
   mScrollFrame->ScrollBy(nsIntPoint(0, aForward ? 1 : -1),
-                         nsIScrollableFrame::PAGES, nsIScrollableFrame::SMOOTH);
+                         nsIScrollableFrame::PAGES, ScrollMode::eSmooth);
   return NS_OK;
 }
 
@@ -694,7 +693,7 @@ nsTextInputSelectionImpl::ScrollLine(bool aForward) {
   if (!mScrollFrame) return NS_ERROR_NOT_INITIALIZED;
 
   mScrollFrame->ScrollBy(nsIntPoint(0, aForward ? 1 : -1),
-                         nsIScrollableFrame::LINES, nsIScrollableFrame::SMOOTH);
+                         nsIScrollableFrame::LINES, ScrollMode::eSmooth);
   return NS_OK;
 }
 
@@ -703,7 +702,7 @@ nsTextInputSelectionImpl::ScrollCharacter(bool aRight) {
   if (!mScrollFrame) return NS_ERROR_NOT_INITIALIZED;
 
   mScrollFrame->ScrollBy(nsIntPoint(aRight ? 1 : -1, 0),
-                         nsIScrollableFrame::LINES, nsIScrollableFrame::SMOOTH);
+                         nsIScrollableFrame::LINES, ScrollMode::eSmooth);
   return NS_OK;
 }
 
@@ -800,7 +799,7 @@ void TextInputListener::OnSelectionChange(Selection& aSelection,
     if (content) {
       nsCOMPtr<Document> doc = content->GetComposedDoc();
       if (doc) {
-        nsCOMPtr<nsIPresShell> presShell = doc->GetShell();
+        RefPtr<PresShell> presShell = doc->GetPresShell();
         if (presShell) {
           nsEventStatus status = nsEventStatus_eIgnore;
           WidgetEvent event(true, eFormSelect);
@@ -1346,8 +1345,10 @@ nsresult nsTextEditorState::PrepareEditor(const nsAString* aValue) {
     // already does the relevant security checks.
     AutoNoJSAPI nojsapi;
 
-    rv = newTextEditor->Init(*doc, GetRootNode(), mSelCon, editorFlags,
-                             defaultValue);
+    RefPtr<Element> rootElement = GetRootNode();
+    RefPtr<nsTextInputSelectionImpl> selectionController = mSelCon;
+    rv = newTextEditor->Init(*doc, rootElement, selectionController,
+                             editorFlags, defaultValue);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -2301,7 +2302,9 @@ bool nsTextEditorState::SetValue(const nsAString& aValue,
             // transactions typed by user shouldn't be merged with this).
             // In this case, we need to dispatch "input" event because
             // web apps may need to know the user's operation.
-            DebugOnly<nsresult> rv = textEditor->ReplaceTextAsAction(newValue);
+            RefPtr<nsRange> range;  // See bug 1506439
+            DebugOnly<nsresult> rv =
+                textEditor->ReplaceTextAsAction(newValue, range);
             NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
                                  "Failed to set the new value");
           } else if (aFlags & eSetValue_ForXUL) {

@@ -21,7 +21,6 @@
 #include "js/Value.h"
 #include "vm/JSObject.h"
 #include "vm/Shape.h"
-#include "vm/ShapedObject.h"
 #include "vm/StringType.h"
 
 namespace js {
@@ -459,7 +458,7 @@ enum class ShouldUpdateTypes { Update, DontUpdate };
  * Slots and elements may both be non-empty. The slots may be either names or
  * indexes; no indexed property will be in both the slots and elements.
  */
-class NativeObject : public ShapedObject {
+class NativeObject : public JSObject {
  protected:
   /* Slots for object properties. */
   js::HeapSlot* slots_;
@@ -938,7 +937,7 @@ class NativeObject : public ShapedObject {
 
   static MOZ_MUST_USE bool fillInAfterSwap(JSContext* cx,
                                            HandleNativeObject obj,
-                                           const AutoValueVector& values,
+                                           HandleValueVector values,
                                            void* priv);
 
  public:
@@ -1582,7 +1581,7 @@ inline bool NativeGetProperty(JSContext* cx, HandleNativeObject obj,
 }
 
 extern bool NativeGetElement(JSContext* cx, HandleNativeObject obj,
-                             HandleValue reciever, int32_t index,
+                             HandleValue receiver, int32_t index,
                              MutableHandleValue vp);
 
 bool GetSparseElementHelper(JSContext* cx, HandleArrayObject obj,

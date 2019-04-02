@@ -157,7 +157,8 @@
   width: 100%;
   height: 2px;
   background-color: var(--tab-line-color, transparent);
-  transition: transform 250ms var(--animation-curve), opacity 250ms var(--animation-curve);
+  transition: transform 250ms var(--animation-curve),
+    opacity 250ms var(--animation-curve);
   opacity: 0;
   transform: scaleX(0);
 }
@@ -230,6 +231,17 @@
 
 .thread-header {
   margin-top: 10px;
+}
+
+.thread-header .img.worker,
+.thread-header .img.file {
+  margin-top: -1px;
+  margin-inline-end: 4px;
+  margin-inline-start: 2px;
+}
+
+.thread-header .img.file {
+  margin-top: -2px;
 }
 
 .thread-header .label {

@@ -131,7 +131,7 @@ class HandleValueArray {
   explicit HandleValueArray(HandleValue value)
       : length_(1), elements_(value.address()) {}
 
-  MOZ_IMPLICIT HandleValueArray(const AutoValueVector& values)
+  MOZ_IMPLICIT HandleValueArray(const RootedValueVector& values)
       : length_(values.length()), elements_(values.begin()) {}
 
   template <size_t N>
@@ -1883,7 +1883,7 @@ extern JS_PUBLIC_API JSObject* CloneFunctionObject(JSContext* cx,
  * objects that should end up on the clone's scope chain.
  */
 extern JS_PUBLIC_API JSObject* CloneFunctionObject(
-    JSContext* cx, HandleObject funobj, AutoObjectVector& scopeChain);
+    JSContext* cx, HandleObject funobj, HandleObjectVector scopeChain);
 
 }  // namespace JS
 
@@ -2973,7 +2973,8 @@ extern JS_PUBLIC_API void JS_SetOffthreadIonCompilationEnabled(JSContext* cx,
 // clang-format off
 #define JIT_COMPILER_OPTIONS(Register) \
   Register(BASELINE_WARMUP_TRIGGER, "baseline.warmup.trigger") \
-  Register(ION_WARMUP_TRIGGER, "ion.warmup.trigger") \
+  Register(ION_NORMAL_WARMUP_TRIGGER, "ion.warmup.trigger") \
+  Register(ION_FULL_WARMUP_TRIGGER, "ion.full.warmup.trigger") \
   Register(ION_GVN_ENABLE, "ion.gvn.enable") \
   Register(ION_FORCE_IC, "ion.forceinlineCaches") \
   Register(ION_ENABLE, "ion.enable") \
@@ -3164,93 +3165,6 @@ extern JS_PUBLIC_API RefPtr<WasmModule> GetWasmModule(HandleObject obj);
 
 extern JS_PUBLIC_API RefPtr<WasmModule> DeserializeWasmModule(
     PRFileDesc* bytecode, JS::UniqueChars filename, unsigned line);
-
-/**
- * Convenience class for imitating a JS level for-of loop. Typical usage:
- *
- *     ForOfIterator it(cx);
- *     if (!it.init(iterable)) {
- *       return false;
- *     }
- *     RootedValue val(cx);
- *     while (true) {
- *       bool done;
- *       if (!it.next(&val, &done)) {
- *         return false;
- *       }
- *       if (done) {
- *         break;
- *       }
- *       if (!DoStuff(cx, val)) {
- *         return false;
- *       }
- *     }
- */
-class MOZ_STACK_CLASS JS_PUBLIC_API ForOfIterator {
- protected:
-  JSContext* cx_;
-  /*
-   * Use the ForOfPIC on the global object (see vm/GlobalObject.h) to try
-   * to optimize iteration across arrays.
-   *
-   *  Case 1: Regular Iteration
-   *      iterator - pointer to the iterator object.
-   *      nextMethod - value of |iterator|.next.
-   *      index - fixed to NOT_ARRAY (== UINT32_MAX)
-   *
-   *  Case 2: Optimized Array Iteration
-   *      iterator - pointer to the array object.
-   *      nextMethod - the undefined value.
-   *      index - current position in array.
-   *
-   * The cases are distinguished by whether or not |index| is equal to
-   * NOT_ARRAY.
-   */
-  JS::RootedObject iterator;
-  JS::RootedValue nextMethod;
-  uint32_t index;
-
-  static const uint32_t NOT_ARRAY = UINT32_MAX;
-
-  ForOfIterator(const ForOfIterator&) = delete;
-  ForOfIterator& operator=(const ForOfIterator&) = delete;
-
- public:
-  explicit ForOfIterator(JSContext* cx)
-      : cx_(cx), iterator(cx_), nextMethod(cx), index(NOT_ARRAY) {}
-
-  enum NonIterableBehavior { ThrowOnNonIterable, AllowNonIterable };
-
-  /**
-   * Initialize the iterator.  If AllowNonIterable is passed then if getting
-   * the @@iterator property from iterable returns undefined init() will just
-   * return true instead of throwing.  Callers must then check
-   * valueIsIterable() before continuing with the iteration.
-   */
-  bool init(JS::HandleValue iterable,
-            NonIterableBehavior nonIterableBehavior = ThrowOnNonIterable);
-
-  /**
-   * Get the next value from the iterator.  If false *done is true
-   * after this call, do not examine val.
-   */
-  bool next(JS::MutableHandleValue val, bool* done);
-
-  /**
-   * Close the iterator.
-   * For the case that completion type is throw.
-   */
-  void closeThrow();
-
-  /**
-   * If initialized with throwOnNonCallable = false, check whether
-   * the value is iterable.
-   */
-  bool valueIsIterable() const { return iterator; }
-
- private:
-  inline bool nextFromOptimizedArray(MutableHandleValue val, bool* done);
-};
 
 /**
  * If a large allocation fails when calling pod_{calloc,realloc}CanGC, the JS

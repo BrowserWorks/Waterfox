@@ -15694,8 +15694,18 @@ QuotaClient::~QuotaClient() {
 nsresult QuotaClient::AsyncDeleteFile(FileManager* aFileManager,
                                       int64_t aFileId) {
   AssertIsOnBackgroundThread();
-  MOZ_ASSERT(mDeleteTimer);
 
+  if (mShutdownRequested) {
+    // Whoops! We want to delete an IndexedDB disk-backed File but it's too late
+    // to actually delete the file! This means we're going to "leak" the file
+    // and leave it around when we shouldn't! (The file will stay around until
+    // next storage initialization is triggered when the app is started again).
+    // Fixing this is tracked by bug 1539377.
+
+    return NS_OK;
+  }
+
+  MOZ_ASSERT(mDeleteTimer);
   MOZ_ALWAYS_SUCCEEDS(mDeleteTimer->Cancel());
 
   nsresult rv = mDeleteTimer->InitWithNamedFuncCallback(
@@ -24000,7 +24010,10 @@ nsresult ObjectStoreAddOrPutRequestOp::DoDatabaseWork(
     nsCString flatCloneData;
     flatCloneData.SetLength(cloneDataSize);
     auto iter = cloneData.Start();
-    cloneData.ReadBytes(iter, flatCloneData.BeginWriting(), cloneDataSize);
+    if (NS_WARN_IF(!cloneData.ReadBytes(iter, flatCloneData.BeginWriting(),
+                                        cloneDataSize))) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
 
     // Compress the bytes before adding into the database.
     const char* uncompressed = flatCloneData.BeginReading();
@@ -24239,7 +24252,10 @@ ObjectStoreAddOrPutRequestOp::SCInputStream::ReadSegments(
     *_retval += count;
     aCount -= count;
 
-    mData.Advance(mIter, count);
+    if (NS_WARN_IF(!mData.Advance(mIter, count))) {
+      // InputStreams do not propagate errors to caller.
+      return NS_OK;
+    }
   }
 
   return NS_OK;

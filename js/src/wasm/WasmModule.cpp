@@ -722,7 +722,7 @@ bool Module::instantiateFunctions(JSContext* cx,
 
   for (size_t i = 0; i < metadata(tier).funcImports.length(); i++) {
     JSFunction* f = funcImports[i];
-    if (!IsExportedFunction(f) || ExportedFunctionToInstance(f).isAsmJS()) {
+    if (!IsWasmExportedFunction(f)) {
       continue;
     }
 
@@ -1086,7 +1086,7 @@ static bool GetFunctionExport(JSContext* cx,
                               const JSFunctionVector& funcImports,
                               const Export& exp, MutableHandleValue val) {
   if (exp.funcIndex() < funcImports.length() &&
-      IsExportedWasmFunction(funcImports[exp.funcIndex()])) {
+      IsWasmExportedFunction(funcImports[exp.funcIndex()])) {
     val.setObject(*funcImports[exp.funcIndex()]);
     return true;
   }
@@ -1175,7 +1175,8 @@ static bool CreateExportObject(JSContext* cx,
 #ifdef ENABLE_WASM_GC
 static bool MakeStructField(JSContext* cx, const ValType& v, bool isMutable,
                             const char* format, uint32_t fieldNo,
-                            AutoIdVector* ids, AutoValueVector* fieldTypeObjs,
+                            AutoIdVector* ids,
+                            MutableHandleValueVector fieldTypeObjs,
                             Vector<StructFieldProps>* fieldProps) {
   char buf[20];
   sprintf(buf, format, fieldNo);
@@ -1228,7 +1229,7 @@ static bool MakeStructField(JSContext* cx, const ValType& v, bool isMutable,
     return false;
   }
 
-  if (!fieldTypeObjs->append(ObjectValue(*t))) {
+  if (!fieldTypeObjs.append(ObjectValue(*t))) {
     return false;
   }
 
@@ -1272,7 +1273,7 @@ bool Module::makeStructTypeDescrs(
 
   for (const StructType& structType : structTypes()) {
     AutoIdVector ids(cx);
-    AutoValueVector fieldTypeObjs(cx);
+    RootedValueVector fieldTypeObjs(cx);
     Vector<StructFieldProps> fieldProps(cx);
     bool allowConstruct = true;
 

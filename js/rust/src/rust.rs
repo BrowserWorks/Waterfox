@@ -22,7 +22,7 @@ use std::sync::mpsc::{SyncSender, sync_channel};
 use std::thread;
 use jsapi::root::*;
 use jsval::{self, UndefinedValue};
-use glue::{CreateAutoObjectVector, CreateCallArgsFromVp, AppendToAutoObjectVector, DeleteAutoObjectVector, IsDebugBuild};
+use glue::{CreateRootedObjectVector, CreateCallArgsFromVp, AppendToRootedObjectVector, DeleteRootedObjectVector, IsDebugBuild};
 use glue::{CreateAutoIdVector, SliceAutoIdVector, DestroyAutoIdVector};
 use glue::{NewCompileOptions, DeleteCompileOptions};
 use panic;
@@ -572,37 +572,43 @@ const ChunkLocationOffset: usize = ChunkSize - 2 * 4 - 8;
 
 pub trait GCMethods {
     unsafe fn initial() -> Self;
-    unsafe fn post_barrier(v: *mut Self, prev: Self, next: Self);
+    unsafe fn write_barriers(v: *mut Self, prev: Self, next: Self);
 }
 
 impl GCMethods for jsid {
     unsafe fn initial() -> jsid { Default::default() }
-    unsafe fn post_barrier(_: *mut jsid, _: jsid, _: jsid) {}
+    unsafe fn write_barriers(_: *mut jsid, _: jsid, _: jsid) {}
 }
 
 impl GCMethods for *mut JSObject {
     unsafe fn initial() -> *mut JSObject { ptr::null_mut() }
-    unsafe fn post_barrier(v: *mut *mut JSObject,
+    unsafe fn write_barriers(v: *mut *mut JSObject,
                            prev: *mut JSObject, next: *mut JSObject) {
-        JS::HeapObjectPostBarrier(v, prev, next);
+        JS::HeapObjectWriteBarriers(v, prev, next);
     }
 }
 
 impl GCMethods for *mut JSString {
     unsafe fn initial() -> *mut JSString { ptr::null_mut() }
-    unsafe fn post_barrier(_: *mut *mut JSString, _: *mut JSString, _: *mut JSString) {}
+    unsafe fn write_barriers(v: *mut *mut JSString, prev: *mut JSString,
+                             next: *mut JSString) {
+        JS::HeapStringWriteBarriers(v, prev, next);
+    }
 }
 
 impl GCMethods for *mut JSScript {
     unsafe fn initial() -> *mut JSScript { ptr::null_mut() }
-    unsafe fn post_barrier(_: *mut *mut JSScript, _: *mut JSScript, _: *mut JSScript) { }
+    unsafe fn write_barriers(v: *mut *mut JSScript, prev: *mut JSScript,
+                             next: *mut JSScript) {
+        JS::HeapScriptWriteBarriers(v, prev, next);
+    }
 }
 
 impl GCMethods for *mut JSFunction {
     unsafe fn initial() -> *mut JSFunction { ptr::null_mut() }
-    unsafe fn post_barrier(v: *mut *mut JSFunction,
-                           prev: *mut JSFunction, next: *mut JSFunction) {
-        JS::HeapObjectPostBarrier(mem::transmute(v),
+    unsafe fn write_barriers(v: *mut *mut JSFunction,
+                             prev: *mut JSFunction, next: *mut JSFunction) {
+        JS::HeapObjectWriteBarriers(mem::transmute(v),
                                   mem::transmute(prev),
                                   mem::transmute(next));
     }
@@ -610,8 +616,8 @@ impl GCMethods for *mut JSFunction {
 
 impl GCMethods for JS::Value {
     unsafe fn initial() -> JS::Value { UndefinedValue() }
-    unsafe fn post_barrier(v: *mut JS::Value, prev: JS::Value, next: JS::Value) {
-        JS::HeapValuePostBarrier(v, &prev, &next);
+    unsafe fn write_barriers(v: *mut JS::Value, prev: JS::Value, next: JS::Value) {
+        JS::HeapValueWriteBarriers(v, &prev, &next);
     }
 }
 
@@ -749,29 +755,29 @@ impl JSJitSetterCallArgs {
 // ___________________________________________________________________________
 // Wrappers around things in jsglue.cpp
 
-pub struct AutoObjectVectorWrapper {
-    pub ptr: *mut JS::AutoObjectVector
+pub struct RootedObjectVectorWrapper {
+    pub ptr: *mut JS::RootedObjectVector
 }
 
-impl AutoObjectVectorWrapper {
-    pub fn new(cx: *mut JSContext) -> AutoObjectVectorWrapper {
-        AutoObjectVectorWrapper {
+impl RootedObjectVectorWrapper {
+    pub fn new(cx: *mut JSContext) -> RootedObjectVectorWrapper {
+        RootedObjectVectorWrapper {
             ptr: unsafe {
-                 CreateAutoObjectVector(cx)
+                 CreateRootedObjectVector(cx)
             }
         }
     }
 
     pub fn append(&self, obj: *mut JSObject) -> bool {
         unsafe {
-            AppendToAutoObjectVector(self.ptr, obj)
+            AppendToRootedObjectVector(self.ptr, obj)
         }
     }
 }
 
-impl Drop for AutoObjectVectorWrapper {
+impl Drop for RootedObjectVectorWrapper {
     fn drop(&mut self) {
-        unsafe { DeleteAutoObjectVector(self.ptr) }
+        unsafe { DeleteRootedObjectVector(self.ptr) }
     }
 }
 

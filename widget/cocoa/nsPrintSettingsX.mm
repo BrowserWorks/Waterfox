@@ -28,6 +28,15 @@ nsPrintSettingsX::nsPrintSettingsX() : mAdjustedPaperWidth{0.0}, mAdjustedPaperH
   mWidthScale = COCOA_PAPER_UNITS_PER_INCH;
   mHeightScale = COCOA_PAPER_UNITS_PER_INCH;
 
+  /*
+   * Don't save print settings after the user cancels out of the
+   * print dialog. For saving print settings after a cancellation
+   * to work properly, in addition to changing |mSaveOnCancel|,
+   * the print dialog implementation must be updated to save changed
+   * settings and serialize them back to the child process.
+   */
+  mSaveOnCancel = false;
+
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 
@@ -456,4 +465,24 @@ nsresult nsPrintSettingsX::SetCocoaPaperSize(double aWidth, double aHeight) {
   return NS_OK;
 
   NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+void nsPrintSettingsX::SetPrinterNameFromPrintInfo() {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
+
+  // Don't attempt to call this from child processes.
+  // Process sandboxing prevents access to the print
+  // server and printer-related settings.
+  MOZ_ASSERT(XRE_IsParentProcess());
+  MOZ_ASSERT(mPrintInfo);
+
+  NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
+  NSString* nsPrinterNameValue = [printInfoDict objectForKey:@"NSPrinterName"];
+  if (nsPrinterNameValue) {
+    nsAutoString printerName;
+    nsCocoaUtils::GetStringForNSString(nsPrinterNameValue, printerName);
+    mPrinter.Assign(printerName);
+  }
+
+  NS_OBJC_END_TRY_ABORT_BLOCK;
 }

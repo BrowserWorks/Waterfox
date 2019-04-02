@@ -843,7 +843,7 @@ bool gfxGDIFontList::FindAndAddFamilies(const nsACString& aFamily,
                                                  aStyle, aDevToCssSize);
 }
 
-gfxFontFamily* gfxGDIFontList::GetDefaultFontForPlatform(
+FontFamily gfxGDIFontList::GetDefaultFontForPlatform(
     const gfxFontStyle* aStyle) {
   gfxFontFamily* ff = nullptr;
 
@@ -855,7 +855,7 @@ gfxFontFamily* gfxGDIFontList::GetDefaultFontForPlatform(
   if (status) {
     ff = FindFamily(NS_ConvertUTF16toUTF8(ncm.lfMessageFont.lfFaceName));
     if (ff) {
-      return ff;
+      return FontFamily(ff);
     }
   }
 
@@ -866,7 +866,7 @@ gfxFontFamily* gfxGDIFontList::GetDefaultFontForPlatform(
     ff = FindFamily(NS_ConvertUTF16toUTF8(logFont.lfFaceName));
   }
 
-  return ff;
+  return FontFamily(ff);
 }
 
 void gfxGDIFontList::AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
@@ -976,7 +976,7 @@ int CALLBACK GDIFontInfo::EnumerateFontsForFamily(
 
       // other family names
       if (famData->mFontInfo.mLoadOtherNames) {
-        gfxFontFamily::ReadOtherFamilyNamesForFace(
+        gfxFontUtils::ReadOtherFamilyNamesForFace(
             famData->mFamilyName, (const char*)(nameData.Elements()), nameSize,
             famData->mOtherFamilyNames, false);
       }

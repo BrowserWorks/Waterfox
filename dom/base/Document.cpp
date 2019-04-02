@@ -1348,7 +1348,7 @@ Document::Document(const char* aContentType)
   SetIsConnected(true);
 
   if (StaticPrefs::layout_css_use_counters_enabled()) {
-    mStyleUseCounters.reset(Servo_UseCounters_Create());
+    mStyleUseCounters = Servo_UseCounters_Create().Consume();
   }
 
   SetContentTypeInternal(nsDependentCString(aContentType));
@@ -1782,7 +1782,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(Document)
   for (MediaQueryList* mql = tmp->mDOMMediaQueryLists.getFirst(); mql;
        mql = static_cast<LinkedListElement<MediaQueryList>*>(mql)->getNext()) {
     if (mql->HasListeners() &&
-        NS_SUCCEEDED(mql->CheckInnerWindowCorrectness())) {
+        NS_SUCCEEDED(mql->CheckCurrentGlobalCorrectness())) {
       NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mDOMMediaQueryLists item");
       cb.NoteXPCOMChild(mql);
     }
@@ -2251,9 +2251,9 @@ void Document::RemoveDocStyleSheetsFromStyleSets() {
     sheet->ClearAssociatedDocumentOrShadowRoot();
 
     if (sheet->IsApplicable()) {
-      nsCOMPtr<nsIPresShell> shell = GetShell();
-      if (shell) {
-        shell->StyleSet()->RemoveDocStyleSheet(sheet);
+      RefPtr<PresShell> presShell = GetPresShell();
+      if (presShell) {
+        presShell->StyleSet()->RemoveDocStyleSheet(sheet);
       }
     }
     // XXX Tell observers?
@@ -2267,9 +2267,9 @@ void Document::RemoveStyleSheetsFromStyleSets(
     sheet->ClearAssociatedDocumentOrShadowRoot();
 
     if (sheet->IsApplicable()) {
-      nsCOMPtr<nsIPresShell> shell = GetShell();
-      if (shell) {
-        shell->StyleSet()->RemoveStyleSheet(aType, sheet);
+      RefPtr<PresShell> presShell = GetPresShell();
+      if (presShell) {
+        presShell->StyleSet()->RemoveStyleSheet(aType, sheet);
       }
     }
     // XXX Tell observers?
@@ -2323,10 +2323,10 @@ void Document::ResetStylesheetsToURI(nsIURI* aURI) {
   }
 
   // Now set up our style sets
-  if (nsIPresShell* shell = GetShell()) {
-    FillStyleSet(shell->StyleSet());
-    if (shell->StyleSet()->StyleSheetsHaveChanged()) {
-      shell->ApplicableStylesChanged();
+  if (PresShell* presShell = GetPresShell()) {
+    FillStyleSet(presShell->StyleSet());
+    if (presShell->StyleSet()->StyleSheetsHaveChanged()) {
+      presShell->ApplicableStylesChanged();
     }
   }
 }
@@ -3630,7 +3630,7 @@ static inline void AssertNoStaleServoDataIn(nsINode& aSubtreeRoot) {
 #endif
 }
 
-already_AddRefed<nsIPresShell> Document::CreateShell(
+already_AddRefed<PresShell> Document::CreatePresShell(
     nsPresContext* aContext, nsViewManager* aViewManager,
     UniquePtr<ServoStyleSet> aStyleSet) {
   NS_ASSERTION(!mPresShell, "We have a presshell already!");
@@ -3640,18 +3640,20 @@ already_AddRefed<nsIPresShell> Document::CreateShell(
   FillStyleSet(aStyleSet.get());
   AssertNoStaleServoDataIn(*this);
 
-  RefPtr<PresShell> shell = new PresShell;
+  RefPtr<PresShell> presShell = new PresShell;
   // Note: we don't hold a ref to the shell (it holds a ref to us)
-  mPresShell = shell;
-  shell->Init(this, aContext, aViewManager, std::move(aStyleSet));
+  mPresShell = presShell;
+  presShell->Init(this, aContext, aViewManager, std::move(aStyleSet));
 
   // Make sure to never paint if we belong to an invisible DocShell.
   nsCOMPtr<nsIDocShell> docShell(mDocumentContainer);
-  if (docShell && docShell->IsInvisible()) shell->SetNeverPainting(true);
+  if (docShell && docShell->IsInvisible()) {
+    presShell->SetNeverPainting(true);
+  }
 
   MOZ_LOG(gDocumentLeakPRLog, LogLevel::Debug,
-          ("DOCUMENT %p with PressShell %p and DocShell %p", this, shell.get(),
-           docShell.get()));
+          ("DOCUMENT %p with PressShell %p and DocShell %p", this,
+           presShell.get(), docShell.get()));
 
   mExternalResourceMap.ShowViewers();
 
@@ -3663,11 +3665,11 @@ already_AddRefed<nsIPresShell> Document::CreateShell(
   // is ready to update we'll flush the font set.
   MarkUserFontSetDirty();
 
-  return shell.forget();
+  return presShell.forget();
 }
 
 void Document::UpdateFrameRequestCallbackSchedulingState(
-    nsIPresShell* aOldShell) {
+    PresShell* aOldPresShell) {
   // If the condition for shouldBeScheduled changes to depend on some other
   // variable, add UpdateFrameRequestCallbackSchedulingState() calls to the
   // places where that variable can change.
@@ -3678,7 +3680,7 @@ void Document::UpdateFrameRequestCallbackSchedulingState(
     return;
   }
 
-  nsIPresShell* presShell = aOldShell ? aOldShell : mPresShell;
+  PresShell* presShell = aOldPresShell ? aOldPresShell : mPresShell;
   MOZ_RELEASE_ASSERT(presShell);
 
   nsRefreshDriver* rd = presShell->GetPresContext()->RefreshDriver();
@@ -3738,7 +3740,7 @@ bool Document::ShouldThrottleFrameRequests() {
   return false;
 }
 
-void Document::DeleteShell() {
+void Document::DeletePresShell() {
   mExternalResourceMap.HideViewers();
   if (nsPresContext* presContext = mPresShell->GetPresContext()) {
     presContext->RefreshDriver()->CancelPendingFullscreenEvents(this);
@@ -3755,9 +3757,9 @@ void Document::DeleteShell() {
   // no point on it.
   MarkUserFontSetDirty();
 
-  nsIPresShell* oldShell = mPresShell;
+  PresShell* oldPresShell = mPresShell;
   mPresShell = nullptr;
-  UpdateFrameRequestCallbackSchedulingState(oldShell);
+  UpdateFrameRequestCallbackSchedulingState(oldPresShell);
   mStyleSetFilled = false;
 
   ClearStaleServoData();
@@ -3952,9 +3954,9 @@ void Document::RemoveChildNode(nsIContent* aKid, bool aNotify) {
 }
 
 void Document::AddStyleSheetToStyleSets(StyleSheet* aSheet) {
-  if (nsIPresShell* shell = GetShell()) {
-    shell->StyleSet()->AddDocStyleSheet(aSheet, this);
-    shell->ApplicableStylesChanged();
+  if (PresShell* presShell = GetPresShell()) {
+    presShell->StyleSet()->AddDocStyleSheet(aSheet, this);
+    presShell->ApplicableStylesChanged();
   }
 }
 
@@ -3992,9 +3994,9 @@ void Document::NotifyStyleSheetRemoved(StyleSheet* aSheet,
 }
 
 void Document::RemoveStyleSheetFromStyleSets(StyleSheet* aSheet) {
-  if (nsIPresShell* shell = GetShell()) {
-    shell->StyleSet()->RemoveDocStyleSheet(aSheet);
-    shell->ApplicableStylesChanged();
+  if (PresShell* presShell = GetPresShell()) {
+    presShell->StyleSet()->RemoveDocStyleSheet(aSheet);
+    presShell->ApplicableStylesChanged();
   }
 }
 
@@ -4174,10 +4176,10 @@ nsresult Document::AddAdditionalStyleSheet(additionalSheetType aType,
 
   mAdditionalSheets[aType].AppendElement(aSheet);
 
-  if (nsIPresShell* shell = GetShell()) {
+  if (PresShell* presShell = GetPresShell()) {
     SheetType type = ConvertAdditionalSheetType(aType);
-    shell->StyleSet()->AppendStyleSheet(type, aSheet);
-    shell->ApplicableStylesChanged();
+    presShell->StyleSet()->AppendStyleSheet(type, aSheet);
+    presShell->ApplicableStylesChanged();
   }
 
   // Passing false, so documet.styleSheets.length will not be affected by
@@ -4199,10 +4201,10 @@ void Document::RemoveAdditionalStyleSheet(additionalSheetType aType,
 
     if (!mIsGoingAway) {
       MOZ_ASSERT(sheetRef->IsApplicable());
-      if (nsIPresShell* shell = GetShell()) {
+      if (PresShell* presShell = GetPresShell()) {
         SheetType type = ConvertAdditionalSheetType(aType);
-        shell->StyleSet()->RemoveStyleSheet(type, sheetRef);
-        shell->ApplicableStylesChanged();
+        presShell->StyleSet()->RemoveStyleSheet(type, sheetRef);
+        presShell->ApplicableStylesChanged();
       }
     }
 
@@ -4941,8 +4943,8 @@ void Document::UnblockDOMContentLoaded() {
           ("DOCUMENT %p UnblockDOMContentLoaded", this));
 
   mDidFireDOMContentLoaded = true;
-  if (nsIPresShell* shell = GetShell()) {
-    shell->GetRefreshDriver()->NotifyDOMContentLoaded();
+  if (PresShell* presShell = GetPresShell()) {
+    presShell->GetRefreshDriver()->NotifyDOMContentLoaded();
   }
 
   MOZ_ASSERT(mReadyState == READYSTATE_INTERACTIVE);
@@ -4971,8 +4973,8 @@ void Document::DocumentStatesChanged(EventStates aStateMask) {
 }
 
 void Document::StyleRuleChanged(StyleSheet* aSheet, css::Rule* aStyleRule) {
-  if (nsIPresShell* shell = GetShell()) {
-    shell->ApplicableStylesChanged();
+  if (PresShell* presShell = GetPresShell()) {
+    presShell->ApplicableStylesChanged();
   }
 
   if (!StyleSheetChangeEventsEnabled()) {
@@ -4984,8 +4986,8 @@ void Document::StyleRuleChanged(StyleSheet* aSheet, css::Rule* aStyleRule) {
 }
 
 void Document::StyleRuleAdded(StyleSheet* aSheet, css::Rule* aStyleRule) {
-  if (nsIPresShell* shell = GetShell()) {
-    shell->ApplicableStylesChanged();
+  if (PresShell* presShell = GetPresShell()) {
+    presShell->ApplicableStylesChanged();
   }
 
   if (!StyleSheetChangeEventsEnabled()) {
@@ -4997,8 +4999,8 @@ void Document::StyleRuleAdded(StyleSheet* aSheet, css::Rule* aStyleRule) {
 }
 
 void Document::StyleRuleRemoved(StyleSheet* aSheet, css::Rule* aStyleRule) {
-  if (nsIPresShell* shell = GetShell()) {
-    shell->ApplicableStylesChanged();
+  if (PresShell* presShell = GetPresShell()) {
+    presShell->ApplicableStylesChanged();
   }
 
   if (!StyleSheetChangeEventsEnabled()) {
@@ -5011,17 +5013,17 @@ void Document::StyleRuleRemoved(StyleSheet* aSheet, css::Rule* aStyleRule) {
 
 #undef DO_STYLESHEET_NOTIFICATION
 
-static Element* GetCustomContentContainer(nsIPresShell* aShell) {
-  if (!aShell || !aShell->GetCanvasFrame()) {
+static Element* GetCustomContentContainer(PresShell* aPresShell) {
+  if (!aPresShell || !aPresShell->GetCanvasFrame()) {
     return nullptr;
   }
 
-  return aShell->GetCanvasFrame()->GetCustomContentContainer();
+  return aPresShell->GetCanvasFrame()->GetCustomContentContainer();
 }
 
 static void InsertAnonContentIntoCanvas(AnonymousContent& aAnonContent,
-                                        nsIPresShell* aShell) {
-  Element* container = GetCustomContentContainer(aShell);
+                                        PresShell* aPresShell) {
+  Element* container = GetCustomContentContainer(aPresShell);
   if (!container) {
     return;
   }
@@ -5031,7 +5033,7 @@ static void InsertAnonContentIntoCanvas(AnonymousContent& aAnonContent,
     return;
   }
 
-  aShell->GetCanvasFrame()->ShowCustomContentContainer();
+  aPresShell->GetCanvasFrame()->ShowCustomContentContainer();
 }
 
 already_AddRefed<AnonymousContent> Document::InsertAnonymousContent(
@@ -5048,14 +5050,14 @@ already_AddRefed<AnonymousContent> Document::InsertAnonymousContent(
       MakeRefPtr<AnonymousContent>(clone.forget().downcast<Element>());
   mAnonymousContents.AppendElement(anonContent);
 
-  InsertAnonContentIntoCanvas(*anonContent, GetShell());
+  InsertAnonContentIntoCanvas(*anonContent, GetPresShell());
 
   return anonContent.forget();
 }
 
 static void RemoveAnonContentFromCanvas(AnonymousContent& aAnonContent,
-                                        nsIPresShell* aShell) {
-  RefPtr<Element> container = GetCustomContentContainer(aShell);
+                                        PresShell* aPresShell) {
+  RefPtr<Element> container = GetCustomContentContainer(aPresShell);
   if (!container) {
     return;
   }
@@ -5072,10 +5074,11 @@ void Document::RemoveAnonymousContent(AnonymousContent& aContent,
   }
 
   mAnonymousContents.RemoveElementAt(index);
-  RemoveAnonContentFromCanvas(aContent, GetShell());
+  RemoveAnonContentFromCanvas(aContent, GetPresShell());
 
-  if (mAnonymousContents.IsEmpty() && GetCustomContentContainer(GetShell())) {
-    GetShell()->GetCanvasFrame()->HideCustomContentContainer();
+  if (mAnonymousContents.IsEmpty() &&
+      GetCustomContentContainer(GetPresShell())) {
+    GetPresShell()->GetCanvasFrame()->HideCustomContentContainer();
   }
 }
 
@@ -5085,14 +5088,14 @@ Element* Document::GetAnonRootIfInAnonymousContentContainer(
     return nullptr;
   }
 
-  nsIPresShell* shell = GetShell();
-  if (!shell || !shell->GetCanvasFrame()) {
+  PresShell* presShell = GetPresShell();
+  if (!presShell || !presShell->GetCanvasFrame()) {
     return nullptr;
   }
 
   nsAutoScriptBlocker scriptBlocker;
   nsCOMPtr<Element> customContainer =
-      shell->GetCanvasFrame()->GetCustomContentContainer();
+      presShell->GetCanvasFrame()->GetCustomContentContainer();
   if (!customContainer) {
     return nullptr;
   }
@@ -5526,9 +5529,9 @@ void Document::EnableStyleSheetsForSetInternal(const nsAString& aSheetSet,
   if (aUpdateCSSLoader) {
     CSSLoader()->DocumentStyleSheetSetChanged();
   }
-  if (nsIPresShell* shell = GetShell()) {
-    if (shell->StyleSet()->StyleSheetsHaveChanged()) {
-      shell->ApplicableStylesChanged();
+  if (PresShell* presShell = GetPresShell()) {
+    if (presShell->StyleSet()->StyleSheetsHaveChanged()) {
+      presShell->ApplicableStylesChanged();
     }
   }
 }
@@ -5891,10 +5894,10 @@ void Document::DoNotifyPossibleTitleChange() {
   nsAutoString title;
   GetTitle(title);
 
-  nsCOMPtr<nsIPresShell> shell = GetShell();
-  if (shell) {
+  RefPtr<PresShell> presShell = GetPresShell();
+  if (presShell) {
     nsCOMPtr<nsISupports> container =
-        shell->GetPresContext()->GetContainerWeak();
+        presShell->GetPresContext()->GetContainerWeak();
     if (container) {
       nsCOMPtr<nsIBaseWindow> docShellWin = do_QueryInterface(container);
       if (docShellWin) {
@@ -6627,7 +6630,11 @@ nsViewportInfo Document::GetViewportInfo(const ScreenIntSize& aDisplaySize) {
     case Unknown: {
       nsAutoString viewport;
       GetHeaderData(nsGkAtoms::viewport, viewport);
-      if (viewport.IsEmpty()) {
+      // We might early exit if the viewport is empty. Even if we don't,
+      // at the end of this case we'll note that it was empty. Later, when
+      // we're using the cached values, this will trigger alternate code paths.
+      bool viewportIsEmpty = viewport.IsEmpty();
+      if (viewportIsEmpty) {
         // If the docType specifies that we are on a site optimized for mobile,
         // then we want to return specially crafted defaults for the viewport
         // info.
@@ -6721,11 +6728,12 @@ nsViewportInfo Document::GetViewportInfo(const ScreenIntSize& aDisplaySize) {
       mValidMaxScale =
           !maxScaleStr.IsEmpty() && NS_SUCCEEDED(scaleMaxErrorCode);
 
-      mViewportType = Specified;
+      mViewportType = viewportIsEmpty ? Empty : Specified;
       mViewportOverflowType = ViewportOverflowType::NoOverflow;
       MOZ_FALLTHROUGH;
     }
     case Specified:
+    case Empty:
     default:
       LayoutDeviceToScreenScale effectiveMinScale = mScaleMinFloat;
       LayoutDeviceToScreenScale effectiveMaxScale = mScaleMaxFloat;
@@ -6830,18 +6838,28 @@ nsViewportInfo Document::GetViewportInfo(const ScreenIntSize& aDisplaySize) {
       // https://drafts.csswg.org/css-device-adapt/#resolve-width
       if (width == nsViewportInfo::Auto) {
         if (height == nsViewportInfo::Auto || aDisplaySize.height == 0) {
-          // If we don't have any applicable viewport width constraints, this is
-          // most likely a desktop page written without mobile devices in mind.
-          // We use the desktop mode viewport for those pages by default,
-          // because a narrow viewport based on typical mobile device screen
-          // sizes (especially in portrait mode) will frequently break the
-          // layout of such pages. To keep text readable in that case, we rely
-          // on font inflation instead.
+          // What we do in this situation deviates somewhat from the spec. We
+          // want to consider the case where no viewport information has been
+          // provided, in which case we want to assume that the document is not
+          // optimized for aDisplaySize, and we should instead force a useful
+          // size.
+          if (mViewportType == Empty) {
+            // If we don't have any applicable viewport width constraints, this
+            // is most likely a desktop page written without mobile devices in
+            // mind. We use the desktop mode viewport for those pages by
+            // default, because a narrow viewport based on typical mobile device
+            // screen sizes (especially in portrait mode) will frequently break
+            // the layout of such pages. To keep text readable in that case, we
+            // rely on font inflation instead.
 
-          // Divide by fullZoom to stretch CSS pixel size of viewport in order
-          // to keep device pixel size unchanged after full zoom applied.
-          // See bug 974242.
-          width = gfxPrefs::DesktopViewportWidth() / fullZoom;
+            // Divide by fullZoom to stretch CSS pixel size of viewport in order
+            // to keep device pixel size unchanged after full zoom applied.
+            // See bug 974242.
+            width = gfxPrefs::DesktopViewportWidth() / fullZoom;
+          } else {
+            // Some viewport information was provided; follow the spec.
+            width = displaySize.width;
+          }
         } else {
           width = height * aDisplaySize.width / aDisplaySize.height;
         }
@@ -7099,8 +7117,8 @@ void Document::FlushPendingNotifications(mozilla::ChangesToFlush aFlush) {
     mParentDocument->FlushPendingNotifications(parentFlush);
   }
 
-  if (nsIPresShell* shell = GetShell()) {
-    shell->FlushPendingNotifications(aFlush);
+  if (RefPtr<PresShell> presShell = GetPresShell()) {
+    presShell->FlushPendingNotifications(aFlush);
   }
 }
 
@@ -7300,10 +7318,11 @@ already_AddRefed<Element> Document::CreateElem(const nsAString& aName,
 }
 
 bool Document::IsSafeToFlush() const {
-  nsIPresShell* shell = GetShell();
-  if (!shell) return true;
-
-  return shell->IsSafeToFlush();
+  PresShell* presShell = GetPresShell();
+  if (!presShell) {
+    return true;
+  }
+  return presShell->IsSafeToFlush();
 }
 
 void Document::Sanitize() {
@@ -8288,12 +8307,12 @@ static void FireOrClearDelayedEvents(nsTArray<nsCOMPtr<Document>>& aDocuments,
     // closed before this event ran.
     if (!aDocuments[i]->EventHandlingSuppressed()) {
       fm->FireDelayedEvents(aDocuments[i]);
-      nsCOMPtr<nsIPresShell> shell = aDocuments[i]->GetShell();
-      if (shell) {
+      RefPtr<PresShell> presShell = aDocuments[i]->GetPresShell();
+      if (presShell) {
         // Only fire events for active documents.
         bool fire = aFireEvents && aDocuments[i]->GetInnerWindow() &&
                     aDocuments[i]->GetInnerWindow()->IsCurrentInnerWindow();
-        shell->FireOrClearDelayedEvents(fire);
+        presShell->FireOrClearDelayedEvents(fire);
       }
     }
   }
@@ -8775,9 +8794,9 @@ void Document::SetScrollToRef(nsIURI* aDocumentURI) {
 
 void Document::ScrollToRef() {
   if (mScrolledToRefAlready) {
-    nsCOMPtr<nsIPresShell> shell = GetShell();
-    if (shell) {
-      shell->ScrollToAnchor();
+    RefPtr<PresShell> presShell = GetPresShell();
+    if (presShell) {
+      presShell->ScrollToAnchor();
     }
     return;
   }
@@ -8786,8 +8805,8 @@ void Document::ScrollToRef() {
     return;
   }
 
-  nsCOMPtr<nsIPresShell> shell = GetShell();
-  if (shell) {
+  RefPtr<PresShell> presShell = GetPresShell();
+  if (presShell) {
     nsresult rv = NS_ERROR_FAILURE;
     // We assume that the bytes are in UTF-8, as it says in the spec:
     // http://www.w3.org/TR/html4/appendix/notes.html#h-B.2.1
@@ -8795,7 +8814,7 @@ void Document::ScrollToRef() {
     // Check an empty string which might be caused by the UTF-8 conversion
     if (!ref.IsEmpty()) {
       // Note that GoToAnchor will handle flushing layout as needed.
-      rv = shell->GoToAnchor(ref, mChangeScrollPosWhenScrollingToRef);
+      rv = presShell->GoToAnchor(ref, mChangeScrollPosWhenScrollingToRef);
     } else {
       rv = NS_ERROR_FAILURE;
     }
@@ -8810,7 +8829,8 @@ void Document::ScrollToRef() {
       if (unescaped) {
         NS_ConvertUTF8toUTF16 utf16Str(buff);
         if (!utf16Str.IsEmpty()) {
-          rv = shell->GoToAnchor(utf16Str, mChangeScrollPosWhenScrollingToRef);
+          rv = presShell->GoToAnchor(utf16Str,
+                                     mChangeScrollPosWhenScrollingToRef);
         }
       }
 
@@ -8821,7 +8841,7 @@ void Document::ScrollToRef() {
         rv = encoding->DecodeWithoutBOMHandling(unescaped ? buff : mScrollToRef,
                                                 ref);
         if (NS_SUCCEEDED(rv) && !ref.IsEmpty()) {
-          rv = shell->GoToAnchor(ref, mChangeScrollPosWhenScrollingToRef);
+          rv = presShell->GoToAnchor(ref, mChangeScrollPosWhenScrollingToRef);
         }
       }
     }
@@ -9156,8 +9176,8 @@ void Document::ScheduleSVGUseElementShadowTreeUpdate(
 
   mSVGUseElementsNeedingShadowTreeUpdate.PutEntry(&aUseElement);
 
-  if (nsIPresShell* shell = GetShell()) {
-    shell->EnsureStyleFlush();
+  if (PresShell* presShell = GetPresShell()) {
+    presShell->EnsureStyleFlush();
   }
 }
 
@@ -9243,12 +9263,12 @@ already_AddRefed<nsDOMCaretPosition> Document::CaretPositionFromPoint(
 
   FlushPendingNotifications(FlushType::Layout);
 
-  nsIPresShell* ps = GetShell();
-  if (!ps) {
+  PresShell* presShell = GetPresShell();
+  if (!presShell) {
     return nullptr;
   }
 
-  nsIFrame* rootFrame = ps->GetRootFrame();
+  nsIFrame* rootFrame = presShell->GetRootFrame();
 
   // XUL docs, unlike HTML, have no frame tree until everything's done loading
   if (!rootFrame) {
@@ -9265,7 +9285,7 @@ already_AddRefed<nsDOMCaretPosition> Document::CaretPositionFromPoint(
 
   // We require frame-relative coordinates for GetContentOffsetsFromPoint.
   nsPoint aOffset;
-  nsCOMPtr<nsIWidget> widget = nsContentUtils::GetWidget(ps, &aOffset);
+  nsCOMPtr<nsIWidget> widget = nsContentUtils::GetWidget(presShell, &aOffset);
   LayoutDeviceIntPoint refPoint = nsContentUtils::ToWidgetPoint(
       CSSPoint(aX, aY), aOffset, GetPresContext());
   nsPoint adjustedPoint =
@@ -10207,10 +10227,10 @@ void Document::CleanupFullscreenState() {
   mFullscreenRoot = nullptr;
 
   // Restore the zoom level that was in place prior to entering fullscreen.
-  if (nsIPresShell* shell = GetShell()) {
-    if (shell->GetMobileViewportManager()) {
-      shell->SetResolutionAndScaleTo(mSavedResolution,
-                                     nsIPresShell::ChangeOrigin::eMainThread);
+  if (PresShell* presShell = GetPresShell()) {
+    if (presShell->GetMobileViewportManager()) {
+      presShell->SetResolutionAndScaleTo(
+          mSavedResolution, nsIPresShell::ChangeOrigin::eMainThread);
     }
   }
 
@@ -10601,13 +10621,14 @@ bool Document::ApplyFullscreen(UniquePtr<FullscreenRequest> aRequest) {
     // fixed elements are sized to the layout viewport).
     // This also ensures that things like video controls aren't zoomed in
     // when in fullscreen mode.
-    if (nsIPresShell* shell = child->GetShell()) {
+    if (PresShell* presShell = child->GetPresShell()) {
       if (RefPtr<MobileViewportManager> manager =
-              shell->GetMobileViewportManager()) {
+              presShell->GetMobileViewportManager()) {
         // Save the previous resolution so it can be restored.
-        child->mSavedResolution = shell->GetResolution();
-        shell->SetResolutionAndScaleTo(manager->ComputeIntrinsicResolution(),
-                                       nsIPresShell::ChangeOrigin::eMainThread);
+        child->mSavedResolution = presShell->GetResolution();
+        presShell->SetResolutionAndScaleTo(
+            manager->ComputeIntrinsicResolution(),
+            nsIPresShell::ChangeOrigin::eMainThread);
       }
     }
 
@@ -10877,8 +10898,8 @@ bool Document::SetPointerLock(Element* aElement, StyleCursorKind aCursorStyle) {
   }
 #endif
 
-  nsIPresShell* shell = GetShell();
-  if (!shell) {
+  PresShell* presShell = GetPresShell();
+  if (!presShell) {
     NS_WARNING("SetPointerLock(): No PresShell");
     if (!aElement) {
       // If we are unlocking pointer lock, but for some reason the doc
@@ -10889,19 +10910,19 @@ bool Document::SetPointerLock(Element* aElement, StyleCursorKind aCursorStyle) {
     }
     return false;
   }
-  nsPresContext* presContext = shell->GetPresContext();
+  nsPresContext* presContext = presShell->GetPresContext();
   if (!presContext) {
     NS_WARNING("SetPointerLock(): Unable to get PresContext");
     return false;
   }
 
   nsCOMPtr<nsIWidget> widget;
-  nsIFrame* rootFrame = shell->GetRootFrame();
+  nsIFrame* rootFrame = presShell->GetRootFrame();
   if (!NS_WARN_IF(!rootFrame)) {
     widget = rootFrame->GetNearestWidget();
     NS_WARNING_ASSERTION(widget,
                          "SetPointerLock(): Unable to find widget in "
-                         "shell->GetRootFrame()->GetNearestWidget();");
+                         "presShell->GetRootFrame()->GetNearestWidget();");
     if (aElement && !widget) {
       return false;
     }
@@ -11681,8 +11702,8 @@ void Document::FlushUserFontSet() {
 
   if (gfxPlatform::GetPlatform()->DownloadableFontsEnabled()) {
     nsTArray<nsFontFaceRuleContainer> rules;
-    nsIPresShell* shell = GetShell();
-    if (shell && !shell->StyleSet()->AppendFontFaceRules(rules)) {
+    PresShell* presShell = GetPresShell();
+    if (presShell && !presShell->StyleSet()->AppendFontFaceRules(rules)) {
       return;
     }
 
@@ -11700,8 +11721,8 @@ void Document::FlushUserFontSet() {
     // reflect that we're modifying @font-face rules.  (However,
     // without a reflow, nothing will happen to start any downloads
     // that are needed.)
-    if (changed && shell) {
-      if (nsPresContext* presContext = shell->GetPresContext()) {
+    if (changed && presShell) {
+      if (nsPresContext* presContext = presShell->GetPresContext()) {
         presContext->UserFontSetUpdated();
       }
     }
@@ -11713,8 +11734,8 @@ void Document::MarkUserFontSetDirty() {
     return;
   }
   mFontFaceSetDirty = true;
-  if (nsIPresShell* shell = GetShell()) {
-    shell->EnsureStyleFlush();
+  if (PresShell* presShell = GetPresShell()) {
+    presShell->EnsureStyleFlush();
   }
 }
 

@@ -34,11 +34,11 @@
 #include "harfbuzz/hb.h"
 #include "mozilla/gfx/2D.h"
 #include "nsColor.h"
+#include "nsFontMetrics.h"
 #include "mozilla/ServoUtils.h"
 
 typedef struct _cairo cairo_t;
 typedef struct _cairo_scaled_font cairo_scaled_font_t;
-// typedef struct gr_face            gr_face;
 
 #ifdef DEBUG
 #  include <stdio.h>
@@ -605,35 +605,6 @@ class gfxTextRunFactory {
   // Protected destructor, to discourage deletion outside of Release():
   virtual ~gfxTextRunFactory();
 };
-
-struct gfxTextRange {
-  enum class MatchType : uint16_t {
-    // The CSS generic that mapped to this font, if any. This field of
-    // the MatchType stores a FontFamilyType value as defined in the enum
-    // in gfxFontFamilyList.h.
-    kGenericMask = 0x00ff,
-
-    // Flags for recording the kind of font-matching that was used.
-    // Note that multiple flags may be set on a single range.
-    kFontGroup = 0x0100,
-    kPrefsFallback = 0x0200,
-    kSystemFallback = 0x0400
-  };
-  gfxTextRange(uint32_t aStart, uint32_t aEnd, gfxFont* aFont,
-               MatchType aMatchType, mozilla::gfx::ShapedTextFlags aOrientation)
-      : start(aStart),
-        end(aEnd),
-        font(aFont),
-        matchType(aMatchType),
-        orientation(aOrientation) {}
-  uint32_t Length() const { return end - start; }
-  uint32_t start, end;
-  RefPtr<gfxFont> font;
-  MatchType matchType;
-  mozilla::gfx::ShapedTextFlags orientation;
-};
-
-MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(gfxTextRange::MatchType)
 
 /**
  * gfxFontShaper
@@ -1577,10 +1548,10 @@ class gfxFont {
     }
   };
 
-  enum Orientation { eHorizontal, eVertical };
+  typedef nsFontMetrics::FontOrientation Orientation;
 
   const Metrics& GetMetrics(Orientation aOrientation) {
-    if (aOrientation == eHorizontal) {
+    if (aOrientation == nsFontMetrics::eHorizontal) {
       return GetHorizontalMetrics();
     }
     if (!mVerticalMetrics) {
@@ -1765,7 +1736,7 @@ class gfxFont {
   template <typename T>
   bool InitFakeSmallCapsRun(DrawTarget* aDrawTarget, gfxTextRun* aTextRun,
                             const T* aText, uint32_t aOffset, uint32_t aLength,
-                            gfxTextRange::MatchType aMatchType,
+                            FontMatchType aMatchType,
                             mozilla::gfx::ShapedTextFlags aOrientation,
                             Script aScript, bool aSyntheticLower,
                             bool aSyntheticUpper);

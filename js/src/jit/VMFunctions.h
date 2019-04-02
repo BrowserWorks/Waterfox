@@ -838,11 +838,13 @@ MOZ_MUST_USE bool InitProp(JSContext* cx, HandleObject obj,
                            HandlePropertyName name, HandleValue value,
                            jsbytecode* pc);
 
-template <bool Equal>
+enum class EqualityKind : bool { NotEqual, Equal };
+
+template <EqualityKind Kind>
 bool LooselyEqual(JSContext* cx, MutableHandleValue lhs, MutableHandleValue rhs,
                   bool* res);
 
-template <bool Equal>
+template <EqualityKind Kind>
 bool StrictlyEqual(JSContext* cx, MutableHandleValue lhs,
                    MutableHandleValue rhs, bool* res);
 
@@ -855,9 +857,14 @@ bool GreaterThan(JSContext* cx, MutableHandleValue lhs, MutableHandleValue rhs,
 bool GreaterThanOrEqual(JSContext* cx, MutableHandleValue lhs,
                         MutableHandleValue rhs, bool* res);
 
-template <bool Equal>
-bool StringsEqual(JSContext* cx, HandleString left, HandleString right,
-                  bool* res);
+template <EqualityKind Kind>
+bool StringsEqual(JSContext* cx, HandleString lhs, HandleString rhs, bool* res);
+
+enum class ComparisonKind : bool { GreaterThanOrEqual, LessThan };
+
+template <ComparisonKind Kind>
+bool StringsCompare(JSContext* cx, HandleString lhs, HandleString rhs,
+                    bool* res);
 
 MOZ_MUST_USE bool StringSplitHelper(JSContext* cx, HandleString str,
                                     HandleString sep, HandleObjectGroup group,
@@ -993,6 +1000,8 @@ JSObject* CreateDerivedTypedObj(JSContext* cx, HandleObject descr,
 
 MOZ_MUST_USE bool IonRecompile(JSContext* cx);
 MOZ_MUST_USE bool IonForcedRecompile(JSContext* cx);
+MOZ_MUST_USE bool IonForcedInvalidation(JSContext* cx);
+
 JSString* StringReplace(JSContext* cx, HandleString string,
                         HandleString pattern, HandleString repl);
 

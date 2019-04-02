@@ -80,6 +80,10 @@ WorkerGlobalScope::WorkerGlobalScope(WorkerPrivate* aWorkerPrivate)
 
   // We should always have an event target when the global is created.
   MOZ_DIAGNOSTIC_ASSERT(mSerialEventTarget);
+
+  // In workers, each DETH must have an owner. Because the global scope doesn't
+  // have one, let's set it as owner of itself.
+  BindToOwner(static_cast<nsIGlobalObject*>(this));
 }
 
 WorkerGlobalScope::~WorkerGlobalScope() {
@@ -395,15 +399,9 @@ already_AddRefed<IDBFactory> WorkerGlobalScope::GetIndexedDB(
       return nullptr;
     }
 
-    JSContext* cx = mWorkerPrivate->GetJSContext();
-    MOZ_ASSERT(cx);
-
-    JS::Rooted<JSObject*> owningObject(cx, GetGlobalJSObject());
-    MOZ_ASSERT(owningObject);
-
     const PrincipalInfo& principalInfo = mWorkerPrivate->GetPrincipalInfo();
 
-    nsresult rv = IDBFactory::CreateForWorker(cx, owningObject, principalInfo,
+    nsresult rv = IDBFactory::CreateForWorker(this, principalInfo,
                                               mWorkerPrivate->WindowID(),
                                               getter_AddRefs(indexedDB));
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -787,6 +785,10 @@ WorkerDebuggerGlobalScope::WorkerDebuggerGlobalScope(
 
   // We should always have an event target when the global is created.
   MOZ_DIAGNOSTIC_ASSERT(mSerialEventTarget);
+
+  // In workers, each DETH must have an owner. Because the global scope doesn't
+  // have an owner, let's set it as owner of itself.
+  BindToOwner(static_cast<nsIGlobalObject*>(this));
 }
 
 WorkerDebuggerGlobalScope::~WorkerDebuggerGlobalScope() {

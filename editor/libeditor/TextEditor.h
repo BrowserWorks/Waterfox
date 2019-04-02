@@ -87,6 +87,7 @@ class TextEditor : public EditorBase, public nsIPlaintextEditor {
   virtual bool CanPasteTransferable(nsITransferable* aTransferable);
 
   // Overrides of EditorBase
+  MOZ_CAN_RUN_SCRIPT
   virtual nsresult Init(Document& aDoc, Element* aRoot,
                         nsISelectionController* aSelCon, uint32_t aFlags,
                         const nsAString& aValue) override;
@@ -105,6 +106,7 @@ class TextEditor : public EditorBase, public nsIPlaintextEditor {
     return NS_SUCCEEDED(rv) && isEmpty;
   }
 
+  MOZ_CAN_RUN_SCRIPT
   virtual nsresult HandleKeyPressEvent(
       WidgetKeyboardEvent* aKeyboardEvent) override;
 
@@ -173,6 +175,7 @@ class TextEditor : public EditorBase, public nsIPlaintextEditor {
    *
    * @ param aString   the string to be set
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult SetText(const nsAString& aString);
 
   /**
@@ -183,6 +186,7 @@ class TextEditor : public EditorBase, public nsIPlaintextEditor {
    * @param aReplaceRange       The range to be replaced.
    *                            If nullptr, all contents will be replaced.
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult ReplaceTextAsAction(const nsAString& aString,
                                nsRange* aReplaceRange = nullptr);
 
@@ -244,6 +248,14 @@ class TextEditor : public EditorBase, public nsIPlaintextEditor {
     return NS_OK;
   }
 
+  /**
+   * Similar to the setter for wrapWidth, but just sets the editor
+   * internal state without actually changing the content being edited
+   * to wrap at that column.  This should only be used by callers who
+   * are sure that their content is already set up correctly.
+   */
+  void SetWrapColumn(int32_t aWrapColumn) { mWrapColumn = aWrapColumn; }
+
  protected:  // May be called by friends.
   /****************************************************************************
    * Some classes like TextEditRules, HTMLEditRules, WSRunObject which are
@@ -255,9 +267,11 @@ class TextEditor : public EditorBase, public nsIPlaintextEditor {
    ****************************************************************************/
 
   // Overrides of EditorBase
+  MOZ_CAN_RUN_SCRIPT
   virtual nsresult RemoveAttributeOrEquivalent(
       Element* aElement, nsAtom* aAttribute,
       bool aSuppressTransaction) override;
+  MOZ_CAN_RUN_SCRIPT
   virtual nsresult SetAttributeOrEquivalent(Element* aElement,
                                             nsAtom* aAttribute,
                                             const nsAString& aValue,
@@ -352,9 +366,11 @@ class TextEditor : public EditorBase, public nsIPlaintextEditor {
  protected:  // Called by helper classes.
   virtual void OnStartToHandleTopLevelEditSubAction(
       EditSubAction aEditSubAction, nsIEditor::EDirection aDirection) override;
+  MOZ_CAN_RUN_SCRIPT
   virtual void OnEndHandlingTopLevelEditSubAction() override;
 
   void BeginEditorInit();
+  MOZ_CAN_RUN_SCRIPT
   nsresult EndEditorInit();
 
  protected:  // Shouldn't be used by friend classes
@@ -365,6 +381,7 @@ class TextEditor : public EditorBase, public nsIPlaintextEditor {
   /**
    * Make the given selection span the entire document.
    */
+  MOZ_CAN_RUN_SCRIPT
   virtual nsresult SelectEntireDocument() override;
 
   /**
@@ -425,6 +442,7 @@ class TextEditor : public EditorBase, public nsIPlaintextEditor {
    */
   bool IsSafeToInsertData(Document* aSourceDoc);
 
+  MOZ_CAN_RUN_SCRIPT
   virtual nsresult InitRules();
 
   /**

@@ -21,16 +21,25 @@
 namespace mozilla {
 namespace dom {
 
+InspectorFontFace::InspectorFontFace(gfxFontEntry* aFontEntry,
+                                     gfxFontGroup* aFontGroup,
+                                     FontMatchType aMatchType)
+    : mFontEntry(aFontEntry), mFontGroup(aFontGroup), mMatchType(aMatchType) {
+  MOZ_COUNT_CTOR(InspectorFontFace);
+}
+
+InspectorFontFace::~InspectorFontFace() { MOZ_COUNT_DTOR(InspectorFontFace); }
+
 bool InspectorFontFace::FromFontGroup() {
-  return bool(mMatchType & gfxTextRange::MatchType::kFontGroup);
+  return bool(mMatchType.kind & FontMatchType::Kind::kFontGroup);
 }
 
 bool InspectorFontFace::FromLanguagePrefs() {
-  return bool(mMatchType & gfxTextRange::MatchType::kPrefsFallback);
+  return bool(mMatchType.kind & FontMatchType::Kind::kPrefsFallback);
 }
 
 bool InspectorFontFace::FromSystemFallback() {
-  return bool(mMatchType & gfxTextRange::MatchType::kSystemFallback);
+  return bool(mMatchType.kind & FontMatchType::Kind::kSystemFallback);
 }
 
 void InspectorFontFace::GetName(nsAString& aName) {
@@ -47,11 +56,8 @@ void InspectorFontFace::GetCSSFamilyName(nsAString& aCSSFamilyName) {
 }
 
 void InspectorFontFace::GetCSSGeneric(nsAString& aName) {
-  auto genericType =
-      FontFamilyType(mMatchType & gfxTextRange::MatchType::kGenericMask);
-  if (genericType >= FontFamilyType::eFamily_generic_first &&
-      genericType <= FontFamilyType::eFamily_generic_last) {
-    aName.AssignASCII(gfxPlatformFontList::GetGenericName(genericType));
+  if (mMatchType.generic != StyleGenericFontFamily::None) {
+    aName.AssignASCII(gfxPlatformFontList::GetGenericName(mMatchType.generic));
   } else {
     aName.Truncate(0);
   }

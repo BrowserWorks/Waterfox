@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
- .theme-light {
+.theme-light {
   --gutter-hover-background-color: #dde1e4;
 
   --breakpoint-fill: var(--blue-50);
@@ -22,7 +22,8 @@
   --breakpoint-disabled-stroke: var(--blue-55);
 }
 
-.theme-light, .theme-dark {
+.theme-light,
+.theme-dark {
   --logpoint-fill: var(--theme-graphs-purple);
   --logpoint-stroke: var(--purple-60);
   --breakpoint-condition-fill: var(--theme-graphs-yellow);
@@ -42,7 +43,7 @@
   pointer-events: none;
 }
 
-:not(.empty-line):not(.new-breakpoint)
+.editor-wrapper:not(.blackboxed) :not(.empty-line):not(.new-breakpoint)
   > .CodeMirror-gutter-wrapper:hover
   > .CodeMirror-linenumber::after {
   content: "";
@@ -55,7 +56,8 @@
   bottom: 0;
   height: 15px;
   background-color: var(--gutter-hover-background-color);
-  mask: url(/images/breakpoint.svg) no-repeat;
+  mask: url(resource://devtools/client/debugger/new/images/breakpoint.svg)
+    no-repeat;
   mask-size: auto 15px;
   mask-position: right;
 }
@@ -150,5 +152,5 @@
 }
 
 .img.column-marker {
-  background-image: url(/images/column-marker.svg);
+  background-image: url(resource://devtools/client/debugger/new/images/column-marker.svg);
 }

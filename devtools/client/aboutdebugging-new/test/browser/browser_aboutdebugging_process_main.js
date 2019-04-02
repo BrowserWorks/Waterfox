@@ -11,13 +11,13 @@ const RUNTIME_ID = "test-runtime-id";
 const RUNTIME_DEVICE_NAME = "test device name";
 const RUNTIME_APP_NAME = "TestApp";
 
-// Test whether process category exists by the runtime type.
+// Test for main process.
 add_task(async function() {
   await pushPref("devtools.aboutdebugging.process-debugging", true);
 
   const mocks = new Mocks();
 
-  const { document, tab } = await openAboutDebugging();
+  const { document, tab, window } = await openAboutDebugging();
 
   const usbRuntime = mocks.createUSBRuntime(RUNTIME_ID, {
     deviceName: RUNTIME_DEVICE_NAME,
@@ -35,8 +35,18 @@ add_task(async function() {
   info("Check debug target item of the main process");
   const mainProcessItem = findDebugTargetByText(MAIN_PROCESS_NAME, document);
   ok(mainProcessItem, "Debug target item of the main process should display");
-  ok(mainProcessItem.textContent.includes("Main Process for the target runtime"),
+  ok(mainProcessItem.textContent.includes("Main Process for the target browser"),
      "Debug target item of the main process should contains the description");
+
+  info("Inspect main process");
+  const { devtoolsTab, devtoolsWindow } =
+    await openAboutDevtoolsToolbox(document, tab, window, MAIN_PROCESS_NAME, false);
+
+  const url = new window.URL(devtoolsWindow.location.href);
+  const processID = url.searchParams.get("id");
+  is(processID, "0", "Correct process id");
+  const remoteID = url.searchParams.get("remoteId");
+  is(remoteID, `${ RUNTIME_ID }-usb`, "Correct remote runtime id");
 
   info("Remove USB runtime");
   mocks.removeUSBRuntime(RUNTIME_ID);
@@ -44,5 +54,7 @@ add_task(async function() {
   info("Wait until the USB sidebar item disappears");
   await waitUntil(() => !findSidebarItemByText(RUNTIME_DEVICE_NAME, document));
 
+  await removeTab(devtoolsTab);
+  await waitUntil(() => !findDebugTargetByText("about:devtools-toolbox?", document));
   await removeTab(tab);
 });

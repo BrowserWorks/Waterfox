@@ -484,6 +484,19 @@ IonBuilder::InliningDecision IonBuilder::canInlineTarget(JSFunction* target,
     return DontInline(inlineScript, "No baseline jitcode");
   }
 
+  // Don't inline functions with a higher optimization level.
+  if (!isHighestOptimizationLevel()) {
+    OptimizationLevel level = optimizationLevel();
+    if (inlineScript->hasIonScript() &&
+        (inlineScript->ionScript()->isRecompiling() ||
+         inlineScript->ionScript()->optimizationLevel() > level)) {
+      return DontInline(inlineScript, "More optimized");
+    }
+    if (IonOptimizations.levelForScript(inlineScript, nullptr) > level) {
+      return DontInline(inlineScript, "Should be more optimized");
+    }
+  }
+
   if (TooManyFormalArguments(target->nargs())) {
     trackOptimizationOutcome(TrackedOutcome::CantInlineTooManyArgs);
     return DontInline(inlineScript, "Too many args");
@@ -776,7 +789,10 @@ AbortReasonOr<Ok> IonBuilder::build() {
 
   MOZ_TRY(init());
 
-  if (script()->hasBaselineScript()) {
+  // The BaselineScript-based inlining heuristics only affect the highest
+  // optimization level. Other levels do almost no inlining and we don't want to
+  // overwrite data from the highest optimization tier.
+  if (script()->hasBaselineScript() && isHighestOptimizationLevel()) {
     script()->baselineScript()->resetMaxInliningDepth();
   }
 
@@ -796,7 +812,7 @@ AbortReasonOr<Ok> IonBuilder::build() {
             (script()->hasIonScript() ? "Rec" : "C"), script()->filename(),
             script()->lineno(), script()->column(), (void*)script(),
             script()->getWarmUpCount(),
-            OptimizationLevelString(optimizationInfo().level()));
+            OptimizationLevelString(optimizationLevel()));
   }
 #endif
 
@@ -909,7 +925,7 @@ AbortReasonOr<Ok> IonBuilder::build() {
 
   MOZ_TRY(traverseBytecode());
 
-  if (script_->hasBaselineScript() &&
+  if (isHighestOptimizationLevel() && script_->hasBaselineScript() &&
       inlinedBytecodeLength_ >
           script_->baselineScript()->inlinedBytecodeLength()) {
     script_->baselineScript()->setInlinedBytecodeLength(inlinedBytecodeLength_);
@@ -4363,7 +4379,10 @@ IonBuilder::InliningDecision IonBuilder::makeInliningDecision(
     // outermost script a max inlining depth of 0, so that it won't be
     // inlined in other scripts. This heuristic is currently only used
     // when we're inlining scripts with loops, see the comment below.
-    outerBaseline->setMaxInliningDepth(0);
+    // These heuristics only apply to the highest optimization level.
+    if (isHighestOptimizationLevel()) {
+      outerBaseline->setMaxInliningDepth(0);
+    }
 
     trackOptimizationOutcome(TrackedOutcome::CantInlineExceededDepth);
     return DontInline(targetScript, "Vetoed: exceeding allowed inline depth");
@@ -4386,7 +4405,10 @@ IonBuilder::InliningDecision IonBuilder::makeInliningDecision(
   // script, indicating at which depth we won't be able to inline all functions
   // we inlined this time. This solves the issue above, because we will only
   // inline f if it means we can also inline g.
-  if (targetScript->hasLoops() &&
+  //
+  // These heuristics only apply to the highest optimization level: other tiers
+  // do very little inlining and performance is not as much of a concern there.
+  if (isHighestOptimizationLevel() && targetScript->hasLoops() &&
       inliningDepth_ >= targetScript->baselineScript()->maxInliningDepth()) {
     trackOptimizationOutcome(TrackedOutcome::CantInlineExceededDepth);
     return DontInline(targetScript,
@@ -4396,7 +4418,8 @@ IonBuilder::InliningDecision IonBuilder::makeInliningDecision(
   // Update the max depth at which we can inline the outer script.
   MOZ_ASSERT(maxInlineDepth > inliningDepth_);
   uint32_t scriptInlineDepth = maxInlineDepth - inliningDepth_ - 1;
-  if (scriptInlineDepth < outerBaseline->maxInliningDepth()) {
+  if (scriptInlineDepth < outerBaseline->maxInliningDepth() &&
+      isHighestOptimizationLevel()) {
     outerBaseline->setMaxInliningDepth(scriptInlineDepth);
   }
 
@@ -5405,12 +5428,9 @@ MDefinition* IonBuilder::createThis(JSFunction* target, MDefinition* callee,
       return nullptr;
     }
 
-    if (target->isNativeWithJitEntry()) {
-      // Do not bother inlining constructor calls to asm.js, since it is
-      // not used much in practice.
-      MOZ_ASSERT(target->isWasmOptimized());
-      return nullptr;
-    }
+    // Only asm.js natives can be constructors and asm.js natives don't have
+    // jit entries.
+    MOZ_ASSERT(!target->isNativeWithJitEntry());
 
     MConstant* magic = MConstant::New(alloc(), MagicValue(JS_IS_CONSTRUCTING));
     current->add(magic);
@@ -5947,12 +5967,12 @@ AbortReasonOr<Ok> IonBuilder::jsop_call(uint32_t argc, bool constructing,
   }
 
   if (status == InliningStatus_WarmUpCountTooLow && callTargets &&
-      callTargets->length() == 1) {
+      callTargets->length() == 1 && isHighestOptimizationLevel()) {
     JSFunction* target = callTargets.ref()[0];
     MRecompileCheck* check =
         MRecompileCheck::New(alloc(), target->nonLazyScript(),
                              optimizationInfo().inliningRecompileThreshold(),
-                             MRecompileCheck::RecompileCheck_Inlining);
+                             MRecompileCheck::RecompileCheckType::Inlining);
     current->add(check);
   }
 
@@ -6081,7 +6101,7 @@ AbortReasonOr<MCall*> IonBuilder::makeCallHelper(
 
   // Collect number of missing arguments provided that the target is
   // scripted. Native functions are passed an explicit 'argc' parameter.
-  if (target && !target->isNativeWithCppEntry()) {
+  if (target && !target->isBuiltinNative()) {
     targetArgs = Max<uint32_t>(target->nargs(), callInfo.argc());
   }
 
@@ -6114,7 +6134,7 @@ AbortReasonOr<MCall*> IonBuilder::makeCallHelper(
   // Explicitly pad any missing arguments with |undefined|.
   // This permits skipping the argumentsRectifier.
   MOZ_ASSERT_IF(target && targetArgs > callInfo.argc(),
-                !target->isNativeWithCppEntry());
+                !target->isBuiltinNative());
   for (int i = targetArgs; i > (int)callInfo.argc(); i--) {
     MConstant* undef = constant(UndefinedValue());
     if (!alloc().ensureBallast()) {
@@ -6415,46 +6435,60 @@ AbortReasonOr<Ok> IonBuilder::compareTryCharacter(bool* emitted, JSOp op,
     trackOptimizationAttempt(TrackedStrategy::Compare_Character);
   }
 
-  // Try to optimize |MConstant(string) <compare> (MFromCharCode MCharCodeAt)|
-  // as |MConstant(charcode) <compare> MCharCodeAt|.
+  // |str[i]| is compiled as |MFromCharCode(MCharCodeAt(str, i))|.
+  auto isCharAccess = [](MDefinition* ins) {
+    return ins->isFromCharCode() &&
+           ins->toFromCharCode()->input()->isCharCodeAt();
+  };
 
-  MConstant* constant;
-  MDefinition* operand;
-  if (left->isConstant()) {
-    constant = left->toConstant();
-    operand = right;
-  } else if (right->isConstant()) {
-    constant = right->toConstant();
-    operand = left;
+  if (left->isConstant() || right->isConstant()) {
+    // Try to optimize |MConstant(string) <compare> (MFromCharCode MCharCodeAt)|
+    // as |MConstant(charcode) <compare> MCharCodeAt|.
+    MConstant* constant;
+    MDefinition* operand;
+    if (left->isConstant()) {
+      constant = left->toConstant();
+      operand = right;
+    } else {
+      constant = right->toConstant();
+      operand = left;
+    }
+
+    if (constant->type() != MIRType::String ||
+        constant->toString()->length() != 1 || !isCharAccess(operand)) {
+      return Ok();
+    }
+
+    char16_t charCode = constant->toString()->asAtom().latin1OrTwoByteChar(0);
+    constant->setImplicitlyUsedUnchecked();
+
+    MConstant* charCodeConst = MConstant::New(alloc(), Int32Value(charCode));
+    current->add(charCodeConst);
+
+    MDefinition* charCodeAt = operand->toFromCharCode()->input();
+    operand->setImplicitlyUsedUnchecked();
+
+    if (left == constant) {
+      left = charCodeConst;
+      right = charCodeAt;
+    } else {
+      left = charCodeAt;
+      right = charCodeConst;
+    }
+  } else if (isCharAccess(left) && isCharAccess(right)) {
+    // Try to optimize |(MFromCharCode MCharCodeAt) <compare> (MFromCharCode
+    // MCharCodeAt)| as |MCharCodeAt <compare> MCharCodeAt|.
+
+    MDefinition* leftCharCodeAt = left->toFromCharCode()->input();
+    left->setImplicitlyUsedUnchecked();
+
+    MDefinition* rightCharCodeAt = right->toFromCharCode()->input();
+    right->setImplicitlyUsedUnchecked();
+
+    left = leftCharCodeAt;
+    right = rightCharCodeAt;
   } else {
     return Ok();
-  }
-
-  if (constant->type() != MIRType::String ||
-      constant->toString()->length() != 1) {
-    return Ok();
-  }
-
-  if (!operand->isFromCharCode() ||
-      !operand->toFromCharCode()->input()->isCharCodeAt()) {
-    return Ok();
-  }
-
-  char16_t charCode = constant->toString()->asAtom().latin1OrTwoByteChar(0);
-  constant->setImplicitlyUsedUnchecked();
-
-  MConstant* charCodeConst = MConstant::New(alloc(), Int32Value(charCode));
-  current->add(charCodeConst);
-
-  MDefinition* charCodeAt = operand->toFromCharCode()->input();
-  operand->setImplicitlyUsedUnchecked();
-
-  if (left == constant) {
-    left = charCodeConst;
-    right = charCodeAt;
-  } else {
-    left = charCodeAt;
-    right = charCodeConst;
   }
 
   MCompare* ins = MCompare::New(alloc(), left, right, op);
@@ -7619,27 +7653,33 @@ static bool ObjectHasExtraOwnProperty(CompileRealm* realm,
 }
 
 void IonBuilder::insertRecompileCheck() {
+  MOZ_ASSERT(pc == script()->code() || *pc == JSOP_LOOPENTRY);
+
   // No need for recompile checks if this is the highest optimization level.
-  OptimizationLevel curLevel = optimizationInfo().level();
+  OptimizationLevel curLevel = optimizationLevel();
   if (IonOptimizations.isLastLevel(curLevel)) {
     return;
   }
 
-  // Add recompile check.
+  // Add recompile check. See MRecompileCheck::RecompileCheckType for how this
+  // works.
 
-  // Get the topmost builder. The topmost script will get recompiled when
-  // warm-up counter is high enough to justify a higher optimization level.
-  IonBuilder* topBuilder = outermostBuilder();
+  MRecompileCheck::RecompileCheckType type;
+  if (*pc == JSOP_LOOPENTRY) {
+    type = MRecompileCheck::RecompileCheckType::OptimizationLevelOSR;
+  } else if (this != outermostBuilder()) {
+    type = MRecompileCheck::RecompileCheckType::OptimizationLevelInlined;
+  } else {
+    type = MRecompileCheck::RecompileCheckType::OptimizationLevel;
+  }
 
   // Add recompile check to recompile when the warm-up count reaches the
   // threshold of the next optimization level.
   OptimizationLevel nextLevel = IonOptimizations.nextLevel(curLevel);
   const OptimizationInfo* info = IonOptimizations.get(nextLevel);
-  uint32_t warmUpThreshold =
-      info->compilerWarmUpThreshold(topBuilder->script());
+  uint32_t warmUpThreshold = info->recompileWarmUpThreshold(script(), pc);
   MRecompileCheck* check =
-      MRecompileCheck::New(alloc(), topBuilder->script(), warmUpThreshold,
-                           MRecompileCheck::RecompileCheck_OptimizationLevel);
+      MRecompileCheck::New(alloc(), script(), warmUpThreshold, type);
   current->add(check);
 }
 
@@ -9705,9 +9745,7 @@ AbortReasonOr<Ok> IonBuilder::initOrSetElemTryDense(bool* emitted,
   MOZ_ASSERT(*emitted == false);
 
   if (value->type() == MIRType::MagicHole) {
-    {
-      trackOptimizationOutcome(TrackedOutcome::InitHole);
-    }
+    trackOptimizationOutcome(TrackedOutcome::InitHole);
     return Ok();
   }
 
@@ -9784,9 +9822,7 @@ AbortReasonOr<Ok> IonBuilder::initOrSetElemTryCache(bool* emitted,
   }
 
   if (value->type() == MIRType::MagicHole) {
-    {
-      trackOptimizationOutcome(TrackedOutcome::InitHole);
-    }
+    trackOptimizationOutcome(TrackedOutcome::InitHole);
     return Ok();
   }
 
@@ -9799,7 +9835,7 @@ AbortReasonOr<Ok> IonBuilder::initOrSetElemTryCache(bool* emitted,
 
   // We can avoid worrying about holes in the IC if we know a priori we are safe
   // from them. If TI can guard that there are no indexed properties on the
-  // prototype chain, we know that we anen't missing any setters by overwriting
+  // prototype chain, we know that we aren't missing any setters by overwriting
   // the hole with another value.
   bool guardHoles;
   MOZ_TRY_VAR(guardHoles, ElementAccessHasExtraIndexedProperty(this, object));

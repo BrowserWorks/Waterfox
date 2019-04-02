@@ -202,6 +202,10 @@ static const Class DebuggerSource_class = {
 
 /*** Utils ******************************************************************/
 
+static inline bool IsInterpretedNonSelfHostedFunction(JSFunction* fun) {
+  return fun->isInterpreted() && !fun->isSelfHostedBuiltin();
+}
+
 static inline bool EnsureFunctionHasScript(JSContext* cx, HandleFunction fun) {
   if (fun->isInterpretedLazy()) {
     AutoRealm ar(cx, fun);
@@ -212,7 +216,7 @@ static inline bool EnsureFunctionHasScript(JSContext* cx, HandleFunction fun) {
 
 static inline JSScript* GetOrCreateFunctionScript(JSContext* cx,
                                                   HandleFunction fun) {
-  MOZ_ASSERT(fun->isInterpreted());
+  MOZ_ASSERT(IsInterpretedNonSelfHostedFunction(fun));
   if (!EnsureFunctionHasScript(cx, fun)) {
     return nullptr;
   }
@@ -1609,9 +1613,9 @@ static void AdjustGeneratorResumptionValue(JSContext* cx,
     Rooted<AbstractGeneratorObject*> genObj(
         cx, GetGeneratorObjectForFrame(cx, frame));
     if (genObj) {
-      // 1.  `return <value>` creates and returns a new object,
-      //     `{value: <value>, done: true}`.
-      if (!genObj->isBeforeInitialYield()) {
+      // 1.  `return <value>` creates and returns a new object in non-async
+      //     generators, `{value: <value>, done: true}`.
+      if (!frame.callee()->isAsync() && !genObj->isBeforeInitialYield()) {
         JSObject* pair = CreateIterResultObject(cx, vp, true);
         if (!pair) {
           getAndClearExceptionThenThrow();
@@ -1641,11 +1645,13 @@ static void AdjustGeneratorResumptionValue(JSContext* cx,
           cx, &genObj->as<AsyncFunctionGeneratorObject>());
 
       // 1.  `return <value>` fulfills and returns the async function's promise.
-      JSObject* promise = AsyncFunctionResolve(
-          cx, asyncGenObj, vp, AsyncFunctionResolveKind::Fulfill);
-      if (!promise) {
-        getAndClearExceptionThenThrow();
-        return;
+      Rooted<PromiseObject*> promise(cx, asyncGenObj->promise());
+      if (promise->state() == JS::PromiseState::Pending) {
+        if (!AsyncFunctionResolve(cx, asyncGenObj, vp,
+                                  AsyncFunctionResolveKind::Fulfill)) {
+          getAndClearExceptionThenThrow();
+          return;
+        }
       }
       vp.setObject(*promise);
 
@@ -2087,7 +2093,7 @@ ResumeMode Debugger::dispatchHook(JSContext* cx, HookIsEnabledFun hookIsEnabled,
   //
   // Note: In the general case, 'triggered' contains references to objects in
   // different compartments--every compartment *except* this one.
-  AutoValueVector triggered(cx);
+  RootedValueVector triggered(cx);
   Handle<GlobalObject*> global = cx->global();
   if (GlobalObject::DebuggerVector* debuggers = global->getDebuggers()) {
     for (auto p = debuggers->begin(); p != debuggers->end(); p++) {
@@ -2418,7 +2424,7 @@ void Debugger::slowPathOnNewGlobalObject(JSContext* cx,
   // Make a copy of the runtime's onNewGlobalObjectWatchers before running the
   // handlers. Since one Debugger's handler can disable another's, the list
   // can be mutated while we're walking it.
-  AutoObjectVector watchers(cx);
+  RootedObjectVector watchers(cx);
   for (auto& dbg : cx->runtime()->onNewGlobalObjectWatchers()) {
     MOZ_ASSERT(dbg.observesNewGlobalObject());
     JSObject* obj = dbg.object;
@@ -4047,7 +4053,7 @@ bool Debugger::getDebuggees(JSContext* cx, unsigned argc, Value* vp) {
   // Obtain the list of debuggees before wrapping each debuggee, as a GC could
   // update the debuggees set while we are iterating it.
   unsigned count = dbg->debuggees.count();
-  AutoValueVector debuggees(cx);
+  RootedValueVector debuggees(cx);
   if (!debuggees.resize(count)) {
     return false;
   }
@@ -5253,7 +5259,7 @@ class MOZ_STACK_CLASS Debugger::ObjectQuery {
       : objects(cx), cx(cx), dbg(dbg), className(cx) {}
 
   /* The vector that we are accumulating results in. */
-  AutoObjectVector objects;
+  RootedObjectVector objects;
 
   /* The set of debuggee compartments. */
   JS::CompartmentSet debuggeeCompartments;
@@ -5465,7 +5471,7 @@ bool Debugger::findObjects(JSContext* cx, unsigned argc, Value* vp) {
 bool Debugger::findAllGlobals(JSContext* cx, unsigned argc, Value* vp) {
   THIS_DEBUGGER(cx, argc, vp, "findAllGlobals", args, dbg);
 
-  AutoObjectVector globals(cx);
+  RootedObjectVector globals(cx);
 
   {
     // Accumulate the list of globals before wrapping them, because
@@ -5661,14 +5667,16 @@ class DebuggerAdoptSourceMatcher {
 
   ReturnType match(HandleScriptSourceObject source) {
     if (source->compartment() == cx_->compartment()) {
-      JS_ReportErrorASCII(cx_, "Source is in the same compartment as this debugger");
+      JS_ReportErrorASCII(cx_,
+                          "Source is in the same compartment as this debugger");
       return nullptr;
     }
     return dbg_->wrapSource(cx_, source);
   }
   ReturnType match(Handle<WasmInstanceObject*> wasmInstance) {
     if (wasmInstance->compartment() == cx_->compartment()) {
-      JS_ReportErrorASCII(cx_, "WasmInstance is in the same compartment as this debugger");
+      JS_ReportErrorASCII(
+          cx_, "WasmInstance is in the same compartment as this debugger");
       return nullptr;
     }
     return dbg_->wrapWasmSource(cx_, wasmInstance);
@@ -6332,8 +6340,8 @@ static bool DebuggerScript_getChildScripts(JSContext* cx, unsigned argc,
     for (const GCPtrObject& obj : script->objects()) {
       if (obj->is<JSFunction>()) {
         fun = &obj->as<JSFunction>();
-        // The inner function could be a wasm native.
-        if (fun->isNative()) {
+        // The inner function could be an asm.js native.
+        if (!IsInterpretedNonSelfHostedFunction(fun)) {
           continue;
         }
         funScript = GetOrCreateFunctionScript(cx, fun);
@@ -9295,7 +9303,7 @@ static bool DebuggerGenericEval(JSContext* cx,
   // Gather keys and values of bindings, if any. This must be done in the
   // debugger compartment, since that is where any exceptions must be thrown.
   AutoIdVector keys(cx);
-  AutoValueVector values(cx);
+  RootedValueVector values(cx);
   if (bindings) {
     if (!GetPropertyKeys(cx, bindings, JSITER_OWNONLY, &keys) ||
         !values.growBy(keys.length())) {
@@ -9345,7 +9353,7 @@ static bool DebuggerGenericEval(JSContext* cx,
       }
     }
 
-    AutoObjectVector envChain(cx);
+    RootedObjectVector envChain(cx);
     if (!envChain.append(nenv)) {
       return false;
     }
@@ -10318,7 +10326,7 @@ bool DebuggerObject::scriptGetter(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   RootedFunction fun(cx, &obj->as<JSFunction>());
-  if (!fun->isInterpreted()) {
+  if (!IsInterpretedNonSelfHostedFunction(fun)) {
     args.rval().setUndefined();
     return true;
   }
@@ -10357,7 +10365,7 @@ bool DebuggerObject::environmentGetter(JSContext* cx, unsigned argc,
   }
 
   RootedFunction fun(cx, &obj->as<JSFunction>());
-  if (!fun->isInterpreted()) {
+  if (!IsInterpretedNonSelfHostedFunction(fun)) {
     args.rval().setUndefined();
     return true;
   }
@@ -11469,7 +11477,7 @@ bool DebuggerObject::getParameterNames(JSContext* cx,
   if (!result.growBy(referent->nargs())) {
     return false;
   }
-  if (referent->isInterpreted()) {
+  if (IsInterpretedNonSelfHostedFunction(referent)) {
     RootedScript script(cx, GetOrCreateFunctionScript(cx, referent));
     if (!script) {
       return false;
@@ -13089,8 +13097,8 @@ JS_PUBLIC_API bool JS::dbg::IsDebugger(JSObject& obj) {
          js::Debugger::fromJSObject(unwrapped) != nullptr;
 }
 
-JS_PUBLIC_API bool JS::dbg::GetDebuggeeGlobals(JSContext* cx, JSObject& dbgObj,
-                                               AutoObjectVector& vector) {
+JS_PUBLIC_API bool JS::dbg::GetDebuggeeGlobals(
+    JSContext* cx, JSObject& dbgObj, MutableHandleObjectVector vector) {
   MOZ_ASSERT(IsDebugger(dbgObj));
   /* Since we know we have a debugger object, CheckedUnwrapStatic is fine. */
   js::Debugger* dbg = js::Debugger::fromJSObject(CheckedUnwrapStatic(&dbgObj));
@@ -13265,7 +13273,7 @@ JS_PUBLIC_API bool FireOnGarbageCollectionHookRequired(JSContext* cx) {
 
 JS_PUBLIC_API bool FireOnGarbageCollectionHook(
     JSContext* cx, JS::dbg::GarbageCollectionEvent::Ptr&& data) {
-  AutoObjectVector triggered(cx);
+  RootedObjectVector triggered(cx);
 
   {
     // We had better not GC (and potentially get a dangling Debugger

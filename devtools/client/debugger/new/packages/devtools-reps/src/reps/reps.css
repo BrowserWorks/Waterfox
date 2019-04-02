@@ -243,7 +243,8 @@
 
 button.open-accessibility-inspector,
 button.open-inspector {
-  mask: url("/images/open-inspector.svg") no-repeat;
+  mask: url("resource://devtools/client/shared/components/reps/images/open-inspector.svg")
+    no-repeat;
   display: inline-block;
   vertical-align: top;
   height: 15px;
@@ -267,7 +268,8 @@ button.open-inspector {
 /* Jump to definition button */
 
 button.jump-definition {
-  mask: url(/images/jump-definition.svg) no-repeat;
+  mask: url(resource://devtools/client/shared/components/reps/images/jump-definition.svg)
+    no-repeat;
   display: inline-block;
   background-color: var(--theme-icon-color);
   height: 16px;
@@ -283,12 +285,13 @@ button.jump-definition {
 /* Invoke getter button */
 
 button.invoke-getter {
-  mask: url(/images/input.svg) no-repeat;
+  mask: url(resource://devtools/client/shared/components/reps/images/input.svg)
+    no-repeat;
   display: inline-block;
   background-color: var(--theme-icon-color);
   height: 10px;
   vertical-align: middle;
-  border:none;
+  border: none;
 }
 
 .invoke-getter:hover {

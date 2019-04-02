@@ -123,14 +123,11 @@ impl nsStyleImage {
         match image {
             GenericImage::Gradient(boxed_gradient) => self.set_gradient(*boxed_gradient),
             GenericImage::Url(ref url) => unsafe {
-                bindings::Gecko_SetLayerImageImageValue(self, (url.0).0.url_value.get());
+                bindings::Gecko_SetLayerImageImageValue(self, url.url_value_ptr())
             },
             GenericImage::Rect(ref image_rect) => {
                 unsafe {
-                    bindings::Gecko_SetLayerImageImageValue(
-                        self,
-                        (image_rect.url.0).0.url_value.get(),
-                    );
+                    bindings::Gecko_SetLayerImageImageValue(self, image_rect.url.url_value_ptr());
                     bindings::Gecko_InitializeImageCropRect(self);
 
                     // Set CropRect
@@ -1011,10 +1008,9 @@ impl<'a> From<&'a Matrix4x4Components> for Matrix3D {
 impl From<Matrix3D> for Matrix4x4Components {
     fn from(matrix: Matrix3D) -> Self {
         [
-            matrix.m11, matrix.m12, matrix.m13, matrix.m14, matrix.m21,
-            matrix.m22, matrix.m23, matrix.m24, matrix.m31, matrix.m32,
-            matrix.m33, matrix.m34, matrix.m41, matrix.m42, matrix.m43,
-            matrix.m44,
+            matrix.m11, matrix.m12, matrix.m13, matrix.m14, matrix.m21, matrix.m22, matrix.m23,
+            matrix.m24, matrix.m31, matrix.m32, matrix.m33, matrix.m34, matrix.m41, matrix.m42,
+            matrix.m43, matrix.m44,
         ]
     }
 }

@@ -1273,7 +1273,7 @@ JS_PUBLIC_API void JS_SetGCParametersBasedOnAvailableMemory(JSContext* cx,
       {JSGC_HIGH_FREQUENCY_TIME_LIMIT, 1500},
       {JSGC_HIGH_FREQUENCY_TIME_LIMIT, 1500},
       {JSGC_ALLOCATION_THRESHOLD, 1},
-      {JSGC_MODE, JSGC_MODE_INCREMENTAL}};
+      {JSGC_MODE, JSGC_MODE_ZONE_INCREMENTAL}};
 
   static const JSGCConfig nominal[] = {
       {JSGC_MAX_MALLOC_BYTES, 6 * 1024 * 1024},
@@ -3308,7 +3308,7 @@ JS_PUBLIC_API JSObject* JS::CloneFunctionObject(JSContext* cx,
 }
 
 extern JS_PUBLIC_API JSObject* JS::CloneFunctionObject(
-    JSContext* cx, HandleObject funobj, AutoObjectVector& envChain) {
+    JSContext* cx, HandleObject funobj, HandleObjectVector envChain) {
   RootedObject env(cx);
   RootedScope scope(cx);
   if (!CreateNonSyntacticEnvironmentChain(cx, envChain, &env, &scope)) {
@@ -4135,7 +4135,7 @@ JS_PUBLIC_API bool JS::SetPromiseUserInputEventHandlingState(
  * Asserts that the array is dense and all entries are Promise objects.
  */
 JS_PUBLIC_API JSObject* JS::GetWaitForAllPromise(
-    JSContext* cx, const JS::AutoObjectVector& promises) {
+    JSContext* cx, JS::HandleObjectVector promises) {
   AssertHeapIsIdle();
   CHECK_THREAD(cx);
 
@@ -5340,15 +5340,19 @@ JS_PUBLIC_API void JS_SetGlobalJitCompilerOption(JSContext* cx,
       }
       jit::JitOptions.baselineWarmUpThreshold = value;
       break;
-    case JSJITCOMPILER_ION_WARMUP_TRIGGER:
+    case JSJITCOMPILER_ION_NORMAL_WARMUP_TRIGGER:
       if (value == uint32_t(-1)) {
-        jit::JitOptions.resetCompilerWarmUpThreshold();
+        jit::JitOptions.resetNormalIonWarmUpThreshold();
         break;
       }
-      jit::JitOptions.setCompilerWarmUpThreshold(value);
-      if (value == 0) {
-        jit::JitOptions.setEagerCompilation();
+      jit::JitOptions.setNormalIonWarmUpThreshold(value);
+      break;
+    case JSJITCOMPILER_ION_FULL_WARMUP_TRIGGER:
+      if (value == uint32_t(-1)) {
+        jit::JitOptions.resetFullIonWarmUpThreshold();
+        break;
       }
+      jit::JitOptions.setFullIonWarmUpThreshold(value);
       break;
     case JSJITCOMPILER_ION_GVN_ENABLE:
       if (value == 0) {
@@ -5471,9 +5475,11 @@ JS_PUBLIC_API bool JS_GetGlobalJitCompilerOption(JSContext* cx,
     case JSJITCOMPILER_BASELINE_WARMUP_TRIGGER:
       *valueOut = jit::JitOptions.baselineWarmUpThreshold;
       break;
-    case JSJITCOMPILER_ION_WARMUP_TRIGGER:
-      *valueOut = jit::JitOptions.forcedDefaultIonWarmUpThreshold.valueOr(
-          jit::OptimizationInfo::CompilerWarmupThreshold);
+    case JSJITCOMPILER_ION_NORMAL_WARMUP_TRIGGER:
+      *valueOut = jit::JitOptions.normalIonWarmUpThreshold;
+      break;
+    case JSJITCOMPILER_ION_FULL_WARMUP_TRIGGER:
+      *valueOut = jit::JitOptions.fullIonWarmUpThreshold;
       break;
     case JSJITCOMPILER_ION_FORCE_IC:
       *valueOut = jit::JitOptions.forceInlineCaches;

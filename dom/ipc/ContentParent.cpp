@@ -134,6 +134,7 @@
 #include "nsFrameMessageManager.h"
 #include "nsHashPropertyBag.h"
 #include "nsIAlertsService.h"
+#include "nsIAppStartup.h"
 #include "nsIClipboard.h"
 #include "nsICookie.h"
 #include "nsContentPermissionHelper.h"
@@ -267,6 +268,9 @@
 #    include "mozilla/SandboxInfo.h"
 #    include "mozilla/SandboxBroker.h"
 #    include "mozilla/SandboxBrokerPolicyFactory.h"
+#  endif
+#  if defined(XP_MACOSX)
+#    include "mozilla/Sandbox.h"
 #  endif
 #endif
 
@@ -1064,6 +1068,14 @@ mozilla::ipc::IPCResult ContentParent::RecvLaunchRDDProcess(
       Preferences::GetBool("media.rdd-process.enabled", false)) {
     RDDProcessManager* rdd = RDDProcessManager::Get();
     if (rdd) {
+      // If there is already an RDDChild, then we've already launched the
+      // RDD process.  We don't need to do anything else.  Specifically,
+      // we want to avoid calling CreateContentBridge again because that
+      // causes the RemoteDecoderManagerParent to rebuild needlessly.
+      if (rdd->GetRDDChild()) {
+        return IPC_OK();
+      }
+
       rdd->LaunchRDDProcess();
 
       bool rddOpened = rdd->CreateContentBridge(OtherPid(), aEndpoint);
@@ -1897,7 +1909,7 @@ void ContentParent::AppendDynamicSandboxParams(
     std::vector<std::string>& aArgs) {
   // For file content processes
   if (GetRemoteType().EqualsLiteral(FILE_REMOTE_TYPE)) {
-    aArgs.push_back("-sbAllowFileAccess");
+    MacSandboxInfo::AppendFileAccessParam(aArgs, true);
   }
 }
 
@@ -1909,33 +1921,25 @@ static void CacheSandboxParams(std::vector<std::string>& aCachedParams) {
   // be starting with an empty list of parameters.
   MOZ_ASSERT(aCachedParams.empty());
 
-  // Indicates the child should startup the sandbox
-  aCachedParams.push_back("-sbStartup");
-
-  // The content sandbox level
-  int contentSandboxLevel =
-      Preferences::GetInt("security.sandbox.content.level");
-  std::ostringstream os;
-  os << contentSandboxLevel;
-  std::string contentSandboxLevelString = os.str();
-  aCachedParams.push_back("-sbLevel");
-  aCachedParams.push_back(contentSandboxLevelString);
+  MacSandboxInfo info;
+  info.type = MacSandboxType_Content;
+  info.level = GetEffectiveContentSandboxLevel();
 
   // Sandbox logging
   if (Preferences::GetBool("security.sandbox.logging.enabled") ||
       PR_GetEnv("MOZ_SANDBOX_LOGGING")) {
-    aCachedParams.push_back("-sbLogging");
+    info.shouldLog = true;
   }
 
   // Audio access
   if (!Preferences::GetBool("media.cubeb.sandbox")) {
-    aCachedParams.push_back("-sbAllowAudio");
+    info.hasAudio = true;
   }
 
   // Windowserver access
   if (!Preferences::GetBool(
           "security.sandbox.content.mac.disconnect-windowserver")) {
-    aCachedParams.push_back("-sbAllowWindowServer");
+    info.hasWindowServer = true;
   }
 
   // .app path (normalized)
@@ -1943,16 +1947,14 @@ static void CacheSandboxParams(std::vector<std::string>& aCachedParams) {
   if (!nsMacUtilsImpl::GetAppPath(appPath)) {
     MOZ_CRASH("Failed to get app dir paths");
   }
-  aCachedParams.push_back("-sbAppPath");
-  aCachedParams.push_back(appPath.get());
+  info.appPath = appPath.get();
 
   // TESTING_READ_PATH1
   nsAutoCString testingReadPath1;
   Preferences::GetCString("security.sandbox.content.mac.testing_read_path1",
                           testingReadPath1);
   if (!testingReadPath1.IsEmpty()) {
-    aCachedParams.push_back("-sbTestingReadPath");
-    aCachedParams.push_back(testingReadPath1.get());
+    info.testingReadPath1 = testingReadPath1.get();
   }
 
   // TESTING_READ_PATH2
@@ -1960,8 +1962,7 @@ static void CacheSandboxParams(std::vector<std::string>& aCachedParams) {
   Preferences::GetCString("security.sandbox.content.mac.testing_read_path2",
                           testingReadPath2);
   if (!testingReadPath2.IsEmpty()) {
-    aCachedParams.push_back("-sbTestingReadPath");
-    aCachedParams.push_back(testingReadPath2.get());
+    info.testingReadPath2 = testingReadPath2.get();
   }
 
   // TESTING_READ_PATH3, TESTING_READ_PATH4. In development builds,
@@ -1976,8 +1977,7 @@ static void CacheSandboxParams(std::vector<std::string>& aCachedParams) {
     }
     nsCString repoDirPath;
     Unused << repoDir->GetNativePath(repoDirPath);
-    aCachedParams.push_back("-sbTestingReadPath");
-    aCachedParams.push_back(repoDirPath.get());
+    info.testingReadPath3 = repoDirPath.get();
 
     // Object dir
     nsCOMPtr<nsIFile> objDir;
@@ -1987,8 +1987,7 @@ static void CacheSandboxParams(std::vector<std::string>& aCachedParams) {
     }
     nsCString objDirPath;
     Unused << objDir->GetNativePath(objDirPath);
-    aCachedParams.push_back("-sbTestingReadPath");
-    aCachedParams.push_back(objDirPath.get());
+    info.testingReadPath4 = objDirPath.get();
   }
 
   // DEBUG_WRITE_DIR
@@ -2002,10 +2001,11 @@ static void CacheSandboxParams(std::vector<std::string>& aCachedParams) {
     // of that path.
     nsAutoCString bloatDirectoryPath =
         nsMacUtilsImpl::GetDirectoryPath(bloatLog);
-    aCachedParams.push_back("-sbDebugWriteDir");
-    aCachedParams.push_back(bloatDirectoryPath.get());
+    info.debugWriteDir = bloatDirectoryPath.get();
   }
 #  endif  // DEBUG
+
+  info.AppendAsParams(aCachedParams);
 }
 
 // Append sandboxing command line parameters.
@@ -2268,7 +2268,6 @@ ContentParent::ContentParent(ContentParent* aOpener,
       mRemoteWorkerActors(0),
       mNumDestroyingTabs(0),
       mLifecycleState(LifecycleState::LAUNCHING),
-      mShuttingDown(false),
       mIsForBrowser(!mRemoteType.IsEmpty()),
       mRecordReplayState(aRecordReplayState),
       mRecordingFile(aRecordingFile),
@@ -2465,8 +2464,21 @@ void ContentParent::InitInternal(ProcessPriority aInitialPriority) {
   ScreenManager& screenManager = ScreenManager::GetSingleton();
   screenManager.CopyScreensToRemote(this);
 
+  // Send the UA sheet shared memory buffer and the address it is mapped at.
+  auto cache = nsLayoutStylesheetCache::Singleton();
+  Maybe<SharedMemoryHandle> sharedUASheetHandle;
+  uintptr_t sharedUASheetAddress = cache->GetSharedMemoryAddress();
+
+  SharedMemoryHandle handle;
+  if (cache->ShareToProcess(OtherPid(), &handle)) {
+    sharedUASheetHandle.emplace(handle);
+  } else {
+    sharedUASheetAddress = 0;
+  }
+
   Unused << SendSetXPCOMProcessAttributes(xpcomInit, initialData, lnfCache,
-                                          fontList);
+                                          fontList, sharedUASheetHandle,
+                                          sharedUASheetAddress);
 
   ipc::WritableSharedMap* sharedData =
       nsFrameMessageManager::sParentProcessManager->SharedData();
@@ -2589,8 +2601,10 @@ void ContentParent::InitInternal(ProcessPriority aInitialPriority) {
   // during an active session. Currently the pref is only used for testing
   // purpose. If the decision is made to permanently rely on the pref, this
   // should be changed so that it is required to restart firefox for the change
-  // of value to take effect.
+  // of value to take effect. Always send SetProcessSandbox message on macOS.
+#  if !defined(XP_MACOSX)
   shouldSandbox = IsContentSandboxEnabled();
+#  endif
 
 #  ifdef XP_LINUX
   if (shouldSandbox) {
@@ -2957,8 +2971,6 @@ ContentParent::Observe(nsISupports* aSubject, const char* aTopic,
                        const char16_t* aData) {
   if (mSubprocess && (!strcmp(aTopic, "profile-before-change") ||
                       !strcmp(aTopic, "xpcom-shutdown"))) {
-    mShuttingDown = true;
-
     // Make sure that our process will get scheduled.
     ProcessPriorityManager::SetProcessPriority(this,
                                                PROCESS_PRIORITY_FOREGROUND);
@@ -3378,7 +3390,8 @@ void ContentParent::GeneratePairedMinidump(const char* aReason) {
   // Something has gone wrong to get us here, so we generate a minidump
   // of the parent and child for submission to the crash server unless we're
   // already shutting down.
-  if (mCrashReporter && !mShuttingDown &&
+  nsCOMPtr<nsIAppStartup> appStartup = components::AppStartup::Service();
+  if (mCrashReporter && !appStartup->GetShuttingDown() &&
       Preferences::GetBool("dom.ipc.tabs.createKillHardCrashReports", false)) {
     // GeneratePairedMinidump creates two minidumps for us - the main
     // one is for the content process we're about to kill, and the other
@@ -4087,10 +4100,11 @@ mozilla::ipc::IPCResult ContentParent::RecvScriptError(
     const nsString& aMessage, const nsString& aSourceName,
     const nsString& aSourceLine, const uint32_t& aLineNumber,
     const uint32_t& aColNumber, const uint32_t& aFlags,
-    const nsCString& aCategory, const bool& aFromPrivateWindow) {
+    const nsCString& aCategory, const bool& aFromPrivateWindow,
+    const bool& aFromChromeContext) {
   return RecvScriptErrorInternal(aMessage, aSourceName, aSourceLine,
                                  aLineNumber, aColNumber, aFlags, aCategory,
-                                 aFromPrivateWindow);
+                                 aFromPrivateWindow, aFromChromeContext);
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvScriptErrorWithStack(
@@ -4098,10 +4112,10 @@ mozilla::ipc::IPCResult ContentParent::RecvScriptErrorWithStack(
     const nsString& aSourceLine, const uint32_t& aLineNumber,
     const uint32_t& aColNumber, const uint32_t& aFlags,
     const nsCString& aCategory, const bool& aFromPrivateWindow,
-    const ClonedMessageData& aFrame) {
-  return RecvScriptErrorInternal(aMessage, aSourceName, aSourceLine,
-                                 aLineNumber, aColNumber, aFlags, aCategory,
-                                 aFromPrivateWindow, &aFrame);
+    const bool& aFromChromeContext, const ClonedMessageData& aFrame) {
+  return RecvScriptErrorInternal(
+      aMessage, aSourceName, aSourceLine, aLineNumber, aColNumber, aFlags,
+      aCategory, aFromPrivateWindow, aFromChromeContext, &aFrame);
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvScriptErrorInternal(
@@ -4109,7 +4123,7 @@ mozilla::ipc::IPCResult ContentParent::RecvScriptErrorInternal(
     const nsString& aSourceLine, const uint32_t& aLineNumber,
     const uint32_t& aColNumber, const uint32_t& aFlags,
     const nsCString& aCategory, const bool& aFromPrivateWindow,
-    const ClonedMessageData* aStack) {
+    const bool& aFromChromeContext, const ClonedMessageData* aStack) {
   RefPtr<nsConsoleService> consoleService = GetConsoleService();
   if (!consoleService) {
     return IPC_OK();
@@ -4144,9 +4158,9 @@ mozilla::ipc::IPCResult ContentParent::RecvScriptErrorInternal(
     msg = new nsScriptError();
   }
 
-  nsresult rv =
-      msg->Init(aMessage, aSourceName, aSourceLine, aLineNumber, aColNumber,
-                aFlags, aCategory.get(), aFromPrivateWindow);
+  nsresult rv = msg->Init(aMessage, aSourceName, aSourceLine, aLineNumber,
+                          aColNumber, aFlags, aCategory.get(),
+                          aFromPrivateWindow, aFromChromeContext);
   if (NS_FAILED(rv)) return IPC_OK();
 
   consoleService->LogMessageWithMode(msg, nsConsoleService::SuppressLog);
@@ -5886,7 +5900,8 @@ void ContentParent::OnBrowsingContextGroupUnsubscribe(
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvCommitBrowsingContextTransaction(
-    BrowsingContext* aContext, BrowsingContext::Transaction&& aTransaction) {
+    BrowsingContext* aContext, BrowsingContext::Transaction&& aTransaction,
+    BrowsingContext::FieldEpochs&& aEpochs) {
   if (!aContext) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
             ("ParentIPC: Trying to run transaction on missing context."));
@@ -5905,12 +5920,14 @@ mozilla::ipc::IPCResult ContentParent::RecvCommitBrowsingContextTransaction(
     auto* entry = iter.Get();
     ContentParent* parent = entry->GetKey();
     if (parent != this) {
-      Unused << parent->SendCommitBrowsingContextTransaction(aContext,
-                                                             aTransaction);
+      Unused << parent->SendCommitBrowsingContextTransaction(
+          aContext, aTransaction,
+          aContext->Canonical()->GetFieldEpochsForChild(parent));
     }
   }
 
   aTransaction.Apply(aContext, this);
+  aContext->Canonical()->SetFieldEpochsForChild(this, aEpochs);
 
   return IPC_OK();
 }

@@ -22,11 +22,15 @@ def with_gradle(value):
         return True
 
 
-@depends('--with-gradle', check_build_environment)
+@depends(host, '--with-gradle', check_build_environment)
 @imports(_from='os.path', _import='isfile')
-def gradle(value, build_env):
-    gradle = value[0] if len(value) else \
-        os.path.join(build_env.topsrcdir, 'gradlew')
+def gradle(host, value, build_env):
+    if len(value):
+        gradle = value[0]
+    else:
+        gradle = os.path.join(build_env.topsrcdir, 'gradlew')
+        if host.os == 'WINNT':
+            gradle = gradle + '.bat'
 
     # TODO: verify that $GRADLE is executable.
     if not isfile(gradle):
@@ -205,16 +209,7 @@ def gradle_android_test_tasks(build_config):
     ]
 
 
-@dependable
-def gradle_android_test_ccov_report_tasks():
-    '''Additional gradle tasks run by |mach android test-ccov|.'''
-    return [
-        'app:jacocoTestReport',
-        'geckoview:jacocoTestReport',
-    ]
-
 set_config('GRADLE_ANDROID_TEST_TASKS', gradle_android_test_tasks)
-set_config('GRADLE_ANDROID_TEST_CCOV_REPORT_TASKS', gradle_android_test_ccov_report_tasks)
 
 
 @depends(gradle_android_build_config)
@@ -245,6 +240,25 @@ def gradle_android_checkstyle_tasks(build_config):
     ]
 
 set_config('GRADLE_ANDROID_CHECKSTYLE_TASKS', gradle_android_checkstyle_tasks)
+
+
+@depends(gradle_android_build_config)
+def gradle_android_checkstyle_output_files(build_config):
+    def uncapitalize(s):
+        if s:
+            return s[0].lower() + s[1:]
+        else:
+            return s
+
+    variant = uncapitalize(build_config.geckoview.variant.name)
+
+    '''Output folder for checkstyle'''
+    return [
+        'gradle/build/mobile/android/geckoview/reports/checkstyle/{}.xml'.format(variant),
+        'gradle/build/mobile/android/app/reports/checkstyle/checkstyle.xml',
+    ]
+
+set_config('GRADLE_ANDROID_CHECKSTYLE_OUTPUT_FILES', gradle_android_checkstyle_output_files)
 
 
 @depends(gradle_android_build_config)

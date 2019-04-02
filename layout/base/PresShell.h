@@ -15,6 +15,7 @@
 #include "mozilla/dom/HTMLDocumentBinding.h"
 #include "mozilla/layers/FocusTarget.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/ScrollTypes.h"
 #include "mozilla/ServoStyleSet.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/UniquePtr.h"
@@ -56,11 +57,7 @@ typedef nsTHashtable<nsPtrHashKey<nsIFrame>> VisibleFrames;
 
 // This is actually pref-controlled, but we use this value if we fail
 // to get the pref for any reason.
-#ifdef MOZ_WIDGET_ANDROID
-#  define PAINTLOCK_EVENT_DELAY 250
-#else
-#  define PAINTLOCK_EVENT_DELAY 5
-#endif
+#define PAINTLOCK_EVENT_DELAY 5
 
 class PresShell final : public nsIPresShell,
                         public nsISelectionController,
@@ -173,6 +170,14 @@ class PresShell final : public nsIPresShell,
   float GetCumulativeNonRootScaleResolution() override;
   void SetRestoreResolution(float aResolution,
                             LayoutDeviceIntSize aDisplaySize) override;
+
+  // Widget notificiations
+  void WindowSizeMoveDone() override;
+  void SysColorChanged() override { mPresContext->SysColorChanged(); }
+  void ThemeChanged() override { mPresContext->ThemeChanged(); }
+  void BackingScaleFactorChanged() override {
+    mPresContext->UIResolutionChangedSync();
+  }
 
   // nsIViewObserver interface
 
@@ -519,7 +524,8 @@ class PresShell final : public nsIPresShell,
      *                                  PresShell should be set instead.  I.e.,
      *                                  in the latter case, the frame is in
      *                                  a parent document.
-     * @param aGUIEvent                 Event to be handled.
+     * @param aGUIEvent                 Event to be handled.  Must be a trusted
+     *                                  event.
      * @param aDontRetargetEvents       true if this shouldn't redirect the
      *                                  event to different PresShell.
      *                                  false if this can redirect the event to
@@ -538,7 +544,8 @@ class PresShell final : public nsIPresShell,
      * WidgetEvent, not WidgetGUIEvent.  So, you can dispatch a simple event
      * with this.
      *
-     * @param aEvent                    Event to be dispatched.
+     * @param aEvent                    Event to be dispatched.  Must be a
+     *                                  trusted event.
      * @param aNewEventFrame            Temporal new event frame.
      * @param aNewEventContent          Temporal new event content.
      * @param aEventStatus              [in/out] EventStuatus of aEvent.
@@ -564,12 +571,7 @@ class PresShell final : public nsIPresShell,
      * OnPresShellDestroy() is called when every PresShell instance is being
      * destroyed.
      */
-    static inline void OnPresShellDestroy(Document* aDocument) {
-      if (sLastKeyDownEventTargetElement &&
-          sLastKeyDownEventTargetElement->OwnerDoc() == aDocument) {
-        sLastKeyDownEventTargetElement = nullptr;
-      }
-    }
+    static inline void OnPresShellDestroy(Document* aDocument);
 
    private:
     static bool InZombieDocument(nsIContent* aContent);
@@ -987,7 +989,7 @@ class PresShell final : public nsIPresShell,
      * @return                          The element which should be the event
      *                                  target of aGUIEvent.
      */
-    Element* ComputeFocusedEventTargetElement(WidgetGUIEvent* aGUIEvent);
+    dom::Element* ComputeFocusedEventTargetElement(WidgetGUIEvent* aGUIEvent);
 
     /**
      * MaybeHandleEventWithAnotherPresShell() may handle aGUIEvent with another
@@ -1005,7 +1007,7 @@ class PresShell final : public nsIPresShell,
      *                                  can handle the event, this returns true.
      */
     MOZ_CAN_RUN_SCRIPT
-    bool MaybeHandleEventWithAnotherPresShell(Element* aEventTargetElement,
+    bool MaybeHandleEventWithAnotherPresShell(dom::Element* aEventTargetElement,
                                               WidgetGUIEvent* aGUIEvent,
                                               nsEventStatus* aEventStatus,
                                               nsresult* aRv);
@@ -1102,13 +1104,22 @@ class PresShell final : public nsIPresShell,
     /**
      * PrepareToDispatchEvent() prepares to dispatch aEvent.
      *
-     * @param aEvent            The handling event.
-     * @return                  true if the event is user interaction.  I.e.,
-     *                          enough obvious input to allow to open popup,
-     *                          etc.  false, otherwise.
+     * @param aEvent                    The handling event.
+     * @param aEventStatus              [in/out] The status of aEvent.
+     * @param aIsUserInteraction        [out] Set to true if the event is user
+     *                                  interaction.  I.e., enough obvious input
+     *                                  to allow to open popup, etc.  Otherwise,
+     *                                  set to false.
+     * @param aTouchIsNew               [out] Set to true if the event is an
+     *                                  eTouchMove event and it represents new
+     *                                  touch.  Otherwise, set to false.
+     * @return                          true if the caller can dispatch the
+     *                                  event into the DOM.
      */
     MOZ_CAN_RUN_SCRIPT
-    bool PrepareToDispatchEvent(WidgetEvent* aEvent);
+    bool PrepareToDispatchEvent(WidgetEvent* aEvent,
+                                nsEventStatus* aEventStatus,
+                                bool* aIsUserInteraction, bool* aTouchIsNew);
 
     /**
      * MaybeHandleKeyboardEventBeforeDispatch() may handle aKeyboardEvent
@@ -1119,16 +1130,6 @@ class PresShell final : public nsIPresShell,
     MOZ_CAN_RUN_SCRIPT
     void MaybeHandleKeyboardEventBeforeDispatch(
         WidgetKeyboardEvent* aKeyboardEvent);
-
-    /**
-     * PrepareToDispatchContextMenuEvent() prepares to dispatch aEvent into
-     * the DOM.
-     *
-     * @param aEvent            Must be eContextMenu event.
-     * @return                  true if it can be dispatched into the DOM.
-     *                          Otherwise, false.
-     */
-    bool PrepareToDispatchContextMenuEvent(WidgetEvent* aEvent);
 
     /**
      * This and the next two helper methods are used to target and position the
@@ -1279,7 +1280,7 @@ class PresShell final : public nsIPresShell,
     AutoCurrentEventInfoSetter* mCurrentEventInfoSetter;
     static TimeStamp sLastInputCreated;
     static TimeStamp sLastInputProcessed;
-    static StaticRefPtr<Element> sLastKeyDownEventTargetElement;
+    static StaticRefPtr<dom::Element> sLastKeyDownEventTargetElement;
   };
 
   void SynthesizeMouseMove(bool aFromScroll) override;
@@ -1291,13 +1292,6 @@ class PresShell final : public nsIPresShell,
   // The callback for the mPaintSuppressionTimer timer.
   static void sPaintSuppressionCallback(nsITimer* aTimer, void* aPresShell);
 
-  // Widget notificiations
-  void WindowSizeMoveDone() override;
-  void SysColorChanged() override { mPresContext->SysColorChanged(); }
-  void ThemeChanged() override { mPresContext->ThemeChanged(); }
-  void BackingScaleFactorChanged() override {
-    mPresContext->UIResolutionChangedSync();
-  }
   Document* GetPrimaryContentDocument() override;
 
   void PausePainting() override;

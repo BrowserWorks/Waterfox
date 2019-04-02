@@ -105,8 +105,7 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleFont {
                              // NS_STYLE_FONT_SIZE_NO_KEYWORD when not
                              // keyword-derived
 
-  uint8_t mGenericID;  // generic CSS font family, if any;
-                       // value is a kGenericFont_* constant, see nsFont.h.
+  mozilla::StyleGenericFontFamily mGenericID;
 
   // MathML scriptlevel support
   int8_t mScriptLevel;
@@ -1110,7 +1109,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleList {
  public:
   RefPtr<RawServoQuotes> mQuotes;
   nsRect mImageRegion;  // the rect to use within an image
-  mozilla::StyleMozListReversed mMozListReversed; // true in an <ol reversed> scope
+  mozilla::StyleMozListReversed
+      mMozListReversed;  // true in an <ol reversed> scope
 };
 
 struct nsStyleGridLine {
@@ -1879,8 +1879,8 @@ struct MOZ_NEEDS_MEMMOVABLE_MEMBERS nsStyleDisplay {
   mozilla::StyleOverflowClipBox mOverflowClipBoxInline;
   mozilla::StyleResize mResize;
   mozilla::StyleOrient mOrient;
-  uint8_t mIsolation;           // NS_STYLE_ISOLATION_*
-  uint8_t mTopLayer;            // NS_STYLE_TOP_LAYER_*
+  uint8_t mIsolation;  // NS_STYLE_ISOLATION_*
+  uint8_t mTopLayer;   // NS_STYLE_TOP_LAYER_*
   // Stores a bitfield representation of the properties that are frequently
   // queried. This should match mWillChange. Also tracks if any of the
   // properties in the will-change list require a stacking context.

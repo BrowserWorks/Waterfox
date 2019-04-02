@@ -2,6 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+ChromeUtils.defineModuleGetter(
+    this, "LightweightThemeManager",
+    "resource://gre/modules/LightweightThemeManager.jsm");
+
 /**
  * Enables compacttheme.css when needed.
  */
@@ -21,11 +25,13 @@ var CompactTheme = {
     return this.styleSheet && !this.styleSheet.disabled;
   },
 
+  isCompactTheme(theme) {
+    return theme && (theme.id == "firefox-compact-dark@mozilla.org" ||
+                     theme.id == "firefox-compact-light@mozilla.org");
+  },
+
   get isThemeCurrentlyApplied() {
-    let theme = LightweightThemeManager.currentThemeWithPersistedData;
-    return theme && (
-           theme.id == "firefox-compact-dark@mozilla.org" ||
-           theme.id == "firefox-compact-light@mozilla.org");
+    return this.isCompactTheme(LightweightThemeManager.currentThemeWithFallback);
   },
 
   init() {
@@ -38,10 +44,7 @@ var CompactTheme = {
 
   observe(subject, topic, data) {
     if (topic == "lightweight-theme-styling-update") {
-      let { theme } = JSON.parse(data) || {};
-      if (theme && (
-          theme.id == "firefox-compact-light@mozilla.org" ||
-          theme.id == "firefox-compact-dark@mozilla.org")) {
+      if (this.isCompactTheme(subject.wrappedJSObject.theme)) {
         // We are using the theme ID on this object instead of always referencing
         // LightweightThemeManager.currentTheme in case this is a preview
         this._toggleStyleSheet(true);

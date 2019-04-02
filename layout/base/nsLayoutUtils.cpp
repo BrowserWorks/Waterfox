@@ -20,6 +20,7 @@
 #include "mozilla/Likely.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/ServoStyleSetInlines.h"
 #include "mozilla/StaticPrefs.h"
 #include "mozilla/Unused.h"
@@ -27,6 +28,7 @@
 #include "mozilla/dom/Document.h"
 #include "nsFontMetrics.h"
 #include "nsPresContext.h"
+#include "nsPresContextInlines.h"
 #include "nsIContent.h"
 #include "nsFrameList.h"
 #include "nsGenericHTMLElement.h"
@@ -461,7 +463,7 @@ bool nsLayoutUtils::IsAnimationLoggingEnabled() {
 
 bool nsLayoutUtils::AreRetainedDisplayListsEnabled() {
 #ifdef MOZ_WIDGET_ANDROID
-  return gfxPrefs::LayoutRetainDisplayList();;
+  return gfxPrefs::LayoutRetainDisplayList();
 #else
   if (XRE_IsContentProcess()) {
     return gfxPrefs::LayoutRetainDisplayList();
@@ -595,7 +597,7 @@ static nsIFrame* GetScrollFrameFromContent(nsIContent* aContent) {
   if (aContent->OwnerDoc()->GetRootElement() == aContent) {
     nsIPresShell* presShell = frame ? frame->PresShell() : nullptr;
     if (!presShell) {
-      presShell = aContent->OwnerDoc()->GetShell();
+      presShell = aContent->OwnerDoc()->GetPresShell();
     }
     // We want the scroll frame, the root scroll frame differs from all
     // others in that the primary frame is not the scroll frame.
@@ -4562,8 +4564,8 @@ already_AddRefed<nsFontMetrics> nsLayoutUtils::GetFontMetricsForComputedStyle(
   params.language = styleFont->mLanguage;
   params.explicitLanguage = styleFont->mExplicitLanguage;
   params.orientation = wm.IsVertical() && !wm.IsSideways()
-                           ? gfxFont::eVertical
-                           : gfxFont::eHorizontal;
+                           ? nsFontMetrics::eVertical
+                           : nsFontMetrics::eHorizontal;
   // pass the user font set object into the device context to
   // pass along to CreateFontGroup
   params.userFontSet = aPresContext->GetUserFontSet();
@@ -8829,8 +8831,7 @@ ScrollMetadata nsLayoutUtils::ComputeScrollMetadata(
         // Restore the visual viewport offset to the copy stored on the
         // main thread.
         presShell->ScrollToVisual(presShell->GetVisualViewportOffset(),
-                                  FrameMetrics::eRestore,
-                                  nsIPresShell::ScrollMode::eInstant);
+                                  FrameMetrics::eRestore, ScrollMode::eInstant);
       }
 
       if (const Maybe<nsIPresShell::VisualScrollUpdate>& visualUpdate =
@@ -9356,7 +9357,7 @@ CSSRect nsLayoutUtils::GetBoundingContentRect(
 static already_AddRefed<nsIPresShell> GetPresShell(const nsIContent* aContent) {
   nsCOMPtr<nsIPresShell> result;
   if (Document* doc = aContent->GetComposedDoc()) {
-    result = doc->GetShell();
+    result = doc->GetPresShell();
   }
   return result.forget();
 }
@@ -9595,8 +9596,7 @@ static nsRect ComputeSVGReferenceRect(nsIFrame* aFrame,
         //    system established by the `viewBox` attribute.
         // 2. The dimension of the reference box is set to the width and height
         //    values of the `viewBox` attribute.
-        SVGViewBox* viewBox = svgElement->GetViewBox();
-        const SVGViewBoxRect& value = viewBox->GetAnimValue();
+        const SVGViewBoxRect& value = svgElement->GetViewBox()->GetAnimValue();
         r = nsRect(nsPresContext::CSSPixelsToAppUnits(value.x),
                    nsPresContext::CSSPixelsToAppUnits(value.y),
                    nsPresContext::CSSPixelsToAppUnits(value.width),
@@ -9728,7 +9728,7 @@ already_AddRefed<nsFontMetrics> nsLayoutUtils::GetMetricsFor(
   nsFont font = aStyleFont->mFont;
   font.size = aFontSize;
   gfxFont::Orientation orientation =
-      aIsVertical ? gfxFont::eVertical : gfxFont::eHorizontal;
+      aIsVertical ? nsFontMetrics::eVertical : nsFontMetrics::eHorizontal;
   nsFontMetrics::Params params;
   params.language = aStyleFont->mLanguage;
   params.explicitLanguage = aStyleFont->mExplicitLanguage;
@@ -9741,34 +9741,6 @@ already_AddRefed<nsFontMetrics> nsLayoutUtils::GetMetricsFor(
 }
 
 /* static */
-void nsLayoutUtils::FixupNoneGeneric(nsFont* aFont, uint8_t aGenericFontID,
-                                     const nsFont* aDefaultVariableFont) {
-  bool useDocumentFonts = StaticPrefs::browser_display_use_document_fonts();
-  if (aGenericFontID == kGenericFont_NONE ||
-      (!useDocumentFonts && (aGenericFontID == kGenericFont_cursive ||
-                             aGenericFontID == kGenericFont_fantasy))) {
-    FontFamilyType defaultGeneric =
-        aDefaultVariableFont->fontlist.GetDefaultFontType();
-    MOZ_ASSERT(aDefaultVariableFont->fontlist.IsEmpty() &&
-               (defaultGeneric == eFamily_serif ||
-                defaultGeneric == eFamily_sans_serif));
-    if (defaultGeneric != eFamily_none) {
-      if (useDocumentFonts) {
-        aFont->fontlist.SetDefaultFontType(defaultGeneric);
-      } else {
-        // Either prioritize the first generic in the list,
-        // or (if there isn't one) prepend the default variable font.
-        if (!aFont->fontlist.PrioritizeFirstGeneric()) {
-          aFont->fontlist.PrependGeneric(defaultGeneric);
-        }
-      }
-    }
-  } else {
-    aFont->fontlist.SetDefaultFontType(eFamily_none);
-  }
-}
-
-/* static */
 void nsLayoutUtils::ComputeSystemFont(nsFont* aSystemFont,
                                       LookAndFeel::FontID aFontID,
                                       const nsFont* aDefaultVariableFont) {
@@ -9777,8 +9749,9 @@ void nsLayoutUtils::ComputeSystemFont(nsFont* aSystemFont,
   if (LookAndFeel::GetFont(aFontID, systemFontName, fontStyle)) {
     systemFontName.Trim("\"'");
     aSystemFont->fontlist =
-        FontFamilyList(NS_ConvertUTF16toUTF8(systemFontName), eUnquotedName);
-    aSystemFont->fontlist.SetDefaultFontType(eFamily_none);
+        FontFamilyList(NS_ConvertUTF16toUTF8(systemFontName),
+                       StyleFontFamilyNameSyntax::Identifiers);
+    aSystemFont->fontlist.SetDefaultFontType(StyleGenericFontFamily::None);
     aSystemFont->style = fontStyle.style;
     aSystemFont->systemFont = fontStyle.systemFont;
     aSystemFont->weight = fontStyle.weight;

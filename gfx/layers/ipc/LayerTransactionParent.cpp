@@ -699,7 +699,7 @@ mozilla::ipc::IPCResult LayerTransactionParent::RecvGetAnimationValue(
 }
 
 mozilla::ipc::IPCResult LayerTransactionParent::RecvGetTransform(
-    const LayerHandle& aLayerHandle, MaybeTransform* aTransform) {
+    const LayerHandle& aLayerHandle, Maybe<Matrix4x4>* aTransform) {
   if (mDestroyed || !mLayerManager || mLayerManager->IsDestroyed()) {
     return IPC_FAIL_NO_REASON(this);
   }
@@ -724,10 +724,10 @@ mozilla::ipc::IPCResult LayerTransactionParent::RecvGetTransform(
   Point3D transformOrigin;
   for (const PropertyAnimationGroup& group :
        layer->GetPropertyAnimationGroups()) {
-    if (group.mAnimationData.type() != AnimationData::TTransformData) {
+    if (group.mAnimationData.isNothing()) {
       continue;
     }
-    const TransformData& data = group.mAnimationData.get_TransformData();
+    const TransformData& data = group.mAnimationData.ref();
     scale = data.appUnitsPerDevPixel();
     scaledOrigin = Point3D(
         NS_round(NSAppUnitsToFloatPixels(data.origin().x, scale)),
@@ -753,7 +753,7 @@ mozilla::ipc::IPCResult LayerTransactionParent::RecvGetTransform(
     transform *= layer->GetParent()->AsHostLayer()->GetShadowBaseTransform();
   }
 
-  *aTransform = transform;
+  *aTransform = Some(transform);
 
   return IPC_OK();
 }
@@ -807,7 +807,7 @@ mozilla::ipc::IPCResult LayerTransactionParent::RecvSetConfirmedTargetAPZC(
       NS_ERROR(
           "Unexpected render root in RecvSetConfirmedTargetAPZC; dropping "
           "message...");
-      return IPC_FAIL(this, "Bad render root"); 
+      return IPC_FAIL(this, "Bad render root");
     }
     if (aTargets[i].mScrollableLayerGuid.mLayersId != GetId()) {
       NS_ERROR(

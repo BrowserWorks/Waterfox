@@ -49,6 +49,7 @@
 #include "js/HashTable.h"
 #include "js/LocaleSensitive.h"
 #include "js/PropertySpec.h"
+#include "js/RegExpFlags.h"  // JS::RegExpFlag, JS::RegExpFlags
 #include "js/SourceText.h"
 #include "js/StableStringChars.h"
 #include "js/StructuredClone.h"
@@ -97,6 +98,8 @@ using mozilla::Maybe;
 
 using JS::AutoStableStringChars;
 using JS::CompileOptions;
+using JS::RegExpFlag;
+using JS::RegExpFlags;
 using JS::SourceOwnership;
 using JS::SourceText;
 
@@ -2200,7 +2203,7 @@ static bool GetWaitForAllPromise(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
   RootedNativeObject list(cx, &args[0].toObject().as<NativeObject>());
-  AutoObjectVector promises(cx);
+  RootedObjectVector promises(cx);
   uint32_t count = list->getDenseInitializedLength();
   if (!promises.resize(count)) {
     return false;
@@ -2944,7 +2947,10 @@ class CloneBufferObject : public NativeObject {
       return false;
     }
     auto iter = data->Start();
-    data->ReadBytes(iter, buffer.get(), size);
+    if (!data->ReadBytes(iter, buffer.get(), size)) {
+      ReportOutOfMemory(cx);
+      return false;
+    }
     JSString* str = JS_NewStringCopyN(cx, buffer.get(), size);
     if (!str) {
       return false;
@@ -2976,7 +2982,10 @@ class CloneBufferObject : public NativeObject {
       return false;
     }
     auto iter = data->Start();
-    data->ReadBytes(iter, buffer.get(), size);
+    if (!data->ReadBytes(iter, buffer.get(), size)) {
+      ReportOutOfMemory(cx);
+      return false;
+    }
 
     auto* rawBuffer = buffer.release();
     JSObject* arrayBuffer = JS::NewArrayBufferWithContents(cx, size, rawBuffer);
@@ -4846,7 +4855,7 @@ static bool ParseRegExp(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  RegExpFlag flags = RegExpFlag(0);
+  RegExpFlags flags = RegExpFlag::NoFlags;
   if (!args.get(1).isUndefined()) {
     if (!args.get(1).isString()) {
       ReportUsageErrorASCII(cx, callee,
@@ -4881,9 +4890,7 @@ static bool ParseRegExp(JSContext* cx, unsigned argc, Value* vp) {
   LifoAllocScope allocScope(&cx->tempLifoAlloc());
   irregexp::RegExpCompileData data;
   if (!irregexp::ParsePattern(dummyTokenStream, allocScope.alloc(), pattern,
-                              flags & MultilineFlag, match_only,
-                              flags & UnicodeFlag, flags & IgnoreCaseFlag,
-                              flags & GlobalFlag, flags & StickyFlag, &data)) {
+                              match_only, flags, &data)) {
     return false;
   }
 

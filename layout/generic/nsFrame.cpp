@@ -21,6 +21,7 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/gfx/PathHelpers.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/StaticPrefs.h"
 
@@ -45,8 +46,8 @@
 #include "nsViewManager.h"
 #include "nsIScrollableFrame.h"
 #include "nsPresContext.h"
+#include "nsPresContextInlines.h"
 #include "nsStyleConsts.h"
-#include "nsIPresShell.h"
 #include "mozilla/Logging.h"
 #include "nsLayoutUtils.h"
 #include "LayoutLogging.h"
@@ -4700,9 +4701,11 @@ NS_IMETHODIMP nsFrame::HandleRelease(nsPresContext* aPresContext,
   if (!frameSelection && captureContent) {
     Document* doc = captureContent->GetUncomposedDoc();
     if (doc) {
-      nsIPresShell* capturingShell = doc->GetShell();
-      if (capturingShell && capturingShell != PresContext()->GetPresShell()) {
-        frameSelection = capturingShell->FrameSelection();
+      mozilla::PresShell* capturingPresShell = doc->GetPresShell();
+      if (capturingPresShell &&
+          capturingPresShell !=
+              static_cast<mozilla::PresShell*>(PresContext()->GetPresShell())) {
+        frameSelection = capturingPresShell->FrameSelection();
       }
     }
   }
@@ -10557,8 +10560,8 @@ void nsIFrame::SetParent(nsContainerFrame* aParent) {
 void nsIFrame::CreateOwnLayerIfNeeded(nsDisplayListBuilder* aBuilder,
                                       nsDisplayList* aList,
                                       bool* aCreatedContainerItem) {
-  wr::RenderRoot renderRoot = gfxUtils::GetRenderRootForFrame(this)
-      .valueOr(wr::RenderRoot::Default);
+  wr::RenderRoot renderRoot =
+      gfxUtils::GetRenderRootForFrame(this).valueOr(wr::RenderRoot::Default);
 
   if (renderRoot != wr::RenderRoot::Default) {
     aList->AppendToTop(MakeDisplayItem<nsDisplayRenderRoot>(

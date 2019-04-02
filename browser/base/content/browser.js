@@ -31,7 +31,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   FormValidationHandler: "resource:///modules/FormValidationHandler.jsm",
   HomePage: "resource:///modules/HomePage.jsm",
   LightweightThemeConsumer: "resource://gre/modules/LightweightThemeConsumer.jsm",
-  LightweightThemeManager: "resource://gre/modules/LightweightThemeManager.jsm",
   Log: "resource://gre/modules/Log.jsm",
   LoginManagerParent: "resource://gre/modules/LoginManagerParent.jsm",
   MigrationUtils: "resource:///modules/MigrationUtils.jsm",
@@ -102,8 +101,7 @@ XPCOMUtils.defineLazyScriptGetter(this, "gViewSourceUtils",
                                   "chrome://global/content/viewSourceUtils.js");
 XPCOMUtils.defineLazyScriptGetter(this, "gTabsPanel",
                                   "chrome://browser/content/browser-allTabsMenu.js");
-XPCOMUtils.defineLazyScriptGetter(this, ["LightWeightThemeWebInstaller",
-                                         "gExtensionsNotifications",
+XPCOMUtils.defineLazyScriptGetter(this, ["gExtensionsNotifications",
                                          "gXPInstallObserver"],
                                   "chrome://browser/content/browser-addons.js");
 XPCOMUtils.defineLazyScriptGetter(this, "ctrlTab",
@@ -141,8 +139,8 @@ XPCOMUtils.defineLazyScriptGetter(this, "gEditItemOverlay",
 XPCOMUtils.defineLazyScriptGetter(this, "SearchOneOffs",
                                   "chrome://browser/content/search/search-one-offs.js");
 if (AppConstants.NIGHTLY_BUILD) {
-  XPCOMUtils.defineLazyScriptGetter(this, "gWebRender",
-                                    "chrome://browser/content/browser-webrender.js");
+  XPCOMUtils.defineLazyScriptGetter(this, "gGfxUtils",
+                                    "chrome://browser/content/browser-graphics-utils.js");
 }
 
 XPCOMUtils.defineLazyScriptGetter(this, "pktUI", "chrome://pocket/content/main.js");
@@ -1654,8 +1652,6 @@ var gBrowserInit = {
       placesContext.addEventListener("popuphiding", updateEditUIVisibility);
     }
 
-    LightWeightThemeWebInstaller.init();
-
     FullScreen.init();
     PointerLock.init();
 
@@ -1832,7 +1828,7 @@ var gBrowserInit = {
       } else {
         // Note: loadOneOrMoreURIs *must not* be called if window.arguments.length >= 3.
         // Such callers expect that window.arguments[0] is handled as a single URI.
-        loadOneOrMoreURIs(uriToLoad, Services.scriptSecurityManager.getSystemPrincipal());
+        loadOneOrMoreURIs(uriToLoad, Services.scriptSecurityManager.getSystemPrincipal(), null);
       }
     });
   },
@@ -2308,7 +2304,7 @@ function BrowserHome(aEvent) {
     if (isInitialPage(homePage)) {
       gBrowser.selectedBrowser.initialPageLoadedFromUserAction = homePage;
     }
-    loadOneOrMoreURIs(homePage, Services.scriptSecurityManager.getSystemPrincipal());
+    loadOneOrMoreURIs(homePage, Services.scriptSecurityManager.getSystemPrincipal(), null);
     if (isBlankPageURL(homePage)) {
       focusAndSelectUrlBar();
     } else {
@@ -2328,6 +2324,7 @@ function BrowserHome(aEvent) {
     gBrowser.loadTabs(urls, {
       inBackground: loadInBackground,
       triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+      csp: null,
     });
     break;
   case "window":
@@ -2345,7 +2342,7 @@ function BrowserHome(aEvent) {
   }
 }
 
-function loadOneOrMoreURIs(aURIString, aTriggeringPrincipal) {
+function loadOneOrMoreURIs(aURIString, aTriggeringPrincipal, aCsp) {
   // we're not a browser window, pass the URI string to a new browser window
   if (window.location.href != AppConstants.BROWSER_CHROME_URL) {
     window.openDialog(AppConstants.BROWSER_CHROME_URL, "_blank", "all,dialog=no", aURIString);
@@ -2359,6 +2356,7 @@ function loadOneOrMoreURIs(aURIString, aTriggeringPrincipal) {
       inBackground: false,
       replace: true,
       triggeringPrincipal: aTriggeringPrincipal,
+      csp: aCsp,
     });
   } catch (e) {
   }
@@ -2555,6 +2553,19 @@ function loadURI(uri, referrerInfo, postData, allowThirdPartyFixup,
                  triggeringPrincipal, allowInheritPrincipal = false, csp = null) {
   if (!triggeringPrincipal) {
     throw new Error("Must load with a triggering Principal");
+  }
+
+  // After Bug 965637 we can remove that Error because the CSP will not
+  // hang off the Principal anymore. Please note that the SystemPrincipal
+  // can not hold a CSP!
+  if (AppConstants.EARLY_BETA_OR_EARLIER) {
+    // Please note that the backend will still query the CSP from the Principal in
+    // release versions of Firefox. We use this error just to annotate all the
+    // callsites to explicitly pass a CSP before we can remove the CSP from
+    // the Principal within Bug 965637.
+    if (!triggeringPrincipal.isSystemPrincipal && triggeringPrincipal.csp && !csp) {
+      throw new Error("If Principal has CSP then we need an explicit CSP");
+    }
   }
 
   try {
@@ -3169,52 +3180,28 @@ var BrowserOnClick = {
         break;
       case "exceptionDialogButton":
         securityInfo = getSecurityInfo(securityInfoAsString);
-        let params = { exceptionAdded: false,
-                       securityInfo };
-        if (Services.prefs.getBoolPref("browser.security.newcerterrorpage.enabled", false)) {
-          let overrideService = Cc["@mozilla.org/security/certoverride;1"]
-                                  .getService(Ci.nsICertOverrideService);
-          let flags = 0;
-          if (securityInfo.isUntrusted) {
-            flags |= overrideService.ERROR_UNTRUSTED;
-          }
-          if (securityInfo.isDomainMismatch) {
-            flags |= overrideService.ERROR_MISMATCH;
-          }
-          if (securityInfo.isNotValidAtThisTime) {
-            flags |= overrideService.ERROR_TIME;
-          }
-          let uri = Services.uriFixup.createFixupURI(location, 0);
-          let permanentOverride =
-            Services.prefs.getBoolPref("security.certerrors.permanentOverride");
-          cert = securityInfo.serverCert;
-          overrideService.rememberValidityOverride(
-            uri.asciiHost, uri.port,
-            cert,
-            flags,
-            !permanentOverride);
-          browser.reload();
-          return;
+        let overrideService = Cc["@mozilla.org/security/certoverride;1"]
+                                .getService(Ci.nsICertOverrideService);
+        let flags = 0;
+        if (securityInfo.isUntrusted) {
+          flags |= overrideService.ERROR_UNTRUSTED;
         }
-
-        try {
-          switch (Services.prefs.getIntPref("browser.ssl_override_behavior")) {
-            case 2 : // Pre-fetch & pre-populate
-              params.prefetchCert = true;
-            case 1 : // Pre-populate
-              params.location = location;
-          }
-        } catch (e) {
-          Cu.reportError("Couldn't get ssl_override pref: " + e);
+        if (securityInfo.isDomainMismatch) {
+          flags |= overrideService.ERROR_MISMATCH;
         }
-
-        window.openDialog("chrome://pippki/content/exceptionDialog.xul",
-                          "", "chrome,centerscreen,modal", params);
-
-        // If the user added the exception cert, attempt to reload the page
-        if (params.exceptionAdded) {
-          browser.reload();
+        if (securityInfo.isNotValidAtThisTime) {
+          flags |= overrideService.ERROR_TIME;
         }
+        let uri = Services.uriFixup.createFixupURI(location, 0);
+        let permanentOverride =
+          Services.prefs.getBoolPref("security.certerrors.permanentOverride");
+        cert = securityInfo.serverCert;
+        overrideService.rememberValidityOverride(
+          uri.asciiHost, uri.port,
+          cert,
+          flags,
+          !permanentOverride);
+        browser.reload();
         break;
 
       case "returnButton":
@@ -3716,6 +3703,10 @@ var browserDragAndDrop = {
     return Services.droppedLinkHandler.getTriggeringPrincipal(aEvent);
   },
 
+  getCSP(aEvent) {
+    return Services.droppedLinkHandler.getCSP(aEvent);
+  },
+
   validateURIsForDrop(aEvent, aURIsCount, aURIs) {
     return Services.droppedLinkHandler.validateURIsForDrop(aEvent,
                                                            aURIsCount,
@@ -3793,6 +3784,7 @@ var newTabButtonObserver = {
     let shiftKey = aEvent.shiftKey;
     let links = browserDragAndDrop.dropLinks(aEvent);
     let triggeringPrincipal = browserDragAndDrop.getTriggeringPrincipal(aEvent);
+    let csp = browserDragAndDrop.getCSP(aEvent);
 
     if (links.length >= Services.prefs.getIntPref("browser.tabs.maxOpenBeforeWarn")) {
       // Sync dialog cannot be used inside drop event handler.
@@ -3814,6 +3806,7 @@ var newTabButtonObserver = {
           postData: data.postData,
           allowThirdPartyFixup: true,
           triggeringPrincipal,
+          csp,
         });
       }
     }
@@ -3828,6 +3821,7 @@ var newWindowButtonObserver = {
   async onDrop(aEvent) {
     let links = browserDragAndDrop.dropLinks(aEvent);
     let triggeringPrincipal = browserDragAndDrop.getTriggeringPrincipal(aEvent);
+    let csp = browserDragAndDrop.getCSP(aEvent);
 
     if (links.length >= Services.prefs.getIntPref("browser.tabs.maxOpenBeforeWarn")) {
       // Sync dialog cannot be used inside drop event handler.
@@ -3849,6 +3843,7 @@ var newWindowButtonObserver = {
           postData: data.postData,
           allowThirdPartyFixup: true,
           triggeringPrincipal,
+          csp,
         });
       }
     }
@@ -4266,7 +4261,7 @@ const BrowserSearch = {
    * @return engine The search engine used to perform a search, or null if no
    *                search was performed.
    */
-  _loadSearch(searchText, useNewTab, purpose, triggeringPrincipal) {
+  _loadSearch(searchText, useNewTab, purpose, triggeringPrincipal, csp) {
     if (!triggeringPrincipal) {
       throw new Error("Required argument triggeringPrincipal missing within _loadSearch");
     }
@@ -4289,7 +4284,8 @@ const BrowserSearch = {
                { postData: submission.postData,
                  inBackground,
                  relatedToCurrent: true,
-                 triggeringPrincipal });
+                 triggeringPrincipal,
+                 csp });
 
     return engine;
   },
@@ -4300,8 +4296,8 @@ const BrowserSearch = {
    * This should only be called from the context menu. See
    * BrowserSearch.loadSearch for the preferred API.
    */
-  loadSearchFromContext(terms, triggeringPrincipal) {
-    let engine = BrowserSearch._loadSearch(terms, true, "contextmenu", triggeringPrincipal);
+  loadSearchFromContext(terms, triggeringPrincipal, csp) {
+    let engine = BrowserSearch._loadSearch(terms, true, "contextmenu", triggeringPrincipal, csp);
     if (engine) {
       BrowserSearch.recordSearchInTelemetry(engine, "contextmenu");
     }
@@ -4823,7 +4819,7 @@ var XULBrowserWindow = {
                         encodeURIComponent);
 
       if (UrlbarPrefs.get("trimURLs")) {
-        url = trimURL(url);
+        url = BrowserUtils.trimURL(url);
       }
     }
 
@@ -6427,6 +6423,7 @@ function middleMousePaste(event) {
                  { ignoreButton: true,
                    allowInheritPrincipal: data.mayInheritPrincipal,
                    triggeringPrincipal: gBrowser.selectedBrowser.contentPrincipal,
+                   csp: gBrowser.selectedBrowser.csp,
                  });
     }
   });
@@ -8372,6 +8369,8 @@ TabModalPromptBox.prototype = {
     if (prompts.length) {
       let prompt = prompts[prompts.length - 1];
       prompt.element.hidden = false;
+      // Because we were hidden before, this won't have been possible, so do it now:
+      prompt.ensureXBLBindingAttached();
       prompt.Dialog.setDefaultFocus();
     } else {
       browser.removeAttribute("tabmodalPromptShowing");

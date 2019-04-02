@@ -16,6 +16,7 @@
 #include "nsLayoutCID.h"
 #include "mozilla/dom/URL.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/ServoBindings.h"
 #include "mozilla/ServoStyleRuleMap.h"
 #include "mozilla/StyleSheet.h"
@@ -94,9 +95,9 @@ nsresult nsXBLPrototypeResources::FlushSkinSheets() {
   }
 
   // There may be no shell during unlink.
-  if (auto* shell = doc->GetShell()) {
-    MOZ_ASSERT(shell->GetPresContext());
-    ComputeServoStyles(*shell->StyleSet());
+  if (PresShell* presShell = doc->GetPresShell()) {
+    MOZ_ASSERT(presShell->GetPresContext());
+    ComputeServoStyles(*presShell->StyleSet());
   }
 
   return NS_OK;
@@ -120,7 +121,7 @@ void nsXBLPrototypeResources::ClearLoader() { mLoader = nullptr; }
 
 void nsXBLPrototypeResources::SyncServoStyles() {
   mStyleRuleMap.reset(nullptr);
-  mServoStyles.reset(Servo_AuthorStyles_Create());
+  mServoStyles = Servo_AuthorStyles_Create().Consume();
   for (auto& sheet : mStyleSheetList) {
     Servo_AuthorStyles_AppendStyleSheet(mServoStyles.get(), sheet);
   }

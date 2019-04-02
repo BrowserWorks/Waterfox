@@ -355,7 +355,6 @@ nsresult gfxPlatformFontList::InitFontList() {
   }
   mFaceNameListsInitialized = false;
   ClearLangGroupPrefFonts();
-  mReplacementCharFallbackFamily = nullptr;
   CancelLoader();
 
   // initialize ranges of characters for which system-wide font search should be
@@ -568,8 +567,12 @@ gfxFontEntry* gfxPlatformFontList::SystemFindFontForChar(
   // encoding errors: just use cached family from last time U+FFFD was seen.
   // This helps speed up pages with lots of encoding errors, binary-as-text,
   // etc.
-  if (aCh == 0xFFFD && mReplacementCharFallbackFamily) {
-    fontEntry = mReplacementCharFallbackFamily->FindFontForStyle(*aStyle);
+  if (aCh == 0xFFFD) {
+    if (!mReplacementCharFallbackFamily.mIsShared &&
+        mReplacementCharFallbackFamily.mUnshared) {
+      fontEntry =
+          mReplacementCharFallbackFamily.mUnshared->FindFontForStyle(*aStyle);
+    }
 
     // this should never fail, as we must have found U+FFFD in order to set
     // mReplacementCharFallbackFamily at all, but better play it safe
@@ -582,7 +585,7 @@ gfxFontEntry* gfxPlatformFontList::SystemFindFontForChar(
 
   // search commonly available fonts
   bool common = true;
-  gfxFontFamily* fallbackFamily = nullptr;
+  FontFamily fallbackFamily;
   fontEntry =
       CommonFontFallback(aCh, aNextCh, aRunScript, aStyle, &fallbackFamily);
 
@@ -613,7 +616,7 @@ gfxFontEntry* gfxPlatformFontList::SystemFindFontForChar(
   // no match? add to set of non-matching codepoints
   if (!fontEntry) {
     mCodepointsWithNoFonts.set(aCh);
-  } else if (aCh == 0xFFFD && fontEntry && fallbackFamily) {
+  } else if (aCh == 0xFFFD && fontEntry) {
     mReplacementCharFallbackFamily = fallbackFamily;
   }
 
@@ -638,7 +641,7 @@ gfxFontEntry* gfxPlatformFontList::SystemFindFontForChar(
 
 gfxFontEntry* gfxPlatformFontList::CommonFontFallback(
     uint32_t aCh, uint32_t aNextCh, Script aRunScript,
-    const gfxFontStyle* aMatchStyle, gfxFontFamily** aMatchedFamily) {
+    const gfxFontStyle* aMatchStyle, FontFamily* aMatchedFamily) {
   AutoTArray<const char*, NUM_FALLBACK_FONTS> defaultFallbacks;
   gfxPlatform::GetPlatform()->GetCommonFallbackFonts(aCh, aNextCh, aRunScript,
                                                      defaultFallbacks);
@@ -649,7 +652,7 @@ gfxFontEntry* gfxPlatformFontList::CommonFontFallback(
     if (fallback) {
       fallback->FindFontForChar(&data);
       if (data.mBestMatch) {
-        *aMatchedFamily = fallback;
+        *aMatchedFamily = FontFamily(fallback);
         return data.mBestMatch;
       }
     }
@@ -659,7 +662,7 @@ gfxFontEntry* gfxPlatformFontList::CommonFontFallback(
 
 gfxFontEntry* gfxPlatformFontList::GlobalFontFallback(
     const uint32_t aCh, Script aRunScript, const gfxFontStyle* aMatchStyle,
-    uint32_t& aCmapCount, gfxFontFamily** aMatchedFamily) {
+    uint32_t& aCmapCount, FontFamily* aMatchedFamily) {
   bool useCmaps = IsFontFamilyWhitelistActive() ||
                   gfxPlatform::GetPlatform()->UseCmapsDuringSystemFallback();
   if (!useCmaps) {
@@ -686,7 +689,7 @@ gfxFontEntry* gfxPlatformFontList::GlobalFontFallback(
   }
 
   aCmapCount = data.mCmapsTested;
-  *aMatchedFamily = data.mMatchedFamily;
+  *aMatchedFamily = FontFamily(data.mMatchedFamily);
 
   return data.mBestMatch;
 }
@@ -888,8 +891,8 @@ void gfxPlatformFontList::RemoveCmap(const gfxCharacterMap* aCharMap) {
 }
 
 void gfxPlatformFontList::ResolveGenericFontNames(
-    FontFamilyType aGenericType, eFontPrefLang aPrefLang,
-    nsTArray<RefPtr<gfxFontFamily>>* aGenericFamilies) {
+    StyleGenericFontFamily aGenericType, eFontPrefLang aPrefLang,
+    PrefFontList* aGenericFamilies) {
   const char* langGroupStr = GetPrefLangName(aPrefLang);
   const char* generic = GetGenericName(aGenericType);
 
@@ -924,7 +927,7 @@ void gfxPlatformFontList::ResolveGenericFontNames(
 }
 
 void gfxPlatformFontList::ResolveEmojiFontNames(
-    nsTArray<RefPtr<gfxFontFamily>>* aGenericFamilies) {
+    PrefFontList* aGenericFamilies) {
   // emoji preference has no lang name
   AutoTArray<nsCString, 4> genericFamilies;
 
@@ -937,7 +940,7 @@ void gfxPlatformFontList::ResolveEmojiFontNames(
 
 void gfxPlatformFontList::GetFontFamiliesFromGenericFamilies(
     nsTArray<nsCString>& aGenericNameFamilies, nsAtom* aLangGroup,
-    nsTArray<RefPtr<gfxFontFamily>>* aGenericFamilies) {
+    PrefFontList* aGenericFamilies) {
   // lookup and add platform fonts uniquely
   for (const nsCString& genericFamily : aGenericNameFamilies) {
     gfxFontStyle style;
@@ -953,14 +956,9 @@ void gfxPlatformFontList::GetFontFamiliesFromGenericFamilies(
   }
 }
 
-nsTArray<RefPtr<gfxFontFamily>>* gfxPlatformFontList::GetPrefFontsLangGroup(
-    mozilla::FontFamilyType aGenericType, eFontPrefLang aPrefLang) {
-  // treat -moz-fixed as monospace
-  if (aGenericType == eFamily_moz_fixed) {
-    aGenericType = eFamily_monospace;
-  }
-
-  if (aGenericType == eFamily_moz_emoji) {
+gfxPlatformFontList::PrefFontList* gfxPlatformFontList::GetPrefFontsLangGroup(
+    StyleGenericFontFamily aGenericType, eFontPrefLang aPrefLang) {
+  if (aGenericType == StyleGenericFontFamily::MozEmoji) {
     // Emoji font has no lang
     PrefFontList* prefFonts = mEmojiPrefFont.get();
     if (MOZ_UNLIKELY(!prefFonts)) {
@@ -971,17 +969,18 @@ nsTArray<RefPtr<gfxFontFamily>>* gfxPlatformFontList::GetPrefFontsLangGroup(
     return prefFonts;
   }
 
-  PrefFontList* prefFonts = mLangGroupPrefFonts[aPrefLang][aGenericType].get();
+  auto index = static_cast<size_t>(aGenericType);
+  PrefFontList* prefFonts = mLangGroupPrefFonts[aPrefLang][index].get();
   if (MOZ_UNLIKELY(!prefFonts)) {
     prefFonts = new PrefFontList;
     ResolveGenericFontNames(aGenericType, aPrefLang, prefFonts);
-    mLangGroupPrefFonts[aPrefLang][aGenericType].reset(prefFonts);
+    mLangGroupPrefFonts[aPrefLang][index].reset(prefFonts);
   }
   return prefFonts;
 }
 
 void gfxPlatformFontList::AddGenericFonts(
-    mozilla::FontFamilyType aGenericType, nsAtom* aLanguage,
+    mozilla::StyleGenericFontFamily aGenericType, nsAtom* aLanguage,
     nsTArray<FamilyAndGeneric>& aFamilyList) {
   // map lang ==> langGroup
   nsAtom* langGroup = GetLangGroup(aLanguage);
@@ -990,13 +989,12 @@ void gfxPlatformFontList::AddGenericFonts(
   eFontPrefLang prefLang = GetFontPrefLangFor(langGroup);
 
   // lookup pref fonts
-  nsTArray<RefPtr<gfxFontFamily>>* prefFonts =
-      GetPrefFontsLangGroup(aGenericType, prefLang);
+  PrefFontList* prefFonts = GetPrefFontsLangGroup(aGenericType, prefLang);
 
   if (!prefFonts->IsEmpty()) {
     aFamilyList.SetCapacity(aFamilyList.Length() + prefFonts->Length());
     for (auto& f : *prefFonts) {
-      aFamilyList.AppendElement(FamilyAndGeneric(f.get(), aGenericType));
+      aFamilyList.AppendElement(FamilyAndGeneric(f, aGenericType));
     }
   }
 }
@@ -1280,10 +1278,10 @@ void gfxPlatformFontList::AppendPrefLang(eFontPrefLang aPrefLangs[],
   }
 }
 
-mozilla::FontFamilyType gfxPlatformFontList::GetDefaultGeneric(
+mozilla::StyleGenericFontFamily gfxPlatformFontList::GetDefaultGeneric(
     eFontPrefLang aLang) {
   if (aLang == eFontPrefLang_Emoji) {
-    return eFamily_moz_emoji;
+    return StyleGenericFontFamily::MozEmoji;
   }
 
   // initialize lang group pref font defaults (i.e. serif/sans-serif)
@@ -1295,9 +1293,9 @@ mozilla::FontFamilyType gfxPlatformFontList::GetDefaultGeneric(
       nsAutoCString serifOrSans;
       Preferences::GetCString(prefDefaultFontType.get(), serifOrSans);
       if (serifOrSans.EqualsLiteral("sans-serif")) {
-        mDefaultGenericsLangGroup[i] = eFamily_sans_serif;
+        mDefaultGenericsLangGroup[i] = StyleGenericFontFamily::SansSerif;
       } else {
-        mDefaultGenericsLangGroup[i] = eFamily_serif;
+        mDefaultGenericsLangGroup[i] = StyleGenericFontFamily::Serif;
       }
     }
   }
@@ -1305,19 +1303,19 @@ mozilla::FontFamilyType gfxPlatformFontList::GetDefaultGeneric(
   if (uint32_t(aLang) < ArrayLength(gPrefLangNames)) {
     return mDefaultGenericsLangGroup[uint32_t(aLang)];
   }
-  return eFamily_serif;
+  return StyleGenericFontFamily::Serif;
 }
 
-gfxFontFamily* gfxPlatformFontList::GetDefaultFont(const gfxFontStyle* aStyle) {
-  gfxFontFamily* family = GetDefaultFontForPlatform(aStyle);
-  if (family) {
+FontFamily gfxPlatformFontList::GetDefaultFont(const gfxFontStyle* aStyle) {
+  FontFamily family = GetDefaultFontForPlatform(aStyle);
+  if (!family.mIsShared && family.mUnshared) {
     return family;
   }
   // Something has gone wrong and we were unable to retrieve a default font
   // from the platform. (Likely the whitelist has blocked all potential
   // default fonts.) As a last resort, we return the first font listed in
   // mFontFamilies.
-  return mFontFamilies.Iter().Data();
+  return FontFamily(mFontFamilies.Iter().Data());
 }
 
 void gfxPlatformFontList::GetFontFamilyNames(
@@ -1341,7 +1339,7 @@ nsAtom* gfxPlatformFontList::GetLangGroup(nsAtom* aLanguage) {
 }
 
 /* static */ const char* gfxPlatformFontList::GetGenericName(
-    FontFamilyType aGenericType) {
+    StyleGenericFontFamily aGenericType) {
   static const char kGeneric_serif[] = "serif";
   static const char kGeneric_sans_serif[] = "sans-serif";
   static const char kGeneric_monospace[] = "monospace";
@@ -1349,32 +1347,22 @@ nsAtom* gfxPlatformFontList::GetLangGroup(nsAtom* aLanguage) {
   static const char kGeneric_fantasy[] = "fantasy";
 
   // type should be standard generic type at this point
-  NS_ASSERTION(aGenericType >= eFamily_serif && aGenericType <= eFamily_fantasy,
-               "standard generic font family type required");
-
   // map generic type to string
-  const char* generic = nullptr;
   switch (aGenericType) {
-    case eFamily_serif:
-      generic = kGeneric_serif;
-      break;
-    case eFamily_sans_serif:
-      generic = kGeneric_sans_serif;
-      break;
-    case eFamily_monospace:
-      generic = kGeneric_monospace;
-      break;
-    case eFamily_cursive:
-      generic = kGeneric_cursive;
-      break;
-    case eFamily_fantasy:
-      generic = kGeneric_fantasy;
-      break;
+    case StyleGenericFontFamily::Serif:
+      return kGeneric_serif;
+    case StyleGenericFontFamily::SansSerif:
+      return kGeneric_sans_serif;
+    case StyleGenericFontFamily::Monospace:
+      return kGeneric_monospace;
+    case StyleGenericFontFamily::Cursive:
+      return kGeneric_cursive;
+    case StyleGenericFontFamily::Fantasy:
+      return kGeneric_fantasy;
     default:
-      break;
+      MOZ_ASSERT_UNREACHABLE("Unknown generic");
+      return nullptr;
   }
-
-  return generic;
 }
 
 void gfxPlatformFontList::InitLoader() {
@@ -1502,9 +1490,8 @@ void gfxPlatformFontList::ClearLangGroupPrefFonts() {
   for (uint32_t i = eFontPrefLang_First;
        i < eFontPrefLang_First + eFontPrefLang_Count; i++) {
     auto& prefFontsLangGroup = mLangGroupPrefFonts[i];
-    for (uint32_t j = eFamily_generic_first;
-         j < eFamily_generic_first + eFamily_generic_count; j++) {
-      prefFontsLangGroup[j] = nullptr;
+    for (auto& pref : prefFontsLangGroup) {
+      pref = nullptr;
     }
   }
   mCJKPrefLangs.Clear();
@@ -1562,9 +1549,7 @@ void gfxPlatformFontList::AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
   for (uint32_t i = eFontPrefLang_First;
        i < eFontPrefLang_First + eFontPrefLang_Count; i++) {
     auto& prefFontsLangGroup = mLangGroupPrefFonts[i];
-    for (uint32_t j = eFamily_generic_first;
-         j < eFamily_generic_first + eFamily_generic_count; j++) {
-      PrefFontList* pf = prefFontsLangGroup[j].get();
+    for (const UniquePtr<PrefFontList>& pf : prefFontsLangGroup) {
       if (pf) {
         aSizes->mFontListSize += pf->ShallowSizeOfExcludingThis(aMallocSizeOf);
       }

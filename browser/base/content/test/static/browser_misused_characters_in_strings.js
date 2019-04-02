@@ -10,10 +10,6 @@
  * removed from the whitelist, thus ensuring there are no stale entries. */
 let gWhitelist = [{
     file: "netError.dtd",
-    key: "certerror.introPara",
-    type: "single-quote",
-  }, {
-    file: "netError.dtd",
     key: "certerror.introPara2",
     type: "single-quote",
   }, {
@@ -59,58 +55,6 @@ let gWhitelist = [{
   }, {
     file: "netError.dtd",
     key: "certerror.mitm.sts.whatCanYouDoAboutIt3",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.palm.advisory.desc2",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.malwarePage.errorDesc.override",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.malwarePage.errorDesc.noOverride",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.malwarePage.learnMore",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.unwantedPage.errorDesc.override",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.unwantedPage.errorDesc.noOverride",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.unwantedPage.learnMore",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.phishingPage.errorDesc.override",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.phishingPage.errorDesc.noOverride",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.phishingPage.learnMore",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.harmfulPage.errorDesc.override",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.harmfulPage.errorDesc.noOverride",
-    type: "single-quote",
-  }, {
-    file: "phishing-afterload-warning-message.dtd",
-    key: "safeb.blocked.harmfulPage.learnMore",
     type: "single-quote",
   }, {
     file: "mathfont.properties",

@@ -14,6 +14,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/BinarySearch.h"
 #include "mozilla/CheckedInt.h"
+#include "mozilla/DbgMacro.h"
 #include "mozilla/fallible.h"
 #include "mozilla/FunctionTypeTraits.h"
 #include "mozilla/MathAlgorithms.h"
@@ -36,11 +37,11 @@
 #include <functional>
 #include <initializer_list>
 #include <new>
+#include <ostream>
 
 namespace JS {
 template <class T>
 class Heap;
-class ObjectPtr;
 } /* namespace JS */
 
 class nsRegion;
@@ -699,7 +700,6 @@ DECLARE_USE_COPY_CONSTRUCTORS(
 DECLARE_USE_COPY_CONSTRUCTORS(JSStructuredCloneData)
 DECLARE_USE_COPY_CONSTRUCTORS(mozilla::dom::MessagePortMessage)
 DECLARE_USE_COPY_CONSTRUCTORS(mozilla::SourceBufferTask)
-DECLARE_USE_COPY_CONSTRUCTORS(JS::ObjectPtr)
 
 //
 // Base class for nsTArray_Impl that is templated on element type and derived
@@ -2648,6 +2648,14 @@ Span<const ElementType> MakeSpan(
 }
 
 }  // namespace mozilla
+
+// MOZ_DBG support
+
+template <class E, class Alloc>
+std::ostream& operator<<(std::ostream& aOut,
+                         const nsTArray_Impl<E, Alloc>& aTArray) {
+  return aOut << mozilla::MakeSpan(aTArray);
+}
 
 // Assert that AutoTArray doesn't have any extra padding inside.
 //

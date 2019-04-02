@@ -2372,13 +2372,15 @@ void EditorBase::CloneAttributesWithTransaction(Element& aDestElement,
     nsAutoString value;
     attr->GetValue(value);
     if (isDestElementInBody) {
-      SetAttributeOrEquivalent(destElement, attr->NodeInfo()->NameAtom(), value,
-                               false);
+      SetAttributeOrEquivalent(destElement,
+                               MOZ_KnownLive(attr->NodeInfo()->NameAtom()),
+                               value, false);
     } else {
       // The element is not inserted in the document yet, we don't want to put
       // a transaction on the UndoStack
-      SetAttributeOrEquivalent(destElement, attr->NodeInfo()->NameAtom(), value,
-                               true);
+      SetAttributeOrEquivalent(destElement,
+                               MOZ_KnownLive(attr->NodeInfo()->NameAtom()),
+                               value, true);
     }
   }
 }
@@ -2658,19 +2660,6 @@ nsresult EditorBase::InsertTextIntoTextNodeWithTransaction(
   }
 
   return rv;
-}
-
-nsresult EditorBase::SelectEntireDocument() {
-  MOZ_ASSERT(IsEditActionDataAvailable());
-
-  Element* rootElement = GetRoot();
-  if (!rootElement) {
-    return NS_ERROR_NOT_INITIALIZED;
-  }
-
-  ErrorResult errorResult;
-  SelectionRefPtr()->SelectAllChildren(*rootElement, errorResult);
-  return errorResult.StealNSResult();
 }
 
 nsINode* EditorBase::GetFirstEditableNode(nsINode* aRoot) {

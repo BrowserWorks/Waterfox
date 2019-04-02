@@ -22,6 +22,7 @@ interface nsIEditorMailSupport : nsISupports
     * @param aInsertHTML  Insert as html?  (vs plaintext)
     * @return             The node which was inserted
     */
+  [can_run_script]
   Node insertAsCitedQuotation(in AString aQuotedText,
                               in AString aCitation,
                               in boolean aInsertHTML);
@@ -30,6 +31,7 @@ interface nsIEditorMailSupport : nsISupports
    * Rewrap the selected part of the document, re-quoting if necessary.
    * @param aRespectNewlines  Try to maintain newlines in the original?
    */
+  [can_run_script]
   void rewrap(in boolean aRespectNewlines);
 };
 

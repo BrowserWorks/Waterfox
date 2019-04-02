@@ -32,6 +32,7 @@
 #include "nsStyleConsts.h"
 #include "nsFrameManager.h"
 #include "nsPresContext.h"
+#include "nsPresContextInlines.h"
 #include "nsIPresShell.h"
 #include "nsHTMLParts.h"
 #include "nsGkAtoms.h"
@@ -2664,8 +2665,9 @@ void nsBlockFrame::ReflowDirtyLines(BlockReflowInput& aState) {
     ReflowOutput metrics(aState.mReflowInput);
     nsIFrame* marker = GetOutsideMarker();
     WritingMode wm = aState.mReflowInput.GetWritingMode();
-    ReflowOutsideMarker(marker, aState, metrics,
-                        aState.mReflowInput.ComputedPhysicalBorderPadding().top);
+    ReflowOutsideMarker(
+        marker, aState, metrics,
+        aState.mReflowInput.ComputedPhysicalBorderPadding().top);
     NS_ASSERTION(!MarkerIsEmpty() || metrics.BSize(wm) == 0,
                  "empty ::marker frame took up space");
 
@@ -6387,6 +6389,10 @@ void nsBlockFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   }
 #endif
 
+  // TODO(heycam): Should we boost the load priority of any shape-outside
+  // images using CATEGORY_DISPLAY, now that this block is being displayed?
+  // We don't have a float manager here.
+
   DisplayBorderBackgroundOutline(aBuilder, aLists);
 
   if (GetPrevInFlow()) {
@@ -6787,7 +6793,8 @@ void nsBlockFrame::GetSpokenMarkerText(nsAString& aText) const {
 
 void nsBlockFrame::ReflowOutsideMarker(nsIFrame* aMarkerFrame,
                                        BlockReflowInput& aState,
-                                       ReflowOutput& aMetrics, nscoord aLineTop) {
+                                       ReflowOutput& aMetrics,
+                                       nscoord aLineTop) {
   const ReflowInput& ri = aState.mReflowInput;
 
   WritingMode markerWM = aMarkerFrame->GetWritingMode();

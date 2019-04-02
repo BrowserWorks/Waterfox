@@ -437,7 +437,7 @@ static bool IsCacheableGetPropCallNative(JSObject* obj, JSObject* holder,
   }
 
   JSFunction& getter = shape->getterValue().toObject().as<JSFunction>();
-  if (!getter.isNativeWithCppEntry()) {
+  if (!getter.isBuiltinNative()) {
     return false;
   }
 
@@ -478,7 +478,7 @@ static bool IsCacheableGetPropCallScripted(
   }
 
   JSFunction& getter = shape->getterValue().toObject().as<JSFunction>();
-  if (getter.isNativeWithCppEntry()) {
+  if (getter.isBuiltinNative()) {
     return false;
   }
 
@@ -998,7 +998,7 @@ static void EmitCallGetterResultNoGuards(CacheIRWriter& writer, JSObject* obj,
                                          ObjOperandId receiverId) {
   if (IsCacheableGetPropCallNative(obj, holder, shape)) {
     JSFunction* target = &shape->getterValue().toObject().as<JSFunction>();
-    MOZ_ASSERT(target->isNativeWithCppEntry());
+    MOZ_ASSERT(target->isBuiltinNative());
     writer.callNativeGetterResult(receiverId, target);
     writer.typeMonitorResult();
     return;
@@ -1362,8 +1362,8 @@ bool GetPropIRGenerator::tryAttachXrayCrossCompartmentWrapper(
   // Look for a getter we can call on the xray or its prototype chain.
   Rooted<PropertyDescriptor> desc(cx_);
   RootedObject holder(cx_, obj);
-  AutoObjectVector prototypes(cx_);
-  AutoObjectVector prototypeExpandoShapeWrappers(cx_);
+  RootedObjectVector prototypes(cx_);
+  RootedObjectVector prototypeExpandoShapeWrappers(cx_);
   while (true) {
     if (!GetOwnPropertyDescriptor(cx_, holder, id, &desc)) {
       cx_->clearPendingException();
@@ -2316,7 +2316,7 @@ bool GetPropIRGenerator::tryAttachGenericElement(HandleObject obj,
   }
 
   // To allow other types to attach in the non-megamorphic case we test the
-  // specific matching native reciever; however, once megamorphic we can attach
+  // specific matching native receiver; however, once megamorphic we can attach
   // for any native
   if (mode_ == ICState::Mode::Megamorphic) {
     writer.guardIsNativeObject(objId);
@@ -2652,7 +2652,7 @@ bool GetNameIRGenerator::tryAttachEnvironmentName(ObjOperandId objId,
   env = env_;
   while (env) {
     if (NeedEnvironmentShapeGuard(env)) {
-      writer.guardShape(lastObjId, env->maybeShape());
+      writer.guardShape(lastObjId, env->shape());
     }
 
     if (env == holder) {
@@ -2802,7 +2802,7 @@ bool BindNameIRGenerator::tryAttachEnvironmentName(ObjOperandId objId,
   env = env_;
   while (env) {
     if (NeedEnvironmentShapeGuard(env) && !env->is<GlobalObject>()) {
-      writer.guardShape(lastObjId, env->maybeShape());
+      writer.guardShape(lastObjId, env->shape());
     }
 
     if (env == holder) {
@@ -3387,7 +3387,9 @@ bool SetPropIRGenerator::tryAttachNativeSetSlot(HandleObject obj,
     return false;
   }
 
-  if (mode_ == ICState::Mode::Megamorphic && cacheKind_ == CacheKind::SetProp) {
+  // Don't attach a megamorphic store slot stub for ops like JSOP_INITELEM.
+  if (mode_ == ICState::Mode::Megamorphic && cacheKind_ == CacheKind::SetProp &&
+      IsPropertySetOp(JSOp(*pc_))) {
     writer.megamorphicStoreSlot(objId, JSID_TO_ATOM(id)->asPropertyName(),
                                 rhsId, typeCheckInfo_.needsTypeBarrier());
     writer.returnFromIC();
@@ -3526,7 +3528,7 @@ static bool IsCacheableSetPropCallNative(JSObject* obj, JSObject* holder,
   }
 
   JSFunction& setter = shape->setterObject()->as<JSFunction>();
-  if (!setter.isNativeWithCppEntry()) {
+  if (!setter.isBuiltinNative()) {
     return false;
   }
 
@@ -3561,7 +3563,7 @@ static bool IsCacheableSetPropCallScripted(
   }
 
   JSFunction& setter = shape->setterObject()->as<JSFunction>();
-  if (setter.isNativeWithCppEntry()) {
+  if (setter.isBuiltinNative()) {
     return false;
   }
 
@@ -3615,7 +3617,7 @@ static void EmitCallSetterNoGuards(CacheIRWriter& writer, JSObject* obj,
                                    ObjOperandId objId, ValOperandId rhsId) {
   if (IsCacheableSetPropCallNative(obj, holder, shape)) {
     JSFunction* target = &shape->setterValue().toObject().as<JSFunction>();
-    MOZ_ASSERT(target->isNativeWithCppEntry());
+    MOZ_ASSERT(target->isBuiltinNative());
     writer.callNativeSetter(objId, target, rhsId);
     writer.returnFromIC();
     return;
@@ -4397,9 +4399,8 @@ bool SetPropIRGenerator::tryAttachAddSlotStub(HandleObjectGroup oldGroup,
 
   // In addition to guarding for type barrier, we need this group guard (or
   // shape guard below) to ensure class is unchanged. This group guard may also
-  // implay maybeInterpretedFunction() for the special-case of function
+  // imply maybeInterpretedFunction() for the special-case of function
   // prototype property set.
-  MOZ_ASSERT(obj->is<ShapedObject>());
   writer.guardGroup(objId, oldGroup);
 
   // If we are adding a property to an object for which the new script
@@ -4435,8 +4436,7 @@ bool SetPropIRGenerator::tryAttachAddSlotStub(HandleObjectGroup oldGroup,
                                 changeGroup, newGroup);
     trackAttached("AddSlot");
   } else {
-    size_t offset =
-        holder->dynamicSlotIndex(propShape->slot()) * sizeof(Value);
+    size_t offset = holder->dynamicSlotIndex(propShape->slot()) * sizeof(Value);
     uint32_t numOldSlots = NativeObject::dynamicSlotsCount(oldShape);
     uint32_t numNewSlots = NativeObject::dynamicSlotsCount(propShape);
     if (numOldSlots == numNewSlots) {
@@ -5463,8 +5463,6 @@ CompareIRGenerator::CompareIRGenerator(JSContext* cx, HandleScript script,
 
 bool CompareIRGenerator::tryAttachString(ValOperandId lhsId,
                                          ValOperandId rhsId) {
-  MOZ_ASSERT(IsEqualityOp(op_));
-
   if (!lhsVal_.isString() || !rhsVal_.isString()) {
     return false;
   }
@@ -5740,8 +5738,7 @@ bool CompareIRGenerator::tryAttachStringNumber(ValOperandId lhsId,
 
 bool CompareIRGenerator::tryAttachStub() {
   MOZ_ASSERT(cacheKind_ == CacheKind::Compare);
-  MOZ_ASSERT(IsEqualityOp(op_) || op_ == JSOP_LE || op_ == JSOP_LT ||
-             op_ == JSOP_GE || op_ == JSOP_GT);
+  MOZ_ASSERT(IsEqualityOp(op_) || IsRelationalOp(op_));
 
   AutoAssertNoPendingException aanpe(cx_);
 
@@ -5760,9 +5757,6 @@ bool CompareIRGenerator::tryAttachStub() {
   // - {Bool} x {Double}.
   // - {Object} x {String, Symbol, Bool, Number}.
   if (IsEqualityOp(op_)) {
-    if (tryAttachString(lhsId, rhsId)) {
-      return true;
-    }
     if (tryAttachObject(lhsId, rhsId)) {
       return true;
     }
@@ -5807,6 +5801,9 @@ bool CompareIRGenerator::tryAttachStub() {
     return true;
   }
   if (tryAttachNumber(lhsId, rhsId)) {
+    return true;
+  }
+  if (tryAttachString(lhsId, rhsId)) {
     return true;
   }
 

@@ -209,6 +209,15 @@ VARCACHE_PREF(
 )
 #undef PREF_VALUE
 
+// If this is true, it's allowed to fire "cut", "copy" and "paste" events.
+// Additionally, "input" events may expose clipboard content when inputType
+// is "insertFromPaste" or something.
+VARCACHE_PREF(
+  "dom.event.clipboardevents.enabled",
+   dom_event_clipboardevents_enabled,
+  bool, true
+)
+
 // If this is true, "keypress" event's keyCode value and charCode value always
 // become same if the event is not created/initialized by JS.
 VARCACHE_PREF(
@@ -330,11 +339,17 @@ VARCACHE_PREF(
   RelaxedAtomicBool, false
 )
 
+#ifdef NIGHTLY_BUILD
+# define PREF_VALUE  true
+#else
+# define PREF_VALUE  false
+#endif
 VARCACHE_PREF(
   "dom.webnotifications.requireuserinteraction",
    dom_webnotifications_requireuserinteraction,
-  RelaxedAtomicBool, false
+  RelaxedAtomicBool, PREF_VALUE
 )
+#undef PREF_VALUE
 
 VARCACHE_PREF(
   "dom.webnotifications.serviceworker.enabled",
@@ -987,6 +1002,13 @@ VARCACHE_PREF(
   bool, false
 )
 
+// Pref to control whether line-height: -moz-block-height is exposed to content.
+VARCACHE_PREF(
+  "layout.css.line-height-moz-block-height.content.enabled",
+   layout_css_line_height_moz_block_height_content_enabled,
+  bool, false
+)
+
 // Is support for variation fonts enabled?
 VARCACHE_PREF(
   "layout.css.font-variations.enabled",
@@ -1075,6 +1097,13 @@ VARCACHE_PREF(
   RelaxedAtomicBool, false
 )
 
+// Are shared memory User Agent style sheets enabled?
+VARCACHE_PREF(
+  "layout.css.shared-memory-ua-sheets.enabled",
+   layout_css_shared_memory_ua_sheets_enabled,
+  bool, false
+)
+
 //---------------------------------------------------------------------------
 // JavaScript prefs
 //---------------------------------------------------------------------------
@@ -1153,6 +1182,12 @@ VARCACHE_PREF(
 VARCACHE_PREF(
   "javascript.options.experimental.fields",
    javascript_options_experimental_fields,
+  RelaxedAtomicBool, false
+)
+
+VARCACHE_PREF(
+  "javascript.options.experimental.await_fix",
+   javascript_options_experimental_await_fix,
   RelaxedAtomicBool, false
 )
 
@@ -1657,7 +1692,7 @@ VARCACHE_PREF(
 # define PREF_VALUE true
 #elif defined(XP_MACOSX)
 # define PREF_VALUE true
-#elif defined(XP_UNIX)
+#elif defined(XP_UNIX) && !defined(Android)
 # define PREF_VALUE true
 #else
 # define PREF_VALUE false
@@ -1668,10 +1703,19 @@ VARCACHE_PREF(
   RelaxedAtomicBool, PREF_VALUE
 )
 #undef PREF_VALUE
+
 VARCACHE_PREF(
   "media.av1.use-dav1d",
    MediaAv1UseDav1d,
+#if defined(XP_WIN) && !defined(_ARM64_)
+  RelaxedAtomicBool, true
+#elif defined(XP_MACOSX)
+  RelaxedAtomicBool, true
+#elif defined(XP_UNIX) && !defined(Android)
+  RelaxedAtomicBool, true
+#else
   RelaxedAtomicBool, false
+#endif
 )
 
 VARCACHE_PREF(
@@ -2033,6 +2077,20 @@ VARCACHE_PREF(
   uint32_t, 32
 )
 
+// Annotate trackers using the strict list. If set to false, the basic list will
+// be used instead.
+#ifdef EARLY_BETA_OR_EARLIER
+#define PREF_VALUE true
+#else
+#define PREF_VALUE false
+#endif
+VARCACHE_PREF(
+  "privacy.annotate_channels.strict_list.enabled",
+   privacy_annotate_channels_strict_list_enabled,
+  bool, PREF_VALUE
+)
+#undef PREF_VALUE
+
 // Annotate channels based on the tracking protection list in all modes
 VARCACHE_PREF(
   "privacy.trackingprotection.annotate_channels",
@@ -2066,6 +2124,13 @@ VARCACHE_PREF(
   "privacy.trackingprotection.cryptomining.annotate.enabled",
    privacy_trackingprotection_cryptomining_annotate_enabled,
   bool, false
+)
+
+// Spoof user locale to English
+VARCACHE_PREF(
+  "privacy.spoof_english",
+   privacy_spoof_english,
+  RelaxedAtomicUint32, 0
 )
 
 // Lower the priority of network loads for resources on the tracking protection
@@ -2187,11 +2252,6 @@ VARCACHE_PREF(
   bool, true
 )
 
-VARCACHE_PREF(
-  "security.csp.experimentalEnabled",
-   security_csp_experimentalEnabled,
-  bool, false
-)
 
 VARCACHE_PREF(
   "security.csp.enableStrictDynamic",

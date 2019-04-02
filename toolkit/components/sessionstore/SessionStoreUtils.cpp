@@ -4,6 +4,8 @@
 
 #include "js/JSON.h"
 #include "jsapi.h"
+#include "mozilla/dom/Document.h"
+#include "mozilla/dom/DocumentInlines.h"
 #include "mozilla/dom/HTMLInputElement.h"
 #include "mozilla/dom/HTMLSelectElement.h"
 #include "mozilla/dom/HTMLTextAreaElement.h"
@@ -260,7 +262,7 @@ void SessionStoreUtils::RestoreDocShellCapabilities(
 
 static void CollectCurrentScrollPosition(JSContext* aCx, Document& aDocument,
                                          Nullable<CollectedData>& aRetVal) {
-  nsIPresShell* presShell = aDocument.GetShell();
+  PresShell* presShell = aDocument.GetPresShell();
   if (!presShell) {
     return;
   }
@@ -287,7 +289,23 @@ void SessionStoreUtils::RestoreScrollPosition(const GlobalObject& aGlobal,
   int pos_X = atoi(token.get());
   token = tokenizer.nextToken();
   int pos_Y = atoi(token.get());
-  aWindow.ScrollTo(pos_X, pos_Y);
+
+  // Self-clamp the layout scroll position to the layout scroll range.
+  // This step will be unnecessary after bug 1516056, when window.scrollTo()
+  // will start performing this clamping itself.
+  CSSCoord layoutPosX = pos_X;
+  CSSCoord layoutPosY = pos_Y;
+  ErrorResult rv;
+  CSSCoord layoutPosMaxX = aWindow.GetScrollMaxX(rv);
+  CSSCoord layoutPosMaxY = aWindow.GetScrollMaxY(rv);
+  if (layoutPosX > layoutPosMaxX) {
+    layoutPosX = layoutPosMaxX;
+  }
+  if (layoutPosY > layoutPosMaxY) {
+    layoutPosY = layoutPosMaxY;
+  }
+
+  aWindow.ScrollTo(layoutPosX, layoutPosY);
 
   if (nsCOMPtr<Document> doc = aWindow.GetExtantDoc()) {
     if (nsPresContext* presContext = doc->GetPresContext()) {
@@ -296,8 +314,7 @@ void SessionStoreUtils::RestoreScrollPosition(const GlobalObject& aGlobal,
         // (ScrollFrameHelper::ScrollToRestoredPosition()).
         presContext->PresShell()->ScrollToVisual(
             CSSPoint::ToAppUnits(CSSPoint(pos_X, pos_Y)),
-            layers::FrameMetrics::eMainThread,
-            nsIPresShell::ScrollMode::eInstant);
+            layers::FrameMetrics::eMainThread, ScrollMode::eInstant);
       }
     }
   }

@@ -240,6 +240,9 @@ pref("devtools.webconsole.filter.css", false);
 pref("devtools.webconsole.filter.net", false);
 pref("devtools.webconsole.filter.netxhr", false);
 
+// Webconsole autocomplete preference
+pref("devtools.webconsole.input.autocomplete",true);
+
 // Browser console filters
 pref("devtools.browserconsole.filter.error", true);
 pref("devtools.browserconsole.filter.warn", true);
@@ -340,7 +343,7 @@ pref("devtools.responsive.showUserAgentInput", false);
 #endif
 
 // Enable new about:debugging.
-pref("devtools.aboutdebugging.new-enabled", false);
+pref("devtools.aboutdebugging.new-enabled", true);
 
 // Show tab debug targets for This Firefox (on by default for local builds).
 #ifdef MOZILLA_OFFICIAL

@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::cg;
 use darling::util::Override;
+use derive_common::cg;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt};
 use syn::{self, Data, Path, WhereClause};
@@ -151,7 +151,7 @@ fn derive_variant_fields_expr(
 
         if let Some(condition) = attrs.contextual_skip_if {
             expr = quote! {
-                if !#condition(#(#bindings),*) {
+                if !#condition(#(#bindings), *) {
                     #expr
                 }
             }
@@ -227,7 +227,7 @@ fn derive_single_field_expr(
 
     if let Some(condition) = attrs.contextual_skip_if {
         expr = quote! {
-            if !#condition(#(#bindings),*) {
+            if !#condition(#(#bindings), *) {
                 #expr
             }
         }

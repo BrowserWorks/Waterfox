@@ -409,7 +409,8 @@ bool nsFrameMessageManager::GetParamsForMessage(JSContext* aCx,
                                   "you trying to send an XPCOM object?"),
                 filename, EmptyString(), lineno, column,
                 nsIScriptError::warningFlag, "chrome javascript",
-                false /* from private window */);
+                false /* from private window */,
+                true /* from chrome context */);
     console->LogMessage(error);
   }
 
@@ -824,7 +825,8 @@ void nsFrameMessageManager::ReceiveMessage(
                 do_CreateInstance(NS_SCRIPTERROR_CONTRACTID));
             error->Init(msg, EmptyString(), EmptyString(), 0, 0,
                         nsIScriptError::warningFlag, "chrome javascript",
-                        false /* from private window */);
+                        false /* from private window */,
+                        true /* from chrome context */);
             console->LogMessage(error);
           }
 
@@ -1226,7 +1228,7 @@ void nsMessageManagerScriptExecutor::LoadScriptInternal(
       }
     } else {
       JS::RootedValue rval(cx);
-      JS::AutoObjectVector envChain(cx);
+      JS::RootedVector<JSObject*> envChain(cx);
       if (!envChain.append(aMessageManager)) {
         return;
       }

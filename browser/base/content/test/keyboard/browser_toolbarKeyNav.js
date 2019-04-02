@@ -18,7 +18,8 @@ function resetToolbarWithoutDevEditionButtons() {
   CustomizableUI.removeWidgetFromArea("developer-button");
 }
 
-async function expectFocusAfterKey(aKey, aFocus, aAncestorOk = false) {
+async function expectFocusAfterKey(aKey, aFocus, aAncestorOk = false,
+                                   aWindow = window) {
   let res = aKey.match(/^(Shift\+)?(?:(.)|(.+))$/);
   let shift = Boolean(res[1]);
   let key;
@@ -30,27 +31,27 @@ async function expectFocusAfterKey(aKey, aFocus, aAncestorOk = false) {
   let expected;
   let friendlyExpected;
   if (typeof aFocus == "string") {
-    expected = document.getElementById(aFocus);
+    expected = aWindow.document.getElementById(aFocus);
     friendlyExpected = aFocus;
   } else {
     expected = aFocus;
-    if (aFocus == gURLBar.inputField) {
+    if (aFocus == aWindow.gURLBar.inputField) {
       friendlyExpected = "URL bar input";
-    } else if (aFocus == gBrowser.selectedBrowser) {
+    } else if (aFocus == aWindow.gBrowser.selectedBrowser) {
       friendlyExpected = "Web document";
     }
   }
   info("Listening on item " + (expected.id || expected.className));
   let focused = BrowserTestUtils.waitForEvent(expected, "focus", aAncestorOk);
-  EventUtils.synthesizeKey(key, {shiftKey: shift});
+  EventUtils.synthesizeKey(key, {shiftKey: shift}, aWindow);
   let receivedEvent = await focused;
   info("Got focus on item: " + (receivedEvent.target.id || receivedEvent.target.className));
   ok(true, friendlyExpected + " focused after " + aKey + " pressed");
 }
 
-function startFromUrlBar() {
-  gURLBar.focus();
-  is(document.activeElement, gURLBar.inputField,
+function startFromUrlBar(aWindow = window) {
+  aWindow.gURLBar.focus();
+  is(aWindow.document.activeElement, aWindow.gURLBar.inputField,
      "URL bar focused for start of test");
 }
 
@@ -74,6 +75,8 @@ function withNewBlankTab(taskFn) {
   });
 }
 
+const BOOKMARKS_COUNT = 100;
+
 add_task(async function setup() {
   await SpecialPowers.pushPrefEnv({
     set: [
@@ -82,6 +85,17 @@ add_task(async function setup() {
     ],
   });
   resetToolbarWithoutDevEditionButtons();
+
+  await PlacesUtils.bookmarks.eraseEverything();
+  // Add bookmarks.
+  let bookmarks = new Array(BOOKMARKS_COUNT);
+  for (let i = 0; i < BOOKMARKS_COUNT; ++i) {
+    bookmarks[i] = {url: `http://test.places.${i}/`};
+  }
+  await PlacesUtils.bookmarks.insertTree({
+    guid: PlacesUtils.bookmarks.toolbarGuid,
+    children: bookmarks,
+  });
 });
 
 // Test tab stops with no page loaded.
@@ -242,4 +256,63 @@ add_task(async function testArrowsOverflowButton() {
   });
 });
 
-registerCleanupFunction(() => CustomizableUI.reset());
+// Test that toolbar keyboard navigation doesn't interfere with PanelMultiView
+// keyboard navigation.
+// We do this by opening the Library menu and ensuring that pressing left arrow
+// does nothing.
+add_task(async function testArrowsInPanelMultiView() {
+  let button = document.getElementById("library-button");
+  forceFocus(button);
+  let view = document.getElementById("appMenu-libraryView");
+  let focused = BrowserTestUtils.waitForEvent(view, "focus", true);
+  EventUtils.synthesizeKey(" ");
+  let focusEvt = await focused;
+  ok(true, "Focus inside Library menu after toolbar button pressed");
+  EventUtils.synthesizeKey("KEY_ArrowLeft");
+  is(document.activeElement, focusEvt.target,
+     "ArrowLeft inside panel does nothing");
+  let hidden = BrowserTestUtils.waitForEvent(document, "popuphidden", true);
+  view.closest("panel").hidePopup();
+  await hidden;
+});
+
+// Test that right/left arrows move in the expected direction for RTL locales.
+add_task(async function testArrowsRtl() {
+  await SpecialPowers.pushPrefEnv({set: [["intl.uidirection", 1]]});
+  // window.RTL_UI doesn't update in existing windows when this pref is changed,
+  // so we need to test in a new window.
+  let win = await BrowserTestUtils.openNewBrowserWindow();
+  startFromUrlBar(win);
+  await expectFocusAfterKey("Tab", "library-button", false, win);
+  EventUtils.synthesizeKey("KEY_ArrowRight", {}, win);
+  is(win.document.activeElement.id, "library-button",
+     "ArrowRight at end of button group does nothing");
+  await expectFocusAfterKey("ArrowLeft", "sidebar-button", false, win);
+  await BrowserTestUtils.closeWindow(win);
+  await SpecialPowers.popPrefEnv();
+});
+
+// Test that right arrow reaches the overflow menu button on the Bookmarks
+// toolbar when it is visible.
+add_task(async function testArrowsBookmarksOverflowButton() {
+  let toolbar = document.getElementById("PersonalToolbar");
+  let transitionEnded = BrowserTestUtils.waitForEvent(toolbar, "transitionend");
+  CustomizableUI.setToolbarVisibility("PersonalToolbar", true);
+  await transitionEnded;
+  let items = document.getElementById("PlacesToolbarItems").children;
+  let lastVisible;
+  for (let item of items) {
+    if (item.style.visibility == "hidden") {
+      break;
+    }
+    lastVisible = item;
+  }
+  forceFocus(lastVisible);
+  await expectFocusAfterKey("ArrowRight", "PlacesChevron");
+  CustomizableUI.setToolbarVisibility("PersonalToolbar", false);
+});
+
+registerCleanupFunction(async function() {
+  CustomizableUI.reset();
+  await PlacesUtils.bookmarks.eraseEverything();
+});

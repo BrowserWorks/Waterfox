@@ -100,6 +100,7 @@ EXPORTS.mozilla += [
     'ServoCSSRuleList.h',
     'ServoElementSnapshot.h',
     'ServoElementSnapshotTable.h',
+    'ServoStyleConstsForwards.h',
     'ServoStyleSet.h',
     'ServoStyleSetInlines.h',
     'ServoTraversalStatistics.h',
@@ -112,6 +113,7 @@ EXPORTS.mozilla += [
     'StyleSheetInfo.h',
     'StyleSheetInlines.h',
     'URLExtraData.h',
+    'UserAgentStyleSheetID.h',
     'UserAgentStyleSheetList.h',
 ]
 
@@ -316,6 +318,7 @@ if CONFIG['COMPILE_ENVIRONMENT']:
     consts = GENERATED_FILES['ServoStyleConsts.h']
     consts.script = 'RunCbindgen.py:generate'
     consts.inputs = [
+        '/servo/ports/geckolib',
         '/servo/components/style',
     ]
 

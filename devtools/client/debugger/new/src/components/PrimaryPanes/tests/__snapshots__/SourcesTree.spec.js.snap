@@ -48,6 +48,32 @@ exports[`SourcesTree After changing expanded nodes Shows the tree with four.js, 
 </div>
 `;
 
+exports[`SourcesTree Should show a 'No Sources' message if there are no sources 1`] = `
+<div
+  className="sources-pane thread"
+  key="pane"
+>
+  <div
+    className="node thread-header"
+  >
+    <AccessibleImage
+      className="file"
+    />
+    <span
+      className="label"
+    >
+      Main Thread
+    </span>
+  </div>
+  <div
+    className="no-sources-message"
+    key="empty"
+  >
+    This page has no sources.
+  </div>
+</div>
+`;
+
 exports[`SourcesTree Should show the tree with nothing expanded 1`] = `
 <div
   className="sources-pane thread"
@@ -172,6 +198,7 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
               "actors": Array [],
               "contentType": "text/javascript",
               "id": "server1.conn13.child1/41",
+              "introductionType": undefined,
               "introductionUrl": null,
               "isBlackBoxed": false,
               "isExtension": false,
@@ -194,6 +221,7 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
                   "actors": Array [],
                   "contentType": "text/javascript",
                   "id": "server1.conn13.child1/42",
+                  "introductionType": undefined,
                   "introductionUrl": null,
                   "isBlackBoxed": false,
                   "isExtension": false,
@@ -214,6 +242,7 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
                   "actors": Array [],
                   "contentType": "text/javascript",
                   "id": "server1.conn13.child1/42/originalSource-sha",
+                  "introductionType": undefined,
                   "introductionUrl": null,
                   "isBlackBoxed": false,
                   "isExtension": false,
@@ -234,6 +263,7 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
                   "actors": Array [],
                   "contentType": "text/javascript",
                   "id": "server1.conn13.child1/39",
+                  "introductionType": undefined,
                   "introductionUrl": null,
                   "isBlackBoxed": false,
                   "isExtension": false,
@@ -254,6 +284,7 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
                   "actors": Array [],
                   "contentType": "text/javascript",
                   "id": "server1.conn13.child1/41",
+                  "introductionType": undefined,
                   "introductionUrl": null,
                   "isBlackBoxed": false,
                   "isExtension": false,
@@ -274,6 +305,7 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
                   "actors": Array [],
                   "contentType": "text/javascript",
                   "id": "server1.conn13.child1/40",
+                  "introductionType": undefined,
                   "introductionUrl": null,
                   "isBlackBoxed": false,
                   "isExtension": false,

@@ -473,7 +473,7 @@ void nsMenuPopupFrame::LayoutPopup(nsBoxLayoutState& aState,
         do_QueryFrame(nsBox::GetChildXULBox(this));
     if (scrollframe) {
       AutoWeakFrame weakFrame(this);
-      scrollframe->ScrollTo(nsPoint(0, 0), nsIScrollableFrame::INSTANT);
+      scrollframe->ScrollTo(nsPoint(0, 0), ScrollMode::eInstant);
       if (!weakFrame.IsAlive()) {
         return;
       }
@@ -687,7 +687,7 @@ void nsMenuPopupFrame::InitializePopup(nsIContent* aAnchorContent,
   mAnchorType = aAnchorType;
 
   // if aAttributesOverride is true, then the popupanchor, popupalign and
-  // position attributes on the <popup> override those values passed in.
+  // position attributes on the <menupopup> override those values passed in.
   // If false, those attributes are only used if the values passed in are empty
   if (aAnchorContent || aAnchorType == MenuPopupAnchorType_Rect) {
     nsAutoString anchor, align, position, flip;

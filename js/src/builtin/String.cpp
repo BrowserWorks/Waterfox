@@ -3080,7 +3080,7 @@ static ArrayObject* SplitHelper(JSContext* cx, HandleLinearString str,
   }
 
   // Step 3 (reordered).
-  AutoValueVector splits(cx);
+  RootedValueVector splits(cx);
 
   // Step 8 (reordered).
   size_t lastEndIndex = 0;
@@ -3657,8 +3657,7 @@ static const JSFunctionSpec string_static_methods[] = {
     JS_INLINABLE_FN("fromCodePoint", js::str_fromCodePoint, 1, 0,
                     StringFromCodePoint),
 
-    JS_SELF_HOSTED_FN("raw", "String_static_raw", 1, 0),
-    JS_FS_END};
+    JS_SELF_HOSTED_FN("raw", "String_static_raw", 1, 0), JS_FS_END};
 
 /* static */
 Shape* StringObject::assignInitialShape(JSContext* cx,

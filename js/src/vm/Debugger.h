@@ -339,7 +339,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger> {
   friend bool(::JS_DefineDebuggerObject)(JSContext* cx, JS::HandleObject obj);
   friend bool(::JS::dbg::IsDebugger)(JSObject&);
   friend bool(::JS::dbg::GetDebuggeeGlobals)(JSContext*, JSObject&,
-                                             AutoObjectVector&);
+                                             MutableHandleObjectVector);
   friend bool JS::dbg::FireOnGarbageCollectionHookRequired(JSContext* cx);
   friend bool JS::dbg::FireOnGarbageCollectionHook(
       JSContext* cx, JS::dbg::GarbageCollectionEvent::Ptr&& data);
@@ -1951,7 +1951,10 @@ class Breakpoint {
   BreakpointSite* const site;
 
  private:
-  /* |handler| is marked unconditionally during minor GC. */
+  /*
+   * |handler| is marked unconditionally during minor GC so a post barrier is
+   * not required.
+   */
   js::PreBarrieredObject handler;
 
   /**
@@ -1969,7 +1972,7 @@ class Breakpoint {
 
   Breakpoint* nextInDebugger();
   Breakpoint* nextInSite();
-  const PreBarrieredObject& getHandler() const { return handler; }
+  JSObject* getHandler() const { return handler; }
   PreBarrieredObject& getHandlerRef() { return handler; }
 
   inline WasmBreakpoint* asWasm();

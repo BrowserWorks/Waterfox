@@ -127,6 +127,7 @@ class Dispatcher;
 class ErrorResult;
 class EventListenerManager;
 class HTMLEditor;
+class PresShell;
 class TextEditor;
 
 namespace dom {
@@ -827,7 +828,7 @@ class nsContentUtils {
    * @return the pres shell, or nullptr if the content is not in a document
    *         (if GetComposedDoc returns nullptr)
    */
-  static nsIPresShell* GetPresShellForContent(const nsIContent* aContent);
+  static mozilla::PresShell* GetPresShellForContent(const nsIContent* aContent);
 
   /**
    * Method to do security and content policy checks on the image URI
@@ -1024,7 +1025,8 @@ class nsContentUtils {
    */
   static void LogSimpleConsoleError(const nsAString& aErrorText,
                                     const char* classification,
-                                    bool aFromPrivateWindow);
+                                    bool aFromPrivateWindow,
+                                    bool aFromChromeContext);
 
   /**
    * Report a non-localized error message to the error console.
@@ -2757,6 +2759,13 @@ class nsContentUtils {
    * allowed for a non-CORS XHR or fetch request.
    */
   static bool IsAllowedNonCorsLanguage(const nsACString& aHeaderValue);
+
+  /**
+   * Returns whether a given header and value is a CORS-safelisted request
+   * header per https://fetch.spec.whatwg.org/#cors-safelisted-request-header
+   */
+  static bool IsCORSSafelistedRequestHeader(const nsACString& aName,
+                                            const nsACString& aValue);
 
   /**
    * Returns whether a given header is forbidden for an XHR or fetch
