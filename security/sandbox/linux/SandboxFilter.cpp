@@ -315,6 +315,9 @@ public:
     case __NR_exit_group:
       return Allow();
 
+      case __NR_getrandom:
+        return Allow();
+
 #ifdef MOZ_ASAN
       // ASAN's error reporter wants to know if stderr is a tty.
     case __NR_ioctl: {
