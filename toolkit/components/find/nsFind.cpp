@@ -929,7 +929,7 @@ nsFind::ResetAll()
 // Take nodes out of the tree with NextNode, until null (NextNode will return 0
 // at the end of our range).
 NS_IMETHODIMP
-nsFind::Find(const char16_t* aPatText, nsIDOMRange* aSearchRange,
+nsFind::Find(const nsAString& aPatText, nsIDOMRange* aSearchRange,
              nsIDOMRange* aStartPoint, nsIDOMRange* aEndPoint,
              nsIDOMRange** aRangeRet)
 {
@@ -945,10 +945,6 @@ nsFind::Find(const char16_t* aPatText, nsIDOMRange* aSearchRange,
   NS_ENSURE_ARG(aEndPoint);
   NS_ENSURE_ARG_POINTER(aRangeRet);
   *aRangeRet = 0;
-
-  if (!aPatText) {
-    return NS_ERROR_NULL_POINTER;
-  }
 
   ResetAll();
 
