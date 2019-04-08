@@ -82,6 +82,9 @@
       <field name="mCurrentTab">
         null
       </field>
+      <field name="_lastRelatedTab">
+        null
+      </field>
       <field name="_lastRelatedTabMap">
         new WeakMap();
       </field>
@@ -1132,6 +1135,10 @@
             // Preview mode should not reset the owner
             if (!this._previewMode && !oldTab.selected)
               oldTab.owner = null;
+
+            if (this._lastRelatedTab) {
+              this._lastRelatedTab = null;
+            }
 
             let lastRelatedTab = this._lastRelatedTabMap.get(oldTab);
             if (lastRelatedTab) {
@@ -2714,6 +2721,7 @@
               else
                 t.owner = openerTab;
               this.moveTabTo(t, newTabPos, true);
+              this._lastRelatedTab = t;
               this._lastRelatedTabMap.set(openerTab, t);
             }
 
@@ -3090,6 +3098,7 @@
               aNewTab = false;
             }
 
+            this._lastRelatedTab = null;
             this._lastRelatedTabMap = new WeakMap();
 
             // update the UI early for responsiveness
@@ -3756,6 +3765,7 @@
             return;
 
           if (!aKeepRelatedTabs) {
+            this._lastRelatedTab = null;
             this._lastRelatedTabMap = new WeakMap();
           }
 
