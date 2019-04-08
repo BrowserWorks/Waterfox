@@ -95,9 +95,17 @@ ProxyObject::New(JSContext* cx, const BaseProxyHandler* handler, HandleValue pri
         proxy->setCrossCompartmentPrivate(priv);
     else
         proxy->setSameCompartmentPrivate(priv);
+    
+    if (newKind == SingletonObject) {
+        Rooted<ProxyObject*> rootedProxy(cx, proxy);
+        if (!JSObject::setSingleton(cx, rootedProxy)) {
+          return nullptr;
+        }
+    return rootedProxy;
+    }
 
     /* Don't track types of properties of non-DOM and non-singleton proxies. */
-    if (newKind != SingletonObject && !clasp->isDOMClass())
+    if (!clasp->isDOMClass())
         MarkObjectGroupUnknownProperties(cx, proxy->group());
 
     return proxy;
@@ -183,13 +191,6 @@ ProxyObject::create(JSContext* cx, const Class* clasp, Handle<TaggedProto> proto
     cx->compartment()->setObjectPendingMetadata(cx, pobj);
 
     js::gc::TraceCreateObject(pobj);
-
-    if (newKind == SingletonObject) {
-        Rooted<ProxyObject*> pobjRoot(cx, pobj);
-        if (!JSObject::setSingleton(cx, pobjRoot))
-            return cx->alreadyReportedOOM();
-        pobj = pobjRoot;
-    }
 
     return pobj;
 }
