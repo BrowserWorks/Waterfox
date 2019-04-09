@@ -141,8 +141,9 @@ public:
 private:
 
   // Instantiate CDMProxy instance.
-  // It could be MediaDrmCDMProxy (Widevine on Fennec) or ChromiumCDMProxy (the rest).
-  already_AddRefed<CDMProxy> CreateCDMProxy(nsIEventTarget* aMainThread);
+  // It could be MediaDrmCDMProxy (Widevine on Fennec) or ChromiumCDMProxy (the
+  // rest).
+  already_AddRefed<CDMProxy> CreateCDMProxy(nsISerialEventTarget* aMainThread);
 
   // Removes promise from mPromises, and returns it.
   already_AddRefed<DetailedPromise> RetrievePromise(PromiseId aId);

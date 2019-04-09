@@ -34,7 +34,7 @@ public:
                    const nsAString& aKeySystem,
                    bool aDistinctiveIdentifierRequired,
                    bool aPersistentStateRequired,
-                   nsIEventTarget* aMainThread);
+                   nsISerialEventTarget* aMainThread);
 
   void Init(PromiseId aPromiseId,
             const nsAString& aOrigin,

@@ -24,9 +24,8 @@ public:
   ChromiumCDMProxy(dom::MediaKeys* aKeys,
                    const nsAString& aKeySystem,
                    GMPCrashHelper* aCrashHelper,
-                   bool aAllowDistinctiveIdentifier,
-                   bool aAllowPersistentState,
-                   nsIEventTarget* aMainThread);
+                   bool aAllowDistinctiveIdentifier, bool aAllowPersistentState,
+                   nsISerialEventTarget* aMainThread);
 
   void Init(PromiseId aPromiseId,
             const nsAString& aOrigin,

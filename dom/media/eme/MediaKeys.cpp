@@ -330,9 +330,8 @@ private:
   WeakPtr<MediaKeys> mMediaKeys;
 };
 
-already_AddRefed<CDMProxy>
-MediaKeys::CreateCDMProxy(nsIEventTarget* aMainThread)
-{
+already_AddRefed<CDMProxy> MediaKeys::CreateCDMProxy(
+    nsISerialEventTarget* aMainThread) {
   RefPtr<CDMProxy> proxy;
 #ifdef MOZ_WIDGET_ANDROID
   if (IsWidevineKeySystem(mKeySystem)) {

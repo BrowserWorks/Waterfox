@@ -20,16 +20,12 @@ ChromiumCDMProxy::ChromiumCDMProxy(dom::MediaKeys* aKeys,
                                    GMPCrashHelper* aCrashHelper,
                                    bool aDistinctiveIdentifierRequired,
                                    bool aPersistentStateRequired,
-                                   nsIEventTarget* aMainThread)
-  : CDMProxy(aKeys,
-             aKeySystem,
-             aDistinctiveIdentifierRequired,
-             aPersistentStateRequired,
-             aMainThread)
-  , mCrashHelper(aCrashHelper)
-  , mCDMMutex("ChromiumCDMProxy")
-  , mGMPThread(GetGMPAbstractThread())
-{
+                                   nsISerialEventTarget* aMainThread)
+    : CDMProxy(aKeys, aKeySystem, aDistinctiveIdentifierRequired,
+               aPersistentStateRequired, aMainThread),
+      mCrashHelper(aCrashHelper),
+      mCDMMutex("ChromiumCDMProxy"),
+      mGMPThread(GetGMPAbstractThread()) {
   MOZ_ASSERT(NS_IsMainThread());
 }
 
