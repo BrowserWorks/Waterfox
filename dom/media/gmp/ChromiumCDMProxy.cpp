@@ -89,7 +89,7 @@ void ChromiumCDMProxy::Init(PromiseId aPromiseId, const nsAString& aOrigin,
               cdm->Init(self->mCallback.get(),
                         self->mDistinctiveIdentifierRequired,
                         self->mPersistentStateRequired, self->mMainThread)
-                  ->Then(thread, __func__,
+                  ->Then(self->mMainThread, __func__,
                          [self, aPromiseId, cdm](bool /* unused */) {
                            // CDM init succeeded
                            {
@@ -121,15 +121,6 @@ ChromiumCDMProxy::OnCDMCreated(uint32_t aPromiseId)
           NS_IsMainThread(),
           this);
 
-  if (!NS_IsMainThread()) {
-    mMainThread->Dispatch(
-      NewRunnableMethod<PromiseId>("ChromiumCDMProxy::OnCDMCreated",
-                                   this,
-                                   &ChromiumCDMProxy::OnCDMCreated,
-                                   aPromiseId),
-      NS_DISPATCH_NORMAL);
-    return;
-  }
   MOZ_ASSERT(NS_IsMainThread());
   if (mKeys.IsNull()) {
     return;
