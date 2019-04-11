@@ -104,6 +104,7 @@
 #include "js/StableStringChars.h"
 #include "js/StructuredClone.h"
 #include "js/SweepingAPI.h"
+#include "js/Warnings.h"  // JS::SetWarningReporter
 #include "js/Wrapper.h"
 #include "perf/jsperf.h"
 #include "shell/jsoptparse.h"
@@ -532,8 +533,36 @@ static bool ScheduleWatchdog(JSContext* cx, double t);
 
 static void CancelExecution(JSContext* cx);
 
+enum class ShellGlobalKind {
+  GlobalObject,
+  WindowProxy,
+};
+
 static JSObject* NewGlobalObject(JSContext* cx, JS::RealmOptions& options,
-                                 JSPrincipals* principals);
+                                 JSPrincipals* principals,
+                                 ShellGlobalKind kind);
+
+/*
+ * A toy WindowProxy class for the shell. This is intended for testing code
+ * where global |this| is a WindowProxy. All requests are forwarded to the
+ * underlying global and no navigation is supported.
+ */
+const js::Class ShellWindowProxyClass =
+    PROXY_CLASS_DEF("ShellWindowProxy", JSCLASS_HAS_RESERVED_SLOTS(1));
+
+JSObject* NewShellWindowProxy(JSContext* cx, JS::HandleObject global) {
+  MOZ_ASSERT(global->is<GlobalObject>());
+
+  js::WrapperOptions options;
+  options.setClass(&ShellWindowProxyClass);
+  options.setSingleton(true);
+
+  JSAutoRealm ar(cx, global);
+  JSObject* obj =
+      js::Wrapper::New(cx, global, &js::Wrapper::singleton, options);
+  MOZ_ASSERT_IF(obj, js::IsWindowProxy(obj));
+  return obj;
+}
 
 /*
  * A toy principals type for the shell.
@@ -860,16 +889,14 @@ static MOZ_MUST_USE bool RunFile(JSContext* cx, const char* filename,
       fprintf(stderr, "(compiling '%s' as UTF-8 without inflating)\n",
               filename);
 
-      if (!JS::CompileUtf8FileDontInflate(cx, options, file, &script)) {
-        return false;
-      }
+      script = JS::CompileUtf8FileDontInflate(cx, options, file);
     } else {
-      if (!JS::CompileUtf8File(cx, options, file, &script)) {
-        return false;
-      }
+      script = JS::CompileUtf8File(cx, options, file);
     }
 
-    MOZ_ASSERT(script);
+    if (!script) {
+      return false;
+    }
   }
 
   if (!RegisterScriptPathWithModuleLoader(cx, script, filename)) {
@@ -1267,8 +1294,8 @@ static MOZ_MUST_USE bool EvalUtf8AndPrint(JSContext* cx, const char* bytes,
       .setIsRunOnce(true)
       .setFileAndLine("typein", lineno);
 
-  RootedScript script(cx);
-  if (!JS::CompileUtf8(cx, options, bytes, length, &script)) {
+  RootedScript script(cx, JS::CompileUtf8(cx, options, bytes, length));
+  if (!script) {
     return false;
   }
   if (compileOnly) {
@@ -1725,10 +1752,9 @@ static bool LoadScript(JSContext* cx, unsigned argc, Value* vp,
         .setIsRunOnce(true)
         .setNoScriptRval(true);
 
-    RootedScript script(cx);
     RootedValue unused(cx);
     if (!(compileOnly
-              ? JS::CompileUtf8Path(cx, opts, filename.get(), &script)
+              ? JS::CompileUtf8Path(cx, opts, filename.get()) != nullptr
               : JS::EvaluateUtf8Path(cx, opts, filename.get(), &unused))) {
       return false;
     }
@@ -2050,7 +2076,8 @@ static bool Evaluate(JSContext* cx, unsigned argc, Value* vp) {
     }
     if (!v.isUndefined()) {
       if (v.isObject()) {
-        global = js::UncheckedUnwrap(&v.toObject());
+        global = js::CheckedUnwrapDynamic(&v.toObject(), cx,
+                                          /* stopAtWindowProxy = */ false);
         if (!global) {
           return false;
         }
@@ -2193,9 +2220,9 @@ static bool Evaluate(JSContext* cx, unsigned argc, Value* vp) {
         }
 
         if (envChain.length() == 0) {
-          (void)JS::Compile(cx, options, srcBuf, &script);
+          script = JS::Compile(cx, options, srcBuf);
         } else {
-          (void)JS::CompileForNonSyntacticScope(cx, options, srcBuf, &script);
+          script = JS::CompileForNonSyntacticScope(cx, options, srcBuf);
         }
       }
 
@@ -2452,7 +2479,8 @@ static bool Run(JSContext* cx, unsigned argc, Value* vp) {
         .setIsRunOnce(true)
         .setNoScriptRval(true);
 
-    if (!JS::Compile(cx, options, srcBuf, &script)) {
+    script = JS::Compile(cx, options, srcBuf);
+    if (!script) {
       return false;
     }
   }
@@ -3454,7 +3482,8 @@ static bool DisassFile(JSContext* cx, unsigned argc, Value* vp) {
         .setIsRunOnce(true)
         .setNoScriptRval(true);
 
-    if (!JS::CompileUtf8Path(cx, options, filename.get(), &script)) {
+    script = JS::CompileUtf8Path(cx, options, filename.get());
+    if (!script) {
       return false;
     }
   }
@@ -3719,7 +3748,7 @@ typedef struct ComplexObject {
 } ComplexObject;
 
 static bool sandbox_enumerate(JSContext* cx, JS::HandleObject obj,
-                              JS::AutoIdVector& properties,
+                              JS::MutableHandleIdVector properties,
                               bool enumerableOnly) {
   RootedValue v(cx);
 
@@ -4001,6 +4030,8 @@ static void WorkerMain(WorkerInput* input) {
   JS_InitDestroyPrincipalsCallback(cx, ShellPrincipals::destroy);
   JS_SetDestroyCompartmentCallback(cx, DestroyShellCompartmentPrivate);
 
+  js::SetWindowProxyClass(cx, &ShellWindowProxyClass);
+
   js::UseInternalJobQueues(cx);
 
   if (!JS::InitSelfHostedCode(cx)) {
@@ -4010,10 +4041,11 @@ static void WorkerMain(WorkerInput* input) {
   EnvironmentPreparer environmentPreparer(cx);
 
   do {
-    JS::RealmOptions compartmentOptions;
-    SetStandardRealmOptions(compartmentOptions);
+    JS::RealmOptions realmOptions;
+    SetStandardRealmOptions(realmOptions);
 
-    RootedObject global(cx, NewGlobalObject(cx, compartmentOptions, nullptr));
+    RootedObject global(cx, NewGlobalObject(cx, realmOptions, nullptr,
+                                            ShellGlobalKind::GlobalObject));
     if (!global) {
       break;
     }
@@ -4024,11 +4056,14 @@ static void WorkerMain(WorkerInput* input) {
     options.setFileAndLine("<string>", 1).setIsRunOnce(true);
 
     AutoReportException are(cx);
-    RootedScript script(cx);
     JS::SourceText<char16_t> srcBuf;
     if (!srcBuf.init(cx, input->chars.get(), input->length,
-                     JS::SourceOwnership::Borrowed) ||
-        !JS::Compile(cx, options, srcBuf, &script)) {
+                     JS::SourceOwnership::Borrowed)) {
+      break;
+    }
+
+    RootedScript script(cx, JS::Compile(cx, options, srcBuf));
+    if (!script) {
       break;
     }
     RootedValue result(cx);
@@ -4663,8 +4698,8 @@ static bool Compile(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  RootedScript script(cx);
-  if (!JS::Compile(cx, options, srcBuf, &script)) {
+  RootedScript script(cx, JS::Compile(cx, options, srcBuf));
+  if (!script) {
     return false;
   }
 
@@ -4941,7 +4976,7 @@ static bool AbortDynamicModuleImport(JSContext* cx, unsigned argc, Value* vp) {
   RootedString specifier(cx, args[1].toString());
   Rooted<PromiseObject*> promise(cx, &args[2].toObject().as<PromiseObject>());
 
-  cx->setPendingException(args[3]);
+  cx->setPendingExceptionAndCaptureStack(args[3]);
   return js::FinishDynamicModuleImport(cx, args[0], specifier, promise);
 }
 
@@ -6113,6 +6148,7 @@ static bool NewGlobal(JSContext* cx, unsigned argc, Value* vp) {
   JS::RealmOptions options;
   JS::RealmCreationOptions& creationOptions = options.creationOptions();
   JS::RealmBehaviors& behaviors = options.behaviors();
+  ShellGlobalKind kind = ShellGlobalKind::GlobalObject;
 
   SetStandardRealmOptions(options);
 
@@ -6172,6 +6208,14 @@ static bool NewGlobal(JSContext* cx, unsigned argc, Value* vp) {
       behaviors.setDisableLazyParsing(v.toBoolean());
     }
 
+    if (!JS_GetProperty(cx, opts, "useWindowProxy", &v)) {
+      return false;
+    }
+    if (v.isBoolean()) {
+      kind = v.toBoolean() ? ShellGlobalKind::WindowProxy
+                           : ShellGlobalKind::GlobalObject;
+    }
+
     if (!JS_GetProperty(cx, opts, "enableBigInt", &v)) {
       return false;
     }
@@ -6207,7 +6251,7 @@ static bool NewGlobal(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  RootedObject global(cx, NewGlobalObject(cx, options, principals));
+  RootedObject global(cx, NewGlobalObject(cx, options, principals, kind));
   if (principals) {
     JS_DropPrincipals(cx, principals);
   }
@@ -6215,11 +6259,12 @@ static bool NewGlobal(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  if (!JS_WrapObject(cx, &global)) {
+  RootedObject wrapped(cx, ToWindowProxyIfWindow(global));
+  if (!JS_WrapObject(cx, &wrapped)) {
     return false;
   }
 
-  args.rval().setObject(*global);
+  args.rval().setObject(*wrapped);
   return true;
 }
 
@@ -6784,7 +6829,9 @@ static bool GetSharedObject(JSContext* cx, unsigned argc, Value* vp) {
         }
         break;
       }
-      default: { MOZ_CRASH(); }
+      default: {
+        MOZ_CRASH();
+      }
     }
   }
 
@@ -8116,7 +8163,9 @@ static bool TransplantObject(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   // |newGlobal| needs to be a GlobalObject.
-  RootedObject newGlobal(cx, CheckedUnwrapDynamic(&args[0].toObject(), cx));
+  RootedObject newGlobal(
+      cx, js::CheckedUnwrapDynamic(&args[0].toObject(), cx,
+                                   /* stopAtWindowProxy = */ false));
   if (!newGlobal) {
     ReportAccessDenied(cx);
     return false;
@@ -8747,6 +8796,8 @@ JS_FN_HELP("parseBin", BinParse, 1, 0,
 "         debugger (default false)\n"
 "      disableLazyParsing: If true, don't create lazy scripts for functions\n"
 "         (default false).\n"
+"      useWindowProxy: the global will be created with a WindowProxy attached. In this\n"
+"          case, the WindowProxy will be returned.\n"
 "      principal: if present, its value converted to a number must be an\n"
 "         integer that fits in 32 bits; use that as the new realm's\n"
 "         principal. Shell principals are toys, meant only for testing; one\n"
@@ -9154,7 +9205,7 @@ static bool PrintHelp(JSContext* cx, HandleObject obj) {
 
 static bool PrintEnumeratedHelp(JSContext* cx, HandleObject obj,
                                 HandleObject pattern, bool brief) {
-  AutoIdVector idv(cx);
+  RootedIdVector idv(cx);
   if (!GetPropertyKeys(cx, obj, JSITER_OWNONLY | JSITER_HIDDEN, &idv)) {
     return false;
   }
@@ -9460,7 +9511,7 @@ void js::shell::WarningReporter(JSContext* cx, JSErrorReport* report) {
 }
 
 static bool global_enumerate(JSContext* cx, JS::HandleObject obj,
-                             JS::AutoIdVector& properties,
+                             JS::MutableHandleIdVector properties,
                              bool enumerableOnly) {
 #ifdef LAZY_STANDARD_CLASSES
   return JS_NewEnumerateStandardClasses(cx, obj, properties, enumerableOnly);
@@ -9818,7 +9869,8 @@ static const JSPropertySpec TestingProperties[] = {
     JS_PSG("timesAccessed", TimesAccessed, 0), JS_PS_END};
 
 static JSObject* NewGlobalObject(JSContext* cx, JS::RealmOptions& options,
-                                 JSPrincipals* principals) {
+                                 JSPrincipals* principals,
+                                 ShellGlobalKind kind) {
   RootedObject glob(cx,
                     JS_NewGlobalObject(cx, &global_class, principals,
                                        JS::DontFireOnNewGlobalHook, options));
@@ -9828,6 +9880,14 @@ static JSObject* NewGlobalObject(JSContext* cx, JS::RealmOptions& options,
 
   {
     JSAutoRealm ar(cx, glob);
+
+    if (kind == ShellGlobalKind::WindowProxy) {
+      RootedObject proxy(cx, NewShellWindowProxy(cx, glob));
+      if (!proxy) {
+        return nullptr;
+      }
+      js::SetWindowProxy(cx, glob, proxy);
+    }
 
 #ifndef LAZY_STANDARD_CLASSES
     if (!JS::InitRealmStandardClasses(cx)) {
@@ -10306,6 +10366,16 @@ static bool SetContextOptions(JSContext* cx, const OptionParser& op) {
     }
   }
 
+  if (const char* str = op.getStringOption("ion-optimization-levels")) {
+    if (strcmp(str, "on") == 0) {
+      jit::JitOptions.disableOptimizationLevels = false;
+    } else if (strcmp(str, "off") == 0) {
+      jit::JitOptions.disableOptimizationLevels = true;
+    } else {
+      return OptionFailure("ion-optimization-levels", str);
+    }
+  }
+
   if (const char* str = op.getStringOption("ion-instruction-reordering")) {
     if (strcmp(str, "on") == 0) {
       jit::JitOptions.disableInstructionReordering = false;
@@ -10651,7 +10721,8 @@ static int Shell(JSContext* cx, OptionParser* op, char** envp) {
 
   JS::RealmOptions options;
   SetStandardRealmOptions(options);
-  RootedObject glob(cx, NewGlobalObject(cx, options, nullptr));
+  RootedObject glob(
+      cx, NewGlobalObject(cx, options, nullptr, ShellGlobalKind::GlobalObject));
   if (!glob) {
     return 1;
   }
@@ -10933,6 +11004,9 @@ int main(int argc, char** argv, char** envp) {
 #endif
       || !op.addStringOption('\0', "ion-sink", "on/off",
                              "Sink code motion (default: off, on to enable)") ||
+      !op.addStringOption('\0', "ion-optimization-levels", "on/off",
+                          "Use multiple Ion optimization levels (default: on, "
+                          "off to disable)") ||
       !op.addStringOption('\0', "ion-loop-unrolling", "on/off",
                           "(NOP for fuzzers)") ||
       !op.addStringOption(
@@ -11205,6 +11279,8 @@ int main(int argc, char** argv, char** envp) {
   JS_SetSecurityCallbacks(cx, &ShellPrincipals::securityCallbacks);
   JS_InitDestroyPrincipalsCallback(cx, ShellPrincipals::destroy);
   JS_SetDestroyCompartmentCallback(cx, DestroyShellCompartmentPrivate);
+
+  js::SetWindowProxyClass(cx, &ShellWindowProxyClass);
 
   JS_AddInterruptCallback(cx, ShellInterruptCallback);
 

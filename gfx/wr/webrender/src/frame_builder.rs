@@ -26,7 +26,6 @@ use resource_cache::{ResourceCache};
 use scene::{ScenePipeline, SceneProperties};
 use scene_builder::DocumentStats;
 use segment::SegmentBuilder;
-use spatial_node::SpatialNode;
 use std::{f32, mem};
 use std::sync::Arc;
 use tiling::{Frame, RenderPass, RenderPassKind, RenderTargetContext, RenderTarget};
@@ -181,6 +180,7 @@ pub struct PictureContext {
     pub apply_local_clip_rect: bool,
     pub allow_subpixel_aa: bool,
     pub is_passthrough: bool,
+    pub is_composite: bool,
     pub raster_space: RasterSpace,
     pub surface_spatial_node_index: SpatialNodeIndex,
     pub raster_spatial_node_index: SpatialNodeIndex,
@@ -199,23 +199,6 @@ pub struct PictureState {
     /// If the plane splitter, the primitives get added to it instead of
     /// batching into their parent pictures.
     pub plane_splitter: Option<PlaneSplitter>,
-}
-
-pub struct PrimitiveContext<'a> {
-    pub spatial_node: &'a SpatialNode,
-    pub spatial_node_index: SpatialNodeIndex,
-}
-
-impl<'a> PrimitiveContext<'a> {
-    pub fn new(
-        spatial_node: &'a SpatialNode,
-        spatial_node_index: SpatialNodeIndex,
-    ) -> Self {
-        PrimitiveContext {
-            spatial_node,
-            spatial_node_index,
-        }
-    }
 }
 
 impl FrameBuilder {

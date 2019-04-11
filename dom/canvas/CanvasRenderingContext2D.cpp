@@ -15,11 +15,12 @@
 
 #include "nsContentUtils.h"
 
+#include "mozilla/PresShell.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
 #include "SVGObserverUtils.h"
 #include "nsPresContext.h"
-#include "nsIPresShell.h"
+#include "nsIPresShellInlines.h"
 
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIFrame.h"
@@ -69,6 +70,7 @@
 #include "jsfriendapi.h"
 #include "js/Conversions.h"
 #include "js/HeapAPI.h"
+#include "js/Warnings.h"  // JS::WarnASCII
 
 #include "mozilla/Alignment.h"
 #include "mozilla/Assertions.h"
@@ -109,7 +111,6 @@
 #include "nsGlobalWindow.h"
 #include "nsIScreenManager.h"
 #include "nsFilterInstance.h"
-#include "nsSVGLength2.h"
 #include "nsDeviceContext.h"
 #include "nsFontMetrics.h"
 #include "Units.h"
@@ -892,23 +893,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(CanvasRenderingContext2D)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
-CanvasRenderingContext2D::ContextState::ContextState()
-    : textAlign(TextAlign::START),
-      textBaseline(TextBaseline::ALPHABETIC),
-      shadowColor(0),
-      lineWidth(1.0f),
-      miterLimit(10.0f),
-      globalAlpha(1.0f),
-      shadowBlur(0.0),
-      dashOffset(0.0f),
-      op(mozilla::gfx::CompositionOp::OP_OVER),
-      fillRule(mozilla::gfx::FillRule::FILL_WINDING),
-      lineCap(mozilla::gfx::CapStyle::BUTT),
-      lineJoin(mozilla::gfx::JoinStyle::MITER_OR_BEVEL),
-      filterString(u"none"),
-      filterSourceGraphicTainted(false),
-      imageSmoothingEnabled(true),
-      fontExplicitLanguage(false) {}
+CanvasRenderingContext2D::ContextState::ContextState() = default;
 
 CanvasRenderingContext2D::ContextState::ContextState(const ContextState& aOther)
     : fontGroup(aOther.fontGroup),
@@ -1016,7 +1001,7 @@ bool CanvasRenderingContext2D::ParseColor(const nsAString& aString,
     RefPtr<ComputedStyle> canvasStyle =
         nsComputedDOMStyle::GetComputedStyle(mCanvasElement, nullptr);
     if (canvasStyle) {
-      *aColor = canvasStyle->StyleColor()->mColor;
+      *aColor = canvasStyle->StyleColor()->mColor.ToColor();
     }
     // Beware that the presShell could be gone here.
   }
@@ -1662,7 +1647,7 @@ nsString CanvasRenderingContext2D::GetHitRegion(
 
 NS_IMETHODIMP
 CanvasRenderingContext2D::GetInputStream(const char* aMimeType,
-                                         const char16_t* aEncoderOptions,
+                                         const nsAString& aEncoderOptions,
                                          nsIInputStream** aStream) {
   nsCString enccid("@mozilla.org/image/encoder;2?type=");
   enccid += aMimeType;
@@ -2038,9 +2023,9 @@ already_AddRefed<CanvasPattern> CanvasRenderingContext2D::CreatePattern(
       if (!srcSurf) {
         JSContext* context = nsContentUtils::GetCurrentJSContext();
         if (context) {
-          JS_ReportWarningASCII(context,
-                                "CanvasRenderingContext2D.createPattern()"
-                                " failed to snapshot source canvas.");
+          JS::WarnASCII(context,
+                        "CanvasRenderingContext2D.createPattern() failed to "
+                        "snapshot source canvas.");
         }
         aError.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
         return nullptr;
@@ -2085,9 +2070,9 @@ already_AddRefed<CanvasPattern> CanvasRenderingContext2D::CreatePattern(
     if (!srcSurf) {
       JSContext* context = nsContentUtils::GetCurrentJSContext();
       if (context) {
-        JS_ReportWarningASCII(context,
-                              "CanvasRenderingContext2D.createPattern()"
-                              " failed to prepare source ImageBitmap.");
+        JS::WarnASCII(context,
+                      "CanvasRenderingContext2D.createPattern() failed to "
+                      "prepare source ImageBitmap.");
       }
       aError.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
       return nullptr;
@@ -4752,9 +4737,10 @@ void CanvasRenderingContext2D::DrawWindow(nsGlobalWindowInner& aWindow,
     thebes->SetMatrix(Matrix::Scaling(matrix._11, matrix._22));
   }
 
-  nsCOMPtr<nsIPresShell> shell = presContext->PresShell();
+  RefPtr<PresShell> presShell = presContext->PresShell();
 
-  Unused << shell->RenderDocument(r, renderDocFlags, backgroundColor, thebes);
+  Unused << presShell->RenderDocument(r, renderDocFlags, backgroundColor,
+                                      thebes);
   // If this canvas was contained in the drawn window, the pre-transaction
   // callback may have returned its DT. If so, we must reacquire it here.
   EnsureTarget(discardContent ? &drawRect : nullptr);

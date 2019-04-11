@@ -171,7 +171,6 @@ class Exception;
 // default initial sizes for maps (hashtables)
 
 #define XPC_JS_MAP_LENGTH 32
-#define XPC_JS_CLASS_MAP_LENGTH 32
 
 #define XPC_NATIVE_MAP_LENGTH 8
 #define XPC_NATIVE_PROTO_MAP_LENGTH 8
@@ -488,10 +487,6 @@ class XPCJSRuntime final : public mozilla::CycleCollectedJSRuntime {
     return mWrappedJSMap;
   }
 
-  IID2WrappedJSClassMap* GetWrappedJSClassMap() const {
-    return mWrappedJSClassMap;
-  }
-
   IID2NativeInterfaceMap* GetIID2NativeInterfaceMap() const {
     return mIID2NativeInterfaceMap;
   }
@@ -625,7 +620,6 @@ class XPCJSRuntime final : public mozilla::CycleCollectedJSRuntime {
       Principal2JSObjectMap;
 
   JSObject2WrappedJSMap* mWrappedJSMap;
-  IID2WrappedJSClassMap* mWrappedJSClassMap;
   IID2NativeInterfaceMap* mIID2NativeInterfaceMap;
   ClassInfo2NativeSetMap* mClassInfo2NativeSetMap;
   NativeSetMap* mNativeSetMap;
@@ -838,7 +832,7 @@ class XPCWrappedNativeScope final
   bool AttachComponentsObject(JSContext* aCx);
 
   // Returns the JS object reflection of the Components object.
-  bool GetComponentsJSObject(JS::MutableHandleObject obj);
+  bool GetComponentsJSObject(JSContext* cx, JS::MutableHandleObject obj);
 
   JSObject* GetExpandoChain(JS::HandleObject target);
 
@@ -1055,11 +1049,13 @@ class XPCNativeInterface final {
   NS_INLINE_DECL_REFCOUNTING_WITH_DESTROY(XPCNativeInterface,
                                           DestroyInstance(this))
 
-  static already_AddRefed<XPCNativeInterface> GetNewOrUsed(const nsIID* iid);
+  static already_AddRefed<XPCNativeInterface> GetNewOrUsed(JSContext* cx,
+                                                           const nsIID* iid);
   static already_AddRefed<XPCNativeInterface> GetNewOrUsed(
-      const nsXPTInterfaceInfo* info);
-  static already_AddRefed<XPCNativeInterface> GetNewOrUsed(const char* name);
-  static already_AddRefed<XPCNativeInterface> GetISupports();
+      JSContext* cx, const nsXPTInterfaceInfo* info);
+  static already_AddRefed<XPCNativeInterface> GetNewOrUsed(JSContext* cx,
+                                                           const char* name);
+  static already_AddRefed<XPCNativeInterface> GetISupports(JSContext* cx);
 
   inline const nsXPTInterfaceInfo* GetInterfaceInfo() const { return mInfo; }
   inline jsid GetName() const { return mName; }
@@ -1083,7 +1079,7 @@ class XPCNativeInterface final {
 
  protected:
   static already_AddRefed<XPCNativeInterface> NewInstance(
-      const nsXPTInterfaceInfo* aInfo);
+      JSContext* cx, const nsXPTInterfaceInfo* aInfo);
 
   XPCNativeInterface() = delete;
   XPCNativeInterface(const nsXPTInterfaceInfo* aInfo, jsid aName)
@@ -1113,14 +1109,16 @@ class MOZ_STACK_CLASS XPCNativeSetKey final {
  public:
   // This represents an existing set |baseSet|.
   explicit XPCNativeSetKey(XPCNativeSet* baseSet)
-      : mBaseSet(baseSet), mAddition(nullptr) {
+      : mCx(nullptr), mBaseSet(baseSet), mAddition(nullptr) {
     MOZ_ASSERT(baseSet);
   }
 
   // This represents a new set containing only nsISupports and
-  // |addition|.
-  explicit XPCNativeSetKey(XPCNativeInterface* addition)
-      : mBaseSet(nullptr), mAddition(addition) {
+  // |addition|.  This needs a JSContext because it may need to
+  // construct some data structures that need one to construct them.
+  explicit XPCNativeSetKey(JSContext* cx, XPCNativeInterface* addition)
+      : mCx(cx), mBaseSet(nullptr), mAddition(addition) {
+    MOZ_ASSERT(cx);
     MOZ_ASSERT(addition);
   }
 
@@ -1138,6 +1136,7 @@ class MOZ_STACK_CLASS XPCNativeSetKey final {
   // Allow shallow copy
 
  private:
+  JSContext* mCx;
   RefPtr<XPCNativeSet> mBaseSet;
   RefPtr<XPCNativeInterface> mAddition;
 };
@@ -1149,9 +1148,12 @@ class XPCNativeSet final {
  public:
   NS_INLINE_DECL_REFCOUNTING_WITH_DESTROY(XPCNativeSet, DestroyInstance(this))
 
-  static already_AddRefed<XPCNativeSet> GetNewOrUsed(const nsIID* iid);
-  static already_AddRefed<XPCNativeSet> GetNewOrUsed(nsIClassInfo* classInfo);
-  static already_AddRefed<XPCNativeSet> GetNewOrUsed(XPCNativeSetKey* key);
+  static already_AddRefed<XPCNativeSet> GetNewOrUsed(JSContext* cx,
+                                                     const nsIID* iid);
+  static already_AddRefed<XPCNativeSet> GetNewOrUsed(JSContext* cx,
+                                                     nsIClassInfo* classInfo);
+  static already_AddRefed<XPCNativeSet> GetNewOrUsed(JSContext* cx,
+                                                     XPCNativeSetKey* key);
 
   // This generates a union set.
   //
@@ -1161,7 +1163,7 @@ class XPCNativeSet final {
   // |firstSet|, we return |secondSet| without worrying about whether the
   // ordering might differ from |firstSet|.
   static already_AddRefed<XPCNativeSet> GetNewOrUsed(
-      XPCNativeSet* firstSet, XPCNativeSet* secondSet,
+      JSContext* cx, XPCNativeSet* firstSet, XPCNativeSet* secondSet,
       bool preserveFirstSetOrder);
 
   static void ClearCacheEntryForClassInfo(nsIClassInfo* classInfo);
@@ -1200,7 +1202,7 @@ class XPCNativeSet final {
 
  protected:
   static already_AddRefed<XPCNativeSet> NewInstance(
-      nsTArray<RefPtr<XPCNativeInterface>>&& array);
+      JSContext* cx, nsTArray<RefPtr<XPCNativeInterface>>&& array);
   static already_AddRefed<XPCNativeSet> NewInstanceMutate(XPCNativeSetKey* key);
 
   XPCNativeSet() : mMemberCount(0), mInterfaceCount(0) {}
@@ -1223,7 +1225,8 @@ class XPCNativeSet final {
 
 class XPCWrappedNativeProto final {
  public:
-  static XPCWrappedNativeProto* GetNewOrUsed(XPCWrappedNativeScope* scope,
+  static XPCWrappedNativeProto* GetNewOrUsed(JSContext* cx,
+                                             XPCWrappedNativeScope* scope,
                                              nsIClassInfo* classInfo,
                                              nsIXPCScriptable* scriptable);
 
@@ -1281,7 +1284,7 @@ class XPCWrappedNativeProto final {
   XPCWrappedNativeProto(XPCWrappedNativeScope* Scope, nsIClassInfo* ClassInfo,
                         already_AddRefed<XPCNativeSet>&& Set);
 
-  bool Init(nsIXPCScriptable* scriptable);
+  bool Init(JSContext* cx, nsIXPCScriptable* scriptable);
 
  private:
 #ifdef DEBUG
@@ -1454,13 +1457,13 @@ class XPCWrappedNative final : public nsIXPConnectWrappedNative {
     return scope ? scope->GetRuntime() : nullptr;
   }
 
-  static nsresult WrapNewGlobal(xpcObjectHelper& nativeHelper,
+  static nsresult WrapNewGlobal(JSContext* cx, xpcObjectHelper& nativeHelper,
                                 nsIPrincipal* principal,
                                 bool initStandardClasses,
                                 JS::RealmOptions& aOptions,
                                 XPCWrappedNative** wrappedGlobal);
 
-  static nsresult GetNewOrUsed(xpcObjectHelper& helper,
+  static nsresult GetNewOrUsed(JSContext* cx, xpcObjectHelper& helper,
                                XPCWrappedNativeScope* Scope,
                                XPCNativeInterface* Interface,
                                XPCWrappedNative** wrapper);
@@ -1484,10 +1487,11 @@ class XPCWrappedNative final : public nsIXPConnectWrappedNative {
 
   inline bool HasInterfaceNoQI(const nsIID& iid);
 
-  XPCWrappedNativeTearOff* FindTearOff(XPCNativeInterface* aInterface,
+  XPCWrappedNativeTearOff* FindTearOff(JSContext* cx,
+                                       XPCNativeInterface* aInterface,
                                        bool needJSObject = false,
                                        nsresult* pError = nullptr);
-  XPCWrappedNativeTearOff* FindTearOff(const nsIID& iid);
+  XPCWrappedNativeTearOff* FindTearOff(JSContext* cx, const nsIID& iid);
 
   void Mark() const {}
 
@@ -1520,7 +1524,7 @@ class XPCWrappedNative final : public nsIXPConnectWrappedNative {
 
   // Returns a string that should be freed with js_free, or nullptr on
   // failure.
-  char* ToString(XPCWrappedNativeTearOff* to = nullptr) const;
+  char* ToString(JSContext* cx, XPCWrappedNativeTearOff* to = nullptr) const;
 
   static nsIXPCScriptable* GatherProtoScriptable(nsIClassInfo* classInfo);
 
@@ -1551,15 +1555,15 @@ class XPCWrappedNative final : public nsIXPConnectWrappedNative {
     FLAT_JS_OBJECT_VALID = JS_BIT(0)
   };
 
-  bool Init(nsIXPCScriptable* scriptable);
-  bool FinishInit();
+  bool Init(JSContext* cx, nsIXPCScriptable* scriptable);
+  bool FinishInit(JSContext* cx);
 
-  bool ExtendSet(XPCNativeInterface* aInterface);
+  bool ExtendSet(JSContext* aCx, XPCNativeInterface* aInterface);
 
-  nsresult InitTearOff(XPCWrappedNativeTearOff* aTearOff,
+  nsresult InitTearOff(JSContext* cx, XPCWrappedNativeTearOff* aTearOff,
                        XPCNativeInterface* aInterface, bool needJSObject);
 
-  bool InitTearOffJSObject(XPCWrappedNativeTearOff* to);
+  bool InitTearOffJSObject(JSContext* cx, XPCWrappedNativeTearOff* to);
 
  public:
   static void GatherScriptable(nsISupports* obj, nsIClassInfo* classInfo,
@@ -1585,99 +1589,6 @@ class XPCWrappedNative final : public nsIXPConnectWrappedNative {
 ****************************************************************************
 ***************************************************************************/
 
-// this interfaces exists so we can refcount nsXPCWrappedJSClass
-// {2453EBA0-A9B8-11d2-BA64-00805F8A5DD7}
-#define NS_IXPCONNECT_WRAPPED_JS_CLASS_IID          \
-  {                                                 \
-    0x2453eba0, 0xa9b8, 0x11d2, {                   \
-      0xba, 0x64, 0x0, 0x80, 0x5f, 0x8a, 0x5d, 0xd7 \
-    }                                               \
-  }
-
-class nsIXPCWrappedJSClass : public nsISupports {
- public:
-  NS_DECLARE_STATIC_IID_ACCESSOR(NS_IXPCONNECT_WRAPPED_JS_CLASS_IID)
-  NS_IMETHOD DebugDump(int16_t depth) = 0;
-};
-
-NS_DEFINE_STATIC_IID_ACCESSOR(nsIXPCWrappedJSClass,
-                              NS_IXPCONNECT_WRAPPED_JS_CLASS_IID)
-
-/*************************/
-// nsXPCWrappedJSClass represents the sharable factored out common code and
-// data for nsXPCWrappedJS instances for the same interface type.
-
-class nsXPCWrappedJSClass final : public nsIXPCWrappedJSClass {
-  // all the interface method declarations...
-  NS_DECL_ISUPPORTS
-  NS_IMETHOD DebugDump(int16_t depth) override;
-
- public:
-  static already_AddRefed<nsXPCWrappedJSClass> GetNewOrUsed(JSContext* cx,
-                                                            REFNSIID aIID);
-
-  REFNSIID GetIID() const { return mIID; }
-  XPCJSRuntime* GetRuntime() const { return mRuntime; }
-  const nsXPTInterfaceInfo* GetInterfaceInfo() const { return mInfo; }
-  const char* GetInterfaceName();
-
-  NS_IMETHOD DelegatedQueryInterface(nsXPCWrappedJS* self, REFNSIID aIID,
-                                     void** aInstancePtr);
-
-  JSObject* GetRootJSObject(JSContext* cx, JSObject* aJSObj);
-
-  NS_IMETHOD CallMethod(nsXPCWrappedJS* wrapper, uint16_t methodIndex,
-                        const nsXPTMethodInfo* info, nsXPTCMiniVariant* params);
-
-  JSObject* CallQueryInterfaceOnJSObject(JSContext* cx, JSObject* jsobj,
-                                         JS::HandleObject scope, REFNSIID aIID);
-
- private:
-  // aObj is the nsXPCWrappedJS's object. We used this as the callee (or |this|
-  // if getter or setter).
-  // aSyntheticException, if not null, is the exception we should be using.
-  // If null, look for an exception on the JSContext hanging off the
-  // XPCCallContext.
-  static nsresult CheckForException(
-      XPCCallContext& ccx, mozilla::dom::AutoEntryScript& aes,
-      JS::HandleObject aObj, const char* aPropertyName,
-      const char* anInterfaceName,
-      mozilla::dom::Exception* aSyntheticException = nullptr);
-  virtual ~nsXPCWrappedJSClass();
-
-  nsXPCWrappedJSClass() = delete;
-  nsXPCWrappedJSClass(JSContext* cx, REFNSIID aIID,
-                      const nsXPTInterfaceInfo* aInfo);
-
-  bool IsReflectable(uint16_t i) const {
-    return (bool)(mDescriptors[i / 32] & (1U << (i % 32)));
-  }
-  void SetReflectable(uint16_t i, bool b) {
-    if (b)
-      mDescriptors[i / 32] |= (1U << (i % 32));
-    else
-      mDescriptors[i / 32] &= ~(1U << (i % 32));
-  }
-
-  bool GetArraySizeFromParam(const nsXPTMethodInfo* method,
-                             const nsXPTType& type, nsXPTCMiniVariant* params,
-                             uint32_t* result) const;
-
-  bool GetInterfaceTypeFromParam(const nsXPTMethodInfo* method,
-                                 const nsXPTType& type,
-                                 nsXPTCMiniVariant* params, nsID* result) const;
-
-  void CleanupOutparams(const nsXPTMethodInfo* info,
-                        nsXPTCMiniVariant* nativeParams, bool inOutOnly,
-                        uint8_t n) const;
-
- private:
-  XPCJSRuntime* mRuntime;
-  const nsXPTInterfaceInfo* mInfo;
-  nsIID mIID;
-  uint32_t* mDescriptors;
-};
-
 /*************************/
 // nsXPCWrappedJS is a wrapper for a single JSObject for use from native code.
 // nsXPCWrappedJS objects are chained together to represent the various
@@ -1697,8 +1608,9 @@ class nsXPCWrappedJS final : protected nsAutoXPTCStub,
   NS_DECL_CYCLE_COLLECTION_SKIPPABLE_CLASS_AMBIGUOUS(nsXPCWrappedJS,
                                                      nsIXPConnectWrappedJS)
 
+  // This method is defined in XPCWrappedJSClass.cpp to preserve VCS blame.
   NS_IMETHOD CallMethod(uint16_t methodIndex, const nsXPTMethodInfo* info,
-                        nsXPTCMiniVariant* params) override;
+                        nsXPTCMiniVariant* nativeParams) override;
 
   /*
    * This is rarely called directly. Instead one usually calls
@@ -1729,8 +1641,8 @@ class nsXPCWrappedJS final : protected nsAutoXPTCStub,
   // on the root wrapper and will assert if not called on a root wrapper.
   bool IsMultiCompartment() const;
 
-  nsXPCWrappedJSClass* GetClass() const { return mClass; }
-  REFNSIID GetIID() const { return GetClass()->GetIID(); }
+  const nsXPTInterfaceInfo* GetInfo() const { return mInfo; }
+  REFNSIID GetIID() const { return mInfo->IID(); }
   nsXPCWrappedJS* GetRootWrapper() const { return mRoot; }
   nsXPCWrappedJS* GetNextWrapper() const { return mNext; }
 
@@ -1772,14 +1684,19 @@ class nsXPCWrappedJS final : protected nsAutoXPTCStub,
 
   void TraceJS(JSTracer* trc);
 
+  // This method is defined in XPCWrappedJSClass.cpp to preserve VCS blame.
+  static void DebugDumpInterfaceInfo(const nsXPTInterfaceInfo* aInfo,
+                                     int16_t depth);
+
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
 
   virtual ~nsXPCWrappedJS();
 
  protected:
   nsXPCWrappedJS() = delete;
-  nsXPCWrappedJS(JSContext* cx, JSObject* aJSObj, nsXPCWrappedJSClass* aClass,
-                 nsXPCWrappedJS* root, nsresult* rv);
+  nsXPCWrappedJS(JSContext* cx, JSObject* aJSObj,
+                 const nsXPTInterfaceInfo* aInfo, nsXPCWrappedJS* root,
+                 nsresult* rv);
 
   bool CanSkip();
   void Destroy();
@@ -1790,8 +1707,44 @@ class nsXPCWrappedJS final : protected nsAutoXPTCStub,
     return js::GetObjectCompartment(mJSObj.unbarrieredGet());
   }
 
+  // These methods are defined in XPCWrappedJSClass.cpp to preserve VCS blame.
+  static const nsXPTInterfaceInfo* GetInterfaceInfo(REFNSIID aIID);
+
+  nsresult DelegatedQueryInterface(REFNSIID aIID, void** aInstancePtr);
+
+  static JSObject* GetRootJSObject(JSContext* cx, JSObject* aJSObj);
+
+  static JSObject* CallQueryInterfaceOnJSObject(JSContext* cx, JSObject* jsobj,
+                                                JS::HandleObject scope,
+                                                REFNSIID aIID);
+
+  // aObj is the nsXPCWrappedJS's object. We used this as the callee (or |this|
+  // if getter or setter).
+  // aSyntheticException, if not null, is the exception we should be using.
+  // If null, look for an exception on the JSContext hanging off the
+  // XPCCallContext.
+  static nsresult CheckForException(
+      XPCCallContext& ccx, mozilla::dom::AutoEntryScript& aes,
+      JS::HandleObject aObj, const char* aPropertyName,
+      const char* anInterfaceName,
+      mozilla::dom::Exception* aSyntheticException = nullptr);
+
+  static bool GetArraySizeFromParam(const nsXPTMethodInfo* method,
+                                    const nsXPTType& type,
+                                    nsXPTCMiniVariant* params,
+                                    uint32_t* result);
+
+  static bool GetInterfaceTypeFromParam(const nsXPTMethodInfo* method,
+                                        const nsXPTType& type,
+                                        nsXPTCMiniVariant* params,
+                                        nsID* result);
+
+  static void CleanupOutparams(const nsXPTMethodInfo* info,
+                               nsXPTCMiniVariant* nativeParams, bool inOutOnly,
+                               uint8_t count);
+
   JS::Heap<JSObject*> mJSObj;
-  RefPtr<nsXPCWrappedJSClass> mClass;
+  const nsXPTInterfaceInfo* const mInfo;
   nsXPCWrappedJS* mRoot;  // If mRoot != this, it is an owning pointer.
   nsXPCWrappedJS* mNext;
   nsCOMPtr<nsISupports> mOuter;  // only set in root
@@ -1833,11 +1786,10 @@ class XPCWrappedJSIterator final : public nsISimpleEnumerator {
 // class here just for static methods
 class XPCConvert {
  public:
-  static bool IsMethodReflectable(const nsXPTMethodInfo& info);
-
   /**
    * Convert a native object into a JS::Value.
    *
+   * @param cx the JSContext representing the global we want the value in
    * @param d [out] the resulting JS::Value
    * @param s the native object we're working with
    * @param type the type of object that s is
@@ -1847,9 +1799,9 @@ class XPCConvert {
    * @param pErr [out] relevant error code, if any.
    */
 
-  static bool NativeData2JS(JS::MutableHandleValue d, const void* s,
-                            const nsXPTType& type, const nsID* iid,
-                            uint32_t arrlen, nsresult* pErr);
+  static bool NativeData2JS(JSContext* cx, JS::MutableHandleValue d,
+                            const void* s, const nsXPTType& type,
+                            const nsID* iid, uint32_t arrlen, nsresult* pErr);
 
   static bool JSData2Native(JSContext* cx, void* d, JS::HandleValue s,
                             const nsXPTType& type, const nsID* iid,
@@ -1858,6 +1810,7 @@ class XPCConvert {
   /**
    * Convert a native nsISupports into a JSObject.
    *
+   * @param cx the JSContext representing the global we want the object in.
    * @param dest [out] the resulting JSObject
    * @param src the native object we're working with
    * @param iid the interface of src that we want (may be null)
@@ -1869,7 +1822,8 @@ class XPCConvert {
    * @param src_is_identity optional performance hint. Set to true only
    *                        if src is the identity pointer.
    */
-  static bool NativeInterface2JSObject(JS::MutableHandleValue dest,
+  static bool NativeInterface2JSObject(JSContext* cx,
+                                       JS::MutableHandleValue dest,
                                        xpcObjectHelper& aHelper,
                                        const nsID* iid, bool allowNativeWrapper,
                                        nsresult* pErr);
@@ -1884,7 +1838,7 @@ class XPCConvert {
   // for the WN case. You probably want UnwrapReflectorToISupports.
   static bool GetISupportsFromJSObject(JSObject* obj, nsISupports** iface);
 
-  static nsresult JSValToXPCException(JS::MutableHandleValue s,
+  static nsresult JSValToXPCException(JSContext* cx, JS::MutableHandleValue s,
                                       const char* ifaceName,
                                       const char* methodName,
                                       mozilla::dom::Exception** exception);
@@ -1899,6 +1853,8 @@ class XPCConvert {
   /**
    * Convert a native array into a JS::Value.
    *
+   * @param cx the JSContext we're working with and in whose global the array
+   *           should be created.
    * @param d [out] the resulting JS::Value
    * @param buf the native buffer containing input values
    * @param type the type of objects in the array
@@ -1907,15 +1863,16 @@ class XPCConvert {
    * @param scope the default scope to put on the new JSObjects' parent chain
    * @param pErr [out] relevant error code, if any.
    */
-  static bool NativeArray2JS(JS::MutableHandleValue d, const void* buf,
-                             const nsXPTType& type, const nsID* iid,
-                             uint32_t count, nsresult* pErr);
+  static bool NativeArray2JS(JSContext* cx, JS::MutableHandleValue d,
+                             const void* buf, const nsXPTType& type,
+                             const nsID* iid, uint32_t count, nsresult* pErr);
 
   typedef std::function<void*(uint32_t*)> ArrayAllocFixupLen;
 
   /**
    * Convert a JS::Value into a native array.
    *
+   * @param cx the JSContext we're working with
    * @param aJSVal the JS::Value to convert
    * @param aEltType the type of objects in the array
    * @param aIID the interface of each object in the array
@@ -1924,8 +1881,9 @@ class XPCConvert {
    *                       allocate the backing buffer. This function may
    *                       modify the length of array to be converted.
    */
-  static bool JSArray2Native(JS::HandleValue aJSVal, const nsXPTType& aEltType,
-                             const nsIID* aIID, nsresult* pErr,
+  static bool JSArray2Native(JSContext* cx, JS::HandleValue aJSVal,
+                             const nsXPTType& aEltType, const nsIID* aIID,
+                             nsresult* pErr,
                              const ArrayAllocFixupLen& aAllocFixupLen);
 
   XPCConvert() = delete;
@@ -2240,14 +2198,14 @@ class XPCVariant : public nsIVariant {
   /**
    * Convert a variant into a JS::Value.
    *
-   * @param ccx the context for the whole procedure
+   * @param cx the context for the whole procedure
    * @param variant the variant to convert
    * @param scope the default scope to put on the new JSObject's parent chain
    * @param pErr [out] relevant error code, if any.
    * @param pJSVal [out] the resulting jsval.
    */
-  static bool VariantDataToJS(nsIVariant* variant, nsresult* pErr,
-                              JS::MutableHandleValue pJSVal);
+  static bool VariantDataToJS(JSContext* cx, nsIVariant* variant,
+                              nsresult* pErr, JS::MutableHandleValue pJSVal);
 
   bool IsPurple() { return mRefCnt.IsPurple(); }
 

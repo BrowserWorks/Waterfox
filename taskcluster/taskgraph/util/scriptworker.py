@@ -353,7 +353,6 @@ def get_release_config(config):
                                                  'release-secondary-update-verify-config',
                                                  'release-balrog-submit-toplevel',
                                                  'release-secondary-balrog-submit-toplevel',
-                                                 'release-mark-as-started'
                                                  ):
         partial_updates = json.loads(partial_updates)
         release_config['partial_versions'] = ', '.join([
@@ -427,11 +426,13 @@ def generate_beetmover_upstream_artifacts(config, job, platform, locale=None, de
         project=config.params['project'],
         platform=platform
     )
-    map_config = cached_load_yaml(job['attributes']['artifact_map'])
+    map_config = deepcopy(cached_load_yaml(job['attributes']['artifact_map']))
     upstream_artifacts = list()
 
     if not locale:
         locales = map_config['default_locales']
+    elif isinstance(locale, list):
+        locales = locale
     else:
         locales = [locale]
 
@@ -497,7 +498,7 @@ def generate_beetmover_compressed_upstream_artifacts(job, dependencies=None):
         list: A list of dictionaries conforming to the upstream_artifacts spec.
     """
     base_artifact_prefix = get_artifact_prefix(job)
-    map_config = cached_load_yaml(job['attributes']['artifact_map'])
+    map_config = deepcopy(cached_load_yaml(job['attributes']['artifact_map']))
     upstream_artifacts = list()
 
     if not dependencies:
@@ -554,7 +555,7 @@ def generate_beetmover_artifact_map(config, job, **kwargs):
         project=config.params['project'],
         platform=platform
     )
-    map_config = cached_load_yaml(job['attributes']['artifact_map'])
+    map_config = deepcopy(cached_load_yaml(job['attributes']['artifact_map']))
     base_artifact_prefix = map_config.get('base_artifact_prefix', get_artifact_prefix(job))
 
     artifacts = list()
@@ -562,7 +563,10 @@ def generate_beetmover_artifact_map(config, job, **kwargs):
     dependencies = job['dependencies'].keys()
 
     if kwargs.get('locale'):
-        locales = [kwargs['locale']]
+        if isinstance(kwargs['locale'], list):
+            locales = kwargs['locale']
+        else:
+            locales = [kwargs['locale']]
     else:
         locales = map_config['default_locales']
 
@@ -694,7 +698,7 @@ def generate_beetmover_partials_artifact_map(config, job, partials_info, **kwarg
         project=config.params['project'],
         platform=platform
     )
-    map_config = cached_load_yaml(job['attributes']['artifact_map'])
+    map_config = deepcopy(cached_load_yaml(job['attributes']['artifact_map']))
     base_artifact_prefix = map_config.get('base_artifact_prefix', get_artifact_prefix(job))
 
     artifacts = list()
@@ -780,6 +784,7 @@ def generate_beetmover_partials_artifact_map(config, job, partials_info, **kwarg
                 kwargs.update({
                     'partial': pname,
                     'from_buildid': info['buildid'],
+                    'previous_version': info.get('previousVersion'),
                     'buildid': str(config.params['moz_build_date']),
                     'locale': locale,
                     'version': config.params['version'],
@@ -826,10 +831,15 @@ def should_use_artifact_map(platform, project):
         'fennec'
     ]
     projects = ['mozilla-central', 'mozilla-beta', 'mozilla-release']
-    if any([pl in platform for pl in platforms]) and any([pj in project for pj in projects]):
+    if any([pl in platform for pl in platforms]) and any([pj == project for pj in projects]):
         return True
 
     platforms = [
+        'linux',    # needed for beetmover-langpacks-checksums
+        'linux64',  # which inherit amended platform from their beetmover counterpart
+        'win32',
+        'win64',
+        'macosx64',
         'linux-shippable',
         'linux64-shippable',
         'macosx64-shippable',
@@ -838,9 +848,11 @@ def should_use_artifact_map(platform, project):
         'win64-aarch64-shippable',
         'win64-asan-reporter-nightly',
         'linux64-asan-reporter-nightly',
+        'firefox-source',
+        'firefox-release',
     ]
-    projects = ['mozilla-central']
-    if any([pl in platform for pl in platforms]) and any([pj in project for pj in projects]):
+    projects = ['mozilla-central', 'mozilla-beta', 'mozilla-release']
+    if any([pl == platform for pl in platforms]) and any([pj == project for pj in projects]):
         return True
 
     return False

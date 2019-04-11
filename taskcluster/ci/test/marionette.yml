@@ -18,6 +18,14 @@ job-defaults:
                 default:
                     - marionette/prod_config.py
                     - remove_executables.py
+    run-on-projects:
+        by-test-platform:
+            windows10-aarch64/opt: ['try', 'mozilla-central']
+            default: built-projects
+    tier:
+        by-test-platform:
+            windows10-aarch64.*: 2
+            default: default
 
 marionette:
     description: "Marionette unittest run"
@@ -47,3 +55,13 @@ marionette-gpu:
         by-test-platform:
             windows10-64.*: virtual-with-gpu
             default: virtual
+
+marionette-media:
+    description: "Marionette DOM media test run"
+    treeherder-symbol: MnM
+    max-run-time: 5400
+    instance-size: default
+    tier: 3
+    mozharness:
+        extra-options:
+            - --test-manifest=stream-tests.ini

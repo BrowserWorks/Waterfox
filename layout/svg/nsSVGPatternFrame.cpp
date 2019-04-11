@@ -131,7 +131,7 @@ static float MaxExpansion(const Matrix &aMatrix) {
 // scale if the viewBox is specified and _patternUnits_ is set to or defaults to
 // objectBoundingBox though, since in that case the viewBox is relative to the
 // bbox
-static bool IncludeBBoxScale(const SVGViewBox &aViewBox,
+static bool IncludeBBoxScale(const SVGAnimatedViewBox &aViewBox,
                              uint32_t aPatternContentUnits,
                              uint32_t aPatternUnits) {
   return (!aViewBox.IsExplicitlySet() &&
@@ -163,7 +163,8 @@ static Matrix GetPatternMatrix(uint16_t aPatternUnits,
   return patternMatrix;
 }
 
-static nsresult GetTargetGeometry(gfxRect *aBBox, const SVGViewBox &aViewBox,
+static nsresult GetTargetGeometry(gfxRect *aBBox,
+                                  const SVGAnimatedViewBox &aViewBox,
                                   uint16_t aPatternContentUnits,
                                   uint16_t aPatternUnits, nsIFrame *aTarget,
                                   const Matrix &aContextMatrix,
@@ -214,7 +215,7 @@ already_AddRefed<SourceSurface> nsSVGPatternFrame::PaintPattern(
   }
   nsIFrame *firstKid = patternWithChildren->mFrames.FirstChild();
 
-  const SVGViewBox &viewBox = GetViewBox();
+  const SVGAnimatedViewBox &viewBox = GetViewBox();
 
   uint16_t patternContentUnits =
       GetEnumValue(SVGPatternElement::PATTERNCONTENTUNITS);
@@ -411,7 +412,7 @@ nsSVGPatternFrame *nsSVGPatternFrame::GetPatternWithChildren() {
 
 uint16_t nsSVGPatternFrame::GetEnumValue(uint32_t aIndex,
                                          nsIContent *aDefault) {
-  SVGEnum &thisEnum =
+  SVGAnimatedEnumeration &thisEnum =
       static_cast<SVGPatternElement *>(GetContent())->mEnumAttributes[aIndex];
 
   if (thisEnum.IsExplicitlySet()) {
@@ -472,8 +473,8 @@ gfxMatrix nsSVGPatternFrame::GetPatternTransform() {
   return animTransformList->GetAnimValue().GetConsolidationMatrix();
 }
 
-const SVGViewBox &nsSVGPatternFrame::GetViewBox(nsIContent *aDefault) {
-  const SVGViewBox &thisViewBox =
+const SVGAnimatedViewBox &nsSVGPatternFrame::GetViewBox(nsIContent *aDefault) {
+  const SVGAnimatedViewBox &thisViewBox =
       static_cast<SVGPatternElement *>(GetContent())->mViewBox;
 
   if (thisViewBox.IsExplicitlySet()) {
@@ -520,9 +521,9 @@ const SVGAnimatedPreserveAspectRatio &nsSVGPatternFrame::GetPreserveAspectRatio(
              : static_cast<SVGPatternElement *>(aDefault)->mPreserveAspectRatio;
 }
 
-const nsSVGLength2 *nsSVGPatternFrame::GetLengthValue(uint32_t aIndex,
-                                                      nsIContent *aDefault) {
-  const nsSVGLength2 *thisLength =
+const SVGAnimatedLength *nsSVGPatternFrame::GetLengthValue(
+    uint32_t aIndex, nsIContent *aDefault) {
+  const SVGAnimatedLength *thisLength =
       &static_cast<SVGPatternElement *>(GetContent())
            ->mLengthAttributes[aIndex];
 
@@ -589,7 +590,7 @@ gfxRect nsSVGPatternFrame::GetPatternRect(uint16_t aPatternUnits,
   float x, y, width, height;
 
   // Get the pattern x,y,width, and height
-  const nsSVGLength2 *tmpX, *tmpY, *tmpHeight, *tmpWidth;
+  const SVGAnimatedLength *tmpX, *tmpY, *tmpHeight, *tmpWidth;
   tmpX = GetLengthValue(SVGPatternElement::ATTR_X);
   tmpY = GetLengthValue(SVGPatternElement::ATTR_Y);
   tmpHeight = GetLengthValue(SVGPatternElement::ATTR_HEIGHT);
@@ -611,7 +612,7 @@ gfxRect nsSVGPatternFrame::GetPatternRect(uint16_t aPatternUnits,
   return gfxRect(x, y, width, height);
 }
 
-gfxMatrix nsSVGPatternFrame::ConstructCTM(const SVGViewBox &aViewBox,
+gfxMatrix nsSVGPatternFrame::ConstructCTM(const SVGAnimatedViewBox &aViewBox,
                                           uint16_t aPatternContentUnits,
                                           uint16_t aPatternUnits,
                                           const gfxRect &callerBBox,
@@ -635,9 +636,9 @@ gfxMatrix nsSVGPatternFrame::ConstructCTM(const SVGViewBox &aViewBox,
   if (!aViewBox.IsExplicitlySet()) {
     return gfxMatrix(scaleX, 0.0, 0.0, scaleY, 0.0, 0.0);
   }
-  const SVGViewBoxRect viewBoxRect = aViewBox.GetAnimValue();
+  const SVGViewBox viewBox = aViewBox.GetAnimValue();
 
-  if (viewBoxRect.height <= 0.0f || viewBoxRect.width <= 0.0f) {
+  if (viewBox.height <= 0.0f || viewBox.width <= 0.0f) {
     return gfxMatrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);  // singular
   }
 
@@ -663,9 +664,8 @@ gfxMatrix nsSVGPatternFrame::ConstructCTM(const SVGViewBox &aViewBox,
   }
 
   Matrix tm = SVGContentUtils::GetViewBoxTransform(
-      viewportWidth * scaleX, viewportHeight * scaleY, viewBoxRect.x,
-      viewBoxRect.y, viewBoxRect.width, viewBoxRect.height,
-      GetPreserveAspectRatio());
+      viewportWidth * scaleX, viewportHeight * scaleY, viewBox.x, viewBox.y,
+      viewBox.width, viewBox.height, GetPreserveAspectRatio());
 
   return ThebesMatrix(tm);
 }

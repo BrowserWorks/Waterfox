@@ -18,6 +18,7 @@
 #include "nsIContentInlines.h"
 #include "mozilla/dom/Document.h"
 #include "nsIDOMWindow.h"
+#include "nsIPresShellInlines.h"
 #include "nsXBLBinding.h"
 #include "nsXBLPrototypeBinding.h"
 #include "nsIMutableArray.h"
@@ -562,14 +563,15 @@ bool InspectorUtils::RemoveContentState(GlobalObject& aGlobalObject,
                                         ErrorResult& aRv) {
   RefPtr<EventStateManager> esm =
       inLayoutUtils::GetEventStateManagerFor(aElement);
-  if (!esm) {
+  EventStates state(aState);
+  if (!esm || !EventStateManager::ManagesState(state)) {
     aRv.Throw(NS_ERROR_INVALID_ARG);
     return false;
   }
 
-  bool result = esm->SetContentState(nullptr, EventStates(aState));
+  bool result = esm->SetContentState(nullptr, state);
 
-  if (aClearActiveDocument && EventStates(aState) == NS_EVENT_STATE_ACTIVE) {
+  if (aClearActiveDocument && state == NS_EVENT_STATE_ACTIVE) {
     EventStateManager* activeESM = static_cast<EventStateManager*>(
         EventStateManager::GetActiveEventStateManager());
     if (activeESM == esm) {

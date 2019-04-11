@@ -1447,7 +1447,7 @@ function acceptAppMenuNotificationWhenShown(id, addonId) {
 
 function assertTelemetryMatches(events, {filterMethods} = {}) {
   let snapshot = Services.telemetry.snapshotEvents(
-    Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTIN, true);
+    Ci.nsITelemetry.DATASET_PRERELEASE_CHANNELS, true);
 
   if (events.length == 0) {
     ok(!snapshot.parent || snapshot.parent.length == 0, "There are no telemetry events");
@@ -1468,6 +1468,25 @@ function assertTelemetryMatches(events, {filterMethods} = {}) {
 }
 
 /* HTML view helpers */
+async function loadInitialView(type) {
+  let managerWindow = await open_manager(null);
+  let categoryUtilities = new CategoryUtilities(managerWindow);
+  await categoryUtilities.openType(type);
+
+  let browser = managerWindow.document.getElementById("html-view-browser");
+  let win = browser.contentWindow;
+  win.managerWindow = managerWindow;
+  return win;
+}
+
+function waitForViewLoad(win) {
+  return wait_for_view_load(win.managerWindow, undefined, true);
+}
+
+function closeView(win) {
+  return close_manager(win.managerWindow);
+}
+
 function mockPromptService() {
   let {prompt} = Services;
   let promptService = {

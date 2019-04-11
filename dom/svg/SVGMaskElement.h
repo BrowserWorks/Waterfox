@@ -7,8 +7,8 @@
 #ifndef mozilla_dom_SVGMaskElement_h
 #define mozilla_dom_SVGMaskElement_h
 
-#include "SVGEnum.h"
-#include "nsSVGLength2.h"
+#include "SVGAnimatedEnumeration.h"
+#include "SVGAnimatedLength.h"
 #include "mozilla/dom/SVGElement.h"
 
 class nsSVGMaskFrame;
@@ -55,11 +55,11 @@ class SVGMaskElement final : public SVGMaskElementBase {
   virtual EnumAttributesInfo GetEnumInfo() override;
 
   enum { ATTR_X, ATTR_Y, ATTR_WIDTH, ATTR_HEIGHT };
-  nsSVGLength2 mLengthAttributes[4];
+  SVGAnimatedLength mLengthAttributes[4];
   static LengthInfo sLengthInfo[4];
 
   enum { MASKUNITS, MASKCONTENTUNITS };
-  SVGEnum mEnumAttributes[2];
+  SVGAnimatedEnumeration mEnumAttributes[2];
   static EnumInfo sEnumInfo[2];
 };
 

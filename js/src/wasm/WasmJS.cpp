@@ -760,7 +760,7 @@ static JSString* KindToString(JSContext* cx, const KindNames& names,
 }
 
 static JSString* FuncTypeToString(JSContext* cx, const FuncType& funcType) {
-  StringBuffer buf(cx);
+  JSStringBuilder buf(cx);
   if (!buf.append('(')) {
     return nullptr;
   }
@@ -2119,7 +2119,9 @@ bool WasmTableObject::getImpl(JSContext* cx, const CallArgs& args) {
       args.rval().set(UnboxAnyRef(table.getAnyRef(index)));
       break;
     }
-    default: { MOZ_CRASH("Unexpected table kind"); }
+    default: {
+      MOZ_CRASH("Unexpected table kind");
+    }
   }
   return true;
 }
@@ -2209,7 +2211,9 @@ bool WasmTableObject::setImpl(JSContext* cx, const CallArgs& args) {
       table.setAnyRef(index, tmp);
       break;
     }
-    default: { MOZ_CRASH("Unexpected table kind"); }
+    default: {
+      MOZ_CRASH("Unexpected table kind");
+    }
   }
 
   args.rval().setUndefined();
@@ -2292,7 +2296,9 @@ bool WasmTableObject::growImpl(JSContext* cx, const CallArgs& args) {
       }
       break;
     }
-    default: { MOZ_CRASH("Unexpected table kind"); }
+    default: {
+      MOZ_CRASH("Unexpected table kind");
+    }
   }
 
   args.rval().setInt32(oldLength);
@@ -2772,6 +2778,12 @@ static bool Reject(JSContext* cx, const CompileArgs& args,
   return PromiseObject::reject(cx, promise, rejectionValue);
 }
 
+static void LogAsync(JSContext* cx, const char* funcName,
+                     const Module& module) {
+  Log(cx, "async %s succeeded%s", funcName,
+      module.loggingDeserialized() ? " (loaded from cache)" : "");
+}
+
 enum class Ret { Pair, Instance };
 
 class AsyncInstantiateTask : public OffThreadPromiseTask {
@@ -2834,7 +2846,7 @@ class AsyncInstantiateTask : public OffThreadPromiseTask {
       return RejectWithPendingException(cx, promise);
     }
 
-    Log(cx, "async instantiate succeeded");
+    LogAsync(cx, "instantiate", *module_);
     return true;
   }
 };
@@ -2869,7 +2881,7 @@ static bool ResolveCompile(JSContext* cx, const Module& module,
     return RejectWithPendingException(cx, promise);
   }
 
-  Log(cx, "async compile succeeded");
+  LogAsync(cx, "compile", module);
   return true;
 }
 

@@ -381,7 +381,7 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
   // If in doubt, return true.
   static bool MayResolve(jsid aId);
 
-  void GetOwnPropertyNames(JSContext* aCx, JS::AutoIdVector& aNames,
+  void GetOwnPropertyNames(JSContext* aCx, JS::MutableHandleVector<jsid> aNames,
                            bool aEnumerableOnly, mozilla::ErrorResult& aRv);
 
   nsPIDOMWindowOuter* GetScriptableTop() override;
@@ -467,7 +467,8 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
     KillSlowScript,
     KillScriptGlobal
   };
-  SlowScriptResponse ShowSlowScriptDialog(const nsString& aAddonId);
+  SlowScriptResponse ShowSlowScriptDialog(JSContext* aCx,
+                                          const nsString& aAddonId);
 
   // Inner windows only.
   void AddGamepad(uint32_t aIndex, mozilla::dom::Gamepad* aGamepad);

@@ -292,7 +292,7 @@ class nsTextInputSelectionImpl final : public nsSupportsWeakReference,
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsTextInputSelectionImpl,
                                            nsISelectionController)
 
-  nsTextInputSelectionImpl(nsFrameSelection* aSel, nsIPresShell* aShell,
+  nsTextInputSelectionImpl(nsFrameSelection* aSel, PresShell* aPresShell,
                            nsIContent* aLimiter);
 
   void SetScrollableFrame(nsIScrollableFrame* aScrollableFrame);
@@ -362,16 +362,16 @@ NS_IMPL_CYCLE_COLLECTION(nsTextInputSelectionImpl, mFrameSelection, mLimiter)
 // BEGIN nsTextInputSelectionImpl
 
 nsTextInputSelectionImpl::nsTextInputSelectionImpl(nsFrameSelection* aSel,
-                                                   nsIPresShell* aShell,
+                                                   PresShell* aPresShell,
                                                    nsIContent* aLimiter)
     : mScrollFrame(nullptr) {
-  if (aSel && aShell) {
+  if (aSel && aPresShell) {
     mFrameSelection = aSel;  // we are the owner now!
     mLimiter = aLimiter;
     bool accessibleCaretEnabled =
         PresShell::AccessibleCaretEnabled(aLimiter->OwnerDoc()->GetDocShell());
-    mFrameSelection->Init(aShell, mLimiter, accessibleCaretEnabled);
-    mPresShellWeak = do_GetWeakReference(aShell);
+    mFrameSelection->Init(aPresShell, mLimiter, accessibleCaretEnabled);
+    mPresShellWeak = do_GetWeakReference(aPresShell);
   }
 }
 
@@ -1178,14 +1178,14 @@ nsresult nsTextEditorState::BindToFrame(nsTextControlFrame* aFrame) {
   Element* rootNode = aFrame->GetRootNode();
   MOZ_ASSERT(rootNode);
 
-  nsIPresShell* shell = aFrame->PresContext()->GetPresShell();
-  MOZ_ASSERT(shell);
+  PresShell* presShell = aFrame->PresContext()->GetPresShell();
+  MOZ_ASSERT(presShell);
 
   // Create selection
   RefPtr<nsFrameSelection> frameSel = new nsFrameSelection();
 
   // Create a SelectionController
-  mSelCon = new nsTextInputSelectionImpl(frameSel, shell, rootNode);
+  mSelCon = new nsTextInputSelectionImpl(frameSel, presShell, rootNode);
   MOZ_ASSERT(!mTextListener, "Should not overwrite the object");
   mTextListener = new TextInputListener(mTextCtrlElement);
 
@@ -1198,7 +1198,7 @@ nsresult nsTextEditorState::BindToFrame(nsTextControlFrame* aFrame) {
   //      to its internal array.
   Selection* selection = mSelCon->GetSelection(SelectionType::eNormal);
   if (selection) {
-    RefPtr<nsCaret> caret = shell->GetCaret();
+    RefPtr<nsCaret> caret = presShell->GetCaret();
     if (caret) {
       selection->AddSelectionListener(caret);
     }
@@ -1268,7 +1268,7 @@ nsresult nsTextEditorState::PrepareEditor(const nsAString* aValue) {
   // the required machinery to it.
 
   nsPresContext* presContext = mBoundFrame->PresContext();
-  nsIPresShell* shell = presContext->GetPresShell();
+  PresShell* presShell = presContext->GetPresShell();
 
   // Setup the editor flags
   uint32_t editorFlags = nsIPlaintextEditor::eEditorPlaintextMask;
@@ -1331,7 +1331,7 @@ nsresult nsTextEditorState::PrepareEditor(const nsAString* aValue) {
     //       editor's Init() call.
 
     // Get the DOM document
-    nsCOMPtr<Document> doc = shell->GetDocument();
+    nsCOMPtr<Document> doc = presShell->GetDocument();
     if (NS_WARN_IF(!doc)) {
       return NS_ERROR_FAILURE;
     }
@@ -1721,6 +1721,8 @@ void nsTextEditorState::SetSelectionEnd(const Nullable<uint32_t>& aEnd,
 static void DirectionToName(nsITextControlFrame::SelectionDirection dir,
                             nsAString& aDirection) {
   if (dir == nsITextControlFrame::eNone) {
+    // TODO(mbrodesser): this should be supported, see
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1541454.
     NS_WARNING("We don't actually support this... how did we get it?");
     aDirection.AssignLiteral("none");
   } else if (dir == nsITextControlFrame::eForward) {
@@ -2127,6 +2129,19 @@ void nsTextEditorState::GetValue(nsAString& aValue, bool aIgnoreWrap) const {
   }
 }
 
+#ifdef DEBUG
+namespace {
+// @param aFlags nsTextEditorState::SetValueFlags
+bool AreFlagsNotDemandingContradictingMovements(uint32_t aFlags) {
+  return !(
+      !!(aFlags &
+         nsTextEditorState::
+             eSetValue_MoveCursorToBeginSetSelectionDirectionForward) &&
+      !!(aFlags & nsTextEditorState::eSetValue_MoveCursorToEndIfValueChanged));
+}
+}  // anonymous namespace
+#endif  // DEBUG
+
 bool nsTextEditorState::SetValue(const nsAString& aValue,
                                  const nsAString* aOldValue, uint32_t aFlags) {
   nsAutoString newValue(aValue);
@@ -2415,10 +2430,17 @@ bool nsTextEditorState::SetValue(const nsAString& aValue,
 
       // Since we have no editor we presumably have cached selection state.
       if (IsSelectionCached()) {
+        MOZ_ASSERT(AreFlagsNotDemandingContradictingMovements(aFlags));
+
         SelectionProperties& props = GetSelectionProperties();
         if (aFlags & eSetValue_MoveCursorToEndIfValueChanged) {
           props.SetStart(newValue.Length());
           props.SetEnd(newValue.Length());
+          props.SetDirection(nsITextControlFrame::eForward);
+        } else if (aFlags &
+                   eSetValue_MoveCursorToBeginSetSelectionDirectionForward) {
+          props.SetStart(0);
+          props.SetEnd(0);
           props.SetDirection(nsITextControlFrame::eForward);
         } else {
           // Make sure our cached selection position is not outside the new

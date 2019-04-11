@@ -94,6 +94,7 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
 
     void HandleOutput(Sample::Param aSample,
                       java::SampleBuffer::Param aBuffer) override {
+      MOZ_ASSERT(!aBuffer, "Video sample should be bufferless");
       // aSample will be implicitly converted into a GlobalRef.
       mDecoder->ProcessOutput(std::move(aSample));
     }
@@ -241,6 +242,10 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
     }
 
     AssertOnTaskQueue();
+    if (GetState() == State::SHUTDOWN) {
+      aSample->Dispose();
+      return;
+    }
 
     UniquePtr<VideoData::Listener> releaseSample(
         new CompositeListener(mJavaDecoder, aSample));
@@ -277,7 +282,7 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
     if (ok && (size > 0 || presentationTimeUs >= 0)) {
       RefPtr<layers::Image> img = new SurfaceTextureImage(
           mSurfaceHandle, inputInfo.mImageSize, false /* NOT continuous */,
-          gl::OriginPos::BottomLeft);
+          gl::OriginPos::BottomLeft, mConfig.HasAlpha());
 
       RefPtr<VideoData> v = VideoData::CreateFromImage(
           inputInfo.mDisplaySize, offset,
@@ -371,6 +376,7 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
 
     void HandleOutput(Sample::Param aSample,
                       java::SampleBuffer::Param aBuffer) override {
+      MOZ_ASSERT(aBuffer, "Audio sample should have buffer");
       // aSample will be implicitly converted into a GlobalRef.
       mDecoder->ProcessOutput(std::move(aSample), std::move(aBuffer));
     }
@@ -419,6 +425,11 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
     }
 
     AssertOnTaskQueue();
+
+    if (GetState() == State::SHUTDOWN || !aBuffer->IsValid()) {
+      aSample->Dispose();
+      return;
+    }
 
     RenderOrReleaseOutput autoRelease(mJavaDecoder, aSample);
 

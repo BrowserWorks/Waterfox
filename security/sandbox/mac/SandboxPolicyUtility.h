@@ -13,6 +13,7 @@ static const char SandboxPolicyUtility[] = R"SANDBOX_LITERAL(
 
   (define should-log (param "SHOULD_LOG"))
   (define app-path (param "APP_PATH"))
+  (define crashPort (param "CRASH_PORT"))
 
   (define (moz-deny feature)
     (if (string=? should-log "TRUE")
@@ -31,22 +32,22 @@ static const char SandboxPolicyUtility[] = R"SANDBOX_LITERAL(
 
   (if (defined? 'file-map-executable)
     (allow file-map-executable file-read*
-      (subpath "/System/Library/PrivateFrameworks")
-      (subpath "/System/Library/Frameworks")
+      (subpath "/System/Library")
       (subpath "/usr/lib")
       (subpath app-path))
     (allow file-read*
-      (subpath "/System/Library/PrivateFrameworks")
-      (subpath "/System/Library/Frameworks")
+      (subpath "/System/Library")
       (subpath "/usr/lib")
       (subpath app-path)))
+
+  (if (string? crashPort)
+    (allow mach-lookup (global-name crashPort)))
 
   (allow signal (target self))
   (allow sysctl-read)
   (allow file-read*
     (literal "/dev/random")
     (literal "/dev/urandom")
-    (literal "/System/Library/CoreServices/SystemVersion.plist")
     (subpath "/usr/share/icu"))
 
   (allow mach-lookup

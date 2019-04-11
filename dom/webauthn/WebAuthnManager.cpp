@@ -43,7 +43,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(WebAuthnManager,
                                                 WebAuthnManagerBase)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mFollowingSignal)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mTransaction)
-  tmp->ClearTransaction();
+  tmp->mTransaction.reset();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(WebAuthnManager,
                                                   WebAuthnManagerBase)
@@ -734,6 +734,11 @@ void WebAuthnManager::FinishGetAssertion(
     return;
   }
 
+  CryptoBuffer userHandleBuf;
+  // U2FTokenManager don't return user handle.
+  // Best effort.
+  userHandleBuf.Assign(aResult.UserHandle());
+
   // If any authenticator returns success:
 
   // Create a new PublicKeyCredential object named value and populate its fields
@@ -744,6 +749,9 @@ void WebAuthnManager::FinishGetAssertion(
   assertion->SetClientDataJSON(clientDataBuf);
   assertion->SetAuthenticatorData(authenticatorDataBuf);
   assertion->SetSignature(signatureBuf);
+  if (!userHandleBuf.IsEmpty()) {
+    assertion->SetUserHandle(userHandleBuf);
+  }
 
   RefPtr<PublicKeyCredential> credential = new PublicKeyCredential(mParent);
   credential->SetId(credentialBase64Url);

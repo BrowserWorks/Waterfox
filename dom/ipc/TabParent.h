@@ -97,10 +97,14 @@ class TabParent final : public PBrowserParent,
   // Helper class for ContentParent::RecvCreateWindow.
   struct AutoUseNewTab;
 
+  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_DECL_NSIAUTHPROMPTPROVIDER
   // nsITabParent
   NS_DECL_NSITABPARENT
   // nsIDOMEventListener interfaces
   NS_DECL_NSIDOMEVENTLISTENER
+
+  NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(TabParent, nsITabParent)
 
   TabParent(ContentParent* aManager, const TabId& aTabId,
             const TabContext& aContext,
@@ -165,9 +169,26 @@ class TabParent final : public PBrowserParent,
                                                       const nsString& aTitle,
                                                       nsIURI* aDocURI);
 
+  mozilla::ipc::IPCResult RecvOnProgressChange(
+      const Maybe<WebProgressData>& aWebProgressData,
+      const RequestData& aRequestData, const int32_t aCurSelfProgress,
+      const int32_t aMaxSelfProgress, const int32_t aCurTotalProgres,
+      const int32_t aMaxTotalProgress);
+
+  mozilla::ipc::IPCResult RecvOnStatusChange(
+      const Maybe<WebProgressData>& aWebProgressData,
+      const RequestData& aRequestData, const nsresult aStatus,
+      const nsString& aMessage);
+
   mozilla::ipc::IPCResult RecvOnContentBlockingEvent(
       const Maybe<WebProgressData>& aWebProgressData,
       const RequestData& aRequestData, const uint32_t& aEvent);
+
+  void ReconstructWebProgressAndRequest(
+      nsIWebProgress* aManager, const Maybe<WebProgressData>& aWebProgressData,
+      const RequestData& aRequestData,
+      nsCOMPtr<nsIWebProgress>& aOutWebProgress,
+      nsCOMPtr<nsIRequest>& aOutRequest);
 
   mozilla::ipc::IPCResult RecvBrowserFrameOpenWindow(
       PBrowserParent* aOpener, const nsString& aURL, const nsString& aName,
@@ -321,13 +342,14 @@ class TabParent final : public PBrowserParent,
 
   PBrowserBridgeParent* AllocPBrowserBridgeParent(
       const nsString& aPresentationURL, const nsString& aRemoteType,
-      BrowsingContext* aBrowsingContext);
+      BrowsingContext* aBrowsingContext, const uint32_t& aChromeFlags);
 
   bool DeallocPBrowserBridgeParent(PBrowserBridgeParent* aActor);
 
   virtual mozilla::ipc::IPCResult RecvPBrowserBridgeConstructor(
       PBrowserBridgeParent* aActor, const nsString& aPresentationURL,
-      const nsString& aRemoteType, BrowsingContext* aBrowsingContext) override;
+      const nsString& aRemoteType, BrowsingContext* aBrowsingContext,
+      const uint32_t& aChromeFlags) override;
 
   void LoadURL(nsIURI* aURI);
 
@@ -451,9 +473,6 @@ class TabParent final : public PBrowserParent,
       IndexedDBPermissionRequestResolver&& aResolve);
 
   bool GetGlobalJSObject(JSContext* cx, JSObject** globalp);
-
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSIAUTHPROMPTPROVIDER
 
   void StartPersistence(uint64_t aOuterWindowID,
                         nsIWebBrowserPersistDocumentReceiver* aRecv,
@@ -614,7 +633,7 @@ class TabParent final : public PBrowserParent,
 
   virtual void ActorDestroy(ActorDestroyReason why) override;
 
-  Element* mFrameElement;
+  nsCOMPtr<Element> mFrameElement;
   nsCOMPtr<nsIBrowserDOMWindow> mBrowserDOMWindow;
 
   mozilla::ipc::IPCResult RecvRemotePaintIsReady();

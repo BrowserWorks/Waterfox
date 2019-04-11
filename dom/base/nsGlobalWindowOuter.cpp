@@ -43,6 +43,7 @@
 #if defined(MOZ_WIDGET_ANDROID)
 #  include "mozilla/dom/WindowOrientationObserver.h"
 #endif
+#include "nsBaseCommandController.h"
 #include "nsError.h"
 #include "nsISizeOfEventTarget.h"
 #include "nsDOMJSUtils.h"
@@ -56,7 +57,6 @@
 #include "nsIScriptContext.h"
 #include "nsIScriptTimeoutHandler.h"
 #include "nsITimeoutHandler.h"
-#include "nsIController.h"
 #include "nsISlowScriptDebug.h"
 #include "nsWindowMemoryReporter.h"
 #include "nsWindowSizes.h"
@@ -98,6 +98,7 @@
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/ProcessHangMonitor.h"
 #include "mozilla/StaticPrefs.h"
 #include "mozilla/ThrottledEventQueue.h"
@@ -123,7 +124,6 @@
 #include "nsIEmbeddingSiteWindow.h"
 #include "nsThreadUtils.h"
 #include "nsILoadContext.h"
-#include "nsIPresShell.h"
 #include "nsIScrollableFrame.h"
 #include "nsView.h"
 #include "nsViewManager.h"
@@ -145,7 +145,6 @@
 #include "nsIContentViewer.h"
 #include "nsIScriptError.h"
 #include "nsIControllers.h"
-#include "nsIControllerContext.h"
 #include "nsGlobalWindowCommands.h"
 #include "nsQueryObject.h"
 #include "nsContentUtils.h"
@@ -390,7 +389,7 @@ class nsOuterWindowProxy : public MaybeCrossOriginObject<js::Wrapper> {
    * with cx.
    */
   bool ownPropertyKeys(JSContext* cx, JS::Handle<JSObject*> proxy,
-                       JS::AutoIdVector& props) const override;
+                       JS::MutableHandleVector<jsid> props) const override;
   /**
    * Implementation of [[Delete]] as defined at
    * https://html.spec.whatwg.org/multipage/window-object.html#windowproxy-delete
@@ -478,7 +477,7 @@ class nsOuterWindowProxy : public MaybeCrossOriginObject<js::Wrapper> {
    * with cx.
    */
   bool getOwnEnumerablePropertyKeys(JSContext* cx, JS::Handle<JSObject*> proxy,
-                                    JS::AutoIdVector& props) const override;
+                                    JS::MutableHandleVector<jsid> props) const override;
 
   /**
    * Hook used by SpiderMonkey to implement Object.prototype.toString.
@@ -514,7 +513,7 @@ class nsOuterWindowProxy : public MaybeCrossOriginObject<js::Wrapper> {
       JSContext* cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id) const;
 
   bool AppendIndexedPropertyNames(JSObject* proxy,
-                                  JS::AutoIdVector& props) const;
+                                  JS::MutableHandleVector<jsid> props) const;
 
   using MaybeCrossOriginObjectMixins::EnsureHolder;
   bool EnsureHolder(JSContext* cx, JS::Handle<JSObject*> proxy,
@@ -736,7 +735,7 @@ bool nsOuterWindowProxy::definePropertySameOrigin(
 
 bool nsOuterWindowProxy::ownPropertyKeys(JSContext* cx,
                                          JS::Handle<JSObject*> proxy,
-                                         JS::AutoIdVector& props) const {
+                                         JS::MutableHandleVector<jsid> props) const {
   // Just our indexed stuff followed by our "normal" own property names.
   if (!AppendIndexedPropertyNames(proxy, props)) {
     return false;
@@ -746,10 +745,10 @@ bool nsOuterWindowProxy::ownPropertyKeys(JSContext* cx,
     // When forwarding to js::Wrapper, we should just enter the Realm of proxy
     // for now.  That's what js::Wrapper expects, and since we're same-origin
     // anyway this is not changing any security behavior.
-    JS::AutoIdVector innerProps(cx);
+    JS::RootedVector<jsid> innerProps(cx);
     {  // Scope for JSAutoRealm so we can mark the ids once we exit it
       JSAutoRealm ar(cx, proxy);
-      if (!js::Wrapper::ownPropertyKeys(cx, proxy, innerProps)) {
+      if (!js::Wrapper::ownPropertyKeys(cx, proxy, &innerProps)) {
         return false;
       }
     }
@@ -766,7 +765,7 @@ bool nsOuterWindowProxy::ownPropertyKeys(JSContext* cx,
     return false;
   }
 
-  JS::AutoIdVector crossOriginProps(cx);
+  JS::RootedVector<jsid> crossOriginProps(cx);
   if (!js::GetPropertyKeys(cx, holder,
                            JSITER_OWNONLY | JSITER_HIDDEN | JSITER_SYMBOLS,
                            &crossOriginProps) ||
@@ -939,7 +938,7 @@ bool nsOuterWindowProxy::set(JSContext* cx, JS::Handle<JSObject*> proxy,
 }
 
 bool nsOuterWindowProxy::getOwnEnumerablePropertyKeys(
-    JSContext* cx, JS::Handle<JSObject*> proxy, JS::AutoIdVector& props) const {
+    JSContext* cx, JS::Handle<JSObject*> proxy, JS::MutableHandleVector<jsid> props) const {
   // We could just stop overring getOwnEnumerablePropertyKeys and let our
   // superclasses deal (by falling back on the BaseProxyHandler implementation
   // that uses a combination of ownPropertyKeys and getOwnPropertyDescriptor to
@@ -961,10 +960,10 @@ bool nsOuterWindowProxy::getOwnEnumerablePropertyKeys(
   // When forwarding to js::Wrapper, we should just enter the Realm of proxy
   // for now.  That's what js::Wrapper expects, and since we're same-origin
   // anyway this is not changing any security behavior.
-  JS::AutoIdVector innerProps(cx);
+  JS::RootedVector<jsid> innerProps(cx);
   {  // Scope for JSAutoRealm so we can mark the ids once we exit it.
     JSAutoRealm ar(cx, proxy);
-    if (!js::Wrapper::getOwnEnumerablePropertyKeys(cx, proxy, innerProps)) {
+    if (!js::Wrapper::getOwnEnumerablePropertyKeys(cx, proxy, &innerProps)) {
       return false;
     }
   }
@@ -1015,7 +1014,7 @@ already_AddRefed<nsPIDOMWindowOuter> nsOuterWindowProxy::GetSubframeWindow(
 }
 
 bool nsOuterWindowProxy::AppendIndexedPropertyNames(
-    JSObject* proxy, JS::AutoIdVector& props) const {
+    JSObject* proxy, JS::MutableHandleVector<jsid> props) const {
   uint32_t length = GetOuterWindow(proxy)->Length();
   MOZ_ASSERT(int32_t(length) >= 0);
   if (!props.reserve(props.length() + length)) {
@@ -2509,6 +2508,9 @@ void nsGlobalWindowOuter::SetOpenerWindow(nsPIDOMWindowOuter* aOpener,
         // the window opener to a closed window. This needs to be
         // cleaned up, see Bug 1511353.
         nsGlobalWindowOuter::Cast(aOpener)->IsClosedOrClosing() ||
+        // TODO(farre): Allowing to set an opener on a closed window is
+        // not ideal either, but we need to allow it for now. Bug 1543056.
+        IsClosedOrClosing() ||
         aOpener->GetBrowsingContext()->Id() ==
             GetBrowsingContext()->GetOpenerId());
     // TODO(farre): Here we really wish to only consider the case
@@ -3195,22 +3197,15 @@ nsIControllers* nsGlobalWindowOuter::GetControllersOuter(ErrorResult& aError) {
     }
 
     // Add in the default controller
-    nsCOMPtr<nsIController> controller =
+    RefPtr<nsBaseCommandController> commandController =
         nsBaseCommandController::CreateWindowController();
-    if (!controller) {
+    if (!commandController) {
       aError.Throw(NS_ERROR_FAILURE);
       return nullptr;
     }
 
-    mControllers->InsertControllerAt(0, controller);
-    nsCOMPtr<nsIControllerContext> controllerContext =
-        do_QueryInterface(controller);
-    if (!controllerContext) {
-      aError.Throw(NS_ERROR_FAILURE);
-      return nullptr;
-    }
-
-    controllerContext->SetCommandContext(static_cast<nsIDOMWindow*>(this));
+    mControllers->InsertControllerAt(0, commandController);
+    commandController->SetCommandContext(static_cast<nsIDOMWindow*>(this));
   }
 
   return mControllers;
@@ -5617,7 +5612,7 @@ PopupBlocker::PopupControlState nsGlobalWindowOuter::RevisePopupAbuseLevel(
   if ((abuse == PopupBlocker::openAllowed ||
        abuse == PopupBlocker::openControlled) &&
       StaticPrefs::dom_block_multiple_popups() && !PopupWhitelisted() &&
-      !PopupBlocker::TryUsePopupOpeningToken()) {
+      !PopupBlocker::TryUsePopupOpeningToken(mDoc->NodePrincipal())) {
     abuse = PopupBlocker::openBlocked;
   }
 
@@ -6293,17 +6288,18 @@ void nsGlobalWindowOuter::EnterModalState() {
   EventStateManager* activeESM = static_cast<EventStateManager*>(
       EventStateManager::GetActiveEventStateManager());
   if (activeESM && activeESM->GetPresContext()) {
-    nsIPresShell* activeShell = activeESM->GetPresContext()->GetPresShell();
-    if (activeShell && (nsContentUtils::ContentIsCrossDocDescendantOf(
-                            activeShell->GetDocument(), mDoc) ||
-                        nsContentUtils::ContentIsCrossDocDescendantOf(
-                            mDoc, activeShell->GetDocument()))) {
+    PresShell* activePresShell = activeESM->GetPresContext()->GetPresShell();
+    if (activePresShell && (nsContentUtils::ContentIsCrossDocDescendantOf(
+                                activePresShell->GetDocument(), mDoc) ||
+                            nsContentUtils::ContentIsCrossDocDescendantOf(
+                                mDoc, activePresShell->GetDocument()))) {
       EventStateManager::ClearGlobalActiveContent(activeESM);
 
       nsIPresShell::SetCapturingContent(nullptr, 0);
 
-      if (activeShell) {
-        RefPtr<nsFrameSelection> frameSelection = activeShell->FrameSelection();
+      if (activePresShell) {
+        RefPtr<nsFrameSelection> frameSelection =
+            activePresShell->FrameSelection();
         frameSelection->SetDragState(false);
       }
     }

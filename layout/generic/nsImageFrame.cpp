@@ -20,21 +20,23 @@
 #include "mozilla/gfx/Helpers.h"
 #include "mozilla/gfx/PathHelpers.h"
 #include "mozilla/dom/GeneratedImageContent.h"
+#include "mozilla/dom/HTMLAreaElement.h"
 #include "mozilla/dom/HTMLImageElement.h"
 #include "mozilla/dom/ResponsiveImageSelector.h"
 #include "mozilla/layers/RenderRootStateManager.h"
 #include "mozilla/layers/WebRenderLayerManager.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/Unused.h"
 
 #include "nsCOMPtr.h"
 #include "nsFontMetrics.h"
 #include "nsIImageLoadingContent.h"
 #include "nsImageLoadingContent.h"
+#include "nsIPresShellInlines.h"
 #include "nsString.h"
 #include "nsPrintfCString.h"
 #include "nsPresContext.h"
-#include "nsIPresShell.h"
 #include "nsGkAtoms.h"
 #include "mozilla/dom/Document.h"
 #include "nsContentUtils.h"
@@ -827,7 +829,7 @@ void nsImageFrame::MaybeDecodeForPredictedSize() {
   }
 
   // OK, we're ready to decode. Compute the scale to the screen...
-  nsIPresShell* presShell = PresContext()->GetPresShell();
+  mozilla::PresShell* presShell = PresContext()->PresShell();
   LayoutDeviceToScreenScale2D resolutionToScreen(
       presShell->GetCumulativeResolution() *
       nsLayoutUtils::GetTransformToAncestorScaleExcludingAnimated(this));
@@ -1058,9 +1060,8 @@ void nsImageFrame::Reflow(nsPresContext* aPresContext, ReflowOutput& aMetrics,
   FinishAndStoreOverflow(&aMetrics, aReflowInput.mStyleDisplay);
 
   if ((GetStateBits() & NS_FRAME_FIRST_REFLOW) && !mReflowCallbackPosted) {
-    nsIPresShell* shell = PresShell();
     mReflowCallbackPosted = true;
-    shell->PostReflowCallback(this);
+    PresShell()->PostReflowCallback(this);
   }
 
   NS_FRAME_TRACE(NS_FRAME_TRACE_CALLS, ("exit nsImageFrame::Reflow: size=%d,%d",
@@ -1156,7 +1157,7 @@ void nsImageFrame::DisplayAltText(nsPresContext* aPresContext,
                                   const nsString& aAltText,
                                   const nsRect& aRect) {
   // Set font and color
-  aRenderingContext.SetColor(Color::FromABGR(StyleColor()->mColor));
+  aRenderingContext.SetColor(Color::FromABGR(StyleColor()->mColor.ToColor()));
   RefPtr<nsFontMetrics> fm =
       nsLayoutUtils::GetInflatedFontMetricsForFrame(this);
 
@@ -1261,7 +1262,7 @@ struct nsRecessedBorder : public nsStyleBorder {
   nsRecessedBorder(nscoord aBorderWidth, nsPresContext* aPresContext)
       : nsStyleBorder(*aPresContext->Document()) {
     NS_FOR_CSS_SIDES(side) {
-      BorderColorFor(side) = StyleComplexColor::Black();
+      BorderColorFor(side) = StyleColor::Black();
       mBorder.Side(side) = aBorderWidth;
       // Note: use SetBorderStyle here because we want to affect
       // mComputedBorder
@@ -2059,8 +2060,7 @@ void nsImageFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     if (!imageOK || !mImage || !SizeIsAvailable(currentRequest)) {
       // No image yet, or image load failed. Draw the alt-text and an icon
       // indicating the status
-      aLists.Content()->AppendToTop(
-          MakeDisplayItem<nsDisplayAltFeedback>(aBuilder, this));
+      aLists.Content()->AppendNewToTop<nsDisplayAltFeedback>(aBuilder, this);
 
       // This image is visible (we are being asked to paint it) but it's not
       // decoded yet. And we are not going to ask the image to draw, so this
@@ -2077,8 +2077,8 @@ void nsImageFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
         }
       }
     } else {
-      aLists.Content()->AppendToTop(
-          MakeDisplayItem<nsDisplayImage>(aBuilder, this, mImage, mPrevImage));
+      aLists.Content()->AppendNewToTop<nsDisplayImage>(aBuilder, this, mImage,
+                                                       mPrevImage);
 
       // If we were previously displaying an icon, we're not anymore
       if (mDisplayingIcon) {
@@ -2088,9 +2088,9 @@ void nsImageFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 
 #ifdef DEBUG
       if (GetShowFrameBorders() && GetImageMap()) {
-        aLists.Outlines()->AppendToTop(MakeDisplayItem<nsDisplayGeneric>(
+        aLists.Outlines()->AppendNewToTop<nsDisplayGeneric>(
             aBuilder, this, PaintDebugImageMap, "DebugImageMap",
-            DisplayItemType::TYPE_DEBUG_IMAGE_MAP));
+            DisplayItemType::TYPE_DEBUG_IMAGE_MAP);
       }
 #endif
     }
@@ -2299,14 +2299,14 @@ Maybe<nsIFrame::Cursor> nsImageFrame::GetCursor(const nsPoint& aPoint) {
   }
   nsIntPoint p;
   TranslateEventCoords(aPoint, p);
-  nsCOMPtr<nsIContent> area = map->GetArea(p.x, p.y);
+  HTMLAreaElement* area = map->GetArea(p.x, p.y);
   if (!area) {
     return nsFrame::GetCursor(aPoint);
   }
 
   // Use the cursor from the style of the *area* element.
-  RefPtr<ComputedStyle> areaStyle = PresShell()->StyleSet()->ResolveStyleFor(
-      area->AsElement(), LazyComputeBehavior::Allow);
+  RefPtr<ComputedStyle> areaStyle =
+    PresShell()->StyleSet()->ResolveStyleLazily(*area);
   StyleCursorKind kind = areaStyle->StyleUI()->mCursor;
   if (kind == StyleCursorKind::Auto) {
     kind = StyleCursorKind::Default;
@@ -2455,12 +2455,15 @@ void nsImageFrame::GetLoadGroup(nsPresContext* aPresContext,
 
   MOZ_ASSERT(nullptr != aLoadGroup, "null OUT parameter pointer");
 
-  nsIPresShell* shell = aPresContext->GetPresShell();
+  mozilla::PresShell* presShell = aPresContext->GetPresShell();
+  if (!presShell) {
+    return;
+  }
 
-  if (!shell) return;
-
-  Document* doc = shell->GetDocument();
-  if (!doc) return;
+  Document* doc = presShell->GetDocument();
+  if (!doc) {
+    return;
+  }
 
   *aLoadGroup = doc->GetDocumentLoadGroup().take();
 }

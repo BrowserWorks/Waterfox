@@ -16,6 +16,7 @@
 #include "nsIURI.h"
 #include "nsIURL.h"
 #include "nsIChannel.h"
+#include "nsIPresShellInlines.h"
 #include "nsString.h"
 #include "plstr.h"
 #include "nsIContent.h"
@@ -495,6 +496,8 @@ nsresult nsXBLService::LoadBindings(Element* aElement, nsIURI* aURL,
     return rv;
   }
 
+  AutoStyleElement styleElement(aElement, aResolveStyle);
+
   if (binding) {
     FlushStyleBindings(aElement);
     binding = nullptr;
@@ -523,8 +526,6 @@ nsresult nsXBLService::LoadBindings(Element* aElement, nsIURI* aURL,
   if (::IsAncestorBinding(document, aURL, aElement)) {
     return NS_ERROR_ILLEGAL_VALUE;
   }
-
-  AutoStyleElement styleElement(aElement, aResolveStyle);
 
   // We loaded a style binding.  It goes on the end.
   // Install the binding on the content node.

@@ -31,6 +31,7 @@
 #include "mozilla/dom/HTMLMediaElement.h"
 #include "mozilla/dom/MediaElementAudioSourceNodeBinding.h"
 #include "mozilla/dom/MediaStreamAudioSourceNodeBinding.h"
+#include "mozilla/dom/MediaStreamTrackAudioSourceNodeBinding.h"
 #include "mozilla/dom/OfflineAudioContextBinding.h"
 #include "mozilla/dom/OscillatorNodeBinding.h"
 #include "mozilla/dom/PannerNodeBinding.h"
@@ -63,6 +64,7 @@
 #include "MediaStreamAudioDestinationNode.h"
 #include "MediaStreamAudioSourceNode.h"
 #include "MediaStreamGraph.h"
+#include "MediaStreamTrackAudioSourceNode.h"
 #include "nsContentUtils.h"
 #include "nsIScriptError.h"
 #include "nsNetCID.h"
@@ -161,7 +163,6 @@ AudioContext::AudioContext(nsPIDOMWindowInner* aWindow, bool aIsOffline,
       mIsDisconnecting(false),
       mWasAllowedToStart(true),
       mSuspendedByContent(false),
-      mSuspendedByChrome(false),
       mWasEverAllowedToStart(false),
       mWasEverBlockedToStart(false),
       mWouldBeAllowedToStart(true) {
@@ -207,7 +208,7 @@ void AudioContext::StartBlockedAudioContextIfAllowed() {
   // not if it was a result of the AudioContext starting after having been
   // blocked because of the auto-play policy.
   if (isAllowedToPlay && !mSuspendedByContent) {
-    ResumeInternal();
+    ResumeInternal(AudioContextOperationFlags::SendStateChange);
   } else {
     ReportBlocked();
   }
@@ -423,6 +424,15 @@ AudioContext::CreateMediaStreamSource(DOMMediaStream& aMediaStream,
   options.mMediaStream = aMediaStream;
 
   return MediaStreamAudioSourceNode::Create(*this, options, aRv);
+}
+
+already_AddRefed<MediaStreamTrackAudioSourceNode>
+AudioContext::CreateMediaStreamTrackSource(MediaStreamTrack& aMediaStreamTrack,
+                                           ErrorResult& aRv) {
+  MediaStreamTrackAudioSourceOptions options;
+  options.mMediaStreamTrack = aMediaStreamTrack;
+
+  return MediaStreamTrackAudioSourceNode::Create(*this, options, aRv);
 }
 
 already_AddRefed<GainNode> AudioContext::CreateGain(ErrorResult& aRv) {
@@ -693,7 +703,7 @@ void AudioContext::Shutdown() {
   // We don't want to touch promises if the global is going away soon.
   if (!mIsDisconnecting) {
     if (!mIsOffline) {
-      CloseInternal(nullptr);
+      CloseInternal(nullptr, AudioContextOperationFlags::None);
     }
 
     for (auto p : mPromiseGripArray) {
@@ -927,22 +937,19 @@ already_AddRefed<Promise> AudioContext::Suspend(ErrorResult& aRv) {
 
   mSuspendedByContent = true;
   mPromiseGripArray.AppendElement(promise);
-  SuspendInternal(promise);
+  SuspendInternal(promise, AudioContextOperationFlags::SendStateChange);
   return promise.forget();
 }
 
 void AudioContext::SuspendFromChrome() {
-  // Not support suspend call for these situations.
-  if (mAudioContextState == AudioContextState::Suspended || mIsOffline ||
-      (mAudioContextState == AudioContextState::Closed || mCloseCalled) ||
-      mIsShutDown) {
+  if (mIsOffline || mIsShutDown) {
     return;
   }
-  SuspendInternal(nullptr);
-  mSuspendedByChrome = true;
+  SuspendInternal(nullptr, AudioContextOperationFlags::None);
 }
 
-void AudioContext::SuspendInternal(void* aPromise) {
+void AudioContext::SuspendInternal(void* aPromise,
+                                   AudioContextOperationFlags aFlags) {
   Destination()->Suspend();
 
   nsTArray<MediaStream*> streams;
@@ -954,20 +961,17 @@ void AudioContext::SuspendInternal(void* aPromise) {
     streams = GetAllStreams();
   }
   Graph()->ApplyAudioContextOperation(DestinationStream(), streams,
-                                      AudioContextOperation::Suspend, aPromise);
+                                      AudioContextOperation::Suspend, aPromise,
+                                      aFlags);
 
   mSuspendCalled = true;
 }
 
 void AudioContext::ResumeFromChrome() {
-  // Not support resume call for these situations.
-  if (mAudioContextState == AudioContextState::Running || mIsOffline ||
-      (mAudioContextState == AudioContextState::Closed || mCloseCalled) ||
-      mIsShutDown || !mSuspendedByChrome) {
+  if (mIsOffline || mIsShutDown) {
     return;
   }
-  ResumeInternal();
-  mSuspendedByChrome = false;
+  ResumeInternal(AudioContextOperationFlags::None);
 }
 
 already_AddRefed<Promise> AudioContext::Resume(ErrorResult& aRv) {
@@ -995,7 +999,7 @@ already_AddRefed<Promise> AudioContext::Resume(ErrorResult& aRv) {
   AUTOPLAY_LOG("Trying to resume AudioContext %p, IsAllowedToPlay=%d", this,
                isAllowedToPlay);
   if (isAllowedToPlay) {
-    ResumeInternal();
+    ResumeInternal(AudioContextOperationFlags::SendStateChange);
   } else {
     ReportBlocked();
   }
@@ -1005,7 +1009,7 @@ already_AddRefed<Promise> AudioContext::Resume(ErrorResult& aRv) {
   return promise.forget();
 }
 
-void AudioContext::ResumeInternal() {
+void AudioContext::ResumeInternal(AudioContextOperationFlags aFlags) {
   AUTOPLAY_LOG("Allow to resume AudioContext %p", this);
   mWasAllowedToStart = true;
 
@@ -1020,12 +1024,9 @@ void AudioContext::ResumeInternal() {
     streams = GetAllStreams();
   }
   Graph()->ApplyAudioContextOperation(DestinationStream(), streams,
-                                      AudioContextOperation::Resume, nullptr);
+                                      AudioContextOperation::Resume, nullptr,
+                                      aFlags);
   mSuspendCalled = false;
-  // AudioContext will be resumed later, so we have no need to keep the suspend
-  // flag from Chrome, in case to avoid to resume the suspended Audio Context
-  // which is requested by content.
-  mSuspendedByChrome = false;
 }
 
 void AudioContext::UpdateAutoplayAssumptionStatus() {
@@ -1122,12 +1123,13 @@ already_AddRefed<Promise> AudioContext::Close(ErrorResult& aRv) {
 
   mPromiseGripArray.AppendElement(promise);
 
-  CloseInternal(promise);
+  CloseInternal(promise, AudioContextOperationFlags::SendStateChange);
 
   return promise.forget();
 }
 
-void AudioContext::CloseInternal(void* aPromise) {
+void AudioContext::CloseInternal(void* aPromise,
+                                 AudioContextOperationFlags aFlags) {
   // This can be called when freeing a document, and the streams are dead at
   // this point, so we need extra null-checks.
   AudioNodeStream* ds = DestinationStream();
@@ -1139,8 +1141,8 @@ void AudioContext::CloseInternal(void* aPromise) {
     if (!mSuspendCalled && !mCloseCalled) {
       streams = GetAllStreams();
     }
-    Graph()->ApplyAudioContextOperation(ds, streams,
-                                        AudioContextOperation::Close, aPromise);
+    Graph()->ApplyAudioContextOperation(
+        ds, streams, AudioContextOperation::Close, aPromise, aFlags);
   }
   mCloseCalled = true;
 }

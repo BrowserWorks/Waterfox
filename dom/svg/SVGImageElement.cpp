@@ -101,6 +101,10 @@ void SVGImageElement::GetDecoding(nsAString& aValue) {
   GetEnumAttr(nsGkAtoms::decoding, kDecodingTableDefault->tag, aValue);
 }
 
+already_AddRefed<Promise> SVGImageElement::Decode(ErrorResult& aRv) {
+  return nsImageLoadingContent::QueueDecodeAsync(aRv);
+}
+
 //----------------------------------------------------------------------
 
 nsresult SVGImageElement::LoadSVGImage(bool aForce, bool aNotify) {
@@ -275,7 +279,8 @@ SVGElement::LengthAttributesInfo SVGImageElement::GetLengthInfo() {
                               ArrayLength(sLengthInfo));
 }
 
-SVGAnimatedPreserveAspectRatio* SVGImageElement::GetPreserveAspectRatio() {
+SVGAnimatedPreserveAspectRatio*
+SVGImageElement::GetAnimatedPreserveAspectRatio() {
   return &mPreserveAspectRatio;
 }
 

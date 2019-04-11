@@ -17,9 +17,11 @@ kind-dependencies:
 
 jobs-from:
    - clang.yml
+   - coverity.yml
    - cram.yml
    - doc.yml
    - file-metadata.yml
+   - infer.yml
    - jsshell.yml
    - mozlint.yml
    - node.yml

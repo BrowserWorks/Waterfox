@@ -151,8 +151,10 @@ function addMessage(newMessage, state, filtersState, prefsState) {
 
   // Add the new message with a reference to the parent group.
   const parentGroups = getParentGroups(currentGroup, groupsById);
-  newMessage.groupId = currentGroup;
-  newMessage.indent = parentGroups.length;
+  if (!isWarningGroup(newMessage)) {
+    newMessage.groupId = currentGroup;
+    newMessage.indent = parentGroups.length;
+  }
 
   ensureExecutionPoint(state, newMessage);
 
@@ -188,12 +190,27 @@ function addMessage(newMessage, state, filtersState, prefsState) {
     ) {
       // Then we put it in the visibleMessages properties, at the position of the first
       // warning message inside the warningGroup.
-      // TODO [Bug 1534927]: It should be added before the outermost console.group message
-      // a warning message could be in.
-      const index = state
-        .visibleMessages
-        .indexOf(state.warningGroupsById.get(warningGroupMessageId)[0]);
-      state.visibleMessages.splice(index, 1, warningGroupMessageId);
+      // If that first warning message is in a console.group, we place it before the
+      // outermost console.group message.
+      const firstWarningMessageId = state.warningGroupsById.get(warningGroupMessageId)[0];
+      const firstWarningMessage = state.messagesById.get(firstWarningMessageId);
+      const outermostGroupId = getOutermostGroup(firstWarningMessage, groupsById);
+      const groupIndex = state.visibleMessages.indexOf(outermostGroupId);
+      const warningMessageIndex = state.visibleMessages.indexOf(firstWarningMessageId);
+
+      if (groupIndex > -1) {
+        // We remove the warning message
+        if (warningMessageIndex > -1) {
+          state.visibleMessages.splice(warningMessageIndex, 1);
+        }
+
+        // And we put the warning group before the console.group
+        state.visibleMessages.splice(groupIndex, 0, warningGroupMessageId);
+      } else {
+        // If the warning message is not in a console.group, we replace it by the
+        // warning group message.
+        state.visibleMessages.splice(warningMessageIndex, 1, warningGroupMessageId);
+      }
     }
   }
 
@@ -415,11 +432,20 @@ function messages(state = MessageState(), action, filtersState, prefsState) {
 
       // If the message is a group
       if (isGroupType(messagesById.get(messageId).type)) {
-        // Hide all its children
-        closeState.visibleMessages = visibleMessages.filter(id =>
-          getParentGroups(messagesById.get(id).groupId, groupsById)
-            .includes(messageId) === false
-        );
+        // Hide all its children, unless they're in a warningGroup.
+        closeState.visibleMessages = visibleMessages.filter((id, i, arr) => {
+          const message = messagesById.get(id);
+          const warningGroupMessage =
+            messagesById.get(getParentWarningGroupMessageId(message));
+
+          // If the message is in a warning group, then we return its current visibility.
+          if (shouldGroupWarningMessages(warningGroupMessage, closeState, prefsState)) {
+            return arr.includes(id);
+          }
+
+          const parentGroups = getParentGroups(message.groupId, groupsById);
+          return parentGroups.includes(messageId) === false;
+        });
       } else if (isWarningGroup(messagesById.get(messageId))) {
         // If the message was a warningGroup, we hide all the messages in the group.
         const groupMessages = closeState.warningGroupsById.get(messageId);
@@ -549,6 +575,14 @@ function getParentGroups(currentGroup, groupsById) {
   }
 
   return groups;
+}
+
+function getOutermostGroup(message, groupsById) {
+  const groups = getParentGroups(message.groupId, groupsById);
+  if (groups.length === 0) {
+    return null;
+  }
+  return groups[groups.length - 1];
 }
 
 /**
@@ -734,10 +768,14 @@ function getMessageVisibility(message, {
     prefsState,
     checkGroup = true,
 }) {
-  // Do not display the message if it's in closed group.
+  const warningGroupMessage =
+    messagesState.messagesById.get(getParentWarningGroupMessageId(message));
+
+  // Do not display the message if it's in closed group and not in a warning group.
   if (
     checkGroup
     && !isInOpenedGroup(message, messagesState.groupsById, messagesState.messagesUiById)
+    && !shouldGroupWarningMessages(warningGroupMessage, messagesState, prefsState)
   ) {
     return {
       visible: false,
@@ -921,7 +959,15 @@ function passCssFilters(message, filters) {
  * @returns {Boolean}
  */
 function passSearchFilters(message, filters) {
-  const text = (filters.text || "").trim();
+  const text = (filters.text || "").trim().toLocaleLowerCase();
+  let regex;
+  if (text.startsWith("/") && text.endsWith("/") && text.length > 2) {
+    try {
+      regex = new RegExp(text.slice(1, -1), "im");
+    } catch (e) {
+
+    }
+  }
 
   // If there is no search, the message passes the filter.
   if (!text) {
@@ -930,26 +976,26 @@ function passSearchFilters(message, filters) {
 
   return (
     // Look for a match in parameters.
-    isTextInParameters(text, message.parameters)
+    isTextInParameters(text, regex, message.parameters)
     // Look for a match in location.
-    || isTextInFrame(text, message.frame)
+    || isTextInFrame(text, regex, message.frame)
     // Look for a match in net events.
-    || isTextInNetEvent(text, message.request)
+    || isTextInNetEvent(text, regex, message.request)
     // Look for a match in stack-trace.
-    || isTextInStackTrace(text, message.stacktrace)
+    || isTextInStackTrace(text, regex, message.stacktrace)
     // Look for a match in messageText.
-    || isTextInMessageText(text, message.messageText)
+    || isTextInMessageText(text, regex, message.messageText)
     // Look for a match in notes.
-    || isTextInNotes(text, message.notes)
+    || isTextInNotes(text, regex, message.notes)
     // Look for a match in prefix.
-    || isTextInPrefix(text, message.prefix)
+    || isTextInPrefix(text, regex, message.prefix)
   );
 }
 
 /**
 * Returns true if given text is included in provided stack frame.
 */
-function isTextInFrame(text, frame) {
+function isTextInFrame(text, regex, frame) {
   if (!frame) {
     return false;
   }
@@ -963,53 +1009,50 @@ function isTextInFrame(text, frame) {
   const { short } = getSourceNames(source);
   const unicodeShort = getUnicodeUrlPath(short);
 
-  const includes =
-    `${functionName ? functionName + " " : ""}${unicodeShort}:${line}:${column}`
-    .toLocaleLowerCase()
-    .includes(text.toLocaleLowerCase());
-  return includes;
+  const str =
+    `${functionName ? functionName + " " : ""}${unicodeShort}:${line}:${column}`;
+  return regex ? regex.test(str) : str.toLocaleLowerCase().includes(text);
 }
 
 /**
 * Returns true if given text is included in provided parameters.
 */
-function isTextInParameters(text, parameters) {
+function isTextInParameters(text, regex, parameters) {
   if (!parameters) {
     return false;
   }
 
-  text = text.toLocaleLowerCase();
-  return getAllProps(parameters).some(prop =>
-    (prop + "").toLocaleLowerCase().includes(text)
-  );
+  return getAllProps(parameters).some(prop => {
+    const str = (prop + "");
+    return regex ? regex.test(str) : str.toLocaleLowerCase().includes(text);
+  });
 }
 
 /**
 * Returns true if given text is included in provided net event grip.
 */
-function isTextInNetEvent(text, request) {
+function isTextInNetEvent(text, regex, request) {
   if (!request) {
     return false;
   }
 
-  text = text.toLocaleLowerCase();
-
-  const method = request.method.toLocaleLowerCase();
-  const url = request.url.toLocaleLowerCase();
-  return method.includes(text) || url.includes(text);
+  const method = request.method;
+  const url = request.url;
+  return regex ? regex.test(method) || regex.test(url) :
+    method.toLocaleLowerCase().includes(text) || url.toLocaleLowerCase().includes(text);
 }
 
 /**
 * Returns true if given text is included in provided stack trace.
 */
-function isTextInStackTrace(text, stacktrace) {
+function isTextInStackTrace(text, regex, stacktrace) {
   if (!Array.isArray(stacktrace)) {
     return false;
   }
 
   // isTextInFrame expect the properties of the frame object to be in the same
   // order they are rendered in the Frame component.
-  return stacktrace.some(frame => isTextInFrame(text, {
+  return stacktrace.some(frame => isTextInFrame(text, regex, {
     functionName: frame.functionName || l10n.getStr("stacktrace.anonymousFunction"),
     source: frame.filename,
     lineNumber: frame.lineNumber,
@@ -1020,17 +1063,19 @@ function isTextInStackTrace(text, stacktrace) {
 /**
 * Returns true if given text is included in `messageText` field.
 */
-function isTextInMessageText(text, messageText) {
+function isTextInMessageText(text, regex, messageText) {
   if (!messageText) {
     return false;
   }
 
   if (typeof messageText === "string") {
-    return messageText.toLocaleLowerCase().includes(text.toLocaleLowerCase());
+    return regex ? regex.test(messageText) :
+      messageText.toLocaleLowerCase().includes(text);
   }
 
   if (messageText.type === "longString") {
-    return messageText.initial.toLocaleLowerCase().includes(text.toLocaleLowerCase());
+    return regex ? regex.test(messageText.initial) :
+      messageText.initial.toLocaleLowerCase().includes(text);
   }
 
   return true;
@@ -1039,18 +1084,21 @@ function isTextInMessageText(text, messageText) {
 /**
 * Returns true if given text is included in notes.
 */
-function isTextInNotes(text, notes) {
+function isTextInNotes(text, regex, notes) {
   if (!Array.isArray(notes)) {
     return false;
   }
 
   return notes.some(note =>
     // Look for a match in location.
-    isTextInFrame(text, note.frame) ||
+    isTextInFrame(text, regex, note.frame) ||
     // Look for a match in messageBody.
     (
       note.messageBody &&
-      note.messageBody.toLocaleLowerCase().includes(text.toLocaleLowerCase())
+      (
+        regex ? regex.test(note.messageBody) :
+          note.messageBody.toLocaleLowerCase().includes(text)
+      )
     )
   );
 }
@@ -1058,12 +1106,14 @@ function isTextInNotes(text, notes) {
 /**
 * Returns true if given text is included in prefix.
 */
-function isTextInPrefix(text, prefix) {
+function isTextInPrefix(text, regex, prefix) {
   if (!prefix) {
     return false;
   }
 
-  return `${prefix}: `.toLocaleLowerCase().includes(text.toLocaleLowerCase());
+  const str = `${prefix}: `;
+
+  return regex ? regex.test(str) : str.toLocaleLowerCase().includes(text);
 }
 
 /**
@@ -1183,6 +1233,10 @@ function getLastMessageId(state) {
  * @param {PrefsState} prefsState
  */
 function shouldGroupWarningMessages(warningGroupMessage, messagesState, prefsState) {
+  if (!warningGroupMessage) {
+    return false;
+  }
+
   // Only group if the preference is ON.
   if (!prefsState.groupWarnings) {
     return false;
@@ -1190,7 +1244,11 @@ function shouldGroupWarningMessages(warningGroupMessage, messagesState, prefsSta
 
   // We group warning messages if there are at least 2 messages that could go in it.
   const warningGroup = messagesState.warningGroupsById.get(warningGroupMessage.id);
-  return warningGroup && warningGroup.length > 1;
+  if (!warningGroup || !Array.isArray(warningGroup)) {
+    return false;
+  }
+
+  return warningGroup.length > 1;
 }
 
 exports.messages = messages;

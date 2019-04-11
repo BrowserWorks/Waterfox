@@ -139,7 +139,7 @@ bool js::GeneratorThrowOrReturn(JSContext* cx, AbstractFramePtr frame,
                                 Handle<AbstractGeneratorObject*> genObj,
                                 HandleValue arg, uint32_t resumeKind) {
   if (resumeKind == AbstractGeneratorObject::THROW) {
-    cx->setPendingException(arg);
+    cx->setPendingExceptionAndCaptureStack(arg);
   } else {
     MOZ_ASSERT(resumeKind == AbstractGeneratorObject::RETURN);
 
@@ -147,7 +147,7 @@ bool js::GeneratorThrowOrReturn(JSContext* cx, AbstractFramePtr frame,
     frame.setReturnValue(arg);
 
     RootedValue closing(cx, MagicValue(JS_GENERATOR_CLOSING));
-    cx->setPendingException(closing);
+    cx->setPendingException(closing, nullptr);
     genObj->setClosing();
   }
   return false;
@@ -273,12 +273,12 @@ bool GlobalObject::initGenerators(JSContext* cx, Handle<GlobalObject*> global) {
     return false;
   }
 
-  RootedValue function(cx, global->getConstructor(JSProto_Function));
-  if (!function.toObjectOrNull()) {
+  RootedObject proto(
+      cx, GlobalObject::getOrCreateFunctionConstructor(cx, cx->global()));
+  if (!proto) {
     return false;
   }
-  RootedObject proto(cx, &function.toObject());
-  RootedAtom name(cx, cx->names().GeneratorFunction);
+  HandlePropertyName name = cx->names().GeneratorFunction;
   RootedObject genFunction(
       cx, NewFunctionWithProto(cx, Generator, 1, JSFunction::NATIVE_CTOR,
                                nullptr, name, proto, gc::AllocKind::FUNCTION,

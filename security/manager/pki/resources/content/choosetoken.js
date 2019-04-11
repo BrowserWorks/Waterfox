@@ -6,12 +6,10 @@
 /* import-globals-from pippki.js */
 "use strict";
 
-const nsIDialogParamBlock = Ci.nsIDialogParamBlock;
-
 var dialogParams;
 
 function onLoad() {
-  dialogParams = window.arguments[0].QueryInterface(nsIDialogParamBlock);
+  dialogParams = window.arguments[0].QueryInterface(Ci.nsIDialogParamBlock);
   let selectElement = document.getElementById("tokens");
   let count = dialogParams.GetInt(0);
   for (let i = 0; i < count; i++) {
@@ -19,7 +17,7 @@ function onLoad() {
     let token = dialogParams.GetString(i);
     menuItemNode.setAttribute("value", token);
     menuItemNode.setAttribute("label", token);
-    selectElement.firstChild.appendChild(menuItemNode);
+    selectElement.menupopup.appendChild(menuItemNode);
     if (i == 0) {
       selectElement.selectedItem = menuItemNode;
     }

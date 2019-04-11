@@ -986,7 +986,6 @@ fn get_animation_rule(
     element: &GeckoElement,
     cascade_level: CascadeLevel,
 ) -> Option<Arc<Locked<PropertyDeclarationBlock>>> {
-    use crate::gecko_bindings::sugar::ownership::HasSimpleFFI;
     use crate::properties::longhands::ANIMATABLE_PROPERTY_COUNT;
 
     // There's a very rough correlation between the number of effects
@@ -1421,16 +1420,6 @@ impl<'le> TElement for GeckoElement<'le> {
             ELEMENT_HAS_DIRTY_DESCENDANTS_FOR_SERVO as u32 |
                 ELEMENT_HAS_ANIMATION_ONLY_DIRTY_DESCENDANTS_FOR_SERVO as u32 |
                 NODE_DESCENDANTS_NEED_FRAMES as u32,
-        )
-    }
-
-    #[inline]
-    unsafe fn clear_dirty_bits(&self) {
-        self.unset_flags(
-            ELEMENT_HAS_DIRTY_DESCENDANTS_FOR_SERVO as u32 |
-                ELEMENT_HAS_ANIMATION_ONLY_DIRTY_DESCENDANTS_FOR_SERVO as u32 |
-                NODE_DESCENDANTS_NEED_FRAMES as u32 |
-                NODE_NEEDS_FRAME as u32,
         )
     }
 

@@ -9,7 +9,7 @@ const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 ChromeUtils.defineModuleGetter(this, "JSONFile", "resource://gre/modules/JSONFile.jsm");
 
-var EXPORTED_SYMBOLS = ["pushBroadcastService"];
+const EXPORTED_SYMBOLS = ["pushBroadcastService"];
 
 // We are supposed to ignore any updates with this version.
 const DUMMY_VERSION_STRING = "____NOP____";
@@ -26,7 +26,7 @@ ChromeUtils.defineModuleGetter(this, "PushService", "resource://gre/modules/Push
 class InvalidSourceInfo extends Error {
   constructor(message) {
     super(message);
-    this.name = 'InvalidSourceInfo';
+    this.name = "InvalidSourceInfo";
   }
 }
 
@@ -34,6 +34,12 @@ const BROADCAST_SERVICE_VERSION = 1;
 
 var BroadcastService = class {
   constructor(pushService, path) {
+    this.PHASES = {
+      HELLO: "hello",
+      REGISTER: "register",
+      BROADCAST: "broadcast",
+    };
+
     this.pushService = pushService;
     this.jsonFile = new JSONFile({
       path,
@@ -140,8 +146,16 @@ var BroadcastService = class {
     }
   }
 
-  async receivedBroadcastMessage(broadcasts) {
-    console.info("receivedBroadcastMessage:", broadcasts);
+  /**
+   * Call the listeners of the specified broadcasts.
+   *
+   * @param {Array<Object>} broadcasts Map between broadcast ids and versions.
+   * @param {Object} context Additional information about the context in which the
+   *  broadcast notification was originally received. This is transmitted to listeners.
+   * @param {String} context.phase One of `BroadcastService.PHASES`
+   */
+  async receivedBroadcastMessage(broadcasts, context) {
+    console.info("receivedBroadcastMessage:", broadcasts, context);
     await this.initializePromise;
     for (const broadcastId in broadcasts) {
       const version = broadcasts[broadcastId];
@@ -177,7 +191,7 @@ var BroadcastService = class {
 
       if (!module[symbolName]) {
         console.error("receivedBroadcastMessage: couldn't invoke", broadcastId,
-                      "because module", moduleName, "missing attribute", symbolName);
+                      "because module", moduleURI, "missing attribute", symbolName);
         continue;
       }
 
@@ -191,7 +205,7 @@ var BroadcastService = class {
       }
 
       try {
-        await handler.receivedBroadcastMessage(version, broadcastId);
+        await handler.receivedBroadcastMessage(version, broadcastId, context);
       } catch (e) {
         console.error("receivedBroadcastMessage: handler for", broadcastId,
                       "threw error:", e);
@@ -214,7 +228,7 @@ var BroadcastService = class {
   _saveImmediately() {
     return this.jsonFile._save();
   }
-}
+};
 
 function initializeBroadcastService() {
   // Fallback path for xpcshell tests.
@@ -224,6 +238,6 @@ function initializeBroadcastService() {
     path = OS.Path.join(OS.Constants.Path.profileDir, path);
   }
   return new BroadcastService(PushService, path);
-};
+}
 
 var pushBroadcastService = initializeBroadcastService();

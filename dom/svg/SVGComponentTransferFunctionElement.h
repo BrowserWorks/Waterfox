@@ -7,10 +7,10 @@
 #ifndef mozilla_dom_SVGComponentTransferFunctionElement_h
 #define mozilla_dom_SVGComponentTransferFunctionElement_h
 
+#include "SVGAnimatedEnumeration.h"
+#include "SVGAnimatedNumber.h"
 #include "SVGAnimatedNumberList.h"
-#include "SVGEnum.h"
 #include "SVGFilters.h"
-#include "nsSVGNumber2.h"
 
 #define NS_SVG_FE_COMPONENT_TRANSFER_FUNCTION_ELEMENT_CID \
   {                                                       \
@@ -34,7 +34,7 @@ class SVGComponentTransferFunctionElement
       already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
       : SVGComponentTransferFunctionElementBase(std::move(aNodeInfo)) {}
 
-  virtual ~SVGComponentTransferFunctionElement() {}
+  virtual ~SVGComponentTransferFunctionElement() = default;
 
  public:
   typedef gfx::ComponentTransferAttributes ComponentTransferAttributes;
@@ -74,11 +74,11 @@ class SVGComponentTransferFunctionElement
   static NumberListInfo sNumberListInfo[1];
 
   enum { SLOPE, INTERCEPT, AMPLITUDE, EXPONENT, OFFSET };
-  nsSVGNumber2 mNumberAttributes[5];
+  SVGAnimatedNumber mNumberAttributes[5];
   static NumberInfo sNumberInfo[5];
 
   enum { TYPE };
-  SVGEnum mEnumAttributes[1];
+  SVGAnimatedEnumeration mEnumAttributes[1];
   static SVGEnumMapping sTypeMap[];
   static EnumInfo sEnumInfo[1];
 };

@@ -159,21 +159,21 @@ NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(
 
 static const mozilla::Module::CIDEntry kPowerManagerCIDs[] = {
     // clang-format off
-  { &kNS_POWERMANAGERSERVICE_CID, false, nullptr, nsIPowerManagerServiceConstructor, mozilla::Module::ALLOW_IN_GPU_AND_SOCKET_PROCESS },
+  { &kNS_POWERMANAGERSERVICE_CID, false, nullptr, nsIPowerManagerServiceConstructor, mozilla::Module::ALLOW_IN_GPU_RDD_AND_SOCKET_PROCESS },
   { nullptr }
     // clang-format on
 };
 
 static const mozilla::Module::ContractIDEntry kPowerManagerContracts[] = {
     // clang-format off
-  { POWERMANAGERSERVICE_CONTRACTID, &kNS_POWERMANAGERSERVICE_CID, mozilla::Module::ALLOW_IN_GPU_AND_SOCKET_PROCESS },
+  { POWERMANAGERSERVICE_CONTRACTID, &kNS_POWERMANAGERSERVICE_CID, mozilla::Module::ALLOW_IN_GPU_RDD_AND_SOCKET_PROCESS },
   { nullptr }
     // clang-format on
 };
 
 // We mark the power module as being available in the GPU process because the
 // appshell depends on the power manager service.
-static const mozilla::Module kPowerManagerModule = {
+extern const mozilla::Module kPowerManagerModule = {
     mozilla::Module::kVersion,
     kPowerManagerCIDs,
     kPowerManagerContracts,
@@ -181,6 +181,4 @@ static const mozilla::Module kPowerManagerModule = {
     nullptr,
     nullptr,
     nullptr,
-    mozilla::Module::ALLOW_IN_GPU_AND_SOCKET_PROCESS};
-
-NSMODULE_DEFN(nsPowerManagerModule) = &kPowerManagerModule;
+    mozilla::Module::ALLOW_IN_GPU_RDD_AND_SOCKET_PROCESS};

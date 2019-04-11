@@ -23,6 +23,7 @@
 #include "nsIFrameInlines.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Likely.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/dom/Selection.h"
 #include "TextDrawTarget.h"
 
@@ -734,24 +735,24 @@ void TextOverflow::PruneDisplayListContents(
       }
     }
 
-    nsCharClipDisplayItem* charClip =
-        itemFrame ? nsCharClipDisplayItem::CheckCast(item) : nullptr;
-    if (charClip && GetSelfOrNearestBlock(itemFrame) == mBlock) {
+    nsDisplayText* textItem =
+        itemFrame ? nsDisplayText::CheckCast(item) : nullptr;
+    if (textItem && GetSelfOrNearestBlock(itemFrame) == mBlock) {
       LogicalRect rect =
           GetLogicalScrollableOverflowRectRelativeToBlock(itemFrame);
       if (mIStart.IsNeeded()) {
         nscoord istart =
             aInsideMarkersArea.IStart(mBlockWM) - rect.IStart(mBlockWM);
         if (istart > 0) {
-          (mBlockWM.IsBidiLTR() ? charClip->mVisIStartEdge
-                                : charClip->mVisIEndEdge) = istart;
+          (mBlockWM.IsBidiLTR() ? textItem->VisIStartEdge()
+                                : textItem->VisIEndEdge()) = istart;
         }
       }
       if (mIEnd.IsNeeded()) {
         nscoord iend = rect.IEnd(mBlockWM) - aInsideMarkersArea.IEnd(mBlockWM);
         if (iend > 0) {
-          (mBlockWM.IsBidiLTR() ? charClip->mVisIEndEdge
-                                : charClip->mVisIStartEdge) = iend;
+          (mBlockWM.IsBidiLTR() ? textItem->VisIEndEdge()
+                                : textItem->VisIStartEdge()) = iend;
         }
       }
     }
@@ -814,10 +815,9 @@ void TextOverflow::CreateMarkers(const nsLineBox* aLine, bool aCreateIStart,
         markerLogicalRect.GetPhysicalRect(mBlockWM, mBlockSize) + offset;
     ClipMarker(aContentArea.GetPhysicalRect(mBlockWM, mBlockSize) + offset,
                markerRect, clipState);
-    nsDisplayItem* marker = MakeDisplayItem<nsDisplayTextOverflowMarker>(
+    mMarkerList.AppendNewToTop<nsDisplayTextOverflowMarker>(
         mBuilder, mBlock, markerRect, aLine->GetLogicalAscent(), mIStart.mStyle,
         aLineNumber, 0);
-    mMarkerList.AppendToTop(marker);
   }
 
   if (aCreateIEnd) {
@@ -831,10 +831,9 @@ void TextOverflow::CreateMarkers(const nsLineBox* aLine, bool aCreateIStart,
         markerLogicalRect.GetPhysicalRect(mBlockWM, mBlockSize) + offset;
     ClipMarker(aContentArea.GetPhysicalRect(mBlockWM, mBlockSize) + offset,
                markerRect, clipState);
-    nsDisplayItem* marker = MakeDisplayItem<nsDisplayTextOverflowMarker>(
+    mMarkerList.AppendNewToTop<nsDisplayTextOverflowMarker>(
         mBuilder, mBlock, markerRect, aLine->GetLogicalAscent(), mIEnd.mStyle,
         aLineNumber, 1);
-    mMarkerList.AppendToTop(marker);
   }
 }
 

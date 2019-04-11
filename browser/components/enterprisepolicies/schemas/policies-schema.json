@@ -393,6 +393,10 @@
       "type": "boolean"
     },
 
+    "NewTabPage": {
+      "type": "boolean"
+    },
+
     "NoDefaultBookmarks": {
       "type": "boolean"
     },
@@ -551,6 +555,30 @@
       }
     },
 
+    "Preferences": {
+      "type": "object",
+      "properties": {
+        "network.IDN_show_punycode": {
+          "type": "boolean"
+        },
+        "browser.fixup.dns_first_for_single_words": {
+          "type": "boolean"
+        },
+        "browser.cache.disk.parent_directory": {
+          "type": "string"
+        },
+        "browser.urlbar.suggest.openpage": {
+          "type": "boolean"
+        },
+        "browser.urlbar.suggest.history": {
+          "type": "boolean"
+        },
+        "browser.urlbar.suggest.bookmark": {
+          "type": "boolean"
+        }
+      }
+    },
+
     "Proxy": {
       "type": "object",
       "properties": {
@@ -607,7 +635,7 @@
     },
 
     "RequestedLocales": {
-      "type": "array",
+      "type": ["string", "array"],
       "items": {
         "type": "string"
       }
@@ -675,6 +703,10 @@
           }
         }
       }
+    },
+
+    "SearchSuggestEnabled": {
+      "type": "boolean"
     },
 
     "SecurityDevices": {

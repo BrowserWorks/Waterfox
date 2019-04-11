@@ -182,6 +182,8 @@ pref("extensions.update.interval", 86400);  // Check for updates to Extensions a
 
 pref("extensions.webextensions.themes.icons.buttons", "back,forward,reload,stop,bookmark_star,bookmark_menu,downloads,home,app_menu,cut,copy,paste,new_window,new_private_window,save_page,print,history,full_screen,find,options,addons,developer,synced_tabs,open_file,sidebars,share_page,subscribe,text_encoding,email_link,forget,pocket");
 
+pref("lightweightThemes.getMoreURL", "https://addons.mozilla.org/%LOCALE%/firefox/themes");
+
 #if defined(MOZ_WIDEVINE_EME)
 pref("browser.eme.ui.enabled", true);
 #else
@@ -403,6 +405,10 @@ pref("permissions.default.microphone", 0);
 pref("permissions.default.geo", 0);
 pref("permissions.default.desktop-notification", 0);
 pref("permissions.default.shortcuts", 0);
+
+pref("permissions.desktop-notification.postPrompt.enabled", false);
+
+pref("permissions.postPrompt.animate", true);
 
 // handle links targeting new windows
 // 1=current window/tab, 2=new window, 3=new tab in most recent window
@@ -1161,6 +1167,8 @@ pref("services.sync.prefs.sync.addons.ignoreUserEnabledChanges", true);
 // source, and this would propagate automatically to other,
 // uncompromised Sync-connected devices.
 pref("services.sync.prefs.sync.browser.contentblocking.category", true);
+pref("services.sync.prefs.sync.browser.contentblocking.features.standard", true);
+pref("services.sync.prefs.sync.browser.contentblocking.features.strict", true);
 pref("services.sync.prefs.sync.browser.contentblocking.introCount", true);
 pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", true);
 pref("services.sync.prefs.sync.browser.ctrlTab.recentlyUsedOrder", true);
@@ -1468,26 +1476,13 @@ pref("media.gmp-widevinecdm.visible", true);
 pref("media.gmp-widevinecdm.enabled", true);
 #endif
 
-#if defined(_ARM64_) && defined(XP_WIN)
-// Windows on ARM64, OpenH264 not available yet.
-pref("media.gmp-gmpopenh264.visible", false);
-pref("media.gmp-gmpopenh264.enabled", false);
-#else
-// Not Windows on ARM64
 pref("media.gmp-gmpopenh264.visible", true);
 pref("media.gmp-gmpopenh264.enabled", true);
-#endif
+
 // Switch block autoplay logic to v2, and enable UI.
 pref("media.autoplay.enabled.user-gestures-needed", true);
-
-#ifdef NIGHTLY_BUILD
 // Set Firefox to block autoplay, asking for permission by default.
 pref("media.autoplay.default", 1); // 0=Allowed, 1=Blocked
-#else
-// Set Firefox to block autoplay, asking for permission by default.
-pref("media.autoplay.default", 1); // 0=Allowed, 1=Blocked
-#endif
-
 
 #ifdef NIGHTLY_BUILD
 // Block WebAudio from playing automatically.
@@ -1563,6 +1558,36 @@ pref("browser.contentblocking.control-center.ui.showAllowedLabels", false);
 
 pref("browser.contentblocking.cryptomining.preferences.ui.enabled", true);
 pref("browser.contentblocking.fingerprinting.preferences.ui.enabled", true);
+
+// Possible values for browser.contentblocking.features.* prefs:
+//   Tracking Protection:
+//     "tp": tracking protection enabled
+//     "-tp": tracking protection disabled
+//   Tracking Protection in private windows:
+//     "tpPrivate": tracking protection in private windows enabled
+//     "-tpPrivate": tracking protection in private windows disabled
+//   Fingerprinting:
+//     "fp": fingerprinting blocking enabled
+//     "-fp": fingerprinting blocking disabled
+//   Cryptomining:
+//     "cm": cryptomining blocking enabled
+//     "-cm": cryptomining blocking disabled
+//   Cookie behavior:
+//     "cookieBehavior0": cookie behaviour BEHAVIOR_ACCEPT
+//     "cookieBehavior1": cookie behaviour BEHAVIOR_REJECT_FOREIGN
+//     "cookieBehavior2": cookie behaviour BEHAVIOR_REJECT
+//     "cookieBehavior3": cookie behaviour BEHAVIOR_LIMIT_FOREIGN
+//     "cookieBehavior4": cookie behaviour BEHAVIOR_REJECT_TRACKER
+// One value from each section must be included in each browser.contentblocking.features.* pref.
+pref("browser.contentblocking.features.strict", "tp,tpPrivate,cookieBehavior4,-cm,-fp");
+
+// Enable blocking access to storage from tracking resources only in nightly
+// and early beta. By default the value is "cookieBehavior0": BEHAVIOR_ACCEPT
+#ifdef EARLY_BETA_OR_EARLIER
+pref("browser.contentblocking.features.standard", "-tp,tpPrivate,cookieBehavior4,-cm,-fp");
+#else
+pref("browser.contentblocking.features.standard", "-tp,tpPrivate,cookieBehavior0,-cm,-fp");
+#endif
 
 // Enable the Report Breakage UI on Nightly and Beta but not on Release yet.
 #ifdef EARLY_BETA_OR_EARLIER
@@ -1814,10 +1839,6 @@ pref("prio.publicKeyB", "26E6674E65425B823F1F1D5F96E3BB3EF9E406EC7FBA7DEF8B08A35
 // Coverage ping is disabled by default.
 pref("toolkit.coverage.enabled", false);
 pref("toolkit.coverage.endpoint.base", "https://coverage.mozilla.org");
-// Whether or not Prio-encoded Telemetry will be sent along with the main ping.
-#if defined(NIGHTLY_BUILD)
-pref("prio.enabled", true);
-#endif
 // Whether Prio-encoded Telemetry will be sent in the prio ping.
 #if defined(NIGHTLY_BUILD)
 pref("toolkit.telemetry.prioping.enabled", true);

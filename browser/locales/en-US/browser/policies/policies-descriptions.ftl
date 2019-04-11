@@ -99,6 +99,8 @@ policy-InstallAddonsPermission = Allow certain websites to install add-ons.
 
 policy-NetworkPrediction = Enable or disable network prediction (DNS prefetching).
 
+policy-NewTabPage = Enable or disable the New Tab page.
+
 policy-NoDefaultBookmarks = Disable creation of the default bookmarks bundled with { -brand-short-name }, and the Smart Bookmarks (Most Visited, Recent Tags). Note: this policy is only effective if used before the first run of the profile.
 
 policy-OfferToSaveLogins = Enforce the setting to allow { -brand-short-name } to offer to remember saved logins and passwords. Both true and false values are accepted.
@@ -111,6 +113,8 @@ policy-Permissions = Configure permissions for camera, microphone, location and 
 
 policy-PopupBlocking = Allow certain websites to display popups by default.
 
+policy-Preferences = Set and lock the value for a subset of preferences.
+
 policy-Proxy = Configure proxy settings.
 
 policy-RequestedLocales = Set the list of requested locales for the application in order of preference.
@@ -120,6 +124,8 @@ policy-SanitizeOnShutdown = Clear all navigation data on shutdown.
 policy-SearchBar = Set the default location of the search bar. The user is still allowed to customize it.
 
 policy-SearchEngines = Configure search engine settings. This policy is only available on the Extended Support Release (ESR) version.
+
+policy-SearchSuggestEnabled = Enable or disable search suggestions.
 
 # For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = Install PKCS #11 modules.

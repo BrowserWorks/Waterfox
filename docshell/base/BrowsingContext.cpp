@@ -131,12 +131,10 @@ already_AddRefed<BrowsingContext> BrowsingContext::Create(
   context->mName = aName;
   context->mOpenerId = aOpener ? aOpener->Id() : 0;
 
-  if (aParent) {
-    context->mCrossOriginPolicy = aParent->mCrossOriginPolicy;
-  } else if (aOpener) {
-    context->mCrossOriginPolicy = aOpener->mCrossOriginPolicy;
-  } else {
-    context->mCrossOriginPolicy = nsILoadInfo::CROSS_ORIGIN_POLICY_NULL;
+  BrowsingContext* inherit = aParent ? aParent : aOpener;
+  if (inherit) {
+    context->mOpenerPolicy = inherit->mOpenerPolicy;
+    context->mCrossOriginPolicy = inherit->mCrossOriginPolicy;
   }
 
   Register(context);
@@ -217,10 +215,21 @@ void BrowsingContext::Attach(bool aFromIPC) {
 
   children->AppendElement(this);
 
-  // Send attach to our parent if we need to.
-  if (!aFromIPC && XRE_IsContentProcess()) {
-    ContentChild::GetSingleton()->SendAttachBrowsingContext(
-        GetIPCInitializer());
+  if (!aFromIPC) {
+    // Send attach to our parent if we need to.
+    if (XRE_IsContentProcess()) {
+      ContentChild::GetSingleton()->SendAttachBrowsingContext(
+          GetIPCInitializer());
+    } else if (IsContent()) {
+      MOZ_DIAGNOSTIC_ASSERT(XRE_IsParentProcess());
+      for (auto iter = Group()->ContentParentsIter(); !iter.Done();
+           iter.Next()) {
+        nsRefPtrHashKey<ContentParent>* entry = iter.Get();
+
+        Unused << entry->GetKey()->SendAttachBrowsingContext(
+            GetIPCInitializer());
+      }
+    }
   }
 }
 

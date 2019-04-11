@@ -17,11 +17,11 @@ jobs:
          nightly: true
       shipping-phase: promote
       shipping-product: fennec
-      worker-type: aws-provisioner-v1/gecko-{level}-b-android
+      worker-type: b-linux
       worker:
          implementation: docker-worker
          os: linux
-         docker-image: {in-tree: google-play-strings}
+         docker-image: {in-tree: mozapkpublisher}
          chain-of-trust: true
          max-run-time: 600
          artifacts:

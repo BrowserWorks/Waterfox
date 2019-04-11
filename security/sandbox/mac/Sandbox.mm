@@ -14,12 +14,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <CoreFoundation/CoreFoundation.h>
-
 #include <iostream>
 #include <sstream>
 #include <vector>
 
 #include "mozilla/Assertions.h"
+#include "SandboxPolicyContent.h"
+#include "SandboxPolicyFlash.h"
+#include "SandboxPolicyGMP.h"
+#include "SandboxPolicyUtility.h"
 
 // XXX There are currently problems with the /usr/include/sandbox.h file on
 // some/all of the Macs in Mozilla's build system. Further,
@@ -287,6 +290,10 @@ bool StartMacSandbox(MacSandboxInfo const &aInfo, std::string &aErrorMessage) {
     params.push_back(aInfo.shouldLog ? "TRUE" : "FALSE");
     params.push_back("APP_PATH");
     params.push_back(aInfo.appPath.c_str());
+    if (!aInfo.crashServerPort.empty()) {
+      params.push_back("CRASH_PORT");
+      params.push_back(aInfo.crashServerPort.c_str());
+    }
   } else if (aInfo.type == MacSandboxType_Plugin) {
     profile = const_cast<char *>(SandboxPolicyGMP);
     params.push_back("SHOULD_LOG");

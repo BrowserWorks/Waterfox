@@ -1068,14 +1068,6 @@ mozilla::ipc::IPCResult ContentParent::RecvLaunchRDDProcess(
       Preferences::GetBool("media.rdd-process.enabled", false)) {
     RDDProcessManager* rdd = RDDProcessManager::Get();
     if (rdd) {
-      // If there is already an RDDChild, then we've already launched the
-      // RDD process.  We don't need to do anything else.  Specifically,
-      // we want to avoid calling CreateContentBridge again because that
-      // causes the RemoteDecoderManagerParent to rebuild needlessly.
-      if (rdd->GetRDDChild()) {
-        return IPC_OK();
-      }
-
       rdd->LaunchRDDProcess();
 
       bool rddOpened = rdd->CreateContentBridge(OtherPid(), aEndpoint);
@@ -1389,8 +1381,8 @@ void ContentParent::ShutDownProcess(ShutDownMethod aMethod) {
 
   using mozilla::dom::quota::QuotaManagerService;
 
-  if (QuotaManagerService* quotaManagerService = QuotaManagerService::Get()) {
-    quotaManagerService->AbortOperationsForProcess(mChildID);
+  if (QuotaManagerService* qms = QuotaManagerService::GetOrCreate()) {
+    qms->AbortOperationsForProcess(mChildID);
   }
 
   // If Close() fails with an error, we'll end up back in this function, but
@@ -2068,49 +2060,13 @@ void ContentParent::LaunchSubprocessInternal(
     earlyReject();
     return;
   }
+  prefSerializer.AddSharedPrefCmdLineArgs(*mSubprocess, extraArgs);
 
   // Register ContentParent as an observer for changes to any pref
   // whose prefix matches the empty string, i.e. all of them.  The
   // observation starts here in order to capture pref updates that
   // happen during async launch.
   Preferences::AddStrongObserver(this, "");
-
-  // Formats a pointer or pointer-sized-integer as a string suitable for passing
-  // in an arguments list.
-  auto formatPtrArg = [](auto arg) {
-    return nsPrintfCString("%zu", uintptr_t(arg));
-  };
-
-#if defined(XP_WIN)
-  // Record the handle as to-be-shared, and pass it via a command flag. This
-  // works because Windows handles are system-wide.
-  HANDLE prefsHandle = prefSerializer.GetSharedMemoryHandle();
-  mSubprocess->AddHandleToShare(prefsHandle);
-  mSubprocess->AddHandleToShare(prefSerializer.GetPrefMapHandle().get());
-  extraArgs.push_back("-prefsHandle");
-  extraArgs.push_back(formatPtrArg(prefsHandle).get());
-  extraArgs.push_back("-prefMapHandle");
-  extraArgs.push_back(
-      formatPtrArg(prefSerializer.GetPrefMapHandle().get()).get());
-#else
-  // In contrast, Unix fds are per-process. So remap the fd to a fixed one that
-  // will be used in the child.
-  // XXX: bug 1440207 is about improving how fixed fds are used.
-  //
-  // Note: on Android, AddFdToRemap() sets up the fd to be passed via a Parcel,
-  // and the fixed fd isn't used. However, we still need to mark it for
-  // remapping so it doesn't get closed in the child.
-  mSubprocess->AddFdToRemap(prefSerializer.GetSharedMemoryHandle().fd,
-                            kPrefsFileDescriptor);
-  mSubprocess->AddFdToRemap(prefSerializer.GetPrefMapHandle().get(),
-                            kPrefMapFileDescriptor);
-#endif
-
-  // Pass the lengths via command line flags.
-  extraArgs.push_back("-prefsLen");
-  extraArgs.push_back(formatPtrArg(prefSerializer.GetPrefLength()).get());
-  extraArgs.push_back("-prefMapSize");
-  extraArgs.push_back(formatPtrArg(prefSerializer.GetPrefMapSize()).get());
 
   if (gSafeMode) {
     extraArgs.push_back("-safeMode");
@@ -4996,6 +4952,8 @@ mozilla::ipc::IPCResult ContentParent::RecvCreateWindowInDifferentProcess(
     const nsCString& aFeatures, const float& aFullZoom, const nsString& aName,
     const IPC::Principal& aTriggeringPrincipal, nsIContentSecurityPolicy* aCsp,
     nsIReferrerInfo* aReferrerInfo) {
+  MOZ_DIAGNOSTIC_ASSERT(!nsContentUtils::IsSpecialName(aName));
+
   nsCOMPtr<nsITabParent> newRemoteTab;
   bool windowIsNew;
   nsCOMPtr<nsIURI> uriToLoad = DeserializeURI(aURIToLoad);
@@ -5720,13 +5678,9 @@ mozilla::ipc::IPCResult ContentParent::RecvAttachBrowsingContext(
     // BrowsingContext in another process. This is illegal since the
     // only thing that could create that child BrowsingContext is a
     // parent docshell in the same process as that BrowsingContext.
+    MOZ_DIAGNOSTIC_ASSERT(false,
+                          "Trying to attach to out of process parent context");
 
-    // TODO(farre): We're doing nothing now, but is that exactly what
-    // we want? Maybe we want to crash the child currently calling
-    // SendAttachBrowsingContext and/or the child that originally
-    // called SendAttachBrowsingContext or possibly all children that
-    // has a BrowsingContext connected to the child that currently
-    // called SendAttachBrowsingContext? [Bug 1471598]
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
             ("ParentIPC: Trying to attach to out of process parent context "
              "0x%08" PRIx64,
@@ -5739,9 +5693,9 @@ mozilla::ipc::IPCResult ContentParent::RecvAttachBrowsingContext(
     // This is highly suspicious. BrowsingContexts should only be
     // attached at most once, but finding one indicates that someone
     // is doing something they shouldn't.
+    MOZ_DIAGNOSTIC_ASSERT(false,
+                          "Trying to attach already attached browsing context");
 
-    // TODO(farre): To crash or not to crash. Same reasoning as in
-    // above TODO. [Bug 1471598]
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
             ("ParentIPC: Trying to attach already attached 0x%08" PRIx64
              " to 0x%08" PRIx64,
@@ -5773,9 +5727,8 @@ mozilla::ipc::IPCResult ContentParent::RecvDetachBrowsingContext(
     // process. This is illegal since the owner of the BrowsingContext
     // is the proccess with the in-process docshell, which is tracked
     // by OwnerProcessId.
+    MOZ_DIAGNOSTIC_ASSERT(false, "Trying to detach out of process context");
 
-    // TODO(farre): To crash or not to crash. Same reasoning as in
-    // above TODO. [Bug 1471598]
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
             ("ParentIPC: Trying to detach out of process context 0x%08" PRIx64,
              aContext->Id()));

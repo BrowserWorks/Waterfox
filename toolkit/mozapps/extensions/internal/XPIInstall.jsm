@@ -556,7 +556,7 @@ var loadManifest = async function(aPackage, aLocation, aOldAddon) {
 
   let {signedState, cert} = await aPackage.verifySignedState(addon);
   addon.signedState = signedState;
-  if (signedState != AddonManager.SIGNEDSTATE_PRIVILEGED) {
+  if (!addon.isPrivileged) {
     addon.hidden = false;
   }
 
@@ -1803,6 +1803,8 @@ var DownloadAddonInstall = class extends AddonInstall {
    * @param {XULElement} [options.browser]
    *        The browser performing the install, used to display
    *        authentication prompts.
+   * @param {nsIPrincipal} [options.principal]
+   *        The principal to use. If not present, will default to browser.contentPrincipal.
    * @param {string} [options.name]
    *        An optional name for the add-on
    * @param {string} [options.type]
@@ -1820,6 +1822,10 @@ var DownloadAddonInstall = class extends AddonInstall {
     super(installLocation, url, options);
 
     this.browser = options.browser;
+    this.loadingPrincipal =
+      options.triggeringPrincipal ||
+      (this.browser && this.browser.contentPrincipal) ||
+      Services.scriptSecurityManager.getSystemPrincipal();
     this.sendCookies = Boolean(options.sendCookies);
 
     this.state = AddonManager.STATE_AVAILABLE;
@@ -1928,7 +1934,9 @@ var DownloadAddonInstall = class extends AddonInstall {
 
       this.channel = NetUtil.newChannel({
         uri: this.sourceURI,
-        loadUsingSystemPrincipal: true,
+        securityFlags: Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
+        contentPolicyType: Ci.nsIContentPolicy.TYPE_SAVEAS_DOWNLOAD,
+        loadingPrincipal: this.loadingPrincipal,
       });
       this.channel.notificationCallbacks = this;
       if (this.sendCookies) {

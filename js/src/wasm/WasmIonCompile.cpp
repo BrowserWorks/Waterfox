@@ -494,7 +494,9 @@ class FunctionCompiler {
         ins = MSignExtendInt64::New(alloc(), op, mode);
         break;
       }
-      default: { MOZ_CRASH("Bad sign extension"); }
+      default: {
+        MOZ_CRASH("Bad sign extension");
+      }
     }
     curBlock_->add(ins);
     return ins;
@@ -980,13 +982,14 @@ class FunctionCompiler {
 
   // Operations that modify a CallCompileState.
 
-  bool passInstance(CallCompileState* args) {
+  bool passInstance(MIRType instanceType, CallCompileState* args) {
     if (inDeadCode()) {
       return true;
     }
 
-    // Should only pass an instance once.
+    // Should only pass an instance once.  And it must be a non-GC pointer.
     MOZ_ASSERT(args->instanceArg_ == ABIArg());
+    MOZ_ASSERT(instanceType == MIRType::Pointer);
     args->instanceArg_ = args->abi_.next(MIRType::Pointer);
     return true;
   }
@@ -2211,17 +2214,17 @@ static bool EmitSetGlobal(FunctionCompiler& f) {
   // The C++ postbarrier performs any necessary filtering.
 
   if (barrierAddr) {
+    const SymbolicAddressSignature& callee = SASigPostBarrierFiltering;
     CallCompileState args;
-    if (!f.passInstance(&args)) {
+    if (!f.passInstance(callee.argTypes[0], &args)) {
       return false;
     }
-    if (!f.passArg(barrierAddr, ValType::AnyRef, &args)) {
+    if (!f.passArg(barrierAddr, callee.argTypes[1], &args)) {
       return false;
     }
     f.finishCall(&args);
     MDefinition* ret;
-    if (!f.builtinInstanceMethodCall(SASigPostBarrierFiltering, lineOrBytecode,
-                                     args, &ret)) {
+    if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
       return false;
     }
   }
@@ -2672,8 +2675,9 @@ static bool EmitBinaryMathBuiltinCall(FunctionCompiler& f,
 static bool EmitMemoryGrow(FunctionCompiler& f) {
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee = SASigMemoryGrow;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
@@ -2682,15 +2686,14 @@ static bool EmitMemoryGrow(FunctionCompiler& f) {
     return false;
   }
 
-  if (!f.passArg(delta, ValType::I32, &args)) {
+  if (!f.passArg(delta, callee.argTypes[1], &args)) {
     return false;
   }
 
   f.finishCall(&args);
 
   MDefinition* ret;
-  if (!f.builtinInstanceMethodCall(SASigMemoryGrow, lineOrBytecode, args,
-                                   &ret)) {
+  if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
   }
 
@@ -2701,21 +2704,21 @@ static bool EmitMemoryGrow(FunctionCompiler& f) {
 static bool EmitMemorySize(FunctionCompiler& f) {
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee = SASigMemorySize;
   CallCompileState args;
 
   if (!f.iter().readMemorySize()) {
     return false;
   }
 
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
   f.finishCall(&args);
 
   MDefinition* ret;
-  if (!f.builtinInstanceMethodCall(SASigMemorySize, lineOrBytecode, args,
-                                   &ret)) {
+  if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
   }
 
@@ -2797,10 +2800,15 @@ static bool EmitAtomicStore(FunctionCompiler& f, ValType type,
 }
 
 static bool EmitWait(FunctionCompiler& f, ValType type, uint32_t byteSize) {
+  MOZ_ASSERT(type == ValType::I32 || type == ValType::I64);
+  MOZ_ASSERT(SizeOf(type) == byteSize);
+
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee =
+      type == ValType::I32 ? SASigWaitI32 : SASigWaitI64;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
@@ -2818,15 +2826,16 @@ static bool EmitWait(FunctionCompiler& f, ValType type, uint32_t byteSize) {
     return false;
   }
 
-  if (!f.passArg(ptr, ValType::I32, &args)) {
+  if (!f.passArg(ptr, callee.argTypes[1], &args)) {
     return false;
   }
 
-  if (!f.passArg(expected, type, &args)) {
+  MOZ_ASSERT(ToMIRType(type) == callee.argTypes[2]);
+  if (!f.passArg(expected, callee.argTypes[2], &args)) {
     return false;
   }
 
-  if (!f.passArg(timeout, ValType::I64, &args)) {
+  if (!f.passArg(timeout, callee.argTypes[3], &args)) {
     return false;
   }
 
@@ -2834,8 +2843,6 @@ static bool EmitWait(FunctionCompiler& f, ValType type, uint32_t byteSize) {
     return false;
   }
 
-  const SymbolicAddressSignature& callee =
-      type == ValType::I32 ? SASigWaitI32 : SASigWaitI64;
   MDefinition* ret;
   if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
@@ -2852,8 +2859,9 @@ static bool EmitWait(FunctionCompiler& f, ValType type, uint32_t byteSize) {
 static bool EmitWake(FunctionCompiler& f) {
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee = SASigWake;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
@@ -2870,11 +2878,11 @@ static bool EmitWake(FunctionCompiler& f) {
     return false;
   }
 
-  if (!f.passArg(ptr, ValType::I32, &args)) {
+  if (!f.passArg(ptr, callee.argTypes[1], &args)) {
     return false;
   }
 
-  if (!f.passArg(count, ValType::I32, &args)) {
+  if (!f.passArg(count, callee.argTypes[2], &args)) {
     return false;
   }
 
@@ -2883,7 +2891,7 @@ static bool EmitWake(FunctionCompiler& f) {
   }
 
   MDefinition* ret;
-  if (!f.builtinInstanceMethodCall(SASigWake, lineOrBytecode, args, &ret)) {
+  if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
   }
 
@@ -2930,18 +2938,20 @@ static bool EmitMemOrTableCopy(FunctionCompiler& f, bool isMem) {
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee =
+      isMem ? SASigMemCopy : SASigTableCopy;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
-  if (!f.passArg(dst, ValType::I32, &args)) {
+  if (!f.passArg(dst, callee.argTypes[1], &args)) {
     return false;
   }
-  if (!f.passArg(src, ValType::I32, &args)) {
+  if (!f.passArg(src, callee.argTypes[2], &args)) {
     return false;
   }
-  if (!f.passArg(len, ValType::I32, &args)) {
+  if (!f.passArg(len, callee.argTypes[3], &args)) {
     return false;
   }
   if (!isMem) {
@@ -2949,14 +2959,14 @@ static bool EmitMemOrTableCopy(FunctionCompiler& f, bool isMem) {
     if (!dti) {
       return false;
     }
-    if (!f.passArg(dti, ValType::I32, &args)) {
+    if (!f.passArg(dti, callee.argTypes[4], &args)) {
       return false;
     }
     MDefinition* sti = f.constant(Int32Value(srcTableIndex), MIRType::Int32);
     if (!sti) {
       return false;
     }
-    if (!f.passArg(sti, ValType::I32, &args)) {
+    if (!f.passArg(sti, callee.argTypes[5], &args)) {
       return false;
     }
   }
@@ -2964,8 +2974,6 @@ static bool EmitMemOrTableCopy(FunctionCompiler& f, bool isMem) {
     return false;
   }
 
-  const SymbolicAddressSignature& callee =
-      isMem ? SASigMemCopy : SASigTableCopy;
   MDefinition* ret;
   if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
@@ -2990,14 +2998,16 @@ static bool EmitDataOrElemDrop(FunctionCompiler& f, bool isData) {
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee =
+      isData ? SASigDataDrop : SASigElemDrop;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
   MDefinition* segIndex =
       f.constant(Int32Value(int32_t(segIndexVal)), MIRType::Int32);
-  if (!f.passArg(segIndex, ValType::I32, &args)) {
+  if (!f.passArg(segIndex, callee.argTypes[1], &args)) {
     return false;
   }
 
@@ -3005,8 +3015,6 @@ static bool EmitDataOrElemDrop(FunctionCompiler& f, bool isData) {
     return false;
   }
 
-  const SymbolicAddressSignature& callee =
-      isData ? SASigDataDrop : SASigElemDrop;
   MDefinition* ret;
   if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
@@ -3031,18 +3039,19 @@ static bool EmitMemFill(FunctionCompiler& f) {
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee = SASigMemFill;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
-  if (!f.passArg(start, ValType::I32, &args)) {
+  if (!f.passArg(start, callee.argTypes[1], &args)) {
     return false;
   }
-  if (!f.passArg(val, ValType::I32, &args)) {
+  if (!f.passArg(val, callee.argTypes[2], &args)) {
     return false;
   }
-  if (!f.passArg(len, ValType::I32, &args)) {
+  if (!f.passArg(len, callee.argTypes[3], &args)) {
     return false;
   }
 
@@ -3051,7 +3060,7 @@ static bool EmitMemFill(FunctionCompiler& f) {
   }
 
   MDefinition* ret;
-  if (!f.builtinInstanceMethodCall(SASigMemFill, lineOrBytecode, args, &ret)) {
+  if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
   }
 
@@ -3076,24 +3085,26 @@ static bool EmitMemOrTableInit(FunctionCompiler& f, bool isMem) {
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee =
+      isMem ? SASigMemInit : SASigTableInit;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
-  if (!f.passArg(dstOff, ValType::I32, &args)) {
+  if (!f.passArg(dstOff, callee.argTypes[1], &args)) {
     return false;
   }
-  if (!f.passArg(srcOff, ValType::I32, &args)) {
+  if (!f.passArg(srcOff, callee.argTypes[2], &args)) {
     return false;
   }
-  if (!f.passArg(len, ValType::I32, &args)) {
+  if (!f.passArg(len, callee.argTypes[3], &args)) {
     return false;
   }
 
   MDefinition* segIndex =
       f.constant(Int32Value(int32_t(segIndexVal)), MIRType::Int32);
-  if (!f.passArg(segIndex, ValType::I32, &args)) {
+  if (!f.passArg(segIndex, callee.argTypes[4], &args)) {
     return false;
   }
   if (!isMem) {
@@ -3101,7 +3112,7 @@ static bool EmitMemOrTableInit(FunctionCompiler& f, bool isMem) {
     if (!dti) {
       return false;
     }
-    if (!f.passArg(dti, ValType::I32, &args)) {
+    if (!f.passArg(dti, callee.argTypes[5], &args)) {
       return false;
     }
   }
@@ -3109,8 +3120,6 @@ static bool EmitMemOrTableInit(FunctionCompiler& f, bool isMem) {
     return false;
   }
 
-  const SymbolicAddressSignature& callee =
-      isMem ? SASigMemInit : SASigTableInit;
   MDefinition* ret;
   if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
@@ -3141,12 +3150,13 @@ static bool EmitTableGet(FunctionCompiler& f) {
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee = SASigTableGet;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
-  if (!f.passArg(index, ValType::I32, &args)) {
+  if (!f.passArg(index, callee.argTypes[1], &args)) {
     return false;
   }
 
@@ -3155,7 +3165,7 @@ static bool EmitTableGet(FunctionCompiler& f) {
   if (!tableIndexArg) {
     return false;
   }
-  if (!f.passArg(tableIndexArg, ValType::I32, &args)) {
+  if (!f.passArg(tableIndexArg, callee.argTypes[2], &args)) {
     return false;
   }
 
@@ -3166,8 +3176,7 @@ static bool EmitTableGet(FunctionCompiler& f) {
   // The return value here is either null, denoting an error, or a short-lived
   // pointer to a location containing a possibly-null ref.
   MDefinition* result;
-  if (!f.builtinInstanceMethodCall(SASigTableGet, lineOrBytecode, args,
-                                   &result)) {
+  if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &result)) {
     return false;
   }
   if (!f.checkPointerNullMeansFailedResult(result)) {
@@ -3197,16 +3206,17 @@ static bool EmitTableGrow(FunctionCompiler& f) {
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee = SASigTableGrow;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
-  if (!f.passArg(delta, ValType::I32, &args)) {
+  if (!f.passArg(delta, callee.argTypes[1], &args)) {
     return false;
   }
 
-  if (!f.passArg(initValue, ValType::AnyRef, &args)) {
+  if (!f.passArg(initValue, callee.argTypes[2], &args)) {
     return false;
   }
 
@@ -3215,7 +3225,7 @@ static bool EmitTableGrow(FunctionCompiler& f) {
   if (!tableIndexArg) {
     return false;
   }
-  if (!f.passArg(tableIndexArg, ValType::I32, &args)) {
+  if (!f.passArg(tableIndexArg, callee.argTypes[3], &args)) {
     return false;
   }
 
@@ -3224,8 +3234,7 @@ static bool EmitTableGrow(FunctionCompiler& f) {
   }
 
   MDefinition* ret;
-  if (!f.builtinInstanceMethodCall(SASigTableGrow, lineOrBytecode, args,
-                                   &ret)) {
+  if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
   }
 
@@ -3247,16 +3256,17 @@ static bool EmitTableSet(FunctionCompiler& f) {
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee = SASigTableSet;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
-  if (!f.passArg(index, ValType::I32, &args)) {
+  if (!f.passArg(index, callee.argTypes[1], &args)) {
     return false;
   }
 
-  if (!f.passArg(value, ValType::AnyRef, &args)) {
+  if (!f.passArg(value, callee.argTypes[2], &args)) {
     return false;
   }
 
@@ -3265,7 +3275,7 @@ static bool EmitTableSet(FunctionCompiler& f) {
   if (!tableIndexArg) {
     return false;
   }
-  if (!f.passArg(tableIndexArg, ValType::I32, &args)) {
+  if (!f.passArg(tableIndexArg, callee.argTypes[3], &args)) {
     return false;
   }
 
@@ -3274,7 +3284,7 @@ static bool EmitTableSet(FunctionCompiler& f) {
   }
 
   MDefinition* ret;
-  if (!f.builtinInstanceMethodCall(SASigTableSet, lineOrBytecode, args, &ret)) {
+  if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
   }
   if (!f.checkI32NegativeMeansFailedResult(ret)) {
@@ -3295,8 +3305,9 @@ static bool EmitTableSize(FunctionCompiler& f) {
 
   uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
 
+  const SymbolicAddressSignature& callee = SASigTableSize;
   CallCompileState args;
-  if (!f.passInstance(&args)) {
+  if (!f.passInstance(callee.argTypes[0], &args)) {
     return false;
   }
 
@@ -3305,7 +3316,7 @@ static bool EmitTableSize(FunctionCompiler& f) {
   if (!tableIndexArg) {
     return false;
   }
-  if (!f.passArg(tableIndexArg, ValType::I32, &args)) {
+  if (!f.passArg(tableIndexArg, callee.argTypes[1], &args)) {
     return false;
   }
 
@@ -3314,8 +3325,7 @@ static bool EmitTableSize(FunctionCompiler& f) {
   }
 
   MDefinition* ret;
-  if (!f.builtinInstanceMethodCall(SASigTableSize, lineOrBytecode, args,
-                                   &ret)) {
+  if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
     return false;
   }
 

@@ -25,6 +25,7 @@
 #include "nsNodeInfoManager.h"
 #include "nsContentCreatorFunctions.h"
 #include "nsContentUtils.h"
+#include "nsUnicodeProperties.h"
 #include "mozilla/EventStates.h"
 #include "nsTextNode.h"
 #include "nsTextFrame.h"
@@ -211,8 +212,6 @@ static already_AddRefed<Element> MakeAnonButton(Document* aDoc,
   // NOTE: SetIsNativeAnonymousRoot() has to be called before setting any
   // attribute.
   button->SetIsNativeAnonymousRoot();
-  button->SetAttr(kNameSpaceID_None, nsGkAtoms::type,
-                  NS_LITERAL_STRING("button"), false);
 
   // Set the file picking button text depending on the current locale.
   nsAutoString buttonTxt;
@@ -240,11 +239,8 @@ static already_AddRefed<Element> MakeAnonButton(Document* aDoc,
     buttonElement->SetAccessKey(aAccessKey, IgnoreErrors());
   }
 
-  // Both elements are given the same tab index so that the user can tab
-  // to the file control at the correct index, and then between the two
-  // buttons.
-  buttonElement->SetTabIndex(aInputElement->TabIndex(), IgnoreErrors());
-
+  // We allow tabbing over the input itself, not the button.
+  buttonElement->SetTabIndex(-1, IgnoreErrors());
   return button.forget();
 }
 
@@ -276,7 +272,7 @@ nsresult nsFileControlFrame::CreateAnonymousContent(
 
   // Update the displayed text to reflect the current element's value.
   nsAutoString value;
-  HTMLInputElement::FromNode(mContent)->GetDisplayFileName(value);
+  fileContent->GetDisplayFileName(value);
   UpdateDisplayedValue(value, false);
 
   aElements.AppendElement(mTextContent);

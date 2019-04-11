@@ -237,7 +237,7 @@ JSString* js::ObjectToSource(JSContext* cx, HandleObject obj) {
     return NewStringCopyZ<CanGC>(cx, "{}");
   }
 
-  StringBuffer buf(cx);
+  JSStringBuilder buf(cx);
   if (outermost && !buf.append('(')) {
     return nullptr;
   }
@@ -245,7 +245,7 @@ JSString* js::ObjectToSource(JSContext* cx, HandleObject obj) {
     return nullptr;
   }
 
-  AutoIdVector idv(cx);
+  RootedIdVector idv(cx);
   if (!GetPropertyKeys(cx, obj, JSITER_OWNONLY | JSITER_SYMBOLS, &idv)) {
     return nullptr;
   }
@@ -837,7 +837,7 @@ static bool TryAssignNative(JSContext* cx, HandleObject to, HandleObject from,
 
 static bool AssignSlow(JSContext* cx, HandleObject to, HandleObject from) {
   // Step 4.b.ii.
-  AutoIdVector keys(cx);
+  RootedIdVector keys(cx);
   if (!GetPropertyKeys(
           cx, from, JSITER_OWNONLY | JSITER_HIDDEN | JSITER_SYMBOLS, &keys)) {
     return false;
@@ -996,7 +996,7 @@ static bool ObjectDefineProperties(JSContext* cx, HandleObject obj,
   }
 
   // Step 3.
-  AutoIdVector keys(cx);
+  RootedIdVector keys(cx);
   if (!GetPropertyKeys(
           cx, props, JSITER_OWNONLY | JSITER_SYMBOLS | JSITER_HIDDEN, &keys)) {
     return false;
@@ -1009,7 +1009,7 @@ static bool ObjectDefineProperties(JSContext* cx, HandleObject obj,
   // Step 4.
   Rooted<PropertyDescriptorVector> descriptors(cx,
                                                PropertyDescriptorVector(cx));
-  AutoIdVector descriptorKeys(cx);
+  RootedIdVector descriptorKeys(cx);
 
   // Step 5.
   for (size_t i = 0, len = keys.length(); i < len; i++) {
@@ -1333,10 +1333,14 @@ static bool TryEnumerableOwnPropertiesNative(JSContext* cx, HandleObject obj,
           kind == EnumerableOwnPropertiesKind::Names) {
         value.setString(str);
       } else if (kind == EnumerableOwnPropertiesKind::Values) {
-        value.set(tobj->getElement(i));
+        if (!tobj->getElement<CanGC>(cx, i, &value)) {
+          return false;
+        }
       } else {
         key.setString(str);
-        value.set(tobj->getElement(i));
+        if (!tobj->getElement<CanGC>(cx, i, &value)) {
+          return false;
+        }
         if (!NewValuePair(cx, key, value, &value)) {
           return false;
         }
@@ -1508,7 +1512,7 @@ static bool EnumerableOwnProperties(JSContext* cx, const JS::CallArgs& args) {
   MOZ_ASSERT(!obj->is<TypedArrayObject>());
 
   // Step 2.
-  AutoIdVector ids(cx);
+  RootedIdVector ids(cx);
   if (!GetPropertyKeys(cx, obj, JSITER_OWNONLY | JSITER_HIDDEN, &ids)) {
     return false;
   }
@@ -1543,7 +1547,10 @@ static bool EnumerableOwnProperties(JSContext* cx, const JS::CallArgs& args) {
     if (obj->is<NativeObject>()) {
       HandleNativeObject nobj = obj.as<NativeObject>();
       if (JSID_IS_INT(id) && nobj->containsDenseElement(JSID_TO_INT(id))) {
-        value = nobj->getDenseOrTypedArrayElement(JSID_TO_INT(id));
+        if (!nobj->getDenseOrTypedArrayElement<CanGC>(cx, JSID_TO_INT(id),
+                                                      &value)) {
+          return false;
+        }
       } else {
         shape = nobj->lookup(cx, id);
         if (!shape || !shape->enumerable()) {
@@ -1678,7 +1685,7 @@ bool js::GetOwnPropertyKeys(JSContext* cx, HandleObject obj, unsigned flags,
   // Step 1 (Performed in caller).
 
   // Steps 2-4.
-  AutoIdVector keys(cx);
+  RootedIdVector keys(cx);
   if (!GetPropertyKeys(cx, obj, flags, &keys)) {
     return false;
   }

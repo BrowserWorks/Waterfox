@@ -30,7 +30,7 @@ bool ForOfLoopControl::emitBeginCodeNeedingIteratorClose(BytecodeEmitter* bce) {
   }
 
   MOZ_ASSERT(numYieldsAtBeginCodeNeedingIterClose_ == UINT32_MAX);
-  numYieldsAtBeginCodeNeedingIterClose_ = bce->numYields;
+  numYieldsAtBeginCodeNeedingIterClose_ = bce->bytecodeSection().numYields();
 
   return true;
 }
@@ -45,7 +45,7 @@ bool ForOfLoopControl::emitEndCodeNeedingIteratorClose(BytecodeEmitter* bce) {
     //              [stack] ITER ... EXCEPTION
     return false;
   }
-  unsigned slotFromTop = bce->stackDepth - iterDepth_;
+  unsigned slotFromTop = bce->bytecodeSection().stackDepth() - iterDepth_;
   if (!bce->emitDupAt(slotFromTop)) {
     //              [stack] ITER ... EXCEPTION ITER
     return false;
@@ -69,12 +69,14 @@ bool ForOfLoopControl::emitEndCodeNeedingIteratorClose(BytecodeEmitter* bce) {
     return false;
   }
 
-  MOZ_ASSERT(slotFromTop == unsigned(bce->stackDepth - iterDepth_));
+  MOZ_ASSERT(slotFromTop ==
+             unsigned(bce->bytecodeSection().stackDepth() - iterDepth_));
   if (!bce->emitDupAt(slotFromTop)) {
     //              [stack] ITER ... EXCEPTION ITER
     return false;
   }
-  if (!emitIteratorCloseInInnermostScope(bce, CompletionKind::Throw)) {
+  if (!emitIteratorCloseInInnermostScopeWithTryNote(bce,
+                                                    CompletionKind::Throw)) {
     return false;  // ITER ... EXCEPTION
   }
 
@@ -91,7 +93,7 @@ bool ForOfLoopControl::emitEndCodeNeedingIteratorClose(BytecodeEmitter* bce) {
   // If any yields were emitted, then this for-of loop is inside a star
   // generator and must handle the case of Generator.return. Like in
   // yield*, it is handled with a finally block.
-  uint32_t numYieldsEmitted = bce->numYields;
+  uint32_t numYieldsEmitted = bce->bytecodeSection().numYields();
   if (numYieldsEmitted > numYieldsAtBeginCodeNeedingIterClose_) {
     if (!tryCatch_->emitFinally()) {
       return false;
@@ -110,7 +112,8 @@ bool ForOfLoopControl::emitEndCodeNeedingIteratorClose(BytecodeEmitter* bce) {
       //            [stack] ITER ... FTYPE FVALUE ITER
       return false;
     }
-    if (!emitIteratorCloseInInnermostScope(bce, CompletionKind::Normal)) {
+    if (!emitIteratorCloseInInnermostScopeWithTryNote(bce,
+                                                      CompletionKind::Normal)) {
       //            [stack] ITER ... FTYPE FVALUE
       return false;
     }
@@ -130,23 +133,23 @@ bool ForOfLoopControl::emitEndCodeNeedingIteratorClose(BytecodeEmitter* bce) {
   return true;
 }
 
-bool ForOfLoopControl::emitIteratorCloseInInnermostScope(
+bool ForOfLoopControl::emitIteratorCloseInInnermostScopeWithTryNote(
     BytecodeEmitter* bce,
     CompletionKind completionKind /* = CompletionKind::Normal */) {
-  return emitIteratorCloseInScope(bce, *bce->innermostEmitterScope(),
-                                  completionKind);
+  ptrdiff_t start = bce->bytecodeSection().offset();
+  if (!emitIteratorCloseInScope(bce, *bce->innermostEmitterScope(),
+                                completionKind)) {
+    return false;
+  }
+  ptrdiff_t end = bce->bytecodeSection().offset();
+  return bce->addTryNote(JSTRY_FOR_OF_ITERCLOSE, 0, start, end);
 }
 
 bool ForOfLoopControl::emitIteratorCloseInScope(
     BytecodeEmitter* bce, EmitterScope& currentScope,
     CompletionKind completionKind /* = CompletionKind::Normal */) {
-  ptrdiff_t start = bce->offset();
-  if (!bce->emitIteratorCloseInScope(currentScope, iterKind_, completionKind,
-                                     allowSelfHosted_)) {
-    return false;
-  }
-  ptrdiff_t end = bce->offset();
-  return bce->addTryNote(JSTRY_FOR_OF_ITERCLOSE, 0, start, end);
+  return bce->emitIteratorCloseInScope(currentScope, iterKind_, completionKind,
+                                       allowSelfHosted_);
 }
 
 // Since we're in the middle of emitting code that will leave
@@ -159,7 +162,8 @@ bool ForOfLoopControl::emitIteratorCloseInScope(
 // Very Bad Things would ensue as we reinterpreted that value as an
 // iterator.
 bool ForOfLoopControl::emitPrepareForNonLocalJumpFromScope(
-    BytecodeEmitter* bce, EmitterScope& currentScope, bool isTarget) {
+    BytecodeEmitter* bce, EmitterScope& currentScope, bool isTarget,
+    ptrdiff_t* tryNoteStart) {
   // Pop unnecessary value from the stack.  Effectively this means
   // leaving try-catch block.  However, the performing IteratorClose can
   // reach the depth for try-catch, and effectively re-enter the
@@ -190,6 +194,7 @@ bool ForOfLoopControl::emitPrepareForNonLocalJumpFromScope(
     return false;
   }
 
+  *tryNoteStart = bce->bytecodeSection().offset();
   if (!emitIteratorCloseInScope(bce, currentScope, CompletionKind::Normal)) {
     //              [stack] UNDEF
     return false;

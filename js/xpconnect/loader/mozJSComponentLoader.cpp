@@ -856,22 +856,16 @@ nsresult mozJSComponentLoader::ObjectForLocation(
       // Note: exceptions will get handled further down;
       // don't early return for them here.
       auto buf = map.get<char>();
-      if (reuseGlobal) {
-        CompileUtf8ForNonSyntacticScope(cx, options, buf.get(), map.size(),
-                                        &script);
-      } else {
-        CompileUtf8(cx, options, buf.get(), map.size(), &script);
-      }
+      script = reuseGlobal ? CompileUtf8ForNonSyntacticScope(
+                                 cx, options, buf.get(), map.size())
+                           : CompileUtf8(cx, options, buf.get(), map.size());
     } else {
       nsCString str;
       MOZ_TRY_VAR(str, ReadScript(aInfo));
 
-      if (reuseGlobal) {
-        CompileUtf8ForNonSyntacticScope(cx, options, str.get(), str.Length(),
-                                        &script);
-      } else {
-        CompileUtf8(cx, options, str.get(), str.Length(), &script);
-      }
+      script = reuseGlobal ? CompileUtf8ForNonSyntacticScope(
+                                 cx, options, str.get(), str.Length())
+                           : CompileUtf8(cx, options, str.get(), str.Length());
     }
     // Propagate the exception, if one exists. Also, don't leave the stale
     // exception on this context.
@@ -950,15 +944,11 @@ void mozJSComponentLoader::UnloadModules() {
   mInitialized = false;
 
   if (mLoaderGlobal) {
-    dom::AutoJSAPI jsapi;
-    jsapi.Init();
-    JSContext* cx = jsapi.cx();
-    RootedObject global(cx, mLoaderGlobal);
-    JSAutoRealm ar(cx, global);
-    MOZ_ASSERT(JS_HasExtensibleLexicalEnvironment(global));
-    JS_SetAllNonReservedSlotsToUndefined(
-        cx, JS_ExtensibleLexicalEnvironment(global));
-    JS_SetAllNonReservedSlotsToUndefined(cx, global);
+    MOZ_ASSERT(JS_HasExtensibleLexicalEnvironment(mLoaderGlobal));
+    JS::RootedObject lexicalEnv(dom::RootingCx(),
+                                JS_ExtensibleLexicalEnvironment(mLoaderGlobal));
+    JS_SetAllNonReservedSlotsToUndefined(lexicalEnv);
+    JS_SetAllNonReservedSlotsToUndefined(mLoaderGlobal);
     mLoaderGlobal = nullptr;
   }
 

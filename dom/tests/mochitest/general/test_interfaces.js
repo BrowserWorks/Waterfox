@@ -45,6 +45,8 @@ var ecmaGlobals =
     {name: "ArrayBuffer", insecureContext: true},
     {name: "Atomics", insecureContext: true, disabled: true},
     {name: "BigInt", insecureContext: true, nightly: true},
+    {name: "BigInt64Array", insecureContext: true, nightly: true},
+    {name: "BigUint64Array", insecureContext: true, nightly: true},
     {name: "Boolean", insecureContext: true},
     {name: "ByteLengthQueuingStrategy", insecureContext: true},
     {name: "CountQueuingStrategy", insecureContext: true},
@@ -653,6 +655,8 @@ var interfaceNamesInGlobalScope =
     {name: "MediaStreamAudioDestinationNode", insecureContext: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MediaStreamAudioSourceNode", insecureContext: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "MediaStreamTrackAudioSourceNode", insecureContext: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MediaStreamEvent", insecureContext: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!

@@ -94,10 +94,11 @@ nsresult nsJSUtils::CompileFunction(AutoJSAPI& jsapi,
     return NS_ERROR_FAILURE;
   }
 
-  JS::Rooted<JSFunction*> fun(cx);
-  if (!JS::CompileFunction(cx, aScopeChain, aOptions,
-                           PromiseFlatCString(aName).get(), aArgCount,
-                           aArgArray, source, &fun)) {
+  JS::Rooted<JSFunction*> fun(
+      cx, JS::CompileFunction(cx, aScopeChain, aOptions,
+                              PromiseFlatCString(aName).get(), aArgCount,
+                              aArgArray, source));
+  if (!fun) {
     return NS_ERROR_FAILURE;
   }
 
@@ -215,16 +216,12 @@ nsresult nsJSUtils::ExecutionContext::Compile(
 #endif
 
   MOZ_ASSERT(!mScript);
-  bool compiled = true;
-  if (mScopeChain.length() == 0) {
-    compiled = JS::Compile(mCx, aCompileOptions, aSrcBuf, &mScript);
-  } else {
-    compiled = JS::CompileForNonSyntacticScope(mCx, aCompileOptions, aSrcBuf,
-                                               &mScript);
-  }
+  mScript =
+      mScopeChain.length() == 0
+          ? JS::Compile(mCx, aCompileOptions, aSrcBuf)
+          : JS::CompileForNonSyntacticScope(mCx, aCompileOptions, aSrcBuf);
 
-  MOZ_ASSERT_IF(compiled, mScript);
-  if (!compiled) {
+  if (!mScript) {
     mSkip = true;
     mRv = EvaluationExceptionToNSResult(mCx);
     return mRv;

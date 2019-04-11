@@ -9,7 +9,7 @@ const { openToolboxAndLog, reloadPageAndLog } = require("../head");
 /*
  * These methods are used for working with debugger state changes in order
  * to make it easier to manipulate the ui and test different behavior. These
- * methods roughly reflect those found in debugger/new/test/mochi/head.js with
+ * methods roughly reflect those found in debugger/test/mochi/head.js with
  * a few exceptions. The `dbg` object is not exactly the same, and the methods
  * have been simplified. We may want to consider unifying them in the future
  */
@@ -179,7 +179,8 @@ function selectSource(dbg, url) {
   dump(`Selecting source: ${url}\n`);
   const line = 1;
   const source = findSource(dbg, url);
-  dbg.actions.selectLocation({ sourceId: source.id, line });
+  const cx = dbg.selectors.getContext(dbg.getState());
+  dbg.actions.selectLocation(cx, { sourceId: source.id, line });
   return waitForState(
     dbg,
     state => {
@@ -246,7 +247,9 @@ async function addBreakpoint(dbg, line, url) {
   };
 
   await selectSource(dbg, url);
-  await dbg.actions.addBreakpoint(location);
+
+  const cx = dbg.selectors.getContext(dbg.getState());
+  await dbg.actions.addBreakpoint(cx, location);
 }
 exports.addBreakpoint = addBreakpoint;
 
@@ -258,7 +261,8 @@ async function removeBreakpoints(dbg, line, url) {
     dbg,
     state => dbg.selectors.getBreakpointCount(state) === 0
   );
-  await dbg.actions.removeBreakpoints(breakpoints);
+  const cx = dbg.selectors.getContext(dbg.getState());
+  await dbg.actions.removeBreakpoints(cx, breakpoints);
   return onBreakpointsCleared;
 }
 exports.removeBreakpoints = removeBreakpoints;
@@ -273,14 +277,16 @@ exports.pauseDebugger = pauseDebugger;
 
 async function resume(dbg) {
   const onResumed = waitForResumed(dbg);
-  dbg.actions.resume();
+  const cx = dbg.selectors.getThreadContext(dbg.getState());
+  dbg.actions.resume(cx);
   return onResumed;
 }
 exports.resume = resume;
 
 async function step(dbg, stepType) {
   const resumed = waitForResumed(dbg);
-  dbg.actions[stepType]();
+  const cx = dbg.selectors.getThreadContext(dbg.getState());
+  dbg.actions[stepType](cx);
   await resumed;
   return waitForPaused(dbg);
 }

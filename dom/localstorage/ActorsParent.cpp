@@ -26,6 +26,7 @@
 #include "mozilla/dom/PBackgroundLSSnapshotParent.h"
 #include "mozilla/dom/StorageDBUpdater.h"
 #include "mozilla/dom/StorageUtils.h"
+#include "mozilla/dom/quota/CheckedUnsafePtr.h"
 #include "mozilla/dom/quota/OriginScope.h"
 #include "mozilla/dom/quota/QuotaCommon.h"
 #include "mozilla/dom/quota/QuotaManager.h"
@@ -39,6 +40,7 @@
 #include "mozilla/Logging.h"
 #include "nsClassHashtable.h"
 #include "nsDataHashtable.h"
+#include "nsExceptionHandler.h"
 #include "nsInterfaceHashtable.h"
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
@@ -252,6 +254,20 @@ const uint32_t kPreparedDatastoreTimeoutMs = 20000;
 const uint32_t kShadowMaxWALSize = 512 * 1024;
 
 const uint32_t kShadowJournalSizeLimit = kShadowMaxWALSize * 3;
+
+/**
+ * Automatically crash the browser if LocalStorage shutdown takes this long.
+ * We've chosen a value that is longer than the value for QuotaManager shutdown
+ * timer which is currently set to 30 seconds.  We've also chosen a value that
+ * is long enough that it is unlikely for the problem to be falsely triggered by
+ * slow system I/O.  We've also chosen a value long enough so that automated
+ * tests should time out and fail if LocalStorage shutdown hangs.  Also, this
+ * value is long enough so that testers can notice the LocalStorage shutdown
+ * hang; we want to know about the hangs, not hide them.  On the other hand this
+ * value is less than 60 seconds which is used by nsTerminator to crash a hung
+ * main process.
+ */
+#define SHUTDOWN_TIMEOUT_MS 50000
 
 bool IsOnConnectionThread();
 
@@ -1838,7 +1854,9 @@ class PreparedDatastore {
  * Actor class declarations
  ******************************************************************************/
 
-class Database final : public PBackgroundLSDatabaseParent {
+class Database final
+    : public PBackgroundLSDatabaseParent,
+      public SupportsCheckedUnsafePtr<CheckIf<DiagnosticAssertEnabled>> {
   RefPtr<Datastore> mDatastore;
   Snapshot* mSnapshot;
   const PrincipalInfo mPrincipalInfo;
@@ -2170,7 +2188,11 @@ class LSRequestBase : public DatastoreOperationBase,
  private:
   void SendReadyMessage();
 
+  nsresult SendReadyMessageInternal();
+
   void Finish();
+
+  void FinishInternal();
 
   void SendResults();
 
@@ -2188,7 +2210,10 @@ class LSRequestBase : public DatastoreOperationBase,
   mozilla::ipc::IPCResult RecvFinish() final;
 };
 
-class PrepareDatastoreOp : public LSRequestBase, public OpenDirectoryListener {
+class PrepareDatastoreOp
+    : public LSRequestBase,
+      public OpenDirectoryListener,
+      public SupportsCheckedUnsafePtr<CheckIf<DiagnosticAssertEnabled>> {
   class LoadDataOp;
 
   enum class NestedState {
@@ -2657,6 +2682,8 @@ class QuotaClient final : public mozilla::dom::quota::Client {
  private:
   ~QuotaClient() override;
 
+  void ShutdownTimedOut();
+
   nsresult CreateArchivedOriginScope(
       const OriginScope& aOriginScope,
       nsAutoPtr<ArchivedOriginScope>& aArchivedOriginScope);
@@ -2705,7 +2732,7 @@ class QuotaClient::MatchFunction final : public mozIStorageFunction {
 bool gLocalStorageInitialized = false;
 #endif
 
-typedef nsTArray<PrepareDatastoreOp*> PrepareDatastoreOpArray;
+typedef nsTArray<CheckedUnsafePtr<PrepareDatastoreOp>> PrepareDatastoreOpArray;
 
 StaticAutoPtr<PrepareDatastoreOpArray> gPrepareDatastoreOps;
 
@@ -2720,7 +2747,7 @@ typedef nsClassHashtable<nsUint64HashKey, PreparedDatastore>
 
 StaticAutoPtr<PreparedDatastoreHashtable> gPreparedDatastores;
 
-typedef nsTArray<Database*> LiveDatabaseArray;
+typedef nsTArray<CheckedUnsafePtr<Database>> LiveDatabaseArray;
 
 StaticAutoPtr<LiveDatabaseArray> gLiveDatabases;
 
@@ -2935,6 +2962,29 @@ void ClientValidationPrefChangedCallback(const char* aPrefName,
   MOZ_ASSERT(!aClosure);
 
   gClientValidation = Preferences::GetBool(aPrefName, kDefaultClientValidation);
+}
+
+template <typename P>
+void RequestAllowToCloseIf(P aPredicate) {
+  AssertIsOnBackgroundThread();
+
+  if (!gLiveDatabases) {
+    return;
+  }
+
+  nsTArray<RefPtr<Database>> databases;
+
+  for (Database* database : *gLiveDatabases) {
+    if (aPredicate(database)) {
+      databases.AppendElement(database);
+    }
+  }
+
+  for (Database* database : databases) {
+    database->RequestAllowToClose();
+  }
+
+  databases.Clear();
 }
 
 }  // namespace
@@ -5106,8 +5156,9 @@ void Database::RequestAllowToClose() {
   // child actor. Except the case when the actor was already destroyed.
   if (mActorDestroyed) {
     MOZ_ASSERT(mAllowedToClose);
-  } else {
-    Unused << SendRequestAllowToClose();
+  } else if (NS_WARN_IF(!SendRequestAllowToClose())) {
+    // Allow to close immediately if sending failed.
+    AllowToClose();
   }
 }
 
@@ -5703,26 +5754,48 @@ void LSRequestBase::SendReadyMessage() {
     MaybeSetFailureCode(NS_ERROR_FAILURE);
   }
 
-  if (MayProceed()) {
-    Unused << SendReady();
+  nsresult rv = SendReadyMessageInternal();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    MaybeSetFailureCode(rv);
 
-    mState = State::WaitingForFinish;
-
-    mWaitingForFinish = true;
-  } else {
-    Cleanup();
-
-    mState = State::Completed;
+    FinishInternal();
   }
+}
+
+nsresult LSRequestBase::SendReadyMessageInternal() {
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mState == State::SendingReadyMessage);
+
+  if (!MayProceed()) {
+    return NS_ERROR_FAILURE;
+  }
+
+  if (NS_WARN_IF(!SendReady())) {
+    return NS_ERROR_FAILURE;
+  }
+
+  mState = State::WaitingForFinish;
+
+  mWaitingForFinish = true;
+
+  return NS_OK;
 }
 
 void LSRequestBase::Finish() {
   AssertIsOnOwningThread();
   MOZ_ASSERT(mState == State::WaitingForFinish);
 
-  mState = State::SendingResults;
-
   mWaitingForFinish = false;
+
+  FinishInternal();
+}
+
+void LSRequestBase::FinishInternal() {
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mState == State::SendingReadyMessage ||
+             mState == State::WaitingForFinish);
+
+  mState = State::SendingResults;
 
   // This LSRequestBase can only be held alive by the IPDL. Run() can end up
   // with clearing that last reference. So we need to add a self reference here.
@@ -7233,22 +7306,22 @@ void ArchivedOriginScope::GetBindingClause(nsACString& aBindingClause) const {
     explicit Matcher(nsACString* aBindingClause)
         : mBindingClause(aBindingClause) {}
 
-    void match(const Origin& aOrigin) {
+    void operator()(const Origin& aOrigin) {
       *mBindingClause = NS_LITERAL_CSTRING(
           " WHERE originKey = :originKey "
           "AND originAttributes = :originAttributes");
     }
 
-    void match(const Prefix& aPrefix) {
+    void operator()(const Prefix& aPrefix) {
       *mBindingClause = NS_LITERAL_CSTRING(" WHERE originKey = :originKey");
     }
 
-    void match(const Pattern& aPattern) {
+    void operator()(const Pattern& aPattern) {
       *mBindingClause = NS_LITERAL_CSTRING(
           " WHERE originAttributes MATCH :originAttributesPattern");
     }
 
-    void match(const Null& aNull) { *mBindingClause = EmptyCString(); }
+    void operator()(const Null& aNull) { *mBindingClause = EmptyCString(); }
   };
 
   mData.match(Matcher(&aBindingClause));
@@ -7264,7 +7337,7 @@ nsresult ArchivedOriginScope::BindToStatement(
 
     explicit Matcher(mozIStorageStatement* aStmt) : mStmt(aStmt) {}
 
-    nsresult match(const Origin& aOrigin) {
+    nsresult operator()(const Origin& aOrigin) {
       nsresult rv = mStmt->BindUTF8StringByName(NS_LITERAL_CSTRING("originKey"),
                                                 aOrigin.OriginNoSuffix());
       if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -7280,7 +7353,7 @@ nsresult ArchivedOriginScope::BindToStatement(
       return NS_OK;
     }
 
-    nsresult match(const Prefix& aPrefix) {
+    nsresult operator()(const Prefix& aPrefix) {
       nsresult rv = mStmt->BindUTF8StringByName(NS_LITERAL_CSTRING("originKey"),
                                                 aPrefix.OriginNoSuffix());
       if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -7290,7 +7363,7 @@ nsresult ArchivedOriginScope::BindToStatement(
       return NS_OK;
     }
 
-    nsresult match(const Pattern& aPattern) {
+    nsresult operator()(const Pattern& aPattern) {
       nsresult rv = mStmt->BindUTF8StringByName(
           NS_LITERAL_CSTRING("originAttributesPattern"),
           NS_LITERAL_CSTRING("pattern1"));
@@ -7301,7 +7374,7 @@ nsresult ArchivedOriginScope::BindToStatement(
       return NS_OK;
     }
 
-    nsresult match(const Null& aNull) { return NS_OK; }
+    nsresult operator()(const Null& aNull) { return NS_OK; }
   };
 
   nsresult rv = mData.match(Matcher(aStmt));
@@ -7323,7 +7396,7 @@ bool ArchivedOriginScope::HasMatches(
     explicit Matcher(ArchivedOriginHashtable* aHashtable)
         : mHashtable(aHashtable) {}
 
-    bool match(const Origin& aOrigin) {
+    bool operator()(const Origin& aOrigin) {
       nsCString hashKey = GetArchivedOriginHashKey(aOrigin.OriginSuffix(),
                                                    aOrigin.OriginNoSuffix());
 
@@ -7331,7 +7404,7 @@ bool ArchivedOriginScope::HasMatches(
       return mHashtable->Get(hashKey, &archivedOriginInfo);
     }
 
-    bool match(const Prefix& aPrefix) {
+    bool operator()(const Prefix& aPrefix) {
       for (auto iter = mHashtable->ConstIter(); !iter.Done(); iter.Next()) {
         ArchivedOriginInfo* archivedOriginInfo = iter.Data();
 
@@ -7343,7 +7416,7 @@ bool ArchivedOriginScope::HasMatches(
       return false;
     }
 
-    bool match(const Pattern& aPattern) {
+    bool operator()(const Pattern& aPattern) {
       for (auto iter = mHashtable->ConstIter(); !iter.Done(); iter.Next()) {
         ArchivedOriginInfo* archivedOriginInfo = iter.Data();
 
@@ -7356,7 +7429,7 @@ bool ArchivedOriginScope::HasMatches(
       return false;
     }
 
-    bool match(const Null& aNull) { return mHashtable->Count(); }
+    bool operator()(const Null& aNull) { return mHashtable->Count(); }
   };
 
   return mData.match(Matcher(aHashtable));
@@ -7373,14 +7446,14 @@ void ArchivedOriginScope::RemoveMatches(
     explicit Matcher(ArchivedOriginHashtable* aHashtable)
         : mHashtable(aHashtable) {}
 
-    void match(const Origin& aOrigin) {
+    void operator()(const Origin& aOrigin) {
       nsCString hashKey = GetArchivedOriginHashKey(aOrigin.OriginSuffix(),
                                                    aOrigin.OriginNoSuffix());
 
       mHashtable->Remove(hashKey);
     }
 
-    void match(const Prefix& aPrefix) {
+    void operator()(const Prefix& aPrefix) {
       for (auto iter = mHashtable->Iter(); !iter.Done(); iter.Next()) {
         ArchivedOriginInfo* archivedOriginInfo = iter.Data();
 
@@ -7390,7 +7463,7 @@ void ArchivedOriginScope::RemoveMatches(
       }
     }
 
-    void match(const Pattern& aPattern) {
+    void operator()(const Pattern& aPattern) {
       for (auto iter = mHashtable->Iter(); !iter.Done(); iter.Next()) {
         ArchivedOriginInfo* archivedOriginInfo = iter.Data();
 
@@ -7401,7 +7474,7 @@ void ArchivedOriginScope::RemoveMatches(
       }
     }
 
-    void match(const Null& aNull) { mHashtable->Clear(); }
+    void operator()(const Null& aNull) { mHashtable->Clear(); }
   };
 
   mData.match(Matcher(aHashtable));
@@ -7954,29 +8027,21 @@ void QuotaClient::AbortOperations(const nsACString& aOrigin) {
     }
   }
 
-  if (gLiveDatabases) {
-    for (Database* database : *gLiveDatabases) {
-      if (aOrigin.IsVoid() || database->Origin() == aOrigin) {
-        // TODO: This just allows the database to close, but we can actually
-        //       set a flag to abort any existing operations, so we can
-        //       eventually close faster.
-
-        database->RequestAllowToClose();
-      }
-    }
+  if (aOrigin.IsVoid()) {
+    RequestAllowToCloseIf([](const Database* const) { return true; });
+  } else {
+    RequestAllowToCloseIf([&aOrigin](const Database* const aDatabase) {
+      return aDatabase->Origin() == aOrigin;
+    });
   }
 }
 
 void QuotaClient::AbortOperationsForProcess(ContentParentId aContentParentId) {
   AssertIsOnBackgroundThread();
 
-  if (gLiveDatabases) {
-    for (Database* database : *gLiveDatabases) {
-      if (database->IsOwnedByProcess(aContentParentId)) {
-        database->RequestAllowToClose();
-      }
-    }
-  }
+  RequestAllowToCloseIf([aContentParentId](const Database* const aDatabase) {
+    return aDatabase->IsOwnedByProcess(aContentParentId);
+  });
 }
 
 void QuotaClient::StartIdleMaintenance() { AssertIsOnBackgroundThread(); }
@@ -8002,16 +8067,23 @@ void QuotaClient::ShutdownWorkThreads() {
     gPreparedDatastores = nullptr;
   }
 
-  if (gLiveDatabases) {
-    for (Database* database : *gLiveDatabases) {
-      database->RequestAllowToClose();
-    }
-  }
+  RequestAllowToCloseIf([](const Database* const) { return true; });
 
   if (gPreparedObsevers) {
     gPreparedObsevers->Clear();
     gPreparedObsevers = nullptr;
   }
+
+  nsCOMPtr<nsITimer> timer = NS_NewTimer();
+
+  MOZ_ALWAYS_SUCCEEDS(timer->InitWithNamedFuncCallback(
+      [](nsITimer* aTimer, void* aClosure) {
+        auto quotaClient = static_cast<QuotaClient*>(aClosure);
+
+        quotaClient->ShutdownTimedOut();
+      },
+      this, SHUTDOWN_TIMEOUT_MS, nsITimer::TYPE_ONE_SHOT,
+      "localstorage::QuotaClient::ShutdownWorkThreads::SpinEventLoopTimer"));
 
   // This should release any local storage related quota objects or directory
   // locks.
@@ -8020,12 +8092,44 @@ void QuotaClient::ShutdownWorkThreads() {
     return !gPrepareDatastoreOps && !gDatastores && !gLiveDatabases;
   }));
 
+  MOZ_ALWAYS_SUCCEEDS(timer->Cancel());
+
   // And finally, shutdown the connection thread.
   if (gConnectionThread) {
     gConnectionThread->Shutdown();
 
     gConnectionThread = nullptr;
   }
+}
+
+void QuotaClient::ShutdownTimedOut() {
+  AssertIsOnBackgroundThread();
+  MOZ_DIAGNOSTIC_ASSERT(gPrepareDatastoreOps || gDatastores || gLiveDatabases);
+
+  nsCString data;
+
+  if (gPrepareDatastoreOps) {
+    data.Append("gPrepareDatastoreOps: ");
+    data.AppendInt(static_cast<uint32_t>(gPrepareDatastoreOps->Length()));
+    data.Append("\n");
+  }
+
+  if (gDatastores) {
+    data.Append("gDatastores: ");
+    data.AppendInt(gDatastores->Count());
+    data.Append("\n");
+  }
+
+  if (gLiveDatabases) {
+    data.Append("gLiveDatabases: ");
+    data.AppendInt(static_cast<uint32_t>(gLiveDatabases->Length()));
+    data.Append("\n");
+  }
+
+  CrashReporter::AnnotateCrashReport(
+      CrashReporter::Annotation::LocalStorageShutdownTimeout, data);
+
+  MOZ_CRASH("LocalStorage shutdown timed out");
 }
 
 nsresult QuotaClient::CreateArchivedOriginScope(

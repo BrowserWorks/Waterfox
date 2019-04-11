@@ -13,8 +13,8 @@
 #include "mozilla/RefPtr.h"
 #include "nsCOMPtr.h"
 #include "nsStubMutationObserver.h"
-#include "nsSVGLength2.h"
-#include "SVGString.h"
+#include "SVGAnimatedLength.h"
+#include "SVGAnimatedString.h"
 #include "nsTArray.h"
 
 class nsIContent;
@@ -140,11 +140,11 @@ class SVGUseElement final : public SVGUseElementBase,
   void UnlinkSource();
 
   enum { ATTR_X, ATTR_Y, ATTR_WIDTH, ATTR_HEIGHT };
-  nsSVGLength2 mLengthAttributes[4];
+  SVGAnimatedLength mLengthAttributes[4];
   static LengthInfo sLengthInfo[4];
 
   enum { HREF, XLINK_HREF };
-  SVGString mStringAttributes[2];
+  SVGAnimatedString mStringAttributes[2];
   static StringInfo sStringInfo[2];
 
   RefPtr<SVGUseElement> mOriginal;  // if we've been cloned, our "real" copy

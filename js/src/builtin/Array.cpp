@@ -450,10 +450,9 @@ bool js::GetElements(JSContext* cx, HandleObject aobj, uint32_t length,
   }
 
   if (aobj->is<TypedArrayObject>()) {
-    TypedArrayObject* typedArray = &aobj->as<TypedArrayObject>();
+    Handle<TypedArrayObject*> typedArray = aobj.as<TypedArrayObject>();
     if (typedArray->length() == length) {
-      typedArray->getElements(vp);
-      return true;
+      return TypedArrayObject::getElements(cx, typedArray, vp);
     }
   }
 
@@ -883,7 +882,7 @@ bool js::ArraySetLength(JSContext* cx, Handle<ArrayObject*> arr, HandleId id,
 
       Vector<uint32_t> indexes(cx);
       {
-        AutoIdVector props(cx);
+        RootedIdVector props(cx);
         if (!GetPropertyKeys(cx, arr, JSITER_OWNONLY | JSITER_HIDDEN, &props)) {
           return false;
         }
@@ -1189,7 +1188,7 @@ static bool array_toSource(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  StringBuffer sb(cx);
+  JSStringBuilder sb(cx);
 
   if (detector.foundCycle()) {
     if (!sb.append("[]")) {
@@ -1449,7 +1448,7 @@ bool js::array_join(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   // Step 5.
-  StringBuffer sb(cx);
+  JSStringBuilder sb(cx);
   if (sepstr->hasTwoByteChars() && !sb.ensureTwoByteChars()) {
     return false;
   }

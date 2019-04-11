@@ -27,6 +27,8 @@ namespace {
   "urlclassifier.features.cryptomining.whitelistTables"
 #define URLCLASSIFIER_CRYPTOMINING_WHITELIST_TEST_ENTRIES \
   "urlclassifier.features.cryptomining.whitelistHosts"
+#define URLCLASSIFIER_CRYPTOMINING_SKIP_URLS \
+  "urlclassifier.features.cryptomining.skipURLs"
 #define TABLE_CRYPTOMINING_BLACKLIST_PREF "cryptomining-blacklist-pref"
 #define TABLE_CRYPTOMINING_WHITELIST_PREF "cryptomining-whitelist-pref"
 
@@ -45,7 +47,7 @@ UrlClassifierFeatureCryptominingProtection::
           NS_LITERAL_CSTRING(URLCLASSIFIER_CRYPTOMINING_WHITELIST_TEST_ENTRIES),
           NS_LITERAL_CSTRING(TABLE_CRYPTOMINING_BLACKLIST_PREF),
           NS_LITERAL_CSTRING(TABLE_CRYPTOMINING_WHITELIST_PREF),
-          EmptyCString()) {}
+          NS_LITERAL_CSTRING(URLCLASSIFIER_CRYPTOMINING_SKIP_URLS)) {}
 
 /* static */ const char* UrlClassifierFeatureCryptominingProtection::Name() {
   return CRYPTOMINING_FEATURE_NAME;
@@ -139,7 +141,8 @@ UrlClassifierFeatureCryptominingProtection::GetIfNameMatches(
 
 NS_IMETHODIMP
 UrlClassifierFeatureCryptominingProtection::ProcessChannel(
-    nsIChannel* aChannel, const nsACString& aList, bool* aShouldContinue) {
+    nsIChannel* aChannel, const nsTArray<nsCString>& aList,
+    bool* aShouldContinue) {
   NS_ENSURE_ARG_POINTER(aChannel);
   NS_ENSURE_ARG_POINTER(aShouldContinue);
 
@@ -153,8 +156,11 @@ UrlClassifierFeatureCryptominingProtection::ProcessChannel(
     return NS_OK;
   }
 
+  nsAutoCString list;
+  UrlClassifierCommon::TablesToString(aList, list);
+
   UrlClassifierCommon::SetBlockedContent(aChannel, NS_ERROR_CRYPTOMINING_URI,
-                                         aList, EmptyCString(), EmptyCString());
+                                         list, EmptyCString(), EmptyCString());
 
   UC_LOG(
       ("UrlClassifierFeatureCryptominingProtection::ProcessChannel, "

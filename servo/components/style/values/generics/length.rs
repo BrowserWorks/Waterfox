@@ -26,6 +26,7 @@ use style_traits::ParseError;
     ToAnimatedZero,
     ToComputedValue,
     ToCss,
+    ToResolvedValue,
     ToShmem,
 )]
 #[repr(C, u8)]
@@ -110,6 +111,7 @@ impl<LengthPercentage: Parse> Parse for LengthPercentageOrAuto<LengthPercentage>
     ToAnimatedZero,
     ToComputedValue,
     ToCss,
+    ToResolvedValue,
     ToShmem,
 )]
 #[repr(C, u8)]
@@ -152,6 +154,7 @@ impl<LengthPercentage> Size<LengthPercentage> {
     ToAnimatedZero,
     ToComputedValue,
     ToCss,
+    ToResolvedValue,
     ToShmem,
 )]
 #[repr(C, u8)]
@@ -188,6 +191,7 @@ impl<LengthPercentage> MaxSize<LengthPercentage> {
     ToAnimatedZero,
     ToComputedValue,
     ToCss,
+    ToResolvedValue,
     ToShmem,
 )]
 #[repr(C, u8)]
@@ -213,5 +217,40 @@ impl<L, N: Zero> Zero for LengthOrNumber<L, N> {
             LengthOrNumber::Number(ref n) => n.is_zero(),
             LengthOrNumber::Length(..) => false,
         }
+    }
+}
+
+/// A generic `<length-percentage>` | normal` value.
+#[derive(
+    Animate,
+    Clone,
+    ComputeSquaredDistance,
+    Copy,
+    Debug,
+    MallocSizeOf,
+    Parse,
+    PartialEq,
+    SpecifiedValueInfo,
+    ToAnimatedValue,
+    ToAnimatedZero,
+    ToComputedValue,
+    ToCss,
+    ToResolvedValue,
+    ToShmem,
+)]
+#[repr(C, u8)]
+#[allow(missing_docs)]
+pub enum GenericLengthPercentageOrNormal<LengthPercent> {
+    LengthPercentage(LengthPercent),
+    Normal,
+}
+
+pub use self::GenericLengthPercentageOrNormal as LengthPercentageOrNormal;
+
+impl<LengthPercent> LengthPercentageOrNormal<LengthPercent> {
+    /// Returns the normal value.
+    #[inline]
+    pub fn normal() -> Self {
+        LengthPercentageOrNormal::Normal
     }
 }

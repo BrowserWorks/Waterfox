@@ -1343,7 +1343,7 @@ void gfxUtils::CopyAsDataURI(DrawTarget* aDT) {
 nsresult gfxUtils::GetInputStream(gfx::DataSourceSurface* aSurface,
                                   bool aIsAlphaPremultiplied,
                                   const char* aMimeType,
-                                  const char16_t* aEncoderOptions,
+                                  const nsAString& aEncoderOptions,
                                   nsIInputStream** outStream) {
   nsCString enccid("@mozilla.org/image/encoder;2?type=");
   enccid += aMimeType;
@@ -1563,6 +1563,10 @@ Color ToDeviceColor(Color aColor) {
 
 Color ToDeviceColor(nscolor aColor) {
   return ToDeviceColor(Color::FromABGR(aColor));
+}
+
+Color ToDeviceColor(const StyleRGBA& aColor) {
+  return ToDeviceColor(aColor.ToColor());
 }
 
 }  // namespace gfx

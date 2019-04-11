@@ -552,6 +552,7 @@ var Policies = {
                 onDownloadFailed: () => {
                   install.removeListener(listener);
                   log.error(`Download failed - ${location}`);
+                  clearRunOnceModification("extensionsInstall");
                 },
                 onInstallFailed: () => {
                   install.removeListener(listener);
@@ -679,6 +680,12 @@ var Policies = {
     },
   },
 
+  "NewTabPage": {
+    onBeforeAddons(manager, param) {
+      setAndLockPref("browser.newtabpage.enabled", param);
+    },
+  },
+
   "NoDefaultBookmarks": {
     onProfileAfterChange(manager, param) {
       if (param) {
@@ -751,6 +758,14 @@ var Policies = {
     },
   },
 
+  "Preferences": {
+    onBeforeAddons(manager, param) {
+      for (let preference in param) {
+        setAndLockPref(preference, param[preference]);
+      }
+    },
+  },
+
   "Proxy": {
     onBeforeAddons(manager, param) {
       if (param.Locked) {
@@ -764,7 +779,11 @@ var Policies = {
 
   "RequestedLocales": {
     onBeforeAddons(manager, param) {
-      Services.locale.requestedLocales = param;
+      if (Array.isArray(param)) {
+        Services.locale.requestedLocales = param;
+      } else {
+        Services.locale.requestedLocales = param.split(",");
+      }
     },
   },
 
@@ -875,6 +894,12 @@ var Policies = {
           });
         }
       });
+    },
+  },
+
+  "SearchSuggestEnabled": {
+    onBeforeAddons(manager, param) {
+      setAndLockPref("browser.urlbar.suggest.searches", param);
     },
   },
 
@@ -1141,6 +1166,16 @@ async function runOncePerModification(actionName, policyValue, callback) {
   }
   Services.prefs.setStringPref(prefName, policyValue);
   return callback();
+}
+
+/**
+ * clearRunOnceModification
+ *
+ * Helper function that clears a runOnce policy.
+*/
+function clearRunOnceModification(actionName) {
+  let prefName = `browser.policies.runOncePerModification.${actionName}`;
+  Services.prefs.clearUserPref(prefName);
 }
 
 let gChromeURLSBlocked = false;

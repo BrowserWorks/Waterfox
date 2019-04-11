@@ -488,7 +488,8 @@ static bool MinorGC(JSContext* cx, unsigned argc, Value* vp) {
   _("allocationThreshold", JSGC_ALLOCATION_THRESHOLD, true)                  \
   _("minEmptyChunkCount", JSGC_MIN_EMPTY_CHUNK_COUNT, true)                  \
   _("maxEmptyChunkCount", JSGC_MAX_EMPTY_CHUNK_COUNT, true)                  \
-  _("compactingEnabled", JSGC_COMPACTING_ENABLED, true)
+  _("compactingEnabled", JSGC_COMPACTING_ENABLED, true)                      \
+  _("minLastDitchGCPeriod", JSGC_MIN_LAST_DITCH_GC_PERIOD, true)
 
 static const struct ParamInfo {
   const char* name;
@@ -898,8 +899,9 @@ static bool WasmExtractCode(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
-static bool WasmHasTier2CompilationCompleted(JSContext* cx, unsigned argc,
-                                             Value* vp) {
+enum class Flag { Tier2Complete, Deserialized };
+
+static bool WasmReturnFlag(JSContext* cx, unsigned argc, Value* vp, Flag flag) {
   CallArgs args = CallArgsFromVp(argc, vp);
 
   if (!args.get(0).isObject()) {
@@ -914,8 +916,27 @@ static bool WasmHasTier2CompilationCompleted(JSContext* cx, unsigned argc,
     return false;
   }
 
-  args.rval().set(BooleanValue(!module->module().testingTier2Active()));
+  bool b;
+  switch (flag) {
+    case Flag::Tier2Complete:
+      b = !module->module().testingTier2Active();
+      break;
+    case Flag::Deserialized:
+      b = module->module().loggingDeserialized();
+      break;
+  }
+
+  args.rval().set(BooleanValue(b));
   return true;
+}
+
+static bool WasmHasTier2CompilationCompleted(JSContext* cx, unsigned argc,
+                                             Value* vp) {
+  return WasmReturnFlag(cx, argc, vp, Flag::Tier2Complete);
+}
+
+static bool WasmLoadedFromCache(JSContext* cx, unsigned argc, Value* vp) {
+  return WasmReturnFlag(cx, argc, vp, Flag::Deserialized);
 }
 
 static bool IsLazyFunction(JSContext* cx, unsigned argc, Value* vp) {
@@ -2664,6 +2685,11 @@ static bool testingFunc_bailAfter(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
+static constexpr unsigned JitWarmupResetLimit = 20;
+static_assert(JitWarmupResetLimit <=
+                  unsigned(JSScript::MutableFlags::WarmupResets_MASK),
+              "JitWarmupResetLimit exceeds max value");
+
 static bool testingFunc_inJit(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
 
@@ -2680,7 +2706,7 @@ static bool testingFunc_inJit(JSContext* cx, unsigned argc, Value* vp) {
     // succeeds. Note: This script may have be inlined into its caller.
     if (iter.isJSJit()) {
       iter.script()->resetWarmUpResetCounter();
-    } else if (iter.script()->getWarmUpResetCount() >= 20) {
+    } else if (iter.script()->getWarmUpResetCount() >= JitWarmupResetLimit) {
       return ReturnStringCopy(
           cx, args, "Compilation is being repeatedly prevented. Giving up.");
     }
@@ -2708,7 +2734,7 @@ static bool testingFunc_inIon(JSContext* cx, unsigned argc, Value* vp) {
     // succeeds. Note: This script may have be inlined into its caller.
     if (iter.isIon()) {
       iter.script()->resetWarmUpResetCounter();
-    } else if (iter.script()->getWarmUpResetCount() >= 20) {
+    } else if (iter.script()->getWarmUpResetCount() >= JitWarmupResetLimit) {
       return ReturnStringCopy(
           cx, args, "Compilation is being repeatedly prevented. Giving up.");
     }
@@ -3908,13 +3934,13 @@ static bool EvalReturningScope(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  RootedScript script(cx);
-  if (!JS::CompileForNonSyntacticScope(cx, options, srcBuf, &script)) {
+  RootedScript script(cx, JS::CompileForNonSyntacticScope(cx, options, srcBuf));
+  if (!script) {
     return false;
   }
 
   if (global) {
-    global = CheckedUnwrapDynamic(global, cx);
+    global = CheckedUnwrapDynamic(global, cx, /* stopAtWindowProxy = */ false);
     if (!global) {
       JS_ReportErrorASCII(cx, "Permission denied to access global");
       return false;
@@ -4012,12 +4038,12 @@ static bool ShellCloneAndExecuteScript(JSContext* cx, unsigned argc,
     return false;
   }
 
-  RootedScript script(cx);
-  if (!JS::Compile(cx, options, srcBuf, &script)) {
+  RootedScript script(cx, JS::Compile(cx, options, srcBuf));
+  if (!script) {
     return false;
   }
 
-  global = CheckedUnwrapDynamic(global, cx);
+  global = CheckedUnwrapDynamic(global, cx, /* stopAtWindowProxy = */ false);
   if (!global) {
     JS_ReportErrorASCII(cx, "Permission denied to access global");
     return false;
@@ -4384,7 +4410,7 @@ static bool GetLcovInfo(JSContext* cx, unsigned argc, Value* vp) {
       JS_ReportErrorASCII(cx, "Permission denied to access global");
       return false;
     }
-    global = CheckedUnwrapDynamic(global, cx);
+    global = CheckedUnwrapDynamic(global, cx, /* stopAtWindowProxy = */ false);
     if (!global) {
       ReportAccessDenied(cx);
       return false;
@@ -5323,7 +5349,7 @@ static bool ObjectGlobal(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   RootedObject obj(cx, &args[0].toObject());
-  if (IsWrapper(obj)) {
+  if (IsCrossCompartmentWrapper(obj)) {
     args.rval().setNull();
     return true;
   }
@@ -5383,7 +5409,7 @@ static bool GlobalLexicals(JSContext* cx, unsigned argc, Value* vp) {
   Rooted<LexicalEnvironmentObject*> globalLexical(
       cx, &cx->global()->lexicalEnvironment());
 
-  AutoIdVector props(cx);
+  RootedIdVector props(cx);
   if (!GetPropertyKeys(cx, globalLexical, JSITER_HIDDEN, &props)) {
     return false;
   }
@@ -5431,12 +5457,8 @@ JSScript* js::TestingFunctionArgumentToScript(
       return nullptr;
     }
 
-    RootedScript script(cx);
     CompileOptions options(cx);
-    if (!JS::Compile(cx, options, source, &script)) {
-      return nullptr;
-    }
-    return script;
+    return JS::Compile(cx, options, source);
   }
 
   RootedFunction fun(cx, JS_ValueToFunction(cx, v));
@@ -6038,6 +6060,11 @@ gc::ZealModeHelpText),
 "wasmHasTier2CompilationCompleted(module)",
 "  Returns a boolean indicating whether a given module has finished compiled code for tier2. \n"
 "This will return true early if compilation isn't two-tiered. "),
+
+    JS_FN_HELP("wasmLoadedFromCache", WasmLoadedFromCache, 1, 0,
+"wasmLoadedFromCache(module)",
+"  Returns a boolean indicating whether a given module was deserialized directly from a\n"
+"  cache (as opposed to compiled from bytecode)."),
 
     JS_FN_HELP("wasmReftypesEnabled", WasmReftypesEnabled, 1, 0,
 "wasmReftypesEnabled()",

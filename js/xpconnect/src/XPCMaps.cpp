@@ -21,7 +21,9 @@ using namespace mozilla;
 // nsID, not the hash of the pointer to the nsID.
 
 static PLDHashNumber HashIIDPtrKey(const void* key) {
-  return HashGeneric(*((uintptr_t*)key));
+  uintptr_t v;
+  memcpy(&v, key, sizeof(v));
+  return HashGeneric(v);
 }
 
 static bool MatchIIDPtrKey(const PLDHashEntryHdr* entry, const void* key) {
@@ -113,21 +115,6 @@ size_t Native2WrappedNativeMap::SizeOfIncludingThis(
   }
   return n;
 }
-
-/***************************************************************************/
-// implement IID2WrappedJSClassMap...
-
-const struct PLDHashTableOps IID2WrappedJSClassMap::Entry::sOps = {
-    HashIIDPtrKey, MatchIIDPtrKey, PLDHashTable::MoveEntryStub,
-    PLDHashTable::ClearEntryStub};
-
-// static
-IID2WrappedJSClassMap* IID2WrappedJSClassMap::newMap(int length) {
-  return new IID2WrappedJSClassMap(length);
-}
-
-IID2WrappedJSClassMap::IID2WrappedJSClassMap(int length)
-    : mTable(&Entry::sOps, sizeof(Entry), length) {}
 
 /***************************************************************************/
 // implement IID2NativeInterfaceMap...

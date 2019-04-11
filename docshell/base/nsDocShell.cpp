@@ -79,7 +79,6 @@
 #include "nsIChannel.h"
 #include "nsIChannelEventSink.h"
 #include "nsIClassOfService.h"
-#include "nsICommandManager.h"
 #include "nsIConsoleReportCollector.h"
 #include "nsIContent.h"
 #include "nsIContentInlines.h"
@@ -179,6 +178,7 @@
 #include "nsDOMCID.h"
 #include "nsDOMNavigationTiming.h"
 #include "nsDSURIContentListener.h"
+#include "nsEditingSession.h"
 #include "nsError.h"
 #include "nsEscape.h"
 #include "nsFocusManager.h"
@@ -341,12 +341,10 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext)
       mTouchEventsOverride(nsIDocShell::TOUCHEVENTS_OVERRIDE_NONE),
       mMetaViewportOverride(nsIDocShell::META_VIEWPORT_OVERRIDE_NONE),
       mFullscreenAllowed(CHECK_ATTRIBUTES),
-      mCreatingDocument(false)
+      mCreatingDocument(false),
 #ifdef DEBUG
-      ,
-      mInEnsureScriptEnv(false)
+      mInEnsureScriptEnv(false),
 #endif
-      ,
       mCreated(false),
       mAllowSubframes(true),
       mAllowPlugins(true),
@@ -574,7 +572,7 @@ nsDocShell::GetInterface(const nsIID& aIID, void** aSink) {
 
   if (aIID.Equals(NS_GET_IID(nsICommandManager))) {
     NS_ENSURE_SUCCESS(EnsureCommandHandler(), NS_ERROR_FAILURE);
-    *aSink = mCommandManager;
+    *aSink = static_cast<nsICommandManager*>(mCommandManager.get());
   } else if (aIID.Equals(NS_GET_IID(nsIURIContentListener))) {
     *aSink = mContentListener;
   } else if ((aIID.Equals(NS_GET_IID(nsIScriptGlobalObject)) ||
@@ -9624,7 +9622,10 @@ nsresult nsDocShell::DoURILoad(nsDocShellLoadState* aLoadState,
         // page is allowed to open them without abuse regardless of allowed
         // events
         if (PopupBlocker::GetPopupControlState() <= PopupBlocker::openBlocked) {
-          popupBlocked = !PopupBlocker::TryUsePopupOpeningToken();
+          nsCOMPtr<nsINode> loadingNode =
+              mScriptGlobal->AsOuter()->GetFrameElementInternal();
+          popupBlocked = !PopupBlocker::TryUsePopupOpeningToken(
+              loadingNode ? loadingNode->NodePrincipal() : nullptr);
         } else if (mIsActive &&
                    PopupBlocker::ConsumeTimerTokenForExternalProtocolIframe()) {
           popupBlocked = false;
@@ -9831,11 +9832,6 @@ nsresult nsDocShell::DoURILoad(nsDocShellLoadState* aLoadState,
   bool isTopLevelDoc = mItemType == typeContent &&
                        (contentPolicyType == nsIContentPolicy::TYPE_DOCUMENT ||
                         GetIsMozBrowser());
-
-  if (isTopLevelDoc && GetDocument() && GetDocument()->GetChannel()) {
-    nsCOMPtr<nsILoadInfo> oldLoadInfo = GetDocument()->GetChannel()->LoadInfo();
-    loadInfo->SetOpenerPolicy(oldLoadInfo->GetOpenerPolicy());
-  }
 
   OriginAttributes attrs;
 
@@ -10926,9 +10922,9 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
   }
 
   // Check that the state object isn't too long.
-  // Default max length: 640k bytes.
+  // Default max length: 2097152 (0x200000) bytes.
   int32_t maxStateObjSize =
-      Preferences::GetInt("browser.history.maxStateObjectSize", 0xA0000);
+      Preferences::GetInt("browser.history.maxStateObjectSize", 2097152);
   if (maxStateObjSize < 0) {
     maxStateObjSize = 0;
   }
@@ -11795,9 +11791,7 @@ nsDocShell::GetHasEditingSession(bool* aHasEditingSession) {
   NS_ENSURE_ARG_POINTER(aHasEditingSession);
 
   if (mEditorData) {
-    nsCOMPtr<nsIEditingSession> editingSession;
-    mEditorData->GetEditingSession(getter_AddRefs(editingSession));
-    *aHasEditingSession = (editingSession.get() != nullptr);
+    *aHasEditingSession = !!mEditorData->GetEditingSession();
   } else {
     *aHasEditingSession = false;
   }
@@ -12384,15 +12378,10 @@ nsDocShell::DoCommandWithParams(const char* aCommand,
 
 nsresult nsDocShell::EnsureCommandHandler() {
   if (!mCommandManager) {
-    nsCOMPtr<nsPICommandUpdater> commandUpdater = new nsCommandManager();
-
-    nsCOMPtr<nsPIDOMWindowOuter> domWindow = GetWindow();
-    nsresult rv = commandUpdater->Init(domWindow);
-    if (NS_SUCCEEDED(rv)) {
-      mCommandManager = do_QueryInterface(commandUpdater);
+    if (nsCOMPtr<nsPIDOMWindowOuter> domWindow = GetWindow()) {
+      mCommandManager = new nsCommandManager(domWindow);
     }
   }
-
   return mCommandManager ? NS_OK : NS_ERROR_FAILURE;
 }
 
@@ -13275,7 +13264,7 @@ nsDocShell::GetEditingSession(nsIEditingSession** aEditSession) {
     return NS_ERROR_FAILURE;
   }
 
-  mEditorData->GetEditingSession(aEditSession);
+  *aEditSession = do_AddRef(mEditorData->GetEditingSession()).take();
   return *aEditSession ? NS_OK : NS_ERROR_FAILURE;
 }
 
@@ -13290,7 +13279,7 @@ already_AddRefed<nsITabChild> nsDocShell::GetTabChild() {
   return tc.forget();
 }
 
-nsICommandManager* nsDocShell::GetCommandManager() {
+nsCommandManager* nsDocShell::GetCommandManager() {
   NS_ENSURE_SUCCESS(EnsureCommandHandler(), nullptr);
   return mCommandManager;
 }

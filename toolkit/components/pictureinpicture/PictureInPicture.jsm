@@ -35,7 +35,29 @@ var PictureInPicture = {
         this.closePipWindow();
         break;
       }
+      case "PictureInPicture:Playing": {
+        let controls = this.weakPipControls && this.weakPipControls.get();
+        if (controls) {
+          controls.classList.add("playing");
+        }
+        break;
+      }
+      case "PictureInPicture:Paused": {
+        let controls = this.weakPipControls && this.weakPipControls.get();
+        if (controls) {
+          controls.classList.remove("playing");
+        }
+        break;
+      }
     }
+  },
+
+  focusTabAndClosePip() {
+    let gBrowser = this.browser.ownerGlobal.gBrowser;
+    let tab = gBrowser.getTabForBrowser(this.browser);
+    gBrowser.selectedTab = tab;
+    this.unload();
+    this.closePipWindow();
   },
 
   /**
@@ -48,7 +70,6 @@ var PictureInPicture = {
       if (win.closed) {
         continue;
       }
-
       win.close();
     }
   },
@@ -74,10 +95,25 @@ var PictureInPicture = {
    *   the player component inside it has finished loading.
    */
   async handlePictureInPictureRequest(browser, videoData) {
+    this.browser = browser;
     let parentWin = browser.ownerGlobal;
     this.closePipWindow();
     let win = await this.openPipWindow(parentWin, videoData);
+    let controls = win.document.getElementById("controls");
+    this.weakPipControls = Cu.getWeakReference(controls);
+    if (videoData.playing) {
+      controls.classList.add("playing");
+    }
     win.setupPlayer(browser, videoData);
+  },
+
+  /**
+   * unload event has been called in player.js, cleanup our preserved
+   * browser object.
+   */
+  unload() {
+    delete this.weakPipControls;
+    delete this.browser;
   },
 
   /**
@@ -115,6 +151,12 @@ var PictureInPicture = {
     let screenLeft = {}, screenTop = {}, screenWidth = {}, screenHeight = {};
     screen.GetAvailRectDisplayPix(screenLeft, screenTop, screenWidth,
                                   screenHeight);
+
+    // We have to divide these dimensions by the CSS scale factor for the
+    // display in order for the video to be positioned correctly on displays
+    // that are not at a 1.0 scaling.
+    screenWidth.value = screenWidth.value / screen.defaultCSSScaleFactor;
+    screenHeight.value = screenHeight.value / screen.defaultCSSScaleFactor;
 
     // For now, the Picture in Picture window will be a maximum of a quarter
     // of the screen height, and a third of the screen width.

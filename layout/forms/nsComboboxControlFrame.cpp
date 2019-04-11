@@ -17,10 +17,10 @@
 #include "nsCSSAnonBoxes.h"
 #include "nsHTMLParts.h"
 #include "nsIFormControl.h"
+#include "nsIPresShellInlines.h"
 #include "nsNameSpaceManager.h"
 #include "nsListControlFrame.h"
 #include "nsPIDOMWindow.h"
-#include "nsIPresShell.h"
 #include "mozilla/PresState.h"
 #include "nsView.h"
 #include "nsViewManager.h"
@@ -46,6 +46,7 @@
 #include "mozilla/EventStates.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/Unused.h"
 #include "gfx2DGlue.h"
 #include "mozilla/widget/nsAutoRollup.h"
@@ -307,14 +308,14 @@ void nsComboboxControlFrame::ShowPopup(bool aShowPopup) {
   }
 
   // fire a popup dom event if it is safe to do so
-  nsCOMPtr<nsIPresShell> shell = PresContext()->GetPresShell();
-  if (shell && nsContentUtils::IsSafeToRunScript()) {
+  RefPtr<mozilla::PresShell> presShell = PresContext()->GetPresShell();
+  if (presShell && nsContentUtils::IsSafeToRunScript()) {
     nsEventStatus status = nsEventStatus_eIgnore;
     WidgetMouseEvent event(true,
                            aShowPopup ? eXULPopupShowing : eXULPopupHiding,
                            nullptr, WidgetMouseEvent::eReal);
 
-    shell->HandleDOMEventWithTarget(mContent, &event, &status);
+    presShell->HandleDOMEventWithTarget(mContent, &event, &status);
   }
 }
 
@@ -513,10 +514,10 @@ class nsAsyncResize : public Runnable {
           static_cast<nsComboboxControlFrame*>(mFrame.GetFrame());
       static_cast<nsListControlFrame*>(combo->mDropdownFrame)
           ->SetSuppressScrollbarUpdate(true);
-      nsCOMPtr<nsIPresShell> shell = mFrame->PresShell();
-      shell->FrameNeedsReflow(combo->mDropdownFrame, nsIPresShell::eResize,
-                              NS_FRAME_IS_DIRTY);
-      shell->FlushPendingNotifications(FlushType::Layout);
+      RefPtr<PresShell> presShell = mFrame->PresShell();
+      presShell->FrameNeedsReflow(combo->mDropdownFrame, nsIPresShell::eResize,
+                                  NS_FRAME_IS_DIRTY);
+      presShell->FlushPendingNotifications(FlushType::Layout);
       if (mFrame.IsAlive()) {
         combo = static_cast<nsComboboxControlFrame*>(mFrame.GetFrame());
         static_cast<nsListControlFrame*>(combo->mDropdownFrame)
@@ -1267,8 +1268,8 @@ nsIFrame* nsComboboxControlFrame::CreateFrameForDisplayNode() {
   MOZ_ASSERT(mDisplayContent);
 
   // Get PresShell
-  nsIPresShell* shell = PresShell();
-  ServoStyleSet* styleSet = shell->StyleSet();
+  mozilla::PresShell* presShell = PresShell();
+  ServoStyleSet* styleSet = presShell->StyleSet();
 
   // create the ComputedStyle for the anonymous block frame and text frame
   RefPtr<ComputedStyle> computedStyle;
@@ -1280,11 +1281,11 @@ nsIFrame* nsComboboxControlFrame::CreateFrameForDisplayNode() {
       styleSet->ResolveStyleForText(mDisplayContent, mComputedStyle);
 
   // Start by creating our anonymous block frame
-  mDisplayFrame = new (shell) nsComboboxDisplayFrame(computedStyle, this);
+  mDisplayFrame = new (presShell) nsComboboxDisplayFrame(computedStyle, this);
   mDisplayFrame->Init(mContent, this, nullptr);
 
   // Create a text frame and put it inside the block frame
-  nsIFrame* textFrame = NS_NewTextFrame(shell, textComputedStyle);
+  nsIFrame* textFrame = NS_NewTextFrame(presShell, textComputedStyle);
 
   // initialize the text frame
   textFrame->Init(mDisplayContent, mDisplayFrame, nullptr);
@@ -1462,8 +1463,8 @@ void nsComboboxControlFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
            !presContext->GetTheme()->ThemeDrawsFocusForWidget(
                disp->mAppearance)) &&
           mDisplayFrame && IsVisibleForPainting()) {
-        aLists.Content()->AppendToTop(
-            MakeDisplayItem<nsDisplayComboboxFocus>(aBuilder, this));
+        aLists.Content()->AppendNewToTop<nsDisplayComboboxFocus>(aBuilder,
+                                                                 this);
       }
     }
   }

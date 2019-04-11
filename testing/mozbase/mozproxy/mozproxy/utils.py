@@ -30,13 +30,12 @@ from mozproxy import mozharness_dir
 
 LOG = get_proxy_logger(component="mozproxy")
 
-external_tools_path = os.environ.get("EXTERNALTOOLSPATH", None)
-if external_tools_path is not None:
-    # running in production via mozharness
-    TOOLTOOL_PATH = os.path.join(external_tools_path, "tooltool.py")
-else:
-    # running locally via mach
-    TOOLTOOL_PATH = os.path.join(mozharness_dir, "external_tools", "tooltool.py")
+# running locally via mach
+TOOLTOOL_PATHS = [os.path.join(mozharness_dir, "external_tools", "tooltool.py")]
+
+if "MOZ_UPLOAD_DIR" in os.environ:
+    TOOLTOOL_PATHS.append(os.path.join(
+        os.environ["MOZ_UPLOAD_DIR"], "..", "..", "mozharness", "external_tools", "tooltool.py"))
 
 
 def transform_platform(str_to_transform, config_platform, config_processor=None):
@@ -73,21 +72,36 @@ def tooltool_download(manifest, run_local, raptor_dir):
     def outputHandler(line):
         LOG.info(line)
 
+    tooltool_path = None
+
+    for path in TOOLTOOL_PATHS:
+        if os.path.exists(os.path.dirname(path)):
+            tooltool_path = path
+            break
+
+    if tooltool_path is None:
+        raise Exception("Could not find tooltool path!")
+
     if run_local:
-        command = [sys.executable, TOOLTOOL_PATH, "fetch", "-o", "-m", manifest]
+        command = [sys.executable, tooltool_path, "fetch", "-o", "-m", manifest]
     else:
         # Attempt to determine the tooltool cache path:
         #  - TOOLTOOLCACHE is used by Raptor tests
         #  - TOOLTOOL_CACHE is automatically set for taskcluster jobs
         #  - fallback to a hardcoded path
-        _cache = next(x for x in (
-                    os.environ.get("TOOLTOOLCACHE"),
-                    os.environ.get("TOOLTOOL_CACHE"),
-                    "/builds/tooltool_cache") if x is not None)
+        _cache = next(
+            x
+            for x in (
+                os.environ.get("TOOLTOOLCACHE"),
+                os.environ.get("TOOLTOOL_CACHE"),
+                "/builds/tooltool_cache",
+            )
+            if x is not None
+        )
 
         command = [
             sys.executable,
-            TOOLTOOL_PATH,
+            tooltool_path,
             "fetch",
             "-o",
             "-m",

@@ -11,8 +11,6 @@
 % locale global @AB_CD@ %locale/@AB_CD@/global/
   locale/@AB_CD@/global/aboutReader.properties          (%chrome/global/aboutReader.properties)
   locale/@AB_CD@/global/aboutStudies.properties         (%chrome/global/aboutStudies.properties)
-  locale/@AB_CD@/global/aboutTelemetry.dtd              (%chrome/global/aboutTelemetry.dtd)
-  locale/@AB_CD@/global/aboutTelemetry.properties       (%chrome/global/aboutTelemetry.properties)
   locale/@AB_CD@/global/aboutWebrtc.properties          (%chrome/global/aboutWebrtc.properties)
   locale/@AB_CD@/global/autocomplete.properties         (%chrome/global/autocomplete.properties)
   locale/@AB_CD@/global/appPicker.dtd                   (%chrome/global/appPicker.dtd)
@@ -44,7 +42,6 @@
 #endif
   locale/@AB_CD@/global/notification.dtd                (%chrome/global/notification.dtd)
 #ifndef MOZ_FENNEC
-  locale/@AB_CD@/global/printPreview.dtd                (%chrome/global/printPreview.dtd)
   locale/@AB_CD@/global/printdialog.properties          (%chrome/global/printdialog.properties)
 #endif
   locale/@AB_CD@/global/resetProfile.dtd                (%chrome/global/resetProfile.dtd)

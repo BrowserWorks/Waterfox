@@ -82,6 +82,9 @@ include = [
   "LengthPercentageOrAuto",
   "LineHeight",
   "NonNegativeLengthPercentageOrAuto",
+  "NonNegativeLengthPercentageOrNormal",
+  "LengthOrAuto",
+  "NonNegativeLengthOrAuto",
   "Rect",
   "IntersectionObserverRootMargin",
   "Size",
@@ -106,6 +109,9 @@ include = [
   "Owned",
   "OwnedOrNull",
   "Strong",
+  "ScrollbarColor",
+  "Color",
+  "ColorOrAuto",
 ]
 item_types = ["enums", "structs", "typedefs", "functions"]
 renaming_overrides_prefixing = true
@@ -196,6 +202,10 @@ renaming_overrides_prefixing = true
   inline float ToPercentage() const;
   inline bool HasPercent() const;
   inline bool HasLengthAndPercentage() const;
+
+  // Just some convenient aliases for LengthOrAuto, to avoid confusing naming.
+  inline bool IsLength() const;
+  inline const StyleLength& AsLength() const;
 """
 
 "GenericSize" = """
@@ -279,4 +289,34 @@ renaming_overrides_prefixing = true
     ptr = nullptr;
     return ret;
   }
+"""
+
+"GenericColor" = """
+  static inline StyleGenericColor FromColor(nscolor);
+  static inline StyleGenericColor Black();
+  static inline StyleGenericColor White();
+  static inline StyleGenericColor Transparent();
+  bool MaybeTransparent() const;
+  /**
+   * Compute the final color, taking into account the foreground color from the
+   * frame's ComputedStyle.
+   */
+  nscolor CalcColor(const nsIFrame*) const;
+  /**
+   * Compute the final color, taking into account the foreground color from the
+   * style.
+   */
+  nscolor CalcColor(const ComputedStyle&) const;
+  /**
+   * Compute the final color, making the argument the foreground color.
+   */
+  nscolor CalcColor(nscolor) const;
+  nscolor CalcColor(const StyleRGBA&) const;
+"""
+
+"RGBA" = """
+  static inline StyleRGBA Transparent();
+  static inline StyleRGBA FromColor(nscolor);
+
+  inline nscolor ToColor() const;
 """

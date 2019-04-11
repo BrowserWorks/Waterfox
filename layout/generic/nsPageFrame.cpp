@@ -6,6 +6,7 @@
 
 #include "nsPageFrame.h"
 
+#include "mozilla/PresShell.h"
 #include "mozilla/gfx/2D.h"
 #include "gfxContext.h"
 #include "nsDeviceContext.h"
@@ -13,7 +14,6 @@
 #include "nsLayoutUtils.h"
 #include "nsPresContext.h"
 #include "nsGkAtoms.h"
-#include "nsIPresShell.h"
 #include "nsPageContentFrame.h"
 #include "nsDisplayList.h"
 #include "nsSimplePageSequenceFrame.h"  // for nsSharedPageData
@@ -545,15 +545,14 @@ void nsPageFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
         *aBuilder, content, child, backgroundRect, NS_RGBA(0, 0, 0, 0));
   }
 
-  content.AppendToTop(MakeDisplayItem<nsDisplayTransform>(
-      aBuilder, child, &content, content.GetBuildingRect(), 0,
-      ::ComputePageTransform));
+  content.AppendNewToTop<nsDisplayTransform>(aBuilder, child, &content,
+                                             content.GetBuildingRect(), 0,
+                                             ::ComputePageTransform);
 
   set.Content()->AppendToTop(&content);
 
   if (PresContext()->IsRootPaginatedDocument()) {
-    set.Content()->AppendToTop(
-        MakeDisplayItem<nsDisplayHeaderFooter>(aBuilder, this));
+    set.Content()->AppendNewToTop<nsDisplayHeaderFooter>(aBuilder, this);
   }
 
   set.MoveTo(aLists);

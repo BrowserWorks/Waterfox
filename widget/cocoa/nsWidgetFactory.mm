@@ -135,7 +135,7 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
     {&kNS_COLORPICKER_CID, false, NULL, nsColorPickerConstructor,
      mozilla::Module::MAIN_PROCESS_ONLY},
     {&kNS_APPSHELL_CID, false, NULL, nsAppShellConstructor,
-     mozilla::Module::ALLOW_IN_GPU_VR_AND_SOCKET_PROCESS},
+     mozilla::Module::ALLOW_IN_GPU_RDD_VR_AND_SOCKET_PROCESS},
     {&kNS_SOUND_CID, false, NULL, nsSoundConstructor, mozilla::Module::MAIN_PROCESS_ONLY},
     {&kNS_TRANSFERABLE_CID, false, NULL, nsTransferableConstructor},
     {&kNS_HTMLFORMATCONVERTER_CID, false, NULL, nsHTMLFormatConverterConstructor},
@@ -165,7 +165,7 @@ static const mozilla::Module::ContractIDEntry kWidgetContracts[] = {
     {"@mozilla.org/filepicker;1", &kNS_FILEPICKER_CID, mozilla::Module::MAIN_PROCESS_ONLY},
     {"@mozilla.org/colorpicker;1", &kNS_COLORPICKER_CID, mozilla::Module::MAIN_PROCESS_ONLY},
     {"@mozilla.org/widget/appshell/mac;1", &kNS_APPSHELL_CID,
-     mozilla::Module::ALLOW_IN_GPU_VR_AND_SOCKET_PROCESS},
+     mozilla::Module::ALLOW_IN_GPU_RDD_VR_AND_SOCKET_PROCESS},
     {"@mozilla.org/sound;1", &kNS_SOUND_CID, mozilla::Module::MAIN_PROCESS_ONLY},
     {"@mozilla.org/widget/transferable;1", &kNS_TRANSFERABLE_CID},
     {"@mozilla.org/widget/htmlformatconverter;1", &kNS_HTMLFORMATCONVERTER_CID},
@@ -200,13 +200,11 @@ static void nsWidgetCocoaModuleDtor() {
   nsAppShellShutdown();
 }
 
-static const mozilla::Module kWidgetModule = {mozilla::Module::kVersion,
+extern const mozilla::Module kWidgetModule = {mozilla::Module::kVersion,
                                               kWidgetCIDs,
                                               kWidgetContracts,
                                               NULL,
                                               NULL,
                                               nsAppShellInit,
                                               nsWidgetCocoaModuleDtor,
-                                              mozilla::Module::ALLOW_IN_GPU_VR_AND_SOCKET_PROCESS};
-
-NSMODULE_DEFN(nsWidgetMacModule) = &kWidgetModule;
+                                              mozilla::Module::ALLOW_IN_GPU_RDD_VR_AND_SOCKET_PROCESS};

@@ -1299,7 +1299,10 @@ class NativeObject : public JSObject {
   inline void setDenseElementHole(JSContext* cx, uint32_t index);
   inline void removeDenseElementForSparseIndex(JSContext* cx, uint32_t index);
 
-  inline Value getDenseOrTypedArrayElement(uint32_t idx);
+  template <AllowGC allowGC>
+  inline bool getDenseOrTypedArrayElement(
+      JSContext* cx, uint32_t idx,
+      typename MaybeRooted<Value, allowGC>::MutableHandleType val);
 
   inline void copyDenseElements(uint32_t dstStart, const Value* src,
                                 uint32_t count);
@@ -1481,7 +1484,6 @@ class NativeObject : public JSObject {
   /* Return the allocKind we would use if we were to tenure this object. */
   inline js::gc::AllocKind allocKindForTenure() const;
 
-  void updateShapeAfterMovingGC();
   void sweepDictionaryListPointer();
   void updateDictionaryListPointerAfterMinorGC(NativeObject* old);
 

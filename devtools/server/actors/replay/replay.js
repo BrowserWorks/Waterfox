@@ -56,9 +56,11 @@ dbg.onNewGlobalObject = function(global) {
 // Utilities
 ///////////////////////////////////////////////////////////////////////////////
 
+const dump = RecordReplayControl.dump;
+
 function assert(v) {
   if (!v) {
-    RecordReplayControl.dump("Assertion Failed: " + (new Error()).stack + "\n");
+    dump("Assertion Failed: " + (new Error()).stack + "\n");
     throw new Error("Assertion Failed!");
   }
 }
@@ -469,12 +471,25 @@ function GetEntryPosition(position) {
 ///////////////////////////////////////////////////////////////////////////////
 
 let gPausedObjects = new IdMap();
+let gDereferencedObjects = new Map();
 
 function getObjectId(obj) {
   const id = gPausedObjects.getId(obj);
   if (!id && obj) {
     assert((obj instanceof Debugger.Object) ||
            (obj instanceof Debugger.Environment));
+
+    // There can be multiple Debugger.Objects for the same dereferenced object.
+    // gDereferencedObjects is used to make sure the IDs we send to the
+    // middleman are canonical and are specific to their referent.
+    if (obj instanceof Debugger.Object) {
+      if (gDereferencedObjects.has(obj.unsafeDereference())) {
+        const canonical = gDereferencedObjects.get(obj.unsafeDereference());
+        return gPausedObjects.getId(canonical);
+      }
+      gDereferencedObjects.set(obj.unsafeDereference(), obj);
+    }
+
     return gPausedObjects.add(obj);
   }
   return id;
@@ -539,9 +554,18 @@ function makeDebuggeeValue(value) {
   return value;
 }
 
+function getDebuggeeValue(value) {
+  if (value && typeof value == "object") {
+    assert(value instanceof Debugger.Object);
+    return value.unsafeDereference();
+  }
+  return value;
+}
+
 // eslint-disable-next-line no-unused-vars
 function ClearPausedState() {
   gPausedObjects = new IdMap();
+  gDereferencedObjects = new Map();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -583,11 +607,31 @@ function forwardToScript(name) {
   return request => gScripts.getObject(request.id)[name](request.value);
 }
 
+function unknownObjectProperties(why) {
+  return [{
+    name: "Unknown properties",
+    desc: {
+      value: why,
+      enumerable: true,
+    },
+  }];
+}
+
 function getObjectProperties(object) {
-  const names = object.getOwnPropertyNames();
+  let names;
+  try {
+    names = object.getOwnPropertyNames();
+  } catch (e) {
+    return unknownObjectProperties(e.toString());
+  }
 
   return names.map(name => {
-    const desc = object.getOwnPropertyDescriptor(name);
+    let desc;
+    try {
+      desc = object.getOwnPropertyDescriptor(name);
+    } catch (e) {
+      return { name, desc: { value: "Unknown: " + e, enumerable: true } };
+    }
     if ("value" in desc) {
       desc.value = convertValue(desc.value);
     }
@@ -599,6 +643,14 @@ function getObjectProperties(object) {
     }
     return { name, desc };
   });
+}
+
+function getWindow() {
+  // Hopefully there is exactly one window in this enumerator.
+  for (const window of Services.ww.getWindowEnumerator()) {
+    return window;
+  }
+  return null;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -613,6 +665,10 @@ const gRequestHandlers = {
     }
     return RecordReplayControl.repaint();
   },
+
+  /////////////////////////////////////////////////////////
+  // Debugger Requests
+  /////////////////////////////////////////////////////////
 
   findScripts(request) {
     const query = Object.assign({}, request.query);
@@ -677,7 +733,6 @@ const gRequestHandlers = {
         parameterNames: object.parameterNames,
         script: gScripts.getId(object.script),
         environment: getObjectId(object.environment),
-        global: getObjectId(object.global),
         isProxy: object.isProxy,
         isExtensible: object.isExtensible(),
         isSealed: object.isSealed(),
@@ -700,13 +755,7 @@ const gRequestHandlers = {
 
   getObjectProperties(request) {
     if (!RecordReplayControl.maybeDivergeFromRecording()) {
-      return [{
-        name: "Unknown properties",
-        desc: {
-          value: "Recording divergence in getObjectProperties",
-          enumerable: true,
-        },
-      }];
+      return unknownObjectProperties("Recording divergence in getObjectProperties");
     }
 
     const object = gPausedObjects.getObject(request.id);
@@ -827,6 +876,86 @@ const gRequestHandlers = {
   recordingEndpoint(request) {
     return RecordReplayControl.recordingEndpoint();
   },
+
+  /////////////////////////////////////////////////////////
+  // Inspector Requests
+  /////////////////////////////////////////////////////////
+
+  getWindow(request) {
+    if (!RecordReplayControl.maybeDivergeFromRecording()) {
+      return { throw: "Recording divergence in getWindow" };
+    }
+
+    // Hopefully there is exactly one window in this enumerator.
+    return { id: getObjectId(makeDebuggeeValue(getWindow())) };
+  },
+
+  newDeepTreeWalker(request) {
+    if (!RecordReplayControl.maybeDivergeFromRecording()) {
+      return { throw: "Recording divergence in newDeepTreeWalker" };
+    }
+
+    const walker = Cc["@mozilla.org/inspector/deep-tree-walker;1"]
+      .createInstance(Ci.inIDeepTreeWalker);
+    return { id: getObjectId(makeDebuggeeValue(walker)) };
+  },
+
+  getObjectPropertyValue(request) {
+    if (!RecordReplayControl.maybeDivergeFromRecording()) {
+      return { throw: "Recording divergence in getObjectPropertyValue" };
+    }
+
+    const object = gPausedObjects.getObject(request.id);
+
+    try {
+      const rv = object.unsafeDereference()[request.name];
+      return { "return": convertValue(makeDebuggeeValue(rv)) };
+    } catch (e) {
+      return { "throw": "" + e };
+    }
+  },
+
+  setObjectPropertyValue(request) {
+    if (!RecordReplayControl.maybeDivergeFromRecording()) {
+      return { throw: "Recording divergence in getObjectPropertyValue" };
+    }
+
+    const object = gPausedObjects.getObject(request.id);
+    const value = getDebuggeeValue(convertValueFromParent(request.value));
+
+    try {
+      object.unsafeDereference()[request.name] = value;
+      return { "return": request.value };
+    } catch (e) {
+      return { "throw": "" + e };
+    }
+  },
+
+  createObject(request) {
+    const global = dbg.getDebuggees()[0];
+    const value = global.executeInGlobal("({})");
+    return { id: getObjectId(value.return) };
+  },
+
+  findEventTarget(request) {
+    const element =
+      getWindow().document.elementFromPoint(request.clientX, request.clientY);
+    if (!element) {
+      return { id: 0 };
+    }
+    const obj = makeDebuggeeValue(element);
+    return { id: getObjectId(obj) };
+  },
+
+  getListenerInfoFor(request) {
+    if (!RecordReplayControl.maybeDivergeFromRecording()) {
+      return { throw: "Recording divergence in getListenerInfoFor" };
+    }
+
+    const node = gPausedObjects.getObject(request.id).unsafeDereference();
+    const obj = makeDebuggeeValue(Services.els.getListenerInfoFor(node) || []);
+    return { id: getObjectId(obj) };
+  },
 };
 
 // eslint-disable-next-line no-unused-vars
@@ -839,11 +968,11 @@ function ProcessRequest(request) {
   } catch (e) {
     let msg;
     try {
-      msg = "" + e;
+      msg = "" + e + " line " + e.lineNumber;
     } catch (ee) {
       msg = "Unknown";
     }
-    RecordReplayControl.dump("ReplayDebugger Record/Replay Error: " + msg + "\n");
+    dump("ReplayDebugger Record/Replay Error: " + msg + "\n");
     return { exception: msg };
   }
 }

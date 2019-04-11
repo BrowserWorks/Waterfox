@@ -179,7 +179,7 @@ NS_IMPL_ISUPPORTS(nsXPCComponents_Interfaces, nsIXPCComponents_Interfaces,
 NS_IMETHODIMP
 nsXPCComponents_Interfaces::NewEnumerate(nsIXPConnectWrappedNative* wrapper,
                                          JSContext* cx, JSObject* obj,
-                                         JS::AutoIdVector& properties,
+                                         JS::MutableHandleIdVector properties,
                                          bool enumerableOnly, bool* _retval) {
   if (!properties.reserve(nsXPTInterfaceInfo::InterfaceCount())) {
     *_retval = false;
@@ -332,7 +332,7 @@ NS_IMPL_ISUPPORTS(nsXPCComponents_Classes, nsIXPCComponents_Classes,
 NS_IMETHODIMP
 nsXPCComponents_Classes::NewEnumerate(nsIXPConnectWrappedNative* wrapper,
                                       JSContext* cx, JSObject* obj,
-                                      JS::AutoIdVector& properties,
+                                      JS::MutableHandleIdVector properties,
                                       bool enumerableOnly, bool* _retval) {
   nsCOMPtr<nsIComponentRegistrar> compMgr;
   if (NS_FAILED(NS_GetComponentRegistrar(getter_AddRefs(compMgr))) ||
@@ -485,7 +485,7 @@ NS_IMPL_ISUPPORTS(nsXPCComponents_Results, nsIXPCComponents_Results,
 NS_IMETHODIMP
 nsXPCComponents_Results::NewEnumerate(nsIXPConnectWrappedNative* wrapper,
                                       JSContext* cx, JSObject* obj,
-                                      JS::AutoIdVector& properties,
+                                      JS::MutableHandleIdVector properties,
                                       bool enumerableOnly, bool* _retval) {
   const char* name;
   const void* iter = nullptr;
@@ -1348,7 +1348,7 @@ nsXPCComponents_Utils::ReportError(HandleValue error, HandleValue stack,
   if (errorObj) {
     JS::RootedObject stackVal(cx);
     JS::RootedObject stackGlobal(cx);
-    FindExceptionStackForConsoleReport(win, error, &stackVal, &stackGlobal);
+    FindExceptionStackForConsoleReport(win, error, nullptr, &stackVal, &stackGlobal);
     if (stackVal) {
       scripterr = new nsScriptErrorWithStack(stackVal, stackGlobal);
     }
@@ -2226,7 +2226,7 @@ class WrappedJSHolder : public nsISupports {
 NS_IMPL_ADDREF(WrappedJSHolder)
 NS_IMPL_RELEASE(WrappedJSHolder)
 
-// nsINamed is always supported by nsXPCWrappedJSClass.
+// nsINamed is always supported by nsXPCWrappedJS::DelegatedQueryInterface().
 // We expose this interface only for the identity in telemetry analysis.
 NS_INTERFACE_TABLE_HEAD(WrappedJSHolder)
   if (aIID.Equals(NS_GET_IID(nsINamed))) {

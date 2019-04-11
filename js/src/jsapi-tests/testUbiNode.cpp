@@ -91,8 +91,8 @@ BEGIN_TEST(test_ubiNodeZone) {
   RootedString string1(
       cx, JS_NewStringCopyZ(cx, "Simpson's Individual Stringettes!"));
   CHECK(string1);
-  RootedScript script1(cx);
-  CHECK(JS::CompileUtf8(cx, options, "", 0, &script1));
+  RootedScript script1(cx, JS::CompileUtf8(cx, options, "", 0));
+  CHECK(script1);
 
   {
     // ... and then enter global2's zone and create a string and script
@@ -102,8 +102,8 @@ BEGIN_TEST(test_ubiNodeZone) {
     RootedString string2(cx,
                          JS_NewStringCopyZ(cx, "A million household uses!"));
     CHECK(string2);
-    RootedScript script2(cx);
-    CHECK(JS::CompileUtf8(cx, options, "", 0, &script2));
+    RootedScript script2(cx, JS::CompileUtf8(cx, options, "", 0));
+    CHECK(script2);
 
     CHECK(JS::ubi::Node(string1).zone() == global1->zone());
     CHECK(JS::ubi::Node(script1).zone() == global1->zone());
@@ -137,16 +137,16 @@ BEGIN_TEST(test_ubiNodeCompartment) {
   JS::CompileOptions options(cx);
 
   // Create a script in the original realm...
-  RootedScript script1(cx);
-  CHECK(JS::CompileUtf8(cx, options, "", 0, &script1));
+  RootedScript script1(cx, JS::CompileUtf8(cx, options, "", 0));
+  CHECK(script1);
 
   {
     // ... and then enter global2's realm and create a script
     // there, too.
     JSAutoRealm ar(cx, global2);
 
-    RootedScript script2(cx);
-    CHECK(JS::CompileUtf8(cx, options, "", 0, &script2));
+    RootedScript script2(cx, JS::CompileUtf8(cx, options, "", 0));
+    CHECK(script2);
 
     CHECK(JS::ubi::Node(script1).compartment() == global1->compartment());
     CHECK(JS::ubi::Node(script2).compartment() == global2->compartment());
@@ -226,11 +226,12 @@ BEGIN_TEST(test_ubiStackFrame) {
 
   // All frames should be from the "filename.js" source.
   while (ubiFrame) {
-    CHECK(checkString("filename.js",
-                      [&](mozilla::RangedPtr<char16_t> ptr, size_t length) {
-                        return ubiFrame.source(ptr, length);
-                      },
-                      [&] { return ubiFrame.source(); }));
+    CHECK(checkString(
+        "filename.js",
+        [&](mozilla::RangedPtr<char16_t> ptr, size_t length) {
+          return ubiFrame.source(ptr, length);
+        },
+        [&] { return ubiFrame.source(); }));
     ubiFrame = ubiFrame.parent();
   }
 

@@ -125,6 +125,9 @@
 #include "mozilla/net/NeckoChannelParams.h"
 #include "mozilla/net/UrlClassifierFeatureFactory.h"
 #include "nsIWebNavigation.h"
+#include "HttpTrafficAnalyzer.h"
+#include "mozilla/dom/CanonicalBrowsingContext.h"
+#include "mozilla/dom/WindowGlobalParent.h"
 
 #ifdef MOZ_TASK_TRACER
 #  include "GeckoTaskTracer.h"
@@ -1282,11 +1285,13 @@ nsresult nsHttpChannel::SetupTransaction() {
 
   EnsureTopLevelOuterContentWindowId();
 
+  HttpTrafficCategory category = CreateTrafficCategory();
+
   nsCOMPtr<nsIAsyncInputStream> responseStream;
   rv = mTransaction->Init(
       mCaps, mConnectionInfo, &mRequestHead, mUploadStream, mReqContentLength,
       mUploadStreamHasHeaders, GetCurrentThreadEventTarget(), callbacks, this,
-      mTopLevelOuterContentWindowId, getter_AddRefs(responseStream));
+      mTopLevelOuterContentWindowId, category, getter_AddRefs(responseStream));
   if (NS_FAILED(rv)) {
     mTransaction = nullptr;
     return rv;
@@ -1300,6 +1305,51 @@ nsresult nsHttpChannel::SetupTransaction() {
   rv = nsInputStreamPump::Create(getter_AddRefs(mTransactionPump),
                                  responseStream);
   return rv;
+}
+
+HttpTrafficCategory nsHttpChannel::CreateTrafficCategory() {
+  MOZ_ASSERT(!mFirstPartyClassificationFlags ||
+             !mThirdPartyClassificationFlags);
+
+  if (!StaticPrefs::network_traffic_analyzer_enabled()) {
+    return HttpTrafficCategory::eInvalid;
+  }
+
+  HttpTrafficAnalyzer::ClassOfService cos;
+  {
+    if (mClassOfService & nsIClassOfService::Leader &&
+        mLoadInfo->GetExternalContentPolicyType() ==
+            nsIContentPolicy::TYPE_SCRIPT) {
+      cos = HttpTrafficAnalyzer::ClassOfService::eLeader;
+    } else if (mLoadFlags & nsIRequest::LOAD_BACKGROUND) {
+      cos = HttpTrafficAnalyzer::ClassOfService::eBackground;
+    } else {
+      cos = HttpTrafficAnalyzer::ClassOfService::eOther;
+    }
+  }
+
+  bool isThirdParty = !!mThirdPartyClassificationFlags;
+  HttpTrafficAnalyzer::TrackingClassification tc;
+  {
+    uint32_t flags = isThirdParty ? mThirdPartyClassificationFlags
+                                  : mFirstPartyClassificationFlags;
+
+    using CF = nsIHttpChannel::ClassificationFlags;
+    using TC = HttpTrafficAnalyzer::TrackingClassification;
+
+    if (flags & CF::CLASSIFIED_TRACKING_CONTENT) {
+      tc = TC::eContent;
+    } else if (flags & CF::CLASSIFIED_FINGERPRINTING) {
+      tc = TC::eFingerprinting;
+    } else if (flags & CF::CLASSIFIED_ANY_BASIC_TRACKING) {
+      tc = TC::eBasic;
+    } else {
+      tc = TC::eNone;
+    }
+  }
+
+  return HttpTrafficAnalyzer::CreateTrafficCategory(NS_UsePrivateBrowsing(this),
+                                                    isThirdParty, cos, tc);
 }
 
 enum class Report { Error, Warning };
@@ -2280,6 +2330,16 @@ void nsHttpChannel::ProcessSSLInformation() {
         Unused << AddSecurityMessage(consoleErrorTag, consoleErrorMessage);
       }
     }
+  }
+
+  uint16_t tlsVersion;
+  nsresult rv = securityInfo->GetProtocolVersion(&tlsVersion);
+  if (NS_SUCCEEDED(rv) &&
+      tlsVersion != nsITransportSecurityInfo::TLS_VERSION_1_2 &&
+      tlsVersion != nsITransportSecurityInfo::TLS_VERSION_1_3) {
+    nsString consoleErrorTag = NS_LITERAL_STRING("DeprecatedTLSVersion");
+    nsString consoleErrorCategory = NS_LITERAL_STRING("TLS");
+    Unused << AddSecurityMessage(consoleErrorTag, consoleErrorCategory);
   }
 }
 
@@ -6653,14 +6713,35 @@ nsresult nsHttpChannel::BeginConnect() {
   RefPtr<nsHttpChannel> self = this;
   bool willCallback = NS_SUCCEEDED(
       AsyncUrlChannelClassifier::CheckChannel(this, [self]() -> void {
-        nsresult rv = self->BeginConnectActual();
-        if (NS_FAILED(rv)) {
-          // Since this error is thrown asynchronously so that the caller
-          // of BeginConnect() will not do clean up for us. We have to do
-          // it on our own.
-          self->CloseCacheEntry(false);
-          Unused << self->AsyncAbort(rv);
+        auto nextFunc = [self]() -> void {
+          nsresult rv = self->BeginConnectActual();
+          if (NS_FAILED(rv)) {
+            // Since this error is thrown asynchronously so that the caller
+            // of BeginConnect() will not do clean up for us. We have to do
+            // it on our own.
+            self->CloseCacheEntry(false);
+            Unused << self->AsyncAbort(rv);
+          }
+        };
+
+        uint32_t delayMillisec = StaticPrefs::network_delay_tracking_load();
+        if (self->IsThirdPartyTrackingResource() && delayMillisec) {
+          nsCOMPtr<nsIRunnable> runnable = NS_NewRunnableFunction(
+              "nsHttpChannel::BeginConnect-delayed", nextFunc);
+          nsresult rv = NS_DelayedDispatchToCurrentThread(runnable.forget(),
+                                                          delayMillisec);
+          if (NS_SUCCEEDED(rv)) {
+            LOG(
+                ("nsHttpChannel::BeginConnect delaying 3rd-party tracking "
+                 "resource for %u ms [this=%p]",
+                 delayMillisec, self.get()));
+            return;
+          }
+          LOG(("nsHttpChannel::BeginConnect unable to delay loading. [this=%p]",
+               self.get()));
         }
+
+        nextFunc();
       }));
 
   if (!willCallback) {
@@ -7251,55 +7332,6 @@ nsresult nsHttpChannel::StartCrossProcessRedirect() {
   return rv;
 }
 
-static nsILoadInfo::CrossOriginOpenerPolicy GetCrossOriginOpenerPolicy(
-    nsHttpResponseHead *responseHead) {
-  MOZ_ASSERT(responseHead);
-
-  nsAutoCString openerPolicy;
-  Unused << responseHead->GetHeader(nsHttp::Cross_Origin_Opener_Policy,
-                                    openerPolicy);
-
-  // Cross-Origin-Opener-Policy = sameness [ RWS outgoing ]
-  // sameness = %s"same-origin" / %s"same-site" ; case-sensitive
-  // outgoing = %s"unsafe-allow-outgoing" ; case-sensitive
-
-  Tokenizer t(openerPolicy);
-  nsAutoCString sameness;
-  nsAutoCString outgoing;
-
-  // The return value will be true if we find any whitespace. If there is
-  // whitespace, then it must be followed by "unsafe-allow-outgoing" otherwise
-  // this is a malformed header value.
-  bool allowOutgoing = t.ReadUntil(Tokenizer::Token::Whitespace(), sameness);
-  if (allowOutgoing) {
-    t.SkipWhites();
-    bool foundEOF = t.ReadUntil(Tokenizer::Token::EndOfFile(), outgoing);
-    if (!foundEOF) {
-      // Malformed response. There should be no text after the second token.
-      return nsILoadInfo::OPENER_POLICY_NULL;
-    }
-    if (!outgoing.EqualsLiteral("unsafe-allow-outgoing")) {
-      // Malformed response. Only one allowed value for the second token.
-      return nsILoadInfo::OPENER_POLICY_NULL;
-    }
-  }
-
-  nsILoadInfo::CrossOriginOpenerPolicy policy = nsILoadInfo::OPENER_POLICY_NULL;
-  if (sameness.EqualsLiteral("same-origin")) {
-    policy = nsILoadInfo::OPENER_POLICY_SAME_ORIGIN;
-    if (allowOutgoing) {
-      policy = nsILoadInfo::OPENER_POLICY_SAME_ORIGIN_ALLOW_OUTGOING;
-    }
-  } else if (sameness.EqualsLiteral("same-site")) {
-    policy = nsILoadInfo::OPENER_POLICY_SAME_SITE;
-    if (allowOutgoing) {
-      policy = nsILoadInfo::OPENER_POLICY_SAME_SITE_ALLOW_OUTGOING;
-    }
-  }
-
-  return policy;
-}
-
 static bool CompareCrossOriginOpenerPolicies(
     nsILoadInfo::CrossOriginOpenerPolicy documentPolicy,
     nsIPrincipal *documentOrigin,
@@ -7327,6 +7359,8 @@ static bool CompareCrossOriginOpenerPolicies(
 
     documentOrigin->GetSiteOrigin(siteOriginA);
     resultOrigin->GetSiteOrigin(siteOriginB);
+    LOG(("Comparing origin doc:[%s] with result:[%s]\n", siteOriginA.get(),
+         siteOriginB.get()));
     if (siteOriginA == siteOriginB) {
       return true;
     }
@@ -7356,27 +7390,45 @@ nsHttpChannel::HasCrossOriginOpenerPolicyMismatch(bool *aMismatch) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
+  RefPtr<mozilla::dom::BrowsingContext> ctx;
+  mLoadInfo->GetBrowsingContext(getter_AddRefs(ctx));
+
   // Get the policy of the active document, and the policy for the result.
-  nsILoadInfo::CrossOriginOpenerPolicy documentPolicy =
-      mLoadInfo->GetOpenerPolicy();
+  nsILoadInfo::CrossOriginOpenerPolicy documentPolicy = ctx->GetOpenerPolicy();
   nsILoadInfo::CrossOriginOpenerPolicy resultPolicy =
-      GetCrossOriginOpenerPolicy(head);
+      nsILoadInfo::OPENER_POLICY_NULL;
+  GetCrossOriginOpenerPolicy(&resultPolicy);
 
-  mLoadInfo->SetOpenerPolicy(resultPolicy);
-
-  // We use the top window principal as the documentOrigin
-  if (!mTopWindowPrincipal) {
-    GetTopWindowPrincipal(getter_AddRefs(mTopWindowPrincipal));
+  if (!ctx->Canonical()->GetCurrentWindowGlobal()) {
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
-  nsCOMPtr<nsIPrincipal> documentOrigin = mTopWindowPrincipal;
+  // We use the top window principal as the documentOrigin
+  nsCOMPtr<nsIPrincipal> documentOrigin =
+      ctx->Canonical()->GetCurrentWindowGlobal()->DocumentPrincipal();
   nsCOMPtr<nsIPrincipal> resultOrigin;
 
   nsContentUtils::GetSecurityManager()->GetChannelResultPrincipal(
       this, getter_AddRefs(resultOrigin));
 
-  if (!CompareCrossOriginOpenerPolicies(documentPolicy, documentOrigin,
-                                        resultPolicy, resultOrigin)) {
+  bool compareResult = CompareCrossOriginOpenerPolicies(
+      documentPolicy, documentOrigin, resultPolicy, resultOrigin);
+
+  if (LOG_ENABLED()) {
+    LOG(
+        ("nsHttpChannel::HasCrossOriginOpenerPolicyMismatch - "
+         "doc:%d result:%d - compare:%d\n",
+         documentPolicy, resultPolicy, compareResult));
+    nsAutoCString docOrigin;
+    nsCOMPtr<nsIURI> uri = documentOrigin->GetURI();
+    uri->GetSpec(docOrigin);
+    nsAutoCString resOrigin;
+    uri = resultOrigin->GetURI();
+    uri->GetSpec(resOrigin);
+    LOG(("doc origin:%s - res origin: %s\n", docOrigin.get(), resOrigin.get()));
+  }
+
+  if (!compareResult) {
     // If one of the following is false:
     //   - doc is the initial about:blank document
     //   - document's unsafe-allow-outgoing is true

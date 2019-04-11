@@ -36,8 +36,6 @@ const PC_TRANSCEIVER_CID = Components.ID("{09475754-103a-41f5-a2d0-e1f27eb0b537}
 const PC_COREQUEST_CID = Components.ID("{74b2122d-65a8-4824-aa9e-3d664cb75dc2}");
 const PC_DTMF_SENDER_CID = Components.ID("{3610C242-654E-11E6-8EC0-6D1BE389A607}");
 
-const TELEMETRY_PC_CONNECTED = "webrtc.peerconnection.connected";
-const TELEMETRY_PC_PROMISE_GETSTATS = "webrtc.peerconnection.promise_stats_used";
 function logMsg(msg, file, line, flag, winID) {
   let scriptErrorClass = Cc["@mozilla.org/scripterror;1"];
   let scriptError = scriptErrorClass.createInstance(Ci.nsIScriptError);
@@ -313,17 +311,54 @@ setupPrototype(RTCStatsReport, {
   QueryInterface: ChromeUtils.generateQI([]),
 });
 
-// This is its own class so that it does not need to be exposed to the client.
+// Records PC related telemetry
 class PeerConnectionTelemetry {
   // Record which style(s) of invocation for getStats are used
   recordGetStats() {
-    Services.telemetry.scalarAdd(TELEMETRY_PC_PROMISE_GETSTATS, 1);
+    Services.telemetry.scalarAdd("webrtc.peerconnection.promise_stats_used",
+                                 1);
     this.recordGetStats = () => {};
   }
   // ICE connection state enters connected or completed.
   recordConnected() {
-    Services.telemetry.scalarAdd(TELEMETRY_PC_CONNECTED, 1);
+    Services.telemetry.scalarAdd("webrtc.peerconnection.connected", 1);
     this.recordConnected = () => {};
+  }
+  // DataChannel is created
+  _recordDataChannelCreated() {
+    Services.telemetry.scalarAdd("webrtc.peerconnection.datachannel_created",
+                                 1);
+    this._recordDataChannelCreated = () => {};
+  }
+  // DataChannel initialized with maxRetransmitTime
+  _recordMaxRetransmitTime(maxRetransmitTime) {
+    if (maxRetransmitTime === undefined) {
+      return false;
+    }
+    Services.telemetry.scalarAdd(
+      "webrtc.peerconnection.datachannel_max_retx_used", 1);
+    this._recordMaxRetransmitTime = () => true;
+    return true;
+  }
+  // DataChannel initialized with maxPacketLifeTime
+  _recordMaxPacketLifeTime(maxPacketLifeTime) {
+    if (maxPacketLifeTime === undefined) {
+      return false;
+    }
+    Services.telemetry.scalarAdd(
+      "webrtc.peerconnection.datachannel_max_life_used", 1);
+    this._recordMaxPacketLifeTime = () => true;
+    return true;
+  }
+  // DataChannel initialized
+  recordDataChannelInit(maxRetransmitTime, maxPacketLifeTime) {
+    const retxUsed = this._recordMaxRetransmitTime(maxRetransmitTime);
+    if (this._recordMaxPacketLifeTime(maxPacketLifeTime) && retxUsed) {
+      Services.telemetry.scalarAdd(
+        "webrtc.peerconnection.datachannel_max_retx_and_life_used", 1);
+      this.recordDataChannelInit = () => {};
+    }
+    this._recordDataChannelCreated();
   }
 }
 
@@ -1173,7 +1208,8 @@ class RTCPeerConnection {
     sender.checkWasCreatedByPc(this.__DOM_IMPL__);
 
     let transceiver =
-      this._transceivers.find(transceiver => transceiver.sender == sender);
+      this._transceivers.find(transceiver =>
+        !transceiver.stopped && transceiver.sender == sender);
 
     // If the transceiver was removed due to rollback, let it slide.
     if (!transceiver || !sender.track) {
@@ -1570,10 +1606,15 @@ class RTCPeerConnection {
 
   createDataChannel(label, {
                       maxRetransmits, ordered, negotiated, id = 0xFFFF,
-                      maxRetransmitTime, maxPacketLifeTime = maxRetransmitTime,
+                      maxRetransmitTime, maxPacketLifeTime,
                       protocol,
                     } = {}) {
     this._checkClosed();
+    this._pcTelemetry.recordDataChannelInit(maxRetransmitTime, maxPacketLifeTime);
+
+    if (maxPacketLifeTime === undefined) {
+      maxPacketLifeTime = maxRetransmitTime;
+    }
 
     if (maxRetransmitTime !== undefined) {
       this.logWarning("Use maxPacketLifeTime instead of deprecated maxRetransmitTime which will stop working soon in createDataChannel!");
@@ -1629,23 +1670,7 @@ class PeerConnectionObserver {
     this._dompc = dompc._innerObject;
   }
 
-  newError(message, code) {
-    // These strings must match those defined in the WebRTC spec.
-    const reasonName = [
-      "",
-      "InternalError",
-      "InternalError",
-      "InvalidParameterError",
-      "InvalidStateError",
-      "InvalidSessionDescriptionError",
-      "IncompatibleSessionDescriptionError",
-      "InternalError",
-      "IncompatibleMediaStreamTrackError",
-      "InternalError",
-      "TypeError",
-      "OperationError",
-    ];
-    let name = reasonName[Math.min(code, reasonName.length - 1)];
+  newError({message, name}) {
     return new this._dompc._win.DOMException(message, name);
   }
 
@@ -1657,16 +1682,16 @@ class PeerConnectionObserver {
     this._dompc._onCreateOfferSuccess(sdp);
   }
 
-  onCreateOfferError(code, message) {
-    this._dompc._onCreateOfferFailure(this.newError(message, code));
+  onCreateOfferError(error) {
+    this._dompc._onCreateOfferFailure(this.newError(error));
   }
 
   onCreateAnswerSuccess(sdp) {
     this._dompc._onCreateAnswerSuccess(sdp);
   }
 
-  onCreateAnswerError(code, message) {
-    this._dompc._onCreateAnswerFailure(this.newError(message, code));
+  onCreateAnswerError(error) {
+    this._dompc._onCreateAnswerFailure(this.newError(error));
   }
 
   onSetLocalDescriptionSuccess() {
@@ -1680,20 +1705,20 @@ class PeerConnectionObserver {
     this._dompc._onSetRemoteDescriptionSuccess();
   }
 
-  onSetLocalDescriptionError(code, message) {
-    this._dompc._onSetLocalDescriptionFailure(this.newError(message, code));
+  onSetLocalDescriptionError(error) {
+    this._dompc._onSetLocalDescriptionFailure(this.newError(error));
   }
 
-  onSetRemoteDescriptionError(code, message) {
-    this._dompc._onSetRemoteDescriptionFailure(this.newError(message, code));
+  onSetRemoteDescriptionError(error) {
+    this._dompc._onSetRemoteDescriptionFailure(this.newError(error));
   }
 
   onAddIceCandidateSuccess() {
     this._dompc._onAddIceCandidateSuccess();
   }
 
-  onAddIceCandidateError(code, message) {
-    this._dompc._onAddIceCandidateError(this.newError(message, code));
+  onAddIceCandidateError(error) {
+    this._dompc._onAddIceCandidateError(this.newError(error));
   }
 
   onIceCandidate(sdpMLineIndex, sdpMid, candidate, usernameFragment) {
@@ -1836,8 +1861,8 @@ class PeerConnectionObserver {
     pc._onGetStatsSuccess(webidlobj);
   }
 
-  onGetStatsError(code, message) {
-    this._dompc._onGetStatsFailure(this.newError(message, code));
+  onGetStatsError(message) {
+    this._dompc._onGetStatsFailure(this.newError({name: "OperationError", message}));
   }
 
   _getTransceiverWithRecvTrack(webrtcTrackId) {

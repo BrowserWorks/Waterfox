@@ -714,12 +714,12 @@ class ScriptSource {
  private:
   struct UncompressedDataMatcher {
     template <typename Unit>
-    const void* match(const Uncompressed<Unit>& u) {
+    const void* operator()(const Uncompressed<Unit>& u) {
       return u.units();
     }
 
     template <typename T>
-    const void* match(const T&) {
+    const void* operator()(const T&) {
       MOZ_CRASH(
           "attempting to access uncompressed data in a "
           "ScriptSource not containing it");
@@ -736,12 +736,12 @@ class ScriptSource {
  private:
   struct CompressedDataMatcher {
     template <typename Unit>
-    char* match(const Compressed<Unit>& c) {
+    char* operator()(const Compressed<Unit>& c) {
       return const_cast<char*>(c.raw.chars());
     }
 
     template <typename T>
-    char* match(const T&) {
+    char* operator()(const T&) {
       MOZ_CRASH(
           "attempting to access compressed data in a ScriptSource "
           "not containing it");
@@ -757,12 +757,14 @@ class ScriptSource {
 
  private:
   struct BinASTDataMatcher {
-    void* match(const BinAST& b) { return const_cast<char*>(b.string.chars()); }
+    void* operator()(const BinAST& b) {
+      return const_cast<char*>(b.string.chars());
+    }
 
     void notBinAST() { MOZ_CRASH("ScriptSource isn't backed by BinAST data"); }
 
     template <typename T>
-    void* match(const T&) {
+    void* operator()(const T&) {
       notBinAST();
       return nullptr;
     }
@@ -774,18 +776,18 @@ class ScriptSource {
  private:
   struct HasUncompressedSource {
     template <typename Unit>
-    bool match(const Uncompressed<Unit>&) {
+    bool operator()(const Uncompressed<Unit>&) {
       return true;
     }
 
     template <typename Unit>
-    bool match(const Compressed<Unit>&) {
+    bool operator()(const Compressed<Unit>&) {
       return false;
     }
 
-    bool match(const BinAST&) { return false; }
+    bool operator()(const BinAST&) { return false; }
 
-    bool match(const Missing&) { return false; }
+    bool operator()(const Missing&) { return false; }
   };
 
  public:
@@ -802,18 +804,18 @@ class ScriptSource {
  private:
   struct HasCompressedSource {
     template <typename Unit>
-    bool match(const Compressed<Unit>&) {
+    bool operator()(const Compressed<Unit>&) {
       return true;
     }
 
     template <typename Unit>
-    bool match(const Uncompressed<Unit>&) {
+    bool operator()(const Uncompressed<Unit>&) {
       return false;
     }
 
-    bool match(const BinAST&) { return false; }
+    bool operator()(const BinAST&) { return false; }
 
-    bool match(const Missing&) { return false; }
+    bool operator()(const Missing&) { return false; }
   };
 
  public:
@@ -829,21 +831,21 @@ class ScriptSource {
   template <typename Unit>
   struct SourceTypeMatcher {
     template <template <typename C> class Data>
-    bool match(const Data<Unit>&) {
+    bool operator()(const Data<Unit>&) {
       return true;
     }
 
     template <template <typename C> class Data, typename NotUnit>
-    bool match(const Data<NotUnit>&) {
+    bool operator()(const Data<NotUnit>&) {
       return false;
     }
 
-    bool match(const BinAST&) {
+    bool operator()(const BinAST&) {
       MOZ_CRASH("doesn't make sense to ask source type of BinAST data");
       return false;
     }
 
-    bool match(const Missing&) {
+    bool operator()(const Missing&) {
       MOZ_CRASH("doesn't make sense to ask source type when missing");
       return false;
     }
@@ -858,19 +860,19 @@ class ScriptSource {
  private:
   struct SourceCharSizeMatcher {
     template <template <typename C> class Data, typename Unit>
-    uint8_t match(const Data<Unit>& data) {
+    uint8_t operator()(const Data<Unit>& data) {
       static_assert(std::is_same<Unit, mozilla::Utf8Unit>::value ||
                         std::is_same<Unit, char16_t>::value,
                     "should only have UTF-8 or UTF-16 source char");
       return sizeof(Unit);
     }
 
-    uint8_t match(const BinAST&) {
+    uint8_t operator()(const BinAST&) {
       MOZ_CRASH("BinAST source has no source-char size");
       return 0;
     }
 
-    uint8_t match(const Missing&) {
+    uint8_t operator()(const Missing&) {
       MOZ_CRASH("missing source has no source-char size");
       return 0;
     }
@@ -882,18 +884,18 @@ class ScriptSource {
  private:
   struct UncompressedLengthMatcher {
     template <typename Unit>
-    size_t match(const Uncompressed<Unit>& u) {
+    size_t operator()(const Uncompressed<Unit>& u) {
       return u.length();
     }
 
     template <typename Unit>
-    size_t match(const Compressed<Unit>& u) {
+    size_t operator()(const Compressed<Unit>& u) {
       return u.uncompressedLength;
     }
 
-    size_t match(const BinAST& b) { return b.string.length(); }
+    size_t operator()(const BinAST& b) { return b.string.length(); }
 
-    size_t match(const Missing& m) {
+    size_t operator()(const Missing& m) {
       MOZ_CRASH("ScriptSource::length on a missing source");
       return 0;
     }
@@ -908,21 +910,21 @@ class ScriptSource {
  private:
   struct CompressedLengthOrZeroMatcher {
     template <typename Unit>
-    size_t match(const Uncompressed<Unit>&) {
+    size_t operator()(const Uncompressed<Unit>&) {
       return 0;
     }
 
     template <typename Unit>
-    size_t match(const Compressed<Unit>& c) {
+    size_t operator()(const Compressed<Unit>& c) {
       return c.raw.length();
     }
 
-    size_t match(const BinAST&) {
+    size_t operator()(const BinAST&) {
       MOZ_CRASH("trying to get compressed length for BinAST data");
       return 0;
     }
 
-    size_t match(const Missing&) {
+    size_t operator()(const Missing&) {
       MOZ_CRASH("missing source data");
       return 0;
     }
@@ -998,26 +1000,26 @@ class ScriptSource {
         : source_(source), compressed_(compressed) {}
 
     template <typename Unit>
-    void match(const Uncompressed<Unit>&) {
+    void operator()(const Uncompressed<Unit>&) {
       source_->setCompressedSource<Unit>(std::move(compressed_),
                                          source_->length());
     }
 
     template <typename Unit>
-    void match(const Compressed<Unit>&) {
+    void operator()(const Compressed<Unit>&) {
       MOZ_CRASH(
           "can't set compressed source when source is already "
           "compressed -- ScriptSource::tryCompressOffThread "
           "shouldn't have queued up this task?");
     }
 
-    void match(const BinAST&) {
+    void operator()(const BinAST&) {
       MOZ_CRASH(
           "doesn't make sense to set compressed source for BinAST "
           "data");
     }
 
-    void match(const Missing&) {
+    void operator()(const Missing&) {
       MOZ_CRASH(
           "doesn't make sense to set compressed source for "
           "missing source -- ScriptSource::tryCompressOffThread "
@@ -1245,6 +1247,34 @@ class ScriptSourceObject : public NativeObject {
 enum class GeneratorKind : bool { NotGenerator, Generator };
 enum class FunctionAsyncKind : bool { SyncFunction, AsyncFunction };
 
+struct FieldInitializers {
+#ifdef DEBUG
+  bool valid;
+#endif
+  // This struct will eventually have a vector of constant values for optimizing
+  // field initializers.
+  size_t numFieldInitializers;
+
+  explicit FieldInitializers(size_t numFieldInitializers)
+      :
+#ifdef DEBUG
+        valid(true),
+#endif
+        numFieldInitializers(numFieldInitializers) {
+  }
+
+  static FieldInitializers Invalid() { return FieldInitializers(); }
+
+ private:
+  FieldInitializers()
+      :
+#ifdef DEBUG
+        valid(false),
+#endif
+        numFieldInitializers(0) {
+  }
+};
+
 /*
  * NB: after a successful XDR_DECODE, XDRScript callers must do any required
  * subsequent set-up of owning function or script object and then call
@@ -1358,6 +1388,8 @@ class alignas(JS::Value) PrivateScriptData final {
   PackedOffsets packedOffsets = {};  // zeroes
   uint32_t nscopes = 0;
 
+  js::FieldInitializers fieldInitializers_ = js::FieldInitializers::Invalid();
+
   // Translate an offset into a concrete pointer.
   template <typename T>
   T* offsetToPointer(size_t offset) {
@@ -1429,6 +1461,10 @@ class alignas(JS::Value) PrivateScriptData final {
   bool hasResumeOffsets() const {
     return packedOffsets.resumeOffsetsSpanOffset != 0;
   }
+  void setFieldInitializers(FieldInitializers fieldInitializers) {
+    fieldInitializers_ = fieldInitializers;
+  }
+  const FieldInitializers& getFieldInitializers() { return fieldInitializers_; }
 
   // Allocate a new PrivateScriptData. Headers and GCPtrs are initialized.
   // The size of allocation is returned as an out parameter.
@@ -1786,28 +1822,28 @@ class JSScript : public js::gc::TenuredCell {
   // behavior of this script. This is only public for the JITs.
  public:
   enum class MutableFlags : uint32_t {
+    // Number of times the |warmUpCount| was forcibly discarded. The counter is
+    // reset when a script is successfully jit-compiled.
+    WarmupResets_MASK = 0xFF,
+
     // Have warned about uses of undefined properties in this script.
-    WarnedAboutUndefinedProp = 1 << 0,
+    WarnedAboutUndefinedProp = 1 << 8,
 
     // If treatAsRunOnce, whether script has executed.
-    HasRunOnce = 1 << 1,
+    HasRunOnce = 1 << 9,
 
     // Script has been reused for a clone.
-    HasBeenCloned = 1 << 2,
+    HasBeenCloned = 1 << 10,
 
     // Whether the record/replay execution progress counter (see RecordReplay.h)
     // should be updated as this script runs.
-    TrackRecordReplayProgress = 1 << 3,
-
-    // (1 << 4) is unused.
+    TrackRecordReplayProgress = 1 << 11,
 
     // Script has an entry in Realm::scriptCountsMap.
-    HasScriptCounts = 1 << 5,
+    HasScriptCounts = 1 << 12,
 
     // Script has an entry in Realm::debugScriptMap.
-    HasDebugScript = 1 << 6,
-
-    // (1 << 7) and (1 << 8) are unused.
+    HasDebugScript = 1 << 13,
 
     // Do not relazify this script. This is used by the relazify() testing
     // function for scripts that are on the stack and also by the AutoDelazify
@@ -1815,37 +1851,37 @@ class JSScript : public js::gc::TenuredCell {
     // scripts on the stack, but the relazify() testing function overrides that,
     // and sometimes we're working with a cross-compartment function and need to
     // keep it from relazifying.
-    DoNotRelazify = 1 << 9,
+    DoNotRelazify = 1 << 14,
 
     // IonMonkey compilation hints.
 
     // Script has had hoisted bounds checks fail.
-    FailedBoundsCheck = 1 << 10,
+    FailedBoundsCheck = 1 << 15,
 
     // Script has had hoisted shape guard fail.
-    FailedShapeGuard = 1 << 11,
+    FailedShapeGuard = 1 << 16,
 
-    HadFrequentBailouts = 1 << 12,
-    HadOverflowBailout = 1 << 13,
+    HadFrequentBailouts = 1 << 17,
+    HadOverflowBailout = 1 << 18,
 
     // Explicitly marked as uninlineable.
-    Uninlineable = 1 << 14,
+    Uninlineable = 1 << 19,
 
     // Idempotent cache has triggered invalidation.
-    InvalidatedIdempotentCache = 1 << 15,
+    InvalidatedIdempotentCache = 1 << 20,
 
     // Lexical check did fail and bail out.
-    FailedLexicalCheck = 1 << 16,
+    FailedLexicalCheck = 1 << 21,
 
     // See comments below.
-    NeedsArgsAnalysis = 1 << 17,
-    NeedsArgsObj = 1 << 18,
+    NeedsArgsAnalysis = 1 << 22,
+    NeedsArgsObj = 1 << 23,
 
     // Set if the debugger's onNewScript hook has not yet been called.
-    HideScriptFromDebugger = 1 << 19,
+    HideScriptFromDebugger = 1 << 24,
 
     // Set if the script has opted into spew
-    SpewEnabled = 1 << 20,
+    SpewEnabled = 1 << 25,
   };
 
  private:
@@ -1854,12 +1890,6 @@ class JSScript : public js::gc::TenuredCell {
   uint32_t mutableFlags_ = 0;
 
   // 16-bit fields.
-
-  /**
-   * Number of times the |warmUpCount| was forcibly discarded. The counter is
-   * reset when a script is successfully jit-compiled.
-   */
-  uint16_t warmUpResetCount = 0;
 
   /* ES6 function length. */
   uint16_t funLength_ = 0;
@@ -2281,6 +2311,16 @@ class JSScript : public js::gc::TenuredCell {
     return hasFlag(ImmutableFlags::FunctionHasThisBinding);
   }
 
+  void setFieldInitializers(js::FieldInitializers fieldInitializers) {
+    MOZ_ASSERT(data_);
+    data_->setFieldInitializers(fieldInitializers);
+  }
+
+  const js::FieldInitializers& getFieldInitializers() const {
+    MOZ_ASSERT(data_);
+    return data_->getFieldInitializers();
+  }
+
   /*
    * Arguments access (via JSOP_*ARG* opcodes) must access the canonical
    * location for the argument. If an arguments object exists AND it's mapped
@@ -2565,11 +2605,22 @@ class JSScript : public js::gc::TenuredCell {
     warmUpCount = 0;
   }
 
-  uint16_t getWarmUpResetCount() const { return warmUpResetCount; }
-  uint16_t incWarmUpResetCounter(uint16_t amount = 1) {
-    return warmUpResetCount += amount;
+  unsigned getWarmUpResetCount() const {
+    constexpr uint32_t MASK = uint32_t(MutableFlags::WarmupResets_MASK);
+    return mutableFlags_ & MASK;
   }
-  void resetWarmUpResetCounter() { warmUpResetCount = 0; }
+  void incWarmUpResetCounter() {
+    constexpr uint32_t MASK = uint32_t(MutableFlags::WarmupResets_MASK);
+    uint32_t newCount = getWarmUpResetCount() + 1;
+    if (newCount <= MASK) {
+      mutableFlags_ &= ~MASK;
+      mutableFlags_ |= newCount;
+    }
+  }
+  void resetWarmUpResetCounter() {
+    constexpr uint32_t MASK = uint32_t(MutableFlags::WarmupResets_MASK);
+    mutableFlags_ &= ~MASK;
+  }
 
  public:
   bool initScriptCounts(JSContext* cx);
@@ -2855,34 +2906,6 @@ static_assert(
     "Size of JSScript must be an integral multiple of js::gc::CellAlignBytes");
 
 namespace js {
-
-struct FieldInitializers {
-#ifdef DEBUG
-  bool valid;
-#endif
-  // This struct will eventually have a vector of constant values for optimizing
-  // field initializers.
-  size_t numFieldInitializers;
-
-  explicit FieldInitializers(size_t numFieldInitializers)
-      :
-#ifdef DEBUG
-        valid(true),
-#endif
-        numFieldInitializers(numFieldInitializers) {
-  }
-
-  static FieldInitializers Invalid() { return FieldInitializers(); }
-
- private:
-  FieldInitializers()
-      :
-#ifdef DEBUG
-        valid(false),
-#endif
-        numFieldInitializers(0) {
-  }
-};
 
 // Variable-length data for LazyScripts. Contains vector of inner functions and
 // vector of captured property ids.
@@ -3268,9 +3291,9 @@ class LazyScript : public gc::TenuredCell {
     lazyData_->fieldInitializers_ = fieldInitializers;
   }
 
-  FieldInitializers getFieldInitializers() const {
-    return lazyData_ ? lazyData_->fieldInitializers_
-                     : FieldInitializers::Invalid();
+  const FieldInitializers& getFieldInitializers() const {
+    MOZ_ASSERT(lazyData_);
+    return lazyData_->fieldInitializers_;
   }
 
   const char* filename() const { return scriptSource()->filename(); }

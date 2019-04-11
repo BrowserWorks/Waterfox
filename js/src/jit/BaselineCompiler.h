@@ -279,6 +279,10 @@ class BaselineCodeGen {
   // construction and before environment chain is initialized.
   CodeOffset bailoutPrologueOffset_;
 
+  // Baseline Interpreter can enter Baseline Compiler code at this address. This
+  // is right after the warm-up counter check in the prologue.
+  CodeOffset warmUpCheckPrologueOffset_;
+
   // Baseline Debug OSR during prologue will enter at this address. This is
   // right after where a debug prologue VM call would have returned.
   CodeOffset debugOsrPrologueOffset_;
@@ -317,12 +321,13 @@ class BaselineCodeGen {
   void pushScriptScopeArg();
 
   // Pushes a bytecode operand as argument for a VM function.
-  void pushUint8BytecodeOperandArg();
-  void pushUint16BytecodeOperandArg();
+  void pushUint8BytecodeOperandArg(Register scratch);
+  void pushUint16BytecodeOperandArg(Register scratch);
 
   void loadResumeIndexBytecodeOperand(Register dest);
   void loadInt32LengthBytecodeOperand(Register dest);
   void loadInt32IndexBytecodeOperand(ValueOperand dest);
+  void loadNumFormalArguments(Register dest);
 
   // Loads the current JSScript* in dest.
   void loadScript(Register dest);
@@ -391,6 +396,8 @@ class BaselineCodeGen {
 
   MOZ_MUST_USE bool emitCheckThis(ValueOperand val, bool reinit = false);
   void emitLoadReturnValue(ValueOperand val);
+  void emitPushNonArrowFunctionNewTarget();
+  void emitGetAliasedVar(ValueOperand dest);
 
   MOZ_MUST_USE bool emitNextIC();
   MOZ_MUST_USE bool emitInterruptCheck();

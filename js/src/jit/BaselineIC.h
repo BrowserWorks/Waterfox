@@ -220,15 +220,24 @@ class ICEntry {
   // A pointer to the first IC stub for this instruction.
   ICStub* firstStub_;
 
-  // The PC of this IC's bytecode op within the JSScript.
+  // The PC offset of this IC's bytecode op within the JSScript or
+  // ProloguePCOffset if this is a prologue IC.
   uint32_t pcOffset_;
 
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
+#ifdef JS_64BIT
+  // On 64-bit architectures, we have 32 bits of alignment padding.
+  // We fill it with a magic value, and check that value when tracing.
+  static const uint32_t EXPECTED_TRACE_MAGIC = 0xdeaddead;
+  uint32_t traceMagic_ = EXPECTED_TRACE_MAGIC;
+#endif
+#endif
+
  public:
-  // Non-op ICs are Baseline ICs used for function argument/this type
-  // monitoring in the script's prologue. All other ICs are "for op" ICs.
-  // Note: the last bytecode op in a script is always a return so UINT32_MAX
-  // is never a valid bytecode offset.
-  static constexpr uint32_t NonOpPCOffset = UINT32_MAX;
+  // Prologue ICs are Baseline ICs used for function argument/this type
+  // monitoring in the script's prologue. Note: the last bytecode op in a script
+  // is always a return so UINT32_MAX is never a valid bytecode offset.
+  static constexpr uint32_t ProloguePCOffset = UINT32_MAX;
 
   ICEntry(ICStub* firstStub, uint32_t pcOffset)
       : firstStub_(firstStub), pcOffset_(pcOffset) {}
@@ -243,7 +252,7 @@ class ICEntry {
   void setFirstStub(ICStub* stub) { firstStub_ = stub; }
 
   uint32_t pcOffset() const {
-    return pcOffset_ == NonOpPCOffset ? 0 : pcOffset_;
+    return pcOffset_ == ProloguePCOffset ? 0 : pcOffset_;
   }
   jsbytecode* pc(JSScript* script) const {
     return script->offsetToPC(pcOffset());
@@ -255,7 +264,7 @@ class ICEntry {
 
   inline ICStub** addressOfFirstStub() { return &firstStub_; }
 
-  bool isForOp() const { return pcOffset_ != NonOpPCOffset; }
+  bool isForPrologue() const { return pcOffset_ == ProloguePCOffset; }
 
   void trace(JSTracer* trc);
 };
@@ -346,6 +355,8 @@ class ICScript {
   void trace(JSTracer* trc);
   void purgeOptimizedStubs(JSScript* script);
 
+  ICEntry* interpreterICEntryFromPCOffset(uint32_t pcOffset);
+
   ICEntry* maybeICEntryFromPCOffset(uint32_t pcOffset);
   ICEntry* maybeICEntryFromPCOffset(uint32_t pcOffset,
                                     ICEntry* prevLookedUpEntry);
@@ -356,7 +367,6 @@ class ICScript {
 
 class ICMonitoredStub;
 class ICMonitoredFallbackStub;
-class ICUpdatedStub;
 
 // Constant iterator that traverses arbitrary chains of ICStubs.
 // No requirements are made of the ICStub used to construct this
@@ -469,7 +479,7 @@ class ICStub {
   friend class ICFallbackStub;
 
  public:
-  enum Kind {
+  enum Kind : uint16_t {
     INVALID = 0,
 #define DEF_ENUM_KIND(kindName) kindName,
     IC_BASELINE_STUB_KIND_LIST(DEF_ENUM_KIND)
@@ -495,7 +505,7 @@ class ICStub {
     }
   }
 
-  enum Trait {
+  enum Trait : uint16_t {
     Regular = 0x0,
     Fallback = 0x1,
     Monitored = 0x2,
@@ -505,6 +515,8 @@ class ICStub {
 
   void updateCode(JitCode* stubCode);
   void trace(JSTracer* trc);
+
+  static const uint16_t EXPECTED_TRACE_MAGIC = 0b1100011;
 
   template <typename T, typename... Args>
   static T* New(JSContext* cx, ICStubSpace* space, JitCode* code,
@@ -535,23 +547,32 @@ class ICStub {
 
   // Pointer to next IC stub.  This is null for the last IC stub, which should
   // either be a fallback or inert IC stub.
-  ICStub* next_;
+  ICStub* next_ = nullptr;
 
   // A 16-bit field usable by subtypes of ICStub for subtype-specific small-info
-  uint16_t extra_;
+  uint16_t extra_ = 0;
 
-  // The kind of the stub.
-  //  High bit is 'isFallback' flag.
-  //  Second high bit is 'isMonitored' flag.
-  Trait trait_ : 3;
-  Kind kind_ : 13;
+  // A 16-bit field storing the trait and kind.
+  // Unused bits are filled with a magic value and verified when tracing.
+  uint16_t traitKindBits_;
 
-  inline ICStub(Kind kind, uint8_t* stubCode)
-      : stubCode_(stubCode),
-        next_(nullptr),
-        extra_(0),
-        trait_(Regular),
-        kind_(kind) {
+  static const uint16_t TRAIT_OFFSET = 0;
+  static const uint16_t TRAIT_BITS = 3;
+  static const uint16_t TRAIT_MASK = (1 << TRAIT_BITS) - 1;
+  static const uint16_t KIND_OFFSET = TRAIT_OFFSET + TRAIT_BITS;
+  static const uint16_t KIND_BITS = 6;
+  static const uint16_t KIND_MASK = (1 << KIND_BITS) - 1;
+  static const uint16_t MAGIC_OFFSET = KIND_OFFSET + KIND_BITS;
+  static const uint16_t MAGIC_BITS = 7;
+  static const uint16_t MAGIC_MASK = (1 << MAGIC_BITS) - 1;
+  static const uint16_t EXPECTED_MAGIC = 0b1100011;
+
+  static_assert(LIMIT <= (1 << KIND_BITS), "Not enough kind bits");
+  static_assert(LIMIT > (1 << (KIND_BITS - 1)), "Too many kind bits");
+  static_assert(TRAIT_BITS + KIND_BITS + MAGIC_BITS == 16, "Unused bits");
+
+  inline ICStub(Kind kind, uint8_t* stubCode) : stubCode_(stubCode) {
+    setTraitKind(Regular, kind);
     MOZ_ASSERT(stubCode != nullptr);
   }
 
@@ -560,25 +581,36 @@ class ICStub {
   }
 
   inline ICStub(Kind kind, Trait trait, uint8_t* stubCode)
-      : stubCode_(stubCode),
-        next_(nullptr),
-        extra_(0),
-        trait_(trait),
-        kind_(kind) {
+      : stubCode_(stubCode) {
+    setTraitKind(trait, kind);
     MOZ_ASSERT(stubCode != nullptr);
   }
+
   inline ICStub(Kind kind, Trait trait, JitCode* stubCode)
       : ICStub(kind, trait, stubCode->raw()) {
     MOZ_ASSERT(stubCode != nullptr);
   }
 
   inline Trait trait() const {
-    // Workaround for MSVC reading trait_ as signed value.
-    return (Trait)(trait_ & 0x7);
+    return (Trait)((traitKindBits_ >> TRAIT_OFFSET) & TRAIT_MASK);
   }
 
+  inline void setTraitKind(Trait trait, Kind kind) {
+    traitKindBits_ = (trait << TRAIT_OFFSET) | (kind << KIND_OFFSET) |
+                     (EXPECTED_MAGIC << MAGIC_OFFSET);
+  }
+
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
+  inline void checkTraceMagic() {
+    uint16_t magic = (traitKindBits_ >> MAGIC_OFFSET) & MAGIC_MASK;
+    MOZ_DIAGNOSTIC_ASSERT(magic == EXPECTED_MAGIC);
+  }
+#endif
+
  public:
-  inline Kind kind() const { return static_cast<Kind>(kind_); }
+  inline Kind kind() const {
+    return (Kind)((traitKindBits_ >> KIND_OFFSET) & KIND_MASK);
+  }
 
   inline bool isFallback() const {
     return trait() == Fallback || trait() == MonitoredFallback;
@@ -622,14 +654,14 @@ class ICStub {
     return reinterpret_cast<ICMonitoredFallbackStub*>(this);
   }
 
-  inline const ICUpdatedStub* toUpdatedStub() const {
+  inline const ICCacheIR_Updated* toUpdatedStub() const {
     MOZ_ASSERT(isUpdated());
-    return reinterpret_cast<const ICUpdatedStub*>(this);
+    return reinterpret_cast<const ICCacheIR_Updated*>(this);
   }
 
-  inline ICUpdatedStub* toUpdatedStub() {
+  inline ICCacheIR_Updated* toUpdatedStub() {
     MOZ_ASSERT(isUpdated());
-    return reinterpret_cast<ICUpdatedStub*>(this);
+    return reinterpret_cast<ICCacheIR_Updated*>(this);
   }
 
 #define KIND_METHODS(kindName)                                    \
@@ -892,22 +924,43 @@ class ICCacheIR_Monitored : public ICMonitoredStub,
   uint8_t* stubDataStart();
 };
 
-// Updated stubs are IC stubs that use a TypeUpdate IC to track
-// the status of heap typesets that need to be updated.
-class ICUpdatedStub : public ICStub {
- protected:
-  static const uint32_t MAX_OPTIMIZED_STUBS = 8;
+class ICCacheIR_Updated : public ICStub,
+                          public ICCacheIR_Trait<ICCacheIR_Updated> {
   uint32_t numOptimizedStubs_;
+
+  GCPtrObjectGroup updateStubGroup_;
+  GCPtrId updateStubId_;
 
   // Pointer to the start of the type updating stub chain.
   ICStub* firstUpdateStub_;
 
-  ICUpdatedStub(Kind kind, JitCode* stubCode)
-      : ICStub(kind, ICStub::Updated, stubCode),
-        numOptimizedStubs_(0),
-        firstUpdateStub_(nullptr) {}
+  static const uint32_t MAX_OPTIMIZED_STUBS = 8;
 
  public:
+  ICCacheIR_Updated(JitCode* stubCode, const CacheIRStubInfo* stubInfo)
+      : ICStub(ICStub::CacheIR_Updated, ICStub::Updated, stubCode),
+        ICCacheIR_Trait(stubInfo),
+        numOptimizedStubs_(0),
+        updateStubGroup_(nullptr),
+        updateStubId_(JSID_EMPTY),
+        firstUpdateStub_(nullptr) {}
+
+  GCPtrObjectGroup& updateStubGroup() { return updateStubGroup_; }
+  GCPtrId& updateStubId() { return updateStubId_; }
+
+  uint8_t* stubDataStart();
+
+  inline ICStub* firstUpdateStub() const { return firstUpdateStub_; }
+
+  static inline size_t offsetOfFirstUpdateStub() {
+    return offsetof(ICCacheIR_Updated, firstUpdateStub_);
+  }
+
+  inline uint32_t numOptimizedStubs() const { return numOptimizedStubs_; }
+
+  void notePreliminaryObject() { extra_ = 1; }
+  bool hasPreliminaryObject() const { return extra_; }
+
   MOZ_MUST_USE bool initUpdatingChain(JSContext* cx, ICStubSpace* space);
 
   MOZ_MUST_USE bool addUpdateStubForValue(JSContext* cx, HandleScript script,
@@ -933,8 +986,6 @@ class ICUpdatedStub : public ICStub {
     numOptimizedStubs_++;
   }
 
-  inline ICStub* firstUpdateStub() const { return firstUpdateStub_; }
-
   void resetUpdateStubChain(Zone* zone);
 
   bool hasTypeUpdateStub(ICStub::Kind kind) {
@@ -949,33 +1000,6 @@ class ICUpdatedStub : public ICStub {
 
     return false;
   }
-
-  inline uint32_t numOptimizedStubs() const { return numOptimizedStubs_; }
-
-  static inline size_t offsetOfFirstUpdateStub() {
-    return offsetof(ICUpdatedStub, firstUpdateStub_);
-  }
-};
-
-class ICCacheIR_Updated : public ICUpdatedStub,
-                          public ICCacheIR_Trait<ICCacheIR_Updated> {
-  GCPtrObjectGroup updateStubGroup_;
-  GCPtrId updateStubId_;
-
- public:
-  ICCacheIR_Updated(JitCode* stubCode, const CacheIRStubInfo* stubInfo)
-      : ICUpdatedStub(ICStub::CacheIR_Updated, stubCode),
-        ICCacheIR_Trait(stubInfo),
-        updateStubGroup_(nullptr),
-        updateStubId_(JSID_EMPTY) {}
-
-  GCPtrObjectGroup& updateStubGroup() { return updateStubGroup_; }
-  GCPtrId& updateStubId() { return updateStubId_; }
-
-  void notePreliminaryObject() { extra_ = 1; }
-  bool hasPreliminaryObject() const { return extra_; }
-
-  uint8_t* stubDataStart();
 };
 
 // Base class for stubcode compilers.
@@ -2371,7 +2395,7 @@ void StoreToTypedArray(JSContext* cx, MacroAssembler& masm, Scalar::Type type,
                        Register scratch, Label* failure);
 
 extern bool DoTypeUpdateFallback(JSContext* cx, BaselineFrame* frame,
-                                 ICUpdatedStub* stub, HandleValue objval,
+                                 ICCacheIR_Updated* stub, HandleValue objval,
                                  HandleValue value);
 
 extern bool DoWarmUpCounterFallbackOSR(JSContext* cx, BaselineFrame* frame,

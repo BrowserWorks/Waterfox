@@ -27,6 +27,8 @@ namespace {
   "urlclassifier.features.cryptomining.annotate.whitelistTables"
 #define URLCLASSIFIER_CRYPTOMINING_ANNOTATION_WHITELIST_TEST_ENTRIES \
   "urlclassifier.features.cryptomining.annotate.whitelistHosts"
+#define URLCLASSIFIER_CRYPTOMINING_ANNOTATION_SKIP_URLS \
+  "urlclassifier.features.cryptomining.annotate.skipURLs"
 #define TABLE_CRYPTOMINING_ANNOTATION_BLACKLIST_PREF \
   "cryptomining-annotate-blacklist-pref"
 #define TABLE_CRYPTOMINING_ANNOTATION_WHITELIST_PREF \
@@ -49,7 +51,8 @@ UrlClassifierFeatureCryptominingAnnotation::
               URLCLASSIFIER_CRYPTOMINING_ANNOTATION_WHITELIST_TEST_ENTRIES),
           NS_LITERAL_CSTRING(TABLE_CRYPTOMINING_ANNOTATION_BLACKLIST_PREF),
           NS_LITERAL_CSTRING(TABLE_CRYPTOMINING_ANNOTATION_WHITELIST_PREF),
-          EmptyCString()) {}
+          NS_LITERAL_CSTRING(URLCLASSIFIER_CRYPTOMINING_ANNOTATION_SKIP_URLS)) {
+}
 
 /* static */ const char* UrlClassifierFeatureCryptominingAnnotation::Name() {
   return CRYPTOMINING_ANNOTATION_FEATURE_NAME;
@@ -120,7 +123,8 @@ UrlClassifierFeatureCryptominingAnnotation::GetIfNameMatches(
 
 NS_IMETHODIMP
 UrlClassifierFeatureCryptominingAnnotation::ProcessChannel(
-    nsIChannel* aChannel, const nsACString& aList, bool* aShouldContinue) {
+    nsIChannel* aChannel, const nsTArray<nsCString>& aList,
+    bool* aShouldContinue) {
   NS_ENSURE_ARG_POINTER(aChannel);
   NS_ENSURE_ARG_POINTER(aShouldContinue);
 
@@ -132,9 +136,19 @@ UrlClassifierFeatureCryptominingAnnotation::ProcessChannel(
        "channel[%p]",
        aChannel));
 
+  static std::vector<UrlClassifierCommon::ClassificationData>
+      sClassificationData = {
+          {NS_LITERAL_CSTRING("content-cryptomining-track-"),
+           nsIHttpChannel::ClassificationFlags::
+               CLASSIFIED_CRYPTOMINING_CONTENT},
+      };
+
+  uint32_t flags = UrlClassifierCommon::TablesToClassificationFlags(
+      aList, sClassificationData,
+      nsIHttpChannel::ClassificationFlags::CLASSIFIED_CRYPTOMINING);
+
   UrlClassifierCommon::AnnotateChannel(
-      aChannel, AntiTrackingCommon::eCryptomining,
-      nsIHttpChannel::ClassificationFlags::CLASSIFIED_CRYPTOMINING,
+      aChannel, AntiTrackingCommon::eCryptomining, flags,
       nsIWebProgressListener::STATE_LOADED_CRYPTOMINING_CONTENT);
   return NS_OK;
 }

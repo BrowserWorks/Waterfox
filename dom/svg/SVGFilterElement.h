@@ -7,9 +7,9 @@
 #ifndef mozilla_dom_SVGFilterElement_h
 #define mozilla_dom_SVGFilterElement_h
 
-#include "SVGEnum.h"
-#include "nsSVGLength2.h"
-#include "SVGString.h"
+#include "SVGAnimatedEnumeration.h"
+#include "SVGAnimatedLength.h"
+#include "SVGAnimatedString.h"
 #include "mozilla/dom/SVGElement.h"
 
 class nsSVGFilterFrame;
@@ -60,15 +60,15 @@ class SVGFilterElement : public SVGFilterElementBase {
   virtual StringAttributesInfo GetStringInfo() override;
 
   enum { ATTR_X, ATTR_Y, ATTR_WIDTH, ATTR_HEIGHT };
-  nsSVGLength2 mLengthAttributes[4];
+  SVGAnimatedLength mLengthAttributes[4];
   static LengthInfo sLengthInfo[4];
 
   enum { FILTERUNITS, PRIMITIVEUNITS };
-  SVGEnum mEnumAttributes[2];
+  SVGAnimatedEnumeration mEnumAttributes[2];
   static EnumInfo sEnumInfo[2];
 
   enum { HREF, XLINK_HREF };
-  SVGString mStringAttributes[2];
+  SVGAnimatedString mStringAttributes[2];
   static StringInfo sStringInfo[2];
 };
 

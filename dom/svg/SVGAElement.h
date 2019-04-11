@@ -9,7 +9,7 @@
 
 #include "Link.h"
 #include "nsDOMTokenList.h"
-#include "SVGString.h"
+#include "SVGAnimatedString.h"
 #include "mozilla/dom/SVGGraphicsElement.h"
 
 nsresult NS_NewSVGAElement(
@@ -42,7 +42,8 @@ class SVGAElement final : public SVGAElementBase, public Link {
 
   // nsINode interface methods
   void GetEventTargetParent(EventChainPreVisitor& aVisitor) override;
-  virtual nsresult PostHandleEvent(EventChainPostVisitor& aVisitor) override;
+  MOZ_CAN_RUN_SCRIPT
+  nsresult PostHandleEvent(EventChainPostVisitor& aVisitor) override;
   virtual nsresult Clone(dom::NodeInfo*, nsINode** aResult) const override;
 
   // nsIContent
@@ -97,7 +98,7 @@ class SVGAElement final : public SVGAElementBase, public Link {
   virtual StringAttributesInfo GetStringInfo() override;
 
   enum { HREF, XLINK_HREF, TARGET };
-  SVGString mStringAttributes[3];
+  SVGAnimatedString mStringAttributes[3];
   static StringInfo sStringInfo[3];
 
   RefPtr<nsDOMTokenList> mRelList;

@@ -20,7 +20,6 @@
 #include "nsNameSpaceManager.h"
 #include "nsScrollbarButtonFrame.h"
 #include "nsIDOMEventListener.h"
-#include "nsIPresShell.h"
 #include "nsFrameList.h"
 #include "nsHTMLParts.h"
 #include "mozilla/ComputedStyle.h"
@@ -35,6 +34,7 @@
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/MouseEvent.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/UniquePtr.h"
 #include "nsBindingManager.h"
 
@@ -313,8 +313,7 @@ void nsSplitterFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   // if the mouse is captured always return us as the frame.
   if (mInner->mDragging && aBuilder->IsForEventDelivery()) {
     // XXX It's probably better not to check visibility here, right?
-    aLists.Outlines()->AppendToTop(
-        MakeDisplayItem<nsDisplayEventReceiver>(aBuilder, this));
+    aLists.Outlines()->AppendNewToTop<nsDisplayEventReceiver>(aBuilder, this);
     return;
   }
 }

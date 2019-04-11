@@ -27,6 +27,7 @@
 #include "nsITabChild.h"
 #include "nsITooltipListener.h"
 #include "nsIWebProgressListener.h"
+#include "nsIWebProgressListener2.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/TabContext.h"
 #include "mozilla/dom/CoalescedMouseData.h"
@@ -45,6 +46,7 @@
 #include "nsDeque.h"
 #include "nsISHistoryListener.h"
 
+class nsBrowserStatusFilter;
 class nsIDOMWindowUtils;
 class nsIHttpChannel;
 class nsIRequest;
@@ -203,7 +205,7 @@ class TabChild final : public TabChildBase,
                        public nsSupportsWeakReference,
                        public nsITabChild,
                        public nsIObserver,
-                       public nsIWebProgressListener,
+                       public nsIWebProgressListener2,
                        public TabContext,
                        public nsITooltipListener,
                        public mozilla::ipc::IShmemAllocator {
@@ -263,6 +265,7 @@ class TabChild final : public TabChildBase,
   NS_DECL_NSITABCHILD
   NS_DECL_NSIOBSERVER
   NS_DECL_NSIWEBPROGRESSLISTENER
+  NS_DECL_NSIWEBPROGRESSLISTENER2
   NS_DECL_NSITOOLTIPLISTENER
 
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(TabChild, TabChildBase)
@@ -308,6 +311,9 @@ class TabChild final : public TabChildBase,
       const mozilla::dom::DimensionInfo& aDimensionInfo) override;
   virtual mozilla::ipc::IPCResult RecvSizeModeChanged(
       const nsSizeMode& aSizeMode) override;
+
+  virtual mozilla::ipc::IPCResult RecvChildToParentMatrix(
+      const mozilla::gfx::Matrix4x4& aMatrix) override;
 
   mozilla::ipc::IPCResult RecvActivate();
 
@@ -634,6 +640,10 @@ class TabChild final : public TabChildBase,
   // The HANDLE object for the widget this TabChild in.
   WindowsHandle WidgetNativeData() { return mWidgetNativeData; }
 
+  // The transform from the coordinate space of this TabChild to the coordinate
+  // space of the native window its TabParent is in.
+  mozilla::LayoutDeviceToLayoutDeviceMatrix4x4 GetChildToParentConversionMatrix() const;
+
   // Prepare to dispatch all coalesced mousemove events. We'll move all data
   // in mCoalescedMouseData to a nsDeque; then we start processing them. We
   // can't fetch the coalesced event one by one and dispatch it because we may
@@ -670,7 +680,7 @@ class TabChild final : public TabChildBase,
 
   virtual PBrowserBridgeChild* AllocPBrowserBridgeChild(
       const nsString& aName, const nsString& aRemoteType,
-      BrowsingContext* aBrowsingContext) override;
+      BrowsingContext* aBrowsingContext, const uint32_t& aChromeFlags) override;
 
   virtual bool DeallocPBrowserBridgeChild(PBrowserBridgeChild* aActor) override;
 
@@ -791,7 +801,7 @@ class TabChild final : public TabChildBase,
 
   nsresult PrepareProgressListenerData(nsIWebProgress* aWebProgress,
                                        nsIRequest* aRequest,
-                                       WebProgressData& aWebProgressData,
+                                       Maybe<WebProgressData>& aWebProgressData,
                                        RequestData& aRequestData);
 
   class DelayedDeleteRunnable;
@@ -804,6 +814,7 @@ class TabChild final : public TabChildBase,
   nsCOMPtr<nsIURI> mLastURI;
   RefPtr<ContentChild> mManager;
   RefPtr<BrowsingContext> mBrowsingContext;
+  RefPtr<nsBrowserStatusFilter> mStatusFilter;
   uint32_t mChromeFlags;
   uint32_t mMaxTouchPoints;
   layers::LayersId mLayersId;
@@ -820,7 +831,7 @@ class TabChild final : public TabChildBase,
   SetAllowedTouchBehaviorCallback mSetAllowedTouchBehaviorCallback;
   bool mHasValidInnerSize;
   bool mDestroyed;
-  bool mProgressListenerRegistered;
+
   // Position of client area relative to the outer window
   LayoutDeviceIntPoint mClientOffset;
   // Position of tab, relative to parent widget (typically the window)
@@ -900,6 +911,8 @@ class TabChild final : public TabChildBase,
   uint32_t mPendingDocShellBlockers;
 
   WindowsHandle mWidgetNativeData;
+
+  Maybe<LayoutDeviceToLayoutDeviceMatrix4x4> mChildToParentConversionMatrix;
 
   // This state is used to keep track of the current visible tabs (the ones
   // rendering layers). There may be more than one if there are multiple browser

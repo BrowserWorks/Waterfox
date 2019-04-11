@@ -17,6 +17,7 @@
 #include "mozilla/MiscEvents.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/TouchEvents.h"
 #include "mozilla/dom/Document.h"
@@ -31,7 +32,6 @@
 #include "nsIFrame.h"
 #include "nsIContent.h"
 #include "nsIContentInlines.h"
-#include "nsIPresShell.h"
 #include "nsIScrollableFrame.h"
 #include "nsJSEnvironment.h"
 #include "nsLayoutUtils.h"
@@ -529,16 +529,28 @@ CSSIntPoint Event::GetScreenCoords(nsPresContext* aPresContext,
     return CSSIntPoint(aPoint.x, aPoint.y);
   }
 
+  // (Potentially) transform the point from the coordinate space of an
+  // out-of-process iframe to the coordinate space of the native
+  // window. The transform can only be applied to a point whose components
+  // are floating-point values, so convert the integer point first, then
+  // transform, and then round the result back to an integer point.
+  LayoutDevicePoint floatPoint(aPoint);
+  LayoutDevicePoint topLevelPoint =
+      guiEvent->mWidget->WidgetToTopLevelWidgetTransform().TransformPoint(
+          floatPoint);
+  LayoutDeviceIntPoint rounded = RoundedToInt(topLevelPoint);
+
   nsPoint pt = LayoutDevicePixel::ToAppUnits(
-      aPoint,
+      rounded,
       aPresContext->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom());
 
-  if (nsIPresShell* ps = aPresContext->GetPresShell()) {
-    pt = pt.RemoveResolution(nsLayoutUtils::GetCurrentAPZResolutionScale(ps));
+  if (PresShell* presShell = aPresContext->GetPresShell()) {
+    pt = pt.RemoveResolution(
+        nsLayoutUtils::GetCurrentAPZResolutionScale(presShell));
   }
 
   pt += LayoutDevicePixel::ToAppUnits(
-      guiEvent->mWidget->WidgetToScreenOffset(),
+      guiEvent->mWidget->TopLevelWidgetToScreenOffset(),
       aPresContext->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom());
 
   return CSSPixel::FromAppUnitsRounded(pt);
@@ -554,8 +566,9 @@ CSSIntPoint Event::GetPageCoords(nsPresContext* aPresContext,
 
   // If there is some scrolling, add scroll info to client point.
   if (aPresContext && aPresContext->GetPresShell()) {
-    nsIPresShell* shell = aPresContext->GetPresShell();
-    nsIScrollableFrame* scrollframe = shell->GetRootScrollFrameAsScrollable();
+    PresShell* presShell = aPresContext->PresShell();
+    nsIScrollableFrame* scrollframe =
+        presShell->GetRootScrollFrameAsScrollable();
     if (scrollframe) {
       pagePoint +=
           CSSIntPoint::FromAppUnitsRounded(scrollframe->GetScrollPosition());
@@ -612,16 +625,16 @@ CSSIntPoint Event::GetOffsetCoords(nsPresContext* aPresContext,
   if (!content || !aPresContext) {
     return CSSIntPoint(0, 0);
   }
-  nsCOMPtr<nsIPresShell> shell = aPresContext->GetPresShell();
-  if (!shell) {
+  RefPtr<PresShell> presShell = aPresContext->GetPresShell();
+  if (!presShell) {
     return CSSIntPoint(0, 0);
   }
-  shell->FlushPendingNotifications(FlushType::Layout);
+  presShell->FlushPendingNotifications(FlushType::Layout);
   nsIFrame* frame = content->GetPrimaryFrame();
   if (!frame) {
     return CSSIntPoint(0, 0);
   }
-  nsIFrame* rootFrame = shell->GetRootFrame();
+  nsIFrame* rootFrame = presShell->GetRootFrame();
   if (!rootFrame) {
     return CSSIntPoint(0, 0);
   }

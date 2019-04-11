@@ -7,9 +7,9 @@
 #ifndef mozilla_dom_SVGFECompositeElement_h
 #define mozilla_dom_SVGFECompositeElement_h
 
-#include "SVGEnum.h"
+#include "SVGAnimatedEnumeration.h"
+#include "SVGAnimatedNumber.h"
 #include "SVGFilters.h"
-#include "nsSVGNumber2.h"
 
 nsresult NS_NewSVGFECompositeElement(
     nsIContent** aResult, already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo);
@@ -38,7 +38,7 @@ class SVGFECompositeElement : public SVGFECompositeElementBase {
       nsTArray<RefPtr<SourceSurface>>& aInputImages) override;
   virtual bool AttributeAffectsRendering(int32_t aNameSpaceID,
                                          nsAtom* aAttribute) const override;
-  virtual SVGString& GetResultImageName() override {
+  virtual SVGAnimatedString& GetResultImageName() override {
     return mStringAttributes[RESULT];
   }
   virtual void GetSourceImageNames(nsTArray<SVGStringInfo>& aSources) override;
@@ -61,16 +61,16 @@ class SVGFECompositeElement : public SVGFECompositeElementBase {
   virtual StringAttributesInfo GetStringInfo() override;
 
   enum { ATTR_K1, ATTR_K2, ATTR_K3, ATTR_K4 };
-  nsSVGNumber2 mNumberAttributes[4];
+  SVGAnimatedNumber mNumberAttributes[4];
   static NumberInfo sNumberInfo[4];
 
   enum { OPERATOR };
-  SVGEnum mEnumAttributes[1];
+  SVGAnimatedEnumeration mEnumAttributes[1];
   static SVGEnumMapping sOperatorMap[];
   static EnumInfo sEnumInfo[1];
 
   enum { RESULT, IN1, IN2 };
-  SVGString mStringAttributes[3];
+  SVGAnimatedString mStringAttributes[3];
   static StringInfo sStringInfo[3];
 };
 

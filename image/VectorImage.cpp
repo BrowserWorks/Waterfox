@@ -18,9 +18,9 @@
 #include "mozilla/dom/SVGDocument.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/PendingAnimationTracker.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/Tuple.h"
-#include "nsIPresShell.h"
 #include "nsIStreamListener.h"
 #include "nsMimeTypes.h"
 #include "nsPresContext.h"
@@ -1232,6 +1232,11 @@ VectorImage::StartDecoding(uint32_t aFlags) {
 }
 
 bool VectorImage::StartDecodingWithResult(uint32_t aFlags) {
+  // SVG images are ready to draw when they are loaded
+  return mIsFullyLoaded;
+}
+
+bool VectorImage::RequestDecodeWithResult(uint32_t aFlags) {
   // SVG images are ready to draw when they are loaded
   return mIsFullyLoaded;
 }

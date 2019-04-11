@@ -469,15 +469,15 @@ void js::CompletePropertyDescriptor(MutableHandle<PropertyDescriptor> desc) {
 }
 
 bool js::ReadPropertyDescriptors(
-    JSContext* cx, HandleObject props, bool checkAccessors, AutoIdVector* ids,
-    MutableHandle<PropertyDescriptorVector> descs) {
+    JSContext* cx, HandleObject props, bool checkAccessors,
+    MutableHandleIdVector ids, MutableHandle<PropertyDescriptorVector> descs) {
   if (!GetPropertyKeys(cx, props, JSITER_OWNONLY | JSITER_SYMBOLS, ids)) {
     return false;
   }
 
   RootedId id(cx);
-  for (size_t i = 0, len = ids->length(); i < len; i++) {
-    id = (*ids)[i];
+  for (size_t i = 0, len = ids.length(); i < len; i++) {
+    id = ids[i];
     Rooted<PropertyDescriptor> desc(cx);
     RootedValue v(cx);
     if (!GetProperty(cx, props, props, id, &v) ||
@@ -567,7 +567,7 @@ bool js::SetIntegrityLevel(JSContext* cx, HandleObject obj,
     }
   } else {
     // Steps 6-7.
-    AutoIdVector keys(cx);
+    RootedIdVector keys(cx);
     if (!GetPropertyKeys(
             cx, obj, JSITER_HIDDEN | JSITER_OWNONLY | JSITER_SYMBOLS, &keys)) {
       return false;
@@ -632,8 +632,8 @@ static bool ResolveLazyProperties(JSContext* cx, HandleNativeObject obj) {
     }
   }
   if (clasp->getNewEnumerate() && clasp->getResolve()) {
-    AutoIdVector properties(cx);
-    if (!clasp->getNewEnumerate()(cx, obj, properties,
+    RootedIdVector properties(cx);
+    if (!clasp->getNewEnumerate()(cx, obj, &properties,
                                   /* enumerableOnly = */ false)) {
       return false;
     }
@@ -717,7 +717,7 @@ bool js::TestIntegrityLevel(JSContext* cx, HandleObject obj,
     }
   } else {
     // Steps 7-8.
-    AutoIdVector props(cx);
+    RootedIdVector props(cx);
     if (!GetPropertyKeys(
             cx, obj, JSITER_HIDDEN | JSITER_OWNONLY | JSITER_SYMBOLS, &props)) {
       return false;
@@ -1297,7 +1297,7 @@ JS_FRIEND_API bool JS_CopyPropertiesFrom(JSContext* cx, HandleObject target,
 
   JSAutoRealm ar(cx, obj);
 
-  AutoIdVector props(cx);
+  RootedIdVector props(cx);
   if (!GetPropertyKeys(cx, obj, JSITER_OWNONLY | JSITER_HIDDEN | JSITER_SYMBOLS,
                        &props)) {
     return false;
@@ -2179,6 +2179,7 @@ static bool SetProto(JSContext* cx, HandleObject obj,
     }
     newGroup->setInterpretedFunction(oldGroup->maybeInterpretedFunction());
   } else {
+    AutoRealm ar(cx, oldGroup);
     newGroup = ObjectGroup::defaultNewGroup(cx, obj->getClass(), proto);
     if (!newGroup) {
       return false;
@@ -2560,15 +2561,15 @@ bool js::LookupOwnPropertyPure(JSContext* cx, JSObject* obj, jsid id,
 }
 
 static inline bool NativeGetPureInline(NativeObject* pobj, jsid id,
-                                       PropertyResult prop, Value* vp) {
+                                       PropertyResult prop, Value* vp,
+                                       JSContext* cx) {
   if (prop.isDenseOrTypedArrayElement()) {
     // For simplicity we ignore the TypedArray with string index case.
     if (!JSID_IS_INT(id)) {
       return false;
     }
 
-    *vp = pobj->getDenseOrTypedArrayElement(JSID_TO_INT(id));
-    return true;
+    return pobj->getDenseOrTypedArrayElement<NoGC>(cx, JSID_TO_INT(id), vp);
   }
 
   // Fail if we have a custom getter.
@@ -2594,7 +2595,7 @@ bool js::GetPropertyPure(JSContext* cx, JSObject* obj, jsid id, Value* vp) {
     return true;
   }
 
-  return NativeGetPureInline(&pobj->as<NativeObject>(), id, prop, vp);
+  return NativeGetPureInline(&pobj->as<NativeObject>(), id, prop, vp, cx);
 }
 
 bool js::GetOwnPropertyPure(JSContext* cx, JSObject* obj, jsid id, Value* vp,
@@ -2611,7 +2612,7 @@ bool js::GetOwnPropertyPure(JSContext* cx, JSObject* obj, jsid id, Value* vp,
   }
 
   *found = true;
-  return NativeGetPureInline(&obj->as<NativeObject>(), id, prop, vp);
+  return NativeGetPureInline(&obj->as<NativeObject>(), id, prop, vp, cx);
 }
 
 static inline bool NativeGetGetterPureInline(PropertyResult prop,
@@ -3013,9 +3014,12 @@ extern bool PropertySpecNameToId(JSContext* cx, const char* name,
                                  MutableHandleId id,
                                  js::PinningBehavior pin = js::DoNotPinAtom);
 
-static bool ShouldIgnorePropertyDefinition(JSContext* cx, HandleObject obj,
-                                           HandleId id) {
-  if (StandardProtoKeyOrNull(obj) == JSProto_DataView &&
+// If a property or method is part of an experimental feature that can be
+// disabled at run-time by a preference, we keep it in the JSFunctionSpec /
+// JSPropertySpec list, but omit the definition if the preference is off.
+JS_FRIEND_API bool js::ShouldIgnorePropertyDefinition(JSContext* cx,
+                                                      JSProtoKey key, jsid id) {
+  if (key == JSProto_DataView &&
       !cx->realm()->creationOptions().getBigIntEnabled() &&
       (id == NameToId(cx->names().getBigInt64) ||
        id == NameToId(cx->names().getBigUint64) ||
@@ -3035,7 +3039,7 @@ static bool DefineFunctionFromSpec(JSContext* cx, HandleObject obj,
     return false;
   }
 
-  if (ShouldIgnorePropertyDefinition(cx, obj, id)) {
+  if (ShouldIgnorePropertyDefinition(cx, StandardProtoKeyOrNull(obj), id)) {
     return true;
   }
 

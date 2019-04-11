@@ -180,6 +180,10 @@ void nsSubDocumentFrame::ShowViewer() {
       }
       mCallingShow = false;
       mDidCreateDoc = didCreateDoc;
+
+      if (!(GetStateBits() & NS_FRAME_FIRST_REFLOW)) {
+        frameloader->UpdatePositionAndSize(this);
+      }
     }
   }
 }
@@ -197,7 +201,7 @@ nsIPresShell* nsSubDocumentFrame::GetSubdocumentPresShellForPainting(
   nsView* subdocView = mInnerView->GetFirstChild();
   if (!subdocView) return nullptr;
 
-  nsIPresShell* presShell = nullptr;
+  mozilla::PresShell* presShell = nullptr;
 
   nsIFrame* subdocRootFrame = subdocView->GetFrame();
   if (subdocRootFrame) {
@@ -217,12 +221,13 @@ nsIPresShell* nsSubDocumentFrame::GetSubdocumentPresShellForPainting(
       frame = nextView->GetFrame();
     }
     if (frame) {
-      nsIPresShell* ps = frame->PresShell();
-      if (!presShell ||
-          (ps && !ps->IsPaintingSuppressed() && sShowPreviousPage)) {
+      mozilla::PresShell* presShellForNextView = frame->PresShell();
+      if (!presShell || (presShellForNextView &&
+                         !presShellForNextView->IsPaintingSuppressed() &&
+                         sShowPreviousPage)) {
         subdocView = nextView;
         subdocRootFrame = frame;
-        presShell = ps;
+        presShell = presShellForNextView;
       }
     }
     if (!presShell) {
@@ -231,7 +236,7 @@ nsIPresShell* nsSubDocumentFrame::GetSubdocumentPresShellForPainting(
       if (!mFrameLoader) return nullptr;
       nsIDocShell* docShell = mFrameLoader->GetDocShell(IgnoreErrors());
       if (!docShell) return nullptr;
-      presShell = docShell->GetPresShell();
+      presShell = static_cast<mozilla::PresShell*>(docShell->GetPresShell());
     }
   }
 
@@ -292,7 +297,9 @@ static void WrapBackgroundColorInOwnLayer(nsDisplayListBuilder* aBuilder,
       item = MakeDisplayItem<nsDisplayOwnLayer>(
           aBuilder, aFrame, &tmpList, aBuilder->CurrentActiveScrolledRoot());
     }
-    tempItems.AppendToTop(item);
+    if (item) {
+      tempItems.AppendToTop(item);
+    }
   }
   aList->AppendToTop(&tempItems);
 }
@@ -342,8 +349,7 @@ void nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     nsRect bounds = this->EnsureInnerView()->GetBounds() + offset;
     clipState.ClipContentDescendants(bounds);
 
-    aLists.Content()->AppendToTop(
-        MakeDisplayItem<nsDisplayRemote>(aBuilder, this));
+    aLists.Content()->AppendNewToTop<nsDisplayRemote>(aBuilder, this);
     return;
   }
 
@@ -542,11 +548,10 @@ void nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     if (ignoreViewportScrolling && !constructResolutionItem) {
       zoomFlags |= nsDisplayOwnLayerFlags::eGenerateScrollableLayer;
     }
-    nsDisplayZoom* zoomItem = MakeDisplayItem<nsDisplayZoom>(
-        aBuilder, subdocRootFrame, this, &childItems, subdocAPD, parentAPD,
-        zoomFlags);
+    childItems.AppendNewToTop<nsDisplayZoom>(aBuilder, subdocRootFrame, this,
+                                             &childItems, subdocAPD, parentAPD,
+                                             zoomFlags);
 
-    childItems.AppendToTop(zoomItem);
     needsOwnLayer = false;
   }
   // Wrap the zoom item in the resolution item if we have both because we want
@@ -556,10 +561,9 @@ void nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     flags |= nsDisplayOwnLayerFlags::eGenerateScrollableLayer;
   }
   if (constructResolutionItem) {
-    nsDisplayResolution* resolutionItem = MakeDisplayItem<nsDisplayResolution>(
-        aBuilder, subdocRootFrame, this, &childItems, flags);
+    childItems.AppendNewToTop<nsDisplayResolution>(aBuilder, subdocRootFrame,
+                                                   this, &childItems, flags);
 
-    childItems.AppendToTop(resolutionItem);
     needsOwnLayer = false;
   }
 
@@ -567,8 +571,10 @@ void nsSubDocumentFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   nsDisplaySubDocument* layerItem = MakeDisplayItem<nsDisplaySubDocument>(
       aBuilder, subdocRootFrame ? subdocRootFrame : this, this, &childItems,
       flags);
-  childItems.AppendToTop(layerItem);
-  layerItem->SetShouldFlattenAway(!needsOwnLayer);
+  if (layerItem) {
+    childItems.AppendToTop(layerItem);
+    layerItem->SetShouldFlattenAway(!needsOwnLayer);
+  }
 
   // If we're using containers for root frames, then the earlier call
   // to AddCanvasBackgroundColorItem won't have been able to add an
@@ -999,6 +1005,11 @@ nsFrameLoader* nsSubDocumentFrame::FrameLoader() const {
   return mFrameLoader;
 }
 
+void nsSubDocumentFrame::ResetFrameLoader() {
+  mFrameLoader = nullptr;
+  nsContentUtils::AddScriptRunner(new AsyncFrameInit(this));
+}
+
 // XXX this should be called ObtainDocShell or something like that,
 // to indicate that it could have side effects
 nsIDocShell* nsSubDocumentFrame::GetDocShell() {
@@ -1024,7 +1035,7 @@ static void DestroyDisplayItemDataForFrames(nsIFrame* aFrame) {
 static bool BeginSwapDocShellsForDocument(Document* aDocument, void*) {
   MOZ_ASSERT(aDocument, "null document");
 
-  PresShell* presShell = aDocument->GetPresShell();
+  mozilla::PresShell* presShell = aDocument->GetPresShell();
   if (presShell) {
     // Disable painting while the views are detached, see bug 946929.
     presShell->SetNeverPainting(true);

@@ -272,7 +272,7 @@ class nsIPresShell : public nsStubDocumentObserver {
   }
 #endif
 
-  mozilla::ServoStyleSet* StyleSet() const { return mStyleSet.get(); }
+  inline mozilla::ServoStyleSet* StyleSet() const;
 
   nsCSSFrameConstructor* FrameConstructor() const {
     return mFrameConstructor.get();
@@ -285,12 +285,6 @@ class nsIPresShell : public nsStubDocumentObserver {
   // problem with nsStyleSet.
   void SetAuthorStyleDisabled(bool aDisabled);
   bool GetAuthorStyleDisabled() const;
-
-  /**
-   * Needs to be called any time the applicable style can has changed, in order
-   * to schedule a style flush and setup all the relevant state.
-   */
-  void ApplicableStylesChanged();
 
   /**
    * Update the style set somehow to take into account changed prefs which
@@ -534,10 +528,6 @@ class nsIPresShell : public nsStubDocumentObserver {
 
   void PostRecreateFramesFor(mozilla::dom::Element*);
   void RestyleForAnimation(mozilla::dom::Element*, mozilla::RestyleHint);
-
-  // ShadowRoot has APIs that can change styles. This notifies the shell that
-  // stlyes applicable in the shadow tree have potentially changed.
-  void RecordShadowStyleChange(mozilla::dom::ShadowRoot& aShadowRoot);
 
   /**
    * Determine if it is safe to flush all pending notifications.
@@ -1778,8 +1768,6 @@ class nsIPresShell : public nsStubDocumentObserver {
       FrameMetrics::ScrollOffsetUpdateType aUpdateType);
 
 #ifdef DEBUG
-  mozilla::UniquePtr<mozilla::ServoStyleSet> CloneStyleSet(
-      mozilla::ServoStyleSet*);
   bool VerifyIncrementalReflow();
   void DoVerifyReflow();
   void VerifyHasDirtyRootAncestor(nsIFrame* aFrame);
@@ -1857,9 +1845,8 @@ class nsIPresShell : public nsStubDocumentObserver {
   // we must share ownership.
   RefPtr<Document> mDocument;
   RefPtr<nsPresContext> mPresContext;
-  // mStyleSet owns it but we maintain a ref, may be null
+  // The document's style set owns it but we maintain a ref, may be null.
   RefPtr<mozilla::StyleSheet> mPrefStyleSheet;
-  mozilla::UniquePtr<mozilla::ServoStyleSet> mStyleSet;
   mozilla::UniquePtr<nsCSSFrameConstructor> mFrameConstructor;
   nsViewManager* mViewManager;  // [WEAK] docViewer owns it so I don't have to
   nsPresArena<8192> mFrameArena;

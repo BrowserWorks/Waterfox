@@ -251,8 +251,9 @@
   "CHECKERBOARD_DURATION": {
     "record_in_processes": ["main", "content", "gpu"],
     "alert_emails": ["gfx-telemetry-alerts@mozilla.com", "kgupta@mozilla.com"],
-    "bug_numbers": [1238040],
-    "expires_in_version": "70",
+    "bug_numbers": [1238040, 1539309],
+    "releaseChannelCollection": "opt-out",
+    "expires_in_version": "73",
     "kind": "exponential",
     "high": 100000,
     "n_buckets": 50,
@@ -261,8 +262,9 @@
   "CHECKERBOARD_PEAK": {
     "record_in_processes": ["main", "content", "gpu"],
     "alert_emails": ["gfx-telemetry-alerts@mozilla.com", "kgupta@mozilla.com"],
-    "bug_numbers": [1238040],
-    "expires_in_version": "70",
+    "bug_numbers": [1238040, 1539309],
+    "releaseChannelCollection": "opt-out",
+    "expires_in_version": "73",
     "kind": "exponential",
     "high": 66355200,
     "n_buckets": 50,
@@ -271,8 +273,9 @@
   "CHECKERBOARD_POTENTIAL_DURATION": {
     "record_in_processes": ["main", "content", "gpu"],
     "alert_emails": ["gfx-telemetry-alerts@mozilla.com", "kgupta@mozilla.com"],
-    "bug_numbers": [1238040],
-    "expires_in_version": "70",
+    "bug_numbers": [1238040, 1539309],
+    "releaseChannelCollection": "opt-out",
+    "expires_in_version": "73",
     "kind": "exponential",
     "high": 1000000,
     "n_buckets": 50,
@@ -281,8 +284,9 @@
   "CHECKERBOARD_SEVERITY": {
     "record_in_processes": ["main", "content", "gpu"],
     "alert_emails": ["gfx-telemetry-alerts@mozilla.com", "kgupta@mozilla.com"],
-    "bug_numbers": [1238040],
-    "expires_in_version": "70",
+    "bug_numbers": [1238040, 1539309],
+    "releaseChannelCollection": "opt-out",
+    "expires_in_version": "73",
     "kind": "exponential",
     "high": 1073741824,
     "n_buckets": 50,
@@ -6500,16 +6504,6 @@
     "releaseChannelCollection": "opt-out",
     "description": "Whether the browser we migrated from was the browser with the most recent data. Keyed by that browser's identifier (e.g. 'ie', 'edge', 'safari', etc.)."
   },
-  "FX_PREFERENCES_OPENED_VIA": {
-    "record_in_processes": ["main", "content"],
-    "bug_numbers": [1330315, 1420062, 1427973],
-    "alert_emails": ["jaws@mozilla.com"],
-    "expires_in_version": "63",
-    "kind": "categorical",
-    "labels": ["aboutHome", "aboutTelemetry", "browserMedia", "commandLine", "commandLineLegacy", "ContainersCommand", "contentSearch", "dataReporting", "doorhanger", "devDisconnectedAlert", "experimentsOpenPref", "fxa", "fxaSignedin", "fxaError", "offlineApps", "prefserviceDefaults", "preferencesButton", "paneSync", "storagePressure", "translationInfobar", "UITour", "menubar", "notifOpenSettings", "other", "autofillFooter", "autofillDoorhanger", "mozscreenshots", "searchChangeSettings"],
-    "releaseChannelCollection": "opt-out",
-    "description":"Count how the Preferences are opened."
-  },
   "FX_PAGE_ACTION_ADDED": {
     "record_in_processes": ["main"],
     "alert_emails": ["gijs@mozilla.com"],
@@ -7313,6 +7307,26 @@
     ],
     "description": "Counts of the different ways sending a Telemetry ping can fail."
   },
+  "TELEMETRY_SEND_FAILURE_TYPE_PER_PING" : {
+    "record_in_processes": ["main"],
+    "alert_emails": ["telemetry-client-dev@mozilla.com", "chutten@mozilla.com"],
+    "bug_numbers": [1438896],
+    "expires_in_version": "never",
+    "kind": "categorical",
+    "keyed": true,
+    "labels": [
+        "eOK",
+        "eRequest",
+        "eUnreachable",
+        "eChannelOpen",
+        "eRedirect",
+        "abort",
+        "timeout",
+        "eTooLate",
+        "eTerminated"
+    ],
+    "description": "Counts of the different ways sending a Telemetry ping can fail per ping type."
+  },
   "TELEMETRY_STRINGIFY" : {
     "record_in_processes": ["main"],
     "alert_emails": ["telemetry-client-dev@mozilla.com"],
@@ -7387,22 +7401,6 @@
     "expires_in_version": "53",
     "kind": "count",
     "description": "Count of exceptions in TelemetrySession.getSessionPayload()."
-  },
-  "TELEMETRY_SCHEDULER_TICK_EXCEPTION": {
-    "record_in_processes": ["main"],
-    "alert_emails": ["telemetry-client-dev@mozilla.com"],
-    "bug_numbers": [1250640],
-    "expires_in_version": "53",
-    "kind": "count",
-    "description": "Count of exceptions during executing the TelemetrySession scheduler tick logic."
-  },
-  "TELEMETRY_SCHEDULER_WAKEUP": {
-    "record_in_processes": ["main"],
-    "alert_emails": ["telemetry-client-dev@mozilla.com"],
-    "bug_numbers": [1250640],
-    "expires_in_version": "53",
-    "kind": "count",
-    "description": "Count of TelemetrySession scheduler ticks that were delayed long enough to suspect sleep."
   },
   "TELEMETRY_EVENT_PING_SENT": {
     "record_in_processes": ["main"],
@@ -7518,6 +7516,21 @@
       "Label8"
     ],
     "description": "a testing histogram; not meant to be touched"
+  },
+  "TELEMETRY_TEST_CATEGORICAL_WIN_ONLY": {
+    "record_in_processes": ["main", "content"],
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "bug_numbers": [1539907],
+    "expires_in_version": "never",
+    "kind": "categorical",
+    "n_values": 70,
+    "labels": [
+      "CommonLabel",
+      "Label7",
+      "Label8"
+    ],
+    "description": "a testing histogram used as a compile-time check; not meant to be touched",
+    "operating_systems": ["windows"]
   },
   "TELEMETRY_TEST_KEYED_COUNT_INIT_NO_RECORD": {
     "record_in_processes": ["main", "content"],
@@ -13274,15 +13287,6 @@
     "description": "The total usage amount of the operations of tab audio indicator, mute=0 , unmuted=1, unblockByVisitingTab=2, unblockingByClickingIcon=3",
     "releaseChannelCollection": "opt-out"
   },
-  "MOZ_CHUNKED_ARRAYBUFFER_IN_XHR": {
-    "record_in_processes": ["main", "content"],
-    "alert_emails": ["amarchesini@mozilla.com"],
-    "expires_in_version": "58",
-    "kind": "boolean",
-    "bug_numbers": [1335365],
-    "releaseChannelCollection": "opt-out",
-    "description": "XMLHttpRequest.responseType set to moz-chunked-arraybuffer"
-  },
   "EXTENSION_INSTALL_PROMPT_RESULT": {
     "record_in_processes": ["main", "content"],
     "alert_emails": ["aswan@mozilla.com", "andym@mozilla.com"],
@@ -14548,5 +14552,19 @@
       ],
       "keyed": true,
       "description": "Getting the number of errors in QuotaManager initialization."
+  },
+  "HTTP_TRAFFIC_ANALYSIS": {
+    "record_in_processes": ["main"],
+    "alert_emails": ["gachen@mozilla.com"],
+    "bug_numbers": [1533363],
+    "expires_in_version": "73",
+    "kind": "categorical",
+    "n_values": 8,
+    "labels": [
+      "Connection",
+      "Transaction"
+    ],
+    "keyed": true,
+    "description": "Numbers of HTTP transactions and connections by type. There are some categories separated by keys based on 4 parameters: 1. normal browsing or private browsing 2. first party or third party 3. class of service 4. tracking classification. Available keys are: ['Y=0|NormalFirstParty', 'Y=1|NormalThirdPartyOther', 'Y=2|NormalThirdPartyContentLeader', 'Y=3|NormalThirdPartyContentBackground', 'Y=4|NormalThirdPartyContentOther', 'Y=5|NormalThirdPartyBasicLeader', 'Y=6|NormalThirdPartyBasicBackground', 'Y=7|NormalThirdPartyBasicOther', 'Y=8|NormalThirdPartyFingerprintingLeader', 'Y=9|NormalThirdPartyFingerprintingBackground', 'Y=10|NormalThirdPartyFingerprintingOther', 'Y=11|PrivateFirstParty', 'Y=12|PrivateThirdPartyOther', 'Y=13|PrivateThirdPartyContentLeader', 'Y=14|PrivateThirdPartyContentBackground', 'Y=15|PrivateThirdPartyContentOther', 'Y=16|PrivateThirdPartyBasicLeader', 'Y=17|PrivateThirdPartyBasicBackground', 'Y=18|PrivateThirdPartyBasicOther', 'Y=19|PrivateThirdPartyFingerprintingLeader', 'Y=20|PrivateThirdPartyFingerprintingBackground', 'Y=21|PrivateThirdPartyFingerprintingOther']."
   }
 }

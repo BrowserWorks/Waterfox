@@ -84,8 +84,7 @@
     <command id="Browser:OpenLocation" oncommand="openLocation();"/>
     <command id="Browser:RestoreLastSession" oncommand="SessionStore.restoreLastSession();" disabled="true"/>
     <command id="Browser:NewUserContextTab" oncommand="openNewUserContextTab(event.sourceEvent);"/>
-    <command id="Browser:OpenAboutContainers" oncommand="openPreferences('paneContainers', {origin: 'ContainersCommand'});"/>
-
+    <command id="Browser:OpenAboutContainers" oncommand="openPreferences('paneContainers');"/>
     <command id="Tools:Search" oncommand="BrowserSearch.webSearch();"/>
     <command id="Tools:Downloads" oncommand="BrowserDownloadsUI();"/>
     <command id="Tools:Addons" oncommand="BrowserOpenAddonsMgr();"/>
@@ -338,6 +337,7 @@
     <!-- These are used to build the Application menu -->
     <key id="key_preferencesCmdMac"
          key="&preferencesCmdMac.commandkey;"
+         reserved="true"
          modifiers="accel"/>
     <key id="key_hideThisAppCmdMac"
          key="&hideThisAppCmdMac2.commandkey;"

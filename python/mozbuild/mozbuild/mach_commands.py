@@ -6,6 +6,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import argparse
 import hashlib
+import io
 import itertools
 import json
 import logging
@@ -16,6 +17,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import xml.etree.ElementTree as ET
 import yaml
@@ -48,6 +50,7 @@ from mozbuild.backend import (
     backends,
 )
 
+from mozversioncontrol import get_repository_object
 
 BUILD_WHAT_HELP = '''
 What to build. Can be a top-level make target or a relative directory. If
@@ -975,6 +978,15 @@ class RunProgram(MachCommandBase):
                 print("setpref is only supported if a profile is not specified")
                 return 1
 
+            if not no_profile_option_given:
+                # The profile name may be non-ascii, but come from the
+                # commandline as str, so convert here with a better guess at
+                # an encoding than the default.
+                encoding = (sys.getfilesystemencoding() or
+                            sys.getdefaultencoding())
+                args = [unicode(a, encoding) if not isinstance(a, unicode) else a
+                        for a in args]
+
         extra_env = {
             'MOZ_DEVELOPER_REPO_DIR': self.topsrcdir,
             'MOZ_DEVELOPER_OBJ_DIR': self.topobjdir,
@@ -1430,8 +1442,7 @@ class PackageFrontend(MachCommandBase):
                 records[record.filename] = DownloadRecord(
                     url, record.filename, record.size, record.digest,
                     record.algorithm, unpack=record.unpack,
-                    version=record.version, visibility=record.visibility,
-                    setup=record.setup)
+                    version=record.version, visibility=record.visibility)
 
         if from_build:
             if 'MOZ_AUTOMATION' in os.environ:
@@ -1576,7 +1587,7 @@ class PackageFrontend(MachCommandBase):
                     'sha256': h.hexdigest(),
                 }
             if record.unpack and not no_unpack:
-                unpack_file(local, record.setup)
+                unpack_file(local)
                 os.unlink(local)
 
         if not downloaded:
@@ -1701,8 +1712,10 @@ class StaticAnalysis(MachCommandBase):
                      help='Write clang-tidy output in a file')
     @CommandArgument('--format', default='text', choices=('text', 'json'),
                      help='Output format to write in a file')
+    @CommandArgument('--outgoing', default=False, action='store_true',
+                     help='Run static analysis checks on outgoing files from mercurial repository')
     def check(self, source=None, jobs=2, strip=1, verbose=False,
-              checks='-*', fix=False, header_filter='', output=None, format='text'):
+              checks='-*', fix=False, header_filter='', output=None, format='text', outgoing=False):
         from mozbuild.controller.building import (
             StaticAnalysisFooter,
             StaticAnalysisOutputManager,
@@ -1716,6 +1729,12 @@ class StaticAnalysis(MachCommandBase):
         rc = rc or self._get_clang_tools(verbose=verbose)
         if rc != 0:
             return rc
+
+        # Use outgoing files instead of source files
+        if outgoing:
+            repo = get_repository_object(self.topsrcdir)
+            files = repo.get_outgoing_files()
+            source = map(os.path.abspath, files)
 
         # Split in several chunks to avoid hitting Python's limit of 100 groups in re
         compile_db = json.loads(open(self._compile_db, 'r').read())
@@ -1760,6 +1779,271 @@ class StaticAnalysis(MachCommandBase):
             rc = self.check_java(source, jobs, strip, verbose, skip_export=True)
         return rc
 
+    @StaticAnalysisSubCommand('static-analysis', 'check-coverity',
+                              'Run coverity static-analysis tool on the given files. '
+                              'Can only be run by automation! '
+                              'It\'s result is stored as an json file on the artifacts server.')
+    @CommandArgument('source', nargs='*', default=['.*'],
+                     help='Source files to be analyzed by Coverity Static Analysis Tool. '
+                          'This is ran only in automation.')
+    @CommandArgument('--output', '-o', default=None,
+                     help='Write coverity output translated to json output in a file')
+    @CommandArgument('--coverity_output_path', '-co', default=None,
+                     help='Path where to write coverity results as cov-results.json. '
+                     'If no path is specified the default path from the coverity working directory, '
+                     '~./mozbuild/coverity is used.')
+    @CommandArgument('--outgoing', default=False, action='store_true',
+                     help='Run coverity on outgoing files from mercurial or git repository')
+    def check_coverity(self, source=None, output=None, coverity_output_path=None, outgoing=False, verbose=False):
+        self._set_log_level(verbose)
+        self.log_manager.enable_all_structured_loggers()
+
+        if 'MOZ_AUTOMATION' not in os.environ:
+            self.log(logging.INFO, 'static-analysis', {}, 'Coverity based static-analysis cannot be ran outside automation.')
+            return
+
+        # Use outgoing files instead of source files
+        if outgoing:
+            repo = get_repository_object(self.topsrcdir)
+            files = repo.get_outgoing_files()
+            source = map(os.path.abspath, files)
+
+        rc = self._build_compile_db(verbose=verbose)
+        rc = rc or self._build_export(jobs=2, verbose=verbose)
+
+        if rc != 0:
+            return rc
+
+        commands_list = self.get_files_with_commands(source)
+
+        if len(commands_list) == 0:
+            self.log(logging.INFO, 'static-analysis', {}, 'There are no files that need to be analyzed.')
+            return 0
+
+        rc = self.setup_coverity()
+        if rc != 0:
+            return rc
+
+        # First run cov-run-desktop --setup in order to setup the analysis env
+        cmd = [self.cov_run_desktop, '--setup']
+        self.log(logging.INFO, 'static-analysis', {}, 'Running {} --setup'.format(self.cov_run_desktop))
+
+        rc = self.run_process(args=cmd, cwd=self.cov_path, pass_thru=True)
+
+        if rc != 0:
+            self.log(logging.ERROR, 'static-analysis', {}, 'Running {} --setup failed!'.format(self.cov_run_desktop))
+            return rc
+
+        # Run cov-configure for clang
+        cmd = [self.cov_configure, '--clang']
+        self.log(logging.INFO, 'static-analysis', {}, 'Running {} --clang'.format(self.cov_configure))
+
+        rc = self.run_process(args=cmd, cwd=self.cov_path, pass_thru=True)
+
+        if rc != 0:
+            self.log(logging.ERROR, 'static-analysis', {}, 'Running {} --clang failed!'.format(self.cov_configure))
+            return rc
+
+        # For each element in commands_list run `cov-translate`
+        for element in commands_list:
+            cmd = [self.cov_translate, '--dir', self.cov_idir_path] + element['command'].split(' ')
+            self.log(logging.INFO, 'static-analysis', {}, 'Running Coverity Tranlate for {}'.format(cmd))
+            rc = self.run_process(args=cmd, cwd=element['directory'], pass_thru=True)
+            if rc != 0:
+                self.log(logging.ERROR, 'static-analysis', {}, 'Running Coverity Tranlate failed for {}'.format(cmd))
+                return cmd
+
+        if coverity_output_path is None:
+            cov_result = mozpath.join(self.cov_state_path, 'cov-results.json')
+        else:
+            cov_result = mozpath.join(coverity_output_path, 'cov-results.json')
+
+        # Once the capture is performed we need to do the actual Coverity Desktop analysis
+        cmd = [self.cov_run_desktop, '--json-output-v6', cov_result, '--strip-path', self.topsrcdir]
+        cmd += [element['file'] for element in commands_list]
+        self.log(logging.INFO, 'static-analysis', {}, 'Running Coverity Analysis for {}'.format(cmd))
+        rc = self.run_process(cmd, cwd=self.cov_state_path, pass_thru=True)
+        if rc != 0:
+            self.log(logging.ERROR, 'static-analysis', {}, 'Coverity Analysis failed!')
+
+        if output is not None:
+            self.dump_cov_artifact(cov_result, output)
+
+    def dump_cov_artifact(self, cov_results, output):
+        # Parse Coverity json into structured issues
+        with open(cov_results) as f:
+            result = json.load(f)
+
+            # Parse the issues to a standard json format
+            issues_dict = {'files': {}}
+
+            files_list = issues_dict['files']
+
+            def build_element(issue):
+                # We look only for main event
+                event_path = next((event for event in issue['events'] if event['main'] is True), None)
+
+                dict_issue = {
+                    'line': issue['mainEventLineNumber'],
+                    'flag': issue['checkerName'],
+                    'message': event_path['eventDescription'],
+                    'extra': {
+                        'category': issue['checkerProperties']['category'],
+                        'stateOnServer': issue['stateOnServer'],
+                        'stack': []
+                    }
+                }
+
+                # Embed all events into extra message
+                for event in issue['events']:
+                    dict_issue['extra']['stack'].append({'file_path': event['strippedFilePathname'],
+                                                         'line_number': event['lineNumber'],
+                                                         'path_type': event['eventTag'],
+                                                         'description': event['eventDescription']})
+
+                return dict_issue
+
+            for issue in result['issues']:
+                path = issue['strippedMainEventFilePathname'].strip('/')
+                if path in files_list:
+                    files_list[path]['warnings'].append(build_element(issue))
+                else:
+                    files_list[path] = {'warnings': [build_element(issue)]}
+
+            with open(output, 'w') as f:
+                json.dump(issues_dict, f)
+
+    def get_coverity_secrets(self):
+        from taskgraph.util.taskcluster import get_root_url
+
+        secret_name = 'project/relman/coverity'
+        secrets_url = '{}/secrets/v1/secret/{}'.format(get_root_url(True), secret_name)
+
+        self.log(logging.INFO, 'static-analysis', {}, 'Using symbol upload token from the secrets service: "{}"'.format(secrets_url))
+
+        import requests
+        res = requests.get(secrets_url)
+        res.raise_for_status()
+        secret = res.json()
+        cov_config = secret['secret'] if 'secret' in secret else None
+
+        if cov_config is None:
+            self.log(logging.ERROR, 'static-analysis', {}, 'Ill formatted secret for Coverity. Aborting analysis.')
+            return 1
+
+        self.cov_analysis_url = cov_config.get('package_url')
+        self.cov_package_name = cov_config.get('package_name')
+        self.cov_url = cov_config.get('server_url')
+        self.cov_auth = cov_config.get('auth_key')
+        self.cov_package_ver = cov_config.get('package_ver')
+        self.cov_full_stack = cov_config.get('full_stack', False)
+
+        return 0
+
+    def download_coverity(self):
+        if self.cov_url is None or self.cov_analysis_url is None or self.cov_auth is None:
+            self.log(logging.ERROR, 'static-analysis', {}, 'Missing Coverity secret on try job!')
+            return 1
+
+        COVERITY_CONFIG = '''
+        {
+            "type": "Coverity configuration",
+            "format_version": 1,
+            "settings": {
+            "server": {
+                "host": "%s",
+                "ssl" : true,
+                "on_new_cert" : "trust",
+                "auth_key_file": "%s"
+            },
+            "stream": "Firefox",
+            "cov_run_desktop": {
+                "build_cmd": [],
+                "clean_cmd": []
+            }
+            }
+        }
+        '''
+        # Generate the coverity.conf and auth files
+        cov_auth_path = mozpath.join(self.cov_state_path, 'auth')
+        cov_setup_path = mozpath.join(self.cov_state_path, 'coverity.conf')
+        cov_conf = COVERITY_CONFIG % (self.cov_url, cov_auth_path)
+
+        def download(artifact_url, target):
+            import requests
+            resp = requests.get(artifact_url, verify=False, stream=True)
+            resp.raise_for_status()
+
+            # Extract archive into destination
+            with tarfile.open(fileobj=io.BytesIO(resp.content)) as tar:
+                tar.extractall(target)
+
+        download(self.cov_analysis_url, self.cov_state_path)
+
+        with open(cov_auth_path, 'w') as f:
+            f.write(self.cov_auth)
+
+        # Modify it's permission to 600
+        os.chmod(cov_auth_path, 0o600)
+
+        with open(cov_setup_path, 'a') as f:
+            f.write(cov_conf)
+
+    def setup_coverity(self, force_download=True):
+        rc, config, _ = self._get_config_environment()
+        rc = rc or self.get_coverity_secrets()
+
+        if rc != 0:
+            return rc
+
+        # Create a directory in mozbuild where we setup coverity
+        self.cov_state_path = mozpath.join(self._mach_context.state_dir, "coverity")
+
+        if force_download is True and os.path.exists(self.cov_state_path):
+            shutil.rmtree(self.cov_state_path)
+
+        os.mkdir(self.cov_state_path)
+
+        # Download everything that we need for Coverity from out private instance
+        self.download_coverity()
+
+        self.cov_path = mozpath.join(self.cov_state_path, self.cov_package_name)
+        self.cov_run_desktop = mozpath.join(self.cov_path, 'bin', 'cov-run-desktop')
+        self.cov_translate = mozpath.join(self.cov_path, 'bin', 'cov-translate')
+        self.cov_configure = mozpath.join(self.cov_path, 'bin', 'cov-configure')
+        self.cov_work_path = mozpath.join(self.cov_state_path, 'data-coverity')
+        self.cov_idir_path = mozpath.join(self.cov_work_path, self.cov_package_ver, 'idir')
+
+        if not os.path.exists(self.cov_path):
+            self.log(logging.ERROR, 'static-analysis', {}, 'Missing Coverity in {}'.format(self.cov_path))
+            return 1
+
+        return 0
+
+    def get_files_with_commands(self, source):
+        '''
+        Returns an array of dictionaries having file_path with build command
+        '''
+
+        compile_db = json.load(open(self._compile_db, 'r'))
+
+        commands_list = []
+
+        for f in source:
+            # It must be a C/C++ file
+            _, ext = os.path.splitext(f)
+
+            if ext.lower() not in self._format_include_extensions:
+                self.log(logging.INFO, 'static-analysis', {}, 'Skipping {}'.format(f))
+                continue
+            file_with_abspath = os.path.join(self.topsrcdir, f)
+            for f in compile_db:
+                # Found for a file that we are looking
+                if file_with_abspath == f['file']:
+                    commands_list.append(f)
+
+        return commands_list
+
     @StaticAnalysisSubCommand('static-analysis', 'check-java',
                               'Run infer on the java codebase.')
     @CommandArgument('source', nargs='*', default=['mobile'],
@@ -1778,9 +2062,13 @@ class StaticAnalysis(MachCommandBase):
     @CommandArgument('--task', '-t', type=str,
                      default='compileWithGeckoBinariesDebugSources',
                      help='Which gradle tasks to use to compile the java codebase.')
+    @CommandArgument('--outgoing', default=False, action='store_true',
+                     help='Run infer checks on outgoing files from repository')
+    @CommandArgument('--output', default=None,
+                     help='Write infer json output in a file')
     def check_java(self, source=['mobile'], jobs=2, strip=1, verbose=False, checks=[],
                    task='compileWithGeckoBinariesDebugSources',
-                   skip_export=False):
+                   skip_export=False, outgoing=False, output=None):
         self._set_log_level(verbose)
         self.log_manager.enable_all_structured_loggers()
         if self.substs['MOZ_BUILD_APP'] != 'mobile/android':
@@ -1790,12 +2078,25 @@ class StaticAnalysis(MachCommandBase):
         rc = self._check_for_java()
         if rc != 0:
             return 1
+        if output is not None:
+            output = os.path.abspath(output)
+            if not os.path.isdir(os.path.dirname(output)):
+                self.log(logging.WARNING, 'static-analysis', {},
+                         'Missing report destination folder for {}'.format(output))
+
         # if source contains the whole mobile folder, then we just have to
         # analyze everything
         check_all = any(i.rstrip(os.sep).split(os.sep)[-1] == 'mobile' for i in source)
         # gather all java sources from the source variable
         java_sources = []
-        if not check_all:
+        if outgoing:
+            repo = get_repository_object(self.topsrcdir)
+            java_sources = self._get_java_files(repo.get_outgoing_files())
+            if not java_sources:
+                self.log(logging.WARNING, 'static-analysis', {},
+                         'No outgoing Java files to check')
+                return 0
+        elif not check_all:
             java_sources = self._get_java_files(source)
             if not java_sources:
                 return 0
@@ -1825,6 +2126,14 @@ class StaticAnalysis(MachCommandBase):
         rc = rc or self.run_process(args=analysis_cmd, cwd=self.topsrcdir, pass_thru=True)
         if tmp_file:
             tmp_file.close()
+
+        # Copy the infer report
+        report_path = os.path.join(self.topsrcdir, 'infer-out', 'report.json')
+        if output is not None and os.path.exists(report_path):
+            shutil.copy(report_path, output)
+            self.log(logging.INFO, 'static-analysis', {},
+                     'Report available in {}'.format(output))
+
         return rc
 
     def _get_java_files(self, sources):
@@ -2406,11 +2715,17 @@ class StaticAnalysis(MachCommandBase):
     @CommandArgument('--format', '-f', choices=('diff', 'json'), default='diff', dest='output_format',
                      help='Specify the output format used: diff is the raw patch provided by '
                      'clang-format, json is a list of atomic changes to process.')
-    def clang_format(self, assume_filename, path, commit, output_path=None, output_format='diff', verbose=False):
+    @CommandArgument('--outgoing', default=False, action='store_true',
+                     help='Run clang-format on outgoing files from mercurial repository')
+    def clang_format(self, assume_filename, path, commit, output_path=None, output_format='diff', verbose=False, outgoing=False):
         # Run clang-format or clang-format-diff on the local changes
         # or files/directories
-        if path is not None:
-            path = self._conv_to_abspath(path)
+        if path is None and outgoing:
+            repo = get_repository_object(self.topsrcdir)
+            path = repo.get_outgoing_files()
+
+        if path:
+            path = map(os.path.abspath, path)
 
         os.chdir(self.topsrcdir)
 
@@ -2647,13 +2962,6 @@ class StaticAnalysis(MachCommandBase):
         return builder._run_make(directory=self.topobjdir, target='export',
                                  line_handler=None, silent=not verbose,
                                  num_jobs=jobs)
-
-    def _conv_to_abspath(self, paths):
-        # Converts all the paths to absolute pathnames
-        tmp_path = []
-        for f in paths:
-            tmp_path.append(os.path.abspath(f))
-        return tmp_path
 
     def _set_clang_tools_paths(self):
         rc, config, _ = self._get_config_environment()
@@ -2920,8 +3228,8 @@ class StaticAnalysis(MachCommandBase):
         with open(paths[0], 'r') as fin:
             process.stdin.write(fin.read())
             process.stdin.close()
-            process.wait();
-            return 0
+            process.wait()
+            return process.returncode
 
     def _run_clang_format_path(self, clang_format, paths, output_file, output_format):
 

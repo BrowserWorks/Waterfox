@@ -16,6 +16,7 @@
 #include "mozilla/ComputedStyle.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/ToString.h"
 #include "mozilla/UniquePtr.h"
 
@@ -33,7 +34,6 @@
 #include "nsFrameManager.h"
 #include "nsPresContext.h"
 #include "nsPresContextInlines.h"
-#include "nsIPresShell.h"
 #include "nsHTMLParts.h"
 #include "nsGkAtoms.h"
 #include "nsAttrValueInlines.h"
@@ -54,6 +54,7 @@
 #include "mozilla/dom/HTMLDetailsElement.h"
 #include "mozilla/dom/HTMLSummaryElement.h"
 #include "mozilla/dom/Selection.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/RestyleManager.h"
 #include "mozilla/ServoStyleSet.h"
 #include "mozilla/Telemetry.h"
@@ -323,12 +324,12 @@ void nsBlockFrame::DestroyFrom(nsIFrame* aDestructRoot,
   DestroyAbsoluteFrames(aDestructRoot, aPostDestroyData);
   mFloats.DestroyFramesFrom(aDestructRoot, aPostDestroyData);
   nsPresContext* presContext = PresContext();
-  nsIPresShell* shell = presContext->PresShell();
+  mozilla::PresShell* presShell = presContext->PresShell();
   nsLineBox::DeleteLineList(presContext, mLines, aDestructRoot, &mFrames,
                             aPostDestroyData);
 
   if (HasPushedFloats()) {
-    SafelyDestroyFrameListProp(aDestructRoot, aPostDestroyData, shell,
+    SafelyDestroyFrameListProp(aDestructRoot, aPostDestroyData, presShell,
                                PushedFloatProperty());
     RemoveStateBits(NS_BLOCK_HAS_PUSHED_FLOATS);
   }
@@ -342,13 +343,13 @@ void nsBlockFrame::DestroyFrom(nsIFrame* aDestructRoot,
   }
 
   if (GetStateBits() & NS_BLOCK_HAS_OVERFLOW_OUT_OF_FLOWS) {
-    SafelyDestroyFrameListProp(aDestructRoot, aPostDestroyData, shell,
+    SafelyDestroyFrameListProp(aDestructRoot, aPostDestroyData, presShell,
                                OverflowOutOfFlowsProperty());
     RemoveStateBits(NS_BLOCK_HAS_OVERFLOW_OUT_OF_FLOWS);
   }
 
   if (HasOutsideMarker()) {
-    SafelyDestroyFrameListProp(aDestructRoot, aPostDestroyData, shell,
+    SafelyDestroyFrameListProp(aDestructRoot, aPostDestroyData, presShell,
                                OutsideMarkerProperty());
     RemoveStateBits(NS_BLOCK_FRAME_HAS_OUTSIDE_MARKER);
   }
@@ -4698,6 +4699,35 @@ bool nsBlockFrame::DrainOverflowLines() {
       ReparentFrames(overflowLines->mFrames, prevBlock, this,
                      ReparentingDirection::Forwards);
 
+      // Collect overflow containers from our [Excess]OverflowContainers lists
+      // that are continuations from the frames we picked up from our prev-in-flow.
+      // We'll append these to mFrames to ensure the continuations are ordered.
+      auto HasOverflowContainers = [this]() -> bool {
+        return GetPropTableFrames(OverflowContainersProperty()) ||
+               GetPropTableFrames(ExcessOverflowContainersProperty());
+      };
+      nsFrameList ocContinuations;
+      if (HasOverflowContainers()) {
+        for (auto* f : overflowLines->mFrames) {
+          auto* cont = f;
+          bool done = false;
+          while (!done && (cont = cont->GetNextContinuation()) &&
+                 cont->GetParent() == this) {
+            bool onlyChild = !cont->GetPrevSibling() && !cont->GetNextSibling();
+            if (MaybeStealOverflowContainerFrame(cont)) {
+              cont->RemoveStateBits(NS_FRAME_IS_OVERFLOW_CONTAINER);
+              ocContinuations.AppendFrame(nullptr, cont);
+              done = onlyChild && !HasOverflowContainers();
+              continue;
+            }
+            break;
+          }
+          if (done) {
+            break;
+          }
+        }
+      }
+
       // Make the overflow out-of-flow frames mine too.
       nsAutoOOFFrameList oofs(prevBlock);
       if (oofs.mList.NotEmpty()) {
@@ -4728,6 +4758,7 @@ bool nsBlockFrame::DrainOverflowLines() {
       mLines.splice(mLines.begin(), overflowLines->mLines);
       NS_ASSERTION(overflowLines->mLines.empty(), "splice should empty list");
       delete overflowLines;
+      AddFrames(ocContinuations, mFrames.LastChild());
       didFindOverflow = true;
     }
   }
@@ -6769,6 +6800,7 @@ bool nsBlockFrame::MarkerIsEmpty() const {
          marker->StyleContent()->ContentCount() == 0;
 }
 
+#ifdef ACCESSIBILITY
 void nsBlockFrame::GetSpokenMarkerText(nsAString& aText) const {
   const nsStyleList* myList = StyleList();
   if (myList->GetListStyleImage()) {
@@ -6790,6 +6822,7 @@ void nsBlockFrame::GetSpokenMarkerText(nsAString& aText) const {
     }
   }
 }
+#endif
 
 void nsBlockFrame::ReflowOutsideMarker(nsIFrame* aMarkerFrame,
                                        BlockReflowInput& aState,

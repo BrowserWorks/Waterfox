@@ -771,7 +771,73 @@ webrtc.peerconnection:
     record_in_processes:
       - 'main'
       - 'content'
-
+  datachannel_created:
+    bug_numbers:
+      - 1518609
+    description: >
+      The number of RTCPeerConnection objects in which a RTCDataChannel was
+      created. This is recorded once for each RTCPeerConnection after the first
+      RTCDataChannel is created.
+    expires: "70"
+    kind: uint
+    notification_emails:
+      - ngrunbaum@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+      - 'content'
+  datachannel_max_retx_used:
+    bug_numbers:
+      - 1518609
+    description: >
+      The number of RTCPeerConnection objects in which one or more
+      RTCDataChannels were created with the legacy maxRetransmitTime option
+      instead of the new, synonymous maxPacketLifeTime option. This is recorded
+      once for each RTCPeerConnection after a RTCDataChannel is created with
+      the maxRetransmitTime option.
+    expires: "70"
+    kind: uint
+    notification_emails:
+      - ngrunbaum@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+      - 'content'
+  datachannel_max_life_used:
+    bug_numbers:
+      - 1518609
+    description: >
+      The number of RTCPeerConnection objects in which one or more RTCDataChannels
+      were created with the maxPacketLifeTime option instead of the deprecated,
+      synonymous maxRetransmitTime option. This is recorded once for each
+      RTCPeerConnection after a RTCDataChannel is created with the
+      maxPacketLifeTime option.
+    expires: "70"
+    kind: uint
+    notification_emails:
+      - ngrunbaum@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+      - 'content'
+  datachannel_max_retx_and_life_used:
+    bug_numbers:
+      - 1518609
+    description: >
+      The number of RTCPeerConnection objects in which one or more RTCDataChannels
+      were created with both maxPacketLifeTime and the deprecated, synonymous
+      maxRetransmitTime option. This is recorded once for each
+      RTCPeerConnection after RTCDataChannels have been created with the
+      maxPacketLifeTime and the maxRetransmitTime options, either together
+      or in seperate invocations.
+    expires: "70"
+    kind: uint
+    notification_emails:
+      - ngrunbaum@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+      - 'content'
 # The following section contains WebRTC nICEr scalars
 # For more info on ICE, see https://tools.ietf.org/html/rfc5245
 # For more info on STUN, see https://tools.ietf.org/html/rfc5389
@@ -2697,6 +2763,49 @@ script.preloader:
     record_in_processes:
       - 'main'
       - 'content'
+
+networking:
+  data_transferred:
+    bug_numbers:
+      - 1533363
+    description: >
+      How many bytes of HTTP data transferred by type, there are some categories
+      separated by keys based on 4 parameters:
+        1. normal browsing or private browsing
+        2. first party or third party
+        3. class of service
+        4. tracking classification
+
+      Available keys are:
+        Y=0|NormalFirstParty
+        Y=1|NormalThirdPartyOther
+        Y=2|NormalThirdPartyContentLeader
+        Y=3|NormalThirdPartyContentBackground
+        Y=4|NormalThirdPartyContentOther
+        Y=5|NormalThirdPartyBasicLeader
+        Y=6|NormalThirdPartyBasicBackground
+        Y=7|NormalThirdPartyBasicOther
+        Y=8|NormalThirdPartyFingerprintingLeader
+        Y=9|NormalThirdPartyFingerprintingBackground
+        Y=10|NormalThirdPartyFingerprintingOther
+        Y=11|PrivateFirstParty
+        Y=12|PrivateThirdPartyOther
+        Y=13|PrivateThirdPartyContentLeader
+        Y=14|PrivateThirdPartyContentBackground
+        Y=15|PrivateThirdPartyContentOther
+        Y=16|PrivateThirdPartyBasicLeader
+        Y=17|PrivateThirdPartyBasicBackground
+        Y=18|PrivateThirdPartyBasicOther
+        Y=19|PrivateThirdPartyFingerprintingLeader
+        Y=20|PrivateThirdPartyFingerprintingBackground
+        Y=21|PrivateThirdPartyFingerprintingOther
+    expires: "73"
+    keyed: true
+    kind: uint
+    notification_emails:
+      - gachen@mozilla.com
+    record_in_processes:
+      - 'main'
 
 # The following section is for probes testing the Telemetry system. They will not be
 # submitted in pings and are only used for testing.

@@ -249,6 +249,12 @@ class ScalarTypeDescr : public SimpleTypeDescr {
         Scalar::Uint32 == JS_SCALARTYPEREPR_UINT32,
         "TypedObjectConstants.h must be consistent with Scalar::Type");
     static_assert(
+        Scalar::BigInt64 == JS_SCALARTYPEREPR_BIGINT64,
+        "TypedObjectConstants.h must be consistent with Scalar::Type");
+    static_assert(
+        Scalar::BigUint64 == JS_SCALARTYPEREPR_BIGUINT64,
+        "TypedObjectConstants.h must be consistent with Scalar::Type");
+    static_assert(
         Scalar::Float32 == JS_SCALARTYPEREPR_FLOAT32,
         "TypedObjectConstants.h must be consistent with Scalar::Type");
     static_assert(
@@ -275,7 +281,9 @@ class ScalarTypeDescr : public SimpleTypeDescr {
   MACRO_(Scalar::Int32, int32_t, int32)                   \
   MACRO_(Scalar::Uint32, uint32_t, uint32)                \
   MACRO_(Scalar::Float32, float, float32)                 \
-  MACRO_(Scalar::Float64, double, float64)
+  MACRO_(Scalar::Float64, double, float64)                \
+  MACRO_(Scalar::BigInt64, int64_t, bigint64)             \
+  MACRO_(Scalar::BigUint64, uint64_t, biguint64)
 
 // Must be in same order as the enum ScalarTypeDescr::Type:
 #define JS_FOR_EACH_SCALAR_TYPE_REPR(MACRO_)        \
@@ -428,7 +436,7 @@ class StructMetaTypeDescr : public NativeObject {
   // The type objects in `fieldTypeObjs` must all be TypeDescr objects.
   static StructTypeDescr* createFromArrays(
       JSContext* cx, HandleObject structTypePrototype, bool opaque,
-      bool allowConstruct, AutoIdVector& ids, HandleValueVector fieldTypeObjs,
+      bool allowConstruct, HandleIdVector ids, HandleValueVector fieldTypeObjs,
       Vector<StructFieldProps>& fieldProps);
 
   // Properties and methods to be installed on StructType.prototype,
@@ -572,7 +580,7 @@ class TypedObject : public JSObject {
 
  public:
   static MOZ_MUST_USE bool obj_newEnumerate(JSContext* cx, HandleObject obj,
-                                            AutoIdVector& properties,
+                                            MutableHandleIdVector properties,
                                             bool enumerableOnly);
 
   TypedProto& typedProto() const {

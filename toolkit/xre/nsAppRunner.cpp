@@ -1245,14 +1245,6 @@ ScopedXPCOMStartup::~ScopedXPCOMStartup() {
   }
 }
 
-// {95d89e3e-a169-41a3-8e56-719978e15b12}
-#define APPINFO_CID                                  \
-  {                                                  \
-    0x95d89e3e, 0xa169, 0x41a3, {                    \
-      0x8e, 0x56, 0x71, 0x99, 0x78, 0xe1, 0x5b, 0x12 \
-    }                                                \
-  }
-
 // {5F5E59CE-27BC-47eb-9D1F-B09CA9049836}
 static const nsCID kProfileServiceCID = {
     0x5f5e59ce,
@@ -1267,26 +1259,16 @@ static already_AddRefed<nsIFactory> ProfileServiceFactoryConstructor(
   return factory.forget();
 }
 
-NS_DEFINE_NAMED_CID(APPINFO_CID);
-
 static const mozilla::Module::CIDEntry kXRECIDs[] = {
-    {&kAPPINFO_CID, false, nullptr, AppInfoConstructor},
     {&kProfileServiceCID, false, ProfileServiceFactoryConstructor, nullptr},
     {nullptr}};
 
 static const mozilla::Module::ContractIDEntry kXREContracts[] = {
-    {XULAPPINFO_SERVICE_CONTRACTID, &kAPPINFO_CID},
-    {XULRUNTIME_SERVICE_CONTRACTID, &kAPPINFO_CID},
-#ifdef MOZ_CRASHREPORTER
-    {NS_CRASHREPORTER_CONTRACTID, &kAPPINFO_CID},
-#endif  // MOZ_CRASHREPORTER
     {NS_PROFILESERVICE_CONTRACTID, &kProfileServiceCID},
     {nullptr}};
 
-static const mozilla::Module kXREModule = {mozilla::Module::kVersion, kXRECIDs,
+extern const mozilla::Module kXREModule = {mozilla::Module::kVersion, kXRECIDs,
                                            kXREContracts};
-
-NSMODULE_DEFN(Apprunner) = &kXREModule;
 
 nsresult ScopedXPCOMStartup::Initialize() {
   NS_ASSERTION(gDirServiceProvider, "Should not get here!");
@@ -1433,13 +1415,16 @@ static void DumpHelp() {
 #ifdef MOZ_BLOCK_PROFILE_DOWNGRADE
       "  --allow-downgrade  Allows downgrading a profile.\n"
 #endif
-      "  -MOZ_LOG=<modules> Treated as MOZ_LOG=<modules> environment variable, "
-      "overrides it.\n"
-      "  -MOZ_LOG_FILE=<file> Treated as MOZ_LOG_FILE=<file> environment "
-      "variable, overrides it.\n"
-      "                     If MOZ_LOG_FILE is not specified as an argument or "
-      "as an environment variable,\n"
-      "                     logging will be written to stdout.\n",
+      "  --MOZ_LOG=<modules> Treated as MOZ_LOG=<modules> environment "
+      "variable,\n"
+      "                     overrides it.\n"
+      "  --MOZ_LOG_FILE=<file> Treated as MOZ_LOG_FILE=<file> environment "
+      "variable,\n"
+      "                     overrides it. If MOZ_LOG_FILE is not specified as "
+      "an\n"
+      "                     argument or as an environment variable, logging "
+      "will be\n"
+      "                     written to stdout.\n",
       (const char*)gAppData->name);
 
 #if defined(XP_WIN)
@@ -2904,6 +2889,7 @@ static bool CheckForUserMismatch() { return false; }
 static void IncreaseDescriptorLimits() {
 #ifdef XP_UNIX
   // Increase the fd limit to accomodate IPC resources like shared memory.
+  // See also the Darwin case in config/external/nspr/pr/moz.build
   static const rlim_t kFDs = 4096;
   struct rlimit rlim;
 
@@ -3183,12 +3169,10 @@ int XREMain::XRE_mainInit(bool* aExitFlag) {
       // see if we have a crashreporter-override.ini in the application
       // directory
       nsCOMPtr<nsIFile> overrideini;
-      bool exists;
       if (NS_SUCCEEDED(
               mDirProvider.GetAppDir()->Clone(getter_AddRefs(overrideini))) &&
           NS_SUCCEEDED(overrideini->AppendNative(
-              NS_LITERAL_CSTRING("crashreporter-override.ini"))) &&
-          NS_SUCCEEDED(overrideini->Exists(&exists)) && exists) {
+              NS_LITERAL_CSTRING("crashreporter-override.ini")))) {
 #ifdef XP_WIN
         nsAutoString overridePathW;
         overrideini->GetPath(overridePathW);
@@ -4733,8 +4717,7 @@ int XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig) {
 
   // Check for an application initiated restart.  This is one that
   // corresponds to nsIAppStartup.quit(eRestart)
-  if (rv == NS_SUCCESS_RESTART_APP ||
-      rv == NS_SUCCESS_RESTART_APP_NOT_SAME_PROFILE) {
+  if (rv == NS_SUCCESS_RESTART_APP) {
     appInitiatedRestart = true;
 
     // We have an application restart don't do any shutdown checks here
@@ -4766,11 +4749,9 @@ int XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig) {
   if (appInitiatedRestart) {
     RestoreStateForAppInitiatedRestart();
 
-    if (rv != NS_SUCCESS_RESTART_APP_NOT_SAME_PROFILE) {
-      // Ensure that these environment variables are set:
-      SaveFileToEnvIfUnset("XRE_PROFILE_PATH", mProfD);
-      SaveFileToEnvIfUnset("XRE_PROFILE_LOCAL_PATH", mProfLD);
-    }
+    // Ensure that these environment variables are set:
+    SaveFileToEnvIfUnset("XRE_PROFILE_PATH", mProfD);
+    SaveFileToEnvIfUnset("XRE_PROFILE_LOCAL_PATH", mProfLD);
 
 #ifdef MOZ_WIDGET_GTK
     if (!gfxPlatform::IsHeadless()) {
@@ -4908,9 +4889,9 @@ bool XRE_IsE10sParentProcess() {
   return XRE_IsParentProcess() && BrowserTabsRemoteAutostart();
 }
 
-#define GECKO_PROCESS_TYPE(enum_name, string_name, xre_name)     \
-  bool XRE_Is##xre_name##Process() {                             \
-    return XRE_GetProcessType() == GeckoProcessType_##enum_name; \
+#define GECKO_PROCESS_TYPE(enum_name, string_name, xre_name, bin_type) \
+  bool XRE_Is##xre_name##Process() {                                   \
+    return XRE_GetProcessType() == GeckoProcessType_##enum_name;       \
   }
 #include "mozilla/GeckoProcessTypes.h"
 #undef GECKO_PROCESS_TYPE
@@ -5076,9 +5057,29 @@ void OverrideDefaultLocaleIfNeeded() {
   }
 }
 
+static bool gRunSelfAsContentProc = false;
+
 void XRE_EnableSameExecutableForContentProc() {
   if (!PR_GetEnv("MOZ_SEPARATE_CHILD_PROCESS")) {
-    mozilla::ipc::GeckoChildProcessHost::EnableSameExecutableForContentProc();
+    gRunSelfAsContentProc = true;
+  }
+}
+
+mozilla::BinPathType XRE_GetChildProcBinPathType(GeckoProcessType aProcessType) {
+  MOZ_ASSERT(aProcessType != GeckoProcessType_Default);
+
+  if (!gRunSelfAsContentProc) {
+    return BinPathType::PluginContainer;
+  }
+
+  switch (aProcessType) {
+#define GECKO_PROCESS_TYPE(enum_name, string_name, xre_name, bin_type) \
+    case GeckoProcessType_##enum_name:                                 \
+      return BinPathType::bin_type;
+#include "mozilla/GeckoProcessTypes.h"
+#undef GECKO_PROCESS_TYPE
+    default:
+      return BinPathType::PluginContainer;
   }
 }
 

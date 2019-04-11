@@ -20,13 +20,14 @@
 #include "mozilla/layers/WebRenderMessages.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Move.h"
+#include "mozilla/PresShell.h"
 #include "nsCOMPtr.h"
+#include "nsCSSFrameConstructor.h"
 #include "nsFontMetrics.h"
 #include "nsGkAtoms.h"
 #include "nsGenericHTMLElement.h"
 #include "nsAttrValueInlines.h"
 #include "nsPresContext.h"
-#include "nsIPresShell.h"
 #include "mozilla/dom/Document.h"
 #include "nsDisplayList.h"
 #include "nsCounterManager.h"
@@ -656,8 +657,7 @@ void nsBulletFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 
   DO_GLOBAL_REFLOW_COUNT_DSP("nsBulletFrame");
 
-  aLists.Content()->AppendToTop(
-      MakeDisplayItem<nsDisplayBullet>(aBuilder, this));
+  aLists.Content()->AppendNewToTop<nsDisplayBullet>(aBuilder, this);
 }
 
 Maybe<BulletRenderer> nsBulletFrame::CreateBulletRenderer(
@@ -824,11 +824,11 @@ ImgDrawResult nsBulletFrame::PaintBullet(gfxContext& aRenderingContext,
                    aDisableSubpixelAA, this);
 }
 
-int32_t nsBulletFrame::Ordinal() const {
+int32_t nsBulletFrame::Ordinal(bool aDebugFromA11y) const {
   auto* fc = PresShell()->FrameConstructor();
   auto* cm = fc->CounterManager();
   auto* list = cm->CounterListFor(NS_LITERAL_STRING("list-item"));
-  MOZ_ASSERT(list && !list->IsDirty());
+  MOZ_ASSERT(aDebugFromA11y || (list && !list->IsDirty()));
   nsIFrame* listItem = GetParent()->GetContent()->GetPrimaryFrame();
   int32_t value = 0;
   for (auto* node = list->First(); node; node = list->Next(node)) {
@@ -1155,10 +1155,10 @@ nsresult nsBulletFrame::OnSizeAvailable(imgIRequest* aRequest,
 
     // Now that the size is available (or an error occurred), trigger
     // a reflow of the bullet frame.
-    nsIPresShell* shell = presContext->GetPresShell();
-    if (shell) {
-      shell->FrameNeedsReflow(this, nsIPresShell::eStyleChange,
-                              NS_FRAME_IS_DIRTY);
+    mozilla::PresShell* presShell = presContext->GetPresShell();
+    if (presShell) {
+      presShell->FrameNeedsReflow(this, nsIPresShell::eStyleChange,
+                                  NS_FRAME_IS_DIRTY);
     }
   }
 
@@ -1178,11 +1178,12 @@ void nsBulletFrame::GetLoadGroup(nsPresContext* aPresContext,
 
   MOZ_ASSERT(nullptr != aLoadGroup, "null OUT parameter pointer");
 
-  nsIPresShell* shell = aPresContext->GetPresShell();
+  mozilla::PresShell* presShell = aPresContext->GetPresShell();
+  if (!presShell) {
+    return;
+  }
 
-  if (!shell) return;
-
-  Document* doc = shell->GetDocument();
+  Document* doc = presShell->GetDocument();
   if (!doc) return;
 
   *aLoadGroup = doc->GetDocumentLoadGroup().take();
@@ -1262,12 +1263,13 @@ nscoord nsBulletFrame::GetLogicalBaseline(WritingMode aWritingMode) const {
   return ascent + GetLogicalUsedMargin(aWritingMode).BStart(aWritingMode);
 }
 
+#ifdef ACCESSIBILITY
 void nsBulletFrame::GetSpokenText(nsAString& aText) {
   CounterStyle* style =
       PresContext()->CounterStyleManager()->ResolveCounterStyle(
           StyleList()->mCounterStyle);
   bool isBullet;
-  style->GetSpokenCounterText(Ordinal(), GetWritingMode(), aText, isBullet);
+  style->GetSpokenCounterText(Ordinal(true), GetWritingMode(), aText, isBullet);
   if (isBullet) {
     if (!style->IsNone()) {
       aText.Append(' ');
@@ -1279,6 +1281,7 @@ void nsBulletFrame::GetSpokenText(nsAString& aText) {
     aText = prefix + aText + suffix;
   }
 }
+#endif
 
 void nsBulletFrame::RegisterImageRequest(bool aKnownToBeAnimated) {
   if (mImageRequest) {

@@ -633,34 +633,7 @@
 
     <panelview id="PanelUI-panicView" flex="1"
                descriptionheightworkaround="true">
-      <vbox class="panel-subview-body">
-        <hbox id="PanelUI-panic-timeframe">
-          <image id="PanelUI-panic-timeframe-icon" alt=""/>
-          <vbox flex="1">
-            <description id="PanelUI-panic-mainDesc">&panicButton.view.mainTimeframeDesc;</description>
-            <radiogroup id="PanelUI-panic-timeSpan" aria-labelledby="PanelUI-panic-mainDesc" closemenu="none">
-              <radio id="PanelUI-panic-5min" label="&panicButton.view.5min;" selected="true"
-                     value="5" class="subviewradio"/>
-              <radio id="PanelUI-panic-2hr" label="&panicButton.view.2hr;"
-                     value="2" class="subviewradio"/>
-              <radio id="PanelUI-panic-day" label="&panicButton.view.day;"
-                     value="6" class="subviewradio"/>
-            </radiogroup>
-          </vbox>
-        </hbox>
-        <vbox id="PanelUI-panic-explanations">
-          <label id="PanelUI-panic-actionlist-main-label">&panicButton.view.mainActionDesc;</label>
-
-          <label id="PanelUI-panic-actionlist-windows" class="PanelUI-panic-actionlist">&panicButton.view.deleteTabsAndWindows;</label>
-          <label id="PanelUI-panic-actionlist-cookies" class="PanelUI-panic-actionlist">&panicButton.view.deleteCookies;</label>
-          <label id="PanelUI-panic-actionlist-history" class="PanelUI-panic-actionlist">&panicButton.view.deleteHistory;</label>
-          <label id="PanelUI-panic-actionlist-newwindow" class="PanelUI-panic-actionlist">&panicButton.view.openNewWindow;</label>
-
-          <label id="PanelUI-panic-warning">&panicButton.view.undoWarning;</label>
-        </vbox>
-        <button id="PanelUI-panic-view-button"
-                label="&panicButton.view.forgetButton;"/>
-      </vbox>
+      <!-- This is constructed in CustomizableWidgets.jsm -->
     </panelview>
 
     <panelview id="appMenu-moreView" title="&moreMenu.label;" class="PanelUI-subView">
@@ -728,13 +701,17 @@
           <image class="fxaChooseWhatToSyncDevices"/>
           <label class="PanelUI-fxa-signin-instruction-callout">&fxa.signin.callout.label;</label>
           <label class="PanelUI-fxa-signin-instruction-label">&fxa.signin.description.label;</label>
-          <toolbarbutton class="PanelUI-fxa-signin-button" label="&fxa.signin.button.label;" oncommand="gSync.openFxAEmailFirstPage('fxa_discoverability_native');"/>
+          <toolbarbutton class="PanelUI-fxa-signin-button"
+                         label="&fxa.signin.button.label;"
+                         oncommand="gSync.openFxAEmailFirstPage('fxa_discoverability_native'); gSync.emitFxaToolbarTelemetry('login');"/>
         </vbox>
         <vbox id="PanelUI-fxa-unverified" class="PanelUI-fxa-unverified-instruction-box">
           <image class="fxaGraphicMail"/>
           <label class="PanelUI-fxa-signin-instruction-callout">&fxa.unverified.callout.label;</label>
           <label class="PanelUI-fxa-signin-instruction-label">&fxa.unverified.description.label;</label>
-          <toolbarbutton class="PanelUI-fxa-signin-button" label="&fxa.unverified.button.label;" oncommand="gSync.openPrefs('fxa_discoverability_native');"/>
+          <toolbarbutton class="PanelUI-fxa-signin-button"
+                         label="&fxa.unverified.button.label;"
+                         oncommand="gSync.openPrefs('fxa_discoverability_native'); gSync.emitFxaToolbarTelemetry('unver_sync_settings');"/>
         </vbox>
         <vbox id="PanelUI-fxa-menu">
           <hbox flex="1" align="center" class="fxa-avatar-subpanel">
@@ -748,28 +725,34 @@
           <toolbarbutton id="PanelUI-fxa-menu-sendtab-button"
                          class="subviewbutton subviewbutton-iconic subviewbutton-nav"
                          closemenu="none"
-                         oncommand="gSync.showSendToDeviceView(this);"/>
+                         oncommand="gSync.showSendToDeviceView(this); gSync.emitFxaToolbarTelemetry('send_tab');"/>
           <toolbarbutton id="PanelUI-fxa-menu-remotetabs-button"
                          class="subviewbutton subviewbutton-iconic subviewbutton-nav"
                          label="&appMenuRemoteTabs.label;"
                          closemenu="none"
-                         oncommand="PanelUI.showSubView('PanelUI-remotetabs', this)"/>
+                         oncommand="PanelUI.showSubView('PanelUI-remotetabs', this); gSync.emitFxaToolbarTelemetry('sync_tabs');"/>
           <toolbarbutton id="PanelUI-fxa-menu-view-sidebar"
                          class="subviewbutton subviewbutton-iconic"
                          label="&appMenuRemoteTabs.sidebar.label;"
-                         oncommand="SidebarUI.toggle('viewTabsSidebar');">
+                         oncommand="SidebarUI.toggle('viewTabsSidebar'); gSync.emitFxaToolbarTelemetry('sync_tabs_sidebar');">
             <observes element="sidebar-box" attribute="positionend"/>
           </toolbarbutton>
           <toolbarseparator/>
-          <toolbarbutton class="subviewbutton" label="&fxa.menu.connectAnotherDevice2.label;" oncommand="gSync.openConnectAnotherDevice('fxa_discoverability_native');"/>
-          <toolbarbutton class="subviewbutton" label="&fxa.menu.manageAccount.label;" oncommand="gSync.openFxAManagePage('fxa_discoverability_native');"/>
-          <toolbarbutton class="subviewbutton" label="&fxa.menu.syncSettings.label;" oncommand="gSync.openPrefs('fxa_discoverability_native');"/>
+          <toolbarbutton class="subviewbutton"
+                         label="&fxa.menu.connectAnotherDevice2.label;"
+                         oncommand="gSync.openConnectAnotherDevice('fxa_discoverability_native'); gSync.emitFxaToolbarTelemetry('cad');"/>
+          <toolbarbutton class="subviewbutton"
+                         label="&fxa.menu.manageAccount.label;"
+                         oncommand="gSync.openFxAManagePage('fxa_discoverability_native'); gSync.emitFxaToolbarTelemetry('account_settings');"/>
+          <toolbarbutton class="subviewbutton"
+                         label="&fxa.menu.syncSettings.label;"
+                         oncommand="gSync.openPrefs('fxa_discoverability_native'); gSync.emitFxaToolbarTelemetry('sync_settings');"/>
           <toolbarseparator/>
           <toolbarbutton id="PanelUI-fxa-menu-syncnow-button"
                          label="&syncSyncNowItem.label;"
                          syncinglabel="&syncSyncNowItemSyncing.label;"
                          class="subviewbutton subviewbutton-iconic"
-                         oncommand="gSync.doSync();"
+                         oncommand="gSync.doSync(); gSync.emitFxaToolbarTelemetry('sync_now');"
                          closemenu="none"/>
         </vbox>
       </vbox>

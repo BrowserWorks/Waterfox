@@ -123,8 +123,8 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 
 
-var pdfjsVersion = '2.2.100';
-var pdfjsBuild = 'f9c58115';
+var pdfjsVersion = '2.2.129';
+var pdfjsBuild = '725a6959';
 
 var pdfjsSharedUtil = __w_pdfjs_require__(1);
 
@@ -1264,6 +1264,7 @@ function getDocument(src) {
         networkStream = new _transport_stream.PDFDataTransportStream({
           length: params.length,
           initialData: params.initialData,
+          progressiveDone: params.progressiveDone,
           disableRange: params.disableRange,
           disableStream: params.disableStream
         }, rangeTransport);
@@ -1297,11 +1298,12 @@ function _fetchDocument(worker, source, pdfDataRangeTransport, docId) {
   if (pdfDataRangeTransport) {
     source.length = pdfDataRangeTransport.length;
     source.initialData = pdfDataRangeTransport.initialData;
+    source.progressiveDone = pdfDataRangeTransport.progressiveDone;
   }
 
   return worker.messageHandler.sendWithPromise('GetDocRequest', {
     docId,
-    apiVersion: '2.2.100',
+    apiVersion: '2.2.129',
     source: {
       data: source.data,
       url: source.url,
@@ -1371,12 +1373,14 @@ const PDFDocumentLoadingTask = function PDFDocumentLoadingTaskClosure() {
 }();
 
 class PDFDataRangeTransport {
-  constructor(length, initialData) {
+  constructor(length, initialData, progressiveDone = false) {
     this.length = length;
     this.initialData = initialData;
+    this.progressiveDone = progressiveDone;
     this._rangeListeners = [];
     this._progressListeners = [];
     this._progressiveReadListeners = [];
+    this._progressiveDoneListeners = [];
     this._readyCapability = (0, _util.createPromiseCapability)();
   }
 
@@ -1392,16 +1396,20 @@ class PDFDataRangeTransport {
     this._progressiveReadListeners.push(listener);
   }
 
+  addProgressiveDoneListener(listener) {
+    this._progressiveDoneListeners.push(listener);
+  }
+
   onDataRange(begin, chunk) {
     for (const listener of this._rangeListeners) {
       listener(begin, chunk);
     }
   }
 
-  onDataProgress(loaded) {
+  onDataProgress(loaded, total) {
     this._readyCapability.promise.then(() => {
       for (const listener of this._progressListeners) {
-        listener(loaded);
+        listener(loaded, total);
       }
     });
   }
@@ -1410,6 +1418,14 @@ class PDFDataRangeTransport {
     this._readyCapability.promise.then(() => {
       for (const listener of this._progressiveReadListeners) {
         listener(chunk);
+      }
+    });
+  }
+
+  onDataProgressiveDone() {
+    this._readyCapability.promise.then(() => {
+      for (const listener of this._progressiveDoneListeners) {
+        listener();
       }
     });
   }
@@ -1460,6 +1476,10 @@ class PDFDocumentProxy {
 
   getPageLabels() {
     return this._transport.getPageLabels();
+  }
+
+  getPageLayout() {
+    return this._transport.getPageLayout();
   }
 
   getPageMode() {
@@ -2745,6 +2765,10 @@ class WorkerTransport {
     return this.messageHandler.sendWithPromise('GetPageLabels', null);
   }
 
+  getPageLayout() {
+    return this.messageHandler.sendWithPromise('GetPageLayout', null);
+  }
+
   getPageMode() {
     return this.messageHandler.sendWithPromise('GetPageMode', null);
   }
@@ -3059,9 +3083,9 @@ const InternalRenderTask = function InternalRenderTaskClosure() {
   return InternalRenderTask;
 }();
 
-const version = '2.2.100';
+const version = '2.2.129';
 exports.version = version;
-const build = 'f9c58115';
+const build = '725a6959';
 exports.build = build;
 
 /***/ }),
@@ -4575,8 +4599,11 @@ var CanvasGraphics = function CanvasGraphicsClosure() {
         ctx.lineDashOffset = dashPhase;
       }
     },
-    setRenderingIntent: function CanvasGraphics_setRenderingIntent(intent) {},
-    setFlatness: function CanvasGraphics_setFlatness(flatness) {},
+
+    setRenderingIntent(intent) {},
+
+    setFlatness(flatness) {},
+
     setGState: function CanvasGraphics_setGState(states) {
       for (var i = 0, ii = states.length; i < ii; i++) {
         var state = states[i];
@@ -6149,42 +6176,42 @@ var TilingPattern = function TilingPatternClosure() {
           y0 = bbox[1],
           x1 = bbox[2],
           y1 = bbox[3];
-      var topLeft = [x0, y0];
-      var botRight = [x0 + xstep, y0 + ystep];
-      var width = botRight[0] - topLeft[0];
-      var height = botRight[1] - topLeft[1];
 
       var matrixScale = _util.Util.singularValueDecompose2dScale(this.matrix);
 
       var curMatrixScale = _util.Util.singularValueDecompose2dScale(this.baseTransform);
 
       var combinedScale = [matrixScale[0] * curMatrixScale[0], matrixScale[1] * curMatrixScale[1]];
-      width = Math.min(Math.ceil(Math.abs(width * combinedScale[0])), MAX_PATTERN_SIZE);
-      height = Math.min(Math.ceil(Math.abs(height * combinedScale[1])), MAX_PATTERN_SIZE);
-      var tmpCanvas = owner.cachedCanvases.getCanvas('pattern', width, height, true);
+      var dimx = this.getSizeAndScale(xstep, this.ctx.canvas.width, combinedScale[0]);
+      var dimy = this.getSizeAndScale(ystep, this.ctx.canvas.height, combinedScale[1]);
+      var tmpCanvas = owner.cachedCanvases.getCanvas('pattern', dimx.size, dimy.size, true);
       var tmpCtx = tmpCanvas.context;
       var graphics = canvasGraphicsFactory.createCanvasGraphics(tmpCtx);
       graphics.groupLevel = owner.groupLevel;
       this.setFillAndStrokeStyleToContext(graphics, paintType, color);
-      this.setScale(width, height, xstep, ystep);
-      this.transformToScale(graphics);
-      var tmpTranslate = [1, 0, 0, 1, -topLeft[0], -topLeft[1]];
-      graphics.transform.apply(graphics, tmpTranslate);
+      graphics.transform(dimx.scale, 0, 0, dimy.scale, 0, 0);
+      graphics.transform(1, 0, 0, 1, -x0, -y0);
       this.clipBbox(graphics, bbox, x0, y0, x1, y1);
       graphics.executeOperatorList(operatorList);
+      this.ctx.transform(1, 0, 0, 1, x0, y0);
+      this.ctx.scale(1 / dimx.scale, 1 / dimy.scale);
       return tmpCanvas.canvas;
     },
-    setScale: function TilingPattern_setScale(width, height, xstep, ystep) {
-      this.scale = [width / xstep, height / ystep];
-    },
-    transformToScale: function TilingPattern_transformToScale(graphics) {
-      var scale = this.scale;
-      var tmpScale = [scale[0], 0, 0, scale[1], 0, 0];
-      graphics.transform.apply(graphics, tmpScale);
-    },
-    scaleToContext: function TilingPattern_scaleToContext() {
-      var scale = this.scale;
-      this.ctx.scale(1 / scale[0], 1 / scale[1]);
+    getSizeAndScale: function TilingPattern_getSizeAndScale(step, realOutputSize, scale) {
+      step = Math.abs(step);
+      var maxSize = Math.max(MAX_PATTERN_SIZE, realOutputSize);
+      var size = Math.ceil(step * scale);
+
+      if (size >= maxSize) {
+        size = maxSize;
+      } else {
+        scale = size / step;
+      }
+
+      return {
+        scale,
+        size
+      };
     },
     clipBbox: function clipBbox(graphics, bbox, x0, y0, x1, y1) {
       if (Array.isArray(bbox) && bbox.length === 4) {
@@ -6222,11 +6249,10 @@ var TilingPattern = function TilingPatternClosure() {
       }
     },
     getPattern: function TilingPattern_getPattern(ctx, owner) {
-      var temporaryPatternCanvas = this.createPatternCanvas(owner);
       ctx = this.ctx;
       ctx.setTransform.apply(ctx, this.baseTransform);
       ctx.transform.apply(ctx, this.matrix);
-      this.scaleToContext();
+      var temporaryPatternCanvas = this.createPatternCanvas(owner);
       return ctx.createPattern(temporaryPatternCanvas, 'repeat');
     }
   };
@@ -7299,7 +7325,8 @@ var PDFDataTransportStream = function PDFDataTransportStreamClosure() {
   function PDFDataTransportStream(params, pdfDataRangeTransport) {
     (0, _util.assert)(pdfDataRangeTransport);
     this._queuedChunks = [];
-    var initialData = params.initialData;
+    this._progressiveDone = params.progressiveDone || false;
+    const initialData = params.initialData;
 
     if (initialData && initialData.length > 0) {
       let buffer = new Uint8Array(initialData).buffer;
@@ -7321,9 +7348,10 @@ var PDFDataTransportStream = function PDFDataTransportStreamClosure() {
       });
     });
 
-    this._pdfDataRangeTransport.addProgressListener(loaded => {
+    this._pdfDataRangeTransport.addProgressListener((loaded, total) => {
       this._onProgress({
-        loaded
+        loaded,
+        total
       });
     });
 
@@ -7331,6 +7359,10 @@ var PDFDataTransportStream = function PDFDataTransportStreamClosure() {
       this._onReceiveData({
         chunk
       });
+    });
+
+    this._pdfDataRangeTransport.addProgressiveDoneListener(() => {
+      this._onProgressiveDone();
     });
 
     this._pdfDataRangeTransport.transportReady();
@@ -7361,16 +7393,35 @@ var PDFDataTransportStream = function PDFDataTransportStreamClosure() {
       }
     },
     _onProgress: function PDFDataTransportStream_onDataProgress(evt) {
-      if (this._rangeReaders.length > 0) {
+      if (evt.total === undefined && this._rangeReaders.length > 0) {
         var firstReader = this._rangeReaders[0];
 
         if (firstReader.onProgress) {
           firstReader.onProgress({
             loaded: evt.loaded
           });
+          return;
         }
       }
+
+      let fullReader = this._fullRequestReader;
+
+      if (fullReader && fullReader.onProgress) {
+        fullReader.onProgress({
+          loaded: evt.loaded,
+          total: evt.total
+        });
+      }
     },
+
+    _onProgressiveDone() {
+      if (this._fullRequestReader) {
+        this._fullRequestReader.progressiveDone();
+      }
+
+      this._progressiveDone = true;
+    },
+
     _removeRangeReader: function PDFDataTransportStream_removeRangeReader(reader) {
       var i = this._rangeReaders.indexOf(reader);
 
@@ -7382,7 +7433,7 @@ var PDFDataTransportStream = function PDFDataTransportStreamClosure() {
       (0, _util.assert)(!this._fullRequestReader);
       var queuedChunks = this._queuedChunks;
       this._queuedChunks = null;
-      return new PDFDataTransportStreamReader(this, queuedChunks);
+      return new PDFDataTransportStreamReader(this, queuedChunks, this._progressiveDone);
     },
     getRangeReader: function PDFDataTransportStream_getRangeReader(begin, end) {
       var reader = new PDFDataTransportStreamRangeReader(this, begin, end);
@@ -7408,9 +7459,9 @@ var PDFDataTransportStream = function PDFDataTransportStreamClosure() {
     }
   };
 
-  function PDFDataTransportStreamReader(stream, queuedChunks) {
+  function PDFDataTransportStreamReader(stream, queuedChunks, progressiveDone = false) {
     this._stream = stream;
-    this._done = false;
+    this._done = progressiveDone || false;
     this._filename = null;
     this._queuedChunks = queuedChunks || [];
     this._requests = [];
@@ -7493,7 +7544,16 @@ var PDFDataTransportStream = function PDFDataTransportStreamClosure() {
       });
 
       this._requests = [];
+    },
+
+    progressiveDone() {
+      if (this._done) {
+        return;
+      }
+
+      this._done = true;
     }
+
   };
 
   function PDFDataTransportStreamRangeReader(stream, begin, end) {
@@ -9692,7 +9752,7 @@ var _is_node = _interopRequireDefault(__w_pdfjs_require__(21));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var SVGGraphics = function () {
+let SVGGraphics = function () {
   throw new Error('Not implemented: SVGGraphics');
 };
 

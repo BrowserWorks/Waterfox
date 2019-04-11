@@ -111,7 +111,8 @@ class MediaStreamGraphImpl : public MediaStreamGraph,
    */
   explicit MediaStreamGraphImpl(GraphDriverType aGraphDriverRequested,
                                 GraphRunType aRunTypeRequested,
-                                TrackRate aSampleRate, AbstractThread* aWindow);
+                                TrackRate aSampleRate, uint32_t aChannelCount,
+                                AbstractThread* aWindow);
 
   // Intended only for assertions, either on graph thread or not running (in
   // which case we must be on the main thread).
@@ -289,7 +290,8 @@ class MediaStreamGraphImpl : public MediaStreamGraph,
    * graph thread.
    */
   void AudioContextOperationCompleted(MediaStream* aStream, void* aPromise,
-                                      dom::AudioContextOperation aOperation);
+                                      dom::AudioContextOperation aOperation,
+                                      dom::AudioContextOperationFlags aFlags);
 
   /**
    * Apply and AudioContext operation (suspend/resume/closed), on the graph
@@ -298,7 +300,8 @@ class MediaStreamGraphImpl : public MediaStreamGraph,
   void ApplyAudioContextOperationImpl(MediaStream* aDestinationStream,
                                       const nsTArray<MediaStream*>& aStreams,
                                       dom::AudioContextOperation aOperation,
-                                      void* aPromise);
+                                      void* aPromise,
+                                      dom::AudioContextOperationFlags aSource);
 
   /**
    * Increment suspend count on aStream and move it to mSuspendedStreams if

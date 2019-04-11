@@ -269,8 +269,6 @@ const DEFAULT_ENVIRONMENT_PREFS = new Map([
   ["privacy.donottrackheader.enabled", {what: RECORD_PREF_VALUE}],
   ["security.mixed_content.block_active_content", {what: RECORD_PREF_VALUE}],
   ["security.mixed_content.block_display_content", {what: RECORD_PREF_VALUE}],
-  ["toolkit.telemetry.testing.overridePreRelease", {what: RECORD_PREF_VALUE}],
-  ["toolkit.telemetry.overrideUpdateChannel", {what: RECORD_PREF_STATE}],
   ["xpinstall.signatures.required", {what: RECORD_PREF_VALUE}],
 ]);
 
@@ -1832,6 +1830,7 @@ EnvironmentCache.prototype = {
 
     if (AppConstants.platform === "win") {
       data.isWow64 = getSysinfoProperty("isWow64", null);
+      data.isWowARM64 = getSysinfoProperty("isWowARM64", null);
     } else if (AppConstants.platform == "android") {
       data.device = this._getDeviceData();
     }

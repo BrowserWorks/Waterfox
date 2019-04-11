@@ -33,12 +33,12 @@ namespace shell {
 // strings, if they have them, else with just their names.
 //
 bool GenerateInterfaceHelp(JSContext* cx, HandleObject obj, const char* name) {
-  AutoIdVector idv(cx);
+  RootedIdVector idv(cx);
   if (!GetPropertyKeys(cx, obj, JSITER_OWNONLY | JSITER_HIDDEN, &idv)) {
     return false;
   }
 
-  StringBuffer buf(cx);
+  JSStringBuilder buf(cx);
   int numEntries = 0;
   for (size_t i = 0; i < idv.length(); i++) {
     RootedId id(cx, idv[i]);

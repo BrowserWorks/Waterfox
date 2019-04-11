@@ -102,6 +102,7 @@ function Sandbox(options) {
     sandboxPrototype: "prototype" in options ? options.prototype : {},
     invisibleToDebugger: "invisibleToDebugger" in options ?
                          options.invisibleToDebugger : false,
+    freshCompartment: options.freshCompartment || false,
   };
 
   const sandbox = Cu.Sandbox(systemPrincipal, options);
@@ -577,6 +578,7 @@ function Loader(options) {
     name: options.sandboxName || "DevTools",
     invisibleToDebugger: options.invisibleToDebugger || false,
     prototype: options.sandboxPrototype || globals,
+    freshCompartment: options.freshCompartment,
   });
 
   if (options.sandboxPrototype) {
@@ -606,7 +608,7 @@ function Loader(options) {
     // Whether the modules loaded should be ignored by the debugger
     invisibleToDebugger: { enumerable: false,
                            value: options.invisibleToDebugger || false },
-    requireHook: { enumerable: false, value: options.requireHook },
+    requireHook: { enumerable: false, writable: true, value: options.requireHook },
   };
 
   return Object.create(null, returnObj);

@@ -95,12 +95,10 @@ class ServoStyleSet {
 
   static ServoStyleSet* Current() { return sInServoTraversal; }
 
-  ServoStyleSet();
+  explicit ServoStyleSet(dom::Document&);
   ~ServoStyleSet();
 
-  void Init(nsPresContext* aPresContext);
-  void BeginShutdown() {}
-  void Shutdown();
+  void ShellDetachedFromDocument();
 
   // Called when a rules in a stylesheet in this set, or a child sheet of that,
   // are mutated from CSSOM.
@@ -131,10 +129,6 @@ class ServoStyleSet {
   bool GetAuthorStyleDisabled() const { return mAuthorStyleDisabled; }
 
   void SetAuthorStyleDisabled(bool aStyleDisabled);
-
-  // FIXME(emilio): All the callers pass Allow here
-  already_AddRefed<ComputedStyle> ResolveStyleFor(
-      dom::Element* aElement, LazyComputeBehavior aMayCompute);
 
   // Get a CopmutedStyle for a text node (which no rules will match).
   //
@@ -181,11 +175,14 @@ class ServoStyleSet {
 
   // Resolves style for a (possibly-pseudo) Element without assuming that the
   // style has been resolved. If the element was unstyled and a new style
-  // context was resolved, it is not stored in the DOM. (That is, the element
-  // remains unstyled.)
+  // was resolved, it is not stored in the DOM. (That is, the element remains
+  // unstyled.)
+  //
+  // TODO(emilio): Element argument should be `const`.
   already_AddRefed<ComputedStyle> ResolveStyleLazily(
-      dom::Element* aElement, PseudoStyleType,
-      StyleRuleInclusion aRules = StyleRuleInclusion::All);
+      dom::Element&,
+      PseudoStyleType = PseudoStyleType::NotPseudo,
+      StyleRuleInclusion = StyleRuleInclusion::All);
 
   // Get a ComputedStyle for an anonymous box. The pseudo type must be an
   // inheriting anon box.
@@ -323,7 +320,7 @@ class ServoStyleSet {
       const mozilla::ComputedStyle* aStyle,
       nsTArray<RefPtr<RawServoAnimationValue>>& aAnimationValues);
 
-  bool AppendFontFaceRules(nsTArray<nsFontFaceRuleContainer>& aArray);
+  void AppendFontFaceRules(nsTArray<nsFontFaceRuleContainer>& aArray);
 
   const RawServoCounterStyleRule* CounterStyleRuleForName(nsAtom* aName);
 
@@ -490,10 +487,6 @@ class ServoStyleSet {
    */
   void UpdateStylist();
 
-  already_AddRefed<ComputedStyle> ResolveStyleLazilyInternal(
-      dom::Element* aElement, PseudoStyleType aPseudoType,
-      StyleRuleInclusion aRules = StyleRuleInclusion::All);
-
   void RunPostTraversalTasks();
 
   void PrependSheetOfType(SheetType aType, StyleSheet* aSheet);
@@ -505,10 +498,8 @@ class ServoStyleSet {
 
   void RemoveSheetOfType(SheetType aType, StyleSheet* aSheet);
 
-  // The owner document of this style set. Null if this is an XBL style set.
-  //
-  // TODO(emilio): This should become a DocumentOrShadowRoot, and be owned by it
-  // directly instead of the shell, eventually.
+  // The owner document of this style set. Never null, and always outlives the
+  // StyleSet.
   dom::Document* mDocument;
 
   const nsPresContext* GetPresContext() const {

@@ -6,6 +6,7 @@
 
 #include "base/basictypes.h"
 
+#include "mozilla/PresShell.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
@@ -211,9 +212,7 @@ already_AddRefed<Layer> nsDisplayRemote::BuildLayer(
     // draw a manager's subtree.  The latter is bad bad bad, but the the
     // MOZ_ASSERT() above will flag it.  Returning nullptr here will just
     // cause the shadow subtree not to be rendered.
-    if (!aContainerParameters.mForEventsAndPluginsOnly) {
-      NS_WARNING("Remote iframe not rendered");
-    }
+    NS_WARNING("Remote iframe not rendered");
     return nullptr;
   }
 

@@ -21,6 +21,7 @@
 #include "gfxContext.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/FloatingPoint.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/UniquePtr.h"
 #include "WritingModes.h"
 
@@ -4420,11 +4421,11 @@ nsFlexContainerFrame* nsFlexContainerFrame::GetFlexFrameWithComputedInfo(
       // Hold onto aFrame while we do this, in case reflow destroys it.
       AutoWeakFrame weakFrameRef(aFrame);
 
-      nsIPresShell* shell = flexFrame->PresContext()->PresShell();
+      RefPtr<mozilla::PresShell> presShell = flexFrame->PresShell();
       flexFrame->AddStateBits(NS_STATE_FLEX_GENERATE_COMPUTED_VALUES);
-      shell->FrameNeedsReflow(flexFrame, nsIPresShell::eResize,
-                              NS_FRAME_IS_DIRTY);
-      shell->FlushPendingNotifications(FlushType::Layout);
+      presShell->FrameNeedsReflow(flexFrame, nsIPresShell::eResize,
+                                  NS_FRAME_IS_DIRTY);
+      presShell->FlushPendingNotifications(FlushType::Layout);
 
       // Since the reflow may have side effects, get the flex frame
       // again. But if the weakFrameRef is no longer valid, then we
@@ -4736,7 +4737,8 @@ void nsFlexContainerFrame::DoFlexLayout(
   // Recalculate the gap sizes if necessary now that the container size has
   // been determined.
   if (aReflowInput.ComputedBSize() == NS_INTRINSICSIZE &&
-      aReflowInput.mStylePosition->mRowGap.HasPercent()) {
+      aReflowInput.mStylePosition->mRowGap.IsLengthPercentage() &&
+      aReflowInput.mStylePosition->mRowGap.AsLengthPercentage().HasPercent()) {
     bool rowIsCross = aAxisTracker.IsRowOriented();
     nscoord newBlockGapSize = nsLayoutUtils::ResolveGapToLength(
         aReflowInput.mStylePosition->mRowGap,

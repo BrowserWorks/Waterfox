@@ -8,6 +8,12 @@
 
 #include "gfx2DGlue.h"
 #include "gfxUtils.h"
+#include "mozilla/Attributes.h"
+#include "mozilla/ComputedStyle.h"
+#include "mozilla/EventStateManager.h"
+#include "mozilla/Preferences.h"
+#include "mozilla/PresShell.h"
+#include "mozilla/layers/RenderRootStateManager.h"
 #include "mozilla/gfx/2D.h"
 #include "nsFontMetrics.h"
 #include "nsReadableUtils.h"
@@ -15,14 +21,12 @@
 #include "nsGkAtoms.h"
 #include "nsPresContext.h"
 #include "gfxContext.h"
-#include "mozilla/ComputedStyle.h"
 #include "nsIContent.h"
 #include "nsNameSpaceManager.h"
 #include "nsBoxLayoutState.h"
 #include "nsMenuBarListener.h"
 #include "nsString.h"
 #include "nsIServiceManager.h"
-#include "mozilla/EventStateManager.h"
 #include "nsITheme.h"
 #include "nsUnicharUtils.h"
 #include "nsContentUtils.h"
@@ -30,11 +34,8 @@
 #include "nsCSSRendering.h"
 #include "nsIReflowCallback.h"
 #include "nsBoxFrame.h"
-#include "mozilla/Preferences.h"
 #include "nsLayoutUtils.h"
-#include "mozilla/Attributes.h"
 #include "nsUnicodeProperties.h"
-#include "mozilla/layers/RenderRootStateManager.h"
 #include "TextDrawTarget.h"
 
 #ifdef ACCESSIBILITY
@@ -283,7 +284,7 @@ void nsDisplayXULTextBox::Paint(nsDisplayListBuilder* aBuilder,
   nsRect drawRect =
       static_cast<nsTextBoxFrame*>(mFrame)->mTextDrawRect + ToReferenceFrame();
   nsLayoutUtils::PaintTextShadow(mFrame, aCtx, drawRect, GetPaintRect(),
-                                 mFrame->StyleColor()->mColor,
+                                 mFrame->StyleColor()->mColor.ToColor(),
                                  PaintTextShadowCallback, (void*)this);
 
   PaintTextToContext(aCtx, nsPoint(0, 0), nullptr);
@@ -343,8 +344,7 @@ void nsTextBoxFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 
   nsLeafBoxFrame::BuildDisplayList(aBuilder, aLists);
 
-  aLists.Content()->AppendToTop(
-      MakeDisplayItem<nsDisplayXULTextBox>(aBuilder, this));
+  aLists.Content()->AppendNewToTop<nsDisplayXULTextBox>(aBuilder, this);
 }
 
 void nsTextBoxFrame::PaintTitle(gfxContext& aRenderingContext,
@@ -394,7 +394,7 @@ void nsTextBoxFrame::DrawText(gfxContext& aRenderingContext,
       if (aOverrideColor) {
         color = *aOverrideColor;
       } else {
-        color = styleText->mTextDecorationColor.CalcColor(context);
+        color = styleText->mTextDecorationColor.CalcColor(*context);
       }
       uint8_t style = styleText->mTextDecorationStyle;
 
@@ -489,7 +489,7 @@ void nsTextBoxFrame::DrawText(gfxContext& aRenderingContext,
 
   CalculateUnderline(refDrawTarget, *fontMet);
 
-  nscolor c = aOverrideColor ? *aOverrideColor : StyleColor()->mColor;
+  nscolor c = aOverrideColor ? *aOverrideColor : StyleColor()->mColor.ToColor();
   ColorPattern color(ToDeviceColor(c));
   aRenderingContext.SetColor(Color::FromABGR(c));
 

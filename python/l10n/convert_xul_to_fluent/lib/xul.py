@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 import re
+import string
 
 tag_re = r'<([a-z]+[^>/]*)(/?>)([^<]*)(?:</[a-z]+>)?'
 attr_re = r'\s+([a-z]+)="([\&\;\.a-zA-Z0-9]+)"'
+prefix = ""
 
 messages = {}
 
@@ -17,19 +19,25 @@ def convert_camel_case(name):
 
 
 def construct_l10n_id(val, attrs):
+    global prefix
     id = None
     if val:
-        id = val[1:-1]
+        id = val[1:-1].strip(string.digits)
     else:
         core = None
         for k in attrs:
-            v = attrs[k][1:-1].split('.')
+            v = attrs[k][1:-1].strip(string.digits).split('.')
             if not core:
-                core = v[0]
+                if v[-1].lower() == k:
+                    core = '.'.join(v[:-1])
+                else:
+                    core = '.'.join(v)
         if core:
             id = core
     id = id.replace('.', '-')
     id = convert_camel_case(id)
+    if prefix:
+        id = "{}-{}".format(prefix, id)
     return id
 
 
@@ -56,7 +64,6 @@ def tagrepl(m):
         if is_entity(m2.group(2)):
             attr_l10n = True
             l10n_attrs[m2.group(1)] = m2.group(2)
-
         if attr_l10n:
             is_l10n = True
             vector = vector + len(m2.group(0))
@@ -82,9 +89,11 @@ def tagrepl(m):
     return tag
 
 
-def collect_messages(xul_source):
+def collect_messages(xul_source, in_prefix):
     global messages
+    global prefix
     messages = {}
+    prefix = in_prefix
 
     new_source = re.sub(tag_re, tagrepl, xul_source)
     return (new_source, messages)

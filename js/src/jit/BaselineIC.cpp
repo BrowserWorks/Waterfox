@@ -124,6 +124,10 @@ ICFallbackStub* ICEntry::fallbackStub() const {
 }
 
 void ICEntry::trace(JSTracer* trc) {
+#ifdef JS_64BIT
+  // If we have filled our padding with a magic value, check it now.
+  MOZ_DIAGNOSTIC_ASSERT(traceMagic_ == EXPECTED_TRACE_MAGIC);
+#endif
   for (ICStub* stub = firstStub(); stub; stub = stub->next()) {
     stub->trace(trc);
   }
@@ -167,7 +171,7 @@ UniquePtr<ICScript> ICScript::create(JSContext* cx, JSScript* script) {
       MOZ_ASSERT(cx->isExceptionPending());
       return false;
     }
-    uint32_t offset = pc ? script->pcToOffset(pc) : ICEntry::NonOpPCOffset;
+    uint32_t offset = pc ? script->pcToOffset(pc) : ICEntry::ProloguePCOffset;
     if (!icEntries.emplaceBack(stub, offset)) {
       ReportOutOfMemory(cx);
       return false;
@@ -581,6 +585,9 @@ void ICStub::updateCode(JitCode* code) {
 
 /* static */
 void ICStub::trace(JSTracer* trc) {
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
+  checkTraceMagic();
+#endif
   // Fallback stubs use runtime-wide trampoline code we don't need to trace.
   if (!usesTrampolineCode()) {
     JitCode* stubJitCode = jitCode();
@@ -984,6 +991,9 @@ void ICFallbackStub::unlinkStub(Zone* zone, ICStub* prev, ICStub* stub) {
     stub->toMonitoredStub()->resetFirstMonitorStub(monitorFallback);
   }
 
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
+  stub->checkTraceMagic();
+#endif
 #ifdef DEBUG
   // Poison stub code to ensure we don't call this stub again. However, if
   // this stub can make calls, a pointer to it may be stored in a stub frame
@@ -1040,7 +1050,7 @@ void ICTypeMonitor_Fallback::resetMonitorStubChain(Zone* zone) {
   }
 }
 
-void ICUpdatedStub::resetUpdateStubChain(Zone* zone) {
+void ICCacheIR_Updated::resetUpdateStubChain(Zone* zone) {
   while (!firstUpdateStub_->isTypeUpdate_Fallback()) {
     if (zone->needsIncrementalBarrier()) {
       // We are removing edges from update stubs to gcthings (JitCode).
@@ -1096,7 +1106,7 @@ bool ICMonitoredFallbackStub::addMonitorStubForValue(JSContext* cx,
   return typeMonitorFallback->addMonitorStubForValue(cx, frame, types, val);
 }
 
-bool ICUpdatedStub::initUpdatingChain(JSContext* cx, ICStubSpace* space) {
+bool ICCacheIR_Updated::initUpdatingChain(JSContext* cx, ICStubSpace* space) {
   MOZ_ASSERT(firstUpdateStub_ == nullptr);
 
   FallbackStubAllocator alloc(cx, *space);
@@ -1625,11 +1635,11 @@ bool ICTypeMonitor_AnyValue::Compiler::generateStubCode(MacroAssembler& masm) {
   return true;
 }
 
-bool ICUpdatedStub::addUpdateStubForValue(JSContext* cx,
-                                          HandleScript outerScript,
-                                          HandleObject obj,
-                                          HandleObjectGroup group, HandleId id,
-                                          HandleValue val) {
+bool ICCacheIR_Updated::addUpdateStubForValue(JSContext* cx,
+                                              HandleScript outerScript,
+                                              HandleObject obj,
+                                              HandleObjectGroup group,
+                                              HandleId id, HandleValue val) {
   EnsureTrackPropertyTypes(cx, obj, id);
 
   // Make sure that undefined values are explicitly included in the property
@@ -1770,7 +1780,7 @@ bool ICUpdatedStub::addUpdateStubForValue(JSContext* cx,
 // TypeUpdate_Fallback
 //
 bool DoTypeUpdateFallback(JSContext* cx, BaselineFrame* frame,
-                          ICUpdatedStub* stub, HandleValue objval,
+                          ICCacheIR_Updated* stub, HandleValue objval,
                           HandleValue value) {
   // This can get called from optimized stubs. Therefore it is not allowed to
   // gc.
@@ -2485,6 +2495,9 @@ void StoreToTypedArray(JSContext* cx, MacroAssembler& masm, Scalar::Type type,
     masm.unboxDouble(value, FloatReg0);
     masm.clampDoubleToUint8(FloatReg0, scratch);
     masm.jump(&clamped);
+  } else if (type == Scalar::BigInt64 || type == Scalar::BigUint64) {
+    // FIXME: https://bugzil.la/1536703
+    masm.jump(failure);
   } else {
     Label notInt32;
     masm.branchTestInt32(Assembler::NotEqual, value, &notInt32);
@@ -3797,32 +3810,43 @@ bool DoCallFallback(JSContext* cx, BaselineFrame* frame, ICCall_Fallback* stub,
   }
 
   bool canAttachStub = stub->state().canAttachStub();
+  bool isFirstStub = stub->numOptimizedStubs() == 0;
   bool handled = false;
+  bool deferred = false;
 
   // Only bother to try optimizing JSOP_CALL with CacheIR if the chain is still
   // allowed to attach stubs.
   if (canAttachStub) {
+    HandleValueArray args = HandleValueArray::fromMarkedLocation(argc, vp + 2);
     CallIRGenerator gen(cx, script, pc, op, stub->state().mode(), argc, callee,
-                        callArgs.thisv(), newTarget,
-                        HandleValueArray::fromMarkedLocation(argc, vp + 2));
-    if (gen.tryAttachStub()) {
-      ICStub* newStub = AttachBaselineCacheIRStub(
-          cx, gen.writerRef(), gen.cacheKind(), gen.cacheIRStubKind(), script,
-          stub, &handled);
+                        callArgs.thisv(), newTarget, args, isFirstStub);
+    switch (gen.tryAttachStub()) {
+      case AttachDecision::NoAction:
+        break;
+      case AttachDecision::Attach: {
+        ICStub* newStub = AttachBaselineCacheIRStub(
+            cx, gen.writerRef(), gen.cacheKind(), gen.cacheIRStubKind(), script,
+            stub, &handled);
+        if (newStub) {
+          JitSpew(JitSpew_BaselineIC, "  Attached Call CacheIR stub");
 
-      if (newStub) {
-        JitSpew(JitSpew_BaselineIC, "  Attached Call CacheIR stub");
-
-        // If it's an updated stub, initialize it.
-        if (gen.cacheIRStubKind() == BaselineCacheIRStubKind::Updated) {
-          SetUpdateStubData(newStub->toCacheIR_Updated(), gen.typeCheckInfo());
+          // If it's an updated stub, initialize it.
+          if (gen.cacheIRStubKind() == BaselineCacheIRStubKind::Updated) {
+            SetUpdateStubData(newStub->toCacheIR_Updated(),
+                              gen.typeCheckInfo());
+          }
         }
-      }
+      } break;
+      case AttachDecision::TemporarilyUnoptimizable:
+        handled = true;
+        break;
+      case AttachDecision::Deferred:
+        deferred = true;
     }
 
     // Try attaching a regular call stub, but only if the CacheIR attempt didn't
     // add any stubs.
-    if (!handled) {
+    if (!handled && !deferred) {
       bool createSingleton =
           ObjectGroup::useSingletonForNewObject(cx, script, pc);
       if (!TryAttachCallStub(cx, stub, script, pc, op, argc, vp, constructing,
@@ -3873,6 +3897,34 @@ bool DoCallFallback(JSContext* cx, BaselineFrame* frame, ICCall_Fallback* stub,
   }
   canAttachStub = stub->state().canAttachStub();
 
+  if (deferred && canAttachStub) {
+    HandleValueArray args = HandleValueArray::fromMarkedLocation(argc, vp + 2);
+    CallIRGenerator gen(cx, script, pc, op, stub->state().mode(), argc, callee,
+                        callArgs.thisv(), newTarget, args, isFirstStub);
+    switch (gen.tryAttachDeferredStub(res)) {
+      case AttachDecision::Attach: {
+        ICStub* newStub = AttachBaselineCacheIRStub(
+            cx, gen.writerRef(), gen.cacheKind(), gen.cacheIRStubKind(), script,
+            stub, &handled);
+        if (newStub) {
+          JitSpew(JitSpew_BaselineIC, "  Attached Call CacheIR stub");
+
+          // If it's an updated stub, initialize it.
+          if (gen.cacheIRStubKind() == BaselineCacheIRStubKind::Updated) {
+            SetUpdateStubData(newStub->toCacheIR_Updated(),
+                              gen.typeCheckInfo());
+          }
+        }
+      } break;
+      case AttachDecision::NoAction:
+        break;
+      case AttachDecision::TemporarilyUnoptimizable:
+      case AttachDecision::Deferred:
+        MOZ_ASSERT_UNREACHABLE("Impossible attach decision");
+        break;
+    }
+  }
+
   if (!handled && canAttachStub && !constructing) {
     // If 'callee' is a potential Call_ConstStringSplit, try to attach an
     // optimized ConstStringSplit stub. Note that vp[0] now holds the return
@@ -3917,29 +3969,41 @@ bool DoSpreadCallFallback(JSContext* cx, BaselineFrame* frame,
 
   // Try attaching a call stub.
   bool handled = false;
+  bool isFirstStub = stub->numOptimizedStubs() == 0;
   if (op != JSOP_SPREADEVAL && op != JSOP_STRICTSPREADEVAL &&
       stub->state().canAttachStub()) {
     // Try CacheIR first:
     RootedArrayObject aobj(cx, &arr.toObject().as<ArrayObject>());
     MOZ_ASSERT(aobj->length() == aobj->getDenseInitializedLength());
 
+    HandleValueArray args = HandleValueArray::fromMarkedLocation(
+        aobj->length(), aobj->getDenseElements());
     CallIRGenerator gen(cx, script, pc, op, stub->state().mode(), 1, callee,
-                        thisv, newTarget,
-                        HandleValueArray::fromMarkedLocation(
-                            aobj->length(), aobj->getDenseElements()));
-    if (gen.tryAttachStub()) {
-      ICStub* newStub = AttachBaselineCacheIRStub(
-          cx, gen.writerRef(), gen.cacheKind(), gen.cacheIRStubKind(), script,
-          stub, &handled);
+                        thisv, newTarget, args, isFirstStub);
+    switch (gen.tryAttachStub()) {
+      case AttachDecision::NoAction:
+        break;
+      case AttachDecision::Attach: {
+        ICStub* newStub = AttachBaselineCacheIRStub(
+            cx, gen.writerRef(), gen.cacheKind(), gen.cacheIRStubKind(), script,
+            stub, &handled);
 
-      if (newStub) {
-        JitSpew(JitSpew_BaselineIC, "  Attached Spread Call CacheIR stub");
+        if (newStub) {
+          JitSpew(JitSpew_BaselineIC, "  Attached Spread Call CacheIR stub");
 
-        // If it's an updated stub, initialize it.
-        if (gen.cacheIRStubKind() == BaselineCacheIRStubKind::Updated) {
-          SetUpdateStubData(newStub->toCacheIR_Updated(), gen.typeCheckInfo());
+          // If it's an updated stub, initialize it.
+          if (gen.cacheIRStubKind() == BaselineCacheIRStubKind::Updated) {
+            SetUpdateStubData(newStub->toCacheIR_Updated(),
+                              gen.typeCheckInfo());
+          }
         }
-      }
+      } break;
+      case AttachDecision::TemporarilyUnoptimizable:
+        handled = true;
+        break;
+      case AttachDecision::Deferred:
+        MOZ_ASSERT_UNREACHABLE("No deferred optimizations for spread calls");
+        break;
     }
 
     // Try attaching a regular call stub, but only if the CacheIR attempt didn't

@@ -31,7 +31,6 @@ push_apk_description_schema = Schema({
     Required('worker'): object,
     Required('scopes'): None,
     Required('requires'): task_description_schema['requires'],
-    Required('deadline-after'): basestring,
     Required('shipping-phase'): task_description_schema['shipping-phase'],
     Required('shipping-product'): task_description_schema['shipping-product'],
     Optional('extra'): task_description_schema['extra'],
@@ -129,7 +128,7 @@ def generate_upstream_artifacts(job, dependencies):
         'taskType': 'signing',
         'paths': ['{}/target.apk'.format(artifact_prefix)],
     } for task_kind in dependencies.keys()
-      if 'google-play-strings' not in task_kind
+      if task_kind not in ('google-play-strings', 'push-apk-checks')
     ]
 
     google_play_strings = [{

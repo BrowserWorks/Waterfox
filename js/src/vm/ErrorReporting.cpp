@@ -13,6 +13,7 @@
 #include "jsexn.h"
 #include "jsfriendapi.h"
 
+#include "js/Warnings.h"  // JS::WarningReporter
 #include "vm/GlobalObject.h"
 #include "vm/JSContext.h"
 
@@ -52,7 +53,7 @@ void js::CompileError::throwError(JSContext* cx) {
 }
 
 bool js::ReportExceptionClosure::operator()(JSContext* cx) {
-  cx->setPendingException(exn_);
+  cx->setPendingExceptionAndCaptureStack(exn_);
   return false;
 }
 

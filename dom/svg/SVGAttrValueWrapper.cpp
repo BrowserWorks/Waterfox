@@ -6,35 +6,35 @@
 
 #include "SVGAttrValueWrapper.h"
 
+#include "SVGAnimatedIntegerPair.h"
+#include "SVGAnimatedLength.h"
+#include "SVGAnimatedNumberPair.h"
+#include "SVGAnimatedOrient.h"
 #include "SVGAnimatedPreserveAspectRatio.h"
-#include "SVGIntegerPair.h"
-#include "nsSVGLength2.h"
+#include "SVGAnimatedViewBox.h"
 #include "SVGLengthList.h"
-#include "SVGNumberPair.h"
 #include "SVGNumberList.h"
-#include "SVGOrient.h"
 #include "SVGPathData.h"
 #include "SVGPointList.h"
 #include "SVGStringList.h"
 #include "SVGTransformList.h"
-#include "SVGViewBox.h"
 
 namespace mozilla {
 
 /*static*/
-void SVGAttrValueWrapper::ToString(const SVGOrient* aOrient,
+void SVGAttrValueWrapper::ToString(const SVGAnimatedOrient* aOrient,
                                    nsAString& aResult) {
   aOrient->GetBaseValueString(aResult);
 }
 
 /*static*/
-void SVGAttrValueWrapper::ToString(const SVGIntegerPair* aIntegerPair,
+void SVGAttrValueWrapper::ToString(const SVGAnimatedIntegerPair* aIntegerPair,
                                    nsAString& aResult) {
   aIntegerPair->GetBaseValueString(aResult);
 }
 
 /*static*/
-void SVGAttrValueWrapper::ToString(const nsSVGLength2* aLength,
+void SVGAttrValueWrapper::ToString(const SVGAnimatedLength* aLength,
                                    nsAString& aResult) {
   aLength->GetBaseValueString(aResult);
 }
@@ -52,7 +52,7 @@ void SVGAttrValueWrapper::ToString(const SVGNumberList* aNumberList,
 }
 
 /*static*/
-void SVGAttrValueWrapper::ToString(const SVGNumberPair* aNumberPair,
+void SVGAttrValueWrapper::ToString(const SVGAnimatedNumberPair* aNumberPair,
                                    nsAString& aResult) {
   aNumberPair->GetBaseValueString(aResult);
 }
@@ -89,7 +89,7 @@ void SVGAttrValueWrapper::ToString(const SVGTransformList* aTransformList,
 }
 
 /*static*/
-void SVGAttrValueWrapper::ToString(const SVGViewBox* aViewBox,
+void SVGAttrValueWrapper::ToString(const SVGAnimatedViewBox* aViewBox,
                                    nsAString& aResult) {
   aViewBox->GetBaseValueString(aResult);
 }

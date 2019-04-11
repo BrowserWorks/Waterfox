@@ -5,13 +5,23 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/WindowGlobalChild.h"
-#include "mozilla/ipc/InProcessChild.h"
+
+#include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/BrowsingContext.h"
+#include "mozilla/dom/TabChild.h"
 #include "mozilla/dom/WindowGlobalActorsBinding.h"
+#include "mozilla/dom/WindowGlobalParent.h"
+#include "mozilla/ipc/InProcessChild.h"
+#include "nsDocShell.h"
+#include "nsGlobalWindowInner.h"
 
 #include "mozilla/dom/JSWindowActorBinding.h"
 #include "mozilla/dom/JSWindowActorChild.h"
 #include "mozilla/dom/JSWindowActorService.h"
+#include "nsIHttpChannelInternal.h"
+
+using namespace mozilla::ipc;
+using namespace mozilla::dom::ipc;
 
 namespace mozilla {
 namespace dom {
@@ -37,6 +47,17 @@ already_AddRefed<WindowGlobalChild> WindowGlobalChild::Create(
 
   // Initalize our WindowGlobalChild object.
   RefPtr<dom::BrowsingContext> bc = docshell->GetBrowsingContext();
+
+  // When creating a new window global child we also need to look at the
+  // channel's Cross-Origin-Opener-Policy and set it on the browsing context
+  // so it's available in the parent process.
+  nsCOMPtr<nsIHttpChannelInternal> chan =
+      do_QueryInterface(aWindow->GetDocument()->GetChannel());
+  nsILoadInfo::CrossOriginOpenerPolicy policy;
+  if (chan && NS_SUCCEEDED(chan->GetCrossOriginOpenerPolicy(&policy))) {
+    bc->SetOpenerPolicy(policy);
+  }
+
   RefPtr<WindowGlobalChild> wgc = new WindowGlobalChild(aWindow, bc);
 
   WindowGlobalInit init(principal, bc, wgc->mInnerWindowId,

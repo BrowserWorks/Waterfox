@@ -308,6 +308,10 @@ class JS::Realm : public JS::shadow::Realm {
   friend struct ::JSContext;
   js::ReadBarrieredGlobalObject global_;
 
+  // The global lexical environment. This is stored here instead of in
+  // GlobalObject for easier/faster JIT access.
+  js::ReadBarriered<js::LexicalEnvironmentObject*> lexicalEnv_;
+
   // Note: this is private to enforce use of ObjectRealm::get(obj).
   js::ObjectRealm objects_;
   friend js::ObjectRealm& js::ObjectRealm::get(const JSObject*);
@@ -395,7 +399,6 @@ class JS::Realm : public JS::shadow::Realm {
   friend class js::AutoRestoreRealmDebugMode;
 
   bool isSelfHostingRealm_ = false;
-  bool marked_ = true;
   bool isSystem_ = false;
 
  public:
@@ -514,13 +517,16 @@ class JS::Realm : public JS::shadow::Realm {
   /* An unbarriered getter for use while tracing. */
   inline js::GlobalObject* unsafeUnbarrieredMaybeGlobal() const;
 
+  inline js::LexicalEnvironmentObject* unbarrieredLexicalEnvironment() const;
+
   /* True if a global object exists, but it's being collected. */
   inline bool globalIsAboutToBeFinalized();
 
   /* True if a global exists and it's not being collected. */
-  inline bool hasLiveGlobal();
+  inline bool hasLiveGlobal() const;
 
-  inline void initGlobal(js::GlobalObject& global);
+  inline void initGlobal(js::GlobalObject& global,
+                         js::LexicalEnvironmentObject& lexicalEnv);
 
   /*
    * This method traces data that is live iff we know that this realm's
@@ -635,9 +641,7 @@ class JS::Realm : public JS::shadow::Realm {
     realmStats_ = newStats;
   }
 
-  bool marked() const { return marked_; }
-  void mark() { marked_ = true; }
-  void unmark() { marked_ = false; }
+  inline bool marked() const;
 
   /*
    * The principals associated with this realm. Note that the same several
@@ -813,6 +817,11 @@ class JS::Realm : public JS::shadow::Realm {
     static_assert(sizeof(global_) == sizeof(uintptr_t),
                   "JIT code assumes field is pointer-sized");
     return offsetof(JS::Realm, global_);
+  }
+  static constexpr size_t offsetOfActiveLexicalEnvironment() {
+    static_assert(sizeof(lexicalEnv_) == sizeof(uintptr_t),
+                  "JIT code assumes field is pointer-sized");
+    return offsetof(JS::Realm, lexicalEnv_);
   }
 };
 

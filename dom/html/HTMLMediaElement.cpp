@@ -56,6 +56,7 @@
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/NotNull.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/StaticPrefs.h"
 #include "mozilla/Telemetry.h"
@@ -101,7 +102,6 @@
 #include "nsIFrame.h"
 #include "nsIObserverService.h"
 #include "nsIPermissionManager.h"
-#include "nsIPresShell.h"
 #include "nsIRequest.h"
 #include "nsIScriptError.h"
 #include "nsIScriptSecurityManager.h"
@@ -5918,7 +5918,7 @@ void HTMLMediaElement::Invalidate(bool aImageSizeChanged,
     UpdateMediaSize(aNewIntrinsicSize.value());
     if (frame) {
       nsPresContext* presContext = frame->PresContext();
-      nsIPresShell* presShell = presContext->PresShell();
+      PresShell* presShell = presContext->PresShell();
       presShell->FrameNeedsReflow(frame, nsIPresShell::eStyleChange,
                                   NS_FRAME_IS_DIRTY);
     }
@@ -6450,24 +6450,25 @@ bool HTMLMediaElement::TryRemoveMediaKeysAssociation() {
   if (mDecoder) {
     RefPtr<HTMLMediaElement> self = this;
     mDecoder->SetCDMProxy(nullptr)
-        ->Then(mAbstractMainThread, __func__,
-               [self]() {
-                 self->mSetCDMRequest.Complete();
+        ->Then(
+            mAbstractMainThread, __func__,
+            [self]() {
+              self->mSetCDMRequest.Complete();
 
-                 self->RemoveMediaKeys();
-                 if (self->AttachNewMediaKeys()) {
-                   // No incoming MediaKeys object or MediaDecoder is not
-                   // created yet.
-                   self->MakeAssociationWithCDMResolved();
-                 }
-               },
-               [self](const MediaResult& aResult) {
-                 self->mSetCDMRequest.Complete();
-                 // 5.2.4 If the preceding step failed, let this object's
-                 // attaching media keys value be false and reject promise with
-                 // a new DOMException whose name is the appropriate error name.
-                 self->SetCDMProxyFailure(aResult);
-               })
+              self->RemoveMediaKeys();
+              if (self->AttachNewMediaKeys()) {
+                // No incoming MediaKeys object or MediaDecoder is not
+                // created yet.
+                self->MakeAssociationWithCDMResolved();
+              }
+            },
+            [self](const MediaResult& aResult) {
+              self->mSetCDMRequest.Complete();
+              // 5.2.4 If the preceding step failed, let this object's
+              // attaching media keys value be false and reject promise with
+              // a new DOMException whose name is the appropriate error name.
+              self->SetCDMProxyFailure(aResult);
+            })
         ->Track(mSetCDMRequest);
     return false;
   }
@@ -6523,15 +6524,16 @@ bool HTMLMediaElement::TryMakeAssociationWithCDM(CDMProxy* aProxy) {
     // HTMLMediaElement should resolve or reject the DOM promise.
     RefPtr<HTMLMediaElement> self = this;
     mDecoder->SetCDMProxy(aProxy)
-        ->Then(mAbstractMainThread, __func__,
-               [self]() {
-                 self->mSetCDMRequest.Complete();
-                 self->MakeAssociationWithCDMResolved();
-               },
-               [self](const MediaResult& aResult) {
-                 self->mSetCDMRequest.Complete();
-                 self->SetCDMProxyFailure(aResult);
-               })
+        ->Then(
+            mAbstractMainThread, __func__,
+            [self]() {
+              self->mSetCDMRequest.Complete();
+              self->MakeAssociationWithCDMResolved();
+            },
+            [self](const MediaResult& aResult) {
+              self->mSetCDMRequest.Complete();
+              self->SetCDMProxyFailure(aResult);
+            })
         ->Track(mSetCDMRequest);
     return false;
   }

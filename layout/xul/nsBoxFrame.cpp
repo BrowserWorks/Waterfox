@@ -49,6 +49,7 @@
 #include "mozilla/dom/Touch.h"
 #include "mozilla/Move.h"
 #include "mozilla/ComputedStyle.h"
+#include "mozilla/PresShell.h"
 #include "nsPlaceholderFrame.h"
 #include "nsPresContext.h"
 #include "nsCOMPtr.h"
@@ -58,7 +59,6 @@
 #include "nsHTMLParts.h"
 #include "nsViewManager.h"
 #include "nsView.h"
-#include "nsIPresShell.h"
 #include "nsCSSRendering.h"
 #include "nsIServiceManager.h"
 #include "nsBoxLayout.h"
@@ -1105,14 +1105,14 @@ void nsBoxFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     if (forceLayer) {
       MOZ_ASSERT(renderRoot == wr::RenderRoot::Default);
       // Wrap the list to make it its own layer
-      aLists.Content()->AppendToTop(MakeDisplayItem<nsDisplayOwnLayer>(
+      aLists.Content()->AppendNewToTop<nsDisplayOwnLayer>(
           aBuilder, this, &masterList, ownLayerASR,
           nsDisplayOwnLayerFlags::eNone, mozilla::layers::ScrollbarData{}, true,
-          true));
+          true);
     } else {
       MOZ_ASSERT(!XRE_IsContentProcess());
-      aLists.Content()->AppendToTop(MakeDisplayItem<nsDisplayRenderRoot>(
-          aBuilder, this, &masterList, ownLayerASR, renderRoot));
+      aLists.Content()->AppendNewToTop<nsDisplayRenderRoot>(
+          aBuilder, this, &masterList, ownLayerASR, renderRoot);
     }
   }
 }

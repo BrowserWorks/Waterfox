@@ -32,6 +32,9 @@ class Target extends Domain {
     } else {
       targets.off("connect", this.onTargetCreated);
     }
+    for (const target of targets) {
+      this.onTargetCreated("connect", target);
+    }
   }
 
   onTargetCreated(eventName, target) {
@@ -72,7 +75,7 @@ class Target extends Domain {
       return new Error(`Unable to find target with id '${targetId}'`);
     }
 
-    const session = new TabSession(this.session.connection, target, sessionIds++);
+    const session = new TabSession(this.session.connection, target, sessionIds++, this.session);
     this.emit("Target.attachedToTarget", {
       targetInfo: {
         type: "page",
@@ -86,4 +89,14 @@ class Target extends Domain {
   }
 
   setAutoAttach() {}
+
+  sendMessageToTarget({ sessionId, message }) {
+    const { sessions } = this.session.connection;
+    const session = sessions.get(sessionId);
+    if (!session) {
+      throw new Error(`Session '${sessionId}' doesn't exists.`);
+    }
+    message = JSON.parse(message);
+    session.onMessage(message);
+  }
 }

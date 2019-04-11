@@ -20,6 +20,7 @@
 #include "jstypes.h"
 
 #include "builtin/String.h"
+#include "gc/GC.h"
 #include "gc/Marking.h"
 #include "js/CharacterEncoding.h"
 #include "js/Symbol.h"
@@ -283,18 +284,21 @@ bool JSRuntime::initializeAtoms(JSContext* cx) {
   emptyString = commonNames->empty;
 
   // Create the well-known symbols.
-  wellKnownSymbols = js_new<WellKnownSymbols>();
-  if (!wellKnownSymbols) {
+  auto wks = js_new<WellKnownSymbols>();
+  if (!wks) {
     return false;
   }
 
+  // Prevent GC until we have fully initialized the well known symbols table.
+  // Faster than zeroing the array and null checking during every GC.
+  gc::AutoSuppressGC nogc(cx);
+
   ImmutablePropertyNamePtr* descriptions =
       commonNames->wellKnownSymbolDescriptions();
-  ImmutableSymbolPtr* symbols =
-      reinterpret_cast<ImmutableSymbolPtr*>(wellKnownSymbols.ref());
+  ImmutableSymbolPtr* symbols = reinterpret_cast<ImmutableSymbolPtr*>(wks);
   for (size_t i = 0; i < JS::WellKnownSymbolLimit; i++) {
-    JS::Symbol* symbol =
-        JS::Symbol::new_(cx, JS::SymbolCode(i), descriptions[i]);
+    HandlePropertyName description = descriptions[i];
+    JS::Symbol* symbol = JS::Symbol::new_(cx, JS::SymbolCode(i), description);
     if (!symbol) {
       ReportOutOfMemory(cx);
       return false;
@@ -302,6 +306,7 @@ bool JSRuntime::initializeAtoms(JSContext* cx) {
     symbols[i].init(symbol);
   }
 
+  wellKnownSymbols = wks;
   return true;
 }
 
@@ -930,8 +935,7 @@ static MOZ_ALWAYS_INLINE JSAtom* AllocateNewAtom(
   JSFlatString* flat = MakeFlatStringForAtomization(cx, chars, length);
   if (!flat) {
     // Grudgingly forgo last-ditch GC. The alternative would be to release
-    // the lock, manually GC here, and retry from the top. If you fix this,
-    // please also fix or comment the similar case in Symbol::new_.
+    // the lock, manually GC here, and retry from the top.
     ReportOutOfMemory(cx);
     return nullptr;
   }

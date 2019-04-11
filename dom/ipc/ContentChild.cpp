@@ -897,6 +897,13 @@ nsresult ContentChild::ProvideWindowCommon(
 
     Maybe<URIParams> uriToLoad;
     SerializeURI(aURI, uriToLoad);
+
+    if (name.LowerCaseEqualsLiteral("_blank")) {
+      name = EmptyString();
+    }
+
+    MOZ_DIAGNOSTIC_ASSERT(!nsContentUtils::IsSpecialName(name));
+
     Unused << SendCreateWindowInDifferentProcess(
         aTabOpener, aChromeFlags, aCalledFromJS, aPositionSpecified,
         aSizeSpecified, uriToLoad, features, fullZoom, name,
@@ -1173,9 +1180,7 @@ void ContentChild::LaunchRDDProcess() {
         nsresult rv;
         Endpoint<PRemoteDecoderManagerChild> endpoint;
         Unused << SendLaunchRDDProcess(&rv, &endpoint);
-        // Only call InitForContent if we got a valid enpoint back which
-        // indicates we needed to launch an RDD process.
-        if (rv == NS_OK && endpoint.IsValid()) {
+        if (rv == NS_OK) {
           RemoteDecoderManagerChild::InitForContent(std::move(endpoint));
         }
       }));
@@ -1821,6 +1826,14 @@ mozilla::ipc::IPCResult ContentChild::RecvPBrowserConstructor(
   }
 
   auto tabChild = static_cast<TabChild*>(aActor);
+  if (!tabChild->mTabGroup) {
+    tabChild->mTabGroup = TabGroup::GetFromActor(tabChild);
+
+    if (!tabChild->mTabGroup) {
+      tabChild->mTabGroup = new TabGroup();
+      MOZ_DIAGNOSTIC_ASSERT(aSameTabGroupAs != 0);
+    }
+  }
 
   if (NS_WARN_IF(NS_FAILED(tabChild->Init(/* aOpener */ nullptr)))) {
     return IPC_FAIL(tabChild, "TabChild::Init failed");

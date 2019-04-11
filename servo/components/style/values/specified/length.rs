@@ -13,12 +13,13 @@ use crate::properties::computed_value_flags::ComputedValueFlags;
 use crate::values::computed::{self, CSSPixelLength, Context};
 use crate::values::generics::length as generics;
 use crate::values::generics::length::{
-    GenericLengthOrNumber, MaxSize as GenericMaxSize, Size as GenericSize,
+    GenericLengthPercentageOrNormal, GenericLengthOrNumber,
+    GenericMaxSize, GenericSize,
 };
 use crate::values::generics::NonNegative;
 use crate::values::specified::calc::CalcNode;
 use crate::values::specified::NonNegativeNumber;
-use crate::values::{CSSFloat, Either, Normal};
+use crate::values::CSSFloat;
 use crate::Zero;
 use app_units::Au;
 use cssparser::{Parser, Token};
@@ -956,11 +957,8 @@ impl NonNegativeLengthPercentageOrAuto {
 /// A wrapper of LengthPercentage, whose value must be >= 0.
 pub type NonNegativeLengthPercentage = NonNegative<LengthPercentage>;
 
-/// Either a computed NonNegativeLength or the `normal` keyword.
-pub type NonNegativeLengthOrNormal = Either<NonNegativeLength, Normal>;
-
 /// Either a NonNegativeLengthPercentage or the `normal` keyword.
-pub type NonNegativeLengthPercentageOrNormal = Either<NonNegativeLengthPercentage, Normal>;
+pub type NonNegativeLengthPercentageOrNormal = GenericLengthPercentageOrNormal<NonNegativeLengthPercentage>;
 
 impl From<NoCalcLength> for NonNegativeLengthPercentage {
     #[inline]
@@ -997,9 +995,6 @@ impl NonNegativeLengthPercentage {
         LengthPercentage::parse_non_negative_quirky(context, input, allow_quirks).map(NonNegative)
     }
 }
-
-/// Either a `<length>` or the `normal` keyword.
-pub type LengthOrNormal = Either<Length, Normal>;
 
 /// Either a `<length>` or the `auto` keyword.
 ///

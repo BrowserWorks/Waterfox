@@ -1068,7 +1068,9 @@ void CopyValPostBarriered(uint8_t* dst, const Val& src) {
     case ValType::NullRef: {
       break;
     }
-    default: { MOZ_CRASH("unexpected Val type"); }
+    default: {
+      MOZ_CRASH("unexpected Val type");
+    }
   }
 }
 
@@ -1819,7 +1821,7 @@ JSString* Instance::createDisplayURL(JSContext* cx) {
   // - URI encoded filename from metadata (if can be encoded), plus ":";
   // - 64-bit hash of the module bytes (as hex dump).
 
-  StringBuffer result(cx);
+  JSStringBuilder result(cx);
   if (!result.append("wasm:")) {
     return nullptr;
   }

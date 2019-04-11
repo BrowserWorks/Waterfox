@@ -652,7 +652,7 @@ extern JS_PUBLIC_API bool JS_EnumerateStandardClasses(JSContext* cx,
  * already-defined properties anyway.
  */
 extern JS_PUBLIC_API bool JS_NewEnumerateStandardClasses(
-    JSContext* cx, JS::HandleObject obj, JS::AutoIdVector& properties,
+    JSContext* cx, JS::HandleObject obj, JS::MutableHandleIdVector properties,
     bool enumerableOnly);
 
 /**
@@ -661,7 +661,7 @@ extern JS_PUBLIC_API bool JS_NewEnumerateStandardClasses(
  * without touching the global itself.
  */
 extern JS_PUBLIC_API bool JS_NewEnumerateStandardClassesIncludingResolved(
-    JSContext* cx, JS::HandleObject obj, JS::AutoIdVector& properties,
+    JSContext* cx, JS::HandleObject obj, JS::MutableHandleIdVector properties,
     bool enumerableOnly);
 
 extern JS_PUBLIC_API bool JS_GetClassObject(JSContext* cx, JSProtoKey key,
@@ -1757,8 +1757,7 @@ extern JS_PUBLIC_API bool IsSetObject(JSContext* cx, JS::HandleObject obj,
  * Assign 'undefined' to all of the object's non-reserved slots. Note: this is
  * done for all slots, regardless of the associated property descriptor.
  */
-JS_PUBLIC_API void JS_SetAllNonReservedSlotsToUndefined(JSContext* cx,
-                                                        JSObject* objArg);
+JS_PUBLIC_API void JS_SetAllNonReservedSlotsToUndefined(JS::HandleObject obj);
 
 extern JS_PUBLIC_API JS::Value JS_GetReservedSlot(JSObject* obj,
                                                   uint32_t index);
@@ -2653,24 +2652,6 @@ extern JS_PUBLIC_API void JS_ReportErrorNumberUCArray(
     JSContext* cx, JSErrorCallback errorCallback, void* userRef,
     const unsigned errorNumber, const char16_t** args);
 
-/**
- * As above, but report a warning instead (JSREPORT_IS_WARNING(report.flags)).
- * Return true if there was no error trying to issue the warning, and if the
- * warning was not converted into an error due to the JSOPTION_WERROR option
- * being set, false otherwise.
- */
-extern JS_PUBLIC_API bool JS_ReportWarningASCII(JSContext* cx,
-                                                const char* format, ...)
-    MOZ_FORMAT_PRINTF(2, 3);
-
-extern JS_PUBLIC_API bool JS_ReportWarningLatin1(JSContext* cx,
-                                                 const char* format, ...)
-    MOZ_FORMAT_PRINTF(2, 3);
-
-extern JS_PUBLIC_API bool JS_ReportWarningUTF8(JSContext* cx,
-                                               const char* format, ...)
-    MOZ_FORMAT_PRINTF(2, 3);
-
 extern JS_PUBLIC_API bool JS_ReportErrorFlagsAndNumberASCII(
     JSContext* cx, unsigned flags, JSErrorCallback errorCallback, void* userRef,
     const unsigned errorNumber, ...);
@@ -2698,33 +2679,6 @@ extern MOZ_COLD JS_PUBLIC_API void JS_ReportOutOfMemory(JSContext* cx);
 extern JS_PUBLIC_API void JS_ReportAllocationOverflow(JSContext* cx);
 
 namespace JS {
-
-using WarningReporter = void (*)(JSContext* cx, JSErrorReport* report);
-
-extern JS_PUBLIC_API WarningReporter
-SetWarningReporter(JSContext* cx, WarningReporter reporter);
-
-extern JS_PUBLIC_API WarningReporter GetWarningReporter(JSContext* cx);
-
-// Suppress the Warning Reporter callback temporarily.
-class MOZ_RAII JS_PUBLIC_API AutoSuppressWarningReporter {
-  JSContext* context_;
-  WarningReporter prevReporter_;
-
- public:
-  explicit AutoSuppressWarningReporter(JSContext* cx) : context_(cx) {
-    prevReporter_ = SetWarningReporter(context_, nullptr);
-  }
-
-  ~AutoSuppressWarningReporter() {
-#ifdef DEBUG
-    WarningReporter reporter =
-#endif
-        SetWarningReporter(context_, prevReporter_);
-    MOZ_ASSERT(reporter == nullptr, "Unexpected WarningReporter active");
-    SetWarningReporter(context_, prevReporter_);
-  }
-};
 
 extern JS_PUBLIC_API bool CreateError(
     JSContext* cx, JSExnType type, HandleObject stack, HandleString fileName,
@@ -2825,8 +2779,22 @@ extern JS_PUBLIC_API bool JS_IsExceptionPending(JSContext* cx);
 extern JS_PUBLIC_API bool JS_GetPendingException(JSContext* cx,
                                                  JS::MutableHandleValue vp);
 
+namespace JS {
+
+enum class ExceptionStackBehavior: bool {
+  // Do not capture any stack.
+  DoNotCapture,
+
+  // Capture the current JS stack when setting the exception. It may be
+  // retrieved by JS::GetPendingExceptionStack.
+  Capture
+};
+
+} // namespace JS
+
 extern JS_PUBLIC_API void JS_SetPendingException(JSContext* cx,
-                                                 JS::HandleValue v);
+                                                 JS::HandleValue v,
+                                                 JS::ExceptionStackBehavior behavior = JS::ExceptionStackBehavior::Capture);
 
 extern JS_PUBLIC_API void JS_ClearPendingException(JSContext* cx);
 
@@ -2851,6 +2819,7 @@ class JS_PUBLIC_API AutoSaveExceptionState {
   bool wasOverRecursed;
   bool wasThrowing;
   RootedValue exceptionValue;
+  RootedObject exceptionStack;
 
  public:
   /*
@@ -2869,12 +2838,7 @@ class JS_PUBLIC_API AutoSaveExceptionState {
    * Discard any stored exception state.
    * If this is called, the destructor is a no-op.
    */
-  void drop() {
-    wasPropagatingForcedReturn = false;
-    wasOverRecursed = false;
-    wasThrowing = false;
-    exceptionValue.setUndefined();
-  }
+  void drop();
 
   /*
    * Replace cx's exception state with the stored exception state. Then
@@ -2883,6 +2847,17 @@ class JS_PUBLIC_API AutoSaveExceptionState {
    */
   void restore();
 };
+
+/**
+ * Get the SavedFrame stack object captured when the pending exception was set
+ * on the JSContext. This fuzzily correlates with a `throw` statement in JS,
+ * although arbitrary JSAPI consumers or VM code may also set pending exceptions
+ * via `JS_SetPendingException`.
+ *
+ * This is not the same stack as `e.stack` when `e` is an `Error` object. (That
+ * would be JS::ExceptionStackOrNull).
+ */
+MOZ_MUST_USE JS_PUBLIC_API JSObject* GetPendingExceptionStack(JSContext* cx);
 
 } /* namespace JS */
 

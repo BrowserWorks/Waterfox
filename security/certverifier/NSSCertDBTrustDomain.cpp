@@ -8,7 +8,6 @@
 
 #include <stdint.h>
 
-#include "CryptoTask.h"
 #include "ExtendedValidation.h"
 #include "NSSErrorsService.h"
 #include "OCSPVerificationTrustDomain.h"
@@ -201,20 +200,20 @@ Result NSSCertDBTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
   if (mCertDBTrustType == trustSSL) {
     int16_t revocationState;
 
-    nsAutoCString encIssuer;
-    nsAutoCString encSerial;
-    nsAutoCString encSubject;
-    nsAutoCString encPubKey;
+    nsTArray<uint8_t> issuerBytes;
+    nsTArray<uint8_t> serialBytes;
+    nsTArray<uint8_t> subjectBytes;
+    nsTArray<uint8_t> pubKeyBytes;
 
-    nsresult nsrv = BuildRevocationCheckStrings(
-        candidateCert.get(), encIssuer, encSerial, encSubject, encPubKey);
+    nsresult nsrv = BuildRevocationCheckArrays(
+        candidateCert, issuerBytes, serialBytes, subjectBytes, pubKeyBytes);
 
     if (NS_FAILED(nsrv)) {
       return Result::FATAL_ERROR_LIBRARY_FAILURE;
     }
 
-    nsrv = mCertBlocklist->GetRevocationState(encIssuer, encSerial, encSubject,
-                                              encPubKey, &revocationState);
+    nsrv = mCertBlocklist->GetRevocationState(
+        issuerBytes, serialBytes, subjectBytes, pubKeyBytes, &revocationState);
     if (NS_FAILED(nsrv)) {
       return Result::FATAL_ERROR_LIBRARY_FAILURE;
     }
@@ -1249,83 +1248,37 @@ nsresult DefaultServerNicknameForCert(const CERTCertificate* cert,
   return NS_ERROR_FAILURE;
 }
 
-nsresult BuildRevocationCheckStrings(const CERTCertificate* cert,
-                                     /*out*/ nsCString& encIssuer,
-                                     /*out*/ nsCString& encSerial,
-                                     /*out*/ nsCString& encSubject,
-                                     /*out*/ nsCString& encPubKey) {
-  // Convert issuer, serial, subject and pubKey data to Base64 encoded DER
-  nsDependentCSubstring issuerString(
-      BitwiseCast<char*, uint8_t*>(cert->derIssuer.data), cert->derIssuer.len);
-  nsDependentCSubstring serialString(
-      BitwiseCast<char*, uint8_t*>(cert->serialNumber.data),
-      cert->serialNumber.len);
-  nsDependentCSubstring subjectString(
-      BitwiseCast<char*, uint8_t*>(cert->derSubject.data),
-      cert->derSubject.len);
-  nsDependentCSubstring pubKeyString(
-      BitwiseCast<char*, uint8_t*>(cert->derPublicKey.data),
-      cert->derPublicKey.len);
-
-  nsresult rv = Base64Encode(issuerString, encIssuer);
-  if (NS_FAILED(rv)) {
-    return rv;
+nsresult BuildRevocationCheckArrays(const UniqueCERTCertificate& cert,
+                                    /*out*/ nsTArray<uint8_t>& issuerBytes,
+                                    /*out*/ nsTArray<uint8_t>& serialBytes,
+                                    /*out*/ nsTArray<uint8_t>& subjectBytes,
+                                    /*out*/ nsTArray<uint8_t>& pubKeyBytes) {
+  issuerBytes.Clear();
+  if (!issuerBytes.AppendElements(
+          BitwiseCast<char*, uint8_t*>(cert->derIssuer.data),
+          cert->derIssuer.len)) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
-  rv = Base64Encode(serialString, encSerial);
-  if (NS_FAILED(rv)) {
-    return rv;
+  serialBytes.Clear();
+  if (!serialBytes.AppendElements(
+          BitwiseCast<char*, uint8_t*>(cert->serialNumber.data),
+          cert->serialNumber.len)) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
-  rv = Base64Encode(subjectString, encSubject);
-  if (NS_FAILED(rv)) {
-    return rv;
+  subjectBytes.Clear();
+  if (!subjectBytes.AppendElements(
+          BitwiseCast<char*, uint8_t*>(cert->derSubject.data),
+          cert->derSubject.len)) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
-  rv = Base64Encode(pubKeyString, encPubKey);
-  if (NS_FAILED(rv)) {
-    return rv;
+  pubKeyBytes.Clear();
+  if (!pubKeyBytes.AppendElements(
+          BitwiseCast<char*, uint8_t*>(cert->derPublicKey.data),
+          cert->derPublicKey.len)) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
-
   return NS_OK;
 }
-
-// Helper for SaveIntermediateCerts. Does the actual importing work on a
-// background thread so certificate verification can return its result.
-class BackgroundSaveIntermediateCertsTask final : public CryptoTask {
- public:
-  explicit BackgroundSaveIntermediateCertsTask(
-      UniqueCERTCertList&& intermediates)
-      : mIntermediates(std::move(intermediates)) {}
-
- private:
-  virtual nsresult CalculateResult() override {
-    UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
-    if (!slot) {
-      return NS_ERROR_FAILURE;
-    }
-    for (CERTCertListNode* node = CERT_LIST_HEAD(mIntermediates);
-         !CERT_LIST_END(node, mIntermediates); node = CERT_LIST_NEXT(node)) {
-      // This is a best-effort attempt at avoiding unknown issuer errors in the
-      // future, so ignore failures here.
-      nsAutoCString nickname;
-      if (NS_FAILED(DefaultServerNicknameForCert(node->cert, nickname))) {
-        continue;
-      }
-      Unused << PK11_ImportCert(slot.get(), node->cert, CK_INVALID_HANDLE,
-                                nickname.get(), false);
-    }
-    return NS_OK;
-  }
-
-  virtual void CallCallback(nsresult rv) override {
-    nsCOMPtr<nsIObserverService> observerService =
-        mozilla::services::GetObserverService();
-    if (observerService) {
-      observerService->NotifyObservers(nullptr, "psm:intermediate-certs-cached",
-                                       nullptr);
-    }
-  }
-
-  UniqueCERTCertList mIntermediates;
-};
 
 /**
  * Given a list of certificates representing a verified certificate path from an
@@ -1388,9 +1341,39 @@ void SaveIntermediateCerts(const UniqueCERTCertList& certList) {
   }
 
   if (numIntermediates > 0) {
-    RefPtr<BackgroundSaveIntermediateCertsTask> task =
-        new BackgroundSaveIntermediateCertsTask(std::move(intermediates));
-    Unused << task->Dispatch("ImportInts");
+    nsCOMPtr<nsIRunnable> importCertsRunnable(NS_NewRunnableFunction(
+        "IdleSaveIntermediateCerts",
+        [intermediates = std::move(intermediates)]() -> void {
+          UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
+          if (!slot) {
+            return;
+          }
+          for (CERTCertListNode* node = CERT_LIST_HEAD(intermediates);
+               !CERT_LIST_END(node, intermediates);
+               node = CERT_LIST_NEXT(node)) {
+            // This is a best-effort attempt at avoiding unknown issuer errors
+            // in the future, so ignore failures here.
+            nsAutoCString nickname;
+            if (NS_FAILED(DefaultServerNicknameForCert(node->cert, nickname))) {
+              continue;
+            }
+            Unused << PK11_ImportCert(slot.get(), node->cert, CK_INVALID_HANDLE,
+                                      nickname.get(), false);
+          }
+
+          nsCOMPtr<nsIRunnable> runnable(NS_NewRunnableFunction(
+              "IdleSaveIntermediateCertsDone", []() -> void {
+                nsCOMPtr<nsIObserverService> observerService =
+                    mozilla::services::GetObserverService();
+                if (observerService) {
+                  observerService->NotifyObservers(
+                      nullptr, "psm:intermediate-certs-cached", nullptr);
+                }
+              }));
+          Unused << NS_DispatchToMainThread(runnable.forget());
+        }));
+    Unused << NS_DispatchToCurrentThreadQueue(importCertsRunnable.forget(),
+                                              EventQueuePriority::Idle);
   }
 }
 

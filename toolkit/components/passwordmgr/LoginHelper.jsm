@@ -60,18 +60,12 @@ var LoginHelper = {
       return this.debug ? "Debug" : "Warn";
     };
 
-    let logger;
-    function getConsole() {
-      if (!logger) {
-        // Create a new instance of the ConsoleAPI so we can control the maxLogLevel with a pref.
-        let consoleOptions = {
-          maxLogLevel: getMaxLogLevel(),
-          prefix: aLogPrefix,
-        };
-        logger = console.createInstance(consoleOptions);
-      }
-      return logger;
-    }
+    // Create a new instance of the ConsoleAPI so we can control the maxLogLevel with a pref.
+    let consoleOptions = {
+      maxLogLevel: getMaxLogLevel(),
+      prefix: aLogPrefix,
+    };
+    let logger = console.createInstance(consoleOptions);
 
     // Watch for pref changes and update this.debug and the maxLogLevel for created loggers
     Services.prefs.addObserver("signon.debug", () => {
@@ -81,26 +75,7 @@ var LoginHelper = {
       }
     });
 
-    return {
-      log: (...args) => {
-        if (this.debug) {
-          getConsole().log(...args);
-        }
-      },
-      error: (...args) => {
-        getConsole().error(...args);
-      },
-      debug: (...args) => {
-        if (this.debug) {
-          getConsole().debug(...args);
-        }
-      },
-      warn: (...args) => {
-        if (this.debug) {
-          getConsole().warn(...args);
-        }
-      },
-    };
+    return logger;
   },
 
   /**
@@ -272,6 +247,7 @@ var LoginHelper = {
    */
   isOriginMatching(aLoginOrigin, aSearchOrigin, aOptions = {
     schemeUpgrades: false,
+    acceptWildcardMatch: false,
   }) {
     if (aLoginOrigin == aSearchOrigin) {
       return true;
@@ -279,6 +255,10 @@ var LoginHelper = {
 
     if (!aOptions) {
       return false;
+    }
+
+    if (aOptions.acceptWildcardMatch && aLoginOrigin == "") {
+      return true;
     }
 
     if (aOptions.schemeUpgrades) {
@@ -480,12 +460,17 @@ var LoginHelper = {
    *        String representing the origin to use for preferring one login over
    *        another when they are dupes. This is used with "scheme" for
    *        `resolveBy` so the scheme from this origin will be preferred.
+   * @param {string} [preferredFormActionOrigin = undefined]
+   *        String representing the action origin to use for preferring one login over
+   *        another when they are dupes. This is used with "actionOrigin" for
+   *        `resolveBy` so the scheme from this action origin will be preferred.
    *
    * @returns {nsILoginInfo[]} list of unique logins.
    */
   dedupeLogins(logins, uniqueKeys = ["username", "password"],
                resolveBy = ["timeLastUsed"],
-               preferredOrigin = undefined) {
+               preferredOrigin = undefined,
+               preferredFormActionOrigin = undefined) {
     const KEY_DELIMITER = ":";
 
     if (!preferredOrigin && resolveBy.includes("scheme")) {
@@ -530,6 +515,16 @@ var LoginHelper = {
 
       for (let preference of resolveBy) {
         switch (preference) {
+          case "actionOrigin": {
+            if (!preferredFormActionOrigin) {
+              break;
+            }
+            if (LoginHelper.isOriginMatching(existingLogin.formSubmitURL, preferredFormActionOrigin, {schemeUpgrades: LoginHelper.schemeUpgrades}) &&
+                !LoginHelper.isOriginMatching(login.formSubmitURL, preferredFormActionOrigin, {schemeUpgrades: LoginHelper.schemeUpgrades})) {
+              return false;
+            }
+            break;
+          }
           case "scheme": {
             if (!preferredOriginScheme) {
               break;
@@ -652,6 +647,10 @@ var LoginHelper = {
 
     let acFieldName = element.getAutocompleteInfo().fieldName;
     if (!(acFieldName == "username" ||
+          // Bug 1540154: Some sites use tel/email on their username fields.
+          acFieldName == "email" ||
+          acFieldName == "tel" ||
+          acFieldName == "tel-national" ||
           acFieldName == "off" ||
           acFieldName == "on" ||
           acFieldName == "")) {

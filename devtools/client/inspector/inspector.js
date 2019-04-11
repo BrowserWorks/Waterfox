@@ -135,6 +135,7 @@ function Inspector(toolbox) {
   this.onSidebarSelect = this.onSidebarSelect.bind(this);
   this.onSidebarShown = this.onSidebarShown.bind(this);
   this.onSidebarToggle = this.onSidebarToggle.bind(this);
+  this.handleThreadState = this.handleThreadState.bind(this);
 
   this._target.on("will-navigate", this._onBeforeNavigate);
 }
@@ -146,6 +147,18 @@ Inspector.prototype = {
   async init() {
     // Localize all the nodes containing a data-localization attribute.
     localizeMarkup(this.panelDoc);
+
+    // When replaying, we need to listen to changes in the target's pause state.
+    if (this._target.isReplayEnabled()) {
+      let dbg = this._toolbox.getPanel("jsdebugger");
+      if (!dbg) {
+        dbg = await this._toolbox.loadTool("jsdebugger");
+      }
+      this._replayResumed = !dbg.isPaused();
+
+      this._target.threadClient.addListener("paused", this.handleThreadState);
+      this._target.threadClient.addListener("resumed", this.handleThreadState);
+    }
 
     await Promise.all([
       this._getCssProperties(),
@@ -349,7 +362,11 @@ Inspector.prototype = {
 
     // A helper to tell if the target has or is about to navigate.
     // this._pendingSelection changes on "will-navigate" and "new-root" events.
-    const hasNavigated = () => pendingSelection !== this._pendingSelection;
+    // When replaying, if the target is unpaused then we consider it to be
+    // navigating so that its tree will not be constructed.
+    const hasNavigated = () => {
+      return pendingSelection !== this._pendingSelection || this._replayResumed;
+    };
 
     // If available, set either the previously selected node or the body
     // as default selected, else set documentElement
@@ -1103,6 +1120,14 @@ Inspector.prototype = {
     this._pendingSelection = onNodeSelected;
     this._getDefaultNodeForSelection()
         .then(onNodeSelected, this._handleRejectionIfNotDestroyed);
+  },
+
+  /**
+   * When replaying, reset the inspector whenever the target paused or unpauses.
+   */
+  handleThreadState(event) {
+    this._replayResumed = event != "paused";
+    this.onNewRoot();
   },
 
   /**

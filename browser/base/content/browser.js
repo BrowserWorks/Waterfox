@@ -484,6 +484,9 @@ function showFxaToolbarMenu(enable) {
     // event was performed yet.
     gSync.maybeUpdateUIState();
 
+    // Enabled FxA toolbar telemetry
+    Services.telemetry.setEventRecordingEnabled("fxa_avatar_menu", true);
+
     // We set an attribute here so that we can toggle the custom
     // badge depending on whether the FxA menu was ever accessed.
     if (!gFxaToolbarAccessed) {
@@ -730,7 +733,7 @@ const gStoragePressureObserver = {
         callback(notificationBar, button) {
           // The advanced subpanes are only supported in the old organization, which will
           // be removed by bug 1349689.
-          openPreferences("privacy-sitedata", { origin: "storagePressure" });
+          openPreferences("privacy-sitedata");
         },
       });
     }
@@ -1373,7 +1376,6 @@ var gBrowserInit = {
     TabsInTitlebar.init();
 
     new LightweightThemeConsumer(document);
-    CompactTheme.init();
 
     if (AppConstants.platform == "win") {
       if (window.matchMedia("(-moz-os-version: windows-win8)").matches &&
@@ -2000,8 +2002,6 @@ var gBrowserInit = {
     TabsInTitlebar.uninit();
 
     ToolbarIconColor.uninit();
-
-    CompactTheme.uninit();
 
     // In certain scenarios it's possible for unload to be fired before onload,
     // (e.g. if the window is being closed after browser.js loads but before the
@@ -3193,8 +3193,7 @@ var BrowserOnClick = {
           flags |= overrideService.ERROR_TIME;
         }
         let uri = Services.uriFixup.createFixupURI(location, 0);
-        let permanentOverride =
-          Services.prefs.getBoolPref("security.certerrors.permanentOverride");
+        let permanentOverride = !PrivateBrowsingUtils.isBrowserPrivate(browser) && Services.prefs.getBoolPref("security.certerrors.permanentOverride");
         cert = securityInfo.serverCert;
         overrideService.rememberValidityOverride(
           uri.asciiHost, uri.port,
@@ -4709,29 +4708,44 @@ function updateFileMenuUserContextUIVisibility(id) {
  * Updates the User Context UI indicators if the browser is in a non-default context
  */
 function updateUserContextUIIndicator() {
+  function replaceContainerClass(classType, element, value) {
+    let prefix = "identity-" + classType + "-";
+    if (value && element.classList.contains(prefix + value)) {
+      return;
+    }
+    for (let className of element.classList) {
+      if (className.startsWith(prefix)) {
+        element.classList.remove(className);
+      }
+    }
+    if (value) {
+      element.classList.add(prefix + value);
+    }
+  }
+
   let hbox = document.getElementById("userContext-icons");
 
   let userContextId = gBrowser.selectedBrowser.getAttribute("usercontextid");
   if (!userContextId) {
-    hbox.setAttribute("data-identity-color", "");
+    replaceContainerClass("color", hbox, "");
     hbox.hidden = true;
     return;
   }
 
   let identity = ContextualIdentityService.getPublicIdentityFromId(userContextId);
   if (!identity) {
-    hbox.setAttribute("data-identity-color", "");
+    replaceContainerClass("color", hbox, "");
     hbox.hidden = true;
     return;
   }
 
-  hbox.setAttribute("data-identity-color", identity.color);
+  replaceContainerClass("color", hbox, identity.color);
 
   let label = document.getElementById("userContext-label");
   label.setAttribute("value", ContextualIdentityService.getUserContextLabel(userContextId));
 
   let indicator = document.getElementById("userContext-indicator");
-  indicator.setAttribute("data-identity-icon", identity.icon);
+  replaceContainerClass("icon", indicator, identity.icon);
 
   hbox.hidden = false;
 }
@@ -6950,7 +6964,7 @@ var OfflineApps = {
   },
 
   manage() {
-    openPreferences("panePrivacy", { origin: "offlineApps" });
+    openPreferences("panePrivacy");
   },
 
   receiveMessage(msg) {

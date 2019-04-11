@@ -27,6 +27,8 @@ namespace {
   "urlclassifier.features.fingerprinting.whitelistTables"
 #define URLCLASSIFIER_FINGERPRINTING_WHITELIST_TEST_ENTRIES \
   "urlclassifier.features.fingerprinting.whitelistHosts"
+#define URLCLASSIFIER_FINGERPRINTING_SKIP_URLS \
+  "urlclassifier.features.fingerprinting.skipURLs"
 #define TABLE_FINGERPRINTING_BLACKLIST_PREF "fingerprinting-blacklist-pref"
 #define TABLE_FINGERPRINTING_WHITELIST_PREF "fingerprinting-whitelist-pref"
 
@@ -47,7 +49,7 @@ UrlClassifierFeatureFingerprintingProtection::
               URLCLASSIFIER_FINGERPRINTING_WHITELIST_TEST_ENTRIES),
           NS_LITERAL_CSTRING(TABLE_FINGERPRINTING_BLACKLIST_PREF),
           NS_LITERAL_CSTRING(TABLE_FINGERPRINTING_WHITELIST_PREF),
-          EmptyCString()) {}
+          NS_LITERAL_CSTRING(URLCLASSIFIER_FINGERPRINTING_SKIP_URLS)) {}
 
 /* static */ const char* UrlClassifierFeatureFingerprintingProtection::Name() {
   return FINGERPRINTING_FEATURE_NAME;
@@ -143,7 +145,8 @@ UrlClassifierFeatureFingerprintingProtection::GetIfNameMatches(
 
 NS_IMETHODIMP
 UrlClassifierFeatureFingerprintingProtection::ProcessChannel(
-    nsIChannel* aChannel, const nsACString& aList, bool* aShouldContinue) {
+    nsIChannel* aChannel, const nsTArray<nsCString>& aList,
+    bool* aShouldContinue) {
   NS_ENSURE_ARG_POINTER(aChannel);
   NS_ENSURE_ARG_POINTER(aShouldContinue);
 
@@ -157,8 +160,11 @@ UrlClassifierFeatureFingerprintingProtection::ProcessChannel(
     return NS_OK;
   }
 
+  nsAutoCString list;
+  UrlClassifierCommon::TablesToString(aList, list);
+
   UrlClassifierCommon::SetBlockedContent(aChannel, NS_ERROR_FINGERPRINTING_URI,
-                                         aList, EmptyCString(), EmptyCString());
+                                         list, EmptyCString(), EmptyCString());
 
   UC_LOG(
       ("UrlClassifierFeatureFingerprintingProtection::ProcessChannel, "

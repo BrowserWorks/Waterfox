@@ -13,6 +13,7 @@
 #include "mozilla/Likely.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/ResultExtensions.h"
 #include "mozilla/TextEditRules.h"
 
@@ -723,7 +724,7 @@ void nsTreeBodyFrame::CheckOverflow(const ScrollParts& aParts) {
   AutoWeakFrame weakFrame(this);
 
   RefPtr<nsPresContext> presContext = PresContext();
-  nsCOMPtr<nsIPresShell> presShell = presContext->GetPresShell();
+  RefPtr<mozilla::PresShell> presShell = presContext->GetPresShell();
   nsCOMPtr<nsIContent> content = mContent;
 
   if (verticalOverflowChanged) {
@@ -2528,6 +2529,9 @@ void nsTreeBodyFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   if (!mView || !GetContent()->GetComposedDoc()->GetWindow()) return;
 
   nsDisplayItem* item = MakeDisplayItem<nsDisplayTreeBody>(aBuilder, this);
+  if (!item) {
+    return;
+  }
   aLists.Content()->AppendToTop(item);
 
 #ifdef XP_MACOSX
@@ -2993,7 +2997,7 @@ ImgDrawResult nsTreeBodyFrame::PaintCell(
 
       const nsStyleBorder* borderStyle = lineContext->StyleBorder();
       // Resolve currentcolor values against the treeline context
-      nscolor color = borderStyle->mBorderLeftColor.CalcColor(lineContext);
+      nscolor color = borderStyle->mBorderLeftColor.CalcColor(*lineContext);
       ColorPattern colorPatt(ToDeviceColor(color));
 
       StyleBorderStyle style = borderStyle->GetBorderStyle(eSideLeft);
@@ -3481,7 +3485,7 @@ ImgDrawResult nsTreeBodyFrame::PaintText(
   }
 
   aRenderingContext.SetColor(
-      Color::FromABGR(textContext->StyleColor()->mColor));
+      Color::FromABGR(textContext->StyleColor()->mColor.ToColor()));
   nsLayoutUtils::DrawString(
       this, *fontMet, &aRenderingContext, text.get(), text.Length(),
       textRect.TopLeft() + nsPoint(0, baseline), cellContext);

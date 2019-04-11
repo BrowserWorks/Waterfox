@@ -225,7 +225,19 @@ let ACTORS = {
 
       messages: [
         "PictureInPicture:SetupPlayer",
+        "PictureInPicture:Play",
+        "PictureInPicture:Pause",
       ],
+    },
+  },
+
+  PictureInPictureToggle: {
+    child: {
+      allFrames: true,
+      module: "resource://gre/actors/PictureInPictureChild.jsm",
+      events: {
+        "canplay": {capture: true, mozSystemGroup: true},
+      },
     },
   },
 

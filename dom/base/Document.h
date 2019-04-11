@@ -54,6 +54,7 @@
 #include "mozilla/dom/ContentBlockingLog.h"
 #include "mozilla/dom/DispatcherTrait.h"
 #include "mozilla/dom/DocumentOrShadowRoot.h"
+#include "mozilla/HashTable.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/NotNull.h"
 #include "mozilla/SegmentedVector.h"
@@ -1244,9 +1245,8 @@ class Document : public nsINode,
    * method is responsible for calling BeginObservingDocument() on the
    * presshell if the presshell should observe document mutations.
    */
-  already_AddRefed<PresShell> CreatePresShell(
-      nsPresContext* aContext, nsViewManager* aViewManager,
-      UniquePtr<ServoStyleSet> aStyleSet);
+  already_AddRefed<PresShell> CreatePresShell(nsPresContext* aContext,
+                                              nsViewManager* aViewManager);
   void DeletePresShell();
 
   PresShell* GetPresShell() const {
@@ -1631,6 +1631,22 @@ class Document : public nsINode,
   // Get the "head" element in the sense of document.head.
   HTMLSharedElement* GetHead();
 
+  ServoStyleSet* StyleSetForPresShellOrMediaQueryEvaluation() const {
+    return mStyleSet.get();
+  }
+
+  // ShadowRoot has APIs that can change styles. This notifies the shell that
+  // stlyes applicable in the shadow tree have potentially changed.
+  void RecordShadowStyleChange(ShadowRoot&);
+
+  // Needs to be called any time the applicable style can has changed, in order
+  // to schedule a style flush and setup all the relevant state.
+  void ApplicableStylesChanged();
+
+  // Whether we filled the style set with any style sheet. Only meant to be used
+  // from DocumentOrShadowRoot::Traverse.
+  bool StyleSetFilled() const { return mStyleSetFilled; }
+
   /**
    * Accessors to the collection of stylesheets owned by this document.
    * Style sheets are ordered, most significant last.
@@ -2013,6 +2029,8 @@ class Document : public nsINode,
   // This should only be called by callers whose state is also reflected in the
   // implementation of Document::GetDocumentState.
   void DocumentStatesChanged(EventStates aStateMask);
+
+  void ResetDocumentDirection();
 
   // Observation hooks for style data to propagate notifications
   // to document observers
@@ -2858,7 +2876,7 @@ class Document : public nsINode,
    * pseudoclass so once can know whether a document is expected to be rendered
    * left-to-right or right-to-left.
    */
-  virtual bool IsDocumentRightToLeft() { return false; }
+  bool IsDocumentRightToLeft();
 
   /**
    * Called by Parser for link rel=preconnect
@@ -2941,16 +2959,34 @@ class Document : public nsINode,
 
   SVGSVGElement* GetSVGRootElement() const;
 
+  struct FrameRequest {
+    FrameRequest(FrameRequestCallback& aCallback, int32_t aHandle);
+
+    // Comparator operators to allow RemoveElementSorted with an
+    // integer argument on arrays of FrameRequest
+    bool operator==(int32_t aHandle) const { return mHandle == aHandle; }
+    bool operator<(int32_t aHandle) const { return mHandle < aHandle; }
+
+    RefPtr<FrameRequestCallback> mCallback;
+    int32_t mHandle;
+  };
+
   nsresult ScheduleFrameRequestCallback(FrameRequestCallback& aCallback,
                                         int32_t* aHandle);
   void CancelFrameRequestCallback(int32_t aHandle);
 
-  typedef nsTArray<RefPtr<FrameRequestCallback>> FrameRequestCallbackList;
+  /**
+   * Returns true if the handle refers to a callback that was canceled that
+   * we did not find in our list of callbacks (e.g. because it is one of those
+   * in the set of callbacks currently queued to be run).
+   */
+  bool IsCanceledFrameRequestCallback(int32_t aHandle) const;
+
   /**
    * Put this document's frame request callbacks into the provided
    * list, and forget about them.
    */
-  void TakeFrameRequestCallbacks(FrameRequestCallbackList& aCallbacks);
+  void TakeFrameRequestCallbacks(nsTArray<FrameRequest>& aCallbacks);
 
   /**
    * @return true if this document's frame request callbacks should be
@@ -3784,7 +3820,14 @@ class Document : public nsINode,
   void RemoveStyleSheetsFromStyleSets(
       const nsTArray<RefPtr<StyleSheet>>& aSheets, SheetType aType);
   void ResetStylesheetsToURI(nsIURI* aURI);
-  void FillStyleSet(ServoStyleSet* aStyleSet);
+  void FillStyleSet();
+  void FillStyleSetUserAndUASheets();
+  void FillStyleSetDocumentSheets();
+  void CompatibilityModeChanged();
+  bool NeedsQuirksSheet() const {
+    // SVG documents never load quirk.css.
+    return mCompatMode == eCompatibility_NavQuirks && !IsSVGDocument();
+  }
   void AddStyleSheetToStyleSets(StyleSheet* aSheet);
   void RemoveStyleSheetFromStyleSets(StyleSheet* aSheet);
   void NotifyStyleSheetAdded(StyleSheet* aSheet, bool aDocumentSheet);
@@ -3808,6 +3851,7 @@ class Document : public nsINode,
   // Lazy-initialization to have mDocGroup initialized in prior to the
   // SelectorCaches.
   UniquePtr<SelectorCache> mSelectorCache;
+  UniquePtr<ServoStyleSet> mStyleSet;
 
  protected:
   friend class nsDocumentOnStack;
@@ -4165,9 +4209,11 @@ class Document : public nsINode,
 
   bool mNeedsReleaseAfterStackRefCntRelease : 1;
 
-  // Whether we have filled our pres shell's style set with the document's
-  // additional sheets and sheets from the nsStyleSheetService.
+  // Whether we have filled our style set with all the stylesheets.
   bool mStyleSetFilled : 1;
+
+  // Whether we have a quirks mode stylesheet in the style set.
+  bool mQuirkSheetAdded : 1;
 
   // Keeps track of whether we have a pending
   // 'style-sheet-applicable-state-changed' notification.
@@ -4398,9 +4444,11 @@ class Document : public nsINode,
 
   nsCOMPtr<nsIDocumentEncoder> mCachedEncoder;
 
-  struct FrameRequest;
-
   nsTArray<FrameRequest> mFrameRequestCallbacks;
+
+  // The set of frame request callbacks that were canceled but which we failed
+  // to find in mFrameRequestCallbacks.
+  HashSet<int32_t> mCanceledFrameRequestCallbacks;
 
   // This object allows us to evict ourself from the back/forward cache.  The
   // pointer is non-null iff we're currently in the bfcache.

@@ -55,10 +55,9 @@ addRDMTask(TEST_URL, async function({ ui }) {
   const deviceCb = [...document.querySelectorAll(".device-input-checkbox")].find(cb => {
     return cb.value == device.name;
   });
-  const submitButton = document.getElementById("device-submit-button");
   ok(deviceCb, "Custom device checkbox added to modal");
   ok(deviceCb.checked, "Custom device enabled");
-  submitButton.click();
+  document.getElementById("device-close-button").click();
 
   info("Look for custom device in device selector");
   const deviceSelector = document.getElementById("device-selector");
@@ -89,15 +88,20 @@ addRDMTask(TEST_URL, async function({ ui }) {
   }));
 
   info("Remove previously added custom device");
+  // Close the form since custom device buttons are only shown when form is not open.
+  const cancelButton = document.getElementById("device-form-cancel");
+  cancelButton.click();
+
   const deviceRemoveButton = document.querySelector(".device-remove-button");
-  const submitButton = document.getElementById("device-submit-button");
   const removed = Promise.all([
     waitUntilState(store, state => state.devices.custom.length == 0),
     once(ui, "device-association-removed"),
   ]);
   deviceRemoveButton.click();
   await removed;
-  submitButton.click();
+
+  info("Close the form before submitting.");
+  document.getElementById("device-close-button").click();
 
   info("Ensure custom device was removed from device selector");
   await waitUntilState(store, state => state.viewports[0].device == "");
@@ -136,10 +140,9 @@ addRDMTask(TEST_URL, async function({ ui }) {
   const deviceCb = [...document.querySelectorAll(".device-input-checkbox")].find(cb => {
     return cb.value == unicodeDevice.name;
   });
-  const submitButton = document.getElementById("device-submit-button");
   ok(deviceCb, "Custom unicode device checkbox added to modal");
   ok(deviceCb.checked, "Custom unicode device enabled");
-  submitButton.click();
+  document.getElementById("device-close-button").click();
 
   info("Look for custom unicode device in device selector");
   const deviceSelector = document.getElementById("device-selector");

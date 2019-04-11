@@ -71,7 +71,6 @@ class GlobalObject : public NativeObject {
     THROWTYPEERROR,
 
     /* One-off properties stored after slots for built-ins. */
-    LEXICAL_ENVIRONMENT,
     EMPTY_GLOBAL_SCOPE,
     ITERATOR_PROTO,
     ARRAY_ITERATOR_PROTO,
@@ -133,12 +132,6 @@ class GlobalObject : public NativeObject {
  public:
   LexicalEnvironmentObject& lexicalEnvironment() const;
   GlobalScope& emptyGlobalScope() const;
-
-  static constexpr size_t offsetOfLexicalEnvironmentSlot() {
-    static_assert(LEXICAL_ENVIRONMENT >= MAX_FIXED_SLOTS,
-                  "Code assumes lexical environment is stored in dynamic slot");
-    return (LEXICAL_ENVIRONMENT - MAX_FIXED_SLOTS) * sizeof(Value);
-  }
 
   void setOriginalEval(JSObject* evalobj) {
     MOZ_ASSERT(getSlotRef(EVAL).isUndefined());
@@ -295,26 +288,32 @@ class GlobalObject : public NativeObject {
 
   static NativeObject* getOrCreateObjectPrototype(
       JSContext* cx, Handle<GlobalObject*> global) {
-    if (global->functionObjectClassesInitialized()) {
-      return &global->getPrototype(JSProto_Object)
-                  .toObject()
-                  .as<NativeObject>();
-    }
-    if (!ensureConstructor(cx, global, JSProto_Object)) {
-      return nullptr;
+    if (!global->functionObjectClassesInitialized()) {
+      if (!ensureConstructor(cx, global, JSProto_Object)) {
+        return nullptr;
+      }
     }
     return &global->getPrototype(JSProto_Object).toObject().as<NativeObject>();
   }
 
+  static NativeObject* getOrCreateFunctionConstructor(
+      JSContext* cx, Handle<GlobalObject*> global) {
+    if (!global->functionObjectClassesInitialized()) {
+      if (!ensureConstructor(cx, global, JSProto_Object)) {
+        return nullptr;
+      }
+    }
+    return &global->getConstructor(JSProto_Function)
+                .toObject()
+                .as<NativeObject>();
+  }
+
   static NativeObject* getOrCreateFunctionPrototype(
       JSContext* cx, Handle<GlobalObject*> global) {
-    if (global->functionObjectClassesInitialized()) {
-      return &global->getPrototype(JSProto_Function)
-                  .toObject()
-                  .as<NativeObject>();
-    }
-    if (!ensureConstructor(cx, global, JSProto_Object)) {
-      return nullptr;
+    if (!global->functionObjectClassesInitialized()) {
+      if (!ensureConstructor(cx, global, JSProto_Object)) {
+        return nullptr;
+      }
     }
     return &global->getPrototype(JSProto_Function)
                 .toObject()

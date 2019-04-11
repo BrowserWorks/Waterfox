@@ -271,7 +271,7 @@ BigInt::Digit BigInt::digitDiv(Digit high, Digit low, Digit divisor,
           : "=a"(quotient), "=d"(rem)
           // Inputs: put `high` into rdx, `low` into rax, and `divisor` into
           // any register or stack slot.
-          : "d"(high), "a"(low), [divisor] "rm"(divisor));
+          : "d"(high), "a"(low), [ divisor ] "rm"(divisor));
   *remainder = rem;
   return quotient;
 #elif defined(__i386__)
@@ -282,7 +282,7 @@ BigInt::Digit BigInt::digitDiv(Digit high, Digit low, Digit divisor,
           : "=a"(quotient), "=d"(rem)
           // Inputs: put `high` into edx, `low` into eax, and `divisor` into
           // any register or stack slot.
-          : "d"(high), "a"(low), [divisor] "rm"(divisor));
+          : "d"(high), "a"(low), [ divisor ] "rm"(divisor));
   *remainder = rem;
   return quotient;
 #else
@@ -2686,6 +2686,22 @@ BigInt* js::ToBigInt(JSContext* cx, HandleValue val) {
 
   JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_NOT_BIGINT);
   return nullptr;
+}
+
+JS::Result<int64_t> js::ToBigInt64(JSContext* cx, HandleValue v) {
+  BigInt* bi = ToBigInt(cx, v);
+  if (!bi) {
+    return cx->alreadyReportedError();
+  }
+  return BigInt::toInt64(bi);
+}
+
+JS::Result<uint64_t> js::ToBigUint64(JSContext* cx, HandleValue v) {
+  BigInt* bi = ToBigInt(cx, v);
+  if (!bi) {
+    return cx->alreadyReportedError();
+  }
+  return BigInt::toUint64(bi);
 }
 
 double BigInt::numberValue(BigInt* x) {

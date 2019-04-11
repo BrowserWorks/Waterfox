@@ -5873,6 +5873,7 @@ nsresult nsContentUtils::GetASCIIOrigin(nsIPrincipal* aPrincipal,
 /* static */
 nsresult nsContentUtils::GetASCIIOrigin(nsIURI* aURI, nsACString& aOrigin) {
   MOZ_ASSERT(aURI, "missing uri");
+  MOZ_ASSERT(NS_IsMainThread());
 
   bool isBlobURL = false;
   nsresult rv = aURI->SchemeIs(BLOBURI_SCHEME, &isBlobURL);
@@ -5924,6 +5925,69 @@ nsresult nsContentUtils::GetASCIIOrigin(nsIURI* aURI, nsACString& aOrigin) {
 }
 
 /* static */
+nsresult nsContentUtils::GetThreadSafeASCIIOrigin(nsIURI* aURI,
+                                                  nsACString& aOrigin) {
+  MOZ_ASSERT(aURI, "missing uri");
+
+  bool isBlobURL = false;
+  nsresult rv = aURI->SchemeIs(BLOBURI_SCHEME, &isBlobURL);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // For Blob URI, the path is the URL of the owning page.
+  if (isBlobURL) {
+    nsAutoCString path;
+    rv = aURI->GetPathQueryRef(path);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    nsCOMPtr<nsIURI> uri;
+    nsresult rv = NS_NewURIOnAnyThread(getter_AddRefs(uri), path);
+    if (rv == NS_ERROR_UNKNOWN_PROTOCOL) {
+      return NS_ERROR_UNKNOWN_PROTOCOL;
+    }
+
+    if (NS_FAILED(rv)) {
+      aOrigin.AssignLiteral("null");
+      return NS_OK;
+    }
+
+    return GetThreadSafeASCIIOrigin(uri, aOrigin);
+  }
+
+  aOrigin.Truncate();
+
+  // This is not supported yet.
+  nsCOMPtr<nsINestedURI> nestedURI(do_QueryInterface(aURI));
+  if (nestedURI) {
+    return NS_ERROR_UNKNOWN_PROTOCOL;
+  }
+
+  nsAutoCString host;
+  rv = aURI->GetAsciiHost(host);
+
+  if (NS_SUCCEEDED(rv) && !host.IsEmpty()) {
+    nsAutoCString userPass;
+    aURI->GetUserPass(userPass);
+
+    nsCOMPtr<nsIURI> uri = aURI;
+
+    nsAutoCString prePath;
+    if (!userPass.IsEmpty()) {
+      rv = NS_MutateURI(uri).SetUserPass(EmptyCString()).Finalize(uri);
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
+
+    rv = uri->GetPrePath(prePath);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    aOrigin = prePath;
+  } else {
+    aOrigin.AssignLiteral("null");
+  }
+
+  return NS_OK;
+}
+
+/* static */
 nsresult nsContentUtils::GetUTFOrigin(nsIPrincipal* aPrincipal,
                                       nsAString& aOrigin) {
   MOZ_ASSERT(aPrincipal, "missing principal");
@@ -5941,6 +6005,7 @@ nsresult nsContentUtils::GetUTFOrigin(nsIPrincipal* aPrincipal,
 /* static */
 nsresult nsContentUtils::GetUTFOrigin(nsIURI* aURI, nsAString& aOrigin) {
   MOZ_ASSERT(aURI, "missing uri");
+  MOZ_ASSERT(NS_IsMainThread());
   nsresult rv;
 
 #if defined(MOZ_THUNDERBIRD) || defined(MOZ_SUITE)
@@ -5958,6 +6023,24 @@ nsresult nsContentUtils::GetUTFOrigin(nsIURI* aURI, nsAString& aOrigin) {
 
   nsAutoCString asciiOrigin;
   rv = GetASCIIOrigin(aURI, asciiOrigin);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  aOrigin = NS_ConvertUTF8toUTF16(asciiOrigin);
+  return NS_OK;
+}
+
+/* static */
+nsresult nsContentUtils::GetThreadSafeUTFOrigin(nsIURI* aURI,
+                                                nsAString& aOrigin) {
+#if defined(MOZ_THUNDERBIRD) || defined(MOZ_SUITE)
+  return NS_ERROR_UNKNOWN_PROTOCOL;
+#endif
+
+  MOZ_ASSERT(aURI, "missing uri");
+  nsresult rv;
+
+  nsAutoCString asciiOrigin;
+  rv = GetThreadSafeASCIIOrigin(aURI, asciiOrigin);
   NS_ENSURE_SUCCESS(rv, rv);
 
   aOrigin = NS_ConvertUTF8toUTF16(asciiOrigin);
@@ -9370,6 +9453,7 @@ void nsContentUtils::TryToUpgradeElement(Element* aElement) {
   }
 }
 
+MOZ_CAN_RUN_SCRIPT
 static void DoCustomElementCreate(Element** aElement, Document* aDoc,
                                   NodeInfo* aNodeInfo,
                                   CustomElementConstructor* aConstructor,
@@ -9457,7 +9541,7 @@ nsresult nsContentUtils::NewXULOrHTMLElement(
   // We only handle the "synchronous custom elements flag is set" now.
   // For the unset case (e.g. cloning a node), see bug 1319342 for that.
   // Step 4.
-  CustomElementDefinition* definition = aDefinition;
+  RefPtr<CustomElementDefinition> definition = aDefinition;
   if (isCustomElement && !definition) {
     MOZ_ASSERT(nodeInfo->NameAtom()->Equals(nodeInfo->LocalName()));
     definition = nsContentUtils::LookupCustomElementDefinition(
@@ -9537,8 +9621,9 @@ nsresult nsContentUtils::NewXULOrHTMLElement(
     // Step 6.1.
     if (synchronousCustomElements) {
       definition->mPrefixStack.AppendElement(nodeInfo->GetPrefixAtom());
-      DoCustomElementCreate(aResult, nodeInfo->GetDocument(), nodeInfo,
-                            definition->mConstructor, rv);
+      RefPtr<Document> doc = nodeInfo->GetDocument();
+      DoCustomElementCreate(aResult, doc, nodeInfo,
+                            MOZ_KnownLive(definition->mConstructor), rv);
       if (rv.MaybeSetPendingException(cx)) {
         if (nodeInfo->NamespaceEquals(kNameSpaceID_XHTML)) {
           NS_IF_ADDREF(*aResult = NS_NewHTMLUnknownElement(nodeInfo.forget(),
@@ -10343,11 +10428,16 @@ Atomic<bool> nsContentUtils::UserInteractionObserver::sUserActive(false);
 NS_IMPL_ISUPPORTS(nsContentUtils::UserInteractionObserver, nsIObserver)
 
 /* static */
+bool nsContentUtils::IsSpecialName(const nsAString& aName) {
+  return aName.LowerCaseEqualsLiteral("_blank") ||
+         aName.LowerCaseEqualsLiteral("_top") ||
+         aName.LowerCaseEqualsLiteral("_parent") ||
+         aName.LowerCaseEqualsLiteral("_self");
+}
+
+/* static */
 bool nsContentUtils::IsOverridingWindowName(const nsAString& aName) {
-  return !aName.IsEmpty() && !aName.LowerCaseEqualsLiteral("_blank") &&
-         !aName.LowerCaseEqualsLiteral("_top") &&
-         !aName.LowerCaseEqualsLiteral("_parent") &&
-         !aName.LowerCaseEqualsLiteral("_self");
+  return !aName.IsEmpty() && !IsSpecialName(aName);
 }
 
 // Unfortunately, we can't unwrap an IDL object using only a concrete type.

@@ -72,7 +72,10 @@ function closeGlobalTab() {
 
 var gTabsProgressListener = {
   onLocationChange(aBrowser, aWebProgress, aRequest, aLocation, aFlags) {
-    if (!gTab || gTab.linkedBrowser != aBrowser) {
+    // Tear down customize mode when the customize mode tab loads some other page.
+    // Customize mode will be re-entered if "about:blank" is loaded again, so
+    // don't tear down in this case.
+    if (!gTab || gTab.linkedBrowser != aBrowser || aLocation.spec == "about:blank") {
       return;
     }
 
@@ -97,6 +100,12 @@ function CustomizeMode(aWindow) {
   this.browser = aWindow.gBrowser;
   this.areas = new Set();
 
+  let content = this.$("customization-content-container");
+  if (!content) {
+    this.window.MozXULElement.insertFTLIfNeeded("browser/customizeMode.ftl");
+    let container = this.$("customization-container");
+    container.replaceChild(this.window.MozXULElement.parseXULToFragment(container.firstChild.data), container.lastChild);
+  }
   // There are two palettes - there's the palette that can be overlayed with
   // toolbar items in browser.xul. This is invisible, and never seen by the
   // user. Then there's the visible palette, which gets populated and displayed
@@ -186,7 +195,9 @@ CustomizeMode.prototype = {
     gTab.setAttribute("customizemode", "true");
     SessionStore.persistTabAttribute("customizemode");
 
-    gTab.linkedBrowser.stop();
+    if (gTab.linkedPanel) {
+      gTab.linkedBrowser.stop();
+    }
 
     let win = gTab.ownerGlobal;
 

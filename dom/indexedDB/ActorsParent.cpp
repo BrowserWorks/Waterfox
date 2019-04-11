@@ -74,6 +74,7 @@
 #include "nsCOMPtr.h"
 #include "nsDataHashtable.h"
 #include "nsEscape.h"
+#include "nsExceptionHandler.h"
 #include "nsHashKeys.h"
 #include "nsNetUtil.h"
 #include "nsIAsyncInputStream.h"
@@ -272,6 +273,20 @@ const char kPrefFileHandleEnabled[] = "dom.fileHandle.enabled";
 #define IDB_DELETION_MARKER_FILE_PREFIX "idb-deleting-"
 
 const uint32_t kDeleteTimeoutMs = 1000;
+
+/**
+ * Automatically crash the browser if IndexedDB shutdown takes this long.  We've
+ * chosen a value that is longer than the value for QuotaManager shutdown timer
+ * which is currently set to 30 seconds.  We've also chosen a value that is long
+ * long enough that it is unlikely for the problem to be falsely triggered by
+ * slow system I/O.  We've also chosen a value long enough so that automated
+ * tests should time out and fail if IndexedDB shutdown hangs.  Also, this value
+ * is long enough so that testers can notice the IndexedDB shutdown hang; we
+ * want to know about the hangs, not hide them.  On the other hand this value is
+ * less than 60 seconds which is used by nsTerminator to crash a hung main
+ * process.
+ */
+#define SHUTDOWN_TIMEOUT_MS 50000
 
 #ifdef DEBUG
 
@@ -7849,6 +7864,8 @@ class QuotaClient final : public mozilla::dom::quota::Client {
 
  private:
   ~QuotaClient() override;
+
+  void ShutdownTimedOut();
 
   static void DeleteTimerCallback(nsITimer* aTimer, void* aClosure);
 
@@ -16209,12 +16226,25 @@ void QuotaClient::ShutdownWorkThreads() {
 
   AbortOperations(VoidCString());
 
+  nsCOMPtr<nsITimer> timer = NS_NewTimer();
+
+  MOZ_ALWAYS_SUCCEEDS(timer->InitWithNamedFuncCallback(
+      [](nsITimer* aTimer, void* aClosure) {
+        auto quotaClient = static_cast<QuotaClient*>(aClosure);
+
+        quotaClient->ShutdownTimedOut();
+      },
+      this, SHUTDOWN_TIMEOUT_MS, nsITimer::TYPE_ONE_SHOT,
+      "indexeddb::QuotaClient::ShutdownWorkThreads::SpinEventLoopTimer"));
+
   // This should release any IDB related quota objects or directory locks.
   MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() {
     return (!gFactoryOps || gFactoryOps->IsEmpty()) &&
            (!gLiveDatabaseHashtable || !gLiveDatabaseHashtable->Count()) &&
            !mCurrentMaintenance;
   }));
+
+  MOZ_ALWAYS_SUCCEEDS(timer->Cancel());
 
   // And finally, shutdown all threads.
   RefPtr<ConnectionPool> connectionPool = gConnectionPool.get();
@@ -16241,6 +16271,37 @@ void QuotaClient::ShutdownWorkThreads() {
     MOZ_ALWAYS_SUCCEEDS(mDeleteTimer->Cancel());
     mDeleteTimer = nullptr;
   }
+}
+
+void QuotaClient::ShutdownTimedOut() {
+  AssertIsOnBackgroundThread();
+  MOZ_DIAGNOSTIC_ASSERT(
+      (gFactoryOps && !gFactoryOps->IsEmpty()) ||
+      (gLiveDatabaseHashtable && gLiveDatabaseHashtable->Count()) ||
+      mCurrentMaintenance);
+
+  nsCString data;
+
+  if (gFactoryOps && !gFactoryOps->IsEmpty()) {
+    data.Append("gFactoryOps: ");
+    data.AppendInt(static_cast<uint32_t>(gFactoryOps->Length()));
+    data.Append("\n");
+  }
+
+  if (gLiveDatabaseHashtable && gLiveDatabaseHashtable->Count()) {
+    data.Append("gLiveDatabaseHashtable: ");
+    data.AppendInt(gLiveDatabaseHashtable->Count());
+    data.Append("\n");
+  }
+
+  if (mCurrentMaintenance) {
+    data.Append("mCurrentMaintenance\n");
+  }
+
+  CrashReporter::AnnotateCrashReport(
+      CrashReporter::Annotation::IndexedDBShutdownTimeout, data);
+
+  MOZ_CRASH("IndexedDB shutdown timed out");
 }
 
 void QuotaClient::DeleteTimerCallback(nsITimer* aTimer, void* aClosure) {
@@ -21623,32 +21684,38 @@ void TransactionDatabaseOperationBase::SendPreprocessInfoOrResults(
   MOZ_ASSERT(mTransaction);
 
   if (NS_WARN_IF(IsActorDestroyed())) {
-    // Don't send any notifications if the actor was destroyed already.
+    // Normally we wouldn't need to send any notifications if the actor was
+    // already destroyed, but this can be a VersionChangeOp which needs to
+    // notify its parent operation (OpenDatabaseOp) about the failure.
+    // So SendFailureResult needs to be called even when the actor was
+    // destroyed.  Normal operations redundantly check if the actor was
+    // destroyed in SendSuccessResult and SendFailureResult, therefore it's
+    // ok to call it in all cases here.
     if (NS_SUCCEEDED(mResultCode)) {
       IDB_REPORT_INTERNAL_ERR();
       mResultCode = NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
     }
-  } else {
-    if (mTransaction->IsInvalidated() || mTransaction->IsAborted()) {
-      // Aborted transactions always see their requests fail with ABORT_ERR,
-      // even if the request succeeded or failed with another error.
-      mResultCode = NS_ERROR_DOM_INDEXEDDB_ABORT_ERR;
-    } else if (NS_SUCCEEDED(mResultCode)) {
-      if (aSendPreprocessInfo) {
-        // This should not release the IPDL reference.
-        mResultCode = SendPreprocessInfo();
-      } else {
-        // This may release the IPDL reference.
-        mResultCode = SendSuccessResult();
-      }
-    }
+  } else if (mTransaction->IsInvalidated() || mTransaction->IsAborted()) {
+    // Aborted transactions always see their requests fail with ABORT_ERR,
+    // even if the request succeeded or failed with another error.
+    mResultCode = NS_ERROR_DOM_INDEXEDDB_ABORT_ERR;
+  }
 
-    if (NS_FAILED(mResultCode)) {
-      // This should definitely release the IPDL reference.
-      if (!SendFailureResult(mResultCode)) {
-        // Abort the transaction.
-        mTransaction->Abort(mResultCode, /* aForce */ false);
-      }
+  if (NS_SUCCEEDED(mResultCode)) {
+    if (aSendPreprocessInfo) {
+      // This should not release the IPDL reference.
+      mResultCode = SendPreprocessInfo();
+    } else {
+      // This may release the IPDL reference.
+      mResultCode = SendSuccessResult();
+    }
+  }
+
+  if (NS_FAILED(mResultCode)) {
+    // This should definitely release the IPDL reference.
+    if (!SendFailureResult(mResultCode)) {
+      // Abort the transaction.
+      mTransaction->Abort(mResultCode, /* aForce */ false);
     }
   }
 

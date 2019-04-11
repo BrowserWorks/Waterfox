@@ -44,6 +44,7 @@
 #include "nsTableWrapperFrame.h"
 #include "nsView.h"
 #include "nsViewManager.h"
+#include "nsIPresShellInlines.h"
 #include "nsIScrollableFrame.h"
 #include "nsPresContext.h"
 #include "nsPresContextInlines.h"
@@ -444,10 +445,10 @@ void AutoWeakFrame::Init(nsIFrame* aFrame) {
   Clear(mFrame ? mFrame->PresContext()->GetPresShell() : nullptr);
   mFrame = aFrame;
   if (mFrame) {
-    nsIPresShell* shell = mFrame->PresContext()->GetPresShell();
-    NS_WARNING_ASSERTION(shell, "Null PresShell in AutoWeakFrame!");
-    if (shell) {
-      shell->AddAutoWeakFrame(this);
+    mozilla::PresShell* presShell = mFrame->PresContext()->GetPresShell();
+    NS_WARNING_ASSERTION(presShell, "Null PresShell in AutoWeakFrame!");
+    if (presShell) {
+      presShell->AddAutoWeakFrame(this);
     } else {
       mFrame = nullptr;
     }
@@ -458,10 +459,10 @@ void WeakFrame::Init(nsIFrame* aFrame) {
   Clear(mFrame ? mFrame->PresContext()->GetPresShell() : nullptr);
   mFrame = aFrame;
   if (mFrame) {
-    nsIPresShell* shell = mFrame->PresContext()->GetPresShell();
-    MOZ_ASSERT(shell, "Null PresShell in WeakFrame!");
-    if (shell) {
-      shell->AddWeakFrame(this);
+    mozilla::PresShell* presShell = mFrame->PresContext()->GetPresShell();
+    MOZ_ASSERT(presShell, "Null PresShell in WeakFrame!");
+    if (presShell) {
+      presShell->AddWeakFrame(this);
     } else {
       mFrame = nullptr;
     }
@@ -1978,7 +1979,7 @@ Visibility nsIFrame::GetVisibility() const {
 }
 
 void nsIFrame::UpdateVisibilitySynchronously() {
-  nsIPresShell* presShell = PresShell();
+  mozilla::PresShell* presShell = PresShell();
   if (!presShell) {
     return;
   }
@@ -2045,7 +2046,7 @@ void nsIFrame::EnableVisibilityTracking() {
   AddStateBits(NS_FRAME_VISIBILITY_IS_TRACKED);
   SetProperty(VisibilityStateProperty(), 0);
 
-  nsIPresShell* presShell = PresShell();
+  mozilla::PresShell* presShell = PresShell();
   if (!presShell) {
     return;
   }
@@ -2218,10 +2219,11 @@ Color nsDisplaySelectionOverlay::ComputeColorFromSelectionStyle(
 
 Color nsDisplaySelectionOverlay::ComputeColor() const {
   LookAndFeel::ColorID colorID;
+  if (RefPtr<ComputedStyle> style =
+          mFrame->ComputeSelectionStyle(mSelectionValue)) {
+    return ComputeColorFromSelectionStyle(*style);
+  }
   if (mSelectionValue == nsISelectionController::SELECTION_ON) {
-    if (RefPtr<ComputedStyle> style = mFrame->ComputeSelectionStyle()) {
-      return ComputeColorFromSelectionStyle(*style);
-    }
     colorID = LookAndFeel::eColorID_TextSelectBackground;
   } else if (mSelectionValue == nsISelectionController::SELECTION_ATTENTION) {
     colorID = LookAndFeel::eColorID_TextSelectBackgroundAttention;
@@ -2273,7 +2275,13 @@ static Element* FindElementAncestorForMozSelection(nsIContent* aContent) {
   return aContent ? aContent->AsElement() : nullptr;
 }
 
-already_AddRefed<ComputedStyle> nsIFrame::ComputeSelectionStyle() const {
+already_AddRefed<ComputedStyle> nsIFrame::ComputeSelectionStyle(
+    int16_t aSelectionStatus) const {
+  // Just bail out if not a selection-status that ::selection applies to.
+  if (aSelectionStatus != nsISelectionController::SELECTION_ON &&
+      aSelectionStatus != nsISelectionController::SELECTION_DISABLED) {
+    return nullptr;
+  }
   Element* element = FindElementAncestorForMozSelection(GetContent());
   if (!element) {
     return nullptr;
@@ -2332,8 +2340,8 @@ void nsFrame::DisplaySelectionOverlay(nsDisplayListBuilder* aBuilder,
     return;
   }
 
-  aList->AppendToTop(MakeDisplayItem<nsDisplaySelectionOverlay>(
-      aBuilder, this, selectionValue));
+  aList->AppendNewToTop<nsDisplaySelectionOverlay>(aBuilder, this,
+                                                   selectionValue);
 }
 
 void nsFrame::DisplayOutlineUnconditional(nsDisplayListBuilder* aBuilder,
@@ -2342,8 +2350,15 @@ void nsFrame::DisplayOutlineUnconditional(nsDisplayListBuilder* aBuilder,
     return;
   }
 
-  aLists.Outlines()->AppendToTop(
-      MakeDisplayItem<nsDisplayOutline>(aBuilder, this));
+  if (IsTableColGroupFrame() || IsTableColFrame()) {
+    // Per https://drafts.csswg.org/css-tables-3/#global-style-overrides:
+    // "All css properties of table-column and table-column-group boxes are
+    // ignored, except when explicitly specified by this specification."
+    // CSS outlines fall into this category, so we skip them on these boxes.
+    return;
+  }
+
+  aLists.Outlines()->AppendNewToTop<nsDisplayOutline>(aBuilder, this);
 }
 
 void nsFrame::DisplayOutline(nsDisplayListBuilder* aBuilder,
@@ -2357,7 +2372,7 @@ void nsIFrame::DisplayCaret(nsDisplayListBuilder* aBuilder,
                             nsDisplayList* aList) {
   if (!IsVisibleForPainting()) return;
 
-  aList->AppendToTop(MakeDisplayItem<nsDisplayCaret>(aBuilder, this));
+  aList->AppendNewToTop<nsDisplayCaret>(aBuilder, this);
 }
 
 nscolor nsIFrame::GetCaretColorAt(int32_t aOffset) {
@@ -2391,23 +2406,22 @@ void nsFrame::DisplayBorderBackgroundOutline(nsDisplayListBuilder* aBuilder,
 
   nsCSSShadowArray* shadows = StyleEffects()->mBoxShadow;
   if (shadows && shadows->HasShadowWithInset(false)) {
-    aLists.BorderBackground()->AppendToTop(
-        MakeDisplayItem<nsDisplayBoxShadowOuter>(aBuilder, this));
+    aLists.BorderBackground()->AppendNewToTop<nsDisplayBoxShadowOuter>(aBuilder,
+                                                                       this);
   }
 
   bool bgIsThemed =
       DisplayBackgroundUnconditional(aBuilder, aLists, aForceBackground);
 
   if (shadows && shadows->HasShadowWithInset(true)) {
-    aLists.BorderBackground()->AppendToTop(
-        MakeDisplayItem<nsDisplayBoxShadowInner>(aBuilder, this));
+    aLists.BorderBackground()->AppendNewToTop<nsDisplayBoxShadowInner>(aBuilder,
+                                                                       this);
   }
 
   // If there's a themed background, we should not create a border item.
   // It won't be rendered.
   if (!bgIsThemed && StyleBorder()->HasBorder()) {
-    aLists.BorderBackground()->AppendToTop(
-        MakeDisplayItem<nsDisplayBorder>(aBuilder, this));
+    aLists.BorderBackground()->AppendNewToTop<nsDisplayBorder>(aBuilder, this);
   }
 
   DisplayOutlineUnconditional(aBuilder, aLists);
@@ -2529,16 +2543,16 @@ static void DisplayDebugBorders(nsDisplayListBuilder* aBuilder,
   // Draw a border around the child
   // REVIEW: From nsContainerFrame::PaintChild
   if (nsFrame::GetShowFrameBorders() && !aFrame->GetRect().IsEmpty()) {
-    aLists.Outlines()->AppendToTop(MakeDisplayItem<nsDisplayGeneric>(
+    aLists.Outlines()->AppendNewToTop<nsDisplayGeneric>(
         aBuilder, aFrame, PaintDebugBorder, "DebugBorder",
-        DisplayItemType::TYPE_DEBUG_BORDER));
+        DisplayItemType::TYPE_DEBUG_BORDER);
   }
   // Draw a border around the current event target
   if (nsFrame::GetShowEventTargetFrameBorder() &&
       aFrame->PresShell()->GetDrawEventTargetFrame() == aFrame) {
-    aLists.Outlines()->AppendToTop(MakeDisplayItem<nsDisplayGeneric>(
+    aLists.Outlines()->AppendNewToTop<nsDisplayGeneric>(
         aBuilder, aFrame, PaintEventTargetBorder, "EventTargetBorder",
-        DisplayItemType::TYPE_EVENT_TARGET_BORDER));
+        DisplayItemType::TYPE_EVENT_TARGET_BORDER);
   }
 }
 #endif
@@ -2654,7 +2668,7 @@ static void WrapSeparatorTransform(nsDisplayListBuilder* aBuilder,
   nsDisplayTransform* item = MakeDisplayItem<nsDisplayTransform>(
       aBuilder, aFrame, aNonParticipants, aBuilder->GetVisibleRect(), aIndex);
 
-  if (*aSeparator == nullptr) {
+  if (*aSeparator == nullptr && item) {
     *aSeparator = item;
   }
 
@@ -2783,7 +2797,9 @@ struct AutoCheckBuilder {
  */
 struct ContainerTracker {
   void TrackContainer(nsDisplayItem* aContainer) {
-    MOZ_ASSERT(aContainer);
+    if (!aContainer) {
+      return;
+    }
 
     if (!mContainer) {
       mContainer = aContainer;
@@ -2815,9 +2831,8 @@ static void AddHitTestInfo(nsDisplayListBuilder* aBuilder, nsDisplayList* aList,
   } else {
     // No container item was created for this frame. Create a separate
     // nsDisplayCompositorHitTestInfo item instead.
-    hitTestItem = MakeDisplayItem<nsDisplayCompositorHitTestInfo>(
+    aList->AppendNewToBottom<nsDisplayCompositorHitTestInfo>(
         aBuilder, aFrame, std::move(aHitTestInfo));
-    aList->AppendToBottom(hitTestItem);
   }
 }
 
@@ -3110,6 +3125,8 @@ void nsIFrame::BuildDisplayListForStackingContext(
                                                                   inTransform);
     nsDisplayListBuilder::AutoEnterFilter filterASRSetter(aBuilder,
                                                           usingFilter);
+    nsDisplayListBuilder::AutoInEventsAndPluginsOnly inEventsAndPluginsSetter(
+        aBuilder, opacityItemForEventsAndPluginsOnly);
 
     CheckForApzAwareEventHandlers(aBuilder, this);
 
@@ -3198,8 +3215,10 @@ void nsIFrame::BuildDisplayListForStackingContext(
         aBuilder, this,
         dirtyRect + aBuilder->GetCurrentFrameOffsetToReferenceFrame(),
         NS_RGBA(255, 0, 0, 64), false);
-    color->SetOverrideZIndex(INT32_MAX);
-    set.PositionedDescendants()->AppendToTop(color);
+    if (color) {
+      color->SetOverrideZIndex(INT32_MAX);
+      set.PositionedDescendants()->AppendToTop(color);
+    }
   }
 
   nsIContent* content = GetContent();
@@ -3251,8 +3270,7 @@ void nsIFrame::BuildDisplayListForStackingContext(
     // Skip all filter effects while generating glyph mask.
     if (usingFilter && !aBuilder->IsForGenerateGlyphMask()) {
       /* List now emptied, so add the new list to the top. */
-      resultList.AppendToTop(
-          MakeDisplayItem<nsDisplayFilters>(aBuilder, this, &resultList));
+      resultList.AppendNewToTop<nsDisplayFilters>(aBuilder, this, &resultList);
       ct.TrackContainer(resultList.GetTop());
     }
 
@@ -3271,8 +3289,8 @@ void nsIFrame::BuildDisplayListForStackingContext(
           clipForMask.isSome() ? aBuilder->CurrentActiveScrolledRoot()
                                : containerItemASR;
       /* List now emptied, so add the new list to the top. */
-      resultList.AppendToTop(MakeDisplayItem<nsDisplayMasksAndClipPaths>(
-          aBuilder, this, &resultList, maskASR));
+      resultList.AppendNewToTop<nsDisplayMasksAndClipPaths>(
+          aBuilder, this, &resultList, maskASR);
       ct.TrackContainer(resultList.GetTop());
     }
 
@@ -3297,9 +3315,9 @@ void nsIFrame::BuildDisplayListForStackingContext(
     const bool needsActiveOpacityLayer =
         nsDisplayOpacity::NeedsActiveLayer(aBuilder, this);
 
-    resultList.AppendToTop(MakeDisplayItem<nsDisplayOpacity>(
+    resultList.AppendNewToTop<nsDisplayOpacity>(
         aBuilder, this, &resultList, containerItemASR,
-        opacityItemForEventsAndPluginsOnly, needsActiveOpacityLayer));
+        opacityItemForEventsAndPluginsOnly, needsActiveOpacityLayer);
     ct.TrackContainer(resultList.GetTop());
   }
 
@@ -3375,15 +3393,17 @@ void nsIFrame::BuildDisplayListForStackingContext(
 
     nsDisplayTransform* transformItem = MakeDisplayItem<nsDisplayTransform>(
         aBuilder, this, &resultList, visibleRect, 0, allowAsyncAnimation);
-    resultList.AppendToTop(transformItem);
-    ct.TrackContainer(transformItem);
+    if (transformItem) {
+      resultList.AppendToTop(transformItem);
+      ct.TrackContainer(transformItem);
+    }
 
     if (hasPerspective) {
       if (clipCapturedBy == ContainerItemType::ePerspective) {
         clipState.Restore();
       }
-      resultList.AppendToTop(
-          MakeDisplayItem<nsDisplayPerspective>(aBuilder, this, &resultList));
+      resultList.AppendNewToTop<nsDisplayPerspective>(aBuilder, this,
+                                                      &resultList);
       ct.TrackContainer(resultList.GetTop());
     }
   }
@@ -3391,10 +3411,10 @@ void nsIFrame::BuildDisplayListForStackingContext(
   if (clipCapturedBy ==
       ContainerItemType::eOwnLayerForTransformWithRoundedClip) {
     clipState.Restore();
-    resultList.AppendToTop(MakeDisplayItem<nsDisplayOwnLayer>(
+    resultList.AppendNewToTop<nsDisplayOwnLayer>(
         aBuilder, this, &resultList, aBuilder->CurrentActiveScrolledRoot(),
         nsDisplayOwnLayerFlags::eNone, ScrollbarData{},
-        /* aForceActive = */ false));
+        /* aForceActive = */ false);
     ct.TrackContainer(resultList.GetTop());
   }
 
@@ -3414,8 +3434,8 @@ void nsIFrame::BuildDisplayListForStackingContext(
     // item as well.
     const ActiveScrolledRoot* fixedASR = ActiveScrolledRoot::PickAncestor(
         containerItemASR, aBuilder->CurrentActiveScrolledRoot());
-    resultList.AppendToTop(MakeDisplayItem<nsDisplayFixedPosition>(
-        aBuilder, this, &resultList, fixedASR, containerItemASR));
+    resultList.AppendNewToTop<nsDisplayFixedPosition>(
+        aBuilder, this, &resultList, fixedASR, containerItemASR);
     ct.TrackContainer(resultList.GetTop());
   } else if (useStickyPosition) {
     // For position:sticky, the clip needs to be applied both to the sticky
@@ -3433,9 +3453,9 @@ void nsIFrame::BuildDisplayListForStackingContext(
     // descendants).
     const ActiveScrolledRoot* stickyASR = ActiveScrolledRoot::PickAncestor(
         containerItemASR, aBuilder->CurrentActiveScrolledRoot());
-    resultList.AppendToTop(MakeDisplayItem<nsDisplayStickyPosition>(
+    resultList.AppendNewToTop<nsDisplayStickyPosition>(
         aBuilder, this, &resultList, stickyASR,
-        aBuilder->CurrentActiveScrolledRoot()));
+        aBuilder->CurrentActiveScrolledRoot());
     ct.TrackContainer(resultList.GetTop());
   }
 
@@ -3446,8 +3466,8 @@ void nsIFrame::BuildDisplayListForStackingContext(
 
   if (useBlendMode) {
     DisplayListClipState::AutoSaveRestore blendModeClipState(aBuilder);
-    resultList.AppendToTop(MakeDisplayItem<nsDisplayBlendMode>(
-        aBuilder, this, &resultList, effects->mMixBlendMode, containerItemASR));
+    resultList.AppendNewToTop<nsDisplayBlendMode>(
+        aBuilder, this, &resultList, effects->mMixBlendMode, containerItemASR);
     ct.TrackContainer(resultList.GetTop());
   }
 
@@ -3654,8 +3674,10 @@ void nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder* aBuilder,
                       aBuilder->ToReferenceFrame(child);
       nsDisplaySolidColor* color = MakeDisplayItem<nsDisplaySolidColor>(
           aBuilder, child, bounds, NS_RGBA(255, 0, 255, 64));
-      color->SetOverrideZIndex(INT32_MAX);
-      aLists.PositionedDescendants()->AppendToTop(color);
+      if (color) {
+        color->SetOverrideZIndex(INT32_MAX);
+        aLists.PositionedDescendants()->AppendToTop(color);
+      }
     }
   }
 
@@ -4201,13 +4223,15 @@ nsFrame::HandlePress(nsPresContext* aPresContext, WidgetGUIEvent* aEvent,
   // Check with the ESM to see if we should process this one
   if (!aPresContext->EventStateManager()->EventStatusOK(aEvent)) return NS_OK;
 
-  nsIPresShell* shell = aPresContext->GetPresShell();
-  if (!shell) return NS_ERROR_FAILURE;
+  mozilla::PresShell* presShell = aPresContext->GetPresShell();
+  if (!presShell) {
+    return NS_ERROR_FAILURE;
+  }
 
   // if we are in Navigator and the click is in a draggable node, we don't want
   // to start selection because we don't want to interfere with a potential
   // drag of said node and steal all its glory.
-  int16_t isEditor = shell->GetSelectionFlags();
+  int16_t isEditor = presShell->GetSelectionFlags();
   // weaaak. only the editor can display frame selection not just text and
   // images
   isEditor = isEditor == nsISelectionDisplay::DISPLAY_ALL;
@@ -4261,7 +4285,7 @@ nsFrame::HandlePress(nsPresContext* aPresContext, WidgetGUIEvent* aEvent,
   if (useFrameSelection)
     frameselection = GetConstFrameSelection();
   else
-    frameselection = shell->ConstFrameSelection();
+    frameselection = presShell->ConstFrameSelection();
 
   if (!frameselection || frameselection->GetDisplaySelection() ==
                              nsISelectionController::SELECTION_OFF)
@@ -4294,7 +4318,7 @@ nsFrame::HandlePress(nsPresContext* aPresContext, WidgetGUIEvent* aEvent,
   int32_t contentOffset;
   TableSelection target;
   nsresult rv;
-  rv = GetDataForTableSelection(frameselection, shell, mouseEvent,
+  rv = GetDataForTableSelection(frameselection, presShell, mouseEvent,
                                 getter_AddRefs(parentContent), &contentOffset,
                                 &target);
   if (NS_SUCCEEDED(rv) && parentContent) {
@@ -4545,7 +4569,7 @@ NS_IMETHODIMP nsFrame::HandleDrag(nsPresContext* aPresContext,
   int32_t contentOffset;
   TableSelection target;
   WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
-  nsCOMPtr<nsIPresShell> presShell = aPresContext->PresShell();
+  mozilla::PresShell* presShell = aPresContext->PresShell();
   nsresult result;
   result = GetDataForTableSelection(frameselection, presShell, mouseEvent,
                                     getter_AddRefs(parentContent),
@@ -4703,8 +4727,7 @@ NS_IMETHODIMP nsFrame::HandleRelease(nsPresContext* aPresContext,
     if (doc) {
       mozilla::PresShell* capturingPresShell = doc->GetPresShell();
       if (capturingPresShell &&
-          capturingPresShell !=
-              static_cast<mozilla::PresShell*>(PresContext()->GetPresShell())) {
+          capturingPresShell != PresContext()->GetPresShell()) {
         frameSelection = capturingPresShell->FrameSelection();
       }
     }
@@ -5019,9 +5042,7 @@ static FrameTarget GetSelectionClosestFrame(nsIFrame* aFrame,
     if (!target.IsNull()) return target;
   }
 
-  nsIFrame* kid = aFrame->PrincipalChildList().FirstChild();
-
-  if (kid) {
+  if (nsIFrame* kid = aFrame->PrincipalChildList().FirstChild()) {
     // Go through all the child frames to find the closest one
     nsIFrame::FrameWithDistance closest = {nullptr, nscoord_MAX, nscoord_MAX};
     for (; kid; kid = kid->GetNextSibling()) {
@@ -5035,7 +5056,12 @@ static FrameTarget GetSelectionClosestFrame(nsIFrame* aFrame,
       return GetSelectionClosestFrameForChild(closest.mFrame, aPoint, aFlags);
     }
   }
-  return FrameTarget(aFrame, false, false);
+
+  // Use frame edge for grid, flex and tables, but not replaced frames like
+  // images.
+  bool useFrameEdge = !aFrame->StyleDisplay()->IsInlineInsideStyle() &&
+                      !aFrame->IsFrameOfType(nsIFrame::eReplaced);
+  return FrameTarget(aFrame, useFrameEdge, false);
 }
 
 static nsIFrame::ContentOffsets OffsetsForSingleFrame(nsIFrame* aFrame,
@@ -7632,9 +7658,8 @@ void nsIFrame::RootFrameList(nsPresContext* aPresContext, FILE* out,
                              const char* aPrefix) {
   if (!aPresContext || !out) return;
 
-  nsIPresShell* shell = aPresContext->GetPresShell();
-  if (shell) {
-    nsIFrame* frame = shell->GetRootFrame();
+  if (mozilla::PresShell* presShell = aPresContext->GetPresShell()) {
+    nsIFrame* frame = presShell->GetRootFrame();
     if (frame) {
       frame->List(out, aPrefix);
     }
@@ -7673,7 +7698,8 @@ nsresult nsFrame::GetSelectionController(nsPresContext* aPresContext,
     frame = frame->GetParent();
   }
 
-  return CallQueryInterface(aPresContext->GetPresShell(), aSelCon);
+  *aSelCon = do_AddRef(aPresContext->PresShell()).take();
+  return NS_OK;
 }
 
 already_AddRefed<nsFrameSelection> nsIFrame::GetFrameSelection() {
@@ -7906,9 +7932,11 @@ nsresult nsFrame::GetNextPrevLineFromeBlockFrame(nsPresContext* aPresContext,
         // special check. if we allow non-text selection then we can allow a hit
         // location to fall before a table. otherwise there is no way to get and
         // click signal to fall before a table (it being a line iterator itself)
-        nsIPresShell* shell = aPresContext->GetPresShell();
-        if (!shell) return NS_ERROR_FAILURE;
-        int16_t isEditor = shell->GetSelectionFlags();
+        mozilla::PresShell* presShell = aPresContext->GetPresShell();
+        if (!presShell) {
+          return NS_ERROR_FAILURE;
+        }
+        int16_t isEditor = presShell->GetSelectionFlags();
         isEditor = isEditor == nsISelectionDisplay::DISPLAY_ALL;
         if (isEditor) {
           if (resultFrame->IsTableWrapperFrame()) {
@@ -9069,7 +9097,7 @@ static void ComputeAndIncludeOutlineArea(nsIFrame* aFrame,
   // Keep this code in sync with GetOutlineInnerRect in nsCSSRendering.cpp.
   SetOrUpdateRectValuedProperty(aFrame, nsIFrame::OutlineInnerRectProperty(),
                                 innerRect);
-  const nscoord offset = outline->mOutlineOffset;
+  const nscoord offset = outline->mOutlineOffset.ToAppUnits();
   nsRect outerRect(innerRect);
   bool useOutlineAuto = false;
   if (nsLayoutUtils::IsOutlineStyleAutoEnabled()) {
@@ -10564,17 +10592,17 @@ void nsIFrame::CreateOwnLayerIfNeeded(nsDisplayListBuilder* aBuilder,
       gfxUtils::GetRenderRootForFrame(this).valueOr(wr::RenderRoot::Default);
 
   if (renderRoot != wr::RenderRoot::Default) {
-    aList->AppendToTop(MakeDisplayItem<nsDisplayRenderRoot>(
+    aList->AppendNewToTop<nsDisplayRenderRoot>(
         aBuilder, this, aList, aBuilder->CurrentActiveScrolledRoot(),
-        renderRoot));
+        renderRoot);
     if (aCreatedContainerItem) {
       *aCreatedContainerItem = true;
     }
   } else if (GetContent() && GetContent()->IsXULElement() &&
              GetContent()->AsElement()->HasAttr(kNameSpaceID_None,
                                                 nsGkAtoms::layer)) {
-    aList->AppendToTop(MakeDisplayItem<nsDisplayOwnLayer>(
-        aBuilder, this, aList, aBuilder->CurrentActiveScrolledRoot()));
+    aList->AppendNewToTop<nsDisplayOwnLayer>(
+        aBuilder, this, aList, aBuilder->CurrentActiveScrolledRoot());
     if (aCreatedContainerItem) {
       *aCreatedContainerItem = true;
     }

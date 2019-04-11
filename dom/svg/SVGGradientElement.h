@@ -8,9 +8,9 @@
 #define __NS_SVGGRADIENTELEMENT_H__
 
 #include "nsAutoPtr.h"
-#include "SVGEnum.h"
-#include "nsSVGLength2.h"
-#include "SVGString.h"
+#include "SVGAnimatedEnumeration.h"
+#include "SVGAnimatedLength.h"
+#include "SVGAnimatedString.h"
 #include "SVGAnimatedTransformList.h"
 #include "mozilla/dom/SVGElement.h"
 
@@ -64,12 +64,12 @@ class SVGGradientElement : public SVGGradientElementBase {
   virtual StringAttributesInfo GetStringInfo() override;
 
   enum { GRADIENTUNITS, SPREADMETHOD };
-  SVGEnum mEnumAttributes[2];
+  SVGAnimatedEnumeration mEnumAttributes[2];
   static SVGEnumMapping sSpreadMethodMap[];
   static EnumInfo sEnumInfo[2];
 
   enum { HREF, XLINK_HREF };
-  SVGString mStringAttributes[2];
+  SVGAnimatedString mStringAttributes[2];
   static StringInfo sStringInfo[2];
 
   // SVGGradientElement values
@@ -105,7 +105,7 @@ class SVGLinearGradientElement : public SVGLinearGradientElementBase {
   virtual LengthAttributesInfo GetLengthInfo() override;
 
   enum { ATTR_X1, ATTR_Y1, ATTR_X2, ATTR_Y2 };
-  nsSVGLength2 mLengthAttributes[4];
+  SVGAnimatedLength mLengthAttributes[4];
   static LengthInfo sLengthInfo[4];
 };
 
@@ -140,7 +140,7 @@ class SVGRadialGradientElement : public SVGRadialGradientElementBase {
   virtual LengthAttributesInfo GetLengthInfo() override;
 
   enum { ATTR_CX, ATTR_CY, ATTR_R, ATTR_FX, ATTR_FY, ATTR_FR };
-  nsSVGLength2 mLengthAttributes[6];
+  SVGAnimatedLength mLengthAttributes[6];
   static LengthInfo sLengthInfo[6];
 };
 

@@ -59,6 +59,7 @@ BuiltinProvider.prototype = {
     this.loader = new Loader({
       paths,
       invisibleToDebugger: this.invisibleToDebugger,
+      freshCompartment: this.freshCompartment,
       sharedGlobal: true,
       sandboxName: "DevTools (Module loader)",
       requireHook: (id, require) => {
@@ -152,6 +153,7 @@ DevToolsLoader.prototype = {
 
     // Pass through internal loader settings specific to this loader instance
     this._provider.invisibleToDebugger = this.invisibleToDebugger;
+    this._provider.freshCompartment = this.freshCompartment;
 
     this._provider.load();
     this.require = Require(this._provider.loader, { id: "devtools" });
@@ -186,6 +188,15 @@ DevToolsLoader.prototype = {
     this.lazyImporter = globals.loader.lazyImporter;
     this.lazyServiceGetter = globals.loader.lazyServiceGetter;
     this.lazyRequireGetter = globals.loader.lazyRequireGetter;
+
+    // When replaying, modify the require hook to allow the ReplayInspector to
+    // replace chrome interfaces with alternatives that understand the proxies
+    // created for objects in the recording/replaying process.
+    if (globals.isReplaying) {
+      const oldHook = this._provider.loader.requireHook;
+      const ReplayInspector = this.require("devtools/server/actors/replay/inspector");
+      this._provider.loader.requireHook = ReplayInspector.wrapRequireHook(oldHook);
+    }
   },
 
   /**

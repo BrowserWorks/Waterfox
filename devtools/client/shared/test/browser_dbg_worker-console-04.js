@@ -20,7 +20,7 @@ Services.scriptloader.loadSubScript(
 
 // There are shutdown issues for which multiple rejections are left uncaught.
 // See bug 1018184 for resolving these issues.
-const { PromiseTestUtils } = scopedCuImport("resource://testing-common/PromiseTestUtils.jsm");
+const { PromiseTestUtils } = ChromeUtils.import("resource://testing-common/PromiseTestUtils.jsm");
 PromiseTestUtils.whitelistRejectionsGlobally(/connection just closed/);
 
 const TAB_URL = EXAMPLE_URL + "doc_WorkerTargetActor.attachThread-tab.html";
@@ -32,9 +32,11 @@ add_task(async function testPausedByConsole() {
 
   info("Check Date objects can be used in the console");
   const jsterm = await getSplitConsole(toolbox);
-  let executed = await jsterm.execute("new Date(0)");
-  ok(executed.textContent.includes("1970-01-01T00:00:00.000Z"),
-      "Text for message appeared correct");
+  let executed = await jsterm.execute("new Date(2013, 3, 1)");
+  ok(
+    executed.textContent.includes("Mon Apr 01 2013 00:00:00"),
+    "Date object has expected text content"
+  );
 
   info("Check RegExp objects can be used in the console");
   executed = await jsterm.execute("new RegExp('.*')");

@@ -9,7 +9,6 @@
 #ifndef mozilla_PresShell_h
 #define mozilla_PresShell_h
 
-#include "MobileViewportManager.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/dom/HTMLDocumentBinding.h"
@@ -40,6 +39,7 @@ struct RangePaintInfo;
 
 class nsPresShellEventCB;
 class AutoPointerEventTargetUpdater;
+class MobileViewportManager;
 
 namespace mozilla {
 
@@ -49,6 +49,7 @@ class Selection;
 }  // namespace dom
 
 class EventDispatchingCallback;
+class GeckoMVMContext;
 class OverflowChangedTracker;
 
 // A set type for tracking visible frames, for use by the visibility code in
@@ -64,6 +65,7 @@ class PresShell final : public nsIPresShell,
                         public nsIObserver,
                         public nsSupportsWeakReference {
   typedef layers::FocusTarget FocusTarget;
+  typedef dom::Element Element;
 
  public:
   PresShell();
@@ -73,8 +75,7 @@ class PresShell final : public nsIPresShell,
 
   static bool AccessibleCaretEnabled(nsIDocShell* aDocShell);
 
-  void Init(Document* aDocument, nsPresContext* aPresContext,
-            nsViewManager* aViewManager, UniquePtr<ServoStyleSet> aStyleSet);
+  void Init(Document*, nsPresContext*, nsViewManager*);
   void Destroy() override;
 
   NS_IMETHOD GetSelectionFromScript(RawSelectionType aRawSelectionType,
@@ -179,6 +180,10 @@ class PresShell final : public nsIPresShell,
     mPresContext->UIResolutionChangedSync();
   }
 
+  void SynthesizeMouseMove(bool aFromScroll) override;
+
+  Document* GetPrimaryContentDocument() override;
+
   // nsIViewObserver interface
 
   void Paint(nsView* aViewToPaint, const nsRegion& aDirtyRegion,
@@ -213,6 +218,8 @@ class PresShell final : public nsIPresShell,
 
   NS_IMETHOD SetSelectionFlags(int16_t aInEnable) override;
   NS_IMETHOD GetSelectionFlags(int16_t* aOutEnable) override;
+
+  using nsIPresShell::GetSelectionFlags;
 
   // nsISelectionController
 
@@ -274,11 +281,10 @@ class PresShell final : public nsIPresShell,
 
   void UpdateCanvasBackground() override;
 
-  void AddCanvasBackgroundColorItem(nsDisplayListBuilder& aBuilder,
-                                    nsDisplayList& aList, nsIFrame* aFrame,
-                                    const nsRect& aBounds,
-                                    nscolor aBackstopColor,
-                                    uint32_t aFlags) override;
+  void AddCanvasBackgroundColorItem(
+      nsDisplayListBuilder& aBuilder, nsDisplayList& aList, nsIFrame* aFrame,
+      const nsRect& aBounds, nscolor aBackstopColor = NS_RGBA(0, 0, 0, 0),
+      uint32_t aFlags = 0) override;
 
   void AddPrintPreviewBackgroundItem(nsDisplayListBuilder& aBuilder,
                                      nsDisplayList& aList, nsIFrame* aFrame,
@@ -292,9 +298,7 @@ class PresShell final : public nsIPresShell,
     return (mMobileViewportManager != nullptr);
   }
 
-  RefPtr<MobileViewportManager> GetMobileViewportManager() const override {
-    return mMobileViewportManager;
-  }
+  RefPtr<MobileViewportManager> GetMobileViewportManager() const override;
 
   void UpdateViewportOverridden(bool aAfterInitialization) override;
 
@@ -1283,16 +1287,12 @@ class PresShell final : public nsIPresShell,
     static StaticRefPtr<dom::Element> sLastKeyDownEventTargetElement;
   };
 
-  void SynthesizeMouseMove(bool aFromScroll) override;
-
   PresShell* GetRootPresShell();
 
   nscolor GetDefaultBackgroundColorToDraw();
 
   // The callback for the mPaintSuppressionTimer timer.
   static void sPaintSuppressionCallback(nsITimer* aTimer, void* aPresShell);
-
-  Document* GetPrimaryContentDocument() override;
 
   void PausePainting() override;
   void ResumePainting() override;
@@ -1349,6 +1349,7 @@ class PresShell final : public nsIPresShell,
   TouchManager mTouchManager;
 
   RefPtr<ZoomConstraintsClient> mZoomConstraintsClient;
+  RefPtr<GeckoMVMContext> mMVMContext;
   RefPtr<MobileViewportManager> mMobileViewportManager;
 
   // This timer controls painting suppression.  Until it fires

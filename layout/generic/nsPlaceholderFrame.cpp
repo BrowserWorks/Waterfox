@@ -15,6 +15,7 @@
 #include "gfxUtils.h"
 #include "mozilla/dom/ElementInlines.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/ServoStyleSetInlines.h"
 #include "nsCSSFrameConstructor.h"
 #include "nsDisplayList.h"
@@ -22,6 +23,7 @@
 #include "nsPresContext.h"
 #include "nsIFrameInlines.h"
 #include "nsIContentInlines.h"
+#include "nsIPresShellInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -252,9 +254,9 @@ void nsPlaceholderFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 
 #  ifdef DEBUG
   if (GetShowFrameBorders()) {
-    aLists.Outlines()->AppendToTop(MakeDisplayItem<nsDisplayGeneric>(
+    aLists.Outlines()->AppendNewToTop<nsDisplayGeneric>(
         aBuilder, this, PaintDebugPlaceholder, "DebugPlaceholder",
-        DisplayItemType::TYPE_DEBUG_PLACEHOLDER));
+        DisplayItemType::TYPE_DEBUG_PLACEHOLDER);
   }
 #  endif
 }

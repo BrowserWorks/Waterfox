@@ -11,6 +11,7 @@
 #include "mozilla/Likely.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/IntegerRange.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/WritingModes.h"
 
 #include "gfxContext.h"
@@ -18,6 +19,7 @@
 #include "mozilla/ComputedStyle.h"
 #include "nsStyleConsts.h"
 #include "nsIContent.h"
+#include "nsIPresShellInlines.h"
 #include "nsCellMap.h"
 #include "nsTableCellFrame.h"
 #include "nsHTMLParts.h"
@@ -35,7 +37,6 @@
 #include "nsCSSRendering.h"
 #include "nsGkAtoms.h"
 #include "nsCSSAnonBoxes.h"
-#include "nsIPresShell.h"
 #include "nsIScriptError.h"
 #include "nsFrameManager.h"
 #include "nsError.h"
@@ -408,12 +409,13 @@ int32_t nsTableFrame::GetIndexOfLastRealCol() {
 }
 
 nsTableColFrame* nsTableFrame::GetColFrame(int32_t aColIndex) const {
-  NS_ASSERTION(!GetPrevInFlow(), "GetColFrame called on next in flow");
+  MOZ_ASSERT(!GetPrevInFlow(), "GetColFrame called on next in flow");
   int32_t numCols = mColFrames.Length();
   if ((aColIndex >= 0) && (aColIndex < numCols)) {
+    MOZ_ASSERT(mColFrames.ElementAt(aColIndex));
     return mColFrames.ElementAt(aColIndex);
   } else {
-    NS_ERROR("invalid col index");
+    MOZ_ASSERT_UNREACHABLE("invalid col index");
     return nullptr;
   }
 }
@@ -644,14 +646,14 @@ nsTableCellMap* nsTableFrame::GetCellMap() const {
 nsTableColGroupFrame* nsTableFrame::CreateSyntheticColGroupFrame() {
   nsIContent* colGroupContent = GetContent();
   nsPresContext* presContext = PresContext();
-  nsIPresShell* shell = presContext->PresShell();
+  mozilla::PresShell* presShell = presContext->PresShell();
 
   RefPtr<ComputedStyle> colGroupStyle;
-  colGroupStyle = shell->StyleSet()->ResolveNonInheritingAnonymousBoxStyle(
+  colGroupStyle = presShell->StyleSet()->ResolveNonInheritingAnonymousBoxStyle(
       PseudoStyleType::tableColGroup);
   // Create a col group frame
   nsTableColGroupFrame* newFrame =
-      NS_NewTableColGroupFrame(shell, colGroupStyle);
+      NS_NewTableColGroupFrame(presShell, colGroupStyle);
   newFrame->SetIsSynthetic();
   newFrame->Init(colGroupContent, this, nullptr);
   return newFrame;
@@ -688,7 +690,7 @@ void nsTableFrame::AppendAnonymousColFrames(
   MOZ_ASSERT(aColType != eColAnonymousCol, "Shouldn't happen");
   MOZ_ASSERT(aNumColsToAdd > 0, "We should be adding _something_.");
 
-  nsIPresShell* shell = PresShell();
+  mozilla::PresShell* presShell = PresShell();
 
   // Get the last col frame
   nsFrameList newColFrames;
@@ -701,13 +703,13 @@ void nsTableFrame::AppendAnonymousColFrames(
     // col group
     nsIContent* iContent = aColGroupFrame->GetContent();
     RefPtr<ComputedStyle> computedStyle =
-        shell->StyleSet()->ResolveNonInheritingAnonymousBoxStyle(
+        presShell->StyleSet()->ResolveNonInheritingAnonymousBoxStyle(
             PseudoStyleType::tableCol);
     // ASSERTION to check for bug 54454 sneaking back in...
     NS_ASSERTION(iContent, "null content in CreateAnonymousColFrames");
 
     // create the new col frame
-    nsIFrame* colFrame = NS_NewTableColFrame(shell, computedStyle);
+    nsIFrame* colFrame = NS_NewTableColFrame(presShell, computedStyle);
     ((nsTableColFrame*)colFrame)->SetColType(aColType);
     colFrame->Init(iContent, aColGroupFrame, nullptr);
 
@@ -1409,8 +1411,8 @@ void nsTableFrame::DisplayGenericTablePart(
 
     // Paint the outset box-shadows for the table frames
     if (aFrame->StyleEffects()->mBoxShadow) {
-      aLists.BorderBackground()->AppendToTop(
-          MakeDisplayItem<nsDisplayBoxShadowOuter>(aBuilder, aFrame));
+      aLists.BorderBackground()->AppendNewToTop<nsDisplayBoxShadowOuter>(
+          aBuilder, aFrame);
     }
   }
 
@@ -1482,8 +1484,8 @@ void nsTableFrame::DisplayGenericTablePart(
 
     // Paint the inset box-shadows for the table frames
     if (aFrame->StyleEffects()->mBoxShadow) {
-      aLists.BorderBackground()->AppendToTop(
-          MakeDisplayItem<nsDisplayBoxShadowInner>(aBuilder, aFrame));
+      aLists.BorderBackground()->AppendNewToTop<nsDisplayBoxShadowInner>(
+          aBuilder, aFrame);
     }
   }
 
@@ -1497,14 +1499,14 @@ void nsTableFrame::DisplayGenericTablePart(
       // In the collapsed border model, overlay all collapsed borders.
       if (table->IsBorderCollapse()) {
         if (table->HasBCBorders()) {
-          aLists.BorderBackground()->AppendToTop(
-              MakeDisplayItem<nsDisplayTableBorderCollapse>(aBuilder, table));
+          aLists.BorderBackground()
+              ->AppendNewToTop<nsDisplayTableBorderCollapse>(aBuilder, table);
         }
       } else {
         const nsStyleBorder* borderStyle = aFrame->StyleBorder();
         if (borderStyle->HasBorder()) {
-          aLists.BorderBackground()->AppendToTop(
-              MakeDisplayItem<nsDisplayBorder>(aBuilder, table));
+          aLists.BorderBackground()->AppendNewToTop<nsDisplayBorder>(aBuilder,
+                                                                     table);
         }
       }
     }
@@ -2695,7 +2697,7 @@ void nsTableFrame::RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) {
       aListID == kColGroupList || mozilla::StyleDisplay::TableColumnGroup !=
                                       aOldFrame->StyleDisplay()->mDisplay,
       "Wrong list name; use kColGroupList iff colgroup");
-  nsIPresShell* shell = PresShell();
+  mozilla::PresShell* presShell = PresShell();
   nsTableFrame* lastParent = nullptr;
   while (aOldFrame) {
     nsIFrame* oldFrameNextContinuation = aOldFrame->GetNextContinuation();
@@ -2712,8 +2714,8 @@ void nsTableFrame::RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) {
         parent->SetFullBCDamageArea();
       }
       parent->SetGeometryDirty();
-      shell->FrameNeedsReflow(parent, nsIPresShell::eTreeChange,
-                              NS_FRAME_HAS_DIRTY_CHILDREN);
+      presShell->FrameNeedsReflow(parent, nsIPresShell::eTreeChange,
+                                  NS_FRAME_HAS_DIRTY_CHILDREN);
       lastParent = parent;
     }
   }
@@ -4261,6 +4263,7 @@ struct BCMapCellInfo {
 
   // storage of table information
   nsTableFrame* mTableFrame;
+  nsTableFrame* mTableFirstInFlow;
   int32_t mNumTableRows;
   int32_t mNumTableCols;
   BCPropertyData* mTableBCData;
@@ -4303,6 +4306,7 @@ struct BCMapCellInfo {
 
 BCMapCellInfo::BCMapCellInfo(nsTableFrame* aTableFrame)
     : mTableFrame(aTableFrame),
+      mTableFirstInFlow(static_cast<nsTableFrame*>(aTableFrame->FirstInFlow())),
       mNumTableRows(aTableFrame->GetRowCount()),
       mNumTableCols(aTableFrame->GetColCount()),
       mTableBCData(mTableFrame->GetProperty(TableBCProperty())),
@@ -4476,13 +4480,13 @@ void BCMapCellInfo::SetInfo(nsTableRowFrame* aNewRow, int32_t aColIndex,
   mRgAtEnd = rgEnd == rowIndex + mRowSpan - 1;
 
   // col frame info
-  mStartCol = mTableFrame->GetColFrame(aColIndex);
+  mStartCol = mTableFirstInFlow->GetColFrame(aColIndex);
   if (!mStartCol) ABORT0();
 
   mEndCol = mStartCol;
   if (mColSpan > 1) {
     nsTableColFrame* colFrame =
-        mTableFrame->GetColFrame(aColIndex + mColSpan - 1);
+        mTableFirstInFlow->GetColFrame(aColIndex + mColSpan - 1);
     if (!colFrame) ABORT0();
     mEndCol = colFrame;
   }
@@ -5487,10 +5491,7 @@ void BCMapCellInfo::SetTableBEndBorderWidth(BCPixelSize aWidth) {
 }
 
 void BCMapCellInfo::SetColumn(int32_t aColX) {
-  mCurrentColFrame = mTableFrame->GetColFrame(aColX);
-  if (!mCurrentColFrame) {
-    NS_ERROR("null mCurrentColFrame");
-  }
+  mCurrentColFrame = mTableFirstInFlow->GetColFrame(aColX);
   mCurrentColGroupFrame =
       static_cast<nsTableColGroupFrame*>(mCurrentColFrame->GetParent());
   if (!mCurrentColGroupFrame) {

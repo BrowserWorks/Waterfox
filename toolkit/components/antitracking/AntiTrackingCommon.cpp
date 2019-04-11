@@ -181,12 +181,18 @@ int32_t CookiesBehavior(Document* aTopLevelDocument,
   MOZ_ASSERT(aTopLevelDocument);
   MOZ_ASSERT(a3rdPartyDocument);
 
-  // WebExtensions principals always get BEHAVIOR_ACCEPT as cookieBehavior
-  // (See Bug 1406675 for rationale).
-  if (BasePrincipal::Cast(aTopLevelDocument->NodePrincipal())->AddonPolicy()) {
+  // Override the cookiebehavior to accept if the top level document has
+  // an extension principal (if the static pref has been set to true
+  // to force the old behavior here, See Bug 1525917).
+  // This block (and the static pref) should be removed as part of
+  // Bug 1537753.
+  if (StaticPrefs::extensions_cookiesBehavior_overrideOnTopLevel() &&
+      BasePrincipal::Cast(aTopLevelDocument->NodePrincipal())->AddonPolicy()) {
     return nsICookieService::BEHAVIOR_ACCEPT;
   }
 
+  // WebExtensions principals always get BEHAVIOR_ACCEPT as cookieBehavior
+  // (See Bug 1406675 and Bug 1525917 for rationale).
   if (BasePrincipal::Cast(a3rdPartyDocument->NodePrincipal())->AddonPolicy()) {
     return nsICookieService::BEHAVIOR_ACCEPT;
   }
@@ -201,13 +207,18 @@ int32_t CookiesBehavior(nsILoadInfo* aLoadInfo,
   MOZ_ASSERT(aTopLevelPrincipal);
   MOZ_ASSERT(a3rdPartyURI);
 
-  // WebExtensions principals always get BEHAVIOR_ACCEPT as cookieBehavior
-  // (See Bug 1406675 for rationale).
-  if (BasePrincipal::Cast(aTopLevelPrincipal)->AddonPolicy()) {
+  // Override the cookiebehavior to accept if the top level principal is
+  // an extension principal (if the static pref has been turned to true
+  // to force the old behavior here, See Bug 1525917).
+  // This block (and the static pref) should be removed as part of
+  // Bug 1537753.
+  if (StaticPrefs::extensions_cookiesBehavior_overrideOnTopLevel() &&
+      BasePrincipal::Cast(aTopLevelPrincipal)->AddonPolicy()) {
     return nsICookieService::BEHAVIOR_ACCEPT;
   }
 
-  // This is semantically equivalent to the principal having a AddonPolicy().
+  // WebExtensions 3rd party URI always get BEHAVIOR_ACCEPT as cookieBehavior,
+  // this is semantically equivalent to the principal having a AddonPolicy().
   bool is3rdPartyMozExt = false;
   if (NS_SUCCEEDED(
           a3rdPartyURI->SchemeIs("moz-extension", &is3rdPartyMozExt)) &&
@@ -244,10 +255,10 @@ struct ContentBlockingAllowListKey {
   // a case where the allocator reallocates a window object where a channel used
   // to live and vice versa.
   explicit ContentBlockingAllowListKey(nsPIDOMWindowInner* aWindow)
-      : mHash(mozilla::AddToHash(uintptr_t(aWindow),
+      : mHash(mozilla::AddToHash(aWindow->WindowID(),
                                  mozilla::HashString("window"))) {}
-  explicit ContentBlockingAllowListKey(nsIChannel* aChannel)
-      : mHash(mozilla::AddToHash(uintptr_t(aChannel),
+  explicit ContentBlockingAllowListKey(nsIHttpChannel* aChannel)
+      : mHash(mozilla::AddToHash(aChannel->ChannelId(),
                                  mozilla::HashString("channel"))) {}
 
   ContentBlockingAllowListKey(const ContentBlockingAllowListKey& aRHS)
@@ -267,7 +278,7 @@ struct ContentBlockingAllowListEntry {
   ContentBlockingAllowListEntry() : mResult(false) {}
   ContentBlockingAllowListEntry(nsPIDOMWindowInner* aWindow, bool aResult)
       : mKey(aWindow), mResult(aResult) {}
-  ContentBlockingAllowListEntry(nsIChannel* aChannel, bool aResult)
+  ContentBlockingAllowListEntry(nsIHttpChannel* aChannel, bool aResult)
       : mKey(aChannel), mResult(aResult) {}
 
   ContentBlockingAllowListKey mKey;
@@ -365,25 +376,42 @@ bool CheckContentBlockingAllowList(nsIHttpChannel* aChannel) {
     return entry.Data().mResult;
   }
 
-  nsCOMPtr<nsIHttpChannelInternal> chan = do_QueryInterface(aChannel);
-  if (chan) {
-    nsCOMPtr<nsIURI> topWinURI;
-    nsresult rv = chan->GetTopWindowURI(getter_AddRefs(topWinURI));
-    if (NS_SUCCEEDED(rv)) {
-      const bool result = CheckContentBlockingAllowList(
-          topWinURI, NS_UsePrivateBrowsing(aChannel));
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
+  nsContentPolicyType contentPolicyType =
+      loadInfo->GetExternalContentPolicyType();
 
-      entry.Set(ContentBlockingAllowListEntry(aChannel, result));
+  nsCOMPtr<nsIURI> uri;
 
-      return result;
+  // This is the top-level request. Let's use the channel URI.
+  if (contentPolicyType == nsIContentPolicy::TYPE_DOCUMENT) {
+    nsresult rv = NS_GetFinalChannelURI(aChannel, getter_AddRefs(uri));
+    if (NS_WARN_IF(NS_FAILED(rv)) || !uri) {
+      LOG(
+          ("Could not check the content blocking allow list because the "
+           "channel URI is not accessible"));
+      entry.Set(ContentBlockingAllowListEntry(aChannel, false));
+      return false;
+    }
+  } else {
+    nsCOMPtr<nsIHttpChannelInternal> chan = do_QueryInterface(aChannel);
+    MOZ_ASSERT(chan);
+
+    nsresult rv = chan->GetTopWindowURI(getter_AddRefs(uri));
+    if (NS_WARN_IF(NS_FAILED(rv)) || !uri) {
+      LOG(
+          ("Could not check the content blocking allow list because the top "
+           "window wasn't accessible"));
+      entry.Set(ContentBlockingAllowListEntry(aChannel, false));
+      return false;
     }
   }
 
-  LOG(
-      ("Could not check the content blocking allow list because the top "
-       "window wasn't accessible"));
-  entry.Set(ContentBlockingAllowListEntry(aChannel, false));
-  return false;
+  MOZ_ASSERT(uri);
+
+  const bool result =
+      CheckContentBlockingAllowList(uri, NS_UsePrivateBrowsing(aChannel));
+  entry.Set(ContentBlockingAllowListEntry(aChannel, result));
+  return result;
 }
 
 void ReportBlockingToConsole(nsPIDOMWindowOuter* aWindow, nsIURI* aURI,

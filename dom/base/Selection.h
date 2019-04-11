@@ -11,13 +11,13 @@
 
 #include "mozilla/AccessibleCaretEventHub.h"
 #include "mozilla/AutoRestore.h"
+#include "mozilla/PresShell.h"  // For ScrollAxis
 #include "mozilla/RangeBoundary.h"
 #include "mozilla/SelectionChangeEventDispatcher.h"
 #include "mozilla/TextRange.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WeakPtr.h"
 #include "nsDirection.h"
-#include "nsIPresShell.h"  // For ScrollAxis
 #include "nsISelectionController.h"
 #include "nsISelectionListener.h"
 #include "nsRange.h"
@@ -92,7 +92,7 @@ class Selection final : public nsSupportsWeakReference,
    * MaybeNotifyAccessibleCaretEventHub() starts to notify
    * AccessibleCaretEventHub of selection change if aPresShell has it.
    */
-  void MaybeNotifyAccessibleCaretEventHub(nsIPresShell* aPresShell) {
+  void MaybeNotifyAccessibleCaretEventHub(PresShell* aPresShell) {
     if (!mAccessibleCaretEventHub && aPresShell) {
       mAccessibleCaretEventHub = aPresShell->GetAccessibleCaretEventHub();
     }
@@ -122,7 +122,7 @@ class Selection final : public nsSupportsWeakReference,
 
   // utility methods for scrolling the selection into view
   nsPresContext* GetPresContext() const;
-  nsIPresShell* GetPresShell() const;
+  PresShell* GetPresShell() const;
   nsFrameSelection* GetFrameSelection() const { return mFrameSelection; }
   // Returns a rect containing the selection region, and frame that that
   // position is relative to. For SELECTION_ANCHOR_REGION or
@@ -910,7 +910,8 @@ inline SelectionTypeMask ToSelectionTypeMask(SelectionType aSelectionType) {
   MOZ_ASSERT(aSelectionType != SelectionType::eInvalid);
   return aSelectionType == SelectionType::eNone
              ? 0
-             : (1 << (static_cast<uint8_t>(aSelectionType) - 1));
+             : static_cast<SelectionTypeMask>(
+                   1 << (static_cast<uint8_t>(aSelectionType) - 1));
 }
 
 }  // namespace mozilla

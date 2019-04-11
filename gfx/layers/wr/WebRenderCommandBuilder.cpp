@@ -245,7 +245,9 @@ static bool IsContainerLayerItem(nsDisplayItem* aItem) {
     case DisplayItemType::TYPE_PERSPECTIVE: {
       return true;
     }
-    default: { return false; }
+    default: {
+      return false;
+    }
   }
 }
 
@@ -1081,12 +1083,13 @@ class WebRenderGroupData : public WebRenderUserData {
 };
 
 static bool IsItemProbablyActive(nsDisplayItem* aItem,
-                                 nsDisplayListBuilder* aDisplayListBuilder);
+                                 nsDisplayListBuilder* aDisplayListBuilder,
+                                 bool aParentActive = true);
 
 static bool HasActiveChildren(const nsDisplayList& aList,
                               nsDisplayListBuilder* aDisplayListBuilder) {
   for (nsDisplayItem* i = aList.GetBottom(); i; i = i->GetAbove()) {
-    if (IsItemProbablyActive(i, aDisplayListBuilder)) {
+    if (IsItemProbablyActive(i, aDisplayListBuilder, false)) {
       return true;
     }
   }
@@ -1101,7 +1104,8 @@ static bool HasActiveChildren(const nsDisplayList& aList,
 // We can't easily use GetLayerState because it wants a bunch of layers related
 // information.
 static bool IsItemProbablyActive(nsDisplayItem* aItem,
-                                 nsDisplayListBuilder* aDisplayListBuilder) {
+                                 nsDisplayListBuilder* aDisplayListBuilder,
+                                 bool aParentActive) {
   switch (aItem->GetType()) {
     case DisplayItemType::TYPE_TRANSFORM: {
       nsDisplayTransform* transformItem =
@@ -1125,6 +1129,13 @@ static bool IsItemProbablyActive(nsDisplayItem* aItem,
     }
     case DisplayItemType::TYPE_FOREIGN_OBJECT: {
       return true;
+    }
+    case DisplayItemType::TYPE_BLEND_MODE: {
+      /* BLEND_MODE needs to be active if it might have a previous sibling
+       * that is active. We use the activeness of the parent as a rough
+       * proxy for this situation. */
+      return aParentActive || HasActiveChildren(*aItem->GetChildren(),
+                                                aDisplayListBuilder);
     }
     case DisplayItemType::TYPE_WRAP_LIST:
     case DisplayItemType::TYPE_PERSPECTIVE: {
@@ -1628,13 +1639,6 @@ void WebRenderCommandBuilder::CreateWebRenderCommandsFromDisplayList(
 
     DisplayItemType itemType = item->GetType();
 
-    if (mForEventsAndPluginsOnly &&
-        (itemType != DisplayItemType::TYPE_COMPOSITOR_HITTEST_INFO &&
-         itemType != DisplayItemType::TYPE_PLUGIN)) {
-      // Only process hit test info items or plugin items.
-      continue;
-    }
-
     bool forceNewLayerData = false;
     size_t layerCountBeforeRecursing =
         mLayerScrollDatas.GetLayerCount(aBuilder.GetRenderRoot());
@@ -1709,13 +1713,6 @@ void WebRenderCommandBuilder::CreateWebRenderCommandsFromDisplayList(
           mClippedGroupBounds = Some(innerClippedBounds);
         }
         GP("attempting to enter the grouping code\n");
-      }
-
-      AutoRestore<bool> restoreForEventsAndPluginsOnly(
-          mForEventsAndPluginsOnly);
-      if (itemType == DisplayItemType::TYPE_OPACITY &&
-          static_cast<nsDisplayOpacity*>(item)->ForEventsAndPluginsOnly()) {
-        mForEventsAndPluginsOnly = true;
       }
 
       if (dumpEnabled) {

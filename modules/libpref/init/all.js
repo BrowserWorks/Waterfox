@@ -446,6 +446,9 @@ pref("media.peerconnection.sdp.rust.compare", false);
 #endif
 
 pref("media.videocontrols.picture-in-picture.enabled", false);
+pref("media.videocontrols.picture-in-picture.video-toggle.enabled", false);
+pref("media.videocontrols.picture-in-picture.video-toggle.flyout-enabled", false);
+pref("media.videocontrols.picture-in-picture.video-toggle.flyout-wait-ms", 5000);
 
 pref("media.webrtc.debug.trace_mask", 0);
 pref("media.webrtc.debug.multi_log", false);
@@ -468,6 +471,8 @@ pref("media.navigator.mediadatadecoder_vpx_enabled", false);
 #endif
 #if defined(ANDROID)
 pref("media.navigator.mediadatadecoder_h264_enabled", false); // bug 1509316
+#elif defined(_ARM64_) && defined(XP_WIN)
+pref("media.navigator.mediadatadecoder_h264_enabled", false);
 #else
 pref("media.navigator.mediadatadecoder_h264_enabled", true);
 #endif
@@ -1129,7 +1134,6 @@ pref("devtools.recordreplay.enableRewinding", true);
 #endif
 
 pref("devtools.recordreplay.mvp.enabled", false);
-pref("devtools.recordreplay.timeline.enabled", false);
 pref("devtools.recordreplay.allowRepaintFailures", true);
 pref("devtools.recordreplay.includeSystemScripts", false);
 
@@ -1413,8 +1417,10 @@ pref("privacy.popups.maxReported", 100);
 // send "do not track" HTTP header, disabled by default
 pref("privacy.donottrackheader.enabled",    false);
 // Enforce tracking protection in all modes
+// In Firefox Desktop this pref is set by browser.contentblocking.features.[standard, strict] see firefox.js for details.
 pref("privacy.trackingprotection.enabled",  false);
 // Enforce tracking protection in Private Browsing mode
+// In Firefox Desktop this pref is set by browser.contentblocking.features.[standard, strict] see firefox.js for details.
 pref("privacy.trackingprotection.pbmode.enabled",  true);
 // First Party Isolation (double keying), disabled by default
 pref("privacy.firstparty.isolate",                        false);
@@ -2696,7 +2702,12 @@ pref("csp.overrule_about_uris_without_csp_whitelist", false);
 pref("csp.skip_about_page_has_csp_assert", false);
 // assertion flag will be set to false after fixing Bug 1473549
 pref("security.allow_eval_with_system_principal", false);
-pref("security.uris_using_eval_with_system_principal", "autocomplete.xml,redux.js,react-redux.js,content-task.js,content-task.js,tree.xml,dialog.xml,preferencesbindings.js,lodash.js,jszip.js,sinon-7.2.7.js,ajv-4.1.1.js,updates.js,setup,jsol.js,parent_utils.js,chrometask_chromescript");
+pref("security.uris_using_eval_with_system_principal", "autocomplete.xml,redux.js,react-redux.js,content-task.js,preferencesbindings.js,lodash.js,jszip.js,sinon-7.2.7.js,ajv-4.1.1.js,updates.js,setup,jsol.js,parent_utils.js,chrometask_chromescript");
+#endif
+
+#if defined(DEBUG) || defined(FUZZING)
+// Disallow web documents loaded with the SystemPrincipal
+pref("security.disallow_non_local_systemprincipal_in_tests", false);
 #endif
 
 // Default Content Security Policy to apply to signed contents.
@@ -3205,7 +3216,8 @@ pref("layout.display-list.dump-parent", false);
 pref("layout.display-list.retain", true);
 pref("layout.display-list.retain.chrome", false);
 #else
-pref("layout.display-list.retain", false);
+pref("layout.display-list.retain", true);
+pref("layout.display-list.retain.chrome", true);
 #endif
 
 // Set the maximum amount of modified frames allowed before doing a full
@@ -5173,7 +5185,7 @@ pref("device.sensors.ambientLight.enabled", false);
 pref("device.storage.enabled", false);
 
 // Push/Pop/Replace State prefs
-pref("browser.history.maxStateObjectSize", 655360);
+pref("browser.history.maxStateObjectSize", 2097152);
 
 pref("browser.meta_refresh_when_inactive.disabled", false);
 
@@ -5580,7 +5592,7 @@ pref("network.trr.custom_uri", "");
 // On Android, the captive portal is handled by the OS itself
 pref("network.trr.wait-for-portal", false);
 #else
-pref("network.trr.wait-for-portal", true);
+pref("network.trr.wait-for-portal", false);
 #endif
 // Allow RFC1918 address in responses?
 pref("network.trr.allow-rfc1918", false);
@@ -5605,6 +5617,9 @@ pref("network.trr.disable-ECS", true);
 pref("network.trr.max-fails", 5);
 // Comma separated list of domains that we should not use TRR for
 pref("network.trr.excluded-domains", "localhost,local");
+
+// enable HttpTrafficAnalyzer
+pref("network.traffic_analyzer.enabled", true);
 
 pref("captivedetect.canonicalURL", "http://detectportal.firefox.com/success.txt");
 pref("captivedetect.canonicalContent", "success\n");
@@ -5639,7 +5654,7 @@ pref("urlclassifier.downloadBlockTable", "goog-badbinurl-proto");
 pref("urlclassifier.passwordAllowTable", "goog-passwordwhite-proto");
 
 // Tables for anti-tracking features
-pref("urlclassifier.trackingAnnotationTable", "test-track-simple,base-track-digest256,content-track-digest256");
+pref("urlclassifier.trackingAnnotationTable", "test-track-simple,ads-track-digest256,social-track-digest256,analytics-track-digest256,content-track-digest256");
 pref("urlclassifier.trackingAnnotationWhitelistTable", "test-trackwhite-simple,mozstd-trackwhite-digest256");
 pref("urlclassifier.trackingTable", "test-track-simple,base-track-digest256");
 pref("urlclassifier.trackingWhitelistTable", "test-trackwhite-simple,mozstd-trackwhite-digest256");
@@ -6067,8 +6082,6 @@ pref("dom.datatransfer.mozAtAPIs", false);
 pref("dom.datatransfer.mozAtAPIs", true);
 #endif
 
-// Whether or not Prio is supported on this platform.
-pref("prio.enabled", false);
 // Whether or not the Prio Ping is supported on this platform.
 pref("toolkit.telemetry.prioping.enabled", false);
 

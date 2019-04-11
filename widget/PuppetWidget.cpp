@@ -286,6 +286,15 @@ void PuppetWidget::Invalidate(const LayoutDeviceIntRect& aRect) {
   }
 }
 
+mozilla::LayoutDeviceToLayoutDeviceMatrix4x4
+PuppetWidget::WidgetToTopLevelWidgetTransform() {
+  if (!GetOwningTabChild()) {
+    NS_WARNING("PuppetWidget without Tab does not have transform information.");
+    return mozilla::LayoutDeviceToLayoutDeviceMatrix4x4();
+  }
+  return GetOwningTabChild()->GetChildToParentConversionMatrix();
+}
+
 void PuppetWidget::InitEvent(WidgetGUIEvent& aEvent,
                              LayoutDeviceIntPoint* aPoint) {
   if (nullptr == aPoint) {
@@ -772,13 +781,14 @@ nsresult PuppetWidget::NotifyIMEOfFocusChange(
       IMENotificationRequests(IMENotificationRequests::NOTIFY_ALL);
   RefPtr<PuppetWidget> self = this;
   mTabChild->SendNotifyIMEFocus(mContentCache, aIMENotification)
-      ->Then(mTabChild->TabGroup()->EventTargetFor(TaskCategory::UI), __func__,
-             [self](IMENotificationRequests&& aRequests) {
-               self->mIMENotificationRequestsOfParent = aRequests;
-             },
-             [self](mozilla::ipc::ResponseRejectReason&& aReason) {
-               NS_WARNING("SendNotifyIMEFocus got rejected.");
-             });
+      ->Then(
+          mTabChild->TabGroup()->EventTargetFor(TaskCategory::UI), __func__,
+          [self](IMENotificationRequests&& aRequests) {
+            self->mIMENotificationRequestsOfParent = aRequests;
+          },
+          [self](mozilla::ipc::ResponseRejectReason&& aReason) {
+            NS_WARNING("SendNotifyIMEFocus got rejected.");
+          });
 
   return NS_OK;
 }

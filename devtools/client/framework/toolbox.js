@@ -71,6 +71,10 @@ loader.lazyGetter(this, "domNodeConstants", () => {
   return require("devtools/shared/dom-node-constants");
 });
 
+loader.lazyGetter(this, "DEBUG_TARGET_TYPES", () => {
+  return require("devtools/client/shared/remote-debugging/constants").DEBUG_TARGET_TYPES;
+});
+
 loader.lazyGetter(this, "registerHarOverlay", () => {
   return require("devtools/client/netmonitor/src/har/toolbox-overlay").register;
 });
@@ -168,6 +172,7 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId,
   this._onInspectObject = this._onInspectObject.bind(this);
   this._onNewSelectedNodeFront = this._onNewSelectedNodeFront.bind(this);
   this._onToolSelected = this._onToolSelected.bind(this);
+  this._onTargetClosed = this._onTargetClosed.bind(this);
   this.updateToolboxButtonsVisibility = this.updateToolboxButtonsVisibility.bind(this);
   this.updateToolboxButtons = this.updateToolboxButtons.bind(this);
   this.selectTool = this.selectTool.bind(this);
@@ -178,7 +183,7 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId,
   this.toggleDragging = this.toggleDragging.bind(this);
   this.isPaintFlashing = false;
 
-  this._target.on("close", this.destroy);
+  this._target.on("close", this._onTargetClosed);
 
   if (!selectedTool) {
     selectedTool = Services.prefs.getCharPref(this._prefs.LAST_TOOL);
@@ -212,7 +217,7 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId,
    */
   loader.lazyGetter(this, "direction", () => {
     // Get the direction from browser.xul document
-    const top = this.win.top;
+    const top = this.topWindow;
     const topDocEl = top.document.documentElement;
     const isRtl = top.getComputedStyle(topDocEl).direction === "rtl";
     return isRtl ? "rtl" : "ltr";
@@ -377,6 +382,15 @@ Toolbox.prototype = {
   },
 
   /**
+   * When the toolbox is loaded in a frame with type="content", win.parent will not return
+   * the parent Chrome window. This getter should return the parent Chrome window
+   * regardless of the frame type. See Bug 1539979.
+   */
+  get topWindow() {
+    return this.win.windowRoot.ownerGlobal;
+  },
+
+  /**
    * Shortcut to the document containing the toolbox UI
    */
   get doc() {
@@ -439,11 +453,6 @@ Toolbox.prototype = {
    */
   open: function() {
     return (async function() {
-      this.browserRequire = BrowserLoader({
-        window: this.doc.defaultView,
-        useOnlyShared: true,
-      }).require;
-
       const isToolboxURL = this.win.location.href.startsWith(this._URL);
       if (isToolboxURL) {
         // Update the URL so that onceDOMReady watch for the right url.
@@ -453,9 +462,8 @@ Toolbox.prototype = {
       if (this.hostType === Toolbox.HostType.PAGE) {
         // Displays DebugTargetInfo which shows the basic information of debug target,
         // if `about:devtools-toolbox` URL opens directly.
-        // DebugTargetInfo requires this._deviceDescription to be populated
-        this._showDebugTargetInfo = true;
-        this._deviceDescription = await this._getDeviceDescription();
+        // DebugTargetInfo requires this._debugTargetData to be populated
+        this._debugTargetData = await this._getDebugTargetData();
       }
 
       const domHelper = new DOMHelpers(this.win);
@@ -482,6 +490,11 @@ Toolbox.prototype = {
       // Attach the thread
       this._threadClient = await attachThread(this);
       await domReady;
+
+      this.browserRequire = BrowserLoader({
+        window: this.win,
+        useOnlyShared: true,
+      }).require;
 
       // The web console is immediately loaded when replaying, so that the
       // timeline will always be populated with generated messages.
@@ -569,15 +582,14 @@ Toolbox.prototype = {
 
       // Wait until the original tool is selected so that the split
       // console input will receive focus.
-      const browserWin = this.win.top;
       let splitConsolePromise = promise.resolve();
       if (Services.prefs.getBoolPref(SPLITCONSOLE_ENABLED_PREF)) {
         splitConsolePromise = this.openSplitConsole();
         this.telemetry.addEventProperty(
-          browserWin, "open", "tools", null, "splitconsole", true);
+          this.win, "open", "tools", null, "splitconsole", true);
       } else {
         this.telemetry.addEventProperty(
-          browserWin, "open", "tools", null, "splitconsole", false);
+          this.win, "open", "tools", null, "splitconsole", false);
       }
 
       await promise.all([
@@ -606,12 +618,37 @@ Toolbox.prototype = {
     });
   },
 
-  _getDeviceDescription: async function() {
+  _getDebugTargetData: async function() {
+    const url = new URL(this.win.location);
+    const searchParams = new this.win.URLSearchParams(url.search);
+
+    const targetType = searchParams.get("type") || DEBUG_TARGET_TYPES.TAB;
+
     const deviceFront = await this.target.client.mainRoot.getFront("device");
-    const description = await deviceFront.getDescription();
-    const remoteId = new this.win.URLSearchParams(this.win.location.href).get("remoteId");
+    const deviceDescription = await deviceFront.getDescription();
+    const remoteId = searchParams.get("remoteId");
     const connectionType = remoteClientManager.getConnectionTypeByRemoteId(remoteId);
-    return Object.assign({}, description, { connectionType });
+
+    return {
+      connectionType,
+      deviceDescription,
+      targetType,
+    };
+  },
+
+  _onTargetClosed: async function() {
+    const win = this.win; // .destroy() will set this.win to null
+
+    // clean up the toolbox
+    this.destroy();
+    // NOTE: we should await this.destroy() to ensure a proper clean up.
+    //       See https://bugzilla.mozilla.org/show_bug.cgi?id=1536144
+
+    // redirect to about:toolbox error page if we are connected to a remote
+    // target and we lose it
+    if (this.hostType === Toolbox.HostType.PAGE) {
+      win.location.replace("about:devtools-toolbox?disconnected");
+    }
   },
 
   /**
@@ -1149,12 +1186,12 @@ Toolbox.prototype = {
 
   postMessage: function(msg) {
     // We sometime try to send messages in middle of destroy(), where the
-    // toolbox iframe may already be detached and no longer have a parent.
-    if (this.win.parent) {
+    // toolbox iframe may already be detached.
+    if (!this._destroyer) {
       // Toolbox document is still chrome and disallow identifying message
       // origin via event.source as it is null. So use a custom id.
       msg.frameId = this.frameId;
-      this.win.parent.postMessage(msg, "*");
+      this.topWindow.postMessage(msg, "*");
     }
   },
 
@@ -1190,8 +1227,7 @@ Toolbox.prototype = {
       closeToolbox: this.closeToolbox,
       focusButton: this._onToolbarFocus,
       toolbox: this,
-      showDebugTargetInfo: this._showDebugTargetInfo,
-      deviceDescription: this._deviceDescription,
+      debugTargetData: this._debugTargetData,
       onTabsOrderUpdated: this._onTabsOrderUpdated,
     });
 
@@ -2096,8 +2132,7 @@ Toolbox.prototype = {
       });
     }
 
-    const browserWin = this.win.top;
-    this.telemetry.addEventProperties(browserWin, "open", "tools", null, {
+    this.telemetry.addEventProperties(this.win, "open", "tools", null, {
       "width": width,
       "session_id": this.sessionId,
     });
@@ -2906,6 +2941,13 @@ Toolbox.prototype = {
   },
 
   /**
+   * Public API to check is the current toolbox is currently being destroyed.
+   */
+  isDestroying: function() {
+    return this._destroyer;
+  },
+
+  /**
    * Remove all UI elements, detach from target and clear up
    */
   destroy: function() {
@@ -3065,7 +3107,7 @@ Toolbox.prototype = {
           }
           const target = this._target;
           this._target = null;
-          target.off("close", this.destroy);
+          target.off("close", this._onTargetClosed);
           return target.destroy();
         }, console.error).then(() => {
           this.emit("destroyed");

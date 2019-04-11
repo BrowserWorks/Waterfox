@@ -11,10 +11,10 @@
 #include "mozilla/dom/SVGElement.h"
 #include "FilterSupport.h"
 #include "nsImageLoadingContent.h"
-#include "nsSVGLength2.h"
-#include "SVGString.h"
-#include "nsSVGNumber2.h"
-#include "SVGNumberPair.h"
+#include "SVGAnimatedLength.h"
+#include "SVGAnimatedNumber.h"
+#include "SVGAnimatedNumberPair.h"
+#include "SVGAnimatedString.h"
 
 class nsSVGFilterInstance;
 
@@ -22,10 +22,10 @@ namespace mozilla {
 namespace dom {
 
 struct SVGStringInfo {
-  SVGStringInfo(const SVGString* aString, SVGElement* aElement)
+  SVGStringInfo(const SVGAnimatedString* aString, SVGElement* aElement)
       : mString(aString), mElement(aElement) {}
 
-  const SVGString* mString;
+  const SVGAnimatedString* mString;
   SVGElement* mElement;
 };
 
@@ -55,7 +55,7 @@ class SVGFE : public SVGFEBase {
 
   explicit SVGFE(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
       : SVGFEBase(std::move(aNodeInfo)) {}
-  virtual ~SVGFE() {}
+  virtual ~SVGFE() = default;
 
  public:
   typedef mozilla::gfx::PrimitiveAttributes PrimitiveAttributes;
@@ -95,7 +95,7 @@ class SVGFE : public SVGFEBase {
     return !(aFlags & ~eFILTER);
   }
 
-  virtual SVGString& GetResultImageName() = 0;
+  virtual SVGAnimatedString& GetResultImageName() = 0;
   // Return a list of all image names used as sources. Default is to
   // return no sources.
   virtual void GetSourceImageNames(nsTArray<SVGStringInfo>& aSources);
@@ -146,10 +146,10 @@ class SVGFE : public SVGFEBase {
   virtual LengthAttributesInfo GetLengthInfo() override;
 
   Size GetKernelUnitLength(nsSVGFilterInstance* aInstance,
-                           SVGNumberPair* aKernelUnitLength);
+                           SVGAnimatedNumberPair* aKernelUnitLength);
 
   enum { ATTR_X, ATTR_Y, ATTR_WIDTH, ATTR_HEIGHT };
-  nsSVGLength2 mLengthAttributes[4];
+  SVGAnimatedLength mLengthAttributes[4];
   static LengthInfo sLengthInfo[4];
 };
 
@@ -183,7 +183,7 @@ class SVGFELightingElement : public SVGFELightingElementBase {
       already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
       : SVGFELightingElementBase(std::move(aNodeInfo)) {}
 
-  virtual ~SVGFELightingElement() {}
+  virtual ~SVGFELightingElement() = default;
 
  public:
   // interfaces:
@@ -192,7 +192,7 @@ class SVGFELightingElement : public SVGFELightingElementBase {
 
   virtual bool AttributeAffectsRendering(int32_t aNameSpaceID,
                                          nsAtom* aAttribute) const override;
-  virtual SVGString& GetResultImageName() override {
+  virtual SVGAnimatedString& GetResultImageName() override {
     return mStringAttributes[RESULT];
   }
   virtual void GetSourceImageNames(nsTArray<SVGStringInfo>& aSources) override;
@@ -221,15 +221,15 @@ class SVGFELightingElement : public SVGFELightingElementBase {
     SPECULAR_CONSTANT,
     SPECULAR_EXPONENT
   };
-  nsSVGNumber2 mNumberAttributes[4];
+  SVGAnimatedNumber mNumberAttributes[4];
   static NumberInfo sNumberInfo[4];
 
   enum { KERNEL_UNIT_LENGTH };
-  SVGNumberPair mNumberPairAttributes[1];
+  SVGAnimatedNumberPair mNumberPairAttributes[1];
   static NumberPairInfo sNumberPairInfo[1];
 
   enum { RESULT, IN1 };
-  SVGString mStringAttributes[2];
+  SVGAnimatedString mStringAttributes[2];
   static StringInfo sStringInfo[2];
 };
 

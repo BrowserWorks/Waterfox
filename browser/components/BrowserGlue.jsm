@@ -305,7 +305,7 @@ let ACTORS = {
 
   // Until bug 1450626 and bug 1488384 are fixed, skip the blank window when
   // using a non-default theme.
-  if (Services.prefs.getCharPref("lightweightThemes.selectedThemeID", "") !=
+  if (Services.prefs.getCharPref("extensions.activeThemeID", "") !=
         "default-theme@mozilla.org")
     return;
 
@@ -518,6 +518,8 @@ const listeners = {
     "FormValidation:HidePopup": ["FormValidationHandler"],
     "PictureInPicture:Request": ["PictureInPicture"],
     "PictureInPicture:Close": ["PictureInPicture"],
+    "PictureInPicture:Playing": ["PictureInPicture"],
+    "PictureInPicture:Paused": ["PictureInPicture"],
     "Prompt:Open": ["RemotePrompt"],
     "Reader:FaviconRequest": ["ReaderParent"],
     "Reader:UpdateReaderButton": ["ReaderParent"],
@@ -722,7 +724,7 @@ BrowserGlue.prototype = {
         console.log("Loaded BootstrapLoader");
       break;
       case "notifications-open-settings":
-        this._openPreferences("privacy-permissions", { origin: "notifOpenSettings" });
+        this._openPreferences("privacy-permissions");
         break;
       case "final-ui-startup":
         this._beforeUIStartup();
@@ -1000,9 +1002,10 @@ BrowserGlue.prototype = {
     os.removeObserver(this, "shield-init-complete");
 
     Services.prefs.removeObserver("privacy.trackingprotection", this._matchCBCategory);
-    Services.prefs.removeObserver("urlclassifier.trackingTable", this._matchCBCategory);
     Services.prefs.removeObserver("network.cookie.cookieBehavior", this._matchCBCategory);
     Services.prefs.removeObserver(ContentBlockingCategoriesPrefs.PREF_CB_CATEGORY, this._updateCBCategory);
+    Services.prefs.removeObserver("browser.contentblocking.features.standard", this._setPrefExpectations);
+    Services.prefs.removeObserver("browser.contentblocking.features.strict", this._setPrefExpectations);
   },
 
   // runs on startup, before the first command line handler is invoked
@@ -1331,19 +1334,26 @@ BrowserGlue.prototype = {
 
     // Set the default favicon size for UI views that use the page-icon protocol.
     PlacesUtils.favicons.setDefaultIconURIPreferredSize(16 * aWindow.devicePixelRatio);
-
+    this._setPrefExpectations();
     this._matchCBCategory();
+
     // This observes the entire privacy.trackingprotection.* pref tree.
     Services.prefs.addObserver("privacy.trackingprotection", this._matchCBCategory);
-    Services.prefs.addObserver("urlclassifier.trackingTable", this._matchCBCategory);
     Services.prefs.addObserver("network.cookie.cookieBehavior", this._matchCBCategory);
     Services.prefs.addObserver(ContentBlockingCategoriesPrefs.PREF_CB_CATEGORY, this._updateCBCategory);
     Services.prefs.addObserver("media.autoplay.default", this._updateAutoplayPref);
+    Services.prefs.addObserver("browser.contentblocking.features.standard", this._setPrefExpectations);
+    Services.prefs.addObserver("browser.contentblocking.features.strict", this._setPrefExpectations);
   },
 
   _updateAutoplayPref() {
     let blocked = Services.prefs.getIntPref("media.autoplay.default", 1);
     Services.telemetry.scalarSet("media.autoplay_default_blocked", blocked);
+  },
+
+  _setPrefExpectations() {
+    ContentBlockingCategoriesPrefs.setPrefExpectations();
+    ContentBlockingCategoriesPrefs.updateCBCategory();
   },
 
   _matchCBCategory() {
@@ -2187,7 +2197,7 @@ BrowserGlue.prototype = {
     let clickCallback = (subject, topic, data) => {
       if (topic != "alertclickcallback")
         return;
-      this._openPreferences("sync", { origin: "doorhanger" });
+      this._openPreferences("sync");
     };
     this.AlertsService.showAlertNotification(null, title, body, true, null, clickCallback);
   },
@@ -2251,16 +2261,6 @@ BrowserGlue.prototype = {
 
     let xulStore = Services.xulStore;
 
-    if (currentUIVersion < 51) {
-      // Switch to compact UI density if the user is using a formerly compact
-      // dark or light theme.
-      let currentTheme = Services.prefs.getCharPref("lightweightThemes.selectedThemeID", "");
-      if (currentTheme == "firefox-compact-dark@mozilla.org" ||
-          currentTheme == "firefox-compact-light@mozilla.org") {
-        Services.prefs.setIntPref("browser.uidensity", 1);
-      }
-    }
-
     if (currentUIVersion < 52) {
       // Keep old devtools log persistence behavior after splitting netmonitor and
       // webconsole prefs (bug 1307881).
@@ -2294,24 +2294,6 @@ BrowserGlue.prototype = {
       // sidebar was open. We should set the checked attribute in case it wasn't:
       if (xulStore.getValue(BROWSER_DOCURL, "sidebar-box", "sidebarcommand")) {
         xulStore.setValue(BROWSER_DOCURL, "sidebar-box", "checked", "true");
-      }
-    }
-
-    if (currentUIVersion < 57) {
-      // Beginning Firefox 57, the theme accent color is shown as highlight
-      // on top of tabs. This didn't look too good with the "A Web Browser Renaissance"
-      // theme, so we're changing its accent color.
-      let lwthemePrefs = Services.prefs.getBranch("lightweightThemes.");
-      if (lwthemePrefs.prefHasUserValue("usedThemes")) {
-        try {
-          let usedThemes = lwthemePrefs.getStringPref("usedThemes");
-          usedThemes = JSON.parse(usedThemes);
-          let renaissanceTheme = usedThemes.find(theme => theme.id == "recommended-1");
-          if (renaissanceTheme) {
-            renaissanceTheme.accentcolor = "#834d29";
-            lwthemePrefs.setStringPref("usedThemes", JSON.stringify(usedThemes));
-          }
-        } catch (e) { /* Don't panic if this pref isn't what we expect it to be. */ }
       }
     }
 
@@ -2893,7 +2875,7 @@ BrowserGlue.prototype = {
     let clickCallback = (subject, topic, data) => {
       if (topic != "alertclickcallback")
         return;
-      this._openPreferences("sync", { origin: "devDisconnectedAlert"});
+      this._openPreferences("sync");
     };
     this.AlertsService.showAlertNotification(null, title, body, true, null, clickCallback);
   },
@@ -2955,27 +2937,85 @@ BrowserGlue.prototype = {
 
 var ContentBlockingCategoriesPrefs = {
   PREF_CB_CATEGORY: "browser.contentblocking.category",
-  // The prefs inside CATEGORY_PREFS set expected value for each CB category.
-  // A null value means that pref is default.
-  CATEGORY_PREFS: {
-    strict: [
-      ["urlclassifier.trackingTable", null],
-      ["network.cookie.cookieBehavior", Ci.nsICookieService.BEHAVIOR_REJECT_TRACKER],
-      ["privacy.trackingprotection.pbmode.enabled", true],
-      ["privacy.trackingprotection.enabled", true],
-      ["privacy.trackingprotection.fingerprinting.enabled", null],
-      ["privacy.trackingprotection.cryptomining.enabled", null],
-    ],
-    standard: [
-      ["urlclassifier.trackingTable", null],
-      ["network.cookie.cookieBehavior", null],
-      ["privacy.trackingprotection.pbmode.enabled", null],
-      ["privacy.trackingprotection.enabled", null],
-      ["privacy.trackingprotection.fingerprinting.enabled", null],
-      ["privacy.trackingprotection.cryptomining.enabled", null],
-    ],
-  },
+  PREF_STRICT_DEF: "browser.contentblocking.features.strict",
+  PREF_STANDARD_DEF: "browser.contentblocking.features.standard",
   switchingCategory: false,
+
+  setPrefExpectations() {
+    // The prefs inside CATEGORY_PREFS are initial values, these values then get set.
+    // If the pref remains null, then it will expect the default value,
+    // but the UI will not respond correctly.
+    this.CATEGORY_PREFS = {
+      strict: {
+        "network.cookie.cookieBehavior": null,
+        "privacy.trackingprotection.pbmode.enabled": null,
+        "privacy.trackingprotection.enabled": null,
+        "privacy.trackingprotection.fingerprinting.enabled": null,
+        "privacy.trackingprotection.cryptomining.enabled": null,
+      },
+      standard: {
+        "network.cookie.cookieBehavior": null,
+        "privacy.trackingprotection.pbmode.enabled": null,
+        "privacy.trackingprotection.enabled": null,
+        "privacy.trackingprotection.fingerprinting.enabled": null,
+        "privacy.trackingprotection.cryptomining.enabled": null,
+      },
+    };
+    let types = ["strict", "standard"];
+    for (let type of types) {
+      let rulesArray;
+      if (type == "strict") {
+        rulesArray = Services.prefs.getStringPref(this.PREF_STRICT_DEF).split(",");
+      } else {
+        rulesArray = Services.prefs.getStringPref(this.PREF_STANDARD_DEF).split(",");
+      }
+      for (let item of rulesArray) {
+        switch (item) {
+        case "tp":
+          this.CATEGORY_PREFS[type]["privacy.trackingprotection.enabled"] = true;
+          break;
+        case "-tp":
+          this.CATEGORY_PREFS[type]["privacy.trackingprotection.enabled"] = false;
+          break;
+        case "tpPrivate":
+          this.CATEGORY_PREFS[type]["privacy.trackingprotection.pbmode.enabled"] = true;
+          break;
+        case "-tpPrivate":
+          this.CATEGORY_PREFS[type]["privacy.trackingprotection.pbmode.enabled"] = false;
+          break;
+        case "fp":
+          this.CATEGORY_PREFS[type]["privacy.trackingprotection.fingerprinting.enabled"] = true;
+          break;
+        case "-fp":
+          this.CATEGORY_PREFS[type]["privacy.trackingprotection.fingerprinting.enabled"] = false;
+          break;
+        case "cm":
+          this.CATEGORY_PREFS[type]["privacy.trackingprotection.cryptomining.enabled"] = true;
+          break;
+        case "-cm":
+          this.CATEGORY_PREFS[type]["privacy.trackingprotection.cryptomining.enabled"] = false;
+          break;
+        case "cookieBehavior0":
+          this.CATEGORY_PREFS[type]["network.cookie.cookieBehavior"] = Ci.nsICookieService.BEHAVIOR_ACCEPT;
+          break;
+        case "cookieBehavior1":
+          this.CATEGORY_PREFS[type]["network.cookie.cookieBehavior"] = Ci.nsICookieService.BEHAVIOR_REJECT_FOREIGN;
+          break;
+        case "cookieBehavior2":
+          this.CATEGORY_PREFS[type]["network.cookie.cookieBehavior"] = Ci.nsICookieService.BEHAVIOR_REJECT;
+          break;
+        case "cookieBehavior3":
+          this.CATEGORY_PREFS[type]["network.cookie.cookieBehavior"] = Ci.nsICookieService.BEHAVIOR_LIMIT_FOREIGN;
+          break;
+        case "cookieBehavior4":
+          this.CATEGORY_PREFS[type]["network.cookie.cookieBehavior"] = Ci.nsICookieService.BEHAVIOR_REJECT_TRACKER;
+          break;
+        default:
+          Cu.reportError(`Error: Unknown rule observed ${item}`);
+        }
+      }
+    }
+  },
 
   /**
    * Checks if CB prefs match perfectly with one of our pre-defined categories.
@@ -2986,8 +3026,10 @@ var ContentBlockingCategoriesPrefs = {
         Services.prefs.getStringPref(this.PREF_CB_CATEGORY) != category) {
       return false;
     }
-    for (let [pref, value] of this.CATEGORY_PREFS[category]) {
-      if (!value) {
+    for (let pref in this.CATEGORY_PREFS[category]) {
+      let value = this.CATEGORY_PREFS[category][pref];
+      if (value == null) {
+        Cu.reportError(`Error: ${pref} has not been defined in ${category}`);
         if (Services.prefs.prefHasUserValue(pref)) {
           return false;
         }
@@ -3049,9 +3091,11 @@ var ContentBlockingCategoriesPrefs = {
       return;
     }
 
-    for (let [pref, value] of this.CATEGORY_PREFS[category]) {
+    for (let pref in this.CATEGORY_PREFS[category]) {
+      let value = this.CATEGORY_PREFS[category][pref];
       if (!Services.prefs.prefIsLocked(pref)) {
-        if (!value) {
+        if (value == null) {
+          Cu.reportError(`Error: ${pref} has not been defined in ${category}`);
           Services.prefs.clearUserPref(pref);
         } else {
           switch (Services.prefs.getPrefType(pref)) {

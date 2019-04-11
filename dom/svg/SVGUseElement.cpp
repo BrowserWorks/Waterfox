@@ -13,7 +13,6 @@
 #include "nsGkAtoms.h"
 #include "mozilla/dom/SVGSVGElement.h"
 #include "mozilla/dom/Document.h"
-#include "nsIPresShell.h"
 #include "mozilla/dom/Element.h"
 #include "nsContentUtils.h"
 #include "nsIURI.h"
@@ -393,7 +392,7 @@ void SVGUseElement::SyncWidthOrHeight(nsAtom* aName) {
   }
   // Our width/height attribute is now no longer explicitly set, so we
   // need to set the value to 100%
-  nsSVGLength2 length;
+  SVGAnimatedLength length;
   length.Init(SVGContentUtils::XY, 0xff, 100,
               SVGLength_Binding::SVG_LENGTHTYPE_PERCENTAGE);
   target->SetLength(aName, length);

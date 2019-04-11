@@ -118,12 +118,8 @@ nsresult HTMLLinkElement::BindToTree(Document* aDocument, nsIContent* aParent,
       nsGenericHTMLElement::BindToTree(aDocument, aParent, aBindingParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  bool isLocalizationLink =
-      aDocument && this->AttrValueIs(kNameSpaceID_None, nsGkAtoms::rel,
-                                     nsGkAtoms::localization, eIgnoreCase);
-
   if (Document* doc = GetComposedDoc()) {
-    if (!isLocalizationLink || !doc->NodePrincipal()->IsSystemPrincipal()) {
+    if (!doc->NodePrincipal()->IsSystemPrincipal()) {
       doc->RegisterPendingLinkUpdate(this);
     }
     TryDNSPrefetchOrPreconnectOrPrefetchOrPreloadOrPrerender();
@@ -134,7 +130,8 @@ nsresult HTMLLinkElement::BindToTree(Document* aDocument, nsIContent* aParent,
   nsContentUtils::AddScriptRunner(
       NewRunnableMethod("dom::HTMLLinkElement::BindToTree", this, update));
 
-  if (isLocalizationLink) {
+  if (aDocument && AttrValueIs(kNameSpaceID_None, nsGkAtoms::rel,
+                               nsGkAtoms::localization, eIgnoreCase)) {
     aDocument->LocalizationLinkAdded(this);
   }
 
@@ -501,11 +498,7 @@ bool HTMLLinkElement::CheckPreloadAttrs(const nsAttrValue& aAs,
   // Check if media attribute is valid.
   if (!aMedia.IsEmpty()) {
     RefPtr<MediaList> mediaList = MediaList::Create(aMedia);
-    nsPresContext* presContext = aDocument->GetPresContext();
-    if (!presContext) {
-      return false;
-    }
-    if (!mediaList->Matches(presContext)) {
+    if (!mediaList->Matches(*aDocument)) {
       return false;
     }
   }

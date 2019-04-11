@@ -369,8 +369,9 @@ Loader::Loader()
 Loader::Loader(DocGroup* aDocGroup) : Loader() { mDocGroup = aDocGroup; }
 
 Loader::Loader(Document* aDocument) : Loader() {
+  MOZ_ASSERT(aDocument, "We should get a valid document from the caller!");
   mDocument = aDocument;
-  MOZ_ASSERT(mDocument, "We should get a valid document from the caller!");
+  mCompatMode = aDocument->GetCompatibilityMode();
 }
 
 Loader::~Loader() {
@@ -1075,13 +1076,7 @@ static Loader::MediaMatched MediaListMatches(const MediaList* aMediaList,
     return Loader::MediaMatched::Yes;
   }
 
-  nsPresContext* pc = aDocument->GetPresContext();
-  if (!pc) {
-    // Conservatively assume a match.
-    return Loader::MediaMatched::Yes;
-  }
-
-  if (aMediaList->Matches(pc)) {
+  if (aMediaList->Matches(*aDocument)) {
     return Loader::MediaMatched::Yes;
   }
 
@@ -1607,19 +1602,20 @@ Loader::Completed Loader::ParseSheet(const nsACString& aBytes,
   RefPtr<SheetLoadData> loadData = aLoadData;
   nsCOMPtr<nsISerialEventTarget> target = DispatchTarget();
   sheet->ParseSheet(this, aBytes, aLoadData)
-      ->Then(target, __func__,
-             [loadData = std::move(loadData)](bool aDummy) {
-               MOZ_ASSERT(NS_IsMainThread());
-               loadData->mIsBeingParsed = false;
-               loadData->mLoader->UnblockOnload(/* aFireSync = */ false);
-               // If there are no child sheets outstanding, mark us as complete.
-               // Otherwise, the children are holding strong refs to the data
-               // and will call SheetComplete() on it when they complete.
-               if (loadData->mPendingChildren == 0) {
-                 loadData->mLoader->SheetComplete(loadData, NS_OK);
-               }
-             },
-             [] { MOZ_CRASH("rejected parse promise"); });
+      ->Then(
+          target, __func__,
+          [loadData = std::move(loadData)](bool aDummy) {
+            MOZ_ASSERT(NS_IsMainThread());
+            loadData->mIsBeingParsed = false;
+            loadData->mLoader->UnblockOnload(/* aFireSync = */ false);
+            // If there are no child sheets outstanding, mark us as complete.
+            // Otherwise, the children are holding strong refs to the data
+            // and will call SheetComplete() on it when they complete.
+            if (loadData->mPendingChildren == 0) {
+              loadData->mLoader->SheetComplete(loadData, NS_OK);
+            }
+          },
+          [] { MOZ_CRASH("rejected parse promise"); });
   return Completed::No;
 }
 

@@ -51,6 +51,7 @@ jobs:
     definition: debian-base
     parent: debian7-raw
     packages:
+      - deb7-apt
       - deb7-gdb
       - deb7-git
       - deb7-make
@@ -177,8 +178,8 @@ jobs:
     symbol: I(idx)
   funsize-update-generator:
     symbol: I(pg)
-  google-play-strings:
-    symbol: I(gps)
+  mozapkpublisher:
+    symbol: I(apk)
   update-verify:
     symbol: I(uv)
   diffoscope:

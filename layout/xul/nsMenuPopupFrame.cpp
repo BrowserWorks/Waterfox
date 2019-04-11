@@ -18,7 +18,6 @@
 #include "nsMenuBarFrame.h"
 #include "nsPopupSetFrame.h"
 #include "nsPIDOMWindow.h"
-#include "nsIPresShell.h"
 #include "nsFrameManager.h"
 #include "mozilla/dom/Document.h"
 #include "nsRect.h"
@@ -51,6 +50,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/KeyboardEvent.h"
@@ -163,6 +163,19 @@ void nsMenuPopupFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
     mInContentShell = false;
   }
 
+  // Support incontentshell=false attribute to allow popups to be displayed outside of the
+  // content shell. Chrome only.
+  if (aContent->NodePrincipal()->IsSystemPrincipal()) {
+    if (aContent->AsElement()->AttrValueIs(kNameSpaceID_None,
+                                           nsGkAtoms::incontentshell,
+                                           nsGkAtoms::_true, eCaseMatters)) {
+      mInContentShell = true;
+    } else if (aContent->AsElement()->AttrValueIs(
+                   kNameSpaceID_None, nsGkAtoms::incontentshell,
+                   nsGkAtoms::_false, eCaseMatters)) {
+      mInContentShell = false;
+    }
+  }
   // To improve performance, create the widget for the popup only if it is not
   // a leaf. Leaf popups such as menus will create their widgets later when
   // the popup opens.
@@ -1620,7 +1633,7 @@ void nsMenuPopupFrame::GenerateFrames() {
   mGeneratedChildren = true;
   if (generateFrames) {
     MOZ_ASSERT(PrincipalChildList().IsEmpty());
-    nsCOMPtr<nsIPresShell> presShell = PresContext()->PresShell();
+    RefPtr<mozilla::PresShell> presShell = PresContext()->PresShell();
     presShell->FrameConstructor()->GenerateChildFrames(this);
   }
 }

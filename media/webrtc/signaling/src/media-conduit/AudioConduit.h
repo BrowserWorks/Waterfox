@@ -226,7 +226,7 @@ class WebrtcAudioConduit : public AudioSessionConduit,
                            unsigned int* cumulativeLost) override;
   bool GetRTCPReceiverReport(uint32_t* jitterMs, uint32_t* packetsReceived,
                              uint64_t* bytesReceived, uint32_t* cumulativeLost,
-                             int32_t* rttMs) override;
+                             Maybe<double>* aOutRttSec) override;
   bool GetRTCPSenderReport(unsigned int* packetsSent,
                            uint64_t* bytesSent) override;
 
@@ -238,7 +238,7 @@ class WebrtcAudioConduit : public AudioSessionConduit,
   void GetRtpSources(const int64_t aTimeNow,
                      nsTArray<dom::RTCRtpSourceEntry>& outSources) override;
 
-  void OnRtpPacket(const webrtc::WebRtcRTPHeader* aRtpHeader,
+  void OnRtpPacket(const webrtc::RTPHeader& aRtpHeader,
                    const int64_t aTimestamp, const uint32_t aJitter) override;
 
   // test-only: inserts fake CSRCs and audio level data
@@ -349,6 +349,9 @@ class WebrtcAudioConduit : public AudioSessionConduit,
 
   // Socket transport service thread. Any thread.
   const nsCOMPtr<nsIEventTarget> mStsThread;
+
+  // Accessed from mStsThread. Last successfully polled RTT
+  Maybe<DOMHighResTimeStamp> mRttSec;
 };
 
 }  // namespace mozilla

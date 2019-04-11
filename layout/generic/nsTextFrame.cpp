@@ -17,6 +17,7 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/Likely.h"
 #include "mozilla/MathAlgorithms.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/StaticPrefs.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/BinarySearch.h"
@@ -39,7 +40,6 @@
 #include "SVGTextFrame.h"
 #include "nsCoord.h"
 #include "gfxContext.h"
-#include "nsIPresShell.h"
 #include "nsTArray.h"
 #include "nsCSSPseudoElements.h"
 #include "nsCSSFrameConstructor.h"
@@ -68,11 +68,6 @@
 #include "nsIFrameInlines.h"
 #include "mozilla/intl/WordBreaker.h"
 #include "mozilla/ServoStyleSet.h"
-#include "mozilla/layers/LayersMessages.h"
-#include "mozilla/layers/RenderRootStateManager.h"
-#include "mozilla/layers/WebRenderBridgeChild.h"
-#include "mozilla/webrender/WebRenderAPI.h"
-#include "mozilla/layers/StackingContextHelper.h"
 
 #include <algorithm>
 #include <limits>
@@ -105,7 +100,6 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
-using namespace mozilla::layers;
 
 typedef mozilla::layout::TextDrawTarget TextDrawTarget;
 
@@ -648,7 +642,7 @@ static void UnhookTextRunFromFrames(gfxTextRun* aTextRun,
 static void InvalidateFrameDueToGlyphsChanged(nsIFrame* aFrame) {
   MOZ_ASSERT(aFrame);
 
-  nsIPresShell* shell = aFrame->PresShell();
+  PresShell* presShell = aFrame->PresShell();
   for (nsIFrame* f = aFrame; f;
        f = nsLayoutUtils::GetNextContinuationOrIBSplitSibling(f)) {
     f->InvalidateFrame();
@@ -668,7 +662,7 @@ static void InvalidateFrameDueToGlyphsChanged(nsIFrame* aFrame) {
       // we should probably do lazily here since there could be a lot
       // of text frames affected and we'd like to coalesce the work. So that's
       // not easy to do well.
-      shell->FrameNeedsReflow(f, nsIPresShell::eResize, NS_FRAME_IS_DIRTY);
+      presShell->FrameNeedsReflow(f, nsIPresShell::eResize, NS_FRAME_IS_DIRTY);
     }
   }
 }
@@ -4064,17 +4058,16 @@ bool nsTextPaintStyle::InitSelectionColorsAndShadow() {
 
   mInitSelectionColorsAndShadow = true;
 
-  if (selectionStatus == nsISelectionController::SELECTION_ON) {
-    // Use ::selection pseudo class.
-    if (RefPtr<ComputedStyle> style = mFrame->ComputeSelectionStyle()) {
-      mSelectionBGColor =
-          style->GetVisitedDependentColor(&nsStyleBackground::mBackgroundColor);
-      mSelectionTextColor =
-          style->GetVisitedDependentColor(&nsStyleText::mWebkitTextFillColor);
-      mHasSelectionShadow = true;
-      mSelectionShadow = style->StyleText()->mTextShadow;
-      return true;
-    }
+  // Use ::selection pseudo class if applicable.
+  if (RefPtr<ComputedStyle> style =
+          mFrame->ComputeSelectionStyle(selectionStatus)) {
+    mSelectionBGColor =
+        style->GetVisitedDependentColor(&nsStyleBackground::mBackgroundColor);
+    mSelectionTextColor =
+        style->GetVisitedDependentColor(&nsStyleText::mWebkitTextFillColor);
+    mHasSelectionShadow = true;
+    mSelectionShadow = style->StyleText()->mTextShadow;
+    return true;
   }
 
   nscolor selectionBGColor =
@@ -4773,7 +4766,7 @@ nsresult nsTextFrame::CharacterDataChanged(
   // dirty bit without bothering to call FrameNeedsReflow again.)
   nsIFrame* lastDirtiedFrameParent = nullptr;
 
-  nsIPresShell* shell = PresContext()->GetPresShell();
+  mozilla::PresShell* presShell = PresContext()->GetPresShell();
   do {
     // textFrame contained deleted text (or the insertion point,
     // if this was a pure insertion).
@@ -4801,8 +4794,8 @@ nsresult nsTextFrame::CharacterDataChanged(
       textFrame->mReflowRequestedForCharDataChange = true;
       if (!areAncestorsAwareOfReflowRequest) {
         // Ask the parent frame to reflow me.
-        shell->FrameNeedsReflow(textFrame, nsIPresShell::eStyleChange,
-                                NS_FRAME_IS_DIRTY);
+        presShell->FrameNeedsReflow(textFrame, nsIPresShell::eStyleChange,
+                                    NS_FRAME_IS_DIRTY);
       } else {
         // We already called FrameNeedsReflow on behalf of an earlier sibling,
         // so we can just mark this frame as dirty and don't need to bother
@@ -4850,271 +4843,11 @@ nsresult nsTextFrame::CharacterDataChanged(
   return NS_OK;
 }
 
-class nsDisplayText final : public nsCharClipDisplayItem {
- public:
-  nsDisplayText(nsDisplayListBuilder* aBuilder, nsTextFrame* aFrame,
-                const Maybe<bool>& aIsSelected);
-#ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayText() { MOZ_COUNT_DTOR(nsDisplayText); }
-#endif
-
-  void RestoreState() final {
-    nsCharClipDisplayItem::RestoreState();
-    mOpacity = 1.0f;
-  }
-
-  nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) const final {
-    *aSnap = false;
-    return mBounds;
-  }
-  void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
-               HitTestState* aState, nsTArray<nsIFrame*>* aOutFrames) final {
-    if (nsRect(ToReferenceFrame(), mFrame->GetSize()).Intersects(aRect)) {
-      aOutFrames->AppendElement(mFrame);
-    }
-  }
-  bool CreateWebRenderCommands(mozilla::wr::DisplayListBuilder& aBuilder,
-                               mozilla::wr::IpcResourceUpdateQueue& aResources,
-                               const StackingContextHelper& aSc,
-                               RenderRootStateManager* aManager,
-                               nsDisplayListBuilder* aDisplayListBuilder) final;
-  void Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx) final;
-  NS_DISPLAY_DECL_NAME("Text", TYPE_TEXT)
-
-  nsRect GetComponentAlphaBounds(nsDisplayListBuilder* aBuilder) const final {
-    if (gfxPlatform::GetPlatform()->RespectsFontStyleSmoothing()) {
-      // On OS X, web authors can turn off subpixel text rendering using the
-      // CSS property -moz-osx-font-smoothing. If they do that, we don't need
-      // to use component alpha layers for the affected text.
-      if (mFrame->StyleFont()->mFont.smoothing == NS_FONT_SMOOTHING_GRAYSCALE) {
-        return nsRect();
-      }
-    }
-    bool snap;
-    return GetBounds(aBuilder, &snap);
-  }
-
-  nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) final;
-
-  void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
-                                 const nsDisplayItemGeometry* aGeometry,
-                                 nsRegion* aInvalidRegion) const final;
-
-  void RenderToContext(gfxContext* aCtx, nsDisplayListBuilder* aBuilder,
-                       bool aIsRecording = false);
-
-  bool CanApplyOpacity() const final {
-    if (IsSelected()) {
-      return false;
-    }
-
-    nsTextFrame* f = static_cast<nsTextFrame*>(mFrame);
-    const nsStyleText* textStyle = f->StyleText();
-    if (textStyle->mTextShadow) {
-      return false;
-    }
-
-    nsTextFrame::TextDecorations decorations;
-    f->GetTextDecorations(f->PresContext(), nsTextFrame::eResolvedColors,
-                          decorations);
-    if (decorations.HasDecorationLines()) {
-      return false;
-    }
-
-    return true;
-  }
-
-  void ApplyOpacity(nsDisplayListBuilder* aBuilder, float aOpacity,
-                    const DisplayItemClipChain* aClip) final {
-    NS_ASSERTION(CanApplyOpacity(), "ApplyOpacity should be allowed");
-    mOpacity = aOpacity;
-    IntersectClip(aBuilder, aClip, false);
-  }
-
-  void WriteDebugInfo(std::stringstream& aStream) final {
-#ifdef DEBUG
-    aStream << " (\"";
-
-    nsTextFrame* f = static_cast<nsTextFrame*>(mFrame);
-    nsCString buf;
-    int32_t totalContentLength;
-    f->ToCString(buf, &totalContentLength);
-
-    aStream << buf.get() << "\")";
-#endif
-  }
-
-  nsRect mBounds;
-  float mOpacity;
-};
-
-class nsDisplayTextGeometry : public nsCharClipGeometry {
- public:
-  nsDisplayTextGeometry(nsDisplayText* aItem, nsDisplayListBuilder* aBuilder)
-      : nsCharClipGeometry(aItem, aBuilder), mOpacity(aItem->mOpacity) {
-    nsTextFrame* f = static_cast<nsTextFrame*>(aItem->Frame());
-    f->GetTextDecorations(f->PresContext(), nsTextFrame::eResolvedColors,
-                          mDecorations);
-  }
-
-  /**
-   * We store the computed text decorations here since they are
-   * computed using style data from parent frames. Any changes to these
-   * styles will only invalidate the parent frame and not this frame.
-   */
-  nsTextFrame::TextDecorations mDecorations;
-  float mOpacity;
-};
-
-nsDisplayItemGeometry* nsDisplayText::AllocateGeometry(
-    nsDisplayListBuilder* aBuilder) {
-  return new nsDisplayTextGeometry(this, aBuilder);
-}
-
-void nsDisplayText::ComputeInvalidationRegion(
-    nsDisplayListBuilder* aBuilder, const nsDisplayItemGeometry* aGeometry,
-    nsRegion* aInvalidRegion) const {
-  const nsDisplayTextGeometry* geometry =
-      static_cast<const nsDisplayTextGeometry*>(aGeometry);
-  nsTextFrame* f = static_cast<nsTextFrame*>(mFrame);
-
-  nsTextFrame::TextDecorations decorations;
-  f->GetTextDecorations(f->PresContext(), nsTextFrame::eResolvedColors,
-                        decorations);
-
-  bool snap;
-  nsRect newRect = geometry->mBounds;
-  nsRect oldRect = GetBounds(aBuilder, &snap);
-  if (decorations != geometry->mDecorations ||
-      mVisIStartEdge != geometry->mVisIStartEdge ||
-      mVisIEndEdge != geometry->mVisIEndEdge ||
-      !oldRect.IsEqualInterior(newRect) ||
-      !geometry->mBorderRect.IsEqualInterior(GetBorderRect()) ||
-      mOpacity != geometry->mOpacity) {
-    aInvalidRegion->Or(oldRect, newRect);
-  }
-}
-
 NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(TextCombineScaleFactorProperty, float)
 
-static float GetTextCombineScaleFactor(nsTextFrame* aFrame) {
+float nsTextFrame::GetTextCombineScaleFactor(nsTextFrame* aFrame) {
   float factor = aFrame->GetProperty(TextCombineScaleFactorProperty());
   return factor ? factor : 1.0f;
-}
-
-nsDisplayText::nsDisplayText(nsDisplayListBuilder* aBuilder,
-                             nsTextFrame* aFrame,
-                             const Maybe<bool>& aIsSelected)
-    : nsCharClipDisplayItem(aBuilder, aFrame), mOpacity(1.0f) {
-  MOZ_COUNT_CTOR(nsDisplayText);
-  mIsFrameSelected = aIsSelected;
-  mBounds = mFrame->GetVisualOverflowRectRelativeToSelf() + ToReferenceFrame();
-  // Bug 748228
-  mBounds.Inflate(mFrame->PresContext()->AppUnitsPerDevPixel());
-}
-
-void nsDisplayText::Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx) {
-  AUTO_PROFILER_LABEL("nsDisplayText::Paint", GRAPHICS);
-
-  DrawTargetAutoDisableSubpixelAntialiasing disable(aCtx->GetDrawTarget(),
-                                                    mDisableSubpixelAA);
-  RenderToContext(aCtx, aBuilder);
-}
-
-bool nsDisplayText::CreateWebRenderCommands(
-    mozilla::wr::DisplayListBuilder& aBuilder,
-    mozilla::wr::IpcResourceUpdateQueue& aResources,
-    const StackingContextHelper& aSc, RenderRootStateManager* aManager,
-    nsDisplayListBuilder* aDisplayListBuilder) {
-  if (mBounds.IsEmpty()) {
-    return true;
-  }
-
-  auto appUnitsPerDevPixel = Frame()->PresContext()->AppUnitsPerDevPixel();
-  gfx::Point deviceOffset =
-      LayoutDevicePoint::FromAppUnits(mBounds.TopLeft(), appUnitsPerDevPixel)
-          .ToUnknownPoint();
-
-  nsRect visible = GetPaintRect();
-  visible.Inflate(3 * appUnitsPerDevPixel);
-
-  visible = visible.Intersect(mBounds);
-
-  RefPtr<gfxContext> textDrawer = aBuilder.GetTextContext(
-      aResources, aSc, aManager, this, visible, deviceOffset);
-
-  RenderToContext(textDrawer, aDisplayListBuilder, true);
-
-  return textDrawer->GetTextDrawer()->Finish();
-}
-
-void nsDisplayText::RenderToContext(gfxContext* aCtx,
-                                    nsDisplayListBuilder* aBuilder,
-                                    bool aIsRecording) {
-  nsTextFrame* f = static_cast<nsTextFrame*>(mFrame);
-
-  // Add 1 pixel of dirty area around mVisibleRect to allow us to paint
-  // antialiased pixels beyond the measured text extents.
-  // This is temporary until we do this in the actual calculation of text
-  // extents.
-  auto A2D = mFrame->PresContext()->AppUnitsPerDevPixel();
-  LayoutDeviceRect extraVisible =
-      LayoutDeviceRect::FromAppUnits(GetPaintRect(), A2D);
-  extraVisible.Inflate(1);
-
-  gfxRect pixelVisible(extraVisible.x, extraVisible.y, extraVisible.width,
-                       extraVisible.height);
-  pixelVisible.Inflate(2);
-  pixelVisible.RoundOut();
-
-  bool willClip = !aBuilder->IsForGenerateGlyphMask() && !aIsRecording;
-  if (willClip) {
-    aCtx->NewPath();
-    aCtx->Rectangle(pixelVisible);
-    aCtx->Clip();
-  }
-
-  NS_ASSERTION(mVisIStartEdge >= 0, "illegal start edge");
-  NS_ASSERTION(mVisIEndEdge >= 0, "illegal end edge");
-
-  gfxContextMatrixAutoSaveRestore matrixSR;
-
-  nsPoint framePt = ToReferenceFrame();
-  if (f->Style()->IsTextCombined()) {
-    float scaleFactor = GetTextCombineScaleFactor(f);
-    if (scaleFactor != 1.0f) {
-      if (auto* textDrawer = aCtx->GetTextDrawer()) {
-        // WebRender doesn't support scaling text like this yet
-        textDrawer->FoundUnsupportedFeature();
-        return;
-      }
-      matrixSR.SetContext(aCtx);
-      // Setup matrix to compress text for text-combine-upright if
-      // necessary. This is done here because we want selection be
-      // compressed at the same time as text.
-      gfxPoint pt = nsLayoutUtils::PointToGfxPoint(framePt, A2D);
-      gfxMatrix mat = aCtx->CurrentMatrixDouble()
-                          .PreTranslate(pt)
-                          .PreScale(scaleFactor, 1.0)
-                          .PreTranslate(-pt);
-      aCtx->SetMatrixDouble(mat);
-    }
-  }
-  nsTextFrame::PaintTextParams params(aCtx);
-  params.framePt = gfx::Point(framePt.x, framePt.y);
-  params.dirtyRect = extraVisible;
-
-  if (aBuilder->IsForGenerateGlyphMask()) {
-    params.state = nsTextFrame::PaintTextParams::GenerateTextMask;
-  } else {
-    params.state = nsTextFrame::PaintTextParams::PaintText;
-  }
-
-  f->PaintText(params, *this, mOpacity);
-
-  if (willClip) {
-    aCtx->PopClip();
-  }
 }
 
 void nsTextFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
@@ -5141,8 +4874,7 @@ void nsTextFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     }
   }
 
-  aLists.Content()->AppendToTop(
-      MakeDisplayItem<nsDisplayText>(aBuilder, this, isSelected));
+  aLists.Content()->AppendNewToTop<nsDisplayText>(aBuilder, this, isSelected);
 }
 
 static nsIFrame* GetGeneratedContentOwner(nsIFrame* aFrame, bool* aIsBefore) {
@@ -6208,7 +5940,7 @@ bool nsTextFrame::PaintTextWithSelectionColors(
     const PaintTextSelectionParams& aParams,
     const UniquePtr<SelectionDetails>& aDetails,
     SelectionTypeMask* aAllSelectionTypeMask,
-    const nsCharClipDisplayItem::ClipEdges& aClipEdges) {
+    const nsDisplayText::ClipEdges& aClipEdges) {
   const gfxTextRun::Range& contentRange = aParams.contentRange;
 
   // Figure out which selections control the colors to use for each character.
@@ -6473,7 +6205,7 @@ void nsTextFrame::PaintTextSelectionDecorations(
 
 bool nsTextFrame::PaintTextWithSelection(
     const PaintTextSelectionParams& aParams,
-    const nsCharClipDisplayItem::ClipEdges& aClipEdges) {
+    const nsDisplayText::ClipEdges& aClipEdges) {
   NS_ASSERTION(GetContent()->IsSelectionDescendant(), "wrong paint path");
 
   UniquePtr<SelectionDetails> details = GetSelectionDetails();
@@ -6773,7 +6505,10 @@ void nsTextFrame::PaintShadows(nsCSSShadowArray* aShadow,
 }
 
 void nsTextFrame::PaintText(const PaintTextParams& aParams,
-                            const nsCharClipDisplayItem& aItem,
+                            const nscoord aVisIStartEdge,
+                            const nscoord aVisIEndEdge,
+                            const nsPoint& aToReferenceFrame,
+                            const bool aIsSelected,
                             float aOpacity /* = 1.0f */) {
   // Don't pass in the rendering context here, because we need a
   // *reference* context and rendering context might have some transform
@@ -6784,11 +6519,9 @@ void nsTextFrame::PaintText(const PaintTextParams& aParams,
 
   PropertyProvider provider(this, iter, nsTextFrame::eInflated, mFontMetrics);
 
-  const bool isSelected = aItem.IsSelected();
-
   // Trim trailing whitespace, unless we're painting a selection highlight,
   // which should include trailing spaces if present (bug 1146754).
-  provider.InitializeForDisplay(!isSelected);
+  provider.InitializeForDisplay(!aIsSelected);
 
   const bool reversed = mTextRun->IsInlineReversed();
   const bool verticalRun = mTextRun->IsVertical();
@@ -6817,9 +6550,9 @@ void nsTextFrame::PaintText(const PaintTextParams& aParams,
   uint32_t startOffset = range.start;
   uint32_t maxLength = range.Length();
   nscoord snappedStartEdge, snappedEndEdge;
-  if (!MeasureCharClippedText(provider, aItem.mVisIStartEdge,
-                              aItem.mVisIEndEdge, &startOffset, &maxLength,
-                              &snappedStartEdge, &snappedEndEdge)) {
+  if (!MeasureCharClippedText(provider, aVisIStartEdge, aVisIEndEdge,
+                              &startOffset, &maxLength, &snappedStartEdge,
+                              &snappedEndEdge)) {
     return;
   }
   if (verticalRun) {
@@ -6827,13 +6560,13 @@ void nsTextFrame::PaintText(const PaintTextParams& aParams,
   } else {
     textBaselinePt.x += reversed ? -snappedEndEdge : snappedStartEdge;
   }
-  nsCharClipDisplayItem::ClipEdges clipEdges(aItem, snappedStartEdge,
-                                             snappedEndEdge);
+  nsDisplayText::ClipEdges clipEdges(this, aToReferenceFrame, snappedStartEdge,
+                                     snappedEndEdge);
   nsTextPaintStyle textPaintStyle(this);
   textPaintStyle.SetResolveColors(!aParams.callbacks);
 
   // Fork off to the (slower) paint-with-selection path if necessary.
-  if (isSelected) {
+  if (aIsSelected) {
     MOZ_ASSERT(aOpacity == 1.0f, "We don't support opacity with selections!");
     gfxSkipCharsIterator tmp(provider.GetStart());
     Range contentRange(
@@ -9698,7 +9431,8 @@ static void TransformChars(nsTextFrame* aFrame, const nsStyleText* aStyle,
       AutoTArray<bool, 50> charsToMergeArray;
       AutoTArray<bool, 50> deletedCharsArray;
       nsCaseTransformTextRunFactory::TransformString(
-          fragString, convertedString, false, nullptr, charsToMergeArray,
+          fragString, convertedString, /* aAllUppercase = */ false,
+          /* aCaseTransformsOnly = */ true, nullptr, charsToMergeArray,
           deletedCharsArray, transformedTextRun, aSkippedOffset);
       aOut.Append(convertedString);
     } else {

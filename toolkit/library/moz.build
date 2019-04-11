@@ -47,7 +47,7 @@ def Libxul(name, output_category=None):
     if CONFIG['OS_ARCH'] == 'WINNT' and CONFIG['ACCESSIBILITY']:
         LOCAL_INCLUDES += ['!/accessible/interfaces/gecko/']
 
-    if CONFIG['OS_ARCH'] == 'WINNT' and CONFIG['CC_TYPE'] not in ('clang', 'gcc'):
+    if CONFIG['OS_ARCH'] == 'WINNT':
         LOCAL_INCLUDES += [
             '/widget/windows',
             '/xpcom/base',
@@ -57,17 +57,6 @@ def Libxul(name, output_category=None):
         # Eventually, the make backend would do its own path canonicalization
         # and config/version.mk would lift the $(srcdir)
         RCINCLUDE = '$(DEPTH)/toolkit/library/xulrunner.rc'
-
-    # BFD ld doesn't create multiple PT_LOADs as usual when an unknown section
-    # exists. Using an implicit linker script to make it fold that section in
-    # .data.rel.ro makes it create multiple PT_LOADs. That implicit linker
-    # script however makes gold misbehave, first because it doesn't like that
-    # the linker script is given after crtbegin.o, and even past that, replaces
-    # the default section rules with those from the script instead of
-    # supplementing them. Which leads to a lib with a huge load of sections.
-    if CONFIG['OS_TARGET'] not in ('OpenBSD', 'WINNT') and \
-            CONFIG['LINKER_KIND'] == 'bfd':
-        LDFLAGS += [TOPSRCDIR + '/toolkit/library/StaticXULComponents.ld']
 
     Libxul_defines()
 

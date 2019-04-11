@@ -1046,7 +1046,7 @@ static bool NativeInterface2JSObjectAndThrowIfFailed(
 
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (!XPCConvert::NativeInterface2JSObject(aRetval, aHelper, aIID,
+  if (!XPCConvert::NativeInterface2JSObject(aCx, aRetval, aHelper, aIID,
                                             aAllowNativeWrapper, &rv)) {
     // I can't tell if NativeInterface2JSObject throws JS exceptions
     // or not.  This is a sloppy stab at the right semantics; the
@@ -1116,7 +1116,7 @@ bool XPCOMObjectToJsval(JSContext* cx, JS::Handle<JSObject*> scope,
 bool VariantToJsval(JSContext* aCx, nsIVariant* aVariant,
                     JS::MutableHandle<JS::Value> aRetval) {
   nsresult rv;
-  if (!XPCVariant::VariantDataToJS(aVariant, &rv, aRetval)) {
+  if (!XPCVariant::VariantDataToJS(aCx, aVariant, &rv, aRetval)) {
     // Does it throw?  Who knows
     if (!JS_IsExceptionPending(aCx)) {
       Throw(aCx, NS_FAILED(rv) ? rv : NS_ERROR_UNEXPECTED);
@@ -1799,7 +1799,7 @@ template <typename SpecType>
 bool XrayAppendPropertyKeys(JSContext* cx, JS::Handle<JSObject*> obj,
                             const Prefable<const SpecType>* pref,
                             const PropertyInfo* infos, unsigned flags,
-                            JS::AutoIdVector& props) {
+                            JS::MutableHandleVector<jsid> props) {
   do {
     bool prefIsEnabled = pref->isEnabled(cx, obj);
     if (prefIsEnabled) {
@@ -1832,7 +1832,7 @@ template <>
 bool XrayAppendPropertyKeys<ConstantSpec>(
     JSContext* cx, JS::Handle<JSObject*> obj,
     const Prefable<const ConstantSpec>* pref, const PropertyInfo* infos,
-    unsigned flags, JS::AutoIdVector& props) {
+    unsigned flags, JS::MutableHandleVector<jsid> props) {
   do {
     bool prefIsEnabled = pref->isEnabled(cx, obj);
     if (prefIsEnabled) {
@@ -1870,7 +1870,7 @@ bool XrayAppendPropertyKeys<ConstantSpec>(
 
 bool XrayOwnPropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
                          JS::Handle<JSObject*> obj, unsigned flags,
-                         JS::AutoIdVector& props, DOMObjectType type,
+                         JS::MutableHandleVector<jsid> props, DOMObjectType type,
                          const NativeProperties* nativeProperties) {
   MOZ_ASSERT(type != eNamedPropertiesObject);
 
@@ -1902,7 +1902,7 @@ bool XrayOwnPropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
 bool XrayOwnNativePropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                const NativePropertyHooks* nativePropertyHooks,
                                DOMObjectType type, JS::Handle<JSObject*> obj,
-                               unsigned flags, JS::AutoIdVector& props) {
+                               unsigned flags, JS::MutableHandleVector<jsid> props) {
   MOZ_ASSERT(type != eNamedPropertiesObject);
 
   if (type == eInterface &&
@@ -1939,7 +1939,7 @@ bool XrayOwnNativePropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
 
 bool XrayOwnPropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
                          JS::Handle<JSObject*> obj, unsigned flags,
-                         JS::AutoIdVector& props) {
+                         JS::MutableHandleVector<jsid> props) {
   DOMObjectType type;
   const NativePropertyHooks* nativePropertyHooks =
       GetNativePropertyHooks(cx, obj, type);
@@ -2082,7 +2082,7 @@ bool HasPropertyOnPrototype(JSContext* cx, JS::Handle<JSObject*> proxy,
 bool AppendNamedPropertyIds(JSContext* cx, JS::Handle<JSObject*> proxy,
                             nsTArray<nsString>& names,
                             bool shadowPrototypeProperties,
-                            JS::AutoIdVector& props) {
+                            JS::MutableHandleVector<jsid> props) {
   for (uint32_t i = 0; i < names.Length(); ++i) {
     JS::Rooted<JS::Value> v(cx);
     if (!xpc::NonVoidStringToJsval(cx, names[i], &v)) {
@@ -2739,7 +2739,7 @@ bool MayResolveGlobal(const JSAtomState& aNames, jsid aId,
 }
 
 bool EnumerateGlobal(JSContext* aCx, JS::HandleObject aObj,
-                     JS::AutoIdVector& aProperties, bool aEnumerableOnly) {
+                     JS::MutableHandleVector<jsid> aProperties, bool aEnumerableOnly) {
   MOZ_ASSERT(JS_IsGlobalObject(aObj),
              "Should have a global here, since we plan to enumerate standard "
              "classes!");

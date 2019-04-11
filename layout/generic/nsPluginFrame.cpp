@@ -14,6 +14,7 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/BasicEvents.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/PresShell.h"
 #ifdef XP_WIN
 // This is needed for DoublePassRenderingEvent.
 #  include "mozilla/plugins/PluginMessageUtils.h"
@@ -22,7 +23,6 @@
 #include "nscore.h"
 #include "nsCOMPtr.h"
 #include "nsPresContext.h"
-#include "nsIPresShell.h"
 #include "nsWidgetsCID.h"
 #include "nsView.h"
 #include "nsViewManager.h"
@@ -1099,9 +1099,9 @@ void nsPluginFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 
   // determine if we are printing
   if (type == nsPresContext::eContext_Print) {
-    aLists.Content()->AppendToTop(MakeDisplayItem<nsDisplayGeneric>(
+    aLists.Content()->AppendNewToTop<nsDisplayGeneric>(
         aBuilder, this, PaintPrintPlugin, "PrintPlugin",
-        DisplayItemType::TYPE_PRINT_PLUGIN));
+        DisplayItemType::TYPE_PRINT_PLUGIN);
   } else {
     LayerState state = GetLayerState(aBuilder, nullptr);
     if (state == LAYER_INACTIVE && nsDisplayItem::ForceActiveLayers()) {
@@ -1109,12 +1109,10 @@ void nsPluginFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
     }
     if (aBuilder->IsPaintingToWindow() && state == LAYER_ACTIVE &&
         IsTransparentMode()) {
-      aLists.Content()->AppendToTop(
-          MakeDisplayItem<nsDisplayPluginReadback>(aBuilder, this));
+      aLists.Content()->AppendNewToTop<nsDisplayPluginReadback>(aBuilder, this);
     }
 
-    aLists.Content()->AppendToTop(
-        MakeDisplayItem<nsDisplayPlugin>(aBuilder, this));
+    aLists.Content()->AppendNewToTop<nsDisplayPlugin>(aBuilder, this);
   }
 }
 

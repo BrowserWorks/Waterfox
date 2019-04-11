@@ -22,7 +22,6 @@
 #include "nsWindowSizes.h"
 
 #include "nsCOMPtr.h"
-#include "nsIPresShell.h"
 
 #include "GeckoProfiler.h"
 #include "mozilla/dom/Document.h"
@@ -278,19 +277,30 @@ static nscolor GetVisitedDependentColorInternal(ComputedStyle* aSc,
   return colors[0];
 }
 
-static nscolor ExtractColor(ComputedStyle* aStyle, const nscolor& aColor) {
-  return aColor;
+static nscolor ExtractColor(const ComputedStyle& aStyle,
+                            const StyleRGBA& aColor) {
+  return aColor.ToColor();
 }
 
-static nscolor ExtractColor(ComputedStyle* aStyle,
-                            const StyleComplexColor& aColor) {
+static nscolor ExtractColor(const ComputedStyle& aStyle,
+                            const StyleColor& aColor) {
   return aColor.CalcColor(aStyle);
 }
 
-static nscolor ExtractColor(ComputedStyle* aStyle,
+// Currently caret-color, the only property in the list which is a ColorOrAuto,
+// always maps auto to currentcolor.
+static nscolor ExtractColor(const ComputedStyle& aStyle,
+                            const StyleColorOrAuto& aColor) {
+  if (aColor.IsAuto()) {
+    return ExtractColor(aStyle, StyleColor::CurrentColor());
+  }
+  return ExtractColor(aStyle, aColor.AsColor());
+}
+
+static nscolor ExtractColor(ComputedStyle& aStyle,
                             const nsStyleSVGPaint& aPaintServer) {
   return aPaintServer.Type() == eStyleSVGPaintType_Color
-             ? aPaintServer.GetColor(aStyle)
+             ? aPaintServer.GetColor(&aStyle)
              : NS_RGBA(0, 0, 0, 0);
 }
 
@@ -304,7 +314,7 @@ static nscolor ExtractColor(ComputedStyle* aStyle,
                " which is not listed in nsCSSVisitedDependentPropList.h");     \
     return GetVisitedDependentColorInternal(                                   \
         this, [aField](ComputedStyle* sc) {                                    \
-          return ExtractColor(sc, sc->Style##name_()->*aField);                \
+          return ExtractColor(*sc, sc->Style##name_()->*aField);               \
         });                                                                    \
   }
 #include "nsCSSVisitedDependentPropList.h"
