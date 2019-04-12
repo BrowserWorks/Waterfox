@@ -83,7 +83,6 @@
 #include "gfxFontMissingGlyphs.h"
 
 #include "nsExceptionHandler.h"
-#include "nsUnicodeRange.h"
 #include "nsServiceManagerUtils.h"
 #include "nsTArray.h"
 #include "nsIObserverService.h"
@@ -296,7 +295,7 @@ void CrashStatsLogForwarder::UpdateCrashReport() {
 }
 
 class LogForwarderEvent : public Runnable {
-  ~LogForwarderEvent() override = default;
+  virtual ~LogForwarderEvent() = default;
 
  public:
   NS_INLINE_DECL_REFCOUNTING_INHERITED(LogForwarderEvent, Runnable)
@@ -349,7 +348,7 @@ void CrashStatsLogForwarder::Log(const std::string& aString) {
 }
 
 class CrashTelemetryEvent : public Runnable {
-  ~CrashTelemetryEvent() override = default;
+  virtual ~CrashTelemetryEvent() = default;
 
  public:
   NS_INLINE_DECL_REFCOUNTING_INHERITED(CrashTelemetryEvent, Runnable)

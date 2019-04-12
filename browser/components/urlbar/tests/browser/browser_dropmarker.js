@@ -14,6 +14,7 @@ add_task(async function() {
     let queryContext = await gURLBar.lastQueryContextPromise;
     is(queryContext.searchString, "",
        "Clicking the history dropmarker should initiate an empty search instead of searching for the loaded URL");
-    await UrlbarTestUtils.promisePopupClose(window);
+    is(gURLBar.value, "example.com",
+       "Clicking the history dropmarker should not change the input value");
   });
 });

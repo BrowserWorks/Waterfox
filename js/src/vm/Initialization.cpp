@@ -9,8 +9,7 @@
 #include "js/Initialization.h"
 
 #include "mozilla/Assertions.h"
-
-#include <ctype.h>
+#include "mozilla/TextUtils.h"
 
 #include "jstypes.h"
 
@@ -46,7 +45,7 @@ InitState JS::detail::libraryInitState;
 static unsigned MessageParameterCount(const char* format) {
   unsigned numfmtspecs = 0;
   for (const char* fmt = format; *fmt != '\0'; fmt++) {
-    if (*fmt == '{' && isdigit(fmt[1])) {
+    if (*fmt == '{' && mozilla::IsAsciiDigit(fmt[1])) {
       ++numfmtspecs;
     }
   }
@@ -150,6 +149,10 @@ JS_PUBLIC_API const char* JS::detail::InitWithFailureDiagnostic(
 
 #ifdef JS_SIMULATOR
   RETURN_IF_FAIL(js::jit::SimulatorProcess::initialize());
+#endif
+
+#ifdef JS_TRACE_LOGGING
+  RETURN_IF_FAIL(JS::InitTraceLogger());
 #endif
 
   libraryInitState = InitState::Running;

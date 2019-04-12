@@ -47,6 +47,7 @@
 #include "mozilla/AccessibleCaretEventHub.h"
 #include "mozilla/ContentEvents.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/ElementBinding.h"
 #include "mozilla/dom/HTMLImageElement.h"
 #include "mozilla/dom/HTMLInputElement.h"
 #include "mozilla/dom/HTMLSlotElement.h"
@@ -396,8 +397,6 @@ NS_IMETHODIMP nsFocusManager::SetFocusedWindow(
   nsCOMPtr<nsPIDOMWindowOuter> windowToFocus =
       nsPIDOMWindowOuter::From(aWindowToFocus);
   NS_ENSURE_TRUE(windowToFocus, NS_ERROR_FAILURE);
-
-  windowToFocus = windowToFocus->GetOuterWindow();
 
   nsCOMPtr<Element> frameElement = windowToFocus->GetFrameElementInternal();
   if (frameElement) {
@@ -2118,14 +2117,19 @@ void nsFocusManager::FireFocusOrBlurEvent(EventMessage aEventMessage,
 void nsFocusManager::ScrollIntoView(nsIPresShell* aPresShell,
                                     nsIContent* aContent, uint32_t aFlags) {
   // if the noscroll flag isn't set, scroll the newly focused element into view
-  if (!(aFlags & FLAG_NOSCROLL))
+  if (!(aFlags & FLAG_NOSCROLL)) {
+    uint32_t scrollFlags = nsIPresShell::SCROLL_OVERFLOW_HIDDEN;
+    if (!(aFlags & FLAG_BYELEMENTFOCUS)) {
+      scrollFlags |= nsIPresShell::SCROLL_IGNORE_SCROLL_MARGIN_AND_PADDING;
+    }
     aPresShell->ScrollContentIntoView(
         aContent,
         nsIPresShell::ScrollAxis(nsIPresShell::SCROLL_MINIMUM,
                                  nsIPresShell::SCROLL_IF_NOT_VISIBLE),
         nsIPresShell::ScrollAxis(nsIPresShell::SCROLL_MINIMUM,
                                  nsIPresShell::SCROLL_IF_NOT_VISIBLE),
-        nsIPresShell::SCROLL_OVERFLOW_HIDDEN);
+        scrollFlags);
+  }
 }
 
 void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow) {
@@ -2856,6 +2860,11 @@ nsresult nsFocusManager::DetermineElementToMoveFocus(
   }
 
   return NS_OK;
+}
+
+uint32_t nsFocusManager::FocusOptionsToFocusManagerFlags(
+    const mozilla::dom::FocusOptions& aOptions) {
+  return aOptions.mPreventScroll ? nsIFocusManager::FLAG_NOSCROLL : 0;
 }
 
 static bool IsHostOrSlot(const nsIContent* aContent) {

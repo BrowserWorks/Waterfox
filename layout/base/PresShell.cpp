@@ -3374,7 +3374,10 @@ static void ScrollToShowRect(nsIScrollableFrame* aFrameAsScrollable,
     if (gfxPrefs::ScrollBehaviorEnabled() && smoothScroll) {
       scrollMode = ScrollMode::eSmoothMsd;
     }
-    aFrameAsScrollable->ScrollTo(scrollPt, scrollMode, &allowedRange);
+    aFrameAsScrollable->ScrollTo(scrollPt, scrollMode, &allowedRange,
+                                 aFlags & nsIPresShell::SCROLL_SNAP
+                                     ? nsIScrollbarMediator::ENABLE_SNAP
+                                     : nsIScrollbarMediator::DISABLE_SNAP);
   }
 }
 
@@ -3454,6 +3457,14 @@ void nsIPresShell::DoScrollContentIntoView() {
     return;
   }
 
+  // Get the scroll-margin here since |frame| is going to be changed to iterate
+  // over all continuation frames below.
+  nsMargin scrollMargin;
+  if (!(data->mContentToScrollToFlags &
+        nsIPresShell::SCROLL_IGNORE_SCROLL_MARGIN_AND_PADDING)) {
+    scrollMargin = frame->StyleMargin()->GetScrollMargin();
+  }
+
   // This is a two-step process.
   // Step 1: Find the bounds of the rect we want to scroll into view.  For
   //         example, for an inline frame we may want to scroll in the whole
@@ -3479,6 +3490,8 @@ void nsIPresShell::DoScrollContentIntoView() {
     AccumulateFrameBounds(container, frame, useWholeLineHeightForInlines,
                           frameBounds, haveRect, prevBlock, lines, curLine);
   } while ((frame = frame->GetNextContinuation()));
+
+  frameBounds.Inflate(scrollMargin);
 
   ScrollFrameRectIntoView(container, frameBounds, data->mContentScrollVAxis,
                           data->mContentScrollHAxis,
@@ -3522,8 +3535,16 @@ bool nsIPresShell::ScrollFrameRectIntoView(nsIFrame* aFrame,
         }
         targetRect.Inflate(padding);
       }
-      ScrollToShowRect(sf, targetRect - sf->GetScrolledFrame()->GetPosition(),
-                       aVertical, aHorizontal, aFlags);
+
+      targetRect -= sf->GetScrolledFrame()->GetPosition();
+      if (!(aFlags & nsIPresShell::SCROLL_IGNORE_SCROLL_MARGIN_AND_PADDING)) {
+        nsMargin scrollPadding = sf->GetScrollPadding();
+        targetRect.Inflate(scrollPadding);
+        targetRect = targetRect.Intersect(sf->GetScrolledRect());
+      }
+
+      ScrollToShowRect(sf, targetRect, aVertical, aHorizontal, aFlags);
+
       nsPoint newPosition = sf->LastScrollDestination();
       // If the scroll position increased, that means our content moved up,
       // so our rect's offset should decrease
@@ -8455,7 +8476,8 @@ bool PresShell::EventHandler::PrepareToUseCaretPosition(
                                  nsIPresShell::SCROLL_IF_NOT_VISIBLE),
         nsIPresShell::ScrollAxis(nsIPresShell::SCROLL_MINIMUM,
                                  nsIPresShell::SCROLL_IF_NOT_VISIBLE),
-        nsIPresShell::SCROLL_OVERFLOW_HIDDEN);
+        nsIPresShell::SCROLL_OVERFLOW_HIDDEN |
+            nsIPresShell::SCROLL_IGNORE_SCROLL_MARGIN_AND_PADDING);
     NS_ENSURE_SUCCESS(rv, false);
     frame = content->GetPrimaryFrame();
     NS_WARNING_ASSERTION(frame, "No frame for focused content?");
@@ -8513,8 +8535,10 @@ void PresShell::EventHandler::GetCurrentItemAndPositionForElement(
     Element* aFocusedElement, nsIContent** aTargetToUse,
     LayoutDeviceIntPoint& aTargetPt, nsIWidget* aRootWidget) {
   nsCOMPtr<nsIContent> focusedContent = aFocusedElement;
-  mPresShell->ScrollContentIntoView(focusedContent, ScrollAxis(), ScrollAxis(),
-                                    nsIPresShell::SCROLL_OVERFLOW_HIDDEN);
+  mPresShell->ScrollContentIntoView(
+      focusedContent, ScrollAxis(), ScrollAxis(),
+      nsIPresShell::SCROLL_OVERFLOW_HIDDEN |
+          nsIPresShell::SCROLL_IGNORE_SCROLL_MARGIN_AND_PADDING);
 
   nsPresContext* presContext = GetPresContext();
 
@@ -9072,7 +9096,7 @@ bool nsIPresShell::DoReflow(nsIFrame* target, bool aInterruptible,
   NS_ASSERTION(!target->GetNextInFlow() && !target->GetPrevInFlow(),
                "reflow roots should never split");
 
-  // Don't pass size directly to the reflow state, since a
+  // Don't pass size directly to the reflow input, since a
   // constrained height implies page/column breaking.
   LogicalSize reflowSize(wm, size.ISize(wm), NS_UNCONSTRAINEDSIZE);
   ReflowInput reflowInput(mPresContext, target, rcx, reflowSize,
@@ -9097,7 +9121,7 @@ bool nsIPresShell::DoReflow(nsIFrame* target, bool aInterruptible,
 
     mLastRootReflowHadUnconstrainedBSize = hasUnconstrainedBSize;
   } else {
-    // Initialize reflow state with current used border and padding,
+    // Initialize reflow input with current used border and padding,
     // in case this was set specially by the parent frame when the reflow root
     // was reflowed by its parent.
     nsMargin currentBorder = target->GetUsedBorder();
@@ -9107,7 +9131,7 @@ bool nsIPresShell::DoReflow(nsIFrame* target, bool aInterruptible,
 
   // fix the computed height
   NS_ASSERTION(reflowInput.ComputedPhysicalMargin() == nsMargin(0, 0, 0, 0),
-               "reflow state should not set margin for reflow roots");
+               "reflow input should not set margin for reflow roots");
   if (size.BSize(wm) != NS_UNCONSTRAINEDSIZE) {
     nscoord computedBSize =
         size.BSize(wm) -
@@ -9118,7 +9142,7 @@ bool nsIPresShell::DoReflow(nsIFrame* target, bool aInterruptible,
   NS_ASSERTION(reflowInput.ComputedISize() ==
                    size.ISize(wm) -
                        reflowInput.ComputedLogicalBorderPadding().IStartEnd(wm),
-               "reflow state computed incorrect inline size");
+               "reflow input computed incorrect inline size");
 
   mPresContext->ReflowStarted(aInterruptible);
   mIsReflowing = true;

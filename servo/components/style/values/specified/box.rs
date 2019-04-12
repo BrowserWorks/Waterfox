@@ -379,6 +379,7 @@ impl Parse for AnimationName {
     }
 }
 
+/// https://drafts.csswg.org/css-scroll-snap-1/#snap-axis
 #[allow(missing_docs)]
 #[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
 #[derive(
@@ -396,10 +397,107 @@ impl Parse for AnimationName {
     ToShmem,
 )]
 #[repr(u8)]
-pub enum ScrollSnapType {
-    None,
+pub enum ScrollSnapAxis {
+    X,
+    Y,
+    Block,
+    Inline,
+    Both,
+}
+
+/// https://drafts.csswg.org/css-scroll-snap-1/#snap-strictness
+#[allow(missing_docs)]
+#[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    MallocSizeOf,
+    Parse,
+    PartialEq,
+    SpecifiedValueInfo,
+    ToComputedValue,
+    ToCss,
+    ToResolvedValue,
+    ToShmem,
+)]
+#[repr(u8)]
+pub enum ScrollSnapStrictness {
+    #[css(skip)]
+    None, // Used to represent scroll-snap-type: none.  It's not parsed.
     Mandatory,
     Proximity,
+}
+
+/// https://drafts.csswg.org/css-scroll-snap-1/#scroll-snap-type
+#[allow(missing_docs)]
+#[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    MallocSizeOf,
+    PartialEq,
+    SpecifiedValueInfo,
+    ToComputedValue,
+    ToResolvedValue,
+    ToShmem,
+)]
+#[repr(C)]
+pub struct ScrollSnapType {
+    axis: ScrollSnapAxis,
+    strictness: ScrollSnapStrictness,
+}
+
+impl ScrollSnapType {
+    /// Returns `none`.
+    #[inline]
+    pub fn none() -> Self {
+        Self {
+            axis: ScrollSnapAxis::Both,
+            strictness: ScrollSnapStrictness::None,
+        }
+    }
+}
+
+impl Parse for ScrollSnapType {
+    /// none | [ x | y | block | inline | both ] [ mandatory | proximity ]?
+    fn parse<'i, 't>(
+        _context: &ParserContext,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self, ParseError<'i>> {
+        if input
+            .try(|input| input.expect_ident_matching("none"))
+            .is_ok()
+        {
+            return Ok(ScrollSnapType::none());
+        }
+
+        let axis = ScrollSnapAxis::parse(input)?;
+        let strictness = input
+            .try(ScrollSnapStrictness::parse)
+            .unwrap_or(ScrollSnapStrictness::Proximity);
+        Ok(Self { axis, strictness })
+    }
+}
+
+impl ToCss for ScrollSnapType {
+    fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result
+    where
+        W: Write,
+    {
+        if self.strictness == ScrollSnapStrictness::None {
+            return dest.write_str("none");
+        }
+        self.axis.to_css(dest)?;
+        if self.strictness != ScrollSnapStrictness::Proximity {
+            dest.write_str(" ")?;
+            self.strictness.to_css(dest)?;
+        }
+        Ok(())
+    }
 }
 
 /// Specified value of scroll-snap-align keyword value.
@@ -431,7 +529,16 @@ pub enum ScrollSnapAlignKeyword {
 /// https://drafts.csswg.org/css-scroll-snap-1/#scroll-snap-align
 #[allow(missing_docs)]
 #[derive(
-    Clone, Copy, Debug, Eq, MallocSizeOf, PartialEq, SpecifiedValueInfo, ToComputedValue, ToResolvedValue, ToShmem,
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    MallocSizeOf,
+    PartialEq,
+    SpecifiedValueInfo,
+    ToComputedValue,
+    ToResolvedValue,
+    ToShmem,
 )]
 #[repr(C)]
 pub struct ScrollSnapAlign {
@@ -544,7 +651,15 @@ pub enum OverflowClipBox {
 }
 
 #[derive(
-    Clone, Debug, MallocSizeOf, PartialEq, SpecifiedValueInfo, ToComputedValue, ToCss, ToResolvedValue, ToShmem,
+    Clone,
+    Debug,
+    MallocSizeOf,
+    PartialEq,
+    SpecifiedValueInfo,
+    ToComputedValue,
+    ToCss,
+    ToResolvedValue,
+    ToShmem,
 )]
 /// Provides a rendering hint to the user agent,
 /// stating what kinds of changes the author expects
@@ -847,7 +962,9 @@ pub type Perspective = GenericPerspective<NonNegativeLength>;
 
 /// A given transition property, that is either `All`, a longhand or shorthand
 /// property, or an unsupported or custom property.
-#[derive(Clone, Debug, Eq, Hash, MallocSizeOf, PartialEq, ToComputedValue, ToResolvedValue, ToShmem)]
+#[derive(
+    Clone, Debug, Eq, Hash, MallocSizeOf, PartialEq, ToComputedValue, ToResolvedValue, ToShmem,
+)]
 pub enum TransitionProperty {
     /// A shorthand.
     Shorthand(ShorthandId),
@@ -942,17 +1059,7 @@ impl TransitionProperty {
 #[allow(missing_docs)]
 #[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    Hash,
-    MallocSizeOf,
-    Parse,
-    PartialEq,
-    SpecifiedValueInfo,
-    ToCss,
-    ToShmem,
+    Clone, Copy, Debug, Eq, Hash, MallocSizeOf, Parse, PartialEq, SpecifiedValueInfo, ToCss, ToShmem,
 )]
 /// https://drafts.csswg.org/css-box/#propdef-float
 pub enum Float {
@@ -967,17 +1074,7 @@ pub enum Float {
 #[allow(missing_docs)]
 #[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    Hash,
-    MallocSizeOf,
-    Parse,
-    PartialEq,
-    SpecifiedValueInfo,
-    ToCss,
-    ToShmem,
+    Clone, Copy, Debug, Eq, Hash, MallocSizeOf, Parse, PartialEq, SpecifiedValueInfo, ToCss, ToShmem,
 )]
 /// https://drafts.csswg.org/css-box/#propdef-clear
 pub enum Clear {
@@ -994,17 +1091,7 @@ pub enum Clear {
 #[allow(missing_docs)]
 #[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    Hash,
-    MallocSizeOf,
-    Parse,
-    PartialEq,
-    SpecifiedValueInfo,
-    ToCss,
-    ToShmem,
+    Clone, Copy, Debug, Eq, Hash, MallocSizeOf, Parse, PartialEq, SpecifiedValueInfo, ToCss, ToShmem,
 )]
 pub enum Resize {
     None,

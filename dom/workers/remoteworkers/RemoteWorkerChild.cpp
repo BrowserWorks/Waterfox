@@ -262,16 +262,31 @@ nsresult RemoteWorkerChild::ExecWorkerOnMainThread(
     return rv;
   }
 
+  nsCOMPtr<nsIPrincipal> storagePrincipal =
+      PrincipalInfoToPrincipal(aData.storagePrincipalInfo(), &rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  rv = PopulatePrincipalContentSecurityPolicy(
+      storagePrincipal, aData.storagePrincipalCsp(),
+      aData.storagePrincipalPreloadCsp());
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
   WorkerLoadInfo info;
   info.mBaseURI = DeserializeURI(aData.baseScriptURL());
   info.mResolvedScriptURI = DeserializeURI(aData.resolvedScriptURL());
 
   info.mPrincipalInfo = new PrincipalInfo(aData.principalInfo());
+  info.mStoragePrincipalInfo = new PrincipalInfo(aData.storagePrincipalInfo());
 
   info.mDomain = aData.domain();
   info.mPrincipal = principal;
+  info.mStoragePrincipal = storagePrincipal;
   info.mLoadingPrincipal = loadingPrincipal;
-  info.mStorageAllowed = aData.isStorageAccessAllowed();
+  info.mStorageAccess = aData.storageAccess();
   info.mOriginAttributes =
       BasePrincipal::Cast(principal)->OriginAttributesRef();
   info.mCookieSettings = net::CookieSettings::Create();
@@ -290,7 +305,8 @@ nsresult RemoteWorkerChild::ExecWorkerOnMainThread(
       new SharedWorkerInterfaceRequestor();
   info.mInterfaceRequestor->SetOuterRequestor(requestor);
 
-  rv = info.SetPrincipalOnMainThread(info.mPrincipal, info.mLoadGroup);
+  rv = info.SetPrincipalsOnMainThread(info.mPrincipal, info.mStoragePrincipal,
+                                      info.mLoadGroup);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -456,7 +472,13 @@ void RemoteWorkerChild::CloseWorkerOnMainThread() {
 
   // The holder will be notified by this.
   if (lock->mWorkerState == eRunning) {
-    MOZ_RELEASE_ASSERT(lock->mWorkerPrivate);
+    // FIXME: mWorkerState transition and each state's associated data should
+    // be improved/fixed in bug 1231213. `!lock->mWorkerPrivate` implies that
+    // the worker state is effectively `eTerminated.`
+    if (!lock->mWorkerPrivate) {
+      return;
+    }
+
     lock->mWorkerPrivate->Cancel();
   }
 }

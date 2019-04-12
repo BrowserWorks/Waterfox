@@ -1098,12 +1098,25 @@ VARCACHE_PREF(
   bool, false
 )
 
+#ifdef NIGHTLY_BUILD
+# define PREF_VALUE  true
+#else
+# define PREF_VALUE  false
+#endif
 // Is the CSS Scroll Snap Module Level 1 enabled?
 VARCACHE_PREF(
   "layout.css.scroll-snap-v1.enabled",
    layout_css_scroll_snap_v1_enabled,
-  RelaxedAtomicBool, false
+  RelaxedAtomicBool, PREF_VALUE
 )
+
+// Is support for scroll-snap enabled?
+VARCACHE_PREF(
+  "layout.css.scroll-snap.enabled",
+   layout_css_scroll_snap_enabled,
+  bool, !PREF_VALUE
+)
+#undef PREF_VALUE
 
 // Are shared memory User Agent style sheets enabled?
 VARCACHE_PREF(
@@ -2220,6 +2233,12 @@ VARCACHE_PREF(
   RelaxedAtomicBool, false
 )
 
+VARCACHE_PREF(
+  "privacy.storagePrincipal.enabledForTrackers",
+   privacy_storagePrincipal_enabledForTrackers,
+  RelaxedAtomicBool, false
+)
+
 // Password protection
 VARCACHE_PREF(
   "browser.safebrowsing.passwords.enabled",
@@ -2475,6 +2494,24 @@ VARCACHE_PREF(
   "security.fileuri.strict_origin_policy",
    security_fileuri_strict_origin_policy,
   RelaxedAtomicBool, true
+)
+
+// Whether origin telemetry should be enabled
+// NOTE: if telemetry.origin_telemetry_test_mode.enabled is enabled, this pref
+//       won't have any effect.
+VARCACHE_PREF(
+  "privacy.trackingprotection.origin_telemetry.enabled",
+   privacy_trackingprotection_origin_telemetry_enabled,
+  RelaxedAtomicBool, false
+)
+
+// Enable origin telemetry test mode or not
+// NOTE: turning this on will override the
+//       privacy.trackingprotection.origin_telemetry.enabled pref.
+VARCACHE_PREF(
+  "telemetry.origin_telemetry_test_mode.enabled",
+   telemetry_origin_telemetry_test_mode_enabled,
+  RelaxedAtomicBool, false
 )
 
 //---------------------------------------------------------------------------
