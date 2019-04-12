@@ -198,7 +198,7 @@ function persistCurrentSets() {
  */
 function wrapToolbarItems() {
   forEachCustomizableToolbar(function(toolbar) {
-    Array.forEach(toolbar.childNodes, function(item) {
+    for (let item of toolbar.childNodes) {
       if (AppConstants.platform == "macosx") {
         if (item.firstChild && item.firstChild.localName == "menubar")
           return;
@@ -207,7 +207,7 @@ function wrapToolbarItems() {
         let wrapper = wrapToolbarItem(item);
         cleanupItemForToolbar(item, wrapper);
       }
-    });
+    }
   });
 }
 
@@ -361,7 +361,7 @@ function cleanUpItemForPalette(aItem, aWrapper) {
   aItem.removeAttribute("type");
   aItem.removeAttribute("width");
 
-  Array.forEach(aWrapper.querySelectorAll("[disabled]"), function(aNode) {
+  aWrapper.querySelectorAll("[disabled]").forEach(function(aNode) {
     aNode.removeAttribute("disabled");
   });
 }
@@ -594,8 +594,8 @@ function updateToolboxProperty(aProp, aValue, aToolkitDefault) {
 }
 
 function forEachCustomizableToolbar(callback) {
-  Array.filter(gToolbox.childNodes, isCustomizableToolbar).forEach(callback);
-  Array.filter(gToolbox.externalToolbars, isCustomizableToolbar).forEach(callback);
+  Array.from(gToolbox.childNodes).filter(isCustomizableToolbar).forEach(callback);
+  Array.from(gToolbox.externalToolbars).filter(isCustomizableToolbar).forEach(callback);
 }
 
 function isCustomizableToolbar(aElt) {

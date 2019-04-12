@@ -9,6 +9,7 @@
 #include "nsComponentManagerExtra.h"
 #include "nsSyncStreamListener.h"
 #include "nsSAXXMLReader.h"  // Sax parser.
+#include "nsXULAppAPI.h"
 
 using mozilla::TransactionManager;
 
@@ -71,4 +72,11 @@ static const mozilla::Module kCommonModule = {
   nullptr
 };
 
-NSMODULE_DEFN(nsCommonModule) = &kCommonModule;
+class ModulesInit {
+public:
+  ModulesInit() {
+    XRE_AddStaticComponent(&kCommonModule);
+  }
+};
+
+ModulesInit gInit;

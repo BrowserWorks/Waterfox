@@ -1,3 +1,3 @@
-browser.jar:
-    content/browser/overlayBindings.css (content/overlayBindings.css)
-    content/browser/overlayBindings.xml (content/overlayBindings.xml)
+messenger.jar:
+    content/messenger/overlayBindings.css (content/overlayBindings.css)
+    content/messenger/overlayBindings.xml (content/overlayBindings.xml)

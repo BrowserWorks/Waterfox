@@ -729,7 +729,7 @@ class RDFSubject extends RDFNode {
 
   /**
    * Removes an assertion from the internal hashes. Should be called for all
-   * assertions that are programatically deleted.
+   * assertions that are programmatically deleted.
    */
   _removeAssertion(assertion) {
     var predicate = assertion.getPredicate();
@@ -1332,7 +1332,7 @@ class RDFDataSource {
 
   /**
    * Guess the indent level within the given Element. The method looks for
-   * elements that are preceeded by whitespace including a newline. The
+   * elements that are preceded by whitespace including a newline. The
    * whitespace following the newline is presumed to be the indentation for the
    * element.
    * If the indentation cannot be guessed then it recurses up the document
@@ -1343,7 +1343,7 @@ class RDFDataSource {
     if (!element || isDocument(element))
       return "";
 
-    // Check the text immediately preceeding each child node. One could be
+    // Check the text immediately preceding each child node. One could be
     // a valid indent
     var pretext = "";
     var child = element.firstChild;
@@ -1415,7 +1415,7 @@ class RDFDataSource {
   _removeElement(element) {
     var parent = element.parentNode;
     var sibling = element.previousSibling;
-    // Drop any text nodes immediately preceeding the element
+    // Drop any text nodes immediately preceding the element
     while (sibling && isText(sibling)) {
       var temp = sibling;
       sibling = sibling.previousSibling;

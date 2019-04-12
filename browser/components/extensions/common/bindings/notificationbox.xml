@@ -70,7 +70,7 @@
           <![CDATA[
             var closedNotification = this._closedNotification;
             var notifications = this.getElementsByTagName("xbl-notification");
-            return Array.filter(notifications, n => n != closedNotification);
+            return Array.from(notifications).filter(n => n != closedNotification);
           ]]>
         </getter>
       </property>
@@ -100,7 +100,7 @@
           <![CDATA[
             if (aPriority < this.PRIORITY_INFO_LOW ||
                 aPriority > this.PRIORITY_CRITICAL_BLOCK)
-              throw "Invalid notification priority " + aPriority;
+              throw new Error("Invalid notification priority " + aPriority);
 
             // check for where the notification should be inserted according to
             // priority. If two are equal, the existing one appears on top.

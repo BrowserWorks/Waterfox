@@ -22,7 +22,7 @@
         <![CDATA[
           var btn = document.getAnonymousElementByAttribute(this, "anonid", "button");
           if (!btn)
-            throw "XBL binding for <button type=\"menu-button\"/> binding must contain an element with anonid=\"button\"";
+            throw new Error("XBL binding for <button type=\"menu-button\"/> binding must contain an element with anonid=\"button\"");
 
           var menubuttonParent = this;
           btn.addEventListener("mouseover", function() {
@@ -105,7 +105,7 @@
     </handlers>
   </binding>
 
-  <binding id="menu-button" display="xul:menu"
+  <binding id="menu-button"
            extends="chrome://messenger/content/menubutton.xml#menu-button-base">
     <resources>
       <stylesheet src="chrome://global/skin/button.css"/>

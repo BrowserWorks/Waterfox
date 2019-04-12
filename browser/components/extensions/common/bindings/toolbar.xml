@@ -494,7 +494,7 @@
     </handlers>
   </binding>
 
-  <binding id="menubar" role="xul:menubar" display="xul:menubar">
+  <binding id="menubar" role="xul:menubar">
     <implementation>
        <field name="_active">false</field>
        <field name="_statusbar">null</field>
@@ -538,7 +538,7 @@
     </handlers>
   </binding>
 
-  <binding id="toolbarpaletteitem" display="xul:button">
+  <binding id="toolbarpaletteitem">
     <content>
       <xul:hbox class="toolbarpaletteitem-box" flex="1" xbl:inherits="type,place">
         <children/>
@@ -574,7 +574,7 @@
     </content>
   </binding>
 
-  <binding id="menu-button" display="xul:menu"
+  <binding id="menu-button"
            extends="chrome://global/content/bindings/button.xml#button-base">
 
     <content>

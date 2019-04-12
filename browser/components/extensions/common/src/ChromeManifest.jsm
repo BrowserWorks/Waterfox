@@ -243,7 +243,7 @@ class ChromeManifest {
   }
 
   /**
-   * Parse the resource instruction, to set up resource uri subtitutions
+   * Parse the resource instruction, to set up resource uri substitutions
    *
    * @param {String} packagename    The resource package name, e.g. resource://packagename/
    * @param {String} url            The location for this content registration

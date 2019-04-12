@@ -419,7 +419,7 @@ class Overlays {
    */
   fetchOverlay(srcUrl) {
     if (!srcUrl.startsWith("chrome://") && !srcUrl.startsWith("resource://")) {
-      throw "May only load overlays from chrome:// or resource:// uris";
+      throw new Error("May only load overlays from chrome:// or resource:// uris");
     }
 
     let xhr = new XMLHttpRequest();
@@ -433,7 +433,7 @@ class Overlays {
     } catch (ex) {
       oconsole.error("Failed to set system principal while fetching overlay " + srcUrl);
       xhr.close();
-      throw "Failed to set system principal";
+      throw new Error("Failed to set system principal");
     }
 
     xhr.send(null);

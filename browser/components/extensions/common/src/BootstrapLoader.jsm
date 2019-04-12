@@ -339,7 +339,12 @@ var BootstrapLoader = {
 
     return {
       install: (...args) => install(...args),
-      uninstall: (...args) => uninstall(...args),
+
+      uninstall(...args) {
+        uninstall(...args);
+        // Forget any cached files we might've had from this extension.
+        Services.obs.notifyObservers(null, "startupcache-invalidate");
+      },
 
       startup(...args) {
         if (addon.type == "extension") {

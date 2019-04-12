@@ -148,7 +148,12 @@ async function checkBootstrappedPref() {
 
     equal(addonData.version, addon.version);
     equal(addonData.type, addon.type);
-    let file = addon.getResourceURI().QueryInterface(Ci.nsIFileURL).file;
+
+    let resourceURI = addon.getResourceURI();
+    if (resourceURI instanceof Ci.nsIJARURI) {
+      resourceURI = resourceURI.JARFile;
+    }
+    let file = resourceURI.QueryInterface(Ci.nsIFileURL).file;
     equal(addonData.path, file.path);
   }
   equal(data.size, 0);

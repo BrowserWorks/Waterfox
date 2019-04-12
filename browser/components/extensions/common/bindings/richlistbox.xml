@@ -852,8 +852,6 @@
               if (currentItem) {
                 this.selectItem(currentItem);
               }
-            } else {
-              this.currentItem._fireEvent("DOMMenuItemActive");
             }
           }
           this._lastKeyTime = 0;
