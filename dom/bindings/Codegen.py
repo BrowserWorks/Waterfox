@@ -13671,8 +13671,6 @@ class CGDictionary(CGThing):
             # up.
             return None
         type = member.type
-        if type.isAny():
-            return "JS::UndefinedValue()"
         if type.isObject():
             return "nullptr"
         if type.isDictionary():
@@ -16214,7 +16212,7 @@ class CallbackMethod(CallbackMember):
                                 typedArraysAreStructs=typedArraysAreStructs)
 
     def getRvalDecl(self):
-        return "JS::Rooted<JS::Value> rval(cx, JS::UndefinedValue());\n"
+        return "JS::Rooted<JS::Value> rval(cx);\n"
 
     def getCall(self):
         if self.argCount > 0:
@@ -16368,7 +16366,7 @@ class CallbackGetter(CallbackAccessor):
                                   typedArraysAreStructs)
 
     def getRvalDecl(self):
-        return "JS::Rooted<JS::Value> rval(cx, JS::UndefinedValue());\n"
+        return "JS::Rooted<JS::Value> rval(cx);\n"
 
     def getCall(self):
         return fill(
