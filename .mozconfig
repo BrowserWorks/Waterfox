@@ -8,10 +8,12 @@ ac_add_options --enable-macos-target=10.7
 ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
 mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 ac_add_options --enable-ccache
+ac_add_options --disable-stylo
 # Windows 10 Specific Options
 elif test `uname -s` = MINGW32_NT-6.2; then
 ac_add_options --enable-optimize="-O2"
 ac_add_options --enable-eme=widevine
+ac_add_options --enable-stylo=build
 ac_add_options --host=x86_64-pc-mingw32
 ac_add_options --target=x86_64-pc-mingw32
 ac_add_options --with-libclang-path="C:\Program Files\LLVM\bin"
@@ -53,7 +55,6 @@ ac_add_options --disable-verify-mar
 ac_add_options --enable-application=browser
 ac_add_options --enable-release
 ac_add_options --enable-rust-simd # on x86 requires SSE2
-ac_add_options --enable-stylo=build
 ac_add_options --enable-update-channel=release
 ac_add_options --enable-updater
 
