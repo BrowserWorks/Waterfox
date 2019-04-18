@@ -140,11 +140,17 @@ DecodeLZ4(const nsACString& lz4, const T& magicNumber)
   auto size = LittleEndian::readUint32(data);
   data += 4;
 
+  size_t dataLen = lz4.EndReading() - data;
+  size_t outputSize;
+
   nsCString result;
   if (!result.SetLength(size, fallible) ||
-      !LZ4::decompress(data, result.BeginWriting(), size)) {
+      !LZ4::decompress(data, dataLen, result.BeginWriting(), size,
+                       &outputSize)) {
     return Err(NS_ERROR_UNEXPECTED);
   }
+
+  MOZ_DIAGNOSTIC_ASSERT(size == outputSize);
 
   return result;
 }
