@@ -77,6 +77,13 @@ public:
   }
 
   void RemoveRule(uint32_t aIndex) {
+    if (aIndex >= mRules.Length()) {
+      return;
+    }
+    if (css::Rule* child = mRules[aIndex]) {
+      child->SetStyleSheet(nullptr);
+      child->SetParentRule(nullptr);
+    }
     mRules.RemoveObjectAt(aIndex);
   }
 
