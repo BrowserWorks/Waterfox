@@ -50,9 +50,14 @@ bool
 ImageLayerComposite::SetCompositableHost(CompositableHost* aHost)
 {
   switch (aHost->GetType()) {
-    case CompositableType::IMAGE:
-      mImageHost = static_cast<ImageHost*>(aHost);
+    case CompositableType::IMAGE: {
+      ImageHost* newImageHost = static_cast<ImageHost*>(aHost);
+      if (mImageHost && newImageHost != mImageHost) {
+        mImageHost->Detach(this);
+      }
+      mImageHost = newImageHost;
       return true;
+    }
     default:
       return false;
   }

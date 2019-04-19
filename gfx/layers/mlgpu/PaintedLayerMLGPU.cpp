@@ -62,12 +62,16 @@ PaintedLayerMLGPU::SetCompositableHost(CompositableHost* aHost)
 {
   switch (aHost->GetType()) {
     case CompositableType::CONTENT_SINGLE:
-    case CompositableType::CONTENT_DOUBLE:
+    case CompositableType::CONTENT_DOUBLE: {
+      if (mHost && mHost != static_cast<ContentHostBase*>(aHost)->AsContentHostTexture()) {
+        mHost->Detach(this);
+      }
       mHost = static_cast<ContentHostBase*>(aHost)->AsContentHostTexture();
       if (!mHost) {
         gfxWarning() << "ContentHostBase is not a ContentHostTexture";
       }
       return true;
+    }
     default:
       return false;
   }
