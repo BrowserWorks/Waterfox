@@ -163,11 +163,11 @@
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
-	<string>firefox</string>
+	<string>waterfox</string>
 	<key>CFBundleGetInfoString</key>
 	<string>%MAC_APP_NAME% %APP_VERSION%</string>
 	<key>CFBundleIconFile</key>
-	<string>firefox.icns</string>
+	<string>waterfox.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>%MOZ_MACBUNDLE_ID%</string>
 	<key>CFBundleInfoDictionaryVersion</key>

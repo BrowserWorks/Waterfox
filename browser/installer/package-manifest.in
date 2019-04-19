@@ -39,7 +39,7 @@
 @APPNAME@/Contents/Library/LaunchServices
 #endif
 @APPNAME@/Contents/PkgInfo
-@RESPATH@/firefox.icns
+@RESPATH@/waterfox.icns
 @RESPATH@/document.icns
 @RESPATH@/@LPROJ_ROOT@.lproj/*
 #endif
