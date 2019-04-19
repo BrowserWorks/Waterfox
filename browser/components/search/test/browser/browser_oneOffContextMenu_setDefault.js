@@ -112,7 +112,7 @@ add_task(async function test_urlBarChangeEngine() {
 function promisedefaultEngineChanged() {
   return new Promise(resolve => {
     function observer(aSub, aTopic, aData) {
-      if (aData == "engine-current") {
+      if (aData == "engine-default") {
         Assert.equal(Services.search.defaultEngine.name, TEST_ENGINE_NAME, "defaultEngine set");
         Services.obs.removeObserver(observer, "browser-search-engine-modified");
         resolve();
@@ -147,7 +147,11 @@ async function openPopupAndGetEngineButton(isSearch, popup, oneOffInstance, base
     EventUtils.synthesizeMouseAtCenter(searchIcon, {});
     await promise;
   } else {
-    await UrlbarTestUtils.promiseAutocompleteResultPopup(window, "a", waitForFocus);
+    await UrlbarTestUtils.promiseAutocompleteResultPopup({
+      window,
+      waitForFocus,
+      value: "a",
+    });
   }
 
   const contextMenu = oneOffInstance.contextMenuPopup;

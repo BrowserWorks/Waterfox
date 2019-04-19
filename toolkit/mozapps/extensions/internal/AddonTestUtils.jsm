@@ -263,6 +263,7 @@ var AddonTestUtils = {
   appInfo: null,
   addonStartup: null,
   collectedTelemetryEvents: [],
+  testScope: null,
   testUnpacked: false,
   useRealCertChecks: false,
   usePrivilegedSignatures: true,
@@ -274,7 +275,7 @@ var AddonTestUtils = {
     }
   },
 
-  init(testScope) {
+  init(testScope, enableLogging = true) {
     if (this.testScope === testScope) {
       return;
     }
@@ -302,8 +303,10 @@ var AddonTestUtils = {
     this.registerDirectory("XREAddonAppDir", appDirForAddons);
 
 
-    // Enable more extensive EM logging
-    Services.prefs.setBoolPref("extensions.logging.enabled", true);
+    // Enable more extensive EM logging.
+    if (enableLogging) {
+      Services.prefs.setBoolPref("extensions.logging.enabled", true);
+    }
 
     // By default only load extensions from the profile install location
     Services.prefs.setIntPref("extensions.enabledScopes", AddonManager.SCOPE_PROFILE);

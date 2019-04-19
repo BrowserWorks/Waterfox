@@ -36,7 +36,8 @@ import {
   getSymbols,
   getIsPaused,
   getCurrentThread,
-  getThreadContext
+  getThreadContext,
+  getSkipPausing
 } from "../../selectors";
 
 // Redux actions
@@ -96,6 +97,7 @@ export type Props = {
   conditionalPanelLocation: SourceLocation,
   symbols: SymbolDeclarations,
   isPaused: boolean,
+  skipPausing: boolean,
 
   // Actions
   openConditionalPanel: typeof actions.openConditionalPanel,
@@ -205,11 +207,6 @@ class Editor extends PureComponent<Props, State> {
   componentDidMount() {
     const { shortcuts } = this.context;
 
-    const searchAgainKey = L10N.getStr("sourceSearch.search.again.key2");
-    const searchAgainPrevKey = L10N.getStr(
-      "sourceSearch.search.againPrev.key2"
-    );
-
     shortcuts.on(L10N.getStr("toggleBreakpoint.key"), this.onToggleBreakpoint);
     shortcuts.on(
       L10N.getStr("toggleCondPanel.breakpoint.key"),
@@ -221,8 +218,6 @@ class Editor extends PureComponent<Props, State> {
     );
     shortcuts.on(L10N.getStr("sourceTabs.closeTab.key"), this.onClosePress);
     shortcuts.on("Esc", this.onEscape);
-    shortcuts.on(searchAgainPrevKey, this.onSearchAgain);
-    shortcuts.on(searchAgainKey, this.onSearchAgain);
   }
 
   onClosePress = (key, e: KeyboardEvent) => {
@@ -241,17 +236,11 @@ class Editor extends PureComponent<Props, State> {
       this.setState({ editor: (null: any) });
     }
 
-    const searchAgainKey = L10N.getStr("sourceSearch.search.again.key2");
-    const searchAgainPrevKey = L10N.getStr(
-      "sourceSearch.search.againPrev.key2"
-    );
     const shortcuts = this.context.shortcuts;
     shortcuts.off(L10N.getStr("sourceTabs.closeTab.key"));
     shortcuts.off(L10N.getStr("toggleBreakpoint.key"));
     shortcuts.off(L10N.getStr("toggleCondPanel.breakpoint.key"));
     shortcuts.off(L10N.getStr("toggleCondPanel.logPoint.key"));
-    shortcuts.off(searchAgainPrevKey);
-    shortcuts.off(searchAgainKey);
   }
 
   getCurrentLine() {
@@ -325,10 +314,6 @@ class Editor extends PureComponent<Props, State> {
       codeMirror.execCommand("singleSelection");
       e.preventDefault();
     }
-  };
-
-  onSearchAgain = (_, e: KeyboardEvent) => {
-    this.props.traverseResults(this.props.cx, e.shiftKey, this.state.editor);
   };
 
   openMenu(event: MouseEvent) {
@@ -418,7 +403,7 @@ class Editor extends PureComponent<Props, State> {
       return continueToHere(cx, sourceLine);
     }
 
-    return addBreakpointAtLine(cx, sourceLine, ev.altKey);
+    return addBreakpointAtLine(cx, sourceLine, ev.altKey, ev.shiftKey);
   };
 
   onGutterContextMenu = (event: MouseEvent) => {
@@ -614,11 +599,12 @@ class Editor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { selectedSource } = this.props;
+    const { selectedSource, skipPausing } = this.props;
     return (
       <div
         className={classnames("editor-wrapper", {
-          blackboxed: selectedSource && selectedSource.isBlackBoxed
+          blackboxed: selectedSource && selectedSource.isBlackBoxed,
+          "skip-pausing": skipPausing
         })}
         ref={c => (this.$editorWrapper = c)}
       >
@@ -647,7 +633,8 @@ const mapStateToProps = state => {
     searchOn: getActiveSearch(state) === "file",
     conditionalPanelLocation: getConditionalPanelLocation(state),
     symbols: getSymbols(state, selectedSource),
-    isPaused: getIsPaused(state, getCurrentThread(state))
+    isPaused: getIsPaused(state, getCurrentThread(state)),
+    skipPausing: getSkipPausing(state)
   };
 };
 

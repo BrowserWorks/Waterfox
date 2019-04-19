@@ -12,6 +12,7 @@ import os
 import subprocess
 import sys
 import types
+import errno
 try:
     from shutil import which
 except ImportError:
@@ -328,7 +329,7 @@ class MozbuildObject(ProcessExecutionMixin):
 
         config_status = os.path.join(self.topobjdir, 'config.status')
 
-        if not os.path.exists(config_status):
+        if not os.path.exists(config_status) or not os.path.getsize(config_status):
             raise BuildEnvironmentNotFoundException('config.status not available. Run configure.')
 
         self._config_environment = \

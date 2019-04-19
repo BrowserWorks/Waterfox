@@ -19,7 +19,10 @@
 
 #define L10N_PSEUDO_PREF "intl.l10n.pseudo"
 
-static const char* kObservedPrefs[] = {L10N_PSEUDO_PREF, nullptr};
+#define INTL_UI_DIRECTION_PREF "intl.uidirection"
+
+static const char* kObservedPrefs[] = {L10N_PSEUDO_PREF, INTL_UI_DIRECTION_PREF,
+                                       nullptr};
 
 namespace mozilla {
 namespace dom {
@@ -128,7 +131,8 @@ DocumentL10n::Observe(nsISupports* aSubject, const char* aTopic,
   } else {
     MOZ_ASSERT(!strcmp("nsPref:changed", aTopic));
     nsDependentString pref(aData);
-    if (pref.EqualsLiteral(L10N_PSEUDO_PREF)) {
+    if (pref.EqualsLiteral(L10N_PSEUDO_PREF) ||
+        pref.EqualsLiteral(INTL_UI_DIRECTION_PREF)) {
       if (mDOMLocalization) {
         mDOMLocalization->OnChange();
       }
@@ -263,10 +267,11 @@ void DocumentL10n::SetAttributes(JSContext* aCx, Element& aElement,
                                  const nsAString& aId,
                                  const Optional<JS::Handle<JSObject*>>& aArgs,
                                  ErrorResult& aRv) {
-  aElement.SetAttribute(NS_LITERAL_STRING("data-l10n-id"), aId, aRv);
-  if (aRv.Failed()) {
-    return;
+  if (!aElement.AttrValueIs(kNameSpaceID_None, nsGkAtoms::datal10nid, aId,
+                            eCaseMatters)) {
+    aElement.SetAttr(kNameSpaceID_None, nsGkAtoms::datal10nid, aId, true);
   }
+
   if (aArgs.WasPassed()) {
     nsAutoString data;
     JS::Rooted<JS::Value> val(aCx, JS::ObjectValue(*aArgs.Value()));
@@ -274,9 +279,12 @@ void DocumentL10n::SetAttributes(JSContext* aCx, Element& aElement,
       aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
       return;
     }
-    aElement.SetAttribute(NS_LITERAL_STRING("data-l10n-args"), data, aRv);
+    if (!aElement.AttrValueIs(kNameSpaceID_None, nsGkAtoms::datal10nargs, data,
+                              eCaseMatters)) {
+      aElement.SetAttr(kNameSpaceID_None, nsGkAtoms::datal10nargs, data, true);
+    }
   } else {
-    aElement.RemoveAttribute(NS_LITERAL_STRING("data-l10n-args"), aRv);
+    aElement.UnsetAttr(kNameSpaceID_None, nsGkAtoms::datal10nargs, true);
   }
 }
 

@@ -17,7 +17,7 @@ import * as selectors from "../selectors";
 import { getHistory } from "../test/utils/history";
 import configureStore from "../actions/utils/create-store";
 import sourceQueue from "../utils/source-queue";
-import type { Source } from "../types";
+import type { Source, OriginalSourceData, GeneratedSourceData } from "../types";
 
 /**
  * This file contains older interfaces used by tests that have not been
@@ -29,6 +29,11 @@ import type { Source } from "../types";
  * @static
  */
 function createStore(client: any, initialState: any = {}, sourceMapsMock: any) {
+  client = {
+    hasWasmSupport: () => true,
+    ...client
+  };
+
   const store = configureStore({
     log: false,
     history: getHistory(),
@@ -42,7 +47,8 @@ function createStore(client: any, initialState: any = {}, sourceMapsMock: any) {
   })(combineReducers(reducers), initialState);
   sourceQueue.clear();
   sourceQueue.initialize({
-    newSources: sources => store.dispatch(actions.newSources(sources))
+    newQueuedSources: sources =>
+      store.dispatch(actions.newQueuedSources(sources))
   });
 
   store.thunkArgs = () => ({
@@ -77,12 +83,79 @@ function makeFrame({ id, sourceId }: Object, opts: Object = {}) {
   };
 }
 
-function makeSourceRaw(name: string, props: any = {}): Source {
-  return {
-    id: name,
-    loadedState: "unloaded",
-    url: `http://localhost:8000/examples/${name}`,
-    ...props
+function createSourceObject(
+  filename: string,
+  props: {
+    sourceMapURL?: string,
+    introductionType?: string,
+    introductionUrl?: string,
+    isBlackBoxed?: boolean,
+    loadedState?: "unloaded" | "loading" | "loaded",
+    text?: string
+  } = {}
+): Source {
+  return ({
+    id: filename,
+    url: makeSourceURL(filename),
+    loadedState: props.loadedState || "unloaded",
+    isBlackBoxed: !!props.isBlackBoxed,
+    isPrettyPrinted: false,
+    introductionUrl: props.introductionUrl || null,
+    introductionType: props.introductionType || null,
+    isExtension: false,
+    actors: [],
+    ...(typeof props.text === "string"
+      ? {
+          text: props.text || "",
+          contentType: "application/javascript",
+          loadedState: "loaded"
+        }
+      : {})
+  }: any);
+}
+
+function createOriginalSourceObject(generated: Source): Source {
+  const rv = {
+    ...generated,
+    id: `${generated.id}/originalSource`
+  };
+
+  return (rv: any);
+}
+
+function makeSourceURL(filename: string) {
+  return `http://localhost:8000/examples/${filename}`;
+}
+
+type MakeSourceProps = {
+  sourceMapURL?: string,
+  introductionType?: string,
+  introductionUrl?: string,
+  isBlackBoxed?: boolean
+};
+function createMakeSource(): (
+  // The name of the file that this actor is part of.
+  name: string,
+  props?: MakeSourceProps
+) => GeneratedSourceData {
+  const indicies = {};
+
+  return function(name, props = {}) {
+    const index = (indicies[name] | 0) + 1;
+    indicies[name] = index;
+
+    return {
+      id: name,
+      thread: "FakeThread",
+      source: {
+        actor: `${name}-${index}-actor`,
+        url: `http://localhost:8000/examples/${name}`,
+        sourceMapURL: props.sourceMapURL || null,
+        introductionType: props.introductionType || null,
+        introductionUrl: props.introductionUrl || null,
+        isBlackBoxed: !!props.isBlackBoxed
+      }
+    };
   };
 }
 
@@ -90,27 +163,26 @@ function makeSourceRaw(name: string, props: any = {}): Source {
  * @memberof utils/test-head
  * @static
  */
-function makeSource(name: string, props: any = {}): Source {
-  const rv = {
-    ...makeSourceRaw(name, props),
-    actors: [
-      {
-        actor: `${name}-actor`,
-        source: name,
-        thread: "FakeThread"
-      }
-    ]
-  };
-  return (rv: any);
+let creator;
+beforeEach(() => {
+  creator = createMakeSource();
+});
+afterEach(() => {
+  creator = null;
+});
+function makeSource(name: string, props?: MakeSourceProps) {
+  if (!creator) {
+    throw new Error("makeSource() cannot be called outside of a test");
+  }
+
+  return creator(name, props);
 }
 
-function makeOriginalSource(name: string, props?: Object): Source {
-  const rv = {
-    ...makeSourceRaw(name, props),
-    id: `${name}/originalSource`,
-    actors: []
+function makeOriginalSource(source: Source): OriginalSourceData {
+  return {
+    id: `${source.id}/originalSource`,
+    url: `${source.url}-original`
   };
-  return (rv: any);
 }
 
 function makeFuncLocation(startLine, endLine) {
@@ -201,6 +273,10 @@ export {
   commonLog,
   getTelemetryEvents,
   makeFrame,
+  createSourceObject,
+  createOriginalSourceObject,
+  createMakeSource,
+  makeSourceURL,
   makeSource,
   makeOriginalSource,
   makeSymbolDeclaration,

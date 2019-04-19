@@ -208,6 +208,7 @@ class ContentParent final : public PContentParent,
    */
   static TabParent* CreateBrowser(const TabContext& aContext,
                                   Element* aFrameElement,
+                                  BrowsingContext* aBrowsingContext,
                                   ContentParent* aOpenerContentParent,
                                   TabParent* aSameTabGroupAs,
                                   uint64_t aNextTabParentId);
@@ -499,8 +500,9 @@ class ContentParent final : public PContentParent,
   PContentPermissionRequestParent* AllocPContentPermissionRequestParent(
       const InfallibleTArray<PermissionRequest>& aRequests,
       const IPC::Principal& aPrincipal,
-      const IPC::Principal& aTopLevelPrincipal, const bool& aIsTrusted,
-      const TabId& aTabId);
+      const IPC::Principal& aTopLevelPrincipal,
+      const bool& aIsHandlingUserInput, const bool& aDocumentHasUserInput,
+      const DOMTimeStamp& aPageLoadTimestamp, const TabId& aTabId);
 
   bool DeallocPContentPermissionRequestParent(
       PContentPermissionRequestParent* actor);
@@ -819,11 +821,10 @@ class ContentParent final : public PContentParent,
 
   bool DeallocPBrowserParent(PBrowserParent* frame);
 
-  virtual mozilla::ipc::IPCResult RecvPBrowserConstructor(
-      PBrowserParent* actor, const TabId& tabId, const TabId& sameTabGroupAs,
-      const IPCTabContext& context, const uint32_t& chromeFlags,
-      const ContentParentId& cpId, BrowsingContext* aBrowsingContext,
-      const bool& isForBrowser) override;
+  mozilla::ipc::IPCResult RecvConstructPopupBrowser(
+      ManagedEndpoint<PBrowserParent>&& actor, const TabId& tabId,
+      const IPCTabContext& context, BrowsingContext* aBrowsingContext,
+      const uint32_t& chromeFlags);
 
   PIPCBlobInputStreamParent* AllocPIPCBlobInputStreamParent(
       const nsID& aID, const uint64_t& aSize);

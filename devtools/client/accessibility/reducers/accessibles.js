@@ -4,6 +4,7 @@
 "use strict";
 
 const {
+  AUDIT,
   FETCH_CHILDREN,
   HIGHLIGHT,
   RESET,
@@ -27,6 +28,8 @@ function accessibles(state = getInitialState(), action) {
     case HIGHLIGHT:
     case SELECT:
       return onReceiveAncestry(state, action);
+    case AUDIT:
+      return onAudit(state, action);
     case RESET:
       return getInitialState();
     default:
@@ -35,7 +38,7 @@ function accessibles(state = getInitialState(), action) {
 }
 
 function getActorID(accessible) {
-  return accessible.actorID || accessible._form.actor;
+  return accessible.actorID || (accessible._form && accessible._form.actor);
 }
 
 /**
@@ -136,6 +139,19 @@ function onReceiveAncestry(cache, action) {
   }
 
   return updateAncestry(new Map(cache), ancestry);
+}
+
+function onAudit(cache, action) {
+  const { error, response: ancestries } = action;
+  if (error) {
+    console.warn(`Error performing an audit: `, error);
+    return cache;
+  }
+
+  const newCache = new Map(cache);
+  ancestries.forEach(ancestry => updateAncestry(newCache, ancestry));
+
+  return newCache;
 }
 
 exports.accessibles = accessibles;

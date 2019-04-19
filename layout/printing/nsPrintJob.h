@@ -32,6 +32,7 @@ class nsIDocShell;
 class nsIPageSequenceFrame;
 
 namespace mozilla {
+class PresShell;
 namespace dom {
 class Document;
 }
@@ -121,6 +122,7 @@ class nsPrintJob final : public nsIObserver,
   nsresult ReflowDocList(const mozilla::UniquePtr<nsPrintObject>& aPO,
                          bool aSetPixelScale);
 
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   nsresult ReflowPrintObject(const mozilla::UniquePtr<nsPrintObject>& aPO);
 
   void CheckForChildFrameSets(const mozilla::UniquePtr<nsPrintObject>& aPO);
@@ -160,7 +162,7 @@ class nsPrintJob final : public nsIObserver,
   bool CheckBeforeDestroy();
   nsresult Cancelled();
 
-  nsIPresShell* GetPrintPreviewPresShell() {
+  mozilla::PresShell* GetPrintPreviewPresShell() {
     return mPrtPreview->mPrintObject->mPresShell;
   }
 
@@ -203,6 +205,7 @@ class nsPrintJob final : public nsIObserver,
   nsView* GetParentViewForRoot();
   bool DoSetPixelScale();
   void UpdateZoomRatio(nsPrintObject* aPO, bool aSetPixelScale);
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   nsresult ReconstructAndReflow(bool aDoSetPixelScale);
   nsresult UpdateSelectionAndShrinkPrintObject(nsPrintObject* aPO,
                                                bool aDocumentIsTopLevel);

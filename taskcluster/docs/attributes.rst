@@ -108,6 +108,13 @@ unittest_try_name
 This is the name used to refer to a unit test via try syntax.  It
 may not match either of ``unittest_suite`` or ``unittest_flavor``.
 
+unittest_variant
+================
+
+The configuration variant the test suite is running with. If set, this usually
+means the tests are running with a special pref enabled. These are defined in
+``taskgraph.transforms.tests.TEST_VARIANTS``.
+
 talos_try_name
 ==============
 
@@ -129,18 +136,6 @@ test_chunk
 
 This is the chunk number of a chunked test suite (talos or unittest).  Note
 that this is a string!
-
-serviceworker_e10s
-==================
-
-For test suites which distinguish whether or not they run with the serviceworker
-e10s redesign enabled.
-
-socketprocess_e10s
-==================
-
-For test suites which distinguish whether or not they run with the socket
-process enabled.
 
 e10s
 ====
@@ -307,3 +302,7 @@ If a task set this boolean attribute to `true`, it will be processed by the code
 review bot, the task will ran for every new Phabricator diff.
 Any supported and detected issue will be automatically reported on the
 Phabricator revision.
+
+retrigger
+=========
+Whether the task can be retriggered, or if it needs to be re-run.

@@ -21,6 +21,7 @@
 #include "nsIRedirectHistoryEntry.h"
 
 #include "mozilla/BasePrincipal.h"
+#include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/nsMixedContentBlocker.h"
 #include "mozilla/dom/TabChild.h"
@@ -101,7 +102,8 @@ bool nsContentSecurityManager::AllowTopLevelNavigationToDataURI(
   nsCOMPtr<nsITabChild> tabChild = do_QueryInterface(context);
   nsCOMPtr<Document> doc;
   if (tabChild) {
-    doc = static_cast<mozilla::dom::TabChild*>(tabChild.get())->GetDocument();
+    doc = static_cast<mozilla::dom::TabChild*>(tabChild.get())
+              ->GetTopLevelDocument();
   }
   NS_ConvertUTF8toUTF16 specUTF16(NS_UnescapeURL(dataSpec));
   const char16_t* params[] = {specUTF16.get()};
@@ -156,6 +158,51 @@ bool nsContentSecurityManager::AllowInsecureRedirectToDataURI(
       nsContentUtils::eSECURITY_PROPERTIES, "BlockSubresourceRedirectToData",
       params, ArrayLength(params));
   return false;
+}
+
+/* static */
+void nsContentSecurityManager::AssertEvalNotUsingSystemPrincipal(
+    nsIPrincipal* subjectPrincipal, JSContext* cx) {
+  if (!subjectPrincipal->IsSystemPrincipal()) {
+    return;
+  }
+
+  if (Preferences::GetBool("security.allow_eval_with_system_principal")) {
+    return;
+  }
+
+  static StaticAutoPtr<nsTArray<nsCString>> sUrisAllowEval;
+  JS::AutoFilename scriptFilename;
+  if (JS::DescribeScriptedCaller(cx, &scriptFilename)) {
+    if (!sUrisAllowEval) {
+      sUrisAllowEval = new nsTArray<nsCString>();
+      nsAutoCString urisAllowEval;
+      Preferences::GetCString("security.uris_using_eval_with_system_principal",
+                              urisAllowEval);
+      for (const nsACString& filenameString : urisAllowEval.Split(',')) {
+        sUrisAllowEval->AppendElement(filenameString);
+      }
+      ClearOnShutdown(&sUrisAllowEval);
+    }
+
+    nsAutoCString fileName;
+    fileName = nsAutoCString(scriptFilename.get());
+    // Extract file name alone if scriptFilename contains line number
+    // separated by multiple space delimiters in few cases.
+    int32_t fileNameIndex = fileName.FindChar(' ');
+    if (fileNameIndex != -1) {
+      fileName = Substring(fileName, 0, fileNameIndex);
+    }
+    ToLowerCase(fileName);
+
+    for (auto& uriEntry : *sUrisAllowEval) {
+      if (StringEndsWith(fileName, uriEntry)) {
+        return;
+      }
+    }
+  }
+
+  MOZ_ASSERT(false, "do not use eval with system privileges");
 }
 
 /* static */
@@ -776,6 +823,30 @@ static void AssertSystemPrincipalMustNotLoadRemoteDocuments(
       !nsContentUtils::SchemeIs(finalURI, "ftp")) {
     return;
   }
+
+  // FIXME The discovery feature in about:addons uses the SystemPrincpal.
+  // We should remove this exception with bug 1544011.
+  static nsAutoCString sDiscoveryPrePath;
+  static bool recvdPrefValue = false;
+  if (!recvdPrefValue) {
+    nsAutoCString discoveryURLString;
+    Preferences::GetCString("extensions.webservice.discoverURL",
+                            discoveryURLString);
+    // discoverURL is by default suffixed with parameters in path like
+    // /%LOCALE%/ so, we use the prePath for comparison
+    nsCOMPtr<nsIURI> discoveryURL;
+    NS_NewURI(getter_AddRefs(discoveryURL), discoveryURLString);
+    if (discoveryURL) {
+      discoveryURL->GetPrePath(sDiscoveryPrePath);
+    }
+    recvdPrefValue = true;
+  }
+  nsAutoCString requestedPrePath;
+  finalURI->GetPrePath(requestedPrePath);
+  if (requestedPrePath.Equals(sDiscoveryPrePath)) {
+    return;
+  }
+
   if (xpc::AreNonLocalConnectionsDisabled()) {
     bool disallowSystemPrincipalRemoteDocuments = Preferences::GetBool(
         "security.disallow_non_local_systemprincipal_in_tests");

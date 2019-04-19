@@ -58,7 +58,7 @@ void nsSVGOuterSVGFrame::UnregisterForeignObject(
 //----------------------------------------------------------------------
 // Implementation
 
-nsContainerFrame* NS_NewSVGOuterSVGFrame(nsIPresShell* aPresShell,
+nsContainerFrame* NS_NewSVGOuterSVGFrame(PresShell* aPresShell,
                                          ComputedStyle* aStyle) {
   return new (aPresShell)
       nsSVGOuterSVGFrame(aStyle, aPresShell->GetPresContext());
@@ -860,7 +860,7 @@ gfxMatrix nsSVGOuterSVGFrame::GetCanvasTM() {
   if (!mCanvasTM) {
     SVGSVGElement* content = static_cast<SVGSVGElement*>(GetContent());
 
-    float devPxPerCSSPx = 1.0f / PresContext()->AppUnitsToFloatCSSPixels(
+    float devPxPerCSSPx = 1.0f / nsPresContext::AppUnitsToFloatCSSPixels(
                                      PresContext()->AppUnitsPerDevPixel());
 
     gfxMatrix tm = content->PrependLocalTransformsTo(
@@ -933,7 +933,7 @@ void nsSVGOuterSVGFrame::AppendDirectlyOwnedAnonBoxes(
 //----------------------------------------------------------------------
 // Implementation of nsSVGOuterSVGAnonChildFrame
 
-nsContainerFrame* NS_NewSVGOuterSVGAnonChildFrame(nsIPresShell* aPresShell,
+nsContainerFrame* NS_NewSVGOuterSVGAnonChildFrame(PresShell* aPresShell,
                                                   ComputedStyle* aStyle) {
   return new (aPresShell)
       nsSVGOuterSVGAnonChildFrame(aStyle, aPresShell->GetPresContext());

@@ -168,6 +168,11 @@ pref("app.update.idletime", 60);
 pref("app.update.service.enabled", true);
 #endif
 
+#ifdef XP_WIN
+// This pref prevents BITS from being used by Firefox to download updates.
+pref("app.update.BITS.enabled", false);
+#endif
+
 // Symmetric (can be overridden by individual extensions) update preferences.
 // e.g.
 //  extensions.{GUID}.update.enabled
@@ -406,9 +411,17 @@ pref("permissions.default.geo", 0);
 pref("permissions.default.desktop-notification", 0);
 pref("permissions.default.shortcuts", 0);
 
+#ifdef NIGHTLY_BUILD
+pref("permissions.desktop-notification.postPrompt.enabled", true);
+#else
 pref("permissions.desktop-notification.postPrompt.enabled", false);
+#endif
 
 pref("permissions.postPrompt.animate", true);
+
+// This is meant to be enabled only for studies, not for
+// permanent data collection on any channel.
+pref("permissions.eventTelemetry.enabled", false);
 
 // handle links targeting new windows
 // 1=current window/tab, 2=new window, 3=new tab in most recent window
@@ -1000,7 +1013,11 @@ pref("browser.flash-protected-mode-flip.enable", false);
 pref("browser.flash-protected-mode-flip.done", false);
 
 // Dark in-content pages
+#ifdef NIGHTLY_BUILD
+pref("browser.in-content.dark-mode", true);
+#else
 pref("browser.in-content.dark-mode", false);
+#endif
 
 pref("dom.ipc.shims.enabledWarnings", false);
 
@@ -1539,10 +1556,14 @@ pref("browser.ping-centre.production.endpoint", "https://tiles.services.mozilla.
 // Enable GMP support in the addon manager.
 pref("media.gmp-provider.enabled", true);
 
+#ifdef EARLY_BETA_OR_EARLIER
 // Enable blocking access to storage from tracking resources only in nightly
 // and early beta. By default the value is 0: BEHAVIOR_ACCEPT
-#ifdef EARLY_BETA_OR_EARLIER
 pref("network.cookie.cookieBehavior", 4 /* BEHAVIOR_REJECT_TRACKER */);
+// Enable fingerprinting blocking by default only in nightly and early beta.
+pref("privacy.trackingprotection.fingerprinting.enabled", true);
+// Enable cryptomining blocking by default only in nightly and early beta.
+pref("privacy.trackingprotection.cryptomining.enabled", true);
 #endif
 
 pref("browser.contentblocking.allowlist.storage.enabled", true);
@@ -1582,12 +1603,13 @@ pref("browser.contentblocking.fingerprinting.preferences.ui.enabled", true);
 //     "cookieBehavior3": cookie behaviour BEHAVIOR_LIMIT_FOREIGN
 //     "cookieBehavior4": cookie behaviour BEHAVIOR_REJECT_TRACKER
 // One value from each section must be included in each browser.contentblocking.features.* pref.
-pref("browser.contentblocking.features.strict", "tp,tpPrivate,cookieBehavior4,-cm,-fp");
-
+pref("browser.contentblocking.features.strict", "tp,tpPrivate,cookieBehavior4,cm,fp");
 // Enable blocking access to storage from tracking resources only in nightly
 // and early beta. By default the value is "cookieBehavior0": BEHAVIOR_ACCEPT
+// Enable cryptomining blocking in standard in nightly and early beta.
+// Enable fingerprinting blocking in standard in nightly and early beta.
 #ifdef EARLY_BETA_OR_EARLIER
-pref("browser.contentblocking.features.standard", "-tp,tpPrivate,cookieBehavior4,-cm,-fp");
+pref("browser.contentblocking.features.standard", "-tp,tpPrivate,cookieBehavior4,cm,fp");
 #else
 pref("browser.contentblocking.features.standard", "-tp,tpPrivate,cookieBehavior0,-cm,-fp");
 #endif
@@ -1841,10 +1863,6 @@ pref("prio.publicKeyB", "26E6674E65425B823F1F1D5F96E3BB3EF9E406EC7FBA7DEF8B08A35
 // Coverage ping is disabled by default.
 pref("toolkit.coverage.enabled", false);
 pref("toolkit.coverage.endpoint.base", "https://coverage.mozilla.org");
-// Whether Prio-encoded Telemetry will be sent in the prio ping.
-#if defined(NIGHTLY_BUILD)
-pref("toolkit.telemetry.prioping.enabled", true);
-#endif
 
 // Discovery prefs
 pref("browser.discovery.enabled", false);

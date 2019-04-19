@@ -248,7 +248,7 @@ DownloadsPlacesView.prototype = {
       let winUtils = window.windowUtils;
       let nodes = winUtils.nodesFromRect(rlbRect.left, rlbRect.top,
                                          0, rlbRect.width, rlbRect.height, 0,
-                                         true, false);
+                                         true, false, false);
       // nodesFromRect returns nodes in z-index order, and for the same z-index
       // sorts them in inverted DOM order, thus starting from the one that would
       // be on top.
@@ -295,8 +295,9 @@ DownloadsPlacesView.prototype = {
   },
 
   get selectedNodes() {
-      return Array.filter(this._richlistbox.selectedItems,
-                          element => element._shell.download.placesNode);
+    return Array.prototype.filter.call(
+      this._richlistbox.selectedItems,
+      element => element._shell.download.placesNode);
   },
 
   get selectedNode() {
@@ -501,14 +502,15 @@ DownloadsPlacesView.prototype = {
       case "downloadsCmd_clearDownloads":
         return this.canClearDownloads(this._richlistbox);
       default:
-        return Array.every(this._richlistbox.selectedItems,
-                           element => element._shell.isCommandEnabled(aCommand));
+        return Array.prototype.every.call(
+          this._richlistbox.selectedItems,
+          element => element._shell.isCommandEnabled(aCommand));
     }
   },
 
   _copySelectedDownloadsToClipboard() {
-    let urls = Array.map(this._richlistbox.selectedItems,
-                         element => element._shell.download.source.url);
+    let urls = Array.from(this._richlistbox.selectedItems,
+                          element => element._shell.download.source.url);
 
     Cc["@mozilla.org/widget/clipboardhelper;1"]
       .getService(Ci.nsIClipboardHelper)

@@ -16,7 +16,8 @@ import {
   getBreakpointsDisabled,
   getExpressions,
   getIsWaitingOnBreak,
-  getMapScopes,
+  getPauseCommand,
+  isMapScopesEnabled,
   getSelectedFrame,
   getShouldPauseOnExceptions,
   getShouldPauseOnCaughtExceptions,
@@ -38,6 +39,7 @@ import CommandBar from "./CommandBar";
 import UtilsBar from "./UtilsBar";
 import XHRBreakpoints from "./XHRBreakpoints";
 import EventListeners from "./EventListeners";
+import WhyPaused from "./WhyPaused";
 
 import Scopes from "./Scopes";
 
@@ -81,7 +83,8 @@ type Props = {
   selectedFrame: ?Frame,
   breakpointsDisabled: boolean,
   isWaitingOnBreak: boolean,
-  shouldMapScopes: boolean,
+  renderWhyPauseDelay: number,
+  mapScopesEnabled: boolean,
   shouldPauseOnExceptions: boolean,
   shouldPauseOnCaughtExceptions: boolean,
   workers: WorkerList,
@@ -225,13 +228,9 @@ class SecondaryPanes extends Component<Props, State> {
   }
 
   getScopesButtons() {
-    const { selectedFrame, shouldMapScopes } = this.props;
+    const { selectedFrame, mapScopesEnabled } = this.props;
 
-    if (
-      !features.mapScopes ||
-      !selectedFrame ||
-      isGeneratedId(selectedFrame.location.sourceId)
-    ) {
+    if (!selectedFrame || isGeneratedId(selectedFrame.location.sourceId)) {
       return null;
     }
 
@@ -244,7 +243,7 @@ class SecondaryPanes extends Component<Props, State> {
         >
           <input
             type="checkbox"
-            checked={shouldMapScopes ? "checked" : ""}
+            checked={mapScopesEnabled ? "checked" : ""}
             onChange={e => this.props.toggleMapScopes()}
           />
           {L10N.getStr("scopes.map.label")}
@@ -364,8 +363,9 @@ class SecondaryPanes extends Component<Props, State> {
 
   getStartItems(): AccordionPaneItem[] {
     const items: AccordionPaneItem[] = [];
+    const { horizontal, hasFrames } = this.props;
 
-    if (this.props.horizontal) {
+    if (horizontal) {
       if (features.workers && this.props.workers.length > 0) {
         items.push(this.getWorkersItem());
       }
@@ -375,9 +375,9 @@ class SecondaryPanes extends Component<Props, State> {
 
     items.push(this.getBreakpointsItem());
 
-    if (this.props.hasFrames) {
+    if (hasFrames) {
       items.push(this.getCallStackItem());
-      if (this.props.horizontal) {
+      if (horizontal) {
         items.push(this.getScopeItem());
       }
     }
@@ -417,19 +417,33 @@ class SecondaryPanes extends Component<Props, State> {
   }
 
   renderHorizontalLayout() {
-    return <Accordion items={this.getItems()} />;
+    const { renderWhyPauseDelay } = this.props;
+
+    return (
+      <div>
+        <WhyPaused delay={renderWhyPauseDelay} />
+        <Accordion items={this.getItems()} />
+      </div>
+    );
   }
 
   renderVerticalLayout() {
     return (
-      <SplitBox
-        initialSize="300px"
-        minSize={10}
-        maxSize="50%"
-        splitterSize={1}
-        startPanel={<Accordion items={this.getStartItems()} />}
-        endPanel={<Accordion items={this.getEndItems()} />}
-      />
+      <div>
+        <SplitBox
+          initialSize="300px"
+          minSize={10}
+          maxSize="50%"
+          splitterSize={1}
+          startPanel={
+            <div style={{ width: "inherit" }}>
+              <WhyPaused delay={this.props.renderWhyPauseDelay} />
+              <Accordion items={this.getStartItems()} />
+            </div>
+          }
+          endPanel={<Accordion items={this.getEndItems()} />}
+        />
+      </div>
     );
   }
 
@@ -461,6 +475,18 @@ class SecondaryPanes extends Component<Props, State> {
   }
 }
 
+// Checks if user is in debugging mode and adds a delay preventing
+// excessive vertical 'jumpiness'
+function getRenderWhyPauseDelay(state, thread) {
+  const inPauseCommand = !!getPauseCommand(state, thread);
+
+  if (!inPauseCommand) {
+    return 100;
+  }
+
+  return 0;
+}
+
 const mapStateToProps = state => {
   const thread = getCurrentThread(state);
 
@@ -471,8 +497,9 @@ const mapStateToProps = state => {
     breakpoints: getBreakpointsList(state),
     breakpointsDisabled: getBreakpointsDisabled(state),
     isWaitingOnBreak: getIsWaitingOnBreak(state, thread),
+    renderWhyPauseDelay: getRenderWhyPauseDelay(state, thread),
     selectedFrame: getSelectedFrame(state, thread),
-    shouldMapScopes: getMapScopes(state),
+    mapScopesEnabled: isMapScopesEnabled(state),
     shouldPauseOnExceptions: getShouldPauseOnExceptions(state),
     shouldPauseOnCaughtExceptions: getShouldPauseOnCaughtExceptions(state),
     workers: getWorkers(state)

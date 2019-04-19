@@ -1149,22 +1149,25 @@ bool EventStateManager::WalkESMTreeToHandleAccessKey(
 
     nsCOMPtr<nsIDocShell> subDS = do_QueryInterface(subShellItem);
     if (subDS && IsShellVisible(subDS)) {
-      nsCOMPtr<nsIPresShell> subPS = subDS->GetPresShell();
+      // Guarantee subPresShell lifetime while we're handling access key
+      // since somebody may assume that it won't be deleted before the
+      // corresponding nsPresContext and EventStateManager.
+      RefPtr<PresShell> subPresShell = subDS->GetPresShell();
 
       // Docshells need not have a presshell (eg. display:none
       // iframes, docshells in transition between documents, etc).
-      if (!subPS) {
+      if (!subPresShell) {
         // Oh, well.  Just move on to the next child
         continue;
       }
 
-      nsPresContext* subPC = subPS->GetPresContext();
+      RefPtr<nsPresContext> subPresContext = subPresShell->GetPresContext();
 
-      EventStateManager* esm =
-          static_cast<EventStateManager*>(subPC->EventStateManager());
+      RefPtr<EventStateManager> esm =
+          static_cast<EventStateManager*>(subPresContext->EventStateManager());
 
       if (esm && esm->WalkESMTreeToHandleAccessKey(
-                     aEvent, subPC, aAccessCharCodes, nullptr,
+                     aEvent, subPresContext, aAccessCharCodes, nullptr,
                      eAccessKeyProcessingDown, aExecute)) {
         return true;
       }
@@ -1177,16 +1180,21 @@ bool EventStateManager::WalkESMTreeToHandleAccessKey(
     docShell->GetParent(getter_AddRefs(parentShellItem));
     nsCOMPtr<nsIDocShell> parentDS = do_QueryInterface(parentShellItem);
     if (parentDS) {
-      nsCOMPtr<nsIPresShell> parentPS = parentDS->GetPresShell();
-      NS_ASSERTION(parentPS, "Our PresShell exists but the parent's does not?");
+      // Guarantee parentPresShell lifetime while we're handling access key
+      // since somebody may assume that it won't be deleted before the
+      // corresponding nsPresContext and EventStateManager.
+      RefPtr<PresShell> parentPresShell = parentDS->GetPresShell();
+      NS_ASSERTION(parentPresShell,
+                   "Our PresShell exists but the parent's does not?");
 
-      nsPresContext* parentPC = parentPS->GetPresContext();
-      NS_ASSERTION(parentPC, "PresShell without PresContext");
+      RefPtr<nsPresContext> parentPresContext =
+          parentPresShell->GetPresContext();
+      NS_ASSERTION(parentPresContext, "PresShell without PresContext");
 
-      EventStateManager* esm =
-          static_cast<EventStateManager*>(parentPC->EventStateManager());
+      RefPtr<EventStateManager> esm = static_cast<EventStateManager*>(
+          parentPresContext->EventStateManager());
       if (esm && esm->WalkESMTreeToHandleAccessKey(
-                     aEvent, parentPC, aAccessCharCodes, docShell,
+                     aEvent, parentPresContext, aAccessCharCodes, docShell,
                      eAccessKeyProcessingDown, aExecute)) {
         return true;
       }
@@ -4015,6 +4023,7 @@ class MOZ_STACK_CLASS ESMEventCB : public EventDispatchingCallback {
  public:
   explicit ESMEventCB(nsIContent* aTarget) : mTarget(aTarget) {}
 
+  MOZ_CAN_RUN_SCRIPT
   void HandleEvent(EventChainPostVisitor& aVisitor) override {
     if (aVisitor.mPresContext) {
       nsIFrame* frame = aVisitor.mPresContext->GetPrimaryFrameFor(mTarget);
@@ -4854,6 +4863,8 @@ nsresult EventStateManager::InitAndDispatchClickEvent(
   event.buttons = aMouseUpEvent->buttons;
   event.mTime = aMouseUpEvent->mTime;
   event.mTimeStamp = aMouseUpEvent->mTimeStamp;
+  event.mFlags.mOnlyChromeDispatch =
+      aNoContentDispatch && !aMouseUpEvent->mUseLegacyNonPrimaryDispatch;
   event.mFlags.mNoContentDispatch = aNoContentDispatch;
   event.button = aMouseUpEvent->button;
   event.pointerId = aMouseUpEvent->pointerId;
@@ -4981,8 +4992,17 @@ nsresult EventStateManager::DispatchClickEvents(
     return rv;
   }
 
+  // Fire auxclick event if necessary.
+  if (fireAuxClick && *aStatus != nsEventStatus_eConsumeNoDefault &&
+      aClickTarget && aClickTarget->IsInComposedDoc()) {
+    rv = InitAndDispatchClickEvent(aMouseUpEvent, aStatus, eMouseAuxClick,
+                                   aPresShell, aClickTarget, currentTarget,
+                                   false, aOverrideClickTarget);
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Failed to dispatch eMouseAuxClick");
+  }
+
   // Fire double click event if click count is 2.
-  if (aMouseUpEvent->mClickCount == 2 && aClickTarget &&
+  if (aMouseUpEvent->mClickCount == 2 && !fireAuxClick && aClickTarget &&
       aClickTarget->IsInComposedDoc()) {
     rv = InitAndDispatchClickEvent(aMouseUpEvent, aStatus, eMouseDoubleClick,
                                    aPresShell, aClickTarget, currentTarget,
@@ -4990,14 +5010,6 @@ nsresult EventStateManager::DispatchClickEvents(
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
-  }
-
-  // Fire auxclick even if necessary.
-  if (fireAuxClick && aClickTarget && aClickTarget->IsInComposedDoc()) {
-    rv = InitAndDispatchClickEvent(aMouseUpEvent, aStatus, eMouseAuxClick,
-                                   aPresShell, aClickTarget, currentTarget,
-                                   false, aOverrideClickTarget);
-    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Failed to dispatch eMouseAuxClick");
   }
 
   return rv;
@@ -5008,7 +5020,7 @@ nsresult EventStateManager::HandleMiddleClickPaste(
     nsEventStatus* aStatus, TextEditor* aTextEditor) {
   MOZ_ASSERT(aPresShell);
   MOZ_ASSERT(aMouseEvent);
-  MOZ_ASSERT((aMouseEvent->mMessage == eMouseClick &&
+  MOZ_ASSERT((aMouseEvent->mMessage == eMouseAuxClick &&
               aMouseEvent->button == WidgetMouseEventBase::eMiddleButton) ||
              EventCausesClickEvents(*aMouseEvent));
   MOZ_ASSERT(aStatus);
@@ -5043,7 +5055,8 @@ nsresult EventStateManager::HandleMiddleClickPaste(
   nsCOMPtr<nsIContent> container;
   int32_t offset;
   nsLayoutUtils::GetContainerAndOffsetAtEvent(
-      aPresShell, aMouseEvent, getter_AddRefs(container), &offset);
+      static_cast<PresShell*>(aPresShell), aMouseEvent,
+      getter_AddRefs(container), &offset);
   if (container) {
     // XXX If readonly or disabled <input> or <textarea> in contenteditable
     //     designMode editor is clicked, the point is in the editor.
@@ -5069,7 +5082,8 @@ nsresult EventStateManager::HandleMiddleClickPaste(
   // Fire ePaste event by ourselves since we need to dispatch "paste" event
   // even if the middle click event was consumed for compatibility with
   // Chromium.
-  if (!nsCopySupport::FireClipboardEvent(ePaste, clipboardType, aPresShell,
+  if (!nsCopySupport::FireClipboardEvent(ePaste, clipboardType,
+                                         static_cast<PresShell*>(aPresShell),
                                          selection)) {
     *aStatus = nsEventStatus_eConsumeNoDefault;
     return NS_OK;

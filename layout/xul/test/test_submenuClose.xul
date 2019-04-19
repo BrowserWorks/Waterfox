@@ -7,8 +7,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1181560
 <window title="Mozilla Bug 1181560"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         onload="SimpleTest.waitForFocus(nextTest, window)">
-  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"/>
-  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"/>
+  <script src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"/>
+  <script src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"/>
 
 
   <!-- test results are displayed in the html:body -->
@@ -77,10 +77,10 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1181560
     mainMenu = document.getElementById("menu");
     menuB = document.getElementById("b");
     menuC = document.getElementById("c");
-    menuB.firstChild.addEventListener("popupshown", handleBOpens, false);
-    menuB.firstChild.addEventListener("popuphidden", handleBCloses, false);
-    menuC.firstChild.addEventListener("popupshown", handleCOpens, false);
-    menuC.firstChild.addEventListener("popuphidden", handleCCloses, false);
+    menuB.menupopup.addEventListener("popupshown", handleBOpens, false);
+    menuB.menupopup.addEventListener("popuphidden", handleBCloses, false);
+    menuC.menupopup.addEventListener("popupshown", handleCOpens, false);
+    menuC.menupopup.addEventListener("popuphidden", handleCCloses, false);
     mainMenu.addEventListener("popupshown", ev => {
       synthesizeMouseAtCenter(menuB, {}, window);
     });

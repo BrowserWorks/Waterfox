@@ -194,13 +194,16 @@ XPCOMUtils.defineLazyGetter(this, "gURLBar", () => gURLBarHandler.urlbar);
  * customization or when the quantumbar pref changes.
  */
 var gURLBarHandler = {
+  toggleQuantumBarAttribute() {
+    this.textbox = document.getElementById("urlbar");
+    this.textbox.setAttribute("quantumbar", this.quantumbar);
+  },
+
   /**
    * The urlbar binding or object.
    */
   get urlbar() {
     if (!this._urlbar) {
-      this.textbox = document.getElementById("urlbar");
-      this._updateBinding();
       if (this.quantumbar) {
         this._urlbar = new UrlbarInput({textbox: this.textbox});
         if (this._lastValue) {
@@ -213,6 +216,18 @@ var gURLBarHandler = {
       gBrowser.tabContainer.addEventListener("TabSelect", this._urlbar);
     }
     return this._urlbar;
+  },
+
+  /**
+   * Forwards to gURLBar.formatValue(), if the binding has been applied already.
+   * This is necessary until the Quantum Bar is not the default and we allow
+   * to dynamically switch between it and the legacy implementation, because the
+   * binding is only applied before the initial xul layout.
+   */
+  formatValue() {
+    if (typeof this.textbox.formatValue == "function") {
+      this.textbox.formatValue();
+    }
   },
 
   /**
@@ -1349,6 +1364,9 @@ var gBrowserInit = {
   },
 
   onBeforeInitialXULLayout() {
+    // Dynamically switch on-off the Quantum Bar based on prefs.
+    gURLBarHandler.toggleQuantumBarAttribute();
+
     // Set a sane starting width/height for all resolutions on new profiles.
     if (Services.prefs.getBoolPref("privacy.resistFingerprinting")) {
       // When the fingerprinting resistance is enabled, making sure that we don't
@@ -3997,7 +4015,7 @@ const BrowserSearch = {
       // browser's offered engines.
       this._removeMaybeOfferedEngine(engineName);
       break;
-    case "engine-current":
+    case "engine-default":
       if (this._searchInitComplete) {
         this._updateURLBarPlaceholder(engineName);
       }
@@ -4523,6 +4541,9 @@ function toOpenWindowByType(inType, uri, features) {
  *          remote:  A boolean indicating if the window should run
  *                   remote browser tabs or not. If omitted, the window
  *                   will choose the profile default state.
+ *          fission: A boolean indicating if the window should run
+ *                   with fission enabled or not. If omitted, the window
+ *                   will choose the profile default state.
  *        }
  * @return a reference to the new window.
  */
@@ -4550,6 +4571,12 @@ function OpenBrowserWindow(options) {
     extraFeatures += ",remote";
   } else if (options && options.remote === false) {
     extraFeatures += ",non-remote";
+  }
+
+  if (options && options.fission) {
+    extraFeatures += ",fission";
+  } else if (options && options.fission === false) {
+    extraFeatures += ",non-fission";
   }
 
   // If the window is maximized, we want to skip the animation, since we're
@@ -5183,7 +5210,7 @@ var XULBrowserWindow = {
 
     // Make sure the "https" part of the URL is striked out or not,
     // depending on the current mixed active content blocking state.
-    gURLBar.formatValue();
+    gURLBarHandler.formatValue();
 
     try {
       uri = Services.uriFixup.createExposableURI(uri);
@@ -6254,7 +6281,7 @@ function hrefAndLinkNodeForClickEvent(event) {
  * @note default event is prevented if the click is handled.
  */
 function contentAreaClick(event, isPanelClick) {
-  if (!event.isTrusted || event.defaultPrevented || event.button == 2)
+  if (!event.isTrusted || event.defaultPrevented || event.button != 0)
     return;
 
   let [href, linkNode] = hrefAndLinkNodeForClickEvent(event);
@@ -7644,11 +7671,6 @@ const gRemoteControl = {
     }
   },
 };
-
-/* DEPRECATED */
-function getBrowser() {
-  return gBrowser;
-}
 
 const gAccessibilityServiceIndicator = {
   init() {

@@ -30,6 +30,7 @@
 #include "mozilla/TouchEvents.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
+#include "MobileViewportManager.h"
 #include <algorithm>
 
 #ifdef XP_WIN
@@ -47,6 +48,7 @@
 #include "mozilla/dom/PointerEventHandler.h"
 #include "mozilla/dom/PopupBlocker.h"
 #include "mozilla/dom/Document.h"
+#include "mozilla/dom/DocumentInlines.h"
 #include "nsAnimationManager.h"
 #include "nsNameSpaceManager.h"  // for Pref-related rule management (bugs 22963,20760,31816)
 #include "nsFrame.h"
@@ -96,6 +98,7 @@
 #ifdef MOZ_REFLOW_PERF
 #  include "nsFontMetrics.h"
 #endif
+#include "MobileViewportManager.h"
 #include "OverflowChangedTracker.h"
 #include "PositionedEventTargeting.h"
 
@@ -367,7 +370,7 @@ class ReflowCountMgr {
   void SetPresContext(nsPresContext* aPresContext) {
     mPresContext = aPresContext;  // weak reference
   }
-  void SetPresShell(nsIPresShell* aPresShell) {
+  void SetPresShell(PresShell* aPresShell) {
     mPresShell = aPresShell;  // weak reference
   }
 
@@ -399,7 +402,7 @@ class ReflowCountMgr {
 
   // Root Frame for Individual Tracking
   nsPresContext* mPresContext;
-  nsIPresShell* mPresShell;
+  PresShell* mPresShell;
 
   // ReflowCountMgr gReflowCountMgr;
 };
@@ -429,18 +432,18 @@ struct nsCallbackEventRequest {
 // bfcache, but font pref changes don't care about that, and maybe / probably
 // shouldn't.
 #ifdef DEBUG
-#  define ASSERT_REFLOW_SCHEDULED_STATE()                                   \
-    {                                                                       \
-      if (ObservingLayoutFlushes()) {                                       \
-        MOZ_ASSERT(                                                         \
-            mDocument->GetBFCacheEntry() ||                                 \
-                mPresContext->RefreshDriver()->IsLayoutFlushObserver(this), \
-            "Unexpected state");                                            \
-      } else {                                                              \
-        MOZ_ASSERT(                                                         \
-            !mPresContext->RefreshDriver()->IsLayoutFlushObserver(this),    \
-            "Unexpected state");                                            \
-      }                                                                     \
+#  define ASSERT_REFLOW_SCHEDULED_STATE()                                    \
+    {                                                                        \
+      if (ObservingLayoutFlushes()) {                                        \
+        MOZ_ASSERT(mDocument->GetBFCacheEntry() ||                           \
+                       mPresContext->RefreshDriver()->IsLayoutFlushObserver( \
+                           static_cast<PresShell*>(this)),                   \
+                   "Unexpected state");                                      \
+      } else {                                                               \
+        MOZ_ASSERT(!mPresContext->RefreshDriver()->IsLayoutFlushObserver(    \
+                       static_cast<PresShell*>(this)),                       \
+                   "Unexpected state");                                      \
+      }                                                                      \
     }
 #else
 #  define ASSERT_REFLOW_SCHEDULED_STATE() /* nothing */
@@ -448,26 +451,28 @@ struct nsCallbackEventRequest {
 
 class nsAutoCauseReflowNotifier {
  public:
-  explicit nsAutoCauseReflowNotifier(nsIPresShell* aShell) : mShell(aShell) {
-    mShell->WillCauseReflow();
+  explicit nsAutoCauseReflowNotifier(PresShell* aPresShell)
+      : mPresShell(aPresShell) {
+    mPresShell->WillCauseReflow();
   }
   ~nsAutoCauseReflowNotifier() {
     // This check should not be needed. Currently the only place that seem
     // to need it is the code that deals with bug 337586.
-    if (!mShell->mHaveShutDown) {
-      mShell->DidCauseReflow();
+    if (!mPresShell->mHaveShutDown) {
+      mPresShell->DidCauseReflow();
     } else {
       nsContentUtils::RemoveScriptBlocker();
     }
   }
 
-  nsIPresShell* mShell;
+  PresShell* mPresShell;
 };
 
 class MOZ_STACK_CLASS nsPresShellEventCB : public EventDispatchingCallback {
  public:
   explicit nsPresShellEventCB(PresShell* aPresShell) : mPresShell(aPresShell) {}
 
+  MOZ_CAN_RUN_SCRIPT
   virtual void HandleEvent(EventChainPostVisitor& aVisitor) override {
     if (aVisitor.mPresContext && aVisitor.mEvent->mClass != eBasicEventClass) {
       if (aVisitor.mEvent->mMessage == eMouseDown ||
@@ -477,7 +482,7 @@ class MOZ_STACK_CLASS nsPresShellEventCB : public EventDispatchingCallback {
         // layout. Bring layout up-to-date now so that GetCurrentEventFrame()
         // below will return a real frame and we don't have to worry about
         // destroying it by flushing later.
-        mPresShell->FlushPendingNotifications(FlushType::Layout);
+        MOZ_KnownLive(mPresShell)->FlushPendingNotifications(FlushType::Layout);
       } else if (aVisitor.mEvent->mMessage == eWheel &&
                  aVisitor.mEventStatus != nsEventStatus_eConsumeNoDefault) {
         nsIFrame* frame = mPresShell->GetCurrentEventFrame();
@@ -833,7 +838,9 @@ PresShell::PresShell()
       mHasHandledUserInput(false),
       mForceDispatchKeyPressEventsForNonPrintableKeys(false),
       mForceUseLegacyKeyCodeAndCharCodeValues(false),
-      mInitializedWithKeyPressEventDispatchingBlacklist(false) {
+      mInitializedWithKeyPressEventDispatchingBlacklist(false),
+      mForceUseLegacyNonPrimaryDispatch(false),
+      mInitializedWithClickEventDispatchingBlacklist(false) {
   MOZ_LOG(gLog, LogLevel::Debug, ("PresShell::PresShell this=%p", this));
 
 #ifdef MOZ_REFLOW_PERF
@@ -945,6 +952,11 @@ void PresShell::Init(Document* aDocument, nsPresContext* aPresContext,
 
   mPresContext->DeviceContext()->InitFontCache();
 
+  // FIXME(emilio, bug 1544185): Some Android code somehow depends on the shell
+  // being eagerly registered as a style flush observer. This shouldn't be
+  // needed otherwise.
+  EnsureStyleFlush();
+
   // Add the preference style sheet.
   UpdatePreferenceStyles();
 
@@ -1055,7 +1067,7 @@ void PresShell::Init(Document* aDocument, nsPresContext* aPresContext,
 enum TextPerfLogType { eLog_reflow, eLog_loaddone, eLog_totals };
 
 static void LogTextPerfStats(gfxTextPerfMetrics* aTextPerf,
-                             nsIPresShell* aPresShell,
+                             PresShell* aPresShell,
                              const gfxTextPerfMetrics::TextCounts& aCounts,
                              float aTime, TextPerfLogType aLogType,
                              const char* aURL) {
@@ -1368,26 +1380,26 @@ void PresShell::Destroy() {
 void nsIPresShell::StopObservingRefreshDriver() {
   nsRefreshDriver* rd = mPresContext->RefreshDriver();
   if (mResizeEventPending) {
-    rd->RemoveResizeEventFlushObserver(this);
+    rd->RemoveResizeEventFlushObserver(static_cast<PresShell*>(this));
   }
   if (mObservingLayoutFlushes) {
-    rd->RemoveLayoutFlushObserver(this);
+    rd->RemoveLayoutFlushObserver(static_cast<PresShell*>(this));
   }
   if (mObservingStyleFlushes) {
-    rd->RemoveStyleFlushObserver(this);
+    rd->RemoveStyleFlushObserver(static_cast<PresShell*>(this));
   }
 }
 
 void nsIPresShell::StartObservingRefreshDriver() {
   nsRefreshDriver* rd = mPresContext->RefreshDriver();
   if (mResizeEventPending) {
-    rd->AddResizeEventFlushObserver(this);
+    rd->AddResizeEventFlushObserver(static_cast<PresShell*>(this));
   }
   if (mObservingLayoutFlushes) {
-    rd->AddLayoutFlushObserver(this);
+    rd->AddLayoutFlushObserver(static_cast<PresShell*>(this));
   }
   if (mObservingStyleFlushes) {
-    rd->AddStyleFlushObserver(this);
+    rd->AddStyleFlushObserver(static_cast<PresShell*>(this));
   }
 }
 
@@ -1449,13 +1461,13 @@ void nsIPresShell::UpdatePreferenceStyles() {
   // it to be modifiable from devtools and similar, see bugs 1239336 and
   // 1436782. I think it conceptually should be a user sheet, and could be
   // without too much trouble I'd think.
-  StyleSet()->AppendStyleSheet(SheetType::Agent, newPrefSheet);
+  StyleSet()->AppendStyleSheet(StyleOrigin::UserAgent, newPrefSheet);
   mPrefStyleSheet = newPrefSheet;
 }
 
 void nsIPresShell::RemovePreferenceStyles() {
   if (mPrefStyleSheet) {
-    StyleSet()->RemoveStyleSheet(SheetType::Agent, mPrefStyleSheet);
+    StyleSet()->RemoveStyleSheet(StyleOrigin::UserAgent, mPrefStyleSheet);
     mPrefStyleSheet = nullptr;
   }
 }
@@ -1482,14 +1494,14 @@ void nsIPresShell::AddUserSheet(StyleSheet* aSheet) {
   // Assert that all of userSheets (except for the last, new element) matches up
   // with what's in the style set.
   for (size_t i = 0; i < index; ++i) {
-    MOZ_ASSERT(StyleSet()->StyleSheetAt(SheetType::User, i) == userSheets[i]);
+    MOZ_ASSERT(StyleSet()->SheetAt(StyleOrigin::User, i) == userSheets[i]);
   }
 
-  if (index == static_cast<size_t>(StyleSet()->SheetCount(SheetType::User))) {
-    StyleSet()->AppendStyleSheet(SheetType::User, aSheet);
+  if (index == static_cast<size_t>(StyleSet()->SheetCount(StyleOrigin::User))) {
+    StyleSet()->AppendStyleSheet(StyleOrigin::User, aSheet);
   } else {
-    StyleSheet* ref = StyleSet()->StyleSheetAt(SheetType::User, index);
-    StyleSet()->InsertStyleSheetBefore(SheetType::User, aSheet, ref);
+    StyleSheet* ref = StyleSet()->SheetAt(StyleOrigin::User, index);
+    StyleSet()->InsertStyleSheetBefore(StyleOrigin::User, aSheet, ref);
   }
 
   mDocument->ApplicableStylesChanged();
@@ -1498,7 +1510,7 @@ void nsIPresShell::AddUserSheet(StyleSheet* aSheet) {
 void nsIPresShell::AddAgentSheet(StyleSheet* aSheet) {
   // Make sure this does what nsDocumentViewer::CreateStyleSet does
   // wrt ordering.
-  StyleSet()->AppendStyleSheet(SheetType::Agent, aSheet);
+  StyleSet()->AppendStyleSheet(StyleOrigin::UserAgent, aSheet);
   mDocument->ApplicableStylesChanged();
 }
 
@@ -1507,17 +1519,17 @@ void nsIPresShell::AddAuthorSheet(StyleSheet* aSheet) {
   // ones added with the StyleSheetService.
   StyleSheet* firstAuthorSheet = mDocument->GetFirstAdditionalAuthorSheet();
   if (firstAuthorSheet) {
-    StyleSet()->InsertStyleSheetBefore(SheetType::Doc, aSheet,
+    StyleSet()->InsertStyleSheetBefore(StyleOrigin::Author, aSheet,
                                        firstAuthorSheet);
   } else {
-    StyleSet()->AppendStyleSheet(SheetType::Doc, aSheet);
+    StyleSet()->AppendStyleSheet(StyleOrigin::Author, aSheet);
   }
 
   mDocument->ApplicableStylesChanged();
 }
 
-void nsIPresShell::RemoveSheet(SheetType aType, StyleSheet* aSheet) {
-  StyleSet()->RemoveStyleSheet(aType, aSheet);
+void nsIPresShell::RemoveSheet(StyleOrigin aOrigin, StyleSheet* aSheet) {
+  StyleSet()->RemoveStyleSheet(aOrigin, aSheet);
   mDocument->ApplicableStylesChanged();
 }
 
@@ -1676,7 +1688,7 @@ nsresult PresShell::Initialize() {
 
   NS_ASSERTION(!mDidInitialize, "Why are we being called?");
 
-  nsCOMPtr<nsIPresShell> kungFuDeathGrip(this);
+  RefPtr<PresShell> kungFuDeathGrip(this);
 
   RecomputeFontSizeInflationEnabled();
   MOZ_DIAGNOSTIC_ASSERT(!mIsDestroying);
@@ -1886,7 +1898,7 @@ nsresult PresShell::ResizeReflowIgnoreOverride(nscoord aWidth, nscoord aHeight,
       GetPresContext()->SuppressingResizeReflow();
 
   RefPtr<nsViewManager> viewManager = mViewManager;
-  nsCOMPtr<nsIPresShell> kungFuDeathGrip(this);
+  RefPtr<PresShell> kungFuDeathGrip(this);
 
   if (!suppressingResizeReflow && shrinkToFit) {
     // Make sure that style is flushed before setting the pres context
@@ -2802,7 +2814,8 @@ void nsIPresShell::CancelAllPendingReflows() {
   mDirtyRoots.Clear();
 
   if (mObservingLayoutFlushes) {
-    GetPresContext()->RefreshDriver()->RemoveLayoutFlushObserver(this);
+    GetPresContext()->RefreshDriver()->RemoveLayoutFlushObserver(
+        static_cast<PresShell*>(this));
     mObservingLayoutFlushes = false;
   }
 
@@ -3902,7 +3915,7 @@ void nsIPresShell::CancelPostedReflowCallbacks() {
   }
 }
 
-void nsIPresShell::HandlePostedReflowCallbacks(bool aInterruptible) {
+void PresShell::HandlePostedReflowCallbacks(bool aInterruptible) {
   bool shouldFlush = false;
 
   while (mFirstCallbackEventRequest) {
@@ -3974,9 +3987,9 @@ static void AssertFrameSubtreeIsSane(const nsIFrame& aRoot) {
 }
 #endif
 
-static inline void AssertFrameTreeIsSane(const nsIPresShell& aShell) {
+static inline void AssertFrameTreeIsSane(const PresShell& aPresShell) {
 #ifdef DEBUG
-  if (const nsIFrame* root = aShell.GetRootFrame()) {
+  if (const nsIFrame* root = aPresShell.GetRootFrame()) {
     AssertFrameSubtreeIsSane(*root);
   }
 #endif
@@ -3988,7 +4001,7 @@ void PresShell::DoFlushPendingNotifications(mozilla::ChangesToFlush aFlush) {
   MOZ_DIAGNOSTIC_ASSERT(!mForbiddenToFlush, "This is bad!");
 
   // Per our API contract, hold a strong ref to ourselves until we return.
-  nsCOMPtr<nsIPresShell> kungFuDeathGrip = this;
+  RefPtr<PresShell> kungFuDeathGrip = this;
 
   /**
    * VERY IMPORTANT: If you add some sort of new flushing to this
@@ -4235,10 +4248,9 @@ void PresShell::ContentStateChanged(Document* aDocument, nsIContent* aContent,
   }
 }
 
-void PresShell::DocumentStatesChanged(Document* aDocument,
-                                      EventStates aStateMask) {
+void PresShell::DocumentStatesChanged(EventStates aStateMask) {
   MOZ_ASSERT(!mIsDocumentGone, "Unexpected DocumentStatesChanged");
-  MOZ_ASSERT(aDocument == mDocument, "Unexpected aDocument");
+  MOZ_ASSERT(mDocument);
   MOZ_ASSERT(!aStateMask.IsEmpty());
 
   if (mDidInitialize) {
@@ -4370,7 +4382,7 @@ void PresShell::ContentRemoved(nsIContent* aChild,
 }
 
 void nsIPresShell::NotifyCounterStylesAreDirty() {
-  nsAutoCauseReflowNotifier reflowNotifier(this);
+  nsAutoCauseReflowNotifier reflowNotifier(static_cast<PresShell*>(this));
   mFrameConstructor->NotifyCounterStylesAreDirty();
 }
 
@@ -4386,7 +4398,7 @@ void PresShell::ReconstructFrames() {
     return;
   }
 
-  nsCOMPtr<nsIPresShell> kungFuDeathGrip(this);
+  RefPtr<PresShell> kungFuDeathGrip(this);
 
   // Have to make sure that the content notifications are flushed before we
   // start messing with the frame model; otherwise we can get content doubling.
@@ -5072,9 +5084,7 @@ static bool IsTransparentContainerElement(nsPresContext* aPresContext) {
   if (tab) {
     // Check if presShell is the top PresShell. Only the top can
     // influence the canvas background color.
-    PresShell* presShell = aPresContext->GetPresShell();
-    nsCOMPtr<nsIPresShell> topPresShell = tab->GetPresShell();
-    if (presShell != topPresShell) {
+    if (aPresContext->GetPresShell() != tab->GetTopLevelPresShell()) {
       tab = nullptr;
     }
   }
@@ -5274,8 +5284,7 @@ void PresShell::SynthesizeMouseMove(bool aFromScroll) {
   }
 
   if (!mPresContext->IsRoot()) {
-    nsIPresShell* rootPresShell = GetRootPresShell();
-    if (rootPresShell) {
+    if (PresShell* rootPresShell = GetRootPresShell()) {
       rootPresShell->SynthesizeMouseMove(aFromScroll);
     }
     return;
@@ -5389,7 +5398,7 @@ void PresShell::ProcessSynthMouseMoveEvent(bool aFromScroll) {
 
   // Hold a ref to ourselves so DispatchEvent won't destroy us (since
   // we need to access members after we call DispatchEvent).
-  nsCOMPtr<nsIPresShell> kungFuDeathGrip(this);
+  RefPtr<PresShell> kungFuDeathGrip(this);
 
 #ifdef DEBUG_MOUSE_LOCATION
   printf("[ps=%p]synthesizing mouse move to (%d,%d)\n", this, mMouseLocation.x,
@@ -5443,8 +5452,7 @@ void PresShell::ProcessSynthMouseMoveEvent(bool aFromScroll) {
   // XXX set event.mModifiers ?
   // XXX mnakano I think that we should get the latest information from widget.
 
-  nsCOMPtr<nsIPresShell> shell = pointVM->GetPresShell();
-  if (shell) {
+  if (RefPtr<PresShell> presShell = pointVM->GetPresShell()) {
     // Since this gets run in a refresh tick there isn't an InputAPZContext on
     // the stack from the nsBaseWidget. We need to simulate one with at least
     // the correct target guid, so that the correct callback transform gets
@@ -5452,7 +5460,7 @@ void PresShell::ProcessSynthMouseMoveEvent(bool aFromScroll) {
     // to 0 because this is a synthetic event which doesn't really belong to any
     // input block. Same for the APZ response field.
     InputAPZContext apzContext(mMouseEventTargetGuid, 0, nsEventStatus_eIgnore);
-    shell->DispatchSynthMouseMove(&event);
+    presShell->DispatchSynthMouseMove(&event);
   }
 
   if (!aFromScroll) {
@@ -5523,7 +5531,7 @@ void PresShell::ClearApproximateFrameVisibilityVisited(nsView* aView,
                                                        bool aClear) {
   nsViewManager* vm = aView->GetViewManager();
   if (aClear) {
-    PresShell* presShell = static_cast<PresShell*>(vm->GetPresShell());
+    PresShell* presShell = vm->GetPresShell();
     if (!presShell->mApproximateFrameVisibilityVisited) {
       presShell->ClearApproximatelyVisibleFramesList();
     }
@@ -5558,7 +5566,7 @@ void PresShell::MarkFramesInSubtreeApproximatelyVisible(
 
   nsSubDocumentFrame* subdocFrame = do_QueryFrame(aFrame);
   if (subdocFrame) {
-    nsIPresShell* presShell = subdocFrame->GetSubdocumentPresShellForPainting(
+    PresShell* presShell = subdocFrame->GetSubdocumentPresShellForPainting(
         nsSubDocumentFrame::IGNORE_PAINT_SUPPRESSION);
     if (presShell && !presShell->AssumeAllFramesVisible()) {
       nsRect rect = aRect;
@@ -6227,9 +6235,9 @@ already_AddRefed<nsPIDOMWindowOuter> PresShell::GetRootWindow() {
 
   // If we don't have DOM window, we're zombie, we should find the root window
   // with our parent shell.
-  nsCOMPtr<nsIPresShell> parent = GetParentPresShellForEventHandling();
-  NS_ENSURE_TRUE(parent, nullptr);
-  return parent->GetRootWindow();
+  RefPtr<PresShell> parentPresShell = GetParentPresShellForEventHandling();
+  NS_ENSURE_TRUE(parentPresShell, nullptr);
+  return parentPresShell->GetRootWindow();
 }
 
 already_AddRefed<nsPIDOMWindowOuter>
@@ -6255,7 +6263,7 @@ already_AddRefed<nsIContent> nsIPresShell::GetFocusedContentInOurWindow()
   return nullptr;
 }
 
-already_AddRefed<nsIPresShell> PresShell::GetParentPresShellForEventHandling() {
+already_AddRefed<PresShell> PresShell::GetParentPresShellForEventHandling() {
   NS_ENSURE_TRUE(mPresContext, nullptr);
 
   // Now, find the parent pres shell and send the event there
@@ -6272,7 +6280,7 @@ already_AddRefed<nsIPresShell> PresShell::GetParentPresShellForEventHandling() {
   nsCOMPtr<nsIDocShell> parentDocShell = do_QueryInterface(parentTreeItem);
   NS_ENSURE_TRUE(parentDocShell && treeItem != parentTreeItem, nullptr);
 
-  nsCOMPtr<nsIPresShell> parentPresShell = parentDocShell->GetPresShell();
+  RefPtr<PresShell> parentPresShell = parentDocShell->GetPresShell();
   return parentPresShell.forget();
 }
 
@@ -6283,7 +6291,7 @@ nsresult PresShell::EventHandler::RetargetEventToParent(
   // or a root content is not present.
   // That way at least the UI key bindings can work.
 
-  nsCOMPtr<nsIPresShell> parentPresShell = GetParentPresShellForEventHandling();
+  RefPtr<PresShell> parentPresShell = GetParentPresShellForEventHandling();
   NS_ENSURE_TRUE(parentPresShell, NS_ERROR_FAILURE);
 
   // Fake the event as though it's from the parent pres shell's root frame.
@@ -6348,7 +6356,7 @@ void PresShell::RecordMouseLocation(WidgetGUIEvent* aEvent) {
 
 // static
 nsIFrame* PresShell::EventHandler::GetNearestFrameContainingPresShell(
-    nsIPresShell* aPresShell) {
+    PresShell* aPresShell) {
   nsView* view = aPresShell->GetViewManager()->GetRootView();
   while (view && !view->GetFrame()) {
     view = view->GetParent();
@@ -6739,7 +6747,7 @@ bool PresShell::EventHandler::MaybeFlushPendingNotifications(
       uint64_t framesConstructedCount = presContext->FramesConstructedCount();
       uint64_t framesReflowedCount = presContext->FramesReflowedCount();
 
-      mPresShell->FlushPendingNotifications(FlushType::Layout);
+      MOZ_KnownLive(mPresShell)->FlushPendingNotifications(FlushType::Layout);
       return framesConstructedCount != presContext->FramesConstructedCount() ||
              framesReflowedCount != presContext->FramesReflowedCount();
     }
@@ -8179,6 +8187,26 @@ nsresult PresShell::EventHandler::DispatchEventToDOM(
       if (mPresShell->mForceUseLegacyKeyCodeAndCharCodeValues) {
         aEvent->AsKeyboardEvent()->mUseLegacyKeyCodeAndCharCodeValues = true;
       }
+    } else if (aEvent->mMessage == eMouseUp) {
+      // Historically Firefox has dispatched click events for non-primary
+      // buttons, but only on window and document (and inside input/textarea),
+      // not on elements in general. The UI events spec forbids click (and
+      // dblclick) for non-primary mouse buttons, and specifies auxclick
+      // instead. In case of some websites that rely on non-primary click to
+      // prevent new tab etc. and don't have auxclick code to do the same, we
+      // need to revert to the historial non-standard behaviour
+      if (!mPresShell->mInitializedWithClickEventDispatchingBlacklist) {
+        mPresShell->mInitializedWithClickEventDispatchingBlacklist = true;
+        nsCOMPtr<nsIURI> uri =
+            GetDocumentURIToCompareWithBlacklist(*mPresShell);
+        mPresShell->mForceUseLegacyNonPrimaryDispatch =
+            nsContentUtils::IsURIInPrefList(
+                uri,
+                "dom.mouseevent.click.hack.use_legacy_non-primary_dispatch");
+      }
+      if (mPresShell->mForceUseLegacyNonPrimaryDispatch) {
+        aEvent->AsMouseEvent()->mUseLegacyNonPrimaryDispatch = true;
+      }
     }
 
     if (aEvent->mClass == eCompositionEventClass) {
@@ -8785,14 +8813,14 @@ bool PresShell::IsDisplayportSuppressed() {
 
 nsresult PresShell::GetAgentStyleSheets(nsTArray<RefPtr<StyleSheet>>& aSheets) {
   aSheets.Clear();
-  int32_t sheetCount = StyleSet()->SheetCount(SheetType::Agent);
+  int32_t sheetCount = StyleSet()->SheetCount(StyleOrigin::UserAgent);
 
   if (!aSheets.SetCapacity(sheetCount, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
   for (int32_t i = 0; i < sheetCount; ++i) {
-    StyleSheet* sheet = StyleSet()->StyleSheetAt(SheetType::Agent, i);
+    StyleSheet* sheet = StyleSet()->SheetAt(StyleOrigin::UserAgent, i);
     aSheets.AppendElement(sheet);
   }
 
@@ -8801,15 +8829,18 @@ nsresult PresShell::GetAgentStyleSheets(nsTArray<RefPtr<StyleSheet>>& aSheets) {
 
 nsresult PresShell::SetAgentStyleSheets(
     const nsTArray<RefPtr<StyleSheet>>& aSheets) {
-  return StyleSet()->ReplaceSheets(SheetType::Agent, aSheets);
+  StyleSet()->ReplaceSheets(StyleOrigin::UserAgent, aSheets);
+  return NS_OK;
 }
 
 nsresult PresShell::AddOverrideStyleSheet(StyleSheet* aSheet) {
-  return StyleSet()->AppendStyleSheet(SheetType::Override, aSheet);
+  StyleSet()->AppendStyleSheet(aSheet->GetOrigin(), aSheet);
+  return NS_OK;
 }
 
 nsresult PresShell::RemoveOverrideStyleSheet(StyleSheet* aSheet) {
-  return StyleSet()->RemoveStyleSheet(SheetType::Override, aSheet);
+  StyleSet()->RemoveStyleSheet(aSheet->GetOrigin(), aSheet);
+  return NS_OK;
 }
 
 static void FreezeElement(nsISupports* aSupports, void* /* unused */) {
@@ -8964,7 +8995,7 @@ void nsIPresShell::WillDoReflow() {
   mLastReflowStart = GetPerformanceNowUnclamped();
 }
 
-void nsIPresShell::DidDoReflow(bool aInterruptible) {
+void PresShell::DidDoReflow(bool aInterruptible) {
   HandlePostedReflowCallbacks(aInterruptible);
 
   nsCOMPtr<nsIDocShell> docShell = mPresContext->GetDocShell();
@@ -9239,8 +9270,8 @@ bool nsIPresShell::DoReflow(nsIFrame* target, bool aInterruptible,
   if (tp) {
     if (tp->current.numChars > 100) {
       TimeDuration reflowTime = TimeStamp::Now() - timeStart;
-      LogTextPerfStats(tp, this, tp->current, reflowTime.ToMilliseconds(),
-                       eLog_reflow, nullptr);
+      LogTextPerfStats(tp, static_cast<PresShell*>(this), tp->current,
+                       reflowTime.ToMilliseconds(), eLog_reflow, nullptr);
     }
     tp->Accumulate();
   }
@@ -9278,7 +9309,7 @@ void nsIPresShell::DoVerifyReflow() {
 // used with Telemetry metrics
 #define NS_LONG_REFLOW_TIME_MS 5000
 
-bool nsIPresShell::ProcessReflowCommands(bool aInterruptible) {
+bool PresShell::ProcessReflowCommands(bool aInterruptible) {
   if (mDirtyRoots.IsEmpty() && !mShouldUnsuppressPainting) {
     // Nothing to do; bail out
     return true;
@@ -9548,7 +9579,8 @@ void nsIPresShell::DoObserveStyleFlushes() {
   mObservingStyleFlushes = true;
 
   if (MOZ_LIKELY(!mDocument->GetBFCacheEntry())) {
-    mPresContext->RefreshDriver()->AddStyleFlushObserver(this);
+    mPresContext->RefreshDriver()->AddStyleFlushObserver(
+        static_cast<PresShell*>(this));
   }
 }
 
@@ -9557,7 +9589,8 @@ void nsIPresShell::DoObserveLayoutFlushes() {
   mObservingLayoutFlushes = true;
 
   if (MOZ_LIKELY(!mDocument->GetBFCacheEntry())) {
-    mPresContext->RefreshDriver()->AddLayoutFlushObserver(this);
+    mPresContext->RefreshDriver()->AddLayoutFlushObserver(
+        static_cast<PresShell*>(this));
   }
 }
 
@@ -9877,7 +9910,7 @@ bool nsIPresShell::VerifyIncrementalReflow() {
                // reflowing the test frame tree
   vm->SetPresShell(presShell);
   {
-    nsAutoCauseReflowNotifier crNotifier(this);
+    nsAutoCauseReflowNotifier crNotifier(static_cast<PresShell*>(this));
     presShell->Initialize();
   }
   mDocument->BindingManager()->ProcessAttachedQueue();
@@ -9950,9 +9983,9 @@ void PresShell::ListComputedStyles(FILE* out, int32_t aIndent) {
 }
 
 void PresShell::ListStyleSheets(FILE* out, int32_t aIndent) {
-  int32_t sheetCount = StyleSet()->SheetCount(SheetType::Doc);
+  int32_t sheetCount = StyleSet()->SheetCount(StyleOrigin::Author);
   for (int32_t i = 0; i < sheetCount; ++i) {
-    StyleSet()->StyleSheetAt(SheetType::Doc, i)->List(out, aIndent);
+    StyleSet()->SheetAt(StyleOrigin::Author, i)->List(out, aIndent);
     fputs("\n", out);
   }
 }
@@ -10756,7 +10789,7 @@ bool nsIPresShell::DetermineFontSizeInflationState() {
 
   // Force-enabling font inflation always trumps the heuristics here.
   if (!FontSizeInflationForceEnabled()) {
-    if (TabChild* tab = TabChild::GetFrom(this)) {
+    if (TabChild* tab = TabChild::GetFrom(static_cast<PresShell*>(this))) {
       // We're in a child process.  Cancel inflation if we're not
       // async-pan zoomed.
       if (!tab->AsyncPanZoomEnabled()) {
@@ -10837,18 +10870,18 @@ void nsIPresShell::SyncWindowProperties(nsView* aView) {
   }
 }
 
-static SheetType ToSheetType(uint32_t aServiceSheetType) {
+static StyleOrigin ToOrigin(uint32_t aServiceSheetType) {
   switch (aServiceSheetType) {
     case nsIStyleSheetService::AGENT_SHEET:
-      return SheetType::Agent;
+      return StyleOrigin::UserAgent;
       break;
     case nsIStyleSheetService::USER_SHEET:
-      return SheetType::User;
+      return StyleOrigin::User;
       break;
     default:
       MOZ_FALLTHROUGH_ASSERT("unexpected aSheetType value");
     case nsIStyleSheetService::AUTHOR_SHEET:
-      return SheetType::Doc;
+      return StyleOrigin::Author;
   }
 }
 
@@ -10878,7 +10911,7 @@ void nsIPresShell::NotifyStyleSheetServiceSheetAdded(StyleSheet* aSheet,
 
 void nsIPresShell::NotifyStyleSheetServiceSheetRemoved(StyleSheet* aSheet,
                                                        uint32_t aSheetType) {
-  RemoveSheet(ToSheetType(aSheetType), aSheet);
+  RemoveSheet(ToOrigin(aSheetType), aSheet);
 }
 
 nsIContent* PresShell::EventHandler::GetOverrideClickTarget(

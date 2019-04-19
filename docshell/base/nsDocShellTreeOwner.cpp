@@ -351,8 +351,8 @@ nsDocShellTreeOwner::SizeShellTo(nsIDocShellTreeItem* aShellItem, int32_t aCX,
 
   NS_ENSURE_STATE(mTreeOwner || webBrowserChrome);
 
-  if (mTreeOwner) {
-    return mTreeOwner->SizeShellTo(aShellItem, aCX, aCY);
+  if (nsCOMPtr<nsIDocShellTreeOwner> treeOwner = mTreeOwner) {
+    return treeOwner->SizeShellTo(aShellItem, aCX, aCY);
   }
 
   if (aShellItem == mWebBrowser->mDocShell) {
@@ -393,7 +393,7 @@ nsDocShellTreeOwner::SizeShellTo(nsIDocShellTreeItem* aShellItem, int32_t aCX,
   RefPtr<nsPresContext> presContext = mWebBrowser->mDocShell->GetPresContext();
   NS_ENSURE_TRUE(presContext, NS_ERROR_FAILURE);
 
-  PresShell* presShell = presContext->GetPresShell();
+  RefPtr<PresShell> presShell = presContext->GetPresShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
 
   NS_ENSURE_SUCCESS(
@@ -1241,14 +1241,11 @@ void ChromeTooltipListener::sTooltipCallback(nsITimer* aTimer,
     // finding the screen coords of its toplevel widget...
     nsCOMPtr<nsIDocShell> docShell =
         do_GetInterface(static_cast<nsIWebBrowser*>(self->mWebBrowser));
-    nsCOMPtr<nsIPresShell> shell;
-    if (docShell) {
-      shell = docShell->GetPresShell();
-    }
+    RefPtr<PresShell> presShell = docShell ? docShell->GetPresShell() : nullptr;
 
     nsIWidget* widget = nullptr;
-    if (shell) {
-      nsViewManager* vm = shell->GetViewManager();
+    if (presShell) {
+      nsViewManager* vm = presShell->GetViewManager();
       if (vm) {
         nsView* view = vm->GetRootView();
         if (view) {
@@ -1279,8 +1276,8 @@ void ChromeTooltipListener::sTooltipCallback(nsITimer* aTimer,
                         tooltipText != self->mLastShownTooltipText)) {
         LayoutDeviceIntPoint screenDot = widget->WidgetToScreenOffset();
         double scaleFactor = 1.0;
-        if (shell->GetPresContext()) {
-          nsDeviceContext* dc = shell->GetPresContext()->DeviceContext();
+        if (presShell->GetPresContext()) {
+          nsDeviceContext* dc = presShell->GetPresContext()->DeviceContext();
           scaleFactor = double(AppUnitsPerCSSPixel()) /
                         dc->AppUnitsPerDevPixelAtUnitFullZoom();
         }

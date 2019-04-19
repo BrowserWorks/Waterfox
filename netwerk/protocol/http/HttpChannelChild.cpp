@@ -2645,8 +2645,7 @@ nsresult HttpChannelChild::ContinueAsyncOpen() {
   TimeStamp navigationStartTimeStamp;
   if (tabChild) {
     MOZ_ASSERT(tabChild->WebNavigation());
-    RefPtr<Document> document = tabChild->GetDocument();
-    if (document) {
+    if (RefPtr<Document> document = tabChild->GetTopLevelDocument()) {
       contentWindowId = document->InnerWindowID();
       nsDOMNavigationTiming* navigationTiming = document->GetNavigationTiming();
       if (navigationTiming) {
@@ -2665,6 +2664,7 @@ nsresult HttpChannelChild::ContinueAsyncOpen() {
   SerializeURI(mOriginalURI, openArgs.original());
   SerializeURI(mDocumentURI, openArgs.doc());
   SerializeURI(mOriginalReferrer, openArgs.originalReferrer());
+  openArgs.originalReferrerPolicy() = mOriginalReferrerPolicy;
   openArgs.referrerPolicy() = mReferrerPolicy;
   SerializeURI(mAPIRedirectToURI, openArgs.apiRedirectTo());
   openArgs.loadFlags() = mLoadFlags;

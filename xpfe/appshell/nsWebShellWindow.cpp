@@ -51,7 +51,6 @@
 #include "nsIScriptSecurityManager.h"
 
 // For calculating size
-#include "nsIPresShell.h"
 #include "nsPresContext.h"
 
 #include "nsIBaseWindow.h"
@@ -62,6 +61,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/PresShell.h"
 
 #include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/LoadURIOptionsBinding.h"
@@ -257,9 +257,10 @@ nsresult nsWebShellWindow::Initialize(
   return rv;
 }
 
-nsIPresShell* nsWebShellWindow::GetPresShell() {
-  if (!mDocShell) return nullptr;
-
+PresShell* nsWebShellWindow::GetPresShell() {
+  if (!mDocShell) {
+    return nullptr;
+  }
   return mDocShell->GetPresShell();
 }
 
@@ -307,7 +308,7 @@ bool nsWebShellWindow::RequestWindowClose(nsIWidget* aWidget) {
                                                 : nullptr);
   nsCOMPtr<EventTarget> eventTarget = do_QueryInterface(window);
 
-  nsCOMPtr<nsIPresShell> presShell = mDocShell->GetPresShell();
+  RefPtr<PresShell> presShell = mDocShell->GetPresShell();
   if (!presShell) {
     mozilla::DebugOnly<bool> dying;
     MOZ_ASSERT(NS_SUCCEEDED(mDocShell->IsBeingDestroyed(&dying)) && dying,
@@ -368,8 +369,7 @@ void nsWebShellWindow::SizeModeChanged(nsSizeMode sizeMode) {
     ourWindow->DispatchCustomEvent(NS_LITERAL_STRING("sizemodechange"));
   }
 
-  nsIPresShell* presShell;
-  if ((presShell = GetPresShell())) {
+  if (PresShell* presShell = GetPresShell()) {
     presShell->GetPresContext()->SizeModeChanged(sizeMode);
   }
 
@@ -734,7 +734,7 @@ nsIXULWindow* nsWebShellWindow::WidgetListenerDelegate::GetXULWindow() {
   return mWebShellWindow->GetXULWindow();
 }
 
-nsIPresShell* nsWebShellWindow::WidgetListenerDelegate::GetPresShell() {
+PresShell* nsWebShellWindow::WidgetListenerDelegate::GetPresShell() {
   return mWebShellWindow->GetPresShell();
 }
 

@@ -7,7 +7,6 @@
 #define nsCoreUtils_h_
 
 #include "mozilla/EventForwards.h"
-#include "mozilla/PresShell.h"
 #include "mozilla/dom/Element.h"
 #include "nsIAccessibleEvent.h"
 #include "nsIContent.h"
@@ -23,6 +22,7 @@ class nsIDocShell;
 class nsIWidget;
 
 namespace mozilla {
+class PresShell;
 namespace dom {
 class XULTreeElement;
 }
@@ -33,6 +33,7 @@ class XULTreeElement;
  */
 class nsCoreUtils {
  public:
+  typedef mozilla::PresShell PresShell;
   typedef mozilla::dom::Document Document;
 
   /**
@@ -55,7 +56,7 @@ class nsCoreUtils {
    * @param  aPseudoElm   [in] pseudo element inside the cell, see
    *                       XULTreeElement for available values
    */
-  MOZ_CAN_RUN_SCRIPT_BOUNDARY
+  MOZ_CAN_RUN_SCRIPT
   static void DispatchClickEvent(mozilla::dom::XULTreeElement *aTree,
                                  int32_t aRowIndex, nsTreeColumn *aColumn,
                                  const nsAString &aPseudoElt = EmptyString());
@@ -71,9 +72,10 @@ class nsCoreUtils {
    * @param aPresShell   [in] the presshell for the element
    * @param aRootWidget  [in] the root widget of the element
    */
+  MOZ_CAN_RUN_SCRIPT
   static void DispatchMouseEvent(mozilla::EventMessage aMessage, int32_t aX,
                                  int32_t aY, nsIContent *aContent,
-                                 nsIFrame *aFrame, nsIPresShell *aPresShell,
+                                 nsIFrame *aFrame, PresShell *aPresShell,
                                  nsIWidget *aRootWidget);
 
   /**
@@ -87,9 +89,10 @@ class nsCoreUtils {
    * @param aPresShell   [in] the presshell for the element
    * @param aRootWidget  [in] the root widget of the element
    */
+  MOZ_CAN_RUN_SCRIPT
   static void DispatchTouchEvent(mozilla::EventMessage aMessage, int32_t aX,
                                  int32_t aY, nsIContent *aContent,
-                                 nsIFrame *aFrame, nsIPresShell *aPresShell,
+                                 nsIFrame *aFrame, PresShell *aPresShell,
                                  nsIWidget *aRootWidget);
 
   /**
@@ -212,7 +215,7 @@ class nsCoreUtils {
   /**
    * Return presShell for the document containing the given DOM node.
    */
-  static nsIPresShell *GetPresShellFor(nsINode *aNode) {
+  static PresShell *GetPresShellFor(nsINode *aNode) {
     return aNode->OwnerDoc()->GetPresShell();
   }
 
@@ -283,7 +286,8 @@ class nsCoreUtils {
   /**
    * Scroll content into view.
    */
-  static void ScrollTo(nsIPresShell *aPresShell, nsIContent *aContent,
+  MOZ_CAN_RUN_SCRIPT
+  static void ScrollTo(PresShell *aPresShell, nsIContent *aContent,
                        uint32_t aScrollType);
 
   /**

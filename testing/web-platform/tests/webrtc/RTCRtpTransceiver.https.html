@@ -1972,6 +1972,30 @@
       ]);
   };
 
+  const checkBundleTagRejected = async t => {
+    const pc1 = new RTCPeerConnection();
+    t.add_cleanup(() => pc1.close());
+    const pc2 = new RTCPeerConnection();
+    t.add_cleanup(() => pc2.close());
+
+    const stream1 = await getNoiseStream({audio: true});
+    t.add_cleanup(() => stopTracks(stream1));
+    const track1 = stream1.getAudioTracks()[0];
+    const stream2 = await getNoiseStream({audio: true});
+    t.add_cleanup(() => stopTracks(stream2));
+    const track2 = stream2.getAudioTracks()[0];
+
+    pc1.addTrack(track1, stream1);
+    pc1.addTrack(track2, stream2);
+
+    await offerAnswer(pc1, pc2);
+
+    pc2.getTransceivers()[0].stop();
+
+    await offerAnswer(pc1, pc2);
+    await offerAnswer(pc2, pc1);
+  };
+
   const checkMsectionReuse = async t => {
     // Use max-compat to make it easier to check for disabled m-sections
     const pc1 = new RTCPeerConnection({ bundlePolicy: "max-compat" });
@@ -2188,6 +2212,68 @@
                   "No rejected m-line, because it was reused");
   };
 
+  const checkStopAfterCreateOfferWithReusedMsection = async t => {
+    const pc1 = new RTCPeerConnection();
+    t.add_cleanup(() => pc1.close());
+    const pc2 = new RTCPeerConnection();
+    t.add_cleanup(() => pc2.close());
+
+    const stream = await getNoiseStream({audio: true, video: true});
+    t.add_cleanup(() => stopTracks(stream));
+    const audio = stream.getAudioTracks()[0];
+    const video = stream.getVideoTracks()[0];
+
+    pc1.addTrack(audio, stream);
+    pc1.addTrack(video, stream);
+
+    await offerAnswer(pc1, pc2);
+    pc1.getTransceivers()[1].stop();
+    await offerAnswer(pc1, pc2);
+
+    // Second (video) m-section has been negotiated disabled.
+    const transceiver = pc1.addTransceiver("video");
+    const offer = await pc1.createOffer();
+    transceiver.stop();
+    await pc1.setLocalDescription(offer);
+    await pc2.setRemoteDescription(offer);
+
+    const answer = await pc2.createAnswer();
+    await pc2.setLocalDescription(answer);
+    await pc1.setRemoteDescription(answer);
+  };
+
+  const checkAddIceCandidateToStoppedTransceiver = async t => {
+    const pc1 = new RTCPeerConnection();
+    t.add_cleanup(() => pc1.close());
+    const pc2 = new RTCPeerConnection();
+    t.add_cleanup(() => pc2.close());
+
+    const stream = await getNoiseStream({audio: true, video: true});
+    t.add_cleanup(() => stopTracks(stream));
+    const audio = stream.getAudioTracks()[0];
+    const video = stream.getVideoTracks()[0];
+
+    pc1.addTrack(audio, stream);
+    pc1.addTrack(video, stream);
+
+    pc2.addTrack(audio, stream);
+    pc2.addTrack(video, stream);
+
+    await pc1.setLocalDescription(await pc1.createOffer());
+    pc1.getTransceivers()[1].stop();
+    pc1.setLocalDescription({type: "rollback"});
+
+    const offer = await pc2.createOffer();
+    await pc2.setLocalDescription(offer);
+    await pc1.setRemoteDescription(offer);
+
+    await pc1.addIceCandidate(
+      {
+        candidate: "candidate:0 1 UDP 2122252543 192.168.1.112 64261 typ host",
+        sdpMid: pc2.getTransceivers()[1].mid
+      });
+  };
+
 const tests = [
   checkAddTransceiverNoTrack,
   checkAddTransceiverWithTrack,
@@ -2222,7 +2308,10 @@ const tests = [
   checkLocalRollback,
   checkRollbackAndSetRemoteOfferWithDifferentType,
   checkRemoteRollback,
-  checkMsectionReuse
+  checkMsectionReuse,
+  checkStopAfterCreateOfferWithReusedMsection,
+  checkAddIceCandidateToStoppedTransceiver,
+  checkBundleTagRejected
 ].forEach(test => promise_test(test, test.name));
 
 </script>

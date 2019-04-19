@@ -8,24 +8,37 @@ import os
 
 from mozlog.commandline import add_logging_group
 
-
+(FIREFOX,
+ CHROME,
+ CHROMIUM) = DESKTOP_APPS = ["firefox", "chrome", "chromium"]
+(FENNEC,
+ GECKOVIEW,
+ REFBROW,
+ FENIX) = FIREFOX_ANDROID_APPS = ["fennec", "geckoview", "refbrow", "fenix"]
+CHROMIUM_DISTROS = [CHROME, CHROMIUM]
 APPS = {
-    "firefox": {
+    FIREFOX: {
         "long_name": "Firefox Desktop"},
-    "chrome": {
+    CHROME: {
         "long_name": "Google Chrome Desktop"},
-    "fennec": {
+    CHROMIUM: {
+        "long_name": "Google Chromium Desktop"},
+    FENNEC: {
         "long_name": "Firefox Fennec on Android"},
-    "geckoview": {
+    GECKOVIEW: {
         "long_name": "Firefox Geckoview on Android",
-        "default_activity": "GeckoViewActivity"},
-    "refbrow": {
+        "default_activity": "GeckoViewActivity",
+        "default_intent": "android.intent.action.MAIN"},
+    REFBROW: {
         "long_name": "Firefox Android Components Reference Browser",
-        "default_activity": "BrowserTestActivity"},
-    "fenix": {
+        "default_activity": "BrowserTestActivity",
+        "default_intent": "android.intent.action.MAIN"},
+    FENIX: {
         "long_name": "Firefox Android Fenix Browser",
-        "default_activity": "HomeActivity"}
+        "default_activity": "browser.BrowserPerformanceTestActivity",
+        "default_intent": "android.intent.action.VIEW"}
 }
+INTEGRATED_APPS = list(APPS.keys())
 
 
 def print_all_activities():
@@ -35,6 +48,15 @@ def print_all_activities():
             _activity = "%s:%s" % (next_app, APPS[next_app]['default_activity'])
             all_activities.append(_activity)
     return all_activities
+
+
+def print_all_intents():
+    all_intents = []
+    for next_app in APPS:
+        if APPS[next_app].get('default_intent', None) is not None:
+            _intent = "%s:%s" % (next_app, APPS[next_app]['default_intent'])
+            all_intents.append(_intent)
+    return all_intents
 
 
 def create_parser(mach_interface=False):
@@ -51,6 +73,9 @@ def create_parser(mach_interface=False):
     add_arg('-a', '--activity', dest='activity', default=None,
             help="Name of android activity used to launch the android app."
             "i.e.: %s" % print_all_activities())
+    add_arg('-i', '--intent', dest='intent', default=None,
+            help="Name of android intent action used to launch the android app."
+            "i.e.: %s" % print_all_intents())
     add_arg('--host', dest='host',
             help="Hostname from which to serve urls, defaults to 127.0.0.1. "
             "The value HOST_IP will cause the value of host to be "
@@ -59,6 +84,8 @@ def create_parser(mach_interface=False):
     add_arg('--power-test', dest="power_test", action="store_true",
             help="Use Raptor to measure power usage. Currently supported for Geckoview. "
             "The host ip address must be specified via the --host command line argument.")
+    add_arg('--memory-test', dest="memory_test", action="store_true",
+            help="Use Raptor to measure memory usage.")
     add_arg('--is-release-build', dest="is_release_build", default=False,
             action='store_true',
             help="Whether the build is a release build which requires work arounds "
@@ -114,7 +141,7 @@ def verify_options(parser, args):
         parser.error("--binary is required!")
 
     # if running on a desktop browser make sure the binary exists
-    if args.app in ["firefox", "chrome"]:
+    if args.app in DESKTOP_APPS:
         if not os.path.isfile(args.binary):
             parser.error("{binary} does not exist!".format(**ctx))
 
@@ -129,7 +156,7 @@ def verify_options(parser, args):
             parser.error("Power test is only supported when running raptor on Firefox Android "
                          "browsers when host is specified!")
 
-    # if running on geckoview/refbrow/fenix, we need an activity name
+    # if running on geckoview/refbrow/fenix, we need an activity and intent
     if args.app in ["geckoview", "refbrow", "fenix"]:
         if not args.activity:
             # if we have a default activity specified in APPS above, use that
@@ -138,6 +165,13 @@ def verify_options(parser, args):
             else:
                 # otherwise fail out
                 parser.error("--activity command line argument is required!")
+        if not args.intent:
+            # if we have a default intent specified in APPS above, use that
+            if APPS[args.app].get("default_intent", None) is not None:
+                args.intent = APPS[args.app]['default_intent']
+            else:
+                # otherwise fail out
+                parser.error("--intent command line argument is required!")
 
 
 def parse_args(argv=None):
@@ -161,13 +195,17 @@ class _StopAction(argparse.Action):
 
 
 class _PrintTests(_StopAction):
+    def __init__(self, integrated_apps=INTEGRATED_APPS, *args, **kwargs):
+        super(_PrintTests, self).__init__(*args, **kwargs)
+        self.integrated_apps = integrated_apps
+
     def __call__(self, parser, namespace, values, option_string=None):
         from manifestparser import TestManifest
 
         here = os.path.abspath(os.path.dirname(__file__))
         raptor_ini = os.path.join(here, 'raptor.ini')
 
-        for _app in ["firefox", "chrome", "fennec", "geckoview", "refbrow", "fenix"]:
+        for _app in self.integrated_apps:
             test_manifest = TestManifest([raptor_ini], strict=False)
             info = {"app": _app}
             available_tests = test_manifest.active_tests(exists=False,

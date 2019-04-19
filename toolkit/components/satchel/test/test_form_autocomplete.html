@@ -2,8 +2,8 @@
 <html>
 <head>
   <title>Test for Form History Autocomplete</title>
-  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+  <script src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script src="/tests/SimpleTest/EventUtils.js"></script>
   <script type="text/javascript" src="satchel_common.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
@@ -217,6 +217,11 @@ function popupShownListener() {
     expectingPopup = false;
     SimpleTest.executeSoon(runTest);
   } else {
+    if (testNum == 253) {
+      // Bug 1420103
+      todo(false, "Autocomplete popup not expected during test " + testNum);
+      return;
+    }
     ok(false, "Autocomplete popup not expected during test " + testNum);
   }
 }
@@ -1072,8 +1077,7 @@ function startTest() {
   });
 }
 
-window.onload = startTest;
-
+SimpleTest.waitForFocus(startTest);
 SimpleTest.waitForExplicitFinish();
 SimpleTest.requestFlakyTimeout("untriaged");
 </script>

@@ -1,0 +1,284 @@
+job-defaults:
+    max-run-time:
+        by-test-platform:
+            .*-qr/.*: 2400
+            .*-ux/.*: 2400
+            default: 1800
+    suite: raptor
+    workdir:
+        by-test-platform:
+            android-hw.*: /builds/worker
+            default: /home/cltbld
+    run-on-projects: ['try', 'mozilla-central']
+    tier: 2
+    virtualization:
+        by-test-platform:
+            windows10-64-ccov/.*: virtual
+            default: hardware
+    mozharness:
+        script: raptor_script.py
+        config:
+            by-test-platform:
+                macosx.*:
+                    - raptor/mac_config.py
+                windows.*:
+                    - raptor/windows_config.py
+                windows10-64-ccov/debug:
+                    - raptor/windows_vm_config.py
+                linux64-ccov/opt:
+                    - raptor/linux64_config_taskcluster.py
+                android-hw.*:
+                    - raptor/android_hw_config.py
+                default:
+                    - raptor/linux_config.py
+    fetches:
+        fetch:
+            by-test-platform:
+                win.*64.*:
+                    - win64-chromium
+                win.*32.*:
+                    - win32-chromium
+                macosx.*:
+                    - mac-chromium
+                default:
+                    - linux64-chromium
+
+raptor-tp6-1-chromium:
+    description: "Raptor tp6-1 on Chromium"
+    try-name: raptor-tp6-1-chromium
+    treeherder-symbol: Rap-Cr(tp6-1)
+    max-run-time: 1200
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-1
+            - --app=chromium
+
+raptor-tp6-2-chromium:
+    description: "Raptor tp6-2 on Chromium"
+    try-name: raptor-tp6-2-chromium
+    treeherder-symbol: Rap-Cr(tp6-2)
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-2
+            - --app=chromium
+
+raptor-tp6-3-chromium:
+    description: "Raptor tp6-3 on Chromium"
+    try-name: raptor-tp6-3-chromium
+    treeherder-symbol: Rap-Cr(tp6-3)
+    max-run-time: 2400
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-3
+            - --app=chromium
+
+raptor-tp6-4-chromium:
+    description: "Raptor tp6-4 on Chromium"
+    try-name: raptor-tp6-4-chromium
+    treeherder-symbol: Rap-Cr(tp6-4)
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-4
+            - --app=chromium
+
+raptor-tp6-5-chromium:
+    description: "Raptor tp6-5 on Chromium"
+    try-name: raptor-tp6-5-chromium
+    treeherder-symbol: Rap-Cr(tp6-5)
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-5
+            - --app=chromium
+
+raptor-tp6-6-chromium:
+    description: "Raptor tp6-6 on Chromium"
+    try-name: raptor-tp6-6-chromium
+    treeherder-symbol: Rap-Cr(tp6-6)
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-6
+            - --app=chromium
+
+raptor-tp6-7-chromium:
+    description: "Raptor tp6-7 on Chromium"
+    try-name: raptor-tp6-7-chromium
+    treeherder-symbol: Rap-Cr(tp6-7)
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-7
+            - --app=chromium
+
+raptor-tp6-8-chromium:
+    description: "Raptor tp6-8 on Chromium"
+    try-name: raptor-tp6-8-chromium
+    treeherder-symbol: Rap-Cr(tp6-8)
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-8
+            - --app=chromium
+
+raptor-tp6-8-404-chromium:
+    description: "Raptor tp6-8-404 on Chromium"
+    try-name: raptor-tp6-8-404-chromium
+    treeherder-symbol: Rap-Cr(tp6-8-404)
+    tier: 3
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-8-404
+            - --app=chromium
+
+raptor-tp6-9-chromium:
+    description: "Raptor tp6-9 on Chromium"
+    try-name: raptor-tp6-9-chromium
+    treeherder-symbol: Rap-Cr(tp6-9)
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-9
+            - --app=chromium
+
+raptor-tp6-10-chromium:
+    description: "Raptor tp6-10 on Chromium"
+    try-name: raptor-tp6-10-chromium
+    treeherder-symbol: Rap-Cr(tp6-10)
+    mozharness:
+        extra-options:
+            - --test=raptor-tp6-10
+            - --app=chromium
+
+raptor-speedometer-chromium:
+    description: "Raptor Speedometer on Chromium"
+    try-name: raptor-speedometer-chromium
+    treeherder-symbol: Rap-Cr(sp)
+    max-run-time: 1500
+    mozharness:
+        extra-options:
+            - --test=raptor-speedometer
+            - --app=chromium
+
+raptor-stylebench-chromium:
+    description: "Raptor StyleBench on Chromium"
+    try-name: raptor-stylebench-chromium
+    treeherder-symbol: Rap-Cr(sb)
+    mozharness:
+        extra-options:
+            - --test=raptor-stylebench
+            - --app=chromium
+
+raptor-motionmark-htmlsuite-chromium:
+    description: "Raptor MotionMark HtmlSuite on Chromium"
+    try-name: raptor-motionmark-htmlsuite-chromium
+    treeherder-symbol: Rap-Cr(mm-h)
+    mozharness:
+        extra-options:
+            - --test=raptor-motionmark-htmlsuite
+            - --app=chromium
+
+raptor-motionmark-animometer-chromium:
+    description: "Raptor MotionMark Animometer on Chromium"
+    try-name: raptor-motionmark-animometer-chromium
+    treeherder-symbol: Rap-Cr(mm-a)
+    mozharness:
+        extra-options:
+            - --test=raptor-motionmark-animometer
+            - --app=chromium
+
+raptor-webaudio-chromium:
+    description: "Raptor WebAudio on Chromium"
+    try-name: raptor-webaudio-chromium
+    treeherder-symbol: Rap-Cr(wa)
+    mozharness:
+        extra-options:
+            - --test=raptor-webaudio
+            - --app=chromium
+
+raptor-sunspider-chromium:
+    description: "Raptor SunSpider on Chromium"
+    try-name: raptor-sunspider-chromium
+    treeherder-symbol: Rap-Cr(ss)
+    mozharness:
+        extra-options:
+            - --test=raptor-sunspider
+            - --app=chromium
+
+raptor-unity-webgl-chromium:
+    description: "Raptor Unity WebGL on Chromium"
+    try-name: raptor-unity-webgl-chromium
+    treeherder-symbol: Rap-Cr(ugl)
+    mozharness:
+        extra-options:
+            - --test=raptor-unity-webgl
+            - --app=chromium
+    fetches:
+        fetch:
+            by-test-platform:
+                win.*64.*:
+                    - win64-chromium
+                    - unity-webgl
+                win.*32.*:
+                    - win32-chromium
+                    - unity-webgl
+                macosx.*:
+                    - mac-chromium
+                    - unity-webgl
+                default:
+                    - linux64-chromium
+                    - unity-webgl
+
+raptor-wasm-misc-chromium:
+    description: "Raptor WASM Misc on Chromium"
+    try-name: raptor-wasm-misc-chromium
+    treeherder-symbol: Rap-Cr(wm)
+    mozharness:
+        extra-options:
+            - --test=raptor-wasm-misc
+            - --app=chromium
+    fetches:
+        fetch:
+            by-test-platform:
+                win.*64.*:
+                    - win64-chromium
+                    - wasm-misc
+                win.*32.*:
+                    - win32-chromium
+                    - wasm-misc
+                macosx.*:
+                    - mac-chromium
+                    - wasm-misc
+                default:
+                    - linux64-chromium
+                    - wasm-misc
+
+raptor-assorted-dom-chromium:
+    description: "Raptor Assorted-Dom on Chromium"
+    try-name: raptor-assorted-dom-chromium
+    treeherder-symbol: Rap-Cr(dom)
+    max-run-time: 1500
+    mozharness:
+        extra-options:
+            - --test=raptor-assorted-dom
+            - --app=chromium
+    fetches:
+        fetch:
+            by-test-platform:
+                win.*64.*:
+                    - win64-chromium
+                    - assorted-dom
+                win.*32.*:
+                    - win32-chromium
+                    - assorted-dom
+                macosx.*:
+                    - mac-chromium
+                    - assorted-dom
+                default:
+                    - linux64-chromium
+                    - assorted-dom
+
+raptor-wasm-godot-chromium:
+    description: "Raptor Wasm Godot on Chromium"
+    try-name: raptor-wasm-godot-chromium
+    treeherder-symbol: Rap-Cr(godot)
+    max-run-time: 1500
+    mozharness:
+        extra-options:
+            - --test=raptor-wasm-godot
+            - --app=chromium

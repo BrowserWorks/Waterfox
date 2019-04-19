@@ -368,6 +368,7 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext)
       mIsAppTab(false),
       mUseGlobalHistory(false),
       mUseRemoteTabs(false),
+      mUseRemoteSubframes(false),
       mUseTrackingProtection(false),
       mDeviceSizeIsPageSize(false),
       mWindowDraggingAllowed(false),
@@ -649,9 +650,8 @@ nsDocShell::GetInterface(const nsIID& aIID, void** aSink) {
     NS_ADDREF((nsISupports*)*aSink);
     return NS_OK;
   } else if (aIID.Equals(NS_GET_IID(nsISelectionDisplay))) {
-    nsIPresShell* shell = GetPresShell();
-    if (shell) {
-      return shell->QueryInterface(aIID, aSink);
+    if (PresShell* presShell = GetPresShell()) {
+      return presShell->QueryInterface(aIID, aSink);
     }
   } else if (aIID.Equals(NS_GET_IID(nsIDocShellTreeOwner))) {
     nsCOMPtr<nsIDocShellTreeOwner> treeOwner;
@@ -1107,12 +1107,12 @@ nsPresContext* nsDocShell::GetPresContext() {
   return mContentViewer->GetPresContext();
 }
 
-nsIPresShell* nsDocShell::GetPresShell() {
+PresShell* nsDocShell::GetPresShell() {
   nsPresContext* presContext = GetPresContext();
   return presContext ? presContext->GetPresShell() : nullptr;
 }
 
-nsIPresShell* nsDocShell::GetEldestPresShell() {
+PresShell* nsDocShell::GetEldestPresShell() {
   nsPresContext* presContext = GetEldestPresContext();
 
   if (presContext) {
@@ -1228,7 +1228,7 @@ NS_IMETHODIMP
 nsDocShell::GetCharset(nsACString& aCharset) {
   aCharset.Truncate();
 
-  nsIPresShell* presShell = GetPresShell();
+  PresShell* presShell = GetPresShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
   Document* doc = presShell->GetDocument();
   NS_ENSURE_TRUE(doc, NS_ERROR_FAILURE);
@@ -1527,7 +1527,33 @@ nsDocShell::SetRemoteTabs(bool aUseRemoteTabs) {
                                        true);
   }
 
+  // Don't allow non-remote tabs with remote subframes.
+  if (NS_WARN_IF(!aUseRemoteTabs && mUseRemoteSubframes)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
   mUseRemoteTabs = aUseRemoteTabs;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocShell::GetUseRemoteSubframes(bool* aUseRemoteSubframes) {
+  NS_ENSURE_ARG_POINTER(aUseRemoteSubframes);
+
+  *aUseRemoteSubframes = mUseRemoteSubframes;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocShell::SetRemoteSubframes(bool aUseRemoteSubframes) {
+  // Should we annotate crash reports like in aUseRemoteTabs?
+
+  // Don't allow non-remote tabs with remote subframes.
+  if (NS_WARN_IF(aUseRemoteSubframes && !mUseRemoteTabs)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  mUseRemoteSubframes = aUseRemoteSubframes;
   return NS_OK;
 }
 
@@ -2370,8 +2396,7 @@ nsDocShell::SetMetaViewportOverride(
 
   // Inform our presShell that it needs to re-check its need for a viewport
   // override.
-  nsCOMPtr<nsIPresShell> presShell = GetPresShell();
-  if (presShell) {
+  if (RefPtr<PresShell> presShell = GetPresShell()) {
     presShell->UpdateViewportOverridden(true);
   }
 
@@ -2644,14 +2669,30 @@ nsresult nsDocShell::SetDocLoaderParent(nsDocLoader* aParent) {
   RecomputeCanExecuteScripts();
 
   // Inform windows when they're being removed from their parent.
-  if (!aParent && mScriptGlobal) {
-    mScriptGlobal->ParentWindowChanged();
+  if (!aParent) {
+    MaybeClearStorageAccessFlag();
   }
 
   NS_ASSERTION(mInheritPrivateBrowsingId || wasPrivate == UsePrivateBrowsing(),
                "Private browsing state changed while inheritance was disabled");
 
   return NS_OK;
+}
+
+void nsDocShell::MaybeClearStorageAccessFlag() {
+  if (mScriptGlobal) {
+    // Tell our window that the parent has now changed.
+    mScriptGlobal->ParentWindowChanged();
+
+    // Tell all of our children about the change recursively as well.
+    nsTObserverArray<nsDocLoader*>::ForwardIterator iter(mChildList);
+    while (iter.HasMore()) {
+      nsCOMPtr<nsIDocShell> child = do_QueryObject(iter.GetNext());
+      if (child) {
+        static_cast<nsDocShell*>(child.get())->MaybeClearStorageAccessFlag();
+      }
+    }
+  }
 }
 
 NS_IMETHODIMP
@@ -5141,10 +5182,10 @@ void nsDocShell::DoGetPositionAndSize(int32_t* aX, int32_t* aY, int32_t* aWidth,
 
 NS_IMETHODIMP
 nsDocShell::Repaint(bool aForce) {
-  nsCOMPtr<nsIPresShell> presShell = GetPresShell();
+  PresShell* presShell = GetPresShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
 
-  nsViewManager* viewManager = presShell->GetViewManager();
+  RefPtr<nsViewManager> viewManager = presShell->GetViewManager();
   NS_ENSURE_TRUE(viewManager, NS_ERROR_FAILURE);
 
   viewManager->InvalidateAllViews();
@@ -5203,7 +5244,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
     return NS_OK;
   }
 
-  nsCOMPtr<nsIPresShell> presShell = GetPresShell();
+  PresShell* presShell = GetPresShell();
   if (!presShell) {
     return NS_OK;
   }
@@ -5228,17 +5269,13 @@ nsDocShell::GetVisibility(bool* aVisibility) {
   RefPtr<nsDocShell> docShell = this;
   RefPtr<nsDocShell> parentItem = docShell->GetParentDocshell();
   while (parentItem) {
-    presShell = docShell->GetPresShell();
-
-    nsCOMPtr<nsIPresShell> pPresShell = parentItem->GetPresShell();
-
     // Null-check for crash in bug 267804
-    if (!pPresShell) {
+    if (!parentItem->GetPresShell()) {
       MOZ_ASSERT_UNREACHABLE("parent docshell has null pres shell");
       return NS_OK;
     }
 
-    vm = presShell->GetViewManager();
+    vm = docShell->GetPresShell()->GetViewManager();
     if (vm) {
       view = vm->GetRootView();
     }
@@ -5298,9 +5335,8 @@ nsDocShell::SetIsActive(bool aIsActive) {
   mIsActive = aIsActive;
 
   // Tell the PresShell about it.
-  nsCOMPtr<nsIPresShell> pshell = GetPresShell();
-  if (pshell) {
-    pshell->SetIsActive(aIsActive);
+  if (RefPtr<PresShell> presShell = GetPresShell()) {
+    presShell->SetIsActive(aIsActive);
   }
 
   // Tell the window about it
@@ -5634,10 +5670,10 @@ nsresult nsDocShell::SetCurScrollPosEx(int32_t aCurHorizontalPos,
 
   // Set the visual viewport offset as well.
 
-  nsCOMPtr<nsIPresShell> shell = GetPresShell();
-  NS_ENSURE_TRUE(shell, NS_ERROR_FAILURE);
+  RefPtr<PresShell> presShell = GetPresShell();
+  NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
 
-  nsPresContext* presContext = shell->GetPresContext();
+  nsPresContext* presContext = presShell->GetPresContext();
   NS_ENSURE_TRUE(presContext, NS_ERROR_FAILURE);
 
   // Only the root content document can have a distinct visual viewport offset.
@@ -5647,12 +5683,12 @@ nsresult nsDocShell::SetCurScrollPosEx(int32_t aCurHorizontalPos,
 
   // Not on a platform with a distinct visual viewport - don't bother setting
   // the visual viewport offset.
-  if (!shell->IsVisualViewportSizeSet()) {
+  if (!presShell->IsVisualViewportSizeSet()) {
     return NS_OK;
   }
 
-  shell->ScrollToVisual(targetPos, layers::FrameMetrics::eMainThread,
-                        scrollMode);
+  presShell->ScrollToVisual(targetPos, layers::FrameMetrics::eMainThread,
+                            scrollMode);
 
   return NS_OK;
 }
@@ -6585,7 +6621,8 @@ nsresult nsDocShell::EndPageLoad(nsIWebProgress* aProgress,
   // will cause any OnLoad(...) and PopState(...) handlers to fire.
   if (!mEODForCurrentDocument && mContentViewer) {
     mIsExecutingOnLoadHandler = true;
-    mContentViewer->LoadComplete(aStatus);
+    nsCOMPtr<nsIContentViewer> contentViewer = mContentViewer;
+    contentViewer->LoadComplete(aStatus);
     mIsExecutingOnLoadHandler = false;
 
     mEODForCurrentDocument = true;
@@ -7612,8 +7649,7 @@ nsresult nsDocShell::RestoreFromHistory() {
   nsView* rootViewParent = nullptr;
   nsIntRect newBounds(0, 0, 0, 0);
 
-  nsCOMPtr<nsIPresShell> oldPresShell = GetPresShell();
-  if (oldPresShell) {
+  if (PresShell* oldPresShell = GetPresShell()) {
     nsViewManager* vm = oldPresShell->GetViewManager();
     if (vm) {
       nsView* oldRootView = vm->GetRootView();
@@ -7842,7 +7878,7 @@ nsresult nsDocShell::RestoreFromHistory() {
   rv = privWin->RestoreWindowState(windowState);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsIPresShell> shell = GetPresShell();
+  RefPtr<PresShell> presShell = GetPresShell();
 
   // We may be displayed on a different monitor (or in a different
   // HiDPI mode) than when we got into the history list.  So we need
@@ -7851,16 +7887,17 @@ nsresult nsDocShell::RestoreFromHistory() {
   // Because the prescontext normally handles resolution changes via
   // a runnable (see nsPresContext::UIResolutionChanged), its device
   // context won't be -immediately- updated as a result of calling
-  // shell->BackingScaleFactorChanged().
+  // presShell->BackingScaleFactorChanged().
 
   // But we depend on that device context when adjusting the view size
   // via mContentViewer->SetBounds(newBounds) below. So we need to
   // explicitly tell it to check for changed resolution here.
-  if (shell && shell->GetPresContext()->DeviceContext()->CheckDPIChange()) {
-    shell->BackingScaleFactorChanged();
+  if (presShell &&
+      presShell->GetPresContext()->DeviceContext()->CheckDPIChange()) {
+    presShell->BackingScaleFactorChanged();
   }
 
-  nsViewManager* newVM = shell ? shell->GetViewManager() : nullptr;
+  nsViewManager* newVM = presShell ? presShell->GetViewManager() : nullptr;
   nsView* newRootView = newVM ? newVM->GetRootView() : nullptr;
 
   // Insert the new root view at the correct location in the view tree.
@@ -7943,7 +7980,7 @@ nsresult nsDocShell::RestoreFromHistory() {
       mContentViewer->SetBounds(newBounds);
     } else {
       nsIScrollableFrame* rootScrollFrame =
-          shell->GetRootScrollFrameAsScrollable();
+          presShell->GetRootScrollFrameAsScrollable();
       if (rootScrollFrame) {
         rootScrollFrame->PostScrolledAreaEventForCurrentArea();
       }
@@ -7959,8 +7996,8 @@ nsresult nsDocShell::RestoreFromHistory() {
   nsDocShell::FinishRestore();
 
   // Restart plugins, and paint the content.
-  if (shell) {
-    shell->Thaw();
+  if (presShell) {
+    presShell->Thaw();
   }
 
   return privWin->FireDelayedDOMEvents();
@@ -8146,10 +8183,8 @@ nsresult nsDocShell::CreateContentViewer(const nsACString& aContentType,
   // the ID can be used to distinguish it from the other parts.
   nsCOMPtr<nsIMultiPartChannel> multiPartChannel(do_QueryInterface(aRequest));
   if (multiPartChannel) {
-    nsCOMPtr<nsIPresShell> shell = GetPresShell();
-    if (NS_SUCCEEDED(rv) && shell) {
-      Document* doc = shell->GetDocument();
-      if (doc) {
+    if (PresShell* presShell = GetPresShell()) {
+      if (Document* doc = presShell->GetDocument()) {
         uint32_t partID;
         multiPartChannel->GetPartID(&partID);
         doc->SetPartID(partID);
@@ -8294,11 +8329,9 @@ nsresult nsDocShell::SetupNewViewer(nsIContentViewer* aNewViewer) {
 
     // Try to extract the canvas background color from the old
     // presentation shell, so we can use it for the next document.
-    nsCOMPtr<nsIPresShell> shell = contentViewer->GetPresShell();
-
-    if (shell) {
-      bgcolor = shell->GetCanvasBackground();
-      isActive = shell->IsActive();
+    if (PresShell* presShell = contentViewer->GetPresShell()) {
+      bgcolor = presShell->GetCanvasBackground();
+      isActive = presShell->IsActive();
     }
 
     contentViewer->Close(mSavingOldViewer ? mOSHE.get() : nullptr);
@@ -8347,12 +8380,10 @@ nsresult nsDocShell::SetupNewViewer(nsIContentViewer* aNewViewer) {
 
   // Stuff the bgcolor from the old pres shell into the new
   // pres shell. This improves page load continuity.
-  nsCOMPtr<nsIPresShell> shell = mContentViewer->GetPresShell();
-
-  if (shell) {
-    shell->SetCanvasBackground(bgcolor);
+  if (RefPtr<PresShell> presShell = mContentViewer->GetPresShell()) {
+    presShell->SetCanvasBackground(bgcolor);
     if (isActive) {
-      shell->SetIsActive(isActive);
+      presShell->SetIsActive(isActive);
     }
   }
 
@@ -9912,8 +9943,11 @@ nsresult nsDocShell::DoURILoad(nsDocShellLoadState* aLoadState,
   nsCOMPtr<nsIContentSecurityPolicy> csp;
   aLoadState->TriggeringPrincipal()->GetCsp(getter_AddRefs(csp));
 #ifdef DEBUG
-  nsCOMPtr<nsIContentSecurityPolicy> argsCSP = aLoadState->Csp();
-  MOZ_ASSERT(nsCSPContext::Equals(csp, argsCSP));
+  if (!aLoadState->TriggeringPrincipal()->GetIsNullPrincipal()) {
+    // After Bug 965637 we can remove that assertion anyway.
+    nsCOMPtr<nsIContentSecurityPolicy> argsCSP = aLoadState->Csp();
+    MOZ_ASSERT(nsCSPContext::Equals(csp, argsCSP));
+  }
 #endif
 
   if (csp) {
@@ -10420,14 +10454,14 @@ nsresult nsDocShell::ScrollToAnchor(bool aCurHasRef, bool aNewHasRef,
     return NS_OK;
   }
 
-  nsCOMPtr<nsIPresShell> shell = GetPresShell();
-  if (!shell) {
+  RefPtr<PresShell> presShell = GetPresShell();
+  if (!presShell) {
     // If we failed to get the shell, or if there is no shell,
     // nothing left to do here.
     return NS_OK;
   }
 
-  nsIScrollableFrame* rootScroll = shell->GetRootScrollFrameAsScrollable();
+  nsIScrollableFrame* rootScroll = presShell->GetRootScrollFrameAsScrollable();
   if (rootScroll) {
     rootScroll->ClearDidHistoryRestore();
   }
@@ -10460,7 +10494,8 @@ nsresult nsDocShell::ScrollToAnchor(bool aCurHasRef, bool aNewHasRef,
     nsresult rv = NS_ERROR_FAILURE;
     NS_ConvertUTF8toUTF16 uStr(aNewHash);
     if (!uStr.IsEmpty()) {
-      rv = shell->GoToAnchor(uStr, scroll, nsIPresShell::SCROLL_SMOOTH_AUTO);
+      rv =
+          presShell->GoToAnchor(uStr, scroll, nsIPresShell::SCROLL_SMOOTH_AUTO);
     }
 
     if (NS_FAILED(rv)) {
@@ -10471,8 +10506,8 @@ nsresult nsDocShell::ScrollToAnchor(bool aCurHasRef, bool aNewHasRef,
       nsUnescape(str);
       NS_ConvertUTF8toUTF16 utf16Str(str);
       if (!utf16Str.IsEmpty()) {
-        rv = shell->GoToAnchor(utf16Str, scroll,
-                               nsIPresShell::SCROLL_SMOOTH_AUTO);
+        rv = presShell->GoToAnchor(utf16Str, scroll,
+                                   nsIPresShell::SCROLL_SMOOTH_AUTO);
       }
       free(str);
     }
@@ -10505,12 +10540,12 @@ nsresult nsDocShell::ScrollToAnchor(bool aCurHasRef, bool aNewHasRef,
       //
       // When aNewHash contains "%00", unescaped string may be empty.
       // And GoToAnchor asserts if we ask it to scroll to an empty ref.
-      shell->GoToAnchor(uStr, scroll && !uStr.IsEmpty(),
-                        nsIPresShell::SCROLL_SMOOTH_AUTO);
+      presShell->GoToAnchor(uStr, scroll && !uStr.IsEmpty(),
+                            nsIPresShell::SCROLL_SMOOTH_AUTO);
     }
   } else {
     // Tell the shell it's at an anchor, without scrolling.
-    shell->GoToAnchor(EmptyString(), false);
+    presShell->GoToAnchor(EmptyString(), false);
 
     // An empty anchor was found, but if it's a load from history,
     // we don't have to jump to the top of the page. Scrollbar
@@ -11626,10 +11661,9 @@ nsresult nsDocShell::PersistLayoutHistoryState() {
 
   if (mOSHE) {
     bool scrollRestorationIsManual = mOSHE->GetScrollRestorationIsManual();
-    nsCOMPtr<nsIPresShell> shell = GetPresShell();
     nsCOMPtr<nsILayoutHistoryState> layoutState;
-    if (shell) {
-      rv = shell->CaptureHistoryState(getter_AddRefs(layoutState));
+    if (RefPtr<PresShell> presShell = GetPresShell()) {
+      rv = presShell->CaptureHistoryState(getter_AddRefs(layoutState));
     } else if (scrollRestorationIsManual) {
       // Even if we don't have layout anymore, we may want to reset the
       // current scroll state in layout history.
@@ -12014,10 +12048,10 @@ nsresult nsDocShell::GetPromptAndStringBundle(nsIPrompt** aPrompt,
 }
 
 nsIScrollableFrame* nsDocShell::GetRootScrollFrame() {
-  nsCOMPtr<nsIPresShell> shell = GetPresShell();
-  NS_ENSURE_TRUE(shell, nullptr);
+  PresShell* presShell = GetPresShell();
+  NS_ENSURE_TRUE(presShell, nullptr);
 
-  return shell->GetRootScrollFrameAsScrollable();
+  return presShell->GetRootScrollFrameAsScrollable();
 }
 
 nsresult nsDocShell::EnsureScriptEnvironment() {
@@ -13101,7 +13135,7 @@ nsDocShell::GetOSHEId(uint32_t* aSHEntryId) {
 
 NS_IMETHODIMP
 nsDocShell::GetAsyncPanZoomEnabled(bool* aOut) {
-  if (nsIPresShell* presShell = GetPresShell()) {
+  if (PresShell* presShell = GetPresShell()) {
     *aOut = presShell->AsyncPanZoomEnabled();
     return NS_OK;
   }
@@ -13374,7 +13408,7 @@ nsDocShell::SetColorMatrix(float* aMatrix, uint32_t aMatrixLen) {
     return NS_ERROR_INVALID_ARG;
   }
 
-  nsIPresShell* presShell = GetPresShell();
+  PresShell* presShell = GetPresShell();
   if (!presShell) {
     return NS_ERROR_FAILURE;
   }

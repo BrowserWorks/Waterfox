@@ -38,10 +38,22 @@ const {
   TEMPORARY_EXTENSION_INSTALL_FAILURE,
   TEMPORARY_EXTENSION_INSTALL_START,
   TEMPORARY_EXTENSION_INSTALL_SUCCESS,
+  TEMPORARY_EXTENSION_RELOAD_FAILURE,
+  TEMPORARY_EXTENSION_RELOAD_START,
+  TEMPORARY_EXTENSION_RELOAD_SUCCESS,
   RUNTIMES,
 } = require("../constants");
 
 const Actions = require("./index");
+
+function isCachedActorNeeded(runtime, type, id) {
+  // Unique ids for workers were introduced in Firefox 68 (Bug 1539328). When debugging
+  // older browsers, the id falls back to the actor ID. Check if the target id is a worker
+  // actorID (which means getActor() should return an actor with id).
+  // Can be removed when Firefox 68 is in Release channel.
+  return type === DEBUG_TARGETS.WORKER &&
+         runtime.runtimeDetails.clientWrapper.client.getActor(id);
+}
 
 function getTabForUrl(url) {
   for (const navigator of Services.wm.getEnumerator("navigator:browser")) {
@@ -58,10 +70,10 @@ function getTabForUrl(url) {
 function inspectDebugTarget(type, id) {
   return async (dispatch, getState) => {
     const runtime = getCurrentRuntime(getState().runtimes);
-    const remoteId = remoteClientManager.getRemoteId(runtime.id, runtime.type);
+    id = encodeURIComponent(id);
 
     let url;
-    if (runtime.id === RUNTIMES.THIS_FIREFOX && type !== DEBUG_TARGETS.WORKER) {
+    if (runtime.id === RUNTIMES.THIS_FIREFOX && !isCachedActorNeeded(runtime, type, id)) {
       // Even when debugging on This Firefox we need to re-use the client since the worker
       // actor is cached in the client instance. Instead we should pass an id that does
       // not depend on the client (such as the worker url). This will be fixed in
@@ -73,6 +85,7 @@ function inspectDebugTarget(type, id) {
       // will fail. See Bug 1534201.
       url = `about:devtools-toolbox?type=${type}&id=${id}`;
     } else {
+      const remoteId = remoteClientManager.getRemoteId(runtime.id, runtime.type);
       url = `about:devtools-toolbox?type=${type}&id=${id}&remoteId=${remoteId}`;
     }
 
@@ -120,14 +133,17 @@ function pushServiceWorker(id) {
 }
 
 function reloadTemporaryExtension(id) {
-  return async (_, getState) => {
+  return async (dispatch, getState) => {
+    dispatch({ type: TEMPORARY_EXTENSION_RELOAD_START, id });
     const clientWrapper = getCurrentClient(getState().runtimes);
 
     try {
       const addonTargetFront = await clientWrapper.getAddon({ id });
       await addonTargetFront.reload();
+      dispatch({ type: TEMPORARY_EXTENSION_RELOAD_SUCCESS, id });
     } catch (e) {
-      console.error(e);
+      const error = typeof e === "string" ? new Error(e) : e;
+      dispatch({ type: TEMPORARY_EXTENSION_RELOAD_FAILURE, id, error });
     }
   };
 }

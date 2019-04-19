@@ -21,6 +21,7 @@
 #include "mozilla/dom/BeforeUnloadEvent.h"
 #include "mozilla/dom/PopupBlocker.h"
 #include "mozilla/dom/Document.h"
+#include "mozilla/dom/DocumentInlines.h"
 #include "nsPresContext.h"
 #include "nsIFrame.h"
 #include "nsIWritablePropertyBag2.h"
@@ -354,6 +355,7 @@ class nsDocumentViewer final : public nsIContentViewer,
   already_AddRefed<nsINode> GetPopupLinkNode();
   already_AddRefed<nsIImageLoadingContent> GetPopupImageNode();
 
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   nsresult GetContentSizeInternal(int32_t* aWidth, int32_t* aHeight,
                                   nscoord aMaxWidth, nscoord aMaxHeight);
 
@@ -1482,8 +1484,7 @@ static void AttachContainerRecurse(nsIDocShell* aShell) {
       nsCOMPtr<nsILinkHandler> handler = do_QueryInterface(aShell);
       pc->SetLinkHandler(handler);
     }
-    nsCOMPtr<nsIPresShell> presShell = viewer->GetPresShell();
-    if (presShell) {
+    if (PresShell* presShell = viewer->GetPresShell()) {
       presShell->SetForwardingContainer(WeakPtr<nsDocShell>());
     }
   }
@@ -1643,8 +1644,7 @@ static void DetachContainerRecurse(nsIDocShell* aShell) {
     if (pc) {
       pc->Detach();
     }
-    nsCOMPtr<nsIPresShell> presShell = viewer->GetPresShell();
-    if (presShell) {
+    if (PresShell* presShell = viewer->GetPresShell()) {
       auto weakShell = static_cast<nsDocShell*>(aShell);
       presShell->SetForwardingContainer(weakShell);
     }
@@ -1973,7 +1973,7 @@ nsDocumentViewer::SetDocumentInternal(Document* aDocument,
   return rv;
 }
 
-nsIPresShell* nsDocumentViewer::GetPresShell() { return mPresShell; }
+PresShell* nsDocumentViewer::GetPresShell() { return mPresShell; }
 
 nsPresContext* nsDocumentViewer::GetPresContext() { return mPresContext; }
 
@@ -2515,8 +2515,9 @@ NS_IMETHODIMP nsDocumentViewer::SelectAll() {
 }
 
 NS_IMETHODIMP nsDocumentViewer::CopySelection() {
+  RefPtr<PresShell> presShell = mPresShell;
   nsCopySupport::FireClipboardEvent(eCopy, nsIClipboard::kGlobalClipboard,
-                                    mPresShell, nullptr);
+                                    presShell, nullptr);
   return NS_OK;
 }
 
@@ -3086,8 +3087,7 @@ nsDocumentViewer::PausePainting() {
   bool enablePaint = false;
   CallChildren(ChangeChildPaintingEnabled, &enablePaint);
 
-  nsIPresShell* presShell = GetPresShell();
-  if (presShell) {
+  if (PresShell* presShell = GetPresShell()) {
     presShell->PausePainting();
   }
 
@@ -3099,8 +3099,7 @@ nsDocumentViewer::ResumePainting() {
   bool enablePaint = true;
   CallChildren(ChangeChildPaintingEnabled, &enablePaint);
 
-  nsIPresShell* presShell = GetPresShell();
-  if (presShell) {
+  if (PresShell* presShell = GetPresShell()) {
     presShell->ResumePainting();
   }
 
@@ -3113,7 +3112,7 @@ nsresult nsDocumentViewer::GetContentSizeInternal(int32_t* aWidth,
                                                   nscoord aMaxHeight) {
   NS_ENSURE_TRUE(mDocument, NS_ERROR_NOT_AVAILABLE);
 
-  nsCOMPtr<nsIPresShell> presShell = GetPresShell();
+  RefPtr<PresShell> presShell = GetPresShell();
   NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
 
   // Flush out all content and style updates. We can't use a resize reflow
@@ -3372,12 +3371,11 @@ nsDocViewerFocusListener::~nsDocViewerFocusListener() {}
 nsresult nsDocViewerFocusListener::HandleEvent(Event* aEvent) {
   NS_ENSURE_STATE(mDocViewer);
 
-  nsCOMPtr<nsIPresShell> shell = mDocViewer->GetPresShell();
-  NS_ENSURE_TRUE(shell, NS_ERROR_FAILURE);
+  RefPtr<PresShell> presShell = mDocViewer->GetPresShell();
+  NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
 
-  nsCOMPtr<nsISelectionController> selCon = do_QueryInterface(shell);
   int16_t selectionStatus;
-  selCon->GetDisplaySelection(&selectionStatus);
+  presShell->GetDisplaySelection(&selectionStatus);
 
   nsAutoString eventType;
   aEvent->GetType(eventType);
@@ -3385,16 +3383,17 @@ nsresult nsDocViewerFocusListener::HandleEvent(Event* aEvent) {
     // If selection was disabled, re-enable it.
     if (selectionStatus == nsISelectionController::SELECTION_DISABLED ||
         selectionStatus == nsISelectionController::SELECTION_HIDDEN) {
-      selCon->SetDisplaySelection(nsISelectionController::SELECTION_ON);
-      selCon->RepaintSelection(nsISelectionController::SELECTION_NORMAL);
+      presShell->SetDisplaySelection(nsISelectionController::SELECTION_ON);
+      presShell->RepaintSelection(nsISelectionController::SELECTION_NORMAL);
     }
   } else {
     MOZ_ASSERT(eventType.EqualsLiteral("blur"), "Unexpected event type");
     // If selection was on, disable it.
     if (selectionStatus == nsISelectionController::SELECTION_ON ||
         selectionStatus == nsISelectionController::SELECTION_ATTENTION) {
-      selCon->SetDisplaySelection(nsISelectionController::SELECTION_DISABLED);
-      selCon->RepaintSelection(nsISelectionController::SELECTION_NORMAL);
+      presShell->SetDisplaySelection(
+          nsISelectionController::SELECTION_DISABLED);
+      presShell->RepaintSelection(nsISelectionController::SELECTION_NORMAL);
     }
   }
 
@@ -4179,7 +4178,7 @@ void nsDocumentViewer::InitializeForPrintPreview() {
 
 void nsDocumentViewer::SetPrintPreviewPresentation(nsViewManager* aViewManager,
                                                    nsPresContext* aPresContext,
-                                                   nsIPresShell* aPresShell) {
+                                                   PresShell* aPresShell) {
   // Protect against pres shell destruction running scripts and re-entrantly
   // creating a new presentation.
   nsAutoScriptBlocker scriptBlocker;
@@ -4191,7 +4190,7 @@ void nsDocumentViewer::SetPrintPreviewPresentation(nsViewManager* aViewManager,
   mWindow = nullptr;
   mViewManager = aViewManager;
   mPresContext = aPresContext;
-  mPresShell = static_cast<PresShell*>(aPresShell);
+  mPresShell = aPresShell;
 
   if (ShouldAttachToTopLevel()) {
     DetachFromTopLevelWidget();

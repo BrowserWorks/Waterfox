@@ -14,14 +14,15 @@
 #include "gfxMatrix.h"
 #include "gfxPattern.h"
 #include "gfxPlatform.h"
+#include "mozilla/ComputedStyle.h"
+#include "mozilla/PresShell.h"
+#include "mozilla/dom/SVGPatternElement.h"
+#include "mozilla/dom/SVGUnitTypesBinding.h"
 #include "mozilla/gfx/2D.h"
 #include "nsGkAtoms.h"
 #include "nsSVGDisplayableFrame.h"
-#include "mozilla/ComputedStyle.h"
 #include "SVGObserverUtils.h"
 #include "SVGGeometryFrame.h"
-#include "mozilla/dom/SVGPatternElement.h"
-#include "mozilla/dom/SVGUnitTypesBinding.h"
 #include "nsSVGUtils.h"
 #include "SVGAnimatedTransformList.h"
 #include "SVGContentUtils.h"
@@ -354,15 +355,13 @@ already_AddRefed<SourceSurface> nsSVGPatternFrame::PaintPattern(
         NS_FRAME_DRAWING_AS_PAINTSERVER)) {
     AutoSetRestorePaintServerState paintServer(patternWithChildren);
     for (nsIFrame *kid = firstKid; kid; kid = kid->GetNextSibling()) {
+      gfxMatrix tm = *(patternWithChildren->mCTM);
+
       // The CTM of each frame referencing us can be different
       nsSVGDisplayableFrame *SVGFrame = do_QueryFrame(kid);
       if (SVGFrame) {
         SVGFrame->NotifySVGChanged(nsSVGDisplayableFrame::TRANSFORM_CHANGED);
-      }
-      gfxMatrix tm = *(patternWithChildren->mCTM);
-      if (kid->GetContent()->IsSVGElement()) {
-        tm = static_cast<SVGElement *>(kid->GetContent())
-                 ->PrependLocalTransformsTo(tm, eUserSpaceToParent);
+        tm = nsSVGUtils::GetTransformMatrixInUserSpace(kid, patternWithChildren) * tm;
       }
 
       nsSVGUtils::PaintFrameWithEffects(kid, *ctx, tm, aImgParams);
@@ -636,7 +635,7 @@ gfxMatrix nsSVGPatternFrame::ConstructCTM(const SVGAnimatedViewBox &aViewBox,
   if (!aViewBox.IsExplicitlySet()) {
     return gfxMatrix(scaleX, 0.0, 0.0, scaleY, 0.0, 0.0);
   }
-  const SVGViewBox viewBox = aViewBox.GetAnimValue();
+  const SVGViewBox& viewBox = aViewBox.GetAnimValue();
 
   if (viewBox.height <= 0.0f || viewBox.width <= 0.0f) {
     return gfxMatrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);  // singular
@@ -705,8 +704,7 @@ already_AddRefed<gfxPattern> nsSVGPatternFrame::GetPaintServerPattern(
 // Public functions
 // -------------------------------------------------------------------------
 
-nsIFrame *NS_NewSVGPatternFrame(nsIPresShell *aPresShell,
-                                ComputedStyle *aStyle) {
+nsIFrame *NS_NewSVGPatternFrame(PresShell *aPresShell, ComputedStyle *aStyle) {
   return new (aPresShell)
       nsSVGPatternFrame(aStyle, aPresShell->GetPresContext());
 }

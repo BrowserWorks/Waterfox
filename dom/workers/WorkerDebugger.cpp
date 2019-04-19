@@ -318,6 +318,18 @@ WorkerDebugger::GetServiceWorkerID(uint32_t* aResult) {
 }
 
 NS_IMETHODIMP
+WorkerDebugger::GetId(nsAString& aResult) {
+  AssertIsOnMainThread();
+
+  if (!mWorkerPrivate) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  aResult = mWorkerPrivate->Id();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 WorkerDebugger::Initialize(const nsAString& aURL) {
   AssertIsOnMainThread();
 
@@ -437,10 +449,16 @@ void WorkerDebugger::ReportErrorToDebuggerOnMainThread(
     listeners[index]->OnError(aFilename, aLineno, aMessage);
   }
 
-  WorkerErrorReport report;
+  // We need a JSContext to be able to read any stack associated with the error.
+  // This will not run any scripts.
+  AutoJSAPI jsapi;
+  DebugOnly<bool> ok = jsapi.Init(xpc::UnprivilegedJunkScope());
+  MOZ_ASSERT(ok, "UnprivilegedJunkScope should exist");
+
+  WorkerErrorReport report(nullptr);
   report.mMessage = aMessage;
   report.mFilename = aFilename;
-  WorkerErrorReport::LogErrorToConsole(report, 0);
+  WorkerErrorReport::LogErrorToConsole(jsapi.cx(), report, 0);
 }
 
 RefPtr<PerformanceInfoPromise> WorkerDebugger::ReportPerformanceInfo() {

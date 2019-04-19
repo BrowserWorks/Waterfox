@@ -445,8 +445,15 @@ var LoginManagerContent = {
     if (!event.isTrusted) {
       return;
     }
+    let isMasterPasswordSet = Services.cpmm.sharedData.get("isMasterPasswordSet");
     let document = event.target.ownerDocument;
-    if (document.visibilityState == "visible") {
+
+    // don't attempt to defer handling when a master password is set
+    // Showing the MP modal as soon as possible minimizes its interference with tab interactions
+    // See bug 1539091 and bug 1538460.
+    log("onDOMFormHasPassword, visibilityState:", document.visibilityState,
+        "isMasterPasswordSet:", isMasterPasswordSet);
+    if (document.visibilityState == "visible" || isMasterPasswordSet) {
       this._processDOMFormHasPasswordEvent(event);
     } else {
       // wait until the document becomes visible before handling this event
@@ -477,7 +484,14 @@ var LoginManagerContent = {
     }
 
     let document = pwField.ownerDocument;
-    if (document.visibilityState == "visible") {
+    let isMasterPasswordSet = Services.cpmm.sharedData.get("isMasterPasswordSet");
+    log("onDOMInputPasswordAdded, visibilityState:", document.visibilityState,
+        "isMasterPasswordSet:", isMasterPasswordSet);
+
+    // don't attempt to defer handling when a master password is set
+    // Showing the MP modal as soon as possible minimizes its interference with tab interactions
+    // See bug 1539091 and bug 1538460.
+    if (document.visibilityState == "visible" || isMasterPasswordSet) {
       this._processDOMInputPasswordAddedEvent(event, topWindow);
     } else {
       // wait until the document becomes visible before handling this event
@@ -596,8 +610,8 @@ var LoginManagerContent = {
       let hasLoginForm = ChromeUtils.nondeterministicGetWeakSetKeys(rootElsWeakSet)
                                     .filter(el => el.isConnected).length > 0;
       return (hasLoginForm && !thisWindow.isSecureContext) ||
-             Array.some(thisWindow.frames,
-                        frame => hasInsecureLoginForms(frame));
+             Array.prototype.some.call(thisWindow.frames,
+                                       frame => hasInsecureLoginForms(frame));
     };
 
     let messageManager = topWindow.docShell.messageManager;
@@ -789,7 +803,7 @@ var LoginManagerContent = {
    */
   _getPasswordFields(form, {
     fieldOverrideRecipe = null,
-    skipEmptyFields = false,
+    minPasswordLength = 0,
   } = {}) {
     // Locate the password fields in the form.
     let pwFields = [];
@@ -809,8 +823,13 @@ var LoginManagerContent = {
         continue;
       }
 
-      if (skipEmptyFields && !element.value.trim()) {
-        continue;
+      // XXX: Bug 780449 tracks our handling of emoji and multi-code-point characters in
+      // password fields. To avoid surprises, we should be consistent with the visual
+      // representation of the masked password
+      if (minPasswordLength && element.value.trim().length < minPasswordLength) {
+        log("skipping password field (id/name is", element.id, " / ",
+            element.name + ") as value is too short:", element.value.trim().length);
+        continue; // Ignore empty or too-short passwords fields
       }
 
       pwFields[pwFields.length] = {
@@ -882,9 +901,10 @@ var LoginManagerContent = {
     if (!pwFields) {
       // Locate the password field(s) in the form. Up to 3 supported.
       // If there's no password field, there's nothing for us to do.
+      const minSubmitPasswordLength = 2;
       pwFields = this._getPasswordFields(form, {
         fieldOverrideRecipe,
-        skipEmptyFields: isSubmission,
+        minPasswordLength: isSubmission ? minSubmitPasswordLength : 0,
       });
     }
 

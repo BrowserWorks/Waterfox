@@ -197,18 +197,17 @@ NS_INTERFACE_MAP_END
 NS_IMPL_CYCLE_COLLECTING_ADDREF(TabChildBase)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(TabChildBase)
 
-already_AddRefed<Document> TabChildBase::GetDocument() const {
+already_AddRefed<Document> TabChildBase::GetTopLevelDocument() const {
   nsCOMPtr<Document> doc;
   WebNavigation()->GetDocument(getter_AddRefs(doc));
   return doc.forget();
 }
 
-already_AddRefed<nsIPresShell> TabChildBase::GetPresShell() const {
-  nsCOMPtr<nsIPresShell> result;
-  if (nsCOMPtr<Document> doc = GetDocument()) {
-    result = doc->GetPresShell();
+PresShell* TabChildBase::GetTopLevelPresShell() const {
+  if (RefPtr<Document> doc = GetTopLevelDocument()) {
+    return doc->GetPresShell();
   }
-  return result.forget();
+  return nullptr;
 }
 
 void TabChildBase::DispatchMessageManagerMessage(const nsAString& aMessageName,
@@ -237,10 +236,10 @@ bool TabChildBase::UpdateFrameHandler(const RepaintRequest& aRequest) {
   MOZ_ASSERT(aRequest.GetScrollId() != ScrollableLayerGuid::NULL_SCROLL_ID);
 
   if (aRequest.IsRootContent()) {
-    if (nsCOMPtr<nsIPresShell> shell = GetPresShell()) {
+    if (PresShell* presShell = GetTopLevelPresShell()) {
       // Guard against stale updates (updates meant for a pres shell which
       // has since been torn down and destroyed).
-      if (aRequest.GetPresShellId() == shell->GetPresShellId()) {
+      if (aRequest.GetPresShellId() == presShell->GetPresShellId()) {
         ProcessUpdateFrame(aRequest);
         return true;
       }
@@ -452,7 +451,7 @@ TabChild::Observe(nsISupports* aSubject, const char* aTopic,
   if (!strcmp(aTopic, BEFORE_FIRST_PAINT)) {
     if (AsyncPanZoomEnabled()) {
       nsCOMPtr<Document> subject(do_QueryInterface(aSubject));
-      nsCOMPtr<Document> doc(GetDocument());
+      nsCOMPtr<Document> doc(GetTopLevelDocument());
 
       if (subject == doc) {
         RefPtr<PresShell> presShell = doc->GetPresShell();
@@ -564,6 +563,8 @@ nsresult TabChild::Init(mozIDOMWindowProxy* aParent) {
   loadContext->SetPrivateBrowsing(OriginAttributesRef().mPrivateBrowsingId > 0);
   loadContext->SetRemoteTabs(mChromeFlags &
                              nsIWebBrowserChrome::CHROME_REMOTE_WINDOW);
+  loadContext->SetRemoteSubframes(mChromeFlags &
+                                  nsIWebBrowserChrome::CHROME_FISSION_WINDOW);
 
   // Few lines before, baseWindow->Create() will end up creating a new
   // window root in nsGlobalWindow::SetDocShell.
@@ -1051,15 +1052,39 @@ mozilla::ipc::IPCResult TabChild::RecvLoadURL(const nsCString& aURI,
       nsIWebNavigation::LOAD_FLAGS_ALLOW_THIRD_PARTY_FIXUP |
       nsIWebNavigation::LOAD_FLAGS_DISALLOW_INHERIT_PRINCIPAL;
 
-  nsresult rv =
-      WebNavigation()->LoadURI(NS_ConvertUTF8toUTF16(aURI), loadURIOptions);
+  nsIWebNavigation* webNav = WebNavigation();
+  nsresult rv = webNav->LoadURI(NS_ConvertUTF8toUTF16(aURI), loadURIOptions);
   if (NS_FAILED(rv)) {
     NS_WARNING(
         "WebNavigation()->LoadURI failed. Eating exception, what else can I "
         "do?");
   }
 
+  nsCOMPtr<nsIDocShell> docShell = do_GetInterface(WebNavigation());
+  if (docShell) {
+    nsDocShell::Cast(docShell)->MaybeClearStorageAccessFlag();
+  }
+
   CrashReporter::AnnotateCrashReport(CrashReporter::Annotation::URL, aURI);
+
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult TabChild::RecvResumeLoad(
+    const uint64_t& aPendingSwitchID, const ShowInfo& aInfo) {
+  if (!mDidLoadURLInit) {
+    mDidLoadURLInit = true;
+    if (!InitTabChildMessageManager()) {
+      return IPC_FAIL_NO_REASON(this);
+    }
+
+    ApplyShowInfo(aInfo);
+  }
+
+  nsresult rv = WebNavigation()->ResumeRedirectedLoad(aPendingSwitchID, -1);
+  if (NS_FAILED(rv)) {
+    NS_WARNING("WebNavigation()->ResumeRedirectedLoad failed");
+  }
 
   return IPC_OK();
 }
@@ -1208,7 +1233,7 @@ mozilla::ipc::IPCResult TabChild::RecvSizeModeChanged(
   if (!mPuppetWidget->IsVisible()) {
     return IPC_OK();
   }
-  nsCOMPtr<Document> document(GetDocument());
+  nsCOMPtr<Document> document(GetTopLevelDocument());
   nsPresContext* presContext = document->GetPresContext();
   if (presContext) {
     presContext->SizeModeChanged(aSizeMode);
@@ -1229,8 +1254,8 @@ bool TabChild::UpdateFrame(const RepaintRequest& aRequest) {
 
 mozilla::ipc::IPCResult TabChild::RecvSuppressDisplayport(
     const bool& aEnabled) {
-  if (nsCOMPtr<nsIPresShell> shell = GetPresShell()) {
-    shell->SuppressDisplayport(aEnabled);
+  if (RefPtr<PresShell> presShell = GetTopLevelPresShell()) {
+    presShell->SuppressDisplayport(aEnabled);
   }
   return IPC_OK();
 }
@@ -1249,7 +1274,7 @@ void TabChild::HandleDoubleTap(const CSSPoint& aPoint,
 
   // Note: there is nothing to do with the modifiers here, as we are not
   // synthesizing any sort of mouse event.
-  RefPtr<Document> document = GetDocument();
+  RefPtr<Document> document = GetTopLevelDocument();
   CSSRect zoomToRect = CalculateRectToZoomTo(document, aPoint);
   // The double-tap can be dispatched by any scroll frame (so |aGuid| could be
   // the guid of any scroll frame), but the zoom-to-rect operation must be
@@ -1275,7 +1300,7 @@ mozilla::ipc::IPCResult TabChild::RecvHandleTap(
   // to be refcounted. This function can run script, which may trigger a nested
   // event loop, which may release this, so we hold a strong reference here.
   RefPtr<TabChild> kungFuDeathGrip(this);
-  nsCOMPtr<nsIPresShell> presShell = GetPresShell();
+  RefPtr<PresShell> presShell = GetTopLevelPresShell();
   if (!presShell) {
     return IPC_OK();
   }
@@ -1372,8 +1397,9 @@ mozilla::ipc::IPCResult TabChild::RecvActivate() {
   // Ensure that the PresShell exists, otherwise focusing
   // is definitely not going to work. GetPresShell should
   // create a PresShell if one doesn't exist yet.
-  nsCOMPtr<nsIPresShell> presShell = GetPresShell();
+  RefPtr<PresShell> presShell = GetTopLevelPresShell();
   MOZ_ASSERT(presShell);
+  Unused << presShell;
 
   mWebBrowser->FocusActivate();
   return IPC_OK();
@@ -1419,7 +1445,7 @@ mozilla::ipc::IPCResult TabChild::RecvMouseEvent(
   // to be refcounted. This function can run script, which may trigger a nested
   // event loop, which may release this, so we hold a strong reference here.
   RefPtr<TabChild> kungFuDeathGrip(this);
-  nsCOMPtr<nsIPresShell> presShell(GetPresShell());
+  RefPtr<PresShell> presShell = GetTopLevelPresShell();
   APZCCallbackHelper::DispatchMouseEvent(
       presShell, aType, CSSPoint(aX, aY), aButton, aClickCount, aModifiers,
       aIgnoreRootScrollFrame, MouseEvent_Binding::MOZ_SOURCE_UNKNOWN,
@@ -1463,7 +1489,8 @@ void TabChild::ProcessPendingCoalescedMouseDataAndDispatchEvents() {
   }
 }
 
-LayoutDeviceToLayoutDeviceMatrix4x4 TabChild::GetChildToParentConversionMatrix() const {
+LayoutDeviceToLayoutDeviceMatrix4x4 TabChild::GetChildToParentConversionMatrix()
+    const {
   if (mChildToParentConversionMatrix) {
     return *mChildToParentConversionMatrix;
   }
@@ -1583,7 +1610,7 @@ void TabChild::HandleRealMouseButtonEvent(const WidgetMouseEvent& aEvent,
   // notifications for them.
   UniquePtr<DisplayportSetListener> postLayerization;
   if (aInputBlockId && aEvent.mFlags.mHandledByAPZ) {
-    nsCOMPtr<Document> document(GetDocument());
+    nsCOMPtr<Document> document(GetTopLevelDocument());
     postLayerization = APZCCallbackHelper::SendSetTargetAPZCNotification(
         mPuppetWidget, document, aEvent, aGuid, aInputBlockId);
   }
@@ -1675,7 +1702,7 @@ void TabChild::DispatchWheelEvent(const WidgetWheelEvent& aEvent,
                                   const uint64_t& aInputBlockId) {
   WidgetWheelEvent localEvent(aEvent);
   if (aInputBlockId && aEvent.mFlags.mHandledByAPZ) {
-    nsCOMPtr<Document> document(GetDocument());
+    nsCOMPtr<Document> document(GetTopLevelDocument());
     UniquePtr<DisplayportSetListener> postLayerization =
         APZCCallbackHelper::SendSetTargetAPZCNotification(
             mPuppetWidget, document, aEvent, aGuid, aInputBlockId);
@@ -1743,7 +1770,7 @@ mozilla::ipc::IPCResult TabChild::RecvRealTouchEvent(
                                              mPuppetWidget->GetDefaultScale());
 
   if (localEvent.mMessage == eTouchStart && AsyncPanZoomEnabled()) {
-    nsCOMPtr<Document> document = GetDocument();
+    nsCOMPtr<Document> document = GetTopLevelDocument();
     if (gfxPrefs::TouchActionEnabled()) {
       APZCCallbackHelper::SendSetAllowedTouchBehaviorNotification(
           mPuppetWidget, document, localEvent, aInputBlockId,
@@ -2204,7 +2231,7 @@ mozilla::ipc::IPCResult TabChild::RecvSwappedWithOtherRemoteLoader(
 
 mozilla::ipc::IPCResult TabChild::RecvHandleAccessKey(
     const WidgetKeyboardEvent& aEvent, nsTArray<uint32_t>&& aCharCodes) {
-  nsCOMPtr<Document> document(GetDocument());
+  nsCOMPtr<Document> document(GetTopLevelDocument());
   RefPtr<nsPresContext> pc = document->GetPresContext();
   if (pc) {
     if (!pc->EventStateManager()->HandleAccessKey(
@@ -2436,7 +2463,7 @@ mozilla::ipc::IPCResult TabChild::RecvRenderLayers(
     // a content viewer if one doesn't exist yet. Creating a content viewer can
     // cause JS to run, which we want to avoid. nsIDocShell::GetPresShell
     // returns null if no content viewer exists yet.
-    if (nsCOMPtr<nsIPresShell> presShell = docShell->GetPresShell()) {
+    if (RefPtr<PresShell> presShell = docShell->GetPresShell()) {
       presShell->SetIsActive(true);
 
       if (nsIFrame* root = presShell->GetRootFrame()) {
@@ -2751,7 +2778,7 @@ void TabChild::MakeHidden() {
     // here because that would create a content viewer if one doesn't exist yet.
     // Creating a content viewer can cause JS to run, which we want to avoid.
     // nsIDocShell::GetPresShell returns null if no content viewer exists yet.
-    if (nsCOMPtr<nsIPresShell> presShell = docShell->GetPresShell()) {
+    if (RefPtr<PresShell> presShell = docShell->GetPresShell()) {
       if (nsPresContext* presContext = presShell->GetPresContext()) {
         nsRootPresContext* rootPresContext = presContext->GetRootPresContext();
         nsIFrame* rootFrame = presShell->GetRootFrame();
@@ -2879,7 +2906,7 @@ nsTArray<RefPtr<TabChild>> TabChild::GetAll() {
   return list;
 }
 
-TabChild* TabChild::GetFrom(nsIPresShell* aPresShell) {
+TabChild* TabChild::GetFrom(PresShell* aPresShell) {
   Document* doc = aPresShell->GetDocument();
   if (!doc) {
     return nullptr;
@@ -2956,7 +2983,7 @@ void TabChild::SchedulePaint() {
   // a content viewer if one doesn't exist yet. Creating a content viewer can
   // cause JS to run, which we want to avoid. nsIDocShell::GetPresShell
   // returns null if no content viewer exists yet.
-  if (nsCOMPtr<nsIPresShell> presShell = docShell->GetPresShell()) {
+  if (RefPtr<PresShell> presShell = docShell->GetPresShell()) {
     if (nsIFrame* root = presShell->GetRootFrame()) {
       root->SchedulePaint();
     }
@@ -3001,7 +3028,7 @@ void TabChild::ReinitRendering() {
   MOZ_ASSERT(lm);
   lm->SetLayersObserverEpoch(mLayersObserverEpoch);
 
-  nsCOMPtr<Document> doc(GetDocument());
+  nsCOMPtr<Document> doc(GetTopLevelDocument());
   doc->NotifyLayerManagerRecreated();
 }
 
@@ -3061,7 +3088,7 @@ mozilla::ipc::IPCResult TabChild::RecvUIResolutionChanged(
   if (aDpi > 0) {
     mPuppetWidget->UpdateBackingScaleCache(aDpi, aRounding, aScale);
   }
-  nsCOMPtr<Document> document(GetDocument());
+  nsCOMPtr<Document> document(GetTopLevelDocument());
   RefPtr<nsPresContext> presContext = document->GetPresContext();
   if (presContext) {
     presContext->UIResolutionChangedSync();
@@ -3085,7 +3112,7 @@ mozilla::ipc::IPCResult TabChild::RecvUIResolutionChanged(
 mozilla::ipc::IPCResult TabChild::RecvThemeChanged(
     nsTArray<LookAndFeelInt>&& aLookAndFeelIntCache) {
   LookAndFeel::SetIntCache(aLookAndFeelIntCache);
-  nsCOMPtr<Document> document(GetDocument());
+  nsCOMPtr<Document> document(GetTopLevelDocument());
   RefPtr<nsPresContext> presContext = document->GetPresContext();
   if (presContext) {
     presContext->ThemeChanged();
@@ -3141,7 +3168,7 @@ mozilla::ipc::IPCResult TabChild::RecvGetContentBlockingLog(
   bool success = false;
   nsAutoCString result;
 
-  if (nsCOMPtr<Document> doc = GetDocument()) {
+  if (nsCOMPtr<Document> doc = GetTopLevelDocument()) {
     result = doc->GetContentBlockingLog()->Stringify();
     success = true;
   }

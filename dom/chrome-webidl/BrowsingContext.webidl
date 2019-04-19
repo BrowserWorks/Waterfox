@@ -16,9 +16,13 @@ interface BrowsingContext {
 
   readonly attribute BrowsingContext? parent;
 
+  readonly attribute BrowsingContext top;
+
   sequence<BrowsingContext> getChildren();
 
   readonly attribute nsIDocShell? docShell;
+
+  readonly attribute Element? embedderElement;
 
   readonly attribute unsigned long long id;
 
@@ -38,6 +42,8 @@ interface CanonicalBrowsingContext : BrowsingContext {
   // content process has died.
   [Throws]
   readonly attribute DOMString? currentRemoteType;
+
+  readonly attribute WindowGlobalParent? embedderWindowGlobal;
 
   void notifyStartDelayedAutoplayMedia();
 };

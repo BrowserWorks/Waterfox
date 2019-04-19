@@ -16,28 +16,56 @@ import BreakpointHeading from "./BreakpointHeading";
 import actions from "../../../actions";
 import { getDisplayPath } from "../../../utils/source";
 import { getSelectedLocation } from "../../../utils/source-maps";
+import { createHeadlessEditor } from "../../../utils/editor/create-editor";
 
 import {
   makeBreakpointId,
   sortSelectedBreakpoints
 } from "../../../utils/breakpoint";
 
-import { getSelectedSource, getBreakpointSources } from "../../../selectors";
+import {
+  getSelectedSource,
+  getBreakpointSources,
+  getSkipPausing
+} from "../../../selectors";
 
 import type { Source } from "../../../types";
 import type { BreakpointSources } from "../../../selectors/breakpointSources";
+import type SourceEditor from "../../../utils/editor/source-editor";
 
 import "./Breakpoints.css";
 
 type Props = {
   breakpointSources: BreakpointSources,
   selectedSource: Source,
+  skipPausing: boolean,
   shouldPauseOnExceptions: boolean,
   shouldPauseOnCaughtExceptions: boolean,
   pauseOnExceptions: Function
 };
 
 class Breakpoints extends Component<Props> {
+  headlessEditor: ?SourceEditor;
+
+  componentWillUnmount() {
+    this.removeEditor();
+  }
+
+  getEditor(): SourceEditor {
+    if (!this.headlessEditor) {
+      this.headlessEditor = createHeadlessEditor();
+    }
+    return this.headlessEditor;
+  }
+
+  removeEditor() {
+    if (!this.headlessEditor) {
+      return;
+    }
+    this.headlessEditor.destroy();
+    this.headlessEditor = (null: any);
+  }
+
   renderExceptionsOptions() {
     const {
       breakpointSources,
@@ -106,6 +134,7 @@ class Breakpoints extends Component<Props> {
                 breakpoint={breakpoint}
                 source={source}
                 selectedSource={selectedSource}
+                editor={this.getEditor()}
                 key={makeBreakpointId(
                   getSelectedLocation(breakpoint, selectedSource)
                 )}
@@ -118,8 +147,9 @@ class Breakpoints extends Component<Props> {
   }
 
   render() {
+    const { skipPausing } = this.props;
     return (
-      <div>
+      <div className={classnames("pane", skipPausing && "skip-pausing")}>
         {this.renderExceptionsOptions()}
         {this.renderBreakpoints()}
       </div>
@@ -129,7 +159,8 @@ class Breakpoints extends Component<Props> {
 
 const mapStateToProps = state => ({
   breakpointSources: getBreakpointSources(state),
-  selectedSource: getSelectedSource(state)
+  selectedSource: getSelectedSource(state),
+  skipPausing: getSkipPausing(state)
 });
 
 export default connect(

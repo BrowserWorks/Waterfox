@@ -41,7 +41,8 @@
  *
  * @return Ok if browser startup should proceed
  */
-static mozilla::LauncherVoidResult PostCreationSetup(HANDLE aChildProcess,
+static mozilla::LauncherVoidResult PostCreationSetup(const wchar_t* aFullImagePath,
+                                                     HANDLE aChildProcess,
                                                      HANDLE aChildMainThread,
                                                      const bool aIsSafeMode) {
   // The launcher process's DLL blocking code is incompatible with ASAN because
@@ -50,7 +51,7 @@ static mozilla::LauncherVoidResult PostCreationSetup(HANDLE aChildProcess,
 #if defined(MOZ_ASAN) || defined(_M_ARM64)
   return mozilla::Ok();
 #else
-  return mozilla::InitializeDllBlocklistOOP(aChildProcess);
+  return mozilla::InitializeDllBlocklistOOP(aFullImagePath, aChildProcess);
 #endif  // defined(MOZ_ASAN) || defined(_M_ARM64)
 }
 
@@ -180,10 +181,10 @@ static mozilla::Maybe<bool> RunAsLauncherProcess(int& argc, wchar_t** argv) {
 #endif  // defined(MOZ_LAUNCHER_PROCESS)
 
   // We must check for force-launcher *after* we do LauncherRegistryInfo checks
-  runAsLauncher |= mozilla::CheckArg(argc, argv, L"force-launcher",
-                                     static_cast<const wchar_t**>(nullptr),
-                                     mozilla::CheckArgFlag::RemoveArg) ==
-                   mozilla::ARG_FOUND;
+  runAsLauncher |=
+      mozilla::CheckArg(argc, argv, L"force-launcher",
+                        static_cast<const wchar_t**>(nullptr),
+                        mozilla::CheckArgFlag::RemoveArg) == mozilla::ARG_FOUND;
 
   if (!runAsLauncher) {
     // In this case, we will be proceeding to run as the browser.
@@ -332,7 +333,8 @@ Maybe<int> LauncherMain(int& argc, wchar_t* argv[],
   nsAutoHandle mainThread(pi.hThread);
 
   LauncherVoidResult setupResult =
-      PostCreationSetup(process.get(), mainThread.get(), isSafeMode.value());
+      PostCreationSetup(argv[0], process.get(), mainThread.get(),
+                        isSafeMode.value());
   if (setupResult.isErr()) {
     HandleLauncherError(setupResult);
     ::TerminateProcess(process.get(), 1);

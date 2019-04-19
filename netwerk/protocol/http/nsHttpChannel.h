@@ -168,7 +168,7 @@ class nsHttpChannel final : public HttpBaseChannel,
   NS_IMETHOD SetChannelIsForDownload(bool aChannelIsForDownload) override;
   NS_IMETHOD GetNavigationStartTimeStamp(TimeStamp *aTimeStamp) override;
   NS_IMETHOD SetNavigationStartTimeStamp(TimeStamp aTimeStamp) override;
-  NS_IMETHOD CancelByChannelClassifier(nsresult aErrorCode) override;
+  NS_IMETHOD CancelByURLClassifier(nsresult aErrorCode) override;
   // nsISupportsPriority
   NS_IMETHOD SetPriority(int32_t value) override;
   // nsIClassOfService
@@ -309,9 +309,9 @@ class nsHttpChannel final : public HttpBaseChannel,
       const std::function<nsresult(nsHttpChannel *)> &aFunc);
 
   bool RequestIsConditional();
-  void HandleContinueCancellingByChannelClassifier(nsresult aErrorCode);
+  void HandleContinueCancellingByURLClassifier(nsresult aErrorCode);
   nsresult CancelInternal(nsresult status);
-  void ContinueCancellingByChannelClassifier(nsresult aErrorCode);
+  void ContinueCancellingByURLClassifier(nsresult aErrorCode);
 
   // Connections will only be established in this function.
   // (including DNS prefetch and speculative connection.)
@@ -586,6 +586,14 @@ class nsHttpChannel final : public HttpBaseChannel,
   // to readjust the referrer if needed according to the referrer default
   // policy preferences.
   void ReEvaluateReferrerAfterTrackingStatusIsKnown();
+
+  // Create a dummy channel for the same principal, out of the load group
+  // just to revalidate the cache entry.  We don't care if this fails.
+  // This method can be called on any thread, and creates an idle task
+  // to perform the revalidation with delay.
+  void PerformBackgroundCacheRevalidation();
+  // This method can only be called on the main thread.
+  void PerformBackgroundCacheRevalidationNow();
 
  private:
   nsCOMPtr<nsICancelable> mProxyRequest;

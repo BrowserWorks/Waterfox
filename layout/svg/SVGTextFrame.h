@@ -27,6 +27,7 @@ namespace mozilla {
 
 class CharIterator;
 class nsISVGPoint;
+class PresShell;
 class TextFrameIterator;
 class TextNodeCorrespondenceRecorder;
 struct TextRenderedRun;
@@ -158,7 +159,7 @@ class GlyphMetricsUpdater : public Runnable {
  * PaintText so that we can fill the text geometry with SVG paint servers.
  */
 class SVGTextFrame final : public nsSVGDisplayContainerFrame {
-  friend nsIFrame* NS_NewSVGTextFrame(nsIPresShell* aPresShell,
+  friend nsIFrame* NS_NewSVGTextFrame(mozilla::PresShell* aPresShell,
                                       ComputedStyle* aStyle);
 
   friend class mozilla::CharIterator;
@@ -186,7 +187,7 @@ class SVGTextFrame final : public nsSVGDisplayContainerFrame {
                  NS_STATE_SVG_POSITIONING_DIRTY);
   }
 
-  ~SVGTextFrame() {}
+  ~SVGTextFrame() = default;
 
  public:
   NS_DECL_QUERYFRAME
@@ -394,6 +395,7 @@ class SVGTextFrame final : public nsSVGDisplayContainerFrame {
    * exception is text in a textPath where we need to ignore characters that
    * fall off the end of the textPath path.
    */
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   nsresult GetSubStringLengthSlowFallback(nsIContent* aContent,
                                           uint32_t charnum, uint32_t nchars,
                                           float* aResult);

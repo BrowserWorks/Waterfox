@@ -1224,6 +1224,7 @@ JSContext::JSContext(JSRuntime* runtime, const JS::ContextOptions& options)
       helperThread_(nullptr),
       options_(options),
       freeLists_(nullptr),
+      defaultFreeOp_(runtime, true),
       jitActivation(nullptr),
       activation_(nullptr),
       profilingActivation_(nullptr),
@@ -1352,7 +1353,9 @@ static const size_t MAX_REPORTED_STACK_DEPTH = 1u << 7;
 
 void JSContext::setPendingExceptionAndCaptureStack(HandleValue value) {
   RootedObject stack(this);
-  if (!CaptureCurrentStack(this, &stack, JS::StackCapture(JS::MaxFrames(MAX_REPORTED_STACK_DEPTH)))) {
+  if (!CaptureCurrentStack(
+          this, &stack,
+          JS::StackCapture(JS::MaxFrames(MAX_REPORTED_STACK_DEPTH)))) {
     clearPendingException();
   }
 

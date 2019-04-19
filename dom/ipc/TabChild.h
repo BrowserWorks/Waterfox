@@ -22,7 +22,6 @@
 #include "nsIDocShell.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsFrameMessageManager.h"
-#include "nsIPresShell.h"
 #include "nsWeakReference.h"
 #include "nsITabChild.h"
 #include "nsITooltipListener.h"
@@ -61,6 +60,7 @@ class nsPtrHashKey;
 
 namespace mozilla {
 class AbstractThread;
+class PresShell;
 
 namespace layers {
 class APZChild;
@@ -170,10 +170,10 @@ class TabChildBase : public nsISupports,
   virtual ScreenIntSize GetInnerSize() = 0;
 
   // Get the Document for the top-level window in this tab.
-  already_AddRefed<Document> GetDocument() const;
+  already_AddRefed<Document> GetTopLevelDocument() const;
 
   // Get the pres-shell of the document for the top-level window in this tab.
-  already_AddRefed<nsIPresShell> GetPresShell() const;
+  PresShell* GetTopLevelPresShell() const;
 
  protected:
   virtual ~TabChildBase();
@@ -297,6 +297,10 @@ class TabChild final : public TabChildBase,
 
   virtual mozilla::ipc::IPCResult RecvLoadURL(const nsCString& aURI,
                                               const ShowInfo& aInfo) override;
+
+  virtual mozilla::ipc::IPCResult RecvResumeLoad(
+      const uint64_t& aPendingSwitchID, const ShowInfo& aInfo) override;
+
   virtual mozilla::ipc::IPCResult RecvShow(
       const ScreenIntSize& aSize, const ShowInfo& aInfo,
       const bool& aParentIsActive, const nsSizeMode& aSizeMode) override;
@@ -494,7 +498,7 @@ class TabChild final : public TabChildBase,
     return GetFrom(docShell);
   }
 
-  static TabChild* GetFrom(nsIPresShell* aPresShell);
+  static TabChild* GetFrom(PresShell* aPresShell);
   static TabChild* GetFrom(layers::LayersId aLayersId);
 
   layers::LayersId GetLayersId() { return mLayersId; }
@@ -642,7 +646,8 @@ class TabChild final : public TabChildBase,
 
   // The transform from the coordinate space of this TabChild to the coordinate
   // space of the native window its TabParent is in.
-  mozilla::LayoutDeviceToLayoutDeviceMatrix4x4 GetChildToParentConversionMatrix() const;
+  mozilla::LayoutDeviceToLayoutDeviceMatrix4x4
+  GetChildToParentConversionMatrix() const;
 
   // Prepare to dispatch all coalesced mousemove events. We'll move all data
   // in mCoalescedMouseData to a nsDeque; then we start processing them. We

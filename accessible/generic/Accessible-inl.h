@@ -10,6 +10,7 @@
 #include "DocAccessible.h"
 #include "ARIAMap.h"
 #include "nsCoreUtils.h"
+#include "mozilla/PresShell.h"
 
 #ifdef A11Y_LOG
 #  include "Logging.h"
@@ -90,7 +91,11 @@ inline bool Accessible::IsDefunct() const {
 }
 
 inline void Accessible::ScrollTo(uint32_t aHow) const {
-  if (mContent) nsCoreUtils::ScrollTo(mDoc->PresShell(), mContent, aHow);
+  if (mContent) {
+    RefPtr<PresShell> presShell = mDoc->PresShellPtr();
+    nsCOMPtr<nsIContent> content = mContent;
+    nsCoreUtils::ScrollTo(presShell, content, aHow);
+  }
 }
 
 inline bool Accessible::InsertAfter(Accessible* aNewChild,

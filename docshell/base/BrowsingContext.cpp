@@ -13,9 +13,12 @@
 #include "mozilla/dom/BrowsingContextBinding.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/ContentParent.h"
+#include "mozilla/dom/Element.h"
 #include "mozilla/dom/Location.h"
 #include "mozilla/dom/LocationBinding.h"
 #include "mozilla/dom/WindowBinding.h"
+#include "mozilla/dom/WindowGlobalChild.h"
+#include "mozilla/dom/WindowGlobalParent.h"
 #include "mozilla/dom/WindowProxyHolder.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -65,7 +68,7 @@ static void Register(BrowsingContext* aBrowsingContext) {
   aBrowsingContext->Group()->Register(aBrowsingContext);
 }
 
-BrowsingContext* BrowsingContext::TopLevelBrowsingContext() {
+BrowsingContext* BrowsingContext::Top() {
   BrowsingContext* bc = this;
   while (bc->mParent) {
     bc = bc->mParent;
@@ -201,6 +204,56 @@ void BrowsingContext::SetDocShell(nsIDocShell* aDocShell) {
   mIsInProcess = true;
 }
 
+void BrowsingContext::SetEmbedderElement(Element* aEmbedder) {
+  // Notify the parent process of the embedding status. We don't need to do
+  // this when clearing our embedder, as we're being destroyed either way.
+  if (aEmbedder) {
+    nsCOMPtr<nsIDocShell> container =
+        do_QueryInterface(aEmbedder->OwnerDoc()->GetContainer());
+
+    // If our embedder element is being mutated to a different embedder, and we
+    // have a parent edge, bad things might be happening!
+    //
+    // XXX: This is a workaround to some parent edges not being immutable in the
+    // parent process. It can be fixed once bug 1539979 has been fixed.
+    if (mParent && mEmbedderElement && mEmbedderElement != aEmbedder) {
+      NS_WARNING("Non root content frameLoader swap! This will crash soon!");
+
+      MOZ_DIAGNOSTIC_ASSERT(mType == Type::Chrome, "must be chrome");
+      MOZ_DIAGNOSTIC_ASSERT(XRE_IsParentProcess(), "must be in parent");
+      MOZ_DIAGNOSTIC_ASSERT(
+          !sCachedBrowsingContexts || !sCachedBrowsingContexts->has(Id()),
+          "cannot be in bfcache");
+
+      RefPtr<BrowsingContext> kungFuDeathGrip(this);
+      RefPtr<BrowsingContext> newParent;
+      container->GetBrowsingContext(getter_AddRefs(newParent));
+      mParent->mChildren.RemoveElement(this);
+      if (newParent) {
+        newParent->mChildren.AppendElement(this);
+      }
+      mParent = newParent;
+    }
+
+    nsCOMPtr<nsPIDOMWindowInner> inner =
+        do_QueryInterface(aEmbedder->GetOwnerGlobal());
+    if (inner) {
+      RefPtr<WindowGlobalChild> wgc = inner->GetWindowGlobalChild();
+
+      // If we're in-process, synchronously perform the update to ensure we
+      // don't get out of sync.
+      // XXX(nika): This is super gross, and I don't like it one bit.
+      if (RefPtr<WindowGlobalParent> wgp = wgc->GetParentActor()) {
+        Canonical()->SetEmbedderWindowGlobal(wgp);
+      } else {
+        wgc->SendDidEmbedBrowsingContext(this);
+      }
+    }
+  }
+
+  mEmbedderElement = aEmbedder;
+}
+
 void BrowsingContext::Attach(bool aFromIPC) {
   MOZ_LOG(GetLog(), LogLevel::Debug,
           ("%s: %s 0x%08" PRIx64 " to 0x%08" PRIx64,
@@ -306,6 +359,10 @@ void BrowsingContext::CacheChildren(bool aFromIPC) {
 }
 
 bool BrowsingContext::IsCached() { return sCachedBrowsingContexts->has(Id()); }
+
+bool BrowsingContext::HasOpener() const {
+  return sBrowsingContexts->has(mOpenerId);
+}
 
 void BrowsingContext::GetChildren(
     nsTArray<RefPtr<BrowsingContext>>& aChildren) {
@@ -413,7 +470,7 @@ BrowsingContext* BrowsingContext::FindWithSpecialName(const nsAString& aName) {
   }
 
   if (aName.LowerCaseEqualsLiteral("_top")) {
-    BrowsingContext* top = TopLevelBrowsingContext();
+    BrowsingContext* top = Top();
 
     return CanAccess(top) ? top : nullptr;
   }
@@ -490,7 +547,7 @@ void BrowsingContext::NotifyUserGestureActivation() {
   // We would set the user gesture activation flag on the top level browsing
   // context, which would automatically be sync to other top level browsing
   // contexts which are in the different process.
-  RefPtr<BrowsingContext> topLevelBC = TopLevelBrowsingContext();
+  RefPtr<BrowsingContext> topLevelBC = Top();
   USER_ACTIVATION_LOG("Get top level browsing context 0x%08" PRIx64,
                       topLevelBC->Id());
   topLevelBC->SetIsActivatedByUserGesture(true);
@@ -500,21 +557,22 @@ void BrowsingContext::NotifyResetUserGestureActivation() {
   // We would reset the user gesture activation flag on the top level browsing
   // context, which would automatically be sync to other top level browsing
   // contexts which are in the different process.
-  RefPtr<BrowsingContext> topLevelBC = TopLevelBrowsingContext();
+  RefPtr<BrowsingContext> topLevelBC = Top();
   USER_ACTIVATION_LOG("Get top level browsing context 0x%08" PRIx64,
                       topLevelBC->Id());
   topLevelBC->SetIsActivatedByUserGesture(false);
 }
 
 bool BrowsingContext::GetUserGestureActivation() {
-  RefPtr<BrowsingContext> topLevelBC = TopLevelBrowsingContext();
+  RefPtr<BrowsingContext> topLevelBC = Top();
   return topLevelBC->GetIsActivatedByUserGesture();
 }
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(BrowsingContext)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(BrowsingContext)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mDocShell, mChildren, mParent, mGroup)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mDocShell, mChildren, mParent, mGroup,
+                                  mEmbedderElement)
   if (XRE_IsParentProcess()) {
     CanonicalBrowsingContext::Cast(tmp)->Unlink();
   }
@@ -522,7 +580,8 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(BrowsingContext)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(BrowsingContext)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDocShell, mChildren, mParent, mGroup)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDocShell, mChildren, mParent, mGroup,
+                                    mEmbedderElement)
   if (XRE_IsParentProcess()) {
     CanonicalBrowsingContext::Cast(tmp)->Traverse(cb);
   }
@@ -600,9 +659,13 @@ void BrowsingContext::Blur(ErrorResult& aError) {
 }
 
 Nullable<WindowProxyHolder> BrowsingContext::GetTop(ErrorResult& aError) {
+  if (mClosed) {
+    return nullptr;
+  }
+
   // We never return null or throw an error, but the implementation in
   // nsGlobalWindow does and we need to use the same signature.
-  return WindowProxyHolder(TopLevelBrowsingContext());
+  return WindowProxyHolder(Top());
 }
 
 void BrowsingContext::GetOpener(JSContext* aCx,
@@ -619,12 +682,15 @@ void BrowsingContext::GetOpener(JSContext* aCx,
   }
 }
 
-Nullable<WindowProxyHolder> BrowsingContext::GetParent(
-    ErrorResult& aError) const {
+Nullable<WindowProxyHolder> BrowsingContext::GetParent(ErrorResult& aError) {
+  if (mClosed) {
+    return nullptr;
+  }
+
   // We never throw an error, but the implementation in nsGlobalWindow does and
   // we need to use the same signature.
   if (!mParent) {
-    return nullptr;
+    return WindowProxyHolder(this);
   }
   return WindowProxyHolder(mParent.get());
 }
@@ -833,12 +899,12 @@ bool IPDLParamTraits<dom::BrowsingContext>::Read(
   }
 
   if (id == 0) {
-    aResult = nullptr;
+    *aResult = nullptr;
     return true;
   }
 
   *aResult = dom::BrowsingContext::Get(id);
-  MOZ_ASSERT(aResult, "Deserialized absent BrowsingContext!");
+  MOZ_ASSERT(*aResult, "Deserialized absent BrowsingContext!");
 
   // If this is an in-process actor, free the reference taken in ::Write().
   if (!aActor->GetIPCChannel()->IsCrossProcess()) {
@@ -846,7 +912,7 @@ bool IPDLParamTraits<dom::BrowsingContext>::Read(
     NS_IF_RELEASE(bc);
   }
 
-  return aResult != nullptr;
+  return *aResult != nullptr;
 }
 
 void IPDLParamTraits<dom::BrowsingContext::Transaction>::Write(

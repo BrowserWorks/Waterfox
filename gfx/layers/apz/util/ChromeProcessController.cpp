@@ -96,7 +96,7 @@ void ChromeProcessController::Destroy() {
   mAPZEventState = nullptr;
 }
 
-nsIPresShell* ChromeProcessController::GetPresShell() const {
+PresShell* ChromeProcessController::GetPresShell() const {
   if (!mWidget) {
     return nullptr;
   }
@@ -107,7 +107,7 @@ nsIPresShell* ChromeProcessController::GetPresShell() const {
 }
 
 dom::Document* ChromeProcessController::GetRootDocument() const {
-  if (nsIPresShell* presShell = GetPresShell()) {
+  if (PresShell* presShell = GetPresShell()) {
     return presShell->GetDocument();
   }
   return nullptr;
@@ -119,9 +119,9 @@ dom::Document* ChromeProcessController::GetRootContentDocument(
   if (!content) {
     return nullptr;
   }
-  nsIPresShell* presShell =
-      APZCCallbackHelper::GetRootContentDocumentPresShellForContent(content);
-  if (presShell) {
+  if (PresShell* presShell =
+          APZCCallbackHelper::GetRootContentDocumentPresShellForContent(
+              content)) {
     return presShell->GetDocument();
   }
   return nullptr;
@@ -178,7 +178,7 @@ void ChromeProcessController::HandleTap(
     return;
   }
 
-  nsCOMPtr<nsIPresShell> presShell = GetPresShell();
+  RefPtr<PresShell> presShell = GetPresShell();
   if (!presShell) {
     return;
   }

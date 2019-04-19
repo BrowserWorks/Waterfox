@@ -12,8 +12,9 @@
  * according to the value of the "controls" property.
  */
 this.VideoControlsWidget = class {
-  constructor(shadowRoot) {
+  constructor(shadowRoot, prefs) {
     this.shadowRoot = shadowRoot;
+    this.prefs = prefs;
     this.element = shadowRoot.host;
     this.document = this.element.ownerDocument;
     this.window = this.document.defaultView;
@@ -45,12 +46,15 @@ this.VideoControlsWidget = class {
    */
   switchImpl() {
     let newImpl;
+    let pageURI = this.document.documentURI;
     if (this.element.controls) {
       newImpl = VideoControlsImplWidget;
     } else if (this.isMobile) {
       newImpl = NoControlsMobileImplWidget;
     } else if (VideoControlsWidget.isPictureInPictureVideo(this.element)) {
       newImpl = NoControlsPictureInPictureImplWidget;
+    } else if (pageURI.startsWith("http://") || pageURI.startsWith("https://")) {
+      newImpl = NoControlsDesktopImplWidget;
     }
 
     // Skip if we are asked to load the same implementation, and
@@ -67,7 +71,7 @@ this.VideoControlsWidget = class {
       this.shadowRoot.firstChild.remove();
     }
     if (newImpl) {
-      this.impl = new newImpl(this.shadowRoot);
+      this.impl = new newImpl(this.shadowRoot, this.prefs);
       this.impl.onsetup();
     } else {
       this.impl = undefined;
@@ -89,8 +93,9 @@ this.VideoControlsWidget = class {
 };
 
 this.VideoControlsImplWidget = class {
-  constructor(shadowRoot) {
+  constructor(shadowRoot, prefs) {
     this.shadowRoot = shadowRoot;
+    this.prefs = prefs;
     this.element = shadowRoot.host;
     this.document = this.element.ownerDocument;
     this.window = this.document.defaultView;
@@ -263,6 +268,12 @@ this.VideoControlsImplWidget = class {
           this.setupStatusFader(true);
         } else if (VideoControlsWidget.isPictureInPictureVideo(this.video)) {
           this.setShowPictureInPictureMessage(true);
+        }
+
+        if (!this.pipToggleEnabled ||
+            this.isShowingPictureInPictureMessage ||
+            this.isAudioOnly) {
+          this.pictureInPictureToggleButton.setAttribute("hidden", true);
         }
 
         let adjustableControls = [
@@ -666,6 +677,9 @@ this.VideoControlsImplWidget = class {
               case this.videocontrols:
                 // Prevent any click event within media controls from dispatching through to video.
                 aEvent.stopPropagation();
+                break;
+              case this.pictureInPictureToggleButton:
+                this.video.togglePictureInPicture();
                 break;
             }
             break;
@@ -1943,13 +1957,18 @@ this.VideoControlsImplWidget = class {
         }
       },
 
-      init(shadowRoot) {
+      get pipToggleEnabled() {
+        return this.prefs["media.videocontrols.picture-in-picture.video-toggle.enabled"];
+      },
+
+      init(shadowRoot, prefs) {
         this.shadowRoot = shadowRoot;
         this.video = this.installReflowCallValidator(shadowRoot.host);
         this.videocontrols = this.installReflowCallValidator(shadowRoot.firstChild);
         this.document = this.videocontrols.ownerDocument;
         this.window = this.document.defaultView;
         this.shadowRoot = shadowRoot;
+        this.prefs = prefs;
 
         this.controlsContainer = this.shadowRoot.getElementById("controlsContainer");
         this.statusIcon = this.shadowRoot.getElementById("statusIcon");
@@ -1975,6 +1994,8 @@ this.VideoControlsImplWidget = class {
         this.castingButton = this.shadowRoot.getElementById("castingButton");
         this.closedCaptionButton = this.shadowRoot.getElementById("closedCaptionButton");
         this.textTrackList = this.shadowRoot.getElementById("textTrackList");
+        this.pictureInPictureToggleButton =
+          this.shadowRoot.getElementById("pictureInPictureToggleButton");
 
         if (this.positionDurationBox) {
           this.durationSpan = this.positionDurationBox.getElementsByTagName("span")[0];
@@ -2062,6 +2083,8 @@ this.VideoControlsImplWidget = class {
           { el: this.video.textTracks, type: "change" },
 
           { el: this.video, type: "media-videoCasting", touchOnly: true },
+
+          { el: this.pictureInPictureToggleButton, type: "click" },
         ];
 
         for (let { el, type, nonTouchOnly = false, touchOnly = false,
@@ -2210,7 +2233,7 @@ this.VideoControlsImplWidget = class {
       },
     };
 
-    this.Utils.init(this.shadowRoot);
+    this.Utils.init(this.shadowRoot, this.prefs);
     if (this.Utils.isTouchControls) {
       this.TouchUtils.init(this.shadowRoot, this.Utils);
     }
@@ -2234,17 +2257,17 @@ this.VideoControlsImplWidget = class {
         <div id="controlsContainer" class="controlsContainer" role="none">
           <div id="statusOverlay" class="statusOverlay stackItem" hidden="true">
             <div id="statusIcon" class="statusIcon"></div>
-            <span class="statusLabel" id="errorAborted">&error.aborted;</span>
-            <span class="statusLabel" id="errorNetwork">&error.network;</span>
-            <span class="statusLabel" id="errorDecode">&error.decode;</span>
-            <span class="statusLabel" id="errorSrcNotSupported">&error.srcNotSupported;</span>
-            <span class="statusLabel" id="errorNoSource">&error.noSource2;</span>
-            <span class="statusLabel" id="errorGeneric">&error.generic;</span>
+            <bdi class="statusLabel" id="errorAborted">&error.aborted;</bdi>
+            <bdi class="statusLabel" id="errorNetwork">&error.network;</bdi>
+            <bdi class="statusLabel" id="errorDecode">&error.decode;</bdi>
+            <bdi class="statusLabel" id="errorSrcNotSupported">&error.srcNotSupported;</bdi>
+            <bdi class="statusLabel" id="errorNoSource">&error.noSource2;</bdi>
+            <bdi class="statusLabel" id="errorGeneric">&error.generic;</bdi>
           </div>
 
           <div id="pictureInPictureOverlay" class="pictureInPictureOverlay stackItem" status="pictureInPicture" hidden="true">
             <div class="statusIcon" type="pictureInPicture"></div>
-            <span class="statusLabel" id="pictureInPicture">&status.pictureInPicture;</span>
+            <bdi class="statusLabel" id="pictureInPicture">&status.pictureInPicture;</bdi>
           </div>
 
           <div id="controlsOverlay" class="controlsOverlay stackItem" role="none">
@@ -2252,6 +2275,11 @@ this.VideoControlsImplWidget = class {
               <div id="controlsSpacer" class="controlsSpacer stackItem" role="none"></div>
               <div id="clickToPlay" class="clickToPlay" hidden="true"></div>
             </div>
+
+            <button id="pictureInPictureToggleButton" class="pictureInPictureToggleButton">
+              <div id="pictureInPictureToggleIcon" class="pictureInPictureToggleIcon"></div>
+              <span class="pictureInPictureToggleLabel">&pictureInPicture.label;</span>
+            </button>
 
             <div id="controlBar" class="controlBar" role="none" hidden="true">
               <button id="playButton"
@@ -2268,11 +2296,11 @@ this.VideoControlsImplWidget = class {
                 </div>
                 <input type="range" id="scrubber" class="scrubber" tabindex="-1"/>
               </div>
-              <span id="positionLabel" class="positionLabel" role="presentation"></span>
-              <span id="durationLabel" class="durationLabel" role="presentation"></span>
-              <span id="positionDurationBox" class="positionDurationBox" aria-hidden="true">
+              <bdi id="positionLabel" class="positionLabel" role="presentation"></bdi>
+              <bdi id="durationLabel" class="durationLabel" role="presentation"></bdi>
+              <bdi id="positionDurationBox" class="positionDurationBox" aria-hidden="true">
                 &positionAndDuration.nameFormat;
-              </span>
+              </bdi>
               <div id="controlBarSpacer" class="controlBarSpacer" hidden="true" role="none"></div>
               <button id="muteButton"
                       class="button muteButton"
@@ -2468,8 +2496,9 @@ this.NoControlsMobileImplWidget = class {
 };
 
 this.NoControlsPictureInPictureImplWidget = class {
-  constructor(shadowRoot) {
+  constructor(shadowRoot, prefs) {
     this.shadowRoot = shadowRoot;
+    this.prefs = prefs;
     this.element = shadowRoot.host;
     this.document = this.element.ownerDocument;
     this.window = this.document.defaultView;
@@ -2501,9 +2530,78 @@ this.NoControlsPictureInPictureImplWidget = class {
         <div id="controlsContainer" class="controlsContainer" role="none">
           <div class="pictureInPictureOverlay stackItem" status="pictureInPicture">
             <div id="statusIcon" class="statusIcon" type="pictureInPicture"></div>
-            <span class="statusLabel" id="pictureInPicture">&status.pictureInPicture;</span>
+            <bdi class="statusLabel" id="pictureInPicture">&status.pictureInPicture;</bdi>
           </div>
           <div class="controlsOverlay stackItem"></div>
+        </div>
+      </div>`, "application/xml");
+    this.shadowRoot.importNodeAndAppendChildAt(this.shadowRoot, parserDoc.documentElement, true);
+  }
+};
+
+this.NoControlsDesktopImplWidget = class {
+  constructor(shadowRoot, prefs) {
+    this.shadowRoot = shadowRoot;
+    this.element = shadowRoot.host;
+    this.document = this.element.ownerDocument;
+    this.window = this.document.defaultView;
+    this.prefs = prefs;
+  }
+
+  onsetup() {
+    this.generateContent();
+
+    this.Utils = {
+      init(shadowRoot, prefs) {
+        this.shadowRoot = shadowRoot;
+        this.prefs = prefs;
+        this.video = shadowRoot.host;
+        this.videocontrols = shadowRoot.firstChild;
+        this.document = this.videocontrols.ownerDocument;
+        this.window = this.document.defaultView;
+        this.shadowRoot = shadowRoot;
+
+        this.pictureInPictureToggleButton =
+          this.shadowRoot.getElementById("pictureInPictureToggleButton");
+
+        if (!this.pipToggleEnabled) {
+          this.pictureInPictureToggleButton.setAttribute("hidden", true);
+        }
+      },
+
+      get pipToggleEnabled() {
+        return this.prefs["media.videocontrols.picture-in-picture.video-toggle.enabled"];
+      },
+    };
+    this.Utils.init(this.shadowRoot, this.prefs);
+  }
+
+  elementStateMatches(element) {
+    return true;
+  }
+
+  destructor() {
+  }
+
+  generateContent() {
+    /*
+     * Pass the markup through XML parser purely for the reason of loading the localization DTD.
+     * Remove it when migrate to Fluent.
+     */
+    const parser = new this.window.DOMParser();
+    let parserDoc = parser.parseFromString(`<!DOCTYPE bindings [
+      <!ENTITY % videocontrolsDTD SYSTEM "chrome://global/locale/videocontrols.dtd">
+      %videocontrolsDTD;
+      ]>
+      <div class="videocontrols" xmlns="http://www.w3.org/1999/xhtml" role="none">
+        <link rel="stylesheet" type="text/css" href="chrome://global/skin/media/videocontrols.css" />
+        <div id="controlsContainer" class="controlsContainer" role="none">
+          <div class="controlsOverlay stackItem">
+            <button id="pictureInPictureToggleButton" class="pictureInPictureToggleButton">
+              <div id="pictureInPictureToggleIcon" class="pictureInPictureToggleIcon"></div>
+              <span class="pictureInPictureToggleLabel">&pictureInPicture.label;</span>
+            </button>
+          </div>
         </div>
       </div>`, "application/xml");
     this.shadowRoot.importNodeAndAppendChildAt(this.shadowRoot, parserDoc.documentElement, true);

@@ -60,6 +60,7 @@ class RaptorRunner(MozbuildObject):
             kwargs['host'] = os.environ['HOST_IP']
         self.host = kwargs['host']
         self.power_test = kwargs['power_test']
+        self.memory_test = kwargs['memory_test']
         self.is_release_build = kwargs['is_release_build']
 
     def setup_benchmarks(self):
@@ -114,7 +115,12 @@ class RaptorRunner(MozbuildObject):
                     shutil.copytree(path, dest)
 
     def make_config(self):
-        default_actions = ['populate-webroot', 'install-chrome', 'create-virtualenv', 'run-tests']
+        default_actions = [
+            'populate-webroot',
+            'install-chromium-distribution',
+            'create-virtualenv',
+            'run-tests'
+        ]
         self.config = {
             'run_local': True,
             'binary_path': self.binary_path,
@@ -134,6 +140,7 @@ class RaptorRunner(MozbuildObject):
             'raptor_cmd_line_args': self.raptor_args,
             'host': self.host,
             'power_test': self.power_test,
+            'memory_test': self.memory_test,
             'is_release_build': self.is_release_build,
         }
 

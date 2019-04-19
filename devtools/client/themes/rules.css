@@ -5,7 +5,6 @@
 /* CSS Variables specific to this panel that aren't defined by the themes */
 :root {
   --rule-highlight-background-color: var(--theme-highlight-yellow);
-  --rule-overridden-item-border-color: var(--theme-content-color3);
   --rule-header-background-color: var(--theme-toolbar-background);
   --rule-pseudo-class-text-color: var(--yellow-70) ;
   /* This should be --yellow-50 but since we need an opacity of 0.4, we hard-code the
@@ -15,7 +14,6 @@
 
 :root.theme-dark {
   --rule-highlight-background-color: #521C76;
-  --rule-overridden-item-border-color: var(--theme-content-color1);
   --rule-header-background-color: #222225;
   --rule-pseudo-class-text-color: var(--yellow-50);
   /* This should be --yellow-50 but since we need an opacity of 0.3, we hard-code the
@@ -39,9 +37,9 @@
 /* Rule View Toolbar */
 
 #ruleview-toolbar-container {
-  display: flex;
   flex-direction: column;
   height: auto;
+  padding: 0;
 }
 
 #ruleview-toolbar {
@@ -57,6 +55,8 @@
 }
 
 .ruleview-reveal-panel {
+  background: var(--rule-header-background-color);
+  border-top: 1px solid var(--theme-splitter-color);
   display: flex;
   overflow: hidden;
   flex-wrap: wrap;
@@ -73,28 +73,33 @@
   align-items: center;
 }
 
+#ruleview-toolbar,
+#pseudo-class-panel,
+#ruleview-class-panel .classes {
+  padding: 0 3px;
+}
+
 /* Class toggle panel */
-#ruleview-class-panel:not([hidden]) {
-  /* The class panel can contain 0 to N classes, so we can't hardcode a height here like
-     we do for the pseudo-class panel. Unfortunately, that means we don't get the height
-     transition when toggling the panel */
+
+#ruleview-class-panel {
   flex-direction: column;
 }
 
 #ruleview-class-panel .add-class {
-  margin: 0;
-  border-width: 0 0 1px 0;
-  padding: 2px 6px;
+  border: 1px solid transparent;
   border-radius: 0;
+  margin: 0;
+}
+
+#ruleview-class-panel .add-class:focus {
+  border: 1px solid var(--blue-50);
 }
 
 #ruleview-class-panel .classes {
+  border-top: 1px solid var(--theme-splitter-color);
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-}
-
-#ruleview-class-panel .classes {
   max-height: 100px;
   overflow-y: auto;
 }
@@ -112,7 +117,7 @@
 
 #ruleview-class-panel .no-classes {
   flex: 1;
-  color: var(--theme-body-color-inactive);
+  color: var(--theme-text-color-inactive);
   margin: 0;
   text-align: center;
 }
@@ -408,29 +413,31 @@
   position: relative;
 }
 
-.ruleview-overridden-item::before {
+.ruleview-overridden-item::before,
+.ruleview-overridden-item::after {
+  content: "";
   position: absolute;
-  left: -15px;
-  top: 0px;
-  content: '';
   display: block;
-  border-left: 0.5px solid var(--rule-overridden-item-border-color);
+  border: 0px solid var(--theme-text-color-alt);
+}
+
+.ruleview-overridden-item::before {
+  top: 0px;
+  left: -15px;
   height: 0.8em;
-  border-bottom: 0.5px solid var(--rule-overridden-item-border-color);
   width: 10px;
+  border-left-width: 0.5px;
+  border-bottom-width: 0.5px;
 }
 
 .ruleview-overridden-item::after {
-  position: absolute;
   left: -15px;
   bottom: -7px;
-  content: '';
-  display: block;
-  border-left: 0.5px solid var(--rule-overridden-item-border-color);
   height: 100%;
+  border-left-width: 0.5px;
 }
 
-.ruleview-overridden-item:last-child:after {
+.ruleview-overridden-item:last-child::after {
   display: none;
 }
 
@@ -534,7 +541,7 @@
 }
 
 .ruleview-overridden {
-  text-decoration: line-through;
+  text-decoration: line-through solid var(--theme-text-color-alt);
 }
 
 /**
@@ -547,10 +554,6 @@
 .ruleview-overridden .ruleview-shapeswatch,
 .ruleview-overridden .ruleview-swatch {
   display: none;
-}
-
-.theme-light .ruleview-overridden {
-  text-decoration-color: var(--theme-content-color3);
 }
 
 .ruleview-font-family.used-font {
@@ -644,18 +647,30 @@
 
 #ruleview-add-rule-button::before {
   background-image: url("chrome://devtools/skin/images/add.svg");
+  background-position: center;
+  background-size: 14px;
 }
 
 #pseudo-class-panel-toggle::before {
-  background-image: url("chrome://devtools/skin/images/pseudo-class.svg");
+  content: ":hov";
 }
 
 #class-panel-toggle::before {
   content: ".cls";
 }
 
+#pseudo-class-panel-toggle::before,
+#class-panel-toggle::before {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
 #print-simulation-toggle::before {
   background-image: url("chrome://devtools/skin/images/rules-view-print-simulation.svg");
+  background-position: center;
+  background-size: 14px;
 }
 
 .flash-out {

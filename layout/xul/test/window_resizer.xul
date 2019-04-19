@@ -2,7 +2,7 @@
 <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     screenX="200" screenY="200" width="300" height="300"
 	onload="setTimeout(doTest, 0)">
-<script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"></script>
+<script src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"></script>
 <script><![CDATA[
 var is = window.opener.SimpleTest.is;
 
@@ -73,7 +73,7 @@ function doTest() {
   testResizer(1, 1);
 
   var resizers = document.getElementsByTagName("resizer");
-  Array.forEach(resizers, function (element) {
+  Array.prototype.forEach.call(resizers, function (element) {
     is(getComputedStyle(element, "").cursor,
        element.getAttribute("expectedcursor"),
        "cursor for " + element.dir);
@@ -82,7 +82,7 @@ function doTest() {
   // now check the cursors in rtl. The bottomend resizer
   // should be reversed
   document.documentElement.setAttribute("localedir", "rtl");
-  Array.forEach(resizers, function (element) {
+  Array.prototype.forEach.call(resizers, function (element) {
     is(getComputedStyle(element, "").cursor,
        element.dir == "bottomend" ? "sw-resize" :
          element.getAttribute("expectedcursor"),

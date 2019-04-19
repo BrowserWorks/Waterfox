@@ -216,20 +216,12 @@ var gUpdates = {
   },
 
   /**
-   * A hash of |pageid| attribute to page object. Can be used to dispatch
-   * function calls to the appropriate page.
-   */
-  _pages: { },
-
-  /**
    * Called when the user presses the "Finish" button on the wizard, dispatches
    * the function call to the selected page.
    */
   onWizardFinish() {
     this._runUnload = false;
     var pageid = document.documentElement.currentPage.pageid;
-    if ("onWizardFinish" in this._pages[pageid])
-      this._pages[pageid].onWizardFinish();
     this._submitTelemetry(pageid);
   },
 
@@ -240,22 +232,9 @@ var gUpdates = {
   onWizardCancel() {
     this._runUnload = false;
     var pageid = document.documentElement.currentPage.pageid;
-    if ("onWizardCancel" in this._pages[pageid])
-      this._pages[pageid].onWizardCancel();
+    let cancelEvent = new CustomEvent("wizardpagecancel", { });
+    document.documentElement.currentPage.dispatchEvent(cancelEvent);
     this._submitTelemetry(pageid);
-  },
-
-  /**
-   * Called when the user presses the "Next" button on the wizard, dispatches
-   * the function call to the selected page.
-   */
-  onWizardNext() {
-    var cp = document.documentElement.currentPage;
-    if (!cp)
-      return;
-    var pageid = cp.pageid;
-    if ("onWizardNext" in this._pages[pageid])
-      this._pages[pageid].onWizardNext();
   },
 
   /**
@@ -294,24 +273,32 @@ var gUpdates = {
     var brandStrings = document.getElementById("brandStrings");
     this.brandName = brandStrings.getString("brandShortName");
 
-    var pages = this.wiz.childNodes;
-    for (var i = 0; i < pages.length; ++i) {
-      var page = pages[i];
-      if (page.localName == "wizardpage")
-        // eslint-disable-next-line no-eval
-        this._pages[page.pageid] = eval(page.getAttribute("object"));
-    }
-
     // Cache the standard button labels in case we need to restore them
     this._cacheButtonStrings("next");
     this._cacheButtonStrings("finish");
     this._cacheButtonStrings("extra1");
     this._cacheButtonStrings("extra2");
 
+    // Add wizardFinish eventListeners globally and to the pages that need one.
     document.addEventListener("wizardfinish", function() { gUpdates.onWizardFinish(); });
-    document.addEventListener("wizardcancel", function() { gUpdates.onWizardCancel(); });
-    document.addEventListener("wizardnext", function() { gUpdates.onWizardNext(); });
+    document.getElementById("finished").addEventListener("wizardfinish", function() { gFinishedPage.onWizardFinish(); });
+    document.getElementById("finishedBackground").addEventListener("wizardfinish", function() { gFinishedPage.onWizardFinish(); });
 
+    // Add wizardcancel eventListener globally.
+    document.addEventListener("wizardcancel", function() { gUpdates.onWizardCancel(); });
+
+    // Add wizardpagecancel eventListener to the pages that need one.
+    document.getElementById("checking").addEventListener("wizardpagecancel", function() { gCheckingPage.onWizardCancel(); });
+    document.getElementById("downloading").addEventListener("wizardpagecancel", function() { gDownloadingPage.onWizardCancel(); });
+
+    // Add special wizardNext eventListener for the errorpatching-page.
+    document.addEventListener("wizardnext", function() {
+        if (document.documentElement.currentPage.pageid == "errorpatching") {
+          gErrorPatchingPage.onWizardNext();
+        }
+    });
+
+    // Add pageShow eventListeners to all pages.
     document.getElementById("checking").addEventListener("pageshow", function() { gCheckingPage.onPageShow(); });
     document.getElementById("noupdatesfound").addEventListener("pageshow", function() { gNoUpdatesPage.onPageShow(); });
     document.getElementById("manualUpdate").addEventListener("pageshow", function() { gManualUpdatePage.onPageShow(); });
@@ -324,11 +311,13 @@ var gUpdates = {
     document.getElementById("finished").addEventListener("pageshow", function() { gFinishedPage.onPageShow(); });
     document.getElementById("finishedBackground").addEventListener("pageshow", function() { gFinishedPage.onPageShowBackground(); });
 
+    // Add extra1 eventListeners to the pages that need one.
     document.getElementById("updatesfoundbasic").addEventListener("extra1", function() { gUpdatesFoundBasicPage.onExtra1(); });
     document.getElementById("downloading").addEventListener("extra1", function() { gDownloadingPage.onHide(); });
     document.getElementById("finished").addEventListener("extra1", function() { gFinishedPage.onExtra1(); });
     document.getElementById("finishedBackground").addEventListener("extra1", function() { gFinishedPage.onExtra1(); });
 
+    // Add extra2 eventListeners to the pages that need one.
     document.getElementById("updatesfoundbasic").addEventListener("extra2", function() { gUpdatesFoundBasicPage.onExtra2(); });
     document.getElementById("finishedBackground").addEventListener("extra2", function() { gFinishedPage.onExtra2(); });
 
@@ -680,7 +669,7 @@ var gUpdatesFoundBasicPage = {
 
 /**
  * The "Update is Downloading" page - provides feedback for the download
- * process plus a pause/resume UI
+ * process
  */
 var gDownloadingPage = {
   /**
@@ -688,12 +677,6 @@ var gDownloadingPage = {
    */
   _downloadStatus: null,
   _downloadProgress: null,
-  _pauseButton: null,
-
-  /**
-   * Whether or not we are currently paused
-   */
-  _paused: false,
 
   /**
    * Label cache to hold the 'Connecting' string
@@ -705,7 +688,6 @@ var gDownloadingPage = {
    */
   _lastSec: Infinity,
   _startTime: null,
-  _pausedStatus: "",
 
   _hiding: false,
 
@@ -720,15 +702,7 @@ var gDownloadingPage = {
   onPageShow() {
     this._downloadStatus = document.getElementById("downloadStatus");
     this._downloadProgress = document.getElementById("downloadProgress");
-    this._pauseButton = document.getElementById("pauseButton");
     this._label_downloadStatus = this._downloadStatus.textContent;
-
-    this._pauseButton.setAttribute("tooltiptext",
-                                   gUpdates.getAUSString("pauseButtonPause"));
-
-    // move focus to the pause/resume button and then disable it (bug #353177)
-    this._pauseButton.focus();
-    this._pauseButton.disabled = true;
 
     var um = Cc["@mozilla.org/updates/update-manager;1"].
              getService(Ci.nsIUpdateManager);
@@ -768,10 +742,7 @@ var gDownloadingPage = {
       gUpdates.update.QueryInterface(Ci.nsIWritablePropertyBag);
       gUpdates.update.setProperty("foregroundDownload", "true");
 
-      // Pause any active background download and restart it as a foreground
-      // download.
-      gAUS.pauseDownload();
-      var state = gAUS.downloadUpdate(gUpdates.update, false);
+      let state = gAUS.downloadUpdate(gUpdates.update, false);
       if (state == "failed") {
         // We've tried as hard as we could to download a valid update -
         // we fell back from a partial patch to a complete patch and even
@@ -784,8 +755,10 @@ var gDownloadingPage = {
       // Add this UI as a listener for active downloads
       gAUS.addDownloadListener(this);
 
-      if (activeUpdate)
-        this._setUIState(!gAUS.isDownloading);
+      if (activeUpdate) {
+        this._downloadProgress.removeAttribute("value");
+        this._setStatus(this._label_downloadStatus);
+      }
     } catch (e) {
       LOG("gDownloadingPage", "onPageShow - error: " + e);
     }
@@ -825,38 +798,7 @@ var gDownloadingPage = {
     [status, this._lastSec] =
       DownloadUtils.getDownloadStatus(aCurr, aMax, rate, this._lastSec);
 
-    // Get the download progress for pausing
-    this._pausedStatus = DownloadUtils.getTransferTotal(aCurr, aMax);
-
     return status;
-  },
-
-  /**
-   * Adjust UI to suit a certain state of paused-ness
-   * @param   paused
-   *          Whether or not the download is paused
-   */
-  _setUIState(paused) {
-    var u = gUpdates.update;
-    if (paused) {
-      if (!this._downloadProgress.hasAttribute("value"))
-        this._downloadProgress.setAttribute("value", "0");
-      this._pauseButton.setAttribute("tooltiptext",
-                                     gUpdates.getAUSString("pauseButtonResume"));
-      this._pauseButton.setAttribute("paused", "true");
-      var p = u.selectedPatch.QueryInterface(Ci.nsIWritablePropertyBag);
-      var status = p.getProperty("status");
-      if (status) {
-        let pausedStatus = gUpdates.getAUSString("downloadPausedStatus", [status]);
-        this._setStatus(pausedStatus);
-      }
-    } else {
-      this._downloadProgress.removeAttribute("value");
-      this._pauseButton.setAttribute("paused", "false");
-      this._pauseButton.setAttribute("tooltiptext",
-                                     gUpdates.getAUSString("pauseButtonPause"));
-      this._setStatus(this._label_downloadStatus);
-    }
   },
 
   /**
@@ -864,7 +806,6 @@ var gDownloadingPage = {
    */
   _setUpdateApplying() {
     this._downloadProgress.removeAttribute("value");
-    this._pauseButton.hidden = true;
     let applyingStatus = gUpdates.getAUSString("applyingUpdate");
     this._setStatus(applyingStatus);
 
@@ -882,24 +823,6 @@ var gDownloadingPage = {
       Services.obs.removeObserver(this, "update-staged");
       this._updateApplyingObserver = false;
     }
-  },
-
-  /**
-   * When the user clicks the Pause/Resume button
-   */
-  onPause() {
-    if (this._paused) {
-      gAUS.downloadUpdate(gUpdates.update, false);
-    } else {
-      var patch = gUpdates.update.selectedPatch;
-      patch.QueryInterface(Ci.nsIWritablePropertyBag);
-      patch.setProperty("status", this._pausedStatus);
-      gAUS.pauseDownload();
-    }
-    this._paused = !this._paused;
-
-    // Update the UI
-    this._setUIState(this._paused);
   },
 
   /**
@@ -930,31 +853,10 @@ var gDownloadingPage = {
              getService(Ci.nsIUpdateManager);
     um.activeUpdate = gUpdates.update;
 
-    // If the download was paused by the user, ask the user if they want to
-    // have the update resume in the background.
-    var downloadInBackground = true;
-    if (this._paused) {
-      var title = gUpdates.getAUSString("resumePausedAfterCloseTitle");
-      var message = gUpdates.getAUSString("resumePausedAfterCloseMsg",
-                                          [gUpdates.brandName]);
-      var ps = Services.prompt;
-      var flags = ps.STD_YES_NO_BUTTONS;
-      // Focus the software update wizard before prompting. This will raise
-      // the software update wizard if it is minimized making it more obvious
-      // what the prompt is for and will solve the problem of windows
-      // obscuring the prompt. See bug #350299 for more details.
-      window.focus();
-      var rv = ps.confirmEx(window, title, message, flags, null, null, null,
-                            null, { });
-      if (rv == Ci.nsIPromptService.BUTTON_POS_0)
-        downloadInBackground = false;
-    }
-    if (downloadInBackground) {
-      // Continue download in the background at full speed.
-      LOG("gDownloadingPage", "onHide - continuing download in background " +
-          "at full speed");
-      gAUS.downloadUpdate(gUpdates.update, false);
-    }
+    // Continue download in the background at full speed.
+    LOG("gDownloadingPage", "onHide - continuing download in background " +
+        "at full speed");
+    gAUS.downloadUpdate(gUpdates.update, false);
     gUpdates.wiz.cancel();
   },
 
@@ -966,11 +868,6 @@ var gDownloadingPage = {
    *          Additional data
    */
   onStartRequest(request) {
-    // This !paused test is necessary because onStartRequest may fire after
-    // the download was paused (for those speedy clickers...)
-    if (this._paused)
-      return;
-
     this._downloadProgress.removeAttribute("value");
     this._setStatus(this._label_downloadStatus);
   },
@@ -995,14 +892,7 @@ var gDownloadingPage = {
     p.setProperty("progress", currentProgress);
     p.setProperty("status", status);
 
-    // This !paused test is necessary because onProgress may fire after
-    // the download was paused (for those speedy clickers...)
-    if (this._paused)
-      return;
-
     this._downloadProgress.setAttribute("value", currentProgress);
-    if (this._pauseButton.disabled)
-      this._pauseButton.disabled = false;
 
     // If the update has completed downloading and the download status contains
     // the original text return early to avoid an assertion in debug builds.

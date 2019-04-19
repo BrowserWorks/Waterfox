@@ -11,6 +11,7 @@
 #include "nsCOMPtr.h"
 #include "nsGkAtoms.h"
 
+#include "mozilla/PresShell.h"
 #include "mozilla/dom/HTMLVideoElement.h"
 #include "mozilla/dom/ShadowRoot.h"
 #include "mozilla/layers/RenderRootStateManager.h"
@@ -34,8 +35,7 @@ using namespace mozilla::layers;
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
 
-nsIFrame* NS_NewHTMLVideoFrame(nsIPresShell* aPresShell,
-                               ComputedStyle* aStyle) {
+nsIFrame* NS_NewHTMLVideoFrame(PresShell* aPresShell, ComputedStyle* aStyle) {
   return new (aPresShell) nsVideoFrame(aStyle, aPresShell->GetPresContext());
 }
 
@@ -473,17 +473,8 @@ class nsDisplayVideo : public nsDisplayItem {
     return true;
   }
 
-  nsRegion GetOpaqueRegion(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) const override {
-    *aSnap = false;
-
-    HTMLVideoElement* element =
-        static_cast<HTMLVideoElement*>(Frame()->GetContent());
-    if (element->HasAlpha()) {
-      return nsRegion();
-    }
-    return GetBounds(aBuilder, aSnap);
-  }
+  // For opaque videos, we will want to override GetOpaqueRegion here.
+  // This is tracked by bug 1545498.
 
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
                            bool* aSnap) const override {

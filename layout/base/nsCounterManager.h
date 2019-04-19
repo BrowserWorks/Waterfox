@@ -118,12 +118,12 @@ struct nsCounterChangeNode : public nsCounterNode {
                       int32_t aPropIndex)
       : nsCounterNode(  // Fake a content index for resets, increments and sets
                         // that comes before all the real content, with
-                        // the resets first, in order, and then the increments and
-                        // then the sets.
-            aPropIndex + (aChangeType == RESET
-                              ? (INT32_MIN)
-                              : (aChangeType == INCREMENT ? ((INT32_MIN / 3) * 2)
-                                                          : INT32_MIN / 3)),
+                        // the resets first, in order, and then the increments
+                        // and then the sets.
+            aPropIndex + (aChangeType == RESET ? (INT32_MIN)
+                                               : (aChangeType == INCREMENT
+                                                      ? ((INT32_MIN / 3) * 2)
+                                                      : INT32_MIN / 3)),
             aChangeType),
         mChangeValue(aChangeValue) {
     NS_ASSERTION(aPropIndex >= 0, "out of range");
@@ -214,7 +214,7 @@ class nsCounterManager {
 
   // Gets the appropriate counter list, creating it if necessary.
   // Guaranteed to return non-null. (Uses an infallible hashtable API.)
-  nsCounterList* CounterListFor(const nsAString& aCounterName);
+  nsCounterList* CounterListFor(nsAtom* aCounterName);
 
   // Clean up data in any dirty counter lists.
   void RecalcAll();
@@ -262,7 +262,7 @@ class nsCounterManager {
                             const nsStyleCounterData& aCounterData,
                             nsCounterNode::Type aType);
 
-  nsClassHashtable<nsStringHashKey, nsCounterList> mNames;
+  nsClassHashtable<nsRefPtrHashKey<nsAtom>, nsCounterList> mNames;
 };
 
 #endif /* nsCounterManager_h_ */

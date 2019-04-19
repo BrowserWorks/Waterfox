@@ -243,8 +243,6 @@ class HttpBaseChannel : public nsHashPropertyBag,
       uint32_t *aIsClassificationFlags) override;
   NS_IMETHOD GetThirdPartyClassificationFlags(
       uint32_t *aIsClassificationFlags) override;
-  NS_IMETHOD OverrideTrackingFlagsForDocumentCookieAccessor(
-      nsIHttpChannel *aDocumentChannel) override;
   NS_IMETHOD GetFlashPluginState(
       nsIHttpChannel::FlashPluginState *aState) override;
 
@@ -313,7 +311,7 @@ class HttpBaseChannel : public nsHashPropertyBag,
   NS_IMETHOD SetLastRedirectFlags(uint32_t aValue) override;
   NS_IMETHOD GetNavigationStartTimeStamp(TimeStamp *aTimeStamp) override;
   NS_IMETHOD SetNavigationStartTimeStamp(TimeStamp aTimeStamp) override;
-  NS_IMETHOD CancelByChannelClassifier(nsresult aErrorCode) override;
+  NS_IMETHOD CancelByURLClassifier(nsresult aErrorCode) override;
   virtual void SetIPv4Disabled(void) override;
   virtual void SetIPv6Disabled(void) override;
   NS_IMETHOD GetCrossOriginOpenerPolicy(
@@ -444,8 +442,9 @@ class HttpBaseChannel : public nsHashPropertyBag,
     mUploadStreamHasHeaders = hasHeaders;
   }
 
-  MOZ_MUST_USE nsresult SetReferrerWithPolicyInternal(nsIURI *referrer,
-                                                      uint32_t referrerPolicy) {
+  MOZ_MUST_USE nsresult SetReferrerWithPolicyInternal(
+      nsIURI *referrer, uint32_t originalReferrerPolicy,
+      uint32_t referrerPolicy) {
     nsAutoCString spec;
     nsresult rv = referrer->GetAsciiSpec(spec);
     if (NS_FAILED(rv)) {
@@ -453,6 +452,7 @@ class HttpBaseChannel : public nsHashPropertyBag,
     }
     mOriginalReferrer = referrer;
     mReferrer = referrer;
+    mOriginalReferrerPolicy = originalReferrerPolicy;
     mReferrerPolicy = referrerPolicy;
     rv = mRequestHead.SetHeader(nsHttp::Referer, spec);
     return rv;
@@ -747,6 +747,7 @@ class HttpBaseChannel : public nsHashPropertyBag,
   uint32_t mProxyResolveFlags;
 
   uint32_t mContentDispositionHint;
+  uint32_t mOriginalReferrerPolicy;
   uint32_t mReferrerPolicy;
 
   uint32_t mCorsMode;

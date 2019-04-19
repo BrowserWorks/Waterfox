@@ -3,6 +3,7 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // @flow
+import SourceMaps, { generatedToOriginalId } from "devtools-source-map";
 
 import assert from "../../utils/assert";
 import { recordEvent } from "../../utils/telemetry";
@@ -10,7 +11,7 @@ import { remapBreakpoints } from "../breakpoints";
 
 import { setSymbols } from "./symbols";
 import { prettyPrint } from "../../workers/pretty-print";
-import { getPrettySourceURL, isLoaded } from "../../utils/source";
+import { getPrettySourceURL, isLoaded, isGenerated } from "../../utils/source";
 import { loadSourceText } from "./loadSourceText";
 import { mapFrames } from "../pause";
 import { selectSpecificLocation } from "../sources";
@@ -28,7 +29,7 @@ import { selectSource } from "./select";
 import type { JsSource, Source, Context } from "../../types";
 
 export async function prettyPrintSource(
-  sourceMaps: any,
+  sourceMaps: typeof SourceMaps,
   prettySource: Source,
   generatedSource: any
 ) {
@@ -55,7 +56,7 @@ export function createPrettySource(cx: Context, sourceId: string) {
   return async ({ dispatch, getState, sourceMaps }: ThunkArgs) => {
     const source = getSourceFromId(getState(), sourceId);
     const url = getPrettySourceURL(source.url);
-    const id = await sourceMaps.generatedToOriginalId(sourceId, url);
+    const id = generatedToOriginalId(sourceId, url);
 
     const prettySource: JsSource = {
       url,
@@ -122,7 +123,7 @@ export function togglePrettyPrint(cx: Context, sourceId: string) {
     }
 
     assert(
-      sourceMaps.isGeneratedId(sourceId),
+      isGenerated(source),
       "Pretty-printing only allowed on generated sources"
     );
 

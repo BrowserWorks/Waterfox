@@ -56,6 +56,9 @@ about-debugging-sidebar-item-connect-button-connection-failed = Connection faile
 # the runtime is taking too much time.
 about-debugging-sidebar-item-connect-button-connection-not-responding = Connection still pending, check for messages on the target browser
 
+# Text displayed as connection error in sidebar item when the connection has timed out.
+about-debugging-sidebar-item-connect-button-connection-timeout = Connection timed out
+
 # Temporary text displayed in sidebar items representing remote runtimes after
 # successfully connecting to them. Temporary UI, do not localize.
 about-debugging-sidebar-item-connected-label = Connected
@@ -64,6 +67,10 @@ about-debugging-sidebar-item-connected-label = Connected
 # Firefox) has not been detected yet. Typically, Android phones connected via USB with
 # USB debugging enabled, but where Firefox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = Waiting for browser…
+
+# Text displayed in sidebar items for remote devices that have been disconnected from the
+# computer.
+about-debugging-sidebar-runtime-item-unplugged = Unplugged
 
 # Title for runtime sidebar items that are related to a specific device (USB, WiFi).
 about-debugging-sidebar-runtime-item-name =

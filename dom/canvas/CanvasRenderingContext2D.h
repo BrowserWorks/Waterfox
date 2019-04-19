@@ -391,7 +391,7 @@ class CanvasRenderingContext2D final : public nsICanvasRenderingContextInternal,
   /**
    * Gets the pres shell from either the canvas element or the doc shell
    */
-  nsIPresShell* GetPresShell() final {
+  PresShell* GetPresShell() final {
     if (mCanvasElement) {
       return mCanvasElement->OwnerDoc()->GetPresShell();
     }
@@ -507,7 +507,7 @@ class CanvasRenderingContext2D final : public nsICanvasRenderingContextInternal,
    * CurrentState().filterChain.
    * Flushes the PresShell, so the world can change if you call this function.
    */
-  void UpdateFilter();
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY void UpdateFilter();
 
  protected:
   nsresult GetImageDataArray(JSContext* aCx, int32_t aX, int32_t aY,

@@ -82,6 +82,8 @@ void OriginAttributes::SetFirstPartyDomain(const bool aIsTopLevelDocument,
     return;
   }
 
+  // Saving isInsufficientDomainLevels before rv is overwritten.
+  bool isInsufficientDomainLevels = (rv == NS_ERROR_INSUFFICIENT_DOMAIN_LEVELS);
   nsAutoCString scheme;
   rv = aURI->GetScheme(scheme);
   NS_ENSURE_SUCCESS_VOID(rv);
@@ -95,6 +97,15 @@ void OriginAttributes::SetFirstPartyDomain(const bool aIsTopLevelDocument,
           aURI, getter_AddRefs(blobPrincipal))) {
     MOZ_ASSERT(blobPrincipal);
     mFirstPartyDomain = blobPrincipal->OriginAttributesRef().mFirstPartyDomain;
+    return;
+  }
+
+  if (isInsufficientDomainLevels) {
+    nsAutoCString publicSuffix;
+    rv = tldService->GetPublicSuffix(aURI, publicSuffix);
+    if (NS_SUCCEEDED(rv)) {
+      mFirstPartyDomain = NS_ConvertUTF8toUTF16(publicSuffix);
+    }
     return;
   }
 }
@@ -150,6 +161,15 @@ void OriginAttributes::CreateSuffix(nsACString& aStr) const {
 
     params.Set(NS_LITERAL_STRING("firstPartyDomain"),
                sanitizedFirstPartyDomain);
+  }
+
+  if (!mGeckoViewSessionContextId.IsEmpty()) {
+    nsAutoString sanitizedGeckoViewUserContextId(mGeckoViewSessionContextId);
+    sanitizedGeckoViewUserContextId.ReplaceChar(
+        dom::quota::QuotaManager::kReplaceChars, '+');
+
+    params.Set(NS_LITERAL_STRING("geckoViewUserContextId"),
+               sanitizedGeckoViewUserContextId);
   }
 
   aStr.Truncate();
@@ -244,6 +264,12 @@ class MOZ_STACK_CLASS PopulateFromSuffixIterator final
     if (aName.EqualsLiteral("firstPartyDomain")) {
       MOZ_RELEASE_ASSERT(mOriginAttributes->mFirstPartyDomain.IsEmpty());
       mOriginAttributes->mFirstPartyDomain.Assign(aValue);
+      return true;
+    }
+
+    if (aName.EqualsLiteral("geckoViewUserContextId")) {
+      MOZ_RELEASE_ASSERT(mOriginAttributes->mGeckoViewSessionContextId.IsEmpty());
+      mOriginAttributes->mGeckoViewSessionContextId.Assign(aValue);
       return true;
     }
 

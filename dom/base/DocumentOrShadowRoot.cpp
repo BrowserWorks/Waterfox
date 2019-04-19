@@ -362,6 +362,7 @@ void DocumentOrShadowRoot::NodesFromRect(float aX, float aY, float aTopSize,
                                          float aLeftSize,
                                          bool aIgnoreRootScrollFrame,
                                          bool aFlushLayout,
+                                         bool aOnlyVisible,
                                          nsTArray<RefPtr<nsINode>>& aReturn) {
   // Following the same behavior of elementFromPoint,
   // we don't return anything if either coord is negative
@@ -379,6 +380,9 @@ void DocumentOrShadowRoot::NodesFromRect(float aX, float aY, float aTopSize,
   EnumSet<FrameForPointOption> options;
   if (aIgnoreRootScrollFrame) {
     options += FrameForPointOption::IgnoreRootScrollFrame;
+  }
+  if (aOnlyVisible) {
+    options += FrameForPointOption::OnlyVisible;
   }
 
   auto flush = aFlushLayout ? FlushLayout::Yes : FlushLayout::No;
@@ -600,9 +604,6 @@ void DocumentOrShadowRoot::Traverse(DocumentOrShadowRoot* tmp,
       NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mServoStyles->sheets[i]");
       cb.NoteXPCOMChild(sheet);
     } else if (tmp->AsNode().AsDocument()->StyleSetFilled()) {
-      NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(
-          cb, "mStyleSet->mStyleSheets[SheetType::Author][i]");
-      cb.NoteXPCOMChild(sheet);
       NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(
           cb, "mStyleSet->mRawSet.stylist.stylesheets.author[i]");
       cb.NoteXPCOMChild(sheet);

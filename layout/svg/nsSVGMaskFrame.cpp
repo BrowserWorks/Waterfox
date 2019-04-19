@@ -11,11 +11,12 @@
 #include "AutoReferenceChainGuard.h"
 #include "gfx2DGlue.h"
 #include "gfxContext.h"
-#include "mozilla/gfx/2D.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/RefPtr.h"
-#include "SVGObserverUtils.h"
 #include "mozilla/dom/SVGMaskElement.h"
 #include "mozilla/dom/SVGUnitTypesBinding.h"
+#include "mozilla/gfx/2D.h"
+#include "SVGObserverUtils.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -36,7 +37,7 @@ static LuminanceType GetLuminanceType(uint8_t aNSMaskType) {
   }
 }
 
-nsIFrame* NS_NewSVGMaskFrame(nsIPresShell* aPresShell, ComputedStyle* aStyle) {
+nsIFrame* NS_NewSVGMaskFrame(PresShell* aPresShell, ComputedStyle* aStyle) {
   return new (aPresShell) nsSVGMaskFrame(aStyle, aPresShell->GetPresContext());
 }
 
@@ -111,16 +112,15 @@ already_AddRefed<SourceSurface> nsSVGMaskFrame::GetMaskForMaskedFrame(
       GetMaskTransform(aParams.maskedFrame) * aParams.toUserSpace;
 
   for (nsIFrame* kid = mFrames.FirstChild(); kid; kid = kid->GetNextSibling()) {
+    gfxMatrix m = mMatrixForChildren;
+
     // The CTM of each frame referencing us can be different
     nsSVGDisplayableFrame* SVGFrame = do_QueryFrame(kid);
     if (SVGFrame) {
       SVGFrame->NotifySVGChanged(nsSVGDisplayableFrame::TRANSFORM_CHANGED);
+      m = nsSVGUtils::GetTransformMatrixInUserSpace(kid, this) * m;
     }
-    gfxMatrix m = mMatrixForChildren;
-    if (kid->GetContent()->IsSVGElement()) {
-      m = static_cast<SVGElement*>(kid->GetContent())
-              ->PrependLocalTransformsTo(m, eUserSpaceToParent);
-    }
+
     nsSVGUtils::PaintFrameWithEffects(kid, *tmpCtx, m, aParams.imgParams);
   }
 

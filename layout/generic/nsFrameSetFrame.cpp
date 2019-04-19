@@ -31,6 +31,7 @@
 #include "nsNameSpaceManager.h"
 #include "nsCSSAnonBoxes.h"
 #include "mozilla/ServoStyleSet.h"
+#include "mozilla/ServoStyleSetInlines.h"
 #include "mozilla/dom/Element.h"
 #include "nsDisplayList.h"
 #include "nsNodeUtils.h"
@@ -1259,7 +1260,7 @@ void nsHTMLFramesetFrame::EndMouseDrag(nsPresContext* aPresContext) {
   gDragInProgress = false;
 }
 
-nsIFrame* NS_NewHTMLFramesetFrame(nsIPresShell* aPresShell,
+nsIFrame* NS_NewHTMLFramesetFrame(PresShell* aPresShell,
                                   ComputedStyle* aStyle) {
 #ifdef DEBUG
   const nsStyleDisplay* disp = aStyle->StyleDisplay();

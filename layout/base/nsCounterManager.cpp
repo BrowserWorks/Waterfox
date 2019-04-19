@@ -203,25 +203,19 @@ static bool HasCounters(const nsStyleContent& aStyle) {
          aStyle.CounterSetCount();
 }
 
-// For elements with 'display:list-item' we add a default
-// 'counter-increment:list-item' unless 'counter-increment' already has a value
-// for 'list-item'.
-//
-// https://drafts.csswg.org/css-lists-3/#declaring-a-list-item
-static bool GeneratesListItemIncrement(const nsIFrame* aFrame) {
-  if (aFrame->StyleDisplay()->mDisplay != StyleDisplay::ListItem) {
-    return false;
-  }
-  // FIXME(emilio): Per https://github.com/w3c/csswg-drafts/issues/3766,
-  // this condition should be removed.
-  if (aFrame->Style()->GetPseudoType() != PseudoStyleType::NotPseudo) {
-    return false;
-  }
-  return true;
-}
-
 bool nsCounterManager::AddCounterChanges(nsIFrame* aFrame) {
-  const bool requiresListItemIncrement = GeneratesListItemIncrement(aFrame);
+  // For elements with 'display:list-item' we add a default
+  // 'counter-increment:list-item' unless 'counter-increment' already has a
+  // value for 'list-item'.
+  //
+  // https://drafts.csswg.org/css-lists-3/#declaring-a-list-item
+  //
+  // We inherit `display` for some anonymous boxes, but we don't want them to
+  // increment the list-item counter.
+  const bool requiresListItemIncrement =
+      aFrame->StyleDisplay()->mDisplay == StyleDisplay::ListItem &&
+      !aFrame->Style()->IsAnonBox();
+
   const nsStyleContent* styleContent = aFrame->StyleContent();
 
   if (!requiresListItemIncrement && !HasCounters(*styleContent)) {
@@ -241,14 +235,14 @@ bool nsCounterManager::AddCounterChanges(nsIFrame* aFrame) {
   bool hasListItemIncrement = false;
   for (int32_t i : IntegerRange(styleContent->CounterIncrementCount())) {
     const nsStyleCounterData& increment = styleContent->CounterIncrementAt(i);
-    hasListItemIncrement |= increment.mCounter.EqualsLiteral("list-item");
+    hasListItemIncrement |= increment.mCounter == nsGkAtoms::list_item;
     dirty |= AddCounterChangeNode(aFrame, i, increment,
                                   nsCounterChangeNode::INCREMENT);
   }
   if (requiresListItemIncrement && !hasListItemIncrement) {
     bool reversed =
         aFrame->StyleList()->mMozListReversed == StyleMozListReversed::True;
-    nsStyleCounterData listItemIncrement{NS_LITERAL_STRING("list-item"),
+    nsStyleCounterData listItemIncrement{nsGkAtoms::list_item,
                                          reversed ? -1 : 1};
     dirty |=
         AddCounterChangeNode(aFrame, styleContent->CounterIncrementCount() + 1,
@@ -284,7 +278,8 @@ bool nsCounterManager::AddCounterChangeNode(
   return false;
 }
 
-nsCounterList* nsCounterManager::CounterListFor(const nsAString& aCounterName) {
+nsCounterList* nsCounterManager::CounterListFor(nsAtom* aCounterName) {
+  MOZ_ASSERT(aCounterName);
   return mNames.LookupForAdd(aCounterName).OrInsert([]() {
     return new nsCounterList();
   });
@@ -323,7 +318,7 @@ bool nsCounterManager::DestroyNodesFor(nsIFrame* aFrame) {
 void nsCounterManager::Dump() {
   printf("\n\nCounter Manager Lists:\n");
   for (auto iter = mNames.Iter(); !iter.Done(); iter.Next()) {
-    printf("Counter named \"%s\":\n", NS_ConvertUTF16toUTF8(iter.Key()).get());
+    printf("Counter named \"%s\":\n", nsAtomCString(iter.Key()).get());
 
     nsCounterList* list = iter.UserData();
     int32_t i = 0;

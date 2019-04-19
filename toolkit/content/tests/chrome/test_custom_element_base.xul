@@ -6,8 +6,8 @@
   onload="runTests();"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"></script>
+  <script src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+  <script src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"></script>
 
   <!-- test results are displayed in the html:body -->
   <body xmlns="http://www.w3.org/1999/xhtml" style="height: 300px; overflow: auto;"/>
@@ -172,8 +172,14 @@
       }
 
       inherit() {
-        for (let attr of [ "text=label", "foo", "boo", "bardo=bar" ]) {
-          this.inheritAttribute(this.label, attr);
+        let map = {
+          "label": [[ "label", "text" ]],
+          "foo": [[ "label", "foo" ]],
+          "boo": [[ "label", "boo" ]],
+          "bar": [[ "label", "bardo" ]],
+        };
+        for (let attr of InheritsElementImperative.observedAttributes) {
+          this.inheritAttribute(map[attr], this.getAttribute(attr));
         }
       }
 

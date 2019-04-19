@@ -31,6 +31,8 @@ talos-bcv:
     treeherder-symbol: T(bcv)
     run-on-projects:
         by-test-platform:
+            linux64-ccov/.*: ['try']
+            windows10-64-ccov/.*: ['try']
             .*-qr/.*: []  # this test is not useful with webrender
             (?:windows10-64|windows7-32|linux64)/opt: ['mozilla-central', 'try']
             macosx64(?:-shippable)?/opt: ['mozilla-central', 'try']
@@ -367,6 +369,8 @@ talos-tp6-stylo-threads:
     max-run-time: 1200
     run-on-projects:
         by-test-platform:
+            linux64-ccov/.*: ['try']
+            windows10-64-ccov/.*: ['try']
             (?:windows10-64|windows7-32|linux64)(?:-qr)?/opt: ['mozilla-central', 'try']
             macosx64(?:-shippable)?(?:-qr)?/opt: ['mozilla-central', 'try']
             default: ['mozilla-beta', 'trunk', 'try']
@@ -410,10 +414,8 @@ talos-xperf:
             default: []
     tier:
         by-test-platform:
-            windows7-32.*: default
-            windows10-64(-pgo)?/.*: default
             windows10-64-ccov/debug: 3
-            default: 3  # this should be disabled but might run via try syntax anyway, so explicitly downgrade to tier-3
+            default: default
     mozharness:
         extra-options:
             - --suite=xperf

@@ -211,7 +211,8 @@ HttpBaseChannel::HttpBaseChannel()
       mInitialRwin(0),
       mProxyResolveFlags(0),
       mContentDispositionHint(UINT32_MAX),
-      mReferrerPolicy(NS_GetDefaultReferrerPolicy()),
+      mOriginalReferrerPolicy(NS_GetDefaultReferrerPolicy()),
+      mReferrerPolicy(mOriginalReferrerPolicy),
       mCorsMode(nsIHttpChannelInternal::CORS_MODE_NO_CORS),
       mRedirectMode(nsIHttpChannelInternal::REDIRECT_MODE_FOLLOW),
       mLastRedirectFlags(0),
@@ -1532,27 +1533,6 @@ HttpBaseChannel::GetFlashPluginState(nsIHttpChannel::FlashPluginState* aState) {
 }
 
 NS_IMETHODIMP
-HttpBaseChannel::OverrideTrackingFlagsForDocumentCookieAccessor(
-    nsIHttpChannel* aDocumentChannel) {
-  LOG(("HttpBaseChannel::OverrideTrackingFlagsForDocumentCookieAccessor() %p",
-       this));
-
-  // The semantics we'd like to achieve here are that document.cookie
-  // should follow the same rules that the document is subject to with
-  // regards to content blocking. Therefore we need to propagate the
-  // same flags from the document channel to the fake channel here.
-
-  mThirdPartyClassificationFlags =
-      aDocumentChannel->GetThirdPartyClassificationFlags();
-  mFirstPartyClassificationFlags =
-      aDocumentChannel->GetFirstPartyClassificationFlags();
-
-  MOZ_ASSERT(
-      !(mFirstPartyClassificationFlags && mThirdPartyClassificationFlags));
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 HttpBaseChannel::GetTransferSize(uint64_t* aTransferSize) {
   *aTransferSize = mTransferSize;
   return NS_OK;
@@ -1648,6 +1628,7 @@ HttpBaseChannel::SetReferrerWithPolicy(nsIURI* referrer,
   ENSURE_CALLED_BEFORE_CONNECT();
 
   nsIURI* originalReferrer = referrer;
+  uint32_t originalReferrerPolicy = referrerPolicy;
 
   mReferrerPolicy = referrerPolicy;
 
@@ -1930,6 +1911,7 @@ HttpBaseChannel::SetReferrerWithPolicy(nsIURI* referrer,
   rv = SetRequestHeader(NS_LITERAL_CSTRING("Referer"), spec, false);
   if (NS_FAILED(rv)) return rv;
 
+  mOriginalReferrerPolicy = originalReferrerPolicy;
   mOriginalReferrer = originalReferrer;
   mReferrer = clone;
   return NS_OK;
@@ -3205,6 +3187,9 @@ already_AddRefed<nsILoadInfo> HttpBaseChannel::CloneLoadInfoForRedirect(
     MOZ_ASSERT(
         docShellAttrs.mPrivateBrowsingId == attrs.mPrivateBrowsingId,
         "docshell and necko should have the same privateBrowsingId attribute.");
+    MOZ_ASSERT(
+        docShellAttrs.mGeckoViewSessionContextId == attrs.mGeckoViewSessionContextId,
+        "docshell and necko should have the same geckoViewSessionContextId attribute");
 
     attrs = docShellAttrs;
     attrs.SetFirstPartyDomain(true, newURI);
@@ -4532,7 +4517,7 @@ HttpBaseChannel::GetNativeServerTiming(
 }
 
 NS_IMETHODIMP
-HttpBaseChannel::CancelByChannelClassifier(nsresult aErrorCode) {
+HttpBaseChannel::CancelByURLClassifier(nsresult aErrorCode) {
   MOZ_ASSERT(
       UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(aErrorCode));
   return Cancel(aErrorCode);

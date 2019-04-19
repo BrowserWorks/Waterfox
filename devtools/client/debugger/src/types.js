@@ -4,6 +4,8 @@
 
 // @flow
 
+import type { SourcePayload } from "./client/firefox/types";
+
 export type SearchModifiers = {
   caseSensitive: boolean,
   wholeWord: boolean,
@@ -46,6 +48,24 @@ export type SourceId = string;
  * @static
  */
 export type ActorId = string;
+
+export type QueuedSourceData =
+  | { type: "original", data: OriginalSourceData }
+  | { type: "generated", data: GeneratedSourceData };
+
+export type OriginalSourceData = {|
+  id: string,
+  url: string
+|};
+
+export type GeneratedSourceData = {
+  thread: ThreadId,
+  source: SourcePayload,
+
+  // Many of our tests rely on being able to set a specific ID for the Source
+  // object. We may want to consider avoiding that eventually.
+  id?: string
+};
 
 export type SourceActorLocation = {|
   +sourceActor: SourceActor,
@@ -213,6 +233,12 @@ export type ChromeFrame = {
   scopeChain: any,
   generatedLocation: SourceLocation,
   location: ?SourceLocation
+};
+
+export type OriginalFrame = {
+  displayName: string,
+  location?: SourceLocation,
+  thread: string
 };
 
 /**
@@ -432,13 +458,13 @@ export type Scope = {|
 |};
 
 export type MainThread = {
-  +actor: string,
+  +actor: ThreadId,
   +url: string,
   +type: number
 };
 
 export type Worker = {
-  +actor: string,
+  +actor: ThreadId,
   +url: string,
   +type: number
 };

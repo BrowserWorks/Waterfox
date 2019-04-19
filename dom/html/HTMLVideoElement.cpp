@@ -313,22 +313,21 @@ HTMLVideoElement::GetVideoPlaybackQuality() {
             TotalPlayTime(), VideoWidth(), VideoHeight());
         corruptedFrames = 0;
       } else {
-        FrameStatisticsData stats =
-            mDecoder->GetFrameStatistics().GetFrameStatisticsData();
-        if (sizeof(totalFrames) >= sizeof(stats.mParsedFrames)) {
-          totalFrames = stats.mPresentedFrames + stats.mDroppedFrames;
-          droppedFrames = stats.mDroppedFrames;
+        FrameStatistics* stats = &mDecoder->GetFrameStatistics();
+        if (sizeof(totalFrames) >= sizeof(stats->GetParsedFrames())) {
+          totalFrames = stats->GetTotalFrames();
+          droppedFrames = stats->GetDroppedFrames();
         } else {
-          uint64_t total = stats.mPresentedFrames + stats.mDroppedFrames;
+          uint64_t total = stats->GetTotalFrames();
           const auto maxNumber = std::numeric_limits<uint32_t>::max();
           if (total <= maxNumber) {
             totalFrames = uint32_t(total);
-            droppedFrames = uint32_t(stats.mDroppedFrames);
+            droppedFrames = uint32_t(stats->GetDroppedFrames());
           } else {
             // Too big number(s) -> Resize everything to fit in 32 bits.
             double ratio = double(maxNumber) / double(total);
             totalFrames = maxNumber;  // === total * ratio
-            droppedFrames = uint32_t(double(stats.mDroppedFrames) * ratio);
+            droppedFrames = uint32_t(double(stats->GetDroppedFrames()) * ratio);
           }
         }
         corruptedFrames = 0;
@@ -545,6 +544,16 @@ void HTMLVideoElement::EndCloningVisually() {
 
   if (IsInComposedDoc() && !sCloneElementVisuallyTesting) {
     NotifyUAWidgetSetupOrChange();
+  }
+}
+
+void HTMLVideoElement::TogglePictureInPicture(ErrorResult& error) {
+  // The MozTogglePictureInPicture event is listen for via the
+  // PictureInPictureChild actor, which is responsible for opening the new
+  // window and starting the visual clone.
+  nsresult rv = DispatchEvent(NS_LITERAL_STRING("MozTogglePictureInPicture"));
+  if (NS_FAILED(rv)) {
+    error.Throw(rv);
   }
 }
 

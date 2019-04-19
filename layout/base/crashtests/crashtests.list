@@ -73,6 +73,9 @@ load 321058-2.xul
 load 321077-1.xul
 load 321077-2.xul
 load 322436-1.html
+load 322678.html
+load 325024.html
+load 325218.xul
 load 325967-1.html
 load 325984-1.xhtml
 load 325984-2.html
@@ -564,3 +567,5 @@ pref(layout.css.column-span.enabled,true) load 1533885.html
 pref(layout.css.column-span.enabled,true) load 1534146.html
 pref(layout.css.column-span.enabled,true) load 1539017.html
 load 1539303.html
+pref(layout.css.column-span.enabled,true) load 1541679.html
+

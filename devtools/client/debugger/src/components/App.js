@@ -58,6 +58,7 @@ import WelcomeBox from "./WelcomeBox";
 import EditorTabs from "./Editor/Tabs";
 import EditorFooter from "./Editor/Footer";
 import QuickOpenModal from "./QuickOpenModal";
+import WhyPaused from "./SecondaryPanes/WhyPaused";
 
 type Props = {
   selectedSource: Source,
@@ -152,6 +153,7 @@ class App extends Component<Props, State> {
       closeQuickOpen,
       quickOpenEnabled
     } = this.props;
+    const { shortcutsModalEnabled } = this.state;
 
     if (activeSearch) {
       e.preventDefault();
@@ -161,6 +163,10 @@ class App extends Component<Props, State> {
     if (quickOpenEnabled) {
       e.preventDefault();
       closeQuickOpen();
+    }
+
+    if (shortcutsModalEnabled) {
+      this.toggleShortcutsModal();
     }
   };
 
@@ -229,6 +235,9 @@ class App extends Component<Props, State> {
             startPanelSize={startPanelSize}
             endPanelSize={endPanelSize}
           />
+          {this.props.endPanelCollapsed ? (
+            <WhyPaused horizontal={horizontal} />
+          ) : null}
           {!this.props.selectedSource ? (
             <WelcomeBox
               horizontal={horizontal}

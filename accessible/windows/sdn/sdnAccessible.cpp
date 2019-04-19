@@ -21,6 +21,7 @@
 #include "mozilla/dom/BorrowedAttrInfo.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/ErrorResult.h"
+#include "mozilla/PresShell.h"
 
 using namespace mozilla;
 using namespace mozilla::a11y;
@@ -262,7 +263,8 @@ sdnAccessible::get_computedStyleForProperties(
   return S_OK;
 }
 
-STDMETHODIMP
+// XXX Use MOZ_CAN_RUN_SCRIPT_BOUNDARY for now due to bug 1543294.
+MOZ_CAN_RUN_SCRIPT_BOUNDARY STDMETHODIMP
 sdnAccessible::scrollTo(boolean aScrollTopLeft) {
   DocAccessible* document = GetDocument();
   if (!document)  // that's IsDefunct check
@@ -274,7 +276,9 @@ sdnAccessible::scrollTo(boolean aScrollTopLeft) {
                             ? nsIAccessibleScrollType::SCROLL_TYPE_TOP_LEFT
                             : nsIAccessibleScrollType::SCROLL_TYPE_BOTTOM_RIGHT;
 
-  nsCoreUtils::ScrollTo(document->PresShell(), mNode->AsContent(), scrollType);
+  RefPtr<PresShell> presShell = document->PresShellPtr();
+  nsCOMPtr<nsIContent> content = mNode->AsContent();
+  nsCoreUtils::ScrollTo(presShell, content, scrollType);
   return S_OK;
 }
 

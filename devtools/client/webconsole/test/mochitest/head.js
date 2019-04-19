@@ -1203,7 +1203,7 @@ function isConfirmDialogOpened(toolbox) {
 
 async function selectFrame(dbg, frame) {
   const onScopes = waitForDispatch(dbg, "ADD_SCOPES");
-  await dbg.actions.selectFrame(dbg.selectors.getThreadContext(dbg.getState()), frame);
+  await dbg.actions.selectFrame(dbg.selectors.getThreadContext(), frame);
   await onScopes;
 }
 
@@ -1319,4 +1319,29 @@ function checkConsoleOutputForWarningGroup(hud, expectedMessages) {
     ok(message.textContent.trim().includes(expectedMessage.trim()), `Message includes ` +
       `the expected "${expectedMessage}" content - "${message.textContent.trim()}"`);
   });
+}
+
+/**
+ * Check that there is a message with the specified text that has the specified
+ * stack information.
+ * @param {WebConsole} hud
+ * @param {string} text
+ *        message substring to look for
+ * @param {Array<number>} frameLines
+ *        line numbers of the frames expected in the stack
+ */
+async function checkMessageStack(hud, text, frameLines) {
+  const msgNode = await waitFor(() => findMessage(hud, text));
+  ok(!msgNode.classList.contains("open"), `Error logged not expanded`);
+
+  const button = msgNode.querySelector(".collapse-button");
+  button.click();
+
+  const framesNode = await waitFor(() => msgNode.querySelector(".frames"));
+  const frameNodes = framesNode.querySelectorAll(".frame");
+  ok(frameNodes.length == frameLines.length, `Found ${frameLines.length} frames`);
+  for (let i = 0; i < frameLines.length; i++) {
+    ok(frameNodes[i].querySelector(".line").textContent == "" + frameLines[i],
+       `Found line ${frameLines[i]} for frame #${i}`);
+  }
 }

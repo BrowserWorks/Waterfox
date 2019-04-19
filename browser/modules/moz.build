@@ -61,6 +61,9 @@ with Files("ContentCrashHandlers.jsm"):
 with Files("ContentSearch.jsm"):
     BUG_COMPONENT = ("Firefox", "Search")
 
+with Files("EveryWindow.jsm"):
+    BUG_COMPONENT = ("Firefox", "General")
+
 with Files("ExtensionsUI.jsm"):
     BUG_COMPONENT = ("WebExtensions", "General")
 
@@ -74,6 +77,9 @@ with Files("OpenInTabsUtils.jsm"):
     BUG_COMPONENT = ("Firefox", "Tabbed Browser")
 
 with Files("PermissionUI.jsm"):
+   BUG_COMPONENT = ("Firefox", "Site Identity and Permission Panels")
+
+with Files("PermissionUITelemetry.jsm"):
    BUG_COMPONENT = ("Firefox", "Site Identity and Permission Panels")
 
 with Files("ProcessHangMonitor.jsm"):
@@ -136,6 +142,7 @@ EXTRA_JS_MODULES += [
     'ContentObservers.js',
     'ContentSearch.jsm',
     'Discovery.jsm',
+    'EveryWindow.jsm',
     'ExtensionsUI.jsm',
     'FaviconLoader.jsm',
     'FormValidationHandler.jsm',
@@ -146,6 +153,7 @@ EXTRA_JS_MODULES += [
     'OpenInTabsUtils.jsm',
     'PageActions.jsm',
     'PermissionUI.jsm',
+    'PermissionUITelemetry.jsm',
     'PingCentre.jsm',
     'ProcessHangMonitor.jsm',
     'ReaderParent.jsm',

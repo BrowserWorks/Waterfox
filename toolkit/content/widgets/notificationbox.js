@@ -54,7 +54,8 @@ MozElements.NotificationBox = class NotificationBox {
 
     var closedNotification = this._closedNotification;
     var notifications = this.stack.getElementsByTagName("notification");
-    return Array.filter(notifications, n => n != closedNotification);
+    return Array.prototype.filter.call(
+      notifications, n => n != closedNotification);
   }
 
   getNotificationWithValue(aValue) {
@@ -111,7 +112,7 @@ MozElements.NotificationBox = class NotificationBox {
                      aEventCallback, aNotificationIs) {
     if (aPriority < this.PRIORITY_INFO_LOW ||
       aPriority > this.PRIORITY_CRITICAL_HIGH)
-      throw "Invalid notification priority " + aPriority;
+      throw new Error("Invalid notification priority " + aPriority);
 
     // check for where the notification should be inserted according to
     // priority. If two are equal, the existing one appears on top.

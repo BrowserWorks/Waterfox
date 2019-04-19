@@ -36,7 +36,8 @@ class JsepTransceiver {
         mWasCreatedBySetRemote(false),
         mStopped(false),
         mRemoved(false),
-        mNegotiated(false) {}
+        mNegotiated(false),
+        mCanRecycle(false) {}
 
   // Can't use default copy c'tor because of the refcount members. Ugh.
   JsepTransceiver(const JsepTransceiver& orig)
@@ -51,23 +52,25 @@ class JsepTransceiver {
         mWasCreatedBySetRemote(orig.mWasCreatedBySetRemote),
         mStopped(orig.mStopped),
         mRemoved(orig.mRemoved),
-        mNegotiated(orig.mNegotiated) {}
+        mNegotiated(orig.mNegotiated),
+        mCanRecycle(orig.mCanRecycle) {}
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(JsepTransceiver);
 
-  void Rollback(JsepTransceiver& oldTransceiver) {
+  void Rollback(JsepTransceiver& oldTransceiver, bool rollbackLevel) {
     MOZ_ASSERT(oldTransceiver.GetMediaType() == GetMediaType());
     MOZ_ASSERT(!oldTransceiver.IsNegotiated() || !oldTransceiver.HasLevel() ||
                !HasLevel() || oldTransceiver.GetLevel() == GetLevel());
     mTransport = oldTransceiver.mTransport;
-    mLevel = oldTransceiver.mLevel;
-    mBundleLevel = oldTransceiver.mBundleLevel;
+    if (rollbackLevel) {
+      mLevel = oldTransceiver.mLevel;
+      mBundleLevel = oldTransceiver.mBundleLevel;
+    }
     mRecvTrack = oldTransceiver.mRecvTrack;
 
-    // stop() caused by a disabled m-section in a remote offer cannot be
-    // rolled back.
-    if (!IsStopped()) {
-      mMid = oldTransceiver.mMid;
+    // Don't allow rollback to re-associate a transceiver.
+    if (!oldTransceiver.IsAssociated()) {
+      Disassociate();
     }
   }
 
@@ -95,7 +98,10 @@ class JsepTransceiver {
     mLevel = level;
   }
 
-  void ClearLevel() { mLevel = SIZE_MAX; }
+  void ClearLevel() {
+    MOZ_ASSERT(!IsAssociated());
+    mLevel = SIZE_MAX;
+  }
 
   size_t GetLevel() const {
     MOZ_ASSERT(HasLevel());
@@ -153,6 +159,10 @@ class JsepTransceiver {
 
   bool IsNegotiated() const { return mNegotiated; }
 
+  void SetCanRecycle() { mCanRecycle = true; }
+
+  bool CanRecycle() const { return mCanRecycle; }
+
   // Convenience function
   SdpMediaSection::MediaType GetMediaType() const {
     MOZ_ASSERT(mRecvTrack.GetMediaType() == mSendTrack.GetMediaType());
@@ -187,6 +197,7 @@ class JsepTransceiver {
   bool mStopped;
   bool mRemoved;
   bool mNegotiated;
+  bool mCanRecycle;
 };
 
 }  // namespace mozilla

@@ -76,7 +76,8 @@ stubPreparedMessages.set(`ReferenceError: asdf is not defined`, new ConsoleMessa
   "notes": null,
   "indent": 0,
   "prefix": "",
-  "private": false
+  "private": false,
+  "chromeContext": false
 }));
 
 stubPreparedMessages.set(`SyntaxError: redeclaration of let a`, new ConsoleMessage({
@@ -131,7 +132,8 @@ stubPreparedMessages.set(`SyntaxError: redeclaration of let a`, new ConsoleMessa
   ],
   "indent": 0,
   "prefix": "",
-  "private": false
+  "private": false,
+  "chromeContext": false
 }));
 
 stubPreparedMessages.set(`TypeError longString message`, new ConsoleMessage({
@@ -187,7 +189,8 @@ stubPreparedMessages.set(`TypeError longString message`, new ConsoleMessage({
   "notes": null,
   "indent": 0,
   "prefix": "",
-  "private": false
+  "private": false,
+  "chromeContext": false
 }));
 
 stubPreparedMessages.set(`throw ""`, new ConsoleMessage({
@@ -202,7 +205,7 @@ stubPreparedMessages.set(`throw ""`, new ConsoleMessage({
   "category": "content javascript",
   "messageText": "uncaught exception: ",
   "parameters": null,
-  "repeatId": "{\"frame\":null,\"groupId\":null,\"indent\":0,\"level\":\"error\",\"messageText\":\"uncaught exception: \",\"parameters\":null,\"source\":\"javascript\",\"type\":\"log\",\"userProvidedStyles\":null,\"private\":false,\"stacktrace\":[{\"filename\":\"http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html\",\"sourceId\":\"server1.conn0.child1/source24\",\"lineNumber\":1,\"columnNumber\":1,\"functionName\":null},{\"filename\":\"resource://testing-common/content-task.js line 59 > eval\",\"sourceId\":null,\"lineNumber\":7,\"columnNumber\":31,\"functionName\":null},{\"filename\":\"resource://testing-common/content-task.js\",\"sourceId\":null,\"lineNumber\":60,\"columnNumber\":29,\"functionName\":null}]}",
+  "repeatId": "{\"frame\":{\"source\":\"http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html\",\"sourceId\":null,\"line\":1,\"column\":1},\"groupId\":null,\"indent\":0,\"level\":\"error\",\"messageText\":\"uncaught exception: \",\"parameters\":null,\"source\":\"javascript\",\"type\":\"log\",\"userProvidedStyles\":null,\"private\":false,\"stacktrace\":[{\"filename\":\"http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html\",\"sourceId\":\"server1.conn0.child1/source24\",\"lineNumber\":1,\"columnNumber\":1,\"functionName\":null},{\"filename\":\"resource://testing-common/content-task.js line 59 > eval\",\"sourceId\":null,\"lineNumber\":7,\"columnNumber\":31,\"functionName\":null},{\"filename\":\"resource://testing-common/content-task.js\",\"sourceId\":null,\"lineNumber\":60,\"columnNumber\":29,\"functionName\":null}]}",
   "stacktrace": [
     {
       "filename": "http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html",
@@ -226,14 +229,20 @@ stubPreparedMessages.set(`throw ""`, new ConsoleMessage({
       "functionName": null
     }
   ],
-  "frame": null,
+  "frame": {
+    "source": "http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html",
+    "sourceId": null,
+    "line": 1,
+    "column": 1
+  },
   "groupId": null,
   "errorMessageName": "JSMSG_UNCAUGHT_EXCEPTION",
   "userProvidedStyles": null,
   "notes": null,
   "indent": 0,
   "prefix": "",
-  "private": false
+  "private": false,
+  "chromeContext": false
 }));
 
 stubPreparedMessages.set(`throw "tomato"`, new ConsoleMessage({
@@ -248,7 +257,7 @@ stubPreparedMessages.set(`throw "tomato"`, new ConsoleMessage({
   "category": "content javascript",
   "messageText": "uncaught exception: tomato",
   "parameters": null,
-  "repeatId": "{\"frame\":null,\"groupId\":null,\"indent\":0,\"level\":\"error\",\"messageText\":\"uncaught exception: tomato\",\"parameters\":null,\"source\":\"javascript\",\"type\":\"log\",\"userProvidedStyles\":null,\"private\":false,\"stacktrace\":[{\"filename\":\"http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html\",\"sourceId\":\"server1.conn0.child1/source24\",\"lineNumber\":1,\"columnNumber\":1,\"functionName\":null},{\"filename\":\"resource://testing-common/content-task.js line 59 > eval\",\"sourceId\":null,\"lineNumber\":7,\"columnNumber\":31,\"functionName\":null},{\"filename\":\"resource://testing-common/content-task.js\",\"sourceId\":null,\"lineNumber\":60,\"columnNumber\":29,\"functionName\":null}]}",
+  "repeatId": "{\"frame\":{\"source\":\"http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html\",\"sourceId\":null,\"line\":1,\"column\":1},\"groupId\":null,\"indent\":0,\"level\":\"error\",\"messageText\":\"uncaught exception: tomato\",\"parameters\":null,\"source\":\"javascript\",\"type\":\"log\",\"userProvidedStyles\":null,\"private\":false,\"stacktrace\":[{\"filename\":\"http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html\",\"sourceId\":\"server1.conn0.child1/source24\",\"lineNumber\":1,\"columnNumber\":1,\"functionName\":null},{\"filename\":\"resource://testing-common/content-task.js line 59 > eval\",\"sourceId\":null,\"lineNumber\":7,\"columnNumber\":31,\"functionName\":null},{\"filename\":\"resource://testing-common/content-task.js\",\"sourceId\":null,\"lineNumber\":60,\"columnNumber\":29,\"functionName\":null}]}",
   "stacktrace": [
     {
       "filename": "http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html",
@@ -272,14 +281,20 @@ stubPreparedMessages.set(`throw "tomato"`, new ConsoleMessage({
       "functionName": null
     }
   ],
-  "frame": null,
+  "frame": {
+    "source": "http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html",
+    "sourceId": null,
+    "line": 1,
+    "column": 1
+  },
   "groupId": null,
   "errorMessageName": "JSMSG_UNCAUGHT_EXCEPTION",
   "userProvidedStyles": null,
   "notes": null,
   "indent": 0,
   "prefix": "",
-  "private": false
+  "private": false,
+  "chromeContext": false
 }));
 
 stubPackets.set(`ReferenceError: asdf is not defined`, {
@@ -338,7 +353,8 @@ stubPackets.set(`ReferenceError: asdf is not defined`, {
         "functionName": null
       }
     ],
-    "notes": null
+    "notes": null,
+    "chromeContext": false
   },
   "type": "pageError",
   "from": "server1.conn0.child1/consoleActor2"
@@ -389,7 +405,8 @@ stubPackets.set(`SyntaxError: redeclaration of let a`, {
           "column": 6
         }
       }
-    ]
+    ],
+    "chromeContext": false
   },
   "type": "pageError",
   "from": "server1.conn0.child1/consoleActor2"
@@ -441,7 +458,8 @@ stubPackets.set(`TypeError longString message`, {
         "functionName": null
       }
     ],
-    "notes": null
+    "notes": null,
+    "chromeContext": false
   },
   "type": "pageError",
   "from": "server1.conn0.child1/consoleActor2"
@@ -451,11 +469,11 @@ stubPackets.set(`throw ""`, {
   "pageError": {
     "errorMessage": "uncaught exception: ",
     "errorMessageName": "JSMSG_UNCAUGHT_EXCEPTION",
-    "sourceName": "",
+    "sourceName": "http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html",
     "sourceId": null,
     "lineText": "",
-    "lineNumber": 0,
-    "columnNumber": 0,
+    "lineNumber": 1,
+    "columnNumber": 1,
     "category": "content javascript",
     "innerWindowID": 6442450949,
     "timeStamp": 1517942398629,
@@ -488,7 +506,8 @@ stubPackets.set(`throw ""`, {
         "functionName": null
       }
     ],
-    "notes": null
+    "notes": null,
+    "chromeContext": false
   },
   "type": "pageError",
   "from": "server1.conn0.child1/consoleActor2"
@@ -498,11 +517,11 @@ stubPackets.set(`throw "tomato"`, {
   "pageError": {
     "errorMessage": "uncaught exception: tomato",
     "errorMessageName": "JSMSG_UNCAUGHT_EXCEPTION",
-    "sourceName": "",
+    "sourceName": "http://example.com/browser/devtools/client/webconsole/test/fixtures/stub-generators/test-console-api.html",
     "sourceId": null,
     "lineText": "",
-    "lineNumber": 0,
-    "columnNumber": 0,
+    "lineNumber": 1,
+    "columnNumber": 1,
     "category": "content javascript",
     "innerWindowID": 6442450949,
     "timeStamp": 1517942398637,
@@ -535,7 +554,8 @@ stubPackets.set(`throw "tomato"`, {
         "functionName": null
       }
     ],
-    "notes": null
+    "notes": null,
+    "chromeContext": false
   },
   "type": "pageError",
   "from": "server1.conn0.child1/consoleActor2"

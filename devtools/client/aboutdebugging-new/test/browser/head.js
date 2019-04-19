@@ -88,6 +88,12 @@ async function openAboutDevtoolsToolbox(doc, tab, win, targetText = "about:debug
   await waitUntil(() =>
     devtoolsBrowser.contentWindow.location.href.startsWith("about:devtools-toolbox?"));
 
+  if (!shouldWaitToolboxReady) {
+    // Wait for show error page.
+    await waitUntil(() =>
+      devtoolsBrowser.contentDocument.querySelector(".js-error-page"));
+  }
+
   return {
     devtoolsBrowser,
     devtoolsDocument: devtoolsBrowser.contentDocument,
@@ -311,4 +317,12 @@ function getThisFirefoxString(aboutDebuggingWindow) {
   const loader = aboutDebuggingWindow.getBrowserLoaderForWindow();
   const { l10n } = loader.require("devtools/client/aboutdebugging-new/src/modules/l10n");
   return l10n.getString("about-debugging-this-firefox-runtime-name");
+}
+
+function waitUntilUsbDeviceIsUnplugged(deviceName, aboutDebuggingDocument) {
+  info("Wait until the USB sidebar item appears as unplugged");
+  return waitUntil(() => {
+    const sidebarItem = findSidebarItemByText(deviceName, aboutDebuggingDocument);
+    return !!sidebarItem.querySelector(".qa-runtime-item-unplugged");
+  });
 }

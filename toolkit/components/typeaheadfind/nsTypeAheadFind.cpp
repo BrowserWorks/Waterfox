@@ -219,9 +219,7 @@ nsTypeAheadFind::SetDocShell(nsIDocShell* aDocShell) {
   mWebBrowserFind = do_GetInterface(aDocShell);
   NS_ENSURE_TRUE(mWebBrowserFind, NS_ERROR_FAILURE);
 
-  nsCOMPtr<nsIPresShell> presShell;
-  presShell = aDocShell->GetPresShell();
-  mPresShell = do_GetWeakReference(presShell);
+  mPresShell = do_GetWeakReference(aDocShell->GetPresShell());
 
   ReleaseStrongMemberVariables();
   return NS_OK;
@@ -323,7 +321,7 @@ void nsTypeAheadFind::PlayNotFoundSound() {
   }
 }
 
-nsresult nsTypeAheadFind::FindItNow(nsIPresShell* aPresShell, bool aIsLinksOnly,
+nsresult nsTypeAheadFind::FindItNow(bool aIsLinksOnly,
                                     bool aIsFirstVisiblePreferred,
                                     bool aFindPrev, uint16_t* aResult) {
   *aResult = FIND_NOTFOUND;
@@ -340,12 +338,9 @@ nsresult nsTypeAheadFind::FindItNow(nsIPresShell* aPresShell, bool aIsLinksOnly,
     mPresShell = do_GetWeakReference(startingPresShell);
   }
 
-  nsCOMPtr<nsIPresShell> presShell(aPresShell);
-
+  nsCOMPtr<nsIPresShell> presShell = startingPresShell;
   if (!presShell) {
-    presShell = startingPresShell;  // this is the current document
-
-    if (!presShell) return NS_ERROR_FAILURE;
+    return NS_ERROR_FAILURE;
   }
 
   // There could be unflushed notifications which hide textareas or other
@@ -745,7 +740,7 @@ nsresult nsTypeAheadFind::GetSearchContainers(
   nsCOMPtr<nsIDocShell> docShell(do_QueryInterface(aContainer));
   if (!docShell) return NS_ERROR_FAILURE;
 
-  nsCOMPtr<nsIPresShell> presShell = docShell->GetPresShell();
+  RefPtr<PresShell> presShell = docShell->GetPresShell();
 
   RefPtr<nsPresContext> presContext = docShell->GetPresContext();
 
@@ -953,7 +948,7 @@ nsTypeAheadFind::FindAgain(bool aFindBackwards, bool aLinksOnly,
   if (!mTypeAheadBuffer.IsEmpty())
     // Beware! This may flush notifications via synchronous
     // ScrollSelectionIntoView.
-    FindItNow(nullptr, aLinksOnly, false, aFindBackwards, aResult);
+    FindItNow(aLinksOnly, false, aFindBackwards, aResult);
 
   return NS_OK;
 }
@@ -1066,8 +1061,7 @@ nsTypeAheadFind::Find(const nsAString& aSearchString, bool aLinksOnly,
   // ----------- Find the text! ---------------------
   // Beware! This may flush notifications via synchronous
   // ScrollSelectionIntoView.
-  nsresult rv =
-      FindItNow(nullptr, aLinksOnly, isFirstVisiblePreferred, false, aResult);
+  nsresult rv = FindItNow(aLinksOnly, isFirstVisiblePreferred, false, aResult);
 
   // ---------Handle success or failure ---------------
   if (NS_SUCCEEDED(rv)) {

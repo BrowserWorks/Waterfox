@@ -15,6 +15,7 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/ScrollTypes.h"
 #include "mozilla/ServoStyleSet.h"
+#include "mozilla/ServoStyleConsts.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/StyleSheet.h"
 #include "mozilla/UniquePtr.h"
@@ -341,7 +342,7 @@ class nsIPresShell : public nsStubDocumentObserver {
    * Reflow the frame model into a new width and height.  The
    * coordinates for aWidth and aHeight must be in standard nscoord's.
    */
-  virtual nsresult ResizeReflow(
+  MOZ_CAN_RUN_SCRIPT virtual nsresult ResizeReflow(
       nscoord aWidth, nscoord aHeight, nscoord aOldWidth = 0,
       nscoord aOldHeight = 0,
       ResizeReflowOptions aOptions = ResizeReflowOptions::eBSizeExact) = 0;
@@ -349,7 +350,7 @@ class nsIPresShell : public nsStubDocumentObserver {
    * Do the same thing as ResizeReflow but even if ResizeReflowOverride was
    * called previously.
    */
-  virtual nsresult ResizeReflowIgnoreOverride(
+  MOZ_CAN_RUN_SCRIPT virtual nsresult ResizeReflowIgnoreOverride(
       nscoord aWidth, nscoord aHeight, nscoord aOldWidth, nscoord aOldHeight,
       ResizeReflowOptions aOptions = ResizeReflowOptions::eBSizeExact) = 0;
 
@@ -555,6 +556,7 @@ class nsIPresShell : public nsStubDocumentObserver {
    *
    * @param aType the type of notifications to flush
    */
+  MOZ_CAN_RUN_SCRIPT
   void FlushPendingNotifications(mozilla::FlushType aType) {
     if (!NeedFlush(aType)) {
       return;
@@ -563,6 +565,7 @@ class nsIPresShell : public nsStubDocumentObserver {
     DoFlushPendingNotifications(aType);
   }
 
+  MOZ_CAN_RUN_SCRIPT
   void FlushPendingNotifications(mozilla::ChangesToFlush aType) {
     if (!NeedFlush(aType.mFlushType)) {
       return;
@@ -575,7 +578,9 @@ class nsIPresShell : public nsStubDocumentObserver {
   /**
    * Implementation methods for FlushPendingNotifications.
    */
+  MOZ_CAN_RUN_SCRIPT
   virtual void DoFlushPendingNotifications(mozilla::FlushType aType) = 0;
+  MOZ_CAN_RUN_SCRIPT
   virtual void DoFlushPendingNotifications(mozilla::ChangesToFlush aType) = 0;
 
  public:
@@ -643,8 +648,6 @@ class nsIPresShell : public nsStubDocumentObserver {
    */
   nsresult PostReflowCallback(nsIReflowCallback* aCallback);
   void CancelReflowCallback(nsIReflowCallback* aCallback);
-
-  void HandlePostedReflowCallbacks(bool aInterruptible);
 
   void ScheduleBeforeFirstPaint();
   void UnsuppressAndInvalidate();
@@ -1459,14 +1462,6 @@ class nsIPresShell : public nsStubDocumentObserver {
                                nsEventStatus* aEventStatus) = 0;
   virtual bool ShouldIgnoreInvalidation() = 0;
   /**
-   * Notify that we're going to call Paint with PAINT_LAYERS
-   * on the pres shell for a widget (which might not be this one, since
-   * WillPaint is called on all presshells in the same toplevel window as the
-   * painted widget). This is issued at a time when it's safe to modify
-   * widget geometry.
-   */
-  virtual void WillPaint() = 0;
-  /**
    * Notify that we're going to call Paint with PAINT_COMPOSITE.
    * Fires on the presshell for the painted widget.
    * This is issued at a time when it's safe to modify widget geometry.
@@ -1774,8 +1769,8 @@ class nsIPresShell : public nsStubDocumentObserver {
       FrameMetrics::ScrollOffsetUpdateType aUpdateType);
 
 #ifdef DEBUG
-  bool VerifyIncrementalReflow();
-  void DoVerifyReflow();
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY bool VerifyIncrementalReflow();
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY void DoVerifyReflow();
   void VerifyHasDirtyRootAncestor(nsIFrame* aFrame);
   void ShowEventTargetDebug();
 
@@ -1799,7 +1794,7 @@ class nsIPresShell : public nsStubDocumentObserver {
   void AddUserSheet(mozilla::StyleSheet*);
   void AddAgentSheet(mozilla::StyleSheet*);
   void AddAuthorSheet(mozilla::StyleSheet*);
-  void RemoveSheet(mozilla::SheetType, mozilla::StyleSheet*);
+  void RemoveSheet(mozilla::StyleOrigin, mozilla::StyleSheet*);
   void RemovePreferenceStyles();
 
   void WillDoReflow();
@@ -1816,15 +1811,6 @@ class nsIPresShell : public nsStubDocumentObserver {
 
   DOMHighResTimeStamp GetPerformanceNowUnclamped();
 
-  /**
-   * Callback handler for whether reflow happened.
-   *
-   * @param aInterruptible Whether or not reflow interruption is allowed.
-   */
-  void DidDoReflow(bool aInterruptible);
-  // ProcessReflowCommands returns whether we processed all our dirty roots
-  // without interruptions.
-  bool ProcessReflowCommands(bool aInterruptible);
   // The callback for the mReflowContinueTimer timer.
   static void sReflowContinueCallback(nsITimer* aTimer, void* aPresShell);
   bool ScheduleReflowOffTimer();

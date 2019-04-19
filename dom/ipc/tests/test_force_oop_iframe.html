@@ -1,9 +1,8 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="application/javascript" src="/tests/SimpleTest/AddTask.js"></script>
-  <script type="application/javascript" src="/tests/SimpleTest/ChromeTask.js"></script>
+  <script src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script src="/tests/SimpleTest/ChromeTask.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
 <body>
@@ -47,6 +46,9 @@ add_task(async function() {
   let frameLoader = SpecialPowers.wrap(iframe).frameLoader;
   is(frameLoader.docShell, null);
   is(frameLoader.tabParent, null);
+  let browsingContext = frameLoader.browsingContext;
+  isnot(browsingContext, null);
+  is(browsingContext.docShell, null);
 
   await contentCreated;
 

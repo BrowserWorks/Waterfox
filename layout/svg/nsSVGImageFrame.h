@@ -27,6 +27,10 @@
 
 class nsSVGImageFrame;
 
+namespace mozilla {
+class PresShell;
+}  // namespace mozilla
+
 class nsSVGImageListener final : public imgINotificationObserver {
  public:
   explicit nsSVGImageListener(nsSVGImageFrame* aFrame);
@@ -37,14 +41,14 @@ class nsSVGImageListener final : public imgINotificationObserver {
   void SetFrame(nsSVGImageFrame* frame) { mFrame = frame; }
 
  private:
-  ~nsSVGImageListener() {}
+  ~nsSVGImageListener() = default;
 
   nsSVGImageFrame* mFrame;
 };
 
 class nsSVGImageFrame final : public mozilla::SVGGeometryFrame,
                               public nsIReflowCallback {
-  friend nsIFrame* NS_NewSVGImageFrame(nsIPresShell* aPresShell,
+  friend nsIFrame* NS_NewSVGImageFrame(mozilla::PresShell* aPresShell,
                                        ComputedStyle* aStyle);
 
  protected:

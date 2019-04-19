@@ -6,7 +6,7 @@
 <html>
 <head>
   <title>Bug 94048 - test install event.</title>
-  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
 <body>
@@ -82,6 +82,7 @@
     ["dom.serviceWorkers.exemptFromPerDomainMax", true],
     ["dom.serviceWorkers.enabled", true],
     ["dom.serviceWorkers.testing.enabled", true],
+    ["dom.xmldocument.load.enabled", true],
     ["javascript.options.streams", true],
     ["network.cookie.cookieBehavior", COOKIE_BEHAVIOR_REJECTFOREIGN],
   ]}, runTest);

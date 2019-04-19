@@ -79,8 +79,7 @@ const char kPrefIncrementalSearchTimeout[] =
 //
 // Wrapper for creating a new menu popup container
 //
-nsIFrame* NS_NewMenuPopupFrame(nsIPresShell* aPresShell,
-                               ComputedStyle* aStyle) {
+nsIFrame* NS_NewMenuPopupFrame(PresShell* aPresShell, ComputedStyle* aStyle) {
   return new (aPresShell)
       nsMenuPopupFrame(aStyle, aPresShell->GetPresContext());
 }
@@ -163,8 +162,8 @@ void nsMenuPopupFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
     mInContentShell = false;
   }
 
-  // Support incontentshell=false attribute to allow popups to be displayed outside of the
-  // content shell. Chrome only.
+  // Support incontentshell=false attribute to allow popups to be displayed
+  // outside of the content shell. Chrome only.
   if (aContent->NodePrincipal()->IsSystemPrincipal()) {
     if (aContent->AsElement()->AttrValueIs(kNameSpaceID_None,
                                            nsGkAtoms::incontentshell,

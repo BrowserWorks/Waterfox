@@ -995,7 +995,7 @@ VARCACHE_PREF(
   bool, false
 )
 
-// Pref to control whether ::xul-tree-* pseudo-elements are parsed in content
+// Pref to control whether XUL ::-tree-* pseudo-elements are parsed in content
 // pages.
 VARCACHE_PREF(
   "layout.css.xul-tree-pseudos.content.enabled",
@@ -1353,7 +1353,7 @@ VARCACHE_PREF(
 VARCACHE_PREF(
   "media.gmp.insecure.allow",
    MediaGmpInsecureAllow,
-  bool, false
+  RelaxedAtomicBool, false
 )
 #endif
 
@@ -2069,6 +2069,13 @@ VARCACHE_PREF(
   "network.delay.tracking.load",
    network_delay_tracking_load,
    uint32_t, 0
+)
+
+// Max time to shutdown the resolver threads
+VARCACHE_PREF(
+  "network.dns.resolver_shutdown_timeout_ms",
+   network_dns_resolver_shutdown_timeout_ms,
+   uint32_t, 2000
 )
 
 //---------------------------------------------------------------------------

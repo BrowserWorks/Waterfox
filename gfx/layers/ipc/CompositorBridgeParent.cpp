@@ -650,11 +650,11 @@ void CompositorBridgeParent::ActorDestroy(ActorDestroyReason why) {
 }
 
 void CompositorBridgeParent::ScheduleRenderOnCompositorThread(
-    const Maybe<wr::RenderRoot>& aRenderRoot) {
+    const wr::RenderRootSet& aRenderRoots) {
   MOZ_ASSERT(CompositorLoop());
-  CompositorLoop()->PostTask(NewRunnableMethod<Maybe<wr::RenderRoot>>(
+  CompositorLoop()->PostTask(NewRunnableMethod<wr::RenderRootSet>(
       "layers::CompositorBridgeParent::ScheduleComposition", this,
-      &CompositorBridgeParent::ScheduleComposition, aRenderRoot));
+      &CompositorBridgeParent::ScheduleComposition, aRenderRoots));
 }
 
 void CompositorBridgeParent::InvalidateOnCompositorThread() {
@@ -723,7 +723,7 @@ void CompositorBridgeParent::ResumeComposition() {
 void CompositorBridgeParent::ForceComposition() {
   // Cancel the orientation changed state to force composition
   mForceCompositionTask = nullptr;
-  ScheduleRenderOnCompositorThread();
+  ScheduleRenderOnCompositorThread(wr::RenderRootSet());
 }
 
 void CompositorBridgeParent::CancelCurrentCompositeTask() {
@@ -864,18 +864,14 @@ void CompositorBridgeParent::NotifyShadowTreeTransaction(
 }
 
 void CompositorBridgeParent::ScheduleComposition(
-    const Maybe<wr::RenderRoot>& aRenderRoot) {
+    const wr::RenderRootSet& aRenderRoots) {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
   if (mPaused) {
     return;
   }
 
   if (mWrBridge) {
-    if (aRenderRoot.isSome()) {
-      mWrBridge->ScheduleGenerateFrame(aRenderRoot);
-    } else {
-      mWrBridge->ScheduleGenerateFrameAllRenderRoots();
-    }
+    mWrBridge->ScheduleGenerateFrame(aRenderRoots);
   } else {
     mCompositorScheduler->ScheduleComposition();
   }
@@ -2064,14 +2060,15 @@ void CompositorBridgeParent::DidComposite(const VsyncId& aId,
 }
 
 void CompositorBridgeParent::NotifyDidSceneBuild(
-    wr::RenderRoot aRenderRoot, RefPtr<wr::WebRenderPipelineInfo> aInfo) {
+    const nsTArray<wr::RenderRoot>& aRenderRoots,
+    RefPtr<wr::WebRenderPipelineInfo> aInfo) {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
   if (mPaused) {
     return;
   }
 
   if (mWrBridge) {
-    mWrBridge->NotifyDidSceneBuild(aRenderRoot, aInfo);
+    mWrBridge->NotifyDidSceneBuild(aRenderRoots, aInfo);
   } else {
     mCompositorScheduler->ScheduleComposition();
   }
@@ -2273,11 +2270,6 @@ bool CompositorBridgeParent::DeallocPTextureParent(PTextureParent* actor) {
 
 bool CompositorBridgeParent::IsSameProcess() const {
   return OtherPid() == base::GetCurrentProcId();
-}
-
-void CompositorBridgeParent::NotifyWebRenderError(wr::WebRenderError aError) {
-  MOZ_ASSERT(CompositorLoop() == MessageLoop::current());
-  Unused << SendNotifyWebRenderError(aError);
 }
 
 void CompositorBridgeParent::NotifyWebRenderContextPurge() {

@@ -454,7 +454,7 @@ nsresult nsHttpChannel::PrepareToConnect() {
   return OnBeforeConnect();
 }
 
-void nsHttpChannel::HandleContinueCancellingByChannelClassifier(
+void nsHttpChannel::HandleContinueCancellingByURLClassifier(
     nsresult aErrorCode) {
   MOZ_ASSERT(
       UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(aErrorCode));
@@ -462,19 +462,19 @@ void nsHttpChannel::HandleContinueCancellingByChannelClassifier(
 
   if (mSuspendCount) {
     LOG(
-        ("Waiting until resume HandleContinueCancellingByChannelClassifier "
+        ("Waiting until resume HandleContinueCancellingByURLClassifier "
          "[this=%p]\n",
          this));
     mCallOnResume = [aErrorCode](nsHttpChannel *self) {
-      self->HandleContinueCancellingByChannelClassifier(aErrorCode);
+      self->HandleContinueCancellingByURLClassifier(aErrorCode);
       return NS_OK;
     };
     return;
   }
 
-  LOG(("nsHttpChannel::HandleContinueCancellingByChannelClassifier [this=%p]\n",
+  LOG(("nsHttpChannel::HandleContinueCancellingByURLClassifier [this=%p]\n",
        this));
-  ContinueCancellingByChannelClassifier(aErrorCode);
+  ContinueCancellingByURLClassifier(aErrorCode);
 }
 
 void nsHttpChannel::HandleOnBeforeConnect() {
@@ -625,9 +625,13 @@ nsresult nsHttpChannel::ContinueOnBeforeConnect(bool aShouldUpgrade,
     mCaps |= NS_HTTP_DISABLE_TRR;
   }
 
+  bool isIsolated = mPrivateBrowsing ||
+                    !AntiTrackingCommon::IsFirstPartyStorageAccessGrantedFor(
+                        this, mURI, nullptr);
+
   // Finalize ConnectionInfo flags before SpeculativeConnect
   mConnectionInfo->SetAnonymous((mLoadFlags & LOAD_ANONYMOUS) != 0);
-  mConnectionInfo->SetPrivate(mPrivateBrowsing);
+  mConnectionInfo->SetPrivate(isIsolated);
   mConnectionInfo->SetNoSpdy(mCaps & NS_HTTP_DISALLOW_SPDY);
   mConnectionInfo->SetBeConservative((mCaps & NS_HTTP_BE_CONSERVATIVE) ||
                                      mBeConservative);
@@ -4363,6 +4367,7 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry *entry,
   NS_ENSURE_SUCCESS(rv, rv);
 
   bool doValidation = false;
+  bool doBackgroundValidation = false;
   bool canAddImsHeader = true;
 
   bool isForcedValid = false;
@@ -4381,7 +4386,7 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry *entry,
     doValidation = nsHttp::ValidationRequired(
         isForcedValid, mCachedResponseHead, mLoadFlags, mAllowStaleCacheContent,
         isImmutable, mCustomConditionalRequest, mRequestHead, entry,
-        cacheControlRequest, fromPreviousSession);
+        cacheControlRequest, fromPreviousSession, &doBackgroundValidation);
   }
 
   // If a content signature is expected to be valid in this load,
@@ -4525,6 +4530,10 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry *entry,
     *aResult = RECHECK_AFTER_WRITE_FINISHED;
   else {
     *aResult = ENTRY_WANTED;
+
+    if (doBackgroundValidation) {
+      PerformBackgroundCacheRevalidation();
+    }
   }
 
   if (mCachedContentIsValid) {
@@ -4866,13 +4875,21 @@ nsresult DoUpdateExpirationTime(nsHttpChannel *aSelf,
   nsresult rv;
 
   if (!aResponseHead->MustValidate()) {
+    // For stale-while-revalidate we use expiration time as the absolute base
+    // for calculation of the stale window absolute end time.  Hence, when the
+    // entry may be served w/o revalidation, we need a non-zero value for the
+    // expiration time.  Let's set it to |now|, which basicly means "expired",
+    // same as when set to 0.
+    uint32_t now = NowInSeconds();
+    aExpirationTime = now;
+
     uint32_t freshnessLifetime = 0;
 
     rv = aResponseHead->ComputeFreshnessLifetime(&freshnessLifetime);
     if (NS_FAILED(rv)) return rv;
 
     if (freshnessLifetime > 0) {
-      uint32_t now = NowInSeconds(), currentAge = 0;
+      uint32_t currentAge = 0;
 
       rv = aResponseHead->ComputeCurrentAge(now, aSelf->GetRequestTime(),
                                             &currentAge);
@@ -4884,12 +4901,12 @@ nsresult DoUpdateExpirationTime(nsHttpChannel *aSelf,
       if (freshnessLifetime > currentAge) {
         uint32_t timeRemaining = freshnessLifetime - currentAge;
         // be careful... now + timeRemaining may overflow
-        if (now + timeRemaining < now)
+        if (now + timeRemaining < now) {
           aExpirationTime = uint32_t(-1);
-        else
+        } else {
           aExpirationTime = now + timeRemaining;
-      } else
-        aExpirationTime = 0;
+        }
+      }
     }
   }
 
@@ -6132,7 +6149,7 @@ nsHttpChannel::Cancel(nsresult status) {
   if (UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(status)) {
     MOZ_CRASH_UNSAFE_PRINTF(
         "Blocking classifier error %" PRIx32
-        " need to be handled by CancelByChannelClassifier()",
+        " need to be handled by CancelByURLClassifier()",
         static_cast<uint32_t>(status));
   }
 #endif
@@ -6152,14 +6169,14 @@ nsHttpChannel::Cancel(nsresult status) {
 }
 
 NS_IMETHODIMP
-nsHttpChannel::CancelByChannelClassifier(nsresult aErrorCode) {
+nsHttpChannel::CancelByURLClassifier(nsresult aErrorCode) {
   MOZ_ASSERT(
       UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(aErrorCode));
   MOZ_ASSERT(NS_IsMainThread());
   // We should never have a pump open while a CORS preflight is in progress.
   MOZ_ASSERT_IF(mPreflightChannel, !mCachePump);
 
-  LOG(("nsHttpChannel::CancelByChannelClassifier [this=%p]\n", this));
+  LOG(("nsHttpChannel::CancelByURLClassifier [this=%p]\n", this));
 
   if (mCanceled) {
     LOG(("  ignoring; already canceled\n"));
@@ -6192,7 +6209,7 @@ nsHttpChannel::CancelByChannelClassifier(nsresult aErrorCode) {
     MOZ_ASSERT(!mCallOnResume);
     mChannelClassifierCancellationPending = 1;
     mCallOnResume = [aErrorCode](nsHttpChannel *self) {
-      self->HandleContinueCancellingByChannelClassifier(aErrorCode);
+      self->HandleContinueCancellingByURLClassifier(aErrorCode);
       return NS_OK;
     };
     return NS_OK;
@@ -6208,14 +6225,14 @@ nsHttpChannel::CancelByChannelClassifier(nsresult aErrorCode) {
   return CancelInternal(aErrorCode);
 }
 
-void nsHttpChannel::ContinueCancellingByChannelClassifier(nsresult aErrorCode) {
+void nsHttpChannel::ContinueCancellingByURLClassifier(nsresult aErrorCode) {
   MOZ_ASSERT(
       UrlClassifierFeatureFactory::IsClassifierBlockingErrorCode(aErrorCode));
   MOZ_ASSERT(NS_IsMainThread());
   // We should never have a pump open while a CORS preflight is in progress.
   MOZ_ASSERT_IF(mPreflightChannel, !mCachePump);
 
-  LOG(("nsHttpChannel::ContinueCancellingByChannelClassifier [this=%p]\n",
+  LOG(("nsHttpChannel::ContinueCancellingByURLClassifier [this=%p]\n",
        this));
   if (mCanceled) {
     LOG(("  ignoring; already canceled\n"));
@@ -10212,18 +10229,128 @@ nsresult nsHttpChannel::RedirectToInterceptedChannel() {
 void nsHttpChannel::ReEvaluateReferrerAfterTrackingStatusIsKnown() {
   if (StaticPrefs::network_cookie_cookieBehavior() ==
       nsICookieService::BEHAVIOR_REJECT_TRACKER) {
-    // If our referrer has been set before, and our referrer policy is equal to
-    // the default policy if we thought the channel wasn't a third-party
-    // tracking channel, we may need to set our referrer with referrer policy
-    // once again to ensure our defaults properly take effect now.
+    // If our referrer has been set before, the JS/DOM caller did not
+    // previously provide us with an explicit referrer policy value and our
+    // current referrer policy is equal to the default policy if we thought the
+    // channel wasn't a third-party tracking channel, we may need to set our
+    // referrer with referrer policy once again to ensure our defaults properly
+    // take effect now.
     bool isPrivate =
         mLoadInfo && mLoadInfo->GetOriginAttributes().mPrivateBrowsingId > 0;
-    if (mOriginalReferrer &&
+    if (mOriginalReferrer && mOriginalReferrerPolicy == REFERRER_POLICY_UNSET &&
         mReferrerPolicy ==
             NS_GetDefaultReferrerPolicy(nullptr, nullptr, isPrivate)) {
       SetReferrer(mOriginalReferrer);
     }
   }
+}
+
+namespace {
+
+class BackgroundRevalidatingListener : public nsIStreamListener {
+  NS_DECL_ISUPPORTS
+
+  NS_DECL_NSISTREAMLISTENER
+  NS_DECL_NSIREQUESTOBSERVER
+
+ private:
+  virtual ~BackgroundRevalidatingListener() = default;
+};
+
+NS_IMETHODIMP
+BackgroundRevalidatingListener::OnStartRequest(nsIRequest *request) {
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BackgroundRevalidatingListener::OnDataAvailable(nsIRequest *request,
+                                                nsIInputStream *input,
+                                                uint64_t offset,
+                                                uint32_t count) {
+  uint32_t bytesRead = 0;
+  input->ReadSegments(NS_DiscardSegment, nullptr, count, &bytesRead);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BackgroundRevalidatingListener::OnStopRequest(nsIRequest *request,
+                                              nsresult status) {
+  nsCOMPtr<nsIHttpChannel> channel(do_QueryInterface(request));
+  if (gHttpHandler) {
+    gHttpHandler->OnBackgroundRevalidation(channel);
+  }
+  return NS_OK;
+}
+
+NS_IMPL_ISUPPORTS(BackgroundRevalidatingListener, nsIStreamListener,
+                  nsIRequestObserver)
+
+}  // namespace
+
+void nsHttpChannel::PerformBackgroundCacheRevalidation() {
+  LOG(("nsHttpChannel::PerformBackgroundCacheRevalidation %p", this));
+
+  Unused << NS_DispatchToMainThreadQueue(
+      NewIdleRunnableMethod(
+          "nsHttpChannel::PerformBackgroundCacheRevalidation", this,
+          &nsHttpChannel::PerformBackgroundCacheRevalidationNow),
+      EventQueuePriority::Idle);
+}
+
+void nsHttpChannel::PerformBackgroundCacheRevalidationNow() {
+  LOG(("nsHttpChannel::PerformBackgroundCacheRevalidationNow %p", this));
+
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsresult rv;
+
+  nsSecurityFlags secFlags;
+  rv = mLoadInfo->GetSecurityFlags(&secFlags);
+  if (NS_FAILED(rv)) {
+    return;
+  }
+
+  secFlags |= nsILoadInfo::SEC_DONT_FOLLOW_REDIRECTS;
+
+  nsCOMPtr<nsICookieSettings> cookieSettings;
+  rv = mLoadInfo->GetCookieSettings(getter_AddRefs(cookieSettings));
+  if (NS_FAILED(rv)) {
+    return;
+  }
+
+  nsCOMPtr<nsIChannel> validatingChannel;
+  rv = NS_NewChannel(getter_AddRefs(validatingChannel), mURI,
+                     mLoadInfo->LoadingPrincipal(), secFlags,
+                     mLoadInfo->InternalContentPolicyType(), cookieSettings,
+                     nullptr /* performance storage */, mLoadGroup, mCallbacks,
+                     LOAD_ONLY_IF_MODIFIED | VALIDATE_ALWAYS | LOAD_BACKGROUND |
+                         LOAD_BYPASS_SERVICE_WORKER);
+  if (NS_FAILED(rv)) {
+    LOG(("  failed to created the channel, rv=0x%08x",
+         static_cast<uint32_t>(rv)));
+    return;
+  }
+
+  nsCOMPtr<nsISupportsPriority> priority(do_QueryInterface(validatingChannel));
+  if (priority) {
+    priority->SetPriority(nsISupportsPriority::PRIORITY_LOWEST);
+  }
+
+  nsCOMPtr<nsIClassOfService> cos(do_QueryInterface(validatingChannel));
+  if (cos) {
+    cos->AddClassFlags(nsIClassOfService::Tail);
+  }
+
+  RefPtr<BackgroundRevalidatingListener> listener =
+      new BackgroundRevalidatingListener();
+  rv = validatingChannel->AsyncOpen(listener);
+  if (NS_FAILED(rv)) {
+    LOG(("  failed to open the channel, rv=0x%08x", static_cast<uint32_t>(rv)));
+    return;
+  }
+
+  LOG(("  %p is re-validating with a new channel %p", this,
+       validatingChannel.get()));
 }
 
 }  // namespace net

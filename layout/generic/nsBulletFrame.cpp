@@ -55,7 +55,7 @@ using namespace mozilla::image;
 using namespace mozilla::layout;
 using mozilla::dom::Document;
 
-nsIFrame* NS_NewBulletFrame(nsIPresShell* aPresShell, ComputedStyle* aStyle) {
+nsIFrame* NS_NewBulletFrame(PresShell* aPresShell, ComputedStyle* aStyle) {
   return new (aPresShell) nsBulletFrame(aStyle, aPresShell->GetPresContext());
 }
 
@@ -646,7 +646,7 @@ void nsDisplayBullet::Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx) {
   }
 
   ImgDrawResult result = static_cast<nsBulletFrame*>(mFrame)->PaintBullet(
-      *aCtx, ToReferenceFrame(), GetPaintRect(), flags, mDisableSubpixelAA);
+      *aCtx, ToReferenceFrame(), GetPaintRect(), flags, IsSubpixelAADisabled());
 
   nsDisplayBulletGeometry::UpdateDrawResult(this, result);
 }
@@ -827,7 +827,7 @@ ImgDrawResult nsBulletFrame::PaintBullet(gfxContext& aRenderingContext,
 int32_t nsBulletFrame::Ordinal(bool aDebugFromA11y) const {
   auto* fc = PresShell()->FrameConstructor();
   auto* cm = fc->CounterManager();
-  auto* list = cm->CounterListFor(NS_LITERAL_STRING("list-item"));
+  auto* list = cm->CounterListFor(nsGkAtoms::list_item);
   MOZ_ASSERT(aDebugFromA11y || (list && !list->IsDirty()));
   nsIFrame* listItem = GetParent()->GetContent()->GetPrimaryFrame();
   int32_t value = 0;
@@ -1261,6 +1261,19 @@ nscoord nsBulletFrame::GetLogicalBaseline(WritingMode aWritingMode) const {
     ascent = GetListStyleAscent();
   }
   return ascent + GetLogicalUsedMargin(aWritingMode).BStart(aWritingMode);
+}
+
+bool nsBulletFrame::GetNaturalBaselineBOffset(WritingMode aWM,
+                                              BaselineSharingGroup,
+                                              nscoord* aBaseline) const {
+  nscoord ascent = 0;
+  if (GetStateBits() & BULLET_FRAME_IMAGE_LOADING) {
+    ascent = BSize(aWM);
+  } else {
+    ascent = GetListStyleAscent();
+  }
+  *aBaseline = ascent;
+  return true;
 }
 
 #ifdef ACCESSIBILITY

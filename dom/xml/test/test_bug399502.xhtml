@@ -5,7 +5,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=399502
 -->
 <head>
   <title>Test for Bug 399502</title>
-  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
 <body>
@@ -30,8 +30,10 @@ function runTest() {
   xmldoc.load("test_bug399502.xhtml");
 }
 SimpleTest.waitForExplicitFinish();
-addLoadEvent(runTest);
 
+SpecialPowers.pushPrefEnv({"set": [
+  ["dom.xmldocument.load.enabled", true],
+]}, runTest);
 
 ]]>
 </script>

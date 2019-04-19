@@ -4638,6 +4638,25 @@ impl Renderer {
             return;
         }
 
+        // TODO(gw): This is a hack / workaround for a resizing glitch. What
+        //           happens is that the framebuffer rect / content origin are
+        //           determined during frame building, rather than at render
+        //           time (which is what used to happen). This means that the
+        //           framebuffer rect/origin can be wrong by the time a frame
+        //           is drawn, if resizing is occurring. This hack just makes
+        //           the framebuffer rect/origin be hard coded to the current
+        //           framebuffer size at render time. It seems like this probably
+        //           breaks some assumptions elsewhere, but it seems to fix the
+        //           bug and I haven't noticed any other issues so far. We will
+        //           need to investigate this further and make a "proper" fix.
+        if let Some(framebuffer_size) = framebuffer_size {
+            frame.framebuffer_rect = FramebufferIntRect::new(
+                FramebufferIntPoint::zero(),
+                framebuffer_size,
+            );
+            frame.content_origin = DeviceIntPoint::zero();
+        }
+
         self.device.disable_depth_write();
         self.set_blend(false, FramebufferKind::Other);
         self.device.disable_stencil();
@@ -5496,11 +5515,11 @@ pub trait SceneBuilderHooks {
     /// This is called after each scene swap occurs. The PipelineInfo contains
     /// the updated epochs and pipelines removed in the new scene compared to
     /// the old scene.
-    fn post_scene_swap(&self, document_id: DocumentId, info: PipelineInfo, sceneswap_time: u64);
+    fn post_scene_swap(&self, document_id: &Vec<DocumentId>, info: PipelineInfo, sceneswap_time: u64);
     /// This is called after a resource update operation on the scene builder
     /// thread, in the case where resource updates were applied without a scene
     /// build.
-    fn post_resource_update(&self, document_id: DocumentId);
+    fn post_resource_update(&self, document_ids: &Vec<DocumentId>);
     /// This is called after a scene build completes without any changes being
     /// made. We guarantee that each pre_scene_build call will be matched with
     /// exactly one of post_scene_swap, post_resource_update or

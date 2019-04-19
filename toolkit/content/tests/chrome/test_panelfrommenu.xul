@@ -7,8 +7,8 @@
   xmlns:html="http://www.w3.org/1999/xhtml"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>      
-  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"></script>      
+  <script src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>      
+  <script src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"></script>      
 
 <!--
   This test does the following:
@@ -74,13 +74,13 @@ function menuClosed()
   // the panel will be open at this point, but the popupshown event
   // still needs to fire
   is($("panel").state, "showing", "panel is open after menu hide");
-  is($("menu").firstChild.state, "closed", "menu is closed after menu hide");
+  is($("menu").menupopup.state, "closed", "menu is closed after menu hide");
 }
 
 function panelOpened()
 {
   is($("panel").state, "open", "panel is open");
-  is($("menu").firstChild.state, "closed", "menu is closed");
+  is($("menu").menupopup.state, "closed", "menu is closed");
   $("panel").hidePopup();
 }
 

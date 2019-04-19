@@ -12,6 +12,7 @@
 import { generatedToOriginalId } from "devtools-source-map";
 import { flatten } from "lodash";
 
+import { makeSourceId } from "../../client/firefox/create";
 import { toggleBlackBox } from "./blackbox";
 import { syncBreakpoint, setBreakpointPositions } from "../breakpoints";
 import { loadSourceText } from "./loadSourceText";
@@ -21,7 +22,8 @@ import {
   getRawSourceURL,
   isPrettyURL,
   isOriginal,
-  isInlineScript
+  isInlineScript,
+  isUrlExtension
 } from "../../utils/source";
 import {
   getBlackBoxList,
@@ -35,28 +37,15 @@ import {
 import { prefs } from "../../utils/prefs";
 import sourceQueue from "../../utils/source-queue";
 
-import type { Source, SourceId, Context } from "../../types";
+import type {
+  Source,
+  SourceId,
+  Context,
+  OriginalSourceData,
+  GeneratedSourceData,
+  QueuedSourceData
+} from "../../types";
 import type { Action, ThunkArgs } from "../types";
-
-function createOriginalSource(
-  originalUrl,
-  generatedSource,
-  sourceMaps
-): Source {
-  return {
-    url: originalUrl,
-    relativeUrl: originalUrl,
-    id: generatedToOriginalId(generatedSource.id, originalUrl),
-    isPrettyPrinted: false,
-    isWasm: false,
-    isBlackBoxed: false,
-    loadedState: "unloaded",
-    introductionUrl: null,
-    introductionType: undefined,
-    isExtension: false,
-    actors: []
-  };
-}
 
 function loadSourceMaps(cx: Context, sources: Source[]) {
   return async function({
@@ -66,7 +55,12 @@ function loadSourceMaps(cx: Context, sources: Source[]) {
     const sourceList = await Promise.all(
       sources.map(async ({ id }) => {
         const originalSources = await dispatch(loadSourceMap(cx, id));
-        sourceQueue.queueSources(originalSources);
+        sourceQueue.queueSources(
+          originalSources.map(data => ({
+            type: "original",
+            data
+          }))
+        );
         return originalSources;
       })
     );
@@ -107,8 +101,10 @@ function loadSourceMap(cx: Context, sourceId: SourceId) {
 
     let urls = null;
     try {
-      const urlInfo = { ...source };
-      if (!urlInfo.url) {
+      // Unable to correctly type the result of a spread on a union type.
+      // See https://github.com/facebook/flow/pull/7298
+      const urlInfo: Source = { ...(source: any) };
+      if (!urlInfo.url && typeof urlInfo.introductionUrl === "string") {
         // If the source was dynamically generated (via eval, dynamically
         // created script elements, and so forth), it won't have a URL, so that
         // it is not collapsed into other sources from the same place. The
@@ -140,7 +136,10 @@ function loadSourceMap(cx: Context, sourceId: SourceId) {
       return [];
     }
 
-    return urls.map(url => createOriginalSource(url, source, sourceMaps));
+    return urls.map(url => ({
+      id: generatedToOriginalId(source.id, url),
+      url
+    }));
   };
 }
 
@@ -218,18 +217,91 @@ function restoreBlackBoxedSources(cx: Context, sources: Source[]) {
   };
 }
 
-/**
- * Handler for the debugger client's unsolicited newSource notification.
- * @memberof actions/sources
- * @static
- */
-export function newSource(source: Source) {
+export function newQueuedSources(sourceInfo: Array<QueuedSourceData>) {
   return async ({ dispatch }: ThunkArgs) => {
-    await dispatch(newSources([source]));
+    const generated = [];
+    const original = [];
+    for (const source of sourceInfo) {
+      if (source.type === "generated") {
+        generated.push(source.data);
+      } else {
+        original.push(source.data);
+      }
+    }
+
+    if (generated.length > 0) {
+      await dispatch(newGeneratedSources(generated));
+    }
+    if (original.length > 0) {
+      await dispatch(newOriginalSources(original));
+    }
   };
 }
 
-export function newSources(sources: Source[]) {
+export function newOriginalSource(sourceInfo: OriginalSourceData) {
+  return async ({ dispatch }: ThunkArgs) => {
+    const sources = await dispatch(newOriginalSources([sourceInfo]));
+    return sources[0];
+  };
+}
+export function newOriginalSources(sourceInfo: Array<OriginalSourceData>) {
+  return async ({ dispatch }: ThunkArgs) => {
+    const sources = sourceInfo.map(({ id, url }) => ({
+      id,
+      url,
+      relativeUrl: url,
+      isPrettyPrinted: false,
+      isWasm: false,
+      isBlackBoxed: false,
+      loadedState: "unloaded",
+      introductionUrl: null,
+      introductionType: undefined,
+      isExtension: false,
+      actors: []
+    }));
+
+    return dispatch(newInnerSources(sources));
+  };
+}
+
+export function newGeneratedSource(sourceInfo: GeneratedSourceData) {
+  return async ({ dispatch }: ThunkArgs) => {
+    const sources = await dispatch(newGeneratedSources([sourceInfo]));
+    return sources[0];
+  };
+}
+export function newGeneratedSources(sourceInfo: Array<GeneratedSourceData>) {
+  return async ({ dispatch, client }: ThunkArgs) => {
+    const supportsWasm = client.hasWasmSupport();
+    const sources: Array<Source> = sourceInfo.map(({ thread, source, id }) => {
+      id = id || makeSourceId(source);
+      const sourceActor = {
+        actor: source.actor,
+        source: id,
+        thread
+      };
+      const createdSource: any = {
+        id,
+        url: source.url,
+        relativeUrl: source.url,
+        isPrettyPrinted: false,
+        sourceMapURL: source.sourceMapURL,
+        introductionUrl: source.introductionUrl,
+        introductionType: source.introductionType,
+        isBlackBoxed: false,
+        loadedState: "unloaded",
+        isWasm: !!supportsWasm && source.introductionType === "wasm",
+        isExtension: (source.url && isUrlExtension(source.url)) || false,
+        actors: [sourceActor]
+      };
+      return createdSource;
+    });
+
+    return dispatch(newInnerSources(sources));
+  };
+}
+
+function newInnerSources(sources: Source[]) {
   return async ({ dispatch, getState }: ThunkArgs) => {
     const cx = getContext(getState());
 
@@ -258,5 +330,7 @@ export function newSources(sources: Source[]) {
 
     dispatch(restoreBlackBoxedSources(cx, _newSources));
     dispatch(loadSourceMaps(cx, _newSources));
+
+    return sources;
   };
 }

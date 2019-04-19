@@ -334,6 +334,21 @@ void TabParent::SetOwnerElement(Element* aElement) {
   if (mRenderFrame.IsInitialized()) {
     mRenderFrame.OwnerContentChanged();
   }
+
+  // Set our BrowsingContext's embedder if we're not embedded within a
+  // BrowserBridgeParent.
+  if (!GetBrowserBridgeParent() && mBrowsingContext) {
+    mBrowsingContext->SetEmbedderElement(mFrameElement);
+  }
+
+  // Ensure all TabParent actors within BrowserBridges are also updated.
+  const auto& browserBridges = ManagedPBrowserBridgeParent();
+  for (auto iter = browserBridges.ConstIter(); !iter.Done(); iter.Next()) {
+    BrowserBridgeParent* browserBridge =
+        static_cast<BrowserBridgeParent*>(iter.Get()->GetKey());
+
+    browserBridge->GetTabParent()->SetOwnerElement(aElement);
+  }
 }
 
 NS_IMETHODIMP TabParent::GetOwnerElement(Element** aElement) {
@@ -355,7 +370,8 @@ void TabParent::AddWindowListeners() {
 }
 
 void TabParent::RemoveWindowListeners() {
-  if (mFrameElement && mFrameElement->OwnerDoc()->GetWindow()) {
+  if (mFrameElement && mFrameElement->OwnerDoc() &&
+      mFrameElement->OwnerDoc()->GetWindow()) {
     nsCOMPtr<nsPIDOMWindowOuter> window =
         mFrameElement->OwnerDoc()->GetWindow();
     nsCOMPtr<EventTarget> eventTarget = window->GetTopWindowRoot();
@@ -460,9 +476,11 @@ void TabParent::ActorDestroy(ActorDestroyReason why) {
     mIsDestroyed = true;
   }
 
+  // Tell our embedder that the tab is now going away unless we're an
+  // out-of-process iframe.
   RefPtr<nsFrameLoader> frameLoader = GetFrameLoader(true);
   nsCOMPtr<nsIObserverService> os = services::GetObserverService();
-  if (frameLoader) {
+  if (frameLoader && !mBrowserBridgeParent) {
     nsCOMPtr<Element> frameElement(mFrameElement);
     ReceiveMessage(CHILD_PROCESS_SHUTDOWN_MESSAGE, false, nullptr, nullptr,
                    nullptr);
@@ -500,9 +518,9 @@ void TabParent::ActorDestroy(ActorDestroyReason why) {
         }
       }
     }
-
-    mFrameLoader = nullptr;
   }
+
+  mFrameLoader = nullptr;
 
   if (os) {
     os->NotifyObservers(NS_ISUPPORTS_CAST(nsITabParent*, this),
@@ -650,6 +668,16 @@ void TabParent::LoadURL(nsIURI* aURI) {
   }
 
   Unused << SendLoadURL(spec, GetShowInfo());
+}
+
+void TabParent::ResumeLoad(uint64_t aPendingSwitchID) {
+  MOZ_ASSERT(aPendingSwitchID != 0);
+
+  if (NS_WARN_IF(mIsDestroyed)) {
+    return;
+  }
+
+  Unused << SendResumeLoad(aPendingSwitchID, GetShowInfo());
 }
 
 void TabParent::InitRendering() {
@@ -1041,7 +1069,8 @@ IPCResult TabParent::RecvPBrowserBridgeConstructor(
     const nsString& aRemoteType, BrowsingContext* aBrowsingContext,
     const uint32_t& aChromeFlags) {
   static_cast<BrowserBridgeParent*>(aActor)->Init(
-      aName, aRemoteType, CanonicalBrowsingContext::Cast(aBrowsingContext), aChromeFlags);
+      aName, aRemoteType, CanonicalBrowsingContext::Cast(aBrowsingContext),
+      aChromeFlags);
   return IPC_OK();
 }
 
@@ -1360,9 +1389,10 @@ class SynthesizedEventObserver : public nsIObserver {
 
     if (mTabParent->IsDestroyed()) {
       // If this happens it's probably a bug in the test that's triggering this.
-      NS_WARNING("TabParent was unexpectedly destroyed during event synthesization!");
+      NS_WARNING(
+          "TabParent was unexpectedly destroyed during event synthesization!");
     } else if (!mTabParent->SendNativeSynthesisResponse(mObserverId,
-                                                 nsCString(aTopic))) {
+                                                        nsCString(aTopic))) {
       NS_WARNING("Unable to send native event synthesization response!");
     }
     // Null out tabparent to indicate we already sent the response
@@ -2696,6 +2726,11 @@ bool TabParent::ReceiveMessage(const nsString& aMessage, bool aSync,
                                StructuredCloneData* aData, CpowHolder* aCpows,
                                nsIPrincipal* aPrincipal,
                                nsTArray<StructuredCloneData>* aRetVal) {
+  // If we're for an oop iframe, don't deliver messages to the wrong place.
+  if (mBrowserBridgeParent) {
+    return true;
+  }
+
   RefPtr<nsFrameLoader> frameLoader = GetFrameLoader(true);
   if (frameLoader && frameLoader->GetFrameMessageManager()) {
     RefPtr<nsFrameMessageManager> manager =
@@ -2887,6 +2922,7 @@ already_AddRefed<nsILoadContext> TabParent::GetLoadContext() {
     loadContext = new LoadContext(
         GetOwnerElement(), true /* aIsContent */, isPrivate,
         mChromeFlags & nsIWebBrowserChrome::CHROME_REMOTE_WINDOW,
+        mChromeFlags & nsIWebBrowserChrome::CHROME_FISSION_WINDOW,
         useTrackingProtection, OriginAttributesRef());
     mLoadContext = loadContext;
   }
@@ -3376,6 +3412,8 @@ class FakeChannel final : public nsIChannel,
   GetOriginAttributes(mozilla::OriginAttributes& aAttrs) override {}
   NS_IMETHOD GetUseRemoteTabs(bool*) NO_IMPL;
   NS_IMETHOD SetRemoteTabs(bool) NO_IMPL;
+  NS_IMETHOD GetUseRemoteSubframes(bool*) NO_IMPL;
+  NS_IMETHOD SetRemoteSubframes(bool) NO_IMPL;
   NS_IMETHOD GetUseTrackingProtection(bool*) NO_IMPL;
   NS_IMETHOD SetUseTrackingProtection(bool) NO_IMPL;
 #undef NO_IMPL

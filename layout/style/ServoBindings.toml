@@ -459,6 +459,7 @@ cbindgen-types = [
     { gecko = "StyleTouchAction", servo = "values::computed::TouchAction" },
     { gecko = "StyleWillChangeBits", servo = "values::specified::box_::WillChangeBits" },
     { gecko = "StyleTextDecorationLine", servo = "values::computed::TextDecorationLine" },
+    { gecko = "StyleTextTransform", servo = "values::computed::TextTransform" },
     { gecko = "StyleMozListReversed", servo = "values::computed::MozListReversed" },
     { gecko = "StyleOwned", servo = "gecko_bindings::sugar::ownership::Owned" },
     { gecko = "StyleOwnedOrNull", servo = "gecko_bindings::sugar::ownership::OwnedOrNull" },
@@ -469,6 +470,7 @@ cbindgen-types = [
     { gecko = "StyleGenericColorOrAuto", servo = "values::generics::color::ColorOrAuto" },
     { gecko = "StyleGenericScrollbarColor", servo = "values::generics::ui::ScrollbarColor" },
     { gecko = "StyleRGBA", servo = "cssparser::RGBA" },
+    { gecko = "StyleOrigin", servo = "stylesheets::Origin" },
 ]
 
 mapped-generic-types = [

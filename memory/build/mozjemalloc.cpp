@@ -1330,11 +1330,9 @@ static bool base_pages_alloc(size_t minsize) {
   // have to be immediately recommitted.
   pminsize = PAGE_CEILING(minsize);
   base_next_decommitted = (void*)((uintptr_t)base_pages + pminsize);
-#if defined(MALLOC_DECOMMIT)
   if (pminsize < csize) {
     pages_decommit(base_next_decommitted, csize - pminsize);
   }
-#endif
   base_mapped += csize;
   base_committed += pminsize;
 
@@ -1362,13 +1360,12 @@ static void* base_alloc(size_t aSize) {
   if ((uintptr_t)base_next_addr > (uintptr_t)base_next_decommitted) {
     void* pbase_next_addr = (void*)(PAGE_CEILING((uintptr_t)base_next_addr));
 
-#ifdef MALLOC_DECOMMIT
     if (!pages_commit(
             base_next_decommitted,
             (uintptr_t)pbase_next_addr - (uintptr_t)base_next_decommitted)) {
       return nullptr;
     }
-#endif
+
     base_committed +=
         (uintptr_t)pbase_next_addr - (uintptr_t)base_next_decommitted;
     base_next_decommitted = pbase_next_addr;
@@ -2433,13 +2430,13 @@ void arena_t::Purge(bool aAll) {
         mStats.committed -= npages;
 
 #ifndef MALLOC_DECOMMIT
-#ifdef XP_SOLARIS
+#  ifdef XP_SOLARIS
         posix_madvise((void*)(uintptr_t(chunk) + (i << gPageSize2Pow)),
-                (npages << gPageSize2Pow), MADV_FREE);
-#else
+                      (npages << gPageSize2Pow), MADV_FREE);
+#  else
         madvise((void*)(uintptr_t(chunk) + (i << gPageSize2Pow)),
                 (npages << gPageSize2Pow), MADV_FREE);
-#endif
+#  endif
 #  ifdef MALLOC_DOUBLE_PURGE
         madvised = true;
 #  endif

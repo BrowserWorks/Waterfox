@@ -81,11 +81,11 @@ class AndroidEmulatorTest(TestingMixin, BaseScript, MozbaseMixin, CodeCoverageMi
          "help": "Set log level (debug|info|warning|error|critical|fatal)",
          }
     ], [
-        ['--e10s', ],
-        {"action": "store_true",
+        ['--disable-e10s', ],
+        {"action": "store_false",
          "dest": "e10s",
-         "default": False,
-         "help": "Run tests with multiple processes.",
+         "default": True,
+         "help": "Run tests without multiple processes (e10s).",
          }
     ], [
         ['--enable-webrender'],
@@ -252,6 +252,8 @@ class AndroidEmulatorTest(TestingMixin, BaseScript, MozbaseMixin, CodeCoverageMi
                 dirs['abs_marionette_tests_dir'],
                 self.config.get('marionette_test_manifest', '')
             ),
+            'gtest_dir': os.path.join(dirs['abs_test_install_dir'], 'gtest',
+                                      'gtest_bin', 'gtest'),
         }
 
         user_paths = self._get_mozharness_test_paths(self.test_suite)

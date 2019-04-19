@@ -16,11 +16,11 @@ import type {
   FrameId,
   ActorId,
   Script,
-  Source,
   Pause,
   PendingLocation,
   Frame,
   SourceId,
+  QueuedSourceData,
   Worker,
   Range
 } from "../../types";
@@ -89,14 +89,11 @@ export type FramePacket = {
  */
 export type SourcePayload = {
   actor: ActorId,
-  generatedUrl?: URL,
-  introductionType: string,
-  introductionUrl?: URL,
+  url: URL | null,
   isBlackBoxed: boolean,
-  isPrettyPrinted: boolean,
-  isSourceMapped: boolean,
-  sourceMapURL?: URL,
-  url: URL
+  sourceMapURL: URL | null,
+  introductionUrl: URL | null,
+  introductionType: string | null
 };
 
 /**
@@ -189,7 +186,7 @@ export type TabPayload = {
 export type Actions = {
   paused: Pause => void,
   resumed: ResumedPacket => void,
-  newSources: (Source[]) => void,
+  newQueuedSources: (QueuedSourceData[]) => void,
   fetchEventListeners: () => void,
   updateWorkers: () => void
 };

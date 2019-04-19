@@ -52,6 +52,9 @@ GeckoViewStartup.prototype = {
           module: "resource://gre/modules/GeckoViewWebExtension.jsm",
           ged: [
             "GeckoView:RegisterWebExtension",
+            "GeckoView:UnregisterWebExtension",
+            "GeckoView:WebExtension:PortDisconnect",
+            "GeckoView:WebExtension:PortMessageFromApp",
           ],
         });
 
@@ -131,10 +134,12 @@ GeckoViewStartup.prototype = {
         SafeBrowsing.init();
 
         // Listen for global EventDispatcher messages
-        EventDispatcher.instance.registerListener(this,
-          ["GeckoView:ResetUserPrefs",
-           "GeckoView:SetDefaultPrefs",
-           "GeckoView:SetLocale"]);
+        EventDispatcher.instance.registerListener(this, [
+          "GeckoView:ClearSessionContextData",
+          "GeckoView:ResetUserPrefs",
+          "GeckoView:SetDefaultPrefs",
+          "GeckoView:SetLocale",
+        ]);
         break;
       }
     }
@@ -144,6 +149,16 @@ GeckoViewStartup.prototype = {
     debug `onEvent ${aEvent}`;
 
     switch (aEvent) {
+      case "GeckoView:ClearSessionContextData": {
+        let pattern = {};
+        if (aData.contextId !== null) {
+          pattern = { geckoViewSessionContextId: aData.contextId };
+        }
+        Services.clearData.deleteDataFromOriginAttributesPattern(pattern);
+        Services.qms.clearStoragesForOriginAttributesPattern(
+          JSON.stringify(pattern));
+        break;
+      }
       case "GeckoView:ResetUserPrefs": {
         const prefs = new Preferences();
         prefs.reset(aData.names);

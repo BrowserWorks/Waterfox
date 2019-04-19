@@ -7,11 +7,11 @@
 
 #include "gfxPrefs.h"
 #include "mozilla/MiscEvents.h"
+#include "mozilla/PresShell.h"
 #include "KeyboardLayout.h"
 #include "WinUtils.h"
 #include "npapi.h"
 #include "nsAutoPtr.h"
-#include "nsIPresShell.h"
 
 using namespace mozilla;
 using namespace mozilla::widget;
@@ -100,8 +100,21 @@ bool nsWindowBase::InjectTouchPoint(uint32_t aId, LayoutDeviceIntPoint& aPoint,
   info.rcContact.left = info.pointerInfo.ptPixelLocation.x - 2;
   info.rcContact.right = info.pointerInfo.ptPixelLocation.x + 2;
 
-  if (!sInjectTouchFuncPtr(1, &info)) {
-    WinUtils::Log("InjectTouchInput failure. GetLastError=%d", GetLastError());
+  for (int i = 0; i < 3; i++) {
+    if (sInjectTouchFuncPtr(1, &info)) {
+      break;
+    }
+    DWORD error = GetLastError();
+    if (error == ERROR_NOT_READY && i < 2) {
+      // We sent it too quickly after the previous injection (see bug 1535140
+      // comment 10). On the first loop iteration we just yield (via Sleep(0))
+      // and try again. If it happens again on the second loop iteration we
+      // explicitly Sleep(1) and try again. If that doesn't work either we just
+      // error out.
+      ::Sleep(i);
+      continue;
+    }
+    WinUtils::Log("InjectTouchInput failure. GetLastError=%d", error);
     return false;
   }
   return true;
@@ -109,8 +122,7 @@ bool nsWindowBase::InjectTouchPoint(uint32_t aId, LayoutDeviceIntPoint& aPoint,
 
 void nsWindowBase::ChangedDPI() {
   if (mWidgetListener) {
-    nsIPresShell* presShell = mWidgetListener->GetPresShell();
-    if (presShell) {
+    if (PresShell* presShell = mWidgetListener->GetPresShell()) {
       presShell->BackingScaleFactorChanged();
     }
   }

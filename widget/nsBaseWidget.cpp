@@ -6,9 +6,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ArrayUtils.h"
-#include "mozilla/UniquePtr.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/TextEventDispatcher.h"
 #include "mozilla/TextEventDispatcherListener.h"
+#include "mozilla/UniquePtr.h"
 
 #include "mozilla/layers/CompositorBridgeChild.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
@@ -27,7 +28,6 @@
 #include "nsISimpleEnumerator.h"
 #include "nsIContent.h"
 #include "mozilla/dom/Document.h"
-#include "nsIPresShell.h"
 #include "nsIServiceManager.h"
 #include "mozilla/Preferences.h"
 #include "BasicLayers.h"
@@ -1152,7 +1152,7 @@ bool nsBaseWidget::ShowContextMenuAfterMouseUp() {
 
 Document* nsBaseWidget::GetDocument() const {
   if (mWidgetListener) {
-    if (nsIPresShell* presShell = mWidgetListener->GetPresShell()) {
+    if (PresShell* presShell = mWidgetListener->GetPresShell()) {
       return presShell->GetDocument();
     }
   }
@@ -1671,8 +1671,7 @@ void nsBaseWidget::NotifyPresShell(NotificationFunc aNotificationFunc) {
     return;
   }
 
-  nsIPresShell* presShell = mWidgetListener->GetPresShell();
-  if (presShell) {
+  if (PresShell* presShell = mWidgetListener->GetPresShell()) {
     (presShell->*aNotificationFunc)();
   }
 }
@@ -1795,7 +1794,8 @@ void nsBaseWidget::ZoomToRect(const uint32_t& aPresShellId,
 a11y::Accessible* nsBaseWidget::GetRootAccessible() {
   NS_ENSURE_TRUE(mWidgetListener, nullptr);
 
-  nsIPresShell* presShell = mWidgetListener->GetPresShell();
+  PresShell* presShell =
+      static_cast<PresShell*>(mWidgetListener->GetPresShell());
   NS_ENSURE_TRUE(presShell, nullptr);
 
   // If container is null then the presshell is not active. This often happens

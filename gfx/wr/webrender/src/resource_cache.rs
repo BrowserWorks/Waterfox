@@ -42,6 +42,7 @@ use std::os::raw::c_void;
 #[cfg(any(feature = "capture", feature = "replay"))]
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
+use std::time::SystemTime;
 use texture_cache::{TextureCache, TextureCacheHandle, Eviction};
 use util::drain_filter;
 
@@ -1207,28 +1208,22 @@ impl ResourceCache {
                 // This code tries to keep things sane if Gecko sends
                 // nonsensical blob image requests.
                 // Constant here definitely needs to be tweaked.
-                const MAX_TILES_PER_REQUEST: i32 = 64;
+                const MAX_TILES_PER_REQUEST: i32 = 512;
                 // For truly nonsensical requests, we might run into overflow
-                // when computing width * height. Even if we don't, the loop
-                // below to reduce the number of tiles is linear and can take
-                // a long time to complete. These preliminary conditions help
-                // get us there faster and avoid the overflow.
-                if tiles.size.width > MAX_TILES_PER_REQUEST {
-                    tiles.origin.x += (tiles.size.width - MAX_TILES_PER_REQUEST) / 2;
-                    tiles.size.width = MAX_TILES_PER_REQUEST;
-                }
-                if tiles.size.height > MAX_TILES_PER_REQUEST {
-                    tiles.origin.y += (tiles.size.height - MAX_TILES_PER_REQUEST) / 2;
-                    tiles.size.height = MAX_TILES_PER_REQUEST;
-                }
-                while tiles.size.width as i32 * tiles.size.height as i32 > MAX_TILES_PER_REQUEST {
+                // when computing width * height, so we first check each extent
+                // individually.
+                while !tiles.size.is_empty_or_negative()
+                    && (tiles.size.width > MAX_TILES_PER_REQUEST
+                        || tiles.size.height > MAX_TILES_PER_REQUEST
+                        || tiles.size.width * tiles.size.height > MAX_TILES_PER_REQUEST) {
+                    let diff = tiles.size.width * tiles.size.height - MAX_TILES_PER_REQUEST;
                     // Remove tiles in the largest dimension.
                     if tiles.size.width > tiles.size.height {
-                        tiles.size.width -= 2;
-                        tiles.origin.x += 1;
+                        tiles.size.width -= diff / tiles.size.height + 1;
+                        tiles.origin.x += diff / (2 * tiles.size.height);
                     } else {
-                        tiles.size.height -= 2;
-                        tiles.origin.y += 1;
+                        tiles.size.height -= diff / tiles.size.width + 1;
+                        tiles.origin.y += diff / (2 * tiles.size.height);
                     }
                 }
 
@@ -1566,6 +1561,18 @@ impl ResourceCache {
                 tiling: image_template.tiling,
             }
         })
+    }
+
+    pub fn before_frames(&mut self, time: SystemTime) {
+        self.texture_cache.before_frames(time);
+    }
+
+    pub fn after_frames(&mut self) {
+        self.texture_cache.after_frames();
+    }
+
+    pub fn requires_frame_build(&self) -> bool {
+        self.texture_cache.requires_frame_build()
     }
 
     pub fn begin_frame(&mut self, stamp: FrameStamp) {
