@@ -107,14 +107,12 @@ WebGLBuffer::BufferData(GLenum target, size_t size, const void* data, GLenum usa
     if (!ValidateBufferUsageEnum(mContext, funcName, usage))
         return;
 
-#ifdef XP_MACOSX
-    // bug 790879
-    if (mContext->gl->WorkAroundDriverBugs() &&
-        size > INT32_MAX)
-    {
-        mContext->ErrorOutOfMemory("%s: Allocation size too large.", funcName);
-        return;
-    }
+#if defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
+  // bug 790879
+  if (mContext->gl->WorkAroundDriverBugs() && size > INT32_MAX) {
+    mContext->ErrorOutOfMemory("%s: Allocation size too large.", funcName);
+    return;
+  }
 #endif
 
     const void* uploadData = data;
