@@ -19,38 +19,38 @@
     "search_provider": {
       "name": "Bing",
       "search_url": "https://www.bing.com/search",
-      "search_form": "https://www.bing.com/search?q={searchTerms}&pc=MOZI",
-      "search_url_get_params": "q={searchTerms}&pc=MOZI",
+      "search_form": "https://www.bing.com/search?q={searchTerms}&pc=IC07&ptag=ICO-97dd84ae",
+      "search_url_get_params": "q={searchTerms}&pc=IC07&ptag=ICO-97dd84ae",
       "params": [
         {
           "name": "form",
           "condition": "purpose",
           "purpose": "contextmenu",
-          "value": "MOZCON"
+          "value": "INCOH1"
         },
         {
           "name": "form",
           "condition": "purpose",
           "purpose": "searchbar",
-          "value": "MOZSBR"
+          "value": "INCOH1"
         },
         {
           "name": "form",
           "condition": "purpose",
           "purpose": "homepage",
-          "value": "MOZSPG"
+          "value": "INCOH1"
         },
         {
           "name": "form",
           "condition": "purpose",
           "purpose": "keyword",
-          "value": "MOZLBR"
+          "value": "INCOH1"
         },
         {
           "name": "form",
           "condition": "purpose",
           "purpose": "newtab",
-          "value": "MOZTSB"
+          "value": "INCOH1"
         }
       ],
       "suggest_url": "https://www.bing.com/osjson.aspx",
