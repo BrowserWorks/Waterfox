@@ -43,7 +43,6 @@ DIRS += [
     'newtab',
     'originattributes',
     'places',
-    'pocket',
     'preferences',
     'privatebrowsing',
     'protocolhandler',

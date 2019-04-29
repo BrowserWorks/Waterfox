@@ -17,7 +17,6 @@ const {PersonalityProvider} = ChromeUtils.import("resource://activity-stream/lib
 const {PersistentCache} = ChromeUtils.import("resource://activity-stream/lib/PersistentCache.jsm");
 
 ChromeUtils.defineModuleGetter(this, "perfService", "resource://activity-stream/common/PerfService.jsm");
-ChromeUtils.defineModuleGetter(this, "pktApi", "chrome://pocket/content/pktApi.jsm");
 
 const STORIES_UPDATE_TIME = 30 * 60 * 1000; // 30 minutes
 const TOPICS_UPDATE_TIME = 3 * 60 * 60 * 1000; // 3 hours
@@ -56,7 +55,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
       this.storiesLoaded = false;
       this.domainAffinitiesLastUpdated = 0;
       this.processAffinityProividerVersion(options);
-      this.dispatchPocketCta(this._prefs.get("pocketCta"), false);
       Services.obs.addObserver(this, "idle-daily");
 
       // Cache is used for new page loads, which shouldn't have changed data.
@@ -101,16 +99,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
     this.storiesLoaded = false;
     Services.obs.removeObserver(this, "idle-daily");
     SectionsManager.disableSection(SECTION_ID);
-  }
-
-  getPocketState(target) {
-    const action = {type: at.POCKET_LOGGED_IN, data: pktApi.isUserLoggedIn()};
-    this.store.dispatch(ac.OnlyToOneContent(action, target));
-  }
-
-  dispatchPocketCta(data, shouldBroadcast) {
-    const action = {type: at.POCKET_CTA, data: JSON.parse(data)};
-    this.store.dispatch(shouldBroadcast ? ac.BroadcastToContent(action) : ac.AlsoToPreloaded(action));
   }
 
   /**
@@ -663,7 +651,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
         this.uninit();
         break;
       case at.NEW_TAB_REHYDRATED:
-        this.getPocketState(action.meta.fromTarget);
         this.maybeAddSpoc(action.meta.fromTarget);
         break;
       case at.SECTION_OPTIONS_CHANGED:
@@ -690,7 +677,7 @@ this.TopStoriesFeed = class TopStoriesFeed {
         // Top Stories impressions pref to continuously grow, see bug #1523408
         if (action.data.source === IMPRESSION_SOURCE) {
           const payload = action.data;
-          const viewImpression = !("click" in payload || "block" in payload || "pocket" in payload);
+          const viewImpression = !("click" in payload || "block" in payload);
           if (payload.tiles && viewImpression) {
             if (this.shouldShowSpocs()) {
               payload.tiles.forEach(t => {
@@ -713,9 +700,6 @@ this.TopStoriesFeed = class TopStoriesFeed {
         // Check if spocs was disabled. Remove them if they were.
         if (action.data.name === "showSponsored" && !action.data.value) {
           await this.removeSpocs();
-        }
-        if (action.data.name === "pocketCta") {
-          this.dispatchPocketCta(action.data.value, true);
         }
         if (action.data.name === OPTIONS_PREF) {
           try {
