@@ -1110,7 +1110,7 @@ pref("toolkit.tabbox.switchByScrolling", false);
 
 // Telemetry settings.
 // Server to submit telemetry pings to.
-pref("toolkit.telemetry.server", "https://incoming.telemetry.mozilla.org");
+pref("toolkit.telemetry.server", "");
 // Telemetry server owner. Please change if you set toolkit.telemetry.server to a different server
 pref("toolkit.telemetry.server_owner", "Mozilla");
 // Determines whether full SQL strings are returned when they might contain sensitive info
@@ -5831,7 +5831,8 @@ pref("browser.search.official", true);
 //pref("media.gmp-manager.url.override", "");
 
 // Update service URL for GMP install/updates:
-pref("media.gmp-manager.url", "https://aus5.mozilla.org/update/3/GMP/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
+// Remove for now until we use our own.
+pref("media.gmp-manager.url", "");
 
 // When |media.gmp-manager.cert.requireBuiltIn| is true or not specified the
 // final certificate and all certificates the connection is redirected to before

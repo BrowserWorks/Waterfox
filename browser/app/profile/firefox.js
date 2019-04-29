@@ -106,7 +106,7 @@ pref("app.update.timerFirstInterval", 30000);
 pref("app.update.altwindowtype", "Browser:About");
 
 // Enables some extra Application Update Logging (can reduce performance)
-pref("app.update.log", false);
+pref("app.update.log", true);
 // Causes Application Update Logging to be sent to a file in the profile
 // directory. This preference is automatically disabled on application start to
 // prevent it from being left on accidentally. Turning this pref on enables
@@ -153,7 +153,8 @@ pref("app.update.silent", false);
 pref("app.update.staging.enabled", true);
 
 // Update service URL:
-pref("app.update.url", "https://aus5.mozilla.org/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
+// OLD: https://www.waterfox.net/update/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml
+pref("app.update.url", "https://www.waterfox.net/update/%PRODUCT%/%VERSION%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
 // app.update.url.manual is in branding section
 // app.update.url.details is in branding section
 
@@ -196,11 +197,11 @@ pref("browser.eme.ui.enabled", false);
 #endif
 
 // UI tour experience.
-pref("browser.uitour.enabled", true);
+pref("browser.uitour.enabled", false);
 pref("browser.uitour.loglevel", "Error");
 pref("browser.uitour.requireSecure", true);
-pref("browser.uitour.themeOrigin", "https://addons.mozilla.org/%LOCALE%/firefox/themes/");
-pref("browser.uitour.url", "https://www.mozilla.org/%LOCALE%/firefox/%VERSION%/tour/");
+pref("browser.uitour.themeOrigin", "");
+pref("browser.uitour.url", "");
 // How long to show a Hearbeat survey (two hours, in seconds)
 pref("browser.uitour.surveyDuration", 7200);
 
@@ -825,7 +826,7 @@ pref("gecko.handlerService.schemes.ircs.2.uriTemplate", "chrome://browser-region
 pref("gecko.handlerService.schemes.ircs.3.name", "chrome://browser-region/locale/region.properties");
 pref("gecko.handlerService.schemes.ircs.3.uriTemplate", "chrome://browser-region/locale/region.properties");
 
-pref("browser.geolocation.warning.infoURL", "https://www.mozilla.org/%LOCALE%/firefox/geolocation/");
+pref("browser.geolocation.warning.infoURL", "");
 
 pref("browser.sessionstore.resume_from_crash", true);
 pref("browser.sessionstore.resume_session_once", false);
@@ -953,28 +954,28 @@ pref("browser.zoom.siteSpecific", true);
 pref("browser.zoom.updateBackgroundTabs", true);
 
 // The breakpad report server to link to in about:crashes
-pref("breakpad.reportURL", "https://crash-stats.mozilla.org/report/index/");
+pref("breakpad.reportURL", "");
 
 // URL for "Learn More" for DataCollection
 pref("toolkit.datacollection.infoURL",
-     "https://www.mozilla.org/legal/privacy/firefox.html");
+     "");
 
 // URL for "Learn More" for Crash Reporter
 pref("toolkit.crashreporter.infoURL",
-     "https://www.mozilla.org/legal/privacy/firefox.html#crash-reporter");
+     "");
 
 // base URL for web-based support pages
-pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/");
+pref("app.support.baseURL", "");
 
 // base url for web-based feedback pages
 #ifdef MOZ_DEV_EDITION
-pref("app.feedback.baseURL", "https://input.mozilla.org/%LOCALE%/feedback/firefoxdev/%VERSION%/");
+pref("app.feedback.baseURL", "");
 #else
-pref("app.feedback.baseURL", "https://input.mozilla.org/%LOCALE%/feedback/%APP%/%VERSION%/");
+pref("app.feedback.baseURL", "");
 #endif
 
 // base URL for web-based marketing pages
-pref("app.productInfo.baseURL", "https://www.mozilla.org/firefox/features/");
+pref("app.productInfo.baseURL", "");
 
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
 pref("security.alternate_certificate_error_page", "certerror");
@@ -1624,7 +1625,7 @@ pref("browser.contentblocking.introCount", 0);
 
 pref("browser.contentblocking.maxIntroCount", 5);
 
-pref("privacy.trackingprotection.introURL", "https://www.mozilla.org/%LOCALE%/firefox/%VERSION%/content-blocking/start/");
+pref("privacy.trackingprotection.introURL", "");
 
 // Always enable newtab segregation using containers
 pref("privacy.usercontext.about_newtab_segregation.enabled", true);
@@ -1743,7 +1744,7 @@ pref("print.use_simplify_page", true);
 
 // Space separated list of URLS that are allowed to send objects (instead of
 // only strings) through webchannels. This list is duplicated in mobile/android/app/mobile.js
-pref("webchannel.allowObject.urlWhitelist", "https://content.cdn.mozilla.net https://support.mozilla.org https://install.mozilla.org");
+pref("webchannel.allowObject.urlWhitelist", "");
 
 // Whether or not the browser should scan for unsubmitted
 // crash reports, and then show a notification for submitting
@@ -1810,16 +1811,16 @@ pref("extensions.screenshots.upload-disabled", false);
 
 // URL for Learn More link for browser error logging in preferences
 pref("browser.chrome.errorReporter.infoURL",
-     "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/nightly-error-collection");
+     "");
 
 // Normandy client preferences
-pref("app.normandy.api_url", "https://normandy.cdn.mozilla.net/api/v1");
+pref("app.normandy.api_url", "");
 pref("app.normandy.dev_mode", false);
-pref("app.normandy.enabled", true);
+pref("app.normandy.enabled", false);
 pref("app.normandy.first_run", true);
 pref("app.normandy.logging.level", 50); // Warn
 pref("app.normandy.run_interval_seconds", 21600); // 6 hours
-pref("app.normandy.shieldLearnMoreUrl", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/shield");
+pref("app.normandy.shieldLearnMoreUrl", "");
 #ifdef MOZ_DATA_REPORTING
 pref("app.shield.optoutstudies.enabled", true);
 #else
