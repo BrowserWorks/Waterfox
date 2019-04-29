@@ -6,7 +6,23 @@ exports[`SourceFooter Component default case should render 1`] = `
 >
   <div
     className="source-footer-start"
-  />
+  >
+    <div
+      className="commands"
+    >
+      <button
+        aria-label="Blackbox source"
+        className="action black-box"
+        key="black-box"
+        onClick={[Function]}
+        title="Blackbox source"
+      >
+        <AccessibleImage
+          className="blackBox"
+        />
+      </button>
+    </div>
+  </div>
   <div
     className="source-footer-end"
   >
@@ -20,7 +36,7 @@ exports[`SourceFooter Component default case should render 1`] = `
       collapsed={false}
       horizontal={false}
       key="toggle"
-      position="start"
+      position="end"
     />
   </div>
 </div>
@@ -32,7 +48,23 @@ exports[`SourceFooter Component move cursor should render new cursor position 1`
 >
   <div
     className="source-footer-start"
-  />
+  >
+    <div
+      className="commands"
+    >
+      <button
+        aria-label="Blackbox source"
+        className="action black-box"
+        key="black-box"
+        onClick={[Function]}
+        title="Blackbox source"
+      >
+        <AccessibleImage
+          className="blackBox"
+        />
+      </button>
+    </div>
+  </div>
   <div
     className="source-footer-end"
   >
@@ -46,7 +78,7 @@ exports[`SourceFooter Component move cursor should render new cursor position 1`
       collapsed={false}
       horizontal={false}
       key="toggle"
-      position="start"
+      position="end"
     />
   </div>
 </div>

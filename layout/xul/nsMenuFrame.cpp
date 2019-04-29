@@ -386,7 +386,7 @@ nsresult nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
     }
 #endif
   } else if (aEvent->mMessage == eMouseDown &&
-             aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton &&
+             aEvent->AsMouseEvent()->mButton == MouseButton::eLeft &&
              !IsDisabled() && IsMenu()) {
     // The menu item was selected. Bring up the menu.
     // We have children.
@@ -403,7 +403,7 @@ nsresult nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
   } else if (
 #ifndef NSCONTEXTMENUISMOUSEUP
       (aEvent->mMessage == eMouseUp &&
-       aEvent->AsMouseEvent()->button == WidgetMouseEvent::eRightButton) &&
+       aEvent->AsMouseEvent()->mButton == MouseButton::eRight) &&
 #else
       aEvent->mMessage == eContextMenu &&
 #endif
@@ -423,7 +423,7 @@ nsresult nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
       Execute(aEvent);
     }
   } else if (aEvent->mMessage == eMouseUp &&
-             aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton &&
+             aEvent->AsMouseEvent()->mButton == MouseButton::eLeft &&
              !IsMenu() && !IsDisabled()) {
     // Execute the execute event handler.
     *aEventStatus = nsEventStatus_eConsumeNoDefault;
@@ -1157,7 +1157,7 @@ void nsMenuFrame::RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) {
     popupList->RemoveFirstChild();
     aOldFrame->Destroy();
     DestroyPopupList();
-    PresShell()->FrameNeedsReflow(this, nsIPresShell::eTreeChange,
+    PresShell()->FrameNeedsReflow(this, IntrinsicDirty::TreeChange,
                                   NS_FRAME_HAS_DIRTY_CHILDREN);
     return;
   }
@@ -1169,7 +1169,7 @@ void nsMenuFrame::InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
   if (!HasPopup() && (aListID == kPrincipalList || aListID == kPopupList)) {
     SetPopupFrame(aFrameList);
     if (HasPopup()) {
-      PresShell()->FrameNeedsReflow(this, nsIPresShell::eTreeChange,
+      PresShell()->FrameNeedsReflow(this, IntrinsicDirty::TreeChange,
                                     NS_FRAME_HAS_DIRTY_CHILDREN);
     }
   }
@@ -1187,7 +1187,7 @@ void nsMenuFrame::AppendFrames(ChildListID aListID, nsFrameList& aFrameList) {
   if (!HasPopup() && (aListID == kPrincipalList || aListID == kPopupList)) {
     SetPopupFrame(aFrameList);
     if (HasPopup()) {
-      PresShell()->FrameNeedsReflow(this, nsIPresShell::eTreeChange,
+      PresShell()->FrameNeedsReflow(this, IntrinsicDirty::TreeChange,
                                     NS_FRAME_HAS_DIRTY_CHILDREN);
     }
   }

@@ -1881,12 +1881,16 @@ class CGClassConstructor(CGAbstractStaticMethod):
             }
 
             JS::Rooted<JSObject*> desiredProto(cx);
-            if (!GetDesiredProto(cx, args, &desiredProto)) {
+            if (!GetDesiredProto(cx, args,
+                                 prototypes::id::${name},
+                                 CreateInterfaceObjects,
+                                 &desiredProto)) {
               return false;
             }
             """,
             chromeOnlyCheck=chromeOnlyCheck,
-            ctorName=ctorName)
+            ctorName=ctorName,
+            name=self.descriptor.name)
 
         name = self._ctor.identifier.name
         nativeName = MakeNativeName(self.descriptor.binaryNameFor(name))
@@ -2724,7 +2728,7 @@ class AttrDefiner(PropertyDefiner):
 
     @staticmethod
     def formatSpec(fields):
-        return '  { "%s", %s, %s, %s }' % fields
+        return '  JSPropertySpec::nativeAccessors("%s", %s, %s, %s)' % fields
 
     def generateArray(self, array, name):
         if len(array) == 0:

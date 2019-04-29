@@ -21,7 +21,7 @@
 #include "nsIWindowCreator.h"  // for stupid compilers
 #include "nsIWindowWatcher.h"
 #include "nsIPromptFactory.h"
-#include "nsITabParent.h"
+#include "nsIRemoteTab.h"
 #include "nsPIWindowWatcher.h"
 #include "nsTArray.h"
 
@@ -84,7 +84,7 @@ class nsWindowWatcher : public nsIWindowWatcher,
                               const char* aName, const char* aFeatures,
                               bool aCalledFromJS, bool aDialog, bool aNavigate,
                               nsIArray* aArgv, bool aIsPopupSpam,
-                              bool aForceNoOpener,
+                              bool aForceNoOpener, bool aForceNoReferrer,
                               nsDocShellLoadState* aLoadState,
                               mozIDOMWindowProxy** aResult);
 
@@ -121,9 +121,9 @@ class nsWindowWatcher : public nsIWindowWatcher,
   nsresult CreateChromeWindow(const nsACString& aFeatures,
                               nsIWebBrowserChrome* aParentChrome,
                               uint32_t aChromeFlags,
-                              nsITabParent* aOpeningTabParent,
+                              nsIRemoteTab* aOpeningBrowserParent,
                               mozIDOMWindowProxy* aOpener,
-                              uint64_t aNextTabParentId,
+                              uint64_t aNextRemoteTabId,
                               nsIWebBrowserChrome** aResult);
 
   void MaybeDisablePersistence(const nsACString& aFeatures,

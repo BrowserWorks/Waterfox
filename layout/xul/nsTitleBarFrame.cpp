@@ -64,7 +64,7 @@ nsresult nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
 
   switch (aEvent->mMessage) {
     case eMouseDown: {
-      if (aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) {
+      if (aEvent->AsMouseEvent()->mButton == MouseButton::eLeft) {
         // titlebar has no effect in non-chrome shells
         nsCOMPtr<nsIDocShellTreeItem> dsti = aPresContext->GetDocShell();
         if (dsti) {
@@ -73,8 +73,8 @@ nsresult nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
             mTrackingMouseMove = true;
 
             // start capture.
-            nsIPresShell::SetCapturingContent(GetContent(),
-                                              CAPTURE_IGNOREALLOWED);
+            PresShell::SetCapturingContent(GetContent(),
+                                           CaptureFlags::IgnoreAllowedState);
 
             // remember current mouse coordinates.
             mLastPoint = aEvent->mRefPoint;
@@ -88,12 +88,12 @@ nsresult nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
 
     case eMouseUp: {
       if (mTrackingMouseMove &&
-          aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) {
+          aEvent->AsMouseEvent()->mButton == MouseButton::eLeft) {
         // we're done tracking.
         mTrackingMouseMove = false;
 
         // end capture
-        nsIPresShell::SetCapturingContent(nullptr, 0);
+        PresShell::ReleaseCapturingContent();
 
         *aEventStatus = nsEventStatus_eConsumeNoDefault;
         doDefault = false;
@@ -158,5 +158,5 @@ void nsTitleBarFrame::MouseClicked(WidgetMouseEvent* aEvent) {
   // Execute the oncommand event handler.
   nsContentUtils::DispatchXULCommand(
       mContent, false, nullptr, nullptr, aEvent->IsControl(), aEvent->IsAlt(),
-      aEvent->IsShift(), aEvent->IsMeta(), aEvent->inputSource);
+      aEvent->IsShift(), aEvent->IsMeta(), aEvent->mInputSource);
 }

@@ -24,9 +24,8 @@
 #include "nsFont.h"
 #include "gfxFontConstants.h"
 #include "nsAtom.h"
-#include "nsITimer.h"
 #include "nsCRT.h"
-#include "nsIWidgetListener.h"
+#include "nsIWidgetListener.h"  // for nsSizeMode
 #include "nsGkAtoms.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsChangeHint.h"
@@ -49,6 +48,7 @@ class nsIPrintSettings;
 class nsDocShell;
 class nsIDocShell;
 class nsITheme;
+class nsITimer;
 class nsIContent;
 class nsIFrame;
 class nsFrameManager;
@@ -698,10 +698,10 @@ class nsPresContext : public nsISupports,
   bool IsVisualMode() const { return mIsVisual; }
 
   enum class InteractionType : uint32_t {
-    eClickInteraction,
-    eKeyInteraction,
-    eMouseMoveInteraction,
-    eScrollInteraction
+    ClickInteraction,
+    KeyInteraction,
+    MouseMoveInteraction,
+    ScrollInteraction
   };
 
   void RecordInteractionTime(InteractionType aType,

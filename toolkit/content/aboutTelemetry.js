@@ -177,17 +177,19 @@ var Settings = {
 
     let elements = document.getElementsByClassName("change-data-choices-link");
     for (let el of elements) {
-      el.addEventListener("click", function() {
-        if (AppConstants.platform == "android") {
-          var {EventDispatcher} = ChromeUtils.import("resource://gre/modules/Messaging.jsm");
-          EventDispatcher.instance.sendRequest({
-            type: "Settings:Show",
-            resource: "preferences_privacy",
-          });
-        } else {
-          // Show the data choices preferences on desktop.
-          let mainWindow = getMainWindowWithPreferencesPane();
-          mainWindow.openPreferences("privacy-reports");
+      el.parentElement.addEventListener("click", function(event) {
+        if (event.target.localName === "a") {
+          if (AppConstants.platform == "android") {
+            var {EventDispatcher} = ChromeUtils.import("resource://gre/modules/Messaging.jsm");
+            EventDispatcher.instance.sendRequest({
+              type: "Settings:Show",
+              resource: "preferences_privacy",
+            });
+          } else {
+            // Show the data choices preferences on desktop.
+            let mainWindow = getMainWindowWithPreferencesPane();
+            mainWindow.openPreferences("privacy-reports");
+          }
         }
       });
     }
@@ -206,20 +208,12 @@ var Settings = {
     let settingsExplanation = document.getElementById("settings-explanation");
     let extendedEnabled = Services.telemetry.canRecordExtended;
 
-    let datacase = extendedEnabled ? "prerelease" : "release";
+    let channel = extendedEnabled ? "prerelease" : "release";
     let uploadcase = TelemetrySend.sendingEnabled() ? "enabled" : "disabled";
 
-    document.l10n.setAttributes(settingsExplanation, "about-telemetry-settings-explanation", {datacase, uploadcase});
+    document.l10n.setAttributes(settingsExplanation, "about-telemetry-settings-explanation", {channel, uploadcase});
 
     this.attachObservers();
-  },
-
-  convertStringToLink(string) {
-    let link = document.createElement("a");
-    link.setAttribute("href", "#");
-    link.setAttribute("class", "change-data-choices-link");
-    link.textContent = string;
-    return link;
   },
 };
 
@@ -1823,7 +1817,7 @@ var Events = {
     setHasData("events-section", hasData);
     if (Object.keys(events).length > 0) {
       const headings = [
-        "about-telemetry-timestamp-header",
+        "about-telemetry-time-stamp-header",
         "about-telemetry-category-header",
         "about-telemetry-method-header",
         "about-telemetry-object-header",

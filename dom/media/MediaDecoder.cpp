@@ -248,7 +248,10 @@ void MediaDecoder::AddOutputStream(DOMMediaStream* aStream) {
   MOZ_ASSERT(mDecoderStateMachine, "Must be called after Load().");
   AbstractThread::AutoEnter context(AbstractMainThread());
   mDecoderStateMachine->EnsureOutputStreamManager(
-      aStream->GetInputStream()->Graph(), ToMaybe(mInfo.get()));
+      aStream->GetInputStream()->Graph());
+  if (mInfo) {
+    mDecoderStateMachine->EnsureOutputStreamManagerHasTracks(*mInfo);
+  }
   mDecoderStateMachine->AddOutputStream(aStream);
 }
 
@@ -301,7 +304,7 @@ MediaDecoder::MediaDecoder(MediaDecoderInit& aInit)
       mMinimizePreroll(aInit.mMinimizePreroll),
       mFiredMetadataLoaded(false),
       mIsDocumentVisible(false),
-      mElementVisibility(Visibility::UNTRACKED),
+      mElementVisibility(Visibility::Untracked),
       mIsElementInTree(false),
       mForcedHidden(false),
       mHasSuspendTaint(aInit.mHasSuspendTaint),
@@ -656,6 +659,7 @@ void MediaDecoder::MetadataLoaded(
       aInfo->mMediaSeekableOnlyInBufferedRanges;
   mInfo = aInfo.release();
   GetOwner()->ConstructMediaTracks(mInfo);
+  mDecoderStateMachine->EnsureOutputStreamManagerHasTracks(*mInfo);
 
   // Make sure the element and the frame (if any) are told about
   // our new size.
@@ -1024,7 +1028,7 @@ void MediaDecoder::UpdateVideoDecodeMode() {
   // If the element is in-tree with UNTRACKED visibility, that means the element
   // is not close enough to the viewport so we have not start to update its
   // visibility. In this case, it's equals to invisible.
-  if (mIsElementInTree && mElementVisibility == Visibility::UNTRACKED) {
+  if (mIsElementInTree && mElementVisibility == Visibility::Untracked) {
     LOG("UpdateVideoDecodeMode(), set Suspend because element hasn't be "
         "updated visibility state.");
     mDecoderStateMachine->SetVideoDecodeMode(VideoDecodeMode::Suspend);
@@ -1035,7 +1039,7 @@ void MediaDecoder::UpdateVideoDecodeMode() {
   // A element is visible only if its document is visible and the element
   // itself is visible.
   if (mIsDocumentVisible &&
-      mElementVisibility == Visibility::APPROXIMATELY_VISIBLE) {
+      mElementVisibility == Visibility::ApproximatelyVisible) {
     LOG("UpdateVideoDecodeMode(), set Normal because the element visible.");
     mDecoderStateMachine->SetVideoDecodeMode(VideoDecodeMode::Normal);
   } else {

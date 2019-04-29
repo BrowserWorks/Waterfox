@@ -10,7 +10,7 @@
 #include "mozilla/dom/ClientIPCTypes.h"
 #include "mozilla/dom/ClientSource.h"
 #include "mozilla/dom/PerformanceStorage.h"
-#include "mozilla/dom/TabChild.h"
+#include "mozilla/dom/BrowserChild.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/net/CookieSettings.h"
@@ -72,8 +72,6 @@ LoadInfo::LoadInfo(
       mUpgradeInsecureRequests(false),
       mBrowserUpgradeInsecureRequests(false),
       mBrowserWouldUpgradeInsecureRequests(false),
-      mVerifySignedContent(false),
-      mEnforceSRI(false),
       mForceAllowDataURI(false),
       mAllowInsecureRedirectToDataURI(false),
       mSkipContentPolicyCheckForWebRequest(false),
@@ -90,6 +88,7 @@ LoadInfo::LoadInfo(
       mIsThirdPartyContext(false),
       mIsDocshellReload(false),
       mSendCSPViolationEvents(true),
+      mRequestBlockingReason(BLOCKING_REASON_NONE),
       mForcePreflight(false),
       mIsPreflight(false),
       mLoadTriggeredFromExternal(false),
@@ -279,12 +278,6 @@ LoadInfo::LoadInfo(
         }
       }
     }
-    // if owner doc has content signature, we enforce SRI
-    nsCOMPtr<nsIChannel> channel = aLoadingContext->OwnerDoc()->GetChannel();
-    if (channel) {
-      nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
-      mEnforceSRI = loadInfo->GetVerifySignedContent();
-    }
   }
 
   mOriginAttributes = mLoadingPrincipal->OriginAttributesRef();
@@ -337,8 +330,6 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
       mUpgradeInsecureRequests(false),
       mBrowserUpgradeInsecureRequests(false),
       mBrowserWouldUpgradeInsecureRequests(false),
-      mVerifySignedContent(false),
-      mEnforceSRI(false),
       mForceAllowDataURI(false),
       mAllowInsecureRedirectToDataURI(false),
       mSkipContentPolicyCheckForWebRequest(false),
@@ -355,6 +346,7 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
       mIsThirdPartyContext(false),  // NB: TYPE_DOCUMENT implies !third-party.
       mIsDocshellReload(false),
       mSendCSPViolationEvents(true),
+      mRequestBlockingReason(BLOCKING_REASON_NONE),
       mForcePreflight(false),
       mIsPreflight(false),
       mLoadTriggeredFromExternal(false),
@@ -440,8 +432,6 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
       mBrowserUpgradeInsecureRequests(rhs.mBrowserUpgradeInsecureRequests),
       mBrowserWouldUpgradeInsecureRequests(
           rhs.mBrowserWouldUpgradeInsecureRequests),
-      mVerifySignedContent(rhs.mVerifySignedContent),
-      mEnforceSRI(rhs.mEnforceSRI),
       mForceAllowDataURI(rhs.mForceAllowDataURI),
       mAllowInsecureRedirectToDataURI(rhs.mAllowInsecureRedirectToDataURI),
       mSkipContentPolicyCheckForWebRequest(
@@ -466,6 +456,7 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
       mAncestorPrincipals(rhs.mAncestorPrincipals),
       mAncestorOuterWindowIDs(rhs.mAncestorOuterWindowIDs),
       mCorsUnsafeHeaders(rhs.mCorsUnsafeHeaders),
+      mRequestBlockingReason(rhs.mRequestBlockingReason),
       mForcePreflight(rhs.mForcePreflight),
       mIsPreflight(rhs.mIsPreflight),
       mLoadTriggeredFromExternal(rhs.mLoadTriggeredFromExternal),
@@ -489,8 +480,7 @@ LoadInfo::LoadInfo(
     nsSecurityFlags aSecurityFlags, nsContentPolicyType aContentPolicyType,
     LoadTainting aTainting, bool aUpgradeInsecureRequests,
     bool aBrowserUpgradeInsecureRequests,
-    bool aBrowserWouldUpgradeInsecureRequests, bool aVerifySignedContent,
-    bool aEnforceSRI, bool aForceAllowDataURI,
+    bool aBrowserWouldUpgradeInsecureRequests, bool aForceAllowDataURI,
     bool aAllowInsecureRedirectToDataURI,
     bool aSkipContentPolicyCheckForWebRequest,
     bool aForceInheritPrincipalDropped, uint64_t aInnerWindowID,
@@ -507,7 +497,8 @@ LoadInfo::LoadInfo(
     const nsTArray<nsCString>& aCorsUnsafeHeaders, bool aForcePreflight,
     bool aIsPreflight, bool aLoadTriggeredFromExternal,
     bool aServiceWorkerTaintingSynthesized, bool aDocumentHasUserInteracted,
-    bool aDocumentHasLoaded, const nsAString& aCspNonce)
+    bool aDocumentHasLoaded, const nsAString& aCspNonce,
+    uint32_t aRequestBlockingReason)
     : mLoadingPrincipal(aLoadingPrincipal),
       mTriggeringPrincipal(aTriggeringPrincipal),
       mPrincipalToInherit(aPrincipalToInherit),
@@ -526,8 +517,6 @@ LoadInfo::LoadInfo(
       mBrowserUpgradeInsecureRequests(aBrowserUpgradeInsecureRequests),
       mBrowserWouldUpgradeInsecureRequests(
           aBrowserWouldUpgradeInsecureRequests),
-      mVerifySignedContent(aVerifySignedContent),
-      mEnforceSRI(aEnforceSRI),
       mForceAllowDataURI(aForceAllowDataURI),
       mAllowInsecureRedirectToDataURI(aAllowInsecureRedirectToDataURI),
       mSkipContentPolicyCheckForWebRequest(
@@ -549,6 +538,7 @@ LoadInfo::LoadInfo(
       mAncestorPrincipals(std::move(aAncestorPrincipals)),
       mAncestorOuterWindowIDs(aAncestorOuterWindowIDs),
       mCorsUnsafeHeaders(aCorsUnsafeHeaders),
+      mRequestBlockingReason(aRequestBlockingReason),
       mForcePreflight(aForcePreflight),
       mIsPreflight(aIsPreflight),
       mLoadTriggeredFromExternal(aLoadTriggeredFromExternal),
@@ -907,32 +897,6 @@ LoadInfo::GetBrowserUpgradeInsecureRequests(bool* aResult) {
 NS_IMETHODIMP
 LoadInfo::GetBrowserWouldUpgradeInsecureRequests(bool* aResult) {
   *aResult = mBrowserWouldUpgradeInsecureRequests;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-LoadInfo::SetVerifySignedContent(bool aVerifySignedContent) {
-  MOZ_ASSERT(mInternalContentPolicyType == nsIContentPolicy::TYPE_DOCUMENT,
-             "can only verify content for TYPE_DOCUMENT");
-  mVerifySignedContent = aVerifySignedContent;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-LoadInfo::GetVerifySignedContent(bool* aResult) {
-  *aResult = mVerifySignedContent;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-LoadInfo::SetEnforceSRI(bool aEnforceSRI) {
-  mEnforceSRI = aEnforceSRI;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-LoadInfo::GetEnforceSRI(bool* aResult) {
-  *aResult = mEnforceSRI;
   return NS_OK;
 }
 
@@ -1348,6 +1312,17 @@ LoadInfo::GetResultPrincipalURI(nsIURI** aURI) {
 NS_IMETHODIMP
 LoadInfo::SetResultPrincipalURI(nsIURI* aURI) {
   mResultPrincipalURI = aURI;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::SetRequestBlockingReason(uint32_t aReason) {
+  mRequestBlockingReason = aReason;
+  return NS_OK;
+}
+NS_IMETHODIMP
+LoadInfo::GetRequestBlockingReason(uint32_t* aReason) {
+  *aReason = mRequestBlockingReason;
   return NS_OK;
 }
 

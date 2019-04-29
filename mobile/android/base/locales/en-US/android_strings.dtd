@@ -4,10 +4,13 @@
 
 <!ENTITY firstrun_panel_title_welcome "Welcome">
 <!ENTITY firstrun_urlbar_message2 "Thanks for choosing &brandShortName;">
+<!ENTITY newfirstrun_urlbar_message "Welcome to &brandShortName;">
 <!ENTITY firstrun_urlbar_subtext2 "A modern mobile browser from Mozilla, the non-profit committed to a free and open web.">
+<!ENTITY newfirstrun_urlbar_subtext "Fast, private, and on your side.">
 <!ENTITY firstrun_panel_title_privacy "Privacy">
 <!ENTITY firstrun_privacy_message "Browse like no one\'s watching">
 <!ENTITY firstrun_privacy_subtext "Private Browsing with Tracking Protection blocks trackers while you browse and won’t remember your history when you finish browsing.">
+<!ENTITY newfirstrun_privacy_subtext "Private browsing blocks ad trackers that follow you online.">
 <!ENTITY firstrun_panel_title_customize "Customize">
 <!ENTITY firstrun_customize_message "Make &brandShortName; your own.">
 <!ENTITY firstrun_customize_subtext "Customize &brandShortName; with add-ons. Block ads, add features, or choose a new theme to reflect your personality.">
@@ -20,8 +23,10 @@
 <!ENTITY firstrun_sync_title "Sync">
 <!ENTITY firstrun_sync_message2 "Pick up where you left off.">
 <!ENTITY firstrun_sync_subtext2 "Use Sync to find the bookmarks, passwords, and other things you save to &brandShortName; on all your devices.">
+<!ENTITY newfirstrun_sync_subtext "Sync the things you save on mobile to Firefox for desktop, privately and securely.">
 <!ENTITY firstrun_signin_message "Get connected, get started">
 <!ENTITY firstrun_signin_button "Sign in to Sync">
+<!ENTITY newfirstrun_signin_button "Turn on Sync">
 <!ENTITY  onboard_start_button_browser "Start Browsing">
 <!ENTITY firstrun_button_notnow "Not right now">
 <!ENTITY firstrun_button_next "Next">
@@ -408,7 +413,11 @@ shown from Android O while a tab is being queued.-->
 <!ENTITY pref_private_data_downloadFiles2 "Downloads">
 <!ENTITY pref_private_data_syncedTabs "Synced tabs">
 
-<!ENTITY pref_default_browser "Make default browser">
+<!ENTITY pref_default_browser2 "Make &brandShortName; your default browser">
+<!-- LOCALIZATION NOTE (default_browser_system_settings_toast):
+    Message of an Android Toast that appears after our app opens "Android System Settings -> Apps -> Default apps"
+    and instruct users to tap on the "Browser app" option on that settings screen to choose a default browser app. -->
+<!ENTITY default_browser_system_settings_toast "Tap Browser app &amp; select &brandShortName;">
 <!ENTITY pref_default_browser_mozilla_support_tablet "Visit Mozilla Support">
 <!ENTITY pref_about_firefox "About &brandShortName;">
 <!ENTITY pref_vendor_faqs "FAQs">
@@ -503,6 +512,10 @@ shown from Android O while a tab is being queued.-->
 <!ENTITY find_prev "Previous">
 <!ENTITY find_next "Next">
 <!ENTITY find_close "Close">
+
+<!-- Localization note (find_error) : Error message shown when there is no result for the
+     searched for text in this webpage -->
+<!ENTITY find_error "Phrase not found">
 
 <!-- Localization note (media_sending_to, media_play, media_pause, media_stop) : These strings are used
      as alternate text for accessibility. They are not visible in the UI. -->

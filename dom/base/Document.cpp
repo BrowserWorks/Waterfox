@@ -76,6 +76,8 @@
 #include "mozilla/dom/Navigator.h"
 #include "mozilla/dom/Performance.h"
 #include "mozilla/dom/TreeOrderedArrayInlines.h"
+#include "mozilla/dom/ResizeObserver.h"
+#include "mozilla/dom/ResizeObserverController.h"
 #include "mozilla/dom/ServiceWorkerContainer.h"
 #include "mozilla/dom/ScriptLoader.h"
 #include "mozilla/dom/ShadowIncludingTreeIterator.h"
@@ -89,7 +91,7 @@
 #include "nsNodeUtils.h"
 #include "nsLayoutUtils.h"  // for GetFrameForPoint
 #include "nsIFrame.h"
-#include "nsITabChild.h"
+#include "nsIBrowserChild.h"
 
 #include "nsRange.h"
 #include "mozilla/dom/DocumentType.h"
@@ -235,7 +237,7 @@
 #include "mozilla/dom/MediaQueryList.h"
 #include "mozilla/dom/NodeFilterBinding.h"
 #include "mozilla/OwningNonNull.h"
-#include "mozilla/dom/TabChild.h"
+#include "mozilla/dom/BrowserChild.h"
 #include "mozilla/dom/WebComponentsBinding.h"
 #include "mozilla/dom/CustomElementRegistryBinding.h"
 #include "mozilla/dom/CustomElementRegistry.h"
@@ -1034,7 +1036,7 @@ NS_IMETHODIMP
 ExternalResourceMap::LoadgroupCallbacks::GetInterface(const nsIID& aIID,
                                                       void** aSink) {
   if (mCallbacks && (IID_IS(nsIPrompt) || IID_IS(nsIAuthPrompt) ||
-                     IID_IS(nsIAuthPrompt2) || IID_IS(nsITabChild))) {
+                     IID_IS(nsIAuthPrompt2) || IID_IS(nsIBrowserChild))) {
     return mCallbacks->GetInterface(aIID, aSink);
   }
 
@@ -1213,6 +1215,8 @@ Document::Document(const char* aContentType)
       mNeedsReleaseAfterStackRefCntRelease(false),
       mStyleSetFilled(false),
       mQuirkSheetAdded(false),
+      mContentEditableSheetAdded(false),
+      mDesignModeSheetAdded(false),
       mSSApplicableStateNotificationPending(false),
       mMayHaveTitleElement(false),
       mDOMLoadingSet(false),
@@ -1737,6 +1741,10 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(Document)
       cb.NoteXPCOMChild(mql);
     }
   }
+
+  if (tmp->mResizeObserverController) {
+    tmp->mResizeObserverController->Traverse(cb);
+  }
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(Document)
@@ -1848,6 +1856,10 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(Document)
   }
 
   tmp->mInUnlinkOrDeletion = false;
+
+  if (tmp->mResizeObserverController) {
+    tmp->mResizeObserverController->Unlink();
+  }
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 nsresult Document::Init() {
@@ -2401,6 +2413,58 @@ void Document::FillStyleSet() {
   mStyleSetFilled = true;
 }
 
+void Document::RemoveContentEditableStyleSheets() {
+  MOZ_ASSERT(IsHTMLOrXHTML());
+
+  auto* cache = nsLayoutStylesheetCache::Singleton();
+  bool changed = false;
+  if (mDesignModeSheetAdded) {
+    mStyleSet->RemoveStyleSheet(StyleOrigin::UserAgent,
+                                cache->DesignModeSheet());
+    mDesignModeSheetAdded = false;
+    changed = true;
+  }
+  if (mContentEditableSheetAdded) {
+    mStyleSet->RemoveStyleSheet(StyleOrigin::UserAgent,
+                                cache->ContentEditableSheet());
+    mContentEditableSheetAdded = false;
+    changed = true;
+  }
+  if (changed) {
+    MOZ_ASSERT(mStyleSetFilled);
+    ApplicableStylesChanged();
+  }
+}
+
+void Document::AddContentEditableStyleSheetsToStyleSet(bool aDesignMode) {
+  MOZ_ASSERT(IsHTMLOrXHTML());
+  MOZ_DIAGNOSTIC_ASSERT(mStyleSetFilled,
+                        "Caller should ensure we're being rendered");
+
+  auto* cache = nsLayoutStylesheetCache::Singleton();
+  bool changed = false;
+  if (!mContentEditableSheetAdded) {
+    mStyleSet->AppendStyleSheet(StyleOrigin::UserAgent,
+                                cache->ContentEditableSheet());
+    mContentEditableSheetAdded = true;
+    changed = true;
+  }
+  if (mDesignModeSheetAdded != aDesignMode) {
+    if (mDesignModeSheetAdded) {
+      mStyleSet->RemoveStyleSheet(StyleOrigin::UserAgent,
+                                  cache->DesignModeSheet());
+    } else {
+      mStyleSet->AppendStyleSheet(StyleOrigin::UserAgent,
+                                  cache->DesignModeSheet());
+    }
+    mDesignModeSheetAdded = !mDesignModeSheetAdded;
+    changed = true;
+  }
+  if (changed) {
+    ApplicableStylesChanged();
+  }
+}
+
 void Document::FillStyleSetDocumentSheets() {
   MOZ_ASSERT(mStyleSet->SheetCount(StyleOrigin::Author) == 0,
              "Style set already has document sheets?");
@@ -2771,16 +2835,8 @@ nsresult Document::InitCSP(nsIChannel* aChannel) {
   rv = principal->EnsureCSP(this, getter_AddRefs(csp));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // Check if this is a signed content to apply default CSP.
-  bool applySignedContentCSP = false;
-  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
-  if (loadInfo->GetVerifySignedContent()) {
-    applySignedContentCSP = true;
-  }
-
   // If there's no CSP to apply, go ahead and return early
-  if (!addonPolicy && !applySignedContentCSP && cspHeaderValue.IsEmpty() &&
-      cspROHeaderValue.IsEmpty()) {
+  if (!addonPolicy && cspHeaderValue.IsEmpty() && cspROHeaderValue.IsEmpty()) {
     if (MOZ_LOG_TEST(gCspPRLog, LogLevel::Debug)) {
       nsCOMPtr<nsIURI> chanURI;
       aChannel->GetURI(getter_AddRefs(chanURI));
@@ -2806,16 +2862,6 @@ nsresult Document::InitCSP(nsIChannel* aChannel) {
     csp->AppendPolicy(addonCSP, false, false);
 
     csp->AppendPolicy(addonPolicy->ContentSecurityPolicy(), false, false);
-  }
-
-  // ----- if the doc is a signed content, apply the default CSP.
-  // Note that when the content signing becomes a standard, we might have
-  // to restrict this enforcement to "remote content" only.
-  if (applySignedContentCSP) {
-    nsAutoString signedContentCSP;
-    Preferences::GetString("security.signed_content.CSP.default",
-                           signedContentCSP);
-    csp->AppendPolicy(signedContentCSP, false, false);
   }
 
   // ----- if there's a full-strength CSP header, apply it.
@@ -3634,7 +3680,7 @@ void Document::ReleaseCapture() const {
   // page from stopping a scrollbar grab for example.
   nsCOMPtr<nsINode> node = nsIPresShell::GetCapturingContent();
   if (node && nsContentUtils::CanCallerAccess(node)) {
-    nsIPresShell::SetCapturingContent(nullptr, 0);
+    PresShell::ReleaseCapturingContent();
   }
 }
 
@@ -4008,6 +4054,8 @@ void Document::DeletePresShell() {
   mStyleSet->ShellDetachedFromDocument();
   mStyleSetFilled = false;
   mQuirkSheetAdded = false;
+  mContentEditableSheetAdded = false;
+  mDesignModeSheetAdded = false;
 }
 
 void Document::SetBFCacheEntry(nsIBFCacheEntry* aEntry) {
@@ -4291,36 +4339,6 @@ void Document::RemoveStyleSheet(StyleSheet* aSheet) {
   }
 
   sheet->ClearAssociatedDocumentOrShadowRoot();
-}
-
-void Document::UpdateStyleSheets(nsTArray<RefPtr<StyleSheet>>& aOldSheets,
-                                 nsTArray<RefPtr<StyleSheet>>& aNewSheets) {
-  // XXX Need to set the sheet on the ownernode, if any
-  MOZ_ASSERT(aOldSheets.Length() == aNewSheets.Length(),
-             "The lists must be the same length!");
-  int32_t count = aOldSheets.Length();
-
-  RefPtr<StyleSheet> oldSheet;
-  int32_t i;
-  for (i = 0; i < count; ++i) {
-    oldSheet = aOldSheets[i];
-
-    // First remove the old sheet.
-    NS_ASSERTION(oldSheet, "None of the old sheets should be null");
-    int32_t oldIndex = mStyleSheets.IndexOf(oldSheet);
-    RemoveStyleSheet(oldSheet);  // This does the right notifications
-
-    // Now put the new one in its place.  If it's null, just ignore it.
-    StyleSheet* newSheet = aNewSheets[i];
-    if (newSheet) {
-      DocumentOrShadowRoot::InsertSheetAt(oldIndex, *newSheet);
-      if (newSheet->IsApplicable()) {
-        AddStyleSheetToStyleSets(newSheet);
-      }
-
-      NotifyStyleSheetAdded(newSheet, true);
-    }
-  }
 }
 
 void Document::InsertSheetAt(size_t aIndex, StyleSheet& aSheet) {
@@ -5458,7 +5476,7 @@ static PseudoStyleType GetPseudoElementType(const nsString& aString,
   }
   RefPtr<nsAtom> pseudo = NS_Atomize(Substring(aString, 1));
   return nsCSSPseudoElements::GetPseudoType(pseudo,
-                                            CSSEnabledState::eInUASheets);
+                                            CSSEnabledState::InUASheets);
 }
 
 already_AddRefed<Element> Document::CreateElement(
@@ -6230,8 +6248,6 @@ already_AddRefed<MediaQueryList> Document::MatchMedia(
 
   return result.forget();
 }
-
-void Document::FlushSkinBindings() { BindingManager()->FlushSkinBindings(); }
 
 void Document::SetMayStartLayout(bool aMayStartLayout) {
   mMayStartLayout = aMayStartLayout;
@@ -8747,11 +8763,10 @@ void Document::PreloadStyle(
                          aReferrerPolicy, aIntegrity);
 }
 
-nsresult Document::LoadChromeSheetSync(nsIURI* uri, bool isAgentSheet,
-                                       RefPtr<mozilla::StyleSheet>* aSheet) {
-  css::SheetParsingMode mode =
-      isAgentSheet ? css::eAgentSheetFeatures : css::eAuthorSheetFeatures;
-  return CSSLoader()->LoadSheetSync(uri, mode, isAgentSheet, aSheet);
+RefPtr<StyleSheet> Document::LoadChromeSheetSync(nsIURI* uri) {
+  RefPtr<StyleSheet> sheet;
+  CSSLoader()->LoadSheetSync(uri, css::eAuthorSheetFeatures, false, &sheet);
+  return sheet;
 }
 
 void Document::ResetDocumentDirection() {
@@ -10511,8 +10526,8 @@ void Document::CleanupFullscreenState() {
   // Restore the zoom level that was in place prior to entering fullscreen.
   if (PresShell* presShell = GetPresShell()) {
     if (presShell->GetMobileViewportManager()) {
-      presShell->SetResolutionAndScaleTo(
-          mSavedResolution, nsIPresShell::ChangeOrigin::eMainThread);
+      presShell->SetResolutionAndScaleTo(mSavedResolution,
+                                         ResolutionChangeOrigin::MainThread);
     }
   }
 
@@ -10910,7 +10925,7 @@ bool Document::ApplyFullscreen(UniquePtr<FullscreenRequest> aRequest) {
         child->mSavedResolution = presShell->GetResolution();
         presShell->SetResolutionAndScaleTo(
             manager->ComputeIntrinsicResolution(),
-            nsIPresShell::ChangeOrigin::eMainThread);
+            ResolutionChangeOrigin::MainThread);
       }
     }
 
@@ -11095,7 +11110,7 @@ static void ChangePointerLockedElement(Element* aElement, Document* aDocument,
   }
   // Retarget all events to aElement via capture or
   // stop retargeting if aElement is nullptr.
-  nsIPresShell::SetCapturingContent(aElement, CAPTURE_POINTERLOCK);
+  PresShell::SetCapturingContent(aElement, CaptureFlags::PointerLock);
   DispatchPointerLockChange(aDocument);
 }
 
@@ -12418,6 +12433,22 @@ FlashClassification Document::DocumentFlashClassification() {
   }
 
   return mFlashClassification;
+}
+
+void Document::AddResizeObserver(ResizeObserver* aResizeObserver) {
+  if (!mResizeObserverController) {
+    mResizeObserverController = MakeUnique<ResizeObserverController>(this);
+  }
+
+  mResizeObserverController->AddResizeObserver(aResizeObserver);
+}
+
+void Document::ScheduleResizeObserversNotification() const {
+  if (!mResizeObserverController) {
+    return;
+  }
+
+  mResizeObserverController->ScheduleNotification();
 }
 
 /**

@@ -253,6 +253,18 @@ VARCACHE_PREF(
   bool, true
 )
 
+// Whether the disabled attribute in HTMLLinkElement disables the sheet loading
+// altogether, or forwards to the inner stylesheet method without attribute
+// reflection.
+//
+// Historical behavior is the second, the first is being discussed at:
+// https://github.com/whatwg/html/issues/3840
+VARCACHE_PREF(
+  "dom.link.disabled_attribute.enabled",
+   dom_link_disabled_attribute_enabled,
+  bool, true
+)
+
 VARCACHE_PREF(
   "dom.performance.enable_scheduler_timing",
   dom_performance_enable_scheduler_timing,
@@ -539,12 +551,18 @@ VARCACHE_PREF(
 )
 
 // For area and anchor elements with target=_blank and no rel set to
-// opener/noopener, this pref sets noopener by default.
+// opener/noopener.
+#ifdef EARLY_BETA_OR_EARLIER
+#define PREF_VALUE true
+#else
+#define PREF_VALUE false
+#endif
 VARCACHE_PREF(
   "dom.targetBlankNoOpener.enabled",
    dom_targetBlankNoOpener_enabled,
-  bool, true
+  bool, PREF_VALUE
 )
+#undef PREF_VALUE
 
 VARCACHE_PREF(
   "dom.disable_open_during_load",
@@ -570,6 +588,22 @@ VARCACHE_PREF(
   "dom.storage_access.auto_grants.delayed",
    dom_storage_access_auto_grants_delayed,
   bool, true
+)
+
+// Enable the "noreferrer" feature argument for window.open()
+VARCACHE_PREF(
+  "dom.window.open.noreferrer.enabled",
+   dom_window_open_noreferrer_enabled,
+  bool, true
+)
+
+
+// Allow the content process to create a File from a path. This is allowed just
+// on parent process, on 'file' Content process, or for testing.
+VARCACHE_PREF(
+  "dom.file.createInChild",
+   dom_file_createInChild,
+  RelaxedAtomicBool, false
 )
 
 //---------------------------------------------------------------------------
@@ -1098,25 +1132,20 @@ VARCACHE_PREF(
   bool, false
 )
 
-#ifdef NIGHTLY_BUILD
-# define PREF_VALUE  true
-#else
-# define PREF_VALUE  false
-#endif
 // Is the CSS Scroll Snap Module Level 1 enabled?
 VARCACHE_PREF(
   "layout.css.scroll-snap-v1.enabled",
    layout_css_scroll_snap_v1_enabled,
-  RelaxedAtomicBool, PREF_VALUE
+  RelaxedAtomicBool, true
 )
 
-// Is support for scroll-snap enabled?
+// Is support for the old unspecced scroll-snap enabled?
+// E.g. scroll-snap-points-{x,y}, scroll-snap-coordinate, etc.
 VARCACHE_PREF(
   "layout.css.scroll-snap.enabled",
    layout_css_scroll_snap_enabled,
-  bool, !PREF_VALUE
+  bool, false
 )
-#undef PREF_VALUE
 
 // Are shared memory User Agent style sheets enabled?
 VARCACHE_PREF(
@@ -1124,6 +1153,33 @@ VARCACHE_PREF(
    layout_css_shared_memory_ua_sheets_enabled,
   bool, false
 )
+
+#ifdef NIGHTLY_BUILD
+# define PREF_VALUE true
+#else
+# define PREF_VALUE false
+#endif
+VARCACHE_PREF(
+  "layout.css.resizeobserver.enabled",
+   layout_css_resizeobserver_enabled,
+  bool, PREF_VALUE
+)
+#undef PREF_VALUE
+
+// Pref to control whether arrow-panel animations are enabled or not.
+// Transitions are currently disabled on Linux due to rendering issues on
+// certain configurations.
+#ifdef MOZ_WIDGET_GTK
+#define PREF_VALUE false
+#else
+#define PREF_VALUE true
+#endif
+VARCACHE_PREF(
+  "xul.panel-animations.enabled",
+   xul_panel_animations_enabled,
+  bool, PREF_VALUE
+)
+#undef PREF_VALUE
 
 //---------------------------------------------------------------------------
 // JavaScript prefs
@@ -1928,6 +1984,17 @@ VARCACHE_PREF(
   RelaxedAtomicInt32, 0
 )
 
+// Cookie lifetime policy. Possible values:
+// 0 - accept all cookies
+// 1 - deprecated. don't use it.
+// 2 - accept as session cookies
+// 3 - deprecated. don't use it.
+VARCACHE_PREF(
+  "network.cookie.lifetimePolicy",
+  network_cookie_lifetimePolicy,
+  RelaxedAtomicInt32, 0
+)
+
 // Enables the predictive service.
 VARCACHE_PREF(
   "network.predictor.enabled",
@@ -2152,7 +2219,7 @@ VARCACHE_PREF(
 VARCACHE_PREF(
   "privacy.trackingprotection.fingerprinting.annotate.enabled",
    privacy_trackingprotection_fingerprinting_annotate_enabled,
-  bool, false
+  bool, true
 )
 
 // Block 3rd party cryptomining resources.
@@ -2167,7 +2234,7 @@ VARCACHE_PREF(
 VARCACHE_PREF(
   "privacy.trackingprotection.cryptomining.annotate.enabled",
    privacy_trackingprotection_cryptomining_annotate_enabled,
-  bool, false
+  bool, true
 )
 
 // Spoof user locale to English

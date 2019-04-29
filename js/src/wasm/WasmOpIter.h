@@ -168,6 +168,7 @@ enum class OpKind {
   DataOrElemDrop,
   MemFill,
   MemOrTableInit,
+  TableFill,
   TableGet,
   TableGrow,
   TableSet,
@@ -466,9 +467,11 @@ class MOZ_STACK_CLASS OpIter : private Policy {
   MOZ_MUST_USE bool readMemOrTableInit(bool isMem, uint32_t* segIndex,
                                        uint32_t* dstTableIndex, Value* dst,
                                        Value* src, Value* len);
+  MOZ_MUST_USE bool readTableFill(uint32_t* tableIndex, Value* start,
+                                  Value* val, Value* len);
   MOZ_MUST_USE bool readTableGet(uint32_t* tableIndex, Value* index);
-  MOZ_MUST_USE bool readTableGrow(uint32_t* tableIndex, Value* delta,
-                                  Value* initValue);
+  MOZ_MUST_USE bool readTableGrow(uint32_t* tableIndex, Value* initValue,
+                                  Value* delta);
   MOZ_MUST_USE bool readTableSet(uint32_t* tableIndex, Value* index,
                                  Value* value);
   MOZ_MUST_USE bool readTableSize(uint32_t* tableIndex);
@@ -1849,16 +1852,6 @@ inline bool OpIter<Policy>::readDataOrElemDrop(bool isData,
                                                uint32_t* segIndex) {
   MOZ_ASSERT(Classify(op_) == OpKind::DataOrElemDrop);
 
-  if (isData) {
-    if (!env_.usesMemory()) {
-      return fail("can't touch memory without memory");
-    }
-  } else {
-    if (env_.tables.length() == 0) {
-      return fail("can't elem.drop without a table");
-    }
-  }
-
   if (!readVarU32(segIndex)) {
     return false;
   }
@@ -1974,6 +1967,38 @@ inline bool OpIter<Policy>::readMemOrTableInit(bool isMem, uint32_t* segIndex,
 }
 
 template <typename Policy>
+inline bool OpIter<Policy>::readTableFill(uint32_t* tableIndex, Value* start,
+                                          Value* val, Value* len) {
+  MOZ_ASSERT(Classify(op_) == OpKind::TableFill);
+
+  if (!popWithType(ValType::I32, len)) {
+    return false;
+  }
+
+  if (!popWithType(ValType::AnyRef, val)) {
+    return false;
+  }
+
+  if (!popWithType(ValType::I32, start)) {
+    return false;
+  }
+
+  if (!readVarU32(tableIndex)) {
+    return false;
+  }
+
+  if (*tableIndex >= env_.tables.length()) {
+    return fail("table index out of range for table.fill");
+  }
+
+  if (env_.tables[*tableIndex].kind != TableKind::AnyRef) {
+    return fail("table.fill only on tables of anyref");
+  }
+
+  return true;
+}
+
+template <typename Policy>
 inline bool OpIter<Policy>::readTableGet(uint32_t* tableIndex, Value* index) {
   MOZ_ASSERT(Classify(op_) == OpKind::TableGet);
 
@@ -1998,14 +2023,14 @@ inline bool OpIter<Policy>::readTableGet(uint32_t* tableIndex, Value* index) {
 }
 
 template <typename Policy>
-inline bool OpIter<Policy>::readTableGrow(uint32_t* tableIndex, Value* delta,
-                                          Value* initValue) {
+inline bool OpIter<Policy>::readTableGrow(uint32_t* tableIndex,
+                                          Value* initValue, Value* delta) {
   MOZ_ASSERT(Classify(op_) == OpKind::TableGrow);
 
-  if (!popWithType(ValType::AnyRef, initValue)) {
+  if (!popWithType(ValType::I32, delta)) {
     return false;
   }
-  if (!popWithType(ValType::I32, delta)) {
+  if (!popWithType(ValType::AnyRef, initValue)) {
     return false;
   }
 

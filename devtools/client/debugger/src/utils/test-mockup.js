@@ -18,50 +18,93 @@ import type {
   Frame,
   FrameId,
   Scope,
-  JsSource,
-  WasmSource,
   Source,
   SourceId,
+  SourceWithContentAndType,
+  SourceWithContent,
+  TextSourceContent,
+  WasmSourceContent,
   Why
 } from "../types";
+import * as asyncValue from "./async-value";
 
-function makeMockSource(
-  url: string = "url",
-  id: SourceId = "source",
-  contentType: string = "text/javascript",
-  text: string = ""
-): JsSource {
+function makeMockSource(url: string = "url", id: SourceId = "source"): Source {
   return {
     id,
     url,
     isBlackBoxed: false,
     isPrettyPrinted: false,
-    loadedState: text ? "loaded" : "unloaded",
     relativeUrl: url,
     introductionUrl: null,
     introductionType: undefined,
-    actors: [],
     isWasm: false,
-    contentType,
-    isExtension: false,
-    text
+    isExtension: false
   };
 }
 
-function makeMockWasmSource(text: {| binary: Object |}): WasmSource {
+function makeMockSourceWithContent(
+  url?: string,
+  id?: SourceId,
+  contentType?: string = "text/javascript",
+  text?: string = ""
+): SourceWithContent {
+  const source = makeMockSource(url, id);
+
+  return {
+    source,
+    content: text
+      ? asyncValue.fulfilled({
+          type: "text",
+          value: text,
+          contentType
+        })
+      : null
+  };
+}
+
+function makeMockSourceAndContent(
+  url?: string,
+  id?: SourceId,
+  contentType?: string = "text/javascript",
+  text: string = ""
+): { source: Source, content: TextSourceContent } {
+  const source = makeMockSource(url, id);
+
+  return {
+    source,
+    content: {
+      type: "text",
+      value: text,
+      contentType
+    }
+  };
+}
+
+function makeMockWasmSource(): Source {
   return {
     id: "wasm-source-id",
     url: "url",
     isBlackBoxed: false,
     isPrettyPrinted: false,
-    loadedState: "unloaded",
     relativeUrl: "url",
     introductionUrl: null,
     introductionType: undefined,
-    actors: [],
     isWasm: true,
-    isExtension: false,
-    text
+    isExtension: false
+  };
+}
+
+function makeMockWasmSourceWithContent(text: {|
+  binary: Object
+|}): SourceWithContentAndType<WasmSourceContent> {
+  const source = makeMockWasmSource();
+
+  return {
+    source,
+    content: asyncValue.fulfilled({
+      type: "wasm",
+      value: text
+    })
   };
 }
 
@@ -165,7 +208,10 @@ const mockthreadcx = {
 
 export {
   makeMockSource,
+  makeMockSourceWithContent,
+  makeMockSourceAndContent,
   makeMockWasmSource,
+  makeMockWasmSourceWithContent,
   makeMockScope,
   mockScopeAddVariable,
   makeMockBreakpoint,

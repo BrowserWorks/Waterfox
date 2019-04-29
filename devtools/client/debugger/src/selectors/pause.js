@@ -7,18 +7,18 @@ import { getCurrentThread } from "../reducers/pause";
 import { getSelectedLocation } from "../reducers/sources";
 
 // eslint-disable-next-line
-import { getSelectedLocation as _getSelectedLocation } from "../utils/source-maps";
+import { getSelectedLocation as _getSelectedLocation } from "../utils/selected-location";
 import { createSelector } from "reselect";
 
 import type { Frame, SourceLocation, ThreadId } from "../types";
 import type { Selector, State } from "../reducers/types";
 
 export const getSelectedFrames: Selector<{ [string]: ?Frame }> = createSelector(
-  state => state.pause,
-  pauseState => {
+  state => state.pause.threads,
+  threadPauseState => {
     const selectedFrames = {};
-    for (const thread in pauseState.threads) {
-      const pausedThread = pauseState.threads[thread];
+    for (const thread in threadPauseState) {
+      const pausedThread = threadPauseState[thread];
       const { selectedFrameId, frames } = pausedThread;
       if (frames) {
         selectedFrames[thread] = frames.find(

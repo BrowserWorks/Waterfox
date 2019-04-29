@@ -210,6 +210,9 @@ public class GeckoSession implements Parcelable {
         public native void setMaxToolbarHeight(int height);
 
         @WrapForJNI(calledFrom = "ui", dispatchTo = "current")
+        public native void setFixedBottomOffset(int offset);
+
+        @WrapForJNI(calledFrom = "ui", dispatchTo = "current")
         public native void setPinned(boolean pinned, int reason);
 
         @WrapForJNI(calledFrom = "ui", dispatchTo = "current")
@@ -401,7 +404,7 @@ public class GeckoSession implements Parcelable {
      *
      * Note: To receive messages from content scripts, the WebExtension needs
      * to explicitely allow it in {@link WebExtension#WebExtension} by setting
-     * {@link WebExtension#allowContentMessaging} to <code>true</code>.
+     * {@link WebExtension.Flags#ALLOW_CONTENT_MESSAGING}.
      *
      * @param delegate {@link WebExtension.MessageDelegate} that will receive
      *                 messages from this session.
@@ -757,6 +760,8 @@ public class GeckoSession implements Parcelable {
                         type = PermissionDelegate.PERMISSION_GEOLOCATION;
                     } else if ("desktop-notification".equals(typeString)) {
                         type = PermissionDelegate.PERMISSION_DESKTOP_NOTIFICATION;
+                    } else if ("persistent-storage".equals(typeString)) {
+                        type = PermissionDelegate.PERMISSION_PERSISTENT_STORAGE;
                     } else {
                         throw new IllegalArgumentException("Unknown permission request: " + typeString);
                     }
@@ -807,7 +812,7 @@ public class GeckoSession implements Parcelable {
                     final SelectionActionDelegate.Selection selection =
                             new SelectionActionDelegate.Selection(message);
 
-                    final @SelectionActionDelegate.Action String[] actions = message.getStringArray("actions");
+                    final @SelectionActionDelegateAction String[] actions = message.getStringArray("actions");
                     final int seqNo = message.getInt("seqNo");
                     final GeckoResponse<String> response = new GeckoResponse<String>() {
                         @Override
@@ -3155,11 +3160,6 @@ public class GeckoSession implements Parcelable {
     }
 
     public interface SelectionActionDelegate {
-        @Retention(RetentionPolicy.SOURCE)
-        @IntDef(flag = true, value = {FLAG_IS_COLLAPSED,
-                                      FLAG_IS_EDITABLE})
-        /* package */ @interface Flag {}
-
         /**
          * The selection is collapsed at a single position.
          */
@@ -3173,18 +3173,6 @@ public class GeckoSession implements Parcelable {
          * The selection is inside a password field.
          */
         final int FLAG_IS_PASSWORD = 4;
-
-        @Retention(RetentionPolicy.SOURCE)
-        @StringDef({ACTION_HIDE,
-                    ACTION_CUT,
-                    ACTION_COPY,
-                    ACTION_DELETE,
-                    ACTION_PASTE,
-                    ACTION_SELECT_ALL,
-                    ACTION_UNSELECT,
-                    ACTION_COLLAPSE_TO_START,
-                    ACTION_COLLAPSE_TO_END})
-        /* package */ @interface Action {}
 
         /**
          * Hide selection actions and cause {@link #onHideAction} to be called.
@@ -3235,7 +3223,7 @@ public class GeckoSession implements Parcelable {
              * Flags describing the current selection, as a bitwise combination
              * of the {@link #FLAG_IS_COLLAPSED FLAG_*} constants.
              */
-            public final @Flag int flags;
+            public final @SelectionActionDelegateFlag int flags;
 
             /**
              * Text content of the current selection. An empty string indicates the selection
@@ -3305,15 +3293,8 @@ public class GeckoSession implements Parcelable {
          */
         @UiThread
         default void onShowActionRequest(@NonNull GeckoSession session, @NonNull Selection selection,
-                                         @NonNull @Action String[] actions,
+                                         @NonNull @SelectionActionDelegateAction String[] actions,
                                          @NonNull GeckoResponse<String> response) {}
-
-        @Retention(RetentionPolicy.SOURCE)
-        @IntDef({HIDE_REASON_NO_SELECTION,
-                 HIDE_REASON_INVISIBLE_SELECTION,
-                 HIDE_REASON_ACTIVE_SELECTION,
-                 HIDE_REASON_ACTIVE_SCROLL})
-        /* package */ @interface HideReason {}
 
         /**
          * Actions are no longer available due to the user clearing the selection.
@@ -3347,8 +3328,36 @@ public class GeckoSession implements Parcelable {
          * {@link #HIDE_REASON_NO_SELECTION HIDE_REASON_*} constants.
          */
         @UiThread
-        default void onHideAction(@NonNull GeckoSession session, @HideReason int reason) {}
+        default void onHideAction(@NonNull GeckoSession session,
+                                  @SelectionActionDelegateHideReason int reason) {}
     }
+
+    @Retention(RetentionPolicy.SOURCE)
+    @StringDef({
+            SelectionActionDelegate.ACTION_HIDE,
+            SelectionActionDelegate.ACTION_CUT,
+            SelectionActionDelegate.ACTION_COPY,
+            SelectionActionDelegate.ACTION_DELETE,
+            SelectionActionDelegate.ACTION_PASTE,
+            SelectionActionDelegate.ACTION_SELECT_ALL,
+            SelectionActionDelegate.ACTION_UNSELECT,
+            SelectionActionDelegate.ACTION_COLLAPSE_TO_START,
+            SelectionActionDelegate.ACTION_COLLAPSE_TO_END})
+    /* package */ @interface SelectionActionDelegateAction {}
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef(flag = true, value = {
+            SelectionActionDelegate.FLAG_IS_COLLAPSED,
+            SelectionActionDelegate.FLAG_IS_EDITABLE})
+            /* package */ @interface SelectionActionDelegateFlag {}
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({
+            SelectionActionDelegate.HIDE_REASON_NO_SELECTION,
+            SelectionActionDelegate.HIDE_REASON_INVISIBLE_SELECTION,
+            SelectionActionDelegate.HIDE_REASON_ACTIVE_SELECTION,
+            SelectionActionDelegate.HIDE_REASON_ACTIVE_SCROLL})
+    /* package */ @interface SelectionActionDelegateHideReason {}
 
     public interface NavigationDelegate {
         /**
@@ -3375,9 +3384,6 @@ public class GeckoSession implements Parcelable {
         @UiThread
         default void onCanGoForward(@NonNull GeckoSession session, boolean canGoForward) {}
 
-        @Retention(RetentionPolicy.SOURCE)
-        @IntDef({TARGET_WINDOW_NONE, TARGET_WINDOW_CURRENT, TARGET_WINDOW_NEW})
-        /* package */ @interface TargetWindow {}
         public static final int TARGET_WINDOW_NONE = 0;
         public static final int TARGET_WINDOW_CURRENT = 1;
         public static final int TARGET_WINDOW_NEW = 2;
@@ -3441,7 +3447,12 @@ public class GeckoSession implements Parcelable {
             public final @TargetWindow int target;
 
             /**
-             * True if and only if the request was triggered by user interaction.
+             * True if and only if the request was triggered by an HTTP redirect.
+             *
+             * If the user loads URI "a", which redirects to URI "b", then
+             * <code>onLoadRequest</code> will be called twice, first with uri "a" and
+             * <code>isRedirect = false</code>, then with uri "b" and
+             * <code>isRedirect = true</code>.
              */
             public final boolean isRedirect;
         }
@@ -3498,6 +3509,11 @@ public class GeckoSession implements Parcelable {
             return null;
         }
     }
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({NavigationDelegate.TARGET_WINDOW_NONE, NavigationDelegate.TARGET_WINDOW_CURRENT,
+            NavigationDelegate.TARGET_WINDOW_NEW})
+    /* package */ @interface TargetWindow {}
 
     /**
      * GeckoSession applications implement this interface to handle prompts triggered by
@@ -3943,11 +3959,6 @@ public class GeckoSession implements Parcelable {
             callback.dismiss();
         }
 
-        @Retention(RetentionPolicy.SOURCE)
-        @IntDef({DATETIME_TYPE_DATE, DATETIME_TYPE_MONTH, DATETIME_TYPE_WEEK,
-                 DATETIME_TYPE_TIME, DATETIME_TYPE_DATETIME_LOCAL})
-        /* package */ @interface DatetimeType {}
-
         /**
          * Prompt for year, month, and day.
          */
@@ -4017,9 +4028,6 @@ public class GeckoSession implements Parcelable {
             default void confirm(@Nullable Context context, @Nullable Uri[] uris) {}
         }
 
-        @Retention(RetentionPolicy.SOURCE)
-        @IntDef({FILE_TYPE_SINGLE, FILE_TYPE_MULTIPLE})
-        /* package */ @interface FileType {}
         static final int FILE_TYPE_SINGLE = 1;
         static final int FILE_TYPE_MULTIPLE = 2;
 
@@ -4058,6 +4066,16 @@ public class GeckoSession implements Parcelable {
             return null;
         }
     }
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({PromptDelegate.FILE_TYPE_SINGLE, PromptDelegate.FILE_TYPE_MULTIPLE})
+            /* package */ @interface FileType {}
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({PromptDelegate.DATETIME_TYPE_DATE, PromptDelegate.DATETIME_TYPE_MONTH,
+            PromptDelegate.DATETIME_TYPE_WEEK, PromptDelegate.DATETIME_TYPE_TIME,
+            PromptDelegate.DATETIME_TYPE_DATETIME_LOCAL})
+    /* package */ @interface DatetimeType {}
 
     /**
      * GeckoSession applications implement this interface to handle content scroll
@@ -4248,10 +4266,6 @@ public class GeckoSession implements Parcelable {
      * further requests from being presented to the user.
      **/
     public interface PermissionDelegate {
-        @Retention(RetentionPolicy.SOURCE)
-        @IntDef({PERMISSION_GEOLOCATION, PERMISSION_DESKTOP_NOTIFICATION})
-        /* package */ @interface Permission {}
-
         /**
          * Permission for using the geolocation API.
          * See: https://developer.mozilla.org/en-US/docs/Web/API/Geolocation
@@ -4263,6 +4277,12 @@ public class GeckoSession implements Parcelable {
          * See: https://developer.mozilla.org/en-US/docs/Web/API/notification
          */
         int PERMISSION_DESKTOP_NOTIFICATION = 1;
+
+        /**
+         * Permission for using the storage API.
+         * See: https://developer.mozilla.org/en-US/docs/Web/API/Storage_API
+         */
+        int PERMISSION_PERSISTENT_STORAGE = 2;
 
         /**
          * Callback interface for notifying the result of a permission request.
@@ -4304,11 +4324,17 @@ public class GeckoSession implements Parcelable {
         /**
          * Request content permission.
          *
+         * Note, that in the case of PERMISSION_PERSISTENT_STORAGE, once permission has been granted
+         * for a site, it cannot be revoked. If the permission has previously been granted, it is
+         * the responsibility of the consuming app to remember the permission and prevent the prompt
+         * from being redisplayed to the user.
+         *
          * @param session GeckoSession instance requesting the permission.
          * @param uri The URI of the content requesting the permission.
          * @param type The type of the requested permission; possible values are,
          *             PERMISSION_GEOLOCATION
          *             PERMISSION_DESKTOP_NOTIFICATION
+         *             PERMISSION_PERSISTENT_STORAGE
          * @param callback Callback interface.
          */
         @UiThread
@@ -4525,16 +4551,17 @@ public class GeckoSession implements Parcelable {
         }
     }
 
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({PermissionDelegate.PERMISSION_GEOLOCATION,
+            PermissionDelegate.PERMISSION_DESKTOP_NOTIFICATION})
+    /* package */ @interface Permission {}
+
     /**
      * Interface that SessionTextInput uses for performing operations such as opening and closing
      * the software keyboard. If the delegate is not set, these operations are forwarded to the
      * system {@link android.view.inputmethod.InputMethodManager} automatically.
      */
     public interface TextInputDelegate {
-        @Retention(RetentionPolicy.SOURCE)
-        @IntDef({RESTART_REASON_FOCUS, RESTART_REASON_BLUR, RESTART_REASON_CONTENT_CHANGE})
-        /* package */ @interface RestartReason {}
-
         /** Restarting input due to an input field gaining focus. */
         int RESTART_REASON_FOCUS = 0;
         /** Restarting input due to an input field losing focus. */
@@ -4622,13 +4649,6 @@ public class GeckoSession implements Parcelable {
         default void updateCursorAnchorInfo(@NonNull GeckoSession session,
                                             @NonNull CursorAnchorInfo info) {}
 
-        @Retention(RetentionPolicy.SOURCE)
-        @IntDef({AUTO_FILL_NOTIFY_STARTED, AUTO_FILL_NOTIFY_COMMITTED, AUTO_FILL_NOTIFY_CANCELED,
-                AUTO_FILL_NOTIFY_VIEW_ADDED, AUTO_FILL_NOTIFY_VIEW_REMOVED,
-                AUTO_FILL_NOTIFY_VIEW_UPDATED, AUTO_FILL_NOTIFY_VIEW_ENTERED,
-                AUTO_FILL_NOTIFY_VIEW_EXITED})
-        /* package */ @interface AutoFillNotification {}
-
         /** An auto-fill session has started, usually as a result of loading a page. */
         int AUTO_FILL_NOTIFY_STARTED = 0;
         /** An auto-fill session has been committed, usually as a result of submitting a form. */
@@ -4664,6 +4684,23 @@ public class GeckoSession implements Parcelable {
                                     @AutoFillNotification int notification,
                                     int virtualId) {}
     }
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({TextInputDelegate.RESTART_REASON_FOCUS, TextInputDelegate.RESTART_REASON_BLUR,
+            TextInputDelegate.RESTART_REASON_CONTENT_CHANGE})
+            /* package */ @interface RestartReason {}
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({
+            TextInputDelegate.AUTO_FILL_NOTIFY_STARTED,
+            TextInputDelegate.AUTO_FILL_NOTIFY_COMMITTED,
+            TextInputDelegate.AUTO_FILL_NOTIFY_CANCELED,
+            TextInputDelegate.AUTO_FILL_NOTIFY_VIEW_ADDED,
+            TextInputDelegate.AUTO_FILL_NOTIFY_VIEW_REMOVED,
+            TextInputDelegate.AUTO_FILL_NOTIFY_VIEW_UPDATED,
+            TextInputDelegate.AUTO_FILL_NOTIFY_VIEW_ENTERED,
+            TextInputDelegate.AUTO_FILL_NOTIFY_VIEW_EXITED})
+    /* package */ @interface AutoFillNotification {}
 
     /* package */ void onSurfaceChanged(final Surface surface, final int x, final int y, final int width,
                                         final int height) {
@@ -4967,14 +5004,6 @@ public class GeckoSession implements Parcelable {
             }
         }
 
-        @Retention(RetentionPolicy.SOURCE)
-        @IntDef(flag = true,
-                value = { VISIT_TOP_LEVEL,
-                          VISIT_REDIRECT_TEMPORARY, VISIT_REDIRECT_PERMANENT,
-                          VISIT_REDIRECT_SOURCE, VISIT_REDIRECT_SOURCE_PERMANENT,
-                          VISIT_UNRECOVERABLE_ERROR })
-        /* package */ @interface VisitFlags {}
-
         // These flags are similar to those in `IHistory::LoadFlags`, but we use
         // different values to decouple GeckoView from Gecko changes. These
         // should be kept in sync with `GeckoViewHistory::GeckoViewVisitFlags`.
@@ -5001,7 +5030,7 @@ public class GeckoSession implements Parcelable {
          *                       redirects and reloads.
          * @param flags Additional flags for this visit, including redirect and
          *              error statuses. This is a bitmask of one or more
-         *              {@link VisitFlags}, OR-ed together.
+         *              {@link #VISIT_TOP_LEVEL VISIT_*} flags, OR-ed together.
          * @return A {@link GeckoResult} completed with a boolean indicating
          *         whether to highlight links for the new URL as visited
          *         ({@code true}) or unvisited ({@code false}).
@@ -5034,4 +5063,16 @@ public class GeckoSession implements Parcelable {
         @UiThread
         default void onHistoryStateChange(@NonNull GeckoSession session, @NonNull HistoryList historyList) {}
     }
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef(flag = true,
+            value = {
+                HistoryDelegate.VISIT_TOP_LEVEL,
+                HistoryDelegate.VISIT_REDIRECT_TEMPORARY,
+                HistoryDelegate.VISIT_REDIRECT_PERMANENT,
+                HistoryDelegate.VISIT_REDIRECT_SOURCE,
+                HistoryDelegate.VISIT_REDIRECT_SOURCE_PERMANENT,
+                HistoryDelegate.VISIT_UNRECOVERABLE_ERROR
+            })
+    /* package */ @interface VisitFlags {}
 }

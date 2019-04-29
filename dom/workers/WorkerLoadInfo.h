@@ -24,13 +24,14 @@ class nsILoadGroup;
 class nsIPrincipal;
 class nsIRunnable;
 class nsIScriptContext;
-class nsITabChild;
+class nsIBrowserChild;
 class nsIURI;
 class nsPIDOMWindowInner;
 
 namespace mozilla {
 
 namespace ipc {
+class ContentSecurityPolicy;
 class PrincipalInfo;
 }  // namespace ipc
 
@@ -66,7 +67,7 @@ struct WorkerLoadInfoData {
 
    public:
     InterfaceRequestor(nsIPrincipal* aPrincipal, nsILoadGroup* aLoadGroup);
-    void MaybeAddTabChild(nsILoadGroup* aLoadGroup);
+    void MaybeAddBrowserChild(nsILoadGroup* aLoadGroup);
     NS_IMETHOD GetInterface(const nsIID& aIID, void** aSink) override;
 
     void SetOuterRequestor(nsIInterfaceRequestor* aOuterRequestor) {
@@ -78,14 +79,15 @@ struct WorkerLoadInfoData {
    private:
     ~InterfaceRequestor() {}
 
-    already_AddRefed<nsITabChild> GetAnyLiveTabChild();
+    already_AddRefed<nsIBrowserChild> GetAnyLiveBrowserChild();
 
     nsCOMPtr<nsILoadContext> mLoadContext;
     nsCOMPtr<nsIInterfaceRequestor> mOuterRequestor;
 
-    // Array of weak references to nsITabChild.  We do not want to keep TabChild
-    // actors alive for long after their ActorDestroy() methods are called.
-    nsTArray<nsWeakPtr> mTabChildList;
+    // Array of weak references to nsIBrowserChild.  We do not want to keep
+    // BrowserChild actors alive for long after their ActorDestroy() methods are
+    // called.
+    nsTArray<nsWeakPtr> mBrowserChildList;
   };
 
   // Only set if we have a custom overriden load group
@@ -95,6 +97,8 @@ struct WorkerLoadInfoData {
   nsAutoPtr<mozilla::ipc::PrincipalInfo> mStoragePrincipalInfo;
   nsCString mDomain;
   nsString mOrigin;  // Derived from mPrincipal; can be used on worker thread.
+
+  nsTArray<mozilla::ipc::ContentSecurityPolicy> mCSPInfos;
 
   nsString mServiceWorkerCacheName;
   Maybe<ServiceWorkerDescriptor> mServiceWorkerDescriptor;

@@ -858,8 +858,7 @@ void nsBoxFrame::MarkIntrinsicISizesDirty() {
     mLayoutManager->IntrinsicISizesDirty(this, state);
   }
 
-  // Don't call base class method, since everything it does is within an
-  // IsXULBoxWrapped check.
+  nsContainerFrame::MarkIntrinsicISizesDirty();
 }
 
 void nsBoxFrame::RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) {
@@ -878,7 +877,7 @@ void nsBoxFrame::RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) {
   aOldFrame->Destroy();
 
   // mark us dirty and generate a reflow command
-  PresShell()->FrameNeedsReflow(this, nsIPresShell::eTreeChange,
+  PresShell()->FrameNeedsReflow(this, IntrinsicDirty::TreeChange,
                                 NS_FRAME_HAS_DIRTY_CHILDREN);
 }
 
@@ -906,7 +905,7 @@ void nsBoxFrame::InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
   // just lose.
   CheckBoxOrder();
 
-  PresShell()->FrameNeedsReflow(this, nsIPresShell::eTreeChange,
+  PresShell()->FrameNeedsReflow(this, IntrinsicDirty::TreeChange,
                                 NS_FRAME_HAS_DIRTY_CHILDREN);
 }
 
@@ -929,7 +928,7 @@ void nsBoxFrame::AppendFrames(ChildListID aListID, nsFrameList& aFrameList) {
 
   // XXXbz why is this NS_FRAME_FIRST_REFLOW check here?
   if (!(GetStateBits() & NS_FRAME_FIRST_REFLOW)) {
-    PresShell()->FrameNeedsReflow(this, nsIPresShell::eTreeChange,
+    PresShell()->FrameNeedsReflow(this, IntrinsicDirty::TreeChange,
                                   NS_FRAME_HAS_DIRTY_CHILDREN);
   }
 }
@@ -1012,7 +1011,7 @@ nsresult nsBoxFrame::AttributeChanged(int32_t aNameSpaceID, nsAtom* aAttribute,
       UpdateMouseThrough();
     }
 
-    PresShell()->FrameNeedsReflow(this, nsIPresShell::eStyleChange,
+    PresShell()->FrameNeedsReflow(this, IntrinsicDirty::StyleChange,
                                   NS_FRAME_IS_DIRTY);
   } else if (aAttribute == nsGkAtoms::ordinal) {
     nsIFrame* parent = GetParentXULBox(this);
@@ -1025,7 +1024,7 @@ nsresult nsBoxFrame::AttributeChanged(int32_t aNameSpaceID, nsAtom* aAttribute,
         StyleDisplay()->mDisplay != mozilla::StyleDisplay::MozPopup) {
       parent->XULRelayoutChildAtOrdinal(this);
       // XXXldb Should this instead be a tree change on the child or parent?
-      PresShell()->FrameNeedsReflow(parent, nsIPresShell::eStyleChange,
+      PresShell()->FrameNeedsReflow(parent, IntrinsicDirty::StyleChange,
                                     NS_FRAME_IS_DIRTY);
     }
   }
@@ -1037,7 +1036,7 @@ nsresult nsBoxFrame::AttributeChanged(int32_t aNameSpaceID, nsAtom* aAttribute,
              mContent->IsXULElement(nsGkAtoms::tree)) {
     // Reflow ourselves and all our children if "rows" changes, since
     // nsTreeBodyFrame's layout reads this from its parent (this frame).
-    PresShell()->FrameNeedsReflow(this, nsIPresShell::eStyleChange,
+    PresShell()->FrameNeedsReflow(this, IntrinsicDirty::StyleChange,
                                   NS_FRAME_IS_DIRTY);
   }
 
@@ -1107,7 +1106,7 @@ void nsBoxFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
       // Wrap the list to make it its own layer
       aLists.Content()->AppendNewToTop<nsDisplayOwnLayer>(
           aBuilder, this, &masterList, ownLayerASR,
-          nsDisplayOwnLayerFlags::eNone, mozilla::layers::ScrollbarData{}, true,
+          nsDisplayOwnLayerFlags::None, mozilla::layers::ScrollbarData{}, true,
           true);
     } else {
       MOZ_ASSERT(!XRE_IsContentProcess());

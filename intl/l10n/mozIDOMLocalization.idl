@@ -20,7 +20,6 @@ interface mozIDOMLocalization : nsISupports
   Promise formatValues(in Array<jsval> aKeys);
   Promise formatValue(in AString aId, [optional] in jsval aArgs);
 
-  Promise translateFragment(in Node aNode);
   Promise translateElements(in Array<Element> aElements);
 
   void connectRoot(in Element aElement);
@@ -33,7 +32,7 @@ interface mozIDOMLocalization : nsISupports
   readonly attribute Promise ready;
 };
 
-[scriptable,uuid(96532d26-2422-11e9-a1ce-9bb586acd241)]
+[scriptable, uuid(96532d26-2422-11e9-a1ce-9bb586acd241)]
 interface mozIDOMLocalizationJSM : nsISupports
 {
   mozIDOMLocalization getDOMLocalization();

@@ -4,7 +4,11 @@
 
 // @flow
 
+import type { SettledValue, FulfilledValue } from "./utils/async-value";
 import type { SourcePayload } from "./client/firefox/types";
+import type { SourceActorId, SourceActor } from "./reducers/source-actors";
+
+export type { SourceActorId, SourceActor };
 
 export type SearchModifiers = {
   caseSensitive: boolean,
@@ -68,7 +72,7 @@ export type GeneratedSourceData = {
 };
 
 export type SourceActorLocation = {|
-  +sourceActor: SourceActor,
+  +sourceActor: SourceActorId,
   +line: number,
   +column?: number
 |};
@@ -118,7 +122,7 @@ export type BreakpointLocation = {
   +line: number,
   +column?: number,
   +sourceUrl?: string,
-  +sourceId?: SourceId
+  +sourceId?: SourceActorId
 };
 
 export type ASTLocation = {|
@@ -352,62 +356,45 @@ export type Grip = {
   name?: string
 };
 
-export type SourceActor = {|
-  +actor: ActorId,
-  +source: SourceId,
-  +thread: ThreadId
+export type TextSourceContent = {|
+  type: "text",
+  value: string,
+  contentType: string | void
+|};
+export type WasmSourceContent = {|
+  type: "wasm",
+  value: {| binary: Object |}
+|};
+export type SourceContent = TextSourceContent | WasmSourceContent;
+
+export type SourceWithContent = {|
+  source: Source,
+  +content: SettledValue<SourceContent> | null
+|};
+export type SourceWithContentAndType<+Content: SourceContent> = {|
+  source: Source,
+  +content: FulfilledValue<Content>
 |};
 
 /**
- * BaseSource
+ * Source
  *
  * @memberof types
  * @static
  */
 
-type BaseSource = {|
+export type Source = {|
   +id: SourceId,
   +url: string,
   +sourceMapURL?: string,
   +isBlackBoxed: boolean,
   +isPrettyPrinted: boolean,
-  +contentType?: string,
-  +error?: string,
-  +loadedState: "unloaded" | "loading" | "loaded",
   +relativeUrl: string,
   +introductionUrl: ?string,
   +introductionType: ?string,
   +isExtension: boolean,
-  +actors: SourceActor[]
+  +isWasm: boolean
 |};
-
-/**
- * JsSource
- *
- * @memberof types
- * @static
- */
-
-export type JsSource = {|
-  ...BaseSource,
-  +isWasm: false,
-  +text?: string
-|};
-
-/**
- * WasmSource
- *
- * @memberof types
- * @static
- */
-
-export type WasmSource = {|
-  ...BaseSource,
-  +isWasm: true,
-  +text?: {| binary: Object |}
-|};
-
-export type Source = JsSource | WasmSource;
 
 /**
  * Script

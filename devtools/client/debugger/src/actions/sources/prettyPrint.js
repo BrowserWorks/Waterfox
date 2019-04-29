@@ -11,7 +11,11 @@ import { remapBreakpoints } from "../breakpoints";
 
 import { setSymbols } from "./symbols";
 import { prettyPrint } from "../../workers/pretty-print";
-import { getPrettySourceURL, isLoaded, isGenerated } from "../../utils/source";
+import {
+  getPrettySourceURL,
+  isGenerated,
+  isJavaScript
+} from "../../utils/source";
 import { loadSourceText } from "./loadSourceText";
 import { mapFrames } from "../pause";
 import { selectSpecificLocation } from "../sources";
@@ -26,27 +30,31 @@ import {
 
 import type { Action, ThunkArgs } from "../types";
 import { selectSource } from "./select";
-import type { JsSource, Source, Context } from "../../types";
+import type { Source, SourceContent, SourceActor, Context } from "../../types";
 
 export async function prettyPrintSource(
   sourceMaps: typeof SourceMaps,
-  prettySource: Source,
-  generatedSource: any
+  generatedSource: Source,
+  content: SourceContent,
+  actors: Array<SourceActor>
 ) {
+  if (!isJavaScript(generatedSource, content) || content.type !== "text") {
+    throw new Error("Can't prettify non-javascript files.");
+  }
+
   const url = getPrettySourceURL(generatedSource.url);
   const { code, mappings } = await prettyPrint({
-    source: generatedSource,
+    text: content.value,
     url: url
   });
   await sourceMaps.applySourceMap(generatedSource.id, url, code, mappings);
 
   // The source map URL service used by other devtools listens to changes to
   // sources based on their actor IDs, so apply the mapping there too.
-  for (const sourceActor of generatedSource.actors) {
-    await sourceMaps.applySourceMap(sourceActor.actor, url, code, mappings);
+  for (const { actor } of actors) {
+    await sourceMaps.applySourceMap(actor, url, code, mappings);
   }
   return {
-    id: prettySource.id,
     text: code,
     contentType: "text/javascript"
   };
@@ -58,19 +66,16 @@ export function createPrettySource(cx: Context, sourceId: string) {
     const url = getPrettySourceURL(source.url);
     const id = generatedToOriginalId(sourceId, url);
 
-    const prettySource: JsSource = {
+    const prettySource: Source = {
+      id,
       url,
       relativeUrl: url,
-      id,
       isBlackBoxed: false,
       isPrettyPrinted: true,
       isWasm: false,
-      contentType: "text/javascript",
-      loadedState: "loading",
       introductionUrl: null,
       introductionType: undefined,
-      isExtension: false,
-      actors: []
+      isExtension: false
     };
 
     dispatch(({ type: "ADD_SOURCE", cx, source: prettySource }: Action));
@@ -118,9 +123,7 @@ export function togglePrettyPrint(cx: Context, sourceId: string) {
       recordEvent("pretty_print");
     }
 
-    if (!isLoaded(source)) {
-      await dispatch(loadSourceText({ cx, source }));
-    }
+    await dispatch(loadSourceText({ cx, source }));
 
     assert(
       isGenerated(source),

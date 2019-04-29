@@ -423,7 +423,7 @@ void ImageDocument::ScrollImageTo(int32_t aX, int32_t aY, bool restoreImage) {
       nsPoint(
           nsPresContext::CSSPixelsToAppUnits(aX / ratio) - portRect.width / 2,
           nsPresContext::CSSPixelsToAppUnits(aY / ratio) - portRect.height / 2),
-      ScrollMode::eInstant);
+      ScrollMode::Instant);
 }
 
 void ImageDocument::RestoreImage() {
@@ -639,13 +639,11 @@ void ImageDocument::UpdateSizeFromLayout() {
   nsIntSize oldSize(mImageWidth, mImageHeight);
   IntrinsicSize newSize = contentFrame->GetIntrinsicSize();
 
-  if (newSize.width.GetUnit() == eStyleUnit_Coord) {
-    mImageWidth =
-        nsPresContext::AppUnitsToFloatCSSPixels(newSize.width.GetCoordValue());
+  if (newSize.width) {
+    mImageWidth = nsPresContext::AppUnitsToFloatCSSPixels(*newSize.width);
   }
-  if (newSize.height.GetUnit() == eStyleUnit_Coord) {
-    mImageHeight =
-        nsPresContext::AppUnitsToFloatCSSPixels(newSize.height.GetCoordValue());
+  if (newSize.height) {
+    mImageHeight = nsPresContext::AppUnitsToFloatCSSPixels(*newSize.height);
   }
 
   // Ensure that our information about overflow is up-to-date if needed.

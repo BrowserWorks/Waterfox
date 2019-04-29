@@ -36,7 +36,7 @@
 #include "mozilla/dom/ChromeUtils.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/TabContext.h"
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "mozilla/dom/network/TCPSocketParent.h"
 #include "mozilla/dom/network/TCPServerSocketParent.h"
 #include "mozilla/dom/network/UDPSocketParent.h"
@@ -57,11 +57,11 @@
 
 using IPC::SerializedLoadContext;
 using mozilla::OriginAttributes;
+using mozilla::dom::BrowserParent;
 using mozilla::dom::ChromeUtils;
 using mozilla::dom::ContentParent;
 using mozilla::dom::ServiceWorkerManager;
 using mozilla::dom::TabContext;
-using mozilla::dom::TabParent;
 using mozilla::dom::TCPServerSocketParent;
 using mozilla::dom::TCPSocketParent;
 using mozilla::dom::UDPSocketParent;
@@ -244,11 +244,11 @@ const char* NeckoParent::CreateChannelLoadContext(
         aSerialized.mOriginAttributes.mPrivateBrowsingId > 0);
     switch (aBrowser.type()) {
       case PBrowserOrId::TPBrowserParent: {
-        RefPtr<TabParent> tabParent =
-            TabParent::GetFrom(aBrowser.get_PBrowserParent());
+        RefPtr<BrowserParent> browserParent =
+            BrowserParent::GetFrom(aBrowser.get_PBrowserParent());
         dom::Element* topFrameElement = nullptr;
-        if (tabParent) {
-          topFrameElement = tabParent->GetOwnerElement();
+        if (browserParent) {
+          topFrameElement = browserParent->GetOwnerElement();
         }
         aResult = new LoadContext(aSerialized, topFrameElement, attrs);
         break;
@@ -331,10 +331,9 @@ bool NeckoParent::DeallocPStunAddrsRequestParent(
 }
 
 PWebrtcProxyChannelParent* NeckoParent::AllocPWebrtcProxyChannelParent(
-    const PBrowserOrId& aBrowser) {
+    const TabId& aTabId) {
 #ifdef MOZ_WEBRTC
-  RefPtr<TabParent> tab = TabParent::GetFrom(aBrowser.get_PBrowserParent());
-  WebrtcProxyChannelParent* parent = new WebrtcProxyChannelParent(tab);
+  WebrtcProxyChannelParent* parent = new WebrtcProxyChannelParent(aTabId);
   parent->AddRef();
   return parent;
 #else
@@ -439,11 +438,11 @@ PWebSocketParent* NeckoParent::AllocPWebSocketParent(
     return nullptr;
   }
 
-  RefPtr<TabParent> tabParent =
-      TabParent::GetFrom(browser.get_PBrowserParent());
+  RefPtr<BrowserParent> browserParent =
+      BrowserParent::GetFrom(browser.get_PBrowserParent());
   PBOverrideStatus overrideStatus = PBOverrideStatusFromLoadContext(serialized);
   WebSocketChannelParent* p = new WebSocketChannelParent(
-      tabParent, loadContext, overrideStatus, aSerial);
+      browserParent, loadContext, overrideStatus, aSerial);
   p->AddRef();
   return p;
 }
@@ -567,14 +566,14 @@ bool NeckoParent::DeallocPTCPServerSocketParent(PTCPServerSocketParent* actor) {
 }
 
 PUDPSocketParent* NeckoParent::AllocPUDPSocketParent(
-    const Principal& /* unused */, const nsCString& /* unused */) {
+    nsIPrincipal* /* unused */, const nsCString& /* unused */) {
   RefPtr<UDPSocketParent> p = new UDPSocketParent(this);
 
   return p.forget().take();
 }
 
 mozilla::ipc::IPCResult NeckoParent::RecvPUDPSocketConstructor(
-    PUDPSocketParent* aActor, const Principal& aPrincipal,
+    PUDPSocketParent* aActor, nsIPrincipal* aPrincipal,
     const nsCString& aFilter) {
   if (!static_cast<UDPSocketParent*>(aActor)->Init(aPrincipal, aFilter)) {
     return IPC_FAIL_NO_REASON(this);
@@ -611,8 +610,7 @@ bool NeckoParent::DeallocPDNSRequestParent(PDNSRequestParent* aParent) {
 }
 
 mozilla::ipc::IPCResult NeckoParent::RecvSpeculativeConnect(
-    const URIParams& aURI, const Principal& aPrincipal,
-    const bool& aAnonymous) {
+    const URIParams& aURI, nsIPrincipal* aPrincipal, const bool& aAnonymous) {
   nsCOMPtr<nsISpeculativeConnect> speculator(gIOService);
   nsCOMPtr<nsIURI> uri = DeserializeURI(aURI);
   nsCOMPtr<nsIPrincipal> principal(aPrincipal);

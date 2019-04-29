@@ -22,7 +22,7 @@ class nsSubDocumentFrame;
 namespace mozilla {
 
 namespace dom {
-class TabParent;
+class BrowserParent;
 }  // namespace dom
 
 namespace layers {
@@ -33,7 +33,7 @@ namespace layout {
 
 /**
  * RenderFrame connects and manages layer trees for remote frames. It is
- * directly owned by a TabParent and always lives in the parent process.
+ * directly owned by a BrowserParent and always lives in the parent process.
  */
 class RenderFrame final {
   typedef mozilla::layers::CompositorOptions CompositorOptions;
@@ -45,7 +45,7 @@ class RenderFrame final {
   RenderFrame();
   virtual ~RenderFrame();
 
-  bool Initialize(dom::TabParent* aTabParent);
+  bool Initialize(dom::BrowserParent* aBrowserParent);
   void Destroy();
 
   void EnsureLayersConnected(CompositorOptions* aCompositorOptions);
@@ -72,7 +72,7 @@ class RenderFrame final {
   // mLayersConnected is true).
   CompositorOptions mCompositorOptions;
 
-  dom::TabParent* mTabParent;
+  dom::BrowserParent* mBrowserParent;
   RefPtr<LayerManager> mLayerManager;
 
   bool mInitialized;
@@ -90,8 +90,6 @@ class RenderFrame final {
  * nsFrameLoader) into its parent frame's layer tree.
  */
 class nsDisplayRemote final : public nsDisplayItem {
-  friend class nsDisplayItem;
-
   typedef mozilla::dom::TabId TabId;
   typedef mozilla::gfx::Matrix4x4 Matrix4x4;
   typedef mozilla::layers::EventRegionsOverride EventRegionsOverride;
@@ -128,6 +126,7 @@ class nsDisplayRemote final : public nsDisplayItem {
   NS_DISPLAY_DECL_NAME("Remote", TYPE_REMOTE)
 
  private:
+  friend class nsDisplayItemBase;
   nsFrameLoader* GetFrameLoader() const;
 
   TabId mTabId;

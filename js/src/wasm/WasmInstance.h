@@ -200,9 +200,11 @@ class Instance {
                            uint32_t srcOffset, uint32_t len,
                            uint32_t dstTableIndex, uint32_t srcTableIndex);
   static int32_t elemDrop(Instance* instance, uint32_t segIndex);
+  static int32_t tableFill(Instance* instance, uint32_t start, void* value,
+                           uint32_t len, uint32_t tableIndex);
   static void* tableGet(Instance* instance, uint32_t index,
                         uint32_t tableIndex);
-  static uint32_t tableGrow(Instance* instance, uint32_t delta, void* initValue,
+  static uint32_t tableGrow(Instance* instance, void* initValue, uint32_t delta,
                             uint32_t tableIndex);
   static int32_t tableSet(Instance* instance, uint32_t index, void* value,
                           uint32_t tableIndex);

@@ -200,8 +200,6 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
         Array [
           Object {
             "contents": Object {
-              "actors": Array [],
-              "contentType": "text/javascript",
               "id": "server1.conn13.child1/41",
               "introductionType": undefined,
               "introductionUrl": null,
@@ -209,10 +207,8 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
               "isExtension": false,
               "isPrettyPrinted": false,
               "isWasm": false,
-              "loadedState": "unloaded",
               "relativeUrl": "http://mdn.com/three.js",
               "sourceMapURL": null,
-              "text": "",
               "url": "http://mdn.com/three.js",
             },
             "name": "three.js",
@@ -223,8 +219,6 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
             "contents": Array [
               Object {
                 "contents": Object {
-                  "actors": Array [],
-                  "contentType": "text/javascript",
                   "id": "server1.conn13.child1/42",
                   "introductionType": undefined,
                   "introductionUrl": null,
@@ -232,10 +226,8 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
                   "isExtension": false,
                   "isPrettyPrinted": false,
                   "isWasm": false,
-                  "loadedState": "unloaded",
                   "relativeUrl": "http://mdn.com/four.js",
                   "sourceMapURL": "data:application/json?charset=utf?dsffewrsf",
-                  "text": "",
                   "url": "http://mdn.com/four.js",
                 },
                 "name": "four.js",
@@ -244,8 +236,6 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
               },
               Object {
                 "contents": Object {
-                  "actors": Array [],
-                  "contentType": "text/javascript",
                   "id": "server1.conn13.child1/42/originalSource-sha",
                   "introductionType": undefined,
                   "introductionUrl": null,
@@ -253,10 +243,8 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
                   "isExtension": false,
                   "isPrettyPrinted": false,
                   "isWasm": false,
-                  "loadedState": "unloaded",
                   "relativeUrl": "http://mdn.com/four.js",
                   "sourceMapURL": null,
-                  "text": "",
                   "url": "http://mdn.com/four.js",
                 },
                 "name": "four.js",
@@ -265,8 +253,6 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
               },
               Object {
                 "contents": Object {
-                  "actors": Array [],
-                  "contentType": "text/javascript",
                   "id": "server1.conn13.child1/39",
                   "introductionType": undefined,
                   "introductionUrl": null,
@@ -274,10 +260,8 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
                   "isExtension": false,
                   "isPrettyPrinted": false,
                   "isWasm": false,
-                  "loadedState": "unloaded",
                   "relativeUrl": "http://mdn.com/one.js",
                   "sourceMapURL": null,
-                  "text": "",
                   "url": "http://mdn.com/one.js",
                 },
                 "name": "one.js",
@@ -286,8 +270,6 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
               },
               Object {
                 "contents": Object {
-                  "actors": Array [],
-                  "contentType": "text/javascript",
                   "id": "server1.conn13.child1/41",
                   "introductionType": undefined,
                   "introductionUrl": null,
@@ -295,10 +277,8 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
                   "isExtension": false,
                   "isPrettyPrinted": false,
                   "isWasm": false,
-                  "loadedState": "unloaded",
                   "relativeUrl": "http://mdn.com/three.js",
                   "sourceMapURL": null,
-                  "text": "",
                   "url": "http://mdn.com/three.js",
                 },
                 "name": "three.js",
@@ -307,8 +287,6 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
               },
               Object {
                 "contents": Object {
-                  "actors": Array [],
-                  "contentType": "text/javascript",
                   "id": "server1.conn13.child1/40",
                   "introductionType": undefined,
                   "introductionUrl": null,
@@ -316,10 +294,8 @@ exports[`SourcesTree on receiving new props updates highlighted items updates hi
                   "isExtension": false,
                   "isPrettyPrinted": false,
                   "isWasm": false,
-                  "loadedState": "unloaded",
                   "relativeUrl": "http://mdn.com/two.js",
                   "sourceMapURL": null,
-                  "text": "",
                   "url": "http://mdn.com/two.js",
                 },
                 "name": "two.js",

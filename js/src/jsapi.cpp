@@ -1136,7 +1136,7 @@ JS_PUBLIC_API void* JS_string_malloc(JSContext* cx, size_t nbytes) {
   AssertHeapIsIdle();
   CHECK_THREAD(cx);
   return static_cast<void*>(
-      cx->maybe_pod_malloc<uint8_t>(nbytes, js::MallocArena));
+      cx->maybe_pod_malloc<uint8_t>(nbytes, js::StringBufferArena));
 }
 
 JS_PUBLIC_API void* JS_string_realloc(JSContext* cx, void* p, size_t oldBytes,
@@ -1144,7 +1144,7 @@ JS_PUBLIC_API void* JS_string_realloc(JSContext* cx, void* p, size_t oldBytes,
   AssertHeapIsIdle();
   CHECK_THREAD(cx);
   return static_cast<void*>(cx->maybe_pod_realloc<uint8_t>(
-      static_cast<uint8_t*>(p), oldBytes, newBytes, js::MallocArena));
+      static_cast<uint8_t*>(p), oldBytes, newBytes, js::StringBufferArena));
 }
 
 JS_PUBLIC_API void JS_string_free(JSContext* cx, void* p) { return js_free(p); }
@@ -2889,15 +2889,15 @@ JS_PUBLIC_API bool JSPropertySpec::getValue(JSContext* cx,
                                             MutableHandleValue vp) const {
   MOZ_ASSERT(!isAccessor());
 
-  if (value.type == JSVAL_TYPE_STRING) {
-    RootedAtom atom(cx, Atomize(cx, value.string, strlen(value.string)));
+  if (u.value.type == JSVAL_TYPE_STRING) {
+    RootedAtom atom(cx, Atomize(cx, u.value.string, strlen(u.value.string)));
     if (!atom) {
       return false;
     }
     vp.setString(atom);
   } else {
-    MOZ_ASSERT(value.type == JSVAL_TYPE_INT32);
-    vp.setInt32(value.int32);
+    MOZ_ASSERT(u.value.type == JSVAL_TYPE_INT32);
+    vp.setInt32(u.value.int32);
   }
 
   return true;
@@ -2947,14 +2947,14 @@ JS_PUBLIC_API bool JS_DefineProperties(JSContext* cx, HandleObject obj,
     if (ps->isAccessor()) {
       if (ps->isSelfHosted()) {
         if (!DefineSelfHostedProperty(
-                cx, obj, id, ps->accessors.getter.selfHosted.funname,
-                ps->accessors.setter.selfHosted.funname, ps->flags)) {
+                cx, obj, id, ps->u.accessors.getter.selfHosted.funname,
+                ps->u.accessors.setter.selfHosted.funname, ps->flags)) {
           return false;
         }
       } else {
         if (!DefineAccessorPropertyById(
-                cx, obj, id, ps->accessors.getter.native,
-                ps->accessors.setter.native, ps->flags)) {
+                cx, obj, id, ps->u.accessors.getter.native,
+                ps->u.accessors.setter.native, ps->flags)) {
           return false;
         }
       }
@@ -3659,9 +3659,8 @@ JS_PUBLIC_API JSString* JS_DecompileScript(JSContext* cx, HandleScript script) {
   if (fun) {
     return JS_DecompileFunction(cx, fun);
   }
-  bool haveSource = script->scriptSource()->hasSourceText();
-  if (!haveSource &&
-      !JSScript::loadSource(cx, script->scriptSource(), &haveSource)) {
+  bool haveSource;
+  if (!ScriptSource::loadSource(cx, script->scriptSource(), &haveSource)) {
     return nullptr;
   }
   return haveSource ? JSScript::sourceData(cx, script)
@@ -5008,10 +5007,9 @@ JS_PUBLIC_API void JS_ClearPendingException(JSContext* cx) {
   cx->clearPendingException();
 }
 
-JS_PUBLIC_API void
-JS::SetPendingExceptionAndStack(JSContext* cx, HandleValue value,
-                                HandleObject stack)
-{
+JS_PUBLIC_API void JS::SetPendingExceptionAndStack(JSContext* cx,
+                                                   HandleValue value,
+                                                   HandleObject stack) {
   AssertHeapIsIdle();
   CHECK_THREAD(cx);
   cx->releaseCheck(value);

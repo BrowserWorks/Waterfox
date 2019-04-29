@@ -349,6 +349,7 @@ class nsDocumentViewer final : public nsIContentViewer,
    * @param aDoInitialReflow set to true if you want to kick off the initial
    * reflow
    */
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   nsresult InitPresentationStuff(bool aDoInitialReflow);
 
   already_AddRefed<nsINode> GetPopupNode();
@@ -824,7 +825,8 @@ nsresult nsDocumentViewer::InitPresentationStuff(bool aDoInitialReflow) {
   }
 
   if (aDoInitialReflow && mDocument) {
-    mDocument->ScrollToRef();
+    nsCOMPtr<Document> document = mDocument;
+    document->ScrollToRef();
   }
 
   return NS_OK;
@@ -1136,7 +1138,8 @@ nsDocumentViewer::LoadComplete(nsresult aStatus) {
 
   if (!mStopped) {
     if (mDocument) {
-      mDocument->ScrollToRef();
+      nsCOMPtr<Document> document = mDocument;
+      document->ScrollToRef();
     }
 
     // Now that the document has loaded, we can tell the presshell
@@ -2763,7 +2766,7 @@ nsDocumentViewer::SetFullZoom(float aFullZoom) {
     nsIPageSequenceFrame* pf = presShell->GetPageSequenceFrame();
     if (pf) {
       nsIFrame* f = do_QueryFrame(pf);
-      presShell->FrameNeedsReflow(f, nsIPresShell::eResize, NS_FRAME_IS_DIRTY);
+      presShell->FrameNeedsReflow(f, IntrinsicDirty::Resize, NS_FRAME_IS_DIRTY);
     }
 
     nsIFrame* rootFrame = presShell->GetRootFrame();
@@ -3131,9 +3134,8 @@ nsresult nsDocumentViewer::GetContentSizeInternal(int32_t* aWidth,
     prefWidth = aMaxWidth;
   }
 
-  nsresult rv =
-      presShell->ResizeReflow(prefWidth, aMaxHeight, 0, 0,
-                              nsIPresShell::ResizeReflowOptions::eBSizeLimit);
+  nsresult rv = presShell->ResizeReflow(prefWidth, aMaxHeight, 0, 0,
+                                        ResizeReflowOptions::BSizeLimit);
   NS_ENSURE_SUCCESS(rv, rv);
 
   RefPtr<nsPresContext> presContext = GetPresContext();
@@ -3617,7 +3619,7 @@ nsDocumentViewer::PrintPreviewNavigate(int16_t aType, int32_t aPageNum) {
   if (aType == nsIWebBrowserPrint::PRINTPREVIEW_HOME ||
       (aType == nsIWebBrowserPrint::PRINTPREVIEW_GOTO_PAGENUM &&
        aPageNum == 1)) {
-    sf->ScrollTo(nsPoint(0, 0), ScrollMode::eInstant);
+    sf->ScrollTo(nsPoint(0, 0), ScrollMode::Instant);
     return NS_OK;
   }
 
@@ -3683,7 +3685,7 @@ nsDocumentViewer::PrintPreviewNavigate(int16_t aType, int32_t aPageNum) {
   if (fndPageFrame) {
     nscoord newYPosn = nscoord(mPrintJob->GetPrintPreviewScale() *
                                fndPageFrame->GetPosition().y);
-    sf->ScrollTo(nsPoint(pt.x, newYPosn), ScrollMode::eInstant);
+    sf->ScrollTo(nsPoint(pt.x, newYPosn), ScrollMode::Instant);
   }
   return NS_OK;
 }

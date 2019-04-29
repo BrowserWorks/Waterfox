@@ -74,7 +74,7 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/BrowserBridgeChild.h"
 #include "mozilla/dom/ScriptSettings.h"
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "mozilla/dom/Text.h"
 #include "mozilla/dom/TouchEvent.h"
 #include "mozilla/dom/ShadowRoot.h"
@@ -229,14 +229,14 @@
 #include "nsXULPopupManager.h"
 #include "xpcprivate.h"  // nsXPConnect
 #include "HTMLSplitOnSpacesTokenizer.h"
-#include "InProcessTabChildMessageManager.h"
+#include "InProcessBrowserChildMessageManager.h"
 #include "nsContentTypeParser.h"
 #include "nsICookiePermission.h"
 #include "nsICookieService.h"
 #include "ThirdPartyUtil.h"
 #include "mozilla/EnumSet.h"
 #include "mozilla/BloomFilter.h"
-#include "TabChild.h"
+#include "BrowserChild.h"
 #include "mozilla/dom/DocGroup.h"
 #include "mozilla/dom/TabGroup.h"
 #include "nsIWebNavigationInfo.h"
@@ -343,9 +343,6 @@ nsContentUtils::UserInteractionObserver*
     nsContentUtils::sUserInteractionObserver = nullptr;
 
 uint32_t nsContentUtils::sHandlingInputTimeout = 1000;
-
-uint32_t nsContentUtils::sCookiesLifetimePolicy =
-    nsICookieService::ACCEPT_NORMALLY;
 
 nsHtml5StringParser* nsContentUtils::sHTMLFragmentParser = nullptr;
 nsIParser* nsContentUtils::sXMLFragmentParser = nullptr;
@@ -678,10 +675,6 @@ nsresult nsContentUtils::Init() {
   Preferences::AddBoolVarCache(
       &sSendPerformanceTimingNotifications,
       "dom.performance.enable_notify_performance_timing", false);
-
-  Preferences::AddUintVarCache(&sCookiesLifetimePolicy,
-                               "network.cookie.lifetimePolicy",
-                               nsICookieService::ACCEPT_NORMALLY);
 
   Preferences::AddBoolVarCache(&sDoNotTrackEnabled,
                                "privacy.donottrackheader.enabled", false);
@@ -7230,8 +7223,8 @@ nsresult nsContentUtils::GetHostOrIPv6WithBrackets(nsIURI* aURI,
 bool nsContentUtils::CallOnAllRemoteChildren(
     MessageBroadcaster* aManager, CallOnRemoteChildFunction aCallback,
     void* aArg) {
-  uint32_t tabChildCount = aManager->ChildCount();
-  for (uint32_t j = 0; j < tabChildCount; ++j) {
+  uint32_t browserChildCount = aManager->ChildCount();
+  for (uint32_t j = 0; j < browserChildCount; ++j) {
     RefPtr<MessageListenerManager> childMM = aManager->GetChildAt(j);
     if (!childMM) {
       continue;
@@ -7248,7 +7241,7 @@ bool nsContentUtils::CallOnAllRemoteChildren(
     mozilla::dom::ipc::MessageManagerCallback* cb = childMM->GetCallback();
     if (cb) {
       nsFrameLoader* fl = static_cast<nsFrameLoader*>(cb);
-      TabParent* remote = TabParent::GetFrom(fl);
+      BrowserParent* remote = BrowserParent::GetFrom(fl);
       if (remote && aCallback) {
         if (aCallback(remote, aArg)) {
           return true;
@@ -7282,7 +7275,7 @@ struct UIStateChangeInfo {
         mShowFocusRings(aShowFocusRings) {}
 };
 
-bool SetKeyboardIndicatorsChild(TabParent* aParent, void* aArg) {
+bool SetKeyboardIndicatorsChild(BrowserParent* aParent, void* aArg) {
   UIStateChangeInfo* stateInfo = static_cast<UIStateChangeInfo*>(aArg);
   Unused << aParent->SendSetKeyboardIndicators(stateInfo->mShowAccelerators,
                                                stateInfo->mShowFocusRings);
@@ -7302,7 +7295,7 @@ nsresult nsContentUtils::IPCTransferableToTransferable(
     nsIPrincipal* aRequestingPrincipal,
     const nsContentPolicyType& aContentPolicyType,
     nsITransferable* aTransferable, mozilla::dom::ContentParent* aContentParent,
-    mozilla::dom::TabChild* aTabChild) {
+    mozilla::dom::BrowserChild* aBrowserChild) {
   nsresult rv;
 
   const nsTArray<IPCDataTransferItem>& items = aDataTransfer.items();
@@ -7348,8 +7341,8 @@ nsresult nsContentUtils::IPCTransferableToTransferable(
 
       if (aContentParent) {
         Unused << aContentParent->DeallocShmem(item.data().get_Shmem());
-      } else if (aTabChild) {
-        Unused << aTabChild->DeallocShmem(item.data().get_Shmem());
+      } else if (aBrowserChild) {
+        Unused << aBrowserChild->DeallocShmem(item.data().get_Shmem());
       }
     }
   }
@@ -7876,17 +7869,17 @@ nsIWidget* nsContentUtils::GetWidget(nsIPresShell* aPresShell,
 int16_t nsContentUtils::GetButtonsFlagForButton(int32_t aButton) {
   switch (aButton) {
     case -1:
-      return WidgetMouseEvent::eNoButtonFlag;
-    case WidgetMouseEvent::eLeftButton:
-      return WidgetMouseEvent::eLeftButtonFlag;
-    case WidgetMouseEvent::eMiddleButton:
-      return WidgetMouseEvent::eMiddleButtonFlag;
-    case WidgetMouseEvent::eRightButton:
-      return WidgetMouseEvent::eRightButtonFlag;
+      return MouseButtonsFlag::eNoButtons;
+    case MouseButton::eLeft:
+      return MouseButtonsFlag::eLeftFlag;
+    case MouseButton::eMiddle:
+      return MouseButtonsFlag::eMiddleFlag;
+    case MouseButton::eRight:
+      return MouseButtonsFlag::eRightFlag;
     case 4:
-      return WidgetMouseEvent::e4thButtonFlag;
+      return MouseButtonsFlag::e4thFlag;
     case 5:
-      return WidgetMouseEvent::e5thButtonFlag;
+      return MouseButtonsFlag::e5thFlag;
     default:
       NS_ERROR("Button not known.");
       return 0;
@@ -7969,12 +7962,12 @@ nsresult nsContentUtils::SendMouseEvent(
                                         : WidgetMouseEvent::eNormal);
   event.pointerId = aIdentifier;
   event.mModifiers = GetWidgetModifiers(aModifiers);
-  event.button = aButton;
-  event.buttons = aButtons != nsIDOMWindowUtils::MOUSE_BUTTONS_NOT_SPECIFIED
-                      ? aButtons
-                      : msg == eMouseUp ? 0 : GetButtonsFlagForButton(aButton);
-  event.pressure = aPressure;
-  event.inputSource = aInputSourceArg;
+  event.mButton = aButton;
+  event.mButtons = aButtons != nsIDOMWindowUtils::MOUSE_BUTTONS_NOT_SPECIFIED
+                       ? aButtons
+                       : msg == eMouseUp ? 0 : GetButtonsFlagForButton(aButton);
+  event.mPressure = aPressure;
+  event.mInputSource = aInputSourceArg;
   event.mClickCount = aClickCount;
   event.mTime = PR_IntervalNow();
   event.mFlags.mIsSynthesizedForTests = aIsDOMEventSynthesized;
@@ -8284,7 +8277,7 @@ nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForServiceWorker(
 void nsContentUtils::GetCookieLifetimePolicyFromCookieSettings(
     nsICookieSettings* aCookieSettings, nsIPrincipal* aPrincipal,
     uint32_t* aLifetimePolicy) {
-  *aLifetimePolicy = sCookiesLifetimePolicy;
+  *aLifetimePolicy = StaticPrefs::network_cookie_lifetimePolicy();
 
   if (aCookieSettings) {
     uint32_t cookiePermission = 0;
@@ -9291,11 +9284,11 @@ void nsContentUtils::GetPresentationURL(nsIDocShell* aDocShell,
     nsCOMPtr<nsIDocShellTreeItem> root;
     aDocShell->GetRootTreeItem(getter_AddRefs(root));
     if (sameTypeRoot.get() == root.get()) {
-      // presentation URL is stored in TabChild for the top most
+      // presentation URL is stored in BrowserChild for the top most
       // <iframe mozbrowser> in content process.
-      TabChild* tabChild = TabChild::GetFrom(aDocShell);
-      if (tabChild) {
-        aPresentationUrl = tabChild->PresentationURL();
+      BrowserChild* browserChild = BrowserChild::GetFrom(aDocShell);
+      if (browserChild) {
+        aPresentationUrl = browserChild->PresentationURL();
       }
       return;
     }
@@ -9833,13 +9826,14 @@ bool nsContentUtils::AttemptLargeAllocationLoad(nsIHttpChannel* aChannel) {
     return false;
   }
 
-  TabChild* tabChild = TabChild::GetFrom(outer);
-  NS_ENSURE_TRUE(tabChild, false);
+  BrowserChild* browserChild = BrowserChild::GetFrom(outer);
+  NS_ENSURE_TRUE(browserChild, false);
 
-  if (tabChild->IsAwaitingLargeAlloc()) {
+  if (browserChild->IsAwaitingLargeAlloc()) {
     NS_WARNING(
-        "In a Large-Allocation TabChild, ignoring Large-Allocation header!");
-    tabChild->StopAwaitingLargeAlloc();
+        "In a Large-Allocation BrowserChild, ignoring Large-Allocation "
+        "header!");
+    browserChild->StopAwaitingLargeAlloc();
     outer->SetLargeAllocStatus(LargeAllocStatus::SUCCESS);
     return false;
   }
@@ -10560,7 +10554,7 @@ bool nsContentUtils::ContentIsLink(nsIContent* aContent) {
 
 /* static */
 already_AddRefed<ContentFrameMessageManager>
-nsContentUtils::TryGetTabChildGlobal(nsISupports* aFrom) {
+nsContentUtils::TryGetBrowserChildGlobal(nsISupports* aFrom) {
   RefPtr<nsFrameLoaderOwner> frameLoaderOwner = do_QueryObject(aFrom);
   if (!frameLoaderOwner) {
     return nullptr;
@@ -10572,7 +10566,7 @@ nsContentUtils::TryGetTabChildGlobal(nsISupports* aFrom) {
   }
 
   RefPtr<ContentFrameMessageManager> manager =
-      frameLoader->GetTabChildMessageManager();
+      frameLoader->GetBrowserChildMessageManager();
   return manager.forget();
 }
 
@@ -10625,6 +10619,21 @@ bool nsContentUtils::
          topLevel->GetPresShell()->GetPresContext() &&
          !topLevel->GetPresShell()->GetPresContext()->HadContentfulPaint() &&
          nsThreadManager::MainThreadHasPendingHighPriorityEvents();
+}
+
+/* static */
+uint32_t nsContentUtils::GetNodeDepth(nsINode* aNode) {
+  uint32_t depth = 1;
+
+  MOZ_ASSERT(aNode, "Node shouldn't be null");
+
+  // Use GetFlattenedTreeParentNode to bypass the shadow root and cross the
+  // shadow boundary to calculate the node depth without the shadow root.
+  while ((aNode = aNode->GetFlattenedTreeParentNode())) {
+    ++depth;
+  }
+
+  return depth;
 }
 
 /* static */

@@ -40,7 +40,7 @@
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FileBlobImpl.h"
 #include "mozilla/dom/StructuredCloneTags.h"
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "mozilla/dom/filehandle/ActorsParent.h"
 #include "mozilla/dom/indexedDB/PBackgroundIDBCursorParent.h"
 #include "mozilla/dom/indexedDB/PBackgroundIDBDatabaseParent.h"
@@ -52,8 +52,8 @@
 #include "mozilla/dom/indexedDB/PBackgroundIDBTransactionParent.h"
 #include "mozilla/dom/indexedDB/PBackgroundIDBVersionChangeTransactionParent.h"
 #include "mozilla/dom/indexedDB/PBackgroundIndexedDBUtilsParent.h"
+#include "mozilla/dom/IPCBlobInputStreamParent.h"
 #include "mozilla/dom/IPCBlobUtils.h"
-#include "mozilla/dom/ipc/IPCBlobInputStreamParent.h"
 #include "mozilla/dom/quota/CheckedUnsafePtr.h"
 #include "mozilla/dom/quota/Client.h"
 #include "mozilla/dom/quota/FileStreams.h"
@@ -7853,8 +7853,7 @@ class QuotaClient final : public mozilla::dom::quota::Client {
 
   nsresult InitOrigin(PersistenceType aPersistenceType,
                       const nsACString& aGroup, const nsACString& aOrigin,
-                      const AtomicBool& aCanceled,
-                      UsageInfo* aUsageInfo,
+                      const AtomicBool& aCanceled, UsageInfo* aUsageInfo,
                       bool aForGetUsage) override;
 
   nsresult GetUsageForOrigin(PersistenceType aPersistenceType,
@@ -9289,7 +9288,7 @@ DatabaseConnection::~DatabaseConnection() {
   MOZ_ASSERT(!mFileManager);
   MOZ_ASSERT(!mCachedStatements.Count());
   MOZ_ASSERT(!mUpdateRefcountFunction);
-  MOZ_ASSERT(!mInWriteTransaction);
+  MOZ_DIAGNOSTIC_ASSERT(!mInWriteTransaction);
   MOZ_ASSERT(!mDEBUGSavepointCount);
 }
 
@@ -9451,7 +9450,7 @@ nsresult DatabaseConnection::CommitWriteTransaction() {
 void DatabaseConnection::RollbackWriteTransaction() {
   AssertIsOnConnectionThread();
   MOZ_ASSERT(!mInReadTransaction);
-  MOZ_ASSERT(mStorageConnection);
+  MOZ_DIAGNOSTIC_ASSERT(mStorageConnection);
 
   AUTO_PROFILER_LABEL("DatabaseConnection::RollbackWriteTransaction", DOM);
 
@@ -9856,7 +9855,7 @@ void DatabaseConnection::Close() {
   AssertIsOnConnectionThread();
   MOZ_ASSERT(mStorageConnection);
   MOZ_ASSERT(!mDEBUGSavepointCount);
-  MOZ_ASSERT(!mInWriteTransaction);
+  MOZ_DIAGNOSTIC_ASSERT(!mInWriteTransaction);
 
   AUTO_PROFILER_LABEL("DatabaseConnection::Close", DOM);
 
@@ -10062,6 +10061,13 @@ nsresult DatabaseConnection::AutoSavepoint::Start(
   DatabaseConnection* connection = aTransaction->GetDatabase()->GetConnection();
   MOZ_ASSERT(connection);
   connection->AssertIsOnConnectionThread();
+
+  // This is just a quick fix for preventing accessing the nullptr. The cause is
+  // probably because the connection was unexpectedly closed.
+  if (!connection->GetUpdateRefcountFunction()) {
+    NS_WARNING("The connection was closed for some reasons!");
+    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
+  }
 
   MOZ_ASSERT(!mConnection);
   MOZ_ASSERT(!mDEBUGTransaction);
@@ -11063,8 +11069,8 @@ void ConnectionPool::ShutdownThread(ThreadInfo& aThreadInfo) {
   // This should clean up the thread with the profiler.
   MOZ_ALWAYS_SUCCEEDS(thread->Dispatch(runnable.forget(), NS_DISPATCH_NORMAL));
 
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(
-      NewRunnableMethod("nsIThread::Shutdown", thread, &nsIThread::Shutdown)));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(NewRunnableMethod(
+      "nsIThread::AsyncShutdown", thread, &nsIThread::AsyncShutdown)));
 
   mTotalThreadCount--;
 }
@@ -11526,7 +11532,7 @@ void ConnectionPool::PerformIdleDatabaseMaintenance(
 void ConnectionPool::CloseDatabase(DatabaseInfo* aDatabaseInfo) {
   AssertIsOnOwningThread();
   MOZ_ASSERT(aDatabaseInfo);
-  MOZ_ASSERT(!aDatabaseInfo->TotalTransactionCount());
+  MOZ_DIAGNOSTIC_ASSERT(!aDatabaseInfo->TotalTransactionCount());
   MOZ_ASSERT(aDatabaseInfo->mThreadInfo.mThread);
   MOZ_ASSERT(aDatabaseInfo->mThreadInfo.mRunnable);
   MOZ_ASSERT(!aDatabaseInfo->mClosing);
@@ -11590,11 +11596,13 @@ ConnectionPool::IdleConnectionRunnable::Run() {
     // successful in TransactionDatabaseOperationBase::RunOnConnectionThread().
     if (mDatabaseInfo->mConnection) {
       mDatabaseInfo->mConnection->DoIdleProcessing(mNeedsCheckpoint);
-
-      MOZ_ALWAYS_SUCCEEDS(owningThread->Dispatch(this, NS_DISPATCH_NORMAL));
-      return NS_OK;
     }
+
+    MOZ_ALWAYS_SUCCEEDS(owningThread->Dispatch(this, NS_DISPATCH_NORMAL));
+    return NS_OK;
   }
+
+  AssertIsOnBackgroundThread();
 
   RefPtr<ConnectionPool> connectionPool = mDatabaseInfo->mConnectionPool;
   MOZ_ASSERT(connectionPool);
@@ -15953,8 +15961,7 @@ nsresult QuotaClient::InitOrigin(PersistenceType aPersistenceType,
                                  const nsACString& aGroup,
                                  const nsACString& aOrigin,
                                  const AtomicBool& aCanceled,
-                                 UsageInfo* aUsageInfo,
-                                 bool aForGetUsage) {
+                                 UsageInfo* aUsageInfo, bool aForGetUsage) {
   AssertIsOnIOThread();
 
   nsCOMPtr<nsIFile> directory;
@@ -22977,11 +22984,13 @@ CreateIndexOp::UpdateIndexDataValuesFunction::OnFunctionCall(
   const int64_t& objectStoreId = mOp->mObjectStoreId;
 
   AutoTArray<IndexUpdateInfo, 32> updateInfos;
-  rv = IDBObjectStore::DeserializeIndexValueToUpdateInfos(
+  ErrorResult errorResult;
+  IDBObjectStore::DeserializeIndexValueToUpdateInfos(
       metadata.id(), metadata.keyPath(), metadata.unique(),
-      metadata.multiEntry(), metadata.locale(), cloneInfo, updateInfos);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
+      metadata.multiEntry(), metadata.locale(), cloneInfo, updateInfos,
+      errorResult);
+  if (NS_WARN_IF(errorResult.Failed())) {
+    return errorResult.StealNSResult();
   }
 
   if (updateInfos.IsEmpty()) {

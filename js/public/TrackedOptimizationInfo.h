@@ -18,10 +18,8 @@ namespace JS {
   _(GetProp_Constant)                       \
   _(GetProp_NotDefined)                     \
   _(GetProp_StaticName)                     \
-  _(GetProp_SimdGetter)                     \
   _(GetProp_TypedObject)                    \
   _(GetProp_DefiniteSlot)                   \
-  _(GetProp_Unboxed)                        \
   _(GetProp_CommonGetter)                   \
   _(GetProp_InlineAccess)                   \
   _(GetProp_InlineProtoAccess)              \
@@ -32,7 +30,6 @@ namespace JS {
   _(SetProp_CommonSetter)                   \
   _(SetProp_TypedObject)                    \
   _(SetProp_DefiniteSlot)                   \
-  _(SetProp_Unboxed)                        \
   _(SetProp_InlineAccess)                   \
   _(SetProp_InlineCache)                    \
                                             \
@@ -55,7 +52,6 @@ namespace JS {
   _(BinaryArith_Concat)                     \
   _(BinaryArith_SpecializedTypes)           \
   _(BinaryArith_SpecializedOnBaselineTypes) \
-  _(BinaryArith_SharedCache)                \
   _(BinaryArith_Call)                       \
                                             \
   _(UnaryArith_SpecializedTypes)            \
@@ -65,17 +61,14 @@ namespace JS {
   _(InlineCache_OptimizedStub)              \
                                             \
   _(NewArray_TemplateObject)                \
-  _(NewArray_SharedCache)                   \
   _(NewArray_Call)                          \
                                             \
   _(NewObject_TemplateObject)               \
-  _(NewObject_SharedCache)                  \
   _(NewObject_Call)                         \
                                             \
   _(Compare_SpecializedTypes)               \
   _(Compare_Bitwise)                        \
   _(Compare_SpecializedOnBaselineTypes)     \
-  _(Compare_SharedCache)                    \
   _(Compare_Call)                           \
   _(Compare_Character)                      \
                                             \
@@ -84,142 +77,88 @@ namespace JS {
 // Ordering is important below. All outcomes before GenericSuccess will be
 // considered failures, and all outcomes after GenericSuccess will be
 // considered successes.
-#define TRACKED_OUTCOME_LIST(_)                   \
-  _(GenericFailure)                               \
-  _(Disabled)                                     \
-  _(NoTypeInfo)                                   \
-  _(NoAnalysisInfo)                               \
-  _(NoShapeInfo)                                  \
-  _(UnknownObject)                                \
-  _(UnknownProperties)                            \
-  _(Singleton)                                    \
-  _(NotSingleton)                                 \
-  _(NotFixedSlot)                                 \
-  _(InconsistentFixedSlot)                        \
-  _(NotObject)                                    \
-  _(NotStruct)                                    \
-  _(NotUnboxed)                                   \
-  _(NotUndefined)                                 \
-  _(UnboxedConvertedToNative)                     \
-  _(StructNoField)                                \
-  _(InconsistentFieldType)                        \
-  _(InconsistentFieldOffset)                      \
-  _(NeedsTypeBarrier)                             \
-  _(InDictionaryMode)                             \
-  _(NoProtoFound)                                 \
-  _(MultiProtoPaths)                              \
-  _(NonWritableProperty)                          \
-  _(ProtoIndexedProps)                            \
-  _(ArrayBadFlags)                                \
-  _(ArrayDoubleConversion)                        \
-  _(ArrayRange)                                   \
-  _(ArraySeenNegativeIndex)                       \
-  _(ArraySeenNonIntegerIndex)                     \
-  _(TypedObjectHasDetachedBuffer)                 \
-  _(TypedObjectArrayRange)                        \
-  _(AccessNotDense)                               \
-  _(AccessNotSimdObject)                          \
-  _(AccessNotTypedObject)                         \
-  _(AccessNotTypedArray)                          \
-  _(AccessNotString)                              \
-  _(OperandNotString)                             \
-  _(OperandNotNumber)                             \
-  _(OperandNotStringOrNumber)                     \
-  _(OperandNotSimpleArith)                        \
-  _(OperandNotEasilyCoercibleToString)            \
-  _(OutOfBounds)                                  \
-  _(GetElemStringNotCached)                       \
-  _(NonNativeReceiver)                            \
-  _(IndexType)                                    \
-  _(SetElemNonDenseNonTANotCached)                \
-  _(NoSimdJitSupport)                             \
-  _(SimdTypeNotOptimized)                         \
-  _(UnknownSimdProperty)                          \
-  _(NotModuleNamespace)                           \
-  _(UnknownProperty)                              \
-  _(NoTemplateObject)                             \
-  _(TemplateObjectIsUnboxedWithoutInlineElements) \
-  _(LengthTooBig)                                 \
-  _(SpeculationOnInputTypesFailed)                \
-  _(RelationalCompare)                            \
-  _(OperandTypeNotBitwiseComparable)              \
-  _(OperandMaybeEmulatesUndefined)                \
-  _(LoosyUndefinedNullCompare)                    \
-  _(LoosyInt32BooleanCompare)                     \
-  _(CallsValueOf)                                 \
-  _(StrictCompare)                                \
-  _(InitHole)                                     \
-                                                  \
-  _(ICOptStub_GenericSuccess)                     \
-                                                  \
-  _(ICGetPropStub_ReadSlot)                       \
-  _(ICGetPropStub_CallGetter)                     \
-  _(ICGetPropStub_ArrayLength)                    \
-  _(ICGetPropStub_UnboxedRead)                    \
-  _(ICGetPropStub_UnboxedReadExpando)             \
-  _(ICGetPropStub_UnboxedArrayLength)             \
-  _(ICGetPropStub_TypedArrayLength)               \
-  _(ICGetPropStub_DOMProxyShadowed)               \
-  _(ICGetPropStub_DOMProxyUnshadowed)             \
-  _(ICGetPropStub_GenericProxy)                   \
-  _(ICGetPropStub_ArgumentsLength)                \
-                                                  \
-  _(ICSetPropStub_Slot)                           \
-  _(ICSetPropStub_GenericProxy)                   \
-  _(ICSetPropStub_DOMProxyShadowed)               \
-  _(ICSetPropStub_DOMProxyUnshadowed)             \
-  _(ICSetPropStub_CallSetter)                     \
-  _(ICSetPropStub_AddSlot)                        \
-  _(ICSetPropStub_SetUnboxed)                     \
-                                                  \
-  _(ICGetElemStub_ReadSlot)                       \
-  _(ICGetElemStub_CallGetter)                     \
-  _(ICGetElemStub_ReadUnboxed)                    \
-  _(ICGetElemStub_Dense)                          \
-  _(ICGetElemStub_DenseHole)                      \
-  _(ICGetElemStub_TypedArray)                     \
-  _(ICGetElemStub_ArgsElementMapped)              \
-  _(ICGetElemStub_ArgsElementUnmapped)            \
-                                                  \
-  _(ICSetElemStub_Dense)                          \
-  _(ICSetElemStub_TypedArray)                     \
-                                                  \
-  _(ICNameStub_ReadSlot)                          \
-  _(ICNameStub_CallGetter)                        \
-  _(ICNameStub_TypeOfNoProperty)                  \
-                                                  \
-  _(CantInlineGeneric)                            \
-  _(CantInlineNoTarget)                           \
-  _(CantInlineNotInterpreted)                     \
-  _(CantInlineNoBaseline)                         \
-  _(CantInlineLazy)                               \
-  _(CantInlineNotConstructor)                     \
-  _(CantInlineClassConstructor)                   \
-  _(CantInlineDisabledIon)                        \
-  _(CantInlineTooManyArgs)                        \
-  _(CantInlineNeedsArgsObj)                       \
-  _(CantInlineDebuggee)                           \
-  _(CantInlineExceededDepth)                      \
-  _(CantInlineExceededTotalBytecodeLength)        \
-  _(CantInlineBigCaller)                          \
-  _(CantInlineBigCallee)                          \
-  _(CantInlineBigCalleeInlinedBytecodeLength)     \
-  _(CantInlineCrossRealm)                         \
-  _(CantInlineNotHot)                             \
-  _(CantInlineNotInDispatch)                      \
-  _(CantInlineUnreachable)                        \
-  _(CantInlineNativeBadForm)                      \
-  _(CantInlineNativeBadType)                      \
-  _(CantInlineNativeNoTemplateObj)                \
-  _(CantInlineBound)                              \
-  _(CantInlineNativeNoSpecialization)             \
-  _(CantInlineUnexpectedNewTarget)                \
-  _(HasCommonInliningPath)                        \
-                                                  \
-  _(GenericSuccess)                               \
-  _(Inlined)                                      \
-  _(DOM)                                          \
-  _(Monomorphic)                                  \
+#define TRACKED_OUTCOME_LIST(_)               \
+  _(GenericFailure)                           \
+  _(Disabled)                                 \
+  _(NoTypeInfo)                               \
+  _(NoShapeInfo)                              \
+  _(UnknownProperties)                        \
+  _(Singleton)                                \
+  _(NotSingleton)                             \
+  _(NotFixedSlot)                             \
+  _(InconsistentFixedSlot)                    \
+  _(NotObject)                                \
+  _(NotStruct)                                \
+  _(NotUndefined)                             \
+  _(StructNoField)                            \
+  _(NeedsTypeBarrier)                         \
+  _(InDictionaryMode)                         \
+  _(MultiProtoPaths)                          \
+  _(NonWritableProperty)                      \
+  _(ProtoIndexedProps)                        \
+  _(ArrayBadFlags)                            \
+  _(ArrayDoubleConversion)                    \
+  _(ArrayRange)                               \
+  _(ArraySeenNegativeIndex)                   \
+  _(ArraySeenNonIntegerIndex)                 \
+  _(TypedObjectHasDetachedBuffer)             \
+  _(TypedObjectArrayRange)                    \
+  _(AccessNotDense)                           \
+  _(AccessNotTypedObject)                     \
+  _(AccessNotTypedArray)                      \
+  _(AccessNotString)                          \
+  _(OperandNotString)                         \
+  _(OperandNotNumber)                         \
+  _(OperandNotSimpleArith)                    \
+  _(OperandNotEasilyCoercibleToString)        \
+  _(OutOfBounds)                              \
+  _(IndexType)                                \
+  _(NotModuleNamespace)                       \
+  _(UnknownProperty)                          \
+  _(NoTemplateObject)                         \
+  _(LengthTooBig)                             \
+  _(SpeculationOnInputTypesFailed)            \
+  _(RelationalCompare)                        \
+  _(OperandTypeNotBitwiseComparable)          \
+  _(OperandMaybeEmulatesUndefined)            \
+  _(LoosyUndefinedNullCompare)                \
+  _(LoosyInt32BooleanCompare)                 \
+  _(CallsValueOf)                             \
+  _(StrictCompare)                            \
+  _(InitHole)                                 \
+                                              \
+  _(CantInlineGeneric)                        \
+  _(CantInlineNoTarget)                       \
+  _(CantInlineNotInterpreted)                 \
+  _(CantInlineNoBaseline)                     \
+  _(CantInlineLazy)                           \
+  _(CantInlineNotConstructor)                 \
+  _(CantInlineClassConstructor)               \
+  _(CantInlineDisabledIon)                    \
+  _(CantInlineTooManyArgs)                    \
+  _(CantInlineNeedsArgsObj)                   \
+  _(CantInlineDebuggee)                       \
+  _(CantInlineExceededDepth)                  \
+  _(CantInlineExceededTotalBytecodeLength)    \
+  _(CantInlineBigCaller)                      \
+  _(CantInlineBigCallee)                      \
+  _(CantInlineBigCalleeInlinedBytecodeLength) \
+  _(CantInlineCrossRealm)                     \
+  _(CantInlineNotHot)                         \
+  _(CantInlineNotInDispatch)                  \
+  _(CantInlineUnreachable)                    \
+  _(CantInlineNativeBadForm)                  \
+  _(CantInlineNativeBadType)                  \
+  _(CantInlineNativeNoTemplateObj)            \
+  _(CantInlineBound)                          \
+  _(CantInlineNativeNoSpecialization)         \
+  _(CantInlineUnexpectedNewTarget)            \
+  _(HasCommonInliningPath)                    \
+                                              \
+  _(GenericSuccess)                           \
+  _(Inlined)                                  \
+  _(DOM)                                      \
+  _(Monomorphic)                              \
   _(Polymorphic)
 
 #define TRACKED_TYPESITE_LIST(_) \

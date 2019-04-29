@@ -9,7 +9,7 @@
 #include "nsHttp.h"
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/dom/ContentChild.h"
-#include "mozilla/dom/TabChild.h"
+#include "mozilla/dom/BrowserChild.h"
 #include "mozilla/net/HttpChannelChild.h"
 #include "mozilla/net/CookieServiceChild.h"
 #include "mozilla/net/FTPChannelChild.h"
@@ -108,7 +108,7 @@ bool NeckoChild::DeallocPStunAddrsRequestChild(PStunAddrsRequestChild* aActor) {
 }
 
 PWebrtcProxyChannelChild* NeckoChild::AllocPWebrtcProxyChannelChild(
-    const PBrowserOrId& browser) {
+    const TabId& tabId) {
   // We don't allocate here: instead we always use IPDL constructor that takes
   // an existing object
   MOZ_ASSERT_UNREACHABLE(
@@ -272,7 +272,7 @@ bool NeckoChild::DeallocPTCPServerSocketChild(PTCPServerSocketChild* child) {
   return true;
 }
 
-PUDPSocketChild* NeckoChild::AllocPUDPSocketChild(const Principal& aPrincipal,
+PUDPSocketChild* NeckoChild::AllocPUDPSocketChild(nsIPrincipal* aPrincipal,
                                                   const nsCString& aFilter) {
   MOZ_ASSERT_UNREACHABLE("AllocPUDPSocket should not be called");
   return nullptr;
@@ -326,12 +326,13 @@ bool NeckoChild::DeallocPTransportProviderChild(
 mozilla::ipc::IPCResult NeckoChild::RecvAsyncAuthPromptForNestedFrame(
     const TabId& aNestedFrameId, const nsCString& aUri, const nsString& aRealm,
     const uint64_t& aCallbackId) {
-  RefPtr<dom::TabChild> tabChild = dom::TabChild::FindTabChild(aNestedFrameId);
-  if (!tabChild) {
+  RefPtr<dom::BrowserChild> browserChild =
+      dom::BrowserChild::FindBrowserChild(aNestedFrameId);
+  if (!browserChild) {
     MOZ_CRASH();
     return IPC_FAIL_NO_REASON(this);
   }
-  tabChild->SendAsyncAuthPrompt(aUri, aRealm, aCallbackId);
+  browserChild->SendAsyncAuthPrompt(aUri, aRealm, aCallbackId);
   return IPC_OK();
 }
 

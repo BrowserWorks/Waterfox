@@ -758,6 +758,7 @@ nsresult nsContentSink::ProcessStyleLinkFromHeader(
       aMedia,
       aAlternate ? Loader::HasAlternateRel::Yes : Loader::HasAlternateRel::No,
       Loader::IsInline::No,
+      Loader::IsExplicitlyEnabled::No,
   };
 
   auto loadResultOrErr =
@@ -1157,7 +1158,10 @@ void nsContentSink::ProcessOfflineManifest(const nsAString& aManifestSpec) {
   }
 }
 
-void nsContentSink::ScrollToRef() { mDocument->ScrollToRef(); }
+void nsContentSink::ScrollToRef() {
+  RefPtr<Document> document = mDocument;
+  document->ScrollToRef();
+}
 
 void nsContentSink::StartLayout(bool aIgnorePendingSheets) {
   AUTO_PROFILER_LABEL_DYNAMIC_NSCSTRING("nsContentSink::StartLayout", LAYOUT,

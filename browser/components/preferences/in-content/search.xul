@@ -1,6 +1,5 @@
-    <script type="application/javascript"
-            src="chrome://browser/content/preferences/in-content/search.js"/>
-    <box id="template-paneSearch" hidden="true"><![CDATA[
+    <script src="chrome://browser/content/preferences/in-content/search.js"/>
+    <html:template id="template-paneSearch">
     <hbox id="searchCategory"
           class="subcategory"
           hidden="true"
@@ -68,10 +67,12 @@
 
       <hbox>
         <button id="restoreDefaultSearchEngines"
+                is="highlightable-button"
                 data-l10n-id="search-restore-default"
                 />
         <spacer flex="1"/>
         <button id="removeEngineButton"
+                is="highlightable-button"
                 class="searchEngineAction"
                 data-l10n-id="search-remove-engine"
                 disabled="true"
@@ -81,4 +82,4 @@
         <label id="addEngines" data-l10n-id="search-find-more-link" is="text-link"></label>
       </hbox>
     </groupbox>
-    ]]></box>
+    </html:template>

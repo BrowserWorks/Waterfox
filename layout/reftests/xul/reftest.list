@@ -5,10 +5,10 @@
 random-if(Android) == menulist-shrinkwrap-1.xul menulist-shrinkwrap-1-ref.xul
 random-if(Android) == menulist-shrinkwrap-2.xul menulist-shrinkwrap-2-ref.xul
 == textbox-overflow-1.xul textbox-overflow-1-ref.xul # for bug 749658
-# accesskeys are not normally displayed on Mac, so skip this test
-skip-if(cocoaWidget) == accesskey.xul accesskey-ref.xul
+# accesskeys are not normally displayed on Mac, so set a pref to enable them
+pref(ui.key.menuAccessKey,18) == chrome://reftest/content/xul/accesskey.xul accesskey-ref.xul
 pref(layout.css.xul-tree-pseudos.content.enabled,true) fuzzy-if(xulRuntime.widgetToolkit=="gtk3",0-1,0-11) == tree-row-outline-1.xul tree-row-outline-1-ref.xul # win8: bug 1254832
-skip-if(!cocoaWidget) fails-if(webrender&&cocoaWidget) == mac-tab-toolbar.xul mac-tab-toolbar-ref.xul
+skip-if(!cocoaWidget) fails-if(webrender&&cocoaWidget) == chrome://reftest/content/xul/mac-tab-toolbar.xul chrome://reftest/content/xul/mac-tab-toolbar-ref.xul
 pref(layout.css.xul-tree-pseudos.content.enabled,true) != tree-row-outline-1.xul tree-row-outline-1-notref.xul
 == text-crop.xul text-crop-ref.xul
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == text-small-caps-1.xul text-small-caps-1-ref.xul
@@ -61,8 +61,6 @@ fuzzy-if(skiaContent,0-1,0-60) fuzzy-if(cocoaWidget&&browserIsRemote&&!skiaConte
 == object-fit-scale-down-svg-006.xul object-fit-scale-down-svg-006-ref.html
 == object-position-png-001.xul object-position-png-001-ref.html
 == object-position-png-002.xul object-position-png-002-ref.html
-
-== root-binding-style.xul green-ref.xul
 
 == stack-sizing-1.xul stack-sizing-1-ref.xul
 == stack-sizing-2.xul stack-sizing-2-ref.xul

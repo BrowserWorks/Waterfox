@@ -4,15 +4,15 @@
 
 <!-- Home panel -->
 
-<script type="application/javascript"
-        src="chrome://browser/content/preferences/in-content/home.js"/>
-<box id="template-paneHome" hidden="true"><![CDATA[
+<script src="chrome://browser/content/preferences/in-content/home.js"/>
+<html:template id="template-paneHome">
 <hbox id="firefoxHomeCategory"
       class="subcategory"
       hidden="true"
       data-category="paneHome">
   <html:h1 style="-moz-box-flex: 1;" data-l10n-id="pane-home-title"/>
   <button id="restoreDefaultHomePageBtn"
+          is="highlightable-button"
           class="homepage-button check-home-page-controlled"
           data-preference-related="browser.startup.homepage"
           data-l10n-id="home-restore-defaults"
@@ -52,6 +52,7 @@
                 autocompletesearch="unifiedcomplete" />
         <hbox class="homepage-buttons">
           <button id="useCurrentBtn"
+                  is="highlightable-button"
                   flex="1"
                   class="homepage-button check-home-page-controlled"
                   data-l10n-id="use-current-pages"
@@ -59,6 +60,7 @@
                   disabled="true"
                   preference="pref.browser.homepage.disable_button.current_page"/>
           <button id="useBookmarkBtn"
+                  is="highlightable-button"
                   flex="1"
                   class="homepage-button check-home-page-controlled"
                   data-l10n-id="choose-bookmark"
@@ -87,6 +89,7 @@
         align="center" hidden="true" class="extension-controlled">
     <description control="disableHomePageExtension" flex="1" />
     <button id="disableHomePageExtension"
+            is="highlightable-button"
             class="extension-controlled-button accessory-button"
             data-l10n-id="disable-extension" />
   </hbox>
@@ -94,8 +97,9 @@
         align="center" hidden="true" class="extension-controlled">
     <description control="disableNewTabExtension" flex="1" />
     <button id="disableNewTabExtension"
+            is="highlightable-button"
             class="extension-controlled-button accessory-button"
             data-l10n-id="disable-extension" />
   </hbox>
 </groupbox>
-]]></box>
+</html:template>

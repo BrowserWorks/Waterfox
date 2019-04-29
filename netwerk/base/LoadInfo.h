@@ -106,8 +106,7 @@ class LoadInfo final : public nsILoadInfo {
            nsSecurityFlags aSecurityFlags,
            nsContentPolicyType aContentPolicyType, LoadTainting aTainting,
            bool aUpgradeInsecureRequests, bool aBrowserUpgradeInsecureRequests,
-           bool aBrowserWouldUpgradeInsecureRequests, bool aVerifySignedContent,
-           bool aEnforceSRI, bool aForceAllowDataURI,
+           bool aBrowserWouldUpgradeInsecureRequests, bool aForceAllowDataURI,
            bool aAllowInsecureRedirectToDataURI,
            bool aSkipContentPolicyCheckForWebRequest,
            bool aForceInheritPrincipalDropped, uint64_t aInnerWindowID,
@@ -125,7 +124,7 @@ class LoadInfo final : public nsILoadInfo {
            bool aIsPreflight, bool aLoadTriggeredFromExternal,
            bool aServiceWorkerTaintingSynthesized,
            bool aDocumentHasUserInteracted, bool aDocumentHasLoaded,
-           const nsAString& aCspNonce);
+           const nsAString& aCspNonce, uint32_t aRequestBlockingReason);
   LoadInfo(const LoadInfo& rhs);
 
   NS_IMETHOD GetRedirects(JSContext* aCx,
@@ -174,8 +173,6 @@ class LoadInfo final : public nsILoadInfo {
   bool mUpgradeInsecureRequests;
   bool mBrowserUpgradeInsecureRequests;
   bool mBrowserWouldUpgradeInsecureRequests;
-  bool mVerifySignedContent;
-  bool mEnforceSRI;
   bool mForceAllowDataURI;
   bool mAllowInsecureRedirectToDataURI;
   bool mSkipContentPolicyCheckForWebRequest;
@@ -198,6 +195,7 @@ class LoadInfo final : public nsILoadInfo {
   nsTArray<nsCOMPtr<nsIPrincipal>> mAncestorPrincipals;
   nsTArray<uint64_t> mAncestorOuterWindowIDs;
   nsTArray<nsCString> mCorsUnsafeHeaders;
+  uint32_t mRequestBlockingReason;
   bool mForcePreflight;
   bool mIsPreflight;
   bool mLoadTriggeredFromExternal;

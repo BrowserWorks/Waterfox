@@ -2205,7 +2205,7 @@ HttpBaseChannel::RedirectTo(nsIURI* targetURI) {
 }
 
 NS_IMETHODIMP
-HttpBaseChannel::SwitchProcessTo(mozilla::dom::Promise* aTabParent,
+HttpBaseChannel::SwitchProcessTo(mozilla::dom::Promise* aBrowserParent,
                                  uint64_t aIdentifier) {
   return NS_ERROR_NOT_AVAILABLE;
 }
@@ -2545,8 +2545,7 @@ nsresult HttpBaseChannel::AddSecurityMessage(
     return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsILoadInfo> loadInfo;
-  GetLoadInfo(getter_AddRefs(loadInfo));
+  nsCOMPtr<nsILoadInfo> loadInfo = LoadInfo();
 
   auto innerWindowID = loadInfo->GetInnerWindowID();
 
@@ -3187,9 +3186,10 @@ already_AddRefed<nsILoadInfo> HttpBaseChannel::CloneLoadInfoForRedirect(
     MOZ_ASSERT(
         docShellAttrs.mPrivateBrowsingId == attrs.mPrivateBrowsingId,
         "docshell and necko should have the same privateBrowsingId attribute.");
-    MOZ_ASSERT(
-        docShellAttrs.mGeckoViewSessionContextId == attrs.mGeckoViewSessionContextId,
-        "docshell and necko should have the same geckoViewSessionContextId attribute");
+    MOZ_ASSERT(docShellAttrs.mGeckoViewSessionContextId ==
+                   attrs.mGeckoViewSessionContextId,
+               "docshell and necko should have the same "
+               "geckoViewSessionContextId attribute");
 
     attrs = docShellAttrs;
     attrs.SetFirstPartyDomain(true, newURI);
@@ -3694,12 +3694,11 @@ nsresult HttpBaseChannel::SetupReplacementChannel(nsIURI* newURI,
 
     // Execute the timing allow check to determine whether
     // to report the redirect timing info
-    nsCOMPtr<nsILoadInfo> loadInfo;
-    GetLoadInfo(getter_AddRefs(loadInfo));
+    nsCOMPtr<nsILoadInfo> loadInfo = LoadInfo();
     // TYPE_DOCUMENT loads don't have a loadingPrincipal, so we can't set
     // AllRedirectsPassTimingAllowCheck on them.
-    if (loadInfo && loadInfo->GetExternalContentPolicyType() !=
-                        nsIContentPolicy::TYPE_DOCUMENT) {
+    if (loadInfo->GetExternalContentPolicyType() !=
+        nsIContentPolicy::TYPE_DOCUMENT) {
       nsCOMPtr<nsIPrincipal> principal = loadInfo->LoadingPrincipal();
       newTimedChannel->SetAllRedirectsPassTimingAllowCheck(
           mAllRedirectsPassTimingAllowCheck &&

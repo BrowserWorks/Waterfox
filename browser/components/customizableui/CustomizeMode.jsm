@@ -175,8 +175,7 @@ CustomizeMode.prototype = {
 
   async _updateThemeButtonIcon() {
     let lwthemeButton = this.$("customization-lwtheme-button");
-    let lwthemeIcon = this.document.getAnonymousElementByAttribute(lwthemeButton,
-                        "class", "button-icon");
+    let lwthemeIcon = lwthemeButton.icon;
     let theme = (await AddonManager.getAddonsByTypes(["theme"])).find(addon => addon.isActive);
     lwthemeIcon.style.backgroundImage = theme ? "url(" + theme.iconURL + ")" : "";
   },
@@ -1366,7 +1365,7 @@ CustomizeMode.prototype = {
       importantThemes.add(currentTheme.id);
     }
 
-    themes.sort((a, b) => importantThemes.has(b) - importantThemes.has(a));
+    themes.sort((a, b) => importantThemes.has(a.id) - importantThemes.has(b.id));
 
     if (themes.length > MAX_THEME_COUNT)
       themes.length = MAX_THEME_COUNT;

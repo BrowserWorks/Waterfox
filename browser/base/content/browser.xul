@@ -80,7 +80,7 @@
 # that they can be shared with macWindow.inc.xul.
 #include global-scripts.inc
 
-<script type="application/javascript">
+<script>
   Services.scriptloader.loadSubScript("chrome://global/content/contentAreaUtils.js", this);
   Services.scriptloader.loadSubScript("chrome://browser/content/browser-captivePortal.js", this);
   Services.scriptloader.loadSubScript("chrome://browser/content/browser-contentblocking.js", this);
@@ -273,11 +273,17 @@
            aria-labelledby="editBookmarkPanelTitle">
       <box class="panel-header">
         <label id="editBookmarkPanelTitle"/>
+        <toolbarbutton id="editBookmarkPanelInfoButton" oncommand="StarUI.toggleRecommendation();" >
+          <image/>
+        </toolbarbutton>
       </box>
-      <html:div id="editBookmarkPanelFaviconContainer">
-        <html:img id="editBookmarkPanelFavicon"/>
+      <html:div id="editBookmarkPanelInfoArea">
+        <html:div id="editBookmarkPanelRecommendation"></html:div>
+        <html:div id="editBookmarkPanelFaviconContainer">
+          <html:img id="editBookmarkPanelFavicon"/>
+        </html:div>
+        <html:div id="editBookmarkPanelImage"></html:div>
       </html:div>
-      <box id="editBookmarkPanelImage"/>
 #include ../../components/places/content/editBookmarkPanel.inc.xul
       <vbox id="editBookmarkPanelBottomContent"
             flex="1">
@@ -416,32 +422,26 @@
       <menuitem id="toolbar-context-reloadSelectedTab"
                 contexttype="tabbar"
                 oncommand="gBrowser.reloadMultiSelectedTabs();"
-                label="&toolbarContextMenu.reloadSelectedTab.label;"
-                accesskey="&toolbarContextMenu.reloadSelectedTab.accesskey;"/>
+                data-lazy-l10n-id="toolbar-context-menu-reload-selected-tab"/>
       <menuitem id="toolbar-context-reloadSelectedTabs"
                 contexttype="tabbar"
                 oncommand="gBrowser.reloadMultiSelectedTabs();"
-                label="&toolbarContextMenu.reloadSelectedTabs.label;"
-                accesskey="&toolbarContextMenu.reloadSelectedTabs.accesskey;"/>
+                data-lazy-l10n-id="toolbar-context-menu-reload-selected-tabs"/>
       <menuitem id="toolbar-context-bookmarkSelectedTab"
                 contexttype="tabbar"
                 oncommand="PlacesCommandHook.bookmarkPages(PlacesCommandHook.uniqueSelectedPages);"
-                label="&toolbarContextMenu.bookmarkSelectedTab.label;"
-                accesskey="&toolbarContextMenu.bookmarkSelectedTab.accesskey;"/>
+                data-lazy-l10n-id="toolbar-context-menu-bookmark-selected-tab"/>
       <menuitem id="toolbar-context-bookmarkSelectedTabs"
                 contexttype="tabbar"
                 oncommand="PlacesCommandHook.bookmarkPages(PlacesCommandHook.uniqueSelectedPages);"
-                label="&toolbarContextMenu.bookmarkSelectedTabs.label;"
-                accesskey="&toolbarContextMenu.bookmarkSelectedTabs.accesskey;"/>
+                data-lazy-l10n-id="toolbar-context-menu-bookmark-selected-tabs"/>
       <menuitem id="toolbar-context-selectAllTabs"
                 contexttype="tabbar"
                 oncommand="gBrowser.selectAllTabs();"
-                label="&toolbarContextMenu.selectAllTabs.label;"
-                accesskey="&toolbarContextMenu.selectAllTabs.accesskey;"/>
+                data-lazy-l10n-id="toolbar-context-menu-select-all-tabs"/>
       <menuitem id="toolbar-context-undoCloseTab"
                 contexttype="tabbar"
-                label="&toolbarContextMenu.undoCloseTab.label;"
-                accesskey="&toolbarContextMenu.undoCloseTab.accesskey;"
+                data-lazy-l10n-id="toolbar-context-menu-undo-close-tab"
                 observes="History:UndoCloseTab"/>
       <menuseparator/>
       <menuseparator id="viewToolbarsMenuSeparator"/>

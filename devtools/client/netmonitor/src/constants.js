@@ -119,6 +119,7 @@ const UPDATE_PROPS = [
   "status",
   "statusText",
   "httpVersion",
+  "isRacing",
   "securityState",
   "securityInfo",
   "securityInfoAvailable",
@@ -149,6 +150,7 @@ const UPDATE_PROPS = [
   "stacktrace",
   "isThirdPartyTrackingResource",
   "referrerPolicy",
+  "blockedReason",
 ];
 
 const PANELS = {

@@ -1,6 +1,7 @@
 package org.mozilla.geckoview;
 
 import android.support.annotation.IntDef;
+import android.support.annotation.LongDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -11,6 +12,8 @@ import org.json.JSONObject;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.util.GeckoBundle;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,9 +42,9 @@ public class WebExtension {
      */
     public final @NonNull String id;
     /**
-     * Whether content scripts can send messages to the browser or not.
+     * {@link Flags} for this WebExtension.
      */
-    public final boolean allowContentMessaging;
+    public final @WebExtensionFlags long flags;
     /**
      * Delegates that handle messaging between this WebExtension and the app.
      */
@@ -49,6 +52,27 @@ public class WebExtension {
 
     private final static String LOGTAG = "WebExtension";
 
+    public static class Flags {
+        /*
+         * Default flags for this WebExtension.
+         */
+        public static final long NONE = 0;
+        /**
+         * Set this flag if you want to enable content scripts messaging.
+         * To listen to such messages you can use
+         * {@link WebExtension#setMessageDelegate}.
+         */
+        public static final long ALLOW_CONTENT_MESSAGING = 1 << 0;
+
+        // Do not instantiate this class.
+        protected Flags() {}
+    }
+
+    @Retention(RetentionPolicy.SOURCE)
+    @LongDef(flag = true,
+            value = { Flags.NONE, Flags.ALLOW_CONTENT_MESSAGING })
+    /* package */ @interface WebExtensionFlags {}
+
     /**
      * Builds a WebExtension instance that can be loaded in GeckoView using
      * {@link GeckoRuntime#registerWebExtension}
@@ -95,15 +119,13 @@ public class WebExtension {
      *                  WebExtensions/WebExtensions_and_the_Add-on_ID
      *               </a>
      *           </ul>
-     * @param allowContentMessaging Whether content scripts are allowed to send
-     *      messages to the browser or not.  To listen to such messages you can
-     *      use {@link #setMessageDelegate(MessageDelegate, String)}.
+     * @param flags {@link Flags} for this WebExtension.
      */
     public WebExtension(final @NonNull String location, final @NonNull String id,
-                        final boolean allowContentMessaging) {
+                        final @WebExtensionFlags long flags) {
         this.location = location;
         this.id = id;
-        this.allowContentMessaging = allowContentMessaging;
+        this.flags = flags;
         this.messageDelegates = new HashMap<>();
     }
 
@@ -120,7 +142,7 @@ public class WebExtension {
      *                 a <code>file:</code> URL to a <code>.xpi</code> file.
      */
     public WebExtension(final @NonNull String location) {
-        this(location, "{" + UUID.randomUUID().toString() + "}", false);
+        this(location, "{" + UUID.randomUUID().toString() + "}", Flags.NONE);
     }
 
     /**

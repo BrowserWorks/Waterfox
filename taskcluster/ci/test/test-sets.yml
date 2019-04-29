@@ -24,7 +24,6 @@ common-tests:
     - jittest
     - jsreftest
     - marionette
-    - marionette-headless
     - mochitest
     - mochitest-a11y
     - mochitest-browser-chrome
@@ -88,7 +87,6 @@ raptor-firefox:
     - raptor-tp6-6-firefox
     - raptor-tp6-7-firefox
     - raptor-tp6-8-firefox
-    - raptor-tp6-8-404-firefox
     - raptor-tp6-9-firefox
     - raptor-tp6-10-firefox
     - raptor-tp6-binast-1-firefox
@@ -128,7 +126,6 @@ raptor-chromium:
     - raptor-tp6-6-chromium
     - raptor-tp6-7-chromium
     - raptor-tp6-8-chromium
-    - raptor-tp6-8-404-chromium
     - raptor-tp6-9-chromium
     - raptor-tp6-10-chromium
     - raptor-speedometer-chromium
@@ -234,7 +231,6 @@ windows-tests:
     - jittest
     - jsreftest
     - marionette
-    - marionette-headless
     - mochitest
     - mochitest-a11y
     - mochitest-browser-chrome
@@ -255,12 +251,14 @@ windows-tests:
     - xpcshell
 
 windows-aarch64-tests:
+    - cppunit
     - crashtest
     - gtest
+    - jittest
     - jsreftest
     - marionette
-    - marionette-headless
     - mochitest
+    - mochitest-a11y
     - mochitest-browser-chrome
     - mochitest-chrome
     - mochitest-clipboard
@@ -272,7 +270,7 @@ windows-aarch64-tests:
     - mochitest-webgl2-core
     - mochitest-webgl2-ext
     - reftest
-    # - web-platform-tests - disabled due to wpt11 experiencing BSoD
+    - web-platform-tests
     - web-platform-tests-reftests
     - xpcshell
 
@@ -309,7 +307,6 @@ macosx64-tests:
     - jittest
     - jsreftest
     - marionette
-    - marionette-headless
     - mochitest
     - mochitest-a11y
     - mochitest-browser-chrome
@@ -389,7 +386,6 @@ desktop-instrumentation:
     - browser-instrumentation
 
 android-common-tests:
-    - cppunit
     - crashtest
     - geckoview-junit
     - jsreftest
@@ -412,9 +408,12 @@ android-x86_64-opt-tests:
     # geckoview-junit perma-fail on opt and debug; bug 1521195
     # - geckoview-junit
     - mochitest
+    - web-platform-tests
+    - web-platform-tests-reftests
 
 android-x86_64-tests:
     - gtest
+    - cppunit
     - jsreftest
     - marionette
     - mochitest-clipboard
@@ -435,6 +434,9 @@ devtools-tests:
 
 mochitest-headless:
     - mochitest-plain-headless
+
+marionette-headless:
+    - marionette-headless
 
 android-hw-arm7-opt-unittests:
     - jittest

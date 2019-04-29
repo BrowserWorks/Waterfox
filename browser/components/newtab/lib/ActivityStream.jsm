@@ -15,13 +15,11 @@ ChromeUtils.defineModuleGetter(this, "UpdateUtils",
 const {actionCreators: ac, actionTypes: at} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm");
 const {AboutPreferences} = ChromeUtils.import("resource://activity-stream/lib/AboutPreferences.jsm");
 const {DefaultPrefs} = ChromeUtils.import("resource://activity-stream/lib/ActivityStreamPrefs.jsm");
-const {ManualMigration} = ChromeUtils.import("resource://activity-stream/lib/ManualMigration.jsm");
 const {NewTabInit} = ChromeUtils.import("resource://activity-stream/lib/NewTabInit.jsm");
 const {SectionsFeed} = ChromeUtils.import("resource://activity-stream/lib/SectionsManager.jsm");
 const {PlacesFeed} = ChromeUtils.import("resource://activity-stream/lib/PlacesFeed.jsm");
 const {PrefsFeed} = ChromeUtils.import("resource://activity-stream/lib/PrefsFeed.jsm");
 const {Store} = ChromeUtils.import("resource://activity-stream/lib/Store.jsm");
-const {SnippetsFeed} = ChromeUtils.import("resource://activity-stream/lib/SnippetsFeed.jsm");
 const {SystemTickFeed} = ChromeUtils.import("resource://activity-stream/lib/SystemTickFeed.jsm");
 const {TelemetryFeed} = ChromeUtils.import("resource://activity-stream/lib/TelemetryFeed.jsm");
 const {FaviconFeed} = ChromeUtils.import("resource://activity-stream/lib/FaviconFeed.jsm");
@@ -74,7 +72,7 @@ const PREFS_CONFIG = new Map([
       model_keys: ["nmf_model_animals", "nmf_model_business", "nmf_model_career", "nmf_model_datascience", "nmf_model_design", "nmf_model_education", "nmf_model_entertainment", "nmf_model_environment", "nmf_model_fashion", "nmf_model_finance", "nmf_model_food", "nmf_model_health", "nmf_model_home", "nmf_model_life", "nmf_model_marketing", "nmf_model_politics", "nmf_model_programming", "nmf_model_science", "nmf_model_shopping", "nmf_model_sports", "nmf_model_tech", "nmf_model_travel", "nb_model_animals", "nb_model_books", "nb_model_business", "nb_model_career", "nb_model_datascience", "nb_model_design", "nb_model_economics", "nb_model_education", "nb_model_entertainment", "nb_model_environment", "nb_model_fashion", "nb_model_finance", "nb_model_food", "nb_model_game", "nb_model_health", "nb_model_history", "nb_model_home", "nb_model_life", "nb_model_marketing", "nb_model_military", "nb_model_philosophy", "nb_model_photography", "nb_model_politics", "nb_model_productivity", "nb_model_programming", "nb_model_psychology", "nb_model_science", "nb_model_shopping", "nb_model_society", "nb_model_space", "nb_model_sports", "nb_model_tech", "nb_model_travel", "nb_model_writing"],
       show_spocs: showSpocs(args),
       personalized: true,
-      version: IS_NIGHTLY_OR_UNBRANDED_BUILD ? 2 : 1,
+      version: 1,
     }),
   }],
   ["showSponsored", {
@@ -94,18 +92,6 @@ const PREFS_CONFIG = new Map([
     title: "Remove adult pages from sites, highlights, etc.",
     value: true,
   }],
-  ["migrationExpired", {
-    title: "Boolean flag that decides whether to show the migration message or not.",
-    value: false,
-  }],
-  ["migrationLastShownDate", {
-    title: "Timestamp when migration message was last shown. In seconds.",
-    value: 0,
-  }],
-  ["migrationRemainingDays", {
-    title: "Number of days to show the manual migration message",
-    value: 4,
-  }],
   ["prerender", {
     title: "Use the prerendered version of activity-stream.html. This is set automatically by PrefsFeed.jsm.",
     value: true,
@@ -114,8 +100,8 @@ const PREFS_CONFIG = new Map([
     title: "Show the Search bar",
     value: true,
   }],
-  ["disableSnippets", {
-    title: "Disable snippets on activity stream",
+  ["feeds.snippets", {
+    title: "Show snippets on activity stream",
     value: true,
   }],
   ["topSitesRows", {
@@ -225,6 +211,16 @@ const PREFS_CONFIG = new Map([
       exclude: [],
     }),
   }],
+  ["asrouter.providers.cfr-fxa", {
+    title: "Configuration for CFR FxA Messages provider",
+    value: JSON.stringify({
+      id: "cfr-fxa",
+      enabled: false,
+      type: "remote-settings",
+      bucket: "cfr-fxa",
+      frequency: {custom: [{period: "daily", cap: 1}]},
+    }),
+  }],
   // See browser/app/profile/firefox.js for other ASR preferences. They must be defined there to enable roll-outs.
   ["discoverystream.config", {
     title: "Configuration for the new pocket new tab",
@@ -239,6 +235,7 @@ const PREFS_CONFIG = new Map([
         collapsible: true,
         enabled: isEnabled,
         show_spocs: showSpocs({geo}),
+        hardcoded_layout: true,
         personalized: false,
         // This is currently an exmple layout used for dev purposes.
         layout_endpoint: "https://getpocket.cdn.mozilla.net/v3/newtab/layout?version=1&consumer_key=$apiKey&layout_variant=basic",
@@ -271,12 +268,6 @@ const FEEDS_DATA = [
     name: "aboutpreferences",
     factory: () => new AboutPreferences(),
     title: "about:preferences rendering",
-    value: true,
-  },
-  {
-    name: "migration",
-    factory: () => new ManualMigration(),
-    title: "Manual migration wizard",
     value: true,
   },
   {
@@ -322,12 +313,6 @@ const FEEDS_DATA = [
       })[geo];
       return !!locales && locales.includes(locale);
     },
-  },
-  {
-    name: "snippets",
-    factory: () => new SnippetsFeed(),
-    title: "Gets snippets data",
-    value: false,
   },
   {
     name: "systemtick",

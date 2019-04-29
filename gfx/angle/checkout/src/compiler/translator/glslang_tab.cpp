@@ -392,41 +392,35 @@ extern void yyerror(YYLTYPE* yylloc, TParseContext* context, void *scanner, cons
       }                                                      \
   } while (0)
 
-#define VERTEX_ONLY(S, L) {  \
+#define VERTEX_ONLY(S, L) do {  \
     if (context->getShaderType() != GL_VERTEX_SHADER) {  \
         context->error(L, " supported in vertex shaders only", S);  \
     }  \
-}
+} while (0)
 
-#define COMPUTE_ONLY(S, L) {  \
+#define COMPUTE_ONLY(S, L) do {  \
     if (context->getShaderType() != GL_COMPUTE_SHADER) {  \
         context->error(L, " supported in compute shaders only", S);  \
     }  \
-}
+} while (0)
 
-#define ES2_ONLY(S, L) {  \
+#define ES2_ONLY(S, L) do {  \
     if (context->getShaderVersion() != 100) {  \
         context->error(L, " supported in GLSL ES 1.00 only", S);  \
     }  \
-}
+} while (0)
 
-#define ES3_OR_NEWER(TOKEN, LINE, REASON) {  \
+#define ES3_OR_NEWER(TOKEN, LINE, REASON) do {  \
     if (context->getShaderVersion() < 300) {  \
         context->error(LINE, REASON " supported in GLSL ES 3.00 and above only", TOKEN);  \
     }  \
-}
+} while (0)
 
-#define ES3_OR_NEWER_OR_MULTIVIEW(TOKEN, LINE, REASON) {  \
-    if (context->getShaderVersion() < 300 && !context->isExtensionEnabled(TExtension::OVR_multiview)) {  \
-        context->error(LINE, REASON " supported in GLSL ES 3.00 and above only", TOKEN);  \
-    }  \
-}
-
-#define ES3_1_ONLY(TOKEN, LINE, REASON) {  \
+#define ES3_1_ONLY(TOKEN, LINE, REASON) do {  \
     if (context->getShaderVersion() != 310) {  \
         context->error(LINE, REASON " supported in GLSL ES 3.10 only", TOKEN);  \
     }  \
-}
+} while (0)
 
 
 
@@ -3740,7 +3734,7 @@ yyreduce:
   case 151:
 
     {
-        ES3_OR_NEWER_OR_MULTIVIEW("layout", (yylsp[-3]), "qualifier");
+       ES3_OR_NEWER("layout", (yylsp[-3]), "qualifier");
         (yyval.interm.layoutQualifier) = (yyvsp[-1].interm.layoutQualifier);
     }
 
@@ -5204,3 +5198,4 @@ yyreturn:
 int glslang_parse(TParseContext* context) {
     return yyparse(context, context->getScanner());
 }
+ 

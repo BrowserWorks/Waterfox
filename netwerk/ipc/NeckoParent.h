@@ -62,7 +62,7 @@ class NeckoParent : public PNeckoParent {
    * This implementation of nsIAuthPrompt2 is used for nested remote iframes
    * that want an auth prompt.  This class lives in the parent process and
    * informs the NeckoChild that we want an auth prompt, which forwards the
-   * request to the TabParent in the remote iframe that contains the nested
+   * request to the BrowserParent in the remote iframe that contains the nested
    * iframe
    */
   class NestedFrameAuthPrompt final : public nsIAuthPrompt2 {
@@ -104,7 +104,7 @@ class NeckoParent : public PNeckoParent {
   bool DeallocPStunAddrsRequestParent(PStunAddrsRequestParent* aActor);
 
   PWebrtcProxyChannelParent* AllocPWebrtcProxyChannelParent(
-      const PBrowserOrId& aBrowser);
+      const TabId& aTabId);
   bool DeallocPWebrtcProxyChannelParent(PWebrtcProxyChannelParent* aActor);
 
   PAltDataOutputStreamParent* AllocPAltDataOutputStreamParent(
@@ -136,10 +136,10 @@ class NeckoParent : public PNeckoParent {
       PTCPServerSocketParent*, const uint16_t& aLocalPort,
       const uint16_t& aBacklog, const bool& aUseArrayBuffers) override;
   bool DeallocPTCPServerSocketParent(PTCPServerSocketParent*);
-  PUDPSocketParent* AllocPUDPSocketParent(const Principal& aPrincipal,
+  PUDPSocketParent* AllocPUDPSocketParent(nsIPrincipal* aPrincipal,
                                           const nsCString& aFilter);
   virtual mozilla::ipc::IPCResult RecvPUDPSocketConstructor(
-      PUDPSocketParent*, const Principal& aPrincipal,
+      PUDPSocketParent*, nsIPrincipal* aPrincipal,
       const nsCString& aFilter) override;
   bool DeallocPUDPSocketParent(PUDPSocketParent*);
   PDNSRequestParent* AllocPDNSRequestParent(
@@ -151,7 +151,7 @@ class NeckoParent : public PNeckoParent {
       const uint32_t& flags) override;
   bool DeallocPDNSRequestParent(PDNSRequestParent*);
   mozilla::ipc::IPCResult RecvSpeculativeConnect(const URIParams& aURI,
-                                                 const Principal& aPrincipal,
+                                                 nsIPrincipal* aPrincipal,
                                                  const bool& aAnonymous);
   mozilla::ipc::IPCResult RecvHTMLDNSPrefetch(
       const nsString& hostname, const bool& isHttps,

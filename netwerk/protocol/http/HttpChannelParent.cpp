@@ -13,7 +13,7 @@
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/ServiceWorkerUtils.h"
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "mozilla/net/NeckoParent.h"
 #include "mozilla/InputStreamLengthHelper.h"
 #include "mozilla/IntegerPrintfMacros.h"
@@ -94,8 +94,8 @@ HttpChannelParent::HttpChannelParent(const PBrowserOrId& iframeEmbedding,
   mHttpHandler = gHttpHandler;
 
   if (iframeEmbedding.type() == PBrowserOrId::TPBrowserParent) {
-    mTabParent =
-        static_cast<dom::TabParent*>(iframeEmbedding.get_PBrowserParent());
+    mBrowserParent =
+        static_cast<dom::BrowserParent*>(iframeEmbedding.get_PBrowserParent());
   } else {
     mNestedFrameId = iframeEmbedding.get_TabId();
   }
@@ -294,9 +294,9 @@ NS_IMETHODIMP
 HttpChannelParent::GetInterface(const nsIID& aIID, void** result) {
   if (aIID.Equals(NS_GET_IID(nsIAuthPromptProvider)) ||
       aIID.Equals(NS_GET_IID(nsISecureBrowserUI)) ||
-      aIID.Equals(NS_GET_IID(nsITabParent))) {
-    if (mTabParent) {
-      return mTabParent->QueryInterface(aIID, result);
+      aIID.Equals(NS_GET_IID(nsIRemoteTab))) {
+    if (mBrowserParent) {
+      return mBrowserParent->QueryInterface(aIID, result);
     }
   }
 
@@ -313,8 +313,8 @@ HttpChannelParent::GetInterface(const nsIID& aIID, void** result) {
     return NS_OK;
   }
 
-  if (mTabParent && aIID.Equals(NS_GET_IID(nsIPrompt))) {
-    nsCOMPtr<Element> frameElement = mTabParent->GetOwnerElement();
+  if (mBrowserParent && aIID.Equals(NS_GET_IID(nsIPrompt))) {
+    nsCOMPtr<Element> frameElement = mBrowserParent->GetOwnerElement();
     if (frameElement) {
       nsCOMPtr<nsPIDOMWindowOuter> win = frameElement->OwnerDoc()->GetWindow();
       NS_ENSURE_TRUE(win, NS_ERROR_UNEXPECTED);
@@ -369,12 +369,6 @@ void HttpChannelParent::InvokeAsyncOpen(nsresult rv) {
     return;
   }
 
-  nsCOMPtr<nsILoadInfo> loadInfo;
-  rv = mChannel->GetLoadInfo(getter_AddRefs(loadInfo));
-  if (NS_FAILED(rv)) {
-    AsyncOpenFailed(rv);
-    return;
-  }
   rv = mChannel->AsyncOpen(mParentListener);
   if (NS_FAILED(rv)) {
     AsyncOpenFailed(rv);
@@ -905,8 +899,7 @@ mozilla::ipc::IPCResult HttpChannelParent::RecvRedirect2Verify(
         appCacheChannel->SetChooseApplicationCache(aChooseAppcache);
       }
 
-      nsCOMPtr<nsILoadInfo> newLoadInfo;
-      Unused << newHttpChannel->GetLoadInfo(getter_AddRefs(newLoadInfo));
+      nsCOMPtr<nsILoadInfo> newLoadInfo = newHttpChannel->LoadInfo();
       rv = MergeChildLoadInfoForwarder(aLoadInfoForwarder, newLoadInfo);
       if (NS_FAILED(rv) && NS_SUCCEEDED(result)) {
         result = rv;
@@ -1364,6 +1357,7 @@ HttpChannelParent::OnStartRequest(nsIRequest* aRequest) {
   }
 
   bool isFromCache = false;
+  bool isRacing = false;
   uint64_t cacheEntryId = 0;
   int32_t fetchCount = 0;
   uint32_t expirationTime = nsICacheEntry::NO_EXPIRATION_TIME;
@@ -1373,6 +1367,7 @@ HttpChannelParent::OnStartRequest(nsIRequest* aRequest) {
 
   if (httpChannelImpl) {
     httpChannelImpl->IsFromCache(&isFromCache);
+    httpChannelImpl->IsRacing(&isRacing);
     httpChannelImpl->GetCacheEntryId(&cacheEntryId);
     httpChannelImpl->GetCacheTokenFetchCount(&fetchCount);
     httpChannelImpl->GetCacheTokenExpirationTime(&expirationTime);
@@ -1433,8 +1428,7 @@ HttpChannelParent::OnStartRequest(nsIRequest* aRequest) {
   int64_t altDataLen = chan->GetAltDataLength();
   bool deliveringAltData = chan->IsDeliveringAltData();
 
-  nsCOMPtr<nsILoadInfo> loadInfo;
-  Unused << chan->GetLoadInfo(getter_AddRefs(loadInfo));
+  nsCOMPtr<nsILoadInfo> loadInfo = chan->LoadInfo();
 
   ParentLoadInfoForwarderArgs loadInfoForwarderArg;
   mozilla::ipc::LoadInfoToParentLoadInfoForwarder(loadInfo,
@@ -1473,11 +1467,11 @@ HttpChannelParent::OnStartRequest(nsIRequest* aRequest) {
       !SendOnStartRequest(
           channelStatus, *responseHead, useResponseHead,
           cleanedUpRequest ? cleanedUpRequestHeaders : requestHead->Headers(),
-          loadInfoForwarderArg, isFromCache, mCacheEntry ? true : false,
-          cacheEntryId, fetchCount, expirationTime, cachedCharset,
-          secInfoSerialization, chan->GetSelfAddr(), chan->GetPeerAddr(),
-          redirectCount, cacheKey, altDataType, altDataLen, deliveringAltData,
-          applyConversion, timing)) {
+          loadInfoForwarderArg, isFromCache, isRacing,
+          mCacheEntry ? true : false, cacheEntryId, fetchCount, expirationTime,
+          cachedCharset, secInfoSerialization, chan->GetSelfAddr(),
+          chan->GetPeerAddr(), redirectCount, cacheKey, altDataType, altDataLen,
+          deliveringAltData, applyConversion, timing)) {
     rv = NS_ERROR_UNEXPECTED;
   }
   requestHead->Exit();
@@ -1552,14 +1546,10 @@ HttpChannelParent::OnStopRequest(nsIRequest* aRequest, nsresult aStatusCode) {
                 Suspended);
 
         // Only analyze non-local suspended cases, which we are interested in.
-        nsCOMPtr<nsILoadInfo> loadInfo;
-        if (NS_SUCCEEDED(mChannel->GetLoadInfo(getter_AddRefs(loadInfo)))) {
-          nsContentPolicyType type = loadInfo
-                                         ? loadInfo->InternalContentPolicyType()
-                                         : nsIContentPolicy::TYPE_OTHER;
-          Telemetry::Accumulate(
-              Telemetry::NETWORK_BACK_PRESSURE_SUSPENSION_CP_TYPE, type);
-        }
+        nsCOMPtr<nsILoadInfo> loadInfo = mChannel->LoadInfo();
+        Telemetry::Accumulate(
+            Telemetry::NETWORK_BACK_PRESSURE_SUSPENSION_CP_TYPE,
+            loadInfo->InternalContentPolicyType());
       }
     } else {
       if (!mHasSuspendedByBackPressure) {
@@ -1938,22 +1928,19 @@ HttpChannelParent::StartRedirect(uint32_t registrarId, nsIChannel* newChannel,
       // to the new channel.  Normally this would be handled by the child
       // ClientChannelHelper, but that is not notified of this redirect since
       // we're not propagating it back to the child process.
-      nsCOMPtr<nsILoadInfo> oldLoadInfo;
-      Unused << mChannel->GetLoadInfo(getter_AddRefs(oldLoadInfo));
-      nsCOMPtr<nsILoadInfo> newLoadInfo;
-      Unused << newChannel->GetLoadInfo(getter_AddRefs(newLoadInfo));
-      if (oldLoadInfo && newLoadInfo) {
-        Maybe<ClientInfo> reservedClientInfo(
-            oldLoadInfo->GetReservedClientInfo());
-        if (reservedClientInfo.isSome()) {
-          newLoadInfo->SetReservedClientInfo(reservedClientInfo.ref());
-        }
+      nsCOMPtr<nsILoadInfo> oldLoadInfo = mChannel->LoadInfo();
 
-        Maybe<ClientInfo> initialClientInfo(
-            oldLoadInfo->GetInitialClientInfo());
-        if (initialClientInfo.isSome()) {
-          newLoadInfo->SetInitialClientInfo(initialClientInfo.ref());
-        }
+      nsCOMPtr<nsILoadInfo> newLoadInfo = newChannel->LoadInfo();
+
+      Maybe<ClientInfo> reservedClientInfo(
+          oldLoadInfo->GetReservedClientInfo());
+      if (reservedClientInfo.isSome()) {
+        newLoadInfo->SetReservedClientInfo(reservedClientInfo.ref());
+      }
+
+      Maybe<ClientInfo> initialClientInfo(oldLoadInfo->GetInitialClientInfo());
+      if (initialClientInfo.isSome()) {
+        newLoadInfo->SetInitialClientInfo(initialClientInfo.ref());
       }
 
       // Re-link the HttpChannelParent to the new InterceptedHttpChannel.
@@ -1999,8 +1986,7 @@ HttpChannelParent::StartRedirect(uint32_t registrarId, nsIChannel* newChannel,
     NS_ENSURE_SUCCESS(rv, NS_BINDING_ABORTED);
   }
 
-  nsCOMPtr<nsILoadInfo> loadInfo;
-  Unused << mChannel->GetLoadInfo(getter_AddRefs(loadInfo));
+  nsCOMPtr<nsILoadInfo> loadInfo = mChannel->LoadInfo();
 
   ParentLoadInfoForwarderArgs loadInfoForwarderArg;
   mozilla::ipc::LoadInfoToParentLoadInfoForwarder(loadInfo,

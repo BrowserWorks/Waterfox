@@ -32,14 +32,14 @@ const LAYOUT_VARIANTS = {
   "dev-test-feeds": "Stress testing for slow feeds",
 };
 
-export class ToggleSpocButton extends React.PureComponent {
+export class ToggleStoryButton extends React.PureComponent {
   constructor(props) {
     super(props);
     this.handleClick = this.handleClick.bind(this);
   }
 
   handleClick() {
-    this.props.onClick(this.props.spoc);
+    this.props.onClick(this.props.story);
   }
 
   render() {
@@ -54,9 +54,9 @@ export class DiscoveryStreamAdmin extends React.PureComponent {
     super(props);
     this.onEnableToggle = this.onEnableToggle.bind(this);
     this.changeEndpointVariant = this.changeEndpointVariant.bind(this);
-    this.onSpocToggle = this.onSpocToggle.bind(this);
+    this.onStoryToggle = this.onStoryToggle.bind(this);
     this.state = {
-      toggledSpocs: {},
+      toggledStories: {},
     };
   }
 
@@ -101,6 +101,28 @@ export class DiscoveryStreamAdmin extends React.PureComponent {
     return isMatch;
   }
 
+  renderFeedData(url) {
+    const {feeds} = this.props.state;
+    const feed = feeds.data[url].data;
+    return (
+      <React.Fragment>
+        <h4>Feed url: {url}</h4>
+        <table><tbody>
+          {feed.recommendations.map(story => this.renderStoryData(story))}
+        </tbody></table>
+      </React.Fragment>
+    );
+  }
+
+  renderFeedsData() {
+    const {feeds} = this.props.state;
+    return (
+      <React.Fragment>
+        {Object.keys(feeds.data).map(url => this.renderFeedData(url))}
+      </React.Fragment>
+    );
+  }
+
   renderSpocs() {
     const {spocs} = this.props.state;
     let spocsData = [];
@@ -122,38 +144,38 @@ export class DiscoveryStreamAdmin extends React.PureComponent {
         </tbody></table>
         <h4>Spoc data</h4>
         <table><tbody>
-          {spocsData.map(spoc => this.renderSpocData(spoc))}
+          {spocsData.map(spoc => this.renderStoryData(spoc))}
         </tbody></table>
         <h4>Spoc frequency caps</h4>
         <table><tbody>
-          {spocs.frequency_caps.map(spoc => this.renderSpocData(spoc))}
+          {spocs.frequency_caps.map(spoc => this.renderStoryData(spoc))}
         </tbody></table>
       </React.Fragment>
     );
   }
 
-  onSpocToggle(spoc) {
-    const {toggledSpocs} = this.state;
+  onStoryToggle(story) {
+    const {toggledStories} = this.state;
     this.setState({
-      toggledSpocs: {
-        ...toggledSpocs,
-        [spoc.id]: !toggledSpocs[spoc.id],
+      toggledStories: {
+        ...toggledStories,
+        [story.id]: !toggledStories[story.id],
       },
     });
   }
 
-  renderSpocData(spoc) {
-    let spocData = "";
-    if (this.state.toggledSpocs[spoc.id]) {
-      spocData = JSON.stringify(spoc, null, 2);
+  renderStoryData(story) {
+    let storyData = "";
+    if (this.state.toggledStories[story.id]) {
+      storyData = JSON.stringify(story, null, 2);
     }
-    return (<tr className="message-item" key={spoc.id}>
+    return (<tr className="message-item" key={story.id}>
       <td className="message-id">
-        <span>{spoc.id} <br /></span>
-        <ToggleSpocButton spoc={spoc} onClick={this.onSpocToggle} />
+        <span>{story.id} <br /></span>
+        <ToggleStoryButton story={story} onClick={this.onStoryToggle} />
       </td>
       <td className="message-summary">
-        <pre>{spocData}</pre>
+        <pre>{storyData}</pre>
       </td>
     </tr>);
   }
@@ -211,6 +233,9 @@ export class DiscoveryStreamAdmin extends React.PureComponent {
           ))}
         </div>
       ))}
+
+      <h3>Feeds Data</h3>
+      {this.renderFeedsData()}
 
       <h3>Spocs</h3>
       {this.renderSpocs()}
@@ -713,7 +738,7 @@ export class ASRouterAdminInner extends React.PureComponent {
   }
 
   render() {
-    return (<div className="asrouter-admin">
+    return (<div className={`asrouter-admin ${this.props.collapsed ? "collapsed" : "expanded"}`}>
       <aside className="sidebar">
         <ul>
           <li><a href="#devtools">General</a></li>
@@ -740,5 +765,60 @@ export class ASRouterAdminInner extends React.PureComponent {
   }
 }
 
-export const _ASRouterAdmin = props => (<SimpleHashRouter><ASRouterAdminInner {...props} /></SimpleHashRouter>);
+export class CollapseToggle extends React.PureComponent {
+  constructor(props) {
+    super(props);
+    this.onCollapseToggle = this.onCollapseToggle.bind(this);
+    this.state = {collapsed: false};
+  }
+
+  get renderAdmin() {
+    const {props} = this;
+    return props.location.hash && (props.location.hash.startsWith("#asrouter") || props.location.hash.startsWith("#devtools"));
+  }
+
+  onCollapseToggle(e) {
+    e.preventDefault();
+    this.setState(state => ({collapsed: !state.collapsed}));
+  }
+
+  setBodyClass() {
+    if (this.renderAdmin && !this.state.collapsed) {
+      global.document.body.classList.add("no-scroll");
+    } else {
+      global.document.body.classList.remove("no-scroll");
+    }
+  }
+
+  componentDidMount() {
+    this.setBodyClass();
+  }
+
+  componentDidUpdate() {
+    this.setBodyClass();
+  }
+
+  componentWillUnmount() {
+    global.document.body.classList.remove("no-scroll");
+  }
+
+  render() {
+    const {props} = this;
+    const {renderAdmin} = this;
+    const isCollapsed = this.state.collapsed || !renderAdmin;
+    const label = `${isCollapsed ? "Expand" : "Collapse"} devtools`;
+    return (<React.Fragment>
+      <a href="#devtools"
+        title={label}
+        className={`asrouter-toggle ${isCollapsed ? "collapsed" : "expanded"}`}
+        onClick={this.renderAdmin ? this.onCollapseToggle : null}>
+        <span className="sr-only">{label}</span><span className="icon icon-devtools" />
+      </a>
+      {renderAdmin ? <ASRouterAdminInner {...props} collapsed={this.state.collapsed} /> : null}
+    </React.Fragment>);
+  }
+}
+
+const _ASRouterAdmin = props => <SimpleHashRouter><CollapseToggle {...props} /></SimpleHashRouter>;
+
 export const ASRouterAdmin = connect(state => ({Sections: state.Sections, DiscoveryStream: state.DiscoveryStream, Prefs: state.Prefs}))(_ASRouterAdmin);

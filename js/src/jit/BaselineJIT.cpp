@@ -205,7 +205,9 @@ MethodStatus jit::BaselineCompile(JSContext* cx, JSScript* script,
   MOZ_ASSERT(!script->hasBaselineScript());
   MOZ_ASSERT(script->canBaselineCompile());
   MOZ_ASSERT(IsBaselineEnabled(cx));
-  AutoGeckoProfilerEntry pseudoFrame(cx, "Baseline script compilation");
+  AutoGeckoProfilerEntry pseudoFrame(
+      cx, "Baseline script compilation",
+      JS::ProfilingCategoryPair::JS_BaselineCompilation);
 
   script->ensureNonLazyCanonicalFunction();
 
@@ -834,27 +836,6 @@ void BaselineScript::computeResumeNativeOffsets(JSScript* script) {
   uint8_t** nativeOffsets = resumeEntryList();
   std::transform(pcOffsets.begin(), pcOffsets.end(), nativeOffsets,
                  computeNative);
-}
-
-void ICScript::initICEntries(JSScript* script, const ICEntry* entries) {
-  // Fix up the return offset in the IC entries and copy them in.
-  // Also write out the IC entry ptrs in any fallback stubs that were added.
-  for (uint32_t i = 0; i < numICEntries(); i++) {
-    ICEntry& realEntry = icEntry(i);
-    new (&realEntry) ICEntry(entries[i]);
-
-    // If the attached stub is a fallback stub, then fix it up with
-    // a pointer to the (now available) realEntry.
-    if (realEntry.firstStub()->isFallback()) {
-      realEntry.firstStub()->toFallbackStub()->fixupICEntry(&realEntry);
-    }
-
-    if (realEntry.firstStub()->isTypeMonitor_Fallback()) {
-      ICTypeMonitor_Fallback* stub =
-          realEntry.firstStub()->toTypeMonitor_Fallback();
-      stub->fixupICEntry(&realEntry);
-    }
-  }
 }
 
 void BaselineScript::copyRetAddrEntries(JSScript* script,

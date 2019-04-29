@@ -31,15 +31,15 @@ already_AddRefed<BrowserBridgeChild> BrowserBridgeChild::Create(
     const nsString& aRemoteType, BrowsingContext* aBrowsingContext) {
   MOZ_ASSERT(XRE_IsContentProcess());
 
-  // Determine our embedder's TabChild actor.
+  // Determine our embedder's BrowserChild actor.
   RefPtr<Element> owner = aFrameLoader->GetOwnerContent();
   MOZ_DIAGNOSTIC_ASSERT(owner);
 
   nsCOMPtr<nsIDocShell> docShell = do_GetInterface(owner->GetOwnerGlobal());
   MOZ_DIAGNOSTIC_ASSERT(docShell);
 
-  RefPtr<TabChild> tabChild = TabChild::GetFrom(docShell);
-  MOZ_DIAGNOSTIC_ASSERT(tabChild);
+  RefPtr<BrowserChild> browserChild = BrowserChild::GetFrom(docShell);
+  MOZ_DIAGNOSTIC_ASSERT(browserChild);
 
   uint32_t chromeFlags = 0;
 
@@ -66,8 +66,8 @@ already_AddRefed<BrowserBridgeChild> BrowserBridgeChild::Create(
 
   RefPtr<BrowserBridgeChild> browserBridge =
       new BrowserBridgeChild(aFrameLoader, aBrowsingContext);
-  // Reference is freed in TabChild::DeallocPBrowserBridgeChild.
-  tabChild->SendPBrowserBridgeConstructor(
+  // Reference is freed in BrowserChild::DeallocPBrowserBridgeChild.
+  browserChild->SendPBrowserBridgeConstructor(
       do_AddRef(browserBridge).take(),
       PromiseFlatString(aContext.PresentationURL()), aRemoteType,
       aBrowsingContext, chromeFlags);
@@ -139,12 +139,21 @@ IPCResult BrowserBridgeChild::RecvSetLayersId(
     const mozilla::layers::LayersId& aLayersId) {
   MOZ_ASSERT(!mLayersId.IsValid() && aLayersId.IsValid());
   mLayersId = aLayersId;
+
+  // Invalidate the nsSubdocumentFrame now that we have a layers ID for the
+  // child browser
+  if (RefPtr<Element> owner = mFrameLoader->GetOwnerContent()) {
+    if (nsIFrame* frame = owner->GetPrimaryFrame()) {
+      frame->InvalidateFrame();
+    }
+  }
+
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult BrowserBridgeChild::RecvRequestFocus(
     const bool& aCanRaise) {
-  // Adapted from TabParent
+  // Adapted from BrowserParent
   nsCOMPtr<nsIFocusManager> fm = nsFocusManager::GetFocusManager();
   if (!fm) {
     return IPC_OK();
@@ -167,7 +176,7 @@ mozilla::ipc::IPCResult BrowserBridgeChild::RecvRequestFocus(
 
 mozilla::ipc::IPCResult BrowserBridgeChild::RecvMoveFocus(
     const bool& aForward, const bool& aForDocumentNavigation) {
-  // Adapted from TabParent
+  // Adapted from BrowserParent
   nsCOMPtr<nsIFocusManager> fm = nsFocusManager::GetFocusManager();
   if (!fm) {
     return IPC_OK();

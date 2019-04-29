@@ -111,8 +111,9 @@ add_task(async function testReportBreakageVisibility() {
       await openIdentityPopup();
 
       let reportBreakageButton = document.getElementById("identity-popup-content-blocking-report-breakage");
-      is(BrowserTestUtils.is_visible(reportBreakageButton), scenario.buttonVisible,
-        "report breakage button has the correct visibility");
+      await TestUtils.waitForCondition(() => BrowserTestUtils.is_visible(reportBreakageButton) == scenario.buttonVisible,
+        "waiting for correct visibility");
+      ok(true, "report breakage button has the correct visibility");
     });
 
     Services.perms.remove(uri, "trackingprotection");
@@ -226,6 +227,9 @@ async function testReportBreakage(url, tags) {
 
   await openIdentityPopup();
 
+  let comments = document.getElementById("identity-popup-breakageReportView-collection-comments");
+  is(comments.value, "", "Comments textarea should initially be empty");
+
   let reportBreakageButton = document.getElementById("identity-popup-content-blocking-report-breakage");
   await TestUtils.waitForCondition(() => BrowserTestUtils.is_visible(reportBreakageButton),
     "report breakage button is visible");
@@ -289,7 +293,6 @@ async function testReportBreakage(url, tags) {
       resolve();
     });
 
-    let comments = document.getElementById("identity-popup-breakageReportView-collection-comments");
     comments.value = "This is a comment";
     submitButton.click();
   });

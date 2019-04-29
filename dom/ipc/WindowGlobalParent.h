@@ -9,7 +9,7 @@
 
 #include "mozilla/RefPtr.h"
 #include "mozilla/dom/PWindowGlobalParent.h"
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "nsRefPtrHashtable.h"
 #include "nsWrapperCache.h"
 #include "nsISupports.h"
@@ -24,6 +24,7 @@ namespace dom {
 class CanonicalBrowsingContext;
 class WindowGlobalChild;
 class JSWindowActorParent;
+class JSWindowActorMessageMeta;
 
 /**
  * A handle in the parent process to a specific nsGlobalWindowInner object.
@@ -62,11 +63,10 @@ class WindowGlobalParent final : public nsISupports,
 
   // Get this actor's manager if it is not an in-process actor. Returns
   // |nullptr| if the actor has been torn down, or is in-process.
-  already_AddRefed<TabParent> GetTabParent();
+  already_AddRefed<BrowserParent> GetRemoteTab();
 
-  void HandleAsyncMessage(const nsString& aActorName,
-                          const nsString& aMessageName,
-                          ipc::StructuredCloneData& aData);
+  void ReceiveRawMessage(const JSWindowActorMessageMeta& aMeta,
+                         ipc::StructuredCloneData&& aData);
 
   // The principal of this WindowGlobal. This value will not change over the
   // lifetime of the WindowGlobal object, even to reflect changes in
@@ -78,8 +78,8 @@ class WindowGlobalParent final : public nsISupports,
 
   // Get the root nsFrameLoader object for the tree of BrowsingContext nodes
   // which this WindowGlobal is a part of. This will be the nsFrameLoader
-  // holding the TabParent for remote tabs, and the root content frameloader for
-  // non-remote tabs.
+  // holding the BrowserParent for remote tabs, and the root content frameloader
+  // for non-remote tabs.
   nsFrameLoader* GetRootFrameLoader() { return mFrameLoader; }
 
   // The current URI which loaded in the document.
@@ -113,9 +113,8 @@ class WindowGlobalParent final : public nsISupports,
   mozilla::ipc::IPCResult RecvUpdateDocumentURI(nsIURI* aURI);
   mozilla::ipc::IPCResult RecvBecomeCurrentWindowGlobal();
   mozilla::ipc::IPCResult RecvDestroy();
-  mozilla::ipc::IPCResult RecvAsyncMessage(const nsString& aActorName,
-                                           const nsString& aMessageName,
-                                           const ClonedMessageData& aData);
+  mozilla::ipc::IPCResult RecvRawMessage(const JSWindowActorMessageMeta& aMeta,
+                                         const ClonedMessageData& aData);
   mozilla::ipc::IPCResult RecvDidEmbedBrowsingContext(
       dom::BrowsingContext* aContext);
 

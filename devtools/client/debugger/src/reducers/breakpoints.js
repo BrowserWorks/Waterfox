@@ -12,9 +12,8 @@
 import { isGeneratedId } from "devtools-source-map";
 import { isEqual } from "lodash";
 
-import { makeBreakpointId, findPosition } from "../utils/breakpoint";
-import { findEmptyLines } from "../utils/empty-lines";
-import { isInlineScript } from "../utils/source";
+import { makeBreakpointId } from "../utils/breakpoint";
+import "../utils/breakable-lines";
 
 // eslint-disable-next-line max-len
 import { getBreakpointsList as getBreakpointsListSelector } from "../selectors/breakpoints";
@@ -23,22 +22,17 @@ import type {
   XHRBreakpoint,
   Breakpoint,
   BreakpointId,
-  MappedLocation,
-  SourceLocation,
-  BreakpointPositions
+  SourceLocation
 } from "../types";
 import type { Action } from "../actions/types";
 
 export type BreakpointsMap = { [BreakpointId]: Breakpoint };
 export type XHRBreakpointsList = $ReadOnlyArray<XHRBreakpoint>;
-export type BreakpointPositionsMap = { [string]: BreakpointPositions };
 
 export type BreakpointsState = {
   breakpoints: BreakpointsMap,
-  breakpointPositions: BreakpointPositionsMap,
   xhrBreakpoints: XHRBreakpointsList,
-  breakpointsDisabled: boolean,
-  emptyLines: { [string]: number[] }
+  breakpointsDisabled: boolean
 };
 
 export function initialBreakpointsState(
@@ -47,9 +41,7 @@ export function initialBreakpointsState(
   return {
     breakpoints: {},
     xhrBreakpoints: xhrBreakpoints,
-    breakpointPositions: {},
-    breakpointsDisabled: false,
-    emptyLines: {}
+    breakpointsDisabled: false
   };
 }
 
@@ -88,43 +80,6 @@ function update(
 
     case "DISABLE_XHR_BREAKPOINT": {
       return updateXHRBreakpoint(state, action);
-    }
-
-    case "ADD_BREAKPOINT_POSITIONS": {
-      const { source, positions } = action;
-      const emptyLines = findEmptyLines(source, positions);
-
-      return {
-        ...state,
-        breakpointPositions: {
-          ...state.breakpointPositions,
-          [source.id]: positions
-        },
-        emptyLines: {
-          ...state.emptyLines,
-          [source.id]: emptyLines
-        }
-      };
-    }
-
-    case "ADD_SOURCES": {
-      const { sources } = action;
-
-      const scriptSources = sources.filter(source => isInlineScript(source));
-
-      if (scriptSources.length > 0) {
-        const { ...breakpointPositions } = state.breakpointPositions;
-
-        // If new HTML sources are being added, we need to clear the breakpoint
-        // positions since the new source is a <script> with new breakpoints.
-        for (const source of scriptSources) {
-          delete breakpointPositions[source.id];
-        }
-
-        state = { ...state, breakpointPositions };
-      }
-
-      return state;
     }
   }
 
@@ -264,53 +219,6 @@ export function getBreakpointForLocation(
 export function getHiddenBreakpoint(state: OuterState): ?Breakpoint {
   const breakpoints = getBreakpointsList(state);
   return breakpoints.find(bp => bp.options.hidden);
-}
-
-export function getBreakpointPositions(
-  state: OuterState
-): BreakpointPositionsMap {
-  return state.breakpoints.breakpointPositions;
-}
-
-export function getBreakpointPositionsForSource(
-  state: OuterState,
-  sourceId: string
-): ?BreakpointPositions {
-  const positions = getBreakpointPositions(state);
-  return positions && positions[sourceId];
-}
-
-export function hasBreakpointPositions(
-  state: OuterState,
-  sourceId: string
-): boolean {
-  return !!getBreakpointPositionsForSource(state, sourceId);
-}
-
-export function getBreakpointPositionsForLocation(
-  state: OuterState,
-  location: SourceLocation
-): ?MappedLocation {
-  const { sourceId } = location;
-  const positions = getBreakpointPositionsForSource(state, sourceId);
-  return findPosition(positions, location);
-}
-
-export function isEmptyLineInSource(
-  state: OuterState,
-  line: number,
-  selectedSourceId: string
-) {
-  const emptyLines = getEmptyLines(state, selectedSourceId);
-  return emptyLines && emptyLines.includes(line);
-}
-
-export function getEmptyLines(state: OuterState, sourceId: string) {
-  if (!sourceId) {
-    return null;
-  }
-
-  return state.breakpoints.emptyLines[sourceId];
 }
 
 export default update;

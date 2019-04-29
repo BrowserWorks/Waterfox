@@ -90,13 +90,23 @@ exclude: true
 [68.18]: ./WebExtension.html#setMessageDelegate-org.mozilla.geckoview.WebExtension.MessageDelegate-java.lang.String-
 [68.19]: ./WebExtension.Port.html
 
-- Added messaging support for WebExtension. [`setMessageDelegate`][68.17]
-  allows embedders to listen to messages coming from a WebExtension.
-  [`Port`][68.18] allows bidirectional communication between the embedder and
-  the WebExtension.
+- Expose the following prefs in [`GeckoRuntimeSettings`][67.3]:
+  [`setAutoZoomEnabled`][68.20], [`setDoubleTapZoomingEnabled`][68.21],
+  [`setGlMsaaLevel`][68.22].
 
-[68.17]: ./WebExtension.html#setMessageDelegate-org.mozilla.geckoview.WebExtension.MessageDelegate-java.lang.String-
-[68.18]: ./WebExtension.Port.html
+[68.20]: ./GeckoRuntimeSettings.html#setAutoZoomEnabled-boolean-
+[68.21]: ./GeckoRuntimeSettings.html#setDoubleTapZoomingEnabled-boolean-
+[68.22]: ./GeckoRuntimeSettings.html#setGlMsaaLevel-int-
+
+- Added new constant for requesting external storage Android permissions, [`PERMISSION_PERSISTENT_STORAGE`][68.23]
+
+[68.23]: ../GeckoSession.PermissionDelegate.html#PERMISSION_PERSISTENT_STORAGE
+
+- Added [`setVerticalClipping`][68.23] to [`GeckoDisplay`][68.24] and
+  [`GeckoView`][68.23] to tell Gecko how much of its vertical space is clipped.
+
+[68.23]: ./GeckoView.html#setVerticalClipping-int-
+[68.24]: ./GeckoDisplay.html#setVerticalClipping-int-
 
 ## v67
 - Added [`setAutomaticFontSizeAdjustment`][67.2] to
@@ -304,4 +314,4 @@ exclude: true
 [65.24]: ../CrashReporter.html#sendCrashReport-android.content.Context-android.os.Bundle-java.lang.String-
 [65.25]: ../GeckoResult.html
 
-[api-version]: 2186cb94bf0e2282ec4dca649f09ecdff0ecf05b
+[api-version]: 9fe3ccad7809f393e67b5186b56a90adf82eed60

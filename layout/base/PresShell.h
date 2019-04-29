@@ -9,6 +9,9 @@
 #ifndef mozilla_PresShell_h
 #define mozilla_PresShell_h
 
+#include "mozilla/PresShellForwards.h"
+#include "nsIPresShell.h"
+
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/dom/HTMLDocumentBinding.h"
@@ -21,7 +24,6 @@
 #include "nsContentUtils.h"  // For AddScriptBlocker().
 #include "nsCRT.h"
 #include "nsIObserver.h"
-#include "nsIPresShell.h"
 #include "nsISelectionController.h"
 #include "nsIWidget.h"
 #include "nsPresContext.h"
@@ -52,20 +54,16 @@ class EventDispatchingCallback;
 class GeckoMVMContext;
 class OverflowChangedTracker;
 
-// A set type for tracking visible frames, for use by the visibility code in
-// PresShell. The set contains nsIFrame* pointers.
-typedef nsTHashtable<nsPtrHashKey<nsIFrame>> VisibleFrames;
-
-// This is actually pref-controlled, but we use this value if we fail
-// to get the pref for any reason.
-#define PAINTLOCK_EVENT_DELAY 5
-
 class PresShell final : public nsIPresShell,
                         public nsISelectionController,
                         public nsIObserver,
                         public nsSupportsWeakReference {
   typedef layers::FocusTarget FocusTarget;
   typedef dom::Element Element;
+
+  // A set type for tracking visible frames, for use by the visibility code in
+  // PresShell. The set contains nsIFrame* pointers.
+  typedef nsTHashtable<nsPtrHashKey<nsIFrame>> VisibleFrames;
 
  public:
   PresShell();
@@ -99,30 +97,26 @@ class PresShell final : public nsIPresShell,
   MOZ_CAN_RUN_SCRIPT nsresult ResizeReflow(
       nscoord aWidth, nscoord aHeight, nscoord aOldWidth = 0,
       nscoord aOldHeight = 0,
-      ResizeReflowOptions aOptions = ResizeReflowOptions::eBSizeExact) override;
+      ResizeReflowOptions aOptions = ResizeReflowOptions::NoOption) override;
   MOZ_CAN_RUN_SCRIPT nsresult ResizeReflowIgnoreOverride(
       nscoord aWidth, nscoord aHeight, nscoord aOldWidth, nscoord aOldHeight,
-      ResizeReflowOptions aOptions = ResizeReflowOptions::eBSizeExact) override;
+      ResizeReflowOptions aOptions = ResizeReflowOptions::NoOption) override;
 
   MOZ_CAN_RUN_SCRIPT
   void DoFlushPendingNotifications(FlushType aType) override;
   MOZ_CAN_RUN_SCRIPT
   void DoFlushPendingNotifications(ChangesToFlush aType) override;
 
-  nsRectVisibility GetRectVisibility(nsIFrame* aFrame, const nsRect& aRect,
-                                     nscoord aMinTwips) const override;
+  RectVisibility GetRectVisibility(nsIFrame* aFrame, const nsRect& aRect,
+                                   nscoord aMinTwips) const override;
 
   nsresult CaptureHistoryState(
       nsILayoutHistoryState** aLayoutHistoryState) override;
 
   void UnsuppressPainting() override;
 
-  nsresult GetAgentStyleSheets(nsTArray<RefPtr<StyleSheet>>& aSheets) override;
-  nsresult SetAgentStyleSheets(
-      const nsTArray<RefPtr<StyleSheet>>& aSheets) override;
-
-  nsresult AddOverrideStyleSheet(StyleSheet* aSheet) override;
-  nsresult RemoveOverrideStyleSheet(StyleSheet* aSheet) override;
+  nsresult AddOverrideStyleSheet(StyleSheet*) override;
+  nsresult RemoveOverrideStyleSheet(StyleSheet*) override;
 
   MOZ_CAN_RUN_SCRIPT_BOUNDARY
   nsresult HandleEventWithTarget(
@@ -142,7 +136,7 @@ class PresShell final : public nsIPresShell,
   void Thaw() override;
   void FireOrClearDelayedEvents(bool aFireEvents) override;
 
-  nsresult RenderDocument(const nsRect& aRect, uint32_t aFlags,
+  nsresult RenderDocument(const nsRect& aRect, RenderDocumentFlags aFlags,
                           nscolor aBackgroundColor,
                           gfxContext* aThebesContext) override;
 
@@ -150,11 +144,11 @@ class PresShell final : public nsIPresShell,
                                              const Maybe<CSSIntRegion>& aRegion,
                                              const LayoutDeviceIntPoint aPoint,
                                              LayoutDeviceIntRect* aScreenRect,
-                                             uint32_t aFlags) override;
+                                             RenderImageFlags aFlags) override;
 
   already_AddRefed<SourceSurface> RenderSelection(
       dom::Selection* aSelection, const LayoutDeviceIntPoint aPoint,
-      LayoutDeviceIntRect* aScreenRect, uint32_t aFlags) override;
+      LayoutDeviceIntRect* aScreenRect, RenderImageFlags aFlags) override;
 
   already_AddRefed<nsPIDOMWindowOuter> GetRootWindow() override;
 
@@ -167,8 +161,26 @@ class PresShell final : public nsIPresShell,
 
   void SetIgnoreViewportScrolling(bool aIgnore) override;
 
+  /**
+   * Set a "resolution" for the document, which if not 1.0 will
+   * allocate more or fewer pixels for rescalable content by a factor
+   * of |resolution| in both dimensions.  Return NS_OK iff the
+   * resolution bounds are sane, and the resolution of this was
+   * actually updated.
+   *
+   * Also increase the scale of the content by the same amount
+   * (that's the "AndScaleTo" part).
+   *
+   * The resolution defaults to 1.0.
+   *
+   * |aOrigin| specifies who originated the resolution change. For changes
+   * sent by APZ, pass ResolutionChangeOrigin::Apz. For changes sent by
+   * the main thread, use pass ResolutionChangeOrigin::MainThread (similar
+   * to the |aOrigin| parameter of nsIScrollableFrame::ScrollToCSSPixels()).
+   */
   nsresult SetResolutionAndScaleTo(float aResolution,
-                                   ChangeOrigin aOrigin) override;
+                                   ResolutionChangeOrigin aOrigin);
+
   float GetCumulativeResolution() override;
   float GetCumulativeNonRootScaleResolution() override;
   void SetRestoreResolution(float aResolution,
@@ -192,7 +204,8 @@ class PresShell final : public nsIPresShell,
   // nsIViewObserver interface
 
   void Paint(nsView* aViewToPaint, const nsRegion& aDirtyRegion,
-             uint32_t aFlags) override;
+             PaintFlags aFlags);
+
   MOZ_CAN_RUN_SCRIPT nsresult HandleEvent(nsIFrame* aFrameForPresShell,
                                           WidgetGUIEvent* aEvent,
                                           bool aDontRetargetEvents,
@@ -205,7 +218,7 @@ class PresShell final : public nsIPresShell,
                                     nsEventStatus* aStatus) override;
   bool ShouldIgnoreInvalidation() override;
   /**
-   * Notify that we're going to call Paint with PAINT_LAYERS
+   * Notify that we're going to call Paint with PaintFlags::PaintLayers
    * on the pres shell for a widget (which might not be this one, since
    * WillPaint is called on all presshells in the same toplevel window as the
    * painted widget). This is issued at a time when it's safe to modify
@@ -214,7 +227,17 @@ class PresShell final : public nsIPresShell,
   MOZ_CAN_RUN_SCRIPT void WillPaint();
   void WillPaintWindow() override;
   void DidPaintWindow() override;
-  void ScheduleViewManagerFlush(PaintType aType = PAINT_DEFAULT) override;
+
+  /**
+   * Ensures that the refresh driver is running, and schedules a view
+   * manager flush on the next tick.
+   *
+   * @param aType PaintType::DelayedCompress : Schedule a paint to be executed
+   * after a delay, and put FrameLayerBuilder in 'compressed' mode that avoids
+   * short cut optimizations.
+   */
+  void ScheduleViewManagerFlush(PaintType aType = PaintType::Default);
+
   void ClearMouseCaptureOnView(nsView* aView) override;
   bool IsVisible() override;
   void SuppressDisplayport(bool aEnabled) override;
@@ -295,10 +318,32 @@ class PresShell final : public nsIPresShell,
 
   void UpdateCanvasBackground() override;
 
+  /**
+   * Add a solid color item to the bottom of aList with frame aFrame and bounds
+   * aBounds. Checks first if this needs to be done by checking if aFrame is a
+   * canvas frame (if the AddCanvasBackgroundColorFlags::ForceDraw is passed
+   * then this check is skipped). aBackstopColor is composed behind the
+   * background color of the canvas, it is transparent by default.
+   *
+   * We attempt to make the background color part of the scrolled canvas (to
+   * reduce transparent layers), and if async scrolling is enabled (and the
+   * background is opaque) then we add a second, unscrolled item to handle the
+   * checkerboarding case.
+   *
+   * AddCanvasBackgroundColorFlags::AddSubDocument should be specified when
+   * calling this for a subdocument, and LayoutUseContainersForRootFrame might
+   * cause the whole list to be scrolled. In that case the second unscrolled
+   * item will be elided.
+   *
+   * AddCanvasBackgroundColorFlags::AppendUnscrolledOnly only attempts to add
+   * the unscrolled item, so that we can add it manually after
+   * LayoutUseContainersForRootFrame has built the scrolling ContainerLayer.
+   */
   void AddCanvasBackgroundColorItem(
       nsDisplayListBuilder& aBuilder, nsDisplayList& aList, nsIFrame* aFrame,
       const nsRect& aBounds, nscolor aBackstopColor = NS_RGBA(0, 0, 0, 0),
-      uint32_t aFlags = 0) override;
+      AddCanvasBackgroundColorFlags aFlags =
+          AddCanvasBackgroundColorFlags::None);
 
   void AddPrintPreviewBackgroundItem(nsDisplayListBuilder& aBuilder,
                                      nsDisplayList& aList, nsIFrame* aFrame,
@@ -360,6 +405,105 @@ class PresShell final : public nsIPresShell,
                                            nsIContent* aContent);
   static PresShell* GetShellForTouchEvent(WidgetGUIEvent* aEvent);
 
+  /**
+   * Informs the pres shell that the document is now at the anchor with
+   * the given name.  If |aScroll| is true, scrolls the view of the
+   * document so that the anchor with the specified name is displayed at
+   * the top of the window.  If |aAnchorName| is empty, then this informs
+   * the pres shell that there is no current target, and |aScroll| must
+   * be false.  If |aAdditionalScrollFlags| is ScrollFlags::ScrollSmoothAuto
+   * and |aScroll| is true, the scrolling may be performed with an animation.
+   */
+  MOZ_CAN_RUN_SCRIPT
+  nsresult GoToAnchor(const nsAString& aAnchorName, bool aScroll,
+                      ScrollFlags aAdditionalScrollFlags = ScrollFlags::None);
+
+  /**
+   * Tells the presshell to scroll again to the last anchor scrolled to by
+   * GoToAnchor, if any. This scroll only happens if the scroll
+   * position has not changed since the last GoToAnchor. This is called
+   * by nsDocumentViewer::LoadComplete. This clears the last anchor
+   * scrolled to by GoToAnchor (we don't want to keep it alive if it's
+   * removed from the DOM), so don't call this more than once.
+   */
+  MOZ_CAN_RUN_SCRIPT nsresult ScrollToAnchor();
+
+  /**
+   * Scrolls the view of the document so that the primary frame of the content
+   * is displayed in the window. Layout is flushed before scrolling.
+   *
+   * @param aContent  The content object of which primary frame should be
+   *                  scrolled into view.
+   * @param aVertical How to align the frame vertically and when to do so.
+   *                  This is a ScrollAxis of Where and When.
+   * @param aHorizontal How to align the frame horizontally and when to do so.
+   *                  This is a ScrollAxis of Where and When.
+   * @param aScrollFlags  If ScrollFlags::ScrollFirstAncestorOnly is set,
+   *                      only the nearest scrollable ancestor is scrolled,
+   *                      otherwise all scrollable ancestors may be scrolled
+   *                      if necessary.  If ScrollFlags::ScrollOverflowHidden
+   *                      is set then we may scroll in a direction even if
+   *                      overflow:hidden is specified in that direction;
+   *                      otherwise we will not scroll in that direction when
+   *                      overflow:hidden is set for that direction.  If
+   *                      ScrollFlags::ScrollNoParentFrames is set then we
+   *                      only scroll nodes in this document, not in any
+   *                      parent documents which contain this document in a
+   *                      iframe or the like.  If ScrollFlags::ScrollSmooth
+   *                      is set and CSSOM-VIEW scroll-behavior is enabled,
+   *                      we will scroll smoothly using
+   *                      nsIScrollableFrame::ScrollMode::SMOOTH_MSD;
+   *                      otherwise, nsIScrollableFrame::ScrollMode::INSTANT
+   *                      will be used.  If ScrollFlags::ScrollSmoothAuto is
+   *                      set, the CSSOM-View scroll-behavior attribute is
+   *                      set to 'smooth' on the scroll frame, and CSSOM-VIEW
+   *                      scroll-behavior is enabled, we will scroll smoothly
+   *                      using nsIScrollableFrame::ScrollMode::SMOOTH_MSD;
+   *                      otherwise, nsIScrollableFrame::ScrollMode::INSTANT
+   *                      will be used.
+   */
+  MOZ_CAN_RUN_SCRIPT
+  nsresult ScrollContentIntoView(nsIContent* aContent, ScrollAxis aVertical,
+                                 ScrollAxis aHorizontal,
+                                 ScrollFlags aScrollFlags);
+
+  /**
+   * When capturing content is set, it traps all mouse events and retargets
+   * them at this content node. If capturing is not allowed
+   * (gCaptureInfo.mAllowed is false), then capturing is not set. However, if
+   * the CaptureFlags::IgnoreAllowedState is set, the allowed state is ignored
+   * and capturing is set regardless. To disable capture, pass null for the
+   * value of aContent.
+   *
+   * If CaptureFlags::RetargetedToElement is set, all mouse events are
+   * targeted at aContent only. Otherwise, mouse events are targeted at
+   * aContent or its descendants. That is, descendants of aContent receive
+   * mouse events as they normally would, but mouse events outside of aContent
+   * are retargeted to aContent.
+   *
+   * If CaptureFlags::PreventDragStart is set then drags are prevented from
+   * starting while this capture is active.
+   *
+   * If CaptureFlags::PointerLock is set, similar to
+   * CaptureFlags::RetargetToElement, then events are targeted at aContent,
+   * but capturing is held more strongly (i.e., calls to SetCapturingContent()
+   * won't unlock unless CaptureFlags::PointerLock is set again).
+   */
+  static void SetCapturingContent(nsIContent* aContent, CaptureFlags aFlags);
+
+  /**
+   * Alias for SetCapturingContent(nullptr, CaptureFlags::None) for making
+   * callers what they do clearer.
+   */
+  static void ReleaseCapturingContent() {
+    PresShell::SetCapturingContent(nullptr, CaptureFlags::None);
+  }
+
+  // Called at the end of nsLayoutUtils::PaintFrame().
+  // This is used to clear any pending visual scroll updates that have been
+  // acknowledged, to make sure they don't stick around for the next paint.
+  void EndPaint();
+
  private:
   ~PresShell();
 
@@ -377,6 +521,11 @@ class PresShell final : public nsIPresShell,
   MOZ_CAN_RUN_SCRIPT void DidDoReflow(bool aInterruptible);
 
   MOZ_CAN_RUN_SCRIPT void HandlePostedReflowCallbacks(bool aInterruptible);
+
+  /**
+   * Helper for ScrollContentIntoView()
+   */
+  MOZ_CAN_RUN_SCRIPT void DoScrollContentIntoView();
 
   /**
    * Initialize cached font inflation preference values and do an initial
@@ -441,14 +590,14 @@ class PresShell final : public nsIPresShell,
    * aPoint - reference point, typically the mouse position
    * aScreenRect - [out] set to the area of the screen the painted area should
    *               be displayed at
-   * aFlags - set RENDER_AUTO_SCALE to scale down large images, but it must not
-   *          be set if a custom image was specified
+   * aFlags - set RenderImageFlags::AutoScale to scale down large images, but
+   * it must not be set if a custom image was specified
    */
   already_AddRefed<SourceSurface> PaintRangePaintInfo(
       const nsTArray<UniquePtr<RangePaintInfo>>& aItems,
       dom::Selection* aSelection, const Maybe<CSSIntRegion>& aRegion,
       nsRect aArea, const LayoutDeviceIntPoint aPoint,
-      LayoutDeviceIntRect* aScreenRect, uint32_t aFlags);
+      LayoutDeviceIntRect* aScreenRect, RenderImageFlags aFlags);
 
   // Hide a view if it is a popup
   void HideViewIfPopup(nsView* aView);
@@ -1176,8 +1325,10 @@ class PresShell final : public nsIPresShell,
      * Returns true if the context menu event should fire and false if it should
      * not.
      */
+    MOZ_CAN_RUN_SCRIPT
     bool AdjustContextMenuKeyEvent(WidgetMouseEvent* aMouseEvent);
 
+    MOZ_CAN_RUN_SCRIPT
     bool PrepareToUseCaretPosition(nsIWidget* aEventWidget,
                                    LayoutDeviceIntPoint& aTargetPt);
 
@@ -1185,6 +1336,7 @@ class PresShell final : public nsIPresShell,
      * Get the selected item and coordinates in device pixels relative to root
      * document's root view for element, first ensuring the element is onscreen.
      */
+    MOZ_CAN_RUN_SCRIPT
     void GetCurrentItemAndPositionForElement(dom::Element* aFocusedElement,
                                              nsIContent** aTargetToUse,
                                              LayoutDeviceIntPoint& aTargetPt,
@@ -1389,12 +1541,23 @@ class PresShell final : public nsIPresShell,
   // when target of pointer event was deleted during executing user handlers.
   nsCOMPtr<nsIContent> mPointerEventTarget;
 
-  int32_t mActiveSuppressDisplayport;
+  nsCOMPtr<nsIContent> mLastAnchorScrolledTo;
+
+  // Information needed to properly handle scrolling content into view if the
+  // pre-scroll reflow flush can be interrupted.  mContentToScrollTo is non-null
+  // between the initial scroll attempt and the first time we finish processing
+  // all our dirty roots.  mContentToScrollTo has a content property storing the
+  // details for the scroll operation, see ScrollIntoViewData above.
+  nsCOMPtr<nsIContent> mContentToScrollTo;
 
   // The focus sequence number of the last processed input event
   uint64_t mAPZFocusSequenceNumber;
   // The focus information needed for async keyboard scrolling
   FocusTarget mAPZFocusTarget;
+
+  nscoord mLastAnchorScrollPositionY = 0;
+
+  int32_t mActiveSuppressDisplayport;
 
   bool mDocumentLoading : 1;
   bool mNoDelayedMouseEvents : 1;

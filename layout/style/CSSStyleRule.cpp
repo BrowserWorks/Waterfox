@@ -197,7 +197,7 @@ nsresult CSSStyleRule::SelectorMatchesElement(Element* aElement,
   if (!aPseudo.IsEmpty()) {
     RefPtr<nsAtom> pseudoElt = NS_Atomize(aPseudo);
     pseudoType = nsCSSPseudoElements::GetPseudoType(
-        pseudoElt, CSSEnabledState::eIgnoreEnabledState);
+        pseudoElt, CSSEnabledState::IgnoreEnabledState);
 
     if (pseudoType == PseudoStyleType::NotPseudo) {
       *aMatches = false;

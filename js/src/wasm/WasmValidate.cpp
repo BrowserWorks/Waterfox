@@ -870,6 +870,11 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
           }
 #endif
 #ifdef ENABLE_WASM_REFTYPES
+          case uint32_t(MiscOp::TableFill): {
+            uint32_t unusedTableIndex;
+            CHECK(iter.readTableFill(&unusedTableIndex, &nothing, &nothing,
+                                     &nothing));
+          }
           case uint32_t(MiscOp::TableGrow): {
             uint32_t unusedTableIndex;
             CHECK(iter.readTableGrow(&unusedTableIndex, &nothing, &nothing));
@@ -2241,8 +2246,9 @@ static bool DecodeElemSection(Decoder& d, ModuleEnvironment* env) {
 
     InitializerKind initializerKind = InitializerKind(initializerKindVal);
 
-    if (env->tables.length() == 0) {
-      return d.fail("elem segment requires a table section");
+    if (initializerKind != InitializerKind::Passive &&
+        env->tables.length() == 0) {
+      return d.fail("active elem segment requires a table section");
     }
 
     MutableElemSegment seg = js_new<ElemSegment>();
@@ -2256,7 +2262,8 @@ static bool DecodeElemSection(Decoder& d, ModuleEnvironment* env) {
         return d.fail("expected table index");
       }
     }
-    if (tableIndex >= env->tables.length()) {
+    if (initializerKind != InitializerKind::Passive &&
+        tableIndex >= env->tables.length()) {
       return d.fail("table index out of range for element segment");
     }
     if (initializerKind == InitializerKind::Passive) {
@@ -2580,8 +2587,8 @@ static bool DecodeDataSection(Decoder& d, ModuleEnvironment* env) {
 
     InitializerKind initializerKind = InitializerKind(initializerKindVal);
 
-    if (!env->usesMemory()) {
-      return d.fail("data segment requires a memory section");
+    if (initializerKind != InitializerKind::Passive && !env->usesMemory()) {
+      return d.fail("active data segment requires a memory section");
     }
 
     uint32_t memIndex = 0;

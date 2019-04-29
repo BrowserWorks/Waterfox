@@ -243,6 +243,8 @@ namespace dom {
 
 class Document;
 class DOMStyleSheetSetList;
+class ResizeObserver;
+class ResizeObserverController;
 
 // Document states
 
@@ -1661,17 +1663,6 @@ class Document : public nsINode,
   void InsertSheetAt(size_t aIndex, StyleSheet&);
 
   /**
-   * Replace the stylesheets in aOldSheets with the stylesheets in
-   * aNewSheets. The two lists must have equal length, and the sheet
-   * at positon J in the first list will be replaced by the sheet at
-   * position J in the second list.  Some sheets in the second list
-   * may be null; if so the corresponding sheets in the first list
-   * will simply be removed.
-   */
-  void UpdateStyleSheets(nsTArray<RefPtr<StyleSheet>>& aOldSheets,
-                         nsTArray<RefPtr<StyleSheet>>& aNewSheets);
-
-  /**
    * Add a stylesheet to the document
    *
    * TODO(emilio): This is only used by parts of editor that are no longer in
@@ -2416,11 +2407,6 @@ class Document : public nsINode,
                                           const nsAString& aAttrValue) const;
 
   /**
-   * See FlushSkinBindings on nsBindingManager
-   */
-  void FlushSkinBindings();
-
-  /**
    * To batch DOMSubtreeModified, document needs to be informed when
    * a mutation event might be dispatched, even if the event isn't actually
    * created because there are no listeners for it.
@@ -2853,9 +2839,8 @@ class Document : public nsINode,
   void ForgetImagePreload(nsIURI* aURI);
 
   /**
-   * Called by nsParser to preload style sheets.  Can also be merged into the
-   * parser if and when the parser is merged with libgklayout.  aCrossOriginAttr
-   * should be a void string if the attr is not present.
+   * Called by nsParser to preload style sheets.  aCrossOriginAttr should be a
+   * void string if the attr is not present.
    */
   void PreloadStyle(nsIURI* aURI, const Encoding* aEncoding,
                     const nsAString& aCrossOriginAttr,
@@ -2863,15 +2848,11 @@ class Document : public nsINode,
                     const nsAString& aIntegrity);
 
   /**
-   * Called by the chrome registry to load style sheets.  Can be put
-   * back there if and when when that module is merged with libgklayout.
+   * Called by the chrome registry to load style sheets.
    *
-   * This always does a synchronous load.  If aIsAgentSheet is true,
-   * it also uses the system principal and enables unsafe rules.
-   * DO NOT USE FOR UNTRUSTED CONTENT.
+   * This always does a synchronous load, and parses as a normal document sheet.
    */
-  nsresult LoadChromeSheetSync(nsIURI* aURI, bool aIsAgentSheet,
-                               RefPtr<StyleSheet>* aSheet);
+  RefPtr<StyleSheet> LoadChromeSheetSync(nsIURI* aURI);
 
   /**
    * Returns true if the locale used for the document specifies a direction of
@@ -2944,7 +2925,7 @@ class Document : public nsINode,
   void TriggerAutoFocus();
 
   void SetScrollToRef(nsIURI* aDocumentURI);
-  void ScrollToRef();
+  MOZ_CAN_RUN_SCRIPT void ScrollToRef();
   void ResetScrolledToRefAlready() { mScrolledToRefAlready = false; }
 
   void SetChangeScrollPosWhenScrollingToRef(bool aValue) {
@@ -3555,6 +3536,10 @@ class Document : public nsINode,
   // toolkit/components/url-classifier/flash-block-lists.rst
   FlashClassification DocumentFlashClassification();
 
+  // ResizeObserver usage.
+  void AddResizeObserver(ResizeObserver* aResizeObserver);
+  void ScheduleResizeObserversNotification() const;
+
   /**
    * Localization
    *
@@ -3830,8 +3815,11 @@ class Document : public nsINode,
   void CompatibilityModeChanged();
   bool NeedsQuirksSheet() const {
     // SVG documents never load quirk.css.
+    // FIXME(emilio): Can SVG documents be in quirks mode anyway?
     return mCompatMode == eCompatibility_NavQuirks && !IsSVGDocument();
   }
+  void AddContentEditableStyleSheetsToStyleSet(bool aDesignMode);
+  void RemoveContentEditableStyleSheets();
   void AddStyleSheetToStyleSets(StyleSheet* aSheet);
   void RemoveStyleSheetFromStyleSets(StyleSheet* aSheet);
   void NotifyStyleSheetAdded(StyleSheet* aSheet, bool aDocumentSheet);
@@ -4041,6 +4029,8 @@ class Document : public nsINode,
 
   RefPtr<FeaturePolicy> mFeaturePolicy;
 
+  UniquePtr<ResizeObserverController> mResizeObserverController;
+
   // True if BIDI is enabled.
   bool mBidiEnabled : 1;
   // True if we may need to recompute the language prefs for this document.
@@ -4224,6 +4214,12 @@ class Document : public nsINode,
 
   // Whether we have a quirks mode stylesheet in the style set.
   bool mQuirkSheetAdded : 1;
+
+  // Whether we have a contenteditable.css stylesheet in the style set.
+  bool mContentEditableSheetAdded : 1;
+
+  // Whether we have a designmode.css stylesheet in the style set.
+  bool mDesignModeSheetAdded : 1;
 
   // Keeps track of whether we have a pending
   // 'style-sheet-applicable-state-changed' notification.

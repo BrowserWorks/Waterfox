@@ -128,7 +128,7 @@ void nsSVGOuterSVGFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
           // intrinsic size.  We need it to resize itself to use our (now
           // available) intrinsic size:
           embeddingFrame->PresShell()->FrameNeedsReflow(
-              embeddingFrame, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
+              embeddingFrame, IntrinsicDirty::StyleChange, NS_FRAME_IS_DIRTY);
         }
       }
     }
@@ -168,7 +168,9 @@ nscoord nsSVGOuterSVGFrame::GetPrefISize(gfxContext* aRenderingContext) {
       wm.IsVertical() ? svg->mLengthAttributes[SVGSVGElement::ATTR_HEIGHT]
                       : svg->mLengthAttributes[SVGSVGElement::ATTR_WIDTH];
 
-  if (isize.IsPercentage()) {
+  if (StyleDisplay()->IsContainSize()) {
+    result = nscoord(0);
+  } else if (isize.IsPercentage()) {
     // It looks like our containing block's isize may depend on our isize. In
     // that case our behavior is undefined according to CSS 2.1 section 10.3.2.
     // As a last resort, we'll fall back to returning zero.
@@ -203,7 +205,10 @@ IntrinsicSize nsSVGOuterSVGFrame::GetIntrinsicSize() {
   // XXXjwatt Note that here we want to return the CSS width/height if they're
   // specified and we're embedded inside an nsIObjectLoadingContent.
 
-  IntrinsicSize intrinsicSize;
+  if (StyleDisplay()->IsContainSize()) {
+    // Intrinsic size of 'contain:size' replaced elements is 0,0.
+    return IntrinsicSize(0, 0);
+  }
 
   SVGSVGElement* content = static_cast<SVGSVGElement*>(GetContent());
   const SVGAnimatedLength& width =
@@ -211,18 +216,18 @@ IntrinsicSize nsSVGOuterSVGFrame::GetIntrinsicSize() {
   const SVGAnimatedLength& height =
       content->mLengthAttributes[SVGSVGElement::ATTR_HEIGHT];
 
+  IntrinsicSize intrinsicSize;
+
   if (!width.IsPercentage()) {
     nscoord val =
         nsPresContext::CSSPixelsToAppUnits(width.GetAnimValue(content));
-    if (val < 0) val = 0;
-    intrinsicSize.width.SetCoordValue(val);
+    intrinsicSize.width.emplace(std::max(val, 0));
   }
 
   if (!height.IsPercentage()) {
     nscoord val =
         nsPresContext::CSSPixelsToAppUnits(height.GetAnimValue(content));
-    if (val < 0) val = 0;
-    intrinsicSize.height.SetCoordValue(val);
+    intrinsicSize.height.emplace(std::max(val, 0));
   }
 
   return intrinsicSize;
@@ -230,6 +235,10 @@ IntrinsicSize nsSVGOuterSVGFrame::GetIntrinsicSize() {
 
 /* virtual */
 nsSize nsSVGOuterSVGFrame::GetIntrinsicRatio() {
+  if (StyleDisplay()->IsContainSize()) {
+    return nsSize(0, 0);
+  }
+
   // We only have an intrinsic size/ratio if our width and height attributes
   // are both specified and set to non-percentage values, or we have a viewBox
   // rect: http://www.w3.org/TR/SVGMobile12/coords.html#IntrinsicSizing
@@ -285,10 +294,10 @@ nsSize nsSVGOuterSVGFrame::GetIntrinsicRatio() {
 
 /* virtual */
 LogicalSize nsSVGOuterSVGFrame::ComputeSize(
-    gfxContext* aRenderingContext, WritingMode aWM, const LogicalSize& aCBSize,
-    nscoord aAvailableISize, const LogicalSize& aMargin,
-    const LogicalSize& aBorder, const LogicalSize& aPadding,
-    ComputeSizeFlags aFlags) {
+    gfxContext* aRenderingContext, WritingMode aWritingMode,
+    const LogicalSize& aCBSize, nscoord aAvailableISize,
+    const LogicalSize& aMargin, const LogicalSize& aBorder,
+    const LogicalSize& aPadding, ComputeSizeFlags aFlags) {
   if (IsRootOfImage() || IsRootOfReplacedElementSubDoc()) {
     // The embedding element has sized itself using the CSS replaced element
     // sizing rules, using our intrinsic dimensions as necessary. The SVG spec
@@ -305,11 +314,14 @@ LogicalSize nsSVGOuterSVGFrame::ComputeSize(
     // We're the root of the outermost browsing context, so we need to scale
     // cbSize by the full-zoom so that SVGs with percentage width/height zoom:
 
-    NS_ASSERTION(aCBSize.ISize(aWM) != NS_AUTOHEIGHT &&
-                     aCBSize.BSize(aWM) != NS_AUTOHEIGHT,
+    NS_ASSERTION(aCBSize.ISize(aWritingMode) != NS_AUTOHEIGHT &&
+                     aCBSize.BSize(aWritingMode) != NS_AUTOHEIGHT,
                  "root should not have auto-width/height containing block");
-    cbSize.ISize(aWM) *= PresContext()->GetFullZoom();
-    cbSize.BSize(aWM) *= PresContext()->GetFullZoom();
+
+    if (!IsContainingWindowElementOfType(nullptr, nsGkAtoms::iframe)) {
+      cbSize.ISize(aWritingMode) *= PresContext()->GetFullZoom();
+      cbSize.BSize(aWritingMode) *= PresContext()->GetFullZoom();
+    }
 
     // We also need to honour the width and height attributes' default values
     // of 100% when we're the root of a browsing context.  (GetIntrinsicSize()
@@ -322,33 +334,32 @@ LogicalSize nsSVGOuterSVGFrame::ComputeSize(
     const SVGAnimatedLength& width =
         content->mLengthAttributes[SVGSVGElement::ATTR_WIDTH];
     if (width.IsPercentage()) {
-      MOZ_ASSERT(intrinsicSize.width.GetUnit() == eStyleUnit_None,
+      MOZ_ASSERT(!intrinsicSize.width,
                  "GetIntrinsicSize should have reported no intrinsic width");
       float val = width.GetAnimValInSpecifiedUnits() / 100.0f;
-      if (val < 0.0f) val = 0.0f;
-      intrinsicSize.width.SetCoordValue(val * cbSize.Width(aWM));
+      intrinsicSize.width.emplace(std::max(val, 0.0f) *
+                                  cbSize.Width(aWritingMode));
     }
 
     const SVGAnimatedLength& height =
         content->mLengthAttributes[SVGSVGElement::ATTR_HEIGHT];
-    NS_ASSERTION(aCBSize.BSize(aWM) != NS_AUTOHEIGHT,
+    NS_ASSERTION(aCBSize.BSize(aWritingMode) != NS_AUTOHEIGHT,
                  "root should not have auto-height containing block");
     if (height.IsPercentage()) {
-      MOZ_ASSERT(intrinsicSize.height.GetUnit() == eStyleUnit_None,
+      MOZ_ASSERT(!intrinsicSize.height,
                  "GetIntrinsicSize should have reported no intrinsic height");
       float val = height.GetAnimValInSpecifiedUnits() / 100.0f;
-      if (val < 0.0f) val = 0.0f;
-      intrinsicSize.height.SetCoordValue(val * cbSize.Height(aWM));
+      intrinsicSize.height.emplace(std::max(val, 0.0f) *
+                                   cbSize.Height(aWritingMode));
     }
-    MOZ_ASSERT(intrinsicSize.height.GetUnit() == eStyleUnit_Coord &&
-                   intrinsicSize.width.GetUnit() == eStyleUnit_Coord,
+    MOZ_ASSERT(intrinsicSize.height && intrinsicSize.width,
                "We should have just handled the only situation where"
                "we lack an intrinsic height or width.");
   }
 
   return ComputeSizeWithIntrinsicDimensions(
-      aRenderingContext, aWM, intrinsicSize, GetIntrinsicRatio(), cbSize,
-      aMargin, aBorder, aPadding, aFlags);
+      aRenderingContext, aWritingMode, intrinsicSize, GetIntrinsicRatio(),
+      cbSize, aMargin, aBorder, aPadding, aFlags);
 }
 
 void nsSVGOuterSVGFrame::Reflow(nsPresContext* aPresContext,
@@ -427,7 +438,8 @@ void nsSVGOuterSVGFrame::Reflow(nsPresContext* aPresContext,
     changeBits |= COORD_CONTEXT_CHANGED;
     svgElem->SetViewportSize(newViewportSize);
   }
-  if (mFullZoom != PresContext()->GetFullZoom()) {
+  if (mFullZoom != PresContext()->GetFullZoom() &&
+      !IsContainingWindowElementOfType(nullptr, nsGkAtoms::iframe)) {
     changeBits |= FULL_ZOOM_CHANGED;
     mFullZoom = PresContext()->GetFullZoom();
   }
@@ -546,7 +558,8 @@ class nsDisplayOuterSVG final : public nsDisplayItem {
   virtual void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
                        HitTestState* aState,
                        nsTArray<nsIFrame*>* aOutFrames) override;
-  virtual void Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx) override;
+  virtual void Paint(nsDisplayListBuilder* aBuilder,
+                     gfxContext* aContext) override;
 
   virtual void ComputeInvalidationRegion(
       nsDisplayListBuilder* aBuilder, const nsDisplayItemGeometry* aGeometry,
@@ -698,13 +711,13 @@ nsresult nsSVGOuterSVGFrame::AttributeChanged(int32_t aNameSpaceID,
           // Tell embeddingFrame's presShell it needs to be reflowed (which
           // takes care of reflowing us too).
           embeddingFrame->PresShell()->FrameNeedsReflow(
-              embeddingFrame, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
+              embeddingFrame, IntrinsicDirty::StyleChange, NS_FRAME_IS_DIRTY);
         }
         // else our width and height is overridden - don't reflow anything
       } else {
         // We are not embedded by reference, so our 'width' and 'height'
         // attributes are not overridden - we need to reflow.
-        PresShell()->FrameNeedsReflow(this, nsIPresShell::eStyleChange,
+        PresShell()->FrameNeedsReflow(this, IntrinsicDirty::StyleChange,
                                       NS_FRAME_IS_DIRTY);
       }
     }
@@ -873,8 +886,9 @@ gfxMatrix nsSVGOuterSVGFrame::GetCanvasTM() {
 //----------------------------------------------------------------------
 // Implementation helpers
 
-bool nsSVGOuterSVGFrame::IsRootOfReplacedElementSubDoc(
-    nsIFrame** aEmbeddingFrame) {
+template <typename... Args>
+bool nsSVGOuterSVGFrame::IsContainingWindowElementOfType(
+    nsIFrame** aContainingWindowFrame, Args... aArgs) const {
   if (!mContent->GetParent()) {
     // Our content is the document element
     nsCOMPtr<nsIDocShell> docShell = PresContext()->GetDocShell();
@@ -885,22 +899,25 @@ bool nsSVGOuterSVGFrame::IsRootOfReplacedElementSubDoc(
 
     if (window) {
       RefPtr<Element> frameElement = window->GetFrameElement();
-      if (frameElement &&
-          frameElement->IsAnyOfHTMLElements(nsGkAtoms::object, nsGkAtoms::embed,
-                                            nsGkAtoms::iframe)) {
-        // Our document is inside an HTML 'object', 'embed' or 'iframe' element
-        if (aEmbeddingFrame) {
-          *aEmbeddingFrame = frameElement->GetPrimaryFrame();
-          NS_ASSERTION(*aEmbeddingFrame, "Yikes, no embedding frame!");
+      if (frameElement && frameElement->IsAnyOfHTMLElements(aArgs...)) {
+        if (aContainingWindowFrame) {
+          *aContainingWindowFrame = frameElement->GetPrimaryFrame();
+          NS_ASSERTION(*aContainingWindowFrame, "Yikes, no frame!");
         }
         return true;
       }
     }
   }
-  if (aEmbeddingFrame) {
-    *aEmbeddingFrame = nullptr;
+  if (aContainingWindowFrame) {
+    *aContainingWindowFrame = nullptr;
   }
   return false;
+}
+
+bool nsSVGOuterSVGFrame::IsRootOfReplacedElementSubDoc(
+    nsIFrame** aEmbeddingFrame) {
+  return IsContainingWindowElementOfType(aEmbeddingFrame, nsGkAtoms::object,
+                                         nsGkAtoms::embed);
 }
 
 bool nsSVGOuterSVGFrame::IsRootOfImage() {

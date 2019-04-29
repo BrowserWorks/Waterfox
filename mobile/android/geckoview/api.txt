@@ -50,7 +50,6 @@ import java.lang.RuntimeException;
 import java.lang.String;
 import java.lang.Throwable;
 import java.lang.Void;
-import java.lang.annotation.Annotation;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.AbstractSequentialList;
@@ -225,6 +224,7 @@ package org.mozilla.geckoview {
     ctor protected GeckoDisplay(GeckoSession);
     method @UiThread @NonNull public GeckoResult<Bitmap> capturePixels();
     method @UiThread public void screenOriginChanged(int, int);
+    method @UiThread public void setVerticalClipping(int);
     method @UiThread public boolean shouldPinOnScreen();
     method @UiThread public void surfaceChanged(@NonNull Surface, int, int);
     method @UiThread public void surfaceChanged(@NonNull Surface, int, int, int, int);
@@ -306,9 +306,12 @@ package org.mozilla.geckoview {
     method @Nullable public Class<?> getCrashHandler();
     method @Nullable public Float getDisplayDensityOverride();
     method @Nullable public Integer getDisplayDpiOverride();
+    method public boolean getDoubleTapZoomingEnabled();
     method @NonNull public Bundle getExtras();
     method public boolean getFontInflationEnabled();
     method public float getFontSizeFactor();
+    method public int getGlMsaaLevel();
+    method public boolean getInputAutoZoomEnabled();
     method public boolean getJavaScriptEnabled();
     method @Nullable public String[] getLocales();
     method public boolean getPauseForDebuggerEnabled();
@@ -322,8 +325,11 @@ package org.mozilla.geckoview {
     method @NonNull public GeckoRuntimeSettings setAutomaticFontSizeAdjustment(boolean);
     method @NonNull public GeckoRuntimeSettings setAutoplayDefault(int);
     method @NonNull public GeckoRuntimeSettings setConsoleOutputEnabled(boolean);
+    method @NonNull public GeckoRuntimeSettings setDoubleTapZoomingEnabled(boolean);
     method @NonNull public GeckoRuntimeSettings setFontInflationEnabled(boolean);
     method @NonNull public GeckoRuntimeSettings setFontSizeFactor(float);
+    method @NonNull public GeckoRuntimeSettings setGlMsaaLevel(int);
+    method @NonNull public GeckoRuntimeSettings setInputAutoZoomEnabled(boolean);
     method @NonNull public GeckoRuntimeSettings setJavaScriptEnabled(boolean);
     method public void setLocales(@Nullable String[]);
     method @NonNull public GeckoRuntimeSettings setPreferredColorScheme(int);
@@ -348,9 +354,12 @@ package org.mozilla.geckoview {
     method @NonNull public GeckoRuntimeSettings.Builder crashHandler(@Nullable Class<?>);
     method @NonNull public GeckoRuntimeSettings.Builder displayDensityOverride(float);
     method @NonNull public GeckoRuntimeSettings.Builder displayDpiOverride(int);
+    method @NonNull public GeckoRuntimeSettings.Builder doubleTapZoomingEnabled(boolean);
     method @NonNull public GeckoRuntimeSettings.Builder extras(@NonNull Bundle);
     method @NonNull public GeckoRuntimeSettings.Builder fontInflation(boolean);
     method @NonNull public GeckoRuntimeSettings.Builder fontSizeFactor(float);
+    method @NonNull public GeckoRuntimeSettings.Builder glMsaaLevel(int);
+    method @NonNull public GeckoRuntimeSettings.Builder inputAutoZoomEnabled(boolean);
     method @NonNull public GeckoRuntimeSettings.Builder javaScriptEnabled(boolean);
     method @NonNull public GeckoRuntimeSettings.Builder locales(@Nullable String[]);
     method @NonNull public GeckoRuntimeSettings.Builder pauseForDebugger(boolean);
@@ -506,9 +515,6 @@ package org.mozilla.geckoview {
     method @AnyThread default public int getCurrentIndex();
   }
 
-  public static interface GeckoSession.HistoryDelegate.VisitFlags implements Annotation {
-  }
-
   public static interface GeckoSession.MediaDelegate {
     method @UiThread default public void onMediaAdd(@NonNull GeckoSession, @NonNull MediaElement);
     method @UiThread default public void onMediaRemove(@NonNull GeckoSession, @NonNull MediaElement);
@@ -535,15 +541,13 @@ package org.mozilla.geckoview {
     field @NonNull public final String uri;
   }
 
-  public static interface GeckoSession.NavigationDelegate.TargetWindow implements Annotation {
-  }
-
   public static interface GeckoSession.PermissionDelegate {
     method @UiThread default public void onAndroidPermissionsRequest(@NonNull GeckoSession, @Nullable String[], @NonNull GeckoSession.PermissionDelegate.Callback);
     method @UiThread default public void onContentPermissionRequest(@NonNull GeckoSession, @Nullable String, int, @NonNull GeckoSession.PermissionDelegate.Callback);
     method @UiThread default public void onMediaPermissionRequest(@NonNull GeckoSession, @NonNull String, @Nullable GeckoSession.PermissionDelegate.MediaSource[], @Nullable GeckoSession.PermissionDelegate.MediaSource[], @NonNull GeckoSession.PermissionDelegate.MediaCallback);
     field public static final int PERMISSION_DESKTOP_NOTIFICATION = 1;
     field public static final int PERMISSION_GEOLOCATION = 0;
+    field public static final int PERMISSION_PERSISTENT_STORAGE = 2;
   }
 
   public static interface GeckoSession.PermissionDelegate.Callback {
@@ -574,9 +578,6 @@ package org.mozilla.geckoview {
     field @NonNull public final String rawId;
     field public final int source;
     field public final int type;
-  }
-
-  public static interface GeckoSession.PermissionDelegate.Permission implements Annotation {
   }
 
   public static interface GeckoSession.ProgressDelegate {
@@ -685,15 +686,9 @@ package org.mozilla.geckoview {
     method @UiThread default public void confirm(@Nullable GeckoSession.PromptDelegate.Choice[]);
   }
 
-  public static interface GeckoSession.PromptDelegate.DatetimeType implements Annotation {
-  }
-
   public static interface GeckoSession.PromptDelegate.FileCallback implements GeckoSession.PromptDelegate.AlertCallback {
     method @UiThread default public void confirm(@Nullable Context, @Nullable Uri);
     method @UiThread default public void confirm(@Nullable Context, @Nullable Uri[]);
-  }
-
-  public static interface GeckoSession.PromptDelegate.FileType implements Annotation {
   }
 
   public static interface GeckoSession.PromptDelegate.TextCallback implements GeckoSession.PromptDelegate.AlertCallback {
@@ -723,15 +718,6 @@ package org.mozilla.geckoview {
     field public static final int HIDE_REASON_ACTIVE_SELECTION = 2;
     field public static final int HIDE_REASON_INVISIBLE_SELECTION = 1;
     field public static final int HIDE_REASON_NO_SELECTION = 0;
-  }
-
-  public static interface GeckoSession.SelectionActionDelegate.Action implements Annotation {
-  }
-
-  public static interface GeckoSession.SelectionActionDelegate.Flag implements Annotation {
-  }
-
-  public static interface GeckoSession.SelectionActionDelegate.HideReason implements Annotation {
   }
 
   public static class GeckoSession.SelectionActionDelegate.Selection {
@@ -767,12 +753,6 @@ package org.mozilla.geckoview {
     field public static final int RESTART_REASON_BLUR = 1;
     field public static final int RESTART_REASON_CONTENT_CHANGE = 2;
     field public static final int RESTART_REASON_FOCUS = 0;
-  }
-
-  public static interface GeckoSession.TextInputDelegate.AutoFillNotification implements Annotation {
-  }
-
-  public static interface GeckoSession.TextInputDelegate.RestartReason implements Annotation {
   }
 
   @AnyThread public static class GeckoSession.WebResponseInfo {
@@ -857,6 +837,7 @@ package org.mozilla.geckoview {
     method @UiThread @Nullable public GeckoSession releaseSession();
     method @UiThread public void setSession(@NonNull GeckoSession);
     method @UiThread public void setSession(@NonNull GeckoSession, @Nullable GeckoRuntime);
+    method public void setVerticalClipping(int);
     method public boolean shouldPinOnScreen();
     field @NonNull protected final GeckoView.Display mDisplay;
     field @Nullable protected GeckoRuntime mRuntime;
@@ -873,9 +854,6 @@ package org.mozilla.geckoview {
     field public static final int FETCH_FLAGS_ANONYMOUS = 1;
     field public static final int FETCH_FLAGS_NONE = 0;
     field public static final int FETCH_FLAGS_NO_REDIRECTS = 2;
-  }
-
-  public static interface GeckoWebExecutor.FetchFlags implements Annotation {
   }
 
   @AnyThread public class MediaElement {
@@ -1044,12 +1022,18 @@ package org.mozilla.geckoview {
   }
 
   public class WebExtension {
-    ctor public WebExtension(@NonNull String, @NonNull String, boolean);
+    ctor public WebExtension(@NonNull String, @NonNull String, long);
     ctor public WebExtension(@NonNull String);
     method @UiThread public void setMessageDelegate(@Nullable WebExtension.MessageDelegate, @NonNull String);
-    field public final boolean allowContentMessaging;
+    field public final long flags;
     field @NonNull public final String id;
     field @NonNull public final String location;
+  }
+
+  public static class WebExtension.Flags {
+    ctor protected Flags();
+    field public static final long ALLOW_CONTENT_MESSAGING = 1L;
+    field public static final long NONE = 0L;
   }
 
   @UiThread public static interface WebExtension.MessageDelegate {
@@ -1117,9 +1101,6 @@ package org.mozilla.geckoview {
     method @NonNull public WebRequest.Builder referrer(@Nullable String);
   }
 
-  public static interface WebRequest.CacheMode implements Annotation {
-  }
-
   @AnyThread public class WebRequestError extends Exception {
     ctor public WebRequestError(int, int);
     field public static final int ERROR_CATEGORY_CONTENT = 4;
@@ -1157,12 +1138,6 @@ package org.mozilla.geckoview {
     field public static final int ERROR_UNSAFE_CONTENT_TYPE = 36;
     field public final int category;
     field public final int code;
-  }
-
-  public static interface WebRequestError.Error implements Annotation {
-  }
-
-  public static interface WebRequestError.ErrorCategory implements Annotation {
   }
 
   @AnyThread public class WebResponse extends WebMessage {

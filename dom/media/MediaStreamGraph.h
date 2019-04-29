@@ -490,8 +490,6 @@ class MediaStream : public mozilla::LinkedListElement<MediaStream> {
   bool IsFinishedOnGraphThread() const { return mFinished; }
   virtual void FinishOnGraphThread();
 
-  bool HasCurrentData() const { return mHasCurrentData; }
-
   /**
    * Find track by track id.
    */
@@ -610,13 +608,6 @@ class MediaStream : public mozilla::LinkedListElement<MediaStream> {
    * and fired NotifyFinished notifications.
    */
   bool mNotifiedFinished;
-  /**
-   * True if some data can be present by this stream if/when it's unblocked.
-   * Set by the stream itself on the MediaStreamGraph thread. Only changes
-   * from false to true once a stream has data, since we won't
-   * unblock it until there's more data.
-   */
-  bool mHasCurrentData;
 
   // Main-thread views of state
   StreamTime mMainThreadCurrentTime;
@@ -655,14 +646,14 @@ class SourceMediaStream : public MediaStream {
 
   // Users of audio inputs go through the stream so it can track when the
   // last stream referencing an input goes away, so it can close the cubeb
-  // input.  Also note: callable on any thread (though it bounces through
-  // MainThread to set the command if needed).
+  // input. Main thread only.
   nsresult OpenAudioInput(CubebUtils::AudioDeviceID aID,
                           AudioDataListener* aListener);
-  // Note: also implied when Destroy() happens
-  void CloseAudioInput(Maybe<CubebUtils::AudioDeviceID>& aID,
-                       AudioDataListener* aListener);
+  // Main thread only.
+  void CloseAudioInput(Maybe<CubebUtils::AudioDeviceID>& aID);
 
+  // Main thread only.
+  void Destroy() override;
   // MediaStreamGraph thread only
   void DestroyImpl() override;
 

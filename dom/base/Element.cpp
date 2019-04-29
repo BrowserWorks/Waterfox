@@ -609,8 +609,6 @@ JSObject* Element::WrapObject(JSContext* aCx,
       nsCOMPtr<nsIPrincipal> principal = bindingURL->ExtraData()->Principal();
 
       // We have a binding that must be installed.
-      bool dummy;
-
       nsXBLService* xblService = nsXBLService::GetInstance();
       if (!xblService) {
         dom::Throw(aCx, NS_ERROR_NOT_AVAILABLE);
@@ -618,8 +616,7 @@ JSObject* Element::WrapObject(JSContext* aCx,
       }
 
       RefPtr<nsXBLBinding> binding;
-      xblService->LoadBindings(this, uri, principal, getter_AddRefs(binding),
-                               &dummy);
+      xblService->LoadBindings(this, uri, principal, getter_AddRefs(binding));
 
       if (binding) {
         if (nsContentUtils::IsSafeToRunScript()) {
@@ -664,19 +661,16 @@ already_AddRefed<nsIHTMLCollection> Element::GetElementsByTagName(
 
 nsIScrollableFrame* Element::GetScrollFrame(nsIFrame** aFrame,
                                             FlushType aFlushType) {
-  // it isn't clear what to return for SVG nodes, so just return nothing
-  if (IsSVGElement()) {
-    if (aFrame) {
-      *aFrame = nullptr;
-    }
-    return nullptr;
-  }
-
   nsIFrame* frame = GetPrimaryFrame(aFlushType);
   if (aFrame) {
     *aFrame = frame;
   }
   if (frame) {
+    if (frame->HasAnyStateBits(NS_FRAME_SVG_LAYOUT)) {
+      // It's unclear what to return for SVG frames, so just return null.
+      return nullptr;
+    }
+
     // menu frames implement GetScrollTargetFrame but we don't want
     // to use it here.  Similar for comboboxes.
     LayoutFrameType type = frame->Type();
@@ -742,68 +736,70 @@ void Element::ScrollIntoView(const ScrollIntoViewOptions& aOptions) {
     return;
   }
 
-  int16_t vpercent = nsIPresShell::SCROLL_CENTER;
+  WhereToScroll whereToScrollVertically = kScrollToCenter;
   switch (aOptions.mBlock) {
     case ScrollLogicalPosition::Start:
-      vpercent = nsIPresShell::SCROLL_TOP;
+      whereToScrollVertically = kScrollToTop;
       break;
     case ScrollLogicalPosition::Center:
-      vpercent = nsIPresShell::SCROLL_CENTER;
+      whereToScrollVertically = kScrollToCenter;
       break;
     case ScrollLogicalPosition::End:
-      vpercent = nsIPresShell::SCROLL_BOTTOM;
+      whereToScrollVertically = kScrollToBottom;
       break;
     case ScrollLogicalPosition::Nearest:
-      vpercent = nsIPresShell::SCROLL_MINIMUM;
+      whereToScrollVertically = kScrollMinimum;
       break;
     default:
       MOZ_ASSERT_UNREACHABLE("Unexpected ScrollLogicalPosition value");
   }
 
-  int16_t hpercent = nsIPresShell::SCROLL_CENTER;
+  WhereToScroll whereToScrollHorizontally = kScrollToCenter;
   switch (aOptions.mInline) {
     case ScrollLogicalPosition::Start:
-      hpercent = nsIPresShell::SCROLL_LEFT;
+      whereToScrollHorizontally = kScrollToLeft;
       break;
     case ScrollLogicalPosition::Center:
-      hpercent = nsIPresShell::SCROLL_CENTER;
+      whereToScrollHorizontally = kScrollToCenter;
       break;
     case ScrollLogicalPosition::End:
-      hpercent = nsIPresShell::SCROLL_RIGHT;
+      whereToScrollHorizontally = kScrollToRight;
       break;
     case ScrollLogicalPosition::Nearest:
-      hpercent = nsIPresShell::SCROLL_MINIMUM;
+      whereToScrollHorizontally = kScrollMinimum;
       break;
     default:
       MOZ_ASSERT_UNREACHABLE("Unexpected ScrollLogicalPosition value");
   }
 
-  uint32_t flags = nsIPresShell::SCROLL_OVERFLOW_HIDDEN;
+  ScrollFlags scrollFlags = ScrollFlags::ScrollOverflowHidden;
   if (aOptions.mBehavior == ScrollBehavior::Smooth) {
-    flags |= nsIPresShell::SCROLL_SMOOTH;
+    scrollFlags |= ScrollFlags::ScrollSmooth;
   } else if (aOptions.mBehavior == ScrollBehavior::Auto) {
-    flags |= nsIPresShell::SCROLL_SMOOTH_AUTO;
+    scrollFlags |= ScrollFlags::ScrollSmoothAuto;
   }
   if (StaticPrefs::layout_css_scroll_snap_v1_enabled()) {
-    flags |= nsIPresShell::SCROLL_SNAP;
+    scrollFlags |= ScrollFlags::ScrollSnap;
   }
 
   presShell->ScrollContentIntoView(
-      this, nsIPresShell::ScrollAxis(vpercent, nsIPresShell::SCROLL_ALWAYS),
-      nsIPresShell::ScrollAxis(hpercent, nsIPresShell::SCROLL_ALWAYS), flags);
+      this,
+      nsIPresShell::ScrollAxis(whereToScrollVertically, WhenToScroll::Always),
+      nsIPresShell::ScrollAxis(whereToScrollHorizontally, WhenToScroll::Always),
+      scrollFlags);
 }
 
 void Element::Scroll(const CSSIntPoint& aScroll,
                      const ScrollOptions& aOptions) {
   nsIScrollableFrame* sf = GetScrollFrame();
   if (sf) {
-    ScrollMode scrollMode = ScrollMode::eInstant;
+    ScrollMode scrollMode = ScrollMode::Instant;
     if (aOptions.mBehavior == ScrollBehavior::Smooth) {
-      scrollMode = ScrollMode::eSmoothMsd;
+      scrollMode = ScrollMode::SmoothMsd;
     } else if (aOptions.mBehavior == ScrollBehavior::Auto) {
       ScrollStyles styles = sf->GetScrollStyles();
       if (styles.mScrollBehavior == NS_STYLE_SCROLL_BEHAVIOR_SMOOTH) {
-        scrollMode = ScrollMode::eSmoothMsd;
+        scrollMode = ScrollMode::SmoothMsd;
       }
     }
 
@@ -860,13 +856,13 @@ void Element::ScrollBy(const ScrollToOptions& aOptions) {
       scrollDelta.y = mozilla::ToZeroIfNonfinite(aOptions.mTop.Value());
     }
 
-    ScrollMode scrollMode = ScrollMode::eInstant;
+    ScrollMode scrollMode = ScrollMode::Instant;
     if (aOptions.mBehavior == ScrollBehavior::Smooth) {
-      scrollMode = ScrollMode::eSmoothMsd;
+      scrollMode = ScrollMode::SmoothMsd;
     } else if (aOptions.mBehavior == ScrollBehavior::Auto) {
       ScrollStyles styles = sf->GetScrollStyles();
       if (styles.mScrollBehavior == NS_STYLE_SCROLL_BEHAVIOR_SMOOTH) {
-        scrollMode = ScrollMode::eSmoothMsd;
+        scrollMode = ScrollMode::SmoothMsd;
       }
     }
 
@@ -890,10 +886,10 @@ void Element::SetScrollTop(int32_t aScrollTop) {
   FlushType flushType = aScrollTop == 0 ? FlushType::Frames : FlushType::Layout;
   nsIScrollableFrame* sf = GetScrollFrame(nullptr, flushType);
   if (sf) {
-    ScrollMode scrollMode = ScrollMode::eInstant;
+    ScrollMode scrollMode = ScrollMode::Instant;
     if (sf->GetScrollStyles().mScrollBehavior ==
         NS_STYLE_SCROLL_BEHAVIOR_SMOOTH) {
-      scrollMode = ScrollMode::eSmoothMsd;
+      scrollMode = ScrollMode::SmoothMsd;
     }
     sf->ScrollToCSSPixels(
         CSSIntPoint(sf->GetScrollPositionCSSPixels().x, aScrollTop),
@@ -912,10 +908,10 @@ void Element::SetScrollLeft(int32_t aScrollLeft) {
   // range.  So we need to flush layout no matter what.
   nsIScrollableFrame* sf = GetScrollFrame();
   if (sf) {
-    ScrollMode scrollMode = ScrollMode::eInstant;
+    ScrollMode scrollMode = ScrollMode::Instant;
     if (sf->GetScrollStyles().mScrollBehavior ==
         NS_STYLE_SCROLL_BEHAVIOR_SMOOTH) {
-      scrollMode = ScrollMode::eSmoothMsd;
+      scrollMode = ScrollMode::SmoothMsd;
     }
 
     sf->ScrollToCSSPixels(
@@ -932,7 +928,7 @@ void Element::MozScrollSnap() {
 }
 
 static nsSize GetScrollRectSizeForOverflowVisibleFrame(nsIFrame* aFrame) {
-  if (!aFrame) {
+  if (!aFrame || aFrame->HasAnyStateBits(NS_FRAME_SVG_LAYOUT)) {
     return nsSize(0, 0);
   }
 
@@ -954,8 +950,6 @@ static nsSize GetScrollRectSizeForOverflowVisibleFrame(nsIFrame* aFrame) {
 }
 
 int32_t Element::ScrollHeight() {
-  if (IsSVGElement()) return 0;
-
   nsIFrame* frame;
   nsIScrollableFrame* sf = GetScrollFrame(&frame);
   nscoord height;
@@ -969,8 +963,6 @@ int32_t Element::ScrollHeight() {
 }
 
 int32_t Element::ScrollWidth() {
-  if (IsSVGElement()) return 0;
-
   nsIFrame* frame;
   nsIScrollableFrame* sf = GetScrollFrame(&frame);
   nscoord width;
@@ -2203,17 +2195,17 @@ nsresult Element::DispatchClickEvent(nsPresContext* aPresContext,
   WidgetMouseEvent* sourceMouseEvent = aSourceEvent->AsMouseEvent();
   if (sourceMouseEvent) {
     clickCount = sourceMouseEvent->mClickCount;
-    pressure = sourceMouseEvent->pressure;
+    pressure = sourceMouseEvent->mPressure;
     pointerId = sourceMouseEvent->pointerId;
-    inputSource = sourceMouseEvent->inputSource;
+    inputSource = sourceMouseEvent->mInputSource;
   } else if (aSourceEvent->mClass == eKeyboardEventClass) {
     event.mFlags.mIsPositionless = true;
     inputSource = MouseEvent_Binding::MOZ_SOURCE_KEYBOARD;
   }
-  event.pressure = pressure;
+  event.mPressure = pressure;
   event.mClickCount = clickCount;
   event.pointerId = pointerId;
-  event.inputSource = inputSource;
+  event.mInputSource = inputSource;
   event.mModifiers = aSourceEvent->mModifiers;
   if (aExtraEventFlags) {
     // Be careful not to overwrite existing flags!
@@ -3097,8 +3089,7 @@ nsresult Element::PostHandleEventForLinks(EventChainPostVisitor& aVisitor) {
 
   switch (aVisitor.mEvent->mMessage) {
     case eMouseDown: {
-      if (aVisitor.mEvent->AsMouseEvent()->button ==
-          WidgetMouseEvent::eLeftButton) {
+      if (aVisitor.mEvent->AsMouseEvent()->mButton == MouseButton::eLeft) {
         // don't make the link grab the focus if there is no link handler
         nsILinkHandler* handler = aVisitor.mPresContext->GetLinkHandler();
         Document* document = GetComposedDoc();

@@ -30,7 +30,6 @@ include PTabContext;
 include "mozilla/GfxMessageUtils.h";
 include "mozilla/layers/LayersMessageUtils.h";
 
-using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
 using moveonly mozilla::gfx::PaintFragment from "mozilla/gfx/CrossProcessPaint.h";
 using mozilla::gfx::Matrix4x4 from "mozilla/gfx/Matrix.h";
 using mozilla::gfx::SurfaceFormat from "mozilla/gfx/Types.h";
@@ -133,7 +132,7 @@ nested(upto inside_cpow) sync protocol PBrowser
 
 both:
     async AsyncMessage(nsString aMessage, CpowEntry[] aCpows,
-                       Principal aPrincipal, ClonedMessageData aData);
+                       nsIPrincipal aPrincipal, ClonedMessageData aData);
 
 parent:
     /**
@@ -214,11 +213,11 @@ parent:
     async Event(RemoteDOMEvent aEvent);
 
     sync SyncMessage(nsString aMessage, ClonedMessageData aData,
-                     CpowEntry[] aCpows, Principal aPrincipal)
+                     CpowEntry[] aCpows, nsIPrincipal aPrincipal)
       returns (StructuredCloneData[] retval);
 
     nested(inside_sync) sync RpcMessage(nsString aMessage, ClonedMessageData aData,
-                                        CpowEntry[] aCpows, Principal aPrincipal)
+                                        CpowEntry[] aCpows, nsIPrincipal aPrincipal)
       returns (StructuredCloneData[] retval);
 
     /**
@@ -440,7 +439,7 @@ parent:
      *       principals that can live in the content process should
      *       provided.
      */
-    async IndexedDBPermissionRequest(Principal aPrincipal) returns (uint32_t permission);
+    async IndexedDBPermissionRequest(nsIPrincipal aPrincipal) returns (uint32_t permission);
 
     /**
      * window.open from inside <iframe mozbrowser> is special.  When the child
@@ -454,7 +453,8 @@ parent:
      * @param opener the PBrowser whose content called window.open.
      */
     async BrowserFrameOpenWindow(PBrowser opener,
-                                 nsString aURL, nsString aName, nsString aFeatures)
+                                 nsString aURL, nsString aName,
+                                 bool aForceNoReferrer, nsString aFeatures)
         returns (CreatedWindowInfo window);
 
     /**
@@ -570,7 +570,7 @@ parent:
 
     /**
      * Child informs the parent that the content is ready to handle input
-     * events. This is sent when the TabChild is created.
+     * events. This is sent when the BrowserChild is created.
      */
     async RemoteIsReadyToHandleInputEvents();
 
@@ -593,12 +593,12 @@ parent:
                             Shmem? visualData,
                             uint32_t stride, SurfaceFormat format,
                             LayoutDeviceIntRect dragRect,
-                            Principal principal);
+                            nsIPrincipal principal);
 
     // After a compositor reset, it is necessary to reconnect each layers ID to
     // the compositor of the widget that will render those layers. Note that
     // this is sync so we can ensure that messages to the window compositor
-    // arrive before the TabChild attempts to use its cross-process compositor
+    // arrive before the BrowserChild attempts to use its cross-process compositor
     // bridge.
     sync EnsureLayersConnected() returns (CompositorOptions compositorOptions);
 
@@ -742,7 +742,7 @@ child:
      * don't need support RealDragEvent with input priority.
      */
     async RealDragEvent(WidgetDragEvent aEvent, uint32_t aDragAction,
-                        uint32_t aDropEffect, Principal aPrincipal);
+                        uint32_t aDropEffect, nsIPrincipal aPrincipal);
 
     async PluginEvent(WidgetPluginEvent aEvent);
 
@@ -758,7 +758,7 @@ child:
      */
     async PasteTransferable(IPCDataTransfer aDataTransfer,
                             bool aIsPrivateData,
-                            Principal aRequestingPrincipal,
+                            nsIPrincipal aRequestingPrincipal,
                             uint32_t aContentPolicyType);
 
     /**
@@ -900,24 +900,24 @@ child:
     async UpdateNativeWindowHandle(uintptr_t aNewHandle);
 
     /**
-     * Tell the TabChild that it should expect a Large-Allocation load to occur.
+     * Tell the BrowserChild that it should expect a Large-Allocation load to occur.
      * Loads which occur until this flag is cleared will not leave the process.
      */
     async AwaitLargeAlloc();
 
     /**
-     * Tell the TabChild to set the name of its toplevel docshell to the given name.
+     * Tell the BrowserChild to set the name of its toplevel docshell to the given name.
      */
     async SetWindowName(nsString aName);
 
     /**
-     * Tell the TabChild to allow scripts in the docshell to close the window.
+     * Tell the BrowserChild to allow scripts in the docshell to close the window.
      */
     async AllowScriptsToClose();
 
     /**
-     * Tell the TabChild what OriginAttributes it should inherit from. This must
-     * be called before the first non-blank document is loaded in the TabChild.
+     * Tell the BrowserChild what OriginAttributes it should inherit from. This must
+     * be called before the first non-blank document is loaded in the BrowserChild.
      */
     async SetOriginAttributes(OriginAttributes aOriginAttributes);
 

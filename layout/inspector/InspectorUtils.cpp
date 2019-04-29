@@ -184,22 +184,6 @@ void InspectorUtils::GetCSSStyleRules(
     maps.AppendElement(map);
   }
 
-  // Collect style rule maps for bindings.
-  for (nsIContent* bindingContent = &aElement; bindingContent;
-       bindingContent = bindingContent->GetBindingParent()) {
-    for (nsXBLBinding* binding = bindingContent->GetXBLBinding(); binding;
-         binding = binding->GetBaseBinding()) {
-      if (auto* map = binding->PrototypeBinding()->GetServoStyleRuleMap()) {
-        maps.AppendElement(map);
-      }
-    }
-    // Note that we intentionally don't cut off here, unlike when we
-    // do styling, because even if style rules from parent binding
-    // do not apply to the element directly in those cases, their
-    // rules may still show up in the list we get above due to the
-    // inheritance in cascading.
-  }
-
   // Now shadow DOM stuff...
   if (auto* shadow = aElement.GetShadowRoot()) {
     maps.AppendElement(&shadow->ServoStyleRuleMap());
@@ -352,8 +336,8 @@ void InspectorUtils::GetCSSPropertyNames(GlobalObject& aGlobalObject,
                                          const PropertyNamesOptions& aOptions,
                                          nsTArray<nsString>& aResult) {
   CSSEnabledState enabledState = aOptions.mIncludeExperimentals
-                                     ? CSSEnabledState::eIgnoreEnabledState
-                                     : CSSEnabledState::eForAllContent;
+                                     ? CSSEnabledState::IgnoreEnabledState
+                                     : CSSEnabledState::ForAllContent;
 
   auto appendProperty = [enabledState, &aResult](uint32_t prop) {
     nsCSSPropertyID cssProp = nsCSSPropertyID(prop);
@@ -642,7 +626,7 @@ void InspectorUtils::GetCSSPseudoElementNames(GlobalObject& aGlobalObject,
       static_cast<size_t>(PseudoStyleType::CSSPseudoElementsEnd);
   for (size_t i = 0; i < kPseudoCount; ++i) {
     PseudoStyleType type = static_cast<PseudoStyleType>(i);
-    if (nsCSSPseudoElements::IsEnabled(type, CSSEnabledState::eForAllContent)) {
+    if (nsCSSPseudoElements::IsEnabled(type, CSSEnabledState::ForAllContent)) {
       nsAtom* atom = nsCSSPseudoElements::GetPseudoAtom(type);
       aResult.AppendElement(nsDependentAtomString(atom));
     }

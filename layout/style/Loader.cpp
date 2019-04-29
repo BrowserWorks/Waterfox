@@ -743,28 +743,7 @@ nsresult SheetLoadData::VerifySheetReadyToParse(nsresult aStatus,
 
   SRIMetadata sriMetadata;
   mSheet->GetIntegrity(sriMetadata);
-  if (sriMetadata.IsEmpty()) {
-    nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
-    if (loadInfo->GetEnforceSRI()) {
-      LOG(("  Load was blocked by SRI"));
-      MOZ_LOG(gSriPRLog, mozilla::LogLevel::Debug,
-              ("css::Loader::OnStreamComplete, required SRI not found"));
-      mLoader->SheetComplete(this, NS_ERROR_SRI_CORRUPT);
-      // log the failed load to web console
-      nsCOMPtr<nsIContentSecurityPolicy> csp;
-      loadInfo->LoadingPrincipal()->GetCsp(getter_AddRefs(csp));
-      nsAutoCString spec;
-      mLoader->mDocument->GetDocumentURI()->GetAsciiSpec(spec);
-      // line number unknown. mRequestingNode doesn't bear this info.
-      csp->LogViolationDetails(
-          nsIContentSecurityPolicy::VIOLATION_TYPE_REQUIRE_SRI_FOR_STYLE,
-          nullptr,  // triggering element
-          nullptr,  // nsICSPEventListener
-          NS_ConvertUTF8toUTF16(spec), EmptyString(), 0, 0, EmptyString(),
-          EmptyString());
-      return NS_OK;
-    }
-  } else {
+  if (!sriMetadata.IsEmpty()) {
     nsAutoCString sourceUri;
     if (mLoader->mDocument && mLoader->mDocument->GetDocumentURI()) {
       mLoader->mDocument->GetDocumentURI()->GetAsciiSpec(sourceUri);
@@ -1088,11 +1067,10 @@ static Loader::MediaMatched MediaListMatches(const MediaList* aMediaList,
  * well as setting the enabled state based on the title and whether
  * the sheet had "alternate" in its rel.
  */
-Loader::MediaMatched Loader::PrepareSheet(StyleSheet* aSheet,
-                                          const nsAString& aTitle,
-                                          const nsAString& aMediaString,
-                                          MediaList* aMediaList,
-                                          IsAlternate aIsAlternate) {
+Loader::MediaMatched Loader::PrepareSheet(
+    StyleSheet* aSheet, const nsAString& aTitle, const nsAString& aMediaString,
+    MediaList* aMediaList, IsAlternate aIsAlternate,
+    IsExplicitlyEnabled aIsExplicitlyEnabled) {
   MOZ_ASSERT(aSheet, "Must have a sheet!");
 
   RefPtr<MediaList> mediaList(aMediaList);
@@ -1106,7 +1084,8 @@ Loader::MediaMatched Loader::PrepareSheet(StyleSheet* aSheet,
   aSheet->SetMedia(mediaList);
 
   aSheet->SetTitle(aTitle);
-  aSheet->SetEnabled(aIsAlternate == IsAlternate::No);
+  aSheet->SetEnabled(aIsAlternate == IsAlternate::No ||
+                     aIsExplicitlyEnabled == IsExplicitlyEnabled::Yes);
   return MediaListMatches(mediaList, mDocument);
 }
 
@@ -1576,6 +1555,15 @@ Loader::Completed Loader::ParseSheet(const nsACString& aBytes,
   MOZ_ASSERT(aLoadData);
   aLoadData->mIsBeingParsed = true;
 
+  // Tell the record/replay system about any sheets that are being parsed,
+  // so that devtools code can find them later.
+  if (recordreplay::IsRecordingOrReplaying() && aLoadData->mURI) {
+    recordreplay::NoteContentParse(
+        aLoadData, aLoadData->mURI->GetSpecOrDefault().get(), "text/css",
+        reinterpret_cast<const Utf8Unit*>(aBytes.BeginReading()),
+        aBytes.Length());
+  }
+
   StyleSheet* sheet = aLoadData->mSheet;
   MOZ_ASSERT(sheet);
 
@@ -1835,8 +1823,8 @@ Result<Loader::LoadSheetResult, nsresult> Loader::LoadInlineStyle(
 
   LOG(("  Sheet is alternate: %d", static_cast<int>(isAlternate)));
 
-  auto matched =
-      PrepareSheet(sheet, aInfo.mTitle, aInfo.mMedia, nullptr, isAlternate);
+  auto matched = PrepareSheet(sheet, aInfo.mTitle, aInfo.mMedia, nullptr,
+                              isAlternate, aInfo.mIsExplicitlyEnabled);
 
   InsertSheetInTree(*sheet, aInfo.mContent);
 
@@ -1940,8 +1928,8 @@ Result<Loader::LoadSheetResult, nsresult> Loader::LoadStyleLink(
 
   LOG(("  Sheet is alternate: %d", static_cast<int>(isAlternate)));
 
-  auto matched =
-      PrepareSheet(sheet, aInfo.mTitle, aInfo.mMedia, nullptr, isAlternate);
+  auto matched = PrepareSheet(sheet, aInfo.mTitle, aInfo.mMedia, nullptr,
+                              isAlternate, aInfo.mIsExplicitlyEnabled);
 
   InsertSheetInTree(*sheet, aInfo.mContent);
 
@@ -2107,7 +2095,8 @@ nsresult Loader::LoadChildSheet(StyleSheet* aParentSheet,
                      &sheet);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PrepareSheet(sheet, empty, empty, aMedia, IsAlternate::No);
+    PrepareSheet(sheet, empty, empty, aMedia, IsAlternate::No,
+                 IsExplicitlyEnabled::No);
   }
 
   MOZ_ASSERT(sheet);
@@ -2159,16 +2148,6 @@ nsresult Loader::LoadSheet(nsIURI* aURL, SheetParsingMode aParsingMode,
                                       aSheet, aObserver);
 }
 
-nsresult Loader::LoadSheet(nsIURI* aURL, nsIPrincipal* aOriginPrincipal,
-                           nsICSSLoaderObserver* aObserver,
-                           RefPtr<StyleSheet>* aSheet) {
-  LOG(("css::Loader::LoadSheet(aURL, aObserver, aSheet) api call"));
-  MOZ_ASSERT(aSheet, "aSheet is null");
-  return InternalLoadNonDocumentSheet(aURL, false, eAuthorSheetFeatures, false,
-                                      aOriginPrincipal, nullptr, aSheet,
-                                      aObserver);
-}
-
 nsresult Loader::LoadSheet(nsIURI* aURL, bool aIsPreload,
                            nsIPrincipal* aOriginPrincipal,
                            const Encoding* aPreloadEncoding,
@@ -2218,7 +2197,8 @@ nsresult Loader::InternalLoadNonDocumentSheet(
                    aReferrerPolicy, aIntegrity, syncLoad, state, &sheet);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PrepareSheet(sheet, empty, empty, nullptr, IsAlternate::No);
+  PrepareSheet(sheet, empty, empty, nullptr, IsAlternate::No,
+               IsExplicitlyEnabled::No);
 
   if (state == eSheetComplete) {
     LOG(("  Sheet already complete"));

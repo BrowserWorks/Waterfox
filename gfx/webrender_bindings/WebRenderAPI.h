@@ -104,8 +104,7 @@ class TransactionBuilder final {
       const nsTArray<wr::WrOpacityProperty>& aOpacityArray,
       const nsTArray<wr::WrTransformProperty>& aTransformArray);
 
-  void SetDocumentView(const LayoutDeviceIntRect& aDocRect,
-                       const LayoutDeviceIntSize& aWidgetSize);
+  void SetDocumentView(const LayoutDeviceIntRect& aDocRect);
 
   void UpdateScrollPosition(
       const wr::WrPipelineId& aPipelineId,
@@ -209,8 +208,9 @@ class WebRenderAPI final {
       RefPtr<widget::CompositorWidget>&& aWidget,
       const wr::WrWindowId& aWindowId, LayoutDeviceIntSize aSize);
 
-  static void SendTransactions(const RenderRootArray<RefPtr<WebRenderAPI>>& aApis,
-                               RenderRootArray<TransactionBuilder*>& aTxns);
+  static void SendTransactions(
+      const RenderRootArray<RefPtr<WebRenderAPI>>& aApis,
+      RenderRootArray<TransactionBuilder*>& aTxns);
 
   already_AddRefed<WebRenderAPI> CreateDocument(LayoutDeviceIntSize aSize,
                                                 int8_t aLayerIndex,
@@ -422,7 +422,8 @@ class DisplayListBuilder final {
   void PushRoundedRect(const wr::LayoutRect& aBounds,
                        const wr::LayoutRect& aClip, bool aIsBackfaceVisible,
                        const wr::ColorF& aColor);
-
+  void PushHitTest(const wr::LayoutRect& aBounds, const wr::LayoutRect& aClip,
+                   bool aIsBackfaceVisible);
   void PushClearRect(const wr::LayoutRect& aBounds);
   void PushClearRectWithComplexRegion(const wr::LayoutRect& aBounds,
                                       const wr::ComplexClipRegion& aRegion);

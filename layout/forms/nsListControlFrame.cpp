@@ -822,7 +822,7 @@ void nsListControlFrame::CaptureMouseEvents(bool aGrabMouseEvents) {
     return;
 
   if (aGrabMouseEvents) {
-    nsIPresShell::SetCapturingContent(mContent, CAPTURE_IGNOREALLOWED);
+    PresShell::SetCapturingContent(mContent, CaptureFlags::IgnoreAllowedState);
   } else {
     nsIContent* capturingContent = nsIPresShell::GetCapturingContent();
 
@@ -837,7 +837,7 @@ void nsListControlFrame::CaptureMouseEvents(bool aGrabMouseEvents) {
       // which is actually grabbing
       // This shouldn't be necessary. We should simply ensure that events
       // targeting scrollbars are never visible to DOM consumers.
-      nsIPresShell::SetCapturingContent(nullptr, 0);
+      PresShell::ReleaseCapturingContent();
     }
   }
 }
@@ -1798,7 +1798,7 @@ void nsListControlFrame::ScrollToIndex(int32_t aIndex) {
   if (aIndex < 0) {
     // XXX shouldn't we just do nothing if we're asked to scroll to
     // kNothingSelected?
-    ScrollTo(nsPoint(0, 0), ScrollMode::eInstant);
+    ScrollTo(nsPoint(0, 0), ScrollMode::Instant);
   } else {
     RefPtr<dom::HTMLOptionElement> option =
         GetOption(AssertedCast<uint32_t>(aIndex));
@@ -1815,9 +1815,9 @@ void nsListControlFrame::ScrollToFrame(dom::HTMLOptionElement& aOptElement) {
     PresShell()->ScrollFrameRectIntoView(
         childFrame, nsRect(nsPoint(0, 0), childFrame->GetSize()),
         nsIPresShell::ScrollAxis(), nsIPresShell::ScrollAxis(),
-        nsIPresShell::SCROLL_OVERFLOW_HIDDEN |
-            nsIPresShell::SCROLL_FIRST_ANCESTOR_ONLY |
-            nsIPresShell::SCROLL_IGNORE_SCROLL_MARGIN_AND_PADDING);
+        ScrollFlags::ScrollOverflowHidden |
+            ScrollFlags::ScrollFirstAncestorOnly |
+            ScrollFlags::IgnoreMarginAndPadding);
   }
 }
 

@@ -13,6 +13,13 @@ function testElements(baseid, callback)
       continue;
     }
 
+    // Ignore content inside a <button>  This can be removed if/when
+    // button switches to use shadow DOM.
+    let buttonParent = element.closest("button");
+    if (buttonParent && buttonParent !== element) {
+      continue;
+    }
+
     testElement(element);
   }
 
@@ -30,6 +37,10 @@ function testElements(baseid, callback)
   is(element.scrollTop, 0, element.id + " scrollTop after nonscroll");
 
   callback();
+}
+
+function usesSVGLayout(e) {
+  return e instanceof SVGElement && !(e instanceof SVGSVGElement);
 }
 
 function toNearestAppunit(v)
@@ -94,13 +105,13 @@ function testElement(element)
   }
 
   if (doScrollCheck) {
-    if (element instanceof SVGElement)
+    if (usesSVGLayout(element))
       checkScrollState(element, 0, 0, 0, 0, element.id);
      else
       checkScrollState(element, 0, 0, scrollWidth, scrollHeight, element.id);
   }
 
-  if (element instanceof SVGElement)
+  if (usesSVGLayout(element))
     checkClientState(element, 0, 0, 0, 0, element.id);
   else
     checkClientState(element, borderLeft, borderTop, clientWidth, clientHeight, element.id);
@@ -207,7 +218,7 @@ function checkCoords(element, type, left, top, width, height, testname)
     checkCoord(element, type + "Height", height, testname);
   }
 
-  if (element instanceof SVGElement)
+  if (usesSVGLayout(element))
     return;
 
   if (element.id == "outerpopup" && !element.parentNode.open) // closed popup
@@ -220,7 +231,7 @@ function checkCoords(element, type, left, top, width, height, testname)
 
 function gcs(element, prop)
 {
-  var propVal = (element instanceof SVGElement && (prop == "width" || prop == "height")) ?
+  var propVal = (usesSVGLayout(element) && (prop == "width" || prop == "height")) ?
                    element.getAttribute(prop) : getComputedStyle(element, "")[prop];
   if (propVal == "auto" || element.id == "nonappended")
     return 0;

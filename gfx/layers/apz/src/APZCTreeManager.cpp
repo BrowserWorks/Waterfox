@@ -17,7 +17,7 @@
 #include "InputData.h"                      // for InputData, etc
 #include "Layers.h"                         // for Layer, etc
 #include "mozilla/dom/MouseEventBinding.h"  // for MouseEvent constants
-#include "mozilla/dom/TabParent.h"          // for AreRecordReplayTabsActive
+#include "mozilla/dom/BrowserParent.h"      // for AreRecordReplayTabsActive
 #include "mozilla/dom/Touch.h"              // for Touch
 #include "mozilla/gfx/gfxVars.h"            // for gfxVars
 #include "mozilla/gfx/GPUParent.h"          // for GPUParent
@@ -714,7 +714,8 @@ void APZCTreeManager::SampleForWebRender(wr::TransactionWrapper& aTxn,
           controller = aState.GetCompositorController();
         });
     if (controller) {
-      controller->ScheduleRenderOnCompositorThread(wr::RenderRootSet(aRenderRoot));
+      controller->ScheduleRenderOnCompositorThread(
+          wr::RenderRootSet(aRenderRoot));
     }
   }
 }
@@ -1219,7 +1220,7 @@ nsEventStatus APZCTreeManager::ReceiveInputEvent(
   // Ignore input events when there are active tabs that are recording or
   // replaying. APZ does not work with the special layers constructed by
   // the middleman processes being communicated with here.
-  if (dom::TabParent::AreRecordReplayTabsActive()) {
+  if (dom::BrowserParent::AreRecordReplayTabsActive()) {
     return nsEventStatus_eIgnore;
   }
 
@@ -1786,12 +1787,10 @@ nsEventStatus APZCTreeManager::ProcessTouchInput(
       uint64_t inputBlockId = 0;
       result = mInputQueue->ReceiveInputEvent(
           mApzcForInputBlock, TargetConfirmationFlags{mHitResultForInputBlock},
-          aInput, &inputBlockId);
+          aInput, &inputBlockId,
+          touchBehaviors.IsEmpty() ? Nothing() : Some(touchBehaviors));
       if (aOutInputBlockId) {
         *aOutInputBlockId = inputBlockId;
-      }
-      if (!touchBehaviors.IsEmpty()) {
-        mInputQueue->SetAllowedTouchBehavior(inputBlockId, touchBehaviors);
       }
 
       // For computing the event to pass back to Gecko, use up-to-date
@@ -1857,7 +1856,7 @@ nsEventStatus APZCTreeManager::ProcessTouchInputForScrollbarDrag(
   MouseInput mouseInput{MultiTouchTypeToMouseType(aTouchInput.mType),
                         MouseInput::LEFT_BUTTON,
                         dom::MouseEvent_Binding::MOZ_SOURCE_TOUCH,
-                        WidgetMouseEvent::eLeftButtonFlag,
+                        MouseButtonsFlag::eLeftFlag,
                         aTouchInput.mTouches[0].mScreenPoint,
                         aTouchInput.mTime,
                         aTouchInput.mTimeStamp,

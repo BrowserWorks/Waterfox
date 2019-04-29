@@ -71,10 +71,17 @@ function handleRequest(aRequest, aResponse) {
   // mar will be downloaded asynchronously which will allow the ui to load
   // before the download completes.
   if (params.slowDownloadMar) {
-    let retries = 0;
     aResponse.processAsync();
     aResponse.setHeader("Content-Type", "binary/octet-stream");
     aResponse.setHeader("Content-Length", SIZE_SIMPLE_MAR);
+
+    // BITS will first make a HEAD request followed by a GET request.
+    if (aRequest.method == "HEAD") {
+      aResponse.finish();
+      return;
+    }
+
+    let retries = 0;
     gSlowDownloadTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
     gSlowDownloadTimer.initWithCallback(function(aTimer) {
       let continueFile = getTestDataFile(CONTINUE_DOWNLOAD);
@@ -225,7 +232,9 @@ function parseQueryString(aQueryString) {
   for (let i = 0, sz = paramArray.length; i < sz; i++) {
     let match = regex.exec(paramArray[i]);
     if (!match) {
-      throw "Bad parameter in queryString!  '" + paramArray[i] + "'";
+      throw Components.Exception(
+        "Bad parameter in queryString! '" + paramArray[i] + "'",
+        Cr.NS_ERROR_ILLEGAL_VALUE);
     }
     params[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
   }

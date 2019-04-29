@@ -803,7 +803,8 @@ bool nsSVGIntegrationUtils::PaintMask(const PaintFramesParams& aParams) {
     MoveContextOriginToUserSpace(firstFrame, aParams);
 
     basicShapeSR.SetContext(&ctx);
-    nsCSSClipPathInstance::ApplyBasicShapeOrPathClip(ctx, frame);
+    nsCSSClipPathInstance::ApplyBasicShapeOrPathClip(
+        ctx, frame, nsSVGUtils::GetCSSPxToDevPxMatrix(frame));
     if (!maskUsage.shouldGenerateMaskLayer) {
       // Only have basic-shape clip-path effect. Fill clipped region by
       // opaque white.
@@ -995,7 +996,8 @@ void PaintMaskAndClipPathInternal(const PaintFramesParams& aParams,
     if (maskUsage.shouldApplyClipPath) {
       clipPathFrame->ApplyClipPath(context, frame, cssPxToDevPxMatrix);
     } else {
-      nsCSSClipPathInstance::ApplyBasicShapeOrPathClip(context, frame);
+      nsCSSClipPathInstance::ApplyBasicShapeOrPathClip(context, frame,
+                                                       cssPxToDevPxMatrix);
     }
   }
 
@@ -1174,12 +1176,12 @@ bool PaintFrameCallback::operator()(gfxContext* aContext,
                mPaintServerSize.height);
 
   using PaintFrameFlags = nsLayoutUtils::PaintFrameFlags;
-  PaintFrameFlags flags = PaintFrameFlags::PAINT_IN_TRANSFORM;
+  PaintFrameFlags flags = PaintFrameFlags::InTransform;
   if (mFlags & nsSVGIntegrationUtils::FLAG_SYNC_DECODE_IMAGES) {
-    flags |= PaintFrameFlags::PAINT_SYNC_DECODE_IMAGES;
+    flags |= PaintFrameFlags::SyncDecodeImages;
   }
   nsLayoutUtils::PaintFrame(aContext, mFrame, dirty, NS_RGBA(0, 0, 0, 0),
-                            nsDisplayListBuilderMode::PAINTING, flags);
+                            nsDisplayListBuilderMode::Painting, flags);
 
   nsIFrame* currentFrame = mFrame;
   while ((currentFrame = currentFrame->GetNextContinuation()) != nullptr) {
@@ -1193,7 +1195,7 @@ bool PaintFrameCallback::operator()(gfxContext* aContext,
 
     nsLayoutUtils::PaintFrame(aContext, currentFrame, dirty - offset,
                               NS_RGBA(0, 0, 0, 0),
-                              nsDisplayListBuilderMode::PAINTING, flags);
+                              nsDisplayListBuilderMode::Painting, flags);
 
     aContext->Restore();
   }

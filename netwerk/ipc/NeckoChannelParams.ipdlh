@@ -80,8 +80,6 @@ struct LoadInfoArgs
   bool                        upgradeInsecureRequests;
   bool                        browserUpgradeInsecureRequests;
   bool                        browserWouldUpgradeInsecureRequests;
-  bool                        verifySignedContent;
-  bool                        enforceSRI;
   bool                        forceAllowDataURI;
   bool                        allowInsecureRedirectToDataURI;
   bool                        skipContentPolicyCheckForWebRequest;
@@ -140,8 +138,8 @@ struct LoadInfoArgs
   bool                        documentHasLoaded;
   nsString                    cspNonce;
   bool                        isFromProcessingFrameAttributes;
-
   CookieSettingsArgs cookieSettings;
+  uint32_t                    requestBlockingReason;
 };
 
 /**
@@ -174,6 +172,8 @@ struct ParentLoadInfoForwarderArgs
   bool documentHasLoaded;
 
   CookieSettingsArgs? cookieSettings;
+
+  uint32_t requestBlockingReason;
 
   // IMPORTANT: when you add new properites here you must also update
   // LoadInfoToParentLoadInfoForwarder and MergeParentLoadInfoForwarder

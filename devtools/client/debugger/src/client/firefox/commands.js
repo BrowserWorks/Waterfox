@@ -8,6 +8,9 @@ import { prepareSourcePayload, createWorker } from "./create";
 import { supportsWorkers, updateWorkerClients } from "./workers";
 import { features } from "../../utils/prefs";
 
+import Reps from "devtools-reps";
+import type { Node } from "devtools-reps";
+
 import type {
   ActorId,
   BreakpointLocation,
@@ -20,7 +23,6 @@ import type {
   Script,
   SourceId,
   SourceActor,
-  Source,
   Worker,
   Range
 } from "../../types";
@@ -67,6 +69,15 @@ function hasWasmSupport() {
 
 function createObjectClient(grip: Grip) {
   return debuggerClient.createObjectClient(grip);
+}
+
+async function loadObjectProperties(root: Node) {
+  const utils = Reps.objectInspector.utils;
+  const properties = await utils.loadProperties.loadItemProperties(
+    root,
+    createObjectClient
+  );
+  return utils.node.makeNodesForProperties(properties, root);
 }
 
 function releaseActor(actor: String) {
@@ -170,8 +181,8 @@ async function sourceContents({
   thread
 }: SourceActor): Promise<{| source: any, contentType: ?string |}> {
   const sourceThreadClient = lookupThreadClient(thread);
-  const sourceClient = sourceThreadClient.source({ actor });
-  const { source, contentType } = await sourceClient.source();
+  const sourceFront = sourceThreadClient.source({ actor });
+  const { source, contentType } = await sourceFront.source();
   return { source, contentType };
 }
 
@@ -188,7 +199,7 @@ function removeXHRBreakpoint(path: string, method: string) {
 function locationKey(location: BreakpointLocation) {
   const { sourceUrl, line, column } = location;
   const sourceId = location.sourceId || "";
-  return `${(sourceUrl: any)}:${sourceId}:${line}:${(column: any)}`;
+  return `${(sourceUrl: any)}:${(sourceId: any)}:${line}:${(column: any)}`;
 }
 
 function waitForWorkers(shouldWait: boolean) {
@@ -354,11 +365,11 @@ async function blackBox(
   isBlackBoxed: boolean,
   range?: Range
 ): Promise<*> {
-  const sourceClient = threadClient.source({ actor: sourceActor.actor });
+  const sourceFront = threadClient.source({ actor: sourceActor.actor });
   if (isBlackBoxed) {
-    await sourceClient.unblackBox(range);
+    await sourceFront.unblackBox(range);
   } else {
-    await sourceClient.blackBox(range);
+    await sourceFront.blackBox(range);
   }
 }
 
@@ -446,15 +457,15 @@ function getMainThread() {
 }
 
 async function getBreakpointPositions(
-  source: Source,
+  actors: Array<SourceActor>,
   range: ?Range
 ): Promise<{ [string]: number[] }> {
   const sourcePositions = {};
 
-  for (const { thread, actor } of source.actors) {
+  for (const { thread, actor } of actors) {
     const sourceThreadClient = lookupThreadClient(thread);
-    const sourceClient = sourceThreadClient.source({ actor });
-    const { positions } = await sourceClient.getBreakpointPositionsCompressed(
+    const sourceFront = sourceThreadClient.source({ actor });
+    const positions = await sourceFront.getBreakpointPositionsCompressed(
       range
     );
 
@@ -475,6 +486,7 @@ const clientCommands = {
   autocomplete,
   blackBox,
   createObjectClient,
+  loadObjectProperties,
   releaseActor,
   interrupt,
   pauseGrip,
@@ -512,7 +524,8 @@ const clientCommands = {
   setEventListenerBreakpoints,
   waitForWorkers,
   detachWorkers,
-  hasWasmSupport
+  hasWasmSupport,
+  lookupConsoleClient
 };
 
 export { setupCommands, clientCommands };

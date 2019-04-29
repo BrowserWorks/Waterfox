@@ -10,10 +10,6 @@ skip script non262/String/normalize-generateddata-input.js # input data for othe
 slow script test262/built-ins/decodeURI/S15.1.3.1_A2.5_T1.js
 slow script test262/built-ins/decodeURIComponent/S15.1.3.2_A2.5_T1.js
 
-# Fields are not fully implemented yet
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1499448
-skip script non262/reflect-parse/class-fields.js
-
 # Windows10-aarch64 fails certain tests.
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1526003
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1526012
@@ -359,17 +355,11 @@ skip script test262/language/expressions/prefix-increment/S11.4.4_A5_T5.js
 skip script test262/language/expressions/prefix-increment/S11.4.4_A6_T1.js
 skip script test262/language/expressions/prefix-increment/S11.4.4_A6_T2.js
 
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1288457
-skip script test262/built-ins/Function/internals/Construct/base-ctor-revoked-proxy.js
-
 # https://bugzilla.mozilla.org/show_bug.cgi?id=944846
 skip script test262/built-ins/Number/prototype/toExponential/return-values.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1225839
 skip script test262/built-ins/Function/internals/Call/class-ctor-realm.js
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1288457
-skip script test262/built-ins/Function/internals/Construct/base-ctor-revoked-proxy-realm.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1297179
 skip script test262/built-ins/Proxy/apply/arguments-realm.js
@@ -403,9 +393,7 @@ skip script test262/built-ins/Function/internals/Construct/derived-return-val-re
 skip script test262/built-ins/Function/internals/Construct/derived-this-uninitialized-realm.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1317416
-skip script test262/language/expressions/super/realm.js
 skip script test262/built-ins/GeneratorFunction/proto-from-ctor-realm.js
-skip script test262/built-ins/Function/prototype/bind/proto-from-ctor-realm.js
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1317395
 skip script test262/built-ins/ArrayBuffer/prototype/byteLength/detached-buffer.js
@@ -558,53 +546,11 @@ skip script test262/intl402/Intl/getCanonicalLocales/non-iana-canon.js
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1508684
 skip script test262/language/expressions/import.meta/syntax/invalid-assignment-target-update-expr.js
 
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1542406
-skip script test262/language/expressions/class/elements/derived-cls-direct-eval-err-contains-supercall-1.js
-skip script test262/language/expressions/class/elements/derived-cls-direct-eval-err-contains-supercall-2.js
-skip script test262/language/expressions/class/elements/derived-cls-direct-eval-err-contains-supercall.js
+# https://github.com/tc39/test262/issues/2127
 skip script test262/language/expressions/class/elements/derived-cls-direct-eval-err-contains-superproperty-1.js
 skip script test262/language/expressions/class/elements/derived-cls-direct-eval-err-contains-superproperty-2.js
-skip script test262/language/expressions/class/elements/derived-cls-indirect-eval-err-contains-supercall-1.js
-skip script test262/language/expressions/class/elements/derived-cls-indirect-eval-err-contains-supercall-2.js
-skip script test262/language/expressions/class/elements/derived-cls-indirect-eval-err-contains-supercall.js
-skip script test262/language/expressions/class/elements/derived-cls-indirect-eval-err-contains-superproperty-1.js
-skip script test262/language/expressions/class/elements/derived-cls-indirect-eval-err-contains-superproperty-2.js
-skip script test262/language/expressions/class/elements/direct-eval-err-contains-arguments.js
-skip script test262/language/expressions/class/elements/private-derived-cls-direct-eval-err-contains-supercall-1.js
-skip script test262/language/expressions/class/elements/private-derived-cls-direct-eval-err-contains-supercall-2.js
-skip script test262/language/expressions/class/elements/private-derived-cls-direct-eval-err-contains-supercall.js
-skip script test262/language/expressions/class/elements/private-derived-cls-indirect-eval-err-contains-supercall-1.js
-skip script test262/language/expressions/class/elements/private-derived-cls-indirect-eval-err-contains-supercall-2.js
-skip script test262/language/expressions/class/elements/private-derived-cls-indirect-eval-err-contains-supercall.js
-skip script test262/language/statements/class/elements/derived-cls-direct-eval-err-contains-supercall-1.js
-skip script test262/language/statements/class/elements/derived-cls-direct-eval-err-contains-supercall-2.js
-skip script test262/language/statements/class/elements/derived-cls-direct-eval-err-contains-supercall.js
 skip script test262/language/statements/class/elements/derived-cls-direct-eval-err-contains-superproperty-1.js
 skip script test262/language/statements/class/elements/derived-cls-direct-eval-err-contains-superproperty-2.js
-skip script test262/language/statements/class/elements/derived-cls-indirect-eval-err-contains-supercall-1.js
-skip script test262/language/statements/class/elements/derived-cls-indirect-eval-err-contains-supercall-2.js
-skip script test262/language/statements/class/elements/derived-cls-indirect-eval-err-contains-supercall.js
-skip script test262/language/statements/class/elements/derived-cls-indirect-eval-err-contains-superproperty-1.js
-skip script test262/language/statements/class/elements/derived-cls-indirect-eval-err-contains-superproperty-2.js
-skip script test262/language/statements/class/elements/direct-eval-err-contains-arguments.js
-skip script test262/language/statements/class/elements/private-derived-cls-direct-eval-err-contains-supercall-1.js
-skip script test262/language/statements/class/elements/private-derived-cls-direct-eval-err-contains-supercall-2.js
-skip script test262/language/statements/class/elements/private-derived-cls-direct-eval-err-contains-supercall.js
-skip script test262/language/statements/class/elements/private-derived-cls-indirect-eval-err-contains-supercall-1.js
-skip script test262/language/statements/class/elements/private-derived-cls-indirect-eval-err-contains-supercall-2.js
-skip script test262/language/statements/class/elements/private-derived-cls-indirect-eval-err-contains-supercall.js
-
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1541641
-skip script test262/language/expressions/class/elements/evaluation-error/computed-name-toprimitive-err.js
-skip script test262/language/expressions/class/elements/evaluation-error/computed-name-toprimitive-returns-noncallable.js
-skip script test262/language/expressions/class/elements/evaluation-error/computed-name-toprimitive-returns-nonobject.js
-skip script test262/language/expressions/class/elements/evaluation-error/computed-name-tostring-err.js
-skip script test262/language/expressions/class/elements/evaluation-error/computed-name-valueof-err.js
-skip script test262/language/statements/class/elements/evaluation-error/computed-name-toprimitive-err.js
-skip script test262/language/statements/class/elements/evaluation-error/computed-name-toprimitive-returns-noncallable.js
-skip script test262/language/statements/class/elements/evaluation-error/computed-name-toprimitive-returns-nonobject.js
-skip script test262/language/statements/class/elements/evaluation-error/computed-name-tostring-err.js
-skip script test262/language/statements/class/elements/evaluation-error/computed-name-valueof-err.js
 
 
 ###########################################################

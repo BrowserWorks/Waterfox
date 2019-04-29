@@ -214,7 +214,7 @@ void nsDisplayRangeFocusRing::Paint(nsDisplayListBuilder* aBuilder,
   MOZ_ASSERT(computedStyle, "We only exist if mOuterFocusStyle is non-null");
 
   PaintBorderFlags flags = aBuilder->ShouldSyncDecodeImages()
-                               ? PaintBorderFlags::SYNC_DECODE_IMAGES
+                               ? PaintBorderFlags::SyncDecodeImages
                                : PaintBorderFlags();
 
   ImgDrawResult result = nsCSSRendering::PaintBorder(
@@ -711,7 +711,7 @@ nsresult nsRangeFrame::AttributeChanged(int32_t aNameSpaceID,
         UpdateForValueChange();
       }
     } else if (aAttribute == nsGkAtoms::orient) {
-      PresShell()->FrameNeedsReflow(this, nsIPresShell::eResize,
+      PresShell()->FrameNeedsReflow(this, IntrinsicDirty::Resize,
                                     NS_FRAME_IS_DIRTY);
     }
   }

@@ -967,8 +967,8 @@ Accessible* nsAccessibilityService::CreateAccessible(nsINode* aNode,
   // Create accessible for visible text frames.
   if (content->IsText()) {
     nsIFrame::RenderedText text = frame->GetRenderedText(
-        0, UINT32_MAX, nsIFrame::TextOffsetType::OFFSETS_IN_CONTENT_TEXT,
-        nsIFrame::TrailingWhitespace::DONT_TRIM_TRAILING_WHITESPACE);
+        0, UINT32_MAX, nsIFrame::TextOffsetType::OffsetsInContentText,
+        nsIFrame::TrailingWhitespace::DontTrim);
     // Ignore not rendered text nodes and whitespace text nodes between table
     // cells.
     if (text.mString.IsEmpty() ||
@@ -1395,14 +1395,20 @@ nsAccessibilityService::CreateAccessibleByFrameType(nsIFrame* aFrame,
         table = aContext->Parent();
 
       if (table) {
-        nsIContent* parentContent = aContent->GetParent();
-        nsIFrame* parentFrame = parentContent->GetPrimaryFrame();
-        if (!parentFrame->IsTableWrapperFrame()) {
-          parentContent = parentContent->GetParent();
+        nsIContent* parentContent =
+            aContent->GetParentOrHostNode()->AsContent();
+        nsIFrame* parentFrame = nullptr;
+        if (parentContent) {
           parentFrame = parentContent->GetPrimaryFrame();
+          if (!parentFrame || !parentFrame->IsTableWrapperFrame()) {
+            parentContent = parentContent->GetParentOrHostNode()->AsContent();
+            if (parentContent) {
+              parentFrame = parentContent->GetPrimaryFrame();
+            }
+          }
         }
 
-        if (parentFrame->IsTableWrapperFrame() &&
+        if (parentFrame && parentFrame->IsTableWrapperFrame() &&
             table->GetContent() == parentContent) {
           newAcc = new HTMLTableRowAccessible(aContent, document);
         }

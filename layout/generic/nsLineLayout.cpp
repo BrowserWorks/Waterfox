@@ -731,8 +731,7 @@ static bool IsPercentageAware(const nsIFrame* aFrame, WritingMode aWM) {
         // Some percents are treated like 'auto', so check != coord
         !pos->BSize(aWM).ConvertsToLength()) {
       const IntrinsicSize& intrinsicSize = f->GetIntrinsicSize();
-      if (intrinsicSize.width.GetUnit() == eStyleUnit_None &&
-          intrinsicSize.height.GetUnit() == eStyleUnit_None) {
+      if (!intrinsicSize.width && !intrinsicSize.height) {
         return true;
       }
     }
@@ -890,7 +889,6 @@ void nsLineLayout::ReflowFrame(nsIFrame* aFrame, nsReflowStatus& aReflowStatus,
   // See if the frame is a placeholderFrame and if it is process
   // the float. At the same time, check if the frame has any non-collapsed-away
   // content.
-  bool placedFloat = false;
   bool isEmpty;
   if (frameType == LayoutFrameType::None) {
     isEmpty = pfd->mFrame->IsEmpty();
@@ -918,7 +916,7 @@ void nsLineLayout::ReflowFrame(nsIFrame* aFrame, nsReflowStatus& aReflowStatus,
           // We'll do this at the next break opportunity.
           RecordNoWrapFloat(outOfFlowFrame);
         } else {
-          placedFloat = TryToPlaceFloat(outOfFlowFrame);
+          TryToPlaceFloat(outOfFlowFrame);
         }
       }
     } else if (isText) {
@@ -1064,11 +1062,12 @@ void nsLineLayout::ReflowFrame(nsIFrame* aFrame, nsReflowStatus& aReflowStatus,
       }
 
       if (!continuingTextRun && !psd->mNoWrap) {
-        if (!LineIsEmpty() || placedFloat) {
+        if (!LineIsEmpty()) {
           // record soft break opportunity after this content that can't be
           // part of a text run. This is not a text frame so we know
           // that offset INT32_MAX means "after the content".
-          if (NotifyOptionalBreakPosition(aFrame, INT32_MAX,
+          if (!aFrame->IsPlaceholderFrame() &&
+              NotifyOptionalBreakPosition(aFrame, INT32_MAX,
                                           optionalBreakAfterFits,
                                           gfxBreakPriority::eNormalBreak)) {
             // If this returns true then we are being told to actually break

@@ -8,7 +8,7 @@
 
 #include "mozilla/dom/ContentProcessManager.h"
 #include "mozilla/dom/ImageBitmap.h"
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "mozilla/gfx/DrawEventRecorder.h"
 #include "mozilla/gfx/InlineTranslator.h"
 #include "mozilla/PresShell.h"
@@ -99,7 +99,8 @@ PaintFragment PaintFragment::Record(nsIDocShell* aDocShell,
     RefPtr<gfxContext> thebes = gfxContext::CreateOrNull(dt);
     thebes->SetMatrix(Matrix::Scaling(aScale, aScale));
     RefPtr<PresShell> presShell = presContext->PresShell();
-    Unused << presShell->RenderDocument(r, 0, aBackgroundColor, thebes);
+    Unused << presShell->RenderDocument(r, RenderDocumentFlags::None,
+                                        aBackgroundColor, thebes);
   }
 
   ByteBuf recording = ByteBuf((uint8_t*)recorder->mOutputStream.mData,
@@ -238,7 +239,8 @@ void CrossProcessPaint::QueueRootPaint(dom::TabId aId, const IntRect& aRect,
   dom::ContentProcessManager* cpm = dom::ContentProcessManager::GetSingleton();
 
   dom::ContentParentId cpId = cpm->GetTabProcessId(aId);
-  RefPtr<dom::TabParent> tab = cpm->GetTabParentByProcessAndTabId(cpId, aId);
+  RefPtr<dom::BrowserParent> tab =
+      cpm->GetBrowserParentByProcessAndTabId(cpId, aId);
   tab->RequestRootPaint(this, aRect, aScale, aBackgroundColor);
 
   // This will always be the first paint, so the constructor will already have
@@ -253,7 +255,8 @@ void CrossProcessPaint::QueueSubPaint(dom::TabId aId) {
   dom::ContentProcessManager* cpm = dom::ContentProcessManager::GetSingleton();
 
   dom::ContentParentId cpId = cpm->GetTabProcessId(aId);
-  RefPtr<dom::TabParent> tab = cpm->GetTabParentByProcessAndTabId(cpId, aId);
+  RefPtr<dom::BrowserParent> tab =
+      cpm->GetBrowserParentByProcessAndTabId(cpId, aId);
   tab->RequestSubPaint(this, mScale, mBackgroundColor);
 
   mPendingFragments += 1;

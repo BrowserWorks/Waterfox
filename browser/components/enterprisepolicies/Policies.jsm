@@ -197,15 +197,33 @@ var Policies = {
                 log.error(`Unable to read certificate - ${certfile.path}`);
                 return;
               }
-              let cert = reader.result;
+              let certFile = reader.result;
+              let cert;
               try {
-                if (/-----BEGIN CERTIFICATE-----/.test(cert)) {
-                  gCertDB.addCertFromBase64(pemToBase64(cert), "CTu,CTu,");
-                } else {
-                  gCertDB.addCert(cert, "CTu,CTu,");
-                }
+                cert = gCertDB.constructX509(certFile);
               } catch (e) {
-                log.error(`Unable to add certificate - ${certfile.path}`);
+                try {
+                  // It might be PEM instead of DER.
+                  cert = gCertDB.constructX509FromBase64(pemToBase64(certFile));
+                } catch (ex) {
+                  log.error(`Unable to add certificate - ${certfile.path}`);
+                }
+              }
+              let now = Date.now() / 1000;
+              if (cert) {
+                gCertDB.asyncVerifyCertAtTime(cert, 0x0008 /* certificateUsageSSLCA */,
+                                              0, null, now, (aPRErrorCode, aVerifiedChain, aHasEVPolicy) => {
+                  if (aPRErrorCode == Cr.NS_OK) {
+                    // Certificate is already installed.
+                    return;
+                  }
+                  try {
+                    gCertDB.addCert(certFile, "CT,CT,");
+                  } catch (e) {
+                    // It might be PEM instead of DER.
+                    gCertDB.addCertFromBase64(pemToBase64(certFile), "CT,CT,");
+                  }
+                });
               }
             };
             reader.readAsBinaryString(file);
@@ -679,6 +697,17 @@ var Policies = {
     },
   },
 
+  "LocalFileLinks": {
+    onBeforeAddons(manager, param) {
+      // If there are existing capabilities, lock them with the policy pref.
+      let policyNames = Services.prefs.getCharPref("capability.policy.policynames", "").split(" ");
+      policyNames.push("localfilelinks_policy");
+      setAndLockPref("capability.policy.policynames", policyNames.join(" "));
+      setAndLockPref("capability.policy.localfilelinks_policy.checkloaduri.enabled", "allAccess");
+      setAndLockPref("capability.policy.localfilelinks_policy.sites", param.join(" "));
+    },
+  },
+
   "NetworkPrediction": {
     onBeforeAddons(manager, param) {
       setAndLockPref("network.dns.disablePrefetch", !param);
@@ -795,16 +824,56 @@ var Policies = {
 
   "SanitizeOnShutdown": {
     onBeforeUIStartup(manager, param) {
-      setAndLockPref("privacy.sanitize.sanitizeOnShutdown", param);
-      if (param) {
-        setAndLockPref("privacy.clearOnShutdown.cache", true);
-        setAndLockPref("privacy.clearOnShutdown.cookies", true);
-        setAndLockPref("privacy.clearOnShutdown.downloads", true);
-        setAndLockPref("privacy.clearOnShutdown.formdata", true);
-        setAndLockPref("privacy.clearOnShutdown.history", true);
-        setAndLockPref("privacy.clearOnShutdown.sessions", true);
-        setAndLockPref("privacy.clearOnShutdown.siteSettings", true);
-        setAndLockPref("privacy.clearOnShutdown.offlineApps", true);
+      if (typeof param === "boolean") {
+        setAndLockPref("privacy.sanitize.sanitizeOnShutdown", param);
+        if (param) {
+          setAndLockPref("privacy.clearOnShutdown.cache", true);
+          setAndLockPref("privacy.clearOnShutdown.cookies", true);
+          setAndLockPref("privacy.clearOnShutdown.downloads", true);
+          setAndLockPref("privacy.clearOnShutdown.formdata", true);
+          setAndLockPref("privacy.clearOnShutdown.history", true);
+          setAndLockPref("privacy.clearOnShutdown.sessions", true);
+          setAndLockPref("privacy.clearOnShutdown.siteSettings", true);
+          setAndLockPref("privacy.clearOnShutdown.offlineApps", true);
+        }
+      } else {
+        setAndLockPref("privacy.sanitize.sanitizeOnShutdown", true);
+        if ("Cache" in param) {
+          setAndLockPref("privacy.clearOnShutdown.cache", param.Cache);
+        } else {
+          setAndLockPref("privacy.clearOnShutdown.cache", false);
+        }
+        if ("Cookies" in param) {
+          setAndLockPref("privacy.clearOnShutdown.cookies", param.Cookies);
+        } else {
+          setAndLockPref("privacy.clearOnShutdown.cookies", false);
+        }
+        if ("Downloads" in param) {
+          setAndLockPref("privacy.clearOnShutdown.downloads", param.Downloads);
+        } else {
+          setAndLockPref("privacy.clearOnShutdown.downloads", false);
+        }
+        if ("FormData" in param) {
+          setAndLockPref("privacy.clearOnShutdown.formdata", param.FormData);
+        } else {
+          setAndLockPref("privacy.clearOnShutdown.formdata", false);
+        }
+        if ("History" in param) {
+          setAndLockPref("privacy.clearOnShutdown.history", param.History);
+        } else {
+          setAndLockPref("privacy.clearOnShutdown.history", false);
+        }
+        if ("Sessions" in param) {
+          setAndLockPref("privacy.clearOnShutdown.sessions", param.Sessions);
+        } else {
+          setAndLockPref("privacy.clearOnShutdown.sessions", false);
+        }
+        if ("SiteSettings" in param) {
+          setAndLockPref("privacy.clearOnShutdown.siteSettings", param.SiteSettings);
+        }
+        if ("OfflineApps" in param) {
+          setAndLockPref("privacy.clearOnShutdown.offlineApps", param.OfflineApps);
+        }
       }
     },
   },

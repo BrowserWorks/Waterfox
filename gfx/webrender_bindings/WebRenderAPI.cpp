@@ -16,6 +16,7 @@
 #include "mozilla/widget/CompositorWidget.h"
 #include "mozilla/layers/SynchronousTask.h"
 #include "TextDrawTarget.h"
+#include "malloc_decls.h"
 
 // clang-format off
 #define WRDL_LOG(...)
@@ -77,7 +78,7 @@ class NewRenderer : public RendererEvent {
             aWindowId, mSize.width, mSize.height,
             supportLowPriorityTransactions,
             gfxPrefs::WebRenderPictureCaching() && supportPictureCaching,
-            compositor->gl(),
+            gfxPrefs::WebRenderStartDebugServer(), compositor->gl(),
             aRenderThread.GetProgramCache()
                 ? aRenderThread.GetProgramCache()->Raw()
                 : nullptr,
@@ -209,12 +210,10 @@ bool TransactionBuilder::IsRenderedFrameInvalidated() const {
 }
 
 void TransactionBuilder::SetDocumentView(
-    const LayoutDeviceIntRect& aDocumentRect,
-    const LayoutDeviceIntSize& aWidgetSize) {
-  wr::FramebufferIntRect wrDocRect;
+    const LayoutDeviceIntRect& aDocumentRect) {
+  wr::DeviceIntRect wrDocRect;
   wrDocRect.origin.x = aDocumentRect.x;
-  wrDocRect.origin.y =
-      aWidgetSize.height - aDocumentRect.y - aDocumentRect.height;
+  wrDocRect.origin.y = aDocumentRect.y;
   wrDocRect.size.width = aDocumentRect.width;
   wrDocRect.size.height = aDocumentRect.height;
   wr_transaction_set_document_view(mTxn, &wrDocRect);
@@ -301,7 +300,7 @@ already_AddRefed<WebRenderAPI> WebRenderAPI::Clone() {
 
 already_AddRefed<WebRenderAPI> WebRenderAPI::CreateDocument(
     LayoutDeviceIntSize aSize, int8_t aLayerIndex, wr::RenderRoot aRenderRoot) {
-  wr::FramebufferIntSize wrSize;
+  wr::DeviceIntSize wrSize;
   wrSize.width = aSize.width;
   wrSize.height = aSize.height;
   wr::DocumentHandle* newDoc;
@@ -374,7 +373,8 @@ void WebRenderAPI::SendTransactions(
     return;
   }
 
-  aApis[RenderRoot::Default]->UpdateDebugFlags(gfx::gfxVars::WebRenderDebugFlags());
+  aApis[RenderRoot::Default]->UpdateDebugFlags(
+      gfx::gfxVars::WebRenderDebugFlags());
   AutoTArray<DocumentHandle*, kRenderRootCount> documentHandles;
   AutoTArray<Transaction*, kRenderRootCount> txns;
   Maybe<bool> useSceneBuilderThread;
@@ -936,6 +936,16 @@ void DisplayListBuilder::PushRoundedRect(const wr::LayoutRect& aBounds,
                                    &spaceAndClip, aColor);
 }
 
+void DisplayListBuilder::PushHitTest(const wr::LayoutRect& aBounds,
+                                     const wr::LayoutRect& aClip,
+                                     bool aIsBackfaceVisible) {
+  wr::LayoutRect clip = MergeClipLeaf(aClip);
+  WRDL_LOG("PushHitTest b=%s cl=%s\n", mWrState, Stringify(aBounds).c_str(),
+           Stringify(clip).c_str());
+  wr_dp_push_hit_test(mWrState, aBounds, clip, aIsBackfaceVisible,
+                      &mCurrentSpaceAndClipChain);
+}
+
 void DisplayListBuilder::PushClearRect(const wr::LayoutRect& aBounds) {
   wr::LayoutRect clip = MergeClipLeaf(aBounds);
   WRDL_LOG("PushClearRect b=%s c=%s\n", mWrState, Stringify(aBounds).c_str(),
@@ -1260,6 +1270,12 @@ void wr_transaction_notification_notified(uintptr_t aHandler,
   // TODO: it would be better to get a callback when the object is destroyed on
   // the rust side and delete then.
   delete handler;
+}
+
+void wr_register_thread_local_arena() {
+#ifdef MOZ_MEMORY
+  jemalloc_thread_local_arena(true);
+#endif
 }
 
 }  // extern C

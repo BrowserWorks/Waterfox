@@ -261,6 +261,7 @@ Maybe<TextureHost::ResourceUpdateOp> AsyncImagePipelineManager::UpdateImageKeys(
   bool canUpdate = !!previousTexture &&
                    previousTexture->GetSize() == texture->GetSize() &&
                    previousTexture->GetFormat() == texture->GetFormat() &&
+                   previousTexture->NeedsYFlip() == texture->NeedsYFlip() &&
                    aPipeline->mKeys.Length() == numKeys;
 
   // Check if WebRenderTextureHostWrapper could be reused.
@@ -289,6 +290,8 @@ Maybe<TextureHost::ResourceUpdateOp> AsyncImagePipelineManager::UpdateImageKeys(
   if (!useExternalImage) {
     return UpdateWithoutExternalImage(texture, aKeys[0], op, aMaybeFastTxn);
   }
+
+  wrTexture->MaybeNofityForUse(aMaybeFastTxn);
 
   if (useWrTextureWrapper && aPipeline->mWrTextureWrapper) {
     MOZ_ASSERT(canUpdate);
@@ -410,6 +413,12 @@ void AsyncImagePipelineManager::ApplyAsyncImageForPipeline(
 
   aPipeline->mIsChanged = false;
 
+  gfx::Matrix4x4 scTransform = aPipeline->mScTransform;
+  if (aPipeline->mCurrentTexture && aPipeline->mCurrentTexture->NeedsYFlip()) {
+    scTransform.PreTranslate(0, aPipeline->mCurrentTexture->GetSize().height, 0)
+        .PreScale(1, -1, 1);
+  }
+
   wr::LayoutSize contentSize{aPipeline->mScBounds.Width(),
                              aPipeline->mScBounds.Height()};
   wr::DisplayListBuilder builder(aPipelineId, contentSize);
@@ -417,8 +426,7 @@ void AsyncImagePipelineManager::ApplyAsyncImageForPipeline(
   float opacity = 1.0f;
   wr::StackingContextParams params;
   params.opacity = &opacity;
-  params.mTransformPtr =
-      aPipeline->mScTransform.IsIdentity() ? nullptr : &aPipeline->mScTransform;
+  params.mTransformPtr = scTransform.IsIdentity() ? nullptr : &scTransform;
   params.mix_blend_mode = aPipeline->mMixBlendMode;
 
   Maybe<wr::WrSpatialId> referenceFrameId = builder.PushStackingContext(

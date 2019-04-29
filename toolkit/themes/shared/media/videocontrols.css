@@ -70,7 +70,8 @@
 
 .controlsContainer [hidden],
 .controlBar[hidden],
-.pictureInPictureToggleButton[hidden] {
+.pictureInPictureToggleButton[hidden],
+.videocontrols[inDOMFullscreen] > .controlsContainer > .controlsOverlay > .pictureInPictureToggleButton {
   display: none;
 }
 
@@ -479,6 +480,16 @@
 .controlsOverlay:hover > .pictureInPictureToggleButton:hover {
   opacity: 1;
   transform: translateY(-50%) translateX(0);
+}
+
+@supports -moz-bool-pref("media.videocontrols.picture-in-picture.video-toggle.testing") {
+  /**
+   * To make automated tests faster, we drop the transition duration in
+   * testing mode.
+   */
+  .pictureInPictureToggleButton {
+    transition-duration: 10ms;
+  }
 }
 
 /* Overlay Play button */

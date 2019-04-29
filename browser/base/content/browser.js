@@ -490,10 +490,13 @@ function showFxaToolbarMenu(enable) {
   const syncEnabled = Services.prefs.getBoolPref("identity.fxaccounts.enabled", false);
   const mainWindowEl = document.documentElement;
   const fxaPanelEl = document.getElementById("PanelUI-fxa");
-  if (enable && syncEnabled) {
-    fxaPanelEl.addEventListener("ViewShowing", gSync.updateSendToDeviceTitle);
 
-    mainWindowEl.setAttribute("fxastatus", "not_configured");
+  mainWindowEl.setAttribute("fxastatus", "not_configured");
+  fxaPanelEl.addEventListener("ViewShowing", gSync.updateSendToDeviceTitle);
+
+  if (enable && syncEnabled) {
+    mainWindowEl.setAttribute("fxatoolbarmenu", "visible");
+
     // We have to manually update the sync state UI when toggling the FxA toolbar
     // because it could show an invalid icon if the user is logged in and no sync
     // event was performed yet.
@@ -510,8 +513,7 @@ function showFxaToolbarMenu(enable) {
       mainWindowEl.removeAttribute("fxa_avatar_badged");
     }
   } else {
-    mainWindowEl.removeAttribute("fxastatus");
-    fxaPanelEl.removeEventListener("ViewShowing", gSync.updateSendToDeviceTitle);
+    mainWindowEl.removeAttribute("fxatoolbarmenu");
   }
 }
 
@@ -3760,7 +3762,7 @@ var homeButtonObserver = {
     },
 
   onDragOver(aEvent) {
-      if (Services.prefs.prefIsLocked("browser.startup.homepage")) {
+      if (HomePage.locked) {
         return;
       }
       browserDragAndDrop.dragOver(aEvent);
@@ -5644,7 +5646,7 @@ nsBrowserAccess.prototype = {
                    aIsExternal, aForceNotRemote = false,
                    aUserContextId = Ci.nsIScriptSecurityManager.DEFAULT_USER_CONTEXT_ID,
                    aOpenerWindow = null, aOpenerBrowser = null,
-                   aTriggeringPrincipal = null, aNextTabParentId = 0, aName = "", aCsp = null) {
+                   aTriggeringPrincipal = null, aNextRemoteTabId = 0, aName = "", aCsp = null) {
     let win, needToFocusWin;
 
     // try the current window.  if we're in a popup, fall back on the most recent browser window
@@ -5677,7 +5679,7 @@ nsBrowserAccess.prototype = {
                                       forceNotRemote: aForceNotRemote,
                                       opener: aOpenerWindow,
                                       openerBrowser: aOpenerBrowser,
-                                      nextTabParentId: aNextTabParentId,
+                                      nextRemoteTabId: aNextRemoteTabId,
                                       name: aName,
                                       csp: aCsp,
                                       });
@@ -5689,27 +5691,40 @@ nsBrowserAccess.prototype = {
     return browser;
   },
 
-  createContentWindow(aURI, aOpener, aWhere, aFlags, aTriggeringPrincipal) {
+  createContentWindow(aURI, aOpener, aWhere, aFlags, aTriggeringPrincipal, aCsp) {
     return this.getContentWindowOrOpenURI(null, aOpener, aWhere, aFlags,
-                                          aTriggeringPrincipal);
+                                          aTriggeringPrincipal, aCsp);
   },
 
-  openURI(aURI, aOpener, aWhere, aFlags, aTriggeringPrincipal) {
+  openURI(aURI, aOpener, aWhere, aFlags, aTriggeringPrincipal, aCsp) {
     if (!aURI) {
       Cu.reportError("openURI should only be called with a valid URI");
       throw Cr.NS_ERROR_FAILURE;
     }
     return this.getContentWindowOrOpenURI(aURI, aOpener, aWhere, aFlags,
-                                          aTriggeringPrincipal);
+                                          aTriggeringPrincipal, aCsp);
   },
 
-  getContentWindowOrOpenURI(aURI, aOpener, aWhere, aFlags, aTriggeringPrincipal) {
+  getContentWindowOrOpenURI(aURI, aOpener, aWhere, aFlags, aTriggeringPrincipal, aCsp) {
     // This function should only ever be called if we're opening a URI
     // from a non-remote browser window (via nsContentTreeOwner).
     if (aOpener && Cu.isCrossProcessWrapper(aOpener)) {
       Cu.reportError("nsBrowserAccess.openURI was passed a CPOW for aOpener. " +
                      "openURI should only ever be called from non-remote browsers.");
       throw Cr.NS_ERROR_FAILURE;
+    }
+
+    // After Bug 965637 we can remove that Error because the CSP will not
+    // hang off the Principal anymore. Please note that the SystemPrincipal
+    // can not hold a CSP!
+    if (AppConstants.EARLY_BETA_OR_EARLIER) {
+      // Please note that the backend will still query the CSP from the Principal in
+      // release versions of Firefox. We use this error just to annotate all the
+      // callsites to explicitly pass a CSP before we can remove the CSP from
+      // the Principal within Bug 965637.
+      if (!aTriggeringPrincipal.isSystemPrincipal && aTriggeringPrincipal.csp && !aCsp) {
+        throw new Error("If Principal has CSP then we need an explicit CSP");
+      }
     }
 
     var newWindow = null;
@@ -5734,13 +5749,16 @@ nsBrowserAccess.prototype = {
         aWhere = Services.prefs.getIntPref("browser.link.open_newwindow");
     }
 
-    let referrerInfo = new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true,
-      aOpener ? makeURI(aOpener.location.href) : null);
+    let referrerInfo;
+    if (aFlags & Ci.nsIBrowserDOMWindow.OPEN_NO_REFERRER) {
+      referrerInfo = new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, false, null);
+    } else {
+      referrerInfo = new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true,
+        aOpener ? makeURI(aOpener.location.href) : null);
+    }
     if (aOpener && aOpener.document) {
       referrerInfo.referrerPolicy = aOpener.document.referrerPolicy;
     }
-    // Bug 965637, query the CSP from the doc instead of the Principal
-    let csp = aTriggeringPrincipal.csp;
     let isPrivate = aOpener
                   ? PrivateBrowsingUtils.isContentWindowPrivate(aOpener)
                   : PrivateBrowsingUtils.isWindowPrivate(window);
@@ -5759,7 +5777,8 @@ nsBrowserAccess.prototype = {
         try {
           newWindow = openDialog(AppConstants.BROWSER_CHROME_URL, "_blank", features,
                       // window.arguments
-                      url, null, null, null, null, null, null, aTriggeringPrincipal);
+                      url, null, null, null, null, null, null, aTriggeringPrincipal,
+                      null, aCsp);
         } catch (ex) {
           Cu.reportError(ex);
         }
@@ -5780,7 +5799,7 @@ nsBrowserAccess.prototype = {
                                             isPrivate, isExternal,
                                             forceNotRemote, userContextId,
                                             openerWindow, null, aTriggeringPrincipal,
-                                            0, "", csp);
+                                            0, "", aCsp);
         if (browser)
           newWindow = browser.contentWindow;
         break;
@@ -5792,7 +5811,7 @@ nsBrowserAccess.prototype = {
                             Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
           gBrowser.loadURI(aURI.spec, {
             triggeringPrincipal: aTriggeringPrincipal,
-            csp,
+            csp: aCsp,
             flags: loadflags,
             referrerInfo,
           });
@@ -5804,22 +5823,22 @@ nsBrowserAccess.prototype = {
   },
 
   createContentWindowInFrame: function browser_createContentWindowInFrame(
-                              aURI, aParams, aWhere, aFlags, aNextTabParentId,
+                              aURI, aParams, aWhere, aFlags, aNextRemoteTabId,
                               aName) {
     // Passing a null-URI to only create the content window.
     return this.getContentWindowOrOpenURIInFrame(null, aParams, aWhere, aFlags,
-                                                 aNextTabParentId, aName);
+                                                 aNextRemoteTabId, aName);
   },
 
   openURIInFrame: function browser_openURIInFrame(aURI, aParams, aWhere, aFlags,
-                                                  aNextTabParentId, aName) {
+                                                  aNextRemoteTabId, aName) {
     return this.getContentWindowOrOpenURIInFrame(aURI, aParams, aWhere, aFlags,
-                                                 aNextTabParentId, aName);
+                                                 aNextRemoteTabId, aName);
   },
 
   getContentWindowOrOpenURIInFrame: function browser_getContentWindowOrOpenURIInFrame(
                                     aURI, aParams, aWhere, aFlags,
-                                    aNextTabParentId, aName) {
+                                    aNextRemoteTabId, aName) {
     if (aWhere != Ci.nsIBrowserDOMWindow.OPEN_NEWTAB) {
       dump("Error: openURIInFrame can only open in new tabs");
       return null;
@@ -5838,7 +5857,7 @@ nsBrowserAccess.prototype = {
                                  isExternal, false,
                                  userContextId, null, aParams.openerBrowser,
                                  aParams.triggeringPrincipal,
-                                 aNextTabParentId, aName, aParams.csp);
+                                 aNextRemoteTabId, aName, aParams.csp);
   },
 
   isTabContentWindow(aWindow) {
@@ -5937,6 +5956,12 @@ function onViewToolbarsPopupShowing(aEvent, aInsertPoint) {
     document.getElementById("toolbar-context-selectAllTabs").disabled = gBrowser.allTabsSelected();
     document.getElementById("toolbar-context-undoCloseTab").disabled =
       SessionStore.getClosedTabCount(window) == 0;
+
+    MozXULElement.insertFTLIfNeeded("browser/toolbarContextMenu.ftl");
+    document.getElementById("toolbar-context-menu").querySelectorAll("[data-lazy-l10n-id]").forEach(el => {
+      el.setAttribute("data-l10n-id", el.getAttribute("data-lazy-l10n-id"));
+      el.removeAttribute("data-lazy-l10n-id");
+    });
     return;
   }
 

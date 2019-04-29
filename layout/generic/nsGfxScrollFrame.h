@@ -260,9 +260,9 @@ class ScrollFrameHelper : public nsIReflowCallback {
     }
     return pt;
   }
-  void ScrollSnap(ScrollMode aMode = ScrollMode::eSmoothMsd);
+  void ScrollSnap(ScrollMode aMode = ScrollMode::SmoothMsd);
   void ScrollSnap(const nsPoint& aDestination,
-                  ScrollMode aMode = ScrollMode::eSmoothMsd);
+                  ScrollMode aMode = ScrollMode::SmoothMsd);
 
  protected:
   nsRect GetVisualScrollRange() const;
@@ -286,7 +286,7 @@ class ScrollFrameHelper : public nsIReflowCallback {
    * @note This method might destroy the frame, pres shell and other objects.
    */
   void ScrollToCSSPixels(const CSSIntPoint& aScrollPosition,
-                         ScrollMode aMode = ScrollMode::eInstant,
+                         ScrollMode aMode = ScrollMode::Instant,
                          nsIScrollbarMediator::ScrollSnapMode aSnap =
                              nsIScrollbarMediator::DEFAULT,
                          nsAtom* aOrigin = nullptr);
@@ -314,7 +314,7 @@ class ScrollFrameHelper : public nsIReflowCallback {
                 nsIScrollbarMediator::ScrollSnapMode aSnap =
                     nsIScrollbarMediator::DISABLE_SNAP);
   void ScrollByCSSPixels(const CSSIntPoint& aDelta,
-                         ScrollMode aMode = ScrollMode::eInstant,
+                         ScrollMode aMode = ScrollMode::Instant,
                          nsAtom* aOrigin = nullptr,
                          nsIScrollbarMediator::ScrollSnapMode aSnap =
                              nsIScrollbarMediator::DEFAULT);
@@ -410,9 +410,17 @@ class ScrollFrameHelper : public nsIReflowCallback {
  private:
   nsIFrame* GetFrameForDir() const;  // helper for Is{Physical,Bidi}LTR to find
                                      // the frame whose directionality we use
+  nsIFrame* GetFrameForScrollSnap() const;  // helper to find the frame whose
+                                            // scroll-snap-type and
+                                            // scroll-padding we use
 
+  // This is the for the old unspecced scroll snap implementation.
+  ScrollSnapInfo ComputeOldScrollSnapInfo() const;
+  // This is the for the scroll snap v1 implementation.
   ScrollSnapInfo ComputeScrollSnapInfo(
       const Maybe<nsPoint>& aDestination) const;
+
+  bool NeedsScrollSnap() const;
 
  public:
   bool IsScrollbarOnRight() const;
@@ -976,7 +984,7 @@ class nsHTMLScrollFrame : public nsContainerFrame,
    * @note This method might destroy the frame, pres shell and other objects.
    */
   virtual void ScrollToCSSPixels(const CSSIntPoint& aScrollPosition,
-                                 ScrollMode aMode = ScrollMode::eInstant,
+                                 ScrollMode aMode = ScrollMode::Instant,
                                  nsIScrollbarMediator::ScrollSnapMode aSnap =
                                      nsIScrollbarMediator::DEFAULT,
                                  nsAtom* aOrigin = nullptr) override {
@@ -1006,7 +1014,7 @@ class nsHTMLScrollFrame : public nsContainerFrame,
                      aSnap);
   }
   virtual void ScrollByCSSPixels(const CSSIntPoint& aDelta,
-                                 ScrollMode aMode = ScrollMode::eInstant,
+                                 ScrollMode aMode = ScrollMode::Instant,
                                  nsAtom* aOrigin = nullptr,
                                  nsIScrollbarMediator::ScrollSnapMode aSnap =
                                      nsIScrollbarMediator::DEFAULT) override {
@@ -1461,7 +1469,7 @@ class nsXULScrollFrame final : public nsBoxFrame,
    * @note This method might destroy the frame, pres shell and other objects.
    */
   virtual void ScrollToCSSPixels(const CSSIntPoint& aScrollPosition,
-                                 ScrollMode aMode = ScrollMode::eInstant,
+                                 ScrollMode aMode = ScrollMode::Instant,
                                  nsIScrollbarMediator::ScrollSnapMode aSnap =
                                      nsIScrollbarMediator::DISABLE_SNAP,
                                  nsAtom* aOrigin = nullptr) override {
@@ -1488,7 +1496,7 @@ class nsXULScrollFrame final : public nsBoxFrame,
                      aSnap);
   }
   virtual void ScrollByCSSPixels(const CSSIntPoint& aDelta,
-                                 ScrollMode aMode = ScrollMode::eInstant,
+                                 ScrollMode aMode = ScrollMode::Instant,
                                  nsAtom* aOrigin = nullptr,
                                  nsIScrollbarMediator::ScrollSnapMode aSnap =
                                      nsIScrollbarMediator::DEFAULT) override {

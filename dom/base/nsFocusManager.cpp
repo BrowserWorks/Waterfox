@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserParent.h"
 
 #include "nsFocusManager.h"
 
@@ -38,7 +38,7 @@
 #include "nsIObjectFrame.h"
 #include "nsBindingManager.h"
 #include "nsStyleCoord.h"
-#include "TabChild.h"
+#include "BrowserChild.h"
 #include "nsFrameLoader.h"
 #include "nsNumberControlFrame.h"
 #include "nsNetUtil.h"
@@ -521,8 +521,8 @@ nsFocusManager::MoveFocus(mozIDOMWindowProxy* aWindow, Element* aStartElement,
     // otherwise the caret will end up moving to the focus position. This
     // would be a problem because the caret would move to the beginning of the
     // focused link making it impossible to navigate the caret over a link.
-    SetFocusInner(newFocus->AsElement(), aFlags, aType != MOVEFOCUS_CARET,
-                  true);
+    SetFocusInner(MOZ_KnownLive(newFocus->AsElement()), aFlags,
+                  aType != MOVEFOCUS_CARET, true);
     *aElement = do_AddRef(newFocus->AsElement()).take();
   } else if (aType == MOVEFOCUS_ROOT || aType == MOVEFOCUS_CARET) {
     // no content was found, so clear the focus for these two types.
@@ -719,7 +719,7 @@ nsFocusManager::WindowLowered(mozIDOMWindowProxy* aWindow) {
   if (mActiveWindow != window) return NS_OK;
 
   // clear the mouse capture as the active window has changed
-  nsIPresShell::SetCapturingContent(nullptr, 0);
+  PresShell::ReleaseCapturingContent();
 
   // In addition, reset the drag state to ensure that we are no longer in
   // drag-select mode.
@@ -837,8 +837,8 @@ nsFocusManager::WindowShown(mozIDOMWindowProxy* aWindow, bool aNeedsFocus) {
   }
 
   if (nsIDocShell* docShell = window->GetDocShell()) {
-    if (nsCOMPtr<nsITabChild> child = docShell->GetTabChild()) {
-      bool active = static_cast<TabChild*>(child.get())->ParentIsActive();
+    if (nsCOMPtr<nsIBrowserChild> child = docShell->GetBrowserChild()) {
+      bool active = static_cast<BrowserChild*>(child.get())->ParentIsActive();
       ActivateOrDeactivate(window, active);
     }
   }
@@ -1089,7 +1089,7 @@ void nsFocusManager::EnsureCurrentWidgetFocused() {
   }
 }
 
-bool ActivateOrDeactivateChild(TabParent* aParent, void* aArg) {
+bool ActivateOrDeactivateChild(BrowserParent* aParent, void* aArg) {
   bool active = static_cast<bool>(aArg);
   Unused << aParent->SendParentActivated(active);
   return false;
@@ -1316,8 +1316,9 @@ void nsFocusManager::SetFocusInner(Element* aNewContent, int32_t aFlags,
       nsCOMPtr<nsIDocShell> docShell = newWindow->GetDocShell();
 
       RefPtr<PresShell> presShell = docShell->GetPresShell();
-      if (presShell && presShell->DidInitialize())
+      if (presShell && presShell->DidInitialize()) {
         ScrollIntoView(presShell, elementToFocus, aFlags);
+      }
     }
 
     // update the commands even when inactive so that the attributes for that
@@ -1613,9 +1614,9 @@ bool nsFocusManager::Blur(nsPIDOMWindowOuter* aWindowToClear,
       if (aAdjustWidgets && objectFrame && !sTestMode) {
         if (XRE_IsContentProcess()) {
           // set focus to the top level window via the chrome process.
-          nsCOMPtr<nsITabChild> tabChild = docShell->GetTabChild();
-          if (tabChild) {
-            static_cast<TabChild*>(tabChild.get())
+          nsCOMPtr<nsIBrowserChild> browserChild = docShell->GetBrowserChild();
+          if (browserChild) {
+            static_cast<BrowserChild*>(browserChild.get())
                 ->SendDispatchFocusToTopLevelWindow();
           }
         } else {
@@ -1636,7 +1637,7 @@ bool nsFocusManager::Blur(nsPIDOMWindowOuter* aWindowToClear,
 
     // if the object being blurred is a remote browser, deactivate remote
     // content
-    if (TabParent* remote = TabParent::GetFrom(element)) {
+    if (BrowserParent* remote = BrowserParent::GetFrom(element)) {
       remote->Deactivate();
       LOGFOCUS(("Remote browser deactivated %p", remote));
     }
@@ -1861,7 +1862,7 @@ void nsFocusManager::Focus(nsPIDOMWindowOuter* aWindow, Element* aElement,
 
         // if the object being focused is a remote browser, activate remote
         // content
-        if (TabParent* remote = TabParent::GetFrom(aElement)) {
+        if (BrowserParent* remote = BrowserParent::GetFrom(aElement)) {
           remote->Activate();
           LOGFOCUS(("Remote browser activated %p", remote));
         }
@@ -2120,20 +2121,18 @@ void nsFocusManager::FireFocusOrBlurEvent(EventMessage aEventMessage,
   }
 }
 
-void nsFocusManager::ScrollIntoView(nsIPresShell* aPresShell,
-                                    nsIContent* aContent, uint32_t aFlags) {
+void nsFocusManager::ScrollIntoView(PresShell* aPresShell, nsIContent* aContent,
+                                    uint32_t aFlags) {
   // if the noscroll flag isn't set, scroll the newly focused element into view
   if (!(aFlags & FLAG_NOSCROLL)) {
-    uint32_t scrollFlags = nsIPresShell::SCROLL_OVERFLOW_HIDDEN;
+    ScrollFlags scrollFlags = ScrollFlags::ScrollOverflowHidden;
     if (!(aFlags & FLAG_BYELEMENTFOCUS)) {
-      scrollFlags |= nsIPresShell::SCROLL_IGNORE_SCROLL_MARGIN_AND_PADDING;
+      scrollFlags |= ScrollFlags::IgnoreMarginAndPadding;
     }
     aPresShell->ScrollContentIntoView(
         aContent,
-        nsIPresShell::ScrollAxis(nsIPresShell::SCROLL_MINIMUM,
-                                 nsIPresShell::SCROLL_IF_NOT_VISIBLE),
-        nsIPresShell::ScrollAxis(nsIPresShell::SCROLL_MINIMUM,
-                                 nsIPresShell::SCROLL_IF_NOT_VISIBLE),
+        nsIPresShell::ScrollAxis(kScrollMinimum, WhenToScroll::IfNotVisible),
+        nsIPresShell::ScrollAxis(kScrollMinimum, WhenToScroll::IfNotVisible),
         scrollFlags);
   }
 }
@@ -3491,7 +3490,7 @@ nsresult nsFocusManager::GetNextTabbableContent(
           // code to have the caller return early. If the child ends up not
           // being focusable in some way, the child process will call back
           // into document navigation again by calling MoveFocus.
-          TabParent* remote = TabParent::GetFrom(currentContent);
+          BrowserParent* remote = BrowserParent::GetFrom(currentContent);
           if (remote) {
             remote->NavigateByKey(aForward, aForDocumentNavigation);
             return NS_SUCCESS_DOM_NO_OPERATION;

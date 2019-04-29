@@ -217,7 +217,7 @@ nsresult nsSliderFrame::AttributeChanged(int32_t aNameSpaceID,
   if (aAttribute == nsGkAtoms::minpos || aAttribute == nsGkAtoms::maxpos ||
       aAttribute == nsGkAtoms::pageincrement ||
       aAttribute == nsGkAtoms::increment) {
-    PresShell()->FrameNeedsReflow(this, nsIPresShell::eStyleChange,
+    PresShell()->FrameNeedsReflow(this, IntrinsicDirty::StyleChange,
                                   NS_FRAME_IS_DIRTY);
   }
 
@@ -363,7 +363,7 @@ void nsSliderFrame::BuildDisplayListForChildren(
       const ActiveScrolledRoot* ownLayerASR = contASRTracker.GetContainerASR();
       aLists.Content()->AppendNewToTop<nsDisplayOwnLayer>(
           aBuilder, this, &masterList, ownLayerASR,
-          nsDisplayOwnLayerFlags::eNone,
+          nsDisplayOwnLayerFlags::None,
           ScrollbarData::CreateForThumb(*scrollDirection, GetThumbRatio(),
                                         thumbStart, thumbLength,
                                         isAsyncDraggable, sliderTrackStart,
@@ -616,7 +616,7 @@ nsresult nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
   }
 #ifdef MOZ_WIDGET_GTK
   else if (ShouldScrollForEvent(aEvent) && aEvent->mClass == eMouseEventClass &&
-           aEvent->AsMouseEvent()->button == WidgetMouseEvent::eRightButton) {
+           aEvent->AsMouseEvent()->mButton == MouseButton::eRight) {
     // HandlePress and HandleRelease are usually called via
     // nsFrame::HandleEvent, but only for the left mouse button.
     if (aEvent->mMessage == eMouseDown) {
@@ -1142,9 +1142,12 @@ nsresult nsSliderFrame::StopDrag() {
 void nsSliderFrame::DragThumb(bool aGrabMouseEvents) {
   mDragFinished = !aGrabMouseEvents;
 
-  nsIPresShell::SetCapturingContent(
-      aGrabMouseEvents ? GetContent() : nullptr,
-      aGrabMouseEvents ? CAPTURE_IGNOREALLOWED : 0);
+  if (aGrabMouseEvents) {
+    PresShell::SetCapturingContent(GetContent(),
+                                   CaptureFlags::IgnoreAllowedState);
+  } else {
+    PresShell::ReleaseCapturingContent();
+  }
 }
 
 bool nsSliderFrame::isDraggingThumb() const {
@@ -1183,15 +1186,15 @@ bool nsSliderFrame::ShouldScrollForEvent(WidgetGUIEvent* aEvent) {
       return true;
     case eMouseDown:
     case eMouseUp: {
-      uint16_t button = aEvent->AsMouseEvent()->button;
+      uint16_t button = aEvent->AsMouseEvent()->mButton;
 #ifdef MOZ_WIDGET_GTK
-      return (button == WidgetMouseEvent::eLeftButton) ||
-             (button == WidgetMouseEvent::eRightButton && GetScrollToClick()) ||
-             (button == WidgetMouseEvent::eMiddleButton && gMiddlePref &&
+      return (button == MouseButton::eLeft) ||
+             (button == MouseButton::eRight && GetScrollToClick()) ||
+             (button == MouseButton::eMiddle && gMiddlePref &&
               !GetScrollToClick());
 #else
-      return (button == WidgetMouseEvent::eLeftButton) ||
-             (button == WidgetMouseEvent::eMiddleButton && gMiddlePref);
+      return (button == MouseButton::eLeft) ||
+             (button == MouseButton::eMiddle && gMiddlePref);
 #endif
     }
     default:
@@ -1221,7 +1224,7 @@ bool nsSliderFrame::ShouldScrollToClickForEvent(WidgetGUIEvent* aEvent) {
   }
 
   WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
-  if (mouseEvent->button == WidgetMouseEvent::eLeftButton) {
+  if (mouseEvent->mButton == MouseButton::eLeft) {
 #ifdef XP_MACOSX
     bool invertPref = mouseEvent->IsAlt();
 #else
@@ -1231,7 +1234,7 @@ bool nsSliderFrame::ShouldScrollToClickForEvent(WidgetGUIEvent* aEvent) {
   }
 
 #ifdef MOZ_WIDGET_GTK
-  if (mouseEvent->button == WidgetMouseEvent::eRightButton) {
+  if (mouseEvent->mButton == MouseButton::eRight) {
     return !GetScrollToClick();
   }
 #endif

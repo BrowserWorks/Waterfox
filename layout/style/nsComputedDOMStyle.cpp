@@ -193,7 +193,7 @@ struct ComputedStyleMap {
     }
 
     bool IsEnabled() const {
-      return nsCSSProps::IsEnabled(mProperty, CSSEnabledState::eForAllContent);
+      return nsCSSProps::IsEnabled(mProperty, CSSEnabledState::ForAllContent);
     }
   };
 
@@ -495,7 +495,7 @@ static inline PseudoStyleType GetPseudoType(nsAtom* aPseudo) {
     return PseudoStyleType::NotPseudo;
   }
   return nsCSSPseudoElements::GetPseudoType(aPseudo,
-                                            CSSEnabledState::eForAllContent);
+                                            CSSEnabledState::ForAllContent);
 }
 
 already_AddRefed<ComputedStyle> nsComputedDOMStyle::DoGetComputedStyleNoFlush(
@@ -670,7 +670,7 @@ static void CollectImageURLsForProperty(nsCSSPropertyID aProp,
                                         nsTArray<nsString>& aURLs) {
   if (nsCSSProps::IsShorthand(aProp)) {
     CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(p, aProp,
-                                         CSSEnabledState::eForAllContent) {
+                                         CSSEnabledState::ForAllContent) {
       CollectImageURLsForProperty(*p, aStyle, aURLs);
     }
     return;
@@ -1831,9 +1831,7 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetHeight() {
 
     const nsStyleDisplay* displayData = StyleDisplay();
     if (displayData->mDisplay == mozilla::StyleDisplay::Inline &&
-        !(mInnerFrame->IsFrameOfType(nsIFrame::eReplaced)) &&
-        // An outer SVG frame should behave the same as eReplaced in this case
-        !mInnerFrame->IsSVGOuterSVGFrame()) {
+        !mInnerFrame->IsFrameOfType(nsIFrame::eReplaced)) {
       calcHeight = false;
     }
   }
@@ -1870,9 +1868,7 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetWidth() {
 
     const nsStyleDisplay* displayData = StyleDisplay();
     if (displayData->mDisplay == mozilla::StyleDisplay::Inline &&
-        !(mInnerFrame->IsFrameOfType(nsIFrame::eReplaced)) &&
-        // An outer SVG frame should behave the same as eReplaced in this case
-        !mInnerFrame->IsSVGOuterSVGFrame()) {
+        !mInnerFrame->IsFrameOfType(nsIFrame::eReplaced)) {
       calcWidth = false;
     }
   }

@@ -6,7 +6,7 @@
 
 "use strict";
 
-const {Cc, Ci} = require("chrome");
+const {Cc, Ci, Cr} = require("chrome");
 const Services = require("Services");
 const flags = require("devtools/shared/flags");
 
@@ -126,10 +126,14 @@ function NetworkObserver(filters, owner) {
   this.openRequests = new Map();
   this.openResponses = new Map();
 
+  this.blockedURLs = new Set();
+
   this._httpResponseExaminer =
     DevToolsUtils.makeInfallible(this._httpResponseExaminer).bind(this);
   this._httpModifyExaminer =
     DevToolsUtils.makeInfallible(this._httpModifyExaminer).bind(this);
+  this._httpFailedOpening =
+    DevToolsUtils.makeInfallible(this._httpFailedOpening).bind(this);
   this._serviceWorkerRequest = this._serviceWorkerRequest.bind(this);
 
   this._throttleData = null;
@@ -205,6 +209,9 @@ NetworkObserver.prototype = {
                                "http-on-examine-cached-response");
       Services.obs.addObserver(this._httpModifyExaminer,
                                "http-on-modify-request");
+    } else {
+      Services.obs.addObserver(this._httpFailedOpening,
+                               "http-on-failed-opening-request");
     }
     // In child processes, only watch for service worker requests
     // everything else only happens in the parent process
@@ -240,6 +247,27 @@ NetworkObserver.prototype = {
 
     // Service workers never fire http-on-examine-cached-response, so fake one.
     this._httpResponseExaminer(channel, "http-on-examine-cached-response");
+  },
+
+  /**
+   * Observes for http-on-failed-opening-request notification to catch any
+   * channels for which asyncOpen has synchronously failed.  This is the only
+   * place to catch early security check failures.
+   */
+  _httpFailedOpening: function(subject, topic) {
+    if (!this.owner ||
+        (topic != "http-on-failed-opening-request") ||
+        !(subject instanceof Ci.nsIHttpChannel)) {
+      return;
+    }
+
+    const channel = subject.QueryInterface(Ci.nsIHttpChannel);
+
+    if (!matchRequest(channel, this.filters)) {
+      return;
+    }
+
+    "add your handling code here";
   },
 
   /**
@@ -393,7 +421,15 @@ NetworkObserver.prototype = {
       case gActivityDistributor.ACTIVITY_SUBTYPE_REQUEST_BODY_SENT:
         this._onRequestBodySent(httpActivity);
         if (httpActivity.sentBody !== null) {
-          httpActivity.owner.addRequestPostData({ text: httpActivity.sentBody });
+          const limit = Services.prefs.getIntPref("devtools.netmonitor.requestBodyLimit");
+          const size = httpActivity.sentBody.length;
+          if (size > limit && limit > 0) {
+            httpActivity.sentBody = httpActivity.sentBody.substr(0, limit);
+          }
+          httpActivity.owner.addRequestPostData({
+            text: httpActivity.sentBody,
+            size: size,
+          });
           httpActivity.sentBody = null;
         }
         break;
@@ -556,9 +592,18 @@ NetworkObserver.prototype = {
       cookies = NetworkHelper.parseCookieHeader(cookieHeader);
     }
 
+    // Check the request URL with ones manually blocked by the user in DevTools.
+    // If it's meant to be blocked, we cancel the request and annotate the event.
+    if (this.blockedURLs.has(httpActivity.url)) {
+      channel.cancel(Cr.NS_BINDING_ABORTED);
+      event.blockedReason = "DevTools";
+    }
+
     httpActivity.owner = this.owner.onNetworkEvent(event);
 
-    this._setupResponseListener(httpActivity, fromCache);
+    if (!event.blockedReason) {
+      this._setupResponseListener(httpActivity, fromCache);
+    }
 
     httpActivity.owner.addRequestHeaders(headers, extraStringData);
     httpActivity.owner.addRequestCookies(cookies);
@@ -642,6 +687,36 @@ NetworkObserver.prototype = {
     }
 
     return httpActivity;
+  },
+
+  /**
+   * Block a request based on certain filtering options.
+   *
+   * Currently, an exact URL match is the only supported filter type.
+   */
+  blockRequest(filter) {
+    if (!filter || !filter.url) {
+      // In the future, there may be other types of filters, such as domain.
+      // For now, ignore anything other than URL.
+      return;
+    }
+
+    this.blockedURLs.add(filter.url);
+  },
+
+  /**
+   * Unblock a request based on certain filtering options.
+   *
+   * Currently, an exact URL match is the only supported filter type.
+   */
+  unblockRequest(filter) {
+    if (!filter || !filter.url) {
+      // In the future, there may be other types of filters, such as domain.
+      // For now, ignore anything other than URL.
+      return;
+    }
+
+    this.blockedURLs.delete(filter.url);
   },
 
   /**
@@ -1082,6 +1157,9 @@ NetworkObserver.prototype = {
                                   "http-on-examine-cached-response");
       Services.obs.removeObserver(this._httpModifyExaminer,
                                   "http-on-modify-request");
+    } else {
+      Services.obs.removeObserver(this._httpFailedOpening,
+                                  "http-on-failed-opening-request");
     }
 
     Services.obs.removeObserver(this._serviceWorkerRequest,

@@ -29,6 +29,8 @@ const PREF_SHOW_SPONSORED = "showSponsored";
 const PREF_SPOC_IMPRESSIONS = "discoverystream.spoc.impressions";
 const PREF_REC_IMPRESSIONS = "discoverystream.rec.impressions";
 
+let defaultLayoutResp;
+
 this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   constructor() {
     // Internal state for checking if we've intialized all our data
@@ -54,6 +56,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     try {
       this._prefCache.config = JSON.parse(this.store.getState().Prefs.values[PREF_CONFIG]);
       const layoutUrl = this._prefCache.config.layout_endpoint;
+
       const apiKeyPref = this._prefCache.config.api_key_pref;
       if (layoutUrl && apiKeyPref) {
         const apiKey = Services.prefs.getCharPref(apiKeyPref, "");
@@ -91,11 +94,20 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     this._prefCache = {};
   }
 
-  async fetchFromEndpoint(endpoint) {
-    if (!endpoint) {
+  async fetchFromEndpoint(rawEndpoint) {
+    if (!rawEndpoint) {
       Cu.reportError("Tried to fetch endpoint but none was configured.");
       return null;
     }
+
+    const apiKeyPref = this._prefCache.config.api_key_pref;
+    const apiKey = Services.prefs.getCharPref(apiKeyPref, "");
+
+    // The server somtimes returns this value already replaced, but we try this for two reasons:
+    // 1. Layout endpoints are not from the server.
+    // 2. Hardcoded layouts don't have this already done for us.
+    const endpoint = rawEndpoint.replace("$apiKey", apiKey);
+
     try {
       // Make sure the requested endpoint is allowed
       const allowed = this.store.getState().Prefs.values[PREF_ENDPOINTS].split(",");
@@ -131,6 +143,10 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     const EXPIRATION_TIME = isStartup ? STARTUP_CACHE_EXPIRE_TIME : updateTimePerComponent[key];
     switch (key) {
       case "layout":
+        // This never needs to expire, as it's not expected to change.
+        if (this.config.hardcoded_layout) {
+          return false;
+        }
         return (!layout || !(Date.now() - layout.lastUpdated < EXPIRATION_TIME));
       case "spocs":
         return (!spocs || !(Date.now() - spocs.lastUpdated < EXPIRATION_TIME));
@@ -162,7 +178,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
       expirationPerComponent.feeds;
   }
 
-  async loadLayout(sendUpdate, isStartup) {
+  async fetchLayout(isStartup) {
     const cachedData = await this.cache.get() || {};
     let {layout} = cachedData;
     if (this.isExpired({cachedData, key: "layout", isStartup})) {
@@ -180,6 +196,16 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
       } else {
         Cu.reportError("No response for response.layout prop");
       }
+    }
+    return layout;
+  }
+
+  async loadLayout(sendUpdate, isStartup) {
+    let layout = {};
+    if (this.config.hardcoded_layout) {
+      layout = {lastUpdate: Date.now(), ...defaultLayoutResp};
+    } else {
+      layout = await this.fetchLayout(isStartup);
     }
 
     if (layout && layout.layout) {
@@ -240,7 +266,10 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
 
   filterRecommendations(feed) {
     if (feed && feed.data && feed.data.recommendations && feed.data.recommendations.length) {
-      return {data: this.filterBlocked(feed.data, "recommendations")};
+      return {
+        ...feed,
+        data: this.filterBlocked(feed.data, "recommendations"),
+      };
     }
     return feed;
   }
@@ -388,8 +417,17 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     }
   }
 
-  scoreItems(item) {
+  scoreItems(items) {
+    return items.map(item => this.scoreItem(item))
+      // Remove spocs that are scored too low.
+      .filter(s => s.score >= s.min_score)
+      // Sort by highest scores.
+      .sort((a, b) => b.score - a.score);
+  }
+
+  scoreItem(item) {
     item.score = item.item_score;
+    item.min_score = item.min_score || 0;
     if (item.score !== 0 && !item.score) {
       item.score = 1;
     }
@@ -420,14 +458,9 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
       const campaignMap = {};
       return {
         ...data,
-        spocs: data.spocs
-          // This order of operations is intended.
-          // scoreItems must be first because it creates this.score.
-          .map(item => this.scoreItems(item))
-          // Remove spocs that are scored too low.
-          .filter(s => s.score >= s.min_score)
-          // Sort by highest scores.
-          .sort((a, b) => b.score - a.score)
+        // This order of operations is intended.
+        // scoreItems must be first because it creates this.score.
+        spocs: this.scoreItems(data.spocs)
           // This removes campaign dupes.
           // We do this only after scoring and sorting because that way
           // we can keep the first item we see, and end up keeping the highest scored.
@@ -462,8 +495,10 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
           return isBelow;
         }),
       };
-      // send caps to redux
-      this.store.dispatch({type: at.DISCOVERY_STREAM_SPOCS_CAPS, data: caps});
+      // send caps to redux if any.
+      if (caps.length) {
+        this.store.dispatch({type: at.DISCOVERY_STREAM_SPOCS_CAPS, data: caps});
+      }
       return result;
     }
     return data;
@@ -514,10 +549,16 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     if (this.isExpired({cachedData, key: "feed", url: feedUrl, isStartup})) {
       const feedResponse = await this.fetchFromEndpoint(feedUrl);
       if (feedResponse) {
+        const scoredItems = this.scoreItems(feedResponse.recommendations);
+        const {recsExpireTime} = feedResponse.settings;
+        const recommendations = this.rotate(scoredItems, recsExpireTime);
         this.componentFeedFetched = true;
         feed = {
           lastUpdated: Date.now(),
-          data: this.rotate(feedResponse),
+          data: {
+            ...feedResponse,
+            recommendations,
+          },
         };
       } else {
         Cu.reportError("No response for feed");
@@ -573,10 +614,8 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   // We have to rotate stories on the client so that
   // active stories are at the front of the list, followed by stories that have expired
   // impressions i.e. have been displayed for longer than recsExpireTime.
-  rotate(feedResponse) {
-    const {recommendations} = feedResponse;
-
-    const maxImpressionAge = Math.max(feedResponse.settings.recsExpireTime * 1000 || DEFAULT_RECS_EXPIRE_TIME, DEFAULT_RECS_EXPIRE_TIME);
+  rotate(recommendations, recsExpireTime) {
+    const maxImpressionAge = Math.max(recsExpireTime * 1000 || DEFAULT_RECS_EXPIRE_TIME, DEFAULT_RECS_EXPIRE_TIME);
     const impressions = this.readImpressionsPref(PREF_REC_IMPRESSIONS);
     const expired = [];
     const active = [];
@@ -587,7 +626,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         active.push(item);
       }
     }
-    return {...feedResponse, recommendations: active.concat(expired)};
+    return active.concat(expired);
   }
 
   /**
@@ -825,16 +864,21 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         if (this.showSpocs) {
           this.recordCampaignImpression(action.data.campaignId);
 
-          const cachedData = await this.cache.get() || {};
-          const {spocs} = cachedData;
-
-          this.store.dispatch(ac.AlsoToPreloaded({
-            type: at.DISCOVERY_STREAM_SPOCS_UPDATE,
-            data: {
-              lastUpdated: spocs.lastUpdated,
-              spocs: this.transform(this.frequencyCapSpocs(spocs.data)),
-            },
-          }));
+          // Apply frequency capping to SPOCs in the redux store, only update the
+          // store if the SPOCs are changed.
+          const {spocs} = this.store.getState().DiscoveryStream;
+          const newSpocs = this.frequencyCapSpocs(spocs.data);
+          const prevSpocs = spocs.data.spocs || [];
+          const currentSpocs = newSpocs.spocs || [];
+          if (prevSpocs.length !== currentSpocs.length) {
+            this.store.dispatch(ac.AlsoToPreloaded({
+              type: at.DISCOVERY_STREAM_SPOCS_UPDATE,
+              data: {
+                lastUpdated: spocs.lastUpdated,
+                spocs: newSpocs,
+              },
+            }));
+          }
         }
         break;
       case at.UNINIT:
@@ -860,6 +904,222 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         break;
     }
   }
+};
+
+defaultLayoutResp = {
+  "spocs": {
+    "url": "https://getpocket.cdn.mozilla.net/v3/firefox/unique-spocs?consumer_key=$apiKey",
+    "spocs_per_domain": 1,
+  },
+  "layout": [
+    {
+      "width": 12,
+      "components": [
+        {
+          "type": "TopSites",
+          "header": {
+            "title": "Top Sites",
+          },
+          "properties": {},
+        },
+      ],
+    },
+    {
+      "width": 12,
+      "components": [
+        {
+          "type": "Message",
+          "header": {
+            "title": "Recommended by Pocket",
+            "subtitle": "",
+            "link_text": "How it works",
+            "link_url": "https://getpocket.com/firefox/new_tab_learn_more",
+            "icon": "resource://activity-stream/data/content/assets/glyph-pocket-16.svg",
+          },
+          "properties": {},
+          "styles": {
+            ".ds-message": "margin-bottom: -20px",
+          },
+        },
+      ],
+    },
+    {
+      "width": 12,
+      "components": [
+        {
+          "type": "CardGrid",
+          "properties": {
+            "items": 4,
+          },
+          "header": {
+            "title": "",
+          },
+          "feed": {
+            "embed_reference": null,
+            "url": "https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?version=3&consumer_key=$apiKey&locale_lang=en-US",
+          },
+          "spocs": {
+            "probability": 1,
+            "positions": [
+              {
+                "index": 3,
+              },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      "width": 12,
+      "components": [
+        {
+          "type": "CardGrid",
+          "header": {
+            "title": "Health & Fitness 💪",
+          },
+          "feed": {
+            "embed_reference": null,
+            "url": "https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?topic_id=4&duration=2592000&end_time_offset=172800&version=3&consumer_key=$apiKey&locale_lang=en-US&feed_variant=OptimalCuratedLinksForLocaleFeed&model_id=external_time_live",
+          },
+          "properties": {
+            "items": 4,
+            "has_numbers": false,
+            "has_images": true,
+            "border": "no-border",
+          },
+          "spocs": {
+            "probability": 1,
+            "positions": [
+              {
+                "index": 3,
+              },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      "width": 12,
+      "components": [
+        {
+          "type": "CardGrid",
+          "header": {
+            "title": "Tech 🖥",
+          },
+          "feed": {
+            "embed_reference": null,
+            "url": "https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?topic_id=5&duration=2592000&end_time_offset=172800&version=3&consumer_key=$apiKey&locale_lang=en-US&feed_variant=OptimalCuratedLinksForLocaleFeed&model_id=external_time_live",
+          },
+          "properties": {
+            "items": 4,
+            "has_numbers": false,
+            "has_images": true,
+            "border": "no-border",
+          },
+        },
+      ],
+    },
+    {
+      "width": 12,
+      "components": [
+        {
+          "type": "CardGrid",
+          "header": {
+            "title": "Entertainment 🍿",
+          },
+          "feed": {
+            "embed_reference": null,
+            "url": "https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?topic_id=8&duration=2592000&end_time_offset=172800&version=3&consumer_key=$apiKey&locale_lang=en-US&feed_variant=OptimalCuratedLinksForLocaleFeed&model_id=external_time_live",
+          },
+          "properties": {
+            "items": 4,
+            "has_numbers": false,
+            "has_images": true,
+            "border": "no-border",
+          },
+          "spocs": {
+            "probability": 1,
+            "positions": [
+              {
+                "index": 3,
+              },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      "width": 12,
+      "components": [
+        {
+          "type": "CardGrid",
+          "header": {
+            "title": "Personal Finance 💰",
+          },
+          "feed": {
+            "embed_reference": null,
+            "url": "https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?topic_id=2&duration=2592000&end_time_offset=172800&version=3&consumer_key=$apiKey&locale_lang=en-US&feed_variant=OptimalCuratedLinksForLocaleFeed&model_id=external_time_live",
+          },
+          "properties": {
+            "items": 4,
+            "has_numbers": false,
+            "has_images": true,
+            "border": "no-border",
+          },
+        },
+      ],
+    },
+    {
+      "width": 12,
+      "components": [
+        {
+          "type": "CardGrid",
+          "header": {
+            "title": "Business 💼",
+          },
+          "feed": {
+            "embed_reference": null,
+            "url": "https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?topic_id=1&duration=2592000&end_time_offset=172800&version=3&consumer_key=$apiKey&locale_lang=en-US&feed_variant=OptimalCuratedLinksForLocaleFeed&model_id=external_time_live",
+          },
+          "properties": {
+            "items": 4,
+            "has_numbers": false,
+            "has_images": true,
+            "border": "no-border",
+          },
+        },
+      ],
+    },
+    {
+      "width": 12,
+      "components": [
+        {
+          "type": "CardGrid",
+          "header": {
+            "title": "Science 🔬",
+          },
+          "feed": {
+            "embed_reference": null,
+            "url": "https://getpocket.cdn.mozilla.net/v3/firefox/global-recs?topic_id=7&duration=2592000&end_time_offset=172800&version=3&consumer_key=$apiKey&locale_lang=en-US&feed_variant=OptimalCuratedLinksForLocaleFeed&model_id=external_time_live",
+          },
+          "properties": {
+            "items": 4,
+            "has_numbers": false,
+            "has_images": true,
+            "border": "no-border",
+          },
+          "spocs": {
+            "probability": 1,
+            "positions": [
+              {
+                "index": 3,
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ],
 };
 
 const EXPORTED_SYMBOLS = ["DiscoveryStreamFeed"];

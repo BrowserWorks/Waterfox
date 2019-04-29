@@ -430,6 +430,7 @@ enum class AstExprKind {
   StructNarrow,
 #endif
 #ifdef ENABLE_WASM_REFTYPES
+  TableFill,
   TableGet,
   TableGrow,
   TableSet,
@@ -919,6 +920,28 @@ class AstMemOrTableInit : public AstExpr {
 #endif
 
 #ifdef ENABLE_WASM_REFTYPES
+class AstTableFill : public AstExpr {
+  AstRef targetTable_;
+  AstExpr* start_;
+  AstExpr* val_;
+  AstExpr* len_;
+
+ public:
+  static const AstExprKind Kind = AstExprKind::TableFill;
+  explicit AstTableFill(AstRef targetTable, AstExpr* start, AstExpr* val,
+                        AstExpr* len)
+      : AstExpr(Kind, ExprType::Void),
+        targetTable_(targetTable),
+        start_(start),
+        val_(val),
+        len_(len) {}
+
+  AstRef& targetTable() { return targetTable_; }
+  AstExpr& start() const { return *start_; }
+  AstExpr& val() const { return *val_; }
+  AstExpr& len() const { return *len_; }
+};
+
 class AstTableGet : public AstExpr {
   AstRef targetTable_;
   AstExpr* index_;
@@ -936,20 +959,20 @@ class AstTableGet : public AstExpr {
 
 class AstTableGrow : public AstExpr {
   AstRef targetTable_;
-  AstExpr* delta_;
   AstExpr* initValue_;
+  AstExpr* delta_;
 
  public:
   static const AstExprKind Kind = AstExprKind::TableGrow;
-  AstTableGrow(AstRef targetTable, AstExpr* delta, AstExpr* initValue)
+  AstTableGrow(AstRef targetTable, AstExpr* initValue, AstExpr* delta)
       : AstExpr(Kind, ExprType::I32),
         targetTable_(targetTable),
-        delta_(delta),
-        initValue_(initValue) {}
+        initValue_(initValue),
+        delta_(delta) {}
 
   AstRef& targetTable() { return targetTable_; }
-  AstExpr& delta() const { return *delta_; }
   AstExpr& initValue() const { return *initValue_; }
+  AstExpr& delta() const { return *delta_; }
 };
 
 class AstTableSet : public AstExpr {

@@ -1020,7 +1020,7 @@ InterceptedHttpChannel::OnStartRequest(nsIRequest* aRequest) {
   }
 
   if (mListener) {
-    mListener->OnStartRequest(this);
+    return mListener->OnStartRequest(this);
   }
   return NS_OK;
 }
@@ -1046,15 +1046,16 @@ InterceptedHttpChannel::OnStopRequest(nsIRequest* aRequest, nsresult aStatus) {
   // Register entry to the PerformanceStorage resource timing
   MaybeReportTimingData();
 
+  nsresult rv = NS_OK;
   if (mListener) {
-    mListener->OnStopRequest(this, mStatus);
+    rv = mListener->OnStopRequest(this, mStatus);
   }
 
   gHttpHandler->OnStopRequest(this);
 
   ReleaseListeners();
 
-  return NS_OK;
+  return rv;
 }
 
 NS_IMETHODIMP
@@ -1170,6 +1171,15 @@ NS_IMETHODIMP
 InterceptedHttpChannel::IsFromCache(bool* value) {
   if (mSynthesizedCacheInfo) {
     return mSynthesizedCacheInfo->IsFromCache(value);
+  }
+  *value = false;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+InterceptedHttpChannel::IsRacing(bool* value) {
+  if (mSynthesizedCacheInfo) {
+    return mSynthesizedCacheInfo->IsRacing(value);
   }
   *value = false;
   return NS_OK;

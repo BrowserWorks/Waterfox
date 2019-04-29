@@ -9,7 +9,6 @@ import copy
 import datetime
 import json
 import os
-import re
 import sys
 import subprocess
 
@@ -133,16 +132,12 @@ class AndroidEmulatorTest(TestingMixin, BaseScript, MozbaseMixin, CodeCoverageMi
         self.test_packages_url = c.get('test_packages_url')
         self.test_manifest = c.get('test_manifest')
         self.robocop_path = os.path.join(abs_dirs['abs_work_dir'], "robocop.apk")
-        self.test_suite = c.get('test_suite')
+        suite = c.get('test_suite')
+        if suite and '-chunked' in suite:
+            suite = suite[:suite.index('-chunked')]
+        self.test_suite = suite
         self.this_chunk = c.get('this_chunk')
         self.total_chunks = c.get('total_chunks')
-        if self.test_suite and self.test_suite not in self.config["suite_definitions"]:
-            # accept old-style test suite name like "mochitest-3"
-            m = re.match("(.*)-(\d*)", self.test_suite)
-            if m:
-                self.test_suite = m.group(1)
-                if self.this_chunk is None:
-                    self.this_chunk = m.group(2)
         self.xre_path = None
         self.device_serial = 'emulator-5554'
         self.log_raw_level = c.get('log_raw_level')
@@ -320,11 +315,11 @@ class AndroidEmulatorTest(TestingMixin, BaseScript, MozbaseMixin, CodeCoverageMi
 
         # For each test category, provide a list of supported sub-suites and a mapping
         # between the per_test_base suite name and the android suite name.
-        all = [('mochitest', {'plain': 'mochitest',
-                              'chrome': 'mochitest-chrome',
+        all = [('mochitest', {'mochitest-plain': 'mochitest-plain',
+                              'mochitest-chrome': 'mochitest-chrome',
                               'mochitest-media': 'mochitest-media',
-                              'plain-clipboard': 'mochitest-plain-clipboard',
-                              'plain-gpu': 'mochitest-plain-gpu'}),
+                              'mochitest-plain-clipboard': 'mochitest-plain-clipboard',
+                              'mochitest-plain-gpu': 'mochitest-plain-gpu'}),
                ('reftest', {'reftest': 'reftest',
                             'crashtest': 'crashtest',
                             'jsreftest': 'jsreftest'}),

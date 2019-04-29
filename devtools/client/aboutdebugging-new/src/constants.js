@@ -15,6 +15,7 @@ const actionTypes = {
   ADB_ADDON_UNINSTALL_SUCCESS: "ADB_ADDON_UNINSTALL_SUCCESS",
   ADB_ADDON_UNINSTALL_FAILURE: "ADB_ADDON_UNINSTALL_FAILURE",
   ADB_ADDON_STATUS_UPDATED: "ADB_ADDON_STATUS_UPDATED",
+  ADB_READY_UPDATED: "ADB_READY_UPDATED",
   CONNECT_RUNTIME_CANCEL: "CONNECT_RUNTIME_CANCEL",
   CONNECT_RUNTIME_FAILURE: "CONNECT_RUNTIME_FAILURE",
   CONNECT_RUNTIME_NOT_RESPONDING: "CONNECT_RUNTIME_NOT_RESPONDING",
@@ -83,6 +84,11 @@ const DEBUG_TARGET_PANE = {
   TEMPORARY_EXTENSION: "temporaryExtension",
 };
 
+const ICON_LABEL_LEVEL = {
+  INFO: "info",
+  OK: "ok",
+};
+
 const MESSAGE_LEVEL = {
   ERROR: "error",
   INFO: "info",
@@ -99,8 +105,8 @@ const PREFERENCES = {
   LOCAL_TAB_DEBUGGING_ENABLED: "devtools.aboutdebugging.local-tab-debugging",
   // Preference that drives the display of the "Processes" debug target category.
   PROCESS_DEBUGGING_ENABLED: "devtools.aboutdebugging.process-debugging",
-  // Preference that drives the display of system addons in about:debugging.
-  SHOW_SYSTEM_ADDONS: "devtools.aboutdebugging.showSystemAddons",
+  // Preference that drives the display of hidden & system addons in about:debugging.
+  SHOW_HIDDEN_ADDONS: "devtools.aboutdebugging.showHiddenAddons",
 };
 
 const RUNTIME_PREFERENCE = {
@@ -138,6 +144,7 @@ const USB_STATES = {
 module.exports = Object.assign({}, {
   DEBUG_TARGETS,
   DEBUG_TARGET_PANE,
+  ICON_LABEL_LEVEL,
   MESSAGE_LEVEL,
   PAGE_TYPES,
   PREFERENCES,

@@ -949,11 +949,11 @@
   "GEOLOCATION_REQUEST_GRANTED": {
     "record_in_processes": ["main", "content"],
     "alert_emails": ["tdsmith@mozilla.com"],
-    "expires_in_version": "67",
+    "expires_in_version": "72",
     "kind": "enumerated",
     "n_values": 20,
     "releaseChannelCollection": "opt-out",
-    "bug_numbers": [1230209, 1494496, 1519170],
+    "bug_numbers": [1230209, 1494496, 1519170, 1544539],
     "description": "Geolocation requests either granted or denied (0=denied/other, 1=denied/http, 2=denied/https, ..., 10=granted/other, 11=granted/http, 12=granted/https)"
   },
   "GEOLOCATION_WATCHPOSITION_SECURE_ORIGIN" : {
@@ -8222,9 +8222,10 @@
     "kind": "count",
     "keyed": true,
     "releaseChannelCollection": "opt-out",
-    "alert_emails": ["adw@mozilla.com"],
-    "bug_numbers": [1089670, 1475571, 1482158, 1499193],
-    "description": "Records search counts for search access points and in content searches. For search access points in general and for the urlbar when an internal @engine shorcut is not used, the format is: <engine-name>.<search-access-point> For the urlbar when an internal @engine shortcut is used, the format is: <engine-name>.alias For in content searches, the format is <provider>.in-content:[sap|sap-follow-on|organic]:[code|none]"
+    "alert_emails": ["adw@mozilla.com", "loines@mozilla.com"],
+    "bug_numbers": [1089670, 1475571, 1482158, 1499193, 1545172],
+    "description": "Records search counts for search access points and in content searches. For search access points in general and for the urlbar when an internal @engine shorcut is not used, the format is: <engine-name>.<search-access-point> For the urlbar when an internal @engine shortcut is used, the format is: <engine-name>.alias For in content searches, the format is <provider>.in-content:[sap|sap-follow-on|organic]:[code|none]",
+    "record_into_store": ["main", "pre-account"]
   },
   "SEARCH_SERVICE_INIT_MS": {
     "record_in_processes": ["main"],
@@ -10852,6 +10853,68 @@
     "n_values": 160,
     "description": "The longest hash match between a newly added entry and all the existing entries."
   },
+  "NETWORK_CACHE_ISOLATION_SIZE_INCREASE" : {
+    "record_in_processes": ["main"],
+    "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
+    "bug_numbers": [1506534],
+    "expires_in_version": "74",
+    "kind": "exponential",
+    "high": 200,
+    "keyed": true,
+    "keys": [
+      "ALL",
+      "UNKNOWN",
+      "OTHER",
+      "JAVASCRIPT",
+      "IMAGE",
+      "MEDIA",
+      "STYLESHEET",
+      "WASM"
+    ],
+    "n_buckets": 100,
+    "description": "Percentage increase of cache size that would be caused by first party isolation without deduplication keyed by content type."
+  },
+  "NETWORK_CACHE_ISOLATION_ENTRY_COUNT_INCREASE" : {
+    "record_in_processes": ["main"],
+    "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
+    "bug_numbers": [1506534],
+    "expires_in_version": "74",
+    "kind": "exponential",
+    "high": 200,
+    "keyed": true,
+    "keys": [
+      "ALL",
+      "UNKNOWN",
+      "OTHER",
+      "JAVASCRIPT",
+      "IMAGE",
+      "MEDIA",
+      "STYLESHEET",
+      "WASM"
+    ],
+    "n_buckets": 100,
+    "description": "Percentage increase of cache entry count that would be caused by first party isolation without deduplication keyed by content type."
+  },
+  "NETWORK_CACHE_ISOLATION_UNIQUE_SITE_ACCESS_COUNT" : {
+    "record_in_processes": ["main"],
+    "alert_emails": ["necko@mozilla.com", "mnovotny@mozilla.com"],
+    "bug_numbers": [1506534],
+    "expires_in_version": "74",
+    "kind": "exponential",
+    "high": 1000,
+    "keyed": true,
+    "keys": [
+      "UNKNOWN",
+      "OTHER",
+      "JAVASCRIPT",
+      "IMAGE",
+      "MEDIA",
+      "STYLESHEET",
+      "WASM"
+    ],
+    "n_buckets": 100,
+    "description": "Number of unique sites accessing the cache entry keyed by content type."
+  },
   "DATABASE_LOCKED_EXCEPTION": {
     "record_in_processes": ["main", "content"],
     "expires_in_version": "42",
@@ -11962,18 +12025,20 @@
     "n_buckets" : 10,
     "description": "The number of sites for which the user has explicitly rejected saving logins",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_FORM_AUTOFILL_RESULT": {
     "record_in_processes": ["main", "content"],
-    "alert_emails": ["seceng-telemetry@mozilla.com"],
-    "bug_numbers": [1340021],
+    "alert_emails": ["seceng-telemetry@mozilla.com","loines@mozilla.com"],
+    "bug_numbers": [1340021, 1545172],
     "releaseChannelCollection": "opt-out",
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values" : 20,
-    "description": "The result of auto-filling a login form. See http://mzl.la/1Mbs6jL for bucket descriptions."
+    "description": "The result of auto-filling a login form. See http://mzl.la/1Mbs6jL for bucket descriptions.",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_LOGIN_LAST_USED_DAYS": {
     "record_in_processes": ["main"],
@@ -11983,18 +12048,20 @@
     "n_buckets" : 40,
     "description": "Time in days each saved login was last used",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_LOGIN_PAGE_SAFETY": {
     "record_in_processes": ["main", "content"],
-    "alert_emails": ["seceng-telemetry@mozilla.com"],
-    "bug_numbers": [1340021],
+    "alert_emails": ["seceng-telemetry@mozilla.com","loines@mozilla.com"],
+    "bug_numbers": [1340021, 1545172],
     "releaseChannelCollection": "opt-out",
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 8,
-    "description": "The safety of a page where we see a password field. (0: safe page & safe submit; 1: safe page & unsafe submit; 2: safe page & unknown submit; 3: unsafe page & safe submit; 4: unsafe page & unsafe submit; 5: unsafe page & unknown submit)"
+    "description": "The safety of a page where we see a password field. (0: safe page & safe submit; 1: safe page & unsafe submit; 2: safe page & unknown submit; 3: unsafe page & safe submit; 4: unsafe page & unsafe submit; 5: unsafe page & unknown submit)",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_MANAGE_COPIED_PASSWORD": {
     "record_in_processes": ["main", "content"],
@@ -12002,8 +12069,9 @@
     "kind": "count",
     "description": "Count of passwords copied from the password management interface",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_MANAGE_COPIED_USERNAME": {
     "record_in_processes": ["main", "content"],
@@ -12011,8 +12079,9 @@
     "kind": "count",
     "description": "Count of usernames copied from the password management interface",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_MANAGE_DELETED": {
     "record_in_processes": ["main", "content"],
@@ -12020,8 +12089,9 @@
     "kind": "count",
     "description": "Count of passwords deleted from the password management interface (including via Remove All)",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_MANAGE_DELETED_ALL": {
     "record_in_processes": ["main", "content"],
@@ -12036,8 +12106,9 @@
     "n_values" : 5,
     "description": "Accumulates how the password management interface was opened. (0=Preferences, 1=Page Info)",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_MANAGE_SORTED": {
     "record_in_processes": ["main", "content"],
@@ -12052,8 +12123,9 @@
     "kind": "boolean",
     "description": "Whether the visibility of passwords was toggled (0=Hide, 1=Show)",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_NUM_PASSWORDS_PER_HOSTNAME": {
     "record_in_processes": ["main"],
@@ -12063,8 +12135,9 @@
     "n_buckets" : 20,
     "description": "The number of passwords per hostname",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_NUM_SAVED_PASSWORDS": {
     "record_in_processes": ["main"],
@@ -12074,8 +12147,9 @@
     "n_buckets" : 50,
     "description": "Total number of saved logins, including those that cannot be decrypted",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_NUM_HTTPAUTH_PASSWORDS": {
     "record_in_processes": ["main", "content"],
@@ -12098,8 +12172,9 @@
     "n_values": 5,
     "description": "Action taken by user through prompt for creating a login. (0=Prompt displayed [always recorded], 1=Add login, 2=Don't save now, 3=Never save)",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_PROMPT_UPDATE_ACTION" : {
     "record_in_processes": ["main"],
@@ -12108,8 +12183,9 @@
     "n_values": 5,
     "description": "Action taken by user through prompt for modifying a login. (0=Prompt displayed [always recorded], 1=Update login)",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_SAVING_ENABLED": {
     "record_in_processes": ["main"],
@@ -12117,8 +12193,9 @@
     "kind": "boolean",
     "description": "Number of users who have password saving on globally",
     "alert_emails": ["loines@mozilla.com"],
-    "bug_numbers": [1454733],
-    "releaseChannelCollection": "opt-out"
+    "bug_numbers": [1454733, 1545172],
+    "releaseChannelCollection": "opt-out",
+    "record_into_store": ["main", "pre-account"]
   },
   "PWMGR_USERNAME_PRESENT": {
     "record_in_processes": ["main", "content"],
@@ -14326,6 +14403,16 @@
     "labels": ["FullStandards", "AlmostStandards", "NavQuirks"],
     "description": "HTML document compat mode (quirks mode)"
   },
+  "HIDDEN_VIEWPORT_OVERFLOW_TYPE": {
+    "record_in_processes": ["main", "content"],
+    "alert_emails": ["mozilla-telemetry@upsuper.org", "botond@mozilla.com"],
+    "bug_numbers": [1423013, 1423017, 1513089],
+    "expires_in_version": "70",
+    "kind": "categorical",
+    "releaseChannelCollection": "opt-out",
+    "labels": ["NoOverflow", "Desktop", "ButNotMinScaleSize", "MinScaleSize"],
+    "description": "How common are different types of out-of-reach viewport overflow?"
+  },
   "WR_SCENEBUILD_TIME": {
     "record_in_processes": ["main", "gpu"],
     "alert_emails": ["kgupta@mozilla.com"],
@@ -14609,18 +14696,42 @@
       "keyed": true,
       "description": "Getting the number of errors in QuotaManager initialization."
   },
-  "HTTP_TRAFFIC_ANALYSIS": {
+  "HTTP_TRAFFIC_ANALYSIS_2": {
     "record_in_processes": ["main"],
     "alert_emails": ["gachen@mozilla.com"],
-    "bug_numbers": [1533363],
+    "bug_numbers": [1533363, 1546796],
     "expires_in_version": "73",
     "kind": "categorical",
-    "n_values": 8,
+    "n_values": 50,
     "labels": [
+      "Y0_N1",
+      "Y1_N3Oth",
+      "Y2_N3BasicLead",
+      "Y3_N3BasicBg",
+      "Y4_N3BasicOth",
+      "Y5_N3ContentLead",
+      "Y6_N3ContentBg",
+      "Y7_N3ContentOth",
+      "Y8_N3FpLead",
+      "Y9_N3FpBg",
+      "Y10_N3FpOth",
+      "Y11_P1",
+      "Y12_P3Oth",
+      "Y13_P3ContentLead",
+      "Y14_P3ContentBg",
+      "Y15_P3ContentOth",
+      "Y16_P3BasicLead",
+      "Y17_P3BasicBg",
+      "Y18_P3BasicOth",
+      "Y19_P3FpLead",
+      "Y20_P3FpBg",
+      "Y21_P3FpOth"
+    ],
+    "keyed": true,
+    "keys": [
       "Connection",
       "Transaction"
     ],
-    "keyed": true,
-    "description": "Numbers of HTTP transactions and connections by type. There are some categories separated by keys based on 4 parameters: 1. normal browsing or private browsing 2. first party or third party 3. class of service 4. tracking classification. Available keys are: ['Y=0|NormalFirstParty', 'Y=1|NormalThirdPartyOther', 'Y=2|NormalThirdPartyContentLeader', 'Y=3|NormalThirdPartyContentBackground', 'Y=4|NormalThirdPartyContentOther', 'Y=5|NormalThirdPartyBasicLeader', 'Y=6|NormalThirdPartyBasicBackground', 'Y=7|NormalThirdPartyBasicOther', 'Y=8|NormalThirdPartyFingerprintingLeader', 'Y=9|NormalThirdPartyFingerprintingBackground', 'Y=10|NormalThirdPartyFingerprintingOther', 'Y=11|PrivateFirstParty', 'Y=12|PrivateThirdPartyOther', 'Y=13|PrivateThirdPartyContentLeader', 'Y=14|PrivateThirdPartyContentBackground', 'Y=15|PrivateThirdPartyContentOther', 'Y=16|PrivateThirdPartyBasicLeader', 'Y=17|PrivateThirdPartyBasicBackground', 'Y=18|PrivateThirdPartyBasicOther', 'Y=19|PrivateThirdPartyFingerprintingLeader', 'Y=20|PrivateThirdPartyFingerprintingBackground', 'Y=21|PrivateThirdPartyFingerprintingOther']."
+    "description": "Numbers of HTTP transactions and connections by type. There are some categories separated by labels based on 4 parameters: 1. normal browsing or private browsing 2. first party or third party 3. class of service 4. tracking classification."
   }
 }

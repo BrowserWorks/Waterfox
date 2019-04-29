@@ -279,7 +279,7 @@ image::ImgDrawResult nsFieldSetFrame::PaintBorder(
   nsPresContext* presContext = PresContext();
 
   PaintBorderFlags borderFlags = aBuilder->ShouldSyncDecodeImages()
-                                     ? PaintBorderFlags::SYNC_DECODE_IMAGES
+                                     ? PaintBorderFlags::SyncDecodeImages
                                      : PaintBorderFlags();
 
   ImgDrawResult result = ImgDrawResult::SUCCESS;
@@ -500,10 +500,10 @@ void nsFieldSetFrame::Reflow(nsPresContext* aPresContext,
   // reflow the content frame only if needed
   if (reflowInner) {
     ReflowInput kidReflowInput(aPresContext, aReflowInput, inner,
-                               innerAvailSize, nullptr,
+                               innerAvailSize, Nothing(),
                                ReflowInput::CALLER_WILL_INIT);
     // Override computed padding, in case it's percentage padding
-    kidReflowInput.Init(aPresContext, nullptr, nullptr,
+    kidReflowInput.Init(aPresContext, Nothing(), nullptr,
                         &aReflowInput.ComputedPhysicalPadding());
     // Our child is "height:100%" but we actually want its height to be reduced
     // by the amount of content-height the legend is eating up, unless our
@@ -695,11 +695,11 @@ nscoord nsFieldSetFrame::GetLogicalBaseline(WritingMode aWM) const {
     case mozilla::StyleDisplay::InlineGrid:
     case mozilla::StyleDisplay::Flex:
     case mozilla::StyleDisplay::InlineFlex:
-      return BaselineBOffset(aWM, BaselineSharingGroup::eFirst,
-                             AlignmentContext::eInline);
+      return BaselineBOffset(aWM, BaselineSharingGroup::First,
+                             AlignmentContext::Inline);
     default:
-      return BSize(aWM) - BaselineBOffset(aWM, BaselineSharingGroup::eLast,
-                                          AlignmentContext::eInline);
+      return BSize(aWM) - BaselineBOffset(aWM, BaselineSharingGroup::Last,
+                                          AlignmentContext::Inline);
   }
 }
 
@@ -734,7 +734,7 @@ bool nsFieldSetFrame::GetNaturalBaselineBOffset(
     return false;
   }
   nscoord innerBStart = inner->BStart(aWM, GetSize());
-  if (aBaselineGroup == BaselineSharingGroup::eFirst) {
+  if (aBaselineGroup == BaselineSharingGroup::First) {
     *aBaseline += innerBStart;
   } else {
     *aBaseline += BSize(aWM) - (innerBStart + inner->BSize(aWM));

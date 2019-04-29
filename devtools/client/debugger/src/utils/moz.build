@@ -7,14 +7,17 @@ DIRS += [
     'breakpoint',
     'editor',
     'pause',
+    'resource',
     'sources-tree',
 ]
 
 CompiledModules(
     'assert.js',
     'ast.js',
+    'async-value.js',
     'asyncStoreHelper.js',
     'bootstrap.js',
+    'breakable-lines.js',
     'build-query.js',
     'clipboard.js',
     'connect.js',
@@ -22,7 +25,6 @@ CompiledModules(
     'dbg.js',
     'defer.js',
     'DevToolsUtils.js',
-    'empty-lines.js',
     'expressions.js',
     'fromJS.js',
     'function.js',
@@ -39,6 +41,7 @@ CompiledModules(
     'project-search.js',
     'quick-open.js',
     'result-list.js',
+    'selected-location.js',
     'source-maps.js',
     'source-queue.js',
     'source.js',

@@ -1176,21 +1176,24 @@ class Element : public FragmentOrElement {
     // occur if a splitter, frame resizer, etc had already captured and we don't
     // want to override those.
     if (!nsIPresShell::GetCapturingContent()) {
-      nsIPresShell::SetCapturingContent(
-          this, CAPTURE_PREVENTDRAG |
-                    (aRetargetToElement ? CAPTURE_RETARGETTOELEMENT : 0));
+      PresShell::SetCapturingContent(
+          this, CaptureFlags::PreventDragStart |
+                    (aRetargetToElement ? CaptureFlags::RetargetToElement
+                                        : CaptureFlags::None));
     }
   }
 
   void SetCaptureAlways(bool aRetargetToElement) {
-    nsIPresShell::SetCapturingContent(
-        this, CAPTURE_PREVENTDRAG | CAPTURE_IGNOREALLOWED |
-                  (aRetargetToElement ? CAPTURE_RETARGETTOELEMENT : 0));
+    PresShell::SetCapturingContent(
+        this, CaptureFlags::PreventDragStart |
+                  CaptureFlags::IgnoreAllowedState |
+                  (aRetargetToElement ? CaptureFlags::RetargetToElement
+                                      : CaptureFlags::None));
   }
 
   void ReleaseCapture() {
     if (nsIPresShell::GetCapturingContent() == this) {
-      nsIPresShell::SetCapturingContent(nullptr, 0);
+      PresShell::ReleaseCapturingContent();
     }
   }
 
@@ -1244,9 +1247,10 @@ class Element : public FragmentOrElement {
   }
 
  private:
-  void ScrollIntoView(const ScrollIntoViewOptions& aOptions);
+  MOZ_CAN_RUN_SCRIPT void ScrollIntoView(const ScrollIntoViewOptions& aOptions);
 
  public:
+  MOZ_CAN_RUN_SCRIPT
   void ScrollIntoView(const BooleanOrScrollIntoViewOptions& aObject);
   MOZ_CAN_RUN_SCRIPT void Scroll(double aXScroll, double aYScroll);
   MOZ_CAN_RUN_SCRIPT void Scroll(const ScrollToOptions& aOptions);

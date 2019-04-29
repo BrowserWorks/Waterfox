@@ -571,6 +571,13 @@ static void WebRenderDebugPrefChangeCallback(const char* aPrefName, void*) {
   // Bit 18 is for the zoom display, which requires the mouse position and thus
   // currently only works in wrench.
   GFX_WEBRENDER_DEBUG(".small-screen", wr::DebugFlags_SMALL_SCREEN)
+  GFX_WEBRENDER_DEBUG(".disable-opaque-pass",
+                      wr::DebugFlags_DISABLE_OPAQUE_PASS)
+  GFX_WEBRENDER_DEBUG(".disable-alpha-pass", wr::DebugFlags_DISABLE_ALPHA_PASS)
+  GFX_WEBRENDER_DEBUG(".disable-clip-masks", wr::DebugFlags_DISABLE_CLIP_MASKS)
+  GFX_WEBRENDER_DEBUG(".disable-text-prims", wr::DebugFlags_DISABLE_TEXT_PRIMS)
+  GFX_WEBRENDER_DEBUG(".disable-gradient-prims",
+                      wr::DebugFlags_DISABLE_GRADIENT_PRIMS)
 #undef GFX_WEBRENDER_DEBUG
 
   gfx::gfxVars::SetWebRenderDebugFlags(flags.bits);
@@ -855,6 +862,19 @@ void gfxPlatform::Init() {
 
   if (XRE_IsParentProcess()) {
     WrRolloutPrefShutdownSaver::AddShutdownObserver();
+
+    nsCOMPtr<nsIFile> profDir;
+    nsresult rv = NS_GetSpecialDirectory(NS_APP_PROFILE_DIR_STARTUP,
+                                         getter_AddRefs(profDir));
+    if (NS_FAILED(rv)) {
+      gfxVars::SetProfDirectory(nsString());
+    } else {
+      nsAutoString path;
+      profDir->GetPath(path);
+      gfxVars::SetProfDirectory(nsString(path));
+    }
+
+    gfxUtils::RemoveShaderCacheFromDiskIfNecessary();
   }
 
   // Drop a note in the crash report if we end up forcing an option that could
@@ -1048,19 +1068,6 @@ void gfxPlatform::Init() {
       Preferences::SetBool(FONT_VARIATIONS_PREF, false);
       Preferences::Lock(FONT_VARIATIONS_PREF);
     }
-
-    nsCOMPtr<nsIFile> profDir;
-    rv = NS_GetSpecialDirectory(NS_APP_PROFILE_DIR_STARTUP,
-                                getter_AddRefs(profDir));
-    if (NS_FAILED(rv)) {
-      gfxVars::SetProfDirectory(nsString());
-    } else {
-      nsAutoString path;
-      profDir->GetPath(path);
-      gfxVars::SetProfDirectory(nsString(path));
-    }
-
-    gfxUtils::RemoveShaderCacheFromDiskIfNecessary();
   }
 
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
@@ -2759,7 +2766,7 @@ void gfxPlatform::InitWebRenderConfig() {
           WebRenderDebugPrefChangeCallback, WR_DEBUG_PREF);
     }
   }
-#if defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID)
+#if defined(MOZ_WIDGET_GTK)
   else if (gfxConfig::IsEnabled(Feature::HW_COMPOSITING)) {
     // Hardware compositing should be disabled by default if we aren't using
     // WebRender. We had to check if it is enabled at all, because it may

@@ -127,7 +127,7 @@ bool GeckoMVMContext::AllowZoomingForDocument() const {
 void GeckoMVMContext::SetResolutionAndScaleTo(float aResolution) {
   MOZ_ASSERT(mPresShell);
   mPresShell->SetResolutionAndScaleTo(aResolution,
-                                      nsIPresShell::ChangeOrigin::eMainThread);
+                                      ResolutionChangeOrigin::MainThread);
 }
 
 void GeckoMVMContext::SetVisualViewportSize(const CSSSize& aSize) {
@@ -160,14 +160,21 @@ void GeckoMVMContext::UpdateDisplayPortMargins() {
   }
 }
 
-void GeckoMVMContext::Reflow(const CSSSize& aNewSize, const CSSSize& aOldSize) {
+void GeckoMVMContext::Reflow(const CSSSize& aNewSize, const CSSSize& aOldSize,
+                             ResizeEventFlag aResizeEventFlag) {
   MOZ_ASSERT(mPresShell);
+
+  ResizeReflowOptions reflowOptions = ResizeReflowOptions::NoOption;
+  if (aResizeEventFlag == ResizeEventFlag::Suppress) {
+    reflowOptions |= ResizeReflowOptions::SuppressResizeEvent;
+  }
+
   RefPtr<PresShell> presShell = mPresShell;
   presShell->ResizeReflowIgnoreOverride(
       nsPresContext::CSSPixelsToAppUnits(aNewSize.width),
       nsPresContext::CSSPixelsToAppUnits(aNewSize.height),
       nsPresContext::CSSPixelsToAppUnits(aOldSize.width),
-      nsPresContext::CSSPixelsToAppUnits(aOldSize.height));
+      nsPresContext::CSSPixelsToAppUnits(aOldSize.height), reflowOptions);
 }
 
 }  // namespace mozilla

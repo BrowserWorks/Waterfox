@@ -27,6 +27,8 @@ https://github.com/whatwg/fetch/pull/853
     return reg;
   }
 
+  // Using 250ms polling interval to provide enough 'network calmness' to give
+  // the background low priority revalidation request a chance to kick in.
   function wait250ms(test) {
     return new Promise(resolve => {
       test.step_timeout(() => {

@@ -3137,6 +3137,60 @@ static bool EmitMemOrTableInit(FunctionCompiler& f, bool isMem) {
 // Note, table.{get,grow,set} on table(funcref) are currently rejected by the
 // verifier.
 
+static bool EmitTableFill(FunctionCompiler& f) {
+  uint32_t tableIndex;
+  MDefinition *start, *val, *len;
+  if (!f.iter().readTableFill(&tableIndex, &start, &val, &len)) {
+    return false;
+  }
+
+  if (f.inDeadCode()) {
+    return true;
+  }
+
+  uint32_t lineOrBytecode = f.readCallSiteLineOrBytecode();
+
+  const SymbolicAddressSignature& callee = SASigTableFill;
+  CallCompileState args;
+  if (!f.passInstance(callee.argTypes[0], &args)) {
+    return false;
+  }
+
+  if (!f.passArg(start, callee.argTypes[1], &args)) {
+    return false;
+  }
+  if (!f.passArg(val, callee.argTypes[2], &args)) {
+    return false;
+  }
+  if (!f.passArg(len, callee.argTypes[3], &args)) {
+    return false;
+  }
+
+  MDefinition* tableIndexArg =
+      f.constant(Int32Value(tableIndex), MIRType::Int32);
+  if (!tableIndexArg) {
+    return false;
+  }
+  if (!f.passArg(tableIndexArg, callee.argTypes[4], &args)) {
+    return false;
+  }
+
+  if (!f.finishCall(&args)) {
+    return false;
+  }
+
+  MDefinition* ret;
+  if (!f.builtinInstanceMethodCall(callee, lineOrBytecode, args, &ret)) {
+    return false;
+  }
+
+  if (!f.checkI32NegativeMeansFailedResult(ret)) {
+    return false;
+  }
+
+  return true;
+}
+
 static bool EmitTableGet(FunctionCompiler& f) {
   uint32_t tableIndex;
   MDefinition* index;
@@ -3194,9 +3248,9 @@ static bool EmitTableGet(FunctionCompiler& f) {
 
 static bool EmitTableGrow(FunctionCompiler& f) {
   uint32_t tableIndex;
-  MDefinition* delta;
   MDefinition* initValue;
-  if (!f.iter().readTableGrow(&tableIndex, &delta, &initValue)) {
+  MDefinition* delta;
+  if (!f.iter().readTableGrow(&tableIndex, &initValue, &delta)) {
     return false;
   }
 
@@ -3212,11 +3266,11 @@ static bool EmitTableGrow(FunctionCompiler& f) {
     return false;
   }
 
-  if (!f.passArg(delta, callee.argTypes[1], &args)) {
+  if (!f.passArg(initValue, callee.argTypes[1], &args)) {
     return false;
   }
 
-  if (!f.passArg(initValue, callee.argTypes[2], &args)) {
+  if (!f.passArg(delta, callee.argTypes[2], &args)) {
     return false;
   }
 
@@ -3865,6 +3919,8 @@ static bool EmitBodyExprs(FunctionCompiler& f) {
             CHECK(EmitMemOrTableInit(f, /*isMem=*/false));
 #endif
 #ifdef ENABLE_WASM_REFTYPES
+          case uint32_t(MiscOp::TableFill):
+            CHECK(EmitTableFill(f));
           case uint32_t(MiscOp::TableGrow):
             CHECK(EmitTableGrow(f));
           case uint32_t(MiscOp::TableSize):
@@ -4272,7 +4328,9 @@ bool wasm::IonCompileFunctions(const ModuleEnvironment& env, LifoAlloc& lifo,
 }
 
 bool js::wasm::IonCanCompile() {
-#if !defined(JS_CODEGEN_NONE) && !defined(JS_CODEGEN_ARM64)
+#if defined(JS_CODEGEN_X64) || defined(JS_CODEGEN_X86) ||    \
+    defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32) || \
+    defined(JS_CODEGEN_MIPS64)
   return true;
 #else
   return false;

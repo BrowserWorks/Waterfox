@@ -8,7 +8,7 @@
 
 #include "mozilla/dom/BrowserBridgeChild.h"  // for BrowserBridgeChild
 #include "mozilla/dom/EventTarget.h"         // for EventTarget
-#include "mozilla/dom/TabParent.h"           // for TabParent
+#include "mozilla/dom/BrowserParent.h"       // for BrowserParent
 #include "mozilla/EventDispatcher.h"         // for EventDispatcher
 #include "mozilla/layout/RenderFrame.h"      // For RenderFrame
 #include "mozilla/PresShell.h"               // For PresShell
@@ -157,7 +157,7 @@ FocusTarget::FocusTarget(PresShell* aRootPresShell,
   }
 
   // Check if the key event target is a remote browser
-  if (TabParent* browserParent = TabParent::GetFrom(keyEventTarget)) {
+  if (BrowserParent* browserParent = BrowserParent::GetFrom(keyEventTarget)) {
     RenderFrame* rf = browserParent->GetRenderFrame();
 
     // The globally focused element for scrolling is in a remote layer tree
@@ -209,10 +209,10 @@ FocusTarget::FocusTarget(PresShell* aRootPresShell,
   // for this scroll target
   nsIScrollableFrame* horizontal =
       presShell->GetScrollableFrameToScrollForContent(
-          selectedContent.get(), nsIPresShell::eHorizontal);
+          selectedContent.get(), ScrollableDirection::Horizontal);
   nsIScrollableFrame* vertical =
-      presShell->GetScrollableFrameToScrollForContent(selectedContent.get(),
-                                                      nsIPresShell::eVertical);
+      presShell->GetScrollableFrameToScrollForContent(
+          selectedContent.get(), ScrollableDirection::Vertical);
 
   // We might have the globally focused element for scrolling. Gather a ViewID
   // for the horizontal and vertical scroll targets of this element.

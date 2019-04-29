@@ -20,11 +20,7 @@ var asyncStorage = require("devtools/shared/async-storage");
 
 const {
   getSelectedLocation
-} = require("devtools/client/debugger/src/utils/source-maps");
-
-const sourceUtils = {
-  isLoaded: source => source.loadedState === "loaded"
-};
+} = require("devtools/client/debugger/src/utils/selected-location");
 
 function log(msg, data) {
   info(`${msg} ${!data ? "" : JSON.stringify(data)}`);
@@ -231,7 +227,7 @@ function waitForSelectedLocation(dbg, line) {
 
 function waitForSelectedSource(dbg, url) {
   const {
-    getSelectedSource,
+    getSelectedSourceWithContent,
     hasSymbols,
     hasBreakpointPositions
   } = dbg.selectors;
@@ -239,9 +235,8 @@ function waitForSelectedSource(dbg, url) {
   return waitForState(
     dbg,
     state => {
-      const source = getSelectedSource();
-      const isLoaded = source && sourceUtils.isLoaded(source);
-      if (!isLoaded) {
+      const { source, content } = getSelectedSourceWithContent() || {};
+      if (!content) {
         return false;
       }
 
@@ -279,17 +274,12 @@ function assertPaused(dbg) {
 }
 
 function assertEmptyLines(dbg, lines) {
-  function every(array, predicate) {
-    return !array.some(item => !predicate(item));
-  }
-
-  function subset(subArray, superArray) {
-    return every(subArray, subItem => superArray.includes(subItem));
-  }
-
   const sourceId = dbg.selectors.getSelectedSourceId();
-  const emptyLines = dbg.selectors.getEmptyLines(sourceId);
-  ok(subset(lines, emptyLines), "empty lines should match");
+  const breakableLines = dbg.selectors.getBreakableLines(sourceId);
+  ok(
+    lines.every(line => !breakableLines.includes(line)),
+    "empty lines should match"
+  );
 }
 
 function getVisibleSelectedFrameLine(dbg) {
@@ -322,8 +312,8 @@ function assertPausedLocation(dbg) {
 function assertDebugLine(dbg, line) {
   // Check the debug line
   const lineInfo = getCM(dbg).lineInfo(line - 1);
-  const source = dbg.selectors.getSelectedSource();
-  if (source && source.loadedState == "loading") {
+  const { source, content } = dbg.selectors.getSelectedSourceWithContent() || {};
+  if (source && !content) {
     const url = source.url;
     ok(
       false,
@@ -518,14 +508,13 @@ function isSelectedFrameSelected(dbg, state) {
   // Make sure the source text is completely loaded for the
   // source we are paused in.
   const sourceId = frame.location.sourceId;
-  const source = dbg.selectors.getSelectedSource();
+  const { source, content } = dbg.selectors.getSelectedSourceWithContent() || {};
 
   if (!source) {
     return false;
   }
 
-  const isLoaded = source.loadedState && sourceUtils.isLoaded(source);
-  if (!isLoaded) {
+  if (!content) {
     return false;
   }
 
@@ -535,7 +524,7 @@ function isSelectedFrameSelected(dbg, state) {
 /**
  * Clear all the debugger related preferences.
  */
-function clearDebuggerPreferences() {
+async function clearDebuggerPreferences() {
   asyncStorage.clear();
   Services.prefs.clearUserPref("devtools.recordreplay.enabled");
   Services.prefs.clearUserPref("devtools.debugger.pause-on-exceptions");
@@ -547,6 +536,7 @@ function clearDebuggerPreferences() {
   Services.prefs.clearUserPref("devtools.debugger.scopes-visible");
   Services.prefs.clearUserPref("devtools.debugger.skip-pausing");
   Services.prefs.clearUserPref("devtools.debugger.map-scopes-enabled");
+  await pushPref("devtools.debugger.log-actions", true);
 }
 
 /**
@@ -558,7 +548,7 @@ function clearDebuggerPreferences() {
  * @static
  */
 async function initDebugger(url, ...sources) {
-  clearDebuggerPreferences();
+  await clearDebuggerPreferences();
   const toolbox = await openNewTabAndToolbox(EXAMPLE_URL + url, "jsdebugger");
   const dbg = createDebuggerContext(toolbox);
   dbg.client.waitForWorkers(false);
@@ -568,7 +558,7 @@ async function initDebugger(url, ...sources) {
 }
 
 async function initPane(url, pane) {
-  clearDebuggerPreferences();
+  await clearDebuggerPreferences();
   return openNewTabAndToolbox(EXAMPLE_URL + url, pane);
 }
 
@@ -621,6 +611,24 @@ function findSource(dbg, url, { silent } = { silent: false }) {
   return source;
 }
 
+function findSourceContent(dbg, url, opts) {
+  const source = findSource(dbg, url, opts);
+
+  if (!source) return null;
+
+  const content = dbg.selectors.getSourceContent(source.id);
+
+  if (!content) {
+    return null;
+  }
+
+  if (content.state !== "fulfilled") {
+    throw new Error("Expected loaded source, got" + content.value);
+  }
+
+  return content.value;
+}
+
 function sourceExists(dbg, url) {
   return !!findSource(dbg, url, { silent: true });
 }
@@ -628,7 +636,10 @@ function sourceExists(dbg, url) {
 function waitForLoadedSource(dbg, url) {
   return waitForState(
     dbg,
-    state => findSource(dbg, url, { silent: true }).loadedState == "loaded",
+    state => {
+      const source = findSource(dbg, url, { silent: true });
+      return source && dbg.selectors.getSourceContent(source.id);
+    },
     "loaded source"
   );
 }
@@ -638,7 +649,7 @@ function waitForLoadedSources(dbg) {
     dbg,
     state => {
       const sources = Object.values(dbg.selectors.getSources());
-      return !sources.some(source => source.loadedState == "loading");
+      return sources.every(source => !!dbg.selectors.getSourceContent(source.id));
     },
     "loaded source"
   );
@@ -1604,10 +1615,10 @@ async function waitForBreakableLine(dbg, source, lineNumber) {
     state => {
       const currentSource = findSource(dbg, source);
 
-      const emptyLines =
-        currentSource && dbg.selectors.getEmptyLines(currentSource.id);
+      const breakableLines =
+        currentSource && dbg.selectors.getBreakableLines(currentSource.id);
 
-      return emptyLines && !emptyLines.includes(lineNumber);
+      return breakableLines && breakableLines.includes(lineNumber);
     },
     `waiting for breakable line ${lineNumber}`
   );

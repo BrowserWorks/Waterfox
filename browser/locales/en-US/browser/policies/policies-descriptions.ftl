@@ -97,6 +97,8 @@ policy-Homepage = Set and optionally lock the homepage.
 
 policy-InstallAddonsPermission = Allow certain websites to install add-ons.
 
+policy-LocalFileLinks = Allow specific websites to link to local files.
+
 policy-NetworkPrediction = Enable or disable network prediction (DNS prefetching).
 
 policy-NewTabPage = Enable or disable the New Tab page.
@@ -119,7 +121,7 @@ policy-Proxy = Configure proxy settings.
 
 policy-RequestedLocales = Set the list of requested locales for the application in order of preference.
 
-policy-SanitizeOnShutdown = Clear all navigation data on shutdown.
+policy-SanitizeOnShutdown2 = Clear navigation data on shutdown.
 
 policy-SearchBar = Set the default location of the search bar. The user is still allowed to customize it.
 

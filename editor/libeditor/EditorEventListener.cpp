@@ -54,7 +54,7 @@
 #  include "nsIBidiKeyboard.h"  // for nsIBidiKeyboard
 #endif
 
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserParent.h"
 
 class nsPresContext;
 
@@ -403,7 +403,7 @@ EditorEventListener::HandleEvent(Event* aEvent) {
     case eMouseClick: {
       WidgetMouseEvent* widgetMouseEvent = internalEvent->AsMouseEvent();
       // Don't handle non-primary click events
-      if (widgetMouseEvent->button != WidgetMouseEventBase::eLeftButton) {
+      if (widgetMouseEvent->mButton != MouseButton::eLeft) {
         return NS_OK;
       }
       MOZ_FALLTHROUGH;
@@ -642,7 +642,7 @@ nsresult EditorEventListener::MouseClick(WidgetMouseEvent* aMouseClickEvent) {
   //     though this makes web apps cannot prevent middle click paste with
   //     calling preventDefault() of "click" nor "auxclick".
 
-  if (aMouseClickEvent->button != WidgetMouseEventBase::eMiddleButton ||
+  if (aMouseClickEvent->mButton != MouseButton::eMiddle ||
       !WidgetMouseEvent::IsMiddleClickPasteEnabled()) {
     return NS_OK;
   }
@@ -880,7 +880,7 @@ bool EditorEventListener::CanDrop(DragEvent* aEvent) {
   // If the source node is a remote browser, treat this as coming from a
   // different document and allow the drop.
   nsCOMPtr<nsIContent> sourceContent = do_QueryInterface(sourceNode);
-  TabParent* tp = TabParent::GetFrom(sourceContent);
+  BrowserParent* tp = BrowserParent::GetFrom(sourceContent);
   if (tp) {
     return true;
   }

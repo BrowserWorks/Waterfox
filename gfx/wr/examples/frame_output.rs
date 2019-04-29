@@ -70,7 +70,7 @@ impl App {
     fn init_output_document(
         &mut self,
         api: &RenderApi,
-        framebuffer_size: FramebufferIntSize,
+        device_size: DeviceIntSize,
         device_pixel_ratio: f32,
     ) {
         // Generate the external image key that will be used to render the output document to the root document.
@@ -79,14 +79,11 @@ impl App {
         let pipeline_id = PipelineId(1, 0);
         let layer = 1;
         let color = ColorF::new(1., 1., 0., 1.);
-        let document_id = api.add_document(framebuffer_size, layer);
+        let document_id = api.add_document(device_size, layer);
         api.enable_frame_output(document_id, pipeline_id, true);
         api.set_document_view(
             document_id,
-            FramebufferIntRect::new(
-                FramebufferIntPoint::new(0, 1000),
-                framebuffer_size,
-            ),
+            device_size.into(),
             device_pixel_ratio,
         );
 
@@ -95,7 +92,7 @@ impl App {
             pipeline_id,
             content_rect: LayoutRect::new(
                 LayoutPoint::zero(),
-                framebuffer_size.to_f32() / TypedScale::new(device_pixel_ratio),
+                device_size.to_f32() / TypedScale::new(device_pixel_ratio),
             ),
             color,
         };
@@ -113,7 +110,6 @@ impl App {
             None,
         );
 
-        let info = LayoutPrimitiveInfo::new(document.content_rect);
         let space_and_clip = SpaceAndClipInfo::root_scroll(pipeline_id);
         let mut builder = DisplayListBuilder::new(
             document.pipeline_id,
@@ -121,11 +117,15 @@ impl App {
         );
 
         builder.push_simple_stacking_context(
-            &info,
+            document.content_rect.origin,
             space_and_clip.spatial_id,
+            true,
         );
 
-        builder.push_rect(&info, &space_and_clip, ColorF::new(1.0, 1.0, 0.0, 1.0));
+        builder.push_rect(
+            &CommonItemProperties::new(document.content_rect, space_and_clip),
+            ColorF::new(1.0, 1.0, 0.0, 1.0)
+        );
         builder.pop_stacking_context();
 
         txn.set_root_pipeline(pipeline_id);
@@ -148,28 +148,29 @@ impl Example for App {
         api: &RenderApi,
         builder: &mut DisplayListBuilder,
         _txn: &mut Transaction,
-        framebuffer_size: FramebufferIntSize,
+        device_size: DeviceIntSize,
         pipeline_id: PipelineId,
         _document_id: DocumentId,
     ) {
         if self.output_document.is_none() {
-            let device_pixel_ratio = framebuffer_size.width as f32 /
+            let device_pixel_ratio = device_size.width as f32 /
                 builder.content_size().width;
-            self.init_output_document(api, FramebufferIntSize::new(200, 200), device_pixel_ratio);
+            self.init_output_document(api, DeviceIntSize::new(200, 200), device_pixel_ratio);
         }
 
-        let info = LayoutPrimitiveInfo::new((100, 100).to(200, 200));
+        let bounds = (100, 100).to(200, 200);
         let space_and_clip = SpaceAndClipInfo::root_scroll(pipeline_id);
 
         builder.push_simple_stacking_context(
-            &info,
+            bounds.origin,
             space_and_clip.spatial_id,
+            true,
         );
 
         builder.push_image(
-            &info,
-            &space_and_clip,
-            info.rect.size,
+            &CommonItemProperties::new(bounds, space_and_clip),
+            bounds,
+            bounds.size,
             LayoutSize::zero(),
             ImageRendering::Auto,
             AlphaType::PremultipliedAlpha,

@@ -5,7 +5,6 @@
 /* eslint-disable no-tabs */
 
 const {
-  FatalError,
   RemoteAgentError,
   UnknownMethodError,
   UnsupportedError,
@@ -81,13 +80,15 @@ caused by: DogError: woof:
   run_next_test();
 });
 
-// FatalError calls nsIAppStartup.quit(), but it's OK because this is an xpcshell test:
-add_test(function test_FatalError() {
-  const e = new FatalError();
-  ok(e instanceof RemoteAgentError);
-  e.notify();
-  equal(e.toString(), RemoteAgentError.format(e));
-  e.quit();
+add_test(function test_RemoteAgentError_fromJSON() {
+  const cdpErr = {message: `TypeError: foo:
+      bar
+      baz`};
+  const err = RemoteAgentError.fromJSON(cdpErr);
+
+  equal(err.message, "TypeError: foo");
+  equal(err.stack, "bar\nbaz");
+  equal(err.cause, null);
 
   run_next_test();
 });

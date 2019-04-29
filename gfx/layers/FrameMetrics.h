@@ -25,6 +25,11 @@
 #include "nsStyleCoord.h"  // for nsStyleCoord
 #include "PLDHashTable.h"  // for PLDHashNumber
 
+struct nsStyleDisplay;
+namespace mozilla {
+class WritingMode;
+}  // namespace mozilla
+
 namespace IPC {
 template <typename T>
 struct ParamTraits;
@@ -732,6 +737,9 @@ struct ScrollSnapInfo {
            mScrollSnapTypeX != mozilla::StyleScrollSnapStrictness::None;
   }
 
+  void InitializeScrollSnapType(WritingMode aWritingMode,
+                                const nsStyleDisplay* aDisplay);
+
   // The scroll frame's scroll-snap-type.
   mozilla::StyleScrollSnapStrictness mScrollSnapTypeX =
       mozilla::StyleScrollSnapStrictness::None;
@@ -779,7 +787,7 @@ struct ScrollSnapInfo {
   // position is still larger than the snapport size.
   // See https://drafts.csswg.org/css-scroll-snap-1/#snap-overflow
   //
-  // Note: This range doesn't contain scroll-margin values.
+  // Note: This range contains scroll-margin values.
   nsTArray<ScrollSnapRange> mXRangeWiderThanSnapport;
   nsTArray<ScrollSnapRange> mYRangeWiderThanSnapport;
 

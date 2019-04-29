@@ -24,7 +24,7 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/nsMixedContentBlocker.h"
-#include "mozilla/dom/TabChild.h"
+#include "mozilla/dom/BrowserChild.h"
 #include "mozilla/Components.h"
 #include "mozilla/Logging.h"
 #include "xpcpublic.h"
@@ -99,10 +99,10 @@ bool nsContentSecurityManager::AllowTopLevelNavigationToDataURI(
     dataSpec.AppendLiteral("...");
   }
   nsCOMPtr<nsISupports> context = loadInfo->ContextForTopLevelLoad();
-  nsCOMPtr<nsITabChild> tabChild = do_QueryInterface(context);
+  nsCOMPtr<nsIBrowserChild> browserChild = do_QueryInterface(context);
   nsCOMPtr<Document> doc;
-  if (tabChild) {
-    doc = static_cast<mozilla::dom::TabChild*>(tabChild.get())
+  if (browserChild) {
+    doc = static_cast<mozilla::dom::BrowserChild*>(browserChild.get())
               ->GetTopLevelDocument();
   }
   NS_ConvertUTF8toUTF16 specUTF16(NS_UnescapeURL(dataSpec));
@@ -616,6 +616,9 @@ static nsresult DoContentSecurityChecks(nsIChannel* aChannel,
                                  nsContentUtils::GetContentPolicy());
 
   if (NS_FAILED(rv) || NS_CP_REJECTED(shouldLoad)) {
+    NS_SetRequestBlockingReasonIfNull(
+        aLoadInfo, nsILoadInfo::BLOCKING_REASON_CONTENT_POLICY_GENERAL);
+
     if ((NS_SUCCEEDED(rv) && shouldLoad == nsIContentPolicy::REJECT_TYPE) &&
         (contentPolicyType == nsIContentPolicy::TYPE_DOCUMENT ||
          contentPolicyType == nsIContentPolicy::TYPE_SUBDOCUMENT)) {

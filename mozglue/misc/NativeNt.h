@@ -17,6 +17,8 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/LauncherResult.h"
+#include "mozilla/Maybe.h"
+#include "mozilla/Span.h"
 
 // The declarations within this #if block are intended to be used for initial
 // process initialization ONLY. You probably don't want to be using these in
@@ -259,8 +261,7 @@ class MOZ_RAII PEHeaders final {
   explicit PEHeaders(void* aBaseAddress)
       : PEHeaders(reinterpret_cast<PIMAGE_DOS_HEADER>(aBaseAddress)) {}
 
-  explicit PEHeaders(HMODULE aModule)
-      : PEHeaders(HModuleToBaseAddr(aModule)) {}
+  explicit PEHeaders(HMODULE aModule) : PEHeaders(HModuleToBaseAddr(aModule)) {}
 
   explicit PEHeaders(PIMAGE_DOS_HEADER aMzHeader)
       : mMzHeader(aMzHeader), mPeHeader(nullptr), mImageLimit(nullptr) {
@@ -295,7 +296,7 @@ class MOZ_RAII PEHeaders final {
    * address of the binary.
    */
   template <typename T, typename R>
-  T RVAToPtr(R aRva) {
+  T RVAToPtr(R aRva) const {
     return RVAToPtr<T>(mMzHeader, aRva);
   }
 
@@ -305,7 +306,7 @@ class MOZ_RAII PEHeaders final {
    * mapping.
    */
   template <typename T, typename R>
-  T RVAToPtr(void* aBase, R aRva) {
+  T RVAToPtr(void* aBase, R aRva) const {
     if (!mImageLimit) {
       return nullptr;
     }
@@ -330,8 +331,7 @@ class MOZ_RAII PEHeaders final {
   }
 
   PIMAGE_DATA_DIRECTORY GetImageDirectoryEntryPtr(
-      const uint32_t aDirectoryIndex,
-      uint32_t* aOutRva = nullptr) const {
+      const uint32_t aDirectoryIndex, uint32_t* aOutRva = nullptr) const {
     if (aOutRva) {
       *aOutRva = 0;
     }
@@ -345,7 +345,7 @@ class MOZ_RAII PEHeaders final {
     }
 
     PIMAGE_DATA_DIRECTORY dirEntry =
-      &optionalHeader.DataDirectory[aDirectoryIndex];
+        &optionalHeader.DataDirectory[aDirectoryIndex];
     if (aOutRva) {
       *aOutRva = reinterpret_cast<char*>(dirEntry) -
                  reinterpret_cast<char*>(mMzHeader);
@@ -404,7 +404,7 @@ class MOZ_RAII PEHeaders final {
 
   struct IATThunks {
     IATThunks(PIMAGE_THUNK_DATA aFirstThunk, ptrdiff_t aNumThunks)
-      : mFirstThunk(aFirstThunk), mNumThunks(aNumThunks) {}
+        : mFirstThunk(aFirstThunk), mNumThunks(aNumThunks) {}
 
     size_t Length() const {
       return size_t(mNumThunks) * sizeof(IMAGE_THUNK_DATA);
@@ -479,6 +479,53 @@ class MOZ_RAII PEHeaders final {
     return RVAToPtr<T>(dataEntry->OffsetToData);
   }
 
+  template <size_t N>
+  Maybe<Span<const uint8_t>> FindSection(const char (&aSecName)[N],
+                                         DWORD aCharacteristicsMask) const {
+    static_assert((N - 1) <= IMAGE_SIZEOF_SHORT_NAME,
+                  "Section names must be at most 8 characters excluding null "
+                  "terminator");
+
+    if (!(*this)) {
+      return Nothing();
+    }
+
+    Span<IMAGE_SECTION_HEADER> sectionTable = GetSectionTable();
+    for (auto&& sectionHeader : sectionTable) {
+      if (strncmp(reinterpret_cast<const char*>(sectionHeader.Name), aSecName,
+                  IMAGE_SIZEOF_SHORT_NAME)) {
+        continue;
+      }
+
+      if (!(sectionHeader.Characteristics & aCharacteristicsMask)) {
+        // We found the section but it does not have the expected
+        // characteristics
+        return Nothing();
+      }
+
+      DWORD rva = sectionHeader.VirtualAddress;
+      if (!rva) {
+        return Nothing();
+      }
+
+      DWORD size = sectionHeader.Misc.VirtualSize;
+      if (!size) {
+        return Nothing();
+      }
+
+      auto base = RVAToPtr<const uint8_t*>(rva);
+      return Some(MakeSpan(base, size));
+    }
+
+    return Nothing();
+  }
+
+  // There may be other code sections in the binary besides .text
+  Maybe<Span<const uint8_t>> GetTextSectionInfo() const {
+    return FindSection(".text", IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE |
+                                    IMAGE_SCN_MEM_READ);
+  }
+
   static bool IsValid(PIMAGE_IMPORT_DESCRIPTOR aImpDesc) {
     return aImpDesc && aImpDesc->OriginalFirstThunk != 0;
   }
@@ -501,8 +548,18 @@ class MOZ_RAII PEHeaders final {
   // This private variant does not have bounds checks, because we need to be
   // able to resolve the bounds themselves.
   template <typename T, typename R>
-  T RVAToPtrUnchecked(R aRva) {
+  T RVAToPtrUnchecked(R aRva) const {
     return reinterpret_cast<T>(reinterpret_cast<char*>(mMzHeader) + aRva);
+  }
+
+  Span<IMAGE_SECTION_HEADER> GetSectionTable() const {
+    MOZ_ASSERT(*this);
+    auto base = RVAToPtr<PIMAGE_SECTION_HEADER>(
+        &mPeHeader->OptionalHeader, mPeHeader->FileHeader.SizeOfOptionalHeader);
+    // The Windows loader has an internal limit of 96 sections (per PE spec)
+    auto numSections =
+        std::min(mPeHeader->FileHeader.NumberOfSections, WORD(96));
+    return MakeSpan(base, numSections);
   }
 
   PIMAGE_RESOURCE_DIRECTORY_ENTRY
@@ -611,12 +668,10 @@ inline LauncherResult<DWORD> GetParentProcessId() {
 }
 
 struct DataDirectoryEntry : public _IMAGE_DATA_DIRECTORY {
-  DataDirectoryEntry() : _IMAGE_DATA_DIRECTORY() {
-  }
+  DataDirectoryEntry() : _IMAGE_DATA_DIRECTORY() {}
 
   MOZ_IMPLICIT DataDirectoryEntry(const _IMAGE_DATA_DIRECTORY& aOther)
-    : _IMAGE_DATA_DIRECTORY(aOther) {
-  }
+      : _IMAGE_DATA_DIRECTORY(aOther) {}
 
   DataDirectoryEntry(const DataDirectoryEntry& aOther) = default;
 };
@@ -624,8 +679,8 @@ struct DataDirectoryEntry : public _IMAGE_DATA_DIRECTORY {
 inline LauncherResult<void*> GetProcessPebPtr(HANDLE aProcess) {
   ULONG returnLength;
   PROCESS_BASIC_INFORMATION pbi;
-  NTSTATUS status = ::NtQueryInformationProcess(aProcess,
-      ProcessBasicInformation, &pbi, sizeof(pbi), &returnLength);
+  NTSTATUS status = ::NtQueryInformationProcess(
+      aProcess, ProcessBasicInformation, &pbi, sizeof(pbi), &returnLength);
   if (!NT_SUCCESS(status)) {
     return LAUNCHER_ERROR_FROM_NTSTATUS(status);
   }
@@ -651,7 +706,8 @@ inline LauncherResult<HMODULE> GetProcessExeModule(HANDLE aProcess) {
 
 #if defined(MOZILLA_INTERNAL_API)
   if (!::ReadProcessMemory(aProcess, ppeb.unwrap(), &peb, sizeof(peb),
-                           &bytesRead) || bytesRead != sizeof(peb)) {
+                           &bytesRead) ||
+      bytesRead != sizeof(peb)) {
     return LAUNCHER_ERROR_FROM_LAST();
   }
 #else
@@ -668,7 +724,8 @@ inline LauncherResult<HMODULE> GetProcessExeModule(HANDLE aProcess) {
   char mzMagic[2];
 #if defined(MOZILLA_INTERNAL_API)
   if (!::ReadProcessMemory(aProcess, baseAddress, mzMagic, sizeof(mzMagic),
-                           &bytesRead) || bytesRead != sizeof(mzMagic)) {
+                           &bytesRead) ||
+      bytesRead != sizeof(mzMagic)) {
     return LAUNCHER_ERROR_FROM_LAST();
   }
 #else

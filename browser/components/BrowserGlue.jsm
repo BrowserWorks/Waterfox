@@ -392,6 +392,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   BrowserUsageTelemetry: "resource:///modules/BrowserUsageTelemetry.jsm",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.jsm",
   ContextualIdentityService: "resource://gre/modules/ContextualIdentityService.jsm",
+  Corroborate: "resource://gre/modules/Corroborate.jsm",
   DateTimePickerParent: "resource://gre/modules/DateTimePickerParent.jsm",
   Discovery: "resource:///modules/Discovery.jsm",
   ExtensionsUI: "resource:///modules/ExtensionsUI.jsm",
@@ -1580,6 +1581,10 @@ BrowserGlue.prototype = {
     this._monitorScreenshotsPref();
     this._monitorWebcompatReporterPref();
 
+    if (Services.prefs.getBoolPref("corroborator.enabled", true)) {
+      Corroborate.init().catch(Cu.reportError);
+    }
+
     let pService = Cc["@mozilla.org/toolkit/profile-service;1"].
                   getService(Ci.nsIToolkitProfileService);
     if (pService.createdAlternateProfile) {
@@ -2544,18 +2549,17 @@ BrowserGlue.prototype = {
     if (currentUIVersion < 81) {
       // Reset homepage pref for users who have it set to a default from before Firefox 4:
       //   <locale>.(start|start2|start3).mozilla.(com|org)
-      const HOMEPAGE_PREF = "browser.startup.homepage";
-      if (Services.prefs.prefHasUserValue(HOMEPAGE_PREF)) {
-        const DEFAULT = Services.prefs.getDefaultBranch(HOMEPAGE_PREF).getCharPref("");
-        let value = Services.prefs.getCharPref(HOMEPAGE_PREF);
+      if (HomePage.overridden) {
+        const DEFAULT = HomePage.getDefault();
+        let value = HomePage.get();
         let updated = value.replace(
           /https?:\/\/([\w\-]+\.)?start\d*\.mozilla\.(org|com)[^|]*/ig, DEFAULT);
         if (updated != value) {
           if (updated == DEFAULT) {
-            Services.prefs.clearUserPref(HOMEPAGE_PREF);
+            HomePage.reset();
           } else {
             value = updated;
-            Services.prefs.setCharPref(HOMEPAGE_PREF, value);
+            HomePage.set(value);
           }
         }
       }

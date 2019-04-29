@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "jest": "^23.0.0",
-    "react-test-renderer": "16.4.1",
     "react": "16.4.1",
-    "react-dom": "16.4.1"
+    "react-dom": "16.4.1",
+    "react-test-renderer": "16.4.1"
   }
 }

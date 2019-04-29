@@ -19,6 +19,13 @@ export * from "../reducers/project-text-search";
 export * from "../reducers/source-tree";
 
 export {
+  getSourceActor,
+  hasSourceActor,
+  getSourceActors,
+  getSourceActorsForThread
+} from "../reducers/source-actors";
+
+export {
   getQuickOpenEnabled,
   getQuickOpenQuery,
   getQuickOpenType
@@ -44,6 +51,7 @@ export {
   getVisibleSelectedFrame
 } from "./pause";
 
+// eslint-disable-next-line import/named
 import { objectInspector } from "devtools-reps";
 
 const { reducer } = objectInspector;

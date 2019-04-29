@@ -17,9 +17,7 @@ debugger-tests:
             npm install &&
             cd /builds/worker/checkouts/gecko/devtools/client/debugger/ &&
             yarn &&
-            yarn flow &&
-            yarn test &&
-            yarn lint
+            node bin/try-runner.js
     when:
         files-changed:
             - 'devtools/client/debugger/**'
@@ -30,7 +28,7 @@ devtools-tests:
     treeherder:
         symbol: node(devtools)
         kind: test
-        tier: 1
+        tier: 3
     worker-type: aws-provisioner-v1/gecko-t-linux-xlarge
     worker:
         docker-image: {in-tree: "lint"}

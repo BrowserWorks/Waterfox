@@ -14,6 +14,7 @@ var {TransientPrefs} = ChromeUtils.import("resource:///modules/TransientPrefs.js
 var {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 var {L10nRegistry} = ChromeUtils.import("resource://gre/modules/L10nRegistry.jsm");
 var {Localization} = ChromeUtils.import("resource://gre/modules/Localization.jsm");
+var {HomePage} = ChromeUtils.import("resource:///modules/HomePage.jsm");
 ChromeUtils.defineModuleGetter(this, "CloudStorage",
   "resource://gre/modules/CloudStorage.jsm");
 ChromeUtils.defineModuleGetter(this, "SelectionChangedMenulist",
@@ -878,7 +879,7 @@ var gMainPane = {
     if (value) {
       // We need to restore the blank homepage setting in our other pref
       if (startupPref.value === this.STARTUP_PREF_BLANK) {
-        Preferences.get("browser.startup.homepage").value = "about:blank";
+        HomePage.set("about:blank");
       }
       newValue = this.STARTUP_PREF_RESTORE_SESSION;
       let warnOnQuitPref = Preferences.get("browser.sessionstore.warnOnQuit");
@@ -2202,9 +2203,11 @@ var gMainPane = {
   readUseDownloadDir() {
     var downloadFolder = document.getElementById("downloadFolder");
     var chooseFolder = document.getElementById("chooseFolder");
-    var preference = Preferences.get("browser.download.useDownloadDir");
-    downloadFolder.disabled = !preference.value || preference.locked;
-    chooseFolder.disabled = !preference.value || preference.locked;
+    var useDownloadDirPreference = Preferences.get("browser.download.useDownloadDir");
+    var dirPreference = Preferences.get("browser.download.dir");
+
+    downloadFolder.disabled = !useDownloadDirPreference.value || dirPreference.locked;
+    chooseFolder.disabled = !useDownloadDirPreference.value || dirPreference.locked;
 
     this.readCloudStorage().catch(Cu.reportError);
     // don't override the preference's value in UI

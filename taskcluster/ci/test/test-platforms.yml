@@ -35,7 +35,6 @@ linux64/debug:
     test-sets:
         - common-tests
         - web-platform-tests
-        - mochitest-headless
         - marionette-media-tests
 linux64/opt:
     build-platform: linux64/opt
@@ -61,6 +60,7 @@ linux64-shippable/opt:
         - talos
         - awsy
         - mochitest-headless
+        - marionette-headless
         - linux-talos-flex
         - raptor-chromium
         - raptor-fetch-chromium
@@ -188,7 +188,6 @@ windows10-64/debug:
         - marionette-gpu-tests
         - windows-tests
         - web-platform-tests
-        - mochitest-headless
         - marionette-media-tests
 
 windows10-64/opt:
@@ -200,7 +199,6 @@ windows10-64/opt:
         - marionette-gpu-tests
         - windows-tests
         - web-platform-tests
-        - mochitest-headless
         - raptor-firefox
         - marionette-media-tests
 
@@ -211,6 +209,7 @@ windows10-aarch64/opt:
         - marionette-gpu-tests
         - raptor-firefox
         - windows-aarch64-tests
+        - windows-talos
 
 windows10-64-ux/opt:
     build-platform: win64-shippable/opt
@@ -228,7 +227,6 @@ windows10-64-shippable/opt:
         - marionette-gpu-tests
         - windows-tests
         - web-platform-tests
-        - mochitest-headless
         - raptor-firefox
         - raptor-chromium
         - raptor-profiling

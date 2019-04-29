@@ -1957,7 +1957,7 @@ void WorkerPrivate::UpdateOverridenLoadGroup(nsILoadGroup* aBaseLoadGroup) {
   AssertIsOnMainThread();
 
   // The load group should have been overriden at init time.
-  mLoadInfo.mInterfaceRequestor->MaybeAddTabChild(aBaseLoadGroup);
+  mLoadInfo.mInterfaceRequestor->MaybeAddBrowserChild(aBaseLoadGroup);
 }
 
 #ifdef DEBUG
@@ -2583,7 +2583,7 @@ void WorkerPrivate::OverrideLoadInfoLoadGroup(WorkerLoadInfo& aLoadInfo,
 
   aLoadInfo.mInterfaceRequestor =
       new WorkerLoadInfo::InterfaceRequestor(aPrincipal, aLoadInfo.mLoadGroup);
-  aLoadInfo.mInterfaceRequestor->MaybeAddTabChild(aLoadInfo.mLoadGroup);
+  aLoadInfo.mInterfaceRequestor->MaybeAddBrowserChild(aLoadInfo.mLoadGroup);
 
   // NOTE: this defaults the load context to:
   //  - private browsing = false
@@ -3945,6 +3945,8 @@ bool WorkerPrivate::NotifyInternal(WorkerStatus aStatus) {
       return true;
     }
 
+    MOZ_ASSERT_IF(aStatus == Killing, mStatus == Canceling);
+
     if (aStatus >= Canceling) {
       MutexAutoUnlock unlock(mMutex);
       data->mClientSource.reset();
@@ -4059,7 +4061,8 @@ void WorkerPrivate::ReportError(JSContext* aCx,
   }
 
   JS::RootedObject stack(aCx), stackGlobal(aCx);
-  xpc::FindExceptionStackForConsoleReport(nullptr, exn, exnStack, &stack, &stackGlobal);
+  xpc::FindExceptionStackForConsoleReport(nullptr, exn, exnStack, &stack,
+                                          &stackGlobal);
 
   if (stack) {
     JS::RootedValue stackValue(aCx, JS::ObjectValue(*stack));
@@ -4091,8 +4094,8 @@ void WorkerPrivate::ReportError(JSContext* aCx,
                      report->mErrorNumber != JSMSG_OUT_OF_MEMORY &&
                      JS::CurrentGlobalOrNull(aCx);
 
-  WorkerErrorReport::ReportError(aCx, this, fireAtScope,
-                                 nullptr, std::move(report), 0, exn);
+  WorkerErrorReport::ReportError(aCx, this, fireAtScope, nullptr,
+                                 std::move(report), 0, exn);
 
   data->mErrorHandlerRecursionCount--;
 }

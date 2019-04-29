@@ -256,11 +256,6 @@ pref("browser.slowStartup.notificationDisabled", false);
 pref("browser.slowStartup.timeThreshold", 20000);
 pref("browser.slowStartup.maxSamples", 5);
 
-// This url, if changed, MUST continue to point to an https url. Pulling arbitrary content to inject into
-// this page over http opens us up to a man-in-the-middle attack that we'd rather not face. If you are a downstream
-// repackager of this code using an alternate snippet url, please keep your users safe
-pref("browser.aboutHomeSnippets.updateUrl", "");
-
 pref("browser.enable_automatic_image_resizing", true);
 pref("browser.chrome.site_icons", true);
 // browser.warnOnQuit == false will override all other possible prompts when quitting or restarting
@@ -1825,7 +1820,6 @@ pref("app.normandy.first_run", true);
 pref("app.normandy.logging.level", 50); // Warn
 pref("app.normandy.run_interval_seconds", 21600); // 6 hours
 pref("app.normandy.shieldLearnMoreUrl", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/shield");
-pref("features.normandy-remote-settings.enabled", false);
 #ifdef MOZ_DATA_REPORTING
 pref("app.shield.optoutstudies.enabled", true);
 #else
@@ -1881,3 +1875,10 @@ pref("browser.toolbars.keyboard_navigation", true);
 // quick access to sign-in and manage your Firefox Account.
 pref("identity.fxaccounts.toolbar.enabled", true);
 pref("identity.fxaccounts.toolbar.accessed", false);
+
+// Check bundled JAR and XPI files for corruption.
+#ifdef RELEASE_OR_BETA
+pref("corroborator.enabled", false);
+#else
+pref("corroborator.enabled", true);
+#endif

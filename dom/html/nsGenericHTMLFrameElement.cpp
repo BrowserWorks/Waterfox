@@ -133,11 +133,11 @@ void nsGenericHTMLFrameElement::EnsureFrameLoader() {
 }
 
 nsresult nsGenericHTMLFrameElement::CreateRemoteFrameLoader(
-    nsITabParent* aTabParent) {
+    nsIRemoteTab* aBrowserParent) {
   MOZ_ASSERT(!mFrameLoader);
   EnsureFrameLoader();
   NS_ENSURE_STATE(mFrameLoader);
-  mFrameLoader->SetRemoteBrowser(aTabParent);
+  mFrameLoader->SetRemoteBrowser(aBrowserParent);
 
   if (nsSubDocumentFrame* subdocFrame = do_QueryFrame(GetPrimaryFrame())) {
     // The reflow for this element already happened while we were waiting
@@ -296,7 +296,7 @@ nsresult nsGenericHTMLFrameElement::AfterSetAttr(
                 presShell ? presShell->GetRootScrollFrame() : nullptr;
             if (rootScroll) {
               presShell->FrameNeedsReflow(
-                  rootScroll, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
+                  rootScroll, IntrinsicDirty::StyleChange, NS_FRAME_IS_DIRTY);
             }
           }
         }

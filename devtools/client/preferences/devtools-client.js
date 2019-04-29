@@ -358,7 +358,7 @@ pref("devtools.aboutdebugging.new-enabled", true);
 #endif
 
 // Show process debug targets.
-pref("devtools.aboutdebugging.process-debugging", false);
+pref("devtools.aboutdebugging.process-debugging", true);
 // Stringified array of network locations that users can connect to.
 pref("devtools.aboutdebugging.network-locations", "[]");
 // Debug target pane collapse/expand settings.
@@ -369,11 +369,11 @@ pref("devtools.aboutdebugging.collapsibilities.sharedWorker", false);
 pref("devtools.aboutdebugging.collapsibilities.tab", false);
 pref("devtools.aboutdebugging.collapsibilities.temporaryExtension", false);
 
-// about:debugging: only show system add-ons in local builds by default.
+// about:debugging: only show system and hidden extensions in local builds by default.
 #ifdef MOZILLA_OFFICIAL
-  pref("devtools.aboutdebugging.showSystemAddons", false);
+  pref("devtools.aboutdebugging.showHiddenAddons", false);
 #else
-  pref("devtools.aboutdebugging.showSystemAddons", true);
+  pref("devtools.aboutdebugging.showHiddenAddons", true);
 #endif
 
 // Map top-level await expressions in the console

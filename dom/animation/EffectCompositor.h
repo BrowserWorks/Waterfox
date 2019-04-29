@@ -23,7 +23,7 @@ class nsCSSPropertyIDSet;
 class nsAtom;
 class nsIFrame;
 class nsPresContext;
-enum class DisplayItemType : uint32_t;
+enum class DisplayItemType : uint8_t;
 struct RawServoAnimationValueMap;
 
 namespace mozilla {
@@ -194,9 +194,6 @@ class EffectCompositor {
   //
   // Returns true if there are elements needing a restyle for animation.
   bool PreTraverse(ServoTraversalFlags aFlags);
-
-  // Similar to the above but only for the (pseudo-)element.
-  bool PreTraverse(dom::Element* aElement, PseudoStyleType aPseudoType);
 
   // Similar to the above but for all elements in the subtree rooted
   // at aElement.

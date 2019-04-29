@@ -103,7 +103,7 @@ class nsISelectionController;
 class nsBoxLayoutState;
 class nsBoxLayout;
 class nsILineIterator;
-class nsDisplayItem;
+class nsDisplayItemBase;
 class nsDisplayListBuilder;
 class nsDisplayListSet;
 class nsDisplayList;
@@ -451,38 +451,33 @@ enum nsBidiDirection {
 namespace mozilla {
 
 // https://drafts.csswg.org/css-align-3/#baseline-sharing-group
-enum BaselineSharingGroup {
+enum class BaselineSharingGroup {
   // NOTE Used as an array index so must be 0 and 1.
-  eFirst = 0,
-  eLast = 1,
+  First = 0,
+  Last = 1,
 };
 
 // Loosely: https://drafts.csswg.org/css-align-3/#shared-alignment-context
 enum class AlignmentContext {
-  eInline,
-  eTable,
-  eFlexbox,
-  eGrid,
+  Inline,
+  Table,
+  Flexbox,
+  Grid,
 };
 
 /*
- * For replaced elements only. Gets the intrinsic dimensions of this element.
- * The dimensions may only be one of the following two types:
- *
- *   eStyleUnit_Coord   - a length in app units
- *   eStyleUnit_None    - the element has no intrinsic size in this dimension
+ * For replaced elements only. Gets the intrinsic dimensions of this element,
+ * which can be specified on a per-axis basis.
  */
 struct IntrinsicSize {
-  nsStyleCoord width, height;
+  Maybe<nscoord> width;
+  Maybe<nscoord> height;
 
-  IntrinsicSize() : width(eStyleUnit_None), height(eStyleUnit_None) {}
-  IntrinsicSize(const IntrinsicSize& rhs)
-      : width(rhs.width), height(rhs.height) {}
-  IntrinsicSize& operator=(const IntrinsicSize& rhs) {
-    width = rhs.width;
-    height = rhs.height;
-    return *this;
-  }
+  IntrinsicSize() = default;
+
+  IntrinsicSize(nscoord aWidth, nscoord aHeight)
+      : width(Some(aWidth)), height(Some(aHeight)) {}
+
   bool operator==(const IntrinsicSize& rhs) {
     return width == rhs.width && height == rhs.height;
   }
@@ -1154,7 +1149,7 @@ class nsIFrame : public nsQueryFrame {
 
   nsPoint GetPositionIgnoringScrolling() const;
 
-  typedef AutoTArray<nsDisplayItem*, 4> DisplayItemArray;
+  typedef AutoTArray<nsDisplayItemBase*, 4> DisplayItemArray;
 
 #define NS_DECLARE_FRAME_PROPERTY_WITH_DTOR(prop, type, dtor)              \
   static const mozilla::FramePropertyDescriptor<type>* prop() {            \
@@ -1466,7 +1461,7 @@ class nsIFrame : public nsQueryFrame {
    * Return true if the frame has a CSS2 'vertical-align' baseline.
    * If it has, then the returned baseline is the distance from the block-
    * axis border-box start edge.
-   * @note This method should only be used in AlignmentContext::eInline
+   * @note This method should only be used in AlignmentContext::Inline
    * contexts.
    * @note The returned value is only valid when reflow is not needed.
    * @note You should only call this on frames with a WM that's parallel to aWM.
@@ -2622,20 +2617,19 @@ class nsIFrame : public nsQueryFrame {
   };
   enum class TextOffsetType {
     // Passed-in start and end offsets are within the content text.
-    OFFSETS_IN_CONTENT_TEXT,
+    OffsetsInContentText,
     // Passed-in start and end offsets are within the rendered text.
-    OFFSETS_IN_RENDERED_TEXT
+    OffsetsInRenderedText,
   };
   enum class TrailingWhitespace {
-    TRIM_TRAILING_WHITESPACE,
+    Trim,
     // Spaces preceding a caret at the end of a line should not be trimmed
-    DONT_TRIM_TRAILING_WHITESPACE
+    DontTrim,
   };
   virtual RenderedText GetRenderedText(
       uint32_t aStartOffset = 0, uint32_t aEndOffset = UINT32_MAX,
-      TextOffsetType aOffsetType = TextOffsetType::OFFSETS_IN_CONTENT_TEXT,
-      TrailingWhitespace aTrimTrailingWhitespace =
-          TrailingWhitespace::TRIM_TRAILING_WHITESPACE) {
+      TextOffsetType aOffsetType = TextOffsetType::OffsetsInContentText,
+      TrailingWhitespace aTrimTrailingWhitespace = TrailingWhitespace::Trim) {
     return RenderedText();
   }
 
@@ -4149,11 +4143,11 @@ class nsIFrame : public nsQueryFrame {
     return mDisplayItemData;
   }
 
-  void AddDisplayItem(nsDisplayItem* aItem);
-  bool RemoveDisplayItem(nsDisplayItem* aItem);
+  void AddDisplayItem(nsDisplayItemBase* aItem);
+  bool RemoveDisplayItem(nsDisplayItemBase* aItem);
   void RemoveDisplayItemDataForDeletion();
   bool HasDisplayItems();
-  bool HasDisplayItem(nsDisplayItem* aItem);
+  bool HasDisplayItem(nsDisplayItemBase* aItem);
   bool HasDisplayItem(uint32_t aKey);
   void DiscardOldItems();
 

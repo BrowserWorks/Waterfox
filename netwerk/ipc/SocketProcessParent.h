@@ -52,6 +52,10 @@ class SocketProcessParent final : public PSocketProcessParent {
   mozilla::ipc::IPCResult RecvRecordDiscardedData(
       const DiscardedData& aDiscardedData);
 
+  PWebrtcProxyChannelParent* AllocPWebrtcProxyChannelParent(
+      const TabId& aTabId);
+  bool DeallocPWebrtcProxyChannelParent(PWebrtcProxyChannelParent* aActor);
+
   void ActorDestroy(ActorDestroyReason aWhy) override;
   bool SendRequestMemoryReport(const uint32_t& aGeneration,
                                const bool& aAnonymize,

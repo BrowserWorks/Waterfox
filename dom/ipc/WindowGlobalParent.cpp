@@ -11,7 +11,7 @@
 #include "mozilla/dom/BrowserBridgeParent.h"
 #include "mozilla/dom/CanonicalBrowsingContext.h"
 #include "mozilla/dom/ContentParent.h"
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "mozilla/dom/WindowGlobalActorsBinding.h"
 #include "mozilla/dom/WindowGlobalChild.h"
 #include "mozilla/dom/ChromeUtils.h"
@@ -25,6 +25,7 @@
 #include "nsFrameLoaderOwner.h"
 #include "nsGlobalWindowInner.h"
 #include "nsQueryObject.h"
+#include "nsFrameLoaderOwner.h"
 
 #include "mozilla/dom/JSWindowActorBinding.h"
 #include "mozilla/dom/JSWindowActorParent.h"
@@ -113,7 +114,7 @@ void WindowGlobalParent::Init(const WindowGlobalInit& aInit) {
   } else {
     // In the cross-process case, we can get the frame element from our manager.
     MOZ_ASSERT(Manager()->GetProtocolTypeId() == PBrowserMsgStart);
-    frameElement = static_cast<TabParent*>(Manager())->GetOwnerElement();
+    frameElement = static_cast<BrowserParent*>(Manager())->GetOwnerElement();
   }
 
   // Extract the nsFrameLoader from the current frame element. We may not have a
@@ -146,11 +147,11 @@ already_AddRefed<WindowGlobalChild> WindowGlobalParent::GetChildActor() {
   return do_AddRef(static_cast<WindowGlobalChild*>(otherSide));
 }
 
-already_AddRefed<TabParent> WindowGlobalParent::GetTabParent() {
+already_AddRefed<BrowserParent> WindowGlobalParent::GetRemoteTab() {
   if (IsInProcess() || mIPCClosed) {
     return nullptr;
   }
-  return do_AddRef(static_cast<TabParent*>(Manager()));
+  return do_AddRef(static_cast<BrowserParent*>(Manager()));
 }
 
 IPCResult WindowGlobalParent::RecvUpdateDocumentURI(nsIURI* aURI) {
@@ -167,55 +168,38 @@ IPCResult WindowGlobalParent::RecvBecomeCurrentWindowGlobal() {
 
 IPCResult WindowGlobalParent::RecvDestroy() {
   if (!mIPCClosed) {
-    RefPtr<TabParent> tabParent = GetTabParent();
-    if (!tabParent || !tabParent->IsDestroyed()) {
+    RefPtr<BrowserParent> browserParent = GetRemoteTab();
+    if (!browserParent || !browserParent->IsDestroyed()) {
       Unused << Send__delete__(this);
     }
   }
   return IPC_OK();
 }
 
-IPCResult WindowGlobalParent::RecvAsyncMessage(const nsString& aActorName,
-                                               const nsString& aMessageName,
-                                               const ClonedMessageData& aData) {
+IPCResult WindowGlobalParent::RecvRawMessage(
+    const JSWindowActorMessageMeta& aMeta, const ClonedMessageData& aData) {
   StructuredCloneData data;
   data.BorrowFromClonedMessageDataForParent(aData);
-  HandleAsyncMessage(aActorName, aMessageName, data);
+  ReceiveRawMessage(aMeta, std::move(data));
   return IPC_OK();
 }
 
-void WindowGlobalParent::HandleAsyncMessage(const nsString& aActorName,
-                                            const nsString& aMessageName,
-                                            StructuredCloneData& aData) {
-  if (NS_WARN_IF(mIPCClosed)) {
-    return;
+void WindowGlobalParent::ReceiveRawMessage(
+    const JSWindowActorMessageMeta& aMeta, StructuredCloneData&& aData) {
+  RefPtr<JSWindowActorParent> actor =
+      GetActor(aMeta.actorName(), IgnoreErrors());
+  if (actor) {
+    actor->ReceiveRawMessage(aMeta, std::move(aData));
   }
-
-  // Force creation of the actor if it hasn't been created yet.
-  IgnoredErrorResult rv;
-  RefPtr<JSWindowActorParent> actor = GetActor(aActorName, rv);
-  if (NS_WARN_IF(rv.Failed())) {
-    return;
-  }
-
-  // Get the JSObject for the named actor.
-  JS::RootedObject obj(RootingCx(), actor->GetWrapper());
-  if (NS_WARN_IF(!obj)) {
-    // If we don't have a preserved wrapper, there won't be any receiver
-    // method to call.
-    return;
-  }
-
-  RefPtr<JSWindowActorService> actorSvc = JSWindowActorService::GetSingleton();
-  if (NS_WARN_IF(!actorSvc)) {
-    return;
-  }
-
-  actorSvc->ReceiveMessage(actor, obj, aMessageName, aData);
 }
 
 already_AddRefed<JSWindowActorParent> WindowGlobalParent::GetActor(
     const nsAString& aName, ErrorResult& aRv) {
+  if (mIPCClosed) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return nullptr;
+  }
+
   // Check if this actor has already been created, and return it if it has.
   if (mWindowActors.Contains(aName)) {
     return do_AddRef(mWindowActors.GetWeak(aName));
@@ -229,8 +213,8 @@ already_AddRefed<JSWindowActorParent> WindowGlobalParent::GetActor(
   }
 
   nsAutoString remoteType;
-  if (RefPtr<TabParent> tabParent = GetTabParent()) {
-    remoteType = tabParent->Manager()->GetRemoteType();
+  if (RefPtr<BrowserParent> browserParent = GetRemoteTab()) {
+    remoteType = browserParent->Manager()->GetRemoteType();
   } else {
     remoteType = VoidString();
   }
@@ -269,8 +253,8 @@ IPCResult WindowGlobalParent::RecvDidEmbedBrowsingContext(
 already_AddRefed<Promise> WindowGlobalParent::ChangeFrameRemoteness(
     dom::BrowsingContext* aBc, const nsAString& aRemoteType,
     uint64_t aPendingSwitchId, ErrorResult& aRv) {
-  RefPtr<TabParent> tabParent = GetTabParent();
-  if (NS_WARN_IF(!tabParent)) {
+  RefPtr<BrowserParent> browserParent = GetRemoteTab();
+  if (NS_WARN_IF(!browserParent)) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
   }
@@ -293,12 +277,12 @@ already_AddRefed<Promise> WindowGlobalParent::ChangeFrameRemoteness(
         }
 
         // If we got a BrowserBridgeParent, the frame is out-of-process, so pull
-        // our target TabParent off of it. Otherwise, it's an in-process frame,
-        // so we can directly use ours.
+        // our target BrowserParent off of it. Otherwise, it's an in-process
+        // frame, so we can directly use ours.
         if (bridge) {
-          promise->MaybeResolve(bridge->GetTabParent());
+          promise->MaybeResolve(bridge->GetBrowserParent());
         } else {
-          promise->MaybeResolve(tabParent);
+          promise->MaybeResolve(browserParent);
         }
       };
 
@@ -315,6 +299,13 @@ void WindowGlobalParent::ActorDestroy(ActorDestroyReason aWhy) {
   mIPCClosed = true;
   gWindowGlobalParentsById->Remove(mInnerWindowId);
   mBrowsingContext->UnregisterWindowGlobal(this);
+
+  // Destroy our JSWindowActors, and reject any pending queries.
+  nsRefPtrHashtable<nsStringHashKey, JSWindowActorParent> windowActors;
+  mWindowActors.SwapElements(windowActors);
+  for (auto iter = windowActors.Iter(); !iter.Done(); iter.Next()) {
+    iter.Data()->RejectPendingQueries();
+  }
 
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
   if (obs) {

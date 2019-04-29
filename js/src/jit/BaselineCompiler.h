@@ -14,6 +14,9 @@
 #include "jit/MacroAssembler.h"
 
 namespace js {
+
+enum class GeneratorResumeKind;
+
 namespace jit {
 
 #define OPCODE_LIST(_)          \
@@ -317,7 +320,7 @@ class BaselineCodeGen {
   // stored in the script) as argument for a VM function.
   enum class ScriptObjectType { RegExp, Function };
   void pushScriptObjectArg(ScriptObjectType type);
-  void pushScriptNameArg();
+  void pushScriptNameArg(Register scratch1, Register scratch2);
   void pushScriptScopeArg();
 
   // Pushes a bytecode operand as argument for a VM function.
@@ -345,6 +348,9 @@ class BaselineCodeGen {
 
   // Load the |this|-value from the global's lexical environment.
   void loadGlobalThisValue(ValueOperand dest);
+
+  // Load script atom |index| into |dest|.
+  void loadScriptAtom(Register index, Register dest);
 
   void prepareVMCall();
 
@@ -393,6 +399,12 @@ class BaselineCodeGen {
   template <typename F>
   MOZ_MUST_USE bool emitTestScriptFlag(JSScript::MutableFlags flag, bool value,
                                        const F& emit, Register scratch);
+
+  MOZ_MUST_USE bool emitGeneratorResume(GeneratorResumeKind resumeKind);
+  MOZ_MUST_USE bool emitEnterGeneratorCode(Register script,
+                                           Register resumeIndex,
+                                           Register scratch);
+  void emitJumpToInterpretOpLabel();
 
   MOZ_MUST_USE bool emitCheckThis(ValueOperand val, bool reinit = false);
   void emitLoadReturnValue(ValueOperand val);

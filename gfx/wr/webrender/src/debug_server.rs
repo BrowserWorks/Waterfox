@@ -6,6 +6,7 @@ use api::{ApiMsg, DebugCommand, DebugFlags};
 use api::channel::MsgSender;
 use api::units::DeviceIntSize;
 use print_tree::PrintTreePrinter;
+use renderer;
 use std::sync::mpsc::{channel, Receiver};
 use std::sync::mpsc::Sender;
 use std::thread;
@@ -61,6 +62,16 @@ impl ws::Handler for Server {
                     "disable_gpu_time_queries" => self.debug_flags.remove(DebugFlags::GPU_TIME_QUERIES),
                     "enable_gpu_sample_queries" => self.debug_flags.insert(DebugFlags::GPU_SAMPLE_QUERIES),
                     "disable_gpu_sample_queries" => self.debug_flags.remove(DebugFlags::GPU_SAMPLE_QUERIES),
+                    "disable_opaque_pass" => self.debug_flags.insert(DebugFlags::DISABLE_OPAQUE_PASS),
+                    "enable_opaque_pass" => self.debug_flags.remove(DebugFlags::DISABLE_OPAQUE_PASS),
+                    "disable_alpha_pass" => self.debug_flags.insert(DebugFlags::DISABLE_ALPHA_PASS),
+                    "enable_alpha_pass" => self.debug_flags.remove(DebugFlags::DISABLE_ALPHA_PASS),
+                    "disable_clip_masks" => self.debug_flags.insert(DebugFlags::DISABLE_CLIP_MASKS),
+                    "enable_clip_masks" => self.debug_flags.remove(DebugFlags::DISABLE_CLIP_MASKS),
+                    "disable_text_prims" => self.debug_flags.insert(DebugFlags::DISABLE_TEXT_PRIMS),
+                    "enable_text_prims" => self.debug_flags.remove(DebugFlags::DISABLE_TEXT_PRIMS),
+                    "disable_gradient_prims" => self.debug_flags.insert(DebugFlags::DISABLE_GRADIENT_PRIMS),
+                    "enable_gradient_prims" => self.debug_flags.remove(DebugFlags::DISABLE_GRADIENT_PRIMS),
                     _ => set_flags = false,
                 };
 
@@ -92,15 +103,15 @@ impl ws::Handler for Server {
 
 // Spawn a thread for a given renderer, and wait for
 // client connections.
-pub struct DebugServer {
+pub struct DebugServerImpl {
     join_handle: Option<thread::JoinHandle<()>>,
     broadcaster: ws::Sender,
     debug_rx: Receiver<DebugMsg>,
     senders: Vec<ws::Sender>,
 }
 
-impl DebugServer {
-    pub fn new(api_tx: MsgSender<ApiMsg>) -> DebugServer {
+impl DebugServerImpl {
+    pub fn new(api_tx: MsgSender<ApiMsg>) -> DebugServerImpl {
         let (debug_tx, debug_rx) = channel();
 
         let socket = ws::Builder::new()
@@ -124,15 +135,17 @@ impl DebugServer {
             }
         }));
 
-        DebugServer {
+        DebugServerImpl {
             join_handle,
             broadcaster,
             debug_rx,
             senders: Vec::new(),
         }
     }
+}
 
-    pub fn send(&mut self, message: String) {
+impl renderer::DebugServer for DebugServerImpl {
+    fn send(&mut self, message: String) {
         // Add any new connections that have been queued.
         while let Ok(msg) = self.debug_rx.try_recv() {
             match msg {
@@ -166,7 +179,7 @@ impl DebugServer {
     }
 }
 
-impl Drop for DebugServer {
+impl Drop for DebugServerImpl {
     fn drop(&mut self) {
         self.broadcaster.shutdown().ok();
         self.join_handle.take().unwrap().join().ok();

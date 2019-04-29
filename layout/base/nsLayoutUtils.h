@@ -15,22 +15,18 @@
 #include "mozilla/TypedEnumBits.h"
 #include "nsBoundingMetrics.h"
 #include "nsChangeHint.h"
-#include "nsFrameList.h"
 #include "mozilla/layout/FrameChildList.h"
 #include "mozilla/layers/ScrollableLayerGuid.h"
 #include "nsThreadUtils.h"
-#include "nsIPrincipal.h"
-#include "nsIWidget.h"
 #include "nsCSSPropertyIDSet.h"
 #include "nsStyleCoord.h"
 #include "nsStyleConsts.h"
 #include "nsGkAtoms.h"
-#include "imgIContainer.h"
 #include "mozilla/gfx/2D.h"
 #include "Units.h"
 #include "mozilla/ToString.h"
 #include "mozilla/ReflowOutput.h"
-#include "ImageContainer.h"
+#include "ImageContainer.h"  // for layers::Image
 #include "gfx2DGlue.h"
 #include "SVGImageContext.h"
 #include <limits>
@@ -39,8 +35,13 @@
 #include "nsClassHashtable.h"
 
 class gfxContext;
+class gfxFontEntry;
+class imgIContainer;
+class nsFrameList;
 class nsPresContext;
 class nsIContent;
+class nsIPrincipal;
+class nsIWidget;
 class nsAtom;
 class nsIScrollableFrame;
 class nsRegion;
@@ -128,8 +129,8 @@ enum class RelativeTo { ScrollPort, ScrollFrame };
 
 // Flags to customize the behavior of nsLayoutUtils::DrawString.
 enum class DrawStringFlags {
-  eDefault = 0x0,
-  eForceHorizontal = 0x1  // Forces the text to be drawn horizontally.
+  Default = 0x0,
+  ForceHorizontal = 0x1  // Forces the text to be drawn horizontally.
 };
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(DrawStringFlags)
 
@@ -319,6 +320,18 @@ class nsLayoutUtils {
    * Remove the displayport for the given element.
    */
   static void RemoveDisplayPort(nsIContent* aContent);
+
+  /**
+   * Notify the scroll frame with the given scroll id that its scroll offset
+   * is being sent to APZ as part of a paint-skip transaction.
+   *
+   * Normally, this notification happens during painting, after calls to
+   * ComputeScrollMetadata(). During paint-skipping that code is skipped,
+   * but it's still important for the scroll frame to be notified for
+   * correctness of relative scroll updates, so the code that sends the
+   * empty paint-skip transaction needs to call this.
+   */
+  static void NotifyPaintSkipTransaction(ViewID aScrollId);
 
   /**
    * Use heuristics to figure out the child list that
@@ -1098,17 +1111,17 @@ class nsLayoutUtils {
       nsIFrame* aFrame, nsDisplayListBuilder& aBuilder);
 
   enum class PaintFrameFlags : uint32_t {
-    PAINT_IN_TRANSFORM = 0x01,
-    PAINT_SYNC_DECODE_IMAGES = 0x02,
-    PAINT_WIDGET_LAYERS = 0x04,
-    PAINT_IGNORE_SUPPRESSION = 0x08,
-    PAINT_DOCUMENT_RELATIVE = 0x10,
-    PAINT_HIDE_CARET = 0x20,
-    PAINT_TO_WINDOW = 0x40,
-    PAINT_EXISTING_TRANSACTION = 0x80,
-    PAINT_NO_COMPOSITE = 0x100,
-    PAINT_COMPRESSED = 0x200,
-    PAINT_FOR_WEBRENDER = 0x400,
+    InTransform = 0x01,
+    SyncDecodeImages = 0x02,
+    WidgetLayers = 0x04,
+    IgnoreSuppression = 0x08,
+    DocumentRelative = 0x10,
+    HideCaret = 0x20,
+    ToWindow = 0x40,
+    ExistingTransaction = 0x80,
+    NoComposite = 0x100,
+    Compressed = 0x200,
+    ForWebRender = 0x400,
   };
 
   /**
@@ -1438,9 +1451,9 @@ class nsLayoutUtils {
    * size by reducing the *content size* (flooring at zero).  This is used for:
    * https://drafts.csswg.org/css-grid/#min-size-auto
    */
-  enum class IntrinsicISizeType { MIN_ISIZE, PREF_ISIZE };
-  static const auto MIN_ISIZE = IntrinsicISizeType::MIN_ISIZE;
-  static const auto PREF_ISIZE = IntrinsicISizeType::PREF_ISIZE;
+  enum class IntrinsicISizeType { MinISize, PrefISize };
+  static const auto MIN_ISIZE = IntrinsicISizeType::MinISize;
+  static const auto PREF_ISIZE = IntrinsicISizeType::PrefISize;
   enum {
     IGNORE_PADDING = 0x01,
     BAIL_IF_REFLOW_NEEDED = 0x02,  // returns NS_INTRINSIC_WIDTH_UNKNOWN if so
@@ -1628,7 +1641,7 @@ class nsLayoutUtils {
                          gfxContext* aContext, const char16_t* aString,
                          int32_t aLength, nsPoint aPoint,
                          ComputedStyle* aComputedStyle = nullptr,
-                         DrawStringFlags aFlags = DrawStringFlags::eDefault);
+                         DrawStringFlags aFlags = DrawStringFlags::Default);
 
   static nsPoint GetBackgroundFirstTilePos(const nsPoint& aDest,
                                            const nsPoint& aFill,
@@ -2726,6 +2739,21 @@ class nsLayoutUtils {
    * async transform. However, the content may still be layerized.
    */
   static bool ShouldDisableApzForElement(nsIContent* aContent);
+
+  /**
+   * Log a key/value pair as "additional data" (not associated with a paint)
+   * for APZ testing.
+   * While the data is not associated with a paint, the APZTestData object
+   * is still owned by {Client,WebRender}LayerManager, so we need to be passed
+   * something from which we can derive the layer manager.
+   * This function takes a display list builder as the object to derive the
+   * layer manager from, to facilitate logging test data during display list
+   * building, but other overloads that take other objects could be added if
+   * desired.
+   */
+  static void LogAdditionalTestData(nsDisplayListBuilder* aBuilder,
+                                    const std::string& aKey,
+                                    const std::string& aValue);
 
   /**
    * Log a key/value pair for APZ testing during a paint.

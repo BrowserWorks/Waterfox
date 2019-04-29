@@ -58,9 +58,7 @@ bool SVGPolyElement::HasValidDimensions() const {
 // SVGGeometryElement methods
 
 bool SVGPolyElement::AttributeDefinesGeometry(const nsAtom* aName) {
-  if (aName == nsGkAtoms::points) return true;
-
-  return false;
+  return aName == nsGkAtoms::points;
 }
 
 void SVGPolyElement::GetMarkPoints(nsTArray<SVGMark>* aMarks) {
@@ -75,7 +73,7 @@ void SVGPolyElement::GetMarkPoints(nsTArray<SVGMark>* aMarks) {
   for (uint32_t i = 1; i < points.Length(); ++i) {
     float x = points[i].mX;
     float y = points[i].mY;
-    float angle = atan2(y - py, x - px);
+    float angle = std::atan2(y - py, x - px);
 
     // Vertex marker.
     if (i == 1) {

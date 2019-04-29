@@ -45,7 +45,7 @@ class nsSVGSwitchFrame final : public nsSVGGFrame {
 
   // nsSVGDisplayableFrame interface:
   virtual void PaintSVG(gfxContext& aContext, const gfxMatrix& aTransform,
-                        imgDrawingParams& aPackage,
+                        imgDrawingParams& aImgParams,
                         const nsIntRect* aDirtyRect = nullptr) override;
   nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) override;
   virtual void ReflowSVG() override;
@@ -103,8 +103,7 @@ void nsSVGSwitchFrame::PaintSVG(gfxContext& aContext,
   if (kid) {
     gfxMatrix tm = aTransform;
     if (kid->GetContent()->IsSVGElement()) {
-      tm = static_cast<SVGElement*>(kid->GetContent())
-               ->PrependLocalTransformsTo(tm, eUserSpaceToParent);
+      tm = nsSVGUtils::GetTransformMatrixInUserSpace(kid) * tm;
     }
     nsSVGUtils::PaintFrameWithEffects(kid, aContext, tm, aImgParams,
                                       aDirtyRect);
@@ -255,7 +254,8 @@ SVGBBox nsSVGSwitchFrame::GetBBoxContribution(const Matrix& aToBBoxUserspace,
     gfxMatrix transform = ThebesMatrix(aToBBoxUserspace);
     if (content->IsSVGElement()) {
       transform = static_cast<SVGElement*>(content)->PrependLocalTransformsTo(
-          transform);
+                      {}, eChildToUserSpace) *
+                  nsSVGUtils::GetTransformMatrixInUserSpace(kid) * transform;
     }
     return svgKid->GetBBoxContribution(ToMatrix(transform), aFlags);
   }

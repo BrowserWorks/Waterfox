@@ -57,7 +57,7 @@
 #include "mozilla/dom/ServiceWorkerInterceptController.h"
 #include "mozilla/dom/ServiceWorkerUtils.h"
 #include "mozilla/dom/SessionStorageManager.h"
-#include "mozilla/dom/TabChild.h"
+#include "mozilla/dom/BrowserChild.h"
 #include "mozilla/dom/TabGroup.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "mozilla/dom/ChildSHistory.h"
@@ -132,7 +132,7 @@
 #include "nsIStringBundle.h"
 #include "nsIStructuredCloneContainer.h"
 #include "nsISupportsPrimitives.h"
-#include "nsITabChild.h"
+#include "nsIBrowserChild.h"
 #include "nsITextToSubURI.h"
 #include "nsITimedChannel.h"
 #include "nsITimer.h"
@@ -183,6 +183,7 @@
 #include "nsEscape.h"
 #include "nsFocusManager.h"
 #include "nsGlobalWindow.h"
+#include "nsISearchService.h"
 #include "nsJSEnvironment.h"
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
@@ -220,10 +221,6 @@
 #if NS_PRINT_PREVIEW
 #  include "nsIDocumentViewerPrint.h"
 #  include "nsIWebBrowserPrint.h"
-#endif
-
-#ifdef MOZ_TOOLKIT_SEARCH
-#  include "nsISearchService.h"
 #endif
 
 using namespace mozilla;
@@ -659,8 +656,8 @@ nsDocShell::GetInterface(const nsIID& aIID, void** aSink) {
     if (NS_SUCCEEDED(rv) && treeOwner) {
       return treeOwner->QueryInterface(aIID, aSink);
     }
-  } else if (aIID.Equals(NS_GET_IID(nsITabChild))) {
-    *aSink = GetTabChild().take();
+  } else if (aIID.Equals(NS_GET_IID(nsIBrowserChild))) {
+    *aSink = GetBrowserChild().take();
     return *aSink ? NS_OK : NS_ERROR_FAILURE;
   } else {
     return nsDocLoader::GetInterface(aIID, aSink);
@@ -3195,18 +3192,21 @@ nsDocShell::SetTreeOwner(nsIDocShellTreeOwner* aTreeOwner) {
   }
 
   // If we're in the content process and have had a TreeOwner set on us, extract
-  // our TabChild actor. If we've already had our TabChild set, assert that it
-  // hasn't changed.
+  // our BrowserChild actor. If we've already had our BrowserChild set, assert
+  // that it hasn't changed.
   if (mTreeOwner && XRE_IsContentProcess()) {
-    nsCOMPtr<nsITabChild> newTabChild = do_GetInterface(mTreeOwner);
-    MOZ_ASSERT(newTabChild, "No TabChild actor for tree owner in Content!");
+    nsCOMPtr<nsIBrowserChild> newBrowserChild = do_GetInterface(mTreeOwner);
+    MOZ_ASSERT(newBrowserChild,
+               "No BrowserChild actor for tree owner in Content!");
 
-    if (mTabChild) {
-      nsCOMPtr<nsITabChild> oldTabChild = do_QueryReferent(mTabChild);
-      MOZ_RELEASE_ASSERT(oldTabChild == newTabChild,
-                         "Cannot cahnge TabChild during nsDocShell lifetime!");
+    if (mBrowserChild) {
+      nsCOMPtr<nsIBrowserChild> oldBrowserChild =
+          do_QueryReferent(mBrowserChild);
+      MOZ_RELEASE_ASSERT(
+          oldBrowserChild == newBrowserChild,
+          "Cannot cahnge BrowserChild during nsDocShell lifetime!");
     } else {
-      mTabChild = do_GetWeakReference(newTabChild);
+      mBrowserChild = do_GetWeakReference(newBrowserChild);
     }
   }
 
@@ -3683,8 +3683,8 @@ nsDocShell::GetDomWindow(mozIDOMWindowProxy** aWindow) {
 NS_IMETHODIMP
 nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
   RefPtr<ContentFrameMessageManager> mm;
-  if (RefPtr<TabChild> tabChild = TabChild::GetFrom(this)) {
-    mm = tabChild->GetMessageManager();
+  if (RefPtr<BrowserChild> browserChild = BrowserChild::GetFrom(this)) {
+    mm = browserChild->GetMessageManager();
   } else if (nsPIDOMWindowOuter* win = GetWindow()) {
     mm = win->GetMessageManager();
   }
@@ -5024,7 +5024,7 @@ nsDocShell::Destroy() {
 
   SetTreeOwner(nullptr);
 
-  mTabChild = nullptr;
+  mBrowserChild = nullptr;
 
   mChromeEventHandler = nullptr;
 
@@ -5659,10 +5659,10 @@ nsresult nsDocShell::SetCurScrollPosEx(int32_t aCurHorizontalPos,
   nsIScrollableFrame* sf = GetRootScrollFrame();
   NS_ENSURE_TRUE(sf, NS_ERROR_FAILURE);
 
-  ScrollMode scrollMode = ScrollMode::eInstant;
+  ScrollMode scrollMode = ScrollMode::Instant;
   if (sf->GetScrollStyles().mScrollBehavior ==
       NS_STYLE_SCROLL_BEHAVIOR_SMOOTH) {
-    scrollMode = ScrollMode::eSmoothMsd;
+    scrollMode = ScrollMode::SmoothMsd;
   }
 
   nsPoint targetPos(aCurHorizontalPos, aCurVerticalPos);
@@ -9749,8 +9749,8 @@ nsresult nsDocShell::DoURILoad(nsDocShellLoadState* aLoadState,
       // In e10s the child process doesn't have access to the element that
       // contains the browsing context (because that element is in the chrome
       // process).
-      nsCOMPtr<nsITabChild> tabChild = GetTabChild();
-      topLevelLoadingContext = ToSupports(tabChild);
+      nsCOMPtr<nsIBrowserChild> browserChild = GetBrowserChild();
+      topLevelLoadingContext = ToSupports(browserChild);
     } else {
       // This is for loading non-e10s tabs and toplevel windows of various
       // sorts.
@@ -10494,8 +10494,7 @@ nsresult nsDocShell::ScrollToAnchor(bool aCurHasRef, bool aNewHasRef,
     nsresult rv = NS_ERROR_FAILURE;
     NS_ConvertUTF8toUTF16 uStr(aNewHash);
     if (!uStr.IsEmpty()) {
-      rv =
-          presShell->GoToAnchor(uStr, scroll, nsIPresShell::SCROLL_SMOOTH_AUTO);
+      rv = presShell->GoToAnchor(uStr, scroll, ScrollFlags::ScrollSmoothAuto);
     }
 
     if (NS_FAILED(rv)) {
@@ -10507,7 +10506,7 @@ nsresult nsDocShell::ScrollToAnchor(bool aCurHasRef, bool aNewHasRef,
       NS_ConvertUTF8toUTF16 utf16Str(str);
       if (!utf16Str.IsEmpty()) {
         rv = presShell->GoToAnchor(utf16Str, scroll,
-                                   nsIPresShell::SCROLL_SMOOTH_AUTO);
+                                   ScrollFlags::ScrollSmoothAuto);
       }
       free(str);
     }
@@ -10541,7 +10540,7 @@ nsresult nsDocShell::ScrollToAnchor(bool aCurHasRef, bool aNewHasRef,
       // When aNewHash contains "%00", unescaped string may be empty.
       // And GoToAnchor asserts if we ask it to scroll to an empty ref.
       presShell->GoToAnchor(uStr, scroll && !uStr.IsEmpty(),
-                            nsIPresShell::SCROLL_SMOOTH_AUTO);
+                            ScrollFlags::ScrollSmoothAuto);
     }
   } else {
     // Tell the shell it's at an anchor, without scrolling.
@@ -13172,12 +13171,12 @@ bool nsDocShell::IsInvisible() { return mInvisible; }
 
 void nsDocShell::SetInvisible(bool aInvisible) { mInvisible = aInvisible; }
 
-void nsDocShell::SetOpener(nsITabParent* aOpener) {
+void nsDocShell::SetOpener(nsIRemoteTab* aOpener) {
   mOpener = do_GetWeakReference(aOpener);
 }
 
-nsITabParent* nsDocShell::GetOpener() {
-  nsCOMPtr<nsITabParent> opener(do_QueryReferent(mOpener));
+nsIRemoteTab* nsDocShell::GetOpener() {
+  nsCOMPtr<nsIRemoteTab> opener(do_QueryReferent(mOpener));
   return opener;
 }
 
@@ -13229,7 +13228,6 @@ void nsDocShell::MaybeNotifyKeywordSearchLoading(const nsString& aProvider,
     return;
   }
 
-#ifdef MOZ_TOOLKIT_SEARCH
   nsCOMPtr<nsISearchService> searchSvc =
       do_GetService("@mozilla.org/browser/search-service;1");
   if (searchSvc) {
@@ -13244,7 +13242,6 @@ void nsDocShell::MaybeNotifyKeywordSearchLoading(const nsString& aProvider,
       }
     }
   }
-#endif
 }
 
 NS_IMETHODIMP
@@ -13296,13 +13293,13 @@ nsDocShell::GetEditingSession(nsIEditingSession** aEditSession) {
 }
 
 NS_IMETHODIMP
-nsDocShell::GetScriptableTabChild(nsITabChild** aTabChild) {
-  *aTabChild = GetTabChild().take();
-  return *aTabChild ? NS_OK : NS_ERROR_FAILURE;
+nsDocShell::GetScriptableBrowserChild(nsIBrowserChild** aBrowserChild) {
+  *aBrowserChild = GetBrowserChild().take();
+  return *aBrowserChild ? NS_OK : NS_ERROR_FAILURE;
 }
 
-already_AddRefed<nsITabChild> nsDocShell::GetTabChild() {
-  nsCOMPtr<nsITabChild> tc = do_QueryReferent(mTabChild);
+already_AddRefed<nsIBrowserChild> nsDocShell::GetBrowserChild() {
+  nsCOMPtr<nsIBrowserChild> tc = do_QueryReferent(mBrowserChild);
   return tc.forget();
 }
 
@@ -13343,12 +13340,13 @@ nsDocShell::GetIsOnlyToplevelInTabGroup(bool* aResult) {
 NS_IMETHODIMP
 nsDocShell::GetAwaitingLargeAlloc(bool* aResult) {
   MOZ_ASSERT(aResult);
-  nsCOMPtr<nsITabChild> tabChild = GetTabChild();
-  if (!tabChild) {
+  nsCOMPtr<nsIBrowserChild> browserChild = GetBrowserChild();
+  if (!browserChild) {
     *aResult = false;
     return NS_OK;
   }
-  *aResult = static_cast<TabChild*>(tabChild.get())->IsAwaitingLargeAlloc();
+  *aResult =
+      static_cast<BrowserChild*>(browserChild.get())->IsAwaitingLargeAlloc();
   return NS_OK;
 }
 

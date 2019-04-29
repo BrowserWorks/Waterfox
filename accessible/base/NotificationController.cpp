@@ -11,7 +11,7 @@
 #include "TextLeafAccessible.h"
 #include "TextUpdater.h"
 
-#include "mozilla/dom/TabChild.h"
+#include "mozilla/dom/BrowserChild.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/Telemetry.h"
@@ -697,8 +697,8 @@ void NotificationController::WillRefresh(mozilla::TimeStamp aTime) {
 #endif
 
     nsIFrame::RenderedText text = textFrame->GetRenderedText(
-        0, UINT32_MAX, nsIFrame::TextOffsetType::OFFSETS_IN_CONTENT_TEXT,
-        nsIFrame::TrailingWhitespace::DONT_TRIM_TRAILING_WHITESPACE);
+        0, UINT32_MAX, nsIFrame::TextOffsetType::OffsetsInContentText,
+        nsIFrame::TrailingWhitespace::DontTrim);
 
     // Remove text accessible if rendered text is empty.
     if (textAcc) {
@@ -920,10 +920,10 @@ void NotificationController::WillRefresh(mozilla::TimeStamp aTime) {
       parentIPCDoc->ConstructChildDocInParentProcess(
           ipcDoc, id, AccessibleWrap::GetChildIDFor(childDoc));
 #else
-      nsCOMPtr<nsITabChild> tabChild =
+      nsCOMPtr<nsIBrowserChild> browserChild =
           do_GetInterface(mDocument->DocumentNode()->GetDocShell());
-      if (tabChild) {
-        static_cast<TabChild*>(tabChild.get())
+      if (browserChild) {
+        static_cast<BrowserChild*>(browserChild.get())
             ->SendPDocAccessibleConstructor(ipcDoc, parentIPCDoc, id, 0, 0);
       }
 #endif

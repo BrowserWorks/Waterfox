@@ -2295,7 +2295,6 @@ function initialState() {
    * License, v. 2.0. If a copy of the MPL was not distributed with this
    * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
-
 function reducer(state = initialState(), action = {}) {
   const { type, data } = action;
 
@@ -4570,6 +4569,7 @@ function getLinkifiedElements(text, cropLimit, openLink, isInContentPage) {
         // exists (so we can preventDefault) or if the reps will be
         // displayed in content page (e.g. in the JSONViewer).
         href: openLink || isInContentPage ? useUrl : null,
+        target: "_blank",
         onClick: openLink ? e => {
           e.preventDefault();
           openLink(useUrl, e);

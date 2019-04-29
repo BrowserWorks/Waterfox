@@ -275,13 +275,6 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
-  MOZ_TOOLKIT_SEARCH:
-#ifdef MOZ_TOOLKIT_SEARCH
-  true,
-#else
-  false,
-#endif
-
   MOZ_GECKO_PROFILER:
 #ifdef MOZ_GECKO_PROFILER
   true,
@@ -324,6 +317,8 @@ this.AppConstants = Object.freeze({
   MOZ_MOZILLA_API_KEY: "@MOZ_MOZILLA_API_KEY@",
 
   BROWSER_CHROME_URL: "@BROWSER_CHROME_URL@",
+
+  OMNIJAR_NAME: "@OMNIJAR_NAME@",
 
   // URL to the hg revision this was built from (e.g.
   // "https://hg.mozilla.org/mozilla-central/rev/6256ec9113c1")

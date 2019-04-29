@@ -453,9 +453,7 @@ Scope* Scope::clone(JSContext* cx, HandleScope scope, HandleScope enclosing) {
 
 void Scope::finalize(FreeOp* fop) {
   MOZ_ASSERT(CurrentThreadIsGCSweeping());
-  applyScopeDataTyped([fop](auto data) {
-                        fop->delete_(data);
-                      });
+  applyScopeDataTyped([fop](auto data) { fop->delete_(data); });
   data_ = nullptr;
 }
 
@@ -664,14 +662,17 @@ FunctionScope* FunctionScope::create(JSContext* cx, Handle<Data*> dataArg,
     return nullptr;
   }
 
-  return createWithData(cx, &data, hasParameterExprs, needsEnvironment, fun,
-                        enclosing);
+  return createWithData(
+      cx, &data, hasParameterExprs,
+      dataArg ? dataArg->isFieldInitializer : IsFieldInitializer::No,
+      needsEnvironment, fun, enclosing);
 }
 
 /* static */
 FunctionScope* FunctionScope::createWithData(
     JSContext* cx, MutableHandle<UniquePtr<Data>> data, bool hasParameterExprs,
-    bool needsEnvironment, HandleFunction fun, HandleScope enclosing) {
+    IsFieldInitializer isFieldInitializer, bool needsEnvironment,
+    HandleFunction fun, HandleScope enclosing) {
   MOZ_ASSERT(data);
   MOZ_ASSERT(fun->isTenured());
 
@@ -687,6 +688,7 @@ FunctionScope* FunctionScope::createWithData(
     return nullptr;
   }
 
+  data->isFieldInitializer = isFieldInitializer;
   data->hasParameterExprs = hasParameterExprs;
   data->canonicalFunction.init(fun);
 
@@ -771,14 +773,18 @@ XDRResult FunctionScope::XDR(XDRState<mode>* xdr, HandleFunction fun,
 
     uint8_t needsEnvironment;
     uint8_t hasParameterExprs;
+    uint8_t isFieldInitializer;
     uint32_t nextFrameSlot;
     if (mode == XDR_ENCODE) {
       needsEnvironment = scope->hasEnvironment();
       hasParameterExprs = data->hasParameterExprs;
+      isFieldInitializer =
+          (data->isFieldInitializer == IsFieldInitializer::Yes ? 1 : 0);
       nextFrameSlot = data->nextFrameSlot;
     }
     MOZ_TRY(xdr->codeUint8(&needsEnvironment));
     MOZ_TRY(xdr->codeUint8(&hasParameterExprs));
+    MOZ_TRY(xdr->codeUint8(&isFieldInitializer));
     MOZ_TRY(xdr->codeUint16(&data->nonPositionalFormalStart));
     MOZ_TRY(xdr->codeUint16(&data->varStart));
     MOZ_TRY(xdr->codeUint32(&nextFrameSlot));
@@ -790,8 +796,10 @@ XDRResult FunctionScope::XDR(XDRState<mode>* xdr, HandleFunction fun,
         MOZ_ASSERT(!data->nextFrameSlot);
       }
 
-      scope.set(createWithData(cx, &uniqueData.ref(), hasParameterExprs,
-                               needsEnvironment, fun, enclosing));
+      scope.set(createWithData(
+          cx, &uniqueData.ref(), hasParameterExprs,
+          isFieldInitializer ? IsFieldInitializer::Yes : IsFieldInitializer::No,
+          needsEnvironment, fun, enclosing));
       if (!scope) {
         return xdr->fail(JS::TranscodeResult_Throw);
       }

@@ -16,8 +16,8 @@
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/PContentPermissionRequestParent.h"
 #include "mozilla/dom/ScriptSettings.h"
-#include "mozilla/dom/TabChild.h"
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserChild.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/Preferences.h"
@@ -122,8 +122,8 @@ class ContentPermissionRequestParent : public PContentPermissionRequestParent {
  public:
   ContentPermissionRequestParent(
       const nsTArray<PermissionRequest>& aRequests, Element* aElement,
-      const IPC::Principal& aPrincipal,
-      const IPC::Principal& aTopLevelPrincipal, const bool aIsHandlingUserInput,
+      nsIPrincipal* aPrincipal, nsIPrincipal* aTopLevelPrincipal,
+      const bool aIsHandlingUserInput,
       const bool aUserHadInteractedWithDocument,
       const DOMTimeStamp aDocumentDOMContentLoadedTimestamp);
   virtual ~ContentPermissionRequestParent();
@@ -151,7 +151,7 @@ class ContentPermissionRequestParent : public PContentPermissionRequestParent {
 
 ContentPermissionRequestParent::ContentPermissionRequestParent(
     const nsTArray<PermissionRequest>& aRequests, Element* aElement,
-    const IPC::Principal& aPrincipal, const IPC::Principal& aTopLevelPrincipal,
+    nsIPrincipal* aPrincipal, nsIPrincipal* aTopLevelPrincipal,
     const bool aIsHandlingUserInput, const bool aUserHadInteractedWithDocument,
     const DOMTimeStamp aDocumentDOMContentLoadedTimestamp) {
   MOZ_COUNT_CTOR(ContentPermissionRequestParent);
@@ -328,7 +328,7 @@ nsresult nsContentPermissionUtils::CreatePermissionArray(
 PContentPermissionRequestParent*
 nsContentPermissionUtils::CreateContentPermissionRequestParent(
     const nsTArray<PermissionRequest>& aRequests, Element* aElement,
-    const IPC::Principal& aPrincipal, const IPC::Principal& aTopLevelPrincipal,
+    nsIPrincipal* aPrincipal, nsIPrincipal* aTopLevelPrincipal,
     const bool aIsHandlingUserInput, const bool aUserHadInteractedWithDocument,
     const DOMTimeStamp aDocumentDOMContentLoadedTimestamp,
     const TabId& aTabId) {
@@ -352,7 +352,7 @@ nsresult nsContentPermissionUtils::AskPermission(
 
     MOZ_ASSERT(NS_IsMainThread());  // IPC can only be execute on main thread.
 
-    TabChild* child = TabChild::GetFrom(aWindow->GetDocShell());
+    BrowserChild* child = BrowserChild::GetFrom(aWindow->GetDocShell());
     NS_ENSURE_TRUE(child, NS_ERROR_FAILURE);
 
     nsCOMPtr<nsIArray> typeArray;

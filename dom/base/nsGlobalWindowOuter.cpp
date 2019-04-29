@@ -229,7 +229,7 @@
 #include "mozilla/dom/PopupBlockedEvent.h"
 #include "mozilla/dom/PrimitiveConversions.h"
 #include "mozilla/dom/WindowBinding.h"
-#include "nsITabChild.h"
+#include "nsIBrowserChild.h"
 #include "mozilla/dom/MediaQueryList.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/NavigatorBinding.h"
@@ -1464,8 +1464,13 @@ bool nsGlobalWindowOuter::IsBlackForCC(bool aTracingNeeded) {
     return false;
   }
 
+  // Unlike most wrappers, the outer window wrapper is not a wrapper for
+  // the outer window. Instead, the outer window wrapper holds the inner
+  // window binding object, which in turn holds the nsGlobalWindowInner, which
+  // has a strong reference to the nsGlobalWindowOuter. We're using the
+  // mInnerWindow pointer as a flag for that whole chain.
   return (nsCCUncollectableMarker::InGeneration(GetMarkedCCGeneration()) ||
-          HasKnownLiveWrapper()) &&
+          (mInnerWindow && HasKnownLiveWrapper())) &&
          (!aTracingNeeded || HasNothingToTrace(ToSupports(this)));
 }
 
@@ -2560,18 +2565,19 @@ void nsGlobalWindowOuter::UpdateParentTarget() {
   // handler itself.
 
   nsCOMPtr<Element> frameElement = GetFrameElementInternal();
-  mMessageManager = nsContentUtils::TryGetTabChildGlobal(frameElement);
+  mMessageManager = nsContentUtils::TryGetBrowserChildGlobal(frameElement);
 
   if (!mMessageManager) {
     nsGlobalWindowOuter* topWin = GetScriptableTopInternal();
     if (topWin) {
       frameElement = topWin->GetFrameElementInternal();
-      mMessageManager = nsContentUtils::TryGetTabChildGlobal(frameElement);
+      mMessageManager = nsContentUtils::TryGetBrowserChildGlobal(frameElement);
     }
   }
 
   if (!mMessageManager) {
-    mMessageManager = nsContentUtils::TryGetTabChildGlobal(mChromeEventHandler);
+    mMessageManager =
+        nsContentUtils::TryGetBrowserChildGlobal(mChromeEventHandler);
   }
 
   if (mMessageManager) {
@@ -2819,8 +2825,8 @@ void nsPIDOMWindowOuter::SetInitialKeyboardIndicators(
     windowRoot->SetShowFocusRings(aShowFocusRings == UIStateChangeType_Set);
   }
 
-  nsContentUtils::SetKeyboardIndicatorsOnRemoteChildren(
-      this, aShowAccelerators, aShowFocusRings);
+  nsContentUtils::SetKeyboardIndicatorsOnRemoteChildren(this, aShowAccelerators,
+                                                        aShowFocusRings);
 }
 
 Element* nsPIDOMWindowOuter::GetFrameElementInternal() const {
@@ -4646,7 +4652,7 @@ bool nsGlobalWindowOuter::CanMoveResizeWindows(CallerType aCallerType) {
     if (XRE_IsContentProcess()) {
       nsCOMPtr<nsIDocShell> docShell = GetDocShell();
       if (docShell) {
-        nsCOMPtr<nsITabChild> child = docShell->GetTabChild();
+        nsCOMPtr<nsIBrowserChild> child = docShell->GetBrowserChild();
         bool hasSiblings = true;
         if (child && NS_SUCCEEDED(child->GetHasSiblings(&hasSiblings)) &&
             hasSiblings) {
@@ -6277,9 +6283,7 @@ void nsGlobalWindowOuter::ReallyCloseWindow() {
         // XXXbz now that we have mHavePendingClose, is this needed?
         bool isTab;
         if (rootWin == this || !bwin ||
-            (NS_SUCCEEDED(
-                 bwin->IsTabContentWindow(this, &isTab)) &&
-             isTab)) {
+            (NS_SUCCEEDED(bwin->IsTabContentWindow(this, &isTab)) && isTab)) {
           treeOwnerAsWin->Destroy();
         }
       }
@@ -6311,7 +6315,7 @@ void nsGlobalWindowOuter::EnterModalState() {
                                 mDoc, activePresShell->GetDocument()))) {
       EventStateManager::ClearGlobalActiveContent(activeESM);
 
-      nsIPresShell::SetCapturingContent(nullptr, 0);
+      PresShell::ReleaseCapturingContent();
 
       if (activePresShell) {
         RefPtr<nsFrameSelection> frameSelection =
@@ -6335,7 +6339,7 @@ void nsGlobalWindowOuter::EnterModalState() {
   nsIContent* capturingContent = nsIPresShell::GetCapturingContent();
   if (capturingContent && topDoc &&
       nsContentUtils::ContentIsCrossDocDescendantOf(capturingContent, topDoc)) {
-    nsIPresShell::SetCapturingContent(nullptr, 0);
+    PresShell::ReleaseCapturingContent();
   }
 
   if (topWin->mModalStateDepth == 0) {
@@ -6461,19 +6465,19 @@ Element* nsGlobalWindowOuter::GetFrameElement() {
 namespace {
 class ChildCommandDispatcher : public Runnable {
  public:
-  ChildCommandDispatcher(nsPIWindowRoot* aRoot, nsITabChild* aTabChild,
+  ChildCommandDispatcher(nsPIWindowRoot* aRoot, nsIBrowserChild* aBrowserChild,
                          const nsAString& aAction)
       : mozilla::Runnable("ChildCommandDispatcher"),
         mRoot(aRoot),
-        mTabChild(aTabChild),
+        mBrowserChild(aBrowserChild),
         mAction(aAction) {}
 
   NS_IMETHOD Run() override {
     nsTArray<nsCString> enabledCommands, disabledCommands;
     mRoot->GetEnabledDisabledCommands(enabledCommands, disabledCommands);
     if (enabledCommands.Length() || disabledCommands.Length()) {
-      mTabChild->EnableDisableCommands(mAction, enabledCommands,
-                                       disabledCommands);
+      mBrowserChild->EnableDisableCommands(mAction, enabledCommands,
+                                           disabledCommands);
     }
 
     return NS_OK;
@@ -6481,7 +6485,7 @@ class ChildCommandDispatcher : public Runnable {
 
  private:
   nsCOMPtr<nsPIWindowRoot> mRoot;
-  nsCOMPtr<nsITabChild> mTabChild;
+  nsCOMPtr<nsIBrowserChild> mBrowserChild;
   nsString mAction;
 };
 
@@ -6504,7 +6508,7 @@ void nsGlobalWindowOuter::UpdateCommands(const nsAString& anAction,
                                          Selection* aSel, int16_t aReason) {
   // If this is a child process, redirect to the parent process.
   if (nsIDocShell* docShell = GetDocShell()) {
-    if (nsCOMPtr<nsITabChild> child = docShell->GetTabChild()) {
+    if (nsCOMPtr<nsIBrowserChild> child = docShell->GetBrowserChild()) {
       nsCOMPtr<nsPIWindowRoot> root = GetTopWindowRoot();
       if (root) {
         nsContentUtils::AddScriptRunner(
@@ -6844,8 +6848,8 @@ void nsGlobalWindowOuter::SetKeyboardIndicators(
     windowRoot->SetShowFocusRings(aShowFocusRings == UIStateChangeType_Set);
   }
 
-  nsContentUtils::SetKeyboardIndicatorsOnRemoteChildren(
-      this, aShowAccelerators, aShowFocusRings);
+  nsContentUtils::SetKeyboardIndicatorsOnRemoteChildren(this, aShowAccelerators,
+                                                        aShowFocusRings);
 
   bool newShouldShowFocusRing = ShouldShowFocusRing();
   if (mInnerWindow && nsGlobalWindowInner::Cast(mInnerWindow)->mHasFocus &&
@@ -7067,6 +7071,7 @@ nsresult nsGlobalWindowOuter::OpenInternal(
 
   nsAutoCString options;
   bool forceNoOpener = aForceNoOpener;
+  bool forceNoReferrer = false;
   // Unlike other window flags, "noopener" comes from splitting on commas with
   // HTML whitespace trimming...
   nsCharSeparatedTokenizerTemplate<nsContentUtils::IsHTMLWhitespace> tok(
@@ -7074,6 +7079,13 @@ nsresult nsGlobalWindowOuter::OpenInternal(
   while (tok.hasMoreTokens()) {
     auto nextTok = tok.nextToken();
     if (nextTok.EqualsLiteral("noopener")) {
+      forceNoOpener = true;
+      continue;
+    }
+    if (StaticPrefs::dom_window_open_noreferrer_enabled() &&
+        nextTok.LowerCaseEqualsLiteral("noreferrer")) {
+      forceNoReferrer = true;
+      // noreferrer implies noopener
       forceNoOpener = true;
       continue;
     }
@@ -7182,7 +7194,7 @@ nsresult nsGlobalWindowOuter::OpenInternal(
       rv = pwwatch->OpenWindow2(
           this, url.IsVoid() ? nullptr : url.get(), name_ptr, options_ptr,
           /* aCalledFromScript = */ true, aDialog, aNavigate, argv,
-          isPopupSpamWindow, forceNoOpener, aLoadState,
+          isPopupSpamWindow, forceNoOpener, forceNoReferrer, aLoadState,
           getter_AddRefs(domReturn));
     } else {
       // Force a system caller here so that the window watcher won't screw us
@@ -7202,7 +7214,7 @@ nsresult nsGlobalWindowOuter::OpenInternal(
       rv = pwwatch->OpenWindow2(
           this, url.IsVoid() ? nullptr : url.get(), name_ptr, options_ptr,
           /* aCalledFromScript = */ false, aDialog, aNavigate, aExtraArgument,
-          isPopupSpamWindow, forceNoOpener, aLoadState,
+          isPopupSpamWindow, forceNoOpener, forceNoReferrer, aLoadState,
           getter_AddRefs(domReturn));
     }
   }
@@ -7357,9 +7369,13 @@ void nsGlobalWindowOuter::EnsureSizeAndPositionUpToDate() {
   // If we're a subframe, make sure our size is up to date.  It's OK that this
   // crosses the content/chrome boundary, since chrome can have pending reflows
   // too.
-  nsGlobalWindowOuter* parent = nsGlobalWindowOuter::Cast(GetPrivateParent());
-  if (parent) {
-    parent->FlushPendingNotifications(FlushType::Layout);
+  //
+  // Make sure to go through the document chain rather than the window chain to
+  // not flush on detached iframes, see bug 1545516.
+  if (mDoc) {
+    if (RefPtr<Document> parent = mDoc->GetParentDocument()) {
+      parent->FlushPendingNotifications(FlushType::Layout);
+    }
   }
 }
 

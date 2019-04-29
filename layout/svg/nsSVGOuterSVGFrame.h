@@ -75,7 +75,8 @@ class nsSVGOuterSVGFrame final : public nsSVGDisplayContainerFrame,
 
   bool IsFrameOfType(uint32_t aFlags) const override {
     return nsSVGDisplayContainerFrame::IsFrameOfType(
-        aFlags & ~eSupportsContainLayoutAndPaint);
+        aFlags &
+        ~(eSupportsContainLayoutAndPaint | eReplaced | eReplacedSizing));
   }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -190,6 +191,11 @@ class nsSVGOuterSVGFrame final : public nsSVGDisplayContainerFrame,
 
   bool mViewportInitialized;
   bool mIsRootContent;
+
+ private:
+  template <typename... Args>
+  bool IsContainingWindowElementOfType(nsIFrame** aContainingWindowFrame,
+                                       Args... aArgs) const;
 };
 
 ////////////////////////////////////////////////////////////////////////

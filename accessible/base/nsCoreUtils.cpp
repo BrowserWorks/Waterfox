@@ -123,9 +123,9 @@ void nsCoreUtils::DispatchMouseEvent(EventMessage aMessage, int32_t aX,
   event.mRefPoint = LayoutDeviceIntPoint(aX, aY);
 
   event.mClickCount = 1;
-  event.button = WidgetMouseEvent::eLeftButton;
+  event.mButton = MouseButton::eLeft;
   event.mTime = PR_IntervalNow();
-  event.inputSource = dom::MouseEvent_Binding::MOZ_SOURCE_UNKNOWN;
+  event.mInputSource = dom::MouseEvent_Binding::MOZ_SOURCE_UNKNOWN;
 
   nsEventStatus status = nsEventStatus_eIgnore;
   aPresShell->HandleEventWithTarget(&event, aFrame, aContent, &status);
@@ -259,56 +259,56 @@ void nsCoreUtils::ScrollFrameToPoint(nsIFrame *aScrollableFrame,
   nsPoint scrollPoint = scrollableFrame->GetScrollPosition();
   scrollPoint -= deltaPoint;
 
-  scrollableFrame->ScrollTo(scrollPoint, ScrollMode::eInstant);
+  scrollableFrame->ScrollTo(scrollPoint, ScrollMode::Instant);
 }
 
 void nsCoreUtils::ConvertScrollTypeToPercents(
     uint32_t aScrollType, nsIPresShell::ScrollAxis *aVertical,
     nsIPresShell::ScrollAxis *aHorizontal) {
-  int16_t whereY, whereX;
-  nsIPresShell::WhenToScroll whenY, whenX;
+  WhereToScroll whereY, whereX;
+  WhenToScroll whenY, whenX;
   switch (aScrollType) {
     case nsIAccessibleScrollType::SCROLL_TYPE_TOP_LEFT:
-      whereY = nsIPresShell::SCROLL_TOP;
-      whenY = nsIPresShell::SCROLL_ALWAYS;
-      whereX = nsIPresShell::SCROLL_LEFT;
-      whenX = nsIPresShell::SCROLL_ALWAYS;
+      whereY = kScrollToTop;
+      whenY = WhenToScroll::Always;
+      whereX = kScrollToLeft;
+      whenX = WhenToScroll::Always;
       break;
     case nsIAccessibleScrollType::SCROLL_TYPE_BOTTOM_RIGHT:
-      whereY = nsIPresShell::SCROLL_BOTTOM;
-      whenY = nsIPresShell::SCROLL_ALWAYS;
-      whereX = nsIPresShell::SCROLL_RIGHT;
-      whenX = nsIPresShell::SCROLL_ALWAYS;
+      whereY = kScrollToBottom;
+      whenY = WhenToScroll::Always;
+      whereX = kScrollToRight;
+      whenX = WhenToScroll::Always;
       break;
     case nsIAccessibleScrollType::SCROLL_TYPE_TOP_EDGE:
-      whereY = nsIPresShell::SCROLL_TOP;
-      whenY = nsIPresShell::SCROLL_ALWAYS;
-      whereX = nsIPresShell::SCROLL_MINIMUM;
-      whenX = nsIPresShell::SCROLL_IF_NOT_FULLY_VISIBLE;
+      whereY = kScrollToTop;
+      whenY = WhenToScroll::Always;
+      whereX = kScrollMinimum;
+      whenX = WhenToScroll::IfNotFullyVisible;
       break;
     case nsIAccessibleScrollType::SCROLL_TYPE_BOTTOM_EDGE:
-      whereY = nsIPresShell::SCROLL_BOTTOM;
-      whenY = nsIPresShell::SCROLL_ALWAYS;
-      whereX = nsIPresShell::SCROLL_MINIMUM;
-      whenX = nsIPresShell::SCROLL_IF_NOT_FULLY_VISIBLE;
+      whereY = kScrollToBottom;
+      whenY = WhenToScroll::Always;
+      whereX = kScrollMinimum;
+      whenX = WhenToScroll::IfNotFullyVisible;
       break;
     case nsIAccessibleScrollType::SCROLL_TYPE_LEFT_EDGE:
-      whereY = nsIPresShell::SCROLL_MINIMUM;
-      whenY = nsIPresShell::SCROLL_IF_NOT_FULLY_VISIBLE;
-      whereX = nsIPresShell::SCROLL_LEFT;
-      whenX = nsIPresShell::SCROLL_ALWAYS;
+      whereY = kScrollMinimum;
+      whenY = WhenToScroll::IfNotFullyVisible;
+      whereX = kScrollToLeft;
+      whenX = WhenToScroll::Always;
       break;
     case nsIAccessibleScrollType::SCROLL_TYPE_RIGHT_EDGE:
-      whereY = nsIPresShell::SCROLL_MINIMUM;
-      whenY = nsIPresShell::SCROLL_IF_NOT_FULLY_VISIBLE;
-      whereX = nsIPresShell::SCROLL_RIGHT;
-      whenX = nsIPresShell::SCROLL_ALWAYS;
+      whereY = kScrollMinimum;
+      whenY = WhenToScroll::IfNotFullyVisible;
+      whereX = kScrollToRight;
+      whenX = WhenToScroll::Always;
       break;
     default:
-      whereY = nsIPresShell::SCROLL_MINIMUM;
-      whenY = nsIPresShell::SCROLL_IF_NOT_FULLY_VISIBLE;
-      whereX = nsIPresShell::SCROLL_MINIMUM;
-      whenX = nsIPresShell::SCROLL_IF_NOT_FULLY_VISIBLE;
+      whereY = kScrollMinimum;
+      whenY = WhenToScroll::IfNotFullyVisible;
+      whereX = kScrollMinimum;
+      whenX = WhenToScroll::IfNotFullyVisible;
   }
   *aVertical = nsIPresShell::ScrollAxis(whereY, whenY);
   *aHorizontal = nsIPresShell::ScrollAxis(whereX, whenX);
@@ -510,7 +510,7 @@ void nsCoreUtils::ScrollTo(PresShell *aPresShell, nsIContent *aContent,
   nsIPresShell::ScrollAxis vertical, horizontal;
   ConvertScrollTypeToPercents(aScrollType, &vertical, &horizontal);
   aPresShell->ScrollContentIntoView(aContent, vertical, horizontal,
-                                    nsIPresShell::SCROLL_OVERFLOW_HIDDEN);
+                                    ScrollFlags::ScrollOverflowHidden);
 }
 
 bool nsCoreUtils::IsWhitespaceString(const nsAString &aString) {

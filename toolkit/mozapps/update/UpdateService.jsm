@@ -33,6 +33,7 @@ const PREF_APP_UPDATE_ALTWINDOWTYPE        = "app.update.altwindowtype";
 const PREF_APP_UPDATE_BACKGROUNDERRORS     = "app.update.backgroundErrors";
 const PREF_APP_UPDATE_BACKGROUNDMAXERRORS  = "app.update.backgroundMaxErrors";
 const PREF_APP_UPDATE_BITS_ENABLED         = "app.update.BITS.enabled";
+const PREF_APP_UPDATE_BITS_INTRIALGROUP    = "app.update.BITS.inTrialGroup";
 const PREF_APP_UPDATE_CANCELATIONS         = "app.update.cancelations";
 const PREF_APP_UPDATE_CANCELATIONS_OSX     = "app.update.cancelations.osx";
 const PREF_APP_UPDATE_CANCELATIONS_OSX_MAX = "app.update.cancelations.osx.max";
@@ -233,6 +234,8 @@ var gLogfileWritePromise;
 // at once. Computers with many users (ex: a school computer), should not end
 // up with dozens of BITS jobs.
 var gBITSInUseByAnotherUser = false;
+// The start time in milliseconds of the update check.
+var gCheckStartMs;
 
 XPCOMUtils.defineLazyGetter(this, "gLogEnabled", function aus_gLogEnabled() {
   return Services.prefs.getBoolPref(PREF_APP_UPDATE_LOG, false) ||
@@ -579,6 +582,20 @@ function getCanUseBits() {
     LOG("getCanUseBits - Not using BITS because the feature is disabled");
     return "NoBits_FeatureOff";
   }
+
+  // By default, enable BITS for 50% of the eligible population (Bug 1542100)
+  let inTrialGroup;
+  if (Services.prefs.getPrefType(PREF_APP_UPDATE_BITS_INTRIALGROUP) ==
+      Services.prefs.PREF_INVALID) {
+    inTrialGroup = (Math.floor(Math.random() * 2) == 1);
+    Services.prefs.setBoolPref(PREF_APP_UPDATE_BITS_INTRIALGROUP, inTrialGroup);
+  } else {
+    inTrialGroup = Services.prefs.getBoolPref(PREF_APP_UPDATE_BITS_INTRIALGROUP,
+                                              false);
+  }
+  let defaultPrefs = Services.prefs.getDefaultBranch("");
+  defaultPrefs.setBoolPref(PREF_APP_UPDATE_BITS_ENABLED, inTrialGroup);
+
   if (!Services.prefs.getBoolPref(PREF_APP_UPDATE_BITS_ENABLED, true)) {
     LOG("getCanUseBits - Not using BITS. Disabled by pref.");
     return "NoBits_Pref";
@@ -592,7 +609,7 @@ function getCanUseBits() {
   // standard system proxy.
   let defaultProxy = Ci.nsIProtocolProxyService.PROXYCONFIG_SYSTEM;
   if (Services.prefs.getIntPref(PREF_NETWORK_PROXY_TYPE, defaultProxy) !=
-      defaultProxy) {
+      defaultProxy && !Cu.isInAutomation) {
     LOG("getCanUseBits - Not using BITS because of proxy usage");
     return "NoBits_Proxy";
   }
@@ -609,7 +626,9 @@ function getCanUseBits() {
 function LOG(string) {
   if (gLogEnabled) {
     dump("*** AUS:SVC " + string + "\n");
-    Services.console.logStringMessage("AUS:SVC " + string);
+    if (!Cu.isInAutomation) {
+      Services.console.logStringMessage("AUS:SVC " + string);
+    }
 
     if (gLogfileEnabled) {
       if (!gLogfileWritePromise) {
@@ -1933,8 +1952,16 @@ UpdateService.prototype = {
         // be resumed the next time the application starts. Downloads using
         // Windows BITS are not stopped since they don't require Firefox to be
         // running to perform the download.
-        if (this._downloader && !this._downloader.usingBits) {
-          this.stopDownload();
+        if (this._downloader) {
+          if (!this._downloader.usingBits) {
+            this.stopDownload();
+          } else {
+            // The BITS downloader isn't stopped on exit so the
+            // active-update.xml needs to be saved for the values sent to
+            // telemetry to be saved to disk.
+            Cc["@mozilla.org/updates/update-manager;1"].
+              getService(Ci.nsIUpdateManager).saveUpdates();
+          }
         }
         // Prevent leaking the downloader (bug 454964)
         this._downloader = null;
@@ -2127,6 +2154,10 @@ UpdateService.prototype = {
       update.errorCode = parseInt(parts[1]);
     }
 
+    if (update.state == STATE_SUCCEEDED || update.patchCount == 1 ||
+        (update.selectedPatch && update.selectedPatch.type == "complete")) {
+      AUSTLMY.pingUpdatePhases(update, true);
+    }
 
     if (status != STATE_SUCCEEDED) {
       // Rotate the update logs so the update log isn't removed. By passing
@@ -3175,6 +3206,10 @@ UpdateManager.prototype = {
     if (!update) {
       return;
     }
+
+    let patch = update.selectedPatch.QueryInterface(Ci.nsIWritablePropertyBag);
+    patch.setProperty("stageFinished", Math.ceil(Date.now() / 1000));
+
     var status = readStatusFile(getUpdatesDir());
     pingStateAndStatusCodes(update, false, status);
     var parts = status.split(":");
@@ -3193,11 +3228,17 @@ UpdateManager.prototype = {
         handleFallbackToCompleteUpdate(update, true);
       }
 
+      // This can be removed after the update ui under update/content is
+      // removed.
       update.QueryInterface(Ci.nsIWritablePropertyBag);
       update.setProperty("stagingFailed", "true");
     }
     if (update.state == STATE_APPLIED && shouldUseService()) {
       writeStatusFile(getUpdatesDir(), update.state = STATE_APPLIED_SERVICE);
+    }
+
+    if (update.state == STATE_FAILED) {
+      AUSTLMY.pingUpdatePhases(update, false);
     }
 
     // Now that the active update's properties have been updated write the
@@ -3223,6 +3264,7 @@ UpdateManager.prototype = {
         update.state == STATE_PENDING ||
         update.state == STATE_PENDING_SERVICE ||
         update.state == STATE_PENDING_ELEVATE) {
+      patch.setProperty("applyStart", Math.floor(Date.now() / 1000));
       // Notify the user that an update has been staged and is ready for
       // installation (i.e. that they should restart the application).
       let prompter = Cc["@mozilla.org/updates/update-prompt;1"].
@@ -3378,6 +3420,7 @@ Checker.prototype = {
       throw Cr.NS_ERROR_NULL_POINTER;
     }
 
+    gCheckStartMs = Date.now();
     let UpdateServiceInstance = UpdateServiceFactory.createInstance();
     // |force| can override |canCheckForUpdates| since |force| indicates a
     // manual update check. But nothing should override enterprise policies.
@@ -3651,6 +3694,17 @@ Downloader.prototype = {
   _bitsActiveNotifications: false,
 
   /**
+   * The start time of the first download attempt in milliseconds for telemetry.
+   */
+  _startDownloadMs: null,
+
+  /**
+   * The name of the downloader being used to download the update. This is used
+   * when setting property names on the update patch for telemetry.
+   */
+  _downloaderName: null,
+
+  /**
    * Cancels the active download.
    *
    * For a BITS download, this will cancel and remove the download job. For
@@ -3769,12 +3823,20 @@ Downloader.prototype = {
         return null;
       }
 
+      // When downloading the patch failed using BITS, there hasn't been an
+      // attempt to download the patch using the internal application download
+      // mechanism, and an attempt to stage or apply the patch hasn't failed
+      // which indicates that a different patch should be downloaded since
+      // re-downloading the same patch with the internal application download
+      // mechanism will likely also fail when trying to stage or apply it then
+      // try to download the same patch using the internal application download
+      // mechanism.
       selectedPatch.QueryInterface(Ci.nsIWritablePropertyBag);
       if (selectedPatch.getProperty("bitsResult") != null &&
           selectedPatch.getProperty("internalResult") == null &&
-          selectedPatch.getProperty("stagingFailed") != null) {
+          !selectedPatch.errorCode) {
         LOG("Downloader:_selectPatch - Falling back to non-BITS download " +
-            "mechanism due to existing BITS result: " +
+            "mechanism for the same patch due to existing BITS result: " +
             selectedPatch.getProperty("bitsResult"));
         return selectedPatch;
       }
@@ -3878,13 +3940,31 @@ Downloader.prototype = {
       AUSTLMY.pingDownloadCode(undefined, AUSTLMY.DWNLD_ERR_NO_UPDATE_PATCH);
       return readStatusFile(updateDir);
     }
+    // QI the update and the patch to nsIWritablePropertyBag so it isn't
+    // necessary later in the download code.
+    this._update.QueryInterface(Ci.nsIWritablePropertyBag);
+    if (gCheckStartMs && !this._update.getProperty("checkInterval")) {
+      let interval = Math.max(Math.ceil((Date.now() - gCheckStartMs) / 1000), 1);
+      this._update.setProperty("checkInterval", interval);
+    }
     // this._patch implements nsIWritablePropertyBag. Expose that interface
     // immediately after a patch is assigned so that this._patch.getProperty
     // and this._patch.setProperty can always safely be called.
     this._patch.QueryInterface(Ci.nsIWritablePropertyBag);
     this.isCompleteUpdate = this._patch.type == "complete";
 
-    if (!this._canUseBits(this._patch)) {
+    let canUseBits = this._canUseBits(this._patch);
+    // Allow the advertised update to disable BITS.
+    if (this._update.getProperty("disableBITS") != null) {
+      canUseBits = false;
+    }
+
+    this._downloaderName = canUseBits ? "bits" : "internal";
+    if (!this._patch.getProperty(this._downloaderName + "DownloadStart")) {
+      this._patch.setProperty(this._downloaderName + "DownloadStart", Math.floor(Date.now() / 1000));
+    }
+
+    if (!canUseBits) {
       let patchFile = getUpdatesDir().clone();
       patchFile.append(FILE_UPDATE_MAR);
 
@@ -3954,7 +4034,8 @@ Downloader.prototype = {
           getService(Ci.nsIUpdateManager).saveUpdates();
         this._pendingRequest = null;
       }, error => {
-        if (error.type == Ci.nsIBits.ERROR_TYPE_FAILED_TO_GET_BITS_JOB &&
+        if ((error.type == Ci.nsIBits.ERROR_TYPE_FAILED_TO_GET_BITS_JOB ||
+            error.type == Ci.nsIBits.ERROR_TYPE_FAILED_TO_CONNECT_TO_BCM) &&
             error.action == Ci.nsIBits.ERROR_ACTION_MONITOR_DOWNLOAD &&
             error.stage == Ci.nsIBits.ERROR_STAGE_BITS_CLIENT &&
             error.codeType == Ci.nsIBits.ERROR_CODE_TYPE_HRESULT &&
@@ -4108,6 +4189,17 @@ Downloader.prototype = {
           getService(Ci.nsIUpdateManager).saveUpdates();
       }
     }
+    // Only record the download bytes per second when there isn't already a
+    // value for the bytes per second so downloads that are already in progess
+    // don't have their records overwritten. When the Update Agent is
+    // implemented this should be reworked so that telemetry receives the bytes
+    // and seconds it took to complete for the entire update download instead of
+    // just the sample that is currently recorded. Note: this._patch has already
+    // been QI'd to nsIWritablePropertyBag.
+    if (!this._patch.getProperty("internalBytes") &&
+        !this._patch.getProperty("bitsBytes")) {
+      this._startDownloadMs = Date.now();
+    }
 
     // Make shallow copy in case listeners remove themselves when called.
     let listeners = this._listeners.concat();
@@ -4131,6 +4223,11 @@ Downloader.prototype = {
   onProgress: function Downloader_onProgress(request, context, progress,
                                              maxProgress) {
     LOG("Downloader:onProgress - progress: " + progress + "/" + maxProgress);
+    if (this._startDownloadMs) {
+      let seconds = Math.round((Date.now() - this._startDownloadMs) / 1000);
+      this._patch.setProperty(this._downloaderName + "Seconds", seconds);
+      this._patch.setProperty(this._downloaderName + "Bytes", progress);
+    }
 
     if (progress > this._patch.size) {
       LOG("Downloader:onProgress - progress: " + progress +
@@ -4253,6 +4350,8 @@ Downloader.prototype = {
         "current fail: " + this.updateService._consecutiveSocketErrors + ", " +
         "max fail: " + maxFail + ", " +
         "retryTimeout: " + retryTimeout);
+    this._patch.setProperty(this._downloaderName + "DownloadFinished",
+                            Math.floor(Date.now() / 1000));
     if (Components.isSuccessCode(status)) {
       if (this._verifyDownload()) {
         if (shouldUseService()) {
@@ -4456,6 +4555,7 @@ Downloader.prototype = {
           Services.prefs.setIntPref(PREF_APP_UPDATE_DOWNLOAD_ATTEMPTS, downloadAttempts);
           let maxAttempts = Math.min(Services.prefs.getIntPref(PREF_APP_UPDATE_DOWNLOAD_MAXATTEMPTS, 2), 10);
 
+          AUSTLMY.pingUpdatePhases(this._update, false);
           if (downloadAttempts > maxAttempts) {
             LOG("Downloader:onStopRequest - notifying observers of error. " +
                 "topic: update-error, status: download-attempts-exceeded, " +
@@ -4496,6 +4596,7 @@ Downloader.prototype = {
         LOG("Downloader:onStopRequest - attempting to stage update: " +
             this._update.name);
         gUpdateFileWriteInfo = {phase: "stage", failure: false};
+        this._patch.setProperty("stageStart", Math.floor(Date.now() / 1000));
         // Stage the update
         try {
           Cc["@mozilla.org/updates/update-processor;1"].
@@ -4509,6 +4610,8 @@ Downloader.prototype = {
             shouldShowPrompt = true;
           }
         }
+      } else {
+        this._patch.setProperty("applyStart", Math.floor(Date.now() / 1000));
       }
     }
 

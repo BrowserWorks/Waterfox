@@ -12,7 +12,7 @@
 #include "LayersLogging.h"  // For Stringify
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/MouseEventBinding.h"
-#include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/layers/LayerTransactionChild.h"
 #include "mozilla/layers/ShadowLayers.h"
@@ -45,7 +45,7 @@
 namespace mozilla {
 namespace layers {
 
-using dom::TabParent;
+using dom::BrowserParent;
 
 uint64_t APZCCallbackHelper::sLastTargetAPZCNotificationInputBlock =
     uint64_t(-1);
@@ -282,7 +282,8 @@ void APZCCallbackHelper::NotifyLayerTransforms(
     const nsTArray<MatrixMessage>& aTransforms) {
   MOZ_ASSERT(NS_IsMainThread());
   for (const MatrixMessage& msg : aTransforms) {
-    TabParent* parent = TabParent::GetTabParentFromLayersId(msg.GetLayersId());
+    BrowserParent* parent =
+        BrowserParent::GetBrowserParentFromLayersId(msg.GetLayersId());
     if (parent) {
       parent->SetChildToParentConversionMatrix(
           ViewAs<LayoutDeviceToLayoutDeviceMatrix4x4>(
@@ -336,7 +337,7 @@ void APZCCallbackHelper::UpdateRootFrame(const RepaintRequest& aRequest) {
     presShellResolution =
         aRequest.GetPresShellResolution() * aRequest.GetAsyncZoom().scale;
     presShell->SetResolutionAndScaleTo(presShellResolution,
-                                       nsIPresShell::ChangeOrigin::eApz);
+                                       ResolutionChangeOrigin::Apz);
   }
 
   // Do this as late as possible since scrolling can flush layout. It also
@@ -556,8 +557,8 @@ nsEventStatus APZCCallbackHelper::DispatchSynthesizedMouseEvent(
                          WidgetMouseEvent::eNormal);
   event.mRefPoint = LayoutDeviceIntPoint::Truncate(aRefPoint.x, aRefPoint.y);
   event.mTime = aTime;
-  event.button = WidgetMouseEvent::eLeftButton;
-  event.inputSource = dom::MouseEvent_Binding::MOZ_SOURCE_TOUCH;
+  event.mButton = MouseButton::eLeft;
+  event.mInputSource = dom::MouseEvent_Binding::MOZ_SOURCE_TOUCH;
   if (aMsg == eMouseLongTap) {
     event.mFlags.mOnlyChromeDispatch = true;
   }

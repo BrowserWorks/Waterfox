@@ -2039,8 +2039,8 @@ class MachineStackTracker {
   // Mark the stack slot |offsetFromSP| up from the bottom as holding a
   // pointer.
   void setGCPointer(size_t offsetFromSP) {
-    // Offset 0 is the most recently pushed, offset 1 is the second most
-    // recently pushed item, etc.
+    // offsetFromSP == 0 denotes the most recently pushed item, == 1 the
+    // second most recently pushed item, etc.
     MOZ_ASSERT(offsetFromSP < vec_.length());
 
     size_t offsetFromTop = vec_.length() - 1 - offsetFromSP;
@@ -2051,7 +2051,9 @@ class MachineStackTracker {
   // Query the pointerness of the slot |offsetFromSP| up from the bottom.
   bool isGCPointer(size_t offsetFromSP) {
     MOZ_ASSERT(offsetFromSP < vec_.length());
-    return vec_[offsetFromSP];
+
+    size_t offsetFromTop = vec_.length() - 1 - offsetFromSP;
+    return vec_[offsetFromTop];
   }
 
   // Return the number of words tracked by this MachineStackTracker.
@@ -2358,7 +2360,7 @@ struct StackMapGenerator {
     // Followed by the "main" part of the map.
     for (uint32_t i = 0; i < augmentedMstWords; i++) {
       if (augmentedMst.isGCPointer(i)) {
-        stackMap->setBit(numMappedWords - 1 - i);
+        stackMap->setBit(extraWords + i);
       }
     }
 
@@ -4154,6 +4156,17 @@ class BaseCompiler final : public BaseCompilerInterface {
       return false;
     }
 
+    // Locals are stack allocated.  Mark ref-typed ones in the stackmap
+    // accordingly.
+    for (const Local& l : localInfo_) {
+      if (l.type == MIRType::RefOrNull) {
+        uint32_t offs = fr.localOffset(l);
+        MOZ_ASSERT(0 == (offs % sizeof(void*)));
+        stackMapGenerator_.machineStackTracker.setGCPointer(offs /
+                                                            sizeof(void*));
+      }
+    }
+
     // Copy arguments from registers to stack.
     for (ABIArgIter<const ValTypeVector> i(args); !i.done(); i++) {
       if (!i->argInRegister()) {
@@ -4168,11 +4181,12 @@ class BaseCompiler final : public BaseCompilerInterface {
           fr.storeLocalI64(RegI64(i->gpr64()), l);
           break;
         case MIRType::RefOrNull: {
-          uint32_t offs = fr.localOffset(l);
+          DebugOnly<uint32_t> offs = fr.localOffset(l);
           MOZ_ASSERT(0 == (offs % sizeof(void*)));
           fr.storeLocalPtr(RegPtr(i->gpr()), l);
-          stackMapGenerator_.machineStackTracker.setGCPointer(offs /
-                                                              sizeof(void*));
+          // We should have just visited this local in the preceding loop.
+          MOZ_ASSERT(stackMapGenerator_.machineStackTracker.isGCPointer(
+              offs / sizeof(void*)));
           break;
         }
         case MIRType::Double:
@@ -4695,7 +4709,8 @@ class BaseCompiler final : public BaseCompilerInterface {
     // Flush constant pools: offset must reflect the distance from the MOV
     // to the start of the table; as the address of the MOV is given by the
     // label, nothing must come between the bind() and the ma_mov().
-    AutoForbidPoolsAndNops afp(&masm, /* number of instructions in scope = */ 5);
+    AutoForbidPoolsAndNops afp(&masm,
+                               /* number of instructions in scope = */ 5);
 
     ScratchI32 scratch(*this);
 
@@ -4728,7 +4743,8 @@ class BaseCompiler final : public BaseCompilerInterface {
 
     masm.branchToComputedAddress(BaseIndex(scratch, switchValue, ScalePointer));
 #elif defined(JS_CODEGEN_ARM64)
-    AutoForbidPoolsAndNops afp(&masm, /* number of instructions in scope = */ 4);
+    AutoForbidPoolsAndNops afp(&masm,
+                               /* number of instructions in scope = */ 4);
 
     ScratchI32 scratch(*this);
 
@@ -6834,6 +6850,7 @@ class BaseCompiler final : public BaseCompilerInterface {
   MOZ_MUST_USE bool emitMemFill();
   MOZ_MUST_USE bool emitMemOrTableInit(bool isMem);
 #endif
+  MOZ_MUST_USE bool emitTableFill();
   MOZ_MUST_USE bool emitTableGet();
   MOZ_MUST_USE bool emitTableGrow();
   MOZ_MUST_USE bool emitTableSet();
@@ -10317,6 +10334,37 @@ bool BaseCompiler::emitMemOrTableInit(bool isMem) {
 #endif
 
 MOZ_MUST_USE
+bool BaseCompiler::emitTableFill() {
+  uint32_t lineOrBytecode = readCallSiteLineOrBytecode();
+
+  Nothing nothing;
+  uint32_t tableIndex;
+  if (!iter_.readTableFill(&tableIndex, &nothing, &nothing, &nothing)) {
+    return false;
+  }
+
+  if (deadCode_) {
+    return true;
+  }
+
+  // fill(start:u32, val:ref, len:u32, table:u32) -> u32
+  //
+  // Returns -1 on trap, otherwise 0.
+  pushI32(tableIndex);
+  if (!emitInstanceCall(lineOrBytecode, SASigTableFill,
+                        /*pushReturnedValue=*/false)) {
+    return false;
+  }
+
+  Label ok;
+  masm.branchTest32(Assembler::NotSigned, ReturnReg, ReturnReg, &ok);
+  trap(Trap::ThrowReported);
+  masm.bind(&ok);
+
+  return true;
+}
+
+MOZ_MUST_USE
 bool BaseCompiler::emitTableGet() {
   uint32_t lineOrBytecode = readCallSiteLineOrBytecode();
   Nothing index;
@@ -10358,13 +10406,13 @@ bool BaseCompiler::emitTableGrow() {
   Nothing delta;
   Nothing initValue;
   uint32_t tableIndex;
-  if (!iter_.readTableGrow(&tableIndex, &delta, &initValue)) {
+  if (!iter_.readTableGrow(&tableIndex, &initValue, &delta)) {
     return false;
   }
   if (deadCode_) {
     return true;
   }
-  // grow(delta:u32, initValue:anyref, table:u32) -> u32
+  // grow(initValue:anyref, delta:u32, table:u32) -> u32
   //
   // infallible.
   pushI32(tableIndex);
@@ -11549,6 +11597,8 @@ bool BaseCompiler::emitBody() {
             CHECK_NEXT(emitMemOrTableInit(/*isMem=*/false));
 #endif  // ENABLE_WASM_BULKMEM_OPS
 #ifdef ENABLE_WASM_REFTYPES
+          case uint32_t(MiscOp::TableFill):
+            CHECK_NEXT(emitTableFill());
           case uint32_t(MiscOp::TableGrow):
             CHECK_NEXT(emitTableGrow());
           case uint32_t(MiscOp::TableSize):

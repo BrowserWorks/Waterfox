@@ -249,7 +249,7 @@ For example: |Actor[]| would turn into |Array<ActorParent*>|, so this
 function would return true for |Actor[]|."""
     return (ipdltype.isIPDL()
             and (ipdltype.isActor()
-                 or ((ipdltype.isArray() or ipdltype.isMaybe())
+                 or (ipdltype.hasBaseType()
                      and _hasVisibleActor(ipdltype.basetype))))
 
 
@@ -557,7 +557,7 @@ def _cxxConstRefType(ipdltype, side):
     if ipdltype.isIPDL() and ipdltype.isByteBuf():
         t.ref = True
         return t
-    if ipdltype.isIPDL() and (ipdltype.isArray() or ipdltype.isMaybe()):
+    if ipdltype.isIPDL() and ipdltype.hasBaseType():
         # Keep same constness as inner type.
         inner = _cxxConstRefType(ipdltype.basetype, side)
         t.const = inner.const or not inner.ref
@@ -603,7 +603,7 @@ def _cxxTypeNeedsMoveForSend(ipdltype):
         return ipdltype.isMoveonly()
 
     if ipdltype.isIPDL():
-        if ipdltype.isMaybe() or ipdltype.isArray():
+        if ipdltype.hasBaseType():
             return _cxxTypeNeedsMove(ipdltype.basetype)
         return (ipdltype.isShmem() or
                 ipdltype.isByteBuf() or
@@ -4626,7 +4626,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             + [_ParamTraits.checkedRead(p.ipdltype,
                                         ExprAddrOf(ExprVar(p.var().name + 'Copy')),
                                         msgexpr, ExprAddrOf(itervar),
-                                        errfn, p.bareType(side).name,
+                                        errfn, p.ipdltype.name(),
                                         sentinelKey=p.name,
                                         errfnSentinel=errfnSentinel(),
                                         actor=ExprVar.THIS)
@@ -4685,7 +4685,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             + [Whitespace.NL]
             + reads + [_ParamTraits.checkedRead(p.ipdltype, ExprAddrOf(p.var()),
                                                 msgexpr, ExprAddrOf(itervar),
-                                                errfn, "'%s'" % p.bareType(side).name,
+                                                errfn, "'%s'" % p.ipdltype.name(),
                                                 sentinelKey=p.name, errfnSentinel=errfnSent,
                                                 actor=ExprVar.THIS)
                        for p in md.params[start:]]
@@ -4747,7 +4747,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             + [Whitespace.NL]
             + reads + [_ParamTraits.checkedRead(p.ipdltype, ExprAddrOf(p.var()),
                                                 msgexpr, ExprAddrOf(itervar),
-                                                errfn, "'%s'" % p.bareType(side).name,
+                                                errfn, "'%s'" % p.ipdltype.name(),
                                                 sentinelKey=p.name, errfnSentinel=errfnSent,
                                                 actor=ExprVar.THIS)
                        for p in md.returns[start:]]
@@ -4776,7 +4776,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             + [_ParamTraits.checkedRead(r.ipdltype, r.var(),
                                         ExprAddrOf(self.replyvar),
                                         ExprAddrOf(self.itervar),
-                                        errfn, "'%s'" % r.bareType(side).name,
+                                        errfn, "'%s'" % r.ipdltype.name(),
                                         sentinelKey=r.name, errfnSentinel=errfnSentinel,
                                         actor=ExprVar.THIS)
                 for r in md.returns]

@@ -6,6 +6,7 @@
 /* global getCDP */
 
 const {RemoteAgent} = ChromeUtils.import("chrome://remote/content/RemoteAgent.jsm");
+const {RemoteAgentError} = ChromeUtils.import("chrome://remote/content/Error.jsm");
 
 // Test the Target domain
 
@@ -16,7 +17,7 @@ add_task(async function() {
     // Display better error message with the server side stacktrace
     // if an error happened on the server side:
     if (e.response) {
-      throw new Error("CDP Exception:\n" + e.response + "\n");
+      throw RemoteAgentError.fromJSON(e.response);
     } else {
       throw e;
     }
@@ -52,7 +53,7 @@ async function testCDP() {
   // Create a new target so that the test runs against a fresh new tab
   const targetCreated = Target.targetCreated();
   const {targetId} = await Target.createTarget();
-  ok(true, "Target created");
+  ok(true, `Target created: ${targetId}`);
   ok(!!targetId, "createTarget returns a non-empty target id");
   const {targetInfo} = await targetCreated;
   is(targetId, targetInfo.targetId, "createTarget and targetCreated refers to the same target id");

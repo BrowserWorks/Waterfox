@@ -25,6 +25,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "jit/arm64/vixl/Cpu-vixl.h"
+#include "jit/arm64/vixl/Simulator-vixl.h"
 #include "jit/arm64/vixl/Utils-vixl.h"
 #include "util/Windows.h"
 
@@ -48,7 +49,24 @@ uint32_t CPU::GetCacheType() {
 
 
 void CPU::EnsureIAndDCacheCoherency(void *address, size_t length) {
-#if defined(_MSC_VER) && defined(_M_ARM64)
+#ifdef JS_CACHE_SIMULATOR_ARM64
+  // This code attempt to emulate what the following assembly sequence is doing,
+  // which is sending the information to other cores that some cache line have
+  // to be invalidated and applying them on the current core.
+  //
+  // This is done by recording the current range to be flushed to all
+  // simulators, then if there is a simulator associated with the current
+  // thread, applying all flushed ranges as the "isb" instruction would do.
+  using js::jit::SimulatorProcess;
+  js::jit::AutoLockSimulatorCache alsc;
+  if (length > 0) {
+    SimulatorProcess::recordICacheFlush(address, length);
+  }
+  Simulator* sim = vixl::Simulator::Current();
+  if (sim) {
+    sim->FlushICache();
+  }
+#elif defined(_MSC_VER) && defined(_M_ARM64)
   FlushInstructionCache(GetCurrentProcess(), address, length);
 #elif defined(__aarch64__)
   // Implement the cache synchronisation for all targets where AArch64 is the
@@ -81,12 +99,14 @@ void CPU::EnsureIAndDCacheCoherency(void *address, size_t length) {
       //
       // dc       : Data Cache maintenance
       //     c    : Clean
+      //      i   : Invalidate
       //      va  : by (Virtual) Address
-      //        u : to the point of Unification
-      // The point of unification for a processor is the point by which the
-      // instruction and data caches are guaranteed to see the same copy of a
-      // memory location. See ARM DDI 0406B page B2-12 for more information.
-      "   dc    cvau, %[dline]\n"
+      //        c : to the point of Coherency
+      // Original implementation used cvau, but changed to civac due to
+      // errata on Cortex-A53 819472, 826319, 827319 and 824069.
+      // See ARM DDI 0406B page B2-12 for more information.
+      //
+      "   dc    civac, %[dline]\n"
       :
       : [dline] "r" (dline)
       // This code does not write to memory, but the "memory" dependency

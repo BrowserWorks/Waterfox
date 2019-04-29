@@ -1095,15 +1095,15 @@ bool nsLayoutUtils::IsMissingDisplayPortBaseRect(nsIContent* aContent) {
 enum class MaxSizeExceededBehaviour {
   // Ask GetDisplayPortImpl to assert if the calculated displayport exceeds
   // the maximum allowed size.
-  eAssert,
+  Assert,
   // Ask GetDisplayPortImpl to pretend like there's no displayport at all, if
   // the calculated displayport exceeds the maximum allowed size.
-  eDrop,
+  Drop,
 };
 
 static bool GetDisplayPortImpl(
     nsIContent* aContent, nsRect* aResult, float aMultiplier,
-    MaxSizeExceededBehaviour aBehaviour = MaxSizeExceededBehaviour::eAssert) {
+    MaxSizeExceededBehaviour aBehaviour = MaxSizeExceededBehaviour::Assert) {
   DisplayPortPropertyData* rectData = nullptr;
   DisplayPortMarginsPropertyData* marginsData = nullptr;
 
@@ -1145,10 +1145,10 @@ static bool GetDisplayPortImpl(
     nscoord maxSize = GetMaxDisplayPortSize(aContent, nullptr);
     if (result.width > maxSize || result.height > maxSize) {
       switch (aBehaviour) {
-        case MaxSizeExceededBehaviour::eAssert:
+        case MaxSizeExceededBehaviour::Assert:
           NS_ASSERTION(false, "Displayport must be a valid texture size");
           break;
-        case MaxSizeExceededBehaviour::eDrop:
+        case MaxSizeExceededBehaviour::Drop:
           return false;
       }
     }
@@ -1197,7 +1197,7 @@ bool nsLayoutUtils::GetDisplayPortForVisibilityTesting(
   // asserting, we can just ignore the displayport if that happens, as this
   // call site is best-effort.
   bool usingDisplayPort = GetDisplayPortImpl(aContent, aResult, 1.0f,
-                                             MaxSizeExceededBehaviour::eDrop);
+                                             MaxSizeExceededBehaviour::Drop);
   if (usingDisplayPort && aRelativeTo == RelativeTo::ScrollFrame) {
     TranslateFromScrollPortToScrollFrame(aContent, aResult);
   }
@@ -1386,6 +1386,13 @@ bool nsLayoutUtils::GetHighResolutionDisplayPort(nsIContent* aContent,
 void nsLayoutUtils::RemoveDisplayPort(nsIContent* aContent) {
   aContent->DeleteProperty(nsGkAtoms::DisplayPort);
   aContent->DeleteProperty(nsGkAtoms::DisplayPortMargins);
+}
+
+void nsLayoutUtils::NotifyPaintSkipTransaction(ViewID aScrollId) {
+  if (nsIScrollableFrame* scrollFrame =
+          nsLayoutUtils::FindScrollableFrameFor(aScrollId)) {
+    scrollFrame->NotifyApzTransaction();
+  }
 }
 
 nsContainerFrame* nsLayoutUtils::LastContinuationWithChild(
@@ -2890,7 +2897,7 @@ bool nsLayoutUtils::GetLayerTransformForFrame(nsIFrame* aFrame,
   }
 
   nsDisplayListBuilder builder(root,
-                               nsDisplayListBuilderMode::TRANSFORM_COMPUTATION,
+                               nsDisplayListBuilderMode::TransformComputation,
                                false /*don't build caret*/);
   builder.BeginFrame();
   nsDisplayList list;
@@ -3164,7 +3171,7 @@ nsresult nsLayoutUtils::GetFramesForArea(
     EnumSet<FrameForPointOption> aOptions) {
   AUTO_PROFILER_LABEL("nsLayoutUtils::GetFramesForArea", LAYOUT);
 
-  nsDisplayListBuilder builder(aFrame, nsDisplayListBuilderMode::EVENT_DELIVERY,
+  nsDisplayListBuilder builder(aFrame, nsDisplayListBuilderMode::EventDelivery,
                                false);
   builder.BeginFrame();
   nsDisplayList list;
@@ -3493,7 +3500,7 @@ static RetainedDisplayListBuilder* GetOrCreateRetainedDisplayListBuilder(
 
   if (aRetainingEnabled) {
     retainedBuilder = new RetainedDisplayListBuilder(
-        aFrame, nsDisplayListBuilderMode::PAINTING, aBuildCaret);
+        aFrame, nsDisplayListBuilderMode::Painting, aBuildCaret);
     aFrame->SetProperty(RetainedDisplayListBuilder::Cached(), retainedBuilder);
   }
 
@@ -3571,10 +3578,10 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
   AutoNestedPaintCount nestedPaintCount;
 #endif
 
-  if (aFlags & PaintFrameFlags::PAINT_WIDGET_LAYERS) {
+  if (aFlags & PaintFrameFlags::WidgetLayers) {
     nsView* view = aFrame->GetView();
     if (!(view && view->GetWidget() && GetDisplayRootFrame(aFrame) == aFrame)) {
-      aFlags &= ~PaintFrameFlags::PAINT_WIDGET_LAYERS;
+      aFlags &= ~PaintFrameFlags::WidgetLayers;
       NS_ASSERTION(aRenderingContext, "need a rendering context");
     }
   }
@@ -3588,9 +3595,9 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
 
   TimeStamp startBuildDisplayList = TimeStamp::Now();
 
-  const bool buildCaret = !(aFlags & PaintFrameFlags::PAINT_HIDE_CARET);
-  const bool isForPainting = (aFlags & PaintFrameFlags::PAINT_WIDGET_LAYERS) &&
-                             aBuilderMode == nsDisplayListBuilderMode::PAINTING;
+  const bool buildCaret = !(aFlags & PaintFrameFlags::HideCaret);
+  const bool isForPainting = (aFlags & PaintFrameFlags::WidgetLayers) &&
+                             aBuilderMode == nsDisplayListBuilderMode::Painting;
 
   // Only allow retaining for painting when preffed on, and for root frames
   // (since the modified frame tracking is per-root-frame).
@@ -3635,20 +3642,19 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
 
   builder.BeginFrame();
 
-  if (aFlags & PaintFrameFlags::PAINT_IN_TRANSFORM) {
+  if (aFlags & PaintFrameFlags::InTransform) {
     builder.SetInTransform(true);
   }
-  if (aFlags & PaintFrameFlags::PAINT_SYNC_DECODE_IMAGES) {
+  if (aFlags & PaintFrameFlags::SyncDecodeImages) {
     builder.SetSyncDecodeImages(true);
   }
-  if (aFlags & (PaintFrameFlags::PAINT_WIDGET_LAYERS |
-                PaintFrameFlags::PAINT_TO_WINDOW)) {
+  if (aFlags & (PaintFrameFlags::WidgetLayers | PaintFrameFlags::ToWindow)) {
     builder.SetPaintingToWindow(true);
   }
-  if (aFlags & PaintFrameFlags::PAINT_FOR_WEBRENDER) {
+  if (aFlags & PaintFrameFlags::ForWebRender) {
     builder.SetPaintingForWebRender(true);
   }
-  if (aFlags & PaintFrameFlags::PAINT_IGNORE_SUPPRESSION) {
+  if (aFlags & PaintFrameFlags::IgnoreSuppression) {
     builder.IgnorePaintSuppression();
   }
 
@@ -3671,7 +3677,7 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
   }
 
   nsRegion visibleRegion;
-  if (aFlags & PaintFrameFlags::PAINT_WIDGET_LAYERS) {
+  if (aFlags & PaintFrameFlags::WidgetLayers) {
     // This layer tree will be reused, so we'll need to calculate it
     // for the whole "visible" area of the window
     //
@@ -3685,8 +3691,8 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
 
   // If the root has embedded plugins, flag the builder so we know we'll need
   // to update plugin geometry after painting.
-  if ((aFlags & PaintFrameFlags::PAINT_WIDGET_LAYERS) &&
-      !(aFlags & PaintFrameFlags::PAINT_DOCUMENT_RELATIVE) &&
+  if ((aFlags & PaintFrameFlags::WidgetLayers) &&
+      !(aFlags & PaintFrameFlags::DocumentRelative) &&
       rootPresContext->NeedToComputePluginGeometryUpdates()) {
     builder.SetWillComputePluginGeometry(true);
 
@@ -3701,7 +3707,7 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
   if (ignoreViewportScrolling && rootScrollFrame) {
     nsIScrollableFrame* rootScrollableFrame =
         presShell->GetRootScrollFrameAsScrollable();
-    if (aFlags & PaintFrameFlags::PAINT_DOCUMENT_RELATIVE) {
+    if (aFlags & PaintFrameFlags::DocumentRelative) {
       // Make visibleRegion and aRenderingContext relative to the
       // scrolled frame instead of the root frame.
       nsPoint pos = rootScrollableFrame->GetScrollPosition();
@@ -3952,9 +3958,9 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
   }
 
   uint32_t flags = nsDisplayList::PAINT_DEFAULT;
-  if (aFlags & PaintFrameFlags::PAINT_WIDGET_LAYERS) {
+  if (aFlags & PaintFrameFlags::WidgetLayers) {
     flags |= nsDisplayList::PAINT_USE_WIDGET_LAYERS;
-    if (!(aFlags & PaintFrameFlags::PAINT_DOCUMENT_RELATIVE)) {
+    if (!(aFlags & PaintFrameFlags::DocumentRelative)) {
       nsIWidget* widget = aFrame->GetNearestWidget();
       if (widget) {
         // If we're finished building display list items for painting of the
@@ -3964,13 +3970,13 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
       }
     }
   }
-  if (aFlags & PaintFrameFlags::PAINT_EXISTING_TRANSACTION) {
+  if (aFlags & PaintFrameFlags::ExistingTransaction) {
     flags |= nsDisplayList::PAINT_EXISTING_TRANSACTION;
   }
-  if (aFlags & PaintFrameFlags::PAINT_NO_COMPOSITE) {
+  if (aFlags & PaintFrameFlags::NoComposite) {
     flags |= nsDisplayList::PAINT_NO_COMPOSITE;
   }
-  if (aFlags & PaintFrameFlags::PAINT_COMPRESSED) {
+  if (aFlags & PaintFrameFlags::Compressed) {
     flags |= nsDisplayList::PAINT_COMPRESSED;
   }
   if (updateState == PartialUpdateResult::NoChange && !aRenderingContext) {
@@ -3988,6 +3994,7 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
       list.PaintRoot(&builder, aRenderingContext, flags);
   Telemetry::AccumulateTimeDelta(Telemetry::PAINT_RASTERIZE_TIME, paintStart);
 
+  presShell->EndPaint();
   builder.Check();
 
   if (gfxPrefs::GfxLoggingPaintedPixelCountEnabled()) {
@@ -4056,8 +4063,8 @@ nsresult nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext,
   // Update the widget's opaque region information. This sets
   // glass boundaries on Windows. Also set up the window dragging region
   // and plugin clip regions and bounds.
-  if ((aFlags & PaintFrameFlags::PAINT_WIDGET_LAYERS) &&
-      !(aFlags & PaintFrameFlags::PAINT_DOCUMENT_RELATIVE)) {
+  if ((aFlags & PaintFrameFlags::WidgetLayers) &&
+      !(aFlags & PaintFrameFlags::DocumentRelative)) {
     nsIWidget* widget = aFrame->GetNearestWidget();
     if (widget) {
       nsRegion opaqueRegion;
@@ -4292,8 +4299,8 @@ struct MOZ_RAII BoxToRectAndText : public BoxToRect {
       nsIFrame::RenderedText renderedText = textFrame->GetRenderedText(
           textFrame->GetContentOffset(),
           textFrame->GetContentOffset() + textFrame->GetContentLength(),
-          nsIFrame::TextOffsetType::OFFSETS_IN_CONTENT_TEXT,
-          nsIFrame::TrailingWhitespace::DONT_TRIM_TRAILING_WHITESPACE);
+          nsIFrame::TextOffsetType::OffsetsInContentText,
+          nsIFrame::TrailingWhitespace::DontTrim);
 
       aResult.Append(renderedText.mString);
     }
@@ -4456,15 +4463,8 @@ static Maybe<nsSize> MaybeComputeObjectFitNoneSize(
   // if its intrinsic dimensions were given as the specified size."
   //
   // So, first we check if we have an intrinsic height and/or width:
-  Maybe<nscoord> specifiedWidth;
-  if (aIntrinsicSize.width.GetUnit() == eStyleUnit_Coord) {
-    specifiedWidth.emplace(aIntrinsicSize.width.GetCoordValue());
-  }
-
-  Maybe<nscoord> specifiedHeight;
-  if (aIntrinsicSize.height.GetUnit() == eStyleUnit_Coord) {
-    specifiedHeight.emplace(aIntrinsicSize.height.GetCoordValue());
-  }
+  const Maybe<nscoord>& specifiedWidth = aIntrinsicSize.width;
+  const Maybe<nscoord>& specifiedHeight = aIntrinsicSize.height;
 
   Maybe<nsSize> noneSize;  // (the value we'll return)
   if (specifiedWidth || specifiedHeight) {
@@ -5380,10 +5380,10 @@ nscoord nsLayoutUtils::IntrinsicForAxis(
 #endif
     if (MOZ_UNLIKELY(!isInlineAxis)) {
       IntrinsicSize intrinsicSize = aFrame->GetIntrinsicSize();
-      const nsStyleCoord intrinsicBCoord =
+      const auto& intrinsicBSize =
           horizontalAxis ? intrinsicSize.width : intrinsicSize.height;
-      if (intrinsicBCoord.GetUnit() == eStyleUnit_Coord) {
-        result = intrinsicBCoord.GetCoordValue();
+      if (intrinsicBSize) {
+        result = *intrinsicBSize;
       } else {
         // We don't have an intrinsic bsize and we need aFrame's block-dir size.
         if (aFlags & BAIL_IF_REFLOW_NEEDED) {
@@ -6041,7 +6041,7 @@ void nsLayoutUtils::DrawString(const nsIFrame* aFrame,
     aComputedStyle = aFrame->Style();
   }
 
-  if (aFlags & DrawStringFlags::eForceHorizontal) {
+  if (aFlags & DrawStringFlags::ForceHorizontal) {
     aFontMetrics.SetVertical(false);
   } else {
     aFontMetrics.SetVertical(WritingMode(aComputedStyle).IsVertical());
@@ -6211,7 +6211,7 @@ bool nsLayoutUtils::GetFirstLinePosition(WritingMode aWM,
         // empty grid/flex/table container
         aResult->mBStart = 0;
         aResult->mBaseline = aFrame->SynthesizeBaselineBOffsetFromBorderBox(
-            aWM, BaselineSharingGroup::eFirst);
+            aWM, BaselineSharingGroup::First);
         aResult->mBEnd = aFrame->BSize(aWM);
         return true;
       }
@@ -8599,6 +8599,20 @@ void nsLayoutUtils::DoLogTestDataForPaint(LayerManager* aManager,
   }
 }
 
+void nsLayoutUtils::LogAdditionalTestData(nsDisplayListBuilder* aBuilder,
+                                          const std::string& aKey,
+                                          const std::string& aValue) {
+  LayerManager* manager = aBuilder->GetWidgetLayerManager(nullptr);
+  if (!manager) {
+    return;
+  }
+  if (ClientLayerManager* clm = manager->AsClientLayerManager()) {
+    clm->LogAdditionalTestData(aKey, aValue);
+  } else if (WebRenderLayerManager* wrlm = manager->AsWebRenderLayerManager()) {
+    wrlm->LogAdditionalTestData(aKey, aValue);
+  }
+}
+
 /* static */
 bool nsLayoutUtils::IsAPZTestLoggingEnabled() {
   return gfxPrefs::APZTestLoggingEnabled();
@@ -8815,7 +8829,7 @@ static void MaybeReflowForInflationScreenSizeChange(
               nsIFrame* rootFrame = descendantPresShell->GetRootFrame();
               if (rootFrame) {
                 descendantPresShell->FrameNeedsReflow(
-                    rootFrame, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
+                    rootFrame, IntrinsicDirty::StyleChange, NS_FRAME_IS_DIRTY);
               }
             }
           }
@@ -8918,7 +8932,7 @@ ScrollMetadata nsLayoutUtils::ComputeScrollMetadata(
         // Restore the visual viewport offset to the copy stored on the
         // main thread.
         presShell->ScrollToVisual(presShell->GetVisualViewportOffset(),
-                                  FrameMetrics::eRestore, ScrollMode::eInstant);
+                                  FrameMetrics::eRestore, ScrollMode::Instant);
       }
 
       if (const Maybe<nsIPresShell::VisualScrollUpdate>& visualUpdate =
@@ -8926,7 +8940,7 @@ ScrollMetadata nsLayoutUtils::ComputeScrollMetadata(
         metrics.SetVisualViewportOffset(
             CSSPoint::FromAppUnits(visualUpdate->mVisualScrollOffset));
         metrics.SetVisualScrollUpdateType(visualUpdate->mUpdateType);
-        presShell->ClearPendingVisualScrollUpdate();
+        presShell->AcknowledgePendingVisualScrollUpdate();
       }
     }
 

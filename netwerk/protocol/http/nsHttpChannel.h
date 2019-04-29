@@ -33,7 +33,7 @@
 #include "nsIRaceCacheWithNetwork.h"
 #include "mozilla/extensions/PStreamFilterParent.h"
 #include "mozilla/Mutex.h"
-#include "nsITabParent.h"
+#include "nsIRemoteTab.h"
 
 class nsDNSPrefetch;
 class nsICancelable;
@@ -160,7 +160,7 @@ class nsHttpChannel final : public HttpBaseChannel,
   NS_IMETHOD AsyncOpen(nsIStreamListener *aListener) override;
   // nsIHttpChannel
   NS_IMETHOD GetEncodedBodySize(uint64_t *aEncodedBodySize) override;
-  NS_IMETHOD SwitchProcessTo(mozilla::dom::Promise *aTabParent,
+  NS_IMETHOD SwitchProcessTo(mozilla::dom::Promise *aBrowserParent,
                              uint64_t aIdentifier) override;
   NS_IMETHOD HasCrossOriginOpenerPolicyMismatch(bool *aMismatch) override;
   // nsIHttpChannelInternal
@@ -286,7 +286,7 @@ class nsHttpChannel final : public HttpBaseChannel,
   }
   TransactionObserver *GetTransactionObserver() { return mTransactionObserver; }
 
-  typedef MozPromise<nsCOMPtr<nsITabParent>, nsresult, false> TabPromise;
+  typedef MozPromise<nsCOMPtr<nsIRemoteTab>, nsresult, false> TabPromise;
   already_AddRefed<TabPromise> TakeRedirectTabPromise() {
     return mRedirectTabPromise.forget();
   }
@@ -555,6 +555,10 @@ class nsHttpChannel final : public HttpBaseChannel,
   // Determines and sets content type in the cache entry. It's called when
   // writing a new entry. The content type is used in cache internally only.
   void SetCachedContentType();
+
+  // Stores information about access from eTLD+1 of the top level document to
+  // the cache entry.
+  void StoreSiteAccessToCacheEntry();
 
  private:
   // this section is for main-thread-only object

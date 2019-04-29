@@ -916,21 +916,21 @@ void ModifierKeyState::InitMouseEvent(WidgetInputEvent& aMouseEvent) const {
                "called with non-mouse event");
 
   WidgetMouseEventBase& mouseEvent = *aMouseEvent.AsMouseEventBase();
-  mouseEvent.buttons = 0;
+  mouseEvent.mButtons = 0;
   if (::GetKeyState(VK_LBUTTON) < 0) {
-    mouseEvent.buttons |= WidgetMouseEvent::eLeftButtonFlag;
+    mouseEvent.mButtons |= MouseButtonsFlag::eLeftFlag;
   }
   if (::GetKeyState(VK_RBUTTON) < 0) {
-    mouseEvent.buttons |= WidgetMouseEvent::eRightButtonFlag;
+    mouseEvent.mButtons |= MouseButtonsFlag::eRightFlag;
   }
   if (::GetKeyState(VK_MBUTTON) < 0) {
-    mouseEvent.buttons |= WidgetMouseEvent::eMiddleButtonFlag;
+    mouseEvent.mButtons |= MouseButtonsFlag::eMiddleFlag;
   }
   if (::GetKeyState(VK_XBUTTON1) < 0) {
-    mouseEvent.buttons |= WidgetMouseEvent::e4thButtonFlag;
+    mouseEvent.mButtons |= MouseButtonsFlag::e4thFlag;
   }
   if (::GetKeyState(VK_XBUTTON2) < 0) {
-    mouseEvent.buttons |= WidgetMouseEvent::e5thButtonFlag;
+    mouseEvent.mButtons |= MouseButtonsFlag::e5thFlag;
   }
 }
 
@@ -1360,7 +1360,7 @@ void NativeKey::InitIsSkippableForKeyOrChar(const MSG& aLastKeyMSG) {
   if (mCodeNameIndex == CODE_NAME_INDEX_UNKNOWN) {
     // If current event is not caused by physical key operation, it may be
     // caused by a keyboard utility.  If so, the event shouldn't be ignored by
-    // TabChild since it want to insert the character, delete a character or
+    // BrowserChild since it want to insert the character, delete a character or
     // move caret.
     return;
   }
@@ -1381,7 +1381,7 @@ void NativeKey::InitIsSkippableForKeyOrChar(const MSG& aLastKeyMSG) {
     case WM_SYSDEADCHAR:
       // However, some keyboard layouts may send some keyboard messages with
       // activating the bit.  If we dispatch repeated keyboard events, they
-      // may be ignored by TabChild due to performance reason.  So, we need
+      // may be ignored by BrowserChild due to performance reason.  So, we need
       // to check if actually a physical key is repeated by the auto-repeat
       // feature.
       switch (aLastKeyMSG.message) {

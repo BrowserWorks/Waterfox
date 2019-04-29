@@ -555,8 +555,7 @@ class UrlbarInput {
       return;
     }
 
-    let { value, selectionStart, selectionEnd } = result.autofill;
-    this._autofillValue(value, selectionStart, selectionEnd);
+    this.setValueFromResult(result);
   }
 
   /**
@@ -1294,6 +1293,8 @@ class UrlbarInput {
   _on_input() {
     let value = this.textValue;
     this.valueIsTyped = true;
+    let valueIsPasted = this._valueIsPasted;
+    this._valueIsPasted = false;
     this._untrimmedValue = value;
     this.window.gBrowser.userTypedValue = value;
 
@@ -1337,21 +1338,9 @@ class UrlbarInput {
       return;
     }
 
-    let sameSearchStrings = value == this._lastSearchString;
     let deletedAutofilledSubstring =
-      deletedEndOfAutofillPlaceholder && sameSearchStrings;
-
-    // Don't search again when the new search would produce the same results.
-    // If we're handling a composition input, we must continue the search
-    // because we canceled the previous search on composition start.
-    if (sameSearchStrings &&
-        !deletedAutofilledSubstring &&
-        compositionState == UrlbarUtils.COMPOSITION.NONE &&
-        value.length > 0) {
-      return;
-    }
-
-    let allowAutofill =
+      deletedEndOfAutofillPlaceholder && value == this._lastSearchString;
+    let allowAutofill = !valueIsPasted &&
       this._maybeAutofillOnInput(value, deletedAutofilledSubstring);
 
     this.startQuery({
@@ -1417,7 +1406,7 @@ class UrlbarInput {
     if (!originalPasteData) {
       return;
     }
-
+    this._valueIsPasted = true;
     let oldValue = this.inputField.value;
     let oldStart = oldValue.substring(0, this.selectionStart);
     // If there is already non-whitespace content in the URL bar

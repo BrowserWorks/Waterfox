@@ -1,4 +1,4 @@
-import {ASRouterAdminInner, DiscoveryStreamAdmin, ToggleSpocButton} from "content-src/components/ASRouterAdmin/ASRouterAdmin";
+import {ASRouterAdminInner, CollapseToggle, DiscoveryStreamAdmin, ToggleStoryButton} from "content-src/components/ASRouterAdmin/ASRouterAdmin";
 import {GlobalOverrider} from "test/unit/utils";
 import React from "react";
 import {shallow} from "enzyme";
@@ -34,7 +34,7 @@ describe("ASRouterAdmin", () => {
     globals.set("RPMAddMessageListener", addListenerStub);
     globals.set("RPMRemoveMessageListener", removeListenerStub);
 
-    wrapper = shallow(<ASRouterAdminInner location={{routes: [""]}} />);
+    wrapper = shallow(<ASRouterAdminInner collapsed={false} location={{routes: [""]}} />);
   });
   afterEach(() => {
     sandbox.restore();
@@ -54,6 +54,15 @@ describe("ASRouterAdmin", () => {
   it("should remove listener on unmount", () => {
     wrapper.unmount();
     assert.calledOnce(removeListenerStub);
+  });
+  it("should set a .collapsed class on the outer div if props.collapsed is true", () => {
+    wrapper.setProps({collapsed: true});
+    assert.isTrue(wrapper.find(".asrouter-admin").hasClass("collapsed"));
+  });
+  it("should set a .expanded class on the outer div if props.collapsed is false", () => {
+    wrapper.setProps({collapsed: false});
+    assert.isTrue(wrapper.find(".asrouter-admin").hasClass("expanded"));
+    assert.isFalse(wrapper.find(".asrouter-admin").hasClass("collapsed"));
   });
   describe("#getSection", () => {
     it("should render a message provider section by default", () => {
@@ -180,6 +189,9 @@ describe("ASRouterAdmin", () => {
         spocs: {
           frequency_caps: [],
         },
+        feeds: {
+          data: {},
+        },
       }} />);
       assert.equal(wrapper.find("h3").at(0).text(), "Endpoint variant");
     });
@@ -198,25 +210,58 @@ describe("ASRouterAdmin", () => {
             }],
           },
         },
+        feeds: {
+          data: {},
+        },
       }} />);
-      wrapper.instance().onSpocToggle({id: 12345});
+      wrapper.instance().onStoryToggle({id: 12345});
       const messageSummary = wrapper.find(".message-summary").at(0);
       const pre = messageSummary.find("pre").at(0);
       const spocText = pre.text();
       assert.equal(spocText, "{\n  \"id\": 12345\n}");
     });
   });
-  describe("#ToggleSpocButton", () => {
-    it("should render a DiscoveryStreamAdmin component", async () => {
+  describe("#ToggleStoryButton", () => {
+    it("should fire onClick in toggle button", async () => {
       let result = "";
       function onClick(spoc) {
         result = spoc;
       }
 
-      wrapper = shallow(<ToggleSpocButton spoc="spoc" onClick={onClick} />);
+      wrapper = shallow(<ToggleStoryButton story="spoc" onClick={onClick} />);
       wrapper.find("button").simulate("click");
 
       assert.equal(result, "spoc");
+    });
+  });
+});
+
+describe("CollapseToggle", () => {
+  let wrapper;
+  beforeEach(() => {
+    wrapper = shallow(<CollapseToggle location={{routes: [""]}} />);
+  });
+
+  describe("rendering inner content", () => {
+    it("should not render ASRouterAdminInner for about:newtab (no hash)", () => {
+      wrapper.setProps({location: {hash: "", routes: [""]}});
+      assert.lengthOf(wrapper.find(ASRouterAdminInner), 0);
+    });
+
+    it("should render ASRouterAdminInner for about:newtab#asrouter and subroutes", () => {
+      wrapper.setProps({location: {hash: "#asrouter", routes: [""]}});
+      assert.lengthOf(wrapper.find(ASRouterAdminInner), 1);
+
+      wrapper.setProps({location: {hash: "#asrouter-foo", routes: [""]}});
+      assert.lengthOf(wrapper.find(ASRouterAdminInner), 1);
+    });
+
+    it("should render ASRouterAdminInner for about:newtab#devtools and subroutes", () => {
+      wrapper.setProps({location: {hash: "#devtools", routes: [""]}});
+      assert.lengthOf(wrapper.find(ASRouterAdminInner), 1);
+
+      wrapper.setProps({location: {hash: "#devtools-foo", routes: [""]}});
+      assert.lengthOf(wrapper.find(ASRouterAdminInner), 1);
     });
   });
 });

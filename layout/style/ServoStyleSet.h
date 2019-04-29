@@ -57,9 +57,9 @@ enum class StylistState : uint8_t {
   // The style sheets have changed, so we need to update the style data.
   StyleSheetsDirty = 1 << 0,
 
-  // Some of the style sheets of the bound elements in binding manager have
-  // changed, so we need to tell the binding manager to update style data.
-  XBLStyleSheetsDirty = 1 << 1,
+  // Some of the style sheets of the shadow trees in the document have
+  // changed.
+  ShadowDOMStyleSheetsDirty = 1 << 1,
 };
 
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(StylistState)
@@ -206,7 +206,6 @@ class ServoStyleSet {
   // manage the set of style sheets in the style set
   void AppendStyleSheet(Origin, StyleSheet*);
   void RemoveStyleSheet(Origin, StyleSheet*);
-  void ReplaceSheets(Origin, const nsTArray<RefPtr<StyleSheet>>& aNewSheets);
   void InsertStyleSheetBefore(Origin, StyleSheet*, StyleSheet* aReferenceSheet);
 
   size_t SheetCount(Origin) const;
@@ -480,7 +479,7 @@ class ServoStyleSet {
    */
   void SetStylistStyleSheetsDirty();
 
-  void SetStylistXBLStyleSheetsDirty();
+  void SetStylistShadowDOMStyleSheetsDirty();
 
   bool StylistNeedsUpdate() const {
     return mStylistState != StylistState::NotDirty;

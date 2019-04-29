@@ -1638,7 +1638,7 @@ bool HTMLMediaElement::IsVideoDecodingSuspended() const {
 }
 
 bool HTMLMediaElement::IsVisible() const {
-  return mVisibilityState == Visibility::APPROXIMATELY_VISIBLE;
+  return mVisibilityState == Visibility::ApproximatelyVisible;
 }
 
 already_AddRefed<layers::Image> HTMLMediaElement::GetCurrentImage() {
@@ -2626,11 +2626,10 @@ bool HTMLMediaElement::Seeking() const {
 double HTMLMediaElement::CurrentTime() const {
   if (MediaStream* stream = GetSrcMediaStream()) {
     MediaStreamGraph* graph = stream->Graph();
-    GraphTime currentTime =
-        mSrcStreamPausedGraphTime == GRAPH_TIME_MAX
-            ? graph->CurrentTime() - mSrcStreamGraphTimeOffset
-            : mSrcStreamPausedGraphTime;
-    return stream->StreamTimeToSeconds(currentTime);
+    GraphTime currentGraphTime =
+        mSrcStreamPausedGraphTime.valueOr(graph->CurrentTime());
+    StreamTime currentStreamTime = currentGraphTime - mSrcStreamGraphTimeOffset;
+    return stream->StreamTimeToSeconds(currentStreamTime);
   }
 
   if (mDefaultPlaybackStartPosition == 0.0 && mDecoder) {
@@ -3622,7 +3621,7 @@ void HTMLMediaElement::SetPlayedOrSeeked(bool aValue) {
   if (!frame) {
     return;
   }
-  frame->PresShell()->FrameNeedsReflow(frame, nsIPresShell::eTreeChange,
+  frame->PresShell()->FrameNeedsReflow(frame, IntrinsicDirty::TreeChange,
                                        NS_FRAME_IS_DIRTY);
 }
 
@@ -4315,7 +4314,7 @@ void HTMLMediaElement::ReportTelemetry() {
 
 void HTMLMediaElement::UnbindFromTree(bool aDeep, bool aNullParent) {
   mUnboundFromTree = true;
-  mVisibilityState = Visibility::UNTRACKED;
+  mVisibilityState = Visibility::Untracked;
 
   if (IsInComposedDoc()) {
     NotifyUAWidgetTeardown();
@@ -4666,9 +4665,9 @@ void HTMLMediaElement::UpdateSrcMediaStreamPlaying(uint32_t aFlags) {
 
   if (shouldPlay) {
     mSrcStreamPlaybackEnded = false;
-    mSrcStreamGraphTimeOffset =
-        graph->CurrentTime() - mSrcStreamPausedGraphTime;
-    mSrcStreamPausedGraphTime = GRAPH_TIME_MAX;
+    mSrcStreamGraphTimeOffset +=
+        graph->CurrentTime() - mSrcStreamPausedGraphTime.ref();
+    mSrcStreamPausedGraphTime = Nothing();
 
     mWatchManager.Watch(graph->CurrentTime(),
                         &HTMLMediaElement::UpdateSrcStreamTime);
@@ -4693,8 +4692,8 @@ void HTMLMediaElement::UpdateSrcMediaStreamPlaying(uint32_t aFlags) {
     SetAudibleState(true);
   } else {
     if (stream) {
-      mSrcStreamPausedGraphTime =
-          graph->CurrentTime() - mSrcStreamGraphTimeOffset;
+      MOZ_DIAGNOSTIC_ASSERT(mSrcStreamPausedGraphTime.isNothing());
+      mSrcStreamPausedGraphTime = Some(graph->CurrentTime().Ref());
 
       mWatchManager.Unwatch(graph->CurrentTime(),
                             &HTMLMediaElement::UpdateSrcStreamTime);
@@ -4734,11 +4733,12 @@ void HTMLMediaElement::SetupSrcMediaStreamPlayback(DOMMediaStream* aStream) {
     return;
   }
 
-  mSrcStreamPausedGraphTime = 0;
+  mSrcStreamPausedGraphTime = Some(0);
   if (MediaStream* stream = GetSrcMediaStream()) {
     if (MediaStreamGraph* graph = stream->Graph()) {
       // The current graph time will represent 0 for this media element.
-      mSrcStreamPausedGraphTime = graph->CurrentTime();
+      mSrcStreamGraphTimeOffset = graph->CurrentTime();
+      mSrcStreamPausedGraphTime = Some(mSrcStreamGraphTimeOffset);
     }
   }
 
@@ -5908,7 +5908,7 @@ void HTMLMediaElement::Invalidate(bool aImageSizeChanged,
     if (frame) {
       nsPresContext* presContext = frame->PresContext();
       PresShell* presShell = presContext->PresShell();
-      presShell->FrameNeedsReflow(frame, nsIPresShell::eStyleChange,
+      presShell->FrameNeedsReflow(frame, IntrinsicDirty::StyleChange,
                                   NS_FRAME_IS_DIRTY);
     }
   }
@@ -6352,14 +6352,14 @@ bool HTMLMediaElement::AudioChannelAgentBlockedPlay() {
 
 static const char* VisibilityString(Visibility aVisibility) {
   switch (aVisibility) {
-    case Visibility::UNTRACKED: {
-      return "UNTRACKED";
+    case Visibility::Untracked: {
+      return "Untracked";
     }
-    case Visibility::APPROXIMATELY_NONVISIBLE: {
-      return "APPROXIMATELY_NONVISIBLE";
+    case Visibility::ApproximatelyNonVisible: {
+      return "ApproximatelyNonVisible";
     }
-    case Visibility::APPROXIMATELY_VISIBLE: {
-      return "APPROXIMATELY_VISIBLE";
+    case Visibility::ApproximatelyVisible: {
+      return "ApproximatelyVisible";
     }
   }
 
@@ -6380,11 +6380,11 @@ void HTMLMediaElement::OnVisibilityChange(Visibility aNewVisibility) {
   }
 
   switch (aNewVisibility) {
-    case Visibility::UNTRACKED: {
+    case Visibility::Untracked: {
       MOZ_ASSERT_UNREACHABLE("Shouldn't notify for untracked visibility");
       return;
     }
-    case Visibility::APPROXIMATELY_NONVISIBLE: {
+    case Visibility::ApproximatelyNonVisible: {
       if (mPlayTime.IsStarted()) {
         // Not visible, play time is running -> Start hidden play time if
         // needed.
@@ -6392,7 +6392,7 @@ void HTMLMediaElement::OnVisibilityChange(Visibility aNewVisibility) {
       }
       break;
     }
-    case Visibility::APPROXIMATELY_VISIBLE: {
+    case Visibility::ApproximatelyVisible: {
       // Visible -> Just pause hidden play time (no-op if already paused).
       HiddenVideoStop();
       break;
@@ -6942,7 +6942,7 @@ void HTMLMediaElement::NotifyCueDisplayStatesChanged() {
 }
 
 void HTMLMediaElement::MarkAsContentSource(CallerAPI aAPI) {
-  const bool isVisible = mVisibilityState == Visibility::APPROXIMATELY_VISIBLE;
+  const bool isVisible = mVisibilityState == Visibility::ApproximatelyVisible;
 
   if (isVisible) {
     // 0 = ALL_VISIBLE

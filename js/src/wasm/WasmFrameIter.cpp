@@ -439,7 +439,8 @@ static void GenerateCallablePrologue(MacroAssembler& masm, uint32_t* entry) {
     // We do not use the PseudoStackPointer.
     MOZ_ASSERT(masm.GetStackPointer64().code() == sp.code());
 
-    AutoForbidPoolsAndNops afp(&masm, /* number of instructions in scope = */ 5);
+    AutoForbidPoolsAndNops afp(&masm,
+                               /* number of instructions in scope = */ 5);
 
     *entry = masm.currentOffset();
 
@@ -458,7 +459,8 @@ static void GenerateCallablePrologue(MacroAssembler& masm, uint32_t* entry) {
 #else
   {
 #  if defined(JS_CODEGEN_ARM)
-    AutoForbidPoolsAndNops afp(&masm, /* number of instructions in scope = */ 7);
+    AutoForbidPoolsAndNops afp(&masm,
+                               /* number of instructions in scope = */ 7);
 
     *entry = masm.currentOffset();
 
@@ -697,7 +699,8 @@ void wasm::GenerateJitEntryPrologue(MacroAssembler& masm, Offsets* offsets) {
 
   {
 #if defined(JS_CODEGEN_ARM)
-    AutoForbidPoolsAndNops afp(&masm, /* number of instructions in scope = */ 2);
+    AutoForbidPoolsAndNops afp(&masm,
+                               /* number of instructions in scope = */ 2);
     offsets->begin = masm.currentOffset();
     MOZ_ASSERT(BeforePushRetAddr == 0);
     masm.push(lr);
@@ -705,7 +708,8 @@ void wasm::GenerateJitEntryPrologue(MacroAssembler& masm, Offsets* offsets) {
     offsets->begin = masm.currentOffset();
     masm.push(ra);
 #elif defined(JS_CODEGEN_ARM64)
-    AutoForbidPoolsAndNops afp(&masm, /* number of instructions in scope = */ 3);
+    AutoForbidPoolsAndNops afp(&masm,
+                               /* number of instructions in scope = */ 3);
     offsets->begin = masm.currentOffset();
     MOZ_ASSERT(BeforePushRetAddr == 0);
     // Subtract from SP first as SP must be aligned before offsetting.
@@ -1357,6 +1361,8 @@ static const char* ThunkedNativeToDescription(SymbolicAddress func) {
       return "call to native memory.init function";
     case SymbolicAddress::TableCopy:
       return "call to native table.copy function";
+    case SymbolicAddress::TableFill:
+      return "call to native table.fill function";
     case SymbolicAddress::ElemDrop:
       return "call to native elem.drop function";
     case SymbolicAddress::TableGet:

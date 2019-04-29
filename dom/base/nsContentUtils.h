@@ -147,9 +147,9 @@ class MessageBroadcaster;
 class NodeInfo;
 class ContentChild;
 class ContentParent;
-class TabChild;
+class BrowserChild;
 class Selection;
-class TabParent;
+class BrowserParent;
 }  // namespace dom
 
 namespace ipc {
@@ -202,8 +202,8 @@ struct EventNameMapping {
   bool mMaybeSpecialSVGorSMILEvent;
 };
 
-typedef bool (*CallOnRemoteChildFunction)(mozilla::dom::TabParent* aTabParent,
-                                          void* aArg);
+typedef bool (*CallOnRemoteChildFunction)(
+    mozilla::dom::BrowserParent* aBrowserParent, void* aArg);
 
 class nsContentUtils {
   friend class nsAutoScriptBlockerSuppressNodeRemoved;
@@ -2805,8 +2805,8 @@ class nsContentUtils {
 
   /*
    * Call nsPIDOMWindow::SetKeyboardIndicators all all remote children. This is
-   * in here rather than nsGlobalWindow because TabParent indirectly includes
-   * Windows headers which aren't allowed there.
+   * in here rather than nsGlobalWindow because BrowserParent indirectly
+   * includes Windows headers which aren't allowed there.
    */
   static void SetKeyboardIndicatorsOnRemoteChildren(
       nsPIDOMWindowOuter* aWindow, UIStateChangeType aShowAccelerators,
@@ -2849,7 +2849,7 @@ class nsContentUtils {
       const nsContentPolicyType& aContentPolicyType,
       nsITransferable* aTransferable,
       mozilla::dom::ContentParent* aContentParent,
-      mozilla::dom::TabChild* aTabChild);
+      mozilla::dom::BrowserChild* aBrowserChild);
 
   static void TransferablesToIPCTransferables(
       nsIArray* aTransferables, nsTArray<mozilla::dom::IPCDataTransfer>& aIPC,
@@ -3331,7 +3331,7 @@ class nsContentUtils {
   static bool ContentIsLink(nsIContent* aContent);
 
   static already_AddRefed<mozilla::dom::ContentFrameMessageManager>
-  TryGetTabChildGlobal(nsISupports* aFrom);
+  TryGetBrowserChildGlobal(nsISupports* aFrom);
 
   // Get a serial number for a newly created inner or outer window.
   static uint32_t InnerOrOuterWindowCreated();
@@ -3359,6 +3359,24 @@ class nsContentUtils {
    */
   static bool HighPriorityEventPendingForTopLevelDocumentBeforeContentfulPaint(
       Document* aDocument);
+
+  /**
+   * Returns the length of the parent-traversal path (in terms of the number of
+   * nodes) to an unparented/root node from aNode. An unparented/root node is
+   * considered to have a depth of 1, its children have a depth of 2, etc.
+   * aNode is expected to be non-null.
+   * Note: The shadow root is not part of the calculation because the caller,
+   * ResizeObserver, doesn't observe the shadow root, and only needs relative
+   * depths among all the observed targets. In other words, we calculate the
+   * depth of the flattened tree.
+   *
+   * However, these is a spec issue about how to handle shadow DOM case. We
+   * may need to update this function later:
+   *   https://github.com/w3c/csswg-drafts/issues/3840
+   *
+   * https://drafts.csswg.org/resize-observer/#calculate-depth-for-node-h
+   */
+  static uint32_t GetNodeDepth(nsINode* aNode);
 
  private:
   static bool InitializeEventTable();
@@ -3508,7 +3526,6 @@ class nsContentUtils {
 #endif
   static bool sIsBytecodeCacheEnabled;
   static int32_t sBytecodeCacheStrategy;
-  static uint32_t sCookiesLifetimePolicy;
   static bool sAntiTrackingControlCenterUIEnabled;
 
   static int32_t sPrivacyMaxInnerWidth;

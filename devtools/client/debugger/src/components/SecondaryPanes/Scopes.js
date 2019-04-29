@@ -20,6 +20,7 @@ import {
 } from "../../selectors";
 import { getScopes } from "../../utils/pause/scopes";
 
+// eslint-disable-next-line import/named
 import { objectInspector } from "devtools-reps";
 
 import type { Why } from "../../types";
@@ -122,7 +123,7 @@ class Scopes extends PureComponent<Props, State> {
     const scopes =
       (showOriginal && mapScopesEnabled && originalScopes) || generatedScopes;
 
-    if (scopes && !isLoading) {
+    if (scopes && scopes.length > 0 && !isLoading) {
       return (
         <div className="pane scopes-list">
           <ObjectInspector

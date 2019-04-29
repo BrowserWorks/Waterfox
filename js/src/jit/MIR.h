@@ -337,7 +337,7 @@ class AliasSet {
     Element = 1 << 1,         // A Value member of obj->elements or
                               // a typed object.
     UnboxedElement = 1 << 2,  // An unboxed scalar or reference member of
-                              // typed object or unboxed object.
+                              // typed object.
     DynamicSlot = 1 << 3,     // A Value member of obj->slots.
     FixedSlot = 1 << 4,       // A Value member of obj->fixedSlots().
     DOMProperty = 1 << 5,     // A DOM property
@@ -2474,17 +2474,6 @@ class MNewDerivedTypedObject
   MOZ_MUST_USE bool writeRecoverData(
       CompactBufferWriter& writer) const override;
   bool canRecoverOnBailout() const override { return true; }
-};
-
-// This vector is used when the recovered object is kept unboxed. We map the
-// offset of each property to the index of the corresponding operands in the
-// object state.
-struct OperandIndexMap : public TempObject {
-  // The number of properties is limited by scalar replacement. Thus we cannot
-  // have any large number of properties.
-  FixedList<uint8_t> map;
-
-  MOZ_MUST_USE bool init(TempAllocator& alloc, JSObject* templateObject);
 };
 
 // Represent the content of all slots of an object.  This instruction is not

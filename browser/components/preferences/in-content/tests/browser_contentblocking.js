@@ -11,6 +11,7 @@ const FP_PREF = "privacy.trackingprotection.fingerprinting.enabled";
 const CM_PREF = "privacy.trackingprotection.cryptomining.enabled";
 const PREF_TEST_NOTIFICATIONS = "browser.safebrowsing.test-notifications.enabled";
 const STRICT_PREF = "browser.contentblocking.features.strict";
+const PRIVACY_PAGE = "about:preferences#privacy";
 
 const {
   EnterprisePolicyTesting,
@@ -304,20 +305,12 @@ add_task(async function testContentBlockingCustomCategory() {
   is(Services.prefs.getStringPref(CAT_PREF), "custom", `${CAT_PREF} has been set to custom`);
 
   strictRadioOption.click();
-  await TestUtils.waitForCondition(() => Services.prefs.prefHasUserValue(TP_PREF));
-
-  // Changing the TP_PREF should necessarily set CAT_PREF to "custom"
-  Services.prefs.setBoolPref(TP_PREF, false);
-  await TestUtils.waitForCondition(() => !Services.prefs.prefHasUserValue(TP_PREF));
-  is(Services.prefs.getStringPref(CAT_PREF), "custom", `${CAT_PREF} has been set to custom`);
-
-  strictRadioOption.click();
   await TestUtils.waitForCondition(() => Services.prefs.getStringPref(CAT_PREF) == "strict");
 
-  // Changing the FP_PREF and CM_PREF should necessarily set CAT_PREF to "custom"
-  for (let pref of [FP_PREF, CM_PREF]) {
+  // Changing the FP_PREF, CM_PREF, TP_PREF, or TP_PBM_PREF should necessarily set CAT_PREF to "custom"
+  for (let pref of [FP_PREF, CM_PREF, TP_PREF, TP_PBM_PREF]) {
     Services.prefs.setBoolPref(pref, !Services.prefs.getBoolPref(pref));
-    await TestUtils.waitForCondition(() => Services.prefs.prefHasUserValue(pref));
+    await TestUtils.waitForCondition(() => Services.prefs.getStringPref(CAT_PREF) == "custom");
     is(Services.prefs.getStringPref(CAT_PREF), "custom", `${CAT_PREF} has been set to custom`);
 
     strictRadioOption.click();
@@ -497,5 +490,47 @@ add_task(async function testContentBlockingReloadWarning() {
   ok(!BrowserTestUtils.is_hidden(strictWarning), "The warning in the strict section should be showing");
 
   Services.prefs.setStringPref(CAT_PREF, "standard");
+  gBrowser.removeCurrentTab();
+});
+
+// Tests that changing a content blocking pref does not show the content blocking warning
+// if it is the only tab.
+add_task(async function testContentBlockingReloadWarning() {
+  Services.prefs.setStringPref(CAT_PREF, "standard");
+  await BrowserTestUtils.loadURI(gBrowser.selectedBrowser, PRIVACY_PAGE);
+
+  let reloadWarnings = [...gBrowser.contentDocument.querySelectorAll(".content-blocking-warning.reload-tabs")];
+  ok(reloadWarnings.every((el) => el.hidden), "all of the warnings to reload tabs are initially hidden");
+
+  is(BrowserWindowTracker.windowCount, 1, "There is only one window open");
+  is(gBrowser.tabs.length, 1, "There is only one tab open");
+  Services.prefs.setStringPref(CAT_PREF, "strict");
+
+  ok(reloadWarnings.every((el) => el.hidden), "all of the warnings to reload tabs are still hidden");
+  Services.prefs.setStringPref(CAT_PREF, "standard");
+  await BrowserTestUtils.loadURI(gBrowser.selectedBrowser, "about:newtab");
+});
+
+// Checks that the reload tabs message reloads all tabs except the active tab.
+add_task(async function testReloadTabsMessage() {
+  Services.prefs.setStringPref(CAT_PREF, "strict");
+  let exampleTab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.com");
+  await openPreferencesViaOpenPreferencesAPI("privacy", {leaveOpen: true});
+  let doc = gBrowser.contentDocument;
+  let standardWarning = doc.querySelector("#contentBlockingOptionStandard .content-blocking-warning.reload-tabs");
+  let standardReloadButton = doc.querySelector("#contentBlockingOptionStandard .reload-tabs-button");
+
+  Services.prefs.setStringPref(CAT_PREF, "standard");
+  ok(!BrowserTestUtils.is_hidden(standardWarning), "The warning in the standard section should be showing");
+
+  standardReloadButton.click();
+  // The example page had a load event
+  await BrowserTestUtils.browserLoaded(exampleTab.linkedBrowser);
+
+  ok(BrowserTestUtils.is_hidden(standardWarning), "The warning in the standard section should have hidden after being clicked");
+
+  // cleanup
+  Services.prefs.setStringPref(CAT_PREF, "standard");
+  gBrowser.removeTab(exampleTab);
   gBrowser.removeCurrentTab();
 });

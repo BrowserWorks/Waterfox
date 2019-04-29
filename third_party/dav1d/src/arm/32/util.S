@@ -34,32 +34,32 @@
 
 .macro movrel rd, val, offset=0
 #if defined(PIC) && defined(__APPLE__)
-    ldr         \rd,  1f
-    b           2f
+        ldr             \rd,  1f
+        b               2f
 1:
-    .word       3f - (2f + 8 - 4 * CONFIG_THUMB)
+        .word           3f - (2f + 8 - 4 * CONFIG_THUMB)
 2:
-    ldr         \rd,  [pc, \rd]
+        ldr             \rd,  [pc, \rd]
 .if \offset < 0
-    sub         \rd,  \rd,  #-(\offset)
+        sub             \rd,  \rd,  #-(\offset)
 .elseif \offset > 0
-    add         \rd,  \rd,  #\offset
+        add             \rd,  \rd,  #\offset
 .endif
-    .non_lazy_symbol_pointer
+        .non_lazy_symbol_pointer
 3:
-    .indirect_symbol \val
-    .word       0
-    .text
+        .indirect_symbol \val
+        .word       0
+        .text
 #elif defined(PIC)
-    ldr         \rd,  1f
-    b           2f
+        ldr             \rd,  1f
+        b               2f
 1:
-    .word       \val + \offset - (2f + 8 - 4 * CONFIG_THUMB)
+        .word           \val + \offset - (2f + 8 - 4 * CONFIG_THUMB)
 2:
-    add         \rd,  \rd,  pc
+        add             \rd,  \rd,  pc
 #else
-    movw        \rd, #:lower16:\val+\offset
-    movt        \rd, #:upper16:\val+\offset
+        movw            \rd, #:lower16:\val+\offset
+        movt            \rd, #:upper16:\val+\offset
 #endif
 .endm
 

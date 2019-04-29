@@ -24,31 +24,23 @@ class nsColumnSetFrame final : public nsContainerFrame {
 
   explicit nsColumnSetFrame(ComputedStyle* aStyle, nsPresContext* aPresContext);
 
-  virtual void Reflow(nsPresContext* aPresContext, ReflowOutput& aDesiredSize,
-                      const ReflowInput& aReflowInput,
-                      nsReflowStatus& aStatus) override;
+  void Reflow(nsPresContext* aPresContext, ReflowOutput& aDesiredSize,
+              const ReflowInput& aReflowInput,
+              nsReflowStatus& aStatus) override;
 
 #ifdef DEBUG
-  virtual void SetInitialChildList(ChildListID aListID,
-                                   nsFrameList& aChildList) override;
-  virtual void AppendFrames(ChildListID aListID,
-                            nsFrameList& aFrameList) override;
-  virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
-                            nsFrameList& aFrameList) override;
-  virtual void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
+  void SetInitialChildList(ChildListID aListID,
+                           nsFrameList& aChildList) override;
+  void AppendFrames(ChildListID aListID, nsFrameList& aFrameList) override;
+  void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                    nsFrameList& aFrameList) override;
+  void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
 #endif
 
-  virtual nscoord GetMinISize(gfxContext* aRenderingContext) override;
-  virtual nscoord GetPrefISize(gfxContext* aRenderingContext) override;
+  nscoord GetMinISize(gfxContext* aRenderingContext) override;
+  nscoord GetPrefISize(gfxContext* aRenderingContext) override;
 
-  /**
-   * Retrieve the available height for content of this frame. The available
-   * content height is the available height for the frame, minus borders and
-   * padding.
-   */
-  virtual nscoord GetAvailableContentBSize(const ReflowInput& aReflowInput);
-
-  virtual nsContainerFrame* GetContentInsertionFrame() override {
+  nsContainerFrame* GetContentInsertionFrame() override {
     nsIFrame* frame = PrincipalChildList().FirstChild();
 
     // if no children return nullptr
@@ -57,13 +49,13 @@ class nsColumnSetFrame final : public nsContainerFrame {
     return frame->GetContentInsertionFrame();
   }
 
-  virtual bool IsFrameOfType(uint32_t aFlags) const override {
+  bool IsFrameOfType(uint32_t aFlags) const override {
     return nsContainerFrame::IsFrameOfType(
         aFlags & ~(nsIFrame::eCanContainOverflowContainers));
   }
 
-  virtual void BuildDisplayList(nsDisplayListBuilder* aBuilder,
-                                const nsDisplayListSet& aLists) override;
+  void BuildDisplayList(nsDisplayListBuilder* aBuilder,
+                        const nsDisplayListSet& aLists) override;
 
   /**
    * Similar to nsBlockFrame::DrainOverflowLines. Locate any columns not
@@ -76,12 +68,12 @@ class nsColumnSetFrame final : public nsContainerFrame {
   void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
 
 #ifdef DEBUG_FRAME_DUMP
-  virtual nsresult GetFrameName(nsAString& aResult) const override {
+  nsresult GetFrameName(nsAString& aResult) const override {
     return MakeFrameName(NS_LITERAL_STRING("ColumnSet"), aResult);
   }
 #endif
 
-  nsRect CalculateColumnRuleBounds(const nsPoint& aOffset);
+  nsRect CalculateColumnRuleBounds(const nsPoint& aOffset) const;
   void CreateBorderRenderers(nsTArray<nsCSSBorderRenderer>& aBorderRenderers,
                              gfxContext* aCtx, const nsRect& aDirtyRect,
                              const nsPoint& aPt);
@@ -134,9 +126,9 @@ class nsColumnSetFrame final : public nsContainerFrame {
     nscoord mConsumedBSize = 0;
   };
 
-  /**
-   * Some data that is better calculated during reflow
-   */
+  // Collect various block-size data calculated in ReflowChildren(), which are
+  // mainly used for column balancing. This is the output of ReflowChildren()
+  // and ReflowColumns().
   struct ColumnBalanceData {
     // The maximum "content block-size" of any column
     nscoord mMaxBSize = 0;
@@ -156,16 +148,22 @@ class nsColumnSetFrame final : public nsContainerFrame {
     // this maximum allowable bSize, and continue reflow without balancing.
     bool mHasExcessBSize = false;
 
-    void Reset() {
-      mMaxBSize = mSumBSize = mLastBSize = mMaxOverflowingBSize = 0;
-      mHasExcessBSize = false;
-    }
+    // This flag indicates the content that was reflowed fits into the
+    // mColMaxBSize in ReflowConfig.
+    bool mFeasible = false;
   };
 
-  bool ReflowColumns(ReflowOutput& aDesiredSize,
-                     const ReflowInput& aReflowInput,
-                     nsReflowStatus& aReflowStatus, ReflowConfig& aConfig,
-                     bool aLastColumnUnbounded, ColumnBalanceData& aColData);
+  ColumnBalanceData ReflowColumns(ReflowOutput& aDesiredSize,
+                                  const ReflowInput& aReflowInput,
+                                  nsReflowStatus& aReflowStatus,
+                                  ReflowConfig& aConfig,
+                                  bool aUnboundedLastColumn);
+
+  ColumnBalanceData ReflowChildren(ReflowOutput& aDesiredSize,
+                                   const ReflowInput& aReflowInput,
+                                   nsReflowStatus& aStatus,
+                                   const ReflowConfig& aConfig,
+                                   bool aUnboundedLastColumn);
 
   /**
    * The basic reflow strategy is to call this function repeatedly to
@@ -175,10 +173,11 @@ class nsColumnSetFrame final : public nsContainerFrame {
    * the state machine that controls column balancing.
    */
   ReflowConfig ChooseColumnStrategy(const ReflowInput& aReflowInput,
-                                    bool aForceAuto);
+                                    bool aForceAuto) const;
 
   /**
-   * Perform the binary search for the best balance height for this column set.
+   * Perform the binary search for the best balance block-size for this column
+   * set.
    *
    * @param aReflowInput The input parameters for the current reflow iteration.
    * @param aPresContext The presentation context in which the current reflow
@@ -190,35 +189,28 @@ class nsColumnSetFrame final : public nsContainerFrame {
    * @param aDesiredSize The final output size of the column set frame (output
    *        of reflow procedure).
    * @param aUnboundedLastColumn A boolean value indicating that the last column
-   *        can be of any height. Used during the first iteration of the
-   *        balancing procedure to measure the height of all content in
+   *        can be of any block-size. Used during the first iteration of the
+   *        balancing procedure to measure the block-size of all content in
    *        descendant frames of the column set.
-   * @param aRunWasFeasible An input/output parameter indicating whether or not
-   *        the last iteration of the balancing loop was a feasible height to
-   *        fit all content from descendant frames.
    * @param aStatus A final reflow status of the column set frame, passed in as
    *        an output parameter.
    */
   void FindBestBalanceBSize(const ReflowInput& aReflowInput,
                             nsPresContext* aPresContext, ReflowConfig& aConfig,
-                            ColumnBalanceData& aColData,
+                            ColumnBalanceData aColData,
                             ReflowOutput& aDesiredSize,
-                            bool& aUnboundedLastColumn, bool& aRunWasFeasible,
-                            nsReflowStatus& aStatus);
+                            bool aUnboundedLastColumn, nsReflowStatus& aStatus);
+
   /**
-   * Reflow column children. Returns true iff the content that was reflowed
-   * fit into the mColMaxBSize.
+   * Retrieve the available block-size for content of this frame. The available
+   * content block-size is the available block-size for the frame, minus borders
+   * and padding.
    */
-  bool ReflowChildren(ReflowOutput& aDesiredSize,
-                      const ReflowInput& aReflowInput, nsReflowStatus& aStatus,
-                      const ReflowConfig& aConfig, bool aLastColumnUnbounded,
-                      ColumnBalanceData& aColData);
+  nscoord GetAvailableContentBSize(const ReflowInput& aReflowInput) const;
 
   void ForEachColumnRule(
       const std::function<void(const nsRect& lineRect)>& aSetLineRect,
-      const nsPoint& aPt);
-
-  static nscoord ClampUsedColumnWidth(const mozilla::Length& aColumnWidth);
+      const nsPoint& aPt) const;
 };
 
 #endif  // nsColumnSetFrame_h___

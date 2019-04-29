@@ -80,7 +80,7 @@ using mozilla::DefaultXDisplay;
 #  include <winuser.h>
 #endif
 
-#include "mozilla/dom/TabChild.h"
+#include "mozilla/dom/BrowserChild.h"
 
 #ifdef CreateEvent  // Thank you MS.
 #  undef CreateEvent
@@ -741,7 +741,7 @@ mozilla::LayoutDeviceIntPoint nsPluginFrame::GetRemoteTabChromeOffset() {
   if (XRE_IsContentProcess()) {
     if (nsPIDOMWindowOuter* window = GetContent()->OwnerDoc()->GetWindow()) {
       if (nsCOMPtr<nsPIDOMWindowOuter> topWindow = window->GetTop()) {
-        dom::TabChild* tc = dom::TabChild::GetFrom(topWindow);
+        dom::BrowserChild* tc = dom::BrowserChild::GetFrom(topWindow);
         if (tc) {
           offset += tc->GetChromeOffset();
         }
@@ -1519,7 +1519,8 @@ nsresult nsPluginFrame::HandleEvent(nsPresContext* aPresContext,
   // dragging conform to standard OS X practice, and to the Cocoa NPAPI spec.
   // See bug 525078 and bug 909678.
   if (anEvent->mMessage == eMouseDown) {
-    nsIPresShell::SetCapturingContent(GetContent(), CAPTURE_IGNOREALLOWED);
+    PresShell::SetCapturingContent(GetContent(),
+                                   CaptureFlags::IgnoreAllowedState);
   }
 #endif
 
@@ -1530,7 +1531,7 @@ nsresult nsPluginFrame::HandleEvent(nsPresContext* aPresContext,
 
 #ifdef XP_MACOSX
   if (anEvent->mMessage == eMouseUp) {
-    nsIPresShell::SetCapturingContent(nullptr, 0);
+    PresShell::ReleaseCapturingContent();
   }
 #endif
 

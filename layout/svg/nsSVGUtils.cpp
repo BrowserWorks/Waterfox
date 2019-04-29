@@ -28,6 +28,7 @@
 #include "nsPresContext.h"
 #include "nsStyleCoord.h"
 #include "nsStyleStruct.h"
+#include "nsStyleTransformMatrix.h"
 #include "SVGAnimatedLength.h"
 #include "nsSVGClipPathFrame.h"
 #include "nsSVGContainerFrame.h"
@@ -222,7 +223,7 @@ void nsSVGUtils::ScheduleReflowSVG(nsIFrame* aFrame) {
       (outerSVGFrame == aFrame ? NS_FRAME_IS_DIRTY
                                : NS_FRAME_HAS_DIRTY_CHILDREN);
 
-  aFrame->PresShell()->FrameNeedsReflow(outerSVGFrame, nsIPresShell::eResize,
+  aFrame->PresShell()->FrameNeedsReflow(outerSVGFrame, IntrinsicDirty::Resize,
                                         dirtyBit);
 }
 
@@ -757,7 +758,8 @@ void nsSVGUtils::PaintFrameWithEffects(nsIFrame* aFrame, gfxContext& aContext,
     if (maskUsage.shouldApplyClipPath) {
       clipPathFrame->ApplyClipPath(aContext, aFrame, aTransform);
     } else {
-      nsCSSClipPathInstance::ApplyBasicShapeOrPathClip(aContext, aFrame);
+      nsCSSClipPathInstance::ApplyBasicShapeOrPathClip(aContext, aFrame,
+                                                       aTransform);
     }
   }
 
@@ -1092,8 +1094,10 @@ gfxRect nsSVGUtils::GetBBox(nsIFrame* aFrame, uint32_t aFlags,
         } else if (aFrame->IsSVGForeignObjectFrame()) {
           matrix = gfxMatrix();
         }
+
         matrix =
-            clipContent->PrependLocalTransformsTo(matrix, eUserSpaceToParent);
+            nsSVGUtils::GetTransformMatrixInUserSpace(clipPathFrame) * matrix;
+
         bbox = clipPathFrame->GetBBoxForClipPathFrame(bbox, matrix, aFlags)
                    .ToThebesRect();
       }
@@ -1209,10 +1213,7 @@ bool nsSVGUtils::CanOptimizeOpacity(nsIFrame* aFrame) {
     return false;
   }
 
-  if (!style->HasFill() || !HasStroke(aFrame)) {
-    return true;
-  }
-  return false;
+  return !style->HasFill() || !HasStroke(aFrame);
 }
 
 gfxMatrix nsSVGUtils::AdjustMatrixForUnits(const gfxMatrix& aMatrix,
@@ -1248,13 +1249,12 @@ bool nsSVGUtils::GetNonScalingStrokeTransform(nsIFrame* aFrame,
     return false;
   }
 
-  nsIContent* content = aFrame->GetContent();
-  MOZ_ASSERT(content->IsSVGElement(), "bad cast");
+  MOZ_ASSERT(aFrame->GetContent()->IsSVGElement(), "should be an SVG element");
 
-  *aUserToOuterSVG = ThebesMatrix(
-      SVGContentUtils::GetCTM(static_cast<SVGElement*>(content), true));
+  *aUserToOuterSVG = ThebesMatrix(SVGContentUtils::GetCTM(
+      static_cast<SVGElement*>(aFrame->GetContent()), true));
 
-  return !aUserToOuterSVG->IsIdentity();
+  return aUserToOuterSVG->HasNonTranslation();
 }
 
 // The logic here comes from _cairo_stroke_style_max_distance_from_path
@@ -1642,8 +1642,7 @@ void nsSVGUtils::PaintSVGGlyph(Element* aElement, gfxContext* aContext) {
   if (frame->GetContent()->IsSVGElement()) {
     // PaintSVG() expects the passed transform to be the transform to its own
     // SVG user space, so we need to account for any 'transform' attribute:
-    m = static_cast<SVGElement*>(frame->GetContent())
-            ->PrependLocalTransformsTo(gfxMatrix(), eUserSpaceToParent);
+    m = nsSVGUtils::GetTransformMatrixInUserSpace(frame);
   }
 
   // SVG-in-OpenType is not allowed to paint external resources, so we can
@@ -1697,27 +1696,49 @@ gfxMatrix nsSVGUtils::GetCSSPxToDevPxMatrix(nsIFrame* aNonSVGFrame) {
   return gfxMatrix(devPxPerCSSPx, 0.0, 0.0, devPxPerCSSPx, 0.0, 0.0);
 }
 
-gfxMatrix nsSVGUtils::GetTransformMatrixInUserSpace(const nsIFrame* aFrame,
-                                                    const nsIFrame* aAncestor) {
+gfxMatrix nsSVGUtils::GetTransformMatrixInUserSpace(const nsIFrame* aFrame) {
   // We check element instead of aFrame directly because SVG element
   // may have non-SVG frame, <tspan> for example.
   MOZ_ASSERT(aFrame->GetContent() && aFrame->GetContent()->IsSVGElement(),
              "Only use this wrapper for SVG elements");
 
+  if (!aFrame->IsTransformed()) {
+    return {};
+  }
+
+  nsDisplayTransform::FrameTransformProperties properties{
+      aFrame, AppUnitsPerCSSPixel(), nullptr};
+  nsStyleTransformMatrix::TransformReferenceBox refBox;
+  refBox.Init(aFrame);
+
+  // SVG elements can have x/y offset, their default transform origin
+  // is the origin of user space, not the top left point of the frame.
+  Point3D svgTransformOrigin{
+      properties.mToTransformOrigin.x - CSSPixel::FromAppUnits(refBox.X()),
+      properties.mToTransformOrigin.y - CSSPixel::FromAppUnits(refBox.Y()),
+      properties.mToTransformOrigin.z};
+
+  Matrix svgTransform;
+  Matrix4x4 trans;
+  (void)aFrame->IsSVGTransformed(&svgTransform);
+
+  if (properties.HasTransform()) {
+    trans = nsStyleTransformMatrix::ReadTransforms(
+        properties.mIndividualTransformList
+            ? properties.mIndividualTransformList->mHead
+            : nullptr,
+        properties.mMotion,
+        properties.mTransformList ? properties.mTransformList->mHead : nullptr,
+        refBox, AppUnitsPerCSSPixel());
+  } else {
+    trans = Matrix4x4::From2D(svgTransform);
+  }
+
+  trans.ChangeBasis(svgTransformOrigin);
+
   Matrix mm;
-  auto trans = nsLayoutUtils::GetTransformToAncestor(aFrame, aAncestor);
   trans.ProjectTo2D();
-  trans.CanDraw2D(&mm);
-  gfxMatrix ret = ThebesMatrix(mm);
+  (void)trans.CanDraw2D(&mm);
 
-  float devPixelPerCSSPixel = float(AppUnitsPerCSSPixel()) /
-                              aFrame->PresContext()->AppUnitsPerDevPixel();
-
-  // The matrix obtained by nsIFrame::GetTransformMatrix is "from
-  // device space to device space", we need to change it to be "from
-  // user space to user space".
-  ret.PreScale(devPixelPerCSSPixel, devPixelPerCSSPixel);
-  ret.PostScale(1.f / devPixelPerCSSPixel, 1.f / devPixelPerCSSPixel);
-
-  return ret;
+  return ThebesMatrix(mm);
 }

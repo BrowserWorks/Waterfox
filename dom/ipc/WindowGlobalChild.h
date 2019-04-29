@@ -21,7 +21,8 @@ namespace dom {
 class BrowsingContext;
 class WindowGlobalParent;
 class JSWindowActorChild;
-class TabChild;
+class JSWindowActorMessageMeta;
+class BrowserChild;
 
 /**
  * Actor for a single nsGlobalWindowInner. This actor is used to communicate
@@ -65,11 +66,10 @@ class WindowGlobalChild : public nsWrapperCache, public PWindowGlobalChild {
 
   // Get this actor's manager if it is not an in-process actor. Returns
   // |nullptr| if the actor has been torn down, or is in-process.
-  already_AddRefed<TabChild> GetTabChild();
+  already_AddRefed<BrowserChild> GetBrowserChild();
 
-  void HandleAsyncMessage(const nsString& aActorName,
-                          const nsString& aMessageName,
-                          ipc::StructuredCloneData& aData);
+  void ReceiveRawMessage(const JSWindowActorMessageMeta& aMeta,
+                         ipc::StructuredCloneData&& aData);
 
   // Get a JS actor object by name.
   already_AddRefed<JSWindowActorChild> GetActor(const nsAString& aName,
@@ -85,9 +85,8 @@ class WindowGlobalChild : public nsWrapperCache, public PWindowGlobalChild {
 
  protected:
   // IPC messages
-  mozilla::ipc::IPCResult RecvAsyncMessage(const nsString& aActorName,
-                                           const nsString& aMessage,
-                                           const ClonedMessageData& aData);
+  mozilla::ipc::IPCResult RecvRawMessage(const JSWindowActorMessageMeta& aMeta,
+                                         const ClonedMessageData& aData);
 
   mozilla::ipc::IPCResult RecvChangeFrameRemoteness(
       dom::BrowsingContext* aBc, const nsString& aRemoteType,

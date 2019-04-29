@@ -85,7 +85,7 @@ with Files('FormLikeFactory.jsm'):
     BUG_COMPONENT = ('Toolkit', 'Password Manager')
 
 with Files('IndexedDB.jsm'):
-    BUG_COMPONENT = ('WebExtensions', 'General')
+    BUG_COMPONENT = ('Toolkit', 'Async Tooling')
 
 with Files('InlineSpellChecker*.jsm'):
     BUG_COMPONENT = ('Core', 'Spell Checker')
@@ -309,11 +309,11 @@ for var in ('ANDROID_PACKAGE_NAME',
             'MOZ_WIDGET_TOOLKIT',
             'DLL_PREFIX',
             'DLL_SUFFIX',
-            'DEBUG_JS_MODULES'):
+            'DEBUG_JS_MODULES',
+            'OMNIJAR_NAME'):
             DEFINES[var] = CONFIG[var]
 
-for var in ('MOZ_TOOLKIT_SEARCH',
-            'MOZ_SYSTEM_NSS',
+for var in ('MOZ_SYSTEM_NSS',
             'MOZ_UNSIGNED_APP_SCOPE',
             'MOZ_UNSIGNED_SYSTEM_SCOPE',
             'MOZ_UPDATER',

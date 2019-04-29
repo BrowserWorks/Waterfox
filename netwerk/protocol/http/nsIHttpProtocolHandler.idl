@@ -14,7 +14,7 @@ class HSTSDataCallbackWrapper;
 %}
 [ptr] native HSTSDataCallbackWrapperPtr(mozilla::net::HSTSDataCallbackWrapper);
 
-[scriptable, uuid(c48126d9-2ddd-485b-a51a-378e917e75f8)]
+[scriptable, builtinclass, uuid(c48126d9-2ddd-485b-a51a-378e917e75f8)]
 interface nsIHttpProtocolHandler : nsIProxiedProtocolHandler
 {
     /**
@@ -24,7 +24,7 @@ interface nsIHttpProtocolHandler : nsIProxiedProtocolHandler
 
     /**
      * Get the application name.
-	 *
+     *
      * @return The name of this application (eg. "Mozilla").
      */
     [must_use] readonly attribute ACString appName;
@@ -40,7 +40,7 @@ interface nsIHttpProtocolHandler : nsIProxiedProtocolHandler
      * Get the current platform.
      *
      * @return The platform this application is running on
-     *		   (eg. "Windows", "Macintosh", "X11")
+     *         (eg. "Windows", "Macintosh", "X11")
      */
     [must_use] readonly attribute ACString platform;
 
@@ -90,6 +90,13 @@ interface nsIHttpProtocolHandler : nsIProxiedProtocolHandler
 #define NS_HTTP_STARTUP_TOPIC "http-startup"
 
 /**
+ * Called when asyncOpen synchronously failes e.g. because of any synchronously
+ * performed security checks.  This only fires on the child process, but if
+ * needed can be implemented also on the parent process.
+ */
+#define NS_HTTP_ON_FAILED_OPENING_REQUEST_TOPIC "http-on-failed-opening-request"
+
+ /**
  * This observer topic is notified when an HTTP channel is opened.
  * It is similar to http-on-modify-request, except that
  * 1) The notification is guaranteed to occur before on-modify-request, during

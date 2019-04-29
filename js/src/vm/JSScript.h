@@ -508,8 +508,8 @@ class ScriptSource {
   // on the main thread.
 
   // Indicate which field in the |data| union is active.
-  struct Missing {};
 
+  // Uncompressed source text.
   template <typename Unit>
   class Uncompressed {
     typename SourceTypeTraits<Unit>::SharedImmutableString string_;
@@ -524,6 +524,7 @@ class ScriptSource {
     size_t length() const { return string_.length(); }
   };
 
+  // Compressed source text.
   template <typename Unit>
   struct Compressed {
     // Single-byte compressed text, regardless whether the original text
@@ -535,6 +536,24 @@ class ScriptSource {
         : raw(std::move(raw)), uncompressedLength(uncompressedLength) {}
   };
 
+  // Source that can be retrieved using the registered source hook.  |Unit|
+  // records the source type so that source-text coordinates in functions and
+  // scripts that depend on this |ScriptSource| are correct.
+  template <typename Unit>
+  struct Retrievable {
+    // The source hook and script URL required to retrieve source are stored
+    // elsewhere, so nothing is needed here.  It'd be better hygiene to store
+    // something source-hook-like in each |ScriptSource| that needs it, but that
+    // requires reimagining a source-hook API that currently depends on source
+    // hooks being uniquely-owned pointers...
+  };
+
+  // Missing source text that isn't retrievable using the source hook.  (All
+  // ScriptSources initially begin in this state.  Users that are compiling
+  // source text will overwrite |data| to store a different state.)
+  struct Missing {};
+
+  // BinAST source.
   struct BinAST {
     SharedImmutableString string;
     explicit BinAST(SharedImmutableString&& str) : string(std::move(str)) {}
@@ -543,10 +562,11 @@ class ScriptSource {
   using SourceType =
       mozilla::Variant<Compressed<mozilla::Utf8Unit>,
                        Uncompressed<mozilla::Utf8Unit>, Compressed<char16_t>,
-                       Uncompressed<char16_t>, Missing, BinAST>;
+                       Uncompressed<char16_t>, Retrievable<mozilla::Utf8Unit>,
+                       Retrievable<char16_t>, Missing, BinAST>;
   SourceType data;
 
-  // If the GC attempts to call setCompressedSource with PinnedUnits
+  // If the GC attempts to call convertToCompressedSource with PinnedUnits
   // present, the first PinnedUnits (that is, bottom of the stack) will set
   // the compressed chars upon destruction.
   PinnedUnitsBase* pinnedUnitsStack_;
@@ -623,10 +643,17 @@ class ScriptSource {
                          mozilla::recordreplay::Behavior::DontPreserve>
       idCount_;
 
-  // True if we can call JSRuntime::sourceHook to load the source on
-  // demand. If sourceRetrievable_ and hasSourceText() are false, it is not
-  // possible to get source at all.
+  // If this field is true, we can call JSRuntime::sourceHook to load the source
+  // on demand.  Thus if this contains compressed/uncompressed data, we don't
+  // have to preserve it while we're not using it, because we can use the source
+  // hook to load it when we need it.
+  //
+  // This field is always true for retrievable source.  It *may* be true for
+  // compressed/uncompressed source (if retrievable source was rewritten to
+  // compressed/uncompressed source loaded using the source hook).  It is always
+  // false for missing or BinAST source.
   bool sourceRetrievable_ : 1;
+
   bool hasIntroductionOffset_ : 1;
   bool containsAsmJS_ : 1;
 
@@ -691,10 +718,22 @@ class ScriptSource {
    */
   static constexpr size_t MinimumCompressibleLength = 256;
 
-  template <typename Unit>
-  MOZ_MUST_USE bool setSourceCopy(JSContext* cx, JS::SourceText<Unit>& srcBuf);
+ private:
+  class LoadSourceMatcher;
 
-  void setSourceRetrievable() { sourceRetrievable_ = true; }
+ public:
+  // Attempt to load usable source for |ss| -- source text on which substring
+  // operations and the like can be performed.  On success return true and set
+  // |*loaded| to indicate whether usable source could be loaded; otherwise
+  // return false.
+  static bool loadSource(JSContext* cx, ScriptSource* ss, bool* loaded);
+
+  // Assign source data from |srcBuf| to this recently-created |ScriptSource|.
+  template <typename Unit>
+  MOZ_MUST_USE bool assignSource(JSContext* cx,
+                                 const JS::ReadOnlyCompileOptions& options,
+                                 JS::SourceText<Unit>& srcBuf);
+
   bool sourceRetrievable() const { return sourceRetrievable_; }
   bool hasSourceText() const {
     return hasUncompressedSource() || hasCompressedSource();
@@ -784,6 +823,11 @@ class ScriptSource {
       return false;
     }
 
+    template <typename Unit>
+    bool operator()(const Retrievable<Unit>&) {
+      return false;
+    }
+
     bool operator()(const BinAST&) { return false; }
 
     bool operator()(const Missing&) { return false; }
@@ -809,6 +853,11 @@ class ScriptSource {
 
     template <typename Unit>
     bool operator()(const Uncompressed<Unit>&) {
+      return false;
+    }
+
+    template <typename Unit>
+    bool operator()(const Retrievable<Unit>&) {
       return false;
     }
 
@@ -857,30 +906,6 @@ class ScriptSource {
   }
 
  private:
-  struct SourceCharSizeMatcher {
-    template <template <typename C> class Data, typename Unit>
-    uint8_t operator()(const Data<Unit>& data) {
-      static_assert(std::is_same<Unit, mozilla::Utf8Unit>::value ||
-                        std::is_same<Unit, char16_t>::value,
-                    "should only have UTF-8 or UTF-16 source char");
-      return sizeof(Unit);
-    }
-
-    uint8_t operator()(const BinAST&) {
-      MOZ_CRASH("BinAST source has no source-char size");
-      return 0;
-    }
-
-    uint8_t operator()(const Missing&) {
-      MOZ_CRASH("missing source has no source-char size");
-      return 0;
-    }
-  };
-
- public:
-  uint8_t sourceCharSize() const { return data.match(SourceCharSizeMatcher()); }
-
- private:
   struct UncompressedLengthMatcher {
     template <typename Unit>
     size_t operator()(const Uncompressed<Unit>& u) {
@@ -890,6 +915,12 @@ class ScriptSource {
     template <typename Unit>
     size_t operator()(const Compressed<Unit>& u) {
       return u.uncompressedLength;
+    }
+
+    template <typename Unit>
+    size_t operator()(const Retrievable<Unit>&) {
+      MOZ_CRASH("ScriptSource::length on a missing-but-retrievable source");
+      return 0;
     }
 
     size_t operator()(const BinAST& b) { return b.string.length(); }
@@ -906,34 +937,6 @@ class ScriptSource {
     return data.match(UncompressedLengthMatcher());
   }
 
- private:
-  struct CompressedLengthOrZeroMatcher {
-    template <typename Unit>
-    size_t operator()(const Uncompressed<Unit>&) {
-      return 0;
-    }
-
-    template <typename Unit>
-    size_t operator()(const Compressed<Unit>& c) {
-      return c.raw.length();
-    }
-
-    size_t operator()(const BinAST&) {
-      MOZ_CRASH("trying to get compressed length for BinAST data");
-      return 0;
-    }
-
-    size_t operator()(const Missing&) {
-      MOZ_CRASH("missing source data");
-      return 0;
-    }
-  };
-
- public:
-  size_t compressedLengthOrZero() const {
-    return data.match(CompressedLengthOrZeroMatcher());
-  }
-
   JSFlatString* substring(JSContext* cx, size_t start, size_t stop);
   JSFlatString* substringDontDeflate(JSContext* cx, size_t start, size_t stop);
 
@@ -946,25 +949,46 @@ class ScriptSource {
   void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                               JS::ScriptSourceInfo* info) const;
 
+ private:
+  // Overwrites |data| with the uncompressed data from |source|.
+  //
+  // This function asserts nothing about |data|.  Users should use assertions to
+  // double-check their own understandings of the |data| state transition being
+  // performed.
   template <typename Unit>
-  MOZ_MUST_USE bool setSource(JSContext* cx, EntryUnits<Unit>&& source,
-                              size_t length);
+  MOZ_MUST_USE bool setUncompressedSourceHelper(JSContext* cx,
+                                                EntryUnits<Unit>&& source,
+                                                size_t length);
 
+ public:
+  // Initialize a fresh |ScriptSource| with uncompressed source.
   template <typename Unit>
-  void setSource(
-      typename SourceTypeTraits<Unit>::SharedImmutableString uncompressed);
+  MOZ_MUST_USE bool initializeUncompressedSource(JSContext* cx,
+                                                 EntryUnits<Unit>&& source,
+                                                 size_t length);
+
+  // Set the retrieved source for a |ScriptSource| whose source was recorded as
+  // missing but retrievable.
+  template <typename Unit>
+  MOZ_MUST_USE bool setRetrievedSource(JSContext* cx, EntryUnits<Unit>&& source,
+                                       size_t length);
 
   MOZ_MUST_USE bool tryCompressOffThread(JSContext* cx);
 
-  // The Unit parameter determines which type of compressed source is
-  // recorded, but raw compressed source is always single-byte.
+  // Convert this ScriptSource from storing uncompressed source of the given
+  // type, to storing compressed source.  (Raw compressed source is always
+  // single-byte; |Unit| just records the encoding of the uncompressed source.)
   template <typename Unit>
-  void setCompressedSource(SharedImmutableString compressed,
-                           size_t sourceLength);
+  void convertToCompressedSource(SharedImmutableString compressed,
+                                 size_t sourceLength);
 
+  // Initialize a fresh ScriptSource as containing compressed source of the
+  // indicated original encoding.
   template <typename Unit>
-  MOZ_MUST_USE bool setCompressedSource(JSContext* cx, UniqueChars&& raw,
-                                        size_t rawLength, size_t sourceLength);
+  MOZ_MUST_USE bool initializeWithCompressedSource(JSContext* cx,
+                                                   UniqueChars&& raw,
+                                                   size_t rawLength,
+                                                   size_t sourceLength);
 
 #if defined(JS_BUILD_BINAST)
 
@@ -977,11 +1001,12 @@ class ScriptSource {
                                         size_t len);
 
   /*
-   * Take ownership of the given `buf` and return the canonical, shared and
-   * de-duplicated version.
+   * Initialize this as containing BinAST data for |buf|/|len|, using a shared,
+   * deduplicated version of |buf| if necessary.
    */
-  MOZ_MUST_USE bool setBinASTSource(JSContext* cx, UniqueChars&& buf,
-                                    size_t len);
+  MOZ_MUST_USE bool initializeBinAST(
+      JSContext* cx, UniqueChars&& buf, size_t len,
+      UniquePtr<frontend::BinASTSourceMetadata> metadata);
 
   const uint8_t* binASTSource();
 
@@ -990,43 +1015,46 @@ class ScriptSource {
  private:
   void performTaskWork(SourceCompressionTask* task);
 
-  struct SetCompressedSourceFromTask {
+  struct ConvertToCompressedSourceFromTask {
     ScriptSource* const source_;
     SharedImmutableString& compressed_;
 
-    SetCompressedSourceFromTask(ScriptSource* source,
-                                SharedImmutableString& compressed)
+    ConvertToCompressedSourceFromTask(ScriptSource* source,
+                                      SharedImmutableString& compressed)
         : source_(source), compressed_(compressed) {}
 
     template <typename Unit>
     void operator()(const Uncompressed<Unit>&) {
-      source_->setCompressedSource<Unit>(std::move(compressed_),
-                                         source_->length());
+      source_->convertToCompressedSource<Unit>(std::move(compressed_),
+                                               source_->length());
     }
 
     template <typename Unit>
     void operator()(const Compressed<Unit>&) {
       MOZ_CRASH(
-          "can't set compressed source when source is already "
-          "compressed -- ScriptSource::tryCompressOffThread "
-          "shouldn't have queued up this task?");
+          "can't set compressed source when source is already compressed -- "
+          "ScriptSource::tryCompressOffThread shouldn't have queued up this "
+          "task?");
+    }
+
+    template <typename Unit>
+    void operator()(const Retrievable<Unit>&) {
+      MOZ_CRASH("shouldn't compressing unloaded-but-retrievable source");
     }
 
     void operator()(const BinAST&) {
-      MOZ_CRASH(
-          "doesn't make sense to set compressed source for BinAST "
-          "data");
+      MOZ_CRASH("doesn't make sense to set compressed source for BinAST data");
     }
 
     void operator()(const Missing&) {
       MOZ_CRASH(
-          "doesn't make sense to set compressed source for "
-          "missing source -- ScriptSource::tryCompressOffThread "
-          "shouldn't have queued up this task?");
+          "doesn't make sense to set compressed source for missing source -- "
+          "ScriptSource::tryCompressOffThread shouldn't have queued up this "
+          "task?");
     }
   };
 
-  void setCompressedSourceFromTask(SharedImmutableString compressed);
+  void convertToCompressedSourceFromTask(SharedImmutableString compressed);
 
  private:
   // It'd be better to make this function take <XDRMode, Unit>, as both
@@ -1117,6 +1145,12 @@ class ScriptSource {
     parseEnded_ = ReallyNow();
   }
 
+ private:
+  template <XDRMode mode>
+  static MOZ_MUST_USE XDRResult xdrData(XDRState<mode>* const xdr,
+                                        ScriptSource* const ss);
+
+ public:
   template <XDRMode mode>
   static MOZ_MUST_USE XDRResult
   XDR(XDRState<mode>* xdr, const mozilla::Maybe<JS::CompileOptions>& options,
@@ -1504,9 +1538,41 @@ class alignas(uintptr_t) SharedScriptData final {
                   mozilla::recordreplay::Behavior::DontPreserve>
       refCount_ = {};
 
+  uint32_t codeOffset_ = 0;  // Byte-offset from 'this'
   uint32_t codeLength_ = 0;
-  uint32_t noteLength_ = 0;
-  uint32_t natoms_ = 0;
+  uint32_t tailOffset_ = 0;
+
+  // Offset of main entry point from code, after predef'ing prologue.
+  uint32_t mainOffset = 0;
+
+  // Fixed frame slots.
+  uint32_t nfixed = 0;
+
+  // Slots plus maximum stack depth.
+  uint32_t nslots = 0;
+
+  // Index into the scopes array of the body scope.
+  uint32_t bodyScopeIndex = 0;
+
+  // Number of IC entries to allocate in ICScript for Baseline ICs.
+  uint32_t numICEntries = 0;
+
+  // ES6 function length.
+  uint16_t funLength = 0;
+
+  // Number of type sets used in this script for dynamic type monitoring.
+  uint16_t numBytecodeTypeSets = 0;
+
+  // NOTE: The raw bytes of this structure are used for hashing so use explicit
+  // padding values as needed for predicatable results across compilers.
+
+  friend class ::JSScript;
+
+ private:
+  // Layout of trailing arrays
+  size_t atomOffset() const { return offsetOfAtoms(); }
+  size_t codeOffset() const { return codeOffset_; }
+  size_t noteOffset() const { return codeOffset_ + codeLength_; }
 
   // Size to allocate
   static size_t AllocationSize(uint32_t codeLength, uint32_t noteLength,
@@ -1532,45 +1598,72 @@ class alignas(uintptr_t) SharedScriptData final {
     }
   }
 
-  size_t dataLength() const {
-    return (natoms_ * sizeof(GCPtrAtom)) + codeLength_ + noteLength_;
+  // Span over all raw bytes in this struct and its trailing arrays.
+  mozilla::Span<const uint8_t> allocSpan() const {
+    size_t allocSize = tailOffset_;
+    return mozilla::MakeSpan(reinterpret_cast<const uint8_t*>(this), allocSize);
   }
-  const uint8_t* data() const {
-    return reinterpret_cast<const uint8_t*>(this + 1);
-  }
-  uint8_t* data() { return reinterpret_cast<uint8_t*>(this + 1); }
 
-  uint32_t natoms() const { return natoms_; }
+  // Span over all immutable bytes in allocation. This excludes part of
+  // structure used for reference counting and is the basis of how we
+  // de-duplicate data.
+  mozilla::Span<const uint8_t> immutableData() const {
+    // The refCount_ must be first field of structure.
+    static_assert(offsetof(SharedScriptData, refCount_) == 0,
+                  "refCount_ must be at start of SharedScriptData");
+    constexpr size_t dataOffset = sizeof(refCount_);
+
+    static_assert(offsetof(SharedScriptData, numBytecodeTypeSets) +
+                          sizeof(numBytecodeTypeSets) ==
+                      sizeof(SharedScriptData),
+                  "SharedScriptData should not have padding after last field");
+
+    return allocSpan().From(dataOffset);
+  }
+
+  uint32_t natoms() const {
+    return (codeOffset_ - atomOffset()) / sizeof(GCPtrAtom);
+  }
   GCPtrAtom* atoms() {
-    if (!natoms_) {
-      return nullptr;
-    }
-    return reinterpret_cast<GCPtrAtom*>(data());
+    uintptr_t base = reinterpret_cast<uintptr_t>(this);
+    return reinterpret_cast<GCPtrAtom*>(base + atomOffset());
   }
 
   uint32_t codeLength() const { return codeLength_; }
   jsbytecode* code() {
-    return reinterpret_cast<jsbytecode*>(data() + natoms_ * sizeof(GCPtrAtom));
+    uintptr_t base = reinterpret_cast<uintptr_t>(this);
+    return reinterpret_cast<jsbytecode*>(base + codeOffset_);
   }
 
-  uint32_t numNotes() const { return noteLength_; }
+  uint32_t noteLength() const { return tailOffset_ - noteOffset(); }
   jssrcnote* notes() {
-    return reinterpret_cast<jssrcnote*>(data() + natoms_ * sizeof(GCPtrAtom) +
-                                        codeLength_);
+    uintptr_t base = reinterpret_cast<uintptr_t>(this);
+    return reinterpret_cast<jssrcnote*>(base + noteOffset());
   }
+
+  static constexpr size_t offsetOfCodeOffset() {
+    return offsetof(SharedScriptData, codeOffset_);
+  }
+  static constexpr size_t offsetOfNfixed() {
+    return offsetof(SharedScriptData, nfixed);
+  }
+  static constexpr size_t offsetOfNslots() {
+    return offsetof(SharedScriptData, nslots);
+  }
+  static constexpr size_t offsetOfFunLength() {
+    return offsetof(SharedScriptData, funLength);
+  }
+  static constexpr size_t offsetOfAtoms() { return sizeof(SharedScriptData); }
 
   void traceChildren(JSTracer* trc);
-
-  static constexpr size_t offsetOfNatoms() {
-    return offsetof(SharedScriptData, natoms_);
-  }
 
   template <XDRMode mode>
   static MOZ_MUST_USE XDRResult XDR(js::XDRState<mode>* xdr,
                                     js::HandleScript script);
 
   static bool InitFromEmitter(JSContext* cx, js::HandleScript script,
-                              js::frontend::BytecodeEmitter* bce);
+                              js::frontend::BytecodeEmitter* bce,
+                              uint32_t nslots);
 
   // Mark this SharedScriptData for use in a new zone
   void markForCrossZone(JSContext* cx);
@@ -1580,38 +1673,25 @@ class alignas(uintptr_t) SharedScriptData final {
   SharedScriptData& operator=(const SharedScriptData&) = delete;
 };
 
-struct ScriptBytecodeHasher {
-  class Lookup {
-    friend struct ScriptBytecodeHasher;
+// Two SharedScriptData instances may be de-duplicated if they have the same
+// data in their immutableData() span. This Hasher enables that comparison.
+struct SharedScriptDataHasher {
+  using Lookup = RefPtr<SharedScriptData>;
 
-    RefPtr<SharedScriptData> scriptData;
-    HashNumber hash;
+  static HashNumber hash(const Lookup& l) {
+    mozilla::Span<const uint8_t> immutableData = l->immutableData();
+    return mozilla::HashBytes(immutableData.data(), immutableData.size());
+  }
 
-   public:
-    explicit Lookup(SharedScriptData* data);
-  };
-
-  static HashNumber hash(const Lookup& l) { return l.hash; }
   static bool match(SharedScriptData* entry, const Lookup& lookup) {
-    const SharedScriptData* data = lookup.scriptData;
-    if (entry->natoms() != data->natoms()) {
-      return false;
-    }
-    if (entry->codeLength() != data->codeLength()) {
-      return false;
-    }
-    if (entry->numNotes() != data->numNotes()) {
-      return false;
-    }
-    return mozilla::ArrayEqual<uint8_t>(entry->data(), data->data(),
-                                        data->dataLength());
+    return entry->immutableData() == lookup->immutableData();
   }
 };
 
 class AutoLockScriptData;
 
 using ScriptDataTable =
-    HashSet<SharedScriptData*, ScriptBytecodeHasher, SystemAllocPolicy>;
+    HashSet<SharedScriptData*, SharedScriptDataHasher, SystemAllocPolicy>;
 
 extern void SweepScriptData(JSRuntime* rt);
 
@@ -1677,18 +1757,6 @@ class JSScript : public js::gc::TenuredCell {
 
   /* Base column of script, optionally set. */
   uint32_t column_ = 0;
-
-  /* Offset of main entry point from code, after predef'ing prologue. */
-  uint32_t mainOffset_ = 0;
-
-  /* Fixed frame slots. */
-  uint32_t nfixed_ = 0;
-
-  /* Slots plus maximum stack depth. */
-  uint32_t nslots_ = 0;
-
-  /* Index into the scopes array of the body scope */
-  uint32_t bodyScopeIndex_ = 0;
 
   // Range of characters in scriptSource which contains this script's
   // source, that is, the range used by the Parser to produce this script.
@@ -1888,14 +1956,6 @@ class JSScript : public js::gc::TenuredCell {
   // from JIT code.
   uint32_t mutableFlags_ = 0;
 
-  // 16-bit fields.
-
-  /* ES6 function length. */
-  uint16_t funLength_ = 0;
-
-  /* Number of type sets used in this script for dynamic type monitoring. */
-  uint16_t numBytecodeTypeSets_ = 0;
-
   //
   // End of fields.  Start methods.
   //
@@ -1914,7 +1974,7 @@ class JSScript : public js::gc::TenuredCell {
 
   friend bool js::SharedScriptData::InitFromEmitter(
       JSContext* cx, js::HandleScript script,
-      js::frontend::BytecodeEmitter* bce);
+      js::frontend::BytecodeEmitter* bce, uint32_t nslot);
 
   template <js::XDRMode mode>
   friend js::XDRResult js::PrivateScriptData::XDR(
@@ -2075,7 +2135,7 @@ class JSScript : public js::gc::TenuredCell {
     return code() + offset;
   }
 
-  size_t mainOffset() const { return mainOffset_; }
+  size_t mainOffset() const { return scriptData_->mainOffset; }
 
   uint32_t lineno() const { return lineno_; }
 
@@ -2085,7 +2145,7 @@ class JSScript : public js::gc::TenuredCell {
 
   // The fixed part of a stack frame is comprised of vars (in function and
   // module code) and block-scoped locals (in all kinds of code).
-  size_t nfixed() const { return nfixed_; }
+  size_t nfixed() const { return scriptData_->nfixed; }
 
   // Number of fixed slots reserved for slots that are always live. Only
   // nonzero for function or module code.
@@ -2102,7 +2162,7 @@ class JSScript : public js::gc::TenuredCell {
   // Calculate the number of fixed slots that are live at a particular bytecode.
   size_t calculateLiveFixed(jsbytecode* pc);
 
-  size_t nslots() const { return nslots_; }
+  size_t nslots() const { return scriptData_->nslots; }
 
   unsigned numArgs() const {
     if (bodyScope()->is<js::FunctionScope>()) {
@@ -2128,14 +2188,16 @@ class JSScript : public js::gc::TenuredCell {
   // the first MaxBytecodeTypeSets - 1 JOF_TYPESET ops have their own TypeSet
   // and all other JOF_TYPESET ops share the last TypeSet.
   static constexpr size_t MaxBytecodeTypeSets = UINT16_MAX;
-  static_assert(sizeof(numBytecodeTypeSets_) == 2,
-                "MaxBytecodeTypeSets must match sizeof(numBytecodeTypeSets_)");
+  static_assert(sizeof(js::SharedScriptData::numBytecodeTypeSets) == 2,
+                "MaxBytecodeTypeSets must match sizeof(numBytecodeTypeSets)");
 
-  size_t numBytecodeTypeSets() const { return numBytecodeTypeSets_; }
+  size_t numBytecodeTypeSets() const {
+    return scriptData_->numBytecodeTypeSets;
+  }
 
-  size_t funLength() const { return funLength_; }
+  size_t numICEntries() const { return scriptData_->numICEntries; }
 
-  static size_t offsetOfFunLength() { return offsetof(JSScript, funLength_); }
+  size_t funLength() const { return scriptData_->funLength; }
 
   uint32_t sourceStart() const { return sourceStart_; }
 
@@ -2344,12 +2406,6 @@ class JSScript : public js::gc::TenuredCell {
   static size_t offsetOfImmutableFlags() {
     return offsetof(JSScript, immutableFlags_);
   }
-  static constexpr size_t offsetOfNfixed() {
-    return offsetof(JSScript, nfixed_);
-  }
-  static constexpr size_t offsetOfNslots() {
-    return offsetof(JSScript, nslots_);
-  }
   static constexpr size_t offsetOfScriptData() {
     return offsetof(JSScript, scriptData_);
   }
@@ -2474,8 +2530,6 @@ class JSScript : public js::gc::TenuredCell {
   MOZ_MUST_USE bool appendSourceDataForToString(JSContext* cx,
                                                 js::StringBuffer& buf);
 
-  static bool loadSource(JSContext* cx, js::ScriptSource* ss, bool* worked);
-
   void setSourceObject(js::ScriptSourceObject* object);
   js::ScriptSourceObject* sourceObject() const { return sourceObject_; }
   js::ScriptSource* scriptSource() const;
@@ -2536,9 +2590,9 @@ class JSScript : public js::gc::TenuredCell {
   inline bool hasGlobal(const js::GlobalObject* global) const;
   js::GlobalObject& uninlinedGlobal() const;
 
-  uint32_t bodyScopeIndex() const { return bodyScopeIndex_; }
+  uint32_t bodyScopeIndex() const { return scriptData_->bodyScopeIndex; }
 
-  js::Scope* bodyScope() const { return getScope(bodyScopeIndex_); }
+  js::Scope* bodyScope() const { return getScope(bodyScopeIndex()); }
 
   js::Scope* outermostScope() const {
     // The body scope may not be the outermost scope in the script when
@@ -2707,7 +2761,7 @@ class JSScript : public js::gc::TenuredCell {
 
   uint32_t numNotes() const {
     MOZ_ASSERT(scriptData_);
-    return scriptData_->numNotes();
+    return scriptData_->noteLength();
   }
   jssrcnote* notes() const {
     MOZ_ASSERT(scriptData_);

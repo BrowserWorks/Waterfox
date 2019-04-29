@@ -6414,8 +6414,11 @@ class ShellSourceHook : public SourceHook {
  public:
   ShellSourceHook(JSContext* cx, JSFunction& fun) : fun(cx, &fun) {}
 
-  bool load(JSContext* cx, const char* filename, char16_t** src,
-            size_t* length) override {
+  bool load(JSContext* cx, const char* filename, char16_t** twoByteSource,
+            char** utf8Source, size_t* length) override {
+    MOZ_ASSERT((twoByteSource != nullptr) != (utf8Source != nullptr),
+               "must be called requesting only one of UTF-8 or UTF-16 source");
+
     RootedString str(cx, JS_NewStringCopyZ(cx, filename));
     if (!str) {
       return false;
@@ -6433,18 +6436,36 @@ class ShellSourceHook : public SourceHook {
       return false;
     }
 
-    *length = JS_GetStringLength(str);
-    *src = cx->pod_malloc<char16_t>(*length);
-    if (!*src) {
+    Rooted<JSFlatString*> flat(cx, str->ensureFlat(cx));
+    if (!flat) {
       return false;
     }
 
-    JSLinearString* linear = str->ensureLinear(cx);
-    if (!linear) {
-      return false;
+    if (twoByteSource) {
+      *length = JS_GetStringLength(flat);
+
+      *twoByteSource = cx->pod_malloc<char16_t>(*length);
+      if (!*twoByteSource) {
+        return false;
+      }
+
+      CopyChars(*twoByteSource, *flat);
+    } else {
+      MOZ_ASSERT(utf8Source != nullptr);
+
+      *length = JS::GetDeflatedUTF8StringLength(flat);
+
+      *utf8Source = cx->pod_malloc<char>(*length);
+      if (!*utf8Source) {
+        return false;
+      }
+
+      size_t dstLen = *length;
+      JS::DeflateStringToUTF8Buffer(
+          flat, mozilla::RangedPtr<char>(*utf8Source, *length), &dstLen);
+      MOZ_ASSERT(dstLen == *length);
     }
 
-    CopyChars(*src, *linear);
     return true;
   }
 };
@@ -8105,7 +8126,7 @@ static constexpr uint32_t DOM_OBJECT_SLOT = 0;
 
 static const JSClass* GetDomClass();
 
-static JSObject* GetDOMPrototype(JSObject* global);
+static JSObject* GetDOMPrototype(JSContext* cx, JSObject* global);
 
 static const JSClass TransplantableDOMObjectClass = {
     "TransplantableDOMObject",
@@ -8229,12 +8250,12 @@ static bool TransplantObject(JSContext* cx, unsigned argc, Value* vp) {
 
   RootedObject proto(cx);
   if (JS_GetClass(source) == GetDomClass()) {
-    proto = GetDOMPrototype(newGlobal);
+    proto = GetDOMPrototype(cx, newGlobal);
   } else {
     proto = JS::GetRealmObjectPrototype(cx);
-    if (!proto) {
-      return false;
-    }
+  }
+  if (!proto) {
+    return false;
   }
 
   RootedObject target(cx, JS_CloneObject(cx, source, proto));
@@ -9721,18 +9742,12 @@ static const JSJitInfo doFoo_methodinfo = {
 };
 
 static const JSPropertySpec dom_props[] = {
-    {
-        "x",
-        JSPROP_ENUMERATE,
-        {{{{dom_genericGetter, &dom_x_getterinfo}},
-          {{dom_genericSetter, &dom_x_setterinfo}}}},
-    },
-    {
-        "global",
-        JSPROP_ENUMERATE,
-        {{{{dom_genericGetter, &dom_global_getterinfo}},
-          {{dom_genericSetter, &dom_global_setterinfo}}}},
-    },
+    JSPropertySpec::nativeAccessors("x", JSPROP_ENUMERATE, dom_genericGetter,
+                                    &dom_x_getterinfo, dom_genericSetter,
+                                    &dom_x_setterinfo),
+    JSPropertySpec::nativeAccessors("global", JSPROP_ENUMERATE,
+                                    dom_genericGetter, &dom_global_getterinfo,
+                                    dom_genericSetter, &dom_global_setterinfo),
     JS_PS_END};
 
 static const JSFunctionSpec dom_methods[] = {
@@ -9820,8 +9835,12 @@ static void InitDOMObject(HandleObject obj) {
                   PrivateValue(const_cast<void*>(DOM_PRIVATE_VALUE)));
 }
 
-static JSObject* GetDOMPrototype(JSObject* global) {
+static JSObject* GetDOMPrototype(JSContext* cx, JSObject* global) {
   MOZ_ASSERT(JS_IsGlobalObject(global));
+  if (GetObjectJSClass(global) != &global_class) {
+    JS_ReportErrorASCII(cx, "Can't get FakeDOMObject prototype in sandbox");
+    return nullptr;
+  }
   MOZ_ASSERT(GetReservedSlot(global, DOM_PROTOTYPE_SLOT).isObject());
   return &GetReservedSlot(global, DOM_PROTOTYPE_SLOT).toObject();
 }
@@ -9917,7 +9936,7 @@ static JSObject* NewGlobalObject(JSContext* cx, JS::RealmOptions& options,
                "having its [[Prototype]] be immutable");
 
 #ifdef JS_HAS_CTYPES
-    if (!JS_InitCTypesClass(cx, glob)) {
+    if (!fuzzingSafe && !JS_InitCTypesClass(cx, glob)) {
       return nullptr;
     }
 #endif
@@ -10538,7 +10557,6 @@ static bool SetContextOptions(JSContext* cx, const OptionParser& op) {
   reportWarnings = op.getBoolOption('w');
   compileOnly = op.getBoolOption('c');
   printTiming = op.getBoolOption('b');
-  enableCodeCoverage = op.getBoolOption("code-coverage");
   enableDisassemblyDumps = op.getBoolOption('D');
   cx->runtime()->profilingScripts =
       enableCodeCoverage || enableDisassemblyDumps;
@@ -10663,12 +10681,12 @@ static MOZ_MUST_USE bool ReportUnhandledRejections(JSContext* cx) {
 
   Rooted<SetIteratorObject*> iterObj(cx,
                                      &iter.toObject().as<SetIteratorObject>());
-  RootedArrayObject resultObj(
-      cx, &SetIteratorObject::createResult(cx)->as<ArrayObject>());
-  if (!resultObj) {
+  JSObject* obj = SetIteratorObject::createResult(cx);
+  if (!obj) {
     return false;
   }
 
+  RootedArrayObject resultObj(cx, &obj->as<ArrayObject>());
   while (true) {
     bool done = SetIteratorObject::next(iterObj, resultObj, cx);
     if (done) {
@@ -10910,13 +10928,12 @@ int main(int argc, char** argv, char** envp) {
           'u', "utf8-file", "PATH",
           "File path to run, directly parsing file contents as UTF-8 "
           "without first inflating to UTF-16") ||
-      !op.addMultiStringOption('m', "module", "PATH", "Module path to run")
+      !op.addMultiStringOption('m', "module", "PATH", "Module path to run") ||
 #if defined(JS_BUILD_BINAST)
-      || !op.addMultiStringOption('B', "binast", "PATH", "BinAST path to run")
+      !op.addMultiStringOption('B', "binast", "PATH", "BinAST path to run") ||
 #else
-      || !op.addMultiStringOption('B', "binast", "", "No-op")
+      !op.addMultiStringOption('B', "binast", "", "No-op") ||
 #endif  // JS_BUILD_BINAST
-      ||
       !op.addMultiStringOption('e', "execute", "CODE", "Inline code to run") ||
       !op.addBoolOption('i', "shell", "Enter prompt after running code") ||
       !op.addBoolOption('c', "compileonly",
@@ -10929,13 +10946,13 @@ int main(int argc, char** argv, char** envp) {
       !op.addBoolOption('b', "print-timing",
                         "Print sub-ms runtime for each file that's run") ||
       !op.addBoolOption('\0', "code-coverage",
-                        "Enable code coverage instrumentation.")
+                        "Enable code coverage instrumentation.") ||
 #ifdef DEBUG
-      || !op.addBoolOption('O', "print-alloc",
-                           "Print the number of allocations at exit")
+      !op.addBoolOption('O', "print-alloc",
+                        "Print the number of allocations at exit") ||
 #endif
-      || !op.addOptionalStringArg("script",
-                                  "A script to execute (after all options)") ||
+      !op.addOptionalStringArg("script",
+                               "A script to execute (after all options)") ||
       !op.addOptionalMultiStringArg(
           "scriptArgs",
           "String arguments to bind as |scriptArgs| in the "
@@ -10959,15 +10976,15 @@ int main(int argc, char** argv, char** envp) {
                         "Enable WebAssembly verbose logging") ||
       !op.addBoolOption('\0', "test-wasm-await-tier2",
                         "Forcibly activate tiering and block "
-                        "instantiation on completion of tier2")
+                        "instantiation on completion of tier2") ||
 #ifdef ENABLE_WASM_GC
-      ||
-      !op.addBoolOption('\0', "wasm-gc", "Enable experimental wasm GC features")
+      !op.addBoolOption('\0', "wasm-gc",
+                        "Enable experimental wasm GC features") ||
 #else
-      || !op.addBoolOption('\0', "wasm-gc", "No-op")
+      !op.addBoolOption('\0', "wasm-gc", "No-op") ||
 #endif
-      || !op.addBoolOption('\0', "no-native-regexp",
-                           "Disable native regexp compilation") ||
+      !op.addBoolOption('\0', "no-native-regexp",
+                        "Disable native regexp compilation") ||
       !op.addBoolOption('\0', "no-unboxed-objects",
                         "Disable creating unboxed plain objects") ||
       !op.addBoolOption('\0', "enable-streams",
@@ -11010,18 +11027,18 @@ int main(int argc, char** argv, char** envp) {
           '\0', "ion-pgo", "on/off",
           "Profile guided optimization (default: on, off to disable)") ||
       !op.addStringOption('\0', "ion-range-analysis", "on/off",
-                          "Range analysis (default: on, off to disable)")
+                          "Range analysis (default: on, off to disable)") ||
 #if defined(__APPLE__)
-      || !op.addStringOption(
-             '\0', "ion-sincos", "on/off",
-             "Replace sin(x)/cos(x) to sincos(x) (default: on, off to disable)")
+      !op.addStringOption(
+          '\0', "ion-sincos", "on/off",
+          "Replace sin(x)/cos(x) to sincos(x) (default: on, off to disable)") ||
 #else
-      || !op.addStringOption(
-             '\0', "ion-sincos", "on/off",
-             "Replace sin(x)/cos(x) to sincos(x) (default: off, on to enable)")
+      !op.addStringOption(
+          '\0', "ion-sincos", "on/off",
+          "Replace sin(x)/cos(x) to sincos(x) (default: off, on to enable)") ||
 #endif
-      || !op.addStringOption('\0', "ion-sink", "on/off",
-                             "Sink code motion (default: off, on to enable)") ||
+      !op.addStringOption('\0', "ion-sink", "on/off",
+                          "Sink code motion (default: off, on to enable)") ||
       !op.addStringOption('\0', "ion-optimization-levels", "on/off",
                           "Use multiple Ion optimization levels (default: on, "
                           "off to disable)") ||
@@ -11101,13 +11118,13 @@ int main(int argc, char** argv, char** envp) {
       !op.addBoolOption('\0', "disable-oom-functions",
                         "Disable functions that cause "
                         "artificial OOMs") ||
-      !op.addBoolOption('\0', "no-threads", "Disable helper threads")
+      !op.addBoolOption('\0', "no-threads", "Disable helper threads") ||
 #ifdef DEBUG
-      || !op.addBoolOption('\0', "dump-entrained-variables",
-                           "Print variables which are "
-                           "unnecessarily entrained by inner functions")
+      !op.addBoolOption('\0', "dump-entrained-variables",
+                        "Print variables which are "
+                        "unnecessarily entrained by inner functions") ||
 #endif
-      || !op.addBoolOption('\0', "no-ggc", "Disable Generational GC") ||
+      !op.addBoolOption('\0', "no-ggc", "Disable Generational GC") ||
       !op.addBoolOption('\0', "no-cgc", "Disable Compacting GC") ||
       !op.addBoolOption('\0', "no-incremental-gc", "Disable Incremental GC") ||
       !op.addStringOption('\0', "nursery-strings", "on/off",
@@ -11141,16 +11158,16 @@ int main(int argc, char** argv, char** envp) {
                        "NUMBER of instructions.",
                        -1) ||
       !op.addIntOption('\0', "nursery-size", "SIZE-MB",
-                       "Set the maximum nursery size in MB", 16)
+                       "Set the maximum nursery size in MB", 16) ||
 #ifdef JS_GC_ZEAL
-      || !op.addStringOption('z', "gc-zeal", "LEVEL(;LEVEL)*[,N]",
-                             gc::ZealModeHelpText)
+      !op.addStringOption('z', "gc-zeal", "LEVEL(;LEVEL)*[,N]",
+                          gc::ZealModeHelpText) ||
 #else
-      || !op.addStringOption('z', "gc-zeal", "LEVEL(;LEVEL)*[,N]",
-                             "option ignored in non-gc-zeal builds")
+      !op.addStringOption('z', "gc-zeal", "LEVEL(;LEVEL)*[,N]",
+                          "option ignored in non-gc-zeal builds") ||
 #endif
-      || !op.addStringOption('\0', "module-load-path", "DIR",
-                             "Set directory to load modules from") ||
+      !op.addStringOption('\0', "module-load-path", "DIR",
+                          "Set directory to load modules from") ||
       !op.addBoolOption('\0', "no-async-stacks", "Disable async stacks") ||
       !op.addMultiStringOption('\0', "dll", "LIBRARY",
                                "Dynamically load LIBRARY") ||
@@ -11222,6 +11239,11 @@ int main(int argc, char** argv, char** envp) {
 
   if (op.getBoolOption("no-threads")) {
     js::DisableExtraThreads();
+  }
+
+  enableCodeCoverage = op.getBoolOption("code-coverage");
+  if (enableCodeCoverage) {
+    coverage::EnableLCov();
   }
 
   AutoLibraryLoader loader;

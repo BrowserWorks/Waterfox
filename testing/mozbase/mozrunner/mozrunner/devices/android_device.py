@@ -27,7 +27,7 @@ EMULATOR_HOME_DIR = os.path.join(os.path.expanduser('~'), '.mozbuild', 'android-
 
 EMULATOR_AUTH_FILE = os.path.join(os.path.expanduser('~'), '.emulator_console_auth_token')
 
-TOOLTOOL_URL = 'https://raw.githubusercontent.com/mozilla/build-tooltool/master/tooltool.py'
+TOOLTOOL_PATH = 'testing/mozharness/external_tools/tooltool.py'
 
 TRY_URL = 'https://hg.mozilla.org/try/raw-file/default'
 
@@ -864,8 +864,8 @@ def _tooltool_fetch():
     def outputHandler(line):
         _log_debug(line)
 
-    _download_file(TOOLTOOL_URL, 'tooltool.py', EMULATOR_HOME_DIR)
-    command = [sys.executable, 'tooltool.py',
+    tooltool_full_path = os.path.abspath(TOOLTOOL_PATH)
+    command = [sys.executable, tooltool_full_path,
                'fetch', '-o', '-m', 'releng.manifest']
     proc = ProcessHandler(
         command, processOutputLine=outputHandler, storeOutput=False,

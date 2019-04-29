@@ -73,7 +73,7 @@
 
 #include "mozilla/dom/AudioDeviceInfo.h"
 #include "mozilla/dom/Element.h"
-#include "mozilla/dom/TabChild.h"
+#include "mozilla/dom/BrowserChild.h"
 #include "mozilla/dom/IDBFactoryBinding.h"
 #include "mozilla/dom/IDBMutableFileBinding.h"
 #include "mozilla/dom/IDBMutableFile.h"
@@ -383,7 +383,7 @@ nsDOMWindowUtils::UpdateLayerTree() {
       nsAutoScriptBlocker scriptBlocker;
       presShell->Paint(
           view, view->GetBounds(),
-          nsIPresShell::PAINT_LAYERS | nsIPresShell::PAINT_SYNC_DECODE_IMAGES);
+          PaintFlags::PaintLayers | PaintFlags::PaintSyncDecodeImages);
       presShell->GetLayerManager()->WaitOnTransactionProcessed();
     }
   }
@@ -498,11 +498,11 @@ nsDOMWindowUtils::SetDisplayPortForElement(float aXPx, float aYPx,
         LayerManager* manager = widget->GetLayerManager();
         manager->BeginTransaction();
         using PaintFrameFlags = nsLayoutUtils::PaintFrameFlags;
-        nsLayoutUtils::PaintFrame(
-            nullptr, rootFrame, nsRegion(), NS_RGB(255, 255, 255),
-            nsDisplayListBuilderMode::PAINTING,
-            PaintFrameFlags::PAINT_WIDGET_LAYERS |
-                PaintFrameFlags::PAINT_EXISTING_TRANSACTION);
+        nsLayoutUtils::PaintFrame(nullptr, rootFrame, nsRegion(),
+                                  NS_RGB(255, 255, 255),
+                                  nsDisplayListBuilderMode::Painting,
+                                  PaintFrameFlags::WidgetLayers |
+                                      PaintFrameFlags::ExistingTransaction);
       }
     }
   }
@@ -568,7 +568,7 @@ nsDOMWindowUtils::SetResolutionAndScaleTo(float aResolution) {
   }
 
   presShell->SetResolutionAndScaleTo(aResolution,
-                                     nsIPresShell::ChangeOrigin::eMainThread);
+                                     ResolutionChangeOrigin::MainThread);
 
   return NS_OK;
 }
@@ -1166,8 +1166,7 @@ nsDOMWindowUtils::NodesFromRect(float aX, float aY, float aTopSize,
 
   AutoTArray<RefPtr<nsINode>, 8> nodes;
   doc->NodesFromRect(aX, aY, aTopSize, aRightSize, aBottomSize, aLeftSize,
-                     aIgnoreRootScrollFrame, aFlushLayout, aOnlyVisible,
-                     nodes);
+                     aIgnoreRootScrollFrame, aFlushLayout, aOnlyVisible, nodes);
   list->SetCapacity(nodes.Length());
   for (auto& node : nodes) {
     list->AppendElement(node->AsContent());
@@ -1436,10 +1435,10 @@ nsDOMWindowUtils::ScrollToVisual(float aOffsetX, float aOffsetY,
   ScrollMode scrollMode;
   switch (aScrollMode) {
     case SCROLL_MODE_INSTANT:
-      scrollMode = ScrollMode::eInstant;
+      scrollMode = ScrollMode::Instant;
       break;
     case SCROLL_MODE_SMOOTH:
-      scrollMode = ScrollMode::eSmoothMsd;
+      scrollMode = ScrollMode::SmoothMsd;
       break;
     default:
       return NS_ERROR_INVALID_ARG;
@@ -2455,7 +2454,7 @@ nsDOMWindowUtils::ZoomToFocusedInput() {
     return NS_OK;
   }
 
-  nsIContent* content = fm->GetFocusedElement();
+  nsCOMPtr<nsIContent> content = fm->GetFocusedElement();
   if (!content) {
     return NS_OK;
   }
@@ -2518,11 +2517,9 @@ nsDOMWindowUtils::ZoomToFocusedInput() {
     // the bounding content rect and ask APZ to adjust the visual viewport.
     presShell->ScrollContentIntoView(
         content,
-        nsIPresShell::ScrollAxis(nsIPresShell::SCROLL_MINIMUM,
-                                 nsIPresShell::SCROLL_IF_NOT_VISIBLE),
-        nsIPresShell::ScrollAxis(nsIPresShell::SCROLL_MINIMUM,
-                                 nsIPresShell::SCROLL_IF_NOT_VISIBLE),
-        nsIPresShell::SCROLL_OVERFLOW_HIDDEN);
+        nsIPresShell::ScrollAxis(kScrollMinimum, WhenToScroll::IfNotVisible),
+        nsIPresShell::ScrollAxis(kScrollMinimum, WhenToScroll::IfNotVisible),
+        ScrollFlags::ScrollOverflowHidden);
 
     CSSRect bounds =
         nsLayoutUtils::GetBoundingContentRect(content, rootScrollFrame);
@@ -4066,7 +4063,7 @@ nsDOMWindowUtils::EnsureDirtyRootFrame() {
     return NS_ERROR_FAILURE;
   }
 
-  presShell->FrameNeedsReflow(frame, nsIPresShell::eStyleChange,
+  presShell->FrameNeedsReflow(frame, IntrinsicDirty::StyleChange,
                               NS_FRAME_IS_DIRTY);
   return NS_OK;
 }

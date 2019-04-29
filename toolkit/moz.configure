@@ -706,9 +706,24 @@ def webrender(value):
         enable = enable_webrender,
     )
 
+option('--enable-webrender-debugger',
+       help='Build the websocket debug server in WebRender')
+
+@depends(webrender, '--enable-webrender-debugger')
+def webrender_debugger(webrender, debugger):
+    if debugger.origin == 'default':
+        # Not trying to build the debuger
+        return None
+    if not webrender.build and debugger:
+        die('Cannot build WR debugger without also building webrender')
+    if debugger:
+        return True
+    return None
+
 set_config('MOZ_BUILD_WEBRENDER', webrender.build)
 set_define('MOZ_BUILD_WEBRENDER', webrender.build)
 set_config('MOZ_ENABLE_WEBRENDER', webrender.enable)
+set_config('MOZ_WEBRENDER_DEBUGGER', webrender_debugger)
 
 # SIMD acceleration for Rust code (currently just encoding_rs)
 # ==============================================================
@@ -919,9 +934,14 @@ add_old_configure_assignment('FT2_CFLAGS',
 # See https://firefox-source-docs.mozilla.org/remote/ for more.
 # The source code lives under ../remote.
 
-option('--enable-cdp', help='{Enable|Disable} remote agent')
+@depends(target, milestone)
+def remote_default(target, milestone):
+    return target.os != 'Android' and milestone.is_nightly
 
-@depends('--enable-cdp')
+option('--disable-cdp', default=remote_default,
+       help='{Enable|Disable} remote agent')
+
+@depends('--disable-cdp')
 def remote(value):
     if value:
         return True
@@ -1294,7 +1314,7 @@ set_define('MOZ_BUNDLED_FONTS',
 # Verify MAR signatures
 # ==============================================================
 
-option('--enable-verify-mar', help='Enable verifying MAR signatures')
+option('--disable-verify-mar', help='Disable verifying MAR signatures')
 
 set_define('MOZ_VERIFY_MAR_SIGNATURE',
            depends_if('--enable-verify-mar')(lambda _: True))

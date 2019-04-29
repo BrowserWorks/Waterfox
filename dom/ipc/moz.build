@@ -36,6 +36,8 @@ EXPORTS.mozilla.dom.ipc += [
 EXPORTS.mozilla.dom += [
     'BrowserBridgeChild.h',
     'BrowserBridgeParent.h',
+    'BrowserChild.h',
+    'BrowserParent.h',
     'CoalescedInputData.h',
     'CoalescedMouseData.h',
     'CoalescedWheelData.h',
@@ -47,6 +49,7 @@ EXPORTS.mozilla.dom += [
     'CSPMessageUtils.h',
     'DocShellMessageUtils.h',
     'FilePickerParent.h',
+    'JSWindowActor.h',
     'JSWindowActorChild.h',
     'JSWindowActorParent.h',
     'JSWindowActorService.h',
@@ -55,10 +58,8 @@ EXPORTS.mozilla.dom += [
     'ReferrerInfoUtils.h',
     'RemoteWebProgress.h',
     'RemoteWebProgressRequest.h',
-    'TabChild.h',
     'TabContext.h',
     'TabMessageUtils.h',
-    'TabParent.h',
     'URLClassifierChild.h',
     'URLClassifierParent.h',
     'WindowGlobalChild.h',
@@ -75,6 +76,8 @@ EXPORTS.mozilla += [
 UNIFIED_SOURCES += [
     'BrowserBridgeChild.cpp',
     'BrowserBridgeParent.cpp',
+    'BrowserChild.cpp',
+    'BrowserParent.cpp',
     'CoalescedMouseData.cpp',
     'CoalescedWheelData.cpp',
     'ColorPickerParent.cpp',
@@ -84,6 +87,7 @@ UNIFIED_SOURCES += [
     'CSPMessageUtils.cpp',
     'DocShellMessageUtils.cpp',
     'FilePickerParent.cpp',
+    'JSWindowActor.cpp',
     'JSWindowActorChild.cpp',
     'JSWindowActorParent.cpp',
     'JSWindowActorService.cpp',
@@ -99,10 +103,8 @@ UNIFIED_SOURCES += [
     'SharedMap.cpp',
     'SharedStringMap.cpp',
     'StructuredCloneData.cpp',
-    'TabChild.cpp',
     'TabContext.cpp',
     'TabMessageUtils.cpp',
-    'TabParent.cpp',
     'URLClassifierParent.cpp',
     'WindowGlobalChild.cpp',
     'WindowGlobalParent.cpp',
@@ -193,9 +195,6 @@ DEFINES['BIN_SUFFIX'] = '"%s"' % CONFIG['BIN_SUFFIX']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
     DEFINES['MOZ_ENABLE_FREETYPE'] = True
-
-if CONFIG['MOZ_TOOLKIT_SEARCH']:
-    DEFINES['MOZ_TOOLKIT_SEARCH'] = True
 
 JAR_MANIFESTS += ['jar.mn']
 

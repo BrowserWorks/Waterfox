@@ -27,6 +27,7 @@ audioipc-server = { path = "../../../../media/audioipc/server", optional = true 
 u2fhid = { path = "../../../../dom/webauthn/u2f-hid-rs" }
 gkrust_utils = { path = "../../../../xpcom/rust/gkrust_utils" }
 rsdparsa_capi = { path = "../../../../media/webrtc/signaling/src/sdp/rsdparsa_capi" }
+xulstore = { path = "../../../components/xulstore" }
 # We have these to enforce common feature sets for said crates.
 log = {version = "0.4", features = ["release_max_level_info"]}
 env_logger = {version = "0.5", default-features = false} # disable `regex` to reduce code size
@@ -46,6 +47,7 @@ default = []
 bindgen = ["geckoservo/bindgen"]
 servo = ["geckoservo"]
 quantum_render = ["webrender_bindings"]
+webrender_debugger = ["webrender_bindings/webrender_debugger"]
 cubeb-remoting = ["cubeb-sys", "audioipc-client", "audioipc-server"]
 cubeb_pulse_rust = ["cubeb-sys", "cubeb-pulse"]
 gecko_debug = ["geckoservo/gecko_debug", "nsstring/gecko_debug"]

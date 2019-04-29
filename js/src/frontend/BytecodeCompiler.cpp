@@ -400,24 +400,11 @@ bool BytecodeCompiler::createScriptSource(
   return true;
 }
 
-template <typename Unit>
-bool BytecodeCompiler::assignSource(SourceText<Unit>& sourceBuffer) {
-  if (!cx->realm()->behaviors().discardSource()) {
-    if (options.sourceIsLazy) {
-      scriptSource->setSourceRetrievable();
-    } else if (!scriptSource->setSourceCopy(cx, sourceBuffer)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 bool BytecodeCompiler::canLazilyParse() const {
   return options.canLazilyParse &&
          !cx->realm()->behaviors().disableLazyParsing() &&
          !cx->realm()->behaviors().discardSource() && !options.sourceIsLazy &&
-         !cx->lcovEnabled() &&
+         !coverage::IsLCovEnabled() &&
          // Disabled during record/replay. The replay debugger requires
          // scripts to be constructed in a consistent order, which might not
          // happen with lazy parsing.
@@ -541,7 +528,8 @@ JSScript* frontend::ScriptCompiler<Unit>::compileScript(
   for (;;) {
     ParseNode* pn;
     {
-      AutoGeckoProfilerEntry pseudoFrame(cx, "script parsing");
+      AutoGeckoProfilerEntry pseudoFrame(cx, "script parsing",
+                                         JS::ProfilingCategoryPair::JS_Parsing);
       if (sc->isEvalContext()) {
         pn = parser->evalBody(sc->asEvalContext());
       } else {
@@ -550,7 +538,8 @@ JSScript* frontend::ScriptCompiler<Unit>::compileScript(
     }
 
     // Successfully parsed. Emit the script.
-    AutoGeckoProfilerEntry pseudoFrame(cx, "script emit");
+    AutoGeckoProfilerEntry pseudoFrame(cx, "script emit",
+                                       JS::ProfilingCategoryPair::JS_Parsing);
     if (pn) {
       if (sc->isEvalContext() && sc->hasDebuggerStatement() &&
           !cx->helperThread()) {

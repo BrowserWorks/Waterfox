@@ -64,7 +64,7 @@ nsresult nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
     case eMouseDown: {
       if (aEvent->mClass == eTouchEventClass ||
           (aEvent->mClass == eMouseEventClass &&
-           aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton)) {
+           aEvent->AsMouseEvent()->mButton == MouseButton::eLeft)) {
         nsCOMPtr<nsIBaseWindow> window;
         mozilla::PresShell* presShell = aPresContext->GetPresShell();
         nsIContent* contentToResize =
@@ -113,7 +113,8 @@ nsresult nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
         // we're tracking
         mTrackingMouseMove = true;
 
-        nsIPresShell::SetCapturingContent(GetContent(), CAPTURE_IGNOREALLOWED);
+        PresShell::SetCapturingContent(GetContent(),
+                                       CaptureFlags::IgnoreAllowedState);
       }
     } break;
 
@@ -121,11 +122,11 @@ nsresult nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
     case eMouseUp: {
       if (aEvent->mClass == eTouchEventClass ||
           (aEvent->mClass == eMouseEventClass &&
-           aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton)) {
+           aEvent->AsMouseEvent()->mButton == MouseButton::eLeft)) {
         // we're done tracking.
         mTrackingMouseMove = false;
 
-        nsIPresShell::SetCapturingContent(nullptr, 0);
+        PresShell::ReleaseCapturingContent();
 
         doDefault = false;
       }
@@ -291,7 +292,7 @@ nsresult nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
       break;
     }
     case eMouseDoubleClick:
-      if (aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) {
+      if (aEvent->AsMouseEvent()->mButton == MouseButton::eLeft) {
         nsCOMPtr<nsIBaseWindow> window;
         mozilla::PresShell* presShell = aPresContext->GetPresShell();
         nsIContent* contentToResize =
@@ -529,5 +530,5 @@ void nsResizerFrame::MouseClicked(WidgetMouseEvent* aEvent) {
   // Execute the oncommand event handler.
   nsContentUtils::DispatchXULCommand(
       mContent, false, nullptr, nullptr, aEvent->IsControl(), aEvent->IsAlt(),
-      aEvent->IsShift(), aEvent->IsMeta(), aEvent->inputSource);
+      aEvent->IsShift(), aEvent->IsMeta(), aEvent->mInputSource);
 }

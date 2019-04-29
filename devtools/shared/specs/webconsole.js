@@ -234,6 +234,18 @@ const webconsoleSpecPrototype = {
       },
       response: RetVal("json"),
     },
+
+    blockRequest: {
+      request: {
+        filter: Arg(0, "json"),
+      },
+    },
+
+    unblockRequest: {
+      request: {
+        filter: Arg(0, "json"),
+      },
+    },
   },
 };
 
