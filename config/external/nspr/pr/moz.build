@@ -42,7 +42,7 @@ elif CONFIG['OS_TARGET'] == 'Darwin':
     OS_LIBS += ['-framework CoreServices']
     DEFINES['FD_SETSIZE'] = 10240
     DEFINES['_DARWIN_UNLIMITED_SELECT'] = True
-    elif CONFIG['HOST_MAJOR_VERSION'] >= '15':
+    if CONFIG['HOST_MAJOR_VERSION'] >= '15':
         DEFINES.update(
             HAS_CONNECTX=True,
         )
