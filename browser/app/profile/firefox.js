@@ -1667,7 +1667,7 @@ pref("browser.tabs.crashReporting.requestEmail", false);
 pref("browser.tabs.crashReporting.emailMe", false);
 pref("browser.tabs.crashReporting.email", "");
 
-pref("extensions.legacy.enabled", false);
+pref("extensions.legacy.enabled", true);
 
 // How often to check for CPOW timeouts. CPOWs are only timed out by
 // the hang monitor.
