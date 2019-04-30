@@ -7,7 +7,7 @@ XPIDL_SOURCES += [
     'nsIComponentManagerExtra.idl',
 ]
 
-XPIDL_MODULE = 'msgcommonbase'
+XPIDL_MODULE = 'browsercompsbase'
 
 EXPORTS += [
     'nsCommonBaseCID.h'
