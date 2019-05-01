@@ -2854,8 +2854,8 @@ nsresult HTMLInputElement::MaybeSubmitForm(nsPresContext* aPresContext) {
     return NS_OK;
   }
 
-  nsCOMPtr<nsIPresShell> shell = aPresContext->GetPresShell();
-  if (!shell) {
+  RefPtr<PresShell> presShell = aPresContext->GetPresShell();
+  if (!presShell) {
     return NS_OK;
   }
 
@@ -2868,7 +2868,7 @@ nsresult HTMLInputElement::MaybeSubmitForm(nsPresContext* aPresContext) {
     // submitting the form.
     WidgetMouseEvent event(true, eMouseClick, nullptr, WidgetMouseEvent::eReal);
     nsEventStatus status = nsEventStatus_eIgnore;
-    shell->HandleDOMEventWithTarget(submitContent, &event, &status);
+    presShell->HandleDOMEventWithTarget(submitContent, &event, &status);
   } else if (!mForm->ImplicitSubmissionIsDisabled() &&
              mForm->SubmissionCanProceed(nullptr)) {
     // TODO: removing this code and have the submit event sent by the form,
@@ -2878,7 +2878,7 @@ nsresult HTMLInputElement::MaybeSubmitForm(nsPresContext* aPresContext) {
     RefPtr<mozilla::dom::HTMLFormElement> form = mForm;
     InternalFormEvent event(true, eFormSubmit);
     nsEventStatus status = nsEventStatus_eIgnore;
-    shell->HandleDOMEventWithTarget(form, &event, &status);
+    presShell->HandleDOMEventWithTarget(form, &event, &status);
   }
 
   return NS_OK;
@@ -3428,7 +3428,7 @@ void HTMLInputElement::StartRangeThumbDrag(WidgetGUIEvent* aEvent) {
 void HTMLInputElement::FinishRangeThumbDrag(WidgetGUIEvent* aEvent) {
   MOZ_ASSERT(mIsDraggingRange);
 
-  if (nsIPresShell::GetCapturingContent() == this) {
+  if (PresShell::GetCapturingContent() == this) {
     PresShell::ReleaseCapturingContent();
   }
   if (aEvent) {
@@ -3443,7 +3443,7 @@ void HTMLInputElement::CancelRangeThumbDrag(bool aIsForUserEvent) {
   MOZ_ASSERT(mIsDraggingRange);
 
   mIsDraggingRange = false;
-  if (nsIPresShell::GetCapturingContent() == this) {
+  if (PresShell::GetCapturingContent() == this) {
     PresShell::ReleaseCapturingContent();
   }
   if (aIsForUserEvent) {
@@ -3512,7 +3512,7 @@ void HTMLInputElement::StartNumberControlSpinnerSpin() {
 
 void HTMLInputElement::StopNumberControlSpinnerSpin(SpinnerStopState aState) {
   if (mNumberControlSpinnerIsSpinning) {
-    if (nsIPresShell::GetCapturingContent() == this) {
+    if (PresShell::GetCapturingContent() == this) {
       PresShell::ReleaseCapturingContent();
     }
 
@@ -3710,11 +3710,10 @@ nsresult HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor) {
       InternalUIEvent actEvent(true, eLegacyDOMActivate, mouseEvent);
       actEvent.mDetail = 1;
 
-      nsCOMPtr<nsIPresShell> shell = aVisitor.mPresContext->GetPresShell();
-      if (shell) {
+      if (RefPtr<PresShell> presShell = aVisitor.mPresContext->GetPresShell()) {
         nsEventStatus status = nsEventStatus_eIgnore;
         mInInternalActivate = true;
-        rv = shell->HandleDOMEventWithTarget(this, &actEvent, &status);
+        rv = presShell->HandleDOMEventWithTarget(this, &actEvent, &status);
         mInInternalActivate = false;
 
         // If activate is cancelled, we must do the same as when click is
@@ -4119,10 +4118,10 @@ nsresult HTMLInputElement::PostHandleEvent(EventChainPostVisitor& aVisitor) {
               event.mOriginator = this;
               nsEventStatus status = nsEventStatus_eIgnore;
 
-              nsCOMPtr<nsIPresShell> presShell =
+              RefPtr<PresShell> presShell =
                   aVisitor.mPresContext->GetPresShell();
 
-              // If |nsIPresShell::Destroy| has been called due to
+              // If |PresShell::Destroy| has been called due to
               // handling the event the pres context will return a null
               // pres shell.  See bug 125624.
               // TODO: removing this code and have the submit event sent by the
@@ -4183,7 +4182,7 @@ void HTMLInputElement::PostHandleEventForRangeThumb(
       if (mIsDraggingRange) {
         break;
       }
-      if (nsIPresShell::GetCapturingContent()) {
+      if (PresShell::GetCapturingContent()) {
         break;  // don't start drag if someone else is already capturing
       }
       WidgetInputEvent* inputEvent = aVisitor.mEvent->AsInputEvent();
@@ -4212,7 +4211,7 @@ void HTMLInputElement::PostHandleEventForRangeThumb(
       if (!mIsDraggingRange) {
         break;
       }
-      if (nsIPresShell::GetCapturingContent() != this) {
+      if (PresShell::GetCapturingContent() != this) {
         // Someone else grabbed capture.
         CancelRangeThumbDrag();
         break;

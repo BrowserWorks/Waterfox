@@ -941,10 +941,11 @@ VARCACHE_PREF(
   bool, true
 )
 
-// Are -moz-prefixed gradient functions enabled?
+// Are -moz-prefixed gradients restricted to a simpler syntax? (with an optional
+// <angle> or <position>, but not both)?
 VARCACHE_PREF(
-  "layout.css.prefixes.gradients",
-   layout_css_prefixes_gradients,
+  "layout.css.simple-moz-gradient.enabled",
+   layout_css_simple_moz_gradient_enabled,
   bool, true
 )
 
@@ -1107,11 +1108,17 @@ VARCACHE_PREF(
 )
 
 // Are dynamic reflow roots enabled?
+#ifdef EARLY_BETA_OR_EARLIER
+#define PREF_VALUE true
+#else
+#define PREF_VALUE false
+#endif
 VARCACHE_PREF(
    "layout.dynamic-reflow-roots.enabled",
    layout_dynamic_reflow_roots_enabled,
-  bool, true
+  bool, PREF_VALUE
 )
+#undef PREF_VALUE
 
 VARCACHE_PREF(
    "layout.lower_priority_refresh_driver_during_load",
@@ -1479,7 +1486,47 @@ VARCACHE_PREF(
 
 #endif // ANDROID
 
-// WebRTC
+//---------------------------------------------------------------------------
+// MediaCapture prefs
+//---------------------------------------------------------------------------
+
+// Enables navigator.mediaDevices and getUserMedia() support. See also
+// media.peerconnection.enabled
+VARCACHE_PREF(
+              "media.navigator.enabled",
+              media_navigator_enabled,
+              bool, true
+              )
+
+// This pref turns off [SecureContext] on the navigator.mediaDevices object, for
+// more compatible legacy behavior.
+VARCACHE_PREF(
+              "media.devices.insecure.enabled",
+              media_devices_insecure_enabled,
+              bool, true
+              )
+
+// If the above pref is also enabled, this pref enabled getUserMedia() support
+// in http, bypassing the instant NotAllowedError you get otherwise.
+VARCACHE_PREF(
+              "media.getusermedia.insecure.enabled",
+              media_getusermedia_insecure_enabled,
+              bool, false
+              )
+
+//---------------------------------------------------------------------------
+// WebRTC prefs
+//---------------------------------------------------------------------------
+
+// Enables RTCPeerConnection support. Note that, when true, this pref enables
+// navigator.mediaDevices and getUserMedia() support as well.
+// See also media.navigator.enabled
+VARCACHE_PREF(
+              "media.peerconnection.enabled",
+              media_peerconnection_enabled,
+              bool, true
+              )
+
 #ifdef MOZ_WEBRTC
 #ifdef ANDROID
 

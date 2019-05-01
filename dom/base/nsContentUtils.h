@@ -83,7 +83,6 @@ class nsNameSpaceManager;
 class nsIObserver;
 class nsIParser;
 class nsIPluginTag;
-class nsIPresShell;
 class nsIPrincipal;
 class nsIRequest;
 class nsIRunnable;
@@ -2149,14 +2148,15 @@ class nsContentUtils {
   /**
    * This method creates and dispatches "command" event, which implements
    * XULCommandEvent.
-   * If aShell is not null, dispatching goes via
-   * nsIPresShell::HandleDOMEventWithTarget.
+   * If aPresShell is not null, dispatching goes via
+   * PresShell::HandleDOMEventWithTarget().
    */
+  MOZ_CAN_RUN_SCRIPT
   static nsresult DispatchXULCommand(
       nsIContent* aTarget, bool aTrusted,
       mozilla::dom::Event* aSourceEvent = nullptr,
-      nsIPresShell* aShell = nullptr, bool aCtrl = false, bool aAlt = false,
-      bool aShift = false, bool aMeta = false,
+      mozilla::PresShell* aPresShell = nullptr, bool aCtrl = false,
+      bool aAlt = false, bool aShift = false, bool aMeta = false,
       // Including MouseEventBinding here leads
       // to incude loops, unfortunately.
       uint16_t inputSource = 0 /* MouseEvent_Binding::MOZ_SOURCE_UNKNOWN */);
@@ -2253,7 +2253,8 @@ class nsContentUtils {
    * getting generic data like a device context or widget from it is OK, but it
    * might not be this document's actual presentation.
    */
-  static nsIPresShell* FindPresShellForDocument(const Document* aDoc);
+  static mozilla::PresShell* FindPresShellForDocument(
+      const Document* aDocument);
 
   /**
    * Returns the widget for this document if there is one. Looks at all ancestor
@@ -2263,7 +2264,7 @@ class nsContentUtils {
    * You should probably use WidgetForContent() instead of this, unless you have
    * a good reason to do otherwise.
    */
-  static nsIWidget* WidgetForDocument(const Document* aDoc);
+  static nsIWidget* WidgetForDocument(const Document* aDocument);
 
   /**
    * Returns the appropriate widget for this element, if there is one. Unlike
@@ -2880,13 +2881,13 @@ class nsContentUtils {
   // Helpers shared by the implementations of nsContentUtils methods and
   // nsIDOMWindowUtils methods.
   static mozilla::Modifiers GetWidgetModifiers(int32_t aModifiers);
-  static nsIWidget* GetWidget(nsIPresShell* aPresShell, nsPoint* aOffset);
+  static nsIWidget* GetWidget(mozilla::PresShell* aPresShell, nsPoint* aOffset);
   static int16_t GetButtonsFlagForButton(int32_t aButton);
   static mozilla::LayoutDeviceIntPoint ToWidgetPoint(
       const mozilla::CSSPoint& aPoint, const nsPoint& aOffset,
       nsPresContext* aPresContext);
   static nsView* GetViewToDispatchEvent(nsPresContext* aPresContext,
-                                        nsIPresShell** aPresShell);
+                                        mozilla::PresShell** aPresShell);
 
   /**
    * Synthesize a mouse event to the given widget
@@ -3016,7 +3017,8 @@ class nsContentUtils {
    * Checks if storage for the given principal is permitted by the user's
    * preferences. This method should be used only by ServiceWorker loading.
    */
-  static StorageAccess StorageAllowedForServiceWorker(nsIPrincipal* aPrincipal);
+  static StorageAccess StorageAllowedForServiceWorker(
+      nsIPrincipal* aPrincipal, nsICookieSettings* aCookieSettings);
 
   /*
    * Returns true if this document should disable storages because of the
@@ -3448,11 +3450,10 @@ class nsContentUtils {
    * Used in the implementation of StorageAllowedForWindow,
    * StorageAllowedForChannel and StorageAllowedForServiceWorker.
    */
-  static StorageAccess InternalStorageAllowedCheck(nsIPrincipal* aPrincipal,
-                                                   nsPIDOMWindowInner* aWindow,
-                                                   nsIURI* aURI,
-                                                   nsIChannel* aChannel,
-                                                   uint32_t& aRejectedReason);
+  static StorageAccess InternalStorageAllowedCheck(
+      nsIPrincipal* aPrincipal, nsPIDOMWindowInner* aWindow, nsIURI* aURI,
+      nsIChannel* aChannel, nsICookieSettings* aCookieSettings,
+      uint32_t& aRejectedReason);
 
   static nsINode* GetCommonAncestorHelper(nsINode* aNode1, nsINode* aNode2);
   static nsIContent* GetCommonFlattenedTreeAncestorHelper(

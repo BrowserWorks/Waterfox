@@ -7810,6 +7810,7 @@ nsresult nsDocShell::RestoreFromHistory() {
   // <head> is parsed.
   document->NotifyPossibleTitleChange(false);
 
+  BrowsingContext::Children contexts(childShells.Count());
   // Now we simulate appending child docshells for subframes.
   for (i = 0; i < childShells.Count(); ++i) {
     nsIDocShellTreeItem* childItem = childShells.ObjectAt(i);
@@ -7849,12 +7850,7 @@ nsresult nsDocShell::RestoreFromHistory() {
     // child inherits our mIsActive mPrivateBrowsingId, which is what we want.
     AddChild(childItem);
 
-    // TODO(farre): This results in sending an IPC message to
-    // re-attach the 'BrowsingContext' to the 'ContentParent'. We
-    // would much rather do this in bulk. See Bug 1410260.
-    RefPtr<BrowsingContext> childContext =
-        nsDocShell::Cast(childShell)->GetBrowsingContext();
-    childContext->Attach();
+    contexts.AppendElement(nsDocShell::Cast(childShell)->GetBrowsingContext());
 
     childShell->SetAllowPlugins(allowPlugins);
     childShell->SetAllowJavascript(allowJavascript);
@@ -7870,6 +7866,10 @@ nsresult nsDocShell::RestoreFromHistory() {
 
     rv = childShell->BeginRestore(nullptr, false);
     NS_ENSURE_SUCCESS(rv, rv);
+  }
+
+  if (!contexts.IsEmpty()) {
+    GetBrowsingContext()->RestoreChildren(std::move(contexts));
   }
 
   // Make sure to restore the window state after adding the child shells back
@@ -9961,7 +9961,7 @@ nsresult nsDocShell::DoURILoad(nsDocShellLoadState* aLoadState,
       NS_ENSURE_SUCCESS(rv, rv);
       if (IsConsideredSameOriginForUIR(aLoadState->TriggeringPrincipal(),
                                        resultPrincipal)) {
-        static_cast<LoadInfo*>(loadInfo.get())->SetUpgradeInsecureRequests();
+        loadInfo->SetUpgradeInsecureRequests();
       }
     }
   }

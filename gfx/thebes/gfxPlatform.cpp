@@ -70,6 +70,10 @@
 #  include "mozilla/gfx/DeviceManagerDx.h"
 #endif
 
+#ifdef MOZ_WAYLAND
+#  include "mozilla/widget/nsWaylandDisplayShutdown.h"
+#endif
+
 #include "nsGkAtoms.h"
 #include "gfxPlatformFontList.h"
 #include "gfxContext.h"
@@ -1276,6 +1280,9 @@ void gfxPlatform::ShutdownLayersIPC() {
       layers::PaintThread::Shutdown();
     }
   } else if (XRE_IsParentProcess()) {
+#ifdef MOZ_WAYLAND
+    widget::WaylandDisplayShutdown();
+#endif
     gfx::VRManagerChild::ShutDown();
     layers::CompositorManagerChild::Shutdown();
     layers::ImageBridgeChild::ShutDown();
@@ -1715,11 +1722,17 @@ nsAutoCString gfxPlatform::GetDefaultFontName(
   // this one variable:
   nsAutoCString result;
 
-  gfxFontFamily* fontFamily =
+  FamilyAndGeneric fam =
       gfxPlatformFontList::PlatformFontList()->GetDefaultFontFamily(
           aLangGroup, aGenericFamily);
-  if (fontFamily) {
-    fontFamily->LocalizedName(result);
+  if (fam.mFamily.mIsShared) {
+    if (fam.mFamily.mShared) {
+      fontlist::FontList* fontList =
+          gfxPlatformFontList::PlatformFontList()->SharedFontList();
+      result = fam.mFamily.mShared->DisplayName().AsString(fontList);
+    }
+  } else if (fam.mFamily.mUnshared) {
+    fam.mFamily.mUnshared->LocalizedName(result);
   }  // (else, leave 'result' empty)
 
   return result;
@@ -2562,7 +2575,7 @@ static FeatureState& WebRenderHardwareQualificationStatus(
                 FeatureStatus::Blocked, "Device too old",
                 NS_LITERAL_CSTRING("FEATURE_FAILURE_DEVICE_TOO_OLD"));
           }
-#ifdef NIGHTLY_BUILD
+#ifdef EARLY_BETA_OR_EARLIER
         } else if (adapterVendorID == u"0x1002") {  // AMD
           // AMD deviceIDs are not very well ordered. This
           // condition is based off the information in gpu-db
@@ -2580,14 +2593,60 @@ static FeatureState& WebRenderHardwareQualificationStatus(
                 FeatureStatus::Blocked, "Device too old",
                 NS_LITERAL_CSTRING("FEATURE_FAILURE_DEVICE_TOO_OLD"));
           }
+#endif
+#ifdef NIGHTLY_BUILD
         } else if (adapterVendorID == u"0x8086" ||
                    adapterVendorID == u"mesa/i965") {  // Intel
           const uint16_t supportedDevices[] = {
-              0x191d,  // HD Graphics P530
-              0x192d,  // Iris Pro Graphics P555
-              0x1912,  // HD Graphics 530
-              0x5912,  // HD Graphics 630
-              0x3e92,  // UHD Graphics 630
+              // skylake gt2+
+              0x1912,
+              0x1913,
+              0x1915,
+              0x1916,
+              0x1917,
+              0x191a,
+              0x191b,
+              0x191d,
+              0x191e,
+              0x1921,
+              0x1923,
+              0x1926,
+              0x1927,
+              0x192b,
+              0x1932,
+              0x193b,
+              0x193d,
+
+              // kabylake gt2+
+              0x5912,
+              0x5916,
+              0x591a,
+              0x591b,
+              0x591c,
+              0x591d,
+              0x591e,
+              0x5921,
+              0x5926,
+              0x5923,
+              0x5927,
+              0x593b,
+
+              // coffeelake gt2+
+              0x3e91,
+              0x3e92,
+              0x3e96,
+              0x3e98,
+              0x3e9a,
+              0x3e9b,
+              0x3e94,
+              0x3ea0,
+              0x3ea9,
+              0x3ea2,
+              0x3ea6,
+              0x3ea7,
+              0x3ea8,
+              0x3ea5,
+
               // HD Graphics 4600
               0x0412,
               0x0416,

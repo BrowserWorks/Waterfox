@@ -195,6 +195,53 @@ class GeckoJavaSampler
 };
 #endif
 
+// Return all features that are available on this platform.
+static uint32_t AvailableFeatures() {
+  uint32_t features = 0;
+
+#define ADD_FEATURE(n_, str_, Name_, desc_) \
+  ProfilerFeature::Set##Name_(features);
+
+  // Add all the possible features.
+  PROFILER_FOR_EACH_FEATURE(ADD_FEATURE)
+
+#undef ADD_FEATURE
+
+  // Now remove features not supported on this platform/configuration.
+#if !defined(GP_OS_android)
+  ProfilerFeature::ClearJava(features);
+#endif
+#if !defined(HAVE_NATIVE_UNWIND)
+  ProfilerFeature::ClearStackWalk(features);
+#endif
+#if !defined(MOZ_TASK_TRACER)
+  ProfilerFeature::ClearTaskTracer(features);
+#endif
+#if !(defined(MOZ_REPLACE_MALLOC) && defined(MOZ_PROFILER_MEMORY))
+  ProfilerFeature::ClearMemory(features);
+#endif
+  if (!JS::TraceLoggerSupported()) {
+    ProfilerFeature::ClearJSTracer(features);
+  }
+
+  return features;
+}
+
+// Default features common to all contexts (even if not available).
+static uint32_t DefaultFeatures() {
+  return ProfilerFeature::Java | ProfilerFeature::JS | ProfilerFeature::Leaf |
+         ProfilerFeature::StackWalk | ProfilerFeature::Threads |
+         ProfilerFeature::Responsiveness;
+}
+
+// Extra default features when MOZ_PROFILER_STARTUP is set (even if not
+// available).
+static uint32_t StartupExtraDefaultFeatures() {
+  // Enable mainthreadio by default for startup profiles as startup is heavy on
+  // I/O operations, and main thread I/O is really important to see there.
+  return ProfilerFeature::MainThreadIO | ProfilerFeature::Memory;
+}
+
 class PSMutex : public StaticMutex {};
 
 typedef BaseAutoLock<PSMutex&> PSAutoLock;
@@ -292,61 +339,69 @@ class CorePS {
   // No PSLockRef is needed for this field because it's immutable.
   PS_GET_LOCKLESS(TimeStamp, ProcessStartTime)
 
-  PS_GET(const nsTArray<UniquePtr<RegisteredThread>>&, RegisteredThreads)
+  PS_GET(const Vector<UniquePtr<RegisteredThread>>&, RegisteredThreads)
 
   static void AppendRegisteredThread(
       PSLockRef, UniquePtr<RegisteredThread>&& aRegisteredThread) {
-    sInstance->mRegisteredThreads.AppendElement(std::move(aRegisteredThread));
+    MOZ_RELEASE_ASSERT(
+        sInstance->mRegisteredThreads.append(std::move(aRegisteredThread)));
   }
 
   static void RemoveRegisteredThread(PSLockRef,
                                      RegisteredThread* aRegisteredThread) {
     // Remove aRegisteredThread from mRegisteredThreads.
-    // Can't use RemoveElement() because we can't equality-compare a UniquePtr
-    // to a raw pointer.
-    sInstance->mRegisteredThreads.RemoveElementsBy(
-        [&](UniquePtr<RegisteredThread>& rt) {
-          return rt.get() == aRegisteredThread;
-        });
+    for (UniquePtr<RegisteredThread>& rt : sInstance->mRegisteredThreads) {
+      if (rt.get() == aRegisteredThread) {
+        sInstance->mRegisteredThreads.erase(&rt);
+        return;
+      }
+    }
   }
 
-  PS_GET(nsTArray<RefPtr<PageInformation>>&, RegisteredPages)
+  PS_GET(Vector<RefPtr<PageInformation>>&, RegisteredPages)
 
   static void AppendRegisteredPage(PSLockRef,
                                    RefPtr<PageInformation>&& aRegisteredPage) {
 #ifdef DEBUG
     struct RegisteredPageComparator {
-      bool Equals(PageInformation* aA, PageInformation* aB) const {
-        return aA->Equals(aB);
-      }
+      PageInformation* aA;
+      bool operator()(PageInformation* aB) const { return aA->Equals(aB); }
     };
-    MOZ_ASSERT(!sInstance->mRegisteredPages.Contains(
-        aRegisteredPage, RegisteredPageComparator()));
+    MOZ_RELEASE_ASSERT(std::none_of(
+        sInstance->mRegisteredPages.begin(), sInstance->mRegisteredPages.end(),
+        RegisteredPageComparator{aRegisteredPage.get()}));
 #endif
-    sInstance->mRegisteredPages.AppendElement(std::move(aRegisteredPage));
+    MOZ_RELEASE_ASSERT(
+        sInstance->mRegisteredPages.append(std::move(aRegisteredPage)));
   }
 
   static void RemoveRegisteredPages(PSLockRef,
                                     const nsID& aRegisteredDocShellId) {
     // Remove RegisteredPage from mRegisteredPages by given DocShell Id.
-    sInstance->mRegisteredPages.RemoveElementsBy(
-        [&](RefPtr<PageInformation>& rd) {
-          return rd->DocShellId().Equals(aRegisteredDocShellId);
-        });
+    sInstance->mRegisteredPages.eraseIf([&](const RefPtr<PageInformation>& rd) {
+      return rd->DocShellId().Equals(aRegisteredDocShellId);
+    });
   }
 
-  PS_GET(const nsTArray<BaseProfilerCount*>&, Counters)
+  static void ClearRegisteredPages(PSLockRef) {
+    sInstance->mRegisteredPages.clear();
+  }
+
+  PS_GET(const Vector<BaseProfilerCount*>&, Counters)
 
   static void AppendCounter(PSLockRef, BaseProfilerCount* aCounter) {
     // we don't own the counter; they may be stored in static objects
-    sInstance->mCounters.AppendElement(aCounter);
+    MOZ_RELEASE_ASSERT(sInstance->mCounters.append(aCounter));
   }
 
   static void RemoveCounter(PSLockRef, BaseProfilerCount* aCounter) {
     // we may be called to remove a counter after the profiler is stopped or
     // late in shutdown.
     if (sInstance) {
-      sInstance->mCounters.RemoveElement(aCounter);
+      auto* counter = std::find(sInstance->mCounters.begin(),
+                                sInstance->mCounters.end(), aCounter);
+      MOZ_RELEASE_ASSERT(counter != sInstance->mCounters.end());
+      sInstance->mCounters.erase(counter);
     }
   }
 
@@ -368,14 +423,14 @@ class CorePS {
 
   // Info on all the registered threads.
   // ThreadIds in mRegisteredThreads are unique.
-  nsTArray<UniquePtr<RegisteredThread>> mRegisteredThreads;
+  Vector<UniquePtr<RegisteredThread>> mRegisteredThreads;
 
   // Info on all the registered pages.
   // DocShellId and DocShellHistoryId pairs in mRegisteredPages are unique.
-  nsTArray<RefPtr<PageInformation>> mRegisteredPages;
+  Vector<RefPtr<PageInformation>> mRegisteredPages;
 
   // Non-owning pointers to all active counters
-  nsTArray<BaseProfilerCount*> mCounters;
+  Vector<BaseProfilerCount*> mCounters;
 
 #ifdef USE_LUL_STACKWALK
   // LUL's state. Null prior to the first activation, non-null thereafter.
@@ -408,7 +463,7 @@ class ActivePS {
  private:
   static uint32_t AdjustFeatures(uint32_t aFeatures, uint32_t aFilterCount) {
     // Filter out any features unavailable in this platform/configuration.
-    aFeatures &= profiler_get_available_features();
+    aFeatures &= AvailableFeatures();
 
 #if defined(GP_OS_android)
     if (!jni::IsFennec()) {
@@ -603,7 +658,7 @@ class ActivePS {
 
   PS_GET(uint32_t, Features)
 
-#define PS_GET_FEATURE(n_, str_, Name_)                       \
+#define PS_GET_FEATURE(n_, str_, Name_, desc_)                \
   static bool Feature##Name_(PSLockRef) {                     \
     return ProfilerFeature::Has##Name_(sInstance->mFeatures); \
   }
@@ -627,8 +682,7 @@ class ActivePS {
 
   static ProfileBuffer& Buffer(PSLockRef) { return *sInstance->mBuffer.get(); }
 
-  static const nsTArray<LiveProfiledThreadData>& LiveProfiledThreads(
-      PSLockRef) {
+  static const Vector<LiveProfiledThreadData>& LiveProfiledThreads(PSLockRef) {
     return sInstance->mLiveProfiledThreads;
   }
 
@@ -641,43 +695,37 @@ class ActivePS {
   // The returned array is sorted by thread register time.
   // Do not hold on to the return value across thread registration or profiler
   // restarts.
-  static nsTArray<Pair<RegisteredThread*, ProfiledThreadData*>> ProfiledThreads(
+  static Vector<Pair<RegisteredThread*, ProfiledThreadData*>> ProfiledThreads(
       PSLockRef) {
-    nsTArray<Pair<RegisteredThread*, ProfiledThreadData*>> array;
+    Vector<Pair<RegisteredThread*, ProfiledThreadData*>> array;
+    MOZ_RELEASE_ASSERT(
+        array.initCapacity(sInstance->mLiveProfiledThreads.length() +
+                           sInstance->mDeadProfiledThreads.length()));
     for (auto& t : sInstance->mLiveProfiledThreads) {
-      array.AppendElement(
-          MakePair(t.mRegisteredThread, t.mProfiledThreadData.get()));
+      MOZ_RELEASE_ASSERT(array.append(
+          MakePair(t.mRegisteredThread, t.mProfiledThreadData.get())));
     }
     for (auto& t : sInstance->mDeadProfiledThreads) {
-      array.AppendElement(MakePair((RegisteredThread*)nullptr, t.get()));
+      MOZ_RELEASE_ASSERT(
+          array.append(MakePair((RegisteredThread*)nullptr, t.get())));
     }
 
-    class ThreadRegisterTimeComparator {
-     public:
-      bool Equals(const Pair<RegisteredThread*, ProfiledThreadData*>& a,
-                  const Pair<RegisteredThread*, ProfiledThreadData*>& b) const {
-        return a.second()->Info()->RegisterTime() ==
-               b.second()->Info()->RegisterTime();
-      }
-
-      bool LessThan(
-          const Pair<RegisteredThread*, ProfiledThreadData*>& a,
-          const Pair<RegisteredThread*, ProfiledThreadData*>& b) const {
-        return a.second()->Info()->RegisterTime() <
-               b.second()->Info()->RegisterTime();
-      }
-    };
-    array.Sort(ThreadRegisterTimeComparator());
+    std::sort(array.begin(), array.end(),
+              [](const Pair<RegisteredThread*, ProfiledThreadData*>& a,
+                 const Pair<RegisteredThread*, ProfiledThreadData*>& b) {
+                return a.second()->Info()->RegisterTime() <
+                       b.second()->Info()->RegisterTime();
+              });
     return array;
   }
 
-  static nsTArray<RefPtr<PageInformation>> ProfiledPages(PSLockRef aLock) {
-    nsTArray<RefPtr<PageInformation>> array;
+  static Vector<RefPtr<PageInformation>> ProfiledPages(PSLockRef aLock) {
+    Vector<RefPtr<PageInformation>> array;
     for (auto& d : CorePS::RegisteredPages(aLock)) {
-      array.AppendElement(d);
+      MOZ_RELEASE_ASSERT(array.append(d));
     }
     for (auto& d : sInstance->mDeadProfiledPages) {
-      array.AppendElement(d);
+      MOZ_RELEASE_ASSERT(array.append(d));
     }
     // We don't need to sort the DocShells like threads since we won't show them
     // as a list.
@@ -688,8 +736,8 @@ class ActivePS {
   // ProfiledThreadData object for a RegisteredThread.
   static ProfiledThreadData* GetProfiledThreadData(
       PSLockRef, RegisteredThread* aRegisteredThread) {
-    for (size_t i = 0; i < sInstance->mLiveProfiledThreads.Length(); i++) {
-      LiveProfiledThreadData& thread = sInstance->mLiveProfiledThreads[i];
+    for (const LiveProfiledThreadData& thread :
+         sInstance->mLiveProfiledThreads) {
       if (thread.mRegisteredThread == aRegisteredThread) {
         return thread.mProfiledThreadData.get();
       }
@@ -700,12 +748,12 @@ class ActivePS {
   static ProfiledThreadData* AddLiveProfiledThread(
       PSLockRef, RegisteredThread* aRegisteredThread,
       UniquePtr<ProfiledThreadData>&& aProfiledThreadData) {
-    sInstance->mLiveProfiledThreads.AppendElement(LiveProfiledThreadData{
-        aRegisteredThread, std::move(aProfiledThreadData)});
+    MOZ_RELEASE_ASSERT(
+        sInstance->mLiveProfiledThreads.append(LiveProfiledThreadData{
+            aRegisteredThread, std::move(aProfiledThreadData)}));
 
     // Return a weak pointer to the ProfiledThreadData object.
-    return sInstance->mLiveProfiledThreads.LastElement()
-        .mProfiledThreadData.get();
+    return sInstance->mLiveProfiledThreads.back().mProfiledThreadData.get();
   }
 
   static void UnregisterThread(PSLockRef aLockRef,
@@ -716,14 +764,15 @@ class ActivePS {
     // element, moving the ProfiledThreadData object for the thread into the
     // mDeadProfiledThreads array.
     // The thread's RegisteredThread object gets destroyed here.
-    for (size_t i = 0; i < sInstance->mLiveProfiledThreads.Length(); i++) {
+    for (size_t i = 0; i < sInstance->mLiveProfiledThreads.length(); i++) {
       LiveProfiledThreadData& thread = sInstance->mLiveProfiledThreads[i];
       if (thread.mRegisteredThread == aRegisteredThread) {
         thread.mProfiledThreadData->NotifyUnregistered(
             sInstance->mBuffer->mRangeEnd);
-        sInstance->mDeadProfiledThreads.AppendElement(
-            std::move(thread.mProfiledThreadData));
-        sInstance->mLiveProfiledThreads.RemoveElementAt(i);
+        MOZ_RELEASE_ASSERT(sInstance->mDeadProfiledThreads.append(
+            std::move(thread.mProfiledThreadData)));
+        sInstance->mLiveProfiledThreads.erase(
+            &sInstance->mLiveProfiledThreads[i]);
         return;
       }
     }
@@ -738,8 +787,9 @@ class ActivePS {
   static void DiscardExpiredDeadProfiledThreads(PSLockRef) {
     uint64_t bufferRangeStart = sInstance->mBuffer->mRangeStart;
     // Discard any dead threads that were unregistered before bufferRangeStart.
-    sInstance->mDeadProfiledThreads.RemoveElementsBy(
-        [bufferRangeStart](UniquePtr<ProfiledThreadData>& aProfiledThreadData) {
+    sInstance->mDeadProfiledThreads.eraseIf(
+        [bufferRangeStart](
+            const UniquePtr<ProfiledThreadData>& aProfiledThreadData) {
           Maybe<uint64_t> bufferPosition =
               aProfiledThreadData->BufferPositionWhenUnregistered();
           MOZ_RELEASE_ASSERT(bufferPosition,
@@ -751,12 +801,13 @@ class ActivePS {
   static void UnregisterPages(PSLockRef aLock,
                               const nsID& aRegisteredDocShellId) {
     auto& registeredPages = CorePS::RegisteredPages(aLock);
-    for (size_t i = 0; i < registeredPages.Length(); i++) {
+    for (size_t i = 0; i < registeredPages.length(); i++) {
       RefPtr<PageInformation>& page = registeredPages[i];
       if (page->DocShellId().Equals(aRegisteredDocShellId)) {
         page->NotifyUnregistered(sInstance->mBuffer->mRangeEnd);
-        sInstance->mDeadProfiledPages.AppendElement(std::move(page));
-        registeredPages.RemoveElementAt(i--);
+        MOZ_RELEASE_ASSERT(
+            sInstance->mDeadProfiledPages.append(std::move(page)));
+        registeredPages.erase(&registeredPages[i--]);
       }
     }
   }
@@ -765,14 +816,18 @@ class ActivePS {
     uint64_t bufferRangeStart = sInstance->mBuffer->mRangeStart;
     // Discard any dead pages that were unregistered before
     // bufferRangeStart.
-    sInstance->mDeadProfiledPages.RemoveElementsBy(
-        [bufferRangeStart](RefPtr<PageInformation>& aProfiledPage) {
+    sInstance->mDeadProfiledPages.eraseIf(
+        [bufferRangeStart](const RefPtr<PageInformation>& aProfiledPage) {
           Maybe<uint64_t> bufferPosition =
               aProfiledPage->BufferPositionWhenUnregistered();
           MOZ_RELEASE_ASSERT(bufferPosition,
                              "should have unregistered this page");
           return *bufferPosition < bufferRangeStart;
         });
+  }
+
+  static void ClearUnregisteredPages(PSLockRef) {
+    sInstance->mDeadProfiledPages.clear();
   }
 
 #if !defined(RELEASE_OR_BETA)
@@ -809,7 +864,7 @@ class ActivePS {
   static void ClearExpiredExitProfiles(PSLockRef) {
     uint64_t bufferRangeStart = sInstance->mBuffer->mRangeStart;
     // Discard exit profiles that were gathered before our buffer RangeStart.
-    sInstance->mExitProfiles.RemoveElementsBy(
+    sInstance->mExitProfiles.eraseIf(
         [bufferRangeStart](const ExitProfile& aExitProfile) {
           return aExitProfile.mBufferPositionAtGatherTime < bufferRangeStart;
         });
@@ -818,18 +873,20 @@ class ActivePS {
   static void AddExitProfile(PSLockRef aLock, const nsCString& aExitProfile) {
     ClearExpiredExitProfiles(aLock);
 
-    sInstance->mExitProfiles.AppendElement(
-        ExitProfile{aExitProfile, sInstance->mBuffer->mRangeEnd});
+    MOZ_RELEASE_ASSERT(sInstance->mExitProfiles.append(
+        ExitProfile{aExitProfile, sInstance->mBuffer->mRangeEnd}));
   }
 
-  static nsTArray<nsCString> MoveExitProfiles(PSLockRef aLock) {
+  static Vector<nsCString> MoveExitProfiles(PSLockRef aLock) {
     ClearExpiredExitProfiles(aLock);
 
-    nsTArray<nsCString> profiles(sInstance->mExitProfiles.Length());
+    Vector<nsCString> profiles;
+    MOZ_RELEASE_ASSERT(
+        profiles.initCapacity(sInstance->mExitProfiles.length()));
     for (auto& profile : sInstance->mExitProfiles) {
-      profiles.AppendElement(std::move(profile.mJSON));
+      MOZ_RELEASE_ASSERT(profiles.append(std::move(profile.mJSON)));
     }
-    sInstance->mExitProfiles.Clear();
+    sInstance->mExitProfiles.clear();
     return profiles;
   }
 
@@ -881,14 +938,14 @@ class ActivePS {
   //  - mLiveProfiledThreads contains all threads that are still registered, and
   //  - mDeadProfiledThreads contains all threads that have already been
   //    unregistered but for which there is still data in the profile buffer.
-  nsTArray<LiveProfiledThreadData> mLiveProfiledThreads;
-  nsTArray<UniquePtr<ProfiledThreadData>> mDeadProfiledThreads;
+  Vector<LiveProfiledThreadData> mLiveProfiledThreads;
+  Vector<UniquePtr<ProfiledThreadData>> mDeadProfiledThreads;
 
   // Info on all the dead pages.
   // Registered pages are being moved to this array after unregistration.
   // We are keeping them in case we need them in the profile data.
   // We are removing them when we ensure that we won't need them anymore.
-  nsTArray<RefPtr<PageInformation>> mDeadProfiledPages;
+  Vector<RefPtr<PageInformation>> mDeadProfiledPages;
 
   // The current sampler thread. This class is not responsible for destroying
   // the SamplerThread object; the Destroy() method returns it so the caller
@@ -911,7 +968,7 @@ class ActivePS {
     nsCString mJSON;
     uint64_t mBufferPositionAtGatherTime;
   };
-  nsTArray<ExitProfile> mExitProfiles;
+  Vector<ExitProfile> mExitProfiles;
 };
 
 ActivePS* ActivePS::sInstance = nullptr;
@@ -1736,10 +1793,10 @@ static void StreamTaskTracer(PSLockRef aLock, SpliceableJSONWriter& aWriter) {
 
   aWriter.StartArrayProperty("data");
   {
-    UniquePtr<nsTArray<nsCString>> data =
+    UniquePtr<Vector<nsCString>> data =
         tasktracer::GetLoggedData(CorePS::ProcessStartTime());
-    for (uint32_t i = 0; i < data->Length(); ++i) {
-      aWriter.StringElement((data->ElementAt(i)).get());
+    for (const nsCString& dataString : *data) {
+      aWriter.StringElement(dataString.get());
     }
   }
   aWriter.EndArray();
@@ -1747,7 +1804,7 @@ static void StreamTaskTracer(PSLockRef aLock, SpliceableJSONWriter& aWriter) {
   aWriter.StartArrayProperty("threads");
   {
     ActivePS::DiscardExpiredDeadProfiledThreads(aLock);
-    nsTArray<Pair<RegisteredThread*, ProfiledThreadData*>> threads =
+    Vector<Pair<RegisteredThread*, ProfiledThreadData*>> threads =
         ActivePS::ProfiledThreads(aLock);
     for (auto& thread : threads) {
       RefPtr<ThreadInfo> info = thread.second()->Info();
@@ -2037,7 +2094,7 @@ static void locked_profiler_stream_json_for_this_process(
   aWriter.StartArrayProperty("threads");
   {
     ActivePS::DiscardExpiredDeadProfiledThreads(aLock);
-    nsTArray<Pair<RegisteredThread*, ProfiledThreadData*>> threads =
+    Vector<Pair<RegisteredThread*, ProfiledThreadData*>> threads =
         ActivePS::ProfiledThreads(aLock);
     for (auto& thread : threads) {
       RegisteredThread* registeredThread = thread.first();
@@ -2130,6 +2187,27 @@ bool profiler_stream_json_for_this_process(SpliceableJSONWriter& aWriter,
 // END saving/streaming code
 ////////////////////////////////////////////////////////////////////////
 
+static char FeatureCategory(uint32_t aFeature) {
+  if (aFeature & DefaultFeatures()) {
+    if (aFeature & AvailableFeatures()) {
+      return 'D';
+    }
+    return 'd';
+  }
+
+  if (aFeature & StartupExtraDefaultFeatures()) {
+    if (aFeature & AvailableFeatures()) {
+      return 'S';
+    }
+    return 's';
+  }
+
+  if (aFeature & AvailableFeatures()) {
+    return '-';
+  }
+  return 'x';
+}
+
 static void PrintUsageThenExit(int aExitCode) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
 
@@ -2151,7 +2229,8 @@ static void PrintUsageThenExit(int aExitCode) {
       "  MOZ_PROFILER_STARTUP_ENTRIES=<1..>\n"
       "  If MOZ_PROFILER_STARTUP is set, specifies the number of entries in\n"
       "  the profiler's circular buffer when the profiler is first started.\n"
-      "  If unset, the platform default is used.\n"
+      "  If unset, the platform default is used:\n"
+      "  %u, or %u when MOZ_PROFILER_STARTUP is set.\n"
       "\n"
       "  MOZ_PROFILER_STARTUP_DURATION=<1..>\n"
       "  If MOZ_PROFILER_STARTUP is set, specifies the maximum life time of\n"
@@ -2176,6 +2255,22 @@ static void PrintUsageThenExit(int aExitCode) {
       "  a comma-separated list of strings.\n"
       "  Ignored if  MOZ_PROFILER_STARTUP_FEATURES_BITFIELD is set.\n"
       "  If unset, the platform default is used.\n"
+      "\n"
+      "    Features: (x=unavailable, D/d=default/unavailable,\n"
+      "               S/s=MOZ_PROFILER_STARTUP extra default/unavailable)\n",
+      unsigned(PROFILER_DEFAULT_ENTRIES),
+      unsigned(PROFILER_DEFAULT_STARTUP_ENTRIES));
+
+#define PRINT_FEATURE(n_, str_, Name_, desc_)                                  \
+  printf("    %c %5u: \"%s\" (%s)\n", FeatureCategory(ProfilerFeature::Name_), \
+         ProfilerFeature::Name_, str_, desc_);
+
+  PROFILER_FOR_EACH_FEATURE(PRINT_FEATURE)
+
+#undef PRINT_FEATURE
+
+  printf(
+      "    -                \"default\" (All above D+S defaults)\n"
       "\n"
       "  MOZ_PROFILER_STARTUP_FILTERS=<Filters>\n"
       "  If MOZ_PROFILER_STARTUP is set, specifies the thread filters, as a\n"
@@ -2352,7 +2447,7 @@ void SamplerThread::Run() {
       TimeStamp expiredMarkersCleaned = TimeStamp::Now();
 
       if (!ActivePS::IsPaused(lock)) {
-        const nsTArray<LiveProfiledThreadData>& liveThreads =
+        const Vector<LiveProfiledThreadData>& liveThreads =
             ActivePS::LiveProfiledThreads(lock);
 
         TimeDuration delta = sampleStart - CorePS::ProcessStartTime();
@@ -2376,7 +2471,7 @@ void SamplerThread::Run() {
         }
 
         // handle per-process generic counters
-        const nsTArray<BaseProfilerCount*>& counters = CorePS::Counters(lock);
+        const Vector<BaseProfilerCount*>& counters = CorePS::Counters(lock);
         TimeStamp now = TimeStamp::Now();
         for (auto& counter : counters) {
           // create Buffer entries for each counter
@@ -2548,28 +2643,34 @@ GeckoProfilerReporter::CollectReports(nsIHandleReportCallback* aHandleReport,
 
 NS_IMPL_ISUPPORTS(GeckoProfilerReporter, nsIMemoryReporter)
 
-static bool HasFeature(const char** aFeatures, uint32_t aFeatureCount,
-                       const char* aFeature) {
-  for (size_t i = 0; i < aFeatureCount; i++) {
-    if (strcmp(aFeatures[i], aFeature) == 0) {
-      return true;
-    }
+static uint32_t ParseFeature(const char* aFeature, bool aIsStartup) {
+  if (strcmp(aFeature, "default") == 0) {
+    return (aIsStartup ? (DefaultFeatures() | StartupExtraDefaultFeatures())
+                       : DefaultFeatures()) &
+           AvailableFeatures();
   }
-  return false;
+
+#define PARSE_FEATURE_BIT(n_, str_, Name_, desc_) \
+  if (strcmp(aFeature, str_) == 0) {              \
+    return ProfilerFeature::Name_;                \
+  }
+
+  PROFILER_FOR_EACH_FEATURE(PARSE_FEATURE_BIT)
+
+#undef PARSE_FEATURE_BIT
+
+  printf("\nUnrecognized feature \"%s\".\n\n", aFeature);
+  PrintUsageThenExit(1);
+  return 0;
 }
 
 uint32_t ParseFeaturesFromStringArray(const char** aFeatures,
-                                      uint32_t aFeatureCount) {
-#define ADD_FEATURE_BIT(n_, str_, Name_)            \
-  if (HasFeature(aFeatures, aFeatureCount, str_)) { \
-    features |= ProfilerFeature::Name_;             \
-  }
-
+                                      uint32_t aFeatureCount,
+                                      bool aIsStartup /* = false */) {
   uint32_t features = 0;
-  PROFILER_FOR_EACH_FEATURE(ADD_FEATURE_BIT)
-
-#undef ADD_FEATURE_BIT
-
+  for (size_t i = 0; i < aFeatureCount; i++) {
+    features |= ParseFeature(aFeatures[i], aIsStartup);
+  }
   return features;
 }
 
@@ -2577,7 +2678,7 @@ uint32_t ParseFeaturesFromStringArray(const char** aFeatures,
 // in places where TLSRegisteredThread can't be used.
 static RegisteredThread* FindCurrentThreadRegisteredThread(PSLockRef aLock) {
   int id = Thread::GetCurrentId();
-  const nsTArray<UniquePtr<RegisteredThread>>& registeredThreads =
+  const Vector<UniquePtr<RegisteredThread>>& registeredThreads =
       CorePS::RegisteredThreads(aLock);
   for (auto& registeredThread : registeredThreads) {
     if (registeredThread->Info()->ThreadId() == id) {
@@ -2668,7 +2769,7 @@ static void NotifyProfilerStarted(const int aCapacity,
   }
 
   nsCOMPtr<nsIProfilerStartParams> params = new nsProfilerStartParams(
-      aCapacity, aDuration, aInterval, aFeatures, filtersArray);
+      aCapacity, aDuration, aInterval, aFeatures, std::move(filtersArray));
 
   ProfilerParent::ProfilerStarted(params);
   NotifyObservers("profiler-started", params);
@@ -2697,22 +2798,22 @@ void MozGlueLabelExit(ProfilingStack* sProfilingStack) {
   }
 }
 
-static nsTArray<const char*> SplitAtCommas(const char* aString,
-                                           UniquePtr<char[]>& aStorage) {
+static Vector<const char*> SplitAtCommas(const char* aString,
+                                         UniquePtr<char[]>& aStorage) {
   size_t len = strlen(aString);
   aStorage = MakeUnique<char[]>(len + 1);
   PodCopy(aStorage.get(), aString, len + 1);
 
   // Iterate over all characters in aStorage and split at commas, by
   // overwriting commas with the null char.
-  nsTArray<const char*> array;
+  Vector<const char*> array;
   size_t currentElementStart = 0;
   for (size_t i = 0; i <= len; i++) {
     if (aStorage[i] == ',') {
       aStorage[i] = '\0';
     }
     if (aStorage[i] == '\0') {
-      array.AppendElement(&aStorage[currentElementStart]);
+      MOZ_RELEASE_ASSERT(array.append(&aStorage[currentElementStart]));
       currentElementStart = i + 1;
     }
   }
@@ -2732,24 +2833,16 @@ void profiler_init(void* aStackTop) {
 
   SharedLibraryInfo::Initialize();
 
-  uint32_t features =
-#if defined(GP_OS_android)
-      ProfilerFeature::Java |
-#endif
-      ProfilerFeature::JS | ProfilerFeature::Leaf |
-#if defined(HAVE_NATIVE_UNWIND)
-      ProfilerFeature::StackWalk |
-#endif
-      ProfilerFeature::Threads | ProfilerFeature::Responsiveness | 0;
+  uint32_t features = DefaultFeatures() & AvailableFeatures();
 
   UniquePtr<char[]> filterStorage;
 
-  nsTArray<const char*> filters;
-  filters.AppendElement("GeckoMain");
-  filters.AppendElement("Compositor");
-  filters.AppendElement("DOM Worker");
+  Vector<const char*> filters;
+  MOZ_RELEASE_ASSERT(filters.append("GeckoMain"));
+  MOZ_RELEASE_ASSERT(filters.append("Compositor"));
+  MOZ_RELEASE_ASSERT(filters.append("DOM Worker"));
 
-  int capacity = PROFILER_DEFAULT_ENTRIES;
+  uint32_t capacity = PROFILER_DEFAULT_ENTRIES;
   Maybe<double> duration = Nothing();
   double interval = PROFILER_DEFAULT_INTERVAL;
 
@@ -2791,12 +2884,20 @@ void profiler_init(void* aStackTop) {
 
     LOG("- MOZ_PROFILER_STARTUP is set");
 
+    // Startup default capacity may be different.
+    capacity = PROFILER_DEFAULT_STARTUP_ENTRIES;
+
     const char* startupCapacity = getenv("MOZ_PROFILER_STARTUP_ENTRIES");
     if (startupCapacity && startupCapacity[0] != '\0') {
       errno = 0;
-      capacity = strtol(startupCapacity, nullptr, 10);
-      if (errno == 0 && capacity > 0) {
-        LOG("- MOZ_PROFILER_STARTUP_ENTRIES = %d", capacity);
+      long capacityLong = strtol(startupCapacity, nullptr, 10);
+      // `long` could be 32 or 64 bits, so we force a 64-bit comparison with
+      // the maximum 32-bit unsigned number.
+      if (errno == 0 && capacityLong > 0 &&
+          static_cast<uint64_t>(capacityLong) <=
+              static_cast<uint64_t>(UINT32_MAX)) {
+        capacity = static_cast<uint32_t>(capacityLong);
+        LOG("- MOZ_PROFILER_STARTUP_ENTRIES = %u", unsigned(capacity));
       } else {
         LOG("- MOZ_PROFILER_STARTUP_ENTRIES not a valid integer: %s",
             startupCapacity);
@@ -2833,10 +2934,7 @@ void profiler_init(void* aStackTop) {
       }
     }
 
-    // Enable mainthreadio by default for startup profiles as startup is
-    // heavy on I/O operations, and main thread I/O is really important to
-    // see there.
-    features |= ProfilerFeature::MainThreadIO;
+    features |= StartupExtraDefaultFeatures() & AvailableFeatures();
 
     const char* startupFeaturesBitfield =
         getenv("MOZ_PROFILER_STARTUP_FEATURES_BITFIELD");
@@ -2856,10 +2954,11 @@ void profiler_init(void* aStackTop) {
         // Interpret startupFeatures as a list of feature strings, separated by
         // commas.
         UniquePtr<char[]> featureStringStorage;
-        nsTArray<const char*> featureStringArray =
+        Vector<const char*> featureStringArray =
             SplitAtCommas(startupFeatures, featureStringStorage);
-        features = ParseFeaturesFromStringArray(featureStringArray.Elements(),
-                                                featureStringArray.Length());
+        features = ParseFeaturesFromStringArray(featureStringArray.begin(),
+                                                featureStringArray.length(),
+                                                /* aIsStartup */ true);
         LOG("- MOZ_PROFILER_STARTUP_FEATURES = %d", features);
       }
     }
@@ -2870,14 +2969,22 @@ void profiler_init(void* aStackTop) {
       LOG("- MOZ_PROFILER_STARTUP_FILTERS = %s", startupFilters);
     }
 
-    locked_profiler_start(lock, capacity, interval, features,
-                          filters.Elements(), filters.Length(), duration);
+    locked_profiler_start(lock, capacity, interval, features, filters.begin(),
+                          filters.length(), duration);
   }
+
+#if defined(MOZ_REPLACE_MALLOC) && defined(MOZ_PROFILER_MEMORY)
+  if (ProfilerFeature::HasMemory(features)) {
+    // start counting memory allocations (outside of lock because this may call
+    // profiler_add_sampled_counter which would attempt to take the lock.)
+    mozilla::profiler::install_memory_counter(true);
+  }
+#endif
 
   // We do this with gPSMutex unlocked. The comment in profiler_stop() explains
   // why.
-  NotifyProfilerStarted(capacity, duration, interval, features,
-                        filters.Elements(), filters.Length());
+  NotifyProfilerStarted(capacity, duration, interval, features, filters.begin(),
+                        filters.length());
 }
 
 static void locked_profiler_save_profile_to_file(PSLockRef aLock,
@@ -3072,10 +3179,10 @@ void profiler_received_exit_profile(const nsCString& aExitProfile) {
   ActivePS::AddExitProfile(lock, aExitProfile);
 }
 
-nsTArray<nsCString> profiler_move_exit_profiles() {
+Vector<nsCString> profiler_move_exit_profiles() {
   MOZ_RELEASE_ASSERT(CorePS::Exists());
   PSAutoLock lock(gPSMutex);
-  nsTArray<nsCString> profiles;
+  Vector<nsCString> profiles;
   if (ActivePS::Exists(lock)) {
     profiles = ActivePS::MoveExitProfiles(lock);
   }
@@ -3099,7 +3206,7 @@ static void locked_profiler_save_profile_to_file(PSLockRef aLock,
                                                    aIsShuttingDown);
 
       w.StartArrayProperty("processes");
-      nsTArray<nsCString> exitProfiles = ActivePS::MoveExitProfiles(aLock);
+      Vector<nsCString> exitProfiles = ActivePS::MoveExitProfiles(aLock);
       for (auto& exitProfile : exitProfiles) {
         if (!exitProfile.IsEmpty()) {
           w.Splice(exitProfile.get());
@@ -3129,31 +3236,7 @@ void profiler_save_profile_to_file(const char* aFilename) {
 
 uint32_t profiler_get_available_features() {
   MOZ_RELEASE_ASSERT(CorePS::Exists());
-
-  uint32_t features = 0;
-
-#define ADD_FEATURE(n_, str_, Name_) ProfilerFeature::Set##Name_(features);
-
-  // Add all the possible features.
-  PROFILER_FOR_EACH_FEATURE(ADD_FEATURE)
-
-#undef ADD_FEATURE
-
-  // Now remove features not supported on this platform/configuration.
-#if !defined(GP_OS_android)
-  ProfilerFeature::ClearJava(features);
-#endif
-#if !defined(HAVE_NATIVE_UNWIND)
-  ProfilerFeature::ClearStackWalk(features);
-#endif
-#if !defined(MOZ_TASK_TRACER)
-  ProfilerFeature::ClearTaskTracer(features);
-#endif
-  if (!JS::TraceLoggerSupported()) {
-    ProfilerFeature::ClearJSTracer(features);
-  }
-
-  return features;
+  return AvailableFeatures();
 }
 
 Maybe<ProfilerBufferInfo> profiler_get_buffer_info() {
@@ -3216,7 +3299,7 @@ static void locked_profiler_start(PSLockRef aLock, uint32_t aCapacity,
     LOG("- duration  = %.2f", aDuration ? *aDuration : -1);
     LOG("- interval = %.2f", aInterval);
 
-#define LOG_FEATURE(n_, str_, Name_)            \
+#define LOG_FEATURE(n_, str_, Name_, desc_)     \
   if (ProfilerFeature::Has##Name_(aFeatures)) { \
     LOG("- feature  = %s", str_);               \
   }
@@ -3250,7 +3333,7 @@ static void locked_profiler_start(PSLockRef aLock, uint32_t aCapacity,
 
   // Set up profiling for each registered thread, if appropriate.
   int tid = Thread::GetCurrentId();
-  const nsTArray<UniquePtr<RegisteredThread>>& registeredThreads =
+  const Vector<UniquePtr<RegisteredThread>>& registeredThreads =
       CorePS::RegisteredThreads(aLock);
   for (auto& registeredThread : registeredThreads) {
     RefPtr<ThreadInfo> info = registeredThread->Info();
@@ -3327,8 +3410,11 @@ void profiler_start(uint32_t aCapacity, double aInterval, uint32_t aFeatures,
   }
 
 #if defined(MOZ_REPLACE_MALLOC) && defined(MOZ_PROFILER_MEMORY)
-  // start counting memory allocations (outside of lock)
-  mozilla::profiler::install_memory_counter(true);
+  if (ProfilerFeature::HasMemory(aFeatures)) {
+    // start counting memory allocations (outside of lock because this may call
+    // profiler_add_sampled_counter which would attempt to take the lock.)
+    mozilla::profiler::install_memory_counter(true);
+  }
 #endif
 
   // We do these operations with gPSMutex unlocked. The comments in
@@ -3364,6 +3450,12 @@ void profiler_ensure_started(uint32_t aCapacity, double aInterval,
                             aFilters, aFilterCount)) {
         // Stop and restart with different settings.
         samplerThread = locked_profiler_stop(lock);
+#if defined(MOZ_REPLACE_MALLOC) && defined(MOZ_PROFILER_MEMORY)
+        if (!ProfilerFeature::HasMemory(aFeatures)) {
+          // Ensure we don't record memory measurements anymore (if we were).
+          mozilla::profiler::install_memory_counter(false);
+        }
+#endif
         locked_profiler_start(lock, aCapacity, aInterval, aFeatures, aFilters,
                               aFilterCount, aDuration);
         startedProfiler = true;
@@ -3376,6 +3468,15 @@ void profiler_ensure_started(uint32_t aCapacity, double aInterval,
     }
   }
 
+#if defined(MOZ_REPLACE_MALLOC) && defined(MOZ_PROFILER_MEMORY)
+  if (startedProfiler && ProfilerFeature::HasMemory(aFeatures)) {
+    // start counting memory allocations (outside of lock because this may
+    // call profiler_add_sampled_counter which would attempt to take the
+    // lock.)
+    mozilla::profiler::install_memory_counter(true);
+  }
+#endif
+
   // We do these operations with gPSMutex unlocked. The comments in
   // profiler_stop() explain why.
   if (samplerThread) {
@@ -3383,6 +3484,7 @@ void profiler_ensure_started(uint32_t aCapacity, double aInterval,
     NotifyObservers("profiler-stopped");
     delete samplerThread;
   }
+
   if (startedProfiler) {
     NotifyProfilerStarted(aCapacity, aDuration, aInterval, aFeatures, aFilters,
                           aFilterCount);
@@ -3415,7 +3517,7 @@ static MOZ_MUST_USE SamplerThread* locked_profiler_stop(PSLockRef aLock) {
 
   // Stop sampling live threads.
   int tid = Thread::GetCurrentId();
-  const nsTArray<LiveProfiledThreadData>& liveProfiledThreads =
+  const Vector<LiveProfiledThreadData>& liveProfiledThreads =
       ActivePS::LiveProfiledThreads(aLock);
   for (auto& thread : liveProfiledThreads) {
     RegisteredThread* registeredThread = thread.mRegisteredThread;
@@ -3665,6 +3767,24 @@ void profiler_unregister_pages(const nsID& aRegisteredDocShellId) {
   }
 }
 
+void profiler_clear_all_pages() {
+  if (!CorePS::Exists()) {
+    // This function can be called after the main thread has already shut down.
+    return;
+  }
+
+  {
+    PSAutoLock lock(gPSMutex);
+    CorePS::ClearRegisteredPages(lock);
+    if (ActivePS::Exists(lock)) {
+      ActivePS::ClearUnregisteredPages(lock);
+    }
+  }
+
+  // gPSMutex must be unlocked when we notify, to avoid potential deadlocks.
+  ProfilerParent::ClearAllPages();
+}
+
 void profiler_thread_sleep() {
   // This function runs both on and off the main thread.
 
@@ -3869,7 +3989,7 @@ void profiler_add_marker_for_thread(int aThreadId,
 #ifdef DEBUG
   // Assert that our thread ID makes sense
   bool realThread = false;
-  const nsTArray<UniquePtr<RegisteredThread>>& registeredThreads =
+  const Vector<UniquePtr<RegisteredThread>>& registeredThreads =
       CorePS::RegisteredThreads(lock);
   for (auto& thread : registeredThreads) {
     RefPtr<ThreadInfo> info = thread->Info();
@@ -4017,7 +4137,7 @@ void profiler_suspend_and_sample_thread(int aThreadId, uint32_t aFeatures,
   // Lock the profiler mutex
   PSAutoLock lock(gPSMutex);
 
-  const nsTArray<UniquePtr<RegisteredThread>>& registeredThreads =
+  const Vector<UniquePtr<RegisteredThread>>& registeredThreads =
       CorePS::RegisteredThreads(lock);
   for (auto& thread : registeredThreads) {
     RefPtr<ThreadInfo> info = thread->Info();

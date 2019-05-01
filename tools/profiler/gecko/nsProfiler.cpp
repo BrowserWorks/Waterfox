@@ -161,6 +161,12 @@ nsProfiler::AddMarker(const char* aMarker) {
 }
 
 NS_IMETHODIMP
+nsProfiler::ClearAllPages() {
+  profiler_clear_all_pages();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsProfiler::GetProfile(double aSinceTime, char** aProfile) {
   mozilla::UniquePtr<char[]> profile = profiler_get_profile(aSinceTime);
   *aProfile = profile.release();
@@ -472,7 +478,7 @@ nsProfiler::IsActive(bool* aIsActive) {
 
 static void GetArrayOfStringsForFeatures(uint32_t aFeatures, uint32_t* aCount,
                                          char*** aFeatureList) {
-#define COUNT_IF_SET(n_, str_, Name_)           \
+#define COUNT_IF_SET(n_, str_, Name_, desc_)    \
   if (ProfilerFeature::Has##Name_(aFeatures)) { \
     len++;                                      \
   }
@@ -485,7 +491,7 @@ static void GetArrayOfStringsForFeatures(uint32_t aFeatures, uint32_t* aCount,
 
   auto featureList = static_cast<char**>(moz_xmalloc(len * sizeof(char*)));
 
-#define DUP_IF_SET(n_, str_, Name_)             \
+#define DUP_IF_SET(n_, str_, Name_, desc_)      \
   if (ProfilerFeature::Has##Name_(aFeatures)) { \
     featureList[i] = moz_xstrdup(str_);         \
     i++;                                        \
@@ -605,7 +611,7 @@ RefPtr<nsProfiler::GatheringPromise> nsProfiler::StartGathering(
   mWriter->StartArrayProperty("processes");
 
   // If we have any process exit profiles, add them immediately.
-  nsTArray<nsCString> exitProfiles = profiler_move_exit_profiles();
+  Vector<nsCString> exitProfiles = profiler_move_exit_profiles();
   for (auto& exitProfile : exitProfiles) {
     if (!exitProfile.IsEmpty()) {
       mWriter->Splice(exitProfile.get());

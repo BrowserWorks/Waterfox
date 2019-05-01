@@ -339,8 +339,9 @@ nsresult nsPluginFrame::PrepForDrawing(nsIWidget* aWidget) {
   }
 
 #ifdef ACCESSIBILITY
-  nsAccessibilityService* accService = nsIPresShell::AccService();
-  if (accService) {
+  ;
+  if (nsAccessibilityService* accService =
+          PresShell::GetAccessibilityService()) {
     accService->RecreateAccessible(PresShell(), mContent);
   }
 #endif
@@ -1514,7 +1515,7 @@ nsresult nsPluginFrame::HandleEvent(nsPresContext* aPresContext,
     return rv;
   }
 
-  // These two calls to nsIPresShell::SetCapturingContext() (on mouse-down
+  // These two calls to PresShell::SetCapturingContent() (on mouse-down
   // and mouse-up) are needed to make the routing of mouse events while
   // dragging conform to standard OS X practice, and to the Cocoa NPAPI spec.
   // See bug 525078 and bug 909678.

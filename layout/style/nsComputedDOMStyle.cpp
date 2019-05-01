@@ -13,12 +13,12 @@
 #include "mozilla/FontPropertyTypes.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
+#include "mozilla/PresShellInlines.h"
 #include "mozilla/StaticPtr.h"
 
 #include "nsError.h"
 #include "nsIFrame.h"
 #include "nsIFrameInlines.h"
-#include "nsIPresShellInlines.h"
 #include "mozilla/ComputedStyle.h"
 #include "nsIScrollableFrame.h"
 #include "nsContentUtils.h"
@@ -785,7 +785,8 @@ bool nsComputedDOMStyle::NeedsToFlush() const {
   Document* doc = mElement->OwnerDoc();
   // If parent document is there, also needs to check if there is some change
   // that needs to flush this document (e.g. size change for iframe).
-  while (Document* parentDocument = doc->GetParentDocument()) {
+  while (doc->StyleOrLayoutObservablyDependsOnParentDocumentLayout()) {
+    Document* parentDocument = doc->GetParentDocument();
     Element* element = parentDocument->FindContentForSubDocument(doc);
     if (ElementNeedsRestyle(element, nullptr)) {
       return true;

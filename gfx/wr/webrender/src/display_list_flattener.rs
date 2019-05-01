@@ -520,10 +520,10 @@ impl<'a> DisplayListFlattener<'a> {
             self.scene.root_pipeline_id.unwrap(),
             None,
             true,
+            true,
             RasterSpace::Screen,
             prim_list,
             main_scroll_root,
-            LayoutRect::max_rect(),
             Some(tile_cache),
             PictureOptions::default(),
         ));
@@ -1648,14 +1648,6 @@ impl<'a> DisplayListFlattener<'a> {
             );
         }
 
-        // An arbitrary large clip rect. For now, we don't
-        // specify a clip specific to the stacking context.
-        // However, now that they are represented as Picture
-        // primitives, we can apply any kind of clip mask
-        // to them, as for a normal primitive. This is needed
-        // to correctly handle some CSS cases (see #1957).
-        let max_clip = LayoutRect::max_rect();
-
         let (leaf_context_3d, leaf_composite_mode, leaf_output_pipeline_id) = match stacking_context.context_3d {
             // TODO(gw): For now, as soon as this picture is in
             //           a 3D context, we draw it to an intermediate
@@ -1692,13 +1684,13 @@ impl<'a> DisplayListFlattener<'a> {
                 stacking_context.pipeline_id,
                 leaf_output_pipeline_id,
                 true,
+                stacking_context.is_backface_visible,
                 stacking_context.requested_raster_space,
                 PrimitiveList::new(
                     stacking_context.primitives,
                     &self.interners,
                 ),
                 stacking_context.spatial_node_index,
-                max_clip,
                 None,
                 PictureOptions::default(),
             ))
@@ -1739,13 +1731,13 @@ impl<'a> DisplayListFlattener<'a> {
                     stacking_context.pipeline_id,
                     stacking_context.frame_output_pipeline_id,
                     true,
+                    stacking_context.is_backface_visible,
                     stacking_context.requested_raster_space,
                     PrimitiveList::new(
                         prims,
                         &self.interners,
                     ),
                     stacking_context.spatial_node_index,
-                    max_clip,
                     None,
                     PictureOptions::default(),
                 ))
@@ -1806,13 +1798,13 @@ impl<'a> DisplayListFlattener<'a> {
                     stacking_context.pipeline_id,
                     None,
                     true,
+                    stacking_context.is_backface_visible,
                     stacking_context.requested_raster_space,
                     PrimitiveList::new(
                         vec![cur_instance.clone()],
                         &self.interners,
                     ),
                     stacking_context.spatial_node_index,
-                    max_clip,
                     None,
                     PictureOptions::default(),
                 ))
@@ -1860,13 +1852,13 @@ impl<'a> DisplayListFlattener<'a> {
                     stacking_context.pipeline_id,
                     None,
                     true,
+                    stacking_context.is_backface_visible,
                     stacking_context.requested_raster_space,
                     PrimitiveList::new(
                         vec![cur_instance.clone()],
                         &self.interners,
                     ),
                     stacking_context.spatial_node_index,
-                    max_clip,
                     None,
                     PictureOptions::default(),
                 ))
@@ -2120,7 +2112,6 @@ impl<'a> DisplayListFlattener<'a> {
         assert!(!self.pending_shadow_items.is_empty(), "popped shadows, but none were present");
 
         let pipeline_id = self.sc_stack.last().unwrap().pipeline_id;
-        let max_clip = LayoutRect::max_rect();
         let mut items = mem::replace(&mut self.pending_shadow_items, VecDeque::new());
 
         //
@@ -2213,6 +2204,7 @@ impl<'a> DisplayListFlattener<'a> {
                         let blur_filter = FilterOp::Blur(std_deviation).sanitize();
                         let composite_mode = PictureCompositeMode::Filter(blur_filter);
                         let composite_mode_key = Some(composite_mode.clone()).into();
+                        let is_backface_visible = true; //TODO: double check this
 
                         // Pass through configuration information about whether WR should
                         // do the bounding rect inflation for text shadows.
@@ -2229,13 +2221,13 @@ impl<'a> DisplayListFlattener<'a> {
                                 pipeline_id,
                                 None,
                                 is_passthrough,
+                                is_backface_visible,
                                 raster_space,
                                 PrimitiveList::new(
                                     prims,
                                     &self.interners,
                                 ),
                                 pending_shadow.clip_and_scroll.spatial_node_index,
-                                max_clip,
                                 None,
                                 options,
                             ))
@@ -3000,13 +2992,13 @@ impl FlattenedStackingContext {
                 self.pipeline_id,
                 None,
                 true,
+                self.is_backface_visible,
                 self.requested_raster_space,
                 PrimitiveList::new(
                     mem::replace(&mut self.primitives, Vec::new()),
                     interners,
                 ),
                 self.spatial_node_index,
-                LayoutRect::max_rect(),
                 None,
                 PictureOptions::default(),
             ))

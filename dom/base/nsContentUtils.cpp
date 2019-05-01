@@ -80,6 +80,7 @@
 #include "mozilla/dom/ShadowRoot.h"
 #include "mozilla/dom/XULCommandEvent.h"
 #include "mozilla/dom/WorkerCommon.h"
+#include "mozilla/net/CookieSettings.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStateManager.h"
@@ -6059,7 +6060,7 @@ bool nsContentUtils::CanAccessNativeAnon() {
 /* static */
 nsresult nsContentUtils::DispatchXULCommand(nsIContent* aTarget, bool aTrusted,
                                             Event* aSourceEvent,
-                                            nsIPresShell* aShell, bool aCtrl,
+                                            PresShell* aPresShell, bool aCtrl,
                                             bool aAlt, bool aShift, bool aMeta,
                                             uint16_t aInputSource) {
   NS_ENSURE_STATE(aTarget);
@@ -6073,10 +6074,9 @@ nsresult nsContentUtils::DispatchXULCommand(nsIContent* aTarget, bool aTrusted,
                                0, aCtrl, aAlt, aShift, aMeta, aSourceEvent,
                                aInputSource, IgnoreErrors());
 
-  if (aShell) {
+  if (aPresShell) {
     nsEventStatus status = nsEventStatus_eIgnore;
-    nsCOMPtr<nsIPresShell> kungFuDeathGrip = aShell;
-    return aShell->HandleDOMEventWithTarget(aTarget, xulCommand, &status);
+    return aPresShell->HandleDOMEventWithTarget(aTarget, xulCommand, &status);
   }
 
   ErrorResult rv;
@@ -6366,8 +6366,8 @@ void nsContentUtils::PopulateStringFromStringBuffer(nsStringBuffer* aBuf,
   aBuf->ToString(stringLen, aResultString);
 }
 
-nsIPresShell* nsContentUtils::FindPresShellForDocument(const Document* aDoc) {
-  const Document* doc = aDoc;
+PresShell* nsContentUtils::FindPresShellForDocument(const Document* aDocument) {
+  const Document* doc = aDocument;
   Document* displayDoc = doc->GetDisplayDocument();
   if (displayDoc) {
     doc = displayDoc;
@@ -6396,22 +6396,24 @@ nsIPresShell* nsContentUtils::FindPresShellForDocument(const Document* aDoc) {
   return nullptr;
 }
 
-nsIWidget* nsContentUtils::WidgetForDocument(const Document* aDoc) {
-  nsIPresShell* shell = FindPresShellForDocument(aDoc);
-  if (shell) {
-    nsViewManager* VM = shell->GetViewManager();
-    if (VM) {
-      nsView* rootView = VM->GetRootView();
-      if (rootView) {
-        nsView* displayRoot = nsViewManager::GetDisplayRootFor(rootView);
-        if (displayRoot) {
-          return displayRoot->GetNearestWidget(nullptr);
-        }
-      }
-    }
+nsIWidget* nsContentUtils::WidgetForDocument(const Document* aDocument) {
+  PresShell* presShell = FindPresShellForDocument(aDocument);
+  if (!presShell) {
+    return nullptr;
   }
-
-  return nullptr;
+  nsViewManager* vm = presShell->GetViewManager();
+  if (!vm) {
+    return nullptr;
+  }
+  nsView* rootView = vm->GetRootView();
+  if (!rootView) {
+    return nullptr;
+  }
+  nsView* displayRoot = nsViewManager::GetDisplayRootFor(rootView);
+  if (!displayRoot) {
+    return nullptr;
+  }
+  return displayRoot->GetNearestWidget(nullptr);
 }
 
 nsIWidget* nsContentUtils::WidgetForContent(const nsIContent* aContent) {
@@ -7857,13 +7859,15 @@ mozilla::Modifiers nsContentUtils::GetWidgetModifiers(int32_t aModifiers) {
   return result;
 }
 
-nsIWidget* nsContentUtils::GetWidget(nsIPresShell* aPresShell,
-                                     nsPoint* aOffset) {
-  if (aPresShell) {
-    nsIFrame* frame = aPresShell->GetRootFrame();
-    if (frame) return frame->GetView()->GetNearestWidget(aOffset);
+nsIWidget* nsContentUtils::GetWidget(PresShell* aPresShell, nsPoint* aOffset) {
+  if (!aPresShell) {
+    return nullptr;
   }
-  return nullptr;
+  nsIFrame* frame = aPresShell->GetRootFrame();
+  if (!frame) {
+    return nullptr;
+  }
+  return frame->GetView()->GetNearestWidget(aOffset);
 }
 
 int16_t nsContentUtils::GetButtonsFlagForButton(int32_t aButton) {
@@ -7896,20 +7900,23 @@ LayoutDeviceIntPoint nsContentUtils::ToWidgetPoint(
       aPresContext->AppUnitsPerDevPixel());
 }
 
-nsView* nsContentUtils::GetViewToDispatchEvent(nsPresContext* presContext,
-                                               nsIPresShell** presShell) {
-  if (presContext && presShell) {
-    *presShell = presContext->PresShell();
-    if (*presShell) {
-      NS_ADDREF(*presShell);
-      if (nsViewManager* viewManager = (*presShell)->GetViewManager()) {
-        if (nsView* view = viewManager->GetRootView()) {
-          return view;
-        }
-      }
-    }
+nsView* nsContentUtils::GetViewToDispatchEvent(nsPresContext* aPresContext,
+                                               PresShell** aPresShell) {
+  if (!aPresContext || !aPresShell) {
+    return nullptr;
   }
-  return nullptr;
+  RefPtr<PresShell> presShell = aPresContext->PresShell();
+  if (NS_WARN_IF(!presShell)) {
+    *aPresShell = nullptr;
+    return nullptr;
+  }
+  nsViewManager* viewManager = presShell->GetViewManager();
+  if (!viewManager) {
+    presShell.forget(aPresShell);  // XXX Is this intentional?
+    return nullptr;
+  }
+  presShell.forget(aPresShell);
+  return viewManager->GetRootView();
 }
 
 nsresult nsContentUtils::SendMouseEvent(
@@ -7981,7 +7988,7 @@ nsresult nsContentUtils::SendMouseEvent(
 
   nsEventStatus status = nsEventStatus_eIgnore;
   if (aToWindow) {
-    nsCOMPtr<nsIPresShell> presShell;
+    RefPtr<PresShell> presShell;
     nsView* view =
         GetViewToDispatchEvent(presContext, getter_AddRefs(presShell));
     if (!presShell || !view) {
@@ -8208,6 +8215,7 @@ nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForWindow(
     // will only fail to notify the UI in case storage gets blocked.
     nsIChannel* channel = document->GetChannel();
     return InternalStorageAllowedCheck(principal, aWindow, nullptr, channel,
+                                       document->CookieSettings(),
                                        *aRejectedReason);
   }
 
@@ -8228,8 +8236,9 @@ nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForDocument(
     nsIChannel* channel = aDoc->GetChannel();
 
     uint32_t rejectedReason = 0;
-    return InternalStorageAllowedCheck(principal, inner, nullptr, channel,
-                                       rejectedReason);
+    return InternalStorageAllowedCheck(
+        principal, inner, nullptr, channel,
+        const_cast<Document*>(aDoc)->CookieSettings(), rejectedReason);
   }
 
   return StorageAccess::eDeny;
@@ -8243,7 +8252,13 @@ nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForNewWindow(
   // parent may be nullptr
 
   uint32_t rejectedReason = 0;
-  return InternalStorageAllowedCheck(aPrincipal, aParent, aURI, nullptr,
+  nsCOMPtr<nsICookieSettings> cs;
+  if (aParent && aParent->GetExtantDoc()) {
+    cs = aParent->GetExtantDoc()->CookieSettings();
+  } else {
+    cs = net::CookieSettings::Create();
+  }
+  return InternalStorageAllowedCheck(aPrincipal, aParent, aURI, nullptr, cs,
                                      rejectedReason);
 }
 
@@ -8258,19 +8273,24 @@ nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForChannel(
       aChannel, getter_AddRefs(principal));
   NS_ENSURE_TRUE(principal, nsContentUtils::StorageAccess::eDeny);
 
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
+  nsCOMPtr<nsICookieSettings> cookieSettings;
+  nsresult rv = loadInfo->GetCookieSettings(getter_AddRefs(cookieSettings));
+  NS_ENSURE_SUCCESS(rv, nsContentUtils::StorageAccess::eDeny);
+
   uint32_t rejectedReason = 0;
   nsContentUtils::StorageAccess result = InternalStorageAllowedCheck(
-      principal, nullptr, nullptr, aChannel, rejectedReason);
+      principal, nullptr, nullptr, aChannel, cookieSettings, rejectedReason);
 
   return result;
 }
 
 // static, public
 nsContentUtils::StorageAccess nsContentUtils::StorageAllowedForServiceWorker(
-    nsIPrincipal* aPrincipal) {
+    nsIPrincipal* aPrincipal, nsICookieSettings* aCookieSettings) {
   uint32_t rejectedReason = 0;
   return InternalStorageAllowedCheck(aPrincipal, nullptr, nullptr, nullptr,
-                                     rejectedReason);
+                                     aCookieSettings, rejectedReason);
 }
 
 // static, private
@@ -8399,11 +8419,10 @@ bool nsContentUtils::IsThirdPartyTrackingResourceWindow(
   return httpChannel->IsThirdPartyTrackingResource();
 }
 
-static bool StorageDisabledByAntiTrackingInternal(nsPIDOMWindowInner* aWindow,
-                                                  nsIChannel* aChannel,
-                                                  nsIPrincipal* aPrincipal,
-                                                  nsIURI* aURI,
-                                                  uint32_t& aRejectedReason) {
+static bool StorageDisabledByAntiTrackingInternal(
+    nsPIDOMWindowInner* aWindow, nsIChannel* aChannel, nsIPrincipal* aPrincipal,
+    nsIURI* aURI, nsICookieSettings* aCookieSettings,
+    uint32_t& aRejectedReason) {
   MOZ_ASSERT(aWindow || aChannel || aPrincipal);
 
   if (aWindow) {
@@ -8430,7 +8449,8 @@ static bool StorageDisabledByAntiTrackingInternal(nsPIDOMWindowInner* aWindow,
   }
 
   MOZ_ASSERT(aPrincipal);
-  return !AntiTrackingCommon::IsFirstPartyStorageAccessGrantedFor(aPrincipal);
+  return !AntiTrackingCommon::IsFirstPartyStorageAccessGrantedFor(
+      aPrincipal, aCookieSettings);
 }
 
 // static public
@@ -8439,8 +8459,20 @@ bool nsContentUtils::StorageDisabledByAntiTracking(nsPIDOMWindowInner* aWindow,
                                                    nsIPrincipal* aPrincipal,
                                                    nsIURI* aURI,
                                                    uint32_t& aRejectedReason) {
+  nsCOMPtr<nsICookieSettings> cookieSettings;
+  if (aWindow) {
+    if (aWindow->GetExtantDoc()) {
+      cookieSettings = aWindow->GetExtantDoc()->CookieSettings();
+    }
+  } else if (aChannel) {
+    nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
+    Unused << loadInfo->GetCookieSettings(getter_AddRefs(cookieSettings));
+  }
+  if (!cookieSettings) {
+    cookieSettings = net::CookieSettings::Create();
+  }
   bool disabled = StorageDisabledByAntiTrackingInternal(
-      aWindow, aChannel, aPrincipal, aURI, aRejectedReason);
+      aWindow, aChannel, aPrincipal, aURI, cookieSettings, aRejectedReason);
   if (sAntiTrackingControlCenterUIEnabled) {
     if (aWindow) {
       AntiTrackingCommon::NotifyBlockingDecision(
@@ -8462,13 +8494,13 @@ bool nsContentUtils::StorageDisabledByAntiTracking(nsPIDOMWindowInner* aWindow,
 // static, private
 nsContentUtils::StorageAccess nsContentUtils::InternalStorageAllowedCheck(
     nsIPrincipal* aPrincipal, nsPIDOMWindowInner* aWindow, nsIURI* aURI,
-    nsIChannel* aChannel, uint32_t& aRejectedReason) {
+    nsIChannel* aChannel, nsICookieSettings* aCookieSettings,
+    uint32_t& aRejectedReason) {
   MOZ_ASSERT(aPrincipal);
 
   aRejectedReason = 0;
 
   StorageAccess access = StorageAccess::eAllow;
-  nsCOMPtr<nsICookieSettings> cookieSettings;
 
   // We don't allow storage on the null principal, in general. Even if the
   // calling context is chrome.
@@ -8487,15 +8519,6 @@ nsContentUtils::StorageAccess nsContentUtils::InternalStorageAllowedCheck(
     if (IsInPrivateBrowsing(document)) {
       access = StorageAccess::ePrivateBrowsing;
     }
-
-    if (document) {
-      cookieSettings = document->CookieSettings();
-    }
-  }
-
-  if (aChannel) {
-    nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
-    loadInfo->GetCookieSettings(getter_AddRefs(cookieSettings));
   }
 
   uint32_t lifetimePolicy;
@@ -8507,7 +8530,7 @@ nsContentUtils::StorageAccess nsContentUtils::InternalStorageAllowedCheck(
   if (policy) {
     lifetimePolicy = nsICookieService::ACCEPT_NORMALLY;
   } else {
-    GetCookieLifetimePolicyFromCookieSettings(cookieSettings, aPrincipal,
+    GetCookieLifetimePolicyFromCookieSettings(aCookieSettings, aPrincipal,
                                               &lifetimePolicy);
   }
 

@@ -33,8 +33,8 @@
 
 #include "mozilla/Logging.h"
 #include "mozilla/UniquePtr.h"
-#include "nsStringFwd.h"
-#include "nsTArray.h"
+#include "mozilla/Vector.h"
+#include "nsString.h"
 
 #include <functional>
 #include <stdint.h>
@@ -111,7 +111,8 @@ void AppendSharedLibraries(mozilla::JSONWriter& aWriter);
 
 // Convert the array of strings to a bitfield.
 uint32_t ParseFeaturesFromStringArray(const char** aFeatures,
-                                      uint32_t aFeatureCount);
+                                      uint32_t aFeatureCount,
+                                      bool aIsStartup = false);
 
 void profiler_get_profile_json_into_lazily_allocated_buffer(
     const std::function<char*(size_t)>& aAllocator, double aSinceTime,
@@ -129,6 +130,6 @@ void profiler_received_exit_profile(const nsCString& aExitProfile);
 
 // Extract all received exit profiles that have not yet expired (i.e., they
 // still intersect with this process' buffer range).
-nsTArray<nsCString> profiler_move_exit_profiles();
+mozilla::Vector<nsCString> profiler_move_exit_profiles();
 
 #endif /* ndef TOOLS_PLATFORM_H_ */

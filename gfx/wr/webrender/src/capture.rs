@@ -6,11 +6,11 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 
 use api::{CaptureBits, ExternalImageData, ImageDescriptor};
+#[cfg(feature = "png")]
+use api::ImageFormat;
 use api::units::TexelRect;
 #[cfg(feature = "png")]
 use api::units::DeviceIntSize;
-#[cfg(feature = "png")]
-use device::ReadPixelsFormat;
 #[cfg(feature = "capture")]
 use print_tree::{PrintableTree, PrintTree};
 use ron;
@@ -40,6 +40,12 @@ impl CaptureConfig {
     }
 
     #[cfg(feature = "capture")]
+    pub fn file_path<P>(&self, name: P, ext: &str) -> PathBuf
+    where P: AsRef<Path> {
+        self.root.join(name).with_extension(ext)
+    }
+
+    #[cfg(feature = "capture")]
     pub fn serialize<T, P>(&self, data: &T, name: P)
     where
         T: serde::Serialize,
@@ -49,9 +55,7 @@ impl CaptureConfig {
 
         let ron = ron::ser::to_string_pretty(data, self.pretty.clone())
             .unwrap();
-        let path = self.root
-            .join(name)
-            .with_extension("ron");
+        let path = self.file_path(name, "ron");
         let mut file = File::create(path)
             .unwrap();
         write!(file, "{}\n", ron)
@@ -97,22 +101,21 @@ impl CaptureConfig {
 
     #[cfg(feature = "png")]
     pub fn save_png(
-        path: PathBuf, size: DeviceIntSize, format: ReadPixelsFormat, data: &[u8],
+        path: PathBuf, size: DeviceIntSize, format: ImageFormat, data: &[u8],
     ) {
-        use api::ImageFormat;
         use png::{BitDepth, ColorType, Encoder, HasParameters};
         use std::io::BufWriter;
 
         let color_type = match format {
-            ReadPixelsFormat::Rgba8 => ColorType::RGBA,
-            ReadPixelsFormat::Standard(ImageFormat::BGRA8) => {
+            ImageFormat::RGBA8 => ColorType::RGBA,
+            ImageFormat::BGRA8 => {
                 warn!("Unable to swizzle PNG of BGRA8 type");
                 ColorType::RGBA
             },
-            ReadPixelsFormat::Standard(ImageFormat::R8) => ColorType::Grayscale,
-            ReadPixelsFormat::Standard(ImageFormat::RG8) => ColorType::GrayscaleAlpha,
-            ReadPixelsFormat::Standard(fm) => {
-                error!("Unable to save PNG of {:?}", fm);
+            ImageFormat::R8 => ColorType::Grayscale,
+            ImageFormat::RG8 => ColorType::GrayscaleAlpha,
+            _ => {
+                error!("Unable to save PNG of {:?}", format);
                 return;
             }
         };

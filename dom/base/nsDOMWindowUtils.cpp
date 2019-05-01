@@ -834,7 +834,7 @@ nsDOMWindowUtils::SendTouchEventCommon(
 
   nsEventStatus status;
   if (aToWindow) {
-    nsCOMPtr<nsIPresShell> presShell;
+    RefPtr<PresShell> presShell;
     nsView* view = nsContentUtils::GetViewToDispatchEvent(
         presContext, getter_AddRefs(presShell));
     if (!presShell || !view) {
@@ -2516,9 +2516,8 @@ nsDOMWindowUtils::ZoomToFocusedInput() {
     // main-thread side knows to scroll the content into view before we get
     // the bounding content rect and ask APZ to adjust the visual viewport.
     presShell->ScrollContentIntoView(
-        content,
-        nsIPresShell::ScrollAxis(kScrollMinimum, WhenToScroll::IfNotVisible),
-        nsIPresShell::ScrollAxis(kScrollMinimum, WhenToScroll::IfNotVisible),
+        content, ScrollAxis(kScrollMinimum, WhenToScroll::IfNotVisible),
+        ScrollAxis(kScrollMinimum, WhenToScroll::IfNotVisible),
         ScrollFlags::ScrollOverflowHidden);
 
     CSSRect bounds =

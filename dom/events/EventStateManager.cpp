@@ -193,7 +193,6 @@ NS_INTERFACE_MAP_END
 
 static uint32_t sESMInstanceCount = 0;
 
-uint64_t EventStateManager::sUserInputCounter = 0;
 int32_t EventStateManager::sUserInputEventDepth = 0;
 int32_t EventStateManager::sUserKeyboardEventDepth = 0;
 bool EventStateManager::sNormalLMouseEventInProcess = false;
@@ -1757,7 +1756,7 @@ void EventStateManager::GenerateDragGesture(nsPresContext* aPresContext,
     }
 
     // If non-native code is capturing the mouse don't start a drag.
-    if (nsIPresShell::IsMouseCapturePreventingDrag()) {
+    if (PresShell::IsMouseCapturePreventingDrag()) {
       StopTrackingDragGesture();
       return;
     }
@@ -3035,7 +3034,7 @@ nsresult EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
       // mousemove/mouseup events will continue to be dispatched to this element
       // and therefore forwarded to the child.
       if (aEvent->HasBeenPostedToRemoteProcess() &&
-          !nsIPresShell::GetCapturingContent()) {
+          !PresShell::GetCapturingContent()) {
         if (nsIContent* content =
                 mCurrentTarget ? mCurrentTarget->GetContent() : nullptr) {
           PresShell::SetCapturingContent(content, CaptureFlags::None);
@@ -4055,7 +4054,6 @@ bool EventStateManager::IsHandlingKeyboardInput() {
 /*static*/
 void EventStateManager::StartHandlingUserInput(EventMessage aMessage) {
   ++sUserInputEventDepth;
-  ++sUserInputCounter;
   if (sUserInputEventDepth == 1) {
     sLatestUserInputStart = sHandlingInputStart = TimeStamp::Now();
   }
@@ -4852,9 +4850,9 @@ bool EventStateManager::EventCausesClickEvents(
 
 nsresult EventStateManager::InitAndDispatchClickEvent(
     WidgetMouseEvent* aMouseUpEvent, nsEventStatus* aStatus,
-    EventMessage aMessage, nsIPresShell* aPresShell,
-    nsIContent* aMouseUpContent, AutoWeakFrame aCurrentTarget,
-    bool aNoContentDispatch, nsIContent* aOverrideClickTarget) {
+    EventMessage aMessage, PresShell* aPresShell, nsIContent* aMouseUpContent,
+    AutoWeakFrame aCurrentTarget, bool aNoContentDispatch,
+    nsIContent* aOverrideClickTarget) {
   MOZ_ASSERT(aMouseUpEvent);
   MOZ_ASSERT(EventCausesClickEvents(*aMouseUpEvent));
   MOZ_ASSERT(aMouseUpContent || aCurrentTarget || aOverrideClickTarget);
@@ -4974,7 +4972,7 @@ nsresult EventStateManager::PostHandleMouseUp(
 }
 
 nsresult EventStateManager::DispatchClickEvents(
-    nsIPresShell* aPresShell, WidgetMouseEvent* aMouseUpEvent,
+    PresShell* aPresShell, WidgetMouseEvent* aMouseUpEvent,
     nsEventStatus* aStatus, nsIContent* aClickTarget,
     nsIContent* aOverrideClickTarget) {
   MOZ_ASSERT(aPresShell);
@@ -5021,7 +5019,7 @@ nsresult EventStateManager::DispatchClickEvents(
 }
 
 nsresult EventStateManager::HandleMiddleClickPaste(
-    nsIPresShell* aPresShell, WidgetMouseEvent* aMouseEvent,
+    PresShell* aPresShell, WidgetMouseEvent* aMouseEvent,
     nsEventStatus* aStatus, TextEditor* aTextEditor) {
   MOZ_ASSERT(aPresShell);
   MOZ_ASSERT(aMouseEvent);
@@ -5060,8 +5058,7 @@ nsresult EventStateManager::HandleMiddleClickPaste(
   nsCOMPtr<nsIContent> container;
   int32_t offset;
   nsLayoutUtils::GetContainerAndOffsetAtEvent(
-      static_cast<PresShell*>(aPresShell), aMouseEvent,
-      getter_AddRefs(container), &offset);
+      aPresShell, aMouseEvent, getter_AddRefs(container), &offset);
   if (container) {
     // XXX If readonly or disabled <input> or <textarea> in contenteditable
     //     designMode editor is clicked, the point is in the editor.
@@ -5087,8 +5084,7 @@ nsresult EventStateManager::HandleMiddleClickPaste(
   // Fire ePaste event by ourselves since we need to dispatch "paste" event
   // even if the middle click event was consumed for compatibility with
   // Chromium.
-  if (!nsCopySupport::FireClipboardEvent(ePaste, clipboardType,
-                                         static_cast<PresShell*>(aPresShell),
+  if (!nsCopySupport::FireClipboardEvent(ePaste, clipboardType, aPresShell,
                                          selection)) {
     *aStatus = nsEventStatus_eConsumeNoDefault;
     return NS_OK;
@@ -6290,7 +6286,7 @@ AutoHandlingUserInputStatePusher::~AutoHandlingUserInputStatePusher() {
   }
   EventStateManager::StopHandlingUserInput(mMessage);
   if (mMessage == eMouseDown) {
-    nsIPresShell::AllowMouseCapture(false);
+    PresShell::AllowMouseCapture(false);
   }
   if (NeedsToResetFocusManagerMouseButtonHandlingState()) {
     nsFocusManager* fm = nsFocusManager::GetFocusManager();

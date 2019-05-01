@@ -9,7 +9,6 @@
 
 #include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/ContentParent.h"
-#include "mozilla/StaticPtr.h"
 #include "nsHashKeys.h"
 #include "nsTArray.h"
 #include "nsTHashtable.h"
@@ -46,7 +45,11 @@ class BrowsingContextGroup final : public nsWrapperCache {
   // Force the given ContentParent to subscribe to our BrowsingContextGroup.
   void EnsureSubscribed(ContentParent* aProcess);
 
-  ContentParents::Iterator ContentParentsIter() { return mSubscribers.Iter(); }
+  // Methods interacting with cached contexts.
+  bool IsContextCached(BrowsingContext* aContext) const;
+  void CacheContext(BrowsingContext* aContext);
+  void CacheContexts(const BrowsingContext::Children& aContexts);
+  bool EvictCachedContext(BrowsingContext* aContext);
 
   // Get a reference to the list of toplevel contexts in this
   // BrowsingContextGroup.
@@ -83,6 +86,28 @@ class BrowsingContextGroup final : public nsWrapperCache {
     return Select(parent, opener);
   }
 
+  // For each 'ContentParent', except for 'aExcludedParent',
+  // associated with this group call 'aCallback'.
+  template <typename Func>
+  void EachOtherParent(ContentParent* aExcludedParent, Func&& aCallback) {
+    MOZ_DIAGNOSTIC_ASSERT(XRE_IsParentProcess());
+    for (auto iter = mSubscribers.Iter(); !iter.Done(); iter.Next()) {
+      if (iter.Get()->GetKey() != aExcludedParent) {
+        aCallback(iter.Get()->GetKey());
+      }
+    }
+  }
+
+  // For each 'ContentParent' associated with
+  // this group call 'aCallback'.
+  template <typename Func>
+  void EachParent(Func&& aCallback) {
+    MOZ_DIAGNOSTIC_ASSERT(XRE_IsParentProcess());
+    for (auto iter = mSubscribers.Iter(); !iter.Done(); iter.Next()) {
+      aCallback(iter.Get()->GetKey());
+    }
+  }
+
  private:
   friend class CanonicalBrowsingContext;
 
@@ -97,6 +122,9 @@ class BrowsingContextGroup final : public nsWrapperCache {
   BrowsingContext::Children mToplevels;
 
   ContentParents mSubscribers;
+
+  // Map of cached contexts that need to stay alive due to bfcache.
+  nsTHashtable<nsRefPtrHashKey<BrowsingContext>> mCachedContexts;
 };
 
 }  // namespace dom

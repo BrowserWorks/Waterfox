@@ -14,7 +14,7 @@ obj*/**
 # We ignore all these directories by default, until we get them enabled.
 # If you are enabling a directory, please add directory specific exclusions
 # below.
-extensions/cookie/**
+extensions/permissions/**
 extensions/spellcheck/**
 extensions/universalchardet/**
 image/**
@@ -262,9 +262,6 @@ mobile/android/chrome/content/about.js
 # Not much JS to lint and non-standard at that
 mobile/android/installer/
 mobile/android/locales/
-
-# Non-standard `(catch ex if ...)`
-mobile/android/chrome/content/browser.js
 
 # Pre-processed/pref files
 modules/libpref/greprefs.js

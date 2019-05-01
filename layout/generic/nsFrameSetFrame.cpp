@@ -16,6 +16,7 @@
 #include "mozilla/gfx/Helpers.h"
 #include "mozilla/Likely.h"
 #include "mozilla/PresShell.h"
+#include "mozilla/PresShellInlines.h"
 
 #include "nsGenericHTMLElement.h"
 #include "nsAttrValueInlines.h"
@@ -24,7 +25,6 @@
 #include "nsLayoutUtils.h"
 #include "nsPresContext.h"
 #include "nsIContentInlines.h"
-#include "nsIPresShellInlines.h"
 #include "nsGkAtoms.h"
 #include "nsStyleConsts.h"
 #include "nsHTMLParts.h"
@@ -1187,7 +1187,7 @@ void nsHTMLFramesetFrame::StartMouseDrag(nsPresContext* aPresContext,
 void nsHTMLFramesetFrame::MouseDrag(nsPresContext* aPresContext,
                                     WidgetGUIEvent* aEvent) {
   // if the capture ended, reset the drag state
-  if (nsIPresShell::GetCapturingContent() != GetContent()) {
+  if (PresShell::GetCapturingContent() != GetContent()) {
     mDragger = nullptr;
     gDragInProgress = false;
     return;

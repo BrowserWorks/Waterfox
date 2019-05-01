@@ -103,6 +103,7 @@
 #include "mozilla/net/PCookieServiceParent.h"
 #include "mozilla/plugins/PluginBridge.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/ProcessHangMonitor.h"
 #include "mozilla/ProcessHangMonitorIPC.h"
 #include "mozilla/RDDProcessManager.h"
@@ -158,7 +159,6 @@
 #include "nsIMutable.h"
 #include "nsIObserverService.h"
 #include "nsIParentChannel.h"
-#include "nsIPresShell.h"
 #include "nsIRemoteWindowContext.h"
 #include "nsIScriptError.h"
 #include "nsIScriptSecurityManager.h"
@@ -203,6 +203,7 @@
 #include "nsOpenURIInFrameParams.h"
 #include "mozilla/net/NeckoMessageUtils.h"
 #include "gfxPlatform.h"
+#include "gfxPlatformFontList.h"
 #include "gfxPrefs.h"
 #include "prio.h"
 #include "private/pprio.h"
@@ -1246,6 +1247,12 @@ void ContentParent::BroadcastStringBundle(
   }
 }
 
+void ContentParent::BroadcastFontListChanged() {
+  for (auto* cp : AllProcesses(eLive)) {
+    Unused << cp->SendFontListChanged();
+  }
+}
+
 const nsAString& ContentParent::GetRemoteType() const { return mRemoteType; }
 
 void ContentParent::Init() {
@@ -1274,7 +1281,7 @@ void ContentParent::Init() {
 #ifdef ACCESSIBILITY
   // If accessibility is running in chrome process then start it in content
   // process.
-  if (nsIPresShell::IsAccessibilityActive()) {
+  if (PresShell::IsAccessibilityActive()) {
 #  if defined(XP_WIN)
     // Don't init content a11y if we detect an incompat version of JAWS in use.
     if (!mozilla::a11y::Compatibility::IsOldJAWS()) {
@@ -1286,7 +1293,7 @@ void ContentParent::Init() {
     Unused << SendActivateA11y(0, 0);
 #  endif
   }
-#endif
+#endif  // #ifdef ACCESSIBILITY
 
 #ifdef MOZ_GECKO_PROFILER
   Unused << SendInitProfiler(ProfilerParent::CreateForProcess(OtherPid()));
@@ -2383,12 +2390,8 @@ void ContentParent::InitInternal(ProcessPriority aInitialPriority) {
 
   // Content processes have no permission to access profile directory, so we
   // send the file URL instead.
-  StyleSheet* ucs = nsLayoutStylesheetCache::Singleton()->GetUserContentSheet();
-  if (ucs) {
-    SerializeURI(ucs->GetSheetURI(), xpcomInit.userContentSheetURL());
-  } else {
-    SerializeURI(nullptr, xpcomInit.userContentSheetURL());
-  }
+  nsIURI* ucsURI = nsLayoutStylesheetCache::Singleton()->GetUserContentCSSURL();
+  SerializeURI(ucsURI, xpcomInit.userContentSheetURL());
 
   // 1. Build ContentDeviceData first, as it may affect some gfxVars.
   gfxPlatform::GetPlatform()->BuildContentDeviceData(
@@ -4461,6 +4464,12 @@ void ContentParent::NotifyUpdatedFonts() {
   }
 }
 
+void ContentParent::NotifyRebuildFontList() {
+  for (auto* cp : AllProcesses(eLive)) {
+    Unused << cp->SendRebuildFontList();
+  }
+}
+
 /*static*/
 void ContentParent::UnregisterRemoteFrame(const TabId& aTabId,
                                           const ContentParentId& aCpId,
@@ -4981,6 +4990,44 @@ mozilla::ipc::IPCResult ContentParent::RecvShutdownProfile(
 mozilla::ipc::IPCResult ContentParent::RecvGetGraphicsDeviceInitData(
     ContentDeviceData* aOut) {
   gfxPlatform::GetPlatform()->BuildContentDeviceData(aOut);
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvGetFontListShmBlock(
+    const uint32_t& aGeneration, const uint32_t& aIndex,
+    mozilla::ipc::SharedMemoryBasic::Handle* aOut) {
+  gfxPlatformFontList::PlatformFontList()->ShareFontListShmBlockToProcess(
+      aGeneration, aIndex, Pid(), aOut);
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvInitializeFamily(
+    const uint32_t& aGeneration, const uint32_t& aFamilyIndex) {
+  gfxPlatformFontList::PlatformFontList()->InitializeFamily(aGeneration,
+                                                            aFamilyIndex);
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvSetCharacterMap(
+    const uint32_t& aGeneration, const mozilla::fontlist::Pointer& aFacePtr,
+    const gfxSparseBitSet& aMap) {
+  gfxPlatformFontList::PlatformFontList()->SetCharacterMap(aGeneration,
+                                                           aFacePtr, aMap);
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvInitOtherFamilyNames(
+    const uint32_t& aGeneration, const bool& aDefer, bool* aLoaded) {
+  gfxPlatformFontList::PlatformFontList()->InitOtherFamilyNames(aGeneration,
+                                                                aDefer);
+  *aLoaded = true;
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvSetupFamilyCharMap(
+    const uint32_t& aGeneration, const mozilla::fontlist::Pointer& aFamilyPtr) {
+  gfxPlatformFontList::PlatformFontList()->SetupFamilyCharMap(aGeneration,
+                                                              aFamilyPtr);
   return IPC_OK();
 }
 
@@ -5659,22 +5706,15 @@ mozilla::ipc::IPCResult ContentParent::RecvAttachBrowsingContext(
 
   child->Attach(/* aFromIPC */ true);
 
-  for (auto iter = child->Group()->ContentParentsIter(); !iter.Done();
-       iter.Next()) {
-    nsRefPtrHashKey<ContentParent>* entry = iter.Get();
-    if (entry->GetKey() == this) {
-      continue;
-    }
-
-    Unused << entry->GetKey()->SendAttachBrowsingContext(
-        child->GetIPCInitializer());
-  }
+  child->Group()->EachOtherParent(this, [&](ContentParent* aParent) {
+    Unused << aParent->SendAttachBrowsingContext(child->GetIPCInitializer());
+  });
 
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult ContentParent::RecvDetachBrowsingContext(
-    BrowsingContext* aContext, bool aMoveToBFCache) {
+    BrowsingContext* aContext) {
   if (!aContext) {
     MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
             ("ParentIPC: Trying to detach already detached"));
@@ -5694,11 +5734,78 @@ mozilla::ipc::IPCResult ContentParent::RecvDetachBrowsingContext(
     return IPC_OK();
   }
 
-  if (aMoveToBFCache) {
-    aContext->CacheChildren(/* aFromIPC */ true);
-  } else {
-    aContext->Detach(/* aFromIPC */ true);
+  aContext->Detach(/* aFromIPC */ true);
+
+  aContext->Group()->EachOtherParent(this, [&](ContentParent* aParent) {
+    Unused << aParent->SendDetachBrowsingContext(aContext);
+  });
+
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvCacheBrowsingContextChildren(
+    BrowsingContext* aContext) {
+  if (!aContext) {
+    MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
+            ("ParentIPC: Trying to cache already detached"));
+    return IPC_OK();
   }
+
+  if (!aContext->Canonical()->IsOwnedByProcess(ChildID())) {
+    // Where trying to cache a child BrowsingContext in another child
+    // process. This is illegal since the owner of the BrowsingContext
+    // is the proccess with the in-process docshell, which is tracked
+    // by OwnerProcessId.
+    MOZ_DIAGNOSTIC_ASSERT(false, "Trying to cache out of process context");
+
+    MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
+            ("ParentIPC: Trying to cache out of process context 0x%08" PRIx64,
+             aContext->Id()));
+    return IPC_OK();
+  }
+
+  aContext->CacheChildren(/* aFromIPC */ true);
+
+  aContext->Group()->EachOtherParent(this, [&](ContentParent* aParent) {
+    Unused << aParent->SendCacheBrowsingContextChildren(aContext);
+  });
+
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvRestoreBrowsingContextChildren(
+    BrowsingContext* aContext, nsTArray<BrowsingContextId>&& aChildren) {
+  if (!aContext) {
+    MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Debug,
+            ("ParentIPC: Trying to restore already detached"));
+    return IPC_OK();
+  }
+
+  if (!aContext->Canonical()->IsOwnedByProcess(ChildID())) {
+    // Where trying to cache a child BrowsingContext in another child
+    // process. This is illegal since the owner of the BrowsingContext
+    // is the proccess with the in-process docshell, which is tracked
+    // by OwnerProcessId.
+    MOZ_DIAGNOSTIC_ASSERT(false, "Trying to restore out of process context");
+
+    MOZ_LOG(BrowsingContext::GetLog(), LogLevel::Warning,
+            ("ParentIPC: Trying to restore out of process context 0x%08" PRIx64,
+             aContext->Id()));
+    return IPC_OK();
+  }
+
+  BrowsingContext::Children children(aChildren.Length());
+
+  for (auto id : aChildren) {
+    RefPtr<BrowsingContext> child = BrowsingContext::Get(id);
+    children.AppendElement(child);
+  }
+
+  aContext->RestoreChildren(std::move(children), /* aFromIPC */ true);
+
+  aContext->Group()->EachOtherParent(this, [&](ContentParent* aParent) {
+    Unused << aParent->SendRestoreBrowsingContextChildren(aContext, aChildren);
+  });
 
   return IPC_OK();
 }
@@ -5827,16 +5934,11 @@ mozilla::ipc::IPCResult ContentParent::RecvCommitBrowsingContextTransaction(
     return IPC_FAIL_NO_REASON(this);
   }
 
-  for (auto iter = aContext->Group()->ContentParentsIter(); !iter.Done();
-       iter.Next()) {
-    auto* entry = iter.Get();
-    ContentParent* parent = entry->GetKey();
-    if (parent != this) {
-      Unused << parent->SendCommitBrowsingContextTransaction(
-          aContext, aTransaction,
-          aContext->Canonical()->GetFieldEpochsForChild(parent));
-    }
-  }
+  aContext->Group()->EachOtherParent(this, [&](ContentParent* aParent) {
+    Unused << aParent->SendCommitBrowsingContextTransaction(
+        aContext, aTransaction,
+        aContext->Canonical()->GetFieldEpochsForChild(aParent));
+  });
 
   aTransaction.Apply(aContext, this);
   aContext->Canonical()->SetFieldEpochsForChild(this, aEpochs);

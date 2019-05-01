@@ -14,14 +14,12 @@
 #include "js/ProfilingFrameIterator.h"
 #include "js/TrackedOptimizationInfo.h"
 #include "mozilla/HashFunctions.h"
+#include "mozilla/HashTable.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Variant.h"
 #include "mozilla/Vector.h"
-#include "nsClassHashtable.h"
-#include "nsDataHashtable.h"
-#include "nsHashKeys.h"
-#include "nsTArray.h"
+#include "nsString.h"
 
 class ProfilerMarker;
 
@@ -141,7 +139,7 @@ class UniqueJSONStrings {
 
  private:
   SpliceableChunkedJSONWriter mStringTableWriter;
-  nsDataHashtable<nsCStringHashKey, uint32_t> mStringToIndexMap;
+  mozilla::HashMap<mozilla::HashNumber, uint32_t> mStringHashToIndexMap;
 };
 
 // Contains all the information about JIT frames that is needed to stream stack
@@ -158,8 +156,10 @@ struct JITFrameInfoForBufferRange final {
   uint64_t mRangeEnd;  // mRangeEnd marks the first invalid index.
 
   struct JITFrameKey {
-    uint32_t Hash() const;
-    bool operator==(const JITFrameKey& aOther) const;
+    bool operator==(const JITFrameKey& aOther) const {
+      return mCanonicalAddress == aOther.mCanonicalAddress &&
+             mDepth == aOther.mDepth;
+    }
     bool operator!=(const JITFrameKey& aOther) const {
       return !(*this == aOther);
     }
@@ -167,10 +167,31 @@ struct JITFrameInfoForBufferRange final {
     void* mCanonicalAddress;
     uint32_t mDepth;
   };
-  nsClassHashtable<nsPtrHashKey<void>, nsTArray<JITFrameKey>>
-      mJITAddressToJITFramesMap;
-  nsClassHashtable<nsGenericHashKey<JITFrameKey>, nsCString>
-      mJITFrameToFrameJSONMap;
+  struct JITFrameKeyHasher {
+    using Lookup = JITFrameKey;
+
+    static mozilla::HashNumber hash(const JITFrameKey& aLookup) {
+      mozilla::HashNumber hash = 0;
+      hash = mozilla::AddToHash(hash, aLookup.mCanonicalAddress);
+      hash = mozilla::AddToHash(hash, aLookup.mDepth);
+      return hash;
+    }
+
+    static bool match(const JITFrameKey& aKey, const JITFrameKey& aLookup) {
+      return aKey == aLookup;
+    }
+
+    static void rekey(JITFrameKey& aKey, const JITFrameKey& aNewKey) {
+      aKey = aNewKey;
+    }
+  };
+
+  using JITAddressToJITFramesMap =
+      mozilla::HashMap<void*, mozilla::Vector<JITFrameKey>>;
+  JITAddressToJITFramesMap mJITAddressToJITFramesMap;
+  using JITFrameToFrameJSONMap =
+      mozilla::HashMap<JITFrameKey, nsCString, JITFrameKeyHasher>;
+  JITFrameToFrameJSONMap mJITFrameToFrameJSONMap;
 };
 
 // Contains JITFrameInfoForBufferRange objects for multiple profiler buffer
@@ -196,19 +217,19 @@ struct JITFrameInfo final {
   // Returns whether the information stored in this object is still relevant
   // for any entries in the buffer.
   bool HasExpired(uint64_t aCurrentBufferRangeStart) const {
-    if (mRanges.IsEmpty()) {
+    if (mRanges.empty()) {
       // No information means no relevant information. Allow this object to be
       // discarded.
       return true;
     }
-    return mRanges.LastElement().mRangeEnd <= aCurrentBufferRangeStart;
+    return mRanges.back().mRangeEnd <= aCurrentBufferRangeStart;
   }
 
   // The array of ranges of JIT frame information, sorted by buffer position.
   // Ranges are non-overlapping.
   // The JSON of the cached frames can contain string indexes, which refer
   // to strings in mUniqueStrings.
-  nsTArray<JITFrameInfoForBufferRange> mRanges;
+  mozilla::Vector<JITFrameInfoForBufferRange> mRanges;
 
   // The string table which contains strings used in the frame JSON that's
   // cached in mRanges.
@@ -258,6 +279,48 @@ class UniqueStacks {
     mozilla::Variant<NormalFrameData, JITFrameData> mData;
   };
 
+  struct FrameKeyHasher {
+    using Lookup = FrameKey;
+
+    static mozilla::HashNumber hash(const FrameKey& aLookup) {
+      mozilla::HashNumber hash = 0;
+      if (aLookup.mData.is<FrameKey::NormalFrameData>()) {
+        const FrameKey::NormalFrameData& data =
+            aLookup.mData.as<FrameKey::NormalFrameData>();
+        if (!data.mLocation.IsEmpty()) {
+          hash = mozilla::AddToHash(hash,
+                                    mozilla::HashString(data.mLocation.get()));
+        }
+        hash = mozilla::AddToHash(hash, data.mRelevantForJS);
+        if (data.mLine.isSome()) {
+          hash = mozilla::AddToHash(hash, *data.mLine);
+        }
+        if (data.mColumn.isSome()) {
+          hash = mozilla::AddToHash(hash, *data.mColumn);
+        }
+        if (data.mCategoryPair.isSome()) {
+          hash = mozilla::AddToHash(hash,
+                                    static_cast<uint32_t>(*data.mCategoryPair));
+        }
+      } else {
+        const FrameKey::JITFrameData& data =
+            aLookup.mData.as<FrameKey::JITFrameData>();
+        hash = mozilla::AddToHash(hash, data.mCanonicalAddress);
+        hash = mozilla::AddToHash(hash, data.mDepth);
+        hash = mozilla::AddToHash(hash, data.mRangeIndex);
+      }
+      return hash;
+    }
+
+    static bool match(const FrameKey& aKey, const FrameKey& aLookup) {
+      return aKey == aLookup;
+    }
+
+    static void rekey(FrameKey& aKey, const FrameKey& aNewKey) {
+      aKey = aNewKey;
+    }
+  };
+
   struct StackKey {
     mozilla::Maybe<uint32_t> mPrefixStackIndex;
     uint32_t mFrameIndex;
@@ -271,7 +334,7 @@ class UniqueStacks {
           mFrameIndex(aFrame),
           mHash(mozilla::AddToHash(aPrefix.mHash, aFrame)) {}
 
-    uint32_t Hash() const { return mHash; }
+    mozilla::HashNumber Hash() const { return mHash; }
 
     bool operator==(const StackKey& aOther) const {
       return mPrefixStackIndex == aOther.mPrefixStackIndex &&
@@ -279,7 +342,23 @@ class UniqueStacks {
     }
 
    private:
-    uint32_t mHash;
+    mozilla::HashNumber mHash;
+  };
+
+  struct StackKeyHasher {
+    using Lookup = StackKey;
+
+    static mozilla::HashNumber hash(const StackKey& aLookup) {
+      return aLookup.Hash();
+    }
+
+    static bool match(const StackKey& aKey, const StackKey& aLookup) {
+      return aKey == aLookup;
+    }
+
+    static void rekey(StackKey& aKey, const StackKey& aNewKey) {
+      aKey = aNewKey;
+    }
   };
 
   explicit UniqueStacks(JITFrameInfo&& aJITFrameInfo);
@@ -296,7 +375,7 @@ class UniqueStacks {
   // is taken from mJITInfoRanges.
   // aBufferPosition is needed in order to look up the correct JIT frame info
   // object in mJITInfoRanges.
-  MOZ_MUST_USE mozilla::Maybe<nsTArray<UniqueStacks::FrameKey>>
+  MOZ_MUST_USE mozilla::Maybe<mozilla::Vector<UniqueStacks::FrameKey>>
   LookupFramesForJITAddressFromBufferPos(void* aJITAddress,
                                          uint64_t aBufferPosition);
 
@@ -315,12 +394,12 @@ class UniqueStacks {
 
  private:
   SpliceableChunkedJSONWriter mFrameTableWriter;
-  nsDataHashtable<nsGenericHashKey<FrameKey>, uint32_t> mFrameToIndexMap;
+  mozilla::HashMap<FrameKey, uint32_t, FrameKeyHasher> mFrameToIndexMap;
 
   SpliceableChunkedJSONWriter mStackTableWriter;
-  nsDataHashtable<nsGenericHashKey<StackKey>, uint32_t> mStackToIndexMap;
+  mozilla::HashMap<StackKey, uint32_t, StackKeyHasher> mStackToIndexMap;
 
-  nsTArray<JITFrameInfoForBufferRange> mJITInfoRanges;
+  mozilla::Vector<JITFrameInfoForBufferRange> mJITInfoRanges;
 };
 
 //

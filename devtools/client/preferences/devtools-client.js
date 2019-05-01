@@ -50,6 +50,12 @@ pref("devtools.inspector.showUserAgentStyles", false);
 pref("devtools.inspector.showAllAnonymousContent", false);
 // Show user agent shadow roots
 pref("devtools.inspector.showUserAgentShadowRoots", false);
+// Enable Inactive CSS detection
+#if defined(NIGHTLY_BUILD)
+pref("devtools.inspector.inactive.css.enabled", true);
+#else
+pref("devtools.inspector.inactive.css.enabled", false);
+#endif
 // Enable the new Rules View
 pref("devtools.inspector.new-rulesview.enabled", false);
 
@@ -180,7 +186,7 @@ pref("devtools.netmonitor.saveRequestAndResponseBodies", true);
 
 // The default Network monitor HAR export setting
 pref("devtools.netmonitor.har.defaultLogDir", "");
-pref("devtools.netmonitor.har.defaultFileName", "Archive %date");
+pref("devtools.netmonitor.har.defaultFileName", "%hostname_Archive [%date]");
 pref("devtools.netmonitor.har.jsonp", false);
 pref("devtools.netmonitor.har.jsonpCallback", "");
 pref("devtools.netmonitor.har.includeResponseBodies", true);

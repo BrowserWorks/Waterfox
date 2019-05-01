@@ -2496,9 +2496,13 @@ nsresult nsHttpHandler::SpeculativeConnectInternal(
   nsAutoCString username;
   aURI->GetUsername(username);
 
-  RefPtr<nsHttpConnectionInfo> ci =
-      new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr,
-                               originAttributes, usingSSL);
+  // TODO For now pass EmptyCString() for topWindowOrigin for all speculative
+  // connection attempts, but ideally we should pass the accurate top window
+  // origin here.  This would require updating the nsISpeculativeConnect API
+  // and all of its consumers.
+  RefPtr<nsHttpConnectionInfo> ci = new nsHttpConnectionInfo(
+      host, port, EmptyCString(), username, EmptyCString(), nullptr,
+      originAttributes, usingSSL);
   ci->SetAnonymous(anonymous);
 
   return SpeculativeConnect(ci, aCallbacks);
@@ -2597,10 +2601,9 @@ nsHttpsHandler::AllowPort(int32_t aPort, const char *aScheme, bool *_retval) {
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsHttpHandler::EnsureHSTSDataReadyNative(HSTSDataCallbackWrapper *aCallback) {
+nsresult nsHttpHandler::EnsureHSTSDataReadyNative(
+    already_AddRefed<mozilla::net::HSTSDataCallbackWrapper> aCallback) {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aCallback);
 
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_NewURI(getter_AddRefs(uri), "http://example.com");
@@ -2610,14 +2613,14 @@ nsHttpHandler::EnsureHSTSDataReadyNative(HSTSDataCallbackWrapper *aCallback) {
   bool willCallback = false;
   OriginAttributes originAttributes;
   RefPtr<HSTSDataCallbackWrapper> callback = aCallback;
-  auto func = [callback{std::move(callback)}](bool aResult, nsresult aStatus) {
+  auto func = [callback](bool aResult, nsresult aStatus) {
     callback->DoCallback(aResult);
   };
   rv = NS_ShouldSecureUpgrade(uri, nullptr, nullptr, false, false,
                               originAttributes, shouldUpgrade, std::move(func),
                               willCallback);
   if (NS_FAILED(rv) || !willCallback) {
-    aCallback->DoCallback(false);
+    callback->DoCallback(false);
     return rv;
   }
 
@@ -2663,7 +2666,7 @@ nsHttpHandler::EnsureHSTSDataReady(JSContext *aCx, Promise **aPromise) {
   RefPtr<HSTSDataCallbackWrapper> wrapper =
       new HSTSDataCallbackWrapper(std::move(callback));
   promise.forget(aPromise);
-  return EnsureHSTSDataReadyNative(wrapper);
+  return EnsureHSTSDataReadyNative(wrapper.forget());
 }
 
 void nsHttpHandler::ShutdownConnectionManager() {
