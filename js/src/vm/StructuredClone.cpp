@@ -64,6 +64,7 @@ using mozilla::LittleEndian;
 using mozilla::NativeEndian;
 using mozilla::NumbersAreIdentical;
 using JS::CanonicalizeNaN;
+using JS::RegExpFlag;
 using JS::RegExpFlags;
 
 // When you make updates here, make sure you consider whether you need to bump the
@@ -2121,7 +2122,14 @@ JSStructuredCloneReader::startRead(MutableHandleValue vp)
       }
 
       case SCTAG_REGEXP_OBJECT: {
-        RegExpFlags flags = AssertedCast<uint8_t>(data);
+        if ((data & RegExpFlag::AllFlags) != data) {
+          JS_ReportErrorNumberASCII(context(), GetErrorMessage, nullptr,
+                                    JSMSG_SC_BAD_SERIALIZED_DATA, "regexp");
+          return false;
+        }
+
+        RegExpFlags flags(AssertedCast<uint8_t>(data));
+
         uint32_t tag2, stringData;
         if (!in.readPair(&tag2, &stringData))
             return false;
@@ -2131,6 +2139,7 @@ JSStructuredCloneReader::startRead(MutableHandleValue vp)
                                       "regexp");
             return false;
         }
+
         JSString* str = readString(stringData);
         if (!str)
             return false;
