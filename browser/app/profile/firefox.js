@@ -41,7 +41,7 @@ pref("extensions.getAddons.cache.enabled", true);
 pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/api/v3/addons/search/?guid=%IDS%&lang=%LOCALE%");
 pref("extensions.getAddons.compatOverides.url", "https://services.addons.mozilla.org/api/v3/addons/compat-override/?guid=%IDS%&lang=%LOCALE%");
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
-pref("extensions.webservice.discoverURL", "https://discovery.addons.mozilla.org/%LOCALE%/firefox/discovery/pane/%VERSION%/%OS%/%COMPATIBILITY_MODE%");
+pref("extensions.webservice.discoverURL", "");
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
 pref("extensions.getAddons.langpacks.url", "https://services.addons.mozilla.org/api/v3/addons/language-tools/?app=firefox&type=language&appversion=%VERSION%");
 
@@ -1862,7 +1862,7 @@ pref("toolkit.coverage.endpoint.base", "https://coverage.mozilla.org");
 // Discovery prefs
 pref("browser.discovery.enabled", false);
 pref("browser.discovery.containers.enabled", true);
-pref("browser.discovery.sites", "addons.mozilla.org");
+pref("browser.discovery.sites", "");
 
 pref("browser.engagement.recent_visited_origins.expiry", 86400); // 24 * 60 * 60 (24 hours in seconds)
 
