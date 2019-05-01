@@ -9,7 +9,7 @@
 
 <!ENTITY window.title "Important News">
 <!ENTITY window.style "width: 490px">
-<!ENTITY sync "To sync information you’ve already saved to Firefox with this installation of &brandShortName;, sign in with your &syncBrand.fxAccount.label;.">
+<!ENTITY sync "To sync information you’ve already saved to Waterfox with this installation of &brandShortName;, sign in with your &syncBrand.fxAccount.label;.">
 <!ENTITY continue-button "Continue">
 
-<!ENTITY mainText "This installation of &brandShortName; has a new profile. It does not share bookmarks, passwords, and user preferences with other installations of Firefox (including Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition, and Firefox Nightly) on this computer.">
+<!ENTITY mainText "This installation of &brandShortName; has a new profile. It does not share bookmarks, passwords, and user preferences with other installations of Waterfox on this computer.">

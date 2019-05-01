@@ -141,7 +141,7 @@ startup-header = Startup
 # { -brand-short-name } will be 'Firefox Developer Edition',
 # since this setting is only exposed in Firefox Developer Edition
 separate-profile-mode =
-    .label = Allow { -brand-short-name } and Firefox to run at the same time
+    .label = Allow { -brand-short-name } and Waterfox to run at the same time
 use-firefox-sync = Tip: This uses separate profiles. Use { -sync-brand-short-name } to share data between them.
 get-started-not-logged-in = Sign in to { -sync-brand-short-name }…
 get-started-configured = Open { -sync-brand-short-name } preferences
@@ -458,10 +458,10 @@ home-restore-defaults =
     .label = Restore Defaults
     .accesskey = R
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox Home (Default)
+    .label = Waterfox Home (Default)
 
 home-mode-choice-custom =
     .label = Custom URLs…
@@ -578,7 +578,7 @@ sync-signedout-account-signin =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Download Firefox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> or <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> to sync with your mobile device.
+sync-mobile-promo = Download Waterfox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> to sync with your mobile device.
 
 ## Sync Section - Signed in
 
@@ -640,7 +640,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Add-ons
-    .tooltiptext = Extensions and themes for Firefox desktop
+    .tooltiptext = Extensions and themes for Waterfox desktop
     .accesskey = A
 
 sync-engine-prefs =

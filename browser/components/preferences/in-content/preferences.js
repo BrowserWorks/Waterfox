@@ -104,10 +104,6 @@ function init_all() {
   window.addEventListener("hashchange", onHashChange);
 
   gotoPref().then(() => {
-    let helpButton = document.getElementById("helpButton");
-    let helpUrl = Services.urlFormatter.formatURLPref("app.support.baseURL") + "preferences";
-    helpButton.setAttribute("href", helpUrl);
-
     document.getElementById("addonsButton")
       .addEventListener("click", () => {
         let mainWindow = window.docShell.rootTreeItem.domWindow;

@@ -38,7 +38,7 @@ window.gActivityStreamStrings = {
   "section_disclaimer_topstories": "இணையத்தின் சுவாரசியமான கதைகள், நீங்கள் படிப்பவற்றின் அடிப்படையில் தேர்ந்தெடுக்கப்பட்டுள்ளன. பாக்கெட், இப்போது மொசில்லாவின் ஒரு பகுதியாகும்.",
   "section_disclaimer_topstories_linktext": "இது எப்படி வேலை செய்கிறது என்று தெரிந்துகொள்ளவும்.",
   "section_disclaimer_topstories_buttontext": "சரி, புரிந்தது",
-  "prefs_home_header": "Firefox முகப்பு உள்ளடக்கம்",
+  "prefs_home_header": "Waterfox முகப்பு உள்ளடக்கம்",
   "prefs_home_description": "உங்கள் பயர்பாக்ஸ் முகப்புத் திரையில் என்ன உள்ளடக்கம் வேண்டுமென்று தேர்ந்தெடு.",
   "prefs_content_discovery_description": "பயர்பாஃசு முகப்பில் உள்ள உள்ளடக்க கண்டுபிடிப்பு, வலைத்தளங்களில் உள்ள உயர் தர, தொடர்புடைய கட்டுரைகளைக் கண்டறிய அனுமதிக்கிறது.",
   "prefs_section_rows_option": "{num} வரிசை;{num} வரிசைகள்",

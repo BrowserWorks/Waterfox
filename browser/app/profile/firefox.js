@@ -965,17 +965,17 @@ pref("toolkit.crashreporter.infoURL",
      "");
 
 // base URL for web-based support pages
-pref("app.support.baseURL", "");
+pref("app.support.baseURL", "about:preferences");
 
 // base url for web-based feedback pages
 #ifdef MOZ_DEV_EDITION
-pref("app.feedback.baseURL", "");
+pref("app.feedback.baseURL", "#");
 #else
-pref("app.feedback.baseURL", "");
+pref("app.feedback.baseURL", "#");
 #endif
 
 // base URL for web-based marketing pages
-pref("app.productInfo.baseURL", "");
+pref("app.productInfo.baseURL", "#");
 
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
 pref("security.alternate_certificate_error_page", "certerror");

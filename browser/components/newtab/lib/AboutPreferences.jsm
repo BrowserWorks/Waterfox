@@ -23,29 +23,6 @@ const PREFS_BEFORE_SECTIONS = [
     },
     icon: "chrome://browser/skin/search-glass.svg",
   },
-  {
-    id: "topsites",
-    pref: {
-      feed: "feeds.topsites",
-      titleString: "settings_pane_topsites_header",
-      descString: "prefs_topsites_description",
-    },
-    icon: "topsites",
-    maxRows: 4,
-    rowsPref: "topSitesRows",
-  },
-];
-
-const PREFS_AFTER_SECTIONS = [
-  {
-    id: "snippets",
-    pref: {
-      feed: "feeds.snippets",
-      titleString: "settings_pane_snippets_header",
-      descString: "prefs_snippets_description",
-    },
-    icon: "info",
-  },
 ];
 
 // This CSS is added to the whole about:preferences page
@@ -121,7 +98,7 @@ this.AboutPreferences = class AboutPreferences {
     }
 
     this.renderPreferences(window, await this.strings, [...PREFS_BEFORE_SECTIONS,
-      ...sections, ...PREFS_AFTER_SECTIONS]);
+      ...sections]);
   }
 
   /**

@@ -4,10 +4,10 @@
 
 -sync-brand-short-name = Sync
 
-# “Sync” can be localized, “Firefox” must be treated as a brand,
+# “Sync” can be localized, “Waterfox” must be treated as a brand,
 # and kept in English.
--sync-brand-name = Firefox Sync
+-sync-brand-name = Waterfox Sync
 
-# “Account” can be localized, “Firefox” must be treated as a brand,
+# “Account” can be localized, “Waterfox” must be treated as a brand,
 # and kept in English.
--fxaccount-brand-name = Firefox Account
+-fxaccount-brand-name = Waterfox Account
