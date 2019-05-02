@@ -52,7 +52,7 @@ async function init(aEvent) {
     versionAttributes.isodate = `${year}-${month}-${day}`;
 
     document.getElementById("experimental").hidden = false;
-    document.getElementById("communityDesc").hidden = true;
+    // document.getElementById("communityDesc").hidden = true;
   }
 
   // Use Fluent arguments for append version and the architecture of the build

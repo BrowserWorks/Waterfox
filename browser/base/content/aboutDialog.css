@@ -14,13 +14,13 @@
 #rightBox {
   background-image: url("chrome://branding/content/about-wordmark.svg");
   background-repeat: no-repeat;
+  background-position: right 10px top -10px;
   /* padding-top creates room for the wordmark */
   padding-top: 38px;
-  margin-top:20px;
 }
 
 #rightBox:-moz-locale-dir(rtl) {
-  background-position: 100% 0;
+  background-position: top;
 }
 
 #bottomBox {
