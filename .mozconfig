@@ -29,6 +29,7 @@ fi
 export MOZ_GECKO_PROFILER=
 export MOZ_ENABLE_PROFILER_SPS=
 export MOZ_PROFILING=
+export MOZ_MAINTENANCE_SERVICE=
 
 if test `uname -s` = MINGW32_NT-6.2; then
 mk_add_options MOZ_MAKE_FLAGS=-j8
