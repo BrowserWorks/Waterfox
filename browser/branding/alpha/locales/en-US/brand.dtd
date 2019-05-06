@@ -10,4 +10,4 @@
    remain unchanged across different versions (Nightly, Beta, etc.). -->
 <!ENTITY  brandProductName      "Waterfox">
 <!ENTITY  vendorShortName       "Waterfox">
-<!ENTITY  trademarkInfo.part1   " ">
+<!ENTITY  trademarkInfo.part1   "Waterfox is a registered Trademark of Waterfox Ltd.">

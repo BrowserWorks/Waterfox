@@ -19,4 +19,4 @@
 # remain unchanged across different versions (Nightly, Beta, etc.).
 -brand-product-name = Waterfox
 -vendor-short-name = Waterfox
-trademarkInfo = { " " }
+trademarkInfo = { "Waterfox is a registered Trademark of Waterfox Ltd." }
