@@ -9,7 +9,6 @@
 #if defined(MOZ_ASAN) || defined(MOZ_TSAN)
 /llvm-symbolizer
 #endif
-/pingsender
 /pk12util
 /ssltunnel
 /webrtc-gtest

@@ -424,10 +424,6 @@ bin/libfreebl_32int64_3.so
 #endif
 #endif
 
-; [ Ping Sender ]
-;
-@BINPATH@/pingsender@BIN_SUFFIX@
-
 ; Shutdown Terminator
 @RESPATH@/components/terminator.manifest
 
