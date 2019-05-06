@@ -61,6 +61,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   SimpleServiceDiscovery: "resource://gre/modules/SimpleServiceDiscovery.jsm",
   SiteDataManager: "resource:///modules/SiteDataManager.jsm",
   SitePermissions: "resource:///modules/SitePermissions.jsm",
+  SubframeCrashHandler: "resource:///modules/ContentCrashHandlers.jsm",
   TabModalPrompt: "chrome://global/content/tabprompts.jsm",
   TabCrashHandler: "resource:///modules/ContentCrashHandlers.jsm",
   TelemetryEnvironment: "resource://gre/modules/TelemetryEnvironment.jsm",
@@ -239,6 +240,15 @@ var gURLBarHandler = {
   },
 
   /**
+   * Invoked by CustomizationHandler when a customization starts.
+   */
+  customizeStart() {
+    if (this._urlbar && this._urlbar.constructor.name == "UrlbarInput") {
+      this._urlbar.removeCopyCutController();
+    }
+  },
+
+  /**
    * Invoked by CustomizationHandler when a customization ends.
    */
   customizeEnd() {
@@ -398,6 +408,10 @@ var gMultiProcessBrowser =
   window.docShell
         .QueryInterface(Ci.nsILoadContext)
         .useRemoteTabs;
+var gFissionBrowser =
+  window.docShell
+        .QueryInterface(Ci.nsILoadContext)
+        .useRemoteSubframes;
 
 var gBrowserAllowScriptsToCloseInitialTabs = false;
 
@@ -494,6 +508,8 @@ function showFxaToolbarMenu(enable) {
   mainWindowEl.setAttribute("fxastatus", "not_configured");
   fxaPanelEl.addEventListener("ViewShowing", gSync.updateSendToDeviceTitle);
 
+  Services.telemetry.setEventRecordingEnabled("fxa_app_menu", true);
+
   if (enable && syncEnabled) {
     mainWindowEl.setAttribute("fxatoolbarmenu", "visible");
 
@@ -502,7 +518,6 @@ function showFxaToolbarMenu(enable) {
     // event was performed yet.
     gSync.maybeUpdateUIState();
 
-    // Enabled FxA toolbar telemetry
     Services.telemetry.setEventRecordingEnabled("fxa_avatar_menu", true);
 
     // We set an attribute here so that we can toggle the custom
@@ -1193,7 +1208,7 @@ function _loadURI(browser, uri, params = {}) {
     mustChangeProcess,
     newFrameloader,
   } = E10SUtils.shouldLoadURIInBrowser(browser, uri, gMultiProcessBrowser,
-                                       flags);
+                                       gFissionBrowser, flags);
   if (uriObject && handleUriInChrome(browser, uriObject)) {
     // If we've handled the URI in Chrome then just return here.
     return;
@@ -1238,7 +1253,7 @@ function _loadURI(browser, uri, params = {}) {
       let loadParams = {
         uri,
         triggeringPrincipal: triggeringPrincipal
-          ? gSerializationHelper.serializeToString(triggeringPrincipal)
+          ? E10SUtils.serializePrincipal(triggeringPrincipal)
           : null,
         flags,
         referrerInfo: E10SUtils.serializeReferrerInfo(referrerInfo),
@@ -1305,7 +1320,8 @@ function RedirectLoad({ target: browser, data }) {
     // If we're in a Large-Allocation process, we prefer switching back into a
     // normal content process, as that way we can clean up the L-A process.
     data.loadOptions.remoteType =
-      E10SUtils.getRemoteTypeForURI(data.loadOptions.uri, gMultiProcessBrowser);
+      E10SUtils.getRemoteTypeForURI(data.loadOptions.uri, gMultiProcessBrowser,
+                                    gFissionBrowser);
   }
 
   // We should only start the redirection if the browser window has finished
@@ -2708,7 +2724,8 @@ async function BrowserViewSourceOfDocument(aArgsOrDocument) {
     // that of the original URL, so disable remoteness if necessary for this
     // URL.
     preferredRemoteType =
-      E10SUtils.getRemoteTypeForURI(args.URL, gMultiProcessBrowser);
+      E10SUtils.getRemoteTypeForURI(args.URL, gMultiProcessBrowser,
+                                    gFissionBrowser);
   }
 
   // In the case of popups, we need to find a non-popup browser window.
@@ -3506,9 +3523,7 @@ function getSecurityInfo(securityInfoAsString) {
   if (!securityInfoAsString)
     return null;
 
-  const serhelper = Cc["@mozilla.org/network/serialization-helper;1"]
-                       .getService(Ci.nsISerializationHelper);
-  let securityInfo = serhelper.deserializeObject(securityInfoAsString);
+  let securityInfo = gSerializationHelper.deserializeObject(securityInfoAsString);
   securityInfo.QueryInterface(Ci.nsITransportSecurityInfo);
 
   return securityInfo;
@@ -5753,12 +5768,12 @@ nsBrowserAccess.prototype = {
     if (aFlags & Ci.nsIBrowserDOMWindow.OPEN_NO_REFERRER) {
       referrerInfo = new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, false, null);
     } else {
-      referrerInfo = new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true,
+      referrerInfo = new ReferrerInfo((aOpener && aOpener.document) ?
+        aOpener.document.referrerPolicy : Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
+        true,
         aOpener ? makeURI(aOpener.location.href) : null);
     }
-    if (aOpener && aOpener.document) {
-      referrerInfo.referrerPolicy = aOpener.document.referrerPolicy;
-    }
+
     let isPrivate = aOpener
                   ? PrivateBrowsingUtils.isContentWindowPrivate(aOpener)
                   : PrivateBrowsingUtils.isWindowPrivate(window);

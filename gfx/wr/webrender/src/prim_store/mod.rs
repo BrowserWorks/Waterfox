@@ -6,7 +6,7 @@ use api::{BorderRadius, ClipMode, ColorF};
 use api::{FilterOp, ImageRendering, RepeatMode};
 use api::{PremultipliedColorF, PropertyBinding, Shadow, GradientStop};
 use api::{BoxShadowClipMode, LineStyle, LineOrientation};
-use api::PrimitiveKeyKind;
+use api::{PrimitiveKeyKind, RasterSpace};
 use api::units::*;
 use border::{get_max_scale_for_border, build_border_instances};
 use border::BorderSegmentCacheKey;
@@ -26,7 +26,7 @@ use gpu_types::{BrushFlags, SnapOffsets};
 use image::{Repetition};
 use intern;
 use malloc_size_of::MallocSizeOf;
-use picture::{PictureCompositeMode, PicturePrimitive};
+use picture::{PictureCompositeMode, PicturePrimitive, SurfaceInfo};
 use picture::{ClusterIndex, PrimitiveList, RecordedDirtyRegion, SurfaceIndex, RetainedTiles, RasterConfig};
 use prim_store::borders::{ImageBorderDataHandle, NormalBorderDataHandle};
 use prim_store::gradient::{GRADIENT_FP_STOPS, GradientCacheKey, GradientStopKey};
@@ -1723,7 +1723,7 @@ impl PrimitiveStore {
         frame_context: &FrameVisibilityContext,
         frame_state: &mut FrameVisibilityState,
     ) {
-        let (mut prim_list, surface_index, apply_local_clip_rect) = {
+        let (mut prim_list, surface_index, apply_local_clip_rect, raster_space) = {
             let pic = &mut self.pictures[pic_index.0];
 
             let prim_list = mem::replace(&mut pic.prim_list, PrimitiveList::empty());
@@ -1748,7 +1748,7 @@ impl PrimitiveStore {
                 frame_state.tile_cache = Some(tile_cache);
             }
 
-            (prim_list, surface_index, pic.apply_local_clip_rect)
+            (prim_list, surface_index, pic.apply_local_clip_rect, pic.requested_raster_space)
         };
 
         let surface = &frame_context.surfaces[surface_index.0 as usize];
@@ -1931,6 +1931,7 @@ impl PrimitiveStore {
                         surface.device_pixel_scale,
                         &frame_context.screen_world_rect,
                         &mut frame_state.data_stores.clip,
+                        true,
                     );
 
                 // Ensure the primitive clip is popped
@@ -2010,8 +2011,16 @@ impl PrimitiveStore {
                 );
 
                 prim_instance.visibility_info = vis_index;
-            }
 
+                self.request_resources_for_prim(
+                    prim_instance,
+                    surface,
+                    raster_space,
+                    &map_local_to_surface,
+                    frame_context,
+                    frame_state,
+                );
+            }
         }
 
         let pic = &mut self.pictures[pic_index.0];
@@ -2031,6 +2040,153 @@ impl PrimitiveStore {
         }
 
         pic.prim_list = prim_list;
+    }
+
+    fn request_resources_for_prim(
+        &mut self,
+        prim_instance: &mut PrimitiveInstance,
+        surface: &SurfaceInfo,
+        raster_space: RasterSpace,
+        map_local_to_surface: &SpaceMapper<LayoutPixel, PicturePixel>,
+        frame_context: &FrameVisibilityContext,
+        frame_state: &mut FrameVisibilityState,
+    ) {
+        match prim_instance.kind {
+            PrimitiveInstanceKind::TextRun { data_handle, run_index, .. } => {
+                let prim_data = &mut frame_state.data_stores.text_run[data_handle];
+                let run = &mut self.text_runs[run_index];
+
+                // The transform only makes sense for screen space rasterization
+                let relative_transform = frame_context
+                    .clip_scroll_tree
+                    .get_relative_transform(
+                        prim_instance.spatial_node_index,
+                        ROOT_SPATIAL_NODE_INDEX,
+                    );
+                let prim_offset = prim_instance.prim_origin.to_vector() - run.reference_frame_relative_offset;
+
+                run.request_resources(
+                    prim_offset,
+                    &prim_data.font,
+                    &prim_data.glyphs,
+                    &relative_transform.flattened.with_destination::<WorldPixel>(),
+                    surface,
+                    raster_space,
+                    frame_state.resource_cache,
+                    frame_state.gpu_cache,
+                    frame_state.render_tasks,
+                    frame_state.scratch,
+                );
+            }
+            PrimitiveInstanceKind::Image { data_handle, image_instance_index, .. } => {
+                let prim_data = &mut frame_state.data_stores.image[data_handle];
+                let common_data = &mut prim_data.common;
+                let image_data = &mut prim_data.kind;
+                let image_instance = &mut self.images[image_instance_index];
+
+                let image_properties = frame_state
+                    .resource_cache
+                    .get_image_properties(image_data.key);
+
+                let request = ImageRequest {
+                    key: image_data.key,
+                    rendering: image_data.image_rendering,
+                    tile: None,
+                };
+
+                match image_properties {
+                    Some(ImageProperties { tiling: None, .. }) => {
+                        frame_state.resource_cache.request_image(
+                            request,
+                            frame_state.gpu_cache,
+                        );
+                    }
+                    Some(ImageProperties { descriptor, tiling: Some(tile_size), .. }) => {
+                        image_instance.visible_tiles.clear();
+                        let device_image_rect = DeviceIntRect::from_size(descriptor.size);
+
+                        // Tighten the clip rect because decomposing the repeated image can
+                        // produce primitives that are partially covering the original image
+                        // rect and we want to clip these extra parts out.
+                        let prim_info = &frame_state.scratch.prim_info[prim_instance.visibility_info.0 as usize];
+                        let prim_rect = LayoutRect::new(
+                            prim_instance.prim_origin,
+                            common_data.prim_size,
+                        );
+                        let tight_clip_rect = prim_info
+                            .combined_local_clip_rect
+                            .intersection(&prim_rect).unwrap();
+                        image_instance.tight_local_clip_rect = tight_clip_rect;
+
+                        let visible_rect = compute_conservative_visible_rect(
+                            &tight_clip_rect,
+                            map_local_to_surface,
+                        );
+
+                        let base_edge_flags = edge_flags_for_tile_spacing(&image_data.tile_spacing);
+
+                        let stride = image_data.stretch_size + image_data.tile_spacing;
+
+                        let repetitions = ::image::repetitions(
+                            &prim_rect,
+                            &visible_rect,
+                            stride,
+                        );
+
+                        for Repetition { origin, edge_flags } in repetitions {
+                            let edge_flags = base_edge_flags | edge_flags;
+
+                            let layout_image_rect = LayoutRect {
+                                origin,
+                                size: image_data.stretch_size,
+                            };
+
+                            let tiles = ::image::tiles(
+                                &layout_image_rect,
+                                &visible_rect,
+                                &device_image_rect,
+                                tile_size as i32,
+                            );
+
+                            for tile in tiles {
+                                frame_state.resource_cache.request_image(
+                                    request.with_tile(tile.offset),
+                                    frame_state.gpu_cache,
+                                );
+
+                                image_instance.visible_tiles.push(VisibleImageTile {
+                                    tile_offset: tile.offset,
+                                    edge_flags: tile.edge_flags & edge_flags,
+                                    local_rect: tile.rect,
+                                    local_clip_rect: tight_clip_rect,
+                                });
+                            }
+                        }
+
+                        if image_instance.visible_tiles.is_empty() {
+                            // Mark as invisible
+                            prim_instance.visibility_info = PrimitiveVisibilityIndex::INVALID;
+                        }
+                    }
+                    None => {}
+                }
+            }
+            PrimitiveInstanceKind::ImageBorder { data_handle, .. } => {
+                let prim_data = &mut frame_state.data_stores.image_border[data_handle];
+                prim_data.kind.request_resources(
+                    frame_state.resource_cache,
+                    frame_state.gpu_cache,
+                );
+            }
+            PrimitiveInstanceKind::YuvImage { data_handle, .. } => {
+                let prim_data = &mut frame_state.data_stores.yuv_image[data_handle];
+                prim_data.kind.request_resources(
+                    frame_state.resource_cache,
+                    frame_state.gpu_cache,
+                );
+            }
+            _ => {}
+        }
     }
 
     pub fn get_opacity_binding(
@@ -2184,7 +2340,6 @@ impl PrimitiveStore {
                         pic_context.surface_spatial_node_index,
                         pic_context.raster_spatial_node_index,
                         pic_context.surface_index,
-                        pic_context.allow_subpixel_aa,
                         frame_state,
                         frame_context,
                     ) {
@@ -2287,78 +2442,16 @@ impl PrimitiveStore {
             prim_instance.prepared_frame_id = frame_state.render_tasks.frame_id();
         }
 
-        match prim_instance.kind {
-            PrimitiveInstanceKind::Picture { pic_index, segment_instance_index, .. } => {
-                let pic = &mut self.pictures[pic_index.0];
-                let prim_info = &scratch.prim_info[prim_instance.visibility_info.0 as usize];
-                if pic.prepare_for_render(
-                    pic_index,
-                    prim_instance,
-                    prim_info.clipped_world_rect,
-                    pic_context.surface_index,
-                    frame_context,
-                    frame_state,
-                    data_stores,
-                ) {
-                    if let Some(ref mut splitter) = pic_state.plane_splitter {
-                        PicturePrimitive::add_split_plane(
-                            splitter,
-                            frame_state.transforms,
-                            prim_instance,
-                            pic.local_rect,
-                            &prim_info.combined_local_clip_rect,
-                            frame_context.screen_world_rect,
-                            plane_split_anchor,
-                        );
-                    }
-
-                    // If this picture uses segments, ensure the GPU cache is
-                    // up to date with segment local rects.
-                    // TODO(gw): This entire match statement above can now be
-                    //           refactored into prepare_interned_prim_for_render.
-                    if pic.can_use_segments() {
-                        write_segment(
-                            segment_instance_index,
-                            frame_state,
-                            &mut scratch.segments,
-                            &mut scratch.segment_instances,
-                            |request| {
-                                request.push(PremultipliedColorF::WHITE);
-                                request.push(PremultipliedColorF::WHITE);
-                                request.push([
-                                    -1.0,       // -ve means use prim rect for stretch size
-                                    0.0,
-                                    0.0,
-                                    0.0,
-                                ]);
-                            }
-                        );
-                    }
-                } else {
-                    prim_instance.visibility_info = PrimitiveVisibilityIndex::INVALID;
-                }
-            }
-            PrimitiveInstanceKind::TextRun { .. } |
-            PrimitiveInstanceKind::Clear { .. } |
-            PrimitiveInstanceKind::Rectangle { .. } |
-            PrimitiveInstanceKind::NormalBorder { .. } |
-            PrimitiveInstanceKind::ImageBorder { .. } |
-            PrimitiveInstanceKind::YuvImage { .. } |
-            PrimitiveInstanceKind::Image { .. } |
-            PrimitiveInstanceKind::LinearGradient { .. } |
-            PrimitiveInstanceKind::RadialGradient { .. } |
-            PrimitiveInstanceKind::LineDecoration { .. } => {
-                self.prepare_interned_prim_for_render(
-                    prim_instance,
-                    pic_context,
-                    pic_state,
-                    frame_context,
-                    frame_state,
-                    data_stores,
-                    scratch,
-                );
-            }
-        }
+        self.prepare_interned_prim_for_render(
+            prim_instance,
+            plane_split_anchor,
+            pic_context,
+            pic_state,
+            frame_context,
+            frame_state,
+            data_stores,
+            scratch,
+        );
 
         true
     }
@@ -2447,8 +2540,9 @@ impl PrimitiveStore {
     fn prepare_interned_prim_for_render(
         &mut self,
         prim_instance: &mut PrimitiveInstance,
+        plane_split_anchor: usize,
         pic_context: &PictureContext,
-        pic_state: &PictureState,
+        pic_state: &mut PictureState,
         frame_context: &FrameBuildingContext,
         frame_state: &mut FrameBuildingState,
         data_stores: &mut DataStores,
@@ -2507,39 +2601,12 @@ impl PrimitiveStore {
                     ));
                 }
             }
-            PrimitiveInstanceKind::TextRun { data_handle, run_index, .. } => {
+            PrimitiveInstanceKind::TextRun { data_handle, .. } => {
                 let prim_data = &mut data_stores.text_run[*data_handle];
-                let run = &mut self.text_runs[*run_index];
 
                 // Update the template this instane references, which may refresh the GPU
                 // cache with any shared template data.
                 prim_data.update(frame_state);
-
-                // The transform only makes sense for screen space rasterization
-                let relative_transform = frame_context
-                    .clip_scroll_tree
-                    .get_relative_transform(
-                        prim_instance.spatial_node_index,
-                        ROOT_SPATIAL_NODE_INDEX,
-                    );
-                let prim_offset = prim_instance.prim_origin.to_vector() - run.reference_frame_relative_offset;
-
-                // TODO(gw): This match is a bit untidy, but it should disappear completely
-                //           once the prepare_prims and batching are unified. When that
-                //           happens, we can use the cache handle immediately, and not need
-                //           to temporarily store it in the primitive instance.
-                run.prepare_for_render(
-                    prim_offset,
-                    &prim_data.font,
-                    &prim_data.glyphs,
-                    device_pixel_scale,
-                    &relative_transform.flattened.with_destination::<WorldPixel>(),
-                    pic_context,
-                    frame_state.resource_cache,
-                    frame_state.gpu_cache,
-                    frame_state.render_tasks,
-                    scratch,
-                );
             }
             PrimitiveInstanceKind::Clear { data_handle, .. } => {
                 let prim_data = &mut data_stores.prim[*data_handle];
@@ -2689,85 +2756,6 @@ impl PrimitiveStore {
                     image_instance.opacity_binding_index,
                     frame_context.scene_properties,
                 );
-
-                image_instance.visible_tiles.clear();
-
-                let image_properties = frame_state
-                    .resource_cache
-                    .get_image_properties(image_data.key);
-
-                if let Some(ImageProperties { descriptor, tiling: Some(tile_size), .. }) = image_properties {
-                    let device_image_rect = DeviceIntRect::from_size(descriptor.size);
-
-                    // Tighten the clip rect because decomposing the repeated image can
-                    // produce primitives that are partially covering the original image
-                    // rect and we want to clip these extra parts out.
-                    let prim_info = &scratch.prim_info[prim_instance.visibility_info.0 as usize];
-                    let prim_rect = LayoutRect::new(
-                        prim_instance.prim_origin,
-                        common_data.prim_size,
-                    );
-                    let tight_clip_rect = prim_info
-                        .combined_local_clip_rect
-                        .intersection(&prim_rect).unwrap();
-                    image_instance.tight_local_clip_rect = tight_clip_rect;
-
-                    let visible_rect = compute_conservative_visible_rect(
-                        &tight_clip_rect,
-                        &pic_state.map_local_to_pic,
-                    );
-
-                    let base_edge_flags = edge_flags_for_tile_spacing(&image_data.tile_spacing);
-
-                    let stride = image_data.stretch_size + image_data.tile_spacing;
-
-                    let repetitions = ::image::repetitions(
-                        &prim_rect,
-                        &visible_rect,
-                        stride,
-                    );
-
-                    let request = ImageRequest {
-                        key: image_data.key,
-                        rendering: image_data.image_rendering,
-                        tile: None,
-                    };
-
-                    for Repetition { origin, edge_flags } in repetitions {
-                        let edge_flags = base_edge_flags | edge_flags;
-
-                        let layout_image_rect = LayoutRect {
-                            origin,
-                            size: image_data.stretch_size,
-                        };
-
-                        let tiles = ::image::tiles(
-                            &layout_image_rect,
-                            &visible_rect,
-                            &device_image_rect,
-                            tile_size as i32,
-                        );
-
-                        for tile in tiles {
-                            frame_state.resource_cache.request_image(
-                                request.with_tile(tile.offset),
-                                frame_state.gpu_cache,
-                            );
-
-                            image_instance.visible_tiles.push(VisibleImageTile {
-                                tile_offset: tile.offset,
-                                edge_flags: tile.edge_flags & edge_flags,
-                                local_rect: tile.rect,
-                                local_clip_rect: tight_clip_rect,
-                            });
-                        }
-                    }
-
-                    if image_instance.visible_tiles.is_empty() {
-                        // Mark as invisible
-                        prim_instance.visibility_info = PrimitiveVisibilityIndex::INVALID;
-                    }
-                }
 
                 write_segment(
                     image_instance.segment_instance_index,
@@ -2944,8 +2932,54 @@ impl PrimitiveStore {
                 // TODO(gw): Consider whether it's worth doing segment building
                 //           for gradient primitives.
             }
-            _ => {
-                unreachable!();
+            PrimitiveInstanceKind::Picture { pic_index, segment_instance_index, .. } => {
+                let pic = &mut self.pictures[pic_index.0];
+                let prim_info = &scratch.prim_info[prim_instance.visibility_info.0 as usize];
+                if pic.prepare_for_render(
+                    *pic_index,
+                    prim_info.clipped_world_rect,
+                    pic_context.surface_index,
+                    frame_context,
+                    frame_state,
+                    data_stores,
+                ) {
+                    if let Some(ref mut splitter) = pic_state.plane_splitter {
+                        PicturePrimitive::add_split_plane(
+                            splitter,
+                            frame_state.transforms,
+                            prim_instance.spatial_node_index,
+                            pic.local_rect,
+                            &prim_info.combined_local_clip_rect,
+                            frame_context.screen_world_rect,
+                            plane_split_anchor,
+                        );
+                    }
+
+                    // If this picture uses segments, ensure the GPU cache is
+                    // up to date with segment local rects.
+                    // TODO(gw): This entire match statement above can now be
+                    //           refactored into prepare_interned_prim_for_render.
+                    if pic.can_use_segments() {
+                        write_segment(
+                            *segment_instance_index,
+                            frame_state,
+                            &mut scratch.segments,
+                            &mut scratch.segment_instances,
+                            |request| {
+                                request.push(PremultipliedColorF::WHITE);
+                                request.push(PremultipliedColorF::WHITE);
+                                request.push([
+                                    -1.0,       // -ve means use prim rect for stretch size
+                                    0.0,
+                                    0.0,
+                                    0.0,
+                                ]);
+                            }
+                        );
+                    }
+                } else {
+                    prim_instance.visibility_info = PrimitiveVisibilityIndex::INVALID;
+                }
             }
         };
     }
@@ -3463,6 +3497,7 @@ impl PrimitiveInstance {
                         device_pixel_scale,
                         &dirty_world_rect,
                         &mut data_stores.clip,
+                        false,
                     );
 
                 let clip_mask_kind = segment.update_clip_task(

@@ -1000,14 +1000,6 @@ class ScriptSource {
   MOZ_MUST_USE bool setBinASTSourceCopy(JSContext* cx, const uint8_t* buf,
                                         size_t len);
 
-  /*
-   * Initialize this as containing BinAST data for |buf|/|len|, using a shared,
-   * deduplicated version of |buf| if necessary.
-   */
-  MOZ_MUST_USE bool initializeBinAST(
-      JSContext* cx, UniqueChars&& buf, size_t len,
-      UniquePtr<frontend::BinASTSourceMetadata> metadata);
-
   const uint8_t* binASTSource();
 
 #endif /* JS_BUILD_BINAST */
@@ -1159,6 +1151,9 @@ class ScriptSource {
   template <XDRMode mode>
   static MOZ_MUST_USE XDRResult codeBinASTData(XDRState<mode>* const xdr,
                                                ScriptSource* const ss);
+
+  template <typename Unit, XDRMode mode>
+  static void codeRetrievableData(ScriptSource* ss);
 
   template <XDRMode mode>
   static MOZ_MUST_USE XDRResult xdrData(XDRState<mode>* const xdr,
@@ -3021,7 +3016,7 @@ class LazyScript : public gc::TenuredCell {
   // If non-nullptr, the script has been compiled and this is a forwarding
   // pointer to the result. This is a weak pointer: after relazification, we
   // can collect the script if there are no other pointers to it.
-  WeakRef<JSScript*> script_;
+  WeakHeapPtrScript script_;
 
   // Original function with which the lazy script is associated.
   GCPtrFunction function_;

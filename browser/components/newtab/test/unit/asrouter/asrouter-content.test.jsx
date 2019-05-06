@@ -1,16 +1,18 @@
 import {ASRouterUISurface, ASRouterUtils} from "content-src/asrouter/asrouter-content";
+import {GlobalOverrider, mountWithIntl} from "test/unit/utils";
 import {OUTGOING_MESSAGE_NAME as AS_GENERAL_OUTGOING_MESSAGE_NAME} from "content-src/lib/init-store";
 import {FAKE_LOCAL_MESSAGES} from "./constants";
-import {GlobalOverrider} from "test/unit/utils";
-import {mount} from "enzyme";
+import {OnboardingMessageProvider} from "lib/OnboardingMessageProvider.jsm";
 import React from "react";
+import {Trailhead} from "../../../content-src/asrouter/templates/Trailhead/Trailhead";
+
 let [FAKE_MESSAGE] = FAKE_LOCAL_MESSAGES;
 const FAKE_NEWSLETTER_SNIPPET = FAKE_LOCAL_MESSAGES.find(msg => msg.id === "newsletter");
 const FAKE_FXA_SNIPPET = FAKE_LOCAL_MESSAGES.find(msg => msg.id === "fxa");
 const FAKE_BELOW_SEARCH_SNIPPET = FAKE_LOCAL_MESSAGES.find(msg => msg.id === "belowsearch");
 
 FAKE_MESSAGE = Object.assign({}, FAKE_MESSAGE, {provider: "fakeprovider"});
-const FAKE_BUNDLED_MESSAGE = {bundle: [{id: "foo", template: "onboarding", content: {title: "Foo", primary_button: {}, body: "Foo123"}}], extraTemplateStrings: {}, template: "onboarding"};
+const FAKE_BUNDLED_MESSAGE = {bundle: [{id: "foo", template: "onboarding", content: {title: "Foo", primary_button: {label: "Bar"}, text: "Foo123"}}], extraTemplateStrings: {}, template: "onboarding"};
 
 describe("ASRouterUtils", () => {
   let global;
@@ -41,12 +43,14 @@ describe("ASRouterUISurface", () => {
   let wrapper;
   let global;
   let sandbox;
-  let portalContainer;
+  let headerPortal;
+  let footerPortal;
   let fakeDocument;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-    portalContainer = document.createElement("div");
+    headerPortal = document.createElement("div");
+    footerPortal = document.createElement("div");
     fakeDocument = {
       location: {href: ""},
       _listeners: new Set(),
@@ -67,8 +71,8 @@ describe("ASRouterUISurface", () => {
       removeEventListener(event, listener) {
         this._listeners.delete(listener);
       },
-      getElementById() {
-        return portalContainer;
+      getElementById(id) {
+        return id === "header-asrouter-container" ? headerPortal : footerPortal;
       },
     };
     global = new GlobalOverrider();
@@ -80,7 +84,7 @@ describe("ASRouterUISurface", () => {
 
     sandbox.stub(ASRouterUtils, "sendTelemetry");
 
-    wrapper = mount(<ASRouterUISurface document={fakeDocument} />);
+    wrapper = mountWithIntl(<ASRouterUISurface document={fakeDocument} />);
   });
 
   afterEach(() => {
@@ -122,21 +126,30 @@ describe("ASRouterUISurface", () => {
     assert.isFalse(wrapper.find(".snippets-preview-banner").exists());
   });
 
-  it("should render a SimpleSnippet in the portal", () => {
+  it("should render a SimpleSnippet in the footer portal", () => {
     wrapper.setState({message: FAKE_MESSAGE});
-    assert.isTrue(portalContainer.childElementCount > 0);
+    assert.isTrue(footerPortal.childElementCount > 0);
+    assert.equal(headerPortal.childElementCount, 0);
   });
 
-  it("should not render a SimpleBelowSearchSnippet in the portal", () => {
+  it("should not render a SimpleBelowSearchSnippet in a portal", () => {
     wrapper.setState({message: FAKE_BELOW_SEARCH_SNIPPET});
-    assert.equal(portalContainer.childElementCount, 0);
+    assert.equal(headerPortal.childElementCount, 0);
+    assert.equal(footerPortal.childElementCount, 0);
+  });
+
+  it("should render a trailhead message in the header portal", async () => {
+    const message = (await OnboardingMessageProvider.getUntranslatedMessages()).find(msg => msg.template === "trailhead");
+    wrapper.setState({message});
+    assert.isTrue(headerPortal.childElementCount > 0);
+    assert.equal(footerPortal.childElementCount, 0);
   });
 
   it("should dispatch an event to select the correct theme", () => {
     const stub = sandbox.stub(window, "dispatchEvent");
     sandbox.stub(ASRouterUtils, "getPreviewEndpoint").returns({theme: "dark"});
 
-    wrapper = mount(<ASRouterUISurface document={fakeDocument} />);
+    wrapper = mountWithIntl(<ASRouterUISurface document={fakeDocument} />);
 
     assert.calledOnce(stub);
     assert.property(stub.firstCall.args[0].detail.data, "ntp_background");
@@ -159,6 +172,14 @@ describe("ASRouterUISurface", () => {
 
       wrapper.find(".blockButton").simulate("click");
       assert.notCalled(ASRouterUtils.sendTelemetry);
+    });
+  });
+
+  describe("trailhead", () => {
+    it("should render trailhead if a trailhead message is received", async () => {
+      const message = (await OnboardingMessageProvider.getUntranslatedMessages()).find(msg => msg.template === "trailhead");
+      wrapper.setState({message});
+      assert.lengthOf(wrapper.find(Trailhead), 1);
     });
   });
 

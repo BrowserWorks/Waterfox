@@ -970,6 +970,21 @@ void Grouper::PaintContainerItem(DIGroup* aGroup, nsDisplayItem* aItem,
       aContext->GetDrawTarget()->FlushItem(aItemBounds);
       break;
     }
+    case DisplayItemType::TYPE_BLEND_CONTAINER: {
+      aContext->GetDrawTarget()->PushLayer(false, 1.0,
+                                           nullptr, mozilla::gfx::Matrix(),
+                                           aItemBounds);
+      GP("beginGroup %s %p-%d\n", aItem->Name(), aItem->Frame(),
+         aItem->GetPerFrameKey());
+      aContext->GetDrawTarget()->FlushItem(aItemBounds);
+      aGroup->PaintItemRange(this, aChildren->GetBottom(), nullptr, aContext,
+                             aRecorder);
+      aContext->GetDrawTarget()->PopLayer();
+      GP("endGroup %s %p-%d\n", aItem->Name(), aItem->Frame(),
+         aItem->GetPerFrameKey());
+      aContext->GetDrawTarget()->FlushItem(aItemBounds);
+      break;
+    }
     case DisplayItemType::TYPE_MASK: {
       GP("Paint Mask\n");
       auto maskItem = static_cast<nsDisplayMasksAndClipPaths*>(aItem);
@@ -2222,6 +2237,13 @@ WebRenderCommandBuilder::GenerateFallbackData(
       bool isInvalidated = PaintItemByDrawTarget(
           aItem, dt, offset, aDisplayListBuilder,
           fallbackData->mBasicLayerManager, scale, highlight);
+      if (!isInvalidated) {
+        if (!aItem->GetBuildingRect().IsEqualInterior(fallbackData->mBuildingRect)) {
+          // The building rect has changed but we didn't see any invalidations.
+          // We should still consider this an invalidation.
+          isInvalidated = true;
+        }
+      }
       recorder->FlushItem(IntRect({0, 0}, dtSize.ToUnknownSize()));
       TakeExternalSurfaces(
           recorder, fallbackData->mExternalSurfaces,
@@ -2313,6 +2335,7 @@ WebRenderCommandBuilder::GenerateFallbackData(
 
   // Update current bounds to fallback data
   fallbackData->mBounds = paintBounds;
+  fallbackData->mBuildingRect = aItem->GetBuildingRect();
 
   MOZ_ASSERT(fallbackData->GetImageKey());
 

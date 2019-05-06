@@ -776,6 +776,8 @@ class MacroAssembler : public MacroAssemblerSpecific {
 
   inline void load32SignExtendToPtr(const Address& src, Register dest) PER_ARCH;
 
+  inline void loadAbiReturnAddress(Register dest) PER_SHARED_ARCH;
+
  public:
   // ===============================================================
   // Logical instructions
@@ -3175,8 +3177,8 @@ class MacroAssembler : public MacroAssemblerSpecific {
   // Align the stack pointer based on the number of arguments which are pushed
   // on the stack, such that the JitFrameLayout would be correctly aligned on
   // the JitStackAlignment.
-  void alignJitStackBasedOnNArgs(Register nargs);
-  void alignJitStackBasedOnNArgs(uint32_t nargs);
+  void alignJitStackBasedOnNArgs(Register nargs, bool countIncludesThis);
+  void alignJitStackBasedOnNArgs(uint32_t argc);
 
   inline void assertStackAlignment(uint32_t alignment, int32_t offset = 0);
 

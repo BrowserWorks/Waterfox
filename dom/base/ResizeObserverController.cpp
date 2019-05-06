@@ -9,6 +9,7 @@
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/ErrorEvent.h"
 #include "mozilla/PresShell.h"
+#include "mozilla/Unused.h"
 #include "nsPresContext.h"
 #include "nsRefreshDriver.h"
 #include <limits>
@@ -17,10 +18,9 @@ namespace mozilla {
 namespace dom {
 
 void ResizeObserverNotificationHelper::WillRefresh(TimeStamp aTime) {
-  MOZ_ASSERT(mOwner,
-             "Why mOwner already dead when this RefreshObserver still "
-             "registered?");
+  MOZ_DIAGNOSTIC_ASSERT(mOwner, "Should've de-registered on-time!");
   mOwner->Notify();
+  // Note that mOwner may be null / dead here.
 }
 
 nsRefreshDriver* ResizeObserverNotificationHelper::GetRefreshDriver() const {
@@ -59,20 +59,19 @@ void ResizeObserverNotificationHelper::Unregister() {
   }
 
   nsRefreshDriver* refreshDriver = GetRefreshDriver();
-  if (!refreshDriver) {
-    // We can't access RefreshDriver now. Just abort the Unregister().
-    return;
-  }
+  MOZ_RELEASE_ASSERT(refreshDriver,
+                     "We should not leave a dangling reference to the observer around");
 
-  DebugOnly<bool> rv =
-      refreshDriver->RemoveRefreshObserver(this, FlushType::Display);
-  MOZ_ASSERT(rv, "Should remove the observer successfully");
+  bool rv = refreshDriver->RemoveRefreshObserver(this, FlushType::Display);
+  MOZ_DIAGNOSTIC_ASSERT(rv, "Should remove the observer successfully");
+  Unused << rv;
 
   mRegistered = false;
 }
 
 ResizeObserverNotificationHelper::~ResizeObserverNotificationHelper() {
-  Unregister();
+  MOZ_RELEASE_ASSERT(!mRegistered, "How can we die when registered?");
+  MOZ_RELEASE_ASSERT(!mOwner, "Forgot to clear weak pointer?");
 }
 
 void ResizeObserverController::Traverse(
@@ -87,6 +86,10 @@ void ResizeObserverController::AddResizeObserver(ResizeObserver* aObserver) {
              "AddResizeObserver() should never be called with a null "
              "parameter");
   mResizeObservers.AppendElement(aObserver);
+}
+
+void ResizeObserverController::ShellDetachedFromDocument() {
+  mResizeObserverNotificationHelper->Unregister();
 }
 
 void ResizeObserverController::Notify() {
@@ -219,7 +222,10 @@ void ResizeObserverController::ScheduleNotification() {
 }
 
 ResizeObserverController::~ResizeObserverController() {
-  mResizeObserverNotificationHelper->Unregister();
+  MOZ_RELEASE_ASSERT(
+      !mResizeObserverNotificationHelper->IsRegistered(),
+      "Nothing else should keep a reference to our helper when we go away");
+  mResizeObserverNotificationHelper->DetachFromOwner();
 }
 
 }  // namespace dom

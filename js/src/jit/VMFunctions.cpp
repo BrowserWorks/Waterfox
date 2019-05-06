@@ -445,18 +445,6 @@ template bool StringsCompare<ComparisonKind::LessThan>(JSContext* cx,
 template bool StringsCompare<ComparisonKind::GreaterThanOrEqual>(
     JSContext* cx, HandleString lhs, HandleString rhs, bool* res);
 
-bool StringSplitHelper(JSContext* cx, HandleString str, HandleString sep,
-                       HandleObjectGroup group, uint32_t limit,
-                       MutableHandleValue result) {
-  JSObject* resultObj = StringSplitString(cx, group, str, sep, limit);
-  if (!resultObj) {
-    return false;
-  }
-
-  result.setObject(*resultObj);
-  return true;
-}
-
 bool ArrayPopDense(JSContext* cx, HandleObject obj, MutableHandleValue rval) {
   MOZ_ASSERT(obj->is<ArrayObject>());
 
@@ -1122,9 +1110,13 @@ bool HandleDebugTrap(JSContext* cx, BaselineFrame* frame, uint8_t* retAddr,
   *mustReturn = false;
 
   RootedScript script(cx, frame->script());
-  jsbytecode* pc =
-      script->baselineScript()->retAddrEntryFromReturnAddress(retAddr).pc(
-          script);
+  jsbytecode* pc;
+  if (frame->runningInInterpreter()) {
+    pc = frame->interpreterPC();
+  } else {
+    BaselineScript* blScript = script->baselineScript();
+    pc = blScript->retAddrEntryFromReturnAddress(retAddr).pc(script);
+  }
 
   if (*pc == JSOP_AFTERYIELD) {
     // JSOP_AFTERYIELD will set the frame's debuggee flag and call the
@@ -1141,7 +1133,15 @@ bool HandleDebugTrap(JSContext* cx, BaselineFrame* frame, uint8_t* retAddr,
   }
 
   MOZ_ASSERT(frame->isDebuggee());
-  MOZ_ASSERT(script->stepModeEnabled() || script->hasBreakpointsAt(pc));
+
+  // The Baseline Interpreter calls HandleDebugTrap for every op when the script
+  // is in step mode or has breakpoints. The Baseline Compiler can toggle
+  // breakpoints more granularly for specific bytecode PCs.
+  if (frame->runningInInterpreter()) {
+    MOZ_ASSERT(script->hasAnyBreakpointsOrStepMode());
+  } else {
+    MOZ_ASSERT(script->stepModeEnabled() || script->hasBreakpointsAt(pc));
+  }
 
   RootedValue rval(cx);
   ResumeMode resumeMode = ResumeMode::Continue;

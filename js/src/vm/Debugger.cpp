@@ -51,6 +51,7 @@
 #include "wasm/WasmInstance.h"
 
 #include "gc/GC-inl.h"
+#include "jit/JSJitFrameIter-inl.h"
 #include "vm/BytecodeUtil-inl.h"
 #include "vm/Compartment-inl.h"
 #include "vm/GeckoProfiler-inl.h"
@@ -2526,7 +2527,7 @@ bool Debugger::slowPathOnLogAllocationSite(JSContext* cx, HandleObject obj,
                                            mozilla::TimeStamp when,
                                            GlobalObject::DebuggerVector& dbgs) {
   MOZ_ASSERT(!dbgs.empty());
-  mozilla::DebugOnly<ReadBarriered<Debugger*>*> begin = dbgs.begin();
+  mozilla::DebugOnly<WeakHeapPtr<Debugger*>*> begin = dbgs.begin();
 
   // Root all the Debuggers while we're iterating over them;
   // appendAllocationSite calls Compartment::wrap, and thus can GC.
@@ -2924,7 +2925,15 @@ static bool UpdateExecutionObservabilityOfScriptsInZone(
       const JSJitFrameIter& frame = iter.frame();
       switch (frame.type()) {
         case FrameType::BaselineJS:
-          MarkTypeScriptActiveIfObservable(frame.script(), obs);
+          // BaselineScripts that are active on the stack get recompiled and
+          // other (affected) BaselineScripts are discarded. If we're running in
+          // the Baseline Interpreter don't mark the script as active here to
+          // prevent BaselineScripts from falling through the cracks: when we
+          // don't dicard them here (because active) and also don't recompile
+          // them (because recompilation skips interpreter frames).
+          if (!frame.baselineFrame()->runningInInterpreter()) {
+            MarkTypeScriptActiveIfObservable(frame.script(), obs);
+          }
           break;
         case FrameType::IonJS:
           MarkTypeScriptActiveIfObservable(frame.script(), obs);
@@ -3535,44 +3544,31 @@ void Debugger::detachAllDebuggersFromGlobal(FreeOp* fop, GlobalObject* global) {
 }
 
 /* static */
-bool Debugger::findSweepGroupEdges(Zone* zone) {
-  JSRuntime* rt = zone->runtimeFromMainThread();
+bool Debugger::findSweepGroupEdges(JSRuntime* rt) {
+  // Ensure that debuggers and their debuggees are finalized in the same group
+  // by adding edges in both directions for debuggee zones. These are weak
+  // references that are not in the cross compartment wrapper map.
+
   for (Debugger* dbg : rt->debuggerList()) {
     Zone* debuggerZone = dbg->object->zone();
     if (!debuggerZone->isGCMarking()) {
       continue;
     }
 
-    if (debuggerZone == zone) {
-      // Add edges to debuggee zones. These are weak references that are
-      // not in the cross compartment wrapper map.
-      for (auto e = dbg->debuggeeZones.all(); !e.empty(); e.popFront()) {
-        Zone* debuggeeZone = e.front();
-        if (debuggeeZone->isGCMarking()) {
-          if (!zone->addSweepGroupEdgeTo(debuggeeZone)) {
-            return false;
-          }
-        }
+    for (auto e = dbg->debuggeeZones.all(); !e.empty(); e.popFront()) {
+      Zone* debuggeeZone = e.front();
+      if (!debuggeeZone->isGCMarking()) {
+        continue;
       }
-    } else {
-      // For debugger cross compartment wrappers, add edges in the
-      // opposite direction to those already added by
-      // Compartment::findOutgoingEdges and above. This ensure that
-      // debuggers and their debuggees are finalized in the same group.
-      if (dbg->debuggeeZones.has(zone) ||
-          dbg->generatorFrames.hasKeyInZone(zone) ||
-          dbg->scripts.hasKeyInZone(zone) ||
-          dbg->lazyScripts.hasKeyInZone(zone) ||
-          dbg->sources.hasKeyInZone(zone) || dbg->objects.hasKeyInZone(zone) ||
-          dbg->environments.hasKeyInZone(zone) ||
-          dbg->wasmInstanceScripts.hasKeyInZone(zone) ||
-          dbg->wasmInstanceSources.hasKeyInZone(zone)) {
-        if (!zone->addSweepGroupEdgeTo(debuggerZone)) {
+
+
+      if (!debuggerZone->addSweepGroupEdgeTo(debuggeeZone) ||
+          !debuggeeZone->addSweepGroupEdgeTo(debuggerZone)) {
           return false;
-        }
       }
     }
   }
+
   return true;
 }
 
@@ -4399,12 +4395,12 @@ static T* findDebuggerInVector(Debugger* dbg,
   return p;
 }
 
-// a ReadBarriered version for findDebuggerInVector
+// a WeakHeapPtr version for findDebuggerInVector
 // TODO: Bug 1515934 - findDebuggerInVector<T> triggers read barriers.
-static ReadBarriered<Debugger*>* findDebuggerInVector(
+static WeakHeapPtr<Debugger*>* findDebuggerInVector(
     Debugger* dbg,
-    Vector<ReadBarriered<Debugger*>, 0, js::SystemAllocPolicy>* vec) {
-  ReadBarriered<Debugger*>* p;
+    Vector<WeakHeapPtr<Debugger*>, 0, js::SystemAllocPolicy>* vec) {
+  WeakHeapPtr<Debugger*>* p;
   for (p = vec->begin(); p != vec->end(); p++) {
     if (p->unbarrieredGet() == dbg) {
       break;

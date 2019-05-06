@@ -168,24 +168,6 @@ class nsMainThreadPtrHolder<
   nsMainThreadPtrHolder(const nsMainThreadPtrHolder& aOther) = delete;
 };
 
-namespace {
-already_AddRefed<nsIAsyncShutdownClient> GetShutdownPhase() {
-  nsCOMPtr<nsIAsyncShutdownService> svc = mozilla::services::GetAsyncShutdown();
-  MOZ_RELEASE_ASSERT(svc);
-
-  nsCOMPtr<nsIAsyncShutdownClient> shutdownPhase;
-  nsresult rv = svc->GetProfileBeforeChange(getter_AddRefs(shutdownPhase));
-  if (!shutdownPhase) {
-    // We are probably in a content process. We need to do cleanup at
-    // XPCOM shutdown in leakchecking builds.
-    rv = svc->GetXpcomWillShutdown(getter_AddRefs(shutdownPhase));
-  }
-  MOZ_RELEASE_ASSERT(shutdownPhase);
-  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-  return shutdownPhase.forget();
-}
-}  // namespace
-
 namespace mozilla {
 
 #ifdef LOG
@@ -1259,7 +1241,6 @@ class GetUserMediaStreamRunnable : public Runnable {
         switch (source) {
           case MediaSourceEnum::Browser:
           case MediaSourceEnum::Screen:
-          case MediaSourceEnum::Application:
           case MediaSourceEnum::Window:
             // Wait for first frame for screen-sharing devices, to ensure
             // with and height settings are available immediately, to pass wpt.
@@ -2026,8 +2007,6 @@ MediaManager* MediaManager::Get() {
 
     // Prepare async shutdown
 
-    nsCOMPtr<nsIAsyncShutdownClient> shutdownPhase = GetShutdownPhase();
-
     class Blocker : public media::ShutdownBlocker {
      public:
       Blocker()
@@ -2043,9 +2022,9 @@ MediaManager* MediaManager::Get() {
     };
 
     sSingleton->mShutdownBlocker = new Blocker();
-    nsresult rv = shutdownPhase->AddBlocker(
+    nsresult rv = media::GetShutdownBarrier()->AddBlocker(
         sSingleton->mShutdownBlocker, NS_LITERAL_STRING(__FILE__), __LINE__,
-        NS_LITERAL_STRING("Media shutdown"));
+        NS_LITERAL_STRING(""));
     MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
   }
   return sSingleton;
@@ -2465,7 +2444,6 @@ RefPtr<MediaManager::StreamPromise> MediaManager::GetUserMedia(
         }
         MOZ_FALLTHROUGH;
       case MediaSourceEnum::Screen:
-      case MediaSourceEnum::Application:
       case MediaSourceEnum::Window:
         // Deny screensharing request if support is disabled, or
         // the requesting document is not from a host on the whitelist.
@@ -2524,7 +2502,6 @@ RefPtr<MediaManager::StreamPromise> MediaManager::GetUserMedia(
       // privacy reasons.
 
       if (videoType == MediaSourceEnum::Screen ||
-          videoType == MediaSourceEnum::Application ||
           videoType == MediaSourceEnum::Browser) {
         videoType = MediaSourceEnum::Window;
         vc.mMediaSource.AssignASCII(
@@ -3654,8 +3631,8 @@ void MediaManager::Shutdown() {
           mMediaThread->Stop();
         }
         // Remove async shutdown blocker
-        nsCOMPtr<nsIAsyncShutdownClient> shutdownPhase = GetShutdownPhase();
-        shutdownPhase->RemoveBlocker(sSingleton->mShutdownBlocker);
+        media::GetShutdownBarrier()->RemoveBlocker(
+            sSingleton->mShutdownBlocker);
 
         // we hold a ref to 'self' which is the same as sSingleton
         sSingleton = nullptr;
@@ -3860,7 +3837,6 @@ NS_IMETHODIMP
 MediaManager::MediaCaptureWindowState(nsIDOMWindow* aCapturedWindow,
                                       uint16_t* aCamera, uint16_t* aMicrophone,
                                       uint16_t* aScreen, uint16_t* aWindow,
-                                      uint16_t* aApplication,
                                       uint16_t* aBrowser) {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -3868,13 +3844,12 @@ MediaManager::MediaCaptureWindowState(nsIDOMWindow* aCapturedWindow,
   CaptureState microphone = CaptureState::Off;
   CaptureState screen = CaptureState::Off;
   CaptureState window = CaptureState::Off;
-  CaptureState application = CaptureState::Off;
   CaptureState browser = CaptureState::Off;
 
   nsCOMPtr<nsPIDOMWindowInner> piWin = do_QueryInterface(aCapturedWindow);
   if (piWin) {
     IterateWindowListeners(
-        piWin, [&camera, &microphone, &screen, &window, &application,
+        piWin, [&camera, &microphone, &screen, &window,
                 &browser](const RefPtr<GetUserMediaWindowListener>& aListener) {
           camera = CombineCaptureState(
               camera, aListener->CapturingSource(MediaSourceEnum::Camera));
@@ -3885,9 +3860,6 @@ MediaManager::MediaCaptureWindowState(nsIDOMWindow* aCapturedWindow,
               screen, aListener->CapturingSource(MediaSourceEnum::Screen));
           window = CombineCaptureState(
               window, aListener->CapturingSource(MediaSourceEnum::Window));
-          application = CombineCaptureState(
-              application,
-              aListener->CapturingSource(MediaSourceEnum::Application));
           browser = CombineCaptureState(
               browser, aListener->CapturingSource(MediaSourceEnum::Browser));
         });
@@ -3897,10 +3869,9 @@ MediaManager::MediaCaptureWindowState(nsIDOMWindow* aCapturedWindow,
   *aMicrophone = FromCaptureState(microphone);
   *aScreen = FromCaptureState(screen);
   *aWindow = FromCaptureState(window);
-  *aApplication = FromCaptureState(application);
   *aBrowser = FromCaptureState(browser);
 
-  LOG("%s: window %" PRIu64 " capturing %s %s %s %s %s %s", __FUNCTION__,
+  LOG("%s: window %" PRIu64 " capturing %s %s %s %s %s", __FUNCTION__,
       piWin ? piWin->WindowID() : -1,
       *aCamera == nsIMediaManagerService::STATE_CAPTURE_ENABLED
           ? "camera (enabled)"
@@ -3913,7 +3884,7 @@ MediaManager::MediaCaptureWindowState(nsIDOMWindow* aCapturedWindow,
                  ? "microphone (disabled)"
                  : ""),
       *aScreen ? "screenshare" : "", *aWindow ? "windowshare" : "",
-      *aApplication ? "appshare" : "", *aBrowser ? "browsershare" : "");
+      *aBrowser ? "browsershare" : "");
 
   return NS_OK;
 }
@@ -4464,8 +4435,6 @@ void SourceListener::StopSharing() {
 
   if (mVideoDeviceState && (mVideoDeviceState->mDevice->GetMediaSource() ==
                                 MediaSourceEnum::Screen ||
-                            mVideoDeviceState->mDevice->GetMediaSource() ==
-                                MediaSourceEnum::Application ||
                             mVideoDeviceState->mDevice->GetMediaSource() ==
                                 MediaSourceEnum::Window)) {
     // We want to stop the whole stream if there's no audio;

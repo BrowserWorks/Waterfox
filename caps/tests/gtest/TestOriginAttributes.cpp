@@ -9,7 +9,7 @@
 using mozilla::OriginAttributes;
 using mozilla::Preferences;
 
-static void TestSuffix(const OriginAttributes &attrs) {
+static void TestSuffix(const OriginAttributes& attrs) {
   nsAutoCString suffix;
   attrs.CreateSuffix(suffix);
 
@@ -20,7 +20,7 @@ static void TestSuffix(const OriginAttributes &attrs) {
   EXPECT_EQ(attrs, attrsFromSuffix);
 }
 
-static void TestFPD(const nsAString &spec, const nsAString &fpd) {
+static void TestFPD(const nsAString& spec, const nsAString& fpd) {
   OriginAttributes attrs;
   nsCOMPtr<nsIURI> url;
   ASSERT_EQ(NS_NewURI(getter_AddRefs(url), spec), NS_OK);
@@ -34,15 +34,9 @@ TEST(OriginAttributes, Suffix_default)
   TestSuffix(attrs);
 }
 
-TEST(OriginAttributes, Suffix_appId_inIsolatedMozBrowser)
+TEST(OriginAttributes, Suffix_inIsolatedMozBrowser)
 {
-  OriginAttributes attrs(1, true);
-  TestSuffix(attrs);
-}
-
-TEST(OriginAttributes, Suffix_maxAppId_inIsolatedMozBrowser)
-{
-  OriginAttributes attrs(4294967295, true);
+  OriginAttributes attrs(true);
   TestSuffix(attrs);
 }
 

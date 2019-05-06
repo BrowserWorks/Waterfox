@@ -243,11 +243,19 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
     return GetWrapper();
   }
 
-  // nsIGlobalJSObjectHolder
-  virtual JSObject* GetGlobalJSObject() override;
-
-  // nsIScriptGlobalObject
-  JSObject* FastGetGlobalJSObject() const { return GetWrapperPreserveColor(); }
+  // nsIGlobalObject
+  JSObject* GetGlobalJSObject() final {
+    return GetWrapper();
+  }
+  JSObject* GetGlobalJSObjectPreserveColor() const final {
+    return GetWrapperPreserveColor();
+  }
+  // The HasJSGlobal on nsIGlobalObject ends up having to do a virtual
+  // call to GetGlobalJSObjectPreserveColor(), because when it's
+  // making the call it doesn't know it's doing it on an
+  // nsGlobalWindowInner.  Add a version here that can be entirely
+  // non-virtual.
+  bool HasJSGlobal() const { return GetGlobalJSObjectPreserveColor(); }
 
   void TraceGlobalJSObject(JSTracer* aTrc);
 
@@ -393,6 +401,8 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
 
   already_AddRefed<mozilla::dom::BrowsingContext> GetChildWindow(
       const nsAString& aName);
+
+  inline nsIBrowserChild* GetBrowserChild() { return mBrowserChild.get(); }
 
   // These return true if we've reached the state in this top level window
   // where we ask the user if further dialogs should be blocked.

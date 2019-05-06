@@ -22,6 +22,13 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  FENNEC_NIGHTLY:
+#ifdef FENNEC_NIGHTLY
+  true,
+#else
+  false,
+#endif
+
   RELEASE_OR_BETA:
 #ifdef RELEASE_OR_BETA
   true,
@@ -350,4 +357,25 @@ this.AppConstants = Object.freeze({
 #endif
 
   TELEMETRY_PING_FORMAT_VERSION: @TELEMETRY_PING_FORMAT_VERSION@,
+
+  MOZ_NEW_XULSTORE:
+#ifdef MOZ_NEW_XULSTORE
+    true,
+#else
+    false,
+#endif
+
+  MOZ_NEW_NOTIFICATION_STORE:
+#ifdef MOZ_NEW_NOTIFICATION_STORE
+    true,
+#else
+    false,
+#endif
+
+  MOZ_NEW_CERT_STORAGE:
+#ifdef MOZ_NEW_CERT_STORAGE
+    true,
+#else
+    false,
+#endif
 });

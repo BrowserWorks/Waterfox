@@ -40,6 +40,7 @@
 #include "mozilla/docshell/OfflineCacheUpdateParent.h"
 #include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/BrowsingContextGroup.h"
+#include "mozilla/dom/CancelContentJSOptionsBinding.h"
 #include "mozilla/dom/CanonicalBrowsingContext.h"
 #include "mozilla/dom/ClientManager.h"
 #include "mozilla/dom/ClientOpenWindowOpActors.h"
@@ -2390,8 +2391,12 @@ void ContentParent::InitInternal(ProcessPriority aInitialPriority) {
 
   // Content processes have no permission to access profile directory, so we
   // send the file URL instead.
-  nsIURI* ucsURI = nsLayoutStylesheetCache::Singleton()->GetUserContentCSSURL();
-  SerializeURI(ucsURI, xpcomInit.userContentSheetURL());
+  StyleSheet* ucs = nsLayoutStylesheetCache::Singleton()->GetUserContentSheet();
+  if (ucs) {
+    SerializeURI(ucs->GetSheetURI(), xpcomInit.userContentSheetURL());
+  } else {
+    SerializeURI(nullptr, xpcomInit.userContentSheetURL());
+  }
 
   // 1. Build ContentDeviceData first, as it may affect some gfxVars.
   gfxPlatform::GetPlatform()->BuildContentDeviceData(
@@ -5295,6 +5300,17 @@ void ContentParent::PaintTabWhileInterruptingJS(
       mHangMonitorActor, aBrowserParent, aForceRepaint, aEpoch);
 }
 
+void ContentParent::CancelContentJSExecutionIfRunning(
+    BrowserParent* aBrowserParent, nsIRemoteTab::NavigationType aNavigationType,
+    const CancelContentJSOptions& aCancelContentJSOptions) {
+  if (!mHangMonitorActor) {
+    return;
+  }
+  ProcessHangMonitor::CancelContentJSExecutionIfRunning(
+      mHangMonitorActor, aBrowserParent, aNavigationType,
+      aCancelContentJSOptions);
+}
+
 void ContentParent::UpdateCookieStatus(nsIChannel* aChannel) {
   PNeckoParent* neckoParent = LoneManagedOrNullAsserts(ManagedPNeckoParent());
   PCookieServiceParent* csParent =
@@ -5443,6 +5459,13 @@ mozilla::ipc::IPCResult ContentParent::RecvRecordDiscardedData(
     const mozilla::Telemetry::DiscardedData& aDiscardedData) {
   TelemetryIPC::RecordDiscardedData(GetTelemetryProcessID(mRemoteType),
                                     aDiscardedData);
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ContentParent::RecvRecordOrigin(
+    const uint32_t& aMetricId, const nsCString& aOrigin) {
+  Telemetry::RecordOrigin(static_cast<Telemetry::OriginMetricID>(aMetricId),
+                          aOrigin);
   return IPC_OK();
 }
 

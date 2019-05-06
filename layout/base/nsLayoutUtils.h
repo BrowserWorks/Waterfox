@@ -62,6 +62,7 @@ struct nsStyleFont;
 struct nsOverflowAreas;
 
 namespace mozilla {
+struct AspectRatio;
 class ComputedStyle;
 class PresShell;
 enum class PseudoStyleType : uint8_t;
@@ -146,6 +147,7 @@ enum class ReparentingDirection {
  * is not to define multiple copies of the same static helper.
  */
 class nsLayoutUtils {
+  typedef mozilla::AspectRatio AspectRatio;
   typedef mozilla::ComputedStyle ComputedStyle;
   typedef mozilla::LengthPercentage LengthPercentage;
   typedef mozilla::LengthPercentageOrAuto LengthPercentageOrAuto;
@@ -1326,7 +1328,7 @@ class nsLayoutUtils {
    */
   static nsRect ComputeObjectDestRect(const nsRect& aConstraintRect,
                                       const IntrinsicSize& aIntrinsicSize,
-                                      const nsSize& aIntrinsicRatio,
+                                      const AspectRatio& aIntrinsicRatio,
                                       const nsStylePosition* aStylePos,
                                       nsPoint* aAnchorPoint = nullptr);
 
@@ -1456,7 +1458,7 @@ class nsLayoutUtils {
   static const auto PREF_ISIZE = IntrinsicISizeType::PrefISize;
   enum {
     IGNORE_PADDING = 0x01,
-    BAIL_IF_REFLOW_NEEDED = 0x02,  // returns NS_INTRINSIC_WIDTH_UNKNOWN if so
+    BAIL_IF_REFLOW_NEEDED = 0x02,  // returns NS_INTRINSIC_ISIZE_UNKNOWN if so
     MIN_INTRINSIC_ISIZE = 0x04,  // use min-width/height instead of width/height
   };
   static nscoord IntrinsicForAxis(
@@ -1926,8 +1928,8 @@ class nsLayoutUtils {
    */
   static void ComputeSizeForDrawing(imgIContainer* aImage,
                                     CSSIntSize& aImageSize,
-                                    nsSize& aIntrinsicRatio, bool& aGotWidth,
-                                    bool& aGotHeight);
+                                    AspectRatio& aIntrinsicRatio,
+                                    bool& aGotWidth, bool& aGotHeight);
 
   /**
    * Given an imgIContainer, this method attempts to obtain an intrinsic
@@ -2830,7 +2832,7 @@ class nsLayoutUtils {
    * are async scrollable.
    */
   static void SetZeroMarginDisplayPortOnAsyncScrollableAncestors(
-      nsIFrame* aFrame, RepaintMode aRepaintMode);
+      nsIFrame* aFrame);
   /**
    * Finds the closest ancestor async scrollable frame from aFrame that has a
    * displayport and attempts to trigger the displayport expiry on that

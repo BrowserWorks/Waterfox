@@ -295,10 +295,6 @@
   background-image: url(chrome://devtools/skin/images/security-state-broken.svg);
 }
 
-.security-state-local {
-  background-image: url(chrome://devtools/skin/images/globe-small.svg);
-}
-
 .tracking-resource {
   display: inline-block;
   width: 16px;
@@ -344,7 +340,7 @@
   background-repeat: repeat-y;
   background-position: left center;
   /* Background created on a <canvas> in js. */
-  /* @see devtools/client/netmonitor/src/waterfall-background.js */
+  /* @see devtools/client/netmonitor/src/widgets/WaterfallBackground.js */
   background-image: -moz-element(#waterfall-background);
 }
 

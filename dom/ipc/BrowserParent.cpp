@@ -13,6 +13,7 @@
 #  include "nsAccessibilityService.h"
 #endif
 #include "mozilla/BrowserElementParent.h"
+#include "mozilla/dom/CancelContentJSOptionsBinding.h"
 #include "mozilla/dom/ChromeMessageSender.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/DataTransfer.h"
@@ -41,6 +42,8 @@
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
+#include "mozilla/ProcessHangMonitor.h"
+#include "mozilla/StaticPrefs.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/TouchEvents.h"
 #include "mozilla/UniquePtr.h"
@@ -482,11 +485,17 @@ void BrowserParent::ActorDestroy(ActorDestroyReason why) {
   // out-of-process iframe.
   RefPtr<nsFrameLoader> frameLoader = GetFrameLoader(true);
   nsCOMPtr<nsIObserverService> os = services::GetObserverService();
-  if (frameLoader && !mBrowserBridgeParent) {
+  if (frameLoader) {
     nsCOMPtr<Element> frameElement(mFrameElement);
     ReceiveMessage(CHILD_PROCESS_SHUTDOWN_MESSAGE, false, nullptr, nullptr,
                    nullptr);
-    frameLoader->DestroyComplete();
+
+    if (!mBrowsingContext->GetParent()) {
+      // If this is a top-level BrowsingContext, tell the frameloader it's time
+      // to go away. Otherwise, this is a subframe crash, and we can keep the
+      // frameloader around.
+      frameLoader->DestroyComplete();
+    }
 
     if (why == AbnormalShutdown && os) {
       os->NotifyObservers(ToSupports(frameLoader), "oop-frameloader-crashed",
@@ -510,6 +519,7 @@ void BrowserParent::ActorDestroy(ActorDestroyReason why) {
           init.mBubbles = true;
           init.mCancelable = true;
           init.mBrowsingContextId = mBrowsingContext->Id();
+          init.mIsTopFrame = !mBrowsingContext->GetParent();
 
           RefPtr<dom::FrameCrashedEvent> event =
               dom::FrameCrashedEvent::Constructor(frameElement->OwnerDoc(),
@@ -3115,6 +3125,21 @@ BrowserParent::GetContentBlockingLog(Promise** aPromise) {
         jsPromise->MaybeRejectWithUndefined();
       });
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BrowserParent::MaybeCancelContentJSExecutionFromScript(
+    nsIRemoteTab::NavigationType aNavigationType,
+    JS::Handle<JS::Value> aCancelContentJSOptions, JSContext* aCx) {
+  dom::CancelContentJSOptions cancelContentJSOptions;
+  if (!cancelContentJSOptions.Init(aCx, aCancelContentJSOptions)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+  if (StaticPrefs::dom_ipc_cancel_content_js_when_navigating()) {
+    Manager()->CancelContentJSExecutionIfRunning(this, aNavigationType,
+                                                 cancelContentJSOptions);
+  }
   return NS_OK;
 }
 

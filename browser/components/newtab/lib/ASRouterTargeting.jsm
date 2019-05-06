@@ -19,6 +19,7 @@ ChromeUtils.defineModuleGetter(this, "AttributionCode",
   "resource:///modules/AttributionCode.jsm");
 
 const FXA_USERNAME_PREF = "services.sync.username";
+const FXA_ENABLED_PREF = "identity.fxaccounts.enabled";
 const SEARCH_REGION_PREF = "browser.search.region";
 const MOZ_JEXL_FILEPATH = "mozjexl";
 
@@ -201,6 +202,9 @@ const TargetingGetters = {
   },
   get usesFirefoxSync() {
     return Services.prefs.prefHasUserValue(FXA_USERNAME_PREF);
+  },
+  get isFxAEnabled() {
+    return Services.prefs.getBoolPref(FXA_ENABLED_PREF, true);
   },
   get sync() {
     return {

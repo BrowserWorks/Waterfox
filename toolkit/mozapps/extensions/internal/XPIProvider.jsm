@@ -106,7 +106,7 @@ const XPI_PERMISSION                  = "install";
 
 const XPI_SIGNATURE_CHECK_PERIOD      = 24 * 60 * 60;
 
-const DB_SCHEMA = 29;
+const DB_SCHEMA = 30;
 
 XPCOMUtils.defineLazyPreferenceGetter(this, "enabledScopesPref",
                                       PREF_EM_ENABLED_SCOPES,
@@ -293,7 +293,7 @@ function canRunInSafeMode(aAddon) {
 
   // TODO product should make the call about temporary add-ons running
   // in safe mode. assuming for now that they are.
-  return location.isTemporary || location.isSystem;
+  return location.isTemporary || location.isSystem || location.isBuiltin;
 }
 
 /**
@@ -1987,6 +1987,18 @@ class BootstrapScope {
   }
 }
 
+function addMissingIntermediateCertificate() {
+  const PREF_SIGNER_HOTFIXED = "extensions.signer.hotfixed";
+  if (!Services.prefs.getBoolPref(PREF_SIGNER_HOTFIXED, false)) {
+    try {
+      XPIInstall.addMissingIntermediateCertificate();
+      Services.prefs.setBoolPref(PREF_SIGNER_HOTFIXED, true);
+    } catch (e) {
+      logger.error("failed to add new intermediate certificate:", e);
+    }
+  }
+}
+
 let resolveDBReady;
 let dbReadyPromise = new Promise(resolve => {
   resolveDBReady = resolve;
@@ -2232,6 +2244,11 @@ var XPIProvider = {
    *        if it is a new profile or the version is unknown
    */
   startup(aAppChanged, aOldAppVersion, aOldPlatformVersion) {
+    // Add missing certificate (bug 1548973). Mistakenly disabled add-ons are
+    // going to be re-enabled because the schema version bump forces a new
+    // signature verification check.
+    addMissingIntermediateCertificate();
+
     try {
       AddonManagerPrivate.recordTimestamp("XPI_startup_begin");
 

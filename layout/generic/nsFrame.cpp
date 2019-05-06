@@ -2358,6 +2358,14 @@ void nsFrame::DisplayOutlineUnconditional(nsDisplayListBuilder* aBuilder,
     return;
   }
 
+  if (HasAnyStateBits(NS_FRAME_PART_OF_IBSPLIT) &&
+      GetScrollableOverflowRect().IsEmpty()) {
+    // Skip parts of IB-splits with an empty overflow rect, see bug 434301.
+    // We may still want to fix some of the overflow area calculations over in
+    // that bug.
+    return;
+  }
+
   aLists.Outlines()->AppendNewToTop<nsDisplayOutline>(aBuilder, this);
 }
 
@@ -5521,7 +5529,7 @@ IntrinsicSize nsFrame::GetIntrinsicSize() {
 }
 
 /* virtual */
-nsSize nsFrame::GetIntrinsicRatio() { return nsSize(0, 0); }
+AspectRatio nsFrame::GetIntrinsicRatio() { return AspectRatio(); }
 
 /* virtual */
 LogicalSize nsFrame::ComputeSize(gfxContext* aRenderingContext, WritingMode aWM,
@@ -5531,7 +5539,7 @@ LogicalSize nsFrame::ComputeSize(gfxContext* aRenderingContext, WritingMode aWM,
                                  const LogicalSize& aBorder,
                                  const LogicalSize& aPadding,
                                  ComputeSizeFlags aFlags) {
-  MOZ_ASSERT(GetIntrinsicRatio() == nsSize(0, 0),
+  MOZ_ASSERT(!GetIntrinsicRatio(),
              "Please override this method and call "
              "nsFrame::ComputeSizeWithIntrinsicDimensions instead.");
   LogicalSize result =
@@ -5783,10 +5791,12 @@ LogicalSize nsFrame::ComputeSize(gfxContext* aRenderingContext, WritingMode aWM,
 
 LogicalSize nsFrame::ComputeSizeWithIntrinsicDimensions(
     gfxContext* aRenderingContext, WritingMode aWM,
-    const IntrinsicSize& aIntrinsicSize, nsSize aIntrinsicRatio,
+    const IntrinsicSize& aIntrinsicSize, const AspectRatio& aIntrinsicRatio,
     const LogicalSize& aCBSize, const LogicalSize& aMargin,
     const LogicalSize& aBorder, const LogicalSize& aPadding,
     ComputeSizeFlags aFlags) {
+  auto logicalRatio =
+      aWM.IsVertical() ? aIntrinsicRatio.Inverted() : aIntrinsicRatio;
   const nsStylePosition* stylePos = StylePosition();
   const auto* inlineStyleCoord = &stylePos->ISize(aWM);
   const auto* blockStyleCoord = &stylePos->BSize(aWM);
@@ -5915,10 +5925,6 @@ LogicalSize nsFrame::ComputeSizeWithIntrinsicDimensions(
   const bool hasIntrinsicBSize = bsizeCoord.isSome();
   nscoord intrinsicBSize = std::max(0, bsizeCoord.valueOr(0));
 
-  NS_ASSERTION(aIntrinsicRatio.width >= 0 && aIntrinsicRatio.height >= 0,
-               "Intrinsic ratio has a negative component!");
-  LogicalSize logicalRatio(aWM, aIntrinsicRatio);
-
   if (!isAutoISize) {
     iSize = ComputeISizeValue(
         aRenderingContext, aCBSize.ISize(aWM), boxSizingAdjust.ISize(aWM),
@@ -5937,7 +5943,7 @@ LogicalSize nsFrame::ComputeSizeWithIntrinsicDimensions(
         // or ratio in the relevant dimension, otherwise 'stretch'.
         // https://drafts.csswg.org/css-grid/#grid-item-sizing
         if ((inlineAxisAlignment == NS_STYLE_ALIGN_NORMAL &&
-             !hasIntrinsicISize && !(logicalRatio.ISize(aWM) > 0)) ||
+             !hasIntrinsicISize && !logicalRatio) ||
             inlineAxisAlignment == NS_STYLE_ALIGN_STRETCH) {
           stretchI = eStretch;
         }
@@ -6004,7 +6010,7 @@ LogicalSize nsFrame::ComputeSizeWithIntrinsicDimensions(
         // or ratio in the relevant dimension, otherwise 'stretch'.
         // https://drafts.csswg.org/css-grid/#grid-item-sizing
         if ((blockAxisAlignment == NS_STYLE_ALIGN_NORMAL &&
-             !hasIntrinsicBSize && !(logicalRatio.BSize(aWM) > 0)) ||
+             !hasIntrinsicBSize && !logicalRatio) ||
             blockAxisAlignment == NS_STYLE_ALIGN_STRETCH) {
           stretchB = eStretch;
         }
@@ -6059,10 +6065,9 @@ LogicalSize nsFrame::ComputeSizeWithIntrinsicDimensions(
 
       if (hasIntrinsicISize) {
         tentISize = intrinsicISize;
-      } else if (hasIntrinsicBSize && logicalRatio.BSize(aWM) > 0) {
-        tentISize = NSCoordMulDiv(intrinsicBSize, logicalRatio.ISize(aWM),
-                                  logicalRatio.BSize(aWM));
-      } else if (logicalRatio.ISize(aWM) > 0) {
+      } else if (hasIntrinsicBSize && logicalRatio) {
+        tentISize = logicalRatio.ApplyTo(intrinsicBSize);
+      } else if (logicalRatio) {
         tentISize =
             aCBSize.ISize(aWM) - boxSizingToMarginEdgeISize;  // XXX scrollbar?
         if (tentISize < 0) tentISize = 0;
@@ -6080,9 +6085,8 @@ LogicalSize nsFrame::ComputeSizeWithIntrinsicDimensions(
 
       if (hasIntrinsicBSize) {
         tentBSize = intrinsicBSize;
-      } else if (logicalRatio.ISize(aWM) > 0) {
-        tentBSize = NSCoordMulDiv(tentISize, logicalRatio.BSize(aWM),
-                                  logicalRatio.ISize(aWM));
+      } else if (logicalRatio) {
+        tentBSize = logicalRatio.Inverted().ApplyTo(tentISize);
       } else {
         tentBSize = nsPresContext::CSSPixelsToAppUnits(150);
       }
@@ -6093,45 +6097,32 @@ LogicalSize nsFrame::ComputeSizeWithIntrinsicDimensions(
         stretchB = (stretchI == eStretch ? eStretch : eStretchPreservingRatio);
       }
 
-      if (aIntrinsicRatio != nsSize(0, 0)) {
+      if (logicalRatio) {
         if (stretchI == eStretch) {
           tentISize = iSize;  // * / 'stretch'
           if (stretchB == eStretch) {
             tentBSize = bSize;  // 'stretch' / 'stretch'
-          } else if (stretchB == eStretchPreservingRatio &&
-                     logicalRatio.ISize(aWM) > 0) {
+          } else if (stretchB == eStretchPreservingRatio) {
             // 'normal' / 'stretch'
-            tentBSize = NSCoordMulDiv(iSize, logicalRatio.BSize(aWM),
-                                      logicalRatio.ISize(aWM));
+            tentBSize = logicalRatio.Inverted().ApplyTo(iSize);
           }
         } else if (stretchB == eStretch) {
           tentBSize = bSize;  // 'stretch' / * (except 'stretch')
-          if (stretchI == eStretchPreservingRatio &&
-              logicalRatio.BSize(aWM) > 0) {
+          if (stretchI == eStretchPreservingRatio) {
             // 'stretch' / 'normal'
-            tentISize = NSCoordMulDiv(bSize, logicalRatio.ISize(aWM),
-                                      logicalRatio.BSize(aWM));
+            tentISize = logicalRatio.ApplyTo(bSize);
           }
         } else if (stretchI == eStretchPreservingRatio) {
           tentISize = iSize;  // * (except 'stretch') / 'normal'
-          if (logicalRatio.ISize(aWM) > 0) {
-            tentBSize = NSCoordMulDiv(iSize, logicalRatio.BSize(aWM),
-                                      logicalRatio.ISize(aWM));
-          }
+          tentBSize = logicalRatio.Inverted().ApplyTo(iSize);
           if (stretchB == eStretchPreservingRatio && tentBSize > bSize) {
             // Stretch within the CB size with preserved intrinsic ratio.
             tentBSize = bSize;  // 'normal' / 'normal'
-            if (logicalRatio.BSize(aWM) > 0) {
-              tentISize = NSCoordMulDiv(bSize, logicalRatio.ISize(aWM),
-                                        logicalRatio.BSize(aWM));
-            }
+            tentISize = logicalRatio.ApplyTo(bSize);
           }
         } else if (stretchB == eStretchPreservingRatio) {
           tentBSize = bSize;  // 'normal' / * (except 'normal' and 'stretch')
-          if (logicalRatio.BSize(aWM) > 0) {
-            tentISize = NSCoordMulDiv(bSize, logicalRatio.ISize(aWM),
-                                      logicalRatio.BSize(aWM));
-          }
+          tentISize = logicalRatio.ApplyTo(bSize);
         }
       }
 
@@ -6139,8 +6130,7 @@ LogicalSize nsFrame::ComputeSizeWithIntrinsicDimensions(
       // applying the min/max-size.  We don't want that when we have 'stretch'
       // in either axis because tentISize/tentBSize is likely not according to
       // ratio now.
-      if (aIntrinsicRatio != nsSize(0, 0) && stretchI != eStretch &&
-          stretchB != eStretch) {
+      if (logicalRatio && stretchI != eStretch && stretchB != eStretch) {
         nsSize autoSize = nsLayoutUtils::ComputeAutoSizeWithIntrinsicDimensions(
             minISize, minBSize, maxISize, maxBSize, tentISize, tentBSize);
         // The nsSize that ComputeAutoSizeWithIntrinsicDimensions returns will
@@ -6158,9 +6148,8 @@ LogicalSize nsFrame::ComputeSizeWithIntrinsicDimensions(
       // 'auto' iSize, non-'auto' bSize
       bSize = NS_CSS_MINMAX(bSize, minBSize, maxBSize);
       if (stretchI != eStretch) {
-        if (logicalRatio.BSize(aWM) > 0) {
-          iSize = NSCoordMulDiv(bSize, logicalRatio.ISize(aWM),
-                                logicalRatio.BSize(aWM));
+        if (logicalRatio) {
+          iSize = logicalRatio.ApplyTo(bSize);
         } else if (hasIntrinsicISize) {
           if (!((aFlags & ComputeSizeFlags::eIClampMarginBoxMinSize) &&
                 intrinsicISize > iSize)) {
@@ -6177,9 +6166,8 @@ LogicalSize nsFrame::ComputeSizeWithIntrinsicDimensions(
       // non-'auto' iSize, 'auto' bSize
       iSize = NS_CSS_MINMAX(iSize, minISize, maxISize);
       if (stretchB != eStretch) {
-        if (logicalRatio.ISize(aWM) > 0) {
-          bSize = NSCoordMulDiv(iSize, logicalRatio.BSize(aWM),
-                                logicalRatio.ISize(aWM));
+        if (logicalRatio) {
+          bSize = logicalRatio.Inverted().ApplyTo(iSize);
         } else if (hasIntrinsicBSize) {
           if (!((aFlags & ComputeSizeFlags::eBClampMarginBoxMinSize) &&
                 intrinsicBSize > bSize)) {
@@ -9763,37 +9751,37 @@ bool nsIFrame::IsFocusable(int32_t* aTabIndex, bool aWithMouse) {
  */
 bool nsIFrame::HasSignificantTerminalNewline() const { return false; }
 
-static uint8_t ConvertSVGDominantBaselineToVerticalAlign(
+static StyleVerticalAlignKeyword ConvertSVGDominantBaselineToVerticalAlign(
     uint8_t aDominantBaseline) {
   // Most of these are approximate mappings.
   switch (aDominantBaseline) {
     case NS_STYLE_DOMINANT_BASELINE_HANGING:
     case NS_STYLE_DOMINANT_BASELINE_TEXT_BEFORE_EDGE:
-      return NS_STYLE_VERTICAL_ALIGN_TEXT_TOP;
+      return StyleVerticalAlignKeyword::TextTop;
     case NS_STYLE_DOMINANT_BASELINE_TEXT_AFTER_EDGE:
     case NS_STYLE_DOMINANT_BASELINE_IDEOGRAPHIC:
-      return NS_STYLE_VERTICAL_ALIGN_TEXT_BOTTOM;
+      return StyleVerticalAlignKeyword::TextBottom;
     case NS_STYLE_DOMINANT_BASELINE_CENTRAL:
     case NS_STYLE_DOMINANT_BASELINE_MIDDLE:
     case NS_STYLE_DOMINANT_BASELINE_MATHEMATICAL:
-      return NS_STYLE_VERTICAL_ALIGN_MIDDLE;
+      return StyleVerticalAlignKeyword::Middle;
     case NS_STYLE_DOMINANT_BASELINE_AUTO:
     case NS_STYLE_DOMINANT_BASELINE_ALPHABETIC:
-      return NS_STYLE_VERTICAL_ALIGN_BASELINE;
+      return StyleVerticalAlignKeyword::Baseline;
     case NS_STYLE_DOMINANT_BASELINE_USE_SCRIPT:
     case NS_STYLE_DOMINANT_BASELINE_NO_CHANGE:
     case NS_STYLE_DOMINANT_BASELINE_RESET_SIZE:
       // These three should not simply map to 'baseline', but we don't
       // support the complex baseline model that SVG 1.1 has and which
       // css3-linebox now defines.
-      return NS_STYLE_VERTICAL_ALIGN_BASELINE;
+      return StyleVerticalAlignKeyword::Baseline;
     default:
       MOZ_ASSERT_UNREACHABLE("unexpected aDominantBaseline value");
-      return NS_STYLE_VERTICAL_ALIGN_BASELINE;
+      return StyleVerticalAlignKeyword::Baseline;
   }
 }
 
-uint8_t nsIFrame::VerticalAlignEnum() const {
+Maybe<StyleVerticalAlignKeyword> nsIFrame::VerticalAlignEnum() const {
   if (nsSVGUtils::IsInSVGTextSubtree(this)) {
     uint8_t dominantBaseline;
     for (const nsIFrame* frame = this; frame; frame = frame->GetParent()) {
@@ -9803,15 +9791,15 @@ uint8_t nsIFrame::VerticalAlignEnum() const {
         break;
       }
     }
-    return ConvertSVGDominantBaselineToVerticalAlign(dominantBaseline);
+    return Some(ConvertSVGDominantBaselineToVerticalAlign(dominantBaseline));
   }
 
-  const nsStyleCoord& verticalAlign = StyleDisplay()->mVerticalAlign;
-  if (verticalAlign.GetUnit() == eStyleUnit_Enumerated) {
-    return verticalAlign.GetIntValue();
+  const auto& verticalAlign = StyleDisplay()->mVerticalAlign;
+  if (verticalAlign.IsKeyword()) {
+    return Some(verticalAlign.AsKeyword());
   }
 
-  return eInvalidVerticalAlign;
+  return Nothing();
 }
 
 NS_IMETHODIMP

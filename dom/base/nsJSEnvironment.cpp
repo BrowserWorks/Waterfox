@@ -2059,19 +2059,22 @@ void nsJSContext::MaybePokeCC() {
     return;
   }
 
-  uint32_t sinceLastCCEnd = TimeUntilNow(sLastCCEndTime);
-  if (sinceLastCCEnd && sinceLastCCEnd < NS_CC_DELAY) {
-    return;
+  // Don't run consecutive CCs too often.
+  if (sCleanupsSinceLastGC && !sLastCCEndTime.IsNull()) {
+    uint32_t sinceLastCCEnd = TimeUntilNow(sLastCCEndTime);
+    if (sinceLastCCEnd < NS_CC_DELAY) {
+      return;
+    }
   }
 
   // If GC hasn't run recently and forget skippable only cycle was run,
   // don't start a new cycle too soon.
-  if (sCleanupsSinceLastGC > NS_MAJOR_FORGET_SKIPPABLE_CALLS) {
+  if ((sCleanupsSinceLastGC > NS_MAJOR_FORGET_SKIPPABLE_CALLS) &&
+      !sLastForgetSkippableCycleEndTime.IsNull()) {
     uint32_t sinceLastForgetSkippableCycle =
         TimeUntilNow(sLastForgetSkippableCycleEndTime);
-    if (sinceLastForgetSkippableCycle &&
-        sinceLastForgetSkippableCycle <
-            NS_TIME_BETWEEN_FORGET_SKIPPABLE_CYCLES) {
+    if (sinceLastForgetSkippableCycle <
+        NS_TIME_BETWEEN_FORGET_SKIPPABLE_CYCLES) {
       return;
     }
   }
@@ -2352,11 +2355,11 @@ static void SetMemoryPrefChangedCallbackMB(const char* aPrefName,
   }
 }
 
-static void SetMemoryNurseryMaxPrefChangedCallback(const char* aPrefName,
-                                                   void* aClosure) {
-  int32_t prefMB = Preferences::GetInt(aPrefName, -1);
+static void SetMemoryNurseryPrefChangedCallback(const char* aPrefName,
+                                                void* aClosure) {
+  int32_t prefKB = Preferences::GetInt(aPrefName, -1);
   // handle overflow and negative pref values
-  CheckedInt<int32_t> prefB = CheckedInt<int32_t>(prefMB) * 1024;
+  CheckedInt<int32_t> prefB = CheckedInt<int32_t>(prefKB) * 1024;
   if (prefB.isValid() && prefB.value() >= 0) {
     SetGCParameter((JSGCParamKey)(uintptr_t)aClosure, prefB.value());
   } else {
@@ -2508,7 +2511,10 @@ void nsJSContext::EnsureStatics() {
   Preferences::RegisterCallbackAndCall(SetMemoryPrefChangedCallbackMB,
                                        "javascript.options.mem.max",
                                        (void*)JSGC_MAX_BYTES);
-  Preferences::RegisterCallbackAndCall(SetMemoryNurseryMaxPrefChangedCallback,
+  Preferences::RegisterCallbackAndCall(SetMemoryNurseryPrefChangedCallback,
+                                       "javascript.options.mem.nursery.min_kb",
+                                       (void*)JSGC_MIN_NURSERY_BYTES);
+  Preferences::RegisterCallbackAndCall(SetMemoryNurseryPrefChangedCallback,
                                        "javascript.options.mem.nursery.max_kb",
                                        (void*)JSGC_MAX_NURSERY_BYTES);
 

@@ -15,6 +15,7 @@
 #include "mozilla/MouseEvents.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/TextEditor.h"
+#include "mozilla/StaticPrefs.h"
 
 #include "nscore.h"
 #include "nsGenericHTMLElement.h"
@@ -967,10 +968,10 @@ static const nsAttrValue::EnumTable kScrollingTable[] = {
     {"auto", NS_STYLE_FRAME_AUTO},     {nullptr, 0}};
 
 static const nsAttrValue::EnumTable kTableVAlignTable[] = {
-    {"top", NS_STYLE_VERTICAL_ALIGN_TOP},
-    {"middle", NS_STYLE_VERTICAL_ALIGN_MIDDLE},
-    {"bottom", NS_STYLE_VERTICAL_ALIGN_BOTTOM},
-    {"baseline", NS_STYLE_VERTICAL_ALIGN_BASELINE},
+    {"top", StyleVerticalAlignKeyword::Top},
+    {"middle", StyleVerticalAlignKeyword::Middle},
+    {"bottom", StyleVerticalAlignKeyword::Bottom},
+    {"baseline", StyleVerticalAlignKeyword::Baseline},
     {nullptr, 0}};
 
 bool nsGenericHTMLElement::ParseAlignValue(const nsAString& aString,
@@ -979,17 +980,17 @@ bool nsGenericHTMLElement::ParseAlignValue(const nsAString& aString,
       {"left", NS_STYLE_TEXT_ALIGN_LEFT},
       {"right", NS_STYLE_TEXT_ALIGN_RIGHT},
 
-      {"top", NS_STYLE_VERTICAL_ALIGN_TOP},
-      {"middle", NS_STYLE_VERTICAL_ALIGN_MIDDLE_WITH_BASELINE},
-      {"bottom", NS_STYLE_VERTICAL_ALIGN_BASELINE},
+      {"top", StyleVerticalAlignKeyword::Top},
+      {"middle", StyleVerticalAlignKeyword::MozMiddleWithBaseline},
+      {"bottom", StyleVerticalAlignKeyword::Bottom},
 
-      {"center", NS_STYLE_VERTICAL_ALIGN_MIDDLE_WITH_BASELINE},
-      {"baseline", NS_STYLE_VERTICAL_ALIGN_BASELINE},
+      {"center", StyleVerticalAlignKeyword::MozMiddleWithBaseline},
+      {"baseline", StyleVerticalAlignKeyword::Baseline},
 
-      {"texttop", NS_STYLE_VERTICAL_ALIGN_TEXT_TOP},
-      {"absmiddle", NS_STYLE_VERTICAL_ALIGN_MIDDLE},
-      {"abscenter", NS_STYLE_VERTICAL_ALIGN_MIDDLE},
-      {"absbottom", NS_STYLE_VERTICAL_ALIGN_BOTTOM},
+      {"texttop", StyleVerticalAlignKeyword::TextTop},
+      {"absmiddle", StyleVerticalAlignKeyword::Middle},
+      {"abscenter", StyleVerticalAlignKeyword::Middle},
+      {"absbottom", StyleVerticalAlignKeyword::Bottom},
       {nullptr, 0}};
 
   return aResult.ParseEnumValue(aString, kAlignTable, false);
@@ -1606,7 +1607,7 @@ nsresult nsGenericHTMLFormElement::BindToTree(Document* aDocument,
   // the document should not be already loaded and the "browser.autofocus"
   // preference should be 'true'.
   if (IsAutofocusable() && HasAttr(kNameSpaceID_None, nsGkAtoms::autofocus) &&
-      nsContentUtils::AutoFocusEnabled() && aDocument) {
+      StaticPrefs::browser_autofocus() && aDocument) {
     aDocument->SetAutoFocusElement(this);
   }
 

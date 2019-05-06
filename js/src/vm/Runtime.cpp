@@ -121,6 +121,7 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
       numActiveHelperThreadZones(0),
       heapState_(JS::HeapState::Idle),
       numRealms(0),
+      numDebuggeeRealms_(0),
       localeCallbacks(nullptr),
       defaultLocale(nullptr),
       profilingScripts(false),
@@ -186,6 +187,9 @@ JSRuntime::~JSRuntime() {
 
   MOZ_ASSERT(offThreadParsesRunning_ == 0);
   MOZ_ASSERT(!offThreadParsingBlocked_);
+
+  MOZ_ASSERT(numRealms == 0);
+  MOZ_ASSERT(numDebuggeeRealms_ == 0);
 }
 
 bool JSRuntime::init(JSContext* cx, uint32_t maxbytes,
@@ -762,6 +766,24 @@ void JSRuntime::clearUsedByHelperThread(Zone* zone) {
   JSContext* cx = mainContextFromOwnThread();
   if (gc.fullGCForAtomsRequested() && cx->canCollectAtoms()) {
     gc.triggerFullGCForAtoms(cx);
+  }
+}
+
+void JSRuntime::incrementNumDebuggeeRealms() {
+  if (numDebuggeeRealms_ == 0) {
+    jitRuntime()->baselineInterpreter().toggleDebuggerInstrumentation(true);
+  }
+
+  numDebuggeeRealms_++;
+  MOZ_ASSERT(numDebuggeeRealms_ <= numRealms);
+}
+
+void JSRuntime::decrementNumDebuggeeRealms() {
+  MOZ_ASSERT(numDebuggeeRealms_ > 0);
+  numDebuggeeRealms_--;
+
+  if (numDebuggeeRealms_ == 0) {
+    jitRuntime()->baselineInterpreter().toggleDebuggerInstrumentation(false);
   }
 }
 

@@ -34,7 +34,7 @@
 //! up the scissor, are accepting already transformed coordinates, which we can get by
 //! calling `DrawTarget::to_framebuffer_rect`
 
-use api::{ApiMsg, BlobImageHandler, ColorF, ColorU};
+use api::{ApiMsg, BlobImageHandler, ColorF, ColorU, MixBlendMode};
 use api::{DocumentId, Epoch, ExternalImageId};
 use api::{ExternalImageType, FontRenderMode, FrameMsg, ImageFormat, PipelineId};
 use api::{ImageRendering, Checkpoint, NotificationRequest};
@@ -66,7 +66,7 @@ use gpu_cache::{GpuCacheDebugChunk, GpuCacheDebugCmd};
 use gpu_glyph_renderer::GpuGlyphRenderer;
 use gpu_types::{PrimitiveHeaderI, PrimitiveHeaderF, ScalingInstance, TransformData, ResolveInstanceData};
 use internal_types::{TextureSource, ORTHO_FAR_PLANE, ORTHO_NEAR_PLANE, ResourceCacheError};
-use internal_types::{CacheTextureId, DebugOutput, FastHashMap, LayerIndex, RenderedDocument, ResultMsg};
+use internal_types::{CacheTextureId, DebugOutput, FastHashMap, FastHashSet, LayerIndex, RenderedDocument, ResultMsg};
 use internal_types::{TextureCacheAllocationKind, TextureCacheUpdate, TextureUpdateList, TextureUpdateSource};
 use internal_types::{RenderTargetInfo, SavedTargetIndex};
 use malloc_size_of::MallocSizeOfOps;
@@ -1114,6 +1114,7 @@ pub enum BlendMode {
     SubpixelDualSource,
     SubpixelConstantTextColor(ColorF),
     SubpixelWithBgColor,
+    Advanced(MixBlendMode),
 }
 
 /// Tracks the state of each row in the GPU cache texture.
@@ -1864,6 +1865,8 @@ pub struct Renderer {
 
     clear_color: Option<ColorF>,
     enable_clear_scissor: bool,
+    enable_advanced_blend_barriers: bool,
+
     debug: LazyInitializedDebugRenderer,
     debug_flags: DebugFlags,
     backend_profile_counters: BackendProfileCounters,
@@ -1940,6 +1943,13 @@ pub struct Renderer {
     /// The current mouse position. This is used for debugging
     /// functionality only, such as the debug zoom widget.
     cursor_position: DeviceIntPoint,
+
+    /// Guards to check if we might be rendering a frame with expired texture
+    /// cache entries.
+    shared_texture_cache_cleared: bool,
+
+    /// The set of documents which we've seen a publish for since last render.
+    documents_seen: FastHashSet<DocumentId>,
 
     #[cfg(feature = "capture")]
     read_fbo: FBOId,
@@ -2022,10 +2032,15 @@ impl Renderer {
         };
         let use_dual_source_blending =
             supports_dual_source_blending &&
-            !options.disable_dual_source_blending &&
+            options.allow_dual_source_blending &&
             // If using pixel local storage, subpixel AA isn't supported (we disable it on all
             // mobile devices explicitly anyway).
             !device.get_capabilities().supports_pixel_local_storage;
+        let ext_blend_equation_advanced =
+            options.allow_advanced_blend_equation &&
+            device.supports_extension("GL_KHR_blend_equation_advanced");
+        let ext_blend_equation_advanced_coherent =
+            device.supports_extension("GL_KHR_blend_equation_advanced_coherent");
 
         // 512 is the minimum that the texture cache can work with.
         const MIN_TEXTURE_SIZE: i32 = 512;
@@ -2201,7 +2216,10 @@ impl Renderer {
             enable_picture_caching: options.enable_picture_caching,
             testing: options.testing,
             gpu_supports_fast_clears: options.gpu_supports_fast_clears,
+            gpu_supports_advanced_blend: ext_blend_equation_advanced,
+            advanced_blend_is_coherent: ext_blend_equation_advanced_coherent,
         };
+        info!("WR {:?}", config);
 
         let device_pixel_ratio = options.device_pixel_ratio;
         let debug_flags = options.debug_flags;
@@ -2377,6 +2395,7 @@ impl Renderer {
             max_recorded_profiles: options.max_recorded_profiles,
             clear_color: options.clear_color,
             enable_clear_scissor: options.enable_clear_scissor,
+            enable_advanced_blend_barriers: !ext_blend_equation_advanced_coherent,
             last_time: 0,
             gpu_profile,
             gpu_glyph_renderer,
@@ -2418,6 +2437,8 @@ impl Renderer {
             device_size: None,
             zoom_debug_texture: None,
             cursor_position: DeviceIntPoint::zero(),
+            shared_texture_cache_cleared: false,
+            documents_seen: FastHashSet::default(),
         };
 
         // We initially set the flags to default and then now call set_debug_flags
@@ -2515,6 +2536,7 @@ impl Renderer {
                     //TODO: associate `document_id` with target window
                     self.pending_texture_updates.push(texture_update_list);
                     self.backend_profile_counters = profile_counters;
+                    self.documents_seen.insert(document_id);
                 }
                 ResultMsg::UpdateGpuCache(mut list) => {
                     if list.clear {
@@ -3021,7 +3043,12 @@ impl Renderer {
             );
 
             let last_document_index = active_documents.len() - 1;
-            for (doc_index, (_, RenderedDocument { ref mut frame, .. })) in active_documents.iter_mut().enumerate() {
+            for (doc_index, (document_id, RenderedDocument { ref mut frame, .. })) in active_documents.iter_mut().enumerate() {
+                if self.shared_texture_cache_cleared {
+                    assert!(self.documents_seen.contains(&document_id),
+                            "Cleared texture cache without sending new document frame.");
+                }
+
                 frame.profile_counters.reset_targets();
                 self.prepare_gpu_cache(frame);
                 assert!(frame.gpu_cache_frame_id <= self.gpu_cache_frame_id,
@@ -3174,6 +3201,9 @@ impl Renderer {
             self.last_time = current_time;
         }
 
+        self.documents_seen.clear();
+        self.shared_texture_cache_cleared = false;
+
         if self.renderer_errors.is_empty() {
             Ok(results)
         } else {
@@ -3270,10 +3300,10 @@ impl Renderer {
         upload_time.profile(|| {
             for update_list in pending_texture_updates.drain(..) {
                 for allocation in update_list.allocations {
-                    let is_realloc = matches!(allocation.kind, TextureCacheAllocationKind::Realloc(..));
-                    match allocation.kind {
-                        TextureCacheAllocationKind::Alloc(info) |
-                        TextureCacheAllocationKind::Realloc(info) => {
+                    let old = match allocation.kind {
+                        TextureCacheAllocationKind::Alloc(ref info) |
+                        TextureCacheAllocationKind::Realloc(ref info) |
+                        TextureCacheAllocationKind::Reset(ref info) => {
                             // Create a new native texture, as requested by the texture cache.
                             //
                             // Ensure no PBO is bound when creating the texture storage,
@@ -3302,20 +3332,31 @@ impl Renderer {
                                 }
                             }
 
-                            let old = self.texture_resolver.texture_cache_map.insert(allocation.id, texture);
-                            assert_eq!(old.is_some(), is_realloc, "Renderer and RenderBackend disagree");
-                            if let Some(old) = old {
-                                self.device.blit_renderable_texture(
-                                    self.texture_resolver.texture_cache_map.get_mut(&allocation.id).unwrap(),
-                                    &old
-                                );
-                                self.device.delete_texture(old);
-                            }
-                        },
+                            self.texture_resolver.texture_cache_map.insert(allocation.id, texture)
+                        }
                         TextureCacheAllocationKind::Free => {
-                            let texture = self.texture_resolver.texture_cache_map.remove(&allocation.id).unwrap();
-                            self.device.delete_texture(texture);
-                        },
+                            self.texture_resolver.texture_cache_map.remove(&allocation.id)
+                        }
+                    };
+
+                    match allocation.kind {
+                        TextureCacheAllocationKind::Alloc(_) => {
+                            assert!(old.is_none(), "Renderer and backend disagree!");
+                        }
+                        TextureCacheAllocationKind::Realloc(_) => {
+                            self.device.blit_renderable_texture(
+                                self.texture_resolver.texture_cache_map.get_mut(&allocation.id).unwrap(),
+                                old.as_ref().unwrap(),
+                            );
+                        }
+                        TextureCacheAllocationKind::Reset(_) |
+                        TextureCacheAllocationKind::Free => {
+                            assert!(old.is_some(), "Renderer and backend disagree!");
+                        }
+                    }
+
+                    if let Some(old) = old {
+                        self.device.delete_texture(old);
                     }
                 }
 
@@ -3385,6 +3426,10 @@ impl Renderer {
                         }
                     };
                     self.profile_counters.texture_data_uploaded.add(bytes_uploaded >> 10);
+                }
+
+                if update_list.clears_shared_cache {
+                    self.shared_texture_cache_cleared = true;
                 }
             }
 
@@ -3898,6 +3943,12 @@ impl Renderer {
                                 //
                                 self.device.set_blend_mode_subpixel_with_bg_color_pass0();
                                 self.device.switch_mode(ShaderColorMode::SubpixelWithBgColorPass0 as _);
+                            }
+                            BlendMode::Advanced(mode) => {
+                                if self.enable_advanced_blend_barriers {
+                                    self.device.gl().blend_barrier_khr();
+                                }
+                                self.device.set_blend_mode_advanced(mode);
                             }
                         }
                         prev_blend_mode = batch.key.blend_mode;
@@ -5602,7 +5653,6 @@ pub struct RendererOptions {
     pub cached_programs: Option<Rc<ProgramCache>>,
     pub debug_flags: DebugFlags,
     pub renderer_id: Option<u64>,
-    pub disable_dual_source_blending: bool,
     pub scene_builder_hooks: Option<Box<SceneBuilderHooks + Send>>,
     pub sampler: Option<Box<AsyncPropertySampler + Send>>,
     pub chase_primitive: ChasePrimitive,
@@ -5615,6 +5665,8 @@ pub struct RendererOptions {
     /// it is a performance win. The default is false, which tends to be best
     /// performance on lower end / integrated GPUs.
     pub gpu_supports_fast_clears: bool,
+    pub allow_dual_source_blending: bool,
+    pub allow_advanced_blend_equation: bool,
     /// If true, allow WR to use pixel local storage if the device supports it.
     /// For now, this defaults to false since the code is still experimental
     /// and not complete. This option will probably be removed once support is
@@ -5652,7 +5704,6 @@ impl Default for RendererOptions {
             enclosing_size_of_op: None,
             renderer_id: None,
             cached_programs: None,
-            disable_dual_source_blending: false,
             scene_builder_hooks: None,
             sampler: None,
             chase_primitive: ChasePrimitive::Nothing,
@@ -5661,6 +5712,8 @@ impl Default for RendererOptions {
             enable_picture_caching: false,
             testing: false,
             gpu_supports_fast_clears: false,
+            allow_dual_source_blending: false,
+            allow_advanced_blend_equation: false,
             allow_pixel_local_storage_support: false,
             // For backwards compatibility we set this to true by default, so
             // that if the debugger feature is enabled, the debug server will

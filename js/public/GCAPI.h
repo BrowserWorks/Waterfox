@@ -303,7 +303,7 @@ typedef enum JSGCParamKey {
    * gc::ChunkSize, otherwise it'll be rounded to the nearest gc::ChunkSize.
    *
    * Default: Nursery::SubChunkLimit
-   * Pref: None
+   * Pref: javascript.options.mem.nursery.min_kb
    */
   JSGC_MIN_NURSERY_BYTES = 31,
 
@@ -314,6 +314,13 @@ typedef enum JSGCParamKey {
    * Pref: None
    */
   JSGC_MIN_LAST_DITCH_GC_PERIOD = 32,
+
+  /*
+   * The delay (in heapsize kilobytes) between slices of an incremental GC.
+   *
+   * Default: ZoneAllocDelayBytes
+   */
+  JSGC_ZONE_ALLOC_DELAY_KB = 33,
 
 } JSGCParamKey;
 

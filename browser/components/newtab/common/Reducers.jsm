@@ -16,10 +16,7 @@ const INITIAL_STATE = {
     // Have we received real data from the app yet?
     initialized: false,
   },
-  ASRouter: {
-    initialized: false,
-    allowLegacySnippets: null,
-  },
+  ASRouter: {initialized: false},
   Snippets: {initialized: false},
   TopSites: {
     // Have we received real data from history yet?
@@ -91,8 +88,6 @@ function ASRouter(prevState = INITIAL_STATE.ASRouter, action) {
   switch (action.type) {
     case at.AS_ROUTER_INITIALIZED:
       return {...action.data, initialized: true};
-    case at.AS_ROUTER_PREF_CHANGED:
-      return {...prevState, ...action.data};
     default:
       return prevState;
   }
@@ -533,7 +528,7 @@ function DiscoveryStream(prevState = INITIAL_STATE.DiscoveryStream, action) {
         };
       }
       return prevState;
-    case at.PLACES_LINK_BLOCKED:
+    case at.DISCOVERY_STREAM_LINK_BLOCKED:
       return isNotReady() ? prevState :
         nextState(items => items.filter(item => item.url !== action.data.url));
 

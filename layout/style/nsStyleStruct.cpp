@@ -1652,7 +1652,7 @@ nsChangeHint nsStyleTable::CalcDifference(const nsStyleTable& aNewData) const {
 nsStyleTableBorder::nsStyleTableBorder(const Document& aDocument)
     : mBorderSpacingCol(0),
       mBorderSpacingRow(0),
-      mBorderCollapse(NS_STYLE_BORDER_SEPARATE),
+      mBorderCollapse(StyleBorderCollapse::Separate),
       mCaptionSide(NS_STYLE_CAPTION_SIDE_TOP),
       mEmptyCells(NS_STYLE_TABLE_EMPTY_CELLS_SHOW) {
   MOZ_COUNT_CTOR(nsStyleTableBorder);
@@ -1740,18 +1740,8 @@ bool nsStyleGradient::operator==(const nsStyleGradient& aOther) const {
     return false;
   }
 
-  if (mStops.Length() != aOther.mStops.Length()) {
+  if (mStops != aOther.mStops) {
     return false;
-  }
-
-  for (uint32_t i = 0; i < mStops.Length(); i++) {
-    const auto& stop1 = mStops[i];
-    const auto& stop2 = aOther.mStops[i];
-    if (stop1.mLocation != stop2.mLocation ||
-        stop1.mIsInterpolationHint != stop2.mIsInterpolationHint ||
-        (!stop1.mIsInterpolationHint && stop1.mColor != stop2.mColor)) {
-      return false;
-    }
   }
 
   return true;
@@ -1765,24 +1755,21 @@ nsStyleGradient::nsStyleGradient()
       mMozLegacySyntax(false) {}
 
 bool nsStyleGradient::IsOpaque() {
-  for (uint32_t i = 0; i < mStops.Length(); i++) {
-    if (mStops[i].mColor.MaybeTransparent()) {
+  for (auto& stop : mStops) {
+    if (stop.IsInterpolationHint()) {
+      continue;
+    }
+
+    auto& color = stop.IsSimpleColorStop() ? stop.AsSimpleColorStop()
+                                           : stop.AsComplexColorStop().color;
+    if (color.MaybeTransparent()) {
       // We don't know the foreground color here, so if it's being used
       // we must assume it might be transparent.
       return false;
     }
   }
-  return true;
-}
 
-bool nsStyleGradient::HasCalc() {
-  for (uint32_t i = 0; i < mStops.Length(); i++) {
-    if (mStops[i].mLocation.IsCalcUnit()) {
-      return true;
-    }
-  }
-  return mBgPosX.IsCalcUnit() || mBgPosY.IsCalcUnit() || mAngle.IsCalcUnit() ||
-         mRadiusX.IsCalcUnit() || mRadiusY.IsCalcUnit();
+  return true;
 }
 
 // --------------------
@@ -2675,7 +2662,7 @@ static bool SizeDependsOnPositioningAreaSize(const StyleBackgroundSize& aSize,
     }
     if (imgContainer) {
       CSSIntSize imageSize;
-      nsSize imageRatio;
+      AspectRatio imageRatio;
       bool hasWidth, hasHeight;
       nsLayoutUtils::ComputeSizeForDrawing(imgContainer, imageSize, imageRatio,
                                            hasWidth, hasHeight);
@@ -2688,7 +2675,7 @@ static bool SizeDependsOnPositioningAreaSize(const StyleBackgroundSize& aSize,
 
       // If the image has an intrinsic ratio, rendering will depend on frame
       // size when background-size is all auto.
-      if (imageRatio != nsSize(0, 0)) {
+      if (imageRatio) {
         return size.width.IsAuto() == size.height.IsAuto();
       }
 
@@ -2978,7 +2965,8 @@ nsStyleDisplay::nsStyleDisplay(const Document& aDocument)
                        {0.}},
       mChildPerspective(StylePerspective::None()),
       mPerspectiveOrigin(Position::FromPercentage(0.5f)),
-      mVerticalAlign(NS_STYLE_VERTICAL_ALIGN_BASELINE, eStyleUnit_Enumerated),
+      mVerticalAlign(
+          StyleVerticalAlign::Keyword(StyleVerticalAlignKeyword::Baseline)),
       mTransitions(
           nsStyleAutoArray<StyleTransition>::WITH_SINGLE_INITIAL_ELEMENT),
       mTransitionTimingFunctionCount(1),

@@ -28,7 +28,6 @@ common-tests:
     - mochitest-a11y
     - mochitest-browser-chrome
     - mochitest-chrome
-    - mochitest-clipboard
     - mochitest-devtools-chrome
     - mochitest-gpu
     - mochitest-media
@@ -97,6 +96,10 @@ raptor-firefox:
     - raptor-webaudio-firefox
     - raptor-sunspider-firefox
     - raptor-wasm-godot-firefox
+    - raptor-tp6-1-firefox-cold
+    - raptor-tp6-2-firefox-cold
+    - raptor-tp6-3-firefox-cold
+    - raptor-tp6-4-firefox-cold
 
 raptor-profiling:
     - raptor-tp6-1-firefox-profiling
@@ -135,6 +138,10 @@ raptor-chromium:
     - raptor-webaudio-chromium
     - raptor-sunspider-chromium
     - raptor-wasm-godot-chromium
+    - raptor-tp6-1-chromium-cold
+    - raptor-tp6-2-chromium-cold
+    - raptor-tp6-3-chromium-cold
+    - raptor-tp6-4-chromium-cold
 
 # Fetch tasks are only supported on Linux for now,
 # so these need to be separate sets.
@@ -235,7 +242,6 @@ windows-tests:
     - mochitest-a11y
     - mochitest-browser-chrome
     - mochitest-chrome
-    - mochitest-clipboard
     - mochitest-devtools-chrome
     - mochitest-gpu
     - mochitest-media
@@ -261,7 +267,6 @@ windows-aarch64-tests:
     - mochitest-a11y
     - mochitest-browser-chrome
     - mochitest-chrome
-    - mochitest-clipboard
     - mochitest-devtools-chrome
     - mochitest-gpu
     - mochitest-media
@@ -311,7 +316,6 @@ macosx64-tests:
     - mochitest-a11y
     - mochitest-browser-chrome
     - mochitest-chrome
-    - mochitest-clipboard
     - mochitest-devtools-chrome
     - mochitest-devtools-webreplay
     - mochitest-gpu
@@ -364,7 +368,6 @@ linux32-tests:
     - mochitest-a11y
     - mochitest-browser-chrome
     - mochitest-chrome
-    - mochitest-clipboard
     - mochitest-gpu
     - mochitest-media
     - mochitest-webgl1-core
@@ -391,7 +394,6 @@ android-common-tests:
     - jsreftest
     - mochitest
     - mochitest-chrome
-    - mochitest-clipboard
     - mochitest-gpu
     - mochitest-media
     - reftest
@@ -416,10 +418,10 @@ android-x86_64-tests:
     - cppunit
     - jsreftest
     - marionette
-    - mochitest-clipboard
     - mochitest-gpu
     # various reftest (plain) failures; bug 1501582
     # - reftest
+    - xpcshell
 
 android-x86-tests:
     - web-platform-tests
@@ -486,6 +488,20 @@ android-hw-arm7-raptor:
     - raptor-tp6m-12-fenix-cold
     - raptor-tp6m-13-fenix-cold
     - raptor-tp6m-14-fenix-cold
+    - raptor-tp6m-1-geckoview-cold
+    - raptor-tp6m-2-geckoview-cold
+    - raptor-tp6m-3-geckoview-cold
+    - raptor-tp6m-4-geckoview-cold
+    - raptor-tp6m-5-geckoview-cold
+    - raptor-tp6m-6-geckoview-cold
+    - raptor-tp6m-7-geckoview-cold
+    - raptor-tp6m-8-geckoview-cold
+    - raptor-tp6m-9-geckoview-cold
+    - raptor-tp6m-10-geckoview-cold
+    - raptor-tp6m-11-geckoview-cold
+    - raptor-tp6m-12-geckoview-cold
+    - raptor-tp6m-13-geckoview-cold
+    - raptor-tp6m-14-geckoview-cold
 
 android-hw-aarch64-raptor:
     - raptor-speedometer-geckoview
@@ -499,7 +515,6 @@ android-hw-aarch64-raptor:
     - raptor-tp6m-7-geckoview
     - raptor-tp6m-8-geckoview
     - raptor-tp6m-9-geckoview
-    - raptor-tp6m-1-geckoview-cold
     - raptor-tp6m-10-geckoview
     - raptor-tp6m-1-refbrow
     - raptor-tp6m-2-refbrow
@@ -525,6 +540,20 @@ android-hw-aarch64-raptor:
     - raptor-tp6m-12-fenix-cold
     - raptor-tp6m-13-fenix-cold
     - raptor-tp6m-14-fenix-cold
+    - raptor-tp6m-1-geckoview-cold
+    - raptor-tp6m-2-geckoview-cold
+    - raptor-tp6m-3-geckoview-cold
+    - raptor-tp6m-4-geckoview-cold
+    - raptor-tp6m-5-geckoview-cold
+    - raptor-tp6m-6-geckoview-cold
+    - raptor-tp6m-7-geckoview-cold
+    - raptor-tp6m-8-geckoview-cold
+    - raptor-tp6m-9-geckoview-cold
+    - raptor-tp6m-10-geckoview-cold
+    - raptor-tp6m-11-geckoview-cold
+    - raptor-tp6m-12-geckoview-cold
+    - raptor-tp6m-13-geckoview-cold
+    - raptor-tp6m-14-geckoview-cold
 
 android-hw-arm7-raptor-power:
     - raptor-speedometer-geckoview-power

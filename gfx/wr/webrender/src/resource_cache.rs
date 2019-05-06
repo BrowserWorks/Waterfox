@@ -1614,12 +1614,6 @@ impl ResourceCache {
 
         // Apply any updates of new / updated images (incl. blobs) to the texture cache.
         self.update_texture_cache(gpu_cache);
-        render_tasks.prepare_for_render();
-        self.cached_render_tasks.update(
-            gpu_cache,
-            &mut self.texture_cache,
-            render_tasks,
-        );
     }
 
     fn rasterize_missing_blob_images(&mut self) {
@@ -2189,6 +2183,9 @@ impl ResourceCache {
         // and fill out the map as the first step.
         let mut raw_map = FastHashMap::<String, Arc<Vec<u8>>>::default();
 
+        self.clear(ClearCache::all());
+        self.clear_images(|_| true);
+
         match caches {
             Some(cached) => {
                 self.current_frame_id = cached.current_frame_id;
@@ -2200,10 +2197,6 @@ impl ResourceCache {
             }
             None => {
                 self.current_frame_id = FrameId::INVALID;
-                self.cached_glyphs.clear();
-                self.cached_glyph_dimensions.clear();
-                self.cached_images.clear();
-                self.cached_render_tasks.clear();
                 self.texture_cache = TextureCache::new(
                     self.texture_cache.max_texture_size(),
                     self.texture_cache.max_texture_layers(),

@@ -32,9 +32,9 @@ var ecmaGlobals =
     {name: "Array", insecureContext: true},
     {name: "ArrayBuffer", insecureContext: true},
     {name: "Atomics", insecureContext: true, disabled: true},
-    {name: "BigInt", insecureContext: true, nightly: true},
-    {name: "BigInt64Array", insecureContext: true, nightly: true},
-    {name: "BigUint64Array", insecureContext: true, nightly: true},
+    {name: "BigInt", insecureContext: true},
+    {name: "BigInt64Array", insecureContext: true},
+    {name: "BigUint64Array", insecureContext: true},
     {name: "Boolean", insecureContext: true},
     {name: "ByteLengthQueuingStrategy", insecureContext: true},
     {name: "CountQueuingStrategy", insecureContext: true},
@@ -209,7 +209,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "ServiceWorkerRegistration", insecureContext: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "StorageManager", android: false},
+    {name: "StorageManager", fennec: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "SubtleCrypto", insecureContext: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -277,6 +277,7 @@ function createInterfaceMap({ version, isNightly, isRelease, isDesktop, isAndroi
             (entry.desktop === !isDesktop) ||
             (entry.android === !isAndroid && !entry.nightlyAndroid) ||
             (entry.fennecOrDesktop === (isAndroid && !isFennec)) ||
+            (entry.fennec === !isFennec) ||
             (entry.release === !isRelease) ||
 	    // The insecureContext test is very purposefully converting
 	    // entry.insecureContext to boolean, so undefined will convert to

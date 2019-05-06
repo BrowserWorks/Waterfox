@@ -27,7 +27,7 @@ use prim_store::{get_raster_rects, PrimitiveScratchBuffer, VectorKey, PointKey};
 use prim_store::{OpacityBindingStorage, ImageInstanceStorage, OpacityBindingIndex, RectangleKey};
 use print_tree::PrintTreePrinter;
 use render_backend::DataStores;
-use render_task::{ClearMode, RenderTask, RenderTaskCacheEntryHandle, TileBlit};
+use render_task::{ClearMode, RenderTask, TileBlit};
 use render_task::{RenderTaskId, RenderTaskLocation};
 use resource_cache::ResourceCache;
 use scene::{FilterOpHelpers, SceneProperties};
@@ -1794,13 +1794,15 @@ pub struct SurfaceInfo {
     pub raster_spatial_node_index: SpatialNodeIndex,
     pub surface_spatial_node_index: SpatialNodeIndex,
     /// This is set when the render task is created.
-    pub surface: Option<PictureSurface>,
+    pub surface: Option<RenderTaskId>,
     /// A list of render tasks that are dependencies of this surface.
     pub tasks: Vec<RenderTaskId>,
     /// How much the local surface rect should be inflated (for blur radii).
     pub inflation_factor: f32,
     /// The device pixel ratio specific to this surface.
     pub device_pixel_scale: DevicePixelScale,
+    /// If true, subpixel AA rendering can be used on this surface.
+    pub allow_subpixel_aa: bool,
 }
 
 impl SurfaceInfo {
@@ -1811,6 +1813,7 @@ impl SurfaceInfo {
         world_rect: WorldRect,
         clip_scroll_tree: &ClipScrollTree,
         device_pixel_scale: DevicePixelScale,
+        allow_subpixel_aa: bool,
     ) -> Self {
         let map_surface_to_world = SpaceMapper::new_with_target(
             ROOT_SPATIAL_NODE_INDEX,
@@ -1837,6 +1840,7 @@ impl SurfaceInfo {
             tasks: Vec::new(),
             inflation_factor,
             device_pixel_scale,
+            allow_subpixel_aa,
         }
     }
 
@@ -1892,17 +1896,6 @@ pub enum PictureCompositeMode {
     TileCache {
         clear_color: ColorF,
     },
-}
-
-// Stores the location of the picture if it is drawn to
-// an intermediate surface. This can be a render task if
-// it is not persisted, or a texture cache item if the
-// picture is cached in the texture cache.
-#[derive(Debug)]
-pub enum PictureSurface {
-    RenderTask(RenderTaskId),
-    #[allow(dead_code)]
-    TextureCache(RenderTaskCacheEntryHandle),
 }
 
 /// Enum value describing the place of a picture in a 3D context.
@@ -2345,7 +2338,6 @@ impl PicturePrimitive {
         surface_spatial_node_index: SpatialNodeIndex,
         raster_spatial_node_index: SpatialNodeIndex,
         surface_index: SurfaceIndex,
-        parent_allows_subpixel_aa: bool,
         frame_state: &mut FrameBuildingState,
         frame_context: &FrameBuildingContext,
     ) -> Option<(PictureContext, PictureState, PrimitiveList)> {
@@ -2420,23 +2412,17 @@ impl PicturePrimitive {
             plane_splitter,
         };
 
-        // Disallow subpixel AA if an intermediate surface is needed.
-        // TODO(lsalzman): allow overriding parent if intermediate surface is opaque
-        let (allow_subpixel_aa, is_composite, is_passthrough) = match self.raster_config {
-            Some(RasterConfig { composite_mode: PictureCompositeMode::TileCache { clear_color, .. }, .. }) => {
-                // If the tile cache has an opaque background, then it's fine to use
-                // subpixel rendering (this is the common case).
-                (clear_color.a >= 1.0, false, false)
+        let (is_composite, is_passthrough) = match self.raster_config {
+            Some(RasterConfig { composite_mode: PictureCompositeMode::TileCache { .. }, .. }) => {
+                (false, false)
             },
             Some(_) => {
-                (false, true, false)
+                (true, false)
             }
             None => {
-                (true, false, true)
+                (false, true)
             }
         };
-        // Still disable subpixel AA if parent forbids it
-        let allow_subpixel_aa = parent_allows_subpixel_aa && allow_subpixel_aa;
 
         let mut dirty_region_count = 0;
 
@@ -2460,7 +2446,6 @@ impl PicturePrimitive {
         let context = PictureContext {
             pic_index,
             apply_local_clip_rect: self.apply_local_clip_rect,
-            allow_subpixel_aa,
             is_composite,
             is_passthrough,
             raster_space: self.requested_raster_space,
@@ -2501,14 +2486,14 @@ impl PicturePrimitive {
     pub fn add_split_plane(
         splitter: &mut PlaneSplitter,
         transforms: &TransformPalette,
-        prim_instance: &PrimitiveInstance,
+        prim_spatial_node_index: SpatialNodeIndex,
         original_local_rect: LayoutRect,
         combined_local_clip_rect: &LayoutRect,
         world_rect: WorldRect,
         plane_split_anchor: usize,
     ) -> bool {
         let transform = transforms
-            .get_world_transform(prim_instance.spatial_node_index);
+            .get_world_transform(prim_spatial_node_index);
         let matrix = transform.cast();
 
         // Apply the local clip rect here, before splitting. This is
@@ -2527,7 +2512,7 @@ impl PicturePrimitive {
 
         if transform.is_simple_translation() {
             let inv_transform = transforms
-                .get_world_inv_transform(prim_instance.spatial_node_index);
+                .get_world_inv_transform(prim_spatial_node_index);
             let polygon = Polygon::from_transformed_rect_with_inverse(
                 local_rect,
                 &matrix,
@@ -2685,7 +2670,10 @@ impl PicturePrimitive {
 
         if let Some(composite_mode) = actual_composite_mode {
             // Retrieve the positioning node information for the parent surface.
-            let parent_raster_node_index = state.current_surface().raster_spatial_node_index;
+            let (parent_raster_node_index, parent_allows_subpixel_aa)= {
+                let parent_surface = state.current_surface();
+                (parent_surface.raster_spatial_node_index, parent_surface.allow_subpixel_aa)
+            };
             let surface_spatial_node_index = self.spatial_node_index;
 
             // This inflation factor is to be applied to all primitives within the surface.
@@ -2712,6 +2700,24 @@ impl PicturePrimitive {
                 .get_relative_transform(surface_spatial_node_index, parent_raster_node_index)
                 .is_perspective;
 
+            // Disallow subpixel AA if an intermediate surface is needed.
+            // TODO(lsalzman): allow overriding parent if intermediate surface is opaque
+            let allow_subpixel_aa = match composite_mode {
+                PictureCompositeMode::TileCache { clear_color, .. } => {
+                    // If the tile cache has an opaque background, then it's fine to use
+                    // subpixel rendering (this is the common case).
+                    clear_color.a >= 1.0
+                }
+                PictureCompositeMode::Blit(..) |
+                PictureCompositeMode::ComponentTransferFilter(..) |
+                PictureCompositeMode::Filter(..) |
+                PictureCompositeMode::MixBlend(..) => {
+                    false
+                }
+            };
+            // Still disable subpixel AA if parent forbids it
+            let allow_subpixel_aa = parent_allows_subpixel_aa && allow_subpixel_aa;
+
             let surface = SurfaceInfo::new(
                 surface_spatial_node_index,
                 if establishes_raster_root {
@@ -2723,6 +2729,7 @@ impl PicturePrimitive {
                 frame_context.screen_world_rect,
                 &frame_context.clip_scroll_tree,
                 frame_context.global_device_pixel_scale,
+                allow_subpixel_aa,
             );
 
             self.raster_config = Some(RasterConfig {
@@ -2868,7 +2875,6 @@ impl PicturePrimitive {
     pub fn prepare_for_render(
         &mut self,
         pic_index: PictureIndex,
-        prim_instance: &PrimitiveInstance,
         clipped_prim_bounding_rect: WorldRect,
         surface_index: SurfaceIndex,
         frame_context: &FrameBuildingContext,
@@ -2898,7 +2904,7 @@ impl PicturePrimitive {
         };
 
         let (map_raster_to_world, map_pic_to_raster) = create_raster_mappers(
-            prim_instance.spatial_node_index,
+            self.spatial_node_index,
             raster_spatial_node_index,
             frame_context.screen_world_rect,
             frame_context.clip_scroll_tree,
@@ -2997,7 +3003,7 @@ impl PicturePrimitive {
 
                 frame_state.surfaces[surface_index.0].tasks.push(render_task_id);
 
-                PictureSurface::RenderTask(render_task_id)
+                render_task_id
             }
             PictureCompositeMode::Filter(FilterOp::DropShadow(offset, blur_radius, color)) => {
                 let blur_std_deviation = blur_radius * device_pixel_scale.0;
@@ -3083,9 +3089,9 @@ impl PicturePrimitive {
                     request.push([0.0, 0.0, 0.0, 0.0]);
                 }
 
-                PictureSurface::RenderTask(render_task_id)
+                render_task_id
             }
-            PictureCompositeMode::MixBlend(..) => {
+            PictureCompositeMode::MixBlend(..) if !frame_context.fb_config.gpu_supports_advanced_blend => {
                 let uv_rect_kind = calculate_uv_rect_kind(
                     &pic_rect,
                     &transform,
@@ -3114,7 +3120,7 @@ impl PicturePrimitive {
 
                 let render_task_id = frame_state.render_tasks.add(picture_task);
                 frame_state.surfaces[surface_index.0].tasks.push(render_task_id);
-                PictureSurface::RenderTask(render_task_id)
+                render_task_id
             }
             PictureCompositeMode::Filter(ref filter) => {
                 if let FilterOp::ColorMatrix(m) = *filter {
@@ -3146,7 +3152,7 @@ impl PicturePrimitive {
 
                 let render_task_id = frame_state.render_tasks.add(picture_task);
                 frame_state.surfaces[surface_index.0].tasks.push(render_task_id);
-                PictureSurface::RenderTask(render_task_id)
+                render_task_id
             }
             PictureCompositeMode::ComponentTransferFilter(handle) => {
                 let filter_data = &mut data_stores.filter_data[handle];
@@ -3173,8 +3179,9 @@ impl PicturePrimitive {
 
                 let render_task_id = frame_state.render_tasks.add(picture_task);
                 frame_state.surfaces[surface_index.0].tasks.push(render_task_id);
-                PictureSurface::RenderTask(render_task_id)
+                render_task_id
             }
+            PictureCompositeMode::MixBlend(..) |
             PictureCompositeMode::Blit(_) => {
                 // The SplitComposite shader used for 3d contexts doesn't snap
                 // to pixels, so we shouldn't snap our uv coordinates either.
@@ -3204,7 +3211,7 @@ impl PicturePrimitive {
 
                 let render_task_id = frame_state.render_tasks.add(picture_task);
                 frame_state.surfaces[surface_index.0].tasks.push(render_task_id);
-                PictureSurface::RenderTask(render_task_id)
+                render_task_id
             }
         };
 

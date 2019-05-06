@@ -57,6 +57,9 @@ add_task(async function setupTestCommon() {
       [PREF_APP_UPDATE_DOWNLOAD_MAXATTEMPTS, 2],
       [PREF_APP_UPDATE_LOG, gDebugTest],
       [PREF_APP_UPDATE_SERVICE_ENABLED, false],
+      // Disable activity stream to prevent errors when opening pages during
+      // TV runs. See bug 1548422 for an example.
+      ["browser.library.activity-stream.enabled", false],
     ],
   });
 
@@ -528,7 +531,18 @@ function runDoorhangerUpdateTest(updateParams, checkAttempts, steps) {
 
     const {notificationId, button, checkActiveUpdate, pageURLs} = step;
     return (async function() {
-      await BrowserTestUtils.waitForEvent(PanelUI.notificationPanel, "popupshown");
+      await TestUtils.waitForCondition(() =>
+        (PanelUI.notificationPanel.state == "open"),
+        "Waiting on PanelUI.notificationPanel.state to equal open",
+        undefined, 200
+      ).catch(e => {
+        // Instead of throwing let the check below fail the test so the
+        // notification ID and the expected notification ID is printed in the
+        // log.
+        logTestInfo(e);
+      });
+      is(PanelUI.notificationPanel.state, "open",
+         "The PanelUI.notificationPanel.state should equal open");
       const shownNotificationId = AppMenuNotifications.activeNotification.id;
       is(shownNotificationId, notificationId,
          "The right notification showed up.");
@@ -565,6 +579,7 @@ function runDoorhangerUpdateTest(updateParams, checkAttempts, steps) {
     await SpecialPowers.pushPrefEnv({
       set: [
         [PREF_APP_UPDATE_DISABLEDFORTESTING, false],
+        [PREF_APP_UPDATE_IDLETIME, 0],
         [PREF_APP_UPDATE_URL_MANUAL, URL_MANUAL_UPDATE],
         [PREF_APP_UPDATE_URL_DETAILS, gDetailsURL],
       ],
@@ -589,8 +604,8 @@ function runDoorhangerUpdateTest(updateParams, checkAttempts, steps) {
       });
     } else {
       // Perform a startup processing doorhanger test.
-      reloadUpdateManagerData();
       writeStatusFile(STATE_FAILED_CRC_ERROR);
+      reloadUpdateManagerData();
       testPostUpdateProcessing();
     }
 

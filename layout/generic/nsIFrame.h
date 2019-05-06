@@ -53,6 +53,7 @@
 #include "FrameProperties.h"
 #include "LayoutConstants.h"
 #include "mozilla/layout/FrameChildList.h"
+#include "mozilla/AspectRatio.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/SmallPointerArray.h"
 #include "mozilla/WritingModes.h"
@@ -2153,7 +2154,7 @@ class nsIFrame : public nsQueryFrame {
   /**
    * Mark any stored intrinsic width information as dirty (requiring
    * re-calculation).  Note that this should generally not be called
-   * directly; nsPresShell::FrameNeedsReflow will call it instead.
+   * directly; PresShell::FrameNeedsReflow() will call it instead.
    */
   virtual void MarkIntrinsicISizesDirty() = 0;
 
@@ -2371,15 +2372,14 @@ class nsIFrame : public nsQueryFrame {
   virtual mozilla::IntrinsicSize GetIntrinsicSize() = 0;
 
   /**
-   * Get the intrinsic ratio of this element, or nsSize(0,0) if it has
-   * no intrinsic ratio.  The intrinsic ratio is the ratio of the
-   * height/width of a box with an intrinsic size or the intrinsic
-   * aspect ratio of a scalable vector image without an intrinsic size.
+   * Get the intrinsic ratio of this element, or a default-constructed
+   * AspectRatio if it has no intrinsic ratio.
    *
-   * Either one of the sides may be zero, indicating a zero or infinite
-   * ratio.
+   * The intrinsic ratio is the ratio of the width/height of a box with an
+   * intrinsic size or the intrinsic aspect ratio of a scalable vector image
+   * without an intrinsic size.
    */
-  virtual nsSize GetIntrinsicRatio() = 0;
+  virtual mozilla::AspectRatio GetIntrinsicRatio() = 0;
 
   /**
    * Bit-flags to pass to ComputeSize in |aFlags| parameter.
@@ -3939,10 +3939,9 @@ class nsIFrame : public nsQueryFrame {
    * of the enumerated values.  If this is an SVG text frame, it returns a value
    * that corresponds to the value of dominant-baseline.  If the
    * vertical-align property has length or percentage value, this returns
-   * eInvalidVerticalAlign.
+   * Nothing().
    */
-  uint8_t VerticalAlignEnum() const;
-  enum { eInvalidVerticalAlign = 0xFF };
+  Maybe<mozilla::StyleVerticalAlignKeyword> VerticalAlignEnum() const;
 
   void CreateOwnLayerIfNeeded(nsDisplayListBuilder* aBuilder,
                               nsDisplayList* aList,

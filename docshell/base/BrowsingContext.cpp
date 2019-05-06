@@ -146,7 +146,11 @@ already_AddRefed<BrowsingContext> BrowsingContext::CreateFromIPC(
   MOZ_DIAGNOSTIC_ASSERT(aOriginProcess || XRE_IsContentProcess());
   MOZ_DIAGNOSTIC_ASSERT(aGroup);
 
-  uint64_t originId = aOriginProcess ? aOriginProcess->ChildID() : 0;
+  uint64_t originId = 0;
+  if (aOriginProcess) {
+    originId = aOriginProcess->ChildID();
+    aGroup->EnsureSubscribed(aOriginProcess);
+  }
 
   MOZ_LOG(GetLog(), LogLevel::Debug,
           ("Creating 0x%08" PRIx64 " from IPC (origin=0x%08" PRIx64 ")",
@@ -279,7 +283,7 @@ void BrowsingContext::Detach(bool aFromIPC) {
 
   RefPtr<BrowsingContext> kungFuDeathGrip(this);
 
-  if (!Group()->EvictCachedContext(this)) {
+  if (Group() && !Group()->EvictCachedContext(this)) {
     Children* children = nullptr;
     if (mParent) {
       children = &mParent->mChildren;
@@ -334,8 +338,6 @@ void BrowsingContext::RestoreChildren(Children&& aChildren, bool aFromIPC) {
   MOZ_LOG(GetLog(), LogLevel::Debug,
           ("%s: Restoring children of 0x%08" PRIx64 "",
            XRE_IsParentProcess() ? "Parent" : "Child", Id()));
-
-  MOZ_DIAGNOSTIC_ASSERT(mChildren.IsEmpty());
 
   for (BrowsingContext* child : aChildren) {
     MOZ_DIAGNOSTIC_ASSERT(child->GetParent() == this);

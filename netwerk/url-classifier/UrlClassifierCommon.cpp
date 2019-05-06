@@ -89,7 +89,8 @@ void UrlClassifierCommon::NotifyChannelBlocked(nsIChannel* aChannel,
 
   nsCOMPtr<nsIURI> uri;
   aChannel->GetURI(getter_AddRefs(uri));
-  pwin->NotifyContentBlockingEvent(aBlockedReason, aChannel, true, uri);
+  pwin->NotifyContentBlockingEvent(aBlockedReason, aChannel, true, uri,
+                                   aChannel);
 }
 
 /* static */
@@ -345,7 +346,7 @@ void LowerPriorityHelper(nsIChannel* aChannel) {
 
   nsCOMPtr<nsIClassOfService> cos(do_QueryInterface(aChannel));
   if (cos) {
-    if (nsContentUtils::IsTailingEnabled()) {
+    if (StaticPrefs::network_http_tailing_enabled()) {
       uint32_t cosFlags = 0;
       cos->GetClassFlags(&cosFlags);
       isBlockingResource =

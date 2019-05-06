@@ -215,7 +215,7 @@ class UrlbarView {
         isFirstPreselectedResult = true;
         this._selectItem(this._rows.firstElementChild, {
           updateInput: false,
-          setAccessibleFocus: false,
+          setAccessibleFocus: this.controller._userSelectionBehavior == "arrow",
         });
       } else {
         // Clear the selection when we get a new set of results.
@@ -436,6 +436,7 @@ class UrlbarView {
     let titleSeparator = this._createElement("span");
     titleSeparator.className = "urlbarView-title-separator";
     content.appendChild(titleSeparator);
+    item._elements.set("titleSeparator", titleSeparator);
 
     let action = this._createElement("span");
     action.className = "urlbarView-secondary urlbarView-action";
@@ -532,6 +533,7 @@ class UrlbarView {
       url.textContent = "";
     }
     item._elements.get("action").textContent = action;
+    item._elements.get("titleSeparator").hidden = !action && !setURL;
   }
 
   _removeStaleRows() {

@@ -1684,8 +1684,16 @@ class ScriptSource::LoadSourceMatcher {
       return true;
     }
 
-    // The argument is just for overloading -- its value doesn't matter.
-    return tryLoadAndSetSource(Unit('0'));
+    size_t length;
+
+    // The first argument is just for overloading -- its value doesn't matter.
+    if (!tryLoadAndSetSource(Unit('0'), &length)) {
+      return false;
+    }
+
+    cx_->updateMallocCounter(length * sizeof(Unit));
+
+    return true;
   }
 
   bool operator()(const Missing&) const {
@@ -1703,11 +1711,10 @@ class ScriptSource::LoadSourceMatcher {
   }
 
  private:
-  bool tryLoadAndSetSource(const Utf8Unit&) const {
+  bool tryLoadAndSetSource(const Utf8Unit&, size_t* length) const {
     char* utf8Source;
-    size_t length;
     if (!cx_->runtime()->sourceHook->load(cx_, ss_->filename(), nullptr,
-                                          &utf8Source, &length)) {
+                                          &utf8Source, length)) {
       return false;
     }
 
@@ -1719,7 +1726,7 @@ class ScriptSource::LoadSourceMatcher {
     if (!ss_->setRetrievedSource(
              cx_,
              EntryUnits<Utf8Unit>(reinterpret_cast<Utf8Unit*>(utf8Source)),
-             length)) {
+             *length)) {
       return false;
     }
 
@@ -1727,11 +1734,10 @@ class ScriptSource::LoadSourceMatcher {
     return true;
   }
 
-  bool tryLoadAndSetSource(const char16_t&) const {
+  bool tryLoadAndSetSource(const char16_t&, size_t* length) const {
     char16_t* utf16Source;
-    size_t length;
     if (!cx_->runtime()->sourceHook->load(cx_, ss_->filename(), &utf16Source,
-                                          nullptr, &length)) {
+                                          nullptr, length)) {
       return false;
     }
 
@@ -1741,7 +1747,7 @@ class ScriptSource::LoadSourceMatcher {
     }
 
     if (!ss_->setRetrievedSource(cx_, EntryUnits<char16_t>(utf16Source),
-                                 length)) {
+                                 *length)) {
       return false;
     }
 
@@ -2177,25 +2183,6 @@ MOZ_MUST_USE bool ScriptSource::setBinASTSourceCopy(JSContext* cx,
   }
 
   data = SourceType(BinAST(std::move(*deduped)));
-  return true;
-}
-
-MOZ_MUST_USE bool ScriptSource::initializeBinAST(
-    JSContext* cx, UniqueChars&& buf, size_t len,
-    UniquePtr<frontend::BinASTSourceMetadata> metadata) {
-  MOZ_ASSERT(data.is<Missing>(),
-             "should only be initializing a fresh ScriptSource");
-  MOZ_ASSERT(binASTMetadata_ == nullptr, "shouldn't have BinAST metadata yet");
-
-  auto& cache = cx->zone()->runtimeFromAnyThread()->sharedImmutableStrings();
-  auto deduped = cache.getOrCreate(std::move(buf), len);
-  if (!deduped) {
-    ReportOutOfMemory(cx);
-    return false;
-  }
-
-  data = SourceType(BinAST(std::move(*deduped)));
-  binASTMetadata_ = std::move(metadata);
   return true;
 }
 
@@ -2653,6 +2640,8 @@ XDRResult ScriptSource::codeUncompressedData(XDRState<mode>* const xdr,
 
   if (mode == XDR_ENCODE) {
     MOZ_ASSERT(ss->data.is<Uncompressed<Unit>>());
+  } else {
+    MOZ_ASSERT(ss->data.is<Missing>());
   }
 
   MOZ_ASSERT(retrievable == ss->sourceRetrievable());
@@ -2686,6 +2675,8 @@ XDRResult ScriptSource::codeCompressedData(XDRState<mode>* const xdr,
 
   if (mode == XDR_ENCODE) {
     MOZ_ASSERT(ss->data.is<Compressed<Unit>>());
+  } else {
+    MOZ_ASSERT(ss->data.is<Missing>());
   }
 
   MOZ_ASSERT(retrievable == ss->sourceRetrievable());
@@ -2740,6 +2731,12 @@ XDRResult ScriptSource::codeBinASTData(XDRState<mode>* const xdr,
 #if !defined(JS_BUILD_BINAST)
   return xdr->fail(JS::TranscodeResult_Throw);
 #else
+  if (mode == XDR_ENCODE) {
+    MOZ_ASSERT(ss->data.is<BinAST>());
+  } else {
+    MOZ_ASSERT(ss->data.is<Missing>());
+  }
+
   // XDR the length of the BinAST data.
   uint32_t binASTLength;
   if (mode == XDR_ENCODE) {
@@ -2748,14 +2745,22 @@ XDRResult ScriptSource::codeBinASTData(XDRState<mode>* const xdr,
   MOZ_TRY(xdr->codeUint32(&binASTLength));
 
   // XDR the BinAST data.
-  UniquePtr<char[], JS::FreePolicy> bytes;
+  Maybe<SharedImmutableString> binASTData;
   if (mode == XDR_DECODE) {
-    bytes =
-        xdr->cx()->template make_pod_array<char>(Max<size_t>(binASTLength, 1));
+    auto bytes = xdr->cx()->template make_pod_array<char>(Max<size_t>(
+        binASTLength, 1));
     if (!bytes) {
       return xdr->fail(JS::TranscodeResult_Throw);
     }
     MOZ_TRY(xdr->codeBytes(bytes.get(), binASTLength));
+
+    auto& cache =
+        xdr->cx()->zone()->runtimeFromAnyThread()->sharedImmutableStrings();
+    binASTData = cache.getOrCreate(std::move(bytes), binASTLength);
+    if (!binASTData) {
+      ReportOutOfMemory(xdr->cx());
+      return xdr->fail(JS::TranscodeResult_Throw);
+    }
   } else {
     void* bytes = ss->binASTData();
     MOZ_TRY(xdr->codeBytes(bytes, binASTLength));
@@ -2768,12 +2773,17 @@ XDRResult ScriptSource::codeBinASTData(XDRState<mode>* const xdr,
   }
   MOZ_TRY(xdr->codeUint8(&hasMetadata));
 
-  UniquePtr<frontend::BinASTSourceMetadata> freshMetadata;
+  Rooted<UniquePtr<frontend::BinASTSourceMetadata>> freshMetadata(xdr->cx());
   if (hasMetadata) {
-    // If we're decoding, we decode into fresh metadata.  If we're encoding,
-    // we encode *from* the stored metadata.
-    auto& binASTMetadata =
-        mode == XDR_DECODE ? freshMetadata : ss->binASTMetadata_;
+    // If we're decoding, this is a *mutable borrowed* reference to the
+    // |UniquePtr| stored in the |Rooted| above, and the |UniquePtr| will be
+    // filled with freshly allocated metadata.
+    //
+    // If we're encoding, this is an *immutable borrowed* reference to the
+    // |UniquePtr| stored in |ss|.  (Immutable up to GCs transparently moving
+    // things around, that is.)
+    UniquePtr<frontend::BinASTSourceMetadata>& binASTMetadata =
+        mode == XDR_DECODE ? freshMetadata.get() : ss->binASTMetadata_;
 
     uint32_t numBinASTKinds;
     uint32_t numStrings;
@@ -2798,6 +2808,8 @@ XDRResult ScriptSource::codeBinASTData(XDRState<mode>* const xdr,
       binASTMetadata.reset(metadata);
     }
 
+    MOZ_ASSERT(binASTMetadata != nullptr);
+
     frontend::BinASTKind* binASTKindBase = binASTMetadata->binASTKindBase();
     for (uint32_t i = 0; i < numBinASTKinds; i++) {
       MOZ_TRY(xdr->codeEnum32(&binASTKindBase[i]));
@@ -2807,7 +2819,7 @@ XDRResult ScriptSource::codeBinASTData(XDRState<mode>* const xdr,
     JSAtom** atomsBase = binASTMetadata->atomsBase();
     auto slices = binASTMetadata->sliceBase();
     const char* sourceBase =
-        mode == XDR_ENCODE ? bytes.get() : ss->data.as<BinAST>().string.chars();
+        (mode == XDR_ENCODE ? ss->data.as<BinAST>().string : *binASTData).chars();
 
     for (uint32_t i = 0; i < numStrings; i++) {
       uint8_t isNull;
@@ -2844,16 +2856,37 @@ XDRResult ScriptSource::codeBinASTData(XDRState<mode>* const xdr,
   }
 
   if (mode == XDR_DECODE) {
-    if (!ss->initializeBinAST(xdr->cx(), std::move(bytes), binASTLength,
-                              std::move(freshMetadata))) {
-      return xdr->fail(JS::TranscodeResult_Throw);
-    }
-  } else {
-    MOZ_ASSERT(freshMetadata == nullptr);
+    MOZ_ASSERT(binASTData.isSome());
+    MOZ_ASSERT(freshMetadata != nullptr);
+
+    MOZ_ASSERT(ss->data.is<Missing>(),
+               "should only be initializing a fresh ScriptSource");
+    MOZ_ASSERT(ss->binASTMetadata_ == nullptr,
+               "shouldn't have BinAST metadata yet");
+
+    ss->data = SourceType(BinAST(std::move(*binASTData)));
+    ss->binASTMetadata_ = std::move(freshMetadata.get());
   }
+
+  MOZ_ASSERT(binASTData.isNothing());
+  MOZ_ASSERT(freshMetadata == nullptr);
+  MOZ_ASSERT(ss->data.is<BinAST>());
 
   return Ok();
 #endif  // !defined(JS_BUILD_BINAST)
+}
+
+template <typename Unit, XDRMode mode>
+/* static */
+void ScriptSource::codeRetrievableData(ScriptSource* ss) {
+  // There's nothing to code for retrievable data.  Just be sure to set
+  // retrievable data when decoding.
+  if (mode == XDR_ENCODE) {
+    MOZ_ASSERT(ss->data.is<Retrievable<char16_t>>());
+  } else {
+    MOZ_ASSERT(ss->data.is<Missing>());
+    ss->data = SourceType(Retrievable<char16_t>());
+  }
 }
 
 template <XDRMode mode>
@@ -2953,21 +2986,13 @@ XDRResult ScriptSource::xdrData(XDRState<mode>* const xdr,
       break;
     }
 
-    case DataType::RetrievableUtf8: {
-      if (mode == XDR_DECODE) {
-        MOZ_ASSERT(ss->data.is<Missing>());
-        ss->data = SourceType(Retrievable<Utf8Unit>());
-      }
+    case DataType::RetrievableUtf8:
+      codeRetrievableData<Utf8Unit, mode>(ss);
       return Ok();
-    }
 
-    case DataType::RetrievableUtf16: {
-      if (mode == XDR_DECODE) {
-        MOZ_ASSERT(ss->data.is<Missing>());
-        ss->data = SourceType(Retrievable<char16_t>());
-      }
+    case DataType::RetrievableUtf16:
+      codeRetrievableData<char16_t, mode>(ss);
       return Ok();
-    }
 
     case DataType::BinAST:
       return codeBinASTData(xdr, ss);
@@ -5401,6 +5426,9 @@ void JSScript::updateJitCodeRaw(JSRuntime* rt) {
     jitCodeSkipArgCheck_ = jitCodeRaw_ + ion->getSkipArgCheckEntryOffset();
   } else if (hasBaselineScript()) {
     jitCodeRaw_ = baseline->method()->raw();
+    jitCodeSkipArgCheck_ = jitCodeRaw_;
+  } else if (types() && js::jit::JitOptions.baselineInterpreter) {
+    jitCodeRaw_ = rt->jitRuntime()->baselineInterpreter().codeRaw();
     jitCodeSkipArgCheck_ = jitCodeRaw_;
   } else {
     jitCodeRaw_ = rt->jitRuntime()->interpreterStub().value;

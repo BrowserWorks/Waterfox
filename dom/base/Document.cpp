@@ -216,6 +216,7 @@
 #include "nsXULAppAPI.h"
 #include "mozilla/dom/Touch.h"
 #include "mozilla/dom/TouchEvent.h"
+#include "ReferrerInfo.h"
 
 #include "mozilla/Preferences.h"
 
@@ -316,6 +317,8 @@
 #define XML_DECLARATION_BITS_STANDALONE_YES (1 << 3)
 
 extern bool sDisablePrefetchHTTPSPref;
+
+mozilla::LazyLogModule gPageCacheLog("PageCache");
 
 namespace mozilla {
 namespace dom {
@@ -995,7 +998,9 @@ nsresult ExternalResourceMap::PendingLoad::StartLoad(nsIURI* aURI,
 
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel));
   if (httpChannel) {
-    rv = httpChannel->SetReferrerWithPolicy(aReferrer, aReferrerPolicy);
+    nsCOMPtr<nsIReferrerInfo> referrerInfo =
+        new ReferrerInfo(aReferrer, aReferrerPolicy);
+    rv = httpChannel->SetReferrerInfoWithoutClone(referrerInfo);
     Unused << NS_WARN_IF(NS_FAILED(rv));
   }
 
@@ -1445,10 +1450,6 @@ Document::~Document() {
   }
 
   ReportUseCounters();
-
-  if (!nsContentUtils::IsInPrivateBrowsing(this)) {
-    mContentBlockingLog.ReportLog();
-  }
 
   mInDestructor = true;
   mInUnlinkOrDeletion = true;
@@ -2585,10 +2586,6 @@ nsresult Document::StartDocumentLoad(const char* aCommand, nsIChannel* aChannel,
              uri ? uri->GetSpecOrDefault().get() : ""));
   }
 
-  MOZ_ASSERT(
-      NodePrincipal()->GetAppId() != nsIScriptSecurityManager::UNKNOWN_APP_ID,
-      "Document should never have UNKNOWN_APP_ID");
-
   MOZ_ASSERT(GetReadyStateEnum() == Document::READYSTATE_UNINITIALIZED,
              "Bad readyState");
   SetReadyStateInternal(READYSTATE_LOADING);
@@ -3350,14 +3347,14 @@ bool Document::IsWebAnimationsEnabled(JSContext* aCx, JSObject* /*unused*/) {
   MOZ_ASSERT(NS_IsMainThread());
 
   return nsContentUtils::IsSystemCaller(aCx) ||
-         nsContentUtils::AnimationsAPICoreEnabled();
+         StaticPrefs::dom_animations_api_core_enabled();
 }
 
 bool Document::IsWebAnimationsEnabled(CallerType aCallerType) {
   MOZ_ASSERT(NS_IsMainThread());
 
   return aCallerType == dom::CallerType::System ||
-         nsContentUtils::AnimationsAPICoreEnabled();
+         StaticPrefs::dom_animations_api_core_enabled();
 }
 
 bool Document::IsWebAnimationsGetAnimationsEnabled(JSContext* aCx,
@@ -4038,6 +4035,10 @@ void Document::DeletePresShell() {
   // to call EnsureStyleFlush either, the shell is going away anyway, so there's
   // no point on it.
   MarkUserFontSetDirty();
+
+  if (mResizeObserverController) {
+    mResizeObserverController->ShellDetachedFromDocument();
+  }
 
   PresShell* oldPresShell = mPresShell;
   mPresShell = nullptr;
@@ -6735,13 +6736,13 @@ nsINode* Document::AdoptNode(nsINode& aAdoptedNode, ErrorResult& rv) {
   JS::Rooted<JSObject*> newScope(cx, nullptr);
   if (!sameDocument) {
     newScope = GetWrapper();
-    if (!newScope && GetScopeObject() &&
-        GetScopeObject()->GetGlobalJSObject()) {
+    if (!newScope && GetScopeObject() && GetScopeObject()->HasJSGlobal()) {
       // Make sure cx is in a semi-sane compartment before we call WrapNative.
       // It's kind of irrelevant, given that we're passing aAllowWrapping =
       // false, and documents should always insist on being wrapped in an
       // canonical scope. But we try to pass something sane anyway.
-      JSAutoRealm ar(cx, GetScopeObject()->GetGlobalJSObject());
+      JSObject* globalObject = GetScopeObject()->GetGlobalJSObject();
+      JSAutoRealm ar(cx, globalObject);
       JS::Rooted<JS::Value> v(cx);
       rv = nsContentUtils::WrapNative(cx, ToSupports(this), this, &v,
                                       /* aAllowWrapping = */ false);
@@ -7424,11 +7425,12 @@ bool Document::IsScriptEnabled() {
 
   nsCOMPtr<nsIScriptGlobalObject> globalObject =
       do_QueryInterface(GetInnerWindow());
-  if (!globalObject || !globalObject->GetGlobalJSObject()) {
+  if (!globalObject || !globalObject->HasJSGlobal()) {
     return false;
   }
 
-  return xpc::Scriptability::Get(globalObject->GetGlobalJSObject()).Allowed();
+  return xpc::Scriptability::Get(globalObject->GetGlobalJSObjectPreserveColor())
+      .Allowed();
 }
 
 void Document::RetrieveRelevantHeaders(nsIChannel* aChannel) {
@@ -7630,16 +7632,21 @@ void Document::CollectDescendantDocuments(
   }
 }
 
-#ifdef DEBUG_bryner
-#  define DEBUG_PAGE_CACHE
-#endif
-
 bool Document::CanSavePresentation(nsIRequest* aNewRequest) {
   if (!IsBFCachingAllowed()) {
     return false;
   }
 
+  nsAutoCString uri;
+  if (MOZ_UNLIKELY(MOZ_LOG_TEST(gPageCacheLog, LogLevel::Verbose))) {
+    if (mDocumentURI) {
+      mDocumentURI->GetSpec(uri);
+    }
+  }
+
   if (EventHandlingSuppressed()) {
+    MOZ_LOG(gPageCacheLog, mozilla::LogLevel::Verbose,
+            ("Save of %s blocked on event handling suppression", uri.get()));
     return false;
   }
 
@@ -7650,6 +7657,8 @@ bool Document::CanSavePresentation(nsIRequest* aNewRequest) {
   // frozen.
   nsPIDOMWindowInner* win = GetInnerWindow();
   if (win && win->IsSuspended() && !win->IsFrozen()) {
+    MOZ_LOG(gPageCacheLog, mozilla::LogLevel::Verbose,
+            ("Save of %s blocked on suspended Window", uri.get()));
     return false;
   }
 
@@ -7658,6 +7667,8 @@ bool Document::CanSavePresentation(nsIRequest* aNewRequest) {
   if (piTarget) {
     EventListenerManager* manager = piTarget->GetExistingListenerManager();
     if (manager && manager->HasUnloadListeners()) {
+      MOZ_LOG(gPageCacheLog, mozilla::LogLevel::Verbose,
+              ("Save of %s blocked due to unload handlers", uri.get()));
       return false;
     }
   }
@@ -7694,14 +7705,15 @@ bool Document::CanSavePresentation(nsIRequest* aNewRequest) {
             continue;
           }
         }
-#ifdef DEBUG_PAGE_CACHE
-        nsAutoCString requestName, docSpec;
-        request->GetName(requestName);
-        if (mDocumentURI) mDocumentURI->GetSpec(docSpec);
 
-        printf("document %s has request %s\n", docSpec.get(),
-               requestName.get());
-#endif
+        if (MOZ_UNLIKELY(MOZ_LOG_TEST(gPageCacheLog, LogLevel::Verbose))) {
+          nsAutoCString requestName;
+          request->GetName(requestName);
+          MOZ_LOG(gPageCacheLog, LogLevel::Verbose,
+                  ("Save of %s blocked because document has request %s",
+                   uri.get(), requestName.get()));
+        }
+
         return false;
       }
     }
@@ -7710,12 +7722,16 @@ bool Document::CanSavePresentation(nsIRequest* aNewRequest) {
   // Check if we have active GetUserMedia use
   if (MediaManager::Exists() && win &&
       MediaManager::Get()->IsWindowStillActive(win->WindowID())) {
+    MOZ_LOG(gPageCacheLog, mozilla::LogLevel::Verbose,
+            ("Save of %s blocked due to GetUserMedia", uri.get()));
     return false;
   }
 
 #ifdef MOZ_WEBRTC
   // Check if we have active PeerConnections
   if (win && win->HasActivePeerConnections()) {
+    MOZ_LOG(gPageCacheLog, mozilla::LogLevel::Verbose,
+            ("Save of %s blocked due to PeerConnection", uri.get()));
     return false;
   }
 #endif  // MOZ_WEBRTC
@@ -7729,6 +7745,8 @@ bool Document::CanSavePresentation(nsIRequest* aNewRequest) {
   // Don't save presentations for documents containing MSE content, to
   // reduce memory usage.
   if (ContainsMSEContent()) {
+    MOZ_LOG(gPageCacheLog, mozilla::LogLevel::Verbose,
+            ("Save of %s blocked due to MSE use", uri.get()));
     return false;
   }
 
@@ -7740,6 +7758,8 @@ bool Document::CanSavePresentation(nsIRequest* aNewRequest) {
       // The aIgnoreRequest we were passed is only for us, so don't pass it on.
       bool canCache = subdoc ? subdoc->CanSavePresentation(nullptr) : false;
       if (!canCache) {
+        MOZ_LOG(gPageCacheLog, mozilla::LogLevel::Verbose,
+                ("Save of %s blocked due to subdocument blocked", uri.get()));
         return false;
       }
     }
@@ -7749,10 +7769,14 @@ bool Document::CanSavePresentation(nsIRequest* aNewRequest) {
     auto* globalWindow = nsGlobalWindowInner::Cast(win);
 #ifdef MOZ_WEBSPEECH
     if (globalWindow->HasActiveSpeechSynthesis()) {
+      MOZ_LOG(gPageCacheLog, mozilla::LogLevel::Verbose,
+              ("Save of %s blocked due to Speech use", uri.get()));
       return false;
     }
 #endif
     if (globalWindow->HasUsedVR()) {
+      MOZ_LOG(gPageCacheLog, mozilla::LogLevel::Verbose,
+              ("Save of %s blocked due to having used VR", uri.get()));
       return false;
     }
   }
@@ -7764,6 +7788,11 @@ void Document::Destroy() {
   // The ContentViewer wants to release the document now.  So, tell our content
   // to drop any references to the document so that it can be destroyed.
   if (mIsGoingAway) return;
+
+  // Make sure to report before IPC closed.
+  if (!nsContentUtils::IsInPrivateBrowsing(this)) {
+    mContentBlockingLog.ReportLog();
+  }
 
   mIsGoingAway = true;
 
@@ -9855,7 +9884,7 @@ void Document::InitializeXULBroadcastManager() {
   mXULBroadcastManager = new XULBroadcastManager(this);
 }
 
-static JSObject* GetScopeObjectOfNode(nsINode* node) {
+static bool NodeHasScopeObject(nsINode* node) {
   MOZ_ASSERT(node, "Must not be called with null.");
 
   // Window root occasionally keeps alive a node of a document whose
@@ -9865,13 +9894,15 @@ static JSObject* GetScopeObjectOfNode(nsINode* node) {
   // not the document global, because we won't know what the document
   // global is).  Returning an orphan node like that to JS would be a
   // bug anyway, so to avoid this, let's do the same check as fetching
-  // GetParentObjet() on the document does to determine the scope and
-  // if it returns null let's just return null in XULDocument::GetPopupNode.
+  // GetParentObject() on the document does to determine the scope and
+  // if there is no usable scope object let's report that and return
+  // null from Document::GetPopupNode instead of returning a node that
+  // will get a reflector in the wrong scope.
   Document* doc = node->OwnerDoc();
   MOZ_ASSERT(doc, "This should never happen.");
 
   nsIGlobalObject* global = doc->GetScopeObject();
-  return global ? global->GetGlobalJSObject() : nullptr;
+  return global ? global->HasJSGlobal() : false;
 }
 
 already_AddRefed<nsPIWindowRoot> Document::GetWindowRoot() {
@@ -9897,7 +9928,7 @@ already_AddRefed<nsINode> Document::GetPopupNode() {
     }
   }
 
-  if (node && GetScopeObjectOfNode(node)) {
+  if (node && NodeHasScopeObject(node)) {
     return node.forget();
   }
 
@@ -10658,7 +10689,7 @@ bool Document::IsUnprefixedFullscreenEnabled(JSContext* aCx,
                                              JSObject* aObject) {
   MOZ_ASSERT(NS_IsMainThread());
   return nsContentUtils::IsSystemCaller(aCx) ||
-         nsContentUtils::IsUnprefixedFullscreenApiEnabled();
+         StaticPrefs::full_screen_api_unprefix_enabled();
 }
 
 static bool HasFullscreenSubDocument(Document* aDoc) {
@@ -10672,7 +10703,7 @@ static bool HasFullscreenSubDocument(Document* aDoc) {
 // in the given document. Returns a static string indicates the reason
 // why it is not enabled otherwise.
 static const char* GetFullscreenError(Document* aDoc, CallerType aCallerType) {
-  bool apiEnabled = nsContentUtils::IsFullscreenApiEnabled();
+  bool apiEnabled = StaticPrefs::full_screen_api_enabled();
   if (apiEnabled && aCallerType == CallerType::System) {
     // Chrome code can always use the fullscreen API, provided it's not
     // explicitly disabled.

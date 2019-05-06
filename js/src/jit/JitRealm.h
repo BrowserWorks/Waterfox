@@ -16,6 +16,7 @@
 
 #include "builtin/TypedObject.h"
 #include "jit/BaselineICList.h"
+#include "jit/BaselineJIT.h"
 #include "jit/CompileInfo.h"
 #include "jit/ICStubSpace.h"
 #include "jit/IonCode.h"
@@ -195,6 +196,9 @@ class JitRuntime {
   WriteOnceData<JitCode*> baselineDebugModeOSRHandler_;
   WriteOnceData<void*> baselineDebugModeOSRHandlerNoFrameRegPopAddr_;
 
+  // BaselineInterpreter state.
+  BaselineInterpreter baselineInterpreter_;
+
   // Code for trampolines and VMFunction wrappers.
   WriteOnceData<JitCode*> trampolineCode_;
 
@@ -325,6 +329,8 @@ class JitRuntime {
   JitCode* debugTrapHandler(JSContext* cx);
   JitCode* getBaselineDebugModeOSRHandler(JSContext* cx);
   void* getBaselineDebugModeOSRHandlerAddress(JSContext* cx, bool popFrameReg);
+
+  BaselineInterpreter& baselineInterpreter() { return baselineInterpreter_; }
 
   TrampolinePtr getGenericBailoutHandler() const {
     return trampolineCode(bailoutHandlerOffset_);
@@ -472,7 +478,7 @@ struct CacheIRStubKey : public DefaultHasher<CacheIRStubKey> {
 
 template <typename Key>
 struct IcStubCodeMapGCPolicy {
-  static bool needsSweep(Key*, ReadBarrieredJitCode* value) {
+  static bool needsSweep(Key*, WeakHeapPtrJitCode* value) {
     return IsAboutToBeFinalized(value);
   }
 };
@@ -490,7 +496,7 @@ class JitZone {
 
   // Map CacheIRStubKey to shared JitCode objects.
   using BaselineCacheIRStubCodeMap =
-      GCHashMap<CacheIRStubKey, ReadBarrieredJitCode, CacheIRStubKey,
+      GCHashMap<CacheIRStubKey, WeakHeapPtrJitCode, CacheIRStubKey,
                 SystemAllocPolicy, IcStubCodeMapGCPolicy<CacheIRStubKey>>;
   BaselineCacheIRStubCodeMap baselineCacheIRStubCodes_;
 
@@ -541,7 +547,7 @@ class JitRealm {
 
   // Map ICStub keys to ICStub shared code objects.
   using ICStubCodeMap =
-      GCHashMap<uint32_t, ReadBarrieredJitCode, DefaultHasher<uint32_t>,
+      GCHashMap<uint32_t, WeakHeapPtrJitCode, DefaultHasher<uint32_t>,
                 ZoneAllocPolicy, IcStubCodeMapGCPolicy<uint32_t>>;
   ICStubCodeMap* stubCodes_;
 
@@ -563,7 +569,7 @@ class JitRealm {
     Count
   };
 
-  mozilla::EnumeratedArray<StubIndex, StubIndex::Count, ReadBarrieredJitCode>
+  mozilla::EnumeratedArray<StubIndex, StubIndex::Count, WeakHeapPtrJitCode>
       stubs_;
 
   bool stringsCanBeInNursery;
@@ -615,13 +621,13 @@ class JitRealm {
   void sweep(JS::Realm* realm);
 
   void discardStubs() {
-    for (ReadBarrieredJitCode& stubRef : stubs_) {
+    for (WeakHeapPtrJitCode& stubRef : stubs_) {
       stubRef = nullptr;
     }
   }
 
   bool hasStubs() const {
-    for (const ReadBarrieredJitCode& stubRef : stubs_) {
+    for (const WeakHeapPtrJitCode& stubRef : stubs_) {
       if (stubRef) {
         return true;
       }

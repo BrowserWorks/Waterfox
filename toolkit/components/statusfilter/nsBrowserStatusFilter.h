@@ -38,13 +38,13 @@ class nsBrowserStatusFilter : public nsIWebProgress,
 
  private:
   nsresult StartDelayTimer();
-  void ProcessTimeout();
+  void CallDelayedProgressListeners();
   void MaybeSendProgress();
   void MaybeSendStatus();
   void ResetMembers();
   bool DelayInEffect() { return mDelayedStatus || mDelayedProgress; }
 
-  static void TimeoutHandler(nsITimer *aTimer, void *aClosure);
+  static void TimeoutHandler(nsITimer* aTimer, void* aClosure);
 
  private:
   nsCOMPtr<nsIWebProgressListener> mListener;

@@ -162,6 +162,7 @@
 #include "nsIJARChannel.h"
 #include "nsIScreenManager.h"
 #include "nsIEffectiveTLDService.h"
+#include "nsIClassifiedChannel.h"
 
 #include "xpcprivate.h"
 
@@ -309,6 +310,7 @@ using mozilla::TimeStamp;
   PR_END_MACRO
 
 static LazyLogModule gDOMLeakPRLogOuter("DOMLeakOuter");
+extern LazyLogModule gPageCacheLog;
 
 static int32_t gOpenPopupSpamCount = 0;
 
@@ -992,14 +994,13 @@ bool nsOuterWindowProxy::GetSubframeWindow(JSContext* cx,
   // Just return the window's global
   nsGlobalWindowOuter* global = nsGlobalWindowOuter::Cast(frame);
   frame->EnsureInnerWindow();
-  JSObject* obj = global->FastGetGlobalJSObject();
+  JSObject* obj = global->GetGlobalJSObject();
   // This null check fixes a hard-to-reproduce crash that occurs when we
   // get here when we're mid-call to nsDocShell::Destroy. See bug 640904
   // comment 105.
   if (MOZ_UNLIKELY(!obj)) {
     return xpc::Throw(cx, NS_ERROR_FAILURE);
   }
-  JS::ExposeObjectToActiveJS(obj);
   vp.setObject(*obj);
   return JS_WrapValue(cx, vp);
 }
@@ -1505,10 +1506,6 @@ nsresult nsGlobalWindowOuter::EnsureScriptEnvironment() {
 
 nsIScriptContext* nsGlobalWindowOuter::GetScriptContext() { return mContext; }
 
-JSObject* nsGlobalWindowOuter::GetGlobalJSObject() {
-  return FastGetGlobalJSObject();
-}
-
 bool nsGlobalWindowOuter::WouldReuseInnerWindow(Document* aNewDocument) {
   // We reuse the inner window when:
   // a. We are currently at our original document.
@@ -1997,15 +1994,15 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
 
   bool doomCurrentInner = false;
 
+  // Only non-gray (i.e. exposed to JS) objects should be assigned to
+  // newInnerGlobal.
   JS::Rooted<JSObject*> newInnerGlobal(cx);
   if (reUseInnerWindow) {
     // We're reusing the current inner window.
     NS_ASSERTION(!currentInner->IsFrozen(),
                  "We should never be reusing a shared inner window");
     newInnerWindow = currentInner;
-    newInnerGlobal = currentInner->GetWrapperPreserveColor();
-
-    JS::ExposeObjectToActiveJS(newInnerGlobal);
+    newInnerGlobal = currentInner->GetWrapper();
 
     // We're reusing the inner window, but this still counts as a navigation,
     // so all expandos and such defined on the outer window should go away.
@@ -2032,7 +2029,7 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
   } else {
     if (aState) {
       newInnerWindow = wsh->GetInnerWindow();
-      newInnerGlobal = newInnerWindow->GetWrapperPreserveColor();
+      newInnerGlobal = newInnerWindow->GetWrapper();
     } else {
       newInnerWindow = nsGlobalWindowInner::Create(this, thisChrome);
       if (StaticPrefs::dom_timeout_defer_during_load()) {
@@ -2099,7 +2096,6 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
 
       SetWrapper(mContext->GetWindowProxy());
     } else {
-      JS::ExposeObjectToActiveJS(newInnerGlobal);
       JS::Rooted<JSObject*> outerObject(
           cx, NewOuterWindowProxy(cx, newInnerGlobal, thisChrome));
       if (!outerObject) {
@@ -5372,16 +5368,15 @@ void nsGlobalWindowOuter::FirePopupBlockedEvent(
 
 void nsGlobalWindowOuter::NotifyContentBlockingEvent(
     unsigned aEvent, nsIChannel* aChannel, bool aBlocked, nsIURI* aURIHint,
+    nsIChannel* aTrackingChannel,
     const mozilla::Maybe<AntiTrackingCommon::StorageAccessGrantedReason>&
         aReason) {
   MOZ_ASSERT(aURIHint);
+  DebugOnly<bool> isCookiesBlockedTracker =
+      aEvent == nsIWebProgressListener::STATE_COOKIES_BLOCKED_TRACKER;
   MOZ_ASSERT_IF(aBlocked, aReason.isNothing());
-  MOZ_ASSERT_IF(aEvent != nsIWebProgressListener::STATE_COOKIES_BLOCKED_TRACKER,
-                aReason.isNothing());
-  MOZ_ASSERT_IF(
-      !aBlocked &&
-          aEvent == nsIWebProgressListener::STATE_COOKIES_BLOCKED_TRACKER,
-      aReason.isSome());
+  MOZ_ASSERT_IF(!isCookiesBlockedTracker, aReason.isNothing());
+  MOZ_ASSERT_IF(isCookiesBlockedTracker && !aBlocked, aReason.isSome());
 
   nsCOMPtr<nsIDocShell> docShell = GetDocShell();
   if (!docShell) {
@@ -5392,6 +5387,8 @@ void nsGlobalWindowOuter::NotifyContentBlockingEvent(
 
   nsCOMPtr<nsIURI> uri(aURIHint);
   nsCOMPtr<nsIChannel> channel(aChannel);
+  nsCOMPtr<nsIClassifiedChannel> trackingChannel =
+      do_QueryInterface(aTrackingChannel);
 
   static bool prefInitialized = false;
   if (!prefInitialized) {
@@ -5403,7 +5400,8 @@ void nsGlobalWindowOuter::NotifyContentBlockingEvent(
 
   nsCOMPtr<nsIRunnable> func = NS_NewRunnableFunction(
       "NotifyContentBlockingEventDelayed",
-      [doc, docShell, uri, channel, aEvent, aBlocked, aReason]() {
+      [doc, docShell, uri, channel, aEvent, aBlocked, aReason,
+       trackingChannel]() {
         // This event might come after the user has navigated to another
         // page. To prevent showing the TrackingProtection UI on the wrong
         // page, we need to check that the loading URI for the channel is
@@ -5470,7 +5468,14 @@ void nsGlobalWindowOuter::NotifyContentBlockingEvent(
           }
         } else if (aEvent ==
                    nsIWebProgressListener::STATE_COOKIES_BLOCKED_TRACKER) {
-          doc->SetHasTrackingCookiesBlocked(aBlocked, origin, aReason);
+          nsTArray<nsCString> trackingFullHashes;
+          if (trackingChannel) {
+            Unused << trackingChannel->GetMatchedTrackingFullHashes(
+                trackingFullHashes);
+          }
+          doc->SetHasTrackingCookiesBlocked(aBlocked, origin, aReason,
+                                            trackingFullHashes);
+
           if (!aBlocked) {
             unblocked = !doc->GetHasTrackingCookiesBlocked();
           }
@@ -7393,9 +7398,8 @@ already_AddRefed<nsISupports> nsGlobalWindowOuter::SaveWindowState() {
 
   nsCOMPtr<nsISupports> state = new WindowStateHolder(inner);
 
-#ifdef DEBUG_PAGE_CACHE
-  printf("saving window state, state = %p\n", (void*)state);
-#endif
+  MOZ_LOG(gPageCacheLog, LogLevel::Debug,
+          ("saving window state, state = %p", (void*)state));
 
   return state.forget();
 }
@@ -7409,9 +7413,8 @@ nsresult nsGlobalWindowOuter::RestoreWindowState(nsISupports* aState) {
   nsCOMPtr<WindowStateHolder> holder = do_QueryInterface(aState);
   NS_ENSURE_TRUE(holder, NS_ERROR_FAILURE);
 
-#ifdef DEBUG_PAGE_CACHE
-  printf("restoring window state, state = %p\n", (void*)holder);
-#endif
+  MOZ_LOG(gPageCacheLog, LogLevel::Debug,
+          ("restoring window state, state = %p", (void*)holder));
 
   // And we're ready to go!
   nsGlobalWindowInner* inner = GetCurrentInnerWindowInternal();

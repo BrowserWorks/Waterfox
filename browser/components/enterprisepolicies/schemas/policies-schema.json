@@ -164,6 +164,10 @@
       }
     },
 
+    "DefaultDownloadDirectory": {
+      "type": "string"
+    },
+
     "DisableAppUpdate": {
       "type": "boolean"
     },
@@ -276,6 +280,10 @@
       "type": "boolean"
     },
 
+    "DownloadDirectory": {
+      "type": "string"
+    },
+
     "EnableTrackingProtection": {
       "type": "object",
       "properties": {
@@ -329,6 +337,30 @@
 
     "ExtensionUpdate": {
       "type": "boolean"
+    },
+
+    "FirefoxHome": {
+      "type": "object",
+      "properties": {
+        "Search": {
+          "type": "boolean"
+        },
+        "TopSites": {
+          "type": "boolean"
+        },
+        "Highlights": {
+          "type": "boolean"
+        },
+        "Pocket": {
+          "type": "boolean"
+        },
+        "Snippets": {
+          "type": "boolean"
+        },
+        "Locked": {
+          "type": "boolean"
+        }
+      }
     },
 
     "FlashPlugin": {
@@ -598,6 +630,10 @@
           "type": "boolean"
         }
       }
+    },
+
+    "PromptForDownloadLocation": {
+      "type": "boolean"
     },
 
     "Proxy": {

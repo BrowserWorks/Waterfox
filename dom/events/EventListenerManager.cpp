@@ -633,7 +633,7 @@ bool EventListenerManager::ListenerCanHandle(const Listener* aListener,
   if (aEvent->mMessage == eUnidentifiedEvent) {
     return aListener->mTypeAtom == aEvent->mSpecifiedEventType;
   }
-  if (MOZ_UNLIKELY(!nsContentUtils::IsUnprefixedFullscreenApiEnabled() &&
+  if (MOZ_UNLIKELY(!StaticPrefs::full_screen_api_unprefix_enabled() &&
                    aEvent->IsTrusted() &&
                    (aEventMessage == eFullscreenChange ||
                     aEventMessage == eFullscreenError))) {
@@ -825,7 +825,7 @@ nsresult EventListenerManager::SetEventHandler(nsAtom* aName,
 
   nsIScriptContext* context = global->GetScriptContext();
   NS_ENSURE_TRUE(context, NS_ERROR_FAILURE);
-  NS_ENSURE_STATE(global->GetGlobalJSObject());
+  NS_ENSURE_STATE(global->HasJSGlobal());
 
   Listener* listener = SetEventHandlerInternal(aName, TypedEventHandler(),
                                                aPermitUntrustedEvents);

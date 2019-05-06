@@ -5,6 +5,7 @@
 
 const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const {NewTabUtils} = ChromeUtils.import("resource://gre/modules/NewTabUtils.jsm");
+const {setTimeout, clearTimeout} = ChromeUtils.import("resource://gre/modules/Timer.jsm");
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
 ChromeUtils.defineModuleGetter(this, "perfService", "resource://activity-stream/common/PerfService.jsm");
@@ -22,6 +23,7 @@ const DEFAULT_RECS_EXPIRE_TIME = 60 * 60 * 1000; // 1 hour
 const MIN_DOMAIN_AFFINITIES_UPDATE_TIME = 12 * 60 * 60 * 1000; // 12 hours
 const MAX_LIFETIME_CAP = 500; // Guard against misconfiguration on the server
 const DEFAULT_MAX_HISTORY_QUERY_RESULTS = 1000;
+const FETCH_TIMEOUT = 45 * 1000;
 const PREF_CONFIG = "discoverystream.config";
 const PREF_ENDPOINTS = "discoverystream.endpoints";
 const PREF_OPT_OUT = "discoverystream.optOut.0";
@@ -40,6 +42,32 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     this.cache = new PersistentCache(CACHE_KEY, true);
     // Internal in-memory cache for parsing json prefs.
     this._prefCache = {};
+  }
+
+  /**
+   * Send SPOCS Fill telemetry.
+   * @param {object} filteredItems An object keyed on filter reasons, and the value
+   *                 is a list of SPOCS.
+   * @param {boolean} fullRecalc A boolean indicating if it's a full recalculation.
+   *                  Calling `loadSpocs` will be treated as a full recalculation.
+   *                  Whereas responding the action "DISCOVERY_STREAM_SPOC_IMPRESSION"
+   *                  is not a full recalculation.
+   */
+  _sendSpocsFill(filteredItems, fullRecalc) {
+    const full_recalc = fullRecalc ? 1 : 0;
+    const spocsFill = [];
+    for (const [reason, items] of Object.entries(filteredItems)) {
+      items.forEach(item => {
+        // Only send SPOCS (i.e. it has a campaign_id)
+        if (item.campaign_id) {
+          spocsFill.push({reason, full_recalc, id: item.id, displayed: 0});
+        }
+      });
+    }
+
+    if (spocsFill.length) {
+      this.store.dispatch(ac.DiscoveryStreamSpocsFill({spoc_fills: spocsFill}));
+    }
   }
 
   finalLayoutEndpoint(url, apiKey) {
@@ -115,10 +143,17 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
         throw new Error(`Not one of allowed prefixes (${allowed})`);
       }
 
-      const response = await fetch(endpoint, {credentials: "omit"});
+      const controller = new AbortController();
+      const {signal} = controller;
+      const fetchPromise = fetch(endpoint, {credentials: "omit", signal});
+      // istanbul ignore next
+      const timeoutId = setTimeout(() => { controller.abort(); }, FETCH_TIMEOUT);
+
+      const response = await fetchPromise;
       if (!response.ok) {
         throw new Error(`Unexpected status (${response.status})`);
       }
+      clearTimeout(timeoutId);
       return response.json();
     } catch (error) {
       Cu.reportError(`Failed to fetch ${endpoint}: ${error.message}`);
@@ -202,19 +237,19 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
 
   async loadLayout(sendUpdate, isStartup) {
     let layout = {};
-    if (this.config.hardcoded_layout) {
-      layout = {lastUpdate: Date.now(), ...defaultLayoutResp};
-    } else {
+    if (!this.config.hardcoded_layout) {
       layout = await this.fetchLayout(isStartup);
     }
 
-    if (layout && layout.layout) {
-      sendUpdate({
-        type: at.DISCOVERY_STREAM_LAYOUT_UPDATE,
-        data: layout,
-      });
+    if (!layout || !layout.layout) {
+      layout = {lastUpdate: Date.now(), ...defaultLayoutResp};
     }
-    if (layout && layout.spocs && layout.spocs.url) {
+
+    sendUpdate({
+      type: at.DISCOVERY_STREAM_LAYOUT_UPDATE,
+      data: layout,
+    });
+    if (layout.spocs && layout.spocs.url) {
       sendUpdate({
         type: at.DISCOVERY_STREAM_SPOCS_ENDPOINT,
         data: layout.spocs.url,
@@ -266,9 +301,10 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
 
   filterRecommendations(feed) {
     if (feed && feed.data && feed.data.recommendations && feed.data.recommendations.length) {
+      const {data} = this.filterBlocked(feed.data, "recommendations");
       return {
         ...feed,
-        data: this.filterBlocked(feed.data, "recommendations"),
+        data,
       };
     }
     return feed;
@@ -361,18 +397,22 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     // We can have no data if spocs set to off.
     // We can have no data if request fails and there is no good cache.
     // We want to send an update spocs or not, so client can render something.
-    spocs = spocs || {
+    spocs = spocs && spocs.data ? spocs : {
       lastUpdated: Date.now(),
       data: {},
     };
+
+    let {data, filtered: frequencyCapped} = this.frequencyCapSpocs(spocs.data);
+    let {data: newSpocs, filtered} = this.transform(data);
 
     sendUpdate({
       type: at.DISCOVERY_STREAM_SPOCS_UPDATE,
       data: {
         lastUpdated: spocs.lastUpdated,
-        spocs: this.transform(this.frequencyCapSpocs(spocs.data)),
+        spocs: newSpocs,
       },
     });
+    this._sendSpocsFill({...filtered, frequency_cap: frequencyCapped}, true);
   }
 
   async loadAffinityScoresCache() {
@@ -418,11 +458,19 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   }
 
   scoreItems(items) {
-    return items.map(item => this.scoreItem(item))
+    const filtered = [];
+    const data = items.map(item => this.scoreItem(item))
       // Remove spocs that are scored too low.
-      .filter(s => s.score >= s.min_score)
+      .filter(s => {
+        if (s.score >= s.min_score) {
+          return true;
+        }
+        filtered.push(s);
+        return false;
+      })
       // Sort by highest scores.
       .sort((a, b) => b.score - a.score);
+    return {data, filtered};
   }
 
   scoreItem(item) {
@@ -441,45 +489,67 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
   }
 
   filterBlocked(data, type) {
+    const filtered = [];
     if (data && data[type] && data[type].length) {
-      const filteredItems = data[type].filter(item => !NewTabUtils.blockedLinks.isBlocked({"url": item.url}));
+      const filteredItems = data[type].filter(item => {
+        const blocked = NewTabUtils.blockedLinks.isBlocked({"url": item.url});
+        if (blocked) {
+          filtered.push(item);
+        }
+        return !blocked;
+      });
       return {
-        ...data,
-        [type]: filteredItems,
+        data: {
+          ...data,
+          [type]: filteredItems,
+        },
+        filtered,
       };
     }
-    return data;
+    return {data, filtered};
   }
 
   transform(spocs) {
-    const data = this.filterBlocked(spocs, "spocs");
+    const {data, filtered: blockedItems} = this.filterBlocked(spocs, "spocs");
     if (data && data.spocs && data.spocs.length) {
       const spocsPerDomain = this.store.getState().DiscoveryStream.spocs.spocs_per_domain || 1;
       const campaignMap = {};
+      const campaignDuplicates = [];
+
+      // This order of operations is intended.
+      // scoreItems must be first because it creates this.score.
+      const {data: items, filtered: belowMinScoreItems} = this.scoreItems(data.spocs);
+      // This removes campaign dupes.
+      // We do this only after scoring and sorting because that way
+      // we can keep the first item we see, and end up keeping the highest scored.
+      const newSpocs = items.filter(s => {
+        if (!campaignMap[s.campaign_id]) {
+          campaignMap[s.campaign_id] = 1;
+          return true;
+        } else if (campaignMap[s.campaign_id] < spocsPerDomain) {
+          campaignMap[s.campaign_id]++;
+          return true;
+        }
+        campaignDuplicates.push(s);
+        return false;
+      });
       return {
-        ...data,
-        // This order of operations is intended.
-        // scoreItems must be first because it creates this.score.
-        spocs: this.scoreItems(data.spocs)
-          // This removes campaign dupes.
-          // We do this only after scoring and sorting because that way
-          // we can keep the first item we see, and end up keeping the highest scored.
-          .filter(s => {
-            if (!campaignMap[s.campaign_id]) {
-              campaignMap[s.campaign_id] = 1;
-              return true;
-            } else if (campaignMap[s.campaign_id] < spocsPerDomain) {
-              campaignMap[s.campaign_id]++;
-              return true;
-            }
-            return false;
-          }),
+        data: {...data, spocs: newSpocs},
+        filtered: {
+          blocked_by_user: blockedItems,
+          below_min_score: belowMinScoreItems,
+          campaign_duplicate: campaignDuplicates,
+        },
       };
     }
-    return data;
+    return {data, filtered: {blocked: blockedItems}};
   }
 
   // Filter spocs based on frequency caps
+  //
+  // @param {Object} data  An object that might have a SPOCS array.
+  // @returns {Object} An object with a property `data` as the result, and a property
+  //                   `filterItems` as the frequency capped items.
   frequencyCapSpocs(data) {
     if (data && data.spocs && data.spocs.length) {
       const {spocs} = data;
@@ -499,9 +569,9 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
       if (caps.length) {
         this.store.dispatch({type: at.DISCOVERY_STREAM_SPOCS_CAPS, data: caps});
       }
-      return result;
+      return {data: result, filtered: caps};
     }
-    return data;
+    return {data, filtered: []};
   }
 
   // Frequency caps are based on campaigns, which may include multiple spocs.
@@ -549,7 +619,7 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
     if (this.isExpired({cachedData, key: "feed", url: feedUrl, isStartup})) {
       const feedResponse = await this.fetchFromEndpoint(feedUrl);
       if (feedResponse) {
-        const scoredItems = this.scoreItems(feedResponse.recommendations);
+        const {data: scoredItems} = this.scoreItems(feedResponse.recommendations);
         const {recsExpireTime} = feedResponse.settings;
         const recommendations = this.rotate(scoredItems, recsExpireTime);
         this.componentFeedFetched = true;
@@ -867,10 +937,8 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
           // Apply frequency capping to SPOCs in the redux store, only update the
           // store if the SPOCs are changed.
           const {spocs} = this.store.getState().DiscoveryStream;
-          const newSpocs = this.frequencyCapSpocs(spocs.data);
-          const prevSpocs = spocs.data.spocs || [];
-          const currentSpocs = newSpocs.spocs || [];
-          if (prevSpocs.length !== currentSpocs.length) {
+          const {data: newSpocs, filtered} = this.frequencyCapSpocs(spocs.data);
+          if (filtered.length) {
             this.store.dispatch(ac.AlsoToPreloaded({
               type: at.DISCOVERY_STREAM_SPOCS_UPDATE,
               data: {
@@ -878,8 +946,23 @@ this.DiscoveryStreamFeed = class DiscoveryStreamFeed {
                 spocs: newSpocs,
               },
             }));
+            this._sendSpocsFill({frequency_cap: filtered}, false);
           }
         }
+        break;
+      case at.PLACES_LINK_BLOCKED:
+        if (this.showSpocs) {
+          const {spocs} = this.store.getState().DiscoveryStream;
+          const spocsList = spocs.data.spocs || [];
+          const filtered = spocsList.filter(s => s.url === action.data.url);
+          if (filtered.length) {
+            this._sendSpocsFill({blocked_by_user: filtered}, false);
+          }
+        }
+        this.store.dispatch(ac.BroadcastToContent({
+          type: at.DISCOVERY_STREAM_LINK_BLOCKED,
+          data: action.data,
+        }));
         break;
       case at.UNINIT:
         // When this feed is shutting down:

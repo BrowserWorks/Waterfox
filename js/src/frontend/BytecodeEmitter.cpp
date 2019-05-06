@@ -250,13 +250,10 @@ bool BytecodeEmitter::emitCheck(JSOp op, ptrdiff_t delta, ptrdiff_t* offset) {
   }
 
   if (BytecodeOpHasIC(op)) {
-    // Because numICEntries also includes entries for formal arguments, we have
-    // to check for overflow here.
-    if (MOZ_UNLIKELY(bytecodeSection().numICEntries() == UINT32_MAX)) {
-      reportError(nullptr, JSMSG_NEED_DIET, js_script_str);
-      return false;
-    }
-
+    // Even if every bytecode op is a JOF_IC op and the function has ARGC_LIMIT
+    // arguments, numICEntries cannot overflow.
+    static_assert(MaxBytecodeLength + 1 /* this */ + ARGC_LIMIT <= UINT32_MAX,
+                  "numICEntries must not overflow");
     bytecodeSection().incrementNumICEntries();
   }
 
@@ -8755,9 +8752,7 @@ bool BytecodeEmitter::emitClass(
   }
 
   if (!classNode->isEmptyScope()) {
-    if (!ce.emitScope(classNode->scopeBindings(),
-                      classNode->names() ? ClassEmitter::HasName::Yes
-                                         : ClassEmitter::HasName::No)) {
+    if (!ce.emitScope(classNode->scopeBindings())) {
       //            [stack]
       return false;
     }

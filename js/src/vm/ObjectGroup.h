@@ -399,7 +399,6 @@ class ObjectGroup : public gc::TenuredCell {
   void updateNewPropertyTypes(const AutoSweepObjectGroup& sweep, JSContext* cx,
                               JSObject* obj, jsid id, HeapTypeSet* types);
   void addDefiniteProperties(JSContext* cx, Shape* shape);
-  bool matchDefiniteProperties(HandleObject obj);
   void markPropertyNonData(JSContext* cx, JSObject* obj, jsid id);
   void markPropertyNonWritable(JSContext* cx, JSObject* obj, jsid id);
   void markStateChange(const AutoSweepObjectGroup& sweep, JSContext* cx);
@@ -539,7 +538,7 @@ class ObjectGroupRealm {
 
   struct ArrayObjectKey;
   using ArrayObjectTable =
-      js::GCRekeyableHashMap<ArrayObjectKey, ReadBarrieredObjectGroup,
+      js::GCRekeyableHashMap<ArrayObjectKey, WeakHeapPtrObjectGroup,
                              ArrayObjectKey, SystemAllocPolicy>;
 
   struct PlainObjectKey;
@@ -597,7 +596,7 @@ class ObjectGroupRealm {
   // unified type.  Having a global group for this also allows us to remove
   // the hash-table lookup that would be required if we allocated this group
   // on the basis of call-site pc.
-  ReadBarrieredObjectGroup stringSplitStringGroup = {};
+  WeakHeapPtrObjectGroup stringSplitStringGroup = {};
 
   // END OF PROPERTIES
 

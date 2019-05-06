@@ -464,6 +464,12 @@
     "minbytes": 4424,
     "maxbytes": 4424
   },
+  "{profile}\\permissions.sqlite-journal": {
+    "mincount": 0,
+    "maxcount": 18,
+    "minbytes": 0,
+    "maxbytes": 7208
+  },
   "{profile}\\pkcs11.txt": {
     "mincount": 0,
     "maxcount": 4,
@@ -566,16 +572,22 @@
     "minbytes": 6000,
     "maxbytes": 6000
   },
-  "{talos}\\talos\\tests\\{tp5n_files}": {
+  "{profile}\\xulstore.json": {
     "mincount": 0,
-    "maxcount": 2,
+    "maxcount": 0,
     "minbytes": 0,
-    "maxbytes": 16384
+    "maxbytes": 702
   },
   "{profile}\\xulstore\\data.mdb": {
     "mincount": 0,
     "maxcount": 4,
     "minbytes": 0,
     "maxbytes": 608
+  },
+  "{talos}\\talos\\tests\\{tp5n_files}": {
+    "mincount": 0,
+    "maxcount": 2,
+    "minbytes": 0,
+    "maxbytes": 16384
   }
 }
