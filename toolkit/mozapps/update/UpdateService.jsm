@@ -872,7 +872,7 @@ function isServiceInstalled() {
     let wrk = Cc["@mozilla.org/windows-registry-key;1"].
               createInstance(Ci.nsIWindowsRegKey);
     wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,
-             "SOFTWARE\\Mozilla\\MaintenanceService",
+             "SOFTWARE\\Waterfox\\MaintenanceService",
              wrk.ACCESS_READ | wrk.WOW64_64);
     installed = wrk.readIntValue("Installed");
     wrk.close();
@@ -3345,7 +3345,7 @@ Checker.prototype = {
     let wrk = Cc["@mozilla.org/windows-registry-key;1"].
               createInstance(Ci.nsIWindowsRegKey);
 
-    let regPath = "SOFTWARE\\Mozilla\\" + Services.appinfo.name +
+    let regPath = "SOFTWARE\\Waterfox\\" + Services.appinfo.name +
                   "\\32to64DidMigrate";
     let regValHKCU = WindowsRegistry.readRegKey(wrk.ROOT_KEY_CURRENT_USER,
                                                 regPath, "Never", wrk.WOW64_32);
