@@ -1741,6 +1741,11 @@ pref("browser.migrate.chrome.history.maxAgeInDays", 180);
 // Enable browser frames for use on desktop.  Only exposed to chrome callers.
 pref("dom.mozBrowserFramesEnabled", true);
 
+pref("extensions.pocket.api", "", locked);
+pref("extensions.pocket.enabled", false, locked);
+pref("extensions.pocket.oAuthConsumerKey", "", locked);
+pref("extensions.pocket.site", "", locked);
+
 pref("signon.schemeUpgrades", true);
 pref("signon.privateBrowsingCapture.enabled", true);
 pref("signon.showAutoCompleteFooter", true);
