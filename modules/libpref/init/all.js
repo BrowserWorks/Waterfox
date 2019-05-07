@@ -1073,7 +1073,7 @@ pref("toolkit.tabbox.switchByScrolling", false);
 
 // Telemetry settings.
 // Server to submit telemetry pings to.
-pref("toolkit.telemetry.server", "");
+pref("toolkit.telemetry.server", "", locked);
 // Telemetry server owner. Please change if you set toolkit.telemetry.server to a different server
 pref("toolkit.telemetry.server_owner", "Mozilla");
 // Determines whether full SQL strings are returned when they might contain sensitive info
@@ -5135,12 +5135,12 @@ pref("browser.history.maxStateObjectSize", 2097152);
 pref("browser.meta_refresh_when_inactive.disabled", false);
 
 // XPInstall prefs
-pref("xpinstall.whitelist.required", true);
+pref("xpinstall.whitelist.required", false);
 // Only Firefox requires add-on signatures
 pref("xpinstall.signatures.required", false);
 pref("extensions.langpacks.signatures.required", false);
 pref("extensions.webExtensionsMinPlatformVersion", "42.0a1");
-pref("extensions.legacy.enabled", true);
+pref("extensions.legacy.enabled", true, locked);
 
 // Other webextensions prefs
 pref("extensions.webextensions.keepStorageOnUninstall", false);

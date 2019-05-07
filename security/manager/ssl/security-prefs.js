@@ -126,7 +126,7 @@ pref("security.webauth.webauthn", true);
 pref("security.webauth.webauthn_enable_softtoken", false);
 pref("security.webauth.webauthn_enable_usbtoken", true);
 
-pref("security.ssl.errorReporting.enabled", true);
+pref("security.ssl.errorReporting.enabled", false);
 pref("security.ssl.errorReporting.url", "https://incoming.telemetry.mozilla.org/submit/sslreports/");
 pref("security.ssl.errorReporting.automatic", false);
 

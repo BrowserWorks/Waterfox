@@ -272,16 +272,6 @@ let LEGACY_ACTORS = {
     },
   },
 
-  ShieldFrame: {
-    child: {
-      module: "resource://normandy-content/ShieldFrameChild.jsm",
-      events: {
-        "ShieldPageEvent": {wantUntrusted: true},
-      },
-      matches: ["about:studies"],
-    },
-  },
-
   UITour: {
     child: {
       module: "resource:///modules/UITourChild.jsm",
@@ -418,7 +408,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   L10nRegistry: "resource://gre/modules/L10nRegistry.jsm",
   LiveBookmarkMigrator: "resource:///modules/LiveBookmarkMigrator.jsm",
   NewTabUtils: "resource://gre/modules/NewTabUtils.jsm",
-  Normandy: "resource://normandy/Normandy.jsm",
   ObjectUtils: "resource://gre/modules/ObjectUtils.jsm",
   OS: "resource://gre/modules/osfile.jsm",
   PageActions: "resource:///modules/PageActions.jsm",
@@ -1069,8 +1058,6 @@ BrowserGlue.prototype = {
         "firefox-compact-dark@mozilla.org", "1.0",
         "resource:///modules/themes/dark/");
 
-    Normandy.init();
-
     Services.obs.notifyObservers(null, "browser-ui-startup-complete");
   },
 
@@ -1507,7 +1494,6 @@ BrowserGlue.prototype = {
     AutoCompletePopup.uninit();
     DateTimePickerParent.uninit();
 
-    Normandy.uninit();
     RFPHelper.uninit();
   },
 

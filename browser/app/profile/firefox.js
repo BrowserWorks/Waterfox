@@ -37,19 +37,19 @@ pref("extensions.webextPermissionPrompts", true);
 pref("extensions.webextOptionalPermissionPrompts", true);
 
 // Preferences for AMO integration
-pref("extensions.getAddons.cache.enabled", true);
-pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/api/v3/addons/search/?guid=%IDS%&lang=%LOCALE%");
-pref("extensions.getAddons.compatOverides.url", "https://services.addons.mozilla.org/api/v3/addons/compat-override/?guid=%IDS%&lang=%LOCALE%");
+pref("extensions.getAddons.cache.enabled", false, locked);
+pref("extensions.getAddons.get.url", "", locked);
+pref("extensions.getAddons.compatOverides.url", "", locked);
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
-pref("extensions.webservice.discoverURL", "");
+pref("extensions.webservice.discoverURL", "", locked);
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
-pref("extensions.getAddons.langpacks.url", "https://services.addons.mozilla.org/api/v3/addons/language-tools/?app=firefox&type=language&appversion=%VERSION%");
+pref("extensions.getAddons.langpacks.url", "", locked);
 
 pref("extensions.update.autoUpdateDefault", true);
 
 // Check AUS for system add-on updates.
-pref("extensions.systemAddon.update.url", "");
-pref("extensions.systemAddon.update.enabled", false);
+pref("extensions.systemAddon.update.url", "", locked);
+pref("extensions.systemAddon.update.enabled", false, locked);
 
 // Disable add-ons that are not installed by the user in all scopes by default.
 // See the SCOPE constants in AddonManager.jsm for values to use here.
@@ -181,8 +181,8 @@ pref("app.update.BITS.enabled", false);
 //  .. etc ..
 //
 pref("extensions.update.enabled", true);
-pref("extensions.update.url", "https://versioncheck.addons.mozilla.org/update/VersionCheck.php?reqVersion=%REQ_VERSION%&id=%ITEM_ID%&version=%ITEM_VERSION%&maxAppVersion=%ITEM_MAXAPPVERSION%&status=%ITEM_STATUS%&appID=%APP_ID%&appVersion=%APP_VERSION%&appOS=%APP_OS%&appABI=%APP_ABI%&locale=%APP_LOCALE%&currentAppVersion=%CURRENT_APP_VERSION%&updateType=%UPDATE_TYPE%&compatMode=%COMPATIBILITY_MODE%");
-pref("extensions.update.background.url", "https://versioncheck-bg.addons.mozilla.org/update/VersionCheck.php?reqVersion=%REQ_VERSION%&id=%ITEM_ID%&version=%ITEM_VERSION%&maxAppVersion=%ITEM_MAXAPPVERSION%&status=%ITEM_STATUS%&appID=%APP_ID%&appVersion=%APP_VERSION%&appOS=%APP_OS%&appABI=%APP_ABI%&locale=%APP_LOCALE%&currentAppVersion=%CURRENT_APP_VERSION%&updateType=%UPDATE_TYPE%&compatMode=%COMPATIBILITY_MODE%");
+pref("extensions.update.url", "");
+pref("extensions.update.background.url", "");
 pref("extensions.update.interval", 86400);  // Check for updates to Extensions and
                                             // Themes every day
 
@@ -1278,7 +1278,7 @@ pref("services.sync.prefs.sync.security.tls.version.max", true);
 pref("services.sync.prefs.sync.services.sync.syncedTabs.showRemoteIcons", true);
 pref("services.sync.prefs.sync.signon.rememberSignons", true);
 pref("services.sync.prefs.sync.spellchecker.dictionary", true);
-pref("services.sync.prefs.sync.xpinstall.whitelist.required", true);
+pref("services.sync.prefs.sync.xpinstall.whitelist.required", false);
 
 // A preference that controls whether we should show the icon for a remote tab.
 // This pref has no UI but exists because some people may be concerned that
@@ -1371,12 +1371,12 @@ pref("security.insecure_password.ui.enabled", true);
 pref("security.insecure_field_warning.contextual.enabled", true);
 
 // Show degraded UI for http pages; disabled for now
-pref("security.insecure_connection_icon.enabled", false);
+pref("security.insecure_connection_icon.enabled", true);
 // Show degraded UI for http pages in private mode only for Nightly: Bug 1434626
 #if defined(NIGHTLY_BUILD)
 pref("security.insecure_connection_icon.pbmode.enabled", true);
 #else
-pref("security.insecure_connection_icon.pbmode.enabled", false);
+pref("security.insecure_connection_icon.pbmode.enabled", true);
 #endif
 
 // Show "Not Secure" text for http pages; disabled for now
@@ -1397,10 +1397,10 @@ pref("dom.debug.propagate_gesture_events_through_content", false);
 // All the Geolocation preferences are here.
 //
 #ifndef EARLY_BETA_OR_EARLIER
-pref("geo.wifi.uri", "https://www.googleapis.com/geolocation/v1/geolocate?key=%GOOGLE_LOCATION_SERVICE_API_KEY%");
+pref("geo.wifi.uri", "");
 #else
 // Use MLS on Nightly and early Beta.
-pref("geo.wifi.uri", "https://location.services.mozilla.com/v1/geolocate?key=%MOZILLA_API_KEY%");
+pref("geo.wifi.uri", "");
 #endif
 
 #ifdef XP_MACOSX
@@ -1531,33 +1531,33 @@ pref("browser.translation.engine", "Google");
 
 // Telemetry settings.
 // Determines if Telemetry pings can be archived locally.
-pref("toolkit.telemetry.archive.enabled", true);
+pref("toolkit.telemetry.archive.enabled", false, locked);
 // Enables sending the shutdown ping when Firefox shuts down.
-pref("toolkit.telemetry.shutdownPingSender.enabled", true);
+pref("toolkit.telemetry.shutdownPingSender.enabled", false, locked);
 // Enables sending the shutdown ping using the pingsender from the first session.
 pref("toolkit.telemetry.shutdownPingSender.enabledFirstSession", false);
 // Enables sending a duplicate of the first shutdown ping from the first session.
-pref("toolkit.telemetry.firstShutdownPing.enabled", true);
+pref("toolkit.telemetry.firstShutdownPing.enabled", false, locked);
 // Enables sending the 'new-profile' ping on new profiles.
-pref("toolkit.telemetry.newProfilePing.enabled", true);
+pref("toolkit.telemetry.newProfilePing.enabled", false, locked);
 // Enables sending 'update' pings on Firefox updates.
-pref("toolkit.telemetry.updatePing.enabled", true);
+pref("toolkit.telemetry.updatePing.enabled", false, locked);
 // Enables sending 'bhr' pings when the browser hangs.
-pref("toolkit.telemetry.bhrPing.enabled", true);
+pref("toolkit.telemetry.bhrPing.enabled", false, locked);
 // Enables using Hybrid Content Telemetry from Mozilla privileged pages.
 pref("toolkit.telemetry.hybridContent.enabled", true);
 // Whether to enable Ecosystem Telemetry, requires a restart.
 #ifdef NIGHTLY_BUILD
-pref("toolkit.telemetry.ecosystemtelemetry.enabled", true);
+pref("toolkit.telemetry.ecosystemtelemetry.enabled", false, locked);
 #else
 pref("toolkit.telemetry.ecosystemtelemetry.enabled", false);
 #endif
 
 // Ping Centre Telemetry settings.
-pref("browser.ping-centre.telemetry", true);
+pref("browser.ping-centre.telemetry", false, locked);
 pref("browser.ping-centre.log", false);
-pref("browser.ping-centre.staging.endpoint", "https://onyx_tiles.stage.mozaws.net/v3/links/ping-centre");
-pref("browser.ping-centre.production.endpoint", "https://tiles.services.mozilla.com/v3/links/ping-centre");
+pref("browser.ping-centre.staging.endpoint", "", locked);
+pref("browser.ping-centre.production.endpoint", "", locked);
 
 // Enable GMP support in the addon manager.
 pref("media.gmp-provider.enabled", true);
@@ -1673,13 +1673,13 @@ pref("browser.tabs.remote.warmup.maxTabs", 3);
 pref("browser.tabs.remote.warmup.unloadDelayMs", 2000);
 
 // For the about:tabcrashed page
-pref("browser.tabs.crashReporting.sendReport", true);
+pref("browser.tabs.crashReporting.sendReport", false);
 pref("browser.tabs.crashReporting.includeURL", false);
 pref("browser.tabs.crashReporting.requestEmail", false);
 pref("browser.tabs.crashReporting.emailMe", false);
 pref("browser.tabs.crashReporting.email", "");
 
-pref("extensions.legacy.enabled", true);
+pref("extensions.legacy.enabled", true, locked);
 
 // How often to check for CPOW timeouts. CPOWs are only timed out by
 // the hang monitor.
@@ -1740,11 +1740,6 @@ pref("browser.migrate.chrome.history.maxAgeInDays", 180);
 
 // Enable browser frames for use on desktop.  Only exposed to chrome callers.
 pref("dom.mozBrowserFramesEnabled", true);
-
-pref("extensions.pocket.api", "api.getpocket.com");
-pref("extensions.pocket.enabled", true);
-pref("extensions.pocket.oAuthConsumerKey", "40249-e88c401e1b1f2242d9e441c4");
-pref("extensions.pocket.site", "getpocket.com");
 
 pref("signon.schemeUpgrades", true);
 pref("signon.privateBrowsingCapture.enabled", true);
@@ -1826,17 +1821,17 @@ pref("browser.chrome.errorReporter.infoURL",
      "");
 
 // Normandy client preferences
-pref("app.normandy.api_url", "");
-pref("app.normandy.dev_mode", false);
-pref("app.normandy.enabled", false);
+pref("app.normandy.api_url", "", locked);
+pref("app.normandy.dev_mode", false, locked);
+pref("app.normandy.enabled", false, locked);
 pref("app.normandy.first_run", true);
 pref("app.normandy.logging.level", 50); // Warn
 pref("app.normandy.run_interval_seconds", 21600); // 6 hours
-pref("app.normandy.shieldLearnMoreUrl", "");
+pref("app.normandy.shieldLearnMoreUrl", "", locked);
 #ifdef MOZ_DATA_REPORTING
-pref("app.shield.optoutstudies.enabled", true);
+pref("app.shield.optoutstudies.enabled", false, locked);
 #else
-pref("app.shield.optoutstudies.enabled", false);
+pref("app.shield.optoutstudies.enabled", false, locked);
 #endif
 
 // Multi-lingual preferences
@@ -1868,13 +1863,13 @@ pref("prio.publicKeyA", "35AC1C7576C7C6EDD7FED6BCFC337B34D48CB4EE45C86BEEFB40BD8
 pref("prio.publicKeyB", "26E6674E65425B823F1F1D5F96E3BB3EF9E406EC7FBA7DEF8B08A35DD135AF50");
 
 // Coverage ping is disabled by default.
-pref("toolkit.coverage.enabled", false);
-pref("toolkit.coverage.endpoint.base", "https://coverage.mozilla.org");
+pref("toolkit.coverage.enabled", false, locked);
+pref("toolkit.coverage.endpoint.base", "");
 
 // Discovery prefs
 pref("browser.discovery.enabled", false);
 pref("browser.discovery.containers.enabled", true);
-pref("browser.discovery.sites", "");
+pref("browser.discovery.sites", "", locked);
 
 pref("browser.engagement.recent_visited_origins.expiry", 86400); // 24 * 60 * 60 (24 hours in seconds)
 
