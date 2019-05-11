@@ -132,6 +132,7 @@ static const char* kPrefWhitelist = "plugin.allowed_types";
 static const char* kPrefLoadInParentPrefix = "plugin.load_in_parent_process.";
 static const char* kPrefDisableFullPage =
     "plugin.disable_full_page_plugin_for_types";
+static const char *kPrefJavaMIME = "plugin.java.mime";
 
 // How long we wait before unloading an idle plugin process.
 // Defaults to 30 seconds.
@@ -1804,6 +1805,20 @@ nsPluginHost::SpecialType nsPluginHost::GetSpecialType(
     return eSpecialType_Flash;
   }
 
+  // Java registers variants of its MIME with parameters, e.g.
+  // application/x-java-vm;version=1.3
+  const nsACString &noParam = Substring(aMIMEType, 0, aMIMEType.FindChar(';'));
+
+  // The java mime pref may well not be one of these,
+  // e.g. application/x-java-test used in the test suite
+  nsAdoptingCString javaMIME = Preferences::GetCString(kPrefJavaMIME);
+  if ((!javaMIME.IsEmpty() && noParam.LowerCaseEqualsASCII(javaMIME)) ||
+      noParam.LowerCaseEqualsASCII("application/x-java-vm") ||
+      noParam.LowerCaseEqualsASCII("application/x-java-applet") ||
+      noParam.LowerCaseEqualsASCII("application/x-java-bean")) {
+    return eSpecialType_Java;
+  }
+
   return eSpecialType_None;
 }
 
@@ -2286,7 +2301,7 @@ nsresult nsPluginHost::SetPluginsInContent(
           tag.version().get(), nsTArray<nsCString>(tag.mimeTypes()),
           nsTArray<nsCString>(tag.mimeDescriptions()),
           nsTArray<nsCString>(tag.extensions()), tag.isFlashPlugin(),
-          tag.supportsAsyncRender(), tag.lastModifiedTime(),
+          tag.isJavaPlugin(), tag.supportsAsyncRender(), tag.lastModifiedTime(),
           tag.isFromExtension(), tag.sandboxLevel(), tag.blocklistState());
       AddPluginTag(pluginTag);
     }
@@ -2506,7 +2521,7 @@ nsresult nsPluginHost::SendPluginsToContent() {
 
     pluginTags.AppendElement(
         PluginTag(tag->mId, tag->Name(), tag->Description(), tag->MimeTypes(),
-                  tag->MimeDescriptions(), tag->Extensions(),
+                  tag->MimeDescriptions(), tag->Extensions(), tag->mIsJavaPlugin,
                   tag->mIsFlashPlugin, tag->mSupportsAsyncRender,
                   tag->FileName(), tag->Version(), tag->mLastModifiedTime,
                   tag->IsFromExtension(), tag->mSandboxLevel, blocklistState));
@@ -3700,7 +3715,8 @@ bool nsPluginHost::CanUsePluginForMIMEType(const nsACString& aMIMEType) {
       MimeTypeIsAllowedForFakePlugin(NS_ConvertUTF8toUTF16(aMIMEType)) ||
       aMIMEType.LowerCaseEqualsLiteral("application/x-test") ||
       aMIMEType.LowerCaseEqualsLiteral("application/x-second-test") ||
-      aMIMEType.LowerCaseEqualsLiteral("application/x-third-test")) {
+      aMIMEType.LowerCaseEqualsLiteral("application/x-third-test") ||
+      aMIMEType.LowerCaseEqualsLiteral("application/x-java-test")) {
     return true;
   }
 
