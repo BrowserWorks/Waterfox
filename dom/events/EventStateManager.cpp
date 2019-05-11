@@ -1536,7 +1536,7 @@ void EventStateManager::FireContextClick() {
             formCtrl->IsTextOrNumberControl(/*aExcludePassword*/ false) ||
             formCtrl->ControlType() == NS_FORM_INPUT_FILE;
       } else if (mGestureDownContent->IsAnyOfHTMLElements(
-                     nsGkAtoms::embed, nsGkAtoms::object, nsGkAtoms::label)) {
+                     nsGkAtoms::applet, nsGkAtoms::embed, nsGkAtoms::object, nsGkAtoms::label)) {
         allowedToDispatch = false;
       }
     }

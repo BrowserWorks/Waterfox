@@ -75,7 +75,7 @@ nsContentList* HTMLAllCollection::Collection() {
 
 static bool IsAllNamedElement(nsIContent* aContent) {
   return aContent->IsAnyOfHTMLElements(
-      nsGkAtoms::a, nsGkAtoms::button, nsGkAtoms::embed, nsGkAtoms::form,
+      nsGkAtoms::a, nsGkAtoms::applet, nsGkAtoms::button, nsGkAtoms::embed, nsGkAtoms::form,
       nsGkAtoms::iframe, nsGkAtoms::img, nsGkAtoms::input, nsGkAtoms::map,
       nsGkAtoms::meta, nsGkAtoms::object, nsGkAtoms::select,
       nsGkAtoms::textarea, nsGkAtoms::frame, nsGkAtoms::frameset);

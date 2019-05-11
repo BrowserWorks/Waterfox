@@ -167,7 +167,7 @@ class nsSVGOuterSVGFrame final : public nsSVGDisplayContainerFrame,
   bool mCallingReflowSVG;
 
   /* Returns true if our content is the document element and our document is
-   * embedded in an HTML 'object' or 'embed' element. Set
+   * embedded in an HTML 'object', 'embed' or 'applet' element. Set
    * aEmbeddingFrame to obtain the nsIFrame for the embedding HTML element.
    */
   bool IsRootOfReplacedElementSubDoc(nsIFrame** aEmbeddingFrame = nullptr);

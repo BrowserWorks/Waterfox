@@ -264,7 +264,7 @@ nsresult txMozillaXMLOutput::endElement() {
 
     // Handle elements that are different when parser-created
     if (element->IsAnyOfHTMLElements(nsGkAtoms::title, nsGkAtoms::object,
-                                     nsGkAtoms::select, nsGkAtoms::textarea) ||
+                                     nsGkAtoms::applet, nsGkAtoms::select, nsGkAtoms::textarea) ||
         element->IsSVGElement(nsGkAtoms::title)) {
       element->DoneAddingChildren(true);
     } else if (element->IsSVGElement(nsGkAtoms::script) ||

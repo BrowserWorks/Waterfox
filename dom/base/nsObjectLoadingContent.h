@@ -7,7 +7,7 @@
 /*
  * A base class implementing nsIObjectLoadingContent for use by
  * various content nodes that want to provide plugin/document/image
- * loading functionality (eg <embed>, <object>, etc).
+ * loading functionality (eg <embed>, <object>, <applet>, etc).
  */
 
 #ifndef NSOBJECTLOADINGCONTENT_H_

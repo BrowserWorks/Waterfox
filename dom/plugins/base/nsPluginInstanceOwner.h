@@ -83,7 +83,7 @@ class nsPluginInstanceOwner final : public nsIPluginInstanceOwner,
 
   /**
    * Get the type of the HTML tag that was used ot instantiate this
-   * plugin.  Currently supported tags are EMBED or OBJECT.
+   * plugin.  Currently supported tags are EMBED, OBJECT and APPLET.
    */
   NS_IMETHOD GetTagType(nsPluginTagType* aResult);
 

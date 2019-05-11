@@ -624,14 +624,14 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
 
   static inline bool CanHaveName(nsAtom* aTag) {
     return aTag == nsGkAtoms::img || aTag == nsGkAtoms::form ||
-           aTag == nsGkAtoms::embed || aTag == nsGkAtoms::object;
+           aTag == nsGkAtoms::applet || aTag == nsGkAtoms::embed || aTag == nsGkAtoms::object;
   }
   static inline bool ShouldExposeNameAsHTMLDocumentProperty(Element* aElement) {
     return aElement->IsHTMLElement() &&
            CanHaveName(aElement->NodeInfo()->NameAtom());
   }
   static inline bool ShouldExposeIdAsHTMLDocumentProperty(Element* aElement) {
-    if (aElement->IsHTMLElement(nsGkAtoms::object)) {
+    if (aElement->IsAnyOfHTMLElements(nsGkAtoms::applet, nsGkAtoms::object)) {
       return true;
     }
 

@@ -2740,7 +2740,8 @@ void nsObjectLoadingContent::LoadFallback(FallbackType aType, bool aNotify) {
   // Do a depth-first traverse of node tree with the current element as root,
   // looking for <embed> or <object> elements that might now need to load.
   nsTArray<nsINodeList*> childNodes;
-  if (thisContent->IsHTMLElement(nsGkAtoms::object) &&
+    if (thisContent->IsHTMLElement(nsGkAtoms::object) ||
+        thisContent->IsHTMLElement(nsGkAtoms::applet)) &&
       (aType == eFallbackUnsupported || aType == eFallbackDisabled ||
        aType == eFallbackBlocklisted || aType == eFallbackAlternate)) {
     for (nsIContent* child = thisContent->GetFirstChild(); child;) {
@@ -3528,7 +3529,12 @@ void nsObjectLoadingContent::MaybeFireErrorEvent() {
 
 bool nsObjectLoadingContent::BlockEmbedOrObjectContentLoading() {
   nsCOMPtr<nsIContent> thisContent =
-      do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
+    do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
+  if (!thisContent->IsHTMLElement(nsGkAtoms::embed) &&
+      !thisContent->IsHTMLElement(nsGkAtoms::object)) {
+    // Doesn't apply to other elements (i.e. <applet>)
+    return false;
+  }
 
   // Traverse up the node tree to see if we have any ancestors that may block us
   // from loading

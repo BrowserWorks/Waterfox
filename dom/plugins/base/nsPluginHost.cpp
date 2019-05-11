@@ -767,7 +767,7 @@ nsresult nsPluginHost::InstantiatePluginInstance(
     return rv;
   }
 
-  if (tagType != nsPluginTagType_Embed && tagType != nsPluginTagType_Object) {
+  if (tagType != nsPluginTagType_Embed && tagType != nsPluginTagType_Applet && tagType != nsPluginTagType_Object) {
     instanceOwner->Destroy();
     return NS_ERROR_FAILURE;
   }

@@ -273,7 +273,7 @@ bool nsXHTMLContentSerializer::SerializeAttributes(
           ((attrName == nsGkAtoms::href) || (attrName == nsGkAtoms::src))) {
         // Make all links absolute when converting only the selection:
         if (mFlags & nsIDocumentEncoder::OutputAbsoluteLinks) {
-          // Would be nice to handle OBJECT tags,
+          // Would be nice to handle OBJECT and APPLET tags,
           // but that gets more complicated since we have to
           // search the tag list for CODEBASE as well.
           // For now, just leave them relative.

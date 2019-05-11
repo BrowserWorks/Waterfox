@@ -541,7 +541,7 @@ static bool MayNeedToLoadXBLBinding(const Document& aDocument,
     return !IsLikelyCustomElement(*xulElem);
   }
 
-  return aElement.IsAnyOfHTMLElements(nsGkAtoms::object, nsGkAtoms::embed);
+  return aElement.IsAnyOfHTMLElements(nsGkAtoms::object, nsGkAtoms::embed, nsGkAtoms::applet);
 }
 
 bool Element::GetBindingURL(Document* aDocument, css::URLValue** aResult) {
