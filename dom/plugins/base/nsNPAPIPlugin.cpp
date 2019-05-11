@@ -1095,7 +1095,7 @@ bool _getproperty(NPP npp, NPObject* npobj, NPIdentifier property,
     return true;
 
   NPString urlnp = NPVARIANT_TO_STRING(*result);
-  nsXPIDLCString url;
+  nsCString url;
   url.Assign(urlnp.UTF8Characters, urlnp.UTF8Length);
 
   bool javaCompatible = false;
@@ -1117,10 +1117,10 @@ bool _getproperty(NPP npp, NPObject* npobj, NPIdentifier property,
     }
   }
 
-  _releasevariantvalue(result);
-  char* fakeurl = (char *) _memalloc(inst->mFakeURL.Length() + 1);
-  strcpy(fakeurl, inst->mFakeURL);
-  STRINGZ_TO_NPVARIANT(fakeurl, *result);
+  // _releasevariantvalue(result);
+  // char* fakeurl = (char *) _memalloc(inst->mFakeURL.Length() + 1);
+  // strcpy(fakeurl, inst->mFakeURL);
+  // STRINGZ_TO_NPVARIANT(fakeurl, *result);
 
   return true;
 }

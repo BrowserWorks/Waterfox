@@ -2740,7 +2740,7 @@ void nsObjectLoadingContent::LoadFallback(FallbackType aType, bool aNotify) {
   // Do a depth-first traverse of node tree with the current element as root,
   // looking for <embed> or <object> elements that might now need to load.
   nsTArray<nsINodeList*> childNodes;
-    if (thisContent->IsHTMLElement(nsGkAtoms::object) ||
+    if ((thisContent->IsHTMLElement(nsGkAtoms::object) ||
         thisContent->IsHTMLElement(nsGkAtoms::applet)) &&
       (aType == eFallbackUnsupported || aType == eFallbackDisabled ||
        aType == eFallbackBlocklisted || aType == eFallbackAlternate)) {
