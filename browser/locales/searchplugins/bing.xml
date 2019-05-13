@@ -12,9 +12,7 @@
 		<Param name="language" value="{moz:locale}"/>
 	</Url>
 	<Url type="text/html" method="GET" template="https://www.bing.com/search" rel="searchform">
-		<Param name="pc" value="IC07"/>
-		<Param name="ptag" value="ICO-089ec2f9"/>
-		<Param name="FORM" value="INCOH1"/>
+		<Param name="PC" value="IS45"/>
 		<Param name="q" value="{searchTerms}"/>
 	</Url>
 </SearchPlugin>
