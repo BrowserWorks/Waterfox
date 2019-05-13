@@ -45,15 +45,15 @@ let gUndoData = null;
 XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   if (AppConstants.platform == "win") {
     return [
-      "firefox", "edge", "ie", "chrome", "chromium", "360se",
+      "waterfox", "firefox", "edge", "ie", "chrome", "chromium", "360se",
       "canary",
     ];
   }
   if (AppConstants.platform == "macosx") {
-    return ["firefox", "safari", "chrome", "chromium", "canary"];
+    return ["waterfox", "firefox", "safari", "chrome", "chromium", "canary"];
   }
   if (AppConstants.XP_UNIX) {
-    return ["firefox", "chrome", "chrome-beta", "chrome-dev", "chromium"];
+    return ["waterfox", "firefox", "chrome", "chrome-beta", "chrome-dev", "chromium"];
   }
   return [];
 });
@@ -523,6 +523,8 @@ var MigrationUtils = Object.freeze({
     const OVERRIDES = {
       "4_firefox": "4_firefox_history_and_bookmarks",
       "64_firefox": "64_firefox_other",
+      "4_waterfox": "4_waterfox_history_and_bookmarks",
+      "64_waterfox": "64_waterfox_other"
     };
     aKey = OVERRIDES[aKey] || aKey;
 
@@ -550,6 +552,8 @@ var MigrationUtils = Object.freeze({
         return "sourceNameChromeDev";
       case "chromium":
         return "sourceNameChromium";
+      case "waterfox":
+        return "sourceNameWaterfox";
       case "firefox":
         return "sourceNameFirefox";
       case "360se":
@@ -738,6 +742,7 @@ var MigrationUtils = Object.freeze({
       "Internet Explorer":                 "ie",
       "Microsoft Edge":                    "edge",
       "Safari":                            "safari",
+      "Waterfox":                          "waterfox",
       "Firefox":                           "firefox",
       "Nightly":                           "firefox",
       "Google Chrome":                     "chrome",  // Windows, Linux
@@ -1159,6 +1164,7 @@ var MigrationUtils = Object.freeze({
     "canary":     7,
     "safari":     8,
     "360se":      9,
+    "waterfox":   10,
   },
   getSourceIdForTelemetry(sourceName) {
     return this._sourceNameToIdMapping[sourceName] || 0;
