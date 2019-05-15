@@ -779,6 +779,7 @@ nsDocShell::nsDocShell()
   , mReferrerPolicy(0)
   , mFailedLoadType(0)
   , mTreeOwner(nullptr)
+  , mChromeEventHandler(nullptr)
   , mCharsetReloadState(eCharsetReloadInit)
   , mChildOffset(0)
   , mBusyFlags(BUSY_FLAGS_NONE)
@@ -949,10 +950,6 @@ nsDocShell::DestroyChildren()
 
   nsDocLoader::DestroyChildren();
 }
-
-NS_IMPL_CYCLE_COLLECTION_INHERITED(nsDocShell, nsDocLoader,
-                                   mSessionStorageManager, mScriptGlobal,
-                                   mInitialClientSource, mChromeEventHandler)
 
 NS_IMPL_ADDREF_INHERITED(nsDocShell, nsDocLoader)
 NS_IMPL_RELEASE_INHERITED(nsDocShell, nsDocLoader)
@@ -1971,8 +1968,11 @@ nsDocShell::GetContentViewer(nsIContentViewer** aContentViewer)
 }
 
 NS_IMETHODIMP
-nsDocShell::SetChromeEventHandler(nsIDOMEventTarget* aChromeEventHandler) {
-  mChromeEventHandler = do_QueryInterface(aChromeEventHandler);
+nsDocShell::SetChromeEventHandler(nsIDOMEventTarget* aChromeEventHandler)
+{
+  // Weak reference. Don't addref.
+  nsCOMPtr<EventTarget> handler = do_QueryInterface(aChromeEventHandler);
+  mChromeEventHandler = handler.get();
 
   if (mScriptGlobal) {
     mScriptGlobal->SetChromeEventHandler(mChromeEventHandler);
@@ -5946,8 +5946,6 @@ nsDocShell::Destroy()
   }
 
   SetTreeOwner(nullptr);
-
-  mChromeEventHandler = nullptr;
 
   mOnePermittedSandboxedNavigator = nullptr;
 
