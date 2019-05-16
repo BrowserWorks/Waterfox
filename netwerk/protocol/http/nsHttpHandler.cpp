@@ -436,7 +436,7 @@ nsHttpHandler::Init()
 
     nsHttpChannelAuthProvider::InitializePrefs();
 
-    mMisc.AssignLiteral("rv:60.0");
+    mMisc.AssignLiteral("rv:56.0");
 
     mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
 
