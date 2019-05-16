@@ -12,7 +12,8 @@ ac_add_options --disable-stylo
 # Windows 10 Specific Options
 elif test `uname -s` = MINGW32_NT-6.2; then
 ac_add_options --enable-ccache
-ac_add_options --enable-optimize="-O2"
+ac_add_options --enable-optimize="-O2 -w"
+ac_add_options --enable-rust-simd # on x86 requires SSE2
 ac_add_options --enable-eme=widevine
 ac_add_options --enable-stylo=build
 ac_add_options --host=x86_64-pc-mingw32
@@ -21,8 +22,8 @@ ac_add_options --with-libclang-path="C:\Program Files\LLVM\bin"
 ac_add_options --with-clang-path="C:\Program Files\LLVM\bin\clang.exe"
 export WIN32_REDIST_DIR="/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x64/Microsoft.VC140.CRT"
 export WIN_UCRT_REDIST_DIR="/c/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64"
-export CC=clang-cl
-export CXX=clang-cl
+#export CC=clang-cl
+#export CXX=clang-cl
 # Linux Specific Options
 elif test `uname -s` = Linux; then
 export CC=clang
@@ -32,6 +33,7 @@ ac_add_options --enable-eme=widevine
 ac_add_options --target=x86_64-pc-linux-gnu
 ac_add_options --enable-pulseaudio
 ac_add_options --enable-alsa
+ac_add_options --disable-stylo
 fi
 
 export MOZ_GECKO_PROFILER=
@@ -57,7 +59,6 @@ ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
 ac_add_options --enable-release
-#ac_add_options --enable-rust-simd # on x86 requires SSE2
 ac_add_options --enable-update-channel=release
 ac_add_options --enable-updater
 
