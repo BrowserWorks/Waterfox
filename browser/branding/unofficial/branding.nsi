@@ -10,19 +10,19 @@
 # instead of BrandFullName and typically should not be modified.
 !define BrandFullNameInternal "Waterfox"
 !define CompanyName           "Waterfox Ltd"
-!define URLInfoAbout          "https://www.waterfoxproject.org"
-!define URLUpdateInfo         "https://www.waterfoxproject.org"
-!define HelpLink              "https://www.waterfoxproject.org"
+!define URLInfoAbout          "https://www.waterfox.net"
+!define URLUpdateInfo         "https://www.waterfox.net"
+!define HelpLink              "https://www.waterfox.net"
 
 ; The OFFICIAL define is a workaround to support different urls for Release and
 ; Beta since they share the same branding when building with other branches that
 ; set the update channel to beta.
 !define OFFICIAL
-!define URLStubDownload32 "https://www.waterfoxproject.org/downloads"
-!define URLStubDownload64 "https://www.waterfoxproject.org/downloads"
-!define URLStubDownload "https://www.waterfoxproject.org/downloads"
-!define URLManualDownload "https://www.waterfoxproject.org/downloads"
-!define URLSystemRequirements "https://www.waterfoxproject.org/downloads"
+!define URLStubDownload32 "https://www.waterfox.net/releases/"
+!define URLStubDownload64 "https://www.waterfox.net/releases/"
+!define URLStubDownload "https://www.waterfox.net/releases/"
+!define URLManualDownload "https://www.waterfox.net/releases/"
+!define URLSystemRequirements "https://www.waterfox.net/releases/"
 !define Channel "release"
 
 # The installer's certificate name and issuer expected by the stub installer
