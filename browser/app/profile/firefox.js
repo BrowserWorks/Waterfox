@@ -65,7 +65,7 @@ pref("extensions.hotfix.certs.1.sha1Fingerprint", "91:53:98:0C:C1:86:DF:47:8F:35
 pref("extensions.hotfix.certs.2.sha1Fingerprint", "39:E7:2B:7A:5B:CF:37:78:F9:5D:4A:E0:53:2D:2F:3D:68:53:C5:60");
 
 // Check AUS for system add-on updates.
-pref("extensions.systemAddon.update.url", "https://www.waterfoxproject.org/update/systemaddons/update.xml");
+pref("extensions.systemAddon.update.url", "https://www.waterfox.net/update/systemaddons/update.xml");
 
 // Disable add-ons that are not installed by the user in all scopes by default.
 // See the SCOPE constants in AddonManager.jsm for values to use here.
@@ -175,13 +175,13 @@ pref("app.update.staging.enabled", true);
 
 // Update service URL:
 #ifdef XP_WIN
-pref("app.update.url", "https://www.waterfoxproject.org/update/win64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+pref("app.update.url", "https://www.waterfox.net/update/win64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
 #endif
 #ifdef XP_MACOSX
-pref("app.update.url", "https://www.waterfoxproject.org/update/osx64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+pref("app.update.url", "https://www.waterfox.net/update/osx64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
 #endif
 #ifdef XP_LINUX
-pref("app.update.url", "https://www.waterfoxproject.org/update/linux64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+pref("app.update.url", "https://www.waterfox.net/update/linux64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
 #endif
 // app.update.url.manual is in branding section
 // app.update.url.details is in branding section
