@@ -32,6 +32,7 @@ pref("general.useragent.site_specific_overrides", true);
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:57.0) Gecko/20100101 Firefox/57.0");
 pref("general.useragent.override.netflix.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.chase.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.web.whatsapp.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.de", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
@@ -41,6 +42,7 @@ pref("general.useragent.override.amazon.co.jp", "Mozilla/5.0 (Windows NT 10.0; W
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:57.0) Gecko/20100101 Firefox/57.0");
 pref("general.useragent.override.netflix.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.chase.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.web.whatsapp.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.de", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
@@ -50,6 +52,7 @@ pref("general.useragent.override.amazon.co.jp", "Mozilla/5.0 (Macintosh; Intel M
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0");
 pref("general.useragent.override.chase.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.netflix.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.web.whatsapp.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.de", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
