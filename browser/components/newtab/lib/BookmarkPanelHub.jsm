@@ -14,7 +14,7 @@ class _BookmarkPanelHub {
   constructor() {
     this._id = "BookmarkPanelHub";
     this._trigger = {id: "bookmark-panel"};
-    this._handleMessageRequest = null;
+    this._handleMessageRequest = function() {};
     this._addImpression = null;
     this._initalized = false;
     this._response = null;
