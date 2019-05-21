@@ -389,8 +389,8 @@ class nsGlobalWindowObserver final : public nsIObserver,
     }
   }
 
-  nsIPrincipal* GetPrincipal() const override {
-    return mWindow ? mWindow->GetPrincipal() : nullptr;
+  nsIPrincipal* GetEffectiveStoragePrincipal() const override {
+    return mWindow ? mWindow->GetEffectiveStoragePrincipal() : nullptr;
   }
 
   bool IsPrivateBrowsing() const override {
@@ -888,10 +888,6 @@ nsGlobalWindowInner::nsGlobalWindowInner(nsGlobalWindowOuter* aOuterWindow)
     os->AddObserver(mObserver, NS_IOSERVICE_OFFLINE_STATUS_TOPIC, false);
 
     os->AddObserver(mObserver, MEMORY_PRESSURE_OBSERVER_TOPIC, false);
-
-    if (aOuterWindow->IsTopLevelWindow()) {
-      os->AddObserver(mObserver, "clear-site-data-reload-needed", false);
-    }
   }
 
   Preferences::AddStrongObserver(mObserver, "intl.accept_languages");
@@ -1200,11 +1196,6 @@ void nsGlobalWindowInner::FreeInnerObjects() {
     if (os) {
       os->RemoveObserver(mObserver, NS_IOSERVICE_OFFLINE_STATUS_TOPIC);
       os->RemoveObserver(mObserver, MEMORY_PRESSURE_OBSERVER_TOPIC);
-
-      if (GetOuterWindowInternal() &&
-          GetOuterWindowInternal()->IsTopLevelWindow()) {
-        os->RemoveObserver(mObserver, "clear-site-data-reload-needed");
-      }
     }
 
     RefPtr<StorageNotifierService> sns = StorageNotifierService::GetOrCreate();
@@ -2609,7 +2600,12 @@ BarProp* nsGlobalWindowInner::GetScrollbars(ErrorResult& aError) {
 }
 
 bool nsGlobalWindowInner::GetClosed(ErrorResult& aError) {
-  FORWARD_TO_OUTER_OR_THROW(GetClosedOuter, (), aError, false);
+  // If we're called from JS (which is the only way we should be getting called
+  // here) and we reach this point, that means our JS global is the current
+  // target of the WindowProxy, which means that we are the "current inner"
+  // of our outer. So if FORWARD_TO_OUTER fails to forward, that means the
+  // outer is already torn down, which corresponds to the closed state.
+  FORWARD_TO_OUTER(GetClosedOuter, (), true);
 }
 
 nsDOMWindowList* nsGlobalWindowInner::GetFrames() {
@@ -4363,8 +4359,9 @@ Storage* nsGlobalWindowInner::GetSessionStorage(ErrorResult& aError) {
     }
 
     RefPtr<Storage> storage;
-    aError = storageManager->CreateStorage(this, principal, documentURI,
-                                           IsPrivateBrowsing(),
+    // No StoragePrincipal for sessions.
+    aError = storageManager->CreateStorage(this, principal, principal,
+                                           documentURI, IsPrivateBrowsing(),
                                            getter_AddRefs(storage));
     if (aError.Failed()) {
       return nullptr;
@@ -4415,7 +4412,7 @@ Storage* nsGlobalWindowInner::GetLocalStorage(ErrorResult& aError) {
   if (access == nsContentUtils::StorageAccess::ePartitionedOrDeny) {
     if (!mDoc) {
       access = nsContentUtils::StorageAccess::eDeny;
-    } else {
+    } else if (!StaticPrefs::privacy_storagePrincipal_enabledForTrackers()) {
       nsCOMPtr<nsIURI> uri;
       Unused << mDoc->NodePrincipal()->GetURI(getter_AddRefs(uri));
       static const char* kPrefName =
@@ -4441,7 +4438,8 @@ Storage* nsGlobalWindowInner::GetLocalStorage(ErrorResult& aError) {
   // tracker, we pass from the partitioned LocalStorage to the 'normal'
   // LocalStorage. The previous data is lost and the 2 window.localStorage
   // objects, before and after the permission granted, will be different.
-  if (access != nsContentUtils::StorageAccess::ePartitionedOrDeny &&
+  if ((StaticPrefs::privacy_storagePrincipal_enabledForTrackers() ||
+       access != nsContentUtils::StorageAccess::ePartitionedOrDeny) &&
       (!mLocalStorage ||
        mLocalStorage->Type() == Storage::ePartitionedLocalStorage)) {
     RefPtr<Storage> storage;
@@ -4471,8 +4469,14 @@ Storage* nsGlobalWindowInner::GetLocalStorage(ErrorResult& aError) {
         return nullptr;
       }
 
-      aError = storageManager->CreateStorage(this, principal, documentURI,
-                                             IsPrivateBrowsing(),
+      nsIPrincipal* storagePrincipal = GetEffectiveStoragePrincipal();
+      if (!storagePrincipal) {
+        aError.Throw(NS_ERROR_DOM_SECURITY_ERR);
+        return nullptr;
+      }
+
+      aError = storageManager->CreateStorage(this, principal, storagePrincipal,
+                                             documentURI, IsPrivateBrowsing(),
                                              getter_AddRefs(storage));
     }
 
@@ -4492,11 +4496,20 @@ Storage* nsGlobalWindowInner::GetLocalStorage(ErrorResult& aError) {
       return nullptr;
     }
 
-    mLocalStorage = new PartitionedLocalStorage(this, principal);
+    nsIPrincipal* storagePrincipal = GetEffectiveStoragePrincipal();
+    if (!storagePrincipal) {
+      aError.Throw(NS_ERROR_DOM_SECURITY_ERR);
+      return nullptr;
+    }
+
+    mLocalStorage =
+        new PartitionedLocalStorage(this, principal, storagePrincipal);
   }
 
-  MOZ_ASSERT((access == nsContentUtils::StorageAccess::ePartitionedOrDeny) ==
-             (mLocalStorage->Type() == Storage::ePartitionedLocalStorage));
+  MOZ_ASSERT_IF(
+      !StaticPrefs::privacy_storagePrincipal_enabledForTrackers(),
+      (access == nsContentUtils::StorageAccess::ePartitionedOrDeny) ==
+          (mLocalStorage->Type() == Storage::ePartitionedLocalStorage));
 
   return mLocalStorage;
 }
@@ -4814,13 +4827,6 @@ nsresult nsGlobalWindowInner::Observe(nsISupports* aSubject, const char* aTopic,
     return NS_OK;
   }
 
-  if (!nsCRT::strcmp(aTopic, "clear-site-data-reload-needed")) {
-    // The reload is propagated from the top-level window only.
-    NS_ConvertUTF16toUTF8 otherOrigin(aData);
-    PropagateClearSiteDataReload(otherOrigin);
-    return NS_OK;
-  }
-
   if (!nsCRT::strcmp(aTopic, "offline-cache-update-added")) {
     if (mApplicationCache) return NS_OK;
 
@@ -4890,6 +4896,11 @@ void nsGlobalWindowInner::ObserveStorageNotification(
     return;
   }
 
+  nsIPrincipal* storagePrincipal = GetEffectiveStoragePrincipal();
+  if (!storagePrincipal) {
+    return;
+  }
+
   bool fireMozStorageChanged = false;
   nsAutoString eventType;
   eventType.AssignLiteral("storage");
@@ -4930,8 +4941,8 @@ void nsGlobalWindowInner::ObserveStorageNotification(
   else {
     MOZ_ASSERT(!NS_strcmp(aStorageType, u"localStorage"));
 
-    MOZ_DIAGNOSTIC_ASSERT(
-        StorageUtils::PrincipalsEqual(aEvent->GetPrincipal(), principal));
+    MOZ_DIAGNOSTIC_ASSERT(StorageUtils::PrincipalsEqual(aEvent->GetPrincipal(),
+                                                        storagePrincipal));
 
     fireMozStorageChanged =
         mLocalStorage && mLocalStorage == aEvent->GetStorageArea();
@@ -6936,42 +6947,6 @@ void nsPIDOMWindowInner::MaybeCreateDoc() {
     nsCOMPtr<Document> document = docShell->GetDocument();
     Unused << document;
   }
-}
-
-void nsGlobalWindowInner::PropagateClearSiteDataReload(
-    const nsACString& aOrigin) {
-  if (!IsCurrentInnerWindow()) {
-    return;
-  }
-
-  nsIPrincipal* principal = GetPrincipal();
-  if (!principal) {
-    return;
-  }
-
-  nsAutoCString origin;
-  nsresult rv = principal->GetOrigin(origin);
-  NS_ENSURE_SUCCESS_VOID(rv);
-
-  // If the URL of this window matches, let's refresh this window only.
-  // We don't need to traverse the DOM tree.
-  if (origin.Equals(aOrigin)) {
-    nsCOMPtr<nsIDocShell> docShell = GetDocShell();
-    nsCOMPtr<nsIWebNavigation> webNav(do_QueryInterface(docShell));
-    if (NS_WARN_IF(!webNav)) {
-      return;
-    }
-
-    // We don't need any special reload flags, because this notification is
-    // dispatched by Clear-Site-Data header, which should have already cleaned
-    // up all the needed data.
-    rv = webNav->Reload(nsIWebNavigation::LOAD_FLAGS_NONE);
-    NS_ENSURE_SUCCESS_VOID(rv);
-
-    return;
-  }
-
-  CallOnChildren(&nsGlobalWindowInner::PropagateClearSiteDataReload, aOrigin);
 }
 
 mozilla::dom::DocGroup* nsPIDOMWindowInner::GetDocGroup() const {

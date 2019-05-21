@@ -10,10 +10,9 @@ import {
   getSourceContent,
   getTopFrame,
   getSelectedFrame,
-  getThreadContext
+  getThreadContext,
 } from "../../selectors";
 import { PROMISE } from "../utils/middleware/promise";
-import { getNextStep } from "../../workers/parser";
 import { addHiddenBreakpoint } from "../breakpoints";
 import { evaluateExpressions } from "../expressions";
 import { selectLocation } from "../sources";
@@ -27,7 +26,7 @@ import type {
   SourceContent,
   ThreadId,
   Context,
-  ThreadContext
+  ThreadContext,
 } from "../../types";
 import type { ThunkArgs } from "../types";
 import type { Command } from "../../reducers/types";
@@ -65,7 +64,7 @@ export function command(cx: ThreadContext, type: Command) {
         command: type,
         cx,
         thread: cx.thread,
-        [PROMISE]: client[type](cx.thread)
+        [PROMISE]: client[type](cx.thread),
       });
     }
   };
@@ -143,20 +142,6 @@ export function rewind(cx: ThreadContext) {
 }
 
 /**
- * reverseStepIn
- * @memberof actions/pause
- * @static
- * @returns {Function} {@link command}
- */
-export function reverseStepIn(cx: ThreadContext) {
-  return ({ dispatch, getState }: ThunkArgs) => {
-    if (cx.isPaused) {
-      return dispatch(command(cx, "reverseStepIn"));
-    }
-  };
-}
-
-/**
  * reverseStepOver
  * @memberof actions/pause
  * @static
@@ -166,20 +151,6 @@ export function reverseStepOver(cx: ThreadContext) {
   return ({ dispatch, getState }: ThunkArgs) => {
     if (cx.isPaused) {
       return dispatch(astCommand(cx, "reverseStepOver"));
-    }
-  };
-}
-
-/**
- * reverseStepOut
- * @memberof actions/pause
- * @static
- * @returns {Function} {@link command}
- */
-export function reverseStepOut(cx: ThreadContext) {
-  return ({ dispatch, getState }: ThunkArgs) => {
-    if (cx.isPaused) {
-      return dispatch(command(cx, "reverseStepOut"));
     }
   };
 }
@@ -213,7 +184,7 @@ function hasAwait(content: AsyncValue<SourceContent> | null, pauseLocation) {
  * @returns {function(ThunkArgs)}
  */
 export function astCommand(cx: ThreadContext, stepType: Command) {
-  return async ({ dispatch, getState, sourceMaps }: ThunkArgs) => {
+  return async ({ dispatch, getState, sourceMaps, parser }: ThunkArgs) => {
     if (!features.asyncStepping) {
       return dispatch(command(cx, stepType));
     }
@@ -225,7 +196,10 @@ export function astCommand(cx: ThreadContext, stepType: Command) {
       const content = source ? getSourceContent(getState(), source.id) : null;
 
       if (source && hasAwait(content, frame.location)) {
-        const nextLocation = await getNextStep(source.id, frame.location);
+        const nextLocation = await parser.getNextStep(
+          source.id,
+          frame.location
+        );
         if (nextLocation) {
           await dispatch(addHiddenBreakpoint(cx, nextLocation));
           return dispatch(command(cx, "resume"));

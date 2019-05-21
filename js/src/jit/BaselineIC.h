@@ -361,6 +361,8 @@ class ICScript {
 
   ICEntry& icEntryFromPCOffset(uint32_t pcOffset);
   ICEntry& icEntryFromPCOffset(uint32_t pcOffset, ICEntry* prevLookedUpEntry);
+
+  static constexpr size_t offsetOfICEntries() { return sizeof(ICScript); }
 };
 
 class ICMonitoredStub;
@@ -2144,73 +2146,6 @@ class ICCall_ScriptedFunCall : public ICMonitoredStub {
     ICStub* getStub(ICStubSpace* space) override {
       return newStub<ICCall_ScriptedFunCall>(space, getStubCode(),
                                              firstMonitorStub_, pcOffset_);
-    }
-  };
-};
-
-class ICCall_ConstStringSplit : public ICMonitoredStub {
-  friend class ICStubSpace;
-
- protected:
-  uint32_t pcOffset_;
-  GCPtrString expectedStr_;
-  GCPtrString expectedSep_;
-  GCPtrArrayObject templateObject_;
-
-  ICCall_ConstStringSplit(JitCode* stubCode, ICStub* firstMonitorStub,
-                          uint32_t pcOffset, JSString* str, JSString* sep,
-                          ArrayObject* templateObject)
-      : ICMonitoredStub(ICStub::Call_ConstStringSplit, stubCode,
-                        firstMonitorStub),
-        pcOffset_(pcOffset),
-        expectedStr_(str),
-        expectedSep_(sep),
-        templateObject_(templateObject) {}
-
- public:
-  static size_t offsetOfExpectedStr() {
-    return offsetof(ICCall_ConstStringSplit, expectedStr_);
-  }
-
-  static size_t offsetOfExpectedSep() {
-    return offsetof(ICCall_ConstStringSplit, expectedSep_);
-  }
-
-  static size_t offsetOfTemplateObject() {
-    return offsetof(ICCall_ConstStringSplit, templateObject_);
-  }
-
-  GCPtrString& expectedStr() { return expectedStr_; }
-
-  GCPtrString& expectedSep() { return expectedSep_; }
-
-  GCPtrArrayObject& templateObject() { return templateObject_; }
-
-  class Compiler : public ICCallStubCompiler {
-   protected:
-    ICStub* firstMonitorStub_;
-    uint32_t pcOffset_;
-    RootedString expectedStr_;
-    RootedString expectedSep_;
-    RootedArrayObject templateObject_;
-
-    MOZ_MUST_USE bool generateStubCode(MacroAssembler& masm) override;
-
-   public:
-    Compiler(JSContext* cx, ICStub* firstMonitorStub, uint32_t pcOffset,
-             HandleString str, HandleString sep,
-             HandleArrayObject templateObject)
-        : ICCallStubCompiler(cx, ICStub::Call_ConstStringSplit),
-          firstMonitorStub_(firstMonitorStub),
-          pcOffset_(pcOffset),
-          expectedStr_(cx, str),
-          expectedSep_(cx, sep),
-          templateObject_(cx, templateObject) {}
-
-    ICStub* getStub(ICStubSpace* space) override {
-      return newStub<ICCall_ConstStringSplit>(
-          space, getStubCode(), firstMonitorStub_, pcOffset_, expectedStr_,
-          expectedSep_, templateObject_);
     }
   };
 };

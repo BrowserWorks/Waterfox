@@ -559,6 +559,7 @@ class PresShell final : public nsStubDocumentObserver,
    * view.
    * @return true if any scrolling happened, false if no scrolling happened
    */
+  MOZ_CAN_RUN_SCRIPT
   bool ScrollFrameRectIntoView(nsIFrame* aFrame, const nsRect& aRect,
                                ScrollAxis aVertical, ScrollAxis aHorizontal,
                                ScrollFlags aScrollFlags);
@@ -637,7 +638,7 @@ class PresShell final : public nsStubDocumentObserver,
    * Interface to dispatch events via the presshell
    * @note The caller must have a strong reference to the PresShell.
    */
-  MOZ_CAN_RUN_SCRIPT_BOUNDARY
+  MOZ_CAN_RUN_SCRIPT
   nsresult HandleEventWithTarget(WidgetEvent* aEvent, nsIFrame* aFrame,
                                  nsIContent* aContent,
                                  nsEventStatus* aEventStatus,
@@ -653,16 +654,16 @@ class PresShell final : public nsStubDocumentObserver,
 
   /**
    * Dispatch event to content only (NOT full processing)
-   * @note The caller must have a strong reference to the PresShell.
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult HandleDOMEventWithTarget(nsIContent* aTargetContent,
                                     WidgetEvent* aEvent,
                                     nsEventStatus* aStatus);
 
   /**
    * Dispatch event to content only (NOT full processing)
-   * @note The caller must have a strong reference to the PresShell.
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult HandleDOMEventWithTarget(nsIContent* aTargetContent,
                                     dom::Event* aEvent, nsEventStatus* aStatus);
 
@@ -1034,15 +1035,19 @@ class PresShell final : public nsStubDocumentObserver,
    * Fires on the presshell for the painted widget.
    * This is issued at a time when it's safe to modify widget geometry.
    */
-  void WillPaintWindow();
+  MOZ_CAN_RUN_SCRIPT void WillPaintWindow();
   /**
    * Notify that we called Paint with PaintFlags::PaintComposite.
    * Fires on the presshell for the painted widget.
    * This is issued at a time when it's safe to modify widget geometry.
    */
-  void DidPaintWindow();
+  MOZ_CAN_RUN_SCRIPT void DidPaintWindow();
 
-  bool IsVisible();
+  bool IsVisible() const;
+  bool IsUnderHiddenEmbedderElement() const {
+    return mUnderHiddenEmbedderElement;
+  }
+  void SetIsUnderHiddenEmbedderElement(bool aUnderHiddenEmbedderElement);
   MOZ_CAN_RUN_SCRIPT
   void DispatchSynthMouseMove(WidgetGUIEvent* aEvent);
 
@@ -1192,13 +1197,20 @@ class PresShell final : public nsStubDocumentObserver,
 
   // Ask APZ in the next transaction to scroll to the given visual viewport
   // offset (relative to the document).
-  // Use this sparingly, as it will clobber JS-driven scrolling that happens
-  // in the same frame. This is mostly intended to be used in special
-  // situations like "first paint" or session restore.
+  // This is intended to be used when desired in cases where the browser
+  // internally triggers scrolling; scrolling triggered explicitly by web
+  // content (such as via window.scrollTo() should scroll the layout viewport
+  // only).
   // If scrolling "far away", i.e. not just within the existing layout
   // viewport, it's recommended to use both nsIScrollableFrame.ScrollTo*()
   // (via window.scrollTo if calling from JS) *and* this function; otherwise,
-  // temporary checkerboarding may result.
+  // temporary checkerboarding may result. If doing this:
+  //   * Be sure to call ScrollTo*() first, as a subsequent layout scroll
+  //     in the same transaction will cancel the pending visual scroll.
+  //   * Keep in mind that ScrollTo*() can tear down the pres shell and
+  //     frame tree. Depending on how the pres shell is obtained for the
+  //     subsequent ScrollToVisual() call, AutoWeakFrame or similar may
+  //     need to be used.
   // Please request APZ review if adding a new call site.
   void ScrollToVisual(const nsPoint& aVisualViewportOffset,
                       FrameMetrics::ScrollOffsetUpdateType aUpdateType,
@@ -1282,8 +1294,7 @@ class PresShell final : public nsStubDocumentObserver,
   void ThemeChanged() { mPresContext->ThemeChanged(); }
   void BackingScaleFactorChanged() { mPresContext->UIResolutionChangedSync(); }
 
-  // nsIViewObserver interface
-
+  MOZ_CAN_RUN_SCRIPT
   void Paint(nsView* aViewToPaint, const nsRegion& aDirtyRegion,
              PaintFlags aFlags);
 
@@ -3067,6 +3078,10 @@ class PresShell final : public nsStubDocumentObserver,
 
   // True if the resolution has been ever changed by APZ.
   bool mResolutionUpdatedByApz : 1;
+
+  // Whether this presshell is hidden by 'vibility:hidden' on an ancestor
+  // nsSubDocumentFrame.
+  bool mUnderHiddenEmbedderElement : 1;
 
   bool mDocumentLoading : 1;
   bool mNoDelayedMouseEvents : 1;

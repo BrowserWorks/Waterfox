@@ -4,13 +4,13 @@
 
 use api::{DocumentLayer, PremultipliedColorF};
 use api::units::*;
-use clip_scroll_tree::{ClipScrollTree, ROOT_SPATIAL_NODE_INDEX, SpatialNodeIndex};
-use gpu_cache::{GpuCacheAddress, GpuDataRequest};
-use internal_types::FastHashMap;
-use prim_store::EdgeAaSegmentMask;
-use render_task::RenderTaskAddress;
+use crate::clip_scroll_tree::{ClipScrollTree, ROOT_SPATIAL_NODE_INDEX, SpatialNodeIndex};
+use crate::gpu_cache::{GpuCacheAddress, GpuDataRequest};
+use crate::internal_types::FastHashMap;
+use crate::prim_store::EdgeAaSegmentMask;
+use crate::render_task::RenderTaskAddress;
 use std::i32;
-use util::{TransformedRectKind, MatrixHelpers};
+use crate::util::{TransformedRectKind, MatrixHelpers};
 
 // Contains type that must exactly match the same structures declared in GLSL.
 
@@ -235,11 +235,12 @@ impl PrimitiveHeaders {
         self.headers_float.push(PrimitiveHeaderF {
             local_rect: prim_header.local_rect,
             local_clip_rect: prim_header.local_clip_rect,
+            snap_offsets: prim_header.snap_offsets,
         });
 
         self.headers_int.push(PrimitiveHeaderI {
             z,
-            task_address: prim_header.task_address,
+            unused: 0,
             specific_prim_address: prim_header.specific_prim_address.as_int(),
             transform_id: prim_header.transform_id,
             user_data,
@@ -255,7 +256,7 @@ impl PrimitiveHeaders {
 pub struct PrimitiveHeader {
     pub local_rect: LayoutRect,
     pub local_clip_rect: LayoutRect,
-    pub task_address: RenderTaskAddress,
+    pub snap_offsets: SnapOffsets,
     pub specific_prim_address: GpuCacheAddress,
     pub transform_id: TransformPaletteId,
 }
@@ -268,6 +269,7 @@ pub struct PrimitiveHeader {
 pub struct PrimitiveHeaderF {
     pub local_rect: LayoutRect,
     pub local_clip_rect: LayoutRect,
+    pub snap_offsets: SnapOffsets,
 }
 
 // i32 parts of a primitive header
@@ -278,9 +280,9 @@ pub struct PrimitiveHeaderF {
 #[cfg_attr(feature = "replay", derive(Deserialize))]
 pub struct PrimitiveHeaderI {
     pub z: ZBufferId,
-    pub task_address: RenderTaskAddress,
     pub specific_prim_address: i32,
     pub transform_id: TransformPaletteId,
+    pub unused: i32,                    // To ensure required 16 byte alignment of vertex textures
     pub user_data: [i32; 4],
 }
 
@@ -316,18 +318,21 @@ pub struct SplitCompositeInstance {
     pub prim_header_index: PrimitiveHeaderIndex,
     pub polygons_address: GpuCacheAddress,
     pub z: ZBufferId,
+    pub render_task_address: RenderTaskAddress,
 }
 
 impl SplitCompositeInstance {
     pub fn new(
         prim_header_index: PrimitiveHeaderIndex,
         polygons_address: GpuCacheAddress,
+        render_task_address: RenderTaskAddress,
         z: ZBufferId,
     ) -> Self {
         SplitCompositeInstance {
             prim_header_index,
             polygons_address,
             z,
+            render_task_address,
         }
     }
 }
@@ -339,7 +344,7 @@ impl From<SplitCompositeInstance> for PrimitiveInstanceData {
                 instance.prim_header_index.0,
                 instance.polygons_address.as_int(),
                 instance.z.0,
-                0,
+                instance.render_task_address.0 as i32,
             ],
         }
     }
@@ -363,8 +368,6 @@ bitflags! {
         const SEGMENT_REPEAT_Y = 0x8;
         /// The extra segment data is a texel rect.
         const SEGMENT_TEXEL_RECT = 0x10;
-        /// Snap to the primitive rect instead of the visible rect.
-        const SNAP_TO_PRIMITIVE = 0x20;
     }
 }
 
@@ -374,6 +377,7 @@ bitflags! {
 #[repr(C)]
 pub struct BrushInstance {
     pub prim_header_index: PrimitiveHeaderIndex,
+    pub render_task_address: RenderTaskAddress,
     pub clip_task_address: RenderTaskAddress,
     pub segment_index: i32,
     pub edge_flags: EdgeAaSegmentMask,
@@ -386,6 +390,7 @@ impl From<BrushInstance> for PrimitiveInstanceData {
         PrimitiveInstanceData {
             data: [
                 instance.prim_header_index.0,
+                ((instance.render_task_address.0 as i32) << 16) |
                 instance.clip_task_address.0 as i32,
                 instance.segment_index |
                 ((instance.edge_flags.bits() as i32) << 16) |
@@ -469,24 +474,23 @@ struct RelativeTransformKey {
 //           specifying a coordinate system that the transform
 //           should be relative to.
 pub struct TransformPalette {
-    pub transforms: Vec<TransformData>,
+    transforms: Vec<TransformData>,
     metadata: Vec<TransformMetadata>,
     map: FastHashMap<RelativeTransformKey, usize>,
 }
 
 impl TransformPalette {
-    pub fn new() -> Self {
+    pub fn new(count: usize) -> Self {
         let _ = VECS_PER_TRANSFORM;
         TransformPalette {
-            transforms: Vec::new(),
-            metadata: Vec::new(),
+            transforms: vec![TransformData::invalid(); count],
+            metadata: vec![TransformMetadata::invalid(); count],
             map: FastHashMap::default(),
         }
     }
 
-    pub fn allocate(&mut self, count: usize) {
-        self.transforms = vec![TransformData::invalid(); count];
-        self.metadata = vec![TransformMetadata::invalid(); count];
+    pub fn finish(self) -> Vec<TransformData> {
+        self.transforms
     }
 
     pub fn set_world_transform(
@@ -530,7 +534,7 @@ impl TransformPalette {
                         child_index,
                         parent_index,
                     )
-                    .flattened
+                    .into_transform()
                     .with_destination::<PicturePixel>();
 
                     register_transform(
@@ -542,24 +546,6 @@ impl TransformPalette {
                     )
                 })
         }
-    }
-
-    pub fn get_world_transform(
-        &self,
-        index: SpatialNodeIndex,
-    ) -> LayoutToWorldTransform {
-        self.transforms[index.0 as usize]
-            .transform
-            .with_destination::<WorldPixel>()
-    }
-
-    pub fn get_world_inv_transform(
-        &self,
-        index: SpatialNodeIndex,
-    ) -> WorldToLayoutTransform {
-        self.transforms[index.0 as usize]
-            .inv_transform
-            .with_source::<WorldPixel>()
     }
 
     // Get a transform palette id for the given spatial node.
@@ -627,6 +613,11 @@ impl SnapOffsets {
             top_left: DeviceVector2D::zero(),
             bottom_right: DeviceVector2D::zero(),
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        let zero = DeviceVector2D::zero();
+        self.top_left == zero && self.bottom_right == zero
     }
 }
 

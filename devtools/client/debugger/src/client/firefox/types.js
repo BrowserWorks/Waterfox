@@ -22,7 +22,7 @@ import type {
   SourceId,
   QueuedSourceData,
   Worker,
-  Range
+  Range,
 } from "../../types";
 
 type URL = string;
@@ -78,7 +78,7 @@ export type FramePacket = {
   depth?: number,
   oldest?: boolean,
   type: "pause" | "call",
-  where: {| actor: string, line: number, column: number |}
+  where: {| actor: string, line: number, column: number |},
 };
 
 /**
@@ -93,7 +93,7 @@ export type SourcePayload = {
   isBlackBoxed: boolean,
   sourceMapURL: URL | null,
   introductionUrl: URL | null,
-  introductionType: string | null
+  introductionType: string | null,
 };
 
 /**
@@ -105,7 +105,7 @@ export type SourcePayload = {
 export type SourcePacket = {
   from: ActorId,
   source: SourcePayload,
-  type: string
+  type: string,
 };
 
 /**
@@ -115,7 +115,7 @@ export type SourcePacket = {
  */
 export type SourcesPacket = {
   from: ActorId,
-  sources: SourcePayload[]
+  sources: SourcePayload[],
 };
 
 /**
@@ -132,13 +132,13 @@ export type PausedPacket = {
   why: {
     actors: ActorId[],
     type: string,
-    onNext?: Function
-  }
+    onNext?: Function,
+  },
 };
 
 export type ResumedPacket = {
   from: ActorId,
-  type: string
+  type: string,
 };
 
 /**
@@ -148,7 +148,7 @@ export type ResumedPacket = {
  */
 export type FramesResponse = {
   frames: FramePacket[],
-  from: ActorId
+  from: ActorId,
 };
 
 export type TabPayload = {
@@ -175,7 +175,7 @@ export type TabPayload = {
   timelineActor: ActorId,
   title: string,
   url: URL,
-  webExtensionInspectedWindowActor: ActorId
+  webExtensionInspectedWindowActor: ActorId,
 };
 
 /**
@@ -188,7 +188,7 @@ export type Actions = {
   resumed: ResumedPacket => void,
   newQueuedSources: (QueuedSourceData[]) => void,
   fetchEventListeners: () => void,
-  updateWorkers: () => void
+  updateWorkers: () => void,
 };
 
 /**
@@ -209,14 +209,14 @@ export type TabTarget = {
       script: Script,
       func: Function,
       params?: { frameActor: ?FrameId }
-    ) => Promise<{ result: ?Object }>,
+    ) => Promise<{ result: Grip | null }>,
     autocomplete: (
       input: string,
       cursor: number,
       func: Function,
       frameId: ?string
     ) => void,
-    emit: (string, any) => void
+    emit: (string, any) => void,
   },
   form: { consoleActor: any },
   root: any,
@@ -226,7 +226,7 @@ export type TabTarget = {
   destroy: () => void,
   isBrowsingContext: boolean,
   isContentProcess: boolean,
-  traits: Object
+  traits: Object,
 };
 
 /**
@@ -243,23 +243,23 @@ export type TabTarget = {
 export type DebuggerClient = {
   _activeRequests: {
     get: any => any,
-    delete: any => void
+    delete: any => void,
   },
   mainRoot: {
     traits: any,
-    getFront: string => Promise<*>
+    getFront: string => Promise<*>,
   },
   connect: () => Promise<*>,
   request: (packet: Object) => Promise<*>,
   attachConsole: (actor: String, listeners: Array<*>) => Promise<*>,
   createObjectClient: (grip: Grip) => {},
-  release: (actor: String) => {}
+  release: (actor: String) => {},
 };
 
 export type TabClient = {
   listWorkers: () => Promise<*>,
   addListener: (string, Function) => void,
-  on: (string, Function) => void
+  on: (string, Function) => void,
 };
 
 /**
@@ -277,9 +277,26 @@ export type TabClient = {
  * @memberof firefox
  * @static
  */
-// FIXME: need Grip definition
 export type Grip = {
-  actor: string
+  actor: string,
+  class: string,
+  displayClass: string,
+  displayName?: string,
+  parameterNames?: string[],
+  userDisplayName?: string,
+  name: string,
+  extensible: boolean,
+  location: {
+    url: string,
+    line: number,
+    column: number,
+  },
+  frozen: boolean,
+  ownPropertyLength: number,
+  preview: Object,
+  sealed: boolean,
+  optimizedOut: boolean,
+  type: string,
 };
 
 export type FunctionGrip = {|
@@ -290,7 +307,7 @@ export type FunctionGrip = {|
   userDisplayName: string,
   url: string,
   line: number,
-  column: number
+  column: number,
 |};
 
 /**
@@ -307,7 +324,7 @@ export type SourceClient = {
   disablePrettyPrint: () => Promise<*>,
   blackBox: (range?: Range) => Promise<*>,
   unblackBox: (range?: Range) => Promise<*>,
-  getBreakableLines: () => Promise<number[]>
+  getBreakableLines: () => Promise<number[]>,
 };
 
 /**
@@ -316,7 +333,7 @@ export type SourceClient = {
  * @static
  */
 export type ObjectClient = {
-  getPrototypeAndProperties: () => any
+  getPrototypeAndProperties: () => any,
 };
 
 /**
@@ -330,9 +347,7 @@ export type ThreadClient = {
   stepOver: Function => Promise<*>,
   stepOut: Function => Promise<*>,
   rewind: Function => Promise<*>,
-  reverseStepIn: Function => Promise<*>,
   reverseStepOver: Function => Promise<*>,
-  reverseStepOut: Function => Promise<*>,
   breakOnNext: () => Promise<*>,
   // FIXME: unclear if SourceId or ActorId here
   source: ({ actor: SourceId }) => SourceClient,
@@ -355,7 +370,7 @@ export type ThreadClient = {
   request: (payload: Object) => Promise<*>,
   url: string,
   setEventListenerBreakpoints: (string[]) => void,
-  skipBreakpoints: boolean => Promise<{| skip: boolean |}>
+  skipBreakpoints: boolean => Promise<{| skip: boolean |}>,
 };
 
 export type Panel = {|
@@ -365,5 +380,5 @@ export type Panel = {|
   openElementInInspector: (grip: Object) => void,
   openConsoleAndEvaluate: (input: string) => void,
   highlightDomElement: (grip: Object) => void,
-  unHighlightDomElement: (grip: Object) => void
+  unHighlightDomElement: (grip: Object) => void,
 |};

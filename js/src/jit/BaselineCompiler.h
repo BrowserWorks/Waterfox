@@ -327,7 +327,6 @@ class BaselineCodeGen {
   void pushUint8BytecodeOperandArg(Register scratch);
   void pushUint16BytecodeOperandArg(Register scratch);
 
-  void loadResumeIndexBytecodeOperand(Register dest);
   void loadInt32LengthBytecodeOperand(Register dest);
   void loadInt32IndexBytecodeOperand(ValueOperand dest);
   void loadNumFormalArguments(Register dest);
@@ -384,6 +383,10 @@ class BaselineCodeGen {
     return emitDebugInstrumentation(ifDebuggee, mozilla::Maybe<F>());
   }
 
+  template <typename F>
+  MOZ_MUST_USE bool emitAfterYieldDebugInstrumentation(const F& ifDebuggee,
+                                                       Register scratch);
+
   // ifSet should be a function emitting code for when the script has |flag|
   // set. ifNotSet emits code for when the flag isn't set.
   template <typename F1, typename F2>
@@ -405,6 +408,8 @@ class BaselineCodeGen {
                                            Register resumeIndex,
                                            Register scratch);
   void emitJumpToInterpretOpLabel();
+
+  MOZ_MUST_USE bool emitIncExecutionProgressCounter(Register scratch);
 
   MOZ_MUST_USE bool emitCheckThis(ValueOperand val, bool reinit = false);
   void emitLoadReturnValue(ValueOperand val);
@@ -497,6 +502,8 @@ class BaselineCodeGen {
 
   MOZ_MUST_USE bool emitTraceLoggerEnter();
   MOZ_MUST_USE bool emitTraceLoggerExit();
+
+  MOZ_MUST_USE bool emitHandleCodeCoverageAtPrologue();
 
   void emitInitFrameFields();
   void emitIsDebuggeeCheck();
@@ -655,6 +662,13 @@ class BaselineCompiler final : private BaselineCompilerCodeGen {
 class BaselineInterpreterHandler {
   InterpreterFrameInfo frame_;
   Label interpretOp_;
+  CodeOffset debuggeeCheckOffset_;
+
+  // Offsets of toggled jumps for code coverage instrumentation.
+  using CodeOffsetVector = Vector<uint32_t, 0, SystemAllocPolicy>;
+  CodeOffsetVector codeCoverageOffsets_;
+  Label codeCoverageAtPrologueLabel_;
+  Label codeCoverageAtPCLabel_;
 
  public:
   using FrameInfoT = InterpreterFrameInfo;
@@ -664,12 +678,21 @@ class BaselineInterpreterHandler {
   InterpreterFrameInfo& frame() { return frame_; }
 
   Label* interpretOpLabel() { return &interpretOp_; }
+  Label* codeCoverageAtPrologueLabel() { return &codeCoverageAtPrologueLabel_; }
+  Label* codeCoverageAtPCLabel() { return &codeCoverageAtPCLabel_; }
+
+  CodeOffsetVector& codeCoverageOffsets() { return codeCoverageOffsets_; }
 
   // Interpreter doesn't know the script and pc statically.
   jsbytecode* maybePC() const { return nullptr; }
   bool isDefinitelyLastOp() const { return false; }
   JSScript* maybeScript() const { return nullptr; }
   JSFunction* maybeFunction() const { return nullptr; }
+
+  void setDebuggeeCheckOffset(CodeOffset offset) {
+    debuggeeCheckOffset_ = offset;
+  }
+  CodeOffset debuggeeCheckOffset() const { return debuggeeCheckOffset_; }
 
   // Interpreter doesn't need to keep track of RetAddrEntries, so these methods
   // are no-ops.
@@ -691,8 +714,28 @@ class BaselineInterpreterHandler {
 using BaselineInterpreterCodeGen = BaselineCodeGen<BaselineInterpreterHandler>;
 
 class BaselineInterpreterGenerator final : private BaselineInterpreterCodeGen {
+  // Offsets of patchable call instructions for debugger breakpoints/stepping.
+  Vector<uint32_t, 0, SystemAllocPolicy> debugTrapOffsets_;
+
+  // Offsets of move instructions for tableswitch base address.
+  Vector<CodeOffset, 0, SystemAllocPolicy> tableLabels_;
+
+  // Offset of the first tableswitch entry.
+  uint32_t tableOffset_ = 0;
+
+  // Offset of the code to start interpreting a bytecode op.
+  uint32_t interpretOpOffset_ = 0;
+
  public:
   explicit BaselineInterpreterGenerator(JSContext* cx);
+
+  MOZ_MUST_USE bool generate(BaselineInterpreter& interpreter);
+
+ private:
+  MOZ_MUST_USE bool emitInterpreterLoop();
+  MOZ_MUST_USE bool emitDebugTrap();
+
+  void emitOutOfLineCodeCoverageInstrumentation();
 };
 
 }  // namespace jit

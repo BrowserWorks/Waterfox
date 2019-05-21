@@ -162,7 +162,7 @@ inline static bool IsTempLayerManager(mozilla::layers::LayerManager* aManager) {
 
 nsDisplayRemote::nsDisplayRemote(nsDisplayListBuilder* aBuilder,
                                  nsSubDocumentFrame* aFrame)
-    : nsDisplayItem(aBuilder, aFrame),
+    : nsPaintedDisplayItem(aBuilder, aFrame),
       mTabId{0},
       mEventRegionsOverride(EventRegionsOverride::NoOverride) {
   bool frameIsPointerEventsNone = aFrame->StyleUI()->GetEffectivePointerEvents(
@@ -192,9 +192,9 @@ mozilla::LayerState nsDisplayRemote::GetLayerState(
     nsDisplayListBuilder* aBuilder, LayerManager* aManager,
     const ContainerLayerParameters& aParameters) {
   if (IsTempLayerManager(aManager)) {
-    return mozilla::LAYER_NONE;
+    return mozilla::LayerState::LAYER_NONE;
   }
-  return mozilla::LAYER_ACTIVE_FORCE;
+  return mozilla::LayerState::LAYER_ACTIVE_FORCE;
 }
 
 already_AddRefed<Layer> nsDisplayRemote::BuildLayer(

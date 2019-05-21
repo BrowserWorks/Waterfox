@@ -94,7 +94,7 @@ class nsComboButtonListener final : public nsIDOMEventListener {
  public:
   NS_DECL_ISUPPORTS
 
-  NS_IMETHOD HandleEvent(dom::Event*) override {
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY NS_IMETHOD HandleEvent(dom::Event*) override {
     mComboBox->ShowDropDown(!mComboBox->IsDroppedDown());
     return NS_OK;
   }
@@ -315,7 +315,8 @@ void nsComboboxControlFrame::ShowPopup(bool aShowPopup) {
                            aShowPopup ? eXULPopupShowing : eXULPopupHiding,
                            nullptr, WidgetMouseEvent::eReal);
 
-    presShell->HandleDOMEventWithTarget(mContent, &event, &status);
+    nsCOMPtr<nsIContent> content = mContent;
+    presShell->HandleDOMEventWithTarget(content, &event, &status);
   }
 }
 
@@ -495,7 +496,7 @@ class nsAsyncRollup : public Runnable {
  public:
   explicit nsAsyncRollup(nsComboboxControlFrame* aFrame)
       : mozilla::Runnable("nsAsyncRollup"), mFrame(aFrame) {}
-  NS_IMETHOD Run() override {
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY NS_IMETHOD Run() override {
     if (mFrame.IsAlive()) {
       static_cast<nsComboboxControlFrame*>(mFrame.GetFrame())->RollupFromList();
     }
@@ -1388,7 +1389,8 @@ bool nsComboboxControlFrame::Rollup(uint32_t aCount, bool aFlush,
   if (aFlush && weakFrame.IsAlive()) {
     // The popup's visibility doesn't update until the minimize animation has
     // finished, so call UpdateWidgetGeometry to update it right away.
-    nsViewManager* viewManager = mDropdownFrame->GetView()->GetViewManager();
+    RefPtr<nsViewManager> viewManager =
+        mDropdownFrame->GetView()->GetViewManager();
     viewManager->UpdateWidgetGeometry();  // might destroy us
   }
 
@@ -1420,11 +1422,11 @@ int32_t nsComboboxControlFrame::UpdateRecentIndex(int32_t aIndex) {
   return index;
 }
 
-class nsDisplayComboboxFocus : public nsDisplayItem {
+class nsDisplayComboboxFocus : public nsPaintedDisplayItem {
  public:
   nsDisplayComboboxFocus(nsDisplayListBuilder* aBuilder,
                          nsComboboxControlFrame* aFrame)
-      : nsDisplayItem(aBuilder, aFrame) {
+      : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayComboboxFocus);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING

@@ -73,6 +73,19 @@ const TEST_LOGINS = [
     timePasswordChanged: 1437787539233,
     timesUsed: 1,
   },
+  {
+    id: 6,
+    username: "username",
+    password: "password6",
+    hostname: "https://www.example.com",
+    formSubmitURL: "", // NULL `action_url`
+    httpRealm: null,
+    usernameField: "",
+    passwordField: "pass",
+    timeCreated: 1557291348878,
+    timePasswordChanged: 1557291348878,
+    timesUsed: 1,
+  },
 ];
 
 var crypto = new OSCrypto();
@@ -145,13 +158,13 @@ add_task(async function test_importIntoEmptyDB() {
   let migrator = await MigrationUtils.getMigrator("chrome");
   Assert.ok(await migrator.isSourceAvailable(), "Sanity check the source exists");
 
-  let logins = Services.logins.getAllLogins({});
+  let logins = Services.logins.getAllLogins();
   Assert.equal(logins.length, 0, "There are no logins initially");
 
   // Migrate the logins.
   await promiseMigration(migrator, MigrationUtils.resourceTypes.PASSWORDS, PROFILE);
 
-  logins = Services.logins.getAllLogins({});
+  logins = Services.logins.getAllLogins();
   Assert.equal(logins.length, TEST_LOGINS.length, "Check login count after importing the data");
   Assert.equal(logins.length, MigrationUtils._importQuantities.logins,
                "Check telemetry matches the actual import.");
@@ -167,7 +180,7 @@ add_task(async function test_importExistingLogins() {
   Assert.ok(await migrator.isSourceAvailable(), "Sanity check the source exists");
 
   Services.logins.removeAllLogins();
-  let logins = Services.logins.getAllLogins({});
+  let logins = Services.logins.getAllLogins();
   Assert.equal(logins.length, 0, "There are no logins after removing all of them");
 
   let newLogins = [];
@@ -178,7 +191,7 @@ add_task(async function test_importExistingLogins() {
     Services.logins.addLogin(newLogins[i]);
   }
 
-  logins = Services.logins.getAllLogins({});
+  logins = Services.logins.getAllLogins();
   Assert.equal(logins.length, newLogins.length, "Check login count after the insertion");
 
   for (let i = 0; i < newLogins.length; i++) {
@@ -187,7 +200,7 @@ add_task(async function test_importExistingLogins() {
   // Migrate the logins.
   await promiseMigration(migrator, MigrationUtils.resourceTypes.PASSWORDS, PROFILE);
 
-  logins = Services.logins.getAllLogins({});
+  logins = Services.logins.getAllLogins();
   Assert.equal(logins.length, TEST_LOGINS.length,
                "Check there are still the same number of logins after re-importing the data");
   Assert.equal(logins.length, MigrationUtils._importQuantities.logins,

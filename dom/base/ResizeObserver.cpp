@@ -7,48 +7,102 @@
 #include "mozilla/dom/ResizeObserver.h"
 
 #include "mozilla/dom/Document.h"
-#include "nsContentUtils.h"
+#include "nsIContent.h"
 #include "nsSVGUtils.h"
 #include <limits>
 
 namespace mozilla {
 namespace dom {
 
+/**
+ * Returns the length of the parent-traversal path (in terms of the number of
+ * nodes) to an unparented/root node from aNode. An unparented/root node is
+ * considered to have a depth of 1, its children have a depth of 2, etc.
+ * aNode is expected to be non-null.
+ * Note: The shadow root is not part of the calculation because the caller,
+ * ResizeObserver, doesn't observe the shadow root, and only needs relative
+ * depths among all the observed targets. In other words, we calculate the
+ * depth of the flattened tree.
+ *
+ * However, these is a spec issue about how to handle shadow DOM case. We
+ * may need to update this function later:
+ *   https://github.com/w3c/csswg-drafts/issues/3840
+ *
+ * https://drafts.csswg.org/resize-observer/#calculate-depth-for-node-h
+ */
+static uint32_t GetNodeDepth(nsINode* aNode) {
+  uint32_t depth = 1;
+
+  MOZ_ASSERT(aNode, "Node shouldn't be null");
+
+  // Use GetFlattenedTreeParentNode to bypass the shadow root and cross the
+  // shadow boundary to calculate the node depth without the shadow root.
+  while ((aNode = aNode->GetFlattenedTreeParentNode())) {
+    ++depth;
+  }
+
+  return depth;
+}
+
+/**
+ * Returns |aTarget|'s size in the form of nsSize.
+ * If the target is SVG, width and height are determined from bounding box.
+ */
+static nsSize GetTargetSize(Element* aTarget, ResizeObserverBoxOptions aBox) {
+  nsSize size;
+  nsIFrame* frame = aTarget->GetPrimaryFrame();
+
+  if (!frame) {
+    return size;
+  }
+
+  if (aTarget->IsSVGElement()) {
+    // Per the spec, SVG size is always its bounding box size no matter what
+    // box option you choose, because SVG elements do not use standard CSS box
+    // model.
+    gfxRect bbox = nsSVGUtils::GetBBox(frame);
+    size.width = NSFloatPixelsToAppUnits(bbox.width, AppUnitsPerCSSPixel());
+    size.height = NSFloatPixelsToAppUnits(bbox.height, AppUnitsPerCSSPixel());
+  } else {
+    // Per the spec, non-replaced inline Elements will always have an empty
+    // content rect. Therefore, we always use the same trivially-empty size
+    // for non-replaced inline elements here, and their IsActive() will
+    // always return false. (So its observation won't be fired.)
+    if (!frame->IsFrameOfType(nsIFrame::eReplaced) &&
+        frame->IsFrameOfType(nsIFrame::eLineParticipant)) {
+      return size;
+    }
+
+    switch (aBox) {
+      case ResizeObserverBoxOptions::Border_box:
+        // GetSize() includes the content area, borders, and padding.
+        size = frame->GetSize();
+        break;
+      case ResizeObserverBoxOptions::Content_box:
+      default:
+        size = frame->GetContentRectRelativeToSelf().Size();
+    }
+  }
+
+  return size;
+}
+
 NS_IMPL_CYCLE_COLLECTION(ResizeObservation, mTarget)
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(ResizeObservation, AddRef)
 NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(ResizeObservation, Release)
 
 bool ResizeObservation::IsActive() const {
-  nsRect rect = GetTargetRect();
-  return (rect.width != mBroadcastWidth || rect.height != mBroadcastHeight);
-}
-
-void ResizeObservation::UpdateBroadcastSize(const nsSize& aSize) {
-  mBroadcastWidth = aSize.width;
-  mBroadcastHeight = aSize.height;
-}
-
-nsRect ResizeObservation::GetTargetRect() const {
-  nsRect rect;
   nsIFrame* frame = mTarget->GetPrimaryFrame();
+  const WritingMode wm = frame ? frame->GetWritingMode() : WritingMode();
+  const LogicalSize size(wm, GetTargetSize(mTarget, mObservedBox));
+  return mLastReportedSize.ISize(mLastReportedWM) != size.ISize(wm) ||
+         mLastReportedSize.BSize(mLastReportedWM) != size.BSize(wm);
+}
 
-  if (frame) {
-    if (mTarget->IsSVGElement()) {
-      gfxRect bbox = nsSVGUtils::GetBBox(frame);
-      rect.width = NSFloatPixelsToAppUnits(bbox.width, AppUnitsPerCSSPixel());
-      rect.height = NSFloatPixelsToAppUnits(bbox.height, AppUnitsPerCSSPixel());
-    } else {
-      // Per the spec, non-replaced inline Elements will always have an empty
-      // content rect. Therefore, we don't set rect for non-replaced inline
-      // elements here, and their IsActive() will always return false.
-      if (frame->IsFrameOfType(nsIFrame::eReplaced) ||
-          !frame->IsFrameOfType(nsIFrame::eLineParticipant)) {
-        rect = frame->GetContentRectRelativeToSelf();
-      }
-    }
-  }
-
-  return rect;
+void ResizeObservation::UpdateLastReportedSize(const nsSize& aSize) {
+  nsIFrame* frame = mTarget->GetPrimaryFrame();
+  mLastReportedWM = frame ? frame->GetWritingMode() : WritingMode();
+  mLastReportedSize = LogicalSize(mLastReportedWM, aSize);
 }
 
 // Only needed for refcounted objects.
@@ -85,20 +139,28 @@ already_AddRefed<ResizeObserver> ResizeObserver::Constructor(
   return observer.forget();
 }
 
-void ResizeObserver::Observe(Element& aTarget, ErrorResult& aRv) {
+void ResizeObserver::Observe(Element& aTarget,
+                             const ResizeObserverOptions& aOptions,
+                             ErrorResult& aRv) {
   RefPtr<ResizeObservation> observation;
 
   if (mObservationMap.Get(&aTarget, getter_AddRefs(observation))) {
-    // Already observed this target, so return.
-    // Note: Based on the spec, we should unobserve it first. However, calling
-    // Unobserve() will remove original ResizeObservation and then add a new
-    // one, this may cause an unexpected result because ResizeObservation stores
-    // the last reported size which should be kept to make sure IsActive()
-    // returns the correct result.
-    return;
+    if (observation->BoxOptions() == aOptions.mBox) {
+      // Already observed this target and the observed box is the same, so
+      // return.
+      // Note: Based on the spec, we should unobserve it first. However,
+      // calling Unobserve() when we observe the same box will remove original
+      // ResizeObservation and then add a new one, this may cause an unexpected
+      // result because ResizeObservation stores the mLastReportedSize which
+      // should be kept to make sure IsActive() returns the correct result.
+      return;
+    }
+    Unobserve(aTarget, aRv);
   }
 
-  observation = new ResizeObservation(aTarget);
+  nsIFrame* frame = aTarget.GetPrimaryFrame();
+  observation = new ResizeObservation(
+      aTarget, aOptions.mBox, frame ? frame->GetWritingMode() : WritingMode());
 
   mObservationMap.Put(&aTarget, observation);
   mObservationList.insertBack(observation);
@@ -136,7 +198,7 @@ void ResizeObserver::GatherActiveObservations(uint32_t aDepth) {
       continue;
     }
 
-    uint32_t targetDepth = nsContentUtils::GetNodeDepth(observation->Target());
+    uint32_t targetDepth = GetNodeDepth(observation->Target());
 
     if (targetDepth > aDepth) {
       mActiveTargets.AppendElement(observation);
@@ -156,12 +218,16 @@ uint32_t ResizeObserver::BroadcastActiveObservations() {
   Sequence<OwningNonNull<ResizeObserverEntry>> entries;
 
   for (auto& observation : mActiveTargets) {
-    RefPtr<ResizeObserverEntry> entry =
-        new ResizeObserverEntry(this, *observation->Target());
+    Element* target = observation->Target();
+    RefPtr<ResizeObserverEntry> entry = new ResizeObserverEntry(this, *target);
 
-    nsRect rect = observation->GetTargetRect();
-    entry->SetContentRect(rect);
-    // FIXME: Bug 1545239: Set borderBoxSize and contentBoxSize.
+    nsSize borderBoxSize =
+        GetTargetSize(target, ResizeObserverBoxOptions::Border_box);
+    entry->SetBorderBoxSize(borderBoxSize);
+
+    nsSize contentBoxSize =
+        GetTargetSize(target, ResizeObserverBoxOptions::Content_box);
+    entry->SetContentRectAndSize(contentBoxSize);
 
     if (!entries.AppendElement(entry.forget(), fallible)) {
       // Out of memory.
@@ -170,9 +236,16 @@ uint32_t ResizeObserver::BroadcastActiveObservations() {
 
     // Sync the broadcast size of observation so the next size inspection
     // will be based on the updated size from last delivered observations.
-    observation->UpdateBroadcastSize(rect.Size());
+    switch (observation->BoxOptions()) {
+      case ResizeObserverBoxOptions::Border_box:
+        observation->UpdateLastReportedSize(borderBoxSize);
+        break;
+      case ResizeObserverBoxOptions::Content_box:
+      default:
+        observation->UpdateLastReportedSize(contentBoxSize);
+    }
 
-    uint32_t targetDepth = nsContentUtils::GetNodeDepth(observation->Target());
+    uint32_t targetDepth = GetNodeDepth(observation->Target());
 
     if (targetDepth < shallowestTargetDepth) {
       shallowestTargetDepth = targetDepth;
@@ -188,8 +261,9 @@ uint32_t ResizeObserver::BroadcastActiveObservations() {
   return shallowestTargetDepth;
 }
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(ResizeObserverEntry, mTarget,
-                                      mContentRect, mOwner)
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(ResizeObserverEntry, mOwner, mTarget,
+                                      mContentRect, mBorderBoxSize,
+                                      mContentBoxSize)
 NS_IMPL_CYCLE_COLLECTING_ADDREF(ResizeObserverEntry)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(ResizeObserverEntry)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ResizeObserverEntry)
@@ -204,19 +278,36 @@ already_AddRefed<ResizeObserverEntry> ResizeObserverEntry::Constructor(
   return observerEntry.forget();
 }
 
-void ResizeObserverEntry::SetContentRect(const nsRect& aRect) {
+void ResizeObserverEntry::SetBorderBoxSize(const nsSize& aSize) {
   nsIFrame* frame = mTarget->GetPrimaryFrame();
-  Maybe<nsMargin> padding = frame ? Some(frame->GetUsedPadding()) : Nothing();
+  const WritingMode wm = frame ? frame->GetWritingMode() : WritingMode();
+  mBorderBoxSize = new ResizeObserverSize(this, aSize, wm);
+}
 
-  // Per the spec, we need to include padding in contentRect of
-  // ResizeObserverEntry.
-  nsRect rect(padding ? padding->left : aRect.x,
-              padding ? padding->top : aRect.y, aRect.width, aRect.height);
+void ResizeObserverEntry::SetContentRectAndSize(const nsSize& aSize) {
+  nsIFrame* frame = mTarget->GetPrimaryFrame();
 
+  // 1. Update mContentRect.
+  nsMargin padding = frame ? frame->GetUsedPadding(): nsMargin();
+  // Per the spec, we need to use the top-left padding offset as the origin of
+  // our contentRect.
+  nsRect rect(nsPoint(padding.left, padding.top), aSize);
   RefPtr<DOMRect> contentRect = new DOMRect(mTarget);
   contentRect->SetLayoutRect(rect);
   mContentRect = contentRect.forget();
+
+  // 2. Update mContentBoxSize.
+  const WritingMode wm = frame ? frame->GetWritingMode() : WritingMode();
+  mContentBoxSize = new ResizeObserverSize(this, aSize, wm);
 }
+
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(ResizeObserverSize, mOwner)
+NS_IMPL_CYCLE_COLLECTING_ADDREF(ResizeObserverSize)
+NS_IMPL_CYCLE_COLLECTING_RELEASE(ResizeObserverSize)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ResizeObserverSize)
+  NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
+  NS_INTERFACE_MAP_ENTRY(nsISupports)
+NS_INTERFACE_MAP_END
 
 }  // namespace dom
 }  // namespace mozilla

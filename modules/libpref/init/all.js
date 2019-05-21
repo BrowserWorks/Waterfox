@@ -154,9 +154,6 @@ pref("dom.serviceWorkers.update_delay", 1000);
 // Enable test for 24 hours update, service workers will always treat last update check time is over 24 hours
 pref("dom.serviceWorkers.testUpdateOverOneDay", false);
 
-// Enable collecting of docgroup activity in the scheduler
-pref("dom.performance.enable_scheduler_timing", true);
-
 // Enable Permission API's .revoke() method
 pref("dom.permissions.revoke.enable", false);
 
@@ -626,6 +623,9 @@ pref("media.audioipc.stack_size", 262144);
 pref("media.cubeb.sandbox", false);
 #endif
 
+// GraphRunner (fixed MediaStreamGraph thread) control
+pref("media.audiograph.single_thread.enabled", false);
+
 #ifdef MOZ_AV1
 #if defined(XP_WIN) && !defined(_ARM64_)
 pref("media.av1.enabled", true);
@@ -780,7 +780,7 @@ pref("gfx.hidpi.enabled", 2);
 #endif
 
 // Default to containerless scrolling
-pref("layout.scroll.root-frame-containers", 0);
+pref("layout.scroll.root-frame-containers", false);
 
 pref("layout.scrollbars.always-layerize-track", false);
 
@@ -884,6 +884,7 @@ pref("gfx.draw-color-bars", false);
 pref("gfx.logging.painted-pixel-count.enabled", false);
 pref("gfx.logging.texture-usage.enabled", false);
 pref("gfx.logging.peak-texture-usage.enabled", false);
+pref("gfx.logging.slow-frames.enabled", false);
 
 pref("gfx.ycbcr.accurate-conversion", false);
 
@@ -1390,10 +1391,8 @@ pref("privacy.restrict3rdpartystorage.userInteractionRequiredForHosts", "");
 pref("privacy.popups.maxReported", 100);
 
 // Enforce tracking protection in all modes
-// In Firefox Desktop this pref is set by browser.contentblocking.features.[standard, strict] see firefox.js for details.
 pref("privacy.trackingprotection.enabled",  false);
 // Enforce tracking protection in Private Browsing mode
-// In Firefox Desktop this pref is set by browser.contentblocking.features.[standard, strict] see firefox.js for details.
 pref("privacy.trackingprotection.pbmode.enabled",  true);
 // First Party Isolation (double keying), disabled by default
 pref("privacy.firstparty.isolate",                        false);
@@ -1624,6 +1623,7 @@ pref("network.protocol-handler.external.vbscript", false);
 pref("network.protocol-handler.external.javascript", false);
 pref("network.protocol-handler.external.data", false);
 pref("network.protocol-handler.external.ms-help", false);
+pref("network.protocol-handler.external.res", false);
 pref("network.protocol-handler.external.shell", false);
 pref("network.protocol-handler.external.vnd.ms.radio", false);
 #ifdef XP_MACOSX
@@ -1880,6 +1880,7 @@ pref("network.http.tcp_keepalive.long_lived_idle_time", 600);
 
 pref("network.http.enforce-framing.http1", false); // should be named "strict"
 pref("network.http.enforce-framing.soft", true);
+pref("network.http.enforce-framing.strict_chunked_encoding", true);
 
 // Max size, in bytes, for received HTTP response header.
 pref("network.http.max_response_header_size", 393216);
@@ -2350,7 +2351,6 @@ pref("network.proxy.failover_timeout",      1800); // 30 minutes
 pref("network.online",                      true); //online/offline
 pref("network.cookie.thirdparty.sessionOnly", false);
 pref("network.cookie.thirdparty.nonsecureSessionOnly", false);
-pref("network.cookie.same-site.enabled",    true); // Honor the SameSite cookie attribute
 
 // The interval in seconds to move the cookies in the child process.
 // Set to 0 to disable moving the cookies.
@@ -2378,6 +2378,11 @@ pref("network.stricttransportsecurity.preloadlist", true);
 
 // Use JS mDNS as a fallback
 pref("network.mdns.use_js_fallback", false);
+
+// Cache SSL resumption tokens in necko
+pref("network.ssl_tokens_cache_enabled", false);
+// Capacity of the cache in kilobytes
+pref("network.ssl_tokens_cache_capacity", 2048);
 
 pref("converter.html2txt.structs",          true); // Output structured phrases (strong, em, code, sub, sup, b, i, u)
 pref("converter.html2txt.header_strategy",  1); // 0 = no indention; 1 = indention, increased with header level; 2 = numbering and slight indention
@@ -2491,6 +2496,11 @@ pref("intl.hyphenation-alias.no", "nb");
 pref("intl.hyphenation-alias.no-*", "nb");
 pref("intl.hyphenation-alias.nb-*", "nb");
 pref("intl.hyphenation-alias.nn-*", "nn");
+
+// In German, we allow hyphenation of capitalized words; otherwise not.
+pref("intl.hyphenate-capitalized.de-1996", true);
+pref("intl.hyphenate-capitalized.de-1901", true);
+pref("intl.hyphenate-capitalized.de-CH", true);
 
 // All prefs of default font should be "auto".
 pref("font.name.serif.ar", "");
@@ -2659,7 +2669,7 @@ pref("csp.overrule_about_uris_without_csp_whitelist", false);
 pref("csp.skip_about_page_has_csp_assert", false);
 // assertion flag will be set to false after fixing Bug 1473549
 pref("security.allow_eval_with_system_principal", false);
-pref("security.uris_using_eval_with_system_principal", "autocomplete.xml,redux.js,react-redux.js,content-task.js,preferencesbindings.js,lodash.js,jszip.js,sinon-7.2.7.js,ajv-4.1.1.js,setup,jsol.js,simpletest/simpletest.js");
+pref("security.uris_using_eval_with_system_principal", "autocomplete.xml,redux.js,react-redux.js,content-task.js,preferencesbindings.js,lodash.js,jszip.js,sinon-7.2.7.js,ajv-4.1.1.js,jsol.js");
 #endif
 
 #if defined(DEBUG) || defined(FUZZING)
@@ -2715,9 +2725,7 @@ pref("security.strict_security_checks.enabled", false);
 // Remote settings preferences
 pref("services.settings.poll_interval", 86400); // 24H
 pref("services.settings.server", "https://firefox.settings.services.mozilla.com/v1");
-pref("services.settings.changes.path", "/buckets/monitor/collections/changes/records");
 pref("services.settings.default_bucket", "main");
-pref("services.settings.default_signer", "remote-settings.content-signature.mozilla.org");
 
 // The percentage of clients who will report uptake telemetry as
 // events instead of just a histogram. This only applies on Release;
@@ -2729,6 +2737,9 @@ pref("services.settings.security.onecrl.bucket", "security-state");
 pref("services.settings.security.onecrl.collection", "onecrl");
 pref("services.settings.security.onecrl.signer", "onecrl.content-signature.mozilla.org");
 pref("services.settings.security.onecrl.checked", 0);
+
+pref("extensions.abuseReport.enabled", false);
+pref("extensions.abuseReport.url", "https://addons.mozilla.org/api/v4/abuse/report/addon/");
 
 // Blocklist preferences
 pref("extensions.blocklist.enabled", true);
@@ -4713,6 +4724,7 @@ pref("signon.schemeUpgrades",               false);
 // This temporarily prevents the master password to reprompt for autocomplete.
 pref("signon.masterPasswordReprompt.timeout_ms", 900000); // 15 Minutes
 pref("signon.showAutoCompleteFooter", false);
+pref("signon.showAutoCompleteOrigins", false);
 
 // Satchel (Form Manager) prefs
 pref("browser.formfill.debug",            false);
@@ -4911,7 +4923,6 @@ pref("webgl.max-contexts-per-principal", 16);
 pref("webgl.max-warnings-per-context", 32);
 pref("webgl.enable-draft-extensions", false);
 pref("webgl.enable-privileged-extensions", false);
-pref("webgl.bypass-shader-validation", false);
 pref("webgl.disable-fail-if-major-performance-caveat", false);
 pref("webgl.disable-DOM-blit-uploads", false);
 pref("webgl.allow-fb-invalidation", false);
@@ -5148,8 +5159,7 @@ pref("extensions.webextensions.keepUuidOnUninstall", false);
 // Redirect basedomain used by identity api
 pref("extensions.webextensions.identity.redirectDomain", "extensions.allizom.org");
 pref("extensions.webextensions.restrictedDomains", "accounts-static.cdn.mozilla.net,accounts.firefox.com,addons.cdn.mozilla.net,addons.mozilla.org,api.accounts.firefox.com,content.cdn.mozilla.net,discovery.addons.mozilla.org,install.mozilla.org,oauth.accounts.firefox.com,profile.accounts.firefox.com,support.mozilla.org,sync.services.mozilla.com");
-// Whether or not webextension icon theming is supported.
-pref("extensions.webextensions.themes.icons.enabled", false);
+
 pref("extensions.webextensions.remote", false);
 // Whether or not the moz-extension resource loads are remoted. For debugging
 // purposes only. Setting this to false will break moz-extension URI loading
@@ -5178,10 +5188,12 @@ pref("extensions.webextensions.enablePerformanceCounters", true);
 // Maximum age in milliseconds of performance counters in children
 // When reached, the counters are sent to the main process and
 // reset, so we reduce memory footprint.
-pref("extensions.webextensions.performanceCountersMaxAge", 1000);
+pref("extensions.webextensions.performanceCountersMaxAge", 5000);
 
 // The HTML about:addons page.
 pref("extensions.htmlaboutaddons.enabled", false);
+// Whether to allow the inline options browser in HTML about:addons page.
+pref("extensions.htmlaboutaddons.inline-options.enabled", false);
 
 // Report Site Issue button
 // Note that on enabling the button in other release channels, make sure to
@@ -6026,5 +6038,17 @@ pref("dom.datatransfer.mozAtAPIs", true);
 // cycles.
 pref("dom.sidebar.enabled", true);
 
-// Turn on fission frameloader swapping
-pref("fission.rebuild_frameloaders_on_remoteness_change", true);
+// Turn off fission frameloader swapping while regressions are being fixed.
+// Should be turned back on to resolve bug 1551993.
+pref("fission.rebuild_frameloaders_on_remoteness_change", false);
+
+// If true, preserve browsing contexts between process swaps. Should be set to
+// true in bug 1550571.
+pref("fission.preserve_browsing_contexts", false);
+
+// Support for legacy customizations that rely on checking the
+// user profile directory for these stylesheets:
+//  * userContent.css
+//  * userChrome.css
+pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);
+

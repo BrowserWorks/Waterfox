@@ -406,11 +406,6 @@ class gfxPrefs final {
   DECL_GFX_PREF(Once, "dom.vr.service.enabled",                VRServiceEnabled, bool, true);
   DECL_GFX_PREF(Live, "dom.w3c_pointer_events.enabled",        PointerEventsEnabled, bool, false);
 
-  // Make APZ send child-to-screen layer matrices to the chrome process
-  // even when the GPU process is in use (behind pref due to IPC errors
-  // in reftests) https://bugzilla.mozilla.org/show_bug.cgi?id=1533673
-  DECL_GFX_PREF(Live, "fission.apz-matrices-with-gpu-process", FissionApzMatricesWithGpuProcess, bool, false);
-
   DECL_GFX_PREF(Live, "general.smoothScroll",                  SmoothScrollEnabled, bool, true);
   DECL_GFX_PREF(Live, "general.smoothScroll.currentVelocityWeighting",
                 SmoothScrollCurrentVelocityWeighting, float, 0.25);
@@ -512,6 +507,7 @@ class gfxPrefs final {
   // The maximums here are quite conservative, we can tighten them if problems show up.
   DECL_GFX_PREF(Once, "gfx.logging.texture-usage.enabled",     GfxLoggingTextureUsageEnabled, bool, false);
   DECL_GFX_PREF(Once, "gfx.logging.peak-texture-usage.enabled",GfxLoggingPeakTextureUsageEnabled, bool, false);
+  DECL_GFX_PREF(Once, "gfx.logging.slow-frames.enabled",       LoggingSlowFramesEnabled, bool, false);
   // Use gfxPlatform::MaxAllocSize instead of the pref directly
   DECL_GFX_PREF(Once, "gfx.max-alloc-size",                    MaxAllocSizeDoNotUseDirectly, int32_t, (int32_t)500000000);
   // Use gfxPlatform::MaxTextureSize instead of the pref directly
@@ -728,7 +724,7 @@ class gfxPrefs final {
   DECL_GFX_PREF(Once, "layout.paint_rects_separately",         LayoutPaintRectsSeparately, bool, true);
 
   // This and code dependent on it should be removed once containerless scrolling looks stable.
-  DECL_OVERRIDE_PREF(Live, "layout.scroll.root-frame-containers",   LayoutUseContainersForRootFrames, !OverrideBase_WebRender());
+  DECL_GFX_PREF(Live, "layout.scroll.root-frame-containers",   LayoutUseContainersForRootFrames, bool, false);
   // This pref is to be set by test code only.
   DECL_GFX_PREF(Live, "layout.scrollbars.always-layerize-track", AlwaysLayerizeScrollbarTrackTestOnly, bool, false);
   DECL_GFX_PREF(Live, "layout.smaller-painted-layers",         LayoutSmallerPaintedLayers, bool, false);
@@ -746,7 +742,8 @@ class gfxPrefs final {
   DECL_GFX_PREF(Live, "media.wmf.skip-blacklist", PDMWMFSkipBlacklist, bool, false);
   DECL_GFX_PREF(Live, "media.wmf.deblacklisting-for-telemetry-in-gpu-process", PDMWMFDeblacklistingForTelemetryInGPUProcess, bool, false);
   DECL_GFX_PREF(Live, "media.wmf.amd.highres.enabled", PDMWMFAMDHighResEnabled, bool, true);
-  DECL_GFX_PREF(Live, "media.wmf.allow-unsupported-resolutions",  PDMWMFAllowUnsupportedResolutions, bool, false);
+  DECL_GFX_PREF(Live, "media.wmf.allow-unsupported-resolutions", PDMWMFAllowUnsupportedResolutions, bool, false);
+  DECL_GFX_PREF(Once, "media.wmf.vp9.enabled", MediaWmfVp9Enabled, bool, true);
 #endif
 
   // These affect how line scrolls from wheel events will be accelerated.
@@ -786,7 +783,6 @@ class gfxPrefs final {
   DECL_GFX_PREF(Live, "webgl.angle.force-d3d11",               WebGLANGLEForceD3D11, bool, false);
   DECL_GFX_PREF(Live, "webgl.angle.try-d3d11",                 WebGLANGLETryD3D11, bool, false);
   DECL_GFX_PREF(Live, "webgl.angle.force-warp",                WebGLANGLEForceWARP, bool, false);
-  DECL_GFX_PREF(Live, "webgl.bypass-shader-validation",        WebGLBypassShaderValidator, bool, true);
   DECL_GFX_PREF(Live, "webgl.can-lose-context-in-foreground",  WebGLCanLoseContextInForeground, bool, true);
   DECL_GFX_PREF(Live, "webgl.default-low-power",               WebGLDefaultLowPower, bool, false);
   DECL_GFX_PREF(Live, "webgl.default-no-alpha",                WebGLDefaultNoAlpha, bool, false);

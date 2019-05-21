@@ -104,7 +104,11 @@ describe("EvaluationResult component:", () => {
 
     serviceContainer.openLink = sinon.spy();
     const wrapper = mount(
-      Provider({ store }, EvaluationResult({ message, serviceContainer }))
+      Provider({ store }, EvaluationResult({
+        message,
+        serviceContainer,
+        dispatch: () => {},
+      }))
     );
 
     const url =

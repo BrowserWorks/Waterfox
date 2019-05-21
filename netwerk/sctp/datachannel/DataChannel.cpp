@@ -289,33 +289,6 @@ static void debug_printf(const char* format, ...) {
   }
 }
 
-DataChannelConnection::DataChannelConnection(DataConnectionListener* listener,
-                                             nsIEventTarget* aTarget,
-                                             MediaTransportHandler* aHandler)
-    : NeckoTargetHolder(aTarget),
-      mLock("netwerk::sctp::DataChannelConnection"),
-      mSendInterleaved(false),
-      mPpidFragmentation(false),
-      mMaxMessageSizeSet(false),
-      mMaxMessageSize(0),
-      mAllocateEven(false),
-      mTransportHandler(aHandler) {
-  mCurrentStream = 0;
-  mState = CLOSED;
-  mSocket = nullptr;
-  mMasterSocket = nullptr;
-  mListener = listener;
-  mLocalPort = 0;
-  mRemotePort = 0;
-  mPendingType = PENDING_NONE;
-  LOG(("Constructor DataChannelConnection=%p, listener=%p", this,
-       mListener.get()));
-  mInternalIOThread = nullptr;
-#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
-  mShutdown = false;
-#endif
-}
-
 DataChannelConnection::~DataChannelConnection() {
   LOG(("Deleting DataChannelConnection %p", (void*)this));
   // This may die on the MainThread, or on the STS thread
@@ -404,9 +377,39 @@ void DataChannelConnection::DestroyOnSTSFinal() {
   sDataChannelShutdown->CreateConnectionShutdown(this);
 }
 
-bool DataChannelConnection::Init(unsigned short aPort, uint16_t aNumStreams,
-                                 bool aMaxMessageSizeSet,
-                                 uint64_t aMaxMessageSize) {
+Maybe<RefPtr<DataChannelConnection>> DataChannelConnection::Create(
+    DataChannelConnection::DataConnectionListener* aListener,
+    nsIEventTarget* aTarget, MediaTransportHandler* aHandler,
+    const uint16_t aLocalPort, const uint16_t aNumStreams,
+    const Maybe<uint64_t>& aMaxMessageSize) {
+  ASSERT_WEBRTC(NS_IsMainThread());
+
+  RefPtr<DataChannelConnection> connection = new DataChannelConnection(
+      aListener, aTarget, aHandler);  // Walks into a bar
+  return connection->Init(aLocalPort, aNumStreams, aMaxMessageSize)
+             ? Some(connection)
+             : Nothing();
+}
+
+DataChannelConnection::DataChannelConnection(
+    DataChannelConnection::DataConnectionListener* aListener,
+    nsIEventTarget* aTarget, MediaTransportHandler* aHandler)
+    : NeckoTargetHolder(aTarget),
+      mLock("netwerk::sctp::DataChannelConnection"),
+      mListener(aListener),
+      mTransportHandler(aHandler) {
+  LOG(("Constructor DataChannelConnection=%p, listener=%p", this,
+       mListener.get()));
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
+  mShutdown = false;
+#endif
+}
+
+bool DataChannelConnection::Init(const uint16_t aLocalPort,
+                                 const uint16_t aNumStreams,
+                                 const Maybe<uint64_t>& aMaxMessageSize) {
+  ASSERT_WEBRTC(NS_IsMainThread());
+
   struct sctp_initmsg initmsg;
   struct sctp_assoc_value av;
   struct sctp_event event;
@@ -419,13 +422,9 @@ bool DataChannelConnection::Init(unsigned short aPort, uint16_t aNumStreams,
       SCTP_SEND_FAILED_EVENT,     SCTP_STREAM_RESET_EVENT,
       SCTP_STREAM_CHANGE_EVENT};
   {
-    ASSERT_WEBRTC(NS_IsMainThread());
     // MutexAutoLock lock(mLock); Not needed since we're on mainthread always
-
-    mSendInterleaved = false;
-    mPpidFragmentation = false;
-    mMaxMessageSizeSet = false;
-    SetMaxMessageSize(aMaxMessageSizeSet, aMaxMessageSize);
+    mLocalPort = aLocalPort;
+    SetMaxMessageSize(aMaxMessageSize.isSome(), aMaxMessageSize.valueOr(0));
 
     if (!sctp_initialized) {
       LOG(("sctp_init"));
@@ -844,11 +843,16 @@ void DataChannelConnection::SctpDtlsInput(const std::string& aTransportId,
   usrsctp_conninput(static_cast<void*>(this), packet.data(), packet.len(), 0);
 }
 
-void DataChannelConnection::SendPacket(nsAutoPtr<MediaPacket> packet) {
-  // LOG(("%p: SCTP/DTLS sent %ld bytes", this, len));
-  if (!mTransportId.empty() && mTransportHandler) {
-    mTransportHandler->SendPacket(mTransportId, std::move(*packet));
-  }
+void DataChannelConnection::SendPacket(std::unique_ptr<MediaPacket>&& packet) {
+  mSTS->Dispatch(NS_NewRunnableFunction(
+      "DataChannelConnection::SendPacket",
+      [this, self = RefPtr<DataChannelConnection>(this),
+       packet = std::move(packet)]() mutable {
+        // LOG(("%p: SCTP/DTLS sent %ld bytes", this, len));
+        if (!mTransportId.empty() && mTransportHandler) {
+          mTransportHandler->SendPacket(mTransportId, std::move(*packet));
+        }
+      }));
 }
 
 /* static */
@@ -873,17 +877,16 @@ int DataChannelConnection::SctpDtlsOutput(void* addr, void* buffer,
   // SCTP has an option for Apple, on IP connections only, to release at least
   // one of the locks before calling a packet output routine; with changes to
   // the underlying SCTP stack this might remove the need to use an async proxy.
-  nsAutoPtr<MediaPacket> packet(new MediaPacket);
+  std::unique_ptr<MediaPacket> packet(new MediaPacket);
   packet->SetType(MediaPacket::SCTP);
   packet->Copy(static_cast<const uint8_t*>(buffer), length);
 
-  // XXX It might be worthwhile to add an assertion against the thread
-  // somehow getting into the DataChannel/SCTP code again, as
-  // DISPATCH_SYNC is not fully blocking.  This may be tricky, as it
-  // needs to be a per-thread check, not a global.
-  peer->mSTS->Dispatch(WrapRunnable(RefPtr<DataChannelConnection>(peer),
-                                    &DataChannelConnection::SendPacket, packet),
-                       NS_DISPATCH_NORMAL);
+  if (NS_IsMainThread() && peer->mDeferSend) {
+    peer->mDeferredSend.emplace_back(std::move(packet));
+    return 0;
+  }
+
+  peer->SendPacket(std::move(packet));
   return 0;  // cheat!  Packets can always be dropped later anyways
 }
 #endif
@@ -1145,7 +1148,7 @@ int DataChannelConnection::SendControlMessage(const uint8_t* data, uint32_t len,
 #endif
   OutgoingMsg msg(info, data, (size_t)len);
   bool buffered;
-  int error = SendMsgInternalOrBuffer(mBufferedControl, msg, buffered);
+  int error = SendMsgInternalOrBuffer(mBufferedControl, msg, buffered, nullptr);
 
   // Set pending type (if buffered)
   if (!error && buffered && !mPendingType) {
@@ -1240,7 +1243,7 @@ bool DataChannelConnection::SendDeferredMessages() {
   //       be sent first before other streams can be used for sending.
   if (!mBufferedControl.IsEmpty() &&
       (mSendInterleaved || mPendingType == PENDING_DCEP)) {
-    if (SendBufferedMessages(mBufferedControl)) {
+    if (SendBufferedMessages(mBufferedControl, nullptr)) {
       return true;
     }
 
@@ -1265,35 +1268,25 @@ bool DataChannelConnection::SendDeferredMessages() {
       continue;
     }
 
-    size_t bufferedAmount = channel->GetBufferedAmountLocked();
-    size_t threshold = channel->mBufferedThreshold;
-    bool wasOverThreshold = bufferedAmount >= threshold;
-
     // Send buffered data messages
     // Warning: This will fail in case ndata is inactive and a previously
     //          deallocated data channel has not been closed properly. If you
     //          ever see that no messages can be sent on any channel, this is
     //          likely the cause (an explicit EOR message partially sent whose
     //          remaining chunks are still being waited for).
-    blocked = SendBufferedMessages(channel->mBufferedData);
-    bufferedAmount = channel->GetBufferedAmountLocked();
-
-    // can never fire with default threshold of 0
-    if (wasOverThreshold && bufferedAmount < threshold) {
-      LOG(("%s: sending BUFFER_LOW_THRESHOLD for %s/%s: %u", __FUNCTION__,
-           channel->mLabel.get(), channel->mProtocol.get(), channel->mStream));
-      Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
-          DataChannelOnMessageAvailable::BUFFER_LOW_THRESHOLD, this, channel)));
+    size_t written = 0;
+    mDeferSend = true;
+    blocked = SendBufferedMessages(channel->mBufferedData, &written);
+    mDeferSend = false;
+    if (written) {
+      channel->DecrementBufferedAmount(written);
     }
 
-    if (bufferedAmount == 0) {
-      // buffered-to-not-buffered transition; tell the DOM code in case this
-      // makes it available for GC
-      LOG(("%s: sending NO_LONGER_BUFFERED for %s/%s: %u", __FUNCTION__,
-           channel->mLabel.get(), channel->mProtocol.get(), channel->mStream));
-      Dispatch(do_AddRef(new DataChannelOnMessageAvailable(
-          DataChannelOnMessageAvailable::NO_LONGER_BUFFERED, this, channel)));
+    for (auto&& packet : mDeferredSend) {
+      MOZ_ASSERT(written);
+      SendPacket(std::move(packet));
     }
+    mDeferredSend.clear();
 
     // Update current stream index
     // Note: If ndata is not active, the outstanding data messages on this
@@ -1314,10 +1307,10 @@ bool DataChannelConnection::SendDeferredMessages() {
 // buffer MUST have at least one item!
 // returns if we're still blocked (true)
 bool DataChannelConnection::SendBufferedMessages(
-    nsTArray<nsAutoPtr<BufferedOutgoingMsg>>& buffer) {
+    nsTArray<nsAutoPtr<BufferedOutgoingMsg>>& buffer, size_t* aWritten) {
   do {
     // Re-send message
-    int error = SendMsgInternal(*buffer[0]);
+    int error = SendMsgInternal(*buffer[0], aWritten);
     switch (error) {
       case 0:
         buffer.RemoveElementAt(0);
@@ -1344,7 +1337,6 @@ void DataChannelConnection::HandleOpenRequestMessage(
   RefPtr<DataChannel> channel;
   uint32_t prValue;
   uint16_t prPolicy;
-  uint32_t flags;
 
   mLock.AssertCurrentThreadOwns();
 
@@ -1378,8 +1370,7 @@ void DataChannelConnection::HandleOpenRequestMessage(
       return;
   }
   prValue = ntohl(req->reliability_param);
-  flags =
-      (req->channel_type & 0x80) ? DATA_CHANNEL_FLAGS_OUT_OF_ORDER_ALLOWED : 0;
+  bool ordered = !(req->channel_type & 0x80);
 
   if ((channel = FindChannelByStream(stream))) {
     if (!(channel->mFlags & DATA_CHANNEL_FLAGS_EXTERNAL_NEGOTIATED)) {
@@ -1392,13 +1383,12 @@ void DataChannelConnection::HandleOpenRequestMessage(
       LOG(("Open for externally negotiated channel %u", stream));
       // XXX should also check protocol, maybe label
       if (prPolicy != channel->mPrPolicy || prValue != channel->mPrValue ||
-          flags !=
-              (channel->mFlags & DATA_CHANNEL_FLAGS_OUT_OF_ORDER_ALLOWED)) {
+          ordered != channel->mOrdered) {
         LOG(
             ("WARNING: external negotiation mismatch with OpenRequest:"
-             "channel %u, policy %u/%u, value %u/%u, flags %x/%x",
+             "channel %u, policy %u/%u, value %u/%u, ordered %d/%d",
              stream, prPolicy, channel->mPrPolicy, prValue, channel->mPrValue,
-             flags, channel->mFlags));
+             static_cast<int>(ordered), static_cast<int>(channel->mOrdered)));
       }
     }
     return;
@@ -1416,7 +1406,7 @@ void DataChannelConnection::HandleOpenRequestMessage(
 
   channel =
       new DataChannel(this, stream, DataChannel::CONNECTING, label, protocol,
-                      prPolicy, prValue, flags, nullptr, nullptr);
+                      prPolicy, prValue, ordered, false, nullptr, nullptr);
   mStreams[stream] = channel;
 
   channel->mState = DataChannel::WAITING_TO_OPEN;
@@ -2346,7 +2336,6 @@ already_AddRefed<DataChannel> DataChannelConnection::Open(
     aStream = INVALID_STREAM;
   }
   uint16_t prPolicy = SCTP_PR_SCTP_NONE;
-  uint32_t flags;
 
   LOG(
       ("DC Open: label %s/%s, type %u, inorder %d, prValue %u, listener %p, "
@@ -2382,14 +2371,9 @@ already_AddRefed<DataChannel> DataChannelConnection::Open(
     return nullptr;
   }
 
-  flags = !inOrder ? DATA_CHANNEL_FLAGS_OUT_OF_ORDER_ALLOWED : 0;
-
-  RefPtr<DataChannel> channel(
-      new DataChannel(this, aStream, DataChannel::CONNECTING, label, protocol,
-                      prPolicy, prValue, flags, aListener, aContext));
-  if (aExternalNegotiated) {
-    channel->mFlags |= DATA_CHANNEL_FLAGS_EXTERNAL_NEGOTIATED;
-  }
+  RefPtr<DataChannel> channel(new DataChannel(
+      this, aStream, DataChannel::CONNECTING, label, protocol, prPolicy,
+      prValue, inOrder, aExternalNegotiated, aListener, aContext));
 
   MutexAutoLock lock(mLock);  // OpenFinish assumes this
   return OpenFinish(channel.forget());
@@ -2561,7 +2545,7 @@ request_error_cleanup:
 
 // Requires mLock to be locked!
 // Returns a POSIX error code directly instead of setting errno.
-int DataChannelConnection::SendMsgInternal(OutgoingMsg& msg) {
+int DataChannelConnection::SendMsgInternal(OutgoingMsg& msg, size_t* aWritten) {
   auto& info = msg.GetInfo().sendv_sndinfo;
   int error;
 
@@ -2595,9 +2579,14 @@ int DataChannelConnection::SendMsgInternal(OutgoingMsg& msg) {
     ssize_t written = usrsctp_sendv(
         mSocket, msg.GetData(), length, nullptr, 0, (void*)&msg.GetInfo(),
         (socklen_t)sizeof(struct sctp_sendv_spa), SCTP_SENDV_SPA, 0);
+
     if (written < 0) {
       error = errno;
       goto out;
+    }
+
+    if (aWritten) {
+      *aWritten += written;
     }
     LOG(("Sent buffer (written=%zu, len=%zu, left=%zu)", (size_t)written,
          length, left - (size_t)written));
@@ -2642,7 +2631,7 @@ out:
 // IMPORTANT: Ensure that the buffer passed is guarded by mLock!
 int DataChannelConnection::SendMsgInternalOrBuffer(
     nsTArray<nsAutoPtr<BufferedOutgoingMsg>>& buffer, OutgoingMsg& msg,
-    bool& buffered) {
+    bool& buffered, size_t* aWritten) {
   NS_WARNING_ASSERTION(msg.GetLength() > 0, "Length is 0?!");
 
   int error = 0;
@@ -2666,7 +2655,7 @@ int DataChannelConnection::SendMsgInternalOrBuffer(
   // Must lock before empty check for similar reasons!
   mLock.AssertCurrentThreadOwns();
   if (buffer.IsEmpty() && (mSendInterleaved || !mPendingType)) {
-    error = SendMsgInternal(msg);
+    error = SendMsgInternal(msg, aWritten);
     switch (error) {
       case 0:
         break;
@@ -2739,7 +2728,20 @@ int DataChannelConnection::SendDataMsgInternalOrBuffer(DataChannel& channel,
   OutgoingMsg msg(info, data, len);
   MutexAutoLock lock(mLock);
   bool buffered;
-  int error = SendMsgInternalOrBuffer(channel.mBufferedData, msg, buffered);
+  size_t written = 0;
+  mDeferSend = true;
+  int error =
+      SendMsgInternalOrBuffer(channel.mBufferedData, msg, buffered, &written);
+  mDeferSend = false;
+  if (written) {
+    channel.DecrementBufferedAmount(written);
+  }
+
+  for (auto&& packet : mDeferredSend) {
+    MOZ_ASSERT(written);
+    SendPacket(std::move(packet));
+  }
+  mDeferredSend.clear();
 
   // Set pending type and stream index (if buffered)
   if (!error && buffered && !mPendingType) {
@@ -3127,12 +3129,45 @@ void DataChannel::SendErrnoToErrorResult(int error, ErrorResult& aRv) {
   }
 }
 
+void DataChannel::IncrementBufferedAmount(uint32_t aSize, ErrorResult& aRv) {
+  ASSERT_WEBRTC(NS_IsMainThread());
+  if (mBufferedAmount > UINT32_MAX - aSize) {
+    aRv.Throw(NS_ERROR_FILE_TOO_BIG);
+    return;
+  }
+
+  mBufferedAmount += aSize;
+}
+
+void DataChannel::DecrementBufferedAmount(uint32_t aSize) {
+  mMainThreadEventTarget->Dispatch(NS_NewRunnableFunction(
+      "DataChannel::DecrementBufferedAmount",
+      [this, self = RefPtr<DataChannel>(this), aSize] {
+        MOZ_ASSERT(aSize <= mBufferedAmount);
+        bool wasLow = mBufferedAmount <= mBufferedThreshold;
+        mBufferedAmount -= aSize;
+        if (!wasLow && mBufferedAmount <= mBufferedThreshold) {
+          LOG(("%s: sending BUFFER_LOW_THRESHOLD for %s/%s: %u", __FUNCTION__,
+               mLabel.get(), mProtocol.get(), mStream));
+          mListener->OnBufferLow(mContext);
+        }
+        if (mBufferedAmount == 0) {
+          LOG(("%s: sending NO_LONGER_BUFFERED for %s/%s: %u", __FUNCTION__,
+               mLabel.get(), mProtocol.get(), mStream));
+          mListener->NotBuffered(mContext);
+        }
+      }));
+}
+
 void DataChannel::SendMsg(const nsACString& aMsg, ErrorResult& aRv) {
   if (!EnsureValidStream(aRv)) {
     return;
   }
 
   SendErrnoToErrorResult(mConnection->SendMsg(mStream, aMsg), aRv);
+  if (!aRv.Failed()) {
+    IncrementBufferedAmount(aMsg.Length(), aRv);
+  }
 }
 
 void DataChannel::SendBinaryMsg(const nsACString& aMsg, ErrorResult& aRv) {
@@ -3141,14 +3176,39 @@ void DataChannel::SendBinaryMsg(const nsACString& aMsg, ErrorResult& aRv) {
   }
 
   SendErrnoToErrorResult(mConnection->SendBinaryMsg(mStream, aMsg), aRv);
+  if (!aRv.Failed()) {
+    IncrementBufferedAmount(aMsg.Length(), aRv);
+  }
 }
 
-void DataChannel::SendBinaryStream(nsIInputStream* aBlob, ErrorResult& aRv) {
+void DataChannel::SendBinaryBlob(dom::Blob& aBlob, ErrorResult& aRv) {
   if (!EnsureValidStream(aRv)) {
     return;
   }
 
-  SendErrnoToErrorResult(mConnection->SendBlob(mStream, aBlob), aRv);
+  uint64_t msgLength = aBlob.GetSize(aRv);
+  if (aRv.Failed()) {
+    return;
+  }
+
+  if (msgLength > UINT32_MAX) {
+    aRv.Throw(NS_ERROR_FILE_TOO_BIG);
+    return;
+  }
+
+  // We convert to an nsIInputStream here, because Blob is not threadsafe, and
+  // we don't convert it earlier because we need to know how large this is so we
+  // can update bufferedAmount.
+  nsCOMPtr<nsIInputStream> msgStream;
+  aBlob.CreateInputStream(getter_AddRefs(msgStream), aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
+  }
+
+  SendErrnoToErrorResult(mConnection->SendBlob(mStream, msgStream), aRv);
+  if (!aRv.Failed()) {
+    IncrementBufferedAmount(msgLength, aRv);
+  }
 }
 
 dom::Nullable<uint16_t> DataChannel::GetMaxPacketLifeTime() const {
@@ -3191,22 +3251,6 @@ void DataChannel::AppReady() {
   mQueuedMessages.Compact();
   // We never use it again...  We could even allocate the array in the odd
   // cases we need it.
-}
-
-size_t DataChannel::GetBufferedAmountLocked() const {
-  size_t buffered = 0;
-
-  for (auto& msg : mBufferedData) {
-    buffered += msg->GetLeft();
-  }
-  // XXX Note: per Michael Tuexen, there's no way to currently get the buffered
-  // amount from the SCTP stack for a single stream.  It is on their to-do
-  // list, and once we import a stack with support for that, we'll need to
-  // add it to what we buffer.  Also we'll need to ask for notification of a
-  // per- stream buffer-low event and merge that into the handling of buffer-low
-  // (the equivalent to TCP_NOTSENT_LOWAT on TCP sockets)
-
-  return buffered;
 }
 
 uint32_t DataChannel::GetBufferedAmountLowThreshold() {

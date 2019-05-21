@@ -339,7 +339,16 @@ AsyncPanZoomController* APZCTreeManager::NewAPZCInstance(
       AsyncPanZoomController::USE_GESTURE_DETECTOR);
 }
 
-TimeStamp APZCTreeManager::GetFrameTime() { return TimeStamp::Now(); }
+void APZCTreeManager::SetTestSampleTime(const Maybe<TimeStamp>& aTime) {
+  mTestSampleTime = aTime;
+}
+
+TimeStamp APZCTreeManager::GetFrameTime() {
+  if (mTestSampleTime) {
+    return *mTestSampleTime;
+  }
+  return TimeStamp::Now();
+}
 
 void APZCTreeManager::SetAllowedTouchBehavior(
     uint64_t aInputBlockId, const nsTArray<TouchBehaviorFlags>& aValues) {
@@ -3237,12 +3246,6 @@ void APZCTreeManager::CollectTransformsForChromeMainThread(
   RefPtr<GeckoContentController> controller =
       GetContentController(aRootLayerTreeId);
   if (!controller) {
-    return;
-  }
-  if (controller->IsRemote() && !gfxPrefs::FissionApzMatricesWithGpuProcess()) {
-    // Avoid IPC errors in the GPU process case until
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=1533673
-    // is resolved.
     return;
   }
   nsTArray<MatrixMessage> messages;

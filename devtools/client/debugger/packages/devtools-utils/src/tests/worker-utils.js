@@ -2,11 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
-const {
-  WorkerDispatcher,
-  workerHandler,
-  streamingWorkerHandler
-} = require("../worker-utils");
+const { WorkerDispatcher, workerHandler } = require("../worker-utils");
 
 describe("worker utils", () => {
   it("starts a worker", () => {
@@ -21,7 +17,7 @@ describe("worker utils", () => {
     const terminateMock = jest.fn();
 
     global.Worker = jest.fn(() => ({
-      terminate: terminateMock
+      terminate: terminateMock,
     }));
 
     dispatcher.start();
@@ -39,7 +35,7 @@ describe("worker utils", () => {
     global.Worker = jest.fn(() => {
       return {
         postMessage: postMessageMock,
-        addEventListener: addEventListenerMock
+        addEventListener: addEventListenerMock,
       };
     });
 
@@ -52,7 +48,7 @@ describe("worker utils", () => {
     expect(postMessageMockCall).toEqual({
       calls: [["bar"]],
       id: 1,
-      method: "foo"
+      method: "foo",
     });
 
     expect(addEventListenerMock.mock.calls).toHaveLength(1);
@@ -70,7 +66,7 @@ describe("worker utils", () => {
     global.Worker = jest.fn(() => {
       return {
         postMessage: postMessageMock,
-        addEventListener: addEventListenerMock
+        addEventListener: addEventListenerMock,
       };
     });
 
@@ -88,7 +84,7 @@ describe("worker utils", () => {
     expect(postMessageMockCall).toEqual({
       calls: [["bar"], ["baz"]],
       id: 1,
-      method: "foo"
+      method: "foo",
     });
 
     expect(addEventListenerMock.mock.calls).toHaveLength(1);
@@ -105,7 +101,7 @@ describe("worker utils", () => {
     const callee = {
       doSomething: () => {
         throw new Error("failed");
-      }
+      },
     };
 
     const handler = workerHandler(callee);
@@ -118,13 +114,13 @@ describe("worker utils", () => {
       id: 53,
       results: [
         {
-          error: "Error: failed"
-        }
-      ]
+          error: "Error: failed",
+        },
+      ],
     });
   });
 
-  it("test a task completing when the worker has shutdown", () => {
+  it("test a task completing when the worker has shutdown", async () => {
     const dispatcher = new WorkerDispatcher();
     const postMessageMock = jest.fn();
     const addEventListenerMock = jest.fn();
@@ -134,70 +130,21 @@ describe("worker utils", () => {
       return {
         postMessage: postMessageMock,
         addEventListener: addEventListenerMock,
-        terminate: terminateMock
+        terminate: terminateMock,
       };
     });
 
     dispatcher.start();
     const task = dispatcher.task("foo");
-    const resp = task("bar");
-    resp.catch(e => expect(e).toEqual("Oops, The worker has shutdown!"));
+
+    try {
+      await task("bar");
+    } catch (e) {
+      expect(e).toEqual("Oops, The worker has shutdown!");
+    }
 
     const listener = addEventListenerMock.mock.calls[0][1];
     dispatcher.stop();
     listener({ data: { id: 1 } });
-  });
-});
-
-it("streams a task", async () => {
-  jest.useRealTimers();
-
-  const postMessageMock = jest.fn();
-
-  const worker = {
-    postMessage: postMessageMock
-  };
-
-  function makeTasks() {
-    return [
-      {
-        callback: () => new Promise(resolve => setTimeout(() => resolve(1), 50))
-      },
-      {
-        callback: () => new Promise(resolve => setTimeout(() => resolve(2), 50))
-      }
-    ];
-  }
-
-  const _workerHandler = streamingWorkerHandler(
-    { makeTasks },
-    { timeout: 25 },
-    worker
-  );
-
-  const id = 1;
-  const task = _workerHandler({
-    data: { id, method: "makeTasks", calls: [[]] }
-  });
-  await task;
-
-  expect(postMessageMock.mock.calls).toHaveLength(4);
-  expect(postMessageMock.mock.calls[0][0]).toEqual({
-    id,
-    status: "start"
-  });
-  expect(postMessageMock.mock.calls[1][0]).toEqual({
-    id,
-    status: "pending",
-    data: [1]
-  });
-  expect(postMessageMock.mock.calls[2][0]).toEqual({
-    id,
-    status: "pending",
-    data: [2]
-  });
-  expect(postMessageMock.mock.calls[3][0]).toEqual({
-    id,
-    status: "done"
   });
 });

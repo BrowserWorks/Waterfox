@@ -12,38 +12,38 @@ use api::{PropertyBinding, ReferenceFrame, ReferenceFrameKind, ScrollFrameDispla
 use api::{Shadow, SpaceAndClipInfo, SpatialId, StackingContext, StickyFrameDisplayItem};
 use api::{ClipMode, PrimitiveKeyKind, TransformStyle, YuvColorSpace, YuvData, TempFilterData};
 use api::units::*;
-use clip::{ClipChainId, ClipRegion, ClipItemKey, ClipStore};
-use clip_scroll_tree::{ROOT_SPATIAL_NODE_INDEX, ClipScrollTree, SpatialNodeIndex};
-use frame_builder::{ChasePrimitive, FrameBuilder, FrameBuilderConfig};
-use glyph_rasterizer::FontInstance;
-use hit_test::{HitTestingItem, HitTestingScene};
-use image::simplify_repeated_primitive;
-use intern::Interner;
-use internal_types::{FastHashMap, FastHashSet, LayoutPrimitiveInfo};
-use picture::{Picture3DContext, PictureCompositeMode, PicturePrimitive, PictureOptions};
-use picture::{BlitReason, PrimitiveList, TileCache};
-use prim_store::{PrimitiveInstance, PrimitiveSceneData};
-use prim_store::{PrimitiveInstanceKind, NinePatchDescriptor, PrimitiveStore};
-use prim_store::{ScrollNodeAndClipChain, PictureIndex};
-use prim_store::{InternablePrimitive, SegmentInstanceIndex};
-use prim_store::{register_prim_chase_id, get_line_decoration_sizes};
-use prim_store::borders::{ImageBorder, NormalBorderPrim};
-use prim_store::gradient::{GradientStopKey, LinearGradient, RadialGradient, RadialGradientParams};
-use prim_store::image::{Image, YuvImage};
-use prim_store::line_dec::{LineDecoration, LineDecorationCacheKey};
-use prim_store::picture::{Picture, PictureCompositeKey, PictureKey};
-use prim_store::text_run::TextRun;
-use render_backend::{DocumentView};
-use resource_cache::{FontInstanceMap, ImageRequest};
-use scene::{Scene, StackingContextHelpers};
-use scene_builder::{DocumentStats, Interners};
-use spatial_node::{StickyFrameInfo, ScrollFrameKind, SpatialNodeType};
+use crate::clip::{ClipChainId, ClipRegion, ClipItemKey, ClipStore};
+use crate::clip_scroll_tree::{ROOT_SPATIAL_NODE_INDEX, ClipScrollTree, SpatialNodeIndex};
+use crate::frame_builder::{ChasePrimitive, FrameBuilder, FrameBuilderConfig};
+use crate::glyph_rasterizer::FontInstance;
+use crate::hit_test::{HitTestingItem, HitTestingScene};
+use crate::image::simplify_repeated_primitive;
+use crate::intern::Interner;
+use crate::internal_types::{FastHashMap, FastHashSet, LayoutPrimitiveInfo, Filter};
+use crate::picture::{Picture3DContext, PictureCompositeMode, PicturePrimitive, PictureOptions};
+use crate::picture::{BlitReason, PrimitiveList, TileCache};
+use crate::prim_store::{PrimitiveInstance, PrimitiveSceneData};
+use crate::prim_store::{PrimitiveInstanceKind, NinePatchDescriptor, PrimitiveStore};
+use crate::prim_store::{ScrollNodeAndClipChain, PictureIndex};
+use crate::prim_store::{InternablePrimitive, SegmentInstanceIndex};
+use crate::prim_store::{register_prim_chase_id, get_line_decoration_sizes};
+use crate::prim_store::borders::{ImageBorder, NormalBorderPrim};
+use crate::prim_store::gradient::{GradientStopKey, LinearGradient, RadialGradient, RadialGradientParams};
+use crate::prim_store::image::{Image, YuvImage};
+use crate::prim_store::line_dec::{LineDecoration, LineDecorationCacheKey};
+use crate::prim_store::picture::{Picture, PictureCompositeKey, PictureKey};
+use crate::prim_store::text_run::TextRun;
+use crate::render_backend::{DocumentView};
+use crate::resource_cache::{FontInstanceMap, ImageRequest};
+use crate::scene::{Scene, StackingContextHelpers};
+use crate::scene_builder::{DocumentStats, Interners};
+use crate::spatial_node::{StickyFrameInfo, ScrollFrameKind, SpatialNodeType};
 use std::{f32, mem, usize, ops};
 use std::collections::vec_deque::VecDeque;
 use std::sync::Arc;
-use tiling::{CompositeOps};
-use util::{MaxRect, VecHelper};
-use ::filterdata::{SFilterDataComponent, SFilterData, SFilterDataKey};
+use crate::tiling::{CompositeOps};
+use crate::util::{MaxRect, VecHelper};
+use crate::filterdata::{SFilterDataComponent, SFilterData, SFilterDataKey};
 
 #[derive(Debug, Copy, Clone)]
 struct ClipNode {
@@ -512,6 +512,7 @@ impl<'a> DisplayListFlattener<'a> {
             &prim_list.prim_instances,
             *self.pipeline_clip_chain_stack.last().unwrap(),
             &self.prim_store.pictures,
+            &self.clip_scroll_tree,
         );
 
         let pic_index = self.prim_store.pictures.alloc().init(PicturePrimitive::new_image(
@@ -1279,7 +1280,7 @@ impl<'a> DisplayListFlattener<'a> {
                     apply_pipeline_clip
                 );
 
-                self.push_shadow(info.shadow, clip_and_scroll);
+                self.push_shadow(info.shadow, clip_and_scroll, info.should_inflate);
             }
             DisplayItem::PopAllShadows => {
                 self.pop_all_shadows();
@@ -1755,11 +1756,11 @@ impl<'a> DisplayListFlattener<'a> {
 
         // For each filter, create a new image with that composite mode.
         let mut current_filter_data_index = 0;
-        for filter in &stacking_context.composite_ops.filters {
-            let filter = filter.sanitize();
+        for filter in &mut stacking_context.composite_ops.filters {
+            filter.sanitize();
 
-            let composite_mode = Some(match filter {
-                FilterOp::ComponentTransfer => {
+            let composite_mode = Some(match *filter {
+                Filter::ComponentTransfer => {
                     let filter_data =
                         &stacking_context.composite_ops.filter_datas[current_filter_data_index];
                     let filter_data = filter_data.sanitize();
@@ -2097,12 +2098,14 @@ impl<'a> DisplayListFlattener<'a> {
         &mut self,
         shadow: Shadow,
         clip_and_scroll: ScrollNodeAndClipChain,
+        should_inflate: bool,
     ) {
         // Store this shadow in the pending list, for processing
         // during pop_all_shadows.
         self.pending_shadow_items.push_back(ShadowItem::Shadow(PendingShadow {
             shadow,
             clip_and_scroll,
+            should_inflate,
         }));
     }
 
@@ -2201,7 +2204,8 @@ impl<'a> DisplayListFlattener<'a> {
                         // blur radius is 0, the code in Picture::prepare_for_render will
                         // detect this and mark the picture to be drawn directly into the
                         // parent picture, which avoids an intermediate surface and blur.
-                        let blur_filter = FilterOp::Blur(std_deviation).sanitize();
+                        let mut blur_filter = Filter::Blur(std_deviation);
+                        blur_filter.sanitize();
                         let composite_mode = PictureCompositeMode::Filter(blur_filter);
                         let composite_mode_key = Some(composite_mode.clone()).into();
                         let is_backface_visible = true; //TODO: double check this
@@ -2209,7 +2213,7 @@ impl<'a> DisplayListFlattener<'a> {
                         // Pass through configuration information about whether WR should
                         // do the bounding rect inflation for text shadows.
                         let options = PictureOptions {
-                            inflate_if_required: pending_shadow.shadow.should_inflate,
+                            inflate_if_required: pending_shadow.should_inflate,
                         };
 
                         // Create the primitive to draw the shadow picture into the scene.
@@ -2311,16 +2315,16 @@ impl<'a> DisplayListFlattener<'a> {
         // Offset the local rect and clip rect by the shadow offset.
         let mut info = pending_primitive.info.clone();
         info.rect = info.rect.translate(&pending_shadow.shadow.offset);
-        info.clip_rect = info.clip_rect.translate(&pending_shadow.shadow.offset);
+        info.clip_rect = info.clip_rect.translate(
+            &pending_shadow.shadow.offset
+        );
 
         // Construct and add a primitive for the given shadow.
         let shadow_prim_instance = self.create_primitive(
             &info,
             pending_primitive.clip_and_scroll.clip_chain_id,
             pending_primitive.clip_and_scroll.spatial_node_index,
-            pending_primitive.prim.create_shadow(
-                &pending_shadow.shadow,
-            ),
+            pending_primitive.prim.create_shadow(&pending_shadow.shadow),
         );
 
         // Add the new primitive to the shadow picture.
@@ -3030,6 +3034,7 @@ pub struct PendingPrimitive<T> {
 /// shadows, and handled at once during pop_all_shadows.
 pub struct PendingShadow {
     shadow: Shadow,
+    should_inflate: bool,
     clip_and_scroll: ScrollNodeAndClipChain,
 }
 

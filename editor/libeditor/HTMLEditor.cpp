@@ -133,13 +133,6 @@ bool HTMLEditorPrefs::sUserWantsToEnableResizingUIByDefault = false;
 bool HTMLEditorPrefs::sUserWantsToEnableInlineTableEditingUIByDefault = false;
 bool HTMLEditorPrefs::sUserWantsToEnableAbsolutePositioningUIByDefault = false;
 
-template EditorDOMPoint HTMLEditor::InsertNodeIntoProperAncestorWithTransaction(
-    nsIContent& aNode, const EditorDOMPoint& aPointToInsert,
-    SplitAtEdges aSplitAtEdges);
-template EditorDOMPoint HTMLEditor::InsertNodeIntoProperAncestorWithTransaction(
-    nsIContent& aNode, const EditorRawDOMPoint& aPointToInsert,
-    SplitAtEdges aSplitAtEdges);
-
 HTMLEditor::HTMLEditor()
     : mCRInParagraphCreatesParagraph(false),
       mCSSAware(false),
@@ -369,7 +362,7 @@ HTMLEditor::NotifySelectionChanged(Document* aDocument, Selection* aSelection,
     typeInState->OnSelectionChange(*aSelection);
 
     // We used a class which derived from nsISelectionListener to call
-    // HTMLEditor::RefereshEditingUI().  The lifetime of the class was
+    // HTMLEditor::RefreshEditingUI().  The lifetime of the class was
     // exactly same as mTypeInState.  So, call it only when mTypeInState
     // is not nullptr.
     if ((aReason & (nsISelectionListener::MOUSEDOWN_REASON |
@@ -381,8 +374,8 @@ HTMLEditor::NotifySelectionChanged(Document* aDocument, Selection* aSelection,
       // FYI: This is an XPCOM method.  So, the caller, Selection, guarantees
       //      the lifetime of this instance.  So, don't need to grab this with
       //      local variable.
-      DebugOnly<nsresult> rv = RefereshEditingUI();
-      NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "RefereshEditingUI() failed");
+      DebugOnly<nsresult> rv = RefreshEditingUI();
+      NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "RefreshEditingUI() failed");
     }
   }
 
@@ -1184,7 +1177,7 @@ nsresult HTMLEditor::InsertBrElementAtSelectionWithTransaction() {
     }
   }
 
-  EditorRawDOMPoint atStartOfSelection(
+  EditorDOMPoint atStartOfSelection(
       EditorBase::GetStartPoint(*SelectionRefPtr()));
   if (NS_WARN_IF(!atStartOfSelection.IsSet())) {
     return NS_ERROR_FAILURE;
@@ -1298,7 +1291,7 @@ nsresult HTMLEditor::ReplaceHeadContentsWithSourceWithTransaction(
   // Loop over the contents of the fragment and move into the document
   while (nsCOMPtr<nsIContent> child = documentFragment->GetFirstChild()) {
     nsresult rv = InsertNodeWithTransaction(
-        *child, EditorRawDOMPoint(headNode, offsetOfNewNode++));
+        *child, EditorDOMPoint(headNode, offsetOfNewNode++));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -1611,7 +1604,7 @@ HTMLEditor::InsertElementAtSelection(Element* aElement, bool aDeleteSelection) {
     if (SelectionRefPtr()->GetAnchorNode()) {
       EditorRawDOMPoint atAnchor(SelectionRefPtr()->AnchorRef());
       // Adjust position based on the node we are going to insert.
-      EditorRawDOMPoint pointToInsert =
+      EditorDOMPoint pointToInsert =
           GetBetterInsertionPointFor(*aElement, atAnchor);
       if (NS_WARN_IF(!pointToInsert.IsSet())) {
         return NS_ERROR_FAILURE;
@@ -1654,9 +1647,8 @@ HTMLEditor::InsertElementAtSelection(Element* aElement, bool aDeleteSelection) {
   return NS_OK;
 }
 
-template <typename PT, typename CT>
 EditorDOMPoint HTMLEditor::InsertNodeIntoProperAncestorWithTransaction(
-    nsIContent& aNode, const EditorDOMPointBase<PT, CT>& aPointToInsert,
+    nsIContent& aNode, const EditorDOMPoint& aPointToInsert,
     SplitAtEdges aSplitAtEdges) {
   if (NS_WARN_IF(!aPointToInsert.IsSet())) {
     return EditorDOMPoint();
@@ -1692,8 +1684,9 @@ EditorDOMPoint HTMLEditor::InsertNodeIntoProperAncestorWithTransaction(
   if (pointToInsert != aPointToInsert) {
     // We need to split some levels above the original selection parent.
     MOZ_ASSERT(pointToInsert.GetChild());
-    SplitNodeResult splitNodeResult = SplitNodeDeepWithTransaction(
-        *pointToInsert.GetChild(), aPointToInsert, aSplitAtEdges);
+    SplitNodeResult splitNodeResult =
+        SplitNodeDeepWithTransaction(MOZ_KnownLive(*pointToInsert.GetChild()),
+                                     aPointToInsert, aSplitAtEdges);
     if (NS_WARN_IF(splitNodeResult.Failed())) {
       return EditorDOMPoint();
     }
@@ -2119,7 +2112,7 @@ HTMLEditor::MakeOrChangeList(const nsAString& aListType, bool entireList,
       return NS_ERROR_FAILURE;
     }
 
-    EditorRawDOMPoint atStartOfSelection(firstRange->StartRef());
+    EditorDOMPoint atStartOfSelection(firstRange->StartRef());
     if (NS_WARN_IF(!atStartOfSelection.IsSet()) ||
         NS_WARN_IF(!atStartOfSelection.GetContainerAsContent())) {
       return NS_ERROR_FAILURE;
@@ -2139,7 +2132,7 @@ HTMLEditor::MakeOrChangeList(const nsAString& aListType, bool entireList,
     if (pointToInsertList.GetContainer() != atStartOfSelection.GetContainer()) {
       // We need to split up to the child of parent.
       SplitNodeResult splitNodeResult = SplitNodeDeepWithTransaction(
-          *pointToInsertList.GetChild(), atStartOfSelection,
+          MOZ_KnownLive(*pointToInsertList.GetChild()), atStartOfSelection,
           SplitAtEdges::eAllowToCreateEmptyContainer);
       if (NS_WARN_IF(splitNodeResult.Failed())) {
         return splitNodeResult.Rv();
@@ -2159,9 +2152,8 @@ HTMLEditor::MakeOrChangeList(const nsAString& aListType, bool entireList,
       return NS_ERROR_FAILURE;
     }
     // make a list item
-    EditorRawDOMPoint atStartOfNewList(newList, 0);
     RefPtr<Element> newItem =
-        CreateNodeWithTransaction(*nsGkAtoms::li, atStartOfNewList);
+        CreateNodeWithTransaction(*nsGkAtoms::li, EditorDOMPoint(newList, 0));
     if (NS_WARN_IF(!newItem)) {
       return NS_ERROR_FAILURE;
     }
@@ -2295,7 +2287,7 @@ nsresult HTMLEditor::InsertBasicBlockWithTransaction(nsAtom& aTagName) {
       return NS_ERROR_FAILURE;
     }
 
-    EditorRawDOMPoint atStartOfSelection(firstRange->StartRef());
+    EditorDOMPoint atStartOfSelection(firstRange->StartRef());
     if (NS_WARN_IF(!atStartOfSelection.IsSet()) ||
         NS_WARN_IF(!atStartOfSelection.GetContainerAsContent())) {
       return NS_ERROR_FAILURE;
@@ -2316,7 +2308,7 @@ nsresult HTMLEditor::InsertBasicBlockWithTransaction(nsAtom& aTagName) {
         atStartOfSelection.GetContainer()) {
       // We need to split up to the child of the point to insert a block.
       SplitNodeResult splitBlockResult = SplitNodeDeepWithTransaction(
-          *pointToInsertBlock.GetChild(), atStartOfSelection,
+          MOZ_KnownLive(*pointToInsertBlock.GetChild()), atStartOfSelection,
           SplitAtEdges::eAllowToCreateEmptyContainer);
       if (NS_WARN_IF(splitBlockResult.Failed())) {
         return splitBlockResult.Rv();
@@ -2435,7 +2427,7 @@ nsresult HTMLEditor::IndentOrOutdentAsSubAction(
       return NS_ERROR_FAILURE;
     }
 
-    EditorRawDOMPoint atStartOfSelection(firstRange->StartRef());
+    EditorDOMPoint atStartOfSelection(firstRange->StartRef());
     if (NS_WARN_IF(!atStartOfSelection.IsSet()) ||
         NS_WARN_IF(!atStartOfSelection.GetContainerAsContent())) {
       return NS_ERROR_FAILURE;
@@ -2457,8 +2449,8 @@ nsresult HTMLEditor::IndentOrOutdentAsSubAction(
         atStartOfSelection.GetContainer()) {
       // We need to split up to the child of parent.
       SplitNodeResult splitBlockquoteResult = SplitNodeDeepWithTransaction(
-          *pointToInsertBlockquote.GetChild(), atStartOfSelection,
-          SplitAtEdges::eAllowToCreateEmptyContainer);
+          MOZ_KnownLive(*pointToInsertBlockquote.GetChild()),
+          atStartOfSelection, SplitAtEdges::eAllowToCreateEmptyContainer);
       if (NS_WARN_IF(splitBlockquoteResult.Failed())) {
         return splitBlockquoteResult.Rv();
       }
@@ -3777,7 +3769,8 @@ nsresult HTMLEditor::CollapseAdjacentTextNodes(nsRange* aInRange) {
     // get the prev sibling of the right node, and see if its leftTextNode
     nsCOMPtr<nsINode> prevSibOfRightNode = rightTextNode->GetPreviousSibling();
     if (prevSibOfRightNode && prevSibOfRightNode == leftTextNode) {
-      nsresult rv = JoinNodesWithTransaction(*leftTextNode, *rightTextNode);
+      nsresult rv = JoinNodesWithTransaction(MOZ_KnownLive(*leftTextNode),
+                                             MOZ_KnownLive(*rightTextNode));
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
       }
@@ -3832,7 +3825,7 @@ nsresult HTMLEditor::RemoveBlockContainerWithTransaction(Element& aElement) {
         !sibling->IsHTMLElement(nsGkAtoms::br) && !IsBlockNode(child)) {
       // Insert br node
       RefPtr<Element> brElement =
-          InsertBrElementWithTransaction(EditorRawDOMPoint(&aElement, 0));
+          InsertBrElementWithTransaction(EditorDOMPoint(&aElement, 0));
       if (NS_WARN_IF(!brElement)) {
         return NS_ERROR_FAILURE;
       }
@@ -3850,7 +3843,7 @@ nsresult HTMLEditor::RemoveBlockContainerWithTransaction(Element& aElement) {
       MOZ_ASSERT(child, "aNode has first editable child but not last?");
       if (!IsBlockNode(child) && !child->IsHTMLElement(nsGkAtoms::br)) {
         // Insert br node
-        EditorRawDOMPoint endOfNode;
+        EditorDOMPoint endOfNode;
         endOfNode.SetToEndOf(&aElement);
         RefPtr<Element> brElement = InsertBrElementWithTransaction(endOfNode);
         if (NS_WARN_IF(!brElement)) {
@@ -3873,7 +3866,7 @@ nsresult HTMLEditor::RemoveBlockContainerWithTransaction(Element& aElement) {
           !sibling->IsHTMLElement(nsGkAtoms::br)) {
         // Insert br node
         RefPtr<Element> brElement =
-            InsertBrElementWithTransaction(EditorRawDOMPoint(&aElement, 0));
+            InsertBrElementWithTransaction(EditorDOMPoint(&aElement, 0));
         if (NS_WARN_IF(!brElement)) {
           return NS_ERROR_FAILURE;
         }
@@ -4387,9 +4380,9 @@ nsresult HTMLEditor::SetCSSBackgroundColorWithTransaction(
       } else if (startNode == endNode &&
                  startNode->IsHTMLElement(nsGkAtoms::body) && isCollapsed) {
         // No block in the document, let's apply the background to the body
-        mCSSEditUtils->SetCSSEquivalentToHTMLStyle(startNode->AsElement(),
-                                                   nullptr, nsGkAtoms::bgcolor,
-                                                   &aColor, false);
+        mCSSEditUtils->SetCSSEquivalentToHTMLStyle(
+            MOZ_KnownLive(startNode->AsElement()), nullptr, nsGkAtoms::bgcolor,
+            &aColor, false);
       } else if (startNode == endNode && (endOffset - startOffset == 1 ||
                                           (!startOffset && !endOffset))) {
         // A unique node is selected, let's also apply the background color to
@@ -4560,9 +4553,8 @@ nsresult HTMLEditor::CopyLastEditableChildStylesWithTransaction(
     nsAtom* tagName = elementInPreviousBlock->NodeInfo()->NameAtom();
     // At first time, just create the most descendant inline container element.
     if (!firstClonsedElement) {
-      EditorRawDOMPoint atStartOfNewBlock(newBlock, 0);
-      firstClonsedElement = lastClonedElement =
-          CreateNodeWithTransaction(*tagName, atStartOfNewBlock);
+      firstClonsedElement = lastClonedElement = CreateNodeWithTransaction(
+          MOZ_KnownLive(*tagName), EditorDOMPoint(newBlock, 0));
       if (NS_WARN_IF(!firstClonsedElement)) {
         return NS_ERROR_FAILURE;
       }
@@ -4589,7 +4581,7 @@ nsresult HTMLEditor::CopyLastEditableChildStylesWithTransaction(
   }
 
   RefPtr<Element> brElement =
-      InsertBrElementWithTransaction(EditorRawDOMPoint(firstClonsedElement, 0));
+      InsertBrElementWithTransaction(EditorDOMPoint(firstClonsedElement, 0));
   if (NS_WARN_IF(!brElement)) {
     return NS_ERROR_FAILURE;
   }

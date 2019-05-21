@@ -9,6 +9,8 @@ ChromeUtils.defineModuleGetter(this, "FxAccounts",
   "resource://gre/modules/FxAccounts.jsm");
 ChromeUtils.defineModuleGetter(this, "Services",
   "resource://gre/modules/Services.jsm");
+ChromeUtils.defineModuleGetter(this, "PrivateBrowsingUtils",
+  "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 class _BookmarkPanelHub {
   constructor() {
@@ -16,34 +18,39 @@ class _BookmarkPanelHub {
     this._trigger = {id: "bookmark-panel"};
     this._handleMessageRequest = null;
     this._addImpression = null;
-    this._initalized = false;
+    this._dispatch = null;
+    this._initialized = false;
     this._response = null;
     this._l10n = null;
 
     this.messageRequest = this.messageRequest.bind(this);
     this.toggleRecommendation = this.toggleRecommendation.bind(this);
+    this.sendUserEventTelemetry = this.sendUserEventTelemetry.bind(this);
     this.collapseMessage = this.collapseMessage.bind(this);
   }
 
   /**
    * @param {function} handleMessageRequest
    * @param {function} addImpression
+   * @param {function} dispatch - Used for sending user telemetry information
    */
-  init(handleMessageRequest, addImpression) {
+  init(handleMessageRequest, addImpression, dispatch) {
     this._handleMessageRequest = handleMessageRequest;
     this._addImpression = addImpression;
+    this._dispatch = dispatch;
     this._l10n = new DOMLocalization([
       "browser/branding/sync-brand.ftl",
       "browser/newtab/asrouter.ftl",
     ]);
-    this._initalized = true;
+    this._initialized = true;
   }
 
   uninit() {
     this._l10n = null;
-    this._initalized = false;
+    this._initialized = false;
     this._handleMessageRequest = null;
     this._addImpression = null;
+    this._dispatch = null;
     this._response = null;
   }
 
@@ -57,7 +64,11 @@ class _BookmarkPanelHub {
    * @returns {obj|null} response object or null if no messages matched
    */
   async messageRequest(target, win) {
-    if (this._response && this._response.url === target.url && this._response.content) {
+    if (!this._initialized) {
+      return false;
+    }
+
+    if (this._response && this._response.win === win && this._response.url === target.url && this._response.content) {
       this.showMessage(this._response.content, target, win);
       return true;
     }
@@ -83,6 +94,7 @@ class _BookmarkPanelHub {
     if (response && response.content) {
       this.showMessage(response.content, target, win);
       this.sendImpression();
+      this.sendUserEventTelemetry("IMPRESSION", win);
     } else {
       this.hideMessage(target);
     }
@@ -111,6 +123,7 @@ class _BookmarkPanelHub {
           triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({}),
           csp: null,
         });
+        this.sendUserEventTelemetry("CLICK", win);
       });
       recommendation.style.color = message.color;
       recommendation.style.background = `-moz-linear-gradient(-45deg, ${message.background_color_1} 0%, ${message.background_color_2} 70%)`;
@@ -119,6 +132,7 @@ class _BookmarkPanelHub {
       close.setAttribute("aria-label", "close");
       this._l10n.setAttributes(close, message.close_button.tooltiptext);
       close.addEventListener("click", e => {
+        this.sendUserEventTelemetry("DISMISS", win);
         this.collapseMessage();
         target.close(e);
       });
@@ -180,6 +194,20 @@ class _BookmarkPanelHub {
 
   sendImpression() {
     this._addImpression(this._response);
+  }
+
+  sendUserEventTelemetry(event, win) {
+    // Only send pings for non private browsing windows
+    if (!PrivateBrowsingUtils.isBrowserPrivate(win.ownerGlobal.gBrowser.selectedBrowser)) {
+      this._sendTelemetry({message_id: this._response.id, bucket_id: this._response.id, event});
+    }
+  }
+
+  _sendTelemetry(ping) {
+    this._dispatch({
+      type: "DOORHANGER_TELEMETRY",
+      data: {action: "cfr_user_event", source: "CFR", ...ping},
+    });
   }
 }
 

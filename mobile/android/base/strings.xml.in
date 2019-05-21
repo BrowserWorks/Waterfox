@@ -290,11 +290,6 @@
   <string name="pref_update_autodownload_disabled">&pref_update_autodownload_never;</string>
   <string name="pref_update_autodownload_enabled">&pref_update_autodownload_always;</string>
 
-  <string name="tracking_protection_prompt_title">&tracking_protection_prompt_title;</string>
-  <string name="tracking_protection_prompt_text">&tracking_protection_prompt_text;</string>
-  <string name="tracking_protection_prompt_tip_text">&tracking_protection_prompt_tip_text;</string>
-  <string name="tracking_protection_prompt_action_button">&tracking_protection_prompt_action_button;</string>
-
   <string name="pref_tab_queue_title">&pref_tab_queue_title3;</string>
   <string name="pref_tab_queue_summary">&pref_tab_queue_summary4;</string>
   <string name="tab_queue_prompt_title">&tab_queue_prompt_title;</string>
@@ -313,7 +308,6 @@
   <string name="tab_queue_notification_settings">&tab_queue_notification_settings;</string>
 
   <string name="pref_default_browser">&pref_default_browser2;</string>
-  <string name="pref_default_browser_mozilla_support_tablet">&pref_default_browser_mozilla_support_tablet;</string>
   <string name="default_browser_system_settings_toast">&default_browser_system_settings_toast;</string>
 
   <string name="pref_about_firefox">&pref_about_firefox;</string>
@@ -659,6 +653,7 @@
   <string name="pip_pause_button_title">&pip_pause_button_title;</string>
   <string name="pip_pause_button_description">&pip_pause_button_description;</string>
 
+  <string name="pref_notification_settings_link">&pref_notification_settings_link;</string>
   <string name="default_notification_channel2">&default_notification_channel2;</string>
   <string name="mls_notification_channel">&mls_notification_channel;</string>
   <string name="media_notification_channel2">&media_notification_channel2;</string>

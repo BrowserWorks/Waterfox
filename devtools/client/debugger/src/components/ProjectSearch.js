@@ -20,7 +20,7 @@ import {
   getTextSearchResults,
   getTextSearchStatus,
   getTextSearchQuery,
-  getContext
+  getContext,
 } from "../selectors";
 
 import ManagedTree from "./shared/ManagedTree";
@@ -42,22 +42,21 @@ export type Match = {
   matchIndex: number,
   match: string,
   value: string,
-  text: string
+  text: string,
 };
 
 type Result = {
   type: "RESULT",
   filepath: string,
   matches: Array<Match>,
-  sourceId: string
+  sourceId: string,
 };
 
 type Item = Result | Match;
 
 type State = {
   inputValue: string,
-  inputFocused: boolean,
-  focusedItem: ?Item
+  focusedItem: ?Item,
 };
 
 type Props = {
@@ -71,7 +70,7 @@ type Props = {
   clearSearch: typeof actions.clearSearch,
   selectSpecificLocation: typeof actions.selectSpecificLocation,
   setActiveSearch: typeof actions.setActiveSearch,
-  doSearchForHighlight: typeof actions.doSearchForHighlight
+  doSearchForHighlight: typeof actions.doSearchForHighlight,
 };
 
 function getFilePath(item: Item, index?: number) {
@@ -90,8 +89,7 @@ export class ProjectSearch extends Component<Props, State> {
     super(props);
     this.state = {
       inputValue: this.props.query || "",
-      inputFocused: false,
-      focusedItem: null
+      focusedItem: null,
     };
   }
 
@@ -144,7 +142,7 @@ export class ProjectSearch extends Component<Props, State> {
     this.props.selectSpecificLocation(this.props.cx, {
       sourceId: matchItem.sourceId,
       line: matchItem.line,
-      column: matchItem.column
+      column: matchItem.column,
     });
     this.props.doSearchForHighlight(
       this.state.inputValue,
@@ -179,11 +177,7 @@ export class ProjectSearch extends Component<Props, State> {
   };
 
   onEnterPress = () => {
-    if (
-      !this.isProjectSearchEnabled() ||
-      !this.state.focusedItem ||
-      this.state.inputFocused
-    ) {
+    if (!this.isProjectSearchEnabled() || !this.state.focusedItem) {
       return;
     }
     if (this.state.focusedItem.type === "MATCH") {
@@ -301,8 +295,6 @@ export class ProjectSearch extends Component<Props, State> {
         summaryMsg={this.renderSummary()}
         isLoading={status === statusType.fetching}
         onChange={this.inputOnChange}
-        onFocus={() => this.setState({ inputFocused: true })}
-        onBlur={() => this.setState({ inputFocused: false })}
         onKeyDown={this.onKeyDown}
         onHistoryScroll={this.onHistoryScroll}
         handleClose={
@@ -330,7 +322,7 @@ export class ProjectSearch extends Component<Props, State> {
   }
 }
 ProjectSearch.contextTypes = {
-  shortcuts: PropTypes.object
+  shortcuts: PropTypes.object,
 };
 
 const mapStateToProps = state => ({
@@ -338,7 +330,7 @@ const mapStateToProps = state => ({
   activeSearch: getActiveSearch(state),
   results: getTextSearchResults(state),
   query: getTextSearchQuery(state),
-  status: getTextSearchStatus(state)
+  status: getTextSearchStatus(state),
 });
 
 export default connect(
@@ -349,6 +341,6 @@ export default connect(
     clearSearch: actions.clearSearch,
     selectSpecificLocation: actions.selectSpecificLocation,
     setActiveSearch: actions.setActiveSearch,
-    doSearchForHighlight: actions.doSearchForHighlight
+    doSearchForHighlight: actions.doSearchForHighlight,
   }
 )(ProjectSearch);

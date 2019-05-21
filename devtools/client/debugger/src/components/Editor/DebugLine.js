@@ -9,7 +9,8 @@ import {
   getDocument,
   hasDocument,
   startOperation,
-  endOperation
+  endOperation,
+  getTokenEnd,
 } from "../../utils/editor";
 import { isException } from "../../utils/pause";
 import { getIndentation } from "../../utils/indentation";
@@ -18,7 +19,7 @@ import {
   getVisibleSelectedFrame,
   getPauseReason,
   getSourceWithContent,
-  getCurrentThread
+  getCurrentThread,
 } from "../../selectors";
 
 import type { Frame, Why, SourceWithContent } from "../../types";
@@ -26,12 +27,12 @@ import type { Frame, Why, SourceWithContent } from "../../types";
 type Props = {
   frame: Frame,
   why: Why,
-  source: ?SourceWithContent
+  source: ?SourceWithContent,
 };
 
 type TextClasses = {
   markTextClass: string,
-  lineClass: string
+  lineClass: string,
 };
 
 function isDocumentReady(source: ?SourceWithContent, frame) {
@@ -76,9 +77,13 @@ export class DebugLine extends PureComponent<Props> {
     const lineText = doc.getLine(line);
     column = Math.max(column, getIndentation(lineText));
 
+    // If component updates because user clicks on
+    // another source tab, codeMirror will be null.
+    const columnEnd = doc.cm ? getTokenEnd(doc.cm, line, column) : null;
+
     this.debugExpression = doc.markText(
       { ch: column, line },
-      { ch: null, line },
+      { ch: columnEnd, line },
       { className: markTextClass }
     );
   }
@@ -103,7 +108,7 @@ export class DebugLine extends PureComponent<Props> {
     if (isException(why)) {
       return {
         markTextClass: "debug-expression-error",
-        lineClass: "new-debug-line-error"
+        lineClass: "new-debug-line-error",
       };
     }
 
@@ -120,7 +125,7 @@ const mapStateToProps = state => {
   return {
     frame,
     source: frame && getSourceWithContent(state, frame.location.sourceId),
-    why: getPauseReason(state, getCurrentThread(state))
+    why: getPauseReason(state, getCurrentThread(state)),
   };
 };
 

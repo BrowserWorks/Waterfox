@@ -624,11 +624,15 @@ bool ContentChild::Init(MessageLoop* aIOLoop, base::ProcessId aParentPid,
   // when --display is set by the command line.
   if (!gfxPlatform::IsHeadless()) {
     const char* display_name = PR_GetEnv("MOZ_GDK_DISPLAY");
-#  ifndef MOZ_WAYLAND
     if (!display_name) {
-      display_name = PR_GetEnv("DISPLAY");
-    }
+      bool waylandDisabled = true;
+#  ifdef MOZ_WAYLAND
+      waylandDisabled = IsWaylandDisabled();
 #  endif
+      if (waylandDisabled) {
+        display_name = PR_GetEnv("DISPLAY");
+      }
+    }
     if (display_name) {
       int argc = 3;
       char option_name[] = "--display";
@@ -1430,7 +1434,6 @@ mozilla::ipc::IPCResult ContentChild::GetResultForRenderingInitFailure(
 
 mozilla::ipc::IPCResult ContentChild::RecvRequestPerformanceMetrics(
     const nsID& aID) {
-  MOZ_ASSERT(mozilla::StaticPrefs::dom_performance_enable_scheduler_timing());
   RefPtr<ContentChild> self = this;
   RefPtr<AbstractThread> mainThread =
       SystemGroup::AbstractMainThreadFor(TaskCategory::Performance);
@@ -2029,6 +2032,17 @@ mozilla::ipc::IPCResult ContentChild::RecvPScriptCacheConstructor(
 
 PNeckoChild* ContentChild::AllocPNeckoChild() { return new NeckoChild(); }
 
+mozilla::ipc::IPCResult ContentChild::RecvNetworkLinkTypeChange(
+    const uint32_t& aType) {
+  mNetworkLinkType = aType;
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (obs) {
+    obs->NotifyObservers(nullptr, "contentchild:network-link-type-changed",
+                         nullptr);
+  }
+  return IPC_OK();
+}
+
 bool ContentChild::DeallocPNeckoChild(PNeckoChild* necko) {
   delete necko;
   return true;
@@ -2284,6 +2298,8 @@ void ContentChild::ActorDestroy(ActorDestroyReason why) {
 
   mIdleObservers.Clear();
 
+  mBrowsingContextGroupHolder.Clear();
+
   nsCOMPtr<nsIConsoleService> svc(do_GetService(NS_CONSOLESERVICE_CONTRACTID));
   if (svc) {
     svc->UnregisterListener(mConsoleListener);
@@ -2517,17 +2533,6 @@ mozilla::ipc::IPCResult ContentChild::RecvUpdateAppLocales(
 mozilla::ipc::IPCResult ContentChild::RecvUpdateRequestedLocales(
     nsTArray<nsCString>&& aRequestedLocales) {
   LocaleService::GetInstance()->AssignRequestedLocales(aRequestedLocales);
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult ContentChild::RecvClearSiteDataReloadNeeded(
-    const nsString& aOrigin) {
-  // Rebroadcast "clear-site-data-reload-needed".
-  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-  if (obs) {
-    obs->NotifyObservers(nullptr, "clear-site-data-reload-needed",
-                         aOrigin.get());
-  }
   return IPC_OK();
 }
 
@@ -3795,7 +3800,6 @@ mozilla::ipc::IPCResult ContentChild::RecvRestoreBrowsingContextChildren(
 mozilla::ipc::IPCResult ContentChild::RecvRegisterBrowsingContextGroup(
     nsTArray<BrowsingContext::IPCInitializer>&& aInits) {
   RefPtr<BrowsingContextGroup> group = new BrowsingContextGroup();
-
   // Each of the initializers in aInits is sorted in pre-order, so our parent
   // should always be available before the element itself.
   for (auto& init : aInits) {
@@ -3906,6 +3910,11 @@ mozilla::ipc::IPCResult ContentChild::RecvCommitBrowsingContextTransaction(
     aTransaction.Apply(aContext, nullptr, &aEpochs);
   }
   return IPC_OK();
+}
+
+void ContentChild::HoldBrowsingContextGroup(BrowsingContextGroup* aBCG) {
+  RefPtr<BrowsingContextGroup> bcgPtr(aBCG);
+  mBrowsingContextGroupHolder.AppendElement(bcgPtr);
 }
 
 }  // namespace dom

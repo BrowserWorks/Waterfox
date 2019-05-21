@@ -352,13 +352,10 @@ var gXPInstallObserver = {
   // IDs of addon install related notifications
   NOTIFICATION_IDS: [
     "addon-install-blocked",
-    "addon-install-blocked-silent",
     "addon-install-complete",
     "addon-install-confirmation",
-    "addon-install-disabled",
     "addon-install-failed",
     "addon-install-origin-blocked",
-    "addon-install-started",
     "addon-progress",
     "addon-webext-permissions",
     "xpinstall-disabled",
@@ -483,10 +480,22 @@ var gXPInstallObserver = {
           installInfo.install();
         },
       };
-      let secondaryAction = {
+      let dontAllowAction = {
         label: gNavigatorBundle.getString("xpinstallPromptMessage.dontAllow"),
         accessKey: gNavigatorBundle.getString("xpinstallPromptMessage.dontAllow.accesskey"),
         callback: () => {
+          for (let install of installInfo.installs) {
+            if (install.state != AddonManager.STATE_CANCELLED) {
+              install.cancel();
+            }
+          }
+        },
+      };
+      let neverAllowAction = {
+        label: gNavigatorBundle.getString("xpinstallPromptMessage.neverAllow"),
+        accessKey: gNavigatorBundle.getString("xpinstallPromptMessage.neverAllow.accesskey"),
+        callback: () => {
+          SitePermissions.set(browser.currentURI, "install", SitePermissions.BLOCK);
           for (let install of installInfo.installs) {
             if (install.state != AddonManager.STATE_CANCELLED) {
               install.cancel();
@@ -498,7 +507,7 @@ var gXPInstallObserver = {
       secHistogram.add(Ci.nsISecurityUITelemetry.WARNING_ADDON_ASKING_PREVENTED);
       let popup = PopupNotifications.show(browser, notificationID,
                                           messageString, anchorID,
-                                          action, [secondaryAction], options);
+                                          action, [dontAllowAction, neverAllowAction], options);
       removeNotificationOnEnd(popup, installInfo.installs);
       break; }
     case "addon-install-started": {
@@ -581,6 +590,16 @@ var gXPInstallObserver = {
         } else {
           error += "Incompatible";
           args = [brandShortName, Services.appinfo.version, install.name];
+        }
+
+        if (install.addon && !Services.policies.mayInstallAddon(install.addon)) {
+          error = "addonInstallBlockedByPolicy";
+          let extensionSettings = Services.policies.getExtensionSettings(install.addon.id);
+          let message = "";
+          if (extensionSettings && "blocked_install_message" in extensionSettings) {
+            message = " " + extensionSettings.blocked_install_message;
+          }
+          args = [install.name, install.addon.id, message];
         }
 
         // Add Learn More link when refusing to install an unsigned add-on

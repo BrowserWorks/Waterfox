@@ -6,11 +6,10 @@
 use api::{ExternalScrollId, PipelineId, PropertyBinding, ReferenceFrameKind, ScrollClamping, ScrollLocation};
 use api::{TransformStyle, ScrollSensitivity, StickyOffsetBounds};
 use api::units::*;
-use clip_scroll_tree::{CoordinateSystem, CoordinateSystemId, SpatialNodeIndex, TransformUpdateState};
+use crate::clip_scroll_tree::{CoordinateSystem, CoordinateSystemId, SpatialNodeIndex, TransformUpdateState};
 use euclid::SideOffsets2D;
-use gpu_types::TransformPalette;
-use scene::SceneProperties;
-use util::{LayoutFastTransform, LayoutToWorldFastTransform, ScaleOffset, TransformedRectKind};
+use crate::scene::SceneProperties;
+use crate::util::{LayoutFastTransform, LayoutToWorldFastTransform, ScaleOffset, TransformedRectKind};
 
 #[derive(Clone, Debug)]
 pub enum SpatialNodeType {
@@ -40,7 +39,7 @@ pub struct SpatialNode {
     /// World transform for content transformed by this node.
     pub world_content_transform: LayoutToWorldFastTransform,
 
-    /// The current transform kind of world_content_transform.
+    /// The current transform kind of this node.
     pub transform_kind: TransformedRectKind,
 
     /// Pipeline that this layer belongs to
@@ -236,21 +235,6 @@ impl SpatialNode {
         self.world_viewport_transform = LayoutToWorldFastTransform::identity();
     }
 
-    pub fn push_gpu_data(
-        &mut self,
-        transform_palette: &mut TransformPalette,
-        node_index: SpatialNodeIndex,
-    ) {
-        if self.invertible {
-            transform_palette.set_world_transform(
-                node_index,
-                self.world_content_transform
-                    .to_transform()
-                    .into_owned()
-            );
-        }
-    }
-
     pub fn update(
         &mut self,
         state: &mut TransformUpdateState,
@@ -266,7 +250,7 @@ impl SpatialNode {
         }
 
         self.update_transform(state, coord_systems, scene_properties, previous_spatial_nodes);
-        self.transform_kind = self.world_content_transform.kind();
+        self.transform_kind = self.world_viewport_transform.kind();
 
         // If this node is a reference frame, we check if it has a non-invertible matrix.
         // For non-reference-frames we assume that they will produce only additional
@@ -308,7 +292,7 @@ impl SpatialNode {
                         // perspective matrix using the scroll offset.
                         source_transform
                             .pre_translate(&scroll_offset)
-                            .post_translate(-scroll_offset)
+                            .post_translate(&-scroll_offset)
                     }
                     ReferenceFrameKind::Perspective { scrolling_relative_to: None } |
                     ReferenceFrameKind::Transform => source_transform,
@@ -323,7 +307,7 @@ impl SpatialNode {
                 // between our reference frame and this node. Finally, we also include
                 // whatever local transformation this reference frame provides.
                 let relative_transform = resolved_transform
-                    .post_translate(state.parent_accumulated_scroll_offset)
+                    .post_translate(&state.parent_accumulated_scroll_offset)
                     .to_transform()
                     .with_destination::<LayoutPixel>();
 
@@ -363,7 +347,10 @@ impl SpatialNode {
                         // Push that new coordinate system and record the new id.
                         let coord_system = CoordinateSystem {
                             transform,
-                            transform_style: info.transform_style,
+                            should_flatten: match (info.transform_style, info.kind) {
+                                (TransformStyle::Flat, ReferenceFrameKind::Transform) => true,
+                                (_, _) => false,
+                            },
                             parent: Some(state.current_coordinate_system_id),
                         };
                         state.current_coordinate_system_id = CoordinateSystemId(coord_systems.len() as u32);
@@ -393,8 +380,6 @@ impl SpatialNode {
                     state.parent_reference_frame_transform
                 };
 
-                // The transformation for any content inside of us is the viewport transformation, plus
-                // whatever scrolling offset we supply as well.
                 let scroll_offset = self.scroll_offset();
                 self.world_content_transform = if scroll_offset != LayoutVector2D::zero() {
                     self.world_viewport_transform.pre_translate(&scroll_offset)
@@ -402,7 +387,10 @@ impl SpatialNode {
                     self.world_viewport_transform
                 };
 
-                let added_offset = state.parent_accumulated_scroll_offset + sticky_offset + scroll_offset;
+
+                // The transformation for any content inside of us is the viewport transformation, plus
+                // whatever scrolling offset we supply as well.
+                let added_offset = accumulated_offset + self.scroll_offset();
                 self.coordinate_system_relative_scale_offset =
                     state.coordinate_system_relative_scale_offset.offset(added_offset.to_untyped());
 
@@ -642,14 +630,6 @@ impl SpatialNode {
             _ => false,
         }
     }
-
-    pub fn transform_style(&self) -> TransformStyle {
-        match self.node_type {
-            SpatialNodeType::ReferenceFrame(ref info) => info.transform_style,
-            SpatialNodeType::StickyFrame(_) |
-            SpatialNodeType::ScrollFrame(_) => TransformStyle::Flat,
-        }
-    }
 }
 
 /// Defines whether we have an implicit scroll frame for a pipeline root,
@@ -802,7 +782,7 @@ fn test_cst_perspective_relative_scroll() {
     // since wrench doesn't understand external scroll ids. When wrench
     // supports this, we could also verify with a reftest.
 
-    use clip_scroll_tree::ClipScrollTree;
+    use crate::clip_scroll_tree::ClipScrollTree;
     use euclid::approxeq::ApproxEq;
 
     let mut cst = ClipScrollTree::new();
@@ -852,7 +832,7 @@ fn test_cst_perspective_relative_scroll() {
         pipeline_id,
     );
 
-    cst.update_tree(WorldPoint::zero(), &SceneProperties::new(), None);
+    cst.update_tree(WorldPoint::zero(), &SceneProperties::new());
 
     let scroll_offset = compute_offset_from(
         cst.spatial_nodes[ref_frame.0 as usize].parent,

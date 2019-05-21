@@ -3,9 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+/* global gTelemetry */
+
 // React
 const { createFactory, Component } = require("devtools/client/shared/vendor/react");
-const { div } = require("devtools/client/shared/vendor/react-dom-factories");
+const { div, span } = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { L10N } = require("../utils/l10n");
 const ToggleButton = createFactory(require("./Button").ToggleButton);
@@ -15,6 +17,7 @@ const actions = require("../actions/audit");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 const { FILTERS } = require("../constants");
 
+const TELEMETRY_AUDIT_ACTIVATED = "devtools.accessibility.audit_activated";
 const FILTER_LABELS = {
   [FILTERS.CONTRAST]: "accessibility.badge.contrast",
 };
@@ -26,6 +29,7 @@ class AccessibilityTreeFilter extends Component {
       filters: PropTypes.object.isRequired,
       dispatch: PropTypes.func.isRequired,
       walker: PropTypes.object.isRequired,
+      describedby: PropTypes.string,
     };
   }
 
@@ -33,6 +37,10 @@ class AccessibilityTreeFilter extends Component {
     const { dispatch, filters, walker } = this.props;
 
     if (!filters[filterKey]) {
+      if (gTelemetry) {
+        gTelemetry.keyedScalarAdd(TELEMETRY_AUDIT_ACTIVATED, filterKey, 1);
+      }
+
       dispatch(actions.auditing(filterKey));
       await dispatch(actions.audit(walker, filterKey));
     }
@@ -65,10 +73,11 @@ class AccessibilityTreeFilter extends Component {
   }
 
   render() {
-    const { auditing, filters } = this.props;
+    const { auditing, filters, describedby } = this.props;
+    const toolbarLabelID = "accessibility-tree-filters-label";
     const filterButtons = Object.entries(filters).map(([filterKey, active]) =>
       ToggleButton({
-        className: "audit-badge badge",
+        className: "badge",
         key: filterKey,
         active,
         label: L10N.getStr(FILTER_LABELS[filterKey]),
@@ -80,8 +89,11 @@ class AccessibilityTreeFilter extends Component {
     return div({
       role: "toolbar",
       className: "accessibility-tree-filters",
+      "aria-labelledby": toolbarLabelID,
+      "aria-describedby": describedby,
     },
-      L10N.getStr("accessibility.tree.filters"),
+      span({ id: toolbarLabelID, role: "presentation" },
+        L10N.getStr("accessibility.tree.filters")),
       ...filterButtons);
   }
 }

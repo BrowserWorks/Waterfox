@@ -11,6 +11,7 @@
 #include "jit/MoveResolver.h"
 #include "jit/x86-shared/MacroAssembler-x86-shared.h"
 #include "js/HeapAPI.h"
+#include "vm/BigIntType.h"  // JS::BigInt
 #include "vm/Realm.h"
 
 namespace js {
@@ -216,6 +217,9 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared {
   }
   void loadValue(const BaseIndex& src, ValueOperand val) {
     loadValue(Operand(src), val);
+  }
+  void loadUnalignedValue(const Address& src, ValueOperand dest) {
+    loadValue(src, dest);
   }
   void tagValue(JSValueType type, Register payload, ValueOperand dest) {
     MOZ_ASSERT(dest.typeReg() != dest.payloadReg());

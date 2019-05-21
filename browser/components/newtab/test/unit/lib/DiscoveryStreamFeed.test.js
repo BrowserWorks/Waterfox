@@ -332,7 +332,7 @@ describe("DiscoveryStreamFeed", () => {
       assert.calledWith(feed.cache.set, "feeds", {"foo.com": {"data": "data", "lastUpdated": 0}});
     });
 
-    it("should send at.DISCOVERY_STREAM_FEEDS_UPDATE with new feed data",
+    it("should send feed update events with new feed data",
       async () => {
         sandbox.stub(feed.cache, "get").returns(Promise.resolve(fakeCache));
         sandbox.spy(feed.store, "dispatch");
@@ -344,9 +344,12 @@ describe("DiscoveryStreamFeed", () => {
 
         await feed.loadComponentFeeds(feed.store.dispatch);
 
-        assert.calledWith(feed.store.dispatch, {
+        assert.calledWith(feed.store.dispatch.firstCall, {
+          type: at.DISCOVERY_STREAM_FEED_UPDATE,
+          data: {feed: null, url: "foo.com"},
+        });
+        assert.calledWith(feed.store.dispatch.secondCall, {
           type: at.DISCOVERY_STREAM_FEEDS_UPDATE,
-          data: {"foo.com": null},
         });
       });
 
@@ -1202,19 +1205,6 @@ describe("DiscoveryStreamFeed", () => {
         type: at.SET_PREF,
       });
     });
-    it("should disable opt-out when setting config enabled", () => {
-      sandbox.spy(feed.store, "dispatch");
-
-      feed.onAction({type: at.DISCOVERY_STREAM_CONFIG_SET_VALUE, data: {name: "enabled", value: true}});
-
-      assert.calledWithMatch(feed.store.dispatch, {
-        data: {
-          name: "discoverystream.optOut.0",
-          value: false,
-        },
-        type: at.SET_PREF,
-      });
-    });
   });
 
   describe("#onAction: DISCOVERY_STREAM_CONFIG_CHANGE", () => {
@@ -1281,22 +1271,6 @@ describe("DiscoveryStreamFeed", () => {
     });
   });
 
-  describe("#onAction: DISCOVERY_STREAM_OPT_OUT", () => {
-    it("should update opt-out pref", async () => {
-      sandbox.spy(feed.store, "dispatch");
-
-      await feed.onAction({type: at.DISCOVERY_STREAM_OPT_OUT});
-
-      assert.calledWithMatch(feed.store.dispatch, {
-        data: {
-          name: "discoverystream.optOut.0",
-          value: true,
-        },
-        type: at.SET_PREF,
-      });
-    });
-  });
-
   describe("#onAction: UNINIT", () => {
     it("should reset pref cache", async () => {
       feed._prefCache = {cached: "value"};
@@ -1312,13 +1286,6 @@ describe("DiscoveryStreamFeed", () => {
       setPref(CONFIG_PREF_NAME, {enabled: true, show_spocs: false, layout_endpoint: "foo"});
 
       assert.deepEqual(feed.store.getState().DiscoveryStream.config, {enabled: true, show_spocs: false, layout_endpoint: "foo"});
-    });
-    it("should handle pref changes when opt out changes", async () => {
-      setPref(CONFIG_PREF_NAME, {enabled: true, show_spocs: false, layout_endpoint: "foo"});
-
-      setPref("discoverystream.optOut.0", true);
-
-      assert.deepEqual(feed.store.getState().DiscoveryStream.config, {enabled: false, show_spocs: false, layout_endpoint: "foo"});
     });
     it("should fire loadSpocs is showSponsored pref changes", async () => {
       sandbox.stub(feed, "loadSpocs").returns(Promise.resolve());
@@ -1597,7 +1564,7 @@ describe("DiscoveryStreamFeed", () => {
         const fakeDiscoveryStream = {DiscoveryStream: {layout: fakeLayout}};
         sandbox.stub(feed.store, "getState").returns(fakeDiscoveryStream);
         sandbox.stub(feed, "rotate").callsFake(val => val);
-        sandbox.stub(feed, "scoreItems").callsFake(val => val);
+        sandbox.stub(feed, "scoreItems").callsFake(val => ({data: val, filtered: []}));
         sandbox.stub(feed, "cleanUpTopRecImpressionPref").callsFake(val => val);
 
         const fakeCache = {feeds: {"foo.com": {lastUpdated: Date.now(), data: "data"}}};
@@ -1613,9 +1580,9 @@ describe("DiscoveryStreamFeed", () => {
         await feed.refreshAll({isStartup: true});
 
         assert.calledOnce(feed.fetchFromEndpoint);
-        // Once from cache, once to update the store
-        assert.calledTwice(feed.store.dispatch);
-        assert.equal(feed.store.dispatch.firstCall.args[0].type, at.DISCOVERY_STREAM_FEEDS_UPDATE);
+        // Once from cache, once to update the feed, once to update that all feeds are done.
+        assert.calledThrice(feed.store.dispatch);
+        assert.equal(feed.store.dispatch.secondCall.args[0].type, at.DISCOVERY_STREAM_FEEDS_UPDATE);
       });
     });
   });

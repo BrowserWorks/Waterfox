@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
 job-defaults:
     e10s: false
     mozharness:
@@ -94,21 +98,21 @@ jittest:
             (?=linux).*(?!-ccov)...../.*: []  # redundant with SM(...)
             (?=windows).*(?!-ccov)...../.*: []  # redundant with SM(p)
             android-hw-.*-api-16/opt: ['try']
+            android-hw-.*-aarch64/opt: ['try']
             default: built-projects
     chunks:
         by-test-platform:
             windows.*: 1
             windows10-64-ccov/debug: 6
-            macosx.*: 1
-            macosx64/debug: 3
-            macosx64-ccov/debug: 4
+            macosx.*/opt: 1
+            macosx.*/debug: 3
             android-em-4.3-arm7-api-15/debug: 20
             android.*: 10
             default: 6
     max-run-time:
         by-test-platform:
             windows10-64-ccov/debug: 7200
-            macosx64-ccov/debug: 7200
+            macosx.*-ccov/debug: 7200
             default: 3600
     mozharness:
         chunked:

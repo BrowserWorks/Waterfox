@@ -5,7 +5,7 @@
 "use strict";
 
 var EXPORTED_SYMBOLS = [
-  "initialize",
+  "BlocklistClients",
 ];
 
 const { AppConstants } = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
@@ -20,21 +20,11 @@ const PREF_SECURITY_SETTINGS_ONECRL_COLLECTION = "services.settings.security.one
 const PREF_SECURITY_SETTINGS_ONECRL_SIGNER     = "services.settings.security.onecrl.signer";
 const PREF_SECURITY_SETTINGS_ONECRL_CHECKED    = "services.settings.security.onecrl.checked";
 
-const PREF_BLOCKLIST_BUCKET                  = "services.blocklist.bucket";
-const PREF_BLOCKLIST_ADDONS_COLLECTION       = "services.blocklist.addons.collection";
-const PREF_BLOCKLIST_ADDONS_CHECKED_SECONDS  = "services.blocklist.addons.checked";
-const PREF_BLOCKLIST_ADDONS_SIGNER           = "services.blocklist.addons.signer";
-const PREF_BLOCKLIST_PLUGINS_COLLECTION      = "services.blocklist.plugins.collection";
-const PREF_BLOCKLIST_PLUGINS_CHECKED_SECONDS = "services.blocklist.plugins.checked";
-const PREF_BLOCKLIST_PLUGINS_SIGNER          = "services.blocklist.plugins.signer";
 const PREF_BLOCKLIST_PINNING_ENABLED         = "services.blocklist.pinning.enabled";
 const PREF_BLOCKLIST_PINNING_BUCKET          = "services.blocklist.pinning.bucket";
 const PREF_BLOCKLIST_PINNING_COLLECTION      = "services.blocklist.pinning.collection";
 const PREF_BLOCKLIST_PINNING_CHECKED_SECONDS = "services.blocklist.pinning.checked";
 const PREF_BLOCKLIST_PINNING_SIGNER          = "services.blocklist.pinning.signer";
-const PREF_BLOCKLIST_GFX_COLLECTION          = "services.blocklist.gfx.collection";
-const PREF_BLOCKLIST_GFX_CHECKED_SECONDS     = "services.blocklist.gfx.checked";
-const PREF_BLOCKLIST_GFX_SIGNER              = "services.blocklist.gfx.signer";
 
 class RevocationState {
   constructor(state) {
@@ -192,110 +182,27 @@ async function updatePinningList({ data: { current: records } }) {
   }
 }
 
-/**
- * This custom filter function is used to limit the entries returned
- * by `RemoteSettings("...").get()` depending on the target app information
- * defined on entries.
- */
-async function targetAppFilter(entry, environment) {
-  // If the entry has a JEXL filter expression, it should prevail.
-  // The legacy target app mechanism will be kept in place for old entries.
-  // See https://bugzilla.mozilla.org/show_bug.cgi?id=1463377
-  const { filter_expression } = entry;
-  if (filter_expression) {
-    return jexlFilterFunc(entry, environment);
-  }
-
-  // Keep entries without target information.
-  if (!("versionRange" in entry)) {
-    return entry;
-  }
-
-  const { appID, version: appVersion, toolkitVersion } = environment;
-  const { versionRange } = entry;
-
-  // Everywhere in this method, we avoid checking the minVersion, because
-  // we want to retain items whose minVersion is higher than the current
-  // app version, so that we have the items around for app updates.
-
-  // Gfx blocklist has a specific versionRange object, which is not a list.
-  if (!Array.isArray(versionRange)) {
-    const { maxVersion = "*" } = versionRange;
-    const matchesRange = (Services.vc.compare(appVersion, maxVersion) <= 0);
-    return matchesRange ? entry : null;
-  }
-
-  // Iterate the targeted applications, at least one of them must match.
-  // If no target application, keep the entry.
-  if (versionRange.length == 0) {
-    return entry;
-  }
-  for (const vr of versionRange) {
-    const { targetApplication = [] } = vr;
-    if (targetApplication.length == 0) {
-      return entry;
-    }
-    for (const ta of targetApplication) {
-      const { guid } = ta;
-      if (!guid) {
-        return entry;
-      }
-      const { maxVersion = "*" } = ta;
-      if (guid == appID &&
-          Services.vc.compare(appVersion, maxVersion) <= 0) {
-        return entry;
-      }
-      if (guid == "toolkit@mozilla.org" &&
-          Services.vc.compare(toolkitVersion, maxVersion) <= 0) {
-        return entry;
-      }
-    }
-  }
-  // Skip this entry.
-  return null;
-}
-
-var AddonBlocklistClient;
-var GfxBlocklistClient;
 var OneCRLBlocklistClient;
 var PinningBlocklistClient;
-var PluginBlocklistClient;
 var RemoteSecuritySettingsClient;
 
-function initialize() {
+function initialize(options = {}) {
+  const { verifySignature = true } = options;
+
   OneCRLBlocklistClient = RemoteSettings(Services.prefs.getCharPref(PREF_SECURITY_SETTINGS_ONECRL_COLLECTION), {
     bucketNamePref: PREF_SECURITY_SETTINGS_ONECRL_BUCKET,
     lastCheckTimePref: PREF_SECURITY_SETTINGS_ONECRL_CHECKED,
     signerName: Services.prefs.getCharPref(PREF_SECURITY_SETTINGS_ONECRL_SIGNER),
   });
+  OneCRLBlocklistClient.verifySignature = verifySignature;
   OneCRLBlocklistClient.on("sync", updateCertBlocklist);
-
-  AddonBlocklistClient = RemoteSettings(Services.prefs.getCharPref(PREF_BLOCKLIST_ADDONS_COLLECTION), {
-    bucketNamePref: PREF_BLOCKLIST_BUCKET,
-    lastCheckTimePref: PREF_BLOCKLIST_ADDONS_CHECKED_SECONDS,
-    signerName: Services.prefs.getCharPref(PREF_BLOCKLIST_ADDONS_SIGNER),
-    filterFunc: targetAppFilter,
-  });
-
-  PluginBlocklistClient = RemoteSettings(Services.prefs.getCharPref(PREF_BLOCKLIST_PLUGINS_COLLECTION), {
-    bucketNamePref: PREF_BLOCKLIST_BUCKET,
-    lastCheckTimePref: PREF_BLOCKLIST_PLUGINS_CHECKED_SECONDS,
-    signerName: Services.prefs.getCharPref(PREF_BLOCKLIST_PLUGINS_SIGNER),
-    filterFunc: targetAppFilter,
-  });
-
-  GfxBlocklistClient = RemoteSettings(Services.prefs.getCharPref(PREF_BLOCKLIST_GFX_COLLECTION), {
-    bucketNamePref: PREF_BLOCKLIST_BUCKET,
-    lastCheckTimePref: PREF_BLOCKLIST_GFX_CHECKED_SECONDS,
-    signerName: Services.prefs.getCharPref(PREF_BLOCKLIST_GFX_SIGNER),
-    filterFunc: targetAppFilter,
-  });
 
   PinningBlocklistClient = RemoteSettings(Services.prefs.getCharPref(PREF_BLOCKLIST_PINNING_COLLECTION), {
     bucketNamePref: PREF_BLOCKLIST_PINNING_BUCKET,
     lastCheckTimePref: PREF_BLOCKLIST_PINNING_CHECKED_SECONDS,
     signerName: Services.prefs.getCharPref(PREF_BLOCKLIST_PINNING_SIGNER),
   });
+  PinningBlocklistClient.verifySignature = verifySignature;
   PinningBlocklistClient.on("sync", updatePinningList);
 
   if (AppConstants.MOZ_NEW_CERT_STORAGE) {
@@ -304,12 +211,10 @@ function initialize() {
     // In Bug 1526018 this will move into its own service, as it's not quite like
     // the others.
     RemoteSecuritySettingsClient = new RemoteSecuritySettings();
+    RemoteSecuritySettingsClient.verifySignature = verifySignature;
 
     return {
       OneCRLBlocklistClient,
-      AddonBlocklistClient,
-      PluginBlocklistClient,
-      GfxBlocklistClient,
       PinningBlocklistClient,
       RemoteSecuritySettingsClient,
     };
@@ -317,9 +222,9 @@ function initialize() {
 
   return {
     OneCRLBlocklistClient,
-    AddonBlocklistClient,
-    PluginBlocklistClient,
-    GfxBlocklistClient,
     PinningBlocklistClient,
   };
 }
+
+let BlocklistClients = {initialize};
+

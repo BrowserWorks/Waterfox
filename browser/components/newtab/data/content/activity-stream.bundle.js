@@ -92,7 +92,7 @@
 __webpack_require__.r(__webpack_exports__);
 /* WEBPACK VAR INJECTION */(function(global) {/* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 /* harmony import */ var content_src_components_Base_Base__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(3);
-/* harmony import */ var content_src_lib_detect_user_session_start__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(51);
+/* harmony import */ var content_src_lib_detect_user_session_start__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(52);
 /* harmony import */ var content_src_lib_init_store__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(7);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(26);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_4__);
@@ -100,7 +100,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_5__);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(16);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_6__);
-/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(56);
+/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(58);
 
 
 
@@ -197,7 +197,7 @@ const globalImportContext = typeof Window === "undefined" ? BACKGROUND_PROCESS :
 // }
 const actionTypes = {};
 
-for (const type of ["ADDONS_INFO_REQUEST", "ADDONS_INFO_RESPONSE", "ARCHIVE_FROM_POCKET", "AS_ROUTER_INITIALIZED", "AS_ROUTER_PREF_CHANGED", "AS_ROUTER_TELEMETRY_USER_EVENT", "BLOCK_URL", "BOOKMARK_URL", "COPY_DOWNLOAD_LINK", "DELETE_BOOKMARK_BY_ID", "DELETE_FROM_POCKET", "DELETE_HISTORY_URL", "DIALOG_CANCEL", "DIALOG_OPEN", "DISCOVERY_STREAM_CONFIG_CHANGE", "DISCOVERY_STREAM_CONFIG_SETUP", "DISCOVERY_STREAM_CONFIG_SET_VALUE", "DISCOVERY_STREAM_FEEDS_UPDATE", "DISCOVERY_STREAM_IMPRESSION_STATS", "DISCOVERY_STREAM_LAYOUT_RESET", "DISCOVERY_STREAM_LAYOUT_UPDATE", "DISCOVERY_STREAM_LINK_BLOCKED", "DISCOVERY_STREAM_LOADED_CONTENT", "DISCOVERY_STREAM_OPT_OUT", "DISCOVERY_STREAM_SPOCS_CAPS", "DISCOVERY_STREAM_SPOCS_ENDPOINT", "DISCOVERY_STREAM_SPOCS_FILL", "DISCOVERY_STREAM_SPOCS_UPDATE", "DISCOVERY_STREAM_SPOC_IMPRESSION", "DOWNLOAD_CHANGED", "FAKE_FOCUS_SEARCH", "FILL_SEARCH_TERM", "HANDOFF_SEARCH_TO_AWESOMEBAR", "HIDE_SEARCH", "INIT", "NEW_TAB_INIT", "NEW_TAB_INITIAL_STATE", "NEW_TAB_LOAD", "NEW_TAB_REHYDRATED", "NEW_TAB_STATE_REQUEST", "NEW_TAB_UNLOAD", "OPEN_DOWNLOAD_FILE", "OPEN_LINK", "OPEN_NEW_WINDOW", "OPEN_PRIVATE_WINDOW", "OPEN_WEBEXT_SETTINGS", "PAGE_PRERENDERED", "PLACES_BOOKMARK_ADDED", "PLACES_BOOKMARK_REMOVED", "PLACES_HISTORY_CLEARED", "PLACES_LINKS_CHANGED", "PLACES_LINK_BLOCKED", "PLACES_LINK_DELETED", "PLACES_SAVED_TO_POCKET", "POCKET_CTA", "POCKET_LINK_DELETED_OR_ARCHIVED", "POCKET_LOGGED_IN", "POCKET_WAITING_FOR_SPOC", "PREFS_INITIAL_VALUES", "PREF_CHANGED", "PREVIEW_REQUEST", "PREVIEW_REQUEST_CANCEL", "PREVIEW_RESPONSE", "REMOVE_DOWNLOAD_FILE", "RICH_ICON_MISSING", "SAVE_SESSION_PERF_DATA", "SAVE_TO_POCKET", "SCREENSHOT_UPDATED", "SECTION_DEREGISTER", "SECTION_DISABLE", "SECTION_ENABLE", "SECTION_MOVE", "SECTION_OPTIONS_CHANGED", "SECTION_REGISTER", "SECTION_UPDATE", "SECTION_UPDATE_CARD", "SETTINGS_CLOSE", "SETTINGS_OPEN", "SET_PREF", "SHOW_DOWNLOAD_FILE", "SHOW_FIREFOX_ACCOUNTS", "SHOW_SEARCH", "SKIPPED_SIGNIN", "SNIPPETS_BLOCKLIST_CLEARED", "SNIPPETS_BLOCKLIST_UPDATED", "SNIPPETS_DATA", "SNIPPETS_PREVIEW_MODE", "SNIPPETS_RESET", "SNIPPET_BLOCKED", "SUBMIT_EMAIL", "SYSTEM_TICK", "TELEMETRY_IMPRESSION_STATS", "TELEMETRY_PERFORMANCE_EVENT", "TELEMETRY_UNDESIRED_EVENT", "TELEMETRY_USER_EVENT", "TOP_SITES_CANCEL_EDIT", "TOP_SITES_CLOSE_SEARCH_SHORTCUTS_MODAL", "TOP_SITES_EDIT", "TOP_SITES_INSERT", "TOP_SITES_OPEN_SEARCH_SHORTCUTS_MODAL", "TOP_SITES_PIN", "TOP_SITES_PREFS_UPDATED", "TOP_SITES_UNPIN", "TOP_SITES_UPDATED", "TOTAL_BOOKMARKS_REQUEST", "TOTAL_BOOKMARKS_RESPONSE", "UNINIT", "UPDATE_PINNED_SEARCH_SHORTCUTS", "UPDATE_SEARCH_SHORTCUTS", "UPDATE_SECTION_PREFS", "WEBEXT_CLICK", "WEBEXT_DISMISS"]) {
+for (const type of ["ADDONS_INFO_REQUEST", "ADDONS_INFO_RESPONSE", "ARCHIVE_FROM_POCKET", "AS_ROUTER_INITIALIZED", "AS_ROUTER_PREF_CHANGED", "AS_ROUTER_TARGETING_UPDATE", "AS_ROUTER_TELEMETRY_USER_EVENT", "BLOCK_URL", "BOOKMARK_URL", "COPY_DOWNLOAD_LINK", "DELETE_BOOKMARK_BY_ID", "DELETE_FROM_POCKET", "DELETE_HISTORY_URL", "DIALOG_CANCEL", "DIALOG_OPEN", "DISCOVERY_STREAM_CONFIG_CHANGE", "DISCOVERY_STREAM_CONFIG_SETUP", "DISCOVERY_STREAM_CONFIG_SET_VALUE", "DISCOVERY_STREAM_FEEDS_UPDATE", "DISCOVERY_STREAM_FEED_UPDATE", "DISCOVERY_STREAM_IMPRESSION_STATS", "DISCOVERY_STREAM_LAYOUT_RESET", "DISCOVERY_STREAM_LAYOUT_UPDATE", "DISCOVERY_STREAM_LINK_BLOCKED", "DISCOVERY_STREAM_LOADED_CONTENT", "DISCOVERY_STREAM_SPOCS_CAPS", "DISCOVERY_STREAM_SPOCS_ENDPOINT", "DISCOVERY_STREAM_SPOCS_FILL", "DISCOVERY_STREAM_SPOCS_UPDATE", "DISCOVERY_STREAM_SPOC_IMPRESSION", "DOWNLOAD_CHANGED", "FAKE_FOCUS_SEARCH", "FILL_SEARCH_TERM", "HANDOFF_SEARCH_TO_AWESOMEBAR", "HIDE_SEARCH", "INIT", "NEW_TAB_INIT", "NEW_TAB_INITIAL_STATE", "NEW_TAB_LOAD", "NEW_TAB_REHYDRATED", "NEW_TAB_STATE_REQUEST", "NEW_TAB_UNLOAD", "OPEN_DOWNLOAD_FILE", "OPEN_LINK", "OPEN_NEW_WINDOW", "OPEN_PRIVATE_WINDOW", "OPEN_WEBEXT_SETTINGS", "PAGE_PRERENDERED", "PLACES_BOOKMARK_ADDED", "PLACES_BOOKMARK_REMOVED", "PLACES_HISTORY_CLEARED", "PLACES_LINKS_CHANGED", "PLACES_LINK_BLOCKED", "PLACES_LINK_DELETED", "PLACES_SAVED_TO_POCKET", "POCKET_CTA", "POCKET_LINK_DELETED_OR_ARCHIVED", "POCKET_LOGGED_IN", "POCKET_WAITING_FOR_SPOC", "PREFS_INITIAL_VALUES", "PREF_CHANGED", "PREVIEW_REQUEST", "PREVIEW_REQUEST_CANCEL", "PREVIEW_RESPONSE", "REMOVE_DOWNLOAD_FILE", "RICH_ICON_MISSING", "SAVE_SESSION_PERF_DATA", "SAVE_TO_POCKET", "SCREENSHOT_UPDATED", "SECTION_DEREGISTER", "SECTION_DISABLE", "SECTION_ENABLE", "SECTION_MOVE", "SECTION_OPTIONS_CHANGED", "SECTION_REGISTER", "SECTION_UPDATE", "SECTION_UPDATE_CARD", "SETTINGS_CLOSE", "SETTINGS_OPEN", "SET_PREF", "SHOW_DOWNLOAD_FILE", "SHOW_FIREFOX_ACCOUNTS", "SHOW_SEARCH", "SKIPPED_SIGNIN", "SNIPPETS_BLOCKLIST_CLEARED", "SNIPPETS_BLOCKLIST_UPDATED", "SNIPPETS_DATA", "SNIPPETS_PREVIEW_MODE", "SNIPPETS_RESET", "SNIPPET_BLOCKED", "SUBMIT_EMAIL", "SYSTEM_TICK", "TELEMETRY_IMPRESSION_STATS", "TELEMETRY_PERFORMANCE_EVENT", "TELEMETRY_UNDESIRED_EVENT", "TELEMETRY_USER_EVENT", "TOP_SITES_CANCEL_EDIT", "TOP_SITES_CLOSE_SEARCH_SHORTCUTS_MODAL", "TOP_SITES_EDIT", "TOP_SITES_INSERT", "TOP_SITES_OPEN_SEARCH_SHORTCUTS_MODAL", "TOP_SITES_PIN", "TOP_SITES_PREFS_UPDATED", "TOP_SITES_UNPIN", "TOP_SITES_UPDATED", "TOTAL_BOOKMARKS_REQUEST", "TOTAL_BOOKMARKS_RESPONSE", "TRAILHEAD_ENROLL_EVENT", "UNINIT", "UPDATE_PINNED_SEARCH_SHORTCUTS", "UPDATE_SEARCH_SHORTCUTS", "UPDATE_SECTION_PREFS", "WEBEXT_CLICK", "WEBEXT_DISMISS"]) {
   actionTypes[type] = type;
 } // These are acceptable actions for AS Router messages to have. They can show up
 // as call-to-action buttons in snippets, onboarding tour, etc.
@@ -570,13 +570,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var content_src_components_ConfirmDialog_ConfirmDialog__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(29);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(26);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var content_src_components_DiscoveryStreamBase_DiscoveryStreamBase__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(52);
-/* harmony import */ var content_src_components_ErrorBoundary_ErrorBoundary__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(35);
-/* harmony import */ var common_PrerenderData_jsm__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(45);
+/* harmony import */ var content_src_components_DiscoveryStreamBase_DiscoveryStreamBase__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(53);
+/* harmony import */ var content_src_components_ErrorBoundary_ErrorBoundary__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(36);
+/* harmony import */ var common_PrerenderData_jsm__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(46);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(11);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_9___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_9__);
-/* harmony import */ var content_src_components_Search_Search__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(46);
-/* harmony import */ var content_src_components_Sections_Sections__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(47);
+/* harmony import */ var content_src_components_Search_Search__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(47);
+/* harmony import */ var content_src_components_Sections_Sections__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(48);
 function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
 
 
@@ -749,8 +749,14 @@ class BaseContent extends react__WEBPACK_IMPORTED_MODULE_9___default.a.PureCompo
     } = App;
     const prefs = props.Prefs.values;
     const shouldBeFixedToTop = common_PrerenderData_jsm__WEBPACK_IMPORTED_MODULE_8__["PrerenderData"].arePrefsValid(name => prefs[name]);
-    const noSectionsEnabled = !prefs["feeds.topsites"] && props.Sections.filter(section => section.enabled).length === 0;
     const isDiscoveryStream = props.DiscoveryStream.config && props.DiscoveryStream.config.enabled;
+    let filteredSections = props.Sections; // Filter out highlights for DS
+
+    if (isDiscoveryStream) {
+      filteredSections = filteredSections.filter(section => section.id !== "highlights");
+    }
+
+    const noSectionsEnabled = !prefs["feeds.topsites"] && filteredSections.filter(section => section.enabled).length === 0;
     const searchHandoffEnabled = prefs["improvesearch.handoffToAwesomebar"];
     const outerClassName = ["outer-wrapper", isDiscoveryStream && "ds-outer-wrapper-search-alignment", isDiscoveryStream && "ds-outer-wrapper-breakpoint-override", shouldBeFixedToTop && "fixed-to-top", prefs.showSearch && this.state.fixedSearch && !noSectionsEnabled && "fixed-search", prefs.showSearch && noSectionsEnabled && "only-search"].filter(v => v).join(" ");
     return react__WEBPACK_IMPORTED_MODULE_9___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_9___default.a.createElement("div", {
@@ -841,7 +847,6 @@ function relativeTime(timestamp) {
   return new Date(timestamp).toLocaleString();
 }
 
-const OPT_OUT_PREF = "discoverystream.optOut.0";
 const LAYOUT_VARIANTS = {
   "basic": "Basic default layout (on by default in nightly)",
   "dev-test-all": "A little bit of everything. Good layout for testing all components",
@@ -873,10 +878,6 @@ class DiscoveryStreamAdmin extends react__WEBPACK_IMPORTED_MODULE_4___default.a.
     this.state = {
       toggledStories: {}
     };
-  }
-
-  get isOptedOut() {
-    return this.props.otherPrefs[OPT_OUT_PREF];
   }
 
   setConfigValue(name, value) {
@@ -996,9 +997,6 @@ class DiscoveryStreamAdmin extends react__WEBPACK_IMPORTED_MODULE_4___default.a.
 
   render() {
     const {
-      isOptedOut
-    } = this;
-    const {
       config,
       lastUpdated,
       layout
@@ -1009,9 +1007,7 @@ class DiscoveryStreamAdmin extends react__WEBPACK_IMPORTED_MODULE_4___default.a.
       type: "checkbox",
       checked: config.enabled,
       onChange: this.onEnableToggle
-    }), " enabled", isOptedOut ? react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("span", {
-      className: "optOutNote"
-    }, "(Note: User has opted-out. Check this box to reset)") : ""), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("h3", null, "Endpoint variant"), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("p", null, "You can also change this manually by changing this pref: ", react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("code", null, "browser.newtabpage.activity-stream.discoverystream.config")), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("table", {
+    }), " enabled "), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("h3", null, "Endpoint variant"), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("p", null, "You can also change this manually by changing this pref: ", react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("code", null, "browser.newtabpage.activity-stream.discoverystream.config")), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("table", {
       style: config.enabled ? null : {
         opacity: 0.5
       }
@@ -1348,7 +1344,8 @@ class ASRouterAdminInner extends react__WEBPACK_IMPORTED_MODULE_4___default.a.Pu
   renderMessageFilter() {
     if (!this.state.providers) {
       return null;
-    }
+    } // eslint-disable-next-line jsx-a11y/no-onchange
+
 
     return react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("p", null, "Show messages from ", react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("select", {
       value: this.state.messageFilter,
@@ -1449,7 +1446,6 @@ class ASRouterAdminInner extends react__WEBPACK_IMPORTED_MODULE_4___default.a.Pu
     }, react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("p", null, react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("textarea", {
       onChange: this.onNewTargetingParams,
       value: this.state.newStringTargetingParameters,
-      autoFocus: true,
       rows: "20",
       cols: "60"
     })), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("p", {
@@ -1774,7 +1770,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var content_src_lib_init_store__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(7);
 /* harmony import */ var _rich_text_strings__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(9);
 /* harmony import */ var _components_ImpressionsWrapper_ImpressionsWrapper__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(10);
-/* harmony import */ var fluent_react__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(55);
+/* harmony import */ var fluent_react__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(56);
 /* harmony import */ var content_src_lib_constants__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(13);
 /* harmony import */ var _templates_OnboardingMessage_OnboardingMessage__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(14);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(11);
@@ -1782,7 +1778,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(16);
 /* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_9___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_9__);
 /* harmony import */ var _templates_ReturnToAMO_ReturnToAMO__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(17);
-/* harmony import */ var _templates_template_manifest__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(53);
+/* harmony import */ var _templates_template_manifest__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(54);
 /* harmony import */ var _templates_StartupOverlay_StartupOverlay__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(25);
 /* harmony import */ var _templates_Trailhead_Trailhead__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(27);
 function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
@@ -1946,7 +1942,8 @@ class ASRouterUISurface extends react__WEBPACK_IMPORTED_MODULE_8___default.a.Pur
 
     if (!message && !extraProps.message_id) {
       throw new Error(`You must provide a message_id for bundled messages`);
-    }
+    } // snippets_user_event, onboarding_user_event
+
 
     const eventType = `${message.provider || bundle.provider}_user_event`;
     ASRouterUtils.sendTelemetry({
@@ -2014,7 +2011,16 @@ class ASRouterUISurface extends react__WEBPACK_IMPORTED_MODULE_8___default.a.Pur
   }
 
   dismissBundle(bundle) {
-    return () => ASRouterUtils.dismissBundle(bundle);
+    return () => {
+      ASRouterUtils.dismissBundle(bundle);
+      this.sendUserActionTelemetry({
+        event: "DISMISS",
+        id: "onboarding-cards",
+        message_id: bundle.map(m => m.id).join(","),
+        // Passing the action because some bundles (Trailhead) don't have a provider set
+        action: "onboarding_user_event"
+      });
+    };
   }
 
   triggerOnboarding() {
@@ -2026,6 +2032,16 @@ class ASRouterUISurface extends react__WEBPACK_IMPORTED_MODULE_8___default.a.Pur
         }
       }
     });
+  }
+
+  clearMessage(id) {
+    if (id === this.state.message.id) {
+      this.setState({
+        message: {}
+      }); // Remove any styles related to the RTAMO message
+
+      document.body.classList.remove("welcome", "hide-main", "amo");
+    }
   }
 
   onMessageFromParent({
@@ -2045,14 +2061,7 @@ class ASRouterUISurface extends react__WEBPACK_IMPORTED_MODULE_8___default.a.Pur
         break;
 
       case "CLEAR_MESSAGE":
-        if (action.data.id === this.state.message.id) {
-          this.setState({
-            message: {}
-          }); // Remove any styles related to the RTAMO message
-
-          document.body.classList.remove("welcome", "hide-main", "amo");
-        }
-
+        this.clearMessage(action.data.id);
         break;
 
       case "CLEAR_PROVIDER":
@@ -2078,6 +2087,11 @@ class ASRouterUISurface extends react__WEBPACK_IMPORTED_MODULE_8___default.a.Pur
           message: {},
           bundle: {}
         });
+        break;
+
+      case "AS_ROUTER_TARGETING_UPDATE":
+        action.data.forEach(id => this.clearMessage(id));
+        break;
     }
   }
 
@@ -2155,7 +2169,7 @@ class ASRouterUISurface extends react__WEBPACK_IMPORTED_MODULE_8___default.a.Pur
       return react__WEBPACK_IMPORTED_MODULE_8___default.a.createElement(_templates_OnboardingMessage_OnboardingMessage__WEBPACK_IMPORTED_MODULE_7__["OnboardingMessage"], _extends({}, this.state.bundle, {
         UISurface: "NEWTAB_OVERLAY",
         onAction: ASRouterUtils.executeAction,
-        onDoneButton: this.dismissBundle(this.state.bundle.bundle),
+        onDismissBundle: this.dismissBundle(this.state.bundle.bundle),
         sendUserActionTelemetry: this.sendUserActionTelemetry
       }));
     }
@@ -2185,9 +2199,11 @@ class ASRouterUISurface extends react__WEBPACK_IMPORTED_MODULE_8___default.a.Pur
           "amo_html": message.content.text
         })
       }, react__WEBPACK_IMPORTED_MODULE_8___default.a.createElement(_templates_ReturnToAMO_ReturnToAMO__WEBPACK_IMPORTED_MODULE_10__["ReturnToAMO"], _extends({}, message, {
+        UISurface: "NEWTAB_OVERLAY",
         onReady: this.triggerOnboarding,
         onBlock: this.onDismissById(message.id),
-        onAction: ASRouterUtils.executeAction
+        onAction: ASRouterUtils.executeAction,
+        sendUserActionTelemetry: this.sendUserActionTelemetry
       })));
     }
 
@@ -2201,9 +2217,10 @@ class ASRouterUISurface extends react__WEBPACK_IMPORTED_MODULE_8___default.a.Pur
 
     if (message.template === "trailhead") {
       return react__WEBPACK_IMPORTED_MODULE_8___default.a.createElement(_templates_Trailhead_Trailhead__WEBPACK_IMPORTED_MODULE_13__["Trailhead"], {
+        document: this.props.document,
         message: message,
         onAction: ASRouterUtils.executeAction,
-        onDoneButton: this.dismissBundle(this.state.bundle.bundle),
+        onDismissBundle: this.dismissBundle(this.state.message.bundle),
         sendUserActionTelemetry: this.sendUserActionTelemetry,
         dispatch: this.props.dispatch,
         fxaEndpoint: this.props.fxaEndpoint
@@ -2425,7 +2442,7 @@ module.exports = Redux;
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "RICH_TEXT_KEYS", function() { return RICH_TEXT_KEYS; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "generateMessages", function() { return generateMessages; });
-/* harmony import */ var fluent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(54);
+/* harmony import */ var fluent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(55);
 
 /**
  * Properties that allow rich text MUST be added to this list.
@@ -2706,7 +2723,7 @@ class ModalOverlayWrapper extends react__WEBPACK_IMPORTED_MODULE_0___default.a.P
 
   onKeyDown(event) {
     if (event.key === "Escape") {
-      this.props.onClose();
+      this.props.onClose(event);
     }
   }
 
@@ -2729,7 +2746,10 @@ class ModalOverlayWrapper extends react__WEBPACK_IMPORTED_MODULE_0___default.a.P
       onClick: props.onClose,
       role: "presentation"
     }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-      className: `modalOverlayInner active ${props.innerClassName || ""}`
+      className: `modalOverlayInner active ${props.innerClassName || ""}`,
+      "aria-labelledby": props.headerId,
+      id: props.id,
+      role: "dialog"
     }, props.children));
   }
 
@@ -2744,12 +2764,12 @@ class ModalOverlay extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureComp
       button_label
     } = this.props;
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ModalOverlayWrapper, {
-      onClose: this.props.onDoneButton
+      onClose: this.props.onDismissBundle
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", null, " ", title, " "), this.props.children, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
       className: "footer"
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
       className: "button primary modalButton",
-      onClick: this.props.onDoneButton
+      onClick: this.props.onDismissBundle
     }, " ", button_label, " ")));
   }
 
@@ -2773,7 +2793,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _components_RichText_RichText__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(18);
 
+ // Alt text if available; in the future this should come from the server. See bug 1551711
 
+const ICON_ALT_TEXT = "";
 class ReturnToAMO extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureComponent {
   constructor(props) {
     super(props);
@@ -2783,22 +2805,35 @@ class ReturnToAMO extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCompo
 
   componentDidMount() {
     this.props.onReady();
+    this.props.sendUserActionTelemetry({
+      event: "IMPRESSION",
+      id: this.props.UISurface
+    });
   }
 
   onClickAddExtension() {
     this.props.onAction(this.props.content.primary_button.action);
+    this.props.sendUserActionTelemetry({
+      event: "INSTALL",
+      id: this.props.UISurface
+    });
   }
 
   onBlockButton() {
     this.props.onBlock();
     document.body.classList.remove("welcome", "hide-main", "amo");
+    this.props.sendUserActionTelemetry({
+      event: "BLOCK",
+      id: this.props.UISurface
+    });
   }
 
   renderText() {
     const customElement = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("img", {
       src: this.props.content.addon_icon,
       width: "20px",
-      height: "20px"
+      height: "20px",
+      alt: ICON_ALT_TEXT
     });
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_components_RichText_RichText__WEBPACK_IMPORTED_MODULE_1__["RichText"], {
       customElements: {
@@ -2844,7 +2879,7 @@ class ReturnToAMO extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCompo
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "convertLinks", function() { return convertLinks; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "RichText", function() { return RichText; });
-/* harmony import */ var fluent_react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(55);
+/* harmony import */ var fluent_react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(56);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(11);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _rich_text_strings__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(9);
@@ -2878,7 +2913,9 @@ function convertLinks(links, sendClick, doNotAutoBlock, openNewWindow = false) {
 
       const url = action ? false : Object(_template_utils__WEBPACK_IMPORTED_MODULE_3__["safeURI"])(links[linkTag].url);
       acc[linkTag] = react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("a", {
-        href: url,
+        href: url // eslint-disable-line jsx-a11y/anchor-has-content
+        // eslint was getting a false positive caused by the dynamic injection of content.
+        ,
         target: openNewWindow ? "_blank" : "",
         "data-metric": links[linkTag].metric,
         "data-action": action,
@@ -2934,31 +2971,31 @@ function safeURI(url) {
 /* 20 */
 /***/ (function(module) {
 
-module.exports = {"title":"EOYSnippet","description":"Fundraising Snippet","version":"1.0.0","type":"object","definitions":{"plainText":{"description":"Plain text (no HTML allowed)","type":"string"},"richText":{"description":"Text with HTML subset allowed: i, b, u, strong, em, br","type":"string"},"link_url":{"description":"Target for links or buttons","type":"string","format":"uri"}},"properties":{"donation_form_url":{"type":"string","description":"Url to the donation form."},"currency_code":{"type":"string","description":"The code for the currency. Examle gbp, cad, usd.","default":"usd"},"locale":{"type":"string","description":"String for the locale code.","default":"en-US"},"text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"text_color":{"type":"string","description":"Modify the text message color"},"background_color":{"type":"string","description":"Snippet background color."},"highlight_color":{"type":"string","description":"Paragraph em highlight color."},"donation_amount_first":{"type":"number","description":"First button amount."},"donation_amount_second":{"type":"number","description":"Second button amount."},"donation_amount_third":{"type":"number","description":"Third button amount."},"donation_amount_fourth":{"type":"number","description":"Fourth button amount."},"selected_button":{"type":"string","description":"Default donation_amount_second. Donation amount button that's selected by default.","default":"donation_amount_second"},"icon":{"type":"string","description":"Snippet icon. 64x64px. SVG or PNG preferred."},"title":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Snippet title displayed before snippet text"}]},"title_icon":{"type":"string","description":"Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."},"button_label":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Text for a button next to main snippet text that links to button_url. Requires button_url."}]},"button_color":{"type":"string","description":"The text color of the button. Valid CSS color."},"button_background_color":{"type":"string","description":"The background color of the button. Valid CSS color."},"block_button_text":{"type":"string","description":"Tooltip text used for dismiss button."},"monthly_checkbox_label_text":{"type":"string","description":"Label text for monthly checkbox.","default":"Make my donation monthly"},"test":{"type":"string","description":"Different styles for the snippet. Options are bold and takeover."},"do_not_autoblock":{"type":"boolean","description":"Used to prevent blocking the snippet after the CTA (link or button) has been clicked"},"links":{"additionalProperties":{"url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"The url where the link points to."}]},"metric":{"type":"string","description":"Custom event name sent with telemetry event."},"args":{"type":"string","description":"Additional parameters for link action, example which specific menu the button should open"}}}},"additionalProperties":false,"required":["text","donation_form_url","donation_amount_first","donation_amount_second","donation_amount_third","donation_amount_fourth","button_label","currency_code"],"dependencies":{"button_color":["button_label"],"button_background_color":["button_label"]}};
+module.exports = {"title":"EOYSnippet","description":"Fundraising Snippet","version":"1.1.0","type":"object","definitions":{"plainText":{"description":"Plain text (no HTML allowed)","type":"string"},"richText":{"description":"Text with HTML subset allowed: i, b, u, strong, em, br","type":"string"},"link_url":{"description":"Target for links or buttons","type":"string","format":"uri"}},"properties":{"donation_form_url":{"type":"string","description":"Url to the donation form."},"currency_code":{"type":"string","description":"The code for the currency. Examle gbp, cad, usd.","default":"usd"},"locale":{"type":"string","description":"String for the locale code.","default":"en-US"},"text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"text_color":{"type":"string","description":"Modify the text message color"},"background_color":{"type":"string","description":"Snippet background color."},"highlight_color":{"type":"string","description":"Paragraph em highlight color."},"donation_amount_first":{"type":"number","description":"First button amount."},"donation_amount_second":{"type":"number","description":"Second button amount."},"donation_amount_third":{"type":"number","description":"Third button amount."},"donation_amount_fourth":{"type":"number","description":"Fourth button amount."},"selected_button":{"type":"string","description":"Default donation_amount_second. Donation amount button that's selected by default.","default":"donation_amount_second"},"icon":{"type":"string","description":"Snippet icon. 64x64px. SVG or PNG preferred."},"icon_dark_theme":{"type":"string","description":"Snippet icon. Dark theme variant. 64x64px. SVG or PNG preferred."},"title":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Snippet title displayed before snippet text"}]},"title_icon":{"type":"string","description":"Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."},"title_icon_dark_theme":{"type":"string","description":"Small icon that shows up before the title / text. Dark theme variant. 16x16px. SVG or PNG preferred. Grayscale."},"button_label":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Text for a button next to main snippet text that links to button_url. Requires button_url."}]},"button_color":{"type":"string","description":"The text color of the button. Valid CSS color."},"button_background_color":{"type":"string","description":"The background color of the button. Valid CSS color."},"block_button_text":{"type":"string","description":"Tooltip text used for dismiss button."},"monthly_checkbox_label_text":{"type":"string","description":"Label text for monthly checkbox.","default":"Make my donation monthly"},"test":{"type":"string","description":"Different styles for the snippet. Options are bold and takeover."},"do_not_autoblock":{"type":"boolean","description":"Used to prevent blocking the snippet after the CTA (link or button) has been clicked"},"links":{"additionalProperties":{"url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"The url where the link points to."}]},"metric":{"type":"string","description":"Custom event name sent with telemetry event."},"args":{"type":"string","description":"Additional parameters for link action, example which specific menu the button should open"}}}},"additionalProperties":false,"required":["text","donation_form_url","donation_amount_first","donation_amount_second","donation_amount_third","donation_amount_fourth","button_label","currency_code"],"dependencies":{"button_color":["button_label"],"button_background_color":["button_label"]}};
 
 /***/ }),
 /* 21 */
 /***/ (function(module) {
 
-module.exports = {"title":"SimpleSnippet","description":"A simple template with an icon, text, and optional button.","version":"1.1.1","type":"object","definitions":{"plainText":{"description":"Plain text (no HTML allowed)","type":"string"},"richText":{"description":"Text with HTML subset allowed: i, b, u, strong, em, br","type":"string"},"link_url":{"description":"Target for links or buttons","type":"string","format":"uri"}},"properties":{"title":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Snippet title displayed before snippet text"}]},"text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"icon":{"type":"string","description":"Snippet icon. 64x64px. SVG or PNG preferred."},"title_icon":{"type":"string","description":"Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."},"button_action":{"type":"string","description":"The type of action the button should trigger."},"button_url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"A url, button_label links to this"}]},"button_action_args":{"type":"string","description":"Additional parameters for button action, example which specific menu the button should open"},"button_label":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Text for a button next to main snippet text that links to button_url. Requires button_url."}]},"button_color":{"type":"string","description":"The text color of the button. Valid CSS color."},"button_background_color":{"type":"string","description":"The background color of the button. Valid CSS color."},"block_button_text":{"type":"string","description":"Tooltip text used for dismiss button.","default":"Remove this"},"tall":{"type":"boolean","description":"To be used by fundraising only, increases height to roughly 120px. Defaults to false."},"do_not_autoblock":{"type":"boolean","description":"Used to prevent blocking the snippet after the CTA (link or button) has been clicked"},"links":{"additionalProperties":{"url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"The url where the link points to."}]},"metric":{"type":"string","description":"Custom event name sent with telemetry event."},"args":{"type":"string","description":"Additional parameters for link action, example which specific menu the button should open"}}},"section_title_icon":{"type":"string","description":"Section title icon. 16x16px. SVG or PNG preferred. section_title_text must also be specified to display."},"section_title_text":{"type":"string","description":"Section title text. section_title_icon must also be specified to display."},"section_title_url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"A url, section_title_text links to this"}]}},"additionalProperties":false,"required":["text"],"dependencies":{"button_action":["button_label"],"button_url":["button_label"],"button_color":["button_label"],"button_background_color":["button_label"],"section_title_url":["section_title_text"]}};
+module.exports = {"title":"SimpleSnippet","description":"A simple template with an icon, text, and optional button.","version":"1.1.1","type":"object","definitions":{"plainText":{"description":"Plain text (no HTML allowed)","type":"string"},"richText":{"description":"Text with HTML subset allowed: i, b, u, strong, em, br","type":"string"},"link_url":{"description":"Target for links or buttons","type":"string","format":"uri"}},"properties":{"title":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Snippet title displayed before snippet text"}]},"text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"icon":{"type":"string","description":"Snippet icon. 64x64px. SVG or PNG preferred."},"icon_dark_theme":{"type":"string","description":"Snippet icon, dark theme variant. 64x64px. SVG or PNG preferred."},"title_icon":{"type":"string","description":"Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."},"title_icon_dark_theme":{"type":"string","description":"Small icon that shows up before the title / text. Dark theme variant. 16x16px. SVG or PNG preferred. Grayscale."},"button_action":{"type":"string","description":"The type of action the button should trigger."},"button_url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"A url, button_label links to this"}]},"button_action_args":{"type":"string","description":"Additional parameters for button action, example which specific menu the button should open"},"button_label":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Text for a button next to main snippet text that links to button_url. Requires button_url."}]},"button_color":{"type":"string","description":"The text color of the button. Valid CSS color."},"button_background_color":{"type":"string","description":"The background color of the button. Valid CSS color."},"block_button_text":{"type":"string","description":"Tooltip text used for dismiss button.","default":"Remove this"},"tall":{"type":"boolean","description":"To be used by fundraising only, increases height to roughly 120px. Defaults to false."},"do_not_autoblock":{"type":"boolean","description":"Used to prevent blocking the snippet after the CTA (link or button) has been clicked"},"links":{"additionalProperties":{"url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"The url where the link points to."}]},"metric":{"type":"string","description":"Custom event name sent with telemetry event."},"args":{"type":"string","description":"Additional parameters for link action, example which specific menu the button should open"}}},"section_title_icon":{"type":"string","description":"Section title icon. 16x16px. SVG or PNG preferred. section_title_text must also be specified to display."},"section_title_icon_dark_theme":{"type":"string","description":"Section title icon, dark theme variant. 16x16px. SVG or PNG preferred. section_title_text must also be specified to display."},"section_title_text":{"type":"string","description":"Section title text. section_title_icon must also be specified to display."},"section_title_url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"A url, section_title_text links to this"}]}},"additionalProperties":false,"required":["text"],"dependencies":{"button_action":["button_label"],"button_url":["button_label"],"button_color":["button_label"],"button_background_color":["button_label"],"section_title_url":["section_title_text"]}};
 
 /***/ }),
 /* 22 */
 /***/ (function(module) {
 
-module.exports = {"title":"FXASignupSnippet","description":"A snippet template for FxA sign up/sign in","version":"1.0.0","type":"object","definitions":{"plainText":{"description":"Plain text (no HTML allowed)","type":"string"},"richText":{"description":"Text with HTML subset allowed: i, b, u, strong, em, br","type":"string"},"link_url":{"description":"Target for links or buttons","type":"string","format":"uri"}},"properties":{"scene1_title":{"allof":[{"$ref":"#/definitions/plainText"},{"description":"snippet title displayed before snippet text"}]},"scene1_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene2_title":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Title displayed before text in scene 2. Should be plain text."}]},"scene2_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene1_icon":{"type":"string","description":"Snippet icon. 64x64px. SVG or PNG preferred."},"scene1_title_icon":{"type":"string","description":"Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."},"scene2_email_placeholder_text":{"type":"string","description":"Value to show while input is empty.","default":"Your email here"},"scene2_button_label":{"type":"string","description":"Label for form submit button","default":"Sign me up"},"scene2_dismiss_button_text":{"type":"string","description":"Label for the dismiss button when the sign-up form is expanded.","default":"Dismiss"},"hidden_inputs":{"type":"object","description":"Each entry represents a hidden input, key is used as value for the name property.","properties":{"action":{"type":"string","enum":["email"]},"context":{"type":"string","enum":["fx_desktop_v3"]},"entrypoint":{"type":"string","enum":["snippets"]},"service":{"type":"string","enum":["sync"]},"utm_content":{"type":"number","description":"Firefox version number"},"utm_source":{"type":"string","enum":["snippet"]},"utm_campaign":{"type":"string","description":"(fxa) Value to pass through to GA as utm_campaign."},"utm_term":{"type":"string","description":"(fxa) Value to pass through to GA as utm_term."},"additionalProperties":false}},"scene1_button_label":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Text for a button next to main snippet text that links to button_url. Requires button_url."}],"default":"Learn more"},"scene1_button_color":{"type":"string","description":"The text color of the button. Valid CSS color."},"scene1_button_background_color":{"type":"string","description":"The background color of the button. Valid CSS color."},"do_not_autoblock":{"type":"boolean","description":"Used to prevent blocking the snippet after the CTA (link or button) has been clicked","default":false},"utm_campaign":{"type":"string","description":"(fxa) Value to pass through to GA as utm_campaign."},"utm_term":{"type":"string","description":"(fxa) Value to pass through to GA as utm_term."},"links":{"additionalProperties":{"url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"The url where the link points to."}]},"metric":{"type":"string","description":"Custom event name sent with telemetry event."}}}},"additionalProperties":false,"required":["scene1_text","scene2_text","scene1_button_label"],"dependencies":{"scene1_button_color":["scene1_button_label"],"scene1_button_background_color":["scene1_button_label"]}};
+module.exports = {"title":"FXASignupSnippet","description":"A snippet template for FxA sign up/sign in","version":"1.1.0","type":"object","definitions":{"plainText":{"description":"Plain text (no HTML allowed)","type":"string"},"richText":{"description":"Text with HTML subset allowed: i, b, u, strong, em, br","type":"string"},"link_url":{"description":"Target for links or buttons","type":"string","format":"uri"}},"properties":{"scene1_title":{"allof":[{"$ref":"#/definitions/plainText"},{"description":"snippet title displayed before snippet text"}]},"scene1_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene2_title":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Title displayed before text in scene 2. Should be plain text."}]},"scene2_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene1_icon":{"type":"string","description":"Snippet icon. 64x64px. SVG or PNG preferred."},"scene1_icon_dark_theme":{"type":"string","description":"Snippet icon. Dark theme variant. 64x64px. SVG or PNG preferred."},"scene1_title_icon":{"type":"string","description":"Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."},"scene1_title_icon_dark_theme":{"type":"string","description":"Small icon that shows up before the title / text. Dark theme variant. 16x16px. SVG or PNG preferred. Grayscale."},"scene2_email_placeholder_text":{"type":"string","description":"Value to show while input is empty.","default":"Your email here"},"scene2_button_label":{"type":"string","description":"Label for form submit button","default":"Sign me up"},"scene2_dismiss_button_text":{"type":"string","description":"Label for the dismiss button when the sign-up form is expanded.","default":"Dismiss"},"hidden_inputs":{"type":"object","description":"Each entry represents a hidden input, key is used as value for the name property.","properties":{"action":{"type":"string","enum":["email"]},"context":{"type":"string","enum":["fx_desktop_v3"]},"entrypoint":{"type":"string","enum":["snippets"]},"service":{"type":"string","enum":["sync"]},"utm_content":{"type":"number","description":"Firefox version number"},"utm_source":{"type":"string","enum":["snippet"]},"utm_campaign":{"type":"string","description":"(fxa) Value to pass through to GA as utm_campaign."},"utm_term":{"type":"string","description":"(fxa) Value to pass through to GA as utm_term."},"additionalProperties":false}},"scene1_button_label":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Text for a button next to main snippet text that links to button_url. Requires button_url."}],"default":"Learn more"},"scene1_button_color":{"type":"string","description":"The text color of the button. Valid CSS color."},"scene1_button_background_color":{"type":"string","description":"The background color of the button. Valid CSS color."},"do_not_autoblock":{"type":"boolean","description":"Used to prevent blocking the snippet after the CTA (link or button) has been clicked","default":false},"utm_campaign":{"type":"string","description":"(fxa) Value to pass through to GA as utm_campaign."},"utm_term":{"type":"string","description":"(fxa) Value to pass through to GA as utm_term."},"links":{"additionalProperties":{"url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"The url where the link points to."}]},"metric":{"type":"string","description":"Custom event name sent with telemetry event."}}}},"additionalProperties":false,"required":["scene1_text","scene2_text","scene1_button_label"],"dependencies":{"scene1_button_color":["scene1_button_label"],"scene1_button_background_color":["scene1_button_label"]}};
 
 /***/ }),
 /* 23 */
 /***/ (function(module) {
 
-module.exports = {"title":"NewsletterSnippet","description":"A snippet template for send to device mobile download","version":"1.0.0","type":"object","definitions":{"plainText":{"description":"Plain text (no HTML allowed)","type":"string"},"richText":{"description":"Text with HTML subset allowed: i, b, u, strong, em, br","type":"string"},"link_url":{"description":"Target for links or buttons","type":"string","format":"uri"}},"properties":{"locale":{"type":"string","description":"Two to five character string for the locale code","default":"en-US"},"scene1_title":{"allof":[{"$ref":"#/definitions/plainText"},{"description":"snippet title displayed before snippet text"}]},"scene1_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene2_title":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Title displayed before text in scene 2. Should be plain text."}]},"scene2_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene1_icon":{"type":"string","description":"Snippet icon. 64x64px. SVG or PNG preferred."},"scene1_title_icon":{"type":"string","description":"Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."},"scene2_email_placeholder_text":{"type":"string","description":"Value to show while input is empty.","default":"Your email here"},"scene2_button_label":{"type":"string","description":"Label for form submit button","default":"Sign me up"},"scene2_privacy_html":{"type":"string","description":"(send to device) Html for disclaimer and link underneath input box."},"scene2_dismiss_button_text":{"type":"string","description":"Label for the dismiss button when the sign-up form is expanded.","default":"Dismiss"},"hidden_inputs":{"type":"object","description":"Each entry represents a hidden input, key is used as value for the name property.","properties":{"fmt":{"type":"string","description":"","default":"H"}}},"scene1_button_label":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Text for a button next to main snippet text that links to button_url. Requires button_url."}],"default":"Learn more"},"scene1_button_color":{"type":"string","description":"The text color of the button. Valid CSS color."},"scene1_button_background_color":{"type":"string","description":"The background color of the button. Valid CSS color."},"do_not_autoblock":{"type":"boolean","description":"Used to prevent blocking the snippet after the CTA (link or button) has been clicked","default":false},"success_text":{"type":"string","description":"Message shown on successful registration."},"error_text":{"type":"string","description":"Message shown if registration failed."},"scene2_newsletter":{"type":"string","description":"Newsletter/basket id user is subscribing to.","default":"mozilla-foundation"},"links":{"additionalProperties":{"url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"The url where the link points to."}]},"metric":{"type":"string","description":"Custom event name sent with telemetry event."}}}},"additionalProperties":false,"required":["scene1_text","scene2_text","scene1_button_label"],"dependencies":{"scene1_button_color":["scene1_button_label"],"scene1_button_background_color":["scene1_button_label"]}};
+module.exports = {"title":"NewsletterSnippet","description":"A snippet template for send to device mobile download","version":"1.1.0","type":"object","definitions":{"plainText":{"description":"Plain text (no HTML allowed)","type":"string"},"richText":{"description":"Text with HTML subset allowed: i, b, u, strong, em, br","type":"string"},"link_url":{"description":"Target for links or buttons","type":"string","format":"uri"}},"properties":{"locale":{"type":"string","description":"Two to five character string for the locale code","default":"en-US"},"scene1_title":{"allof":[{"$ref":"#/definitions/plainText"},{"description":"snippet title displayed before snippet text"}]},"scene1_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene2_title":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Title displayed before text in scene 2. Should be plain text."}]},"scene2_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene1_icon":{"type":"string","description":"Snippet icon. 64x64px. SVG or PNG preferred."},"scene1_icon_dark_theme":{"type":"string","description":"Snippet icon. Dark theme variant. 64x64px. SVG or PNG preferred."},"scene1_title_icon":{"type":"string","description":"Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."},"scene1_title_icon_dark_theme":{"type":"string","description":"Small icon that shows up before the title / text. Dark theme variant. 16x16px. SVG or PNG preferred. Grayscale."},"scene2_email_placeholder_text":{"type":"string","description":"Value to show while input is empty.","default":"Your email here"},"scene2_button_label":{"type":"string","description":"Label for form submit button","default":"Sign me up"},"scene2_privacy_html":{"type":"string","description":"(send to device) Html for disclaimer and link underneath input box."},"scene2_dismiss_button_text":{"type":"string","description":"Label for the dismiss button when the sign-up form is expanded.","default":"Dismiss"},"hidden_inputs":{"type":"object","description":"Each entry represents a hidden input, key is used as value for the name property.","properties":{"fmt":{"type":"string","description":"","default":"H"}}},"scene1_button_label":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Text for a button next to main snippet text that links to button_url. Requires button_url."}],"default":"Learn more"},"scene1_button_color":{"type":"string","description":"The text color of the button. Valid CSS color."},"scene1_button_background_color":{"type":"string","description":"The background color of the button. Valid CSS color."},"do_not_autoblock":{"type":"boolean","description":"Used to prevent blocking the snippet after the CTA (link or button) has been clicked","default":false},"success_text":{"type":"string","description":"Message shown on successful registration."},"error_text":{"type":"string","description":"Message shown if registration failed."},"scene2_newsletter":{"type":"string","description":"Newsletter/basket id user is subscribing to.","default":"mozilla-foundation"},"links":{"additionalProperties":{"url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"The url where the link points to."}]},"metric":{"type":"string","description":"Custom event name sent with telemetry event."}}}},"additionalProperties":false,"required":["scene1_text","scene2_text","scene1_button_label"],"dependencies":{"scene1_button_color":["scene1_button_label"],"scene1_button_background_color":["scene1_button_label"]}};
 
 /***/ }),
 /* 24 */
 /***/ (function(module) {
 
-module.exports = {"title":"SendToDeviceSnippet","description":"A snippet template for send to device mobile download","version":"1.0.0","type":"object","definitions":{"plainText":{"description":"Plain text (no HTML allowed)","type":"string"},"richText":{"description":"Text with HTML subset allowed: i, b, u, strong, em, br","type":"string"},"link_url":{"description":"Target for links or buttons","type":"string","format":"uri"}},"properties":{"locale":{"type":"string","description":"Two to five character string for the locale code","default":"en-US"},"country":{"type":"string","description":"Two character string for the country code (used for SMS)","default":"us"},"scene1_title":{"allof":[{"$ref":"#/definitions/plainText"},{"description":"snippet title displayed before snippet text"}]},"scene1_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene2_title":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Title displayed before text in scene 2. Should be plain text."}]},"scene2_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene1_icon":{"type":"string","description":"Snippet icon. 64x64px. SVG or PNG preferred."},"scene2_icon":{"type":"string","description":"(send to device) Image to display above the form. 98x98px. SVG or PNG preferred."},"scene1_title_icon":{"type":"string","description":"Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."},"scene2_button_label":{"type":"string","description":"Label for form submit button","default":"Send"},"scene2_input_placeholder":{"type":"string","description":"(send to device) Value to show while input is empty.","default":"Your email here"},"scene2_disclaimer_html":{"type":"string","description":"(send to device) Html for disclaimer and link underneath input box."},"scene2_dismiss_button_text":{"type":"string","description":"Label for the dismiss button when the sign-up form is expanded.","default":"Dismiss"},"hidden_inputs":{"type":"object","description":"Each entry represents a hidden input, key is used as value for the name property.","properties":{"action":{"type":"string","enum":["email"]},"context":{"type":"string","enum":["fx_desktop_v3"]},"entrypoint":{"type":"string","enum":["snippets"]},"service":{"type":"string","enum":["sync"]},"utm_content":{"type":"string","description":"Firefox version number"},"utm_source":{"type":"string","enum":["snippet"]},"utm_campaign":{"type":"string","description":"(fxa) Value to pass through to GA as utm_campaign."},"utm_term":{"type":"string","description":"(fxa) Value to pass through to GA as utm_term."},"additionalProperties":false}},"scene1_button_label":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Text for a button next to main snippet text that links to button_url. Requires button_url."}],"default":"Learn more"},"scene1_button_color":{"type":"string","description":"The text color of the button. Valid CSS color."},"scene1_button_background_color":{"type":"string","description":"The background color of the button. Valid CSS color."},"do_not_autoblock":{"type":"boolean","description":"Used to prevent blocking the snippet after the CTA (link or button) has been clicked","default":false},"success_title":{"type":"string","description":"(send to device) Title shown before text on successful registration."},"success_text":{"type":"string","description":"Message shown on successful registration."},"error_text":{"type":"string","description":"Message shown if registration failed."},"include_sms":{"type":"boolean","description":"(send to device) Allow users to send an SMS message with the form?","default":false},"message_id_sms":{"type":"string","description":"(send to device) Newsletter/basket id representing the SMS message to be sent."},"message_id_email":{"type":"string","description":"(send to device) Newsletter/basket id representing the email message to be sent. Must be a value from the 'Slug' column here: https://basket.mozilla.org/news/."},"utm_campaign":{"type":"string","description":"(fxa) Value to pass through to GA as utm_campaign."},"utm_term":{"type":"string","description":"(fxa) Value to pass through to GA as utm_term."},"links":{"additionalProperties":{"url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"The url where the link points to."}]},"metric":{"type":"string","description":"Custom event name sent with telemetry event."}}}},"additionalProperties":false,"required":["scene1_text","scene2_text","scene1_button_label"],"dependencies":{"scene1_button_color":["scene1_button_label"],"scene1_button_background_color":["scene1_button_label"]}};
+module.exports = {"title":"SendToDeviceSnippet","description":"A snippet template for send to device mobile download","version":"1.1.0","type":"object","definitions":{"plainText":{"description":"Plain text (no HTML allowed)","type":"string"},"richText":{"description":"Text with HTML subset allowed: i, b, u, strong, em, br","type":"string"},"link_url":{"description":"Target for links or buttons","type":"string","format":"uri"}},"properties":{"locale":{"type":"string","description":"Two to five character string for the locale code","default":"en-US"},"country":{"type":"string","description":"Two character string for the country code (used for SMS)","default":"us"},"scene1_title":{"allof":[{"$ref":"#/definitions/plainText"},{"description":"snippet title displayed before snippet text"}]},"scene1_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene2_title":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Title displayed before text in scene 2. Should be plain text."}]},"scene2_text":{"allOf":[{"$ref":"#/definitions/richText"},{"description":"Main body text of snippet. HTML subset allowed: i, b, u, strong, em, br"}]},"scene1_icon":{"type":"string","description":"Snippet icon. 64x64px. SVG or PNG preferred."},"scene1_icon_dark_theme":{"type":"string","description":"Snippet icon. Dark theme variant. 64x64px. SVG or PNG preferred."},"scene2_icon":{"type":"string","description":"(send to device) Image to display above the form. Dark theme variant. 98x98px. SVG or PNG preferred."},"scene2_icon_dark_theme":{"type":"string","description":"(send to device) Image to display above the form. 98x98px. SVG or PNG preferred."},"scene1_title_icon":{"type":"string","description":"Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."},"scene1_title_icon_dark_theme":{"type":"string","description":"Small icon that shows up before the title / text. Dark theme variant. 16x16px. SVG or PNG preferred. Grayscale."},"scene2_button_label":{"type":"string","description":"Label for form submit button","default":"Send"},"scene2_input_placeholder":{"type":"string","description":"(send to device) Value to show while input is empty.","default":"Your email here"},"scene2_disclaimer_html":{"type":"string","description":"(send to device) Html for disclaimer and link underneath input box."},"scene2_dismiss_button_text":{"type":"string","description":"Label for the dismiss button when the sign-up form is expanded.","default":"Dismiss"},"hidden_inputs":{"type":"object","description":"Each entry represents a hidden input, key is used as value for the name property.","properties":{"action":{"type":"string","enum":["email"]},"context":{"type":"string","enum":["fx_desktop_v3"]},"entrypoint":{"type":"string","enum":["snippets"]},"service":{"type":"string","enum":["sync"]},"utm_content":{"type":"string","description":"Firefox version number"},"utm_source":{"type":"string","enum":["snippet"]},"utm_campaign":{"type":"string","description":"(fxa) Value to pass through to GA as utm_campaign."},"utm_term":{"type":"string","description":"(fxa) Value to pass through to GA as utm_term."},"additionalProperties":false}},"scene1_button_label":{"allOf":[{"$ref":"#/definitions/plainText"},{"description":"Text for a button next to main snippet text that links to button_url. Requires button_url."}],"default":"Learn more"},"scene1_button_color":{"type":"string","description":"The text color of the button. Valid CSS color."},"scene1_button_background_color":{"type":"string","description":"The background color of the button. Valid CSS color."},"do_not_autoblock":{"type":"boolean","description":"Used to prevent blocking the snippet after the CTA (link or button) has been clicked","default":false},"success_title":{"type":"string","description":"(send to device) Title shown before text on successful registration."},"success_text":{"type":"string","description":"Message shown on successful registration."},"error_text":{"type":"string","description":"Message shown if registration failed."},"include_sms":{"type":"boolean","description":"(send to device) Allow users to send an SMS message with the form?","default":false},"message_id_sms":{"type":"string","description":"(send to device) Newsletter/basket id representing the SMS message to be sent."},"message_id_email":{"type":"string","description":"(send to device) Newsletter/basket id representing the email message to be sent. Must be a value from the 'Slug' column here: https://basket.mozilla.org/news/."},"utm_campaign":{"type":"string","description":"(fxa) Value to pass through to GA as utm_campaign."},"utm_term":{"type":"string","description":"(fxa) Value to pass through to GA as utm_term."},"links":{"additionalProperties":{"url":{"allOf":[{"$ref":"#/definitions/link_url"},{"description":"The url where the link points to."}]},"metric":{"type":"string","description":"Custom event name sent with telemetry event."}}}},"additionalProperties":false,"required":["scene1_text","scene2_text","scene1_button_label"],"dependencies":{"scene1_button_color":["scene1_button_label"],"scene1_button_background_color":["scene1_button_label"]}};
 
 /***/ }),
 /* 25 */
@@ -2988,9 +3025,11 @@ class _StartupOverlay extends react__WEBPACK_IMPORTED_MODULE_3___default.a.PureC
     this.initScene = this.initScene.bind(this);
     this.removeOverlay = this.removeOverlay.bind(this);
     this.onInputInvalid = this.onInputInvalid.bind(this);
+    this.utmParams = "utm_source=activity-stream&utm_campaign=firstrun&utm_medium=referral&utm_term=trailhead-control";
     this.state = {
       emailInput: "",
       overlayRemoved: false,
+      deviceId: "",
       flowId: "",
       flowBeginTime: 0
     };
@@ -3001,17 +3040,19 @@ class _StartupOverlay extends react__WEBPACK_IMPORTED_MODULE_3___default.a.PureC
     if (this.props.fxa_endpoint && !this.didFetch) {
       try {
         this.didFetch = true;
-        const fxaParams = "entrypoint=activity-stream-firstrun&utm_source=activity-stream&utm_campaign=firstrun&form_type=email";
-        const response = await fetch(`${this.props.fxa_endpoint}/metrics-flow?${fxaParams}`, {
+        const fxaParams = "entrypoint=activity-stream-firstrun&form_type=email";
+        const response = await fetch(`${this.props.fxa_endpoint}/metrics-flow?${fxaParams}&${this.utmParams}`, {
           credentials: "omit"
         });
 
         if (response.status === 200) {
           const {
+            deviceId,
             flowId,
             flowBeginTime
           } = await response.json();
           this.setState({
+            deviceId,
             flowId,
             flowBeginTime
           });
@@ -3121,14 +3162,14 @@ class _StartupOverlay extends react__WEBPACK_IMPORTED_MODULE_3___default.a.PureC
     }
 
     let termsLink = react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement("a", {
-      href: `${this.props.fxa_endpoint}/legal/terms`,
+      href: `${this.props.fxa_endpoint}/legal/terms?${this.utmParams}`,
       target: "_blank",
       rel: "noopener noreferrer"
     }, react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement(react_intl__WEBPACK_IMPORTED_MODULE_1__["FormattedMessage"], {
       id: "firstrun_terms_of_service"
     }));
     let privacyLink = react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement("a", {
-      href: `${this.props.fxa_endpoint}/legal/privacy`,
+      href: `${this.props.fxa_endpoint}/legal/privacy?${this.utmParams}`,
       target: "_blank",
       rel: "noopener noreferrer"
     }, react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement(react_intl__WEBPACK_IMPORTED_MODULE_1__["FormattedMessage"], {
@@ -3154,7 +3195,7 @@ class _StartupOverlay extends react__WEBPACK_IMPORTED_MODULE_3___default.a.PureC
       id: "firstrun_content"
     })), react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement("a", {
       className: "firstrun-link",
-      href: "https://www.mozilla.org/firefox/features/sync/",
+      href: `https://www.mozilla.org/firefox/features/sync/?${this.utmParams}`,
       target: "_blank",
       rel: "noopener noreferrer"
     }, react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement(react_intl__WEBPACK_IMPORTED_MODULE_1__["FormattedMessage"], {
@@ -3199,6 +3240,18 @@ class _StartupOverlay extends react__WEBPACK_IMPORTED_MODULE_3___default.a.PureC
       name: "utm_campaign",
       type: "hidden",
       value: "firstrun"
+    }), react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement("input", {
+      name: "utm_medium",
+      type: "hidden",
+      value: "referral"
+    }), react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement("input", {
+      name: "utm_term",
+      type: "hidden",
+      value: "trailhead-control"
+    }), react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement("input", {
+      name: "device_id",
+      type: "hidden",
+      value: this.state.deviceId
     }), react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement("input", {
       name: "flow_id",
       type: "hidden",
@@ -3279,27 +3332,34 @@ function _extends() { _extends = Object.assign || function (target) { for (var i
 
 
 
-const FLUENT_FILES = ["branding/brand.ftl", "browser/branding/sync-brand.ftl", // These are finalized strings exposed to localizers
-"browser/newtab/onboarding.ftl", // These are WIP/in-development strings that only get used if the string
-// doesn't already exist in onboarding.ftl above
-"trailhead.ftl"];
+const FLUENT_FILES = ["branding/brand.ftl", "browser/branding/brandings.ftl", "browser/branding/sync-brand.ftl", "browser/newtab/onboarding.ftl"]; // From resource://devtools/client/shared/focus.js
+
+const FOCUSABLE_SELECTOR = ["a[href]:not([tabindex='-1'])", "button:not([disabled]):not([tabindex='-1'])", "iframe:not([tabindex='-1'])", "input:not([disabled]):not([tabindex='-1'])", "select:not([disabled]):not([tabindex='-1'])", "textarea:not([disabled]):not([tabindex='-1'])", "[tabindex]:not([tabindex='-1'])"].join(", ");
 class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureComponent {
   constructor(props) {
     super(props);
     this.closeModal = this.closeModal.bind(this);
     this.hideCardPanel = this.hideCardPanel.bind(this);
     this.onInputChange = this.onInputChange.bind(this);
+    this.onStartBlur = this.onStartBlur.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this.onInputInvalid = this.onInputInvalid.bind(this);
+    this.onCardAction = this.onCardAction.bind(this);
     this.state = {
       emailInput: "",
       isModalOpen: true,
       showCardPanel: true,
       showCards: false,
+      // The params below are for FxA metrics
+      deviceId: "",
       flowId: "",
       flowBeginTime: 0
     };
-    this.didFetch = false;
+    this.fxaMetricsInitialized = false;
+  }
+
+  get dialog() {
+    return this.props.document.getElementById("trailheadDialog");
   }
 
   async componentWillMount() {
@@ -3309,20 +3369,23 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
       link.rel = "localization";
     });
 
-    if (this.props.fxaEndpoint && !this.didFetch) {
+    if (this.props.fxaEndpoint && !this.fxaMetricsInitialized) {
       try {
-        this.didFetch = true;
-        const fxaParams = "entrypoint=activity-stream-firstrun&utm_source=activity-stream&utm_campaign=firstrun&utm_term=trailhead&form_type=email";
-        const response = await fetch(`${this.props.fxaEndpoint}/metrics-flow?${fxaParams}`, {
+        this.fxaMetricsInitialized = true;
+        const url = new URL(`${this.props.fxaEndpoint}/metrics-flow?entrypoint=activity-stream-firstrun&form_type=email`);
+        this.addUtmParams(url);
+        const response = await fetch(url, {
           credentials: "omit"
         });
 
         if (response.status === 200) {
           const {
+            deviceId,
             flowId,
             flowBeginTime
           } = await response.json();
           this.setState({
+            deviceId,
             flowId,
             flowBeginTime
           });
@@ -3348,13 +3411,17 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
 
   componentDidMount() {
     // We need to remove hide-main since we should show it underneath everything that has rendered
-    global.document.body.classList.remove("hide-main"); // Add inline-onboarding class to disable fixed search header and fixed positioned settings icon
+    this.props.document.body.classList.remove("hide-main"); // Add inline-onboarding class to disable fixed search header and fixed positioned settings icon
 
-    global.document.body.classList.add("inline-onboarding");
+    this.props.document.body.classList.add("inline-onboarding"); // The rest of the page is "hidden" when the modal is open
 
-    if (!this.props.message.content) {
+    if (this.props.message.content) {
+      this.props.document.getElementById("root").setAttribute("aria-hidden", "true"); // Start with focus in the email input box
+
+      this.dialog.querySelector("input[name=email]").focus();
+    } else {
       // No modal overlay, let the user scroll and deal them some cards.
-      global.document.body.classList.remove("welcome");
+      this.props.document.body.classList.remove("welcome");
 
       if (this.props.message.includeBundle || this.props.message.cards) {
         this.revealCards();
@@ -3362,8 +3429,8 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
     }
   }
 
-  componentDidUnmount() {
-    global.document.body.classList.remove("inline-onboarding");
+  componentWillUnmount() {
+    this.props.document.body.classList.remove("inline-onboarding");
   }
 
   onInputChange(e) {
@@ -3375,7 +3442,31 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
     e.target.classList.remove("invalid");
   }
 
-  onSubmit() {
+  onStartBlur(event) {
+    // Make sure focus stays within the dialog when tabbing from the button
+    const {
+      dialog
+    } = this;
+
+    if (event.relatedTarget && !(dialog.compareDocumentPosition(event.relatedTarget) & dialog.DOCUMENT_POSITION_CONTAINED_BY)) {
+      dialog.querySelector(FOCUSABLE_SELECTOR).focus();
+    }
+  }
+
+  onSubmit(event) {
+    // Dynamically require the email on submission so screen readers don't read
+    // out it's always required because there's also ways to skip the modal
+    const {
+      email
+    } = event.target.elements;
+
+    if (!email.value.length) {
+      email.required = true;
+      email.checkValidity();
+      event.preventDefault();
+      return;
+    }
+
     this.props.dispatch(common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionCreators"].UserEvent({
       event: "SUBMIT_EMAIL",
       ...this._getFormInfo()
@@ -3383,17 +3474,25 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
     global.addEventListener("visibilitychange", this.closeModal);
   }
 
-  closeModal() {
+  closeModal(ev) {
     global.removeEventListener("visibilitychange", this.closeModal);
-    global.document.body.classList.remove("welcome");
+    this.props.document.body.classList.remove("welcome");
+    this.props.document.getElementById("root").removeAttribute("aria-hidden");
     this.setState({
       isModalOpen: false
     });
-    this.revealCards();
-    this.props.dispatch(common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionCreators"].UserEvent({
-      event: "SKIPPED_SIGNIN",
-      ...this._getFormInfo()
-    }));
+    this.revealCards(); // If closeModal() was triggered by a visibilitychange event, the user actually
+    // submitted the email form so we don't send a SKIPPED_SIGNIN ping.
+
+    if (!ev || ev.type !== "visibilitychange") {
+      this.props.dispatch(common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__["actionCreators"].UserEvent({
+        event: "SKIPPED_SIGNIN",
+        ...this._getFormInfo()
+      }));
+    } // Bug 1190882 - Focus in a disappearing dialog confuses screen readers
+
+
+    this.props.document.activeElement.blur();
   }
   /**
    * Report to telemetry additional information about the form submission.
@@ -3422,6 +3521,7 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
     this.setState({
       showCardPanel: false
     });
+    this.props.onDismissBundle();
   }
 
   revealCards() {
@@ -3439,6 +3539,52 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
 
     return str.value;
   }
+  /**
+   * Takes in a url as a string or URL object and returns a URL object with the
+   * utm_* parameters added to it. If a URL object is passed in, the paraemeters
+   * are added to it (the return value can be ignored in that case as it's the
+   * same object).
+   */
+
+
+  addUtmParams(url, isCard = false) {
+    let returnUrl = url;
+
+    if (typeof returnUrl === "string") {
+      returnUrl = new URL(url);
+    }
+
+    returnUrl.searchParams.append("utm_source", "activity-stream");
+    returnUrl.searchParams.append("utm_campaign", "firstrun");
+    returnUrl.searchParams.append("utm_medium", "referral");
+    returnUrl.searchParams.append("utm_term", `${this.props.message.utm_term}${isCard ? "-card" : ""}`);
+    return returnUrl;
+  }
+
+  onCardAction(action) {
+    let actionUpdates = {};
+
+    if (action.type === "OPEN_URL") {
+      let url = new URL(action.data.args);
+      this.addUtmParams(url, true);
+
+      if (action.addFlowParams) {
+        url.searchParams.append("device_id", this.state.deviceId);
+        url.searchParams.append("flow_id", this.state.flowId);
+        url.searchParams.append("flow_begin_time", this.state.flowBeginTime);
+      }
+
+      actionUpdates = {
+        data: { ...action.data,
+          args: url
+        }
+      };
+    }
+
+    this.props.onAction({ ...action,
+      ...actionUpdates
+    });
+  }
 
   render() {
     const {
@@ -3446,18 +3592,22 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
     } = this;
     const {
       bundle: cards,
-      content
+      content,
+      utm_term
     } = props.message;
     const innerClassName = ["trailhead", content && content.className].filter(v => v).join(" ");
     return react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(react__WEBPACK_IMPORTED_MODULE_4___default.a.Fragment, null, this.state.isModalOpen && content ? react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement(_components_ModalOverlay_ModalOverlay__WEBPACK_IMPORTED_MODULE_2__["ModalOverlayWrapper"], {
       innerClassName: innerClassName,
-      onClose: this.closeModal
+      onClose: this.closeModal,
+      id: "trailheadDialog",
+      headerId: "trailheadHeader"
     }, react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("div", {
       className: "trailheadInner"
     }, react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("div", {
       className: "trailheadContent"
     }, react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("h1", {
-      "data-l10n-id": content.title.string_id
+      "data-l10n-id": content.title.string_id,
+      id: "trailheadHeader"
     }, this.getStringValue(content.title)), content.subtitle && react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("p", {
       "data-l10n-id": content.subtitle.string_id
     }, this.getStringValue(content.subtitle)), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("ul", {
@@ -3472,12 +3622,19 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
     }, this.getStringValue(item.text))))), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("a", {
       className: "trailheadLearn",
       "data-l10n-id": content.learn.text.string_id,
-      href: content.learn.url
+      href: this.addUtmParams(content.learn.url),
+      target: "_blank",
+      rel: "noopener noreferrer"
     }, this.getStringValue(content.learn.text))), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("div", {
+      role: "group",
+      "aria-labelledby": "joinFormHeader",
+      "aria-describedby": "joinFormBody",
       className: "trailheadForm"
     }, react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("h3", {
+      id: "joinFormHeader",
       "data-l10n-id": content.form.title.string_id
     }, this.getStringValue(content.form.title)), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("p", {
+      id: "joinFormBody",
       "data-l10n-id": content.form.text.string_id
     }, this.getStringValue(content.form.text)), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("form", {
       method: "get",
@@ -3512,7 +3669,11 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
     }), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("input", {
       name: "utm_term",
       type: "hidden",
-      value: "trailhead"
+      value: utm_term
+    }), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("input", {
+      name: "device_id",
+      type: "hidden",
+      value: this.state.deviceId
     }), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("input", {
       name: "flow_id",
       type: "hidden",
@@ -3521,6 +3682,10 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
       name: "flow_begin_time",
       type: "hidden",
       value: this.state.flowBeginTime
+    }), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("input", {
+      name: "style",
+      type: "hidden",
+      value: "trailhead"
     }), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("p", {
       "data-l10n-id": "onboarding-join-form-email-error",
       className: "error"
@@ -3529,7 +3694,6 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
       placeholder: this.getStringValue(content.form.email),
       name: "email",
       type: "email",
-      required: "true",
       onInvalid: this.onInputInvalid,
       onChange: this.onInputChange
     }), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("p", {
@@ -3537,21 +3701,27 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
       "data-l10n-id": "onboarding-join-form-legal"
     }, react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("a", {
       "data-l10n-name": "terms",
-      href: "https://accounts.firefox.com/legal/terms"
+      target: "_blank",
+      rel: "noopener noreferrer",
+      href: this.addUtmParams("https://accounts.firefox.com/legal/terms")
     }), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("a", {
       "data-l10n-name": "privacy",
-      href: "https://accounts.firefox.com/legal/privacy"
+      target: "_blank",
+      rel: "noopener noreferrer",
+      href: this.addUtmParams("https://accounts.firefox.com/legal/privacy")
     })), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("button", {
       "data-l10n-id": content.form.button.string_id,
       type: "submit"
     }, this.getStringValue(content.form.button))))), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("button", {
       className: "trailheadStart",
       "data-l10n-id": content.skipButton.string_id,
+      onBlur: this.onStartBlur,
       onClick: this.closeModal
     }, this.getStringValue(content.skipButton))) : null, cards && cards.length ? react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("div", {
       className: `trailheadCards ${this.state.showCardPanel ? "expanded" : "collapsed"}`
     }, react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("div", {
-      className: "trailheadCardsInner"
+      className: "trailheadCardsInner",
+      "aria-hidden": !this.state.showCards
     }, react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("h1", {
       "data-l10n-id": "onboarding-welcome-header"
     }), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("div", {
@@ -3560,7 +3730,7 @@ class _Trailhead extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompon
       key: card.id,
       className: "trailheadCard",
       sendUserActionTelemetry: props.sendUserActionTelemetry,
-      onAction: props.onAction,
+      onAction: this.onCardAction,
       UISurface: "TRAILHEAD"
     }, card)))), this.state.showCardPanel && react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("button", {
       className: "icon icon-dismiss",
@@ -3737,15 +3907,51 @@ const ConfirmDialog = Object(react_redux__WEBPACK_IMPORTED_MODULE_1__["connect"]
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* WEBPACK VAR INJECTION */(function(global) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "clampTotalLines", function() { return clampTotalLines; });
+/**
+ * Adjusts line-clamps of a node's children to fill a desired number of lines.
+ *
+ * This is a React callback ref that should be set on a parent node that also
+ * has a data-total-lines attribute. Children with "clamp" class name are
+ * clamped to allow as many lines to earlier children while making sure every
+ * child gets at least one line. Each child can be explicitly clamped to a max
+ * lines with a data-clamp attribute.
+ */
+function clampTotalLines(parentNode) {
+  // Nothing to do if the node is removed or didn't configure how many lines
+  if (!parentNode || !parentNode.dataset.totalLines) {
+    return;
+  } // Only handle clamp-able children that are displayed (not hidden)
+
+
+  const toClamp = Array.from(parentNode.querySelectorAll(".clamp")).filter(child => child.scrollHeight); // Start with total allowed lines while reserving 1 line for each child
+
+  let maxLines = parentNode.dataset.totalLines - toClamp.length + 1;
+  toClamp.forEach(child => {
+    // Clamp to the remaining allowed, explicit limit or the natural line count
+    const lines = Math.min(maxLines, child.dataset.clamp || Infinity, child.scrollHeight / parseInt(global.getComputedStyle(child).lineHeight, 10));
+    child.style.webkitLineClamp = `${lines}`; // Update the remaining line allowance less the already reserved 1 line
+
+    maxLines -= lines - 1;
+  });
+}
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
+
+/***/ }),
+/* 31 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_LinkMenu", function() { return _LinkMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LinkMenu", function() { return LinkMenu; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(26);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var content_src_components_ContextMenu_ContextMenu__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(31);
+/* harmony import */ var content_src_components_ContextMenu_ContextMenu__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(32);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(4);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var content_src_lib_link_menu_options__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(32);
+/* harmony import */ var content_src_lib_link_menu_options__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(33);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(11);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_5__);
 
@@ -3831,7 +4037,7 @@ const getState = state => ({
 const LinkMenu = Object(react_redux__WEBPACK_IMPORTED_MODULE_1__["connect"])(getState)(Object(react_intl__WEBPACK_IMPORTED_MODULE_3__["injectIntl"])(_LinkMenu));
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3951,7 +4157,7 @@ class ContextMenuItem extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureC
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4244,7 +4450,7 @@ const LinkMenuOptions = {
 };
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4465,7 +4671,7 @@ ImpressionStats.defaultProps = {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4475,11 +4681,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2);
-/* harmony import */ var content_src_components_ErrorBoundary_ErrorBoundary__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(35);
+/* harmony import */ var content_src_components_ErrorBoundary_ErrorBoundary__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(36);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(11);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var content_src_components_SectionMenu_SectionMenu__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(36);
-/* harmony import */ var content_src_lib_section_menu_options__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(37);
+/* harmony import */ var content_src_components_SectionMenu_SectionMenu__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(37);
+/* harmony import */ var content_src_lib_section_menu_options__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(38);
 
 
 
@@ -4761,7 +4967,7 @@ const CollapsibleSection = Object(react_intl__WEBPACK_IMPORTED_MODULE_0__["injec
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4850,7 +5056,7 @@ ErrorBoundary.defaultProps = {
 };
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4858,12 +5064,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_SectionMenu", function() { return _SectionMenu; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "SectionMenu", function() { return SectionMenu; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var content_src_components_ContextMenu_ContextMenu__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(31);
+/* harmony import */ var content_src_components_ContextMenu_ContextMenu__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(32);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(4);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(11);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var content_src_lib_section_menu_options__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(37);
+/* harmony import */ var content_src_lib_section_menu_options__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(38);
 
 
 
@@ -4938,7 +5144,7 @@ class _SectionMenu extends react__WEBPACK_IMPORTED_MODULE_3___default.a.PureComp
 const SectionMenu = Object(react_intl__WEBPACK_IMPORTED_MODULE_2__["injectIntl"])(_SectionMenu);
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5065,7 +5271,7 @@ const SectionMenuOptions = {
 };
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5073,19 +5279,19 @@ __webpack_require__.r(__webpack_exports__);
 /* WEBPACK VAR INJECTION */(function(global) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_TopSites", function() { return _TopSites; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TopSites", function() { return TopSites; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(39);
-/* harmony import */ var content_src_components_CollapsibleSection_CollapsibleSection__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(34);
-/* harmony import */ var content_src_components_ComponentPerfTimer_ComponentPerfTimer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(40);
+/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(40);
+/* harmony import */ var content_src_components_CollapsibleSection_CollapsibleSection__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(35);
+/* harmony import */ var content_src_components_ComponentPerfTimer_ComponentPerfTimer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(41);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(26);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_4__);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(4);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_5__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(11);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_6__);
-/* harmony import */ var _SearchShortcutsForm__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(42);
-/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(56);
-/* harmony import */ var _TopSiteForm__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(58);
-/* harmony import */ var _TopSite__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(43);
+/* harmony import */ var _SearchShortcutsForm__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(43);
+/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(58);
+/* harmony import */ var _TopSiteForm__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(57);
+/* harmony import */ var _TopSite__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(44);
 function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
 
 
@@ -5262,7 +5468,8 @@ class _TopSites extends react__WEBPACK_IMPORTED_MODULE_6___default.a.PureCompone
       className: "edit-topsites"
     }, react__WEBPACK_IMPORTED_MODULE_6___default.a.createElement("div", {
       className: "modal-overlay",
-      onClick: this.onEditFormClose
+      onClick: this.onEditFormClose,
+      role: "presentation"
     }), react__WEBPACK_IMPORTED_MODULE_6___default.a.createElement("div", {
       className: "modal"
     }, react__WEBPACK_IMPORTED_MODULE_6___default.a.createElement(_TopSiteForm__WEBPACK_IMPORTED_MODULE_9__["TopSiteForm"], _extends({
@@ -5274,7 +5481,8 @@ class _TopSites extends react__WEBPACK_IMPORTED_MODULE_6___default.a.PureCompone
       className: "edit-search-shortcuts"
     }, react__WEBPACK_IMPORTED_MODULE_6___default.a.createElement("div", {
       className: "modal-overlay",
-      onClick: this.onSearchShortcutsFormClose
+      onClick: this.onSearchShortcutsFormClose,
+      role: "presentation"
     }), react__WEBPACK_IMPORTED_MODULE_6___default.a.createElement("div", {
       className: "modal"
     }, react__WEBPACK_IMPORTED_MODULE_6___default.a.createElement(_SearchShortcutsForm__WEBPACK_IMPORTED_MODULE_7__["SearchShortcutsForm"], {
@@ -5293,7 +5501,7 @@ const TopSites = Object(react_redux__WEBPACK_IMPORTED_MODULE_4__["connect"])(sta
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5313,14 +5521,14 @@ const MIN_RICH_FAVICON_SIZE = 96; // minimum size necessary to show any icon in 
 const MIN_CORNER_FAVICON_SIZE = 16;
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ComponentPerfTimer", function() { return ComponentPerfTimer; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var common_PerfService_jsm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(41);
+/* harmony import */ var common_PerfService_jsm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(42);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(11);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_2__);
 
@@ -5490,7 +5698,7 @@ class ComponentPerfTimer extends react__WEBPACK_IMPORTED_MODULE_2___default.a.Co
 }
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5628,7 +5836,7 @@ _PerfService.prototype = {
 var perfService = new _PerfService();
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5640,7 +5848,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(11);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(39);
+/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(40);
 
 
 
@@ -5822,7 +6030,7 @@ class SearchShortcutsForm extends react__WEBPACK_IMPORTED_MODULE_2___default.a.P
 }
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5835,12 +6043,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(4);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(39);
-/* harmony import */ var content_src_components_LinkMenu_LinkMenu__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(30);
+/* harmony import */ var _TopSitesConstants__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(40);
+/* harmony import */ var content_src_components_LinkMenu_LinkMenu__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(31);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(11);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var content_src_lib_screenshot_utils__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(44);
-/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(56);
+/* harmony import */ var content_src_lib_screenshot_utils__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(45);
+/* harmony import */ var common_Reducers_jsm__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(58);
 function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
 
 
@@ -6066,6 +6274,7 @@ class TopSiteLink extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureCompo
     }, draggableProps), react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("div", {
       className: "top-site-inner"
     }, react__WEBPACK_IMPORTED_MODULE_4___default.a.createElement("a", {
+      className: "top-site-button",
       href: link.searchTopSite ? undefined : link.url,
       tabIndex: "0",
       onKeyPress: this.onKeyPress,
@@ -6480,7 +6689,7 @@ class _TopSiteList extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureComp
 const TopSiteList = Object(react_intl__WEBPACK_IMPORTED_MODULE_1__["injectIntl"])(_TopSiteList);
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6545,7 +6754,7 @@ const ScreenshotUtils = {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6683,7 +6892,7 @@ var PrerenderData = new _PrerenderData({
 });
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6891,7 +7100,7 @@ class _Search extends react__WEBPACK_IMPORTED_MODULE_4___default.a.PureComponent
 const Search = Object(react_redux__WEBPACK_IMPORTED_MODULE_2__["connect"])()(Object(react_intl__WEBPACK_IMPORTED_MODULE_1__["injectIntl"])(_Search));
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6901,19 +7110,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_Sections", function() { return _Sections; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Sections", function() { return Sections; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var content_src_components_Card_Card__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(57);
+/* harmony import */ var content_src_components_Card_Card__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(59);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(4);
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_intl__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var content_src_components_CollapsibleSection_CollapsibleSection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(34);
-/* harmony import */ var content_src_components_ComponentPerfTimer_ComponentPerfTimer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(40);
+/* harmony import */ var content_src_components_CollapsibleSection_CollapsibleSection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(35);
+/* harmony import */ var content_src_components_ComponentPerfTimer_ComponentPerfTimer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(41);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(26);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var content_src_components_MoreRecommendations_MoreRecommendations__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(48);
-/* harmony import */ var content_src_components_PocketLoggedInCta_PocketLoggedInCta__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(49);
+/* harmony import */ var content_src_components_MoreRecommendations_MoreRecommendations__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(49);
+/* harmony import */ var content_src_components_PocketLoggedInCta_PocketLoggedInCta__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(50);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(11);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_8__);
-/* harmony import */ var content_src_components_Topics_Topics__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(50);
-/* harmony import */ var content_src_components_TopSites_TopSites__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(38);
+/* harmony import */ var content_src_components_Topics_Topics__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(51);
+/* harmony import */ var content_src_components_TopSites_TopSites__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(39);
 function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
 
 
@@ -7262,7 +7471,7 @@ const Sections = Object(react_redux__WEBPACK_IMPORTED_MODULE_5__["connect"])(sta
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7295,7 +7504,7 @@ class MoreRecommendations extends react__WEBPACK_IMPORTED_MODULE_1___default.a.P
 }
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7338,7 +7547,7 @@ const PocketLoggedInCta = Object(react_redux__WEBPACK_IMPORTED_MODULE_0__["conne
 }))(_PocketLoggedInCta);
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7383,14 +7592,14 @@ class Topics extends react__WEBPACK_IMPORTED_MODULE_1___default.a.PureComponent 
 }
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* WEBPACK VAR INJECTION */(function(global) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DetectUserSessionStart", function() { return DetectUserSessionStart; });
 /* harmony import */ var common_Actions_jsm__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
-/* harmony import */ var common_PerfService_jsm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(41);
+/* harmony import */ var common_PerfService_jsm__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(42);
 
 
 const VISIBLE = "visible";
@@ -7462,7 +7671,7 @@ class DetectUserSessionStart {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1)))
 
 /***/ }),
-/* 52 */
+/* 53 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7470,6 +7679,9 @@ __webpack_require__.r(__webpack_exports__);
 
 // EXTERNAL MODULE: ./common/Actions.jsm
 var Actions = __webpack_require__(2);
+
+// EXTERNAL MODULE: ./content-src/lib/clamp-total-lines.js
+var clamp_total_lines = __webpack_require__(30);
 
 // EXTERNAL MODULE: external "React"
 var external_React_ = __webpack_require__(11);
@@ -7545,6 +7757,7 @@ class DSImage_DSImage extends external_React_default.a.PureComponent {
           source = this.reformatImageURL(baseSource, this.state.containerWidth, this.state.containerHeight);
           source2x = this.reformatImageURL(baseSource, this.state.containerWidth * 2, this.state.containerHeight * 2);
           img = external_React_default.a.createElement("img", {
+            crossOrigin: "anonymous",
             onError: this.onOptimizedImageError,
             src: source,
             srcSet: `${source2x} 2x`
@@ -7552,6 +7765,7 @@ class DSImage_DSImage extends external_React_default.a.PureComponent {
         }
       } else if (!this.state.nonOptimizedImageFailed) {
         img = external_React_default.a.createElement("img", {
+          crossOrigin: "anonymous",
           onError: this.onNonOptimizedImageError,
           src: this.props.source
         });
@@ -7596,7 +7810,7 @@ DSImage_DSImage.defaultProps = {
 var external_ReactIntl_ = __webpack_require__(4);
 
 // EXTERNAL MODULE: ./content-src/components/LinkMenu/LinkMenu.jsx
-var LinkMenu = __webpack_require__(30);
+var LinkMenu = __webpack_require__(31);
 
 // CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/DSLinkMenu/DSLinkMenu.jsx
 
@@ -7690,7 +7904,7 @@ class DSLinkMenu_DSLinkMenu extends external_React_default.a.PureComponent {
 }
 const DSLinkMenu = Object(external_ReactIntl_["injectIntl"])(DSLinkMenu_DSLinkMenu);
 // EXTERNAL MODULE: ./content-src/components/DiscoveryStreamImpressionStats/ImpressionStats.jsx
-var ImpressionStats = __webpack_require__(33);
+var ImpressionStats = __webpack_require__(34);
 
 // CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/SafeAnchor/SafeAnchor.jsx
 
@@ -7775,6 +7989,7 @@ class SafeAnchor_SafeAnchor extends external_React_default.a.PureComponent {
 
 
 
+
 class DSCard_DSCard extends external_React_default.a.PureComponent {
   constructor(props) {
     super(props);
@@ -7816,16 +8031,20 @@ class DSCard_DSCard extends external_React_default.a.PureComponent {
     })), external_React_default.a.createElement("div", {
       className: "meta"
     }, external_React_default.a.createElement("div", {
-      className: "info-wrap"
-    }, external_React_default.a.createElement("header", {
-      className: "title"
+      className: "info-wrap",
+      "data-total-lines": "7",
+      ref: clamp_total_lines["clampTotalLines"]
+    }, external_React_default.a.createElement("p", {
+      className: "source clamp",
+      "data-clamp": "1"
+    }, this.props.source), external_React_default.a.createElement("header", {
+      className: "title clamp",
+      "data-clamp": "4"
     }, this.props.title), this.props.excerpt && external_React_default.a.createElement("p", {
-      className: "excerpt"
-    }, this.props.excerpt)), external_React_default.a.createElement("p", null, this.props.context && external_React_default.a.createElement("span", null, external_React_default.a.createElement("span", {
+      className: "excerpt clamp"
+    }, this.props.excerpt)), this.props.context && external_React_default.a.createElement("p", {
       className: "context"
-    }, this.props.context), external_React_default.a.createElement("br", null)), external_React_default.a.createElement("span", {
-      className: "source"
-    }, this.props.source))), external_React_default.a.createElement(ImpressionStats["ImpressionStats"], {
+    }, this.props.context)), external_React_default.a.createElement(ImpressionStats["ImpressionStats"], {
       campaignId: this.props.campaignId,
       rows: [{
         id: this.props.id,
@@ -7874,7 +8093,9 @@ class CardGrid_CardGrid extends external_React_default.a.PureComponent {
 
     for (let index = 0; index < this.props.items; index++) {
       const rec = recs[index];
-      cards.push(rec ? external_React_default.a.createElement(DSCard_DSCard, {
+      cards.push(!rec || rec.placeholder ? external_React_default.a.createElement(PlaceholderDSCard, {
+        key: `dscard-${index}`
+      }) : external_React_default.a.createElement(DSCard_DSCard, {
         key: `dscard-${index}`,
         pos: rec.pos,
         campaignId: rec.campaign_id,
@@ -7890,8 +8111,6 @@ class CardGrid_CardGrid extends external_React_default.a.PureComponent {
         source: rec.domain,
         pocket_id: rec.pocket_id,
         bookmarkGuid: rec.bookmarkGuid
-      }) : external_React_default.a.createElement(PlaceholderDSCard, {
-        key: `dscard-${index}`
       }));
     }
 
@@ -7933,7 +8152,7 @@ CardGrid_CardGrid.defaultProps = {
 
 };
 // EXTERNAL MODULE: ./content-src/components/CollapsibleSection/CollapsibleSection.jsx
-var CollapsibleSection = __webpack_require__(34);
+var CollapsibleSection = __webpack_require__(35);
 
 // EXTERNAL MODULE: external "ReactRedux"
 var external_ReactRedux_ = __webpack_require__(26);
@@ -7962,6 +8181,7 @@ class DSMessage_DSMessage extends external_React_default.a.PureComponent {
 
 }
 // CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/List/List.jsx
+
 
 
 
@@ -8010,14 +8230,17 @@ class List_ListItem extends external_React_default.a.PureComponent {
       url: this.props.url
     }, external_React_default.a.createElement("div", {
       className: "ds-list-item-text"
-    }, external_React_default.a.createElement("div", null, external_React_default.a.createElement("div", {
-      className: "ds-list-item-title"
+    }, external_React_default.a.createElement("div", {
+      "data-total-lines": "4",
+      ref: clamp_total_lines["clampTotalLines"]
+    }, external_React_default.a.createElement("div", {
+      className: "ds-list-item-title clamp"
     }, this.props.title), this.props.excerpt && external_React_default.a.createElement("div", {
-      className: "ds-list-item-excerpt"
+      className: "ds-list-item-excerpt clamp"
     }, this.props.excerpt)), external_React_default.a.createElement("p", null, this.props.context && external_React_default.a.createElement("span", null, external_React_default.a.createElement("span", {
       className: "ds-list-item-context"
     }, this.props.context), external_React_default.a.createElement("br", null)), external_React_default.a.createElement("span", {
-      className: "ds-list-item-info"
+      className: "ds-list-item-info clamp"
     }, this.props.domain))), external_React_default.a.createElement(DSImage_DSImage, {
       extraClassNames: "ds-list-image",
       source: this.props.image_src,
@@ -8059,7 +8282,9 @@ function _List(props) {
 
     for (let index = 0; index < props.items; index++) {
       const rec = recs[index];
-      recMarkup.push(rec ? external_React_default.a.createElement(List_ListItem, {
+      recMarkup.push(!rec || rec.placeholder ? external_React_default.a.createElement(PlaceholderListItem, {
+        key: `ds-list-item-${index}`
+      }) : external_React_default.a.createElement(List_ListItem, {
         key: `ds-list-item-${index}`,
         dispatch: props.dispatch,
         campaignId: rec.campaign_id,
@@ -8075,8 +8300,6 @@ function _List(props) {
         url: rec.url,
         pocket_id: rec.pocket_id,
         bookmarkGuid: rec.bookmarkGuid
-      }) : external_React_default.a.createElement(PlaceholderListItem, {
-        key: `ds-list-item-${index}`
       }));
     }
 
@@ -8127,6 +8350,7 @@ const List = Object(external_ReactRedux_["connect"])(state => ({
 
 
 
+
 class Hero_Hero extends external_React_default.a.PureComponent {
   constructor(props) {
     super(props);
@@ -8158,7 +8382,9 @@ class Hero_Hero extends external_React_default.a.PureComponent {
 
     for (let index = 0; index < this.props.items - 1; index++) {
       const rec = otherRecs[index];
-      cards.push(rec ? external_React_default.a.createElement(DSCard_DSCard, {
+      cards.push(!rec || rec.placeholder ? external_React_default.a.createElement(PlaceholderDSCard, {
+        key: `dscard-${index}`
+      }) : external_React_default.a.createElement(DSCard_DSCard, {
         campaignId: rec.campaign_id,
         key: `dscard-${index}`,
         image_src: rec.image_src,
@@ -8173,8 +8399,62 @@ class Hero_Hero extends external_React_default.a.PureComponent {
         source: rec.domain,
         pocket_id: rec.pocket_id,
         bookmarkGuid: rec.bookmarkGuid
-      }) : external_React_default.a.createElement(PlaceholderDSCard, {
-        key: `dscard-${index}`
+      }));
+    }
+
+    let heroCard = null;
+
+    if (!heroRec || heroRec.placeholder) {
+      heroCard = external_React_default.a.createElement(PlaceholderDSCard, null);
+    } else {
+      heroCard = external_React_default.a.createElement("div", {
+        className: "ds-hero-item"
+      }, external_React_default.a.createElement(SafeAnchor_SafeAnchor, {
+        className: "wrapper",
+        dispatch: this.props.dispatch,
+        onLinkClick: this.onLinkClick,
+        url: heroRec.url
+      }, external_React_default.a.createElement("div", {
+        className: "img-wrapper"
+      }, external_React_default.a.createElement(DSImage_DSImage, {
+        extraClassNames: "img",
+        source: heroRec.image_src,
+        rawSource: heroRec.raw_image_src
+      })), external_React_default.a.createElement("div", {
+        className: "meta"
+      }, external_React_default.a.createElement("div", {
+        className: "header-and-excerpt",
+        "data-total-lines": "7",
+        ref: clamp_total_lines["clampTotalLines"]
+      }, heroRec.context ? external_React_default.a.createElement("p", {
+        className: "context"
+      }, heroRec.context) : external_React_default.a.createElement("p", {
+        className: "source clamp",
+        "data-clamp": "1"
+      }, heroRec.domain), external_React_default.a.createElement("header", {
+        className: "clamp",
+        "data-clamp": "4"
+      }, heroRec.title), external_React_default.a.createElement("p", {
+        className: "excerpt clamp"
+      }, heroRec.excerpt))), external_React_default.a.createElement(ImpressionStats["ImpressionStats"], {
+        campaignId: heroRec.campaignId,
+        rows: [{
+          id: heroRec.id,
+          pos: heroRec.pos
+        }],
+        dispatch: this.props.dispatch,
+        source: this.props.type
+      })), external_React_default.a.createElement(DSLinkMenu, {
+        id: heroRec.id,
+        index: heroRec.pos,
+        dispatch: this.props.dispatch,
+        intl: this.props.intl,
+        url: heroRec.url,
+        title: heroRec.title,
+        source: heroRec.domain,
+        type: this.props.type,
+        pocket_id: heroRec.pocket_id,
+        bookmarkGuid: heroRec.bookmarkGuid
       }));
     }
 
@@ -8188,49 +8468,7 @@ class Hero_Hero extends external_React_default.a.PureComponent {
     });
     return external_React_default.a.createElement("div", {
       className: `ds-hero ds-hero-${this.props.border}`
-    }, external_React_default.a.createElement("div", {
-      className: "ds-hero-item"
-    }, external_React_default.a.createElement(SafeAnchor_SafeAnchor, {
-      className: "wrapper",
-      dispatch: this.props.dispatch,
-      onLinkClick: this.onLinkClick,
-      url: heroRec.url
-    }, external_React_default.a.createElement("div", {
-      className: "img-wrapper"
-    }, external_React_default.a.createElement(DSImage_DSImage, {
-      extraClassNames: "img",
-      source: heroRec.image_src,
-      rawSource: heroRec.raw_image_src
-    })), external_React_default.a.createElement("div", {
-      className: "meta"
-    }, external_React_default.a.createElement("div", {
-      className: "header-and-excerpt"
-    }, external_React_default.a.createElement("header", null, heroRec.title), external_React_default.a.createElement("p", {
-      className: "excerpt"
-    }, heroRec.excerpt)), heroRec.context ? external_React_default.a.createElement("p", {
-      className: "context"
-    }, heroRec.context) : external_React_default.a.createElement("p", {
-      className: "source"
-    }, heroRec.domain)), external_React_default.a.createElement(ImpressionStats["ImpressionStats"], {
-      campaignId: heroRec.campaignId,
-      rows: [{
-        id: heroRec.id,
-        pos: heroRec.pos
-      }],
-      dispatch: this.props.dispatch,
-      source: this.props.type
-    })), external_React_default.a.createElement(DSLinkMenu, {
-      id: heroRec.id,
-      index: heroRec.pos,
-      dispatch: this.props.dispatch,
-      intl: this.props.intl,
-      url: heroRec.url,
-      title: heroRec.title,
-      source: heroRec.domain,
-      type: this.props.type,
-      pocket_id: heroRec.pocket_id,
-      bookmarkGuid: heroRec.bookmarkGuid
-    })), external_React_default.a.createElement("div", {
+    }, heroCard, external_React_default.a.createElement("div", {
       className: `${this.props.subComponentType}`
     }, this.props.subComponentType === `cards` ? cards : list));
   }
@@ -8338,48 +8576,41 @@ const selectLayoutRender = (state, prefs, rickRollCache) => {
   let bufferRollCache = []; // Records the chosen and unchosen spocs by the probability selection.
 
   let chosenSpocs = new Set();
-  let unchosenSpocs = new Set(); // rickRollCache stores random probability values for each spoc position. This cache is empty
-  // on page refresh and gets filled with random values on first render inside maybeInjectSpocs.
+  let unchosenSpocs = new Set();
 
-  const isFirstRun = !rickRollCache.length;
+  function rollForSpocs(data, spocsConfig) {
+    const recommendations = [...data.recommendations];
 
-  function maybeInjectSpocs(data, spocsConfig) {
-    if (data && spocsConfig && spocsConfig.positions && spocsConfig.positions.length && spocs.data.spocs && spocs.data.spocs.length) {
-      const recommendations = [...data.recommendations];
+    for (let position of spocsConfig.positions) {
+      const spoc = spocs.data.spocs[spocIndex];
 
-      for (let position of spocsConfig.positions) {
-        const spoc = spocs.data.spocs[spocIndex];
-
-        if (!spoc) {
-          break;
-        } // Cache random number for a position
+      if (!spoc) {
+        break;
+      } // Cache random number for a position
 
 
-        let rickRoll;
+      let rickRoll;
 
-        if (isFirstRun) {
-          rickRoll = Math.random();
-          rickRollCache.push(rickRoll);
-        } else {
-          rickRoll = rickRollCache.shift();
-          bufferRollCache.push(rickRoll);
-        }
-
-        if (rickRoll <= spocsConfig.probability) {
-          spocIndex++;
-          recommendations.splice(position.index, 0, spoc);
-          chosenSpocs.add(spoc);
-        } else {
-          unchosenSpocs.add(spoc);
-        }
+      if (!rickRollCache.length) {
+        rickRoll = Math.random();
+        bufferRollCache.push(rickRoll);
+      } else {
+        rickRoll = rickRollCache.shift();
+        bufferRollCache.push(rickRoll);
       }
 
-      return { ...data,
-        recommendations
-      };
+      if (rickRoll <= spocsConfig.probability) {
+        spocIndex++;
+        recommendations.splice(position.index, 0, spoc);
+        chosenSpocs.add(spoc);
+      } else {
+        unchosenSpocs.add(spoc);
+      }
     }
 
-    return data;
+    return { ...data,
+      recommendations
+    };
   }
 
   const positions = {};
@@ -8394,56 +8625,116 @@ const selectLayoutRender = (state, prefs, rickRollCache) => {
     filterArray.push(...DS_COMPONENTS);
   }
 
-  const layoutRender = layout.map(row => ({ ...row,
-    // Loops through desired components and adds a .data property
-    // containing data from feeds
-    components: row.components.filter(c => !filterArray.includes(c.type)).map(component => {
-      if (!component.feed || !feeds.data[component.feed.url]) {
-        return component;
-      }
+  const placeholderComponent = component => {
+    const data = {
+      recommendations: []
+    };
+    let items = 0;
 
-      positions[component.type] = positions[component.type] || 0;
-      let {
-        data
-      } = feeds.data[component.feed.url];
+    if (component.properties && component.properties.items) {
+      items = component.properties.items;
+    }
 
-      if (component && component.properties && component.properties.offset) {
-        data = { ...data,
-          recommendations: data.recommendations.slice(component.properties.offset)
-        };
-      }
+    for (let i = 0; i < items; i++) {
+      data.recommendations.push({
+        "placeholder": true
+      });
+    }
 
-      data = maybeInjectSpocs(data, component.spocs); // If empty, fill rickRollCache with random probability values from bufferRollCache
+    return { ...component,
+      data
+    };
+  };
 
-      if (!rickRollCache.length) {
-        rickRollCache.push(...bufferRollCache);
-      }
+  const handleComponent = component => {
+    positions[component.type] = positions[component.type] || 0;
+    const feed = feeds.data[component.feed.url];
+    let data = {
+      recommendations: []
+    };
 
-      let items = 0;
-
-      if (component.properties && component.properties.items) {
-        items = Math.min(component.properties.items, data.recommendations.length);
-      } // loop through a component items
-      // Store the items position sequentially for multiple components of the same type.
-      // Example: A second card grid starts pos offset from the last card grid.
-
-
-      for (let i = 0; i < items; i++) {
-        data.recommendations[i].pos = positions[component.type]++;
-      }
-
-      return { ...component,
-        data
+    if (feed && feed.data) {
+      data = { ...feed.data,
+        recommendations: [...feed.data.recommendations]
       };
-    })
-  })).filter(row => row.components.length); // Generate the payload for the SPOCS Fill ping. Note that a SPOC could be rejected
+    }
+
+    if (component && component.properties && component.properties.offset) {
+      data = { ...data,
+        recommendations: data.recommendations.slice(component.properties.offset)
+      };
+    } // Do we ever expect to possibly have a spoc.
+
+
+    if (data && component.spocs && component.spocs.positions && component.spocs.positions.length) {
+      // We expect a spoc, spocs are loaded, and the server returned spocs.
+      if (spocs.loaded && spocs.data.spocs && spocs.data.spocs.length) {
+        data = rollForSpocs(data, component.spocs);
+      }
+    }
+
+    let items = 0;
+
+    if (component.properties && component.properties.items) {
+      items = Math.min(component.properties.items, data.recommendations.length);
+    } // loop through a component items
+    // Store the items position sequentially for multiple components of the same type.
+    // Example: A second card grid starts pos offset from the last card grid.
+
+
+    for (let i = 0; i < items; i++) {
+      data.recommendations[i] = { ...data.recommendations[i],
+        pos: positions[component.type]++
+      };
+    }
+
+    return { ...component,
+      data
+    };
+  };
+
+  const renderLayout = () => {
+    const renderedLayoutArray = [];
+
+    for (const row of layout.filter(r => r.components.filter(c => !filterArray.includes(c.type)).length)) {
+      let components = [];
+      renderedLayoutArray.push({ ...row,
+        components
+      });
+
+      for (const component of row.components.filter(c => !filterArray.includes(c.type))) {
+        if (component.feed) {
+          const spocsConfig = component.spocs; // Are we still waiting on a feed/spocs, render what we have,
+          // add a placeholder for this component, and bail out early.
+
+          if (!feeds.data[component.feed.url] || spocsConfig && spocsConfig.positions && spocsConfig.positions.length && !spocs.loaded) {
+            components.push(placeholderComponent(component));
+            return renderedLayoutArray;
+          }
+
+          components.push(handleComponent(component));
+        } else {
+          components.push(component);
+        }
+      }
+    }
+
+    return renderedLayoutArray;
+  };
+
+  const layoutRender = renderLayout(layout); // If empty, fill rickRollCache with random probability values from bufferRollCache
+
+  if (!rickRollCache.length) {
+    rickRollCache.push(...bufferRollCache);
+  } // Generate the payload for the SPOCS Fill ping. Note that a SPOC could be rejected
   // by the `probability_selection` first, then gets chosen for the next position. For
   // all other SPOCS that never went through the probabilistic selection, its reason will
   // be "out_of_position".
 
+
   let spocsFill = [];
 
-  if (spocs.data.spocs) {
+  if (spocs.loaded && feeds.loaded && spocs.data.spocs) {
     const chosenSpocsFill = [...chosenSpocs].map(spoc => ({
       id: spoc.id,
       reason: "n/a",
@@ -8471,7 +8762,7 @@ const selectLayoutRender = (state, prefs, rickRollCache) => {
   };
 };
 // EXTERNAL MODULE: ./content-src/components/TopSites/TopSites.jsx
-var TopSites = __webpack_require__(38);
+var TopSites = __webpack_require__(39);
 
 // CONCATENATED MODULE: ./content-src/components/DiscoveryStreamComponents/TopSites/TopSites.jsx
 
@@ -8679,17 +8970,12 @@ class DiscoveryStreamBase_DiscoveryStreamBase extends external_React_default.a.P
     } = selectLayoutRender(this.props.DiscoveryStream, this.props.Prefs.values, rickRollCache);
     const {
       config,
-      feeds,
-      spocs
-    } = this.props.DiscoveryStream;
-
-    if (!spocs.loaded || !feeds.loaded) {
-      return null;
-    } // Send SPOCS Fill if any. Note that it should not send it again if the same
+      spocs,
+      feeds
+    } = this.props.DiscoveryStream; // Send SPOCS Fill if any. Note that it should not send it again if the same
     // page gets re-rendered by state changes.
 
-
-    if (spocsFill.length && !this._spocsFillSent) {
+    if (spocs.loaded && feeds.loaded && spocsFill.length && !this._spocsFillSent) {
       this.props.dispatch(Actions["actionCreators"].DiscoveryStreamSpocsFill({
         spoc_fills: spocsFill
       }));
@@ -8722,7 +9008,12 @@ class DiscoveryStreamBase_DiscoveryStreamBase extends external_React_default.a.P
     }; // Get "topstories" Section state for default values
 
 
-    const topStories = this.props.Sections.find(s => s.id === "topstories"); // Extract TopSites to render before the rest and Message to use for header
+    const topStories = this.props.Sections.find(s => s.id === "topstories");
+
+    if (!topStories) {
+      return null;
+    } // Extract TopSites to render before the rest and Message to use for header
+
 
     const topSites = extractComponent("TopSites");
     const message = extractComponent("Message") || {
@@ -8765,6 +9056,10 @@ class DiscoveryStreamBase_DiscoveryStreamBase extends external_React_default.a.P
     }, external_React_default.a.createElement("div", {
       className: "ds-column-grid"
     }, row.components.map((component, componentIndex) => {
+      if (!component) {
+        return null;
+      }
+
       styles[rowIndex] = [...(styles[rowIndex] || []), component.styles];
       return external_React_default.a.createElement("div", {
         key: `component-${componentIndex}`
@@ -8780,7 +9075,7 @@ const DiscoveryStreamBase = Object(external_ReactRedux_["connect"])(state => ({
 }))(DiscoveryStreamBase_DiscoveryStreamBase);
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8948,7 +9243,9 @@ function _extends() { _extends = Object.assign || function (target) { for (var i
 
 
 
-const DEFAULT_ICON_PATH = "chrome://branding/content/icon64.png";
+const DEFAULT_ICON_PATH = "chrome://branding/content/icon64.png"; // Alt text if available; in the future this should come from the server. See bug 1551711
+
+const ICON_ALT_TEXT = "";
 class SimpleSnippet_SimpleSnippet extends external_React_default.a.PureComponent {
   constructor(props) {
     super(props);
@@ -8994,13 +9291,24 @@ class SimpleSnippet_SimpleSnippet extends external_React_default.a.PureComponent
   }
 
   renderTitleIcon() {
-    const titleIcon = Object(template_utils["safeURI"])(this.props.content.title_icon);
-    return titleIcon ? external_React_default.a.createElement("span", {
-      className: "titleIcon",
+    const titleIconLight = Object(template_utils["safeURI"])(this.props.content.title_icon);
+    const titleIconDark = Object(template_utils["safeURI"])(this.props.content.title_icon_dark_theme || this.props.content.title_icon);
+
+    if (!titleIconLight) {
+      return null;
+    }
+
+    return external_React_default.a.createElement(external_React_default.a.Fragment, null, external_React_default.a.createElement("span", {
+      className: "titleIcon icon-light-theme",
       style: {
-        backgroundImage: `url("${titleIcon}")`
+        backgroundImage: `url("${titleIconLight}")`
       }
-    }) : null;
+    }), external_React_default.a.createElement("span", {
+      className: "titleIcon icon-dark-theme",
+      style: {
+        backgroundImage: `url("${titleIconDark}")`
+      }
+    }));
   }
 
   renderButton() {
@@ -9052,7 +9360,8 @@ class SimpleSnippet_SimpleSnippet extends external_React_default.a.PureComponent
     } = this; // an icon and text must be specified to render the section header
 
     if (props.content.section_title_icon && props.content.section_title_text) {
-      const sectionTitleIcon = Object(template_utils["safeURI"])(props.content.section_title_icon);
+      const sectionTitleIconLight = Object(template_utils["safeURI"])(props.content.section_title_icon);
+      const sectionTitleIconDark = Object(template_utils["safeURI"])(props.content.section_title_icon_dark_theme || props.content.section_title_icon);
       const sectionTitleURL = props.content.section_title_url;
       return external_React_default.a.createElement("div", {
         className: "section-header"
@@ -9062,9 +9371,14 @@ class SimpleSnippet_SimpleSnippet extends external_React_default.a.PureComponent
         condition: sectionTitleURL,
         wrap: this.wrapSectionHeader(sectionTitleURL)
       }, external_React_default.a.createElement("span", {
-        className: "icon icon-small-spacer",
+        className: "icon icon-small-spacer icon-light-theme",
         style: {
-          backgroundImage: `url("${sectionTitleIcon}")`
+          backgroundImage: `url("${sectionTitleIconLight}")`
+        }
+      }), external_React_default.a.createElement("span", {
+        className: "icon icon-small-spacer icon-dark-theme",
+        style: {
+          backgroundImage: `url("${sectionTitleIconDark}")`
         }
       }), external_React_default.a.createElement("span", {
         className: "section-title-text"
@@ -9101,7 +9415,12 @@ class SimpleSnippet_SimpleSnippet extends external_React_default.a.PureComponent
       wrap: this.wrapSnippetContent
     }, external_React_default.a.createElement("img", {
       src: Object(template_utils["safeURI"])(props.content.icon) || DEFAULT_ICON_PATH,
-      className: "icon"
+      className: "icon icon-light-theme",
+      alt: ICON_ALT_TEXT
+    }), external_React_default.a.createElement("img", {
+      src: Object(template_utils["safeURI"])(props.content.icon_dark_theme || props.content.icon) || DEFAULT_ICON_PATH,
+      className: "icon icon-dark-theme",
+      alt: ICON_ALT_TEXT
     }), external_React_default.a.createElement("div", null, this.renderTitle(), " ", external_React_default.a.createElement("p", {
       className: "body"
     }, this.renderText()), this.props.extraContent), external_React_default.a.createElement("div", null, this.renderButton())));
@@ -9264,6 +9583,9 @@ function SubmitFormSnippet_extends() { SubmitFormSnippet_extends = Object.assign
 
 
 
+ // Alt text if available; in the future this should come from the server. See bug 1551711
+
+const SubmitFormSnippet_ICON_ALT_TEXT = "";
 class SubmitFormSnippet_SubmitFormSnippet extends external_React_default.a.PureComponent {
   constructor(props) {
     super(props);
@@ -9490,8 +9812,7 @@ class SubmitFormSnippet_SubmitFormSnippet extends external_React_default.a.PureC
       name: "email",
       required: true,
       placeholder: placholder,
-      onChange: this.props.validateInput ? this.onInputChange : null,
-      autoFocus: true
+      onChange: this.props.validateInput ? this.onInputChange : null
     });
   }
 
@@ -9506,7 +9827,13 @@ class SubmitFormSnippet_SubmitFormSnippet extends external_React_default.a.PureC
     }), content.scene2_icon ? external_React_default.a.createElement("div", {
       className: "scene2Icon"
     }, external_React_default.a.createElement("img", {
-      src: content.scene2_icon
+      src: Object(template_utils["safeURI"])(content.scene2_icon),
+      className: "icon-light-theme",
+      alt: SubmitFormSnippet_ICON_ALT_TEXT
+    }), external_React_default.a.createElement("img", {
+      src: Object(template_utils["safeURI"])(content.scene2_icon_dark_theme || content.scene2_icon),
+      className: "icon-dark-theme",
+      alt: SubmitFormSnippet_ICON_ALT_TEXT
     })) : null, external_React_default.a.createElement("div", {
       className: "message"
     }, external_React_default.a.createElement("p", null, content.scene2_title && external_React_default.a.createElement("h3", {
@@ -9736,7 +10063,9 @@ function SimpleBelowSearchSnippet_extends() { SimpleBelowSearchSnippet_extends =
 
 
 
-const SimpleBelowSearchSnippet_DEFAULT_ICON_PATH = "chrome://branding/content/icon64.png";
+const SimpleBelowSearchSnippet_DEFAULT_ICON_PATH = "chrome://branding/content/icon64.png"; // Alt text if available; in the future this should come from the server. See bug 1551711
+
+const SimpleBelowSearchSnippet_ICON_ALT_TEXT = "";
 class SimpleBelowSearchSnippet_SimpleBelowSearchSnippet extends external_React_default.a.PureComponent {
   renderText() {
     const {
@@ -9766,7 +10095,12 @@ class SimpleBelowSearchSnippet_SimpleBelowSearchSnippet extends external_React_d
       textStyle: this.props.textStyle
     }), external_React_default.a.createElement("img", {
       src: Object(template_utils["safeURI"])(props.content.icon) || SimpleBelowSearchSnippet_DEFAULT_ICON_PATH,
-      className: "icon"
+      className: "icon icon-light-theme",
+      alt: SimpleBelowSearchSnippet_ICON_ALT_TEXT
+    }), external_React_default.a.createElement("img", {
+      src: Object(template_utils["safeURI"])(props.content.icon_dark_theme || props.content.icon) || SimpleBelowSearchSnippet_DEFAULT_ICON_PATH,
+      className: "icon icon-dark-theme",
+      alt: SimpleBelowSearchSnippet_ICON_ALT_TEXT
     }), external_React_default.a.createElement("div", null, external_React_default.a.createElement("p", {
       className: "body"
     }, this.renderText()), this.props.extraContent));
@@ -9792,7 +10126,7 @@ const SnippetsTemplates = {
 };
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11995,7 +12329,7 @@ function ftl(strings) {
 
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12009,7 +12343,7 @@ var external_PropTypes_ = __webpack_require__(12);
 var external_PropTypes_default = /*#__PURE__*/__webpack_require__.n(external_PropTypes_);
 
 // EXTERNAL MODULE: ./node_modules/fluent/src/index.js + 8 modules
-var src = __webpack_require__(54);
+var src = __webpack_require__(55);
 
 // CONCATENATED MODULE: ./node_modules/fluent-react/src/localization.js
 
@@ -12523,7 +12857,461 @@ localized_Localized.propTypes = {
 
 
 /***/ }),
-/* 56 */
+/* 57 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+
+// EXTERNAL MODULE: ./common/Actions.jsm
+var Actions = __webpack_require__(2);
+
+// EXTERNAL MODULE: external "React"
+var external_React_ = __webpack_require__(11);
+var external_React_default = /*#__PURE__*/__webpack_require__.n(external_React_);
+
+// CONCATENATED MODULE: ./content-src/components/A11yLinkButton/A11yLinkButton.jsx
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+
+
+function A11yLinkButton(props) {
+  // function for merging classes, if necessary
+  let className = "a11y-link-button";
+
+  if (props.className) {
+    className += ` ${props.className}`;
+  }
+
+  return external_React_default.a.createElement("button", _extends({
+    type: "button"
+  }, props, {
+    className: className
+  }), props.children);
+}
+// EXTERNAL MODULE: external "ReactIntl"
+var external_ReactIntl_ = __webpack_require__(4);
+
+// EXTERNAL MODULE: ./content-src/components/TopSites/TopSitesConstants.js
+var TopSitesConstants = __webpack_require__(40);
+
+// CONCATENATED MODULE: ./content-src/components/TopSites/TopSiteFormInput.jsx
+
+
+class TopSiteFormInput_TopSiteFormInput extends external_React_default.a.PureComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      validationError: this.props.validationError
+    };
+    this.onChange = this.onChange.bind(this);
+    this.onMount = this.onMount.bind(this);
+    this.onClearIconPress = this.onClearIconPress.bind(this);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.shouldFocus && !this.props.shouldFocus) {
+      this.input.focus();
+    }
+
+    if (nextProps.validationError && !this.props.validationError) {
+      this.setState({
+        validationError: true
+      });
+    } // If the component is in an error state but the value was cleared by the parent
+
+
+    if (this.state.validationError && !nextProps.value) {
+      this.setState({
+        validationError: false
+      });
+    }
+  }
+
+  onClearIconPress(event) {
+    // If there is input in the URL or custom image URL fields,
+    // and we hit 'enter' while tabbed over the clear icon,
+    // we should execute the function to clear the field.
+    if (event.key === "Enter") {
+      this.props.onClear();
+    }
+  }
+
+  onChange(ev) {
+    if (this.state.validationError) {
+      this.setState({
+        validationError: false
+      });
+    }
+
+    this.props.onChange(ev);
+  }
+
+  onMount(input) {
+    this.input = input;
+  }
+
+  renderLoadingOrCloseButton() {
+    const showClearButton = this.props.value && this.props.onClear;
+
+    if (this.props.loading) {
+      return external_React_default.a.createElement("div", {
+        className: "loading-container"
+      }, external_React_default.a.createElement("div", {
+        className: "loading-animation"
+      }));
+    } else if (showClearButton) {
+      return external_React_default.a.createElement("button", {
+        type: "button",
+        className: "icon icon-clear-input icon-button-style",
+        onClick: this.props.onClear,
+        onKeyPress: this.onClearIconPress
+      });
+    }
+
+    return null;
+  }
+
+  render() {
+    const {
+      typeUrl
+    } = this.props;
+    const {
+      validationError
+    } = this.state;
+    return external_React_default.a.createElement("label", null, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
+      id: this.props.titleId
+    }), external_React_default.a.createElement("div", {
+      className: `field ${typeUrl ? "url" : ""}${validationError ? " invalid" : ""}`
+    }, external_React_default.a.createElement("input", {
+      type: "text",
+      value: this.props.value,
+      ref: this.onMount,
+      onChange: this.onChange,
+      placeholder: this.props.intl.formatMessage({
+        id: this.props.placeholderId
+      }) // Set focus on error if the url field is valid or when the input is first rendered and is empty
+      // eslint-disable-next-line jsx-a11y/no-autofocus
+      ,
+      autoFocus: this.props.shouldFocus,
+      disabled: this.props.loading
+    }), this.renderLoadingOrCloseButton(), validationError && external_React_default.a.createElement("aside", {
+      className: "error-tooltip"
+    }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
+      id: this.props.errorMessageId
+    }))));
+  }
+
+}
+TopSiteFormInput_TopSiteFormInput.defaultProps = {
+  showClearButton: false,
+  value: "",
+  validationError: false
+};
+// EXTERNAL MODULE: ./content-src/components/TopSites/TopSite.jsx
+var TopSite = __webpack_require__(44);
+
+// CONCATENATED MODULE: ./content-src/components/TopSites/TopSiteForm.jsx
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TopSiteForm", function() { return TopSiteForm_TopSiteForm; });
+
+
+
+
+
+
+
+class TopSiteForm_TopSiteForm extends external_React_default.a.PureComponent {
+  constructor(props) {
+    super(props);
+    const {
+      site
+    } = props;
+    this.state = {
+      label: site ? site.label || site.hostname : "",
+      url: site ? site.url : "",
+      validationError: false,
+      customScreenshotUrl: site ? site.customScreenshotURL : "",
+      showCustomScreenshotForm: site ? site.customScreenshotURL : false
+    };
+    this.onClearScreenshotInput = this.onClearScreenshotInput.bind(this);
+    this.onLabelChange = this.onLabelChange.bind(this);
+    this.onUrlChange = this.onUrlChange.bind(this);
+    this.onCancelButtonClick = this.onCancelButtonClick.bind(this);
+    this.onClearUrlClick = this.onClearUrlClick.bind(this);
+    this.onDoneButtonClick = this.onDoneButtonClick.bind(this);
+    this.onCustomScreenshotUrlChange = this.onCustomScreenshotUrlChange.bind(this);
+    this.onPreviewButtonClick = this.onPreviewButtonClick.bind(this);
+    this.onEnableScreenshotUrlForm = this.onEnableScreenshotUrlForm.bind(this);
+    this.validateUrl = this.validateUrl.bind(this);
+  }
+
+  onLabelChange(event) {
+    this.setState({
+      "label": event.target.value
+    });
+  }
+
+  onUrlChange(event) {
+    this.setState({
+      url: event.target.value,
+      validationError: false
+    });
+  }
+
+  onClearUrlClick() {
+    this.setState({
+      url: "",
+      validationError: false
+    });
+  }
+
+  onEnableScreenshotUrlForm() {
+    this.setState({
+      showCustomScreenshotForm: true
+    });
+  }
+
+  _updateCustomScreenshotInput(customScreenshotUrl) {
+    this.setState({
+      customScreenshotUrl,
+      validationError: false
+    });
+    this.props.dispatch({
+      type: Actions["actionTypes"].PREVIEW_REQUEST_CANCEL
+    });
+  }
+
+  onCustomScreenshotUrlChange(event) {
+    this._updateCustomScreenshotInput(event.target.value);
+  }
+
+  onClearScreenshotInput() {
+    this._updateCustomScreenshotInput("");
+  }
+
+  onCancelButtonClick(ev) {
+    ev.preventDefault();
+    this.props.onClose();
+  }
+
+  onDoneButtonClick(ev) {
+    ev.preventDefault();
+
+    if (this.validateForm()) {
+      const site = {
+        url: this.cleanUrl(this.state.url)
+      };
+      const {
+        index
+      } = this.props;
+
+      if (this.state.label !== "") {
+        site.label = this.state.label;
+      }
+
+      if (this.state.customScreenshotUrl) {
+        site.customScreenshotURL = this.cleanUrl(this.state.customScreenshotUrl);
+      } else if (this.props.site && this.props.site.customScreenshotURL) {
+        // Used to flag that previously cached screenshot should be removed
+        site.customScreenshotURL = null;
+      }
+
+      this.props.dispatch(Actions["actionCreators"].AlsoToMain({
+        type: Actions["actionTypes"].TOP_SITES_PIN,
+        data: {
+          site,
+          index
+        }
+      }));
+      this.props.dispatch(Actions["actionCreators"].UserEvent({
+        source: TopSitesConstants["TOP_SITES_SOURCE"],
+        event: "TOP_SITES_EDIT",
+        action_position: index
+      }));
+      this.props.onClose();
+    }
+  }
+
+  onPreviewButtonClick(event) {
+    event.preventDefault();
+
+    if (this.validateForm()) {
+      this.props.dispatch(Actions["actionCreators"].AlsoToMain({
+        type: Actions["actionTypes"].PREVIEW_REQUEST,
+        data: {
+          url: this.cleanUrl(this.state.customScreenshotUrl)
+        }
+      }));
+      this.props.dispatch(Actions["actionCreators"].UserEvent({
+        source: TopSitesConstants["TOP_SITES_SOURCE"],
+        event: "PREVIEW_REQUEST"
+      }));
+    }
+  }
+
+  cleanUrl(url) {
+    // If we are missing a protocol, prepend http://
+    if (!url.startsWith("http:") && !url.startsWith("https:")) {
+      return `http://${url}`;
+    }
+
+    return url;
+  }
+
+  _tryParseUrl(url) {
+    try {
+      return new URL(url);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  validateUrl(url) {
+    const validProtocols = ["http:", "https:"];
+
+    const urlObj = this._tryParseUrl(url) || this._tryParseUrl(this.cleanUrl(url));
+
+    return urlObj && validProtocols.includes(urlObj.protocol);
+  }
+
+  validateCustomScreenshotUrl() {
+    const {
+      customScreenshotUrl
+    } = this.state;
+    return !customScreenshotUrl || this.validateUrl(customScreenshotUrl);
+  }
+
+  validateForm() {
+    const validate = this.validateUrl(this.state.url) && this.validateCustomScreenshotUrl();
+
+    if (!validate) {
+      this.setState({
+        validationError: true
+      });
+    }
+
+    return validate;
+  }
+
+  _renderCustomScreenshotInput() {
+    const {
+      customScreenshotUrl
+    } = this.state;
+    const requestFailed = this.props.previewResponse === "";
+    const validationError = this.state.validationError && !this.validateCustomScreenshotUrl() || requestFailed; // Set focus on error if the url field is valid or when the input is first rendered and is empty
+
+    const shouldFocus = validationError && this.validateUrl(this.state.url) || !customScreenshotUrl;
+    const isLoading = this.props.previewResponse === null && customScreenshotUrl && this.props.previewUrl === this.cleanUrl(customScreenshotUrl);
+
+    if (!this.state.showCustomScreenshotForm) {
+      return external_React_default.a.createElement(A11yLinkButton, {
+        onClick: this.onEnableScreenshotUrlForm,
+        className: "enable-custom-image-input"
+      }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
+        id: "topsites_form_use_image_link"
+      }));
+    }
+
+    return external_React_default.a.createElement("div", {
+      className: "custom-image-input-container"
+    }, external_React_default.a.createElement(TopSiteFormInput_TopSiteFormInput, {
+      errorMessageId: requestFailed ? "topsites_form_image_validation" : "topsites_form_url_validation",
+      loading: isLoading,
+      onChange: this.onCustomScreenshotUrlChange,
+      onClear: this.onClearScreenshotInput,
+      shouldFocus: shouldFocus,
+      typeUrl: true,
+      value: customScreenshotUrl,
+      validationError: validationError,
+      titleId: "topsites_form_image_url_label",
+      placeholderId: "topsites_form_url_placeholder",
+      intl: this.props.intl
+    }));
+  }
+
+  render() {
+    const {
+      customScreenshotUrl
+    } = this.state;
+    const requestFailed = this.props.previewResponse === ""; // For UI purposes, editing without an existing link is "add"
+
+    const showAsAdd = !this.props.site;
+    const previous = this.props.site && this.props.site.customScreenshotURL || "";
+    const changed = customScreenshotUrl && this.cleanUrl(customScreenshotUrl) !== previous; // Preview mode if changes were made to the custom screenshot URL and no preview was received yet
+    // or the request failed
+
+    const previewMode = changed && !this.props.previewResponse;
+    const previewLink = Object.assign({}, this.props.site);
+
+    if (this.props.previewResponse) {
+      previewLink.screenshot = this.props.previewResponse;
+      previewLink.customScreenshotURL = this.props.previewUrl;
+    } // Handles the form submit so an enter press performs the correct action
+
+
+    const onSubmit = previewMode ? this.onPreviewButtonClick : this.onDoneButtonClick;
+    return external_React_default.a.createElement("form", {
+      className: "topsite-form",
+      onSubmit: onSubmit
+    }, external_React_default.a.createElement("div", {
+      className: "form-input-container"
+    }, external_React_default.a.createElement("h3", {
+      className: "section-title"
+    }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
+      id: showAsAdd ? "topsites_form_add_header" : "topsites_form_edit_header"
+    })), external_React_default.a.createElement("div", {
+      className: "fields-and-preview"
+    }, external_React_default.a.createElement("div", {
+      className: "form-wrapper"
+    }, external_React_default.a.createElement(TopSiteFormInput_TopSiteFormInput, {
+      onChange: this.onLabelChange,
+      value: this.state.label,
+      titleId: "topsites_form_title_label",
+      placeholderId: "topsites_form_title_placeholder",
+      intl: this.props.intl
+    }), external_React_default.a.createElement(TopSiteFormInput_TopSiteFormInput, {
+      onChange: this.onUrlChange,
+      shouldFocus: this.state.validationError && !this.validateUrl(this.state.url),
+      value: this.state.url,
+      onClear: this.onClearUrlClick,
+      validationError: this.state.validationError && !this.validateUrl(this.state.url),
+      titleId: "topsites_form_url_label",
+      typeUrl: true,
+      placeholderId: "topsites_form_url_placeholder",
+      errorMessageId: "topsites_form_url_validation",
+      intl: this.props.intl
+    }), this._renderCustomScreenshotInput()), external_React_default.a.createElement(TopSite["TopSiteLink"], {
+      link: previewLink,
+      defaultStyle: requestFailed,
+      title: this.state.label
+    }))), external_React_default.a.createElement("section", {
+      className: "actions"
+    }, external_React_default.a.createElement("button", {
+      className: "cancel",
+      type: "button",
+      onClick: this.onCancelButtonClick
+    }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
+      id: "topsites_form_cancel_button"
+    })), previewMode ? external_React_default.a.createElement("button", {
+      className: "done preview",
+      type: "submit"
+    }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
+      id: "topsites_form_preview_button"
+    })) : external_React_default.a.createElement("button", {
+      className: "done",
+      type: "submit"
+    }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
+      id: showAsAdd ? "topsites_form_add_button" : "topsites_form_save_button"
+    }))));
+  }
+
+}
+TopSiteForm_TopSiteForm.defaultProps = {
+  site: null,
+  index: -1
+};
+
+/***/ }),
+/* 58 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -13231,8 +14019,18 @@ function DiscoveryStream(prevState = INITIAL_STATE.DiscoveryStream, action) {
     case Actions["actionTypes"].DISCOVERY_STREAM_FEEDS_UPDATE:
       return { ...prevState,
         feeds: { ...prevState.feeds,
-          data: action.data || prevState.feeds.data,
           loaded: true
+        }
+      };
+
+    case Actions["actionTypes"].DISCOVERY_STREAM_FEED_UPDATE:
+      const newData = {};
+      newData[action.data.url] = action.data.feed;
+      return { ...prevState,
+        feeds: { ...prevState.feeds,
+          data: { ...prevState.feeds.data,
+            ...newData
+          }
         }
       };
 
@@ -13361,7 +14159,7 @@ var reducers = {
 };
 
 /***/ }),
-/* 57 */
+/* 59 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -13404,17 +14202,17 @@ const cardContextTypes = {
 var external_ReactRedux_ = __webpack_require__(26);
 
 // EXTERNAL MODULE: ./content-src/lib/link-menu-options.js
-var link_menu_options = __webpack_require__(32);
+var link_menu_options = __webpack_require__(33);
 
 // EXTERNAL MODULE: ./content-src/components/LinkMenu/LinkMenu.jsx
-var LinkMenu = __webpack_require__(30);
+var LinkMenu = __webpack_require__(31);
 
 // EXTERNAL MODULE: external "React"
 var external_React_ = __webpack_require__(11);
 var external_React_default = /*#__PURE__*/__webpack_require__.n(external_React_);
 
 // EXTERNAL MODULE: ./content-src/lib/screenshot-utils.js
-var screenshot_utils = __webpack_require__(44);
+var screenshot_utils = __webpack_require__(45);
 
 // CONCATENATED MODULE: ./content-src/components/Card/Card.jsx
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_Card", function() { return Card_Card; });
@@ -13751,415 +14549,6 @@ const PlaceholderCard = props => external_React_default.a.createElement(Card, {
   placeholder: true,
   className: props.className
 });
-
-/***/ }),
-/* 58 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-
-// EXTERNAL MODULE: ./common/Actions.jsm
-var Actions = __webpack_require__(2);
-
-// EXTERNAL MODULE: external "ReactIntl"
-var external_ReactIntl_ = __webpack_require__(4);
-
-// EXTERNAL MODULE: external "React"
-var external_React_ = __webpack_require__(11);
-var external_React_default = /*#__PURE__*/__webpack_require__.n(external_React_);
-
-// EXTERNAL MODULE: ./content-src/components/TopSites/TopSitesConstants.js
-var TopSitesConstants = __webpack_require__(39);
-
-// CONCATENATED MODULE: ./content-src/components/TopSites/TopSiteFormInput.jsx
-
-
-class TopSiteFormInput_TopSiteFormInput extends external_React_default.a.PureComponent {
-  constructor(props) {
-    super(props);
-    this.state = {
-      validationError: this.props.validationError
-    };
-    this.onChange = this.onChange.bind(this);
-    this.onMount = this.onMount.bind(this);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.shouldFocus && !this.props.shouldFocus) {
-      this.input.focus();
-    }
-
-    if (nextProps.validationError && !this.props.validationError) {
-      this.setState({
-        validationError: true
-      });
-    } // If the component is in an error state but the value was cleared by the parent
-
-
-    if (this.state.validationError && !nextProps.value) {
-      this.setState({
-        validationError: false
-      });
-    }
-  }
-
-  onChange(ev) {
-    if (this.state.validationError) {
-      this.setState({
-        validationError: false
-      });
-    }
-
-    this.props.onChange(ev);
-  }
-
-  onMount(input) {
-    this.input = input;
-  }
-
-  render() {
-    const showClearButton = this.props.value && this.props.onClear;
-    const {
-      typeUrl
-    } = this.props;
-    const {
-      validationError
-    } = this.state;
-    return external_React_default.a.createElement("label", null, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
-      id: this.props.titleId
-    }), external_React_default.a.createElement("div", {
-      className: `field ${typeUrl ? "url" : ""}${validationError ? " invalid" : ""}`
-    }, this.props.loading ? external_React_default.a.createElement("div", {
-      className: "loading-container"
-    }, external_React_default.a.createElement("div", {
-      className: "loading-animation"
-    })) : showClearButton && external_React_default.a.createElement("div", {
-      className: "icon icon-clear-input",
-      onClick: this.props.onClear
-    }), external_React_default.a.createElement("input", {
-      type: "text",
-      value: this.props.value,
-      ref: this.onMount,
-      onChange: this.onChange,
-      placeholder: this.props.intl.formatMessage({
-        id: this.props.placeholderId
-      }),
-      autoFocus: this.props.shouldFocus,
-      disabled: this.props.loading
-    }), validationError && external_React_default.a.createElement("aside", {
-      className: "error-tooltip"
-    }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
-      id: this.props.errorMessageId
-    }))));
-  }
-
-}
-TopSiteFormInput_TopSiteFormInput.defaultProps = {
-  showClearButton: false,
-  value: "",
-  validationError: false
-};
-// EXTERNAL MODULE: ./content-src/components/TopSites/TopSite.jsx
-var TopSite = __webpack_require__(43);
-
-// CONCATENATED MODULE: ./content-src/components/TopSites/TopSiteForm.jsx
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TopSiteForm", function() { return TopSiteForm_TopSiteForm; });
-
-
-
-
-
-
-class TopSiteForm_TopSiteForm extends external_React_default.a.PureComponent {
-  constructor(props) {
-    super(props);
-    const {
-      site
-    } = props;
-    this.state = {
-      label: site ? site.label || site.hostname : "",
-      url: site ? site.url : "",
-      validationError: false,
-      customScreenshotUrl: site ? site.customScreenshotURL : "",
-      showCustomScreenshotForm: site ? site.customScreenshotURL : false
-    };
-    this.onClearScreenshotInput = this.onClearScreenshotInput.bind(this);
-    this.onLabelChange = this.onLabelChange.bind(this);
-    this.onUrlChange = this.onUrlChange.bind(this);
-    this.onCancelButtonClick = this.onCancelButtonClick.bind(this);
-    this.onClearUrlClick = this.onClearUrlClick.bind(this);
-    this.onDoneButtonClick = this.onDoneButtonClick.bind(this);
-    this.onCustomScreenshotUrlChange = this.onCustomScreenshotUrlChange.bind(this);
-    this.onPreviewButtonClick = this.onPreviewButtonClick.bind(this);
-    this.onEnableScreenshotUrlForm = this.onEnableScreenshotUrlForm.bind(this);
-    this.validateUrl = this.validateUrl.bind(this);
-  }
-
-  onLabelChange(event) {
-    this.setState({
-      "label": event.target.value
-    });
-  }
-
-  onUrlChange(event) {
-    this.setState({
-      url: event.target.value,
-      validationError: false
-    });
-  }
-
-  onClearUrlClick() {
-    this.setState({
-      url: "",
-      validationError: false
-    });
-  }
-
-  onEnableScreenshotUrlForm() {
-    this.setState({
-      showCustomScreenshotForm: true
-    });
-  }
-
-  _updateCustomScreenshotInput(customScreenshotUrl) {
-    this.setState({
-      customScreenshotUrl,
-      validationError: false
-    });
-    this.props.dispatch({
-      type: Actions["actionTypes"].PREVIEW_REQUEST_CANCEL
-    });
-  }
-
-  onCustomScreenshotUrlChange(event) {
-    this._updateCustomScreenshotInput(event.target.value);
-  }
-
-  onClearScreenshotInput() {
-    this._updateCustomScreenshotInput("");
-  }
-
-  onCancelButtonClick(ev) {
-    ev.preventDefault();
-    this.props.onClose();
-  }
-
-  onDoneButtonClick(ev) {
-    ev.preventDefault();
-
-    if (this.validateForm()) {
-      const site = {
-        url: this.cleanUrl(this.state.url)
-      };
-      const {
-        index
-      } = this.props;
-
-      if (this.state.label !== "") {
-        site.label = this.state.label;
-      }
-
-      if (this.state.customScreenshotUrl) {
-        site.customScreenshotURL = this.cleanUrl(this.state.customScreenshotUrl);
-      } else if (this.props.site && this.props.site.customScreenshotURL) {
-        // Used to flag that previously cached screenshot should be removed
-        site.customScreenshotURL = null;
-      }
-
-      this.props.dispatch(Actions["actionCreators"].AlsoToMain({
-        type: Actions["actionTypes"].TOP_SITES_PIN,
-        data: {
-          site,
-          index
-        }
-      }));
-      this.props.dispatch(Actions["actionCreators"].UserEvent({
-        source: TopSitesConstants["TOP_SITES_SOURCE"],
-        event: "TOP_SITES_EDIT",
-        action_position: index
-      }));
-      this.props.onClose();
-    }
-  }
-
-  onPreviewButtonClick(event) {
-    event.preventDefault();
-
-    if (this.validateForm()) {
-      this.props.dispatch(Actions["actionCreators"].AlsoToMain({
-        type: Actions["actionTypes"].PREVIEW_REQUEST,
-        data: {
-          url: this.cleanUrl(this.state.customScreenshotUrl)
-        }
-      }));
-      this.props.dispatch(Actions["actionCreators"].UserEvent({
-        source: TopSitesConstants["TOP_SITES_SOURCE"],
-        event: "PREVIEW_REQUEST"
-      }));
-    }
-  }
-
-  cleanUrl(url) {
-    // If we are missing a protocol, prepend http://
-    if (!url.startsWith("http:") && !url.startsWith("https:")) {
-      return `http://${url}`;
-    }
-
-    return url;
-  }
-
-  _tryParseUrl(url) {
-    try {
-      return new URL(url);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  validateUrl(url) {
-    const validProtocols = ["http:", "https:"];
-
-    const urlObj = this._tryParseUrl(url) || this._tryParseUrl(this.cleanUrl(url));
-
-    return urlObj && validProtocols.includes(urlObj.protocol);
-  }
-
-  validateCustomScreenshotUrl() {
-    const {
-      customScreenshotUrl
-    } = this.state;
-    return !customScreenshotUrl || this.validateUrl(customScreenshotUrl);
-  }
-
-  validateForm() {
-    const validate = this.validateUrl(this.state.url) && this.validateCustomScreenshotUrl();
-
-    if (!validate) {
-      this.setState({
-        validationError: true
-      });
-    }
-
-    return validate;
-  }
-
-  _renderCustomScreenshotInput() {
-    const {
-      customScreenshotUrl
-    } = this.state;
-    const requestFailed = this.props.previewResponse === "";
-    const validationError = this.state.validationError && !this.validateCustomScreenshotUrl() || requestFailed; // Set focus on error if the url field is valid or when the input is first rendered and is empty
-
-    const shouldFocus = validationError && this.validateUrl(this.state.url) || !customScreenshotUrl;
-    const isLoading = this.props.previewResponse === null && customScreenshotUrl && this.props.previewUrl === this.cleanUrl(customScreenshotUrl);
-
-    if (!this.state.showCustomScreenshotForm) {
-      return external_React_default.a.createElement("a", {
-        className: "enable-custom-image-input",
-        onClick: this.onEnableScreenshotUrlForm
-      }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
-        id: "topsites_form_use_image_link"
-      }));
-    }
-
-    return external_React_default.a.createElement("div", {
-      className: "custom-image-input-container"
-    }, external_React_default.a.createElement(TopSiteFormInput_TopSiteFormInput, {
-      errorMessageId: requestFailed ? "topsites_form_image_validation" : "topsites_form_url_validation",
-      loading: isLoading,
-      onChange: this.onCustomScreenshotUrlChange,
-      onClear: this.onClearScreenshotInput,
-      shouldFocus: shouldFocus,
-      typeUrl: true,
-      value: customScreenshotUrl,
-      validationError: validationError,
-      titleId: "topsites_form_image_url_label",
-      placeholderId: "topsites_form_url_placeholder",
-      intl: this.props.intl
-    }));
-  }
-
-  render() {
-    const {
-      customScreenshotUrl
-    } = this.state;
-    const requestFailed = this.props.previewResponse === ""; // For UI purposes, editing without an existing link is "add"
-
-    const showAsAdd = !this.props.site;
-    const previous = this.props.site && this.props.site.customScreenshotURL || "";
-    const changed = customScreenshotUrl && this.cleanUrl(customScreenshotUrl) !== previous; // Preview mode if changes were made to the custom screenshot URL and no preview was received yet
-    // or the request failed
-
-    const previewMode = changed && !this.props.previewResponse;
-    const previewLink = Object.assign({}, this.props.site);
-
-    if (this.props.previewResponse) {
-      previewLink.screenshot = this.props.previewResponse;
-      previewLink.customScreenshotURL = this.props.previewUrl;
-    }
-
-    return external_React_default.a.createElement("form", {
-      className: "topsite-form"
-    }, external_React_default.a.createElement("div", {
-      className: "form-input-container"
-    }, external_React_default.a.createElement("h3", {
-      className: "section-title"
-    }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
-      id: showAsAdd ? "topsites_form_add_header" : "topsites_form_edit_header"
-    })), external_React_default.a.createElement("div", {
-      className: "fields-and-preview"
-    }, external_React_default.a.createElement("div", {
-      className: "form-wrapper"
-    }, external_React_default.a.createElement(TopSiteFormInput_TopSiteFormInput, {
-      onChange: this.onLabelChange,
-      value: this.state.label,
-      titleId: "topsites_form_title_label",
-      placeholderId: "topsites_form_title_placeholder",
-      intl: this.props.intl
-    }), external_React_default.a.createElement(TopSiteFormInput_TopSiteFormInput, {
-      onChange: this.onUrlChange,
-      shouldFocus: this.state.validationError && !this.validateUrl(this.state.url),
-      value: this.state.url,
-      onClear: this.onClearUrlClick,
-      validationError: this.state.validationError && !this.validateUrl(this.state.url),
-      titleId: "topsites_form_url_label",
-      typeUrl: true,
-      placeholderId: "topsites_form_url_placeholder",
-      errorMessageId: "topsites_form_url_validation",
-      intl: this.props.intl
-    }), this._renderCustomScreenshotInput()), external_React_default.a.createElement(TopSite["TopSiteLink"], {
-      link: previewLink,
-      defaultStyle: requestFailed,
-      title: this.state.label
-    }))), external_React_default.a.createElement("section", {
-      className: "actions"
-    }, external_React_default.a.createElement("button", {
-      className: "cancel",
-      type: "button",
-      onClick: this.onCancelButtonClick
-    }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
-      id: "topsites_form_cancel_button"
-    })), previewMode ? external_React_default.a.createElement("button", {
-      className: "done preview",
-      type: "submit",
-      onClick: this.onPreviewButtonClick
-    }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
-      id: "topsites_form_preview_button"
-    })) : external_React_default.a.createElement("button", {
-      className: "done",
-      type: "submit",
-      onClick: this.onDoneButtonClick
-    }, external_React_default.a.createElement(external_ReactIntl_["FormattedMessage"], {
-      id: showAsAdd ? "topsites_form_add_button" : "topsites_form_save_button"
-    }))));
-  }
-
-}
-TopSiteForm_TopSiteForm.defaultProps = {
-  site: null,
-  index: -1
-};
 
 /***/ })
 /******/ ]);

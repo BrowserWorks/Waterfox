@@ -240,7 +240,8 @@ nsresult TRR::SendHTTPRequest() {
       nullptr,  // PerformanceStorage
       nullptr,  // aLoadGroup
       this,
-      nsIRequest::LOAD_ANONYMOUS | (mPB ? nsIRequest::INHIBIT_CACHING : 0),
+      nsIRequest::LOAD_ANONYMOUS | (mPB ? nsIRequest::INHIBIT_CACHING : 0) |
+          nsIChannel::LOAD_BYPASS_URL_CLASSIFIER,
       ios);
   if (NS_FAILED(rv)) {
     LOG(("TRR:SendHTTPRequest: NewChannel failed!\n"));
@@ -275,7 +276,7 @@ nsresult TRR::SendHTTPRequest() {
   // update with each HEADERS or reply to a DATA with a WINDOW UPDATE
   rv = internalChannel->SetInitialRwin(127 * 1024);
   NS_ENSURE_SUCCESS(rv, rv);
-  rv = internalChannel->SetTrr(true);
+  rv = internalChannel->SetIsTRRServiceChannel(true);
   NS_ENSURE_SUCCESS(rv, rv);
 
   mAllowRFC1918 = gTRRService->AllowRFC1918();

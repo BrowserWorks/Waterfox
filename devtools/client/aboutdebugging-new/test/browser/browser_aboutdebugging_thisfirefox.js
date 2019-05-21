@@ -41,6 +41,41 @@ add_task(async function testThisFirefoxWithoutLocalTab() {
   await removeTab(tab);
 });
 
+/**
+ * Check that the tab which is discarded keeps the state after open the aboutdebugging.
+ */
+add_task(async function testThisFirefoxKeepDiscardedTab() {
+  const targetTab = await addTab("https://example.com/");
+  const blankTab = await addTab("about:blank");
+  targetTab.ownerGlobal.gBrowser.discardBrowser(targetTab);
+
+  const { document, tab, window } = await openAboutDebugging({ enableLocalTabs: false });
+  await selectThisFirefoxPage(document, window.AboutDebugging.store);
+
+  ok(!targetTab.linkedPanel, "The target tab is still discarded");
+
+  await removeTab(blankTab);
+  await removeTab(targetTab);
+  await removeTab(tab);
+});
+
+/**
+ * Check that the Temporary Extensions is hidden if "xpinstall.enabled" is set to false.
+ */
+add_task(async function testThisFirefoxWithXpinstallDisabled() {
+  await pushPref("xpinstall.enabled", false);
+
+  const { document, tab, window } = await openAboutDebugging();
+  await selectThisFirefoxPage(document, window.AboutDebugging.store);
+
+  // Expect all target panes but temporary extensions to be displayed.
+  const expectedTargetPanesWithXpinstallDisabled =
+    EXPECTED_TARGET_PANES.filter(p => p !== "Temporary Extensions");
+  await checkThisFirefoxTargetPanes(document, expectedTargetPanesWithXpinstallDisabled);
+
+  await removeTab(tab);
+});
+
 async function checkThisFirefoxTargetPanes(doc, expectedTargetPanes) {
   const win = doc.ownerGlobal;
   // Check that the selected sidebar item is "This Firefox"/"This Nightly"/...
@@ -64,4 +99,3 @@ async function checkThisFirefoxTargetPanes(doc, expectedTargetPanes) {
        `Expected debug target category found: ${ expectedPaneTitle }`);
   }
 }
-

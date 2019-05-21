@@ -9,6 +9,21 @@
   max-width: var(--section-width);
 }
 
+#abuse-reports-messages {
+  margin-inline-start: 28px;
+  max-width: var(--section-width);
+}
+
+/* The margin between message bars. */
+message-bar-stack > * {
+  margin-bottom: 8px;
+}
+
+/* The margin between pending message-bar-stack and the section heading. */
+addon-list message-bar-stack.pending-uninstall {
+  margin-bottom: 12px;
+}
+
 /* List sections */
 
 .list-section-heading {
@@ -32,6 +47,11 @@
   box-shadow: var(--card-shadow);
 }
 
+addon-card:not([expanded]) > .addon.card:hover {
+  box-shadow: var(--card-shadow-hover);
+  cursor: pointer;
+}
+
 .addon-card-collapsed {
   display: flex;
 }
@@ -42,10 +62,12 @@ addon-list .addon.card {
 
 /* Theme preview image. */
 .card-heading-image {
+  /* If the width, height or aspect ratio changes, don't forget to update the
+   * getScreenshotUrlForAddon function in aboutaddons.js */
   width: var(--section-width);
-  /* This is a magic number for the aspect ratio we get from AMO. */
-  height: 89px;
-  object-fit: cover;
+  /* Adjust height so that the image preserves the aspect ratio from AMO.
+   * For details, see https://bugzilla.mozilla.org/show_bug.cgi?id=1546123 */
+  height: calc(var(--section-width) * 92 / 680);
 }
 
 .card-heading-icon {
@@ -58,6 +80,7 @@ addon-list .addon.card {
 }
 
 .card-contents {
+  word-break: break-word;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -120,13 +143,89 @@ addon-card:not([expanded]) .addon-description {
   margin-inline-end: -8px;
 }
 
+/* Discopane extensions to the add-on card */
+
+recommended-addon-card .addon-name {
+  display: flex;
+}
+
+recommended-addon-card .addon-description:not(:empty) {
+  margin-top: 0.5em;
+}
+
+.disco-card-head {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.disco-addon-author {
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.disco-description-statistics {
+  margin-top: 1em;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  grid-column-gap: 2em;
+  align-items: center;
+}
+
+.disco-cta-button {
+  font-size: 14px;
+  flex-shrink: 0;
+  flex-grow: 0;
+  align-self: baseline;
+}
+
+.disco-cta-button[action="install-addon"]::before {
+  content: "+";
+  padding-inline-end: 4px;
+}
+
+.discopane-notice {
+  margin: 0.5em 0;
+}
+
+.discopane-notice-content {
+  align-items: center;
+  display: flex;
+  width: 100%;
+}
+
+.discopane-notice-content > span {
+  flex-grow: 1;
+}
+
+.discopane-notice-content > button {
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+.discopane-footer {
+  text-align: center;
+}
+
+.discopane-footer > * {
+  margin-top: 30px;
+}
+
+.discopane-privacy-policy-link {
+  font-size: small;
+}
+
+addon-details {
+  color: var(--in-content-deemphasized-text);
+}
+
 .addon-detail-description {
   margin: 16px 0;
 }
 
 .addon-detail-contribute {
   padding: var(--card-padding);
-  border: 1px solid var(--grey-90-a20);
+  border: 1px solid var(--in-content-box-border-color);
   border-radius: var(--panel-border-radius);
   margin-bottom: var(--card-padding);
   display: flex;
@@ -153,20 +252,23 @@ addon-card:not([expanded]) .addon-description {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid var(--grey-90-a20);
+  border-top: 1px solid var(--in-content-box-border-color);
   margin: 0 calc(var(--card-padding) * -1);
   padding: var(--card-padding);
-  color: var(--grey-90);
+  color: var(--in-content-text-color);
+}
+
+.addon-detail-row.addon-detail-help-row {
+  display: block;
+  color: var(--in-content-deemphasized-text);
+  padding-top: 4px;
+  padding-bottom: var(--card-padding);
+  border: none;
 }
 
 .addon-detail-row-has-help,
 .addon-detail-row:last-of-type {
   padding-bottom: 0;
-}
-
-.addon-detail-row-help {
-  color: var(--grey-60);
-  padding-bottom: var(--card-padding);
 }
 
 .addon-detail-row input[type="checkbox"] {
@@ -175,33 +277,6 @@ addon-card:not([expanded]) .addon-description {
 
 .addon-detail-rating {
   display: flex;
-}
-
-.addon-detail-rating-star {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  background: url("chrome://browser/skin/bookmark-hollow.svg");
-}
-
-.addon-detail-rating-star[fill="full"] {
-  background: url("chrome://browser/skin/bookmark.svg");
-}
-
-.addon-detail-rating-star[fill="half"] {
-  background: url("chrome://browser/skin/bookmark.svg");
-  width: 8px;
-  margin-inline-end: 8px;
-}
-
-.addon-detail-rating-star[fill="half"]::after {
-  content: "";
-  display: inline-block;
-  background: url("chrome://browser/skin/bookmark-hollow.svg");
-  background-position: 8px;
-  width: 8px;
-  height: 16px;
-  margin-left: 8px;
 }
 
 .addon-detail-rating > a {
@@ -249,6 +324,12 @@ panel-item[action="install-update"] {
   --icon: url("chrome://global/skin/icons/update-icon.svg");
 }
 
+panel-item[action="report"] {
+  -moz-context-properties: fill;
+  fill: currentColor;
+  --icon: url(chrome://global/skin/icons/warning.svg);
+}
+
 panel-item-separator {
   display: block;
   height: 1px;
@@ -279,4 +360,18 @@ panel-item-separator[hidden] {
 .button-link:active {
   color: var(--in-content-link-color-active) !important;
   text-decoration: none;
+}
+
+addon-permissions-list > .addon-detail-row:first-of-type {
+  border-top: none;
+}
+
+.deck-tab-group {
+  border-bottom: 1px solid var(--grey-90-a20);
+  border-top: 1px solid var(--grey-90-a20);
+  margin-top: 8px;
+  /* Pull the buttons flush with the side of the card */
+  margin-inline: calc(var(--card-padding) * -1);
+  font-size: 0;
+  line-height: 0;
 }

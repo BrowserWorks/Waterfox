@@ -70,7 +70,7 @@ textbox.plain html|*.textbox-input {
 
 /* ::::: search textbox ::::: */
 
-textbox:not([searchbutton]) > moz-input-box > .textbox-search-sign {
+textbox:not([searchbutton]) > .textbox-search-sign {
   list-style-image: url(chrome://global/skin/icons/search-textbox.svg);
   margin-inline-end: 5px;
 }
@@ -80,7 +80,8 @@ textbox:not([searchbutton]) > moz-input-box > .textbox-search-sign {
 }
 
 .textbox-search-clear {
-  list-style-image: url(moz-icon://stock/gtk-clear?size=menu);
+  list-style-image: url(chrome://global/skin/icons/searchfield-cancel.svg);
+  -moz-image-region: rect(0, 14px, 14px, 0);
 }
 
 .textbox-search-icon[searchbutton]:not([disabled]) ,

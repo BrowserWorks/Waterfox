@@ -12,7 +12,7 @@ const renderRep = (string, props) =>
   mount(
     Rep({
       object: string,
-      ...props
+      ...props,
     })
   );
 
@@ -27,8 +27,8 @@ const testLinkClick = (link, openLink, url) => {
 
   link.simulate("click", { preventDefault });
   // Prevent defaults behavior on click
-  expect(preventDefault).toBeCalled();
-  expect(openLink).toBeCalledWith(url, syntheticEvent);
+  expect(preventDefault).toHaveBeenCalled();
+  expect(openLink).toHaveBeenCalledWith(url, syntheticEvent);
 };
 
 describe("test String with URL", () => {
@@ -201,7 +201,7 @@ describe("test String with URL", () => {
     const element = renderRep(url, {
       openLink,
       useQuotes: false,
-      cropLimit: 15
+      cropLimit: 15,
     });
 
     expect(element.text()).toEqual("http://…ple.com");
@@ -218,7 +218,7 @@ describe("test String with URL", () => {
     const element = renderRep(url, {
       openLink,
       useQuotes: false,
-      cropLimit: 50
+      cropLimit: 50,
     });
 
     expect(element.text()).toEqual(url);
@@ -236,8 +236,8 @@ describe("test String with URL", () => {
       openLink,
       useQuotes: false,
       member: {
-        open: true
-      }
+        open: true,
+      },
     });
 
     expect(element.text()).toEqual(url);
@@ -254,7 +254,7 @@ describe("test String with URL", () => {
     const element = renderRep(text, {
       openLink,
       useQuotes: false,
-      cropLimit: 41
+      cropLimit: 41,
     });
 
     expect(element.text()).toEqual("- http://example.fr … http://example.us -");
@@ -273,7 +273,7 @@ describe("test String with URL", () => {
     const element = renderRep(text, {
       openLink,
       useQuotes: false,
-      cropLimit: 42
+      cropLimit: 42,
     });
 
     expect(element.text()).toEqual(
@@ -294,7 +294,7 @@ describe("test String with URL", () => {
     const element = renderRep(text, {
       openLink,
       useQuotes: false,
-      cropLimit: 20
+      cropLimit: 20,
     });
 
     expect(element.text()).toEqual("- http://e…ample.us -");
@@ -314,7 +314,7 @@ describe("test String with URL", () => {
     const element = renderRep(text, {
       openLink,
       useQuotes: false,
-      cropLimit: 60
+      cropLimit: 60,
     });
 
     expect(element.text()).toEqual(
@@ -340,7 +340,7 @@ describe("test String with URL", () => {
     const element = renderRep(text, {
       openLink,
       useQuotes: false,
-      cropLimit: 20
+      cropLimit: 20,
     });
 
     expect(element.text()).toEqual("- http://e…ample.us -");
@@ -359,7 +359,7 @@ describe("test String with URL", () => {
     const element = renderRep(text, {
       openLink,
       useQuotes: false,
-      cropLimit: 20
+      cropLimit: 20,
     });
 
     expect(element.text()).toEqual("http://exa…cdefghijkl");
@@ -374,7 +374,7 @@ describe("test String with URL", () => {
     const element = renderRep(text, {
       openLink,
       useQuotes: false,
-      cropLimit: 20
+      cropLimit: 20,
     });
 
     expect(element.text()).toEqual("abcdefghij…xample.fr ");
@@ -386,11 +386,11 @@ describe("test String with URL", () => {
   it("renders URLs without unrelated characters", () => {
     const text =
       "global(http://example.com) and local(http://example.us)" +
-      " and maybe https://example.fr, https://example.es?";
+      " and maybe https://example.fr, “https://example.cz“, https://example.es?";
     const openLink = jest.fn();
     const element = renderRep(text, {
       openLink,
-      useQuotes: false
+      useQuotes: false,
     });
 
     expect(element.text()).toEqual(text);
@@ -403,8 +403,82 @@ describe("test String with URL", () => {
     const linkFr = element.find("a").at(2);
     expect(linkFr.prop("href")).toBe("https://example.fr");
 
-    const linkEs = element.find("a").at(3);
+    const linkCz = element.find("a").at(3);
+    expect(linkCz.prop("href")).toBe("https://example.cz");
+
+    const linkEs = element.find("a").at(4);
     expect(linkEs.prop("href")).toBe("https://example.es");
+  });
+
+  it("renders a cropped URL with urlCropLimit", () => {
+    const xyzUrl = "http://xyz.com/abcdefghijklmnopqrst";
+    const text = `${xyzUrl} is the best`;
+    const openLink = jest.fn();
+    const element = renderRep(text, {
+      openLink,
+      useQuotes: false,
+      urlCropLimit: 20,
+    });
+
+    expect(element.text()).toEqual("http://xyz…klmnopqrst is the best");
+    const link = element.find("a").at(0);
+    expect(link.prop("href")).toBe(xyzUrl);
+    expect(link.prop("title")).toBe(xyzUrl);
+  });
+
+  it("renders multiple cropped URL", () => {
+    const xyzUrl = "http://xyz.com/abcdefghijklmnopqrst";
+    const abcUrl = "http://abc.com/abcdefghijklmnopqrst";
+    const text = `${xyzUrl} is lit, not ${abcUrl}`;
+    const openLink = jest.fn();
+    const element = renderRep(text, {
+      openLink,
+      useQuotes: false,
+      urlCropLimit: 20,
+    });
+
+    expect(element.text()).toEqual(
+      "http://xyz…klmnopqrst is lit, not http://abc…klmnopqrst"
+    );
+
+    const links = element.find("a");
+    const xyzLink = links.at(0);
+    expect(xyzLink.prop("href")).toBe(xyzUrl);
+    expect(xyzLink.prop("title")).toBe(xyzUrl);
+    const abc = links.at(1);
+    expect(abc.prop("href")).toBe(abcUrl);
+    expect(abc.prop("title")).toBe(abcUrl);
+  });
+
+  it("renders full URL if smaller than cropLimit", () => {
+    const xyzUrl = "http://example.com/";
+
+    const openLink = jest.fn();
+    const element = renderRep(xyzUrl, {
+      openLink,
+      useQuotes: false,
+      urlCropLimit: 20,
+    });
+
+    expect(element.text()).toEqual(xyzUrl);
+    const link = element.find("a").at(0);
+    expect(link.prop("href")).toBe(xyzUrl);
+    expect(link.prop("title")).toBe(xyzUrl);
+  });
+
+  it("renders cropped URL followed by cropped string with urlCropLimit", () => {
+    const text = "http://example.fr abcdefghijkl";
+    const openLink = jest.fn();
+    const element = renderRep(text, {
+      openLink,
+      useQuotes: false,
+      cropLimit: 20,
+    });
+
+    expect(element.text()).toEqual("http://exa…cdefghijkl");
+    const linkFr = element.find("a").at(0);
+    expect(linkFr.prop("href")).toBe("http://example.fr");
+    expect(linkFr.prop("title")).toBe("http://example.fr");
   });
 
   it("does not render a link if the URL has no scheme", () => {
@@ -428,7 +502,7 @@ describe("test String with URL", () => {
     const element = renderRep(text, {
       openLink,
       useQuotes: false,
-      cropLimit: 60
+      cropLimit: 60,
     });
     expect(element.text()).toEqual(
       "//www.youtubeinmp3.com/downloa…outube.com/watch?v=8vkfsCIfDFc"

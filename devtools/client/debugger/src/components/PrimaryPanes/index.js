@@ -15,7 +15,7 @@ import {
   getProjectDirectoryRoot,
   getSelectedPrimaryPaneTab,
   getThreads,
-  getContext
+  getContext,
 } from "../../selectors";
 import { features, prefs } from "../../utils/prefs";
 import { connect } from "../../utils/connect";
@@ -32,7 +32,7 @@ import type { Thread, Context } from "../../types";
 import "./Sources.css";
 
 type State = {
-  alphabetizeOutline: boolean
+  alphabetizeOutline: boolean,
 };
 
 type Props = {
@@ -46,7 +46,7 @@ type Props = {
   setActiveSearch: typeof actions.setActiveSearch,
   closeActiveSearch: typeof actions.closeActiveSearch,
   clearProjectDirectoryRoot: typeof actions.clearProjectDirectoryRoot,
-  threads: Thread[]
+  threads: Thread[],
 };
 
 class PrimaryPanes extends Component<Props, State> {
@@ -54,7 +54,7 @@ class PrimaryPanes extends Component<Props, State> {
     super(props);
 
     this.state = {
-      alphabetizeOutline: prefs.alphabetizeOutline
+      alphabetizeOutline: prefs.alphabetizeOutline,
     };
   }
 
@@ -98,7 +98,7 @@ class PrimaryPanes extends Component<Props, State> {
         key="outline-tab"
       >
         {outline}
-      </Tab>
+      </Tab>,
     ];
   }
 
@@ -127,9 +127,7 @@ class PrimaryPanes extends Component<Props, State> {
   }
 
   renderThreadSources() {
-    return this.props.threads.map(({ actor }) => (
-      <SourcesTree thread={actor} key={actor} />
-    ));
+    return <SourcesTree threads={this.props.threads} />;
   }
 
   render() {
@@ -147,7 +145,7 @@ class PrimaryPanes extends Component<Props, State> {
         </TabList>
         <TabPanels
           className={classnames("source-outline-panel", {
-            "has-root": projectRoot
+            "has-root": projectRoot,
           })}
           hasFocusableContent
         >
@@ -171,7 +169,7 @@ const mapStateToProps = state => ({
   sources: getDisplayedSources(state),
   sourceSearchOn: getActiveSearch(state) === "source",
   threads: getThreads(state),
-  projectRoot: getProjectDirectoryRoot(state)
+  projectRoot: getProjectDirectoryRoot(state),
 });
 
 const connector = connect(
@@ -180,7 +178,7 @@ const connector = connect(
     setPrimaryPaneTab: actions.setPrimaryPaneTab,
     setActiveSearch: actions.setActiveSearch,
     closeActiveSearch: actions.closeActiveSearch,
-    clearProjectDirectoryRoot: actions.clearProjectDirectoryRoot
+    clearProjectDirectoryRoot: actions.clearProjectDirectoryRoot,
   }
 );
 

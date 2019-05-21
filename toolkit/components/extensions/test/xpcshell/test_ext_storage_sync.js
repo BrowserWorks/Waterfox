@@ -34,6 +34,10 @@ function handleCannedResponse(cannedResponse, request, response) {
   response.write(cannedResponse.responseBody);
 }
 
+function collectionPath(collectionId) {
+  return `/buckets/default/collections/${collectionId}`;
+}
+
 function collectionRecordsPath(collectionId) {
   return `/buckets/default/collections/${collectionId}/records`;
 }
@@ -88,7 +92,8 @@ class KintoServer {
   }
 
   checkAuth(request, response) {
-    // FIXME: assert auth is "Bearer ...token..."
+    equal(request.getHeader("Authorization"), "Bearer some-access-token");
+
     if (this.rejectNextAuthResponse) {
       response.setStatusLine(null, 401, "Unauthorized");
       response.write(this.rejectNextAuthResponse);
@@ -256,8 +261,25 @@ class KintoServer {
       return;
     }
     this.collections.add(collectionId);
+    const remoteCollectionPath = "/v1" + collectionPath(encodeURIComponent(collectionId));
+    this.httpServer.registerPathHandler(remoteCollectionPath, this.handleGetCollection.bind(this, collectionId));
     const remoteRecordsPath = "/v1" + collectionRecordsPath(encodeURIComponent(collectionId));
     this.httpServer.registerPathHandler(remoteRecordsPath, this.handleGetRecords.bind(this, collectionId));
+  }
+
+  handleGetCollection(collectionId, request, response) {
+    if (this.checkAuth(request, response)) {
+      return;
+    }
+
+    response.setStatusLine(null, 200, "OK");
+    response.setHeader("Content-Type", "application/json; charset=UTF-8");
+    response.setHeader("Date", (new Date()).toUTCString());
+    response.write(JSON.stringify({
+      data: {
+        id: collectionId,
+      },
+    }));
   }
 
   handleGetRecords(collectionId, request, response) {
@@ -448,28 +470,28 @@ async function withSignedInUser(user, f) {
 // Some assertions that make it easier to write tests about what was
 // posted and when.
 
-// Assert that the request was made with the correct access token.
+// Assert that a post in a batch was made with the correct access token.
 // This should be true of all requests, so this is usually called from
 // another assertion.
-function assertAuthenticatedRequest(post) {
+function assertAuthenticatedPost(post) {
   equal(post.headers.Authorization, "Bearer some-access-token");
 }
 
 // Assert that this post was made with the correct request headers to
 // create a new resource while protecting against someone else
 // creating it at the same time (in other words, "If-None-Match: *").
-// Also calls assertAuthenticatedRequest(post).
+// Also calls assertAuthenticatedPost(post).
 function assertPostedNewRecord(post) {
-  assertAuthenticatedRequest(post);
+  assertAuthenticatedPost(post);
   equal(post.headers["If-None-Match"], "*");
 }
 
 // Assert that this post was made with the correct request headers to
 // update an existing resource while protecting against concurrent
 // modification (in other words, `If-Match: "${etag}"`).
-// Also calls assertAuthenticatedRequest(post).
+// Also calls assertAuthenticatedPost(post).
 function assertPostedUpdatedRecord(post, since) {
-  assertAuthenticatedRequest(post);
+  assertAuthenticatedPost(post);
   equal(post.headers["If-Match"], `"${since}"`);
 }
 

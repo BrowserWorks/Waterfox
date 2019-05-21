@@ -69,9 +69,8 @@ extern crate serde;
 #[macro_use]
 extern crate thread_profiler;
 
-extern crate wr_malloc_size_of;
+extern crate malloc_size_of;
 extern crate svg_fmt;
-use wr_malloc_size_of as malloc_size_of;
 
 #[macro_use]
 mod profiler;
@@ -129,15 +128,15 @@ mod shader_source {
     include!(concat!(env!("OUT_DIR"), "/shaders.rs"));
 }
 
-pub use record::{ApiRecordingReceiver, BinaryRecorder, WEBRENDER_RECORDING_HEADER};
+pub use crate::record::{ApiRecordingReceiver, BinaryRecorder, WEBRENDER_RECORDING_HEADER};
 
 mod platform {
     #[cfg(target_os = "macos")]
-    pub use platform::macos::font;
+    pub use crate::platform::macos::font;
     #[cfg(any(target_os = "android", all(unix, not(target_os = "macos"))))]
-    pub use platform::unix::font;
+    pub use crate::platform::unix::font;
     #[cfg(target_os = "windows")]
-    pub use platform::windows::font;
+    pub use crate::platform::windows::font;
 
     #[cfg(target_os = "macos")]
     pub mod macos {
@@ -170,6 +169,7 @@ extern crate dwrote;
 
 extern crate bincode;
 extern crate byteorder;
+pub extern crate euclid;
 extern crate fxhash;
 extern crate gleam;
 extern crate num_traits;
@@ -188,12 +188,13 @@ extern crate ron;
 #[cfg(feature = "debugger")]
 extern crate serde_json;
 extern crate sha2;
+#[macro_use]
 extern crate smallvec;
 extern crate time;
 #[cfg(feature = "debugger")]
 extern crate ws;
 #[cfg(feature = "debugger")]
-extern crate image as image_loader;
+extern crate image_loader;
 #[cfg(feature = "debugger")]
 extern crate base64;
 #[cfg(all(feature = "capture", feature = "png"))]
@@ -202,20 +203,19 @@ extern crate png;
 extern crate rand;
 
 #[macro_use]
-pub extern crate webrender_api;
+pub extern crate api;
 extern crate webrender_build;
 
 #[doc(hidden)]
-pub use device::{build_shader_strings, UploadMethod, VertexUsageHint};
-pub use device::{ProgramBinary, ProgramCache, ProgramCacheObserver};
-pub use device::Device;
-pub use frame_builder::ChasePrimitive;
-pub use profiler::{ProfilerHooks, set_profiler_hooks};
-pub use renderer::{AsyncPropertySampler, AsyncScreenshotHandle, CpuProfile, DebugFlags};
-pub use renderer::{OutputImageHandler, RendererKind, ExternalImage, ExternalImageHandler};
-pub use renderer::{ExternalImageSource, GpuProfile, GraphicsApi, GraphicsApiInfo, PipelineInfo};
-pub use renderer::{Renderer, RendererOptions, RenderResults, RendererStats, SceneBuilderHooks};
-pub use renderer::{ThreadListener, ShaderPrecacheFlags, MAX_VERTEX_TEXTURE_WIDTH};
-pub use shade::{Shaders, WrShaders};
-pub use webrender_api as api;
-pub use webrender_api::euclid;
+pub use crate::device::{build_shader_strings, UploadMethod, VertexUsageHint};
+pub use crate::device::{ProgramBinary, ProgramCache, ProgramCacheObserver};
+pub use crate::device::Device;
+pub use crate::frame_builder::ChasePrimitive;
+pub use crate::profiler::{ProfilerHooks, set_profiler_hooks};
+pub use crate::renderer::{AsyncPropertySampler, AsyncScreenshotHandle, CpuProfile, DebugFlags};
+pub use crate::renderer::{OutputImageHandler, RendererKind, ExternalImage, ExternalImageHandler};
+pub use crate::renderer::{ExternalImageSource, GpuProfile, GraphicsApi, GraphicsApiInfo, PipelineInfo};
+pub use crate::renderer::{Renderer, RendererOptions, RenderResults, RendererStats, SceneBuilderHooks};
+pub use crate::renderer::{ThreadListener, ShaderPrecacheFlags, MAX_VERTEX_TEXTURE_WIDTH};
+pub use crate::shade::{Shaders, WrShaders};
+pub use api as webrender_api;

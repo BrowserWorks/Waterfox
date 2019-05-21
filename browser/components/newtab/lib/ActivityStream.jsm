@@ -160,7 +160,7 @@ const PREFS_CONFIG = new Map([
     value: "topsites,topstories,highlights",
   }],
   ["improvesearch.noDefaultSearchTile", {
-    title: "Experiment to remove tiles that are the same as the default search",
+    title: "Remove tiles that are the same as the default search",
     value: true,
   }],
   ["improvesearch.topSiteSearchShortcuts.searchEngines", {
@@ -215,7 +215,7 @@ const PREFS_CONFIG = new Map([
     title: "Configuration for CFR FxA Messages provider",
     value: JSON.stringify({
       id: "cfr-fxa",
-      enabled: false,
+      enabled: true,
       type: "remote-settings",
       bucket: "cfr-fxa",
       frequency: {custom: [{period: "daily", cap: 1}]},
@@ -245,10 +245,6 @@ const PREFS_CONFIG = new Map([
   ["discoverystream.endpoints", {
     title: "Endpoint prefixes (comma-separated) that are allowed to be requested",
     value: "https://getpocket.cdn.mozilla.net/",
-  }],
-  ["discoverystream.optOut.0", {
-    title: "Opt out of new layout v0",
-    value: false,
   }],
   ["discoverystream.spoc.impressions", {
     title: "Track spoc impressions",
@@ -302,7 +298,7 @@ const FEEDS_DATA = [
   },
   {
     name: "section.topstories",
-    factory: () => new TopStoriesFeed(),
+    factory: () => new TopStoriesFeed(PREFS_CONFIG.get("discoverystream.config")),
     title: "Fetches content recommendations from a configurable content provider",
     // Dynamically determine if Pocket should be shown for a geo / locale
     getValue: ({geo, locale}) => {

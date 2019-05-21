@@ -47,15 +47,15 @@ uniform HIGHP_SAMPLER_FLOAT isampler2D sPrimitiveHeadersI;
 // Instanced attributes
 in ivec4 aData;
 
-#define VECS_PER_PRIM_HEADER_F 2U
+#define VECS_PER_PRIM_HEADER_F 3U
 #define VECS_PER_PRIM_HEADER_I 2U
 
 struct PrimitiveHeader {
     RectWithSize local_rect;
     RectWithSize local_clip_rect;
+    vec4 snap_offsets;
     float z;
     int specific_prim_address;
-    int render_task_index;
     int transform_id;
     ivec4 user_data;
 };
@@ -66,6 +66,7 @@ PrimitiveHeader fetch_prim_header(int index) {
     ivec2 uv_f = get_fetch_uv(index, VECS_PER_PRIM_HEADER_F);
     vec4 local_rect = TEXEL_FETCH(sPrimitiveHeadersF, uv_f, 0, ivec2(0, 0));
     vec4 local_clip_rect = TEXEL_FETCH(sPrimitiveHeadersF, uv_f, 0, ivec2(1, 0));
+    ph.snap_offsets = TEXEL_FETCH(sPrimitiveHeadersF, uv_f, 0, ivec2(2, 0));
     ph.local_rect = RectWithSize(local_rect.xy, local_rect.zw);
     ph.local_clip_rect = RectWithSize(local_clip_rect.xy, local_clip_rect.zw);
 
@@ -73,9 +74,8 @@ PrimitiveHeader fetch_prim_header(int index) {
     ivec4 data0 = TEXEL_FETCH(sPrimitiveHeadersI, uv_i, 0, ivec2(0, 0));
     ivec4 data1 = TEXEL_FETCH(sPrimitiveHeadersI, uv_i, 0, ivec2(1, 0));
     ph.z = float(data0.x);
-    ph.render_task_index = data0.y;
-    ph.specific_prim_address = data0.z;
-    ph.transform_id = data0.w;
+    ph.specific_prim_address = data0.y;
+    ph.transform_id = data0.z;
     ph.user_data = data1;
 
     return ph;
@@ -93,7 +93,7 @@ VertexInfo write_vertex(RectWithSize instance_rect,
                         Transform transform,
                         PictureTask task,
                         RectWithSize snap_rect,
-                        bool snap_to_primitive) {
+                        vec4 snap_offsets) {
 
     // Select the corner of the local rect that we are processing.
     vec2 local_pos = instance_rect.p0 + instance_rect.size * aPosition.xy;
@@ -101,23 +101,11 @@ VertexInfo write_vertex(RectWithSize instance_rect,
     // Clamp to the two local clip rects.
     vec2 clamped_local_pos = clamp_rect(local_pos, local_clip_rect);
 
-    RectWithSize visible_rect;
-    if (snap_to_primitive) {
-        // We are producing a picture. The snap rect has already taken into
-        // account the clipping we wish to consider for snapping purposes.
-        visible_rect = snap_rect;
-    } else {
-        // Compute the visible rect to snap against. This ensures segments along
-        // the edges are snapped consistently with other nearby primitives.
-        visible_rect = intersect_rects(local_clip_rect, snap_rect);
-    }
-
     /// Compute the snapping offset.
     vec2 snap_offset = compute_snap_offset(
         clamped_local_pos,
-        transform.m,
-        visible_rect,
-        task.device_pixel_scale
+        snap_rect,
+        snap_offsets
     );
 
     // Transform the current vertex to world space.

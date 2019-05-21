@@ -443,11 +443,14 @@ def av1(value):
 
 @depends(target, nasm_version, when=av1 & compile_environment)
 def dav1d_asm(target, nasm_version):
-    if target.os != 'Android' and target.cpu in ('x86', 'x86_64'):
-        if nasm_version < '2.13':
-            die('nasm 2.13 or greater is required for AV1 support. '
-                'Either install nasm or add --disable-av1 to your configure options.')
-        return True
+    if target.os != 'Android':
+        if target.cpu == 'aarch64':
+            return True
+        elif target.cpu in ('x86', 'x86_64'):
+            if nasm_version < '2.13':
+                die('nasm 2.13 or greater is required for AV1 support. '
+                    'Either install nasm or add --disable-av1 to your configure options.')
+            return True
 
 
 set_config('MOZ_DAV1D_ASM', dav1d_asm)
@@ -636,6 +639,23 @@ set_define('MOZ_ALLOW_LEGACY_EXTENSIONS', legacy_extensions)
 def check_places_and_android_history(places, android_history):
     if places and android_history:
         die('Cannot use MOZ_ANDROID_HISTORY alongside MOZ_PLACES.')
+
+
+option(env='MOZ_TELEMETRY_REPORTING', default=mozilla_official,
+       help='Enable telemetry reporting')
+
+set_define('MOZ_TELEMETRY_REPORTING', True, when='MOZ_TELEMETRY_REPORTING')
+add_old_configure_assignment(
+    'MOZ_TELEMETRY_REPORTING', True, when='MOZ_TELEMETRY_REPORTING')
+
+
+@depends('MOZ_TELEMETRY_REPORTING', milestone.is_nightly, fennec_nightly)
+def telemetry_on_by_default(reporting, is_nightly, fennec_nightly):
+    return reporting and (is_nightly or fennec_nightly)
+
+
+set_define('MOZ_TELEMETRY_ON_BY_DEFAULT', True, when=telemetry_on_by_default)
+
 
 # gpsd support
 # ==============================================================
@@ -1302,7 +1322,7 @@ def bundled_fonts_default(target):
 
 @depends(build_project)
 def allow_bundled_fonts(project):
-    return project == 'browser'
+    return project == 'browser' or project == 'comm/mail'
 
 option('--enable-bundled-fonts', default=bundled_fonts_default,
        when=allow_bundled_fonts,
@@ -1755,15 +1775,3 @@ def new_notification_store(milestone):
 
 set_config('MOZ_NEW_NOTIFICATION_STORE', True, when=new_notification_store)
 set_define('MOZ_NEW_NOTIFICATION_STORE', True, when=new_notification_store)
-
-
-# new Cert Storage implementation
-# ==============================================================
-
-@depends(milestone)
-def new_cert_storage(milestone):
-    if milestone.is_nightly:
-        return True
-
-set_config('MOZ_NEW_CERT_STORAGE', True, when=new_cert_storage)
-set_define('MOZ_NEW_CERT_STORAGE', True, when=new_cert_storage)

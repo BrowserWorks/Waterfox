@@ -176,6 +176,33 @@ body {
   margin-inline-end: 5px;
 }
 
+/* @remove after release 68 (See Bug 1551574) */
+.devtools-toolbar .beta {
+  color: var(--theme-highlight-blue);
+  font-size: 80%;
+  font-weight: 500;
+  margin-inline-end: 3px;
+}
+
+#audit-progress-container {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background: rgba(255,255,255,0.9);
+  padding-block-start: 30vh;
+  font: message-box;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.audit-progress-progressbar {
+  width: 30vw;
+}
+
 /* Description */
 .description {
   color: var(--theme-toolbar-color);
@@ -344,13 +371,36 @@ body {
 }
 
 .badge {
+  display: inline-block;
   font: message-box;
+  font-size: var(--theme-body-font-size);
+  line-height: calc(14 / 11);
   border-radius: 3px;
-  padding: 0px 2px;
+  padding: 0px 3px;
   margin-inline-start: 5px;
   color: var(--accessible-label-color);
   background-color: var(--accessible-label-background-color);
   border: 1px solid var(--accessible-label-border-color);
+}
+
+.badge.audit-badge::before {
+  content: "";
+  display: inline-block;
+  vertical-align: -1px;
+  width: 10px;
+  height: 10px;
+  margin-inline-end: 1px;
+  background: url("chrome://devtools/skin/images/alert-tiny.svg") no-repeat;
+  -moz-context-properties: fill;
+  fill: currentColor;
+  opacity: 0.9;
+}
+
+/* improve alignment in high res (where we can use half pixels) */
+@media (min-resolution: 1.5x) {
+  .badge.audit-badge::before {
+    vertical-align: -1.5px;
+  }
 }
 
 .badge.toggle-button {
@@ -484,6 +534,13 @@ body {
 .accessible .tree:focus .node.focused *,
 .accessible .tree .tree-node-active .node.focused * {
   color: var(--theme-selection-color);
+}
+
+/* Invert text selection color in selected rows */
+.accessible .tree:focus .node.focused ::selection,
+.accessible .tree .tree-node-active .node.focused ::selection {
+  color: var(--theme-selection-background);
+  background-color: var(--theme-selection-color);
 }
 
 .accessible .tree:focus .node.focused .open-inspector,

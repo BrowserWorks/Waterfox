@@ -60,6 +60,7 @@ class UrlbarInput {
       MozXULElement.parseXULToFragment(`
         <panel id="urlbar-results"
                role="group"
+               tooltip="aHTMLTooltip"
                noautofocus="true"
                hidden="true"
                flip="none"
@@ -97,13 +98,15 @@ class UrlbarInput {
     this._resultForCurrentValue = null;
     this._suppressStartQuery = false;
     this._untrimmedValue = "";
+    this._openViewOnFocus = false;
 
     // This exists only for tests.
     this._enableAutofillPlaceholder = true;
 
     // Forward textbox methods and properties.
     const METHODS = ["addEventListener", "removeEventListener",
-      "setAttribute", "hasAttribute", "removeAttribute", "getAttribute",
+      "getAttribute", "hasAttribute",
+      "setAttribute", "removeAttribute", "toggleAttribute",
       "select"];
     const READ_ONLY_PROPERTIES = ["inputField", "editor"];
     const READ_WRITE_PROPERTIES = ["placeholder", "readOnly",
@@ -174,6 +177,9 @@ class UrlbarInput {
     // Tracks IME composition.
     this._compositionState = UrlbarUtils.COMPOSITION.NONE;
     this._compositionClosedPopup = false;
+
+    this.editor.QueryInterface(Ci.nsIPlaintextEditor).newlineHandling =
+      Ci.nsIPlaintextEditor.eNewlinesStripSurroundingWhitespace;
   }
 
   /**
@@ -466,7 +472,7 @@ class UrlbarInput {
           // visit anything.  The user can then type a search string.  Also
           // start a new search so that the offer appears in the view by itself
           // to make it even clearer to the user what's going on.
-          this.startQuery();
+          this.startQuery({ allowEmptyInput: true });
           return;
         }
         const actionDetails = {
@@ -608,7 +614,7 @@ class UrlbarInput {
     allowAutofill = true,
     searchString = null,
     resetSearchState = true,
-    allowEmptyInput = true,
+    allowEmptyInput = false,
   } = {}) {
     if (this._suppressStartQuery) {
       return;
@@ -637,7 +643,6 @@ class UrlbarInput {
       isPrivate: this.isPrivate,
       maxResults: UrlbarPrefs.get("maxRichResults"),
       muxer: "UnifiedComplete",
-      providers: ["UnifiedComplete"],
       searchString,
       userContextId: this.window.gBrowser.selectedBrowser.getAttribute("usercontextid"),
     }));
@@ -738,6 +743,15 @@ class UrlbarInput {
 
   set value(val) {
     return this._setValue(val, true);
+  }
+
+  get openViewOnFocus() {
+    return this._openViewOnFocus;
+  }
+
+  set openViewOnFocus(val) {
+    this._openViewOnFocus = val;
+    this.toggleAttribute("hidedropmarker", val);
   }
 
   // Private methods below.
@@ -1270,10 +1284,17 @@ class UrlbarInput {
     // additional cleanup on blur.
     this._clearActionOverride();
     this.formatValue();
+
+    // The extension input sessions depends more on blur than on the fact we
+    // actually cancel a running query, so we do it here.
+    if (ExtensionSearchHandler.hasActiveInputSession()) {
+      ExtensionSearchHandler.handleInputCancelled();
+    }
+
     // Respect the autohide preference for easier inspecting/debugging via
     // the browser toolbox.
     if (!UrlbarPrefs.get("ui.popup.disable_autohide")) {
-      this.view.close(UrlbarUtils.CANCEL_REASON.BLUR);
+      this.view.close();
     }
     // We may have hidden popup notifications, show them again if necessary.
     if (this.getAttribute("pageproxystate") != "valid") {
@@ -1289,6 +1310,10 @@ class UrlbarInput {
     // Hide popup notifications, to reduce visual noise.
     if (this.getAttribute("pageproxystate") != "valid") {
       this.window.UpdatePopupNotificationsVisibility();
+    }
+
+    if (this.openViewOnFocus) {
+      this.startQuery();
     }
   }
 
@@ -1311,7 +1336,7 @@ class UrlbarInput {
       if (this.view.isOpen) {
         this.view.close();
       } else {
-        this.startQuery({ allowEmptyInput: false });
+        this.startQuery();
       }
     }
   }
@@ -1372,6 +1397,7 @@ class UrlbarInput {
     this.startQuery({
       searchString: value,
       allowAutofill,
+      allowEmptyInput: true,
       resetSearchState: false,
     });
   }
@@ -1465,6 +1491,9 @@ class UrlbarInput {
   _on_TabSelect(event) {
     this._resetSearchState();
     this.controller.viewContextChanged();
+    if (this.focused && this.openViewOnFocus) {
+      this.startQuery();
+    }
   }
 
   _on_keydown(event) {
@@ -1555,20 +1584,20 @@ class UrlbarInput {
 
   _on_drop(event) {
     let droppedItem = getDroppableData(event);
-    if (!droppedItem) {
-      return;
+    let droppedURL = droppedItem instanceof URL ? droppedItem.href : droppedItem;
+    if (droppedURL && (droppedURL !== this.window.gBrowser.currentURI.spec)) {
+      let principal = Services.droppedLinkHandler.getTriggeringPrincipal(event);
+      this.value = droppedURL;
+      this.window.SetPageProxyState("invalid");
+      this.focus();
+      this.handleCommand(null, undefined, undefined, principal);
+      // For safety reasons, in the drop case we don't want to immediately show
+      // the the dropped value, instead we want to keep showing the current page
+      // url until an onLocationChange happens.
+      // See the handling in URLBarSetURI for further details.
+      this.window.gBrowser.userTypedValue = null;
+      this.window.URLBarSetURI(null, true);
     }
-    let principal = Services.droppedLinkHandler.getTriggeringPrincipal(event);
-    this.value = droppedItem instanceof URL ? droppedItem.href : droppedItem;
-    this.window.SetPageProxyState("invalid");
-    this.focus();
-    this.handleCommand(null, undefined, undefined, principal);
-    // For safety reasons, in the drop case we don't want to immediately show
-    // the the dropped value, instead we want to keep showing the current page
-    // url until an onLocationChange happens.
-    // See the handling in URLBarSetURI for further details.
-    this.window.gBrowser.userTypedValue = null;
-    this.window.URLBarSetURI(null, true);
   }
 }
 

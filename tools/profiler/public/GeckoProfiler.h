@@ -239,18 +239,18 @@ bool IsThreadBeingProfiled();
 
 static constexpr uint32_t PROFILER_DEFAULT_ENTRIES =
 #  if !defined(ARCH_ARMV6)
-    1000000;
+    1u << 20;  // 1'048'576
 #  else
-    100000;
+    1u << 17;  // 131'072
 #  endif
 
 // Startup profiling usually need to capture more data, especially on slow
 // systems.
 static constexpr uint32_t PROFILER_DEFAULT_STARTUP_ENTRIES =
 #  if !defined(ARCH_ARMV6)
-    10000000;
+    1u << 22;  // 4'194'304
 #  else
-    100000;
+    1u << 17;  // 131'072
 #  endif
 
 #  define PROFILER_DEFAULT_DURATION 20
@@ -449,6 +449,9 @@ void profiler_get_start_params(
 // The number of milliseconds since the process started. Operates the same
 // whether the profiler is active or inactive.
 double profiler_time();
+
+// Get the current process's ID.
+int profiler_current_process_id();
 
 // Get the current thread's ID.
 int profiler_current_thread_id();

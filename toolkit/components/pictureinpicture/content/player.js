@@ -8,7 +8,6 @@ const {PictureInPicture} = ChromeUtils.import("resource://gre/modules/PictureInP
 const CONTROLS_FADE_TIMEOUT = 3000;
 
 async function setupPlayer(originatingBrowser, videoData) {
-  window.windowUtils.setChromeMargin(0, 0, 0, 0);
   let holder = document.querySelector(".player-holder");
   let browser = document.getElementById("browser");
   browser.remove();
@@ -42,12 +41,9 @@ async function setupPlayer(originatingBrowser, videoData) {
     window.close();
   });
 
-  browser.addEventListener("unload", () => {
+  window.addEventListener("unload", () => {
     PictureInPicture.unload();
   });
-
-  await window.promiseDocumentFlushed(() => {});
-  browser.style.MozWindowDragging = "drag";
 
   let close = document.getElementById("close");
   close.addEventListener("click", () => {

@@ -169,11 +169,11 @@
               <image class="info-icon"></image>
             </hbox>
             <hbox align="center" flex="1">
-              <label class="policies-label" flex="1" data-l10n-id="policies-notice"></label>
+              <label class="policies-label" flex="1" data-l10n-id="managed-notice"></label>
             </hbox>
           </hbox>
           <textbox
-            type="search" id="searchInput"
+            is="search-textbox" id="searchInput"
             data-l10n-id="search-input-box"
             data-l10n-attrs="style"
             hidden="true" clickSelectsAll="true"/>

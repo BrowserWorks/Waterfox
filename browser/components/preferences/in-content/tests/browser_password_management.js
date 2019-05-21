@@ -1,4 +1,7 @@
 "use strict";
+
+ChromeUtils.import("resource://testing-common/TelemetryTestUtils.jsm", this);
+
 const PM_URL = "chrome://passwordmgr/content/passwordManager.xul";
 const PREF_MANAGEMENT_URI = "signon.management.overrideURI";
 
@@ -21,6 +24,7 @@ add_task(async function test_setup() {
 });
 
 add_task(async function test_openPasswordSubDialog() {
+  Services.telemetry.clearEvents();
   await openPreferencesViaOpenPreferencesAPI("privacy", {leaveOpen: true});
 
   let dialogOpened = promiseLoadSubDialog(PM_URL);
@@ -37,6 +41,11 @@ add_task(async function test_openPasswordSubDialog() {
   });
 
   passwordsDialog = await dialogOpened;
+
+  // check telemetry events while we are in here
+  TelemetryTestUtils.assertEvents(
+    [["pwmgr", "open_management", "preferences"]],
+    {category: "pwmgr", method: "open_management"});
 });
 
 add_task(async function test_deletePasswordWithKey() {
@@ -60,6 +69,7 @@ add_task(async function test_deletePasswordWithKey() {
 });
 
 add_task(async function subdialog_cleanup() {
+  Services.telemetry.clearEvents();
   // Undo the save password change.
   await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
     let doc = content.document;
@@ -72,6 +82,10 @@ add_task(async function subdialog_cleanup() {
 });
 
 add_task(async function test_openPasswordManagement_overrideURI() {
+  await SpecialPowers.pushPrefEnv({"set": [
+    ["signon.management.page.enabled", true],
+  ]});
+
   Services.prefs.setStringPref(PREF_MANAGEMENT_URI, "about:logins?filter=%DOMAIN%");
   await openPreferencesViaOpenPreferencesAPI("privacy", {leaveOpen: true});
 

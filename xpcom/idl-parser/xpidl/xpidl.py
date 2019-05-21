@@ -16,9 +16,6 @@ from collections import namedtuple
 
 """A type conforms to the following pattern:
 
-    def isScriptable(self):
-        'returns True or False'
-
     def nativeType(self, calltype):
         'returns a string representation of the native type
         calltype must be 'in', 'out', 'inout', or 'element'
@@ -123,9 +120,6 @@ class Builtin(object):
         self.rustname = rustname
         self.signed = signed
         self.maybeConst = maybeConst
-
-    def isScriptable(self):
-        return True
 
     def isPointer(self):
         """Check if this type is a pointer type - this will control how pointers act"""
@@ -415,9 +409,6 @@ class Typedef(object):
         if not isinstance(self.realtype, (Builtin, Native, Typedef)):
             raise IDLError("Unsupported typedef target type", self.location)
 
-    def isScriptable(self):
-        return self.realtype.isScriptable()
-
     def nativeType(self, calltype):
         return "%s %s" % (self.name, '*' if 'out' in calltype else '')
 
@@ -455,9 +446,6 @@ class Forward(object):
                     break
 
         parent.setName(self)
-
-    def isScriptable(self):
-        return True
 
     def nativeType(self, calltype):
         if calltype == 'element':
@@ -523,18 +511,6 @@ class Native(object):
 
     def resolve(self, parent):
         parent.setName(self)
-
-    def isScriptable(self):
-        if self.specialtype is None:
-            return False
-
-        if self.specialtype == 'promise':
-            return self.modifier == 'ptr'
-
-        if self.specialtype == 'nsid':
-            return self.modifier is not None
-
-        return self.modifier == 'ref'
 
     def isPtr(self, calltype):
         return self.modifier == 'ptr'
@@ -655,9 +631,6 @@ class WebIDL(object):
 
         parent.setName(self)
 
-    def isScriptable(self):
-        return True  # All DOM objects are script exposed.
-
     def nativeType(self, calltype):
         if calltype == 'element':
             return 'RefPtr<%s>' % self.native
@@ -683,20 +656,10 @@ class Interface(object):
         self.namemap = NameMap()
         self.doccomments = doccomments
         self.nativename = name
-        self.implicit_builtinclass = False
 
         for m in members:
             if not isinstance(m, CDATA):
                 self.namemap.set(m)
-
-            if ((m.kind == 'method' or m.kind == 'attribute') and
-                m.notxpcom and name != 'nsISupports'):
-                # An interface cannot be implemented by JS if it has a notxpcom
-                # method or attribute. Such a type is an "implicit builtinclass".
-                #
-                # XXX(nika): Why does nostdcall not imply builtinclass?
-                # It could screw up the shims as well...
-                self.implicit_builtinclass = True
 
     def __eq__(self, other):
         return self.name == other.name and self.location == other.location
@@ -742,9 +705,6 @@ class Interface(object):
                                "builtinclass '%s'" %
                                (self.name, self.base), self.location)
 
-            if realbase.implicit_builtinclass:
-                self.implicit_builtinclass = True  # Inherit implicit builtinclass from base
-
         for member in self.members:
             member.resolve(self)
 
@@ -754,12 +714,6 @@ class Interface(object):
         # location, or you WILL cause otherwise unknown problems!
         if self.countEntries() > 250 and not self.attributes.builtinclass:
             raise IDLError("interface '%s' has too many entries" % self.name, self.location)
-
-    def isScriptable(self):
-        # NOTE: this is not whether *this* interface is scriptable... it's
-        # whether, when used as a type, it's scriptable, which is true of all
-        # interfaces.
-        return True
 
     def nativeType(self, calltype, const=False):
         if calltype == 'element':
@@ -983,9 +937,6 @@ class CEnum(object):
     def count(self):
         return 0
 
-    def isScriptable(self):
-        return True
-
     def nativeType(self, calltype):
         if 'out' in calltype:
             return "%s::%s *" % (self.iface.name, self.basename)
@@ -997,6 +948,25 @@ class CEnum(object):
     def __str__(self):
         body = ', '.join('%s = %s' % v for v in self.variants)
         return "\tcenum %s : %d { %s };\n" % (self.name, self.width, body)
+
+
+# An interface cannot be implemented by JS if it has a notxpcom
+# method or attribute, so it must be marked as builtinclass.
+#
+# XXX(nika): Why does nostdcall not imply builtinclass?
+# It could screw up the shims as well...
+def ensureBuiltinClassIfNeeded(methodOrAttribute):
+    iface = methodOrAttribute.iface
+    if not iface.attributes.scriptable or iface.attributes.builtinclass:
+        return
+    if iface.name == 'nsISupports':
+        return
+    if methodOrAttribute.notxpcom:
+        raise IDLError(
+            ("scriptable interface '%s' must be marked [builtinclass] because it "
+             "contains a [notxpcom] %s '%s'") %
+            (iface.name, methodOrAttribute.kind, methodOrAttribute.name),
+            methodOrAttribute.location)
 
 
 class Attribute(object):
@@ -1068,6 +1038,8 @@ class Attribute(object):
             raise IDLError('[infallible] attributes are only allowed on '
                            '[builtinclass] interfaces',
                            self.location)
+
+        ensureBuiltinClassIfNeeded(self)
 
     def toIDL(self):
         attribs = attlistToIDL(self.attlist)
@@ -1148,6 +1120,9 @@ class Method(object):
     def resolve(self, iface):
         self.iface = iface
         self.realtype = self.iface.idl.getName(self.type, self.location)
+
+        ensureBuiltinClassIfNeeded(self)
+
         for p in self.params:
             p.resolve(self)
         for p in self.params:
@@ -1297,9 +1272,6 @@ class LegacyArray(object):
         self.type = basetype
         self.location = self.type.location
 
-    def isScriptable(self):
-        return self.type.isScriptable()
-
     def nativeType(self, calltype, const=False):
         if 'element' in calltype:
             raise IDLError("nested [array] unsupported", self.location)
@@ -1332,9 +1304,6 @@ class Array(object):
 
     def resolve(self, idl):
         idl.getName(self.type, self.location)
-
-    def isScriptable(self):
-        return self.type.isScriptable()
 
     def nativeType(self, calltype):
         if calltype == 'legacyelement':

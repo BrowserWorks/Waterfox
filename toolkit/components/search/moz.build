@@ -5,7 +5,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 XPCSHELL_TESTS_MANIFESTS += [
-    'tests/xpcshell/searchconfigs/xpcshell.ini',
+    'tests/xpcshell/searchconfigs/xpcshell-1.ini',
+    'tests/xpcshell/searchconfigs/xpcshell-2.ini',
+    'tests/xpcshell/searchconfigs/xpcshell-3.ini',
+    'tests/xpcshell/searchconfigs/xpcshell-4.ini',
     'tests/xpcshell/xpcshell.ini',
 ]
 
@@ -14,9 +17,6 @@ XPIDL_SOURCES += [
 ]
 
 XPIDL_MODULE = 'toolkit_search'
-
-EXTRA_COMPONENTS += [
-]
 
 if CONFIG['MOZ_BUILD_APP'] in ['browser', 'mobile/android', 'xulrunner']:
     EXTRA_JS_MODULES += [
@@ -29,6 +29,7 @@ EXTRA_JS_MODULES += [
     'SearchStaticData.jsm',
     'SearchSuggestionController.jsm',
     'SearchSuggestions.jsm',
+    'SearchUtils.jsm',
 ]
 
 EXTRA_COMPONENTS += [

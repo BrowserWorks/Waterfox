@@ -385,7 +385,9 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext)
       mHasLoadedNonBlankURI(false),
       mBlankTiming(false),
       mTitleValidForCurrentURI(false),
-      mIsFrame(false) {
+      mIsFrame(false),
+      mSkipBrowsingContextDetachOnDestroy(false),
+      mWatchedByDevtools(false) {
   mHistoryID.m0 = 0;
   mHistoryID.m1 = 0;
   mHistoryID.m2 = 0;
@@ -5036,7 +5038,11 @@ nsDocShell::Destroy() {
     mSessionHistory = nullptr;
   }
 
-  mBrowsingContext->Detach();
+  // This will be skipped in cases where we want to preserve the browsing
+  // context between loads.
+  if (!mSkipBrowsingContextDetachOnDestroy) {
+    mBrowsingContext->Detach();
+  }
 
   SetTreeOwner(nullptr);
 
@@ -7212,8 +7218,52 @@ bool nsDocShell::CanSavePresentation(uint32_t aLoadType,
 
   // If the document does not want its presentation cached, then don't.
   RefPtr<Document> doc = mScriptGlobal->GetExtantDoc();
-  return doc && doc->CanSavePresentation(aNewRequest);
+
+  uint16_t bfCacheCombo = 0;
+  bool canSavePresentation =
+      doc->CanSavePresentation(aNewRequest, bfCacheCombo);
+  ReportBFCacheComboTelemetry(bfCacheCombo);
+
+  return doc && canSavePresentation;
 }
+
+void nsDocShell::ReportBFCacheComboTelemetry(uint16_t aCombo) {
+  switch (aCombo) {
+    case BFCACHE_SUCCESS:
+      Telemetry::AccumulateCategorical(
+          Telemetry::LABELS_BFCACHE_COMBO::BFCache_Success);
+      break;
+    case UNLOAD:
+      Telemetry::AccumulateCategorical(Telemetry::LABELS_BFCACHE_COMBO::Unload);
+      break;
+    case UNLOAD_REQUEST:
+      Telemetry::AccumulateCategorical(
+          Telemetry::LABELS_BFCACHE_COMBO::Unload_Req);
+      break;
+    case REQUEST:
+      Telemetry::AccumulateCategorical(Telemetry::LABELS_BFCACHE_COMBO::Req);
+      break;
+    case UNLOAD_REQUEST_PEER:
+      Telemetry::AccumulateCategorical(
+          Telemetry::LABELS_BFCACHE_COMBO::Unload_Req_Peer);
+      break;
+    case UNLOAD_REQUEST_PEER_MSE:
+      Telemetry::AccumulateCategorical(
+          Telemetry::LABELS_BFCACHE_COMBO::Unload_Req_Peer_MSE);
+      break;
+    case UNLOAD_REQUEST_MSE:
+      Telemetry::AccumulateCategorical(
+          Telemetry::LABELS_BFCACHE_COMBO::Unload_Req_MSE);
+      break;
+    case SUSPENDED_UNLOAD_REQUEST_PEER:
+      Telemetry::AccumulateCategorical(
+          Telemetry::LABELS_BFCACHE_COMBO::SPD_Unload_Req_Peer);
+      break;
+    default:
+      Telemetry::AccumulateCategorical(Telemetry::LABELS_BFCACHE_COMBO::Other);
+      break;
+  }
+};
 
 void nsDocShell::ReattachEditorToWindow(nsISHEntry* aSHEntry) {
   MOZ_ASSERT(!mIsBeingDestroyed);
@@ -7662,7 +7712,8 @@ nsresult nsDocShell::RestoreFromHistory() {
   nsView* rootViewParent = nullptr;
   nsIntRect newBounds(0, 0, 0, 0);
 
-  if (PresShell* oldPresShell = GetPresShell()) {
+  PresShell* oldPresShell = GetPresShell();
+  if (oldPresShell) {
     nsViewManager* vm = oldPresShell->GetViewManager();
     if (vm) {
       nsView* oldRootView = vm->GetRootView();
@@ -8003,6 +8054,15 @@ nsresult nsDocShell::RestoreFromHistory() {
   // have invalid pointer lying around.
   newRootView = rootViewSibling = rootViewParent = nullptr;
   newVM = nullptr;
+
+  // If the IsUnderHiddenEmbedderElement() state has been changed, we need to
+  // update it.
+  if (oldPresShell && presShell &&
+      presShell->IsUnderHiddenEmbedderElement() !=
+          oldPresShell->IsUnderHiddenEmbedderElement()) {
+    presShell->SetIsUnderHiddenEmbedderElement(
+        oldPresShell->IsUnderHiddenEmbedderElement());
+  }
 
   // Simulate the completion of the load.
   nsDocShell::FinishRestore();
@@ -9471,8 +9531,10 @@ nsresult nsDocShell::InternalLoad(nsDocShellLoadState* aLoadState,
     bool restoring;
     rv = RestorePresentation(aLoadState->SHEntry(), &restoring);
     if (restoring) {
+      Telemetry::Accumulate(Telemetry::BFCACHE_PAGE_RESTORED, true);
       return rv;
     }
+    Telemetry::Accumulate(Telemetry::BFCACHE_PAGE_RESTORED, false);
 
     // We failed to restore the presentation, so clean up.
     // Both the old and new history entries could potentially be in
@@ -12849,14 +12911,12 @@ nsresult nsDocShell::CharsetChangeStopDocumentLoad() {
   return NS_ERROR_DOCSHELL_REQUEST_REJECTED;
 }
 
-NS_IMETHODIMP
-nsDocShell::SetIsPrinting(bool aIsPrinting) {
+void nsDocShell::SetIsPrinting(bool aIsPrinting) {
   mIsPrintingOrPP = aIsPrinting;
-  return NS_OK;
 }
 
 NS_IMETHODIMP
-nsDocShell::GetPrintPreview(nsIWebBrowserPrint** aPrintPreview) {
+nsDocShell::InitOrReusePrintPreviewViewer(nsIWebBrowserPrint** aPrintPreview) {
   *aPrintPreview = nullptr;
 #if NS_PRINT_PREVIEW
   nsCOMPtr<nsIDocumentViewerPrint> print = do_QueryInterface(mContentViewer);
@@ -12884,6 +12944,19 @@ nsDocShell::GetPrintPreview(nsIWebBrowserPrint** aPrintPreview) {
   return NS_OK;
 #else
   return NS_ERROR_NOT_IMPLEMENTED;
+#endif
+}
+
+NS_IMETHODIMP nsDocShell::ExitPrintPreview() {
+#if NS_PRINT_PREVIEW
+#  ifdef DEBUG
+  nsCOMPtr<nsIDocumentViewerPrint> vp = do_QueryInterface(mContentViewer);
+  MOZ_ASSERT(vp && vp->IsInitializedForPrintPreview());
+#  endif
+  nsCOMPtr<nsIWebBrowserPrint> viewer = do_QueryInterface(mContentViewer);
+  return viewer->ExitPrintPreview();
+#else
+  return NS_OK;
 #endif
 }
 
@@ -13082,6 +13155,10 @@ nsDocShell::ResumeRedirectedLoad(uint64_t aIdentifier, int32_t aHistoryIndex) {
   // Call into InternalLoad with the pending channel when it is received.
   cpcl->RegisterCallback(
       aIdentifier, [self, aHistoryIndex](nsIChildChannel* aChannel) {
+        if (NS_WARN_IF(self->mIsBeingDestroyed)) {
+          return;
+        }
+
         RefPtr<nsDocShellLoadState> loadState;
         nsresult rv = nsDocShellLoadState::CreateFromPendingChannel(
             aChannel, getter_AddRefs(loadState));
@@ -13091,7 +13168,7 @@ nsDocShell::ResumeRedirectedLoad(uint64_t aIdentifier, int32_t aHistoryIndex) {
 
         // If we're performing a history load, locate the correct history entry,
         // and set the relevant bits on our loadState.
-        if (aHistoryIndex >= 0) {
+        if (aHistoryIndex >= 0 && self->mSessionHistory) {
           nsCOMPtr<nsISHistory> legacySHistory =
               self->mSessionHistory->LegacySHistory();
 
@@ -13484,4 +13561,17 @@ bool nsDocShell::GetIsAttemptingToNavigate() {
   }
 
   return false;
+}
+
+NS_IMETHODIMP
+nsDocShell::GetWatchedByDevtools(bool* aWatched) {
+  NS_ENSURE_ARG(aWatched);
+  *aWatched = mWatchedByDevtools;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocShell::SetWatchedByDevtools(bool aWatched) {
+  mWatchedByDevtools = aWatched;
+  return NS_OK;
 }

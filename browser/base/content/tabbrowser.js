@@ -1178,7 +1178,9 @@ window._gBrowser = {
     // if the tab is a blank one.
     if (newBrowser._urlbarFocused && gURLBar) {
       // Explicitly close the popup if the URL bar retains focus
-      gURLBar.closePopup();
+      if (!gURLBar.openViewOnFocus) {
+        gURLBar.closePopup();
+      }
 
       // If the user happened to type into the URL bar for this browser
       // by the time we got here, focusing will cause the text to be
@@ -1606,6 +1608,7 @@ window._gBrowser = {
     remoteType,
     sameProcessAsFrameLoader,
     recordExecution,
+    replaceBrowsingContext,
   } = {}) {
     let isRemote = aBrowser.getAttribute("remote") == "true";
 
@@ -1726,7 +1729,7 @@ window._gBrowser = {
       // This call actually switches out our frameloaders. Do this as late as
       // possible before rebuilding the browser, as we'll need the new browser
       // state set up completely first.
-      aBrowser.changeRemoteness({ remoteType });
+      aBrowser.changeRemoteness({ remoteType, replaceBrowsingContext });
       // Once we have new frameloaders, this call sets the browser back up.
       //
       // FIXME(emilio): Shouldn't we call destroy() first? What hides the

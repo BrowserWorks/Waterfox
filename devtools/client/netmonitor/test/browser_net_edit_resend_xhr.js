@@ -11,8 +11,7 @@
 add_task(async function() {
   const { tab, monitor } = await initNetMonitor(POST_RAW_URL);
 
-  const { document, store, windowRequire, parent } = monitor.panelWin;
-  const parentDocument = parent.document;
+  const { document, store, windowRequire } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
   store.dispatch(Actions.batchEnable(false));
 
@@ -30,10 +29,14 @@ add_task(async function() {
 
   // Context Menu > "Edit & Resend"
   EventUtils.sendMouseEvent({ type: "contextmenu" }, xhrRequest);
-  parentDocument.querySelector("#request-list-context-resend").click();
+  getContextMenuItem(monitor, "request-list-context-resend").click();
 
-  // Waits for "Edit & Resend" panel to appear > New request "Send"
+  // 1) Wait for "Edit & Resend" panel to appear
+  // 2) Click the "Send" button
+  // 3) Wait till the new request appears in the list
+  await waitUntil(() => document.querySelector(".custom-request-panel"));
   document.querySelector("#custom-request-send-button").click();
+  await waitForNetworkEvents(monitor, 1);
 
   // Selects cloned request
   const clonedRequest = document.querySelectorAll(".request-list-item")[1];

@@ -53,9 +53,11 @@ requestLongerTimeout(10);
 add_task(async function setupTestCommon() {
   await SpecialPowers.pushPrefEnv({
     set: [
+      [PREF_APP_UPDATE_BADGEWAITTIME, 1800],
       [PREF_APP_UPDATE_DOWNLOAD_ATTEMPTS, 0],
       [PREF_APP_UPDATE_DOWNLOAD_MAXATTEMPTS, 2],
       [PREF_APP_UPDATE_LOG, gDebugTest],
+      [PREF_APP_UPDATE_PROMPTWAITTIME, 3600],
       [PREF_APP_UPDATE_SERVICE_ENABLED, false],
       // Disable activity stream to prevent errors when opening pages during
       // TV runs. See bug 1548422 for an example.
@@ -65,6 +67,7 @@ add_task(async function setupTestCommon() {
 
   setUpdateTimerPrefs();
   removeUpdateFiles(true);
+  UpdateListener.reset();
   AppMenuNotifications.removeNotification(/.*/);
   // Most app update mochitest-browser-chrome tests expect auto update to be
   // enabled. Those that don't will explicitly change this.
@@ -79,6 +82,7 @@ registerCleanupFunction(async () => {
   gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "");
   gEnv.set("MOZ_TEST_SLOW_SKIP_UPDATE_STAGE", "");
   UpdateListener.reset();
+  AppMenuNotifications.removeNotification(/.*/);
   reloadUpdateManagerData(true);
   // Pass false when the log files are needed for troubleshooting the tests.
   removeUpdateFiles(true);
@@ -114,10 +118,10 @@ registerCleanupFunction(async () => {
  * @throws If the file already exists.
  */
 async function continueFileHandler(leafName) {
-  // The total time to wait with 200 retries and the default interval of 100 is
-  // approximately 20 seconds.
+  // The total time to wait with 300 retries and the default interval of 100 is
+  // approximately 30 seconds.
   let interval = 100;
-  let retries = 200;
+  let retries = 300;
   let continueFile;
   if (leafName == CONTINUE_STAGING) {
     // The total time to wait with 600 retries and an interval of 200 is
@@ -512,18 +516,14 @@ function getPatchOfType(type) {
  * Runs a Doorhanger update test. This will set various common prefs for
  * updating and runs the provided list of steps.
  *
- * @param  updateParams
- *         Params which will be sent to app_update.sjs.
- * @param  checkAttempts
- *         How many times to check for updates. Useful for testing the UI
- *         for check failures. If this is 0 then a startup processing test will
- *         be performed.
+ * @param  params
+ *         An object containing parameters used to run the test.
  * @param  steps
  *         An array of test steps to perform. A step will either be an object
  *         containing expected conditions and actions or a function to call.
  * @return A promise which will resolve once all of the steps have been run.
  */
-function runDoorhangerUpdateTest(updateParams, checkAttempts, steps) {
+function runDoorhangerUpdateTest(params, steps) {
   function processDoorhangerStep(step) {
     if (typeof(step) == "function") {
       return step();
@@ -531,18 +531,8 @@ function runDoorhangerUpdateTest(updateParams, checkAttempts, steps) {
 
     const {notificationId, button, checkActiveUpdate, pageURLs} = step;
     return (async function() {
-      await TestUtils.waitForCondition(() =>
-        (PanelUI.notificationPanel.state == "open"),
-        "Waiting on PanelUI.notificationPanel.state to equal open",
-        undefined, 200
-      ).catch(e => {
-        // Instead of throwing let the check below fail the test so the
-        // notification ID and the expected notification ID is printed in the
-        // log.
-        logTestInfo(e);
-      });
-      is(PanelUI.notificationPanel.state, "open",
-         "The PanelUI.notificationPanel.state should equal open");
+      await BrowserTestUtils.waitForEvent(PanelUI.notificationPanel,
+                                          "popupshown");
       const shownNotificationId = AppMenuNotifications.activeNotification.id;
       is(shownNotificationId, notificationId,
          "The right notification showed up.");
@@ -580,23 +570,24 @@ function runDoorhangerUpdateTest(updateParams, checkAttempts, steps) {
       set: [
         [PREF_APP_UPDATE_DISABLEDFORTESTING, false],
         [PREF_APP_UPDATE_IDLETIME, 0],
-        [PREF_APP_UPDATE_URL_MANUAL, URL_MANUAL_UPDATE],
         [PREF_APP_UPDATE_URL_DETAILS, gDetailsURL],
+        [PREF_APP_UPDATE_URL_MANUAL, URL_MANUAL_UPDATE],
       ],
     });
 
     await setupTestUpdater();
 
+    let queryString = params.queryString ? params.queryString : "";
     let updateURL = URL_HTTP_UPDATE_SJS + "?detailsURL=" + gDetailsURL +
-                    updateParams + getVersionParams();
+                    queryString + getVersionParams();
     setUpdateURL(updateURL);
 
-    if (checkAttempts) {
+    if (params.checkAttempts) {
       // Perform a background check doorhanger test.
       executeSoon(() => {
         (async function() {
           gAUS.checkForBackgroundUpdates();
-          for (var i = 0; i < checkAttempts - 1; i++) {
+          for (var i = 0; i < params.checkAttempts - 1; i++) {
             await waitForEvent("update-error", "check-attempt-failed");
             gAUS.checkForBackgroundUpdates();
           }
@@ -605,6 +596,7 @@ function runDoorhangerUpdateTest(updateParams, checkAttempts, steps) {
     } else {
       // Perform a startup processing doorhanger test.
       writeStatusFile(STATE_FAILED_CRC_ERROR);
+      writeUpdatesToXMLFile(getLocalUpdatesXMLString(params.updates), true);
       reloadUpdateManagerData();
       testPostUpdateProcessing();
     }
@@ -619,17 +611,14 @@ function runDoorhangerUpdateTest(updateParams, checkAttempts, steps) {
  * Runs an About Dialog update test. This will set various common prefs for
  * updating and runs the provided list of steps.
  *
- * @param  updateParams
- *         Params which will be sent to app_update.sjs.
- * @param  backgroundUpdate
- *         If true a background check will be performed before opening the About
- *         Dialog.
+ * @param  params
+ *         An object containing parameters used to run the test.
  * @param  steps
  *         An array of test steps to perform. A step will either be an object
  *         containing expected conditions and actions or a function to call.
  * @return A promise which will resolve once all of the steps have been run.
  */
-function runAboutDialogUpdateTest(updateParams, backgroundUpdate, steps) {
+function runAboutDialogUpdateTest(params, steps) {
   let aboutDialog;
   function processAboutDialogStep(step) {
     if (typeof(step) == "function") {
@@ -639,8 +628,12 @@ function runAboutDialogUpdateTest(updateParams, backgroundUpdate, steps) {
     const {panelId, checkActiveUpdate, continueFile, downloadInfo} = step;
     return (async function() {
       let updateDeck = aboutDialog.document.getElementById("updateDeck");
+      // Also continue if the selected panel ID is 'apply' since there are no
+      // other panels after 'apply'.
       await TestUtils.waitForCondition(() =>
-        (updateDeck.selectedPanel && updateDeck.selectedPanel.id == panelId),
+        (updateDeck.selectedPanel &&
+         (updateDeck.selectedPanel.id == panelId ||
+          updateDeck.selectedPanel.id == "apply")),
         "Waiting for the expected panel ID: " + panelId, undefined, 200
       ).catch(e => {
         // Instead of throwing let the check below fail the test so the panel
@@ -661,29 +654,29 @@ function runAboutDialogUpdateTest(updateParams, backgroundUpdate, steps) {
 
       if (panelId == "downloading") {
         for (let i = 0; i < downloadInfo.length; ++i) {
-          let info = downloadInfo[i];
+          let data = downloadInfo[i];
           // The About Dialog tests always specify a continue file.
           await continueFileHandler(continueFile);
-          let patch = getPatchOfType(info.patchType);
+          let patch = getPatchOfType(data.patchType);
           // The update is removed early when the last download fails so check
           // that there is a patch before proceeding.
           let isLastPatch = (i == downloadInfo.length - 1);
           if (!isLastPatch || patch) {
-            let resultName = info.bitsResult ? "bitsResult" : "internalResult";
+            let resultName = data.bitsResult ? "bitsResult" : "internalResult";
             patch.QueryInterface(Ci.nsIWritablePropertyBag);
             await TestUtils.waitForCondition(() =>
-              (patch.getProperty(resultName) == info[resultName]),
+              (patch.getProperty(resultName) == data[resultName]),
               "Waiting for expected patch property " + resultName + " value: " +
-              info[resultName], undefined, 200
+              data[resultName], undefined, 200
             ).catch(e => {
               // Instead of throwing let the check below fail the test so the
               // property value and the expected property value is printed in
               // the log.
               logTestInfo(e);
             });
-            is(patch.getProperty(resultName), info[resultName],
+            is(patch.getProperty(resultName), data[resultName],
                "The patch property " + resultName + " value should equal " +
-               info[resultName]);
+               data[resultName]);
           }
         }
       } else if (continueFile) {
@@ -727,18 +720,30 @@ function runAboutDialogUpdateTest(updateParams, backgroundUpdate, steps) {
 
     await setupTestUpdater();
 
+    let queryString = params.queryString ? params.queryString : "";
     let updateURL = URL_HTTP_UPDATE_SJS + "?detailsURL=" + gDetailsURL +
-                    updateParams + getVersionParams();
-    if (backgroundUpdate) {
-      if (Services.prefs.getBoolPref(PREF_APP_UPDATE_STAGING_ENABLED)) {
-        // Since MOZ_TEST_SKIP_UPDATE_STAGE is checked before
-        // MOZ_TEST_SLOW_SKIP_UPDATE_STAGE in updater.cpp this removes the need
-        // for the continue file to continue staging the update.
-        gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
-      }
+                    queryString + getVersionParams();
+    if (params.backgroundUpdate) {
       setUpdateURL(updateURL);
       gAUS.checkForBackgroundUpdates();
-      await waitForEvent("update-downloaded");
+      if (params.continueFile) {
+        await continueFileHandler(params.continueFile);
+      }
+      if (params.waitForUpdateState) {
+        await TestUtils.waitForCondition(() =>
+          (gUpdateManager.activeUpdate &&
+           gUpdateManager.activeUpdate.state == params.waitForUpdateState),
+          "Waiting for update state: " + params.waitForUpdateState,
+          undefined, 200
+        ).catch(e => {
+          // Instead of throwing let the check below fail the test so the panel
+          // ID and the expected panel ID is printed in the log.
+          logTestInfo(e);
+        });
+        // Display the UI after the update state equals the expected value.
+        is(gUpdateManager.activeUpdate.state, params.waitForUpdateState,
+           "The update state value should equal " + params.waitForUpdateState);
+      }
     } else {
       updateURL += "&slowUpdateCheck=1&useSlowDownloadMar=1";
       setUpdateURL(updateURL);
@@ -759,17 +764,14 @@ function runAboutDialogUpdateTest(updateParams, backgroundUpdate, steps) {
  * Runs an about:preferences update test. This will set various common prefs for
  * updating and runs the provided list of steps.
  *
- * @param  updateParams
- *         Params which will be sent to app_update.sjs.
- * @param  backgroundUpdate
- *         If true a background check will be performed before opening the About
- *         Dialog.
+ * @param  params
+ *         An object containing parameters used to run the test.
  * @param  steps
  *         An array of test steps to perform. A step will either be an object
  *         containing expected conditions and actions or a function to call.
  * @return A promise which will resolve once all of the steps have been run.
  */
-function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
+function runAboutPrefsUpdateTest(params, steps) {
   let tab;
   function processAboutPrefsStep(step) {
     if (typeof(step) == "function") {
@@ -781,13 +783,19 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
       await ContentTask.spawn(tab.linkedBrowser, {panelId},
                               async ({panelId}) => {
         let updateDeck = content.document.getElementById("updateDeck");
+        // Also continue if the selected panel ID is 'apply' since there are no
+        // other panels after 'apply'.
         await ContentTaskUtils.waitForCondition(() =>
-          (updateDeck.selectedPanel && updateDeck.selectedPanel.id == panelId),
+          (updateDeck.selectedPanel &&
+           (updateDeck.selectedPanel.id == panelId ||
+            updateDeck.selectedPanel.id == "apply")),
           "Waiting for the expected panel ID: " + panelId, undefined, 200
         ).catch(e => {
           // Instead of throwing let the check below fail the test so the panel
-          // ID and the expected panel ID is printed in the log.
-          logTestInfo(e);
+          // ID and the expected panel ID is printed in the log. Use info here
+          // instead of logTestInfo since logTestInfo isn't available in the
+          // content task.
+          info(e);
         });
         is(updateDeck.selectedPanel.id, panelId,
            "The panel ID should equal " + panelId);
@@ -804,29 +812,29 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
 
       if (panelId == "downloading") {
         for (let i = 0; i < downloadInfo.length; ++i) {
-          let info = downloadInfo[i];
+          let data = downloadInfo[i];
           // The About Dialog tests always specify a continue file.
           await continueFileHandler(continueFile);
-          let patch = getPatchOfType(info.patchType);
+          let patch = getPatchOfType(data.patchType);
           // The update is removed early when the last download fails so check
           // that there is a patch before proceeding.
           let isLastPatch = (i == downloadInfo.length - 1);
           if (!isLastPatch || patch) {
-            let resultName = info.bitsResult ? "bitsResult" : "internalResult";
+            let resultName = data.bitsResult ? "bitsResult" : "internalResult";
             patch.QueryInterface(Ci.nsIWritablePropertyBag);
             await TestUtils.waitForCondition(() =>
-              (patch.getProperty(resultName) == info[resultName]),
+              (patch.getProperty(resultName) == data[resultName]),
               "Waiting for expected patch property " + resultName + " value: " +
-              info[resultName], undefined, 200
+              data[resultName], undefined, 200
             ).catch(e => {
               // Instead of throwing let the check below fail the test so the
               // property value and the expected property value is printed in
               // the log.
               logTestInfo(e);
             });
-            is(patch.getProperty(resultName), info[resultName],
+            is(patch.getProperty(resultName), data[resultName],
                "The patch property " + resultName + " value should equal " +
-               info[resultName]);
+               data[resultName]);
           }
         }
       } else if (continueFile) {
@@ -882,18 +890,31 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
 
     await setupTestUpdater();
 
+    let queryString = params.queryString ? params.queryString : "";
     let updateURL = URL_HTTP_UPDATE_SJS + "?detailsURL=" + gDetailsURL +
-                    updateParams + getVersionParams();
-    if (backgroundUpdate) {
-      if (Services.prefs.getBoolPref(PREF_APP_UPDATE_STAGING_ENABLED)) {
-        // Since MOZ_TEST_SKIP_UPDATE_STAGE is checked before
-        // MOZ_TEST_SLOW_SKIP_UPDATE_STAGE in updater.cpp this removes the need
-        // for the continue file to continue staging the update.
-        gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
-      }
+                    queryString + getVersionParams();
+    if (params.backgroundUpdate) {
       setUpdateURL(updateURL);
       gAUS.checkForBackgroundUpdates();
-      await waitForEvent("update-downloaded");
+      if (params.continueFile) {
+        await continueFileHandler(params.continueFile);
+      }
+      if (params.waitForUpdateState) {
+        // Wait until the update state equals the expected value before
+        // displaying the UI.
+        await TestUtils.waitForCondition(() =>
+          (gUpdateManager.activeUpdate &&
+           gUpdateManager.activeUpdate.state == params.waitForUpdateState),
+          "Waiting for update state: " + params.waitForUpdateState,
+          undefined, 200
+        ).catch(e => {
+          // Instead of throwing let the check below fail the test so the panel
+          // ID and the expected panel ID is printed in the log.
+          logTestInfo(e);
+        });
+        is(gUpdateManager.activeUpdate.state, params.waitForUpdateState,
+           "The update state value should equal " + params.waitForUpdateState);
+      }
     } else {
       updateURL += "&slowUpdateCheck=1&useSlowDownloadMar=1";
       setUpdateURL(updateURL);
@@ -905,12 +926,16 @@ function runAboutPrefsUpdateTest(updateParams, backgroundUpdate, steps) {
       await BrowserTestUtils.removeTab(tab);
     });
 
+    // Scroll the UI into view so it is easier to troubleshoot tests.
+    await ContentTask.spawn(tab.linkedBrowser, null, async () => {
+      content.document.getElementById("updatesCategory").scrollIntoView();
+    });
+
     for (let step of steps) {
       await processAboutPrefsStep(step);
     }
   })();
 }
-
 
 /**
  * Removes the modified update-settings.ini file so the updater will fail to
@@ -946,7 +971,7 @@ function removeUpdateSettingsIni() {
 function runTelemetryUpdateTest(updateParams, event, stageFailure = false) {
   return (async function() {
     Services.telemetry.clearScalars();
-    gEnv.set("MOZ_TEST_SLOW_SKIP_UPDATE_STAGE", "1");
+    gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
     await SpecialPowers.pushPrefEnv({
       set: [
         [PREF_APP_UPDATE_DISABLEDFORTESTING, false],
@@ -962,12 +987,6 @@ function runTelemetryUpdateTest(updateParams, event, stageFailure = false) {
     let updateURL = URL_HTTP_UPDATE_SJS + "?detailsURL=" + gDetailsURL +
                     updateParams + getVersionParams();
     setUpdateURL(updateURL);
-    if (Services.prefs.getBoolPref(PREF_APP_UPDATE_STAGING_ENABLED)) {
-      // Since MOZ_TEST_SKIP_UPDATE_STAGE is checked before
-      // MOZ_TEST_SLOW_SKIP_UPDATE_STAGE in updater.cpp this removes the need
-      // for the continue file to continue staging the update.
-      gEnv.set("MOZ_TEST_SKIP_UPDATE_STAGE", "1");
-    }
     gAUS.checkForBackgroundUpdates();
     await waitForEvent(event);
   })();

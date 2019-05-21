@@ -44,6 +44,9 @@ XPCOMUtils.defineLazyGetter(this, "log", () => {
   });
 });
 
+let env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
+const isXpcshell = env.exists("XPCSHELL_TEST_PROFILE_DIR");
+
 function EnterprisePoliciesManager() {
   Services.obs.addObserver(this, "profile-after-change", true);
   Services.obs.addObserver(this, "final-ui-startup", true);
@@ -174,10 +177,6 @@ EnterprisePoliciesManager.prototype = {
   },
 
   async _restart() {
-    if (!Cu.isInAutomation) {
-      return;
-    }
-
     DisallowedFeatures = {};
 
     Services.ppmm.sharedData.delete("EnterprisePolicies:Status");
@@ -301,16 +300,53 @@ EnterprisePoliciesManager.prototype = {
 
   setExtensionSettings(extensionSettings) {
     ExtensionSettings = extensionSettings;
+    if ("*" in extensionSettings &&
+        "install_sources" in extensionSettings["*"]) {
+      InstallSources = new MatchPatternSet(extensionSettings["*"].install_sources);
+    }
   },
 
   getExtensionSettings(extensionID) {
     let settings = null;
-    if (extensionID in ExtensionSettings) {
-      settings = ExtensionSettings[extensionID];
-    } else if ("*" in ExtensionSettings) {
-      settings = ExtensionSettings["*"];
+    if (ExtensionSettings) {
+      if (extensionID in ExtensionSettings) {
+        settings = ExtensionSettings[extensionID];
+      } else if ("*" in ExtensionSettings) {
+        settings = ExtensionSettings["*"];
+      }
     }
     return settings;
+  },
+
+  mayInstallAddon(addon) {
+    // See https://dev.chromium.org/administrators/policy-list-3/extension-settings-full
+    if (!ExtensionSettings) {
+      return true;
+    }
+    if (addon.id in ExtensionSettings) {
+      if ("installation_mode" in ExtensionSettings[addon.id]) {
+        switch (ExtensionSettings[addon.id].installation_mode) {
+          case "blocked":
+            return false;
+          default:
+            return true;
+        }
+      }
+    }
+    if ("*" in ExtensionSettings) {
+      if (ExtensionSettings["*"].installation_mode &&
+          ExtensionSettings["*"].installation_mode == "blocked") {
+        return false;
+      }
+      if ("allowed_types" in ExtensionSettings["*"]) {
+        return ExtensionSettings["*"].allowed_types.includes(addon.type);
+      }
+    }
+    return true;
+  },
+
+  allowedInstallSource(uri) {
+    return InstallSources ? InstallSources.matches(uri) : true;
   },
 };
 
@@ -318,6 +354,7 @@ let DisallowedFeatures = {};
 let SupportMenu = null;
 let ExtensionPolicies = null;
 let ExtensionSettings = null;
+let InstallSources = null;
 
 /**
  * areEnterpriseOnlyPoliciesAllowed
@@ -340,7 +377,7 @@ function areEnterpriseOnlyPoliciesAllowed() {
   }
 
   if (AppConstants.MOZ_UPDATE_CHANNEL != "release" ||
-      Cu.isInAutomation) {
+      Cu.isInAutomation || isXpcshell) {
     return true;
   }
 
@@ -392,7 +429,7 @@ class JSONPoliciesProvider {
     // testing purposes), but the Background Update Agent will be unable to
     // detect the alternate policy file so the DisableAppUpdate policy may not
     // work as expected.
-    if (alternatePath && (Cu.isInAutomation || AppConstants.NIGHTLY_BUILD) &&
+    if (alternatePath && (Cu.isInAutomation || AppConstants.NIGHTLY_BUILD || isXpcshell) &&
         (!configFile || !configFile.exists())) {
       if (alternatePath.startsWith(MAGIC_TEST_ROOT_PREFIX)) {
         // Intentionally not using a default value on this pref lookup. If no
@@ -415,8 +452,13 @@ class JSONPoliciesProvider {
   }
 
   _readData() {
+    let configFile = this._getConfigurationFile();
+    if (!configFile) {
+      // Do nothing, _policies will remain null
+      return;
+    }
     try {
-      let data = Cu.readUTF8File(this._getConfigurationFile());
+      let data = Cu.readUTF8File(configFile);
       if (data) {
         this._policies = JSON.parse(data).policies;
 

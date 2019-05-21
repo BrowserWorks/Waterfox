@@ -38,6 +38,8 @@
 #include "nsICancelable.h"
 #include "TCPFastOpenLayer.h"
 #include <algorithm>
+#include "sslexp.h"
+#include "mozilla/net/SSLTokensCache.h"
 
 #include "nsPrintfCString.h"
 #include "xpcpublic.h"
@@ -712,6 +714,7 @@ nsSocketTransport::nsSocketTransport()
       mDNSARequestFinished(0),
       mEsniQueried(false),
       mEsniUsed(false),
+      mResolvedByTRR(false),
       mNetAddrIsSet(false),
       mSelfAddrIsSet(false),
       mLock("nsSocketTransport.mLock"),
@@ -733,7 +736,8 @@ nsSocketTransport::nsSocketTransport()
       mFastOpenLayerHasBufferedData(false),
       mFastOpenStatus(TFO_NOT_SET),
       mFirstRetryError(NS_OK),
-      mDoNotRetryToConnect(false) {
+      mDoNotRetryToConnect(false),
+      mSSLCallbackSet(false) {
   this->mNetAddr.raw.family = 0;
   this->mNetAddr.inet = {};
   this->mSelfAddr.raw.family = 0;
@@ -1245,6 +1249,22 @@ nsresult nsSocketTransport::BuildSocket(PRFileDesc*& fd, bool& proxyTransparent,
   return rv;
 }
 
+// static
+SECStatus nsSocketTransport::StoreResumptionToken(
+    PRFileDesc* fd, const PRUint8* resumptionToken, unsigned int len,
+    void* ctx) {
+  PRIntn val;
+  if (SSL_OptionGet(fd, SSL_ENABLE_SESSION_TICKETS, &val) != SECSuccess ||
+      val == 0) {
+    return SECFailure;
+  }
+
+  SSLTokensCache::Put(static_cast<nsSocketTransport*>(ctx)->mHost,
+                      resumptionToken, len);
+
+  return SECSuccess;
+}
+
 nsresult nsSocketTransport::InitiateSocket() {
   SOCKET_LOG(("nsSocketTransport::InitiateSocket [this=%p]\n", this));
 
@@ -1529,6 +1549,27 @@ nsresult nsSocketTransport::InitiateSocket() {
     }
   }
 
+  if (usingSSL && SSLTokensCache::IsEnabled()) {
+    PRIntn val;
+    // If SSL_NO_CACHE option was set, we must not use the cache
+    if (SSL_OptionGet(fd, SSL_NO_CACHE, &val) == SECSuccess && val == 0) {
+      nsTArray<uint8_t> token;
+      nsresult rv2 = SSLTokensCache::Get(mHost, token);
+      if (NS_SUCCEEDED(rv2) && token.Length() != 0) {
+        SECStatus srv =
+            SSL_SetResumptionToken(fd, token.Elements(), token.Length());
+        if (srv == SECFailure) {
+          SOCKET_LOG(("Setting token failed with NSS error %d [host=%s]",
+                      PORT_GetError(), PromiseFlatCString(mHost).get()));
+          SSLTokensCache::Remove(mHost);
+        }
+      }
+    }
+
+    SSL_SetResumptionTokenCallback(fd, &StoreResumptionToken, this);
+    mSSLCallbackSet = true;
+  }
+
   bool connectCalled = true;  // This is only needed for telemetry.
   status = PR_Connect(fd, &prAddr, NS_SOCKET_CONNECT_TIMEOUT);
   PRErrorCode code = PR_GetError();
@@ -1803,6 +1844,7 @@ bool nsSocketTransport::RecoverFromError() {
     // try next ip address only if past the resolver stage...
     if (mState == STATE_CONNECTING && mDNSRecord) {
       nsresult rv = mDNSRecord->GetNextAddr(SocketPort(), &mNetAddr);
+      mDNSRecord->IsTRR(&mResolvedByTRR);
       if (NS_SUCCEEDED(rv)) {
         SOCKET_LOG(("  trying again with next ip address\n"));
         tryAgain = true;
@@ -2014,6 +2056,11 @@ void nsSocketTransport::ReleaseFD_Locked(PRFileDesc* fd) {
   NS_ASSERTION(mFD == fd, "wrong fd");
 
   if (--mFDref == 0) {
+    if (mSSLCallbackSet) {
+      SSL_SetResumptionTokenCallback(fd, nullptr, nullptr);
+      mSSLCallbackSet = false;
+    }
+
     if (gIOService->IsNetTearingDown() &&
         ((PR_IntervalNow() - gIOService->NetTearingDownStarted()) >
          gSocketTransportService->MaxTimeForPrClosePref())) {
@@ -2096,6 +2143,7 @@ void nsSocketTransport::OnSocketEvent(uint32_t type, nsresult status,
       mDNSTxtRequest = nullptr;
       if (mDNSRecord) {
         mDNSRecord->GetNextAddr(SocketPort(), &mNetAddr);
+        mDNSRecord->IsTRR(&mResolvedByTRR);
       }
       // status contains DNS lookup status
       if (NS_FAILED(status)) {
@@ -3520,6 +3568,12 @@ nsSocketTransport::GetResetIPFamilyPreference(bool* aReset) {
 NS_IMETHODIMP
 nsSocketTransport::GetEsniUsed(bool* aEsniUsed) {
   *aEsniUsed = mEsniUsed;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSocketTransport::ResolvedByTRR(bool* aResolvedByTRR) {
+  *aResolvedByTRR = mResolvedByTRR;
   return NS_OK;
 }
 

@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
 job-defaults:
     suite: xpcshell
     variants:
@@ -41,23 +45,22 @@ xpcshell:
             default: built-projects
     chunks:
         by-test-platform:
-            linux32/debug: 12
-            linux64/debug: 10
+            android-em-4.*: 8
             android-em-4.3-arm7-api-16/debug: 12
             android-em-7.*: 3
-            macosx.*: 1
-            windows.*: 1
+            macosx10(10|14)-64/.*: 2
+            linux64(-qr)?/debug: 6
+            .*-ccov/debug: 6
+            windows(7-32|10-64)(-shippable|-devedition|-asan|.*-qr)?/.*: 2
             windows10-aarch64/opt: 3
-            windows10-64-ccov/debug: 8
-            macosx64-ccov/debug: 8
-            default: 8
+            default: 5
     instance-size:
         by-test-platform:
             android-em.*: xlarge
             default: default
     max-run-time:
         by-test-platform:
-            android-em-4.3-arm7-api-16/debug: 7200
+            android-em-4.*\/debug: 7200
             default: 5400
     allow-software-gl-layers: false
     tier:

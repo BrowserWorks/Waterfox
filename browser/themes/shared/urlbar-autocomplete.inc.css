@@ -72,8 +72,13 @@
   mask-image: linear-gradient(to left, transparent, black 2em);
 }
 
-.urlbarView-title[overflow]:-moz-locale-dir(rtl) {
+.urlbarView-title[overflow]:not([isurl]):-moz-locale-dir(rtl) {
   mask-image: linear-gradient(to right, transparent, black 2em);
+}
+
+.urlbarView-title[isurl]:-moz-locale-dir(rtl),
+.urlbarView-url:-moz-locale-dir(rtl) {
+  direction: ltr !important;
 }
 
 .urlbarView-row:hover {
@@ -88,8 +93,6 @@
 
 .urlbarView-type-icon,
 .urlbarView-favicon {
-  display: inline-block;
-  vertical-align: middle;
   min-width: 16px;
   height: 16px;
   margin-inline-end: @urlbarViewIconMarginEnd@;
@@ -115,8 +118,6 @@
 }
 
 .urlbarView-title {
-  display: inline-block;
-  vertical-align: text-bottom;
   overflow: hidden;
   white-space: nowrap;
   /* We prioritize the title over the url, so it can grow freely, but it should
@@ -136,7 +137,7 @@
 }
 
 .urlbarView-tags,
-.urlbarView-secondary {
+.urlbarView-title:not(:empty) ~ .urlbarView-secondary {
   font-size: .85em;
 }
 
@@ -147,17 +148,12 @@
 }
 
 .urlbarView-secondary {
-  display: inline-block;
   color: var(--urlbar-popup-action-color);
 }
 
 .urlbarView-url {
   overflow: hidden;
   color: var(--urlbar-popup-url-color);
-}
-
-.urlbarView-url:-moz-locale-dir(rtl) {
-  direction: ltr !important;
 }
 
 .urlbarView-row[selected] > .urlbarView-row-inner > .urlbarView-title-separator::before,
@@ -176,7 +172,6 @@
 }
 
 .urlbarView-tags {
-  display: inline-block;
   overflow: hidden;
 }
 

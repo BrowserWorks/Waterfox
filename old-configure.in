@@ -1691,6 +1691,13 @@ elif test "$EARLY_BETA_OR_EARLIER"; then
 fi
 AC_SUBST(EARLY_BETA_OR_EARLIER)
 
+
+if test "$EARLY_BETA_OR_EARLIER"; then
+    MOZ_NEW_CERT_STORAGE=1
+    AC_DEFINE(MOZ_NEW_CERT_STORAGE)
+fi
+AC_SUBST(MOZ_NEW_CERT_STORAGE)
+
 # Allow someone to change MOZ_APP_NAME and MOZ_APP_BASENAME in mozconfig
 MOZ_ARG_WITH_STRING(app-name,
 [--with-app-name=APPNAME sets MOZ_APP_NAME to APPNAME],
@@ -1717,10 +1724,6 @@ case "$MOZ_BUILD_APP" in
 browser)
   AC_DEFINE(MOZ_PHOENIX)
   ;;
-
-xulrunner)
-  AC_DEFINE(MOZ_XULRUNNER)
-  ;;
 esac
 
 # Graphene is a desktop runtime for running applications with a HTML UI.
@@ -1729,7 +1732,6 @@ if test -n "$MOZ_GRAPHENE"; then
 fi
 
 AC_SUBST(MOZ_PHOENIX)
-AC_SUBST(MOZ_XULRUNNER)
 
 dnl ========================================================
 dnl Ensure Android SDK and build-tools versions depending on
@@ -3117,15 +3119,6 @@ fi
 AC_SUBST(MOZ_SOURCE_REPO)
 AC_SUBST(MOZ_SOURCE_CHANGESET)
 AC_SUBST(MOZ_INCLUDE_SOURCE_INFO)
-
-if test "$MOZ_TELEMETRY_REPORTING"; then
-    AC_DEFINE(MOZ_TELEMETRY_REPORTING)
-
-    # Enable Telemetry by default for nightly and aurora channels
-    if test -z "$RELEASE_OR_BETA" || test -n "$FENNEC_NIGHTLY"; then
-      AC_DEFINE(MOZ_TELEMETRY_ON_BY_DEFAULT)
-    fi
-fi
 
 dnl If we have any service that uploads data (and requires data submission
 dnl policy alert), set MOZ_DATA_REPORTING.

@@ -83,11 +83,11 @@ class SignalHandlerException(Exception):
 class Raptor(object):
     """Container class for Raptor"""
 
-    def __init__(self, app, binary, run_local=False, obj_path=None,
+    def __init__(self, app, binary, run_local=False, obj_path=None, profile_class=None,
                  gecko_profile=False, gecko_profile_interval=None, gecko_profile_entries=None,
                  symbols_path=None, host=None, power_test=False, memory_test=False,
                  is_release_build=False, debug_mode=False, post_startup_delay=None,
-                 interrupt_handler=None, **kwargs):
+                 interrupt_handler=None, e10s=True, **kwargs):
 
         # Override the magic --host HOST_IP with the value of the environment variable.
         if host == 'HOST_IP':
@@ -109,6 +109,7 @@ class Raptor(object):
             'memory_test': memory_test,
             'is_release_build': is_release_build,
             'enable_control_server_wait': memory_test,
+            'e10s': e10s,
         }
 
         self.raptor_venv = os.path.join(os.getcwd(), 'raptor-venv')
@@ -120,7 +121,7 @@ class Raptor(object):
         self.gecko_profiler = None
         self.post_startup_delay = post_startup_delay
         self.device = None
-        self.profile_class = app
+        self.profile_class = profile_class or app
         self.firefox_android_apps = FIREFOX_ANDROID_APPS
         self.interrupt_handler = interrupt_handler
 
@@ -137,6 +138,9 @@ class Raptor(object):
 
         # create results holder
         self.results_handler = RaptorResultsHandler()
+
+        self.build_browser_profile()
+        self.start_control_server()
 
     @property
     def profile_data_dir(self):
@@ -176,6 +180,48 @@ class Raptor(object):
         # if 'alert_on' was provided in the test INI, add to our config for results/output
         self.config['subtest_alert_on'] = test.get('alert_on')
 
+    def run_tests(self, tests, test_names):
+        try:
+            for test in tests:
+                self.run_test(test, timeout=int(test['page_timeout']))
+
+            return self.process_results(test_names)
+
+        finally:
+            self.clean_up()
+
+    def run_test(self, test, timeout=None):
+        raise NotImplementedError()
+
+    def wait_for_test_finish(self, test, timeout):
+        # convert timeout to seconds and account for page cycles
+        timeout = int(timeout / 1000) * int(test.get('page_cycles', 1))
+        # account for the pause the raptor webext runner takes after browser startup
+        # and the time an exception is propagated through the framework
+        timeout += (int(self.post_startup_delay / 1000) + 10)
+
+        # if geckoProfile enabled, give browser more time for profiling
+        if self.config['gecko_profile'] is True:
+            timeout += 5 * 60
+
+        elapsed_time = 0
+        while not self.control_server._finished:
+            if self.config['enable_control_server_wait']:
+                response = self.control_server_wait_get()
+                if response == 'webext_status/__raptor_shutdownBrowser':
+                    if self.config['memory_test']:
+                        generate_android_memory_profile(self, test['name'])
+                    self.control_server_wait_continue()
+            time.sleep(1)
+            # we only want to force browser-shutdown on timeout if not in debug mode;
+            # in debug-mode we leave the browser running (require manual shutdown)
+            if not self.debug_mode:
+                elapsed_time += 1
+                if elapsed_time > (timeout) - 5:  # stop 5 seconds early
+                    self.log.info("application timed out after {} seconds".format(timeout))
+                    self.control_server.wait_for_quit()
+                    break
+
     def run_test_teardown(self):
         self.check_for_crashes()
 
@@ -193,18 +239,18 @@ class Raptor(object):
 
     def set_browser_test_prefs(self, raw_prefs):
         # add test specific preferences
-        self.log.info("preferences were configured for the test, however \
-                        we currently do not install them on non Firefox browsers.")
+        self.log.info("setting test-specific Firefox preferences")
+        self.profile.set_preferences(json.loads(raw_prefs))
 
-    def create_browser_profile(self):
+    def build_browser_profile(self):
         self.profile = create_profile(self.profile_class)
 
-        # Merge in base profiles
+        # Merge extra profile data from testing/profiles
         with open(os.path.join(self.profile_data_dir, 'profiles.json'), 'r') as fh:
             base_profiles = json.load(fh)['raptor']
 
-        for name in base_profiles:
-            path = os.path.join(self.profile_data_dir, name)
+        for profile in base_profiles:
+            path = os.path.join(self.profile_data_dir, profile)
             self.log.info("Merging profile: {}".format(path))
             self.profile.merge(path)
 
@@ -330,34 +376,6 @@ class Raptor(object):
                                                self.config,
                                                test)
 
-    def wait_for_test_finish(self, test, timeout):
-        # convert timeout to seconds and account for page cycles
-        timeout = int(timeout / 1000) * int(test.get('page_cycles', 1))
-        # account for the pause the raptor webext runner takes after browser startup
-        timeout += (int(self.post_startup_delay / 1000) + 3)
-
-        # if geckoProfile enabled, give browser more time for profiling
-        if self.config['gecko_profile'] is True:
-            timeout += 5 * 60
-
-        elapsed_time = 0
-        while not self.control_server._finished:
-            if self.config['enable_control_server_wait']:
-                response = self.control_server_wait_get()
-                if response == 'webext_status/__raptor_shutdownBrowser':
-                    if self.config['memory_test']:
-                        generate_android_memory_profile(self, test['name'])
-                    self.control_server_wait_continue()
-            time.sleep(1)
-            # we only want to force browser-shutdown on timeout if not in debug mode;
-            # in debug-mode we leave the browser running (require manual shutdown)
-            if not self.debug_mode:
-                elapsed_time += 1
-                if elapsed_time > (timeout) - 5:  # stop 5 seconds early
-                    self.log.info("application timed out after {} seconds".format(timeout))
-                    self.control_server.wait_for_quit()
-                    break
-
     def process_results(self, test_names):
         # when running locally output results in build/raptor.json; when running
         # in production output to a local.json to be turned into tc job artifact
@@ -411,7 +429,9 @@ class Raptor(object):
 
 class RaptorDesktop(Raptor):
 
-    def create_browser_handler(self):
+    def __init__(self, *args, **kwargs):
+        super(RaptorDesktop, self).__init__(*args, **kwargs)
+
         # create the desktop browser runner
         self.log.info("creating browser runner using mozrunner")
         self.output_handler = OutputHandler()
@@ -484,7 +504,7 @@ class RaptorDesktop(Raptor):
             else:
                 # initial browser profile was already created before run_test was called;
                 # now additional browser cycles we want to create a new one each time
-                self.create_browser_profile()
+                self.build_browser_profile()
 
                 self.run_test_setup(test)
 
@@ -580,11 +600,6 @@ class RaptorDesktopFirefox(RaptorDesktop):
             # to disk; then profiles are picked up by gecko_profile.symbolicate
             self.control_server.gecko_profile_dir = self.gecko_profiler.gecko_profile_dir
 
-    def set_browser_test_prefs(self, raw_prefs):
-        # add test specific preferences
-        self.log.info("setting test-specific Firefox preferences")
-        self.profile.set_preferences(json.loads(raw_prefs))
-
 
 class RaptorDesktopChrome(RaptorDesktop):
 
@@ -616,86 +631,245 @@ class RaptorDesktopChrome(RaptorDesktop):
 
         self.start_runner_proc()
 
+    def set_browser_test_prefs(self, raw_prefs):
+        # add test-specific preferences
+        self.log.info("preferences were configured for the test, however \
+                        we currently do not install them on non-Firefox browsers.")
+
 
 class RaptorAndroid(Raptor):
-    def __init__(self, app, binary, activity=None, intent=None, **kwargs):
-        super(RaptorAndroid, self).__init__(app, binary, **kwargs)
 
-        # on android, when creating the browser profile, we want to use a 'firefox' type profile
-        self.profile_class = "firefox"
+    def __init__(self, app, binary, activity=None, intent=None, **kwargs):
+        super(RaptorAndroid, self).__init__(app, binary, profile_class="firefox", **kwargs)
+
         self.config.update({
             'activity': activity,
             'intent': intent,
         })
 
+        self.remote_test_root = os.path.abspath(os.path.join(os.sep, 'sdcard', 'raptor'))
+        self.remote_profile = os.path.join(self.remote_test_root, "profile")
+
     def set_reverse_port(self, port):
         tcp_port = "tcp:{}".format(port)
         self.device.create_socket_connection('reverse', tcp_port, tcp_port)
 
-    def serve_benchmark_source(self, *args, **kwargs):
-        super(RaptorAndroid, self).serve_benchmark_source(*args, **kwargs)
-
-        # for Android we must make the benchmarks server available to the device
-        if self.config['host'] in ('localhost', '127.0.0.1'):
-            self.log.info("making the raptor benchmarks server port available to device")
-            self.set_reverse_port(self.benchmark_port)
-
-    def start_control_server(self):
-        super(RaptorAndroid, self).start_control_server()
-
-        # for Android we must make the control server available to the device
+    def set_reverse_ports(self, is_benchmark=False):
+        # Make services running on the host available to the device
         if self.config['host'] in ('localhost', '127.0.0.1'):
             self.log.info("making the raptor control server port available to device")
             self.set_reverse_port(self.control_server.port)
 
-    def start_playback(self, test):
-        super(RaptorAndroid, self).start_playback(test)
-
-        # for Android we must make the playback server available to the device
         if self.config['host'] in ('localhost', '127.0.0.1'):
             self.log.info("making the raptor playback server port available to device")
             self.set_reverse_port(8080)
 
-    def create_browser_handler(self):
-        # create the android device handler; it gets initiated and sets up adb etc
-        self.log.info("creating android device handler using mozdevice")
-        self.device = ADBDevice(verbose=True)
-        self.device.clear_logcat()
+        if is_benchmark and self.config['host'] in ('localhost', '127.0.0.1'):
+            self.log.info("making the raptor benchmarks server port available to device")
+            self.set_reverse_port(self.benchmark_port)
+
+    def setup_adb_device(self):
+        if self.device is None:
+            self.device = ADBDevice(verbose=True)
+            self.tune_performance()
+
+        self.log.info("creating remote root folder for raptor: %s" % self.remote_test_root)
+        self.device.rm(self.remote_test_root, force=True, recursive=True)
+        self.device.mkdir(self.remote_test_root)
+        self.device.chmod(self.remote_test_root, recursive=True, root=True)
+
         self.clear_app_data()
+
+    def tune_performance(self):
+        """Set various performance-oriented parameters, to reduce jitter.
+
+        For more information, see https://bugzilla.mozilla.org/show_bug.cgi?id=1547135.
+        """
+        self.log.info("tuning android device performance")
+        self.set_svc_power_stayon()
+        if (self.device._have_su or self.device._have_android_su):
+            self.log.info("executing additional tuning commands requiring root")
+            device_name = self.device.shell_output('getprop ro.product.model')
+            # all commands require root shell from here on
+            self.set_scheduler()
+            self.set_virtual_memory_parameters()
+            self.turn_off_services()
+            self.set_cpu_performance_parameters(device_name)
+            self.set_gpu_performance_parameters(device_name)
+            self.set_kernel_performance_parameters()
+        self.device.clear_logcat()
+        self.log.info("android device performance tuning complete")
+
+    def _set_value_and_check_exitcode(self, file_name, value, root=False):
+        self.log.info('setting {} to {}'.format(file_name, value))
+        process = self.device.shell(' '.join(['echo', str(value), '>', str(file_name)]), root=root)
+        if process.exitcode == 0:
+            self.log.info('successfully set {} to {}'.format(file_name, value))
+        else:
+            self.log.warning('command failed with exitcode {}'.format(str(process.exitcode)))
+
+    def set_svc_power_stayon(self):
+        self.log.info('set device to stay awake on usb')
+        self.device.shell('svc power stayon usb')
+
+    def set_scheduler(self):
+        self.log.info('setting scheduler to noop')
+        scheduler_location = '/sys/block/sda/queue/scheduler'
+
+        self._set_value_and_check_exitcode(scheduler_location, 'noop')
+
+    def turn_off_services(self):
+        services = [
+            'mpdecision',
+            'thermal-engine',
+            'thermald',
+        ]
+        for service in services:
+            self.log.info(' '.join(['turning off service:', service]))
+            self.device.shell(' '.join(['stop', service]), root=True)
+
+        services_list_output = self.device.shell_output('service list')
+        for service in services:
+            if service not in services_list_output:
+                self.log.info(' '.join(['successfully terminated:', service]))
+            else:
+                self.log.warning(' '.join(['failed to terminate:', service]))
+
+    def disable_animations(self):
+        self.log.info('disabling animations')
+        commands = {
+            'animator_duration_scale': 0.0,
+            'transition_animation_scale': 0.0,
+            'window_animation_scale': 0.0
+        }
+
+        for key, value in commands.items():
+            command = ' '.join(['settings', 'put', 'global', key, str(value)])
+            self.log.info('setting {} to {}'.format(key, value))
+            self.device.shell(command)
+
+    def restore_animations(self):
+        # animation settings are not restored to default by reboot
+        self.log.info('restoring animations')
+        commands = {
+            'animator_duration_scale': 1.0,
+            'transition_animation_scale': 1.0,
+            'window_animation_scale': 1.0
+        }
+
+        for key, value in commands.items():
+            command = ' '.join(['settings', 'put', 'global', key, str(value)])
+            self.device.shell(command)
+
+    def set_virtual_memory_parameters(self):
+        self.log.info('setting virtual memory parameters')
+        commands = {
+            '/proc/sys/vm/swappiness': 0,
+            '/proc/sys/vm/dirty_ratio': 85,
+            '/proc/sys/vm/dirty_background_ratio': 70
+        }
+
+        for key, value in commands.items():
+            self._set_value_and_check_exitcode(key, value, root=True)
+
+    def set_cpu_performance_parameters(self, device_name):
+        self.log.info('setting cpu performance parameters')
+        commands = {}
+
+        if device_name == 'Pixel 2':
+            # MSM8998 (4x 2.35GHz, 4x 1.9GHz)
+            # values obtained from:
+            #   /sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies
+            #   /sys/devices/system/cpu/cpufreq/policy4/scaling_available_frequencies
+            commands.update({
+                '/sys/devices/system/cpu/cpufreq/policy0/scaling_governor': 'performance',
+                '/sys/devices/system/cpu/cpufreq/policy4/scaling_governor': 'performance',
+                '/sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq': '1900800',
+                '/sys/devices/system/cpu/cpufreq/policy4/scaling_min_freq': '2457600',
+            })
+        elif device_name == 'Moto G (5)':
+            # MSM8937(8x 1.4GHz)
+            # values obtained from:
+            #   /sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies
+            for x in xrange(0, 8):
+                commands.update({
+                    '/sys/devices/system/cpu/cpu{}/'
+                    'cpufreq/scaling_governor'.format(x): 'performance',
+                    '/sys/devices/system/cpu/cpu{}/'
+                    'cpufreq/scaling_min_freq'.format(x): '1401000'
+                })
+        else:
+            pass
+
+        for key, value in commands.items():
+            self._set_value_and_check_exitcode(key, value, root=True)
+
+    def set_gpu_performance_parameters(self, device_name):
+        self.log.info('setting gpu performance parameters')
+        commands = {
+            '/sys/class/kgsl/kgsl-3d0/bus_split': '0',
+            '/sys/class/kgsl/kgsl-3d0/force_bus_on': '1',
+            '/sys/class/kgsl/kgsl-3d0/force_rail_on': '1',
+            '/sys/class/kgsl/kgsl-3d0/force_clk_on': '1',
+            '/sys/class/kgsl/kgsl-3d0/force_no_nap': '1',
+            '/sys/class/kgsl/kgsl-3d0/idle_timer': '1000000',
+        }
+
+        if device_name == 'Pixel 2':
+            # Adreno 540 (710MHz)
+            # values obtained from:
+            #   /sys/devices/soc/5000000.qcom,kgsl-3d0/kgsl/kgsl-3d0/max_clk_mhz
+            commands.update({
+                '/sys/devices/soc/5000000.qcom,kgsl-3d0/devfreq/'
+                '5000000.qcom,kgsl-3d0/governor': 'performance',
+                '/sys/devices/soc/soc:qcom,kgsl-busmon/devfreq/'
+                'soc:qcom,kgsl-busmon/governor': 'performance',
+                '/sys/devices/soc/5000000.qcom,kgsl-3d0/kgsl/kgsl-3d0/min_clock_mhz': '710',
+            })
+        elif device_name == 'Moto G (5)':
+            # Adreno 505 (450MHz)
+            # values obtained from:
+            #   /sys/devices/soc/1c00000.qcom,kgsl-3d0/kgsl/kgsl-3d0/max_clock_mhz
+            commands.update({
+                '/sys/devices/soc/1c00000.qcom,kgsl-3d0/devfreq/'
+                '1c00000.qcom,kgsl-3d0/governor': 'performance',
+                '/sys/devices/soc/1c00000.qcom,kgsl-3d0/kgsl/kgsl-3d0/min_clock_mhz': '450',
+            })
+        else:
+            pass
+        for key, value in commands.items():
+            self._set_value_and_check_exitcode(key, value, root=True)
+
+    def set_kernel_performance_parameters(self):
+        self.log.info('setting kernel performance parameters')
+        commands = {
+            '/sys/kernel/debug/msm-bus-dbg/shell-client/update_request': '1',
+            '/sys/kernel/debug/msm-bus-dbg/shell-client/mas': '1',
+            '/sys/kernel/debug/msm-bus-dbg/shell-client/ab': '0',
+            '/sys/kernel/debug/msm-bus-dbg/shell-client/slv': '512',
+        }
+        for key, value in commands.items():
+            self._set_value_and_check_exitcode(key, value, root=True)
 
     def clear_app_data(self):
         self.log.info("clearing %s app data" % self.config['binary'])
         self.device.shell("pm clear %s" % self.config['binary'])
 
-    def create_raptor_sdcard_folder(self):
-        # for android/geckoview, create a top-level raptor folder on the device
-        # sdcard; if it already exists remove it so we start fresh each time
-        self.device_raptor_dir = "/sdcard/raptor"
-        self.config['device_raptor_dir'] = self.device_raptor_dir
-        if self.device.is_dir(self.device_raptor_dir):
-            self.log.info("deleting existing device raptor dir: %s" % self.device_raptor_dir)
-            self.device.rm(self.device_raptor_dir, recursive=True)
-        self.log.info("creating raptor folder on sdcard: %s" % self.device_raptor_dir)
-        self.device.mkdir(self.device_raptor_dir)
-        self.device.chmod(self.device_raptor_dir, recursive=True)
-
-    def copy_profile_onto_device(self):
-        # for geckoview/fennec we must copy the profile onto the device and set perms
+    def copy_profile_to_device(self):
+        """Copy the profile to the device, and update permissions of all files."""
         if not self.device.is_app_installed(self.config['binary']):
             raise Exception('%s is not installed' % self.config['binary'])
-        self.device_profile = os.path.join(self.device_raptor_dir, "profile")
 
-        if self.device.is_dir(self.device_profile):
-            self.log.info("deleting existing device profile folder: %s" % self.device_profile)
-            self.device.rm(self.device_profile, recursive=True)
-        self.log.info("creating profile folder on device: %s" % self.device_profile)
-        self.device.mkdir(self.device_profile)
+        try:
+            self.log.info("copying profile to device: %s" % self.remote_profile)
+            self.device.rm(self.remote_profile, force=True, recursive=True)
+            # self.device.mkdir(self.remote_profile)
+            self.device.push(self.profile.profile, self.remote_profile)
+            self.device.chmod(self.remote_profile, recursive=True, root=True)
 
-        self.log.info("copying firefox profile onto the device")
-        self.log.info("note: the profile folder being copied is: %s" % self.profile.profile)
-        self.log.info('the adb push cmd copies that profile dir to a new temp dir before copy')
-        self.device.push(self.profile.profile, self.device_profile)
-        self.device.chmod(self.device_profile, recursive=True)
+        except Exception:
+            self.log.error("Unable to copy profile to device.")
+            raise
 
     def turn_on_android_app_proxy(self):
         # for geckoview/android pageload playback we can't use a policy to turn on the
@@ -714,7 +888,7 @@ class RaptorAndroid(Raptor):
     def launch_firefox_android_app(self, test_name):
         self.log.info("starting %s" % self.config['app'])
 
-        extra_args = ["-profile", self.device_profile,
+        extra_args = ["-profile", self.remote_profile,
                       "--es", "env0", "LOG_VERBOSE=1",
                       "--es", "env1", "R_LOG_LEVEL=6"]
 
@@ -728,13 +902,27 @@ class RaptorAndroid(Raptor):
                                           url='about:blank',
                                           fail_if_running=False)
             else:
-                self.device.launch_activity(self.config['binary'],
-                                            self.config['activity'],
-                                            self.config['intent'],
-                                            extra_args=extra_args,
-                                            url='about:blank',
-                                            e10s=True,
-                                            fail_if_running=False)
+
+                # Additional command line arguments that the app will read and use (e.g.
+                # with a custom profile)
+                extras = {}
+                if extra_args:
+                    extras['args'] = " ".join(extra_args)
+
+                # add e10s=True
+                extras['use_multiprocess'] = self.config['e10s']
+
+                self.device.launch_application(self.config['binary'],
+                                               self.config['activity'],
+                                               self.config['intent'],
+                                               extras=extras,
+                                               url='about:blank',
+                                               fail_if_running=False)
+
+            # Check if app has started and it's running
+            if not self.device.process_exist(self.config['binary']):
+                raise Exception("Error launching %s. App did not start properly!" %
+                                self.config['binary'])
         except Exception as e:
             self.log.error("Exception launching %s" % self.config['binary'])
             self.log.error("Exception: %s %s" % (type(e).__name__, str(e)))
@@ -757,6 +945,23 @@ class RaptorAndroid(Raptor):
                 shutil.copyfile(_source, _dest)
             else:
                 self.log.critical("unable to find ssl cert db file: %s" % _source)
+
+    def run_tests(self, tests, test_names):
+        self.setup_adb_device()
+
+        return super(RaptorAndroid, self).run_tests(tests, test_names)
+
+    def run_test_setup(self, test):
+        super(RaptorAndroid, self).run_test_setup(test)
+
+        is_benchmark = test.get('type') == "benchmark"
+        self.set_reverse_ports(is_benchmark=is_benchmark)
+
+    def run_test_teardown(self):
+        self.log.info('removing reverse socket connections')
+        self.device.remove_socket_connections('reverse')
+
+        super(RaptorAndroid, self).run_test_teardown()
 
     def run_test(self, test, timeout=None):
         # tests will be run warm (i.e. NO browser restart between page-cycles)
@@ -813,9 +1018,10 @@ class RaptorAndroid(Raptor):
 
             self.run_test_setup(test)
 
-            if test['browser_cycle'] == 1:
-                self.create_raptor_sdcard_folder()
+            # clear the android app data before the next app startup
+            self.clear_app_data()
 
+            if test['browser_cycle'] == 1:
                 if test.get('playback') is not None:
                     self.start_playback(test)
 
@@ -832,12 +1038,9 @@ class RaptorAndroid(Raptor):
                 # double-check to ensure app has been shutdown
                 self.device.stop_application(self.config['binary'])
 
-                # clear the android app data before the next app startup
-                self.clear_app_data()
-
                 # initial browser profile was already created before run_test was called;
                 # now additional browser cycles we want to create a new one each time
-                self.create_browser_profile()
+                self.build_browser_profile()
 
                 if test.get('playback') is not None:
                     # get cert db from previous cycle profile and copy into new clean profile
@@ -850,7 +1053,7 @@ class RaptorAndroid(Raptor):
             if test.get('playback') is not None:
                 self.turn_on_android_app_proxy()
 
-            self.copy_profile_onto_device()
+            self.copy_profile_to_device()
 
             # now start the browser/app under test
             self.launch_firefox_android_app(test['name'])
@@ -865,6 +1068,10 @@ class RaptorAndroid(Raptor):
                 self.log.info("* debug-mode enabled - please shutdown the browser manually...")
                 self.runner.wait(timeout=None)
 
+            # break test execution if a exception is present
+            if len(self.results_handler.page_timeout_list) > 0:
+                break
+
     def run_test_warm(self, test, timeout=None):
         self.log.info("test %s is running in warm mode; browser will NOT be restarted between "
                       "page cycles" % test['name'])
@@ -872,7 +1079,6 @@ class RaptorAndroid(Raptor):
             init_android_power_test(self)
 
         self.run_test_setup(test)
-        self.create_raptor_sdcard_folder()
 
         if test.get('playback') is not None:
             self.start_playback(test)
@@ -884,7 +1090,7 @@ class RaptorAndroid(Raptor):
             self.turn_on_android_app_proxy()
 
         self.clear_app_data()
-        self.copy_profile_onto_device()
+        self.copy_profile_to_device()
 
         # now start the browser/app under test
         self.launch_firefox_android_app(test['name'])
@@ -910,7 +1116,7 @@ class RaptorAndroid(Raptor):
                 return
         try:
             dump_dir = tempfile.mkdtemp()
-            remote_dir = posixpath.join(self.device_profile, 'minidumps')
+            remote_dir = posixpath.join(self.remote_profile, 'minidumps')
             if not self.device.is_dir(remote_dir):
                 self.log.error("No crash directory (%s) found on remote device" % remote_dir)
                 return
@@ -923,8 +1129,8 @@ class RaptorAndroid(Raptor):
                 self.log.warning("unable to remove directory: %s" % dump_dir)
 
     def clean_up(self):
-        self.log.info('removing reverse socket connections')
-        self.device.remove_socket_connections('reverse')
+        self.log.info("removing test folder for raptor: %s" % self.remote_test_root)
+        self.device.rm(self.remote_test_root, force=True, recursive=True)
 
         super(RaptorAndroid, self).clean_up()
 
@@ -981,18 +1187,7 @@ def main(args=sys.argv[1:]):
                           interrupt_handler=SignalHandler(),
                           )
 
-    raptor.create_browser_profile()
-    raptor.create_browser_handler()
-    raptor.start_control_server()
-
-    try:
-        for next_test in raptor_test_list:
-            raptor.run_test(next_test, timeout=int(next_test['page_timeout']))
-
-        success = raptor.process_results(raptor_test_names)
-
-    finally:
-        raptor.clean_up()
+    success = raptor.run_tests(raptor_test_list, raptor_test_names)
 
     if not success:
         # didn't get test results; test timed out or crashed, etc. we want job to fail

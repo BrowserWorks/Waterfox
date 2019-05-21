@@ -204,9 +204,11 @@
 #include "jspubtd.h"
 
 #include "frontend/ErrorReporter.h"
+#include "frontend/Token.h"
 #include "frontend/TokenKind.h"
 #include "js/CompileOptions.h"
-#include "js/RegExpFlags.h"  // JS::RegExpFlag, JS::RegExpFlags
+#include "js/HashTable.h"    // js::HashMap
+#include "js/RegExpFlags.h"  // JS::RegExpFlags
 #include "js/UniquePtr.h"
 #include "js/Vector.h"
 #include "util/Text.h"
@@ -223,217 +225,6 @@ namespace js {
 class AutoKeepAtoms;
 
 namespace frontend {
-
-class FunctionBox;
-
-struct TokenPos {
-  uint32_t begin;  // Offset of the token's first code unit.
-  uint32_t end;    // Offset of 1 past the token's last code unit.
-
-  TokenPos() : begin(0), end(0) {}
-  TokenPos(uint32_t begin, uint32_t end) : begin(begin), end(end) {}
-
-  // Return a TokenPos that covers left, right, and anything in between.
-  static TokenPos box(const TokenPos& left, const TokenPos& right) {
-    MOZ_ASSERT(left.begin <= left.end);
-    MOZ_ASSERT(left.end <= right.begin);
-    MOZ_ASSERT(right.begin <= right.end);
-    return TokenPos(left.begin, right.end);
-  }
-
-  bool operator==(const TokenPos& bpos) const {
-    return begin == bpos.begin && end == bpos.end;
-  }
-
-  bool operator!=(const TokenPos& bpos) const {
-    return begin != bpos.begin || end != bpos.end;
-  }
-
-  bool operator<(const TokenPos& bpos) const { return begin < bpos.begin; }
-
-  bool operator<=(const TokenPos& bpos) const { return begin <= bpos.begin; }
-
-  bool operator>(const TokenPos& bpos) const { return !(*this <= bpos); }
-
-  bool operator>=(const TokenPos& bpos) const { return !(*this < bpos); }
-
-  bool encloses(const TokenPos& pos) const {
-    return begin <= pos.begin && pos.end <= end;
-  }
-};
-
-enum DecimalPoint { NoDecimal = false, HasDecimal = true };
-
-enum class InvalidEscapeType {
-  // No invalid character escapes.
-  None,
-  // A malformed \x escape.
-  Hexadecimal,
-  // A malformed \u escape.
-  Unicode,
-  // An otherwise well-formed \u escape which represents a
-  // codepoint > 10FFFF.
-  UnicodeOverflow,
-  // An octal escape in a template token.
-  Octal
-};
-
-// The only escapes found in IdentifierName are of the Unicode flavor.
-enum class IdentifierEscapes { None, SawUnicodeEscape };
-
-enum class NameVisibility { Public, Private };
-
-class TokenStreamShared;
-
-struct Token {
- private:
-  // The lexical grammar of JavaScript has a quirk around the '/' character.
-  // As the spec puts it:
-  //
-  // > There are several situations where the identification of lexical input
-  // > elements is sensitive to the syntactic grammar context that is consuming
-  // > the input elements. This requires multiple goal symbols for the lexical
-  // > grammar. [...] The InputElementRegExp goal symbol is used in all
-  // > syntactic grammar contexts where a RegularExpressionLiteral is permitted
-  // > [...]  In all other contexts, InputElementDiv is used as the lexical
-  // > goal symbol.
-  //
-  // https://tc39.github.io/ecma262/#sec-lexical-and-regexp-grammars
-  //
-  // What "sensitive to the syntactic grammar context" means is, the parser has
-  // to tell the TokenStream whether to interpret '/' as division or
-  // RegExp. Because only one or the other (or neither) will be legal at that
-  // point in the program, and only the parser knows which one.
-  //
-  // But there's a problem: the parser often gets a token, puts it back, then
-  // consumes it later; or (equivalently) peeks at a token, leaves it, peeks
-  // again later, then finally consumes it. Of course we don't actually re-scan
-  // the token every time; we cache it in the TokenStream. This leads to the
-  // following rule:
-  //
-  // The parser must not pass SlashIsRegExp when getting/peeking at a token
-  // previously scanned with SlashIsDiv; or vice versa.
-  //
-  // That way, code that asks for a SlashIsRegExp mode will never get a cached
-  // Div token. But this rule is easy to screw up, because tokens are so often
-  // peeked at on Parser.cpp line A and consumed on line B, where |A-B| is
-  // thousands of lines. We therefore enforce it with the frontend's most
-  // annoying assertion (in verifyConsistentModifier), and provide
-  // Modifier::SlashIsInvalid to help avoid tripping it.
-  //
-  // This enum belongs in TokenStream, but C++, so we define it here and
-  // typedef it there.
-  enum Modifier {
-    // Parse `/` and `/=` as the division operators. (That is, use
-    // InputElementDiv as the goal symbol.)
-    SlashIsDiv,
-
-    // Parse `/` as the beginning of a RegExp literal. (That is, use
-    // InputElementRegExp.)
-    SlashIsRegExp,
-
-    // Neither a Div token nor a RegExp token is syntactically valid here. When
-    // the parser calls `getToken(SlashIsInvalid)`, it must be prepared to see
-    // either one (and throw a SyntaxError either way).
-    //
-    // It's OK to use SlashIsInvalid to get a token that was originally scanned
-    // with SlashIsDiv or SlashIsRegExp. The reverse--peeking with
-    // SlashIsInvalid, then getting with another mode--is not OK. If either Div
-    // or RegExp is syntactically valid here, use the appropriate modifier.
-    SlashIsInvalid,
-  };
-  friend class TokenStreamShared;
-
- public:
-  // WARNING: TokenStreamPosition assumes that the only GC things a Token
-  //          includes are atoms.  DON'T ADD NON-ATOM GC THING POINTERS HERE
-  //          UNLESS YOU ADD ADDITIONAL ROOTING TO THAT CLASS.
-
-  /** The type of this token. */
-  TokenKind type;
-
-  /** The token's position in the overall script. */
-  TokenPos pos;
-
-  union {
-   private:
-    friend struct Token;
-
-    /** Non-numeric atom. */
-    PropertyName* name;
-
-    /** Potentially-numeric atom. */
-    JSAtom* atom;
-
-    struct {
-      /** Numeric literal's value. */
-      double value;
-
-      /** Does the numeric literal contain a '.'? */
-      DecimalPoint decimalPoint;
-    } number;
-
-    /** Regular expression flags; use charBuffer to access source chars. */
-    JS::RegExpFlags reflags;
-  } u;
-
-#ifdef DEBUG
-  /** The modifier used to get this token. */
-  Modifier modifier;
-#endif
-
-  // Mutators
-
-  void setName(PropertyName* name) {
-    MOZ_ASSERT(type == TokenKind::Name || type == TokenKind::PrivateName);
-    u.name = name;
-  }
-
-  void setAtom(JSAtom* atom) {
-    MOZ_ASSERT(type == TokenKind::String || type == TokenKind::TemplateHead ||
-               type == TokenKind::NoSubsTemplate);
-    u.atom = atom;
-  }
-
-  void setRegExpFlags(JS::RegExpFlags flags) {
-    MOZ_ASSERT(type == TokenKind::RegExp);
-    u.reflags = flags;
-  }
-
-  void setNumber(double n, DecimalPoint decimalPoint) {
-    MOZ_ASSERT(type == TokenKind::Number);
-    u.number.value = n;
-    u.number.decimalPoint = decimalPoint;
-  }
-
-  // Type-safe accessors
-
-  PropertyName* name() const {
-    MOZ_ASSERT(type == TokenKind::Name || type == TokenKind::PrivateName);
-    return u.name->JSAtom::asPropertyName();  // poor-man's type verification
-  }
-
-  JSAtom* atom() const {
-    MOZ_ASSERT(type == TokenKind::String || type == TokenKind::TemplateHead ||
-               type == TokenKind::NoSubsTemplate);
-    return u.atom;
-  }
-
-  JS::RegExpFlags regExpFlags() const {
-    MOZ_ASSERT(type == TokenKind::RegExp);
-    return u.reflags;
-  }
-
-  double number() const {
-    MOZ_ASSERT(type == TokenKind::Number);
-    return u.number.value;
-  }
-
-  DecimalPoint decimalPoint() const {
-    MOZ_ASSERT(type == TokenKind::Number);
-    return u.number.decimalPoint;
-  }
-};
 
 extern TokenKind ReservedWordTokenKind(PropertyName* str);
 
@@ -527,6 +318,15 @@ class MOZ_STACK_CLASS TokenStreamPosition final {
   unsigned lookahead;
   Token lookaheadTokens[TokenStreamShared::maxLookahead];
 } JS_HAZ_ROOTED;
+
+template <typename Unit>
+class SourceUnits;
+
+// Column numbers *ought* be in terms of counts of code points, but in the past
+// we counted code units.  Set this to 0 to keep returning counts of code units
+// (even for UTF-8, which is clearly wrong, but we don't ship UTF-8 yet so this
+// is fine until we can fix users that depend on code-unit counting).
+#define JS_COLUMN_DIMENSION_IS_CODE_POINTS() 0
 
 class TokenStreamAnyChars : public TokenStreamShared {
  public:
@@ -805,6 +605,8 @@ class TokenStreamAnyChars : public TokenStreamShared {
 
     /** Return the offset of the start of the line for |lineToken|. */
     uint32_t lineStart(LineToken lineToken) const {
+      MOZ_ASSERT(lineToken.index + 1 < lineStartOffsets_.length(),
+                 "recorded line-start information must be available");
       return lineStartOffsets_[lineToken.index];
     }
   };
@@ -843,10 +645,66 @@ class TokenStreamAnyChars : public TokenStreamShared {
   MOZ_ALWAYS_INLINE void updateFlagsForEOL() { flags.isDirtyLine = false; }
 
  private:
+#if JS_COLUMN_DIMENSION_IS_CODE_POINTS()
+  /**
+   * Compute the "partial" column number in Unicode code points of the absolute
+   * |offset| within source text on the line of |lineToken| (which must have
+   * been computed from |offset|).
+   *
+   * A partial column number on a line that isn't the first line is just the
+   * actual column number.  But a partial column number on the first line is the
+   * column number *ignoring the initial line/column of the script*.  For
+   * example, consider this HTML with line/column number keys:
+   *
+   *                 1         2            3
+   *       0123456789012345678901234   567890
+   *     ------------------------------------
+   *   1 | <html>
+   *   2 | <head>
+   *   3 |   <script>var x = 3;  x &lt; 4;
+   *   4 | const y = 7;</script>
+   *   5 | </head>
+   *   6 | <body></body>
+   *   7 | </html>
+   *
+   * The script would be compiled specifying initial (line, column) of (3, 10)
+   * using |JS::ReadOnlyCompileOptions::{lineno,column}|.  And the column
+   * reported by |computeColumn| for the "v" of |var| would be 10.  But the
+   * partial column number of the "v" in |var|, that this function returns,
+   * would be 0.  On the other hand, the column reported by |computeColumn| and
+   * the partial column number returned by this function for the "c" in |const|
+   * would both be 0, because it's not in the first line of source text.
+   *
+   * The partial column is with respect *only* to the JavaScript source text as
+   * SpiderMonkey sees it.  In the example, the "&lt;" is converted to "<" by
+   * the browser before SpiderMonkey would see it.  So the partial column of the
+   * "4" in the inequality would be 16, not 19.
+   *
+   * Code points are not all equal length, so counting requires *some* kind of
+   * linear-time counting from the start of the line.  This function attempts
+   * various tricks to reduce this cost.  If these optimizations succeed,
+   * repeated calls to this function on a line will pay a one-time cost linear
+   * in the length of the line, then each call pays a separate constant-time
+   * cost.  If the optimizations do not succeed, this function works in time
+   * linear in the length of the line.
+   *
+   * It's unusual for a function in *this* class to be |Unit|-templated, but
+   * while this operation manages |Unit|-agnostic fields in this class and in
+   * |srcCoords|, it must *perform* |Unit|-sensitive computations to fill them.
+   * And this is the best place to do that.
+   */
+  template <typename Unit>
+  uint32_t computePartialColumn(const LineToken lineToken,
+                                const uint32_t offset,
+                                const SourceUnits<Unit>& sourceUnits) const;
+#endif  // JS_COLUMN_DIMENSION_IS_CODE_POINTS()
+
+  /**
+   * Update line/column information for the start of a new line at
+   * |lineStartOffset|.
+   */
   MOZ_MUST_USE MOZ_ALWAYS_INLINE bool internalUpdateLineInfoForEOL(
       uint32_t lineStartOffset);
-
-  void undoInternalUpdateLineInfoForEOL();
 
  public:
   const Token& nextToken() const {
@@ -892,6 +750,58 @@ class TokenStreamAnyChars : public TokenStreamShared {
 
   const char* getFilename() const { return filename_; }
 
+ private:
+#if JS_COLUMN_DIMENSION_IS_CODE_POINTS()
+  static constexpr uint32_t ColumnChunkLength = 128;
+
+  enum class UnitsType : unsigned char{
+      PossiblyMultiUnit = 0,
+      GuaranteedSingleUnit = 1,
+  };
+
+  class ChunkInfo {
+   public:
+    ChunkInfo(uint32_t col, UnitsType type)
+        : unitsType_(static_cast<unsigned char>(type)) {
+      memcpy(column_, &col, sizeof(col));
+    }
+
+    uint32_t column() const {
+      uint32_t col;
+      memcpy(&col, column_, sizeof(uint32_t));
+      return col;
+    }
+
+    UnitsType unitsType() const {
+      MOZ_ASSERT(unitsType_ <= 1, "unitsType_ must be 0 or 1");
+      return static_cast<UnitsType>(unitsType_);
+    }
+
+    void guaranteeSingleUnits() {
+      MOZ_ASSERT(unitsType() == UnitsType::PossiblyMultiUnit,
+                 "should only be setting to possibly optimize from the "
+                 "pessimistic case");
+      unitsType_ = static_cast<unsigned char>(UnitsType::GuaranteedSingleUnit);
+    }
+
+   private:
+    // Store everything in |unsigned char|s so everything packs.
+    unsigned char column_[sizeof(uint32_t)];
+    unsigned char unitsType_;
+  };
+
+  /**
+   * Line number (of lines at least |ColumnChunkLength| code units long) to
+   * a sequence of the column numbers at |ColumnChunkLength| boundaries rewound
+   * (if needed) to the nearest code point boundary.
+   *
+   * Entries appear in this map only when a column computation of sufficient
+   * distance is performed on a line, and the vectors are lazily filled as
+   * greater offsets within lines require column computations.
+   */
+  mutable HashMap<uint32_t, Vector<ChunkInfo>> longLineColumnInfo_;
+#endif  // JS_COLUMN_DIMENSION_IS_CODE_POINTS()
+
  protected:
   // Options used for parsing/tokenizing.
   const JS::ReadOnlyCompileOptions& options_;
@@ -936,6 +846,29 @@ class TokenStreamAnyChars : public TokenStreamShared {
   JSContext* const cx;
   bool mutedErrors;
   StrictModeGetter* strictModeGetter;  // used to test for strict mode
+
+#if JS_COLUMN_DIMENSION_IS_CODE_POINTS()
+  // Computing accurate column numbers requires at *some* point linearly
+  // iterating through prior source units in the line to properly account for
+  // multi-unit code points.  This is quadratic if counting happens repeatedly.
+  //
+  // But usually we need columns for advancing offsets through scripts.  By
+  // caching the last ((line number, offset) => relative column) mapping (in
+  // similar manner to how |SourceUnits::lastIndex_| is used to cache
+  // (offset => line number) mappings) we can usually avoid re-iterating through
+  // the common line prefix.
+  //
+  // Additionally, we avoid hash table lookup costs by caching the
+  // |Vector<ChunkInfo>*| for the line of the last lookup.  (|nullptr| means we
+  // have to look it up -- or it hasn't been created yet.)  This pointer is
+  // invalidated when a lookup on a new line occurs, but as it's not a pointer
+  // at literal element data, it's *not* invalidated when new entries are added
+  // to such a vector.
+  mutable uint32_t lineOfLastColumnComputation_ = UINT32_MAX;
+  mutable Vector<ChunkInfo>* lastChunkVectorForLine_ = nullptr;
+  mutable uint32_t lastOffsetOfComputedColumn_ = UINT32_MAX;
+  mutable uint32_t lastComputedColumn_ = 0;
+#endif  // JS_COLUMN_DIMENSION_IS_CODE_POINTS()
 };
 
 constexpr char16_t CodeUnitValue(char16_t unit) { return unit; }
@@ -1817,12 +1750,6 @@ class TokenStart {
   uint32_t offset() const { return startOffset_; }
 };
 
-// Column numbers *ought* be in terms of counts of code points, but in the past
-// we counted code units.  Set this to 0 to keep returning counts of code units
-// (even for UTF-8, which is clearly wrong, but we don't ship UTF-8 yet so this
-// is fine until we can fix users that depend on code-unit counting).
-#define JS_COLUMN_DIMENSION_IS_CODE_POINTS 1
-
 template <typename Unit, class AnyCharsAccess>
 class GeneralTokenStreamChars : public SpecializedTokenStreamCharsBase<Unit> {
   using CharsBase = TokenStreamCharsBase<Unit>;
@@ -1889,22 +1816,14 @@ class GeneralTokenStreamChars : public SpecializedTokenStreamCharsBase<Unit> {
     return static_cast<TokenStreamSpecific*>(this);
   }
 
- private:
-  // Computing accurate column numbers requires linearly iterating through all
-  // source units in the line to account for multi-unit code points; on long
-  // lines requiring many column computations, this becomes quadratic.
-  //
-  // However, because usually we need columns for advancing offsets through
-  // scripts, caching the last ((line number, offset) => relative column)
-  // mapping -- in similar manner to how |SourceUnits::lastIndex_| is used to
-  // cache (offset => line number) mappings -- lets us avoid re-iterating
-  // through the line prefix in most cases.
-
-  mutable uint32_t lastLineForColumn_ = UINT32_MAX;
-  mutable uint32_t lastOffsetForColumn_ = UINT32_MAX;
-  mutable uint32_t lastColumn_ = 0;
-
  protected:
+  /**
+   * Compute the column number in Unicode code points of the absolute |offset|
+   * within source text on the line corresponding to |lineToken|.
+   *
+   * |offset| must be a code point boundary, preceded only by validly-encoded
+   * source units.  (It doesn't have to be *followed* by valid source units.)
+   */
   uint32_t computeColumn(LineToken lineToken, uint32_t offset) const;
   void computeLineAndColumn(uint32_t offset, uint32_t* line,
                             uint32_t* column) const;
@@ -2094,8 +2013,6 @@ class GeneralTokenStreamChars : public SpecializedTokenStreamCharsBase<Unit> {
 
     return drainCharBufferIntoAtom(anyChars.cx);
   }
-
-  inline void setFunctionStart(FunctionBox* funbox) const;
 };
 
 template <typename Unit, class AnyCharsAccess>
@@ -2509,6 +2426,10 @@ class MOZ_STACK_CLASS TokenStreamSpecific
   }
 
   MOZ_MUST_USE bool putIdentInCharBuffer(const Unit* identStart);
+
+  using IsIntegerUnit = bool (*)(int32_t);
+  MOZ_MUST_USE MOZ_ALWAYS_INLINE bool matchInteger(IsIntegerUnit isIntegerUnit,
+                                                   int32_t* nextUnit);
 
   /**
    * Tokenize a decimal number that begins at |numStart| into the provided

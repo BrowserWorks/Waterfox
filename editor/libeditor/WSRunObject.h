@@ -177,6 +177,7 @@ class MOZ_STACK_CLASS WSRunObject final {
 
   // ScrubBlockBoundary removes any non-visible whitespace at the specified
   // location relative to a block node.
+  MOZ_CAN_RUN_SCRIPT
   static nsresult ScrubBlockBoundary(HTMLEditor* aHTMLEditor,
                                      BlockBoundary aBoundary, nsINode* aBlock,
                                      int32_t aOffset = -1);
@@ -184,6 +185,7 @@ class MOZ_STACK_CLASS WSRunObject final {
   // PrepareToJoinBlocks fixes up ws at the end of aLeftBlock and the
   // beginning of aRightBlock in preperation for them to be joined.  Example
   // of fixup: trailingws in aLeftBlock needs to be removed.
+  MOZ_CAN_RUN_SCRIPT
   static nsresult PrepareToJoinBlocks(HTMLEditor* aHTMLEditor,
                                       dom::Element* aLeftBlock,
                                       dom::Element* aRightBlock);
@@ -195,6 +197,7 @@ class MOZ_STACK_CLASS WSRunObject final {
   // adjusting ws.
   // example of fixup: trailingws before {aStartNode,aStartOffset}
   //                   needs to be removed.
+  MOZ_CAN_RUN_SCRIPT
   static nsresult PrepareToDeleteRange(HTMLEditor* aHTMLEditor,
                                        nsCOMPtr<nsINode>* aStartNode,
                                        int32_t* aStartOffset,
@@ -204,6 +207,7 @@ class MOZ_STACK_CLASS WSRunObject final {
   // PrepareToDeleteNode fixes up ws before and after aContent in preparation
   // for aContent to be deleted.  Example of fixup: trailingws before
   // aContent needs to be removed.
+  MOZ_CAN_RUN_SCRIPT
   static nsresult PrepareToDeleteNode(HTMLEditor* aHTMLEditor,
                                       nsIContent* aContent);
 
@@ -212,6 +216,7 @@ class MOZ_STACK_CLASS WSRunObject final {
   // Note that the aSplitNode and aSplitOffset are adjusted in response to
   // any DOM changes we make while adjusting ws.  Example of fixup: normalws
   // before {aSplitNode,aSplitOffset} needs to end with nbsp.
+  MOZ_CAN_RUN_SCRIPT
   static nsresult PrepareToSplitAcrossBlocks(HTMLEditor* aHTMLEditor,
                                              nsCOMPtr<nsINode>* aSplitNode,
                                              int32_t* aSplitOffset);
@@ -235,9 +240,8 @@ class MOZ_STACK_CLASS WSRunObject final {
    * @return                The new <br> node.  If failed to create new <br>
    *                        node, returns nullptr.
    */
-  template <typename PT, typename CT>
-  already_AddRefed<dom::Element> InsertBreak(
-      Selection& aSelection, const EditorDOMPointBase<PT, CT>& aPointToInsert,
+  MOZ_CAN_RUN_SCRIPT already_AddRefed<dom::Element> InsertBreak(
+      Selection& aSelection, const EditorDOMPoint& aPointToInsert,
       nsIEditor::EDirection aSelect);
 
   /**
@@ -267,12 +271,12 @@ class MOZ_STACK_CLASS WSRunObject final {
   // point (the point to create the wsRunObject, passed to its constructor).
   // It makes any needed conversion to adjacent ws to retain its
   // significance.
-  nsresult DeleteWSBackward();
+  MOZ_CAN_RUN_SCRIPT nsresult DeleteWSBackward();
 
   // DeleteWSForward deletes a single visible piece of ws after the ws point
   // (the point to create the wsRunObject, passed to its constructor).  It
   // makes any needed conversion to adjacent ws to retain its significance.
-  nsresult DeleteWSForward();
+  MOZ_CAN_RUN_SCRIPT nsresult DeleteWSForward();
 
   // PriorVisibleNode() returns the first piece of visible thing before aPoint.
   // If there is no visible ws qualifying it returns what is before the ws run.
@@ -310,7 +314,7 @@ class MOZ_STACK_CLASS WSRunObject final {
 
   // AdjustWhitespace examines the ws object for nbsp's that can
   // be safely converted to regular ascii space and converts them.
-  nsresult AdjustWhitespace();
+  MOZ_CAN_RUN_SCRIPT nsresult AdjustWhitespace();
 
  protected:
   // WSFragment represents a single run of ws (all leadingws, or all normalws,
@@ -370,8 +374,8 @@ class MOZ_STACK_CLASS WSRunObject final {
   nsIContent* GetNextWSNodeInner(nsINode* aStartNode, nsINode* aBlockParent);
   nsIContent* GetNextWSNode(const EditorDOMPoint& aPoint,
                             nsINode* aBlockParent);
-  nsresult PrepareToDeleteRangePriv(WSRunObject* aEndObject);
-  nsresult PrepareToSplitAcrossBlocksPriv();
+  MOZ_CAN_RUN_SCRIPT nsresult PrepareToDeleteRangePriv(WSRunObject* aEndObject);
+  MOZ_CAN_RUN_SCRIPT nsresult PrepareToSplitAcrossBlocksPriv();
 
   /**
    * DeleteRange() removes the range between aStartPoint and aEndPoint.
@@ -382,9 +386,8 @@ class MOZ_STACK_CLASS WSRunObject final {
    * When aEndPoint is in a text node, removes the text data before the point.
    * Removes any nodes between them.
    */
-  template <typename PT1, typename CT1, typename PT2, typename CT2>
-  nsresult DeleteRange(const EditorDOMPointBase<PT1, CT1>& aStartPoint,
-                       const EditorDOMPointBase<PT2, CT2>& aEndPoint);
+  MOZ_CAN_RUN_SCRIPT nsresult DeleteRange(const EditorDOMPoint& aStartPoint,
+                                          const EditorDOMPoint& aEndPoint);
 
   /**
    * GetNextCharPoint() returns next character's point of aPoint.  If there is
@@ -422,6 +425,7 @@ class MOZ_STACK_CLASS WSRunObject final {
    * InsertNBSPAndRemoveFollowingASCIIWhitespaces() inserts an NBSP first.
    * Then, if following characters are ASCII whitespaces, will remove them.
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult InsertNBSPAndRemoveFollowingASCIIWhitespaces(WSPoint aPoint);
 
   /**
@@ -475,7 +479,7 @@ class MOZ_STACK_CLASS WSRunObject final {
                              bool aForward) const;
 
   char16_t GetCharAt(dom::Text* aTextNode, int32_t aOffset) const;
-  nsresult CheckTrailingNBSPOfRun(WSFragment* aRun);
+  MOZ_CAN_RUN_SCRIPT nsresult CheckTrailingNBSPOfRun(WSFragment* aRun);
 
   /**
    * ReplacePreviousNBSPIfUnncessary() replaces previous character of aPoint
@@ -485,20 +489,20 @@ class MOZ_STACK_CLASS WSRunObject final {
    * @param aPoint      Current insertion point.  Its previous character is
    *                    unnecessary NBSP will be checked.
    */
-  template <typename PT, typename CT>
-  nsresult ReplacePreviousNBSPIfUnncessary(
-      WSFragment* aRun, const EditorDOMPointBase<PT, CT>& aPoint);
+  MOZ_CAN_RUN_SCRIPT nsresult ReplacePreviousNBSPIfUnncessary(
+      WSFragment* aRun, const EditorDOMPoint& aPoint);
 
+  MOZ_CAN_RUN_SCRIPT
   nsresult CheckLeadingNBSP(WSFragment* aRun, nsINode* aNode, int32_t aOffset);
 
-  nsresult Scrub();
+  MOZ_CAN_RUN_SCRIPT nsresult Scrub();
   bool IsBlockNode(nsINode* aNode);
 
-  EditorRawDOMPoint StartPoint() const {
-    return EditorRawDOMPoint(mStartNode, mStartOffset);
+  EditorDOMPoint StartPoint() const {
+    return EditorDOMPoint(mStartNode, mStartOffset);
   }
-  EditorRawDOMPoint EndPoint() const {
-    return EditorRawDOMPoint(mEndNode, mEndOffset);
+  EditorDOMPoint EndPoint() const {
+    return EditorDOMPoint(mEndNode, mEndOffset);
   }
 
   // The node passed to our constructor.

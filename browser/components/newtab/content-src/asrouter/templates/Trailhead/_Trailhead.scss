@@ -10,11 +10,6 @@
   height: auto;
   top: 100px;
 
-  @media (max-height: 700px) {
-    position: absolute;
-    top: 20px;
-  }
-
   a {
     color: $white;
     text-decoration: underline;
@@ -68,7 +63,7 @@
 
     .trailheadContent {
       .trailheadBenefits {
-        background: url('#{$image-path}sync-devices.svg');
+        background: url('#{$image-path}sync-devices-trailhead.svg');
         background-position: center center;
         background-repeat: no-repeat;
         background-size: contain;
@@ -183,18 +178,38 @@
 
     button,
     input {
-      border: 0;
       width: 100%;
     }
 
     input {
       background-color: $white;
+      border: 1px solid $grey-50;
+      box-shadow: none;
       color: $grey-70;
       font-size: 15px;
+      transition: border-color 150ms, box-shadow 150ms;
+
+      &:hover {
+        border-color: $grey-90;
+      }
+
+      &:focus {
+        border-color: $blue-50;
+        box-shadow: 0 0 0 3px $email-input-focus;
+      }
+
+      &.invalid {
+        border-color: $red-60;
+      }
+
+      &.invalid:focus {
+        box-shadow: 0 0 0 3px $email-input-invalid;
+      }
     }
 
     button {
       background-color: $blue-60;
+      border: 0;
       cursor: pointer;
       display: block;
       font-size: 15px;
@@ -356,9 +371,10 @@
     color: var(--newtab-text-conditional-color);
     background: var(--trailhead-card-button-background-color);
     border: 0;
-    height: 30px;
+    margin: 14px;
     min-width: 70%;
-    padding: 0 14px;
+    padding: 6px 14px;
+    white-space: pre-wrap;
 
     &:focus,
     &:hover {
@@ -376,9 +392,8 @@
   }
 
   .onboardingButtonContainer {
-    height: 60px;
     position: absolute;
-    bottom: 0;
+    bottom: 16px;
     left: 0;
     width: 100%;
     text-align: center;
@@ -386,6 +401,14 @@
 }
 
 .inline-onboarding {
+  &.activity-stream.welcome {
+    overflow-y: scroll;
+  }
+
+  .modalOverlayInner {
+    position: absolute;
+  }
+
   .outer-wrapper {
     position: relative;
 
@@ -398,12 +421,5 @@
 
   .asrouter-toggle {
     position: absolute;
-  }
-}
-
-// If the window is too short, we need to allow scrolling so user can get to Start Browsing button.
-@media (max-height: 700px) {
-  .activity-stream.welcome.inline-onboarding {
-    overflow: auto;
   }
 }

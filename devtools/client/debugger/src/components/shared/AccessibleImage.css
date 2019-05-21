@@ -80,6 +80,11 @@ html[dir="rtl"] .img.arrow {
   mask-size: 12px 12px;
 }
 
+.img.window {
+  mask-image: url(resource://devtools/client/debugger/images/window.svg);
+  mask-size: 12px 12px;
+}
+
 .img.file {
   mask-image: url(resource://devtools/client/debugger/images/file-small.svg);
   mask-size: 12px 12px;
@@ -147,16 +152,6 @@ html[dir="rtl"] .img.more-tabs {
 
 .img.resume {
   mask-image: url(resource://devtools/client/debugger/images/resume.svg);
-}
-
-.img.reverseStepIn {
-  mask-image: url(resource://devtools/client/debugger/images/stepIn.svg);
-  transform: scaleX(-1);
-}
-
-.img.reverseStepOut {
-  mask-image: url(resource://devtools/client/debugger/images/stepOut.svg);
-  transform: scaleX(-1);
 }
 
 .img.reverseStepOver {

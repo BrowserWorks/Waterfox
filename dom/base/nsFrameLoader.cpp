@@ -84,6 +84,7 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/FrameLoaderBinding.h"
 #include "mozilla/dom/MozFrameLoaderOwnerBinding.h"
+#include "mozilla/dom/SessionStoreListener.h"
 #include "mozilla/gfx/CrossProcessPaint.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/layout/RenderFrame.h"
@@ -363,7 +364,7 @@ nsFrameLoader* nsFrameLoader::Create(Element* aOwner, BrowsingContext* aOpener,
 
 /* static */
 nsFrameLoader* nsFrameLoader::Create(
-    mozilla::dom::Element* aOwner,
+    mozilla::dom::Element* aOwner, BrowsingContext* aPreservedBrowsingContext,
     const mozilla::dom::RemotenessOptions& aOptions) {
   NS_ENSURE_TRUE(aOwner, nullptr);
   // This version of Create is only called for Remoteness updates, so we can
@@ -380,7 +381,12 @@ nsFrameLoader* nsFrameLoader::Create(
   if (hasOpener) {
     opener = aOptions.mOpener.Value().Value().get();
   }
-  RefPtr<BrowsingContext> context = CreateBrowsingContext(aOwner, opener);
+  RefPtr<BrowsingContext> context;
+  if (aPreservedBrowsingContext) {
+    context = aPreservedBrowsingContext;
+  } else {
+    context = CreateBrowsingContext(aOwner, opener);
+  }
   NS_ENSURE_TRUE(context, nullptr);
   return new nsFrameLoader(aOwner, context, aOptions);
 }
@@ -1927,6 +1933,11 @@ void nsFrameLoader::DestroyDocShell() {
     mChildMessageManager->FireUnloadEvent();
   }
 
+  if (mSessionStoreListener) {
+    mSessionStoreListener->RemoveListeners();
+    mSessionStoreListener = nullptr;
+  }
+
   // Destroy the docshell.
   if (GetDocShell()) {
     GetDocShell()->Destroy();
@@ -2512,6 +2523,16 @@ nsresult nsFrameLoader::UpdatePositionAndSize(nsSubDocumentFrame* aIFrame) {
   return NS_OK;
 }
 
+void nsFrameLoader::SendIsUnderHiddenEmbedderElement(
+    bool aIsUnderHiddenEmbedderElement) {
+  MOZ_ASSERT(IsRemoteFrame());
+
+  if (mBrowserBridgeChild) {
+    mBrowserBridgeChild->SetIsUnderHiddenEmbedderElement(
+        aIsUnderHiddenEmbedderElement);
+  }
+}
+
 void nsFrameLoader::UpdateBaseWindowPositionAndSize(
     nsSubDocumentFrame* aIFrame) {
   nsCOMPtr<nsIBaseWindow> baseWindow = GetDocShell(IgnoreErrors());
@@ -3008,6 +3029,13 @@ nsresult nsFrameLoader::EnsureMessageManager() {
     mChildMessageManager = InProcessBrowserChildMessageManager::Create(
         GetDocShell(), mOwnerContent, mMessageManager);
     NS_ENSURE_TRUE(mChildMessageManager, NS_ERROR_UNEXPECTED);
+
+    // Set up a TabListener for sessionStore
+    if (XRE_IsParentProcess()) {
+      mSessionStoreListener = new TabListener(GetDocShell(), mOwnerContent);
+      rv = mSessionStoreListener->Init();
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
   }
   return NS_OK;
 }
@@ -3152,6 +3180,22 @@ void nsFrameLoader::RequestUpdatePosition(ErrorResult& aRv) {
       aRv.Throw(rv);
     }
   }
+}
+
+bool nsFrameLoader::RequestTabStateFlush(uint32_t aFlushId) {
+  if (mSessionStoreListener) {
+    mSessionStoreListener->ForceFlushFromParent(aFlushId);
+    // No async ipc call is involved in parent only case
+    return false;
+  }
+
+  // If remote browsing (e10s), handle this with the BrowserParent.
+  if (mBrowserParent) {
+    Unused << mBrowserParent->SendFlushTabState(aFlushId);
+    return true;
+  }
+
+  return false;
 }
 
 void nsFrameLoader::Print(uint64_t aOuterWindowID,
@@ -3450,4 +3494,23 @@ JSObject* nsFrameLoader::WrapObject(JSContext* cx,
   JS::RootedObject result(cx);
   FrameLoader_Binding::Wrap(cx, this, this, aGivenProto, &result);
   return result;
+}
+
+void nsFrameLoader::SkipBrowsingContextDetach() {
+  if (IsRemoteFrame()) {
+    // OOP Browser - Go directly over Browser Parent
+    if (mBrowserParent) {
+      Unused << mBrowserParent->SendSkipBrowsingContextDetach();
+    }
+    // OOP IFrame - Through Browser Bridge Parent, set on browser child
+    else if (mBrowserBridgeChild) {
+      Unused << mBrowserBridgeChild->SendSkipBrowsingContextDetach();
+    }
+    return;
+  }
+
+  // In process
+  RefPtr<nsDocShell> docshell = GetDocShell();
+  MOZ_ASSERT(docshell);
+  docshell->SkipBrowsingContextDetach();
 }

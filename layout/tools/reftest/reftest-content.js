@@ -219,7 +219,7 @@ function setupPrintMode() {
    ps.footerStrLeft = "";
    ps.footerStrCenter = "";
    ps.footerStrRight = "";
-   docShell.contentViewer.setPageMode(true, ps);
+   docShell.contentViewer.setPageModeForTesting(/* aPageMode */ true, ps);
 }
 
 // Prints current page to a PDF file and calls callback when sucessfully
@@ -940,7 +940,7 @@ function CheckLayerAssertions(contentRootElement)
         try {
             var elements = layerNameToElementsMap[layerName];
             oneOfEach.push(elements[0]);
-            var numberOfLayers = windowUtils().numberOfAssignedPaintedLayers(elements, elements.length);
+            var numberOfLayers = windowUtils().numberOfAssignedPaintedLayers(elements);
             if (numberOfLayers !== 1) {
                 SendFailedAssignedLayer('these elements are assigned to ' + numberOfLayers +
                                         ' different layers, instead of sharing just one layer: ' +
@@ -954,7 +954,7 @@ function CheckLayerAssertions(contentRootElement)
     // Check that elements with different reftest-assigned-layer are assigned to different PaintedLayers.
     if (oneOfEach.length > 0) {
         try {
-            var numberOfLayers = windowUtils().numberOfAssignedPaintedLayers(oneOfEach, oneOfEach.length);
+            var numberOfLayers = windowUtils().numberOfAssignedPaintedLayers(oneOfEach);
             if (numberOfLayers !== oneOfEach.length) {
                 SendFailedAssignedLayer('these elements are assigned to ' + numberOfLayers +
                                         ' different layers, instead of having none in common (expected ' +

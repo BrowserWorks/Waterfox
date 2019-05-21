@@ -40,6 +40,11 @@
               label="&customizeMenu.removeExtension.label;"
               contexttype="toolbaritem"
               class="customize-context-removeExtension"/>
+    <menuitem oncommand="ToolbarContextMenu.reportExtensionForContextAction(this.parentElement, 'toolbar_context_menu')"
+              accesskey="&customizeMenu.reportExtension.accesskey;"
+              label="&customizeMenu.reportExtension.label;"
+              contexttype="toolbaritem"
+              class="customize-context-reportExtension"/>
     <menuseparator/>
     <menuitem oncommand="gCustomizeMode.addToPanel(document.popupNode)"
               id="customizationPanelItemContextMenuPin"
@@ -122,6 +127,20 @@
     <popupnotificationcontent id="update-manual-notification-content" orient="vertical">
       <description id="update-manual-description" data-lazy-l10n-id="appmenu-update-manual-message"></description>
       <label id="update-manual-whats-new" is="text-link"  data-lazy-l10n-id="appmenu-update-whats-new"/>
+    </popupnotificationcontent>
+  </popupnotification>
+
+  <popupnotification id="appMenu-update-unsupported-notification"
+                     popupid="update-unsupported"
+                     data-lazy-l10n-id="appmenu-update-unsupported"
+                     data-l10n-attrs="buttonlabel, buttonaccesskey, secondarybuttonlabel, secondarybuttonaccesskey"
+                     closebuttonhidden="true"
+                     dropmarkerhidden="true"
+                     checkboxhidden="true"
+                     buttonhighlight="true"
+                     hidden="true">
+    <popupnotificationcontent id="update-unsupported-notification-content" orient="vertical">
+      <description id="update-unsupported-description" data-lazy-l10n-id="appmenu-update-unsupported-message"></description>
     </popupnotificationcontent>
   </popupnotification>
 
@@ -212,6 +231,7 @@
         <toolbarbutton class="panel-banner-item"
                        label-update-available="&updateAvailable.panelUI.label;"
                        label-update-manual="&updateManual.panelUI.label;"
+                       label-update-unsupported="&updateUnsupported.panelUI.label;"
                        label-update-restart="&updateRestart.panelUI.label2;"
                        oncommand="PanelUI._onBannerItemSelected(event)"
                        wrap="true"
@@ -316,7 +336,7 @@
         <toolbarbutton id="appMenu-logins-button"
                        class="subviewbutton subviewbutton-iconic"
                        label="&logins.label;"
-                       oncommand="LoginHelper.openPasswordManager(window)"
+                       oncommand="LoginHelper.openPasswordManager(window, { entryPoint: 'mainmenu' })"
                        />
         <toolbarbutton id="appMenu-addons-button"
                        class="subviewbutton subviewbutton-iconic"
@@ -405,7 +425,7 @@
         <toolbarbutton id="appMenuViewHistorySidebar"
                        label="&appMenuHistory.viewSidebar.label;"
                        label-checked="&appMenuHistory.hideSidebar.label;"
-                       label-unchecked="&appMenuHistory.viewSidebar.label;"                      
+                       label-unchecked="&appMenuHistory.viewSidebar.label;"
                        type="checkbox"
                        class="subviewbutton subviewbutton-iconic"
                        key="key_gotoHistory"

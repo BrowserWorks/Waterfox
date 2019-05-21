@@ -118,6 +118,13 @@ struct RequestData
   nsCString matchedList;
 };
 
+/**
+ * A PBrowser manages a maximal locally connected subtree of BrowsingContexts
+ * in a content process.
+ *
+ * See `dom/docs/Fission-IPC-Diagram.svg` for an overview of the DOM IPC
+ * actors.
+ */
 nested(upto inside_cpow) sync protocol PBrowser
 {
     manager PContent;
@@ -549,8 +556,15 @@ parent:
     async OnContentBlockingEvent(WebProgressData? aWebProgressData,
                                  RequestData aRequestData, uint32_t aEvent);
 
+    async SessionStoreUpdate(nsCString? aDocShellCaps,
+                             bool? aPrivatedMode,
+                             nsCString[] aPositions,
+                             int32_t[] aPositionDescendants,
+                             uint32_t aFlushId);
+
 child:
     async NativeSynthesisResponse(uint64_t aObserverId, nsCString aResponse);
+    async FlushTabState(uint32_t aFlushId);
 
 parent:
 
@@ -646,6 +660,8 @@ child:
     async SizeModeChanged(nsSizeMode sizeMode);
 
     async ChildToParentMatrix(Matrix4x4 aMatrix);
+
+    async SetIsUnderHiddenEmbedderElement(bool aIsUnderHiddenEmbedderElement);
 
     async ParentActivated(bool aActivated);
 
@@ -932,6 +948,7 @@ child:
      */
     async GetContentBlockingLog() returns(nsCString log, bool success);
 
+    async SkipBrowsingContextDetach();
 parent:
     /** Records a history visit. */
     async VisitURI(URIParams aURI, URIParams? aLastVisitedURI,

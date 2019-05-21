@@ -56,6 +56,10 @@ async function setLogPoint(dbg, index, value) {
   await typeInPanel(dbg, value);
 }
 
+async function waitForConditionalPanelFocus(dbg) {
+  await waitFor(() => dbg.win.document.activeElement.tagName === "TEXTAREA");
+}
+
 add_task(async function() {
   const dbg = await initDebugger("doc-scripts.html", "simple2");
   await pushPref("devtools.debugger.features.column-breakpoints", true);
@@ -80,6 +84,29 @@ add_task(async function() {
   is(bp.options.condition, "12", "breakpoint is created with the condition");
   await assertEditorBreakpoint(dbg, 5, { hasCondition: true });
 
+  info("Hit 'Enter' when the cursor is in the conditional statement");
+  rightClickElement(dbg, "gutter", 5);
+  selectContextMenuItem(dbg, `${selectors.editConditionItem}`);
+  await waitForConditionalPanelFocus(dbg);
+  pressKey(dbg, "Left");
+  pressKey(dbg, "Enter");
+  await waitForCondition(dbg, 12);
+
+  bp = findBreakpoint(dbg, "simple2", 5);
+  is(bp.options.condition, "12", "Hit 'Enter' doesn't add a new line");
+
+  info("Hit 'Alt+Enter' when the cursor is in the conditional statement");
+  rightClickElement(dbg, "gutter", 5);
+  selectContextMenuItem(dbg, `${selectors.editConditionItem}`);
+  await waitForConditionalPanelFocus(dbg);
+  pressKey(dbg, "Left");
+  pressKey(dbg, "AltEnter");
+  pressKey(dbg, "Enter");
+  await waitForCondition(dbg, "1\n2");
+
+  bp = findBreakpoint(dbg, "simple2", 5);
+  is(bp.options.condition, "1\n2", "Hit 'Alt+Enter' adds a new line");
+
   clickElement(dbg, "gutter", 5);
   await waitForDispatch(dbg, "REMOVE_BREAKPOINT");
   bp = findBreakpoint(dbg, "simple2", 5);
@@ -95,6 +122,19 @@ add_task(async function() {
   bp = findBreakpoint(dbg, "simple2", 5);
   is(bp.options.condition, "1", "breakpoint is created with the condition");
   await assertEditorBreakpoint(dbg, 5, { hasCondition: true });
+
+  info("Double click the conditional breakpoint in secondary pane");
+  dblClickElement(dbg, "conditionalBreakpointInSecPane");
+  is(
+    dbg.win.document.activeElement.tagName,
+    "TEXTAREA",
+    "The textarea of conditional breakpoint panel is focused"
+  );
+  
+  info("Click the conditional breakpoint in secondary pane");
+  await clickElement(dbg, "conditionalBreakpointInSecPane");
+  let conditonalPanel = findElement(dbg, "conditionalPanel");
+  is(conditonalPanel, null, "The conditional breakpoint panel is closed");
 
   rightClickElement(dbg, "breakpointItem", 2);
   info('select "remove condition"');
@@ -114,4 +154,17 @@ add_task(async function() {
   await altClickElement(dbg, "gutter", 6);
   bp = await waitForBreakpoint(dbg, "simple2", 6);
   is(bp.options.logValue, "displayName", "logPoint has default value");
+
+  info("Double click the logpoint in secondary pane");
+  dblClickElement(dbg, "logPointInSecPane");
+  is(
+    dbg.win.document.activeElement.tagName,
+    "TEXTAREA",
+    "The textarea of logpoint panel is focused"
+  );
+  
+  info("Click the logpoint in secondary pane");
+  await clickElement(dbg, "logPointInSecPane");
+  let logPointPanel = findElement(dbg, "logPointPanel");
+  is(logPointPanel, null, "The logpoint panel is closed");
 });

@@ -121,12 +121,6 @@ var UrlbarUtils = {
     CANCELED: 4,
   },
 
-  // This defines possible reasons for canceling a query.
-  CANCEL_REASON: {
-    // 1 is intentionally left in case we want a none/undefined/other later.
-    BLUR: 2,
-  },
-
   // Limit the length of titles and URLs we display so layout doesn't spend too
   // much time building text runs.
   MAX_TEXT_LENGTH: 255,
@@ -492,11 +486,25 @@ class UrlbarProvider {
     throw new Error("Trying to access the base class, must be overridden");
   }
   /**
-   * List of UrlbarUtils.RESULT_SOURCE, representing the data sources used by
-   * the provider.
+   * Whether this provider should be invoked for the given context.
+   * If this method returns false, the providers manager won't start a query
+   * with this provider, to save on resources.
+   * @param {UrlbarQueryContext} queryContext The query context object
+   * @returns {boolean} Whether this provider should be invoked for the search.
    * @abstract
    */
-  get sources() {
+  isActive(queryContext) {
+    throw new Error("Trying to access the base class, must be overridden");
+  }
+  /**
+   * Whether this provider wants to restrict results to just itself.
+   * Other providers won't be invoked, unless this provider doesn't
+   * support the current query.
+   * @param {UrlbarQueryContext} queryContext The query context object
+   * @returns {boolean} Whether this provider wants to restrict results.
+   * @abstract
+   */
+  isRestricting(queryContext) {
     throw new Error("Trying to access the base class, must be overridden");
   }
   /**

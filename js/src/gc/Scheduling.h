@@ -308,13 +308,25 @@
 #define gc_Scheduling_h
 
 #include "mozilla/Atomics.h"
+#include "mozilla/DebugOnly.h"
 
 #include "js/HashTable.h"
 
 namespace js {
 
-// This will eventually have internal reasons too.
-using JS::MemoryUse;
+#define JS_FOR_EACH_INTERNAL_MEMORY_USE(_)      \
+  _(ArrayBufferContents)                        \
+  _(StringContents)
+
+#define JS_FOR_EACH_MEMORY_USE(_)               \
+  JS_FOR_EACH_PUBLIC_MEMORY_USE(_)              \
+  JS_FOR_EACH_INTERNAL_MEMORY_USE(_)
+
+enum class MemoryUse : uint8_t {
+#define DEFINE_MEMORY_USE(Name) Name,
+  JS_FOR_EACH_MEMORY_USE(DEFINE_MEMORY_USE)
+#undef DEFINE_MEMORY_USE
+};
 
 namespace gc {
 
@@ -662,18 +674,27 @@ class MemoryTracker {
 #endif
 
   void addMemory(Cell* cell, size_t nbytes, MemoryUse use) {
+    MOZ_ASSERT(cell);
+    MOZ_ASSERT(nbytes);
+    mozilla::DebugOnly<size_t> initialBytes(bytes_);
+    MOZ_ASSERT(initialBytes + nbytes > initialBytes);
+
+    bytes_ += nbytes;
+
 #ifdef DEBUG
     trackMemory(cell, nbytes, use);
 #endif
-    MOZ_ASSERT(bytes_ + nbytes >= bytes_);
-    bytes_ += nbytes;
   }
   void removeMemory(Cell* cell, size_t nbytes, MemoryUse use) {
+    MOZ_ASSERT(cell);
+    MOZ_ASSERT(nbytes);
+    MOZ_ASSERT(bytes_ >= nbytes);
+
+    bytes_ -= nbytes;
+
 #ifdef DEBUG
     untrackMemory(cell, nbytes, use);
 #endif
-    MOZ_ASSERT(bytes_ >= nbytes);
-    bytes_ -= nbytes;
   }
 
   size_t bytes() const { return bytes_; }

@@ -106,7 +106,7 @@ const XPI_PERMISSION                  = "install";
 
 const XPI_SIGNATURE_CHECK_PERIOD      = 24 * 60 * 60;
 
-const DB_SCHEMA = 30;
+const DB_SCHEMA = 31;
 
 XPCOMUtils.defineLazyPreferenceGetter(this, "enabledScopesPref",
                                       PREF_EM_ENABLED_SCOPES,
@@ -1987,18 +1987,6 @@ class BootstrapScope {
   }
 }
 
-function addMissingIntermediateCertificate() {
-  const PREF_SIGNER_HOTFIXED = "extensions.signer.hotfixed";
-  if (!Services.prefs.getBoolPref(PREF_SIGNER_HOTFIXED, false)) {
-    try {
-      XPIInstall.addMissingIntermediateCertificate();
-      Services.prefs.setBoolPref(PREF_SIGNER_HOTFIXED, true);
-    } catch (e) {
-      logger.error("failed to add new intermediate certificate:", e);
-    }
-  }
-}
-
 let resolveDBReady;
 let dbReadyPromise = new Promise(resolve => {
   resolveDBReady = resolve;
@@ -2244,11 +2232,6 @@ var XPIProvider = {
    *        if it is a new profile or the version is unknown
    */
   startup(aAppChanged, aOldAppVersion, aOldPlatformVersion) {
-    // Add missing certificate (bug 1548973). Mistakenly disabled add-ons are
-    // going to be re-enabled because the schema version bump forces a new
-    // signature verification check.
-    addMissingIntermediateCertificate();
-
     try {
       AddonManagerPrivate.recordTimestamp("XPI_startup_begin");
 
@@ -2336,6 +2319,9 @@ var XPIProvider = {
             if (AddonManager.getStartupChanges(AddonManager.STARTUP_CHANGE_INSTALLED)
                             .includes(addon.id))
               reason = BOOTSTRAP_REASONS.ADDON_INSTALL;
+            else if (AddonManager.getStartupChanges(AddonManager.STARTUP_CHANGE_ENABLED)
+                                 .includes(addon.id))
+              reason = BOOTSTRAP_REASONS.ADDON_ENABLE;
             BootstrapScope.get(addon).startup(reason);
           } catch (e) {
             logger.error("Failed to load bootstrap addon " + addon.id + " from " +
@@ -2588,10 +2574,13 @@ var XPIProvider = {
    *        reload them later
    * @param {string} [aAppChanged]
    *        See checkForChanges
+   * @param {string?} [aOldAppVersion]
+   *        The version of the application last run with this profile or null
+   *        if it is a new profile or the version is unknown
    * @returns {boolean}
    *        True if any new add-ons were installed
    */
-  installDistributionAddons(aManifests, aAppChanged) {
+  installDistributionAddons(aManifests, aAppChanged, aOldAppVersion) {
     let distroDir;
     try {
       distroDir = FileUtils.getDir(KEY_APP_DISTRIBUTION, [DIR_EXTENSIONS]);
@@ -2620,7 +2609,7 @@ var XPIProvider = {
 
       try {
         let loc = XPIStates.getLocation(KEY_APP_PROFILE);
-        let addon = awaitPromise(XPIInstall.installDistributionAddon(id, file, loc));
+        let addon = awaitPromise(XPIInstall.installDistributionAddon(id, file, loc, aOldAppVersion));
 
         if (addon) {
           // aManifests may contain a copy of a newly installed add-on's manifest
@@ -2706,7 +2695,7 @@ var XPIProvider = {
 
     // If the application has changed then check for new distribution add-ons
     if (Services.prefs.getBoolPref(PREF_INSTALL_DISTRO_ADDONS, true)) {
-      updated = this.installDistributionAddons(manifests, aAppChanged);
+      updated = this.installDistributionAddons(manifests, aAppChanged, aOldAppVersion);
       if (updated) {
         updateReasons.push("installDistributionAddons");
       }

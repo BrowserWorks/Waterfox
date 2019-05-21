@@ -4358,13 +4358,13 @@ bool CacheIRCompiler::emitCallIsSuspendedGeneratorResult() {
                           &GeneratorObject::class_, scratch2, scratch,
                           &returnFalse);
 
-  // If the resumeIndex slot holds an int32 value < RESUME_INDEX_CLOSING,
+  // If the resumeIndex slot holds an int32 value < RESUME_INDEX_RUNNING,
   // the generator is suspended.
   Address addr(scratch, AbstractGeneratorObject::offsetOfResumeIndexSlot());
   masm.branchTestInt32(Assembler::NotEqual, addr, &returnFalse);
   masm.unboxInt32(addr, scratch);
   masm.branch32(Assembler::AboveOrEqual, scratch,
-                Imm32(AbstractGeneratorObject::RESUME_INDEX_CLOSING),
+                Imm32(AbstractGeneratorObject::RESUME_INDEX_RUNNING),
                 &returnFalse);
 
   masm.moveValue(BooleanValue(true), output.valueReg());
@@ -4382,16 +4382,6 @@ bool CacheIRCompiler::emitMetaTwoByte() {
   mozilla::Unused << reader.readByte();  // meta kind
   mozilla::Unused << reader.readByte();  // payload byte 1
   mozilla::Unused << reader.readByte();  // payload byte 2
-
-  return true;
-}
-
-// This op generates no code. It is consumed by BaselineInspector.
-bool CacheIRCompiler::emitMetaThreeByte() {
-  mozilla::Unused << reader.readByte();  // meta kind
-  mozilla::Unused << reader.readByte();  // payload byte 1
-  mozilla::Unused << reader.readByte();  // payload byte 2
-  mozilla::Unused << reader.readByte();  // payload byte 3
 
   return true;
 }

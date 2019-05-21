@@ -260,7 +260,7 @@ To see more help for a specific command, run:
                 mod = imp.new_module(b'mach.commands')
                 sys.modules[b'mach.commands'] = mod
 
-            module_name = 'mach.commands.%s' % uuid.uuid1().get_hex()
+            module_name = 'mach.commands.%s' % uuid.uuid4().get_hex()
 
         try:
             imp.load_source(module_name, path)
@@ -398,6 +398,8 @@ To see more help for a specific command, run:
         if self.populate_context_handler:
             self.populate_context_handler(context)
             context = ContextWrapper(context, self.populate_context_handler)
+
+        Registrar.register_conditional_names(context)
 
         parser = self.get_argument_parser(context)
 

@@ -38,7 +38,7 @@ interface GlobalEventHandlers {
            attribute EventHandler onclick;
            attribute EventHandler onclose;
            attribute EventHandler oncontextmenu;
-           //(Not implemented)attribute EventHandler oncuechange;
+           attribute EventHandler oncuechange;
            attribute EventHandler ondblclick;
            attribute EventHandler ondrag;
            attribute EventHandler ondragend;
@@ -155,7 +155,11 @@ interface WindowEventHandlers {
            attribute EventHandler onpagehide;
            attribute EventHandler onpageshow;
            attribute EventHandler onpopstate;
+           [Func="mozilla::dom::DOMPrefs::dom_promise_rejection_events_enabled"]
+           attribute EventHandler onrejectionhandled;
            attribute EventHandler onstorage;
+           [Func="mozilla::dom::DOMPrefs::dom_promise_rejection_events_enabled"]
+           attribute EventHandler onunhandledrejection;
            attribute EventHandler onunload;
 };
 

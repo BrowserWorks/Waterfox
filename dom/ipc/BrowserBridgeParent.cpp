@@ -5,10 +5,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/BrowserBridgeParent.h"
+#include "mozilla/dom/BrowserParent.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/ContentProcessManager.h"
 #include "mozilla/dom/CanonicalBrowsingContext.h"
 #include "mozilla/dom/BrowsingContextGroup.h"
+#include "mozilla/layers/InputAPZContext.h"
 
 using namespace mozilla::ipc;
 using namespace mozilla::layout;
@@ -98,6 +100,15 @@ nsresult BrowserBridgeParent::Init(const nsString& aPresentationURL,
   return NS_OK;
 }
 
+CanonicalBrowsingContext* BrowserBridgeParent::GetBrowsingContext() {
+  return mBrowserParent->GetBrowsingContext();
+}
+
+BrowserParent* BrowserBridgeParent::Manager() {
+  MOZ_ASSERT(mIPCOpen);
+  return static_cast<BrowserParent*>(PBrowserBridgeParent::Manager());
+}
+
 void BrowserBridgeParent::Destroy() {
   if (mBrowserParent) {
     mBrowserParent->Destroy();
@@ -147,6 +158,35 @@ IPCResult BrowserBridgeParent::RecvNavigateByKey(
   return IPC_OK();
 }
 
+IPCResult BrowserBridgeParent::RecvDispatchSynthesizedMouseEvent(
+    const WidgetMouseEvent& aEvent) {
+  if (aEvent.mMessage != eMouseMove ||
+      aEvent.mReason != WidgetMouseEvent::eSynthesized) {
+    return IPC_FAIL(this, "Unexpected event type");
+  }
+
+  WidgetMouseEvent event = aEvent;
+  // Convert mRefPoint from the dispatching child process coordinate space
+  // to the parent coordinate space. The SendRealMouseEvent call will convert
+  // it into the dispatchee child process coordinate space
+  event.mRefPoint = Manager()->TransformChildToParent(event.mRefPoint);
+  // We need to set up an InputAPZContext on the stack because
+  // BrowserParent::SendRealMouseEvent requires one. But the only thing in
+  // that context that is actually used in this scenario is the layers id,
+  // and we already have that on the mouse event.
+  layers::InputAPZContext context(
+      layers::ScrollableLayerGuid(event.mLayersId, 0,
+                                  layers::ScrollableLayerGuid::NULL_SCROLL_ID),
+      0, nsEventStatus_eIgnore);
+  mBrowserParent->SendRealMouseEvent(event);
+  return IPC_OK();
+}
+
+IPCResult BrowserBridgeParent::RecvSkipBrowsingContextDetach() {
+  mBrowserParent->SkipBrowsingContextDetach();
+  return IPC_OK();
+}
+
 IPCResult BrowserBridgeParent::RecvActivate() {
   mBrowserParent->Activate();
   return IPC_OK();
@@ -154,6 +194,13 @@ IPCResult BrowserBridgeParent::RecvActivate() {
 
 IPCResult BrowserBridgeParent::RecvDeactivate() {
   mBrowserParent->Deactivate();
+  return IPC_OK();
+}
+
+IPCResult BrowserBridgeParent::RecvSetIsUnderHiddenEmbedderElement(
+    const bool& aIsUnderHiddenEmbedderElement) {
+  Unused << mBrowserParent->SendSetIsUnderHiddenEmbedderElement(
+      aIsUnderHiddenEmbedderElement);
   return IPC_OK();
 }
 

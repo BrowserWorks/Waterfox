@@ -768,6 +768,10 @@ class WorkerPrivate : public RelativeTimeline {
     return mLoadInfo.mServiceWorkersTestingInWindow;
   }
 
+  bool IsWatchedByDevtools() const {
+    return mLoadInfo.mWatchedByDevtools;
+  }
+
   // Determine if the worker is currently loading its top level script.
   bool IsLoadingWorkerScript() const { return mLoadingWorkerScript; }
 
@@ -1140,8 +1144,6 @@ class WorkerPrivate : public RelativeTimeline {
   // We expose some extra testing functions in that case.
   bool mIsInAutomation;
 
-  // This pointer will be null if dom.performance.enable_scheduler_timing is
-  // false (default value)
   RefPtr<mozilla::PerformanceCounter> mPerformanceCounter;
 
   nsString mID;

@@ -18,6 +18,7 @@
 // Supported test types
 const TEST_BENCHMARK = "benchmark";
 const TEST_PAGE_LOAD = "pageload";
+const TEST_SCENARIO = "scenario";
 
 // when the browser starts this webext runner will start automatically; we
 // want to give the browser some time (ms) to settle before starting tests
@@ -42,6 +43,7 @@ var pageCycles = 0;
 var pageCycle = 0;
 var testURL;
 var testTabID = 0;
+var scenarioTestTime = 60000;
 var getHero = false;
 var getFNBPaint = false;
 var getFCP = false;
@@ -56,6 +58,7 @@ var isFCPPending = false;
 var isDCFPending = false;
 var isTTFIPending = false;
 var isLoadTimePending = false;
+var isScenarioPending = false;
 var isBenchmarkPending = false;
 var pageTimeout = 10000; // default pageload timeout
 var geckoProfiling = false;
@@ -65,15 +68,18 @@ var geckoThreads = [];
 var debugMode = 0;
 var screenCapture = false;
 
-var results = {"name": "",
-               "page": "",
-               "type": "",
-               "browser_cycle": 0,
-               "expected_browser_cycles": 0,
-               "cold": false,
-               "lower_is_better": true,
-               "alert_threshold": 2.0,
-               "measurements": {}};
+var results = {
+  "name": "",
+  "page": "",
+  "type": "",
+  "browser_cycle": 0,
+  "expected_browser_cycles": 0,
+  "cold": false,
+  "lower_is_better": true,
+  "alert_change_type": "relative",
+  "alert_threshold": 2.0,
+  "measurements": {},
+};
 
 function getTestSettings() {
   console.log("getting test settings from control server");
@@ -87,6 +93,7 @@ function getTestSettings() {
         testType = settings.type;
         pageCycles = settings.page_cycles;
         testURL = settings.test_url;
+        scenarioTestTime = settings.scenario_time;
 
         // for pageload type tests, the testURL is fine as is - we don't have
         // to add a port as it's accessed via proxy and the playback tool
@@ -104,17 +111,18 @@ function getTestSettings() {
 
         console.log(`testURL: ${testURL}`);
 
+        results.alert_change_type = settings.alert_change_type;
+        results.alert_threshold = settings.alert_threshold;
+        results.browser_cycle = browserCycle;
+        results.cold = settings.cold;
+        results.expected_browser_cycles = settings.expected_browser_cycles;
+        results.lower_is_better = settings.lower_is_better === true;
+        results.name = testName;
         results.page = testURL;
         results.type = testType;
-        results.name = testName;
-        results.browser_cycle = browserCycle;
-        results.expected_browser_cycles = settings.expected_browser_cycles;
-        results.cold = settings.cold;
         results.unit = settings.unit;
         results.subtest_unit = settings.subtest_unit;
-        results.lower_is_better = settings.lower_is_better === true;
         results.subtest_lower_is_better = settings.subtest_lower_is_better === true;
-        results.alert_threshold = settings.alert_threshold;
 
         if (settings.gecko_profile === true) {
           results.extra_options = ["gecko_profile"];
@@ -214,6 +222,14 @@ function getBrowserInfo() {
   });
 }
 
+function scenarioTimer() {
+  postToControlServer("status", `started scenario test timer`);
+    setTimeout(function() {
+      isScenarioPending = false;
+      results.measurements.scenario = [1];
+  }, scenarioTestTime);
+}
+
 function testTabCreated(tab) {
   testTabID = tab.id;
   postToControlServer("status", `opened new empty tab: ${testTabID}`);
@@ -257,6 +273,16 @@ async function waitForResult() {
             resolve();
           } else {
             setTimeout(checkForResult, 250);
+          }
+          break;
+
+        case TEST_SCENARIO:
+          if (!isScenarioPending) {
+            cancelTimeoutAlarm("raptor-page-timeout");
+            postToControlServer("status", `scenario test ended`);
+            resolve();
+          } else {
+            setTimeout(checkForResult, 5);
           }
           break;
       }
@@ -368,6 +394,10 @@ async function nextCycle() {
           if (getLoadTime)
             isLoadTimePending = true;
           break;
+
+        case TEST_SCENARIO:
+          isScenarioPending = true;
+          break;
       }
 
       if (reuseTab && testTabID != 0) {
@@ -383,6 +413,9 @@ async function nextCycle() {
         postToControlServer("status", `update tab: ${testTabID}`);
         // update the test page - browse to our test URL
         ext.tabs.update(testTabID, {url: testURL}, testTabUpdated);
+        if (testType == TEST_SCENARIO) {
+          scenarioTimer();
+        }
         }, newTabDelay);
       }, pageCycleDelay);
     } else {

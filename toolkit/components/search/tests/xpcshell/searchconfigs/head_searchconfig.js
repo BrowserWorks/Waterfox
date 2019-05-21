@@ -13,6 +13,9 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 
 const GLOBAL_SCOPE = this;
 
+const URLTYPE_SUGGEST_JSON = "application/x-suggestions+json";
+const URLTYPE_SEARCH_HTML  = "text/html";
+
 /**
  * This class implements the test harness for search configuration tests.
  * These tests are designed to ensure that the correct search engines are
@@ -82,6 +85,8 @@ class SearchConfigTest {
     await AddonTestUtils.promiseStartupManager();
     await Services.search.init();
 
+    // Note: we don't use the helper function here, so that we have at least
+    // one message output per process.
     Assert.ok(Services.search.isInitialized,
       "Should have correctly initialized the search service");
   }
@@ -97,15 +102,19 @@ class SearchConfigTest {
     // when updating the requested/available locales.
     for (let region of regions) {
       for (let locale of locales) {
-        const infoString = `region: "${region}" locale: "${locale}"`;
-        info(`Checking ${infoString}`);
+        info(`Checking region: "${region}" locale: "${locale}"`);
         await this._reinit(region, locale);
 
-        this._assertDefaultEngines(region, locale, infoString);
+        this._assertDefaultEngines(region, locale);
+        const engines = await Services.search.getVisibleEngines();
+        const isPresent = this._assertAvailableEngines(region, locale, engines);
+        if (isPresent) {
+          this._assertCorrectDomains(region, locale, engines);
+        }
       }
     }
 
-    Assert.ok(!this._testDebug, "Should not have test debug turned on in production");
+    this.assertOk(!this._testDebug, "Should not have test debug turned on in production");
   }
 
   /**
@@ -125,7 +134,7 @@ class SearchConfigTest {
     Services.search.reInit();
     await reinitCompletePromise;
 
-    Assert.ok(Services.search.isInitialized,
+    this.assertOk(Services.search.isInitialized,
       "Should have completely re-initialization, if it fails check logs for if reinit was successful");
   }
 
@@ -136,7 +145,11 @@ class SearchConfigTest {
     if (this._testDebug) {
       return new Set(["by", "cn", "kz", "us", "ru", "tr"]);
     }
-    return Services.intl.getAvailableLocaleDisplayNames("region");
+    const chunk = Services.prefs.getIntPref("browser.search.config.test.section", -1) - 1;
+    const regions = Services.intl.getAvailableLocaleDisplayNames("region");
+    const chunkSize =  Math.ceil(regions.length / 4);
+    const startPoint = chunk * chunkSize;
+    return regions.slice(startPoint, startPoint + chunkSize);
   }
 
   /**
@@ -169,7 +182,7 @@ class SearchConfigTest {
       return true;
     }
     if ("startsWith" in locales) {
-      return locales.startsWith.find(element => element.startsWith(locale));
+      return !!locales.startsWith.find(element => locale.startsWith(element));
     }
 
     return false;
@@ -189,11 +202,79 @@ class SearchConfigTest {
    */
   _localeRegionInSection(section, region, locale) {
     for (const {regions, locales} of section) {
-      if (regions.includes(region) &&
-          this._localeIncludes(locales, locale)) {
+      // If we only specify a regions or locales section then
+      // it is always considered included in the other section.
+      const inRegions = !regions || regions.includes(region);
+      const inLocales = !locales || this._localeIncludes(locales, locale);
+      if (inRegions && inLocales) {
         return true;
       }
     }
+    return false;
+  }
+
+  /**
+   * Helper function to find an engine from within a list.
+   * Due to Amazon's current complex setup with three different identifiers,
+   * if the identifier is 'amazon', then we do a startsWith match. Otherwise
+   * we expect the names to equal.
+   *
+   * @param {Array} engines
+   *   The list of engines to check.
+   * @param {string} identifier
+   *   The identifier to look for in the list.
+   * @returns {Engine}
+   *   Returns the engine if found, null otherwise.
+   */
+  _findEngine(engines, identifier) {
+    if (identifier == "amazon") {
+      return engines.find(engine => engine.identifier.startsWith(identifier));
+    }
+    return engines.find(engine => engine.identifier == identifier);
+  }
+
+  /**
+   * Asserts whether the engines rules defined in the configuration are met.
+   *
+   * @param {Array} engines
+   *   The list of engines to check.
+   * @param {string} region
+   *   The two-letter region code.
+   * @param {string} locale
+   *   The two-letter locale code.
+   * @param {string} section
+   *   The section of the configuration to check.
+   * @returns {boolean}
+   *   Returns true if the engine is expected to be present, false otherwise.
+   */
+  _assertEngineRules(engines, region, locale, section) {
+    const infoString = `region: "${region}" locale: "${locale}"`;
+    const config = this._config[section];
+    const hasIncluded = "included" in config;
+    const hasExcluded = "excluded" in config;
+    const identifierIncluded = !!this._findEngine(engines, this._config.identifier);
+
+    // If there's not included/excluded, then this shouldn't be the default anywhere.
+    if (section == "default" && !hasIncluded && !hasExcluded) {
+      this.assertOk(!identifierIncluded,
+        `Should not be ${section} for any locale/region,
+         currently set for ${infoString}`);
+      return false;
+    }
+
+    // If there's no included section, we assume the engine is default everywhere
+    // and we should apply the exclusions instead.
+    let included = (hasIncluded &&
+      this._localeRegionInSection(config.included, region, locale));
+
+    let notExcluded = (hasExcluded &&
+     !this._localeRegionInSection(config.excluded, region, locale));
+
+    if (included || notExcluded) {
+      this.assertOk(identifierIncluded, `Should be ${section} for ${infoString}`);
+      return true;
+    }
+    this.assertOk(!identifierIncluded, `Should not be ${section} for ${infoString}`);
     return false;
   }
 
@@ -204,37 +285,85 @@ class SearchConfigTest {
    *   The two-letter region code.
    * @param {string} locale
    *   The two-letter locale code.
-   * @param {string} infoString
-   *   An additional message to output with assertions.
    */
-  _assertDefaultEngines(region, locale, infoString) {
-    // We use the originalDefaultEngine here as due to the way we run the tests
-    // the default engine may not have changed.
-    const identifier = Services.search.originalDefaultEngine.identifier;
+  _assertDefaultEngines(region, locale) {
+    this._assertEngineRules([Services.search.originalDefaultEngine], region,
+                            locale, "default");
+  }
 
-    // If there's not included/excluded, then this shouldn't be the default anywhere.
-    if (!("included" in this._config.default) &&
-        !("excluded" in this._config.default)) {
-      Assert.notEqual(identifier,
-        this._config.identifier,
-        `Should not be set as the default engine for any locale/region,
-         currently set for ${infoString}`);
-      return;
-    }
+  /**
+   * Asserts whether the engine is correctly available or not.
+   *
+   * @param {string} region
+   *   The two-letter region code.
+   * @param {string} locale
+   *   The two-letter locale code.
+   * @param {array} engines
+   *   The current visible engines.
+   * @returns {boolean}
+   *   Returns true if the engine is expected to be present, false otherwise.
+   */
+  _assertAvailableEngines(region, locale, engines) {
+    return this._assertEngineRules(engines, region, locale, "available");
+  }
 
-    // If there's no included section, we assume the engine is default everywhere
-    // and we should apply the exclusions instead.
-    if (("included" in this._config.default &&
-        this._localeRegionInSection(this._config.default.included, region, locale)) ||
-        ("excluded" in this._config.default &&
-         !this._localeRegionInSection(this._config.default.excluded, region, locale))) {
-      Assert.equal(identifier,
-        this._config.identifier,
-        `Should be set as the default engine for ${infoString}`);
-      return;
+  /**
+   * Asserts whether the engine is using the correct domains or not.
+   *
+   * @param {string} region
+   *   The two-letter region code.
+   * @param {string} locale
+   *   The two-letter locale code.
+   * @param {array} engines
+   *   The current visible engines.
+   */
+  _assertCorrectDomains(region, locale, engines) {
+    const [expectedDomain, domainConfig] =
+      Object.entries(this._config.domains).find(([key, value]) =>
+        this._localeRegionInSection(value.included, region, locale));
+
+    this.assertOk(expectedDomain,
+      `Should have an expectedDomain for the engine in region: "${region}" locale: "${locale}"`);
+
+    const engine = this._findEngine(engines, this._config.identifier);
+    this.assertOk(engine, "Should have an engine present");
+
+    const searchForm = new URL(engine.searchForm);
+    this.assertOk(searchForm.host.endsWith(expectedDomain),
+      `Should have the correct search form domain for region: "${region}" locale: "${locale}".
+       Got "${searchForm.host}", expected to end with "${expectedDomain}".`);
+
+    for (const urlType of [URLTYPE_SUGGEST_JSON, URLTYPE_SEARCH_HTML]) {
+      const submission = engine.getSubmission("test", urlType);
+      if (urlType == URLTYPE_SUGGEST_JSON &&
+          (this._config.noSuggestionsURL || domainConfig.noSuggestionsURL)) {
+        this.assertOk(!submission, "Should not have a submission url");
+      } else if (this._config.searchUrlBase) {
+          this.assertEqual(submission.uri.prePath + submission.uri.filePath,
+            this._config.searchUrlBase + domainConfig.searchUrlEnd,
+            `Should have the correct domain for type: ${urlType} region: "${region}" locale: "${locale}".`);
+      } else {
+        this.assertOk(submission.uri.host.endsWith(expectedDomain),
+          `Should have the correct domain for type: ${urlType} region: "${region}" locale: "${locale}".
+           Got "${submission.uri.host}", expected to end with "${expectedDomain}".`);
+      }
     }
-    Assert.notEqual(identifier,
-      this._config.identifier,
-      `Should not be set as the default engine for ${infoString}`);
+  }
+
+  /**
+   * Helper functions which avoid outputting test results when there are no
+   * failures. These help the tests to run faster, and avoid clogging up the
+   * python test runner process.
+   */
+  assertOk(value, message) {
+    if (!value || this._testDebug) {
+      Assert.ok(value, message);
+    }
+  }
+
+  assertEqual(actual, expected, message) {
+    if (actual != expected || this._testDebug) {
+      Assert.equal(actual, expected, message);
+    }
   }
 }

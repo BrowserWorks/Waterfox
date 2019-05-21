@@ -55,12 +55,6 @@ template void WSRunObject::NextVisibleNode(const EditorRawDOMPoint& aPoint,
                                            nsCOMPtr<nsINode>* outVisNode,
                                            int32_t* outVisOffset,
                                            WSType* outType) const;
-template already_AddRefed<Element> WSRunObject::InsertBreak(
-    Selection& aSelection, const EditorDOMPoint& aPointToInsert,
-    nsIEditor::EDirection aSelect);
-template already_AddRefed<Element> WSRunObject::InsertBreak(
-    Selection& aSelection, const EditorRawDOMPoint& aPointToInsert,
-    nsIEditor::EDirection aSelect);
 template void WSRunObject::GetASCIIWhitespacesBounds(
     int16_t aDir, const EditorDOMPoint& aPoint, dom::Text** outStartNode,
     int32_t* outStartOffset, dom::Text** outEndNode, int32_t* outEndOffset);
@@ -171,9 +165,8 @@ nsresult WSRunObject::PrepareToSplitAcrossBlocks(HTMLEditor* aHTMLEditor,
   return wsObj.PrepareToSplitAcrossBlocksPriv();
 }
 
-template <typename PT, typename CT>
 already_AddRefed<Element> WSRunObject::InsertBreak(
-    Selection& aSelection, const EditorDOMPointBase<PT, CT>& aPointToInsert,
+    Selection& aSelection, const EditorDOMPoint& aPointToInsert,
     nsIEditor::EDirection aSelect) {
   if (NS_WARN_IF(!aPointToInsert.IsSet())) {
     return nullptr;
@@ -240,7 +233,8 @@ already_AddRefed<Element> WSRunObject::InsertBreak(
   }
 
   RefPtr<Element> newBrElement =
-      mHTMLEditor->InsertBrElementWithTransaction(pointToInsert, aSelect);
+      MOZ_KnownLive(mHTMLEditor)
+          ->InsertBrElementWithTransaction(pointToInsert, aSelect);
   if (NS_WARN_IF(!newBrElement)) {
     return nullptr;
   }
@@ -289,8 +283,9 @@ nsresult WSRunObject::InsertText(Document& aDocument,
     } else if (afterRun->mType == WSType::normalWS) {
       // Try to change an nbsp to a space, if possible, just to prevent nbsp
       // proliferation
-      nsresult rv = CheckLeadingNBSP(afterRun, pointToInsert.GetContainer(),
-                                     pointToInsert.Offset());
+      nsresult rv = CheckLeadingNBSP(
+          afterRun, MOZ_KnownLive(pointToInsert.GetContainer()),
+          pointToInsert.Offset());
       NS_ENSURE_SUCCESS(rv, rv);
     }
 
@@ -391,8 +386,8 @@ nsresult WSRunObject::DeleteWSBackward() {
   // Easy case, preformatted ws.
   if (mPRE && (nsCRT::IsAsciiSpace(point.mChar) || point.mChar == kNBSP)) {
     nsresult rv =
-        DeleteRange(EditorRawDOMPoint(point.mTextNode, point.mOffset),
-                    EditorRawDOMPoint(point.mTextNode, point.mOffset + 1));
+        DeleteRange(EditorDOMPoint(point.mTextNode, point.mOffset),
+                    EditorDOMPoint(point.mTextNode, point.mOffset + 1));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -413,13 +408,13 @@ nsresult WSRunObject::DeleteWSBackward() {
     nsCOMPtr<nsINode> startNode = startNodeText.get();
     nsCOMPtr<nsINode> endNode = endNodeText.get();
     nsresult rv = WSRunObject::PrepareToDeleteRange(
-        mHTMLEditor, address_of(startNode), &startOffset, address_of(endNode),
-        &endOffset);
+        MOZ_KnownLive(mHTMLEditor), address_of(startNode), &startOffset,
+        address_of(endNode), &endOffset);
     NS_ENSURE_SUCCESS(rv, rv);
 
     // finally, delete that ws
-    rv = DeleteRange(EditorRawDOMPoint(startNode, startOffset),
-                     EditorRawDOMPoint(endNode, endOffset));
+    rv = DeleteRange(EditorDOMPoint(startNode, startOffset),
+                     EditorDOMPoint(endNode, endOffset));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -432,13 +427,13 @@ nsresult WSRunObject::DeleteWSBackward() {
     int32_t startOffset = point.mOffset;
     int32_t endOffset = point.mOffset + 1;
     nsresult rv = WSRunObject::PrepareToDeleteRange(
-        mHTMLEditor, address_of(node), &startOffset, address_of(node),
-        &endOffset);
+        MOZ_KnownLive(mHTMLEditor), address_of(node), &startOffset,
+        address_of(node), &endOffset);
     NS_ENSURE_SUCCESS(rv, rv);
 
     // finally, delete that ws
-    rv = DeleteRange(EditorRawDOMPoint(node, startOffset),
-                     EditorRawDOMPoint(node, endOffset));
+    rv = DeleteRange(EditorDOMPoint(node, startOffset),
+                     EditorDOMPoint(node, endOffset));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -455,8 +450,8 @@ nsresult WSRunObject::DeleteWSForward() {
   // Easy case, preformatted ws.
   if (mPRE && (nsCRT::IsAsciiSpace(point.mChar) || point.mChar == kNBSP)) {
     nsresult rv =
-        DeleteRange(EditorRawDOMPoint(point.mTextNode, point.mOffset),
-                    EditorRawDOMPoint(point.mTextNode, point.mOffset + 1));
+        DeleteRange(EditorDOMPoint(point.mTextNode, point.mOffset),
+                    EditorDOMPoint(point.mTextNode, point.mOffset + 1));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -476,13 +471,13 @@ nsresult WSRunObject::DeleteWSForward() {
     // Adjust surrounding ws
     nsCOMPtr<nsINode> startNode(startNodeText), endNode(endNodeText);
     nsresult rv = WSRunObject::PrepareToDeleteRange(
-        mHTMLEditor, address_of(startNode), &startOffset, address_of(endNode),
-        &endOffset);
+        MOZ_KnownLive(mHTMLEditor), address_of(startNode), &startOffset,
+        address_of(endNode), &endOffset);
     NS_ENSURE_SUCCESS(rv, rv);
 
     // Finally, delete that ws
-    rv = DeleteRange(EditorRawDOMPoint(startNode, startOffset),
-                     EditorRawDOMPoint(endNode, endOffset));
+    rv = DeleteRange(EditorDOMPoint(startNode, startOffset),
+                     EditorDOMPoint(endNode, endOffset));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -495,13 +490,13 @@ nsresult WSRunObject::DeleteWSForward() {
     int32_t startOffset = point.mOffset;
     int32_t endOffset = point.mOffset + 1;
     nsresult rv = WSRunObject::PrepareToDeleteRange(
-        mHTMLEditor, address_of(node), &startOffset, address_of(node),
-        &endOffset);
+        MOZ_KnownLive(mHTMLEditor), address_of(node), &startOffset,
+        address_of(node), &endOffset);
     NS_ENSURE_SUCCESS(rv, rv);
 
     // Finally, delete that ws
-    rv = DeleteRange(EditorRawDOMPoint(node, startOffset),
-                     EditorRawDOMPoint(node, endOffset));
+    rv = DeleteRange(EditorDOMPoint(node, startOffset),
+                     EditorDOMPoint(node, endOffset));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -1300,10 +1295,8 @@ nsresult WSRunObject::PrepareToSplitAcrossBlocksPriv() {
   return NS_OK;
 }
 
-template <typename PT1, typename CT1, typename PT2, typename CT2>
-nsresult WSRunObject::DeleteRange(
-    const EditorDOMPointBase<PT1, CT1>& aStartPoint,
-    const EditorDOMPointBase<PT2, CT2>& aEndPoint) {
+nsresult WSRunObject::DeleteRange(const EditorDOMPoint& aStartPoint,
+                                  const EditorDOMPoint& aEndPoint) {
   if (NS_WARN_IF(!aStartPoint.IsSet()) || NS_WARN_IF(!aEndPoint.IsSet())) {
     return NS_ERROR_INVALID_ARG;
   }
@@ -1323,8 +1316,9 @@ nsresult WSRunObject::DeleteRange(
 
   if (aStartPoint.GetContainer() == aEndPoint.GetContainer() &&
       aStartPoint.IsInTextNode()) {
+    RefPtr<Text> textNode = aStartPoint.GetContainerAsText();
     return htmlEditor->DeleteTextWithTransaction(
-        *aStartPoint.GetContainerAsText(), aStartPoint.Offset(),
+        *textNode, aStartPoint.Offset(),
         aEndPoint.Offset() - aStartPoint.Offset());
   }
 
@@ -1501,7 +1495,8 @@ nsresult WSRunObject::InsertNBSPAndRemoveFollowingASCIIWhitespaces(
   // First, insert an NBSP.
   AutoTransactionsConserveSelection dontChangeMySelection(*htmlEditor);
   nsresult rv = htmlEditor->InsertTextIntoTextNodeWithTransaction(
-      nsDependentSubstring(&kNBSP, 1), *aPoint.mTextNode, aPoint.mOffset, true);
+      nsDependentSubstring(&kNBSP, 1), MOZ_KnownLive(*aPoint.mTextNode),
+      aPoint.mOffset, true);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -1833,7 +1828,7 @@ nsresult WSRunObject::CheckTrailingNBSPOfRun(WSFragment* aRun) {
       AutoTransactionsConserveSelection dontChangeMySelection(*htmlEditor);
       nsAutoString spaceStr(char16_t(32));
       nsresult rv = htmlEditor->InsertTextIntoTextNodeWithTransaction(
-          spaceStr, *thePoint.mTextNode, thePoint.mOffset, true);
+          spaceStr, MOZ_KnownLive(*thePoint.mTextNode), thePoint.mOffset, true);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
       }
@@ -1880,9 +1875,8 @@ nsresult WSRunObject::CheckTrailingNBSPOfRun(WSFragment* aRun) {
   return NS_OK;
 }
 
-template <typename PT, typename CT>
 nsresult WSRunObject::ReplacePreviousNBSPIfUnncessary(
-    WSFragment* aRun, const EditorDOMPointBase<PT, CT>& aPoint) {
+    WSFragment* aRun, const EditorDOMPoint& aPoint) {
   if (NS_WARN_IF(!aRun) || NS_WARN_IF(!aPoint.IsSet())) {
     return NS_ERROR_INVALID_ARG;
   }
@@ -1926,7 +1920,7 @@ nsresult WSRunObject::ReplacePreviousNBSPIfUnncessary(
   AutoTransactionsConserveSelection dontChangeMySelection(*htmlEditor);
   nsAutoString spaceStr(char16_t(32));
   nsresult rv = htmlEditor->InsertTextIntoTextNodeWithTransaction(
-      spaceStr, *thePoint.mTextNode, thePoint.mOffset, true);
+      spaceStr, MOZ_KnownLive(*thePoint.mTextNode), thePoint.mOffset, true);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -1973,7 +1967,7 @@ nsresult WSRunObject::CheckLeadingNBSP(WSFragment* aRun, nsINode* aNode,
     AutoTransactionsConserveSelection dontChangeMySelection(*htmlEditor);
     nsAutoString spaceStr(char16_t(32));
     nsresult rv = htmlEditor->InsertTextIntoTextNodeWithTransaction(
-        spaceStr, *thePoint.mTextNode, thePoint.mOffset, true);
+        spaceStr, MOZ_KnownLive(*thePoint.mTextNode), thePoint.mOffset, true);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }

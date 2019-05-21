@@ -61,9 +61,6 @@ const actionTypes = {
   UPDATE_CONNECTION_PROMPT_SETTING_FAILURE: "UPDATE_CONNECTION_PROMPT_SETTING_FAILURE",
   UPDATE_CONNECTION_PROMPT_SETTING_START: "UPDATE_CONNECTION_PROMPT_SETTING_START",
   UPDATE_CONNECTION_PROMPT_SETTING_SUCCESS: "UPDATE_CONNECTION_PROMPT_SETTING_SUCCESS",
-  UPDATE_EXTENSION_DEBUG_SETTING_FAILURE: "UPDATE_EXTENSION_DEBUG_SETTING_FAILURE",
-  UPDATE_EXTENSION_DEBUG_SETTING_START: "UPDATE_EXTENSION_DEBUG_SETTING_START",
-  UPDATE_EXTENSION_DEBUG_SETTING_SUCCESS: "UPDATE_EXTENSION_DEBUG_SETTING_SUCCESS",
   UPDATE_RUNTIME_MULTIE10S_FAILURE: "UPDATE_RUNTIME_MULTIE10S_FAILURE",
   UPDATE_RUNTIME_MULTIE10S_START: "UPDATE_RUNTIME_MULTIE10S_START",
   UPDATE_RUNTIME_MULTIE10S_SUCCESS: "UPDATE_RUNTIME_MULTIE10S_SUCCESS",
@@ -109,13 +106,15 @@ const PREFERENCES = {
   PROCESS_DEBUGGING_ENABLED: "devtools.aboutdebugging.process-debugging",
   // Preference that drives the display of hidden & system addons in about:debugging.
   SHOW_HIDDEN_ADDONS: "devtools.aboutdebugging.showHiddenAddons",
+  // Preference to store the last path used for loading a temporary extension.
+  TEMPORARY_EXTENSION_PATH: "devtools.aboutdebugging.tmpExtDirPath",
+  // Preference that disables installing extensions when set to false.
+  XPINSTALL_ENABLED: "xpinstall.enabled",
 };
 
 const RUNTIME_PREFERENCE = {
-  CHROME_DEBUG_ENABLED: "devtools.chrome.enabled",
   CONNECTION_PROMPT: "devtools.debugger.prompt-connection",
   PERMANENT_PRIVATE_BROWSING: "browser.privatebrowsing.autostart",
-  REMOTE_DEBUG_ENABLED: "devtools.debugger.remote-enabled",
   SERVICE_WORKERS_ENABLED: "dom.serviceWorkers.enabled",
 };
 

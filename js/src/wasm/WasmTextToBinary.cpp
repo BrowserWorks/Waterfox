@@ -90,7 +90,6 @@ class WasmToken {
     Field,
     Float,
     Func,
-    FuncRef,
 #ifdef ENABLE_WASM_GC
     GcFeatureOptIn,
 #endif
@@ -376,7 +375,6 @@ class WasmToken {
       case Field:
       case Float:
       case Func:
-      case FuncRef:
 #ifdef ENABLE_WASM_GC
       case GcFeatureOptIn:
 #endif
@@ -954,7 +952,7 @@ WasmToken WasmTokenStream::next() {
         return WasmToken(WasmToken::Align, begin, cur_);
       }
       if (consume(u"anyfunc")) {
-        return WasmToken(WasmToken::FuncRef, begin, cur_);
+        return WasmToken(WasmToken::ValueType, ValType::FuncRef, begin, cur_);
       }
       if (consume(u"anyref")) {
         return WasmToken(WasmToken::ValueType, ValType::AnyRef, begin, cur_);
@@ -1037,7 +1035,7 @@ WasmToken WasmTokenStream::next() {
       }
 
       if (consume(u"funcref")) {
-        return WasmToken(WasmToken::FuncRef, begin, cur_);
+        return WasmToken(WasmToken::ValueType, ValType::FuncRef, begin, cur_);
       }
 
       if (consume(u"func")) {
@@ -2448,8 +2446,24 @@ static bool ParseBlockSignature(WasmParseContext& c, AstExprType* type) {
   WasmToken token;
   AstValType vt;
 
-  if (!MaybeParseValType(c, &vt)) {
-    return false;
+  if (c.ts.getIf(WasmToken::OpenParen, &token)) {
+    if (c.ts.getIf(WasmToken::Result)) {
+      if (!ParseValType(c, &vt)) {
+        return false;
+      }
+      if (!c.ts.match(WasmToken::CloseParen, c.error)) {
+        return false;
+      }
+    } else {
+      c.ts.unget(token);
+      if (!MaybeParseValType(c, &vt)) {
+        return false;
+      }
+    }
+  } else {
+    if (!MaybeParseValType(c, &vt)) {
+      return false;
+    }
   }
 
   if (vt.isValid()) {
@@ -3957,7 +3971,7 @@ static AstExpr* ParseStructNarrow(WasmParseContext& c, bool inParens) {
     return nullptr;
   }
 
-  if (!inputType.isRefType()) {
+  if (!inputType.isNarrowType()) {
     c.ts.generateError(c.ts.peek(), "struct.narrow requires ref type", c.error);
     return nullptr;
   }
@@ -3967,7 +3981,7 @@ static AstExpr* ParseStructNarrow(WasmParseContext& c, bool inParens) {
     return nullptr;
   }
 
-  if (!outputType.isRefType()) {
+  if (!outputType.isNarrowType()) {
     c.ts.generateError(c.ts.peek(), "struct.narrow requires ref type", c.error);
     return nullptr;
   }
@@ -4438,9 +4452,12 @@ static bool MaybeParseOwnerIndex(WasmParseContext& c) {
   return true;
 }
 
-static AstExpr* ParseInitializerExpression(WasmParseContext& c) {
-  if (!c.ts.match(WasmToken::OpenParen, c.error)) {
-    return nullptr;
+static AstExpr* ParseInitializerConstExpression(WasmParseContext& c) {
+  bool need_rparen = false;
+
+  // For const initializer expressions, the parens are optional.
+  if (c.ts.getIf(WasmToken::OpenParen)) {
+    need_rparen = true;
   }
 
   AstExpr* initExpr = ParseExprInsideParens(c);
@@ -4448,7 +4465,7 @@ static AstExpr* ParseInitializerExpression(WasmParseContext& c) {
     return nullptr;
   }
 
-  if (!c.ts.match(WasmToken::CloseParen, c.error)) {
+  if (need_rparen && !c.ts.match(WasmToken::CloseParen, c.error)) {
     return nullptr;
   }
 
@@ -4464,8 +4481,16 @@ static bool ParseInitializerExpressionOrPassive(WasmParseContext& c,
   }
 #endif
 
-  AstExpr* initExpr = ParseInitializerExpression(c);
+  if (!c.ts.match(WasmToken::OpenParen, c.error)) {
+    return false;
+  }
+
+  AstExpr* initExpr = ParseExprInsideParens(c);
   if (!initExpr) {
+    return false;
+  }
+
+  if (!c.ts.match(WasmToken::CloseParen, c.error)) {
     return false;
   }
 
@@ -4692,20 +4717,19 @@ static bool ParseGlobalType(WasmParseContext& c, AstValType* type,
 
 static bool ParseElemType(WasmParseContext& c, TableKind* tableKind) {
   WasmToken token;
-  if (c.ts.getIf(WasmToken::FuncRef, &token)) {
-    *tableKind = TableKind::AnyFunction;
-    return true;
-  }
+  if (c.ts.getIf(WasmToken::ValueType, &token)) {
+    if (token.valueType() == ValType::FuncRef) {
+      *tableKind = TableKind::FuncRef;
+      return true;
+    }
 #ifdef ENABLE_WASM_REFTYPES
-  if (c.ts.getIf(WasmToken::ValueType, &token) &&
-      token.valueType() == ValType::AnyRef) {
-    *tableKind = TableKind::AnyRef;
-    return true;
+    if (token.valueType() == ValType::AnyRef) {
+      *tableKind = TableKind::AnyRef;
+      return true;
+    }
+#endif
   }
   c.ts.generateError(token, "'funcref' or 'anyref' required", c.error);
-#else
-  c.ts.generateError(token, "'funcref' required", c.error);
-#endif
   return false;
 }
 
@@ -5103,7 +5127,7 @@ static bool ParseGlobal(WasmParseContext& c, AstModule* module) {
     return false;
   }
 
-  AstExpr* init = ParseInitializerExpression(c);
+  AstExpr* init = ParseInitializerConstExpression(c);
   if (!init) {
     return false;
   }
@@ -6831,8 +6855,8 @@ static bool EncodeLimits(Encoder& e, const Limits& limits) {
 static bool EncodeTableLimits(Encoder& e, const Limits& limits,
                               TableKind tableKind) {
   switch (tableKind) {
-    case TableKind::AnyFunction:
-      if (!e.writeVarU32(uint32_t(TypeCode::AnyFunc))) {
+    case TableKind::FuncRef:
+      if (!e.writeVarU32(uint32_t(TypeCode::FuncRef))) {
         return false;
       }
       break;
@@ -7253,7 +7277,7 @@ static bool EncodeElemSegment(Encoder& e, AstElemSegment& segment) {
   }
 
   if (segment.isPassive()) {
-    if (!e.writeFixedU8(uint8_t(TypeCode::AnyFunc))) {
+    if (!e.writeFixedU8(uint8_t(TypeCode::FuncRef))) {
       return false;
     }
   }

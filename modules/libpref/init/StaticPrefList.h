@@ -280,12 +280,6 @@ VARCACHE_PREF(
   bool, true
 )
 
-VARCACHE_PREF(
-  "dom.performance.enable_scheduler_timing",
-  dom_performance_enable_scheduler_timing,
-  RelaxedAtomicBool, true
-)
-
 // Should we defer timeouts and intervals while loading a page.  Released
 // on Idle or when the page is loaded.
 VARCACHE_PREF(
@@ -366,7 +360,7 @@ VARCACHE_PREF(
   RelaxedAtomicBool, false
 )
 
-#ifdef NIGHTLY_BUILD
+#ifdef EARLY_BETA_OR_EARLIER
 # define PREF_VALUE  true
 #else
 # define PREF_VALUE  false
@@ -717,6 +711,12 @@ VARCACHE_PREF(
 VARCACHE_PREF(
   "dom.largeAllocation.forceEnable",
    dom_largeAllocation_forceEnable,
+  bool, false
+)
+
+VARCACHE_PREF(
+  "dom.metaElement.setCookie.allowed",
+   dom_metaElement_setCookie_allowed,
   bool, false
 )
 
@@ -1334,6 +1334,13 @@ VARCACHE_PREF(
 )
 #undef PREF_VALUE
 
+// Is support for -webkit-line-clamp enabled?
+VARCACHE_PREF(
+  "layout.css.webkit-line-clamp.enabled",
+  layout_css_webkit_line_clamp_enabled,
+  bool, true
+)
+
 //---------------------------------------------------------------------------
 // JavaScript prefs
 //---------------------------------------------------------------------------
@@ -1435,17 +1442,18 @@ VARCACHE_PREF(
 // reviewer had an unshakeable preference for that.
 
 // File-backed MediaCache size.
-#ifdef ANDROID
-# define PREF_VALUE  32768  // Measured in KiB
-#else
-# define PREF_VALUE 512000  // Measured in KiB
-#endif
 VARCACHE_PREF(
   "media.cache_size",
    MediaCacheSize,
-  RelaxedAtomicUint32, PREF_VALUE
+  RelaxedAtomicUint32, 512000 // Measured in KiB
 )
-#undef PREF_VALUE
+// Size of file backed MediaCache while on a connection which is cellular (3G, etc),
+// and thus assumed to be "expensive".
+VARCACHE_PREF(
+  "media.cache_size.cellular",
+   MediaCacheCellularSize,
+  RelaxedAtomicUint32, 32768 // Measured in KiB
+)
 
 // If a resource is known to be smaller than this size (in kilobytes), a
 // memory-backed MediaCache may be used; otherwise the (single shared global)
@@ -1474,32 +1482,30 @@ VARCACHE_PREF(
 
 // When a network connection is suspended, don't resume it until the amount of
 // buffered data falls below this threshold (in seconds).
-#ifdef ANDROID
-# define PREF_VALUE 10  // Use a smaller limit to save battery.
-#else
-# define PREF_VALUE 30
-#endif
 VARCACHE_PREF(
   "media.cache_resume_threshold",
    MediaCacheResumeThreshold,
-  RelaxedAtomicInt32, PREF_VALUE
+  RelaxedAtomicUint32, 30
 )
-#undef PREF_VALUE
+VARCACHE_PREF(
+  "media.cache_resume_threshold.cellular",
+   MediaCacheCellularResumeThreshold,
+  RelaxedAtomicUint32, 10
+)
 
 // Stop reading ahead when our buffered data is this many seconds ahead of the
 // current playback position. This limit can stop us from using arbitrary
 // amounts of network bandwidth prefetching huge videos.
-#ifdef ANDROID
-# define PREF_VALUE 30  // Use a smaller limit to save battery.
-#else
-# define PREF_VALUE 60
-#endif
 VARCACHE_PREF(
   "media.cache_readahead_limit",
    MediaCacheReadaheadLimit,
-  RelaxedAtomicInt32, PREF_VALUE
+  RelaxedAtomicUint32, 60
 )
-#undef PREF_VALUE
+VARCACHE_PREF(
+  "media.cache_readahead_limit.cellular",
+   MediaCacheCellularReadaheadLimit,
+  RelaxedAtomicUint32, 30
+)
 
 // AudioSink
 VARCACHE_PREF(
@@ -1596,7 +1602,7 @@ VARCACHE_PREF(
 # define PREF_VALUE true
 #elif defined(XP_MACOSX)
 # define PREF_VALUE true
-#elif defined(XP_UNIX)
+#elif defined(XP_LINUX) && !defined(ANDROID)
 # define PREF_VALUE true
 #else
 # define PREF_VALUE false
@@ -1784,12 +1790,6 @@ VARCACHE_PREF(
   "media.decoder-doctor.wmf-disabled-is-failure",
    MediaDecoderDoctorWmfDisabledIsFailure,
   bool, false
-)
-
-VARCACHE_PREF(
-  "media.wmf.vp9.enabled",
-   MediaWmfVp9Enabled,
-  RelaxedAtomicBool, true
 )
 
 #endif // MOZ_WMF
@@ -2175,11 +2175,17 @@ VARCACHE_PREF(
 // 0-Accept, 1-dontAcceptForeign, 2-dontAcceptAny, 3-limitForeign,
 // 4-rejectTracker
 // Keep the old default of accepting all cookies
-// In Firefox Desktop this pref is set by browser.contentblocking.features.[standard, strict] see firefox.js for details.
 VARCACHE_PREF(
   "network.cookie.cookieBehavior",
   network_cookie_cookieBehavior,
   RelaxedAtomicInt32, 0
+)
+
+// Stale threshold for cookies in seconds.
+VARCACHE_PREF(
+  "network.cookie.staleThreshold",
+   network_cookie_staleThreshold,
+  uint32_t, 60
 )
 
 // Cookie lifetime policy. Possible values:
@@ -2421,7 +2427,6 @@ VARCACHE_PREF(
 )
 
 // Block 3rd party fingerprinting resources.
-// In Firefox Desktop this pref is set by browser.contentblocking.features.[standard, strict] see firefox.js for details.
 VARCACHE_PREF(
   "privacy.trackingprotection.fingerprinting.enabled",
    privacy_trackingprotection_fingerprinting_enabled,
@@ -2436,7 +2441,6 @@ VARCACHE_PREF(
 )
 
 // Block 3rd party cryptomining resources.
-// In Firefox Desktop this pref is set by browser.contentblocking.features.[standard, strict] see firefox.js for details.
 VARCACHE_PREF(
   "privacy.trackingprotection.cryptomining.enabled",
    privacy_trackingprotection_cryptomining_enabled,
@@ -2579,6 +2583,13 @@ VARCACHE_PREF(
   "browser.safebrowsing.blockedURIs.enabled",
    browser_safebrowsing_blockedURIs_enabled,
   bool, true
+)
+
+// Maximum size for an array to store the safebrowsing prefixset.
+VARCACHE_PREF(
+  "browser.safebrowsing.prefixset_max_array_size",
+   browser_safebrowsing_prefixset_max_array_size,
+  RelaxedAtomicUint32, 512*1024
 )
 
 // When this pref is enabled document loads with a mismatched

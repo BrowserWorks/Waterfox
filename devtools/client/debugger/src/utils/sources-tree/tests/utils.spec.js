@@ -13,8 +13,7 @@ import {
   isExactUrlMatch,
   isDirectory,
   addToTree,
-  sortEntireTree,
-  isNotJavaScript
+  isNotJavaScript,
 } from "../index";
 
 describe("sources tree", () => {
@@ -43,13 +42,14 @@ describe("sources tree", () => {
     it("identifies directories correctly", () => {
       const sources = [
         makeMockSource("http://example.com/a.js", "actor1"),
-        makeMockSource("http://example.com/b/c/d.js", "actor2")
+        makeMockSource("http://example.com/b/c/d.js", "actor2"),
       ];
 
       const tree = createDirectoryNode("root", "", []);
-      sources.forEach(source => addToTree(tree, source, "http://example.com/"));
-      sortEntireTree(tree);
-      const [bFolderNode, aFileNode] = tree.contents[0].contents;
+      sources.forEach(source =>
+        addToTree(tree, source, "http://example.com/", "Main Thread")
+      );
+      const [bFolderNode, aFileNode] = tree.contents[0].contents[0].contents;
       const [cFolderNode] = bFolderNode.contents;
       const [dFileNode] = cFolderNode.contents;
 

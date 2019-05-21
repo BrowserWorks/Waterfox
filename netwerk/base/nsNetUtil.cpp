@@ -95,6 +95,8 @@
 #include "nsJSProtocolHandler.h"
 #include "nsDataHandler.h"
 #include "mozilla/dom/BlobURLProtocolHandler.h"
+#include "nsStreamUtils.h"
+#include "nsSocketTransportService2.h"
 
 #include <limits>
 
@@ -104,6 +106,8 @@ using mozilla::dom::BlobURLProtocolHandler;
 using mozilla::dom::ClientInfo;
 using mozilla::dom::PerformanceStorage;
 using mozilla::dom::ServiceWorkerDescriptor;
+
+#define MAX_RECURSION_COUNT 50
 
 already_AddRefed<nsIIOService> do_GetIOService(nsresult* error /* = 0 */) {
   nsCOMPtr<nsIIOService> io = mozilla::services::GetIOService();
@@ -1053,8 +1057,8 @@ nsresult NS_NewProxyInfo(const nsACString& type, const nsACString& host,
   nsCOMPtr<nsIProtocolProxyService> pps =
       do_GetService(NS_PROTOCOLPROXYSERVICE_CONTRACTID, &rv);
   if (NS_SUCCEEDED(rv))
-    rv =
-        pps->NewProxyInfo(type, host, port, flags, UINT32_MAX, nullptr, result);
+    rv = pps->NewProxyInfo(type, host, port, EmptyCString(), EmptyCString(),
+                           flags, UINT32_MAX, nullptr, result);
   return rv;
 }
 
@@ -3024,20 +3028,20 @@ nsresult NS_CompareLoadInfoAndLoadContext(nsIChannel* aChannel) {
   return NS_OK;
 }
 
-nsresult NS_SetRequestBlockingReason(nsIChannel *channel, uint32_t reason) {
+nsresult NS_SetRequestBlockingReason(nsIChannel* channel, uint32_t reason) {
   NS_ENSURE_ARG(channel);
 
   nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
   return NS_SetRequestBlockingReason(loadInfo, reason);
 }
 
-nsresult NS_SetRequestBlockingReason(nsILoadInfo *loadInfo, uint32_t reason) {
+nsresult NS_SetRequestBlockingReason(nsILoadInfo* loadInfo, uint32_t reason) {
   NS_ENSURE_ARG(loadInfo);
 
   return loadInfo->SetRequestBlockingReason(reason);
 }
 
-nsresult NS_SetRequestBlockingReasonIfNull(nsILoadInfo *loadInfo,
+nsresult NS_SetRequestBlockingReasonIfNull(nsILoadInfo* loadInfo,
                                            uint32_t reason) {
   NS_ENSURE_ARG(loadInfo);
 

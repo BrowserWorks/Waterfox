@@ -8,7 +8,7 @@ export class ModalOverlayWrapper extends React.PureComponent {
 
   onKeyDown(event) {
     if (event.key === "Escape") {
-      this.props.onClose();
+      this.props.onClose(event);
     }
   }
 
@@ -26,7 +26,10 @@ export class ModalOverlayWrapper extends React.PureComponent {
     const {props} = this;
     return (<React.Fragment>
       <div className="modalOverlayOuter active" onClick={props.onClose} role="presentation" />
-      <div className={`modalOverlayInner active ${props.innerClassName || ""}`}>
+      <div className={`modalOverlayInner active ${props.innerClassName || ""}`}
+        aria-labelledby={props.headerId}
+        id={props.id}
+        role="dialog">
         {props.children}
       </div>
     </React.Fragment>);
@@ -39,12 +42,12 @@ export class ModalOverlay extends React.PureComponent {
   render() {
     const {title, button_label} = this.props;
     return (
-      <ModalOverlayWrapper onClose={this.props.onDoneButton}>
+      <ModalOverlayWrapper onClose={this.props.onDismissBundle}>
         <h2> {title} </h2>
         {this.props.children}
         <div className="footer">
           <button className="button primary modalButton"
-            onClick={this.props.onDoneButton}> {button_label} </button>
+            onClick={this.props.onDismissBundle}> {button_label} </button>
         </div>
       </ModalOverlayWrapper>);
   }

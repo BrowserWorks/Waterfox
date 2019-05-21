@@ -15,6 +15,8 @@ raptor_ini = os.path.join(here, 'raptor.ini')
 tests_dir = os.path.join(here, 'tests')
 LOG = get_proxy_logger(component="raptor-manifest")
 
+LIVE_SITE_TIMEOUT_MULTIPLIER = 1.2
+
 required_settings = [
     'alert_threshold',
     'apps',
@@ -22,6 +24,7 @@ required_settings = [
     'measure',
     'page_cycles',
     'test_url',
+    'scenario_time',
     'type',
     'unit',
 ]
@@ -29,6 +32,10 @@ required_settings = [
 playback_settings = [
     'playback_pageset_manifest',
     'playback_recordings',
+]
+
+whitelist_live_site_tests = [
+    "raptor-youtube-playback",
 ]
 
 
@@ -47,8 +54,15 @@ def filter_live_sites(tests, values):
             if values["run_local"] is True:
                 yield test
             # can run with live sites if running on try
-            if "hg.mozilla.org/try" in os.environ.get('GECKO_HEAD_REPOSITORY', 'n/a'):
+            elif "hg.mozilla.org/try" in os.environ.get('GECKO_HEAD_REPOSITORY', 'n/a'):
                 yield test
+
+            # can run with live sites when white-listed
+            elif filter(lambda name: test['name'].startswith(name), whitelist_live_site_tests):
+                yield test
+
+            else:
+                LOG.warning('%s is not allowed to run with use_live_sites' % test['name'])
         else:
             # not using live-sites so go ahead
             yield test
@@ -71,6 +85,8 @@ def validate_test_ini(test_details):
     for setting in required_settings:
         # measure setting not required for benchmark type tests
         if setting == 'measure' and test_details['type'] == 'benchmark':
+            continue
+        if setting == 'scenario_time' and test_details['type'] != 'scenario':
             continue
         if test_details.get(setting) is None:
             # if page-cycles is not specified, it's ok as long as browser-cycles is there
@@ -161,6 +177,9 @@ def write_test_settings_json(args, test_details, oskey):
         test_settings['raptor-options']['subtest_lower_is_better'] = bool_from_str(
             subtest_lower_is_better)
 
+    if test_details.get("alert_change_type", None) is not None:
+        test_settings['raptor-options']['alert_change_type'] = test_details['alert_change_type']
+
     if test_details.get("alert_threshold", None) is not None:
         test_settings['raptor-options']['alert_threshold'] = float(test_details['alert_threshold'])
 
@@ -189,6 +208,9 @@ def write_test_settings_json(args, test_details, oskey):
     if test_details.get("newtab_per_cycle", None) is not None:
         test_settings['raptor-options']['newtab_per_cycle'] = \
             bool(test_details['newtab_per_cycle'])
+
+    if test_details['type'] == "scenario":
+        test_settings['raptor-options']['scenario_time'] = test_details['scenario_time']
 
     settings_file = os.path.join(tests_dir, test_details['name'] + '.json')
     try:
@@ -321,8 +343,10 @@ def get_raptor_test_list(args, oskey):
             next_test['playback'] = None
             LOG.info("using live sites so appending '-live' to the test name")
             next_test['name'] = next_test['name'] + "-live"
-            # we also want to increase the page timeout since may be longer live
-            next_test['page_timeout'] = 180000
+            # allow a slightly higher page timeout due to remote page loads
+            next_test['page_timeout'] = int(
+                next_test['page_timeout']) * LIVE_SITE_TIMEOUT_MULTIPLIER
+            LOG.info("using live sites so using page timeout of %dms" % next_test['page_timeout'])
 
         # convert 'measure =' test INI line to list
         if next_test.get('measure') is not None:

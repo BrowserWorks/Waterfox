@@ -1046,6 +1046,7 @@ class EventStateManager : public nsSupportsWeakReference, public nsIObserver {
   friend class mozilla::dom::BrowserParent;
   void BeginTrackingRemoteDragGesture(nsIContent* aContent);
   void StopTrackingDragGesture();
+  MOZ_CAN_RUN_SCRIPT
   void GenerateDragGesture(nsPresContext* aPresContext,
                            WidgetInputEvent* aEvent);
 
@@ -1053,6 +1054,7 @@ class EventStateManager : public nsSupportsWeakReference, public nsIObserver {
    * When starting a dnd session, UA must fire a pointercancel event and stop
    * firing the subsequent pointer events.
    */
+  MOZ_CAN_RUN_SCRIPT
   void MaybeFirePointerCancel(WidgetInputEvent* aEvent);
 
   /**
@@ -1086,6 +1088,7 @@ class EventStateManager : public nsSupportsWeakReference, public nsIObserver {
    * aPrincipal - the triggering principal of the drag, or null if it's from
    *              browser chrome or OS
    */
+  MOZ_CAN_RUN_SCRIPT
   bool DoDefaultDragStart(nsPresContext* aPresContext,
                           WidgetDragEvent* aDragEvent,
                           dom::DataTransfer* aDataTransfer,
@@ -1271,7 +1274,8 @@ class EventStateManager : public nsSupportsWeakReference, public nsIObserver {
   void KillClickHoldTimer();
   void FireContextClick();
 
-  static void SetPointerLock(nsIWidget* aWidget, nsIContent* aElement);
+  MOZ_CAN_RUN_SCRIPT static void SetPointerLock(nsIWidget* aWidget,
+                                                nsIContent* aElement);
   static void sClickHoldCallback(nsITimer* aTimer, void* aESM);
 };
 
@@ -1279,7 +1283,7 @@ class EventStateManager : public nsSupportsWeakReference, public nsIObserver {
  * This class is used while processing real user input. During this time, popups
  * are allowed. For mousedown events, mouse capturing is also permitted.
  */
-class AutoHandlingUserInputStatePusher {
+class MOZ_RAII AutoHandlingUserInputStatePusher final {
  public:
   AutoHandlingUserInputStatePusher(bool aIsHandlingUserInput,
                                    WidgetEvent* aEvent,
@@ -1294,11 +1298,6 @@ class AutoHandlingUserInputStatePusher {
   bool NeedsToResetFocusManagerMouseButtonHandlingState() const {
     return mMessage == eMouseDown || mMessage == eMouseUp;
   }
-
- private:
-  // Hide so that this class can only be stack-allocated
-  static void* operator new(size_t /*size*/) CPP_THROW_NEW { return nullptr; }
-  static void operator delete(void* /*memory*/) {}
 };
 
 }  // namespace mozilla

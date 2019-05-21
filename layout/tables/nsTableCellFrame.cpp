@@ -38,10 +38,10 @@ using namespace mozilla;
 using namespace mozilla::gfx;
 using namespace mozilla::image;
 
-class nsDisplayTableCellSelection final : public nsDisplayItem {
+class nsDisplayTableCellSelection final : public nsPaintedDisplayItem {
  public:
   nsDisplayTableCellSelection(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame)
-      : nsDisplayItem(aBuilder, aFrame) {
+      : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayTableCellSelection);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
@@ -444,7 +444,7 @@ void nsTableCellFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   DO_GLOBAL_REFLOW_COUNT_DSP("nsTableCellFrame");
   if (ShouldPaintBordersAndBackgrounds()) {
     // display outset box-shadows if we need to.
-    bool hasBoxShadow = !!StyleEffects()->mBoxShadow;
+    bool hasBoxShadow = !StyleEffects()->mBoxShadow.IsEmpty();
     if (hasBoxShadow) {
       aLists.BorderBackground()->AppendNewToTop<nsDisplayBoxShadowOuter>(
           aBuilder, this);

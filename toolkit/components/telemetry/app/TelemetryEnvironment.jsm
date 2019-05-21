@@ -291,7 +291,7 @@ const SEARCH_ENGINE_MODIFIED_TOPIC = "browser-search-engine-modified";
 const SEARCH_SERVICE_TOPIC = "browser-search-service";
 const SESSIONSTORE_WINDOWS_RESTORED_TOPIC = "sessionstore-windows-restored";
 const PREF_CHANGED_TOPIC = "nsPref:changed";
-const BLOCKLIST_LOADED_TOPIC = "blocklist-loaded";
+const BLOCKLIST_LOADED_TOPIC = "plugin-blocklist-loaded";
 const AUTO_UPDATE_PREF_CHANGE_TOPIC = "auto-update-config-change";
 
 /**
@@ -828,7 +828,7 @@ EnvironmentAddonBuilder.prototype = {
       }];
     }
     let pluginTags =
-      Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost).getPluginTags({});
+      Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost).getPluginTags();
 
     let activePlugins = [];
     for (let tag of pluginTags) {
@@ -848,7 +848,7 @@ EnvironmentAddonBuilder.prototype = {
           blocklisted: tag.blocklisted,
           disabled: tag.disabled,
           clicktoplay: tag.clicktoplay,
-          mimeTypes: tag.getMimeTypes({}),
+          mimeTypes: tag.getMimeTypes(),
           updateDay: Utils.millisecondsToDays(updateDate.getTime()),
         });
       } catch (ex) {
@@ -1718,14 +1718,17 @@ EnvironmentCache.prototype = {
       profile: { // hdd where the profile folder is located
         model: getSysinfoProperty("profileHDDModel", null),
         revision: getSysinfoProperty("profileHDDRevision", null),
+        type: getSysinfoProperty("profileHDDType", null),
       },
       binary:  { // hdd where the application binary is located
         model: getSysinfoProperty("binHDDModel", null),
         revision: getSysinfoProperty("binHDDRevision", null),
+        type: getSysinfoProperty("binHDDType", null),
       },
       system:  { // hdd where the system files are located
         model: getSysinfoProperty("winHDDModel", null),
         revision: getSysinfoProperty("winHDDRevision", null),
+        type: getSysinfoProperty("winHDDType", null),
       },
     };
   },

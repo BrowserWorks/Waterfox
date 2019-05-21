@@ -8,14 +8,14 @@ import {
   actions,
   selectors,
   createStore,
-  makeSource
+  makeSource,
 } from "../../../utils/test-head";
 
 describe("blackbox", () => {
   it("should blackbox a source", async () => {
     const store = createStore({
       blackBox: async () => true,
-      getBreakableLines: async () => []
+      getBreakableLines: async () => [],
     });
     const { dispatch, getState, cx } = store;
 
@@ -30,16 +30,10 @@ describe("blackbox", () => {
       throw new Error("foo should exist");
     }
 
-    const { thread } = selectors.getSourceActorsForSource(
-      getState(),
-      foo1Source.id
-    )[0];
-    const displayedSources = selectors.getDisplayedSourcesForThread(
-      getState(),
-      thread
+    const displayedSources = selectors.getDisplayedSources(getState());
+    expect(displayedSources.FakeThread[fooSource.id].isBlackBoxed).toEqual(
+      true
     );
-
-    expect(displayedSources[fooSource.id].isBlackBoxed).toEqual(true);
     expect(fooSource.isBlackBoxed).toEqual(true);
   });
 });

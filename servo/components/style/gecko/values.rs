@@ -7,13 +7,11 @@
 //! Different kind of helpers to interact with Gecko values.
 
 use crate::counter_style::{Symbol, Symbols};
+use crate::gecko_bindings::structs::StyleGridTrackBreadth;
 use crate::gecko_bindings::structs::{nsStyleCoord, CounterStylePtr};
-use crate::gecko_bindings::structs::{StyleGridTrackBreadth, StyleShapeRadius};
 use crate::gecko_bindings::sugar::ns_style_coord::{CoordData, CoordDataMut, CoordDataValue};
-use crate::values::computed::basic_shape::ShapeRadius as ComputedShapeRadius;
 use crate::values::computed::{Angle, Length, LengthPercentage};
 use crate::values::computed::{Number, NumberOrPercentage, Percentage};
-use crate::values::generics::basic_shape::ShapeRadius;
 use crate::values::generics::gecko::ScrollSnapPoint;
 use crate::values::generics::grid::{TrackBreadth, TrackKeyword};
 use crate::values::generics::length::LengthPercentageOrAuto;
@@ -192,35 +190,6 @@ impl<L: GeckoStyleCoordConvertible> GeckoStyleCoordConvertible for TrackBreadth<
     }
 }
 
-impl GeckoStyleCoordConvertible for ComputedShapeRadius {
-    fn to_gecko_style_coord<T: CoordDataMut>(&self, coord: &mut T) {
-        match *self {
-            ShapeRadius::ClosestSide => coord.set_value(CoordDataValue::Enumerated(
-                StyleShapeRadius::ClosestSide as u32,
-            )),
-            ShapeRadius::FarthestSide => coord.set_value(CoordDataValue::Enumerated(
-                StyleShapeRadius::FarthestSide as u32,
-            )),
-            ShapeRadius::Length(lp) => lp.to_gecko_style_coord(coord),
-        }
-    }
-
-    fn from_gecko_style_coord<T: CoordData>(coord: &T) -> Option<Self> {
-        match coord.as_value() {
-            CoordDataValue::Enumerated(v) => {
-                if v == StyleShapeRadius::ClosestSide as u32 {
-                    Some(ShapeRadius::ClosestSide)
-                } else if v == StyleShapeRadius::FarthestSide as u32 {
-                    Some(ShapeRadius::FarthestSide)
-                } else {
-                    None
-                }
-            },
-            _ => GeckoStyleCoordConvertible::from_gecko_style_coord(coord).map(ShapeRadius::Length),
-        }
-    }
-}
-
 impl<T: GeckoStyleCoordConvertible> GeckoStyleCoordConvertible for Option<T> {
     fn to_gecko_style_coord<U: CoordDataMut>(&self, coord: &mut U) {
         if let Some(ref me) = *self {
@@ -319,7 +288,7 @@ impl CounterStyleOrNone {
                     .0
                     .iter()
                     .map(|symbol| match *symbol {
-                        Symbol::String(ref s) => nsCStr::from(s),
+                        Symbol::String(ref s) => nsCStr::from(&**s),
                         Symbol::Ident(_) => unreachable!("Should not have identifier in symbols()"),
                     })
                     .collect();
@@ -364,7 +333,7 @@ impl CounterStyleOrNone {
                 let symbol_type = SymbolsType::from_gecko_keyword(anonymous.mSystem as u32);
                 let symbols = symbols
                     .iter()
-                    .map(|gecko_symbol| Symbol::String(gecko_symbol.to_string()))
+                    .map(|gecko_symbol| Symbol::String(gecko_symbol.to_string().into()))
                     .collect();
                 Either::First(CounterStyleOrNone::Symbols(symbol_type, Symbols(symbols)))
             }

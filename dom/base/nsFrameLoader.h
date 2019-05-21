@@ -52,6 +52,7 @@ class OriginAttributes;
 namespace dom {
 class ChromeMessageSender;
 class ContentParent;
+class TabListener;
 class InProcessBrowserChildMessageManager;
 class MessageSender;
 class PBrowserParent;
@@ -94,6 +95,7 @@ class nsFrameLoader final : public nsStubMutationObserver,
   typedef mozilla::dom::PBrowserParent PBrowserParent;
   typedef mozilla::dom::Document Document;
   typedef mozilla::dom::BrowserParent BrowserParent;
+  typedef mozilla::dom::BrowsingContext BrowsingContext;
   typedef mozilla::layout::RenderFrame RenderFrame;
 
  public:
@@ -105,6 +107,7 @@ class nsFrameLoader final : public nsStubMutationObserver,
   // Called by nsFrameLoaderOwner::ChangeRemoteness when switching out
   // FrameLoaders.
   static nsFrameLoader* Create(mozilla::dom::Element* aOwner,
+                               BrowsingContext* aPreservedBrowsingContext,
                                const mozilla::dom::RemotenessOptions& aOptions);
 
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_FRAMELOADER_IID)
@@ -127,6 +130,7 @@ class nsFrameLoader final : public nsStubMutationObserver,
   }
   nsresult CreateStaticClone(nsFrameLoader* aDest);
   nsresult UpdatePositionAndSize(nsSubDocumentFrame* aIFrame);
+  void SendIsUnderHiddenEmbedderElement(bool aIsUnderHiddenEmbedderElement);
 
   // WebIDL methods
 
@@ -191,6 +195,8 @@ class nsFrameLoader final : public nsStubMutationObserver,
 
   void RequestUpdatePosition(mozilla::ErrorResult& aRv);
 
+  bool RequestTabStateFlush(uint32_t aFlushId);
+
   void Print(uint64_t aOuterWindowID, nsIPrintSettings* aPrintSettings,
              nsIWebProgressListener* aProgressListener,
              mozilla::ErrorResult& aRv);
@@ -241,8 +247,11 @@ class nsFrameLoader final : public nsStubMutationObserver,
    * Called from the layout frame associated with this frame loader;
    * this notifies us to hook up with the widget and view.
    */
-  bool Show(int32_t marginWidth, int32_t marginHeight, int32_t scrollbarPrefX,
-            int32_t scrollbarPrefY, nsSubDocumentFrame* frame);
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY bool Show(int32_t marginWidth,
+                                        int32_t marginHeight,
+                                        int32_t scrollbarPrefX,
+                                        int32_t scrollbarPrefY,
+                                        nsSubDocumentFrame* frame);
 
   void MaybeShowFrame();
 
@@ -378,6 +387,8 @@ class nsFrameLoader final : public nsStubMutationObserver,
   virtual JSObject* WrapObject(JSContext* cx,
                                JS::Handle<JSObject*> aGivenProto) override;
 
+  void SkipBrowsingContextDetach();
+
  private:
   nsFrameLoader(mozilla::dom::Element* aOwner,
                 mozilla::dom::BrowsingContext* aBrowsingContext,
@@ -491,6 +502,8 @@ class nsFrameLoader final : public nsStubMutationObserver,
   mozilla::ScreenIntSize mLazySize;
 
   RefPtr<mozilla::dom::ParentSHistory> mParentSHistory;
+
+  RefPtr<mozilla::dom::TabListener> mSessionStoreListener;
 
   bool mDepthTooGreat : 1;
   bool mIsTopLevelContent : 1;

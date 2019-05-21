@@ -240,17 +240,17 @@ class MOZ_STACK_CLASS SplitNodeResult final {
    * by this instance.  Therefore, the life time of both container node
    * and child node are guaranteed while using the result temporarily.
    */
-  EditorRawDOMPoint SplitPoint() const {
+  EditorDOMPoint SplitPoint() const {
     if (Failed()) {
-      return EditorRawDOMPoint();
+      return EditorDOMPoint();
     }
     if (mGivenSplitPoint.IsSet()) {
-      return EditorRawDOMPoint(mGivenSplitPoint);
+      return EditorDOMPoint(mGivenSplitPoint);
     }
     if (!mPreviousNode) {
-      return EditorRawDOMPoint(mNextNode);
+      return EditorDOMPoint(mNextNode);
     }
-    EditorRawDOMPoint point(mPreviousNode);
+    EditorDOMPoint point(mPreviousNode);
     DebugOnly<bool> advanced = point.AdvanceOffset();
     NS_WARNING_ASSERTION(advanced,
                          "Failed to advance offset to after previous node");
@@ -406,19 +406,21 @@ class MOZ_STACK_CLASS SplitRangeOffFromNodeResult final {
  * methods.
  ***************************************************************************/
 class MOZ_RAII AutoTransactionBatchExternal final {
- private:
-  OwningNonNull<EditorBase> mEditorBase;
-  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-
  public:
-  explicit AutoTransactionBatchExternal(
+  MOZ_CAN_RUN_SCRIPT explicit AutoTransactionBatchExternal(
       EditorBase& aEditorBase MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
       : mEditorBase(aEditorBase) {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-    mEditorBase->BeginTransaction();
+    mEditorBase.BeginTransaction();
   }
 
-  ~AutoTransactionBatchExternal() { mEditorBase->EndTransaction(); }
+  MOZ_CAN_RUN_SCRIPT ~AutoTransactionBatchExternal() {
+    MOZ_KnownLive(mEditorBase).EndTransaction();
+  }
+
+ private:
+  EditorBase& mEditorBase;
+  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
 class MOZ_STACK_CLASS AutoRangeArray final {

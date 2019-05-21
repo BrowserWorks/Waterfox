@@ -296,6 +296,26 @@ function resolveGeckoURI(aURI) {
   return aURI;
 }
 
+XPCOMUtils.defineLazyGetter(this, "ReferrerInfo", () =>
+  Components.Constructor(
+    "@mozilla.org/referrer-info;1",
+    "nsIReferrerInfo",
+    "init"));
+
+function createReferrerInfo(aReferrer) {
+  let referrerUri;
+  try {
+    referrerUri = Services.io.newURI(aReferrer);
+  } catch (ignored) {
+  }
+
+  return new ReferrerInfo(
+    Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
+    true,
+    referrerUri
+  );
+}
+
 /**
  * Cache of commonly used string bundles.
  */
@@ -1179,7 +1199,7 @@ var BrowserApp = {
 
     let flags = "flags" in aParams ? aParams.flags : Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
     let postData = ("postData" in aParams && aParams.postData) ? aParams.postData : null;
-    let referrerURI = "referrerURI" in aParams ? aParams.referrerURI : null;
+    let referrerInfo = "referrerURI" in aParams ? createReferrerInfo(aParams.referrerURI) : null;
     let charset = "charset" in aParams ? aParams.charset : null;
 
     let tab = this.getTabForBrowser(aBrowser);
@@ -1193,7 +1213,7 @@ var BrowserApp = {
     try {
       aBrowser.loadURI(aURI, {
         flags,
-        referrerURI,
+        referrerInfo,
         charset,
         postData,
         triggeringPrincipal,
@@ -1771,9 +1791,7 @@ var BrowserApp = {
         Services.prefs.setCharPref("intl.locale.os", languageTag);
         Services.prefs.savePrefFile(null);
 
-        let appLocale = this.getUALocalePref();
-
-        this.computeAcceptLanguages(languageTag, appLocale);
+        this.computeAcceptLanguages(languageTag);
 
         // Rebuild strings, in case we're mirroring OS locale.
         Strings.flush();
@@ -1795,7 +1813,7 @@ var BrowserApp = {
         // Make sure we use the right Accept-Language header.
         let osLocale = Services.prefs.getCharPref("intl.locale.os");
 
-        this.computeAcceptLanguages(osLocale, data && data.languageTag);
+        this.computeAcceptLanguages(osLocale);
         break;
       }
 
@@ -2153,7 +2171,7 @@ var BrowserApp = {
    * osLocale should never be null, but this method is safe regardless.
    * appLocale may explicitly be null.
    */
-  computeAcceptLanguages(osLocale, appLocale) {
+  computeAcceptLanguages(osLocale) {
     let defaultBranch = Services.prefs.getDefaultBranch(null);
     let defaultAccept = defaultBranch.getComplexValue("intl.accept_languages", Ci.nsIPrefLocalizedString).data;
     console.log("Default intl.accept_languages = " + defaultAccept);
@@ -2168,10 +2186,6 @@ var BrowserApp = {
       defaultAccept = defaultAccept.toLowerCase();
     }
 
-    if (appLocale) {
-      appLocale = appLocale.toLowerCase();
-    }
-
     try {
         const resistFingerprinting = Services.prefs.getBoolPref("privacy.resistFingerprinting");
         if (resistFingerprinting) {
@@ -2179,28 +2193,30 @@ var BrowserApp = {
         }
     } catch (e) {}
 
+    // Explicitly-set app prefs come first:
+    let chosen = Services.prefs.getCharPref("intl.locale.requested", "")
+                               .split(",")
+                               .map((x) => x.trim().toLowerCase())
+                               .filter((x) => x.length > 0);
+
+    // OS prefs come second:
     if (osLocale) {
       osLocale = osLocale.toLowerCase();
+      if (!chosen.includes(osLocale)) {
+        chosen.push(osLocale);
+      }
     }
 
-    // Eliminate values if they're present in the default.
-    let chosen;
+    // Default app prefs come third:
     if (defaultAccept) {
       // intl.accept_languages is a comma-separated list, with no q-value params. Those
       // are added when the header is generated.
-      chosen = defaultAccept.split(",")
-                            .map((x) => x.trim())
-                            .filter((x) => (x != appLocale && x != osLocale));
-    } else {
-      chosen = [];
-    }
-
-    if (osLocale) {
-      chosen.unshift(osLocale);
-    }
-
-    if (appLocale && appLocale != osLocale) {
-      chosen.unshift(appLocale);
+      let defaults = defaultAccept.split(",").map((x) => x.trim());
+      for (let locale of defaults) {
+        if (!chosen.includes(locale)) {
+          chosen.push(locale);
+        }
+      }
     }
 
     let result = chosen.join(",");
@@ -3469,7 +3485,7 @@ nsBrowserAccess.prototype = {
     if (aURI && browser) {
       browser.loadURI(aURI.spec, {
         flags: loadflags,
-        referrerURI: referrer,
+        referrerInfo: createReferrerInfo(referrer),
         triggeringPrincipal: aTriggeringPrincipal,
       });
     }
@@ -3763,7 +3779,7 @@ Tab.prototype = {
       }
 
       let postData = ("postData" in aParams && aParams.postData) ? aParams.postData.value : null;
-      let referrerURI = "referrerURI" in aParams ? aParams.referrerURI : null;
+      let referrerInfo = "referrerURI" in aParams ? createReferrerInfo(aParams.referrerURI) : null;
       let charset = "charset" in aParams ? aParams.charset : null;
 
       // The search term the user entered to load the current URL
@@ -3773,7 +3789,7 @@ Tab.prototype = {
       try {
         this.browser.loadURI(aURL, {
           flags,
-          referrerURI,
+          referrerInfo,
           charset,
           postData,
           triggeringPrincipal: aParams.triggeringPrincipal,
@@ -4205,7 +4221,7 @@ Tab.prototype = {
       case "DOMFormHasPassword": {
         // Send logins for this hostname to Java.
         let hostname = aEvent.target.baseURIObject.displayPrePath;
-        let foundLogins = Services.logins.findLogins({}, hostname, "", "");
+        let foundLogins = Services.logins.findLogins(hostname, "", "");
         if (foundLogins.length > 0) {
           let displayHost = IdentityHandler.getEffectiveHost();
           let title = { text: displayHost, resource: hostname };

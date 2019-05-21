@@ -438,10 +438,10 @@ void nsDisplayCanvasThemedBackground::Paint(nsDisplayListBuilder* aBuilder,
  *
  * The only reason this can't use nsDisplayGeneric is overriding GetBounds.
  */
-class nsDisplayCanvasFocus : public nsDisplayItem {
+class nsDisplayCanvasFocus : public nsPaintedDisplayItem {
  public:
   nsDisplayCanvasFocus(nsDisplayListBuilder* aBuilder, nsCanvasFrame* aFrame)
-      : nsDisplayItem(aBuilder, aFrame) {
+      : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayCanvasFocus);
   }
   virtual ~nsDisplayCanvasFocus() { MOZ_COUNT_DTOR(nsDisplayCanvasFocus); }
@@ -548,8 +548,8 @@ void nsCanvasFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
         {
           DisplayListClipState::AutoSaveRestore bgImageClip(aBuilder);
           bgImageClip.Clear();
-          bgItem =
-              MakeDisplayItem<nsDisplayCanvasBackgroundImage>(aBuilder, bgData);
+          bgItem = MakeDisplayItem<nsDisplayCanvasBackgroundImage>(
+              aBuilder, this, bgData);
           if (bgItem) {
             bgItem->SetDependentFrame(aBuilder, dependentFrame);
           }
@@ -562,7 +562,8 @@ void nsCanvasFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 
       } else {
         nsDisplayCanvasBackgroundImage* bgItem =
-            MakeDisplayItem<nsDisplayCanvasBackgroundImage>(aBuilder, bgData);
+            MakeDisplayItem<nsDisplayCanvasBackgroundImage>(aBuilder, this,
+                                                            bgData);
         if (bgItem) {
           bgItem->SetDependentFrame(aBuilder, dependentFrame);
           thisItemList.AppendToTop(bgItem);

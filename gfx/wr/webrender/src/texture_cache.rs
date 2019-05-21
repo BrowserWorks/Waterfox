@@ -7,15 +7,15 @@ use api::{DebugFlags, ImageDescriptor};
 use api::units::*;
 #[cfg(test)]
 use api::IdNamespace;
-use device::{TextureFilter, total_gpu_bytes_allocated};
-use freelist::{FreeList, FreeListHandle, UpsertResult, WeakFreeListHandle};
-use gpu_cache::{GpuCache, GpuCacheHandle};
-use gpu_types::{ImageSource, UvRectKind};
-use internal_types::{CacheTextureId, FastHashMap, LayerIndex, TextureUpdateList, TextureUpdateSource};
-use internal_types::{TextureSource, TextureCacheAllocInfo, TextureCacheUpdate};
-use profiler::{ResourceProfileCounter, TextureCacheProfileCounters};
-use render_backend::{FrameId, FrameStamp};
-use resource_cache::{CacheItem, CachedImageData};
+use crate::device::{TextureFilter, total_gpu_bytes_allocated};
+use crate::freelist::{FreeList, FreeListHandle, UpsertResult, WeakFreeListHandle};
+use crate::gpu_cache::{GpuCache, GpuCacheHandle};
+use crate::gpu_types::{ImageSource, UvRectKind};
+use crate::internal_types::{CacheTextureId, FastHashMap, LayerIndex, TextureUpdateList, TextureUpdateSource};
+use crate::internal_types::{TextureSource, TextureCacheAllocInfo, TextureCacheUpdate};
+use crate::profiler::{ResourceProfileCounter, TextureCacheProfileCounters};
+use crate::render_backend::{FrameId, FrameStamp};
+use crate::resource_cache::{CacheItem, CachedImageData};
 use std::cell::Cell;
 use std::cmp;
 use std::mem;
@@ -671,11 +671,11 @@ impl TextureCache {
                                  mem::replace(&mut self.doc_data, PerDocumentData::new()));
     }
 
-    pub fn before_frames(&mut self, time: SystemTime) {
+    pub fn prepare_for_frames(&mut self, time: SystemTime) {
         self.maybe_reclaim_shared_memory(time);
     }
 
-    pub fn after_frames(&mut self) {
+    pub fn bookkeep_after_frames(&mut self) {
         self.require_frame_build = false;
     }
 

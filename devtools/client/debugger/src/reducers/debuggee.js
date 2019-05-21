@@ -10,18 +10,26 @@
  */
 
 import { sortBy } from "lodash";
+import { createSelector } from "reselect";
+
 import { getDisplayName } from "../utils/workers";
 
-import type { MainThread, WorkerList } from "../types";
+import type { Selector } from "./types";
+import type { MainThread, WorkerList, Thread } from "../types";
 import type { Action } from "../actions/types";
 
 export type DebuggeeState = {
   workers: WorkerList,
-  mainThread: MainThread
+  mainThread: MainThread,
+  isWebExtension: boolean,
 };
 
 export function initialDebuggeeState(): DebuggeeState {
-  return { workers: [], mainThread: { actor: "", url: "", type: -1 } };
+  return {
+    workers: [],
+    mainThread: { actor: "", url: "", type: -1, name: "" },
+    isWebExtension: false,
+  };
 }
 
 export default function debuggee(
@@ -32,27 +40,37 @@ export default function debuggee(
     case "CONNECT":
       return {
         ...state,
-        mainThread: action.mainThread
+        mainThread: { ...action.mainThread, name: L10N.getStr("mainThread") },
+        isWebExtension: action.isWebExtension,
       };
     case "INSERT_WORKERS":
-      return {
-        ...state,
-        workers: [...state.workers, ...action.workers]
-      };
+      return insertWorkers(state, action.workers);
     case "REMOVE_WORKERS":
       const { workers } = action;
       return {
         ...state,
-        workers: state.workers.filter(w => !workers.includes(w.actor))
+        workers: state.workers.filter(w => !workers.includes(w.actor)),
       };
     case "NAVIGATE":
       return {
         ...initialDebuggeeState(),
-        mainThread: action.mainThread
+        mainThread: action.mainThread,
       };
     default:
       return state;
   }
+}
+
+function insertWorkers(state, workers) {
+  const formatedWorkers = workers.map(worker => ({
+    ...worker,
+    name: getDisplayName(worker),
+  }));
+
+  return {
+    ...state,
+    workers: [...state.workers, ...formatedWorkers],
+  };
 }
 
 export const getWorkers = (state: OuterState) => state.debuggee.workers;
@@ -71,8 +89,10 @@ export function getDebuggeeUrl(state: OuterState): string {
   return getMainThread(state).url;
 }
 
-export function getThreads(state: OuterState) {
-  return [getMainThread(state), ...sortBy(getWorkers(state), getDisplayName)];
-}
+export const getThreads: Selector<Thread[]> = createSelector(
+  getMainThread,
+  getWorkers,
+  (mainThread, workers) => [mainThread, ...sortBy(workers, getDisplayName)]
+);
 
 type OuterState = { debuggee: DebuggeeState };

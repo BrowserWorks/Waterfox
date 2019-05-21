@@ -1,10 +1,15 @@
 /* eslint max-len: ["error", 80] */
 
+const {AddonTestUtils} =
+  ChromeUtils.import("resource://testing-common/AddonTestUtils.jsm", {});
+
 const {ExtensionPermissions} =
   ChromeUtils.import("resource://gre/modules/ExtensionPermissions.jsm", {});
 
 let gProvider;
 let promptService;
+
+AddonTestUtils.initMochitest(this);
 
 function getAddonCard(doc, addonId) {
   return doc.querySelector(`addon-card[addon-id="${addonId}"]`);
@@ -56,6 +61,26 @@ function checkOptions(doc, options, expectedOptions) {
   }
 }
 
+function assertDeckHeadingHidden(group) {
+  ok(group.hidden, "The tab group is hidden");
+  for (let button of group.children) {
+    ok(button.offsetHeight == 0, `The ${button.name} is hidden`);
+  }
+}
+
+function assertDeckHeadingButtons(group, visibleButtons) {
+  ok(!group.hidden, "The tab group is shown");
+  ok(group.children.length >= visibleButtons.length,
+     `There should be at least ${visibleButtons.length} buttons`);
+  for (let button of group.children) {
+    if (visibleButtons.includes(button.name)) {
+      ok(!button.hidden, `The ${button.name} is shown`);
+    } else {
+      ok(button.hidden, `The ${button.name} is hidden`);
+    }
+  }
+}
+
 async function hasPrivateAllowed(id) {
   let perms = await ExtensionPermissions.get(id);
   return perms.permissions.includes("internal:privateBrowsingAllowed");
@@ -77,7 +102,11 @@ add_task(async function enableHtmlViews() {
     fullDescription: "Longer description\nWith brs!",
     type: "extension",
     contributionURL: "http://foo.com",
-    averageRating: 4.3,
+    averageRating: 4.279,
+    userPermissions: {
+      origins: ["<all_urls>", "file://*/*"],
+      permissions: ["alarms", "contextMenus", "tabs", "webNavigation"],
+    },
     reviewCount: 5,
     reviewURL: "http://example.com/reviews",
     homepageURL: "http://example.com/addon1",
@@ -88,6 +117,10 @@ add_task(async function enableHtmlViews() {
     name: "Test add-on 2",
     creator: {name: "I made it"},
     description: "Short description",
+    userPermissions: {
+      origins: [],
+      permissions: ["alarms", "contextMenus"],
+    },
     type: "extension",
   }, {
     id: "theme1@mochi.test",
@@ -123,12 +156,11 @@ add_task(async function testOpenDetailView() {
   let win = await loadInitialView("extension");
   let doc = win.document;
 
-  // Test double click on card to open details.
+  // Test click on card to open details.
   let card = getAddonCard(doc, "test@mochi.test");
   ok(!card.querySelector("addon-details"), "The card doesn't have details");
   let loaded = waitForViewLoad(win);
   EventUtils.synthesizeMouseAtCenter(card, {clickCount: 1}, win);
-  EventUtils.synthesizeMouseAtCenter(card, {clickCount: 2}, win);
   await loaded;
 
   card = getAddonCard(doc, "test@mochi.test");
@@ -169,7 +201,6 @@ add_task(async function testDetailOperations() {
   ok(!card.querySelector("addon-details"), "The card doesn't have details");
   let loaded = waitForViewLoad(win);
   EventUtils.synthesizeMouseAtCenter(card, {clickCount: 1}, win);
-  EventUtils.synthesizeMouseAtCenter(card, {clickCount: 2}, win);
   await loaded;
 
   card = getAddonCard(doc, "test@mochi.test");
@@ -205,9 +236,11 @@ add_task(async function testDetailOperations() {
     "The name is updated to the disabled text");
 
   // Enable the add-on.
+  let extensionStarted = AddonTestUtils.promiseWebExtensionStartup(
+    "test@mochi.test");
   disableToggled = BrowserTestUtils.waitForEvent(card, "update");
   disableButton.click();
-  await disableToggled;
+  await Promise.all([disableToggled, extensionStarted]);
 
   // Name is just the add-on name again.
   is(name.textContent, "Test", "The name is reset when enabled");
@@ -218,7 +251,6 @@ add_task(async function testDetailOperations() {
   removeButton.click();
   await cancelled;
 
-
   // Remove the extension.
   let viewChanged = waitForViewLoad(win);
   // Tell the mock prompt service that the prompt was accepted.
@@ -227,11 +259,27 @@ add_task(async function testDetailOperations() {
   await viewChanged;
 
   // We're on the list view now and there's no card for this extension.
-  ok(doc.querySelector("addon-list"), "There's an addon-list now");
+  const addonList = doc.querySelector("addon-list");
+  ok(addonList, "There's an addon-list now");
   ok(!getAddonCard(doc, "test@mochi.test"),
      "The extension no longer has a card");
   let addon = await AddonManager.getAddonByID("test@mochi.test");
-  ok(!addon, "The extension can't be found now");
+  ok(addon && !!(addon.pendingOperations & AddonManager.PENDING_UNINSTALL),
+     "The addon is pending uninstall");
+
+  // Ensure that a pending uninstall bar has been created for the
+  // pending uninstall extension, and pressing the undo button will
+  // refresh the list and render a card to the re-enabled extension.
+  assertHasPendingUninstalls(addonList, 1);
+  assertHasPendingUninstallAddon(addonList, addon);
+
+  extensionStarted = AddonTestUtils.promiseWebExtensionStartup(addon.id);
+  await testUndoPendingUninstall(addonList, addon);
+  info("Wait for the pending uninstall addon complete restart");
+  await extensionStarted;
+
+  card = getAddonCard(doc, addon.id);
+  ok(card, "Addon card rendered after clicking pending uninstall undo button");
 
   await closeView(win);
   await extension.unload();
@@ -264,6 +312,10 @@ add_task(async function testFullDetails() {
   is(preview.hidden, true, "The preview is hidden");
 
   let details = card.querySelector("addon-details");
+
+  // Check all the deck buttons are hidden.
+  assertDeckHeadingButtons(details.tabGroup, ["details", "permissions"]);
+
   let desc = details.querySelector(".addon-detail-description");
   is(desc.innerHTML, "Longer description<br>With brs!",
      "The full description replaces newlines with <br>");
@@ -271,7 +323,8 @@ add_task(async function testFullDetails() {
   let contrib = details.querySelector(".addon-detail-contribute");
   ok(contrib, "The contribution section is visible");
 
-  let rows = Array.from(details.querySelectorAll(".addon-detail-row"));
+  let rows = Array.from(
+    card.querySelectorAll('[name="details"] .addon-detail-row'));
 
   // Auto updates.
   let row = rows.shift();
@@ -287,6 +340,13 @@ add_task(async function testFullDetails() {
   // Private browsing, functionality checked in another test.
   row = rows.shift();
   checkLabel(row, "private-browsing");
+
+  // Private browsing help text.
+  row = rows.shift();
+  ok(row.classList.contains("addon-detail-help-row"), "There's a help row");
+  ok(!row.hidden, "The help row is shown");
+  is(doc.l10n.getAttributes(row).id, "addon-detail-private-browsing-help",
+     "The help row is for private browsing");
 
   // Author.
   row = rows.shift();
@@ -317,7 +377,9 @@ add_task(async function testFullDetails() {
   checkLabel(row, "rating");
   let rating = row.lastElementChild;
   ok(rating.classList.contains("addon-detail-rating"), "Found the rating el");
-  let stars = Array.from(rating.querySelectorAll(".addon-detail-rating-star"));
+  let starsElem = rating.querySelector("five-star-rating");
+  is(starsElem.rating, 4.279, "Exact rating used for calculations");
+  let stars = Array.from(starsElem.shadowRoot.querySelectorAll(".rating-star"));
   let fullAttrs = stars.map(star => star.getAttribute("fill")).join(",");
   is(fullAttrs, "full,full,full,full,half", "Four and a half stars are full");
   link = rating.querySelector("a");
@@ -325,6 +387,28 @@ add_task(async function testFullDetails() {
     id: "addon-detail-reviews-link",
     args: {numberOfReviews: 5},
   });
+
+  // While we are here, let's test edge cases of star ratings.
+  async function testRating(rating, ratingRounded, expectation) {
+    starsElem.rating = rating;
+    await starsElem.ownerDocument.l10n.translateElements([starsElem]);
+    is(starsElem.ratingBuckets.join(","), expectation,
+       `Rendering of rating ${rating}`);
+
+    is(starsElem.title, `Rated ${ratingRounded} out of 5`,
+       "Rendered title must contain at most one fractional digit");
+  }
+  await testRating(0.000, "0", "empty,empty,empty,empty,empty");
+  await testRating(0.123, "0.1", "empty,empty,empty,empty,empty");
+  await testRating(0.249, "0.2", "empty,empty,empty,empty,empty");
+  await testRating(0.250, "0.3", "half,empty,empty,empty,empty");
+  await testRating(0.749, "0.7", "half,empty,empty,empty,empty");
+  await testRating(0.750, "0.8", "full,empty,empty,empty,empty");
+  await testRating(1.000, "1", "full,empty,empty,empty,empty");
+  await testRating(4.249, "4.2", "full,full,full,full,empty");
+  await testRating(4.250, "4.3", "full,full,full,full,half");
+  await testRating(4.749, "4.7", "full,full,full,full,half");
+  await testRating(5.000, "5", "full,full,full,full,full");
 
   // That should've been all the rows.
   is(rows.length, 0, "There are no more rows left");
@@ -345,20 +429,32 @@ add_task(async function testMinimalExtension() {
   card = getAddonCard(doc, "addon2@mochi.test");
   let details = card.querySelector("addon-details");
 
+  // Check all the deck buttons are hidden.
+  assertDeckHeadingButtons(details.tabGroup, ["details", "permissions"]);
+
   let desc = details.querySelector(".addon-detail-description");
   is(desc.textContent, "", "There is no full description");
 
   let contrib = details.querySelector(".addon-detail-contribute");
   ok(!contrib, "There is no contribution element");
 
-  let rows = Array.from(details.querySelectorAll(".addon-detail-row"));
+  let rows = Array.from(
+    card.querySelectorAll('[name="details"] .addon-detail-row'));
 
   // Automatic updates.
   let row = rows.shift();
   checkLabel(row, "updates");
 
+  // Private browsing settings.
   row = rows.shift();
   checkLabel(row, "private-browsing");
+
+  // Private browsing help text.
+  row = rows.shift();
+  ok(row.classList.contains("addon-detail-help-row"), "There's a help row");
+  ok(!row.hidden, "The help row is shown");
+  is(doc.l10n.getAttributes(row).id, "addon-detail-private-browsing-help",
+     "The help row is for private browsing");
 
   // Author.
   row = rows.shift();
@@ -395,7 +491,11 @@ add_task(async function testDefaultTheme() {
   ok(preview, "There is a preview");
   is(preview.hidden, true, "The preview is hidden");
 
-  let rows = Array.from(card.querySelectorAll(".addon-detail-row"));
+  // Check all the deck buttons are hidden.
+  assertDeckHeadingHidden(card.details.tabGroup);
+
+  let rows = Array.from(
+    card.querySelectorAll('[name="details"] .addon-detail-row'));
 
   // Author.
   let author = rows.shift();
@@ -431,7 +531,7 @@ add_task(async function testStaticTheme() {
   ok(preview, "There is a preview");
   is(preview.src, "http://example.com/preview.png", "The preview URL is set");
   is(preview.width, "664", "The width is set");
-  is(preview.height, "89", "The height is set");
+  is(preview.height, "90", "The height is set");
   is(preview.hidden, false, "The preview is visible");
 
   // Load the detail view.
@@ -446,10 +546,14 @@ add_task(async function testStaticTheme() {
   ok(preview, "There is a preview");
   is(preview.src, "http://example.com/preview.png", "The preview URL is set");
   is(preview.width, "664", "The width is set");
-  is(preview.height, "89", "The height is set");
+  is(preview.height, "90", "The height is set");
   is(preview.hidden, false, "The preview is visible");
 
-  let rows = Array.from(card.querySelectorAll(".addon-detail-row"));
+  // Check all the deck buttons are hidden.
+  assertDeckHeadingHidden(card.details.tabGroup);
+
+  let rows = Array.from(
+    card.querySelectorAll('[name="details"] .addon-detail-row'));
 
   // Automatic updates.
   let row = rows.shift();
@@ -536,6 +640,79 @@ add_task(async function testPrivateBrowsingExtension() {
   await closeView(win);
 });
 
+add_task(async function testExternalUninstall() {
+  let id = "remove@mochi.test";
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      name: "Remove me",
+      applications: {gecko: {id}},
+    },
+    useAddonManager: "temporary",
+  });
+  await extension.startup();
+  let addon = await AddonManager.getAddonByID(id);
+
+  let win = await loadInitialView("extension");
+  let doc = win.document;
+
+  // Load the detail view.
+  let card = doc.querySelector(`addon-card[addon-id="${id}"]`);
+  let detailsLoaded = waitForViewLoad(win);
+  card.querySelector('[action="expand"]').click();
+  await detailsLoaded;
+
+  // Uninstall the add-on with undo. Should go to extension list.
+  let listLoaded = waitForViewLoad(win);
+  await addon.uninstall(true);
+  await listLoaded;
+
+  // Verify the list view was loaded and the card is gone.
+  let list = doc.querySelector("addon-list");
+  is(list.type, "extension", "We're on the extension list page");
+  card = list.querySelector(`addon-card[addon-id="${id}"]`);
+  ok(!card, "The card has been removed");
+
+  await extension.unload();
+  closeView(win);
+});
+
+add_task(async function testExternalThemeUninstall() {
+  let id = "remove-theme@mochi.test";
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      applications: {gecko: {id}},
+      name: "Remove theme",
+      theme: {},
+    },
+    useAddonManager: "temporary",
+  });
+  await extension.startup();
+  let addon = await AddonManager.getAddonByID(id);
+
+  let win = await loadInitialView("theme");
+  let doc = win.document;
+
+  // Load the detail view.
+  let card = doc.querySelector(`addon-card[addon-id="${id}"]`);
+  let detailsLoaded = waitForViewLoad(win);
+  card.querySelector('[action="expand"]').click();
+  await detailsLoaded;
+
+  // Uninstall the add-on without undo. Should go to theme list.
+  let listLoaded = waitForViewLoad(win);
+  await addon.uninstall();
+  await listLoaded;
+
+  // Verify the list view was loaded and the card is gone.
+  let list = doc.querySelector("addon-list");
+  is(list.type, "theme", "We're on the theme list page");
+  card = list.querySelector(`addon-card[addon-id="${id}"]`);
+  ok(!card, "The card has been removed");
+
+  await extension.unload();
+  closeView(win);
+});
+
 add_task(async function testPrivateBrowsingAllowedListView() {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
@@ -561,4 +738,62 @@ add_task(async function testPrivateBrowsingAllowedListView() {
 
   await extension.unload();
   await closeView(win);
+});
+
+add_task(async function testPermissions() {
+  async function runTest(id, permissions) {
+    let win = await loadInitialView("extension");
+    let doc = win.document;
+
+    let card = getAddonCard(doc, id);
+    ok(!card.hasAttribute("expanded"), "The list card is not expanded");
+    let loaded = waitForViewLoad(win);
+    card.querySelector('[action="expand"]').click();
+    await loaded;
+
+    card = getAddonCard(doc, id);
+    let {deck, tabGroup} = card.details;
+
+    // Check all the deck buttons are hidden.
+    assertDeckHeadingButtons(tabGroup, ["details", "permissions"]);
+
+    let permsBtn = tabGroup.querySelector('[name="permissions"]');
+    let permsShown = BrowserTestUtils.waitForEvent(deck, "view-changed");
+    permsBtn.click();
+    await permsShown;
+
+    let permsSection = card.querySelector("addon-permissions-list");
+    let rows = Array.from(permsSection.querySelectorAll(".addon-detail-row"));
+
+    info("Check displayed permissions");
+    if (permissions) {
+      for (let name in permissions) {
+        // Check the permission-info class to make sure it's for a permission.
+        let row = rows.shift();
+        ok(row.classList.contains("permission-info"),
+           `There's a row for ${name}`);
+      }
+    } else {
+      let row = rows.shift();
+      is(doc.l10n.getAttributes(row).id, "addon-permissions-empty",
+        "There's a message when no permissions are shown");
+    }
+
+    info("Check learn more link");
+    let row = rows.shift();
+    is(row.children.length, 1, "There's one child for learn more");
+    let link = row.firstElementChild;
+    let rootUrl = Services.urlFormatter.formatURLPref("app.support.baseURL");
+    let url = rootUrl + "extension-permissions";
+    is(link.href, url, "The URL is set");
+    is(link.getAttribute("target"), "_blank", "The link opens in a new tab");
+
+    await closeView(win);
+  }
+
+  info("Check permissions for add-on with permission message");
+  await runTest("addon1@mochi.test", ["<all_urls>", "tabs", "webNavigation"]);
+
+  info("Check permissions for add-on without permission messages");
+  await runTest("addon2@mochi.test");
 });

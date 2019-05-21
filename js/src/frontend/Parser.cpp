@@ -48,6 +48,7 @@
 #include "vm/JSContext.h"
 #include "vm/JSFunction.h"
 #include "vm/JSScript.h"
+#include "vm/ModuleBuilder.h"  // js::ModuleBuilder
 #include "vm/RegExpObject.h"
 #include "vm/StringType.h"
 #include "wasm/AsmJS.h"
@@ -1960,9 +1961,6 @@ JSFunction* AllocNewFunction(JSContext* cx, HandleAtom atom,
 
   gc::AllocKind allocKind = gc::AllocKind::FUNCTION;
   JSFunction::Flags flags;
-#ifdef DEBUG
-  bool isGlobalSelfHostedBuiltin = false;
-#endif
   switch (kind) {
     case FunctionSyntaxKind::Expression:
       flags = (generatorKind == GeneratorKind::NotGenerator &&
@@ -1993,12 +1991,9 @@ JSFunction* AllocNewFunction(JSContext* cx, HandleAtom atom,
       break;
     default:
       MOZ_ASSERT(kind == FunctionSyntaxKind::Statement);
-#ifdef DEBUG
       if (isSelfHosting && !inFunctionBox) {
-        isGlobalSelfHostedBuiltin = true;
         allocKind = gc::AllocKind::FUNCTION_EXTENDED;
       }
-#endif
       flags = (generatorKind == GeneratorKind::NotGenerator &&
                        asyncKind == FunctionAsyncKind::SyncFunction
                    ? JSFunction::INTERPRETED_NORMAL
@@ -2012,12 +2007,6 @@ JSFunction* AllocNewFunction(JSContext* cx, HandleAtom atom,
   }
   if (isSelfHosting) {
     fun->setIsSelfHostedBuiltin();
-#ifdef DEBUG
-    if (isGlobalSelfHostedBuiltin) {
-      fun->setExtendedSlot(HAS_SELFHOSTED_CANONICAL_NAME_SLOT,
-                           BooleanValue(false));
-    }
-#endif
   }
   return fun;
 }
@@ -2119,6 +2108,17 @@ JSAtom* ParserBase::prefixAccessorName(PropertyType propType,
 }
 
 template <class ParseHandler, typename Unit>
+void GeneralParser<ParseHandler, Unit>::setFunctionStartAtCurrentToken(
+    FunctionBox* funbox) const {
+  uint32_t bufStart = anyChars.currentToken().pos.begin;
+
+  uint32_t startLine, startColumn;
+  tokenStream.computeLineAndColumn(bufStart, &startLine, &startColumn);
+
+  funbox->setStart(bufStart, startLine, startColumn);
+}
+
+template <class ParseHandler, typename Unit>
 bool GeneralParser<ParseHandler, Unit>::functionArguments(
     YieldHandling yieldHandling, FunctionSyntaxKind kind,
     FunctionNodeType funNode) {
@@ -2182,7 +2182,7 @@ bool GeneralParser<ParseHandler, Unit>::functionArguments(
 
     // Record the start of function source (for FunctionToString). If we
     // are parenFreeArrow, we will set this below, after consuming the NAME.
-    tokenStream.setFunctionStart(funbox);
+    setFunctionStartAtCurrentToken(funbox);
   } else {
     // When delazifying, we may not have a current token and pos() is
     // garbage. In that case, substitute the first token's position.
@@ -2297,7 +2297,7 @@ bool GeneralParser<ParseHandler, Unit>::functionArguments(
           }
 
           if (parenFreeArrow) {
-            tokenStream.setFunctionStart(funbox);
+            setFunctionStartAtCurrentToken(funbox);
           }
 
           RootedPropertyName name(cx_, bindingIdentifier(yieldHandling));
@@ -2913,6 +2913,10 @@ FunctionNode* Parser<FullParseHandler, Unit>::standaloneLazyFunction(
   return funNode;
 }
 
+void ParserBase::setFunctionEndFromCurrentToken(FunctionBox* funbox) const {
+  funbox->setEnd(anyChars.currentToken().pos.end);
+}
+
 template <class ParseHandler, typename Unit>
 bool GeneralParser<ParseHandler, Unit>::functionFormalParametersAndBody(
     InHandling inHandling, YieldHandling yieldHandling,
@@ -3053,7 +3057,7 @@ bool GeneralParser<ParseHandler, Unit>::functionFormalParametersAndBody(
       return false;
     }
 
-    funbox->setEnd(anyChars);
+    setFunctionEndFromCurrentToken(funbox);
   } else {
     MOZ_ASSERT(kind == FunctionSyntaxKind::Arrow);
 
@@ -3061,7 +3065,7 @@ bool GeneralParser<ParseHandler, Unit>::functionFormalParametersAndBody(
       return false;
     }
 
-    funbox->setEnd(anyChars);
+    setFunctionEndFromCurrentToken(funbox);
 
     if (kind == FunctionSyntaxKind::Statement) {
       if (!matchOrInsertSemicolon()) {
@@ -7162,7 +7166,7 @@ GeneralParser<ParseHandler, Unit>::synthesizeConstructor(
   }
   funbox->initWithEnclosingParseContext(pc_, functionSyntaxKind);
   handler_.setFunctionBox(funNode, funbox);
-  funbox->setEnd(anyChars);
+  setFunctionEndFromCurrentToken(funbox);
 
   // Push a SourceParseContext on to the stack.
   SourceParseContext funpc(this, funbox, /* newDirectives = */ nullptr);
@@ -7178,8 +7182,21 @@ GeneralParser<ParseHandler, Unit>::synthesizeConstructor(
     return null();
   }
   handler_.setFunctionFormalParametersAndBody(funNode, argsbody);
-  funbox->function()->setArgCount(0);
-  tokenStream.setFunctionStart(funbox);
+  setFunctionStartAtCurrentToken(funbox);
+
+  if (hasHeritage == HasHeritage::Yes) {
+    // Synthesize the equivalent to `function f(...args)`
+    funbox->setHasRest();
+    if (!notePositionalFormalParameter(funNode, cx_->names().args,
+                                       synthesizedBodyPos.begin,
+                                       /* disallowDuplicateParams = */ false,
+                                       /* duplicatedParam = */ nullptr)) {
+      return null();
+    }
+    funbox->function()->setArgCount(1);
+  } else {
+    funbox->function()->setArgCount(0);
+  }
 
   pc_->functionScope().useAsVarScope(pc_);
 
@@ -7224,7 +7241,23 @@ GeneralParser<ParseHandler, Unit>::synthesizeConstructor(
       return null();
     }
 
-    CallNodeType superCall = handler_.newSuperCall(superBase, arguments, false);
+    NameNodeType argsNameNode = newName(cx_->names().args, synthesizedBodyPos);
+    if (!argsNameNode) {
+      return null();
+    }
+    if (!noteUsedName(cx_->names().args)) {
+      return null();
+    }
+
+    UnaryNodeType spreadArgs =
+        handler_.newSpread(synthesizedBodyPos.begin, argsNameNode);
+    if (!spreadArgs) {
+      return null();
+    }
+    handler_.addList(arguments, spreadArgs);
+
+    CallNodeType superCall =
+        handler_.newSuperCall(superBase, arguments, /* isSpread = */ true);
     if (!superCall) {
       return null();
     }
@@ -7316,7 +7349,7 @@ GeneralParser<ParseHandler, Unit>::fieldInitializerOpt(
   funbox->initFieldInitializer(pc_, hasHeritage);
   handler_.setFunctionBox(funNode, funbox);
 
-  // We can't use tokenStream.setFunctionStart, because that uses pos().begin,
+  // We can't use setFunctionStartAtCurrentToken because that uses pos().begin,
   // which is incorrect for fields without initializers (pos() points to the
   // field identifier)
   uint32_t firstTokenLine, firstTokenColumn;
@@ -7353,7 +7386,7 @@ GeneralParser<ParseHandler, Unit>::fieldInitializerOpt(
 
   // Update the end position of the parse node.
   handler_.setEndPosition(funNode, wholeInitializerPos.end);
-  funbox->setEnd(anyChars);
+  setFunctionEndFromCurrentToken(funbox);
 
   // Create a ListNode for the parameters + body (there are no parameters).
   ListNodeType argsbody =
@@ -7445,7 +7478,7 @@ GeneralParser<ParseHandler, Unit>::fieldInitializerOpt(
   }
 
   ListNodeType statementList = handler_.newStatementList(wholeInitializerPos);
-  if (!argsbody) {
+  if (!statementList) {
     return null();
   }
   handler_.addStatementToList(statementList, exprStatement);

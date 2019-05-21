@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
 job-defaults:
     # Run only on try and code-review tasks
     # to avoid running Coverity SA on the whole codebase
@@ -19,7 +23,7 @@ job-defaults:
         using: run-task
         tooltool-downloads: public
     toolchains:
-        - linux64-clang
+        - linux64-clang-7
         - linux64-rust
         - linux64-cbindgen
         - linux64-nasm

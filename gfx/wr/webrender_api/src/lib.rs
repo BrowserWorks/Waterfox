@@ -37,8 +37,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate time;
 
-extern crate wr_malloc_size_of;
-use wr_malloc_size_of as malloc_size_of;
+extern crate malloc_size_of;
 
 mod api;
 pub mod channel;
@@ -50,10 +49,10 @@ mod gradient_builder;
 mod image;
 pub mod units;
 
-pub use api::*;
-pub use color::*;
-pub use display_item::*;
-pub use display_list::*;
-pub use font::*;
-pub use gradient_builder::*;
-pub use image::*;
+pub use crate::api::*;
+pub use crate::color::*;
+pub use crate::display_item::*;
+pub use crate::display_list::*;
+pub use crate::font::*;
+pub use crate::gradient_builder::*;
+pub use crate::image::*;

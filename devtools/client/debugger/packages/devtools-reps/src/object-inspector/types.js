@@ -16,14 +16,14 @@ export type Grip = {
   location: {
     url: string,
     line: number,
-    column: number
+    column: number,
   },
   frozen: boolean,
   ownPropertyLength: number,
   preview: Object,
   sealed: boolean,
   optimizedOut: boolean,
-  type: string
+  type: string,
 };
 
 export type GripProperties = {
@@ -31,16 +31,16 @@ export type GripProperties = {
   ownSymbols?: Array<Object>,
   safeGetterValues?: Object,
   prototype?: Object,
-  fullText?: string
+  fullText?: string,
 };
 
 export type NodeContents = {
-  value: Object | number | string | boolean | null | typeof undefined
+  value: Object | number | string | boolean | null | typeof undefined,
 };
 
 export type NodeMeta = {
   startIndex: number,
-  endIndex: number
+  endIndex: number,
 };
 
 export type Path = string;
@@ -49,7 +49,7 @@ export type Node = {
   name: string,
   path: Path,
   type?: Symbol,
-  meta?: NodeMeta
+  meta?: NodeMeta,
 };
 
 export type RdpGrip = {
@@ -61,19 +61,20 @@ export type RdpGrip = {
   ownPropertyLength: number,
   preview: Object,
   sealed: boolean,
-  type: string
+  type: string,
 };
 
 export type PropertiesIterator = {
   count: number,
-  slice: (start: number, count: number) => Promise<GripProperties>
+  slice: (start: number, count: number) => Promise<GripProperties>,
 };
 
 export type ObjectClient = {
   enumEntries: () => Promise<PropertiesIterator>,
   enumProperties: (options: Object) => Promise<PropertiesIterator>,
   enumSymbols: () => Promise<PropertiesIterator>,
-  getPrototype: () => Promise<{ prototype: Object }>
+  getPrototype: () => Promise<{ prototype: Object }>,
+  getProxySlots: () => Promise<{ proxyTarget: Object, proxyHandler: Object }>,
 };
 
 export type LongStringClient = {
@@ -83,9 +84,9 @@ export type LongStringClient = {
     response: {
       substring?: string,
       error?: Error,
-      message?: string
+      message?: string,
     }
-  ) => void
+  ) => void,
 };
 
 export type CreateObjectClient = RdpGrip => ObjectClient;
@@ -125,7 +126,7 @@ export type Props = {
     options: {
       depth: number,
       focused: boolean,
-      expanded: boolean
+      expanded: boolean,
     }
   ) => any,
   onCmdCtrlClick: ?(
@@ -134,7 +135,7 @@ export type Props = {
       depth: number,
       event: MouseEvent,
       focused: boolean,
-      expanded: boolean
+      expanded: boolean,
     }
   ) => any,
   onLabelClick: ?(
@@ -143,7 +144,7 @@ export type Props = {
       depth: number,
       focused: boolean,
       expanded: boolean,
-      setExpanded: (Node, boolean) => any
+      setExpanded: (Node, boolean) => any,
     }
   ) => any,
   actors: Set<string>,
@@ -152,12 +153,12 @@ export type Props = {
   activeItem: ?Node,
   loadedProperties: LoadedProperties,
   evaluations: Evaluations,
-  loading: Map<Path, Array<Promise<GripProperties>>>
+  loading: Map<Path, Array<Promise<GripProperties>>>,
 };
 
 export type ReduxAction = {
   type: string,
-  data: {}
+  data: {},
 };
 
 export type State = {
@@ -165,12 +166,12 @@ export type State = {
   expandedPaths: Set<Path>,
   focusedItem: ?Node,
   activeItem: ?Node,
-  loadedProperties: LoadedProperties
+  loadedProperties: LoadedProperties,
 };
 
 export type Store = {
   dispatch: any => any,
-  getState: () => State
+  getState: () => State,
 };
 
 export type ObjectInspectorId = string | number;

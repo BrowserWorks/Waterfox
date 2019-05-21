@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
 trust-domain: gecko
 project-repo-param-prefix: ''
 product-dir: 'browser'
@@ -39,6 +43,8 @@ treeherder:
         'Rap-P': 'Raptor power tests on Firefox'
         'Rap-P-1proc': 'Raptor power tests on Firefox without e10s'
         'Rap-fenix': 'Raptor performance tests on Fenix'
+        'Rap-fennec': 'Raptor performance tests on Fennec'
+        'Rap-fennec-1proc': 'Raptor performance tests on Fennec without e10s'
         'Rap-refbrow': 'Raptor performance tests on the reference browser'
         'T': 'Talos performance tests'
         'T-1proc': 'Talos performance tests without e10s'
@@ -259,7 +265,7 @@ partner-urls:
 task-priority:
     by-project:
         'mozilla-release': 'highest'
-        'mozilla-esr60': 'very-high'
+        'mozilla-esr.*': 'very-high'
         'mozilla-beta': 'high'
         'mozilla-central': 'medium'
         'autoland': 'low'
@@ -323,6 +329,11 @@ workers:
             implementation: generic-worker
             os: macosx
             worker-type: 'gecko-{alias}'
+        t-osx-1014:
+            provisioner: releng-hardware
+            implementation: generic-worker
+            os: macosx
+            worker-type: 'gecko-{alias}'
         t-linux-xlarge-pgo:
             provisioner: aws-provisioner-v1
             implementation: docker-worker
@@ -339,6 +350,14 @@ workers:
                 by-level:
                     '3': 'gecko-{level}-t-osx-1010'
                     default: 'gecko-t-osx-1010'
+        t-osx-1014-pgo:
+            provisioner: releng-hardware
+            implementation: generic-worker
+            os: macosx
+            worker-type:
+                by-level:
+                    '3': 'gecko-{level}-t-osx-1014'
+                    default: 'gecko-t-osx-1014'
         t-win10-64(|-gpu):
             provisioner: aws-provisioner-v1
             implementation: generic-worker

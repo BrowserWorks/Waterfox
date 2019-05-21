@@ -86,6 +86,9 @@ mozilla::ipc::IPCResult VideoDecoderChild::RecvError(const nsresult& aError) {
   mDecodePromise.RejectIfExists(aError, __func__);
   mDrainPromise.RejectIfExists(aError, __func__);
   mFlushPromise.RejectIfExists(aError, __func__);
+  mShutdownPromise.ResolveIfExists(true, __func__);
+  RefPtr<VideoDecoderChild> kungFuDeathGrip = mShutdownSelfRef.forget();
+  Unused << kungFuDeathGrip;
   return IPC_OK();
 }
 
@@ -115,6 +118,15 @@ mozilla::ipc::IPCResult VideoDecoderChild::RecvFlushComplete() {
   return IPC_OK();
 }
 
+mozilla::ipc::IPCResult VideoDecoderChild::RecvShutdownComplete() {
+  AssertOnManagerThread();
+  MOZ_ASSERT(mShutdownSelfRef);
+  mShutdownPromise.ResolveIfExists(true, __func__);
+  RefPtr<VideoDecoderChild> kungFuDeathGrip = mShutdownSelfRef.forget();
+  Unused << kungFuDeathGrip;
+  return IPC_OK();
+}
+
 void VideoDecoderChild::ActorDestroy(ActorDestroyReason aWhy) {
   if (aWhy == AbnormalShutdown) {
     // GPU process crashed, record the time and send back to MFR for telemetry.
@@ -123,6 +135,9 @@ void VideoDecoderChild::ActorDestroy(ActorDestroyReason aWhy) {
     // Defer reporting an error until we've recreated the manager so that
     // it'll be safe for MediaFormatReader to recreate decoders
     RefPtr<VideoDecoderChild> ref = this;
+    // Make sure shutdown self reference is null. Since ref is captured by the
+    // lambda it is not necessary to keep it any longer.
+    mShutdownSelfRef = nullptr;
     GetManager()->RunWhenRecreated(
         NS_NewRunnableFunction("VideoDecoderChild::ActorDestroy", [=]() {
           MediaResult error(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER);
@@ -132,6 +147,7 @@ void VideoDecoderChild::ActorDestroy(ActorDestroyReason aWhy) {
             mDecodePromise.RejectIfExists(error, __func__);
             mDrainPromise.RejectIfExists(error, __func__);
             mFlushPromise.RejectIfExists(error, __func__);
+            mShutdownPromise.ResolveIfExists(true, __func__);
             // Make sure the next request will be rejected accordingly if ever
             // called.
             mNeedNewDecoder = true;
@@ -189,6 +205,7 @@ MediaResult VideoDecoderChild::InitIPDL(
 }
 
 void VideoDecoderChild::DestroyIPDL() {
+  AssertOnManagerThread();
   if (mCanSend) {
     PVideoDecoderChild::Send__delete__(this);
   }
@@ -243,8 +260,7 @@ RefPtr<MediaDataDecoder::DecodePromise> VideoDecoderChild::Decode(
   MediaRawDataIPDL sample(
       MediaDataIPDL(aSample->mOffset, aSample->mTime, aSample->mTimecode,
                     aSample->mDuration, aSample->mKeyframe),
-      aSample->mEOS,
-      std::move(buffer));
+      aSample->mEOS, std::move(buffer));
   SendInput(sample);
   return mDecodePromise.Ensure(__func__);
 }
@@ -277,13 +293,22 @@ RefPtr<MediaDataDecoder::DecodePromise> VideoDecoderChild::Drain() {
   return mDrainPromise.Ensure(__func__);
 }
 
-void VideoDecoderChild::Shutdown() {
+RefPtr<ShutdownPromise> VideoDecoderChild::Shutdown() {
   AssertOnManagerThread();
   mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
-  if (mCanSend) {
-    SendShutdown();
-  }
   mInitialized = false;
+  if (mNeedNewDecoder) {
+    MediaResult error(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER);
+    error.SetGPUCrashTimeStamp(mGPUCrashTime);
+    return ShutdownPromise::CreateAndResolve(true, __func__);
+  }
+  if (!mCanSend) {
+    return ShutdownPromise::CreateAndResolve(true, __func__);
+  }
+  SendShutdown();
+  MOZ_ASSERT(!mShutdownSelfRef);
+  mShutdownSelfRef = this;
+  return mShutdownPromise.Ensure(__func__);
 }
 
 bool VideoDecoderChild::IsHardwareAccelerated(

@@ -27,15 +27,15 @@ APPS = {
         "long_name": "Firefox Fennec on Android"},
     GECKOVIEW: {
         "long_name": "Firefox Geckoview on Android",
-        "default_activity": "GeckoViewActivity",
+        "default_activity": "org.mozilla.geckoview_example.GeckoViewActivity",
         "default_intent": "android.intent.action.MAIN"},
     REFBROW: {
         "long_name": "Firefox Android Components Reference Browser",
-        "default_activity": "BrowserTestActivity",
+        "default_activity": "org.mozilla.reference.browser.BrowserTestActivity",
         "default_intent": "android.intent.action.MAIN"},
     FENIX: {
         "long_name": "Firefox Android Fenix Browser",
-        "default_activity": "browser.BrowserPerformanceTestActivity",
+        "default_activity": "org.mozilla.fenix.browser.BrowserPerformanceTestActivity",
         "default_intent": "android.intent.action.VIEW"}
 }
 INTEGRATED_APPS = list(APPS.keys())
@@ -129,6 +129,8 @@ def create_parser(mach_interface=False):
             help="Print all available Raptor tests")
     add_arg('--debug-mode', dest="debug_mode", action="store_true",
             help="Run Raptor in debug mode (open browser console, limited page-cycles, etc.)")
+    add_arg('--disable-e10s', dest="e10s", action="store_false", default=True,
+            help="Run without multiple processes (e10s).")
     if not mach_interface:
         add_arg('--run-local', dest="run_local", default=False, action="store_true",
                 help="Flag that indicates if raptor is running locally or in production")

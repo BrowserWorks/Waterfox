@@ -7,7 +7,7 @@
 import {
   isOriginalId,
   isGeneratedId,
-  originalToGeneratedId
+  originalToGeneratedId,
 } from "devtools-source-map";
 import { uniqBy, zip } from "lodash";
 
@@ -17,7 +17,7 @@ import {
   hasBreakpointPositions,
   hasBreakpointPositionsForLine,
   getBreakpointPositionsForSource,
-  getSourceActorsForSource
+  getSourceActorsForSource,
 } from "../../selectors";
 
 import type {
@@ -25,13 +25,13 @@ import type {
   Range,
   SourceLocation,
   BreakpointPositions,
-  Context
+  Context,
 } from "../../types";
 
 import { makeBreakpointId } from "../../utils/breakpoint";
 import {
   memoizeableAction,
-  type MemoizedAction
+  type MemoizedAction,
 } from "../../utils/memoizableAction";
 import type { ThunkArgs } from "../../actions/types";
 
@@ -39,7 +39,14 @@ async function mapLocations(
   generatedLocations: SourceLocation[],
   { sourceMaps }: ThunkArgs
 ) {
+  if (generatedLocations.length == 0) {
+    return [];
+  }
+
+  const { sourceId } = generatedLocations[0];
+
   const originalLocations = await sourceMaps.getOriginalLocations(
+    sourceId,
     generatedLocations
   );
 
@@ -70,7 +77,7 @@ function convertToList(results, source) {
         line: Number(line),
         column: column,
         sourceId: id,
-        sourceUrl: url
+        sourceUrl: url,
       });
     }
   }
@@ -129,7 +136,7 @@ async function _setBreakpointPositions(cx, sourceId, line, thunkArgs) {
       if (range.end.column === Infinity) {
         range.end = {
           line: range.end.line + 1,
-          column: 0
+          column: 0,
         };
       }
 
@@ -169,7 +176,7 @@ async function _setBreakpointPositions(cx, sourceId, line, thunkArgs) {
     type: "ADD_BREAKPOINT_POSITIONS",
     cx,
     source: source,
-    positions
+    positions,
   });
 
   return positions;
@@ -203,5 +210,5 @@ export const setBreakpointPositions: MemoizedAction<
     return isGeneratedId(sourceId) && line ? `${key}-${line}` : key;
   },
   action: async ({ cx, sourceId, line }, thunkArgs) =>
-    _setBreakpointPositions(cx, sourceId, line, thunkArgs)
+    _setBreakpointPositions(cx, sourceId, line, thunkArgs),
 });

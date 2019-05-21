@@ -240,10 +240,10 @@ void nsTextBoxFrame::UpdateAttributes(nsAtom* aAttribute, bool& aResize,
   }
 }
 
-class nsDisplayXULTextBox final : public nsDisplayItem {
+class nsDisplayXULTextBox final : public nsPaintedDisplayItem {
  public:
   nsDisplayXULTextBox(nsDisplayListBuilder* aBuilder, nsTextBoxFrame* aFrame)
-      : nsDisplayItem(aBuilder, aFrame) {
+      : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayXULTextBox);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
@@ -948,7 +948,7 @@ nsTextBoxFrame::DoXULLayout(nsBoxLayoutState& aBoxLayoutState) {
   visualBounds.UnionRect(scrollBounds, textRect);
   nsOverflowAreas overflow(visualBounds, scrollBounds);
 
-  if (textStyle->mTextShadow) {
+  if (textStyle->HasTextShadow()) {
     // text-shadow extends our visual but not scrollable bounds
     nsRect& vis = overflow.VisualOverflow();
     vis.UnionRect(vis,
@@ -960,7 +960,7 @@ nsTextBoxFrame::DoXULLayout(nsBoxLayoutState& aBoxLayoutState) {
 }
 
 nsRect nsTextBoxFrame::GetComponentAlphaBounds() const {
-  if (StyleText()->mTextShadow) {
+  if (StyleText()->HasTextShadow()) {
     return GetVisualOverflowRectRelativeToSelf();
   }
   return mTextDrawRect;

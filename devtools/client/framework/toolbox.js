@@ -24,7 +24,6 @@ var {gDevTools} = require("devtools/client/framework/devtools");
 var EventEmitter = require("devtools/shared/event-emitter");
 var Telemetry = require("devtools/client/shared/telemetry");
 const { getUnicodeUrl } = require("devtools/client/shared/unicode-url");
-var { attachThread, detachThread } = require("./attach-thread");
 var { DOMHelpers } = require("resource://devtools/client/shared/DOMHelpers.jsm");
 const { KeyCodes } = require("devtools/client/shared/keycodes");
 var Startup = Cc["@mozilla.org/devtools/startup-clh;1"].getService(Ci.nsISupports)
@@ -175,6 +174,7 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId,
   this._onNewSelectedNodeFront = this._onNewSelectedNodeFront.bind(this);
   this._onToolSelected = this._onToolSelected.bind(this);
   this._onTargetClosed = this._onTargetClosed.bind(this);
+  this._onContextMenu = this._onContextMenu.bind(this);
   this.updateToolboxButtonsVisibility = this.updateToolboxButtonsVisibility.bind(this);
   this.updateToolboxButtons = this.updateToolboxButtons.bind(this);
   this.selectTool = this.selectTool.bind(this);
@@ -183,6 +183,8 @@ function Toolbox(target, selectedTool, hostType, contentWindow, frameId,
   this.toggleOptions = this.toggleOptions.bind(this);
   this.togglePaintFlashing = this.togglePaintFlashing.bind(this);
   this.toggleDragging = this.toggleDragging.bind(this);
+  this._onPausedState = this._onPausedState.bind(this);
+  this._onResumedState = this._onResumedState.bind(this);
   this.isPaintFlashing = false;
 
   this._target.on("close", this._onTargetClosed);
@@ -390,6 +392,10 @@ Toolbox.prototype = {
     return DevToolsUtils.getTopWindow(this.win);
   },
 
+  get topDoc() {
+    return this.topWindow.document;
+  },
+
   /**
    * Shortcut to the document containing the toolbox UI
    */
@@ -448,6 +454,68 @@ Toolbox.prototype = {
       this.doc.querySelector("#toolbox-panel-iframe-webconsole").contentWindow;
   },
 
+  _onPausedState: function(_, packet) {
+    // Suppress interrupted events by default because the thread is
+    // paused/resumed a lot for various actions.
+    if (packet.why.type === "interrupted") {
+      return;
+    }
+
+    this.highlightTool("jsdebugger");
+
+    if (packet.why.type === "debuggerStatement" ||
+       packet.why.type === "breakpoint" ||
+       packet.why.type === "exception") {
+      this.raise();
+      this.selectTool("jsdebugger", packet.why.type);
+    }
+  },
+
+  _onResumedState: function() {
+    this.unhighlightTool("jsdebugger");
+  },
+
+  _startThreadClientListeners: function() {
+    this.threadClient.addListener("paused", this._onPausedState);
+    this.threadClient.addListener("resumed", this._onResumedState);
+  },
+
+  _stopThreadClientListeners: function() {
+    this.threadClient.removeListener("paused", this._onPausedState);
+    this.threadClient.removeListener("resumed", this._onResumedState);
+  },
+
+  _attachAndResumeThread: async function() {
+    const threadOptions = {
+      autoBlackBox: false,
+      ignoreFrameEnvironment: true,
+      pauseOnExceptions:
+        Services.prefs.getBoolPref("devtools.debugger.pause-on-exceptions"),
+      ignoreCaughtExceptions:
+        Services.prefs.getBoolPref("devtools.debugger.ignore-caught-exceptions"),
+    };
+    const [, threadClient] = await this._target.attachThread(threadOptions);
+
+    try {
+      await threadClient.resume();
+    } catch (ex) {
+      // Interpret a possible error thrown by ThreadActor.resume
+      if (ex.error === "wrongOrder") {
+        const box = this.getNotificationBox();
+        box.appendNotification(
+          L10N.getStr("toolbox.resumeOrderWarning"),
+          "wrong-resume-order",
+          "",
+          box.PRIORITY_WARNING_HIGH
+        );
+      } else {
+        throw ex;
+      }
+    }
+
+    return threadClient;
+  },
+
   /**
    * Open the toolbox
    */
@@ -463,7 +531,7 @@ Toolbox.prototype = {
         // Displays DebugTargetInfo which shows the basic information of debug target,
         // if `about:devtools-toolbox` URL opens directly.
         // DebugTargetInfo requires this._debugTargetData to be populated
-        this._debugTargetData = await this._getDebugTargetData();
+        this._debugTargetData = this._getDebugTargetData();
       }
 
       const domHelper = new DOMHelpers(this.win);
@@ -487,8 +555,9 @@ Toolbox.prototype = {
         ]);
       }
 
-      // Attach the thread
-      this._threadClient = await attachThread(this);
+      this._threadClient = await this._attachAndResumeThread();
+      this._startThreadClientListeners();
+
       await domReady;
 
       this.browserRequire = BrowserLoader({
@@ -510,21 +579,6 @@ Toolbox.prototype = {
       Services.prefs.addObserver("devtools.serviceWorkers.testing.enabled",
                                  this._applyServiceWorkersTestingSettings);
 
-      // Register listener for handling context menus in standard
-      // input elements: <input> and <textarea>.
-      // There is also support for custom input elements using
-      // .devtools-input class (e.g. CodeMirror instances).
-      this.doc.addEventListener("contextmenu", (e) => {
-        if (e.originalTarget.closest("input[type=text]") ||
-            e.originalTarget.closest("input[type=search]") ||
-            e.originalTarget.closest("input:not([type])") ||
-            e.originalTarget.closest(".devtools-input") ||
-            e.originalTarget.closest("textarea")) {
-          e.stopPropagation();
-          e.preventDefault();
-          this.openTextBoxContextMenu(e.screenX, e.screenY);
-        }
-      });
       // Get the DOM element to mount the ToolboxController to.
       this._componentMount = this.doc.getElementById("toolbox-toolbar-mount");
 
@@ -648,6 +702,7 @@ Toolbox.prototype = {
 
     this._chromeEventHandler.addEventListener("keypress", this._splitConsoleOnKeypress);
     this._chromeEventHandler.addEventListener("focus", this._onFocus, true);
+    this._chromeEventHandler.addEventListener("contextmenu", this._onContextMenu);
   },
 
   _removeChromeEventHandlerEvents: function() {
@@ -663,6 +718,7 @@ Toolbox.prototype = {
     this._chromeEventHandler.removeEventListener("keypress",
       this._splitConsoleOnKeypress);
     this._chromeEventHandler.removeEventListener("focus", this._onFocus, true);
+    this._chromeEventHandler.removeEventListener("contextmenu", this._onContextMenu);
 
     this._chromeEventHandler = null;
   },
@@ -794,20 +850,34 @@ Toolbox.prototype = {
     }
   },
 
-  _getDebugTargetData: async function() {
+  _onContextMenu: function(e) {
+    // Handle context menu events in standard input elements: <input> and <textarea>.
+    // Also support for custom input elements using .devtools-input class
+    // (e.g. CodeMirror instances).
+    if (e.originalTarget.closest("input[type=text]") ||
+        e.originalTarget.closest("input[type=search]") ||
+        e.originalTarget.closest("input:not([type])") ||
+        e.originalTarget.closest(".devtools-input") ||
+        e.originalTarget.closest("textarea")) {
+      e.stopPropagation();
+      e.preventDefault();
+      this.openTextBoxContextMenu(e.screenX, e.screenY);
+    }
+  },
+
+  _getDebugTargetData: function() {
     const url = new URL(this.win.location);
     const searchParams = new this.win.URLSearchParams(url.search);
 
     const targetType = searchParams.get("type") || DEBUG_TARGET_TYPES.TAB;
 
-    const deviceFront = await this.target.client.mainRoot.getFront("device");
-    const deviceDescription = await deviceFront.getDescription();
     const remoteId = searchParams.get("remoteId");
+    const runtimeInfo = remoteClientManager.getRuntimeInfoByRemoteId(remoteId);
     const connectionType = remoteClientManager.getConnectionTypeByRemoteId(remoteId);
 
     return {
       connectionType,
-      deviceDescription,
+      runtimeInfo,
       targetType,
     };
   },
@@ -929,6 +999,24 @@ Toolbox.prototype = {
    */
   get sourceMapService() {
     return this._createSourceMapService();
+  },
+
+    /**
+   * A common access point for the client-side parser service that any panel can use.
+   */
+  get parserService() {
+    if (this._parserService) {
+      return this._parserService;
+    }
+
+    const { ParserDispatcher } =
+      require("devtools/client/debugger/src/workers/parser/index");
+
+    this._parserService = new ParserDispatcher();
+    this._parserService.start(
+      "resource://devtools/client/debugger/dist/parser-worker.js",
+      this.win);
+    return this._parserService;
   },
 
   /**
@@ -2364,7 +2452,7 @@ Toolbox.prototype = {
    * Toggles the options panel.
    * If the option panel is already selected then select the last selected panel.
    */
-  toggleOptions: function() {
+  toggleOptions: function(event) {
     // Flip back to the last used panel if we are already
     // on the options panel.
     if (this.currentToolId === "options" &&
@@ -2373,6 +2461,10 @@ Toolbox.prototype = {
     } else {
       this.selectTool("options", "toggle_settings_on");
     }
+
+    // preventDefault will avoid a Linux only bug when the focus is on a text input
+    // See Bug 1519087.
+    event.preventDefault();
   },
 
   /**
@@ -3068,9 +3160,15 @@ Toolbox.prototype = {
       this._sourceMapURLService.destroy();
       this._sourceMapURLService = null;
     }
+
     if (this._sourceMapService) {
       this._sourceMapService.stopSourceMapWorker();
       this._sourceMapService = null;
+    }
+
+    if (this._parserService) {
+      this._parserService.stop();
+      this._parserService = null;
     }
 
     if (this.webconsolePanel) {
@@ -3112,7 +3210,7 @@ Toolbox.prototype = {
     outstanding.push(this.resetPreference());
 
     // Detach the thread
-    detachThread(this._threadClient);
+    this._stopThreadClientListeners();
     this._threadClient = null;
 
     // Unregister buttons listeners
@@ -3245,13 +3343,20 @@ Toolbox.prototype = {
    * @param {Number} y
    */
   openTextBoxContextMenu: function(x, y) {
-    const menu = createEditContextMenu(this.win, "toolbox-menu");
+    const menu = createEditContextMenu(this.topWindow, "toolbox-menu");
 
     // Fire event for tests
     menu.once("open", () => this.emit("menu-open"));
     menu.once("close", () => this.emit("menu-close"));
 
-    menu.popup(x, y, { doc: this.doc });
+    menu.popup(x, y, this.doc);
+  },
+
+  /**
+   *  Retrieve the current textbox context menu, if available.
+   */
+  getTextBoxContextMenu: function() {
+    return this.topDoc.getElementById("toolbox-menu");
   },
 
   /**

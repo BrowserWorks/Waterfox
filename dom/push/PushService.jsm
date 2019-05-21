@@ -913,7 +913,7 @@ var PushService = {
     if (payload) {
       gPushNotifier.notifyPushWithData(aPushRecord.scope,
                                        aPushRecord.principal,
-                                       messageID, payload.length, payload);
+                                       messageID, payload);
     } else {
       gPushNotifier.notifyPush(aPushRecord.scope, aPushRecord.principal,
                                messageID);
@@ -1021,7 +1021,8 @@ var PushService = {
     console.debug("register()", aPageRecord);
 
     let keyPromise;
-    if (aPageRecord.appServerKey) {
+    if (aPageRecord.appServerKey &&
+        aPageRecord.appServerKey.length != 0) {
       let keyView = new Uint8Array(aPageRecord.appServerKey);
       keyPromise = PushCrypto.validateAppServerKey(keyView)
         .catch(error => {

@@ -180,7 +180,7 @@ class EditorBase : public nsIEditor,
    * PostCreate should be called after Init, and is the time that the editor
    * tells its documentStateObservers that the document has been created.
    */
-  nsresult PostCreate();
+  MOZ_CAN_RUN_SCRIPT nsresult PostCreate();
 
   /**
    * PreDestroy is called before the editor goes away, and gives the editor a
@@ -189,7 +189,7 @@ class EditorBase : public nsIEditor,
    * are being destroyed (so there is no need to modify any nsISelections,
    * nor is it safe to do so)
    */
-  virtual void PreDestroy(bool aDestroyingFrames);
+  MOZ_CAN_RUN_SCRIPT virtual void PreDestroy(bool aDestroyingFrames);
 
   bool IsInitialized() const { return !!mDocument; }
   bool Destroyed() const { return mDidPreDestroy; }
@@ -911,6 +911,7 @@ class EditorBase : public nsIEditor,
    *                            E.g., adjusting whitespaces during composition.
    *                            false, otherwise.
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult InsertTextIntoTextNodeWithTransaction(
       const nsAString& aStringToInsert, Text& aTextNode, int32_t aOffset,
       bool aSuppressIME = false);
@@ -922,7 +923,7 @@ class EditorBase : public nsIEditor,
    *
    * @param aNode       The node which will be removed form the DOM tree.
    */
-  nsresult DeleteNodeWithTransaction(nsINode& aNode);
+  MOZ_CAN_RUN_SCRIPT nsresult DeleteNodeWithTransaction(nsINode& aNode);
 
   /**
    * InsertNodeWithTransaction() inserts aContentToInsert before the child
@@ -935,10 +936,8 @@ class EditorBase : public nsIEditor,
    *                            container.  Otherwise, will insert the node
    *                            before child node referred by this.
    */
-  template <typename PT, typename CT>
-  MOZ_CAN_RUN_SCRIPT nsresult
-  InsertNodeWithTransaction(nsIContent& aContentToInsert,
-                            const EditorDOMPointBase<PT, CT>& aPointToInsert);
+  MOZ_CAN_RUN_SCRIPT nsresult InsertNodeWithTransaction(
+      nsIContent& aContentToInsert, const EditorDOMPoint& aPointToInsert);
 
   /**
    * ReplaceContainerWithTransaction() creates new element whose name is
@@ -1070,10 +1069,8 @@ class EditorBase : public nsIEditor,
    * @param aError              If succeed, returns no error.  Otherwise, an
    *                            error.
    */
-  template <typename PT, typename CT>
-  already_AddRefed<nsIContent> SplitNodeWithTransaction(
-      const EditorDOMPointBase<PT, CT>& aStartOfRightNode,
-      ErrorResult& aResult);
+  MOZ_CAN_RUN_SCRIPT already_AddRefed<nsIContent> SplitNodeWithTransaction(
+      const EditorDOMPoint& aStartOfRightNode, ErrorResult& aResult);
 
   /**
    * JoinNodesWithTransaction() joins aLeftNode and aRightNode.  Content of
@@ -1084,6 +1081,7 @@ class EditorBase : public nsIEditor,
    * @param aRightNode  The node which will be new container of the content of
    *                    aLeftNode.
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult JoinNodesWithTransaction(nsINode& aLeftNode, nsINode& aRightNode);
 
   /**
@@ -1091,9 +1089,8 @@ class EditorBase : public nsIEditor,
    *
    * @param aContent        The node to be moved.
    */
-  template <typename PT, typename CT>
   MOZ_CAN_RUN_SCRIPT nsresult MoveNodeWithTransaction(
-      nsIContent& aContent, const EditorDOMPointBase<PT, CT>& aPointToInsert);
+      nsIContent& aContent, const EditorDOMPoint& aPointToInsert);
 
   /**
    * MoveNodeToEndWithTransaction() moves aContent to end of aNewContainer.
@@ -1105,7 +1102,7 @@ class EditorBase : public nsIEditor,
   MOZ_CAN_RUN_SCRIPT
   nsresult MoveNodeToEndWithTransaction(nsIContent& aContent,
                                         nsINode& aNewContainer) {
-    EditorRawDOMPoint pointToInsert;
+    EditorDOMPoint pointToInsert;
     pointToInsert.SetToEndOf(&aNewContainer);
     return MoveNodeWithTransaction(aContent, pointToInsert);
   }
@@ -1176,6 +1173,7 @@ class EditorBase : public nsIEditor,
    * @param aSourceElement      Element node which provides the value of
    *                            aAttribute in aDestElement.
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult CloneAttributeWithTransaction(nsAtom& aAttribute,
                                          Element& aDestElement,
                                          Element& aSourceElement);
@@ -1186,6 +1184,7 @@ class EditorBase : public nsIEditor,
    * @param aElement        Element node which will lose aAttribute.
    * @param aAttribute      Attribute name to be removed from aElement.
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult RemoveAttributeWithTransaction(Element& aElement,
                                           nsAtom& aAttribute);
 
@@ -1201,6 +1200,7 @@ class EditorBase : public nsIEditor,
    * @param aAttribute      Attribute name to be set.
    * @param aValue          Attribute value be set to aAttribute.
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult SetAttributeWithTransaction(Element& aElement, nsAtom& aAttribute,
                                        const nsAString& aValue);
 
@@ -1238,9 +1238,8 @@ class EditorBase : public nsIEditor,
    *                        child node referred by this.
    * @return                The created new element node.
    */
-  template <typename PT, typename CT>
-  already_AddRefed<Element> CreateNodeWithTransaction(
-      nsAtom& aTag, const EditorDOMPointBase<PT, CT>& aPointToInsert);
+  MOZ_CAN_RUN_SCRIPT already_AddRefed<Element> CreateNodeWithTransaction(
+      nsAtom& aTag, const EditorDOMPoint& aPointToInsert);
 
   /**
    * Create an aggregate transaction for delete selection.  The result may
@@ -1282,6 +1281,7 @@ class EditorBase : public nsIEditor,
    * @param aOffset             Start offset of removing text in aCharData.
    * @param aLength             Length of removing text.
    */
+  MOZ_CAN_RUN_SCRIPT
   nsresult DeleteTextWithTransaction(dom::CharacterData& aCharacterData,
                                      uint32_t aOffset, uint32_t aLength);
 
@@ -1384,11 +1384,10 @@ class EditorBase : public nsIEditor,
    *                                    be good to insert something if the
    *                                    caller want to do it.
    */
-  template <typename PT, typename CT>
-  SplitNodeResult SplitNodeDeepWithTransaction(
-      nsIContent& aMostAncestorToSplit,
-      const EditorDOMPointBase<PT, CT>& aDeepestStartOfRightNode,
-      SplitAtEdges aSplitAtEdges);
+  MOZ_CAN_RUN_SCRIPT SplitNodeResult
+  SplitNodeDeepWithTransaction(nsIContent& aMostAncestorToSplit,
+                               const EditorDOMPoint& aDeepestStartOfRightNode,
+                               SplitAtEdges aSplitAtEdges);
 
   /**
    * JoinNodesDeepWithTransaction() joins aLeftNode and aRightNode "deeply".
@@ -1402,10 +1401,11 @@ class EditorBase : public nsIEditor,
    *                    aLeftNode.
    * @return            The point of the first child of the last right node.
    */
+  MOZ_CAN_RUN_SCRIPT
   EditorDOMPoint JoinNodesDeepWithTransaction(nsIContent& aLeftNode,
                                               nsIContent& aRightNode);
 
-  nsresult DoTransactionInternal(nsITransaction* aTxn);
+  MOZ_CAN_RUN_SCRIPT nsresult DoTransactionInternal(nsITransaction* aTxn);
 
   virtual bool IsBlockNode(nsINode* aNode);
 
@@ -1783,7 +1783,7 @@ class EditorBase : public nsIEditor,
   void EndPlaceholderTransaction();
 
   void BeginUpdateViewBatch();
-  void EndUpdateViewBatch();
+  MOZ_CAN_RUN_SCRIPT void EndUpdateViewBatch();
 
   /**
    * Used by AutoTransactionBatch.  After calling BeginTransactionInternal(),
@@ -1793,7 +1793,7 @@ class EditorBase : public nsIEditor,
    *     use it instead?
    */
   void BeginTransactionInternal();
-  void EndTransactionInternal();
+  MOZ_CAN_RUN_SCRIPT void EndTransactionInternal();
 
  protected:  // Shouldn't be used by friend classes
   /**
@@ -1860,18 +1860,18 @@ class EditorBase : public nsIEditor,
   /**
    * Called after a transaction is done successfully.
    */
-  void DoAfterDoTransaction(nsITransaction* aTxn);
+  MOZ_CAN_RUN_SCRIPT void DoAfterDoTransaction(nsITransaction* aTxn);
 
   /**
    * Called after a transaction is undone successfully.
    */
 
-  void DoAfterUndoTransaction();
+  MOZ_CAN_RUN_SCRIPT void DoAfterUndoTransaction();
 
   /**
    * Called after a transaction is redone successfully.
    */
-  void DoAfterRedoTransaction();
+  MOZ_CAN_RUN_SCRIPT void DoAfterRedoTransaction();
 
   /**
    * Tell the doc state listeners that the doc state has changed.
@@ -1881,8 +1881,8 @@ class EditorBase : public nsIEditor,
     eDocumentToBeDestroyed,
     eDocumentStateChanged
   };
-  nsresult NotifyDocumentListeners(
-      TDocumentListenerNotification aNotificationType);
+  MOZ_CAN_RUN_SCRIPT nsresult
+  NotifyDocumentListeners(TDocumentListenerNotification aNotificationType);
 
   /**
    * Make the given selection span the entire document.
@@ -2048,17 +2048,19 @@ class EditorBase : public nsIEditor,
    */
   class MOZ_RAII AutoTransactionBatch final {
    public:
-    explicit AutoTransactionBatch(
+    MOZ_CAN_RUN_SCRIPT explicit AutoTransactionBatch(
         EditorBase& aEditorBase MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
         : mEditorBase(aEditorBase) {
       MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-      mEditorBase->BeginTransactionInternal();
+      mEditorBase.BeginTransactionInternal();
     }
 
-    ~AutoTransactionBatch() { mEditorBase->EndTransactionInternal(); }
+    MOZ_CAN_RUN_SCRIPT ~AutoTransactionBatch() {
+      MOZ_KnownLive(mEditorBase).EndTransactionInternal();
+    }
 
    protected:
-    OwningNonNull<EditorBase> mEditorBase;
+    EditorBase& mEditorBase;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
   };
 
@@ -2185,14 +2187,16 @@ class EditorBase : public nsIEditor,
    */
   class MOZ_RAII AutoUpdateViewBatch final {
    public:
-    explicit AutoUpdateViewBatch(
+    MOZ_CAN_RUN_SCRIPT explicit AutoUpdateViewBatch(
         EditorBase& aEditorBase MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
         : mEditorBase(aEditorBase) {
       MOZ_GUARD_OBJECT_NOTIFIER_INIT;
       mEditorBase.BeginUpdateViewBatch();
     }
 
-    ~AutoUpdateViewBatch() { mEditorBase.EndUpdateViewBatch(); }
+    MOZ_CAN_RUN_SCRIPT ~AutoUpdateViewBatch() {
+      MOZ_KnownLive(mEditorBase).EndUpdateViewBatch();
+    }
 
    protected:
     EditorBase& mEditorBase;

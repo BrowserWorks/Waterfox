@@ -103,7 +103,7 @@ void nsHttpConnectionInfo::Init(const nsACString& host, int32_t port,
   mNPNToken = npnToken;
   mOriginAttributes = originAttributes;
   mTlsFlags = 0x0;
-  mTrrUsed = false;
+  mIsTrrServiceChannel = false;
   mTrrDisabled = false;
   mIPv4Disabled = false;
   mIPv6Disabled = false;
@@ -252,6 +252,16 @@ void nsHttpConnectionInfo::BuildHashKey() {
     mHashKey.Append('}');
   }
 
+  if (mProxyInfo) {
+    const nsCString& connectionIsolationKey =
+        mProxyInfo->ConnectionIsolationKey();
+    if (!connectionIsolationKey.IsEmpty()) {
+      mHashKey.AppendLiteral("{CIK ");
+      mHashKey.Append(connectionIsolationKey);
+      mHashKey.AppendLiteral("}");
+    }
+  }
+
   nsAutoCString originAttributes;
   mOriginAttributes.CreateSuffix(originAttributes);
   mHashKey.Append(originAttributes);
@@ -284,7 +294,7 @@ already_AddRefed<nsHttpConnectionInfo> nsHttpConnectionInfo::Clone() const {
   clone->SetNoSpdy(GetNoSpdy());
   clone->SetBeConservative(GetBeConservative());
   clone->SetTlsFlags(GetTlsFlags());
-  clone->SetTrrUsed(GetTrrUsed());
+  clone->SetIsTrrServiceChannel(GetIsTrrServiceChannel());
   clone->SetTrrDisabled(GetTrrDisabled());
   clone->SetIPv4Disabled(GetIPv4Disabled());
   clone->SetIPv6Disabled(GetIPv6Disabled());
@@ -310,7 +320,7 @@ void nsHttpConnectionInfo::CloneAsDirectRoute(nsHttpConnectionInfo** outCI) {
   clone->SetNoSpdy(GetNoSpdy());
   clone->SetBeConservative(GetBeConservative());
   clone->SetTlsFlags(GetTlsFlags());
-  clone->SetTrrUsed(GetTrrUsed());
+  clone->SetIsTrrServiceChannel(GetIsTrrServiceChannel());
   clone->SetTrrDisabled(GetTrrDisabled());
   clone->SetIPv4Disabled(GetIPv4Disabled());
   clone->SetIPv6Disabled(GetIPv6Disabled());

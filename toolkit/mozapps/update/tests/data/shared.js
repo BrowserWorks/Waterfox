@@ -21,6 +21,7 @@ ChromeUtils.defineModuleGetter(this, "UpdateUtils",
 const PREF_APP_UPDATE_AUTO                 = "app.update.auto";
 const PREF_APP_UPDATE_BACKGROUNDERRORS     = "app.update.backgroundErrors";
 const PREF_APP_UPDATE_BACKGROUNDMAXERRORS  = "app.update.backgroundMaxErrors";
+const PREF_APP_UPDATE_BADGEWAITTIME        = "app.update.badgeWaitTime";
 const PREF_APP_UPDATE_BITS_ENABLED         = "app.update.BITS.enabled";
 const PREF_APP_UPDATE_CANCELATIONS         = "app.update.cancelations";
 const PREF_APP_UPDATE_CHANNEL              = "app.update.channel";
@@ -39,6 +40,7 @@ const PREF_APP_UPDATE_SERVICE_ENABLED      = "app.update.service.enabled";
 const PREF_APP_UPDATE_SILENT               = "app.update.silent";
 const PREF_APP_UPDATE_SOCKET_MAXERRORS     = "app.update.socket.maxErrors";
 const PREF_APP_UPDATE_STAGING_ENABLED      = "app.update.staging.enabled";
+const PREF_APP_UPDATE_UNSUPPORTED_URL      = "app.update.unsupported.url";
 const PREF_APP_UPDATE_URL                  = "app.update.url";
 const PREF_APP_UPDATE_URL_DETAILS          = "app.update.url.details";
 const PREF_APP_UPDATE_URL_MANUAL           = "app.update.url.manual";

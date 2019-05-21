@@ -44,6 +44,8 @@
 #include "nsContentList.h"
 #include "nsPresContext.h"
 #include "nsIContent.h"
+#include "mozilla/dom/BrowserBridgeChild.h"
+#include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/PointerEventHandler.h"
 #include "mozilla/dom/PopupBlocker.h"
@@ -500,7 +502,8 @@ class MOZ_STACK_CLASS nsPresShellEventCB : public EventDispatchingCallback {
         frame = mPresShell->GetRootFrame();
       }
       if (frame) {
-        frame->HandleEvent(aVisitor.mPresContext, aVisitor.mEvent->AsGUIEvent(),
+        frame->HandleEvent(MOZ_KnownLive(aVisitor.mPresContext),
+                           aVisitor.mEvent->AsGUIEvent(),
                            &aVisitor.mEventStatus);
       }
     }
@@ -819,6 +822,7 @@ PresShell::PresShell()
       mIsNeverPainting(false),
       mResolutionUpdated(false),
       mResolutionUpdatedByApz(false),
+      mUnderHiddenEmbedderElement(false),
       mDocumentLoading(false),
       mNoDelayedMouseEvents(false),
       mNoDelayedKeyEvents(false),
@@ -1052,6 +1056,26 @@ void PresShell::Init(Document* aDocument, nsPresContext* aPresContext,
 
     // We call this to create mMobileViewportManager, if it is needed.
     UpdateViewportOverridden(false);
+  }
+
+  if (nsCOMPtr<nsIDocShell> docShell = mPresContext->GetDocShell()) {
+    BrowsingContext* bc = nsDocShell::Cast(docShell)->GetBrowsingContext();
+    bool embedderFrameIsHidden = true;
+    if (Element* embedderElement = bc->GetEmbedderElement()) {
+      if (auto embedderFrame = embedderElement->GetPrimaryFrame()) {
+        embedderFrameIsHidden = !embedderFrame->StyleVisibility()->IsVisible();
+      }
+    }
+
+    if (BrowsingContext* parent = bc->GetParent()) {
+      if (nsCOMPtr<nsIDocShell> parentDocShell = parent->GetDocShell()) {
+        if (PresShell* parentPresShell = parentDocShell->GetPresShell()) {
+          mUnderHiddenEmbedderElement =
+              parentPresShell->IsUnderHiddenEmbedderElement() ||
+              embedderFrameIsHidden;
+        }
+      }
+    }
   }
 }
 
@@ -3309,7 +3333,8 @@ static nscoord ComputeWhereToScroll(WhereToScroll aWhereToScroll,
  * stop there, even if it could get closer to the desired position by
  * moving the visual viewport within the layout viewport.
  */
-static void ScrollToShowRect(nsIScrollableFrame* aFrameAsScrollable,
+static void ScrollToShowRect(PresShell* aPresShell,
+                             nsIScrollableFrame* aFrameAsScrollable,
                              const nsRect& aRect, ScrollAxis aVertical,
                              ScrollAxis aHorizontal, ScrollFlags aScrollFlags) {
   nsPoint scrollPt = aFrameAsScrollable->GetVisualViewportOffset();
@@ -3375,10 +3400,25 @@ static void ScrollToShowRect(nsIScrollableFrame* aFrameAsScrollable,
     if (gfxPrefs::ScrollBehaviorEnabled() && smoothScroll) {
       scrollMode = ScrollMode::SmoothMsd;
     }
+    nsIFrame* frame = do_QueryFrame(aFrameAsScrollable);
+    AutoWeakFrame weakFrame(frame);
     aFrameAsScrollable->ScrollTo(scrollPt, scrollMode, &allowedRange,
                                  aScrollFlags & ScrollFlags::ScrollSnap
                                      ? nsIScrollbarMediator::ENABLE_SNAP
                                      : nsIScrollbarMediator::DISABLE_SNAP);
+    if (!weakFrame.IsAlive()) {
+      return;
+    }
+
+    // If this is the RCD-RSF, also call ScrollToVisual() since we want to
+    // scroll the rect into view visually, and that may require scrolling
+    // the visual viewport in scenarios where there is not enough layout
+    // scroll range.
+    if (aFrameAsScrollable->IsRootScrollFrameOfDocument() &&
+        aPresShell->GetPresContext()->IsRootContentDocument()) {
+      aPresShell->ScrollToVisual(scrollPt, FrameMetrics::eMainThread,
+                                 scrollMode);
+    }
   }
 }
 
@@ -3543,7 +3583,8 @@ bool PresShell::ScrollFrameRectIntoView(nsIFrame* aFrame, const nsRect& aRect,
         targetRect = targetRect.Intersect(sf->GetScrolledRect());
       }
 
-      ScrollToShowRect(sf, targetRect, aVertical, aHorizontal, aScrollFlags);
+      ScrollToShowRect(this, sf, targetRect, aVertical, aHorizontal,
+                       aScrollFlags);
 
       nsPoint newPosition = sf->LastScrollDestination();
       // If the scroll position increased, that means our content moved up,
@@ -4541,6 +4582,13 @@ nsRect PresShell::ClipListToRange(nsDisplayListBuilder* aBuilder,
 
   nsDisplayItem* i;
   while ((i = aList->RemoveBottom())) {
+    if (i->GetType() == DisplayItemType::TYPE_CONTAINER) {
+      tmpList.AppendToTop(i);
+      surfaceRect.UnionRect(
+          surfaceRect, ClipListToRange(aBuilder, i->GetChildren(), aRange));
+      continue;
+    }
+
     // itemToInsert indiciates the item that should be inserted into the
     // temporary list. If null, no item should be inserted.
     nsDisplayItem* itemToInsert = nullptr;
@@ -5373,6 +5421,22 @@ static nsView* FindViewContaining(nsView* aView, nsPoint aPt) {
   return aView;
 }
 
+static BrowserBridgeChild* GetChildBrowser(nsView* aView) {
+  if (!aView) {
+    return nullptr;
+  }
+  nsIFrame* frame = aView->GetFrame();
+  if (!frame && aView->GetParent()) {
+    // If frame is null then view is an anonymous inner view, and we want
+    // the frame from the corresponding outer view.
+    frame = aView->GetParent()->GetFrame();
+  }
+  if (!frame || !frame->GetContent()) {
+    return nullptr;
+  }
+  return BrowserBridgeChild::GetFrom(frame->GetContent());
+}
+
 void PresShell::ProcessSynthMouseMoveEvent(bool aFromScroll) {
   // If drag session has started, we shouldn't synthesize mousemove event.
   nsCOMPtr<nsIDragSession> dragSession = nsContentUtils::GetDragSession();
@@ -5427,9 +5491,10 @@ void PresShell::ProcessSynthMouseMoveEvent(bool aFromScroll) {
   // This could be a bit slow (traverses entire view hierarchy)
   // but it's OK to do it once per synthetic mouse event
   view = FindFloatingViewContaining(rootView, mMouseLocation);
+  nsView* pointView = view;
   if (!view) {
     view = rootView;
-    nsView* pointView = FindViewContaining(rootView, mMouseLocation);
+    pointView = FindViewContaining(rootView, mMouseLocation);
     // pointView can be null in situations related to mouse capture
     pointVM = (pointView ? pointView : view)->GetViewManager();
     refpoint = mMouseLocation + rootView->ViewToWidgetOffset();
@@ -5452,7 +5517,17 @@ void PresShell::ProcessSynthMouseMoveEvent(bool aFromScroll) {
   // XXX set event.mModifiers ?
   // XXX mnakano I think that we should get the latest information from widget.
 
-  if (RefPtr<PresShell> presShell = pointVM->GetPresShell()) {
+  if (BrowserBridgeChild* bbc = GetChildBrowser(pointView)) {
+    // If we have a BrowserBridgeChild, we're going to be dispatching this
+    // mouse event into an OOP iframe of the current document.
+    event.mLayersId = bbc->GetLayersId();
+    bbc->SendDispatchSynthesizedMouseEvent(event);
+  } else if (RefPtr<PresShell> presShell = pointVM->GetPresShell()) {
+    // Otherwise we're targetting regular (non-OOP iframe) content in the
+    // current process. This field probably won't even be read, but we
+    // can fill it in with a sane value.
+    event.mLayersId = mMouseEventTargetGuid.mLayersId;
+
     // Since this gets run in a refresh tick there isn't an InputAPZContext on
     // the stack from the nsBaseWidget. We need to simulate one with at least
     // the correct target guid, so that the correct callback transform gets
@@ -8765,7 +8840,7 @@ void PresShell::DidPaintWindow() {
   }
 }
 
-bool PresShell::IsVisible() {
+bool PresShell::IsVisible() const {
   if (!mIsActive || !mViewManager) return false;
 
   nsView* view = mViewManager->GetRootView();
@@ -10427,10 +10502,11 @@ RefPtr<MobileViewportManager> PresShell::GetMobileViewportManager() const {
 }
 
 void PresShell::UpdateViewportOverridden(bool aAfterInitialization) {
-  // Determine if we require a MobileViewportManager. This logic is
-  // equivalent to ShouldHandleMetaViewport, which will check gfxPrefs if
-  // there are not meta viewport overrides.
-  bool needMVM = nsLayoutUtils::ShouldHandleMetaViewport(mDocument);
+  // Determine if we require a MobileViewportManager. We need one any
+  // time we allow resolution zooming for a document, and any time we
+  // want to obey <meta name="viewport"> tags for it.
+  bool needMVM = nsLayoutUtils::ShouldHandleMetaViewport(mDocument) ||
+                 nsLayoutUtils::AllowZoomingForDocument(mDocument);
 
   if (needMVM == !!mMobileViewportManager) {
     // Either we've need one and we've already got it, or we don't need one
@@ -10836,6 +10912,52 @@ void PresShell::NotifyStyleSheetServiceSheetAdded(StyleSheet* aSheet,
 void PresShell::NotifyStyleSheetServiceSheetRemoved(StyleSheet* aSheet,
                                                     uint32_t aSheetType) {
   RemoveSheet(ToOrigin(aSheetType), aSheet);
+}
+
+void PresShell::SetIsUnderHiddenEmbedderElement(
+    bool aUnderHiddenEmbedderElement) {
+  if (mUnderHiddenEmbedderElement == aUnderHiddenEmbedderElement) {
+    return;
+  }
+
+  mUnderHiddenEmbedderElement = aUnderHiddenEmbedderElement;
+
+  if (nsCOMPtr<nsIDocShell> docShell = mPresContext->GetDocShell()) {
+    BrowsingContext* bc = nsDocShell::Cast(docShell)->GetBrowsingContext();
+
+    // Propagate to children.
+    for (BrowsingContext* child : bc->GetChildren()) {
+      Element* embedderElement = child->GetEmbedderElement();
+      if (!embedderElement) {
+        // TODO: We shouldn't need to null check here since `child` and the
+        // element returned by `child->GetEmbedderElement()` are in our
+        // process (the actual browsing context represented by `child` may not
+        // be, but that doesn't matter).  However, there are currently a very
+        // small number of crashes due to `embedderElement` being null, somehow
+        // - see bug 1551241.  For now we wallpaper the crash.
+        continue;
+      }
+
+      bool embedderFrameIsHidden = true;
+      if (auto embedderFrame = embedderElement->GetPrimaryFrame()) {
+        embedderFrameIsHidden = !embedderFrame->StyleVisibility()->IsVisible();
+      }
+
+      if (nsIDocShell* childDocShell = child->GetDocShell()) {
+        PresShell* presShell = childDocShell->GetPresShell();
+        if (!presShell) {
+          continue;
+        }
+        presShell->SetIsUnderHiddenEmbedderElement(
+            aUnderHiddenEmbedderElement || embedderFrameIsHidden);
+      } else {
+        BrowserBridgeChild* bridgeChild =
+            BrowserBridgeChild::GetFrom(embedderElement);
+        bridgeChild->SetIsUnderHiddenEmbedderElement(
+            aUnderHiddenEmbedderElement || embedderFrameIsHidden);
+      }
+    }
+  }
 }
 
 nsIContent* PresShell::EventHandler::GetOverrideClickTarget(

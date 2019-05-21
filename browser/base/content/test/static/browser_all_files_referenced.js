@@ -147,6 +147,8 @@ var whitelist = [
   {file: "chrome://pippki/content/resetpassword.xul"},
   // Bug 1337345
   {file: "resource://gre/modules/Manifest.jsm"},
+  // Bug 1548381
+  {file: "resource://gre/modules/PasswordGenerator.jsm"},
   // Bug 1351097
   {file: "resource://gre/modules/accessibility/AccessFu.jsm"},
   // Bug 1356043
@@ -157,9 +159,6 @@ var whitelist = [
   {file: "resource://gre/modules/Promise.jsm"},
   // Still used by WebIDE, which is going away but not entirely gone.
   {file: "resource://gre/modules/ZipUtils.jsm"},
-  // Bug 1483277 (temporarily unreferenced)
-  {file: AppConstants.BROWSER_CHROME_URL == "chrome://browser/content/browser.xul" ?
-    "chrome://browser/content/browser.xhtml" : "chrome://browser/content/browser.xul" },
   // Bug 1494170
   // (The references to these files are dynamically generated, so the test can't
   // find the references)

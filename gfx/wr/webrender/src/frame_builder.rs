@@ -5,30 +5,31 @@
 use api::{ColorF, DebugFlags, DocumentLayer, FontRenderMode, PremultipliedColorF};
 use api::{PipelineId, RasterSpace};
 use api::units::*;
-use clip::{ClipDataStore, ClipStore, ClipChainStack};
-use clip_scroll_tree::{ClipScrollTree, ROOT_SPATIAL_NODE_INDEX, SpatialNodeIndex};
-use display_list_flattener::{DisplayListFlattener};
-use gpu_cache::{GpuCache, GpuCacheHandle};
-use gpu_types::{PrimitiveHeaders, TransformPalette, UvRectKind, ZBufferIdGenerator};
-use hit_test::{HitTester, HitTestingScene};
+use crate::clip::{ClipDataStore, ClipStore, ClipChainStack};
+use crate::clip_scroll_tree::{ClipScrollTree, ROOT_SPATIAL_NODE_INDEX, SpatialNodeIndex};
+use crate::display_list_flattener::{DisplayListFlattener};
+use crate::gpu_cache::{GpuCache, GpuCacheHandle};
+use crate::gpu_types::{PrimitiveHeaders, TransformPalette, UvRectKind, ZBufferIdGenerator};
+use crate::hit_test::{HitTester, HitTestingScene};
 #[cfg(feature = "replay")]
-use hit_test::HitTestingSceneStats;
-use internal_types::{FastHashMap, PlaneSplitter};
-use picture::{PictureUpdateState, SurfaceInfo, ROOT_SURFACE_INDEX, SurfaceIndex};
-use picture::{RetainedTiles, TileCache, DirtyRegion};
-use prim_store::{PrimitiveStore, SpaceMapper, PictureIndex, PrimitiveDebugId, PrimitiveScratchBuffer};
+use crate::hit_test::HitTestingSceneStats;
+use crate::internal_types::{FastHashMap, PlaneSplitter};
+use crate::picture::{PictureUpdateState, SurfaceInfo, ROOT_SURFACE_INDEX, SurfaceIndex};
+use crate::picture::{RetainedTiles, TileCache, DirtyRegion, SurfaceRenderTasks};
+use crate::prim_store::{PrimitiveStore, SpaceMapper, PictureIndex, PrimitiveDebugId, PrimitiveScratchBuffer};
 #[cfg(feature = "replay")]
-use prim_store::{PrimitiveStoreStats};
-use profiler::{FrameProfileCounters, GpuCacheProfileCounters, TextureCacheProfileCounters};
-use render_backend::{DataStores, FrameStamp};
-use render_task::{RenderTask, RenderTaskId, RenderTaskLocation, RenderTaskTree, RenderTaskTreeCounters};
-use resource_cache::{ResourceCache};
-use scene::{ScenePipeline, SceneProperties};
-use scene_builder::DocumentStats;
-use segment::SegmentBuilder;
+use crate::prim_store::{PrimitiveStoreStats};
+use crate::profiler::{FrameProfileCounters, GpuCacheProfileCounters, TextureCacheProfileCounters};
+use crate::render_backend::{DataStores, FrameStamp};
+use crate::render_task::{RenderTask, RenderTaskId, RenderTaskLocation, RenderTaskGraph, RenderTaskGraphCounters};
+use crate::resource_cache::{ResourceCache};
+use crate::scene::{ScenePipeline, SceneProperties};
+use crate::scene_builder::DocumentStats;
+use crate::segment::SegmentBuilder;
 use std::{f32, mem};
 use std::sync::Arc;
-use tiling::{Frame, RenderPassKind, RenderTargetContext, RenderTarget};
+use crate::tiling::{Frame, RenderPassKind, RenderTargetContext, RenderTarget};
+use crate::util::MaxRect;
 
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -132,7 +133,7 @@ pub struct FrameVisibilityState<'a> {
     pub retained_tiles: &'a mut RetainedTiles,
     pub data_stores: &'a mut DataStores,
     pub clip_chain_stack: ClipChainStack,
-    pub render_tasks: &'a mut RenderTaskTree,
+    pub render_tasks: &'a mut RenderTaskGraph,
 }
 
 pub struct FrameBuildingContext<'a> {
@@ -147,7 +148,7 @@ pub struct FrameBuildingContext<'a> {
 }
 
 pub struct FrameBuildingState<'a> {
-    pub render_tasks: &'a mut RenderTaskTree,
+    pub render_tasks: &'a mut RenderTaskGraph,
     pub profile_counters: &'a mut FrameProfileCounters,
     pub clip_store: &'a mut ClipStore,
     pub resource_cache: &'a mut ResourceCache,
@@ -302,7 +303,7 @@ impl FrameBuilder {
         pipelines: &FastHashMap<PipelineId, Arc<ScenePipeline>>,
         resource_cache: &mut ResourceCache,
         gpu_cache: &mut GpuCache,
-        render_tasks: &mut RenderTaskTree,
+        render_tasks: &mut RenderTaskGraph,
         profile_counters: &mut FrameProfileCounters,
         global_device_pixel_scale: DevicePixelScale,
         scene_properties: &SceneProperties,
@@ -433,7 +434,6 @@ impl FrameBuilder {
             self.output_rect.size.to_f32(),
             self.root_pic_index,
             DeviceIntPoint::zero(),
-            Vec::new(),
             UvRectKind::Rect,
             root_spatial_node_index,
             global_device_pixel_scale,
@@ -444,7 +444,10 @@ impl FrameBuilder {
             .surfaces
             .first_mut()
             .unwrap()
-            .surface = Some(root_render_task_id);
+            .render_tasks = Some(SurfaceRenderTasks {
+                root: root_render_task_id,
+                port: root_render_task_id,
+            });
 
         // Push a default dirty region which culls primitives
         // against the screen world rect, in absence of any
@@ -460,6 +463,7 @@ impl FrameBuilder {
             .pictures[self.root_pic_index.0]
             .take_context(
                 self.root_pic_index,
+                WorldRect::max_rect(),
                 root_spatial_node_index,
                 root_spatial_node_index,
                 ROOT_SURFACE_INDEX,
@@ -492,17 +496,6 @@ impl FrameBuilder {
 
         frame_state.pop_dirty_region();
 
-        let child_tasks = frame_state
-            .surfaces[ROOT_SURFACE_INDEX.0]
-            .take_render_tasks();
-
-        for child_task_id in child_tasks {
-            frame_state.render_tasks.add_dependency(
-                root_render_task_id,
-                child_task_id,
-            );
-        }
-
         Some(root_render_task_id)
     }
 
@@ -522,7 +515,7 @@ impl FrameBuilder {
         scene_properties: &SceneProperties,
         data_stores: &mut DataStores,
         scratch: &mut PrimitiveScratchBuffer,
-        render_task_counters: &mut RenderTaskTreeCounters,
+        render_task_counters: &mut RenderTaskGraphCounters,
         debug_flags: DebugFlags,
     ) -> Frame {
         profile_scope!("build");
@@ -538,15 +531,14 @@ impl FrameBuilder {
 
         self.globals.update(gpu_cache);
 
-        let mut transform_palette = TransformPalette::new();
         clip_scroll_tree.update_tree(
             pan,
             scene_properties,
-            Some(&mut transform_palette),
         );
+        let mut transform_palette = clip_scroll_tree.build_transform_palette();
         self.clip_store.clear_old_instances();
 
-        let mut render_tasks = RenderTaskTree::new(
+        let mut render_tasks = RenderTaskGraph::new(
             stamp.frame_id(),
             render_task_counters,
         );
@@ -620,8 +612,8 @@ impl FrameBuilder {
                 );
 
                 match pass.kind {
-                    RenderPassKind::MainFramebuffer(ref color) => {
-                        has_texture_cache_tasks |= color.must_be_drawn();
+                    RenderPassKind::MainFramebuffer { ref main_target, .. } => {
+                        has_texture_cache_tasks |= main_target.must_be_drawn();
                     }
                     RenderPassKind::OffScreen { ref texture_cache, ref color, .. } => {
                         has_texture_cache_tasks |= !texture_cache.is_empty();
@@ -647,7 +639,7 @@ impl FrameBuilder {
             layer,
             profile_counters,
             passes,
-            transform_palette: transform_palette.transforms,
+            transform_palette: transform_palette.finish(),
             render_tasks,
             deferred_resolves,
             gpu_cache_frame_id,

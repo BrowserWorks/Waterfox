@@ -159,11 +159,6 @@ p, h1 {
   font-family: var(--monospace-font-family);
 }
 
-/* Text that is not selectable */
-.unselectable-text {
-  -moz-user-select: none;
-}
-
 /* Links that need to look like current text */
 .undecorated-link,
 .undecorated-link:hover {
@@ -377,13 +372,6 @@ Form controls
   background-color: var(--box-background);
 }
 
-/* Standard checkbox, from Photon */
-.default-checkbox {
-  height: calc(var(--base-unit) * 4);
-  margin-inline-end: var(--base-unit);
-  width: calc(var(--base-unit) * 4);
-}
-
 /*
 * Other UI components
 */
@@ -422,6 +410,8 @@ Form controls
   background-color: var(--white-100); /* from common.inc.css */
   border-radius: var(--card-shadow-blur-radius); /* from common.inc.css */
   box-shadow: 0 1px 4px var(--grey-90-a10); /* from common.inc.css */
+  box-sizing: border-box;
+  min-width: min-content;
   padding-block: calc(var(--base-unit) * 5);
 }
 

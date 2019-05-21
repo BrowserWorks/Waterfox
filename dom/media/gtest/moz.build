@@ -16,6 +16,7 @@ LOCAL_INCLUDES += [
 UNIFIED_SOURCES += [
     'MockMediaResource.cpp',
     'TestAudioBuffers.cpp',
+    'TestAudioCallbackDriver.cpp',
     'TestAudioCompactor.cpp',
     'TestAudioMixer.cpp',
     'TestAudioPacketizer.cpp',
@@ -29,12 +30,19 @@ UNIFIED_SOURCES += [
     'TestGMPUtils.cpp',
     'TestGroupId.cpp',
     'TestIntervalSet.cpp',
+    'TestMediaDataDecoder.cpp',
+    'TestMediaDataEncoder.cpp',
     'TestMediaEventSource.cpp',
     'TestMediaMIMETypes.cpp',
+    'TestMP3Demuxer.cpp',
+    'TestMP4Demuxer.cpp',
     'TestOpusParser.cpp',
     'TestRust.cpp',
+    'TestTimeUnit.cpp',
     'TestVideoSegment.cpp',
     'TestVideoUtils.cpp',
+    'TestVPXDecoding.cpp',
+    'TestWebMBuffered.cpp',
 ]
 
 if CONFIG['MOZ_WEBM_ENCODER']:
@@ -52,12 +60,6 @@ if CONFIG['OS_TARGET'] != 'Android':
         'TestCDMStorage.cpp',
         'TestGMPCrossOrigin.cpp',
         'TestGMPRemoveAndDelete.cpp',
-        'TestMediaDataDecoder.cpp',
-        'TestMediaDataEncoder.cpp',
-        'TestMP3Demuxer.cpp',
-        'TestMP4Demuxer.cpp',
-        'TestVPXDecoding.cpp',
-        'TestWebMBuffered.cpp',
     ]
 
 if CONFIG['MOZ_WEBRTC'] and CONFIG['OS_TARGET'] != 'Android':

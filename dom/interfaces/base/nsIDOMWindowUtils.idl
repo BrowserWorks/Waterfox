@@ -357,14 +357,13 @@ interface nsIDOMWindowUtils : nsISupports {
    */
   [can_run_script]
   boolean sendTouchEvent(in AString aType,
-                         [array, size_is(count)] in uint32_t aIdentifiers,
-                         [array, size_is(count)] in int32_t aXs,
-                         [array, size_is(count)] in int32_t aYs,
-                         [array, size_is(count)] in uint32_t aRxs,
-                         [array, size_is(count)] in uint32_t aRys,
-                         [array, size_is(count)] in float aRotationAngles,
-                         [array, size_is(count)] in float aForces,
-                         in uint32_t count,
+                         in Array<uint32_t> aIdentifiers,
+                         in Array<int32_t> aXs,
+                         in Array<int32_t> aYs,
+                         in Array<uint32_t> aRxs,
+                         in Array<uint32_t> aRys,
+                         in Array<float> aRotationAngles,
+                         in Array<float> aForces,
                          in long aModifiers,
                          [optional] in boolean aIgnoreRootScrollFrame);
 
@@ -391,14 +390,13 @@ interface nsIDOMWindowUtils : nsISupports {
    */
   [can_run_script]
   boolean sendTouchEventToWindow(in AString aType,
-                                 [array, size_is(count)] in uint32_t aIdentifiers,
-                                 [array, size_is(count)] in int32_t aXs,
-                                 [array, size_is(count)] in int32_t aYs,
-                                 [array, size_is(count)] in uint32_t aRxs,
-                                 [array, size_is(count)] in uint32_t aRys,
-                                 [array, size_is(count)] in float aRotationAngles,
-                                 [array, size_is(count)] in float aForces,
-                                 in uint32_t count,
+                                 in Array<uint32_t> aIdentifiers,
+                                 in Array<int32_t> aXs,
+                                 in Array<int32_t> aYs,
+                                 in Array<uint32_t> aRxs,
+                                 in Array<uint32_t> aRys,
+                                 in Array<float> aRotationAngles,
+                                 in Array<float> aForces,
                                  in long aModifiers,
                                  [optional] in boolean aIgnoreRootScrollFrame);
 
@@ -1351,13 +1349,10 @@ interface nsIDOMWindowUtils : nsISupports {
   void startFrameTimeRecording([retval] out unsigned long startIndex);
 
   /**
-   * Returns number of recorded frames since startIndex was issued,
-   *   and allocates+populates 2 arraye with the recorded data.
-   * - Allocation is infallible. Should be released even if size is 0.
+   * Returns array of frame intervals since the time when the given startIndex
+   * was handed out from startFrameTimeRecording.
    */
-  void stopFrameTimeRecording(in unsigned long startIndex,
-                             [optional] out unsigned long frameCount,
-                             [retval, array, size_is(frameCount)] out float frameIntervals);
+  Array<float> stopFrameTimeRecording(in unsigned long startIndex);
 
   /**
    * The DPI of the display
@@ -1515,8 +1510,7 @@ interface nsIDOMWindowUtils : nsISupports {
    * elements doesn't have a primary frame, or if that frame's display items are
    * assigned to any other layers than just a single PaintedLayer per element.
    */
-  unsigned long numberOfAssignedPaintedLayers([array, size_is(count)] in Element aElements,
-                                              in uint32_t count);
+  unsigned long numberOfAssignedPaintedLayers(in Array<Element> aElements);
 
   /**
    * Get internal id of the stored blob, file or file handle.

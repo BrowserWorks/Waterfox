@@ -196,12 +196,6 @@ static NSMutableDictionary* sNativeKeyEventsMap = [NSMutableDictionary dictionar
 - (void)drawTitleString;
 - (void)maskTopCornersInContext:(CGContextRef)aContext;
 
-#if USE_CLICK_HOLD_CONTEXTMENU
-// called on a timer two seconds after a mouse down to see if we should display
-// a context menu (click-hold)
-- (void)clickHoldCallback:(id)inEvent;
-#endif
-
 #ifdef ACCESSIBILITY
 - (id<mozAccessible>)accessible;
 #endif
@@ -3429,42 +3423,6 @@ NSEvent* gLastDragMouseDownEvent = nil;
   [super viewWillDraw];
 }
 
-#if USE_CLICK_HOLD_CONTEXTMENU
-//
-// -clickHoldCallback:
-//
-// called from a timer two seconds after a mouse down to see if we should display
-// a context menu (click-hold). |anEvent| is the original mouseDown event. If we're
-// still in that mouseDown by this time, put up the context menu, otherwise just
-// fuhgeddaboutit. |anEvent| has been retained by the OS until after this callback
-// fires so we're ok there.
-//
-// This code currently messes in a bunch of edge cases (bugs 234751, 232964, 232314)
-// so removing it until we get it straightened out.
-//
-- (void)clickHoldCallback:(id)theEvent;
-{
-  NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
-
-  if (theEvent == [NSApp currentEvent]) {
-    // we're still in the middle of the same mousedown event here, activate
-    // click-hold context menu by triggering the right mouseDown action.
-    NSEvent* clickHoldEvent = [NSEvent mouseEventWithType:NSRightMouseDown
-                                                 location:[theEvent locationInWindow]
-                                            modifierFlags:[theEvent modifierFlags]
-                                                timestamp:[theEvent timestamp]
-                                             windowNumber:[theEvent windowNumber]
-                                                  context:[theEvent context]
-                                              eventNumber:[theEvent eventNumber]
-                                               clickCount:[theEvent clickCount]
-                                                 pressure:[theEvent pressure]];
-    [self rightMouseDown:clickHoldEvent];
-  }
-
-  NS_OBJC_END_TRY_ABORT_BLOCK;
-}
-#endif
-
 // If we've just created a non-native context menu, we need to mark it as
 // such and let the OS (and other programs) know when it opens and closes
 // (this is how the OS knows to close other programs' context menus when
@@ -3961,11 +3919,6 @@ NSEvent* gLastDragMouseDownEvent = nil;
     mBlockedLastMouseDown = YES;
     return;
   }
-
-#if USE_CLICK_HOLD_CONTEXTMENU
-  // fire off timer to check for click-hold after two seconds. retains |theEvent|
-  [self performSelector:@selector(clickHoldCallback:) withObject:theEvent afterDelay:2.0];
-#endif
 
   // in order to send gecko events we'll need a gecko widget
   if (!mGeckoChild) return;
@@ -5250,8 +5203,9 @@ static gfx::IntPoint GetIntegerDeltaForEvent(NSEvent* aEvent) {
     if (aMessage == eDragOver) {
       // fire the drag event at the source. Just ignore whether it was
       // cancelled or not as there isn't actually a means to stop the drag
-      mDragService->FireDragEventAtSource(eDrag,
-                                          nsCocoaUtils::ModifiersForEvent([NSApp currentEvent]));
+      nsCOMPtr<nsIDragService> dragService = mDragService;
+      dragService->FireDragEventAtSource(eDrag,
+                                         nsCocoaUtils::ModifiersForEvent([NSApp currentEvent]));
       dragSession->SetCanDrop(false);
     } else if (aMessage == eDrop) {
       // We make the assumption that the dragOver handlers have correctly set
@@ -5263,8 +5217,8 @@ static gfx::IntPoint GetIntegerDeltaForEvent(NSEvent* aEvent) {
         nsCOMPtr<nsINode> sourceNode;
         dragSession->GetSourceNode(getter_AddRefs(sourceNode));
         if (!sourceNode) {
-          mDragService->EndDragSession(false,
-                                       nsCocoaUtils::ModifiersForEvent([NSApp currentEvent]));
+          nsCOMPtr<nsIDragService> dragService = mDragService;
+          dragService->EndDragSession(false, nsCocoaUtils::ModifiersForEvent([NSApp currentEvent]));
         }
         return NSDragOperationNone;
       }
@@ -5324,8 +5278,8 @@ static gfx::IntPoint GetIntegerDeltaForEvent(NSEvent* aEvent) {
           // initiated in a different app. End the drag session,
           // since we're done with it for now (until the user
           // drags back into mozilla).
-          mDragService->EndDragSession(false,
-                                       nsCocoaUtils::ModifiersForEvent([NSApp currentEvent]));
+          nsCOMPtr<nsIDragService> dragService = mDragService;
+          dragService->EndDragSession(false, nsCocoaUtils::ModifiersForEvent([NSApp currentEvent]));
         }
       }
       default:
@@ -5411,7 +5365,7 @@ static gfx::IntPoint GetIntegerDeltaForEvent(NSEvent* aEvent) {
 
   if (mDragService) {
     // set the dragend point from the current mouse location
-    nsDragService* dragService = static_cast<nsDragService*>(mDragService);
+    RefPtr<nsDragService> dragService = static_cast<nsDragService*>(mDragService);
     FlipCocoaScreenCoordinate(aPoint);
     dragService->SetDragEndPoint(gfx::IntPoint::Round(aPoint.x, aPoint.y));
 
@@ -5434,7 +5388,7 @@ static gfx::IntPoint GetIntegerDeltaForEvent(NSEvent* aEvent) {
       }
     }
 
-    mDragService->EndDragSession(true, nsCocoaUtils::ModifiersForEvent(currentEvent));
+    dragService->EndDragSession(true, nsCocoaUtils::ModifiersForEvent(currentEvent));
     NS_RELEASE(mDragService);
   }
 

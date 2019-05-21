@@ -827,10 +827,10 @@ void nsPluginFrame::PaintPrintPlugin(nsIFrame* aFrame, gfxContext* aCtx,
  * the ReadbackLayer, which we then use as an opaque buffer for plugins to
  * asynchronously draw onto.
  */
-class nsDisplayPluginReadback : public nsDisplayItem {
+class nsDisplayPluginReadback : public nsPaintedDisplayItem {
  public:
   nsDisplayPluginReadback(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame)
-      : nsDisplayItem(aBuilder, aFrame) {
+      : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayPluginReadback);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
@@ -853,7 +853,7 @@ class nsDisplayPluginReadback : public nsDisplayItem {
   LayerState GetLayerState(
       nsDisplayListBuilder* aBuilder, LayerManager* aManager,
       const ContainerLayerParameters& aParameters) override {
-    return LAYER_ACTIVE;
+    return LayerState::LAYER_ACTIVE;
   }
 
   virtual nsDisplayItemGeometry* AllocateGeometry(
@@ -1107,10 +1107,11 @@ void nsPluginFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
         DisplayItemType::TYPE_PRINT_PLUGIN);
   } else {
     LayerState state = GetLayerState(aBuilder, nullptr);
-    if (state == LAYER_INACTIVE && nsDisplayItem::ForceActiveLayers()) {
-      state = LAYER_ACTIVE;
+    if (state == LayerState::LAYER_INACTIVE &&
+        nsDisplayItem::ForceActiveLayers()) {
+      state = LayerState::LAYER_ACTIVE;
     }
-    if (aBuilder->IsPaintingToWindow() && state == LAYER_ACTIVE &&
+    if (aBuilder->IsPaintingToWindow() && state == LayerState::LAYER_ACTIVE &&
         IsTransparentMode()) {
       aLists.Content()->AppendNewToTop<nsDisplayPluginReadback>(aBuilder, this);
     }
@@ -1234,17 +1235,17 @@ nsRect nsPluginFrame::GetPaintedRect(const nsDisplayPlugin* aItem) const {
 
 LayerState nsPluginFrame::GetLayerState(nsDisplayListBuilder* aBuilder,
                                         LayerManager* aManager) {
-  if (!mInstanceOwner) return LAYER_NONE;
+  if (!mInstanceOwner) return LayerState::LAYER_NONE;
 
   if (mInstanceOwner->NeedsScrollImageLayer()) {
-    return LAYER_ACTIVE;
+    return LayerState::LAYER_ACTIVE;
   }
 
   if (!mInstanceOwner->UseAsyncRendering()) {
-    return LAYER_NONE;
+    return LayerState::LAYER_NONE;
   }
 
-  return LAYER_ACTIVE_FORCE;
+  return LayerState::LAYER_ACTIVE_FORCE;
 }
 
 class PluginFrameDidCompositeObserver final : public DidCompositeObserver {

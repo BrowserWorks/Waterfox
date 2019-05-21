@@ -985,7 +985,7 @@ This reports the user's interaction with Activity Stream Router.
   "locale": "en-US",
   "source": "ONBOARDING",
   "message_id": "onboarding_message_1",
-  "event": "CLICK_BUTTION"
+  "event": ["IMPRESSION" | "CLICK_BUTTION" | "INSTALL" | "BLOCK"]
 }
 ```
 
@@ -1000,7 +1000,7 @@ This reports the user's interaction with Activity Stream Router.
   "source": "CFR",
   // message_id could be the ID of the recommendation, such as "wikipedia_addon"
   "message_id": "wikipedia_addon",
-  "event": "[INSTALL | PIN | BLOCK | DISMISS | RATIONALE | LEARN_MORE | CLICK_DOORHANGER | MANAGE]"
+  "event": "[IMPRESSION | INSTALL | PIN | BLOCK | DISMISS | RATIONALE | LEARN_MORE | CLICK | CLICK_DOORHANGER | MANAGE]"
 }
 ```
 
@@ -1016,7 +1016,7 @@ This reports the user's interaction with Activity Stream Router.
   // message_id should be a bucket ID in the release channel, we may not use the
   // individual ID, such as addon ID, per legal's request
   "message_id": "bucket_id",
-  "event": "[INSTALL | PIN | BLOCK | DISMISS | RATIONALE | LEARN_MORE | CLICK_DOORHANGER | MANAGE]"
+  "event": "[IMPRESSION | INSTALL | PIN | BLOCK | DISMISS | RATIONALE | LEARN_MORE | CLICK | CLICK_DOORHANGER | MANAGE]"
 }
 ```
 
@@ -1051,5 +1051,22 @@ This reports a failure in the Remote Settings loader to load messages for Activi
   "event": ["ASR_RS_NO_MESSAGES" | "ASR_RS_ERROR"],
   // The value is set to the ID of the message provider. For example: remote-cfr, remote-onboarding, etc.
   "value": "REMOTE_PROVIDER_ID"
+}
+```
+
+## Trailhead experiment enrollment ping
+
+This reports an enrollment ping when a user gets enrolled in a Trailhead experiment. Note that this ping is only collected through the Mozilla Events telemetry pipeline.
+
+```js
+{
+  "category": "activity_stream",
+  "method": "enroll",
+  "object": "preference_study"
+  "value": "activity-stream-firstup-trailhead-interrupts",
+  "extra_keys": {
+    "experimentType": "as-firstrun",
+    "branch": ["supercharge" | "join" | "sync" | "privacy" ...]
+  }
 }
 ```

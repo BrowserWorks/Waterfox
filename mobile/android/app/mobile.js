@@ -527,6 +527,9 @@ pref("apz.second_tap_tolerance", "0.3");
 pref("apz.touch_move_tolerance", "0.03");
 pref("apz.touch_start_tolerance", "0.06");
 
+// Enable the Visual Viewport API
+pref("dom.visualviewport.enabled", true);
+
 pref("layers.progressive-paint", true);
 pref("layers.low-precision-buffer", true);
 pref("layers.low-precision-resolution", "0.25");
@@ -539,7 +542,7 @@ pref("layers.low-precision-opacity", "1.0");
 pref("layers.max-active", 20);
 
 // Use containerless scrolling on Fennec.
-pref("layout.scroll.root-frame-containers", 0);
+pref("layout.scroll.root-frame-containers", false);
 
 pref("notification.feature.enabled", true);
 pref("dom.webnotifications.enabled", true);
@@ -550,12 +553,10 @@ pref("browser.chrome.toolbar_tips", false);
 // don't allow meta-refresh when backgrounded
 pref("browser.meta_refresh_when_inactive.disabled", true);
 
-// prevent video elements from preloading too much data
-pref("media.preload.default", 1); // default to preload none
-pref("media.preload.auto", 2);    // preload metadata if preload=auto
-// On mobile we'll throttle the download once the readahead_limit is hit,
-// even if the download is slow. This is to preserve battery and data.
-pref("media.throttle-regardless-of-download-rate", true);
+// On mobile we throttle the download once the readahead_limit is hit
+// if we're using a cellular connection, even if the download is slow.
+// This is to preserve battery and data.
+pref("media.throttle-cellular-regardless-of-download-rate", true);
 
 // Number of video frames we buffer while decoding video.
 // On Android this is decided by a similar value which varies for

@@ -86,6 +86,7 @@ class nsComboboxControlFrame final : public nsBlockFrame,
                       const ReflowInput& aReflowInput,
                       nsReflowStatus& aStatus) override;
 
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   virtual nsresult HandleEvent(nsPresContext* aPresContext,
                                mozilla::WidgetGUIEvent* aEvent,
                                nsEventStatus* aEventStatus) override;
@@ -135,16 +136,10 @@ class nsComboboxControlFrame final : public nsBlockFrame,
   virtual void SetFocus(bool aOn, bool aRepaint) override;
 
   bool IsDroppedDown() { return mDroppedDown; }
-  /**
-   * @note This method might destroy |this|.
-   */
-  void ShowDropDown(bool aDoDropDown);
+  MOZ_CAN_RUN_SCRIPT void ShowDropDown(bool aDoDropDown);
   nsIFrame* GetDropDown();
   void SetDropDown(nsIFrame* aDropDownFrame);
-  /**
-   * @note This method might destroy |this|.
-   */
-  void RollupFromList();
+  MOZ_CAN_RUN_SCRIPT void RollupFromList();
 
   /**
    * Return the available space before and after this frame for
@@ -184,6 +179,7 @@ class nsComboboxControlFrame final : public nsBlockFrame,
    * Hide the dropdown menu and stop capturing mouse events.
    * @note This method might destroy |this|.
    */
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   virtual bool Rollup(uint32_t aCount, bool aFlush, const nsIntPoint* pos,
                       nsIContent** aLastRolledUp) override;
   virtual void NotifyGeometryChange() override;
@@ -211,6 +207,7 @@ class nsComboboxControlFrame final : public nsBlockFrame,
 
   // nsIStatefulFrame
   mozilla::UniquePtr<mozilla::PresState> SaveState() override;
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
   NS_IMETHOD RestoreState(mozilla::PresState* aState) override;
   NS_IMETHOD GenerateStateKey(nsIContent* aContent,
                               mozilla::dom::Document* aDocument,
@@ -260,7 +257,7 @@ class nsComboboxControlFrame final : public nsBlockFrame,
    * Show or hide the dropdown list.
    * @note This method might destroy |this|.
    */
-  void ShowPopup(bool aShowPopup);
+  MOZ_CAN_RUN_SCRIPT void ShowPopup(bool aShowPopup);
 
   /**
    * Show or hide the dropdown list.
@@ -268,7 +265,7 @@ class nsComboboxControlFrame final : public nsBlockFrame,
    * @note This method might destroy |this|.
    * @return false if this frame is destroyed, true if still alive.
    */
-  bool ShowList(bool aShowList);
+  MOZ_CAN_RUN_SCRIPT bool ShowList(bool aShowList);
   void CheckFireOnChange();
   void FireValueChangeEvent();
   nsresult RedisplayText();

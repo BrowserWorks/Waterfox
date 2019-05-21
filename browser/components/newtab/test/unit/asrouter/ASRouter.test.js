@@ -235,6 +235,20 @@ describe("ASRouter", () => {
       assert.calledOnce(ASRouterPreferences.uninit);
       assert.calledWith(ASRouterPreferences.removeListener, Router.onPrefChange);
     });
+    it("should send a AS_ROUTER_TARGETING_UPDATE message", async () => {
+      const messageTargeted = {id: "1", campaign: "foocampaign", targeting: "true"};
+      const messageNotTargeted = {id: "2", campaign: "foocampaign"};
+      await Router.setState({messages: [messageTargeted, messageNotTargeted]});
+      sandbox.stub(ASRouterTargeting, "isMatch").resolves(false);
+
+      await Router.onPrefChange("services.sync.username");
+
+      assert.calledOnce(channel.sendAsyncMessage);
+      const [, {type, data}] = channel.sendAsyncMessage.firstCall.args;
+      assert.equal(type, "AS_ROUTER_TARGETING_UPDATE");
+      assert.equal(data[0], messageTargeted.id);
+      assert.lengthOf(data, 1);
+    });
     it("should call loadMessagesFromAllProviders on pref change", () => {
       sandbox.spy(Router, "loadMessagesFromAllProviders");
 
@@ -1600,12 +1614,19 @@ describe("ASRouter", () => {
 
     describe(".setupTrailhead", () => {
       let getBoolPrefStub;
+      let setStringPrefStub;
+      let setBoolPrefStub;
 
       beforeEach(() => {
-        getBoolPrefStub = sandbox.stub(global.Services.prefs, "getBoolPref").withArgs(TRAILHEAD_CONFIG.DID_SEE_ABOUT_WELCOME_PREF).returns(true);
+        getBoolPrefStub = sandbox.stub(global.Services.prefs, "getBoolPref");
+        getBoolPrefStub.withArgs(TRAILHEAD_CONFIG.DID_SEE_ABOUT_WELCOME_PREF).returns(true);
+        getBoolPrefStub.withArgs(TRAILHEAD_CONFIG.TRIPLETS_ENROLLED_PREF).returns(false);
+        setStringPrefStub = sandbox.stub(global.Services.prefs, "setStringPref");
+        setBoolPrefStub = sandbox.stub(global.Services.prefs, "setBoolPref");
       });
 
-      const configWithExperiment = {experiment: "interrupt", interrupt: "join", triplet: "privacy"};
+      const configWithInterruptsExperiment = {experiment: "interrupts", interrupt: "join", triplet: "privacy"};
+      const configWithTripletsExperiment = {experiment: "triplets", interrupt: "join", triplet: "privacy"};
       const configWithoutExperiment = {experiment: "", interrupt: "control", triplet: ""};
 
       it("should generates an experiment/branch configuration and update Router.state", async () => {
@@ -1635,13 +1656,35 @@ describe("ASRouter", () => {
         sandbox.spy(Router, "setState");
         assert.notCalled(Router.setState);
       });
-      it("should set active experiment if one is defined", async () => {
-        sandbox.stub(Router, "_generateTrailheadBranches").resolves(configWithExperiment);
+      it("should set active interrupts experiment if one is defined", async () => {
+        sandbox.stub(Router, "_generateTrailheadBranches").resolves(configWithInterruptsExperiment);
         sandbox.stub(global.TelemetryEnvironment, "setExperimentActive");
+        sandbox.spy(Router, "_sendTrailheadEnrollEvent");
 
         await Router.setupTrailhead();
 
         assert.calledOnce(global.TelemetryEnvironment.setExperimentActive);
+        assert.calledWith(setStringPrefStub, TRAILHEAD_CONFIG.INTERRUPTS_EXPERIMENT_PREF, "join");
+        assert.calledWith(Router._sendTrailheadEnrollEvent, {
+          experiment: "activity-stream-firstrun-trailhead-interrupts",
+          type: "as-firstrun",
+          branch: "join",
+        });
+      });
+      it("should set active triplets experiment if one is defined", async () => {
+        sandbox.stub(Router, "_generateTrailheadBranches").resolves(configWithTripletsExperiment);
+        sandbox.stub(global.TelemetryEnvironment, "setExperimentActive");
+        sandbox.spy(Router, "_sendTrailheadEnrollEvent");
+
+        await Router.setupTrailhead();
+
+        assert.calledOnce(global.TelemetryEnvironment.setExperimentActive);
+        assert.calledWith(setBoolPrefStub, TRAILHEAD_CONFIG.TRIPLETS_ENROLLED_PREF, true);
+        assert.calledWith(Router._sendTrailheadEnrollEvent, {
+          experiment: "activity-stream-firstrun-trailhead-triplets",
+          type: "as-firstrun",
+          branch: "privacy",
+        });
       });
       it("should not set an active experiment if no experiment is defined", async () => {
         sandbox.stub(Router, "_generateTrailheadBranches").resolves(configWithoutExperiment);
@@ -1650,6 +1693,7 @@ describe("ASRouter", () => {
         await Router.setupTrailhead();
 
         assert.notCalled(global.TelemetryEnvironment.setExperimentActive);
+        assert.notCalled(setStringPrefStub);
       });
     });
 
@@ -1662,6 +1706,10 @@ describe("ASRouter", () => {
       }
       it("should return control experience with no experiment if locale is NOT in TRAILHEAD_LOCALES", async () => {
         sandbox.stub(global.Services.locale, "appLocaleAsLangTag").get(() => "zh-CN");
+        checkReturnValue({experiment: "", interrupt: "control", triplet: ""});
+      });
+      it("should return control experience with no experiment if attribution data contains an addon source", async () => {
+        sandbox.stub(fakeAttributionCode, "getAttrDataAsync").resolves({source: "addons.mozilla.org"});
         checkReturnValue({experiment: "", interrupt: "control", triplet: ""});
       });
       it("should use values in override pref if it is set with no experiment", async () => {
@@ -1682,6 +1730,19 @@ describe("ASRouter", () => {
       it("should roll for experiment if locale is in TRAILHEAD_LOCALES", async () => {
         sandbox.stub(global.Sampling, "ratioSample").resolves(1); // 1 = interrupts experiment
         sandbox.stub(global.Services.locale, "appLocaleAsLangTag").get(() => "en-US");
+        checkReturnValue({experiment: "interrupts", interrupt: "join", triplet: "supercharge"});
+      });
+      it("should roll for experiment if attribution data is empty", async () => {
+        sandbox.stub(global.Sampling, "ratioSample").resolves(1); // 1 = interrupts experiment
+        sandbox.stub(global.Services.locale, "appLocaleAsLangTag").get(() => "en-US");
+        sandbox.stub(fakeAttributionCode, "getAttrDataAsync").resolves(null);
+
+        checkReturnValue({experiment: "interrupts", interrupt: "join", triplet: "supercharge"});
+      });
+      it("should roll for experiment if attribution data rejects with an error", async () => {
+        sandbox.stub(global.Sampling, "ratioSample").resolves(1); // 1 = interrupts experiment
+        sandbox.stub(global.Services.locale, "appLocaleAsLangTag").get(() => "en-US");
+        sandbox.stub(fakeAttributionCode, "getAttrDataAsync").rejects(new Error("whoops"));
         checkReturnValue({experiment: "interrupts", interrupt: "join", triplet: "supercharge"});
       });
       it("should roll a triplet experiment", async () => {

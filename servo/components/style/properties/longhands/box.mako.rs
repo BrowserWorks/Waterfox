@@ -337,11 +337,11 @@ ${helpers.predefined_type(
     "Position",
     "computed::Position::zero()",
     vector=True,
+    allow_empty=True,
     products="gecko",
     gecko_pref="layout.css.scroll-snap.enabled",
     spec="Nonstandard (https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-destination)",
     animation_value_type="discrete",
-    allow_empty="NotInitial",
 )}
 
 <% transform_extra_prefixes = "moz:layout.css.prefixes.transforms webkit" %>
@@ -352,7 +352,6 @@ ${helpers.predefined_type(
     "generics::transform::Transform::none()",
     extra_prefixes=transform_extra_prefixes,
     animation_value_type="ComputedValue",
-    gecko_ffi_name="mSpecifiedTransform",
     flags="CREATES_STACKING_CONTEXT FIXPOS_CB \
            GETCS_NEEDS_LAYOUT_FLUSH CAN_ANIMATE_ON_COMPOSITOR",
     spec="https://drafts.csswg.org/css-transforms/#propdef-transform",
@@ -669,4 +668,17 @@ ${helpers.predefined_type(
     gecko_pref="layout.css.touch_action.enabled",
     animation_value_type="discrete",
     spec="https://compat.spec.whatwg.org/#touch-action",
+)}
+
+// Note that we only implement -webkit-line-clamp as a single, longhand
+// property for now, but the spec defines line-clamp as a shorthand for separate
+// max-lines, block-ellipsis, and continue properties.
+${helpers.predefined_type(
+    "-webkit-line-clamp",
+    "PositiveIntegerOrNone",
+    "Either::Second(None_)",
+    gecko_pref="layout.css.webkit-line-clamp.enabled",
+    animation_value_type="Integer",
+    products="gecko",
+    spec="https://drafts.csswg.org/css-overflow-3/#line-clamp",
 )}

@@ -9,24 +9,24 @@ import {
   isPretty,
   getFilename,
   getSourceClassnames,
-  getSourceQueryString
+  getSourceQueryString,
 } from "./source";
 
 import type { Location as BabelLocation } from "@babel/types";
 import type { Symbols } from "../reducers/ast";
 import type { QuickOpenType } from "../reducers/quick-open";
-import type { TabList } from "../reducers/tabs";
+import type { Tab } from "../reducers/tabs";
 import type { Source } from "../types";
 import type {
   SymbolDeclaration,
-  IdentifierDeclaration
+  IdentifierDeclaration,
 } from "../workers/parser";
 
 export const MODIFIERS = {
   "@": "functions",
   "#": "variables",
   ":": "goto",
-  "?": "shortcuts"
+  "?": "shortcuts",
 };
 
 export function parseQuickOpenQuery(query: string): QuickOpenType {
@@ -54,12 +54,15 @@ export function parseLineColumn(query: string) {
   if (!isNaN(lineNumber)) {
     return {
       line: lineNumber,
-      ...(!isNaN(columnNumber) ? { column: columnNumber } : null)
+      ...(!isNaN(columnNumber) ? { column: columnNumber } : null),
     };
   }
 }
 
-export function formatSourcesForList(source: Source, tabs: TabList) {
+export function formatSourcesForList(
+  source: Source,
+  tabUrls: Set<$PropertyType<Tab, "url">>
+) {
   const title = getFilename(source);
   const relativeUrlWithQuery = `${source.relativeUrl}${getSourceQueryString(
     source
@@ -70,11 +73,11 @@ export function formatSourcesForList(source: Source, tabs: TabList) {
     value,
     title,
     subtitle,
-    icon: tabs.some(tab => tab.url == source.url)
+    icon: tabUrls.has(source.url)
       ? "tab result-item-icon"
       : classnames(getSourceClassnames(source), "result-item-icon"),
     id: source.id,
-    url: source.url
+    url: source.url,
   };
 }
 
@@ -85,11 +88,11 @@ export type QuickOpenResult = {|
   subtitle?: string,
   location?: BabelLocation,
   url?: string,
-  icon?: string
+  icon?: string,
 |};
 
 export type FormattedSymbolDeclarations = {|
-  functions: Array<QuickOpenResult>
+  functions: Array<QuickOpenResult>,
 |};
 
 export function formatSymbol(
@@ -100,7 +103,7 @@ export function formatSymbol(
     title: symbol.name,
     subtitle: `${symbol.location.start.line}`,
     value: symbol.name,
-    location: symbol.location
+    location: symbol.location,
   };
 }
 
@@ -112,7 +115,7 @@ export function formatSymbols(symbols: ?Symbols): FormattedSymbolDeclarations {
   const { functions } = symbols;
 
   return {
-    functions: functions.map(formatSymbol)
+    functions: functions.map(formatSymbol),
   };
 }
 
@@ -121,27 +124,27 @@ export function formatShortcutResults(): Array<QuickOpenResult> {
     {
       value: L10N.getStr("symbolSearch.search.functionsPlaceholder.title"),
       title: `@ ${L10N.getStr("symbolSearch.search.functionsPlaceholder")}`,
-      id: "@"
+      id: "@",
     },
     {
       value: L10N.getStr("symbolSearch.search.variablesPlaceholder.title"),
       title: `# ${L10N.getStr("symbolSearch.search.variablesPlaceholder")}`,
-      id: "#"
+      id: "#",
     },
     {
       value: L10N.getStr("gotoLineModal.title"),
       title: `: ${L10N.getStr("gotoLineModal.placeholder")}`,
-      id: ":"
-    }
+      id: ":",
+    },
   ];
 }
 
 export function formatSources(
   sources: Source[],
-  tabs: TabList
+  tabUrls: Set<$PropertyType<Tab, "url">>
 ): Array<QuickOpenResult> {
   return sources
     .filter(source => !isPretty(source))
-    .filter(({ relativeUrl }) => !!relativeUrl)
-    .map(source => formatSourcesForList(source, tabs));
+    .filter(source => !!source.relativeUrl && !isPretty(source))
+    .map(source => formatSourcesForList(source, tabUrls));
 }

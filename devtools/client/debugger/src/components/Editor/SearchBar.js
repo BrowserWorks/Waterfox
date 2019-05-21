@@ -19,7 +19,7 @@ import {
   getFileSearchModifiers,
   getFileSearchResults,
   getHighlightedLineRange,
-  getContext
+  getContext,
 } from "../../selectors";
 
 import { removeOverlay } from "../../utils/editor";
@@ -44,7 +44,7 @@ function getShortcuts() {
   return {
     shiftSearchAgainShortcut: searchAgainPrevKey,
     searchAgainShortcut: searchAgainKey,
-    searchShortcut: searchKey
+    searchShortcut: searchKey,
   };
 }
 
@@ -53,7 +53,6 @@ type State = {
   selectedResultIndex: number,
   count: number,
   index: number,
-  inputFocused: boolean
 };
 
 type Props = {
@@ -72,7 +71,7 @@ type Props = {
   setActiveSearch: typeof actions.setActiveSearch,
   closeFileSearch: typeof actions.closeFileSearch,
   doSearch: typeof actions.doSearch,
-  traverseResults: typeof actions.traverseResults
+  traverseResults: typeof actions.traverseResults,
 };
 
 class SearchBar extends Component<Props, State> {
@@ -83,7 +82,6 @@ class SearchBar extends Component<Props, State> {
       selectedResultIndex: 0,
       count: 0,
       index: -1,
-      inputFocused: false
     };
   }
 
@@ -92,7 +90,7 @@ class SearchBar extends Component<Props, State> {
     const {
       searchShortcut,
       searchAgainShortcut,
-      shiftSearchAgainShortcut
+      shiftSearchAgainShortcut,
     } = getShortcuts();
 
     shortcuts.off(searchShortcut);
@@ -109,7 +107,7 @@ class SearchBar extends Component<Props, State> {
     const {
       searchShortcut,
       searchAgainShortcut,
-      shiftSearchAgainShortcut
+      shiftSearchAgainShortcut,
     } = getShortcuts();
 
     shortcuts.on(searchShortcut, (_, e) => this.toggleSearch(e));
@@ -148,7 +146,7 @@ class SearchBar extends Component<Props, State> {
       e.stopPropagation();
       e.preventDefault();
     }
-    this.setState({ query: "", inputFocused: false });
+    this.setState({ query: "" });
   };
 
   toggleSearch = (e: SyntheticKeyboardEvent<HTMLElement>) => {
@@ -164,10 +162,10 @@ class SearchBar extends Component<Props, State> {
       const query = editor.codeMirror.getSelection() || this.state.query;
 
       if (query !== "") {
-        this.setState({ query, inputFocused: true });
+        this.setState({ query });
         this.doSearch(query);
       } else {
-        this.setState({ query: "", inputFocused: true });
+        this.setState({ query: "" });
       }
     }
   };
@@ -200,14 +198,6 @@ class SearchBar extends Component<Props, State> {
     return this.doSearch(e.target.value);
   };
 
-  onFocus = (e: SyntheticFocusEvent<HTMLElement>) => {
-    this.setState({ inputFocused: true });
-  };
-
-  onBlur = (e: SyntheticFocusEvent<HTMLElement>) => {
-    this.setState({ inputFocused: false });
-  };
-
   onKeyDown = (e: any) => {
     if (e.key !== "Enter" && e.key !== "F3") {
       return;
@@ -227,7 +217,7 @@ class SearchBar extends Component<Props, State> {
   buildSummaryMsg() {
     const {
       searchResults: { matchIndex, count, index },
-      query
+      query,
     } = this.props;
 
     if (query.trim() == "") {
@@ -251,7 +241,7 @@ class SearchBar extends Component<Props, State> {
 
     function SearchModBtn({ modVal, className, svgName, tooltip }) {
       const preppedClass = classnames(className, {
-        active: modifiers && modifiers.get(modVal)
+        active: modifiers && modifiers.get(modVal),
       });
       return (
         <button
@@ -304,7 +294,7 @@ class SearchBar extends Component<Props, State> {
   shouldShowErrorEmoji() {
     const {
       query,
-      searchResults: { count }
+      searchResults: { count },
     } = this.props;
     return !!query && !count;
   }
@@ -314,17 +304,15 @@ class SearchBar extends Component<Props, State> {
       searchResults: { count },
       searchOn,
       showClose = true,
-      size = "big"
+      size = "big",
     } = this.props;
 
     if (!searchOn) {
       return <div />;
     }
-    const classes = classnames("search-bar", {
-      "search-bar-focused": this.state.inputFocused
-    });
+
     return (
-      <div className={classes}>
+      <div className="search-bar">
         <SearchInput
           query={this.state.query}
           count={count}
@@ -332,14 +320,11 @@ class SearchBar extends Component<Props, State> {
           summaryMsg={this.buildSummaryMsg()}
           isLoading={false}
           onChange={this.onChange}
-          onFocus={this.onFocus}
-          onBlur={this.onBlur}
           showErrorEmoji={this.shouldShowErrorEmoji()}
           onKeyDown={this.onKeyDown}
           onHistoryScroll={this.onHistoryScroll}
           handleNext={e => this.traverseResults(e, false)}
           handlePrev={e => this.traverseResults(e, true)}
-          shouldFocus={this.state.inputFocused}
           showClose={false}
         />
         <div className="search-bottom-bar">
@@ -357,7 +342,7 @@ class SearchBar extends Component<Props, State> {
 }
 
 SearchBar.contextTypes = {
-  shortcuts: PropTypes.object
+  shortcuts: PropTypes.object,
 };
 
 const mapStateToProps = state => {
@@ -374,7 +359,7 @@ const mapStateToProps = state => {
     query: getFileSearchQuery(state),
     modifiers: getFileSearchModifiers(state),
     highlightedLineRange: getHighlightedLineRange(state),
-    searchResults: getFileSearchResults(state)
+    searchResults: getFileSearchResults(state),
   };
 };
 
@@ -386,6 +371,6 @@ export default connect(
     setActiveSearch: actions.setActiveSearch,
     closeFileSearch: actions.closeFileSearch,
     doSearch: actions.doSearch,
-    traverseResults: actions.traverseResults
+    traverseResults: actions.traverseResults,
   }
 )(SearchBar);

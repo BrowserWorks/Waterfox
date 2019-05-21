@@ -8,7 +8,7 @@ import type {
   ObjectClient,
   PropertiesIterator,
   Node,
-  LongStringClient
+  LongStringClient,
 } from "../types";
 
 const { getValue, nodeHasFullText } = require("../utils/node");
@@ -20,7 +20,7 @@ async function enumIndexedProperties(
 ): Promise<{ ownProperties?: Object }> {
   try {
     const { iterator } = await objectClient.enumProperties({
-      ignoreNonIndexedProperties: true
+      ignoreNonIndexedProperties: true,
     });
     const response = await iteratorSlice(iterator, start, end);
     return response;
@@ -37,7 +37,7 @@ async function enumNonIndexedProperties(
 ): Promise<{ ownProperties?: Object }> {
   try {
     const { iterator } = await objectClient.enumProperties({
-      ignoreIndexedProperties: true
+      ignoreIndexedProperties: true,
     });
     const response = await iteratorSlice(iterator, start, end);
     return response;
@@ -111,10 +111,16 @@ async function getFullText(
       }
 
       resolve({
-        fullText: initial + response.substring
+        fullText: initial + response.substring,
       });
     });
   });
+}
+
+async function getProxySlots(
+  objectClient: ObjectClient
+): Promise<{ proxyTarget?: Object, proxyHandler?: Object }> {
+  return objectClient.getProxySlots();
 }
 
 function iteratorSlice(
@@ -137,5 +143,6 @@ module.exports = {
   enumNonIndexedProperties,
   enumSymbols,
   getPrototype,
-  getFullText
+  getFullText,
+  getProxySlots,
 };

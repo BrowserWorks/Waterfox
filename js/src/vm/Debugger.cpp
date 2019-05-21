@@ -80,41 +80,33 @@ using mozilla::TimeStamp;
 
 /*** Forward declarations, ClassOps and Classes *****************************/
 
-static void DebuggerFrame_finalize(FreeOp* fop, JSObject* obj);
-static void DebuggerFrame_trace(JSTracer* trc, JSObject* obj);
 static void DebuggerEnv_trace(JSTracer* trc, JSObject* obj);
 static void DebuggerObject_trace(JSTracer* trc, JSObject* obj);
 static void DebuggerScript_trace(JSTracer* trc, JSObject* obj);
 static void DebuggerSource_trace(JSTracer* trc, JSObject* obj);
 
-enum {
-  JSSLOT_DEBUGFRAME_OWNER,
-  JSSLOT_DEBUGFRAME_ARGUMENTS,
-  JSSLOT_DEBUGFRAME_ONSTEP_HANDLER,
-  JSSLOT_DEBUGFRAME_ONPOP_HANDLER,
-  JSSLOT_DEBUGFRAME_COUNT
-};
-
 inline js::Debugger* js::DebuggerFrame::owner() const {
-  JSObject* dbgobj = &getReservedSlot(JSSLOT_DEBUGFRAME_OWNER).toObject();
+  JSObject* dbgobj = &getReservedSlot(OWNER_SLOT).toObject();
   return Debugger::fromJSObject(dbgobj);
 }
 
-const ClassOps DebuggerFrame::classOps_ = {nullptr, /* addProperty */
-                                           nullptr, /* delProperty */
-                                           nullptr, /* enumerate   */
-                                           nullptr, /* newEnumerate */
-                                           nullptr, /* resolve     */
-                                           nullptr, /* mayResolve  */
-                                           DebuggerFrame_finalize,
-                                           nullptr, /* call        */
-                                           nullptr, /* hasInstance */
-                                           nullptr, /* construct   */
-                                           DebuggerFrame_trace};
+const ClassOps DebuggerFrame::classOps_ = {
+    nullptr,  /* addProperty */
+    nullptr,  /* delProperty */
+    nullptr,  /* enumerate   */
+    nullptr,  /* newEnumerate */
+    nullptr,  /* resolve     */
+    nullptr,  /* mayResolve  */
+    finalize, /* finalize */
+    nullptr,  /* call        */
+    nullptr,  /* hasInstance */
+    nullptr,  /* construct   */
+    trace,    /* trace */
+};
 
 const Class DebuggerFrame::class_ = {
     "Frame",
-    JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(JSSLOT_DEBUGFRAME_COUNT) |
+    JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(RESERVED_SLOTS) |
         JSCLASS_BACKGROUND_FINALIZE,
     &DebuggerFrame::classOps_};
 
@@ -651,13 +643,13 @@ Debugger::~Debugger() {
   }
 }
 
-JS_STATIC_ASSERT(unsigned(JSSLOT_DEBUGFRAME_OWNER) ==
+JS_STATIC_ASSERT(unsigned(DebuggerFrame::OWNER_SLOT) ==
                  unsigned(JSSLOT_DEBUGSCRIPT_OWNER));
-JS_STATIC_ASSERT(unsigned(JSSLOT_DEBUGFRAME_OWNER) ==
+JS_STATIC_ASSERT(unsigned(DebuggerFrame::OWNER_SLOT) ==
                  unsigned(JSSLOT_DEBUGSOURCE_OWNER));
-JS_STATIC_ASSERT(unsigned(JSSLOT_DEBUGFRAME_OWNER) ==
+JS_STATIC_ASSERT(unsigned(DebuggerFrame::OWNER_SLOT) ==
                  unsigned(JSSLOT_DEBUGOBJECT_OWNER));
-JS_STATIC_ASSERT(unsigned(JSSLOT_DEBUGFRAME_OWNER) ==
+JS_STATIC_ASSERT(unsigned(DebuggerFrame::OWNER_SLOT) ==
                  unsigned(DebuggerEnvironment::OWNER_SLOT));
 
 /* static */
@@ -940,9 +932,6 @@ ResumeMode Debugger::slowPathOnResumeFrame(JSContext* cx,
   return slowPathOnEnterFrame(cx, frame);
 }
 
-static void DebuggerFrame_maybeDecrementFrameScriptStepModeCount(
-    FreeOp* fop, AbstractFramePtr frame, NativeObject* frameobj);
-
 /*
  * RAII class to mark a generator as "running" temporarily while running
  * debugger code.
@@ -1042,8 +1031,9 @@ bool Debugger::slowPathOnLeaveFrame(JSContext* cx, AbstractFramePtr frame,
   // Save the frame's completion value.
   ResumeMode resumeMode;
   RootedValue value(cx);
+  RootedSavedFrame exnStack(cx);
   Debugger::resultToCompletion(cx, frameOk, frame.returnValue(), &resumeMode,
-                               &value);
+                               &value, &exnStack);
 
   // Preserve the debuggee's microtask event queue while we run the hooks, so
   // the debugger's microtask checkpoints don't run from the debuggee's
@@ -1083,7 +1073,8 @@ bool Debugger::slowPathOnLeaveFrame(JSContext* cx, AbstractFramePtr frame,
         bool success;
         {
           AutoSetGeneratorRunning asgr(cx, genObj);
-          success = handler->onPop(cx, frameobj, nextResumeMode, &nextValue);
+          success = handler->onPop(cx, frameobj, nextResumeMode, &nextValue,
+                                   exnStack);
         }
         nextResumeMode = dbg->processParsedHandlerResult(
             ar, frame, pc, success, nextResumeMode, &nextValue);
@@ -1111,7 +1102,13 @@ bool Debugger::slowPathOnLeaveFrame(JSContext* cx, AbstractFramePtr frame,
       return true;
 
     case ResumeMode::Throw:
-      cx->setPendingExceptionAndCaptureStack(value);
+      // If we have a stack from the original throw, use it instead of
+      // associating the throw with the current execution point.
+      if (exnStack) {
+        cx->setPendingException(value, exnStack);
+      } else {
+        cx->setPendingExceptionAndCaptureStack(value);
+      }
       return false;
 
     case ResumeMode::Terminate:
@@ -1274,8 +1271,8 @@ bool Debugger::wrapEnvironment(JSContext* cx, Handle<Env*> env,
       return false;
     }
 
-    CrossCompartmentKey key(object, env,
-                            CrossCompartmentKey::DebuggerEnvironment);
+    CrossCompartmentKey key(
+        CrossCompartmentKey::DebuggeeEnvironment(object, env));
     if (!object->compartment()->putWrapper(cx, key, ObjectValue(*envobj))) {
       NukeDebuggerWrapper(envobj);
       environments.remove(env);
@@ -1372,7 +1369,7 @@ bool Debugger::wrapDebuggeeObject(JSContext* cx, HandleObject obj,
     }
 
     if (obj->compartment() != object->compartment()) {
-      CrossCompartmentKey key(object, obj, CrossCompartmentKey::DebuggerObject);
+      CrossCompartmentKey key(CrossCompartmentKey::DebuggeeObject(object, obj));
       if (!object->compartment()->putWrapper(cx, key, ObjectValue(*dobj))) {
         NukeDebuggerWrapper(dobj);
         objects.remove(obj);
@@ -1668,7 +1665,7 @@ static void AdjustGeneratorResumptionValue(JSContext* cx,
     // bytecode, so we have to simulate that here. For async generators, our
     // C++ implementation of AsyncGeneratorResolve will do this. So don't do it
     // twice:
-    if (!frame.callee()->isAsync()) {
+    if (!genObj->is<AsyncGeneratorObject>()) {
       JSObject* pair = CreateIterResultObject(cx, vp, true);
       if (!pair) {
         getAndClearExceptionThenThrow();
@@ -1679,6 +1676,12 @@ static void AdjustGeneratorResumptionValue(JSContext* cx,
 
     // 2.  The generator must be closed.
     genObj->setClosed();
+
+    // Async generators have additionally bookkeeping which must be adjusted
+    // when switching over to the closed state.
+    if (genObj->is<AsyncGeneratorObject>()) {
+      genObj->as<AsyncGeneratorObject>().setCompleted();
+    }
   } else if (frame.callee()->isAsync()) {
     if (AbstractGeneratorObject* genObj =
             GetGeneratorObjectForFrame(cx, frame)) {
@@ -1889,7 +1892,8 @@ ResumeMode Debugger::processHandlerResult(Maybe<AutoRealm>& ar, bool success,
 /* static */
 void Debugger::resultToCompletion(JSContext* cx, bool ok, const Value& rv,
                                   ResumeMode* resumeMode,
-                                  MutableHandleValue value) {
+                                  MutableHandleValue value,
+                                  MutableHandleSavedFrame exnStack) {
   MOZ_ASSERT_IF(ok, !cx->isExceptionPending());
 
   if (ok) {
@@ -1900,6 +1904,7 @@ void Debugger::resultToCompletion(JSContext* cx, bool ok, const Value& rv,
     if (!cx->getPendingException(value)) {
       *resumeMode = ResumeMode::Terminate;
     }
+    exnStack.set(cx->getPendingExceptionStack());
     cx->clearPendingException();
   } else {
     *resumeMode = ResumeMode::Terminate;
@@ -1908,7 +1913,7 @@ void Debugger::resultToCompletion(JSContext* cx, bool ok, const Value& rv,
 }
 
 bool Debugger::newCompletionValue(JSContext* cx, ResumeMode resumeMode,
-                                  const Value& value_,
+                                  const Value& value_, SavedFrame* exnStack_,
                                   MutableHandleValue result) {
   // We must be in the debugger's compartment, since that's where we want
   // to construct the completion value.
@@ -1917,6 +1922,7 @@ bool Debugger::newCompletionValue(JSContext* cx, ResumeMode resumeMode,
 
   RootedId key(cx);
   RootedValue value(cx, value_);
+  RootedSavedFrame exnStack(cx, exnStack_);
 
   switch (resumeMode) {
     case ResumeMode::Return:
@@ -1942,6 +1948,15 @@ bool Debugger::newCompletionValue(JSContext* cx, ResumeMode resumeMode,
     return false;
   }
 
+  if (exnStack) {
+    RootedId nkey(cx, NameToId(cx->names().stack));
+    RootedValue nvalue(cx, ObjectValue(*exnStack));
+    if (!cx->compartment()->wrap(cx, &nvalue) ||
+        !NativeDefineDataProperty(cx, obj, nkey, nvalue, JSPROP_ENUMERATE)) {
+      return false;
+    }
+  }
+
   result.setObject(*obj);
   return true;
 }
@@ -1952,10 +1967,11 @@ bool Debugger::receiveCompletionValue(Maybe<AutoRealm>& ar, bool ok,
 
   ResumeMode resumeMode;
   RootedValue value(cx);
-  resultToCompletion(cx, ok, val, &resumeMode, &value);
+  RootedSavedFrame exnStack(cx);
+  resultToCompletion(cx, ok, val, &resumeMode, &value, &exnStack);
   ar.reset();
   return wrapDebuggeeValue(cx, &value) &&
-         newCompletionValue(cx, resumeMode, value, vp);
+         newCompletionValue(cx, resumeMode, value, exnStack, vp);
 }
 
 /*** Firing debugger hooks **************************************************/
@@ -2062,7 +2078,7 @@ ResumeMode Debugger::fireEnterFrame(JSContext* cx, MutableHandleValue vp) {
   // Assert that the hook won't be able to re-enter the generator.
   if (iter.hasScript() && *iter.pc() == JSOP_AFTERYIELD) {
     auto* genObj = GetGeneratorObjectForFrame(cx, iter.abstractFramePtr());
-    MOZ_ASSERT(genObj->isRunning() || genObj->isClosing());
+    MOZ_ASSERT(genObj->isRunning());
   }
 #endif
 
@@ -2359,7 +2375,8 @@ ResumeMode Debugger::onSingleStep(JSContext* cx, MutableHandleValue vp) {
   // The converse --- ensuring that we do receive traps when we should --- can
   // be done with unit tests.
   if (iter.hasScript()) {
-    uint32_t stepperCount = 0;
+    uint32_t liveStepperCount = 0;
+    uint32_t suspendedStepperCount = 0;
     JSScript* trappingScript = iter.script();
     GlobalObject* global = cx->global();
     if (GlobalObject::DebuggerVector* debuggers = global->getDebuggers()) {
@@ -2372,14 +2389,60 @@ ResumeMode Debugger::onSingleStep(JSContext* cx, MutableHandleValue vp) {
             continue;
           }
           if (frame.script() == trappingScript &&
-              !frameobj->getReservedSlot(JSSLOT_DEBUGFRAME_ONSTEP_HANDLER)
+              !frameobj->getReservedSlot(DebuggerFrame::ONSTEP_HANDLER_SLOT)
                    .isUndefined()) {
-            stepperCount++;
+            liveStepperCount++;
+          }
+        }
+
+        // Also count hooks set on suspended generator frames.
+        for (GeneratorWeakMap::Range r = dbg->generatorFrames.all(); !r.empty();
+             r.popFront()) {
+          AbstractGeneratorObject& genObj =
+              r.front().key()->as<AbstractGeneratorObject>();
+          DebuggerFrame& frameObj = r.front().value()->as<DebuggerFrame>();
+
+          // Live Debugger.Frames were already counted in dbg->frames loop.
+          if (frameObj.isLive()) {
+            continue;
+          }
+
+          // It is possible to have entries in generatorFrames that are not
+          // live, but also not suspended:
+          //
+          // In a generator script prologue, between the 'GENERATOR'
+          // instruction, which creates the generator object, and the
+          // 'SETALIASEDVAR .generator' instruction, which stores it in its
+          // designated spot in the frame, we are in an odd state. 'GENERATOR'
+          // has called onNewGenerator, adding an entry to generatorFrames
+          // mapping the generator object to its Debugger.Frame; but
+          // GetGeneratorObjectForFrame cannot yet find that generator object
+          // given a frame pointer. This means that if Debugger forces a return
+          // between those two instructions, slowPathOnLeaveFrame cannot find
+          // the generator object in order to clean up its generatorFramse
+          // entry.
+          //
+          // When this has occurred, the table entry will get cleaned up once
+          // the generator object gets GC'd, which should be soon since nobody
+          // got a chance to look at it. But it does mean that we need to verify
+          // that the generator is actually suspended before we attribute a step
+          // count to it.
+          if (!genObj.isSuspended()) {
+            continue;
+          }
+
+          if (!genObj.callee().isInterpretedLazy() &&
+              genObj.callee().nonLazyScript() == trappingScript &&
+              !frameObj.getReservedSlot(DebuggerFrame::ONSTEP_HANDLER_SLOT)
+                   .isUndefined()) {
+            suspendedStepperCount++;
           }
         }
       }
     }
-    MOZ_ASSERT(stepperCount == trappingScript->stepModeCount());
+
+    MOZ_ASSERT(liveStepperCount + suspendedStepperCount ==
+               trappingScript->stepModeCount());
   }
 #endif
 
@@ -2925,15 +2988,7 @@ static bool UpdateExecutionObservabilityOfScriptsInZone(
       const JSJitFrameIter& frame = iter.frame();
       switch (frame.type()) {
         case FrameType::BaselineJS:
-          // BaselineScripts that are active on the stack get recompiled and
-          // other (affected) BaselineScripts are discarded. If we're running in
-          // the Baseline Interpreter don't mark the script as active here to
-          // prevent BaselineScripts from falling through the cracks: when we
-          // don't dicard them here (because active) and also don't recompile
-          // them (because recompilation skips interpreter frames).
-          if (!frame.baselineFrame()->runningInInterpreter()) {
-            MarkTypeScriptActiveIfObservable(frame.script(), obs);
-          }
+          MarkTypeScriptActiveIfObservable(frame.script(), obs);
           break;
         case FrameType::IonJS:
           MarkTypeScriptActiveIfObservable(frame.script(), obs);
@@ -3300,7 +3355,7 @@ void Debugger::removeAllocationsTrackingForAllDebuggees() {
 /*** Debugger JSObjects *****************************************************/
 
 void Debugger::traceCrossCompartmentEdges(JSTracer* trc) {
-  generatorFrames.traceCrossCompartmentEdges<DebuggerFrame_trace>(trc);
+  generatorFrames.traceCrossCompartmentEdges<DebuggerFrame::trace>(trc);
   objects.traceCrossCompartmentEdges<DebuggerObject_trace>(trc);
   environments.traceCrossCompartmentEdges<DebuggerEnv_trace>(trc);
   scripts.traceCrossCompartmentEdges<DebuggerScript_trace>(trc);
@@ -3561,10 +3616,9 @@ bool Debugger::findSweepGroupEdges(JSRuntime* rt) {
         continue;
       }
 
-
       if (!debuggerZone->addSweepGroupEdgeTo(debuggeeZone) ||
           !debuggeeZone->addSweepGroupEdgeTo(debuggerZone)) {
-          return false;
+        return false;
       }
     }
   }
@@ -4431,8 +4485,7 @@ void Debugger::removeDebuggeeGlobal(FreeOp* fop, GlobalObject* global,
     DebuggerFrame* frameobj = e.front().value();
     if (frame.hasGlobal(global)) {
       frameobj->freeFrameIterData(fop);
-      DebuggerFrame_maybeDecrementFrameScriptStepModeCount(fop, frame,
-                                                           frameobj);
+      frameobj->maybeDecrementFrameScriptStepModeCount(fop, frame);
       e.removeFront();
     }
   }
@@ -6016,9 +6069,7 @@ JSObject* Debugger::wrapVariantReferent(
     Handle<WasmInstanceObject*> untaggedReferent =
         referent.template as<WasmInstanceObject*>();
     Rooted<CrossCompartmentKey> key(
-        cx, CrossCompartmentKey(
-                object, untaggedReferent,
-                CrossCompartmentKey::DebuggerObjectKind::DebuggerWasmScript));
+        cx, CrossCompartmentKey::DebuggeeWasmScript(object, untaggedReferent));
     obj = wrapVariantReferent<DebuggerScriptReferent, WasmInstanceObject*,
                               WasmInstanceWeakMap>(cx, wasmInstanceScripts, key,
                                                    referent);
@@ -7719,7 +7770,7 @@ bool Debugger::replaceFrameGuts(JSContext* cx, AbstractFramePtr from,
       // lambda. Manually clean it up here.
       FreeOp* fop = cx->runtime()->defaultFreeOp();
       frameobj->freeFrameIterData(fop);
-      DebuggerFrame_maybeDecrementFrameScriptStepModeCount(fop, to, frameobj);
+      frameobj->maybeDecrementFrameScriptStepModeCount(fop, to);
 
       ReportOutOfMemory(cx);
       return false;
@@ -7748,8 +7799,7 @@ void Debugger::removeFromFrameMapsAndClearBreakpointsIn(JSContext* cx,
     FreeOp* fop = cx->runtime()->defaultFreeOp();
     frameobj->freeFrameIterData(fop);
     if (!suspending) {
-      DebuggerFrame_maybeDecrementFrameScriptStepModeCount(fop, frame,
-                                                           frameobj);
+      frameobj->maybeDecrementFrameScriptStepModeCount(fop, frame);
     }
 
     Debugger* dbg = Debugger::fromChildJSObject(frameobj);
@@ -8302,18 +8352,14 @@ JSObject* Debugger::wrapVariantReferent(
     Handle<ScriptSourceObject*> untaggedReferent =
         referent.template as<ScriptSourceObject*>();
     Rooted<CrossCompartmentKey> key(
-        cx, CrossCompartmentKey(
-                object, untaggedReferent,
-                CrossCompartmentKey::DebuggerObjectKind::DebuggerSource));
+        cx, CrossCompartmentKey::DebuggeeSource(object, untaggedReferent));
     obj = wrapVariantReferent<DebuggerSourceReferent, ScriptSourceObject*,
                               SourceWeakMap>(cx, sources, key, referent);
   } else {
     Handle<WasmInstanceObject*> untaggedReferent =
         referent.template as<WasmInstanceObject*>();
     Rooted<CrossCompartmentKey> key(
-        cx, CrossCompartmentKey(
-                object, untaggedReferent,
-                CrossCompartmentKey::DebuggerObjectKind::DebuggerWasmSource));
+        cx, CrossCompartmentKey::DebuggeeSource(object, untaggedReferent));
     obj = wrapVariantReferent<DebuggerSourceReferent, WasmInstanceObject*,
                               WasmInstanceWeakMap>(cx, wasmInstanceSources, key,
                                                    referent);
@@ -8865,8 +8911,8 @@ void ScriptedOnPopHandler::trace(JSTracer* tracer) {
 }
 
 bool ScriptedOnPopHandler::onPop(JSContext* cx, HandleDebuggerFrame frame,
-                                 ResumeMode& resumeMode,
-                                 MutableHandleValue vp) {
+                                 ResumeMode& resumeMode, MutableHandleValue vp,
+                                 HandleSavedFrame exnStack) {
   Debugger* dbg = frame->owner();
 
   // Make it possible to distinguish 'return' from 'await' completions.
@@ -8883,7 +8929,7 @@ bool ScriptedOnPopHandler::onPop(JSContext* cx, HandleDebuggerFrame frame,
   }
 
   RootedValue completion(cx);
-  if (!dbg->newCompletionValue(cx, resumeMode, vp, &completion)) {
+  if (!dbg->newCompletionValue(cx, resumeMode, vp, exnStack, &completion)) {
     return false;
   }
 
@@ -8913,8 +8959,8 @@ bool DebuggerFrame::resume(const FrameIter& iter) {
 }
 
 bool DebuggerFrame::hasAnyLiveHooks() const {
-  return !getReservedSlot(JSSLOT_DEBUGFRAME_ONSTEP_HANDLER).isUndefined() ||
-         !getReservedSlot(JSSLOT_DEBUGFRAME_ONPOP_HANDLER).isUndefined();
+  return !getReservedSlot(ONSTEP_HANDLER_SLOT).isUndefined() ||
+         !getReservedSlot(ONPOP_HANDLER_SLOT).isUndefined();
 }
 
 /* static */
@@ -8939,7 +8985,7 @@ DebuggerFrame* DebuggerFrame::create(JSContext* cx, HandleObject proto,
   }
   frame->setPrivate(data);
 
-  frame->setReservedSlot(JSSLOT_DEBUGFRAME_OWNER, ObjectValue(*debugger));
+  frame->setReservedSlot(OWNER_SLOT, ObjectValue(*debugger));
 
   return frame;
 }
@@ -9226,7 +9272,7 @@ bool DebuggerFrame::setOnStepHandler(JSContext* cx, HandleDebuggerFrame frame,
   }
 
   // Now that the step mode switch has succeeded, we can install the handler.
-  frame->setReservedSlot(JSSLOT_DEBUGFRAME_ONSTEP_HANDLER,
+  frame->setReservedSlot(ONSTEP_HANDLER_SLOT,
                          handler ? PrivateValue(handler) : UndefinedValue());
   return true;
 }
@@ -9234,7 +9280,7 @@ bool DebuggerFrame::setOnStepHandler(JSContext* cx, HandleDebuggerFrame frame,
 /* static */
 bool DebuggerFrame::getArguments(JSContext* cx, HandleDebuggerFrame frame,
                                  MutableHandleDebuggerArguments result) {
-  Value argumentsv = frame->getReservedSlot(JSSLOT_DEBUGFRAME_ARGUMENTS);
+  Value argumentsv = frame->getReservedSlot(ARGUMENTS_SLOT);
   if (!argumentsv.isUndefined()) {
     result.set(argumentsv.isObject()
                    ? &argumentsv.toObject().as<DebuggerArguments>()
@@ -9260,8 +9306,7 @@ bool DebuggerFrame::getArguments(JSContext* cx, HandleDebuggerFrame frame,
   }
 
   result.set(arguments);
-  frame->setReservedSlot(JSSLOT_DEBUGFRAME_ARGUMENTS,
-                         ObjectOrNullValue(result));
+  frame->setReservedSlot(ARGUMENTS_SLOT, ObjectOrNullValue(result));
   return true;
 }
 
@@ -9337,13 +9382,11 @@ static bool EvaluateInEnv(JSContext* cx, Handle<Env*> env,
   return ExecuteKernel(cx, script, *env, NullValue(), frame, rval.address());
 }
 
-static bool DebuggerGenericEval(JSContext* cx,
-                                const mozilla::Range<const char16_t> chars,
-                                HandleObject bindings,
-                                const EvalOptions& options,
-                                ResumeMode& resumeMode,
-                                MutableHandleValue value, Debugger* dbg,
-                                HandleObject envArg, FrameIter* iter) {
+static bool DebuggerGenericEval(
+    JSContext* cx, const mozilla::Range<const char16_t> chars,
+    HandleObject bindings, const EvalOptions& options, ResumeMode& resumeMode,
+    MutableHandleValue value, MutableHandleSavedFrame exnStack, Debugger* dbg,
+    HandleObject envArg, FrameIter* iter) {
   // Either we're specifying the frame, or a global.
   MOZ_ASSERT_IF(iter, !envArg);
   MOZ_ASSERT_IF(!iter, envArg && IsGlobalLexicalEnvironment(envArg));
@@ -9423,7 +9466,7 @@ static bool DebuggerGenericEval(JSContext* cx,
       cx, env, frame, chars,
       options.filename() ? options.filename() : "debugger eval code",
       options.lineno(), &rval);
-  Debugger::resultToCompletion(cx, ok, rval, &resumeMode, value);
+  Debugger::resultToCompletion(cx, ok, rval, &resumeMode, value, exnStack);
   ar.reset();
   return dbg->wrapDebuggeeValue(cx, value);
 }
@@ -9432,7 +9475,8 @@ static bool DebuggerGenericEval(JSContext* cx,
 bool DebuggerFrame::eval(JSContext* cx, HandleDebuggerFrame frame,
                          mozilla::Range<const char16_t> chars,
                          HandleObject bindings, const EvalOptions& options,
-                         ResumeMode& resumeMode, MutableHandleValue value) {
+                         ResumeMode& resumeMode, MutableHandleValue value,
+                         MutableHandleSavedFrame exnStack) {
   MOZ_ASSERT(frame->isLive());
 
   Debugger* dbg = frame->owner();
@@ -9446,20 +9490,20 @@ bool DebuggerFrame::eval(JSContext* cx, HandleDebuggerFrame frame,
   UpdateFrameIterPc(iter);
 
   return DebuggerGenericEval(cx, chars, bindings, options, resumeMode, value,
-                             dbg, nullptr, &iter);
+                             exnStack, dbg, nullptr, &iter);
 }
 
 /* static */
 bool DebuggerFrame::isLive() const { return !!getPrivate(); }
 
 OnStepHandler* DebuggerFrame::onStepHandler() const {
-  Value value = getReservedSlot(JSSLOT_DEBUGFRAME_ONSTEP_HANDLER);
+  Value value = getReservedSlot(ONSTEP_HANDLER_SLOT);
   return value.isUndefined() ? nullptr
                              : static_cast<OnStepHandler*>(value.toPrivate());
 }
 
 OnPopHandler* DebuggerFrame::onPopHandler() const {
-  Value value = getReservedSlot(JSSLOT_DEBUGFRAME_ONPOP_HANDLER);
+  Value value = getReservedSlot(ONPOP_HANDLER_SLOT);
   return value.isUndefined() ? nullptr
                              : static_cast<OnPopHandler*>(value.toPrivate());
 }
@@ -9472,13 +9516,12 @@ void DebuggerFrame::setOnPopHandler(OnPopHandler* handler) {
     prior->drop();
   }
 
-  setReservedSlot(JSSLOT_DEBUGFRAME_ONPOP_HANDLER,
+  setReservedSlot(ONPOP_HANDLER_SLOT,
                   handler ? PrivateValue(handler) : UndefinedValue());
 }
 
-static bool DebuggerFrame_requireLive(JSContext* cx,
-                                      HandleDebuggerFrame frame) {
-  if (!frame->isLive()) {
+bool DebuggerFrame::requireLive(JSContext* cx) {
+  if (!isLive()) {
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                               JSMSG_DEBUG_NOT_LIVE, "Debugger.Frame");
     return false;
@@ -9524,11 +9567,10 @@ void DebuggerFrame::freeFrameIterData(FreeOp* fop) {
   }
 }
 
-static void DebuggerFrame_maybeDecrementFrameScriptStepModeCount(
-    FreeOp* fop, AbstractFramePtr frame, NativeObject* frameobj) {
+void DebuggerFrame::maybeDecrementFrameScriptStepModeCount(
+    FreeOp* fop, AbstractFramePtr frame) {
   // If this frame has an onStep handler, decrement the script's count.
-  if (frameobj->getReservedSlot(JSSLOT_DEBUGFRAME_ONSTEP_HANDLER)
-          .isUndefined()) {
+  if (getReservedSlot(ONSTEP_HANDLER_SLOT).isUndefined()) {
     return;
   }
   if (frame.isWasmDebugFrame()) {
@@ -9540,7 +9582,8 @@ static void DebuggerFrame_maybeDecrementFrameScriptStepModeCount(
   }
 }
 
-static void DebuggerFrame_finalize(FreeOp* fop, JSObject* obj) {
+/* static */
+void DebuggerFrame::finalize(FreeOp* fop, JSObject* obj) {
   MOZ_ASSERT(fop->maybeOnHelperThread());
   DebuggerFrame& frameobj = obj->as<DebuggerFrame>();
   frameobj.freeFrameIterData(fop);
@@ -9554,7 +9597,8 @@ static void DebuggerFrame_finalize(FreeOp* fop, JSObject* obj) {
   }
 }
 
-static void DebuggerFrame_trace(JSTracer* trc, JSObject* obj) {
+/* static */
+void DebuggerFrame::trace(JSTracer* trc, JSObject* obj) {
   OnStepHandler* onStepHandler = obj->as<DebuggerFrame>().onStepHandler();
   if (onStepHandler) {
     onStepHandler->trace(trc);
@@ -9565,15 +9609,14 @@ static void DebuggerFrame_trace(JSTracer* trc, JSObject* obj) {
   }
 }
 
-static DebuggerFrame* DebuggerFrame_checkThis(JSContext* cx,
-                                              const CallArgs& args,
-                                              const char* fnname,
-                                              bool checkLive) {
+/* static */
+DebuggerFrame* DebuggerFrame::checkThis(JSContext* cx, const CallArgs& args,
+                                        const char* fnname, bool checkLive) {
   JSObject* thisobj = NonNullObject(cx, args.thisv());
   if (!thisobj) {
     return nullptr;
   }
-  if (thisobj->getClass() != &DebuggerFrame::class_) {
+  if (thisobj->getClass() != &class_) {
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                               JSMSG_INCOMPATIBLE_PROTO, "Debugger.Frame",
                               fnname, thisobj->getClass()->name);
@@ -9587,7 +9630,7 @@ static DebuggerFrame* DebuggerFrame_checkThis(JSContext* cx,
   // is distinguished by having a nullptr private value. Also, forbid popped
   // frames.
   if (!frame->getPrivate() &&
-      frame->getReservedSlot(JSSLOT_DEBUGFRAME_OWNER).isUndefined()) {
+      frame->getReservedSlot(OWNER_SLOT).isUndefined()) {
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                               JSMSG_INCOMPATIBLE_PROTO, "Debugger.Frame",
                               fnname, "prototype object");
@@ -9595,7 +9638,7 @@ static DebuggerFrame* DebuggerFrame_checkThis(JSContext* cx,
   }
 
   if (checkLive) {
-    if (!DebuggerFrame_requireLive(cx, frame)) {
+    if (!frame->requireLive(cx)) {
       return nullptr;
     }
   }
@@ -9609,10 +9652,10 @@ static DebuggerFrame* DebuggerFrame_checkThis(JSContext* cx,
  *
  * Methods that need the AbstractFramePtr should use THIS_FRAME.
  */
-#define THIS_DEBUGGER_FRAME(cx, argc, vp, fnname, args, frame)                \
-  CallArgs args = CallArgsFromVp(argc, vp);                                   \
-  RootedDebuggerFrame frame(cx,                                               \
-                            DebuggerFrame_checkThis(cx, args, fnname, true)); \
+#define THIS_DEBUGGER_FRAME(cx, argc, vp, fnname, args, frame)                 \
+  CallArgs args = CallArgsFromVp(argc, vp);                                    \
+  RootedDebuggerFrame frame(cx,                                                \
+                            DebuggerFrame::checkThis(cx, args, fnname, true)); \
   if (!frame) return false;
 
 #define THIS_FRAME(cx, argc, vp, fnname, args, thisobj, iter, frame) \
@@ -9755,7 +9798,7 @@ bool DebuggerFrame::olderGetter(JSContext* cx, unsigned argc, Value* vp) {
 }
 
 // The getter used for each element of frame.arguments.
-// See DebuggerFrame_getArguments.
+// See DebuggerFrame::getArguments.
 static bool DebuggerArguments_getArg(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
   int32_t i = args.callee().as<JSFunction>().getExtendedSlot(0).toInt32();
@@ -9876,7 +9919,8 @@ bool DebuggerFrame::argumentsGetter(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
-static bool DebuggerFrame_getScript(JSContext* cx, unsigned argc, Value* vp) {
+/* static */
+bool DebuggerFrame::getScript(JSContext* cx, unsigned argc, Value* vp) {
   THIS_FRAME(cx, argc, vp, "get script", args, thisobj, frameIter, frame);
   Debugger* debug = Debugger::fromChildJSObject(thisobj);
 
@@ -9916,8 +9960,7 @@ bool DebuggerFrame::offsetGetter(JSContext* cx, unsigned argc, Value* vp) {
 /* static */
 bool DebuggerFrame::liveGetter(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
-  RootedDebuggerFrame frame(
-      cx, DebuggerFrame_checkThis(cx, args, "get live", false));
+  RootedDebuggerFrame frame(cx, checkThis(cx, args, "get live", false));
   if (!frame) {
     return false;
   }
@@ -10030,12 +10073,14 @@ bool DebuggerFrame::evalMethod(JSContext* cx, unsigned argc, Value* vp) {
 
   ResumeMode resumeMode;
   RootedValue value(cx);
+  RootedSavedFrame exnStack(cx);
   if (!DebuggerFrame::eval(cx, frame, chars, nullptr, options, resumeMode,
-                           &value)) {
+                           &value, &exnStack)) {
     return false;
   }
 
-  return frame->owner()->newCompletionValue(cx, resumeMode, value, args.rval());
+  return frame->owner()->newCompletionValue(cx, resumeMode, value, exnStack,
+                                            args.rval());
 }
 
 /* static */
@@ -10066,12 +10111,14 @@ bool DebuggerFrame::evalWithBindingsMethod(JSContext* cx, unsigned argc,
 
   ResumeMode resumeMode;
   RootedValue value(cx);
+  RootedSavedFrame exnStack(cx);
   if (!DebuggerFrame::eval(cx, frame, chars, bindings, options, resumeMode,
-                           &value)) {
+                           &value, &exnStack)) {
     return false;
   }
 
-  return frame->owner()->newCompletionValue(cx, resumeMode, value, args.rval());
+  return frame->owner()->newCompletionValue(cx, resumeMode, value, exnStack,
+                                            args.rval());
 }
 
 /* static */
@@ -10090,7 +10137,7 @@ const JSPropertySpec DebuggerFrame::properties_[] = {
     JS_PSG("live", DebuggerFrame::liveGetter, 0),
     JS_PSG("offset", DebuggerFrame::offsetGetter, 0),
     JS_PSG("older", DebuggerFrame::olderGetter, 0),
-    JS_PSG("script", DebuggerFrame_getScript, 0),
+    JS_PSG("script", DebuggerFrame::getScript, 0),
     JS_PSG("this", DebuggerFrame::thisGetter, 0),
     JS_PSG("type", DebuggerFrame::typeGetter, 0),
     JS_PSG("implementation", DebuggerFrame::implementationGetter, 0),
@@ -11205,12 +11252,13 @@ bool DebuggerObject::executeInGlobalMethod(JSContext* cx, unsigned argc,
 
   ResumeMode resumeMode;
   RootedValue value(cx);
+  RootedSavedFrame exnStack(cx);
   if (!DebuggerObject::executeInGlobal(cx, object, chars, nullptr, options,
-                                       resumeMode, &value)) {
+                                       resumeMode, &value, &exnStack)) {
     return false;
   }
 
-  return object->owner()->newCompletionValue(cx, resumeMode, value,
+  return object->owner()->newCompletionValue(cx, resumeMode, value, exnStack,
                                              args.rval());
 }
 
@@ -11248,12 +11296,13 @@ bool DebuggerObject::executeInGlobalWithBindingsMethod(JSContext* cx,
 
   ResumeMode resumeMode;
   RootedValue value(cx);
+  RootedSavedFrame exnStack(cx);
   if (!DebuggerObject::executeInGlobal(cx, object, chars, bindings, options,
-                                       resumeMode, &value)) {
+                                       resumeMode, &value, &exnStack)) {
     return false;
   }
 
-  return object->owner()->newCompletionValue(cx, resumeMode, value,
+  return object->owner()->newCompletionValue(cx, resumeMode, value, exnStack,
                                              args.rval());
 }
 
@@ -12218,7 +12267,8 @@ bool DebuggerObject::executeInGlobal(JSContext* cx, HandleDebuggerObject object,
                                      HandleObject bindings,
                                      const EvalOptions& options,
                                      ResumeMode& resumeMode,
-                                     MutableHandleValue value) {
+                                     MutableHandleValue value,
+                                     MutableHandleSavedFrame exnStack) {
   MOZ_ASSERT(object->isGlobal());
 
   Rooted<GlobalObject*> referent(cx, &object->referent()->as<GlobalObject>());
@@ -12226,7 +12276,7 @@ bool DebuggerObject::executeInGlobal(JSContext* cx, HandleDebuggerObject object,
 
   RootedObject globalLexical(cx, &referent->lexicalEnvironment());
   return DebuggerGenericEval(cx, chars, bindings, options, resumeMode, value,
-                             dbg, globalLexical, nullptr);
+                             exnStack, dbg, globalLexical, nullptr);
 }
 
 /* static */

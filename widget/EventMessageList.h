@@ -108,6 +108,8 @@ NS_EVENT_MESSAGE_FIRST_LAST(ePointerEvent, ePointerMove, ePointerLostCapture)
 
 NS_EVENT_MESSAGE(eContextMenu)
 
+NS_EVENT_MESSAGE(eCueChange)
+
 NS_EVENT_MESSAGE(eLoad)
 NS_EVENT_MESSAGE(eUnload)
 NS_EVENT_MESSAGE(eHashChange)
@@ -115,7 +117,9 @@ NS_EVENT_MESSAGE(eImageAbort)
 NS_EVENT_MESSAGE(eLoadError)
 NS_EVENT_MESSAGE(eLoadEnd)
 NS_EVENT_MESSAGE(ePopState)
+NS_EVENT_MESSAGE(eRejectionHandled)
 NS_EVENT_MESSAGE(eStorage)
+NS_EVENT_MESSAGE(eUnhandledRejection)
 NS_EVENT_MESSAGE(eBeforeUnload)
 NS_EVENT_MESSAGE(eReadyStateChange)
 

@@ -1150,20 +1150,23 @@ class Debugger : private mozilla::LinkedListElement<Debugger> {
    * standard SpiderMonkey call state: a boolean success value |ok|, a return
    * value |rv|, and a context |cx| that may or may not have an exception set.
    * If an exception was pending on |cx|, it is cleared (and |ok| is asserted
-   * to be false).
+   * to be false). On exceptional returns, exnStack will be set to any stack
+   * associated with the original throw, if available.
    */
   static void resultToCompletion(JSContext* cx, bool ok, const Value& rv,
                                  ResumeMode* resumeMode,
-                                 MutableHandleValue value);
+                                 MutableHandleValue value,
+                                 MutableHandleSavedFrame exnStack);
 
   /*
    * Set |*result| to a JavaScript completion value corresponding to
    * |resumeMode| and |value|. |value| should be the return value or exception
-   * value, not wrapped as a debuggee value. |cx| must be in the debugger
-   * compartment.
+   * value, not wrapped as a debuggee value. When throwing an exception,
+   * |exnStack| may be set to the stack when the value was thrown. |cx| must be
+   * in the debugger compartment.
    */
   MOZ_MUST_USE bool newCompletionValue(JSContext* cx, ResumeMode resumeMode,
-                                       const Value& value,
+                                       const Value& value, SavedFrame* exnStack,
                                        MutableHandleValue result);
 
   /*
@@ -1411,7 +1414,8 @@ struct OnPopHandler : Handler {
    * specifying how execution should continue.
    */
   virtual bool onPop(JSContext* cx, HandleDebuggerFrame frame,
-                     ResumeMode& resumeMode, MutableHandleValue vp) = 0;
+                     ResumeMode& resumeMode, MutableHandleValue vp,
+                     HandleSavedFrame exnStack) = 0;
 };
 
 class ScriptedOnPopHandler final : public OnPopHandler {
@@ -1421,7 +1425,8 @@ class ScriptedOnPopHandler final : public OnPopHandler {
   virtual void drop() override;
   virtual void trace(JSTracer* tracer) override;
   virtual bool onPop(JSContext* cx, HandleDebuggerFrame frame,
-                     ResumeMode& resumeMode, MutableHandleValue vp) override;
+                     ResumeMode& resumeMode, MutableHandleValue vp,
+                     HandleSavedFrame exnStack) override;
 
  private:
   HeapPtr<JSObject*> object_;
@@ -1435,13 +1440,23 @@ class DebuggerFrame : public NativeObject {
  public:
   static const Class class_;
 
+  enum {
+    OWNER_SLOT = 0,
+    ARGUMENTS_SLOT,
+    ONSTEP_HANDLER_SLOT,
+    ONPOP_HANDLER_SLOT,
+    RESERVED_SLOTS,
+  };
+
+  static void trace(JSTracer* trc, JSObject* obj);
+
   static NativeObject* initClass(JSContext* cx, HandleObject dbgCtor,
                                  Handle<GlobalObject*> global);
   static DebuggerFrame* create(JSContext* cx, HandleObject proto,
                                const FrameIter& iter,
                                HandleNativeObject debugger);
-  void freeFrameIterData(FreeOp* fop);
 
+  static MOZ_MUST_USE bool getScript(JSContext* cx, unsigned argc, Value* vp);
   static MOZ_MUST_USE bool getArguments(JSContext* cx,
                                         HandleDebuggerFrame frame,
                                         MutableHandleDebuggerArguments result);
@@ -1472,7 +1487,14 @@ class DebuggerFrame : public NativeObject {
                                 HandleObject bindings,
                                 const EvalOptions& options,
                                 ResumeMode& resumeMode,
-                                MutableHandleValue value);
+                                MutableHandleValue value,
+                                MutableHandleSavedFrame exnStack);
+
+  MOZ_MUST_USE bool requireLive(JSContext* cx);
+  static MOZ_MUST_USE DebuggerFrame* checkThis(JSContext* cx,
+                                               const CallArgs& args,
+                                               const char* fnname,
+                                               bool checkLive);
 
   bool isLive() const;
   OnStepHandler* onStepHandler() const;
@@ -1492,6 +1514,8 @@ class DebuggerFrame : public NativeObject {
 
   static const JSPropertySpec properties_[];
   static const JSFunctionSpec methods_[];
+
+  static void finalize(FreeOp* fop, JSObject* obj);
 
   static AbstractFramePtr getReferent(HandleDebuggerFrame frame);
   static MOZ_MUST_USE bool getFrameIter(JSContext* cx,
@@ -1535,6 +1559,9 @@ class DebuggerFrame : public NativeObject {
 
  public:
   FrameIter::Data* frameIterData() const;
+  void freeFrameIterData(FreeOp* fop);
+  void maybeDecrementFrameScriptStepModeCount(FreeOp* fop,
+                                              AbstractFramePtr frame);
 };
 
 class DebuggerObject : public NativeObject {
@@ -1637,13 +1664,11 @@ class DebuggerObject : public NativeObject {
                                 MutableHandleValue result);
   static MOZ_MUST_USE bool forceLexicalInitializationByName(
       JSContext* cx, HandleDebuggerObject object, HandleId id, bool& result);
-  static MOZ_MUST_USE bool executeInGlobal(JSContext* cx,
-                                           HandleDebuggerObject object,
-                                           mozilla::Range<const char16_t> chars,
-                                           HandleObject bindings,
-                                           const EvalOptions& options,
-                                           ResumeMode& resumeMode,
-                                           MutableHandleValue value);
+  static MOZ_MUST_USE bool executeInGlobal(
+      JSContext* cx, HandleDebuggerObject object,
+      mozilla::Range<const char16_t> chars, HandleObject bindings,
+      const EvalOptions& options, ResumeMode& resumeMode,
+      MutableHandleValue value, MutableHandleSavedFrame exnStack);
   static MOZ_MUST_USE bool makeDebuggeeValue(JSContext* cx,
                                              HandleDebuggerObject object,
                                              HandleValue value,
@@ -1849,14 +1874,14 @@ class BreakpointSite {
 
  protected:
   virtual void recompile(FreeOp* fop) = 0;
-  inline bool isEnabled() const { return enabledCount > 0; }
+  bool isEnabled() const { return enabledCount > 0; }
 
  public:
   BreakpointSite(Type type);
   Breakpoint* firstBreakpoint() const;
   virtual ~BreakpointSite() {}
   bool hasBreakpoint(Breakpoint* bp);
-  inline Type type() const { return type_; }
+  Type type() const { return type_; }
 
   void inc(FreeOp* fop);
   void dec(FreeOp* fop);

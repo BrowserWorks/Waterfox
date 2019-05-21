@@ -42,6 +42,7 @@ async function getAddonInfo() {
 
 const L10N = new Localization([
   "branding/brand.ftl",
+  "browser/branding/brandings.ftl",
   "browser/branding/sync-brand.ftl",
   "browser/newtab/onboarding.ftl",
 ]);
@@ -148,6 +149,7 @@ const ONBOARDING_MESSAGES = async () => ([
     targeting: "trailheadInterrupt == 'join'",
     trigger: {id: "firstRun"},
     includeBundle: {length: 3, template: "onboarding", trigger: {id: "showOnboarding"}},
+    utm_term: "trailhead-join",
     content: {
       className: "joinCohort",
       title: {string_id: "onboarding-welcome-body"},
@@ -177,6 +179,7 @@ const ONBOARDING_MESSAGES = async () => ([
     targeting: "trailheadInterrupt == 'sync'",
     trigger: {id: "firstRun"},
     includeBundle: {length: 3, template: "onboarding", trigger: {id: "showOnboarding"}},
+    utm_term: "trailhead-sync",
     content: {
       className: "syncCohort",
       title: {property_id: "firstrun_title"},
@@ -201,6 +204,7 @@ const ONBOARDING_MESSAGES = async () => ([
     targeting: "trailheadInterrupt == 'cards'",
     trigger: {id: "firstRun"},
     includeBundle: {length: 3, template: "onboarding", trigger: {id: "showOnboarding"}},
+    utm_term: "trailhead-cards",
   },
   {
     id: "TRAILHEAD_4",
@@ -214,11 +218,11 @@ const ONBOARDING_MESSAGES = async () => ([
     bundled: 3,
     order: 2,
     content: {
-      title: {string_id: "onboarding-tracking-protection-title"},
-      text: {string_id: "onboarding-tracking-protection-text"},
+      title: {string_id: "onboarding-tracking-protection-title2"},
+      text: {string_id: "onboarding-tracking-protection-text2"},
       icon: "tracking",
       primary_button: {
-        label: {string_id: "onboarding-tracking-protection-button"},
+        label: {string_id: "onboarding-tracking-protection-button2"},
         action: {
           type: "OPEN_PREFERENCES_PAGE",
           data: {category: "privacy-trackingprotection"},
@@ -235,13 +239,14 @@ const ONBOARDING_MESSAGES = async () => ([
     order: 2,
     content: {
       title: {string_id: "onboarding-data-sync-title"},
-      text: {string_id: "onboarding-data-sync-text"},
+      text: {string_id: "onboarding-data-sync-text2"},
       icon: "devices",
       primary_button: {
-        label: {string_id: "onboarding-data-sync-button"},
+        label: {string_id: "onboarding-data-sync-button2"},
         action: {
           type: "OPEN_URL",
-          data: {args: "https://accounts.firefox.com/?service=sync&action=email&context=fx_desktop_v3&entrypoint=activity-stream-firstrun&utm_source=activity-stream&utm_campaign=firstrun", where: "tabshifted"},
+          addFlowParams: true,
+          data: {args: "https://accounts.firefox.com/?service=sync&action=email&context=fx_desktop_v3&entrypoint=activity-stream-firstrun&style=trailhead", where: "tabshifted"},
         },
       },
     },
@@ -274,11 +279,11 @@ const ONBOARDING_MESSAGES = async () => ([
     bundled: 3,
     order: 1,
     content: {
-      title: {string_id: "onboarding-private-browsing-title"},
-      text: {string_id: "onboarding-private-browsing-text"},
+      title: {string_id: "onboarding-browse-privately-title"},
+      text: {string_id: "onboarding-browse-privately-text"},
       icon: "private",
       primary_button: {
-        label: {string_id: "onboarding-private-browsing-button"},
+        label: {string_id: "onboarding-browse-privately-button"},
         action: {type: "OPEN_PRIVATE_BROWSER_WINDOW"},
       },
     },
@@ -292,13 +297,13 @@ const ONBOARDING_MESSAGES = async () => ([
     order: 5,
     content: {
       title: {string_id: "onboarding-firefox-send-title"},
-      text: {string_id: "onboarding-firefox-send-text"},
+      text: {string_id: "onboarding-firefox-send-text2"},
       icon: "ffsend",
       primary_button: {
         label: {string_id: "onboarding-firefox-send-button"},
         action: {
           type: "OPEN_URL",
-          data: {args: "https://send.firefox.com/?utm_source=activity-stream?utm_medium=referral?utm_campaign=firstrun", where: "tabshifted"},
+          data: {args: "https://send.firefox.com/", where: "tabshifted"},
         },
       },
     },
@@ -329,25 +334,6 @@ const ONBOARDING_MESSAGES = async () => ([
     id: "TRAILHEAD_CARD_7",
     template: "onboarding",
     bundled: 3,
-    content: {
-      title: {string_id: "onboarding-privacy-right-title"},
-      text: {string_id: "onboarding-privacy-right-text"},
-      icon: "pledge",
-      primary_button: {
-        label: {string_id: "onboarding-privacy-right-button"},
-        action: {
-          type: "OPEN_URL",
-          data: {args: "https://www.mozilla.org/?privacy-right", where: "tabshifted"},
-        },
-      },
-    },
-    targeting: "trailheadTriplet == 'unused'",
-    trigger: {id: "showOnboarding"},
-  },
-  {
-    id: "TRAILHEAD_CARD_8",
-    template: "onboarding",
-    bundled: 3,
     order: 3,
     content: {
       title: {string_id: "onboarding-send-tabs-title"},
@@ -357,7 +343,7 @@ const ONBOARDING_MESSAGES = async () => ([
         label: {string_id: "onboarding-send-tabs-button"},
         action: {
           type: "OPEN_URL",
-          data: {args: "https://blog.mozilla.org/firefox/send-tabs-a-better-way/", where: "tabshifted"},
+          data: {args: "https://support.mozilla.org/kb/send-tab-firefox-desktop-mobile", where: "tabshifted"},
         },
       },
     },
@@ -365,13 +351,13 @@ const ONBOARDING_MESSAGES = async () => ([
     trigger: {id: "showOnboarding"},
   },
   {
-    id: "TRAILHEAD_CARD_9",
+    id: "TRAILHEAD_CARD_8",
     template: "onboarding",
     bundled: 3,
     order: 2,
     content: {
       title: {string_id: "onboarding-pocket-anywhere-title"},
-      text: {string_id: "onboarding-pocket-anywhere-text"},
+      text: {string_id: "onboarding-pocket-anywhere-text2"},
       icon: "pocket",
       primary_button: {
         label: {string_id: "onboarding-pocket-anywhere-button"},
@@ -385,16 +371,16 @@ const ONBOARDING_MESSAGES = async () => ([
     trigger: {id: "showOnboarding"},
   },
   {
-    id: "TRAILHEAD_CARD_10",
+    id: "TRAILHEAD_CARD_9",
     template: "onboarding",
     bundled: 3,
     order: 3,
     content: {
       title: {string_id: "onboarding-lockwise-passwords-title"},
-      text: {string_id: "onboarding-lockwise-passwords-text"},
+      text: {string_id: "onboarding-lockwise-passwords-text2"},
       icon: "lockwise",
       primary_button: {
-        label: {string_id: "onboarding-lockwise-passwords-button"},
+        label: {string_id: "onboarding-lockwise-passwords-button2"},
         action: {
           type: "OPEN_URL",
           data: {args: "https://lockwise.firefox.com/", where: "tabshifted"},
@@ -405,13 +391,13 @@ const ONBOARDING_MESSAGES = async () => ([
     trigger: {id: "showOnboarding"},
   },
   {
-    id: "TRAILHEAD_CARD_11",
+    id: "TRAILHEAD_CARD_10",
     template: "onboarding",
     bundled: 3,
     order: 4,
     content: {
       title: {string_id: "onboarding-facebook-container-title"},
-      text: {string_id: "onboarding-facebook-container-text"},
+      text: {string_id: "onboarding-facebook-container-text2"},
       icon: "fbcont",
       primary_button: {
         label: {string_id: "onboarding-facebook-container-button"},
@@ -499,6 +485,16 @@ const OnboardingMessageProvider = {
         } catch (e) {
           continue;
         }
+
+        // We know we want to show this message, so translate message strings
+        const [primary_button_string, title_string, text_string] = await L10N.formatMessages([
+          {id: msg.content.primary_button.label.string_id},
+          {id: msg.content.title.string_id},
+          {id: msg.content.text.string_id, args: msg.content.text.args},
+        ]);
+        translatedMessage.content.primary_button.label = primary_button_string.value;
+        translatedMessage.content.title = title_string.value;
+        translatedMessage.content.text = text_string.value;
       }
 
       // Translate any secondary buttons separately

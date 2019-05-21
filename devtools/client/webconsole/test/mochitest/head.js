@@ -297,8 +297,7 @@ async function openContextMenu(hud, element) {
   const onConsoleMenuOpened = hud.ui.wrapper.once("menu-open");
   synthesizeContextMenuEvent(element);
   await onConsoleMenuOpened;
-  const doc = hud.chromeWindow.document;
-  return doc.getElementById("webconsole-menu");
+  return _getContextMenu(hud);
 }
 
 /**
@@ -310,8 +309,7 @@ async function openContextMenu(hud, element) {
  * @return promise
  */
 function hideContextMenu(hud) {
-  const doc = hud.chromeWindow.document;
-  const popup = doc.getElementById("webconsole-menu");
+  const popup = _getContextMenu(hud);
   if (!popup) {
     return Promise.resolve();
   }
@@ -319,6 +317,12 @@ function hideContextMenu(hud) {
   const onPopupHidden = once(popup, "popuphidden");
   popup.hidePopup();
   return onPopupHidden;
+}
+
+function _getContextMenu(hud) {
+  const toolbox = gDevTools.getToolbox(hud.target);
+  const doc = toolbox ? toolbox.topWindow.document : hud.chromeWindow.document;
+  return doc.getElementById("webconsole-menu");
 }
 
 function loadDocument(url, browser = gBrowser.selectedBrowser) {
@@ -1334,7 +1338,7 @@ async function checkMessageStack(hud, text, frameLines) {
   const msgNode = await waitFor(() => findMessage(hud, text));
   ok(!msgNode.classList.contains("open"), `Error logged not expanded`);
 
-  const button = msgNode.querySelector(".collapse-button");
+  const button = await waitFor(() => msgNode.querySelector(".collapse-button"));
   button.click();
 
   const framesNode = await waitFor(() => msgNode.querySelector(".frames"));

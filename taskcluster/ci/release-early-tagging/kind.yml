@@ -1,7 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
+---
 loader: taskgraph.loader.transform:loader
 
 transforms:
@@ -27,10 +27,7 @@ job-defaults:
         dontbuild: true
         push:
             by-project:
-                mozilla-beta: true
-                mozilla-release: true
-                mozilla-esr52: true
-                mozilla-esr60: true
+                mozilla-(beta|release|esr.*): true
                 maple: true
                 birch: true
                 default: false

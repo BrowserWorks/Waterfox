@@ -1,0 +1,353 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<panel id="identity-popup"
+       type="arrow"
+       hidden="true"
+       photon="true"
+       role="alertdialog"
+       aria-labelledby="identity-popup-mainView-panel-header-span"
+       onpopupshown="gIdentityHandler.onPopupShown(event);"
+       onpopuphidden="gIdentityHandler.onPopupHidden(event);"
+       orient="vertical">
+
+  <panelmultiview id="identity-popup-multiView"
+                  mainViewId="identity-popup-mainView">
+    <panelview id="identity-popup-mainView"
+               descriptionheightworkaround="true">
+      <vbox id="identity-popup-mainView-panel-header">
+        <label>
+          <html:span id="identity-popup-mainView-panel-header-span"/>
+        </label>
+      </vbox>
+
+      <!-- Security Section -->
+      <hbox id="identity-popup-security" class="identity-popup-section">
+        <vbox class="identity-popup-security-content" flex="1">
+          <label class="plain">
+            <label class="identity-popup-headline">&identity.connection;</label>
+          </label>
+          <description class="identity-popup-connection-not-secure"
+                       when-connection="not-secure secure-cert-user-overridden secure-custom-root">&identity.connectionNotSecure;</description>
+          <description class="identity-popup-connection-secure"
+                       when-connection="secure secure-ev">&identity.connectionSecure;</description>
+          <description when-connection="chrome">&identity.connectionInternal;</description>
+          <description when-connection="file">&identity.connectionFile;</description>
+          <description when-connection="extension">&identity.extensionPage;</description>
+
+          <vbox id="identity-popup-security-descriptions">
+            <description class="identity-popup-warning-gray"
+                         when-mixedcontent="active-blocked">&identity.activeBlocked;</description>
+           <description  id="identity-popup-security-decription-custom-root"
+                         class="identity-popup-warning-gray"
+                         when-customroot="true">&identity.customRoot;</description>
+            <description class="identity-popup-warning-yellow"
+                         when-mixedcontent="passive-loaded">&identity.passiveLoaded;</description>
+            <description when-mixedcontent="active-loaded">&identity.activeLoaded;</description>
+            <description class="identity-popup-warning-yellow"
+                         when-ciphers="weak">&identity.weakEncryption;</description>
+            <description when-loginforms="insecure">&identity.insecureLoginForms2;</description>
+          </vbox>
+        </vbox>
+        <button id="identity-popup-security-expander"
+                class="identity-popup-expander"
+                when-connection="not-secure secure secure-ev secure-cert-user-overridden"
+                oncommand="gIdentityHandler.showSecuritySubView(); gIdentityHandler.recordClick('security_subview_btn');"/>
+      </hbox>
+
+      <!-- Tracking Protection Section -->
+      <hbox id="tracking-protection-container"
+            class="identity-popup-section"
+            when-connection="not-secure secure secure-ev secure-cert-user-overridden extension">
+        <vbox id="identity-popup-content-blocking-content" flex="1">
+          <hbox align="start">
+            <label id="content-blocking-label"
+                   class="identity-popup-headline"
+                   flex="1">&contentBlocking.title;</label>
+            <toolbarbutton id="tracking-protection-preferences-button"
+                           class="identity-popup-preferences-button subviewbutton"
+                           tooltiptext="&identity.contentBlockingPreferences.tooltip;"
+                           oncommand="ContentBlocking.openPreferences('identityPopup-TP-preferencesButton'); gIdentityHandler.recordClick('cb_prefs_button');" />
+          </hbox>
+
+          <description id="identity-popup-content-blocking-detected"
+                       crop="end">&contentBlocking.detected;</description>
+          <description id="identity-popup-content-blocking-not-detected"
+                       crop="end">&contentBlocking.notDetected;</description>
+
+          <vbox id="identity-popup-content-blocking-category-list">
+            <toolbarbutton id="identity-popup-content-blocking-category-tracking-protection"
+                           onclick="ContentBlocking.showTrackersSubview(); gIdentityHandler.recordClick('trackers_subview_btn');"
+                           class="identity-popup-content-blocking-category" align="center">
+              <image class="identity-popup-content-blocking-category-icon tracking-protection-icon"/>
+              <label flex="1" class="identity-popup-content-blocking-category-label">&contentBlocking.trackingProtection3.label;</label>
+              <label flex="1" id="identity-popup-content-blocking-tracking-protection-state-label" class="identity-popup-content-blocking-category-state-label"/>
+            </toolbarbutton>
+            <toolbarbutton id="identity-popup-content-blocking-category-cookies"
+                           onclick="ContentBlocking.showCookiesSubview(); gIdentityHandler.recordClick('cookies_subview_btn');"
+                           class="identity-popup-content-blocking-category" align="center">
+              <image class="identity-popup-content-blocking-category-icon thirdpartycookies-icon"/>
+              <label flex="1" id="identity-popup-content-blocking-category-label-default"
+                     class="identity-popup-content-blocking-category-label">&contentBlocking.cookies.label;</label>
+              <label flex="1" id="identity-popup-content-blocking-cookies-state-label" class="identity-popup-content-blocking-category-state-label"/>
+            </toolbarbutton>
+            <toolbarbutton id="identity-popup-content-blocking-category-cryptominers"
+                           onclick="ContentBlocking.showCryptominersSubview();"
+                           class="identity-popup-content-blocking-category" align="center">
+              <image class="identity-popup-content-blocking-category-icon cryptominers-icon"/>
+              <label flex="1" class="identity-popup-content-blocking-category-label">&contentBlocking.cryptominers.label;</label>
+              <label flex="1" id="identity-popup-content-blocking-cryptominers-state-label" class="identity-popup-content-blocking-category-state-label"/>
+            </toolbarbutton>
+            <toolbarbutton id="identity-popup-content-blocking-category-fingerprinters"
+                           onclick="ContentBlocking.showFingerprintersSubview();"
+                           class="identity-popup-content-blocking-category" align="center">
+              <image class="identity-popup-content-blocking-category-icon fingerprinters-icon"/>
+              <label flex="1" class="identity-popup-content-blocking-category-label">&contentBlocking.fingerprinters.label;</label>
+              <label flex="1" id="identity-popup-content-blocking-fingerprinters-state-label" class="identity-popup-content-blocking-category-state-label"/>
+            </toolbarbutton>
+          </vbox>
+
+          <button id="tracking-action-unblock"
+                  class="panel-button tracking-protection-button"
+                  label="&trackingProtection.unblock5.label;"
+                  accesskey="&trackingProtection.unblock5.accesskey;"
+                  oncommand="ContentBlocking.disableForCurrentPage(); gIdentityHandler.recordClick('unblock');" />
+          <button id="tracking-action-unblock-private"
+                  class="panel-button tracking-protection-button"
+                  label="&trackingProtection.unblockPrivate5.label;"
+                  accesskey="&trackingProtection.unblockPrivate5.accesskey;"
+                  oncommand="ContentBlocking.disableForCurrentPage(); gIdentityHandler.recordClick('unblock_private');" />
+          <button id="tracking-action-block"
+                  class="panel-button tracking-protection-button"
+                  label="&trackingProtection.block6.label;"
+                  accesskey="&trackingProtection.block6.accesskey;"
+                  oncommand="ContentBlocking.enableForCurrentPage(); gIdentityHandler.recordClick('block');" />
+          <label id="identity-popup-content-blocking-report-breakage"
+                 onclick="ContentBlocking.showReportBreakageSubview(); gIdentityHandler.recordClick('report_breakage');"
+                 class="text-link subviewkeynav"
+                 flex="1">&contentBlocking.openBreakageReportView2.label;</label>
+        </vbox>
+      </hbox>
+
+      <!-- Permissions Section -->
+      <hbox class="identity-popup-section"
+            when-connection="not-secure secure secure-ev secure-cert-user-overridden file extension">
+        <vbox id="identity-popup-permissions-content" flex="1" role="group"
+              aria-labelledby="identity-popup-permissions-headline">
+          <hbox>
+            <label id="identity-popup-permissions-headline"
+                   class="identity-popup-headline"
+                   flex="1"
+                   value="&identity.permissions;"/>
+            <toolbarbutton id="identity-popup-permission-preferences-button"
+                           class="identity-popup-preferences-button subviewbutton"
+                           tooltiptext="&identity.permissionsPreferences.tooltip;"
+                           oncommand="gIdentityHandler.openPermissionPreferences(); gIdentityHandler.recordClick('permission_prefs_btn');" />
+          </hbox>
+          <vbox id="identity-popup-permission-list"/>
+          <description id="identity-popup-permission-reload-hint">&identity.permissionsReloadHint;</description>
+          <description id="identity-popup-permission-empty-hint">&identity.permissionsEmpty;</description>
+        </vbox>
+      </hbox>
+
+      <!-- Clear Site Data Button -->
+      <vbox hidden="true"
+            id="identity-popup-clear-sitedata-footer"
+            class="panel-footer">
+        <button id="identity-popup-clear-sitedata-button"
+                label="&identity.clearSiteData;"
+                oncommand="gIdentityHandler.clearSiteData(event); gIdentityHandler.recordClick('clear_sitedata');"/>
+      </vbox>
+    </panelview>
+
+    <!-- Security SubView -->
+    <panelview id="identity-popup-securityView"
+               title="&identity.securityView.label;"
+               descriptionheightworkaround="true">
+      <vbox class="identity-popup-security-content">
+        <label class="plain">
+          <label class="identity-popup-headline" id="identity-popup-host"></label>
+        </label>
+        <description class="identity-popup-connection-not-secure"
+                     when-connection="not-secure secure-cert-user-overridden">&identity.connectionNotSecure;</description>
+        <description class="identity-popup-connection-secure"
+                     when-connection="secure secure-ev">&identity.connectionSecure;</description>
+      </vbox>
+
+      <vbox id="identity-popup-securityView-body" class="panel-view-body-unscrollable">
+        <!-- (EV) Certificate Information -->
+        <description id="identity-popup-content-verified-by"
+                     when-connection="secure-ev">&identity.connectionVerified2;</description>
+        <description id="identity-popup-content-owner"
+                     when-connection="secure-ev"
+                     class="header"/>
+        <description id="identity-popup-content-supplemental"
+                     when-connection="secure-ev"/>
+        <description id="identity-popup-content-verifier"
+                     when-connection="secure secure-ev secure-cert-user-overridden"/>
+        <description id="identity-popup-content-verifier-unknown"
+                     class="identity-popup-warning-gray"
+                     when-customroot="true">&identity.description.customRoot; <label id="identity-popup-custom-root-learn-more" is="text-link" class="plain" value="&identity.learnMore;"/></description>
+
+        <!-- Remove Certificate Exception -->
+        <button when-connection="secure-cert-user-overridden"
+                label="&identity.removeCertException.label;"
+                accesskey="&identity.removeCertException.accesskey;"
+                class="panel-button"
+                oncommand="gIdentityHandler.removeCertException()"/>
+
+        <!-- Connection is Not Secure -->
+        <description when-connection="not-secure"
+                     and-when-loginforms="secure">&identity.description.insecure;</description>
+
+        <!-- Insecure login forms -->
+        <description when-loginforms="insecure">&identity.description.insecureLoginForms; <label id="identity-popup-insecure-login-forms-learn-more" is="text-link" class="plain" value="&identity.learnMore;"/></description>
+
+        <!-- Weak Cipher -->
+        <description when-ciphers="weak">&identity.description.weakCipher;</description>
+        <description class="identity-popup-warning-yellow"
+                     when-ciphers="weak">&identity.description.weakCipher2;</description>
+
+        <!-- Active Mixed Content Blocked -->
+        <description class="identity-popup-warning-gray"
+                     when-mixedcontent="active-blocked">&identity.description.activeBlocked; <label is="text-link" class="identity-popup-mcb-learn-more plain" value="&identity.learnMore;"/></description>
+
+        <!-- Passive Mixed Content Loaded -->
+        <description when-mixedcontent="passive-loaded">&identity.description.passiveLoaded;</description>
+        <description class="identity-popup-warning-yellow"
+                     when-mixedcontent="passive-loaded">&identity.description.passiveLoaded2; <label is="text-link" class="identity-popup-mcb-learn-more plain" value="&identity.learnMore;"/></description>
+
+        <!-- Passive Mixed Content Loaded, Active Mixed Content Blocked -->
+        <description when-mixedcontent="passive-loaded active-blocked">&identity.description.passiveLoaded;</description>
+        <description when-mixedcontent="passive-loaded active-blocked"
+                     class="identity-popup-warning-yellow">&identity.description.passiveLoaded3; <label is="text-link" class="identity-popup-mcb-learn-more plain" value="&identity.learnMore;"/></description>
+
+        <!-- Active Mixed Content Blocking Disabled -->
+        <description when-mixedcontent="active-loaded"
+                     and-when-loginforms="secure">&identity.description.activeLoaded;</description>
+        <description when-mixedcontent="active-loaded"
+                     and-when-loginforms="secure">&identity.description.activeLoaded2; <label is="text-link" class="identity-popup-mcb-learn-more plain" value="&identity.learnMore;"/></description>
+        <!-- Show only the first message when there are insecure login forms,
+             and make sure the Learn More link is included. -->
+        <description when-mixedcontent="active-loaded"
+                     and-when-loginforms="insecure">&identity.description.activeLoaded; <label is="text-link" class="identity-popup-mcb-learn-more plain" value="&identity.learnMore;"/></description>
+
+        <!-- Buttons to enable/disable mixed content blocking. -->
+        <button when-mixedcontent="active-blocked"
+                label="&identity.disableMixedContentBlocking.label;"
+                accesskey="&identity.disableMixedContentBlocking.accesskey;"
+                class="panel-button"
+                oncommand="gIdentityHandler.disableMixedContentProtection()"/>
+        <button when-mixedcontent="active-loaded"
+                label="&identity.enableMixedContentBlocking.label;"
+                accesskey="&identity.enableMixedContentBlocking.accesskey;"
+                class="panel-button"
+                oncommand="gIdentityHandler.enableMixedContentProtection()"/>
+      </vbox>
+
+      <vbox id="identity-popup-more-info-footer" class="panel-footer">
+        <!-- More Security Information -->
+        <button id="identity-popup-more-info"
+                label="&identity.moreInfoLinkText2;"
+                oncommand="gIdentityHandler.handleMoreInfoClick(event);"/>
+      </vbox>
+
+    </panelview>
+
+    <!-- Trackers SubView -->
+    <panelview id="identity-popup-trackersView"
+               role="document"
+               title="&contentBlocking.trackersView.label;"
+               descriptionheightworkaround="true">
+        <vbox id="identity-popup-trackersView-list" class="identity-popup-content-blocking-list">
+        </vbox>
+        <hbox id="identity-popup-trackersView-strict-info">
+          <image/>
+          <label>&contentBlocking.trackersView.strictInfo.label;</label>
+        </hbox>
+        <vbox class="panel-footer">
+          <button id="identity-popup-trackersView-settings-button"
+                  label="&contentBlocking.manageSettings.label;"
+                  accesskey="&contentBlocking.manageSettings.accesskey;"
+                  oncommand="ContentBlocking.openPreferences(); gIdentityHandler.recordClick('trackers_prefs_btn');"/>
+        </vbox>
+    </panelview>
+
+    <!-- Cookies SubView -->
+    <panelview id="identity-popup-cookiesView"
+               role="document"
+               title="&contentBlocking.cookiesView.label;"
+               descriptionheightworkaround="true">
+        <vbox id="identity-popup-cookiesView-list" class="identity-popup-content-blocking-list">
+        </vbox>
+        <vbox class="panel-footer">
+          <button id="identity-popup-cookiesView-settings-button"
+                  label="&contentBlocking.manageSettings.label;"
+                  accesskey="&contentBlocking.manageSettings.accesskey;"
+                  oncommand="ContentBlocking.openPreferences(); gIdentityHandler.recordClick('cookies_prefs_btn');"/>
+        </vbox>
+    </panelview>
+
+    <!-- Fingerprinters SubView -->
+    <panelview id="identity-popup-fingerprintersView"
+               role="document"
+               title="&contentBlocking.fingerprintersView.label;"
+               descriptionheightworkaround="true">
+        <vbox id="identity-popup-fingerprintersView-list" class="identity-popup-content-blocking-list">
+        </vbox>
+        <vbox class="panel-footer">
+          <button id="identity-popup-fingerprintersView-settings-button"
+                  label="&contentBlocking.manageSettings.label;"
+                  accesskey="&contentBlocking.manageSettings.accesskey;"
+                  oncommand="ContentBlocking.openPreferences();"/>
+        </vbox>
+    </panelview>
+
+    <!-- Cryptominers SubView -->
+    <panelview id="identity-popup-cryptominersView"
+               role="document"
+               title="&contentBlocking.cryptominersView.label;"
+               descriptionheightworkaround="true">
+        <vbox id="identity-popup-cryptominersView-list" class="identity-popup-content-blocking-list">
+        </vbox>
+        <vbox class="panel-footer">
+          <button id="identity-popup-cryptominersView-settings-button"
+                  label="&contentBlocking.manageSettings.label;"
+                  accesskey="&contentBlocking.manageSettings.accesskey;"
+                  oncommand="ContentBlocking.openPreferences();"/>
+        </vbox>
+    </panelview>
+
+    <!-- Report Breakage SubView -->
+    <panelview id="identity-popup-breakageReportView"
+               title="&contentBlocking.breakageReportView.label;"
+               descriptionheightworkaround="true">
+        <vbox id="identity-popup-breakageReportView-heading">
+          <description>&contentBlocking.breakageReportView2.description;</description>
+          <label id="identity-popup-breakageReportView-learn-more"
+                 is="text-link">&contentBlocking.breakageReportView.learnMore;</label>
+        </vbox>
+        <vbox id="identity-popup-breakageReportView-body" class="panel-view-body-unscrollable">
+          <vbox class="identity-popup-breakageReportView-collection-section">
+            <label>&contentBlocking.breakageReportView.collection.url.label;</label>
+            <textbox readonly="true" id="identity-popup-breakageReportView-collection-url"/>
+          </vbox>
+          <vbox class="identity-popup-breakageReportView-collection-section">
+            <label>&contentBlocking.breakageReportView.collection.comments.label;</label>
+            <html:textarea id="identity-popup-breakageReportView-collection-comments"/>
+          </vbox>
+        </vbox>
+        <vbox id="identity-popup-breakageReportView-footer"
+              class="panel-footer">
+          <button id="identity-popup-breakageReportView-cancel"
+                  label="&contentBlocking.breakageReportView.cancel.label;"
+                  oncommand="ContentBlocking.backToMainView();"/>
+          <button id="identity-popup-breakageReportView-submit"
+                  default="true"
+                  label="&contentBlocking.breakageReportView.sendReport.label;"
+                  oncommand="ContentBlocking.submitBreakageReport();"/>
+        </vbox>
+    </panelview>
+  </panelmultiview>
+</panel>

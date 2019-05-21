@@ -3,7 +3,7 @@
 const { Constructor: CC } = Components;
 
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const BlocklistClients = ChromeUtils.import("resource://services-common/blocklist-clients.js", null);
+const {BlocklistClients} = ChromeUtils.import("resource://services-common/blocklist-clients.js");
 
 const BinaryInputStream = CC("@mozilla.org/binaryinputstream;1",
   "nsIBinaryInputStream", "setInputStream");
@@ -27,12 +27,9 @@ let server;
 // Some simple tests to demonstrate that the core preload sync operations work
 // correctly and that simple kinto operations are working as expected.
 add_task(async function test_something() {
-  BlocklistClients.initialize();
-
-  const PinningPreloadClient = BlocklistClients.PinningBlocklistClient;
-
-  const configPath = "/v1/";
-  const recordsPath = "/v1/buckets/pinning/collections/pins/records";
+  const {
+    PinningBlocklistClient: PinningPreloadClient,
+  } = BlocklistClients.initialize({ verifySignature: false });
 
   Services.prefs.setCharPref("services.settings.server",
                              `http://localhost:${server.identity.primaryPort}/v1`);
@@ -59,8 +56,9 @@ add_task(async function test_something() {
       info(e);
     }
   }
-  server.registerPathHandler(configPath, handleResponse);
-  server.registerPathHandler(recordsPath, handleResponse);
+  server.registerPathHandler("/v1/", handleResponse);
+  server.registerPathHandler("/v1/buckets/pinning/collections/pins", handleResponse);
+  server.registerPathHandler("/v1/buckets/pinning/collections/pins/records", handleResponse);
 
   let sss = Cc["@mozilla.org/ssservice;1"]
               .getService(Ci.nsISiteSecurityService);
@@ -140,10 +138,6 @@ add_task(async function test_something() {
 });
 
 function run_test() {
-  // Ensure that signature verification is disabled to prevent interference
-  // with basic certificate sync tests
-  Services.prefs.setBoolPref("services.settings.verify_signature", false);
-
   // Set up an HTTP Server
   server = new HttpServer();
   server.start(-1);
@@ -186,6 +180,22 @@ function getSampleResponse(req, port) {
         "version": "1.5.1",
         "commit": "cbc6f58",
         "hello": "kinto",
+      }),
+    },
+    "GET:/v1/buckets/pinning/collections/pins": {
+      "sampleHeaders": [
+        "Access-Control-Allow-Origin: *",
+        "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
+        "Content-Type: application/json; charset=UTF-8",
+        "Server: waitress",
+        "Etag: \"1234\"",
+      ],
+      "status": { status: 200, statusText: "OK" },
+      "responseBody": JSON.stringify({
+        "data": {
+          "id": "pins",
+          "last_modified": 1234,
+        },
       }),
     },
     "GET:/v1/buckets/pinning/collections/pins/records?_expected=2000&_sort=-last_modified": {
@@ -302,5 +312,6 @@ function getSampleResponse(req, port) {
     },
   };
   return responses[`${req.method}:${req.path}?${req.queryString}`] ||
+         responses[`${req.method}:${req.path}`] ||
          responses[req.method];
 }

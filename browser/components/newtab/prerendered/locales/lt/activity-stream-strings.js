@@ -95,7 +95,7 @@ window.gActivityStreamStrings = {
   "section_menu_action_privacy_notice": "Privatumo pranešimas",
   "firstrun_title": "Pasiimkite „Waterfox“ su savimi",
   "firstrun_content": "Turėkite savo adresyną, žurnalą, slaptažodžius ir kitas nuostatas visuose savo įrenginiuose.",
-  "firstrun_learn_more_link": "Sužinokite daugiau apie „Waterfox“ paskyras",
+  "firstrun_learn_more_link": "Sužinokite apie „Waterfox“ paskyras daugiau",
   "firstrun_form_header": "Įveskite savo el. paštą",
   "firstrun_form_sub_header": "norėdami tęsti su „Waterfox Sync“.",
   "firstrun_email_input_placeholder": "El. paštas",

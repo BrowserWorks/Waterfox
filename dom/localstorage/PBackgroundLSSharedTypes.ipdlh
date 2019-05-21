@@ -5,12 +5,18 @@
 include PBackgroundSharedTypes;
 include ProtocolTypes;
 
+include "mozilla/dom/localstorage/SerializationHelpers.h";
+
+using mozilla::dom::LSValue
+  from "mozilla/dom/LSValue.h";
+
 namespace mozilla {
 namespace dom {
 
 struct LSRequestCommonParams
 {
   PrincipalInfo principalInfo;
+  PrincipalInfo storagePrincipalInfo;
   nsCString originKey;
 };
 
@@ -28,6 +34,7 @@ struct LSRequestPrepareDatastoreParams
 struct LSRequestPrepareObserverParams
 {
   PrincipalInfo principalInfo;
+  PrincipalInfo storagePrincipalInfo;
   nsID? clientId;
 };
 
@@ -41,6 +48,7 @@ union LSRequestParams
 struct LSSimpleRequestPreloadedParams
 {
   PrincipalInfo principalInfo;
+  PrincipalInfo storagePrincipalInfo;
 };
 
 union LSSimpleRequestParams
@@ -57,7 +65,7 @@ union LSSimpleRequestParams
 struct LSItemInfo
 {
   nsString key;
-  nsString value;
+  LSValue value;
 };
 
 } // namespace dom

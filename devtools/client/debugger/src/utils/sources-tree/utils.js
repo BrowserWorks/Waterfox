@@ -13,7 +13,7 @@ import { getURL } from "./getURL";
 const IGNORED_URLS = ["debugger eval code", "XStringBundle"];
 
 export function nodeHasChildren(item: TreeNode): boolean {
-  return Array.isArray(item.contents) && item.type === "directory";
+  return Array.isArray(item.contents) && item.type == "directory";
 }
 
 export function isExactUrlMatch(pathPart: string, debuggeeUrl: string) {
@@ -86,7 +86,7 @@ export function createDirectoryNode(
     type: "directory",
     name,
     path,
-    contents
+    contents,
   };
 }
 
@@ -99,7 +99,7 @@ export function createSourceNode(
     type: "source",
     name,
     path,
-    contents
+    contents,
   };
 }
 

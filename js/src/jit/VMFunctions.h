@@ -1056,6 +1056,10 @@ MOZ_MUST_USE bool BaselineGetFunctionThis(JSContext* cx, BaselineFrame* frame,
 MOZ_MUST_USE bool CallNativeGetter(JSContext* cx, HandleFunction callee,
                                    HandleObject obj, MutableHandleValue result);
 
+MOZ_MUST_USE bool CallNativeGetterByValue(JSContext* cx, HandleFunction callee,
+                                          HandleValue receiver,
+                                          MutableHandleValue result);
+
 MOZ_MUST_USE bool CallNativeSetter(JSContext* cx, HandleFunction callee,
                                    HandleObject obj, HandleValue rhs);
 
@@ -1063,6 +1067,9 @@ MOZ_MUST_USE bool EqualStringsHelperPure(JSString* str1, JSString* str2);
 
 MOZ_MUST_USE bool CheckIsCallable(JSContext* cx, HandleValue v,
                                   CheckIsCallableKind kind);
+
+void HandleCodeCoverageAtPC(BaselineFrame* frame, jsbytecode* pc);
+void HandleCodeCoverageAtPrologue(BaselineFrame* frame);
 
 template <bool HandleMissing>
 bool GetNativeDataPropertyPure(JSContext* cx, JSObject* obj, PropertyName* name,
@@ -1102,9 +1109,6 @@ bool IsPossiblyWrappedTypedArray(JSContext* cx, JSObject* obj, bool* result);
 
 bool DoToNumber(JSContext* cx, HandleValue arg, MutableHandleValue ret);
 bool DoToNumeric(JSContext* cx, HandleValue arg, MutableHandleValue ret);
-
-bool CopyStringSplitArray(JSContext* cx, HandleArrayObject arr,
-                          MutableHandleValue result);
 
 enum class TailCallVMFunctionId;
 enum class VMFunctionId;

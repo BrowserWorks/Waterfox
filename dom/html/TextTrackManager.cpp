@@ -202,7 +202,7 @@ void TextTrackManager::AddCues(TextTrack* aTextTrack) {
     for (uint32_t i = 0; i < cueList->Length(); ++i) {
       mNewCues->AddCue(*cueList->IndexedGetter(i, dummy));
     }
-    TimeMarchesOn();
+    MaybeRunTimeMarchesOn();
   }
 }
 
@@ -226,7 +226,7 @@ void TextTrackManager::RemoveTextTrack(TextTrack* aTextTrack,
     for (uint32_t i = 0; i < removeCueList->Length(); ++i) {
       mNewCues->RemoveCue(*((*removeCueList)[i]));
     }
-    TimeMarchesOn();
+    MaybeRunTimeMarchesOn();
   }
 }
 
@@ -281,7 +281,7 @@ void TextTrackManager::NotifyCueAdded(TextTrackCue& aCue) {
   if (mNewCues) {
     mNewCues->AddCue(aCue);
   }
-  TimeMarchesOn();
+  MaybeRunTimeMarchesOn();
   ReportTelemetryForCue();
 }
 
@@ -290,7 +290,7 @@ void TextTrackManager::NotifyCueRemoved(TextTrackCue& aCue) {
   if (mNewCues) {
     mNewCues->RemoveCue(aCue);
   }
-  TimeMarchesOn();
+  MaybeRunTimeMarchesOn();
   DispatchUpdateCueDisplay();
 }
 
@@ -568,8 +568,7 @@ class TextTrackListInternal {
 };
 
 void TextTrackManager::DispatchUpdateCueDisplay() {
-  if (!mUpdateCueDisplayDispatched && !IsShutdown() &&
-      mMediaElement->IsCurrentlyPlaying()) {
+  if (!mUpdateCueDisplayDispatched && !IsShutdown()) {
     WEBVTT_LOG("DispatchUpdateCueDisplay");
     nsPIDOMWindowInner* win = mMediaElement->OwnerDoc()->GetInnerWindow();
     if (win) {
@@ -587,8 +586,7 @@ void TextTrackManager::DispatchTimeMarchesOn() {
   // enqueue the current playback position and whether only that changed
   // through its usual monotonic increase during normal playback; current
   // executing call upon completion will check queue for further 'work'.
-  if (!mTimeMarchesOnDispatched && !IsShutdown() &&
-      mMediaElement->IsCurrentlyPlaying()) {
+  if (!mTimeMarchesOnDispatched && !IsShutdown()) {
     WEBVTT_LOG("DispatchTimeMarchesOn");
     nsPIDOMWindowInner* win = mMediaElement->OwnerDoc()->GetInnerWindow();
     if (win) {
@@ -620,21 +618,30 @@ void TextTrackManager::TimeMarchesOn() {
   WEBVTT_LOG("TimeMarchesOn");
 
   // Early return if we don't have any TextTracks or shutting down.
-  if (!mTextTracks || mTextTracks->Length() == 0 || IsShutdown()) {
+  if (!mTextTracks || mTextTracks->Length() == 0 || IsShutdown() ||
+      !mMediaElement) {
     return;
   }
 
+  if (mMediaElement->ReadyState() == HTMLMediaElement_Binding::HAVE_NOTHING) {
+    WEBVTT_LOG(
+        "TimeMarchesOn return because media doesn't contain any data yet");
+    return;
+  }
+
+  if (mMediaElement->Seeking()) {
+    WEBVTT_LOG("TimeMarchesOn return during seeking");
+    return;
+  }
+
+  // Step 1, 2.
   nsISupports* parentObject = mMediaElement->OwnerDoc()->GetParentObject();
   if (NS_WARN_IF(!parentObject)) {
     return;
   }
   nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(parentObject);
-
-  if (mMediaElement &&
-      (!(mMediaElement->GetPlayedOrSeeked()) || mMediaElement->Seeking())) {
-    WEBVTT_LOG("TimeMarchesOn seeking or post return");
-    return;
-  }
+  RefPtr<TextTrackCueList> currentCues = new TextTrackCueList(window);
+  RefPtr<TextTrackCueList> otherCues = new TextTrackCueList(window);
 
   // Step 3.
   auto currentPlaybackTime =
@@ -646,10 +653,6 @@ void TextTrackManager::TimeMarchesOn() {
       "hasNormalPlayback %d",
       mLastTimeMarchesOnCalled.ToSeconds(), currentPlaybackTime.ToSeconds(),
       hasNormalPlayback);
-
-  // Step 1, 2.
-  RefPtr<TextTrackCueList> currentCues = new TextTrackCueList(window);
-  RefPtr<TextTrackCueList> otherCues = new TextTrackCueList(window);
 
   // The reason we collect other cues is (1) to change active cues to inactive,
   // (2) find missing cues, so we actually no need to process all cues. We just
@@ -816,7 +819,7 @@ void TextTrackManager::TimeMarchesOn() {
 void TextTrackManager::NotifyCueUpdated(TextTrackCue* aCue) {
   // TODO: Add/Reorder the cue to mNewCues if we have some optimization?
   WEBVTT_LOG("NotifyCueUpdated, cue=%p", aCue);
-  TimeMarchesOn();
+  MaybeRunTimeMarchesOn();
   // For the case "Texttrack.mode = hidden/showing", if the mode
   // changing between showing and hidden, TimeMarchesOn
   // doesn't render the cue. Call DispatchUpdateCueDisplay() explicitly.
@@ -824,8 +827,14 @@ void TextTrackManager::NotifyCueUpdated(TextTrackCue* aCue) {
 }
 
 void TextTrackManager::NotifyReset() {
+  // https://html.spec.whatwg.org/multipage/media.html#text-track-cue-active-flag
+  // This will unset all cues' active flag and update the cue display.
   WEBVTT_LOG("NotifyReset");
   mLastTimeMarchesOnCalled = media::TimeUnit::Zero();
+  for (uint32_t idx = 0; idx < mTextTracks->Length(); ++idx) {
+    (*mTextTracks)[idx]->SetCuesInactive();
+  }
+  UpdateCueDisplay();
 }
 
 void TextTrackManager::ReportTelemetryForTrack(TextTrack* aTextTrack) const {
@@ -853,6 +862,19 @@ bool TextTrackManager::IsLoaded() {
 
 bool TextTrackManager::IsShutdown() const {
   return (mShutdown || !sParserWrapper);
+}
+
+void TextTrackManager::MaybeRunTimeMarchesOn() {
+  MOZ_ASSERT(mMediaElement);
+  // According to spec, we should check media element's show poster flag before
+  // running `TimeMarchesOn` in following situations, (1) add cue (2) remove cue
+  // (3) cue's start time changes (4) cues's end time changes
+  // https://html.spec.whatwg.org/multipage/media.html#playing-the-media-resource:time-marches-on
+  // https://html.spec.whatwg.org/multipage/media.html#text-track-api:time-marches-on
+  if (mMediaElement->GetShowPosterFlag()) {
+    return;
+  }
+  TimeMarchesOn();
 }
 
 }  // namespace dom

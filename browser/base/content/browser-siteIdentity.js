@@ -140,6 +140,11 @@ var gIdentityHandler = {
     return this._identityPopupContentVerif =
       document.getElementById("identity-popup-content-verifier");
   },
+  get _identityPopupCustomRootLearnMore() {
+    delete this._identityPopupCustomRootLearnMore;
+    return this._identityPopupCustomRootLearnMore =
+      document.getElementById("identity-popup-custom-root-learn-more");
+  },
   get _identityPopupMixedContentLearnMore() {
     delete this._identityPopupMixedContentLearnMore;
     return this._identityPopupMixedContentLearnMore =
@@ -231,6 +236,13 @@ var gIdentityHandler = {
     XPCOMUtils.defineLazyPreferenceGetter(this, "_insecureConnectionTextPBModeEnabled",
                                           "security.insecure_connection_text.pbmode.enabled");
     return this._insecureConnectionTextPBModeEnabled;
+  },
+  get _protectionsPanelEnabled() {
+    delete this._protectionsPanelEnabled;
+    XPCOMUtils.defineLazyPreferenceGetter(this, "_protectionsPanelEnabled",
+                                          "browser.protections_panel.enabled",
+                                          false);
+    return this._protectionsPanelEnabled;
   },
 
   /**
@@ -460,6 +472,32 @@ var gIdentityHandler = {
     }
   },
 
+  getHostForDisplay() {
+    let host = "";
+
+    try {
+      host = this.getEffectiveHost();
+    } catch (e) {
+      // Some URIs might have no hosts.
+    }
+
+    let readerStrippedURI = ReaderMode.getOriginalUrlObjectForDisplay(this._uri.displaySpec);
+    if (readerStrippedURI) {
+      host = readerStrippedURI.host;
+    }
+
+    if (this._pageExtensionPolicy) {
+      host = this._pageExtensionPolicy.name;
+    }
+
+    // Fallback for special protocols.
+    if (!host) {
+      host = this._uri.specIgnoringRef;
+    }
+
+    return host;
+  },
+
   /**
    * Return the CSS class name to set on the "fullscreen-warning" element to
    * display information about connection security in the notification shown
@@ -474,6 +512,18 @@ var gIdentityHandler = {
       return "verifiedDomain";
     }
     return "unknownIdentity";
+  },
+
+  /**
+   * Returns whether the issuer of the current certificate chain is
+   * built-in (returns false) or imported (returns true).
+   */
+  _hasCustomRoot() {
+    let issuerCert = null;
+    // Walk the whole chain to get the last cert.
+    for (issuerCert of this._secInfo.succeededCertChain.getEnumerator());
+
+    return !issuerCert.isBuiltInRoot;
   },
 
   /**
@@ -662,9 +712,13 @@ var gIdentityHandler = {
       e => e.setAttribute("href", baseURL + "mixed-content"));
     this._identityPopupInsecureLoginFormsLearnMore
         .setAttribute("href", baseURL + "insecure-password");
+    this._identityPopupCustomRootLearnMore
+        .setAttribute("href", baseURL + "enterprise-roots");
 
     // This is in the properties file because the expander used to switch its tooltip.
     this._popupExpander.tooltipText = gNavigatorBundle.getString("identity.showDetails.tooltip");
+
+    let customRoot = false;
 
     // Determine connection security information.
     let connection = "not-secure";
@@ -680,6 +734,7 @@ var gIdentityHandler = {
       connection = "secure-cert-user-overridden";
     } else if (this._isSecure) {
       connection = "secure";
+      customRoot = this._hasCustomRoot();
     }
 
     // Determine if there are insecure login forms.
@@ -729,33 +784,14 @@ var gIdentityHandler = {
       updateAttribute(element, "ciphers", ciphers);
       updateAttribute(element, "mixedcontent", mixedcontent);
       updateAttribute(element, "isbroken", this._isBroken);
+      updateAttribute(element, "customroot", customRoot);
     }
 
     // Initialize the optional strings to empty values
     let supplemental = "";
     let verifier = "";
-    let host = "";
+    let host = this.getHostForDisplay();
     let owner = "";
-
-    try {
-      host = this.getEffectiveHost();
-    } catch (e) {
-      // Some URIs might have no hosts.
-    }
-
-    let readerStrippedURI = ReaderMode.getOriginalUrlObjectForDisplay(this._uri.displaySpec);
-    if (readerStrippedURI) {
-      host = readerStrippedURI.host;
-    }
-
-    if (this._pageExtensionPolicy) {
-      host = this._pageExtensionPolicy.name;
-    }
-
-    // Fallback for special protocols.
-    if (!host) {
-      host = this._uri.specIgnoringRef;
-    }
 
     // Fill in the CA name if we have a valid TLS certificate.
     if (this._isSecure || this._isCertUserOverridden) {
@@ -832,6 +868,14 @@ var gIdentityHandler = {
    * Click handler for the identity-box element in primary chrome.
    */
   handleIdentityButtonEvent(event) {
+    // For Nightly users, show the WIP protections panel if the tracking
+    // protection icon was clicked.
+    if (this._protectionsPanelEnabled &&
+        event.originalTarget.id == "tracking-protection-icon-animatable-image") {
+      gProtectionsHandler.handleProtectionsButtonEvent(event);
+      return;
+    }
+
     event.stopPropagation();
 
     if ((event.type == "click" && event.button != 0) ||
@@ -932,7 +976,11 @@ var gIdentityHandler = {
     canvas.width = 550 * scale;
     let ctx = canvas.getContext("2d");
     ctx.font = `${14 * scale}px sans-serif`;
-    ctx.fillText(`${value}`, 10, 50);
+    ctx.fillText(`${value}`, 20 * scale, 14 * scale);
+    let tabIcon = document.getAnonymousElementByAttribute(gBrowser.selectedTab, "anonid", "tab-icon-image");
+    let image = new Image();
+    image.src = tabIcon.src;
+    ctx.drawImage(image, 0, 0, 16 * scale, 16 * scale);
 
     let dt = event.dataTransfer;
     dt.setData("text/x-moz-url", urlString);

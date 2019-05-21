@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
 job-defaults:
     max-run-time:
         by-test-platform:
@@ -15,7 +19,8 @@ job-defaults:
             windows10-aarch64/opt: ['try', 'mozilla-central']
             (?:windows10-64|windows7-32|linux64)(?:-qr)?/opt: ['mozilla-central', 'try']
             android-hw-.*-api-16/opt: ['try']
-            macosx64(?:-qr)?/opt: ['mozilla-central', 'try']
+            android-hw-.*-aarch64/opt: ['try']
+            macosx.*64(?:-qr)?/opt: ['mozilla-central', 'try']
             default: ['try', 'trunk', 'mozilla-beta']
     tier:
         by-test-platform:
@@ -91,8 +96,13 @@ raptor-tp6-3-firefox:
     treeherder-symbol: Rap(tp6-3)
     run-on-projects:
         by-test-platform:
-            windows10-aarch64/opt: ['try']
-            default: built-projects
+            windows10-64-ux/opt: ['try', 'mozilla-central']
+            windows10-aarch64/opt: ['try', 'mozilla-central']
+            (?:windows10-64|windows7-32|linux64)(?:-qr)?/opt: ['mozilla-central', 'try']
+            android-hw-.*-api-16/opt: ['try']
+            android-hw-.*-aarch64/opt: ['try']
+            macosx64(?:-qr)?/opt: ['mozilla-central', 'try']
+            default: ['try', 'trunk', 'mozilla-beta']
     mozharness:
         extra-options:
             - --test=raptor-tp6-3
@@ -273,7 +283,7 @@ raptor-tp6m-1-geckoview:
             - --test=raptor-tp6m-1
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-1-fenix:
     description: "Raptor tp6m-1 on Fenix"
@@ -282,49 +292,54 @@ raptor-tp6m-1-fenix:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-1
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-1-refbrow:
     description: "Raptor tp6m-1 on the reference browser"
     treeherder-symbol: Rap-refbrow(tp6m-1)
     run-on-projects: ['try']
     target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.reference-browser.signed-nightly.nightly.latest
+                name: target.aarch64.apk
+            default:
+                index: project.mobile.reference-browser.signed-nightly.nightly.latest
+                name: target.arm.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-1
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-tp6m-2-geckoview:
     description: "Raptor tp6m-2 on Geckoview"
     try-name: raptor-tp6m-2-geckoview
     treeherder-symbol: Rap(tp6m-2)
     target: geckoview_example.apk
-    run-on-projects:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-g5.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try']
-            default: ['try', 'trunk', 'mozilla-beta']
+    run-on-projects: ['try', 'mozilla-central']
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-2
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-2-refbrow:
     description: "Raptor tp6m-2 on the reference browser"
@@ -339,18 +354,14 @@ raptor-tp6m-2-refbrow:
             - --test=raptor-tp6m-2
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-tp6m-3-geckoview:
     description: "Raptor tp6m-3 on Geckoview"
     try-name: raptor-tp6m-3-geckoview
     treeherder-symbol: Rap(tp6m-3)
     target: geckoview_example.apk
-    run-on-projects:
-        by-test-platform:
-            android-hw.*/pgo: ['try', 'mozilla-central']
-            android-hw.*aarch64/opt: ['try', 'mozilla-central']
-            default: ['try']
+    run-on-projects: ['try', 'mozilla-central']
     tier: 2
     mozharness:
         extra-options:
@@ -371,7 +382,7 @@ raptor-tp6m-3-refbrow:
             - --test=raptor-tp6m-3
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-tp6m-4-geckoview:
     description: "Raptor tp6m-4 on Geckoview"
@@ -381,7 +392,6 @@ raptor-tp6m-4-geckoview:
     run-on-projects:
         by-test-platform:
             android-hw.*/pgo: ['try', 'mozilla-central']
-            android-hw.*aarch64/opt: ['try', 'mozilla-central']
             default: ['try']
     tier: 2
     mozharness:
@@ -403,7 +413,7 @@ raptor-tp6m-4-refbrow:
             - --test=raptor-tp6m-4
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-tp6m-5-geckoview:
     description: "Raptor tp6m-5 on Geckoview"
@@ -422,7 +432,7 @@ raptor-tp6m-5-geckoview:
             - --test=raptor-tp6m-5
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-5-refbrow:
     description: "Raptor tp6m-5 on the reference browser"
@@ -437,7 +447,7 @@ raptor-tp6m-5-refbrow:
             - --test=raptor-tp6m-5
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-tp6m-6-geckoview:
     description: "Raptor tp6m-6 on Geckoview"
@@ -470,7 +480,7 @@ raptor-tp6m-6-refbrow:
             - --test=raptor-tp6m-6
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-tp6m-7-geckoview:
     description: "Raptor tp6m-7 on Geckoview"
@@ -479,7 +489,6 @@ raptor-tp6m-7-geckoview:
     run-on-projects:
         by-test-platform:
             android-hw.*/pgo: ['try', 'mozilla-central']
-            android-hw.*aarch64/opt: ['try', 'mozilla-central']
             default: ['try']
     target: geckoview_example.apk
     tier: 2
@@ -488,7 +497,7 @@ raptor-tp6m-7-geckoview:
             - --test=raptor-tp6m-7
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-7-refbrow:
     description: "Raptor tp6m-7 on the reference browser"
@@ -503,7 +512,7 @@ raptor-tp6m-7-refbrow:
             - --test=raptor-tp6m-7
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-tp6m-8-geckoview:
     description: "Raptor tp6m-8 on Geckoview"
@@ -536,7 +545,7 @@ raptor-tp6m-8-refbrow:
             - --test=raptor-tp6m-8
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-tp6m-9-geckoview:
     description: "Raptor tp6m-9 on Geckoview"
@@ -546,7 +555,6 @@ raptor-tp6m-9-geckoview:
     run-on-projects:
         by-test-platform:
             android-hw.*/pgo: ['try', 'mozilla-central']
-            android-hw.*aarch64/opt: ['try', 'mozilla-central']
             default: ['try']
     tier: 2
     mozharness:
@@ -554,7 +562,7 @@ raptor-tp6m-9-geckoview:
             - --test=raptor-tp6m-9
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-9-refbrow:
     description: "Raptor tp6m-9 on the reference browser"
@@ -569,7 +577,7 @@ raptor-tp6m-9-refbrow:
             - --test=raptor-tp6m-9
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-tp6m-10-geckoview:
     description: "Raptor tp6m-10 on Geckoview"
@@ -579,7 +587,6 @@ raptor-tp6m-10-geckoview:
     run-on-projects:
         by-test-platform:
             android-hw.*/pgo: ['try', 'mozilla-central']
-            android-hw.*aarch64/opt: ['try', 'mozilla-central']
             default: ['try']
     tier: 2
     mozharness:
@@ -587,7 +594,7 @@ raptor-tp6m-10-geckoview:
             - --test=raptor-tp6m-10
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-10-refbrow:
     description: "Raptor tp6m-10 on the reference browser"
@@ -602,7 +609,7 @@ raptor-tp6m-10-refbrow:
             - --test=raptor-tp6m-10
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-tp6m-1-fennec:
     description: "Raptor tp6m-1 on Fennec"
@@ -613,7 +620,7 @@ raptor-tp6m-1-fennec:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-1-fennec
+            - --test=raptor-tp6m-1
             - --app=fennec
             - --binary=org.mozilla.fennec_aurora
 
@@ -626,7 +633,7 @@ raptor-tp6m-2-fennec:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-2-fennec
+            - --test=raptor-tp6m-2
             - --app=fennec
             - --binary=org.mozilla.fennec_aurora
 
@@ -639,7 +646,7 @@ raptor-tp6m-3-fennec:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-3-fennec
+            - --test=raptor-tp6m-3
             - --app=fennec
             - --binary=org.mozilla.fennec_aurora
 
@@ -652,7 +659,7 @@ raptor-tp6m-4-fennec:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-4-fennec
+            - --test=raptor-tp6m-4
             - --app=fennec
             - --binary=org.mozilla.fennec_aurora
 
@@ -665,7 +672,7 @@ raptor-tp6m-5-fennec:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-5-fennec
+            - --test=raptor-tp6m-5
             - --app=fennec
             - --binary=org.mozilla.fennec_aurora
 
@@ -678,7 +685,7 @@ raptor-tp6m-6-fennec:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-6-fennec
+            - --test=raptor-tp6m-6
             - --app=fennec
             - --binary=org.mozilla.fennec_aurora
 
@@ -691,7 +698,7 @@ raptor-tp6m-7-fennec:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-7-fennec
+            - --test=raptor-tp6m-7
             - --app=fennec
             - --binary=org.mozilla.fennec_aurora
 
@@ -704,7 +711,7 @@ raptor-tp6m-8-fennec:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-8-fennec
+            - --test=raptor-tp6m-8
             - --app=fennec
             - --binary=org.mozilla.fennec_aurora
 
@@ -717,7 +724,7 @@ raptor-tp6m-9-fennec:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-9-fennec
+            - --test=raptor-tp6m-9
             - --app=fennec
             - --binary=org.mozilla.fennec_aurora
 
@@ -730,7 +737,7 @@ raptor-tp6m-10-fennec:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-10-fennec
+            - --test=raptor-tp6m-10
             - --app=fennec
             - --binary=org.mozilla.fennec_aurora
 
@@ -741,15 +748,20 @@ raptor-tp6m-1-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-1
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-2-fenix-cold:
     description: "Raptor tp6m-2 cold page-load on Fenix"
@@ -758,15 +770,20 @@ raptor-tp6m-2-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-2
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-3-fenix-cold:
     description: "Raptor tp6m-3 cold page-load on Fenix"
@@ -775,15 +792,20 @@ raptor-tp6m-3-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-3
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-4-fenix-cold:
     description: "Raptor tp6m-4 cold page-load on Fenix"
@@ -792,15 +814,20 @@ raptor-tp6m-4-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-4
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-5-fenix-cold:
     description: "Raptor tp6m-5 cold page-load on Fenix"
@@ -809,15 +836,20 @@ raptor-tp6m-5-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-5
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-6-fenix-cold:
     description: "Raptor tp6m-6 cold page-load on Fenix"
@@ -826,15 +858,20 @@ raptor-tp6m-6-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-6
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-7-fenix-cold:
     description: "Raptor tp6m-7 cold page-load on Fenix"
@@ -843,15 +880,20 @@ raptor-tp6m-7-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-7
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-8-fenix-cold:
     description: "Raptor tp6m-8 cold page-load on Fenix"
@@ -860,15 +902,20 @@ raptor-tp6m-8-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-8
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-9-fenix-cold:
     description: "Raptor tp6m-9 cold page-load on Fenix"
@@ -877,15 +924,20 @@ raptor-tp6m-9-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-9
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-10-fenix-cold:
     description: "Raptor tp6m-10 cold page-load on Fenix"
@@ -894,15 +946,20 @@ raptor-tp6m-10-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-10
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-11-fenix-cold:
     description: "Raptor tp6m-11 cold page-load on Fenix"
@@ -911,15 +968,20 @@ raptor-tp6m-11-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-11
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-12-fenix-cold:
     description: "Raptor tp6m-12 cold page-load on Fenix"
@@ -928,15 +990,20 @@ raptor-tp6m-12-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-12
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-13-fenix-cold:
     description: "Raptor tp6m-13 cold page-load on Fenix"
@@ -945,15 +1012,20 @@ raptor-tp6m-13-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-13
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-tp6m-14-fenix-cold:
     description: "Raptor tp6m-14 cold page-load on Fenix"
@@ -962,15 +1034,20 @@ raptor-tp6m-14-fenix-cold:
     run-on-projects: ['try']
     e10s: true
     target:
-        index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-        name: target.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-14
             - --app=fenix
             - --binary-path=org.mozilla.fenix.raptor
-            - --activity=browser.BrowserPerformanceTestActivity
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
 
 raptor-speedometer-firefox:
     description: "Raptor Speedometer on Firefox"
@@ -1008,7 +1085,7 @@ raptor-speedometer-geckoview:
             - --test=raptor-speedometer
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-speedometer-geckoview-power:
     description: "Raptor Speedometer Power on Geckoview"
@@ -1018,8 +1095,7 @@ raptor-speedometer-geckoview-power:
     run-on-projects:
         by-test-platform:
             android-hw.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-aarch64/opt: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try']
+            default: ['try']
     max-run-time: 1800
     mozharness:
         extra-options:
@@ -1029,7 +1105,92 @@ raptor-speedometer-geckoview-power:
             - --power-test
             - --page-cycles 5
             - --host HOST_IP
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
+
+raptor-scn-power-idle-fenix:
+    description: "Raptor idle-browser power-usage test on Fenix"
+    try-name: raptor-scn-power-idle-fenix
+    treeherder-symbol: Rap-fenix(idl)
+    run-on-projects: ['try']
+    e10s: true
+    target:
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
+                name: target.apk
+            default:
+                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
+                name: target.apk
+    tier: 3
+    max-run-time: 1800
+    mozharness:
+        extra-options:
+            - --test=raptor-scn-power-idle
+            - --app=fenix
+            - --binary-path=org.mozilla.fenix.raptor
+            - --power-test
+            - --host HOST_IP
+            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
+
+raptor-scn-power-idle-fennec:
+    description: "Raptor idle-browser power-use measurement on Fennec"
+    try-name: raptor-scn-power-idle-fennec
+    treeherder-symbol: Rap-fennec(idl)
+    target: target.apk
+    run-on-projects: ['try']
+    tier: 3
+    max-run-time: 1800
+    mozharness:
+        extra-options:
+            - --test=raptor-scn-power-idle
+            - --app=fennec
+            - --binary=org.mozilla.fennec_aurora
+            - --power-test
+            - --host HOST_IP
+
+raptor-scn-power-idle-geckoview:
+    description: "Raptor idle-browser power-use measurement on GeckoView"
+    try-name: raptor-scn-power-idle-geckoview
+    treeherder-symbol: Rap-P(idl)
+    target: geckoview_example.apk
+    run-on-projects:
+        by-test-platform:
+            android-hw.*/pgo: ['try', 'trunk', 'mozilla-central']
+            default: ['try']
+    tier: 3
+    max-run-time: 1800
+    mozharness:
+        extra-options:
+            - --test=raptor-scn-power-idle
+            - --app=geckoview
+            - --binary=org.mozilla.geckoview_example
+            - --power-test
+            - --host HOST_IP
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
+
+raptor-scn-power-idle-refbrow:
+    description: "Raptor idle-browser power-use measurement on Reference Browser"
+    try-name: raptor-scn-power-idle-refbrow
+    treeherder-symbol: Rap-refbrow(idl)
+    target:
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.reference-browser.signed-nightly.nightly.latest
+                name: target.aarch64.apk
+            default:
+                index: project.mobile.reference-browser.signed-nightly.nightly.latest
+                name: target.arm.apk
+    run-on-projects: ['try']
+    tier: 3
+    max-run-time: 1800
+    mozharness:
+        extra-options:
+            - --test=raptor-scn-power-idle
+            - --app=refbrow
+            - --binary-path=org.mozilla.reference.browser
+            - --power-test
+            - --host HOST_IP
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-speedometer-fennec:
     description: "Raptor Speedometer on Fennec"
@@ -1053,15 +1214,20 @@ raptor-speedometer-refbrow:
     treeherder-symbol: Rap-refbrow(sp)
     run-on-projects: ['try']
     target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.reference-browser.signed-nightly.nightly.latest
+                name: target.aarch64.apk
+            default:
+                index: project.mobile.reference-browser.signed-nightly.nightly.latest
+                name: target.arm.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-speedometer
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
 
 raptor-stylebench-firefox:
     description: "Raptor StyleBench on Firefox"
@@ -1206,7 +1372,7 @@ raptor-unity-webgl-geckoview:
             - --test=raptor-unity-webgl
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
     fetches:
         fetch:
             - unity-webgl
@@ -1216,15 +1382,20 @@ raptor-unity-webgl-refbrow:
     treeherder-symbol: Rap-refbrow(ugl)
     run-on-projects: ['try']
     target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
+        by-test-platform:
+            android-hw.*-aarch64.*/.*:
+                index: project.mobile.reference-browser.signed-nightly.nightly.latest
+                name: target.aarch64.apk
+            default:
+                index: project.mobile.reference-browser.signed-nightly.nightly.latest
+                name: target.arm.apk
     tier: 2
     mozharness:
         extra-options:
             - --test=raptor-unity-webgl
             - --app=refbrow
             - --binary-path=org.mozilla.reference.browser
-            - --activity=BrowserTestActivity
+            - --activity=org.mozilla.reference.browser.BrowserTestActivity
     fetches:
         fetch:
             - unity-webgl
@@ -1451,6 +1622,20 @@ raptor-wasm-godot-ion-firefox-profiling:
             - --test=raptor-wasm-godot-ion
             - --gecko-profile
 
+raptor-youtube-playback-firefox:
+    description: "Raptor YouTube Playback on Firefox"
+    try-name: raptor-youtube-playback-firefox
+    treeherder-symbol: Rap(ytp)
+    run-on-projects: ['mozilla-central', 'try']
+    max-run-time:
+        by-test-platform:
+            windows10-aarch64/opt: 3600
+            default: 2700
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback
+
 raptor-tp6-1-firefox-cold:
     description: "Raptor tp6-1 cold page-load on Firefox"
     try-name: raptor-tp6-1-firefox-cold
@@ -1507,7 +1692,7 @@ raptor-tp6m-1-geckoview-cold:
             - --test=raptor-tp6m-cold-1
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-2-geckoview-cold:
     description: "Raptor tp6m-2 cold page-load on Geckoview Example"
@@ -1529,7 +1714,7 @@ raptor-tp6m-2-geckoview-cold:
             - --test=raptor-tp6m-cold-2
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-3-geckoview-cold:
     description: "Raptor tp6m-3 cold page-load on Geckoview Example"
@@ -1551,55 +1736,73 @@ raptor-tp6m-3-geckoview-cold:
             - --test=raptor-tp6m-cold-3
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-4-geckoview-cold:
     description: "Raptor tp6m-4 cold page-load on Geckoview Example"
     max-run-time: 2700
     try-name: raptor-tp6m-4-geckoview-cold
     treeherder-symbol: Rap(tp6m-c-4)
-    run-on-projects: ['mozilla-central', 'try']
+    run-on-projects:
+        by-test-platform:
+            android-hw-p2-8-0-arm7.*: ['try', 'mozilla-central']
+            default: ['try', 'trunk', 'mozilla-beta']
     e10s: true
     target: geckoview_example.apk
-    tier: 2
+    tier:
+        by-test-platform:
+            android-hw-p2-8-0-arm7.*: 2
+            default: 1
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-4
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-5-geckoview-cold:
     description: "Raptor tp6m-5 cold page-load on Geckoview Example"
     max-run-time: 2700
     try-name: raptor-tp6m-5-geckoview-cold
     treeherder-symbol: Rap(tp6m-c-5)
-    run-on-projects: ['mozilla-central', 'try']
+    run-on-projects:
+        by-test-platform:
+            android-hw-p2-8-0-arm7.*: ['try', 'mozilla-central']
+            default: ['try', 'trunk', 'mozilla-beta']
     e10s: true
     target: geckoview_example.apk
-    tier: 2
+    tier:
+        by-test-platform:
+            android-hw-p2-8-0-arm7.*: 2
+            default: 1
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-5
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-6-geckoview-cold:
     description: "Raptor tp6m-6 cold page-load on Geckoview Example"
     max-run-time: 2700
     try-name: raptor-tp6m-6-geckoview-cold
     treeherder-symbol: Rap(tp6m-c-6)
-    run-on-projects: ['mozilla-central', 'try']
+    run-on-projects:
+        by-test-platform:
+            android-hw-p2-8-0-arm7.*: ['try', 'mozilla-central']
+            default: ['try', 'trunk', 'mozilla-beta']
     e10s: true
     target: geckoview_example.apk
-    tier: 2
+    tier:
+        by-test-platform:
+            android-hw-p2-8-0-arm7.*: 2
+            default: 1
     mozharness:
         extra-options:
             - --test=raptor-tp6m-cold-6
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-7-geckoview-cold:
     description: "Raptor tp6m-7 cold page-load on Geckoview Example"
@@ -1615,7 +1818,7 @@ raptor-tp6m-7-geckoview-cold:
             - --test=raptor-tp6m-cold-7
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-8-geckoview-cold:
     description: "Raptor tp6m-8 cold page-load on Geckoview Example"
@@ -1631,7 +1834,7 @@ raptor-tp6m-8-geckoview-cold:
             - --test=raptor-tp6m-cold-8
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-9-geckoview-cold:
     description: "Raptor tp6m-9 cold page-load on Geckoview Example"
@@ -1647,7 +1850,7 @@ raptor-tp6m-9-geckoview-cold:
             - --test=raptor-tp6m-cold-9
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-10-geckoview-cold:
     description: "Raptor tp6m-10 cold page-load on Geckoview Example"
@@ -1663,7 +1866,7 @@ raptor-tp6m-10-geckoview-cold:
             - --test=raptor-tp6m-cold-10
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-11-geckoview-cold:
     description: "Raptor tp6m-11 cold page-load on Geckoview Example"
@@ -1679,7 +1882,7 @@ raptor-tp6m-11-geckoview-cold:
             - --test=raptor-tp6m-cold-11
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-12-geckoview-cold:
     description: "Raptor tp6m-12 cold page-load on Geckoview Example"
@@ -1695,7 +1898,7 @@ raptor-tp6m-12-geckoview-cold:
             - --test=raptor-tp6m-cold-12
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-13-geckoview-cold:
     description: "Raptor tp6m-13 cold page-load on Geckoview Example"
@@ -1711,7 +1914,7 @@ raptor-tp6m-13-geckoview-cold:
             - --test=raptor-tp6m-cold-13
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
 
 raptor-tp6m-14-geckoview-cold:
     description: "Raptor tp6m-14 cold page-load on Geckoview Example"
@@ -1727,4 +1930,4 @@ raptor-tp6m-14-geckoview-cold:
             - --test=raptor-tp6m-cold-14
             - --app=geckoview
             - --binary=org.mozilla.geckoview_example
-            - --activity=GeckoViewActivity
+            - --activity=org.mozilla.geckoview_example.GeckoViewActivity

@@ -12,7 +12,7 @@ const validProtocols = /(http|https|ftp|data|resource|chrome):/i;
 //                       character so we can include it as part of the text
 //                       preceding the match. We lack look-behind matching.
 //  ^|                   The URL can start at the beginning of the string.
-//  [\s(,;'"`]           Or whitespace or some punctuation that does not imply
+//  [\s(,;'"`“]          Or whitespace or some punctuation that does not imply
 //                       a context which would preclude a URL.
 // )
 //
@@ -53,7 +53,7 @@ const validProtocols = /(http|https|ftp|data|resource|chrome):/i;
 //                       (so also '%')
 // )
 // eslint-disable-next-line max-len
-const urlRegex = /(^|[\s(,;'"`])((?:https?:\/\/|www\d{0,3}[.][a-z0-9.\-]{2,249}|[a-z0-9.\-]{2,250}[.][a-z]{2,4}\/)[-\w.!~*'();,/?:@&=+$#%]*)/im;
+const urlRegex = /(^|[\s(,;'"`“])((?:https?:\/\/|www\d{0,3}[.][a-z0-9.\-]{2,249}|[a-z0-9.\-]{2,250}[.][a-z]{2,4}\/)[-\w.!~*'();,/?:@&=+$#%]*)/im;
 
 // Set of terminators that are likely to have been part of the context rather
 // than part of the URL and so should be uneaten. This is '(', ',', ';', plus
@@ -91,7 +91,7 @@ const escapeMap = {
   // Quote.
   0x22: '\\"',
   // Backslash.
-  0x5c: "\\\\"
+  0x5c: "\\\\",
 };
 
 // Regexp that matches any character we might possibly want to escape.
@@ -253,7 +253,7 @@ function parseURLEncodedText(text) {
   return entries.map(entry => {
     return {
       name: entry[0],
-      value: entry[1]
+      value: entry[1],
     };
   });
 }
@@ -285,14 +285,14 @@ function splitURLTrue(url) {
   if (!m) {
     return {
       name: url,
-      path: url
+      path: url,
     };
   } else if (m[4] == "" && m[5] == "") {
     return {
       protocol: m[1],
       domain: m[2],
       path: m[3],
-      name: m[3] != "/" ? m[3] : m[2]
+      name: m[3] != "/" ? m[3] : m[2],
     };
   }
 
@@ -300,7 +300,7 @@ function splitURLTrue(url) {
     protocol: m[1],
     domain: m[2],
     path: m[2] + m[3],
-    name: m[4] + m[5]
+    name: m[4] + m[5],
   };
 }
 
@@ -319,7 +319,7 @@ function wrapRender(renderMethod) {
           className: "objectBox objectBox-failure",
           title:
             "This object could not be rendered, " +
-            "please file a bug on bugzilla.mozilla.org"
+            "please file a bug on bugzilla.mozilla.org",
         },
         /* Labels have to be hardcoded for reps, see Bug 1317038. */
         "Invalid object"
@@ -472,7 +472,7 @@ const ellipsisElement = span(
   {
     key: "more",
     className: "more-ellipsis",
-    title: `more${ELLIPSIS}`
+    title: `more${ELLIPSIS}`,
   },
   ELLIPSIS
 );
@@ -498,5 +498,5 @@ module.exports = {
   ellipsisElement,
   ELLIPSIS,
   uneatLastUrlCharsRegex,
-  urlRegex
+  urlRegex,
 };

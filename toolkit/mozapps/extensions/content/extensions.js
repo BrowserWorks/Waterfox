@@ -7,7 +7,7 @@
 /* import-globals-from ../../../content/contentAreaUtils.js */
 /* import-globals-from aboutaddonsCommon.js */
 /* globals ProcessingInstruction */
-/* exported UPDATES_RELEASENOTES_TRANSFORMFILE, XMLURI_PARSE_ERROR, loadView, gBrowser */
+/* exported gBrowser, loadView */
 
 const {DeferredTask} = ChromeUtils.import("resource://gre/modules/DeferredTask.jsm");
 const {AddonManager} = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
@@ -42,6 +42,10 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "SUPPORT_URL", "app.support.baseURL"
                                       "", null, val => Services.urlFormatter.formatURL(val));
 XPCOMUtils.defineLazyPreferenceGetter(this, "useHtmlViews",
                                       "extensions.htmlaboutaddons.enabled");
+XPCOMUtils.defineLazyPreferenceGetter(this, "useHtmlDiscover",
+                                      "extensions.htmlaboutaddons.discover.enabled");
+XPCOMUtils.defineLazyPreferenceGetter(this, "useNewAboutDebugging",
+                                      "devtools.aboutdebugging.new-enabled");
 
 const PREF_DISCOVERURL = "extensions.webservice.discoverURL";
 const PREF_DISCOVER_ENABLED = "extensions.getAddons.showPane";
@@ -55,9 +59,6 @@ const PREF_LEGACY_ENABLED = "extensions.legacy.enabled";
 const LOADING_MSG_DELAY = 100;
 
 const UPDATES_RECENT_TIMESPAN = 2 * 24 * 3600000; // 2 days (in milliseconds)
-const UPDATES_RELEASENOTES_TRANSFORMFILE = "chrome://mozapps/content/extensions/updateinfo.xsl";
-
-const XMLURI_PARSE_ERROR = "http://www.mozilla.org/newlayout/xml/parsererror.xml";
 
 var gViewDefault = "addons://discover/";
 
@@ -155,7 +156,7 @@ function initialize(event) {
 
   document.getElementById("preferencesButton")
     .addEventListener("click", () => {
-      let mainWindow = getMainWindow();
+      let mainWindow = window.windowRoot.ownerGlobal;
       recordLinkTelemetry("about:preferences");
       if ("switchToTabHavingURI" in mainWindow) {
         mainWindow.switchToTabHavingURI("about:preferences", true, {
@@ -380,13 +381,6 @@ function setSearchLabel(type) {
     searchLabel.textContent = "";
     searchLabel.hidden = true;
   }
-}
-
-/**
- * Obtain the main DOMWindow for the current context.
- */
-function getMainWindow() {
-  return window.docShell.rootTreeItem.domWindow;
 }
 
 /**
@@ -733,7 +727,6 @@ var gViewController = {
     this.headeredViewsDeck = document.getElementById("headered-views-content");
     this.backButton = document.getElementById("go-back");
 
-    this.viewObjects.discover = gDiscoverView;
     this.viewObjects.legacy = gLegacyView;
     this.viewObjects.shortcuts = gShortcutsView;
 
@@ -748,6 +741,12 @@ var gViewController = {
       this.viewObjects.list = gListView;
       this.viewObjects.detail = gDetailView;
       this.viewObjects.updates = gUpdatesView;
+    }
+
+    if (useHtmlDiscover && isDiscoverEnabled()) {
+      this.viewObjects.discover = htmlView("discover");
+    } else {
+      this.viewObjects.discover = gDiscoverView;
     }
 
     for (let type in this.viewObjects) {
@@ -912,11 +911,16 @@ var gViewController = {
 
     let headingName = document.getElementById("heading-name");
     let headingLabel;
-    try {
-      headingLabel = gStrings.ext.GetStringFromName(`listHeading.${view.param}`);
-    } catch (e) {
-      // Some views don't have a label, like the updates view.
-      headingLabel = "";
+    if (view.type == "discover") {
+      headingLabel = gStrings.ext.formatStringFromName(
+        "listHeading.discover", [gStrings.brandShortName], 1);
+    } else {
+      try {
+        headingLabel = gStrings.ext.GetStringFromName(`listHeading.${view.param}`);
+      } catch (e) {
+        // Some views don't have a label, like the updates view.
+        headingLabel = "";
+      }
     }
     headingName.textContent = headingLabel;
     setSearchLabel(view.param);
@@ -1385,10 +1389,11 @@ var gViewController = {
         return true;
       },
       doCommand() {
-        let mainWindow = getMainWindow();
+        let mainWindow = window.windowRoot.ownerGlobal;
         recordLinkTelemetry("about:debugging");
         if ("switchToTabHavingURI" in mainWindow) {
-          mainWindow.switchToTabHavingURI("about:debugging#addons", true, {
+          let path = useNewAboutDebugging ? "/runtime/this-firefox" : "addons";
+          mainWindow.switchToTabHavingURI(`about:debugging#${path}`, true, {
             triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
           });
         }
@@ -1550,18 +1555,6 @@ async function isAddonAllowedInCurrentWindow(aAddon) {
 function hasInlineOptions(aAddon) {
   return aAddon.optionsType == AddonManager.OPTIONS_TYPE_INLINE_BROWSER ||
          aAddon.type == "plugin";
-}
-
-function openOptionsInTab(optionsURL) {
-  let mainWindow = getMainWindow();
-  if ("switchToTabHavingURI" in mainWindow) {
-    mainWindow.switchToTabHavingURI(optionsURL, true, {
-      relatedToCurrent: true,
-      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
-    });
-    return true;
-  }
-  return false;
 }
 
 function formatDate(aDate) {

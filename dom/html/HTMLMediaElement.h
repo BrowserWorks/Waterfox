@@ -729,6 +729,8 @@ class HTMLMediaElement : public nsGenericHTMLElement,
   // that we can start AudioContext if it was not allowed to start.
   RefPtr<GenericNonExclusivePromise> GetAllowedToPlayPromise();
 
+  bool GetShowPosterFlag() const { return mShowPoster; }
+
  protected:
   virtual ~HTMLMediaElement();
 
@@ -1736,6 +1738,9 @@ class HTMLMediaElement : public nsGenericHTMLElement,
   void UpdateHadAudibleAutoplayState();
 
   virtual void MaybeBeginCloningVisually(){};
+
+  uint32_t GetPreloadDefault() const;
+  uint32_t GetPreloadDefaultAuto() const;
 
   /**
    * This function is called by AfterSetAttr and OnAttrSetButNotChanged.

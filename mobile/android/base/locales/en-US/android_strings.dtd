@@ -328,11 +328,6 @@
 <!ENTITY pref_pwa "Progressive Web Apps">
 <!ENTITY pref_pwa_summary "Allow web apps to be added to home screen">
 
-<!ENTITY tracking_protection_prompt_title "Now with Tracking Protection">
-<!ENTITY tracking_protection_prompt_text "Actively block tracking elements so you don\'t have to worry.">
-<!ENTITY tracking_protection_prompt_tip_text "Visit Privacy settings to learn more">
-<!ENTITY tracking_protection_prompt_action_button "Got it!">
-
 <!ENTITY tab_queue_toast_message3 "Tab saved in &brandShortName;">
 <!ENTITY tab_queue_toast_action "Open now">
 <!ENTITY tab_queue_prompt_title "Opening multiple links?">
@@ -418,7 +413,6 @@ shown from Android O while a tab is being queued.-->
     Message of an Android Toast that appears after our app opens "Android System Settings -> Apps -> Default apps"
     and instruct users to tap on the "Browser app" option on that settings screen to choose a default browser app. -->
 <!ENTITY default_browser_system_settings_toast "Tap Browser app &amp; select &brandShortName;">
-<!ENTITY pref_default_browser_mozilla_support_tablet "Visit Mozilla Support">
 <!ENTITY pref_about_firefox "About &brandShortName;">
 <!ENTITY pref_vendor_faqs "FAQs">
 <!ENTITY pref_vendor_feedback "Give feedback">
@@ -919,6 +913,7 @@ Picture-in-picture mini window -->
 <!ENTITY pip_pause_button_title "Pause">
 <!ENTITY pip_pause_button_description "Pause playing">
 
+<!ENTITY pref_notification_settings_link "Manage notification settings">
 <!-- Notification channels names -->
 <!ENTITY default_notification_channel2 "Browser">
 <!ENTITY mls_notification_channel "&vendorShortName; Location Service">

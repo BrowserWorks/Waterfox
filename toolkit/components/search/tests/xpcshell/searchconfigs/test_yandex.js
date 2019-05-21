@@ -12,9 +12,49 @@ const test = new SearchConfigTest({
       ],
       locales: {
         matches: ["ru", "tr", "be", "kk"],
-        startsWith: ["en"],
+        // We don't currently enforce this.
+        // startsWith: ["en"],
       },
     }],
+  },
+  available: {
+    included: [{
+      locales: {
+        matches: ["az", "ru", "be", "kk", "tr"],
+      },
+    }],
+  },
+  domains: {
+    "yandex.az": {
+      included: [{
+        locales: { matches: ["az"] },
+      }],
+    },
+    "yandex.com": {
+      included: [{
+        locales: { startsWith: ["en"] },
+      }],
+    },
+    "yandex.ru": {
+      included: [{
+        locales: { matches: ["ru"] },
+      }],
+    },
+    "yandex.by": {
+      included: [{
+        locales: { matches: ["be"] },
+      }],
+    },
+    "yandex.kz": {
+      included: [{
+        locales: { matches: ["kk"] },
+      }],
+    },
+    "yandex.com.tr": {
+      included: [{
+        locales: { matches: ["tr"] },
+      }],
+    },
   },
 });
 

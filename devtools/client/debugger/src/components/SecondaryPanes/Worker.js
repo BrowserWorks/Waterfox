@@ -20,7 +20,7 @@ type Props = {
   selectThread: typeof actions.selectThread,
   isPaused: boolean,
   thread: Thread,
-  currentThread: string
+  currentThread: string,
 };
 
 export class Worker extends Component<Props> {
@@ -38,13 +38,13 @@ export class Worker extends Component<Props> {
     return (
       <div
         className={classnames("worker", {
-          selected: thread.actor == currentThread
+          selected: thread.actor == currentThread,
         })}
         key={thread.actor}
         onClick={this.onSelectThread}
       >
         <div className="icon">
-          <AccessibleImage className={worker ? "worker" : "file"} />
+          <AccessibleImage className={worker ? "worker" : "window"} />
         </div>
         <div className="label">{label}</div>
         {isPaused ? (
@@ -60,12 +60,12 @@ export class Worker extends Component<Props> {
 const mapStateToProps = (state, props: Props) => ({
   cx: getContext(state),
   currentThread: getCurrentThread(state),
-  isPaused: getIsPaused(state, props.thread.actor)
+  isPaused: getIsPaused(state, props.thread.actor),
 });
 
 export default connect(
   mapStateToProps,
   {
-    selectThread: actions.selectThread
+    selectThread: actions.selectThread,
   }
 )(Worker);

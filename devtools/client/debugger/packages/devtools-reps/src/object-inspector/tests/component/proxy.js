@@ -6,7 +6,9 @@
 const { mountObjectInspector } = require("../test-utils");
 
 const { MODE } = require("../../../reps/constants");
-const stub = require("../../../reps/stubs/grip").get("testProxy");
+const gripStubs = require("../../../reps/stubs/grip");
+const stub = gripStubs.get("testProxy");
+const proxySlots = gripStubs.get("testProxySlots");
 const { formatObjectInspector } = require("../test-utils");
 
 const ObjectClient = require("../__mocks__/object-client");
@@ -15,52 +17,58 @@ function generateDefaults(overrides) {
     roots: [
       {
         path: "root",
-        contents: { value: stub }
-      }
+        contents: { value: stub },
+      },
     ],
     autoExpandDepth: 1,
     mode: MODE.LONG,
-    ...overrides
+    ...overrides,
   };
 }
 
 function getEnumPropertiesMock() {
   return jest.fn(() => ({
     iterator: {
-      slice: () => ({})
-    }
+      slice: () => ({}),
+    },
   }));
+}
+
+function getProxySlotsMock() {
+  return jest.fn(() => proxySlots);
 }
 
 function mount(props, { initialState } = {}) {
   const enumProperties = getEnumPropertiesMock();
+  const getProxySlots = getProxySlotsMock();
 
   const client = {
-    createObjectClient: grip => ObjectClient(grip, { enumProperties })
+    createObjectClient: grip =>
+      ObjectClient(grip, { enumProperties, getProxySlots }),
   };
 
   const obj = mountObjectInspector({
     client,
     props: generateDefaults(props),
-    initialState
+    initialState,
   });
 
-  return { ...obj, enumProperties };
+  return { ...obj, enumProperties, getProxySlots };
 }
 
 describe("ObjectInspector - Proxy", () => {
   it("renders Proxy as expected", () => {
-    const { wrapper, enumProperties } = mount(
+    const { wrapper, enumProperties, getProxySlots } = mount(
       {},
       {
         initialState: {
           objectInspector: {
             // Have the prototype already loaded so the component does not call
             // enumProperties for the root's properties.
-            loadedProperties: new Map([["root", { prototype: {} }]]),
-            evaluations: new Map()
-          }
-        }
+            loadedProperties: new Map([["root", proxySlots]]),
+            evaluations: new Map(),
+          },
+        },
       }
     );
 
@@ -68,6 +76,9 @@ describe("ObjectInspector - Proxy", () => {
 
     // enumProperties should not have been called.
     expect(enumProperties.mock.calls).toHaveLength(0);
+
+    // getProxySlots should not have been called.
+    expect(getProxySlots.mock.calls).toHaveLength(0);
   });
 
   it("calls enumProperties on <target> and <handler> clicks", () => {
@@ -78,10 +89,10 @@ describe("ObjectInspector - Proxy", () => {
           objectInspector: {
             // Have the prototype already loaded so the component does not call
             // enumProperties for the root's properties.
-            loadedProperties: new Map([["root", { prototype: {} }]]),
-            evaluations: new Map()
-          }
-        }
+            loadedProperties: new Map([["root", proxySlots]]),
+            evaluations: new Map(),
+          },
+        },
       }
     );
 
@@ -95,10 +106,10 @@ describe("ObjectInspector - Proxy", () => {
     // to get both non-indexed and indexed properties.
     expect(enumProperties.mock.calls).toHaveLength(2);
     expect(enumProperties.mock.calls[0][0]).toEqual({
-      ignoreNonIndexedProperties: true
+      ignoreNonIndexedProperties: true,
     });
     expect(enumProperties.mock.calls[1][0]).toEqual({
-      ignoreIndexedProperties: true
+      ignoreIndexedProperties: true,
     });
 
     handlerNode.simulate("click");
@@ -106,10 +117,10 @@ describe("ObjectInspector - Proxy", () => {
     // to get  both non-indexed and indexed properties.
     expect(enumProperties.mock.calls).toHaveLength(4);
     expect(enumProperties.mock.calls[2][0]).toEqual({
-      ignoreNonIndexedProperties: true
+      ignoreNonIndexedProperties: true,
     });
     expect(enumProperties.mock.calls[3][0]).toEqual({
-      ignoreIndexedProperties: true
+      ignoreIndexedProperties: true,
     });
   });
 });

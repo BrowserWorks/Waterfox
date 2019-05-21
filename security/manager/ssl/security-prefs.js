@@ -121,10 +121,24 @@ pref("security.pki.certificate_transparency.mode", 0);
 // Hardware Origin-bound Second Factor Support
 pref("security.webauth.u2f", true);
 pref("security.webauth.webauthn", true);
-// Only one of "enable_softtoken" and "enable_usbtoken" can be true
-// at a time.
+
+// Only one of ["enable_softtoken", "enable_usbtoken",
+// "webauthn_enable_android_fido2"] should be true at a time, as the
+// softtoken will override the other two.
 pref("security.webauth.webauthn_enable_softtoken", false);
+
+#ifdef FENNEC_NIGHTLY
+pref("security.webauth.webauthn_enable_android_fido2", true);
+#else
+pref("security.webauth.webauthn_enable_android_fido2", false);
+#endif
+
+#ifdef MOZ_WIDGET_ANDROID
+// the Rust usbtoken support does not function on Android
+pref("security.webauth.webauthn_enable_usbtoken", false);
+#else
 pref("security.webauth.webauthn_enable_usbtoken", true);
+#endif
 
 pref("security.ssl.errorReporting.enabled", false);
 pref("security.ssl.errorReporting.url", "https://incoming.telemetry.mozilla.org/submit/sslreports/");
@@ -159,10 +173,10 @@ pref("security.pki.mitm_canary_issuer.enabled", true);
 pref("security.pki.mitm_detected", false);
 
 // Intermediate CA Preloading settings
-#if defined(RELEASE_OR_BETA) || defined(MOZ_WIDGET_ANDROID)
-pref("security.remote_settings.intermediates.enabled", false);
-#else
+#if defined(MOZ_NEW_CERT_STORAGE) && !defined(MOZ_WIDGET_ANDROID)
 pref("security.remote_settings.intermediates.enabled", true);
+#else
+pref("security.remote_settings.intermediates.enabled", false);
 #endif
 pref("security.remote_settings.intermediates.bucket", "security-state");
 pref("security.remote_settings.intermediates.collection", "intermediates");

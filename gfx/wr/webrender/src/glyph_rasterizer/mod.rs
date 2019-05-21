@@ -7,9 +7,9 @@ use api::{FontKey, FontInstanceKey, FontRenderMode, FontTemplate, FontVariation}
 use api::{ColorU, GlyphIndex, GlyphDimensions, SyntheticItalics};
 use api::units::*;
 use euclid::approxeq::ApproxEq;
-use internal_types::ResourceCacheError;
-use wr_malloc_size_of::{MallocSizeOf, MallocSizeOfOps};
-use platform::font::FontContext;
+use crate::internal_types::ResourceCacheError;
+use malloc_size_of::{MallocSizeOf, MallocSizeOfOps};
+use crate::platform::font::FontContext;
 use rayon::ThreadPool;
 use std::cmp;
 use std::hash::{Hash, Hasher};
@@ -808,7 +808,7 @@ impl AddFont for FontContext {
 }
 
 #[allow(dead_code)]
-pub(in glyph_rasterizer) struct GlyphRasterJob {
+pub(in crate::glyph_rasterizer) struct GlyphRasterJob {
     key: GlyphKey,
     result: GlyphRasterResult,
 }
@@ -842,18 +842,18 @@ mod test_glyph_rasterizer {
         use rayon::ThreadPoolBuilder;
         use std::fs::File;
         use std::io::Read;
-        use texture_cache::TextureCache;
-        use glyph_cache::GlyphCache;
-        use gpu_cache::GpuCache;
-        use render_task::{RenderTaskCache, RenderTaskTree, RenderTaskTreeCounters};
-        use profiler::TextureCacheProfileCounters;
+        use crate::texture_cache::TextureCache;
+        use crate::glyph_cache::GlyphCache;
+        use crate::gpu_cache::GpuCache;
+        use crate::render_task::{RenderTaskCache, RenderTaskGraph, RenderTaskGraphCounters};
+        use crate::profiler::TextureCacheProfileCounters;
         use api::{FontKey, FontInstanceKey, FontTemplate, FontRenderMode,
                   IdNamespace, ColorU};
         use api::units::{Au, DevicePoint};
-        use render_backend::FrameId;
+        use crate::render_backend::FrameId;
         use thread_profiler::register_thread_with_profiler;
         use std::sync::Arc;
-        use glyph_rasterizer::{FontInstance, BaseFontInstance, GlyphKey, GlyphRasterizer};
+        use crate::glyph_rasterizer::{FontInstance, BaseFontInstance, GlyphKey, GlyphRasterizer};
 
         let worker = ThreadPoolBuilder::new()
             .thread_name(|idx|{ format!("WRWorker#{}", idx) })
@@ -867,7 +867,7 @@ mod test_glyph_rasterizer {
         let mut gpu_cache = GpuCache::new_for_testing();
         let mut texture_cache = TextureCache::new_for_testing(2048, 1024);
         let mut render_task_cache = RenderTaskCache::new();
-        let mut render_task_tree = RenderTaskTree::new(FrameId::INVALID, &RenderTaskTreeCounters::new());
+        let mut render_task_tree = RenderTaskGraph::new(FrameId::INVALID, &RenderTaskGraphCounters::new());
         let mut font_file =
             File::open("../wrench/reftests/text/VeraBd.ttf").expect("Couldn't open font file");
         let mut font_data = vec![];
@@ -927,7 +927,7 @@ mod test_glyph_rasterizer {
 
     #[test]
     fn test_subpx_quantize() {
-        use glyph_rasterizer::SubpixelOffset;
+        use crate::glyph_rasterizer::SubpixelOffset;
 
         assert_eq!(SubpixelOffset::quantize(0.0), SubpixelOffset::Zero);
         assert_eq!(SubpixelOffset::quantize(-0.0), SubpixelOffset::Zero);

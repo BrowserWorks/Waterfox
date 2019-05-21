@@ -105,7 +105,7 @@ module.exports = {
   Tree: _tree2.default
 }; /* This Source Code Form is subject to the terms of the Mozilla Public
     * License, v. 2.0. If a copy of the MPL was not distributed with this
-    * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+    * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 /***/ }),
 
@@ -175,6 +175,7 @@ class ArrowExpander extends Component {
 }
 
 const treeIndent = _reactDomFactories2.default.span({ className: "tree-indent" }, "\u200B");
+const treeLastIndent = _reactDomFactories2.default.span({ className: "tree-indent tree-last-indent" }, "\u200B");
 
 class TreeNode extends Component {
   static get propTypes() {
@@ -300,7 +301,13 @@ class TreeNode extends Component {
       ariaExpanded = true;
     }
 
-    const indents = Array.from({ length: depth }).fill(treeIndent);
+    const indents = Array.from({ length: depth }, (_, i) => {
+      if (i == depth - 1) {
+        return treeLastIndent;
+      }
+      return treeIndent;
+    });
+
     const items = indents.concat(renderItem(item, depth, focused, arrow, expanded));
 
     return _reactDomFactories2.default.div({
@@ -1712,8 +1719,8 @@ function makeNodesForPromiseProperties(item) {
   return properties;
 }
 
-function makeNodesForProxyProperties(item) {
-  const { proxyHandler, proxyTarget } = getValue(item);
+function makeNodesForProxyProperties(loadedProps, item) {
+  const { proxyHandler, proxyTarget } = loadedProps;
 
   return [createNode({
     parent: item,
@@ -2106,8 +2113,8 @@ function getChildren(options) {
     return addToCache(makeNodesForMapEntry(item));
   }
 
-  if (nodeIsProxy(item)) {
-    return addToCache(makeNodesForProxyProperties(item));
+  if (nodeIsProxy(item) && hasLoadedProps) {
+    return addToCache(makeNodesForProxyProperties(loadedProps, item));
   }
 
   if (nodeIsLongString(item) && hasLoadedProps) {
@@ -3481,7 +3488,8 @@ const {
   enumNonIndexedProperties,
   getPrototype,
   enumSymbols,
-  getFullText
+  getFullText,
+  getProxySlots
 } = __webpack_require__(197);
 
 const {
@@ -3535,6 +3543,10 @@ function loadItemProperties(item, createObjectClient, createLongStringClient, lo
     promises.push(getFullText(createLongStringClient(value), item));
   }
 
+  if (shouldLoadItemProxySlots(item, loadedProperties)) {
+    promises.push(getProxySlots(getObjectClient()));
+  }
+
   return Promise.all(promises).then(mergeResponses);
 }
 
@@ -3556,6 +3568,11 @@ function mergeResponses(responses) {
 
     if (response.fullText) {
       data.fullText = response.fullText;
+    }
+
+    if (response.proxyTarget && response.proxyHandler) {
+      data.proxyTarget = response.proxyTarget;
+      data.proxyHandler = response.proxyHandler;
     }
   }
 
@@ -3590,7 +3607,7 @@ function shouldLoadItemEntries(item, loadedProperties = new Map()) {
 function shouldLoadItemPrototype(item, loadedProperties = new Map()) {
   const value = getValue(item);
 
-  return value && !loadedProperties.has(item.path) && !nodeIsBucket(item) && !nodeIsMapEntry(item) && !nodeIsEntries(item) && !nodeIsDefaultProperties(item) && !nodeHasAccessors(item) && !nodeIsPrimitive(item) && !nodeIsLongString(item);
+  return value && !loadedProperties.has(item.path) && !nodeIsBucket(item) && !nodeIsMapEntry(item) && !nodeIsEntries(item) && !nodeIsDefaultProperties(item) && !nodeHasAccessors(item) && !nodeIsPrimitive(item) && !nodeIsLongString(item) && !nodeIsProxy(item);
 }
 
 function shouldLoadItemSymbols(item, loadedProperties = new Map()) {
@@ -3603,6 +3620,10 @@ function shouldLoadItemFullText(item, loadedProperties = new Map()) {
   return !loadedProperties.has(item.path) && nodeIsLongString(item);
 }
 
+function shouldLoadItemProxySlots(item, loadedProperties = new Map()) {
+  return !loadedProperties.has(item.path) && nodeIsProxy(item);
+}
+
 module.exports = {
   loadItemProperties,
   mergeResponses,
@@ -3611,7 +3632,8 @@ module.exports = {
   shouldLoadItemNonIndexedProperties,
   shouldLoadItemPrototype,
   shouldLoadItemSymbols,
-  shouldLoadItemFullText
+  shouldLoadItemFullText,
+  shouldLoadItemProxySlots
 };
 
 /***/ }),
@@ -3706,6 +3728,10 @@ async function getFullText(longStringClient, item) {
   });
 }
 
+async function getProxySlots(objectClient) {
+  return objectClient.getProxySlots();
+}
+
 function iteratorSlice(iterator, start, end) {
   start = start || 0;
   const count = end ? end - start + 1 : iterator.count;
@@ -3722,7 +3748,8 @@ module.exports = {
   enumNonIndexedProperties,
   enumSymbols,
   getPrototype,
-  getFullText
+  getFullText,
+  getProxySlots
 };
 
 /***/ }),
@@ -3747,7 +3774,7 @@ const validProtocols = /(http|https|ftp|data|resource|chrome):/i;
 //                       character so we can include it as part of the text
 //                       preceding the match. We lack look-behind matching.
 //  ^|                   The URL can start at the beginning of the string.
-//  [\s(,;'"`]           Or whitespace or some punctuation that does not imply
+//  [\s(,;'"`“]          Or whitespace or some punctuation that does not imply
 //                       a context which would preclude a URL.
 // )
 //
@@ -3788,7 +3815,7 @@ const validProtocols = /(http|https|ftp|data|resource|chrome):/i;
 //                       (so also '%')
 // )
 // eslint-disable-next-line max-len
-const urlRegex = /(^|[\s(,;'"`])((?:https?:\/\/|www\d{0,3}[.][a-z0-9.\-]{2,249}|[a-z0-9.\-]{2,250}[.][a-z]{2,4}\/)[-\w.!~*'();,/?:@&=+$#%]*)/im;
+const urlRegex = /(^|[\s(,;'"`“])((?:https?:\/\/|www\d{0,3}[.][a-z0-9.\-]{2,249}|[a-z0-9.\-]{2,250}[.][a-z]{2,4}\/)[-\w.!~*'();,/?:@&=+$#%]*)/im;
 
 // Set of terminators that are likely to have been part of the context rather
 // than part of the URL and so should be uneaten. This is '(', ',', ';', plus
@@ -4396,6 +4423,7 @@ StringRep.propTypes = {
   escapeWhitespace: PropTypes.bool,
   style: PropTypes.object,
   cropLimit: PropTypes.number.isRequired,
+  urlCropLimit: PropTypes.number,
   member: PropTypes.object,
   object: PropTypes.object.isRequired,
   openLink: PropTypes.func,
@@ -4409,6 +4437,7 @@ function StringRep(props) {
     className,
     style,
     cropLimit,
+    urlCropLimit,
     object,
     useQuotes = true,
     escapeWhitespace = true,
@@ -4450,7 +4479,13 @@ function StringRep(props) {
 
   if (!isLong) {
     if (containsURL(text)) {
-      return span(config, ...getLinkifiedElements(text, shouldCrop && cropLimit, openLink, isInContentPage));
+      return span(config, getLinkifiedElements({
+        text,
+        cropLimit: shouldCrop ? cropLimit : null,
+        urlCropLimit,
+        openLink,
+        isInContentPage
+      }));
     }
 
     // Cropping of longString has been handled before formatting.
@@ -4520,14 +4555,24 @@ function maybeCropString(opts, text) {
  * Get an array of the elements representing the string, cropped if needed,
  * with actual links.
  *
- * @param {String} text: The actual string to linkify.
- * @param {Integer | null} cropLimit
- * @param {Function} openLink: Function handling the link opening.
- * @param {Boolean} isInContentPage: pass true if the reps is rendered in
- *                                   the content page (e.g. in JSONViewer).
+ * @param {Object} An options object of the following shape:
+ *                 - text {String}: The actual string to linkify.
+ *                 - cropLimit {Integer}: The limit to apply on the whole text.
+ *                 - urlCropLimit {Integer}: The limit to apply on each URL.
+ *                 - openLink {Function} openLink: Function handling the link
+ *                                                 opening.
+ *                 - isInContentPage {Boolean}: pass true if the reps is
+ *                                              rendered in the content page
+ *                                              (e.g. in JSONViewer).
  * @returns {Array<String|ReactElement>}
  */
-function getLinkifiedElements(text, cropLimit, openLink, isInContentPage) {
+function getLinkifiedElements({
+  text,
+  cropLimit,
+  urlCropLimit,
+  openLink,
+  isInContentPage
+}) {
   const halfLimit = Math.ceil((cropLimit - ELLIPSIS.length) / 2);
   const startCropIndex = cropLimit ? halfLimit : null;
   const endCropIndex = cropLimit ? text.length - halfLimit : null;
@@ -4557,10 +4602,16 @@ function getLinkifiedElements(text, cropLimit, openLink, isInContentPage) {
     }
 
     currentIndex = currentIndex + contentStart;
-    const linkText = getCroppedString(useUrl, currentIndex, startCropIndex, endCropIndex);
+    let linkText = getCroppedString(useUrl, currentIndex, startCropIndex, endCropIndex);
 
     if (linkText) {
+      if (urlCropLimit && useUrl.length > urlCropLimit) {
+        const urlCropHalf = Math.ceil((urlCropLimit - ELLIPSIS.length) / 2);
+        linkText = getCroppedString(useUrl, 0, urlCropHalf, useUrl.length - urlCropHalf);
+      }
+
       items.push(a({
+        key: `${useUrl}-${currentIndex}`,
         className: "url",
         title: useUrl,
         draggable: false,

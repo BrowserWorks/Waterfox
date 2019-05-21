@@ -1569,7 +1569,7 @@ bool js::FinishCompilation(JSContext* cx, HandleScript script,
   }
 
   if (!succeeded) {
-    script->resetWarmUpCounter();
+    script->resetWarmUpCounterToDelayIonCompilation();
     *isValidOut = false;
     return true;
   }
@@ -2679,9 +2679,7 @@ void TypeZone::addPendingRecompile(JSContext* cx, JSScript* script) {
   CancelOffThreadIonCompile(script);
 
   // Let the script warm up again before attempting another compile.
-  if (jit::IsBaselineEnabled(cx)) {
-    script->resetWarmUpCounter();
-  }
+  script->resetWarmUpCounterToDelayIonCompilation();
 
   if (script->hasIonScript()) {
     addPendingRecompile(
@@ -3493,7 +3491,22 @@ bool JSScript::makeTypes(JSContext* cx) {
   MOZ_ASSERT(!types_);
   cx->check(this);
 
+  // Scripts that will never run in the Baseline Interpreter or the JITs don't
+  // need a TypeScript.
+  MOZ_ASSERT(!hasForceInterpreterOp());
+
   AutoEnterAnalysis enter(cx);
+
+  // Run the arguments-analysis if needed. Both the Baseline Interpreter and
+  // Compiler rely on this.
+  if (!ensureHasAnalyzedArgsUsage(cx)) {
+    return false;
+  }
+
+  // If ensureHasAnalyzedArgsUsage allocated the TypeScript we're done.
+  if (types_) {
+    return true;
+  }
 
   UniquePtr<jit::ICScript> icScript(jit::ICScript::create(cx, this));
   if (!icScript) {
@@ -3524,6 +3537,7 @@ bool JSScript::makeTypes(JSContext* cx) {
 
   prepareForDestruction.release();
 
+  MOZ_ASSERT(!types_);
   types_ = new (typeScript) TypeScript(this, std::move(icScript), numTypeSets);
 
   // We have a TypeScript so we can set the script's jitCodeRaw_ pointer to the

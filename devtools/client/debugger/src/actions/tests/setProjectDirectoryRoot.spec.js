@@ -8,10 +8,8 @@ import {
   createStore,
   selectors,
   actions,
-  makeSource
+  makeSource,
 } from "../../utils/test-head";
-
-import type { Source } from "../../types";
 
 const { getProjectDirectoryRoot, getDisplayedSources } = selectors;
 
@@ -45,7 +43,7 @@ describe("setProjectDirectoryRoot", () => {
 
   it("should filter sources", async () => {
     const store = createStore({
-      getBreakableLines: async () => []
+      getBreakableLines: async () => [],
     });
     const { dispatch, getState, cx } = store;
     await dispatch(actions.newGeneratedSource(makeSource("js/scopes.js")));
@@ -54,19 +52,20 @@ describe("setProjectDirectoryRoot", () => {
     dispatch(actions.setProjectDirectoryRoot(cx, "localhost:8000/examples/js"));
 
     const filteredSourcesByThread = getDisplayedSources(getState());
-    const filteredSources = Object.values(filteredSourcesByThread)[0];
-    const firstSource: Source = (Object.values(filteredSources)[0]: any);
+    const filteredSources = (Object.values(
+      filteredSourcesByThread.FakeThread
+    ): any)[0];
 
-    expect(firstSource.url).toEqual(
+    expect(filteredSources.url).toEqual(
       "http://localhost:8000/examples/js/scopes.js"
     );
 
-    expect(firstSource.relativeUrl).toEqual("scopes.js");
+    expect(filteredSources.relativeUrl).toEqual("scopes.js");
   });
 
   it("should update the child directory ", () => {
     const { dispatch, getState, cx } = createStore({
-      getBreakableLines: async () => []
+      getBreakableLines: async () => [],
     });
     dispatch(actions.setProjectDirectoryRoot(cx, "example.com"));
     dispatch(actions.setProjectDirectoryRoot(cx, "example.com/foo/bar"));
@@ -75,7 +74,7 @@ describe("setProjectDirectoryRoot", () => {
 
   it("should update the child directory when domain name is Webpack://", () => {
     const { dispatch, getState, cx } = createStore({
-      getBreakableLines: async () => []
+      getBreakableLines: async () => [],
     });
     dispatch(actions.setProjectDirectoryRoot(cx, "webpack://"));
     dispatch(actions.setProjectDirectoryRoot(cx, "webpack:///app"));

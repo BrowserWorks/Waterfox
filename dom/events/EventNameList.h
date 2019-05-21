@@ -163,8 +163,7 @@ EVENT(close, eClose, EventNameType_HTMLXUL, eBasicEventClass)
 EVENT(contextmenu, eContextMenu, EventNameType_HTMLXUL, eMouseEventClass)
 NON_IDL_EVENT(mouselongtap, eMouseLongTap, EventNameType_HTMLXUL,
               eMouseEventClass)
-// Not supported yet
-// EVENT(cuechange)
+EVENT(cuechange, eCueChange, EventNameType_All, eBasicEventClass)
 EVENT(dblclick, eMouseDoubleClick, EventNameType_HTMLXUL, eMouseEventClass)
 EVENT(drag, eDrag, EventNameType_HTMLXUL, eDragEventClass)
 EVENT(dragend, eDragEnd, EventNameType_HTMLXUL, eDragEventClass)
@@ -307,12 +306,12 @@ WINDOW_EVENT(pageshow, ePageShow, EventNameType_HTMLBodyOrFramesetOnly,
 WINDOW_EVENT(popstate, ePopState,
              EventNameType_XUL | EventNameType_HTMLBodyOrFramesetOnly,
              eBasicEventClass)
-// Not supported yet
-// WINDOW_EVENT(redo)
+WINDOW_EVENT(rejectionhandled, eRejectionHandled,
+             EventNameType_HTMLBodyOrFramesetOnly, eBasicEventClass)
 WINDOW_EVENT(storage, eStorage, EventNameType_HTMLBodyOrFramesetOnly,
              eBasicEventClass)
-// Not supported yet
-// WINDOW_EVENT(undo)
+WINDOW_EVENT(unhandledrejection, eUnhandledRejection,
+             EventNameType_HTMLBodyOrFramesetOnly, eBasicEventClass)
 WINDOW_EVENT(unload, eUnload,
              (EventNameType_XUL | EventNameType_SVGSVG |
               EventNameType_HTMLBodyOrFramesetOnly),

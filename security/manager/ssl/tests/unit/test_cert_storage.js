@@ -14,7 +14,7 @@
 
 const { setTimeout } = ChromeUtils.import("resource://gre/modules/Timer.jsm", {});
 const { RemoteSettings } = ChromeUtils.import("resource://services-settings/remote-settings.js", {});
-const BlocklistClients = ChromeUtils.import("resource://services-common/blocklist-clients.js", {});
+const {BlocklistClients} = ChromeUtils.import("resource://services-common/blocklist-clients.js", {});
 
 // First, we need to setup appInfo for the blocklist service to work
 var id = "xpcshell@tests.mozilla.org";
@@ -186,11 +186,10 @@ function load_cert(cert, trust) {
 
 function fetch_blocklist() {
   Services.prefs.setBoolPref("services.settings.load_dump", false);
-  Services.prefs.setBoolPref("services.settings.verify_signature", false);
   Services.prefs.setCharPref("services.settings.server",
                              `http://localhost:${port}/v1`);
 
-  BlocklistClients.initialize();
+  BlocklistClients.initialize({ verifySignature: false });
 
   return RemoteSettings.pollChanges();
 }

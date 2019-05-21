@@ -126,12 +126,12 @@ with only_when(target_is_osx):
     # MacOS SDK
     # =========
 
-    option('--with-macos-sdk', env='MACOS_SDK_DIR', nargs=1,
+    js_option('--with-macos-sdk', env='MACOS_SDK_DIR', nargs=1,
            help='Location of platform SDK to use')
 
     @depends_if('--with-macos-sdk')
     @imports(_from='os.path', _import='isdir')
-    @imports(_from='plistlib', _import='readPlist')
+    @imports(_from='biplist', _import='readPlist')
     def macos_sdk(value):
         sdk_min_version = Version('10.11')
         sdk_max_version = Version('10.14')
@@ -257,7 +257,8 @@ js_option(env='CCACHE_PREFIX',
           nargs=1,
           help='Compiler prefix to use when using ccache')
 
-set_config('CCACHE_PREFIX', depends_if('CCACHE_PREFIX')(lambda prefix: prefix[0]))
+ccache_prefix = depends_if('CCACHE_PREFIX')(lambda prefix: prefix[0])
+set_config('CCACHE_PREFIX', ccache_prefix)
 
 # Distinguish ccache from sccache.
 
@@ -1030,6 +1031,12 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
                     'Only GCC 6.1 or newer is supported (found version %s).'
                     % info.version)
 
+        if info.type == 'clang-cl':
+            if info.version < '8.0.0':
+                raise FatalCheckError(
+                    'Only clang-cl 8.0 or newer is supported (found version %s)'
+                    % info.version)
+
         # If you want to bump the version check here search for
         # builtin_bitreverse8 above, and see the associated comment.
         if info.type == 'clang' and not info.version:
@@ -1161,12 +1168,15 @@ host_cxx_compiler = compiler('C++', host, c_compiler=host_c_compiler,
 building_with_gcc = depends(c_compiler)(lambda info: info.type == 'gcc')
 
 
-@depends(cxx_compiler)
+@depends(cxx_compiler, ccache_prefix)
 @imports('os')
-def cxx_is_icecream(info):
+def cxx_is_icecream(info, ccache_prefix):
     if (os.path.islink(info.compiler) and os.path.basename(
             os.readlink(info.compiler)) == 'icecc'):
         return True
+    if ccache_prefix and os.path.basename(ccache_prefix) == 'icecc':
+        return True
+
 set_config('CXX_IS_ICECREAM', cxx_is_icecream)
 
 
@@ -1496,7 +1506,7 @@ set_config('PGO_JARLOG_PATH', depends_if('--with-pgo-jarlog')(lambda p: p))
 js_option('--enable-lto',
           env='MOZ_LTO',
           nargs='?',
-          choices=('full', 'thin'),
+          choices=('full', 'thin', 'cross'),
           help='Enable LTO')
 
 
@@ -1506,6 +1516,7 @@ def lto(value, pgo, c_compiler):
     cflags = []
     ldflags = []
     enabled = None
+    rust_lto = False
 
     # MSVC's implementation of PGO implies LTO. Make clang-cl match this.
     if c_compiler.type == 'clang-cl' and pgo and value.origin == 'default':
@@ -1513,6 +1524,15 @@ def lto(value, pgo, c_compiler):
 
     if value:
         enabled = True
+        # `cross` implies `thin`, but with Rust code participating in LTO
+        # as well.  Make that a little more explicit.
+        if len(value) and value[0].lower() == 'cross':
+            if c_compiler.type == 'gcc':
+                die('Cross-language LTO is not supported with GCC.')
+
+            rust_lto = True
+            value = ['thin']
+
         if c_compiler.type == 'clang':
             if len(value) and value[0].lower() == 'full':
                 cflags.append("-flto")
@@ -1539,7 +1559,8 @@ def lto(value, pgo, c_compiler):
     return namespace(
         enabled=enabled,
         cflags=cflags,
-        ldflags=ldflags
+        ldflags=ldflags,
+        rust_lto=rust_lto,
     )
 
 
@@ -1548,6 +1569,7 @@ set_config('MOZ_LTO', lto.enabled)
 set_define('MOZ_LTO', lto.enabled)
 set_config('MOZ_LTO_CFLAGS', lto.cflags)
 set_config('MOZ_LTO_LDFLAGS', lto.ldflags)
+set_config('MOZ_LTO_RUST', lto.rust_lto)
 add_old_configure_assignment('MOZ_LTO_CFLAGS', lto.cflags)
 add_old_configure_assignment('MOZ_LTO_LDFLAGS', lto.ldflags)
 
@@ -1888,10 +1910,17 @@ def rust_compile_flags(opt_level, debug_rust, debug_symbols):
 # Rust incremental compilation
 # ==============================================================
 
+js_option('--disable-cargo-incremental',
+          help='Disable incremental rust compilation.')
 
-@depends(rustc_opt_level, debug_rust, 'MOZ_AUTOMATION', code_coverage)
-def cargo_incremental(opt_level, debug_rust, automation, code_coverage):
+@depends(rustc_opt_level, debug_rust, 'MOZ_AUTOMATION', code_coverage,
+         '--disable-cargo-incremental')
+def cargo_incremental(opt_level, debug_rust, automation, code_coverage,
+                      enabled):
     """Return a value for the CARGO_INCREMENTAL environment variable."""
+
+    if not enabled:
+        return '0'
 
     # We never want to use incremental compilation in automation.  sccache
     # handles our automation use case much better than incremental compilation

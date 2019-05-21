@@ -8,6 +8,7 @@
 
 #include "nsColumnSetFrame.h"
 
+#include "mozilla/ColumnUtils.h"
 #include "mozilla/Logging.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/ToString.h"
@@ -21,10 +22,10 @@ static LazyLogModule sColumnSetLog("ColumnSet");
 #define COLUMN_SET_LOG(msg, ...) \
   MOZ_LOG(sColumnSetLog, LogLevel::Debug, (msg, ##__VA_ARGS__))
 
-class nsDisplayColumnRule : public nsDisplayItem {
+class nsDisplayColumnRule : public nsPaintedDisplayItem {
  public:
   nsDisplayColumnRule(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame)
-      : nsDisplayItem(aBuilder, aFrame) {
+      : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayColumnRule);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
@@ -275,18 +276,16 @@ nscoord nsColumnSetFrame::GetAvailableContentBSize(
   return std::max(0, aReflowInput.AvailableBSize() - bp.BStartEnd(wm));
 }
 
-static nscoord GetColumnGap(const nsColumnSetFrame* aFrame,
-                            nscoord aPercentageBasis) {
-  const auto& columnGap = aFrame->StylePosition()->mColumnGap;
-  if (columnGap.IsNormal()) {
-    return aFrame->StyleFont()->mFont.size;
+static uint32_t ColumnBalancingDepth(const ReflowInput& aReflowInput,
+                                     uint32_t aMaxDepth) {
+  uint32_t depth = 0;
+  for (const ReflowInput* ri = aReflowInput.mParentReflowInput;
+       ri && depth < aMaxDepth; ri = ri->mParentReflowInput) {
+    if (ri->mFlags.mIsColumnBalancing) {
+      ++depth;
+    }
   }
-  return nsLayoutUtils::ResolveGapToLength(columnGap, aPercentageBasis);
-}
-
-static nscoord ClampUsedColumnWidth(const Length& aColumnWidth) {
-  // Per spec, used values will be clamped to a minimum of 1px.
-  return std::max(CSSPixel::ToAppUnits(1), aColumnWidth.ToAppUnits());
+  return depth;
 }
 
 nsColumnSetFrame::ReflowConfig nsColumnSetFrame::ChooseColumnStrategy(
@@ -319,22 +318,18 @@ nsColumnSetFrame::ReflowConfig nsColumnSetFrame::ChooseColumnStrategy(
         std::min(colBSize, aReflowInput.mCBReflowInput->ComputedMaxBSize());
   }
 
-  nscoord colGap = GetColumnGap(this, aReflowInput.ComputedISize());
+  nscoord colGap =
+      ColumnUtils::GetColumnGap(this, aReflowInput.ComputedISize());
   int32_t numColumns = colStyle->mColumnCount;
 
   // If column-fill is set to 'balance', then we want to balance the columns.
   const bool isBalancing =
       colStyle->mColumnFill == StyleColumnFill::Balance && !aForceAuto;
   if (isBalancing) {
-    const uint32_t MAX_NESTED_COLUMN_BALANCING = 2;
-    uint32_t cnt = 0;
-    for (const ReflowInput* rs = aReflowInput.mParentReflowInput;
-         rs && cnt < MAX_NESTED_COLUMN_BALANCING; rs = rs->mParentReflowInput) {
-      if (rs->mFlags.mIsColumnBalancing) {
-        ++cnt;
-      }
-    }
-    if (cnt == MAX_NESTED_COLUMN_BALANCING) {
+    const uint32_t kMaxNestedColumnBalancingDepth = 2;
+    const uint32_t balancingDepth =
+        ColumnBalancingDepth(aReflowInput, kMaxNestedColumnBalancingDepth);
+    if (balancingDepth == kMaxNestedColumnBalancingDepth) {
       numColumns = 1;
     }
   }
@@ -343,7 +338,8 @@ nsColumnSetFrame::ReflowConfig nsColumnSetFrame::ChooseColumnStrategy(
   // In vertical writing-mode, "column-width" (inline size) will actually be
   // physical height, but its CSS name is still column-width.
   if (colStyle->mColumnWidth.IsLength()) {
-    colISize = ClampUsedColumnWidth(colStyle->mColumnWidth.AsLength());
+    colISize =
+        ColumnUtils::ClampUsedColumnWidth(colStyle->mColumnWidth.AsLength());
     NS_ASSERTION(colISize >= 0, "negative column width");
     // Reduce column count if necessary to make columns fit in the
     // available width. Compute max number of columns that fit in
@@ -483,16 +479,22 @@ nscoord nsColumnSetFrame::GetMinISize(gfxContext* aRenderingContext) {
   nscoord iSize = 0;
   DISPLAY_MIN_INLINE_SIZE(this, iSize);
 
-  if (mFrames.FirstChild() && !StyleDisplay()->IsContainSize()) {
+  if (mFrames.FirstChild() && (StaticPrefs::layout_css_column_span_enabled() ||
+                               !StyleDisplay()->IsContainSize())) {
     // We want to ignore this in the case that we're size contained
     // because our children should not contribute to our
     // intrinsic size.
+    //
+    // Bug 1499281: When we remove the column-span pref, we can also remove the
+    // contain:size check since nsColumnSetFrame is no longer the outermost
+    // frame in a multicol container, and we need to handle size-containment at
+    // the level of the outermost frame for the contained element.
     iSize = mFrames.FirstChild()->GetMinISize(aRenderingContext);
   }
   const nsStyleColumn* colStyle = StyleColumn();
-  nscoord colISize;
   if (colStyle->mColumnWidth.IsLength()) {
-    colISize = ClampUsedColumnWidth(colStyle->mColumnWidth.AsLength());
+    nscoord colISize =
+        ColumnUtils::ClampUsedColumnWidth(colStyle->mColumnWidth.AsLength());
     // As available width reduces to zero, we reduce our number of columns
     // to one, and don't enforce the column width, so just return the min
     // of the child's min-width with any specified column width.
@@ -501,15 +503,10 @@ nscoord nsColumnSetFrame::GetMinISize(gfxContext* aRenderingContext) {
     NS_ASSERTION(colStyle->mColumnCount > 0,
                  "column-count and column-width can't both be auto");
     // As available width reduces to zero, we still have mColumnCount columns,
-    // so multiply the child's min-width by the number of columns (n) and
-    // include n-1 column gaps.
-    colISize = iSize;
-    iSize *= colStyle->mColumnCount;
-    nscoord colGap = GetColumnGap(this, NS_UNCONSTRAINEDSIZE);
-    iSize += colGap * (colStyle->mColumnCount - 1);
-    // The multiplication above can make 'width' negative (integer overflow),
-    // so use std::max to protect against that.
-    iSize = std::max(iSize, colISize);
+    // so compute our minimum size based on the number of columns and their gaps
+    // and minimum per-column size.
+    nscoord colGap = ColumnUtils::GetColumnGap(this, NS_UNCONSTRAINEDSIZE);
+    iSize = ColumnUtils::IntrinsicISize(colStyle->mColumnCount, colGap, iSize);
   }
   // XXX count forced column breaks here? Maybe we should return the child's
   // min-width times the minimum number of columns.
@@ -524,30 +521,34 @@ nscoord nsColumnSetFrame::GetPrefISize(gfxContext* aRenderingContext) {
   nscoord result = 0;
   DISPLAY_PREF_INLINE_SIZE(this, result);
   const nsStyleColumn* colStyle = StyleColumn();
-  nscoord colGap = GetColumnGap(this, NS_UNCONSTRAINEDSIZE);
 
   nscoord colISize;
   if (colStyle->mColumnWidth.IsLength()) {
-    colISize = ClampUsedColumnWidth(colStyle->mColumnWidth.AsLength());
-  } else if (mFrames.FirstChild() && !StyleDisplay()->IsContainSize()) {
+    colISize =
+        ColumnUtils::ClampUsedColumnWidth(colStyle->mColumnWidth.AsLength());
+  } else if (mFrames.FirstChild() &&
+             (StaticPrefs::layout_css_column_span_enabled() ||
+              !StyleDisplay()->IsContainSize())) {
     // We want to ignore this in the case that we're size contained
     // because our children should not contribute to our
     // intrinsic size.
+    //
+    // Bug 1499281: When we remove the column-span pref, we can also remove the
+    // contain:size check since nsColumnSetFrame is no longer the outermost
+    // frame in a multicol container, and we need to handle size-containment at
+    // the level of the outermost frame for the contained element.
     colISize = mFrames.FirstChild()->GetPrefISize(aRenderingContext);
   } else {
     colISize = 0;
   }
 
-  int32_t numColumns = colStyle->mColumnCount;
-  if (numColumns <= 0) {
-    // if column-count is auto, assume one column
-    numColumns = 1;
-  }
-
-  nscoord iSize = colISize * numColumns + colGap * (numColumns - 1);
-  // The multiplication above can make 'iSize' negative (integer overflow),
-  // so use std::max to protect against that.
-  result = std::max(iSize, colISize);
+  // If column-count is auto, assume one column.
+  uint32_t numColumns =
+      colStyle->mColumnCount == nsStyleColumn::kColumnCountAuto
+          ? 1
+          : colStyle->mColumnCount;
+  nscoord colGap = ColumnUtils::GetColumnGap(this, NS_UNCONSTRAINEDSIZE);
+  result = ColumnUtils::IntrinsicISize(numColumns, colGap, colISize);
   return result;
 }
 
@@ -816,7 +817,6 @@ nsColumnSetFrame::ColumnBalanceData nsColumnSetFrame::ReflowChildren(
       child = nullptr;
       break;
     } else {
-      ++columnCount;
       // Make sure that the column has a next-in-flow. If not, we must
       // create one to hold the overflowing stuff, even if we're just
       // going to put it on our overflow list and let *our*
@@ -856,7 +856,7 @@ nsColumnSetFrame::ColumnBalanceData nsColumnSetFrame::ReflowChildren(
         colData.mHasExcessBSize = true;
       }
 
-      if (columnCount >= aConfig.mBalanceColCount) {
+      if (columnCount >= aConfig.mBalanceColCount - 1) {
         // No more columns allowed here. Stop.
         aStatus.SetNextInFlowNeedsReflow();
         kidNextInFlow->AddStateBits(NS_FRAME_IS_DIRTY);
@@ -884,6 +884,7 @@ nsColumnSetFrame::ColumnBalanceData nsColumnSetFrame::ReflowChildren(
 
     // Advance to the next column
     child = child->GetNextSibling();
+    ++columnCount;
 
     if (child) {
       childOrigin.I(wm) += aConfig.mColISize + aConfig.mColGap;

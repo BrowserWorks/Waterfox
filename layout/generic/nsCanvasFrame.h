@@ -175,9 +175,9 @@ class nsDisplayCanvasBackgroundColor final : public nsDisplaySolidColorBase {
       nsDisplayListBuilder* aBuilder, LayerManager* aManager,
       const ContainerLayerParameters& aParameters) override {
     if (ForceActiveLayers()) {
-      return mozilla::LAYER_ACTIVE;
+      return mozilla::LayerState::LAYER_ACTIVE;
     }
-    return mozilla::LAYER_NONE;
+    return mozilla::LayerState::LAYER_NONE;
   }
   virtual void Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx) override;
 
@@ -192,8 +192,9 @@ class nsDisplayCanvasBackgroundColor final : public nsDisplaySolidColorBase {
 class nsDisplayCanvasBackgroundImage : public nsDisplayBackgroundImage {
  public:
   explicit nsDisplayCanvasBackgroundImage(nsDisplayListBuilder* aBuilder,
+                                          nsIFrame* aFrame,
                                           const InitData& aInitData)
-      : nsDisplayBackgroundImage(aBuilder, aInitData) {}
+      : nsDisplayBackgroundImage(aBuilder, aFrame, aInitData) {}
 
   virtual void Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx) override;
 

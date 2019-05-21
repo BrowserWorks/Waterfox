@@ -434,15 +434,6 @@ class nsLayoutUtils {
    */
   static bool IsPrimaryStyleFrame(const nsIFrame* aFrame);
 
-  /**
-   * Gets the real primary frame associated with the content object.
-   *
-   * In the case of absolutely positioned elements and floated elements,
-   * the real primary frame is the frame that is out of the flow and not the
-   * placeholder frame.
-   */
-  static nsIFrame* GetRealPrimaryFrameFor(const nsIContent* aContent);
-
 #ifdef DEBUG
   // TODO: remove, see bug 598468.
   static bool gPreventAssertInCompareTreePosition;
@@ -1404,6 +1395,15 @@ class nsLayoutUtils {
    * return its (possibly cross-doc) parent.
    */
   static nsIFrame* GetParentOrPlaceholderForCrossDoc(nsIFrame* aFrame);
+
+  /**
+   * Returns the frame that would act as the parent of aFrame when
+   * descending through the frame tree in display list building.
+   * Usually the same as GetParentOrPlaceholderForCrossDoc, except
+   * that pushed floats are treated as children of their containing
+   * block.
+   */
+  static nsIFrame* GetDisplayListParent(nsIFrame* aFrame);
 
   /**
    * Get a frame's next-in-flow, or, if it doesn't have one, its
@@ -3021,18 +3021,11 @@ class nsLayoutUtils {
                                 mozilla::LookAndFeel::FontID aFontID,
                                 const nsFont* aDefaultVariableFont);
 
-  static void ComputeFontFeatures(const nsCSSValuePairList* aFeaturesList,
-                                  nsTArray<gfxFontFeature>& aFeatureSettings);
-
-  static void ComputeFontVariations(
-      const nsCSSValuePairList* aVariationsList,
-      nsTArray<gfxFontVariation>& aVariationSettings);
-
   static uint32_t ParseFontLanguageOverride(const nsAString& aLangTag);
 
   /**
    * Returns true if there are any preferences or overrides that indicate a
-   * need to create a MobileViewportManager.
+   * need to handle <meta name="viewport"> tags.
    */
   static bool ShouldHandleMetaViewport(const mozilla::dom::Document*);
 

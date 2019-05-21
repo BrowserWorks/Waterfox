@@ -19,8 +19,8 @@ module.exports = {
     threadClient,
     tabTarget,
     debuggerClient,
-    sourceMaps,
-    panel
+    workers,
+    panel,
   }: any) =>
     onConnect(
       {
@@ -28,15 +28,15 @@ module.exports = {
         tabConnection: {
           tabTarget,
           threadClient,
-          debuggerClient
-        }
+          debuggerClient,
+        },
       },
-      sourceMaps,
+      workers,
       panel
     ),
   destroy: () => {
     unmountRoot();
     sourceQueue.clear();
     teardownWorkers();
-  }
+  },
 };

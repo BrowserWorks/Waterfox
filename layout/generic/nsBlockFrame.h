@@ -365,7 +365,7 @@ class nsBlockFrame : public nsContainerFrame {
   /**
    * Returns the inline size that needs to be cleared past floats for
    * blocks that cannot intersect floats.  aState must already have
-   * GetAvailableSpace called on it for the block-dir position that we
+   * GetFloatAvailableSpace called on it for the block-dir position that we
    * care about (which need not be its current mBCoord)
    */
   struct ReplacedElementISizeToClear {
@@ -576,6 +576,12 @@ class nsBlockFrame : public nsContainerFrame {
 
   // @see nsIFrame::AddSizeOfExcludingThisForTree
   void AddSizeOfExcludingThisForTree(nsWindowSizes&) const override;
+
+  /**
+   * Clears any -webkit-line-clamp ellipsis on a line in this block or one
+   * of its descendants.
+   */
+  void ClearLineClampEllipsis();
 
  protected:
   /** @see DoRemoveFrame */

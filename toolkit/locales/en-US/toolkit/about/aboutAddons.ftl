@@ -223,9 +223,9 @@ private-browsing-description2 =
     there. We’ve made this change to keep your private browsing private.
     <label data-l10n-name="private-browsing-learn-more">Learn how to manage extension settings</label>
 
-extensions-view-discover =
-    .name = Get Add-ons
-    .tooltiptext = { extensions-view-discover.name }
+extensions-view-discopane =
+    .name = Recommendations
+    .tooltiptext = { extensions-view-discopane.name }
 
 extensions-view-recent-updates =
     .name = Recent Updates
@@ -343,11 +343,55 @@ shortcuts-card-collapse-button = Show Less
 go-back-button =
     .tooltiptext = Go back
 
+## Recommended add-ons page
+
+# Explanatory introduction to the list of recommended add-ons. The action word
+# ("recommends") in the final sentence is a link to external documentation.
+discopane-intro =
+    Extensions and themes are like apps for your browser, and they let you
+    protect passwords, download videos, find deals, block annoying ads, change
+    how your browser looks, and much more. These small software programs are
+    often developed by a third party. Here’s a selection { -brand-product-name }
+    <a data-l10n-name="learn-more-trigger">recommends</a> for exceptional
+    security, performance, and functionality.
+
+# Notice to make user aware that the recommendations are personalized.
+discopane-notice-recommendations =
+    Some of these recommendations are personalized. They are based on other
+    extensions you’ve installed, profile preferences, and usage statistics.
+discopane-notice-learn-more = Learn more
+
+privacy-policy = Privacy Policy
+
+# Refers to the author of an add-on, shown below the name of the add-on.
+# Variables:
+#   $author (string) - The name of the add-on developer.
+created-by-author = by <a data-l10n-name="author">{ $author }</a>
+# Shows the number of daily users of the add-on.
+# Variables:
+#   $dailyUsers (number) - The number of daily users.
+user-count = Users: { $dailyUsers }
+install-extension-button = Add to { -brand-product-name }
+install-theme-button = Install Theme
+# The label of the button that appears after installing an add-on. Upon click,
+# the detailed add-on view is opened, from where the add-on can be managed.
+manage-addon-button = Manage
+find-more-addons = Find more add-ons
+
 ## Add-on actions
+report-addon-button = Report
 remove-addon-button = Remove
 disable-addon-button = Disable
 enable-addon-button = Enable
 expand-addon-button = More Options
+preferences-addon-button =
+    { PLATFORM() ->
+        [windows] Options
+       *[other] Preferences
+    }
+details-addon-button = Details
+release-notes-addon-button = Release Notes
+permissions-addon-button = Permissions
 
 addons-enabled-heading = Enabled
 addons-disabled-heading = Disabled
@@ -362,6 +406,12 @@ addon-detail-last-updated-label = Last Updated
 addon-detail-homepage-label = Homepage
 addon-detail-rating-label = Rating
 
+# The average rating that the add-on has received.
+# Variables:
+#   $rating (number) - A number between 0 and 5. The translation should show at most one digit after the comma.
+five-star-rating =
+  .title = Rated { NUMBER($rating, maximumFractionDigits: 1) } out of 5
+
 # This string is used to show that an add-on is disabled.
 # Variables:
 #   $name (string) - The name of the add-on
@@ -375,6 +425,13 @@ addon-detail-reviews-link =
         [one] { $numberOfReviews } review
        *[other] { $numberOfReviews } reviews
     }
+
+## Pending uninstall message bar
+
+# Variables:
+#   $addon (string) - Name of the add-on
+pending-uninstall-description = <span data-l10n-name="addon-name">{ $addon }</span> has been removed.
+pending-uninstall-undo-button = Undo
 
 addon-detail-updates-label = Allow automatic updates
 addon-detail-updates-radio-default = Default
@@ -393,3 +450,8 @@ addon-detail-private-browsing-disallow = Don’t Allow
 
 available-updates-heading = Available Updates
 recent-updates-heading = Recent Updates
+
+release-notes-loading = Loading…
+release-notes-error = Sorry, but there was an error loading the release notes.
+
+addon-permissions-empty = This extension doesn’t require any permissions

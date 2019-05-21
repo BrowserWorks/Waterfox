@@ -301,7 +301,6 @@ extern const uint32_t ArgLengths[];
                                                                                \
   /* Meta ops generate no code, but contain data for BaselineInspector */      \
   _(MetaTwoByte, Byte, Field, Field)                                           \
-  _(MetaThreeByte, Byte, Field, Field, Field)                                  \
                                                                                \
   /* The *Result ops load a value into the cache's result register. */         \
   _(LoadFixedSlotResult, Id, Field)                                            \
@@ -327,7 +326,9 @@ extern const uint32_t ArgLengths[];
   _(LoadEnvironmentDynamicSlotResult, Id, Field)                               \
   _(LoadObjectResult, Id)                                                      \
   _(CallScriptedGetterResult, Id, Field, Byte)                                 \
+  _(CallScriptedGetterByValueResult, Id, Field, Byte)                          \
   _(CallNativeGetterResult, Id, Field)                                         \
+  _(CallNativeGetterByValueResult, Id, Field)                                  \
   _(CallProxyGetResult, Id, Field)                                             \
   _(CallProxyGetByValueResult, Id, Id)                                         \
   _(CallProxyHasPropResult, Id, Id, Byte)                                      \
@@ -368,7 +369,6 @@ extern const uint32_t ArgLengths[];
   _(LoadValueResult, Field)                                                    \
   _(LoadNewObjectFromTemplateResult, Field, UInt32, UInt32)                    \
                                                                                \
-  _(CallConstStringSplitResult, Field)                                         \
   _(CallStringConcatResult, Id, Id)                                            \
   _(CallStringObjectConcatResult, Id, Id)                                      \
   _(CallIsSuspendedGeneratorResult, Id)                                        \
@@ -631,10 +631,6 @@ enum class MetaTwoByteKind : uint8_t {
   NativeTemplateObject,
   ScriptedTemplateObject,
   ClassTemplateObject,
-};
-
-enum class MetaThreeByteKind : uint8_t {
-  ConstStringSplitData,
 };
 
 #ifdef JS_SIMULATOR
@@ -1438,15 +1434,6 @@ class MOZ_RAII CacheIRWriter : public JS::CustomAutoRooter {
     reuseStubField(classOffset);
     addStubField(uintptr_t(templateObject), StubField::Type::JSObject);
   }
-  void metaConstStringSplitData(FieldOffset strOffset, FieldOffset sepOffset,
-                                FieldOffset templateOffset) {
-    writeOp(CacheOp::MetaThreeByte);
-    buffer_.writeByte(uint32_t(MetaThreeByteKind::ConstStringSplitData));
-    reuseStubField(strOffset);
-    reuseStubField(sepOffset);
-    reuseStubField(templateOffset);
-  }
-
   void megamorphicLoadSlotResult(ObjOperandId obj, PropertyName* name,
                                  bool handleMissing) {
     writeOpWithOperandId(CacheOp::MegamorphicLoadSlotResult, obj);
@@ -1654,8 +1641,17 @@ class MOZ_RAII CacheIRWriter : public JS::CustomAutoRooter {
     addStubField(uintptr_t(getter), StubField::Type::JSObject);
     buffer_.writeByte(cx_->realm() == getter->realm());
   }
+  void callScriptedGetterByValueResult(ValOperandId obj, JSFunction* getter) {
+    writeOpWithOperandId(CacheOp::CallScriptedGetterByValueResult, obj);
+    addStubField(uintptr_t(getter), StubField::Type::JSObject);
+    buffer_.writeByte(cx_->realm() == getter->realm());
+  }
   void callNativeGetterResult(ObjOperandId obj, JSFunction* getter) {
     writeOpWithOperandId(CacheOp::CallNativeGetterResult, obj);
+    addStubField(uintptr_t(getter), StubField::Type::JSObject);
+  }
+  void callNativeGetterByValueResult(ValOperandId obj, JSFunction* getter) {
+    writeOpWithOperandId(CacheOp::CallNativeGetterByValueResult, obj);
     addStubField(uintptr_t(getter), StubField::Type::JSObject);
   }
   void callProxyGetResult(ObjOperandId obj, jsid id) {
@@ -1736,10 +1732,6 @@ class MOZ_RAII CacheIRWriter : public JS::CustomAutoRooter {
   void callStringObjectConcatResult(ValOperandId lhs, ValOperandId rhs) {
     writeOpWithOperandId(CacheOp::CallStringObjectConcatResult, lhs);
     writeOperandId(rhs);
-  }
-  FieldOffset callConstStringSplitResult(ArrayObject* resultTemplate) {
-    writeOp(CacheOp::CallConstStringSplitResult);
-    return addStubField(uintptr_t(resultTemplate), StubField::Type::JSObject);
   }
 
   void compareStringResult(uint32_t op, StringOperandId lhs,
@@ -2378,7 +2370,6 @@ class MOZ_RAII CallIRGenerator : public IRGenerator {
   HandleValueArray args_;
   PropertyTypeCheckInfo typeCheckInfo_;
   BaselineCacheIRStubKind cacheIRStubKind_;
-  bool isFirstStub_;
 
   bool getTemplateObjectForScripted(HandleFunction calleeFunc,
                                     MutableHandleObject result,
@@ -2388,21 +2379,15 @@ class MOZ_RAII CallIRGenerator : public IRGenerator {
   bool getTemplateObjectForClassHook(HandleObject calleeObj,
                                      MutableHandleObject result);
 
-  // Regular stubs
   AttachDecision tryAttachArrayPush();
   AttachDecision tryAttachArrayJoin();
   AttachDecision tryAttachIsSuspendedGenerator();
   AttachDecision tryAttachFunCall();
   AttachDecision tryAttachFunApply();
-  AttachDecision tryAttachSelfHosted(HandleFunction calleeFunc);
   AttachDecision tryAttachCallScripted(HandleFunction calleeFunc);
   AttachDecision tryAttachSpecialCaseCallNative(HandleFunction calleeFunc);
   AttachDecision tryAttachCallNative(HandleFunction calleeFunc);
   AttachDecision tryAttachCallHook(HandleObject calleeObj);
-
-  // Deferred stubs
-  AttachDecision tryAttachConstStringSplit(HandleValue result,
-                                           HandleFunction calleeFunc);
 
   void trackAttached(const char* name);
 
@@ -2410,11 +2395,10 @@ class MOZ_RAII CallIRGenerator : public IRGenerator {
   CallIRGenerator(JSContext* cx, HandleScript script, jsbytecode* pc, JSOp op,
                   ICState::Mode mode, uint32_t argc, HandleValue callee,
                   HandleValue thisval, HandleValue newTarget,
-                  HandleValueArray args, bool isFirstStub);
+                  HandleValueArray args);
 
   AttachDecision tryAttachStub();
 
-  bool isOptimizableConstStringSplit(HandleFunction calleeFunc);
   AttachDecision tryAttachDeferredStub(HandleValue result);
 
   BaselineCacheIRStubKind cacheIRStubKind() const { return cacheIRStubKind_; }

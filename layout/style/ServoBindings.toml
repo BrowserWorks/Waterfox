@@ -35,6 +35,7 @@ headers = [
     "nsNameSpaceManager.h",
     "nsMediaFeatures.h",
     "nsXBLBinding.h",
+    "GeckoProfiler.h",
 ]
 raw-lines = [
     # FIXME(emilio): Incrementally remove these "pub use"s. Probably
@@ -51,6 +52,8 @@ hide-types = [
     ".*incompatible_char_type",
     # https://github.com/rust-lang/rust-bindgen/issues/1503
     "mozilla::StyleTimingFunction.*",
+    # https://github.com/rust-lang/rust-bindgen/issues/1559
+    "mozilla::StyleGenericTransformOperation_.*",
 ]
 bitfield-enums = [
     "nsChangeHint",
@@ -159,6 +162,7 @@ whitelist-vars = [
     "GECKO_IS_NIGHTLY",
     "mozilla::detail::gGkAtoms",
     "mozilla::detail::kGkAtomsArrayOffset",
+    "mozilla::profiler::detail::RacyFeatures::sActiveAndFeatures",
 ]
 # TODO(emilio): A bunch of types here can go away once we generate bindings and
 # structs together.
@@ -328,8 +332,10 @@ whitelist-types = [
     "mozilla::dom::MediaList",
     "mozilla::StyleRuleInclusion",
     "nsStyleTransformMatrix::MatrixTransformOperator",
+    "mozilla::profiler::detail::RacyFeatures",
 ]
 opaque-types = [
+    "mozilla::StyleThinArc", # https://github.com/rust-lang/rust-bindgen/issues/1557
     "std::pair__PCCP",
     "std::namespace::atomic___base", "std::atomic__My_base",
     "std::atomic",
@@ -456,7 +462,7 @@ cbindgen-types = [
     { gecko = "StyleContain", servo = "values::computed::Contain" },
     { gecko = "StyleRestyleHint", servo = "invalidation::element::restyle_hints::RestyleHint" },
     { gecko = "StyleTouchAction", servo = "values::computed::TouchAction" },
-    { gecko = "StyleWillChangeBits", servo = "values::specified::box_::WillChangeBits" },
+    { gecko = "StyleWillChange", servo = "values::specified::box_::WillChange" },
     { gecko = "StyleTextDecorationLine", servo = "values::computed::TextDecorationLine" },
     { gecko = "StyleTextTransform", servo = "values::computed::TextTransform" },
     { gecko = "StyleMozListReversed", servo = "values::computed::MozListReversed" },
@@ -473,6 +479,21 @@ cbindgen-types = [
     { gecko = "StyleGenericGradientItem", servo = "values::generics::image::GradientItem" },
     { gecko = "StyleGenericVerticalAlign", servo = "values::generics::box_::VerticalAlign" },
     { gecko = "StyleVerticalAlignKeyword", servo = "values::generics::box_::VerticalAlignKeyword" },
+    { gecko = "StyleGenericBasicShape", servo = "values::generics::basic_shape::BasicShape" },
+    { gecko = "StyleArcSlice", servo = "style_traits::arc_slice::ArcSlice" },
+    { gecko = "StyleForgottenArcSlicePtr", servo = "style_traits::arc_slice::ForgottenArcSlicePtr" },
+    { gecko = "StyleOwnedSlice", servo = "style_traits::owned_slice::OwnedSlice" },
+    { gecko = "StyleMozContextProperties", servo = "values::specified::svg::MozContextProperties" },
+    { gecko = "StyleQuotes", servo = "values::specified::list::Quotes" },
+    { gecko = "StyleOwnedStr", servo = "style_traits::owned_str::OwnedStr" },
+    { gecko = "StyleGenericBoxShadow", servo = "values::generics::effects::BoxShadow" },
+    { gecko = "StyleGenericSimpleShadow", servo = "values::generics::effects::SimpleShadow" },
+    { gecko = "StyleGenericTransformOperation", servo = "values::generics::transform::TransformOperation" },
+    { gecko = "StyleGenericTransform", servo = "values::generics::transform::Transform" },
+    { gecko = "StyleGenericScale", servo = "values::generics::transform::Scale" },
+    { gecko = "StyleGenericRotate", servo = "values::generics::transform::Rotate" },
+    { gecko = "StyleGenericTranslate", servo = "values::generics::transform::Translate" },
+    { gecko = "StyleAngle", servo = "values::computed::Angle" }
 ]
 
 mapped-generic-types = [
@@ -484,14 +505,11 @@ mapped-generic-types = [
     { generic = false, gecko = "mozilla::ServoVisitedStyle", servo = "Option<::servo_arc::RawOffsetArc<::properties::ComputedValues>>" },
     { generic = false, gecko = "mozilla::ServoComputedValueFlags", servo = "::properties::computed_value_flags::ComputedValueFlags" },
     { generic = true, gecko = "mozilla::ServoRawOffsetArc", servo = "::servo_arc::RawOffsetArc" },
+    { generic = true, gecko = "mozilla::ServoManuallyDrop", servo = "::std::mem::ManuallyDrop" },
     { generic = false, gecko = "nsACString", servo = "nsstring::nsACString" },
     { generic = false, gecko = "nsAString", servo = "nsstring::nsAString" },
     { generic = false, gecko = "nsCString", servo = "nsstring::nsCString" },
-    { generic = false, gecko = "nsString", servo = "nsstring::nsStringRepr" },
+    { generic = false, gecko = "nsString", servo = "nsstring::nsString" },
 ]
 
 whitelist-functions = ["Servo_.*", "Gecko_.*"]
-
-fixups = [
-    { pat = "\\broot\\s*::\\s*nsTString\\s*<\\s*u16\\s*>", rep = "::nsstring::nsStringRepr" },
-]

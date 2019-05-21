@@ -89,6 +89,17 @@ static inline bool DependsOnIntrinsicSize(const nsIFrame* aEmbeddingFrame) {
   return !width.ConvertsToLength() || !height.ConvertsToLength();
 }
 
+// The CSS Containment spec says that size-contained replaced elements must be
+// treated as having an intrinsic width and height of 0.  That's applicable to
+// outer SVG frames, unless they're the outermost element (in which case
+// they're not really "replaced", and there's no outer context to contain sizes
+// from leaking into). Hence, we check for a parent element before we bother
+// testing for 'contain:size'.
+static inline bool IsReplacedAndContainSize(const nsSVGOuterSVGFrame* aFrame) {
+  return aFrame->GetContent()->GetParent() &&
+         aFrame->StyleDisplay()->IsContainSize();
+}
+
 void nsSVGOuterSVGFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
                               nsIFrame* aPrevInFlow) {
   NS_ASSERTION(aContent->IsSVGElement(nsGkAtoms::svg),
@@ -168,7 +179,7 @@ nscoord nsSVGOuterSVGFrame::GetPrefISize(gfxContext* aRenderingContext) {
       wm.IsVertical() ? svg->mLengthAttributes[SVGSVGElement::ATTR_HEIGHT]
                       : svg->mLengthAttributes[SVGSVGElement::ATTR_WIDTH];
 
-  if (StyleDisplay()->IsContainSize()) {
+  if (IsReplacedAndContainSize(this)) {
     result = nscoord(0);
   } else if (isize.IsPercentage()) {
     // It looks like our containing block's isize may depend on our isize. In
@@ -205,7 +216,7 @@ IntrinsicSize nsSVGOuterSVGFrame::GetIntrinsicSize() {
   // XXXjwatt Note that here we want to return the CSS width/height if they're
   // specified and we're embedded inside an nsIObjectLoadingContent.
 
-  if (StyleDisplay()->IsContainSize()) {
+  if (IsReplacedAndContainSize(this)) {
     // Intrinsic size of 'contain:size' replaced elements is 0,0.
     return IntrinsicSize(0, 0);
   }
@@ -235,7 +246,7 @@ IntrinsicSize nsSVGOuterSVGFrame::GetIntrinsicSize() {
 
 /* virtual */
 AspectRatio nsSVGOuterSVGFrame::GetIntrinsicRatio() {
-  if (StyleDisplay()->IsContainSize()) {
+  if (IsReplacedAndContainSize(this)) {
     return AspectRatio();
   }
 
@@ -527,10 +538,10 @@ void nsSVGOuterSVGFrame::UnionChildOverflow(nsOverflowAreas& aOverflowAreas) {
 /**
  * Used to paint/hit-test SVG when SVG display lists are disabled.
  */
-class nsDisplayOuterSVG final : public nsDisplayItem {
+class nsDisplayOuterSVG final : public nsPaintedDisplayItem {
  public:
   nsDisplayOuterSVG(nsDisplayListBuilder* aBuilder, nsSVGOuterSVGFrame* aFrame)
-      : nsDisplayItem(aBuilder, aFrame) {
+      : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayOuterSVG);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING

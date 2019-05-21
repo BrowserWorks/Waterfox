@@ -30,8 +30,9 @@ browser.jar:
         content/browser/browser.js                    (content/browser.js)
 #ifdef MOZ_BROWSER_XHTML
 *       content/browser/browser.xhtml                 (content/browser.xhtml)
-#endif
+#else
 *       content/browser/browser.xul                   (content/browser.xul)
+#endif
         content/browser/browser-addons.js             (content/browser-addons.js)
         content/browser/browser-allTabsMenu.js        (content/browser-allTabsMenu.js)
         content/browser/browser-captivePortal.js      (content/browser-captivePortal.js)
@@ -52,6 +53,7 @@ browser.jar:
         content/browser/browser-safebrowsing.js       (content/browser-safebrowsing.js)
         content/browser/browser-sidebar.js            (content/browser-sidebar.js)
         content/browser/browser-siteIdentity.js       (content/browser-siteIdentity.js)
+        content/browser/browser-siteProtections.js    (content/browser-siteProtections.js)
         content/browser/browser-sync.js               (content/browser-sync.js)
         content/browser/browser-tabsintitlebar.js     (content/browser-tabsintitlebar.js)
         content/browser/browser-toolbarKeyNav.js      (content/browser-toolbarKeyNav.js)

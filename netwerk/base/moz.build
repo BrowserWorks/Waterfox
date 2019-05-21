@@ -173,6 +173,7 @@ EXPORTS.mozilla.net += [
     'ReferrerPolicy.h',
     'RequestContextService.h',
     'SimpleChannelParent.h',
+    'SSLTokensCache.h',
     'TCPFastOpen.h',
 ]
 
@@ -241,6 +242,7 @@ UNIFIED_SOURCES += [
     'SimpleBuffer.cpp',
     'SimpleChannel.cpp',
     'SimpleChannelParent.cpp',
+    'SSLTokensCache.cpp',
     'TCPFastOpenLayer.cpp',
     'ThrottleQueue.cpp',
     'Tickler.cpp',
@@ -313,6 +315,11 @@ LOCAL_INCLUDES += [
     '/netwerk/socket',
     '/netwerk/url-classifier',
 ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    LOCAL_INCLUDES += [
+        '/xpcom/base',
+    ]
 
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += ['-Wno-error=shadow']

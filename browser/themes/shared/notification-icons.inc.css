@@ -250,6 +250,7 @@ html|*#webRTC-previewVideo {
   list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric-16.svg);
 }
 
+.install-icon.blocked-permission-icon,
 .popup-notification-icon[popupid="xpinstall-disabled"],
 .popup-notification-icon[popupid="addon-install-blocked"],
 .popup-notification-icon[popupid="addon-install-origin-blocked"] {
@@ -379,5 +380,10 @@ html|*#webRTC-previewVideo {
 .popup-notification-icon[popupid="update-manual"],
 .popup-notification-icon[popupid="update-restart"] {
   background: #74BF43 url(chrome://browser/skin/notification-icons/update.svg) no-repeat center;
+  border-radius: 50%;
+}
+
+.popup-notification-icon[popupid="update-unsupported"] {
+  background: #FFE900 url(chrome://browser/skin/notification-icons/update.svg) no-repeat center;
   border-radius: 50%;
 }

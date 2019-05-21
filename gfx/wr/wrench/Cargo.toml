@@ -4,6 +4,7 @@ version = "0.3.0"
 authors = ["Vladimir Vukicevic <vladimir@pobox.com>"]
 build = "build.rs"
 license = "MPL-2.0"
+edition = "2018"
 
 [dependencies]
 base64 = "0.10"
@@ -28,6 +29,7 @@ webrender = {path = "../webrender", features=["capture","replay","debugger","png
 webrender_api = {path = "../webrender_api", features=["serialize","deserialize"]}
 winit = "0.16"
 serde = {version = "1.0", features = ["derive"] }
+semver = "0.9.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.17.1"

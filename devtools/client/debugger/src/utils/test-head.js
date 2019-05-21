@@ -15,6 +15,7 @@ import reducers from "../reducers";
 import actions from "../actions";
 import * as selectors from "../selectors";
 import { getHistory } from "../test/utils/history";
+import { parserWorker } from "../test/tests-setup";
 import configureStore from "../actions/utils/create-store";
 import sourceQueue from "../utils/source-queue";
 import type { Source, OriginalSourceData, GeneratedSourceData } from "../types";
@@ -31,7 +32,7 @@ import type { Source, OriginalSourceData, GeneratedSourceData } from "../types";
 function createStore(client: any, initialState: any = {}, sourceMapsMock: any) {
   client = {
     hasWasmSupport: () => true,
-    ...client
+    ...client,
   };
 
   const store = configureStore({
@@ -41,14 +42,15 @@ function createStore(client: any, initialState: any = {}, sourceMapsMock: any) {
       return {
         ...args,
         client,
-        sourceMaps: sourceMapsMock !== undefined ? sourceMapsMock : sourceMaps
+        sourceMaps: sourceMapsMock !== undefined ? sourceMapsMock : sourceMaps,
+        parser: parserWorker,
       };
-    }
+    },
   })(combineReducers(reducers), initialState);
   sourceQueue.clear();
   sourceQueue.initialize({
     newQueuedSources: sources =>
-      store.dispatch(actions.newQueuedSources(sources))
+      store.dispatch(actions.newQueuedSources(sources)),
   });
 
   store.thunkArgs = () => ({
@@ -56,7 +58,7 @@ function createStore(client: any, initialState: any = {}, sourceMapsMock: any) {
     getState: store.getState,
     client,
     sourceMaps,
-    panel: {}
+    panel: {},
   });
 
   // Put the initial context in the store, for convenience to unit tests.
@@ -79,7 +81,7 @@ function makeFrame({ id, sourceId }: Object, opts: Object = {}) {
     scope: { bindings: { variables: {}, arguments: [] } },
     location: { sourceId, line: 4 },
     thread: "FakeThread",
-    ...opts
+    ...opts,
   };
 }
 
@@ -89,7 +91,7 @@ function createSourceObject(
     sourceMapURL?: string,
     introductionType?: string,
     introductionUrl?: string,
-    isBlackBoxed?: boolean
+    isBlackBoxed?: boolean,
   } = {}
 ): Source {
   return ({
@@ -99,14 +101,14 @@ function createSourceObject(
     isPrettyPrinted: false,
     introductionUrl: props.introductionUrl || null,
     introductionType: props.introductionType || null,
-    isExtension: false
+    isExtension: false,
   }: any);
 }
 
 function createOriginalSourceObject(generated: Source): Source {
   const rv = {
     ...generated,
-    id: `${generated.id}/originalSource`
+    id: `${generated.id}/originalSource`,
   };
 
   return (rv: any);
@@ -120,7 +122,7 @@ type MakeSourceProps = {
   sourceMapURL?: string,
   introductionType?: string,
   introductionUrl?: string,
-  isBlackBoxed?: boolean
+  isBlackBoxed?: boolean,
 };
 function createMakeSource(): (
   // The name of the file that this actor is part of.
@@ -142,8 +144,8 @@ function createMakeSource(): (
         sourceMapURL: props.sourceMapURL || null,
         introductionType: props.introductionType || null,
         introductionUrl: props.introductionUrl || null,
-        isBlackBoxed: !!props.isBlackBoxed
-      }
+        isBlackBoxed: !!props.isBlackBoxed,
+      },
     };
   };
 }
@@ -170,7 +172,7 @@ function makeSource(name: string, props?: MakeSourceProps) {
 function makeOriginalSource(source: Source): OriginalSourceData {
   return {
     id: `${source.id}/originalSource`,
-    url: `${source.url}-original`
+    url: `${source.url}-original`,
   };
 }
 
@@ -180,11 +182,11 @@ function makeFuncLocation(startLine, endLine) {
   }
   return {
     start: {
-      line: startLine
+      line: startLine,
     },
     end: {
-      line: endLine
-    }
+      line: endLine,
+    },
   };
 }
 
@@ -198,7 +200,7 @@ function makeSymbolDeclaration(
     id: `${name}:${start}`,
     name,
     location: makeFuncLocation(start, end),
-    klass
+    klass,
   };
 }
 
@@ -271,5 +273,5 @@ export {
   makeSymbolDeclaration,
   waitForState,
   watchForState,
-  getHistory
+  getHistory,
 };

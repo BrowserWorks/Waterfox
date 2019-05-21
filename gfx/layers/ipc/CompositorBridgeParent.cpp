@@ -80,6 +80,7 @@
 #ifdef XP_WIN
 #  include "mozilla/layers/CompositorD3D11.h"
 #  include "mozilla/widget/WinCompositorWidget.h"
+#  include "mozilla/WindowsVersion.h"
 #endif
 #include "GeckoProfiler.h"
 #include "mozilla/ipc/ProtocolTypes.h"
@@ -1291,6 +1292,9 @@ bool CompositorBridgeParent::SetTestSampleTime(const LayersId& aId,
   }
 
   mTestTime = Some(aTime);
+  if (mApzcTreeManager) {
+    mApzcTreeManager->SetTestSampleTime(mTestTime);
+  }
 
   if (mWrBridge) {
     mWrBridge->FlushRendering();
@@ -1318,6 +1322,9 @@ bool CompositorBridgeParent::SetTestSampleTime(const LayersId& aId,
 
 void CompositorBridgeParent::LeaveTestMode(const LayersId& aId) {
   mTestTime = Nothing();
+  if (mApzcTreeManager) {
+    mApzcTreeManager->SetTestSampleTime(mTestTime);
+  }
 }
 
 void CompositorBridgeParent::ApplyAsyncProperties(
@@ -1543,6 +1550,15 @@ RefPtr<Compositor> CompositorBridgeParent::NewCompositor(
 PLayerTransactionParent* CompositorBridgeParent::AllocPLayerTransactionParent(
     const nsTArray<LayersBackend>& aBackendHints, const LayersId& aId) {
   MOZ_ASSERT(!aId.IsValid());
+
+#ifdef XP_WIN
+  // This is needed to avoid freezing the window on a device crash on double
+  // buffering, see bug 1549674.
+  if (gfxPrefs::Direct3D11UseDoubleBuffering() && IsWin10OrLater() &&
+      XRE_IsGPUProcess()) {
+    mWidget->AsWindows()->EnsureCompositorWindow();
+  }
+#endif
 
   InitializeLayerManager(aBackendHints);
 
@@ -2595,12 +2611,18 @@ int32_t RecordContentFrameTime(
 mozilla::ipc::IPCResult CompositorBridgeParent::RecvBeginRecording(
     const TimeStamp& aRecordingStart) {
   mCompositionRecorder.reset(new CompositionRecorder(aRecordingStart));
-  mLayerManager->SetCompositionRecorder(mCompositionRecorder.get());
+
+  if (mLayerManager) {
+    mLayerManager->SetCompositionRecorder(mCompositionRecorder.get());
+  }
+
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult CompositorBridgeParent::RecvEndRecording() {
-  mLayerManager->SetCompositionRecorder(nullptr);
+  if (mLayerManager) {
+    mLayerManager->SetCompositionRecorder(nullptr);
+  }
   mCompositionRecorder->WriteCollectedFrames();
   mCompositionRecorder.reset(nullptr);
   return IPC_OK();

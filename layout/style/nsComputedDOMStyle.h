@@ -188,8 +188,7 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
 
   already_AddRefed<CSSValue> GetMarginWidthFor(mozilla::Side aSide);
 
-  already_AddRefed<CSSValue> GetTransformValue(
-      nsCSSValueSharedList* aSpecifiedTransform);
+  already_AddRefed<CSSValue> GetTransformValue(const mozilla::StyleTransform&);
 
   // Appends all aLineNames (may be empty) space-separated to aResult.
   void AppendGridLineNames(nsString& aResult,
@@ -295,9 +294,7 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
   void SetValueToURLValue(const mozilla::css::URLValue* aURL,
                           nsROCSSPrimitiveValue* aValue);
 
-  void SetValueToSize(nsROCSSPrimitiveValue* aValue, const mozilla::StyleSize&,
-                      nscoord aMinAppUnits = nscoord_MIN,
-                      nscoord aMaxAppUnits = nscoord_MAX);
+  void SetValueToSize(nsROCSSPrimitiveValue* aValue, const mozilla::StyleSize&);
 
   void SetValueToLengthPercentageOrAuto(nsROCSSPrimitiveValue* aValue,
                                         const LengthPercentageOrAuto&,
@@ -305,9 +302,7 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
 
   void SetValueToLengthPercentage(nsROCSSPrimitiveValue* aValue,
                                   const LengthPercentage&,
-                                  bool aClampNegativeCalc,
-                                  nscoord aMinAppUnits = nscoord_MIN,
-                                  nscoord aMaxAppUnits = nscoord_MAX);
+                                  bool aClampNegativeCalc);
 
   void SetValueToMaxSize(nsROCSSPrimitiveValue* aValue, const StyleMaxSize&);
 
@@ -331,9 +326,7 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
   void SetValueToCoord(nsROCSSPrimitiveValue* aValue,
                        const nsStyleCoord& aCoord, bool aClampNegativeCalc,
                        PercentageBaseGetter aPercentageBaseGetter = nullptr,
-                       const KTableEntry aTable[] = nullptr,
-                       nscoord aMinAppUnits = nscoord_MIN,
-                       nscoord aMaxAppUnits = nscoord_MAX);
+                       const KTableEntry aTable[] = nullptr);
 
   /**
    * If aCoord is a eStyleUnit_Coord returns the nscoord.  If it's
@@ -374,20 +367,6 @@ class nsComputedDOMStyle final : public nsDOMCSSDeclaration,
   /* Helper functions for computing and serializing a nsStyleCoord. */
   void SetCssTextToCoord(nsAString& aCssText, const nsStyleCoord& aCoord,
                          bool aClampNegativeCalc);
-
-  template <typename ReferenceBox>
-  already_AddRefed<CSSValue> CreatePrimitiveValueForShapeSource(
-      const mozilla::UniquePtr<mozilla::StyleBasicShape>& aStyleBasicShape,
-      ReferenceBox aReferenceBox, const KTableEntry aBoxKeywordTable[]);
-
-  // Helper function for computing basic shape styles.
-  already_AddRefed<CSSValue> CreatePrimitiveValueForBasicShape(
-      const mozilla::UniquePtr<mozilla::StyleBasicShape>& aStyleBasicShape);
-  void BoxValuesToString(nsAString& aString,
-                         const nsTArray<nsStyleCoord>& aBoxValues,
-                         bool aClampNegativeCalc);
-  void BasicShapeRadiiToString(nsAString& aCssText,
-                               const mozilla::BorderRadius&);
 
   // Find out if we can safely skip flushing (i.e. pending restyles do not
   // affect mElement).

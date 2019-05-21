@@ -7,7 +7,10 @@ header = """/* This Source Code Form is subject to the terms of the Mozilla Publ
 #ifdef __clang__
 #  pragma GCC diagnostic ignored "-Wreturn-type-c-linkage"
 #endif"""
-trailer = "#pragma GCC diagnostic pop"
+trailer = """
+#pragma GCC diagnostic pop
+#include "mozilla/ServoStyleConstsInlines.h"
+"""
 autogen_warning = """/* DO NOT MODIFY THIS MANUALLY! This file was generated using cbindgen.
  * To generate this file:
  *   1. Get the latest cbindgen using `cargo install --force cbindgen`
@@ -26,7 +29,7 @@ includes = ["mozilla/ServoStyleConstsForwards.h"]
 
 [parse]
 parse_deps = true
-include = ["style", "cssparser", "style_traits"]
+include = ["style", "cssparser", "style_traits", "servo_arc"]
 
 [struct]
 derive_eq = true
@@ -38,6 +41,7 @@ bitflags = true
 [enum]
 derive_helper_methods = true
 derive_const_casts = true
+derive_tagged_enum_destructor = true
 cast_assert_name = "MOZ_ASSERT"
 
 [export]
@@ -106,7 +110,7 @@ include = [
   "Origin",
   "RestyleHint",
   "TouchAction",
-  "WillChangeBits",
+  "WillChange",
   "TextDecorationLine",
   "TextTransform",
   "MozListReversed",
@@ -118,6 +122,19 @@ include = [
   "ColorOrAuto",
   "GradientItem",
   "VerticalAlign",
+  "BasicShape",
+  "ShapeRadius",
+  "ArcSlice",
+  "ForgottenArcSlicePtr",
+  "HeaderWithLength",
+  "MozContextProperties",
+  "Quotes",
+  "BoxShadow",
+  "SimpleShadow",
+  "Transform",
+  "Rotate",
+  "Scale",
+  "Translate",
 ]
 item_types = ["enums", "structs", "typedefs", "functions"]
 renaming_overrides_prefixing = true
@@ -174,6 +191,7 @@ renaming_overrides_prefixing = true
 "CSSPixelLength" = """
   inline nscoord ToAppUnits() const;
   inline bool IsZero() const;
+  float ToCSSPixels() const { return _0; }
 """
 
 "LengthPercentage" = """
@@ -330,4 +348,97 @@ renaming_overrides_prefixing = true
   static inline StyleRGBA FromColor(nscolor);
 
   inline nscolor ToColor() const;
+"""
+
+"OwnedSlice" = """
+  StyleOwnedSlice() :
+    ptr((T*)alignof(T)),
+    len(0) {}
+
+  // Should be easily implementable if wanted, but the default implementation would leak.
+  StyleOwnedSlice& operator=(const StyleOwnedSlice&) = delete;
+  StyleOwnedSlice& operator=(StyleOwnedSlice&&) = delete;
+
+  inline StyleOwnedSlice(const StyleOwnedSlice&);
+  inline StyleOwnedSlice(StyleOwnedSlice&&);
+
+  inline void Clear();
+
+  inline ~StyleOwnedSlice();
+
+  Span<const T> AsSpan() const {
+    return MakeSpan(ptr, len);
+  }
+
+  size_t Length() const {
+    return AsSpan().Length();
+  }
+
+  bool IsEmpty() const { return Length() == 0; }
+
+  bool operator==(const StyleOwnedSlice& other) const {
+    return AsSpan() == other.AsSpan();
+  }
+
+  bool operator!=(const StyleOwnedSlice& other) const {
+    return !(*this == other);
+  }
+"""
+
+"ArcSlice" = """
+  inline StyleArcSlice();
+  inline StyleArcSlice(const StyleArcSlice& aOther);
+
+  // Should be easily implementable if wanted, but the default implementation would leak.
+  StyleArcSlice& operator=(const StyleArcSlice&) = delete;
+  StyleArcSlice& operator=(StyleArcSlice&&) = delete;
+
+  inline explicit StyleArcSlice(const StyleForgottenArcSlicePtr<T>& aPtr);
+  inline ~StyleArcSlice();
+  inline Span<const T> AsSpan() const;
+  inline size_t Length() const;
+  inline bool IsEmpty() const;
+  inline bool operator==(const StyleArcSlice& other) const;
+  inline bool operator!=(const StyleArcSlice& other) const;
+"""
+
+"CustomIdent" = """
+  inline nsAtom* AsAtom() const;
+"""
+
+"Atom" = """
+  StyleAtom(size_t) = delete;
+  StyleAtom() = delete;
+
+  // NOTE(emilio): For now we don't need to expose anything else, but it'd be trivial if we wanted to.
+  inline bool IsStatic() const;
+  inline nsAtom* AsAtom() const;
+
+  inline StyleAtom(const StyleAtom& aOther);
+  inline ~StyleAtom();
+"""
+
+"OwnedStr" = """
+  inline nsDependentCSubstring AsString() const;
+"""
+
+"GenericTransform" = """
+  inline Span<const T> Operations() const;
+  inline bool IsNone() const;
+"""
+
+"GenericTransformOperation" = """
+ private:
+  // Private default constructor without initialization so that the helper
+  // constructor functions still work as expected. They take care of
+  // initializing the fields properly.
+  StyleGenericTransformOperation() {}
+ public:
+"""
+
+
+"Angle" = """
+  inline static StyleAngle Zero();
+  inline float ToDegrees() const;
+  inline double ToRadians() const;
 """

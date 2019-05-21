@@ -193,6 +193,43 @@ var WebConsoleUtils = {
         return null;
     }
   },
+
+  /**
+   * Remove any frames in a stack that are above a debugger-triggered evaluation
+   * and will correspond with devtools server code, which we never want to show
+   * to the user.
+   *
+   * @param array stack
+   *        An array of frames, with the topmost first, and each of which has a
+   *        'filename' property.
+   * @return array
+   *         An array of stack frames with any devtools server frames removed.
+   *         The original array is not modified.
+   */
+  removeFramesAboveDebuggerEval(stack) {
+    const debuggerEvalFilename = "debugger eval code";
+
+    // Remove any frames for server code above the last debugger eval frame.
+    const evalIndex = stack.findIndex(({ filename }, idx, arr) => {
+      const nextFrame = arr[idx + 1];
+      return filename == debuggerEvalFilename
+        && (!nextFrame || nextFrame.filename !== debuggerEvalFilename);
+    });
+    if (evalIndex != -1) {
+      return stack.slice(0, evalIndex + 1);
+    }
+
+    // In some cases (e.g. evaluated expression with SyntaxError), we might not have a
+    // "debugger eval code" frame but still have internal ones. If that's the case, we
+    // return null as the end user shouldn't see those frames.
+    if (stack.some(({ filename }) =>
+      filename && filename.startsWith("resource://devtools/"))
+    ) {
+      return null;
+    }
+
+    return stack;
+  },
 };
 
 exports.WebConsoleUtils = WebConsoleUtils;

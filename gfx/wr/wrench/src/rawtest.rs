@@ -2,15 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use {WindowWrapper, NotifierEvent};
-use blob;
+use crate::{WindowWrapper, NotifierEvent};
+use crate::blob;
 use euclid::{point2, size2, rect};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicIsize, Ordering};
 use std::sync::mpsc::Receiver;
 use webrender::api::*;
 use webrender::api::units::*;
-use wrench::Wrench;
+use crate::wrench::Wrench;
 
 pub struct RawtestHarness<'a> {
     wrench: &'a mut Wrench,
@@ -952,8 +952,8 @@ impl<'a> RawtestHarness<'a> {
                         offset: LayoutVector2D::new(1.0, 1.0),
                         blur_radius: 1.0,
                         color: ColorF::new(0.0, 0.0, 0.0, 1.0),
-                        should_inflate: true,
                     },
+                    true,
                 );
                 let info = CommonItemProperties {
                     clip_rect: rect(110., 110., 50., 2.),
@@ -1030,8 +1030,8 @@ impl<'a> RawtestHarness<'a> {
                     offset: LayoutVector2D::new(1.0, 1.0),
                     blur_radius: 1.0,
                     color: shadow_color,
-                    should_inflate: true,
                 },
+                true,
             );
             let info = self.make_common_properties(rect(110., 110., 50., 2.));
             builder.push_line(

@@ -5,15 +5,15 @@
 use api::{BorderRadius, BorderSide, BorderStyle, ColorF, ColorU};
 use api::{NormalBorder as ApiNormalBorder, RepeatMode};
 use api::units::*;
-use ellipse::Ellipse;
+use crate::ellipse::Ellipse;
 use euclid::vec2;
-use display_list_flattener::DisplayListFlattener;
-use gpu_types::{BorderInstance, BorderSegment, BrushFlags};
-use prim_store::{BorderSegmentInfo, BrushSegment, NinePatchDescriptor};
-use prim_store::{EdgeAaSegmentMask, ScrollNodeAndClipChain};
-use prim_store::borders::{NormalBorderPrim, NormalBorderData};
-use util::{lerp, RectHelpers};
-use internal_types::LayoutPrimitiveInfo;
+use crate::display_list_flattener::DisplayListFlattener;
+use crate::gpu_types::{BorderInstance, BorderSegment, BrushFlags};
+use crate::prim_store::{BorderSegmentInfo, BrushSegment, NinePatchDescriptor};
+use crate::prim_store::{EdgeAaSegmentMask, ScrollNodeAndClipChain};
+use crate::prim_store::borders::{NormalBorderPrim, NormalBorderData};
+use crate::util::{lerp, RectHelpers};
+use crate::internal_types::LayoutPrimitiveInfo;
 
 // Using 2048 as the maximum radius in device space before which we
 // start stretching is up for debate.
@@ -654,6 +654,17 @@ pub fn create_border_segments(
         size,
     );
 
+    let overlap = LayoutSize::new(
+        (widths.left + widths.right - size.width).max(0.0),
+        (widths.top + widths.bottom - size.height).max(0.0),
+    );
+    let non_overlapping_widths = LayoutSideOffsets::new(
+        widths.top - overlap.height / 2.0,
+        widths.right - overlap.width / 2.0,
+        widths.bottom - overlap.height / 2.0,
+        widths.left - overlap.width / 2.0,
+    );
+
     let local_size_tl = LayoutSize::new(
         border.radius.top_left.width.max(widths.left),
         border.radius.top_left.height.max(widths.top),
@@ -697,12 +708,12 @@ pub fn create_border_segments(
         LayoutRect::from_floats(
             rect.origin.x,
             rect.origin.y + local_size_tl.height + left_edge_info.local_offset,
-            rect.origin.x + widths.left,
+            rect.origin.x + non_overlapping_widths.left,
             rect.origin.y + local_size_tl.height + left_edge_info.local_offset + left_edge_info.local_size,
         ),
         &left_edge_info,
         border.left,
-        widths.left,
+        non_overlapping_widths.left,
         BorderSegment::Left,
         EdgeAaSegmentMask::LEFT | EdgeAaSegmentMask::RIGHT,
         brush_segments,
@@ -714,11 +725,11 @@ pub fn create_border_segments(
             rect.origin.x + local_size_tl.width + top_edge_info.local_offset,
             rect.origin.y,
             rect.origin.x + local_size_tl.width + top_edge_info.local_offset + top_edge_info.local_size,
-            rect.origin.y + widths.top,
+            rect.origin.y + non_overlapping_widths.top,
         ),
         &top_edge_info,
         border.top,
-        widths.top,
+        non_overlapping_widths.top,
         BorderSegment::Top,
         EdgeAaSegmentMask::TOP | EdgeAaSegmentMask::BOTTOM,
         brush_segments,
@@ -727,14 +738,14 @@ pub fn create_border_segments(
     );
     add_edge_segment(
         LayoutRect::from_floats(
-            rect.origin.x + rect.size.width - widths.right,
+            rect.origin.x + rect.size.width - non_overlapping_widths.right,
             rect.origin.y + local_size_tr.height + right_edge_info.local_offset,
             rect.origin.x + rect.size.width,
             rect.origin.y + local_size_tr.height + right_edge_info.local_offset + right_edge_info.local_size,
         ),
         &right_edge_info,
         border.right,
-        widths.right,
+        non_overlapping_widths.right,
         BorderSegment::Right,
         EdgeAaSegmentMask::RIGHT | EdgeAaSegmentMask::LEFT,
         brush_segments,
@@ -744,13 +755,13 @@ pub fn create_border_segments(
     add_edge_segment(
         LayoutRect::from_floats(
             rect.origin.x + local_size_bl.width + bottom_edge_info.local_offset,
-            rect.origin.y + rect.size.height - widths.bottom,
+            rect.origin.y + rect.size.height - non_overlapping_widths.bottom,
             rect.origin.x + local_size_bl.width + bottom_edge_info.local_offset + bottom_edge_info.local_size,
             rect.origin.y + rect.size.height,
         ),
         &bottom_edge_info,
         border.bottom,
-        widths.bottom,
+        non_overlapping_widths.bottom,
         BorderSegment::Bottom,
         EdgeAaSegmentMask::BOTTOM | EdgeAaSegmentMask::TOP,
         brush_segments,
@@ -768,8 +779,8 @@ pub fn create_border_segments(
         LayoutRect::from_floats(
             rect.origin.x,
             rect.origin.y,
-            rect.max_x() - widths.right,
-            rect.max_y() - widths.bottom
+            rect.max_x() - non_overlapping_widths.right,
+            rect.max_y() - non_overlapping_widths.bottom
         ),
         border.left,
         border.top,
@@ -793,10 +804,10 @@ pub fn create_border_segments(
             rect.origin.y + local_size_tr.height,
         ),
         LayoutRect::from_floats(
-            rect.origin.x + widths.left,
+            rect.origin.x + non_overlapping_widths.left,
             rect.origin.y,
             rect.max_x(),
-            rect.max_y() - widths.bottom,
+            rect.max_y() - non_overlapping_widths.bottom,
         ),
         border.top,
         border.right,
@@ -820,8 +831,8 @@ pub fn create_border_segments(
             rect.origin.y + rect.size.height,
         ),
         LayoutRect::from_floats(
-            rect.origin.x + widths.left,
-            rect.origin.y + widths.top,
+            rect.origin.x + non_overlapping_widths.left,
+            rect.origin.y + non_overlapping_widths.top,
             rect.max_x(),
             rect.max_y(),
         ),
@@ -848,8 +859,8 @@ pub fn create_border_segments(
         ),
         LayoutRect::from_floats(
             rect.origin.x,
-            rect.origin.y + widths.top,
-            rect.max_x() - widths.right,
+            rect.origin.y + non_overlapping_widths.top,
+            rect.max_x() - non_overlapping_widths.right,
             rect.max_y(),
         ),
         border.bottom,

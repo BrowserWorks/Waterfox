@@ -24,14 +24,14 @@ void brush_vs(
 #define BRUSH_FLAG_SEGMENT_REPEAT_X             4
 #define BRUSH_FLAG_SEGMENT_REPEAT_Y             8
 #define BRUSH_FLAG_TEXEL_RECT                  16
-#define BRUSH_FLAG_SNAP_TO_PRIMITIVE           32
 
 #define INVALID_SEGMENT_INDEX                   0xffff
 
 void main(void) {
     // Load the brush instance from vertex attributes.
     int prim_header_address = aData.x;
-    int clip_address = aData.y;
+    int render_task_index = aData.y >> 16;
+    int clip_address = aData.y & 0xffff;
     int segment_index = aData.z & 0xffff;
     int edge_flags = (aData.z >> 16) & 0xff;
     int brush_flags = (aData.z >> 24) & 0xff;
@@ -58,14 +58,13 @@ void main(void) {
     VertexInfo vi;
 
     // Fetch the dynamic picture that we are drawing on.
-    PictureTask pic_task = fetch_picture_task(ph.render_task_index);
+    PictureTask pic_task = fetch_picture_task(render_task_index);
     ClipArea clip_area = fetch_clip_area(clip_address);
 
     Transform transform = fetch_transform(ph.transform_id);
 
     // Write the normal vertex information out.
     if (transform.is_axis_aligned) {
-        bool snap_to_primitive = (brush_flags & BRUSH_FLAG_SNAP_TO_PRIMITIVE) != 0;
         vi = write_vertex(
             segment_rect,
             ph.local_clip_rect,
@@ -73,7 +72,7 @@ void main(void) {
             transform,
             pic_task,
             ph.local_rect,
-            snap_to_primitive
+            ph.snap_offsets
         );
 
         // TODO(gw): transform bounds may be referenced by

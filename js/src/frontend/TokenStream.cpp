@@ -166,6 +166,13 @@ static uint32_t GetSingleCodePoint(const char16_t** p, const char16_t* end) {
 }
 
 template <typename CharT>
+static constexpr bool IsAsciiBinary(CharT c) {
+  using UnsignedCharT = std::make_unsigned_t<CharT>;
+  auto uc = static_cast<UnsignedCharT>(c);
+  return uc == '0' || uc == '1';
+}
+
+template <typename CharT>
 static constexpr bool IsAsciiOctal(CharT c) {
   using UnsignedCharT = std::make_unsigned_t<CharT>;
   auto uc = static_cast<UnsignedCharT>(c);
@@ -488,6 +495,9 @@ TokenStreamAnyChars::TokenStreamAnyChars(JSContext* cx,
                                          const ReadOnlyCompileOptions& options,
                                          StrictModeGetter* smg)
     : srcCoords(cx, options.lineno, options.scriptSourceOffset),
+#if JS_COLUMN_DIMENSION_IS_CODE_POINTS()
+      longLineColumnInfo_(cx),
+#endif  // JS_COLUMN_DIMENSION_IS_CODE_POINTS()
       options_(options),
       tokens(),
       cursor_(0),
@@ -632,14 +642,6 @@ TokenStreamAnyChars::internalUpdateLineInfoForEOL(uint32_t lineStartOffset) {
   return srcCoords.add(lineno, linebase);
 }
 
-void TokenStreamAnyChars::undoInternalUpdateLineInfoForEOL() {
-  MOZ_ASSERT(prevLinebase !=
-             size_t(-1));  // we should never get more than one EOL
-  linebase = prevLinebase;
-  prevLinebase = size_t(-1);
-  lineno--;
-}
-
 #ifdef DEBUG
 
 template <>
@@ -690,14 +692,266 @@ inline void SourceUnits<Utf8Unit>::assertNextCodePoint(
 
 #endif  // DEBUG
 
-template <typename Unit>
-static size_t ComputeColumn(const Unit* begin, const Unit* end) {
-#if JS_COLUMN_DIMENSION_IS_CODE_POINTS
-  return unicode::CountCodePoints(begin, end);
-#else
-  return PointerRangeSize(begin, end);
-#endif
+#if JS_COLUMN_DIMENSION_IS_CODE_POINTS()
+
+static MOZ_ALWAYS_INLINE void RetractPointerToCodePointBoundary(
+    const Utf8Unit** ptr, const Utf8Unit* limit) {
+  MOZ_ASSERT(*ptr <= limit);
+
+  // |limit| is a code point boundary.
+  if (MOZ_UNLIKELY(*ptr == limit)) {
+    return;
+  }
+
+  // Otherwise rewind past trailing units to the start of the code point.
+#  ifdef DEBUG
+  size_t retracted = 0;
+#  endif
+  while (MOZ_UNLIKELY(IsTrailingUnit((*ptr)[0]))) {
+    --*ptr;
+#  ifdef DEBUG
+    retracted++;
+#  endif
+  }
+
+  MOZ_ASSERT(retracted < 4,
+             "the longest UTF-8 code point is four units, so this should never "
+             "retract more than three units");
 }
+
+static MOZ_ALWAYS_INLINE void RetractPointerToCodePointBoundary(
+    const char16_t** ptr, const char16_t* limit) {
+  MOZ_ASSERT(*ptr <= limit);
+
+  // |limit| is a code point boundary.
+  if (MOZ_UNLIKELY(*ptr == limit)) {
+    return;
+  }
+
+  // Otherwise the pointer must be retracted by one iff it splits a two-unit
+  // code point.
+  if (MOZ_UNLIKELY(unicode::IsTrailSurrogate((*ptr)[0]))) {
+    // Outside test suites testing garbage WTF-16, it's basically guaranteed
+    // here that |(*ptr)[-1] (*ptr)[0]| is a surrogate pair.
+    if (MOZ_LIKELY(unicode::IsLeadSurrogate((*ptr)[-1]))) {
+      --*ptr;
+    }
+  }
+}
+
+template <typename Unit>
+uint32_t TokenStreamAnyChars::computePartialColumn(
+    const LineToken lineToken, const uint32_t offset,
+    const SourceUnits<Unit>& sourceUnits) const {
+  lineToken.assertConsistentOffset(offset);
+
+  const uint32_t line = lineNumber(lineToken);
+  const uint32_t start = srcCoords.lineStart(lineToken);
+
+  // Reset the previous offset/column cache for this line, if the previous
+  // lookup wasn't on this line.
+  if (line != lineOfLastColumnComputation_) {
+    lineOfLastColumnComputation_ = line;
+    lastChunkVectorForLine_ = nullptr;
+    lastOffsetOfComputedColumn_ = start;
+    lastComputedColumn_ = 0;
+  }
+
+  // Compute and return the final column number from a partial offset/column,
+  // using the last-cached offset/column if they're more optimal.
+  auto ColumnFromPartial = [this, offset, &sourceUnits](uint32_t partialOffset,
+                                                        uint32_t partialCols,
+                                                        UnitsType unitsType) {
+    MOZ_ASSERT(partialOffset <= offset);
+
+    // If the last lookup on this line was closer to |offset|, use it.
+    if (partialOffset < this->lastOffsetOfComputedColumn_ &&
+        this->lastOffsetOfComputedColumn_ <= offset) {
+      partialOffset = this->lastOffsetOfComputedColumn_;
+      partialCols = this->lastComputedColumn_;
+    }
+
+    const Unit* begin = sourceUnits.codeUnitPtrAt(partialOffset);
+    const Unit* end = sourceUnits.codeUnitPtrAt(offset);
+
+    size_t offsetDelta = AssertedCast<uint32_t>(PointerRangeSize(begin, end));
+    partialOffset += offsetDelta;
+
+    if (unitsType == UnitsType::GuaranteedSingleUnit) {
+      MOZ_ASSERT(unicode::CountCodePoints(begin, end) == offsetDelta,
+                 "guaranteed-single-units also guarantee pointer distance "
+                 "equals code point count");
+      partialCols += offsetDelta;
+    } else {
+      partialCols +=
+          AssertedCast<uint32_t>(unicode::CountCodePoints(begin, end));
+    }
+
+    this->lastOffsetOfComputedColumn_ = partialOffset;
+    this->lastComputedColumn_ = partialCols;
+    return partialCols;
+  };
+
+  const uint32_t offsetInLine = offset - start;
+
+  // The index within any associated |Vector<ChunkInfo>| of |offset|'s chunk.
+  const uint32_t chunkIndex = offsetInLine / ColumnChunkLength;
+  if (chunkIndex == 0) {
+    // We don't know from an |offset| in the zeroth chunk that this line is even
+    // long.  First-chunk info is mostly useless, anyway -- we have |start|
+    // already.  So if we have *easy* access to that zeroth chunk, use it --
+    // otherwise just count pessimally.  (This will still benefit from caching
+    // the last column/offset for computations for successive offsets, so it's
+    // not *always* worst-case.)
+    UnitsType unitsType;
+    if (lastChunkVectorForLine_ && lastChunkVectorForLine_->length() > 0) {
+      MOZ_ASSERT((*lastChunkVectorForLine_)[0].column() == 0);
+      unitsType = (*lastChunkVectorForLine_)[0].unitsType();
+    } else {
+      unitsType = UnitsType::PossiblyMultiUnit;
+    }
+
+    return ColumnFromPartial(start, 0, unitsType);
+  }
+
+  // If this line has no chunk vector yet, insert one in the hash map.  (The
+  // required index is allocated and filled further down.)
+  if (!lastChunkVectorForLine_) {
+    auto ptr = longLineColumnInfo_.lookupForAdd(line);
+    if (!ptr) {
+      // This could rehash and invalidate a cached vector pointer, but the outer
+      // condition means we don't have a cached pointer.
+      if (!longLineColumnInfo_.add(ptr, line, Vector<ChunkInfo>(cx))) {
+        // In case of OOM, just count columns from the start of the line.
+        cx->recoverFromOutOfMemory();
+        return ColumnFromPartial(start, 0, UnitsType::PossiblyMultiUnit);
+      }
+    }
+
+    // Note that adding elements to this vector won't invalidate this pointer.
+    lastChunkVectorForLine_ = &ptr->value();
+  }
+
+  const Unit* const limit = sourceUnits.codeUnitPtrAt(offset);
+
+  auto RetractedOffsetOfChunk = [
+#  ifdef DEBUG
+                                    this,
+#  endif
+                                    start, limit,
+                                    &sourceUnits](uint32_t index) {
+    MOZ_ASSERT(index < this->lastChunkVectorForLine_->length());
+
+    uint32_t naiveOffset = start + index * ColumnChunkLength;
+    const Unit* naivePtr = sourceUnits.codeUnitPtrAt(naiveOffset);
+
+    const Unit* actualPtr = naivePtr;
+    RetractPointerToCodePointBoundary(&actualPtr, limit);
+
+#  ifdef DEBUG
+    if ((*this->lastChunkVectorForLine_)[index].unitsType() ==
+        UnitsType::GuaranteedSingleUnit) {
+      MOZ_ASSERT(naivePtr == actualPtr, "miscomputed unitsType value");
+    }
+#  endif
+
+    return naiveOffset - PointerRangeSize(actualPtr, naivePtr);
+  };
+
+  uint32_t partialOffset;
+  uint32_t partialColumn;
+  UnitsType unitsType;
+
+  auto entriesLen = AssertedCast<uint32_t>(lastChunkVectorForLine_->length());
+  if (chunkIndex < entriesLen) {
+    // We've computed the chunk |offset| resides in.  Compute the column number
+    // from the chunk.
+    partialOffset = RetractedOffsetOfChunk(chunkIndex);
+    partialColumn = (*lastChunkVectorForLine_)[chunkIndex].column();
+
+    // This is exact if |chunkIndex| isn't the last chunk.
+    unitsType = (*lastChunkVectorForLine_)[chunkIndex].unitsType();
+
+    // Otherwise the last chunk is pessimistically assumed to contain multi-unit
+    // code points because we haven't fully examined its contents yet -- they
+    // may not have been tokenized yet, they could contain encoding errors, or
+    // they might not even exist.
+    MOZ_ASSERT_IF(chunkIndex == entriesLen - 1,
+                  (*lastChunkVectorForLine_)[chunkIndex].unitsType() ==
+                      UnitsType::PossiblyMultiUnit);
+  } else {
+    // Extend the vector from its last entry or the start of the line.  (This is
+    // also a suitable partial start point if we must recover from OOM.)
+    if (entriesLen > 0) {
+      partialOffset = RetractedOffsetOfChunk(entriesLen - 1);
+      partialColumn = (*lastChunkVectorForLine_)[entriesLen - 1].column();
+    } else {
+      partialOffset = start;
+      partialColumn = 0;
+    }
+
+    if (!lastChunkVectorForLine_->reserve(chunkIndex + 1)) {
+      // As earlier, just start from the greatest offset/column in case of OOM.
+      cx->recoverFromOutOfMemory();
+      return ColumnFromPartial(partialOffset, partialColumn,
+                               UnitsType::PossiblyMultiUnit);
+    }
+
+    // OOM is no longer possible now.  \o/
+
+    // The vector always begins with the column of the line start, i.e. zero,
+    // with chunk units pessimally assumed not single-unit.
+    if (entriesLen == 0) {
+      lastChunkVectorForLine_->infallibleAppend(
+          ChunkInfo(0, UnitsType::PossiblyMultiUnit));
+      entriesLen++;
+    }
+
+    do {
+      const Unit* const begin = sourceUnits.codeUnitPtrAt(partialOffset);
+      const Unit* chunkLimit = sourceUnits.codeUnitPtrAt(
+          start + std::min(entriesLen++ * ColumnChunkLength, offsetInLine));
+
+      MOZ_ASSERT(begin < chunkLimit);
+      MOZ_ASSERT(chunkLimit <= limit);
+
+      static_assert(ColumnChunkLength > SourceUnitTraits<Unit>::maxUnitsLength,
+                    "chunk length in code units must be able to contain the "
+                    "largest encoding of a code point, for retracting below to "
+                    "never underflow");
+
+      // Prior tokenizing ensured that [begin, limit) is validly encoded, and
+      // |begin < chunkLimit|, so any retraction here can't underflow.
+      RetractPointerToCodePointBoundary(&chunkLimit, limit);
+
+      MOZ_ASSERT(begin < chunkLimit);
+      MOZ_ASSERT(chunkLimit <= limit);
+
+      size_t numUnits = PointerRangeSize(begin, chunkLimit);
+      size_t numCodePoints = unicode::CountCodePoints(begin, chunkLimit);
+
+      // If this chunk (which will become non-final at the end of the loop) is
+      // all single-unit code points, annotate the chunk accordingly.
+      if (numUnits == numCodePoints) {
+        lastChunkVectorForLine_->back().guaranteeSingleUnits();
+      }
+
+      partialOffset += numUnits;
+      partialColumn += numCodePoints;
+
+      lastChunkVectorForLine_->infallibleEmplaceBack(
+          partialColumn, UnitsType::PossiblyMultiUnit);
+    } while (entriesLen < chunkIndex + 1);
+
+    // We're at a spot in the current final chunk, and final chunks never have
+    // complete units information, so be pessimistic.
+    unitsType = UnitsType::PossiblyMultiUnit;
+  }
+
+  return ColumnFromPartial(partialOffset, partialColumn, unitsType);
+}
+
+#endif  // JS_COLUMN_DIMENSION_IS_CODE_POINTS()
 
 template <typename Unit, class AnyCharsAccess>
 uint32_t GeneralTokenStreamChars<Unit, AnyCharsAccess>::computeColumn(
@@ -706,26 +960,14 @@ uint32_t GeneralTokenStreamChars<Unit, AnyCharsAccess>::computeColumn(
 
   const TokenStreamAnyChars& anyChars = anyCharsAccess();
 
-  uint32_t lineNumber = anyChars.srcCoords.lineNumber(lineToken);
+  uint32_t partialCols =
+#if JS_COLUMN_DIMENSION_IS_CODE_POINTS()
+      anyChars.computePartialColumn(lineToken, offset, this->sourceUnits)
+#else
+      offset - anyChars.lineStart(lineToken)
+#endif  // JS_COLUMN_DIMENSION_IS_CODE_POINTS()
+      ;
 
-  uint32_t beginOffset;
-  uint32_t partialCols;
-  if (lineNumber == lastLineForColumn_ && lastOffsetForColumn_ <= offset) {
-    beginOffset = lastOffsetForColumn_;
-    partialCols = lastColumn_;
-  } else {
-    beginOffset = anyChars.lineStart(lineToken);
-    partialCols = 0;
-  }
-
-  const Unit* begin = this->sourceUnits.codeUnitPtrAt(beginOffset);
-  const Unit* end = this->sourceUnits.codeUnitPtrAt(offset);
-
-  partialCols += AssertedCast<uint32_t>(ComputeColumn(begin, end));
-
-  lastLineForColumn_ = lineNumber;
-  lastOffsetForColumn_ = offset;
-  lastColumn_ = partialCols;
   return (lineToken.isFirstLine() ? anyChars.options_.column : 0) + partialCols;
 }
 
@@ -2165,6 +2407,34 @@ void SourceUnits<Utf8Unit>::consumeRestOfSingleLineComment() {
 }
 
 template <typename Unit, class AnyCharsAccess>
+MOZ_MUST_USE MOZ_ALWAYS_INLINE bool
+TokenStreamSpecific<Unit, AnyCharsAccess>::matchInteger(
+    IsIntegerUnit isIntegerUnit, int32_t* nextUnit) {
+  int32_t unit;
+  while (true) {
+    unit = getCodeUnit();
+    if (isIntegerUnit(unit)) {
+      continue;
+    }
+#ifdef NIGHTLY_BUILD
+    if (unit != '_') {
+      break;
+    }
+    unit = getCodeUnit();
+    if (!isIntegerUnit(unit)) {
+      error(JSMSG_MISSING_DIGIT_AFTER_SEPARATOR);
+      return false;
+    }
+#else
+    break;
+#endif /* NIGHTLY_BUILD */
+  }
+
+  *nextUnit = unit;
+  return true;
+}
+
+template <typename Unit, class AnyCharsAccess>
 MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::decimalNumber(
     int32_t unit, TokenStart start, const Unit* numStart, Modifier modifier,
     TokenKind* out) {
@@ -2173,8 +2443,10 @@ MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::decimalNumber(
   auto noteBadToken = MakeScopeExit([this]() { this->badToken(); });
 
   // Consume integral component digits.
-  while (IsAsciiDigit(unit)) {
-    unit = getCodeUnit();
+  if (IsAsciiDigit(unit)) {
+    if (!matchInteger(IsAsciiDigit, &unit)) {
+      return false;
+    }
   }
 
   // Numbers contain no escapes, so we can read directly from |sourceUnits|.
@@ -2198,9 +2470,9 @@ MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::decimalNumber(
     // Consume any decimal dot and fractional component.
     if (unit == '.') {
       decimalPoint = HasDecimal;
-      do {
-        unit = getCodeUnit();
-      } while (IsAsciiDigit(unit));
+      if (!matchInteger(IsAsciiDigit, &unit)) {
+        return false;
+      }
     }
 
     // Consume any exponential notation.
@@ -2218,9 +2490,9 @@ MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::decimalNumber(
       }
 
       // Consume exponential digits.
-      do {
-        unit = getCodeUnit();
-      } while (IsAsciiDigit(unit));
+      if (!matchInteger(IsAsciiDigit, &unit)) {
+        return false;
+      }
     }
 
     ungetCodeUnit(unit);
@@ -2228,8 +2500,9 @@ MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::decimalNumber(
     // "0." and "0e..." numbers parse "." or "e..." here.  Neither range
     // contains a number, so we can't use |FullStringToDouble|.  (Parse
     // failures return 0.0, so we'll still get the right result.)
-    if (!StringToDouble(anyCharsAccess().cx, numStart,
-                        this->sourceUnits.addressOfNextCodeUnit(), &dval)) {
+    if (!GetDecimalNonInteger(anyCharsAccess().cx, numStart,
+                              this->sourceUnits.addressOfNextCodeUnit(),
+                              &dval)) {
       return false;
     }
   }
@@ -2406,6 +2679,12 @@ MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::bigIntLiteral(
     // binary, octal, decimal, or hex digits.  Already checked by caller, as
     // the "n" indicating bigint comes at the end.
     MOZ_ASSERT(isAsciiCodePoint(unit));
+#ifdef NIGHTLY_BUILD
+    // Skip over any separators.
+    if (unit == '_') {
+      continue;
+    }
+#endif
     if (!this->appendCodePointToCharBuffer(unit)) {
       return false;
     }
@@ -2617,13 +2896,13 @@ MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::getTokenInternal(
         // one past the '0x'
         numStart = this->sourceUnits.addressOfNextCodeUnit() - 1;
 
-        while (IsAsciiHexDigit(unit)) {
-          unit = getCodeUnit();
+        if (!matchInteger(IsAsciiHexDigit, &unit)) {
+          return badToken();
         }
       } else if (unit == 'b' || unit == 'B') {
         radix = 2;
         unit = getCodeUnit();
-        if (unit != '0' && unit != '1') {
+        if (!IsAsciiBinary(unit)) {
           // NOTE: |unit| may be EOF here.
           ungetCodeUnit(unit);
           error(JSMSG_MISSING_BINARY_DIGITS);
@@ -2633,8 +2912,8 @@ MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::getTokenInternal(
         // one past the '0b'
         numStart = this->sourceUnits.addressOfNextCodeUnit() - 1;
 
-        while (unit == '0' || unit == '1') {
-          unit = getCodeUnit();
+        if (!matchInteger(IsAsciiBinary, &unit)) {
+          return badToken();
         }
       } else if (unit == 'o' || unit == 'O') {
         radix = 8;
@@ -2649,39 +2928,47 @@ MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::getTokenInternal(
         // one past the '0o'
         numStart = this->sourceUnits.addressOfNextCodeUnit() - 1;
 
-        while (IsAsciiOctal(unit)) {
-          unit = getCodeUnit();
+        if (!matchInteger(IsAsciiOctal, &unit)) {
+          return badToken();
         }
       } else if (IsAsciiDigit(unit)) {
+        // Octal integer literals are not permitted in strict mode code.
+        if (!strictModeError(JSMSG_DEPRECATED_OCTAL)) {
+          return badToken();
+        }
+
         radix = 8;
         isLegacyOctalOrNoctal = true;
         // one past the '0'
         numStart = this->sourceUnits.addressOfNextCodeUnit() - 1;
 
+        bool nonOctalDecimalIntegerLiteral = false;
         do {
-          // Octal integer literals are not permitted in strict mode
-          // code.
-          if (!strictModeError(JSMSG_DEPRECATED_OCTAL)) {
-            return badToken();
-          }
-
-          // Outside strict mode, we permit 08 and 09 as decimal
-          // numbers, which makes our behaviour a superset of the
-          // ECMA numeric grammar. We might not always be so
-          // permissive, so we warn about it.
           if (unit >= '8') {
-            if (!warning(JSMSG_BAD_OCTAL, unit == '8' ? "08" : "09")) {
-              return badToken();
-            }
-
-            // Use the decimal scanner for the rest of the number.
-            return decimalNumber(unit, start, numStart, modifier, ttp);
+            nonOctalDecimalIntegerLiteral = true;
           }
-
           unit = getCodeUnit();
         } while (IsAsciiDigit(unit));
+
+#ifdef NIGHTLY_BUILD
+        if (unit == '_') {
+          error(JSMSG_SEPARATOR_IN_ZERO_PREFIXED_NUMBER);
+          return badToken();
+        }
+#endif /* NIGHTLY_BUILD */
+
+        if (nonOctalDecimalIntegerLiteral) {
+          // Use the decimal scanner for the rest of the number.
+          return decimalNumber(unit, start, numStart, modifier, ttp);
+        }
+#ifdef NIGHTLY_BUILD
+      } else if (unit == '_') {
+        // Give a more explicit error message when '_' is used after '0'.
+        error(JSMSG_SEPARATOR_IN_ZERO_PREFIXED_NUMBER);
+        return badToken();
+#endif /* NIGHTLY_BUILD */
       } else {
-        // '0' not followed by [XxBbOo0-9];  scan as a decimal number.
+        // '0' not followed by [XxBbOo0-9_];  scan as a decimal number.
         numStart = this->sourceUnits.addressOfNextCodeUnit() - 1;
 
         // NOTE: |unit| may be EOF here.  (This is permitted by case #3
@@ -2726,7 +3013,7 @@ MOZ_MUST_USE bool TokenStreamSpecific<Unit, AnyCharsAccess>::getTokenInternal(
       double dval;
       if (!GetFullInteger(anyCharsAccess().cx, numStart,
                           this->sourceUnits.addressOfNextCodeUnit(), radix,
-                          &dval)) {
+                          IntegerSeparatorHandling::SkipUnderscore, &dval)) {
         return badToken();
       }
       newNumberToken(dval, NoDecimal, start, modifier, ttp);

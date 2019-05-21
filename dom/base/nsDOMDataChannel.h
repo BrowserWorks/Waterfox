@@ -12,7 +12,6 @@
 #include "mozilla/dom/RTCDataChannelBinding.h"
 #include "mozilla/dom/TypedArray.h"
 #include "mozilla/net/DataChannelListener.h"
-#include "nsIInputStream.h"
 
 namespace mozilla {
 namespace dom {
@@ -75,6 +74,7 @@ class nsDOMDataChannel final : public mozilla::DOMEventTargetHelper,
   void Send(const mozilla::dom::ArrayBufferView& aData,
             mozilla::ErrorResult& aRv);
 
+  bool Negotiated() const;
   bool Ordered() const;
   mozilla::dom::Nullable<uint16_t> GetId() const;
 
@@ -110,7 +110,7 @@ class nsDOMDataChannel final : public mozilla::DOMEventTargetHelper,
   ~nsDOMDataChannel();
 
  private:
-  void Send(nsIInputStream* aMsgStream, const nsACString& aMsgString,
+  void Send(mozilla::dom::Blob* aMsgBlob, const nsACString* aMsgString,
             bool aIsBinary, mozilla::ErrorResult& aRv);
 
   void ReleaseSelf();

@@ -14,7 +14,7 @@ const gripArrayStubs = require("../stubs/grip-array");
 const {
   expectActorAttribute,
   getSelectableInInspectorGrips,
-  getGripLengthBubbleText
+  getGripLengthBubbleText,
 } = require("./test-helpers");
 const { maxLengthMap } = Grip;
 
@@ -22,7 +22,7 @@ function shallowRenderRep(object, props = {}) {
   return shallow(
     Grip.rep({
       object,
-      ...props
+      ...props,
     })
   );
 }
@@ -124,8 +124,9 @@ describe("Grip - Proxy", () => {
 
   it("renders as expected", () => {
     const renderRep = props => shallowRenderRep(object, props);
-    const handlerLength = getGripLengthBubbleText(object.proxyHandler, {
-      mode: MODE.TINY
+    const handler = object.preview.ownProperties["<handler>"].value;
+    const handlerLength = getGripLengthBubbleText(handler, {
+      mode: MODE.TINY,
     });
     const out = `Proxy { <target>: {…}, <handler>: ${handlerLength} […] }`;
 
@@ -305,7 +306,7 @@ describe("Grip - Object with nested object", () => {
     expect(
       renderRep({
         mode: MODE.LONG,
-        title: "CustomTitle"
+        title: "CustomTitle",
       }).text()
     ).toBe('CustomTitle { objProp: {…}, strProp: "test string" }');
   });

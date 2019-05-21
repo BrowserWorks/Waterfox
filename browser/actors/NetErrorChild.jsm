@@ -59,6 +59,10 @@ const PREF_SERVICES_SETTINGS_LAST_FETCHED       = "services.settings.last_update
 
 const PREF_SSL_IMPACT_ROOTS = ["security.tls.version.", "security.ssl3."];
 
+let formatter = new Services.intl.DateTimeFormat(undefined, {
+  dateStyle: "long",
+});
+
 function getSerializedSecurityInfo(docShell) {
   let serhelper = Cc["@mozilla.org/network/serialization-helper;1"]
                     .getService(Ci.nsISerializationHelper);
@@ -271,27 +275,19 @@ class NetErrorChild extends ActorChild {
     }
 
     if (input.data.isNotValidAtThisTime) {
-      let nowTime = new Date().getTime() * 1000;
-      let msg = "";
-      if (input.data.validity.notBefore) {
-        if (nowTime > input.data.validity.notAfter) {
-          technicalInfo.textContent = "";
-          msg += gPipNSSBundle.formatStringFromName("certErrorExpiredNow2",
-                                                  [hostString], 1);
-          msg += "\n";
-        } else {
-          technicalInfo.textContent = "";
-          msg += gPipNSSBundle.formatStringFromName("certErrorNotYetValidNow2",
-                                                    [hostString], 1);
-          msg += "\n";
-         }
-        } else {
-          // If something goes wrong, we assume the cert expired.
-          technicalInfo.textContent = "";
-          msg += gPipNSSBundle.formatStringFromName("certErrorExpiredNow2",
-                                                    [hostString], 1);
-          msg += "\n";
+      let msg;
+      if (input.data.validity.notBefore && (Date.now() < input.data.validity.notAfter)) {
+        let notBeforeLocalTime = formatter.format(new Date(input.data.validity.notBefore));
+        msg = gPipNSSBundle.formatStringFromName("certErrorNotYetValidNow3",
+                                                 [hostString, notBeforeLocalTime], 2);
+      } else {
+        let notAfterLocalTime = formatter.format(new Date(input.data.validity.notAfter));
+        msg = gPipNSSBundle.formatStringFromName("certErrorExpiredNow3",
+                                                 [hostString, notAfterLocalTime], 2);
       }
+      msg += "\n";
+
+      technicalInfo.textContent = "";
       technicalInfo.append(msg);
     }
     technicalInfo.append("\n");
@@ -480,9 +476,6 @@ class NetErrorChild extends ActorChild {
 
         let now = Date.now();
         let certRange = this._getCertValidityRange(docShell);
-        let formatter = new Services.intl.DateTimeFormat(undefined, {
-          dateStyle: "short",
-        });
 
         let approximateDate = now - difference * 1000;
         // If the difference is more than a day, we last fetched the date in the last 5 days,
@@ -490,16 +483,6 @@ class NetErrorChild extends ActorChild {
         if (Math.abs(difference) > 60 * 60 * 24 && (now - lastFetched) <= 60 * 60 * 24 * 5 &&
             certRange.notBefore < approximateDate && certRange.notAfter > approximateDate) {
           clockSkew = true;
-          let systemDate = formatter.format(new Date());
-          // negative difference means local time is behind server time
-          approximateDate = formatter.format(new Date(approximateDate));
-
-          doc.getElementById("wrongSystemTime_URL").textContent = doc.location.hostname;
-          doc.getElementById("wrongSystemTime_systemDate").textContent = systemDate;
-          doc.getElementById("wrongSystemTime_actualDate").textContent = approximateDate;
-
-          doc.getElementById("errorShortDesc").style.display = "none";
-          doc.getElementById("wrongSystemTimePanel").style.display = "block";
 
         // If there is no clock skew with Kinto servers, check against the build date.
         // (The Kinto ping could have happened when the time was still right, or not at all)
@@ -519,11 +502,6 @@ class NetErrorChild extends ActorChild {
           // since the build date.
           if (buildDate > systemDate && new Date(certRange.notAfter) > buildDate) {
             clockSkew = true;
-
-            doc.getElementById("wrongSystemTimeWithoutReference_URL")
-              .textContent = doc.location.hostname;
-            doc.getElementById("wrongSystemTimeWithoutReference_systemDate")
-              .textContent = formatter.format(systemDate);
           }
         }
 
@@ -537,7 +515,6 @@ class NetErrorChild extends ActorChild {
           doc.querySelector(".title-text").textContent = clockErrTitle.textContent;
           let desc = doc.getElementById("errorShortDescText");
           doc.getElementById("errorShortDesc").style.display = "block";
-          doc.getElementById("wrongSystemTimePanel").style.display = "none";
           doc.getElementById("certificateErrorReporting").style.display = "none";
           if (desc) {
             // eslint-disable-next-line no-unsanitized/property
@@ -610,9 +587,6 @@ class NetErrorChild extends ActorChild {
     case "AboutNetErrorLoad":
       this.onPageLoad(aEvent.originalTarget, doc.defaultView);
       break;
-    case "AboutNetErrorOpenCaptivePortal":
-      this.openCaptivePortalPage(aEvent);
-      break;
     case "AboutNetErrorSetAutomatic":
       this.onSetAutomatic(aEvent);
       break;
@@ -644,18 +618,7 @@ class NetErrorChild extends ActorChild {
       }
 
       this.onCertErrorDetails(msg, frameDocShell);
-    } else if (msg.name == "Browser:CaptivePortalFreed") {
-      // TODO: This check is not correct for frames.
-      if (!this.isAboutCertError(this.content.document)) {
-        return;
-      }
-
-      this.onCaptivePortalFreed(msg);
     }
-  }
-
-  onCaptivePortalFreed(msg) {
-    this.content.dispatchEvent(new this.content.CustomEvent("AboutNetErrorCaptivePortalFreed"));
   }
 
   changedCertPrefs() {
@@ -757,11 +720,6 @@ class NetErrorChild extends ActorChild {
                             {reportStatus: TLS_ERROR_REPORT_TELEMETRY_UI_SHOWN});
   }
 
-  openCaptivePortalPage(evt) {
-    this.mm.sendAsyncMessage("Browser:OpenCaptivePortalPage");
-  }
-
-
   onResetPreferences(evt) {
     this.mm.sendAsyncMessage("Browser:ResetSSLPreferences");
   }
@@ -836,7 +794,8 @@ class NetErrorChild extends ActorChild {
       this.mm.sendAsyncMessage("Browser:SSLErrorGoBack", {});
       return;
     }
-    if (elmId != "errorTryAgain" || !/e=netOffline/.test(documentURI)) {
+
+    if (!event.originalTarget.classList.contains("try-again") || !/e=netOffline/.test(documentURI)) {
       return;
     }
     // browser front end will handle clearing offline mode and refreshing

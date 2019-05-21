@@ -82,10 +82,6 @@ void WindowGlobalParent::Init(const WindowGlobalInit& aInit) {
   mBrowsingContext = CanonicalBrowsingContext::Cast(aInit.browsingContext());
   MOZ_ASSERT(mBrowsingContext);
 
-  // XXX(nika): This won't be the case soon, but for now this is a good
-  // assertion as we can't switch processes. We should relax this eventually.
-  MOZ_ASSERT(mBrowsingContext->IsOwnedByProcess(processId));
-
   // Attach ourself to the browsing context.
   mBrowsingContext->RegisterWindowGlobal(this);
 
@@ -170,6 +166,16 @@ IPCResult WindowGlobalParent::RecvDestroy() {
   if (!mIPCClosed) {
     RefPtr<BrowserParent> browserParent = GetRemoteTab();
     if (!browserParent || !browserParent->IsDestroyed()) {
+      // Make a copy so that we can avoid potential iterator invalidation when
+      // calling the user-provided Destroy() methods.
+      nsTArray<RefPtr<JSWindowActorParent>> windowActors(mWindowActors.Count());
+      for (auto iter = mWindowActors.Iter(); !iter.Done(); iter.Next()) {
+        windowActors.AppendElement(iter.UserData());
+      }
+
+      for (auto& windowActor : windowActors) {
+        windowActor->StartDestroy();
+      }
       Unused << Send__delete__(this);
     }
   }
@@ -299,7 +305,9 @@ void WindowGlobalParent::ActorDestroy(ActorDestroyReason aWhy) {
   mWindowActors.SwapElements(windowActors);
   for (auto iter = windowActors.Iter(); !iter.Done(); iter.Next()) {
     iter.Data()->RejectPendingQueries();
+    iter.Data()->AfterDestroy();
   }
+  windowActors.Clear();
 
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
   if (obs) {
@@ -310,6 +318,7 @@ void WindowGlobalParent::ActorDestroy(ActorDestroyReason aWhy) {
 WindowGlobalParent::~WindowGlobalParent() {
   MOZ_ASSERT(!gWindowGlobalParentsById ||
              !gWindowGlobalParentsById->Contains(mInnerWindowId));
+  MOZ_ASSERT(!mWindowActors.Count());
 }
 
 JSObject* WindowGlobalParent::WrapObject(JSContext* aCx,

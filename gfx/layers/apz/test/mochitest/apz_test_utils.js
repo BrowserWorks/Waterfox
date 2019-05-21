@@ -19,6 +19,8 @@ function convertEntries(entries) {
   return result;
 }
 
+// TODO: Clean up these rect-handling functions so that e.g. a rect returned
+//       by Element.getBoundingClientRect() Just Works with them.
 function parseRect(str) {
   var pieces = str.replace(/[()\s]+/g, "").split(",");
   SimpleTest.is(pieces.length, 4, "expected string of form (x,y,w,h)");
@@ -38,6 +40,11 @@ function rectContains(haystack, needle) {
 }
 function rectToString(rect) {
   return "(" + rect.x + "," + rect.y + "," + rect.w + "," + rect.h + ")";
+}
+function assertRectContainment(haystackRect, haystackDesc, needleRect, needleDesc) {
+  SimpleTest.ok(rectContains(haystackRect, needleRect),
+                haystackDesc + " " + rectToString(haystackRect) + " should contain " +
+                needleDesc + " " + rectToString(needleRect));
 }
 
 function getPropertyAsRect(scrollFrames, scrollId, prop) {
@@ -794,8 +801,6 @@ function getPrefs(ident) {
         // position is synced back to the main thread. So we disable displayport
         // expiry for these tests.
         ["apz.displayport_expiry_ms", 0],
-        // All of test cases should define viewport meta tag.
-        ["dom.meta-viewport.enabled", true],
       ];
     case "TOUCH_ACTION":
       return [

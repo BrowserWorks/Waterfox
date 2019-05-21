@@ -113,6 +113,8 @@ XPCOMUtils.defineLazyScriptGetter(this, ["PointerLock", "FullScreen"],
                                   "chrome://browser/content/browser-fullScreenAndPointerLock.js");
 XPCOMUtils.defineLazyScriptGetter(this, "gIdentityHandler",
                                   "chrome://browser/content/browser-siteIdentity.js");
+XPCOMUtils.defineLazyScriptGetter(this, "gProtectionsHandler",
+                                  "chrome://browser/content/browser-siteProtections.js");
 XPCOMUtils.defineLazyScriptGetter(this, ["gGestureSupport", "gHistorySwipeAnimation"],
                                   "chrome://browser/content/browser-gestureSupport.js");
 XPCOMUtils.defineLazyScriptGetter(this, "gSafeBrowsing",
@@ -394,6 +396,12 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "gFxaToolbarAccessed",
   "identity.fxaccounts.toolbar.accessed", false, (aPref, aOldVal, aNewVal) => {
     showFxaToolbarMenu(gFxaToolbarEnabled);
   });
+
+XPCOMUtils.defineLazyPreferenceGetter(this, "gHtmlAboutAddonsEnabled",
+  "extensions.htmlaboutaddons.enabled", false);
+
+XPCOMUtils.defineLazyPreferenceGetter(this, "gAddonAbuseReportEnabled",
+  "extensions.abuseReport.enabled", false);
 
 customElements.setElementCreationCallback("translation-notification", () => {
   Services.scriptloader.loadSubScript(
@@ -3045,7 +3053,6 @@ var BrowserOnClick = {
   init() {
     let mm = window.messageManager;
     mm.addMessageListener("Browser:CertExceptionError", this);
-    mm.addMessageListener("Browser:OpenCaptivePortalPage", this);
     mm.addMessageListener("Browser:SiteBlockedError", this);
     mm.addMessageListener("Browser:EnableOnlineMode", this);
     mm.addMessageListener("Browser:SetSSLErrorReportAuto", this);
@@ -3054,9 +3061,6 @@ var BrowserOnClick = {
     mm.addMessageListener("Browser:SSLErrorGoBack", this);
     mm.addMessageListener("Browser:PrimeMitm", this);
     mm.addMessageListener("Browser:ResetEnterpriseRootsPref", this);
-
-    Services.obs.addObserver(this, "captive-portal-login-abort");
-    Services.obs.addObserver(this, "captive-portal-login-success");
   },
 
   uninit() {
@@ -3070,20 +3074,6 @@ var BrowserOnClick = {
     mm.removeMessageListener("Browser:SSLErrorGoBack", this);
     mm.removeMessageListener("Browser:PrimeMitm", this);
     mm.removeMessageListener("Browser:ResetEnterpriseRootsPref", this);
-
-    Services.obs.removeObserver(this, "captive-portal-login-abort");
-    Services.obs.removeObserver(this, "captive-portal-login-success");
-  },
-
-  observe(aSubject, aTopic, aData) {
-    switch (aTopic) {
-      case "captive-portal-login-abort":
-      case "captive-portal-login-success":
-        // Broadcast when a captive portal is freed so that error pages
-        // can refresh themselves.
-        window.messageManager.broadcastAsyncMessage("Browser:CaptivePortalFreed");
-      break;
-    }
   },
 
   receiveMessage(msg) {
@@ -3093,9 +3083,6 @@ var BrowserOnClick = {
                          msg.data.isTopFrame, msg.data.location,
                          msg.data.securityInfoAsString,
                          msg.data.frameId);
-      break;
-      case "Browser:OpenCaptivePortalPage":
-        CaptivePortalWatcher.ensureCaptivePortalTab();
       break;
       case "Browser:SiteBlockedError":
         this.onAboutBlocked(msg.data.elementId, msg.data.reason,
@@ -3253,10 +3240,8 @@ var BrowserOnClick = {
         let errorInfo = getDetailedCertErrorInfo(location,
                                                  securityInfo);
         let validityInfo = {
-          notAfter: securityInfo.serverCert.validity.notAfter,
-          notBefore: securityInfo.serverCert.validity.notBefore,
-          notAfterLocalTime: securityInfo.serverCert.validity.notAfterLocalTime,
-          notBeforeLocalTime: securityInfo.serverCert.validity.notBeforeLocalTime,
+          notAfter: securityInfo.serverCert.validity.notAfter / 1000,
+          notBefore: securityInfo.serverCert.validity.notBefore / 1000,
         };
         browser.messageManager.sendAsyncMessage("CertErrorDetails", {
             code: securityInfo.errorCode,
@@ -3741,10 +3726,8 @@ var browserDragAndDrop = {
     return Services.droppedLinkHandler.getCSP(aEvent);
   },
 
-  validateURIsForDrop(aEvent, aURIsCount, aURIs) {
-    return Services.droppedLinkHandler.validateURIsForDrop(aEvent,
-                                                           aURIsCount,
-                                                           aURIs);
+  validateURIsForDrop(aEvent, aURIs) {
+    return Services.droppedLinkHandler.validateURIsForDrop(aEvent, aURIs);
   },
 
   dropLinks(aEvent, aDisallowInherit) {
@@ -3767,7 +3750,7 @@ var homeButtonObserver = {
         }
 
         try {
-          browserDragAndDrop.validateURIsForDrop(aEvent, urls.length, urls);
+          browserDragAndDrop.validateURIsForDrop(aEvent, urls);
         } catch (e) {
           return;
         }
@@ -4169,6 +4152,13 @@ const BrowserSearch = {
   },
 
   addEngine(browser, engine, uri) {
+    if (!this._searchInitComplete) {
+      // We haven't finished initialising search yet. This means we can't
+      // call getEngineByName here. Since this is only on start-up and unlikely
+      // to happen in the normal case, we'll just return early rather than
+      // trying to handle it asynchronously.
+      return;
+    }
     // Check to see whether we've already added an engine with this title
     if (browser.engines) {
       if (browser.engines.some(e => e.title == engine.title))
@@ -5268,6 +5258,89 @@ var XULBrowserWindow = {
 
     throw new Error("Trying to navigateAndRestore a browser which was " +
                     "not attached to this tabbrowser is unsupported");
+  },
+
+  // data for updating sessionStore
+  _sessionData: {},
+
+  composeChildren: function XWB_composeScrollPositionsData(
+      aPositions, aDescendants, aStartIndex, aNumberOfDescendants) {
+    let children = [];
+    let lastIndexOfNonNullbject = -1;
+    for (let i = 0; i < aNumberOfDescendants; i++) {
+      let currentIndex = aStartIndex + i;
+      let obj = {};
+      let objWithData = false;
+      if (aPositions[currentIndex]) {
+        obj.scroll = aPositions[currentIndex];
+        objWithData = true;
+      }
+      if (aDescendants[currentIndex]) {
+        let descendantsTree = this.composeChildren(aPositions, aDescendants, currentIndex + 1, aDescendants[currentIndex]);
+        i += aDescendants[currentIndex];
+        if (descendantsTree) {
+          obj.children = descendantsTree;
+          objWithData = true;
+        }
+      }
+
+      if (objWithData) {
+        lastIndexOfNonNullbject = children.length;
+        children.push(obj);
+      } else {
+        children.push(null);
+      }
+    }
+
+    if (lastIndexOfNonNullbject == -1) {
+      return null;
+    }
+
+    return children.slice(0, lastIndexOfNonNullbject + 1);
+  },
+
+  updateScrollPositions: function XWB_updateScrollPositions(aPositions, aDescendants) {
+    let obj = {};
+    let objWithData = false;
+
+    if (aPositions[0]) {
+      obj.scroll = aPositions[0];
+      objWithData = true;
+    }
+
+    if (aPositions.length > 1) {
+      let children = this.composeChildren(aPositions, aDescendants, 1, aDescendants[0]);
+      if (children) {
+        obj.children = children;
+        objWithData = true;
+      }
+    }
+
+    if (objWithData) {
+      this._sessionData.scroll = obj;
+    } else {
+      this._sessionData.scroll = null;
+    }
+  },
+
+  updateDocShellCaps: function XWB_updateDocShellCaps(aDisCaps) {
+    this._sessionData.disallow = aDisCaps ? aDisCaps : null;
+  },
+
+  updateIsPrivate: function XWB_updateIsPrivate(aIsPrivate) {
+    this._sessionData.isPrivate = aIsPrivate;
+  },
+
+  updateSessionStore: function XWB_updateSessionStore(aBrowser, aFlushId) {
+    let tab = gBrowser.getTabForBrowser(aBrowser);
+    if (tab) {
+      SessionStore.updateSessionStoreFromTablistener(tab, {
+        data: this._sessionData,
+        flushID: aFlushId,
+        isFinal: false,
+      });
+      this._sessionData = {};
+    }
   },
 };
 
@@ -6610,8 +6683,18 @@ function promptRemoveExtension(addon) {
   let {BUTTON_TITLE_IS_STRING: titleString, BUTTON_TITLE_CANCEL: titleCancel,
         BUTTON_POS_0, BUTTON_POS_1, confirmEx} = Services.prompt;
   let btnFlags = BUTTON_POS_0 * titleString + BUTTON_POS_1 * titleCancel;
-  return confirmEx(null, title, message, btnFlags, btnTitle, null, null, null,
-                    {value: 0});
+  let checkboxState = {value: false};
+  let checkboxMessage = null;
+
+  // Enable abuse report checkbox in the remove extension dialog.
+  if (gHtmlAboutAddonsEnabled && gAddonAbuseReportEnabled) {
+    checkboxMessage = getFormattedString("webext.remove.abuseReportCheckbox.message", [
+      document.getElementById("bundle_brand").getString("vendorShortName"),
+    ]);
+  }
+  const result = confirmEx(null, title, message, btnFlags, btnTitle, null, null,
+                           checkboxMessage, checkboxState);
+  return {remove: result === 0, report: checkboxState.value};
 }
 
 var ToolbarContextMenu = {
@@ -6648,10 +6731,19 @@ var ToolbarContextMenu = {
   async updateExtension(popup) {
     let removeExtension = popup.querySelector(".customize-context-removeExtension");
     let manageExtension = popup.querySelector(".customize-context-manageExtension");
-    let separator = removeExtension.nextElementSibling;
+    let reportExtension = popup.querySelector(".customize-context-reportExtension");
+    let separator = reportExtension.nextElementSibling;
     let id = this._getExtensionId(popup);
     let addon = id && await AddonManager.getAddonByID(id);
-    removeExtension.hidden = manageExtension.hidden = separator.hidden = !addon;
+
+    for (let element of [removeExtension, manageExtension, separator]) {
+      element.hidden = !addon;
+    }
+
+    reportExtension.hidden = !addon ||
+                             !gAddonAbuseReportEnabled ||
+                             !gHtmlAboutAddonsEnabled;
+
     if (addon) {
       removeExtension.disabled = !(addon.permissions & AddonManager.PERM_CAN_UNINSTALL);
     }
@@ -6663,16 +6755,34 @@ var ToolbarContextMenu = {
     if (!addon || !(addon.permissions & AddonManager.PERM_CAN_UNINSTALL)) {
       return;
     }
-    let response = promptRemoveExtension(addon);
+    let {remove, report} = promptRemoveExtension(addon);
     AMTelemetry.recordActionEvent({
       object: "browserAction",
       action: "uninstall",
-      value: response ? "cancelled" : "accepted",
+      value: remove ? "accepted" : "cancelled",
       extra: {addonId: addon.id},
     });
-    if (response == 0) {
-      addon.uninstall();
+    if (remove) {
+      // Leave the extension in pending uninstall if we are also
+      // reporting the add-on.
+      await addon.uninstall(report);
+      if (report) {
+        this.reportExtensionForContextAction(popup, "uninstall");
+      }
     }
+  },
+
+  async reportExtensionForContextAction(popup, reportEntryPoint) {
+    let id = this._getExtensionId(popup);
+    let addon = id && await AddonManager.getAddonByID(id);
+    if (!addon) {
+      return;
+    }
+    const win = await BrowserOpenAddonsMgr("addons://list/extension");
+    win.openAbuseReport({
+      addonId: addon.id,
+      reportEntryPoint,
+    });
   },
 
   openAboutAddonsForContextAction(popup) {

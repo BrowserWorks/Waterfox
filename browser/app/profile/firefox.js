@@ -37,13 +37,17 @@ pref("extensions.webextPermissionPrompts", true);
 pref("extensions.webextOptionalPermissionPrompts", true);
 
 // Preferences for AMO integration
-pref("extensions.getAddons.cache.enabled", false, locked);
-pref("extensions.getAddons.get.url", "", locked);
-pref("extensions.getAddons.compatOverides.url", "", locked);
+pref("extensions.getAddons.cache.enabled", true);
+pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/api/v3/addons/search/?guid=%IDS%&lang=%LOCALE%");
+pref("extensions.getAddons.compatOverides.url", "https://services.addons.mozilla.org/api/v3/addons/compat-override/?guid=%IDS%&lang=%LOCALE%");
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
 pref("extensions.webservice.discoverURL", "", locked);
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
 pref("extensions.getAddons.langpacks.url", "", locked);
+pref("extensions.getAddons.discovery.api_url", "", locked);
+
+// Enable the HTML-based discovery panel at about:addons.
+pref("extensions.htmlaboutaddons.discover.enabled", false, locked);
 
 pref("extensions.update.autoUpdateDefault", true);
 
@@ -185,8 +189,6 @@ pref("extensions.update.url", "");
 pref("extensions.update.background.url", "");
 pref("extensions.update.interval", 86400);  // Check for updates to Extensions and
                                             // Themes every day
-
-pref("extensions.webextensions.themes.icons.buttons", "back,forward,reload,stop,bookmark_star,bookmark_menu,downloads,home,app_menu,cut,copy,paste,new_window,new_private_window,save_page,print,history,full_screen,find,options,addons,developer,synced_tabs,open_file,sidebars,share_page,subscribe,text_encoding,email_link,forget,pocket");
 
 pref("lightweightThemes.getMoreURL", "https://addons.mozilla.org/%LOCALE%/firefox/themes");
 
@@ -412,7 +414,7 @@ pref("permissions.default.geo", 0);
 pref("permissions.default.desktop-notification", 0);
 pref("permissions.default.shortcuts", 0);
 
-#ifdef NIGHTLY_BUILD
+#ifdef EARLY_BETA_OR_EARLIER
 pref("permissions.desktop-notification.postPrompt.enabled", true);
 #else
 pref("permissions.desktop-notification.postPrompt.enabled", false);
@@ -1187,7 +1189,6 @@ pref("services.sync.prefs.sync.addons.ignoreUserEnabledChanges", true);
 // source, and this would propagate automatically to other,
 // uncompromised Sync-connected devices.
 pref("services.sync.prefs.sync.browser.contentblocking.category", true);
-pref("services.sync.prefs.sync.browser.contentblocking.features.standard", true);
 pref("services.sync.prefs.sync.browser.contentblocking.features.strict", true);
 pref("services.sync.prefs.sync.browser.contentblocking.introCount", true);
 pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", true);
@@ -1589,7 +1590,7 @@ pref("browser.contentblocking.control-center.ui.showAllowedLabels", false);
 pref("browser.contentblocking.cryptomining.preferences.ui.enabled", true);
 pref("browser.contentblocking.fingerprinting.preferences.ui.enabled", true);
 
-// Possible values for browser.contentblocking.features.* prefs:
+// Possible values for browser.contentblocking.features.strict pref:
 //   Tracking Protection:
 //     "tp": tracking protection enabled
 //     "-tp": tracking protection disabled
@@ -1608,17 +1609,8 @@ pref("browser.contentblocking.fingerprinting.preferences.ui.enabled", true);
 //     "cookieBehavior2": cookie behaviour BEHAVIOR_REJECT
 //     "cookieBehavior3": cookie behaviour BEHAVIOR_LIMIT_FOREIGN
 //     "cookieBehavior4": cookie behaviour BEHAVIOR_REJECT_TRACKER
-// One value from each section must be included in each browser.contentblocking.features.* pref.
+// One value from each section must be included in the browser.contentblocking.features.strict pref.
 pref("browser.contentblocking.features.strict", "tp,tpPrivate,cookieBehavior4,cm,fp");
-// Enable blocking access to storage from tracking resources only in nightly
-// and early beta. By default the value is "cookieBehavior0": BEHAVIOR_ACCEPT
-// Enable cryptomining blocking in standard in nightly and early beta.
-// Enable fingerprinting blocking in standard in nightly and early beta.
-#ifdef EARLY_BETA_OR_EARLIER
-pref("browser.contentblocking.features.standard", "-tp,tpPrivate,cookieBehavior4,cm,fp");
-#else
-pref("browser.contentblocking.features.standard", "-tp,tpPrivate,cookieBehavior0,-cm,-fp");
-#endif
 
 // Enable the Report Breakage UI on Nightly and Beta but not on Release yet.
 #ifdef EARLY_BETA_OR_EARLIER
@@ -1636,6 +1628,11 @@ pref("browser.contentblocking.introCount", 0);
 pref("browser.contentblocking.maxIntroCount", 5);
 // 1800 = 30 min in seconds
 pref("browser.contentblocking.introDelaySeconds", 1800);
+
+// Enables the new Protections Panel.
+#ifdef NIGHTLY_BUILD
+pref("browser.protections_panel.enabled", true);
+#endif
 
 pref("privacy.trackingprotection.introURL", "");
 
@@ -1749,6 +1746,7 @@ pref("extensions.pocket.site", "", locked);
 pref("signon.schemeUpgrades", true);
 pref("signon.privateBrowsingCapture.enabled", true);
 pref("signon.showAutoCompleteFooter", true);
+pref("signon.management.page.enabled", false);
 
 // Enable the "Simplify Page" feature in Print Preview. This feature
 // is disabled by default in toolkit.

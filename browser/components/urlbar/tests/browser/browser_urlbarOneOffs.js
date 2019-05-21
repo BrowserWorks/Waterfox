@@ -56,53 +56,63 @@ add_task(async function history() {
       "example.com/browser_urlbarOneOffs.js/?" + (gMaxResults - i - 1));
   }
 
-  // Key down through each one-off.
-  let numButtons = oneOffSearchButtons.getSelectableButtons(true).length;
-  for (let i = 0; i < numButtons; i++) {
+  if (!UrlbarPrefs.get("quantumbar")) {
+    // Key down through each one-off.
+    let numButtons = oneOffSearchButtons.getSelectableButtons(true).length;
+    for (let i = 0; i < numButtons; i++) {
+      EventUtils.synthesizeKey("KEY_ArrowDown");
+      assertState(-1, i, "");
+    }
+
+    // Key down once more.  Nothing should be selected.
     EventUtils.synthesizeKey("KEY_ArrowDown");
-    assertState(-1, i, "");
-  }
+    assertState(-1, -1, "");
 
-  // Key down once more.  Nothing should be selected.
-  EventUtils.synthesizeKey("KEY_ArrowDown");
-  assertState(-1, -1, "");
+    // Once more.  The first result should be selected.
+    EventUtils.synthesizeKey("KEY_ArrowDown");
+    assertState(0, -1,
+      "example.com/browser_urlbarOneOffs.js/?" + (gMaxResults - 1));
 
-  // Once more.  The first result should be selected.
-  EventUtils.synthesizeKey("KEY_ArrowDown");
-  assertState(0, -1,
-    "example.com/browser_urlbarOneOffs.js/?" + (gMaxResults - 1));
-
-  // Now key up.  Nothing should be selected again.
-  EventUtils.synthesizeKey("KEY_ArrowUp");
-  assertState(-1, -1, "");
-
-  // Key up through each one-off.
-  for (let i = numButtons - 1; i >= 0; i--) {
+    // Now key up.  Nothing should be selected again.
     EventUtils.synthesizeKey("KEY_ArrowUp");
-    assertState(-1, i, "");
-  }
+    assertState(-1, -1, "");
 
-  // Key right through each one-off.
-  for (let i = 1; i < numButtons; i++) {
-    EventUtils.synthesizeKey("KEY_ArrowRight");
-    assertState(-1, i, "");
-  }
+    // Key up through each one-off.
+    for (let i = numButtons - 1; i >= 0; i--) {
+      EventUtils.synthesizeKey("KEY_ArrowUp");
+      assertState(-1, i, "");
+    }
 
-  // Key left through each one-off.
-  for (let i = numButtons - 2; i >= 0; i--) {
-    EventUtils.synthesizeKey("KEY_ArrowLeft");
-    assertState(-1, i, "");
-  }
+    // Key right through each one-off.
+    for (let i = 1; i < numButtons; i++) {
+      EventUtils.synthesizeKey("KEY_ArrowRight");
+      assertState(-1, i, "");
+    }
 
-  // Key up through each result.
-  for (let i = gMaxResults - 1; i >= 0; i--) {
+    // Key left through each one-off.
+    for (let i = numButtons - 2; i >= 0; i--) {
+      EventUtils.synthesizeKey("KEY_ArrowLeft");
+      assertState(-1, i, "");
+    }
+
+    // Key up through each result.
+    for (let i = gMaxResults - 1; i >= 0; i--) {
+      EventUtils.synthesizeKey("KEY_ArrowUp");
+      assertState(i, -1,
+        "example.com/browser_urlbarOneOffs.js/?" + (gMaxResults - i - 1));
+    }
+
+    // Key up once more.  Nothing should be selected.
     EventUtils.synthesizeKey("KEY_ArrowUp");
-    assertState(i, -1,
-      "example.com/browser_urlbarOneOffs.js/?" + (gMaxResults - i - 1));
+    assertState(-1, -1, "");
+
+    await hidePopup();
+    return;
   }
 
-  // Key up once more.  Nothing should be selected.
-  EventUtils.synthesizeKey("KEY_ArrowUp");
+  // Key down once more.  Nothing should be selected as one-off buttons
+  // should be hidden.
+  EventUtils.synthesizeKey("KEY_ArrowDown");
   assertState(-1, -1, "");
 
   await hidePopup();
@@ -198,7 +208,7 @@ add_task(async function oneOffClick() {
   // stricter. Even if it looks like a url, we should search.
   let typedValue = "foo.bar";
   await promiseAutocompleteResultPopup(typedValue);
-  await waitForAutocompleteResultAt(1);
+  await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   assertState(0, -1, typedValue);
 
   let oneOffs = oneOffSearchButtons.getSelectableButtons(true);
@@ -219,7 +229,7 @@ add_task(async function oneOffReturn() {
   // stricter. Even if it looks like a url, we should search.
   let typedValue = "foo.bar";
   await promiseAutocompleteResultPopup(typedValue, window, true);
-  await waitForAutocompleteResultAt(1);
+  await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   assertState(0, -1, typedValue);
 
   // Alt+Down to select the first one-off.
@@ -246,7 +256,7 @@ add_task(async function collapsedOneOffs() {
 
   let typedValue = "foo";
   await promiseAutocompleteResultPopup(typedValue, window, true);
-  await waitForAutocompleteResultAt(0);
+  await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   assertState(0, -1);
   Assert.ok(oneOffSearchButtons.buttons.collapsed,
     "The one-off buttons should be collapsed");
@@ -255,25 +265,23 @@ add_task(async function collapsedOneOffs() {
   await hidePopup();
 });
 
-
 // The one-offs should be hidden when searching with an "@engine" search engine
 // alias.
 add_task(async function hiddenWhenUsingSearchAlias() {
   let typedValue = "@example";
   await promiseAutocompleteResultPopup(typedValue, window, true);
-  await waitForAutocompleteResultAt(0);
+  await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.equal(UrlbarTestUtils.getOneOffSearchButtonsVisible(window), false,
     "Should not be showing the one-off buttons");
   await hidePopup();
 
   typedValue = "not an engine alias";
   await promiseAutocompleteResultPopup(typedValue, window, true);
-  await waitForAutocompleteResultAt(0);
+  await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.equal(UrlbarTestUtils.getOneOffSearchButtonsVisible(window), true,
     "Should be showing the one-off buttons");
   await hidePopup();
 });
-
 
 function assertState(result, oneOff, textValue = undefined) {
   Assert.equal(UrlbarTestUtils.getSelectedIndex(window), result,

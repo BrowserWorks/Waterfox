@@ -27,6 +27,7 @@
 #include "jit/VMFunctionList-inl.h"
 #include "vm/Debugger-inl.h"
 #include "vm/Interpreter-inl.h"
+#include "vm/JSScript-inl.h"
 #include "vm/NativeObject-inl.h"
 #include "vm/StringObject-inl.h"
 #include "vm/TypeInference-inl.h"
@@ -1242,7 +1243,8 @@ bool DebugLeaveThenRecreateLexicalEnv(JSContext* cx, BaselineFrame* frame,
 }
 
 bool DebugLeaveLexicalEnv(JSContext* cx, BaselineFrame* frame, jsbytecode* pc) {
-  MOZ_ASSERT(frame->script()->baselineScript()->hasDebugInstrumentation());
+  MOZ_ASSERT_IF(!frame->runningInInterpreter(),
+                frame->script()->baselineScript()->hasDebugInstrumentation());
   if (cx->realm()->isDebuggee()) {
     DebugEnvironments::onPopLexical(cx, frame, pc);
   }
@@ -1550,6 +1552,25 @@ bool CallNativeGetter(JSContext* cx, HandleFunction callee, HandleObject obj,
   JS::AutoValueArray<2> vp(cx);
   vp[0].setObject(*callee.get());
   vp[1].setObject(*obj.get());
+
+  if (!natfun(cx, 0, vp.begin())) {
+    return false;
+  }
+
+  result.set(vp[0]);
+  return true;
+}
+
+bool CallNativeGetterByValue(JSContext* cx, HandleFunction callee,
+                             HandleValue receiver, MutableHandleValue result) {
+  AutoRealm ar(cx, callee);
+
+  MOZ_ASSERT(callee->isNative());
+  JSNative natfun = callee->native();
+
+  JS::AutoValueArray<2> vp(cx);
+  vp[0].setObject(*callee.get());
+  vp[1].set(receiver);
 
   if (!natfun(cx, 0, vp.begin())) {
     return false;
@@ -1886,6 +1907,42 @@ bool HasNativeElementPure(JSContext* cx, NativeObject* obj, int32_t index,
   return true;
 }
 
+void HandleCodeCoverageAtPC(BaselineFrame* frame, jsbytecode* pc) {
+  AutoUnsafeCallWithABI unsafe(UnsafeABIStrictness::AllowPendingExceptions);
+
+  MOZ_ASSERT(frame->runningInInterpreter());
+
+  JSScript* script = frame->script();
+  MOZ_ASSERT(pc == script->main() || BytecodeIsJumpTarget(JSOp(*pc)));
+
+  if (!script->hasScriptCounts()) {
+    if (!script->realm()->collectCoverageForDebug()) {
+      return;
+    }
+    JSContext* cx = script->runtimeFromMainThread()->mainContextFromOwnThread();
+    AutoEnterOOMUnsafeRegion oomUnsafe;
+    if (!script->initScriptCounts(cx)) {
+      oomUnsafe.crash("initScriptCounts");
+    }
+  }
+
+  PCCounts* counts = script->maybeGetPCCounts(pc);
+  MOZ_ASSERT(counts);
+  counts->numExec()++;
+}
+
+void HandleCodeCoverageAtPrologue(BaselineFrame* frame) {
+  AutoUnsafeCallWithABI unsafe;
+
+  MOZ_ASSERT(frame->runningInInterpreter());
+
+  JSScript* script = frame->script();
+  jsbytecode* main = script->main();
+  if (!BytecodeIsJumpTarget(JSOp(*main))) {
+    HandleCodeCoverageAtPC(frame, main);
+  }
+}
+
 JSString* TypeOfObject(JSObject* obj, JSRuntime* rt) {
   AutoUnsafeCallWithABI unsafe;
   JSType type = js::TypeOfObject(obj);
@@ -1990,25 +2047,6 @@ bool DoToNumber(JSContext* cx, HandleValue arg, MutableHandleValue ret) {
 bool DoToNumeric(JSContext* cx, HandleValue arg, MutableHandleValue ret) {
   ret.set(arg);
   return ToNumeric(cx, ret);
-}
-
-bool CopyStringSplitArray(JSContext* cx, HandleArrayObject arr,
-                          MutableHandleValue result) {
-  MOZ_ASSERT(arr->isTenured(),
-             "ConstStringSplit needs a tenured template object");
-
-  uint32_t length = arr->getDenseInitializedLength();
-  MOZ_ASSERT(length == arr->length(),
-             "template object is a fully initialized array");
-
-  ArrayObject* nobj = NewFullyAllocatedArrayTryReuseGroup(cx, arr, length);
-  if (!nobj) {
-    return false;
-  }
-  nobj->initDenseElements(arr, 0, length);
-
-  result.setObject(*nobj);
-  return true;
 }
 
 }  // namespace jit

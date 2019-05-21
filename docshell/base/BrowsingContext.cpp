@@ -344,14 +344,14 @@ void BrowsingContext::RestoreChildren(Children&& aChildren, bool aFromIPC) {
     Unused << Group()->EvictCachedContext(child);
   }
 
-  mChildren.SwapElements(aChildren);
+  mChildren.AppendElements(aChildren);
 
   if (!aFromIPC && XRE_IsContentProcess()) {
     auto cc = ContentChild::GetSingleton();
     MOZ_DIAGNOSTIC_ASSERT(cc);
 
-    nsTArray<BrowsingContextId> contexts(mChildren.Length());
-    for (BrowsingContext* child : mChildren) {
+    nsTArray<BrowsingContextId> contexts(aChildren.Length());
+    for (BrowsingContext* child : aChildren) {
       contexts.AppendElement(child->Id());
     }
     cc->SendRestoreBrowsingContextChildren(this, contexts);
@@ -811,6 +811,21 @@ void BrowsingContext::Transaction::Apply(BrowsingContext* aBrowsingContext,
     m##name.reset();                                    \
   }
 #include "mozilla/dom/BrowsingContextFieldList.h"
+}
+
+BrowsingContext::IPCInitializer BrowsingContext::GetIPCInitializer() {
+  MOZ_ASSERT(
+      !mozilla::Preferences::GetBool("fission.preserve_browsing_contexts", false) ||
+      IsContent());
+
+  IPCInitializer init;
+  init.mId = Id();
+  init.mParentId = mParent ? mParent->Id() : 0;
+  init.mCached = IsCached();
+
+#define MOZ_BC_FIELD(name, type) init.m##name = m##name;
+#include "mozilla/dom/BrowsingContextFieldList.h"
+  return init;
 }
 
 already_AddRefed<BrowsingContext> BrowsingContext::IPCInitializer::GetParent() {

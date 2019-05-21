@@ -15,14 +15,13 @@ import {
   getSelectedFrameBindings,
   getCurrentThread,
   getIsPaused,
-  isMapScopesEnabled
+  isMapScopesEnabled,
 } from "../selectors";
 import { PROMISE } from "./utils/middleware/promise";
 import { wrapExpression } from "../utils/expressions";
 import { features } from "../utils/prefs";
 import { isOriginal } from "../utils/source";
 
-import * as parser from "../workers/parser";
 import type { Expression, ThreadContext } from "../types";
 import type { ThunkArgs } from "./types";
 
@@ -35,12 +34,12 @@ import type { ThunkArgs } from "./types";
  * @static
  */
 export function addExpression(cx: ThreadContext, input: string) {
-  return async ({ dispatch, getState }: ThunkArgs) => {
+  return async ({ dispatch, getState, evaluationsParser }: ThunkArgs) => {
     if (!input) {
       return;
     }
 
-    const expressionError = await parser.hasSyntaxError(input);
+    const expressionError = await evaluationsParser.hasSyntaxError(input);
 
     const expression = getExpression(getState(), input);
     if (expression) {
@@ -80,7 +79,7 @@ export function updateExpression(
   input: string,
   expression: Expression
 ) {
-  return async ({ dispatch, getState }: ThunkArgs) => {
+  return async ({ dispatch, getState, parser }: ThunkArgs) => {
     if (!input) {
       return;
     }
@@ -91,7 +90,7 @@ export function updateExpression(
       cx,
       expression,
       input: expressionError ? expression.input : input,
-      expressionError
+      expressionError,
     });
 
     dispatch(evaluateExpressions(cx));
@@ -109,7 +108,7 @@ export function deleteExpression(expression: Expression) {
   return ({ dispatch }: ThunkArgs) => {
     dispatch({
       type: "DELETE_EXPRESSION",
-      input: expression.input
+      input: expression.input,
     });
   };
 }
@@ -127,7 +126,7 @@ export function evaluateExpressions(cx: ThreadContext) {
     const frameId = getSelectedFrameId(getState(), cx.thread);
     const results = await client.evaluateExpressions(inputs, {
       frameId,
-      thread: cx.thread
+      thread: cx.thread,
     });
     dispatch({ type: "EVALUATE_EXPRESSIONS", cx, inputs, results });
   };
@@ -166,8 +165,8 @@ function evaluateExpression(cx: ThreadContext, expression: Expression) {
       input: expression.input,
       [PROMISE]: client.evaluateInFrame(wrapExpression(input), {
         frameId,
-        thread: cx.thread
-      })
+        thread: cx.thread,
+      }),
     });
   };
 }
@@ -177,14 +176,20 @@ function evaluateExpression(cx: ThreadContext, expression: Expression) {
  * and replaces all posible generated names.
  */
 export function getMappedExpression(expression: string) {
-  return async function({ dispatch, getState, client, sourceMaps }: ThunkArgs) {
+  return async function({
+    dispatch,
+    getState,
+    client,
+    sourceMaps,
+    evaluationsParser,
+  }: ThunkArgs) {
     const thread = getCurrentThread(getState());
     const mappings = getSelectedScopeMappings(getState(), thread);
     const bindings = getSelectedFrameBindings(getState(), thread);
 
     // We bail early if we do not need to map the expression. This is important
-    // because mapping an expression can be slow if the parser worker is
-    // busy doing other work.
+    // because mapping an expression can be slow if the evaluationsParser
+    // worker is busy doing other work.
     //
     // 1. there are no mappings - we do not need to map original expressions
     // 2. does not contain `await` - we do not need to map top level awaits
@@ -194,7 +199,7 @@ export function getMappedExpression(expression: string) {
       return null;
     }
 
-    return parser.mapExpression(
+    return evaluationsParser.mapExpression(
       expression,
       mappings,
       bindings || [],

@@ -12,13 +12,6 @@ import { waitForMs } from "../utils/utils";
 import { newGeneratedSources } from "./sources";
 import { updateWorkers } from "./debuggee";
 
-import {
-  clearASTs,
-  clearSymbols,
-  clearScopes,
-  clearSources
-} from "../workers/parser";
-
 import { clearWasmStates } from "../utils/wasm";
 import { getMainThread } from "../selectors";
 import type { Action, ThunkArgs } from "./types";
@@ -33,39 +26,42 @@ import type { Action, ThunkArgs } from "./types";
  * @static
  */
 export function willNavigate(event: Object) {
-  return function({ dispatch, getState, client, sourceMaps }: ThunkArgs) {
+  return async function({
+    dispatch,
+    getState,
+    client,
+    sourceMaps,
+    parser,
+  }: ThunkArgs) {
+    sourceQueue.clear();
     sourceMaps.clearSourceMaps();
     clearWasmStates();
     clearDocuments();
-    clearSymbols();
-    clearASTs();
-    clearScopes();
-    clearSources();
+    parser.clear();
     client.detachWorkers();
-    dispatch(navigate(event.url));
-  };
-}
-
-export function navigate(url: string) {
-  return async function({ dispatch, getState }: ThunkArgs) {
-    sourceQueue.clear();
     const thread = getMainThread(getState());
 
     dispatch({
       type: "NAVIGATE",
-      mainThread: { ...thread, url }
+      mainThread: { ...thread, url: event.url },
     });
   };
 }
 
-export function connect(url: string, actor: string, canRewind: boolean) {
+export function connect(
+  url: string,
+  actor: string,
+  canRewind: boolean,
+  isWebExtension: boolean
+) {
   return async function({ dispatch }: ThunkArgs) {
     await dispatch(updateWorkers());
     dispatch(
       ({
         type: "CONNECT",
-        mainThread: { url, actor, type: -1 },
-        canRewind
+        mainThread: { url, actor, type: -1, name: "" },
+        canRewind,
+        isWebExtension,
       }: Action)
     );
   };

@@ -10,17 +10,15 @@ import { PROMISE } from "../utils/middleware/promise";
 import { updateTab } from "../tabs";
 import { loadSourceText } from "./loadSourceText";
 
-import * as parser from "../../workers/parser";
-
 import {
   memoizeableAction,
-  type MemoizedAction
+  type MemoizedAction,
 } from "../../utils/memoizableAction";
 
 import type { Source, Context } from "../../types";
 import type { Symbols } from "../../reducers/types";
 
-async function doSetSymbols(cx, source, { dispatch, getState }) {
+async function doSetSymbols(cx, source, { dispatch, getState, parser }) {
   const sourceId = source.id;
 
   await dispatch(loadSourceText({ cx, source }));
@@ -29,7 +27,7 @@ async function doSetSymbols(cx, source, { dispatch, getState }) {
     type: "SET_SYMBOLS",
     cx,
     sourceId,
-    [PROMISE]: parser.getSymbols(sourceId)
+    [PROMISE]: parser.getSymbols(sourceId),
   });
 
   const symbols = getSymbols(getState(), source);
@@ -49,6 +47,6 @@ export const setSymbols: MemoizedAction<Args, ?Symbols> = memoizeableAction(
     hasValue: ({ source }, { getState }) => hasSymbols(getState(), source),
     getValue: ({ source }, { getState }) => getSymbols(getState(), source),
     createKey: ({ source }) => source.id,
-    action: ({ cx, source }, thunkArgs) => doSetSymbols(cx, source, thunkArgs)
+    action: ({ cx, source }, thunkArgs) => doSetSymbols(cx, source, thunkArgs),
   }
 );

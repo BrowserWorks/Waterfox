@@ -15,6 +15,18 @@ const test = new SearchConfigTest({
       },
     }],
   },
+  available: {
+    included: [{
+      locales: {
+        matches: ["zh-CN"],
+      },
+    }],
+  },
+  domains: {
+    "baidu.com": {
+      included: [{}],
+    },
+  },
 });
 
 add_task(async function setup() {
