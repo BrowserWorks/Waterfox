@@ -1381,7 +1381,7 @@ nsPluginStreamListenerPeer::AsyncOnChannelRedirect(nsIChannel *oldChannel, nsICh
     return NS_ERROR_FAILURE;
   }
 
-  // Don't allow cross-origin 307 POST redirects.
+  // Don't allow cross-origin 307/308 POST redirects.
   nsCOMPtr<nsIHttpChannel> oldHttpChannel(do_QueryInterface(oldChannel));
   if (oldHttpChannel) {
     uint32_t responseStatus;
@@ -1389,7 +1389,7 @@ nsPluginStreamListenerPeer::AsyncOnChannelRedirect(nsIChannel *oldChannel, nsICh
     if (NS_FAILED(rv)) {
       return rv;
     }
-    if (responseStatus == 307) {
+    if (responseStatus == 307 || responseStatus == 308) {
       nsAutoCString method;
       rv = oldHttpChannel->GetRequestMethod(method);
       if (NS_FAILED(rv)) {
