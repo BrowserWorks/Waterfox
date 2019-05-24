@@ -66,7 +66,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=654550
     // set 'loop' to true to keep playing so that we won't miss 'timeupdate' events
     v.loop = true;
     manager.started(token);
-    SpecialPowers.pushPrefEnv({"set": [["media.video_stats.enabled", true]]},
+    SpecialPowers.pushPrefEnv({"set": [["media.video_stats.enabled", false]]},
       function() {
         v.play();
         v.addEventListener("timeupdate", ontimeupdate_statsEnabled);
