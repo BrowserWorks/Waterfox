@@ -2736,9 +2736,14 @@ BackgroundVersionChangeTransactionChild::RecvComplete(const nsresult& aResult)
     database->Close();
   }
 
+  RefPtr<IDBOpenDBRequest> request = mOpenDBRequest;
+  MOZ_ASSERT(request);
+
   mTransaction->FireCompleteOrAbortEvents(aResult);
 
-  mOpenDBRequest->SetTransaction(nullptr);
+  request->SetTransaction(nullptr);
+  request = nullptr;
+
   mOpenDBRequest = nullptr;
 
   NoteComplete();
