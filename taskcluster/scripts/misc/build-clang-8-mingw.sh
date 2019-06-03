@@ -32,13 +32,9 @@ SRC_DIR=$TOOLCHAIN_DIR/src
 
 make_flags="-j$(nproc)"
 
-mingw_version=d539d36fd573e688ec7ad9dc840e3826a65419b1
-libunwind_version=1f89d78bb488bc71cfdee8281fc0834e9fbe5dce
-llvm_mingw_version=53db1c3a4c9c81972b70556a5ba5cd6ccd8e6e7d
-
-binutils_version=2.27
-binutils_ext=bz2
-binutils_sha=369737ce51587f92466041a97ab7d2358c6d9e1b6490b3940eb09fb0a9a6ac88
+mingw_version=164990461720e0ed6ea5ea9f359d78595b1a459a
+libunwind_version=6ee92fcc97350ae32db3172a269e9afcc2bab686
+llvm_mingw_version=c3a16814bd26aa6702e1e5b482a3d9044bb0f725
 
 # This is default value of _WIN32_WINNT. Gecko configure script explicitly sets this,
 # so this is not used to build Gecko itself. We default to 0x601, which is Windows 7.
@@ -71,14 +67,6 @@ prepare() {
   pushd llvm-mingw
   git checkout $llvm_mingw_version
   popd
-
-  wget -c --progress=dot:mega ftp://ftp.gnu.org/gnu/binutils/binutils-$binutils_version.tar.$binutils_ext
-  if [ "$(sha256sum binutils-$binutils_version.tar.$binutils_ext)" != "$binutils_sha  binutils-$binutils_version.tar.$binutils_ext" ];
-  then
-    echo Corrupted binutils archive
-    exit 1
-  fi
-  tar -jxf binutils-$binutils_version.tar.$binutils_ext
 
   popd
 }
@@ -193,15 +181,18 @@ build_libcxx() {
       -DCMAKE_SYSTEM_NAME=Windows \
       -DCMAKE_C_COMPILER_WORKS=TRUE \
       -DCMAKE_CXX_COMPILER_WORKS=TRUE \
+      -DLLVM_COMPILER_CHECKED=TRUE \
       -DCMAKE_AR=$INSTALL_DIR/bin/llvm-ar \
       -DCMAKE_RANLIB=$INSTALL_DIR/bin/llvm-ranlib \
       -DLLVM_NO_OLD_LIBSTDCXX=TRUE \
       -DCXX_SUPPORTS_CXX11=TRUE \
+      -DCXX_SUPPORTS_CXX_STD=TRUE \
       -DLIBUNWIND_USE_COMPILER_RT=TRUE \
       -DLIBUNWIND_ENABLE_THREADS=TRUE \
       -DLIBUNWIND_ENABLE_SHARED=FALSE \
       -DLIBUNWIND_ENABLE_CROSS_UNWINDING=FALSE \
-      -DCMAKE_CXX_FLAGS="${DEBUG_FLAGS} -nostdinc++ -I$SRC_DIR/libcxx/include -DPSAPI_VERSION=2" \
+      -DCMAKE_CXX_FLAGS="${DEBUG_FLAGS} -Wno-dll-attribute-on-redeclaration -nostdinc++ -I$SRC_DIR/libcxx/include -DPSAPI_VERSION=2" \
+      -DCMAKE_C_FLAGS="-Wno-dll-attribute-on-redeclaration" \
       $SRC_DIR/libunwind
   make $make_flags
   make $make_flags install
@@ -219,6 +210,7 @@ build_libcxx() {
       -DCMAKE_C_COMPILER_WORKS=TRUE \
       -DCMAKE_CXX_COMPILER_WORKS=TRUE \
       -DCMAKE_SYSROOT=$CROSS_PREFIX_DIR \
+      -DLLVM_COMPILER_CHECKED=TRUE \
       -DCMAKE_AR=$INSTALL_DIR/bin/llvm-ar \
       -DCMAKE_RANLIB=$INSTALL_DIR/bin/llvm-ranlib \
       -DLIBCXXABI_USE_COMPILER_RT=ON \
@@ -229,6 +221,7 @@ build_libcxx() {
       -DLIBCXXABI_LIBCXX_INCLUDES=$SRC_DIR/libcxx/include \
       -DLLVM_NO_OLD_LIBSTDCXX=TRUE \
       -DCXX_SUPPORTS_CXX11=TRUE \
+      -DCXX_SUPPORTS_CXX_STD=TRUE \
       -DCMAKE_CXX_FLAGS="${DEBUG_FLAGS} -D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS -D_LIBCPP_HAS_THREAD_API_WIN32" \
       $SRC_DIR/libcxxabi
   make $make_flags VERBOSE=1
@@ -245,6 +238,7 @@ build_libcxx() {
       -DCMAKE_SYSTEM_NAME=Windows \
       -DCMAKE_C_COMPILER_WORKS=TRUE \
       -DCMAKE_CXX_COMPILER_WORKS=TRUE \
+      -DLLVM_COMPILER_CHECKED=TRUE \
       -DCMAKE_AR=$INSTALL_DIR/bin/llvm-ar \
       -DCMAKE_RANLIB=$INSTALL_DIR/bin/llvm-ranlib \
       -DLIBCXX_USE_COMPILER_RT=ON \
@@ -276,22 +270,12 @@ build_libcxx() {
 }
 
 build_utils() {
-  mkdir binutils
-  pushd binutils
-  $SRC_DIR/binutils-$binutils_version/configure --prefix=$INSTALL_DIR \
-                                                --disable-multilib \
-                                                --disable-nls \
-                                                --target=$machine-w64-mingw32
-  make $make_flags
-
-  # Manually install only nm
-  cp binutils/nm-new $INSTALL_DIR/bin/$machine-w64-mingw32-nm
-
   pushd $INSTALL_DIR/bin/
+  ln -s llvm-nm $machine-w64-mingw32-nm
+  ln -s llvm-strip $machine-w64-mingw32-strip
   ln -s llvm-readobj $machine-w64-mingw32-readobj
+  ln -s llvm-objcopy $machine-w64-mingw32-objcopy
   ./clang $SRC_DIR/llvm-mingw/wrappers/windres-wrapper.c -O2 -Wl,-s -o $machine-w64-mingw32-windres
-  popd
-
   popd
 }
 

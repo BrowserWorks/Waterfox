@@ -68,8 +68,12 @@ def make_beetmover_checksums_description(config, jobs):
             attributes['chunk_locales'] = dep_job.attributes['chunk_locales']
         attributes.update(job.get('attributes', {}))
 
-        bucket_scope = get_beetmover_bucket_scope(config)
-        action_scope = get_beetmover_action_scope(config)
+        bucket_scope = get_beetmover_bucket_scope(
+            config, job_release_type=attributes.get('release-type')
+        )
+        action_scope = get_beetmover_action_scope(
+            config, job_release_type=attributes.get('release-type')
+        )
 
         task = {
             'label': label,
@@ -138,7 +142,7 @@ def make_beetmover_checksums_worker(config, jobs):
             'release-properties': craft_release_properties(config, job),
         }
 
-        if should_use_artifact_map(platform, config.params['project']):
+        if should_use_artifact_map(platform):
             upstream_artifacts = generate_beetmover_upstream_artifacts(
                 config, job, platform, locales
             )

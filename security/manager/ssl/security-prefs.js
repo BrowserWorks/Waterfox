@@ -119,8 +119,13 @@ pref("security.pki.netscape_step_up_policy", 2);
 pref("security.pki.certificate_transparency.mode", 0);
 
 // Hardware Origin-bound Second Factor Support
-pref("security.webauth.u2f", true);
 pref("security.webauth.webauthn", true);
+#ifdef MOZ_WIDGET_ANDROID
+// No way to enable on Android, Bug 1552602
+pref("security.webauth.u2f", false);
+#else
+pref("security.webauth.u2f", true);
+#endif
 
 // Only one of ["enable_softtoken", "enable_usbtoken",
 // "webauthn_enable_android_fido2"] should be true at a time, as the
@@ -173,10 +178,10 @@ pref("security.pki.mitm_canary_issuer.enabled", true);
 pref("security.pki.mitm_detected", false);
 
 // Intermediate CA Preloading settings
-#if defined(MOZ_NEW_CERT_STORAGE) && !defined(MOZ_WIDGET_ANDROID)
-pref("security.remote_settings.intermediates.enabled", true);
-#else
+#if defined(RELEASE_OR_BETA) || defined(MOZ_WIDGET_ANDROID)
 pref("security.remote_settings.intermediates.enabled", false);
+#else
+pref("security.remote_settings.intermediates.enabled", true);
 #endif
 pref("security.remote_settings.intermediates.bucket", "security-state");
 pref("security.remote_settings.intermediates.collection", "intermediates");

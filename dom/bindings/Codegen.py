@@ -2361,7 +2361,8 @@ class MethodDefiner(PropertyDefiner):
                        m.isMethod() and m.isStatic() == static and
                        MemberIsUnforgeable(m, descriptor) == unforgeable and
                        (not crossOriginOnly or m.getExtendedAttribute("CrossOriginCallable")) and
-                       not m.isIdentifierLess()]
+                       not m.isIdentifierLess() and
+                       not m.getExtendedAttribute("Unexposed")]
         else:
             methods = []
         self.chrome = []
@@ -7978,7 +7979,13 @@ class CGPerSignatureCall(CGThing):
                 self.getArguments(), argsPre, returnType,
                 self.extendedAttributes, descriptor,
                 nativeMethodName,
-                static, argsPost=argsPost, resultVar=resultVar))
+                static,
+                # We know our "self" must be being kept alive; otherwise we have
+                # a serious problem.  In common cases it's just an argument and
+                # we're MOZ_CAN_RUN_SCRIPT, but in some cases it's on the stack
+                # and being kept alive via references from JS.
+                object="MOZ_KnownLive(self)",
+                argsPost=argsPost, resultVar=resultVar))
 
         if useCounterName:
             # Generate a telemetry call for when [UseCounter] is used.
@@ -8752,7 +8759,8 @@ class CGAbstractBindingMethod(CGAbstractStaticMethod):
     """
     def __init__(self, descriptor, name, args, getThisObj,
                  callArgs="JS::CallArgs args = JS::CallArgsFromVp(argc, vp);\n"):
-        CGAbstractStaticMethod.__init__(self, descriptor, name, "bool", args)
+        CGAbstractStaticMethod.__init__(self, descriptor, name, "bool", args,
+                                        canRunScript=True)
 
         self.unwrapFailureCode = 'return ThrowErrorMessage(cx, MSG_THIS_DOES_NOT_IMPLEMENT_INTERFACE, "Value", "%s");\n' % descriptor.interface.identifier.name
 
@@ -9628,11 +9636,19 @@ class CGMemberJITInfo(CGThing):
                 argTypes=argTypes,
                 slotAssert=slotAssert)
 
+        # Unexposed things are meant to be used from C++ directly, so we make
+        # their jitinfo non-static.  That way C++ can get at it.
+        if self.member.getExtendedAttribute("Unexposed"):
+            storageClass = "extern"
+        else:
+            storageClass = "static"
+
         return fill(
             """
-            static const JSJitInfo ${infoName} = ${jitInfo};
+            ${storageClass} const JSJitInfo ${infoName} = ${jitInfo};
             $*{slotAssert}
             """,
+            storageClass=storageClass,
             infoName=infoName,
             jitInfo=jitInfoInitializer(False),
             slotAssert=slotAssert)

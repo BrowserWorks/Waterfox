@@ -348,11 +348,7 @@ class PanelList extends HTMLElement {
   }
 
   set open(val) {
-    if (val) {
-      this.setAttribute("open", "true");
-    } else {
-      this.removeAttribute("open");
-    }
+    this.toggleAttribute("open", val);
   }
 
   show(triggeringEvent) {
@@ -458,6 +454,10 @@ class PanelList extends HTMLElement {
       case "click":
         if (e.target.tagName == "PANEL-ITEM") {
           this.hide();
+        } else {
+          // Avoid falling through to the default click handler of the
+          // add-on card, which would expand the add-on card.
+          e.stopPropagation();
         }
         break;
       case "mousedown":
@@ -509,11 +509,7 @@ class PanelItem extends HTMLElement {
   }
 
   set disabled(val) {
-    if (val) {
-      this.button.setAttribute("disabled", "");
-    } else {
-      this.button.removeAttribute("disabled");
-    }
+    this.button.toggleAttribute("disabled", val);
   }
 
   get checked() {
@@ -521,11 +517,7 @@ class PanelItem extends HTMLElement {
   }
 
   set checked(val) {
-    if (val) {
-      this.setAttribute("checked", "");
-    } else {
-      this.removeAttribute("checked");
-    }
+    this.toggleAttribute("checked", val);
   }
 }
 customElements.define("panel-item", PanelItem);
@@ -565,34 +557,44 @@ class AddonOptions extends HTMLElement {
     }
   }
 
+  get template() {
+    return "addon-options";
+  }
+
   render() {
-    this.appendChild(importTemplate("addon-options"));
+    this.appendChild(importTemplate(this.template));
+  }
+
+  setElementState(el, card, addon, updateInstall) {
+    switch (el.getAttribute("action")) {
+      case "remove":
+        el.hidden = !hasPermission(addon, "uninstall");
+        break;
+      case "report":
+        el.hidden = !ABUSE_REPORT_ENABLED;
+        break;
+      case "toggle-disabled":
+        let toggleDisabledAction = addon.userDisabled ? "enable" : "disable";
+        document.l10n.setAttributes(
+          el, `${toggleDisabledAction}-addon-button`);
+        el.hidden = !hasPermission(addon, toggleDisabledAction);
+        break;
+      case "install-update":
+        el.hidden = !updateInstall;
+        break;
+      case "expand":
+        el.hidden = card.expanded;
+        break;
+      case "preferences":
+        el.hidden = getOptionsType(addon) !== "tab";
+        break;
+    }
   }
 
   update(card, addon, updateInstall) {
-    // Hide remove button if not allowed.
-    let removeButton = this.querySelector('[action="remove"]');
-    removeButton.hidden = !hasPermission(addon, "uninstall");
-
-    // Hide the report button if reporting is preffed off.
-    this.querySelector('[action="report"]').hidden = !ABUSE_REPORT_ENABLED;
-
-    // Set disable label and hide if not allowed.
-    let toggleDisabledButton = this.querySelector('[action="toggle-disabled"]');
-    let toggleDisabledAction = addon.userDisabled ? "enable" : "disable";
-    document.l10n.setAttributes(
-      toggleDisabledButton, `${toggleDisabledAction}-addon-button`);
-    toggleDisabledButton.hidden = !hasPermission(addon, toggleDisabledAction);
-
-    // Set the update button and badge the menu if there's an update.
-    this.querySelector('[action="install-update"]').hidden = !updateInstall;
-
-    // Hide the expand button if we're expanded.
-    this.querySelector('[action="expand"]').hidden = card.expanded;
-
-    // Show the preferences option if needed.
-    this.querySelector('[action="preferences"]').hidden =
-      getOptionsType(addon) != "tab";
+    for (let el of this.querySelectorAll("panel-item")) {
+      this.setElementState(el, card, addon, updateInstall);
+    }
 
     // Update the separators visibility based on the updated visibility
     // of the actions in the panel-list.
@@ -601,32 +603,24 @@ class AddonOptions extends HTMLElement {
 }
 customElements.define("addon-options", AddonOptions);
 
-class PluginOptions extends HTMLElement {
-  connectedCallback() {
-    if (this.children.length == 0) {
-      this.render();
-    }
+class PluginOptions extends AddonOptions {
+  get template() {
+    return "plugin-options";
   }
 
-  render() {
-    this.appendChild(importTemplate("plugin-options"));
-  }
-
-  update(card, addon) {
-    let actions = [{
-      action: "ask-to-activate",
-      userDisabled: AddonManager.STATE_ASK_TO_ACTIVATE,
-    }, {
-      action: "always-activate",
-      userDisabled: false,
-    }, {
-      action: "never-activate",
-      userDisabled: true,
-    }];
-    for (let {action, userDisabled} of actions) {
-      let el = this.querySelector(`[action="${action}"]`);
+  setElementState(el, card, addon) {
+    const userDisabledStates = {
+      "ask-to-activate": AddonManager.STATE_ASK_TO_ACTIVATE,
+      "always-activate": false,
+      "never-activate": true,
+    };
+    const action = el.getAttribute("action");
+    if (action in userDisabledStates) {
+      let userDisabled = userDisabledStates[action];
       el.checked = addon.userDisabled === userDisabled;
       el.disabled = !(el.checked || hasPermission(addon, action));
+    } else {
+      super.setElementState(el, card, addon);
     }
   }
 }
@@ -1157,8 +1151,7 @@ class AddonCard extends HTMLElement {
           break;
         default:
           // Handle a click on the card itself.
-          // Don't expand if expanded or a button was clicked.
-          if (!this.expanded && e.target.localName != "button") {
+          if (!this.expanded) {
             loadViewFn("detail", this.addon.id);
           }
           break;

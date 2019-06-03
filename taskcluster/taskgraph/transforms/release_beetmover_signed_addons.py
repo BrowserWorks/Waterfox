@@ -102,8 +102,12 @@ def make_task_description(config, jobs):
         )
 
         job['scopes'] = [
-            get_beetmover_bucket_scope(config),
-            get_beetmover_action_scope(config),
+            get_beetmover_bucket_scope(
+                config, job_release_type=attributes.get('release-type')
+            ),
+            get_beetmover_action_scope(
+                config, job_release_type=attributes.get('release-type')
+            ),
         ]
 
         job['dependencies'] = {dep_job.kind: dep_job.label}
@@ -125,7 +129,7 @@ def make_task_worker(config, jobs):
 
         platform = job["attributes"]["build_platform"]
         locale = job["attributes"]["chunk_locales"]
-        if should_use_artifact_map(platform, config.params['project']):
+        if should_use_artifact_map(platform):
             upstream_artifacts = generate_beetmover_upstream_artifacts(
                 config, job, platform, locale,
             )
@@ -139,7 +143,7 @@ def make_task_worker(config, jobs):
             'upstream-artifacts': upstream_artifacts,
         }
 
-        if should_use_artifact_map(platform, config.params['project']):
+        if should_use_artifact_map(platform):
             job['worker']['artifact-map'] = generate_beetmover_artifact_map(
                 config, job, platform=platform, locale=locale)
 
@@ -232,7 +236,7 @@ def _change_platform_data(config, platform_job, platform):
     platform_job['worker']['release-properties']['platform'] = platform
 
     # amend artifactMap entries as well
-    if should_use_artifact_map(backup_platform, config.params['project']):
+    if should_use_artifact_map(backup_platform):
         platform_mapping = {
             'linux64': 'linux-x86_64',
             'linux': 'linux-i686',

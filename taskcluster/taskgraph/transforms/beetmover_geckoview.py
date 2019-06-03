@@ -11,8 +11,9 @@ import re
 
 from taskgraph.loader.single_dep import schema
 from taskgraph.transforms.base import TransformSequence
-from taskgraph.transforms.beetmover import \
-    craft_release_properties as beetmover_craft_release_properties
+from taskgraph.transforms.beetmover import (
+    craft_release_properties as beetmover_craft_release_properties,
+)
 from taskgraph.util.attributes import copy_attributes_from_dependent_job
 from taskgraph.util.schema import resolve_keyed_by, optionally_keyed_by
 from taskgraph.util.scriptworker import (generate_beetmover_artifact_map,
@@ -27,6 +28,10 @@ _ARTIFACT_ID_PER_PLATFORM = {
     'android-api-16': 'geckoview{update_channel}-armeabi-v7a',
     'android-x86': 'geckoview{update_channel}-x86',
     'android-x86_64': 'geckoview{update_channel}-x86_64',
+    'android-aarch64-beta': 'geckoview-beta-arm64-v8a',
+    'android-api-16-beta': 'geckoview-beta-armeabi-v7a',
+    'android-x86-beta': 'geckoview-beta-x86',
+    'android-x86_64-beta': 'geckoview-beta-x86_64',
 }
 
 _MOZ_UPDATE_CHANNEL_PER_BRANCH = {
@@ -116,6 +121,7 @@ def make_task_description(config, jobs):
             'run-on-projects': job['run-on-projects'],
             'treeherder': treeherder,
             'shipping-phase': job['shipping-phase'],
+            'shipping-product': job.get('shipping-product'),
         }
 
         yield task

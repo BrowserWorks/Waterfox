@@ -5,6 +5,7 @@
 
 const test = new SearchConfigTest({
   identifier: "bing",
+  aliases: ["@bing"],
   default: {
     // Not included anywhere.
   },
@@ -32,11 +33,19 @@ const test = new SearchConfigTest({
       },
     }],
   },
-  domains: {
-    "bing.com": {
-      included: [{}],
+  details: [{
+    included: [{}],
+    domain: "bing.com",
+    codes: {
+      "searchbar": "form=MOZSBR",
+      "keyword": "form=MOZLBR",
+      "contextmenu": "form=MOZCON",
+      "homepage": "form=MOZSPG",
+      "newtab": "form=MOZTSB",
     },
-  },
+    searchUrlCode: "pc=MOZI",
+    searchFormUrlCode: "pc=MOZI",
+  }],
 });
 
 add_task(async function setup() {

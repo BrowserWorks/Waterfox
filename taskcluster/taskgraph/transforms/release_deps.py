@@ -35,10 +35,19 @@ def add_dependencies(config, jobs):
                 attr = dep_task.attributes.get
                 if attr("locale") or attr("chunk_locales"):
                     continue
+
+                if attr('build_platform', '').endswith('-nightly'):
+                    continue
+
             # We can only depend on tasks in the current or previous phases
             dep_phase = dep_task.attributes.get('shipping_phase')
             if dep_phase and PHASES.index(dep_phase) > PHASES.index(phase):
                 continue
+
+            if dep_task.attributes.get("release-type") and \
+               job.get("attributes", {}).get("release-type"):
+                if dep_task.attributes["release-type"] != job["attributes"]["release-type"]:
+                    continue
 
             if dep_task.attributes.get("build_platform") and \
                job.get("attributes", {}).get("build_platform"):

@@ -385,9 +385,12 @@ def target_tasks_promote_fennec(full_task_graph, parameters, graph_config):
         # Don't ship single locale fennec anymore - Bug 1408083
         if attr("locale") or attr("chunk_locales"):
             return False
+
         if task.attributes.get('shipping_product') == 'fennec' and \
-                task.attributes.get('shipping_phase') == 'promote':
+                task.attributes.get('shipping_phase') == 'promote' and \
+                task.attributes.get('release-type') != 'nightly':
             return True
+        return False
 
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(full_task_graph[l])]
 
@@ -402,15 +405,18 @@ def target_tasks_ship_fennec(full_task_graph, parameters, graph_config):
     )
 
     def filter(task):
+        # XXX Starting 68, Geckoview is shipped in a separate target_tasks
+        if task.kind == 'beetmover-geckoview':
+            return False
+
         # Include candidates build tasks; these will be optimized out
         if task.label in filtered_for_candidates:
             return True
         if task.attributes.get('shipping_product') != 'fennec' or \
-                task.attributes.get('shipping_phase') not in ('ship', 'push'):
+                task.attributes.get('shipping_phase') not in ('ship', 'push') or \
+                task.attributes.get('release-type') == 'nightly':
             return False
-        # We always run push-apk during ship
-        if task.kind == 'push-apk':
-            return True
+
         # secondary-notify-ship is only for RC
         if task.kind in (
             'release-secondary-notify-ship',
@@ -446,14 +452,32 @@ def target_tasks_nightly_fennec(full_task_graph, parameters, graph_config):
     nightly build process involves a pipeline of builds, signing,
     and, eventually, uploading the tasks to balrog."""
     def filter(task):
+        # XXX Starting 68, we ship Fennec outside of mozilla-central, but geckoview must remain
+        # shipped from there
+        if task.kind == 'beetmover-geckoview':
+            return False
+
+        if not filter_for_project(task, parameters):
+            return False
+        if task.attributes.get('shipping_product') == 'fennec':
+            if task.attributes.get('release-type') == 'nightly':
+                if not task.attributes.get('nightly', False):
+                    return False
+                return True
+
+    return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
+
+
+@_target_task('ship_geckoview_beta')
+def target_tasks_nightly_geckoview(full_task_graph, parameters, graph_config):
+    """Select the set of tasks required to ship geckoview beta. The
+    build process involves a pipeline of builds and an upload to
+    maven.mozilla.org."""
+
+    def filter(task):
         # XXX Starting 69, we don't ship Fennec Nightly anymore. We just want geckoview to be
         # uploaded
-        return task.label in (
-            'beetmover-geckoview-android-aarch64-nightly/opt',
-            'beetmover-geckoview-android-api-16-nightly/opt',
-            'beetmover-geckoview-android-x86-nightly/opt',
-            'beetmover-geckoview-android-x86_64-nightly/opt',
-        )
+        return task.kind == 'beetmover-geckoview' and task.attributes.get('release-type') == 'beta'
 
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
 

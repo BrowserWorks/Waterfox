@@ -14,7 +14,7 @@ def loader(kind, path, config, params, loaded_tasks):
     jobs = base_loader(kind, path, config, params, loaded_tasks)
 
     for job in jobs:
-        dependent_tasks = get_dependent_loaded_tasks(config, params, loaded_tasks)
+        dependent_tasks = get_dependent_loaded_tasks(config, params, loaded_tasks, job)
         if not dependent_tasks:
             # PushApk must depend on signed APK. If no dependent task was found,
             # this means another plaform (like windows) is being processed
@@ -26,25 +26,26 @@ def loader(kind, path, config, params, loaded_tasks):
         yield job
 
 
-def get_dependent_loaded_tasks(config, params, loaded_tasks):
+def get_dependent_loaded_tasks(config, params, loaded_tasks, job):
     nightly_tasks = (
         task for task in loaded_tasks if task.attributes.get('nightly')
     )
     tasks_with_matching_kind = (
         task for task in nightly_tasks if task.kind in config.get('kind-dependencies')
     )
-    android_tasks = (
+    tasks = (
         task for task in tasks_with_matching_kind
-        if task.attributes.get('build_platform', '').startswith('android')
+        if task.attributes.get('shipping_product') == 'fennec'
+        and task.attributes.get('release-type') == job['attributes']['release-type']
     )
 
     # XXX Bug 1368484: Aarch64 is not planned to ride the trains regularly. It stayed on central
     # for a couple of cycles, and is planned to stay on mozilla-beta until 68.
     if params['project'] in ('mozilla-central', 'mozilla-beta', 'try'):
-        shipping_tasks = list(android_tasks)
+        shipping_tasks = list(tasks)
     else:
         shipping_tasks = [
-            task for task in android_tasks
+            task for task in tasks
             if 'aarch64' not in task.attributes.get('build_platform', '')
         ]
 

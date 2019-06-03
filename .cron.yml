@@ -75,13 +75,29 @@ jobs:
           treeherder-symbol: Na
           target-tasks-method: nightly_fennec
           include-push-tasks: true
+          android-release-type: nightly
       run-on-projects:
           - mozilla-central
+          - mozilla-beta
       when:
           by-project:
-              # Match buildbot starts for now
+              # mozilla-central builds geckoview, mozilla-beta builds
+              # and ships Fennec nightly
               mozilla-central: [{hour: 10, minute: 0}]
+              mozilla-beta: [{hour: 10, minute: 0}]
               # No default
+
+    - name: ship-geckoview
+      job:
+          type: decision-task
+          treeherder-symbol: ship_geckoview_beta
+          target-tasks-method: ship_geckoview_beta
+          include-push-tasks: true
+          android-release-type: beta
+      run-on-projects:
+          - mozilla-beta
+      when: []    # never (hook only)
+
 
     - name: searchfox-index
       job:

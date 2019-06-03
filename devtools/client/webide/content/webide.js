@@ -115,8 +115,9 @@ var UI = {
     this.contentViewer = window.docShell.contentViewer;
     this.contentViewer.fullZoom = Services.prefs.getCharPref("devtools.webide.zoom");
 
-    // Show a deprecation message to encourage users to open the new Remote Debugging
-    if (Services.prefs.getBoolPref("devtools.webide.showDeprecationMessage", false)) {
+    // If the new about:debugging is enabled, show a deprecation message to encourage
+    // users to open the new Remote Debugging
+    if (Services.prefs.getBoolPref("devtools.aboutdebugging.new-enabled", false)) {
       this.showDeprecationMessage();
     }
 
@@ -318,7 +319,15 @@ var UI = {
   },
 
   showDeprecationMessage: function() {
-    const text = Strings.GetStringFromName("error_webIDEDeprecated");
+    let text;
+    try {
+      text = Strings.GetStringFromName("error_webIDEDeprecated2");
+    } catch (e) {
+      // The string error_webIDEDeprecated2 should be upflited to Beta 68. In this
+      // situation, some language packs might not be updated and provide the new string
+      // immediately. Fallback to the previous string in this case.
+      text = Strings.GetStringFromName("error_webIDEDeprecated");
+    }
     const buttons = [{
       label: Strings.GetStringFromName("notification_openAboutDebugging.label"),
       accessKey: Strings.GetStringFromName("notification_openAboutDebugging.accesskey"),

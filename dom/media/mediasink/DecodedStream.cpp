@@ -22,6 +22,7 @@
 
 namespace mozilla {
 
+using media::NullableTimeUnit;
 using media::TimeUnit;
 
 /*
@@ -275,11 +276,11 @@ class DecodedStreamData {
   // mLastVideoStartTime is the start timestamp for the last packet sent to the
   // stream. Therefore video packets starting after this time need to be copied
   // to the output stream.
-  Maybe<TimeUnit> mLastVideoStartTime;
+  NullableTimeUnit mLastVideoStartTime;
   // mLastVideoEndTime is the end timestamp for the last packet sent to the
   // stream. It is used to adjust durations of chunks sent to the output stream
   // when there are overlaps in VideoData.
-  Maybe<TimeUnit> mLastVideoEndTime;
+  NullableTimeUnit mLastVideoEndTime;
   // The timestamp of the last frame, so we can ensure time never goes
   // backwards.
   TimeStamp mLastVideoTimeStamp;
@@ -372,7 +373,6 @@ DecodedStream::DecodedStream(AbstractThread* aOwnerThread,
   mPrincipalHandle.Connect(mOutputStreamManager->CanonicalPrincipalHandle());
 
   mWatchManager.Watch(mPlaying, &DecodedStream::PlayingChanged);
-
   PlayingChanged();  // Notify of the initial state
 }
 
@@ -758,7 +758,8 @@ void DecodedStream::SendVideo(bool aIsSameOrigin,
 
   for (uint32_t i = 0; i < video.Length(); ++i) {
     VideoData* v = video[i];
-    TimeUnit lastStart = mData->mLastVideoStartTime.valueOr(mStartTime.ref());
+    TimeUnit lastStart = mData->mLastVideoStartTime.valueOr(
+        mStartTime.ref() - TimeUnit::FromMicroseconds(1));
     TimeUnit lastEnd = mData->mLastVideoEndTime.valueOr(mStartTime.ref());
 
     if (lastEnd < v->mTime) {
@@ -777,7 +778,10 @@ void DecodedStream::SendVideo(bool aIsSameOrigin,
       mData->WriteVideoToSegment(mData->mLastVideoImage, lastEnd, v->mTime,
                                  mData->mLastVideoImageDisplaySize, t, &output,
                                  aPrincipalHandle);
-    } else if (lastStart < v->mTime) {
+      lastEnd = v->mTime;
+    }
+
+    if (lastStart < v->mTime) {
       // This frame starts after the last frame's start. Note that this could be
       // before the last frame's end time for some videos. This only matters for
       // the track's lifetime in the MSG, as rendering is based on timestamps,
@@ -861,7 +865,6 @@ StreamTime DecodedStream::SentDuration() {
 
 void DecodedStream::SendData() {
   AssertOwnerThread();
-  MOZ_ASSERT(mStartTime.isSome(), "Must be called after StartPlayback()");
 
   // Not yet created on the main thread. MDSM will try again later.
   if (!mData) {
@@ -943,6 +946,7 @@ void DecodedStream::ConnectListener() {
       mOwnerThread, this, &DecodedStream::SendData);
   mVideoFinishListener = mVideoQueue.FinishEvent().Connect(
       mOwnerThread, this, &DecodedStream::SendData);
+  mWatchManager.Watch(mPlaying, &DecodedStream::SendData);
 }
 
 void DecodedStream::DisconnectListener() {
@@ -952,16 +956,20 @@ void DecodedStream::DisconnectListener() {
   mVideoPushListener.Disconnect();
   mAudioFinishListener.Disconnect();
   mVideoFinishListener.Disconnect();
+  mWatchManager.Unwatch(mPlaying, &DecodedStream::SendData);
 }
 
 nsCString DecodedStream::GetDebugInfo() {
   AssertOwnerThread();
   int64_t startTime = mStartTime.isSome() ? mStartTime->ToMicroseconds() : -1;
-  auto str =
-      nsPrintfCString("DecodedStream=%p mStartTime=%" PRId64
-                      " mLastOutputTime=%" PRId64 " mPlaying=%d mData=%p",
-                      this, startTime, mLastOutputTime.ToMicroseconds(),
-                      mPlaying.Ref(), mData.get());
+  auto lastAudio = mAudioQueue.PeekBack();
+  auto str = nsPrintfCString(
+      "DecodedStream=%p mStartTime=%" PRId64 " mLastOutputTime=%" PRId64
+      " mPlaying=%d AudioQueue(finished=%d size=%zu lastEndTime=%" PRId64
+      ") mData=%p",
+      this, startTime, mLastOutputTime.ToMicroseconds(), mPlaying.Ref(),
+      mAudioQueue.IsFinished(), mAudioQueue.GetSize(),
+      lastAudio ? lastAudio->GetEndTime().ToMicroseconds() : -1, mData.get());
   if (mData) {
     AppendStringIfNotEmpty(str, mData->GetDebugInfo());
   }

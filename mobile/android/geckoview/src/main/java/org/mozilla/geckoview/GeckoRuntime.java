@@ -15,7 +15,6 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.content.res.Configuration;
@@ -37,6 +36,7 @@ import org.mozilla.gecko.GeckoSystemStateListener;
 import org.mozilla.gecko.GeckoThread;
 import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.util.BundleEventListener;
+import org.mozilla.gecko.util.ContextUtils;
 import org.mozilla.gecko.util.DebugConfig;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoBundle;
@@ -160,6 +160,7 @@ public final class GeckoRuntime implements Parcelable {
     private Delegate mDelegate;
     private RuntimeTelemetry mTelemetry;
     private WebExtensionEventDispatcher mWebExtensionDispatcher;
+    private StorageController mStorageController;
 
     /**
      * Attach the runtime to the given context.
@@ -263,11 +264,10 @@ public final class GeckoRuntime implements Parcelable {
         String configFilePath = settings.getConfigFilePath();
         if (configFilePath == null) {
             // Default to /data/local/tmp/$PACKAGE-geckoview-config.yaml if android:debuggable="true"
-            // and to not read configuration from a file if android:debuggable="false".
-            final ApplicationInfo applicationInfo = context.getApplicationInfo();
-            final boolean isPackageDebuggable = (applicationInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-            if (isPackageDebuggable) {
-                configFilePath = String.format(CONFIG_FILE_PATH_TEMPLATE, applicationInfo.packageName);
+            // or if this application is the current Android "debug_app", and to not read configuration
+            // from a file otherwise.
+            if (ContextUtils.isApplicationDebuggable(context) || ContextUtils.isApplicationCurrentDebugApp(context)) {
+                configFilePath = String.format(CONFIG_FILE_PATH_TEMPLATE, context.getApplicationInfo().packageName);
             }
         }
 
@@ -561,6 +561,24 @@ public final class GeckoRuntime implements Parcelable {
     public void orientationChanged(final int newOrientation) {
         ThreadUtils.assertOnUiThread();
         GeckoScreenOrientation.getInstance().update(newOrientation);
+    }
+
+
+    /**
+     * Get the storage controller for this runtime.
+     * The storage controller can be used to manage persistent storage data
+     * accumulated by {@link GeckoSession}.
+     *
+     * @return The {@link StorageController} for this instance.
+     */
+    @UiThread
+    public @NonNull StorageController getStorageController() {
+        ThreadUtils.assertOnUiThread();
+
+        if (mStorageController == null) {
+            mStorageController = new StorageController();
+        }
+        return mStorageController;
     }
 
     @Override // Parcelable
