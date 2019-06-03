@@ -23,7 +23,7 @@ add_task(async () => {
       name: "dedicated",
       path: dedicatedProfile.leafName,
     }, {
-      name: "dev-edition-default",
+      name: "68-edition-default",
       path: devProfile.leafName,
     }],
     installs: {

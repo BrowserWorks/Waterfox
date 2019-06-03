@@ -73,7 +73,7 @@ function getProfileService() {
 let PROFILE_DEFAULT = "default";
 let DEDICATED_NAME = `default-${UPDATE_CHANNEL}`;
 if (AppConstants.MOZ_DEV_EDITION) {
-  DEDICATED_NAME = PROFILE_DEFAULT = "dev-edition-default";
+  DEDICATED_NAME = PROFILE_DEFAULT = "68-edition-default";
 }
 
 /**

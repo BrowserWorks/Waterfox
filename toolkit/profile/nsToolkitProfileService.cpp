@@ -50,7 +50,7 @@
 
 using namespace mozilla;
 
-#define DEV_EDITION_NAME "dev-edition-default"
+#define DEV_EDITION_NAME "68-edition-default"
 #define DEFAULT_NAME "default"
 #define COMPAT_FILE NS_LITERAL_STRING("compatibility.ini")
 #define PROFILE_DB_VERSION "2"

@@ -23,7 +23,7 @@ add_task(async () => {
       name: "default",
       path: defaultProfile.leafName,
     }, {
-      name: "dev-edition-default",
+      name: "68-edition-default",
       path: devDefaultProfile.leafName,
     }],
   });
@@ -44,7 +44,7 @@ add_task(async () => {
   Assert.ok(!profile.default, "Should not be marked as the old-style default.");
 
   profile = profileData.profiles[1];
-  Assert.equal(profile.name, "dev-edition-default", "Should have the right name.");
+  Assert.equal(profile.name, "68-edition-default", "Should have the right name.");
   Assert.equal(profile.path, devDefaultProfile.leafName, "Should be the original dev default profile.");
   Assert.ok(!profile.default, "Should not be marked as the old-style default.");
 
@@ -67,7 +67,7 @@ add_task(async () => {
   Assert.ok(!didCreate, "Should not have created a new profile.");
   if (AppConstants.MOZ_DEV_EDITION) {
     Assert.ok(selectedProfile.rootDir.equals(devDefaultProfile), "Should be using the right directory.");
-    Assert.equal(selectedProfile.name, "dev-edition-default");
+    Assert.equal(selectedProfile.name, "68-edition-default");
   } else {
     Assert.ok(selectedProfile.rootDir.equals(mydefaultProfile), "Should be using the right directory.");
     Assert.equal(selectedProfile.name, "mydefault");
