@@ -20,9 +20,9 @@ EXTRA_JS_MODULES += [
     'ChromeMigrationUtils.jsm',
     'ChromeProfileMigrator.jsm',
     'FirefoxProfileMigrator.jsm',
-    'WaterfoxProfileMigrator.jsm',
     'MigrationUtils.jsm',
     'ProfileMigrator.jsm',
+    'WaterfoxProfileMigrator.jsm',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
