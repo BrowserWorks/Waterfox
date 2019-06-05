@@ -5814,7 +5814,7 @@ pref("prompts.authentication_dialog_abuse_limit", 3);
 pref("dom.IntersectionObserver.enabled", true);
 
 // Whether module scripts (<script type="module">) are enabled for content.
-pref("dom.moduleScripts.enabled", false);
+pref("dom.moduleScripts.enabled", true);
 
 // Maximum amount of time in milliseconds consecutive setTimeout()/setInterval()
 // callback are allowed to run before yielding the event loop.
