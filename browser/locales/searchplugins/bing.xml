@@ -14,7 +14,7 @@
 	<Url type="text/html" method="GET" template="https://www.bing.com/search" rel="searchform">
 		<Param name="q" value="{searchTerms}"/>
 		<Param name="PC" value="IS45"/>
-		<Param name="FC" value="ISCHR1"/>
+		<Param name="FORM" value="ISCHR1"/>
 		<Param name="PTAG" value="SYS1000000"/>
 	</Url>
 </SearchPlugin>
