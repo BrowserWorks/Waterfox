@@ -20,13 +20,8 @@ ac_add_options --with-android-ndk="/Users/akontos/.mozbuild/android-ndk-r17b"
 CC="/Users/akontos/.mozbuild/clang/bin/clang"
 CXX="/Users/akontos/.mozbuild/clang/bin/clang++"
 
-ac_add_options --enable-optimize="-O3 -march=armv8-a -mtune=generic -w"
+ac_add_options --enable-optimize="-Oz -march=armv8-a -mtune=armv8-a -w"
 
-
-export MOZ_GECKO_PROFILER=
-export MOZ_ENABLE_PROFILER_SPS=
-export MOZ_PROFILING=
-export MOZ_MAINTENANCE_SERVICE=
 
 if test `uname -s` = MINGW32_NT-6.2; then
 mk_add_options MOZ_MAKE_FLAGS=-j8
@@ -48,9 +43,6 @@ ac_add_options --disable-verify-mar
 ac_add_options --enable-ccache=sccache
 # ac_add_options --enable-lto
 ac_add_options --enable-release
-ac_add_options --enable-rust-simd # on x86 requires SSE2
-ac_add_options --enable-update-channel=aurora
-ac_add_options --disable-updater
 
 ac_add_options --with-app-name=waterfox
 ac_add_options --with-app-basename=Waterfox
