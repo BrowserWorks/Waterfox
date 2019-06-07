@@ -74,7 +74,7 @@ public class testAboutHomePageNavigation extends UITest {
     // TODO: bug 943706 - reimplement this old test code.
     /*
         //  Removed by Bug 896576 - [fig] Remove [getAllPagesList] from OldBaseTest
-        //  ListView list = getAllPagesList("about:firefox");
+        //  ListView list = getAllPagesList("about:waterfox");
 
         // Test normal sliding of the list left and right
         ViewPager pager = (ViewPager)mSolo.getView(ViewPager.class, 0);

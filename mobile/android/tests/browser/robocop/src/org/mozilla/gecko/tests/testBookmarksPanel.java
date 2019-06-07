@@ -47,7 +47,7 @@ public class testBookmarksPanel extends AboutHomeTest {
         mAsserter.ok(mSolo.searchText(mStringHelper.TITLE_PLACE_HOLDER), "Checking that the tab is not changed", "The tab was not changed");
         // extra check here on the Tab:Added message to be sure the right tab opened
         mAsserter.is(mStringHelper.ABOUT_FIREFOX_URL, data.getString("uri"), "Checking tab uri");
-        // close tab so about:firefox can be selected again
+        // close tab so about:waterfox can be selected again
         closeTab(data.getInt("tabID"));
 
         // Test that "Open in Private Tab" works

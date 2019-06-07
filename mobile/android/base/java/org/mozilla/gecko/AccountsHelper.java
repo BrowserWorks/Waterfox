@@ -40,7 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Helper class to manage Android Accounts corresponding to Firefox Accounts.
+ * Helper class to manage Android Accounts corresponding to Waterfox Accounts.
  */
 public class AccountsHelper implements BundleEventListener {
     private static final String LOGTAG = "GeckoAccounts";
@@ -139,9 +139,9 @@ public class AccountsHelper implements BundleEventListener {
                 }
             } catch (URISyntaxException | GeneralSecurityException |
                      UnsupportedEncodingException e) {
-                Log.w(LOGTAG, "Got exception creating Firefox Account from JSON; ignoring.", e);
+                Log.w(LOGTAG, "Got exception creating Waterfox Account from JSON; ignoring.", e);
                 if (callback != null) {
-                    callback.sendError("Could not create Firefox Account from JSON: " +
+                    callback.sendError("Could not create Waterfox Account from JSON: " +
                                        e.toString());
                     return;
                 }
@@ -157,7 +157,7 @@ public class AccountsHelper implements BundleEventListener {
             final Account account = FirefoxAccounts.getFirefoxAccount(mContext);
             if (account == null) {
                 if (callback != null) {
-                    callback.sendError("Could not update Firefox Account since none exists");
+                    callback.sendError("Could not update Waterfox Account since none exists");
                 }
                 return;
             }
@@ -168,7 +168,7 @@ public class AccountsHelper implements BundleEventListener {
 
             // Protect against cross-connecting accounts.
             if (account.name == null || !account.name.equals(email)) {
-                final String errorMessage = "Cannot update Firefox Account from JSON: " +
+                final String errorMessage = "Cannot update Waterfox Account from JSON: " +
                         "datum has different email address!";
                 Log.e(LOGTAG, errorMessage);
                 if (callback != null) {
@@ -183,7 +183,7 @@ public class AccountsHelper implements BundleEventListener {
             final byte[] keyFetchToken = Utils.hex2Byte(json.getString("keyFetchToken", ""));
 
             if (unwrapkB.length == 0 || sessionToken.length == 0 || keyFetchToken.length == 0) {
-                final String error = "Cannot update Firefox Account from JSON: invalid key/tokens";
+                final String error = "Cannot update Waterfox Account from JSON: invalid key/tokens";
                 Log.e(LOGTAG, error);
                 if (callback != null) {
                     callback.sendError(error);
@@ -228,9 +228,9 @@ public class AccountsHelper implements BundleEventListener {
             try {
                 final Account account = FirefoxAccounts.getFirefoxAccount(mContext);
                 if (account == null) {
-                    Log.w(LOGTAG, "Could not delete Firefox Account since none exists!");
+                    Log.w(LOGTAG, "Could not delete Waterfox Account since none exists!");
                     if (callback != null) {
-                        callback.sendError("Could not delete Firefox Account since none exists");
+                        callback.sendError("Could not delete Waterfox Account since none exists");
                     }
                     return;
                 }
@@ -250,7 +250,7 @@ public class AccountsHelper implements BundleEventListener {
                         } catch (OperationCanceledException | IOException |
                                  AuthenticatorException e) {
                             if (callback != null) {
-                                callback.sendError("Could not delete Firefox Account: " +
+                                callback.sendError("Could not delete Waterfox Account: " +
                                                    e.toString());
                             }
                         }
@@ -260,9 +260,9 @@ public class AccountsHelper implements BundleEventListener {
                 AccountManager.get(mContext).removeAccount(
                         account, accountManagerCallback, ThreadUtils.getBackgroundHandler());
             } catch (Exception e) {
-                Log.w(LOGTAG, "Got exception updating Firefox Account from JSON; ignoring.", e);
+                Log.w(LOGTAG, "Got exception updating Waterfox Account from JSON; ignoring.", e);
                 if (callback != null) {
-                    callback.sendError("Could not update Firefox Account from JSON: " +
+                    callback.sendError("Could not update Waterfox Account from JSON: " +
                                        e.toString());
                     return;
                 }
@@ -309,7 +309,7 @@ public class AccountsHelper implements BundleEventListener {
         } else if ("Accounts:ProfileUpdated".equals(event)) {
             final Account account = FirefoxAccounts.getFirefoxAccount(mContext);
             if (account == null) {
-                Log.w(LOGTAG, "Can't change profile of non-existent Firefox Account!; ignored");
+                Log.w(LOGTAG, "Can't change profile of non-existent Waterfox Account!; ignored");
                 return;
             }
             final AndroidFxAccount androidFxAccount = new AndroidFxAccount(mContext, account);
@@ -319,7 +319,7 @@ public class AccountsHelper implements BundleEventListener {
             final Account account = FirefoxAccounts.getFirefoxAccount(mContext);
             if (account == null) {
                 Log.w(LOGTAG, "Can't change show Sync preferences of " +
-                              "non-existent Firefox Account!; ignored");
+                              "non-existent Waterfox Account!; ignored");
                 return;
             }
             // We don't necessarily have an Activity context here, so we always start in a new task.

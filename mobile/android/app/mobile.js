@@ -185,7 +185,7 @@ pref("xpinstall.whitelist.fileRequest", false);
 pref("xpinstall.whitelist.add", "https://addons.mozilla.org");
 
 pref("extensions.langpacks.signatures.required", true);
-pref("xpinstall.signatures.required", true);
+pref("xpinstall.signatures.required", false);
 
 // Disable add-ons that are not installed by the user in all scopes by default (See the SCOPE
 // constants in AddonManager.jsm for values to use here, and Bug 1405528 for a rationale).
@@ -231,7 +231,7 @@ pref("extensions.webextensions.default-content-security-policy", "script-src 'se
 
 pref("extensions.webextensions.background-delayed-startup", true);
 
-pref("extensions.legacy.enabled", false);
+pref("extensions.legacy.enabled", true);
 
 /* block popups by default, and notify the user about blocked popups */
 pref("dom.disable_open_during_load", true);
@@ -411,25 +411,25 @@ pref("dom.ipc.plugins.enabled", false);
 
 // product URLs
 // The breakpad report server to link to in about:crashes
-pref("breakpad.reportURL", "https://crash-stats.mozilla.org/report/index/");
+pref("breakpad.reportURL", "h");
 
-pref("app.support.baseURL", "https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/");
-pref("app.supportURL", "https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/mobile-help");
-pref("app.faqURL", "https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/faq");
+pref("app.support.baseURL", "");
+pref("app.supportURL", "");
+pref("app.faqURL", "");
 
 // URL for feedback page
 // This should be kept in sync with the "feedback_link" string defined in strings.xml.in
-pref("app.feedbackURL", "https://input.mozilla.org/feedback/android/%VERSION%/%CHANNEL%/?utm_source=feedback-prompt");
+pref("app.feedbackURL", "");
 
-pref("app.privacyURL", "https://www.mozilla.org/privacy/firefox/");
-pref("app.creditsURL", "https://www.mozilla.org/credits/");
-pref("app.channelURL", "https://www.mozilla.org/%LOCALE%/firefox/channel/");
+pref("app.privacyURL", "https://www.waterfox.net/privacy/");
+pref("app.creditsURL", "");
+pref("app.channelURL", "");
 #if MOZ_UPDATE_CHANNEL == aurora
-pref("app.releaseNotesURL", "https://www.mozilla.com/%LOCALE%/mobile/%VERSION%/auroranotes/");
+pref("app.releaseNotesURL", "");
 #elif MOZ_UPDATE_CHANNEL == beta
-pref("app.releaseNotesURL", "https://www.mozilla.com/%LOCALE%/mobile/%VERSION%beta/releasenotes/");
+pref("app.releaseNotesURL", "");
 #else
-pref("app.releaseNotesURL", "https://www.mozilla.com/%LOCALE%/mobile/%VERSION%/releasenotes/");
+pref("app.releaseNotesURL", "");
 #endif
 
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
@@ -483,7 +483,7 @@ pref("app.update.timerMinimumDelay", 30); // seconds
 // used by update service to decide whether or not to
 // automatically download an update
 pref("app.update.autodownload", "wifi");
-pref("app.update.url.android", "https://aus5.mozilla.org/update/4/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/%MOZ_VERSION%/update.xml");
+pref("app.update.url.android", "");
 
 #ifdef MOZ_UPDATER
 /* prefs used specifically for updating the app */

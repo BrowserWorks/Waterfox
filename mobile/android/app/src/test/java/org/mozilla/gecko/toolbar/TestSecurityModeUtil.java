@@ -36,7 +36,7 @@ public class TestSecurityModeUtil {
     public void testNoSiteIdentity() {
         assertEquals(IconType.UNKNOWN, resolve(null));
         assertEquals(IconType.SEARCH, resolve(null, "about:home"));
-        assertEquals(IconType.UNKNOWN, resolve(null, "about:firefox"));
+        assertEquals(IconType.UNKNOWN, resolve(null, "about:waterfox"));
         assertEquals(IconType.UNKNOWN, resolve(null, "https://mozilla.com"));
     }
 
@@ -59,10 +59,10 @@ public class TestSecurityModeUtil {
         assertEquals(IconType.WARNING, resolve(identity, "https://mozilla.com"));
 
         // even about:* pages, they can still load external sites.
-        assertEquals(IconType.WARNING, resolve(identity, "about:firefox"));
+        assertEquals(IconType.WARNING, resolve(identity, "about:waterfox"));
         // even specify ChromeUI, still respect SecurityException
         doReturn(SecurityMode.CHROMEUI).when(identity).getSecurityMode();
-        assertEquals(IconType.WARNING, resolve(identity, "about:firefox"));
+        assertEquals(IconType.WARNING, resolve(identity, "about:waterfox"));
 
         // TrackingMode does not matter
         doReturn(TrackingMode.TRACKING_CONTENT_BLOCKED).when(identity).getTrackingMode();

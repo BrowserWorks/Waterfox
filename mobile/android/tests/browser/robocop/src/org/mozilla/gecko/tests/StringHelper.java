@@ -35,7 +35,7 @@ public class StringHelper {
     public final String ABOUT_HOME_TITLE = "";
 
     // To be kept in sync with 'addons.browseRecommended' from 'aboutAddons.properties'
-    public final String ABOUT_ADDONS_AMO_TITLE = "Browse Firefox’s Recommended Extensions";
+    public final String ABOUT_ADDONS_AMO_TITLE = "Browse Waterfox’s Recommended Extensions";
 
     // Context Menu item strings
     public final String CONTEXT_MENU_BOOKMARK_LINK = "Bookmark Link";
@@ -120,9 +120,9 @@ public class StringHelper {
     public final String MOZILLA_SECTION_LABEL;
 
     // Mozilla
-    public final String BRAND_NAME = "(Fennec|Nightly|Firefox Aurora|Firefox Beta|Firefox)";
+    public final String BRAND_NAME = "(Fennec|Nightly|Waterfox Alpha|Waterfox Beta|Waterfox)";
     public final String ABOUT_LABEL = "About " + BRAND_NAME ;
-    public final String LOCATION_SERVICES_LABEL = "Mozilla Location Service";
+    public final String LOCATION_SERVICES_LABEL = "MLS";
 
     // Labels for the about:home tabs
     public final String HISTORY_LABEL;

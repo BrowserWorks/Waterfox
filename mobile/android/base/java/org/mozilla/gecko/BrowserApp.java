@@ -212,7 +212,7 @@ public class BrowserApp extends GeckoApp
     private static final String INTENT_KEY_SWITCHBOARD_SERVER = "switchboard-server";
 
     // TODO: Replace with kinto endpoint.
-    private static final String SWITCHBOARD_SERVER = "https://firefox.settings.services.mozilla.com/v1/buckets/fennec/collections/experiments/records";
+    private static final String SWITCHBOARD_SERVER = "";
 
     private static final String STATE_ABOUT_HOME_TOP_PADDING = "abouthome_top_padding";
 
@@ -2060,7 +2060,7 @@ public class BrowserApp extends GeckoApp
                  *
                  * This depends on the current channel: Release and Beta both direct to
                  * the Google Play Store. If updating is enabled, Aurora, Nightly, and
-                 * custom builds open about:firefox, which provides an update interface.
+                 * custom builds open about:waterfox, which provides an update interface.
                  *
                  * If updating is not enabled, this simply logs an error.
                  */

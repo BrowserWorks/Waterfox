@@ -45,7 +45,7 @@
             android:text="@string/tab_queue_prompt_text"
             android:textColor="@color/placeholder_grey"
             android:textSize="16sp"
-            tools:text="Save them until the next time you open Firefox." />
+            tools:text="Save them until the next time you open Waterfox." />
 
         <TextView
             android:id="@+id/tip_text"

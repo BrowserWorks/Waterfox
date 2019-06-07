@@ -272,8 +272,8 @@ var Addons = {
   // Ensure we get a localized string by using the previous title as a fallback
   // if the new one has not yet been translated.
   _getAmoTitle: function _getAmoTitle() {
-    const initialTitleUS = "Browse all Firefox Add-ons";
-    const updatedTitleUS = "Browse Firefox’s Recommended Extensions";
+    const initialTitleUS = "Browse all Waterfox Add-ons";
+    const updatedTitleUS = "Browse Waterfox’s Recommended Extensions";
     const initialTitleLocalized = gStringBundle.GetStringFromName("addons.browseAll");
     const updatedTitleLocalized = gStringBundle.GetStringFromName("addons.browseRecommended");
     let title = initialTitleLocalized;

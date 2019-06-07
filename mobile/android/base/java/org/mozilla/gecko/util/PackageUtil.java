@@ -75,7 +75,7 @@ public class PackageUtil {
     public static void showInstalledBrowsers(Context context) {
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse("https://www.mozilla.org/firefox/mobile"));
+            intent.setData(Uri.parse(""));
 
             context.startActivity(intent);
         } catch (Exception e) {

@@ -17,7 +17,7 @@
             android:key="android.not_a_preference.donottrackheader.learn_more"
             android:title="@string/pref_learn_more"
             android:persistent="false"
-            url="https://www.mozilla.org/firefox/dnt/" />
+            url="" />
 
     <ListPreference android:key="privacy.trackingprotection.state"
                     android:title="@string/pref_tracking_protection_title"
@@ -29,7 +29,7 @@
             android:key="android.not_a_preference.trackingprotection.learn_more"
             android:title="@string/pref_learn_more"
             android:persistent="false"
-            url="https://support.mozilla.org/kb/firefox-android-tracking-protection" />
+            url="" />
 
     <ListPreference android:key="network.cookie.cookieBehavior"
                     android:title="@string/pref_cookies_menu"

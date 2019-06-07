@@ -12,7 +12,7 @@ var modules = {
     hide: true,
   },
 
-  // about:firefox is an alias for about:fennec, but not hidden from about:about
+  // about:waterfox is an alias for about:fennec, but not hidden from about:about
   get firefox() {
     return Object.assign({}, this.fennec, {hide: false});
   },

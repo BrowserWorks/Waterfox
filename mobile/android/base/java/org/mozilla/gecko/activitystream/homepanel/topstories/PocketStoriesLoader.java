@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
 public class PocketStoriesLoader extends AsyncTaskLoader<List<TopStory>> {
     public static final String LOGTAG = "PocketStoriesLoader";
 
-    public static final String POCKET_REFERRER_URI = "https://getpocket.com/recommendations";
+    public static final String POCKET_REFERRER_URI = "";
 
     @RobocopTarget
     @VisibleForTesting public static final String PLACEHOLDER_TITLE = "Placeholder ";
@@ -68,7 +68,7 @@ public class PocketStoriesLoader extends AsyncTaskLoader<List<TopStory>> {
     private static final String STORIES_CACHE_PREFIX = "storiesCache-";
 
     // Pocket API params and defaults
-    private static final String GLOBAL_ENDPOINT = "https://getpocket.cdn.mozilla.net/v3/firefox/global-recs";
+    private static final String GLOBAL_ENDPOINT = "";
     private static final String PARAM_APIKEY = "consumer_key";
     private static final String APIKEY = AppConstants.MOZ_POCKET_API_KEY;
     private static final String PARAM_COUNT = "count";

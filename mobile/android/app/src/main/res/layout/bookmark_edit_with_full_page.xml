@@ -54,7 +54,7 @@
                     android:textColor="@color/text_and_tabs_tray_grey"
                     android:textSize="18sp"
                     android:focusable="true"
-                    tools:text="Firefox: About your browser" />
+                    tools:text="Waterfox: About your browser" />
             </android.support.design.widget.TextInputLayout>
 
             <android.support.design.widget.TextInputLayout

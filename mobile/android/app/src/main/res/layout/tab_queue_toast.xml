@@ -21,7 +21,7 @@
             android:id="@+id/toast_message"
             style="@style/ToastMessage"
 
-            tools:text="Tab queued in firefox" />
+            tools:text="Tab queued in Waterfox" />
 
         <View
             android:id="@+id/toast_divider"
