@@ -41,7 +41,6 @@ ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
 ac_add_options --enable-ccache=sccache
-ac_add_options --enable-lto
 ac_add_options --enable-release
 ac_add_options --enable-rust-simd
 
