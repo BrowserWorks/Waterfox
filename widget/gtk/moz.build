@@ -33,10 +33,18 @@ UNIFIED_SOURCES += [
     'nsAppShell.cpp',
     'nsBidiKeyboard.cpp',
     'nsColorPicker.cpp',
+    'nsDbusmenu.cpp',
     'nsFilePicker.cpp',
     'nsGtkKeyUtils.cpp',
     'nsImageToPixbuf.cpp',
     'nsLookAndFeel.cpp',
+    'nsMenuBar.cpp',
+    'nsMenuContainer.cpp',
+    'nsMenuItem.cpp',
+    'nsMenuObject.cpp',
+    'nsMenuSeparator.cpp',
+    'nsNativeMenuAtoms.cpp',
+    'nsNativeMenuDocListener.cpp',
     'nsNativeThemeGTK.cpp',
     'nsSound.cpp',
     'nsToolkit.cpp',
@@ -48,6 +56,8 @@ UNIFIED_SOURCES += [
 ]
 
 SOURCES += [
+    'nsMenu.cpp', # conflicts with X11 headers
+    'nsNativeMenuService.cpp',
     'nsWindow.cpp', # conflicts with X11 headers
 ]
 
@@ -112,6 +122,7 @@ FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '/layout/generic',
+    '/layout/style',
     '/layout/xul',
     '/other-licenses/atk-1.0',
     '/widget',

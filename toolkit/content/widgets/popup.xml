@@ -27,8 +27,14 @@
         </getter>
       </property>
 
-      <property name="state" readonly="true"
-                onget="return this.popupBoxObject.popupState"/>
+      <property name="state" readonly="true">
+        <getter><![CDATA[
+          if (this.hasAttribute('_moz-nativemenupopupstate'))
+            return this.getAttribute('_moz-nativemenupopupstate');
+          else
+            return this.popupBoxObject.popupState;
+        ]]></getter>
+      </property>
 
       <property name="triggerNode" readonly="true"
                 onget="return this.popupBoxObject.triggerNode"/>

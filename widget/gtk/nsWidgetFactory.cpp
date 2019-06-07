@@ -48,6 +48,8 @@
 #include "GfxInfoX11.h"
 #endif
 
+#include "nsNativeMenuService.h"
+
 #include "nsNativeThemeGTK.h"
 
 #include "nsIComponentRegistrar.h"
@@ -122,6 +124,9 @@ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(GfxInfo, Init)
 }
 }
 #endif
+
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsNativeMenuService,
+                                         nsNativeMenuService::GetInstanceForServiceManager)
 
 #ifdef NS_PRINTING
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsDeviceContextSpecGTK)
@@ -225,6 +230,7 @@ NS_DEFINE_NAMED_CID(NS_IMAGE_TO_PIXBUF_CID);
 NS_DEFINE_NAMED_CID(NS_IDLE_SERVICE_CID);
 NS_DEFINE_NAMED_CID(NS_GFXINFO_CID);
 #endif
+NS_DEFINE_NAMED_CID(NS_NATIVEMENUSERVICE_CID);
 
 
 static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
@@ -260,6 +266,7 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
     { &kNS_IDLE_SERVICE_CID, false, nullptr, nsIdleServiceGTKConstructor },
     { &kNS_GFXINFO_CID, false, nullptr, mozilla::widget::GfxInfoConstructor },
 #endif
+    { &kNS_NATIVEMENUSERVICE_CID, true, NULL, nsNativeMenuServiceConstructor },
     { nullptr }
 };
 
@@ -297,6 +304,7 @@ static const mozilla::Module::ContractIDEntry kWidgetContracts[] = {
     { "@mozilla.org/widget/idleservice;1", &kNS_IDLE_SERVICE_CID },
     { "@mozilla.org/gfx/info;1", &kNS_GFXINFO_CID },
 #endif
+    { "@mozilla.org/widget/nativemenuservice;1", &kNS_NATIVEMENUSERVICE_CID },
     { nullptr }
 };
 
