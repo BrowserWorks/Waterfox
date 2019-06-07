@@ -30,6 +30,7 @@ export MOZ_GECKO_PROFILER=
 export MOZ_ENABLE_PROFILER_SPS=
 export MOZ_PROFILING=
 export MOZ_MAINTENANCE_SERVICE=
+MOZ_REQUIRE_SIGNING=0
 
 if test `uname -s` = MINGW32_NT-6.2; then
 mk_add_options MOZ_MAKE_FLAGS=-j8
@@ -40,6 +41,7 @@ fi
 mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_OBJDIR=objdir-68
 
+ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
 ac_add_options --disable-debug
 ac_add_options --disable-dmd
 ac_add_options --disable-crashreporter
