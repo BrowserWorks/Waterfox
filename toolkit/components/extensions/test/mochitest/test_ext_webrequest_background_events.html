@@ -14,7 +14,10 @@
 
 add_task(async function test_webRequest_serviceworker_events() {
   await SpecialPowers.pushPrefEnv({
-    set: [["dom.serviceWorkers.testing.enabled", true]],
+    set: [
+      ["dom.serviceWorkers.testing.enabled", true],
+      ["dom.serviceWorkers.enabled", true],
+    ],
   });
 
   let extension = ExtensionTestUtils.loadExtension({
