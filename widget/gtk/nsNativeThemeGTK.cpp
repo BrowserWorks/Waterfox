@@ -51,6 +51,7 @@
 
 using namespace mozilla;
 using namespace mozilla::gfx;
+using mozilla::widget::ScreenHelperGTK;
 
 NS_IMPL_ISUPPORTS_INHERITED(nsNativeThemeGTK, nsNativeTheme, nsITheme,
                                                              nsIObserver)
