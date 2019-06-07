@@ -20,7 +20,7 @@ ac_add_options --with-android-ndk="/Users/akontos/.mozbuild/android-ndk-r17b"
 CC="/Users/akontos/.mozbuild/clang/bin/clang"
 CXX="/Users/akontos/.mozbuild/clang/bin/clang++"
 
-ac_add_options --enable-optimize="-Oz -march=armv8-a -mtune=armv8-a -w"
+ac_add_options --enable-optimize="-Oz -march=armv8-a -w"
 
 
 if test `uname -s` = MINGW32_NT-6.2; then
@@ -41,8 +41,9 @@ ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
 ac_add_options --enable-ccache=sccache
-# ac_add_options --enable-lto
+ac_add_options --enable-lto
 ac_add_options --enable-release
+ac_add_options --enable-rust-simd
 
 ac_add_options --with-app-name=waterfox
 ac_add_options --with-app-basename=Waterfox
