@@ -10,7 +10,6 @@
 <Url type="text/html" method="GET" template="https://search.yahoo.co.jp/search">
   <Param name="p" value="{searchTerms}"/>
   <Param name="ei" value="UTF-8"/>
-  <Param name="fr" value="mozff" />
 </Url>
 <SearchForm>https://search.yahoo.co.jp/</SearchForm>
 </SearchPlugin>

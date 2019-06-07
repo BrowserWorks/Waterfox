@@ -3,7 +3,7 @@
     "searchDefault": "Bing",
     "searchOrder": ["Bing", "Google"],
     "visibleDefaultEngines": [
-      "google-b-m", "bing", "amazondotcom", "ddg", "twitter", "wikipedia"
+      "google-b-m", "bing", "qwant", "ddg", "twitter", "wikipedia"
     ]
   },
   "regionOverrides": {

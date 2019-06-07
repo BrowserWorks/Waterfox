@@ -11,11 +11,8 @@
      template="https://coccoc.com/composer/autocomplete">
   <Param name="of"  value="b" />
   <Param name="q" value="{searchTerms}"/>
-  <Param name="s" value="ff"/>
 </Url>
 <Url type="text/html" method="GET" template="https://coccoc.com/search" resultdomain="coccoc.com">
   <Param name="query" value="{searchTerms}"/>
-  <Param name="s" value="ff"/>
-  <Param name="utm_source" value="ffmobile"/>
 </Url>
 </SearchPlugin>

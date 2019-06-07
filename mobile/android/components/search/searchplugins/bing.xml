@@ -12,15 +12,17 @@
     <Param name="language" value="{moz:locale}"/>
   </Url>
   <Url type="text/html" method="GET" template="https://www.bing.com/search" rel="searchform">
-    <Param name="PC" value="IS45"/>
+    <Param name="PC" value="IS46"/>
     <Param name="q" value="{searchTerms}"/>
   </Url>
 </SearchPlugin>
 
 </Url>
 <Url type="application/x-moz-tabletsearch" method="GET" template="https://www.bing.com/search">
-  <Param name="q" value="{searchTerms}" />
-  <Param name="PC" value="IS45" />
+  <Param name="q" value="{searchTerms}"/>
+  <Param name="PC" value="IS46"/>
+  <Param name="FORM" value="ISCHR1"/>
+  <Param name="PTAG" value="SYS1000000"/>
 </Url>
 <SearchForm>https://www.bing.com</SearchForm>
 </SearchPlugin>
