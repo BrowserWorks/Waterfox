@@ -344,7 +344,7 @@ const FEEDS_DATA = [
     name: "discoverystreamfeed",
     factory: () => new DiscoveryStreamFeed(),
     title: "Handles new pocket ui for the new tab page",
-    value: true,
+    value: false,
   },
 ];
 
