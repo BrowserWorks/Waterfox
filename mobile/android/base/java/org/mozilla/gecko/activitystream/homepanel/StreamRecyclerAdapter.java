@@ -26,7 +26,6 @@ import org.mozilla.gecko.activitystream.homepanel.model.TopSite;
 import org.mozilla.gecko.activitystream.homepanel.model.WebpageModel;
 import org.mozilla.gecko.activitystream.homepanel.model.WebpageRowModel;
 import org.mozilla.gecko.activitystream.homepanel.stream.HighlightsEmptyStateRow;
-import org.mozilla.gecko.activitystream.homepanel.stream.LearnMoreRow;
 import org.mozilla.gecko.activitystream.homepanel.stream.TopPanelRow;
 import org.mozilla.gecko.activitystream.homepanel.model.TopStory;
 import org.mozilla.gecko.activitystream.homepanel.topstories.PocketStoriesLoader;
@@ -59,7 +58,7 @@ public class StreamRecyclerAdapter extends RecyclerView.Adapter<StreamViewHolder
 
     // Content sections available on the Activity Stream page. These may be hidden if the sections are disabled.
     private final RowItemType[] ACTIVITY_STREAM_SECTIONS =
-            { RowItemType.TOP_PANEL, RowItemType.TOP_STORIES_TITLE, RowItemType.HIGHLIGHTS_TITLE, RowItemType.LEARN_MORE_LINK };
+            { RowItemType.TOP_PANEL, RowItemType.TOP_STORIES_TITLE, RowItemType.HIGHLIGHTS_TITLE };
     public static final int MAX_TOP_STORIES = 3;
     private static final String LINK_MORE_POCKET = "https://getpocket.com/explore/trending?src=ff_android&cdn=0";
 
@@ -74,8 +73,7 @@ public class StreamRecyclerAdapter extends RecyclerView.Adapter<StreamViewHolder
         TOP_STORIES_ITEM(-1), // There can be multiple Top Stories items so caller should handle as a special case.
         HIGHLIGHTS_TITLE (-4),
         HIGHLIGHTS_EMPTY_STATE(-5),
-        HIGHLIGHT_ITEM (-1), // There can be multiple Highlight Items so caller should handle as a special case.
-        LEARN_MORE_LINK(-6);
+        HIGHLIGHT_ITEM (-1); // There can be multiple Highlight Items so caller should handle as a special case.
 
         public final int stableId;
 
@@ -166,8 +164,6 @@ public class StreamRecyclerAdapter extends RecyclerView.Adapter<StreamViewHolder
             return new StreamTitleRow(inflater.inflate(StreamTitleRow.LAYOUT_ID, parent, false), R.string.activity_stream_highlights);
         } else if (type == RowItemType.HIGHLIGHTS_EMPTY_STATE.getViewType()) {
             return new HighlightsEmptyStateRow(inflater.inflate(HighlightsEmptyStateRow.LAYOUT_ID, parent, false));
-        } else if (type == RowItemType.LEARN_MORE_LINK.getViewType()) {
-            return new LearnMoreRow(inflater.inflate(LearnMoreRow.LAYOUT_ID, parent, false));
         } else {
             throw new IllegalStateException("Missing inflation for ViewType " + type);
         }

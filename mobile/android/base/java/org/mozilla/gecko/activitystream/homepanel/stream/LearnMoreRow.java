@@ -39,7 +39,7 @@ public class LearnMoreRow extends StreamViewHolder {
      * - OS
      * - locale
      */
-    private static final String LEARN_MORE_URL_TEMPLATE = "https://support.mozilla.org/1/mobile/%s/%s/%s/activity-stream";
+    private static final String LEARN_MORE_URL_TEMPLATE = "";
 
     public LearnMoreRow(final View itemView) {
         super(itemView);
