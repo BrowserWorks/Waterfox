@@ -13,7 +13,6 @@ from taskgraph.util.attributes import copy_attributes_from_dependent_job
 from taskgraph.util.keyed_by import evaluate_keyed_by
 from taskgraph.util.schema import taskref_or_string
 from taskgraph.util.scriptworker import (
-    add_scope_prefix,
     get_signing_cert_scope_per_platform,
     get_worker_type_for_scope,
 )
@@ -108,10 +107,6 @@ def make_task_description(config, jobs):
         for artifacts in job['upstream-artifacts']:
             for f in artifacts['formats']:
                 formats.add(f)  # Add each format only once
-        for format in formats:
-            signing_format_scopes.append(
-                add_scope_prefix(config, 'signing:format:{}'.format(format))
-            )
 
         is_nightly = dep_job.attributes.get(
             'nightly', dep_job.attributes.get('shippable', False))

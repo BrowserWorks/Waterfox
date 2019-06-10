@@ -12,7 +12,6 @@ from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.attributes import copy_attributes_from_dependent_job
 from taskgraph.util.partners import check_if_partners_enabled, get_partner_config_by_kind
 from taskgraph.util.scriptworker import (
-    add_scope_prefix,
     get_signing_cert_scope_per_platform,
     get_worker_type_for_scope,
 )
@@ -84,8 +83,6 @@ def make_repackage_signing_description(config, jobs):
                 ],
                 "formats": ["autograph_authenticode", "autograph_gpg"]
             }]
-            scopes.append(add_scope_prefix(config, "signing:format:sha2signcode"))
-
             partner_config = get_partner_config_by_kind(config, config.kind)
             partner, subpartner, _ = repack_id.split('/')
             repack_stub_installer = partner_config[partner][subpartner].get(
