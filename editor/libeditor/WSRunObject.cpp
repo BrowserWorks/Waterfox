@@ -68,6 +68,7 @@ WSRunObject::WSRunObject(HTMLEditor* aHTMLEditor,
                          const EditorDOMPointBase<PT, CT>& aScanEndPoint)
     : mScanStartPoint(aScanStartPoint),
       mScanEndPoint(aScanEndPoint),
+      mEditingHost(aHTMLEditor->GetActiveEditingHost()),
       mPRE(false),
       mStartOffset(0),
       mEndOffset(0),
