@@ -1,26 +1,55 @@
-use std::ops::{Not, BitAnd, BitOr, BitXor, Shl, Shr};
+use core::ops::{BitAnd, BitOr, BitXor, Not, Shl, Shr};
 
-use {Num, NumCast};
 use bounds::Bounded;
 use ops::checked::*;
 use ops::saturating::Saturating;
+use {Num, NumCast};
 
-pub trait PrimInt
-    : Sized
+/// Generic trait for primitive integers.
+///
+/// The `PrimInt` trait is an abstraction over the builtin primitive integer types (e.g., `u8`,
+/// `u32`, `isize`, `i128`, ...). It inherits the basic numeric traits and extends them with
+/// bitwise operators and non-wrapping arithmetic.
+///
+/// The trait explicitly inherits `Copy`, `Eq`, `Ord`, and `Sized`. The intention is that all
+/// types implementing this trait behave like primitive types that are passed by value by default
+/// and behave like builtin integers. Furthermore, the types are expected to expose the integer
+/// value in binary representation and support bitwise operators. The standard bitwise operations
+/// (e.g., bitwise-and, bitwise-or, right-shift, left-shift) are inherited and the trait extends
+/// these with introspective queries (e.g., `PrimInt::count_ones()`, `PrimInt::leading_zeros()`),
+/// bitwise combinators (e.g., `PrimInt::rotate_left()`), and endianness converters (e.g.,
+/// `PrimInt::to_be()`).
+///
+/// All `PrimInt` types are expected to be fixed-width binary integers. The width can be queried
+/// via `T::zero().count_zeros()`. The trait currently lacks a way to query the width at
+/// compile-time.
+///
+/// While a default implementation for all builtin primitive integers is provided, the trait is in
+/// no way restricted to these. Other integer types that fulfil the requirements are free to
+/// implement the trait was well.
+///
+/// This trait and many of the method names originate in the unstable `core::num::Int` trait from
+/// the rust standard library. The original trait was never stabilized and thus removed from the
+/// standard library.
+pub trait PrimInt:
+    Sized
     + Copy
-    + Num + NumCast
+    + Num
+    + NumCast
     + Bounded
-    + PartialOrd + Ord + Eq
-    + Not<Output=Self>
-    + BitAnd<Output=Self>
-    + BitOr<Output=Self>
-    + BitXor<Output=Self>
-    + Shl<usize, Output=Self>
-    + Shr<usize, Output=Self>
-    + CheckedAdd<Output=Self>
-    + CheckedSub<Output=Self>
-    + CheckedMul<Output=Self>
-    + CheckedDiv<Output=Self>
+    + PartialOrd
+    + Ord
+    + Eq
+    + Not<Output = Self>
+    + BitAnd<Output = Self>
+    + BitOr<Output = Self>
+    + BitXor<Output = Self>
+    + Shl<usize, Output = Self>
+    + Shr<usize, Output = Self>
+    + CheckedAdd<Output = Self>
+    + CheckedSub<Output = Self>
+    + CheckedMul<Output = Self>
+    + CheckedDiv<Output = Self>
     + Saturating
 {
     /// Returns the number of ones in the binary representation of `self`.
@@ -168,10 +197,10 @@ pub trait PrimInt
     /// ```
     /// use num_traits::PrimInt;
     ///
-    /// let n = 0xFEDCBA9876543210i64;
-    /// let m = 0x000FEDCBA9876543i64;
+    /// let n = -8i8; // 0b11111000
+    /// let m = 62i8; // 0b00111110
     ///
-    /// assert_eq!(n.unsigned_shr(12), m);
+    /// assert_eq!(n.unsigned_shr(2), m);
     /// ```
     fn unsigned_shr(self, n: u32) -> Self;
 
@@ -278,7 +307,7 @@ pub trait PrimInt
 }
 
 macro_rules! prim_int_impl {
-    ($T:ty, $S:ty, $U:ty) => (
+    ($T:ty, $S:ty, $U:ty) => {
         impl PrimInt for $T {
             #[inline]
             fn count_ones(self) -> u32 {
@@ -360,17 +389,21 @@ macro_rules! prim_int_impl {
                 <$T>::pow(self, exp)
             }
         }
-    )
+    };
 }
 
 // prim_int_impl!(type, signed, unsigned);
-prim_int_impl!(u8,    i8,    u8);
-prim_int_impl!(u16,   i16,   u16);
-prim_int_impl!(u32,   i32,   u32);
-prim_int_impl!(u64,   i64,   u64);
+prim_int_impl!(u8, i8, u8);
+prim_int_impl!(u16, i16, u16);
+prim_int_impl!(u32, i32, u32);
+prim_int_impl!(u64, i64, u64);
+#[cfg(has_i128)]
+prim_int_impl!(u128, i128, u128);
 prim_int_impl!(usize, isize, usize);
-prim_int_impl!(i8,    i8,    u8);
-prim_int_impl!(i16,   i16,   u16);
-prim_int_impl!(i32,   i32,   u32);
-prim_int_impl!(i64,   i64,   u64);
+prim_int_impl!(i8, i8, u8);
+prim_int_impl!(i16, i16, u16);
+prim_int_impl!(i32, i32, u32);
+prim_int_impl!(i64, i64, u64);
+#[cfg(has_i128)]
+prim_int_impl!(i128, i128, u128);
 prim_int_impl!(isize, isize, usize);

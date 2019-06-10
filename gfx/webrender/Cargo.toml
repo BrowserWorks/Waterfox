@@ -13,7 +13,7 @@ profiler = ["thread_profiler/thread_profiler"]
 webgl = ["offscreen_gl_context", "webrender_api/webgl"]
 
 [dependencies]
-app_units = "0.5"
+app_units = "0.7"
 bincode = "0.8"
 bit-set = "0.4"
 byteorder = "1.0"

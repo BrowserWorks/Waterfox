@@ -10,7 +10,7 @@ name = "layout_thread"
 path = "lib.rs"
 
 [dependencies]
-app_units = "0.5"
+app_units = "0.7"
 atomic_refcell = "0.1"
 euclid = "0.15"
 fnv = "1.0"

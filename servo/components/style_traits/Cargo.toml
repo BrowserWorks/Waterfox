@@ -14,7 +14,7 @@ servo = ["heapsize", "heapsize_derive", "serde", "servo_atoms", "cssparser/heaps
 gecko = []
 
 [dependencies]
-app_units = "0.5"
+app_units = "0.7"
 bitflags = "0.7"
 cssparser = "0.18"
 euclid = "0.15"

@@ -11,7 +11,7 @@ ipc = ["ipc-channel"]
 webgl = ["offscreen_gl_context"]
 
 [dependencies]
-app_units = "0.5"
+app_units = "0.7"
 bincode = "0.8"
 byteorder = "1.0"
 euclid = "0.15"
