@@ -336,7 +336,7 @@ marionette-media-tests:
     - web-platform-tests
     - web-platform-tests-reftests
     - web-platform-tests-wdspec
-#    - xpcshell
+    - xpcshell
 
 # macosx1014-64-qr-tests:
     - crashtest
@@ -354,7 +354,6 @@ macosx64-tests:
     - mochitest-webgl2-core
     # - mochitest-webgl2-ext test timeouts
     - reftest
-    - xpcshell
 
 macosx64-talos:
     - talos-bcv
