@@ -197,7 +197,7 @@ module.exports = {
     // since only let and const are used, see "no-var").
     "block-scoped-var": "error",
     // Require camel case names
-    "camelcase": "error",
+    "camelcase": ["error", { "properties": "never" }],
     // Warn about cyclomatic complexity in functions.
     "complexity": ["error", 53],
     // Don't warn for inconsistent naming when capturing this (not so important
