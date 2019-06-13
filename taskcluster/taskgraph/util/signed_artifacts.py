@@ -94,7 +94,9 @@ def _strip_widevine_for_partners(artifacts_specifications):
     """
     for spec in artifacts_specifications:
         if 'autograph_widevine' in spec['formats']:
-            spec['formats'].remove('widevine')
+            spec['formats'].remove('autograph_widevine')
+        if 'autograph_omnija' in spec['formats']:
+            spec['formats'].remove('autograph_omnija')
 
     return artifacts_specifications
 
