@@ -115,106 +115,105 @@ WebGLBuffer::BufferData(GLenum target, size_t size, const void* data, GLenum usa
   }
 #endif
 
-    const void* uploadData = data;
+  const void* uploadData = data;
 
-    UniqueBuffer newIndexCache;
-    if (target == LOCAL_GL_ELEMENT_ARRAY_BUFFER &&
-        mContext->mNeedsIndexValidation)
-    {
-        newIndexCache = malloc(size);
-        if (!newIndexCache) {
-            mContext->ErrorOutOfMemory("%s: Failed to alloc index cache.", funcName);
-            return;
-        }
-        memcpy(newIndexCache.get(), data, size);
-        uploadData = newIndexCache.get();
+  UniqueBuffer newIndexCache;
+  if (target == LOCAL_GL_ELEMENT_ARRAY_BUFFER &&
+      mContext->mNeedsIndexValidation) {
+    newIndexCache = malloc(size);
+    if (!newIndexCache) {
+      mContext->ErrorOutOfMemory("%s: Failed to alloc index cache.", funcName);
+      return;
     }
+    memcpy(newIndexCache.get(), data, size);
+    uploadData = newIndexCache.get();
+  }
 
-    const auto& gl = mContext->gl;
-    gl->MakeCurrent();
-    const ScopedLazyBind lazyBind(gl, target, this);
+  const auto& gl = mContext->gl;
+  const ScopedLazyBind lazyBind(gl, target, this);
 
-    const bool sizeChanges = (size != ByteLength());
-    if (sizeChanges) {
-        mContext->InvalidateBufferFetching();
+  const bool sizeChanges = (size != ByteLength());
+  if (sizeChanges) {
+    gl::GLContext::LocalErrorScope errorScope(*gl);
+    gl->fBufferData(target, size, uploadData, usage);
+    const auto error = errorScope.GetError();
 
-        gl::GLContext::LocalErrorScope errorScope(*gl);
-        gl->fBufferData(target, size, uploadData, usage);
-        const auto error = errorScope.GetError();
+    if (error) {
+      MOZ_ASSERT(error == LOCAL_GL_OUT_OF_MEMORY);
+      mContext->ErrorOutOfMemory("%s: Error from driver: 0x%04x", funcName,
+                                 error);
 
-        if (error) {
-            MOZ_ASSERT(error == LOCAL_GL_OUT_OF_MEMORY);
-            mContext->ErrorOutOfMemory("%s: Error from driver: 0x%04x", funcName, error);
-            return;
-        }
-    } else {
-        gl->fBufferData(target, size, uploadData, usage);
+      // Truncate
+      mByteLength = 0;
+      // mFetchInvalidator.InvalidateCaches();
+      mIndexCache = nullptr;
+      return;
     }
+  } else {
+    gl->fBufferData(target, size, uploadData, usage);
+  }
 
-    mContext->OnDataAllocCall();
+  mContext->OnDataAllocCall();
 
-    mUsage = usage;
-    mByteLength = size;
-    mIndexCache = Move(newIndexCache);
+  mUsage = usage;
+  mByteLength = size;
+  mIndexCache = Move(newIndexCache);
 
-    if (mIndexCache) {
-        if (mIndexRanges.size()) {
-            mContext->GeneratePerfWarning("[%p] Invalidating %u ranges.", this,
-                                          uint32_t(mIndexRanges.size()));
-            mIndexRanges.clear();
-        }
+  if (mIndexCache) {
+    if (mIndexRanges.size()) {
+      mContext->GeneratePerfWarning("[%p] Invalidating %u ranges.", this,
+                                    uint32_t(mIndexRanges.size()));
+      mIndexRanges.clear();
     }
+  }
+
 }
 
-void
-WebGLBuffer::BufferSubData(GLenum target, size_t dstByteOffset, size_t dataLen,
-                           const void* data) const
-{
-    const char funcName[] = "bufferSubData";
+void WebGLBuffer::BufferSubData(GLenum target, size_t dstByteOffset,
+                                size_t dataLen, const void* data) const {
+  const char funcName[] = "bufferSubData";
 
-    if (!ValidateRange(funcName, dstByteOffset, dataLen))
-        return;
+  if (!ValidateRange(funcName, dstByteOffset, dataLen)) return;
 
-    if (!CheckedInt<GLintptr>(dataLen).isValid())
-        return mContext->ErrorOutOfMemory("%s: Size too large.", funcName);
+  if (!CheckedInt<GLintptr>(dataLen).isValid())
+    return mContext->ErrorOutOfMemory("%s: Size too large.", funcName);
 
-    ////
+  ////
 
-    const void* uploadData = data;
-    if (mIndexCache) {
-        const auto cachedDataBegin = (uint8_t*)mIndexCache.get() + dstByteOffset;
-        memcpy(cachedDataBegin, data, dataLen);
-        uploadData = cachedDataBegin;
+  const void* uploadData = data;
+  if (mIndexCache) {
+    const auto cachedDataBegin = (uint8_t*)mIndexCache.get() + dstByteOffset;
+    memcpy(cachedDataBegin, data, dataLen);
+    uploadData = cachedDataBegin;
 
-        InvalidateCacheRange(dstByteOffset, dataLen);
-    }
+    InvalidateCacheRange(dstByteOffset, dataLen);
+  }
 
-    ////
+  ////
 
-    const auto& gl = mContext->gl;
-    gl->MakeCurrent();
-    const ScopedLazyBind lazyBind(gl, target, this);
+  const auto& gl = mContext->gl;
+  const ScopedLazyBind lazyBind(gl, target, this);
 
-    gl->fBufferSubData(target, dstByteOffset, dataLen, uploadData);
+  gl->fBufferSubData(target, dstByteOffset, dataLen, uploadData);
 }
 
-bool
-WebGLBuffer::ValidateRange(const char* funcName, size_t byteOffset, size_t byteLen) const
-{
-    auto availLength = mByteLength;
-    if (byteOffset > availLength) {
-        mContext->ErrorInvalidValue("%s: Offset passes the end of the buffer.", funcName);
-        return false;
-    }
-    availLength -= byteOffset;
+bool WebGLBuffer::ValidateRange(const char* funcName, size_t byteOffset,
+                                size_t byteLen) const {
+  auto availLength = mByteLength;
+  if (byteOffset > availLength) {
+    mContext->ErrorInvalidValue("%s: Offset passes the end of the buffer.",
+                                funcName);
+    return false;
+  }
+  availLength -= byteOffset;
 
-    if (byteLen > availLength) {
-        mContext->ErrorInvalidValue("%s: Offset+size passes the end of the buffer.",
-                                    funcName);
-        return false;
-    }
+  if (byteLen > availLength) {
+    mContext->ErrorInvalidValue("%s: Offset+size passes the end of the buffer.",
+                                funcName);
+    return false;
+  }
 
-    return true;
+  return true;
 }
 
 ////////////////////////////////////////

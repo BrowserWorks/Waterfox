@@ -26,95 +26,74 @@ namespace mozilla {
 ////////////////////////////////////////
 
 template <typename T>
-static inline T&
-Mutable(const T& x)
-{
-    return const_cast<T&>(x);
+static inline T& Mutable(const T& x) {
+  return const_cast<T&>(x);
 }
 
-void
-WebGLTexture::ImageInfo::Clear(const char* funcName)
-{
-    if (!IsDefined())
-        return;
+void WebGLTexture::ImageInfo::Clear(const char* funcName) {
+  if (!IsDefined()) return;
 
-    OnRespecify(funcName);
+  OnRespecify(funcName);
 
-    Mutable(mFormat) = LOCAL_GL_NONE;
-    Mutable(mWidth) = 0;
-    Mutable(mHeight) = 0;
-    Mutable(mDepth) = 0;
+  Mutable(mFormat) = LOCAL_GL_NONE;
+  Mutable(mWidth) = 0;
+  Mutable(mHeight) = 0;
+  Mutable(mDepth) = 0;
 
-    MOZ_ASSERT(!IsDefined());
+  MOZ_ASSERT(!IsDefined());
 }
 
-void
-WebGLTexture::ImageInfo::Set(const char* funcName, const ImageInfo& a)
-{
-    MOZ_ASSERT(a.IsDefined());
+void WebGLTexture::ImageInfo::Set(const char* funcName, const ImageInfo& a) {
+  Mutable(mFormat) = a.mFormat;
+  Mutable(mWidth) = a.mWidth;
+  Mutable(mHeight) = a.mHeight;
+  Mutable(mDepth) = a.mDepth;
 
-    Mutable(mFormat) = a.mFormat;
-    Mutable(mWidth) = a.mWidth;
-    Mutable(mHeight) = a.mHeight;
-    Mutable(mDepth) = a.mDepth;
+  mIsDataInitialized = a.mIsDataInitialized;
 
-    mIsDataInitialized = a.mIsDataInitialized;
-
-    // But *don't* transfer mAttachPoints!
-    MOZ_ASSERT(a.mAttachPoints.empty());
-    OnRespecify(funcName);
+  // But *don't* transfer mAttachPoints!
+  MOZ_ASSERT(a.mAttachPoints.empty());
+  OnRespecify(funcName);
 }
 
-bool
-WebGLTexture::ImageInfo::IsPowerOfTwo() const
-{
-    return mozilla::IsPowerOfTwo(mWidth) &&
-           mozilla::IsPowerOfTwo(mHeight) &&
-           mozilla::IsPowerOfTwo(mDepth);
+bool WebGLTexture::ImageInfo::IsPowerOfTwo() const {
+  return mozilla::IsPowerOfTwo(mWidth) && mozilla::IsPowerOfTwo(mHeight) &&
+         mozilla::IsPowerOfTwo(mDepth);
 }
 
-void
-WebGLTexture::ImageInfo::AddAttachPoint(WebGLFBAttachPoint* attachPoint)
-{
-    const auto pair = mAttachPoints.insert(attachPoint);
-    DebugOnly<bool> didInsert = pair.second;
-    MOZ_ASSERT(didInsert);
+void WebGLTexture::ImageInfo::AddAttachPoint(WebGLFBAttachPoint* attachPoint) {
+  const auto pair = mAttachPoints.insert(attachPoint);
+  DebugOnly<bool> didInsert = pair.second;
+  MOZ_ASSERT(didInsert);
 }
 
-void
-WebGLTexture::ImageInfo::RemoveAttachPoint(WebGLFBAttachPoint* attachPoint)
-{
-    DebugOnly<size_t> numElemsErased = mAttachPoints.erase(attachPoint);
-    MOZ_ASSERT_IF(IsDefined(), numElemsErased == 1);
+void WebGLTexture::ImageInfo::RemoveAttachPoint(
+    WebGLFBAttachPoint* attachPoint) {
+  DebugOnly<size_t> numElemsErased = mAttachPoints.erase(attachPoint);
+  MOZ_ASSERT_IF(IsDefined(), numElemsErased == 1);
 }
 
-void
-WebGLTexture::ImageInfo::OnRespecify(const char* funcName) const
-{
-    for (auto cur : mAttachPoints) {
-        cur->OnBackingStoreRespecified(funcName);
-    }
+void WebGLTexture::ImageInfo::OnRespecify(const char* funcName) const {
+  for (auto cur : mAttachPoints) {
+    cur->OnBackingStoreRespecified(funcName);
+  }
 }
 
-size_t
-WebGLTexture::ImageInfo::MemoryUsage() const
-{
-    if (!IsDefined())
-        return 0;
+size_t WebGLTexture::ImageInfo::MemoryUsage() const {
+  if (!IsDefined()) return 0;
 
-    const auto bytesPerTexel = mFormat->format->estimatedBytesPerPixel;
-    return size_t(mWidth) * size_t(mHeight) * size_t(mDepth) * bytesPerTexel;
+  const auto bytesPerTexel = mFormat->format->estimatedBytesPerPixel;
+  return size_t(mWidth) * size_t(mHeight) * size_t(mDepth) * bytesPerTexel;
 }
 
-void
-WebGLTexture::ImageInfo::SetIsDataInitialized(bool isDataInitialized, WebGLTexture* tex)
-{
-    MOZ_ASSERT(tex);
-    MOZ_ASSERT(this >= &tex->mImageInfoArr[0]);
-    MOZ_ASSERT(this < &tex->mImageInfoArr[kMaxLevelCount * kMaxFaceCount]);
+void WebGLTexture::ImageInfo::SetIsDataInitialized(bool isDataInitialized,
+                                                   WebGLTexture* tex) {
+  MOZ_ASSERT(tex);
+  MOZ_ASSERT(this >= &tex->mImageInfoArr[0]);
+  MOZ_ASSERT(this < &tex->mImageInfoArr[kMaxLevelCount * kMaxFaceCount]);
 
-    mIsDataInitialized = isDataInitialized;
-    tex->InvalidateResolveCache();
+  mIsDataInitialized = isDataInitialized;
+  tex->InvalidateResolveCache();
 }
 
 ////////////////////////////////////////
@@ -1220,6 +1199,12 @@ WebGLTexture::TexParameter(TexTarget texTarget, GLenum pname, const FloatOrInt& 
         mContext->gl->fTexParameteri(texTarget.get(), pname, clamped.i);
     else
         mContext->gl->fTexParameterf(texTarget.get(), pname, clamped.f);
+}
+
+void WebGLTexture::Truncate() {
+  for (auto& cur : mImageInfoArr) {
+    SetImageInfo("OUT_OF_MEMORY", &cur, ImageInfo());
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -194,39 +194,37 @@ WebGLRenderbuffer::RenderbufferStorage(const char* funcName, uint32_t samples,
         mContext->ErrorInvalidValue("%s: Width or height exceeds maximum renderbuffer"
                                     " size.",
                                     funcName);
-        return;
+    return;
+  }
+
+  // Validation complete.
+
+  const GLenum error = DoRenderbufferStorage(samples, usage, width, height);
+  if (error) {
+    const char* errorName = mContext->ErrorName(error);
+    mContext->GenerateWarning("%s generated error %s", funcName, errorName);
+    if (error != LOCAL_GL_OUT_OF_MEMORY) {
+      // Truncate.
+      mSamples = 0;
+      mFormat = nullptr;
+      mWidth = 0;
+      mHeight = 0;
+      mImageDataStatus = WebGLImageDataStatus::NoImageData;
+
+      InvalidateStatusOfAttachedFBs(funcName);
     }
+    return;
+  }
 
-    mContext->MakeContextCurrent();
+  mContext->OnDataAllocCall();
 
-    if (!usage->maxSamplesKnown) {
-        const_cast<webgl::FormatUsageInfo*>(usage)->ResolveMaxSamples(mContext->gl);
-    }
-    MOZ_ASSERT(usage->maxSamplesKnown);
+  mSamples = samples;
+  mFormat = usage;
+  mWidth = width;
+  mHeight = height;
+  mImageDataStatus = WebGLImageDataStatus::UninitializedImageData;
 
-    if (samples > usage->maxSamples) {
-        mContext->ErrorInvalidOperation("%s: `samples` is out of the valid range.", funcName);
-        return;
-    }
-
-    // Validation complete.
-
-    const GLenum error = DoRenderbufferStorage(samples, usage, width, height);
-    if (error) {
-        const char* errorName = mContext->ErrorName(error);
-        mContext->GenerateWarning("%s generated error %s", funcName, errorName);
-        return;
-    }
-
-    mContext->OnDataAllocCall();
-
-    mSamples = samples;
-    mFormat = usage;
-    mWidth = width;
-    mHeight = height;
-    mImageDataStatus = WebGLImageDataStatus::UninitializedImageData;
-
-    InvalidateStatusOfAttachedFBs(funcName);
+  InvalidateStatusOfAttachedFBs(funcName);
 }
 
 void

@@ -387,6 +387,7 @@ public:
                     bool* const out_initFailed);
 
     bool IsMipmapCubeComplete() const;
+    void Truncate();
 
     bool IsCubeMap() const { return (mTarget == LOCAL_GL_TEXTURE_CUBE_MAP); }
 
