@@ -2330,11 +2330,8 @@ nsHtml5Tokenizer::stateLoop(int32_t state, char16_t c, int32_t pos, char16_t* bu
               default: {
                 tokenHandler->characters(nsHtml5Tokenizer::LT_SOLIDUS, 0, 2);
                 emitStrBuf();
-                if (c == '\0') {
-                  emitReplacementCharacter(buf, pos);
-                } else {
-                  cstart = pos;
-                }
+                cstart = pos;
+                reconsume = true;
                 state = P::transition(mViewSource, returnState, reconsume, pos);
                 NS_HTML5_CONTINUE(stateloop);
               }
