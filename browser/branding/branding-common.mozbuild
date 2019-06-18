@@ -44,9 +44,11 @@ def FirefoxBranding():
             'default16.png',
             'default22.png',
             'default24.png',
-            'default256.png',
             'default32.png',
             'default48.png',
+            'default64.png',
+            'default128.png',
+            'default256.png',
             'mozicon128.png',
         ]
         FINAL_TARGET_FILES.icons += ['mozicon128.png']
@@ -54,7 +56,9 @@ def FirefoxBranding():
             'default16.png',
             'default22.png',
             'default24.png',
-            'default256.png',
             'default32.png',
             'default48.png',
+            'default64.png',
+            'default128.png',
+            'default256.png',
         ]
