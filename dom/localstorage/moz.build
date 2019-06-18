@@ -7,6 +7,8 @@
 with Files("**"):
     BUG_COMPONENT = ("Core", "DOM: Web Storage")
 
+BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
+
 XPCSHELL_TESTS_MANIFESTS += [
     'test/unit/xpcshell.ini'
 ]
@@ -35,6 +37,7 @@ EXPORTS.mozilla.dom += [
     'LSObserver.h',
     'LSSnapshot.h',
     'LSValue.h',
+    'LSWriteOptimizer.h',
     'SnappyUtils.h',
 ]
 
@@ -48,6 +51,7 @@ UNIFIED_SOURCES += [
     'LSObserver.cpp',
     'LSSnapshot.cpp',
     'LSValue.cpp',
+    'LSWriteOptimizer.cpp',
     'ReportInternalError.cpp',
     'SnappyUtils.cpp',
 ]

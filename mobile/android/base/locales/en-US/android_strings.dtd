@@ -24,9 +24,11 @@
 <!ENTITY firstrun_sync_message2 "Pick up where you left off.">
 <!ENTITY firstrun_sync_subtext2 "Use Sync to find the bookmarks, passwords, and other things you save to &brandShortName; on all your devices.">
 <!ENTITY newfirstrun_sync_subtext "Sync the things you save on mobile to Waterfox for desktop, privately and securely.">
+<!ENTITY updatednewfirstrun_sync_subtext "Sign in to your account to get the most out of &brandShortName;">
 <!ENTITY firstrun_signin_message "Get connected, get started">
 <!ENTITY firstrun_signin_button "Sign in to Sync">
 <!ENTITY newfirstrun_signin_button "Turn on Sync">
+<!ENTITY updatednewfirstrun_signin_button "Sign in to &brandShortName;">
 <!ENTITY  onboard_start_button_browser "Start Browsing">
 <!ENTITY firstrun_button_notnow "Not right now">
 <!ENTITY firstrun_button_next "Next">
@@ -66,6 +68,11 @@
 <!ENTITY  sending_crash_report "Sending crash report\u2026">
 <!ENTITY  crash_close_label "Close">
 <!ENTITY  crash_restart_label "Restart &brandShortName;">
+<!-- Localization note (crash_notification_title, crash_notification_message, crash_notification_negative_button_text)
+     Text displayed in a system notification to allow starting the Crash Reporter (Android Q and later).-->
+<!ENTITY  crash_notification_title "&brandShortName; crashed">
+<!ENTITY  crash_notification_message "Tap to report to &vendorShortName;">
+<!ENTITY  crash_notification_negative_button_text "Ignore">
 
 <!ENTITY url_bar_default_text2 "Search or enter address">
 
@@ -108,6 +115,9 @@
 <!ENTITY bookmark_folder_updated "Folder updated">
 <!ENTITY bookmark_parent_folder "Parent Folder">
 <!ENTITY bookmark_add_folder "Add new folder">
+<!-- Localization note (bookmark_default_folder_title): Default title is used if user doesn't specify
+     one when he is creating a bookmark folder -->
+<!ENTITY bookmark_default_folder_title "(no title)">
 
 <!ENTITY reader_saved_offline "Saved offline">
 <!-- Localization note (reader_switch_to_bookmarks) : This
@@ -671,6 +681,7 @@ shown from Android O while a tab is being queued.-->
 <!ENTITY filepicker_audio_title "Choose or record a sound">
 <!ENTITY filepicker_image_title "Choose or take a picture">
 <!ENTITY filepicker_video_title "Choose or record a video">
+<!ENTITY filepicker_permission_denied "Required permissions not granted, reverting to the system file picker.">
 
 <!-- Site identity popup -->
 <!ENTITY identity_connected_to "You are connected to">
@@ -926,3 +937,4 @@ Picture-in-picture mini window -->
 <!-- LOCALIZATION NOTE (site_notifications_channel): This is for system notifications displayed by
 web sites through the HTML Notifications API. -->
 <!ENTITY site_notifications_channel "Site notifications">
+<!ENTITY crash_handler_notifications_channel "&brandShortName; Crash Reporter">

@@ -93,7 +93,6 @@ class UrlbarInput {
     this.lastQueryContextPromise = Promise.resolve();
     this._actionOverrideKeyCount = 0;
     this._autofillPlaceholder = "";
-    this._deletedEndOfAutofillPlaceholder = false;
     this._lastSearchString = "";
     this._resultForCurrentValue = null;
     this._suppressStartQuery = false;
@@ -190,8 +189,6 @@ class UrlbarInput {
       this.inputField.removeEventListener(name, this);
     }
     this.removeEventListener("mousedown", this);
-
-    this.editor.removeEditActionListener(this);
 
     this.view.panel.remove();
 
@@ -316,9 +313,6 @@ class UrlbarInput {
 
   /**
    * Handles an event which would cause a url or text to be opened.
-   * TODO Bug 1536816 the name is currently handleCommand which is compatible with
-   * urlbarBindings. However, it is no longer called automatically by autocomplete,
-   * See _on_keydown.
    *
    * @param {Event} event The event triggering the open.
    * @param {string} [openWhere] Where we expect the result to be opened.
@@ -466,6 +460,11 @@ class UrlbarInput {
       }
       case UrlbarUtils.RESULT_TYPE.SEARCH: {
         if (result.payload.isKeywordOffer) {
+          // The user confirmed a token alias, so just move the caret
+          // to the end of it. Because there's a trailing space in the value,
+          // the user can directly start typing a query string at that point.
+          this.selectionStart = this.selectionEnd = this.value.length;
+
           // Picking a keyword offer just fills it in the input and doesn't
           // visit anything.  The user can then type a search string.  Also
           // start a new search so that the offer appears in the view by itself
@@ -695,31 +694,6 @@ class UrlbarInput {
     this.textbox.classList.remove("hidden-focus");
   }
 
-  /**
-   * nsIEditActionListener method implementation.  We use this to detect when
-   * the user deletes autofilled substrings.
-   *
-   * There is also a DidDeleteSelection method, but it's called before the input
-   * event is fired.  So the order is: WillDeleteSelection, DidDeleteSelection,
-   * input event.  Further, in DidDeleteSelection, the passed-in selection
-   * object is the same as the object passed to WillDeleteSelection, but by that
-   * point its properties have been adjusted to account for the deletion.  For
-   * example, the endOffset property of its range will be smaller than it was in
-   * WillDeleteSelection.  Therefore we compute whether the user deleted the
-   * autofilled substring here in WillDeleteSelection instead of deferring it to
-   * when we handle the input event.
-   *
-   * @param {Selection} selection
-   *   The Selection object.
-   */
-  WillDeleteSelection(selection) {
-    this._deletedEndOfAutofillPlaceholder =
-      selection &&
-      selection.getRangeAt(0).endOffset ==
-        this._autofillPlaceholder.length &&
-      this._autofillPlaceholder.endsWith(String(selection));
-  }
-
   // Getters and Setters below.
 
   get focused() {
@@ -815,21 +789,11 @@ class UrlbarInput {
    *
    * @param {string} value
    *   The new search string.
-   * @param {boolean} deletedAutofilledSubstring
-   *   Whether the user deleted the previously autofilled substring.
    * @returns {boolean}
    *   Whether autofill should be allowed in the new search.
    */
-  _maybeAutofillOnInput(value, deletedAutofilledSubstring) {
-    // Determine whether autofill should be allowed for the new search triggered
-    // by the input event.
-    let lastSearchStartsWithNewSearch =
-      value.length < this._lastSearchString.length &&
-      this._lastSearchString.startsWith(value);
-    let allowAutofill =
-      !lastSearchStartsWithNewSearch &&
-      !deletedAutofilledSubstring &&
-      this.selectionEnd == value.length;
+  _maybeAutofillOnInput(value) {
+    let allowAutofill = this.selectionEnd == value.length;
 
     // Determine whether we can autofill the placeholder.  The placeholder is a
     // value that we autofill now, when the search starts and before we wait on
@@ -1171,7 +1135,7 @@ class UrlbarInput {
       }
     }
 
-    // Ensure the start of the URL is visible for usability reasons.
+    // Make sure the domain name stays visible for spoof protection and usability.
     this.selectionStart = this.selectionEnd = 0;
 
     this.view.close();
@@ -1341,16 +1305,11 @@ class UrlbarInput {
     }
   }
 
-  _on_input() {
+  _on_input(event) {
     let value = this.textValue;
     this.valueIsTyped = true;
-    let valueIsPasted = this._valueIsPasted;
-    this._valueIsPasted = false;
     this._untrimmedValue = value;
     this.window.gBrowser.userTypedValue = value;
-
-    let deletedEndOfAutofillPlaceholder = this._deletedEndOfAutofillPlaceholder;
-    this._deletedEndOfAutofillPlaceholder = false;
 
     let compositionState = this._compositionState;
     let compositionClosedPopup = this._compositionClosedPopup;
@@ -1389,10 +1348,13 @@ class UrlbarInput {
       return;
     }
 
-    let deletedAutofilledSubstring =
-      deletedEndOfAutofillPlaceholder && value == this._lastSearchString;
-    let allowAutofill = !valueIsPasted &&
-      this._maybeAutofillOnInput(value, deletedAutofilledSubstring);
+    // Autofill only when text is inserted (i.e., event.data is not empty) and
+    // it's not due to pasting.
+    let allowAutofill =
+      !!event.data &&
+      !event.inputType.startsWith("insertFromPaste") &&
+      event.inputType != "insertFromYank" &&
+      this._maybeAutofillOnInput(value);
 
     this.startQuery({
       searchString: value,
@@ -1403,18 +1365,8 @@ class UrlbarInput {
   }
 
   _on_select(event) {
-    if (!this.window.windowUtils.isHandlingUserInput) {
-      // Register the editor listener we use to detect when the user deletes
-      // autofilled substrings.  The editor is destroyed and removes all its
-      // listeners at various surprising times, and autofill causes a non-user
-      // select, which is why we do this here instead of, for example, in the
-      // constructor.  addEditActionListener is idempotent, so it's OK to call
-      // it even when we're already registered.
-      this.editor.addEditActionListener(this);
-      return;
-    }
-
-    if (!Services.clipboard.supportsSelectionClipboard()) {
+    if (!this.window.windowUtils.isHandlingUserInput ||
+        !Services.clipboard.supportsSelectionClipboard()) {
       return;
     }
 
@@ -1458,7 +1410,7 @@ class UrlbarInput {
     if (!originalPasteData) {
       return;
     }
-    this._valueIsPasted = true;
+
     let oldValue = this.inputField.value;
     let oldStart = oldValue.substring(0, this.selectionStart);
     // If there is already non-whitespace content in the URL bar

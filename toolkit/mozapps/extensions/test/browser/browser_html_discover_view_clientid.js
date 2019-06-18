@@ -7,14 +7,10 @@ const {
   AddonTestUtils,
 } = ChromeUtils.import("resource://testing-common/AddonTestUtils.jsm");
 
-const {
-  TelemetryTestUtils,
-} = ChromeUtils.import("resource://testing-common/TelemetryTestUtils.jsm");
-
 AddonTestUtils.initMochitest(this);
 const server = AddonTestUtils.createHttpServer();
 const serverBaseUrl = `http://localhost:${server.identity.primaryPort}/`;
-server.registerPathHandler("/sumo/personalized-extension-recommendations",
+server.registerPathHandler("/sumo/personalized-addons",
   (request, response) => {
     response.write("This is a SUMO page that explains personalized add-ons.");
   });
@@ -40,7 +36,8 @@ function getNoticeButton(win) {
 }
 
 function isNoticeVisible(win) {
-  return getNoticeButton(win).closest("message-bar").offsetHeight > 0;
+  let message = win.document.querySelector("taar-notice");
+  return message && message.offsetHeight > 0;
 }
 
 add_task(async function setup() {
@@ -52,6 +49,12 @@ add_task(async function setup() {
       ["extensions.getAddons.discovery.api_url", `${serverBaseUrl}discoapi`],
       ["app.support.baseURL", `${serverBaseUrl}sumo/`],
       ["extensions.htmlaboutaddons.discover.enabled", true],
+      ["extensions.htmlaboutaddons.enabled", true],
+      // Discovery API requests can be triggered by the discopane and the
+      // recommendations in the list view. To make sure that the every test
+      // checks the behavior of the view they're testing, ensure that only one
+      // of the two views is enabled at a time.
+      ["extensions.htmlaboutaddons.recommendations.enabled", false],
     ],
   });
 });
@@ -83,8 +86,7 @@ add_task(async function clientid_enabled() {
   Services.telemetry.clearEvents();
 
   let tabbrowser = win.windowRoot.ownerGlobal.gBrowser;
-  let expectedUrl =
-    `${serverBaseUrl}sumo/personalized-extension-recommendations`;
+  let expectedUrl = `${serverBaseUrl}sumo/personalized-addons`;
   let tabPromise = BrowserTestUtils.waitForNewTab(tabbrowser, expectedUrl);
 
   getNoticeButton(win).click();
@@ -95,17 +97,9 @@ add_task(async function clientid_enabled() {
 
   await closeView(win);
 
-  TelemetryTestUtils.assertEvents([{
-    method: "link",
-    value: "disconotice",
-    extra: {
-      view: "discover",
-    },
-  }], {
-    category: "addonsManager",
-    method: "link",
-    object: "aboutAddons",
-  });
+  assertAboutAddonsTelemetryEvents([
+    ["addonsManager", "link", "aboutAddons", "disconotice", {view: "discover"}],
+  ], {methods: ["link"]});
 });
 
 // Test that the clientid is not sent when disabled via prefs.
@@ -139,4 +133,70 @@ add_task(async function clientid_from_private_window() {
 
   await close_manager(managerWindow);
   await BrowserTestUtils.closeWindow(privateWindow);
+});
+
+add_task(async function clientid_enabled_from_extension_list() {
+  await SpecialPowers.pushPrefEnv({
+    // Override prefs from setup to enable recommendations.
+    set: [
+      ["extensions.htmlaboutaddons.discover.enabled", false],
+      ["extensions.htmlaboutaddons.recommendations.enabled", true],
+    ],
+  });
+
+  // Force the extension list to be the first load. This pref will be
+  // overwritten once the view loads.
+  Services.prefs.setCharPref(PREF_UI_LASTCATEGORY, "addons://list/extension");
+
+  let requestPromise = promiseOneDiscoveryApiRequest();
+  let win = await loadInitialView("extension");
+
+  ok(isNoticeVisible(win), "Notice about personalization should be visible");
+
+  ok(await requestPromise,
+     "Moz-Client-Id should be set when telemetry & discovery are enabled");
+
+  // Make sure switching to the theme view doesn't trigger another request.
+  await switchView(win, "theme");
+
+  // Wait until the request would have happened so promiseOneDiscoveryApiRequest
+  // can fail if it does.
+  let recommendations = win.document.querySelector("recommended-addon-list");
+  await recommendations.loadCardsIfNeeded();
+
+  await closeView(win);
+  await SpecialPowers.popPrefEnv();
+});
+
+add_task(async function clientid_enabled_from_theme_list() {
+  await SpecialPowers.pushPrefEnv({
+    // Override prefs from setup to enable recommendations.
+    set: [
+      ["extensions.htmlaboutaddons.discover.enabled", false],
+      ["extensions.htmlaboutaddons.recommendations.enabled", true],
+    ],
+  });
+
+  // Force the theme list to be the first load. This pref will be overwritten
+  // once the view loads.
+  Services.prefs.setCharPref(PREF_UI_LASTCATEGORY, "addons://list/theme");
+
+  let requestPromise = promiseOneDiscoveryApiRequest();
+  let win = await loadInitialView("theme");
+
+  ok(!isNoticeVisible(win), "Notice about personalization should be hidden");
+
+  is(await requestPromise, null,
+     "Moz-Client-Id should not be sent when loading themes initially");
+
+  info("Load the extension list and verify the client ID is now sent");
+
+  requestPromise = promiseOneDiscoveryApiRequest();
+  await switchView(win, "extension");
+
+  ok(await requestPromise,
+     "Moz-Client-Id is now sent for extensions");
+
+  await closeView(win);
+  await SpecialPowers.popPrefEnv();
 });

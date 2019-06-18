@@ -47,13 +47,18 @@ pref("extensions.getAddons.langpacks.url", "", locked);
 pref("extensions.getAddons.discovery.api_url", "", locked);
 
 // Enable the HTML-based discovery panel at about:addons.
-pref("extensions.htmlaboutaddons.discover.enabled", false, locked);
+pref("extensions.htmlaboutaddons.discover.enabled", false);
+
+// The URL for the privacy policy related to recommended extensions.
+pref("extensions.recommendations.privacyPolicyUrl", "https://www.mozilla.org/privacy/firefox/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=privacy-policy-link#addons");
+// The URL for Firefox Color, recommended on the theme page in about:addons.
+pref("extensions.recommendations.themeRecommendationUrl", "https://color.firefox.com/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=theme-footer-link");
 
 pref("extensions.update.autoUpdateDefault", true);
 
 // Check AUS for system add-on updates.
-pref("extensions.systemAddon.update.url", "", locked);
-pref("extensions.systemAddon.update.enabled", false, locked);
+pref("extensions.systemAddon.update.url", "https://aus5.mozilla.org/update/3/SystemAddons/68.10/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
+pref("extensions.systemAddon.update.enabled", true);
 
 // Disable add-ons that are not installed by the user in all scopes by default.
 // See the SCOPE constants in AddonManager.jsm for values to use here.
@@ -339,13 +344,8 @@ pref("browser.urlbar.openintab", false);
 pref("browser.urlbar.usepreloadedtopurls.enabled", false);
 pref("browser.urlbar.usepreloadedtopurls.expire_days", 14);
 
-// Toggle the new work in progress Address Bar code. Enable it on Nightly and Beta,
-// not on Release yet.
-#ifdef EARLY_BETA_OR_EARLIER
+// Enable the new Address Bar code.
 pref("browser.urlbar.quantumbar", true);
-#else
-pref("browser.urlbar.quantumbar", false);
-#endif
 
 pref("browser.altClickSave", false);
 
@@ -504,11 +504,16 @@ pref("browser.tabs.delayHidingAudioPlayingIconMS", 3000);
 pref("browser.tabs.remote.separatePrivilegedContentProcess", true);
 #endif
 
-// Turn on HTTP response process selection.
+#ifdef NIGHTLY_BUILD
 pref("browser.tabs.remote.useHTTPResponseProcessSelection", true);
+#else
+// Disabled outside of nightly due to bug 1554217
+pref("browser.tabs.remote.useHTTPResponseProcessSelection", false);
+#endif
+
 
 // Unload tabs when available memory is running low
-pref("browser.tabs.unloadOnLowMemory", true);
+pref("browser.tabs.unloadOnLowMemory", false);
 
 pref("browser.ctrlTab.recentlyUsedOrder", true);
 
@@ -1076,7 +1081,7 @@ pref("security.sandbox.gmp.win32k-disable", false);
 // of when messaged by the parent after the message loop is running.
 pref("security.sandbox.content.mac.earlyinit", true);
 // Remove this pref once RDD early init is stable on Release.
-pref("security.sandbox.rdd.mac.earlyinit", true);
+pref("security.sandbox.rdd.mac.earlyinit", false);
 
 // This pref is discussed in bug 1083344, the naming is inspired from its
 // Windows counterpart, but on Mac it's an integer which means:

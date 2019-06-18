@@ -521,22 +521,22 @@ def check_compiler(compiler, language, target):
     # C99 compiles as e.g. C11 (as of writing, this is true of libnestegg, for
     # example)
     if info.language == 'C' and info.language_version != 199901:
-        if info.type in ('clang-cl', 'clang', 'gcc'):
-            if info.type == 'clang-cl':
-                flags.append('-Xclang')
-            flags.append('-std=gnu99')
+        if info.type == 'clang-cl':
+            flags.append('-Xclang')
+        flags.append('-std=gnu99')
 
     # Note: this is a strict version check because we used to always add
     # -std=gnu++14.
     cxx14_version = 201402
     if info.language == 'C++':
-        if info.type == 'clang' and info.language_version != cxx14_version:
-            flags.append('-std=gnu++14')
-        # MSVC headers include C++14 features, but don't guard them
-        # with appropriate checks.
-        elif info.type == 'clang-cl' and info.language_version != cxx14_version:
-            flags.append('-Xclang')
-            flags.append('-std=c++14')
+        if info.language_version != cxx14_version:
+            # MSVC headers include C++14 features, but don't guard them
+            # with appropriate checks.
+            if info.type == 'clang-cl':
+                flags.append('-Xclang')
+                flags.append('-std=c++14')
+            else:
+                flags.append('-std=gnu++14')
 
     # Check compiler target
     # --------------------------------------------------------------------
@@ -1470,7 +1470,7 @@ js_option('--enable-profile-use',
           help='Use a generated profile during the build')
 
 js_option('--with-pgo-profile-path',
-          help='Path to the (unmerged) profile path to use during the build',
+          help='Path to the directory with unmerged profile data to use during the build',
           nargs=1)
 
 imply_option('MOZ_PGO',
@@ -1481,6 +1481,7 @@ set_config('MOZ_PROFILE_USE',
 
 
 @depends('--with-pgo-profile-path', '--enable-profile-use', 'LLVM_PROFDATA')
+@imports('os')
 def pgo_profile_path(path, pgo_use, profdata):
     if not path:
         return
@@ -1488,6 +1489,10 @@ def pgo_profile_path(path, pgo_use, profdata):
         die('Pass --enable-profile-use to use --with-pgo-profile-path.')
     if path and not profdata:
         die('LLVM_PROFDATA must be set to process the pgo profile.')
+    if not os.path.isdir(path[0]):
+        die('Argument to --with-pgo-profile-path must be a directory.')
+    if not os.path.isabs(path[0]):
+        die('Argument to --with-pgo-profile-path must be an absolute path.')
     return path[0]
 
 

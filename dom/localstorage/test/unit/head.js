@@ -51,11 +51,18 @@ function returnToEventLoop() {
 
 function enableTesting() {
   Services.prefs.setBoolPref("dom.storage.testing", true);
+
+  // xpcshell globals don't have associated clients in the Clients API sense, so
+  // we need to disable client validation so that the unit tests are allowed to
+  // use LocalStorage.
+  Services.prefs.setBoolPref("dom.storage.client_validation", false);
+
   Services.prefs.setBoolPref("dom.quotaManager.testing", true);
 }
 
 function resetTesting() {
   Services.prefs.clearUserPref("dom.quotaManager.testing");
+  Services.prefs.clearUserPref("dom.storage.client_validation");
   Services.prefs.clearUserPref("dom.storage.testing");
 }
 
@@ -74,6 +81,18 @@ function setOriginLimit(originLimit) {
 
 function resetOriginLimit() {
   Services.prefs.clearUserPref("dom.storage.default_quota");
+}
+
+function setTimeout(callback, timeout) {
+  let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+
+  timer.initWithCallback({
+    notify() {
+      callback();
+    },
+  }, timeout, Ci.nsITimer.TYPE_ONE_SHOT);
+
+  return timer;
 }
 
 function init() {

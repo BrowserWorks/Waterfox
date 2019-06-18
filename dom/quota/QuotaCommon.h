@@ -26,7 +26,7 @@
 #define DSSTORE_FILE_NAME ".DS_Store"
 #define DESKTOP_FILE_NAME ".desktop"
 #define DESKTOP_INI_FILE_NAME "desktop.ini"
-#define THUMBS_DB_FILE_NAME "Thumbs.db"
+#define THUMBS_DB_FILE_NAME "thumbs.db"
 
 #define QM_WARNING(...)                                                      \
   do {                                                                       \
@@ -57,6 +57,9 @@
     } while (0)
 
 #  define CONTINUE_IN_NIGHTLY_RETURN_IN_OTHERS(_dummy) continue
+
+#  define RETURN_STATUS_OR_RESULT(_status, _rv) \
+    return NS_FAILED(_status) ? _status : _rv
 #else
 #  define REPORT_TELEMETRY_INIT_ERR(_key, _label) \
     {}
@@ -68,6 +71,8 @@
     {}
 
 #  define CONTINUE_IN_NIGHTLY_RETURN_IN_OTHERS(_rv) return _rv
+
+#  define RETURN_STATUS_OR_RESULT(_status, _rv) return _rv
 #endif
 
 class nsIEventTarget;

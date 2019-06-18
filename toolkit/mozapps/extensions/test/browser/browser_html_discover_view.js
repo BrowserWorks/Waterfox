@@ -12,10 +12,6 @@ const {
   },
 }  = ChromeUtils.import("resource://gre/modules/ExtensionUtils.jsm");
 
-const {
-  TelemetryTestUtils,
-} = ChromeUtils.import("resource://testing-common/TelemetryTestUtils.jsm");
-
 // The response to the discovery API, as documented at:
 // https://addons-server.readthedocs.io/en/latest/topics/api/discovery.html
 //
@@ -264,16 +260,6 @@ async function testAddonUninstall(card) {
     "Should have an Install button after uninstall");
 }
 
-function checkTelemetryEvents(expectations) {
-  TelemetryTestUtils.assertEvents(expectations, {
-    category: "addonsManager",
-    method(actual) {
-      return actual === "action" || actual === "link";
-    },
-    object: "aboutAddons",
-  });
-}
-
 add_task(async function setup() {
   await SpecialPowers.pushPrefEnv({
     set: [
@@ -282,6 +268,9 @@ add_task(async function setup() {
       // Enable HTML for all because some tests load non-discopane views.
       ["extensions.htmlaboutaddons.enabled", true],
       ["extensions.htmlaboutaddons.discover.enabled", true],
+      // Disable non-discopane recommendations to avoid unexpected discovery
+      // API requests.
+      ["extensions.htmlaboutaddons.recommendations.enabled", false],
       // Disable the telemetry client ID (and its associated UI warning).
       // browser_html_discover_view_clientid.js covers this functionality.
       ["browser.discovery.enabled", false],
@@ -447,27 +436,14 @@ add_task(async function install_from_discopane() {
     ],
     "The Install buttons should be replaced with Manage buttons");
 
-  checkTelemetryEvents([{
-    category: "addonsManager",
-    method: "action",
-    object: "aboutAddons",
-    extra: {
-      action: "installFromRecommendation",
-      view: "discover",
-      addonId: FIRST_EXTENSION_ID,
-      type: "extension",
-    },
-  }, {
-    category: "addonsManager",
-    method: "action",
-    object: "aboutAddons",
-    extra: {
-      action: "installFromRecommendation",
-      view: "discover",
-      addonId: FIRST_THEME_ID,
-      type: "theme",
-    },
-  }]);
+  assertAboutAddonsTelemetryEvents([
+    ["addonsManager", "action", "aboutAddons", null,
+     {action: "installFromRecommendation", view: "discover",
+      addonId: FIRST_EXTENSION_ID, type: "extension"}],
+    ["addonsManager", "action", "aboutAddons", null,
+     {action: "installFromRecommendation", view: "discover",
+      addonId: FIRST_THEME_ID, type: "theme"}],
+  ]);
 
   // End of the testing installation from a card.
 
@@ -486,17 +462,11 @@ add_task(async function install_from_discopane() {
     // TODO bug 1540253: Check that the "recommended" badge is visible.
   }
 
-  checkTelemetryEvents([{
-    category: "addonsManager",
-    method: "action",
-    object: "aboutAddons",
-    extra: {
-      action: "manage",
-      view: "discover",
-      addonId: FIRST_EXTENSION_ID,
-      type: "extension",
-    },
-  }]);
+  assertAboutAddonsTelemetryEvents([
+    ["addonsManager", "action", "aboutAddons", null,
+     {action: "manage", view: "discover", addonId: FIRST_EXTENSION_ID,
+      type: "extension"}],
+  ], {methods: ["action"]});
 
   // Now we are going to force an updated rendering and check that the cards are
   // in the expected order, and then test uninstallation of the above add-ons.
@@ -686,23 +656,10 @@ add_task(async function discopane_interaction_telemetry() {
   // Link to AMO listing
   await testClickInDiscoCard(".disco-addon-author a", "discopane-entry-link");
 
-  checkTelemetryEvents([{
-    category: "addonsManager",
-    method: "link",
-    object: "aboutAddons",
-    value: "discomore",
-    extra: {
-      view: "discover",
-    },
-  }, {
-    category: "addonsManager",
-    method: "link",
-    object: "aboutAddons",
-    value: "discohome",
-    extra: {
-      view: "discover",
-    },
-  }]);
+  assertAboutAddonsTelemetryEvents([
+    ["addonsManager", "link", "aboutAddons", "discomore", {view: "discover"}],
+    ["addonsManager", "link", "aboutAddons", "discohome", {view: "discover"}],
+  ]);
 
   is(apiHandler.requestCount, 1, "Discovery API should be fetched once");
 

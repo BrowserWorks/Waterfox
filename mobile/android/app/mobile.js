@@ -191,7 +191,7 @@ pref("xpinstall.signatures.required", false);
 // constants in AddonManager.jsm for values to use here, and Bug 1405528 for a rationale).
 pref("extensions.autoDisableScopes", 15);
 
-pref("extensions.enabledScopes", 1);
+pref("extensions.enabledScopes", 5);
 pref("extensions.autoupdate.enabled", true);
 pref("extensions.autoupdate.interval", 86400);
 pref("extensions.update.enabled", true);
@@ -861,3 +861,7 @@ pref("extensions.systemAddon.update.url", "https://aus5.mozilla.org/update/3/Sys
 pref("browser.tabs.remote.separateFileUriProcess", false);
 pref("browser.tabs.remote.allowLinkedWebInFileUriProcess", true);
 pref("browser.tabs.remote.separatePrivilegedContentProcess", false);
+
+// Allow Web Authentication
+pref("security.webauth.webauthn_enable_android_fido2", true);
+

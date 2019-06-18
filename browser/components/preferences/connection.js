@@ -152,14 +152,14 @@ var gConnectionsDialog = {
     this.updateProtocolPrefs();
 
     var shareProxiesPref = Preferences.get("network.proxy.share_proxy_settings");
-    shareProxiesPref.disabled = proxyTypePref.value != 1;
+    shareProxiesPref.disabled = proxyTypePref.value != 1 || shareProxiesPref.locked;
     var autologinProxyPref = Preferences.get("signon.autologin.proxy");
-    autologinProxyPref.disabled = proxyTypePref.value == 0;
+    autologinProxyPref.disabled = proxyTypePref.value == 0 || autologinProxyPref.locked;
     var noProxiesPref = Preferences.get("network.proxy.no_proxies_on");
-    noProxiesPref.disabled = proxyTypePref.value == 0;
+    noProxiesPref.disabled = proxyTypePref.value == 0 || noProxiesPref.locked;
 
     var autoconfigURLPref = Preferences.get("network.proxy.autoconfig_url");
-    autoconfigURLPref.disabled = proxyTypePref.value != 2;
+    autoconfigURLPref.disabled = proxyTypePref.value != 2 || autoconfigURLPref.locked;
 
     this.updateReloadButton();
   },
@@ -296,19 +296,15 @@ var gConnectionsDialog = {
       pref => Services.prefs.prefIsLocked(pref));
 
     function setInputsDisabledState(isControlled) {
-      let disabled = isLocked || isControlled;
       for (let element of gConnectionsDialog.getProxyControls()) {
-        element.disabled = disabled;
+        element.disabled = isControlled;
       }
-      if (!isLocked) {
-        gConnectionsDialog.proxyTypeChanged();
-      }
+      gConnectionsDialog.proxyTypeChanged();
     }
 
     if (isLocked) {
       // An extension can't control this setting if any pref is locked.
       hideControllingExtension(PROXY_KEY);
-      setInputsDisabledState(false);
     } else {
       handleControllingExtension(PREF_SETTING_TYPE, PROXY_KEY)
         .then(setInputsDisabledState);

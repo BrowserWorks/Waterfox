@@ -115,7 +115,7 @@ const PROP_JSON_FIELDS = ["id", "syncGUID", "version", "type",
                           "userPermissions", "icons", "iconURL",
                           "blocklistState", "blocklistURL", "startupData",
                           "previewImage", "hidden", "installTelemetryInfo",
-                          "rootURI"];
+                          "recommendationState", "rootURI"];
 
 const LEGACY_TYPES = new Set([
   "extension",
@@ -246,6 +246,7 @@ class AddonInternal {
     this.installTelemetryInfo = null;
     this.rootURI = null;
     this._updateInstall = null;
+    this.recommendationState = null;
 
     this.inDatabase = false;
 
@@ -396,7 +397,7 @@ class AddonInternal {
   }
 
   get hidden() {
-    return this.location.hidden || (this._hidden && this.isPrivileged);
+    return this.location.hidden || (this._hidden && this.isPrivileged) || false;
   }
 
   set hidden(val) {
@@ -831,6 +832,18 @@ AddonWrapper = class {
     }
 
     return null;
+  }
+
+  get isRecommended() {
+    let addon = addonFor(this);
+    let state = addon.recommendationState;
+    if (state &&
+        state.validNotBefore < addon.updateDate &&
+        state.validNotAfter > addon.updateDate &&
+        addon.isCorrectlySigned && !this.temporarilyInstalled) {
+      return state.states.includes("recommended");
+    }
+    return false;
   }
 
   get applyBackgroundUpdates() {

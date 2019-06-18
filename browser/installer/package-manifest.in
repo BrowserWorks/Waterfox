@@ -116,6 +116,7 @@
 @BINPATH@/msvcp*.dll
 @BINPATH@/libEGL.dll
 @BINPATH@/libGLESv2.dll
+@BINPATH@/d3dcompiler_47.dll
 #endif
 
 [browser]
@@ -184,6 +185,7 @@
 @RESPATH@/components/servicesComponents.manifest
 @RESPATH@/components/servicesSettings.manifest
 @RESPATH@/components/cryptoComponents.manifest
+@RESPATH@/components/TelemetryStartup.manifest
 
 @RESPATH@/components/Push.manifest
 

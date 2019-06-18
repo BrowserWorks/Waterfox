@@ -3,6 +3,14 @@
   --addon-icon-size: 32px;
 }
 
+*|*[hidden] {
+  display: none !important;
+}
+
+.header-name {
+  -moz-user-select: initial;
+}
+
 #main {
   margin-inline-start: 28px;
   margin-bottom: 28px;
@@ -52,12 +60,27 @@ addon-card:not([expanded]) > .addon.card:hover {
   cursor: pointer;
 }
 
+addon-card[expanded] .addon.card {
+  padding-bottom: 0;
+}
+
 .addon-card-collapsed {
   display: flex;
 }
 
-addon-list .addon.card {
+addon-list addon-card > .addon.card {
   -moz-user-select: none;
+}
+
+.addon-card-message {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  margin: 8px calc(var(--card-padding) * -1) calc(var(--card-padding) * -1);
+}
+
+addon-card[expanded] .addon-card-message {
+  border-radius: 0;
+  margin-bottom: 0;
 }
 
 /* Theme preview image. */
@@ -108,10 +131,22 @@ addon-list .addon.card {
   width: 16px;
   height: 16px;
   background-size: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-inline-end: 8px;
 }
 
 .addon-badge-private-browsing-allowed {
   background-image: url("chrome://browser/skin/private-browsing.svg");
+}
+
+.addon-badge-recommended {
+  background-color: var(--orange-50);
+  background-image: url("chrome://mozapps/skin/extensions/recommended.svg");
+  background-size: 10px;
+  border-radius: 8px;
+  fill: #fff;
+  -moz-context-properties: fill;
 }
 
 .addon-description {
@@ -141,6 +176,11 @@ addon-card:not([expanded]) .addon-description {
   /* Add some negative margin to account for the button's padding */
   margin-top: -10px;
   margin-inline-end: -8px;
+}
+
+/* Recommended add-ons on list views */
+.recommended-heading {
+  margin-bottom: 16px;
 }
 
 /* Discopane extensions to the add-on card */
@@ -203,15 +243,15 @@ recommended-addon-card .addon-description:not(:empty) {
   flex-shrink: 0;
 }
 
-.discopane-footer {
+.view-footer {
   text-align: center;
 }
 
-.discopane-footer > * {
+.view-footer-item {
   margin-top: 30px;
 }
 
-.discopane-privacy-policy-link {
+.privacy-policy-link {
   font-size: small;
 }
 
@@ -224,11 +264,11 @@ addon-details {
 }
 
 .addon-detail-contribute {
+  display: flex;
   padding: var(--card-padding);
   border: 1px solid var(--in-content-box-border-color);
   border-radius: var(--panel-border-radius);
   margin-bottom: var(--card-padding);
-  display: flex;
   flex-direction: column;
 }
 
@@ -266,8 +306,7 @@ addon-details {
   border: none;
 }
 
-.addon-detail-row-has-help,
-.addon-detail-row:last-of-type {
+.addon-detail-row-has-help {
   padding-bottom: 0;
 }
 
@@ -338,7 +377,7 @@ panel-item-separator {
   margin: 6px 0;
 }
 
-panel-item-separator[hidden] {
+.hide-amo-link .amo-link-container {
   display: none;
 }
 
@@ -360,6 +399,13 @@ panel-item-separator[hidden] {
 .button-link:active {
   color: var(--in-content-link-color-active) !important;
   text-decoration: none;
+}
+
+.inline-options-stack {
+  /* If the options browser triggers an alert we need room to show it. */
+  min-height: 250px;
+  width: 100%;
+  background-color: white;
 }
 
 addon-permissions-list > .addon-detail-row:first-of-type {

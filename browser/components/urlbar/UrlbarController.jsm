@@ -285,17 +285,13 @@ class UrlbarController {
         event.preventDefault();
         break;
       case KeyEvent.DOM_VK_RETURN:
-        if (isMac &&
-            event.metaKey) {
-          // Prevent beep on Mac.
-          event.preventDefault();
-        }
         if (executeAction) {
           this.input.handleCommand(event);
         }
+        event.preventDefault();
         break;
       case KeyEvent.DOM_VK_TAB:
-        if (this.view.isOpen) {
+        if (this.view.isOpen && !event.ctrlKey && !event.altKey) {
           if (executeAction) {
             this.userSelectionBehavior = "tab";
             this.view.selectBy(1, { reverse: event.shiftKey });

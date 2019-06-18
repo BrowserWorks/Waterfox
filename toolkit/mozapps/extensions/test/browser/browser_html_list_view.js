@@ -39,6 +39,7 @@ add_task(async function enableHtmlViews() {
     set: [["extensions.htmlaboutaddons.enabled", true]],
   });
   promptService = mockPromptService();
+  Services.telemetry.clearEvents();
 });
 
 let extensionsCreated = 0;
@@ -58,10 +59,11 @@ function createExtensions(manifestExtras) {
 }
 
 add_task(async function testExtensionList() {
+  let id = "test@mochi.test";
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       name: "Test extension",
-      applications: {gecko: {id: "test@mochi.test"}},
+      applications: {gecko: {id}},
       icons: {
         32: "test-icon.png",
       },
@@ -70,7 +72,7 @@ add_task(async function testExtensionList() {
   });
   await extension.startup();
 
-  let addon = await AddonManager.getAddonByID("test@mochi.test");
+  let addon = await AddonManager.getAddonByID(id);
   ok(addon, "The add-on can be found");
 
   let win = await loadInitialView("extension");
@@ -86,7 +88,7 @@ add_task(async function testExtensionList() {
   // The loaded extension should be in the enabled list.
   let enabledSection = getSection(doc, "enabled");
   ok(!isEmpty(enabledSection), "The enabled section isn't empty");
-  let card = getCardByAddonId(enabledSection, "test@mochi.test");
+  let card = getCardByAddonId(enabledSection, id);
   ok(card, "The card is in the enabled section");
 
   // Check the properties of the card.
@@ -126,7 +128,7 @@ add_task(async function testExtensionList() {
   removeButton.click();
   await removed;
 
-  addon = await AddonManager.getAddonByID("test@mochi.test");
+  addon = await AddonManager.getAddonByID(id);
   ok(addon && !!(addon.pendingOperations & AddonManager.PENDING_UNINSTALL),
      "The addon is pending uninstall");
 
@@ -183,6 +185,20 @@ add_task(async function testExtensionList() {
   await extension2.unload();
   await extension.unload();
 
+  // Install a theme and verify that it is not listed in the pending
+  // uninstall message bars while the list extensions view is loaded.
+  const themeXpi = AddonTestUtils.createTempWebExtensionFile({
+    manifest: {
+      name: "My theme",
+      applications: {gecko: {id: "theme@mochi.test"}},
+      theme: {},
+    },
+  });
+  const themeAddon = await AddonManager.installTemporaryAddon(themeXpi);
+  // Leave it pending uninstall, the following assertions related to
+  // the pending uninstall message bars will fail if the theme is listed.
+  await themeAddon.uninstall(true);
+
   // Install a third addon to verify that is being fully removed once the
   // about:addons page is closed.
   const xpi = AddonTestUtils.createTempWebExtensionFile({
@@ -215,6 +231,29 @@ add_task(async function testExtensionList() {
 
   ok(!await AddonManager.getAddonByID(addon3.id),
      "The third addon has been fully uninstalled");
+
+  ok(themeAddon.pendingOperations & AddonManager.PENDING_UNINSTALL,
+     "The theme addon is pending after the list extension view is closed");
+
+  await themeAddon.uninstall();
+
+  ok(!await AddonManager.getAddonByID(themeAddon.id),
+     "The theme addon is fully uninstalled");
+
+  assertAboutAddonsTelemetryEvents([
+    ["addonsManager", "view", "aboutAddons", "list", {type: "extension"}],
+    ["addonsManager", "action", "aboutAddons", null,
+     {type: "extension", addonId: id, view: "list", action: "disable"}],
+    ["addonsManager", "action", "aboutAddons", "cancelled",
+     {type: "extension", addonId: id, view: "list", action: "uninstall"}],
+    ["addonsManager", "action", "aboutAddons", "accepted",
+     {type: "extension", addonId: id, view: "list", action: "uninstall"}],
+    ["addonsManager", "action", "aboutAddons", null,
+     {type: "extension", addonId: id, view: "list", action: "undo"}],
+    ["addonsManager", "action", "aboutAddons", null,
+     {type: "extension", addonId: "test-2@mochi.test", view: "list",
+      action: "undo"}],
+  ]);
 });
 
 add_task(async function testMouseSupport() {
@@ -279,6 +318,7 @@ add_task(async function testKeyboardSupport() {
 
   // Test opening and closing the menu.
   let moreOptionsMenu = card.querySelector("panel-list");
+  let expandButton = moreOptionsMenu.querySelector('[action="expand"]');
   is(moreOptionsMenu.open, false, "The menu is closed");
   space();
   is(moreOptionsMenu.open, true, "The menu is open");
@@ -292,12 +332,15 @@ add_task(async function testKeyboardSupport() {
   is(moreOptionsMenu.open, false, "Tabbing away from the menu closes it");
   tab();
   isFocused(moreOptionsButton, "The button is focused again");
+  let shown = BrowserTestUtils.waitForEvent(moreOptionsMenu, "shown");
   space();
+  await shown;
   is(moreOptionsMenu.open, true, "The menu is open");
-  tab();
-  tab();
-  tab();
-  isFocused(moreOptionsButton, "The last item is focused");
+  for (let it of moreOptionsMenu.querySelectorAll("panel-item:not([hidden])")) {
+    tab();
+    isFocused(it, `After tab, focus item "${it.getAttribute("action")}"`);
+  }
+  isFocused(expandButton, "The last item is focused");
   tab();
   is(moreOptionsMenu.open, false, "Tabbing out of the menu closes it");
 
@@ -306,7 +349,7 @@ add_task(async function testKeyboardSupport() {
   isFocused(moreOptionsButton, "The button is focused again");
 
   // Open the menu to test contents.
-  let shown = BrowserTestUtils.waitForEvent(moreOptionsMenu, "shown");
+  shown = BrowserTestUtils.waitForEvent(moreOptionsMenu, "shown");
   space();
   is(moreOptionsMenu.open, true, "The menu is open");
   // Wait for the panel to be shown.

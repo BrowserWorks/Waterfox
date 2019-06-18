@@ -951,6 +951,37 @@ webrtc.nicer:
       - 'main'
       - 'content'
 
+webrtc.video:
+  recv_codec_used:
+    bug_numbers:
+      - 1556766
+    description: >
+      The video codec used for receiving video on a WebRTC call.
+    expires: "never"
+    kind: uint
+    keyed: true
+    notification_emails:
+      - dminor@mozilla.com
+      - nohlmeier@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'content'
+
+  send_codec_used:
+    bug_numbers:
+      - 1556766
+    description: >
+      The video codec used for sending video on a WebRTC call.
+    expires: "never"
+    kind: uint
+    keyed: true
+    notification_emails:
+      - dminor@mozilla.com
+      - nohlmeier@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'content'
+
 webrtc.sdp:
   parser_diff:
     bug_numbers:
@@ -1441,6 +1472,21 @@ devtools.inspector:
     description: >
       Number of times the element picker is used to select an element from the page.
     expires: "70"
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+      - mbalfanz@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  node_selection_count:
+    bug_numbers:
+      - 1550794
+    description: >
+      Number of times a different node is marked as selected in the Inspector regardless
+      of the cause: context menu, manual selection in markup view, etc.
+    expires: "never"
     kind: uint
     notification_emails:
       - dev-developer-tools@lists.mozilla.org

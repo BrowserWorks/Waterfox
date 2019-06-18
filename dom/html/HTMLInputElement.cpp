@@ -2368,6 +2368,10 @@ HTMLInputElement::GetFilesOrDirectoriesInternal() const {
 void HTMLInputElement::SetFilesOrDirectories(
     const nsTArray<OwningFileOrDirectory>& aFilesOrDirectories,
     bool aSetValueChanged) {
+  if (NS_WARN_IF(mType != NS_FORM_INPUT_FILE)) {
+    return;
+  }
+
   MOZ_ASSERT(mFileData);
 
   mFileData->ClearGetFilesHelpers();
@@ -3408,12 +3412,16 @@ nsresult HTMLInputElement::PreHandleEvent(EventChainVisitor& aVisitor) {
 }
 
 void HTMLInputElement::StartRangeThumbDrag(WidgetGUIEvent* aEvent) {
+  nsRangeFrame* rangeFrame = do_QueryFrame(GetPrimaryFrame());
+  if (!rangeFrame) {
+    return;
+  }
+
   mIsDraggingRange = true;
   mRangeThumbDragStartValue = GetValueAsDecimal();
   // Don't use CaptureFlags::RetargetToElement, as that breaks pseudo-class
   // styling of the thumb.
   PresShell::SetCapturingContent(this, CaptureFlags::IgnoreAllowedState);
-  nsRangeFrame* rangeFrame = do_QueryFrame(GetPrimaryFrame());
 
   // Before we change the value, record the current value so that we'll
   // correctly send a 'change' event if appropriate. We need to do this here

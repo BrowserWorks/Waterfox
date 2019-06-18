@@ -1279,11 +1279,8 @@ pref("dom.storage.enabled", true);
 // Whether or not LSNG (Next Generation Local Storage) is enabled.
 // See bug 1517090 for enabling this on Nightly.
 // See bug 1534736 for changing it to EARLY_BETA_OR_EARLIER.
-#ifdef EARLY_BETA_OR_EARLIER
+// See bug 1539835 for enabling this unconditionally.
 pref("dom.storage.next_gen", true);
-#else
-pref("dom.storage.next_gen", false);
-#endif
 pref("dom.storage.default_quota",      5120);
 pref("dom.storage.shadow_writes", true);
 pref("dom.storage.snapshot_prefill", 16384);
@@ -2741,7 +2738,7 @@ pref("services.settings.security.onecrl.collection", "onecrl");
 pref("services.settings.security.onecrl.signer", "onecrl.content-signature.mozilla.org");
 pref("services.settings.security.onecrl.checked", 0);
 
-pref("extensions.abuseReport.enabled", false);
+pref("extensions.abuseReport.enabled", true);
 pref("extensions.abuseReport.url", "https://addons.mozilla.org/api/v4/abuse/report/addon/");
 
 // Blocklist preferences
@@ -5116,7 +5113,11 @@ pref("gfx.direct3d11.break-on-error", false);
 
 // Prefer flipping between two buffers over copying from our back buffer
 // to the OS.
+#ifdef NIGHTLY_BUILD
 pref("gfx.direct3d11.use-double-buffering", true);
+#else
+pref("gfx.direct3d11.use-double-buffering", false);
+#endif
 
 pref("layers.prefer-opengl", false);
 #endif
@@ -5172,13 +5173,8 @@ pref("extensions.webextensions.protocol.remote", true);
 // Enable tab hiding API by default.
 pref("extensions.webextensions.tabhide.enabled", true);
 
-#ifdef NIGHTLY_BUILD
-// Enable userScripts API by default on Nightly.
+// Enable userScripts API by default.
 pref("extensions.webextensions.userScripts.enabled", true);
-#else
-// Disable userScripts API by default on all other channels.
-pref("extensions.webextensions.userScripts.enabled", false);
-#endif
 
 pref("extensions.webextensions.background-delayed-startup", false);
 
@@ -5194,9 +5190,16 @@ pref("extensions.webextensions.enablePerformanceCounters", true);
 pref("extensions.webextensions.performanceCountersMaxAge", 5000);
 
 // The HTML about:addons page.
-pref("extensions.htmlaboutaddons.enabled", false);
+pref("extensions.htmlaboutaddons.enabled", true);
 // Whether to allow the inline options browser in HTML about:addons page.
-pref("extensions.htmlaboutaddons.inline-options.enabled", false);
+pref("extensions.htmlaboutaddons.inline-options.enabled", true);
+// Show recommendations on the extension and theme list views.
+pref("extensions.htmlaboutaddons.recommendations.enabled", true);
+
+// The URL for the privacy policy related to recommended add-ons.
+pref("extensions.recommendations.privacyPolicyUrl", "");
+// The URL for a recommended theme, shown on the theme page in about:addons.
+pref("extensions.recommendations.themeRecommendationUrl", "");
 
 // Report Site Issue button
 // Note that on enabling the button in other release channels, make sure to

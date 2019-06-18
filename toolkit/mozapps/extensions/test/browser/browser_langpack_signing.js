@@ -1,3 +1,11 @@
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+
+// The HTML tests are in browser_html_warning_messages.js.
+SpecialPowers.pushPrefEnv({
+  set: [["extensions.htmlaboutaddons.enabled", false]],
+});
 
 // Tests that signed and unsigned language packs show up correctly in
 // the Languages tab based on the langpack signing preference.

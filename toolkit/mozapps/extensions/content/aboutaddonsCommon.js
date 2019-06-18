@@ -5,9 +5,12 @@
 
 "use strict";
 
-/* exported attachUpdateHandler, getBrowserElement, loadReleaseNotes,
- * openOptionsInTab */
+/* exported attachUpdateHandler, gBrowser, getBrowserElement, isCorrectlySigned,
+ *          isDisabledUnsigned, loadReleaseNotes, openOptionsInTab,
+ *          promiseEvent, shouldShowPermissionsPrompt, showPermissionsPrompt */
 
+const {AddonSettings} =
+  ChromeUtils.import("resource://gre/modules/addons/AddonSettings.jsm");
 var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 var {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -20,6 +23,12 @@ ChromeUtils.defineModuleGetter(this, "Extension",
 
 function getBrowserElement() {
   return window.docShell.chromeEventHandler;
+}
+
+function promiseEvent(event, target, capture = false) {
+  return new Promise(resolve => {
+    target.addEventListener(event, resolve, {capture, once: true});
+  });
 }
 
 function attachUpdateHandler(install) {
@@ -99,4 +108,80 @@ function openOptionsInTab(optionsURL) {
     return true;
   }
   return false;
+}
+
+function shouldShowPermissionsPrompt(addon) {
+  if (!WEBEXT_PERMISSION_PROMPTS || !addon.isWebExtension || addon.seen) {
+    return false;
+  }
+
+  const {origins, permissions} = addon.userPermissions;
+  return origins.length > 0 || permissions.length > 0;
+}
+
+function showPermissionsPrompt(addon) {
+  return new Promise((resolve) => {
+    const permissions = addon.userPermissions;
+    const target = getBrowserElement();
+
+    const onAddonEnabled = () => {
+      // The user has just enabled a sideloaded extension, if the permission
+      // can be changed for the extension, show the post-install panel to
+      // give the user that opportunity.
+      if (addon.permissions &
+        AddonManager.PERM_CAN_CHANGE_PRIVATEBROWSING_ACCESS) {
+        Services.obs.notifyObservers({addon, target},
+          "webextension-install-notify");
+      }
+      resolve();
+    };
+
+    const subject = {
+      wrappedJSObject: {
+        target,
+        info: {
+          type: "sideload",
+          addon,
+          icon: addon.iconURL,
+          permissions,
+          resolve() {
+            addon.markAsSeen();
+            addon.enable().then(onAddonEnabled);
+          },
+          reject() {
+            // Ignore a cancelled permission prompt.
+          },
+        },
+      },
+    };
+    Services.obs.notifyObservers(subject, "webextension-permission-prompt");
+  });
+}
+
+// Stub tabbrowser implementation for use by the tab-modal alert code
+// when an alert/prompt/confirm method is called in a WebExtensions options_ui
+// page (See Bug 1385548 for rationale).
+var gBrowser = {
+  getTabModalPromptBox(browser) {
+    const parentWindow = window.docShell.chromeEventHandler.ownerGlobal;
+
+    if (parentWindow.gBrowser) {
+      return parentWindow.gBrowser.getTabModalPromptBox(browser);
+    }
+
+    return null;
+  },
+};
+
+function isCorrectlySigned(addon) {
+  // Add-ons without an "isCorrectlySigned" property are correctly signed as
+  // they aren't the correct type for signing.
+  return addon.isCorrectlySigned !== false;
+}
+
+function isDisabledUnsigned(addon) {
+  let signingRequired = (addon.type == "locale") ?
+                        AddonSettings.LANGPACKS_REQUIRE_SIGNING :
+                        AddonSettings.REQUIRE_SIGNING;
+  return signingRequired && !isCorrectlySigned(addon);
 }

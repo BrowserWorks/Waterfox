@@ -272,8 +272,8 @@ def target_tasks_mozilla_release(full_task_graph, parameters, graph_config):
 @_target_task('mozilla_esr60_tasks')
 def target_tasks_mozilla_esr60(full_task_graph, parameters, graph_config):
     """Select the set of tasks required for a promotable beta or release build
-    of desktop, plus android CI. The candidates build process involves a pipeline
-    of builds and signing, but does not include beetmover or balrog jobs."""
+    of desktop. The candidates build process involves a pipeline of builds and
+    signing, but does not include beetmover or balrog jobs."""
 
     def filter(task):
         if not filter_release_tasks(task, parameters):
@@ -284,11 +284,31 @@ def target_tasks_mozilla_esr60(full_task_graph, parameters, graph_config):
 
         platform = task.attributes.get('build_platform')
 
-        # Android is not built on esr.
+        # Android is not built on esr60.
         if platform and 'android' in platform:
             return False
 
         # All else was already filtered
+        return True
+
+    return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
+
+
+@_target_task('mozilla_esr68_tasks')
+def target_tasks_mozilla_esr68(full_task_graph, parameters, graph_config):
+    """Select the set of tasks required for a promotable beta or release build
+    of desktop, plus android CI. The candidates build process involves a pipeline
+    of builds and signing, but does not include beetmover or balrog jobs."""
+
+    def filter(task):
+        if not filter_release_tasks(task, parameters):
+            return False
+
+        if not standard_filter(task, parameters):
+            return False
+
+        # Unlike esr60, we do want all kinds of fennec builds on esr68.
+
         return True
 
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
@@ -374,7 +394,7 @@ def target_tasks_ship_desktop(full_task_graph, parameters, graph_config):
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
 
 
-@_target_task('promote_fennec')
+@_target_task('promote_fennec_beta')
 def target_tasks_promote_fennec(full_task_graph, parameters, graph_config):
     """Select the set of tasks required for a candidates build of fennec. The
     nightly build process involves a pipeline of builds, signing,
@@ -395,7 +415,7 @@ def target_tasks_promote_fennec(full_task_graph, parameters, graph_config):
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(full_task_graph[l])]
 
 
-@_target_task('ship_fennec')
+@_target_task('ship_fennec_beta')
 def target_tasks_ship_fennec(full_task_graph, parameters, graph_config):
     """Select the set of tasks required to ship fennec.
     Previous build deps will be optimized out via action task."""
@@ -475,9 +495,14 @@ def target_tasks_nightly_geckoview(full_task_graph, parameters, graph_config):
     maven.mozilla.org."""
 
     def filter(task):
-        # XXX Starting 69, we don't ship Fennec Nightly anymore. We just want geckoview to be
-        # uploaded
-        return task.kind == 'beetmover-geckoview' and task.attributes.get('release-type') == 'beta'
+        # XXX Starting 69, we don't ship Fennec Nightly anymore. We just want geckoview and
+        # its symbols to be uploaded
+        return (
+            task.attributes.get('release-type') == 'beta' and
+            # XXX The shippable geckoview beta are flagged as "nightly"
+            task.attributes.get('nightly') is True and
+            task.kind in ('beetmover-geckoview', 'upload-symbols')
+        )
 
     return [l for l, t in full_task_graph.tasks.iteritems() if filter(t)]
 

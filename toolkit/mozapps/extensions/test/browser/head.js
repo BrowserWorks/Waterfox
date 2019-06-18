@@ -6,6 +6,7 @@
 /* eslint no-unused-vars: ["error", {vars: "local", args: "none"}] */
 
 var {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
+const {TelemetryTestUtils} = ChromeUtils.import("resource://testing-common/TelemetryTestUtils.jsm");
 
 var tmp = {};
 ChromeUtils.import("resource://gre/modules/AddonManager.jsm", tmp);
@@ -211,16 +212,37 @@ function run_next_test() {
   executeSoon(() => log_exceptions(test));
 }
 
-var get_tooltip_info = async function(addon) {
-  let managerWindow = addon.ownerGlobal;
+var get_tooltip_info = async function(addonEl, managerWindow) {
+  if (managerWindow && managerWindow.useHtmlViews) {
+    // Extract from title attribute.
+    const {addon} = addonEl;
+    const name = addon.name;
+    const nameEl = addonEl.querySelector(".addon-name");
 
-  // The popup code uses a triggering event's target to set the
+    let nameWithVersion = nameEl.title;
+    if (addonEl.addon.userDisabled) {
+      // TODO - Bug 1558077: Currently Fluent is clearing the addon title
+      // when the addon is disabled, fixing it requires changes to the
+      // HTML about:addons localized strings, and then remove this
+      // workaround.
+      nameWithVersion = `${name} ${addon.version}`;
+    }
+
+    return {
+      name,
+      version: nameWithVersion.substring(name.length + 1),
+    };
+  }
+
+  // Retrieve the tooltip from the XUL about:addons view,
+  // the popup code uses a triggering event's target to set the
   // document.tooltipNode property.
-  let nameNode = addon.ownerDocument.getAnonymousElementByAttribute(addon, "anonid", "name");
-  let event = new managerWindow.CustomEvent("TriggerEvent");
+  let doc = addonEl.ownerDocument;
+  let nameNode = doc.getAnonymousElementByAttribute(addonEl, "anonid", "name");
+  let event = new doc.ownerGlobal.CustomEvent("TriggerEvent");
   nameNode.dispatchEvent(event);
 
-  let tooltip = managerWindow.document.getElementById("addonitem-tooltip");
+  let tooltip = doc.getElementById("addonitem-tooltip");
 
   let promise = BrowserTestUtils.waitForEvent(tooltip, "popupshown");
   tooltip.openPopup(nameNode, "after_start", 0, 0, false, false, event);
@@ -232,7 +254,7 @@ var get_tooltip_info = async function(addon) {
   tooltip.hidePopup();
   await promise;
 
-  let expectedName = addon.getAttribute("name");
+  let expectedName = addonEl.getAttribute("name");
   is(tiptext.substring(0, expectedName.length), expectedName,
      "Tooltip should always start with the expected name");
 
@@ -272,26 +294,6 @@ function get_current_view(aManager) {
   return view;
 }
 
-function get_test_items_in_list(aManager) {
-  var tests = "@tests.mozilla.org";
-
-  let item = aManager.document.getElementById("addon-list").firstChild;
-  let items = [];
-
-  while (item) {
-    if (item.localName != "richlistitem") {
-      item = item.nextSibling;
-      continue;
-    }
-
-    if (!item.mAddon || item.mAddon.id.substring(item.mAddon.id.length - tests.length) == tests)
-      items.push(item);
-    item = item.nextSibling;
-  }
-
-  return items;
-}
-
 function check_all_in_list(aManager, aIds, aIgnoreExtras) {
   var doc = aManager.document;
   var list = doc.getElementById("addon-list");
@@ -319,19 +321,27 @@ function check_all_in_list(aManager, aIds, aIgnoreExtras) {
 }
 
 function get_addon_element(aManager, aId) {
-  var doc = aManager.document;
-  var view = get_current_view(aManager);
-  var listid = "addon-list";
-  if (view.id == "updates-view")
-    listid = "updates-list";
-  var list = doc.getElementById(listid);
+  if (aManager.useHtmlViews) {
+    const doc = aManager.getHtmlBrowser().contentDocument;
+    return doc.querySelector(`addon-card[addon-id="${aId}"]`);
+  }
 
-  var node = list.firstChild;
+  const doc = aManager.document;
+  const view = get_current_view(aManager);
+  let listid = "addon-list";
+  if (view.id == "updates-view") {
+    listid = "updates-list";
+  }
+  const list = doc.getElementById(listid);
+
+  let node = list.firstChild;
   while (node) {
-    if (node.value == aId)
+    if (node.value == aId) {
       return node;
+    }
     node = node.nextSibling;
   }
+
   return null;
 }
 
@@ -1445,6 +1455,16 @@ function acceptAppMenuNotificationWhenShown(id, addonId) {
   return waitAppMenuNotificationShown(id, addonId, true);
 }
 
+const ABOUT_ADDONS_METHODS = new Set(["action", "view", "link"]);
+function assertAboutAddonsTelemetryEvents(events, filters = {}) {
+  TelemetryTestUtils.assertEvents(events, {
+    category: "addonsManager",
+    method: (actual) => filters.methods ?
+      filters.methods.includes(actual) : ABOUT_ADDONS_METHODS.has(actual),
+    object: "aboutAddons",
+  });
+}
+
 function assertTelemetryMatches(events, {filterMethods} = {}) {
   let snapshot = Services.telemetry.snapshotEvents(
     Ci.nsITelemetry.DATASET_PRERELEASE_CHANNELS, true);
@@ -1469,9 +1489,11 @@ function assertTelemetryMatches(events, {filterMethods} = {}) {
 
 /* HTML view helpers */
 async function loadInitialView(type) {
+  // Force the first page load to be the view we want.
+  let viewId = type == "discover" ? "discover/" : `list/${type}`;
+  Services.prefs.setCharPref(PREF_UI_LASTCATEGORY, `addons://${viewId}`);
+
   let managerWindow = await open_manager(null);
-  let categoryUtilities = new CategoryUtilities(managerWindow);
-  await categoryUtilities.openType(type);
 
   let browser = managerWindow.document.getElementById("html-view-browser");
   let win = browser.contentWindow;
@@ -1485,6 +1507,10 @@ function waitForViewLoad(win) {
 
 function closeView(win) {
   return close_manager(win.managerWindow);
+}
+
+function switchView(win, type) {
+  return new CategoryUtilities(win.managerWindow).openType(type);
 }
 
 function mockPromptService() {

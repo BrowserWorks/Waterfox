@@ -12,7 +12,6 @@
 const {DeferredTask} = ChromeUtils.import("resource://gre/modules/DeferredTask.jsm");
 const {AddonManager} = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
 const {AddonRepository} = ChromeUtils.import("resource://gre/modules/addons/AddonRepository.jsm");
-const {AddonSettings} = ChromeUtils.import("resource://gre/modules/addons/AddonSettings.jsm");
 
 ChromeUtils.defineModuleGetter(this, "AMTelemetry",
                                "resource://gre/modules/AddonManager.jsm");
@@ -30,8 +29,6 @@ ChromeUtils.defineModuleGetter(this, "ClientID",
 ChromeUtils.defineModuleGetter(this, "PrivateBrowsingUtils",
                                "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
-XPCOMUtils.defineLazyPreferenceGetter(this, "WEBEXT_PERMISSION_PROMPTS",
-                                      "extensions.webextPermissionPrompts", false);
 XPCOMUtils.defineLazyPreferenceGetter(this, "XPINSTALL_ENABLED",
                                       "xpinstall.enabled", true);
 
@@ -99,12 +96,6 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "legacyExtensionsEnabled",
 
 document.addEventListener("load", initialize, true);
 window.addEventListener("unload", shutdown);
-
-function promiseEvent(event, target, capture = false) {
-  return new Promise(resolve => {
-    target.addEventListener(event, resolve, {capture, once: true});
-  });
-}
 
 var gPendingInitializations = 1;
 Object.defineProperty(this, "gIsInitializing", {
@@ -309,19 +300,6 @@ function loadView(aViewId) {
   } else {
     gViewController.loadView(aViewId);
   }
-}
-
-function isCorrectlySigned(aAddon) {
-  // Add-ons without an "isCorrectlySigned" property are correctly signed as
-  // they aren't the correct type for signing.
-  return aAddon.isCorrectlySigned !== false;
-}
-
-function isDisabledUnsigned(addon) {
-  let signingRequired = (addon.type == "locale") ?
-                        AddonSettings.LANGPACKS_REQUIRE_SIGNING :
-                        AddonSettings.REQUIRE_SIGNING;
-  return signingRequired && !isCorrectlySigned(addon);
 }
 
 function isLegacyExtension(addon) {
@@ -1230,42 +1208,15 @@ var gViewController = {
                 hasPermission(aAddon, "enable"));
       },
       doCommand(aAddon) {
-        if (aAddon.isWebExtension && !aAddon.seen && WEBEXT_PERMISSION_PROMPTS) {
-          let perms = aAddon.userPermissions;
-          if (perms.origins.length > 0 || perms.permissions.length > 0) {
-            const target = getBrowserElement();
-
-            let subject = {
-              wrappedJSObject: {
-                target,
-                info: {
-                  type: "sideload",
-                  addon: aAddon,
-                  icon: aAddon.iconURL,
-                  permissions: perms,
-                  resolve() {
-                    aAddon.markAsSeen();
-                    aAddon.enable().then(() => {
-                      // The user has just enabled a sideloaded extension, if the permission
-                      // can be changed for the extension, show the post-install panel to
-                      // give the user that opportunity.
-                      if (aAddon.permissions & AddonManager.PERM_CAN_CHANGE_PRIVATEBROWSING_ACCESS) {
-                        Services.obs.notifyObservers({
-                          addon: aAddon, target,
-                        }, "webextension-install-notify");
-                      }
-                    });
-                  },
-                  reject() {},
-                },
-              },
-            };
-            Services.obs.notifyObservers(subject, "webextension-permission-prompt");
-            return;
-          }
+        if (shouldShowPermissionsPrompt(aAddon)) {
+          showPermissionsPrompt(aAddon).then(() => {
+            // Record telemetry if the addon has been enabled.
+            recordActionTelemetry({action: "enable", addon: aAddon});
+          });
+        } else {
+          aAddon.enable();
+          recordActionTelemetry({action: "enable", addon: aAddon});
         }
-        aAddon.enable();
-        recordActionTelemetry({action: "enable", addon: aAddon});
       },
       getTooltip(aAddon) {
         if (!aAddon)
@@ -3804,21 +3755,6 @@ var gDragDrop = {
   },
 };
 
-// Stub tabbrowser implementation for use by the tab-modal alert code
-// when an alert/prompt/confirm method is called in a WebExtensions options_ui page
-// (See Bug 1385548 for rationale).
-var gBrowser = {
-  getTabModalPromptBox(browser) {
-    const parentWindow = window.docShell.chromeEventHandler.ownerGlobal;
-
-    if (parentWindow.gBrowser) {
-      return parentWindow.gBrowser.getTabModalPromptBox(browser);
-    }
-
-    return null;
-  },
-};
-
 // Force the options_ui remote browser to recompute window.mozInnerScreenX and
 // window.mozInnerScreenY when the "addon details" page has been scrolled
 // (See Bug 1390445 for rationale).
@@ -3841,12 +3777,20 @@ const addonTypes = new Set([
   "extension", "theme", "plugin", "dictionary", "locale",
 ]);
 const htmlViewOpts = {
-  loadViewFn(type, param) {
+  loadViewFn(type, ...params) {
     let viewId = `addons://${type}`;
-    if (param) {
-      viewId += "/" + encodeURIComponent(param);
+    if (params.length > 0) {
+      for (let param of params) {
+        viewId += "/" + encodeURIComponent(param);
+      }
+    } else {
+      viewId += "/";
     }
+
     gViewController.loadView(viewId);
+  },
+  replaceWithDefaultViewFn() {
+    gViewController.replaceView(gViewDefault);
   },
   setCategoryFn(name) {
     if (addonTypes.has(name)) {
@@ -3874,22 +3818,29 @@ function getHtmlBrowser() {
 
 function htmlView(type) {
   return {
+    _browser: null,
     node: null,
     isRoot: type != "detail",
 
     initialize() {
-      this.node = getHtmlBrowser();
+      this._browser = getHtmlBrowser();
+      this.node = this._browser.closest("#html-view");
     },
 
     async show(param, request, state, refresh) {
       await htmlBrowserLoaded;
-      await this.node.contentWindow.show(type, param);
+      this.node.setAttribute("type", type);
+      this.node.setAttribute("param", param);
+      await this._browser.contentWindow.show(type, param);
+      gViewController.updateCommands();
       gViewController.notifyViewChanged();
     },
 
     async hide() {
       await htmlBrowserLoaded;
-      return this.node.contentWindow.hide();
+      this.node.removeAttribute("type");
+      this.node.removeAttribute("param");
+      return this._browser.contentWindow.hide();
     },
 
     getSelectedAddon() {

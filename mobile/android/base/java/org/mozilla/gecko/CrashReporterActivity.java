@@ -139,6 +139,8 @@ public class CrashReporterActivity extends AppCompatActivity
     @Override
     @SuppressLint("WrongThread") // We don't have a worker thread for the TelemetryDispatcher
     public void onCreate(Bundle savedInstanceState) {
+        informReporterStarted();
+
         super.onCreate(savedInstanceState);
         // mHandler is created here so runnables can be run on the main thread
         mHandler = new Handler();
@@ -200,14 +202,6 @@ public class CrashReporterActivity extends AppCompatActivity
             }
         } catch (GeckoProfileDirectories.NoMozillaDirectoryException | IOException e) {
             Log.e(LOGTAG, "Cannot send the crash ping: ", e);
-        }
-
-        // Notify GeckoApp that we've crashed, so it can react appropriately during the next start.
-        try {
-            File crashFlag = new File(GeckoProfileDirectories.getMozillaDirectory(this), "CRASHED");
-            crashFlag.createNewFile();
-        } catch (GeckoProfileDirectories.NoMozillaDirectoryException | IOException e) {
-            Log.e(LOGTAG, "Cannot set crash flag: ", e);
         }
 
         final CheckBox allowContactCheckBox = (CheckBox) findViewById(R.id.allow_contact);
@@ -595,5 +589,12 @@ public class CrashReporterActivity extends AppCompatActivity
 
     private String unescape(String string) {
         return string.replaceAll("\\\\\\\\", "\\").replaceAll("\\\\n", "\n").replaceAll("\\\\t", "\t");
+    }
+
+    /**
+     * Inform other parts of the app that user started the crash reporting process.
+     */
+    private void informReporterStarted() {
+        CrashHandlerService.reportingStarted(this);
     }
 }

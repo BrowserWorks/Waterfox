@@ -172,12 +172,12 @@ add_task(async function test_addon_install_method_mapping() {
     ["distribution", {source: "distribution"}],
     ["drag_and_drop", {source: "about:addons", method: "drag-and-drop"}],
     ["enterprise_policy", {source: "enterprise-policy"}],
-    ["file_uri", {source: "file-uri"}],
+    ["file_url", {source: "file-url"}],
     ["install_from_file", {source: "about:addons", method: "install-from-file"}],
     ["installtrigger", {source: "test-host", method: "installTrigger"}],
     ["link", {source: "unknown", method: "link"}],
     ["management_webext_api", {source: "extension", method: "management-webext-api"}],
-    ["sideload", {source: "sideload"}],
+    ["sideload", {source: "app-profile", method: "sideload"}],
     ["sync", {source: "sync"}],
     ["system_addon", {source: "system-addon"}],
     ["temporary_addon", {source: "temporary-addon"}],
@@ -400,4 +400,95 @@ add_task(async function test_submission_aborting() {
   // test file can shutdown (otherwise the test run will be stuck after this
   // task completed).
   resolvePendingResponses();
+});
+
+add_task(async function test_truncated_string_properties() {
+  const generateString = len => (new Array(len)).fill("a").join("");
+
+  const LONG_STRINGS_ADDON_ID = "addon-with-long-strings-props@mochi.test";
+  const {extension} = await installTestExtension({
+    manifest: {
+      name: generateString(400),
+      description: generateString(400),
+      applications: {gecko: {id: LONG_STRINGS_ADDON_ID}},
+    },
+  });
+
+  // Override the test api server request handler, to be able to
+  // intercept the properties actually submitted.
+  let reportSubmitted;
+  apiRequestHandler = ({data, request, response}) => {
+    reportSubmitted = JSON.parse(data);
+    handleSubmitRequest({request, response});
+  };
+
+  const report = await AbuseReporter.createAbuseReport(
+    LONG_STRINGS_ADDON_ID, REPORT_OPTIONS);
+
+  await report.submit({message: "fake-message", reason: "fake-reason"});
+
+  const expected = {
+    addon_name: generateString(255),
+    addon_summary: generateString(255),
+  };
+
+  Assert.deepEqual({
+    addon_name: reportSubmitted.addon_name,
+    addon_summary: reportSubmitted.addon_summary,
+  }, expected, "Got the long strings truncated as expected");
+
+  await extension.unload();
+});
+
+add_task(async function test_report_recommended() {
+  const NON_RECOMMENDED_ADDON_ID = "non-recommended-addon@mochi.test";
+  const RECOMMENDED_ADDON_ID = "recommended-addon@mochi.test";
+
+  const now = Date.now();
+  const not_before = new Date(now - 3600000).toISOString();
+  const not_after = new Date(now + 3600000).toISOString();
+
+  const {extension: nonRecommended} = await installTestExtension({
+    manifest: {
+      name: "Fake non recommended addon",
+      applications: {gecko: {id: NON_RECOMMENDED_ADDON_ID}},
+    },
+  });
+
+  const {extension: recommended} = await installTestExtension({
+    manifest: {
+      name: "Fake recommended addon",
+      applications: {gecko: {id: RECOMMENDED_ADDON_ID}},
+    },
+    files: {
+      "mozilla-recommendation.json": {
+        addon_id: RECOMMENDED_ADDON_ID,
+        states: ["recommended"],
+        validity: {not_before, not_after},
+      },
+    },
+  });
+
+  // Override the test api server request handler, to be able to
+  // intercept the properties actually submitted.
+  let reportSubmitted;
+  apiRequestHandler = ({data, request, response}) => {
+    reportSubmitted = JSON.parse(data);
+    handleSubmitRequest({request, response});
+  };
+
+  async function checkReportedSignature(addonId, expectedAddonSignature) {
+    await clearAbuseReportState();
+    const report = await AbuseReporter.createAbuseReport(
+      addonId, REPORT_OPTIONS);
+    await report.submit({message: "fake-message", reason: "fake-reason"});
+    equal(reportSubmitted.addon_signature, expectedAddonSignature,
+      `Got the expected addon_signature for ${addonId}`);
+  }
+
+  await checkReportedSignature(NON_RECOMMENDED_ADDON_ID, "signed");
+  await checkReportedSignature(RECOMMENDED_ADDON_ID, "curated");
+
+  await nonRecommended.unload();
+  await recommended.unload();
 });
