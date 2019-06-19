@@ -212,3 +212,10 @@ richlistitem:not([selected]) * {
 #pluginFlashBlockingCheckbox .checkbox-label-box {
   display: none; /*see bug 1508724*/
 }
+
+/* Hacky method for smaller window size with addon version */
+@media screen and (max-width: 850px) {
+  .version{
+    display: none;
+  }
+}
