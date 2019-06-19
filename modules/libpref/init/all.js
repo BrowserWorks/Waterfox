@@ -5611,7 +5611,7 @@ pref("media.gmp-manager.updateEnabled", true);
 //pref("media.gmp-manager.url.override", "");
 
 // Update service URL for GMP install/updates:
-pref("media.gmp-manager.url", "https://www.waterfox.net/update/GMP/%VERSION%/%CHANNEL%/%OS_VERSION%/update.xml");
+pref("media.gmp-manager.url", "");
 
 // When |media.gmp-manager.cert.requireBuiltIn| is true or not specified the
 // final certificate and all certificates the connection is redirected to before
