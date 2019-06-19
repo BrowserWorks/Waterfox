@@ -63,9 +63,9 @@ elif toolkit == 'cocoa':
         'nsISystemStatusBar.idl',
         'nsITaskbarProgress.idl',
     ]
-    EXPORTS += [
-        'nsINativeMenuService.h',
-    ]
+
+if toolkit in ('cocoa', 'gtk2', 'gtk3'):
+    EXPORTS += ['nsINativeMenuService.h']
 
 TEST_DIRS += ['tests']
 

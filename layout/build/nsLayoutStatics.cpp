@@ -126,6 +126,10 @@
 #include "mozilla/dom/ipc/IPCBlobInputStreamStorage.h"
 #include "mozilla/dom/U2FTokenManager.h"
 
+#ifdef MOZ_WIDGET_GTK
+#include "nsNativeMenuAtoms.h"
+#endif
+
 using namespace mozilla;
 using namespace mozilla::net;
 using namespace mozilla::dom;
@@ -158,6 +162,9 @@ nsLayoutStatics::Initialize()
   nsTextServicesDocument::RegisterAtoms();
   nsHTMLTags::RegisterAtoms();
   nsRDFAtoms::RegisterAtoms();
+#ifdef MOZ_WIDGET_GTK
+  nsNativeMenuAtoms::RegisterAtoms();
+#endif
 
   NS_SealStaticAtomTable();
 

@@ -5,7 +5,11 @@
 
        <menubar id="main-menubar"
                 onpopupshowing="if (event.target.parentNode.parentNode == this &amp;&amp;
+#ifdef MOZ_WIDGET_GTK
+                                    document.documentElement.getAttribute('shellshowingmenubar') != 'true')
+#else
                                     !('@mozilla.org/widget/nativemenuservice;1' in Cc))
+#endif
                                   this.setAttribute('openedwithkey',
                                                     event.target.parentNode.openedWithKey);"
                 style="border:0px;padding:0px;margin:0px;-moz-appearance:none">

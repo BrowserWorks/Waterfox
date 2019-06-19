@@ -5358,6 +5358,8 @@ function getTogglableToolbars() {
   let toolbarNodes = Array.slice(gNavToolbox.childNodes);
   toolbarNodes = toolbarNodes.concat(gNavToolbox.externalToolbars);
   toolbarNodes = toolbarNodes.filter(node => node.getAttribute("toolbarname"));
+  if (document.documentElement.getAttribute("shellshowingmenubar") == "true")
+    toolbarNodes = toolbarNodes.filter(node => node.id != "toolbar-menubar");
   return toolbarNodes;
 }
 
