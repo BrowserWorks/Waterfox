@@ -46,6 +46,10 @@ pref("general.useragent.override.slack.com", "Mozilla/5.0 (Windows NT 10.0; Win6
 pref("general.useragent.override.wire.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.trello.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.tresorit.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.hoopladigital.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.ucf.org.au", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.gizmodo.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 #endif
 #ifdef XP_MACOSX
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:57.0) Gecko/20100101 Firefox/57.0");
@@ -65,6 +69,11 @@ pref("general.useragent.override.slack.com", "Mozilla/5.0 (Macintosh; Intel Mac 
 pref("general.useragent.override.wire.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.trello.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.tresorit.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.hoopladigital.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.ucf.org.au.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.gizmodo.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+
 #endif
 #ifdef XP_LINUX
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0");
@@ -84,6 +93,11 @@ pref("general.useragent.override.slack.com", "Mozilla/5.0 (X11; Linux x86_64; rv
 pref("general.useragent.override.wire.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.trello.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.tresorit.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.hoopladigital.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.ucf.org.au", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.gizmodo.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+
 #endif
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
