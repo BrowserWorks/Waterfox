@@ -323,7 +323,7 @@ marionette-media-tests:
     - mochitest-devtools-chrome
     - mochitest-devtools-webreplay
     - mochitest-gpu
-#    - mochitest-media
+    - mochitest-media
     - mochitest-webgl1-core
     - mochitest-webgl1-ext
 #    - mochitest-webgl2-core
