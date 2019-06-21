@@ -361,7 +361,7 @@ BaseBookmarksEngine.prototype = {
     let shouldWipeRemote = await PlacesSyncUtils.bookmarks.shouldWipeRemote();
     if (!shouldWipeRemote) {
       this._log.debug(
-        "Checking if server sync ID ${newSyncID} matches " + "existing",
+        "Checking if server sync ID ${newSyncID} matches existing",
         { newSyncID }
       );
       await this._ensureCurrentSyncID(newSyncID);
@@ -900,7 +900,7 @@ BufferedBookmarksEngine.prototype = {
     let change = this._modified.changes[id];
     if (!change) {
       this._log.error(
-        "Creating record for item ${id} not in strong " + "changeset",
+        "Creating record for item ${id} not in strong changeset",
         { id }
       );
       throw new TypeError("Can't create record for unchanged item");
